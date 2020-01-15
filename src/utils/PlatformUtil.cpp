@@ -6,14 +6,14 @@ See the included LICENSE file
 #include "PlatformUtil.h"
 
 namespace {
-std::string backslash_to_slash(const std::string &s) {
-	std::string sc(s);
-	int len = sc.length();
-	for (int i = 0; i < len; ++i)
-		if (sc[i] == '\\')
-			sc[i] = '/';
-	return sc;
-}
+	std::string backslash_to_slash(const std::string &s) {
+		std::string sc(s);
+		size_t len = sc.length();
+		for (size_t i = 0; i < len; ++i)
+			if (sc[i] == '\\')
+				sc[i] = '/';
+		return sc;
+	}
 }
 
 namespace PlatformUtil {

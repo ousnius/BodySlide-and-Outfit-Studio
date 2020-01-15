@@ -241,11 +241,11 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 #endif
 
 	if (loaded) {
-		int ret = outDoc.LoadFile(fp);
+		int retDoc = outDoc.LoadFile(fp);
 		fclose(fp);
 		fp = nullptr;
 
-		if (ret != 0)
+		if (retDoc != 0)
 			loaded = false;
 	}
 
