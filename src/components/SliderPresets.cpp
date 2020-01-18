@@ -385,4 +385,3 @@ int PresetCollection::DeletePreset(const std::string& filePath, const std::strin
 
 	return 0;
 }
-

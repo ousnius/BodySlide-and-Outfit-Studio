@@ -77,8 +77,10 @@ void RefTemplateFile::Open(const std::string& srcFileName) {
 		return;
 #else
 	fp = fopen(srcFileName.c_str(), "rb");
-	if (!fp)
+	if (!fp) {
+		error = errno;
 		return;
+	}
 #endif
 
 	error = doc.LoadFile(fp);

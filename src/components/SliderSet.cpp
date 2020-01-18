@@ -77,7 +77,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 
 	tmpElement = element->FirstChildElement("OutputPath");
 	if (tmpElement)
-		outputpath = tmpElement->GetText();
+		outputpath = ToOSSlashes(tmpElement->GetText());
 
 	genWeights = true;
 	tmpElement = element->FirstChildElement("OutputFile");
@@ -290,7 +290,8 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
 
 	newElement = sliderSetElement->GetDocument()->NewElement("OutputPath");
-	newText = sliderSetElement->GetDocument()->NewText(outputpath.c_str());
+	std::string outputpath_bs = ToBackslashes(outputpath);
+	newText = sliderSetElement->GetDocument()->NewText(outputpath_bs.c_str());
 	sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
 
 	newElement = sliderSetElement->GetDocument()->NewElement("OutputFile");
@@ -411,8 +412,10 @@ void SliderSetFile::Open(const std::string& srcFileName) {
 		return;
 #else
 	fp = fopen(srcFileName.c_str(), "rb");
-	if (!fp)
+	if (!fp) {
+		error = errno;
 		return;
+	}
 #endif
 
 	error = doc.LoadFile(fp);
@@ -525,7 +528,7 @@ void SliderSetFile::GetSetOutputFilePath(const std::string& setName, std::string
 	XMLElement* setPtr = setsInFile[setName];
 	XMLElement* tmpElement = setPtr->FirstChildElement("OutputPath");
 	if (tmpElement)
-		outFilePath += tmpElement->GetText();
+		outFilePath += ToOSSlashes(tmpElement->GetText());
 
 	tmpElement = setPtr->FirstChildElement("OutputFile");
 	if (tmpElement) {
@@ -572,8 +575,10 @@ bool SliderSetFile::Save() {
 		return false;
 #else
 	fp = fopen(fileName.c_str(), "w");
-	if (!fp)
+	if (!fp) {
+		error = errno;
 		return false;
+	}
 #endif
 
 	doc.SetBOM(true);
