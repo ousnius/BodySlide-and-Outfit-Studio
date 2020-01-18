@@ -58,3 +58,4 @@ namespace PlatformUtil {
 	}
 #endif
 }
+
