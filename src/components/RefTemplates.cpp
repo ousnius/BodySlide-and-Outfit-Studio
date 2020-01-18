@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "RefTemplates.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/StringStuff.h"
 
 int RefTemplateCollection::Load(const std::string& basePath) {
 	refTemplates.clear();
@@ -44,7 +45,7 @@ int RefTemplate::Load(XMLElement* srcElement) {
 	name = srcElement->GetText();
 
 	if (srcElement->Attribute("sourcefile"))
-		source = srcElement->Attribute("sourcefile");
+		source = ToOSSlashes(srcElement->Attribute("sourcefile"));
 
 	if (srcElement->Attribute("set"))
 		set = srcElement->Attribute("set");

@@ -7,7 +7,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 find_package(wxWidgets REQUIRED gl core base net xrc adv qa html propgrid)
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
-find_library(fbxsdk fbxsdk PATHS ../fbxsdk/lib/gcc/x64/release)
+set(fbxsdk_dir ../fbxsdk)
+find_library(fbxsdk fbxsdk PATHS ${fbxsdk_dir}/lib/gcc/x64/release)
 
 set(commonsources
 	lib/FSEngine/FSBSA.cpp
@@ -90,7 +91,7 @@ add_executable(BodySlide ${BSsources})
 
 include(${wxWidgets_USE_FILE})
 target_include_directories(OutfitStudio SYSTEM PRIVATE
-	../fbxsdk/include
+	${fbxsdk_dir}/include
 	/usr/include/wine/windows
 	)
 target_include_directories(BodySlide SYSTEM PRIVATE

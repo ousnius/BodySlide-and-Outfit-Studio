@@ -883,15 +883,10 @@ void BodySlideApp::InitPreview() {
 		previewBaseNif = new NifFile();
 		PreviewMod.Clear();
 
-#ifdef _WINDOWS
 		std::fstream file;
 		PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
 		if (previewBaseNif->Load(file))
 			return;
-#else
-		if (previewBaseNif->Load(inputFileName))
-			return;
-#endif
 
 		PreviewMod.CopyFrom(*previewBaseNif);
 
@@ -2353,7 +2348,7 @@ void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const 
 	if (target) {
 		auto triExtraData = new NiStringExtraData();
 		triExtraData->SetName("BODYTRI");
-		triExtraData->SetStringData(triPath);
+		triExtraData->SetStringData(ToBackslashes(triPath));
 		nif.AssignExtraData(target, triExtraData);
 	}
 }

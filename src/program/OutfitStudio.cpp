@@ -1272,6 +1272,8 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 								// Split target file name to get OSD file name
 								int split = dataFileName.find_last_of('/');
 								if (split < 0)
+									split = dataFileName.find_last_of('\\');
+								if (split < 0)
 									continue;
 
 								dataFiles.insert(set.GetDefaultDataFolder() + sep + dataFileName.substr(0, split));

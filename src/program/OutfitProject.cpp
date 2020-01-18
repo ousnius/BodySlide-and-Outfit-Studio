@@ -136,7 +136,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 				targSlider = activeSet[i].TargetDataName(targ);
 				if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
 					if (activeSet[i].IsLocalData(targSlider)) {
-						targSliderData = osdFileName + "/" + targSlider;
+						targSliderData = osdFileName + PathSepStr + targSlider;
 						outSet[id].AddDataFile(targ, targSlider, targSliderData);
 					}
 					else {
@@ -159,7 +159,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 				if (morpher.GetResultDiffSize(shapeName, activeSet[i].name) > 0) {
 					std::string shapeDataFolder = activeSet.ShapeToDataFolder(shapeName);
 					if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
-						targSliderData = osdFileName + "/" + targSlider;
+						targSliderData = osdFileName + PathSepStr + targSlider;
 						outSet[i].AddDataFile(targ, targSlider, targSliderData);
 					}
 					else {

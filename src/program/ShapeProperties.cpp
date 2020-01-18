@@ -340,7 +340,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			if (!blockType)
 				continue;
 
-			stTexGrid->SetCellValue(i, 0, texPath);
+			stTexGrid->SetCellValue(i, 0, ToOSSlashes(texPath));
 		}
 
 		// BSEffectShaderProperty
@@ -362,7 +362,8 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			std::vector<std::string> texFiles(10);
 			for (int i = 0; i < 10; i++) {
 				std::string texPath = stTexGrid->GetCellValue(i, 0);
-				nif->SetTextureSlot(shader, texPath, i);
+				std::string texPath_bs = ToBackslashes(texPath);
+				nif->SetTextureSlot(shader, texPath_bs, i);
 
 				if (!texPath.empty())
 					texFiles[i] = dataPath + texPath;

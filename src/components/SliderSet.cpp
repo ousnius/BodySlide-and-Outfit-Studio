@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "SliderSet.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/StringStuff.h"
 
 
 SliderSet::SliderSet() {
@@ -67,7 +68,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	XMLElement* tmpElement = element->FirstChildElement(dataFolderStr.c_str());
 	if (tmpElement) {
 		tmpElement->SetName("DataFolder");
-		datafolder = tmpElement->GetText();
+		datafolder = ToOSSlashes(tmpElement->GetText());
 	}
 
 	tmpElement = element->FirstChildElement("SourceFile");
@@ -91,7 +92,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 
 		auto& shape = shapeAttributes[shapeName->GetText()];
 		if (shapeName->Attribute("DataFolder"))
-			shape.dataFolder = shapeName->Attribute("DataFolder");
+			shape.dataFolder = ToOSSlashes(shapeName->Attribute("DataFolder"));
 		else
 			shape.dataFolder = datafolder;
 
@@ -216,6 +217,8 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 			// Split file name to get file and data name in it
 			int split = fullFilePath.find_last_of('/');
 			if (split < 0)
+				split = fullFilePath.find_last_of('\\');
+			if (split < 0)
 				return;
 
 			std::string dataName = fullFilePath.substr(split + 1);
@@ -278,7 +281,8 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	sliderSetElement->SetAttribute("name", name.c_str());
 
 	XMLElement* newElement = sliderSetElement->GetDocument()->NewElement("DataFolder");
-	XMLText* newText = sliderSetElement->GetDocument()->NewText(datafolder.c_str());
+	std::string datafolder_bs = ToBackslashes(datafolder);
+	XMLText* newText = sliderSetElement->GetDocument()->NewText(datafolder_bs.c_str());
 	sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
 
 	newElement = sliderSetElement->GetDocument()->NewElement("SourceFile");
@@ -308,8 +312,10 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		if (!s.second.targetShape.empty())
 			baseShapeElement->SetAttribute("target", s.second.targetShape.c_str());
 
-		if (!s.second.dataFolder.empty())
-			baseShapeElement->SetAttribute("DataFolder", s.second.dataFolder.c_str());
+		if (!s.second.dataFolder.empty()) {
+			std::string dataFolder_bs = ToBackslashes(s.second.dataFolder);
+			baseShapeElement->SetAttribute("DataFolder", dataFolder_bs.c_str());
+		}
 
 		if (!s.second.smoothSeamNormals)
 			baseShapeElement->SetAttribute("SmoothSeamNormals", s.second.smoothSeamNormals);
@@ -366,7 +372,8 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			if (df.bLocal)
 				dataFileElement->SetAttribute("local", true);
 
-			newText = sliderSetElement->GetDocument()->NewText(df.fileName.c_str());
+			std::string fileName_bs = ToBackslashes(df.fileName);
+			newText = sliderSetElement->GetDocument()->NewText(fileName_bs.c_str());
 			dataFileElement->InsertEndChild(newText);
 		}
 	}
