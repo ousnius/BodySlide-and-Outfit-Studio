@@ -138,9 +138,6 @@ bool ResourceLoader::RenameTexture(const std::string& texNameSrc, const std::str
 	std::string src = texNameSrc;
 	std::string dst = texNameDest;
 
-	std::transform(src.begin(), src.end(), src.begin(), ::tolower);
-	std::transform(dst.begin(), dst.end(), dst.begin(), ::tolower);
-
 	auto tid = textures.find(dst);
 	if (tid != textures.end()) {
 		if (!overwrite)

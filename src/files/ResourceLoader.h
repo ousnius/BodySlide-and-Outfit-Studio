@@ -8,6 +8,9 @@ See the included LICENSE file
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <map>
+
+#include "../utils/StringStuff.h"
 
 #pragma warning (push, 0)
 #include "gli.hpp"
@@ -80,7 +83,7 @@ private:
 	typedef std::unordered_map<MaterialKey, std::unique_ptr<GLMaterial>, MatKeyHash> MaterialCache;
 	// defining texture cache like this both for consitency, might also make it easier to add features like
 	// reference tracking later.  For now, Textures are only unloaded when ResourceLoader is destroyed.
-	typedef std::unordered_map<std::string, GLuint> TextureCache;
+	typedef std::map<std::string, GLuint, case_insensitive_compare> TextureCache;
 
 	TextureCache textures;
 	MaterialCache materials;

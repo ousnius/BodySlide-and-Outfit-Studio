@@ -23,8 +23,8 @@ bool StringsEqualInsens(const char *a, const char *b)
 std::string ToOSSlashes(const std::string &s)
 {
 	std::string d(s);
-	int len = d.length();
-	for (int i = 0; i < len; ++i)
+	size_t len = d.length();
+	for (size_t i = 0; i < len; ++i)
 #ifdef WINDOWS
 		if (d[i] == '/')
 			d[i] = '\\';
@@ -38,8 +38,8 @@ std::string ToOSSlashes(const std::string &s)
 std::string ToBackslashes(const std::string &s)
 {
 	std::string d(s);
-	int len = d.length();
-	for (int i = 0; i < len; ++i)
+	size_t len = d.length();
+	for (size_t i = 0; i < len; ++i)
 		if (d[i] == '/')
 			d[i] = '\\';
 	return d;
