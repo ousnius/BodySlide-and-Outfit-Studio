@@ -352,7 +352,7 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 		activeSet.Clear();
 		sliderManager.ClearSliders();
 		if (!sliderDoc.GetSet(outfit, activeSet)) {
-			activeSet.SetBaseDataPath(Config["AppDir"] + "/ShapeData");
+			activeSet.SetBaseDataPath(Config["AppDir"] + PathSepStr + "ShapeData");
 			activeSet.LoadSetDiffData(dataSets);
 
 			sliderManager.AddSlidersInSet(activeSet);
@@ -407,10 +407,8 @@ int BodySlideApp::LoadSliderSets() {
 			outfitNameOrder.push_back(o);
 
 			sliderDoc.GetSetOutputFilePath(o, outFilePath);
-			if (!outFilePath.empty()) {
-				std::transform(outFilePath.begin(), outFilePath.end(), outFilePath.begin(), ::tolower);
+			if (!outFilePath.empty())
 				outFileCount[outFilePath].push_back(o);
-			}
 		}
 	}
 
@@ -1627,7 +1625,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 				return 4;
 			}
 
-			response.Append('/');
+			response.Append(PathSepChar);
 			Config.SetValue("GameDataPath", response.ToStdString());
 		}
 
@@ -1749,8 +1747,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	if (tri) {
 		std::string triPath = activeSet.GetOutputFilePath() + ".tri";
 		std::string triPathTrimmed = triPath;
-		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "/");									// Replace multiple backslashes or forward slashes with one forward slash
-		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes/", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
+		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");									// Replace multiple backslashes or forward slashes with one backslash
+		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
 
 		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
 			wxLogError("Failed to write TRI file to '%s'!", triPath);
@@ -1902,7 +1900,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				}
 			}
 
-			Config.SetValue("GameDataPath", Config["AppDir"] + "/");
+			Config.SetValue("GameDataPath", Config["AppDir"] + PathSepStr);
 		}
 
 		datapath = GetOutputDataPath();
@@ -2015,7 +2013,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			return;
 		}
 
-		currentSet.SetBaseDataPath(Config["AppDir"] + "/ShapeData");
+		currentSet.SetBaseDataPath(Config["AppDir"] + PathSepStr + "ShapeData");
 
 		// ALT key
 		if (clean && custPath.empty()) {
@@ -2197,8 +2195,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		if (triEnd) {
 			std::string triPath = currentSet.GetOutputFilePath() + ".tri";
 			std::string triPathTrimmed = triPath;
-			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "/");									// Replace multiple backslashes or forward slashes with one forward slash
-			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes/", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
+			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");									// Replace multiple backslashes or forward slashes with one backslash
+			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
 
 			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
 				wxLogError("Failed to create TRI file to '%s'!", triPath);
@@ -2348,7 +2346,7 @@ void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const 
 	if (target) {
 		auto triExtraData = new NiStringExtraData();
 		triExtraData->SetName("BODYTRI");
-		triExtraData->SetStringData(ToBackslashes(triPath));
+		triExtraData->SetStringData(triPath);
 		nif.AssignExtraData(target, triExtraData);
 	}
 }
@@ -3212,7 +3210,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		if (path.empty())
 			return;
 
-		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, path + "/");
+		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, path + PathSepStr);
 	}
 	else if (clean)
 		ret = app->BuildListBodies(toBuild, failedOutfits, true, tri);

@@ -1113,7 +1113,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 								// Split target file name to get OSD file name
 								int split = dataFileName.find_last_of('/');
 								if (split < 0)
-								split = dataFileName.find_last_of('\\');
+									split = dataFileName.find_last_of('\\');
 								if (split < 0)
 									continue;
 
@@ -2309,7 +2309,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
 			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-				error = project->LoadReferenceTemplate(Config["AppDir"] + "/" + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape());
+				error = project->LoadReferenceTemplate(Config["AppDir"] + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape());
 			else
 				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape());
 		}
@@ -2446,7 +2446,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
 			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-				error = project->LoadReferenceTemplate(Config["AppDir"] + "/" + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), mergeSliders);
+				error = project->LoadReferenceTemplate(Config["AppDir"] + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), mergeSliders);
 			else
 				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), mergeSliders);
 		}
@@ -3478,7 +3478,7 @@ void OutfitStudioFrame::OnExportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
-		std::string fn = dir + "/" + shape->GetName() + ".tri";
+		std::string fn = dir + PathSepStr + shape->GetName() + ".tri";
 
 		wxLogMessage("Exporting TRI (head) morphs of '%s' to '%s'...", shape->GetName(), fn);
 		if (!project->WriteHeadTRI(shape, fn)) {
@@ -6177,7 +6177,7 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + "/" + i->GetShape()->GetName() + "_" + activeSlider + ".bsd";
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->GetName() + "_" + activeSlider + ".bsd";
 			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->GetName(), targetFile);
 			project->SaveSliderBSD(activeSlider, i->GetShape(), targetFile);
 		}
@@ -6210,7 +6210,7 @@ void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + "/" + i->GetShape()->GetName() + "_" + activeSlider + ".obj";
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->GetName() + "_" + activeSlider + ".obj";
 			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->GetName(), targetFile);
 			project->SaveSliderOBJ(activeSlider, i->GetShape(), targetFile);
 		}
@@ -6282,7 +6282,7 @@ void OutfitStudioFrame::OnSliderExportToOBJs(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Exporting sliders to OBJ files in '%s'...", dir);
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
 		for (auto &slider : sliderList) {
-			std::string targetFile = std::string(dir.ToUTF8()) + "/" + shape->GetName() + "_" + slider + ".obj";
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + shape->GetName() + "_" + slider + ".obj";
 			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", slider, shape->GetName(), targetFile);
 			if (project->SaveSliderOBJ(slider, shape, targetFile, true))
 				wxLogError("Failed to export OBJ file '%s'!", targetFile);
