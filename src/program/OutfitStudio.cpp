@@ -1766,7 +1766,7 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrol
 
 	auto d = new SliderDisplay();
 	d->sliderPane = new wxPanel(wnd, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER | wxTAB_TRAVERSAL);
-	d->sliderPane->SetBackgroundColour(wxNullColour);
+	d->sliderPane->SetBackgroundColour(wxColour(64,64,64));
 	d->sliderPane->SetMinSize(wxSize(-1, 25));
 	d->sliderPane->SetMaxSize(wxSize(-1, 25));
 
