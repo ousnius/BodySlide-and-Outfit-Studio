@@ -25,7 +25,7 @@ std::string ToOSSlashes(const std::string &s)
 	std::string d(s);
 	size_t len = d.length();
 	for (size_t i = 0; i < len; ++i)
-#ifdef WINDOWS
+#ifdef _WINDOWS
 		if (d[i] == '/')
 			d[i] = '\\';
 #else
