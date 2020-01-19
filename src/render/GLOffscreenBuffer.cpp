@@ -31,12 +31,12 @@ GLOffScreenBuffer::GLOffScreenBuffer(GLSurface* gls, int width, int height, unsi
 
 	// Create Texture destination
 	createTextures();
-	glGenFrameBuffers(count, pmfbo);
+	glGenFramebuffers(count, pmfbo);
 
 	// Create a renderbuffer for depth information, and attach it
 	glGenRenderbuffers(1, &mrbo);
 	glBindRenderbuffer(GL_RENDERBUFFER, mrbo);
-	glRenderbufferstorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
 
 	for (int i = 0; i < count; i++) {
 		if (texIds.size() > i && texIds[i] != 0) {
@@ -185,7 +185,7 @@ GLOffScreenBuffer::~GLOffScreenBuffer() {
 	deleteTextures();
 	glDeleteRenderbuffers(1, &mrbo);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glDeleteFrameBuffers(numBuffers, pmfbo);
+	glDeleteFramebuffers(numBuffers, pmfbo);
 
 	delete[] pmfbo;
 	delete[] pmtex;

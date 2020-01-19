@@ -127,6 +127,8 @@ struct MotorDesc {
 		case MOTOR_SPRING:
 			motorSpringDamper.Get(stream);
 			break;
+		default:
+			break;
 		}
 	}
 
@@ -142,6 +144,8 @@ struct MotorDesc {
 			break;
 		case MOTOR_SPRING:
 			motorSpringDamper.Put(stream);
+			break;
+		default:
 			break;
 		}
 	}

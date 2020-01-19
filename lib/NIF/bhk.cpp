@@ -51,6 +51,8 @@ void BoundingVolume::Get(NiStream& stream) {
 	case HALFSPACE_BV:
 		stream >> bvHalfSpace;
 		break;
+	default:
+		break;
 	}
 }
 
@@ -72,6 +74,8 @@ void BoundingVolume::Put(NiStream& stream) {
 		break;
 	case HALFSPACE_BV:
 		stream << bvHalfSpace;
+		break;
+	default:
 		break;
 	}
 }

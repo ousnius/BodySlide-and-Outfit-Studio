@@ -871,6 +871,9 @@
     <ClInclude Include="src\utils\PlatformUtil.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="src\utils\StringStuff.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
     <ClInclude Include="lib\NIF\Factory.h">
       <Filter>Libraries\NIF</Filter>
     </ClInclude>
@@ -1948,6 +1951,9 @@
       <Filter>Libraries\NIF</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\PlatformUtil.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\StringStuff.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="lib\NIF\Factory.cpp">

@@ -61,7 +61,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 		wxMemoryBuffer data;
 		wxString texFile = inFileName;
-		texFile.Replace(wxString(Config["GameDataPath"]).MakeLower(), "");
+		texFile.Replace(wxString(Config["GameDataPath"]), "");
 		texFile.Replace("\\", "/");
 		for (FSArchiveFile *archive : FSManager::archiveList()) {
 			if (archive) {
@@ -137,9 +137,6 @@ void ResourceLoader::DeleteTexture(const std::string& texName) {
 bool ResourceLoader::RenameTexture(const std::string& texNameSrc, const std::string& texNameDest, bool overwrite) {
 	std::string src = texNameSrc;
 	std::string dst = texNameDest;
-
-	std::transform(src.begin(), src.end(), src.begin(), ::tolower);
-	std::transform(dst.begin(), dst.end(), dst.begin(), ::tolower);
 
 	auto tid = textures.find(dst);
 	if (tid != textures.end()) {
@@ -309,8 +306,6 @@ GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t s
 
 GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures) {
 	auto texFiles = textureFiles;
-	for (auto &f : texFiles)
-		std::transform(f.begin(), f.end(), f.begin(), ::tolower);
 
 	MaterialKey key(texFiles, vShaderFile, fShaderFile);
 	if (!reloadTextures) {
@@ -338,8 +333,7 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 
 	if (texRefs[0] == 0) {
 		// Load default image
-		std::string defaultTex = Config["AppDir"] + "\\res\\images\\noimg.png";
-		std::transform(defaultTex.begin(), defaultTex.end(), defaultTex.begin(), ::tolower);
+		std::string defaultTex = Config["AppDir"] + "/res/images/NoImg.png";
 
 		texRefs[0] = LoadTexture(defaultTex, false);
 

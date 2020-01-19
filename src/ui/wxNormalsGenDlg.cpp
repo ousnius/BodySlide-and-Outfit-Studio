@@ -24,7 +24,7 @@ wxEND_EVENT_TABLE()
 
 wxNormalsGenDlg::wxNormalsGenDlg(wxWindow* parent) {
 	wxXmlResource *xrc = wxXmlResource::Get();
-	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\NormalsGenDlg.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/NormalsGenDlg.xrc");
 	xrc->LoadDialog(this, parent, "wxNormalsGenDlg");
 
 	bpPreset = XRCCTRL(*this, "bpPreset", wxBitmapButton);
@@ -54,5 +54,5 @@ wxNormalsGenDlg::wxNormalsGenDlg(wxWindow* parent) {
 
 wxNormalsGenDlg::~wxNormalsGenDlg() {
 	delete presetContext;
-	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\NormalsGenDlg.xrc");
+	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/NormalsGenDlg.xrc");
 }

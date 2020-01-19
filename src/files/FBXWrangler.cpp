@@ -4,42 +4,66 @@ See the included LICENSE file
 */
 
 #include "FBXWrangler.h"
+#include <fbxsdk.h>
 
 extern ConfigurationManager Config;
 
-FBXWrangler::FBXWrangler() {
-	sdkManager = FbxManager::Create();
+struct FBXWrangler::Priv {
+	FbxManager* sdkManager = nullptr;
+	FbxScene* scene = nullptr;
+	std::map<std::string, FBXShape> shapes;
 
-	FbxIOSettings* ios = FbxIOSettings::Create(sdkManager, IOSROOT);
-	sdkManager->SetIOSettings(ios);
+	// Recursively add bones to the skeleton in a depth-first manner
+	FbxNode* AddLimb(NifFile* nif, NiNode* nifBone);
+	void AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone);
+
+	void AddGeometry(NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs);
+
+	bool LoadMeshes(const FBXImportOptions& options);
+};
+
+FBXWrangler::FBXWrangler(): priv(new Priv) {
+	priv->sdkManager = FbxManager::Create();
+
+	FbxIOSettings* ios = FbxIOSettings::Create(priv->sdkManager, IOSROOT);
+	priv->sdkManager->SetIOSettings(ios);
 
 	NewScene();
 }
 
 FBXWrangler::~FBXWrangler() {
-	if (scene)
+	if (priv->scene)
 		CloseScene();
 
-	if (sdkManager)
-		sdkManager->Destroy();
+	if (priv->sdkManager)
+		priv->sdkManager->Destroy();
 }
 
 void FBXWrangler::NewScene() {
-	if (scene)
+	if (priv->scene)
 		CloseScene();
 
-	scene = FbxScene::Create(sdkManager, "OutfitStudioScene");
+	priv->scene = FbxScene::Create(priv->sdkManager, "OutfitStudioScene");
 }
 
 void FBXWrangler::CloseScene() {
-	if (scene)
-		scene->Destroy();
+	if (priv->scene)
+		priv->scene->Destroy();
 	
-	scene = nullptr;
+	priv->scene = nullptr;
 	comName.clear();
 }
 
-void FBXWrangler::AddGeometry(NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs) {
+void FBXWrangler::GetShapeNames(std::vector<std::string>& outNames) {
+	for (auto &s : priv->shapes)
+		outNames.push_back(s.first);
+}
+
+FBXShape* FBXWrangler::GetShape(const std::string& shapeName) {
+	return &(priv->shapes[shapeName]);
+}
+
+void FBXWrangler::Priv::AddGeometry(NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs) {
 	if (!verts || verts->empty())
 		return;
 
@@ -112,22 +136,22 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 
 	// Check if skeleton already exists
 	std::string skelName = "NifSkeleton";
-	FbxNode* skelNode = scene->GetRootNode()->FindChild(skelName.c_str());
+	FbxNode* skelNode = priv->scene->GetRootNode()->FindChild(skelName.c_str());
 	if (skelNode && onlyNonSkeleton) {
 		// Add non-skeleton nodes to the existing skeleton
 		FbxNode* comNode = skelNode->FindChild(comName.c_str());
 		if (comNode) {
 			std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
 			for (auto &b : boneNodes)
-				comNode->AddChild(AddLimb(nif, b));
+				comNode->AddChild(priv->AddLimb(nif, b));
 		}
 	}
 	else if (!skelNode) {
 		// Create new skeleton
-		FbxSkeleton* skel = FbxSkeleton::Create(scene, skelName.c_str());
+		FbxSkeleton* skel = FbxSkeleton::Create(priv->scene, skelName.c_str());
 		skel->SetSkeletonType(FbxSkeleton::eRoot);
 
-		skelNode = FbxNode::Create(scene, skelName.c_str());
+		skelNode = FbxNode::Create(priv->scene, skelName.c_str());
 		skelNode->SetNodeAttribute(skel);
 		skelNode->LclTranslation.Set(FbxDouble3(0.0, 0.0, 0.0));
 		//skelNode->LclRotation.Set(FbxDouble3(0.0, 0.0, 0.0));
@@ -135,11 +159,11 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 
 		FbxNode* parentNode = skelNode;
 		if (root) {
-			FbxSkeleton* rootBone = FbxSkeleton::Create(scene, root->GetName().c_str());
+			FbxSkeleton* rootBone = FbxSkeleton::Create(priv->scene, root->GetName().c_str());
 			rootBone->SetSkeletonType(FbxSkeleton::eLimbNode);
 			rootBone->Size.Set(1.0);
 
-			FbxNode* rootNode = FbxNode::Create(scene, root->GetName().c_str());
+			FbxNode* rootNode = FbxNode::Create(priv->scene, root->GetName().c_str());
 			rootNode->SetNodeAttribute(rootBone);
 
 			rootNode->LclTranslation.Set(FbxDouble3(root->transform.translation.x, root->transform.translation.y, root->transform.translation.z));
@@ -155,11 +179,11 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 		}
 
 		if (com) {
-			FbxSkeleton* comBone = FbxSkeleton::Create(scene, com->GetName().c_str());
+			FbxSkeleton* comBone = FbxSkeleton::Create(priv->scene, com->GetName().c_str());
 			comBone->SetSkeletonType(FbxSkeleton::eLimbNode);
 			comBone->Size.Set(1.0);
 
-			FbxNode* comNode = FbxNode::Create(scene, com->GetName().c_str());
+			FbxNode* comNode = FbxNode::Create(priv->scene, com->GetName().c_str());
 			comNode->SetNodeAttribute(comBone);
 
 			comNode->LclTranslation.Set(FbxDouble3(com->transform.translation.y, com->transform.translation.z, com->transform.translation.x));
@@ -176,13 +200,13 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 
 		std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
 		for (auto bn : boneNodes)
-			parentNode->AddChild(AddLimb(nif, bn));
+			parentNode->AddChild(priv->AddLimb(nif, bn));
 
-		scene->GetRootNode()->AddChild(skelNode);
+		priv->scene->GetRootNode()->AddChild(skelNode);
 	}
 }
 
-FbxNode* FBXWrangler::AddLimb(NifFile* nif, NiNode* nifBone) {
+FbxNode* FBXWrangler::Priv::AddLimb(NifFile* nif, NiNode* nifBone) {
 	FbxNode* node = scene->GetRootNode()->FindChild(nifBone->GetName().c_str());
 	if (!node) {
 		// Add new bone
@@ -211,7 +235,7 @@ FbxNode* FBXWrangler::AddLimb(NifFile* nif, NiNode* nifBone) {
 	return node;
 }
 
-void FBXWrangler::AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone) {
+void FBXWrangler::Priv::AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone) {
 	std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(nifBone);
 	for (auto &b : boneNodes)
 		node->AddChild(AddLimb(nif, b));
@@ -227,14 +251,14 @@ void FBXWrangler::AddNif(NifFile* nif, NiShape* shape) {
 				const std::vector<Vector3>* verts = nif->GetRawVertsForShape(s);
 				const std::vector<Vector3>* norms = nif->GetNormalsForShape(s, false);
 				const std::vector<Vector2>* uvs = nif->GetUvsForShape(s);
-				AddGeometry(s, verts, norms, &tris, uvs);
+				priv->AddGeometry(s, verts, norms, &tris, uvs);
 			}
 		}
 	}
 }
 
 void FBXWrangler::AddSkinning(AnimInfo* anim, NiShape* shape) {
-	FbxNode* rootNode = scene->GetRootNode();
+	FbxNode* rootNode = priv->scene->GetRootNode();
 	FbxNode* skelNode = rootNode->FindChild("NifSkeleton");
 
 	if (!skelNode || !shape)
@@ -250,13 +274,13 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, NiShape* shape) {
 			continue;
 
 		std::string shapeSkin = shapeName + "_sk";
-		FbxSkin* skin = FbxSkin::Create(scene, shapeSkin.c_str());
+		FbxSkin* skin = FbxSkin::Create(priv->scene, shapeSkin.c_str());
 
 		for (auto &bone : anim->shapeBones[shapeName]) {
 			FbxNode* jointNode = skelNode->FindChild(bone.c_str());
 			if (jointNode) {
 				std::string boneSkin = bone + "_sk";
-				FbxCluster* aCluster = FbxCluster::Create(scene, boneSkin.c_str());
+				FbxCluster* aCluster = FbxCluster::Create(priv->scene, boneSkin.c_str());
 				aCluster->SetLink(jointNode);
 				aCluster->SetLinkMode(FbxCluster::eTotalOne);
 
@@ -277,8 +301,8 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, NiShape* shape) {
 }
 
 bool FBXWrangler::ExportScene(const std::string& fileName) {
-	FbxExporter* iExporter = FbxExporter::Create(sdkManager, "");
-	if (!iExporter->Initialize(fileName.c_str(), -1, sdkManager->GetIOSettings())) {
+	FbxExporter* iExporter = FbxExporter::Create(priv->sdkManager, "");
+	if (!iExporter->Initialize(fileName.c_str(), -1, priv->sdkManager->GetIOSettings())) {
 		iExporter->Destroy();
 		return false;
 	}
@@ -286,7 +310,7 @@ bool FBXWrangler::ExportScene(const std::string& fileName) {
 	// Export options determine what kind of data is to be imported.
 	// The default (except for the option eEXPORT_TEXTURE_AS_EMBEDDED)
 	// is true, but here we set the options explicitly.
-	FbxIOSettings* ios = sdkManager->GetIOSettings();
+	FbxIOSettings* ios = priv->sdkManager->GetIOSettings();
 	ios->SetBoolProp(EXP_FBX_MATERIAL, true);
 	ios->SetBoolProp(EXP_FBX_TEXTURE, true);
 	ios->SetBoolProp(EXP_FBX_EMBEDDED, false);
@@ -297,19 +321,19 @@ bool FBXWrangler::ExportScene(const std::string& fileName) {
 
 	iExporter->SetFileExportVersion(FBX_2014_00_COMPATIBLE);
 
-	sdkManager->CreateMissingBindPoses(scene);
+	priv->sdkManager->CreateMissingBindPoses(priv->scene);
 
 	FbxAxisSystem axis(FbxAxisSystem::eMax);
-	axis.ConvertScene(scene);
+	axis.ConvertScene(priv->scene);
 
-	bool status = iExporter->Export(scene);
+	bool status = iExporter->Export(priv->scene);
 	iExporter->Destroy();
 
 	return status;
 }
 
 bool FBXWrangler::ImportScene(const std::string& fileName, const FBXImportOptions& options) {
-	FbxIOSettings* ios = sdkManager->GetIOSettings();
+	FbxIOSettings* ios = priv->sdkManager->GetIOSettings();
 	ios->SetBoolProp(IMP_FBX_MATERIAL, true);
 	ios->SetBoolProp(IMP_FBX_TEXTURE, true);
 	ios->SetBoolProp(IMP_FBX_LINK, false);
@@ -318,7 +342,7 @@ bool FBXWrangler::ImportScene(const std::string& fileName, const FBXImportOption
 	ios->SetBoolProp(IMP_FBX_ANIMATION, true);
 	ios->SetBoolProp(IMP_FBX_GLOBAL_SETTINGS, true);
 
-	FbxImporter* iImporter = FbxImporter::Create(sdkManager, "");
+	FbxImporter* iImporter = FbxImporter::Create(priv->sdkManager, "");
 	if (!iImporter->Initialize(fileName.c_str(), -1, ios)) {
 		iImporter->Destroy();
 		return false;
@@ -326,16 +350,16 @@ bool FBXWrangler::ImportScene(const std::string& fileName, const FBXImportOption
 
 	NewScene();
 
-	bool status = iImporter->Import(scene);
+	bool status = iImporter->Import(priv->scene);
 	iImporter->Destroy();
 
 	if (!status)
 		return false;
 
-	return LoadMeshes(options);
+	return priv->LoadMeshes(options);
 }
 
-bool FBXWrangler::LoadMeshes(const FBXImportOptions& options) {
+bool FBXWrangler::Priv::LoadMeshes(const FBXImportOptions& options) {
 	if (!scene)
 		return false;
 

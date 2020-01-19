@@ -769,6 +769,7 @@
     <ClInclude Include="src\utils\ConfigurationManager.h" />
     <ClInclude Include="src\utils\Log.h" />
     <ClInclude Include="src\utils\PlatformUtil.h" />
+    <ClInclude Include="src\utils\StringStuff.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\FSEngine\FSBSA.cpp" />
@@ -830,6 +831,7 @@
     <ClCompile Include="src\utils\ConfigurationManager.cpp" />
     <ClCompile Include="src\utils\Log.cpp" />
     <ClCompile Include="src\utils\PlatformUtil.cpp" />
+    <ClCompile Include="src\utils\StringStuff.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml" />

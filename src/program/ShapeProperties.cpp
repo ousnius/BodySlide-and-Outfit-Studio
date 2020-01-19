@@ -20,7 +20,7 @@ wxEND_EVENT_TABLE()
 
 ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* refShape) {
 	wxXmlResource *xrc = wxXmlResource::Get();
-	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\ShapeProperties.xrc");
+	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/ShapeProperties.xrc");
 	if (!loaded) {
 		wxMessageBox("Failed to load ShapeProperties.xrc file!", "Error", wxICON_ERROR);
 		return;
@@ -81,7 +81,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 }
 
 ShapeProperties::~ShapeProperties() {
-	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\ShapeProperties.xrc");
+	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/ShapeProperties.xrc");
 }
 
 void ShapeProperties::GetShader() {
@@ -217,7 +217,7 @@ void ShapeProperties::OnChooseMaterial(wxCommandEvent& WXUNUSED(event)) {
 	if (fileName.empty())
 		return;
 
-	int index = fileName.Lower().Find("\\materials\\");
+	int index = fileName.Lower().Find("/materials/");
 	if (index != wxNOT_FOUND && fileName.length() - 1 > index + 1)
 		fileName = fileName.Mid(index + 1);
 
@@ -340,7 +340,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			if (!blockType)
 				continue;
 
-			stTexGrid->SetCellValue(i, 0, texPath);
+			stTexGrid->SetCellValue(i, 0, ToOSSlashes(texPath));
 		}
 
 		// BSEffectShaderProperty
@@ -362,7 +362,8 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			std::vector<std::string> texFiles(10);
 			for (int i = 0; i < 10; i++) {
 				std::string texPath = stTexGrid->GetCellValue(i, 0);
-				nif->SetTextureSlot(shader, texPath, i);
+				std::string texPath_bs = ToBackslashes(texPath);
+				nif->SetTextureSlot(shader, texPath_bs, i);
 
 				if (!texPath.empty())
 					texFiles[i] = dataPath + texPath;

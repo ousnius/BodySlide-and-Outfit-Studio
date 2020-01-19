@@ -7,6 +7,8 @@ See the included LICENSE file
 
 #include <vector>
 #include <algorithm>
+#include <cmath>
+#include <cstring>
 
 #pragma warning (disable : 4018 4244 4267 4389)
 
@@ -252,7 +254,7 @@ struct Vector3 {
 		else if (dot == 0.0f)
 			return PI / 2.0f;
 
-		return acosf(dot);
+		return acos(dot);
 	}
 
 	void clampEpsilon() {
@@ -495,12 +497,12 @@ public:
 
 	// Set rotation matrix from yaw, pitch and roll
 	static Matrix3 MakeRotation(const float yaw, const float pitch, const float roll) {
-		float ch = std::cosf(yaw);
-		float sh = std::sinf(yaw);
-		float cp = std::cosf(pitch);
-		float sp = std::sinf(pitch);
-		float cb = std::cosf(roll);
-		float sb = std::sinf(roll);
+		float ch = std::cos(yaw);
+		float sh = std::sin(yaw);
+		float cp = std::cos(pitch);
+		float sp = std::sin(pitch);
+		float cb = std::cos(roll);
+		float sb = std::sin(roll);
 
 		Matrix3 rot;
 		rot[0].x = ch * cb + sh * sp * sb;
@@ -751,8 +753,8 @@ public:
 	}
 
 	Matrix4& Rotate(float radAngle, float x, float y, float z) {
-		float c = std::cosf(radAngle);
-		float s = std::sinf(radAngle);
+		float c = std::cos(radAngle);
+		float s = std::sin(radAngle);
 
 		float xx = x*x;
 		float xy = x*y;
@@ -1153,19 +1155,13 @@ struct Edge {
 };
 
 namespace std {
-	template<> struct std::hash < Edge > {
+	template<> struct hash < Edge > {
 		std::size_t operator() (const Edge& t) const {
 			return ((t.p2 << 16) | (t.p1 & 0xFFFF));
 		}
 	};
 
-	template <> struct std::equal_to < Edge > {
-		bool operator() (const Edge& t1, const Edge& t2) const {
-			return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2));
-		}
-	};
-
-	template <> struct std::hash < Triangle > {
+	template <> struct hash < Triangle > {
 		std::size_t operator() (const Triangle& t) const {
 			char* d = (char*)&t;
 			std::size_t len = sizeof(Triangle);
@@ -1181,12 +1177,14 @@ namespace std {
 			return hash;
 		}
 	};
+}
 
-	template <> struct std::equal_to < Triangle > {
-		bool operator() (const Triangle& t1, const Triangle& t2) const {
-			return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2) && (t1.p3 == t2.p3));
-		}
-	};
+inline bool operator== (const Edge& t1, const Edge& t2) {
+	return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2));
+}
+
+inline bool operator== (const Triangle& t1, const Triangle& t2) {
+	return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2) && (t1.p3 == t2.p3));
 }
 
 struct Face {

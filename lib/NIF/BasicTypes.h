@@ -12,6 +12,7 @@ See the included LICENSE file
 #include <string>
 #include <algorithm>
 #include <memory>
+#include <iostream>
 
 enum NiFileVersion : uint {
 	V2_3 = 0x02030000,
@@ -420,6 +421,9 @@ public:
 template <typename T>
 class BlockRefShortArray : public BlockRefArray<T> {
 public:
+	typedef BlockRefArray<T> base;
+	using base::arraySize;
+	using base::refs;
 	virtual void Get(NiStream& stream) override {
 		stream.read((char*)&arraySize, 2);
 		refs.resize(arraySize);
@@ -429,7 +433,7 @@ public:
 	}
 
 	virtual void Put(NiStream& stream) override {
-		CleanInvalidRefs();
+		base::CleanInvalidRefs();
 		stream.write((char*)&arraySize, 2);
 
 		for (auto &r : refs)
@@ -437,7 +441,7 @@ public:
 	}
 	
 	virtual void Put(NiStream& stream, const int forcedSize) override {
-		CleanInvalidRefs();
+		base::CleanInvalidRefs();
 		arraySize = forcedSize;
 		refs.resize(forcedSize);
 

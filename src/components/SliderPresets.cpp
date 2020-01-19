@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "../TinyXML-2/tinyxml2.h"
 #include "SliderPresets.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/StringStuff.h"
 
 #include <wx/dir.h>
 
@@ -149,10 +150,10 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 			continue;
 #endif
 
-		ret = doc.LoadFile(fp);
+		int ret2 = doc.LoadFile(fp);
 		fclose(fp);
 
-		if (ret)
+		if (ret2)
 			continue;
 
 		root = doc.FirstChildElement("SliderPresets");
@@ -240,11 +241,11 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 #endif
 
 	if (loaded) {
-		ret = outDoc.LoadFile(fp);
+		int retDoc = outDoc.LoadFile(fp);
 		fclose(fp);
 		fp = nullptr;
 
-		if (ret != 0)
+		if (retDoc != 0)
 			loaded = false;
 	}
 
@@ -254,7 +255,7 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 		presetElem = slidersNode->FirstChildElement("Preset");
 		while (presetElem) {
 			// Replace preset if found in file.
-			if (_stricmp(presetElem->Attribute("name"), presetName.c_str()) == 0) {
+			if (StringsEqualInsens(presetElem->Attribute("name"), presetName.c_str())) {
 				XMLElement* tmpElem = presetElem;
 				presetElem = presetElem->NextSiblingElement("Preset");
 				slidersNode->DeleteChild(tmpElem);
@@ -336,18 +337,18 @@ int PresetCollection::DeletePreset(const std::string& filePath, const std::strin
 #endif
 
 	XMLDocument doc;
-	ret = doc.LoadFile(fp);
+	int ret2 = doc.LoadFile(fp);
 	fclose(fp);
 	fp = nullptr;
 
-	if (ret)
+	if (ret2)
 		return -1;
 
 	XMLNode* slidersNode = doc.FirstChildElement("SliderPresets");
 	if (slidersNode) {
 		XMLElement* presetElem = slidersNode->FirstChildElement("Preset");
 		while (presetElem) {
-			if (_stricmp(presetElem->Attribute("name"), presetName.c_str()) == 0) {
+			if (StringsEqualInsens(presetElem->Attribute("name"), presetName.c_str())) {
 				slidersNode->DeleteChild(presetElem);
 				break;
 			}

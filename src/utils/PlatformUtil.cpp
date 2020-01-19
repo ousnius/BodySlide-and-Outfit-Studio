@@ -5,6 +5,17 @@ See the included LICENSE file
 
 #include "PlatformUtil.h"
 
+namespace {
+	std::string backslash_to_slash(const std::string &s) {
+		std::string sc(s);
+		size_t len = sc.length();
+		for (size_t i = 0; i < len; ++i)
+			if (sc[i] == '\\')
+				sc[i] = '/';
+		return sc;
+	}
+}
+
 namespace PlatformUtil {
 #ifdef _WINDOWS
 	// ACP wide to multibyte
@@ -30,12 +41,13 @@ namespace PlatformUtil {
 	}
 #endif
 
-	void OpenFileStream(std::fstream& file, const std::string& fileName, unsigned int mode) {
+	void OpenFileStream(std::fstream& file, const std::string& fileName, std::ios_base::openmode mode) {
 #ifdef _WINDOWS
 		// Convert to std::wstring on Windows only
 		file.open(MultiByteToWideUTF8(fileName).c_str(), mode);
 #else
-		file.open(fileName.c_str(), mode);
+		std::string fn_nobs = backslash_to_slash(fileName);
+		file.open(fn_nobs.c_str(), mode);
 #endif
 	}
 

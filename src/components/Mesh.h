@@ -32,7 +32,7 @@ class GLMaterial;
 
 class mesh {
 private:
-	bool queueUpdate[7] = { false };
+	bool queueUpdate[8] = { false };
 
 public:
 	enum UpdateType {

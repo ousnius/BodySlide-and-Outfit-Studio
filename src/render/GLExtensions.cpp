@@ -10,6 +10,7 @@ bool extInitialized = false;
 bool extSupported = true;
 bool extGLISupported = true;
 
+#ifndef __linux__
 // OpenGL 4.2
 PFNGLTEXSTORAGE1DPROC glTexStorage1D = nullptr;
 PFNGLTEXSTORAGE2DPROC glTexStorage2D = nullptr;
@@ -21,13 +22,13 @@ PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
 PFNGLBINDVERTEXARRAYPROC glBindVertexArray = nullptr;
 PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays = nullptr;
 
-PFNGLGENFRAMEBUFFERSPROC glGenFrameBuffers = nullptr;
-PFNGLDELETEFRAMEBUFFERSPROC glDeleteFrameBuffers = nullptr;
+PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers = nullptr;
+PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers = nullptr;
 PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer = nullptr;
 PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D = nullptr;
 PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers = nullptr;
 PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer = nullptr;
-PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferstorage = nullptr;
+PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage = nullptr;
 PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer = nullptr;
 PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers = nullptr;
 
@@ -87,13 +88,13 @@ void InitExtensions() {
 		glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)wglGetProcAddress("glGenVertexArrays");
 		glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
 		glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
-		glGenFrameBuffers = (PFNGLGENFRAMEBUFFERSPROC) wglGetProcAddress("glGenFramebuffers");
-		glDeleteFrameBuffers = (PFNGLDELETEFRAMEBUFFERSPROC) wglGetProcAddress("glDeleteFramebuffers");
+		glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC) wglGetProcAddress("glGenFramebuffers");
+		glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC) wglGetProcAddress("glDeleteFramebuffers");
 		glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC) wglGetProcAddress("glBindFramebuffer");
 		glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)wglGetProcAddress("glFramebufferTexture2D");
 		glGenRenderbuffers =(PFNGLGENRENDERBUFFERSPROC) wglGetProcAddress("glGenRenderbuffers");
 		glBindRenderbuffer =(PFNGLBINDRENDERBUFFERPROC) wglGetProcAddress("glBindRenderbuffer");
-		glRenderbufferstorage =(PFNGLRENDERBUFFERSTORAGEPROC) wglGetProcAddress("glRenderbufferStorage");
+		glRenderbufferStorage =(PFNGLRENDERBUFFERSTORAGEPROC) wglGetProcAddress("glRenderbufferStorage");
 		glFramebufferRenderbuffer =(PFNGLFRAMEBUFFERRENDERBUFFERPROC) wglGetProcAddress("glFramebufferRenderbuffer");
 		glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC) wglGetProcAddress("glDeleteRenderbuffers");
 
@@ -171,3 +172,61 @@ bool IsExtensionSupported(const char* ext) {
 
 	return false;
 }
+
+#else // __linux__
+
+void InitExtensions() {
+	if (extInitialized) return;
+	GLenum err = glewInit();
+	if (err != GLEW_OK) {
+		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+		abort();
+	}
+	extGLISupported =
+		glTexStorage1D &&
+		glTexStorage2D &&
+		glTexStorage3D &&
+		glTexSubImage3D &&
+		glCompressedTexSubImage1D &&
+		glCompressedTexSubImage2D &&
+		glCompressedTexSubImage3D;
+	extSupported =
+		glGetStringi &&
+		glGenVertexArrays &&
+		glBindVertexArray &&
+		glDeleteVertexArrays &&
+		glCreateShader &&
+		glShaderSource &&
+		glCompileShader &&
+		glCreateProgram &&
+		glAttachShader &&
+		glLinkProgram &&
+		glUseProgram &&
+		glGetShaderiv &&
+		glGetShaderInfoLog &&
+		glGetProgramiv &&
+		glGetProgramInfoLog &&
+		glDisableVertexAttribArray &&
+		glEnableVertexAttribArray &&
+		glVertexAttribPointer &&
+		glGenBuffers &&
+		glDeleteBuffers &&
+		glBindBuffer &&
+		glBufferData &&
+		glBufferSubData &&
+		glGetAttribLocation &&
+		glGetUniformLocation &&
+		glUniform1f &&
+		glUniform1i &&
+		glUniform2f &&
+		glUniform3f &&
+		glUniformMatrix4fv &&
+		glActiveTexture;
+	extInitialized = true;
+}
+
+bool IsExtensionSupported(const char *ext) {
+	return glewIsSupported(ext);
+}
+
+#endif

@@ -77,17 +77,17 @@ class BodySlideApp : public wxApp {
 	Log logger;
 
 	/* Data Items */
-	std::map<std::string, std::string> outfitNameSource;		// All currently defined outfits.
-	std::vector<std::string> outfitNameOrder;				// All currently defined outfits, in their order of appearance.
-	std::map<std::string, std::vector<std::string>> groupMembers;	// All currently defined groups.
-	std::map<std::string, std::string> groupAlias;				// Group name aliases.
-	std::vector<std::string> ungroupedOutfits;			// Outfits without a group.
-	std::vector<std::string> filteredOutfits;				// Filtered outfit names.
+	std::map<std::string, std::string, case_insensitive_compare> outfitNameSource;	// All currently defined outfits.
+	std::vector<std::string> outfitNameOrder;										// All currently defined outfits, in their order of appearance.
+	std::map<std::string, std::vector<std::string>> groupMembers;					// All currently defined groups.
+	std::map<std::string, std::string> groupAlias;									// Group name aliases.
+	std::vector<std::string> ungroupedOutfits;										// Outfits without a group.
+	std::vector<std::string> filteredOutfits;										// Filtered outfit names.
 	std::vector<std::string> presetGroups;
 	std::vector<std::string> allGroups;
 	SliderSetGroupCollection gCollection;
 
-	std::map<std::string, std::vector<std::string>> outFileCount;	// Counts how many sets write to the same output file
+	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount;	// Counts how many sets write to the same output file
 
 	std::string previewBaseName;
 	std::string previewSetName;
@@ -137,6 +137,7 @@ public:
 			return;
 		}
 
+#ifdef _WINDOWS
 		std::string stupidkeys = "0123456789-";
 		bool stupidHack = false;
 		if (event.GetKeyCode() < 256 && stupidkeys.find(event.GetKeyCode()) != std::string::npos)
@@ -147,7 +148,9 @@ public:
 			HWND hwndEdit = e->GetHandle();
 			::SendMessage(hwndEdit, WM_CHAR, event.GetKeyCode(), event.GetRawKeyFlags());
 		}
-		else {
+		else
+#endif
+		{
 			event.Skip();
 		}
 	}

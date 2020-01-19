@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "ConfigurationManager.h"
+#include "../utils/StringStuff.h"
 
 ConfigurationItem::~ConfigurationItem() {
 	for (auto &it : properties)
@@ -367,9 +368,9 @@ bool ConfigurationManager::GetBoolValue(const std::string& inName, bool def) {
 
 	ConfigurationItem* itemFound = FindCI(inName);
 	if (itemFound) {
-		if (_strnicmp(itemFound->value.c_str(), "true", 4) == 0)
+		if (StringsEqualNInsens(itemFound->value.c_str(), "true", 4))
 			res = true;
-		else if (_strnicmp(itemFound->value.c_str(), "false", 5) == 0)
+		else if (StringsEqualNInsens(itemFound->value.c_str(), "false", 5))
 			res = false;
 	}
 
@@ -450,13 +451,13 @@ void ConfigurationManager::SetValue(const std::string& inName, const std::string
 
 void ConfigurationManager::SetValue(const std::string& inName, int newValue, bool flagDefault) {
 	char intStr[24];
-	_snprintf_s(intStr, 24, 24, "%d", newValue);
+	snprintf(intStr, 24, "%d", newValue);
 	SetValue(inName, std::string(intStr), flagDefault);
 }
 
 void ConfigurationManager::SetValue(const std::string& inName, float newValue, bool flagDefault) {
 	char intStr[24];
-	_snprintf_s(intStr, 24, 24, "%0.5f", newValue);
+	snprintf(intStr, 24, "%0.5f", newValue);
 	SetValue(inName, std::string(intStr), flagDefault);
 }
 
@@ -470,7 +471,7 @@ bool ConfigurationManager::MatchValue(const std::string& inName, const std::stri
 	ConfigurationItem* itemFound = FindCI(inName);
 	if (itemFound) {
 		if (!useCase) {
-			if (!_stricmp(itemFound->value.c_str(), val.c_str()))
+			if (StringsEqualInsens(itemFound->value.c_str(), val.c_str()))
 				return true;
 		}
 		else {

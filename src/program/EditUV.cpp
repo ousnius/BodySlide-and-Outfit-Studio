@@ -112,7 +112,7 @@ wxEND_EVENT_TABLE()
 
 EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, mesh* srcMesh, const std::string& srcSliderName) {
 	wxXmlResource *xrc = wxXmlResource::Get();
-	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\EditUV.xrc");
+	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/EditUV.xrc");
 	if (!loaded) {
 		wxMessageBox("Failed to load EditUV.xrc file!", "Error", wxICON_ERROR);
 		return;
@@ -141,7 +141,7 @@ EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, mesh* srcMe
 }
 
 EditUV::~EditUV() {
-	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\EditUV.xrc");
+	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/EditUV.xrc");
 }
 
 void EditUV::OnSelectTool(wxCommandEvent& event) {
@@ -407,8 +407,8 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 					lastDirection |= EDITUV_DIRECTION_UP;
 			}
 
-			float angle = std::atan2f(currentCenter.y - current.y, currentCenter.x - current.x) * 180.0f / PI;
-			float angleAbs = std::fabsf(angle);
+			float angle = std::atan2(currentCenter.y - current.y, currentCenter.x - current.x) * 180.0f / PI;
+			float angleAbs = std::fabs(angle);
 
 			// Set cursor depending on the angle to the center
 			if ((angle >= -22.5f && angle < 22.5f) || (angleAbs >= 157.5f && angleAbs <= 180.0f))
@@ -463,10 +463,10 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 			}
 		}
 		else if (activeTool == EditUVTool::Rotate) {
-			float angle = std::atan2f(currentCenter.y - current.y, currentCenter.x - current.x);
+			float angle = std::atan2(currentCenter.y - current.y, currentCenter.x - current.x);
 			float angleDiff = angle - lastAngle;
-			float angleSin = std::sinf(angleDiff);
-			float angleCos = std::cosf(angleDiff);
+			float angleSin = std::sin(angleDiff);
+			float angleCos = std::cos(angleDiff);
 
 			auto curState = editUV->GetHistory().GetCurState();
 			if (curState) {
@@ -549,7 +549,7 @@ void EditUVCanvas::OnLeftDown(wxMouseEvent& event) {
 		else
 			currentCenter.Zero();
 
-		lastAngle = std::atan2f(currentCenter.y - click.y, currentCenter.x - click.x);
+		lastAngle = std::atan2(currentCenter.y - click.y, currentCenter.x - click.x);
 
 		std::unordered_map<int, Vector2> state;
 		state.reserve(uvGridMesh->nVerts);
@@ -702,8 +702,8 @@ void EditUVCanvas::InitMeshes() {
 		texFile = texturesDir + texFile;
 
 		std::vector<std::string> textures(1, texFile);
-		std::string vShader = Config["AppDir"] + "\\res\\shaders\\default.vert";
-		std::string fShader = Config["AppDir"] + "\\res\\shaders\\default.frag";
+		std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
+		std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
 		planeMesh->material = uvSurface.GetResourceLoader()->AddMaterial(textures, vShader, fShader);
 		uvSurface.UpdateShaders(planeMesh);
 	}
@@ -748,7 +748,7 @@ void EditUVCanvas::InitMeshes() {
 	uvGridMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 	uvGridMesh->vertexColors = true;
 
-	uvGridMaterial = GLMaterial(Config["AppDir"] + "\\res\\shaders\\primitive.vert", Config["AppDir"] + "\\res\\shaders\\primitive.frag");
+	uvGridMaterial = GLMaterial(Config["AppDir"] + "/res/shaders/primitive.vert", Config["AppDir"] + "/res/shaders/primitive.frag");
 	uvGridMesh->material = &uvGridMaterial;
 	uvGridMesh->shapeName = "UVGrid";
 
@@ -771,7 +771,7 @@ void EditUVCanvas::InitMeshes() {
 	boxSelectMesh->tris[0] = Triangle(0, 1, 2);
 	boxSelectMesh->tris[1] = Triangle(2, 3, 0);
 
-	boxSelectMaterial = GLMaterial(Config["AppDir"] + "\\res\\shaders\\primitive.vert", Config["AppDir"] + "\\res\\shaders\\primitive.frag");
+	boxSelectMaterial = GLMaterial(Config["AppDir"] + "/res/shaders/primitive.vert", Config["AppDir"] + "/res/shaders/primitive.frag");
 	boxSelectMesh->material = &boxSelectMaterial;
 
 	boxSelectMesh->shapeName = "BoxSelect";

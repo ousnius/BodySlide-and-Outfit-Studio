@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "MaterialFile.h"
+#include "../utils/StringStuff.h"
 
 MaterialFile::MaterialFile(const Type& signature) {
 	this->signature = signature;
@@ -79,41 +80,51 @@ int MaterialFile::Read(std::istream& input) {
 
 	uint length = 0;
 	if (signature == BGSM) {
+		std::string tmp;
 		input.read((char*)&length, 4);
-		diffuseTexture.resize(length);
-		input.read((char*)&diffuseTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		diffuseTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		normalTexture.resize(length);
-		input.read((char*)&normalTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		normalTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		smoothSpecTexture.resize(length);
-		input.read((char*)&smoothSpecTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		smoothSpecTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		greyscaleTexture.resize(length);
-		input.read((char*)&greyscaleTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		greyscaleTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		envmapTexture.resize(length);
-		input.read((char*)&envmapTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		envmapTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		glowTexture.resize(length);
-		input.read((char*)&glowTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		glowTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		innerLayerTexture.resize(length);
-		input.read((char*)&innerLayerTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		innerLayerTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		wrinklesTexture.resize(length);
-		input.read((char*)&wrinklesTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		wrinklesTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		displacementTexture.resize(length);
-		input.read((char*)&displacementTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		displacementTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&enableEditorAlphaRef, 1);
 		input.read((char*)&rimLighting, 1);
@@ -176,25 +187,31 @@ int MaterialFile::Read(std::istream& input) {
 			input.read((char*)&skewSpecularAlpha, 1);
 	}
 	else if (signature == BGEM) {
+		std::string tmp;
 		input.read((char*)&length, 4);
-		baseTexture.resize(length);
-		input.read((char*)&baseTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		baseTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		grayscaleTexture.resize(length);
-		input.read((char*)&grayscaleTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		grayscaleTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		fxEnvmapTexture.resize(length);
-		input.read((char*)&fxEnvmapTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		fxEnvmapTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		fxNormalTexture.resize(length);
-		input.read((char*)&fxNormalTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		fxNormalTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&length, 4);
-		envmapMaskTexture.resize(length);
-		input.read((char*)&envmapMaskTexture.front(), length);
+		tmp.resize(length);
+		input.read((char*)&tmp.front(), length);
+		envmapMaskTexture = ToOSSlashes(tmp);
 
 		input.read((char*)&bloodEnabled, 1);
 		input.read((char*)&effectLightingEnabled, 1);
@@ -260,41 +277,51 @@ int MaterialFile::Write(std::ostream& output) {
 
 	uint length = 0;
 	if (signature == BGSM) {
-		length = diffuseTexture.length();
+		std::string tmp;
+		tmp = ToBackslashes(diffuseTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(diffuseTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = normalTexture.length();
+		tmp = ToBackslashes(normalTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(normalTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = smoothSpecTexture.length();
+		tmp = ToBackslashes(smoothSpecTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(smoothSpecTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = greyscaleTexture.length();
+		tmp = ToBackslashes(greyscaleTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(greyscaleTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = envmapTexture.length();
+		tmp = ToBackslashes(envmapTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(envmapTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = glowTexture.length();
+		tmp = ToBackslashes(glowTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(glowTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = innerLayerTexture.length();
+		tmp = ToBackslashes(innerLayerTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(innerLayerTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = wrinklesTexture.length();
+		tmp = ToBackslashes(wrinklesTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(wrinklesTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = displacementTexture.length();
+		tmp = ToBackslashes(displacementTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(displacementTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
 		output.write((char*)&enableEditorAlphaRef, 1);
 		output.write((char*)&rimLighting, 1);
@@ -357,25 +384,31 @@ int MaterialFile::Write(std::ostream& output) {
 			output.write((char*)&skewSpecularAlpha, 1);
 	}
 	else if (signature == BGEM) {
-		length = baseTexture.length();
+		std::string tmp;
+		tmp = ToBackslashes(baseTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(baseTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = grayscaleTexture.length();
+		tmp = ToBackslashes(grayscaleTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(grayscaleTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = fxEnvmapTexture.length();
+		tmp = ToBackslashes(fxEnvmapTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(fxEnvmapTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = fxNormalTexture.length();
+		tmp = ToBackslashes(fxNormalTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(fxNormalTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
-		length = envmapMaskTexture.length();
+		tmp = ToBackslashes(envmapMaskTexture);
+		length = tmp.length();
 		output.write((char*)&length, 4);
-		output.write(envmapMaskTexture.c_str(), length);
+		output.write(tmp.c_str(), length);
 
 		output.write((char*)&bloodEnabled, 1);
 		output.write((char*)&effectLightingEnabled, 1);

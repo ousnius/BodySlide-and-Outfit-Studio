@@ -3,7 +3,7 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
-#include "..\files\ResourceLoader.h"
+#include "../files/ResourceLoader.h"
 #include "GLShader.h"
 
 class GLMaterial {
