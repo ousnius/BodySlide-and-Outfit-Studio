@@ -473,7 +473,7 @@ bool OutfitStudio::SetDefaultConfig() {
 		if (key.Exists()) {
 			wxString installPath;
 			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
-				installPath.Append("Data/");
+				installPath.Append("Data").Append(PathSepChar);
 				Config.SetDefaultValue("GameDataPath", installPath.ToStdString());
 				wxLogMessage("Registry game data path: %s", installPath);
 			}
@@ -669,7 +669,7 @@ wxString OutfitStudio::GetGameDataPath(TargetGame targ) {
 		wxRegKey key(wxRegKey::HKLM, Config[gkey], wxRegKey::WOW64ViewMode_32);
 		if (key.Exists()) {
 			if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
-				dataPath.Append("Data/");
+				dataPath.Append("Data").Append(PathSepChar);
 			}
 		}
 	}
@@ -2972,7 +2972,7 @@ void OutfitStudioFrame::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		if (!project->mGamePath.empty())
 			XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->ChangeValue(project->mGamePath);
 		else
-			XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->ChangeValue("meshes/armor/" + sssName);
+			XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->ChangeValue(wxString::Format("meshes%carmor%c%s", PathSepChar, PathSepChar, sssName));
 
 		if (!project->mGameFile.empty())
 			XRCCTRL(dlg, "sssOutputFileName", wxTextCtrl)->ChangeValue(project->mGameFile);

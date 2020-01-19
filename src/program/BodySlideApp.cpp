@@ -1159,7 +1159,7 @@ bool BodySlideApp::SetDefaultConfig() {
 		if (key.Exists()) {
 			wxString installPath;
 			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
-				installPath.Append("Data/");
+				installPath.Append("Data").Append(PathSepChar);
 				Config.SetDefaultValue("GameDataPath", installPath.ToStdString());
 				wxLogMessage("Registry game data path: %s", installPath);
 			}
@@ -1355,7 +1355,7 @@ wxString BodySlideApp::GetGameDataPath(TargetGame targ) {
 		wxRegKey key(wxRegKey::HKLM, Config[gkey], wxRegKey::WOW64ViewMode_32);
 		if (key.Exists()) {
 			if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
-				dataPath.Append("Data/");
+				dataPath.Append("Data").Append(PathSepChar);
 			}
 		}
 	}
