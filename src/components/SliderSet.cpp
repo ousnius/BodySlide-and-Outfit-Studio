@@ -173,7 +173,7 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 				if (split < 0)
 					split = fullFilePath.find_last_of('\\');
 				if (split < 0)
-					return;
+					continue;
 
 				std::string dataName = fullFilePath.substr(split + 1);
 				std::string fileName = fullFilePath.substr(0, split);
