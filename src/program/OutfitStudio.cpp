@@ -2022,15 +2022,19 @@ void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
 
 void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit &cto, bool bIsUndo) {
 	if (bEditSlider) {
+		double sliderscale = project->SliderValue(activeSlider);
+		if (sliderscale == 0.0)
+			sliderscale = 1.0;
+		sliderscale = 1 / sliderscale;
 		for (auto &mit : cto.pointStartState) {
 			mesh *m = mit.first;
 			std::unordered_map<ushort, Vector3> strokeDiff;
 
 			for (auto &p : mit.second) {
 				if (bIsUndo)
-					strokeDiff[p.first] = p.second - cto.pointEndState[m][p.first];
+					strokeDiff[p.first] = (p.second - cto.pointEndState[m][p.first]) * sliderscale;
 				else
-					strokeDiff[p.first] = cto.pointEndState[m][p.first] - p.second;
+					strokeDiff[p.first] = (cto.pointEndState[m][p.first] - p.second) * sliderscale;
 			}
 			auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
 			if (shape)
@@ -2218,15 +2222,25 @@ bool OutfitStudioFrame::NotifyStrokeStarting() {
 	if (!activeItem)
 		return false;
 
-	if (bEditSlider || project->AllSlidersZero())
-		return true;
-
 	auto activeBrush = glView->GetActiveBrush();
 	if (activeBrush) {
 		int brushType = activeBrush->Type();
 		if (brushType == TBT_MASK || brushType == TBT_WEIGHT || brushType == TBT_COLOR || brushType == TBT_ALPHA)
 			return true;
 	}
+
+	if (bEditSlider && project->SliderValue(activeSlider) == 0.0) {
+		int response = wxMessageBox(_("You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"),
+			wxMessageBoxCaptionStr, wxYES_NO, this);
+		if (response == wxYES) {
+			SetSliderValue(activeSlider, 100);
+			ApplySliders();
+		}
+		return false;
+	}
+
+	if (bEditSlider || project->AllSlidersZero())
+		return true;
 
 	int	response = wxMessageBox(_("You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph."),
 		wxMessageBoxCaptionStr, wxYES_NO, this);

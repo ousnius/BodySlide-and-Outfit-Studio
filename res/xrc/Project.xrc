@@ -509,7 +509,7 @@
 									<tooltip>The name of the output's base NIF file.</tooltip>
 									<message>Select output NIF file name</message>
 									<wildcard>*.nif</wildcard>
-									<style>wxFLP_DEFAULT_STYLE</style>
+									<style>wxFLP_SAVE|wxFLP_USE_TEXTCTRL</style>
 								</object>
 							</object>
 						</object>

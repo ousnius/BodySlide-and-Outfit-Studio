@@ -203,8 +203,7 @@ public:
 
 	virtual bool queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes);
 
-	// Apply the brush effect to the mesh, modifying the points in the set provided.
-	// Version using a pre-allocated array of vectors matching the order of the points array.
+	// Apply the brush effect to the mesh
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToOutfit &cto);
 };
 
