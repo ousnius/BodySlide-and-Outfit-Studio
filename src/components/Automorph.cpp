@@ -315,7 +315,7 @@ void Automorph::SetResultDiff(const std::string& shapeName, const std::string& s
 		resultDiffData.AddEmptySet(setName, shapeName);
 
 	for (auto &i : diff)
-		resultDiffData.SumDiff(setName, shapeName, i.first, i.second);
+		resultDiffData.UpdateDiff(setName, shapeName, i.first, i.second);
 }
 
 void Automorph::UpdateResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& diff) {
