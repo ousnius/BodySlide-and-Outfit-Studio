@@ -207,10 +207,6 @@ public:
 	virtual bool queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes);
 
 	// Apply the brush effect to the mesh, modifying the points in the set provided.
-	// Overridden versions should return the original point positions in the movedpoints map.
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
-
-	// Version using a pre-allocated array of vectors matching the order of the points array.
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
@@ -223,7 +219,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -239,7 +234,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -267,7 +261,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
@@ -304,7 +297,6 @@ public:
 	TB_Smooth();
 	virtual ~TB_Smooth();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -326,7 +318,6 @@ public:
 
 	virtual bool strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pickInfo);
 	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
-	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -361,7 +352,6 @@ public:
 
 	virtual bool strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pickInfo);
 	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
-	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -380,7 +370,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
@@ -395,7 +384,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
@@ -420,7 +408,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
@@ -435,7 +422,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
@@ -448,7 +434,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
@@ -461,7 +446,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -477,7 +461,6 @@ public:
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
