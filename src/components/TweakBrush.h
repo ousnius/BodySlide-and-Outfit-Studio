@@ -317,7 +317,6 @@ public:
 
 class TB_XForm : public TweakBrush {
 	TweakPickInfo pick;
-	float d = 0.0f;			// Plane dist,
 	int xformType = 0;		// 0 = Move, 1 = Rotate, 2 = Scale, 3 = Uniform Scale
 
 public:

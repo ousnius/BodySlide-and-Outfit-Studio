@@ -191,12 +191,12 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 				continue;
 
 			if (refBrush->isMirrored())
-				refBrush->queryPoints(m, mirrorPick, pts1[m].get(), nPts2, cto.ctss[m].affectedNodes);
+				refBrush->queryPoints(m, mirrorPick, pts2[m].get(), nPts2, cto.ctss[m].affectedNodes);
 
 			refBrush->brushAction(m, pickInfo, pts1[m].get(), nPts1, cto.ctss[m]);
 
 			if (refBrush->isMirrored())
-				refBrush->brushAction(m, mirrorPick, pts1[m].get(), nPts2, cto.ctss[m]);
+				refBrush->brushAction(m, mirrorPick, pts2[m].get(), nPts2, cto.ctss[m]);
 
 			if (refBrush->LiveNormals()) {
 				auto pending1 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m].get(), nPts1);
@@ -976,7 +976,6 @@ void TB_XForm::GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist) {
 
 void TB_XForm::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pickInfo, ChangeToOutfit &cto) {
 	pick = pickInfo;
-	d = pick.origin.dot(pick.normal);
 
 	cache.clear();
 
