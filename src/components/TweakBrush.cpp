@@ -17,6 +17,8 @@ void TweakUndo::Clear()	{
 	curState = -1;
 }
 
+std::vector<std::future<void>> TweakStroke::normalUpdates{};
+
 TweakStroke* TweakUndo::CreateStroke(const std::vector<mesh*>& refMeshes, TweakBrush* refBrush) {
 	int nStrokes = strokes.size();
 	if (curState < nStrokes - 1) {
@@ -121,8 +123,13 @@ void ChangeToOutfit::RestoreEndState(mesh* m) {
 void TweakStroke::beginStroke(TweakPickInfo& pickInfo) {
 	refBrush->strokeInit(refMeshes, pickInfo, cto);
 
-	for (auto &m : refMeshes)
+	for (auto &m : refMeshes) {
 		cto.ctss[m].startBVH = m->bvh;
+
+		pts1[m] = std::make_unique<int[]>(m->nVerts);
+		if (refBrush->isMirrored())
+			pts2[m] = std::make_unique<int[]>(m->nVerts);
+	}
 }
 
 void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
@@ -139,6 +146,14 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	}
 	else
 		newStroke = false;
+
+	// Remove finished tasks
+	for (int i = 0; i < normalUpdates.size(); i++) {
+		if (normalUpdates[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+			normalUpdates.erase(normalUpdates.begin() + i);
+			i--;
+		}
+	}
 
 	// Move/transform handles most operations differently than other brushes.
 	// Mirroring is done internally, most of the pick info values are ignored.
@@ -159,8 +174,10 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 			refBrush->brushAction(m, pickInfo, nullptr, nPts1, cto.ctss[m]);
 
-			if (refBrush->LiveNormals())
-				mesh::SmoothNormalsStaticMap(m, cto.ctss[m].pointStartState);
+			if (refBrush->LiveNormals()) {
+				auto pending = async(std::launch::async, mesh::SmoothNormalsStaticMap, m, cto.ctss[m].pointStartState);
+				normalUpdates.push_back(std::move(pending));
+			}
 		}
 		pickInfo.origin = originSave;
 		pickInfo.center = centerSave;
@@ -169,23 +186,25 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 		for (auto &m : refMeshes) {
 			int nPts1 = 0;
 			int nPts2 = 0;
-			std::vector<int> pts1(m->nVerts);
-			std::vector<int> pts2(m->nVerts);
 
-			if (!refBrush->queryPoints(m, pickInfo, &pts1.front(), nPts1, cto.ctss[m].affectedNodes))
+			if (!refBrush->queryPoints(m, pickInfo, pts1[m].get(), nPts1, cto.ctss[m].affectedNodes))
 				continue;
 
 			if (refBrush->isMirrored())
-				refBrush->queryPoints(m, mirrorPick, &pts2.front(), nPts2, cto.ctss[m].affectedNodes);
+				refBrush->queryPoints(m, mirrorPick, pts1[m].get(), nPts2, cto.ctss[m].affectedNodes);
 
-			refBrush->brushAction(m, pickInfo, &pts1.front(), nPts1, cto.ctss[m]);
+			refBrush->brushAction(m, pickInfo, pts1[m].get(), nPts1, cto.ctss[m]);
 
 			if (refBrush->isMirrored())
-				refBrush->brushAction(m, mirrorPick, &pts2.front(), nPts2, cto.ctss[m]);
+				refBrush->brushAction(m, mirrorPick, pts1[m].get(), nPts2, cto.ctss[m]);
 
 			if (refBrush->LiveNormals()) {
-				mesh::SmoothNormalsStaticArray(m, &pts1.front(), nPts1);
-				mesh::SmoothNormalsStaticArray(m, &pts2.front(), nPts2);
+				auto pending1 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m].get(), nPts1);
+				normalUpdates.push_back(std::move(pending1));
+				if (refBrush->isMirrored()) {
+					auto pending2 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts2[m].get(), nPts2);
+					normalUpdates.push_back(std::move(pending2));
+				}
 			}
 		}
 	}
@@ -219,8 +238,23 @@ void TweakStroke::endStroke() {
 				bvhNode->UpdateAABB();
 
 	if (!refBrush->LiveNormals()) {
-		for (auto &m : refMeshes)
-			m->SmoothNormals();
+		for (auto &m : refMeshes) {
+			auto pending = std::async(std::launch::async, mesh::SmoothNormalsStatic, m);
+			normalUpdates.push_back(std::move(pending));
+		}
+	}
+
+	bool notReady = true;
+	while (notReady) {
+		notReady = false;
+		for (int i = 0; i < normalUpdates.size(); i++) {
+			if (normalUpdates[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+				normalUpdates.erase(normalUpdates.begin() + i);
+				i--;
+			}
+			else
+				notReady = true;
+		}
 	}
 
 	for (auto &m : refMeshes) {

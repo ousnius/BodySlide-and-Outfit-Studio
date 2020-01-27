@@ -59,6 +59,8 @@ See the included LICENSE file
 
 #include "Mesh.h"
 
+#include <future>
+
 const int TB_MAX_UNDO = 40;
 
 enum TweakBrushType {
@@ -421,6 +423,10 @@ class TweakStroke {
 	TweakBrush* refBrush;
 	bool newStroke = true;
 	Vector3 lastPoint;
+
+	static std::vector<std::future<void>> normalUpdates;
+	std::unordered_map<mesh*, std::unique_ptr<int[]>> pts1;
+	std::unordered_map<mesh*, std::unique_ptr<int[]>> pts2;
 
 public:
 	ChangeToOutfit cto;
