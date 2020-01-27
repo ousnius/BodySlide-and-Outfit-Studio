@@ -2020,21 +2020,21 @@ void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
 	project->UpdateShapeFromMesh(shape, glView->GetMesh(shape->GetName()));
 }
 
-void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit &cto, bool bIsUndo) {
+void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit *cto, bool bIsUndo) {
 	if (bEditSlider) {
 		double sliderscale = project->SliderValue(activeSlider);
 		if (sliderscale == 0.0)
 			sliderscale = 1.0;
 		sliderscale = 1 / sliderscale;
-		for (auto &mit : cto.pointStartState) {
+		for (auto &mit : cto->ctss) {
 			mesh *m = mit.first;
 			std::unordered_map<ushort, Vector3> strokeDiff;
 
-			for (auto &p : mit.second) {
+			for (auto &p : mit.second.pointStartState) {
 				if (bIsUndo)
-					strokeDiff[p.first] = (p.second - cto.pointEndState[m][p.first]) * sliderscale;
+					strokeDiff[p.first] = (p.second - mit.second.pointEndState[p.first]) * sliderscale;
 				else
-					strokeDiff[p.first] = (cto.pointEndState[m][p.first] - p.second) * sliderscale;
+					strokeDiff[p.first] = (mit.second.pointEndState[p.first] - p.second) * sliderscale;
 			}
 			auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
 			if (shape)
@@ -2042,15 +2042,15 @@ void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit &cto, bool bIsUndo) {
 		}
 	}
 	else {
-		if (cto.brushType == TBT_WEIGHT) {
-			for (auto &mit : cto.pointStartState) {
+		if (cto->brushType == TBT_WEIGHT) {
+			for (auto &mit : cto->ctss) {
 				mesh *m = mit.first;
 				auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, activeBone);
 				if (!weights)
 					continue;
 
 				if (bIsUndo) {
-					for (auto &p : mit.second) {
+					for (auto &p : mit.second.pointStartState) {
 						if (p.second.y == 0.0f)
 							weights->erase(p.first);
 						else
@@ -2058,7 +2058,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit &cto, bool bIsUndo) {
 					}
 				}
 				else {
-					for (auto &p : cto.pointEndState[m]) {
+					for (auto &p : mit.second.pointEndState) {
 						if (p.second.y == 0.0f)
 							weights->erase(p.first);
 						else
@@ -2067,8 +2067,8 @@ void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit &cto, bool bIsUndo) {
 				}
 			}
 		}
-		else if (cto.brushType == TBT_COLOR) {
-			for (auto &mit : cto.pointStartState) {
+		else if (cto->brushType == TBT_COLOR) {
+			for (auto &mit : cto->ctss) {
 				mesh *m = mit.first;
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
@@ -2077,14 +2077,14 @@ void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit &cto, bool bIsUndo) {
 				std::vector<Color4> vcolors = (*colorPtr);
 
 				if (bIsUndo) {
-					for (auto &p : mit.second) {
+					for (auto &p : mit.second.pointStartState) {
 						vcolors[p.first].r = p.second.x;
 						vcolors[p.first].g = p.second.y;
 						vcolors[p.first].b = p.second.z;
 					}
 				}
 				else {
-					for (auto &p : cto.pointEndState[m]) {
+					for (auto &p : mit.second.pointEndState) {
 						vcolors[p.first].r = p.second.x;
 						vcolors[p.first].g = p.second.y;
 						vcolors[p.first].b = p.second.z;
@@ -2094,8 +2094,8 @@ void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit &cto, bool bIsUndo) {
 				project->GetWorkNif()->SetColorsForShape(m->shapeName, vcolors);
 			}
 		}
-		else if (cto.brushType == TBT_ALPHA) {
-			for (auto &mit : cto.pointStartState) {
+		else if (cto->brushType == TBT_ALPHA) {
+			for (auto &mit : cto->ctss) {
 				mesh *m = mit.first;
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
@@ -2104,11 +2104,11 @@ void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit &cto, bool bIsUndo) {
 				std::vector<Color4> vcolors = (*colorPtr);
 
 				if (bIsUndo) {
-					for (auto &p : mit.second)
+					for (auto &p : mit.second.pointStartState)
 						vcolors[p.first].a = p.second.x;
 				}
 				else {
-					for (auto &p : cto.pointEndState[m])
+					for (auto &p : mit.second.pointEndState)
 						vcolors[p.first].a = p.second.x;
 				}
 
@@ -8748,13 +8748,12 @@ void wxGLPanel::EndPivotPosition() {
 	std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
 	if (refMeshes.size() > 0) {
 		mesh* pivotHitMesh = refMeshes[0];
-		auto pivotStartState = activeStroke->cto.pointStartState.find(pivotHitMesh);
-		auto pivotEndState = activeStroke->cto.pointEndState.find(pivotHitMesh);
+		auto pivotState = activeStroke->cto.ctss.find(pivotHitMesh);
 
-		if (pivotStartState != activeStroke->cto.pointStartState.end() && pivotEndState != activeStroke->cto.pointEndState.end()) {
-			if (pivotStartState->second.size() > 0 && pivotEndState->second.size() > 0) {
-				Vector3& pivotStartStatePos = pivotStartState->second[0];
-				Vector3& pivotEndStatePos = pivotEndState->second[0];
+		if (pivotState != activeStroke->cto.ctss.end()) {
+			if (pivotState->second.pointStartState.size() > 0 && pivotState->second.pointEndState.size() > 0) {
+				Vector3& pivotStartStatePos = pivotState->second.pointStartState[0];
+				Vector3& pivotEndStatePos = pivotState->second.pointEndState[0];
 				Vector3 pivotDiff = pivotEndStatePos - pivotStartStatePos;
 				pivotPosition += pivotDiff;
 			}
@@ -8790,11 +8789,11 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 
 bool wxGLPanel::UndoStroke() {
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
-	ChangeToOutfit &curChange = strokeManager->GetCurChange();
+	ChangeToOutfit *curChange = strokeManager->GetCurChange();
 	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
 
-	if (ret && curStroke) {
-		int brushType = curStroke->BrushType();
+	if (ret && curStroke && curChange) {
+		int brushType = curChange->brushType;
 		if (brushType != TBT_MASK) {
 			os->ActiveShapesUpdated(curChange, true);
 
