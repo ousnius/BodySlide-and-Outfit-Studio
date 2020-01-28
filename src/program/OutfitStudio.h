@@ -792,7 +792,7 @@ public:
 
 	void UpdateShapeSource(NiShape* shape);
 
-	void ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo = false);
+	void ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo = false);
 	void UpdateActiveShapeUI();
 	void HighlightBoneNamesWithWeights();
 
