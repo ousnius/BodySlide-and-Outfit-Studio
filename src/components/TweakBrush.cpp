@@ -512,11 +512,9 @@ TB_SmoothMask::~TB_SmoothMask() {
 void TB_SmoothMask::lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
 	std::unordered_map<int, Vector3>::iterator mi;
 	int adjPoints[1000];
-	int c = 0;
-	int a;
 
 	for (int i = 0; i < nPoints; i++) {
-		c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
+		int c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
 		if (c == 0) continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
@@ -538,13 +536,10 @@ void TB_SmoothMask::hclapFilter(mesh* refmesh, const int* points, int nPoints, s
 	std::vector<Vector3> b(refmesh->nVerts);
 
 	int adjPoints[1000];
-	int a;
-	int c;
-	int i;
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
-		i = points[p];
-		c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int i = points[p];
+		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0) continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
@@ -565,7 +560,7 @@ void TB_SmoothMask::hclapFilter(mesh* refmesh, const int* points, int nPoints, s
 					skip = true;
 		if (skip) continue;
 		// Average 'b' for adjacent points
-		c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0) continue;
 		Vector3 d;
 		for (int n = 0; n < c; n++)
@@ -658,11 +653,9 @@ TB_Smooth::~TB_Smooth() {
 void TB_Smooth::lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map <int, Vector3>& wv) {
 	std::unordered_map<int, Vector3>::iterator mi;
 	int adjPoints[1000];
-	int c = 0;
-	int a;
 
 	for (int i = 0; i < nPoints; i++) {
-		c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
+		int c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
 		if (c == 0) continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
@@ -684,13 +677,10 @@ void TB_Smooth::hclapFilter(mesh* refmesh, const int* points, int nPoints, std::
 	std::vector<Vector3> b(refmesh->nVerts);
 
 	int adjPoints[1000];
-	int a;
-	int c;
-	int i;
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
-		i = points[p];
-		c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int i = points[p];
+		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0) continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
@@ -711,7 +701,7 @@ void TB_Smooth::hclapFilter(mesh* refmesh, const int* points, int nPoints, std::
 					skip = true;
 		if (skip) continue;
 		// Average 'b' for adjacent points
-		c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0) continue;
 		Vector3 d;
 		for (int n = 0; n < c; n++)
@@ -1122,11 +1112,9 @@ TB_SmoothWeight::~TB_SmoothWeight() {
 void TB_SmoothWeight::lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
 	std::unordered_map<int, Vector3>::iterator mi;
 	int adjPoints[1000];
-	int c = 0;
-	int a;
 
 	for (int i = 0; i < nPoints; i++) {
-		c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
+		int c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
 		if (c == 0) continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
@@ -1148,13 +1136,10 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints,
 	std::vector<Vector3> b(refmesh->nVerts);
 
 	int adjPoints[1000];
-	int a;
-	int c;
-	int i;
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
-		i = points[p];
-		c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int i = points[p];
+		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0) continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
@@ -1175,7 +1160,7 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints,
 					skip = true;
 		if (skip) continue;
 		// Average 'b' for adjacent points
-		c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0) continue;
 		Vector3 d;
 		for (int n = 0; n < c; n++)
