@@ -240,7 +240,7 @@ public:
 	float hcBeta;
 
 	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
+	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, TweakState &ts);
 
 	TB_SmoothMask();
 	virtual ~TB_SmoothMask();
@@ -272,7 +272,7 @@ class TB_Smooth : public TweakBrush {
 	// Improved laplacian smoothing filter (HC-Smooth) points are the set of point indices into refmesh to smooth.
 	// wv is the current position of those points. This function can be called iteratively, reusing wv.
 	// This algo is much slower than lap, but tries to maintain mesh volume.
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
+	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, TweakState &ts);
 
 public:
 	TB_Smooth();
@@ -369,7 +369,7 @@ public:
 	float hcBeta;
 
 	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
+	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, TweakState &ts);
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
