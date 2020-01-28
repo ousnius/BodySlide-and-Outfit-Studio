@@ -917,12 +917,17 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 				std::vector<Triangle> triangles;
 				geomData->GetTriangles(triangles);
 
+				if (!options.removeParallax)
+					removeVertexColors = false;
+
 				// Only remove vertex colors if all are 0xFFFFFFFF
-				Color4 white(1.0f, 1.0f, 1.0f, 1.0f);
-				for (auto &c : colors) {
-					if (white != c) {
-						removeVertexColors = false;
-						break;
+				if (removeVertexColors) {
+					Color4 white(1.0f, 1.0f, 1.0f, 1.0f);
+					for (auto &c : colors) {
+						if (white != c) {
+							removeVertexColors = false;
+							break;
+						}
 					}
 				}
 
@@ -1200,8 +1205,11 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 				std::vector<Triangle> triangles;
 				bsTriShape->GetTriangles(triangles);
 
+				if (!options.removeParallax)
+					removeVertexColors = false;
+
 				// Only remove vertex colors if all are 0xFFFFFFFF
-				if (colors) {
+				if (colors && removeVertexColors) {
 					Color4 white(1.0f, 1.0f, 1.0f, 1.0f);
 					for (auto &c : (*colors)) {
 						if (white != c) {
