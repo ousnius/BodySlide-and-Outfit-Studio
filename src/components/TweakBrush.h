@@ -73,7 +73,7 @@ enum TweakBrushType {
 	TBT_XFORM
 };
 
-struct ChangeToShape {
+struct TweakState {
 	std::unordered_map<int, Vector3> pointStartState;
 	std::unordered_map<int, Vector3> pointEndState;
 	std::shared_ptr<AABBTree> startBVH;
@@ -81,9 +81,9 @@ struct ChangeToShape {
 	std::unordered_set<AABBTree::AABBTreeNode*> affectedNodes;
 };
 
-struct ChangeToOutfit {
+struct TweakStateHolder {
 	TweakBrushType brushType;
-	std::unordered_map<mesh*, ChangeToShape> ctss;
+	std::unordered_map<mesh*, TweakState> tss;
 
 	void RestoreStartState(mesh* m);
 	void RestoreEndState(mesh* m);
@@ -188,7 +188,7 @@ public:
 	}
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, ChangeToOutfit &) {}
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, TweakStateHolder &) {}
 
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
 	virtual bool checkSpacing(Vector3& start, Vector3& end);
@@ -206,7 +206,7 @@ public:
 	virtual bool queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes);
 
 	// Apply the brush effect to the mesh
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 };
 
 class TB_Mask : public TweakBrush {
@@ -214,7 +214,7 @@ public:
 	TB_Mask();
 	virtual ~TB_Mask();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
 	}
@@ -225,7 +225,7 @@ public:
 	TB_Unmask();
 	virtual ~TB_Unmask();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
 	}
@@ -245,7 +245,7 @@ public:
 	TB_SmoothMask();
 	virtual ~TB_SmoothMask();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 };
 
 class TB_Deflate : public TweakBrush {
@@ -278,7 +278,7 @@ public:
 	TB_Smooth();
 	virtual ~TB_Smooth();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
 	}
@@ -297,10 +297,10 @@ public:
 	TB_Move();
 	virtual ~TB_Move();
 
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, ChangeToOutfit&);
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, TweakStateHolder&);
 
 	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
-	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
 	}
@@ -331,9 +331,9 @@ public:
 		xformType = type;
 	}
 
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, ChangeToOutfit&);
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, TweakStateHolder&);
 	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
-	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
 	}
@@ -347,7 +347,7 @@ public:
 	TB_Weight();
 	virtual ~TB_Weight();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 };
 
 class TB_Unweight : public TweakBrush {
@@ -357,7 +357,7 @@ public:
 	TB_Unweight();
 	virtual ~TB_Unweight();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 };
 
 class TB_SmoothWeight : public TweakBrush {
@@ -374,7 +374,7 @@ public:
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 };
 
 class TB_Color : public TweakBrush {
@@ -384,7 +384,7 @@ public:
 	TB_Color();
 	virtual ~TB_Color();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 };
 
 class TB_Uncolor : public TweakBrush {
@@ -392,7 +392,7 @@ public:
 	TB_Uncolor();
 	virtual ~TB_Uncolor();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 };
 
 class TB_Alpha : public TweakBrush {
@@ -400,7 +400,7 @@ public:
 	TB_Alpha();
 	virtual ~TB_Alpha();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
 	}
@@ -411,7 +411,7 @@ public:
 	TB_Unalpha();
 	virtual ~TB_Unalpha();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, ChangeToShape &cts);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, TweakState &ts);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
 	}
@@ -428,18 +428,18 @@ class TweakStroke {
 	std::unordered_map<mesh*, std::unique_ptr<int[]>> pts2;
 
 public:
-	ChangeToOutfit cto;
+	TweakStateHolder tsh;
 
 	TweakStroke(const std::vector<mesh*>& meshes, TweakBrush* theBrush) {
 		refMeshes = meshes;
 		refBrush = theBrush;
-		cto.brushType = static_cast<TweakBrushType>(refBrush->Type());
+		tsh.brushType = static_cast<TweakBrushType>(refBrush->Type());
 	}
 
 	void PushBVH(const std::vector<mesh*>& meshes) {
 		for (auto &m : meshes) {
 			if (m) {
-				cto.ctss[m].endBVH = m->bvh;
+				tsh.tss[m].endBVH = m->bvh;
 			}
 		}
 	}
@@ -488,9 +488,9 @@ public:
 			curstroke->PushBVH(curstroke->GetRefMeshes());
 	}
 
-	ChangeToOutfit *GetCurChange() {
+	TweakStateHolder *GetCurStateHolder() {
 		if (curState == -1)
 			return nullptr;
-		return &strokes[curState]->cto;
+		return &strokes[curState]->tsh;
 	}
 };

@@ -2020,13 +2020,13 @@ void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
 	project->UpdateShapeFromMesh(shape, glView->GetMesh(shape->GetName()));
 }
 
-void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit *cto, bool bIsUndo) {
+void OutfitStudioFrame::ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo) {
 	if (bEditSlider) {
 		double sliderscale = project->SliderValue(activeSlider);
 		if (sliderscale == 0.0)
 			sliderscale = 1.0;
 		sliderscale = 1 / sliderscale;
-		for (auto &mit : cto->ctss) {
+		for (auto &mit : tsh->tss) {
 			mesh *m = mit.first;
 			std::unordered_map<ushort, Vector3> strokeDiff;
 
@@ -2042,8 +2042,8 @@ void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit *cto, bool bIsUndo) {
 		}
 	}
 	else {
-		if (cto->brushType == TBT_WEIGHT) {
-			for (auto &mit : cto->ctss) {
+		if (tsh->brushType == TBT_WEIGHT) {
+			for (auto &mit : tsh->tss) {
 				mesh *m = mit.first;
 				auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, activeBone);
 				if (!weights)
@@ -2067,8 +2067,8 @@ void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit *cto, bool bIsUndo) {
 				}
 			}
 		}
-		else if (cto->brushType == TBT_COLOR) {
-			for (auto &mit : cto->ctss) {
+		else if (tsh->brushType == TBT_COLOR) {
+			for (auto &mit : tsh->tss) {
 				mesh *m = mit.first;
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
@@ -2094,8 +2094,8 @@ void OutfitStudioFrame::ActiveShapesUpdated(ChangeToOutfit *cto, bool bIsUndo) {
 				project->GetWorkNif()->SetColorsForShape(m->shapeName, vcolors);
 			}
 		}
-		else if (cto->brushType == TBT_ALPHA) {
-			for (auto &mit : cto->ctss) {
+		else if (tsh->brushType == TBT_ALPHA) {
+			for (auto &mit : tsh->tss) {
 				mesh *m = mit.first;
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
@@ -8511,7 +8511,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		if (activeBrush->Type() == TBT_WEIGHT) {
 			std::string selectedBone = os->GetActiveBone();
 			if (!selectedBone.empty()) {
-				os->ActiveShapesUpdated(strokeManager->GetCurChange(), false);
+				os->ActiveShapesUpdated(strokeManager->GetCurStateHolder(), false);
 
 				int boneScalePos = os->boneScale->GetValue();
 				if (boneScalePos != 0)
@@ -8535,7 +8535,7 @@ void wxGLPanel::EndBrushStroke() {
 
 		int brushType = activeStroke->BrushType();
 		if (brushType != TBT_MASK) {
-			os->ActiveShapesUpdated(strokeManager->GetCurChange());
+			os->ActiveShapesUpdated(strokeManager->GetCurStateHolder());
 
 			if (brushType == TBT_WEIGHT) {
 				std::string selectedBone = os->GetActiveBone();
@@ -8678,7 +8678,7 @@ void wxGLPanel::EndTransform() {
 	activeStroke->endStroke();
 	activeStroke = nullptr;
 
-	os->ActiveShapesUpdated(strokeManager->GetCurChange());
+	os->ActiveShapesUpdated(strokeManager->GetCurStateHolder());
 	if (!os->bEditSlider) {
 		for (auto &s : os->project->GetWorkNif()->GetShapes()) {
 			os->UpdateShapeSource(s);
@@ -8748,9 +8748,9 @@ void wxGLPanel::EndPivotPosition() {
 	std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
 	if (refMeshes.size() > 0) {
 		mesh* pivotHitMesh = refMeshes[0];
-		auto pivotState = activeStroke->cto.ctss.find(pivotHitMesh);
+		auto pivotState = activeStroke->tsh.tss.find(pivotHitMesh);
 
-		if (pivotState != activeStroke->cto.ctss.end()) {
+		if (pivotState != activeStroke->tsh.tss.end()) {
 			if (pivotState->second.pointStartState.size() > 0 && pivotState->second.pointEndState.size() > 0) {
 				Vector3& pivotStartStatePos = pivotState->second.pointStartState[0];
 				Vector3& pivotEndStatePos = pivotState->second.pointEndState[0];
@@ -8789,13 +8789,13 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 
 bool wxGLPanel::UndoStroke() {
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
-	ChangeToOutfit *curChange = strokeManager->GetCurChange();
+	TweakStateHolder *curState = strokeManager->GetCurStateHolder();
 	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
 
-	if (ret && curStroke && curChange) {
-		int brushType = curChange->brushType;
+	if (ret && curStroke && curState) {
+		int brushType = curState->brushType;
 		if (brushType != TBT_MASK) {
-			os->ActiveShapesUpdated(curChange, true);
+			os->ActiveShapesUpdated(curState, true);
 
 			if (!os->bEditSlider && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
 				std::vector<mesh*> refMeshes = curStroke->GetRefMeshes();
@@ -8833,7 +8833,7 @@ bool wxGLPanel::RedoStroke() {
 	if (ret && curStroke) {
 		int brushType = curStroke->BrushType();
 		if (brushType != TBT_MASK) {
-			os->ActiveShapesUpdated(strokeManager->GetCurChange());
+			os->ActiveShapesUpdated(strokeManager->GetCurStateHolder());
 
 			if (!os->bEditSlider && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
 				std::vector<mesh*> refMeshes = curStroke->GetRefMeshes();
