@@ -1169,7 +1169,7 @@ TB_SmoothWeight::TB_SmoothWeight() :TweakBrush() {
 TB_SmoothWeight::~TB_SmoothWeight() {
 }
 
-void TB_SmoothWeight::lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, TweakState &ts) {
+void TB_SmoothWeight::lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv) {
 	int adjPoints[1000];
 
 	for (int i = 0; i < nPoints; i++) {
@@ -1178,7 +1178,7 @@ void TB_SmoothWeight::lapFilter(mesh* refmesh, const int* points, int nPoints, s
 		// average adjacent points values, using values from last iteration.
 		float d = 0.0;
 		for (int n = 0; n < c; n++)
-			d += ts.boneWeights[0].weights[adjPoints[n]].endVal;
+			d += refmesh->vcolors[adjPoints[n]].y;
 		wv[points[i]] = d / (float)c;
 
 		if (refmesh->weldVerts.find(points[i]) != refmesh->weldVerts.end()) {
@@ -1270,7 +1270,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 	}
 
 	if (method == 0)		// laplacian smooth
-		lapFilter(refmesh, points, nPoints, wv, ts);
+		lapFilter(refmesh, points, nPoints, wv);
 	else					// HC-laplacian smooth
 		hclapFilter(refmesh, points, nPoints, wv, ts);
 

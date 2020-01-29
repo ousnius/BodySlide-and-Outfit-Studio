@@ -382,7 +382,7 @@ public:
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
 
-	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, TweakState &ts);
+	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv);
 	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, TweakState &ts);
 
 	TB_SmoothWeight();
