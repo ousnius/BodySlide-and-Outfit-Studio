@@ -1062,8 +1062,11 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 			if (bw.find(i) != bw.end())
 				totW += bw[i].endVal;
 		}
-		if (totW - 1.0 > -EPSILON) totW = 1.0;
 		float sw = ts.boneWeights[0].weights[i].endVal;
+		bool solo = false;
+		if (totW - sw <= EPSILON) solo = true;
+		if (solo) totW = 1.0;
+		if (totW - 1.0 > -EPSILON) totW = 1.0;
 		float ew = bFixedWeight ? strength * 10.0f - sw : strength;
 		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
 		ew *= 1.0f - refmesh->vcolors[i].x;
@@ -1072,7 +1075,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		if (fw > totW) fw = totW;
 		if (fw - 1.0 > -EPSILON) fw = 1.0;
 		ts.boneWeights[0].weights[i].endVal = refmesh->vcolors[i].y = fw;
-		float redFac = totW - sw > EPSILON ? (totW - fw) / (totW - sw) : 0.0;
+		float redFac = solo ? 0.0 : (totW - fw) / (totW - sw);
 		for (unsigned int bi = 1; bi < nBones; ++bi) {
 			auto owi = ts.boneWeights[bi].weights.find(i);
 			if (owi == ts.boneWeights[bi].weights.end()) continue;
@@ -1132,8 +1135,11 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 			if (bw.find(i) != bw.end())
 				totW += bw[i].endVal;
 		}
-		if (totW - 1.0 > -EPSILON) totW = 1.0;
 		float sw = ts.boneWeights[0].weights[i].endVal;
+		bool solo = false;
+		if (totW - sw <= EPSILON) solo = true;
+		if (solo) totW = 1.0;
+		if (totW - 1.0 > -EPSILON) totW = 1.0;
 		float ew = strength;
 		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
 		ew *= 1.0f - refmesh->vcolors[i].x;
@@ -1142,7 +1148,7 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 		if (fw > totW) fw = totW;
 		if (fw - 1.0 > -EPSILON) fw = 1.0;
 		ts.boneWeights[0].weights[i].endVal = refmesh->vcolors[i].y = fw;
-		float redFac = totW - sw > EPSILON ? (totW - fw) / (totW - sw) : 0.0;
+		float redFac = solo ? 0.0 : (totW - fw) / (totW - sw);
 		for (unsigned int bi = 1; bi < nBones; ++bi) {
 			auto owi = ts.boneWeights[bi].weights.find(i);
 			if (owi == ts.boneWeights[bi].weights.end()) continue;
@@ -1285,6 +1291,10 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 				totW += bw[i].endVal;
 		}
 		float sw = ts.boneWeights[0].weights[i].endVal;
+		bool solo = false;
+		if (totW - sw <= EPSILON) solo = true;
+		if (solo) totW = 1.0;
+		if (totW - 1.0 > -EPSILON) totW = 1.0;
 		float ew = wv[i] - sw;
 		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
 		ew *= 1.0f - refmesh->vcolors[i].x;
@@ -1293,7 +1303,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 		if (fw - 1.0 > -EPSILON) fw = 1.0;
 		if (fw > totW) fw = totW;
 		ts.boneWeights[0].weights[i].endVal = refmesh->vcolors[i].y = fw;
-		float redFac = totW - sw > 0.0 ? (totW - fw) / (totW - sw) : 0.0;
+		float redFac = solo ? 0.0 : (totW - fw) / (totW - sw);
 		for (unsigned int bi = 1; bi < nBones; ++bi) {
 			auto owi = ts.boneWeights[bi].weights.find(i);
 			if (owi == ts.boneWeights[bi].weights.end()) continue;
