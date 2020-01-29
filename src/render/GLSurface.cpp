@@ -479,7 +479,7 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 	if (fabs(den) < .00001)
 		return false;
 
-	float t = -(inPlaneNormal.dot(o) + inPlaneDist) / den;
+	float t = -(inPlaneNormal.dot(o) - inPlaneDist) / den;
 	outOrigin = o + d*t;
 
 	return true;

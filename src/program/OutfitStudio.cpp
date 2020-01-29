@@ -2030,11 +2030,14 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo)
 			mesh *m = mit.first;
 			std::unordered_map<ushort, Vector3> strokeDiff;
 
-			for (auto &p : mit.second.pointStartState) {
+			for (auto &ps : mit.second.pointStartState) {
+				auto pe = mit.second.pointEndState.find(ps.first);
+				if (pe == mit.second.pointEndState.end())
+					continue;
 				if (bIsUndo)
-					strokeDiff[p.first] = (p.second - mit.second.pointEndState[p.first]) * sliderscale;
+					strokeDiff[ps.first] = (ps.second - pe->second) * sliderscale;
 				else
-					strokeDiff[p.first] = (mit.second.pointEndState[p.first] - p.second) * sliderscale;
+					strokeDiff[ps.first] = (pe->second - ps.second) * sliderscale;
 			}
 			auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
 			if (shape)
@@ -8598,17 +8601,17 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		translateBrush.SetXFormType(1);
 		switch (mname[0]) {
 		case 'X':
-			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(1.0f, 0.0f, 0.0f), -tpi.center.x);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(1.0f, 0.0f, 0.0f), tpi.center.x);
 			//tpi.view = Vector3(0.0f, 1.0f, 0.0f);
 			tpi.normal = Vector3(1.0f, 0.0f, 0.0f);
 			break;
 		case 'Y':
-			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 1.0f, 0.0f), -tpi.center.y);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 1.0f, 0.0f), tpi.center.y);
 			//tpi.view = Vector3(-1.0f, 0.0f, 0.0f);
 			tpi.normal = Vector3(0.0f, 1.0f, 0.0f);
 			break;
 		case 'Z':
-			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 0.0f, 1.0f), -tpi.center.z);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 0.0f, 1.0f), tpi.center.z);
 			//tpi.view = Vector3(-1.0f, 0.0f, 0.0f);
 			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
 			break;
@@ -8634,9 +8637,9 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		}
 		else {
 			translateBrush.SetXFormType(3);
-			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(1.0f, 0.0f, 0.0f), -tpi.center.x);
-			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 1.0f, 0.0f), -tpi.center.y);
-			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 0.0f, 1.0f), -tpi.center.z);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(1.0f, 0.0f, 0.0f), tpi.center.x);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 1.0f, 0.0f), tpi.center.y);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 0.0f, 1.0f), tpi.center.z);
 			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
 		}
 	}
@@ -8667,7 +8670,7 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 	float pd;
 
 	translateBrush.GetWorkingPlane(pn, pd);
-	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, -pd);
+	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
 
 	activeStroke->updateStroke(tpi);
 
@@ -8737,7 +8740,7 @@ void wxGLPanel::UpdatePivotPosition(const wxPoint& screenPos) {
 	float pd;
 
 	translateBrush.GetWorkingPlane(pn, pd);
-	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, -pd);
+	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
 
 	activeStroke->updateStroke(tpi);
 }

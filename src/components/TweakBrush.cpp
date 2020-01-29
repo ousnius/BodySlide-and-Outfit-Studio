@@ -850,6 +850,8 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Twe
 		for (int p = 0; p < meshCache->nCachedPointsM; p++) {
 			int i = meshCache->cachedPointsM[p];
 			vs = startState[i];
+			if (mpick.origin.DistanceTo(vs) > pick.origin.DistanceTo(vs))
+				continue;
 			ve = xformMirror * vs;
 			ve -= vs;
 			applyFalloff(ve, mpick.origin.DistanceTo(vs));
@@ -866,6 +868,8 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Twe
 	for (int p = 0; p < meshCache->nCachedPoints; p++) {
 		int i = meshCache->cachedPoints[p];
 		vs = startState[i];
+		if (bMirror && pick.origin.DistanceTo(vs) > mpick.origin.DistanceTo(vs))
+			continue;
 		ve = xform * vs;
 		ve -= vs;
 		applyFalloff(ve, pick.origin.DistanceTo(vs));
