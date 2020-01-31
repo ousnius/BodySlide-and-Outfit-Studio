@@ -2048,24 +2048,16 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo)
 		if (tsh->brushType == TBT_WEIGHT) {
 			for (auto &mit : tsh->tss) {
 				mesh *m = mit.first;
-				auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, activeBone);
-				if (!weights)
-					continue;
-
-				if (bIsUndo) {
-					for (auto &p : mit.second.pointStartState) {
-						if (p.second.y == 0.0f)
+				for (auto &bw : mit.second.boneWeights) {
+					if (bw.weights.empty()) continue;
+					auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, bw.boneName);
+					if (!weights) continue;
+					for (auto &p : bw.weights) {
+						float val = bIsUndo ? p.second.startVal : p.second.endVal;
+						if (val == 0.0f)
 							weights->erase(p.first);
 						else
-							(*weights)[p.first] = p.second.y;
-					}
-				}
-				else {
-					for (auto &p : mit.second.pointEndState) {
-						if (p.second.y == 0.0f)
-							weights->erase(p.first);
-						else
-							(*weights)[p.first] = p.second.y;
+							(*weights)[p.first] = val;
 					}
 				}
 			}
@@ -8410,18 +8402,27 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		}
 	}
 	else if (activeBrush == &weightBrush) {
+		std::vector<std::string> activeBones, brushBones;
+		os->project->GetActiveBones(activeBones);
+		brushBones.push_back(os->GetActiveBone());
+		for (auto &bone : activeBones)
+			if (bone != os->GetActiveBone())
+				brushBones.push_back(bone);
 		if (wxGetKeyState(WXK_ALT)) {
-			unweightBrush.refBone = os->GetActiveBone();
+			unweightBrush.animInfo = os->project->GetWorkAnim();
+			unweightBrush.boneNames = brushBones;
 			unweightBrush.setStrength(-weightBrush.getStrength());
 			activeBrush = &unweightBrush;
 		}
 		else if (wxGetKeyState(WXK_SHIFT)) {
-			smoothWeightBrush.refBone = os->GetActiveBone();
+			smoothWeightBrush.animInfo = os->project->GetWorkAnim();
+			smoothWeightBrush.boneNames = brushBones;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
 			activeBrush = &smoothWeightBrush;
 		}
 		else {
-			weightBrush.refBone = os->GetActiveBone();
+			weightBrush.animInfo = os->project->GetWorkAnim();
+			weightBrush.boneNames = brushBones;
 		}
 	}
 	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {

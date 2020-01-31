@@ -73,9 +73,19 @@ enum TweakBrushType {
 	TBT_XFORM
 };
 
+struct TweakVertexWeight {
+	float startVal, endVal;
+};
+
+struct TweakBoneWeights {
+	std::string boneName;
+	std::unordered_map<ushort, TweakVertexWeight> weights;
+};
+
 struct TweakState {
 	std::unordered_map<int, Vector3> pointStartState;
 	std::unordered_map<int, Vector3> pointEndState;
+	std::vector<TweakBoneWeights> boneWeights;
 	std::shared_ptr<AABBTree> startBVH;
 	std::shared_ptr<AABBTree> endBVH;
 	std::unordered_set<AABBTree::AABBTreeNode*> affectedNodes;
@@ -196,6 +206,7 @@ public:
 	// Standard falloff function, used by most brushes
 	// y = (cos((pi/2)*x) * sqrt(cos((pi/2)*x))) ^ focus
 	// Focus values between 0 and 1 give a spherical curve, values over 1 give a peaked curve.
+	virtual float getFalloff(float dist);
 	virtual void applyFalloff(Vector3& deltaVec, float dist);
 
 	// Get the list of points, facets and BVH nodes within the brush sphere of influence.
@@ -233,8 +244,6 @@ public:
 
 class TB_SmoothMask : public TweakBrush {
 public:
-	std::string refBone;
-	int iterations;
 	byte method;				// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
@@ -258,9 +267,7 @@ public:
 
 
 // Smooth brush implementing a laplacian smooth function with HC-Smooth modifier.
-// Default is 2 iterations but can be configured for more or less.
 class TB_Smooth : public TweakBrush {
-	int iterations;
 	byte method;				// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
@@ -339,10 +346,14 @@ public:
 	}
 };
 
+class AnimInfo;
+
 class TB_Weight : public TweakBrush {
 public:
-	std::string refBone;
 	bool bFixedWeight;
+	AnimInfo *animInfo;
+	// boneNames: first is bone being edited; rest are balance
+	std::vector<std::string> boneNames;
 
 	TB_Weight();
 	virtual ~TB_Weight();
@@ -352,7 +363,9 @@ public:
 
 class TB_Unweight : public TweakBrush {
 public:
-	std::string refBone;
+	AnimInfo *animInfo;
+	// boneNames: first is bone being edited; rest are balance
+	std::vector<std::string> boneNames;
 
 	TB_Unweight();
 	virtual ~TB_Unweight();
@@ -362,14 +375,15 @@ public:
 
 class TB_SmoothWeight : public TweakBrush {
 public:
-	std::string refBone;
-	int iterations;
+	AnimInfo *animInfo;
+	// boneNames: first is bone being edited; rest are balance
+	std::vector<std::string> boneNames;
 	byte method;				// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
 
-	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, TweakState &ts);
+	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv);
+	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, TweakState &ts);
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
