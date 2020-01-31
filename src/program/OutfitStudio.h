@@ -748,7 +748,6 @@ public:
 	wxTreeItemId bonesRoot;
 	wxTreeItemId segmentRoot;
 	wxTreeItemId partitionRoot;
-	wxImageList* visStateImages;
 
 	class SliderDisplay {
 	public:
@@ -795,6 +794,7 @@ public:
 	void ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo = false);
 	void UpdateActiveShapeUI();
 	void HighlightBoneNamesWithWeights();
+	void GetNormalizeBones(std::vector<std::string> *normBones, std::vector<std::string> *notNormBones);
 
 	void ShowSegment(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
 	void UpdateSegmentNames();
@@ -1065,6 +1065,8 @@ private:
 	void OnShapeDrop(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 
+	void ToggleBoneState(wxTreeItemId firstItem = wxTreeItemId());
+	void OnBoneStateToggle(wxTreeEvent& event);
 	void OnBoneSelect(wxTreeEvent& event);
 	void OnBoneContext(wxTreeEvent& event);
 	void OnBoneTreeContext(wxCommandEvent& event);
