@@ -64,9 +64,12 @@ std::string OutfitProject::Save(const wxString& strFileName,
 	outSet.SetOutputFile(gameFile);
 	outSet.SetGenWeights(genWeights);
 
+	wxString sliderSetsStr = "SliderSets";
+	sliderSetsStr.Append(PathSepChar);
+
 	wxString ssFileName = strFileName;
-	if (ssFileName.Find("SliderSets/") == wxNOT_FOUND)
-		ssFileName = ssFileName.Prepend("SliderSets/");
+	if (ssFileName.Find(sliderSetsStr) == wxNOT_FOUND)
+		ssFileName = ssFileName.Prepend(sliderSetsStr);
 
 	mFileName = ssFileName;
 	mOutfitName = wxString::FromUTF8(outfit);
