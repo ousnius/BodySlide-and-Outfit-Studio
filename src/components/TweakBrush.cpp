@@ -1103,7 +1103,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		}
 		// Check if normalization didn't work; if so, split the missing
 		// weight among the normalize bones.
-		if (1.0 - totW - fw - totLW > WEIGHT_EPSILON && nBones >= 2) {
+		if (1.0 - totW - fw - totLW > WEIGHT_EPSILON && nBones >= 2 && bSpreadWeight) {
 			float remainW = (1.0 - totW - fw - totLW) / (nBones - 1);
 			for (unsigned int bi = 1; bi < nBones; ++bi) {
 				auto &bw = ts.boneWeights[bi].weights;
@@ -1203,7 +1203,7 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 		}
 		// Check if normalization didn't work; if so, split the missing
 		// weight among the normalize bones.
-		if (1.0 - totW - fw - totLW > WEIGHT_EPSILON && nBones >= 2) {
+		if (1.0 - totW - fw - totLW > WEIGHT_EPSILON && nBones >= 2 && bSpreadWeight) {
 			float remainW = (1.0 - totW - fw - totLW) / (nBones - 1);
 			for (unsigned int bi = 1; bi < nBones; ++bi) {
 				auto &bw = ts.boneWeights[bi].weights;
@@ -1385,7 +1385,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 		}
 		// Check if normalization didn't work; if so, split the missing
 		// weight among the normalize bones.
-		if (1.0 - totW - fw - totLW > WEIGHT_EPSILON && nBones >= 2) {
+		if (1.0 - totW - fw - totLW > WEIGHT_EPSILON && nBones >= 2 && bSpreadWeight) {
 			float remainW = (1.0 - totW - fw - totLW) / (nBones - 1);
 			for (unsigned int bi = 1; bi < nBones; ++bi) {
 				auto &bw = ts.boneWeights[bi].weights;
