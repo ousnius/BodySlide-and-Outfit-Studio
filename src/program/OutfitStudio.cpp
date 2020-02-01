@@ -8436,7 +8436,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		for (auto &bone : normBones)
 			if (bone != activeBone)
 				brushBones.push_back(bone);
-		if (brushBones.size() > 1) {
+		bool bHasNormBones = brushBones.size() > 1;
+		if (bHasNormBones) {
 			for (auto &bone : notNormBones)
 				if (bone != activeBone)
 					lockedBones.push_back(bone);
@@ -8450,6 +8451,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			unweightBrush.animInfo = os->project->GetWorkAnim();
 			unweightBrush.boneNames = brushBones;
 			unweightBrush.lockedBoneNames = lockedBones;
+			unweightBrush.bSpreadWeight = bHasNormBones;
 			unweightBrush.setStrength(-weightBrush.getStrength());
 			activeBrush = &unweightBrush;
 		}
@@ -8457,6 +8459,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			smoothWeightBrush.animInfo = os->project->GetWorkAnim();
 			smoothWeightBrush.boneNames = brushBones;
 			smoothWeightBrush.lockedBoneNames = lockedBones;
+			smoothWeightBrush.bSpreadWeight = bHasNormBones;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
 			activeBrush = &smoothWeightBrush;
 		}
@@ -8464,6 +8467,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			weightBrush.animInfo = os->project->GetWorkAnim();
 			weightBrush.boneNames = brushBones;
 			weightBrush.lockedBoneNames = lockedBones;
+			weightBrush.bSpreadWeight = bHasNormBones;
 		}
 	}
 	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {
