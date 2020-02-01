@@ -8843,22 +8843,34 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 	return true;
 }
 
-void wxGLPanel::RestoreMode(TweakStateHolder *curState) {
+bool wxGLPanel::RestoreMode(TweakStateHolder *curState) {
+	bool modeChanged = false;
 	int brushType = curState->brushType;
-	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && (!os->bEditSlider || os->activeSlider != curState->sliderName))
+	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && os->activeSlider != curState->sliderName) {
 		os->EnterSliderEdit(curState->sliderName);
-	if (((brushType != TBT_MOVE && brushType != TBT_STANDARD) || curState->sliderName.empty()) && os->bEditSlider)
+		modeChanged = true;
+	}
+	if (((brushType != TBT_MOVE && brushType != TBT_STANDARD) || curState->sliderName.empty()) && os->bEditSlider) {
 		os->ExitSliderEdit();
-	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && !curState->sliderName.empty()) {
+		modeChanged = true;
+	}
+	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && !curState->sliderName.empty() && curState->sliderscale != os->project->SliderValue(curState->sliderName)) {
 		os->SetSliderValue(curState->sliderName, curState->sliderscale * 100);
 		os->ApplySliders();
+		modeChanged = true;
 	}
+	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && curState->sliderName.empty() && !os->project->AllSlidersZero()) {
+		os->ZeroSliders();
+		modeChanged = true;
+	}
+	return modeChanged;
 }
 
 bool wxGLPanel::UndoStroke() {
 	TweakStateHolder *curState = strokeManager.GetCurStateHolder();
 	if (curState)
-		RestoreMode(curState);
+		if (RestoreMode(curState))
+			return true;
 
 	bool ret = strokeManager.backStroke(gls.GetActiveMeshes());
 
@@ -8898,7 +8910,8 @@ bool wxGLPanel::UndoStroke() {
 bool wxGLPanel::RedoStroke() {
 	TweakStateHolder *curState = strokeManager.GetNextStateHolder();
 	if (curState)
-		RestoreMode(curState);
+		if (RestoreMode(curState))
+			return true;
 
 	bool ret = strokeManager.forwardStroke(gls.GetActiveMeshes());
 

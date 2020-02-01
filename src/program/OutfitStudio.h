@@ -176,7 +176,7 @@ public:
 
 	bool SelectVertex(const wxPoint& screenPos);
 
-	void RestoreMode(TweakStateHolder *curState);
+	bool RestoreMode(TweakStateHolder *curState);
 	bool UndoStroke();
 	bool RedoStroke();
 
@@ -772,6 +772,7 @@ public:
 
 	void SetSliderValue(int index, int val);
 	void SetSliderValue(const std::string& name, int val);
+	void ZeroSliders();
 
 	void ApplySliders(bool recalcBVH = true);
 
@@ -969,7 +970,6 @@ private:
 
 	void createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const std::string& name);
-	void ZeroSliders();
 
 	void UpdateReferenceTemplates();
 
