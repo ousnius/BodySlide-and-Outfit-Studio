@@ -150,13 +150,7 @@ public:
 	void SetSelectedShape(const std::string& shapeName);
 
 	TweakUndo* GetStrokeManager() {
-		return strokeManager;
-	}
-	void SetStrokeManager(TweakUndo* manager) {
-		if (!manager)
-			strokeManager = &baseStrokes;
-		else
-			strokeManager = manager;
+		return &strokeManager;
 	}
 
 	void SetActiveBrush(int brushID);
@@ -182,6 +176,7 @@ public:
 
 	bool SelectVertex(const wxPoint& screenPos);
 
+	bool RestoreMode(TweakStateHolder *curState);
 	bool UndoStroke();
 	bool RedoStroke();
 
@@ -652,8 +647,7 @@ private:
 	TB_XForm translateBrush;
 
 	TweakStroke* activeStroke;
-	TweakUndo* strokeManager;
-	TweakUndo baseStrokes;
+	TweakUndo strokeManager;
 
 	mesh* XMoveMesh = nullptr;
 	mesh* YMoveMesh = nullptr;
@@ -765,8 +759,6 @@ public:
 		wxStaticText* sliderName;
 		wxSlider* slider;
 		wxTextCtrl* sliderReadout;
-
-		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
 	};
 
 	std::map<std::string, SliderDisplay*> sliderDisplays;
@@ -780,6 +772,7 @@ public:
 
 	void SetSliderValue(int index, int val);
 	void SetSliderValue(const std::string& name, int val);
+	void ZeroSliders();
 
 	void ApplySliders(bool recalcBVH = true);
 
@@ -977,7 +970,6 @@ private:
 
 	void createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const std::string& name);
-	void ZeroSliders();
 
 	void UpdateReferenceTemplates();
 

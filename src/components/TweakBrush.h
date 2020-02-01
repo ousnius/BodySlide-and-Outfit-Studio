@@ -94,6 +94,11 @@ struct TweakState {
 struct TweakStateHolder {
 	TweakBrushType brushType;
 	std::unordered_map<mesh*, TweakState> tss;
+	// if brushType is TBT_MOVE or TBT_STANDARD and sliderName is not
+	// empty, this is a slider position edit rather than a base shape edit.
+	std::string sliderName;
+	// sliderscale is only set if this is a slider position edit.  Non-zero.
+	float sliderscale;
 
 	void RestoreStartState(mesh* m);
 	void RestoreEndState(mesh* m);
@@ -512,5 +517,11 @@ public:
 		if (curState == -1)
 			return nullptr;
 		return &strokes[curState]->tsh;
+	}
+
+	TweakStateHolder *GetNextStateHolder() {
+		if (curState + 1 >= static_cast<int>(strokes.size()))
+			return nullptr;
+		return &strokes[curState + 1]->tsh;
 	}
 };

@@ -1638,7 +1638,6 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 		project->ClearOutfit();
 
 		glView->Cleanup();
-		glView->SetStrokeManager(nullptr);
 		glView->GetStrokeManager()->Clear();
 
 		activeSlider.clear();
@@ -2048,11 +2047,8 @@ void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
 }
 
 void OutfitStudioFrame::ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo) {
-	if (bEditSlider) {
-		double sliderscale = project->SliderValue(activeSlider);
-		if (sliderscale == 0.0)
-			sliderscale = 1.0;
-		sliderscale = 1 / sliderscale;
+	if (!tsh->sliderName.empty()) {
+		float sliderscale = 1 / tsh->sliderscale;
 		for (auto &mit : tsh->tss) {
 			mesh *m = mit.first;
 			std::unordered_map<ushort, Vector3> strokeDiff;
@@ -2068,7 +2064,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo)
 			}
 			auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
 			if (shape)
-				project->UpdateMorphResult(shape, activeSlider, strokeDiff);
+				project->UpdateMorphResult(shape, tsh->sliderName, strokeDiff);
 		}
 	}
 	else {
@@ -2171,6 +2167,16 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 	if (sliderName.empty())
 		return;
 
+	if (bEditSlider) {
+		SliderDisplay* od = sliderDisplays[activeSlider];
+		if (od) {
+			od->sliderNameCheck->Enable(true);
+			od->btnMinus->Hide();
+			od->btnPlus->Hide();
+			od->sliderPane->Layout();
+		}
+	}
+
 	SliderDisplay* d = sliderDisplays[sliderName];
 	if (!d)
 		return;
@@ -2191,8 +2197,6 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 	d->btnMinus->Show();
 	d->btnPlus->Show();
 	d->sliderPane->Layout();
-	glView->GetStrokeManager()->PushBVH();
-	glView->SetStrokeManager(&d->sliderStrokes);
 	MenuEnterSliderEdit();
 
 	HighlightSlider(activeSlider);
@@ -2214,8 +2218,6 @@ void OutfitStudioFrame::ExitSliderEdit() {
 
 	activeSlider.clear();
 	bEditSlider = false;
-	glView->GetStrokeManager()->PushBVH();
-	glView->SetStrokeManager(nullptr);
 	MenuExitSliderEdit();
 
 	HighlightSlider(activeSlider);
@@ -2316,7 +2318,6 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearOutfit();
 	
 	glView->Cleanup();
-	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
 
 	activeSlider.clear();
@@ -2610,7 +2611,6 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearOutfit();
 
 	glView->Cleanup();
-	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
 
 	activeSlider.clear();
@@ -3144,11 +3144,9 @@ void OutfitStudioFrame::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeSlider.empty()) {
 		bEditSlider = false;
 		SliderDisplay* d = sliderDisplays[activeSlider];
-		d->sliderStrokes.Clear(); //InvalidateHistoricalBVH();
 		d->slider->SetFocus();
 		HighlightSlider("");
 		activeSlider.clear();
-		glView->SetStrokeManager(nullptr);
 	}
 }
 
@@ -3434,7 +3432,6 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 	importDialog.GetPaths(fileNames);
 
 	sliderScroll->Freeze();
-	glView->SetStrokeManager(nullptr);
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
 	activeSlider.clear();
@@ -3621,7 +3618,6 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 		project->DeleteSlider(s);
 	}
 
-	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
 
 	activeSlider.clear();
@@ -6044,7 +6040,6 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		sd.second->slider->SetValue(0);
 		SetSliderValue(sd.first, 0);
 		ShowSliderEffect(sd.first, true);
-		sd.second->sliderStrokes.Clear();
 		sd.second->slider->SetFocus();
 
 		sd.second->btnSliderEdit->Destroy();
@@ -6062,7 +6057,6 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	for (auto &e : erase)
 		sliderDisplays.erase(e);
 
-	glView->SetStrokeManager(nullptr);
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
 	activeSlider.clear();
@@ -6131,7 +6125,6 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		sd.second->slider->SetValue(0);
 		SetSliderValue(sd.first, 0);
 		ShowSliderEffect(sd.first, true);
-		sd.second->sliderStrokes.Clear();
 		sd.second->slider->SetFocus();
 
 		sd.second->btnSliderEdit->Destroy();
@@ -6149,7 +6142,6 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	for (auto &e : erase)
 		sliderDisplays.erase(e);
 
-	glView->SetStrokeManager(nullptr);
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
 	activeSlider.clear();
@@ -6490,7 +6482,6 @@ void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 		sd->slider->SetValue(0);
 		SetSliderValue(sliderName, 0);
 		ShowSliderEffect(sliderName, true);
-		sd->sliderStrokes.Clear();
 		sd->slider->SetFocus();
 
 		sd->btnSliderEdit->Destroy();
@@ -6520,7 +6511,6 @@ void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 		sliderDisplays.erase(activeSlider);
 
 		MenuExitSliderEdit();
-		glView->SetStrokeManager(nullptr);
 		activeSlider.clear();
 		bEditSlider = false;
 	}
@@ -7436,12 +7426,6 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	UpdateActiveShapeUI();
 
-	for (auto &s : sliderDisplays) {
-		glView->SetStrokeManager(&s.second->sliderStrokes);
-		glView->GetStrokeManager()->Clear();
-	}
-
-	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
 	glView->ClearActiveMask();
 	ApplySliders();
@@ -7487,12 +7471,6 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	RefreshGUIFromProj();
 	UpdateActiveShapeUI();
 
-	for (auto &s : sliderDisplays) {
-		glView->SetStrokeManager(&s.second->sliderStrokes);
-		glView->GetStrokeManager()->Clear();
-	}
-
-	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
 	glView->ClearActiveMask();
 	ApplySliders();
@@ -8172,8 +8150,6 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	bGlobalBrushCollision = true;
 
 	lastCenterDistance = 0.0f;
-
-	strokeManager = &baseStrokes;
 }
 
 wxGLPanel::~wxGLPanel() {
@@ -8530,11 +8506,18 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		}
 	}
 
-	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), activeBrush);
+	activeStroke = strokeManager.CreateStroke(gls.GetActiveMeshes(), activeBrush);
 
 	activeBrush->setConnected(bConnectedEdit);
 	activeBrush->setMirror(bXMirror);
 	activeBrush->setRadius(brushSize);
+	if (os->bEditSlider) {
+		activeStroke->tsh.sliderName = os->activeSlider;
+		float sliderscale = os->project->SliderValue(os->activeSlider);
+		if (sliderscale == 0.0)
+			sliderscale = 1.0;
+		activeStroke->tsh.sliderscale = sliderscale;
+	}
 	activeStroke->beginStroke(tpi);
 
 	if (activeBrush->Type() != TBT_MOVE)
@@ -8584,7 +8567,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		if (activeBrush->Type() == TBT_WEIGHT) {
 			std::string selectedBone = os->GetActiveBone();
 			if (!selectedBone.empty()) {
-				os->ActiveShapesUpdated(strokeManager->GetCurStateHolder(), false);
+				os->ActiveShapesUpdated(strokeManager.GetCurStateHolder(), false);
 
 				int boneScalePos = os->boneScale->GetValue();
 				if (boneScalePos != 0)
@@ -8608,7 +8591,7 @@ void wxGLPanel::EndBrushStroke() {
 
 		int brushType = activeStroke->BrushType();
 		if (brushType != TBT_MASK) {
-			os->ActiveShapesUpdated(strokeManager->GetCurStateHolder());
+			os->ActiveShapesUpdated(strokeManager.GetCurStateHolder());
 
 			if (brushType == TBT_WEIGHT) {
 				std::string selectedBone = os->GetActiveBone();
@@ -8716,7 +8699,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	else
 		return false;
 
-	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), &translateBrush);
+	activeStroke = strokeManager.CreateStroke(gls.GetActiveMeshes(), &translateBrush);
 
 	activeStroke->beginStroke(tpi);
 
@@ -8751,7 +8734,7 @@ void wxGLPanel::EndTransform() {
 	activeStroke->endStroke();
 	activeStroke = nullptr;
 
-	os->ActiveShapesUpdated(strokeManager->GetCurStateHolder());
+	os->ActiveShapesUpdated(strokeManager.GetCurStateHolder());
 	if (!os->bEditSlider) {
 		for (auto &s : os->project->GetWorkNif()->GetShapes()) {
 			os->UpdateShapeSource(s);
@@ -8793,7 +8776,7 @@ bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
 		return false;
 
 	std::vector<mesh*> strokeMeshes{ hitMesh };
-	activeStroke = strokeManager->CreateStroke(strokeMeshes, &translateBrush);
+	activeStroke = strokeManager.CreateStroke(strokeMeshes, &translateBrush);
 	activeStroke->beginStroke(tpi);
 
 	XPivotMesh->bVisible = false;
@@ -8860,22 +8843,47 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 	return true;
 }
 
-bool wxGLPanel::UndoStroke() {
-	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
-	TweakStateHolder *curState = strokeManager->GetCurStateHolder();
-	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
+bool wxGLPanel::RestoreMode(TweakStateHolder *curState) {
+	bool modeChanged = false;
+	int brushType = curState->brushType;
+	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && os->activeSlider != curState->sliderName) {
+		os->EnterSliderEdit(curState->sliderName);
+		modeChanged = true;
+	}
+	if (((brushType != TBT_MOVE && brushType != TBT_STANDARD) || curState->sliderName.empty()) && os->bEditSlider) {
+		os->ExitSliderEdit();
+		modeChanged = true;
+	}
+	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && !curState->sliderName.empty() && curState->sliderscale != os->project->SliderValue(curState->sliderName)) {
+		os->SetSliderValue(curState->sliderName, curState->sliderscale * 100);
+		os->ApplySliders();
+		modeChanged = true;
+	}
+	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && curState->sliderName.empty() && !os->project->AllSlidersZero()) {
+		os->ZeroSliders();
+		modeChanged = true;
+	}
+	return modeChanged;
+}
 
-	if (ret && curStroke && curState) {
+bool wxGLPanel::UndoStroke() {
+	TweakStateHolder *curState = strokeManager.GetCurStateHolder();
+	if (curState)
+		if (RestoreMode(curState))
+			return true;
+
+	bool ret = strokeManager.backStroke(gls.GetActiveMeshes());
+
+	if (ret && curState) {
 		int brushType = curState->brushType;
 		if (brushType != TBT_MASK) {
 			os->ActiveShapesUpdated(curState, true);
 
-			if (!os->bEditSlider && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
-				std::vector<mesh*> refMeshes = curStroke->GetRefMeshes();
-				for (auto &m : refMeshes) {
-					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
+			if (curState->sliderName.empty() && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
+				for (auto &m : curState->tss) {
+					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(m.first->shapeName);
 					if (shape)
-						os->project->UpdateShapeFromMesh(shape, m);
+						os->project->UpdateShapeFromMesh(shape, m.first);
 				}
 			}
 		}
@@ -8900,20 +8908,23 @@ bool wxGLPanel::UndoStroke() {
 }
 
 bool wxGLPanel::RedoStroke() {
-	bool ret = strokeManager->forwardStroke(gls.GetActiveMeshes());
-	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
+	TweakStateHolder *curState = strokeManager.GetNextStateHolder();
+	if (curState)
+		if (RestoreMode(curState))
+			return true;
 
-	if (ret && curStroke) {
-		int brushType = curStroke->BrushType();
+	bool ret = strokeManager.forwardStroke(gls.GetActiveMeshes());
+
+	if (ret && curState) {
+		int brushType = curState->brushType;
 		if (brushType != TBT_MASK) {
-			os->ActiveShapesUpdated(strokeManager->GetCurStateHolder());
+			os->ActiveShapesUpdated(curState);
 
-			if (!os->bEditSlider && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
-				std::vector<mesh*> refMeshes = curStroke->GetRefMeshes();
-				for (auto &m : refMeshes) {
-					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
+			if (curState->sliderName.empty() && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
+				for (auto &m : curState->tss) {
+					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(m.first->shapeName);
 					if (shape)
-						os->project->UpdateShapeFromMesh(shape, m);
+						os->project->UpdateShapeFromMesh(shape, m.first);
 				}
 			}
 		}
