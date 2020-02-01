@@ -1051,7 +1051,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 			auto &bw = ts.boneWeights[bi].weights;
 			if (bw.find(i) == bw.end()) {
 				float val = 0.0;
-				if (wPtrs[bi]->find(i) != wPtrs[bi]->end())
+				if (wPtrs[bi] && wPtrs[bi]->find(i) != wPtrs[bi]->end())
 					val = (*wPtrs[bi])[i];
 				if (val > 0.0 || bi == 0)
 					bw[i].startVal = bw[i].endVal = val;
@@ -1070,6 +1070,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		}
 		float totLW = 0.0;
 		for (unsigned int bi = 0; bi < nLBones; ++bi) {
+			if (!lWPtrs[bi]) continue;
 			auto wpit = lWPtrs[bi]->find(i);
 			if (wpit != lWPtrs[bi]->end())
 				totLW += wpit->second;
@@ -1150,7 +1151,7 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 			auto &bw = ts.boneWeights[bi].weights;
 			if (bw.find(i) == bw.end()) {
 				float val = 0.0;
-				if (wPtrs[bi]->find(i) != wPtrs[bi]->end())
+				if (wPtrs[bi] && wPtrs[bi]->find(i) != wPtrs[bi]->end())
 					val = (*wPtrs[bi])[i];
 				if (val > 0.0 || bi == 0)
 					bw[i].startVal = bw[i].endVal = val;
@@ -1169,6 +1170,7 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 		}
 		float totLW = 0.0;
 		for (unsigned int bi = 0; bi < nLBones; ++bi) {
+			if (!lWPtrs[bi]) continue;
 			auto wpit = lWPtrs[bi]->find(i);
 			if (wpit != lWPtrs[bi]->end())
 				totLW += wpit->second;
@@ -1319,7 +1321,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 			auto &bw = ts.boneWeights[bi].weights;
 			if (bw.find(i) == bw.end()) {
 				float val = 0.0;
-				if (wPtrs[bi]->find(i) != wPtrs[bi]->end())
+				if (wPtrs[bi] && wPtrs[bi]->find(i) != wPtrs[bi]->end())
 					val = (*wPtrs[bi])[i];
 				if (val > 0.0 || bi == 0)
 					bw[i].startVal = bw[i].endVal = val;
@@ -1350,6 +1352,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 		}
 		float totLW = 0.0;
 		for (unsigned int bi = 0; bi < nLBones; ++bi) {
+			if (!lWPtrs[bi]) continue;
 			auto wpit = lWPtrs[bi]->find(i);
 			if (wpit != lWPtrs[bi]->end())
 				totLW += wpit->second;
