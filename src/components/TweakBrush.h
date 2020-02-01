@@ -352,8 +352,10 @@ class TB_Weight : public TweakBrush {
 public:
 	bool bFixedWeight;
 	AnimInfo *animInfo;
-	// boneNames: first is bone being edited; rest are balance
-	std::vector<std::string> boneNames;
+	// boneNames: first is bone being edited; rest are normalize
+	std::vector<std::string> boneNames, lockedBoneNames;
+	// bSpreadWeight: if true, leftover weight is spread across normalize bones.
+	bool bSpreadWeight;
 
 	TB_Weight();
 	virtual ~TB_Weight();
@@ -364,8 +366,10 @@ public:
 class TB_Unweight : public TweakBrush {
 public:
 	AnimInfo *animInfo;
-	// boneNames: first is bone being edited; rest are balance
-	std::vector<std::string> boneNames;
+	// boneNames: first is bone being edited; rest are normalize
+	std::vector<std::string> boneNames, lockedBoneNames;
+	// bSpreadWeight: if true, leftover weight is spread across normalize bones.
+	bool bSpreadWeight;
 
 	TB_Unweight();
 	virtual ~TB_Unweight();
@@ -376,8 +380,10 @@ public:
 class TB_SmoothWeight : public TweakBrush {
 public:
 	AnimInfo *animInfo;
-	// boneNames: first is bone being edited; rest are balance
-	std::vector<std::string> boneNames;
+	// boneNames: first is bone being edited; rest are normalize
+	std::vector<std::string> boneNames, lockedBoneNames;
+	// bSpreadWeight: if true, leftover weight is spread across normalize bones.
+	bool bSpreadWeight;
 	byte method;				// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;

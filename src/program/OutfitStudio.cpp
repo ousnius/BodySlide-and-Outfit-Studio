@@ -179,7 +179,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("editUndo"), OutfitStudioFrame::OnUndo)
 	EVT_MENU(XRCID("editRedo"), OutfitStudioFrame::OnRedo)
 
-	EVT_TREE_STATE_IMAGE_CLICK(wxID_ANY, OutfitStudioFrame::OnShapeVisToggle)
+	EVT_TREE_STATE_IMAGE_CLICK(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeVisToggle)
 	EVT_TREE_SEL_CHANGING(XRCID("outfitShapes"), OutfitStudioFrame::OnCheckTreeSel)
 	EVT_TREE_SEL_CHANGED(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeSelect)
 	EVT_TREE_ITEM_ACTIVATED(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeActivated)
@@ -187,6 +187,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TREE_BEGIN_DRAG(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeDrag)
 	EVT_TREE_END_DRAG(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeDrop)
 
+	EVT_TREE_STATE_IMAGE_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneStateToggle)
 	EVT_TREE_SEL_CHANGED(XRCID("outfitBones"), OutfitStudioFrame::OnBoneSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneContext)
 	EVT_COMMAND_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneTreeContext)
@@ -801,7 +802,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
 	if (outfitShapes) {
-		visStateImages = new wxImageList(16, 16, false, 2);
+		wxImageList *visStateImages = new wxImageList(16, 16, false, 2);
 		wxBitmap visImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoVisible.png", wxBITMAP_TYPE_PNG);
 		wxBitmap invImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoInvisible.png", wxBITMAP_TYPE_PNG);
 		wxBitmap wfImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoWireframe.png", wxBITMAP_TYPE_PNG);
@@ -818,8 +819,17 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	}
 
 	outfitBones = (wxTreeCtrl*)FindWindowByName("outfitBones");
-	if (outfitBones)
+	if (outfitBones) {
+		wxBitmap noneImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoNone.png", wxBITMAP_TYPE_PNG);
+		wxBitmap changeImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoChange.png", wxBITMAP_TYPE_PNG);
+		wxImageList *boneStateImages = new wxImageList(16, 16, false, 2);
+		if (noneImg.IsOk())
+			boneStateImages->Add(noneImg);
+		if (changeImg.IsOk())
+			boneStateImages->Add(changeImg);
+		outfitBones->AssignStateImageList(boneStateImages);
 		bonesRoot = outfitBones->AddRoot("Bones");
+	}
 
 	colorSettings = (wxPanel*)FindWindowByName("colorSettings");
 
@@ -1981,6 +1991,23 @@ void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
 	}
 }
 
+void OutfitStudioFrame::GetNormalizeBones(std::vector<std::string> *normBones, std::vector<std::string> *notNormBones) {
+	wxTreeItemIdValue cookie;
+	wxTreeItemId item = outfitBones->GetFirstChild(bonesRoot, cookie);
+	while (item.IsOk()) {
+		std::string boneName = outfitBones->GetItemText(item).ToStdString();
+		if (outfitBones->GetItemState(item) == 0) {
+			if (notNormBones)
+				notNormBones->push_back(boneName);
+		}
+		else {
+			if (normBones)
+				normBones->push_back(boneName);
+		}
+		item = outfitBones->GetNextChild(bonesRoot, cookie);
+	}
+}
+
 void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
 	wxTreeItemId item;
 	wxTreeItemId subitem;
@@ -2784,8 +2811,10 @@ void OutfitStudioFrame::AnimationGUIFromProj() {
 
 	activeBone.clear();
 	project->GetActiveBones(activeBones);
-	for (auto &bone : activeBones)
-		outfitBones->AppendItem(bonesRoot, bone);
+	for (auto &bone : activeBones) {
+		wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
+		outfitBones->SetItemState(item, 0);
+	}
 }
 
 void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
@@ -3752,6 +3781,26 @@ void OutfitStudioFrame::OnShapeActivated(wxTreeEvent& event) {
 
 	wxCommandEvent evt;
 	OnShapeProperties(evt);
+}
+
+void OutfitStudioFrame::ToggleBoneState(wxTreeItemId item) {
+	if (!item.IsOk())
+		return;
+
+	int state = outfitBones->GetItemState(item);
+	switch (state) {
+	case 0:
+		outfitBones->SetItemState(item, 1);
+		break;
+	default:
+		outfitBones->SetItemState(item, 0);
+		break;
+	}
+}
+
+void OutfitStudioFrame::OnBoneStateToggle(wxTreeEvent& event) {
+	ToggleBoneState(event.GetItem());
+	event.Skip();
 }
 
 void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
@@ -7557,7 +7606,8 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Adding bone '%s' to project.", bone);
 
 			project->AddBoneRef(bone);
-			outfitBones->AppendItem(bonesRoot, bone);
+			wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
+			outfitBones->SetItemState(item, 0);
 		}
 	}
 }
@@ -7591,7 +7641,8 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 
 			wxLogMessage("Adding custom bone '%s' to project.", bone);
 			project->AddCustomBoneRef(bone.ToStdString(), translation);
-			outfitBones->AppendItem(bonesRoot, bone);
+			wxTreeItemId newItem = outfitBones->AppendItem(bonesRoot, bone);
+			outfitBones->SetItemState(newItem, 0);
 		}
 	}
 }
@@ -8402,27 +8453,45 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		}
 	}
 	else if (activeBrush == &weightBrush) {
-		std::vector<std::string> activeBones, brushBones;
-		os->project->GetActiveBones(activeBones);
-		brushBones.push_back(os->GetActiveBone());
-		for (auto &bone : activeBones)
-			if (bone != os->GetActiveBone())
+		std::vector<std::string> normBones, notNormBones, brushBones, lockedBones;
+		os->GetNormalizeBones(&normBones, &notNormBones);
+		std::string activeBone = os->GetActiveBone();
+		brushBones.push_back(activeBone);
+		for (auto &bone : normBones)
+			if (bone != activeBone)
 				brushBones.push_back(bone);
+		bool bHasNormBones = brushBones.size() > 1;
+		if (bHasNormBones) {
+			for (auto &bone : notNormBones)
+				if (bone != activeBone)
+					lockedBones.push_back(bone);
+		}
+		else {
+			for (auto &bone : notNormBones)
+				if (bone != activeBone)
+					brushBones.push_back(bone);
+		}
 		if (wxGetKeyState(WXK_ALT)) {
 			unweightBrush.animInfo = os->project->GetWorkAnim();
 			unweightBrush.boneNames = brushBones;
+			unweightBrush.lockedBoneNames = lockedBones;
+			unweightBrush.bSpreadWeight = bHasNormBones;
 			unweightBrush.setStrength(-weightBrush.getStrength());
 			activeBrush = &unweightBrush;
 		}
 		else if (wxGetKeyState(WXK_SHIFT)) {
 			smoothWeightBrush.animInfo = os->project->GetWorkAnim();
 			smoothWeightBrush.boneNames = brushBones;
+			smoothWeightBrush.lockedBoneNames = lockedBones;
+			smoothWeightBrush.bSpreadWeight = bHasNormBones;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
 			activeBrush = &smoothWeightBrush;
 		}
 		else {
 			weightBrush.animInfo = os->project->GetWorkAnim();
 			weightBrush.boneNames = brushBones;
+			weightBrush.lockedBoneNames = lockedBones;
+			weightBrush.bSpreadWeight = bHasNormBones;
 		}
 	}
 	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {
