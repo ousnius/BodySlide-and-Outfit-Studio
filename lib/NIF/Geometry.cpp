@@ -1411,8 +1411,8 @@ void BSSubIndexTriShape::Get(NiStream& stream) {
 
 			segmentation.subSegmentData.dataRecords.resize(segmentation.numTotalSegments);
 			for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
-				stream >> dataRecord.segmentUser;
-				stream >> dataRecord.unkInt2;
+				stream >> dataRecord.userSlotID;
+				stream >> dataRecord.material;
 				stream >> dataRecord.numData;
 
 				dataRecord.extraData.resize(dataRecord.numData);
@@ -1462,8 +1462,8 @@ void BSSubIndexTriShape::Put(NiStream& stream) {
 				stream << arrayIndex;
 
 			for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
-				stream << dataRecord.segmentUser;
-				stream << dataRecord.unkInt2;
+				stream << dataRecord.userSlotID;
+				stream << dataRecord.material;
 				stream << dataRecord.numData;
 
 				for (auto &data : dataRecord.extraData)

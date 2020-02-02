@@ -457,8 +457,8 @@ public:
 
 	class BSSITSSubSegmentDataRecord {
 	public:
-		uint segmentUser = 0;
-		uint unkInt2 = 0xFFFFFFFF;
+		uint userSlotID = 0;
+		uint material = 0xFFFFFFFF;
 		uint numData = 0;
 		std::vector<float> extraData;
 	};

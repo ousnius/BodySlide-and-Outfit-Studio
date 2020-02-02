@@ -87,12 +87,14 @@ public:
 class SubSegmentItemData : public wxTreeItemData  {
 public:
 	std::set<uint> tris;
-	uint type;
+	uint userSlotID;
+	uint material;
 	std::vector<float> extraData;
 
-	SubSegmentItemData(const std::set<uint>& inTriangles, const uint& inType, const std::vector<float>& inExtraData = std::vector<float>()) {
+	SubSegmentItemData(const std::set<uint>& inTriangles, const uint& inUserSlotID, const uint& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
 		tris = inTriangles;
-		type = inType;
+		userSlotID = inUserSlotID;
+		material = inMaterial;
 		extraData = inExtraData;
 	}
 };
@@ -1072,6 +1074,7 @@ private:
 	void OnAddSubSegment(wxCommandEvent& event);
 	void OnDeleteSegment(wxCommandEvent& event);
 	void OnDeleteSubSegment(wxCommandEvent& event);
+	void OnSegmentSlotChanged(wxCommandEvent& event);
 	void OnSegmentTypeChanged(wxCommandEvent& event);
 	void OnSegmentApply(wxCommandEvent& event);
 	void OnSegmentReset(wxCommandEvent& event);

@@ -664,6 +664,69 @@
 															<option>0</option>
 															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 															<border>5</border>
+															<object class="wxStaticText" name="segmentSlotLabel">
+																<fg>#ffffff</fg>
+																<label>Slot</label>
+																<hidden>1</hidden>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<border>5</border>
+															<object class="wxChoice" name="segmentSlot">
+																<selection>0</selection>
+																<content>
+																	<item>None</item>
+																	<item>30 - Hair Top</item>
+																	<item>31 - Hair Long</item>
+																	<item>32 - Head</item>
+																	<item>33 - Body</item>
+																	<item>34 - L Hand</item>
+																	<item>35 - R Hand</item>
+																	<item>36 - [U] Torso</item>
+																	<item>37 - [U] L Arm</item>
+																	<item>38 - [U] R Arm</item>
+																	<item>39 - [U] L Leg</item>
+																	<item>40 - [U] R Leg</item>
+																	<item>41 - [A] Torso</item>
+																	<item>42 - [A] L Arm</item>
+																	<item>43 - [A] R Arm</item>
+																	<item>44 - [A] L Leg</item>
+																	<item>45 - [A] R Leg</item>
+																	<item>46 - Headband</item>
+																	<item>47 - Eyes</item>
+																	<item>48 - Beard</item>
+																	<item>49 - Mouth</item>
+																	<item>50 - Neck</item>
+																	<item>51 - Ring</item>
+																	<item>52 - Scalp</item>
+																	<item>53 - Decapitation</item>
+																	<item>54 - Unnamed</item>
+																	<item>55 - Unnamed</item>
+																	<item>56 - Unnamed</item>
+																	<item>57 - Unnamed</item>
+																	<item>58 - Unnamed</item>
+																	<item>59 - Shield</item>
+																	<item>60 - Pipboy</item>
+																	<item>61 - FX</item>
+																</content>
+																<hidden>1</hidden>
+																<enabled>0</enabled>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>0</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+															<border>5</border>
 															<object class="wxStaticText" name="segmentSSFLabel">
 																<fg>#ffffff</fg>
 																<label>SSF File</label>
