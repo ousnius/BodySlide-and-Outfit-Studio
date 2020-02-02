@@ -8,7 +8,7 @@ See the included LICENSE file
 #include <vector>
 #include <memory>
 
-class UndoStateProject;
+struct UndoStateProject;
 
 class UndoHistory {
 	static constexpr int UH_MAX_UNDO = 40;
