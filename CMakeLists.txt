@@ -71,6 +71,7 @@ set(OSsources
 	src/components/RefTemplates.cpp
 	src/components/TweakBrush.cpp
 	src/components/UndoHistory.cpp
+	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
 	src/program/EditUV.cpp
 	src/program/FBXImportDialog.cpp

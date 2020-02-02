@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "TweakBrush.h"
-#include "Anim.h"
+#include "WeightNorm.h"
 
 std::vector<std::future<void>> TweakStroke::normalUpdates{};
 
@@ -896,8 +896,6 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Un
 	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
-constexpr double WEIGHT_EPSILON = .001;
-
 TB_Weight::TB_Weight() :TweakBrush() {
 	brushType = TBT_WEIGHT;
 	strength = 0.0015f;
@@ -911,91 +909,19 @@ TB_Weight::~TB_Weight() {
 }
 
 void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
-	const unsigned int nBones = boneNames.size();
-	const unsigned int nLBones = lockedBoneNames.size();
-	// Create uss.boneWeights if necessary
-	if (uss.boneWeights.size() != nBones) {
-		uss.boneWeights.resize(nBones);
-		for (unsigned int bi = 0; bi < nBones; ++bi)
-			uss.boneWeights[bi].boneName = boneNames[bi];
-	}
-	// Stash weights pointers so we don't look them up over and over.
-	std::vector<std::unordered_map<ushort, float>*> wPtrs(nBones), lWPtrs(nLBones);
-	for (unsigned int bi = 0; bi < nBones; ++bi)
-		wPtrs[bi] = animInfo->GetWeightsPtr(refmesh->shapeName, boneNames[bi]);
-	for (unsigned int bi = 0; bi < nLBones; ++bi)
-		lWPtrs[bi] = animInfo->GetWeightsPtr(refmesh->shapeName, lockedBoneNames[bi]);
-	// Fill in uss start and end values for vertices that don't have them yet
+	BoneWeightAutoNormalizer nzer;
+	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bSpreadWeight);
+	nzer.GrabStartingWeights(points, nPoints);
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		for (unsigned int bi = 0; bi < nBones; ++bi) {
-			auto &bw = uss.boneWeights[bi].weights;
-			if (bw.find(i) == bw.end()) {
-				float val = 0.0;
-				if (wPtrs[bi] && wPtrs[bi]->find(i) != wPtrs[bi]->end())
-					val = (*wPtrs[bi])[i];
-				if (val > 0.0 || bi == 0)
-					bw[i].startVal = bw[i].endVal = val;
-			}
-		}
-	}
-
-	for (int pi = 0; pi < nPoints; pi++) {
-		int i = points[pi];
-		// Calculate total locked and normalizable weight
-		float totW = 0.0;
-		for (unsigned int bi = 1; bi < nBones; ++bi) {
-			auto &bw = uss.boneWeights[bi].weights;
-			if (bw.find(i) != bw.end())
-				totW += bw[i].endVal;
-		}
-		float totLW = 0.0;
-		for (unsigned int bi = 0; bi < nLBones; ++bi) {
-			if (!lWPtrs[bi]) continue;
-			auto wpit = lWPtrs[bi]->find(i);
-			if (wpit != lWPtrs[bi]->end())
-				totLW += wpit->second;
-		}
-		// Calculate available weight
-		if (totLW < WEIGHT_EPSILON) totLW = 0.0;
-		float availW = 1.0 - totLW;
-		if (availW < WEIGHT_EPSILON) availW = 0.0;
-		// Calculate result
 		float sw = uss.boneWeights[0].weights[i].endVal;
 		float ew = bFixedWeight ? strength * 10.0f - sw : strength;
 		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
 		ew *= 1.0f - refmesh->vcolors[i].x;
 		float fw = sw + ew;
-		if (fw < WEIGHT_EPSILON) fw = 0.0;
-		if (fw > availW) fw = availW;
-		if (fw - 1.0 > -WEIGHT_EPSILON) fw = 1.0;
-		uss.boneWeights[0].weights[i].endVal = refmesh->vcolors[i].y = fw;
-		// Normalize
-		float redFac = totW <= WEIGHT_EPSILON ? 0.0 : (availW - fw) / totW;
-		totW = 0.0;
-		for (unsigned int bi = 1; bi < nBones; ++bi) {
-			auto owi = uss.boneWeights[bi].weights.find(i);
-			if (owi == uss.boneWeights[bi].weights.end()) continue;
-			float &ow = owi->second.endVal;
-			ow *= redFac;
-			if (ow < WEIGHT_EPSILON) ow = 0.0;
-			if (ow - 1.0 > -WEIGHT_EPSILON) ow = 1.0;
-			totW += ow;
-		}
-		// Check if normalization didn't work; if so, split the missing
-		// weight among the normalize bones.
-		if (1.0 - totW - fw - totLW > WEIGHT_EPSILON && nBones >= 2 && bSpreadWeight) {
-			float remainW = (1.0 - totW - fw - totLW) / (nBones - 1);
-			for (unsigned int bi = 1; bi < nBones; ++bi) {
-				auto &bw = uss.boneWeights[bi].weights;
-				auto owi = bw.find(i);
-				if (owi == bw.end())
-					bw[i].startVal = bw[i].endVal = 0.0;
-				bw[i].endVal += remainW;
-			}
-		}
+		fw = nzer.SetWeight(0, i, fw);
+		refmesh->vcolors[i].y = fw;
 	}
-
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
@@ -1011,91 +937,19 @@ TB_Unweight::~TB_Unweight() {
 }
 
 void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
-	const unsigned int nBones = boneNames.size();
-	const unsigned int nLBones = lockedBoneNames.size();
-	// Create uss.boneWeights if necessary
-	if (uss.boneWeights.size() != nBones) {
-		uss.boneWeights.resize(nBones);
-		for (unsigned int bi = 0; bi < nBones; ++bi)
-			uss.boneWeights[bi].boneName = boneNames[bi];
-	}
-	// Stash weights pointers so we don't look them up over and over.
-	std::vector<std::unordered_map<ushort, float>*> wPtrs(nBones), lWPtrs(nLBones);
-	for (unsigned int bi = 0; bi < nBones; ++bi)
-		wPtrs[bi] = animInfo->GetWeightsPtr(refmesh->shapeName, boneNames[bi]);
-	for (unsigned int bi = 0; bi < nLBones; ++bi)
-		lWPtrs[bi] = animInfo->GetWeightsPtr(refmesh->shapeName, lockedBoneNames[bi]);
-	// Fill in uss start and end values for vertices that don't have them yet
+	BoneWeightAutoNormalizer nzer;
+	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bSpreadWeight);
+	nzer.GrabStartingWeights(points, nPoints);
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		for (unsigned int bi = 0; bi < nBones; ++bi) {
-			auto &bw = uss.boneWeights[bi].weights;
-			if (bw.find(i) == bw.end()) {
-				float val = 0.0;
-				if (wPtrs[bi] && wPtrs[bi]->find(i) != wPtrs[bi]->end())
-					val = (*wPtrs[bi])[i];
-				if (val > 0.0 || bi == 0)
-					bw[i].startVal = bw[i].endVal = val;
-			}
-		}
-	}
-
-	for (int pi = 0; pi < nPoints; pi++) {
-		int i = points[pi];
-		// Calculate total locked and normalizable weight
-		float totW = 0.0;
-		for (unsigned int bi = 1; bi < nBones; ++bi) {
-			auto &bw = uss.boneWeights[bi].weights;
-			if (bw.find(i) != bw.end())
-				totW += bw[i].endVal;
-		}
-		float totLW = 0.0;
-		for (unsigned int bi = 0; bi < nLBones; ++bi) {
-			if (!lWPtrs[bi]) continue;
-			auto wpit = lWPtrs[bi]->find(i);
-			if (wpit != lWPtrs[bi]->end())
-				totLW += wpit->second;
-		}
-		// Calculate available weight
-		if (totLW < WEIGHT_EPSILON) totLW = 0.0;
-		float availW = 1.0 - totLW;
-		if (availW < WEIGHT_EPSILON) availW = 0.0;
-		// Calculate result
 		float sw = uss.boneWeights[0].weights[i].endVal;
 		float ew = strength;
 		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
 		ew *= 1.0f - refmesh->vcolors[i].x;
 		float fw = sw + ew;
-		if (fw < WEIGHT_EPSILON) fw = 0.0;
-		if (fw > availW) fw = availW;
-		if (fw - 1.0 > -WEIGHT_EPSILON) fw = 1.0;
-		uss.boneWeights[0].weights[i].endVal = refmesh->vcolors[i].y = fw;
-		// Normalize
-		float redFac = totW <= WEIGHT_EPSILON ? 0.0 : (availW - fw) / totW;
-		totW = 0.0;
-		for (unsigned int bi = 1; bi < nBones; ++bi) {
-			auto owi = uss.boneWeights[bi].weights.find(i);
-			if (owi == uss.boneWeights[bi].weights.end()) continue;
-			float &ow = owi->second.endVal;
-			ow *= redFac;
-			if (ow < WEIGHT_EPSILON) ow = 0.0;
-			if (ow - 1.0 > -WEIGHT_EPSILON) ow = 1.0;
-			totW += ow;
-		}
-		// Check if normalization didn't work; if so, split the missing
-		// weight among the normalize bones.
-		if (1.0 - totW - fw - totLW > WEIGHT_EPSILON && nBones >= 2 && bSpreadWeight) {
-			float remainW = (1.0 - totW - fw - totLW) / (nBones - 1);
-			for (unsigned int bi = 1; bi < nBones; ++bi) {
-				auto &bw = uss.boneWeights[bi].weights;
-				auto owi = bw.find(i);
-				if (owi == bw.end())
-					bw[i].startVal = bw[i].endVal = 0.0;
-				bw[i].endVal += remainW;
-			}
-		}
+		fw = nzer.SetWeight(0, i, fw);
+		refmesh->vcolors[i].y = fw;
 	}
-
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
@@ -1181,34 +1035,9 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints,
 }
 
 void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
-	const unsigned int nBones = boneNames.size();
-	const unsigned int nLBones = lockedBoneNames.size();
-	// Create uss.boneWeights if necessary
-	if (uss.boneWeights.size() != nBones) {
-		uss.boneWeights.resize(nBones);
-		for (unsigned int bi = 0; bi < nBones; ++bi)
-			uss.boneWeights[bi].boneName = boneNames[bi];
-	}
-	// Stash weights pointers so we don't look them up over and over.
-	std::vector<std::unordered_map<ushort, float>*> wPtrs(nBones), lWPtrs(nLBones);
-	for (unsigned int bi = 0; bi < nBones; ++bi)
-		wPtrs[bi] = animInfo->GetWeightsPtr(refmesh->shapeName, boneNames[bi]);
-	for (unsigned int bi = 0; bi < nLBones; ++bi)
-		lWPtrs[bi] = animInfo->GetWeightsPtr(refmesh->shapeName, lockedBoneNames[bi]);
-	// Fill in uss start and end values for vertices that don't have them yet
-	for (int pi = 0; pi < nPoints; pi++) {
-		int i = points[pi];
-		for (unsigned int bi = 0; bi < nBones; ++bi) {
-			auto &bw = uss.boneWeights[bi].weights;
-			if (bw.find(i) == bw.end()) {
-				float val = 0.0;
-				if (wPtrs[bi] && wPtrs[bi]->find(i) != wPtrs[bi]->end())
-					val = (*wPtrs[bi])[i];
-				if (val > 0.0 || bi == 0)
-					bw[i].startVal = bw[i].endVal = val;
-			}
-		}
-	}
+	BoneWeightAutoNormalizer nzer;
+	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bSpreadWeight);
+	nzer.GrabStartingWeights(points, nPoints);
 
 	// Copy previous iteration's results into wv
 	std::unordered_map<int, float> wv;
@@ -1224,60 +1053,14 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		// Calculate total locked and normalizable weight
-		float totW = 0.0;
-		for (unsigned int bi = 1; bi < nBones; ++bi) {
-			auto &bw = uss.boneWeights[bi].weights;
-			if (bw.find(i) != bw.end())
-				totW += bw[i].endVal;
-		}
-		float totLW = 0.0;
-		for (unsigned int bi = 0; bi < nLBones; ++bi) {
-			if (!lWPtrs[bi]) continue;
-			auto wpit = lWPtrs[bi]->find(i);
-			if (wpit != lWPtrs[bi]->end())
-				totLW += wpit->second;
-		}
-		// Calculate available weight
-		if (totLW < WEIGHT_EPSILON) totLW = 0.0;
-		float availW = 1.0 - totLW;
-		if (availW < WEIGHT_EPSILON) availW = 0.0;
-		// Calculate result
 		float sw = uss.boneWeights[0].weights[i].endVal;
 		float ew = wv[i] - sw;
 		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
 		ew *= 1.0f - refmesh->vcolors[i].x;
 		float fw = sw + ew;
-		if (fw < WEIGHT_EPSILON) fw = 0.0;
-		if (fw - 1.0 > -WEIGHT_EPSILON) fw = 1.0;
-		if (fw > availW) fw = availW;
-		uss.boneWeights[0].weights[i].endVal = refmesh->vcolors[i].y = fw;
-		// Normalize
-		float redFac = totW <= WEIGHT_EPSILON ? 0.0 : (availW - fw) / totW;
-		totW = 0.0;
-		for (unsigned int bi = 1; bi < nBones; ++bi) {
-			auto owi = uss.boneWeights[bi].weights.find(i);
-			if (owi == uss.boneWeights[bi].weights.end()) continue;
-			float &ow = owi->second.endVal;
-			ow *= redFac;
-			if (ow < WEIGHT_EPSILON) ow = 0.0;
-			if (ow - 1.0 > -WEIGHT_EPSILON) ow = 1.0;
-			totW += ow;
-		}
-		// Check if normalization didn't work; if so, split the missing
-		// weight among the normalize bones.
-		if (1.0 - totW - fw - totLW > WEIGHT_EPSILON && nBones >= 2 && bSpreadWeight) {
-			float remainW = (1.0 - totW - fw - totLW) / (nBones - 1);
-			for (unsigned int bi = 1; bi < nBones; ++bi) {
-				auto &bw = uss.boneWeights[bi].weights;
-				auto owi = bw.find(i);
-				if (owi == bw.end())
-					bw[i].startVal = bw[i].endVal = 0.0;
-				bw[i].endVal += remainW;
-			}
-		}
+		fw = nzer.SetWeight(0, i, fw);
+		refmesh->vcolors[i].y = fw;
 	}
-
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
