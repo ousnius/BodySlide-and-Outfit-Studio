@@ -70,6 +70,7 @@ set(OSsources
 	${commonsources}
 	src/components/RefTemplates.cpp
 	src/components/TweakBrush.cpp
+	src/components/UndoHistory.cpp
 	src/files/FBXWrangler.cpp
 	src/program/EditUV.cpp
 	src/program/FBXImportDialog.cpp

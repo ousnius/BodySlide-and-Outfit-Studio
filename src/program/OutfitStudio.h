@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../ui/wxStateButton.h"
 #include "../render/GLSurface.h"
 #include "../components/TweakBrush.h"
+#include "../components/UndoHistory.h"
 #include "../components/Automorph.h"
 #include "../components/RefTemplates.h"
 #include "../utils/Log.h"
@@ -149,8 +150,8 @@ public:
 	void SetActiveShapes(const std::vector<std::string>& shapeNames);
 	void SetSelectedShape(const std::string& shapeName);
 
-	TweakUndo* GetStrokeManager() {
-		return &strokeManager;
+	UndoHistory* GetUndoHistory() {
+		return &undoHistory;
 	}
 
 	void SetActiveBrush(int brushID);
@@ -176,7 +177,8 @@ public:
 
 	bool SelectVertex(const wxPoint& screenPos);
 
-	bool RestoreMode(TweakStateHolder *curState);
+	bool RestoreMode(UndoStateProject *usp);
+	void ApplyUndoState(UndoStateProject *usp, bool bUndo);
 	bool UndoStroke();
 	bool RedoStroke();
 
@@ -646,8 +648,8 @@ private:
 	TB_Unalpha unalphaBrush;
 	TB_XForm translateBrush;
 
-	TweakStroke* activeStroke;
-	TweakUndo strokeManager;
+	std::unique_ptr<TweakStroke> activeStroke;
+	UndoHistory undoHistory;
 
 	mesh* XMoveMesh = nullptr;
 	mesh* YMoveMesh = nullptr;
@@ -784,7 +786,7 @@ public:
 
 	void UpdateShapeSource(NiShape* shape);
 
-	void ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo = false);
+	void ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo = false);
 	void UpdateActiveShapeUI();
 	void HighlightBoneNamesWithWeights();
 	void GetNormalizeBones(std::vector<std::string> *normBones, std::vector<std::string> *notNormBones);
