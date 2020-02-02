@@ -691,6 +691,12 @@
     <ClInclude Include="src\components\TweakBrush.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\UndoState.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\UndoHistory.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\Automorph.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -1825,6 +1831,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\TweakBrush.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\UndoHistory.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\components\Automorph.cpp">

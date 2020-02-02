@@ -751,6 +751,8 @@
     <ClInclude Include="src\components\SliderPresets.h" />
     <ClInclude Include="src\components\SliderSet.h" />
     <ClInclude Include="src\components\TweakBrush.h" />
+    <ClInclude Include="src\components\UndoState.h" />
+    <ClInclude Include="src\components\UndoHistory.h" />
     <ClInclude Include="src\files\FBXWrangler.h" />
     <ClInclude Include="src\files\MaterialFile.h" />
     <ClInclude Include="src\files\ObjFile.h" />
@@ -817,6 +819,7 @@
     <ClCompile Include="src\components\SliderPresets.cpp" />
     <ClCompile Include="src\components\SliderSet.cpp" />
     <ClCompile Include="src\components\TweakBrush.cpp" />
+    <ClCompile Include="src\components\UndoHistory.cpp" />
     <ClCompile Include="src\files\FBXWrangler.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />

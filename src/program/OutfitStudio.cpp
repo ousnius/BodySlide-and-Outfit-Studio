@@ -1638,7 +1638,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 		project->ClearOutfit();
 
 		glView->Cleanup();
-		glView->GetStrokeManager()->Clear();
+		glView->GetUndoHistory()->ClearHistory();
 
 		activeSlider.clear();
 		bEditSlider = false;
@@ -2046,10 +2046,10 @@ void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
 	project->UpdateShapeFromMesh(shape, glView->GetMesh(shape->GetName()));
 }
 
-void OutfitStudioFrame::ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo) {
-	if (!tsh->sliderName.empty()) {
-		float sliderscale = 1 / tsh->sliderscale;
-		for (auto &mit : tsh->tss) {
+void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo) {
+	if (!usp->sliderName.empty()) {
+		float sliderscale = 1 / usp->sliderscale;
+		for (auto &mit : usp->usss) {
 			mesh *m = mit.first;
 			std::unordered_map<ushort, Vector3> strokeDiff;
 
@@ -2064,12 +2064,12 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo)
 			}
 			auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
 			if (shape)
-				project->UpdateMorphResult(shape, tsh->sliderName, strokeDiff);
+				project->UpdateMorphResult(shape, usp->sliderName, strokeDiff);
 		}
 	}
 	else {
-		if (tsh->brushType == TBT_WEIGHT) {
-			for (auto &mit : tsh->tss) {
+		if (usp->undoType == UT_WEIGHT) {
+			for (auto &mit : usp->usss) {
 				mesh *m = mit.first;
 				for (auto &bw : mit.second.boneWeights) {
 					if (bw.weights.empty()) continue;
@@ -2085,8 +2085,8 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo)
 				}
 			}
 		}
-		else if (tsh->brushType == TBT_COLOR) {
-			for (auto &mit : tsh->tss) {
+		else if (usp->undoType == UT_COLOR) {
+			for (auto &mit : usp->usss) {
 				mesh *m = mit.first;
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
@@ -2112,8 +2112,8 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStateHolder *tsh, bool bIsUndo)
 				project->GetWorkNif()->SetColorsForShape(m->shapeName, vcolors);
 			}
 		}
-		else if (tsh->brushType == TBT_ALPHA) {
-			for (auto &mit : tsh->tss) {
+		else if (usp->undoType == UT_ALPHA) {
+			for (auto &mit : usp->usss) {
 				mesh *m = mit.first;
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
@@ -2318,7 +2318,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearOutfit();
 	
 	glView->Cleanup();
-	glView->GetStrokeManager()->Clear();
+	glView->GetUndoHistory()->ClearHistory();
 
 	activeSlider.clear();
 	bEditSlider = false;
@@ -2611,7 +2611,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearOutfit();
 
 	glView->Cleanup();
-	glView->GetStrokeManager()->Clear();
+	glView->GetUndoHistory()->ClearHistory();
 
 	activeSlider.clear();
 	bEditSlider = false;
@@ -3618,7 +3618,7 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 		project->DeleteSlider(s);
 	}
 
-	glView->GetStrokeManager()->Clear();
+	glView->GetUndoHistory()->ClearHistory();
 
 	activeSlider.clear();
 	bEditSlider = false;
@@ -3808,7 +3808,7 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 		return;
 
 	// Clear history
-	glView->GetStrokeManager()->Clear();
+	glView->GetUndoHistory()->ClearHistory();
 
 	// Clear vcolors of all shapes
 	for (auto &s : project->GetWorkNif()->GetShapeNames()) {
@@ -7426,7 +7426,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	UpdateActiveShapeUI();
 
-	glView->GetStrokeManager()->Clear();
+	glView->GetUndoHistory()->ClearHistory();
 	glView->ClearActiveMask();
 	ApplySliders();
 }
@@ -7471,7 +7471,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	RefreshGUIFromProj();
 	UpdateActiveShapeUI();
 
-	glView->GetStrokeManager()->Clear();
+	glView->GetUndoHistory()->ClearHistory();
 	glView->ClearActiveMask();
 	ApplySliders();
 }
@@ -8506,17 +8506,17 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		}
 	}
 
-	activeStroke = strokeManager.CreateStroke(gls.GetActiveMeshes(), activeBrush);
+	activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), activeBrush, *undoHistory.PushState());
 
 	activeBrush->setConnected(bConnectedEdit);
 	activeBrush->setMirror(bXMirror);
 	activeBrush->setRadius(brushSize);
 	if (os->bEditSlider) {
-		activeStroke->tsh.sliderName = os->activeSlider;
+		activeStroke->usp.sliderName = os->activeSlider;
 		float sliderscale = os->project->SliderValue(os->activeSlider);
 		if (sliderscale == 0.0)
 			sliderscale = 1.0;
-		activeStroke->tsh.sliderscale = sliderscale;
+		activeStroke->usp.sliderscale = sliderscale;
 	}
 	activeStroke->beginStroke(tpi);
 
@@ -8567,7 +8567,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		if (activeBrush->Type() == TBT_WEIGHT) {
 			std::string selectedBone = os->GetActiveBone();
 			if (!selectedBone.empty()) {
-				os->ActiveShapesUpdated(strokeManager.GetCurStateHolder(), false);
+				os->ActiveShapesUpdated(undoHistory.GetCurState(), false);
 
 				int boneScalePos = os->boneScale->GetValue();
 				if (boneScalePos != 0)
@@ -8591,7 +8591,7 @@ void wxGLPanel::EndBrushStroke() {
 
 		int brushType = activeStroke->BrushType();
 		if (brushType != TBT_MASK) {
-			os->ActiveShapesUpdated(strokeManager.GetCurStateHolder());
+			os->ActiveShapesUpdated(undoHistory.GetCurState());
 
 			if (brushType == TBT_WEIGHT) {
 				std::string selectedBone = os->GetActiveBone();
@@ -8699,7 +8699,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	else
 		return false;
 
-	activeStroke = strokeManager.CreateStroke(gls.GetActiveMeshes(), &translateBrush);
+	activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), &translateBrush, *undoHistory.PushState());
 
 	activeStroke->beginStroke(tpi);
 
@@ -8734,7 +8734,7 @@ void wxGLPanel::EndTransform() {
 	activeStroke->endStroke();
 	activeStroke = nullptr;
 
-	os->ActiveShapesUpdated(strokeManager.GetCurStateHolder());
+	os->ActiveShapesUpdated(undoHistory.GetCurState());
 	if (!os->bEditSlider) {
 		for (auto &s : os->project->GetWorkNif()->GetShapes()) {
 			os->UpdateShapeSource(s);
@@ -8776,7 +8776,7 @@ bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
 		return false;
 
 	std::vector<mesh*> strokeMeshes{ hitMesh };
-	activeStroke = strokeManager.CreateStroke(strokeMeshes, &translateBrush);
+	activeStroke = std::make_unique<TweakStroke>(strokeMeshes, &translateBrush, *undoHistory.PushState());
 	activeStroke->beginStroke(tpi);
 
 	XPivotMesh->bVisible = false;
@@ -8804,9 +8804,9 @@ void wxGLPanel::EndPivotPosition() {
 	std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
 	if (refMeshes.size() > 0) {
 		mesh* pivotHitMesh = refMeshes[0];
-		auto pivotState = activeStroke->tsh.tss.find(pivotHitMesh);
+		auto pivotState = activeStroke->usp.usss.find(pivotHitMesh);
 
-		if (pivotState != activeStroke->tsh.tss.end()) {
+		if (pivotState != activeStroke->usp.usss.end()) {
 			if (pivotState->second.pointStartState.size() > 0 && pivotState->second.pointEndState.size() > 0) {
 				Vector3& pivotStartStatePos = pivotState->second.pointStartState[0];
 				Vector3& pivotEndStatePos = pivotState->second.pointEndState[0];
@@ -8843,58 +8843,86 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 	return true;
 }
 
-bool wxGLPanel::RestoreMode(TweakStateHolder *curState) {
+bool wxGLPanel::RestoreMode(UndoStateProject *usp) {
 	bool modeChanged = false;
-	int brushType = curState->brushType;
-	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && os->activeSlider != curState->sliderName) {
-		os->EnterSliderEdit(curState->sliderName);
+	int undoType = usp->undoType;
+	if (undoType == UT_VERTPOS  && os->activeSlider != usp->sliderName) {
+		os->EnterSliderEdit(usp->sliderName);
 		modeChanged = true;
 	}
-	if (((brushType != TBT_MOVE && brushType != TBT_STANDARD) || curState->sliderName.empty()) && os->bEditSlider) {
+	if ((undoType != UT_VERTPOS || usp->sliderName.empty()) && os->bEditSlider) {
 		os->ExitSliderEdit();
 		modeChanged = true;
 	}
-	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && !curState->sliderName.empty() && curState->sliderscale != os->project->SliderValue(curState->sliderName)) {
-		os->SetSliderValue(curState->sliderName, curState->sliderscale * 100);
+	if (undoType == UT_VERTPOS && !usp->sliderName.empty() && usp->sliderscale != os->project->SliderValue(usp->sliderName)) {
+		os->SetSliderValue(usp->sliderName, usp->sliderscale * 100);
 		os->ApplySliders();
 		modeChanged = true;
 	}
-	if ((brushType == TBT_MOVE || brushType == TBT_STANDARD) && curState->sliderName.empty() && !os->project->AllSlidersZero()) {
+	if (undoType == UT_VERTPOS && usp->sliderName.empty() && !os->project->AllSlidersZero()) {
 		os->ZeroSliders();
 		modeChanged = true;
 	}
 	return modeChanged;
 }
 
-bool wxGLPanel::UndoStroke() {
-	TweakStateHolder *curState = strokeManager.GetCurStateHolder();
-	if (curState)
-		if (RestoreMode(curState))
-			return true;
-
-	bool ret = strokeManager.backStroke(gls.GetActiveMeshes());
-
-	if (ret && curState) {
-		int brushType = curState->brushType;
-		if (brushType != TBT_MASK) {
-			os->ActiveShapesUpdated(curState, true);
-
-			if (curState->sliderName.empty() && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
-				for (auto &m : curState->tss) {
-					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(m.first->shapeName);
-					if (shape)
-						os->project->UpdateShapeFromMesh(shape, m.first);
-				}
-			}
+void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
+	int undoType = usp->undoType;
+	if (undoType == UT_WEIGHT) {
+		for (auto &mit : usp->usss) {
+			mesh *m = mit.first;
+			for (auto &wIt : mit.second.boneWeights[0].weights)
+				m->vcolors[wIt.first].y = bUndo ? wIt.second.startVal : wIt.second.endVal;
+			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
-
-		if (brushType == TBT_WEIGHT) {
-			wxArrayTreeItemIds selItems;
-			os->outfitBones->GetSelections(selItems);
-			if (selItems.size() > 0) {
-				std::string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				int boneScalePos = os->boneScale->GetValue();
-				os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
+		os->ActiveShapesUpdated(usp, bUndo);
+		wxArrayTreeItemIds selItems;
+		os->outfitBones->GetSelections(selItems);
+		if (selItems.size() > 0) {
+			std::string selectedBone = os->outfitBones->GetItemText(selItems.front());
+			int boneScalePos = os->boneScale->GetValue();
+			os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
+		}
+	}
+	else if (undoType == UT_MASK || undoType == UT_COLOR) {
+		for (auto &mit : usp->usss) {
+			mesh *m = mit.first;
+			for (auto &pit : (bUndo ? mit.second.pointStartState : mit.second.pointEndState))
+				m->vcolors[pit.first] = pit.second;
+			m->QueueUpdate(mesh::UpdateType::VertexColors);
+		}
+		if (undoType != UT_MASK)
+			os->ActiveShapesUpdated(usp, bUndo);
+	}
+	else if (undoType == UT_ALPHA) {
+		for (auto &mit : usp->usss) {
+			mesh *m = mit.first;
+			for (auto &pit : (bUndo ? mit.second.pointStartState : mit.second.pointEndState))
+				m->valpha[pit.first] = pit.second.x;
+			m->QueueUpdate(mesh::UpdateType::VertexAlpha);
+		}
+		os->ActiveShapesUpdated(usp, bUndo);
+	}
+	else if (undoType == UT_VERTPOS) {
+		for (auto &mit : usp->usss) {
+			mesh *m = mit.first;
+			for (auto &pit : (bUndo ? mit.second.pointStartState : mit.second.pointEndState))
+				m->verts[pit.first] = pit.second;
+			m->SmoothNormals();
+			if (mit.second.startBVH == mit.second.endBVH) {
+				for (auto &bvhNode : mit.second.affectedNodes)
+					bvhNode->UpdateAABB();
+			}
+			else
+				m->bvh = bUndo ? mit.second.startBVH : mit.second.endBVH;
+			m->QueueUpdate(mesh::UpdateType::Position);
+		}
+		os->ActiveShapesUpdated(usp, bUndo);
+		if (usp->sliderName.empty()) {
+			for (auto &m : usp->usss) {
+				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(m.first->shapeName);
+				if (shape)
+					os->project->UpdateShapeFromMesh(shape, m.first);
 			}
 		}
 	}
@@ -8903,49 +8931,34 @@ bool wxGLPanel::UndoStroke() {
 		ShowTransformTool();
 	else
 		Render();
+}
 
-	return ret;
+bool wxGLPanel::UndoStroke() {
+	UndoStateProject *curState = undoHistory.GetCurState();
+	if (!curState)
+		return false;
+	if (RestoreMode(curState))
+		return true;
+	if (!undoHistory.BackStepHistory())
+		return false;
+
+	ApplyUndoState(curState, true);
+
+	return true;
 }
 
 bool wxGLPanel::RedoStroke() {
-	TweakStateHolder *curState = strokeManager.GetNextStateHolder();
-	if (curState)
-		if (RestoreMode(curState))
-			return true;
+	UndoStateProject *curState = undoHistory.GetNextState();
+	if (!curState)
+		return false;
+	if (RestoreMode(curState))
+		return true;
+	if (!undoHistory.ForwardStepHistory())
+		return false;
 
-	bool ret = strokeManager.forwardStroke(gls.GetActiveMeshes());
+	ApplyUndoState(curState, false);
 
-	if (ret && curState) {
-		int brushType = curState->brushType;
-		if (brushType != TBT_MASK) {
-			os->ActiveShapesUpdated(curState);
-
-			if (curState->sliderName.empty() && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
-				for (auto &m : curState->tss) {
-					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(m.first->shapeName);
-					if (shape)
-						os->project->UpdateShapeFromMesh(shape, m.first);
-				}
-			}
-		}
-
-		if (brushType == TBT_WEIGHT) {
-			wxArrayTreeItemIds selItems;
-			os->outfitBones->GetSelections(selItems);
-			if (selItems.size() > 0) {
-				std::string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				int boneScalePos = os->boneScale->GetValue();
-				os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
-			}
-		}
-	}
-
-	if (transformMode)
-		ShowTransformTool();
-	else
-		Render();
-
-	return ret;
+	return true;
 }
 
 void wxGLPanel::ShowTransformTool(bool show) {
