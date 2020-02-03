@@ -1757,6 +1757,17 @@
 			<fg>#ffffff</fg>
 			<label>Field of View: 65</label>
 		</object>
+		<object class="space"/>
+		<object class="tool" name="btnDiscord">
+			<label>Discord</label>
+			<tooltip>Open Discord invite link.</tooltip>
+			<bitmap>$(AppDir)\res\images\Discord.png</bitmap>
+		</object>
+		<object class="tool" name="btnPayPal">
+			<label>PayPal</label>
+			<tooltip>Open PayPal link.</tooltip>
+			<bitmap>$(AppDir)\res\images\PayPal.png</bitmap>
+		</object>
 	</object>
 	
 	<object class="wxMenu" name="menuMeshContext">

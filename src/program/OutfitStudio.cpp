@@ -229,7 +229,10 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_SLIDER(XRCID("lightDirectional1Slider"), OutfitStudioFrame::OnUpdateLights)
 	EVT_SLIDER(XRCID("lightDirectional2Slider"), OutfitStudioFrame::OnUpdateLights)
 	EVT_BUTTON(XRCID("lightReset"), OutfitStudioFrame::OnResetLights)
-	
+
+	EVT_MENU(XRCID("btnDiscord"), OutfitStudioFrame::OnDiscord)
+	EVT_MENU(XRCID("btnPayPal"), OutfitStudioFrame::OnPayPal)
+
 	EVT_SPLITTER_SASH_POS_CHANGED(XRCID("splitter"), OutfitStudioFrame::OnSashPosChanged)
 	EVT_SPLITTER_SASH_POS_CHANGED(XRCID("splitterRight"), OutfitStudioFrame::OnSashPosChanged)
 	EVT_MOVE_END(OutfitStudioFrame::OnMoveWindow)

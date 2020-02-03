@@ -1300,6 +1300,16 @@ private:
 			glView->Render();
 	}
 
+	void OnDiscord(wxCommandEvent& WXUNUSED(event)) {
+		wxString url = "https://discordapp.com/invite/2qg2Rzw";
+		wxLaunchDefaultBrowser(url);
+	}
+
+	void OnPayPal(wxCommandEvent& WXUNUSED(event)) {
+		wxString url = "https://www.paypal.me/ousnius";
+		wxLaunchDefaultBrowser(url);
+	}
+
 	wxDECLARE_EVENT_TABLE();
 };
 
