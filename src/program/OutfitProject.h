@@ -13,6 +13,7 @@ See the included LICENSE file
 #include <wx/arrstr.h>
 
 class OutfitStudioFrame;
+struct UndoStateShape;
 
 class OutfitProject {
 	OutfitStudioFrame* owner = nullptr;
@@ -158,11 +159,12 @@ public:
 	void ScaleShape(NiShape* shape, const Vector3& scale, std::unordered_map<ushort, float>* mask = nullptr);
 	void RotateShape(NiShape* shape, const Vector3& angle, std::unordered_map<ushort, float>* mask = nullptr);
 
+	bool AddShapeBoneAndXForm(const std::string &shapeName, const std::string &boneName);
 	// Uses the AutoMorph class to generate proximity values for bone weights.
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
 	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
 	// The resulting data is then written back to the outfit shape as the green color channel.
-	void CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
+	void CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
 	void TransferSelectedWeights(NiShape* shape, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);

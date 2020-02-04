@@ -6,10 +6,11 @@ See the included LICENSE file
 #include "WeightNorm.h"
 #include "Anim.h"
 
-void BoneWeightAutoNormalizer::SetUp(UndoStateShape *ussi, AnimInfo *animInfo, const std::string &shapeName, const std::vector<std::string> &boneNames, const std::vector<std::string> &lockedBoneNames, bool bSprWt) {
+void BoneWeightAutoNormalizer::SetUp(UndoStateShape *ussi, AnimInfo *animInfo, const std::string &shapeName, const std::vector<std::string> &boneNames, const std::vector<std::string> &lockedBoneNames, int nMBonesi, bool bSprWt) {
 	uss = ussi;
 	wPtrs.clear();
 	lWPtrs.clear();
+	nMBones = nMBonesi;
 	bSpreadWeight = bSprWt;
 
 	const unsigned int nBones = boneNames.size();
@@ -29,34 +30,39 @@ void BoneWeightAutoNormalizer::SetUp(UndoStateShape *ussi, AnimInfo *animInfo, c
 		lWPtrs[bi] = animInfo->GetWeightsPtr(shapeName, lockedBoneNames[bi]);
 }
 
-void BoneWeightAutoNormalizer::GrabStartingWeights(const int *points, int nPoints) {
+void BoneWeightAutoNormalizer::GrabOneVertexStartingWeights(int i) {
 	const unsigned int nBones = wPtrs.size();
-	// Fill in uss start and end values for vertices that don't have them yet
-	for (int pi = 0; pi < nPoints; pi++) {
-		int i = points[pi];
-		for (unsigned int bi = 0; bi < nBones; ++bi) {
-			auto &bw = uss->boneWeights[bi].weights;
-			if (bw.find(i) == bw.end()) {
-				float val = 0.0;
-				if (wPtrs[bi] && wPtrs[bi]->find(i) != wPtrs[bi]->end())
-					val = (*wPtrs[bi])[i];
-				if (val > 0.0 || bi == 0)
-					bw[i].startVal = bw[i].endVal = val;
-			}
+	// Fill in uss start and end values if the vertex doesn't have them yet.
+	for (unsigned int bi = 0; bi < nBones; ++bi) {
+		auto &bw = uss->boneWeights[bi].weights;
+		if (bw.find(i) == bw.end()) {
+			float val = 0.0;
+			if (wPtrs[bi] && wPtrs[bi]->find(i) != wPtrs[bi]->end())
+				val = (*wPtrs[bi])[i];
+			if (val > 0.0 || bi < nMBones)
+				bw[i].startVal = bw[i].endVal = val;
 		}
 	}
 }
 
-float BoneWeightAutoNormalizer::SetWeight(int bonInd, int vInd, float w) {
+void BoneWeightAutoNormalizer::GrabStartingWeights(const int *points, int nPoints) {
+	for (int pi = 0; pi < nPoints; pi++)
+		GrabOneVertexStartingWeights(points[pi]);
+}
+
+void BoneWeightAutoNormalizer::AdjustWeights(int vInd) {
+	// We have three sets of bones: modified, normalizable, and locked:
+	// modified bones are those with bi < nMBones.
+	// normalizable bones are those with bi >= nMBones.
+	// locked bones are listed separately, in lWPtrs.
 	const unsigned int nBones = wPtrs.size();
 	const unsigned int nLBones = lWPtrs.size();
 	// Calculate total locked and normalizable weight
-	float totW = 0.0;
-	for (unsigned int bi = 0; bi < nBones; ++bi) {
-		if (bi == bonInd) continue;
+	float totNW = 0.0;
+	for (unsigned int bi = nMBones; bi < nBones; ++bi) {
 		auto &bw = uss->boneWeights[bi].weights;
 		if (bw.find(vInd) != bw.end())
-			totW += bw[vInd].endVal;
+			totNW += bw[vInd].endVal;
 	}
 	float totLW = 0.0;
 	for (unsigned int bi = 0; bi < nLBones; ++bi) {
@@ -69,30 +75,46 @@ float BoneWeightAutoNormalizer::SetWeight(int bonInd, int vInd, float w) {
 	if (totLW < WEIGHT_EPSILON) totLW = 0.0;
 	float availW = 1.0 - totLW;
 	if (availW < WEIGHT_EPSILON) availW = 0.0;
-	// Limit result
-	if (w < WEIGHT_EPSILON) w = 0.0;
-	if (w > availW) w = availW;
-	if (w - 1.0 > -WEIGHT_EPSILON) w = 1.0;
-	uss->boneWeights[bonInd].weights[vInd].endVal = w;
-	// Normalize
-	float redFac = totW <= WEIGHT_EPSILON ? 0.0 : (availW - w) / totW;
-	totW = 0.0;
-	for (unsigned int bi = 0; bi < nBones; ++bi) {
-		if (bi == bonInd) continue;
+	// Limit modified weights and total them.
+	float totMW = 0.0;
+	for (unsigned int bi = 0; bi < nMBones; ++bi) {
+		auto wi = uss->boneWeights[bi].weights.find(vInd);
+		if (wi == uss->boneWeights[bi].weights.end()) continue;
+		float &w = wi->second.endVal;
+		if (w < WEIGHT_EPSILON) w = 0.0;
+		if (w - 1.0 > -WEIGHT_EPSILON) w = 1.0;
+		totMW += w;
+	}
+	// If the total modified weight is too high, reduce it.
+	if (totMW > availW) {
+		float modFac = totMW <= WEIGHT_EPSILON ? 0.0 : availW / totMW;
+		totMW = 0.0;
+		for (unsigned int bi = 0; bi < nMBones; ++bi) {
+			auto wi = uss->boneWeights[bi].weights.find(vInd);
+			if (wi == uss->boneWeights[bi].weights.end()) continue;
+			wi->second.endVal *= modFac;
+			totMW += wi->second.endVal;
+		}
+		if (totMW > availW) totMW = availW;
+	}
+	// Normalize, adjusting only normalizable bones
+	float nrmFac = totNW <= WEIGHT_EPSILON ? 0.0 : (availW - totMW) / totNW;
+	totNW = 0.0;
+	for (unsigned int bi = nMBones; bi < nBones; ++bi) {
 		auto owi = uss->boneWeights[bi].weights.find(vInd);
 		if (owi == uss->boneWeights[bi].weights.end()) continue;
 		float &ow = owi->second.endVal;
-		ow *= redFac;
+		ow *= nrmFac;
 		if (ow < WEIGHT_EPSILON) ow = 0.0;
 		if (ow - 1.0 > -WEIGHT_EPSILON) ow = 1.0;
-		totW += ow;
+		totNW += ow;
 	}
 	// Check if normalization didn't work; if so, split the missing
-	// weight among the normalize bones.
-	if (1.0 - totW - w - totLW > WEIGHT_EPSILON && nBones >= 2 && bSpreadWeight) {
-		float remainW = (1.0 - totW - w - totLW) / (nBones - 1);
-		for (unsigned int bi = 0; bi < nBones; ++bi) {
-			if (bi == bonInd) continue;
+	// weight among the normalizable bones, if any, and only if
+	// bSpreadWeight is true.
+	if (1.0 - totNW - totMW - totLW > WEIGHT_EPSILON && nBones > nMBones && bSpreadWeight) {
+		float remainW = (1.0 - totNW - totMW - totLW) / (nBones - nMBones);
+		for (unsigned int bi = nMBones; bi < nBones; ++bi) {
 			auto &bw = uss->boneWeights[bi].weights;
 			auto owi = bw.find(vInd);
 			if (owi == bw.end())
@@ -100,5 +122,10 @@ float BoneWeightAutoNormalizer::SetWeight(int bonInd, int vInd, float w) {
 			bw[vInd].endVal += remainW;
 		}
 	}
-	return w;
+}
+
+float BoneWeightAutoNormalizer::SetWeight(int vInd, float w) {
+	uss->boneWeights[0].weights[vInd].endVal = w;
+	AdjustWeights(vInd);
+	return uss->boneWeights[0].weights[vInd].endVal;
 }

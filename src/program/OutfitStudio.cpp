@@ -2069,6 +2069,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 				mesh *m = mit.first;
 				for (auto &bw : mit.second.boneWeights) {
 					if (bw.weights.empty()) continue;
+					project->AddShapeBoneAndXForm(m->shapeName, bw.boneName);
 					auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, bw.boneName);
 					if (!weights) continue;
 					for (auto &p : bw.weights) {
@@ -7811,18 +7812,32 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (ShowWeightCopy(options)) {
 		StartProgress(_("Copying bone weights..."));
 
+		UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+		usp->undoType = UT_WEIGHT;
+		std::vector<std::string> baseBones = project->GetWorkAnim()->shapeBones[project->GetBaseShape()->GetName()];
+		std::sort(baseBones.begin(), baseBones.end());
 		std::unordered_map<ushort, float> mask;
 		for (int i = 0; i < selectedItems.size(); i++) {
-			if (!project->IsBaseShape(selectedItems[i]->GetShape())) {
-				wxLogMessage("Copying bone weights to '%s'...", selectedItems[i]->GetShape()->GetName());
+			NiShape *shape = selectedItems[i]->GetShape();
+			mesh *m = glView->GetMesh(shape->GetName());
+			if (!m) continue;
+			if (!project->IsBaseShape(shape)) {
+				wxLogMessage("Copying bone weights to '%s'...", shape->GetName());
 				mask.clear();
-				glView->GetShapeMask(mask, selectedItems[i]->GetShape()->GetName());
-				project->CopyBoneWeights(selectedItems[i]->GetShape(), options.proximityRadius, options.maxResults, &mask);
+				glView->GetShapeMask(mask, shape->GetName());
+				std::vector<std::string> bones = project->GetWorkAnim()->shapeBones[shape->GetName()];
+				std::vector<std::string> mergedBones = baseBones;
+				for (auto b : bones)
+					if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
+						mergedBones.push_back(b);
+				std::vector<std::string> lockedBones;
+				project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, mergedBones, baseBones.size(), lockedBones, usp->usss[m], false);
 			}
 			else
 				wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
 		}
 
+		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
 		ReselectBone();
 
@@ -7847,7 +7862,7 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::vector<std::string> selectedBones;
+	std::vector<std::string> boneList;
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
 	if (selItems.size() < 1)
@@ -7857,25 +7872,49 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	for (int i = 0; i < selItems.size(); i++) {
 		std::string boneName = outfitBones->GetItemText(selItems[i]).ToStdString();
 		bonesString += "'" + boneName + "' ";
-		selectedBones.push_back(boneName);
+		boneList.push_back(boneName);
+	}
+	std::sort(boneList.begin(), boneList.end());
+	int nSelBones = boneList.size();
+	std::vector<std::string> normBones, notNormBones, lockedBones;
+	GetNormalizeBones(&normBones, &notNormBones);
+	for (auto &bone : normBones)
+		if (!std::binary_search(boneList.begin(), boneList.begin() + nSelBones, bone))
+			boneList.push_back(bone);
+	bool bHasNormBones = static_cast<int>(boneList.size()) > nSelBones;
+	if (bHasNormBones) {
+		for (auto &bone : notNormBones)
+			if (!std::binary_search(boneList.begin(), boneList.begin() + nSelBones, bone))
+				lockedBones.push_back(bone);
+	}
+	else {
+		for (auto &bone : notNormBones)
+			if (!std::binary_search(boneList.begin(), boneList.begin() + nSelBones, bone))
+				boneList.push_back(bone);
 	}
 
 	WeightCopyOptions options;
 	if (ShowWeightCopy(options)) {
 		StartProgress(_("Copying selected bone weights..."));
 
+		UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+		usp->undoType = UT_WEIGHT;
 		std::unordered_map<ushort, float> mask;
 		for (int i = 0; i < selectedItems.size(); i++) {
-			if (!project->IsBaseShape(selectedItems[i]->GetShape())) {
-				wxLogMessage("Copying selected bone weights to '%s' for %s...", selectedItems[i]->GetShape()->GetName(), bonesString);
+			NiShape *shape = selectedItems[i]->GetShape();
+			mesh *m = glView->GetMesh(shape->GetName());
+			if (!m) continue;
+			if (!project->IsBaseShape(shape)) {
+				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->GetName(), bonesString);
 				mask.clear();
-				glView->GetShapeMask(mask, selectedItems[i]->GetShape()->GetName());
-				project->CopyBoneWeights(selectedItems[i]->GetShape(), options.proximityRadius, options.maxResults, &mask, &selectedBones);
+				glView->GetShapeMask(mask, shape->GetName());
+				project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, boneList, nSelBones, lockedBones, usp->usss[m], bHasNormBones);
 			}
 			else
 				wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
 		}
 
+		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
 		ReselectBone();
 
