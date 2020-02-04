@@ -13,7 +13,7 @@ See the included LICENSE file
 #include <wx/arrstr.h>
 
 class OutfitStudioFrame;
-class UndoStateShape;
+struct UndoStateShape;
 
 class OutfitProject {
 	OutfitStudioFrame* owner = nullptr;
