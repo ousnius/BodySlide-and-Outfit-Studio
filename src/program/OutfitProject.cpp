@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "../files/FBXWrangler.h"
 #include "../program/FBXImportDialog.h"
 #include "../utils/PlatformUtil.h"
+#include "../components/WeightNorm.h"
 
 #include "../FSEngine/FSManager.h"
 #include "../FSEngine/FSEngine.h"
@@ -1441,46 +1442,58 @@ void OutfitProject::RotateShape(NiShape* shape, const Vector3& angle, std::unord
 	workNif.RotateShape(shape, angle, mask);
 }
 
-void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>* mask, std::vector<std::string>* inBoneList) {
+bool OutfitProject::AddShapeBoneAndXForm(const std::string &shapeName, const std::string &boneName) {
+	if (!workAnim.AddShapeBone(shapeName, boneName))
+		return false;
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame == FO4 || targetGame == FO4VR) {
+		// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
+		MatTransform xForm;
+		workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
+		workAnim.SetShapeBoneXForm(shapeName, boneName, xForm);
+	}
+	else {
+		MatTransform xForm;
+		workAnim.GetBoneXForm(boneName, xForm);
+		workAnim.SetShapeBoneXForm(shapeName, boneName, xForm);
+	}
+	return true;
+}
+
+void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
 	if (!shape || !baseShape)
 		return;
 
 	std::string shapeName = shape->GetName();
 	std::string baseShapeName = baseShape->GetName();
 
-	std::vector<std::string> lboneList;
-	std::vector<std::string>* boneList;
-
-	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	owner->UpdateProgress(1, _("Gathering bones..."));
 
-	if (!inBoneList) {
-		for (auto &bn : workAnim.shapeBones[baseShapeName])
-			lboneList.push_back(bn);
-
-		boneList = &lboneList;
-	}
-	else
-		boneList = inBoneList;
-
-	if (boneList->size() <= 0) {
+	int nBones = boneList.size();
+	if (nBones <= 0 || nCopyBones <= 0) {
 		owner->UpdateProgress(90);
 		return;
 	}
 
 	DiffDataSets dds;
-	for (auto &bone : *boneList) {
-		dds.AddEmptySet(bone + "_WT_", "Weight");
+	for (int bi = 0; bi < nCopyBones; ++bi) {
+		const std::string &bone = boneList[bi];
+		std::string wtSet = bone + "_WT_";
+		dds.AddEmptySet(wtSet, "Weight");
 
 		auto weights = workAnim.GetWeightsPtr(baseShapeName, bone);
 		if (weights) {
 			for (auto &w : *weights) {
 				Vector3 tmp;
 				tmp.y = w.second;
-				dds.UpdateDiff(bone + "_WT_", "Weight", w.first, tmp);
+				dds.UpdateDiff(wtSet, "Weight", w.first, tmp);
 			}
 		}
 	}
+
+	BoneWeightAutoNormalizer nzer;
+	nzer.SetUp(&uss, &workAnim, shapeName, boneList, lockedBones, nCopyBones, bSpreadWeight);
+	std::unordered_set<int> vertList;
 
 	owner->UpdateProgress(10, _("Initializing proximity data..."));
 
@@ -1489,68 +1502,51 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	morpher.BuildProximityCache(shapeName, proximityRadius);
 	workNif.CreateSkinning(shape);
 
-	int step = 40 / boneList->size();
+	int step = 40 / nCopyBones;
 	int prog = 40;
 	owner->UpdateProgress(prog);
 
-	for (auto &boneName : *boneList) {
-		std::unordered_map<ushort, float> oldWeights;
-		if (mask)
-			workAnim.GetWeights(shapeName, boneName, oldWeights);
-
+	for (unsigned int bi = 0; bi < nCopyBones; ++bi) {
+		const std::string &boneName = boneList[bi];
+		auto &ubw = uss.boneWeights[bi].weights;
+		// Zero out unmasked weights
 		auto weights = workAnim.GetWeightsPtr(shapeName, boneName);
-		if (weights)
-			weights->clear();
+		if (weights) {
+			for (auto &pi : *weights) {
+				if (mask[pi.first] > 0.0f) continue;
+				if (vertList.find(pi.first) == vertList.end()) {
+					vertList.insert(pi.first);
+					nzer.GrabOneVertexStartingWeights(pi.first);
+				}
+				ubw[pi.first].endVal = 0.0;
+			}
+		}
 
+		// Calculate new values for bone's weights
 		std::string wtSet = boneName + "_WT_";
 		morpher.GenerateResultDiff(shapeName, wtSet, wtSet, maxResults);
 
 		std::unordered_map<ushort, Vector3> diffResult;
 		morpher.GetRawResultDiff(shapeName, wtSet, diffResult);
 
-		if (diffResult.size() > 0) {
-			if (workAnim.AddShapeBone(shapeName, boneName)) {
-				if (targetGame == FO4 || targetGame == FO4VR) {
-					// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
-					MatTransform xForm;
-					workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
-					workAnim.SetShapeBoneXForm(shapeName, boneName, xForm);
-				}
-				else {
-					MatTransform xForm;
-					workAnim.GetBoneXForm(boneName, xForm);
-					workAnim.SetShapeBoneXForm(shapeName, boneName, xForm);
-				}
-
-				weights = workAnim.GetWeightsPtr(shapeName, boneName);
+		// Copy unmasked weights from diffResult into uss
+		for (auto &dr : diffResult) {
+			if (mask[dr.first] > 0.0f) continue;
+			if (vertList.find(dr.first) == vertList.end()) {
+				vertList.insert(dr.first);
+				nzer.GrabOneVertexStartingWeights(dr.first);
 			}
-
-			if (weights) {
-				for (auto &dr : diffResult) {
-					if (mask) {
-						auto& vmask = (*mask)[dr.first];
-						if (1.0f - vmask > 0.0f)
-							(*weights)[dr.first] = dr.second.y * (1.0f - vmask);
-						else
-							(*weights).erase(dr.first);
-					}
-					else
-						(*weights)[dr.first] = dr.second.y;
-				}
-
-				// Restore old weights from mask
-				if (mask) {
-					for (auto &w : oldWeights)
-						if ((*mask)[w.first] > 0.0f)
-							(*weights)[w.first] = w.second;
-				}
-			}
+			ubw[dr.first].endVal = dr.second.y;
 		}
 
 		owner->UpdateProgress(prog += step, _("Copying bone weights..."));
 	}
-
 	morpher.UnlinkRefDiffData();
+
+	// Normalize
+	for (auto vInd : vertList)
+		nzer.AdjustWeights(vInd);
+
 	owner->UpdateProgress(90);
 }
 
@@ -1561,7 +1557,6 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 	std::string shapeName = shape->GetName();
 	std::string baseShapeName = baseShape->GetName();
 
-	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	owner->UpdateProgress(10, _("Gathering bones..."));
 
 	std::vector<std::string>* boneList;
@@ -1601,20 +1596,7 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 				weights[w.first] = w.second;
 		}
 
-		if (workAnim.AddShapeBone(shapeName, boneName)) {
-			if (targetGame == FO4 || targetGame == FO4VR) {
-				// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
-				MatTransform xForm;
-				workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
-				workAnim.SetShapeBoneXForm(shapeName, boneName, xForm);
-			}
-			else {
-				MatTransform xForm;
-				workAnim.GetBoneXForm(boneName, xForm);
-				workAnim.SetShapeBoneXForm(shapeName, boneName, xForm);
-			}
-		}
-
+		AddShapeBoneAndXForm(shapeName, boneName);
 		workAnim.SetWeights(shapeName, boneName, weights);
 		owner->UpdateProgress(prog += step, "");
 	}

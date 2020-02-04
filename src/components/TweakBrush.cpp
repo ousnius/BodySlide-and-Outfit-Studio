@@ -910,7 +910,7 @@ TB_Weight::~TB_Weight() {
 
 void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bSpreadWeight);
+	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
@@ -919,7 +919,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
 		ew *= 1.0f - refmesh->vcolors[i].x;
 		float fw = sw + ew;
-		fw = nzer.SetWeight(0, i, fw);
+		fw = nzer.SetWeight(i, fw);
 		refmesh->vcolors[i].y = fw;
 	}
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
@@ -938,7 +938,7 @@ TB_Unweight::~TB_Unweight() {
 
 void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bSpreadWeight);
+	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
@@ -947,7 +947,7 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
 		ew *= 1.0f - refmesh->vcolors[i].x;
 		float fw = sw + ew;
-		fw = nzer.SetWeight(0, i, fw);
+		fw = nzer.SetWeight(i, fw);
 		refmesh->vcolors[i].y = fw;
 	}
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
@@ -1036,7 +1036,7 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints,
 
 void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bSpreadWeight);
+	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
 
 	// Copy previous iteration's results into wv
@@ -1058,7 +1058,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
 		ew *= 1.0f - refmesh->vcolors[i].x;
 		float fw = sw + ew;
-		fw = nzer.SetWeight(0, i, fw);
+		fw = nzer.SetWeight(i, fw);
 		refmesh->vcolors[i].y = fw;
 	}
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
