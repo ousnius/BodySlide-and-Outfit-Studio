@@ -791,7 +791,9 @@ public:
 	void ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo = false);
 	void UpdateActiveShapeUI();
 	void HighlightBoneNamesWithWeights();
+	void RefreshGUIWeightColors();
 	void GetNormalizeBones(std::vector<std::string> *normBones, std::vector<std::string> *notNormBones);
+	std::vector<std::string> GetSelectedBones();
 
 	void ShowSegment(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
 	void UpdateSegmentNames();
@@ -966,6 +968,7 @@ private:
 
 	bool selectionLocked = false;
 	std::vector<ShapeItemData*> selectedItems;
+	bool recursingUI = false;
 	std::string activeBone;
 	wxTreeItemId activeSegment;
 	wxTreeItemId activePartition;
