@@ -9,15 +9,19 @@ See the included LICENSE file
 std::vector<std::future<void>> TweakStroke::normalUpdates{};
 
 void TweakStroke::beginStroke(TweakPickInfo& pickInfo) {
-	refBrush->strokeInit(refMeshes, pickInfo, usp);
-
-	for (auto &m : refMeshes) {
-		usp.usss[m].startBVH = m->bvh;
+	const int nMesh = refMeshes.size();
+	usp.usss.resize(nMesh);
+	for (int mi = 0; mi < nMesh; ++mi) {
+		mesh *m = refMeshes[mi];
+		usp.usss[mi].shapeName = m->shapeName;
+		usp.usss[mi].startBVH = m->bvh;
 
 		pts1[m] = std::make_unique<int[]>(m->nVerts);
 		if (refBrush->isMirrored())
 			pts2[m] = std::make_unique<int[]>(m->nVerts);
 	}
+
+	refBrush->strokeInit(refMeshes, pickInfo, usp);
 }
 
 void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
@@ -43,12 +47,15 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 		}
 	}
 
+	const int nMesh = refMeshes.size();
 	// Move/transform handles most operations differently than other brushes.
 	// Mirroring is done internally, most of the pick info values are ignored.
 	if (brushType == TBT_MOVE || brushType == TBT_XFORM) {
 		Vector3 originSave = pickInfo.origin;
 		Vector3 centerSave = pickInfo.center;
-		for (auto &m : refMeshes) {
+		for (int mi = 0; mi < nMesh; ++mi) {
+			mesh *m = refMeshes[mi];
+			UndoStateShape &uss = usp.usss[mi];
 			int nPts1 = 0;
 
 			// Get rid of model space from collision again
@@ -57,13 +64,13 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 				pickInfo.origin = Vector3(morigin.x, morigin.y, morigin.z);
 			}
 
-			if (!refBrush->queryPoints(m, pickInfo, nullptr, nPts1, usp.usss[m].affectedNodes))
+			if (!refBrush->queryPoints(m, pickInfo, nullptr, nPts1, uss.affectedNodes))
 				continue;
 
-			refBrush->brushAction(m, pickInfo, nullptr, nPts1, usp.usss[m]);
+			refBrush->brushAction(m, pickInfo, nullptr, nPts1, uss);
 
 			if (refBrush->LiveNormals()) {
-				auto pending = async(std::launch::async, mesh::SmoothNormalsStaticMap, m, usp.usss[m].pointStartState);
+				auto pending = async(std::launch::async, mesh::SmoothNormalsStaticMap, m, uss.pointStartState);
 				normalUpdates.push_back(std::move(pending));
 			}
 		}
@@ -71,20 +78,22 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 		pickInfo.center = centerSave;
 	}
 	else {
-		for (auto &m : refMeshes) {
+		for (int mi = 0; mi < nMesh; ++mi) {
+			mesh *m = refMeshes[mi];
+			UndoStateShape &uss = usp.usss[mi];
 			int nPts1 = 0;
 			int nPts2 = 0;
 
-			if (!refBrush->queryPoints(m, pickInfo, pts1[m].get(), nPts1, usp.usss[m].affectedNodes))
+			if (!refBrush->queryPoints(m, pickInfo, pts1[m].get(), nPts1, uss.affectedNodes))
 				continue;
 
 			if (refBrush->isMirrored())
-				refBrush->queryPoints(m, mirrorPick, pts2[m].get(), nPts2, usp.usss[m].affectedNodes);
+				refBrush->queryPoints(m, mirrorPick, pts2[m].get(), nPts2, uss.affectedNodes);
 
-			refBrush->brushAction(m, pickInfo, pts1[m].get(), nPts1, usp.usss[m]);
+			refBrush->brushAction(m, pickInfo, pts1[m].get(), nPts1, uss);
 
 			if (refBrush->isMirrored())
-				refBrush->brushAction(m, mirrorPick, pts2[m].get(), nPts2, usp.usss[m]);
+				refBrush->brushAction(m, mirrorPick, pts2[m].get(), nPts2, uss);
 
 			if (refBrush->LiveNormals()) {
 				auto pending1 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m].get(), nPts1);
@@ -100,34 +109,37 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	lastPoint = pickInfo.origin;
 
 	if (refBrush->LiveBVH()) {
-		for (auto &m : refMeshes)
-			for (auto &bvhNode : usp.usss[m].affectedNodes)
+		for (int mi = 0; mi < nMesh; ++mi)
+			for (auto &bvhNode : usp.usss[mi].affectedNodes)
 				bvhNode->UpdateAABB();
 	}
 }
 
 void TweakStroke::endStroke() {
+	const int nMesh = refMeshes.size();
 	if (refBrush->Type() == TBT_MOVE) {
-		for (auto &m : refMeshes) {
+		for (int mi = 0; mi < nMesh; ++mi) {
+			mesh *m = refMeshes[mi];
+			UndoStateShape &uss = usp.usss[mi];
 			TweakBrushMeshCache* meshCache = refBrush->getCache(m);
-			usp.usss[m].affectedNodes.swap(meshCache->cachedNodes);
-			usp.usss[m].affectedNodes.insert(meshCache->cachedNodesM.begin(), meshCache->cachedNodesM.end());
+			uss.affectedNodes.swap(meshCache->cachedNodes);
+			uss.affectedNodes.insert(meshCache->cachedNodesM.begin(), meshCache->cachedNodesM.end());
 			meshCache->cachedNodes.clear();
 			meshCache->cachedNodesM.clear();
 		}
 	}
 	else if (refBrush->Type() == TBT_XFORM)
-		for (auto &m : refMeshes)
-			m->CreateBVH();
+		for (int mi = 0; mi < nMesh; ++mi)
+			refMeshes[mi]->CreateBVH();
 
 	if (!refBrush->LiveBVH() && refBrush->Type() != TBT_WEIGHT)
-		for (auto &m : refMeshes)
-			for (auto &bvhNode : usp.usss[m].affectedNodes)
+		for (int mi = 0; mi < nMesh; ++mi)
+			for (auto &bvhNode : usp.usss[mi].affectedNodes)
 				bvhNode->UpdateAABB();
 
 	if (!refBrush->LiveNormals()) {
-		for (auto &m : refMeshes) {
-			auto pending = std::async(std::launch::async, mesh::SmoothNormalsStatic, m);
+		for (int mi = 0; mi < nMesh; ++mi) {
+			auto pending = std::async(std::launch::async, mesh::SmoothNormalsStatic, refMeshes[mi]);
 			normalUpdates.push_back(std::move(pending));
 		}
 	}
@@ -145,8 +157,9 @@ void TweakStroke::endStroke() {
 		}
 	}
 
-	for (auto &m : refMeshes) {
-		usp.usss[m].endBVH = m->bvh;
+	for (int mi = 0; mi < nMesh; ++mi) {
+		mesh *m = refMeshes[mi];
+		usp.usss[mi].endBVH = m->bvh;
 	}
 }
 
@@ -656,11 +669,14 @@ void TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pic
 
 	cache.clear();
 
-	for (auto &m : refMeshes) {
+	const int nMesh = refMeshes.size();
+	for (int mi = 0; mi < nMesh; ++mi) {
+		mesh *m = refMeshes[mi];
+		UndoStateShape &uss = usp.usss[mi];
 		TweakBrushMeshCache* meshCache = &cache[m];
 		meshCache->nCachedPoints = 0;
 		meshCache->nCachedPointsM = 0;
-		auto& startState = usp.usss[m].pointStartState;
+		auto& startState = uss.pointStartState;
 		meshCache->cachedPoints.resize(m->nVerts);
 
 		if (bMirror)
@@ -789,10 +805,13 @@ void TB_XForm::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pi
 
 	cache.clear();
 
-	for (auto &m : refMeshes) {
+	const int nMesh = refMeshes.size();
+	for (int mi = 0; mi < nMesh; ++mi) {
+		mesh *m = refMeshes[mi];
+		UndoStateShape &uss = usp.usss[mi];
 		TweakBrushMeshCache* meshCache = &cache[m];
 		meshCache->nCachedPoints = m->nVerts;
-		auto& startState = usp.usss[m].pointStartState;
+		auto& startState = uss.pointStartState;
 		for (int i = 0; i < meshCache->nCachedPoints; i++)
 			startState[i] = m->verts[i];
 	}

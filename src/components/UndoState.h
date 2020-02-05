@@ -12,8 +12,6 @@ See the included LICENSE file
 #include <unordered_set>
 #include <memory>
 
-class mesh;
-
 enum UndoType {
 	UT_VERTPOS,
 	UT_MASK,
@@ -32,6 +30,7 @@ struct UndoStateBoneWeights {
 };
 
 struct UndoStateShape {
+	std::string shapeName;
 	// pointStartState and pointEndState are only meaningful for not UT_WEIGHT.
 	// For UT_MASK and UT_ALPHA, only the x coordinate is meaningful.
 	std::unordered_map<int, Vector3> pointStartState;
@@ -47,7 +46,7 @@ struct UndoStateShape {
 
 struct UndoStateProject {
 	UndoType undoType;
-	std::unordered_map<mesh*, UndoStateShape> usss;
+	std::vector<UndoStateShape> usss;
 	// if undoType is UT_VERTPOS and sliderName is not empty, this is
 	// a slider shape edit rather than a base shape edit.
 	std::string sliderName;
