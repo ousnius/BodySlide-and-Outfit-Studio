@@ -9007,13 +9007,9 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
 		os->ActiveShapesUpdated(usp, bUndo);
-		wxArrayTreeItemIds selItems;
-		os->outfitBones->GetSelections(selItems);
-		if (selItems.size() > 0) {
-			std::string selectedBone = os->outfitBones->GetItemText(selItems.front());
-			int boneScalePos = os->boneScale->GetValue();
-			os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
-		}
+		std::string activeBone = os->GetActiveBone();
+		if (!activeBone.empty())
+			os->project->ApplyBoneScale(activeBone, os->boneScale->GetValue(), true);
 	}
 	else if (undoType == UT_MASK || undoType == UT_COLOR) {
 		for (auto &mit : usp->usss) {
