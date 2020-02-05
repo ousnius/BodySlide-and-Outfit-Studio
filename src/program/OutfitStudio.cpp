@@ -2007,7 +2007,7 @@ std::vector<std::string> OutfitStudioFrame::GetSelectedBones() {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
 	for (int i = 0; i < selItems.size(); i++)
-		boneList.push_back(outfitBones->GetItemText(selItems[i]));
+		boneList.push_back(outfitBones->GetItemText(selItems[i]).ToStdString());
 	return boneList;
 }
 
@@ -7684,7 +7684,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 		wxArrayTreeItemIds sel;
 		boneTree->GetSelections(sel);
 		for (int i = 0; i < sel.size(); i++) {
-			std::string bone = boneTree->GetItemText(sel[i]).ToStdString();
+			std::string bone = boneTree->GetItemText(sel[i]);
 			wxLogMessage("Adding bone '%s' to project.", bone);
 
 			project->AddBoneRef(bone);
