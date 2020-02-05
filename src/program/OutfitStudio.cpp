@@ -1963,7 +1963,6 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 
 		CreateSegmentTree(activeItem->GetShape());
 		CreatePartitionTree(activeItem->GetShape());
-		ReselectBone();
 	}
 
 	HighlightBoneNamesWithWeights();
@@ -2001,6 +2000,15 @@ void OutfitStudioFrame::GetNormalizeBones(std::vector<std::string> *normBones, s
 		}
 		item = outfitBones->GetNextChild(bonesRoot, cookie);
 	}
+}
+
+std::vector<std::string> OutfitStudioFrame::GetSelectedBones() {
+	std::vector<std::string> boneList;
+	wxArrayTreeItemIds selItems;
+	outfitBones->GetSelections(selItems);
+	for (int i = 0; i < selItems.size(); i++)
+		boneList.push_back(outfitBones->GetItemText(selItems[i]).ToStdString());
+	return boneList;
 }
 
 void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
@@ -2802,16 +2810,37 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 }
 
 void OutfitStudioFrame::AnimationGUIFromProj() {
-	std::vector<std::string> activeBones;
+	// Preserve selected and normalize bones
+	std::vector<std::string> selBones = GetSelectedBones();
+	std::vector<std::string> normBones;
+	GetNormalizeBones(&normBones, nullptr);
+	std::unordered_set<std::string> normBonesS{normBones.begin(), normBones.end()};
+	std::unordered_set<std::string> selBonesS{selBones.begin(), selBones.end()};
+
+	// Clear GUI's bone list
 	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
 		outfitBones->DeleteChildren(bonesRoot);
+	if (selBonesS.count(activeBone) != 0)
+		activeBone.clear();
 
-	activeBone.clear();
+	// Refill GUI's bone list, re-setting normalize flags and re-selecting
+	std::vector<std::string> activeBones;
 	project->GetActiveBones(activeBones);
+	bool saveRUI = recursingUI;
+	recursingUI = true;
 	for (auto &bone : activeBones) {
 		wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
-		outfitBones->SetItemState(item, 0);
+		outfitBones->SetItemState(item, normBonesS.count(bone) != 0 ? 1 : 0);
+		if (selBonesS.count(bone) != 0) {
+			outfitBones->SelectItem(item);
+			if (activeBone.empty())
+				activeBone = bone;
+		}
 	}
+	recursingUI = saveRUI;
+
+	HighlightBoneNamesWithWeights();
+	RefreshGUIWeightColors();
 }
 
 void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
@@ -3763,6 +3792,7 @@ void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 		glView->SetSelectedShape("");
 
 	UpdateActiveShapeUI();
+	glView->GetUndoHistory()->ClearHistory();
 }
 
 void OutfitStudioFrame::OnShapeActivated(wxTreeEvent& event) {
@@ -3796,35 +3826,13 @@ void OutfitStudioFrame::OnBoneStateToggle(wxTreeEvent& event) {
 	event.Skip();
 }
 
-void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
-	project->ClearBoneScale();
-	boneScale->SetValue(0);
-
-	wxTreeItemId item = event.GetItem();
-	if (!activeItem || !item.IsOk())
-		return;
-
-	// Clear history
-	glView->GetUndoHistory()->ClearHistory();
-
+void OutfitStudioFrame::RefreshGUIWeightColors() {
 	// Clear vcolors of all shapes
 	for (auto &s : project->GetWorkNif()->GetShapeNames()) {
 		mesh* m = glView->GetMesh(s);
 		if (m)
 			m->ColorChannelFill(1, 0.0f);
 	}
-
-	activeBone.clear();
-
-	if (!outfitBones->IsSelected(item)) {
-		wxArrayTreeItemIds selected;
-		outfitBones->GetSelections(selected);
-
-		if (!selected.IsEmpty())
-			activeBone = outfitBones->GetItemText(selected.front());
-	}
-	else
-		activeBone = outfitBones->GetItemText(item);
 
 	if (!activeBone.empty()) {
 		// Show weights of selected shapes without reference
@@ -3860,6 +3868,30 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	}
 
 	glView->Refresh();
+}
+
+void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
+	if (recursingUI) return;
+	project->ClearBoneScale();
+	boneScale->SetValue(0);
+
+	wxTreeItemId item = event.GetItem();
+	if (!activeItem || !item.IsOk())
+		return;
+
+	activeBone.clear();
+
+	if (!outfitBones->IsSelected(item)) {
+		wxArrayTreeItemIds selected;
+		outfitBones->GetSelections(selected);
+
+		if (!selected.IsEmpty())
+			activeBone = outfitBones->GetItemText(selected.front());
+	}
+	else
+		activeBone = outfitBones->GetItemText(item);
+
+	RefreshGUIWeightColors();
 }
 
 void OutfitStudioFrame::OnCheckTreeSel(wxTreeEvent& event) {
@@ -5579,6 +5611,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 
 		ReselectBone();
+		glView->GetUndoHistory()->ClearHistory();
 	}
 	else if (id == XRCID("colorsTabButton")) {
 		outfitShapes->Hide();
@@ -7710,6 +7743,7 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	ReselectBone();
+	glView->GetUndoHistory()->ClearHistory();
 }
 
 void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
@@ -7724,6 +7758,7 @@ void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)
 	}
 
 	ReselectBone();
+	glView->GetUndoHistory()->ClearHistory();
 	HighlightBoneNamesWithWeights();
 }
 
@@ -7839,7 +7874,6 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
-		ReselectBone();
 
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
@@ -7847,8 +7881,6 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 
 	project->GetWorkAnim()->CleanupBones();
 	AnimationGUIFromProj();
-
-	UpdateActiveShapeUI();
 }
 
 void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
@@ -7862,34 +7894,30 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::vector<std::string> boneList;
-	wxArrayTreeItemIds selItems;
-	outfitBones->GetSelections(selItems);
-	if (selItems.size() < 1)
+	std::vector<std::string> boneList = GetSelectedBones();
+	int nSelBones = boneList.size();
+	if (nSelBones < 1)
 		return;
+	std::unordered_set<std::string> selBones{boneList.begin(), boneList.end()};
 
 	std::string bonesString;
-	for (int i = 0; i < selItems.size(); i++) {
-		std::string boneName = outfitBones->GetItemText(selItems[i]).ToStdString();
+	for (std::string &boneName : boneList)
 		bonesString += "'" + boneName + "' ";
-		boneList.push_back(boneName);
-	}
-	std::sort(boneList.begin(), boneList.end());
-	int nSelBones = boneList.size();
+
 	std::vector<std::string> normBones, notNormBones, lockedBones;
 	GetNormalizeBones(&normBones, &notNormBones);
 	for (auto &bone : normBones)
-		if (!std::binary_search(boneList.begin(), boneList.begin() + nSelBones, bone))
+		if (!selBones.count(bone))
 			boneList.push_back(bone);
 	bool bHasNormBones = static_cast<int>(boneList.size()) > nSelBones;
 	if (bHasNormBones) {
 		for (auto &bone : notNormBones)
-			if (!std::binary_search(boneList.begin(), boneList.begin() + nSelBones, bone))
+			if (!selBones.count(bone))
 				lockedBones.push_back(bone);
 	}
 	else {
 		for (auto &bone : notNormBones)
-			if (!std::binary_search(boneList.begin(), boneList.begin() + nSelBones, bone))
+			if (!selBones.count(bone))
 				boneList.push_back(bone);
 	}
 
@@ -7916,7 +7944,6 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
-		ReselectBone();
 
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
@@ -7924,8 +7951,6 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 
 	project->GetWorkAnim()->CleanupBones();
 	AnimationGUIFromProj();
-
-	UpdateActiveShapeUI();
 }
 
 void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
@@ -7952,18 +7977,13 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 		return;
 	}
 
-	std::vector<std::string> selectedBones;
-	wxArrayTreeItemIds selItems;
-	outfitBones->GetSelections(selItems);
-	if (selItems.size() < 1)
+	std::vector<std::string> selectedBones = GetSelectedBones();
+	if (selectedBones.size() < 1)
 		return;
 
 	std::string bonesString;
-	for (int i = 0; i < selItems.size(); i++) {
-		std::string boneName = outfitBones->GetItemText(selItems[i]).ToStdString();
+	for (std::string &boneName : selectedBones)
 		bonesString += "'" + boneName + "' ";
-		selectedBones.push_back(boneName);
-	}
 
 	wxLogMessage("Transferring selected bone weights to '%s' for %s...", activeItem->GetShape()->GetName(), bonesString);
 	StartProgress(_("Transferring bone weights..."));
@@ -7972,8 +7992,7 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 	glView->GetActiveMask(mask);
 	project->TransferSelectedWeights(activeItem->GetShape(), &mask, &selectedBones);
 
-	ReselectBone();
-	HighlightBoneNamesWithWeights();
+	AnimationGUIFromProj();
 
 	UpdateProgress(100, _("Finished"));
 	EndProgress();
@@ -8980,18 +8999,17 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 	if (undoType == UT_WEIGHT) {
 		for (auto &mit : usp->usss) {
 			mesh *m = mit.first;
-			for (auto &wIt : mit.second.boneWeights[0].weights)
-				m->vcolors[wIt.first].y = bUndo ? wIt.second.startVal : wIt.second.endVal;
+			for (auto &bw : mit.second.boneWeights) {
+				if (bw.boneName != os->GetActiveBone()) continue;
+				for (auto &wIt : bw.weights)
+					m->vcolors[wIt.first].y = bUndo ? wIt.second.startVal : wIt.second.endVal;
+			}
 			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
 		os->ActiveShapesUpdated(usp, bUndo);
-		wxArrayTreeItemIds selItems;
-		os->outfitBones->GetSelections(selItems);
-		if (selItems.size() > 0) {
-			std::string selectedBone = os->outfitBones->GetItemText(selItems.front());
-			int boneScalePos = os->boneScale->GetValue();
-			os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
-		}
+		std::string activeBone = os->GetActiveBone();
+		if (!activeBone.empty())
+			os->project->ApplyBoneScale(activeBone, os->boneScale->GetValue(), true);
 	}
 	else if (undoType == UT_MASK || undoType == UT_COLOR) {
 		for (auto &mit : usp->usss) {
