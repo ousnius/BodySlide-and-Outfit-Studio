@@ -2053,13 +2053,14 @@ void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
 void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo) {
 	if (!usp->sliderName.empty()) {
 		float sliderscale = 1 / usp->sliderscale;
-		for (auto &mit : usp->usss) {
-			mesh *m = mit.first;
+		for (auto &uss : usp->usss) {
+			mesh *m = glView->GetMesh(uss.shapeName);
+			if (!m) continue;
 			std::unordered_map<ushort, Vector3> strokeDiff;
 
-			for (auto &ps : mit.second.pointStartState) {
-				auto pe = mit.second.pointEndState.find(ps.first);
-				if (pe == mit.second.pointEndState.end())
+			for (auto &ps : uss.pointStartState) {
+				auto pe = uss.pointEndState.find(ps.first);
+				if (pe == uss.pointEndState.end())
 					continue;
 				if (bIsUndo)
 					strokeDiff[ps.first] = (ps.second - pe->second) * sliderscale;
@@ -2073,9 +2074,10 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 	}
 	else {
 		if (usp->undoType == UT_WEIGHT) {
-			for (auto &mit : usp->usss) {
-				mesh *m = mit.first;
-				for (auto &bw : mit.second.boneWeights) {
+			for (auto &uss : usp->usss) {
+				mesh *m = glView->GetMesh(uss.shapeName);
+				if (!m) continue;
+				for (auto &bw : uss.boneWeights) {
 					if (bw.weights.empty()) continue;
 					project->AddShapeBoneAndXForm(m->shapeName, bw.boneName);
 					auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, bw.boneName);
@@ -2091,8 +2093,9 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 			}
 		}
 		else if (usp->undoType == UT_COLOR) {
-			for (auto &mit : usp->usss) {
-				mesh *m = mit.first;
+			for (auto &uss : usp->usss) {
+				mesh *m = glView->GetMesh(uss.shapeName);
+				if (!m) continue;
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
 					continue;
@@ -2100,14 +2103,14 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 				std::vector<Color4> vcolors = (*colorPtr);
 
 				if (bIsUndo) {
-					for (auto &p : mit.second.pointStartState) {
+					for (auto &p : uss.pointStartState) {
 						vcolors[p.first].r = p.second.x;
 						vcolors[p.first].g = p.second.y;
 						vcolors[p.first].b = p.second.z;
 					}
 				}
 				else {
-					for (auto &p : mit.second.pointEndState) {
+					for (auto &p : uss.pointEndState) {
 						vcolors[p.first].r = p.second.x;
 						vcolors[p.first].g = p.second.y;
 						vcolors[p.first].b = p.second.z;
@@ -2118,8 +2121,9 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 			}
 		}
 		else if (usp->undoType == UT_ALPHA) {
-			for (auto &mit : usp->usss) {
-				mesh *m = mit.first;
+			for (auto &uss : usp->usss) {
+				mesh *m = glView->GetMesh(uss.shapeName);
+				if (!m) continue;
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
 					continue;
@@ -2127,11 +2131,11 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 				std::vector<Color4> vcolors = (*colorPtr);
 
 				if (bIsUndo) {
-					for (auto &p : mit.second.pointStartState)
+					for (auto &p : uss.pointStartState)
 						vcolors[p.first].a = p.second.x;
 				}
 				else {
-					for (auto &p : mit.second.pointEndState)
+					for (auto &p : uss.pointEndState)
 						vcolors[p.first].a = p.second.x;
 				}
 
@@ -7854,10 +7858,10 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		std::unordered_map<ushort, float> mask;
 		for (int i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
-			mesh *m = glView->GetMesh(shape->GetName());
-			if (!m) continue;
 			if (!project->IsBaseShape(shape)) {
 				wxLogMessage("Copying bone weights to '%s'...", shape->GetName());
+				usp->usss.resize(usp->usss.size()+1);
+				usp->usss.back().shapeName = shape->GetName();
 				mask.clear();
 				glView->GetShapeMask(mask, shape->GetName());
 				std::vector<std::string> bones = project->GetWorkAnim()->shapeBones[shape->GetName()];
@@ -7866,7 +7870,7 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 					if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
 						mergedBones.push_back(b);
 				std::vector<std::string> lockedBones;
-				project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, mergedBones, baseBones.size(), lockedBones, usp->usss[m], false);
+				project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, mergedBones, baseBones.size(), lockedBones, usp->usss.back(), false);
 			}
 			else
 				wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
@@ -7930,13 +7934,13 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		std::unordered_map<ushort, float> mask;
 		for (int i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
-			mesh *m = glView->GetMesh(shape->GetName());
-			if (!m) continue;
 			if (!project->IsBaseShape(shape)) {
 				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->GetName(), bonesString);
+				usp->usss.resize(usp->usss.size()+1);
+				usp->usss.back().shapeName = shape->GetName();
 				mask.clear();
 				glView->GetShapeMask(mask, shape->GetName());
-				project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, boneList, nSelBones, lockedBones, usp->usss[m], bHasNormBones);
+				project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, boneList, nSelBones, lockedBones, usp->usss.back(), bHasNormBones);
 			}
 			else
 				wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
@@ -8931,16 +8935,12 @@ void wxGLPanel::EndPivotPosition() {
 
 	std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
 	if (refMeshes.size() > 0) {
-		mesh* pivotHitMesh = refMeshes[0];
-		auto pivotState = activeStroke->usp.usss.find(pivotHitMesh);
-
-		if (pivotState != activeStroke->usp.usss.end()) {
-			if (pivotState->second.pointStartState.size() > 0 && pivotState->second.pointEndState.size() > 0) {
-				Vector3& pivotStartStatePos = pivotState->second.pointStartState[0];
-				Vector3& pivotEndStatePos = pivotState->second.pointEndState[0];
-				Vector3 pivotDiff = pivotEndStatePos - pivotStartStatePos;
-				pivotPosition += pivotDiff;
-			}
+		UndoStateShape &uss = activeStroke->usp.usss[0];
+		if (uss.pointStartState.size() > 0 && uss.pointEndState.size() > 0) {
+			Vector3& pivotStartStatePos = uss.pointStartState[0];
+			Vector3& pivotEndStatePos = uss.pointEndState[0];
+			Vector3 pivotDiff = pivotEndStatePos - pivotStartStatePos;
+			pivotPosition += pivotDiff;
 		}
 	}
 
@@ -8997,9 +8997,10 @@ bool wxGLPanel::RestoreMode(UndoStateProject *usp) {
 void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 	int undoType = usp->undoType;
 	if (undoType == UT_WEIGHT) {
-		for (auto &mit : usp->usss) {
-			mesh *m = mit.first;
-			for (auto &bw : mit.second.boneWeights) {
+		for (auto &uss : usp->usss) {
+			mesh *m = GetMesh(uss.shapeName);
+			if (!m) continue;
+			for (auto &bw : uss.boneWeights) {
 				if (bw.boneName != os->GetActiveBone()) continue;
 				for (auto &wIt : bw.weights)
 					m->vcolors[wIt.first].y = bUndo ? wIt.second.startVal : wIt.second.endVal;
@@ -9012,9 +9013,10 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 			os->project->ApplyBoneScale(activeBone, os->boneScale->GetValue(), true);
 	}
 	else if (undoType == UT_MASK || undoType == UT_COLOR) {
-		for (auto &mit : usp->usss) {
-			mesh *m = mit.first;
-			for (auto &pit : (bUndo ? mit.second.pointStartState : mit.second.pointEndState))
+		for (auto &uss : usp->usss) {
+			mesh *m = GetMesh(uss.shapeName);
+			if (!m) continue;
+			for (auto &pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->vcolors[pit.first] = pit.second;
 			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
@@ -9022,34 +9024,38 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 			os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UT_ALPHA) {
-		for (auto &mit : usp->usss) {
-			mesh *m = mit.first;
-			for (auto &pit : (bUndo ? mit.second.pointStartState : mit.second.pointEndState))
+		for (auto &uss : usp->usss) {
+			mesh *m = GetMesh(uss.shapeName);
+			if (!m) continue;
+			for (auto &pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->valpha[pit.first] = pit.second.x;
 			m->QueueUpdate(mesh::UpdateType::VertexAlpha);
 		}
 		os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UT_VERTPOS) {
-		for (auto &mit : usp->usss) {
-			mesh *m = mit.first;
-			for (auto &pit : (bUndo ? mit.second.pointStartState : mit.second.pointEndState))
+		for (auto &uss : usp->usss) {
+			mesh *m = GetMesh(uss.shapeName);
+			if (!m) continue;
+			for (auto &pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->verts[pit.first] = pit.second;
 			m->SmoothNormals();
-			if (mit.second.startBVH == mit.second.endBVH) {
-				for (auto &bvhNode : mit.second.affectedNodes)
+			if (uss.startBVH == uss.endBVH) {
+				for (auto &bvhNode : uss.affectedNodes)
 					bvhNode->UpdateAABB();
 			}
 			else
-				m->bvh = bUndo ? mit.second.startBVH : mit.second.endBVH;
+				m->bvh = bUndo ? uss.startBVH : uss.endBVH;
 			m->QueueUpdate(mesh::UpdateType::Position);
 		}
 		os->ActiveShapesUpdated(usp, bUndo);
 		if (usp->sliderName.empty()) {
-			for (auto &m : usp->usss) {
-				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(m.first->shapeName);
+			for (auto &uss : usp->usss) {
+				mesh *m = GetMesh(uss.shapeName);
+				if (!m) continue;
+				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
 				if (shape)
-					os->project->UpdateShapeFromMesh(shape, m.first);
+					os->project->UpdateShapeFromMesh(shape, m);
 			}
 		}
 	}
