@@ -8935,7 +8935,6 @@ void wxGLPanel::EndPivotPosition() {
 
 	std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
 	if (refMeshes.size() > 0) {
-		mesh* pivotHitMesh = refMeshes[0];
 		UndoStateShape &uss = activeStroke->usp.usss[0];
 		if (uss.pointStartState.size() > 0 && uss.pointEndState.size() > 0) {
 			Vector3& pivotStartStatePos = uss.pointStartState[0];
