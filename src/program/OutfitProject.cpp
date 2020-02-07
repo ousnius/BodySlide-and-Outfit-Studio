@@ -1818,14 +1818,19 @@ int OutfitProject::LoadSkeletonReference(const std::string& skeletonFileName) {
 	return AnimSkeleton::getInstance().LoadFromNif(skeletonFileName);
 }
 
-int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool mergeSliders) {
+int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders) {
 	if (sourceFile.empty() || set.empty()) {
 		wxLogError("Template source entries are invalid.");
 		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR, owner);
 		return 1;
 	}
 
-	return LoadReference(sourceFile, set, mergeSliders, shape);
+	if (loadAll) {
+		owner->StartSubProgress(10, 20);
+		return AddFromSliderSet(sourceFile, set);
+	}
+	else
+		return LoadReference(sourceFile, set, mergeSliders, shape);
 }
 
 int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders) {

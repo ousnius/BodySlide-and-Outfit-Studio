@@ -183,7 +183,7 @@ public:
 	void DeleteSlider(const std::string& sliderName);
 
 	int LoadSkeletonReference(const std::string& skeletonFileName);
-	int LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool mergeSliders = false);
+	int LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll = false, bool mergeSliders = false);
 	int LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders = false);
 	int LoadReference(const std::string& fileName, const std::string& setName, bool mergeSliders = false, const std::string& shapeName = "");
 

@@ -2347,9 +2347,9 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
 			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-				error = project->LoadReferenceTemplate(Config["AppDir"] + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape());
+				error = project->LoadReferenceTemplate(Config["AppDir"] + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll());
 			else
-				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape());
+				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll());
 		}
 		else
 			error = 1;
@@ -2484,9 +2484,9 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
 			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-				error = project->LoadReferenceTemplate(Config["AppDir"] + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), mergeSliders);
+				error = project->LoadReferenceTemplate(Config["AppDir"] + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders);
 			else
-				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), mergeSliders);
+				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders);
 		}
 		else
 			error = 1;

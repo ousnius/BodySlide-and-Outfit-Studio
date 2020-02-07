@@ -53,6 +53,9 @@ int RefTemplate::Load(XMLElement* srcElement) {
 	if (srcElement->Attribute("shape"))
 		shape = srcElement->Attribute("shape");
 
+	if (srcElement->Attribute("loadAll"))
+		loadAll = srcElement->BoolAttribute("loadAll");
+
 	std::string* fileName = static_cast<std::string*>(srcElement->GetDocument()->GetUserData());
 	sourceFiles.push_back(*fileName);
 

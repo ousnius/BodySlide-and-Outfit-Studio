@@ -20,6 +20,7 @@ class RefTemplate {
 	std::string source;
 	std::string set;
 	std::string shape;
+	bool loadAll = false;
 	std::vector<std::string> sourceFiles;
 
 public:
@@ -54,6 +55,13 @@ public:
 	}
 	void SetShape(const std::string& inShape) {
 		shape = inShape;
+	}
+
+	bool GetLoadAll() const {
+		return loadAll;
+	}
+	void SetLoadAll(const bool inLoadAll) {
+		loadAll = inLoadAll;
 	}
 
 	int Load(XMLElement* srcElement);
