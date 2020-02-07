@@ -2460,8 +2460,14 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 		bool buildMorphsDef = BodySlideConfig.GetBoolValue("BuildMorphs");
 		cbMorphs->SetValue(buildMorphsDef);
 
-		if (app->targetGame != SKYRIM && app->targetGame != FO4 && app->targetGame != SKYRIMSE)
-			cbMorphs->Show(false);
+		switch (app->targetGame) {
+		case SKYRIM:
+		case FO4:
+		case SKYRIMSE:
+		case SKYRIMVR:
+			cbMorphs->Show();
+			break;
+		}
 	}
 }
 

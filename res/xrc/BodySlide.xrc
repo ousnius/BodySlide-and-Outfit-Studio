@@ -307,6 +307,7 @@
 											<fg>#c8c8c8</fg>
 											<label>Build Morphs</label>
 											<tooltip>Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires other mods to make use of the morph data.</tooltip>
+											<hidden>1</hidden>
 										</object>
 									</object>
 								</object>
