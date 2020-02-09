@@ -903,10 +903,11 @@
 														<orient>wxHORIZONTAL</orient>
 														<object class="sizeritem">
 															<option>0</option>
-															<flag>wxALIGN_CENTER</flag>
+															<flag>wxRIGHT|wxALIGN_CENTER</flag>
+															<border>15</border>
 															<object class="wxStaticText" name="xMirrorBoneLabel">
 																<fg>#ffffff</fg>
-																<label>X-Mirror Bone: </label>
+																<label>X-Mirror Bone</label>
 																<hidden>1</hidden>
 															</object>
 														</object>
@@ -1070,7 +1071,7 @@
 			<fields>1</fields>
 		</object>
 	</object>
-	
+
 	<object class="wxMenuBar" name="menuBar">
 		<label>Menu</label>
 		<object class="wxMenu" name="menuFile">
@@ -1614,7 +1615,7 @@
 			</object>
 		</object>
 	</object>
-	
+
 	<object class="wxToolBar" name="toolBar">
 		<style>wxTB_HORIZONTAL|wxTB_FLAT</style>
 		<bg>#707070</bg>
@@ -1795,7 +1796,7 @@
 			<bitmap>$(AppDir)\res\images\PayPal.png</bitmap>
 		</object>
 	</object>
-	
+
 	<object class="wxMenu" name="menuMeshContext">
 		<label>Shape</label>
 		<object class="wxMenu" name="menuExportMesh">
