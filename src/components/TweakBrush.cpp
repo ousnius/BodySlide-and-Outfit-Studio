@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "TweakBrush.h"
 #include "WeightNorm.h"
+#include "Anim.h"
 
 std::vector<std::future<void>> TweakStroke::normalUpdates{};
 
@@ -64,7 +65,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 				pickInfo.origin = Vector3(morigin.x, morigin.y, morigin.z);
 			}
 
-			if (!refBrush->queryPoints(m, pickInfo, nullptr, nPts1, uss.affectedNodes))
+			if (!refBrush->queryPoints(m, pickInfo, mirrorPick, nullptr, nPts1, uss.affectedNodes))
 				continue;
 
 			refBrush->brushAction(m, pickInfo, nullptr, nPts1, uss);
@@ -84,21 +85,21 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			int nPts1 = 0;
 			int nPts2 = 0;
 
-			if (!refBrush->queryPoints(m, pickInfo, pts1[m].get(), nPts1, uss.affectedNodes))
+			if (!refBrush->queryPoints(m, pickInfo, mirrorPick, pts1[m].get(), nPts1, uss.affectedNodes))
 				continue;
 
-			if (refBrush->isMirrored())
-				refBrush->queryPoints(m, mirrorPick, pts2[m].get(), nPts2, uss.affectedNodes);
+			if (refBrush->isMirrored() && !refBrush->NeedMirrorMergedQuery())
+				refBrush->queryPoints(m, mirrorPick, pickInfo, pts2[m].get(), nPts2, uss.affectedNodes);
 
 			refBrush->brushAction(m, pickInfo, pts1[m].get(), nPts1, uss);
 
-			if (refBrush->isMirrored())
+			if (refBrush->isMirrored() && nPts2 > 0)
 				refBrush->brushAction(m, mirrorPick, pts2[m].get(), nPts2, uss);
 
 			if (refBrush->LiveNormals()) {
 				auto pending1 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m].get(), nPts1);
 				normalUpdates.push_back(std::move(pending1));
-				if (refBrush->isMirrored()) {
+				if (refBrush->isMirrored() && nPts2 > 0) {
 					auto pending2 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts2[m].get(), nPts2);
 					normalUpdates.push_back(std::move(pending2));
 				}
@@ -226,18 +227,23 @@ void TweakBrush::applyFalloff(Vector3 &deltaVec, float dist) {
 	deltaVec *= getFalloff(dist);
 }
 
-bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes) {
+bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes) {
 	std::vector<IntersectResult> IResults;
 
 	if (!refmesh->bvh || !refmesh->bvh->IntersectSphere(pickInfo.origin, radius, &IResults))
 		return false;
+	unsigned int mirrorStartInd = IResults.size();
+	bool mergeMirror = NeedMirrorMergedQuery();
+	if (mergeMirror)
+		refmesh->bvh->IntersectSphere(mirrorPick.origin, radius, &IResults);
 
 	std::unique_ptr<bool[]> pointVisit = std::make_unique<bool[]>(refmesh->nVerts);
 
 	if (bConnected && !IResults.empty()) {
 		int pickFacet = IResults[0].HitFacet;
 		float minDist = IResults[0].HitDistance;
-		for (auto &r : IResults) {
+		for (unsigned int i = 0; i < mirrorStartInd; ++i) {
+			auto &r = IResults[i];
 			if (r.HitDistance < minDist) {
 				minDist = r.HitDistance;
 				pickFacet = r.HitFacet;
@@ -246,14 +252,25 @@ bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* result
 
 		std::vector<int> resultFacets;
 		refmesh->ConnectedPointsInSphere(pickInfo.origin, radius * radius, pickFacet, nullptr, pointVisit.get(), resultPoints, outResultCount, resultFacets);
+		if (mergeMirror && mirrorStartInd < IResults.size()) {
+			pickFacet = IResults[mirrorStartInd].HitFacet;
+			minDist = IResults[mirrorStartInd].HitDistance;
+			for (unsigned int i = mirrorStartInd; i < IResults.size(); ++i) {
+				auto &r = IResults[i];
+				if (r.HitDistance < minDist) {
+					minDist = r.HitDistance;
+					pickFacet = r.HitFacet;
+				}
+			}
+			refmesh->ConnectedPointsInSphere(mirrorPick.origin, radius * radius, pickFacet, nullptr, pointVisit.get(), resultPoints, outResultCount, resultFacets);
+		}
 	}
 	else
 		outResultCount = 0;
 
-	Triangle t;
 	for (unsigned int i = 0; i < IResults.size(); i++) {
 		if (!bConnected) {
-			t = refmesh->tris[IResults[i].HitFacet];
+			const Triangle &t = refmesh->tris[IResults[i].HitFacet];
 			if (!pointVisit[t.p1]) {
 				resultPoints[outResultCount++] = t.p1;
 				pointVisit[t.p1] = true;
@@ -682,7 +699,7 @@ void TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pic
 		if (bMirror)
 			meshCache->cachedPointsM.resize(m->nVerts);
 
-		if (!TweakBrush::queryPoints(m, pick, &meshCache->cachedPoints.front(), meshCache->nCachedPoints, meshCache->cachedNodes))
+		if (!TweakBrush::queryPoints(m, pick, mpick, &meshCache->cachedPoints.front(), meshCache->nCachedPoints, meshCache->cachedNodes))
 			continue;
 
 		for (int i = 0; i < meshCache->nCachedPoints; i++) {
@@ -691,7 +708,7 @@ void TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pic
 		}
 
 		if (bMirror) {
-			TweakBrush::queryPoints(m, mpick, &meshCache->cachedPointsM.front(), meshCache->nCachedPointsM, meshCache->cachedNodesM);
+			TweakBrush::queryPoints(m, mpick, pick, &meshCache->cachedPointsM.front(), meshCache->nCachedPointsM, meshCache->cachedNodesM);
 
 			for (int i = 0; i < meshCache->nCachedPointsM; i++) {
 				int vi = meshCache->cachedPointsM[i];
@@ -701,7 +718,7 @@ void TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pic
 	}
 }
 
-bool TB_Move::queryPoints(mesh* m, TweakPickInfo&, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>&) {
+bool TB_Move::queryPoints(mesh* m, TweakPickInfo&, TweakPickInfo&, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>&) {
 	TweakBrushMeshCache* meshCache = &cache[m];
 	if (meshCache->nCachedPoints == 0)
 		return false;
@@ -817,7 +834,7 @@ void TB_XForm::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pi
 	}
 }
 
-bool TB_XForm::queryPoints(mesh* m, TweakPickInfo&, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>&) {
+bool TB_XForm::queryPoints(mesh* m, TweakPickInfo&, TweakPickInfo&, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>&) {
 	TweakBrushMeshCache* meshCache = &cache[m];
 	if (meshCache->nCachedPoints == 0)
 		return false;
@@ -929,17 +946,36 @@ TB_Weight::~TB_Weight() {
 
 void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, 1, bSpreadWeight);
+	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
+	Vector3 mOrigin = pickInfo.origin;
+	mOrigin.x = -mOrigin.x;
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
+		bool adjFlag[2] = {true, false};
+		float orDist = pickInfo.origin.DistanceTo(refmesh->verts[i]);
+		float morDist = mOrigin.DistanceTo(refmesh->verts[i]);
+		float falloff = getFalloff(orDist);
+		float mFalloff = getFalloff(morDist);
+		float b0falloff = falloff;
+		if (bMirror && morDist < orDist)
+			b0falloff = mFalloff;
+		adjFlag[0] = b0falloff > 0.0;
 		float sw = uss.boneWeights[0].weights[i].endVal;
-		float ew = bFixedWeight ? strength * 10.0f - sw : strength;
-		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
-		ew *= 1.0f - refmesh->vcolors[i].x;
-		float fw = sw + ew;
-		fw = nzer.SetWeight(i, fw);
-		refmesh->vcolors[i].y = fw;
+		float str = bFixedWeight ? strength * 10.0f - sw : strength;
+		float maskF = 1.0f - refmesh->vcolors[i].x;
+		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
+		if (bXMirrorBone) {
+			float b1falloff = mFalloff;
+			if (bMirror && orDist < morDist)
+				b1falloff = falloff;
+			adjFlag[1] = b1falloff > 0.0;
+			sw = uss.boneWeights[1].weights[i].endVal;
+			str = bFixedWeight ? strength * 10.0f - sw : strength;
+			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
+		}
+		nzer.AdjustWeights(i, adjFlag);
+		refmesh->vcolors[i].y = uss.boneWeights[0].weights[i].endVal;
 	}
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
@@ -957,17 +993,32 @@ TB_Unweight::~TB_Unweight() {
 
 void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, 1, bSpreadWeight);
+	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
+	Vector3 mOrigin = pickInfo.origin;
+	mOrigin.x = -mOrigin.x;
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		float sw = uss.boneWeights[0].weights[i].endVal;
-		float ew = strength;
-		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
-		ew *= 1.0f - refmesh->vcolors[i].x;
-		float fw = sw + ew;
-		fw = nzer.SetWeight(i, fw);
-		refmesh->vcolors[i].y = fw;
+		bool adjFlag[2] = {true, false};
+		float orDist = pickInfo.origin.DistanceTo(refmesh->verts[i]);
+		float morDist = mOrigin.DistanceTo(refmesh->verts[i]);
+		float falloff = getFalloff(orDist);
+		float mFalloff = getFalloff(morDist);
+		float b0falloff = falloff;
+		if (bMirror && morDist < orDist)
+			b0falloff = mFalloff;
+		adjFlag[0] = b0falloff > 0.0;
+		float maskF = 1.0f - refmesh->vcolors[i].x;
+		uss.boneWeights[0].weights[i].endVal += strength * maskF * b0falloff;
+		if (bXMirrorBone) {
+			float b1falloff = mFalloff;
+			if (bMirror && orDist < morDist)
+				b1falloff = falloff;
+			adjFlag[1] = b1falloff > 0.0;
+			uss.boneWeights[1].weights[i].endVal += strength * maskF * b1falloff;
+		}
+		nzer.AdjustWeights(i, adjFlag);
+		refmesh->vcolors[i].y = uss.boneWeights[0].weights[i].endVal;
 	}
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
@@ -1007,7 +1058,8 @@ void TB_SmoothWeight::lapFilter(mesh* refmesh, const int* points, int nPoints, s
 	}
 }
 
-void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape &uss) {
+void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape &uss, const int boneInd, const std::unordered_map<ushort, float> *wPtr) {
+	auto &ubw = uss.boneWeights[boneInd].weights;
 	std::vector<float> b(refmesh->nVerts);
 
 	int adjPoints[1000];
@@ -1018,11 +1070,17 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints,
 		if (c == 0) continue;
 		// average adjacent points positions, using values from last iteration.
 		float d = 0.0;
-		for (int n = 0; n < c; n++)
-			d += refmesh->vcolors[adjPoints[n]].y;
+		for (int n = 0; n < c; n++) {
+			int ai = adjPoints[n];
+			if (ubw.find(ai) != ubw.end())
+				d += ubw[ai].endVal;
+			else if (wPtr && wPtr->find(ai) != wPtr->end())
+				d += wPtr->at(ai);
+			// otherwise the previous weight is zero
+		}
 		wv[i] = d / (float)c;
 		// Calculate the difference between the new position and a blend of the original and previous positions
-		b[i] = wv[i] - ((uss.boneWeights[0].weights[i].startVal * hcAlpha) + (refmesh->vcolors[i].y * (1.0f - hcAlpha)));
+		b[i] = wv[i] - ((ubw[i].startVal * hcAlpha) + (ubw[i].endVal * (1.0f - hcAlpha)));
 	}
 
 	for (int p = 0; p < nPoints; p++) {
@@ -1055,30 +1113,55 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints,
 
 void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, 1, bSpreadWeight);
+	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
+	Vector3 mOrigin = pickInfo.origin;
+	mOrigin.x = -mOrigin.x;
 
 	// Copy previous iteration's results into wv
-	std::unordered_map<int, float> wv;
+	std::unordered_map<int, float> wv, mwv;
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
 		wv[i] = uss.boneWeights[0].weights[i].endVal;
+		if (bXMirrorBone)
+			mwv[i] = uss.boneWeights[1].weights[i].endVal;
 	}
 
 	if (method == 0)		// laplacian smooth
 		lapFilter(refmesh, points, nPoints, wv);
 	else					// HC-laplacian smooth
-		hclapFilter(refmesh, points, nPoints, wv, uss);
+		hclapFilter(refmesh, points, nPoints, wv, uss, 0, animInfo->GetWeightsPtr(refmesh->shapeName, boneNames[0]));
+	if (bXMirrorBone) {
+		if (method == 0)		// laplacian smooth
+			lapFilter(refmesh, points, nPoints, mwv);
+		else					// HC-laplacian smooth
+			hclapFilter(refmesh, points, nPoints, mwv, uss, 1, animInfo->GetWeightsPtr(refmesh->shapeName, boneNames[1]));
+	}
 
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		float sw = uss.boneWeights[0].weights[i].endVal;
-		float ew = wv[i] - sw;
-		ew *= getFalloff(pickInfo.origin.DistanceTo(refmesh->verts[i]));
-		ew *= 1.0f - refmesh->vcolors[i].x;
-		float fw = sw + ew;
-		fw = nzer.SetWeight(i, fw);
-		refmesh->vcolors[i].y = fw;
+		bool adjFlag[2] = {true, false};
+		float orDist = pickInfo.origin.DistanceTo(refmesh->verts[i]);
+		float morDist = mOrigin.DistanceTo(refmesh->verts[i]);
+		float falloff = getFalloff(orDist);
+		float mFalloff = getFalloff(morDist);
+		float b0falloff = falloff;
+		if (bMirror && morDist < orDist)
+			b0falloff = mFalloff;
+		adjFlag[0] = b0falloff > 0.0;
+		float str = wv[i] - uss.boneWeights[0].weights[i].endVal;
+		float maskF = 1.0f - refmesh->vcolors[i].x;
+		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
+		if (bXMirrorBone) {
+			float b1falloff = mFalloff;
+			if (bMirror && orDist < morDist)
+				b1falloff = falloff;
+			adjFlag[1] = b1falloff > 0.0;
+			str = mwv[i] - uss.boneWeights[1].weights[i].endVal;
+			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
+		}
+		nzer.AdjustWeights(i, adjFlag);
+		refmesh->vcolors[i].y = uss.boneWeights[0].weights[i].endVal;
 	}
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }

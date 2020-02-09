@@ -869,7 +869,12 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		lightDirectional2Slider->SetValue(directional2);
 	}
 
+	auto editPanel = (wxPanel*)FindWindowByName("editPanel");
+	if (editPanel)
+		editPanel->SetBackgroundColour(wxColour(112, 112, 112));
+
 	boneScale = (wxSlider*)FindWindowByName("boneScale");
+	cXMirrorBone = (wxChoice*)FindWindowByName("cXMirrorBone");
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
@@ -2011,6 +2016,55 @@ std::vector<std::string> OutfitStudioFrame::GetSelectedBones() {
 	return boneList;
 }
 
+void OutfitStudioFrame::CalcAutoXMirrorBone() {
+	autoXMirrorBone.clear();
+	const unsigned int abLen = activeBone.length();
+	std::vector<std::string> bones;
+	project->GetActiveBones(bones);
+	int bestFlips = 0;
+	for (const std::string &b : bones) {
+		if (abLen != b.length()) continue;
+		int flips = 0;
+		bool nomatch = false;
+		for (unsigned int i = 0; i < abLen && !nomatch; ++i) {
+			char abc = tolower(activeBone[i]);
+			char bc = tolower(b[i]);
+			if (abc == 'l') {
+				if (bc == 'r')
+					++flips;
+				else if (bc != abc)
+					nomatch = true;
+			}
+			else if (abc == 'r') {
+				if (bc == 'l')
+					++flips;
+				else if (bc != abc)
+					nomatch = true;
+			}
+			else
+				nomatch = bc != abc;
+		}
+		if (nomatch) continue;
+		if (flips <= bestFlips) continue;
+		bestFlips = flips;
+		autoXMirrorBone = b;
+	}
+	if (autoXMirrorBone.empty())
+		cXMirrorBone->SetString(1, "Auto: None");
+	else
+		cXMirrorBone->SetString(1, "Auto: " + autoXMirrorBone);
+}
+
+std::string OutfitStudioFrame::GetXMirrorBone() {
+	int xMChoice = cXMirrorBone->GetSelection();
+	if (xMChoice == 0)
+		return std::string();
+	else if (xMChoice == 1)
+		return autoXMirrorBone;
+	else
+		return cXMirrorBone->GetString(xMChoice).ToStdString();
+}
+
 void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
 	wxTreeItemId item;
 	wxTreeItemId subitem;
@@ -2814,18 +2868,26 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 }
 
 void OutfitStudioFrame::AnimationGUIFromProj() {
-	// Preserve selected and normalize bones
+	// Preserve selected, normalize, and x-mirror bones
 	std::vector<std::string> selBones = GetSelectedBones();
 	std::vector<std::string> normBones;
 	GetNormalizeBones(&normBones, nullptr);
 	std::unordered_set<std::string> normBonesS{normBones.begin(), normBones.end()};
 	std::unordered_set<std::string> selBonesS{selBones.begin(), selBones.end()};
+	int xMChoice = cXMirrorBone->GetSelection();
+	std::string ManualXMirrorBone;
+	if (xMChoice >= 2)
+		ManualXMirrorBone = cXMirrorBone->GetString(xMChoice);
 
 	// Clear GUI's bone list
 	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
 		outfitBones->DeleteChildren(bonesRoot);
-	if (selBonesS.count(activeBone) != 0)
+	if (selBonesS.count(activeBone) == 0)
 		activeBone.clear();
+	cXMirrorBone->Clear();
+	cXMirrorBone->AppendString("None");
+	cXMirrorBone->AppendString("Auto");
+	cXMirrorBone->SetSelection(xMChoice == 1 ? 1 : 0);
 
 	// Refill GUI's bone list, re-setting normalize flags and re-selecting
 	std::vector<std::string> activeBones;
@@ -2840,8 +2902,12 @@ void OutfitStudioFrame::AnimationGUIFromProj() {
 			if (activeBone.empty())
 				activeBone = bone;
 		}
+		cXMirrorBone->AppendString(bone);
+		if (xMChoice >= 2 && bone == ManualXMirrorBone)
+			cXMirrorBone->SetSelection(cXMirrorBone->GetCount()-1);
 	}
 	recursingUI = saveRUI;
+	CalcAutoXMirrorBone();
 
 	HighlightBoneNamesWithWeights();
 	RefreshGUIWeightColors();
@@ -3896,6 +3962,7 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 		activeBone = outfitBones->GetItemText(item);
 
 	RefreshGUIWeightColors();
+	CalcAutoXMirrorBone();
 }
 
 void OutfitStudioFrame::OnCheckTreeSel(wxTreeEvent& event) {
@@ -5453,12 +5520,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 	if (id != XRCID("boneTabButton")) {
 		boneScale->Show(false);
+		cXMirrorBone->Show(false);
 
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
+		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
 
 		boneScaleLabel->Show(false);
 		cbFixedWeight->Show(false);
+		xMirrorBoneLabel->Show(false);
 
 		project->ClearBoneScale();
 
@@ -5574,12 +5644,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		boneScale->SetValue(0);
 		boneScale->Show();
+		cXMirrorBone->Show();
 		
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
+		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
 
 		boneScaleLabel->Show();
 		cbFixedWeight->Show();
+		xMirrorBoneLabel->Show();
 		
 		glView->SetTransformMode(false);
 		glView->SetActiveBrush(10);
@@ -7747,6 +7820,7 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	ReselectBone();
+	CalcAutoXMirrorBone();
 	glView->GetUndoHistory()->ClearHistory();
 }
 
@@ -8564,19 +8638,24 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		std::vector<std::string> normBones, notNormBones, brushBones, lockedBones;
 		os->GetNormalizeBones(&normBones, &notNormBones);
 		std::string activeBone = os->GetActiveBone();
+		std::string xMirrorBone = os->GetXMirrorBone();
 		brushBones.push_back(activeBone);
+		if (!xMirrorBone.empty())
+			brushBones.push_back(xMirrorBone);
+		bool bHasNormBones = false;
 		for (auto &bone : normBones)
-			if (bone != activeBone)
+			if (bone != activeBone && bone != xMirrorBone) {
 				brushBones.push_back(bone);
-		bool bHasNormBones = brushBones.size() > 1;
+				bHasNormBones = true;
+			}
 		if (bHasNormBones) {
 			for (auto &bone : notNormBones)
-				if (bone != activeBone)
+				if (bone != activeBone && bone != xMirrorBone)
 					lockedBones.push_back(bone);
 		}
 		else {
 			for (auto &bone : notNormBones)
-				if (bone != activeBone)
+				if (bone != activeBone && bone != xMirrorBone)
 					brushBones.push_back(bone);
 		}
 		if (wxGetKeyState(WXK_ALT)) {
@@ -8584,6 +8663,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			unweightBrush.boneNames = brushBones;
 			unweightBrush.lockedBoneNames = lockedBones;
 			unweightBrush.bSpreadWeight = bHasNormBones;
+			unweightBrush.bXMirrorBone = !xMirrorBone.empty();
 			unweightBrush.setStrength(-weightBrush.getStrength());
 			activeBrush = &unweightBrush;
 		}
@@ -8592,6 +8672,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			smoothWeightBrush.boneNames = brushBones;
 			smoothWeightBrush.lockedBoneNames = lockedBones;
 			smoothWeightBrush.bSpreadWeight = bHasNormBones;
+			smoothWeightBrush.bXMirrorBone = !xMirrorBone.empty();
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
 			activeBrush = &smoothWeightBrush;
 		}
@@ -8600,6 +8681,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			weightBrush.boneNames = brushBones;
 			weightBrush.lockedBoneNames = lockedBones;
 			weightBrush.bSpreadWeight = bHasNormBones;
+			weightBrush.bXMirrorBone = !xMirrorBone.empty();
 		}
 	}
 	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {

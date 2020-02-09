@@ -50,7 +50,7 @@ void BoneWeightAutoNormalizer::GrabStartingWeights(const int *points, int nPoint
 		GrabOneVertexStartingWeights(points[pi]);
 }
 
-void BoneWeightAutoNormalizer::AdjustWeights(int vInd) {
+void BoneWeightAutoNormalizer::AdjustWeights(int vInd, bool *adjFlag) {
 	// We have three sets of bones: modified, normalizable, and locked:
 	// modified bones are those with bi < nMBones.
 	// normalizable bones are those with bi >= nMBones.
@@ -59,7 +59,8 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd) {
 	const unsigned int nLBones = lWPtrs.size();
 	// Calculate total locked and normalizable weight
 	float totNW = 0.0;
-	for (unsigned int bi = nMBones; bi < nBones; ++bi) {
+	for (unsigned int bi = 0; bi < nBones; ++bi) {
+		if (bi < nMBones && (!adjFlag || adjFlag[bi])) continue;
 		auto &bw = uss->boneWeights[bi].weights;
 		if (bw.find(vInd) != bw.end())
 			totNW += bw[vInd].endVal;
@@ -78,6 +79,7 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd) {
 	// Limit modified weights and total them.
 	float totMW = 0.0;
 	for (unsigned int bi = 0; bi < nMBones; ++bi) {
+		if (adjFlag && !adjFlag[bi]) continue;
 		auto wi = uss->boneWeights[bi].weights.find(vInd);
 		if (wi == uss->boneWeights[bi].weights.end()) continue;
 		float &w = wi->second.endVal;
@@ -90,6 +92,7 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd) {
 		float modFac = totMW <= WEIGHT_EPSILON ? 0.0 : availW / totMW;
 		totMW = 0.0;
 		for (unsigned int bi = 0; bi < nMBones; ++bi) {
+			if (adjFlag && !adjFlag[bi]) continue;
 			auto wi = uss->boneWeights[bi].weights.find(vInd);
 			if (wi == uss->boneWeights[bi].weights.end()) continue;
 			wi->second.endVal *= modFac;
@@ -100,7 +103,8 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd) {
 	// Normalize, adjusting only normalizable bones
 	float nrmFac = totNW <= WEIGHT_EPSILON ? 0.0 : (availW - totMW) / totNW;
 	totNW = 0.0;
-	for (unsigned int bi = nMBones; bi < nBones; ++bi) {
+	for (unsigned int bi = 0; bi < nBones; ++bi) {
+		if (bi < nMBones && (!adjFlag || adjFlag[bi])) continue;
 		auto owi = uss->boneWeights[bi].weights.find(vInd);
 		if (owi == uss->boneWeights[bi].weights.end()) continue;
 		float &ow = owi->second.endVal;
@@ -114,7 +118,8 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd) {
 	// bSpreadWeight is true.
 	if (1.0 - totNW - totMW - totLW > WEIGHT_EPSILON && nBones > nMBones && bSpreadWeight) {
 		float remainW = (1.0 - totNW - totMW - totLW) / (nBones - nMBones);
-		for (unsigned int bi = nMBones; bi < nBones; ++bi) {
+		for (unsigned int bi = 0; bi < nBones; ++bi) {
+			if (bi < nMBones && (!adjFlag || adjFlag[bi])) continue;
 			auto &bw = uss->boneWeights[bi].weights;
 			auto owi = bw.find(vInd);
 			if (owi == bw.end())

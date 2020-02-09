@@ -527,7 +527,7 @@
 										<option>0</option>
 										<flag>wxALL|wxEXPAND|wxLEFT</flag>
 										<border>2</border>
-										<object class="wxPanel" name="m_panel6">
+										<object class="wxPanel" name="editPanel">
 											<style>wxTAB_TRAVERSAL</style>
 											<object class="wxBoxSizer">
 												<orient>wxVERTICAL</orient>
@@ -903,6 +903,33 @@
 														<orient>wxHORIZONTAL</orient>
 														<object class="sizeritem">
 															<option>0</option>
+															<flag>wxRIGHT|wxALIGN_CENTER</flag>
+															<border>15</border>
+															<object class="wxStaticText" name="xMirrorBoneLabel">
+																<fg>#ffffff</fg>
+																<label>X-Mirror Bone</label>
+																<hidden>1</hidden>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<object class="wxChoice" name="cXMirrorBone">
+																<selection>0</selection>
+																<content />
+																<hidden>1</hidden>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
 															<object class="wxStaticText" name="boneScaleLabel">
 																<fg>#ffffff</fg>
 																<label>Preview Scaling</label>
@@ -1044,7 +1071,7 @@
 			<fields>1</fields>
 		</object>
 	</object>
-	
+
 	<object class="wxMenuBar" name="menuBar">
 		<label>Menu</label>
 		<object class="wxMenu" name="menuFile">
@@ -1588,7 +1615,7 @@
 			</object>
 		</object>
 	</object>
-	
+
 	<object class="wxToolBar" name="toolBar">
 		<style>wxTB_HORIZONTAL|wxTB_FLAT</style>
 		<bg>#707070</bg>
@@ -1769,7 +1796,7 @@
 			<bitmap>$(AppDir)\res\images\PayPal.png</bitmap>
 		</object>
 	</object>
-	
+
 	<object class="wxMenu" name="menuMeshContext">
 		<label>Shape</label>
 		<object class="wxMenu" name="menuExportMesh">

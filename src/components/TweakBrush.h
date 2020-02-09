@@ -171,6 +171,7 @@ public:
 	virtual bool LiveNormals() {
 		return bLiveNormals;
 	}
+	virtual bool NeedMirrorMergedQuery() {return false;}
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject &) {}
@@ -189,7 +190,7 @@ public:
 	// Optionally, the operation can use the nearest vertex  on the mesh as the center point, using the provided facet to determine candidate points.
 	// Also optionally, the query can return only connected points within the sphere.
 
-	virtual bool queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes);
+	virtual bool queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes);
 
 	// Apply the brush effect to the mesh
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
@@ -284,7 +285,7 @@ public:
 
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&);
 
-	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
+	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -317,7 +318,7 @@ public:
 	}
 
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&);
-	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
+	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -330,14 +331,18 @@ class TB_Weight : public TweakBrush {
 public:
 	bool bFixedWeight;
 	AnimInfo *animInfo;
-	// boneNames: first is bone being edited; rest are normalize
+	// boneNames: first is bone being edited; second is x-mirror bone if
+	// bXMirrorBone is true; the rest are normalize bones
 	std::vector<std::string> boneNames, lockedBoneNames;
 	// bSpreadWeight: if true, leftover weight is spread across normalize bones.
 	bool bSpreadWeight;
+	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
+	bool bXMirrorBone;
 
 	TB_Weight();
 	virtual ~TB_Weight();
 	virtual UndoType GetUndoType() {return UT_WEIGHT;}
+	virtual bool NeedMirrorMergedQuery() {return bMirror || bXMirrorBone;}
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 };
@@ -345,14 +350,18 @@ public:
 class TB_Unweight : public TweakBrush {
 public:
 	AnimInfo *animInfo;
-	// boneNames: first is bone being edited; rest are normalize
+	// boneNames: first is bone being edited; second is x-mirror bone if
+	// bXMirrorBone is true; the rest are normalize bones
 	std::vector<std::string> boneNames, lockedBoneNames;
 	// bSpreadWeight: if true, leftover weight is spread across normalize bones.
 	bool bSpreadWeight;
+	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
+	bool bXMirrorBone;
 
 	TB_Unweight();
 	virtual ~TB_Unweight();
 	virtual UndoType GetUndoType() {return UT_WEIGHT;}
+	virtual bool NeedMirrorMergedQuery() {return bMirror || bXMirrorBone;}
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 };
@@ -360,20 +369,24 @@ public:
 class TB_SmoothWeight : public TweakBrush {
 public:
 	AnimInfo *animInfo;
-	// boneNames: first is bone being edited; rest are normalize
+	// boneNames: first is bone being edited; second is x-mirror bone if
+	// bXMirrorBone is true; the rest are normalize bones
 	std::vector<std::string> boneNames, lockedBoneNames;
 	// bSpreadWeight: if true, leftover weight is spread across normalize bones.
 	bool bSpreadWeight;
+	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
+	bool bXMirrorBone;
 	byte method;				// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
 
 	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv);
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape &uss);
+	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape &uss, const int boneInd, const std::unordered_map<ushort, float> *wPtr);
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
 	virtual UndoType GetUndoType() {return UT_WEIGHT;}
+	virtual bool NeedMirrorMergedQuery() {return bMirror || bXMirrorBone;}
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 };
