@@ -527,7 +527,7 @@
 										<option>0</option>
 										<flag>wxALL|wxEXPAND|wxLEFT</flag>
 										<border>2</border>
-										<object class="wxPanel" name="m_panel6">
+										<object class="wxPanel" name="editPanel">
 											<style>wxTAB_TRAVERSAL</style>
 											<object class="wxBoxSizer">
 												<orient>wxVERTICAL</orient>

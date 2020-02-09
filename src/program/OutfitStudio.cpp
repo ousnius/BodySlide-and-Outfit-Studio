@@ -869,8 +869,9 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		lightDirectional2Slider->SetValue(directional2);
 	}
 
-	wxPanel* m_panel6 = (wxPanel*)FindWindowByName("m_panel6");
-	m_panel6->SetBackgroundColour(wxColour(112, 112, 112));
+	auto editPanel = (wxPanel*)FindWindowByName("editPanel");
+	if (editPanel)
+		editPanel->SetBackgroundColour(wxColour(112, 112, 112));
 
 	boneScale = (wxSlider*)FindWindowByName("boneScale");
 	cXMirrorBone = (wxChoice*)FindWindowByName("cXMirrorBone");
