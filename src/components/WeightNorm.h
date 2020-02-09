@@ -58,10 +58,12 @@ public:
 	/* AdjustWeights: normalizes the weights for the vertex, preferring
 	to adjust weights for bones with index >= nMBones (the unmodified
 	but normalizable bones) before those with index < nBones (the
-	modified bones).  Note that only weight data in uss is accessed
-	for unlocked bones, so you must ensure that all necessary data
-	is grabbed first. */
-	void AdjustWeights(int ptInd);
+	modified bones).  If adjFlag is not null, it points to an array
+	of size nMBones, with each array element indicating whether the
+	weight for that bone was adjusted or not.  Note that only weight
+	data in uss is accessed for unlocked bones, so you must ensure
+	that all necessary data is grabbed first. */
+	void AdjustWeights(int ptInd, bool *adjFlag = nullptr);
 
 	/* SetWeight: sets the weight for the vertex with the given
 	index for bone 0 (indexed into boneNames or uss->boneWeights) and

@@ -739,6 +739,7 @@ public:
 	wxTreeCtrl* partitionTree;
 	wxPanel* lightSettings;
 	wxSlider* boneScale;
+	wxChoice* cXMirrorBone;
 	wxScrolledWindow* sliderScroll;
 	wxStatusBar* statusBar;
 	wxTreeItemId shapesRoot;
@@ -794,6 +795,8 @@ public:
 	void RefreshGUIWeightColors();
 	void GetNormalizeBones(std::vector<std::string> *normBones, std::vector<std::string> *notNormBones);
 	std::vector<std::string> GetSelectedBones();
+	void CalcAutoXMirrorBone();
+	std::string GetXMirrorBone();
 
 	void ShowSegment(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
 	void UpdateSegmentNames();
@@ -970,6 +973,7 @@ private:
 	std::vector<ShapeItemData*> selectedItems;
 	bool recursingUI = false;
 	std::string activeBone;
+	std::string autoXMirrorBone;
 	wxTreeItemId activeSegment;
 	wxTreeItemId activePartition;
 
