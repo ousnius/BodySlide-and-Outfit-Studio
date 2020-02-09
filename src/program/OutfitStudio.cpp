@@ -2061,7 +2061,7 @@ std::string OutfitStudioFrame::GetXMirrorBone() {
 	else if (xMChoice == 1)
 		return autoXMirrorBone;
 	else
-		return cXMirrorBone->GetString(xMChoice);
+		return cXMirrorBone->GetString(xMChoice).ToStdString();
 }
 
 void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
