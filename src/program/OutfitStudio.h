@@ -823,6 +823,24 @@ public:
 	void MenuEnterSliderEdit();
 	void MenuExitSliderEdit();
 
+	enum ToolID {
+		Any = -1,
+		Select = 0,
+		MaskBrush = 1,
+		InflateBrush = 2,
+		DeflateBrush = 3,
+		MoveBrush = 4,
+		SmoothBrush = 5,
+		WeightBrush = 6,
+		ColorBrush = 7,
+		AlphaBrush = 8,
+		Transform,
+		Pivot,
+		VertexEdit
+	};
+
+	void SelectTool(ToolID tool);
+
 	void ToggleBrushPane(bool forceCollapse = false) {
 		wxCollapsiblePane* brushPane = (wxCollapsiblePane*)FindWindowByName("brushPane");
 		if (!brushPane)

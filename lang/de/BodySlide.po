@@ -991,15 +991,9 @@ msgstr "Werkzeug"
 msgid "Current Tool"
 msgstr "Aktuelles Werkzeug"
 
-msgid "Select\t0"
-msgstr "Auswählen\t0"
-
 msgid "Navigate and select meshes (or vertices in vertex mode)."
 msgstr ""
 "Navigiert durch Modelle und wählt sie aus (oder Vertices im Vertexmodus)."
-
-msgid "Mask\t1"
-msgstr "Maskieren\t1"
 
 msgid ""
 "Mask vertices to prevent them from being transformed.\n"
@@ -1008,32 +1002,17 @@ msgstr ""
 "Maskiert Vertices, um zu verhindern, dass sie transformiert werden.\n"
 "ALT gedrückt halten, um Maskierungen zu entfernen."
 
-msgid "Inflate\t2"
-msgstr "Vergrößern\t2"
-
 msgid "Increase mesh volume in an area."
 msgstr "Vergrößert das Meshvolumen im Bereich."
-
-msgid "Deflate\t3"
-msgstr "Reduzieren\t3"
 
 msgid "Decrease mesh volume in an area."
 msgstr "Reduziert das Meshvolumen im Bereich."
 
-msgid "Move\t4"
-msgstr "Bewegen\t4"
-
 msgid "Move vertices over a plane parallel to the view."
 msgstr "Bewegt Vertices auf einer Ebene parallel zur Blickrichtung."
 
-msgid "Smooth\t5"
-msgstr "Glätten\t5"
-
 msgid "Smooth an area of a mesh."
 msgstr "Glättet einen Bereich eines Meshes."
-
-msgid "Weight Paint\t6"
-msgstr "Weight Farbe\t6"
 
 msgid ""
 "Apply animation weight values for the currently selected bone.\n"
@@ -2848,9 +2827,6 @@ msgstr "Alpha bearbeiten"
 msgid "Color Paint"
 msgstr "Farbe"
 
-msgid "Color Paint\t7"
-msgstr "Farbe\t7"
-
 msgid ""
 "Apply vertex colors.\n"
 "Hold down the ALT key to remove colors."
@@ -2858,9 +2834,6 @@ msgstr "Vertexfarben anwenden. ALT gedrückt halten zum Entfernen."
 
 msgid "Alpha Paint"
 msgstr "Alpha"
-
-msgid "Alpha Paint\t8"
-msgstr "Alpha\t8"
 
 msgid ""
 "Apply vertex alpha.\n"

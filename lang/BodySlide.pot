@@ -864,13 +864,7 @@ msgstr ""
 msgid "Current Tool"
 msgstr ""
 
-msgid "Select\t0"
-msgstr ""
-
 msgid "Navigate and select meshes (or vertices in vertex mode)."
-msgstr ""
-
-msgid "Mask\t1"
 msgstr ""
 
 msgid ""
@@ -878,31 +872,16 @@ msgid ""
 "Hold down the ALT key to remove masking."
 msgstr ""
 
-msgid "Inflate\t2"
-msgstr ""
-
 msgid "Increase mesh volume in an area."
-msgstr ""
-
-msgid "Deflate\t3"
 msgstr ""
 
 msgid "Decrease mesh volume in an area."
 msgstr ""
 
-msgid "Move\t4"
-msgstr ""
-
 msgid "Move vertices over a plane parallel to the view."
 msgstr ""
 
-msgid "Smooth\t5"
-msgstr ""
-
 msgid "Smooth an area of a mesh."
-msgstr ""
-
-msgid "Weight Paint\t6"
 msgstr ""
 
 msgid ""
@@ -2441,18 +2420,12 @@ msgstr ""
 msgid "Color Paint"
 msgstr ""
 
-msgid "Color Paint\t7"
-msgstr ""
-
 msgid ""
 "Apply vertex colors.\n"
 "Hold down the ALT key to remove colors."
 msgstr ""
 
 msgid "Alpha Paint"
-msgstr ""
-
-msgid "Alpha Paint\t8"
 msgstr ""
 
 msgid ""

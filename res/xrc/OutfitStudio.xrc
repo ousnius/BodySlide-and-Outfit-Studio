@@ -1508,50 +1508,50 @@
 			<object class="wxMenu" name="brushSelect">
 				<label>Current Tool</label>
 				<object class="wxMenuItem" name="btnSelect">
-					<label>Select\t0</label>
+					<label>Select</label>
 					<help>Navigate and select meshes (or vertices in vertex mode).</help>
 					<radio>1</radio>
 				</object>
 				<object class="wxMenuItem" name="btnMaskBrush">
-					<label>Mask\t1</label>
+					<label>Mask</label>
 					<help>Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.</help>
 					<radio>1</radio>
 				</object>
 				<object class="wxMenuItem" name="btnInflateBrush">
-					<label>Inflate\t2</label>
+					<label>Inflate</label>
 					<help>Increase mesh volume in an area.</help>
 					<radio>1</radio>
 					<checked>1</checked>
 				</object>
 				<object class="wxMenuItem" name="btnDeflateBrush">
-					<label>Deflate\t3</label>
+					<label>Deflate</label>
 					<help>Decrease mesh volume in an area.</help>
 					<radio>1</radio>
 				</object>
 				<object class="wxMenuItem" name="btnMoveBrush">
-					<label>Move\t4</label>
+					<label>Move</label>
 					<help>Move vertices over a plane parallel to the view.</help>
 					<radio>1</radio>
 				</object>
 				<object class="wxMenuItem" name="btnSmoothBrush">
-					<label>Smooth\t5</label>
+					<label>Smooth</label>
 					<help>Smooth an area of a mesh.</help>
 					<radio>1</radio>
 				</object>
 				<object class="wxMenuItem" name="btnWeightBrush">
-					<label>Weight Paint\t6</label>
+					<label>Weight Paint</label>
 					<help>Apply animation weight values for the currently selected bone.\nHold down the ALT key to weaken the weighting.</help>
 					<radio>1</radio>
 					<enabled>0</enabled>
 				</object>
 				<object class="wxMenuItem" name="btnColorBrush">
-					<label>Color Paint\t7</label>
+					<label>Color Paint</label>
 					<help>Apply vertex colors.\nHold down the ALT key to remove colors.</help>
 					<radio>1</radio>
 					<enabled>0</enabled>
 				</object>
 				<object class="wxMenuItem" name="btnAlphaBrush">
-					<label>Alpha Paint\t8</label>
+					<label>Alpha Paint</label>
 					<help>Apply vertex alpha.\nHold down the ALT key to remove alpha.</help>
 					<radio>1</radio>
 					<enabled>0</enabled>

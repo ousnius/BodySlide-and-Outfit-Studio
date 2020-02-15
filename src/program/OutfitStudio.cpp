@@ -2305,6 +2305,124 @@ void OutfitStudioFrame::MenuExitSliderEdit() {
 	menu->Enable(XRCID("sliderProperties"), false);
 }
 
+void OutfitStudioFrame::SelectTool(ToolID tool) {
+	wxMenuBar* menuBar = GetMenuBar();
+	wxToolBar* toolBar = GetToolBar();
+
+	if (glView->GetActiveBrush()) {
+		int brushType = glView->GetActiveBrush()->Type();
+		if (brushType == TBT_WEIGHT || brushType == TBT_COLOR || brushType == TBT_ALPHA) {
+			glView->SetXMirror(previousMirror);
+			menuBar->Check(XRCID("btnXMirror"), previousMirror);
+		}
+	}
+
+	if (tool == ToolID::Select) {
+		glView->SetEditMode(false);
+		glView->SetActiveBrush(-1);
+		menuBar->Check(XRCID("btnSelect"), true);
+		toolBar->ToggleTool(XRCID("btnSelect"), true);
+
+		ToggleBrushPane(true);
+		return;
+	}
+
+	if (tool == ToolID::Transform) {
+		int id = XRCID("btnTransform");
+		bool checked = menuBar->IsChecked(id);
+		menuBar->Check(id, checked);
+		toolBar->ToggleTool(id, checked);
+		glView->SetTransformMode(checked);
+		return;
+	}
+
+	if (tool == ToolID::Pivot) {
+		int id = XRCID("btnPivot");
+		bool checked = menuBar->IsChecked(id);
+		menuBar->Check(id, checked);
+		toolBar->ToggleTool(id, checked);
+		glView->SetPivotMode(checked);
+		return;
+	}
+
+	if (tool == ToolID::VertexEdit) {
+		int id = XRCID("btnVertexEdit");
+		bool checked = menuBar->IsChecked(id);
+		menuBar->Check(id, checked);
+		toolBar->ToggleTool(id, checked);
+		glView->SetVertexEdit(checked);
+		return;
+	}
+
+	if (tool == ToolID::MaskBrush) {
+		glView->SetActiveBrush(0);
+		menuBar->Check(XRCID("btnMaskBrush"), true);
+		toolBar->ToggleTool(XRCID("btnMaskBrush"), true);
+	}
+	else if (tool == ToolID::InflateBrush) {
+		glView->SetActiveBrush(1);
+		menuBar->Check(XRCID("btnInflateBrush"), true);
+		toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
+	}
+	else if (tool == ToolID::DeflateBrush) {
+		glView->SetActiveBrush(2);
+		menuBar->Check(XRCID("btnDeflateBrush"), true);
+		toolBar->ToggleTool(XRCID("btnDeflateBrush"), true);
+	}
+	else if (tool == ToolID::MoveBrush) {
+		glView->SetActiveBrush(3);
+		menuBar->Check(XRCID("btnMoveBrush"), true);
+		toolBar->ToggleTool(XRCID("btnMoveBrush"), true);
+	}
+	else if (tool == ToolID::SmoothBrush) {
+		glView->SetActiveBrush(4);
+		menuBar->Check(XRCID("btnSmoothBrush"), true);
+		toolBar->ToggleTool(XRCID("btnSmoothBrush"), true);
+	}
+	else if (tool == ToolID::WeightBrush) {
+		glView->SetActiveBrush(10);
+		menuBar->Check(XRCID("btnWeightBrush"), true);
+		toolBar->ToggleTool(XRCID("btnWeightBrush"), true);
+		previousMirror = glView->GetXMirror();
+		glView->SetXMirror(false);
+		menuBar->Check(XRCID("btnXMirror"), false);
+	}
+	else if (tool == ToolID::ColorBrush) {
+		glView->SetActiveBrush(11);
+		menuBar->Check(XRCID("btnColorBrush"), true);
+		toolBar->ToggleTool(XRCID("btnColorBrush"), true);
+		previousMirror = glView->GetXMirror();
+		glView->SetXMirror(false);
+		menuBar->Check(XRCID("btnXMirror"), false);
+
+		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
+		btnSwapBrush->SetLabel(_("Edit Alpha"));
+	}
+	else if (tool == ToolID::AlphaBrush) {
+		glView->SetActiveBrush(12);
+		menuBar->Check(XRCID("btnAlphaBrush"), true);
+		toolBar->ToggleTool(XRCID("btnAlphaBrush"), true);
+		previousMirror = glView->GetXMirror();
+		glView->SetXMirror(false);
+		menuBar->Check(XRCID("btnXMirror"), false);
+
+		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
+		btnSwapBrush->SetLabel(_("Edit Color"));
+	}
+	else {
+		glView->SetEditMode(false);
+		glView->SetTransformMode(false);
+		return;
+	}
+
+	// One of the brushes was activated
+	glView->SetEditMode();
+	glView->SetBrushSize(glView->GetBrushSize());
+
+	CheckBrushBounds();
+	UpdateBrushPane();
+}
+
 bool OutfitStudioFrame::NotifyStrokeStarting() {
 	if (!activeItem)
 		return false;
@@ -5176,125 +5294,33 @@ void OutfitStudioFrame::OnCheckBox(wxCommandEvent& event) {
 
 void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 	int id = event.GetId();
-	wxWindow* w = FindFocus();
-	wxMenuBar* menuBar = GetMenuBar();
-	wxToolBar* toolBar = GetToolBar();
 
-	wxString s = w->GetName();
-	if (s.EndsWith("|readout")){
-		menuBar->Disable();
-		return;
-	}
-
-	if (glView->GetActiveBrush()) {
-		int brushType = glView->GetActiveBrush()->Type();
-		if (brushType == TBT_WEIGHT || brushType == TBT_COLOR || brushType == TBT_ALPHA) {
-			glView->SetXMirror(previousMirror);
-			menuBar->Check(XRCID("btnXMirror"), previousMirror);
-		}
-	}
-
-	if (id == XRCID("btnSelect")) {
-		glView->SetEditMode(false);
-		glView->SetActiveBrush(-1);
-		menuBar->Check(XRCID("btnSelect"), true);
-		toolBar->ToggleTool(XRCID("btnSelect"), true);
-		
-		ToggleBrushPane(true);
-		return;
-	}
-
-	if (id == XRCID("btnTransform")) {
-		bool checked = event.IsChecked();
-		menuBar->Check(XRCID("btnTransform"), checked);
-		toolBar->ToggleTool(XRCID("btnTransform"), checked);
-		glView->SetTransformMode(checked);
-		return;
-	}
-
-	if (id == XRCID("btnPivot")) {
-		bool checked = event.IsChecked();
-		menuBar->Check(XRCID("btnPivot"), checked);
-		toolBar->ToggleTool(XRCID("btnPivot"), checked);
-		glView->SetPivotMode(checked);
-		return;
-	}
-
-	if (id == XRCID("btnVertexEdit")) {
-		bool checked = event.IsChecked();
-		menuBar->Check(XRCID("btnVertexEdit"), checked);
-		toolBar->ToggleTool(XRCID("btnVertexEdit"), checked);
-		glView->SetVertexEdit(checked);
-		return;
-	}
-
-	if (id == XRCID("btnMaskBrush")) {
-		glView->SetActiveBrush(0);
-		menuBar->Check(XRCID("btnMaskBrush"), true);
-		toolBar->ToggleTool(XRCID("btnMaskBrush"), true);
-	}
-	else if (id == XRCID("btnInflateBrush")) {
-		glView->SetActiveBrush(1);
-		menuBar->Check(XRCID("btnInflateBrush"), true);
-		toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
-	}
-	else if (id == XRCID("btnDeflateBrush")) {
-		glView->SetActiveBrush(2);
-		menuBar->Check(XRCID("btnDeflateBrush"), true);
-		toolBar->ToggleTool(XRCID("btnDeflateBrush"), true);
-	}
-	else if (id == XRCID("btnMoveBrush")) {
-		glView->SetActiveBrush(3);
-		menuBar->Check(XRCID("btnMoveBrush"), true);
-		toolBar->ToggleTool(XRCID("btnMoveBrush"), true);
-	}
-	else if (id == XRCID("btnSmoothBrush")) {
-		glView->SetActiveBrush(4);
-		menuBar->Check(XRCID("btnSmoothBrush"), true);
-		toolBar->ToggleTool(XRCID("btnSmoothBrush"), true);
-	}
-	else if (id == XRCID("btnWeightBrush")) {
-		glView->SetActiveBrush(10);
-		menuBar->Check(XRCID("btnWeightBrush"), true);
-		toolBar->ToggleTool(XRCID("btnWeightBrush"), true);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
-		menuBar->Check(XRCID("btnXMirror"), false);
-	}
-	else if (id == XRCID("btnColorBrush")) {
-		glView->SetActiveBrush(11);
-		menuBar->Check(XRCID("btnColorBrush"), true);
-		toolBar->ToggleTool(XRCID("btnColorBrush"), true);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
-		menuBar->Check(XRCID("btnXMirror"), false);
-
-		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
-		btnSwapBrush->SetLabel(_("Edit Alpha"));
-	}
-	else if (id == XRCID("btnAlphaBrush")) {
-		glView->SetActiveBrush(12);
-		menuBar->Check(XRCID("btnAlphaBrush"), true);
-		toolBar->ToggleTool(XRCID("btnAlphaBrush"), true);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
-		menuBar->Check(XRCID("btnXMirror"), false);
-
-		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
-		btnSwapBrush->SetLabel(_("Edit Color"));
-	}
-	else {
-		glView->SetEditMode(false);
-		glView->SetTransformMode(false);
-		return;
-	}
-
-	// One of the brushes was activated
-	glView->SetEditMode();
-	glView->SetBrushSize(glView->GetBrushSize());
-
-	CheckBrushBounds();
-	UpdateBrushPane();
+	if (id == XRCID("btnSelect"))
+		SelectTool(ToolID::Select);
+	else if (id == XRCID("btnTransform"))
+		SelectTool(ToolID::Transform);
+	else if (id == XRCID("btnPivot"))
+		SelectTool(ToolID::Pivot);
+	else if (id == XRCID("btnVertexEdit"))
+		SelectTool(ToolID::VertexEdit);
+	else if (id == XRCID("btnMaskBrush"))
+		SelectTool(ToolID::MaskBrush);
+	else if (id == XRCID("btnInflateBrush"))
+		SelectTool(ToolID::InflateBrush);
+	else if (id == XRCID("btnDeflateBrush"))
+		SelectTool(ToolID::DeflateBrush);
+	else if (id == XRCID("btnMoveBrush"))
+		SelectTool(ToolID::MoveBrush);
+	else if (id == XRCID("btnSmoothBrush"))
+		SelectTool(ToolID::SmoothBrush);
+	else if (id == XRCID("btnWeightBrush"))
+		SelectTool(ToolID::WeightBrush);
+	else if (id == XRCID("btnColorBrush"))
+		SelectTool(ToolID::ColorBrush);
+	else if (id == XRCID("btnAlphaBrush"))
+		SelectTool(ToolID::AlphaBrush);
+	else
+		SelectTool(ToolID::Any);
 }
 
 void OutfitStudioFrame::OnSetView(wxCommandEvent& event) {
@@ -8589,6 +8615,24 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				ShowVertexEdit();
 		}
 	}
+	else if (event.GetUnicodeKey() == '0')
+		os->SelectTool(OutfitStudioFrame::ToolID::Select);
+	else if (event.GetUnicodeKey() == '1')
+		os->SelectTool(OutfitStudioFrame::ToolID::MaskBrush);
+	else if (event.GetUnicodeKey() == '2')
+		os->SelectTool(OutfitStudioFrame::ToolID::InflateBrush);
+	else if (event.GetUnicodeKey() == '3')
+		os->SelectTool(OutfitStudioFrame::ToolID::DeflateBrush);
+	else if (event.GetUnicodeKey() == '4')
+		os->SelectTool(OutfitStudioFrame::ToolID::MoveBrush);
+	else if (event.GetUnicodeKey() == '5')
+		os->SelectTool(OutfitStudioFrame::ToolID::SmoothBrush);
+	else if (event.GetUnicodeKey() == '6')
+		os->SelectTool(OutfitStudioFrame::ToolID::WeightBrush);
+	else if (event.GetUnicodeKey() == '7')
+		os->SelectTool(OutfitStudioFrame::ToolID::ColorBrush);
+	else if (event.GetUnicodeKey() == '8')
+		os->SelectTool(OutfitStudioFrame::ToolID::AlphaBrush);
 	else if (event.GetKeyCode() == WXK_SPACE)
 		os->ToggleBrushPane();
 
