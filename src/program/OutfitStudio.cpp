@@ -5970,16 +5970,10 @@ void OutfitStudioFrame::OnBrushColorChanged(wxColourPickerEvent& event) {
 
 void OutfitStudioFrame::OnSwapBrush(wxCommandEvent& WXUNUSED(event)) {
 	if (glView->GetActiveBrush()) {
-		if (glView->GetActiveBrush()->Type() == TBT_COLOR) {
-			wxCommandEvent evt;
-			evt.SetId(XRCID("btnAlphaBrush"));
-			OnSelectTool(evt);
-		}
-		else if (glView->GetActiveBrush()->Type() == TBT_ALPHA) {
-			wxCommandEvent evt;
-			evt.SetId(XRCID("btnColorBrush"));
-			OnSelectTool(evt);
-		}
+		if (glView->GetActiveBrush()->Type() == TBT_COLOR)
+			SelectTool(ToolID::AlphaBrush);
+		else if (glView->GetActiveBrush()->Type() == TBT_ALPHA)
+			SelectTool(ToolID::ColorBrush);
 	}
 }
 

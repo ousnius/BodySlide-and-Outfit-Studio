@@ -406,6 +406,7 @@ class TB_Uncolor : public TweakBrush {
 public:
 	TB_Uncolor();
 	virtual ~TB_Uncolor();
+	virtual UndoType GetUndoType() { return UT_COLOR; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 };
@@ -414,6 +415,7 @@ class TB_Alpha : public TweakBrush {
 public:
 	TB_Alpha();
 	virtual ~TB_Alpha();
+	virtual UndoType GetUndoType() { return UT_ALPHA; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
@@ -425,6 +427,7 @@ class TB_Unalpha : public TweakBrush {
 public:
 	TB_Unalpha();
 	virtual ~TB_Unalpha();
+	virtual UndoType GetUndoType() { return UT_ALPHA; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
