@@ -1787,7 +1787,7 @@ int NifFile::GetShapeBoneWeights(NiShape* shape, const int boneIndex, std::unord
 		return 0;
 
 	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
-	if (!skinData || boneIndex > skinData->numBones)
+	if (!skinData || boneIndex >= skinData->numBones)
 		return 0;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
@@ -1837,7 +1837,7 @@ bool NifFile::SetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTran
 		return true;
 	}
 
-	if (boneIndex > skinData->numBones)
+	if (boneIndex >= skinData->numBones)
 		return false;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
@@ -1868,7 +1868,7 @@ bool NifFile::SetShapeBoneBounds(const std::string& shapeName, const int boneInd
 	if (!skinData)
 		return false;
 
-	if (boneIndex > skinData->numBones)
+	if (boneIndex >= skinData->numBones)
 		return false;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
@@ -1889,7 +1889,7 @@ bool NifFile::GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTran
 				return false;
 			}
 
-			if (boneIndex > boneData->nBones)
+			if (boneIndex >= boneData->nBones)
 				return false;
 
 			outTransform = boneData->boneXforms[boneIndex].boneTransform;
@@ -1911,7 +1911,7 @@ bool NifFile::GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTran
 		return true;
 	}
 
-	if (boneIndex > skinData->numBones)
+	if (boneIndex >= skinData->numBones)
 		return false;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
@@ -1940,8 +1940,8 @@ bool NifFile::GetShapeBoneBounds(NiShape* shape, const int boneIndex, BoundingSp
 	if (!skinData)
 		return false;
 
-	if (boneIndex > skinData->numBones)
-		return 0;
+	if (boneIndex >= skinData->numBones)
+		return false;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	outBounds = bone->bounds;
@@ -1979,7 +1979,7 @@ void NifFile::SetShapeBoneWeights(const std::string& shapeName, const int boneIn
 	if (!skinData)
 		return;
 
-	if (boneIndex > skinData->numBones)
+	if (boneIndex >= skinData->numBones)
 		return;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
