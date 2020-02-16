@@ -241,7 +241,7 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 
 	std::vector<Vector3> boundVerts;
 	for (auto &w : shapeSkinning[shapeName].boneWeights[boneIndex].weights) {
-		if (w.first > verts.size())		// Incoming weights have a larger set of possible verts.
+		if (w.first >= verts.size())		// Incoming weights have a larger set of possible verts.
 			return false;
 
 		boundVerts.push_back(verts[w.first]);

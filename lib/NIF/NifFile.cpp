@@ -1889,6 +1889,9 @@ bool NifFile::GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTran
 				return false;
 			}
 
+			if (boneIndex > boneData->nBones)
+				return false;
+
 			outTransform = boneData->boneXforms[boneIndex].boneTransform;
 			return true;
 		}
@@ -1909,7 +1912,7 @@ bool NifFile::GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTran
 	}
 
 	if (boneIndex > skinData->numBones)
-		return 0;
+		return false;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	outTransform = bone->boneTransform;
