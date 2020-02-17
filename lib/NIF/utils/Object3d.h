@@ -909,15 +909,15 @@ struct MatTransform {
 	Matrix4 ToMatrix() {
 		Matrix4 mat;
 		mat[0] = rotation[0].x * scale;
-		mat[1] = rotation[0].y;
-		mat[2] = rotation[0].z;
+		mat[1] = rotation[0].y * scale;
+		mat[2] = rotation[0].z * scale;
 		mat[3] = translation.x;
-		mat[4] = rotation[1].x;
+		mat[4] = rotation[1].x * scale;
 		mat[5] = rotation[1].y * scale;
-		mat[6] = rotation[1].z;
+		mat[6] = rotation[1].z * scale;
 		mat[7] = translation.y;
-		mat[8] = rotation[2].x;
-		mat[9] = rotation[2].y;
+		mat[8] = rotation[2].x * scale;
+		mat[9] = rotation[2].y * scale;
 		mat[10] = rotation[2].z * scale;
 		mat[11] = translation.z;
 		return mat;
