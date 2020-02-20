@@ -994,21 +994,21 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	mesh* m = new mesh();
 
 	if (!shape->IsSkinned()) {
-		// Calculate transform from shape's CS to absolute CS.
-		MatTransform tta = shape->GetTransformToParent();
+		// Calculate transform from shape's CS to global CS.
+		MatTransform ttg = shape->GetTransformToParent();
 		NiNode* parent = nif->GetParentNode(shape);
 		while (parent) {
-			tta = parent->GetTransformToParent().ComposeTransforms(tta);
+			ttg = parent->GetTransformToParent().ComposeTransforms(ttg);
 			parent = nif->GetParentNode(parent);
 		}
 
-		// Convert tta to a glm::mat4x4
+		// Convert ttg to a glm::mat4x4
 		auto matShape = glm::identity<glm::mat4x4>();
-		matShape = glm::translate(matShape, glm::vec3(tta.translation.x / -10.0f, tta.translation.z / 10.0f, tta.translation.y / 10.0f));
+		matShape = glm::translate(matShape, glm::vec3(ttg.translation.x / -10.0f, ttg.translation.z / 10.0f, ttg.translation.y / 10.0f));
 		float y, p, r;
-		tta.rotation.ToEulerAngles(y, p, r);
+		ttg.rotation.ToEulerAngles(y, p, r);
 		matShape *= glm::yawPitchRoll(r, p, y);
-		matShape = glm::scale(matShape, glm::vec3(tta.scale, tta.scale, tta.scale));
+		matShape = glm::scale(matShape, glm::vec3(ttg.scale, ttg.scale, ttg.scale));
 		m->matModel = matShape;
 	}
 	else {

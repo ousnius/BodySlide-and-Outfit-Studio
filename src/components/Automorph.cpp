@@ -176,21 +176,21 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
 	m->shapeName = shape->GetName();
 
 	if (!shape->IsSkinned()) {
-		// Calculate transform from shape's CS to absolute CS.
-		MatTransform tta = shape->GetTransformToParent();
+		// Calculate transform from shape's CS to global CS.
+		MatTransform ttg = shape->GetTransformToParent();
 		NiNode* parent = ref.GetParentNode(shape);
 		while (parent) {
-			tta = parent->GetTransformToParent().ComposeTransforms(tta);
+			ttg = parent->GetTransformToParent().ComposeTransforms(ttg);
 			parent = ref.GetParentNode(parent);
 		}
 
-		// Convert tta to a glm::mat4x4.
+		// Convert ttg to a glm::mat4x4.
 		auto matShape = glm::identity<glm::mat4x4>();
-		matShape = glm::translate(matShape, glm::vec3(tta.translation.x, tta.translation.y, tta.translation.z));
+		matShape = glm::translate(matShape, glm::vec3(ttg.translation.x, ttg.translation.y, ttg.translation.z));
 		float y, p, r;
-		tta.rotation.ToEulerAngles(y, p, r);
+		ttg.rotation.ToEulerAngles(y, p, r);
 		matShape *= glm::yawPitchRoll(r, p, y);
-		matShape = glm::scale(matShape, glm::vec3(tta.scale, tta.scale, tta.scale));
+		matShape = glm::scale(matShape, glm::vec3(ttg.scale, ttg.scale, ttg.scale));
 		m->matModel = matShape;
 	}
 	else {
