@@ -35,12 +35,16 @@ struct BoneIndices {
 class NiSkinData : public NiObject {
 public:
 	struct BoneData {
+		// boneTransform transforms from skin CS to bone CS.
+		// Recommend renaming boneTransform to transformSkinToBone.
 		MatTransform boneTransform;
 		BoundingSphere bounds;
 		ushort numVertices = 0;
 		std::vector<SkinWeight> vertexWeights;
 	};
 
+	// skinTransform transforms from the global CS to the skin CS.
+	// Recommend renaming to "transformGlobalToSkin".
 	MatTransform skinTransform;
 	uint numBones = 0;
 	byte hasVertWeights = 1;
@@ -189,6 +193,9 @@ public:
 
 	struct BoneData {
 		BoundingSphere bounds;
+		// boneTransform transforms from global CS (which is the same as
+		// skin CS for skins with BSSkinBoneData) to bone CS.
+		// Recommend renaming boneTransform to transformGlobalToBone.
 		MatTransform boneTransform;
 	};
 

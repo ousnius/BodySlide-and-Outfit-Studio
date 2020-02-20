@@ -166,10 +166,11 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 			FbxNode* rootNode = FbxNode::Create(priv->scene, root->GetName().c_str());
 			rootNode->SetNodeAttribute(rootBone);
 
-			rootNode->LclTranslation.Set(FbxDouble3(root->transform.translation.x, root->transform.translation.y, root->transform.translation.z));
+			const MatTransform &ttp = root->GetTransformToParent();
+			rootNode->LclTranslation.Set(FbxDouble3(ttp.translation.x, ttp.translation.y, ttp.translation.z));
 
 			float rx, ry, rz;
-			root->transform.ToEulerDegrees(rx, ry, rz);
+			ttp.ToEulerDegrees(rx, ry, rz);
 			rootNode->LclRotation.Set(FbxDouble3(rx, ry, rz));
 			//rootNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
 
@@ -186,10 +187,11 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 			FbxNode* comNode = FbxNode::Create(priv->scene, com->GetName().c_str());
 			comNode->SetNodeAttribute(comBone);
 
-			comNode->LclTranslation.Set(FbxDouble3(com->transform.translation.y, com->transform.translation.z, com->transform.translation.x));
+			const MatTransform &ttp = com->GetTransformToParent();
+			comNode->LclTranslation.Set(FbxDouble3(ttp.translation.y, ttp.translation.z, ttp.translation.x));
 
 			float rx, ry, rz;
-			com->transform.ToEulerDegrees(rx, ry, rz);
+			ttp.ToEulerDegrees(rx, ry, rz);
 			comNode->LclRotation.Set(FbxDouble3(rx, ry, rz));
 			//comNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
 
@@ -217,11 +219,11 @@ FbxNode* FBXWrangler::Priv::AddLimb(NifFile* nif, NiNode* nifBone) {
 		node = FbxNode::Create(scene, nifBone->GetName().c_str());
 		node->SetNodeAttribute(bone);
 
-		Vector3 translation = nifBone->transform.translation;
-		node->LclTranslation.Set(FbxDouble3(translation.x, translation.y, translation.z));
+		const MatTransform &ttp = nifBone->GetTransformToParent();
+		node->LclTranslation.Set(FbxDouble3(ttp.translation.x, ttp.translation.y, ttp.translation.z));
 
 		float rx, ry, rz;
-		nifBone->transform.ToEulerDegrees(rx, ry, rz);
+		ttp.ToEulerDegrees(rx, ry, rz);
 		node->LclRotation.Set(FbxDouble3(rx, ry, rz));
 		//myNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
 	}

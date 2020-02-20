@@ -175,39 +175,39 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
 
 	m->shapeName = shape->GetName();
 
-	float y, p, r;
-	auto matParents = glm::identity<glm::mat4x4>();
-	auto matShape = glm::identity<glm::mat4x4>();
-	auto matSkin = glm::identity<glm::mat4x4>();
-
 	if (!shape->IsSkinned()) {
+		// Calculate transform from shape's CS to absolute CS.
+		MatTransform tta = shape->GetTransformToParent();
 		NiNode* parent = ref.GetParentNode(shape);
 		while (parent) {
-			parent->transform.ToEulerDegrees(y, p, r);
-			matParents = glm::translate(matParents, glm::vec3(parent->transform.translation.x, parent->transform.translation.y, parent->transform.translation.z));
-			matParents *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
-			matParents = glm::scale(matParents, glm::vec3(parent->transform.scale, parent->transform.scale, parent->transform.scale));
+			tta = parent->GetTransformToParent().ComposeTransforms(tta);
 			parent = ref.GetParentNode(parent);
 		}
 
-		matShape = glm::translate(matShape, glm::vec3(shape->transform.translation.x, shape->transform.translation.y, shape->transform.translation.z));
-		shape->transform.ToEulerDegrees(y, p, r);
-		matShape *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
-		matShape = glm::scale(matShape, glm::vec3(shape->transform.scale, shape->transform.scale, shape->transform.scale));
+		// Convert tta to a glm::mat4x4.
+		auto matShape = glm::identity<glm::mat4x4>();
+		matShape = glm::translate(matShape, glm::vec3(tta.translation.x, tta.translation.y, tta.translation.z));
+		float y, p, r;
+		tta.rotation.ToEulerAngles(y, p, r);
+		matShape *= glm::yawPitchRoll(r, p, y);
+		matShape = glm::scale(matShape, glm::vec3(tta.scale, tta.scale, tta.scale));
+		m->matModel = matShape;
 	}
 	else {
 		// Not rendered by the game for skinned meshes
 		// Keep to counter-offset bone transforms
 		MatTransform xFormSkin;
-		if (ref.GetShapeBoneTransform(shape, 0xFFFFFFFF, xFormSkin)) {
-			xFormSkin.ToEulerDegrees(y, p, r);
+		auto matSkin = glm::identity<glm::mat4x4>();
+		if (ref.GetShapeTransformGlobalToSkin(shape, xFormSkin)) {
+			float y, p, r;
+			xFormSkin.rotation.ToEulerAngles(y, p, r);
 			matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x, xFormSkin.translation.y, xFormSkin.translation.z));
-			matSkin *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+			matSkin *= glm::yawPitchRoll(r, p, y);
 			matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
 		}
+		m->matModel = glm::inverse(matSkin);
 	}
 
-	m->matModel = matParents * matShape * glm::inverse(matSkin);
 
 	//float c = 0.4f + (meshes.size()*0.3f);
 	//m->color = Vector3(c,c,c);

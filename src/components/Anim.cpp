@@ -17,6 +17,14 @@ bool AnimInfo::AddShapeBone(const std::string& shape, const std::string& boneNam
 	shapeSkinning[shape].boneNames[boneName] = shapeBones[shape].size();
 	shapeBones[shape].push_back(boneName);
 	AnimSkeleton::getInstance().RefBone(boneName);
+	// Calculate a good default value for xformSkinToBone by:
+	// Composing: bone -> global -> skin
+	// then inverting
+	MatTransform xformGlobalToSkin = shapeSkinning[shape].xformGlobalToSkin;
+	MatTransform xformBoneToGlobal;
+	AnimSkeleton::getInstance().GetBoneTransformToGlobal(boneName, xformBoneToGlobal);
+	MatTransform xformBoneToSkin = xformGlobalToSkin.ComposeTransforms(xformBoneToGlobal);
+	SetXFormSkinToBone(shape, boneName, xformBoneToSkin.InverseTransform());
 	return true;
 }
 
@@ -141,16 +149,10 @@ bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 				nonRefBones += bn + "\n";
 
 			MatTransform xform;
-			nif->GetAbsoluteNodeTransform(bn, xform);
+			nif->GetNodeTransformToGlobal(bn, xform);
 
-			cstm.rot.SetRow(0, xform.rotation[0]);
-			cstm.rot.SetRow(1, xform.rotation[1]);
-			cstm.rot.SetRow(2, xform.rotation[2]);
-			cstm.trans = xform.translation;
-			cstm.scale = xform.scale;
-
-			cstm.localRot = cstm.rot;
-			cstm.localTrans = cstm.trans;
+			cstm.xformToGlobal = xform;
+			cstm.xformToParent = xform;
 
 			AnimSkeleton::getInstance().RefBone(bn);
 		}
@@ -164,17 +166,6 @@ bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 		wxLogMessage("Bones in shape '%s' not found in reference skeleton and added as custom bones:\n%s", shapeName, nonRefBones);
 
 	return true;
-}
-
-void AnimInfo::GetBoneXForm(const std::string& boneName, MatTransform& stransform) {
-	AnimBone b;
-	if (AnimSkeleton::getInstance().GetBone(boneName, b)) {
-		stransform.translation = b.localTrans;
-		stransform.scale = b.scale;
-		b.rot.GetRow(0, stransform.rotation[0]);
-		b.rot.GetRow(1, stransform.rotation[1]);
-		b.rot.GetRow(2, stransform.rotation[2]);
-	}
 }
 
 int AnimInfo::GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName) {
@@ -208,21 +199,21 @@ void AnimInfo::GetWeights(const std::string& shape, const std::string& boneName,
 		outVertWeights = *weights;
 }
 
-bool AnimInfo::GetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform) {
+bool AnimInfo::GetXFormSkinToBone(const std::string& shape, const std::string& boneName, MatTransform& stransform) {
 	int b = GetShapeBoneIndex(shape, boneName);
 	if (b < 0)
 		return false;
 
-	stransform = shapeSkinning[shape].boneWeights[b].xform;
+	stransform = shapeSkinning[shape].boneWeights[b].xformSkinToBone;
 	return true;
 }
 
-void AnimInfo::SetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform) {
+void AnimInfo::SetXFormSkinToBone(const std::string& shape, const std::string& boneName, const MatTransform& stransform) {
 	int b = GetShapeBoneIndex(shape, boneName);
 	if (b < 0)
 		return;
 
-	shapeSkinning[shape].boneWeights[b].xform = stransform;
+	shapeSkinning[shape].boneWeights[b].xformSkinToBone = stransform;
 }
 
 bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex) {
@@ -247,12 +238,12 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 		boundVerts.push_back(verts[w.first]);
 	}
 
-	Matrix4 mat;
 	BoundingSphere bounds(boundVerts);
 
-	mat = shapeSkinning[shapeName].boneWeights[boneIndex].xform.ToMatrix();
+	const MatTransform &xformSkinToBone = shapeSkinning[shapeName].boneWeights[boneIndex].xformSkinToBone;
 
-	bounds.center = mat * bounds.center;
+	bounds.center = xformSkinToBone.ApplyTransform(bounds.center);
+	bounds.radius *= xformSkinToBone.scale;
 	shapeSkinning[shapeName].boneWeights[boneIndex].bounds = bounds;
 	return true;
 }
@@ -305,12 +296,8 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 
 			int id = nif->GetBlockID(nif->FindBlockByName<NiNode>(bone));
 			if (id == 0xFFFFFFFF) {
-				MatTransform xform;
-				xform.translation = boneRef.trans;
-				boneRef.rot.GetRow(0, xform.rotation[0]);
-				boneRef.rot.GetRow(1, xform.rotation[1]);
-				boneRef.rot.GetRow(2, xform.rotation[2]);
-				xform.scale = 1.0f;				// Bone scaling is bad!
+				MatTransform xform = boneRef.xformToGlobal;
+				//xform.scale = 1.0f;				// Bone scaling is bad!
 				id = nif->AddNode(boneRef.boneName, xform);
 			}
 
@@ -325,7 +312,6 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	}
 
 	bool incomplete = false;
-	bool isFO4 = nif->GetHeader().GetVersion().IsFO4();
 
 	for (auto &shapeBoneList : shapeBones) {
 		if (shapeBoneList.first == shapeException)
@@ -340,8 +326,8 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 		std::unordered_map<ushort, VertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {
 			MatTransform xForm;
-			if (AnimSkeleton::getInstance().GetBoneTransform(boneName, xForm))
-				nif->SetNodeTransform(boneName, xForm, true);
+			if (AnimSkeleton::getInstance().GetBoneTransformToGlobal(boneName, xForm))
+				nif->SetNodeTransformToParent(boneName, xForm, true);
 
 			AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
 			int bid = GetShapeBoneIndex(shapeBoneList.first, boneName);
@@ -351,32 +337,11 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 				for (auto vw : bw.weights)
 					vertWeights[vw.first].Add(bid, vw.second);
 
-			if (isFO4) {
-				if (!bptr) {
-					incomplete = true;
-					nif->SetShapeBoneTransform(shape, bid, bw.xform);
-				}
-				else {
-					nif->SetShapeBoneTransform(shape, bid, bw.xform);
-				}
-			}
-			else {
-				if (!bptr) {
-					incomplete = true;
-					nif->SetShapeBoneTransform(shape, bid, bw.xform);
-				}
-				else {
-					MatTransform xFormSkin;
-					if (nif->GetShapeBoneTransform(shape, 0xFFFFFFFF, xFormSkin)) {
-						if (AnimSkeleton::getInstance().GetSkinTransform(boneName, xFormSkin, xForm)) {
-							nif->SetShapeBoneTransform(shape, bid, xForm);
-							bw.xform = xForm;
-						}
-					}
-				}
-
+			nif->SetShapeTransformSkinToBone(shape, bid, bw.xformSkinToBone);
+			if (!bptr)
+				incomplete = true;
+			if (!isBSShape)
 				nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
-			}
 
 			if (CalcShapeSkinBounds(shapeBoneList.first, bid))
 				nif->SetShapeBoneBounds(shapeBoneList.first, bid, bw.bounds);
@@ -419,20 +384,12 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 	boneName = node->GetName();
 	refCount = 0;
 
-	localRot.SetRow(0, node->transform.rotation[0]);
-	localRot.SetRow(1, node->transform.rotation[1]);
-	localRot.SetRow(2, node->transform.rotation[2]);
-	localTrans = node->transform.translation;
-	scale = node->transform.scale;
+	xformToParent = node->GetTransformToParent();
 
-	if (parent) {
-		trans = parent->trans + (parent->rot * localTrans);
-		rot = parent->rot * localRot;
-	}
-	else {
-		trans = localTrans;
-		rot = localRot;
-	}
+	if (parent)
+		xformToGlobal = parent->xformToGlobal.ComposeTransforms(xformToParent);
+	else
+		xformToGlobal = xformToParent;
 
 	for (auto& child : node->GetChildren()) {
 		std::string name = skeletonNif->GetNodeName(child.GetIndex());
@@ -549,33 +506,13 @@ bool AnimSkeleton::GetBone(const std::string& boneName, AnimBone& outBone) {
 	return false;
 }
 
-bool AnimSkeleton::GetBoneTransform(const std::string &boneName, MatTransform& xform) {
+bool AnimSkeleton::GetBoneTransformToGlobal(const std::string &boneName, MatTransform& xform) {
 	auto bone = GetBonePtr(boneName, allowCustomTransforms);
 	if (!bone)
 		return false;
 
-	Matrix4 rot = bone->rot;
-	rot.GetRow(0, xform.rotation[0]);
-	rot.GetRow(1, xform.rotation[1]);
-	rot.GetRow(2, xform.rotation[2]);
-	xform.scale = 1.0f; //bone->scale					// Scale should be ignored?
-	xform.translation = bone->trans;
-	//xform.translation = bone->trans * -1.0f;
-	//xform.translation = rot * xform.translation;
-	return true;
-}
-
-bool AnimSkeleton::GetSkinTransform(const std::string &boneName, const MatTransform& skinning, MatTransform& xform) {
-	auto bone = GetBonePtr(boneName, allowCustomTransforms);
-	if (!bone)
-		return false;
-
-	Matrix4 rot = bone->rot.Inverse();
-	rot.GetRow(0, xform.rotation[0]);
-	rot.GetRow(1, xform.rotation[1]);
-	rot.GetRow(2, xform.rotation[2]);
-	xform.scale = 1.0f;	//bone->scale					// Scale should be ignored?
-	xform.translation = rot * (bone->trans * -1.0f + skinning.translation * -1.0f);
+	xform = bone->xformToGlobal;
+	//xform.scale = 1.0f; // Scale should be ignored?
 	return true;
 }
 
