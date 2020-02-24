@@ -116,6 +116,38 @@ void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<u
 	}
 }
 
+AnimWeight::AnimWeight(NifFile* loadFromFile, NiShape* shape, const int& index) {
+	loadFromFile->GetShapeBoneWeights(shape, index, weights);
+	loadFromFile->GetShapeTransformSkinToBone(shape, index, xformSkinToBone);
+	loadFromFile->GetShapeBoneBounds(shape, index, bounds);
+}
+
+AnimSkin::AnimSkin(NifFile* loadFromFile, NiShape* shape) {
+	bool gotGTS = loadFromFile->GetShapeTransformGlobalToSkin(shape, xformGlobalToSkin);
+	std::vector<int> idList;
+	loadFromFile->GetShapeBoneIDList(shape, idList);
+
+	int newID = 0;
+	for (auto &id : idList) {
+		auto node = loadFromFile->GetHeader().GetBlock<NiNode>(id);
+		if (node) {
+			boneWeights[newID] = AnimWeight(loadFromFile, shape, newID);
+			boneNames[node->GetName()] = newID;
+			if (!gotGTS) {
+				// We don't have a global-to-skin transform, probably because
+				// the NIF has BSSkinBoneData instead of NiSkinData (FO4 or
+				// newer).  So calculate by:
+				// Compose: skin -> bone -> global
+				// and inverting.
+				MatTransform xformBoneToGlobal = node->GetTransformToParent();
+				xformGlobalToSkin = xformBoneToGlobal.ComposeTransforms(boneWeights[newID].xformSkinToBone).InverseTransform();
+				gotGTS = true;
+			}
+			newID++;
+		}
+	}
+}
+
 bool AnimInfo::LoadFromNif(NifFile* nif) {
 	Clear();
 

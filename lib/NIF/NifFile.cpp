@@ -1785,8 +1785,6 @@ int NifFile::GetShapeBoneWeights(NiShape* shape, const int boneIndex, std::unord
 }
 
 bool NifFile::GetShapeTransformGlobalToSkin(NiShape* shape, MatTransform& outTransform) {
-	outTransform = MatTransform();
-
 	if (!shape)
 		return false;
 

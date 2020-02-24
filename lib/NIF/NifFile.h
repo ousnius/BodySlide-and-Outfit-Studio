@@ -166,8 +166,10 @@ public:
 	void SetShapeBoneIDList(NiShape* shape, std::vector<int>& inList);
 	int GetShapeBoneWeights(NiShape* shape, const int boneIndex, std::unordered_map<ushort, float>& outWeights);
 
-	// Returns false if no such transform exists, in which case outTransform
-	// will be set to the identity transform.
+	// Returns false if no such transform exists in the file, in which
+	// case outTransform will not be changed.  Note that, even if this
+	// function returns false, you can not assume that the global-to-skin
+	// transform is the identity; it almost never is.
 	bool GetShapeTransformGlobalToSkin(NiShape* shape, MatTransform& outTransform);
 	// Does nothing if the shape has no such transform.
 	void SetShapeTransformGlobalToSkin(NiShape* shape, const MatTransform& inTransform);

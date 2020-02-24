@@ -61,11 +61,7 @@ public:
 	BoundingSphere bounds;
 
 	AnimWeight() {}
-	AnimWeight(NifFile* loadFromFile, NiShape* shape, const int& index) {
-		loadFromFile->GetShapeBoneWeights(shape, index, weights);
-		loadFromFile->GetShapeTransformSkinToBone(shape, index, xformSkinToBone);
-		loadFromFile->GetShapeBoneBounds(shape, index, bounds);
-	}
+	AnimWeight(NifFile* loadFromFile, NiShape* shape, const int& index);
 };
 
 // Bone to weight list association.
@@ -76,21 +72,7 @@ public:
 	MatTransform xformGlobalToSkin;
 
 	AnimSkin() { }
-	AnimSkin(NifFile* loadFromFile, NiShape* shape) {
-		loadFromFile->GetShapeTransformGlobalToSkin(shape, xformGlobalToSkin);
-		std::vector<int> idList;
-		loadFromFile->GetShapeBoneIDList(shape, idList);
-
-		int newID = 0;
-		for (auto &id : idList) {
-			auto node = loadFromFile->GetHeader().GetBlock<NiNode>(id);
-			if (node) {
-				boneWeights[newID] = AnimWeight(loadFromFile, shape, newID);
-				boneNames[node->GetName()] = newID;
-				newID++;
-			}
-		}
-	}
+	AnimSkin(NifFile* loadFromFile, NiShape* shape);
 
 	void RemoveBone(const std::string& boneName) {
 		auto bone = boneNames.find(boneName);
