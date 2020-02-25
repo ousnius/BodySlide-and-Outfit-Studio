@@ -130,21 +130,22 @@ AnimSkin::AnimSkin(NifFile* loadFromFile, NiShape* shape) {
 	int newID = 0;
 	for (auto &id : idList) {
 		auto node = loadFromFile->GetHeader().GetBlock<NiNode>(id);
-		if (node) {
-			boneWeights[newID] = AnimWeight(loadFromFile, shape, newID);
-			boneNames[node->GetName()] = newID;
-			if (!gotGTS) {
-				// We don't have a global-to-skin transform, probably because
-				// the NIF has BSSkinBoneData instead of NiSkinData (FO4 or
-				// newer).  So calculate by:
-				// Compose: skin -> bone -> global
-				// and inverting.
-				MatTransform xformBoneToGlobal = node->GetTransformToParent();
+		if (!node) continue;
+		boneWeights[newID] = AnimWeight(loadFromFile, shape, newID);
+		boneNames[node->GetName()] = newID;
+		if (!gotGTS) {
+			// We don't have a global-to-skin transform, probably because
+			// the NIF has BSSkinBoneData instead of NiSkinData (FO4 or
+			// newer).  So calculate by:
+			// Compose: skin -> bone -> global
+			// and inverting.
+			MatTransform xformBoneToGlobal;
+			if (AnimSkeleton::getInstance().GetBoneTransformToGlobal(node->GetName(), xformBoneToGlobal)) {
 				xformGlobalToSkin = xformBoneToGlobal.ComposeTransforms(boneWeights[newID].xformSkinToBone).InverseTransform();
 				gotGTS = true;
 			}
-			newID++;
 		}
+		newID++;
 	}
 }
 
