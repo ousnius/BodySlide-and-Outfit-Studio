@@ -1442,23 +1442,6 @@ void OutfitProject::RotateShape(NiShape* shape, const Vector3& angle, std::unord
 	workNif.RotateShape(shape, angle, mask);
 }
 
-bool OutfitProject::AddShapeBoneAndXForm(const std::string &shapeName, const std::string &boneName) {
-	if (!workAnim.AddShapeBone(shapeName, boneName))
-		return false;
-	// If the base shape has a skin-to-bone transform for this bone, copy it.
-	const std::string baseName = baseShape->GetName();
-	MatTransform xformBaseSkinToBone;
-	if (workAnim.GetXFormSkinToBone(baseName, boneName, xformBaseSkinToBone)) {
-		// The base shape's skin does not necessarily have the same
-		// global-to-skin transform as this shape, so we have to compose:
-		// this skin -> global -> base skin -> bone
-		MatTransform xformGlobalToBaseSkin = workAnim.shapeSkinning[baseName].xformGlobalToSkin;
-		MatTransform xformGlobalToThisSkin = workAnim.shapeSkinning[shapeName].xformGlobalToSkin;
-		workAnim.SetXFormSkinToBone(shapeName, boneName, xformBaseSkinToBone.ComposeTransforms(xformGlobalToBaseSkin.ComposeTransforms(xformGlobalToThisSkin.InverseTransform())));
-	}
-	return true;
-}
-
 void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
 	if (!shape || !baseShape)
 		return;
@@ -1595,7 +1578,7 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 				weights[w.first] = w.second;
 		}
 
-		AddShapeBoneAndXForm(shapeName, boneName);
+		workAnim.AddShapeBone(shapeName, boneName);
 		workAnim.SetWeights(shapeName, boneName, weights);
 		owner->UpdateProgress(prog += step, "");
 	}
