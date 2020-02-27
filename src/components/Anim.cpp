@@ -345,6 +345,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	}
 
 	bool incomplete = false;
+	bool isFO4 = nif->GetHeader().GetVersion().IsFO4();
 
 	for (auto &shapeBoneList : shapeBones) {
 		if (shapeBoneList.first == shapeException)
@@ -373,7 +374,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 			nif->SetShapeTransformSkinToBone(shape, bid, bw.xformSkinToBone);
 			if (!bptr)
 				incomplete = true;
-			if (!isBSShape)
+			if (!isFO4)
 				nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
 
 			if (CalcShapeSkinBounds(shapeBoneList.first, bid))
