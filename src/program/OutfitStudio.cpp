@@ -8401,7 +8401,7 @@ void OutfitStudioFrame::ApplyPose() {
 	glView->Render();
 }
 
-void OutfitStudioFrame::OnPosePaneCollapse(wxCollapsiblePaneEvent& event) {
+void OutfitStudioFrame::OnPosePaneCollapse(wxCollapsiblePaneEvent& WXUNUSED(event)) {
 	wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
 	parentPanel->Layout();
 }
@@ -8445,7 +8445,7 @@ void OutfitStudioFrame::PoseToGUI() {
 	}
 }
 
-void OutfitStudioFrame::OnPoseBoneChanged(wxCommandEvent& event) {
+void OutfitStudioFrame::OnPoseBoneChanged(wxCommandEvent& WXUNUSED(event)) {
 	PoseToGUI();
 }
 
@@ -8495,26 +8495,26 @@ void OutfitStudioFrame::OnAnyPoseTextChanged(wxTextCtrl *t, wxSlider *s, int cin
 	OnPoseValChanged(cind, val);
 }
 
-void OutfitStudioFrame::OnRXPoseTextChanged(wxCommandEvent& e) {
+void OutfitStudioFrame::OnRXPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
 	OnAnyPoseTextChanged(rxPoseText, rxPoseSlider, 0);
 }
-void OutfitStudioFrame::OnRYPoseTextChanged(wxCommandEvent& e) {
+void OutfitStudioFrame::OnRYPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
 	OnAnyPoseTextChanged(ryPoseText, ryPoseSlider, 1);
 }
-void OutfitStudioFrame::OnRZPoseTextChanged(wxCommandEvent& e) {
+void OutfitStudioFrame::OnRZPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
 	OnAnyPoseTextChanged(rzPoseText, rzPoseSlider, 2);
 }
-void OutfitStudioFrame::OnTXPoseTextChanged(wxCommandEvent& e) {
+void OutfitStudioFrame::OnTXPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
 	OnAnyPoseTextChanged(txPoseText, txPoseSlider, 3);
 }
-void OutfitStudioFrame::OnTYPoseTextChanged(wxCommandEvent& e) {
+void OutfitStudioFrame::OnTYPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
 	OnAnyPoseTextChanged(tyPoseText, tyPoseSlider, 4);
 }
-void OutfitStudioFrame::OnTZPoseTextChanged(wxCommandEvent& e) {
+void OutfitStudioFrame::OnTZPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
 	OnAnyPoseTextChanged(tzPoseText, tzPoseSlider, 5);
 }
 
-void OutfitStudioFrame::OnResetBonePose(wxCommandEvent &e) {
+void OutfitStudioFrame::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {
 	AnimBone *bone = GetPoseBonePtr();
 	if (!bone) return;
 	bone->poseRotVec = Vector3(0,0,0);
@@ -8524,7 +8524,7 @@ void OutfitStudioFrame::OnResetBonePose(wxCommandEvent &e) {
 	ApplyPose();
 }
 
-void OutfitStudioFrame::OnResetAllPose(wxCommandEvent &e) {
+void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
 	std::vector<std::string> bones;
 	project->GetActiveBones(bones);
 	for (const std::string &boneName : bones) {
