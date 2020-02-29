@@ -1442,24 +1442,6 @@ void OutfitProject::RotateShape(NiShape* shape, const Vector3& angle, std::unord
 	workNif.RotateShape(shape, angle, mask);
 }
 
-bool OutfitProject::AddShapeBoneAndXForm(const std::string &shapeName, const std::string &boneName) {
-	if (!workAnim.AddShapeBone(shapeName, boneName))
-		return false;
-	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4 || targetGame == FO4VR) {
-		// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
-		MatTransform xForm;
-		workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
-		workAnim.SetShapeBoneXForm(shapeName, boneName, xForm);
-	}
-	else {
-		MatTransform xForm;
-		workAnim.GetBoneXForm(boneName, xForm);
-		workAnim.SetShapeBoneXForm(shapeName, boneName, xForm);
-	}
-	return true;
-}
-
 void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
 	if (!shape || !baseShape)
 		return;
@@ -1596,7 +1578,7 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 				weights[w.first] = w.second;
 		}
 
-		AddShapeBoneAndXForm(shapeName, boneName);
+		workAnim.AddShapeBone(shapeName, boneName);
 		workAnim.SetWeights(shapeName, boneName, weights);
 		owner->UpdateProgress(prog += step, "");
 	}
@@ -1684,7 +1666,7 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 		for (auto &b : workAnim.shapeBones[s]) {
 			if (b == bone) {
 				MatTransform xform;
-				workNif.GetNodeTransform(b, xform);
+				workNif.GetNodeTransformToParent(b, xform);
 
 				auto weights = workAnim.GetWeightsPtr(s, b);
 				if (weights) {
@@ -1734,27 +1716,20 @@ void OutfitProject::ClearBoneScale(bool clear) {
 }
 
 void OutfitProject::AddBoneRef(const std::string& boneName) {
-	MatTransform xForm;
-	if (!AnimSkeleton::getInstance().GetSkinTransform(boneName, xForm, xForm))
-		return;
-
 	for (auto &s : workNif.GetShapeNames())
-		if (workAnim.AddShapeBone(s, boneName))
-			workAnim.SetShapeBoneXForm(s, boneName, xForm);
+		workAnim.AddShapeBone(s, boneName);
 }
 
 void OutfitProject::AddCustomBoneRef(const std::string& boneName, const Vector3& translation) {
 	AnimBone& customBone = AnimSkeleton::getInstance().AddBone(boneName, true);
 
-	MatTransform xForm;
-	xForm.translation = translation;
+	MatTransform xformBoneToGlobal;
+	xformBoneToGlobal.translation = translation;
 
-	customBone.trans = xForm.translation;
-	customBone.scale = xForm.scale;
+	customBone.xformToGlobal = xformBoneToGlobal;
 
 	for (auto &s : workNif.GetShapeNames())
-		if (workAnim.AddShapeBone(s, boneName))
-			workAnim.SetShapeBoneXForm(s, boneName, xForm);
+		workAnim.AddShapeBone(s, boneName);
 }
 
 void OutfitProject::ClearWorkSliders() {
@@ -2692,8 +2667,8 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 			if (baseShape) {
 				MatTransform xform;
-				if (workAnim.GetShapeBoneXForm(baseShape->GetName(), bn, xform))
-					workAnim.SetShapeBoneXForm(useShapeName, bn, xform);
+				if (workAnim.GetXFormSkinToBone(baseShape->GetName(), bn, xform))
+					workAnim.SetXFormSkinToBone(useShapeName, bn, xform);
 			}
 
 			boneIndices.push_back(slot++);
@@ -2790,13 +2765,11 @@ void OutfitProject::ResetTransforms() {
 				clearRoot = true;
 
 			 // Clear shape transform
-			s->transform.Clear();
+			s->SetTransformToParent(MatTransform());
 
 			// Clear overall skin transform
-			MatTransform xForm;
-			workNif.SetShapeBoneTransform(s, 0xFFFFFFFF, xForm);
-
-			//workAnim.GetBoneXForm("", );
+			workAnim.shapeSkinning[s->GetName()].xformGlobalToSkin.Clear();
+			workNif.SetShapeTransformGlobalToSkin(s, MatTransform());
 		}
 		else {
 			clearRoot = false;
@@ -2808,6 +2781,6 @@ void OutfitProject::ResetTransforms() {
 		// Clear root node transform
 		auto rootNode = workNif.GetRootNode();
 		if (rootNode)
-			rootNode->transform.Clear();
+			rootNode->SetTransformToParent(MatTransform());
 	}
 }

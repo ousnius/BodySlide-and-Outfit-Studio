@@ -38,15 +38,13 @@ class AnimBone {
 public:
 	std::string boneName = "bogus";		// bone names are node names in the nif file
 	int boneID = -1;					// block id from the original nif file
-	Matrix4 rot;						// original node rotation value (total rotation, including parents)
-	Vector3 trans;						// original node translation value (total translation, including parents)
-	float scale = 1.0f;					// original node scale value
-
 	bool isValidBone = false;
 	AnimBone* parent = nullptr;
 	std::vector<AnimBone*> children;
-	Matrix4 localRot;					// rotation offset from parent bone.
-	Vector3 localTrans;					// offset from parent bone
+	// xformToGlobal: transforms from this bone's CS to the global CS.
+	MatTransform xformToGlobal;
+	// xformToParent: transforms from this bone's CS to its parent's CS.
+	MatTransform xformToParent;
 
 	int refCount = 0;					// reference count of this bone
 
@@ -55,19 +53,15 @@ public:
 	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
 };
 
-// Vertex to weight value association. Also keeps track of skin transform and bounding sphere.
+// Vertex to weight value association. Also keeps track of skin-to-bone transform and bounding sphere.
 class AnimWeight {
 public:
 	std::unordered_map<ushort, float> weights;
-	MatTransform xform;
+	MatTransform xformSkinToBone;
 	BoundingSphere bounds;
 
 	AnimWeight() {}
-	AnimWeight(NifFile* loadFromFile, NiShape* shape, const int& index) {
-		loadFromFile->GetShapeBoneWeights(shape, index, weights);
-		loadFromFile->GetShapeBoneTransform(shape, index, xform);
-		loadFromFile->GetShapeBoneBounds(shape, index, bounds);
-	}
+	AnimWeight(NifFile* loadFromFile, NiShape* shape, const int& index);
 };
 
 // Bone to weight list association.
@@ -75,22 +69,10 @@ class AnimSkin {
 public:
 	std::unordered_map<int, AnimWeight> boneWeights;
 	std::unordered_map<std::string, int> boneNames;
+	MatTransform xformGlobalToSkin;
 
 	AnimSkin() { }
-	AnimSkin(NifFile* loadFromFile, NiShape* shape) {
-		std::vector<int> idList;
-		loadFromFile->GetShapeBoneIDList(shape, idList);
-
-		int newID = 0;
-		for (auto &id : idList) {
-			auto node = loadFromFile->GetHeader().GetBlock<NiNode>(id);
-			if (node) {
-				boneWeights[newID] = AnimWeight(loadFromFile, shape, newID);
-				boneNames[node->GetName()] = newID;
-				newID++;
-			}
-		}
-	}
+	AnimSkin(NifFile* loadFromFile, NiShape* shape);
 
 	void RemoveBone(const std::string& boneName) {
 		auto bone = boneNames.find(boneName);
@@ -153,10 +135,9 @@ public:
 	std::unordered_map<ushort, float>* GetWeightsPtr(const std::string& shape, const std::string& boneName);
 	bool HasWeights(const std::string& shape, const std::string& boneName);
 	void GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& outVertWeights);
-	void GetBoneXForm(const std::string& boneName, MatTransform& stransform);
 	void SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& inVertWeights);
-	bool GetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform);
-	void SetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform);
+	bool GetXFormSkinToBone(const std::string& shape, const std::string& boneName, MatTransform& stransform);
+	void SetXFormSkinToBone(const std::string& shape, const std::string& boneName, const MatTransform& stransform);
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
 	void WriteToNif(NifFile* nif, const std::string& shapeException = "");
@@ -193,8 +174,7 @@ public:
 	AnimBone* GetBonePtr(const std::string& boneName, const bool allowCustom = true);
 	AnimBone* GetRootBonePtr();
 	bool GetBone(const std::string& boneName, AnimBone& outBone);
-	bool GetBoneTransform(const std::string& boneName, MatTransform& xform);
-	bool GetSkinTransform(const std::string& boneName, const MatTransform& skinning, MatTransform& xform);
+	bool GetBoneTransformToGlobal(const std::string& boneName, MatTransform& xform);
 
 	int GetActiveBoneNames(std::vector<std::string>& outBoneNames);
 	void DisableCustomTransforms();

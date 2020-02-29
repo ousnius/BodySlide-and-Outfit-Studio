@@ -103,6 +103,9 @@ struct Vector3 {
 		z = Z;
 	}
 
+	float &operator[](int ind) {return ind?(ind==2?z:y):x;}
+	const float &operator[](int ind) const {return ind?(ind==2?z:y):x;}
+
 	void Zero() {
 		x = y = z = 0.0f;
 	}
@@ -266,6 +269,10 @@ struct Vector3 {
 			z = 0.0f;
 	}
 };
+
+inline Vector3 operator*(float f, const Vector3 &v) {
+	return Vector3(f*v.x, f*v.y, f*v.z);
+}
 
 struct Vector4 {
 	float x;
@@ -474,50 +481,63 @@ public:
 	}
 
 	Matrix3& operator*=(const Matrix3& other) {
-		Matrix3 res;
-		res[0].x = rows[0].x * other[0].x + rows[1].x * other[0].y + rows[2].x * other[0].z;
-		res[0].y = rows[0].y * other[0].x + rows[1].y * other[0].y + rows[2].y * other[0].z;
-		res[0].z = rows[0].z * other[0].x + rows[1].z * other[0].y + rows[2].z * other[0].z;
-		res[1].x = rows[0].x * other[1].x + rows[1].x * other[1].y + rows[2].x * other[1].z;
-		res[1].y = rows[0].y * other[1].x + rows[1].y * other[1].y + rows[2].y * other[1].z;
-		res[1].z = rows[0].z * other[1].x + rows[1].z * other[1].y + rows[2].z * other[1].z;
-		res[2].x = rows[0].x * other[2].x + rows[1].x * other[2].y + rows[2].x * other[2].z;
-		res[2].y = rows[0].y * other[2].x + rows[1].y * other[2].y + rows[2].y * other[2].z;
-		res[2].z = rows[0].z * other[2].x + rows[1].z * other[2].y + rows[2].z * other[2].z;
-
-		*this = res;
-		return (*this);
+		*this = *this * other;
+		return *this;
 	}
 
-	Matrix3 operator*(const Matrix3& other) {
+	Matrix3 operator*(const Matrix3& o) const {
 		Matrix3 res;
-		res *= other;
+		res[0][0] = rows[0][0] * o[0][0] + rows[0][1] * o[1][0] + rows[0][2] * o[2][0];
+		res[0][1] = rows[0][0] * o[0][1] + rows[0][1] * o[1][1] + rows[0][2] * o[2][1];
+		res[0][2] = rows[0][0] * o[0][2] + rows[0][1] * o[1][2] + rows[0][2] * o[2][2];
+		res[1][0] = rows[1][0] * o[0][0] + rows[1][1] * o[1][0] + rows[1][2] * o[2][0];
+		res[1][1] = rows[1][0] * o[0][1] + rows[1][1] * o[1][1] + rows[1][2] * o[2][1];
+		res[1][2] = rows[1][0] * o[0][2] + rows[1][1] * o[1][2] + rows[1][2] * o[2][2];
+		res[2][0] = rows[2][0] * o[0][0] + rows[2][1] * o[1][0] + rows[2][2] * o[2][0];
+		res[2][1] = rows[2][0] * o[0][1] + rows[2][1] * o[1][1] + rows[2][2] * o[2][1];
+		res[2][2] = rows[2][0] * o[0][2] + rows[2][1] * o[1][2] + rows[2][2] * o[2][2];
 		return res;
 	}
 
-	// Set rotation matrix from yaw, pitch and roll
-	static Matrix3 MakeRotation(const float yaw, const float pitch, const float roll) {
-		float ch = std::cos(yaw);
-		float sh = std::sin(yaw);
-		float cp = std::cos(pitch);
-		float sp = std::sin(pitch);
-		float cb = std::cos(roll);
-		float sb = std::sin(roll);
+	Vector3 operator*(const Vector3& v) const {
+		return Vector3(
+			rows[0][0] * v.x + rows[0][1] * v.y + rows[0][2] * v.z,
+			rows[1][0] * v.x + rows[1][1] * v.y + rows[1][2] * v.z,
+			rows[2][0] * v.x + rows[2][1] * v.y + rows[2][2] * v.z);
+	}
 
-		Matrix3 rot;
-		rot[0].x = ch * cb + sh * sp * sb;
-		rot[0].y = sb * cp;
-		rot[0].z = -sh * cb + ch * sp * sb;
+	float Determinant() const;
 
-		rot[1].x = -ch * sb + sh * sp * cb;
-		rot[1].y = cb * cp;
-		rot[1].z = sb * sh + ch * sp * cb;
+	// Invert attempts to invert this matrix, returning the result in
+	// inverse.  It returns false if the matrix is not invertible, in
+	// which case inverse is not changed.
+	bool Invert(Matrix3 *inverse) const;
 
-		rot[2].x = sh * cp;
-		rot[2].y = -sp;
-		rot[2].z = ch * cp;
+	// Inverse returns the inverse of this matrix if it's invertible.
+	// If this matrix is not invertible, the identity matrix is returned.
+	Matrix3 Inverse() const;
 
-		return rot;
+	// Generate rotation matrix from yaw, pitch and roll (in radians)
+	// This is not the inverse of ToEulerAngles; though both functions
+	// work with Euler angles, there are many conflicting definitions
+	// of "Euler angles" (yaw, pitch, and roll), and these two functions
+	// use different definitions.
+	static Matrix3 MakeRotation(const float yaw, const float pitch, const float roll);
+
+	// Convert rotation to euler degrees (Yaw, Pitch, Roll)
+	// This function assumes that the matrix is a rotation matrix.
+	// ToEulerAngles is not the inverse of MakeRotation; though both
+	// functions work with Euler angles, there are many conflicting
+	// definitions of "Euler angles", and these two functions use
+	// different definitions.
+	// The return result "canRot" apparently means roll is not zero.
+	bool ToEulerAngles(float &y, float& p, float& r) const;
+	bool ToEulerDegrees(float &y, float& p, float& r) const {
+		bool canRot = ToEulerAngles(y, p, r);
+		y *= 180.0f / PI;
+		p *= 180.0f / PI;
+		r *= 180.0f / PI;
+		return canRot;
 	}
 };
 
@@ -548,7 +568,7 @@ public:
 		m[12] = 0;		   m[13] = 0;		  m[14] = 0;	      m[15] = 1;
 	}
 
-	void SetRow(int row, Vector3& inVec) {
+	void SetRow(int row, const Vector3& inVec) {
 		m[row * 4 + 0] = inVec.x;
 		m[row * 4 + 1] = inVec.y;
 		m[row * 4 + 2] = inVec.z;
@@ -865,9 +885,29 @@ struct QuatTransform {
 };
 
 struct MatTransform {
+	/* On MatTransform and coordinate-system (CS) transformations:
+
+	A MatTransform can represent a "similarity transform", where
+	it scales, rotates, and moves geometry; or it can represent a
+	"coordinate-system transform", where the geometry itself does
+	not change, but its representation changes from one CS to another.
+
+	If CS1 is the source CS and CS2 is the target CS, then:
+	ApplyTransform(v) converts a point v represented in CS1 to CS2.
+	translation is CS1's origin represented in CS2.
+	rotation has columns the basis vectors of CS1 represented in CS2.
+	scale gives how much farther apart points appear to be in CS2 than in CS1.
+
+	Note that we do not force "rotation" to actually be a rotation
+	matrix.  A rotation matrix's inverse is its transpose.  Instead,
+	we only assume "rotation" is invertible, which means its inverse
+	must be calculated (using Matrix3::Invert).  Even though we always
+	treat "rotation" as a general invertible matrix and not a rotation
+	matrix, in practice it is always a rotation matrix.
+	*/
 	Vector3 translation;
-	Matrix3 rotation;
-	float scale = 1.0f;
+	Matrix3 rotation; // must be invertible
+	float scale = 1.0f; // must be nonzero
 
 	void Clear() {
 		translation.Zero();
@@ -876,52 +916,41 @@ struct MatTransform {
 	}
 
 	// Rotation in euler degrees (Yaw, Pitch, Roll)
-	bool ToEulerDegrees(float &y, float& p, float& r) {
-		float rx, ry, rz;
-		bool canRot = false;
-
-		if (rotation[0].z < 1.0f) {
-			if (rotation[0].z > -1.0f) {
-				rx = atan2(-rotation[1].z, rotation[2].z);
-				ry = asin(rotation[0].z);
-				rz = atan2(-rotation[0].y, rotation[0].x);
-				canRot = true;
-			}
-			else {
-				rx = -atan2(-rotation[1].x, rotation[1].y);
-				ry = -PI / 2.0f;
-				rz = 0.0f;
-			}
-		}
-		else {
-			rx = atan2(rotation[1].x, rotation[1].y);
-			ry = PI / 2.0f;
-			rz = 0.0f;
-		}
-
-		y = rx * 180.0f / PI;
-		p = ry * 180.0f / PI;
-		r = rz * 180.0f / PI;
-		return canRot;
+	bool ToEulerDegrees(float &y, float& p, float& r) const {
+		return rotation.ToEulerDegrees(y, p, r);
 	}
 
 	// Full matrix of translation, rotation and scale
-	Matrix4 ToMatrix() {
+	Matrix4 ToMatrix() const {
 		Matrix4 mat;
 		mat[0] = rotation[0].x * scale;
-		mat[1] = rotation[0].y;
-		mat[2] = rotation[0].z;
+		mat[1] = rotation[0].y * scale;
+		mat[2] = rotation[0].z * scale;
 		mat[3] = translation.x;
-		mat[4] = rotation[1].x;
+		mat[4] = rotation[1].x * scale;
 		mat[5] = rotation[1].y * scale;
-		mat[6] = rotation[1].z;
+		mat[6] = rotation[1].z * scale;
 		mat[7] = translation.y;
-		mat[8] = rotation[2].x;
-		mat[9] = rotation[2].y;
+		mat[8] = rotation[2].x * scale;
+		mat[9] = rotation[2].y * scale;
 		mat[10] = rotation[2].z * scale;
 		mat[11] = translation.z;
 		return mat;
 	}
+
+	// ApplyTransform applies this MatTransform to a vector v by first
+	// scaling v, then rotating the result of that, then translating the
+	// result of that.
+	Vector3 ApplyTransform(const Vector3 &v) const;
+
+	// Note that InverseTransform will return garbage if "rotation"
+	// is not invertible or scale is 0.
+	MatTransform InverseTransform() const;
+
+	// ComposeTransforms returns the transform that is the composition
+	// of this and other.  That is, if t3 = t1.ComposeTransforms(t2), then
+	// t3.ApplyTransform(v) == t1.ApplyTransform(t2.ApplyTransform(v)).
+	MatTransform ComposeTransforms(const MatTransform &other) const;
 };
 
 

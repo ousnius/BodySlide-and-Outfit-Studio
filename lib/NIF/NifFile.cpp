@@ -435,14 +435,14 @@ bool NifFile::DeleteUnreferencedBlocks() {
 	return hadDeletions;
 }
 
-int NifFile::AddNode(const std::string& nodeName, const MatTransform& xform) {
+int NifFile::AddNode(const std::string& nodeName, const MatTransform& xformToParent) {
 	auto root = GetRootNode();
 	if (!root)
 		return 0xFFFFFFFF;
 
 	auto newNode = new NiNode();
 	newNode->SetName(nodeName);
-	newNode->transform = xform;
+	newNode->SetTransformToParent(xformToParent);
 
 	int newNodeId = hdr.AddBlock(newNode);
 	if (newNodeId != 0xFFFFFFFF)
@@ -774,8 +774,8 @@ NiShape* NifFile::CloneShape(NiShape* srcShape, const std::string& destShapeName
 				// Move existing node to non-root parent
 				auto oldParent = GetParentNode(node);
 				if (oldParent && oldParent != nodeParent && nodeParent != rootNode) {
-					MatTransform xform;
-					srcNif->GetNodeTransform(boneName, xform);
+					MatTransform xformToParent;
+					srcNif->GetNodeTransformToParent(boneName, xformToParent);
 
 					std::set<Ref*> childRefs;
 					oldParent->GetChildRefs(childRefs);
@@ -784,7 +784,7 @@ NiShape* NifFile::CloneShape(NiShape* srcShape, const std::string& destShapeName
 							ref->Clear();
 
 					nodeParent->GetChildren().AddBlockRef(boneID);
-					SetNodeTransform(boneName, xform);
+					SetNodeTransformToParent(boneName, xformToParent);
 				}
 			}
 
@@ -1041,7 +1041,7 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 				bsOptShape->GetProperties() = shape->GetProperties();
 				bsOptShape->GetExtraData() = shape->GetExtraData();
 
-				bsOptShape->transform = shape->transform;
+				bsOptShape->SetTransformToParent(shape->GetTransformToParent());
 
 				bsOptShape->Create(vertices, &triangles, uvs, normals);
 				bsOptShape->flags = shape->flags;
@@ -1307,7 +1307,7 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 				bsOptShape->GetProperties() = shape->GetProperties();
 				bsOptShape->GetExtraData() = shape->GetExtraData();
 
-				bsOptShape->transform = shape->transform;
+				bsOptShape->SetTransformToParent(shape->GetTransformToParent());
 				bsOptShape->flags = shape->flags;
 
 				// Move segments to new shape
@@ -1597,50 +1597,36 @@ NiNode* NifFile::GetRootNode() {
 	return root;
 }
 
-bool NifFile::GetNodeTransform(const std::string& nodeName, MatTransform& outTransform) {
+bool NifFile::GetNodeTransformToParent(const std::string& nodeName, MatTransform& outTransform) {
 	for (auto& block : blocks) {
 		auto node = dynamic_cast<NiNode*>(block.get());
 		if (node && !node->GetName().compare(nodeName)) {
-			outTransform = node->transform;
+			outTransform = node->GetTransformToParent();
 			return true;
 		}
 	}
 	return false;
 }
 
-bool NifFile::GetAbsoluteNodeTransform(const std::string& nodeName, MatTransform& outTransform) {
-	std::function<void(NiNode*, MatTransform&)> addParents = [&](NiNode* node, MatTransform& xform) -> void {
-		auto parent = GetParentNode(node);
-		if (parent) {
-			Matrix4 rot;
-			rot.SetRow(0, parent->transform.rotation[0]);
-			rot.SetRow(1, parent->transform.rotation[1]);
-			rot.SetRow(2, parent->transform.rotation[2]);
-
-			Matrix4 newRot = rot * xform.ToMatrix();
-			newRot.GetRow(0, xform.rotation[0]);
-			newRot.GetRow(1, xform.rotation[1]);
-			newRot.GetRow(2, xform.rotation[2]);
-
-			xform.translation = parent->transform.translation + (rot * xform.translation);
-			addParents(parent, xform);
-		}
-	};
-
+bool NifFile::GetNodeTransformToGlobal(const std::string& nodeName, MatTransform& outTransform) {
 	for (auto& block : blocks) {
-		auto node = dynamic_cast<NiNode*>(block.get());
-		if (node && node->GetName().compare(nodeName) == 0) {
-			MatTransform xform = node->transform;
-			addParents(node, xform);
-			outTransform = xform;
-			return true;
+		NiNode *node = dynamic_cast<NiNode*>(block.get());
+		if (!node || node->GetName().compare(nodeName) != 0)
+			continue;
+		MatTransform xform = node->GetTransformToParent();
+		NiNode *parent = GetParentNode(node);
+		while (parent) {
+			xform = parent->GetTransformToParent().ComposeTransforms(xform);
+			parent = GetParentNode(parent);
 		}
+		outTransform = xform;
+		return true;
 	}
 
 	return false;
 }
 
-bool NifFile::SetNodeTransform(const std::string& nodeName, MatTransform& inTransform, const bool rootChildrenOnly) {
+bool NifFile::SetNodeTransformToParent(const std::string& nodeName, const MatTransform& inTransform, const bool rootChildrenOnly) {
 	if (rootChildrenOnly) {
 		auto root = GetRootNode();
 		if (root) {
@@ -1648,7 +1634,7 @@ bool NifFile::SetNodeTransform(const std::string& nodeName, MatTransform& inTran
 				auto node = hdr.GetBlock<NiNode>(child.GetIndex());
 				if (node) {
 					if (!node->GetName().compare(nodeName)) {
-						node->transform = inTransform;
+						node->SetTransformToParent(inTransform);
 						return true;
 					}
 				}
@@ -1659,7 +1645,7 @@ bool NifFile::SetNodeTransform(const std::string& nodeName, MatTransform& inTran
 		for (auto& block : blocks) {
 			auto node = dynamic_cast<NiNode*>(block.get());
 			if (node && !node->GetName().compare(nodeName)) {
-				node->transform = inTransform;
+				node->SetTransformToParent(inTransform);
 				return true;
 			}
 		}
@@ -1798,29 +1784,64 @@ int NifFile::GetShapeBoneWeights(NiShape* shape, const int boneIndex, std::unord
 	return outWeights.size();
 }
 
-bool NifFile::GetShapeBoneTransform(NiShape* shape, const std::string& boneName, MatTransform& outTransform) {
+bool NifFile::GetShapeTransformGlobalToSkin(NiShape* shape, MatTransform& outTransform) {
 	if (!shape)
 		return false;
 
-	int boneIndex = shape->GetBoneID(hdr, boneName);
-	if (boneName.empty())
-		boneIndex = 0xFFFFFFFF;
+	// For FO4 meshes, the skin instance is a BSSkinInstance instead of
+	// an NiSkinInstance, so skinInst will be nullptr.  FO4 meshes do not
+	// have this transform.
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (!skinInst)
+		return false;
 
-	return GetShapeBoneTransform(shape, boneIndex, outTransform);
+	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	if (!skinData)
+		return false;
+
+	outTransform = skinData->skinTransform;
+	return true;
 }
 
-bool NifFile::SetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& inTransform) {
+void NifFile::SetShapeTransformGlobalToSkin(NiShape* shape, const MatTransform& inTransform) {
+	if (!shape)
+		return;
+
+	// For FO4 meshes, the skin instance is a BSSkinInstance instead of
+	// an NiSkinInstance, so skinInst will be nullptr.  FO4 meshes do not
+	// have this transform.
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (!skinInst)
+		return;
+
+	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	if (!skinData)
+		return;
+
+	// Set the overall skin transform
+	skinData->skinTransform = inTransform;
+}
+
+bool NifFile::GetShapeTransformSkinToBone(NiShape* shape, const std::string& boneName, MatTransform& outTransform) {
+	if (!shape)
+		return false;
+	return GetShapeBoneTransform(shape, shape->GetBoneID(hdr, boneName), outTransform);
+}
+
+bool NifFile::GetShapeTransformSkinToBone(NiShape* shape, const int boneIndex, MatTransform& outTransform) {
 	if (!shape)
 		return false;
 
 	auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
-	if (skinForBoneRef && boneIndex != 0xFFFFFFFF) {
-		auto bsSkin = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
-		if (!bsSkin)
-			return false;
+	if (skinForBoneRef) {
+		auto boneData = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
+		if (boneData) {
+			if (boneIndex >= boneData->nBones)
+				return false;
 
-		bsSkin->boneXforms[boneIndex].boneTransform = inTransform;
-		return true;
+			outTransform = boneData->boneXforms[boneIndex].boneTransform;
+			return true;
+		}
 	}
 
 	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
@@ -1831,17 +1852,64 @@ bool NifFile::SetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTran
 	if (!skinData)
 		return false;
 
-	if (boneIndex == 0xFFFFFFFF) {
-		// Set the overall skin transform
-		skinData->skinTransform = inTransform;
-		return true;
-	}
-
 	if (boneIndex >= skinData->numBones)
 		return false;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
+	outTransform = bone->boneTransform;
+	return true;
+}
+
+void NifFile::SetShapeTransformSkinToBone(NiShape* shape, const int boneIndex, const MatTransform& inTransform) {
+	if (!shape)
+		return;
+
+	auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
+	if (skinForBoneRef) {
+		auto bsSkin = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
+		if (!bsSkin)
+			return;
+
+		if (boneIndex >= bsSkin->nBones)
+			return;
+		bsSkin->boneXforms[boneIndex].boneTransform = inTransform;
+		return;
+	}
+
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (!skinInst)
+		return;
+
+	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	if (!skinData)
+		return;
+
+	if (boneIndex >= skinData->numBones)
+		return;
+
+	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	bone->boneTransform = inTransform;
+}
+
+bool NifFile::GetShapeBoneTransform(NiShape* shape, const std::string& boneName, MatTransform& outTransform) {
+	if (boneName.empty())
+		return GetShapeTransformGlobalToSkin(shape, outTransform);
+	else
+		return GetShapeTransformSkinToBone(shape, boneName, outTransform);
+}
+
+bool NifFile::GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& outTransform) {
+	if (boneIndex == 0xFFFFFFFF)
+		return GetShapeTransformGlobalToSkin(shape, outTransform);
+	else
+		return GetShapeTransformSkinToBone(shape, boneIndex, outTransform);
+}
+
+bool NifFile::SetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& inTransform) {
+	if (boneIndex == 0xFFFFFFFF)
+		SetShapeTransformGlobalToSkin(shape, inTransform);
+	else
+		SetShapeTransformSkinToBone(shape, boneIndex, inTransform);
 	return true;
 }
 
@@ -1873,49 +1941,6 @@ bool NifFile::SetShapeBoneBounds(const std::string& shapeName, const int boneInd
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	bone->bounds = inBounds;
-	return true;
-}
-
-bool NifFile::GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& outTransform) {
-	if (!shape)
-		return false;
-
-	auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
-	if (skinForBoneRef) {
-		auto boneData = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
-		if (boneData) {
-			if (boneIndex == 0xFFFFFFFF) {
-				// Overall skin transform not found in FO4 meshes :(
-				return false;
-			}
-
-			if (boneIndex >= boneData->nBones)
-				return false;
-
-			outTransform = boneData->boneXforms[boneIndex].boneTransform;
-			return true;
-		}
-	}
-
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-	if (!skinInst)
-		return false;
-
-	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
-	if (!skinData)
-		return false;
-
-	if (boneIndex == 0xFFFFFFFF) {
-		// Want the overall skin transform
-		outTransform = skinData->skinTransform;
-		return true;
-	}
-
-	if (boneIndex >= skinData->numBones)
-		return false;
-
-	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
-	outTransform = bone->boneTransform;
 	return true;
 }
 
@@ -2585,7 +2610,7 @@ void NifFile::CalcTangentsForShape(NiShape* shape) {
 void NifFile::GetRootTranslation(Vector3& outVec) {
 	auto root = GetRootNode();
 	if (root)
-		outVec = root->transform.translation;
+		outVec = root->GetTransformToParent().translation;
 	else
 		outVec.Zero();
 }

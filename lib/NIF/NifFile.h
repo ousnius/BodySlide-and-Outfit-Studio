@@ -97,7 +97,7 @@ public:
 	void LinkGeomData();
 	void RemoveInvalidTris();
 
-	int AddNode(const std::string& nodeName, const MatTransform& xform);
+	int AddNode(const std::string& nodeName, const MatTransform& xformToParent);
 	void DeleteNode(const std::string& nodeName);
 	bool CanDeleteNode(const std::string& nodeName);
 	std::string GetNodeName(const int blockID);
@@ -142,22 +142,53 @@ public:
 	std::vector<T*> GetChildren(NiNode* parent = nullptr, bool searchExtraData = false);
 
 	NiNode* GetRootNode();
-	bool GetNodeTransform(const std::string& nodeName, MatTransform& outTransform);
-	bool GetAbsoluteNodeTransform(const std::string& nodeName, MatTransform& outTransform);
-	bool SetNodeTransform(const std::string& nodeName, MatTransform& inTransform, const bool rootChildrenOnly = false);
+	bool GetNodeTransformToParent(const std::string& nodeName, MatTransform& outTransform);
+	// GetNodeTransform is deprecated.  Use GetNodeTransformToParent instead.
+	bool GetNodeTransform(const std::string& nodeName, MatTransform& outTransform) {
+		return GetNodeTransformToParent(nodeName, outTransform);
+	}
+	// GetNodeTransformToGlobal calculates the transform from this node's
+	// CS to the global CS by composing transforms up the node tree to the
+	// root node.
+	bool GetNodeTransformToGlobal(const std::string& nodeName, MatTransform& outTransform);
+	// GetAbsoluteNodeTransform is deprecated.  Use GetNodeTransformToGlobal instead.
+	bool GetAbsoluteNodeTransform(const std::string& nodeName, MatTransform& outTransform) {
+		return GetNodeTransformToGlobal(nodeName, outTransform);
+	}
+	bool SetNodeTransformToParent(const std::string& nodeName, const MatTransform& inTransform, const bool rootChildrenOnly = false);
+	// SetNodeTransform is deprecated.  Use SetNodeTransformToParent instead.
+	bool SetNodeTransform(const std::string& nodeName, MatTransform& inTransform, const bool rootChildrenOnly = false) {
+		return SetNodeTransformToParent(nodeName, inTransform, rootChildrenOnly);
+	}
 
 	int GetShapeBoneList(NiShape* shape, std::vector<std::string>& outList);
 	int GetShapeBoneIDList(NiShape* shape, std::vector<int>& outList);
 	void SetShapeBoneIDList(NiShape* shape, std::vector<int>& inList);
 	int GetShapeBoneWeights(NiShape* shape, const int boneIndex, std::unordered_map<ushort, float>& outWeights);
 
+	// Returns false if no such transform exists in the file, in which
+	// case outTransform will not be changed.  Note that, even if this
+	// function returns false, you can not assume that the global-to-skin
+	// transform is the identity; it almost never is.
+	bool GetShapeTransformGlobalToSkin(NiShape* shape, MatTransform& outTransform);
+	// Does nothing if the shape has no such transform.
+	void SetShapeTransformGlobalToSkin(NiShape* shape, const MatTransform& inTransform);
+	bool GetShapeTransformSkinToBone(NiShape* shape, const std::string& boneName, MatTransform& outTransform);
+	bool GetShapeTransformSkinToBone(NiShape* shape, int boneIndex, MatTransform& outTransform);
+	void SetShapeTransformSkinToBone(NiShape* shape, int boneIndex, const MatTransform& inTransform);
 	// Empty std::string for the bone name returns the overall skin transform for the shape.
+	// GetShapeBoneTransform is deprecated.  Use GetShapeTransformGlobalToSkin
+	// or GetShapeTransfromSkinToBone instead.
 	bool GetShapeBoneTransform(NiShape* shape, const std::string& boneName, MatTransform& outTransform);
+	// 0xFFFFFFFF on the bone index returns the overall skin transform for the shape.
+	// GetShapeBoneTransform is deprecated.  Use GetShapeTransformGlobalToSkin
+	// or GetShapeTransfromSkinToBone instead.
+	bool GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& outTransform);
 	// 0xFFFFFFFF for the bone index sets the overall skin transform for the shape.
+	// SetShapeBoneTransform is deprecated.  Use SetShapeTransformGlobalToSkin
+	// or SetShapeTransfromSkinToBone instead.
 	bool SetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& inTransform);
 	bool SetShapeBoneBounds(const std::string& shapeName, const int boneIndex, BoundingSphere& inBounds);
-	// 0xFFFFFFFF on the bone index returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& outTransform);
 	bool GetShapeBoneBounds(NiShape* shape, const int boneIndex, BoundingSphere& outBounds);
 	void UpdateShapeBoneID(const std::string& shapeName, const int oldID, const int newID);
 	void SetShapeBoneWeights(const std::string& shapeName, const int boneIndex, std::unordered_map<ushort, float>& inWeights);

@@ -2133,7 +2133,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 				if (!m) continue;
 				for (auto &bw : uss.boneWeights) {
 					if (bw.weights.empty()) continue;
-					project->AddShapeBoneAndXForm(m->shapeName, bw.boneName);
+					project->GetWorkAnim()->AddShapeBone(m->shapeName, bw.boneName);
 					auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, bw.boneName);
 					if (!weights) continue;
 					for (auto &p : bw.weights) {

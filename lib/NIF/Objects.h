@@ -44,6 +44,9 @@ protected:
 
 public:
 	uint flags = 524302;
+	/* "transform" is the coordinate system (CS) transform from this
+	object's CS to its parent's CS.
+	Recommendation: rename "transform" to "transformToParent". */
 	MatTransform transform;
 
 	void Get(NiStream& stream);
@@ -54,6 +57,9 @@ public:
 
 	int GetCollisionRef() { return collisionRef.GetIndex(); }
 	void SetCollisionRef(const int colRef) { collisionRef.SetIndex(colRef); }
+
+	const MatTransform &GetTransformToParent() const {return transform;}
+	void SetTransformToParent(const MatTransform &t) {transform = t;}
 };
 
 struct AVObject {
