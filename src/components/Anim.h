@@ -45,12 +45,16 @@ public:
 	MatTransform xformToGlobal;
 	// xformToParent: transforms from this bone's CS to its parent's CS.
 	MatTransform xformToParent;
+	// pose rotation and translation vectors
+	Vector3 poseRotVec, poseTranVec;
+	MatTransform xformPoseToGlobal;
 
 	int refCount = 0;					// reference count of this bone
 
 	AnimBone() {}
 
 	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
+	void UpdatePoseTransform();
 };
 
 // Vertex to weight value association. Also keeps track of skin-to-bone transform and bounding sphere.

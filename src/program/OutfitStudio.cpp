@@ -53,7 +53,27 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMMAND_SCROLL(XRCID("brushStr"), OutfitStudioFrame::OnBrushSettingsSlider)
 	EVT_COMMAND_SCROLL(XRCID("brushFocus"), OutfitStudioFrame::OnBrushSettingsSlider)
 	EVT_COMMAND_SCROLL(XRCID("brushSpace"), OutfitStudioFrame::OnBrushSettingsSlider)
+
+	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("posePane"), OutfitStudioFrame::OnPosePaneCollapse)
+	EVT_CHOICE(XRCID("cPoseBone"), OutfitStudioFrame::OnPoseBoneChanged)
+	EVT_COMMAND_SCROLL(XRCID("rxPoseSlider"), OutfitStudioFrame::OnRXPoseSlider)
+	EVT_COMMAND_SCROLL(XRCID("ryPoseSlider"), OutfitStudioFrame::OnRYPoseSlider)
+	EVT_COMMAND_SCROLL(XRCID("rzPoseSlider"), OutfitStudioFrame::OnRZPoseSlider)
+	EVT_COMMAND_SCROLL(XRCID("txPoseSlider"), OutfitStudioFrame::OnTXPoseSlider)
+	EVT_COMMAND_SCROLL(XRCID("tyPoseSlider"), OutfitStudioFrame::OnTYPoseSlider)
+	EVT_COMMAND_SCROLL(XRCID("tzPoseSlider"), OutfitStudioFrame::OnTZPoseSlider)
+	EVT_TEXT(XRCID("rxPoseText"), OutfitStudioFrame::OnRXPoseTextChanged)
+	EVT_TEXT(XRCID("ryPoseText"), OutfitStudioFrame::OnRYPoseTextChanged)
+	EVT_TEXT(XRCID("rzPoseText"), OutfitStudioFrame::OnRZPoseTextChanged)
+	EVT_TEXT(XRCID("txPoseText"), OutfitStudioFrame::OnTXPoseTextChanged)
+	EVT_TEXT(XRCID("tyPoseText"), OutfitStudioFrame::OnTYPoseTextChanged)
+	EVT_TEXT(XRCID("tzPoseText"), OutfitStudioFrame::OnTZPoseTextChanged)
+	EVT_BUTTON(XRCID("resetBonePose"), OutfitStudioFrame::OnResetBonePose)
+	EVT_BUTTON(XRCID("resetAllPose"), OutfitStudioFrame::OnResetAllPose)
+	EVT_CHECKBOX(XRCID("cbPose"), OutfitStudioFrame::OnPoseCheckBox)
 	
+	// The following line with "EVT_COMMAND_SCROLL(wxID_ANY" apparently
+	// suppresses all following lines with EVT_COMMAND_SCROLL.
 	EVT_COMMAND_SCROLL(wxID_ANY, OutfitStudioFrame::OnSlider)
 	EVT_BUTTON(wxID_ANY, OutfitStudioFrame::OnClickSliderButton)
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
@@ -875,6 +895,20 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	boneScale = (wxSlider*)FindWindowByName("boneScale");
 	cXMirrorBone = (wxChoice*)FindWindowByName("cXMirrorBone");
+	cPoseBone = (wxChoice*)FindWindowByName("cPoseBone");
+	rxPoseSlider = (wxSlider*)FindWindowByName("rxPoseSlider");
+	ryPoseSlider = (wxSlider*)FindWindowByName("ryPoseSlider");
+	rzPoseSlider = (wxSlider*)FindWindowByName("rzPoseSlider");
+	txPoseSlider = (wxSlider*)FindWindowByName("txPoseSlider");
+	tyPoseSlider = (wxSlider*)FindWindowByName("tyPoseSlider");
+	tzPoseSlider = (wxSlider*)FindWindowByName("tzPoseSlider");
+	rxPoseText = (wxTextCtrl*)FindWindowByName("rxPoseText");
+	ryPoseText = (wxTextCtrl*)FindWindowByName("ryPoseText");
+	rzPoseText = (wxTextCtrl*)FindWindowByName("rzPoseText");
+	txPoseText = (wxTextCtrl*)FindWindowByName("txPoseText");
+	tyPoseText = (wxTextCtrl*)FindWindowByName("tyPoseText");
+	tzPoseText = (wxTextCtrl*)FindWindowByName("tzPoseText");
+	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
@@ -2144,6 +2178,12 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 							(*weights)[p.first] = val;
 					}
 				}
+				if (project->bPose) {
+					auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
+					std::vector<Vector3> verts;
+					project->GetLiveVerts(shape, verts);
+					glView->UpdateMeshVertices(shape->GetName(), &verts);
+				}
 			}
 		}
 		else if (usp->undoType == UT_COLOR) {
@@ -2986,7 +3026,7 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 }
 
 void OutfitStudioFrame::AnimationGUIFromProj() {
-	// Preserve selected, normalize, and x-mirror bones
+	// Preserve selected, normalize, x-mirror, and pose bones
 	std::vector<std::string> selBones = GetSelectedBones();
 	std::vector<std::string> normBones;
 	GetNormalizeBones(&normBones, nullptr);
@@ -2996,6 +3036,10 @@ void OutfitStudioFrame::AnimationGUIFromProj() {
 	std::string ManualXMirrorBone;
 	if (xMChoice >= 2)
 		ManualXMirrorBone = cXMirrorBone->GetString(xMChoice);
+	std::string poseBone;
+	int poseBoneSel = cPoseBone->GetSelection();
+	if (poseBoneSel != wxNOT_FOUND)
+		poseBone = cPoseBone->GetString(poseBoneSel).ToStdString();
 
 	// Clear GUI's bone list
 	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
@@ -3006,6 +3050,7 @@ void OutfitStudioFrame::AnimationGUIFromProj() {
 	cXMirrorBone->AppendString("None");
 	cXMirrorBone->AppendString("Auto");
 	cXMirrorBone->SetSelection(xMChoice == 1 ? 1 : 0);
+	cPoseBone->Clear();
 
 	// Refill GUI's bone list, re-setting normalize flags and re-selecting
 	std::vector<std::string> activeBones;
@@ -3023,9 +3068,14 @@ void OutfitStudioFrame::AnimationGUIFromProj() {
 		cXMirrorBone->AppendString(bone);
 		if (xMChoice >= 2 && bone == ManualXMirrorBone)
 			cXMirrorBone->SetSelection(cXMirrorBone->GetCount()-1);
+		cPoseBone->AppendString(bone);
+		if (poseBone == bone)
+			cPoseBone->SetSelection(cPoseBone->GetCount()-1);
 	}
 	recursingUI = saveRUI;
 	CalcAutoXMirrorBone();
+	if (cPoseBone->GetSelection() == wxNOT_FOUND && cPoseBone->GetCount() > 0)
+		cPoseBone->SetSelection(0);
 
 	HighlightBoneNamesWithWeights();
 	RefreshGUIWeightColors();
@@ -5551,10 +5601,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
+		wxCollapsiblePane* posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
 
 		boneScaleLabel->Show(false);
 		cbFixedWeight->Show(false);
 		xMirrorBoneLabel->Show(false);
+		posePane->Show(false);
+		project->bPose = false;
 
 		project->ClearBoneScale();
 
@@ -5675,10 +5728,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
+		wxCollapsiblePane* posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
 
 		boneScaleLabel->Show();
 		cbFixedWeight->Show();
 		xMirrorBoneLabel->Show();
+		posePane->Show();
+		project->bPose = cbPose->GetValue();
 		
 		glView->SetTransformMode(false);
 		glView->SetActiveBrush(10);
@@ -6012,7 +6068,18 @@ void OutfitStudioFrame::OnSlider(wxScrollEvent& event) {
 		return;
 
 	wxString sliderName = s->GetName();
-	if (sliderName == "brushSize" || sliderName == "brushStrength" || sliderName == "brushFocus" || sliderName == "brushSpacing")
+	// Note that this function should never be called for any of the
+	// sliders checked in the next 'if' statement.
+	if (sliderName == "brushSize" ||
+		sliderName == "brushStrength" ||
+		sliderName == "brushFocus" ||
+		sliderName == "brushSpacing" ||
+		sliderName == "rxPoseSlider" ||
+		sliderName == "ryPoseSlider" ||
+		sliderName == "rzPoseSlider" ||
+		sliderName == "txPoseSlider" ||
+		sliderName == "tyPoseSlider" ||
+		sliderName == "tzPoseSlider")
 		return;
 
 	if (sliderName != "boneScale") {
@@ -8325,6 +8392,159 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
+void OutfitStudioFrame::ApplyPose() {
+	for (auto &shape : project->GetWorkNif()->GetShapes()) {
+		std::vector<Vector3> verts;
+		project->GetLiveVerts(shape, verts);
+		glView->UpdateMeshVertices(shape->GetName(), &verts, true, true, false);
+	}
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnPosePaneCollapse(wxCollapsiblePaneEvent& event) {
+	wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
+	parentPanel->Layout();
+}
+
+AnimBone *OutfitStudioFrame::GetPoseBonePtr() {
+	int selind = cPoseBone->GetSelection();
+	if (selind == wxNOT_FOUND) return nullptr;
+	std::string poseBone = cPoseBone->GetString(selind).ToStdString();
+	return AnimSkeleton::getInstance().GetBonePtr(poseBone);
+}
+
+void OutfitStudioFrame::PoseToGUI() {
+	AnimBone *bone = GetPoseBonePtr();
+	if (bone) {
+		rxPoseSlider->SetValue(bone->poseRotVec.x * 100);
+		ryPoseSlider->SetValue(bone->poseRotVec.y * 100);
+		rzPoseSlider->SetValue(bone->poseRotVec.z * 100);
+		txPoseSlider->SetValue(bone->poseTranVec.x * 100);
+		tyPoseSlider->SetValue(bone->poseTranVec.y * 100);
+		tzPoseSlider->SetValue(bone->poseTranVec.z * 100);
+		rxPoseText->ChangeValue(wxString() << bone->poseRotVec.x);
+		ryPoseText->ChangeValue(wxString() << bone->poseRotVec.y);
+		rzPoseText->ChangeValue(wxString() << bone->poseRotVec.z);
+		txPoseText->ChangeValue(wxString() << bone->poseTranVec.x);
+		tyPoseText->ChangeValue(wxString() << bone->poseTranVec.y);
+		tzPoseText->ChangeValue(wxString() << bone->poseTranVec.z);
+	}
+	else {
+		rxPoseSlider->SetValue(0);
+		ryPoseSlider->SetValue(0);
+		rzPoseSlider->SetValue(0);
+		txPoseSlider->SetValue(0);
+		tyPoseSlider->SetValue(0);
+		tzPoseSlider->SetValue(0);
+		rxPoseText->ChangeValue("0");
+		ryPoseText->ChangeValue("0");
+		rzPoseText->ChangeValue("0");
+		txPoseText->ChangeValue("0");
+		tyPoseText->ChangeValue("0");
+		tzPoseText->ChangeValue("0");
+	}
+}
+
+void OutfitStudioFrame::OnPoseBoneChanged(wxCommandEvent& event) {
+	PoseToGUI();
+}
+
+void OutfitStudioFrame::OnPoseValChanged(int cind, float val) {
+	// Called when any pose slider or text control is changed.
+	AnimBone *bone = GetPoseBonePtr();
+	if (!bone) return;
+	if (cind < 3)
+		bone->poseRotVec[cind] = val;
+	else
+		bone->poseTranVec[cind-3] = val;
+	bone->UpdatePoseTransform();
+	ApplyPose();
+}
+
+void OutfitStudioFrame::OnAnyPoseSlider(wxScrollEvent &e, wxTextCtrl *t, int cind) {
+	float val = e.GetPosition() * 0.01f;
+	t->ChangeValue(wxString() << val);
+	OnPoseValChanged(cind, val);
+}
+
+void OutfitStudioFrame::OnRXPoseSlider(wxScrollEvent& e) {
+	OnAnyPoseSlider(e, rxPoseText, 0);
+}
+void OutfitStudioFrame::OnRYPoseSlider(wxScrollEvent& e) {
+	OnAnyPoseSlider(e, ryPoseText, 1);
+}
+void OutfitStudioFrame::OnRZPoseSlider(wxScrollEvent& e) {
+	OnAnyPoseSlider(e, rzPoseText, 2);
+}
+void OutfitStudioFrame::OnTXPoseSlider(wxScrollEvent& e) {
+	OnAnyPoseSlider(e, txPoseText, 3);
+}
+void OutfitStudioFrame::OnTYPoseSlider(wxScrollEvent& e) {
+	OnAnyPoseSlider(e, tyPoseText, 4);
+}
+void OutfitStudioFrame::OnTZPoseSlider(wxScrollEvent& e) {
+	OnAnyPoseSlider(e, tzPoseText, 5);
+}
+
+void OutfitStudioFrame::OnAnyPoseTextChanged(wxTextCtrl *t, wxSlider *s, int cind) {
+	if (!t || !s) return;
+	double val;
+	if (!t->GetValue().ToDouble(&val))
+		return;
+	s->SetValue(val*100);
+	OnPoseValChanged(cind, val);
+}
+
+void OutfitStudioFrame::OnRXPoseTextChanged(wxCommandEvent& e) {
+	OnAnyPoseTextChanged(rxPoseText, rxPoseSlider, 0);
+}
+void OutfitStudioFrame::OnRYPoseTextChanged(wxCommandEvent& e) {
+	OnAnyPoseTextChanged(ryPoseText, ryPoseSlider, 1);
+}
+void OutfitStudioFrame::OnRZPoseTextChanged(wxCommandEvent& e) {
+	OnAnyPoseTextChanged(rzPoseText, rzPoseSlider, 2);
+}
+void OutfitStudioFrame::OnTXPoseTextChanged(wxCommandEvent& e) {
+	OnAnyPoseTextChanged(txPoseText, txPoseSlider, 3);
+}
+void OutfitStudioFrame::OnTYPoseTextChanged(wxCommandEvent& e) {
+	OnAnyPoseTextChanged(tyPoseText, tyPoseSlider, 4);
+}
+void OutfitStudioFrame::OnTZPoseTextChanged(wxCommandEvent& e) {
+	OnAnyPoseTextChanged(tzPoseText, tzPoseSlider, 5);
+}
+
+void OutfitStudioFrame::OnResetBonePose(wxCommandEvent &e) {
+	AnimBone *bone = GetPoseBonePtr();
+	if (!bone) return;
+	bone->poseRotVec = Vector3(0,0,0);
+	bone->poseTranVec = Vector3(0,0,0);
+	bone->UpdatePoseTransform();
+	PoseToGUI();
+	ApplyPose();
+}
+
+void OutfitStudioFrame::OnResetAllPose(wxCommandEvent &e) {
+	std::vector<std::string> bones;
+	project->GetActiveBones(bones);
+	for (const std::string &boneName : bones) {
+		AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		if (!bone) continue;
+		if (bone->poseRotVec == Vector3(0,0,0) && bone->poseTranVec == Vector3(0,0,0))
+			continue;
+		bone->poseRotVec = Vector3(0,0,0);
+		bone->poseTranVec = Vector3(0,0,0);
+		bone->UpdatePoseTransform();
+	}
+	PoseToGUI();
+	ApplyPose();
+}
+
+void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {
+	project->bPose = e.IsChecked();
+	ApplyPose();
+}
+
 
 wxBEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)
 	EVT_PAINT(wxGLPanel::OnPaint)
@@ -8849,7 +9069,8 @@ void wxGLPanel::EndBrushStroke() {
 				std::string selectedBone = os->GetActiveBone();
 				if (!selectedBone.empty()) {
 					int boneScalePos = os->boneScale->GetValue();
-					os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
+					if (boneScalePos != 0)
+						os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
 					os->HighlightBoneNamesWithWeights();
 				}
 			}
@@ -9129,8 +9350,11 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 		}
 		os->ActiveShapesUpdated(usp, bUndo);
 		std::string activeBone = os->GetActiveBone();
-		if (!activeBone.empty())
-			os->project->ApplyBoneScale(activeBone, os->boneScale->GetValue(), true);
+		if (!activeBone.empty()) {
+			int boneScalePos = os->boneScale->GetValue();
+			if (boneScalePos != 0)
+				os->project->ApplyBoneScale(activeBone, boneScalePos, true);
+		}
 	}
 	else if (undoType == UT_MASK || undoType == UT_COLOR) {
 		for (auto &uss : usp->usss) {

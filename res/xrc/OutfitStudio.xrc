@@ -953,6 +953,286 @@
 										</object>
 									</object>
 									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALL|wxEXPAND|wxLEFT</flag>
+										<border>2</border>
+										<object class="wxCollapsiblePane" name="posePane">
+											<style>wxCP_DEFAULT_STYLE</style>
+											<collapsed>1</collapsed>
+											<label>Pose</label>
+											<bg>wxSYS_COLOUR_MENU</bg>
+											<hidden>1</hidden>
+											<object class="panewindow">
+												<object class="wxBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxCheckBox" name="cbPose">
+																	<label>Pose</label>
+																	<checked>0</checked>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxButton" name="resetBonePose">
+																	<size>-1,25</size>
+																	<label>Reset Bone</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxButton" name="resetAllPose">
+																	<size>-1,25</size>
+																	<label>Reset All</label>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																<object class="wxStaticText" name="poseBoneLabel">
+																	<label>Bone to pose</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxChoice" name="cPoseBone">
+																	<selection>0</selection>
+																	<content />
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																<object class="wxStaticText" name="rxLabel">
+																	<label>rot x</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxSlider" name="rxPoseSlider">
+																	<style>wxSL_HORIZONTAL</style>
+																	<size>-1,10</size>
+																	<value>0</value>
+																	<min>-300</min>
+																	<max>300</max>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<object class="wxTextCtrl" name="rxPoseText">
+																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																	<size>40,-1</size>
+																	<value>0</value>
+																	<maxlength>0</maxlength>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																<object class="wxStaticText" name="ryLabel">
+																	<label>rot y</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxSlider" name="ryPoseSlider">
+																	<style>wxSL_HORIZONTAL</style>
+																	<size>-1,10</size>
+																	<value>0</value>
+																	<min>-300</min>
+																	<max>300</max>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<object class="wxTextCtrl" name="ryPoseText">
+																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																	<size>40,-1</size>
+																	<value>0</value>
+																	<maxlength>0</maxlength>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																<object class="wxStaticText" name="rzLabel">
+																	<label>rot z</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxSlider" name="rzPoseSlider">
+																	<style>wxSL_HORIZONTAL</style>
+																	<size>-1,10</size>
+																	<value>0</value>
+																	<min>-300</min>
+																	<max>300</max>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<object class="wxTextCtrl" name="rzPoseText">
+																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																	<size>40,-1</size>
+																	<value>0</value>
+																	<maxlength>0</maxlength>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																<object class="wxStaticText" name="txLabel">
+																	<label>off x</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxSlider" name="txPoseSlider">
+																	<style>wxSL_HORIZONTAL</style>
+																	<size>-1,10</size>
+																	<value>0</value>
+																	<min>-1000</min>
+																	<max>1000</max>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<object class="wxTextCtrl" name="txPoseText">
+																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																	<size>40,-1</size>
+																	<value>0</value>
+																	<maxlength>0</maxlength>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																<object class="wxStaticText" name="tyLabel">
+																	<label>off y</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxSlider" name="tyPoseSlider">
+																	<style>wxSL_HORIZONTAL</style>
+																	<size>-1,10</size>
+																	<value>0</value>
+																	<min>-1000</min>
+																	<max>1000</max>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<object class="wxTextCtrl" name="tyPoseText">
+																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																	<size>40,-1</size>
+																	<value>0</value>
+																	<maxlength>0</maxlength>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																<object class="wxStaticText" name="tzLabel">
+																	<label>off z</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxALL|wxEXPAND</flag>
+																<object class="wxSlider" name="tzPoseSlider">
+																	<style>wxSL_HORIZONTAL</style>
+																	<size>-1,10</size>
+																	<value>0</value>
+																	<min>-1000</min>
+																	<max>1000</max>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<object class="wxTextCtrl" name="tzPoseText">
+																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																	<size>40,-1</size>
+																	<value>0</value>
+																	<maxlength>0</maxlength>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+									<object class="sizeritem">
 										<option>3</option>
 										<flag>wxEXPAND</flag>
 										<border>0</border>

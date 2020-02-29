@@ -52,6 +52,7 @@ public:
 	wxString mGameFile;
 	bool mCopyRef = true;
 	bool mGenWeights = false;
+	bool bPose = false;
 
 	// Returns a string error message or empty string on success.
 	std::string Save(const wxString& strFileName,

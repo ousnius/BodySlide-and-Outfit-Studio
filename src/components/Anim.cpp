@@ -186,6 +186,7 @@ bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 
 			cstm.xformToGlobal = xform;
 			cstm.xformToParent = xform;
+			cstm.xformPoseToGlobal = xform;
 
 			AnimSkeleton::getInstance().RefBone(bn);
 		}
@@ -424,6 +425,7 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 		xformToGlobal = parent->xformToGlobal.ComposeTransforms(xformToParent);
 	else
 		xformToGlobal = xformToParent;
+	xformPoseToGlobal = xformToGlobal;
 
 	for (auto& child : node->GetChildren()) {
 		std::string name = skeletonNif->GetNodeName(child.GetIndex());
@@ -570,4 +572,18 @@ int AnimSkeleton::GetActiveBoneNames(std::vector<std::string>& outBoneNames) {
 
 void AnimSkeleton::DisableCustomTransforms() {
 	allowCustomTransforms = false;
+}
+
+void AnimBone::UpdatePoseTransform() {
+	// this bone's pose -> this bone -> parent bone's pose -> global
+	MatTransform xformPoseToBone;
+	xformPoseToBone.translation = poseTranVec;
+	xformPoseToBone.rotation = RotVecToMat(poseRotVec);
+	MatTransform xformPoseToParent = xformToParent.ComposeTransforms(xformPoseToBone);
+	if (parent)
+		xformPoseToGlobal = parent->xformPoseToGlobal.ComposeTransforms(xformPoseToParent);
+	else
+		xformPoseToGlobal = xformPoseToParent;
+	for (AnimBone *cptr : children)
+		cptr->UpdatePoseTransform();
 }
