@@ -1631,7 +1631,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 		outFileNameSmall = GetOutputDataPath() + activeSet.GetOutputFilePath();
 		outFileNameBig = outFileNameSmall;
-		wxString path = GetOutputDataPath() + activeSet.GetOutputPath();
+		wxString path = wxString::FromUTF8(GetOutputDataPath() + activeSet.GetOutputPath());
 		wxFileName::Mkdir(path, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	}
 
@@ -1652,7 +1652,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		else
 			removeHigh = outFileNameSmall + ".nif";
 		
-		bool remHigh = wxRemoveFile(removeHigh);
+		bool remHigh = wxRemoveFile(wxString::FromUTF8(removeHigh));
 		if (remHigh)
 			msg.Append(removeHigh + "\n");
 		else
@@ -1665,7 +1665,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 
 		removeLow = outFileNameSmall + "_0.nif";
-		bool remLow = wxRemoveFile(removeLow);
+		bool remLow = wxRemoveFile(wxString::FromUTF8(removeLow));
 		if (remLow)
 			msg.Append(removeLow + "\n");
 		else
@@ -1784,7 +1784,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 	}
 	else {
-		std::string triPath = outFileNameBig + ".tri";
+		wxString triPath = wxString::FromUTF8(outFileNameBig + ".tri");
 		if (wxFileName::FileExists(triPath))
 			wxRemoveFile(triPath);
 	}
@@ -2019,8 +2019,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		if (clean && custPath.empty()) {
 			bool genWeights = currentSet.GenWeights();
 
-			std::string removePath = datapath + currentSet.GetOutputFilePath();
-			std::string removeHigh = removePath + ".nif";
+			wxString removePath = wxString::FromUTF8(datapath + currentSet.GetOutputFilePath());
+			wxString removeHigh = removePath + ".nif";
 			if (genWeights)
 				removeHigh = removePath + "_1.nif";
 
@@ -2030,7 +2030,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			if (!genWeights)
 				return;
 
-			std::string removeLow = removePath + "_0.nif";
+			wxString removeLow = removePath + "_0.nif";
 			if (wxFileName::FileExists(removeLow))
 				wxRemoveFile(removeLow);
 
@@ -2179,7 +2179,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		currentDiffs.Clear();
 
 		/* Create directory for the outfit */
-		wxString dir = datapath + currentSet.GetOutputPath();
+		wxString dir = wxString::FromUTF8(datapath + currentSet.GetOutputPath());
 		bool success = wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 		if (!success) {
