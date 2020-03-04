@@ -7854,6 +7854,8 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 			project->AddBoneRef(bone);
 			wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
 			outfitBones->SetItemState(item, 0);
+			cXMirrorBone->AppendString(bone);
+			cPoseBone->AppendString(bone);
 		}
 	}
 }
@@ -7889,6 +7891,8 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 			project->AddCustomBoneRef(bone.ToStdString(), translation);
 			wxTreeItemId newItem = outfitBones->AppendItem(bonesRoot, bone);
 			outfitBones->SetItemState(newItem, 0);
+			cXMirrorBone->AppendString(bone);
+			cPoseBone->AppendString(bone);
 		}
 	}
 }
