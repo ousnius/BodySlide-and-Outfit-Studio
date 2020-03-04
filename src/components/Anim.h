@@ -37,7 +37,6 @@ struct VertexBoneWeights {
 class AnimBone {
 public:
 	std::string boneName = "bogus";		// bone names are node names in the nif file
-	int boneID = -1;					// block id from the original nif file
 	bool isValidBone = false;
 	AnimBone* parent = nullptr;
 	std::vector<AnimBone*> children;
@@ -54,6 +53,19 @@ public:
 	AnimBone() {}
 
 	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
+	// AddToNif adds this bone to the given nif, as well as its parent
+	// if missing, recursively.  The new bone's NiNode is returned.
+	NiNode* AddToNif(NifFile *nif) const;
+	// SetTransformBoneToParent sets xformToParent and updates xformToGlobal
+	// and xformPoseToGlobal, for this and for descendants.
+	void SetTransformBoneToParent(const MatTransform &ttp);
+	// UpdateTransformToGlobal updates xformToGlobal for this and for
+	// descendants.  This should only be called from itself and
+	// SetTransformBoneToParent.
+	void UpdateTransformToGlobal();
+	// UpdatePoseTransform updates xformPoseToGlobal for this and all
+	// descendants.  Call it after poseRotVec, poseTranVec, or
+	// xformToGlobal is changed.
 	void UpdatePoseTransform();
 };
 
@@ -154,7 +166,6 @@ class AnimSkeleton {
 	std::map<std::string, AnimBone> customBones;
 	std::string rootBone;
 	int unknownCount = 0;
-	bool allowCustomTransforms = true;
 
 	AnimSkeleton() {}
 
@@ -168,8 +179,10 @@ public:
 	bool isValid = false;
 
 	int LoadFromNif(const std::string& fileName);
-	AnimBone& AddBone(const std::string& boneName, bool bCustom = false);
+	AnimBone& AddStandardBone(const std::string& boneName);
+	AnimBone& AddCustomBone(const std::string& boneName);
 	std::string GenerateBoneName();
+	AnimBone *LoadCustomBoneFromNif(NifFile *nif, const std::string &boneName);
 
 	bool RefBone(const std::string& boneName);
 	bool ReleaseBone(const std::string& boneName);
@@ -181,5 +194,4 @@ public:
 	bool GetBoneTransformToGlobal(const std::string& boneName, MatTransform& xform);
 
 	int GetActiveBoneNames(std::vector<std::string>& outBoneNames);
-	void DisableCustomTransforms();
 };

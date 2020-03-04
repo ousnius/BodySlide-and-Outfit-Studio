@@ -177,17 +177,9 @@ bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 
 	for (auto &bn : boneNames) {
 		if (!AnimSkeleton::getInstance().RefBone(bn)) {
-			AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
-			if (!cstm.isValidBone)
+			AnimBone *cstm = AnimSkeleton::getInstance().LoadCustomBoneFromNif(nif, bn);
+			if (!cstm->isValidBone)
 				nonRefBones += bn + "\n";
-
-			MatTransform xform;
-			nif->GetNodeTransformToGlobal(bn, xform);
-
-			cstm.xformToGlobal = xform;
-			cstm.xformToParent = xform;
-			cstm.xformPoseToGlobal = xform;
-
 			AnimSkeleton::getInstance().RefBone(bn);
 		}
 
@@ -223,7 +215,7 @@ bool AnimInfo::HasWeights(const std::string& shape, const std::string& boneName)
 	auto weights = GetWeightsPtr(shape, boneName);
 	if (weights && weights->size() > 0)
 		return true;
-	
+
 	return false;
 }
 
@@ -316,12 +308,12 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	for (auto &bones : shapeBones) {
 		std::vector<int> bids;
 		for (auto &bone : bones.second) {
-			AnimBone boneRef;
-			if (!AnimSkeleton::getInstance().GetBone(bone, boneRef))
+			const AnimBone *bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
+			if (!bptr)
 				continue;
 
 			if (bones.first == shapeException) {
-				if (boneRef.refCount <= 1) {
+				if (bptr->refCount <= 1) {
 					if (nif->CanDeleteNode(bone))
 						nif->DeleteNode(bone);
 				}
@@ -329,11 +321,8 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 			}
 
 			int id = nif->GetBlockID(nif->FindBlockByName<NiNode>(bone));
-			if (id == 0xFFFFFFFF) {
-				MatTransform xform = boneRef.xformToGlobal;
-				//xform.scale = 1.0f;				// Bone scaling is bad!
-				id = nif->AddNode(boneRef.boneName, xform);
-			}
+			if (id == 0xFFFFFFFF)
+				id = nif->GetBlockID(bptr->AddToNif(nif));
 
 			bids.push_back(id);
 		}
@@ -360,11 +349,10 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 
 		std::unordered_map<ushort, VertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {
-			MatTransform xForm;
-			if (AnimSkeleton::getInstance().GetBoneTransformToGlobal(boneName, xForm))
-				nif->SetNodeTransformToParent(boneName, xForm, true);
-
 			AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			if (bptr)
+				nif->SetNodeTransformToParent(boneName, bptr->xformToGlobal, true);
+
 			int bid = GetShapeBoneIndex(shapeBoneList.first, boneName);
 			AnimWeight& bw = shapeSkinning[shapeBoneList.first].boneWeights[bid];
 
@@ -415,17 +403,10 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 	else
 		return (*this);
 
-	boneID = srcBlock;
 	boneName = node->GetName();
 	refCount = 0;
 
-	xformToParent = node->GetTransformToParent();
-
-	if (parent)
-		xformToGlobal = parent->xformToGlobal.ComposeTransforms(xformToParent);
-	else
-		xformToGlobal = xformToParent;
-	xformPoseToGlobal = xformToGlobal;
+	SetTransformBoneToParent(node->GetTransformToParent());
 
 	for (auto& child : node->GetChildren()) {
 		std::string name = skeletonNif->GetNodeName(child.GetIndex());
@@ -433,12 +414,22 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 			if (name == "_unnamed_")
 				name = AnimSkeleton::getInstance().GenerateBoneName();
 
-			AnimBone& bone = AnimSkeleton::getInstance().AddBone(name).LoadFromNif(skeletonNif, child.GetIndex(), this);
+			AnimBone& bone = AnimSkeleton::getInstance().AddStandardBone(name).LoadFromNif(skeletonNif, child.GetIndex(), this);
 			children.push_back(&bone);
 		}
 	}
 
 	return (*this);
+}
+
+NiNode* AnimBone::AddToNif(NifFile *nif) const {
+	NiNode *pnode = nullptr;
+	if (parent) {
+		pnode = nif->FindBlockByName<NiNode>(parent->boneName);
+		if (!pnode)
+			pnode = parent->AddToNif(nif);
+	}
+	return nif->AddNode(boneName, xformToParent, pnode);
 }
 
 int AnimSkeleton::LoadFromNif(const std::string& fileName) {
@@ -462,26 +453,43 @@ int AnimSkeleton::LoadFromNif(const std::string& fileName) {
 		customBones.clear();
 	}
 
-	AddBone(rootBone).LoadFromNif(&refSkeletonNif, nodeID, nullptr);
+	AddStandardBone(rootBone).LoadFromNif(&refSkeletonNif, nodeID, nullptr);
 	isValid = true;
 	wxLogMessage("Loaded skeleton '%s' with root '%s'.", fileName, rootBone);
 	return 0;
 }
 
-AnimBone& AnimSkeleton::AddBone(const std::string& boneName, bool bCustom) {
-	if (!bCustom)
-		return allBones[boneName];
-	else {
-		AnimBone* cb = &customBones[boneName];
-		cb->boneName = boneName;
-		return *cb;
-	}
+AnimBone& AnimSkeleton::AddStandardBone(const std::string& boneName) {
+	return allBones[boneName];
+}
+
+AnimBone& AnimSkeleton::AddCustomBone(const std::string& boneName) {
+	AnimBone* cb = &customBones[boneName];
+	cb->boneName = boneName;
+	return *cb;
 }
 
 std::string AnimSkeleton::GenerateBoneName() {
 	return wxString::Format("UnnamedBone_%i", unknownCount++).ToStdString();
 }
-	
+
+AnimBone *AnimSkeleton::LoadCustomBoneFromNif(NifFile *nif, const std::string &boneName) {
+	NiNode *node = nif->FindBlockByName<NiNode>(boneName);
+	if (!node) return nullptr;
+	AnimBone *parentBone = nullptr;
+	NiNode *parentNode = nif->GetParentNode(node);
+	if (parentNode) {
+		parentBone = GetBonePtr(parentNode->GetName());
+		if (!parentBone)
+			parentBone = LoadCustomBoneFromNif(nif, parentNode->GetName());
+	}
+	AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(boneName);
+	cstm.parent = parentBone;
+	parentBone->children.push_back(&cstm);
+	cstm.SetTransformBoneToParent(node->GetTransformToParent());
+	return &cstm;
+}
+
 bool AnimSkeleton::RefBone(const std::string& boneName) {
 	if (allBones.find(boneName) != allBones.end()) {
 		allBones[boneName].refCount++;
@@ -543,7 +551,7 @@ bool AnimSkeleton::GetBone(const std::string& boneName, AnimBone& outBone) {
 }
 
 bool AnimSkeleton::GetBoneTransformToGlobal(const std::string &boneName, MatTransform& xform) {
-	auto bone = GetBonePtr(boneName, allowCustomTransforms);
+	auto bone = GetBonePtr(boneName);
 	if (!bone)
 		return false;
 
@@ -570,8 +578,13 @@ int AnimSkeleton::GetActiveBoneNames(std::vector<std::string>& outBoneNames) {
 	return c;
 }
 
-void AnimSkeleton::DisableCustomTransforms() {
-	allowCustomTransforms = false;
+void AnimBone::UpdateTransformToGlobal() {
+	if (parent)
+		xformToGlobal = parent->xformToGlobal.ComposeTransforms(xformToParent);
+	else
+		xformToGlobal = xformToParent;
+	for (AnimBone *cptr : children)
+		cptr->UpdateTransformToGlobal();
 }
 
 void AnimBone::UpdatePoseTransform() {
@@ -586,4 +599,10 @@ void AnimBone::UpdatePoseTransform() {
 		xformPoseToGlobal = xformPoseToParent;
 	for (AnimBone *cptr : children)
 		cptr->UpdatePoseTransform();
+}
+
+void AnimBone::SetTransformBoneToParent(const MatTransform &ttp) {
+	xformToParent = ttp;
+	UpdateTransformToGlobal();
+	UpdatePoseTransform();
 }

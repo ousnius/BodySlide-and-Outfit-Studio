@@ -1749,14 +1749,12 @@ void OutfitProject::AddBoneRef(const std::string& boneName) {
 }
 
 void OutfitProject::AddCustomBoneRef(const std::string& boneName, const Vector3& translation) {
-	AnimBone& customBone = AnimSkeleton::getInstance().AddBone(boneName, true);
+	AnimBone& customBone = AnimSkeleton::getInstance().AddCustomBone(boneName);
 
 	MatTransform xformBoneToGlobal;
 	xformBoneToGlobal.translation = translation;
 
-	customBone.xformToGlobal = xformBoneToGlobal;
-	customBone.xformToParent = xformBoneToGlobal;
-	customBone.xformPoseToGlobal = xformBoneToGlobal;
+	customBone.SetTransformBoneToParent(xformBoneToGlobal);
 
 	for (auto &s : workNif.GetShapeNames())
 		workAnim.AddShapeBone(s, boneName);
@@ -2684,7 +2682,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		for (auto &bn : fbxShape->boneNames) {
 			if (!AnimSkeleton::getInstance().RefBone(bn)) {
 				// Not found in reference skeleton, use default values
-				AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
+				AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(bn);
 				if (!cstm.isValidBone)
 					nonRefBones += bn + "\n";
 
