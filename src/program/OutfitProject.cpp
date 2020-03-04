@@ -2683,7 +2683,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 			if (!AnimSkeleton::getInstance().RefBone(bn)) {
 				// Not found in reference skeleton, use default values
 				AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(bn);
-				if (!cstm.isValidBone)
+				if (!cstm.isStandardBone)
 					nonRefBones += bn + "\n";
 
 				AnimSkeleton::getInstance().RefBone(bn);

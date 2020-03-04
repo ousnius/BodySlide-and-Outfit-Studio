@@ -14,8 +14,6 @@ struct VertexBoneWeights {
 	std::vector<byte> boneIds;
 	std::vector<float> weights;
 
-	VertexBoneWeights() { }
-
 	void Add(const byte inBoneId, const float inWeight) {
 		if (inWeight == 0.0f)
 			return;
@@ -37,7 +35,7 @@ struct VertexBoneWeights {
 class AnimBone {
 public:
 	std::string boneName = "bogus";		// bone names are node names in the nif file
-	bool isValidBone = false;
+	bool isStandardBone = false;
 	AnimBone* parent = nullptr;
 	std::vector<AnimBone*> children;
 	// xformToGlobal: transforms from this bone's CS to the global CS.
@@ -49,8 +47,6 @@ public:
 	MatTransform xformPoseToGlobal;
 
 	int refCount = 0;					// reference count of this bone
-
-	AnimBone() {}
 
 	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
 	// AddToNif adds this bone to the given nif, as well as its parent
@@ -76,8 +72,7 @@ public:
 	MatTransform xformSkinToBone;
 	BoundingSphere bounds;
 
-	AnimWeight() {}
-	AnimWeight(NifFile* loadFromFile, NiShape* shape, const int& index);
+	void LoadFromNif(NifFile* loadFromFile, NiShape* shape, const int& index);
 };
 
 // Bone to weight list association.
@@ -87,8 +82,7 @@ public:
 	std::unordered_map<std::string, int> boneNames;
 	MatTransform xformGlobalToSkin;
 
-	AnimSkin() { }
-	AnimSkin(NifFile* loadFromFile, NiShape* shape);
+	void LoadFromNif(NifFile* loadFromFile, NiShape* shape);
 
 	void RemoveBone(const std::string& boneName) {
 		auto bone = boneNames.find(boneName);
@@ -133,8 +127,6 @@ public:
 	std::unordered_map<std::string, AnimSkin> shapeSkinning;		// Shape to skin association.
 	NifFile* refNif = nullptr;
 
-	AnimInfo() {}
-
 	// Returns true if a new bone is added, false if the bone already exists.
 	bool AddShapeBone(const std::string& shape, const std::string& boneName);
 	bool RemoveShapeBone(const std::string& shape, const std::string& boneName);
@@ -176,7 +168,6 @@ public:
 	}
 
 	NifFile refSkeletonNif;
-	bool isValid = false;
 
 	int LoadFromNif(const std::string& fileName);
 	AnimBone& AddStandardBone(const std::string& boneName);
@@ -190,7 +181,6 @@ public:
 
 	AnimBone* GetBonePtr(const std::string& boneName, const bool allowCustom = true);
 	AnimBone* GetRootBonePtr();
-	bool GetBone(const std::string& boneName, AnimBone& outBone);
 	bool GetBoneTransformToGlobal(const std::string& boneName, MatTransform& xform);
 
 	int GetActiveBoneNames(std::vector<std::string>& outBoneNames);
