@@ -2182,7 +2182,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 					auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
 					std::vector<Vector3> verts;
 					project->GetLiveVerts(shape, verts);
-					glView->UpdateMeshVertices(shape->GetName(), &verts);
+					glView->UpdateMeshVertices(shape->GetName(), &verts, true, true, false);
 				}
 			}
 		}

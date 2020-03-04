@@ -169,6 +169,7 @@ public:
 	void TransferSelectedWeights(NiShape* shape, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
 
+	void InvalidateBoneScaleCache();
 	void ApplyBoneScale(const std::string& bone, int sliderPos, bool clear = false);
 	void ClearBoneScale(bool clear = true);
 

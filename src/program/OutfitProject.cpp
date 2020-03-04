@@ -1205,6 +1205,7 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 		}
 		outVerts.swap(pv);
 	}
+	InvalidateBoneScaleCache();
 }
 
 void OutfitProject::GetSliderDiff(NiShape* shape, const std::string& sliderName, std::vector<Vector3>& outVerts) {
@@ -1667,6 +1668,11 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 	}
 
 	return hasUnweighted;
+}
+
+void OutfitProject::InvalidateBoneScaleCache() {
+	boneScaleVerts.clear();
+	boneScaleOffsets.clear();
 }
 
 void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool clear) {
