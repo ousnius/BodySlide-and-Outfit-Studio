@@ -1755,6 +1755,8 @@ void OutfitProject::AddCustomBoneRef(const std::string& boneName, const Vector3&
 	xformBoneToGlobal.translation = translation;
 
 	customBone.xformToGlobal = xformBoneToGlobal;
+	customBone.xformToParent = xformBoneToGlobal;
+	customBone.xformPoseToGlobal = xformBoneToGlobal;
 
 	for (auto &s : workNif.GetShapeNames())
 		workAnim.AddShapeBone(s, boneName);
