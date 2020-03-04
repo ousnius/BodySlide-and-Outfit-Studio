@@ -535,7 +535,7 @@ AnimBone* AnimSkeleton::GetRootBonePtr() {
 }
 
 bool AnimSkeleton::GetBoneTransformToGlobal(const std::string &boneName, MatTransform& xform) {
-	auto bone = GetBonePtr(boneName);
+	auto bone = GetBonePtr(boneName, allowCustomTransforms);
 	if (!bone)
 		return false;
 
@@ -560,6 +560,10 @@ int AnimSkeleton::GetActiveBoneNames(std::vector<std::string>& outBoneNames) {
 		}
 	}
 	return c;
+}
+
+void AnimSkeleton::DisableCustomTransforms() {
+	allowCustomTransforms = false;
 }
 
 void AnimBone::UpdateTransformToGlobal() {

@@ -158,6 +158,7 @@ class AnimSkeleton {
 	std::map<std::string, AnimBone> customBones;
 	std::string rootBone;
 	int unknownCount = 0;
+	bool allowCustomTransforms = true;
 
 	AnimSkeleton() {}
 
@@ -184,4 +185,5 @@ public:
 	bool GetBoneTransformToGlobal(const std::string& boneName, MatTransform& xform);
 
 	int GetActiveBoneNames(std::vector<std::string>& outBoneNames);
+	void DisableCustomTransforms();
 };
