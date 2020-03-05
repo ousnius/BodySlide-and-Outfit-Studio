@@ -435,10 +435,11 @@ bool NifFile::DeleteUnreferencedBlocks() {
 	return hadDeletions;
 }
 
-int NifFile::AddNode(const std::string& nodeName, const MatTransform& xformToParent) {
-	auto root = GetRootNode();
-	if (!root)
-		return 0xFFFFFFFF;
+NiNode* NifFile::AddNode(const std::string& nodeName, const MatTransform& xformToParent, NiNode* parent) {
+	if (!parent)
+		parent = GetRootNode();
+	if (!parent)
+		return nullptr;
 
 	auto newNode = new NiNode();
 	newNode->SetName(nodeName);
@@ -446,9 +447,9 @@ int NifFile::AddNode(const std::string& nodeName, const MatTransform& xformToPar
 
 	int newNodeId = hdr.AddBlock(newNode);
 	if (newNodeId != 0xFFFFFFFF)
-		root->GetChildren().AddBlockRef(newNodeId);
+		parent->GetChildren().AddBlockRef(newNodeId);
 
-	return newNodeId;
+	return newNode;
 }
 
 void NifFile::DeleteNode(const std::string& nodeName) {

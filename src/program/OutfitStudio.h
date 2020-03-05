@@ -740,6 +740,20 @@ public:
 	wxPanel* lightSettings;
 	wxSlider* boneScale;
 	wxChoice* cXMirrorBone;
+	wxChoice* cPoseBone;
+	wxSlider *rxPoseSlider = nullptr;
+	wxSlider *ryPoseSlider = nullptr;
+	wxSlider *rzPoseSlider = nullptr;
+	wxSlider *txPoseSlider = nullptr;
+	wxSlider *tyPoseSlider = nullptr;
+	wxSlider *tzPoseSlider = nullptr;
+	wxTextCtrl *rxPoseText = nullptr;
+	wxTextCtrl *ryPoseText = nullptr;
+	wxTextCtrl *rzPoseText = nullptr;
+	wxTextCtrl *txPoseText = nullptr;
+	wxTextCtrl *tyPoseText = nullptr;
+	wxTextCtrl *tzPoseText = nullptr;
+	wxCheckBox *cbPose = nullptr;
 	wxScrolledWindow* sliderScroll;
 	wxStatusBar* statusBar;
 	wxTreeItemId shapesRoot;
@@ -1334,6 +1348,30 @@ private:
 		wxString url = "https://www.paypal.me/ousnius";
 		wxLaunchDefaultBrowser(url);
 	}
+
+	void ApplyPose();
+	void OnPosePaneCollapse(wxCollapsiblePaneEvent &event);
+	AnimBone *GetPoseBonePtr();
+	void PoseToGUI();
+	void OnPoseBoneChanged(wxCommandEvent& event);
+	void OnPoseValChanged(int cind, float val);
+	void OnAnyPoseSlider(wxScrollEvent &e, wxTextCtrl *t, int cind);
+	void OnRXPoseSlider(wxScrollEvent& event);
+	void OnRYPoseSlider(wxScrollEvent& event);
+	void OnRZPoseSlider(wxScrollEvent& event);
+	void OnTXPoseSlider(wxScrollEvent& event);
+	void OnTYPoseSlider(wxScrollEvent& event);
+	void OnTZPoseSlider(wxScrollEvent& event);
+	void OnAnyPoseTextChanged(wxTextCtrl *t, wxSlider *s, int cind);
+	void OnRXPoseTextChanged(wxCommandEvent& event);
+	void OnRYPoseTextChanged(wxCommandEvent& event);
+	void OnRZPoseTextChanged(wxCommandEvent& event);
+	void OnTXPoseTextChanged(wxCommandEvent& event);
+	void OnTYPoseTextChanged(wxCommandEvent& event);
+	void OnTZPoseTextChanged(wxCommandEvent& event);
+	void OnResetBonePose(wxCommandEvent& event);
+	void OnResetAllPose(wxCommandEvent& event);
+	void OnPoseCheckBox(wxCommandEvent& event);
 
 	wxDECLARE_EVENT_TABLE();
 };

@@ -97,7 +97,7 @@ public:
 	void LinkGeomData();
 	void RemoveInvalidTris();
 
-	int AddNode(const std::string& nodeName, const MatTransform& xformToParent);
+	NiNode* AddNode(const std::string& nodeName, const MatTransform& xformToParent, NiNode* parent = nullptr);
 	void DeleteNode(const std::string& nodeName);
 	bool CanDeleteNode(const std::string& nodeName);
 	std::string GetNodeName(const int blockID);

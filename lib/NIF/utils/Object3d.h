@@ -39,7 +39,7 @@ struct Vector2 {
 		return false;
 	}
 	bool operator != (const Vector2& other) {
-		if (u != other.u && v != other.v)
+		if (u != other.u || v != other.v)
 			return true;
 		return false;
 	}
@@ -145,7 +145,7 @@ struct Vector3 {
 		return false;
 	}
 	bool operator != (const Vector3& other) {
-		if (x != other.x && y != other.y && z != other.z)
+		if (x != other.x || y != other.y || z != other.z)
 			return true;
 		return false;
 	}
@@ -540,6 +540,18 @@ public:
 		return canRot;
 	}
 };
+
+// RotVecToMat: converts a rotation vector to a rotation matrix.
+// (A rotation vector has direction the axis of the rotation
+// and magnitude the angle of rotation.)
+Matrix3 RotVecToMat(const Vector3 &v);
+
+// RotMatToVec: converts a rotation matrix into a rotation vector.
+// (A rotation vector has direction the axis of the rotation
+// and magnitude the angle of rotation.)
+// Note that this function is unstable for angles near pi, but it
+// should still work.
+Vector3 RotMatToVec(const Matrix3 &m);
 
 // 4D Matrix class for calculating and applying transformations.
 class Matrix4 {

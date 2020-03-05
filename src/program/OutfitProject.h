@@ -52,6 +52,7 @@ public:
 	wxString mGameFile;
 	bool mCopyRef = true;
 	bool mGenWeights = false;
+	bool bPose = false;
 
 	// Returns a string error message or empty string on success.
 	std::string Save(const wxString& strFileName,
@@ -168,6 +169,7 @@ public:
 	void TransferSelectedWeights(NiShape* shape, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
 
+	void InvalidateBoneScaleCache();
 	void ApplyBoneScale(const std::string& bone, int sliderPos, bool clear = false);
 	void ClearBoneScale(bool clear = true);
 

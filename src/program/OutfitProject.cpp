@@ -1177,6 +1177,35 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 			}
 		}
 	}
+	if (bPose) {
+		int nv = outVerts.size();
+		std::vector<Vector3> pv(nv);
+		std::vector<float> wv(nv, 0.0f);
+		AnimSkin &animSkin = workAnim.shapeSkinning[shape->GetName()];
+		for (auto &boneNamesIt : animSkin.boneNames) {
+			AnimWeight &animW = animSkin.boneWeights[boneNamesIt.second];
+			AnimBone *animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
+			// Compose transform: skin -> (posed) bone -> global -> skin
+			MatTransform t = animSkin.xformGlobalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+			// Add weighted contributions to vertex for this bone
+			for (auto &wIt : animW.weights) {
+				int ind = wIt.first;
+				float w = wIt.second;
+				pv[ind] += w * t.ApplyTransform(outVerts[ind]);
+				wv[ind] += w;
+			}
+		}
+		// Check if total weight for each vertex was 1
+		for (int ind = 0; ind < nv; ++ind) {
+			if (wv[ind] < EPSILON) // If weights are missing for this vertex
+				pv[ind] = outVerts[ind];
+			else if (std::fabs(wv[ind] - 1.0f) >= EPSILON) // If weights are bad for this vertex
+				pv[ind] /= wv[ind];
+			// else do nothing because weights totaled 1.
+		}
+		outVerts.swap(pv);
+	}
+	InvalidateBoneScaleCache();
 }
 
 void OutfitProject::GetSliderDiff(NiShape* shape, const std::string& sliderName, std::vector<Vector3>& outVerts) {
@@ -1641,8 +1670,17 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 	return hasUnweighted;
 }
 
+void OutfitProject::InvalidateBoneScaleCache() {
+	boneScaleVerts.clear();
+	boneScaleOffsets.clear();
+}
+
 void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool clear) {
 	ClearBoneScale(false);
+
+	AnimBone *bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
+	if (!bptr) return;
+	MatTransform xform = bPose ? bptr->xformPoseToGlobal : bptr->xformToGlobal;
 
 	for (auto &s : workNif.GetShapeNames()) {
 		auto it = boneScaleVerts.find(s);
@@ -1665,9 +1703,6 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 
 		for (auto &b : workAnim.shapeBones[s]) {
 			if (b == bone) {
-				MatTransform xform;
-				workNif.GetNodeTransformToParent(b, xform);
-
 				auto weights = workAnim.GetWeightsPtr(s, b);
 				if (weights) {
 					for (auto &w : *weights) {
@@ -1721,12 +1756,12 @@ void OutfitProject::AddBoneRef(const std::string& boneName) {
 }
 
 void OutfitProject::AddCustomBoneRef(const std::string& boneName, const Vector3& translation) {
-	AnimBone& customBone = AnimSkeleton::getInstance().AddBone(boneName, true);
+	AnimBone& customBone = AnimSkeleton::getInstance().AddCustomBone(boneName);
 
 	MatTransform xformBoneToGlobal;
 	xformBoneToGlobal.translation = translation;
 
-	customBone.xformToGlobal = xformBoneToGlobal;
+	customBone.SetTransformBoneToParent(xformBoneToGlobal);
 
 	for (auto &s : workNif.GetShapeNames())
 		workAnim.AddShapeBone(s, boneName);
@@ -2654,8 +2689,8 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		for (auto &bn : fbxShape->boneNames) {
 			if (!AnimSkeleton::getInstance().RefBone(bn)) {
 				// Not found in reference skeleton, use default values
-				AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
-				if (!cstm.isValidBone)
+				AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(bn);
+				if (!cstm.isStandardBone)
 					nonRefBones += bn + "\n";
 
 				AnimSkeleton::getInstance().RefBone(bn);

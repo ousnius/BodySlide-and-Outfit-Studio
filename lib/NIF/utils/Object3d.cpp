@@ -126,3 +126,49 @@ MatTransform MatTransform::ComposeTransforms(const MatTransform &other) const {
 	comp.translation = translation + rotation * (scale * other.translation);
 	return comp;
 }
+
+Matrix3 RotVecToMat(const Vector3 &v) {
+	double angle = std::sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+	double cosang = std::cos(angle);
+	double sinang = std::sin(angle);
+	double onemcosang;	// One minus cosang
+	// Avoid loss of precision from cancellation in calculating onemcosang
+	if (cosang > .5)
+		onemcosang = sinang * sinang / (1 + cosang);
+	else
+		onemcosang = 1 - cosang;
+	Vector3 n = angle != 0 ? v / angle : Vector3(1,0,0);
+	Matrix3 m;
+	m[0][0] = n.x * n.x * onemcosang + cosang;
+	m[1][1] = n.y * n.y * onemcosang + cosang;
+	m[2][2] = n.z * n.z * onemcosang + cosang;
+	m[0][1] = n.x * n.y * onemcosang + n.z * sinang;
+	m[1][0] = n.x * n.y * onemcosang - n.z * sinang;
+	m[1][2] = n.y * n.z * onemcosang + n.x * sinang;
+	m[2][1] = n.y * n.z * onemcosang - n.x * sinang;
+	m[2][0] = n.z * n.x * onemcosang + n.y * sinang;
+	m[0][2] = n.z * n.x * onemcosang - n.y * sinang;
+	return m;
+}
+
+Vector3 RotMatToVec(const Matrix3 &m) {
+	double cosang = (m[0][0] + m[1][1] + m[2][2] - 1) * 0.5;
+	if (cosang >= 1)
+		return Vector3(0,0,0);
+	else if (cosang > -1) {
+		Vector3 v(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
+		v.Normalize();
+		return v * std::acos(cosang);
+	}
+	else { // cosang <= -1, sinang == 0
+		Vector3 v(
+			std::sqrt((m[0][0] - cosang) * 0.5),
+			std::sqrt((m[1][1] - cosang) * 0.5),
+			std::sqrt((m[2][2] - cosang) * 0.5));
+		v.Normalize();
+		if (m[1][2] < m[2][1]) v.x = -v.x;
+		if (m[2][0] < m[0][2]) v.y = -v.y;
+		if (m[0][1] < m[1][0]) v.z = -v.z;
+		return v * PI;
+	}
+}
