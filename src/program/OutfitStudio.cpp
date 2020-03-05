@@ -3079,6 +3079,7 @@ void OutfitStudioFrame::AnimationGUIFromProj() {
 
 	HighlightBoneNamesWithWeights();
 	RefreshGUIWeightColors();
+	PoseToGUI();
 }
 
 void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
@@ -8452,6 +8453,8 @@ void OutfitStudioFrame::PoseToGUI() {
 		tyPoseText->ChangeValue("0");
 		tzPoseText->ChangeValue("0");
 	}
+	if (project->bPose != cbPose->GetValue())
+		cbPose->SetValue(project->bPose);
 }
 
 void OutfitStudioFrame::OnPoseBoneChanged(wxCommandEvent& WXUNUSED(event)) {
