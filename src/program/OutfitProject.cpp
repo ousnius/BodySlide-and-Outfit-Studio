@@ -1678,6 +1678,10 @@ void OutfitProject::InvalidateBoneScaleCache() {
 void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool clear) {
 	ClearBoneScale(false);
 
+	AnimBone *bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
+	if (!bptr) return;
+	MatTransform xform = bPose ? bptr->xformPoseToGlobal : bptr->xformToGlobal;
+
 	for (auto &s : workNif.GetShapeNames()) {
 		auto it = boneScaleVerts.find(s);
 		if (it == boneScaleVerts.end()) {
@@ -1699,9 +1703,6 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 
 		for (auto &b : workAnim.shapeBones[s]) {
 			if (b == bone) {
-				MatTransform xform;
-				workNif.GetNodeTransformToParent(b, xform);
-
 				auto weights = workAnim.GetWeightsPtr(s, b);
 				if (weights) {
 					for (auto &w : *weights) {

@@ -8402,6 +8402,11 @@ void OutfitStudioFrame::ApplyPose() {
 		project->GetLiveVerts(shape, verts);
 		glView->UpdateMeshVertices(shape->GetName(), &verts, true, true, false);
 	}
+	if (!activeBone.empty()) {
+		int boneScalePos = boneScale->GetValue();
+		if (boneScalePos != 0)
+			project->ApplyBoneScale(activeBone, boneScalePos);
+	}
 	glView->Render();
 }
 
