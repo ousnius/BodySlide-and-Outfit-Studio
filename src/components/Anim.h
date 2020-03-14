@@ -56,13 +56,17 @@ public:
 	// and xformPoseToGlobal, for this and for descendants.
 	void SetTransformBoneToParent(const MatTransform &ttp);
 	// UpdateTransformToGlobal updates xformToGlobal for this and for
-	// descendants.  This should only be called from itself and
-	// SetTransformBoneToParent.
+	// descendants.  This should only be called from itself,
+	// SetTransformBoneToParent, and SetParentBone.
 	void UpdateTransformToGlobal();
 	// UpdatePoseTransform updates xformPoseToGlobal for this and all
 	// descendants.  Call it after poseRotVec, poseTranVec, or
 	// xformToGlobal is changed.
 	void UpdatePoseTransform();
+	// SetParentBone updates "parent" of this and "children" of the old
+	// and new parents.  It also calls UpdateTransformToGlobal and
+	// UpdatePoseTranform.
+	void SetParentBone(AnimBone* newParent);
 };
 
 // Vertex to weight value association. Also keeps track of skin-to-bone transform and bounding sphere.

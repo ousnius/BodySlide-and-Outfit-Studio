@@ -480,9 +480,8 @@ AnimBone *AnimSkeleton::LoadCustomBoneFromNif(NifFile *nif, const std::string &b
 			parentBone = LoadCustomBoneFromNif(nif, parentNode->GetName());
 	}
 	AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(boneName);
-	cstm.parent = parentBone;
-	parentBone->children.push_back(&cstm);
 	cstm.SetTransformBoneToParent(node->GetTransformToParent());
+	cstm.SetParentBone(parentBone);
 	return &cstm;
 }
 
@@ -591,6 +590,21 @@ void AnimBone::UpdatePoseTransform() {
 
 void AnimBone::SetTransformBoneToParent(const MatTransform &ttp) {
 	xformToParent = ttp;
+	UpdateTransformToGlobal();
+	UpdatePoseTransform();
+}
+
+void AnimBone::SetParentBone(AnimBone* newParent) {
+	if (parent == newParent)
+		return;
+	if (parent) {
+		//std::erase(parent->children, this);
+		auto it = std::remove(parent->children.begin(), parent->children.end(), this);
+		parent->children.erase(it, parent->children.end());
+	}
+	parent = newParent;
+	if (parent)
+		parent->children.push_back(this);
 	UpdateTransformToGlobal();
 	UpdatePoseTransform();
 }

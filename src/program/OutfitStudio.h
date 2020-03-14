@@ -731,6 +731,7 @@ public:
 	ShapeItemData* activeItem = nullptr;
 	std::string activeSlider;
 	bool bEditSlider;
+	std::string contextBone;
 
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
