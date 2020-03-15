@@ -1764,6 +1764,14 @@ void OutfitProject::AddCustomBoneRef(const std::string& boneName, const std::str
 		workAnim.AddShapeBone(s, boneName);
 }
 
+void OutfitProject::ModifyCustomBone(AnimBone *bPtr, const std::string& parentBone, const MatTransform &xformToParent) {
+	bPtr->SetTransformBoneToParent(xformToParent);
+	bPtr->SetParentBone(AnimSkeleton::getInstance().GetBonePtr(parentBone));
+
+	for (auto &s : workNif.GetShapeNames())
+		workAnim.RecursiveRecalcXFormSkinToBone(s, bPtr);
+}
+
 void OutfitProject::ClearWorkSliders() {
 	morpher.ClearResultDiff();
 }

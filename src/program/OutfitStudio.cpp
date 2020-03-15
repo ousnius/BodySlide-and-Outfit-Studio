@@ -189,6 +189,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("addCustomBone"), OutfitStudioFrame::OnAddCustomBone)
 	EVT_MENU(XRCID("deleteBone"), OutfitStudioFrame::OnDeleteBone)
 	EVT_MENU(XRCID("deleteBoneSelected"), OutfitStudioFrame::OnDeleteBoneFromSelected)
+	EVT_MENU(XRCID("editBone"), OutfitStudioFrame::OnEditBone)
 	EVT_MENU(XRCID("copyBoneWeight"), OutfitStudioFrame::OnCopyBoneWeight)	
 	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudioFrame::OnCopySelectedWeight)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
@@ -7868,14 +7869,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
-	wxDialog dlg;
-	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone"))
-		return;
-	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
-
-	// Fill in the parent bone choice box.  Select the bone that was
-	// right-clicked on, if possible.
+void OutfitStudioFrame::FillParentBoneChoice(wxDialog &dlg, const std::string &selBone) {
 	wxChoice *cParentBone = XRCCTRL(dlg, "cParentBone", wxChoice);
 	cParentBone->AppendString("(none)");
 	std::set<std::string> boneSet;
@@ -7886,11 +7880,42 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	}
 	for (auto &bone : boneSet) {
 		cParentBone->AppendString(bone);
-		if (bone == contextBone)
+		if (bone == selBone)
 			cParentBone->SetSelection(cParentBone->GetCount()-1);
 	}
-	if (cParentBone->GetSelection() == wxNOT_FOUND)
-		cParentBone->SetSelection(0);
+	if (cParentBone->GetSelection() == wxNOT_FOUND) {
+		if (selBone.empty())
+			cParentBone->SetSelection(0);
+		else {
+			cParentBone->AppendString(selBone);
+			cParentBone->SetSelection(cParentBone->GetCount()-1);
+		}
+	}
+}
+
+void OutfitStudioFrame::GetBoneDlgData(wxDialog &dlg, MatTransform &xform, std::string &parentBone) {
+	xform.translation.x = atof(XRCCTRL(dlg, "textX", wxTextCtrl)->GetValue().c_str());
+	xform.translation.y = atof(XRCCTRL(dlg, "textY", wxTextCtrl)->GetValue().c_str());
+	xform.translation.z = atof(XRCCTRL(dlg, "textZ", wxTextCtrl)->GetValue().c_str());
+	Vector3 rotvec;
+	rotvec.x = atof(XRCCTRL(dlg, "textRX", wxTextCtrl)->GetValue().c_str());
+	rotvec.y = atof(XRCCTRL(dlg, "textRY", wxTextCtrl)->GetValue().c_str());
+	rotvec.z = atof(XRCCTRL(dlg, "textRZ", wxTextCtrl)->GetValue().c_str());
+	xform.rotation = RotVecToMat(rotvec);
+	wxChoice *cParentBone = XRCCTRL(dlg, "cParentBone", wxChoice);
+	int pBChoice = cParentBone->GetSelection();
+	if (pBChoice != wxNOT_FOUND)
+		parentBone = cParentBone->GetString(pBChoice).ToStdString();
+	if (parentBone == "(none)")
+		parentBone = std::string();
+}
+
+void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog dlg;
+	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone"))
+		return;
+	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+	FillParentBoneChoice(dlg, contextBone);
 
 	if (dlg.ShowModal() != wxID_OK)
 		return;
@@ -7911,20 +7936,8 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	MatTransform xform;
-	xform.translation.x = atof(XRCCTRL(dlg, "textX", wxTextCtrl)->GetValue().c_str());
-	xform.translation.y = atof(XRCCTRL(dlg, "textY", wxTextCtrl)->GetValue().c_str());
-	xform.translation.z = atof(XRCCTRL(dlg, "textZ", wxTextCtrl)->GetValue().c_str());
-	Vector3 rotvec;
-	rotvec.x = atof(XRCCTRL(dlg, "textRX", wxTextCtrl)->GetValue().c_str());
-	rotvec.y = atof(XRCCTRL(dlg, "textRY", wxTextCtrl)->GetValue().c_str());
-	rotvec.z = atof(XRCCTRL(dlg, "textRZ", wxTextCtrl)->GetValue().c_str());
-	xform.rotation = RotVecToMat(rotvec);
 	std::string parentBone;
-	int pBChoice = cParentBone->GetSelection();
-	if (pBChoice != wxNOT_FOUND)
-		parentBone = cParentBone->GetString(pBChoice).ToStdString();
-	if (parentBone == "(none)")
-		parentBone = std::string();
+	GetBoneDlgData(dlg, xform, parentBone);
 
 	wxLogMessage("Adding custom bone '%s' to project.", bone);
 	project->AddCustomBoneRef(bone.ToStdString(), parentBone, xform);
@@ -7932,6 +7945,55 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	outfitBones->SetItemState(newItem, 0);
 	cXMirrorBone->AppendString(bone);
 	cPoseBone->AppendString(bone);
+}
+
+void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
+	AnimBone *bPtr = AnimSkeleton::getInstance().GetBonePtr(contextBone);
+	if (!bPtr)
+		return;
+
+	wxDialog dlg;
+	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone"))
+		return;
+	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+
+	FillParentBoneChoice(dlg, bPtr->parent ? bPtr->parent->boneName : std::string());
+	wxChoice *cParentBone = XRCCTRL(dlg, "cParentBone", wxChoice);
+	wxTextCtrl *boneNameTC = XRCCTRL(dlg, "boneName", wxTextCtrl);
+	boneNameTC->SetValue(bPtr->boneName);
+	boneNameTC->Disable();
+	Vector3 rotvec = RotMatToVec(bPtr->xformToParent.rotation);
+	XRCCTRL(dlg, "textX", wxTextCtrl)->SetValue(wxString() << bPtr->xformToParent.translation.x);
+	XRCCTRL(dlg, "textY", wxTextCtrl)->SetValue(wxString() << bPtr->xformToParent.translation.y);
+	XRCCTRL(dlg, "textZ", wxTextCtrl)->SetValue(wxString() << bPtr->xformToParent.translation.z);
+	XRCCTRL(dlg, "textRX", wxTextCtrl)->SetValue(wxString() << rotvec.x);
+	XRCCTRL(dlg, "textRY", wxTextCtrl)->SetValue(wxString() << rotvec.y);
+	XRCCTRL(dlg, "textRZ", wxTextCtrl)->SetValue(wxString() << rotvec.z);
+
+	if (bPtr->isStandardBone) {
+		dlg.SetLabel("View Standard Bone");
+		XRCCTRL(dlg, "textX", wxTextCtrl)->Disable();
+		XRCCTRL(dlg, "textY", wxTextCtrl)->Disable();
+		XRCCTRL(dlg, "textZ", wxTextCtrl)->Disable();
+		XRCCTRL(dlg, "textRX", wxTextCtrl)->Disable();
+		XRCCTRL(dlg, "textRY", wxTextCtrl)->Disable();
+		XRCCTRL(dlg, "textRZ", wxTextCtrl)->Disable();
+		XRCCTRL(dlg, "cParentBone", wxChoice)->Disable();
+		XRCCTRL(dlg, "wxID_OK", wxButton)->Disable();
+	}
+	else {
+		dlg.SetLabel("Edit Custom Bone");
+	}
+
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
+	MatTransform xform;
+	std::string parentBone;
+	GetBoneDlgData(dlg, xform, parentBone);
+
+	project->ModifyCustomBone(bPtr, parentBone, xform);
+	ApplyPose();
 }
 
 void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {

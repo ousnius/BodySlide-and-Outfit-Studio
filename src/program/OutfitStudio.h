@@ -1196,6 +1196,9 @@ private:
 	void OnAddCustomBone(wxCommandEvent& event);
 	void OnDeleteBone(wxCommandEvent& event);
 	void OnDeleteBoneFromSelected(wxCommandEvent& event);
+	void FillParentBoneChoice(wxDialog &dlg, const std::string &selBone);
+	void GetBoneDlgData(wxDialog &dlg, MatTransform &xform, std::string &parentBone);
+	void OnEditBone(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);

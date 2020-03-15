@@ -150,6 +150,12 @@ public:
 	void SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& inVertWeights);
 	bool GetXFormSkinToBone(const std::string& shape, const std::string& boneName, MatTransform& stransform);
 	void SetXFormSkinToBone(const std::string& shape, const std::string& boneName, const MatTransform& stransform);
+	// RecalcXFormSkinToBone recalculates a shape bone's xformSkinToBone
+	// from other transforms.
+	void RecalcXFormSkinToBone(const std::string& shape, const std::string& boneName);
+	// RecursiveRecalcXFormSkinToBone calls RecalcXFormSkinToBone for the
+	// given bone and all its descendants.
+	void RecursiveRecalcXFormSkinToBone(const std::string& shape, AnimBone *bPtr);
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
 	void WriteToNif(NifFile* nif, const std::string& shapeException = "");

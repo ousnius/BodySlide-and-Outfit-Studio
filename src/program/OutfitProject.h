@@ -175,6 +175,7 @@ public:
 
 	void AddBoneRef(const std::string& boneName);
 	void AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const MatTransform &xformToParent);
+	void ModifyCustomBone(AnimBone *bPtr, const std::string& parentBone, const MatTransform &xformToParent);
 
 	void ClearWorkSliders();
 	void ClearReference();
