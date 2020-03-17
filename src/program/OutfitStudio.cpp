@@ -7872,23 +7872,27 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::FillParentBoneChoice(wxDialog &dlg, const std::string &selBone) {
 	wxChoice *cParentBone = XRCCTRL(dlg, "cParentBone", wxChoice);
 	cParentBone->AppendString("(none)");
+
 	std::set<std::string> boneSet;
 	for (auto selItem : selectedItems) {
 		const std::vector<std::string> &bones = project->GetWorkAnim()->shapeBones[selItem->GetShape()->GetName()];
 		for (const std::string &b : bones)
 			boneSet.insert(b);
 	}
+
 	for (auto &bone : boneSet) {
 		cParentBone->AppendString(bone);
 		if (bone == selBone)
-			cParentBone->SetSelection(cParentBone->GetCount()-1);
+			cParentBone->SetSelection(cParentBone->GetCount() - 1);
 	}
+
 	if (cParentBone->GetSelection() == wxNOT_FOUND) {
-		if (selBone.empty())
+		if (selBone.empty()) {
 			cParentBone->SetSelection(0);
+		}
 		else {
 			cParentBone->AppendString(selBone);
-			cParentBone->SetSelection(cParentBone->GetCount()-1);
+			cParentBone->SetSelection(cParentBone->GetCount() - 1);
 		}
 	}
 }
@@ -7897,15 +7901,18 @@ void OutfitStudioFrame::GetBoneDlgData(wxDialog &dlg, MatTransform &xform, std::
 	xform.translation.x = atof(XRCCTRL(dlg, "textX", wxTextCtrl)->GetValue().c_str());
 	xform.translation.y = atof(XRCCTRL(dlg, "textY", wxTextCtrl)->GetValue().c_str());
 	xform.translation.z = atof(XRCCTRL(dlg, "textZ", wxTextCtrl)->GetValue().c_str());
+
 	Vector3 rotvec;
 	rotvec.x = atof(XRCCTRL(dlg, "textRX", wxTextCtrl)->GetValue().c_str());
 	rotvec.y = atof(XRCCTRL(dlg, "textRY", wxTextCtrl)->GetValue().c_str());
 	rotvec.z = atof(XRCCTRL(dlg, "textRZ", wxTextCtrl)->GetValue().c_str());
 	xform.rotation = RotVecToMat(rotvec);
+
 	wxChoice *cParentBone = XRCCTRL(dlg, "cParentBone", wxChoice);
 	int pBChoice = cParentBone->GetSelection();
 	if (pBChoice != wxNOT_FOUND)
 		parentBone = cParentBone->GetString(pBChoice).ToStdString();
+
 	if (parentBone == "(none)")
 		parentBone = std::string();
 }
@@ -7914,11 +7921,13 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone"))
 		return;
+
 	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 	FillParentBoneChoice(dlg, contextBone);
 
 	if (dlg.ShowModal() != wxID_OK)
 		return;
+
 	wxString bone = XRCCTRL(dlg, "boneName", wxTextCtrl)->GetValue();
 	if (bone.empty()) {
 		wxMessageBox(_("No bone name was entered!"), _("Error"), wxICON_INFORMATION, this);
@@ -7955,13 +7964,18 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone"))
 		return;
+
 	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
-	FillParentBoneChoice(dlg, bPtr->parent ? bPtr->parent->boneName : std::string());
-	wxChoice *cParentBone = XRCCTRL(dlg, "cParentBone", wxChoice);
+	if (bPtr->parent)
+		FillParentBoneChoice(dlg, bPtr->parent->boneName);
+	else
+		FillParentBoneChoice(dlg);
+
 	wxTextCtrl *boneNameTC = XRCCTRL(dlg, "boneName", wxTextCtrl);
 	boneNameTC->SetValue(bPtr->boneName);
 	boneNameTC->Disable();
+
 	Vector3 rotvec = RotMatToVec(bPtr->xformToParent.rotation);
 	XRCCTRL(dlg, "textX", wxTextCtrl)->SetValue(wxString() << bPtr->xformToParent.translation.x);
 	XRCCTRL(dlg, "textY", wxTextCtrl)->SetValue(wxString() << bPtr->xformToParent.translation.y);
