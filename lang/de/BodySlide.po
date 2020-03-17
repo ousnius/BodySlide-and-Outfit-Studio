@@ -2936,3 +2936,48 @@ msgstr "Slot"
 
 msgid "X-Mirror Bone"
 msgstr "Bone spiegeln"
+
+msgid "Posing"
+msgstr "Posen"
+
+msgid "Show Pose"
+msgstr "Pose anzeigen"
+
+msgid "Reset Bone"
+msgstr "Bone zurücksetzen"
+
+msgid "Reset All"
+msgstr "Alle zurücksetzen"
+
+msgid "Rotation X"
+msgstr "Rotation X"
+
+msgid "Rotation Y"
+msgstr "Rotation Y"
+
+msgid "Rotation Z"
+msgstr "Rotation Z"
+
+msgid "Offset X"
+msgstr "X-Verschiebung"
+
+msgid "Offset Y"
+msgstr "Y-Verschiebung"
+
+msgid "Offset Z"
+msgstr "Z-Verschiebung"
+
+msgid "Edit Bone..."
+msgstr "Bone bearbeiten..."
+
+msgid "Edit a custom bone or view a standard bone."
+msgstr "Bone bearbeiten oder Standard-Bone anzeigen."
+
+msgid "Parent"
+msgstr "Parent"
+
+msgid "Origin"
+msgstr "Ausgangspunkt"
+
+msgid "Rotation"
+msgstr "Rotation"
