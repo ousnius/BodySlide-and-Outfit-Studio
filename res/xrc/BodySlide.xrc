@@ -448,5 +448,8 @@
 		<object class="wxMenuItem" name="batchBuildAll">
 			<label>Select All</label>
 		</object>
+		<object class="wxMenuItem" name="batchBuildInvert">
+			<label>Invert Selection</label>
+		</object>
 	</object>
 </resource>

@@ -160,6 +160,9 @@ msgstr "Alle auswählen"
 msgid "Select All\tCtrl+A"
 msgstr "Alle auswählen\tCtrl+A"
 
+msgid "Invert Selection"
+msgstr "Auswahl umkehren"
+
 msgid "Enter preset name..."
 msgstr "Preset-Name eingeben..."
 
