@@ -56,13 +56,17 @@ public:
 	// and xformPoseToGlobal, for this and for descendants.
 	void SetTransformBoneToParent(const MatTransform &ttp);
 	// UpdateTransformToGlobal updates xformToGlobal for this and for
-	// descendants.  This should only be called from itself and
-	// SetTransformBoneToParent.
+	// descendants.  This should only be called from itself,
+	// SetTransformBoneToParent, and SetParentBone.
 	void UpdateTransformToGlobal();
 	// UpdatePoseTransform updates xformPoseToGlobal for this and all
 	// descendants.  Call it after poseRotVec, poseTranVec, or
 	// xformToGlobal is changed.
 	void UpdatePoseTransform();
+	// SetParentBone updates "parent" of this and "children" of the old
+	// and new parents.  It also calls UpdateTransformToGlobal and
+	// UpdatePoseTranform.
+	void SetParentBone(AnimBone* newParent);
 };
 
 // Vertex to weight value association. Also keeps track of skin-to-bone transform and bounding sphere.
@@ -146,6 +150,12 @@ public:
 	void SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& inVertWeights);
 	bool GetXFormSkinToBone(const std::string& shape, const std::string& boneName, MatTransform& stransform);
 	void SetXFormSkinToBone(const std::string& shape, const std::string& boneName, const MatTransform& stransform);
+	// RecalcXFormSkinToBone recalculates a shape bone's xformSkinToBone
+	// from other transforms.
+	void RecalcXFormSkinToBone(const std::string& shape, const std::string& boneName);
+	// RecursiveRecalcXFormSkinToBone calls RecalcXFormSkinToBone for the
+	// given bone and all its descendants.
+	void RecursiveRecalcXFormSkinToBone(const std::string& shape, AnimBone *bPtr);
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
 	void WriteToNif(NifFile* nif, const std::string& shapeException = "");

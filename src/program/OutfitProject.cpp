@@ -1755,16 +1755,21 @@ void OutfitProject::AddBoneRef(const std::string& boneName) {
 		workAnim.AddShapeBone(s, boneName);
 }
 
-void OutfitProject::AddCustomBoneRef(const std::string& boneName, const Vector3& translation) {
+void OutfitProject::AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const MatTransform &xformToParent) {
 	AnimBone& customBone = AnimSkeleton::getInstance().AddCustomBone(boneName);
-
-	MatTransform xformBoneToGlobal;
-	xformBoneToGlobal.translation = translation;
-
-	customBone.SetTransformBoneToParent(xformBoneToGlobal);
+	customBone.SetTransformBoneToParent(xformToParent);
+	customBone.SetParentBone(AnimSkeleton::getInstance().GetBonePtr(parentBone));
 
 	for (auto &s : workNif.GetShapeNames())
 		workAnim.AddShapeBone(s, boneName);
+}
+
+void OutfitProject::ModifyCustomBone(AnimBone *bPtr, const std::string& parentBone, const MatTransform &xformToParent) {
+	bPtr->SetTransformBoneToParent(xformToParent);
+	bPtr->SetParentBone(AnimSkeleton::getInstance().GetBonePtr(parentBone));
+
+	for (auto &s : workNif.GetShapeNames())
+		workAnim.RecursiveRecalcXFormSkinToBone(s, bPtr);
 }
 
 void OutfitProject::ClearWorkSliders() {

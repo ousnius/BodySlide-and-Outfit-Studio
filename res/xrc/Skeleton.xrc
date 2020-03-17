@@ -87,6 +87,64 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lbParentBone">
+							<label>Parent</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxChoice" name="cParentBone">
+							<selection>0</selection>
+							<content />
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxFlexGridSizer">
+					<rows>0</rows>
+					<cols>3</cols>
+					<vgap>0</vgap>
+					<hgap>0</hgap>
+					<growablecols>1</growablecols>
+					<growablerows></growablerows>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="labelblank">
+							<label></label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="labelorigin">
+							<label>Origin</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="labelrot">
+							<label>Rotation</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelX">
@@ -102,14 +160,14 @@
 							<value>0.00000</value>
 						</object>
 					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="textRX">
+							<value>0.00000</value>
+						</object>
+					</object>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
@@ -127,14 +185,14 @@
 							<value>0.00000</value>
 						</object>
 					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="textRY">
+							<value>0.00000</value>
+						</object>
+					</object>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
@@ -149,6 +207,14 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="textZ">
+							<value>0.00000</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="textRZ">
 							<value>0.00000</value>
 						</object>
 					</object>

@@ -17,14 +17,7 @@ bool AnimInfo::AddShapeBone(const std::string& shape, const std::string& boneNam
 	shapeSkinning[shape].boneNames[boneName] = shapeBones[shape].size();
 	shapeBones[shape].push_back(boneName);
 	AnimSkeleton::getInstance().RefBone(boneName);
-	// Calculate a good default value for xformSkinToBone by:
-	// Composing: bone -> global -> skin
-	// then inverting
-	MatTransform xformGlobalToSkin = shapeSkinning[shape].xformGlobalToSkin;
-	MatTransform xformBoneToGlobal;
-	AnimSkeleton::getInstance().GetBoneTransformToGlobal(boneName, xformBoneToGlobal);
-	MatTransform xformBoneToSkin = xformGlobalToSkin.ComposeTransforms(xformBoneToGlobal);
-	SetXFormSkinToBone(shape, boneName, xformBoneToSkin.InverseTransform());
+	RecalcXFormSkinToBone(shape, boneName);
 	return true;
 }
 
@@ -240,6 +233,23 @@ void AnimInfo::SetXFormSkinToBone(const std::string& shape, const std::string& b
 		return;
 
 	shapeSkinning[shape].boneWeights[b].xformSkinToBone = stransform;
+}
+
+void AnimInfo::RecalcXFormSkinToBone(const std::string& shape, const std::string& boneName) {
+	// Calculate a good default value for xformSkinToBone by:
+	// Composing: bone -> global -> skin
+	// then inverting
+	MatTransform xformGlobalToSkin = shapeSkinning[shape].xformGlobalToSkin;
+	MatTransform xformBoneToGlobal;
+	AnimSkeleton::getInstance().GetBoneTransformToGlobal(boneName, xformBoneToGlobal);
+	MatTransform xformBoneToSkin = xformGlobalToSkin.ComposeTransforms(xformBoneToGlobal);
+	SetXFormSkinToBone(shape, boneName, xformBoneToSkin.InverseTransform());
+}
+
+void AnimInfo::RecursiveRecalcXFormSkinToBone(const std::string& shape, AnimBone *bPtr) {
+	RecalcXFormSkinToBone(shape, bPtr->boneName);
+	for (AnimBone *cptr : bPtr->children)
+		RecursiveRecalcXFormSkinToBone(shape, cptr);
 }
 
 bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex) {
@@ -480,9 +490,8 @@ AnimBone *AnimSkeleton::LoadCustomBoneFromNif(NifFile *nif, const std::string &b
 			parentBone = LoadCustomBoneFromNif(nif, parentNode->GetName());
 	}
 	AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(boneName);
-	cstm.parent = parentBone;
-	parentBone->children.push_back(&cstm);
 	cstm.SetTransformBoneToParent(node->GetTransformToParent());
+	cstm.SetParentBone(parentBone);
 	return &cstm;
 }
 
@@ -591,6 +600,21 @@ void AnimBone::UpdatePoseTransform() {
 
 void AnimBone::SetTransformBoneToParent(const MatTransform &ttp) {
 	xformToParent = ttp;
+	UpdateTransformToGlobal();
+	UpdatePoseTransform();
+}
+
+void AnimBone::SetParentBone(AnimBone* newParent) {
+	if (parent == newParent)
+		return;
+	if (parent) {
+		//std::erase(parent->children, this);
+		auto it = std::remove(parent->children.begin(), parent->children.end(), this);
+		parent->children.erase(it, parent->children.end());
+	}
+	parent = newParent;
+	if (parent)
+		parent->children.push_back(this);
 	UpdateTransformToGlobal();
 	UpdatePoseTransform();
 }
