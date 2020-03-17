@@ -1027,9 +1027,13 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 						for (int i = 0; i < projectList->GetCount(); i++)
 							projectList->Check(i, false);
 					}
-					else {
+					else if (event.GetId() == XRCID("projectListAll")) {
 						for (int i = 0; i < projectList->GetCount(); i++)
 							projectList->Check(i);
+					}
+					else if (event.GetId() == XRCID("projectListInvert")) {
+						for (int i = 0; i < projectList->GetCount(); i++)
+							projectList->Check(i, !projectList->IsChecked(i));
 					}
 				});
 

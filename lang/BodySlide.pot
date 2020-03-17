@@ -144,6 +144,9 @@ msgstr ""
 msgid "Select All\tCtrl+A"
 msgstr ""
 
+msgid "Invert Selection"
+msgstr ""
+
 msgid "Enter preset name..."
 msgstr ""
 

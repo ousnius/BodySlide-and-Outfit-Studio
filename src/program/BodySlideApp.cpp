@@ -3256,9 +3256,13 @@ void BodySlideFrame::OnBatchBuildSelect(wxCommandEvent& event) {
 		for (int i = 0; i < batchBuildList->GetCount(); i++)
 			batchBuildList->Check(i, false);
 	}
-	else {
+	else if (event.GetId() == XRCID("batchBuildAll")) {
 		for (int i = 0; i < batchBuildList->GetCount(); i++)
 			batchBuildList->Check(i);
+	}
+	else if (event.GetId() == XRCID("batchBuildInvert")) {
+		for (int i = 0; i < batchBuildList->GetCount(); i++)
+			batchBuildList->Check(!batchBuildList->IsChecked(i));
 	}
 }
 

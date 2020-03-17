@@ -1031,5 +1031,8 @@
 		<object class="wxMenuItem" name="projectListAll">
 			<label>Select All</label>
 		</object>
+		<object class="wxMenuItem" name="projectListInvert">
+			<label>Invert Selection</label>
+		</object>
 	</object>
 </resource>
