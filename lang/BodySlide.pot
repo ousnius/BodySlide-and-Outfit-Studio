@@ -2525,3 +2525,48 @@ msgstr ""
 
 msgid "X-Mirror Bone"
 msgstr ""
+
+msgid "Posing"
+msgstr ""
+
+msgid "Show Pose"
+msgstr ""
+
+msgid "Reset Bone"
+msgstr ""
+
+msgid "Reset All"
+msgstr ""
+
+msgid "Rotation X"
+msgstr ""
+
+msgid "Rotation Y"
+msgstr ""
+
+msgid "Rotation Z"
+msgstr ""
+
+msgid "Offset X"
+msgstr ""
+
+msgid "Offset Y"
+msgstr ""
+
+msgid "Offset Z"
+msgstr ""
+
+msgid "Edit Bone..."
+msgstr ""
+
+msgid "Edit a custom bone or view a standard bone."
+msgstr ""
+
+msgid "Parent"
+msgstr ""
+
+msgid "Origin"
+msgstr ""
+
+msgid "Rotation"
+msgstr ""
