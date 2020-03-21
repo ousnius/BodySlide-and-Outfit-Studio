@@ -956,6 +956,66 @@
 										<option>0</option>
 										<flag>wxALL|wxEXPAND|wxLEFT</flag>
 										<border>2</border>
+										<object class="wxCollapsiblePane" name="masksPane">
+											<style>wxCP_DEFAULT_STYLE</style>
+											<collapsed>1</collapsed>
+											<label>Masks</label>
+											<bg>wxSYS_COLOUR_MENU</bg>
+											<hidden>0</hidden>
+											<object class="panewindow">
+												<object class="wxBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																<border>5</border>
+																<object class="wxChoice" name="cMaskName">
+																	<selection>0</selection>
+																	<content />
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxBOTTOM|wxEXPAND</flag>
+																<border>5</border>
+																<object class="wxButton" name="saveMask">
+																	<size>-1,25</size>
+																	<label>Save</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxBOTTOM|wxEXPAND</flag>
+																<border>5</border>
+																<object class="wxButton" name="saveAsMask">
+																	<size>-1,25</size>
+																	<label>Save As</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxBOTTOM|wxEXPAND</flag>
+																<border>5</border>
+																<object class="wxButton" name="deleteMask">
+																	<size>-1,25</size>
+																	<label>Delete</label>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALL|wxEXPAND|wxLEFT</flag>
+										<border>2</border>
 										<object class="wxCollapsiblePane" name="posePane">
 											<style>wxCP_DEFAULT_STYLE</style>
 											<collapsed>1</collapsed>
@@ -1856,12 +1916,6 @@
 			<object class="wxMenuItem" name="btnClearMask">
 				<label>Clear Mask\tCtrl+A</label>
 				<help>Clear Mask</help>
-			</object>
-			<object class="wxMenuItem" name="btnShowMask">
-				<label>Show Mask\tM</label>
-				<help>Shade meshes to indicate areas that are currently masked.</help>
-				<checked>1</checked>
-				<checkable>1</checkable>
 			</object>
 		</object>
 	</object>

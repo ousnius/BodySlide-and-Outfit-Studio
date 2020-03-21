@@ -29,7 +29,7 @@ class GLSurface {
 	bool bWireframe = false;
 	bool bLighting = true;
 	bool bTextured = true;
-	bool bMaskVisible = false;
+	bool bMaskVisible = true;
 	bool bWeightColors = false;
 	bool bVertexColors = false;
 	bool bSegmentColors = false;
