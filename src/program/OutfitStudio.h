@@ -437,6 +437,21 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
+	void SetShapeMask(std::unordered_map<ushort, float>& mask, const std::string& shapeName) {
+		mesh* m = gls.GetMesh(shapeName);
+		if (!m)
+			return;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			if (mask.find(i) != mask.end())
+				m->vcolors[i].x = mask[i];
+			else
+				m->vcolors[i].x = 0.0f;
+		}
+
+		m->QueueUpdate(mesh::UpdateType::VertexColors);
+	}
+
 	void MaskLess() {
 		for (auto &m : gls.GetActiveMeshes()) {
 			std::set<int> unmaskPoints;
@@ -1273,11 +1288,6 @@ private:
 		glView->Render();
 	}
 
-	void OnShowMask(wxCommandEvent& event) {
-		glView->SetMaskVisible(event.IsChecked());
-		glView->Render();
-	}
-
 	void OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetBrushSize() < 1.0f) {
 			float v = glView->IncBrush() / 3.0f;
@@ -1353,8 +1363,12 @@ private:
 		wxLaunchDefaultBrowser(url);
 	}
 
+	void OnSelectMask(wxCommandEvent& event);
+	void OnSaveMask(wxCommandEvent& event);
+	void OnSaveAsMask(wxCommandEvent& event);
+	void OnDeleteMask(wxCommandEvent& event);
+	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
 	void ApplyPose();
-	void OnPosePaneCollapse(wxCollapsiblePaneEvent &event);
 	AnimBone *GetPoseBonePtr();
 	void PoseToGUI();
 	void OnPoseBoneChanged(wxCommandEvent& event);

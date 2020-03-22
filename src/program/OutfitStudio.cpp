@@ -54,7 +54,13 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMMAND_SCROLL(XRCID("brushFocus"), OutfitStudioFrame::OnBrushSettingsSlider)
 	EVT_COMMAND_SCROLL(XRCID("brushSpace"), OutfitStudioFrame::OnBrushSettingsSlider)
 
-	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("posePane"), OutfitStudioFrame::OnPosePaneCollapse)
+	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("masksPane"), OutfitStudioFrame::OnPaneCollapse)
+	EVT_CHOICE(XRCID("cMaskName"), OutfitStudioFrame::OnSelectMask)
+	EVT_BUTTON(XRCID("saveMask"), OutfitStudioFrame::OnSaveMask)
+	EVT_BUTTON(XRCID("saveAsMask"), OutfitStudioFrame::OnSaveAsMask)
+	EVT_BUTTON(XRCID("deleteMask"), OutfitStudioFrame::OnDeleteMask)
+
+	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("posePane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_CHOICE(XRCID("cPoseBone"), OutfitStudioFrame::OnPoseBoneChanged)
 	EVT_COMMAND_SCROLL(XRCID("rxPoseSlider"), OutfitStudioFrame::OnRXPoseSlider)
 	EVT_COMMAND_SCROLL(XRCID("ryPoseSlider"), OutfitStudioFrame::OnRYPoseSlider)
@@ -158,7 +164,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnMaskMore"), OutfitStudioFrame::OnMaskMore)
 	EVT_MENU(XRCID("btnClearMask"), OutfitStudioFrame::OnClearMask)
 	EVT_MENU(XRCID("btnInvertMask"), OutfitStudioFrame::OnInvertMask)
-	EVT_MENU(XRCID("btnShowMask"), OutfitStudioFrame::OnShowMask)
 
 	EVT_MENU(XRCID("btnRecalcNormals"), OutfitStudioFrame::OnRecalcNormals)
 	EVT_MENU(XRCID("btnSmoothSeams"), OutfitStudioFrame::OnSmoothNormalSeams)
@@ -2374,28 +2379,28 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 
 	if (tool == ToolID::Transform) {
 		int id = XRCID("btnTransform");
-		bool checked = menuBar->IsChecked(id);
-		menuBar->Check(id, checked);
-		toolBar->ToggleTool(id, checked);
-		glView->SetTransformMode(checked);
+		bool state = !glView->GetTransformMode();
+		menuBar->Check(id, state);
+		toolBar->ToggleTool(id, state);
+		glView->SetTransformMode(state);
 		return;
 	}
 
 	if (tool == ToolID::Pivot) {
 		int id = XRCID("btnPivot");
-		bool checked = menuBar->IsChecked(id);
-		menuBar->Check(id, checked);
-		toolBar->ToggleTool(id, checked);
-		glView->SetPivotMode(checked);
+		bool state = !glView->GetPivotMode();
+		menuBar->Check(id, state);
+		toolBar->ToggleTool(id, state);
+		glView->SetPivotMode(state);
 		return;
 	}
 
 	if (tool == ToolID::VertexEdit) {
 		int id = XRCID("btnVertexEdit");
-		bool checked = menuBar->IsChecked(id);
-		menuBar->Check(id, checked);
-		toolBar->ToggleTool(id, checked);
-		glView->SetVertexEdit(checked);
+		bool state = !glView->GetVertexEdit();
+		menuBar->Check(id, state);
+		toolBar->ToggleTool(id, state);
+		glView->SetVertexEdit(state);
 		return;
 	}
 
@@ -2888,6 +2893,10 @@ void OutfitStudioFrame::ClearProject() {
 
 	glView->DestroyOverlays();
 	activePartition.Unset();
+	activeSegment.Unset();
+
+	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+	cMaskName->Clear();
 
 	SetTitle("Outfit Studio");
 }
@@ -5531,6 +5540,11 @@ void OutfitStudioFrame::OnReadoutChange(wxCommandEvent& event) {
 void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 
+	if (id != XRCID("meshTabButton")) {
+		wxCollapsiblePane* masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
+		masksPane->Hide();
+	}
+
 	if (id != XRCID("segmentTabButton")) {
 		wxStaticText* segmentTypeLabel = (wxStaticText*)FindWindowByName("segmentTypeLabel");
 		wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
@@ -5559,12 +5573,10 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetGlobalBrushCollision();
 
 		GetMenuBar()->Check(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Check(XRCID("btnShowMask"), true);
 		GetMenuBar()->Enable(XRCID("btnBrushCollision"), true);
 		GetMenuBar()->Enable(XRCID("btnSelect"), true);
 		GetMenuBar()->Enable(XRCID("btnClearMask"), true);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), true);
-		GetMenuBar()->Enable(XRCID("btnShowMask"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), true);
@@ -5592,12 +5604,10 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetGlobalBrushCollision();
 
 		GetMenuBar()->Check(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Check(XRCID("btnShowMask"), true);
 		GetMenuBar()->Enable(XRCID("btnBrushCollision"), true);
 		GetMenuBar()->Enable(XRCID("btnSelect"), true);
 		GetMenuBar()->Enable(XRCID("btnClearMask"), true);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), true);
-		GetMenuBar()->Enable(XRCID("btnShowMask"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), true);
@@ -5705,12 +5715,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
 		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
 		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
+		wxCollapsiblePane* masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
 
 		boneTabButton->SetCheck(false);
 		colorsTabButton->SetCheck(false);
 		segmentTabButton->SetCheck(false);
 		partitionTabButton->SetCheck(false);
 		lightsTabButton->SetCheck(false);
+
+		masksPane->Show();
 	}
 	else if (id == XRCID("boneTabButton")) {
 		outfitShapes->Hide();
@@ -5892,7 +5905,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
 		GetMenuBar()->Check(XRCID("btnXMirror"), false);
 		GetMenuBar()->Check(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Check(XRCID("btnShowMask"), false);
 		GetMenuBar()->Enable(XRCID("btnSelect"), false);
 		GetMenuBar()->Enable(XRCID("btnTransform"), false);
 		GetMenuBar()->Enable(XRCID("btnPivot"), false);
@@ -5904,7 +5916,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
-		GetMenuBar()->Enable(XRCID("btnShowMask"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
@@ -5964,7 +5975,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
 		GetMenuBar()->Check(XRCID("btnXMirror"), false);
 		GetMenuBar()->Check(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Check(XRCID("btnShowMask"), false);
 		GetMenuBar()->Enable(XRCID("btnSelect"), false);
 		GetMenuBar()->Enable(XRCID("btnTransform"), false);
 		GetMenuBar()->Enable(XRCID("btnPivot"), false);
@@ -5976,7 +5986,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
-		GetMenuBar()->Enable(XRCID("btnShowMask"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
@@ -8513,6 +8522,76 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
+void OutfitStudioFrame::OnSelectMask(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+	int maskSel = cMaskName->GetSelection();
+	if (maskSel != wxNOT_FOUND) {
+		auto maskData = (std::map<std::string, std::unordered_map<ushort, float>>*)cMaskName->GetClientData(maskSel);
+		for (auto mask : (*maskData)) {
+			glView->SetShapeMask(mask.second, mask.first);
+		}
+	}
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnSaveMask(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+	int maskSel = cMaskName->GetSelection();
+	if (maskSel != wxNOT_FOUND) {
+		auto maskData = new std::map<std::string, std::unordered_map<ushort, float>>();
+
+		std::vector<std::string> shapes = GetShapeList();
+		for (auto &s : shapes) {
+			std::unordered_map<ushort, float> mask;
+			glView->GetShapeMask(mask, s);
+			(*maskData)[s] = std::move(mask);
+		}
+
+		cMaskName->SetClientData(maskSel, maskData);
+	}
+	else {
+		wxCommandEvent evt;
+		OnSaveAsMask(evt);
+	}
+}
+
+void OutfitStudioFrame::OnSaveAsMask(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+
+	wxString maskName;
+	do {
+		maskName = wxGetTextFromUser(_("Please enter a new unique name for the mask."), _("New Mask"));
+		if (maskName.empty())
+			return;
+
+	} while (cMaskName->FindString(maskName) != wxNOT_FOUND);
+
+	auto maskData = new std::map<std::string, std::unordered_map<ushort, float>>();
+
+	std::vector<std::string> shapes = GetShapeList();
+	for (auto &s : shapes) {
+		std::unordered_map<ushort, float> mask;
+		glView->GetShapeMask(mask, s);
+		(*maskData)[s] = std::move(mask);
+	}
+
+	cMaskName->Append(maskName, maskData);
+}
+
+void OutfitStudioFrame::OnDeleteMask(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+	int maskSel = cMaskName->GetSelection();
+	if (maskSel != wxNOT_FOUND) {
+		cMaskName->Delete(maskSel);
+	}
+}
+
+void OutfitStudioFrame::OnPaneCollapse(wxCollapsiblePaneEvent& WXUNUSED(event)) {
+	wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
+	parentPanel->Layout();
+}
+
 void OutfitStudioFrame::ApplyPose() {
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
 		std::vector<Vector3> verts;
@@ -8525,11 +8604,6 @@ void OutfitStudioFrame::ApplyPose() {
 			project->ApplyBoneScale(activeBone, boneScalePos);
 	}
 	glView->Render();
-}
-
-void OutfitStudioFrame::OnPosePaneCollapse(wxCollapsiblePaneEvent& WXUNUSED(event)) {
-	wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
-	parentPanel->Layout();
 }
 
 AnimBone *OutfitStudioFrame::GetPoseBonePtr() {

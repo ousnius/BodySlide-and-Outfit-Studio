@@ -2981,3 +2981,12 @@ msgstr "Ausgangspunkt"
 
 msgid "Rotation"
 msgstr "Rotation"
+
+msgid "Masks"
+msgstr "Masken"
+
+msgid "New Mask"
+msgstr "Neue Maske"
+
+msgid "Please enter a new unique name for the mask."
+msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für die Maske ein."
