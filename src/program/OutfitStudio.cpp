@@ -2379,28 +2379,28 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 
 	if (tool == ToolID::Transform) {
 		int id = XRCID("btnTransform");
-		bool checked = menuBar->IsChecked(id);
-		menuBar->Check(id, checked);
-		toolBar->ToggleTool(id, checked);
-		glView->SetTransformMode(checked);
+		bool state = !glView->GetTransformMode();
+		menuBar->Check(id, state);
+		toolBar->ToggleTool(id, state);
+		glView->SetTransformMode(state);
 		return;
 	}
 
 	if (tool == ToolID::Pivot) {
 		int id = XRCID("btnPivot");
-		bool checked = menuBar->IsChecked(id);
-		menuBar->Check(id, checked);
-		toolBar->ToggleTool(id, checked);
-		glView->SetPivotMode(checked);
+		bool state = !glView->GetPivotMode();
+		menuBar->Check(id, state);
+		toolBar->ToggleTool(id, state);
+		glView->SetPivotMode(state);
 		return;
 	}
 
 	if (tool == ToolID::VertexEdit) {
 		int id = XRCID("btnVertexEdit");
-		bool checked = menuBar->IsChecked(id);
-		menuBar->Check(id, checked);
-		toolBar->ToggleTool(id, checked);
-		glView->SetVertexEdit(checked);
+		bool state = !glView->GetVertexEdit();
+		menuBar->Check(id, state);
+		toolBar->ToggleTool(id, state);
+		glView->SetVertexEdit(state);
 		return;
 	}
 
