@@ -5127,47 +5127,30 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 			std::vector<Triangle> tris;
 			shape->GetTriangles(tris);
 
-			bool isBSTri = shape->HasType<BSTriShape>();
-
 			// Add vertices and triangles from mask
 			std::set<Triangle> realTris;
 			partitionData->verts.clear();
 			partitionData->tris.clear();
 			for (auto &tri : tris) {
 				if (mask.find(tri.p1) != mask.end() && mask.find(tri.p2) != mask.end() && mask.find(tri.p3) != mask.end()) {
-					Triangle partTri;
-
 					auto p1Find = find(partitionData->verts.begin(), partitionData->verts.end(), tri.p1);
 					if (p1Find == partitionData->verts.end()) {
-						partTri.p1 = partitionData->verts.size();
 						partitionData->verts.push_back(tri.p1);
 					}
-					else
-						partTri.p1 = p1Find - partitionData->verts.begin();
 
 					auto p2Find = find(partitionData->verts.begin(), partitionData->verts.end(), tri.p2);
 					if (p2Find == partitionData->verts.end()) {
-						partTri.p2 = partitionData->verts.size();
 						partitionData->verts.push_back(tri.p2);
 					}
-					else
-						partTri.p2 = p2Find - partitionData->verts.begin();
 
 					auto p3Find = find(partitionData->verts.begin(), partitionData->verts.end(), tri.p3);
 					if (p3Find == partitionData->verts.end()) {
-						partTri.p3 = partitionData->verts.size();
 						partitionData->verts.push_back(tri.p3);
 					}
-					else
-						partTri.p3 = p3Find - partitionData->verts.begin();
 
 					tri.rot();
-					partTri.rot();
 
-					if (isBSTri)
-						partitionData->tris.push_back(tri);
-					else
-						partitionData->tris.push_back(partTri);
+					partitionData->tris.push_back(tri);
 
 					realTris.insert(tri);
 				}
@@ -5175,19 +5158,10 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 
 			// Vertex indices that are assigned
 			std::set<ushort> vertsToCheck;
-			if (!isBSTri) {
-				for (auto &tri : partitionData->tris) {
-					vertsToCheck.insert(partitionData->verts[tri.p1]);
-					vertsToCheck.insert(partitionData->verts[tri.p2]);
-					vertsToCheck.insert(partitionData->verts[tri.p3]);
-				}
-			}
-			else {
-				for (auto &tri : partitionData->tris) {
-					vertsToCheck.insert(tri.p1);
-					vertsToCheck.insert(tri.p2);
-					vertsToCheck.insert(tri.p3);
-				}
+			for (auto &tri : partitionData->tris) {
+				vertsToCheck.insert(tri.p1);
+				vertsToCheck.insert(tri.p2);
+				vertsToCheck.insert(tri.p3);
 			}
 
 			// Remove assigned verts/tris from all other partitions
@@ -5197,25 +5171,12 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 				PartitionItemData* childPartition = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
 				if (childPartition && childPartition != partitionData) {
 					// Move triangles that match to the end
-					auto removeTriEnd = childPartition->tris.end();
-					if (!isBSTri) {
-						removeTriEnd = std::partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
-							Triangle t(childPartition->verts[tri.p1], childPartition->verts[tri.p2], childPartition->verts[tri.p3]);
+					auto removeTriEnd = std::partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
+						if (find_if(realTris.begin(), realTris.end(), [&tri](const Triangle& t) { return t.CompareIndices(tri); }) != realTris.end())
+							return true;
 
-							if (find_if(realTris.begin(), realTris.end(), [&t](const Triangle& tri) { return tri.CompareIndices(t); }) != realTris.end())
-								return true;
-
-							return false;
-						});
-					}
-					else {
-						removeTriEnd = std::partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
-							if (find_if(realTris.begin(), realTris.end(), [&tri](const Triangle& t) { return t.CompareIndices(tri); }) != realTris.end())
-								return true;
-
-							return false;
-						});
-					}
+						return false;
+					});
 
 					// Find vertices that need to be removed
 					std::set<ushort> vertsToRemove;
@@ -5226,19 +5187,9 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 						removeVert = true;
 						for (tri = removeTriEnd; tri < triEnd; ++tri) {
 							const Triangle& t = (*tri);
-							if (!isBSTri) {
-								if (v == childPartition->verts[t.p1] ||
-									v == childPartition->verts[t.p2] ||
-									v == childPartition->verts[t.p3]) {
-									removeVert = false;
-									break;
-								}
-							}
-							else {
-								if (v == t.p1 || v == t.p2 || v == t.p3) {
-									removeVert = false;
-									break;
-								}
+							if (v == t.p1 || v == t.p2 || v == t.p3) {
+								removeVert = false;
+								break;
 							}
 						}
 
@@ -5246,39 +5197,8 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 							vertsToRemove.insert(v);
 					}
 
-					// Find vertices that need to be decremented before erasing tris
-					std::set<ushort> vertsToDecrement;
-					if (!isBSTri) {
-						for (auto &v : vertsToRemove) {
-							for (auto itTri = childPartition->tris.begin(); itTri < removeTriEnd; ++itTri) {
-								const Triangle& t = (*itTri);
-								if (v == childPartition->verts[t.p1])
-									vertsToDecrement.insert(t.p1);
-								else if (v == childPartition->verts[t.p2])
-									vertsToDecrement.insert(t.p2);
-								else if (v == childPartition->verts[t.p3])
-									vertsToDecrement.insert(t.p3);
-							}
-						}
-					}
-
 					// Erase triangles from end
 					childPartition->tris.erase(childPartition->tris.begin(), removeTriEnd);
-
-					// Decrement vertex indices in tris
-					if (!isBSTri) {
-						for (auto &t : childPartition->tris) {
-							ushort* p = &t.p1;
-							for (int i = 0; i < 3; i++) {
-								int pRem = 0;
-								for (auto &remPos : vertsToDecrement)
-									if (p[i] > remPos)
-										pRem++;
-
-								p[i] -= pRem;
-							}
-						}
-					}
 
 					// Erase vertices marked for removal
 					auto removeVertEnd = remove_if(childPartition->verts.begin(), childPartition->verts.end(), [&vertsToRemove](const ushort& vert) {

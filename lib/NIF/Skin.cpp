@@ -112,6 +112,7 @@ void NiSkinPartition::Get(NiStream& stream) {
 	partitions.resize(numPartitions);
 
 	if (stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() == 100) {
+		bMappedIndices = false;
 		stream >> dataSize;
 		stream >> vertexSize;
 		vertexDesc.Get(stream);
@@ -329,6 +330,10 @@ void NiSkinPartition::Put(NiStream& stream) {
 		}
 	}
 
+	// This call of PrepareVertexMapsAndTriangles should be completely
+	// unnecessary.  But it doesn't hurt to be safe.
+	PrepareVertexMapsAndTriangles();
+
 	for (int p = 0; p < numPartitions; p++) {
 		stream << partitions[p].numVertices;
 		stream << partitions[p].numTriangles;
@@ -373,9 +378,6 @@ void NiSkinPartition::Put(NiStream& stream) {
 		if (stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() == 100) {
 			partitions[p].vertexDesc.Put(stream);
 
-			if (partitions[p].trueTriangles.size() != partitions[p].numTriangles)
-				partitions[p].trueTriangles = partitions[p].triangles;
-
 			for (int i = 0; i < partitions[p].numTriangles; i++)
 				stream << partitions[p].trueTriangles[i];
 		}
@@ -401,6 +403,9 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 		else
 			indexCollapse[i] = remCount;
 	}
+
+	ConvertStripsToTriangles();
+	PrepareVertexMapsAndTriangles();
 
 	size_t maxVertexMapSz = 0;
 	for (auto &p : partitions)
@@ -442,7 +447,7 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 				p.vertexMap[i] -= indexCollapse[index];
 		}
 
-		if (!p.trueTriangles.empty()) {
+		if (!bMappedIndices) {
 			for (int i = p.numTriangles - 1; i >= 0; i--) {
 				if (p.triangles[i].p1 > highestRemoved) {
 					p.triangles[i].p1 -= remCount;
@@ -480,7 +485,7 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 
 			p.trueTriangles = p.triangles;
 		}
-		else if (p.numStrips == 0 && p.hasFaces) {
+		else {
 			for (int i = p.numTriangles - 1; i >= 0; i--) {
 				if (p.triangles[i].p1 > mapHighestRemoved) {
 					p.triangles[i].p1 -= mapRemCount;
@@ -515,6 +520,8 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 				else
 					p.triangles[i].p3 -= mapCollapse[p.triangles[i].p3];
 			}
+
+			p.trueTriangles.clear();
 		}
 	}
 
@@ -540,6 +547,130 @@ int NiSkinPartition::RemoveEmptyPartitions(std::vector<int>& outDeletedIndices) 
 		}
 	}
 	return outDeletedIndices.size();
+}
+
+bool NiSkinPartition::PartitionBlock::ConvertStripsToTriangles() {
+	if (numStrips == 0)
+		return false;
+	std::vector<Triangle> stripTris;
+	for (auto &strip : strips) {
+		if (strip.size() < 3)
+			continue;
+
+		ushort a;
+		ushort b = strip[0];
+		ushort c = strip[1];
+		bool flip = false;
+
+		for (int s = 2; s < strip.size(); s++) {
+			a = b;
+			b = c;
+			c = strip[s];
+
+			if (a != b && b != c && c != a) {
+				if (!flip)
+					stripTris.push_back(Triangle(a, b, c));
+				else
+					stripTris.push_back(Triangle(a, c, b));
+			}
+
+			flip = !flip;
+		}
+	}
+
+	hasFaces = true;
+	numTriangles = stripTris.size();
+	triangles = move(stripTris);
+	numStrips = 0;
+	strips.clear();
+	stripLengths.clear();
+	trueTriangles.clear();
+	return true;
+}
+
+bool NiSkinPartition::ConvertStripsToTriangles() {
+	bool triangulated = false;
+	for (PartitionBlock &p : partitions) {
+		if (p.ConvertStripsToTriangles())
+			triangulated = true;
+	}
+	return triangulated;
+}
+
+void NiSkinPartition::PartitionBlock::GenerateTrueTrianglesFromMappedTriangles() {
+	if (vertexMap.empty() || triangles.empty()) {
+		trueTriangles.clear();
+		return;
+	}
+	ApplyMapToTriangles(triangles, vertexMap, trueTriangles);
+}
+
+void NiSkinPartition::PartitionBlock::GenerateMappedTrianglesFromTrueTrianglesAndVertexMap() {
+	if (vertexMap.empty() || trueTriangles.empty()) {
+		triangles.clear();
+		return;
+	}
+	std::vector<ushort> invmap(vertexMap.back() + 1);
+	for (unsigned int mi = 0; mi < vertexMap.size(); ++mi) {
+		if (vertexMap[mi] >= invmap.size())
+			invmap.resize(vertexMap[mi] + 1);
+		invmap[vertexMap[mi]] = mi;
+	}
+	ApplyMapToTriangles(trueTriangles, invmap, triangles);
+}
+
+void NiSkinPartition::PartitionBlock::GenerateVertexMapFromTrueTriangles() {
+	std::vector<bool> vertUsed(CalcMaxTriangleIndex(trueTriangles) + 1, false);
+	for (unsigned int i = 0; i < trueTriangles.size(); ++i) {
+		vertUsed[trueTriangles[i].p1] = true;
+		vertUsed[trueTriangles[i].p2] = true;
+		vertUsed[trueTriangles[i].p3] = true;
+	}
+	vertexMap.clear();
+	for (unsigned int i = 0; i < vertUsed.size(); ++i) {
+		if (vertUsed[i])
+			vertexMap.push_back(i);
+	}
+	numVertices = vertexMap.size();
+}
+
+void NiSkinPartition::PrepareTrueTriangles() {
+	for (PartitionBlock &p : partitions) {
+		if (!p.trueTriangles.empty())
+			continue;
+		if (p.numStrips)
+			p.ConvertStripsToTriangles();
+		if (bMappedIndices)
+			p.GenerateTrueTrianglesFromMappedTriangles();
+		else
+			p.trueTriangles = p.triangles;
+	}
+}
+
+void NiSkinPartition::PartitionBlock::SetTrueTriangles(const std::vector<Triangle> &tris) {
+	trueTriangles = tris;
+	numTriangles = tris.size();
+	triangles.clear();
+	numStrips = 0;
+	strips.clear();
+	stripLengths.clear();
+	hasFaces = true;
+	vertexMap.clear();
+	vertexWeights.clear();
+	boneIndices.clear();
+}
+
+void NiSkinPartition::PrepareVertexMapsAndTriangles() {
+	for (PartitionBlock &p : partitions) {
+		if (p.vertexMap.empty())
+			p.GenerateVertexMapFromTrueTriangles();
+		if (p.triangles.empty()) {
+			if (bMappedIndices)
+				p.GenerateMappedTrianglesFromTrueTrianglesAndVertexMap();
+			else
+				p.triangles = p.trueTriangles;
+		}
+	}
 }
 
 

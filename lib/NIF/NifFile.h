@@ -242,7 +242,6 @@ public:
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(NiShape* shape);
-	bool TriangulatePartitions(NiShape* shape);
 	// Update bone set flags
 	void UpdatePartitionFlags(NiShape* shape);
 };

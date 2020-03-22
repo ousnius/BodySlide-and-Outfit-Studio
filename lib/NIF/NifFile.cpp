@@ -1104,7 +1104,7 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 						if (skinInst) {
 							auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 							if (skinPart) {
-								bool triangulated = TriangulatePartitions(shape);
+								bool triangulated = skinPart->ConvertStripsToTriangles();
 								if (triangulated)
 									result.shapesPartTriangulated.push_back(shapeName);
 
@@ -1135,23 +1135,10 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 										}
 									}
 
-									std::vector<Triangle> realTris(part.numTriangles);
-									for (int i = 0; i < part.numTriangles; i++) {
-										auto& partTri = part.triangles[i];
-
-										// Find the actual tri index from the partition tri index
-										Triangle tri;
-										tri.p1 = part.vertexMap[partTri.p1];
-										tri.p2 = part.vertexMap[partTri.p2];
-										tri.p3 = part.vertexMap[partTri.p3];
-
-										tri.rot();
-										realTris[i] = tri;
-									}
-
-									part.triangles = realTris;
-									part.trueTriangles = realTris;
+									part.GenerateTrueTrianglesFromMappedTriangles();
+									part.triangles = part.trueTriangles;
 								}
+								skinPart->bMappedIndices = false;
 							}
 						}
 					}
@@ -1336,38 +1323,16 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 						if (skinInst) {
 							auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 							if (skinPart) {
-								bool triangulated = TriangulatePartitions(shape);
+								bool triangulated = skinPart->ConvertStripsToTriangles();
 								if (triangulated)
 									result.shapesPartTriangulated.push_back(shapeName);
 
 								for (int partID = 0; partID < skinPart->numPartitions; partID++) {
 									NiSkinPartition::PartitionBlock& part = skinPart->partitions[partID];
 
-									std::vector<Triangle> realTris(part.numTriangles);
-									for (int i = 0; i < part.numTriangles; i++) {
-										auto& partTri = part.triangles[i];
-										Triangle tri;
-
-										// Find the vertex map index of the triangle points
-										auto mapIt1 = std::find(part.vertexMap.begin(), part.vertexMap.end(), partTri.p1);
-										if (mapIt1 != part.vertexMap.end())
-											tri.p1 = std::distance(part.vertexMap.begin(), mapIt1);
-
-										auto mapIt2 = std::find(part.vertexMap.begin(), part.vertexMap.end(), partTri.p2);
-										if (mapIt2 != part.vertexMap.end())
-											tri.p2 = std::distance(part.vertexMap.begin(), mapIt2);
-
-										auto mapIt3 = std::find(part.vertexMap.begin(), part.vertexMap.end(), partTri.p3);
-										if (mapIt3 != part.vertexMap.end())
-											tri.p3 = std::distance(part.vertexMap.begin(), mapIt3);
-
-										tri.rot();
-										realTris[i] = tri;
-									}
-
-									part.triangles = realTris;
-									part.trueTriangles.clear();
+									part.GenerateMappedTrianglesFromTrueTrianglesAndVertexMap();
 								}
+								skinPart->bMappedIndices = true;
 							}
 						}
 					}
@@ -2096,9 +2061,10 @@ bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInst
 	if (!skinPart)
 		return false;
 
+	skinPart->PrepareTrueTriangles();
 	for (auto &part : skinPart->partitions) {
 		verts.push_back(part.vertexMap);
-		tris.push_back(part.triangles);
+		tris.push_back(part.trueTriangles);
 	}
 
 	return true;
@@ -2123,6 +2089,8 @@ void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSk
 	skinPart->numPartitions = verts.size();
 	skinPart->partitions.resize(verts.size());
 	for (int i = 0; i < skinPart->numPartitions; i++) {
+		skinPart->partitions[i].SetTrueTriangles(tris[i]);
+
 		skinPart->partitions[i].numVertices = verts[i].size();
 		if (!verts[i].empty()) {
 			skinPart->partitions[i].hasVertexMap = true;
@@ -2130,12 +2098,6 @@ void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSk
 		}
 		else
 			skinPart->partitions[i].vertexMap.clear();
-
-		skinPart->partitions[i].numTriangles = tris[i].size();
-		if (!tris[i].empty())
-			skinPart->partitions[i].triangles = tris[i];
-		else
-			skinPart->partitions[i].triangles.clear();
 	}
 
 	std::vector<int> emptyIndices;
@@ -2208,7 +2170,7 @@ void NifFile::SetDefaultPartition(NiShape* shape) {
 
 		if (!tris.empty()) {
 			part.numTriangles = tris.size();
-			part.triangles = tris;
+			part.triangles = part.trueTriangles = tris;
 		}
 
 		skinPart->partitions.clear();
@@ -2944,7 +2906,7 @@ bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& ind
 
 		auto skinPartition = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 		if (skinPartition) {
-			TriangulatePartitions(shape);
+			skinPartition->ConvertStripsToTriangles();
 			skinPartition->notifyVerticesDelete(indices);
 
 			std::vector<int> emptyIndices;
@@ -3040,7 +3002,7 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 		return;
 
 	ushort numVerts = shape->GetNumVertices();
-	TriangulatePartitions(shape);
+	skinPart->ConvertStripsToTriangles();
 
 	auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
 	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
@@ -3116,19 +3078,11 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 		fill(usedVerts.begin(), usedVerts.end(), false);
 
 		auto& partition = skinPart->partitions[partID];
+		if (partition.trueTriangles.empty())
+			partition.GenerateTrueTrianglesFromMappedTriangles();
 		ushort numTrisInPart = 0;
 		for (int it = 0; it < partition.numTriangles;) {
-			// Find the actual tri index from the partition tri index
-			Triangle tri;
-			if (bsTriShape) {
-				tri = partition.triangles[it];
-			}
-			else {
-				tri.p1 = partition.vertexMap[partition.triangles[it].p1];
-				tri.p2 = partition.vertexMap[partition.triangles[it].p2];
-				tri.p3 = partition.vertexMap[partition.triangles[it].p3];
-			}
-
+			Triangle tri = partition.trueTriangles[it];
 			tri.rot();
 
 			// Find current tri in full list
@@ -3162,8 +3116,8 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 			if (partBones[partID].size() + newBoneCount > maxBonesPerPartition) {
 				// Too many bones for this partition, make a new partition starting with this triangle
 				NiSkinPartition::PartitionBlock tempPart;
-				tempPart.triangles.assign(partition.triangles.begin() + numTrisInPart, partition.triangles.end());
-				tempPart.numTriangles = tempPart.triangles.size();
+				tempPart.trueTriangles.assign(partition.trueTriangles.begin() + numTrisInPart, partition.trueTriangles.end());
+				tempPart.numTriangles = tempPart.trueTriangles.size();
 
 				tempPart.vertexMap = partition.vertexMap;
 				tempPart.numVertices = tempPart.vertexMap.size();
@@ -3265,45 +3219,18 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 		part.hasVertexWeights = true;
 		part.numWeightsPerVertex = maxBonesPerVertex;
 
-		std::unordered_map<int, int> vertMap;
 		for (int triID = 0; triID < tris.size(); triID++) {
 			if (triParts[triID] != partID)
 				continue;
-
 			Triangle tri = tris[triID];
-			if (vertMap.find(tri.p1) == vertMap.end()) {
-				vertMap[tri.p1] = part.numVertices;
-				part.vertexMap.push_back(tri.p1);
-				tri.p1 = part.numVertices++;
-			}
-			else
-				tri.p1 = vertMap[tri.p1];
-
-			if (vertMap.find(tri.p2) == vertMap.end()) {
-				vertMap[tri.p2] = part.numVertices;
-				part.vertexMap.push_back(tri.p2);
-				tri.p2 = part.numVertices++;
-			}
-			else
-				tri.p2 = vertMap[tri.p2];
-
-			if (vertMap.find(tri.p3) == vertMap.end()) {
-				vertMap[tri.p3] = part.numVertices;
-				part.vertexMap.push_back(tri.p3);
-				tri.p3 = part.numVertices++;
-			}
-			else
-				tri.p3 = vertMap[tri.p3];
-
 			tri.rot();
-
-			if (bsTriShape) {
-				part.triangles.push_back(tris[triID]);
-				part.trueTriangles.push_back(tris[triID]);
-			}
-			else
-				part.triangles.push_back(tri);
+			part.trueTriangles.push_back(tris[triID]);
 		}
+		part.GenerateVertexMapFromTrueTriangles();
+		if (bsTriShape)
+			part.triangles = part.trueTriangles;
+		else
+			part.GenerateMappedTrianglesFromTrueTrianglesAndVertexMap();
 
 		part.numTriangles = part.triangles.size();
 
@@ -3361,64 +3288,6 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 	}
 
 	UpdatePartitionFlags(shape);
-}
-
-bool NifFile::TriangulatePartitions(NiShape* shape) {
-	NiSkinData* skinData = nullptr;
-	NiSkinPartition* skinPart = nullptr;
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-	if (skinInst) {
-		skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
-		skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-
-		if (!skinData || !skinPart)
-			return false;
-	}
-	else
-		return false;
-
-	bool triangulated = false;
-	for (int partID = 0; partID < skinPart->partitions.size(); partID++) {
-		// Triangulate partition if stripified
-		auto& partition = skinPart->partitions[partID];
-		if (partition.numStrips > 0) {
-			std::vector<Triangle> stripTris;
-			for (auto &strip : partition.strips) {
-				if (strip.size() < 3)
-					continue;
-
-				ushort a;
-				ushort b = strip[0];
-				ushort c = strip[1];
-				bool flip = false;
-
-				for (int s = 2; s < strip.size(); s++) {
-					a = b;
-					b = c;
-					c = strip[s];
-
-					if (a != b && b != c && c != a) {
-						if (!flip)
-							stripTris.push_back(Triangle(a, b, c));
-						else
-							stripTris.push_back(Triangle(a, c, b));
-					}
-
-					flip = !flip;
-				}
-			}
-
-			partition.hasFaces = true;
-			partition.numTriangles = stripTris.size();
-			partition.triangles = move(stripTris);
-			partition.numStrips = 0;
-			partition.strips.clear();
-			partition.stripLengths.clear();
-			triangulated = true;
-		}
-	}
-
-	return triangulated;
 }
 
 void NifFile::UpdatePartitionFlags(NiShape* shape) {
@@ -3505,6 +3374,7 @@ void NifFile::CreateSkinning(NiShape* shape) {
 				int skinDataID = hdr.AddBlock(nifSkinData);
 
 				auto nifSkinPartition = new NiSkinPartition();
+				nifSkinPartition->bMappedIndices = false;
 				int partID = hdr.AddBlock(nifSkinPartition);
 
 				auto nifDismemberInst = new BSDismemberSkinInstance();

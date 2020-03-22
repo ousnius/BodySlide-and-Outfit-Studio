@@ -1228,6 +1228,30 @@ inline bool operator== (const Triangle& t1, const Triangle& t2) {
 	return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2) && (t1.p3 == t2.p3));
 }
 
+template<typename IndexType> void ApplyMapToTriangles(const std::vector<Triangle> &src, const std::vector<IndexType> &map, std::vector<Triangle> &dst, bool doRot = true) {
+	int numTriangles = src.size();
+	dst.resize(numTriangles);
+	for (int i = 0; i < numTriangles; ++i) {
+		const Triangle &stri = src[i];
+		Triangle &dtri = dst[i];
+		dtri.p1 = map[stri.p1];
+		dtri.p2 = map[stri.p2];
+		dtri.p3 = map[stri.p3];
+		if (doRot)
+			dtri.rot();
+	}
+}
+
+inline ushort CalcMaxTriangleIndex(const std::vector<Triangle> &v) {
+	ushort maxind = 0;
+	for (unsigned int i = 0; i < v.size(); ++i) {
+		maxind = std::max(maxind, v[i].p1);
+		maxind = std::max(maxind, v[i].p2);
+		maxind = std::max(maxind, v[i].p3);
+	}
+	return maxind;
+}
+
 struct Face {
 	byte nPoints;
 	ushort p1;

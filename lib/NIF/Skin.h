@@ -82,6 +82,14 @@ public:
 		ushort unkShort = 0;					// User Version >= 12
 		VertexDesc vertexDesc;					// User Version >= 12, User Version 2 == 100
 		std::vector<Triangle> trueTriangles;	// User Version >= 12, User Version 2 == 100
+
+		bool ConvertStripsToTriangles();
+		void GenerateTrueTrianglesFromMappedTriangles();
+		void GenerateMappedTrianglesFromTrueTrianglesAndVertexMap();
+		void GenerateVertexMapFromTrueTriangles();
+		// SetTrueTriangles: assigns tris to trueTriangles and clears out
+		// old data.
+		void SetTrueTriangles(const std::vector<Triangle> &tris);
 	};
 
 	uint numPartitions = 0;
@@ -92,6 +100,12 @@ public:
 	uint numVertices = 0;					// Not in file
 	std::vector<BSVertexData> vertData;		// User Version >= 12, User Version 2 == 100
 	std::vector<PartitionBlock> partitions;
+
+	// bMappedIndices is not in the file; it is calculated from 
+	// the file version.  If true, the vertex indices in triangles
+	// and strips are indices into vertexMap, not vertData.
+	// trueTriangles always uses indices into vertData.
+	bool bMappedIndices = true;
 
 	bool HasVertices() { return vertexDesc.HasFlag(VF_VERTEX); }
 	bool HasUVs() { return vertexDesc.HasFlag(VF_UV); }
@@ -110,6 +124,17 @@ public:
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	int RemoveEmptyPartitions(std::vector<int>& outDeletedIndices);
 	NiSkinPartition* Clone() { return new NiSkinPartition(*this); }
+	// ConvertStripsToTriangles returns true if any conversions were
+	// actually performed.  After calling this function, all of the
+	// strips will be empty.
+	bool ConvertStripsToTriangles();
+	// PrepareTrueTriangles: ensures each partition's trueTriangles has
+	// valid data, if necessary by generating it from "triangles" or "strips".
+	void PrepareTrueTriangles();
+	// PrepareVertexMapsAndTriangles: ensures "vertexMap" and "triangles"
+	// have valid data for every partition, if necessary by generating them
+	// from trueTriangles.
+	void PrepareVertexMapsAndTriangles();
 };
 
 class NiNode;
