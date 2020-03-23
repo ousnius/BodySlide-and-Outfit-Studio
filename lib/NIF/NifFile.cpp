@@ -2043,7 +2043,7 @@ void NifFile::SetShapeSegments(NiShape* shape, const BSSubIndexTriShape::BSSITSS
 	bssits->SetSegmentation(segmentation);
 }
 
-bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<ushort>>& verts, std::vector<std::vector<Triangle>>& tris) {
+bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<Triangle>>& tris) {
 	if (!shape)
 		return false;
 
@@ -2063,14 +2063,13 @@ bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInst
 
 	skinPart->PrepareTrueTriangles();
 	for (auto &part : skinPart->partitions) {
-		verts.push_back(part.vertexMap);
 		tris.push_back(part.trueTriangles);
 	}
 
 	return true;
 }
 
-void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<ushort>>& verts, const std::vector<std::vector<Triangle>>& tris) {
+void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<Triangle>>& tris) {
 	if (!shape)
 		return;
 
@@ -2086,18 +2085,12 @@ void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSk
 	if (!skinPart)
 		return;
 
-	skinPart->numPartitions = verts.size();
-	skinPart->partitions.resize(verts.size());
+	skinPart->numPartitions = tris.size();
+	skinPart->partitions.resize(tris.size());
 	for (int i = 0; i < skinPart->numPartitions; i++) {
 		skinPart->partitions[i].SetTrueTriangles(tris[i]);
-
-		skinPart->partitions[i].numVertices = verts[i].size();
-		if (!verts[i].empty()) {
-			skinPart->partitions[i].hasVertexMap = true;
-			skinPart->partitions[i].vertexMap = verts[i];
-		}
-		else
-			skinPart->partitions[i].vertexMap.clear();
+		skinPart->partitions[i].hasVertexMap = true;
+		skinPart->partitions[i].vertexMap.clear();
 	}
 
 	std::vector<int> emptyIndices;
@@ -3224,7 +3217,7 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 				continue;
 			Triangle tri = tris[triID];
 			tri.rot();
-			part.trueTriangles.push_back(tris[triID]);
+			part.trueTriangles.push_back(tri);
 		}
 		part.GenerateVertexMapFromTrueTriangles();
 		if (bsTriShape)

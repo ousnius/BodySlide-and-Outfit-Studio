@@ -101,7 +101,7 @@ public:
 	std::vector<BSVertexData> vertData;		// User Version >= 12, User Version 2 == 100
 	std::vector<PartitionBlock> partitions;
 
-	// bMappedIndices is not in the file; it is calculated from 
+	// bMappedIndices is not in the file; it is calculated from
 	// the file version.  If true, the vertex indices in triangles
 	// and strips are indices into vertexMap, not vertData.
 	// trueTriangles always uses indices into vertData.

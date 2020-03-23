@@ -101,12 +101,10 @@ public:
 
 class PartitionItemData : public wxTreeItemData  {
 public:
-	std::vector<ushort> verts;
 	std::vector<Triangle> tris;
 	ushort type;
 
-	PartitionItemData(const std::vector<ushort>& inVerts, const std::vector<Triangle>& inTris, const ushort& inType) {
-		verts = inVerts;
+	PartitionItemData(const std::vector<Triangle>& inTris, const ushort& inType) {
 		tris = inTris;
 		type = inType;
 	}
