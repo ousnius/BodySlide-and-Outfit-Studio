@@ -1224,10 +1224,6 @@ inline bool operator== (const Edge& t1, const Edge& t2) {
 	return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2));
 }
 
-inline bool operator== (const Triangle& t1, const Triangle& t2) {
-	return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2) && (t1.p3 == t2.p3));
-}
-
 template<typename IndexType> void ApplyMapToTriangles(const std::vector<Triangle> &src, const std::vector<IndexType> &map, std::vector<Triangle> &dst, bool doRot = true) {
 	int numTriangles = src.size();
 	dst.resize(numTriangles);

@@ -101,11 +101,11 @@ public:
 
 class PartitionItemData : public wxTreeItemData  {
 public:
-	std::vector<Triangle> tris;
+	int index;
 	ushort type;
 
-	PartitionItemData(const std::vector<Triangle>& inTris, const ushort& inType) {
-		tris = inTris;
+	PartitionItemData(int inIndex, const ushort& inType) {
+		index = inIndex;
 		type = inType;
 	}
 };
@@ -745,6 +745,7 @@ public:
 	std::string activeSlider;
 	bool bEditSlider;
 	std::string contextBone;
+	std::vector<int> triParts;  // the partition index for each triangle, or -1 for none
 
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
