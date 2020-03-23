@@ -2043,7 +2043,7 @@ void NifFile::SetShapeSegments(NiShape* shape, const BSSubIndexTriShape::BSSITSS
 	bssits->SetSegmentation(segmentation);
 }
 
-bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<Triangle>>& tris) {
+bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<int> &triParts) {
 	if (!shape)
 		return false;
 
@@ -2062,20 +2062,24 @@ bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInst
 		return false;
 
 	skinPart->PrepareTrueTriangles();
-	for (auto &part : skinPart->partitions) {
-		tris.push_back(part.trueTriangles);
+	std::vector<Triangle> shapeTris;
+	shape->GetTriangles(shapeTris);
+	skinPart->GenerateTriPartsFromTrueTriangles(shapeTris);
+	triParts = skinPart->triParts;
+
+	while (partitionInfo.size() < skinPart->partitions.size()) {
+		BSDismemberSkinInstance::PartitionInfo pi;
+		pi.flags = PF_EDITOR_VISIBLE;
+		pi.partID = hdr.GetVersion().User() >= 12 ? 32 : 0;
+		partitionInfo.push_back(pi);
 	}
 
 	return true;
 }
 
-void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<Triangle>>& tris) {
+void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<int> &triParts) {
 	if (!shape)
 		return;
-
-	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
-	if (bsdSkinInst)
-		bsdSkinInst->SetPartitions(partitionInfo);
 
 	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
@@ -2085,14 +2089,50 @@ void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSk
 	if (!skinPart)
 		return;
 
-	skinPart->numPartitions = tris.size();
-	skinPart->partitions.resize(tris.size());
-	for (int i = 0; i < skinPart->numPartitions; i++) {
-		skinPart->partitions[i].SetTrueTriangles(tris[i]);
-		skinPart->partitions[i].hasVertexMap = true;
-		skinPart->partitions[i].vertexMap.clear();
+	// Calculate new number of partitions
+	int numParts = partitionInfo.size();
+	bool hasUnassignedTris = false;
+	for (int pi : triParts) {
+		if (pi >= numParts)
+			numParts = pi + 1;
+		if (pi < 0)
+			hasUnassignedTris = true;
+	}
+	if (hasUnassignedTris)
+		++numParts;
+
+	// Copy triParts and ensure every triangle is assigned to a partition
+	skinPart->triParts = triParts;
+	if (hasUnassignedTris) {
+		for (int &pi : skinPart->triParts) {
+			if (pi < 0) pi = numParts - 1;
+		}
 	}
 
+	// Resize NiSkinPartition partition list
+	skinPart->numPartitions = numParts;
+	skinPart->partitions.resize(numParts);
+	for (int i = 0; i < numParts; i++)
+		skinPart->partitions[i].hasVertexMap = true;
+
+	// Regenerate trueTriangles
+	std::vector<Triangle> shapeTris;
+	shape->GetTriangles(shapeTris);
+	skinPart->GenerateTrueTrianglesFromTriParts(shapeTris);
+
+	// Set BSDismemberSkinInstance partition list
+	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	if (bsdSkinInst) {
+		bsdSkinInst->SetPartitions(partitionInfo);
+		while (bsdSkinInst->GetNumPartitions() < numParts) {
+			BSDismemberSkinInstance::PartitionInfo pi;
+			pi.flags = PF_EDITOR_VISIBLE;
+			pi.partID = hdr.GetVersion().User() >= 12 ? 32 : 0;
+			bsdSkinInst->AddPartition(pi);
+		}
+	}
+
+	// Remove empty partitions
 	std::vector<int> emptyIndices;
 	if (skinPart->RemoveEmptyPartitions(emptyIndices)) {
 		if (bsdSkinInst) {

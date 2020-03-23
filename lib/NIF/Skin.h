@@ -107,6 +107,13 @@ public:
 	// trueTriangles always uses indices into vertData.
 	bool bMappedIndices = true;
 
+	// triParts is not in the file; it is generated as needed.  If
+	// not empty, its size should match the shape's triangle list.
+	// It gives the partition index (into "partitions") of each
+	// triangle.  Unfortunately, converting between triParts and
+	// trueTriangles requires access to the shape's triangle list.
+	std::vector<int> triParts;
+
 	bool HasVertices() { return vertexDesc.HasFlag(VF_VERTEX); }
 	bool HasUVs() { return vertexDesc.HasFlag(VF_UV); }
 	bool HasNormals() { return vertexDesc.HasFlag(VF_NORMAL); }
@@ -135,6 +142,18 @@ public:
 	// have valid data for every partition, if necessary by generating them
 	// from trueTriangles.
 	void PrepareVertexMapsAndTriangles();
+	// GenerateTriPartsFromTrueTriangles: generates triParts from
+	// the partitions' trueTriangles by looking them up in shapeTris.
+	// The new triParts will have the same size as shapeTris.  Though
+	// typically triParts[i] will be between 0 and partitions.size()-1,
+	// it is theoretically possible for some triParts[i] to be -1
+	// (like because of garbage data in the file).
+	void GenerateTriPartsFromTrueTriangles(const std::vector<Triangle> &shapeTris);
+	// GenerateTrueTrianglesFromTriParts: generates the partitions'
+	// trueTriangles from triParts and shapeTris.  If triParts[i] is
+	// out of range, the corresponding triangle will not be copied
+	// into a partition.
+	void GenerateTrueTrianglesFromTriParts(const std::vector<Triangle> &shapeTris);
 };
 
 class NiNode;

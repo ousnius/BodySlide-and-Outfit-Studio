@@ -4976,6 +4976,8 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 			newItem = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1,
 				new PartitionItemData(partInd, isSkyrim ? 32 : 0));
 		}
+		for (int &pi : triParts)
+			pi = partInd;
 	}
 	else
 		newItem = partitionTree->InsertItem(partitionRoot, activePartition, "Partition", -1, -1,
@@ -5031,19 +5033,11 @@ void OutfitStudioFrame::OnPartitionTypeChanged(wxCommandEvent& event) {
 void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 	((wxButton*)event.GetEventObject())->Enable(false);
 
-	// Get all of the active shape's triangles
 	auto shape = activeItem->GetShape();
 	if (!shape)
 		return;
-	std::vector<Triangle> allTris;
-	shape->GetTriangles(allTris);
-	if (allTris.size() != triParts.size()) {
-		CreatePartitionTree(shape);
-		return;
-	}
 
 	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
-	std::vector<std::vector<Triangle>> partitionTris;
 
 	wxTreeItemIdValue cookie;
 	wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
@@ -5051,22 +5045,17 @@ void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 	while (child.IsOk()) {
 		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
 		if (partitionData) {
-			BSDismemberSkinInstance::PartitionInfo pInfo;
-			pInfo.flags = PF_EDITOR_VISIBLE;
-			pInfo.partID = partitionData->type;
-			partitionInfo.push_back(pInfo);
-
-			std::vector<Triangle> partTris;
-			for (unsigned int i = 0; i < triParts.size(); ++i)
-				if (triParts[i] == partitionData->index)
-					partTris.push_back(allTris[i]);
-			partitionTris.push_back(std::move(partTris));
+			const int index = partitionData->index;
+			if (index >= partitionInfo.size())
+				partitionInfo.resize(index + 1);
+			partitionInfo[index].flags = PF_EDITOR_VISIBLE;
+			partitionInfo[index].partID = partitionData->type;
 		}
 
 		child = partitionTree->GetNextChild(partitionRoot, cookie);
 	}
 
-	project->GetWorkNif()->SetShapePartitions(shape, partitionInfo, partitionTris);
+	project->GetWorkNif()->SetShapePartitions(shape, partitionInfo, triParts);
 	CreatePartitionTree(shape);
 }
 
@@ -5080,30 +5069,9 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 		partitionTree->DeleteChildren(partitionRoot);
 
 	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
-	std::vector<std::vector<Triangle>> partitionTris;
-	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, partitionTris)) {
-		partitionInfo.resize(partitionTris.size());
-
-		// Make a map for turning triangles into triangle indices
-		std::vector<Triangle> allTris;
-		shape->GetTriangles(allTris);
-		triParts.clear();
-		triParts.resize(allTris.size(), -1);
-		std::unordered_map<Triangle, int> allTrisInds;
-		for (int i = 0; i < allTris.size(); ++i) {
-			Triangle tri = allTris[i];
-			tri.rot();
-			allTrisInds[tri] = i;
-		}
-
-		for (int i = 0; i < partitionTris.size(); i++) {
+	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {
+		for (int i = 0; i < partitionInfo.size(); i++) {
 			partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(i, partitionInfo[i].partID));
-			// Set triParts to i for all of the partition's triangles.
-			for (int j = 0; j < partitionTris[i].size(); j++) {
-				auto it = allTrisInds.find(partitionTris[i][j]);
-				if (it != allTrisInds.end())
-					triParts[it->second] = i;
-			}
 		}
 	}
 

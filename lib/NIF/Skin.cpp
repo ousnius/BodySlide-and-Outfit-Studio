@@ -673,6 +673,53 @@ void NiSkinPartition::PrepareVertexMapsAndTriangles() {
 	}
 }
 
+void NiSkinPartition::GenerateTriPartsFromTrueTriangles(const std::vector<Triangle> &shapeTris) {
+	triParts.clear();
+	triParts.resize(shapeTris.size());
+
+	// Make a map from Triangles to their indices in shapeTris
+	std::unordered_map<Triangle, int> shapeTriInds;
+	for (int triInd = 0; triInd < shapeTris.size(); ++triInd) {
+		Triangle t = shapeTris[triInd];
+		t.rot();
+		shapeTriInds[t] = triInd;
+	}
+
+	// Set triParts for each partition triangle
+	for (int partInd = 0; partInd < partitions.size(); ++partInd) {
+		for (const Triangle &pt : partitions[partInd].trueTriangles) {
+			Triangle t = pt;
+			t.rot();
+			auto it = shapeTriInds.find(t);
+			if (it != shapeTriInds.end())
+				triParts[it->second] = partInd;
+		}
+	}
+}
+
+void NiSkinPartition::GenerateTrueTrianglesFromTriParts(const std::vector<Triangle> &shapeTris) {
+	if (shapeTris.size() != triParts.size())
+		return;
+	for (PartitionBlock &p : partitions) {
+		p.trueTriangles.clear();
+		p.triangles.clear();
+		p.numStrips = 0;
+		p.strips.clear();
+		p.stripLengths.clear();
+		p.hasFaces = true;
+		p.vertexMap.clear();
+		p.vertexWeights.clear();
+		p.boneIndices.clear();
+	}
+	for (int triInd = 0; triInd < shapeTris.size(); ++triInd) {
+		int partInd = triParts[triInd];
+		if (partInd >= 0 && partInd < partitions.size())
+			partitions[partInd].trueTriangles.push_back(shapeTris[triInd]);
+	}
+	for (PartitionBlock &p : partitions)
+		p.numTriangles = p.trueTriangles.size();
+}
+
 
 BlockRefArray<NiNode>& NiBoneContainer::GetBones() {
 	return boneRefs;
