@@ -81,15 +81,14 @@ public:
 
 		ushort unkShort = 0;					// User Version >= 12
 		VertexDesc vertexDesc;					// User Version >= 12, User Version 2 == 100
+		// When trueTriangles is changed so it's no longer in sync with
+		// triParts, triParts should be cleared.
 		std::vector<Triangle> trueTriangles;	// User Version >= 12, User Version 2 == 100
 
 		bool ConvertStripsToTriangles();
 		void GenerateTrueTrianglesFromMappedTriangles();
 		void GenerateMappedTrianglesFromTrueTrianglesAndVertexMap();
 		void GenerateVertexMapFromTrueTriangles();
-		// SetTrueTriangles: assigns tris to trueTriangles and clears out
-		// old data.
-		void SetTrueTriangles(const std::vector<Triangle> &tris);
 	};
 
 	uint numPartitions = 0;
@@ -103,15 +102,16 @@ public:
 
 	// bMappedIndices is not in the file; it is calculated from
 	// the file version.  If true, the vertex indices in triangles
-	// and strips are indices into vertexMap, not vertData.
-	// trueTriangles always uses indices into vertData.
+	// and strips are indices into vertexMap, not the shape's vertices.
+	// trueTriangles always uses indices into the shape's vertex list.
 	bool bMappedIndices = true;
 
 	// triParts is not in the file; it is generated as needed.  If
 	// not empty, its size should match the shape's triangle list.
 	// It gives the partition index (into "partitions") of each
-	// triangle.  Unfortunately, converting between triParts and
-	// trueTriangles requires access to the shape's triangle list.
+	// triangle.  Whenever triParts is changed so it's not in sync
+	// with trueTriangles, GenerateTrueTrianglesFromTriParts should
+	// be called to get them back in sync.
 	std::vector<int> triParts;
 
 	bool HasVertices() { return vertexDesc.HasFlag(VF_VERTEX); }
@@ -154,6 +154,9 @@ public:
 	// out of range, the corresponding triangle will not be copied
 	// into a partition.
 	void GenerateTrueTrianglesFromTriParts(const std::vector<Triangle> &shapeTris);
+	// PrepareTriParts: ensures triParts has data, generating it
+	// if necessary from trueTriangles and shapeTris.
+	void PrepareTriParts(const std::vector<Triangle> &shapeTris);
 };
 
 class NiNode;

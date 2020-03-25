@@ -1155,6 +1155,9 @@ struct Triangle {
 		return true;
 	}
 
+	ushort &operator[](int ind) {return ind?(ind==2?p3:p2):p1;}
+	const ushort &operator[](int ind) const {return ind?(ind==2?p3:p2):p1;}
+
 	bool operator < (const Triangle& other) const {
 		int d = 0;
 		if (d == 0) d = p1 - other.p1;

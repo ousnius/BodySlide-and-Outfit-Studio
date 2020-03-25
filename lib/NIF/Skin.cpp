@@ -406,6 +406,7 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 
 	ConvertStripsToTriangles();
 	PrepareVertexMapsAndTriangles();
+	triParts.clear();
 
 	size_t maxVertexMapSz = 0;
 	for (auto &p : partitions)
@@ -546,6 +547,8 @@ int NiSkinPartition::RemoveEmptyPartitions(std::vector<int>& outDeletedIndices) 
 			numPartitions--;
 		}
 	}
+	if (!outDeletedIndices.empty())
+		triParts.clear();
 	return outDeletedIndices.size();
 }
 
@@ -647,19 +650,6 @@ void NiSkinPartition::PrepareTrueTriangles() {
 	}
 }
 
-void NiSkinPartition::PartitionBlock::SetTrueTriangles(const std::vector<Triangle> &tris) {
-	trueTriangles = tris;
-	numTriangles = tris.size();
-	triangles.clear();
-	numStrips = 0;
-	strips.clear();
-	stripLengths.clear();
-	hasFaces = true;
-	vertexMap.clear();
-	vertexWeights.clear();
-	boneIndices.clear();
-}
-
 void NiSkinPartition::PrepareVertexMapsAndTriangles() {
 	for (PartitionBlock &p : partitions) {
 		if (p.vertexMap.empty())
@@ -718,6 +708,13 @@ void NiSkinPartition::GenerateTrueTrianglesFromTriParts(const std::vector<Triang
 	}
 	for (PartitionBlock &p : partitions)
 		p.numTriangles = p.trueTriangles.size();
+}
+
+void NiSkinPartition::PrepareTriParts(const std::vector<Triangle> &shapeTris) {
+	if (shapeTris.size() == triParts.size())
+		return;
+	PrepareTrueTriangles();
+	GenerateTriPartsFromTrueTriangles(shapeTris);
 }
 
 
