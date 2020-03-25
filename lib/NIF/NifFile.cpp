@@ -3052,8 +3052,6 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 	if (!shape->GetTriangles(tris))
 		return;
 
-	ushort numVerts = shape->GetNumVertices();
-
 	auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
 	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (bsTriShape)
