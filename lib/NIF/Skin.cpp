@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "Skin.h"
 #include "utils/half.hpp"
 
+#include <unordered_map>
+
 void NiSkinData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
