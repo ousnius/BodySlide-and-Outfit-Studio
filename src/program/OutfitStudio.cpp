@@ -4998,13 +4998,22 @@ void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
 		if (!sibling.IsOk())
 			sibling = partitionTree->GetNextSibling(activePartition);
 
+		int newIndex = -1;
+		if (sibling.IsOk()) {
+			PartitionItemData *siblingData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(sibling));
+			if (siblingData)
+				newIndex = siblingData->index;
+		}
+		for (int i = 0; i < triParts.size(); ++i)
+			if (triParts[i] == partitionData->index)
+				triParts[i] = newIndex;
+
 		if (sibling.IsOk()) {
 			partitionTree->UnselectAll();
 			partitionTree->Delete(activePartition);
 			partitionTree->SelectItem(sibling);
 
-			// Force update from mask to fix triangles
-			ShowPartition(sibling, true);
+			ShowPartition(sibling);
 		}
 		else {
 			partitionTree->Delete(activePartition);
