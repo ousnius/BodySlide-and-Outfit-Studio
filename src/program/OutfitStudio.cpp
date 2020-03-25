@@ -84,6 +84,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(wxID_ANY, OutfitStudioFrame::OnClickSliderButton)
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
 	EVT_CHECKBOX(XRCID("cbFixedWeight"), OutfitStudioFrame::OnFixedWeight)
+	EVT_CHECKBOX(XRCID("cbNormalizeWeights"), OutfitStudioFrame::OnCBNormalizeWeights)
 	EVT_CHECKBOX(wxID_ANY, OutfitStudioFrame::OnCheckBox)
 
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudioFrame::OnSetBaseShape)
@@ -3921,6 +3922,13 @@ void OutfitStudioFrame::OnFixedWeight(wxCommandEvent& event) {
 		weightBrush->bFixedWeight = checked;
 }
 
+void OutfitStudioFrame::OnCBNormalizeWeights(wxCommandEvent& event) {
+	bool checked = event.IsChecked();
+	TB_Weight* weightBrush = dynamic_cast<TB_Weight*>(glView->GetActiveBrush());
+	if (weightBrush)
+		weightBrush->bNormalizeWeights = checked;
+}
+
 void OutfitStudioFrame::ToggleVisibility(wxTreeItemId firstItem) {
 	bool vis = true;
 	bool ghost = false;
@@ -5473,11 +5481,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
+		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
 		wxCollapsiblePane* posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
 
 		boneScaleLabel->Show(false);
 		cbFixedWeight->Show(false);
+		cbNormalizeWeights->Show(false);
 		xMirrorBoneLabel->Show(false);
 		posePane->Show(false);
 		project->bPose = false;
@@ -5603,11 +5613,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
+		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
 		wxCollapsiblePane* posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
 
 		boneScaleLabel->Show();
 		cbFixedWeight->Show();
+		cbNormalizeWeights->Show();
 		xMirrorBoneLabel->Show();
 		posePane->Show();
 		project->bPose = cbPose->GetValue();
@@ -8976,6 +8988,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			unweightBrush.lockedBoneNames = lockedBones;
 			unweightBrush.bSpreadWeight = bHasNormBones;
 			unweightBrush.bXMirrorBone = !xMirrorBone.empty();
+			unweightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			unweightBrush.setStrength(-weightBrush.getStrength());
 			activeBrush = &unweightBrush;
 		}
@@ -8985,6 +8998,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			smoothWeightBrush.lockedBoneNames = lockedBones;
 			smoothWeightBrush.bSpreadWeight = bHasNormBones;
 			smoothWeightBrush.bXMirrorBone = !xMirrorBone.empty();
+			smoothWeightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
 			activeBrush = &smoothWeightBrush;
 		}

@@ -899,6 +899,17 @@
 													<option>0</option>
 													<flag>wxALL|wxEXPAND</flag>
 													<border>5</border>
+													<object class="wxCheckBox" name="cbNormalizeWeights">
+														<fg>#ffffff</fg>
+														<label>Normalize Weights</label>
+														<checked>1</checked>
+														<hidden>1</hidden>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
 													<object class="wxBoxSizer">
 														<orient>wxHORIZONTAL</orient>
 														<object class="sizeritem">

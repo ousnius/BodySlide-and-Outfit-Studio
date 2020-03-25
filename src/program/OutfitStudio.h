@@ -1104,6 +1104,7 @@ private:
 	void OnBrushColorChanged(wxColourPickerEvent& event);
 	void OnSwapBrush(wxCommandEvent& event);
 	void OnFixedWeight(wxCommandEvent& event);
+	void OnCBNormalizeWeights(wxCommandEvent& event);
 	void OnSelectSliders(wxCommandEvent& event);
 
 	void ToggleVisibility(wxTreeItemId firstItem = wxTreeItemId());
