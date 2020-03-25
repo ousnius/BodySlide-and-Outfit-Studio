@@ -1228,16 +1228,23 @@ inline bool operator== (const Edge& t1, const Edge& t2) {
 }
 
 template<typename IndexType> void ApplyMapToTriangles(const std::vector<Triangle> &src, const std::vector<IndexType> &map, std::vector<Triangle> &dst, bool doRot = true) {
-	int numTriangles = src.size();
-	dst.resize(numTriangles);
+	const int numTriangles = src.size();
+	const int mapsz = map.size();
+	dst.clear();
+	dst.reserve(numTriangles);
 	for (int i = 0; i < numTriangles; ++i) {
-		const Triangle &stri = src[i];
-		Triangle &dtri = dst[i];
-		dtri.p1 = map[stri.p1];
-		dtri.p2 = map[stri.p2];
-		dtri.p3 = map[stri.p3];
+		Triangle tri = src[i];
+		if (tri.p1 >= mapsz || tri.p2  >= mapsz || tri.p3 >= mapsz)
+			continue;
+		// Triangle's indices are unsigned, but IndexType might be signed.
+		if (map[tri.p1] < 0 || map[tri.p2] < 0 || map[tri.p3] < 0)
+			continue;
+		tri.p1 = map[tri.p1];
+		tri.p2 = map[tri.p2];
+		tri.p3 = map[tri.p3];
 		if (doRot)
-			dtri.rot();
+			tri.rot();
+		dst.push_back(tri);
 	}
 }
 

@@ -541,7 +541,7 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 int NiSkinPartition::RemoveEmptyPartitions(std::vector<int>& outDeletedIndices) {
 	outDeletedIndices.clear();
 	for (int i = partitions.size() - 1; i >= 0; i--) {
-		if (partitions[i].numVertices == 0) {
+		if (partitions[i].numTriangles == 0) {
 			outDeletedIndices.push_back(i);
 			partitions.erase(partitions.begin() + i);
 			numPartitions--;
@@ -603,14 +603,20 @@ bool NiSkinPartition::ConvertStripsToTriangles() {
 void NiSkinPartition::PartitionBlock::GenerateTrueTrianglesFromMappedTriangles() {
 	if (vertexMap.empty() || triangles.empty()) {
 		trueTriangles.clear();
+		numTriangles = 0;
 		return;
 	}
 	ApplyMapToTriangles(triangles, vertexMap, trueTriangles);
+	if (triangles.size() != trueTriangles.size()) {
+		triangles.clear();
+		numTriangles = trueTriangles.size();
+	}
 }
 
 void NiSkinPartition::PartitionBlock::GenerateMappedTrianglesFromTrueTrianglesAndVertexMap() {
 	if (vertexMap.empty() || trueTriangles.empty()) {
 		triangles.clear();
+		numTriangles = 0;
 		return;
 	}
 	std::vector<ushort> invmap(vertexMap.back() + 1);
@@ -620,6 +626,10 @@ void NiSkinPartition::PartitionBlock::GenerateMappedTrianglesFromTrueTrianglesAn
 		invmap[vertexMap[mi]] = mi;
 	}
 	ApplyMapToTriangles(trueTriangles, invmap, triangles);
+	if (triangles.size() != trueTriangles.size()) {
+		trueTriangles.clear();
+		numTriangles = triangles.size();
+	}
 }
 
 void NiSkinPartition::PartitionBlock::GenerateVertexMapFromTrueTriangles() {
