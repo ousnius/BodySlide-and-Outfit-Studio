@@ -4955,25 +4955,33 @@ void OutfitStudioFrame::OnPartitionTreeContext(wxCommandEvent& WXUNUSED(event)) 
 
 void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	bool isSkyrim = wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE || wxGetApp().targetGame == SKYRIMVR;
+	// Find an unused partition index
+	std::set<int> partInds;
+	wxTreeItemIdValue cookie;
+	wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
+	while (child.IsOk()) {
+		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
+		if (partitionData)
+			partInds.insert(partitionData->index);
+		child = partitionTree->GetNextChild(partitionRoot, cookie);
+	}
+	int partInd = 0;
+	while (partInds.count(partInd) != 0) ++partInd;
 	
+	// Create partition item
 	wxTreeItemId newItem;
 	if (!activePartition.IsOk() || partitionTree->GetChildrenCount(partitionRoot) <= 0) {
 		auto shape = activeItem->GetShape();
 		if (shape && shape->GetNumVertices() > 0) {
-			std::vector<ushort> verts(shape->GetNumVertices());
-			for (int id = 0; id < verts.size(); id++)
-				verts[id] = id;
-
-			std::vector<Triangle> tris;
-			shape->GetTriangles(tris);
-
 			newItem = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1,
-				new PartitionItemData(verts, tris, isSkyrim ? 32 : 0));
+				new PartitionItemData(partInd, isSkyrim ? 32 : 0));
 		}
+		for (int &pi : triParts)
+			pi = partInd;
 	}
 	else
 		newItem = partitionTree->InsertItem(partitionRoot, activePartition, "Partition", -1, -1,
-			new PartitionItemData(std::vector<ushort>(), std::vector<Triangle>(), isSkyrim ? 32 : 0));
+			new PartitionItemData(partInd, isSkyrim ? 32 : 0));
 
 	if (newItem.IsOk()) {
 		partitionTree->UnselectAll();
@@ -4990,19 +4998,22 @@ void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
 		if (!sibling.IsOk())
 			sibling = partitionTree->GetNextSibling(activePartition);
 
+		int newIndex = -1;
 		if (sibling.IsOk()) {
-			PartitionItemData* siblingData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(sibling));
-			if (siblingData) {
-				for (auto &id : partitionData->verts)
-					siblingData->verts.push_back(id);
-			}
+			PartitionItemData *siblingData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(sibling));
+			if (siblingData)
+				newIndex = siblingData->index;
+		}
+		for (int i = 0; i < triParts.size(); ++i)
+			if (triParts[i] == partitionData->index)
+				triParts[i] = newIndex;
 
+		if (sibling.IsOk()) {
 			partitionTree->UnselectAll();
 			partitionTree->Delete(activePartition);
 			partitionTree->SelectItem(sibling);
 
-			// Force update from mask to fix triangles
-			ShowPartition(sibling, true);
+			ShowPartition(sibling);
 		}
 		else {
 			partitionTree->Delete(activePartition);
@@ -5031,9 +5042,11 @@ void OutfitStudioFrame::OnPartitionTypeChanged(wxCommandEvent& event) {
 void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 	((wxButton*)event.GetEventObject())->Enable(false);
 
+	auto shape = activeItem->GetShape();
+	if (!shape)
+		return;
+
 	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
-	std::vector<std::vector<ushort>> partitionVerts;
-	std::vector<std::vector<Triangle>> partitionTris;
 
 	wxTreeItemIdValue cookie;
 	wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
@@ -5041,20 +5054,18 @@ void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 	while (child.IsOk()) {
 		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
 		if (partitionData) {
-			BSDismemberSkinInstance::PartitionInfo pInfo;
-			pInfo.flags = PF_EDITOR_VISIBLE;
-			pInfo.partID = partitionData->type;
-			partitionInfo.push_back(pInfo);
-
-			partitionVerts.push_back(partitionData->verts);
-			partitionTris.push_back(partitionData->tris);
+			const int index = partitionData->index;
+			if (index >= partitionInfo.size())
+				partitionInfo.resize(index + 1);
+			partitionInfo[index].flags = PF_EDITOR_VISIBLE;
+			partitionInfo[index].partID = partitionData->type;
 		}
 
 		child = partitionTree->GetNextChild(partitionRoot, cookie);
 	}
 
-	project->GetWorkNif()->SetShapePartitions(activeItem->GetShape(), partitionInfo, partitionVerts, partitionTris);
-	CreatePartitionTree(activeItem->GetShape());
+	project->GetWorkNif()->SetShapePartitions(shape, partitionInfo, triParts);
+	CreatePartitionTree(shape);
 }
 
 void OutfitStudioFrame::OnPartitionReset(wxCommandEvent& event) {
@@ -5067,13 +5078,10 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 		partitionTree->DeleteChildren(partitionRoot);
 
 	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
-	std::vector<std::vector<ushort>> partitionVerts;
-	std::vector<std::vector<Triangle>> partitionTris;
-	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, partitionVerts, partitionTris)) {
-		partitionInfo.resize(partitionVerts.size());
-
-		for (int i = 0; i < partitionVerts.size(); i++)
-			partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(partitionVerts[i], partitionTris[i], partitionInfo[i].partID));
+	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {
+		for (int i = 0; i < partitionInfo.size(); i++) {
+			partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(i, partitionInfo[i].partID));
+		}
 	}
 
 	UpdatePartitionNames();
@@ -5087,6 +5095,9 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 
 void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromMask) {
 	if (!activeItem || !glView->GetSegmentMode())
+		return;
+	auto shape = activeItem->GetShape();
+	if (!shape)
 		return;
 
 	std::unordered_map<ushort, float> mask;
@@ -5107,6 +5118,12 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 	if (!activePartition.IsOk() || !partitionTree->GetItemParent(activePartition).IsOk())
 		return;
 
+	// Get all triangles of the active shape
+	std::vector<Triangle> allTris;
+	shape->GetTriangles(allTris);
+	if (allTris.size() != triParts.size())
+		return;
+
 	PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(activePartition));
 	if (partitionData) {
 		if (!updateFromMask) {
@@ -5119,176 +5136,11 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 			}
 		}
 		else {
-			auto shape = activeItem->GetShape();
-			if (!shape)
-				return;
-
-			// Get all triangles of the active shape
-			std::vector<Triangle> tris;
-			shape->GetTriangles(tris);
-
-			bool isBSTri = shape->HasType<BSTriShape>();
-
-			// Add vertices and triangles from mask
-			std::set<Triangle> realTris;
-			partitionData->verts.clear();
-			partitionData->tris.clear();
-			for (auto &tri : tris) {
-				if (mask.find(tri.p1) != mask.end() && mask.find(tri.p2) != mask.end() && mask.find(tri.p3) != mask.end()) {
-					Triangle partTri;
-
-					auto p1Find = find(partitionData->verts.begin(), partitionData->verts.end(), tri.p1);
-					if (p1Find == partitionData->verts.end()) {
-						partTri.p1 = partitionData->verts.size();
-						partitionData->verts.push_back(tri.p1);
-					}
-					else
-						partTri.p1 = p1Find - partitionData->verts.begin();
-
-					auto p2Find = find(partitionData->verts.begin(), partitionData->verts.end(), tri.p2);
-					if (p2Find == partitionData->verts.end()) {
-						partTri.p2 = partitionData->verts.size();
-						partitionData->verts.push_back(tri.p2);
-					}
-					else
-						partTri.p2 = p2Find - partitionData->verts.begin();
-
-					auto p3Find = find(partitionData->verts.begin(), partitionData->verts.end(), tri.p3);
-					if (p3Find == partitionData->verts.end()) {
-						partTri.p3 = partitionData->verts.size();
-						partitionData->verts.push_back(tri.p3);
-					}
-					else
-						partTri.p3 = p3Find - partitionData->verts.begin();
-
-					tri.rot();
-					partTri.rot();
-
-					if (isBSTri)
-						partitionData->tris.push_back(tri);
-					else
-						partitionData->tris.push_back(partTri);
-
-					realTris.insert(tri);
-				}
-			}
-
-			// Vertex indices that are assigned
-			std::set<ushort> vertsToCheck;
-			if (!isBSTri) {
-				for (auto &tri : partitionData->tris) {
-					vertsToCheck.insert(partitionData->verts[tri.p1]);
-					vertsToCheck.insert(partitionData->verts[tri.p2]);
-					vertsToCheck.insert(partitionData->verts[tri.p3]);
-				}
-			}
-			else {
-				for (auto &tri : partitionData->tris) {
-					vertsToCheck.insert(tri.p1);
-					vertsToCheck.insert(tri.p2);
-					vertsToCheck.insert(tri.p3);
-				}
-			}
-
-			// Remove assigned verts/tris from all other partitions
-			wxTreeItemIdValue cookie;
-			wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
-			while (child.IsOk()) {
-				PartitionItemData* childPartition = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
-				if (childPartition && childPartition != partitionData) {
-					// Move triangles that match to the end
-					auto removeTriEnd = childPartition->tris.end();
-					if (!isBSTri) {
-						removeTriEnd = std::partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
-							Triangle t(childPartition->verts[tri.p1], childPartition->verts[tri.p2], childPartition->verts[tri.p3]);
-
-							if (find_if(realTris.begin(), realTris.end(), [&t](const Triangle& tri) { return tri.CompareIndices(t); }) != realTris.end())
-								return true;
-
-							return false;
-						});
-					}
-					else {
-						removeTriEnd = std::partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
-							if (find_if(realTris.begin(), realTris.end(), [&tri](const Triangle& t) { return t.CompareIndices(tri); }) != realTris.end())
-								return true;
-
-							return false;
-						});
-					}
-
-					// Find vertices that need to be removed
-					std::set<ushort> vertsToRemove;
-					auto tri = removeTriEnd;
-					auto triEnd = childPartition->tris.end();
-					bool removeVert;
-					for (auto &v : vertsToCheck) {
-						removeVert = true;
-						for (tri = removeTriEnd; tri < triEnd; ++tri) {
-							const Triangle& t = (*tri);
-							if (!isBSTri) {
-								if (v == childPartition->verts[t.p1] ||
-									v == childPartition->verts[t.p2] ||
-									v == childPartition->verts[t.p3]) {
-									removeVert = false;
-									break;
-								}
-							}
-							else {
-								if (v == t.p1 || v == t.p2 || v == t.p3) {
-									removeVert = false;
-									break;
-								}
-							}
-						}
-
-						if (removeVert)
-							vertsToRemove.insert(v);
-					}
-
-					// Find vertices that need to be decremented before erasing tris
-					std::set<ushort> vertsToDecrement;
-					if (!isBSTri) {
-						for (auto &v : vertsToRemove) {
-							for (auto itTri = childPartition->tris.begin(); itTri < removeTriEnd; ++itTri) {
-								const Triangle& t = (*itTri);
-								if (v == childPartition->verts[t.p1])
-									vertsToDecrement.insert(t.p1);
-								else if (v == childPartition->verts[t.p2])
-									vertsToDecrement.insert(t.p2);
-								else if (v == childPartition->verts[t.p3])
-									vertsToDecrement.insert(t.p3);
-							}
-						}
-					}
-
-					// Erase triangles from end
-					childPartition->tris.erase(childPartition->tris.begin(), removeTriEnd);
-
-					// Decrement vertex indices in tris
-					if (!isBSTri) {
-						for (auto &t : childPartition->tris) {
-							ushort* p = &t.p1;
-							for (int i = 0; i < 3; i++) {
-								int pRem = 0;
-								for (auto &remPos : vertsToDecrement)
-									if (p[i] > remPos)
-										pRem++;
-
-								p[i] -= pRem;
-							}
-						}
-					}
-
-					// Erase vertices marked for removal
-					auto removeVertEnd = remove_if(childPartition->verts.begin(), childPartition->verts.end(), [&vertsToRemove](const ushort& vert) {
-						return (vertsToRemove.find(vert) != vertsToRemove.end());
-					});
-
-					childPartition->verts.erase(removeVertEnd, childPartition->verts.end());
-				}
-
-				child = partitionTree->GetNextChild(partitionRoot, cookie);
+			// Add triangles from mask
+			for (int triInd = 0; triInd < allTris.size(); ++triInd) {
+				const Triangle &tri = allTris[triInd];
+				if (mask.find(tri.p1) != mask.end() && mask.find(tri.p2) != mask.end() && mask.find(tri.p3) != mask.end())
+					triParts[triInd] = partitionData->index;
 			}
 		}
 	}
@@ -5298,26 +5150,26 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 	if (m) {
 		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 
-		float color = 0.0f;
-		wxTreeItemIdValue cookie;
-		wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
+		const int partIndex = partitionData ? partitionData->index : -1;
 		size_t childCount = partitionTree->GetChildrenCount(partitionRoot) + 1;
-		while (child.IsOk()) {
-			PartitionItemData* childPartition = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
-			if (childPartition && childPartition != partitionData) {
-				color += 1.0f / childCount;
-
-				for (auto &v : childPartition->verts)
-					m->vcolors[v].y = color;
-			}
-
-			child = partitionTree->GetNextChild(partitionRoot, cookie);
+		for (int i = 0; i < allTris.size(); ++i) {
+			if (triParts[i] == -1 || triParts[i] == partIndex)
+				continue;
+			float color = (triParts[i] + 1.0f) / childCount;
+			const Triangle &t = allTris[i];
+			m->vcolors[t.p1].y = color;
+			m->vcolors[t.p2].y = color;
+			m->vcolors[t.p3].y = color;
 		}
 
 		if (partitionData) {
-			for (auto &v : partitionData->verts) {
-				m->vcolors[v].x = 1.0f;
-				m->vcolors[v].z = 1.0f;
+			for (int i = 0; i < allTris.size(); ++i) {
+				if (triParts[i] != partIndex)
+					continue;
+				const Triangle &t = allTris[i];
+				m->vcolors[t.p1].x = m->vcolors[t.p1].z = 1.0f;
+				m->vcolors[t.p2].x = m->vcolors[t.p2].z = 1.0f;
+				m->vcolors[t.p3].x = m->vcolors[t.p3].z = 1.0f;
 			}
 		}
 	}
