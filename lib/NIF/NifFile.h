@@ -198,8 +198,8 @@ public:
 	bool GetShapeSegments(NiShape* shape, BSSubIndexTriShape::BSSITSSegmentation& segmentation);
 	void SetShapeSegments(NiShape* shape, const BSSubIndexTriShape::BSSITSSegmentation& segmentation);
 
-	bool GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<ushort>>& verts, std::vector<std::vector<Triangle>>& tris);
-	void SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<ushort>>& verts, const std::vector<std::vector<Triangle>>& tris, const bool convertSkinInstance = true);
+	bool GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<int> &triParts);
+	void SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<int> &triParts, const bool convertSkinInstance = true);
 	void SetDefaultPartition(NiShape* shape);
 
 	const std::vector<Vector3>* GetRawVertsForShape(NiShape* shape);
@@ -242,7 +242,6 @@ public:
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(NiShape* shape);
-	bool TriangulatePartitions(NiShape* shape);
 	// Update bone set flags
 	void UpdatePartitionFlags(NiShape* shape);
 };

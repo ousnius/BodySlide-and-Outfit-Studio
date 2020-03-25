@@ -1155,6 +1155,9 @@ struct Triangle {
 		return true;
 	}
 
+	ushort &operator[](int ind) {return ind?(ind==2?p3:p2):p1;}
+	const ushort &operator[](int ind) const {return ind?(ind==2?p3:p2):p1;}
+
 	bool operator < (const Triangle& other) const {
 		int d = 0;
 		if (d == 0) d = p1 - other.p1;
@@ -1224,8 +1227,35 @@ inline bool operator== (const Edge& t1, const Edge& t2) {
 	return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2));
 }
 
-inline bool operator== (const Triangle& t1, const Triangle& t2) {
-	return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2) && (t1.p3 == t2.p3));
+template<typename IndexType> void ApplyMapToTriangles(const std::vector<Triangle> &src, const std::vector<IndexType> &map, std::vector<Triangle> &dst, bool doRot = true) {
+	const int numTriangles = src.size();
+	const int mapsz = map.size();
+	dst.clear();
+	dst.reserve(numTriangles);
+	for (int i = 0; i < numTriangles; ++i) {
+		Triangle tri = src[i];
+		if (tri.p1 >= mapsz || tri.p2  >= mapsz || tri.p3 >= mapsz)
+			continue;
+		// Triangle's indices are unsigned, but IndexType might be signed.
+		if (map[tri.p1] < 0 || map[tri.p2] < 0 || map[tri.p3] < 0)
+			continue;
+		tri.p1 = map[tri.p1];
+		tri.p2 = map[tri.p2];
+		tri.p3 = map[tri.p3];
+		if (doRot)
+			tri.rot();
+		dst.push_back(tri);
+	}
+}
+
+inline ushort CalcMaxTriangleIndex(const std::vector<Triangle> &v) {
+	ushort maxind = 0;
+	for (unsigned int i = 0; i < v.size(); ++i) {
+		maxind = std::max(maxind, v[i].p1);
+		maxind = std::max(maxind, v[i].p2);
+		maxind = std::max(maxind, v[i].p3);
+	}
+	return maxind;
 }
 
 struct Face {

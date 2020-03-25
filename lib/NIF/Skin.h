@@ -81,7 +81,14 @@ public:
 
 		ushort unkShort = 0;					// User Version >= 12
 		VertexDesc vertexDesc;					// User Version >= 12, User Version 2 == 100
+		// When trueTriangles is changed so it's no longer in sync with
+		// triParts, triParts should be cleared.
 		std::vector<Triangle> trueTriangles;	// User Version >= 12, User Version 2 == 100
+
+		bool ConvertStripsToTriangles();
+		void GenerateTrueTrianglesFromMappedTriangles();
+		void GenerateMappedTrianglesFromTrueTrianglesAndVertexMap();
+		void GenerateVertexMapFromTrueTriangles();
 	};
 
 	uint numPartitions = 0;
@@ -92,6 +99,20 @@ public:
 	uint numVertices = 0;					// Not in file
 	std::vector<BSVertexData> vertData;		// User Version >= 12, User Version 2 == 100
 	std::vector<PartitionBlock> partitions;
+
+	// bMappedIndices is not in the file; it is calculated from
+	// the file version.  If true, the vertex indices in triangles
+	// and strips are indices into vertexMap, not the shape's vertices.
+	// trueTriangles always uses indices into the shape's vertex list.
+	bool bMappedIndices = true;
+
+	// triParts is not in the file; it is generated as needed.  If
+	// not empty, its size should match the shape's triangle list.
+	// It gives the partition index (into "partitions") of each
+	// triangle.  Whenever triParts is changed so it's not in sync
+	// with trueTriangles, GenerateTrueTrianglesFromTriParts should
+	// be called to get them back in sync.
+	std::vector<int> triParts;
 
 	bool HasVertices() { return vertexDesc.HasFlag(VF_VERTEX); }
 	bool HasUVs() { return vertexDesc.HasFlag(VF_UV); }
@@ -110,6 +131,32 @@ public:
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	int RemoveEmptyPartitions(std::vector<int>& outDeletedIndices);
 	NiSkinPartition* Clone() { return new NiSkinPartition(*this); }
+	// ConvertStripsToTriangles returns true if any conversions were
+	// actually performed.  After calling this function, all of the
+	// strips will be empty.
+	bool ConvertStripsToTriangles();
+	// PrepareTrueTriangles: ensures each partition's trueTriangles has
+	// valid data, if necessary by generating it from "triangles" or "strips".
+	void PrepareTrueTriangles();
+	// PrepareVertexMapsAndTriangles: ensures "vertexMap" and "triangles"
+	// have valid data for every partition, if necessary by generating them
+	// from trueTriangles.
+	void PrepareVertexMapsAndTriangles();
+	// GenerateTriPartsFromTrueTriangles: generates triParts from
+	// the partitions' trueTriangles by looking them up in shapeTris.
+	// The new triParts will have the same size as shapeTris.  Though
+	// typically triParts[i] will be between 0 and partitions.size()-1,
+	// it is theoretically possible for some triParts[i] to be -1
+	// (like because of garbage data in the file).
+	void GenerateTriPartsFromTrueTriangles(const std::vector<Triangle> &shapeTris);
+	// GenerateTrueTrianglesFromTriParts: generates the partitions'
+	// trueTriangles from triParts and shapeTris.  If triParts[i] is
+	// out of range, the corresponding triangle will not be copied
+	// into a partition.
+	void GenerateTrueTrianglesFromTriParts(const std::vector<Triangle> &shapeTris);
+	// PrepareTriParts: ensures triParts has data, generating it
+	// if necessary from trueTriangles and shapeTris.
+	void PrepareTriParts(const std::vector<Triangle> &shapeTris);
 };
 
 class NiNode;
