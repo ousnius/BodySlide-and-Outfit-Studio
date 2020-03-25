@@ -9219,6 +9219,16 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 
 	activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), &translateBrush, *undoHistory.PushState());
 
+	if (os->bEditSlider) {
+		activeStroke->usp.sliderName = os->activeSlider;
+
+		float sliderscale = os->project->SliderValue(os->activeSlider);
+		if (sliderscale == 0.0)
+			sliderscale = 1.0;
+
+		activeStroke->usp.sliderscale = sliderscale;
+	}
+
 	activeStroke->beginStroke(tpi);
 
 	XMoveMesh->bVisible = false;

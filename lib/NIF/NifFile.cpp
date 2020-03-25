@@ -2080,7 +2080,7 @@ bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInst
 	return true;
 }
 
-void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<int> &triParts) {
+void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<int> &triParts, const bool convertSkinInstance) {
 	if (!shape)
 		return;
 
@@ -2127,6 +2127,13 @@ void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSk
 
 	// Set BSDismemberSkinInstance partition list
 	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	if (!bsdSkinInst && convertSkinInstance) {
+		bsdSkinInst = new BSDismemberSkinInstance();
+		*static_cast<NiSkinInstance*>(bsdSkinInst) = *static_cast<NiSkinInstance*>(skinInst);
+		hdr.ReplaceBlock(GetBlockID(skinInst), bsdSkinInst);
+		skinInst = bsdSkinInst;
+	}
+
 	if (bsdSkinInst) {
 		bsdSkinInst->SetPartitions(partitionInfo);
 		while (bsdSkinInst->GetNumPartitions() < numParts) {
