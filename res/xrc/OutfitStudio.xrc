@@ -902,7 +902,7 @@
 													<object class="wxCheckBox" name="cbNormalizeWeights">
 														<fg>#ffffff</fg>
 														<label>Normalize Weights</label>
-														<checked>1</checked>
+														<checked>0</checked>
 														<hidden>1</hidden>
 													</object>
 												</object>

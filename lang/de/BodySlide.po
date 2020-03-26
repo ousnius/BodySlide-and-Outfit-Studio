@@ -2990,3 +2990,6 @@ msgstr "Neue Maske"
 
 msgid "Please enter a new unique name for the mask."
 msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für die Maske ein."
+
+msgid "Normalize Weights"
+msgstr "Weights normalisieren"
