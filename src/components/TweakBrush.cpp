@@ -974,7 +974,8 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 			str = bFixedWeight ? strength * 10.0f - sw : strength;
 			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
 		}
-		nzer.AdjustWeights(i, adjFlag);
+		if (bNormalizeWeights)
+			nzer.AdjustWeights(i, adjFlag);
 		refmesh->vcolors[i].y = uss.boneWeights[0].weights[i].endVal;
 	}
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
@@ -1017,7 +1018,8 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 			adjFlag[1] = b1falloff > 0.0;
 			uss.boneWeights[1].weights[i].endVal += strength * maskF * b1falloff;
 		}
-		nzer.AdjustWeights(i, adjFlag);
+		if (bNormalizeWeights)
+			nzer.AdjustWeights(i, adjFlag);
 		refmesh->vcolors[i].y = uss.boneWeights[0].weights[i].endVal;
 	}
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
@@ -1160,7 +1162,8 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 			str = mwv[i] - uss.boneWeights[1].weights[i].endVal;
 			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
 		}
-		nzer.AdjustWeights(i, adjFlag);
+		if (bNormalizeWeights)
+			nzer.AdjustWeights(i, adjFlag);
 		refmesh->vcolors[i].y = uss.boneWeights[0].weights[i].endVal;
 	}
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);

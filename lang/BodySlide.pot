@@ -2579,3 +2579,6 @@ msgstr ""
 
 msgid "Please enter a new unique name for the mask."
 msgstr ""
+
+msgid "Normalize Weights"
+msgstr ""

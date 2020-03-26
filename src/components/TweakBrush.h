@@ -338,6 +338,7 @@ public:
 	bool bSpreadWeight;
 	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
 	bool bXMirrorBone;
+	bool bNormalizeWeights = false;
 
 	TB_Weight();
 	virtual ~TB_Weight();
@@ -357,6 +358,7 @@ public:
 	bool bSpreadWeight;
 	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
 	bool bXMirrorBone;
+	bool bNormalizeWeights = false;
 
 	TB_Unweight();
 	virtual ~TB_Unweight();
@@ -376,6 +378,7 @@ public:
 	bool bSpreadWeight;
 	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
 	bool bXMirrorBone;
+	bool bNormalizeWeights = false;
 	byte method;				// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
