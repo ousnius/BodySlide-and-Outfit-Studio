@@ -932,6 +932,11 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Un
 	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
+static inline void ClampWeight(float &w) {
+	if (w > 1.0f) w = 1.0f;
+	if (w < 0) w = 0;
+}
+
 TB_Weight::TB_Weight() :TweakBrush() {
 	brushType = TBT_WEIGHT;
 	strength = 0.0015f;
@@ -965,6 +970,8 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		float str = bFixedWeight ? strength * 10.0f - sw : strength;
 		float maskF = 1.0f - refmesh->vcolors[i].x;
 		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
+		if (!bNormalizeWeights)
+			ClampWeight(uss.boneWeights[0].weights[i].endVal);
 		if (bXMirrorBone) {
 			float b1falloff = mFalloff;
 			if (bMirror && orDist < morDist)
@@ -973,6 +980,8 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 			sw = uss.boneWeights[1].weights[i].endVal;
 			str = bFixedWeight ? strength * 10.0f - sw : strength;
 			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
+			if (!bNormalizeWeights)
+				ClampWeight(uss.boneWeights[1].weights[i].endVal);
 		}
 		if (bNormalizeWeights)
 			nzer.AdjustWeights(i, adjFlag);
@@ -1011,12 +1020,16 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 		adjFlag[0] = b0falloff > 0.0;
 		float maskF = 1.0f - refmesh->vcolors[i].x;
 		uss.boneWeights[0].weights[i].endVal += strength * maskF * b0falloff;
+		if (!bNormalizeWeights)
+			ClampWeight(uss.boneWeights[0].weights[i].endVal);
 		if (bXMirrorBone) {
 			float b1falloff = mFalloff;
 			if (bMirror && orDist < morDist)
 				b1falloff = falloff;
 			adjFlag[1] = b1falloff > 0.0;
 			uss.boneWeights[1].weights[i].endVal += strength * maskF * b1falloff;
+			if (!bNormalizeWeights)
+				ClampWeight(uss.boneWeights[1].weights[i].endVal);
 		}
 		if (bNormalizeWeights)
 			nzer.AdjustWeights(i, adjFlag);
@@ -1154,6 +1167,8 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 		float str = wv[i] - uss.boneWeights[0].weights[i].endVal;
 		float maskF = 1.0f - refmesh->vcolors[i].x;
 		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
+		if (!bNormalizeWeights)
+			ClampWeight(uss.boneWeights[0].weights[i].endVal);
 		if (bXMirrorBone) {
 			float b1falloff = mFalloff;
 			if (bMirror && orDist < morDist)
@@ -1161,6 +1176,8 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 			adjFlag[1] = b1falloff > 0.0;
 			str = mwv[i] - uss.boneWeights[1].weights[i].endVal;
 			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
+			if (!bNormalizeWeights)
+				ClampWeight(uss.boneWeights[1].weights[i].endVal);
 		}
 		if (bNormalizeWeights)
 			nzer.AdjustWeights(i, adjFlag);
