@@ -98,7 +98,6 @@ public:
 	}
 	
 	void Open(const std::string& srcFileName);
-	void New(const std::string& newFileName);
 	void Rename(const std::string& newFileName);
 	int GetNames(std::vector<std::string>& outNames, bool append = true, bool unique = false);
 	bool Has(const std::string& queryName);

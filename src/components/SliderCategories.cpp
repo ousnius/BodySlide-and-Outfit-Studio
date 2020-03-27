@@ -224,24 +224,6 @@ void SliderCategoryFile::Open(const std::string& srcFileName) {
 	error = 0;
 }
 
-void SliderCategoryFile::New(const std::string& newFileName) {
-	if (root)
-		return;
-
-	doc.Clear();
-	if (doc.LoadFile(newFileName.c_str()) == XML_SUCCESS) {
-		error = 1;
-	}
-	else {
-		XMLElement* newElement = doc.NewElement("SliderCategories");
-		root = doc.InsertEndChild(newElement)->ToElement();
-	}
-
-	fileName = newFileName;
-	doc.SetUserData(&fileName);
-	error = 0;
-}
-
 void SliderCategoryFile::Rename(const std::string& newFileName) {
 	fileName = newFileName;
 }

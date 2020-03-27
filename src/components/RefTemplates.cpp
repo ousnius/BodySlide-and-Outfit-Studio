@@ -113,24 +113,6 @@ void RefTemplateFile::Open(const std::string& srcFileName) {
 	error = 0;
 }
 
-void RefTemplateFile::New(const std::string& newFileName) {
-	if (root)
-		return;
-
-	doc.Clear();
-	if (doc.LoadFile(newFileName.c_str()) == XML_SUCCESS) {
-		error = 1;
-	}
-	else {
-		XMLElement* newElement = doc.NewElement("RefTemplates");
-		root = doc.InsertEndChild(newElement)->ToElement();
-	}
-
-	fileName = newFileName;
-	doc.SetUserData(&fileName);
-	error = 0;
-}
-
 void RefTemplateFile::Rename(const std::string& newFileName) {
 	fileName = newFileName;
 }

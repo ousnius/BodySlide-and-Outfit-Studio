@@ -94,9 +94,6 @@ public:
 	// Loads the XML document and identifies included category names. On a failure, sets the internal error value.
 	void Open(const std::string& srcFileName);
 
-	// Creates a new empty category document structure, ready to add new categories and sliders to.
-	void New(const std::string& newFileName);
-
 	// Changes the internal file name. The XML file isn't saved until the Save() function is used.
 	// Note the original file name is not changed. This method allows you to save a category as a new file without altering the original.
 	void Rename(const std::string& newFileName);
