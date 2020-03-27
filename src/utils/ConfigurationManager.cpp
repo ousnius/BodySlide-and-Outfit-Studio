@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "ConfigurationManager.h"
+#include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 
 ConfigurationItem::~ConfigurationItem() {
@@ -255,17 +256,34 @@ void ConfigurationManager::Clear() {
 }
 
 int ConfigurationManager::LoadConfig(const std::string& pathToFile, const std::string& rootElement) {
-	XMLDocument configXML;
-	configXML.LoadFile(pathToFile.c_str());
+	int error = 0;
+	FILE* fp = nullptr;
 
-	if (configXML.Error())
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(pathToFile);
+	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
+	if (error)
 		return 1;
+#else
+	fp = fopen(pathToFile.c_str(), "rb");
+	if (!fp) {
+		error = errno;
+		return 1;
+	}
+#endif
+
+	XMLDocument doc;
+	error = doc.LoadFile(fp);
+	fclose(fp);
+
+	if (error)
+		return 2;
 
 	Clear();
 
-	XMLElement* root = configXML.FirstChildElement(rootElement.c_str());
+	XMLElement* root = doc.FirstChildElement(rootElement.c_str());
 	if (!root)
-		return 2;
+		return 3;
 
 	XMLNode* child = root->FirstChild();
 	while (child) {
@@ -276,6 +294,7 @@ int ConfigurationManager::LoadConfig(const std::string& pathToFile, const std::s
 
 		child = child->NextSibling();
 	}
+
 	return 0;
 }
 
@@ -546,10 +565,7 @@ int ConfigurationManager::SaveConfig(const std::string& pathToFile, const std::s
 		return 1;
 
 	XMLDocument doc;
-	if (doc.LoadFile(pathToFile.c_str()) != XML_SUCCESS)
-		return 2;
-
-	doc.Clear();
+	doc.SetBOM(true);
 
 	XMLElement* newElement = doc.NewElement(rootElement.c_str());
 	XMLElement* root = doc.InsertEndChild(newElement)->ToElement();
@@ -565,7 +581,25 @@ int ConfigurationManager::SaveConfig(const std::string& pathToFile, const std::s
 			ci->ToXML(root);
 	}
 
-	if (doc.SaveFile(pathToFile.c_str()) != XML_SUCCESS)
+	int error = 0;
+	FILE* fp = nullptr;
+
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(pathToFile);
+	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
+	if (error)
+		return 2;
+#else
+	fp = fopen(pathToFile.c_str(), "w");
+	if (!fp) {
+		error = errno;
+		return 2;
+	}
+#endif
+
+	error = doc.SaveFile(fp);
+	fclose(fp);
+	if (error)
 		return 3;
 
 	return 0;

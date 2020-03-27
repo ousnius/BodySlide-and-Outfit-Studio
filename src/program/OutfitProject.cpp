@@ -1177,24 +1177,29 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 			}
 		}
 	}
+
 	if (bPose) {
 		int nv = outVerts.size();
 		std::vector<Vector3> pv(nv);
 		std::vector<float> wv(nv, 0.0f);
 		AnimSkin &animSkin = workAnim.shapeSkinning[shape->GetName()];
+
 		for (auto &boneNamesIt : animSkin.boneNames) {
-			AnimWeight &animW = animSkin.boneWeights[boneNamesIt.second];
 			AnimBone *animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
-			// Compose transform: skin -> (posed) bone -> global -> skin
-			MatTransform t = animSkin.xformGlobalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
-			// Add weighted contributions to vertex for this bone
-			for (auto &wIt : animW.weights) {
-				int ind = wIt.first;
-				float w = wIt.second;
-				pv[ind] += w * t.ApplyTransform(outVerts[ind]);
-				wv[ind] += w;
+			if (animB) {
+				AnimWeight &animW = animSkin.boneWeights[boneNamesIt.second];
+				// Compose transform: skin -> (posed) bone -> global -> skin
+				MatTransform t = animSkin.xformGlobalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+				// Add weighted contributions to vertex for this bone
+				for (auto &wIt : animW.weights) {
+					int ind = wIt.first;
+					float w = wIt.second;
+					pv[ind] += w * t.ApplyTransform(outVerts[ind]);
+					wv[ind] += w;
+				}
 			}
 		}
+
 		// Check if total weight for each vertex was 1
 		for (int ind = 0; ind < nv; ++ind) {
 			if (wv[ind] < EPSILON) // If weights are missing for this vertex
@@ -1203,8 +1208,10 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 				pv[ind] /= wv[ind];
 			// else do nothing because weights totaled 1.
 		}
+
 		outVerts.swap(pv);
 	}
+
 	InvalidateBoneScaleCache();
 }
 
@@ -2689,33 +2696,18 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 		CreateNifShapeFromData(s, fbxShape->verts, fbxShape->tris, fbxShape->uvs, &fbxShape->normals);
 
-		int slot = 0;
-		std::vector<int> boneIndices;
 		for (auto &bn : fbxShape->boneNames) {
-			if (!AnimSkeleton::getInstance().RefBone(bn)) {
+			if (!AnimSkeleton::getInstance().GetBonePtr(bn)) {
 				// Not found in reference skeleton, use default values
 				AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(bn);
-				if (!cstm.isStandardBone)
-					nonRefBones += bn + "\n";
-
-				AnimSkeleton::getInstance().RefBone(bn);
+				// TODO: call SetParentBone (FbxNode::GetParent?)
+				// TODO: call SetTransformBoneToParent (FbxNode::LclTranslation and LclRotation?)
+				nonRefBones += bn + "\n";
 			}
 
-			workAnim.shapeBones[useShapeName].push_back(bn);
-			workAnim.shapeSkinning[useShapeName].boneNames[bn] = slot;
+			workAnim.AddShapeBone(useShapeName, bn);
 			workAnim.SetWeights(useShapeName, bn, fbxShape->boneSkin[bn].GetWeights());
-
-			if (baseShape) {
-				MatTransform xform;
-				if (workAnim.GetXFormSkinToBone(baseShape->GetName(), bn, xform))
-					workAnim.SetXFormSkinToBone(useShapeName, bn, xform);
-			}
-
-			boneIndices.push_back(slot++);
 		}
-
-		auto shape = workNif.FindBlockByName<NiShape>(useShapeName);
-		workNif.SetShapeBoneIDList(shape, boneIndices);
 
 		if (!nonRefBones.empty())
 			wxLogMessage("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, nonRefBones);
