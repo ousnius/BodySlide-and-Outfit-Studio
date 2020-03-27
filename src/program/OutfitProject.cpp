@@ -2696,33 +2696,18 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 		CreateNifShapeFromData(s, fbxShape->verts, fbxShape->tris, fbxShape->uvs, &fbxShape->normals);
 
-		int slot = 0;
-		std::vector<int> boneIndices;
 		for (auto &bn : fbxShape->boneNames) {
-			if (!AnimSkeleton::getInstance().RefBone(bn)) {
+			if (!AnimSkeleton::getInstance().GetBonePtr(bn)) {
 				// Not found in reference skeleton, use default values
 				AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(bn);
-				if (!cstm.isStandardBone)
-					nonRefBones += bn + "\n";
-
-				AnimSkeleton::getInstance().RefBone(bn);
+				// TODO: call SetParentBone (FbxNode::GetParent?)
+				// TODO: call SetTransformBoneToParent (FbxNode::LclTranslation and LclRotation?)
+				nonRefBones += bn + "\n";
 			}
 
-			workAnim.shapeBones[useShapeName].push_back(bn);
-			workAnim.shapeSkinning[useShapeName].boneNames[bn] = slot;
+			workAnim.AddShapeBone(useShapeName, bn);
 			workAnim.SetWeights(useShapeName, bn, fbxShape->boneSkin[bn].GetWeights());
-
-			if (baseShape) {
-				MatTransform xform;
-				if (workAnim.GetXFormSkinToBone(baseShape->GetName(), bn, xform))
-					workAnim.SetXFormSkinToBone(useShapeName, bn, xform);
-			}
-
-			boneIndices.push_back(slot++);
 		}
-
-		auto shape = workNif.FindBlockByName<NiShape>(useShapeName);
-		workNif.SetShapeBoneIDList(shape, boneIndices);
 
 		if (!nonRefBones.empty())
 			wxLogMessage("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, nonRefBones);
