@@ -8920,6 +8920,13 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 }
 
 bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
+	// Check if brush strokes are currently allowed
+	if (activeBrush == &weightBrush) {
+		std::string activeBone = os->GetActiveBone();
+		if (activeBone.empty())
+			return false;
+	}
+
 	Vector3 o;
 	Vector3 n;
 	Vector3 d;

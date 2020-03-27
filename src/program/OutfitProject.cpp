@@ -1177,24 +1177,29 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 			}
 		}
 	}
+
 	if (bPose) {
 		int nv = outVerts.size();
 		std::vector<Vector3> pv(nv);
 		std::vector<float> wv(nv, 0.0f);
 		AnimSkin &animSkin = workAnim.shapeSkinning[shape->GetName()];
+
 		for (auto &boneNamesIt : animSkin.boneNames) {
-			AnimWeight &animW = animSkin.boneWeights[boneNamesIt.second];
 			AnimBone *animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
-			// Compose transform: skin -> (posed) bone -> global -> skin
-			MatTransform t = animSkin.xformGlobalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
-			// Add weighted contributions to vertex for this bone
-			for (auto &wIt : animW.weights) {
-				int ind = wIt.first;
-				float w = wIt.second;
-				pv[ind] += w * t.ApplyTransform(outVerts[ind]);
-				wv[ind] += w;
+			if (animB) {
+				AnimWeight &animW = animSkin.boneWeights[boneNamesIt.second];
+				// Compose transform: skin -> (posed) bone -> global -> skin
+				MatTransform t = animSkin.xformGlobalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+				// Add weighted contributions to vertex for this bone
+				for (auto &wIt : animW.weights) {
+					int ind = wIt.first;
+					float w = wIt.second;
+					pv[ind] += w * t.ApplyTransform(outVerts[ind]);
+					wv[ind] += w;
+				}
 			}
 		}
+
 		// Check if total weight for each vertex was 1
 		for (int ind = 0; ind < nv; ++ind) {
 			if (wv[ind] < EPSILON) // If weights are missing for this vertex
@@ -1203,8 +1208,10 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 				pv[ind] /= wv[ind];
 			// else do nothing because weights totaled 1.
 		}
+
 		outVerts.swap(pv);
 	}
+
 	InvalidateBoneScaleCache();
 }
 
