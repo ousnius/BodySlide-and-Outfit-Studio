@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "Skin.h"
 #include "utils/half.hpp"
+#include "NifUtil.h"
 
 #include <unordered_map>
 
@@ -74,34 +75,23 @@ void NiSkinData::Put(NiStream& stream) {
 
 void NiSkinData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 	ushort highestRemoved = vertIndices.back();
-	std::vector<int> indexCollapse(highestRemoved + 1, 0);
+	std::vector<int> indexCollapse = GenerateIndexCollapseMap(vertIndices, highestRemoved + 1);
 
 	NiObject::notifyVerticesDelete(vertIndices);
-
-	int remCount = 0;
-	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
-		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
-			indexCollapse[i] = -1;	// Flag delete
-			remCount++;
-			j++;
-		}
-		else
-			indexCollapse[i] = remCount;
-	}
 
 	ushort ival;
 	for (auto &b : bones) {
 		for (int i = b.numVertices - 1; i >= 0; i--) {
 			ival = b.vertexWeights[i].index;
 			if (b.vertexWeights[i].index > highestRemoved) {
-				b.vertexWeights[i].index -= remCount;
+				b.vertexWeights[i].index -= vertIndices.size();
 			}
 			else if (indexCollapse[ival] == -1) {
 				b.vertexWeights.erase(b.vertexWeights.begin() + i);
 				b.numVertices--;
 			}
 			else
-				b.vertexWeights[i].index -= indexCollapse[ival];
+				b.vertexWeights[i].index = indexCollapse[ival];
 		}
 	}
 }
@@ -390,202 +380,94 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 	if (vertIndices.empty())
 		return;
 
-	ushort highestRemoved = vertIndices.back();
-	std::vector<int> indexCollapse(highestRemoved + 1, 0);
-
 	NiObject::notifyVerticesDelete(vertIndices);
 
-	int remCount = 0;
-	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
-		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
-			indexCollapse[i] = -1;	// Flag delete
-			remCount++;
-			j++;
-		}
-		else
-			indexCollapse[i] = remCount;
-	}
-
+	// Prepare vertexMap and triangles.
 	ConvertStripsToTriangles();
 	PrepareVertexMapsAndTriangles();
 	triParts.clear();
 
-	size_t maxVertexMapSz = 0;
-	for (auto &p : partitions)
-		if (p.vertexMap.size() > maxVertexMapSz)
-			maxVertexMapSz = p.vertexMap.size();
-
-	std::vector<int> mapCollapse(maxVertexMapSz, 0);
-	int mapRemCount = 0;
-	int mapHighestRemoved = maxVertexMapSz;
-
-	ushort index;
+	// Determine maximum vertex index used so we can make a complete
+	// collapse map.  (It would be nice if notifyVerticesDelete had a
+	// numVertices parameter so we didn't have to calculate this.)
+	ushort maxVertInd = 0;
 	for (auto &p : partitions) {
-		mapRemCount = 0;
-		mapHighestRemoved = maxVertexMapSz;
-		for (int i = 0; i < p.vertexMap.size(); i++) {
-			if (p.vertexMap[i] <= highestRemoved && indexCollapse[p.vertexMap[i]] == -1) {
-				mapRemCount++;
-				mapCollapse[i] = -1;
-				mapHighestRemoved = i;
-			}
-			else
-				mapCollapse[i] = mapRemCount;
-		}
+		for (auto i : p.vertexMap)
+			maxVertInd = std::max(maxVertInd, i);
+		if (!bMappedIndices)
+			maxVertInd = std::max(maxVertInd, CalcMaxTriangleIndex(p.triangles));
+	}
 
-		for (int i = p.vertexMap.size() - 1; i >= 0; i--) {
-			index = p.vertexMap[i];
-			if (index > highestRemoved) {
-				p.vertexMap[i] -= remCount;
-			}
-			else if (indexCollapse[index] == -1) {
-				p.vertexMap.erase(p.vertexMap.begin() + i);
-				p.numVertices--;
-				if (p.hasVertexWeights)
-					p.vertexWeights.erase(p.vertexWeights.begin() + i);
-				if (p.hasBoneIndices)
-					p.boneIndices.erase(p.boneIndices.begin() + i);
-			}
-			else
-				p.vertexMap[i] -= indexCollapse[index];
-		}
+	// Make collapse map for shape vertex indices
+	std::vector<int> indexCollapse = GenerateIndexCollapseMap(vertIndices, maxVertInd + 1);
+
+	for (auto &p : partitions) {
+		int oldNumVertices = p.vertexMap.size();
+
+		// Make list of deleted vertexMap indices
+		std::vector<int> vertexMapDelList;
+		for (int i = 0; i < p.vertexMap.size(); i++)
+			if (indexCollapse[p.vertexMap[i]] == -1)
+				vertexMapDelList.push_back(i);
+
+		// Erase indices of vertexMap, vertexWeights, and boneIndices
+		EraseVectorIndices(p.vertexMap, vertexMapDelList);
+		if (p.hasVertexWeights)
+			EraseVectorIndices(p.vertexWeights, vertexMapDelList);
+		if (p.hasBoneIndices)
+			EraseVectorIndices(p.boneIndices, vertexMapDelList);
+		p.numVertices = p.vertexMap.size();
+
+		// Compose vertexMap with indexCollapse to get new vertexMap
+		for (int i = 0; i < p.vertexMap.size(); i++)
+			p.vertexMap[i] = indexCollapse[p.vertexMap[i]];
 
 		if (!bMappedIndices) {
-			for (int i = p.numTriangles - 1; i >= 0; i--) {
-				if (p.triangles[i].p1 > highestRemoved) {
-					p.triangles[i].p1 -= remCount;
-				}
-				else if (indexCollapse[p.triangles[i].p1] == -1) {
-					p.triangles.erase(p.triangles.begin() + i);
-					p.numTriangles--;
-					continue;
-				}
-				else
-					p.triangles[i].p1 -= indexCollapse[p.triangles[i].p1];
-
-				if (p.triangles[i].p2 > highestRemoved) {
-					p.triangles[i].p2 -= remCount;
-				}
-				else if (indexCollapse[p.triangles[i].p2] == -1) {
-					p.triangles.erase(p.triangles.begin() + i);
-					p.numTriangles--;
-					continue;
-				}
-				else
-					p.triangles[i].p2 -= indexCollapse[p.triangles[i].p2];
-
-				if (p.triangles[i].p3 > highestRemoved) {
-					p.triangles[i].p3 -= remCount;
-				}
-				else if (indexCollapse[p.triangles[i].p3] == -1) {
-					p.triangles.erase(p.triangles.begin() + i);
-					p.numTriangles--;
-					continue;
-				}
-				else
-					p.triangles[i].p3 -= indexCollapse[p.triangles[i].p3];
-			}
-
+			// Apply shape vertex index collapse map to true triangles
+			ApplyMapToTriangles(p.triangles, indexCollapse);
 			p.trueTriangles = p.triangles;
 		}
 		else {
-			for (int i = p.numTriangles - 1; i >= 0; i--) {
-				if (p.triangles[i].p1 > mapHighestRemoved) {
-					p.triangles[i].p1 -= mapRemCount;
-				}
-				else if (mapCollapse[p.triangles[i].p1] == -1) {
-					p.triangles.erase(p.triangles.begin() + i);
-					p.numTriangles--;
-					continue;
-				}
-				else
-					p.triangles[i].p1 -= mapCollapse[p.triangles[i].p1];
-
-				if (p.triangles[i].p2 > mapHighestRemoved) {
-					p.triangles[i].p2 -= mapRemCount;
-				}
-				else if (mapCollapse[p.triangles[i].p2] == -1) {
-					p.triangles.erase(p.triangles.begin() + i);
-					p.numTriangles--;
-					continue;
-				}
-				else
-					p.triangles[i].p2 -= mapCollapse[p.triangles[i].p2];
-
-				if (p.triangles[i].p3 > mapHighestRemoved) {
-					p.triangles[i].p3 -= mapRemCount;
-				}
-				else if (mapCollapse[p.triangles[i].p3] == -1) {
-					p.triangles.erase(p.triangles.begin() + i);
-					p.numTriangles--;
-					continue;
-				}
-				else
-					p.triangles[i].p3 -= mapCollapse[p.triangles[i].p3];
-			}
-
+			// Generate collapse map for indices into (old) vertexMap.
+			std::vector<int> mapCollapse = GenerateIndexCollapseMap(vertexMapDelList, oldNumVertices);
+			// Apply vertexMap index collapse to mapped triangles
+			ApplyMapToTriangles(p.triangles, mapCollapse);
 			p.trueTriangles.clear();
 		}
+		p.numTriangles = p.triangles.size();
 	}
 
 	if (!vertData.empty()) {
-		auto vertBegin = &vertData.front();
-		auto pos = remove_if(vertData.begin(), vertData.end(), [&vertBegin, &vertIndices](BSVertexData& v) {
-			auto i = std::distance(vertBegin, &v);
-			return (std::find(vertIndices.begin(), vertIndices.end(), i) != vertIndices.end());
-		});
-
-		vertData.erase(pos, vertData.end());
+		EraseVectorIndices(vertData, vertIndices);
 		numVertices = vertData.size();
 	}
 }
 
 int NiSkinPartition::RemoveEmptyPartitions(std::vector<int>& outDeletedIndices) {
 	outDeletedIndices.clear();
-	for (int i = partitions.size() - 1; i >= 0; i--) {
-		if (partitions[i].numTriangles == 0) {
+	for (int i = 0; i < partitions.size(); ++i)
+		if (partitions[i].numTriangles == 0)
 			outDeletedIndices.push_back(i);
-			partitions.erase(partitions.begin() + i);
-			numPartitions--;
+	if (!outDeletedIndices.empty()) {
+		if (!triParts.empty()) {
+			std::vector<int> piMap = GenerateIndexCollapseMap(outDeletedIndices, numPartitions);
+			for (int &pi : triParts) {
+				if (pi >= 0 && pi < piMap.size())
+					pi = piMap[pi];
+			}
 		}
+		EraseVectorIndices(partitions, outDeletedIndices);
+		numPartitions = partitions.size();
 	}
-	if (!outDeletedIndices.empty())
-		triParts.clear();
 	return outDeletedIndices.size();
 }
 
 bool NiSkinPartition::PartitionBlock::ConvertStripsToTriangles() {
 	if (numStrips == 0)
 		return false;
-	std::vector<Triangle> stripTris;
-	for (auto &strip : strips) {
-		if (strip.size() < 3)
-			continue;
-
-		ushort a;
-		ushort b = strip[0];
-		ushort c = strip[1];
-		bool flip = false;
-
-		for (int s = 2; s < strip.size(); s++) {
-			a = b;
-			b = c;
-			c = strip[s];
-
-			if (a != b && b != c && c != a) {
-				if (!flip)
-					stripTris.push_back(Triangle(a, b, c));
-				else
-					stripTris.push_back(Triangle(a, c, b));
-			}
-
-			flip = !flip;
-		}
-	}
-
 	hasFaces = true;
-	numTriangles = stripTris.size();
-	triangles = move(stripTris);
+	triangles = GenerateTrianglesFromStrips(strips);
+	numTriangles = triangles.size();
 	numStrips = 0;
 	strips.clear();
 	stripLengths.clear();
@@ -608,7 +490,10 @@ void NiSkinPartition::PartitionBlock::GenerateTrueTrianglesFromMappedTriangles()
 		numTriangles = 0;
 		return;
 	}
-	ApplyMapToTriangles(triangles, vertexMap, trueTriangles);
+	trueTriangles = triangles;
+	ApplyMapToTriangles(trueTriangles, vertexMap);
+	for (Triangle &t : trueTriangles)
+		t.rot();
 	if (triangles.size() != trueTriangles.size()) {
 		triangles.clear();
 		numTriangles = trueTriangles.size();
@@ -627,7 +512,10 @@ void NiSkinPartition::PartitionBlock::GenerateMappedTrianglesFromTrueTrianglesAn
 			invmap.resize(vertexMap[mi] + 1);
 		invmap[vertexMap[mi]] = mi;
 	}
-	ApplyMapToTriangles(trueTriangles, invmap, triangles);
+	triangles = trueTriangles;
+	ApplyMapToTriangles(triangles, invmap);
+	for (Triangle &t : triangles)
+		t.rot();
 	if (triangles.size() != trueTriangles.size()) {
 		trueTriangles.clear();
 		numTriangles = triangles.size();

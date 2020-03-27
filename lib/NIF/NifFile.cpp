@@ -1531,8 +1531,7 @@ void NifFile::TriangulateShape(NiShape* shape) {
 	if (shape->HasType<NiTriStrips>()) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (stripsData) {
-			std::vector<Triangle> tris;
-			stripsData->StripsToTris(&tris);
+			std::vector<Triangle> tris = stripsData->StripsToTris();
 
 			if (!tris.empty()) {
 				auto triShape = new NiTriShape();
