@@ -1531,8 +1531,7 @@ void NifFile::TriangulateShape(NiShape* shape) {
 	if (shape->HasType<NiTriStrips>()) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (stripsData) {
-			std::vector<Triangle> tris;
-			stripsData->StripsToTris(&tris);
+			std::vector<Triangle> tris = stripsData->StripsToTris();
 
 			if (!tris.empty()) {
 				auto triShape = new NiTriShape();
@@ -2148,6 +2147,8 @@ void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSk
 	std::vector<int> emptyIndices;
 	if (skinPart->RemoveEmptyPartitions(emptyIndices)) {
 		if (bsdSkinInst) {
+			// Delete partition info in descending order
+			std::sort(emptyIndices.begin(), emptyIndices.end(), std::greater<>());
 			for (auto &i : emptyIndices)
 				bsdSkinInst->RemovePartition(i);
 
@@ -2964,6 +2965,9 @@ bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& ind
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
 				if (skinInst->HasType<BSDismemberSkinInstance>()) {
 					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
+
+					// Delete partition info in descending order
+					std::sort(emptyIndices.begin(), emptyIndices.end(), std::greater<>());
 					for (auto &i : emptyIndices)
 						bsdSkinInst->RemovePartition(i);
 
