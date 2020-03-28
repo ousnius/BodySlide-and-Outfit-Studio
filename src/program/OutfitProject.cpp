@@ -2713,6 +2713,10 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 			wxLogMessage("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, nonRefBones);
 	}
 
+	// Set reference NIF in case nothing was loaded yet
+	if (!workAnim.GetRefNif())
+		workAnim.SetRefNif(&workNif);
+
 	return 0;
 }
 

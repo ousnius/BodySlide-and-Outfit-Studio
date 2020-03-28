@@ -30,9 +30,12 @@ bool AnimInfo::RemoveShapeBone(const std::string& shape, const std::string& bone
 	shapeSkinning[shape].RemoveBone(boneName);
 
 	AnimSkeleton::getInstance().ReleaseBone(boneName);
-	if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
-		if (refNif->CanDeleteNode(boneName))
-			refNif->DeleteNode(boneName);
+
+	if (refNif && refNif->IsValid()) {
+		if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
+			if (refNif->CanDeleteNode(boneName))
+				refNif->DeleteNode(boneName);
+		}
 	}
 
 	return true;
@@ -43,6 +46,7 @@ void AnimInfo::Clear() {
 		for (auto &shapeBoneList : shapeBones) {
 			for (auto &boneName : shapeBoneList.second) {
 				AnimSkeleton::getInstance().ReleaseBone(boneName);
+
 				if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
 					if (refNif->CanDeleteNode(boneName))
 						refNif->DeleteNode(boneName);
@@ -56,6 +60,14 @@ void AnimInfo::Clear() {
 
 		refNif = nullptr;
 	}
+	else {
+		for (auto &shapeBoneList : shapeBones)
+			for (auto &boneName : shapeBoneList.second)
+				AnimSkeleton::getInstance().ReleaseBone(boneName);
+
+		shapeSkinning.clear();
+		shapeBones.clear();
+	}
 }
 
 void AnimInfo::ClearShape(const std::string& shape) {
@@ -64,9 +76,12 @@ void AnimInfo::ClearShape(const std::string& shape) {
 
 	for (auto &boneName : shapeBones[shape]) {
 		AnimSkeleton::getInstance().ReleaseBone(boneName);
-		if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
-			if (refNif->CanDeleteNode(boneName))
-				refNif->DeleteNode(boneName);
+
+		if (refNif && refNif->IsValid()) {
+			if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
+				if (refNif->CanDeleteNode(boneName))
+					refNif->DeleteNode(boneName);
+			}
 		}
 	}
 

@@ -126,10 +126,15 @@ public:
 
 /* Represents animation weighting to a common skeleton across multiple shapes, sourced from nif files*/
 class AnimInfo {
+private:
+	NifFile* refNif = nullptr;
+
 public:
 	std::map<std::string, std::vector<std::string>> shapeBones;
 	std::unordered_map<std::string, AnimSkin> shapeSkinning;		// Shape to skin association.
-	NifFile* refNif = nullptr;
+
+	NifFile* GetRefNif() { return refNif; };
+	void SetRefNif(NifFile* nif) { refNif = nif; };
 
 	// Returns true if a new bone is added, false if the bone already exists.
 	bool AddShapeBone(const std::string& shape, const std::string& boneName);
