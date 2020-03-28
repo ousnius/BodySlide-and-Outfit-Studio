@@ -50,6 +50,53 @@ NiNode* NifFile::GetParentNode(NiObject* childBlock) {
 	return nullptr;
 }
 
+void NifFile::SetParentNode(NiObject* childBlock, NiNode* newParent) {
+	if (!childBlock)
+		return;
+
+	if (!newParent) {
+		newParent = GetRootNode();
+
+		if (!newParent)
+			return;
+	}
+
+	int childId = GetBlockID(childBlock);
+	for (auto &block : blocks) {
+		auto node = dynamic_cast<NiNode*>(block.get());
+		if (!node)
+			continue;
+
+		auto& children = node->GetChildren();
+		for (int ci = 0; ci < children.GetSize(); ++ci) {
+			if (childId != children.GetBlockRef(ci))
+				continue;
+
+			// We have now found the node's old parent
+			if (newParent != node) {
+				children.RemoveBlockRef(ci);
+				newParent->GetChildren().AddBlockRef(childId);
+			}
+
+			return;
+		}
+	}
+
+	// If we get here, the node's old parent was not found.
+	newParent->GetChildren().AddBlockRef(childId);
+}
+
+std::vector<NiNode*> NifFile::GetNodes() {
+	std::vector<NiNode*> outList;
+	for (auto& block : blocks) {
+		auto node = dynamic_cast<NiNode*>(block.get());
+		if (node)
+			outList.push_back(node);
+	}
+
+	return outList;
+}
+
 void NifFile::CopyFrom(const NifFile& other) {
 	if (isValid)
 		Clear();
