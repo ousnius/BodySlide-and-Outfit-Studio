@@ -657,7 +657,7 @@ public:
 	uint GetNumTriangles();
 	bool GetTriangles(std::vector<Triangle>& tris);
 	void SetTriangles(const std::vector<Triangle>& tris);
-	void StripsToTris(std::vector<Triangle>* outTris);
+	std::vector<Triangle> StripsToTris();
 
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();

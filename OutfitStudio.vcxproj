@@ -709,6 +709,7 @@
     <ClInclude Include="lib\NIF\Geometry.h" />
     <ClInclude Include="lib\NIF\Keys.h" />
     <ClInclude Include="lib\NIF\NifFile.h" />
+    <ClInclude Include="lib\NIF\NifUtil.h" />
     <ClInclude Include="lib\NIF\Nodes.h" />
     <ClInclude Include="lib\NIF\Objects.h" />
     <ClInclude Include="lib\NIF\Particles.h" />

@@ -814,6 +814,9 @@
     <ClInclude Include="lib\NIF\NifFile.h">
       <Filter>Libraries\NIF</Filter>
     </ClInclude>
+    <ClInclude Include="lib\NIF\NifUtil.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
     <ClInclude Include="lib\NIF\utils\Miniball.hpp">
       <Filter>Libraries\NIF\Utilities</Filter>
     </ClInclude>
