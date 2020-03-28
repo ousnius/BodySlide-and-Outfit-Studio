@@ -118,6 +118,8 @@ public:
 	T* FindBlockByName(const std::string& name);
 	int GetBlockID(NiObject* block);
 	NiNode* GetParentNode(NiObject* block);
+	void SetParentNode(NiObject *block, NiNode *parent);
+	std::vector<NiNode*> GetNodes();
 
 	NiShader* GetShader(NiShape* shape);
 	NiMaterialProperty* GetMaterialProperty(NiShape* shape);

@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "Anim.h"
 #include <wx/log.h>
 #include <wx/msgdlg.h>
+#include <unordered_set>
 
 extern ConfigurationManager Config;
 
@@ -315,8 +316,10 @@ void AnimInfo::CleanupBones() {
 }
 
 void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
+	// Collect list of needed bones.  Also delete bones used by shapeException
+	// and no other shape if they have no children and have root parent.
+	std::unordered_set<const AnimBone *> neededBones;
 	for (auto &bones : shapeBones) {
-		std::vector<int> bids;
 		for (auto &bone : bones.second) {
 			const AnimBone *bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
 			if (!bptr)
@@ -330,16 +333,83 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 				continue;
 			}
 
-			int id = nif->GetBlockID(nif->FindBlockByName<NiNode>(bone));
-			if (id == 0xFFFFFFFF)
-				id = nif->GetBlockID(bptr->AddToNif(nif));
-
-			bids.push_back(id);
+			neededBones.insert(bptr);
 		}
+	}
 
+	// Make sure each needed bone has a node by creating it if necessary.
+	// Also, for each custom bone, set parent and transform to parent.
+	// Also, generate map of bone names to node IDs.
+	std::unordered_map<std::string, int> boneIDMap;
+	for (const AnimBone *bptr : neededBones) {
+		NiNode *node = nif->FindBlockByName<NiNode>(bptr->boneName);
+		if (!node) {
+			if (bptr->isStandardBone)
+				// If new standard bone, add to root and use xformToGlobal
+				node = nif->AddNode(bptr->boneName, bptr->xformToGlobal);
+			else
+				// If new custom bone, add to parent, recursively
+				node = bptr->AddToNif(nif);
+		}
+		else if (!bptr->isStandardBone) {
+			// If old (exists in nif) custom bone...
+			if (!bptr->parent) {
+				// If old custom bone with no parent, set parent node to root.
+				nif->SetParentNode(node, nullptr);
+			}
+			else {
+				// If old custom bone with parent, find parent bone's node
+				NiNode *pNode = nif->FindBlockByName<NiNode>(bptr->parent->boneName);
+				if (!pNode)
+					// No parent: add parent recursively.
+					pNode = bptr->parent->AddToNif(nif);
+				nif->SetParentNode(node, pNode);
+			}
+			node->SetTransformToParent(bptr->xformToParent);
+		}
+		boneIDMap[bptr->boneName] = nif->GetBlockID(node);
+	}
+
+	// Set the node-to-parent transform for every standard-bone node,
+	// even ones we don't use.
+	for (NiNode *node : nif->GetNodes()) {
+		const AnimBone *bptr = AnimSkeleton::getInstance().GetBonePtr(node->GetName());
+		if (!bptr)
+			continue;	// Don't touch bones we don't know about
+		if (!bptr->isStandardBone)
+			continue;	// Custom bones have already been set
+		NiNode *pNode = nif->GetParentNode(node);
+		if (!pNode || pNode == nif->GetRootNode())
+			// Parent node is root: use xformToGlobal
+			node->SetTransformToParent(bptr->xformToGlobal);
+		else if (bptr->parent && pNode->GetName() == bptr->parent->boneName)
+			// Parent node is bone's parent's node: use xformToParent
+			node->SetTransformToParent(bptr->xformToParent);
+		else {
+			// The parent node does not match our skeletal structure, so we
+			// must calculate the transform.
+			const AnimBone *nparent = AnimSkeleton::getInstance().GetBonePtr(pNode->GetName());
+			if (nparent) {
+				MatTransform p2g = nparent->xformToGlobal;
+				// Now compose: bone cs -> global cs -> parent node's bone cs
+				MatTransform b2p = p2g.InverseTransform().ComposeTransforms(bptr->xformToGlobal);
+				node->SetTransformToParent(b2p);
+			}
+			// if nparent is nullptr, give up: the node has an unknown
+			// parent, so we can't sensibly set its node-to-parent transform.
+		}
+	}
+
+	// Generate bone node ID list for each shape and set it.
+	for (auto &bones : shapeBones) {
 		if (bones.first == shapeException)
 			continue;
-
+		std::vector<int> bids;
+		for (auto &bone : bones.second) {
+			auto it = boneIDMap.find(bone);
+			if (it != boneIDMap.end())
+				bids.push_back(it->second);
+		}
 		auto shape = nif->FindBlockByName<NiShape>(bones.first);
 		nif->SetShapeBoneIDList(shape, bids);
 	}
@@ -360,8 +430,6 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 		std::unordered_map<ushort, VertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {
 			AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
-			if (bptr)
-				nif->SetNodeTransformToParent(boneName, bptr->xformToGlobal, true);
 
 			int bid = GetShapeBoneIndex(shapeBoneList.first, boneName);
 			AnimWeight& bw = shapeSkinning[shapeBoneList.first].boneWeights[bid];
