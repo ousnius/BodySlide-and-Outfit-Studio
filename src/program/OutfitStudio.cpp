@@ -5490,9 +5490,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		cbNormalizeWeights->Show(false);
 		xMirrorBoneLabel->Show(false);
 		posePane->Show(false);
-		project->bPose = false;
 
 		project->ClearBoneScale();
+
+		if (project->bPose) {
+			project->bPose = false;
+			ApplyPose();
+		}
 
 		glView->SetXMirror(previousMirror);
 		glView->SetTransformMode(false);
@@ -5622,7 +5626,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		cbNormalizeWeights->Show();
 		xMirrorBoneLabel->Show();
 		posePane->Show();
-		project->bPose = cbPose->GetValue();
 		
 		glView->SetTransformMode(false);
 		glView->SetActiveBrush(10);
@@ -5630,6 +5633,11 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetXMirror(false);
 		glView->SetEditMode();
 		glView->SetWeightVisible();
+
+		project->bPose = cbPose->GetValue();
+
+		if (project->bPose)
+			ApplyPose();
 
 		GetMenuBar()->Check(XRCID("btnWeightBrush"), true);
 		GetMenuBar()->Check(XRCID("btnXMirror"), false);
