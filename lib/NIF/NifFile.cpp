@@ -60,7 +60,7 @@ void NifFile::SetParentNode(NiObject *childBlock, NiNode *newParent) {
 		auto node = dynamic_cast<NiNode*>(block.get());
 		if (!node)
 			continue;
-		auto children = node->GetChildren();
+		BlockRefArray<NiAVObject> &children = node->GetChildren();
 		for (int ci = 0; ci < children.GetSize(); ++ci) {
 			if (childId != children.GetBlockRef(ci))
 				continue;
