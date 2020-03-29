@@ -201,6 +201,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
 	EVT_MENU(XRCID("resetTransforms"), OutfitStudioFrame::OnResetTransforms)
+	EVT_MENU(XRCID("removeSkinning"), OutfitStudioFrame::OnRemoveSkinning)
 	EVT_MENU(XRCID("shapeProperties"), OutfitStudioFrame::OnShapeProperties)
 
 	EVT_MENU(XRCID("editUndo"), OutfitStudioFrame::OnUndo)
@@ -8197,6 +8198,11 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnResetTransforms(wxCommandEvent& WXUNUSED(event)) {
 	project->ResetTransforms();
+	RefreshGUIFromProj();
+}
+
+void OutfitStudioFrame::OnRemoveSkinning(wxCommandEvent& WXUNUSED(event)) {
+	project->RemoveSkinning();
 	RefreshGUIFromProj();
 }
 

@@ -59,6 +59,7 @@ void AnimInfo::Clear() {
 		for (auto &s : refNif->GetShapeNames())
 			shapeBones[s].clear();
 
+		refNif->DeleteUnreferencedNodes();
 		refNif = nullptr;
 	}
 	else {
@@ -470,6 +471,8 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 				nif->SetShapeVertWeights(shapeBoneList.first, vid.first, vid.second.boneIds, vid.second.weights);
 		}
 	}
+
+	nif->DeleteUnreferencedNodes();
 
 	if (incomplete)
 		wxMessageBox(_("Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export."), _("Export Warning"), wxICON_WARNING);

@@ -2993,3 +2993,9 @@ msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für die Maske ein."
 
 msgid "Normalize Weights"
 msgstr "Weights normalisieren"
+
+msgid "Remove Skinning"
+msgstr "Skinning entfernen"
+
+msgid "Removes skinning of all shapes and all unused nodes."
+msgstr "Skinning aller Modelle und unverwendete Nodes entfernen."

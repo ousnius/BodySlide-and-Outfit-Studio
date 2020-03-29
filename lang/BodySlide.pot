@@ -2582,3 +2582,9 @@ msgstr ""
 
 msgid "Normalize Weights"
 msgstr ""
+
+msgid "Remove Skinning"
+msgstr ""
+
+msgid "Removes skinning of all shapes and all unused nodes."
+msgstr ""

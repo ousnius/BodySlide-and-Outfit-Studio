@@ -577,7 +577,29 @@ public:
 	// Swaps two blocks, updating references in other blocks that may refer to their old indices
 	void SwapBlocks(const int blockIndexLo, const int blockIndexHi);
 	bool IsBlockReferenced(const int blockId);
-	void DeleteUnreferencedBlocks(const int rootId, bool* hadDeletions = nullptr);
+	int GetBlockRefCount(const int blockId);
+
+	template <class T>
+	void DeleteUnreferencedBlocks(const int rootId, bool* hadDeletions = nullptr) {
+		if (rootId == 0xFFFFFFFF)
+			return;
+
+		for (int i = 0; i < numBlocks; i++) {
+			if (i != rootId) {
+				// Only check blocks of provided template type
+				auto block = GetBlock<T>(i);
+				if (block && !IsBlockReferenced(i)) {
+					DeleteBlock(i);
+
+					// Deleting a block can cause others to become unreferenced
+					if (hadDeletions)
+						(*hadDeletions) = true;
+
+					return DeleteUnreferencedBlocks<T>(rootId > i ? rootId - 1 : rootId);
+				}
+			}
+		}
+	}
 
 	ushort AddOrFindBlockTypeId(const std::string& blockTypeName);
 	std::string GetBlockTypeStringById(const int blockId);

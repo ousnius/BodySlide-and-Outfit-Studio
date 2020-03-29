@@ -99,6 +99,7 @@ public:
 
 	NiNode* AddNode(const std::string& nodeName, const MatTransform& xformToParent, NiNode* parent = nullptr);
 	void DeleteNode(const std::string& nodeName);
+	bool CanDeleteNode(NiNode* node);
 	bool CanDeleteNode(const std::string& nodeName);
 	std::string GetNodeName(const int blockID);
 	void SetNodeName(const int blockID, const std::string& newName);
@@ -112,7 +113,18 @@ public:
 	void SortShape(NiShape* shape, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
 	void SortGraph(NiNode* root, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
 	void PrettySortBlocks();
-	bool DeleteUnreferencedBlocks();
+
+	template<class T = NiObject>
+	bool DeleteUnreferencedBlocks() {
+		if (hasUnknown)
+			return false;
+
+		bool hadDeletions = false;
+		hdr.DeleteUnreferencedBlocks<T>(GetBlockID(GetRootNode()), &hadDeletions);
+		return hadDeletions;
+	}
+
+	void DeleteUnreferencedNodes(bool* hadDeletions = nullptr);
 
 	template<class T = NiObject>
 	T* FindBlockByName(const std::string& name);

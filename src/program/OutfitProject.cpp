@@ -2820,3 +2820,12 @@ void OutfitProject::ResetTransforms() {
 			rootNode->SetTransformToParent(MatTransform());
 	}
 }
+
+void OutfitProject::RemoveSkinning() {
+	for (auto &s : workNif.GetShapes()) {
+		workNif.DeleteSkinning(s);
+		workAnim.ClearShape(s->GetName());
+	}
+
+	workNif.DeleteUnreferencedNodes();
+}

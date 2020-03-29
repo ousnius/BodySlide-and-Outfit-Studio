@@ -212,6 +212,7 @@ public:
 
 	void ChooseClothData(NifFile& nif);
 	void ResetTransforms();
+	void RemoveSkinning();
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
 	int ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef = false);

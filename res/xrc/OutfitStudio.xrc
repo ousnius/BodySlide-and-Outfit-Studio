@@ -1545,6 +1545,10 @@
 				<label>Reset Transforms</label>
 				<help>Resets the shape and skin transforms.</help>
 			</object>
+			<object class="wxMenuItem" name="removeSkinning">
+				<label>Remove Skinning</label>
+				<help>Removes skinning of all shapes and all unused nodes.</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenu" name="viewSelect">
 				<label>View</label>

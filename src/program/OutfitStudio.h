@@ -1219,6 +1219,7 @@ private:
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnResetTransforms(wxCommandEvent& event);
+	void OnRemoveSkinning(wxCommandEvent& event);
 	void OnShapeProperties(wxCommandEvent& event);
 
 	void OnMaskLess(wxCommandEvent& event);

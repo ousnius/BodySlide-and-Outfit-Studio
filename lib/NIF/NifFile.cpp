@@ -473,13 +473,32 @@ void NifFile::PrettySortBlocks() {
 	hdr.SetBlockOrder(newIndices);
 }
 
-bool NifFile::DeleteUnreferencedBlocks() {
-	if (hasUnknown)
-		return false;
+void NifFile::DeleteUnreferencedNodes(bool* hadDeletions) {
+	auto root = GetRootNode();
+	if (!root)
+		return;
 
-	bool hadDeletions = false;
-	hdr.DeleteUnreferencedBlocks(GetBlockID(GetRootNode()), &hadDeletions);
-	return hadDeletions;
+	for (auto &node : GetNodes()) {
+		if (node == root)
+			continue;
+
+		int blockId = GetBlockID(node);
+		if (blockId == 0xFFFFFFFF)
+			continue;
+
+		if (!CanDeleteNode(node))
+			continue;
+
+		if (hdr.GetBlockRefCount(blockId) < 2) {
+			hdr.DeleteBlock(blockId);
+
+			// Deleting a block can cause others to become unreferenced
+			if (hadDeletions)
+				(*hadDeletions) = true;
+
+			return DeleteUnreferencedNodes();
+		}
+	}
 }
 
 NiNode* NifFile::AddNode(const std::string& nodeName, const MatTransform& xformToParent, NiNode* parent) {
@@ -503,21 +522,24 @@ void NifFile::DeleteNode(const std::string& nodeName) {
 	hdr.DeleteBlock(GetBlockID(FindBlockByName<NiNode>(nodeName)));
 }
 
-bool NifFile::CanDeleteNode(const std::string& nodeName) {
-	auto node = FindBlockByName<NiNode>(nodeName);
+bool NifFile::CanDeleteNode(NiNode* node) {
 	if (!node)
 		return false;
 
-	// Only delete if the node has no children
-	if (node->GetChildren().GetSize() > 0)
-		return false;
+	std::set<Ref*> refs;
+	node->GetChildRefs(refs);
 
-	// Only delete if the node's parent is the root node
-	auto nodeParent = GetParentNode(node);
-	if (nodeParent != GetRootNode())
-		return false;
+	// Only delete if the node has no child refs
+	for (auto &ref : refs)
+		if (ref->GetIndex() != 0xFFFFFFFF)
+			return false;
 
 	return true;
+}
+
+bool NifFile::CanDeleteNode(const std::string& nodeName) {
+	auto node = FindBlockByName<NiNode>(nodeName);
+	return CanDeleteNode(node);
 }
 
 std::string NifFile::GetNodeName(const int blockID) {
