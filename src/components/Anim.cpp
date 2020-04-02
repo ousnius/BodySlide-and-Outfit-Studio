@@ -269,6 +269,11 @@ void AnimInfo::RecursiveRecalcXFormSkinToBone(const std::string& shape, AnimBone
 		RecursiveRecalcXFormSkinToBone(shape, cptr);
 }
 
+void AnimInfo::ChangeGlobalToSkinTransform(const std::string& shape, const MatTransform &newTrans) {
+	shapeSkinning[shape].xformGlobalToSkin = newTrans;
+	RecursiveRecalcXFormSkinToBone(shape, AnimSkeleton::getInstance().GetRootBonePtr());
+}
+
 bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex) {
 	if (!refNif || !refNif->IsValid())	// Check for existence of reference nif
 		return false;

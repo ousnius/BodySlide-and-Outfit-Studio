@@ -755,6 +755,24 @@
 				</object>
 			</object>
 			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="copyTransDescription">
+					<label>The selected shape(s) has a different skin coordinate system from the reference shape.  Do you want to copy the transforms so they have the same skin coordinates?</label>
+					<wrap>550</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT</flag>
+				<border>10</border>
+				<object class="wxCheckBox" name="cbCopySkinTrans">
+					<label>Copy global-to-skin transform from reference to selected shape(s).</label>
+					<checked>0</checked>
+				</object>
+			</object>
+			<object class="sizeritem">
 				<option>1</option>
 				<flag>wxEXPAND|wxALL</flag>
 				<border>5</border>

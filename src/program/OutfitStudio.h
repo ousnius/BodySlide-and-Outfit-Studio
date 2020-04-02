@@ -113,6 +113,8 @@ public:
 struct WeightCopyOptions {
 	float proximityRadius = 0.0f;
 	int maxResults = 0;
+	bool showSkinTransOption = false;
+	bool doSkinTransCopy = false;
 };
 
 struct ConformOptions {
@@ -1038,6 +1040,7 @@ private:
 	void FillVertexColors();
 
 	bool HasUnweightedCheck();
+	void CalcCopySkinTransOption(WeightCopyOptions &options);
 	bool ShowWeightCopy(WeightCopyOptions& options);
 	void ReselectBone();
 

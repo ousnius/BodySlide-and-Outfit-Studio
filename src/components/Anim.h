@@ -161,6 +161,9 @@ public:
 	// RecursiveRecalcXFormSkinToBone calls RecalcXFormSkinToBone for the
 	// given bone and all its descendants.
 	void RecursiveRecalcXFormSkinToBone(const std::string& shape, AnimBone *bPtr);
+	// ChangeGlobalToSkinTransform sets the global-to-skin transform for a
+	// shape and updates all skin-to-bone transforms.
+	void ChangeGlobalToSkinTransform(const std::string& shape, const MatTransform &newTrans);
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
 	void WriteToNif(NifFile* nif, const std::string& shapeException = "");

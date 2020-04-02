@@ -7973,6 +7973,14 @@ bool OutfitStudioFrame::ShowWeightCopy(WeightCopyOptions& options) {
 			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Enable(!noTargetLimit);
 		});
 
+		wxCheckBox *cbCopySkinTrans = XRCCTRL(dlg, "cbCopySkinTrans", wxCheckBox);
+		if (options.showSkinTransOption)
+			cbCopySkinTrans->SetValue(options.doSkinTransCopy);
+		else {
+			cbCopySkinTrans->Hide();
+			XRCCTRL(dlg, "copyTransDescription", wxStaticText)->Hide();
+		}
+
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
@@ -7983,6 +7991,9 @@ bool OutfitStudioFrame::ShowWeightCopy(WeightCopyOptions& options) {
 				options.maxResults = atol(XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->GetValue().c_str());
 			else
 				options.maxResults = std::numeric_limits<int>::max();
+
+			if (options.showSkinTransOption)
+				options.doSkinTransCopy = cbCopySkinTrans->IsChecked();
 
 			return true;
 		}
@@ -8000,6 +8011,75 @@ void OutfitStudioFrame::ReselectBone() {
 	}
 }
 
+void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
+	// This function calculates whether the "copy global-to-skin transform
+	// from base shape" checkbox should be shown and what its default value
+	// should be.
+
+	NifFile *nif = project->GetWorkNif();
+	NiShape *baseShape = project->GetBaseShape();
+	AnimInfo &workAnim = *project->GetWorkAnim();
+	const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;
+
+	// Check if any shape's skin CS is different from the base shape's.
+	for (int i = 0; i < selectedItems.size(); i++) {
+		NiShape *shape = selectedItems[i]->GetShape();
+		if (shape == baseShape)
+			continue;
+		if (!workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin)) {
+			options.showSkinTransOption = true;
+			break;
+		}
+	}
+
+	if (!options.showSkinTransOption)
+		// They're all the same, so hide the option.
+		return;
+
+	// As a first step in calculating a good default for the option, find
+	// the average vertex position of the base shape in its own skin
+	// coordinates.
+	Vector3 baseAvg;
+	{
+		const std::vector<Vector3> &verts = *nif->GetRawVertsForShape(baseShape);
+		for (int i = 0; i < verts.size(); ++i)
+			baseAvg += verts[i];
+		if (verts.size())
+			baseAvg /= verts.size();
+	}
+
+	// Now check if any shape would be better aligned by changing its
+	// global-to-skin transform.
+	for (int i = 0; i < selectedItems.size(); i++) {
+		NiShape *shape = selectedItems[i]->GetShape();
+		if (shape == baseShape)
+			continue;
+		const MatTransform &globalToSkin = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin;
+		if (globalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin))
+			continue;
+		const std::vector<Vector3> &verts = *nif->GetRawVertsForShape(shape);
+		if (verts.empty())
+			continue;
+
+		// Calculate old average and new average.
+		MatTransform skinToGlobal = globalToSkin.InverseTransform();
+		MatTransform skinToBaseSkin = baseXformGlobalToSkin.ComposeTransforms(skinToGlobal);
+		Vector3 oldAvg, newAvg;
+		for (int i = 0; i < verts.size(); ++i) {
+			oldAvg += skinToBaseSkin.ApplyTransform(verts[i]);
+			newAvg += verts[i];
+		}
+		oldAvg /= verts.size();
+		newAvg /= verts.size();
+
+		// Check whether old or new is closer to the base shape.
+		if (newAvg.DistanceTo(baseAvg) < oldAvg.DistanceTo(baseAvg)) {
+			options.doSkinTransCopy = true;
+			break;
+		}
+	}
+}
+
 void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
@@ -8012,23 +8092,28 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	WeightCopyOptions options;
+	CalcCopySkinTransOption(options);
+	AnimInfo &workAnim = *project->GetWorkAnim();
+
 	if (ShowWeightCopy(options)) {
 		StartProgress(_("Copying bone weights..."));
 
 		UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 		usp->undoType = UT_WEIGHT;
-		std::vector<std::string> baseBones = project->GetWorkAnim()->shapeBones[project->GetBaseShape()->GetName()];
+		std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->GetName()];
 		std::sort(baseBones.begin(), baseBones.end());
 		std::unordered_map<ushort, float> mask;
 		for (int i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
 				wxLogMessage("Copying bone weights to '%s'...", shape->GetName());
+				if (options.doSkinTransCopy)
+					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin);
 				usp->usss.resize(usp->usss.size()+1);
 				usp->usss.back().shapeName = shape->GetName();
 				mask.clear();
 				glView->GetShapeMask(mask, shape->GetName());
-				std::vector<std::string> bones = project->GetWorkAnim()->shapeBones[shape->GetName()];
+				std::vector<std::string> bones = workAnim.shapeBones[shape->GetName()];
 				std::vector<std::string> mergedBones = baseBones;
 				for (auto b : bones)
 					if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
@@ -8047,7 +8132,7 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		EndProgress();
 	}
 
-	project->GetWorkAnim()->CleanupBones();
+	workAnim.CleanupBones();
 	AnimationGUIFromProj();
 }
 
@@ -8090,6 +8175,9 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	WeightCopyOptions options;
+	CalcCopySkinTransOption(options);
+	AnimInfo &workAnim = *project->GetWorkAnim();
+
 	if (ShowWeightCopy(options)) {
 		StartProgress(_("Copying selected bone weights..."));
 
@@ -8100,6 +8188,8 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
 				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->GetName(), bonesString);
+				if (options.doSkinTransCopy)
+					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin);
 				usp->usss.resize(usp->usss.size()+1);
 				usp->usss.back().shapeName = shape->GetName();
 				mask.clear();
@@ -8117,7 +8207,7 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		EndProgress();
 	}
 
-	project->GetWorkAnim()->CleanupBones();
+	workAnim.CleanupBones();
 	AnimationGUIFromProj();
 }
 
