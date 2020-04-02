@@ -3565,6 +3565,19 @@ void OutfitStudioFrame::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetWorkNif()->IsValid())
 		return;
 
+	bool hasSkinTrans = false;
+	for (NiShape *shape : project->GetWorkNif()->GetShapes()) {
+		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+			hasSkinTrans = true;
+	}
+	bool transToGlobal = false;
+	if (hasSkinTrans) {
+		int res = wxMessageBox(_("Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?"), _("Transform to global"), wxYES_NO | wxCANCEL);
+		if (res == wxCANCEL)
+			return;
+		transToGlobal = (res == wxYES);
+	}
+
 	wxString fileName = wxFileSelector(_("Export project as an .obj file"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.IsEmpty())
 		return;
@@ -3572,7 +3585,7 @@ void OutfitStudioFrame::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Exporting project to OBJ file '%s'...", fileName);
 	project->ClearBoneScale();
 
-	if (project->ExportOBJ(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapes(), Vector3(0.1f, 0.1f, 0.1f))) {
+	if (project->ExportOBJ(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapes(), transToGlobal, Vector3(0.1f, 0.1f, 0.1f))) {
 		wxLogError("Failed to export OBJ file '%s'!", fileName);
 		wxMessageBox(_("Failed to export OBJ file!"), _("Export Error"), wxICON_ERROR);
 	}
@@ -3582,6 +3595,20 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
+	}
+
+	bool hasSkinTrans = false;
+	for (auto &i : selectedItems) {
+		NiShape *shape = i->GetShape();
+		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+			hasSkinTrans = true;
+	}
+	bool transToGlobal = false;
+	if (hasSkinTrans) {
+		int res = wxMessageBox(_("Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?"), _("Transform to global"), wxYES_NO | wxCANCEL);
+		if (res == wxCANCEL)
+			return;
+		transToGlobal = (res == wxYES);
 	}
 
 	if (selectedItems.size() > 1) {
@@ -3597,7 +3624,7 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &i : selectedItems)
 			shapes.push_back(i->GetShape());
 
-		if (project->ExportOBJ(fileName.ToUTF8().data(), shapes, Vector3(0.1f, 0.1f, 0.1f))) {
+		if (project->ExportOBJ(fileName.ToUTF8().data(), shapes, transToGlobal, Vector3(0.1f, 0.1f, 0.1f))) {
 			wxLogError("Failed to export OBJ file '%s'!", fileName);
 			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 		}
@@ -3611,7 +3638,7 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes = { activeItem->GetShape() };
-		if (project->ExportOBJ(fileName.ToUTF8().data(), shapes, Vector3(0.1f, 0.1f, 0.1f))) {
+		if (project->ExportOBJ(fileName.ToUTF8().data(), shapes, transToGlobal, Vector3(0.1f, 0.1f, 0.1f))) {
 			wxLogError("Failed to export OBJ file '%s'!", fileName);
 			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 		}
