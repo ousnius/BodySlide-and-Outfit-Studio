@@ -43,7 +43,6 @@ private:
 	wxPanel* pgExtraData = nullptr;
 	wxFlexGridSizer* extraDataGrid = nullptr;
 
-	wxPanel* pgCoordinates = nullptr;
 	wxTextCtrl* textScale = nullptr;
 	wxTextCtrl* textX = nullptr;
 	wxTextCtrl* textY = nullptr;

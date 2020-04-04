@@ -74,7 +74,6 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
 
-	pgCoordinates = XRCCTRL(*this, "pgCoordinates", wxPanel);
 	textScale = XRCCTRL(*this, "textScale", wxTextCtrl);
 	textX = XRCCTRL(*this, "textX", wxTextCtrl);
 	textY = XRCCTRL(*this, "textY", wxTextCtrl);
