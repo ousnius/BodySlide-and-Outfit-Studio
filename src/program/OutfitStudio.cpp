@@ -8099,9 +8099,9 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 		MatTransform skinToGlobal = globalToSkin.InverseTransform();
 		MatTransform skinToBaseSkin = baseXformGlobalToSkin.ComposeTransforms(skinToGlobal);
 		Vector3 oldAvg, newAvg;
-		for (int i = 0; i < verts.size(); ++i) {
-			oldAvg += skinToBaseSkin.ApplyTransform(verts[i]);
-			newAvg += verts[i];
+		for (int j = 0; j < verts.size(); ++j) {
+			oldAvg += skinToBaseSkin.ApplyTransform(verts[j]);
+			newAvg += verts[j];
 		}
 		oldAvg /= verts.size();
 		newAvg /= verts.size();
