@@ -4565,7 +4565,9 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 	}
 	else {
 		triParts.clear();
-		triParts.resize(shape->GetNumTriangles(), -1);
+
+		if (shape)
+			triParts.resize(shape->GetNumTriangles(), -1);
 	}
 
 	wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
