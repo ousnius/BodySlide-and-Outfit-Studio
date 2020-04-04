@@ -708,7 +708,7 @@ public:
 	NiGeometryData* GetGeomData();
 	void SetGeomData(NiGeometryData* geomDataPtr);
 
-	virtual bool ReorderTriangles(const std::vector<uint>& triInds) {return false;}
+	virtual bool ReorderTriangles(const std::vector<uint>&) { return false; }
 
 	NiTriStrips* Clone() { return new NiTriStrips(*this); }
 };

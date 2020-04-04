@@ -499,13 +499,17 @@ bool NiShape::ReorderTriangles(const std::vector<uint>& triInds) {
 	std::vector<Triangle> tris;
 	if (!GetTriangles(tris))
 		return false;
+
 	if (tris.size() != triInds.size())
 		return false;
+
 	for (uint id : triInds)
 		if (id < tris.size())
 			trisOrdered.push_back(tris[id]);
+
 	if (trisOrdered.size() != tris.size())
 		return false;
+
 	SetTriangles(trisOrdered);
 	return true;
 }
@@ -1558,26 +1562,35 @@ void BSSubIndexTriShape::GetSegmentation(NifSegmentationInfo &inf, std::vector<i
 	inf.ssfFile = segmentation.subSegmentData.ssfFile.GetString();
 	inf.segs.resize(segmentation.segments.size());
 	triParts.clear();
+
 	uint numTris = GetNumTriangles();
 	triParts.resize(numTris, -1);
 
-	int partID = 0, arrayIndex = 0;
+	int partID = 0;
+	int arrayIndex = 0;
+
 	for (int i = 0; i < segmentation.segments.size(); ++i) {
 		BSSITSSegment &seg = segmentation.segments[i];
 		uint startIndex = seg.startIndex / 3;
 		uint endIndex = std::min(numTris, startIndex + seg.numPrimitives);
+
 		for (uint id = startIndex; id < endIndex; id++)
 			triParts[id] = partID;
+
 		inf.segs[i].partID = partID++;
 		inf.segs[i].subs.resize(seg.subSegments.size());
+
 		for (int j = 0; j < seg.subSegments.size(); ++j) {
 			BSSITSSubSegment &sub = seg.subSegments[j];
 			startIndex = sub.startIndex / 3;
-			uint endIndex = std::min(numTris, startIndex + sub.numPrimitives);
+
+			endIndex = std::min(numTris, startIndex + sub.numPrimitives);
 			for (uint id = startIndex; id < endIndex; id++)
 				triParts[id] = partID;
+
 			inf.segs[i].subs[j].partID = partID++;
 			arrayIndex++;
+
 			BSSITSSubSegmentDataRecord &rec = segmentation.subSegmentData.dataRecords[arrayIndex];
 			inf.segs[i].subs[j].userSlotID = rec.userSlotID < 30 ? 0 : rec.userSlotID;
 			inf.segs[i].subs[j].material = rec.material;
@@ -1598,6 +1611,7 @@ void BSSubIndexTriShape::SetSegmentation(const NifSegmentationInfo &inf, const s
 	for (const NifSegmentInfo &seg : inf.segs) {
 		if (seg.partID >= oldToNewPartIDs.size())
 			oldToNewPartIDs.resize(seg.partID + 1);
+
 		oldToNewPartIDs[seg.partID] = newPartID++;
 		for (const NifSubSegmentInfo &sub : seg.subs) {
 			if (sub.partID >= oldToNewPartIDs.size())
@@ -1605,6 +1619,7 @@ void BSSubIndexTriShape::SetSegmentation(const NifSegmentationInfo &inf, const s
 			oldToNewPartIDs[sub.partID] = newPartID++;
 		}
 	}
+
 	std::vector<int> triParts(numTris);
 	for (int i = 0; i < numTris; ++i)
 		if (triParts[i] >= 0)
@@ -1614,6 +1629,7 @@ void BSSubIndexTriShape::SetSegmentation(const NifSegmentationInfo &inf, const s
 	std::vector<uint> triInds(numTris);
 	for (int i = 0; i < numTris; ++i)
 		triInds[i] = i;
+
 	std::stable_sort(triInds.begin(), triInds.end(), [&triParts](int i, int j) {
 		return triParts[i] < triParts[j];
 	});
@@ -1626,6 +1642,7 @@ void BSSubIndexTriShape::SetSegmentation(const NifSegmentationInfo &inf, const s
 	for (int i = 0, j = 0; i < triInds.size(); ++i)
 		while (triParts[triInds[i]] >= j)
 			partTriInds[j++] = i;
+
 	partTriInds.back() = triInds.size();
 
 	segmentation = std::move(BSSITSSegmentation());
@@ -1665,11 +1682,13 @@ void BSSubIndexTriShape::SetSegmentation(const NifSegmentationInfo &inf, const s
 				subSegmentDataRecord.userSlotID = subSegmentNumber++;
 			else
 				subSegmentDataRecord.userSlotID = sub.userSlotID;
+
 			subSegmentDataRecord.material = sub.material;
 			subSegmentDataRecord.numData = sub.extraData.size();
 			subSegmentDataRecord.extraData = sub.extraData;
 			segmentation.subSegmentData.dataRecords.push_back(subSegmentDataRecord);
 		}
+
 		parentArrayIndex += childCount + 1;
 		++segmentIndex;
 	}
