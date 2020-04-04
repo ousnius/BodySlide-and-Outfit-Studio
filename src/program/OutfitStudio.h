@@ -115,6 +115,7 @@ struct WeightCopyOptions {
 	int maxResults = 0;
 	bool showSkinTransOption = false;
 	bool doSkinTransCopy = false;
+	bool doTransformGeo = false;
 };
 
 struct ConformOptions {

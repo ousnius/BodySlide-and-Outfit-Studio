@@ -3572,7 +3572,7 @@ void OutfitStudioFrame::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	}
 	bool transToGlobal = false;
 	if (hasSkinTrans) {
-		int res = wxMessageBox(_("Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?"), _("Transform to global"), wxYES_NO | wxCANCEL);
+		int res = wxMessageBox(_("Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?  (This is not recommended.)"), _("Transform to global"), wxYES_NO | wxCANCEL);
 		if (res == wxCANCEL)
 			return;
 		transToGlobal = (res == wxYES);
@@ -8001,10 +8001,14 @@ bool OutfitStudioFrame::ShowWeightCopy(WeightCopyOptions& options) {
 		});
 
 		wxCheckBox *cbCopySkinTrans = XRCCTRL(dlg, "cbCopySkinTrans", wxCheckBox);
-		if (options.showSkinTransOption)
+		wxCheckBox *cbTransformGeo = XRCCTRL(dlg, "cbTransformGeo", wxCheckBox);
+		if (options.showSkinTransOption) {
 			cbCopySkinTrans->SetValue(options.doSkinTransCopy);
+			cbTransformGeo->SetValue(options.doTransformGeo);
+		}
 		else {
 			cbCopySkinTrans->Hide();
+			cbTransformGeo->Hide();
 			XRCCTRL(dlg, "copyTransDescription", wxStaticText)->Hide();
 		}
 
@@ -8019,8 +8023,10 @@ bool OutfitStudioFrame::ShowWeightCopy(WeightCopyOptions& options) {
 			else
 				options.maxResults = std::numeric_limits<int>::max();
 
-			if (options.showSkinTransOption)
+			if (options.showSkinTransOption) {
 				options.doSkinTransCopy = cbCopySkinTrans->IsChecked();
+				options.doTransformGeo = cbTransformGeo->IsChecked();
+			}
 
 			return true;
 		}
@@ -8040,8 +8046,8 @@ void OutfitStudioFrame::ReselectBone() {
 
 void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 	// This function calculates whether the "copy global-to-skin transform
-	// from base shape" checkbox should be shown and what its default value
-	// should be.
+	// from base shape" checkbox should be shown and what the default value
+	// for the "transform-geometry" checkbox should be.
 
 	NifFile *nif = project->GetWorkNif();
 	NiShape *baseShape = project->GetBaseShape();
@@ -8062,10 +8068,11 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 	if (!options.showSkinTransOption)
 		// They're all the same, so hide the option.
 		return;
+	options.doSkinTransCopy = true;
 
-	// As a first step in calculating a good default for the option, find
-	// the average vertex position of the base shape in its own skin
-	// coordinates.
+	// As a first step in calculating a good default for the
+	// transform-geometry option, find the average vertex position of the
+	// base shape in its own skin coordinates.
 	Vector3 baseAvg;
 	{
 		const std::vector<Vector3> &verts = *nif->GetRawVertsForShape(baseShape);
@@ -8100,8 +8107,10 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 		newAvg /= verts.size();
 
 		// Check whether old or new is closer to the base shape.
-		if (newAvg.DistanceTo(baseAvg) < oldAvg.DistanceTo(baseAvg)) {
-			options.doSkinTransCopy = true;
+		// If new is farther away, then transforming the geometry would
+		// be a good idea.
+		if (newAvg.DistanceTo(baseAvg) > oldAvg.DistanceTo(baseAvg)) {
+			options.doTransformGeo = true;
 			break;
 		}
 	}
@@ -8134,8 +8143,14 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
 				wxLogMessage("Copying bone weights to '%s'...", shape->GetName());
-				if (options.doSkinTransCopy)
-					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin);
+				if (options.doSkinTransCopy) {
+					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin;
+					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin;
+					if (options.doTransformGeo && !baseXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin))
+						project->ApplyTransformToShapeGeometry(shape, baseXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
+					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), baseXformGlobalToSkin);
+					project->GetWorkNif()->SetShapeTransformGlobalToSkin(shape, baseXformGlobalToSkin);
+				}
 				usp->usss.resize(usp->usss.size()+1);
 				usp->usss.back().shapeName = shape->GetName();
 				mask.clear();
@@ -8152,6 +8167,8 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 				wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
 		}
 
+		if (options.doSkinTransCopy || options.doTransformGeo)
+			MeshesFromProj();
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
 
@@ -8215,8 +8232,14 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
 				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->GetName(), bonesString);
-				if (options.doSkinTransCopy)
-					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin);
+				if (options.doSkinTransCopy) {
+					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin;
+					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin;
+					if (options.doTransformGeo && !baseXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin))
+						project->ApplyTransformToShapeGeometry(shape, baseXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
+					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), baseXformGlobalToSkin);
+					project->GetWorkNif()->SetShapeTransformGlobalToSkin(shape, baseXformGlobalToSkin);
+				}
 				usp->usss.resize(usp->usss.size()+1);
 				usp->usss.back().shapeName = shape->GetName();
 				mask.clear();
@@ -8227,6 +8250,8 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 				wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
 		}
 
+		if (options.doSkinTransCopy || options.doTransformGeo)
+			MeshesFromProj();
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
 

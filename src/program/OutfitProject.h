@@ -159,6 +159,7 @@ public:
 	void OffsetShape(NiShape* shape, const Vector3& xlate, std::unordered_map<ushort, float>* mask = nullptr);
 	void ScaleShape(NiShape* shape, const Vector3& scale, std::unordered_map<ushort, float>* mask = nullptr);
 	void RotateShape(NiShape* shape, const Vector3& angle, std::unordered_map<ushort, float>* mask = nullptr);
+	void ApplyTransformToShapeGeometry(NiShape* shape, const MatTransform& t);
 
 	// Uses the AutoMorph class to generate proximity values for bone weights.
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.

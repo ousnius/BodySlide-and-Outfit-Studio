@@ -559,6 +559,172 @@
 							</object>
 						</object>
 					</object>
+					<object class="notebookpage">
+						<label>Coordinates</label>
+						<object class="wxPanel" name="pgCoordinates">
+							<object class="wxBoxSizer">
+								<orient>wxVERTICAL</orient>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALIGN_CENTER_VERTICAL|wxTOP|wxLEFT|wxRIGHT</flag>
+									<border>5</border>
+									<object class="wxStaticText" name="lbCoordIntro">
+										<label>The shape's transform from global coordinates to skin coordinates: (All shape geometry is represented in skin coordinates)</label>
+										<wrap>500</wrap>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxBoxSizer">
+										<orient>wxHORIZONTAL</orient>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxALL</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="lbScale">
+												<label>Scale</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxALL</flag>
+											<border>5</border>
+											<object class="wxTextCtrl" name="textScale">
+												<value>1.00000</value>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxFlexGridSizer">
+										<rows>0</rows>
+										<cols>3</cols>
+										<vgap>0</vgap>
+										<hgap>0</hgap>
+										<growablecols>2</growablecols>
+										<growablerows></growablerows>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="labelblank">
+												<label></label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="labelorigin">
+												<label>Origin</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="labelrot">
+												<label>Rotation</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="labelX">
+												<label>X</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxTextCtrl" name="textX">
+												<value>0.00000</value>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxTextCtrl" name="textRX">
+												<value>0.00000</value>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="labelY">
+												<label>Y</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxTextCtrl" name="textY">
+												<value>0.00000</value>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxTextCtrl" name="textRY">
+												<value>0.00000</value>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="labelZ">
+												<label>Z</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxTextCtrl" name="textZ">
+												<value>0.00000</value>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxTextCtrl" name="textRZ">
+												<value>0.00000</value>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxLEFT</flag>
+									<border>10</border>
+									<object class="wxCheckBox" name="cbTransformGeo">
+										<label>Transform geometry so its position in global coordinates does not change.</label>
+										<checked>1</checked>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="spacer">

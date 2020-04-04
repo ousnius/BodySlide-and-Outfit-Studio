@@ -769,7 +769,16 @@
 				<border>10</border>
 				<object class="wxCheckBox" name="cbCopySkinTrans">
 					<label>Copy global-to-skin transform from reference to selected shape(s).</label>
-					<checked>0</checked>
+					<checked>1</checked>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT</flag>
+				<border>10</border>
+				<object class="wxCheckBox" name="cbTransformGeo">
+					<label>Transform geometry so its position in global coordinates does not change.</label>
+					<checked>1</checked>
 				</object>
 			</object>
 			<object class="sizeritem">

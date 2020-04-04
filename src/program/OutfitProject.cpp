@@ -1478,6 +1478,32 @@ void OutfitProject::RotateShape(NiShape* shape, const Vector3& angle, std::unord
 	workNif.RotateShape(shape, angle, mask);
 }
 
+void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTransform &t) {
+	if (!shape)
+		return;
+
+	// Vertices
+	const std::vector<Vector3>* oldVerts = workNif.GetRawVertsForShape(shape);
+	if (!oldVerts || oldVerts->empty())
+		return;
+	int nVerts = oldVerts->size();
+	std::vector<Vector3> verts(nVerts);
+	for (int i = 0; i < nVerts; ++i)
+		verts[i] = t.ApplyTransform((*oldVerts)[i]);
+	workNif.SetVertsForShape(shape, verts);
+
+	// Normals
+	if (t.rotation.IsNearlyEqualTo(Matrix3()))
+		return;
+	const std::vector<Vector3>* oldNorms = workNif.GetNormalsForShape(shape, false);
+	if (!oldNorms || oldNorms->size() != nVerts)
+		return;
+	std::vector<Vector3> norms(nVerts);
+	for (int i = 0; i < nVerts; ++i)
+		norms[i] = t.rotation * (*oldNorms)[i];
+	workNif.SetNormalsForShape(shape, norms);
+}
+
 void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
 	if (!shape || !baseShape)
 		return;
