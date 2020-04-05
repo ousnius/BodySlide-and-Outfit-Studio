@@ -4318,8 +4318,8 @@ void OutfitStudioFrame::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemId newItem;
 	if (!activeSegment.IsOk() || segmentTree->GetChildrenCount(segmentRoot) <= 0) {
 		// The new segment is the only partition: assign all triangles.
-		for (int i = 0; i < triParts.size(); ++i)
-			triParts[i] = newPartID;
+		for (int i = 0; i < triSParts.size(); ++i)
+			triSParts[i] = newPartID;
 
 		newItem = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(newPartID));
 	}
@@ -4344,9 +4344,9 @@ void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
 			// the segment's triangles to it.
 			SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
 			if (segmentData)
-				for (int i = 0; i < triParts.size(); ++i)
-					if (triParts[i] == segmentData->partID)
-						triParts[i] = newPartID;
+				for (int i = 0; i < triSParts.size(); ++i)
+					if (triSParts[i] == segmentData->partID)
+						triSParts[i] = newPartID;
 		}
 
 		newItem = segmentTree->PrependItem(activeSegment, "Sub Segment", -1, -1, new SubSegmentItemData(newPartID, 0, 0xFFFFFFFF));
@@ -4396,9 +4396,9 @@ void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		// Assign triangles from old partitions to new partition.
-		for (int i = 0; i < triParts.size(); ++i)
-			if (triParts[i] >= 0 && triParts[i] < oldPartIDs.size() && oldPartIDs[triParts[i]])
-				triParts[i] = newPartID;
+		for (int i = 0; i < triSParts.size(); ++i)
+			if (triSParts[i] >= 0 && triSParts[i] < oldPartIDs.size() && oldPartIDs[triSParts[i]])
+				triSParts[i] = newPartID;
 
 		segmentTree->UnselectAll();
 		segmentTree->Delete(activeSegment);
@@ -4439,9 +4439,9 @@ void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		// Assign triangles to new partition.
-		for (int i = 0; i < triParts.size(); ++i)
-			if (triParts[i] == oldPartID)
-				triParts[i] = newPartID;
+		for (int i = 0; i < triSParts.size(); ++i)
+			if (triSParts[i] == oldPartID)
+				triSParts[i] = newPartID;
 
 		segmentTree->UnselectAll();
 		segmentTree->Delete(activeSegment);
@@ -4537,7 +4537,7 @@ void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& event) {
 	wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
 	inf.ssfFile = segmentSSF->GetValue().ToStdString();
 
-	project->GetWorkNif()->SetShapeSegments(activeItem->GetShape(), inf, triParts);
+	project->GetWorkNif()->SetShapeSegments(activeItem->GetShape(), inf, triSParts);
 	CreateSegmentTree(activeItem->GetShape());
 }
 
@@ -4547,12 +4547,13 @@ void OutfitStudioFrame::OnSegmentReset(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
-	triParts.clear(); // DeleteChildren might call OnSegmentSelect
-	if (segmentTree->GetChildrenCount(segmentRoot) > 0)
+	if (segmentTree->GetChildrenCount(segmentRoot) > 0) {
+		triSParts.clear(); // DeleteChildren calls OnSegmentSelect
 		segmentTree->DeleteChildren(segmentRoot);
+	}
 
 	NifSegmentationInfo inf;
-	if (project->GetWorkNif()->GetShapeSegments(shape, inf, triParts)) {
+	if (project->GetWorkNif()->GetShapeSegments(shape, inf, triSParts)) {
 		for (int i = 0; i < inf.segs.size(); i++) {
 			wxTreeItemId segID = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(inf.segs[i].partID));
 			if (segID.IsOk()) {
@@ -4563,10 +4564,6 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 				}
 			}
 		}
-	}
-	else {
-		if (shape)
-			triParts.resize(shape->GetNumTriangles(), -1);
 	}
 
 	wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
@@ -4610,7 +4607,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 	std::vector<Triangle> tris;
 	if (activeItem->GetShape())
 		activeItem->GetShape()->GetTriangles(tris);
-	if (triParts.size() != tris.size())
+	if (triSParts.size() != tris.size())
 		return;
 
 	// selPartIDs will be true for selected item and its children.
@@ -4625,7 +4622,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 			// Add triangles from mask
 			for (int t = 0; t < tris.size(); t++) {
 				if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end())
-					triParts[t] = subSegmentData->partID;
+					triSParts[t] = subSegmentData->partID;
 			}
 		}
 		else {
@@ -4681,8 +4678,8 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 			if (updateFromMask) {
 				// Add triangles from mask
 				for (int t = 0; t < tris.size(); t++) {
-					if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end() && (triParts[t] < 0 || !selPartIDs[triParts[t]]))
-						triParts[t] = destPartID;
+					if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end() && (triSParts[t] < 0 || !selPartIDs[triSParts[t]]))
+						triSParts[t] = destPartID;
 				}
 			}
 		}
@@ -4694,18 +4691,18 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 
 		// First, apply color to unselected partitions
-		for (int i = 0; i < triParts.size(); ++i) {
-			if (triParts[i] < 0 || selPartIDs[triParts[i]])
+		for (int i = 0; i < triSParts.size(); ++i) {
+			if (triSParts[i] < 0 || selPartIDs[triSParts[i]])
 				continue;
-			float color = (triParts[i] + 1.0f) / (selPartIDs.size() + 1.0f);
+			float color = (triSParts[i] + 1.0f) / (selPartIDs.size() + 1.0f);
 			m->vcolors[tris[i].p1].y = color;
 			m->vcolors[tris[i].p2].y = color;
 			m->vcolors[tris[i].p3].y = color;
 		}
 
 		// Now apply selection color to selected partitions
-		for (int i = 0; i < triParts.size(); ++i) {
-			if (triParts[i] < 0 || !selPartIDs[triParts[i]])
+		for (int i = 0; i < triSParts.size(); ++i) {
+			if (triSParts[i] < 0 || !selPartIDs[triSParts[i]])
 				continue;
 			m->vcolors[tris[i].p1].x = m->vcolors[tris[i].p1].z = 1.0f;
 			m->vcolors[tris[i].p2].x = m->vcolors[tris[i].p2].z = 1.0f;
@@ -4933,9 +4930,10 @@ void OutfitStudioFrame::OnPartitionReset(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
-	triParts.clear(); // DeleteChildren might call OnPartitionSelect
-	if (partitionTree->GetChildrenCount(partitionRoot) > 0)
+	if (partitionTree->GetChildrenCount(partitionRoot) > 0) {
+		triParts.clear(); // DeleteChildren calls OnPartitionSelect
 		partitionTree->DeleteChildren(partitionRoot);
+	}
 
 	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {

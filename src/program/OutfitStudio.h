@@ -79,7 +79,7 @@ class SegmentItemData : public wxTreeItemData  {
 public:
 	// partID: a small nonnegative integer uniquely identifying this
 	// segment among all the segments and subsegments.  Used as a value
-	// in triParts.  Not in the file.
+	// in triSParts.  Not in the file.
 	int partID;
 
 	SegmentItemData(int inPartitionID) {
@@ -91,7 +91,7 @@ class SubSegmentItemData : public wxTreeItemData  {
 public:
 	// partID: a small nonnegative integer uniquely identifying this
 	// subsegment among all the segments and subsegments.  Used as a value
-	// in triParts.  Not in the file.
+	// in triSParts.  Not in the file.
 	int partID;
 	uint userSlotID;
 	uint material;
@@ -752,6 +752,7 @@ public:
 	bool bEditSlider;
 	std::string contextBone;
 	std::vector<int> triParts;  // the partition index for each triangle, or -1 for none
+	std::vector<int> triSParts;  // the segment partition index for each triangle, or -1 for none
 
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
