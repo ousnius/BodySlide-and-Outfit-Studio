@@ -256,6 +256,7 @@ void directionalLight(in DirectionalLight light, in vec3 lightDir, inout vec3 ou
 		vec3 reflected = reflect(viewDir, normal);
 		vec3 reflectedVS = t * reflected.x + b * reflected.y + n * reflected.z;
 		vec3 reflectedWS = mat3(matModelView) * reflectedVS;
+		reflectedWS = normalize(reflectedWS);
 		
 		vec4 cube = textureLod(texCubemap, reflectedWS, 8.0 - smoothness * 8.0);
 		cube.rgb *= prop.envReflection * prop.specularStrength;
