@@ -4611,6 +4611,8 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 	std::vector<Triangle> tris;
 	if (activeItem->GetShape())
 		activeItem->GetShape()->GetTriangles(tris);
+	if (triParts.size() != tris.size())
+		return;
 
 	// selPartIDs will be true for selected item and its children.
 	std::vector<bool> selPartIDs(CalcMaxSegPartID() + 1, false);
@@ -4680,7 +4682,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 			if (updateFromMask) {
 				// Add triangles from mask
 				for (int t = 0; t < tris.size(); t++) {
-					if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end() && !selPartIDs[triParts[t]])
+					if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end() && (triParts[t] < 0 || !selPartIDs[triParts[t]]))
 						triParts[t] = destPartID;
 				}
 			}
