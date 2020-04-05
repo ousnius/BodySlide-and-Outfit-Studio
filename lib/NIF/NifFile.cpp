@@ -2096,21 +2096,21 @@ void NifFile::ClearShapeVertWeights(const std::string& shapeName) {
 	}
 }
 
-bool NifFile::GetShapeSegments(NiShape* shape, BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
+bool NifFile::GetShapeSegments(NiShape* shape, NifSegmentationInfo& inf, std::vector<int>& triParts) {
 	auto bssits = dynamic_cast<BSSubIndexTriShape*>(shape);
 	if (!bssits)
 		return false;
 
-	segmentation = bssits->GetSegmentation();
+	bssits->GetSegmentation(inf, triParts);
 	return true;
 }
 
-void NifFile::SetShapeSegments(NiShape* shape, const BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
+void NifFile::SetShapeSegments(NiShape* shape, const NifSegmentationInfo& inf, const std::vector<int>& triParts) {
 	auto bssits = dynamic_cast<BSSubIndexTriShape*>(shape);
 	if (!bssits)
 		return;
 
-	bssits->SetSegmentation(segmentation);
+	bssits->SetSegmentation(inf, triParts);
 }
 
 bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<int> &triParts) {
@@ -2326,24 +2326,7 @@ bool NifFile::ReorderTriangles(NiShape* shape, const std::vector<uint>& triangle
 	if (shape->HasType<NiTriStrips>())
 		return false;
 
-	std::vector<Triangle> trisOrdered;
-	std::vector<Triangle> tris;
-	if (shape->GetTriangles(tris)) {
-		if (triangleIndices.size() != tris.size())
-			return false;
-
-		for (auto &id : triangleIndices)
-			if (tris.size() >= id)
-				trisOrdered.push_back(tris[id]);
-
-		if (trisOrdered.size() != tris.size())
-			return false;
-
-		shape->SetTriangles(trisOrdered);
-		return true;
-	}
-
-	return false;
+	return shape->ReorderTriangles(triangleIndices);
 }
 
 const std::vector<Vector3>* NifFile::GetNormalsForShape(NiShape* shape, bool transform) {

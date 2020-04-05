@@ -209,8 +209,8 @@ public:
 	void SetShapeVertWeights(const std::string& shapeName, const int vertIndex, std::vector<byte>& boneids, std::vector<float>& weights);
 	void ClearShapeVertWeights(const std::string& shapeName);
 
-	bool GetShapeSegments(NiShape* shape, BSSubIndexTriShape::BSSITSSegmentation& segmentation);
-	void SetShapeSegments(NiShape* shape, const BSSubIndexTriShape::BSSITSSegmentation& segmentation);
+	bool GetShapeSegments(NiShape* shape, NifSegmentationInfo& inf, std::vector<int>& triParts);
+	void SetShapeSegments(NiShape* shape, const NifSegmentationInfo& inf, const std::vector<int>& triParts);
 
 	bool GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<int> &triParts);
 	void SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<int> &triParts, const bool convertSkinInstance = true);
