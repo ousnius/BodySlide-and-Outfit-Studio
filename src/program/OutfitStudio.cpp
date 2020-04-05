@@ -8878,22 +8878,23 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 
 	for (int i = 0; i < shapeList.size(); i++) {
-		mesh* m = nullptr;
-		if (!shapeName.empty() && (shapeList[i] == shapeName))
-			m = gls.AddMeshFromNif(nif, shapeList[i]);
-		else if (!shapeName.empty())
+		if (!shapeName.empty() && shapeList[i] != shapeName)
 			continue;
-		else
-			m = gls.AddMeshFromNif(nif, shapeList[i]);
 
-		if (m) {
-			m->BuildTriAdjacency();
-			m->BuildEdgeList();
-			m->ColorFill(Vector3());
+		mesh* m = gls.AddMeshFromNif(nif, shapeList[i]);
+		if (!m)
+			continue;
 
-			if (extInitialized)
-				m->CreateBuffers();
-		}
+		NiShape* shape = nif->FindBlockByName<NiShape>(shapeList[i]);
+		if (shape && shape->IsSkinned())
+			gls.SetSkinModelMat(m, os->project->GetWorkAnim()->shapeSkinning[shapeList[i]].xformGlobalToSkin);
+
+		m->BuildTriAdjacency();
+		m->BuildEdgeList();
+		m->ColorFill(Vector3());
+
+		if (extInitialized)
+			m->CreateBuffers();
 	}
 }
 

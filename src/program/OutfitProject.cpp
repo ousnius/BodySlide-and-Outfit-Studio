@@ -2213,9 +2213,9 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 
 void OutfitProject::InitConform() {
 	if (baseShape) {
-		morpher.SetRef(workNif, baseShape);
+		morpher.SetRef(workNif, baseShape, &workAnim);
 		morpher.LinkRefDiffData(&baseDiffData);
-		morpher.SourceShapesFromNif(workNif);
+		morpher.SourceShapesFromNif(workNif, &workAnim);
 	}
 }
 

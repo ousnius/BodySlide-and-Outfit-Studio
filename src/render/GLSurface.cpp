@@ -1012,18 +1012,9 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		m->matModel = matShape;
 	}
 	else {
-		// Not rendered by the game for skinned meshes
-		// Keep to counter-offset bone transforms
-		MatTransform xFormSkin;
-		auto matSkin = glm::identity<glm::mat4x4>();
-		if (nif->GetShapeTransformGlobalToSkin(shape, xFormSkin)) {
-			float y, p, r;
-			xFormSkin.rotation.ToEulerAngles(y, p, r);
-			matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x / -10.0f, xFormSkin.translation.z / 10.0f, xFormSkin.translation.y / 10.0f));
-			matSkin *= glm::yawPitchRoll(r, p, y);
-			matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
-		}
-		m->matModel = glm::inverse(matSkin);
+		// For skinned meshes, SetSkinModelMat should be called with an
+		// appropriate global-to-skin transform.
+		m->matModel = glm::identity<glm::mat4x4>();
 	}
 
 
@@ -1218,13 +1209,18 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		}
 	}
 
-	// Offset camera for skinned FO4 shapes
-	if (nif->GetHeader().GetVersion().User() == 12 && nif->GetHeader().GetVersion().Stream() == 130) {
-		if (shape && shape->IsSkinned())
-			camOffset.y = 12.0f;
-	}
-
 	return m;
+}
+
+void GLSurface::SetSkinModelMat(mesh *m, const MatTransform &xformGlobalToSkin) {
+	const MatTransform &xf = xformGlobalToSkin;
+	auto matSkin = glm::identity<glm::mat4x4>();
+	float y, p, r;
+	xf.rotation.ToEulerAngles(y, p, r);
+	matSkin = glm::translate(matSkin, glm::vec3(xf.translation.x / -10.0f, xf.translation.z / 10.0f, xf.translation.y / 10.0f));
+	matSkin *= glm::yawPitchRoll(r, p, y);
+	matSkin = glm::scale(matSkin, glm::vec3(xf.scale, xf.scale, xf.scale));
+	m->matModel = glm::inverse(matSkin);
 }
 
 mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Vector3* color) {

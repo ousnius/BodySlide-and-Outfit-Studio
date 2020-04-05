@@ -291,6 +291,7 @@ public:
 	mesh* AddVisPlane(const Vector3& center, const Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const Vector3* color = nullptr);
 
 	mesh* AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color = nullptr);
+	void SetSkinModelMat(mesh *m, const MatTransform &xformGlobalToSkin);
 	void Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
 	void Update(int shapeIndex, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
 	mesh* ReloadMeshFromNif(NifFile* nif, std::string shapeName);

@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "Automorph.h"
+#include "Anim.h"
 
 Automorph::Automorph() {
 }
@@ -91,9 +92,9 @@ void Automorph::CopyShape(const std::string& srcShapeName, const std::string& sr
 		targetSliderDataNames[newKeys[i]] = newVals[i];
 }
 
-void Automorph::SetRef(NifFile& ref, NiShape* refShape) {
+void Automorph::SetRef(NifFile& ref, NiShape* refShape, const AnimInfo *workAnim) {
 	morphRef = std::make_unique<mesh>();
-	MeshFromNifShape(morphRef.get(), ref, refShape);
+	MeshFromNifShape(morphRef.get(), ref, refShape, workAnim);
 
 	refTree = std::make_unique<kd_tree>(morphRef->verts.get(), morphRef->nVerts);
 }
@@ -122,13 +123,13 @@ bool Automorph::ApplyResultToUVs(const std::string& sliderName, const std::strin
 	return resultDiffData.ApplyUVDiff(setname, shapeTargetName, strength, inOutResult);
 }
 
-void Automorph::SourceShapesFromNif(NifFile &baseNif) {
+void Automorph::SourceShapesFromNif(NifFile &baseNif, const AnimInfo *workAnim) {
 	ClearSourceShapes();
 
 	auto shapes = baseNif.GetShapes();
 	for (auto &s : shapes) {
 		mesh* m = new mesh();
-		MeshFromNifShape(m, baseNif, s);
+		MeshFromNifShape(m, baseNif, s, workAnim);
 		sourceShapes[s->GetName()] = m;
 	}
 }
@@ -166,7 +167,7 @@ void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 		dm->vcolors[i] = m->vcolors[i];
 }
 
-void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
+void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const AnimInfo *workAnim) {
 	std::vector<Vector3> nifVerts;
 	ref.GetVertsForShape(shape, nifVerts);
 
@@ -196,15 +197,13 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
 	else {
 		// Not rendered by the game for skinned meshes
 		// Keep to counter-offset bone transforms
-		MatTransform xFormSkin;
 		auto matSkin = glm::identity<glm::mat4x4>();
-		if (ref.GetShapeTransformGlobalToSkin(shape, xFormSkin)) {
-			float y, p, r;
-			xFormSkin.rotation.ToEulerAngles(y, p, r);
-			matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x, xFormSkin.translation.y, xFormSkin.translation.z));
-			matSkin *= glm::yawPitchRoll(r, p, y);
-			matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
-		}
+		const MatTransform &xFormSkin = workAnim->shapeSkinning.find(m->shapeName)->second.xformGlobalToSkin;
+		float y, p, r;
+		xFormSkin.rotation.ToEulerAngles(y, p, r);
+		matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x, xFormSkin.translation.y, xFormSkin.translation.z));
+		matSkin *= glm::yawPitchRoll(r, p, y);
+		matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
 		m->matModel = glm::inverse(matSkin);
 	}
 

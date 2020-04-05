@@ -180,6 +180,10 @@ public:
 	void SetShapeBoneIDList(NiShape* shape, std::vector<int>& inList);
 	int GetShapeBoneWeights(NiShape* shape, const int boneIndex, std::unordered_map<ushort, float>& outWeights);
 
+	// Looks up the shape's global-to-skin transform if it has it.
+	// Otherwise, try to calculate it using skin-to-bone and node-to-global
+	// transforms.  Returns false on failure.
+	bool CalcShapeTransformGlobalToSkin(NiShape* shape, MatTransform& outTransforms);
 	// Returns false if no such transform exists in the file, in which
 	// case outTransform will not be changed.  Note that, even if this
 	// function returns false, you can not assume that the global-to-skin
