@@ -4547,6 +4547,7 @@ void OutfitStudioFrame::OnSegmentReset(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
+	triParts.clear(); // DeleteChildren might call OnSegmentSelect
 	if (segmentTree->GetChildrenCount(segmentRoot) > 0)
 		segmentTree->DeleteChildren(segmentRoot);
 
@@ -4564,8 +4565,6 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 		}
 	}
 	else {
-		triParts.clear();
-
 		if (shape)
 			triParts.resize(shape->GetNumTriangles(), -1);
 	}
@@ -4934,6 +4933,7 @@ void OutfitStudioFrame::OnPartitionReset(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
+	triParts.clear(); // DeleteChildren might call OnPartitionSelect
 	if (partitionTree->GetChildrenCount(partitionRoot) > 0)
 		partitionTree->DeleteChildren(partitionRoot);
 
