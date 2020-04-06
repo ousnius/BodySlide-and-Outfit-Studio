@@ -307,6 +307,7 @@ public:
 	virtual uint GetNumTriangles();
 	virtual bool GetTriangles(std::vector<Triangle>& tris);
 	virtual void SetTriangles(const std::vector<Triangle>& tris);
+	virtual bool ReorderTriangles(const std::vector<uint>& triInds);
 
 	virtual void SetBounds(const BoundingSphere& bounds);
 	virtual BoundingSphere GetBounds();
@@ -426,6 +427,38 @@ public:
 };
 
 
+// NifSubSegmentInfo: not in file.  The portion of a subsegment's data
+// that has nothing to do with triangle set partitioning.
+struct NifSubSegmentInfo {
+	// partID: a small nonnegative integer uniquely identifying this
+	// subsegment among all the segments and subsegments.  Used as a value
+	// in triParts.  Not in the file.
+	int partID;
+	uint userSlotID;
+	uint material;
+	std::vector<float> extraData;
+};
+
+// NifSegmentInfo: not in file.  The portion of a segment's data that
+// has nothing to do with triangle set partitioning.
+struct NifSegmentInfo {
+	// partID: a small nonnegative integer uniquely identifying this
+	// segment among all the segments and subsegments.  Used as a value
+	// in triParts.  Not in the file.
+	int partID;
+	std::vector<NifSubSegmentInfo> subs;
+};
+
+// NifSegmentationInfo: not in file.  The portion of a shape's
+// segmentation data that has nothing to do with triangle set partitioning.
+// The intention is that this data structure can be used for any type of
+// segmentation data, both BSSITSSegmentation and BSGeometrySegmentData.
+struct NifSegmentationInfo {
+	std::vector<NifSegmentInfo> segs;
+	std::string ssfFile;
+};
+
+
 class BSGeometrySegmentData {
 public:
 	byte flags = 0;
@@ -498,8 +531,8 @@ public:
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	BSSubIndexTriShape* Clone() { return new BSSubIndexTriShape(*this); }
 
-	BSSITSSegmentation GetSegmentation() { return segmentation; }
-	void SetSegmentation(const BSSITSSegmentation& seg) { segmentation = seg; }
+	void GetSegmentation(NifSegmentationInfo &inf, std::vector<int> &triParts);
+	void SetSegmentation(const NifSegmentationInfo &inf, const std::vector<int> &triParts);
 
 	void SetDefaultSegments();
 	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals = nullptr);
@@ -674,6 +707,8 @@ public:
 
 	NiGeometryData* GetGeomData();
 	void SetGeomData(NiGeometryData* geomDataPtr);
+
+	virtual bool ReorderTriangles(const std::vector<uint>&) { return false; }
 
 	NiTriStrips* Clone() { return new NiTriStrips(*this); }
 };

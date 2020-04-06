@@ -77,22 +77,28 @@ struct ShapeItemState {
 
 class SegmentItemData : public wxTreeItemData  {
 public:
-	std::set<uint> tris;
+	// partID: a small nonnegative integer uniquely identifying this
+	// segment among all the segments and subsegments.  Used as a value
+	// in triSParts.  Not in the file.
+	int partID;
 
-	SegmentItemData(const std::set<uint>& inTriangles) {
-		tris = inTriangles;
+	SegmentItemData(int inPartitionID) {
+		partID = inPartitionID;
 	}
 };
 
 class SubSegmentItemData : public wxTreeItemData  {
 public:
-	std::set<uint> tris;
+	// partID: a small nonnegative integer uniquely identifying this
+	// subsegment among all the segments and subsegments.  Used as a value
+	// in triSParts.  Not in the file.
+	int partID;
 	uint userSlotID;
 	uint material;
 	std::vector<float> extraData;
 
-	SubSegmentItemData(const std::set<uint>& inTriangles, const uint& inUserSlotID, const uint& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
-		tris = inTriangles;
+	SubSegmentItemData(int inPartitionID, const uint& inUserSlotID, const uint& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
+		partID = inPartitionID;
 		userSlotID = inUserSlotID;
 		material = inMaterial;
 		extraData = inExtraData;
@@ -749,6 +755,7 @@ public:
 	bool bEditSlider;
 	std::string contextBone;
 	std::vector<int> triParts;  // the partition index for each triangle, or -1 for none
+	std::vector<int> triSParts;  // the segment partition index for each triangle, or -1 for none
 
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
@@ -1126,6 +1133,7 @@ private:
 	void OnBoneContext(wxTreeEvent& event);
 	void OnBoneTreeContext(wxCommandEvent& event);
 
+	int CalcMaxSegPartID();
 	void OnSegmentSelect(wxTreeEvent& event);
 	void OnSegmentContext(wxTreeEvent& event);
 	void OnSegmentTreeContext(wxCommandEvent& event);

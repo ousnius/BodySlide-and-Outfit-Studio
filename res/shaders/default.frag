@@ -216,6 +216,7 @@ void main(void)
 				{
 					// Vertex normal for shading with disabled maps
 					normal = mat3(matModelView) * n;
+					normal = normalize(normal);
 				}
 				
 				if (bShowTexture)
@@ -228,6 +229,7 @@ void main(void)
 							normal = normalize(normalMap.rgb * 2.0 - 1.0);
 							normal.r = -normal.r;
 							normal = mat3(matModelView) * normal;
+							normal = normalize(normal);
 							
 							if (bSpecular)
 							{
@@ -257,6 +259,7 @@ void main(void)
 					vec3 reflected = reflect(-viewDir, normal);
 					vec3 reflectedVS = b * reflected.x + t * reflected.y + n * reflected.z;
 					vec3 reflectedWS = mat3(matModelView) * reflectedVS;
+					reflectedWS = normalize(reflectedWS);
 					
 					vec4 cubeMap = texture(texCubemap, reflectedWS);
 					cubeMap.rgb *= prop.envReflection;
