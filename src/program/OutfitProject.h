@@ -193,7 +193,6 @@ public:
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
 	int AddFromSliderSet(const std::string& fileName, const std::string& setName);
 
-	bool DeleteVerts(NiShape* shape, const std::unordered_map<ushort, float>& mask);
 	void CollectVertexData(NiShape *shape, UndoStateShape &uss, const std::vector<int> &indices);
 	void CollectTriangleData(NiShape *shape, UndoStateShape &uss, const std::vector<int> &indices);
 	bool PrepareDeleteVerts(NiShape* shape, const std::unordered_map<ushort, float>& mask, UndoStateShape &uss);

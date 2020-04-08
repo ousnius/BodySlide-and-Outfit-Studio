@@ -2232,34 +2232,6 @@ void OutfitProject::ConformShape(NiShape* shape, const float proximityRadius, co
 			morpher.GenerateResultDiff(shape->GetName(), activeSet[i].name, activeSet[i].TargetDataName(refTarget), maxResults);
 }
 
-bool OutfitProject::DeleteVerts(NiShape* shape, const std::unordered_map<ushort, float>& mask) {
-	std::vector<ushort> indices;
-	indices.reserve(mask.size());
-
-	for (auto &m : mask)
-		indices.push_back(m.first);
-
-	std::sort(indices.begin(), indices.end());
-	indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
-
-	bool deleteShape = workNif.DeleteVertsForShape(shape, indices);
-	if (!deleteShape) {
-		workAnim.DeleteVertsForShape(shape->GetName(), indices);
-
-		std::string target = ShapeToTarget(shape->GetName());
-		if (IsBaseShape(shape))
-			baseDiffData.DeleteVerts(target, indices);
-		else
-			morpher.DeleteVerts(target, indices);
-
-		activeSet.SetReferencedData(shape->GetName(), true);
-	}
-	else
-		DeleteShape(shape);
-
-	return deleteShape;
-}
-
 void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices) {
 	uss.delVerts.resize(indices.size());
 	const std::vector<Vector3> *verts = workNif.GetRawVertsForShape(shape);
