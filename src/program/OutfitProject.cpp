@@ -1486,21 +1486,26 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 	const std::vector<Vector3>* oldVerts = workNif.GetRawVertsForShape(shape);
 	if (!oldVerts || oldVerts->empty())
 		return;
+
 	int nVerts = oldVerts->size();
 	std::vector<Vector3> verts(nVerts);
 	for (int i = 0; i < nVerts; ++i)
 		verts[i] = t.ApplyTransform((*oldVerts)[i]);
+
 	workNif.SetVertsForShape(shape, verts);
 
 	// Normals
 	if (t.rotation.IsNearlyEqualTo(Matrix3()))
 		return;
+
 	const std::vector<Vector3>* oldNorms = workNif.GetNormalsForShape(shape, false);
 	if (!oldNorms || oldNorms->size() != nVerts)
 		return;
+
 	std::vector<Vector3> norms(nVerts);
 	for (int i = 0; i < nVerts; ++i)
 		norms[i] = t.rotation * (*oldNorms)[i];
+
 	workNif.SetNormalsForShape(shape, norms);
 }
 

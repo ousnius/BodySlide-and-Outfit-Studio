@@ -759,7 +759,7 @@
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxStaticText" name="copyTransDescription">
-					<label>The selected shape(s) has a different skin coordinate system from the reference shape.  Do you want to copy the transforms so they have the same skin coordinates?</label>
+					<label>The skin coordinate system doesn't match the reference shape's. Do you want to copy the transforms?</label>
 					<wrap>550</wrap>
 				</object>
 			</object>
@@ -768,7 +768,7 @@
 				<flag>wxLEFT</flag>
 				<border>10</border>
 				<object class="wxCheckBox" name="cbCopySkinTrans">
-					<label>Copy global-to-skin transform from reference to selected shape(s).</label>
+					<label>Copy skin transform from reference</label>
 					<checked>1</checked>
 				</object>
 			</object>
@@ -777,7 +777,8 @@
 				<flag>wxLEFT</flag>
 				<border>10</border>
 				<object class="wxCheckBox" name="cbTransformGeo">
-					<label>Transform geometry so its position in global coordinates does not change.</label>
+					<label>Recalculate geometry's coordinates so it doesn't move</label>
+					<tooltip>Transform geometry so its position in global coordinates does not change.</tooltip>
 					<checked>1</checked>
 				</object>
 			</object>

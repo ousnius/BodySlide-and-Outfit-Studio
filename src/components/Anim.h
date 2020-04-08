@@ -142,6 +142,7 @@ public:
 
 	void Clear();
 	void ClearShape(const std::string& shape);
+	bool HasSkinnedShape(NiShape* shape);
 	void DeleteVertsForShape(const std::string& shape, const std::vector<ushort>& indices);
 
 	// Loads the skinning information contained in the nif for all shapes.
