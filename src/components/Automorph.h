@@ -61,7 +61,12 @@ public:
 	void CopyMeshMask(mesh*m, const std::string& shapeName);
 
 	void MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const AnimInfo *workAnim);
+	// indices must be in ascending order.
 	void DeleteVerts(const std::string& shapeName, const std::vector<ushort>& indices);
+	// indices must be in ascending order.
+	void InsertVertexIndices(const std::string& target, const std::vector<ushort>& indices);
+	void GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs);
+	void SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs);
 
 	void ClearProximityCache();
 	void BuildProximityCache(const std::string& shapeName, const float proximityRadius = 10.0f);

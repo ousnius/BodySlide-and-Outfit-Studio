@@ -59,6 +59,23 @@ template<typename VectorType, typename IndexType> void EraseVectorIndices(Vector
 }
 
 // inds must be in sorted ascending order.
+template<typename VectorType, typename IndexType> void InsertVectorIndices(VectorType &v, const std::vector<IndexType> &inds) {
+	if (inds.empty() || inds.back() >= v.size() + inds.size())
+		return;
+	int indi = inds.size() - 1;
+	int di = v.size() + inds.size() - 1;
+	int si = v.size() - 1;
+	v.resize(di + 1);
+	while (true) {
+		while (indi >= 0 && di == inds[indi])
+			--di, --indi;
+		if (indi < 0)
+			break;
+		v[di--] = std::move(v[si--]);
+	}
+}
+
+// inds must be in sorted ascending order.
 template<typename IndexType1, typename IndexType2> std::vector<int> GenerateIndexCollapseMap(const std::vector<IndexType1> &inds, IndexType2 mapSize) {
 	std::vector<int> map(mapSize);
 	int indi = 0;
@@ -69,6 +86,18 @@ template<typename IndexType1, typename IndexType2> std::vector<int> GenerateInde
 		}
 		else
 			map[si] = di++;
+	}
+	return map;
+}
+
+// inds must be in sorted ascending order.
+template<typename IndexType1, typename IndexType2> std::vector<int> GenerateIndexExpandMap(const std::vector<IndexType1> &inds, IndexType2 mapSize) {
+	std::vector<int> map(mapSize);
+	int indi = 0;
+	for (int si = 0, di = 0; si < mapSize; ++si, ++di) {
+		while (indi < inds.size() && di == inds[indi])
+			++di, ++indi;
+		map[si] = di;
 	}
 	return map;
 }

@@ -112,6 +112,8 @@ public:
 			if (bn.second > boneID)
 				bn.second--;
 	}
+
+	void InsertVertexIndices(const std::vector<ushort>& indices);
 };
 
 class AnimPartition {

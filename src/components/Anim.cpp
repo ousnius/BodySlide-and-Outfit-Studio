@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "Anim.h"
+#include "../NIF/NifUtil.h"
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 #include <unordered_set>
@@ -96,33 +97,39 @@ void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<u
 		return;
 
 	ushort highestRemoved = indices.back();
-	std::vector<int> indexCollapse(highestRemoved + 1, 0);
-
-	int remCount = 0;
-	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
-		if (j < indices.size() && indices[j] == i) {	// Found one to remove
-			indexCollapse[i] = -1;						// Flag delete
-			remCount++;
-			j++;
-		}
-		else
-			indexCollapse[i] = remCount;
-	}
+	std::vector<int> indexCollapse = GenerateIndexCollapseMap(indices, highestRemoved + 1);
 
 	auto& skin = shapeSkinning[shape];
 	for (auto &w : skin.boneWeights) {
-		std::unordered_map<ushort, float> indexCopy;
+		std::unordered_map<ushort, float> weightsCopy;
 		for (auto &d : w.second.weights) {
 			if (d.first > highestRemoved)
-				indexCopy.emplace(d.first - remCount, d.second);
+				weightsCopy.emplace(d.first - indices.size(), d.second);
 			else if (indexCollapse[d.first] != -1)
-				indexCopy.emplace(d.first - indexCollapse[d.first], d.second);
+				weightsCopy.emplace(indexCollapse[d.first], d.second);
 		}
 
-		w.second.weights.clear();
-		w.second.weights.reserve(indexCopy.size());
-		for (auto &copy : indexCopy)
-			w.second.weights[copy.first] = std::move(copy.second);
+		w.second.weights = std::move(weightsCopy);
+	}
+}
+
+void AnimSkin::InsertVertexIndices(const std::vector<ushort>& indices) {
+	if (indices.empty())
+		return;
+
+	int highestAdded = indices.back();
+	std::vector<int> indexExpand = GenerateIndexExpandMap(indices, highestAdded + 1);
+
+	for (auto &w : boneWeights) {
+		std::unordered_map<ushort, float> weightsCopy;
+		for (auto &d : w.second.weights) {
+			if (d.first > highestAdded)
+				weightsCopy[d.first + indices.size()] = d.second;
+			else
+				weightsCopy[indexExpand[d.first]] = d.second;
+		}
+
+		w.second.weights = std::move(weightsCopy);
 	}
 }
 

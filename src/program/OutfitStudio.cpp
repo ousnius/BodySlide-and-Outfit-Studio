@@ -7438,23 +7438,43 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (wxMessageBox(_("Are you sure you wish to delete the unmasked vertices of the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO) == wxNO)
-		return;
-
-	bool shapeDeleted = false;
+	// Prepare the undo data and determine if any shapes are being deleted.
+	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UT_MESH;
+	std::vector<NiShape *> delShapes;
 	for (auto &i : selectedItems) {
 		if (editUV && editUV->GetShape() == i->GetShape())
 			editUV->Close();
 
 		std::unordered_map<ushort, float> mask;
 		glView->GetShapeUnmasked(mask, i->GetShape()->GetName());
-		if (project->DeleteVerts(i->GetShape(), mask))
-			shapeDeleted = true;
+		UndoStateShape uss;
+		uss.shapeName = i->GetShape()->GetName();
+		if (project->PrepareDeleteVerts(i->GetShape(), mask, uss))
+			delShapes.push_back(i->GetShape());
+		else
+			usp->usss.push_back(std::move(uss));
+	}
+
+	// Confirm deleting shapes; then delete them.
+	if (!delShapes.empty()) {
+		if (wxMessageBox(_("Are you sure you wish to delete some of the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO) == wxNO)
+			return;
+		for (NiShape *shape : delShapes)
+			project->DeleteShape(shape);
+	}
+
+	// Now do the vertex deletion
+	for (auto &uss : usp->usss) {
+		NiShape *shape = project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+		if (!shape)
+			continue;
+		project->ApplyShapeMeshUndo(shape, uss, false);
 	}
 
 	project->GetWorkAnim()->CleanupBones();
 
-	if (!shapeDeleted) {
+	if (delShapes.empty()) {
 		MeshesFromProj();
 		AnimationGUIFromProj();
 	}
@@ -7463,7 +7483,6 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	UpdateActiveShapeUI();
 
-	glView->GetUndoHistory()->ClearHistory();
 	glView->ClearActiveMask();
 	ApplySliders();
 }
@@ -7498,17 +7517,25 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	auto newShape = project->DuplicateShape(activeItem->GetShape(), newShapeName);
 
+	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UT_MESH;
+	usp->usss.resize(2);
+	usp->usss[0].shapeName = activeItem->GetShape()->GetName();
+	usp->usss[1].shapeName = newShapeName;
+
 	std::unordered_map<ushort, float> unmasked = masked;
 	glView->InvertMaskTris(unmasked, activeItem->GetShape()->GetName());
 
-	project->DeleteVerts(activeItem->GetShape(), masked);
-	project->DeleteVerts(newShape, unmasked);
+	project->PrepareDeleteVerts(activeItem->GetShape(), masked, usp->usss[0]);
+	project->PrepareDeleteVerts(newShape, unmasked, usp->usss[1]);
+
+	project->ApplyShapeMeshUndo(activeItem->GetShape(), usp->usss[0], false);
+	project->ApplyShapeMeshUndo(newShape, usp->usss[1], false);
 
 	project->SetTextures();
 	RefreshGUIFromProj();
 	UpdateActiveShapeUI();
 
-	glView->GetUndoHistory()->ClearHistory();
 	glView->ClearActiveMask();
 	ApplySliders();
 }
@@ -9493,6 +9520,19 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 					os->project->UpdateShapeFromMesh(shape, m);
 			}
 		}
+	}
+	else if (undoType == UT_MESH) {
+		for (auto &uss : usp->usss) {
+			NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+			if (!shape)
+				continue;
+			os->project->ApplyShapeMeshUndo(shape, uss, bUndo);
+		}
+		os->MeshesFromProj();
+		os->AnimationGUIFromProj();
+		os->UpdateActiveShapeUI();
+		ClearActiveMask();
+		os->ApplySliders();
 	}
 
 	if (transformMode)

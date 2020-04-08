@@ -225,11 +225,17 @@ public:
 	const std::vector<Vector3>* GetNormalsForShape(NiShape* shape, bool transform = true);
 	const std::vector<Vector2>* GetUvsForShape(NiShape* shape);
 	const std::vector<Color4>* GetColorsForShape(const std::string& shapeName);
+	const std::vector<Vector3>* GetTangentsForShape(NiShape* shape, bool transform = true);
+	const std::vector<Vector3>* GetBitangentsForShape(NiShape* shape, bool transform = true);
+	std::vector<float>* GetEyeDataForShape(NiShape* shape);
 	bool GetUvsForShape(NiShape* shape, std::vector<Vector2>& outUvs);
 	bool GetVertsForShape(NiShape* shape, std::vector<Vector3>& outVerts);
 	void SetVertsForShape(NiShape* shape, const std::vector<Vector3>& verts);
 	void SetUvsForShape(NiShape* shape, const std::vector<Vector2>& uvs);
 	void SetColorsForShape(const std::string& shapeName, const std::vector<Color4>& colors);
+	void SetTangentsForShape(NiShape* shape, const std::vector<Vector3>& in);
+	void SetBitangentsForShape(NiShape* shape, const std::vector<Vector3>& in);
+	void SetEyeDataForShape(NiShape* shape, const std::vector<float>& in);
 	void InvertUVsForShape(NiShape* shape, bool invertX, bool invertY);
 	void MirrorShape(NiShape* shape, bool mirrorX, bool mirrorY, bool mirrorZ);
 	void SetNormalsForShape(NiShape* shape, const std::vector<Vector3>& norms);
