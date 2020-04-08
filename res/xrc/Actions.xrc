@@ -668,7 +668,7 @@
 			<object class="sizeritem">
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
+				<border>10</border>
 				<object class="wxStaticText" name="copyWeightsDescription">
 					<label>Each vertex of the reference will copy its weights to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become weighted and work well. Often, the default values are sufficient.</label>
 					<wrap>550</wrap>
@@ -757,10 +757,11 @@
 			<object class="sizeritem">
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
+				<border>10</border>
 				<object class="wxStaticText" name="copyTransDescription">
-					<label>The selected shape(s) has a different skin coordinate system from the reference shape.  Do you want to copy the transforms so they have the same skin coordinates?</label>
+					<label>The skin coordinate system doesn't match the reference shape's. Do you want to copy the transforms?</label>
 					<wrap>550</wrap>
+					<hidden>1</hidden>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -768,8 +769,9 @@
 				<flag>wxLEFT</flag>
 				<border>10</border>
 				<object class="wxCheckBox" name="cbCopySkinTrans">
-					<label>Copy global-to-skin transform from reference to selected shape(s).</label>
+					<label>Copy skin transform from reference</label>
 					<checked>1</checked>
+					<hidden>1</hidden>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -777,8 +779,10 @@
 				<flag>wxLEFT</flag>
 				<border>10</border>
 				<object class="wxCheckBox" name="cbTransformGeo">
-					<label>Transform geometry so its position in global coordinates does not change.</label>
+					<label>Recalculate geometry's coordinates so it doesn't move</label>
+					<tooltip>Transform geometry so its position in global coordinates does not change.</tooltip>
 					<checked>1</checked>
+					<hidden>1</hidden>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -814,7 +818,7 @@
 			<object class="sizeritem">
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
+				<border>10</border>
 				<object class="wxStaticText" name="conformingDescription">
 					<label>Each vertex of the reference will copy its slider data to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become conformed and work well. Often, the default values are sufficient.</label>
 					<wrap>550</wrap>
