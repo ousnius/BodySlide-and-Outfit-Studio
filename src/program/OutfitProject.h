@@ -159,6 +159,7 @@ public:
 	void OffsetShape(NiShape* shape, const Vector3& xlate, std::unordered_map<ushort, float>* mask = nullptr);
 	void ScaleShape(NiShape* shape, const Vector3& scale, std::unordered_map<ushort, float>* mask = nullptr);
 	void RotateShape(NiShape* shape, const Vector3& angle, std::unordered_map<ushort, float>* mask = nullptr);
+	void ApplyTransformToShapeGeometry(NiShape* shape, const MatTransform& t);
 
 	// Uses the AutoMorph class to generate proximity values for bone weights.
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
@@ -219,7 +220,7 @@ public:
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape = nullptr);
-	int ExportOBJ(const std::string& fileName, const std::vector<NiShape*>& shapes, const Vector3& scale = Vector3(1.0f, 1.0f, 1.0f), const Vector3& offset = Vector3());
+	int ExportOBJ(const std::string& fileName, const std::vector<NiShape*>& shapes, bool transToGlobal, const Vector3& scale = Vector3(1.0f, 1.0f, 1.0f), const Vector3& offset = Vector3());
 
 	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", NiShape* mergeShape = nullptr);
 	int ExportFBX(const std::string& fileName, const std::vector<NiShape*>& shapes);

@@ -15,6 +15,13 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnAddTransparency"), ShapeProperties::OnAddTransparency)
 	EVT_BUTTON(XRCID("btnRemoveTransparency"), ShapeProperties::OnRemoveTransparency)
 	EVT_BUTTON(XRCID("btnAddExtraData"), ShapeProperties::OnAddExtraData)
+	EVT_TEXT(XRCID("textScale"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textX"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textY"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textZ"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textRX"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textRY"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textRZ"), ShapeProperties::OnTransChanged)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
 wxEND_EVENT_TABLE()
 
@@ -67,6 +74,15 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
 
+	textScale = XRCCTRL(*this, "textScale", wxTextCtrl);
+	textX = XRCCTRL(*this, "textX", wxTextCtrl);
+	textY = XRCCTRL(*this, "textY", wxTextCtrl);
+	textZ = XRCCTRL(*this, "textZ", wxTextCtrl);
+	textRX = XRCCTRL(*this, "textRX", wxTextCtrl);
+	textRY = XRCCTRL(*this, "textRY", wxTextCtrl);
+	textRZ = XRCCTRL(*this, "textRZ", wxTextCtrl);
+	cbTransformGeo = XRCCTRL(*this, "cbTransformGeo", wxCheckBox);
+
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == FO4 || targetGame == FO4VR) {
 		lbShaderName->SetLabel(_("Material"));
@@ -78,6 +94,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	GetTransparency();
 	GetGeometry();
 	GetExtraData();
+	GetCoordTrans();
 }
 
 ShapeProperties::~ShapeProperties() {
@@ -628,6 +645,52 @@ void ShapeProperties::RemoveExtraData(int id) {
 	pgExtraData->Layout();
 }
 
+void ShapeProperties::GetCoordTrans() {
+	oldXformGlobalToSkin = os->project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin;
+	newXformGlobalToSkin = oldXformGlobalToSkin;
+	Vector3 rotvec = RotMatToVec(newXformGlobalToSkin.rotation);
+
+	textScale->ChangeValue(wxString() << newXformGlobalToSkin.scale);
+	textX->ChangeValue(wxString() << newXformGlobalToSkin.translation.x);
+	textY->ChangeValue(wxString() << newXformGlobalToSkin.translation.y);
+	textZ->ChangeValue(wxString() << newXformGlobalToSkin.translation.z);
+	textRX->ChangeValue(wxString() << rotvec.x);
+	textRY->ChangeValue(wxString() << rotvec.y);
+	textRZ->ChangeValue(wxString() << rotvec.z);
+
+	cbTransformGeo->Disable();
+}
+
+void ShapeProperties::OnTransChanged(wxCommandEvent&) {
+	if (!textScale || !textX || !textY || !textZ || !textRX || !textRY || !textRZ)
+		return;
+
+	double scale, x, y, z, rx, ry, rz;
+	if (!textScale->GetValue().ToDouble(&scale))
+		return;
+	if (scale <= 0)
+		return;
+	if (!textX->GetValue().ToDouble(&x))
+		return;
+	if (!textY->GetValue().ToDouble(&y))
+		return;
+	if (!textZ->GetValue().ToDouble(&z))
+		return;
+	if (!textRX->GetValue().ToDouble(&rx))
+		return;
+	if (!textRY->GetValue().ToDouble(&ry))
+		return;
+	if (!textRZ->GetValue().ToDouble(&rz))
+		return;
+
+	newXformGlobalToSkin.scale = scale;
+	newXformGlobalToSkin.translation.x = x;
+	newXformGlobalToSkin.translation.y = y;
+	newXformGlobalToSkin.translation.z = z;
+	newXformGlobalToSkin.rotation = RotVecToMat(Vector3(rx, ry, rz));
+	cbTransformGeo->Enable(!newXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin));
+}
+
 void ShapeProperties::RefreshMesh() {
 	os->project->SetTextures(shape);
 	os->MeshFromProj(shape, true);
@@ -660,7 +723,7 @@ void ShapeProperties::ApplyChanges() {
 
 		shader->SetName(name);
 		shader->SetVertexColors(vertexColors->IsChecked());
-		
+
 		if (vertexColors->IsChecked() && currentVertexColors != vertexColors->IsChecked())
 			shape->SetVertexColors(true);
 
@@ -811,5 +874,13 @@ void ShapeProperties::ApplyChanges() {
 					floatExtraData->SetFloatData((float)val);
 			}
 		}
+	}
+
+	if (!newXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin)) {
+		if (cbTransformGeo->IsChecked())
+			os->project->ApplyTransformToShapeGeometry(shape, newXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
+
+		os->project->GetWorkAnim()->ChangeGlobalToSkinTransform(shape->GetName(), newXformGlobalToSkin);
+		nif->SetShapeTransformGlobalToSkin(shape, newXformGlobalToSkin);
 	}
 }

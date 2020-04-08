@@ -1478,6 +1478,37 @@ void OutfitProject::RotateShape(NiShape* shape, const Vector3& angle, std::unord
 	workNif.RotateShape(shape, angle, mask);
 }
 
+void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTransform &t) {
+	if (!shape)
+		return;
+
+	// Vertices
+	const std::vector<Vector3>* oldVerts = workNif.GetRawVertsForShape(shape);
+	if (!oldVerts || oldVerts->empty())
+		return;
+
+	int nVerts = oldVerts->size();
+	std::vector<Vector3> verts(nVerts);
+	for (int i = 0; i < nVerts; ++i)
+		verts[i] = t.ApplyTransform((*oldVerts)[i]);
+
+	workNif.SetVertsForShape(shape, verts);
+
+	// Normals
+	if (t.rotation.IsNearlyEqualTo(Matrix3()))
+		return;
+
+	const std::vector<Vector3>* oldNorms = workNif.GetNormalsForShape(shape, false);
+	if (!oldNorms || oldNorms->size() != nVerts)
+		return;
+
+	std::vector<Vector3> norms(nVerts);
+	for (int i = 0; i < nVerts; ++i)
+		norms[i] = t.rotation * (*oldNorms)[i];
+
+	workNif.SetNormalsForShape(shape, norms);
+}
+
 void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
 	if (!shape || !baseShape)
 		return;
@@ -2187,9 +2218,9 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 
 void OutfitProject::InitConform() {
 	if (baseShape) {
-		morpher.SetRef(workNif, baseShape);
+		morpher.SetRef(workNif, baseShape, &workAnim);
 		morpher.LinkRefDiffData(&baseDiffData);
-		morpher.SourceShapesFromNif(workNif);
+		morpher.SourceShapesFromNif(workNif, &workAnim);
 	}
 }
 
@@ -2616,7 +2647,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 	return 0;
 }
 
-int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiShape*>& shapes, const Vector3& scale, const Vector3& offset) {
+int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiShape*>& shapes, bool transToGlobal, const Vector3& scale, const Vector3& offset) {
 	ObjFile obj;
 	obj.SetScale(scale);
 	obj.SetOffset(offset);
@@ -2633,8 +2664,24 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 		if (!verts)
 			return 3;
 
+
 		const std::vector<Vector2>* uvs = workNif.GetUvsForShape(shape);
 		const std::vector<Vector3>* norms = workNif.GetNormalsForShape(shape, false);
+
+		std::vector<Vector3> gVerts, gNorms;
+		if (transToGlobal) {
+			MatTransform toGlobal = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin.InverseTransform();
+			gVerts.resize(verts->size());
+			for (int i = 0; i < gVerts.size(); ++i)
+				gVerts[i] = toGlobal.ApplyTransform((*verts)[i]);
+			verts = &gVerts;
+			if (norms) {
+				gNorms.resize(norms->size());
+				for (int i = 0; i < gNorms.size(); ++i)
+					gNorms[i] = toGlobal.rotation * (*norms)[i];
+				norms = &gNorms;
+			}
+		}
 
 		obj.AddGroup(shape->GetName(), *verts, tris, uvs ? *uvs : std::vector<Vector2>(), norms ? *norms : std::vector<Vector3>());
 	}

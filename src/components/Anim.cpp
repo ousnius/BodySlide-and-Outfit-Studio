@@ -91,6 +91,16 @@ void AnimInfo::ClearShape(const std::string& shape) {
 	shapeSkinning.erase(shape);
 }
 
+bool AnimInfo::HasSkinnedShape(NiShape* shape) {
+	if (!shape)
+		return false;
+
+	if (shapeSkinning.find(shape->GetName()) != shapeSkinning.end())
+		return true;
+	else
+		return false;
+}
+
 void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<ushort>& indices) {
 	if (indices.empty())
 		return;
@@ -267,6 +277,11 @@ void AnimInfo::RecursiveRecalcXFormSkinToBone(const std::string& shape, AnimBone
 	RecalcXFormSkinToBone(shape, bPtr->boneName);
 	for (AnimBone *cptr : bPtr->children)
 		RecursiveRecalcXFormSkinToBone(shape, cptr);
+}
+
+void AnimInfo::ChangeGlobalToSkinTransform(const std::string& shape, const MatTransform &newTrans) {
+	shapeSkinning[shape].xformGlobalToSkin = newTrans;
+	RecursiveRecalcXFormSkinToBone(shape, AnimSkeleton::getInstance().GetRootBonePtr());
 }
 
 bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex) {

@@ -43,6 +43,16 @@ private:
 	wxPanel* pgExtraData = nullptr;
 	wxFlexGridSizer* extraDataGrid = nullptr;
 
+	wxTextCtrl* textScale = nullptr;
+	wxTextCtrl* textX = nullptr;
+	wxTextCtrl* textY = nullptr;
+	wxTextCtrl* textZ = nullptr;
+	wxTextCtrl* textRX = nullptr;
+	wxTextCtrl* textRY = nullptr;
+	wxTextCtrl* textRZ = nullptr;
+	wxCheckBox* cbTransformGeo = nullptr;
+	MatTransform oldXformGlobalToSkin, newXformGlobalToSkin;
+
 	OutfitStudioFrame* os = nullptr;
 	NifFile* nif = nullptr;
 	NiShape* shape = nullptr;
@@ -67,6 +77,9 @@ private:
 	void AddExtraData(NiExtraData* extraData, bool uiOnly = false);
 	void ChangeExtraDataType(int index);
 	void RemoveExtraData(int index);
+
+	void GetCoordTrans();
+	void OnTransChanged(wxCommandEvent&);
 
 	void AssignDefaultTexture();
 	void RefreshMesh();

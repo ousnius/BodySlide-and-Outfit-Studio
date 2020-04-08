@@ -21,6 +21,11 @@ typedef unsigned char byte;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 
+inline bool FloatsAreNearlyEqual(float a, float b) {
+	float scale = std::max(std::max(std::fabs(a), std::fabs(b)), 1.0f);
+	return std::fabs(a - b) <= EPSILON * scale;
+}
+
 struct Vector2 {
 	float u;
 	float v;
@@ -267,6 +272,12 @@ struct Vector3 {
 			y = 0.0f;
 		if (fabs(z) < EPSILON)
 			z = 0.0f;
+	}
+
+	bool IsNearlyEqualTo(const Vector3& other) const {
+		return FloatsAreNearlyEqual(x, other.x) &&
+			FloatsAreNearlyEqual(y, other.y) &&
+			FloatsAreNearlyEqual(z, other.z);
 	}
 };
 
@@ -538,6 +549,12 @@ public:
 		p *= 180.0f / PI;
 		r *= 180.0f / PI;
 		return canRot;
+	}
+
+	bool IsNearlyEqualTo(const Matrix3 &other) const {
+		return rows[0].IsNearlyEqualTo(other.rows[0]) &&
+			rows[1].IsNearlyEqualTo(other.rows[1]) &&
+			rows[2].IsNearlyEqualTo(other.rows[2]);
 	}
 };
 
@@ -963,6 +980,12 @@ struct MatTransform {
 	// of this and other.  That is, if t3 = t1.ComposeTransforms(t2), then
 	// t3.ApplyTransform(v) == t1.ApplyTransform(t2.ApplyTransform(v)).
 	MatTransform ComposeTransforms(const MatTransform &other) const;
+
+	bool IsNearlyEqualTo(const MatTransform &other) const {
+		return translation.IsNearlyEqualTo(other.translation) &&
+			rotation.IsNearlyEqualTo(other.rotation) &&
+			FloatsAreNearlyEqual(scale, other.scale);
+	}
 };
 
 

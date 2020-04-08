@@ -1820,6 +1820,33 @@ int NifFile::GetShapeBoneWeights(NiShape* shape, const int boneIndex, std::unord
 	return outWeights.size();
 }
 
+bool NifFile::CalcShapeTransformGlobalToSkin(NiShape* shape, MatTransform& outTransform) {
+	if (!shape)
+		return false;
+	if (GetShapeTransformGlobalToSkin(shape, outTransform))
+		return true;
+
+	// Now the nif doesn't have this transform, probably because it's
+	// a FO4 nif, so we will try to calculate it, since FO4 shapes almost
+	// always have a non-identity global-to-skin transform.
+	// Ideally, we'd use bone transforms from the skeleton file, but we
+	// don't have access to that here.
+	std::vector<std::string> bones;
+	GetShapeBoneList(shape, bones);
+	for (const std::string &bone : bones) {
+		MatTransform xformBoneToGlobal;
+		if (!GetNodeTransformToGlobal(bone, xformBoneToGlobal))
+			continue;
+		MatTransform xformSkinToBone;
+		if (!GetShapeTransformSkinToBone(shape, bone, xformSkinToBone))
+			continue;
+		// compose: skin -> bone -> global and invert
+		outTransform = xformBoneToGlobal.ComposeTransforms(xformSkinToBone).InverseTransform();
+		return true;
+	}
+	return false;
+}
+
 bool NifFile::GetShapeTransformGlobalToSkin(NiShape* shape, MatTransform& outTransform) {
 	if (!shape)
 		return false;
@@ -1861,7 +1888,7 @@ void NifFile::SetShapeTransformGlobalToSkin(NiShape* shape, const MatTransform& 
 bool NifFile::GetShapeTransformSkinToBone(NiShape* shape, const std::string& boneName, MatTransform& outTransform) {
 	if (!shape)
 		return false;
-	return GetShapeBoneTransform(shape, shape->GetBoneID(hdr, boneName), outTransform);
+	return GetShapeTransformSkinToBone(shape, shape->GetBoneID(hdr, boneName), outTransform);
 }
 
 bool NifFile::GetShapeTransformSkinToBone(NiShape* shape, const int boneIndex, MatTransform& outTransform) {

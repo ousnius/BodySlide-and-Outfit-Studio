@@ -10,6 +10,8 @@ See the included LICENSE file
 #include "Mesh.h"
 #include "SliderSet.h"
 
+class AnimInfo;
+
 class Automorph {
 	std::unique_ptr<kd_tree> refTree;
 	std::map<std::string, mesh*> sourceShapes;
@@ -45,7 +47,7 @@ public:
 		bEnableMask = enable;
 	}
 
-	void SetRef(NifFile& Ref, NiShape* refShape);
+	void SetRef(NifFile& Ref, NiShape* refShape, const AnimInfo *workAnim);
 
 	void LinkRefDiffData(DiffDataSets* diffData);
 	void UnlinkRefDiffData();
@@ -54,11 +56,11 @@ public:
 	bool ApplyResultToVerts(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector3>* inOutResult, float strength = 1.0f);
 	bool ApplyResultToUVs(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector2>* inOutResult, float strength = 1.0f);
 
-	void SourceShapesFromNif(NifFile& baseNif);
+	void SourceShapesFromNif(NifFile& baseNif, const AnimInfo *workAnim);
 	void UpdateMeshFromNif(NifFile &baseNif, const std::string& shapeName);
 	void CopyMeshMask(mesh*m, const std::string& shapeName);
 
-	void MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape);
+	void MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const AnimInfo *workAnim);
 	void DeleteVerts(const std::string& shapeName, const std::vector<ushort>& indices);
 
 	void ClearProximityCache();

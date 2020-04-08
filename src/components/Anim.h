@@ -142,6 +142,7 @@ public:
 
 	void Clear();
 	void ClearShape(const std::string& shape);
+	bool HasSkinnedShape(NiShape* shape);
 	void DeleteVertsForShape(const std::string& shape, const std::vector<ushort>& indices);
 
 	// Loads the skinning information contained in the nif for all shapes.
@@ -161,6 +162,9 @@ public:
 	// RecursiveRecalcXFormSkinToBone calls RecalcXFormSkinToBone for the
 	// given bone and all its descendants.
 	void RecursiveRecalcXFormSkinToBone(const std::string& shape, AnimBone *bPtr);
+	// ChangeGlobalToSkinTransform sets the global-to-skin transform for a
+	// shape and updates all skin-to-bone transforms.
+	void ChangeGlobalToSkinTransform(const std::string& shape, const MatTransform &newTrans);
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
 	void WriteToNif(NifFile* nif, const std::string& shapeException = "");
