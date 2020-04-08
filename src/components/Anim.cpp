@@ -96,20 +96,12 @@ void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<u
 	if (indices.empty())
 		return;
 
-	ushort highestRemoved = indices.back();
+	int highestRemoved = indices.back();
 	std::vector<int> indexCollapse = GenerateIndexCollapseMap(indices, highestRemoved + 1);
 
 	auto& skin = shapeSkinning[shape];
 	for (auto &w : skin.boneWeights) {
-		std::unordered_map<ushort, float> weightsCopy;
-		for (auto &d : w.second.weights) {
-			if (d.first > highestRemoved)
-				weightsCopy.emplace(d.first - indices.size(), d.second);
-			else if (indexCollapse[d.first] != -1)
-				weightsCopy.emplace(indexCollapse[d.first], d.second);
-		}
-
-		w.second.weights = std::move(weightsCopy);
+		ApplyIndexMapToMapKeys(w.second.weights, indexCollapse, - static_cast<int>(indices.size()));
 	}
 }
 
@@ -121,15 +113,7 @@ void AnimSkin::InsertVertexIndices(const std::vector<ushort>& indices) {
 	std::vector<int> indexExpand = GenerateIndexExpandMap(indices, highestAdded + 1);
 
 	for (auto &w : boneWeights) {
-		std::unordered_map<ushort, float> weightsCopy;
-		for (auto &d : w.second.weights) {
-			if (d.first > highestAdded)
-				weightsCopy[d.first + indices.size()] = d.second;
-			else
-				weightsCopy[indexExpand[d.first]] = d.second;
-		}
-
-		w.second.weights = std::move(weightsCopy);
+		ApplyIndexMapToMapKeys(w.second.weights, indexExpand, indices.size());
 	}
 }
 

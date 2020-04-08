@@ -102,6 +102,22 @@ template<typename IndexType1, typename IndexType2> std::vector<int> GenerateInde
 	return map;
 }
 
+// ApplyIndexMapToMapKeys: MapType is something like
+// std::unordered_map<int, Data> or std::map<int, Data>.
+// If a MapType-key k is in the indexMap, it is deleted if indexMap[k]
+// is negative, or changed to indexMap[k] otherwise.  If k is not in
+// indexMap, defaultOffset is added to it.
+template<typename MapType> void ApplyIndexMapToMapKeys(MapType &keyMap, const std::vector<int> indexMap, int defaultOffset) {
+	MapType copy;
+	for (auto &d : keyMap) {
+		if (d.first >= indexMap.size())
+			copy[d.first + defaultOffset] = std::move(d.second);
+		else if (indexMap[d.first] >= 0)
+			copy[indexMap[d.first]] = std::move(d.second);
+	}
+	keyMap = std::move(copy);
+}
+
 template<typename IndexType> std::vector<Triangle> GenerateTrianglesFromStrips(const std::vector<std::vector<IndexType>> &strips) {
 	std::vector<Triangle> tris;
 	for (const std::vector<IndexType> &strip : strips) {

@@ -406,17 +406,8 @@ void DiffDataSets::DeleteVerts(const std::string& target, const std::vector<usho
 	std::vector<int> indexCollapse = GenerateIndexCollapseMap(indices, highestRemoved + 1);
 
 	for (auto &data : namedSet) {
-		if (TargetMatch(data.first, target)) {
-			std::unordered_map<ushort, Vector3> indexCopy;
-			for (auto &d : data.second) {
-				if (d.first > highestRemoved)
-					indexCopy.emplace(d.first - indices.size(), d.second);
-				else if (indexCollapse[d.first] != -1)
-					indexCopy.emplace(indexCollapse[d.first], d.second);
-			}
-
-			data.second = std::move(indexCopy);
-		}
+		if (TargetMatch(data.first, target))
+			ApplyIndexMapToMapKeys(data.second, indexCollapse, - static_cast<int>(indices.size()));
 	}
 }
 
@@ -424,21 +415,13 @@ void DiffDataSets::InsertVertexIndices(const std::string& target, const std::vec
 	if (indices.empty())
 		return;
 
-	ushort highestAdded = indices.back();
+	int highestAdded = indices.back();
 	std::vector<int> indexExpand = GenerateIndexExpandMap(indices, highestAdded + 1);
 
 	for (auto &data : namedSet) {
 		if (!TargetMatch(data.first, target))
 			continue;
-		std::unordered_map<ushort, Vector3> dataCopy;
-		for (auto &d : data.second) {
-			if (d.first > highestAdded)
-				dataCopy[d.first + indices.size()] = d.second;
-			else
-				dataCopy[indexExpand[d.first]] = d.second;
-		}
-
-		data.second = std::move(dataCopy);
+		ApplyIndexMapToMapKeys(data.second, indexExpand, indices.size());
 	}
 }
 
