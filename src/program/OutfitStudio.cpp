@@ -8005,15 +8005,15 @@ bool OutfitStudioFrame::ShowWeightCopy(WeightCopyOptions& options) {
 		if (options.showSkinTransOption) {
 			cbCopySkinTrans->SetValue(options.doSkinTransCopy);
 			cbTransformGeo->SetValue(options.doTransformGeo);
-		}
-		else {
-			cbCopySkinTrans->Hide();
-			cbTransformGeo->Hide();
-			XRCCTRL(dlg, "copyTransDescription", wxStaticText)->Hide();
+			cbCopySkinTrans->Show();
+			cbTransformGeo->Show();
+			XRCCTRL(dlg, "copyTransDescription", wxStaticText)->Show();
 		}
 
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
+		dlg.SetSize(dlg.GetBestSize());
+		
 		if (dlg.ShowModal() == wxID_OK) {
 			options.proximityRadius = atof(XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->GetValue().c_str());
 
