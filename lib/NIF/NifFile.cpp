@@ -2238,19 +2238,6 @@ void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSk
 			bsdSkinInst->AddPartition(pi);
 		}
 	}
-
-	// Remove empty partitions
-	std::vector<int> emptyIndices;
-	if (skinPart->RemoveEmptyPartitions(emptyIndices)) {
-		if (bsdSkinInst) {
-			// Delete partition info in descending order
-			std::sort(emptyIndices.begin(), emptyIndices.end(), std::greater<>());
-			for (auto &i : emptyIndices)
-				bsdSkinInst->RemovePartition(i);
-
-			UpdatePartitionFlags(shape);
-		}
-	}
 }
 
 void NifFile::SetDefaultPartition(NiShape* shape) {
