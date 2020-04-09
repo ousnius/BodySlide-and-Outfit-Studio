@@ -7474,12 +7474,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	project->GetWorkAnim()->CleanupBones();
 
-	if (delShapes.empty()) {
-		MeshesFromProj();
-		AnimationGUIFromProj();
-	}
-	else
-		RefreshGUIFromProj();
+	RefreshGUIFromProj();
 
 	UpdateActiveShapeUI();
 
@@ -9528,8 +9523,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 				continue;
 			os->project->ApplyShapeMeshUndo(shape, uss, bUndo);
 		}
-		os->MeshesFromProj();
-		os->AnimationGUIFromProj();
+		os->RefreshGUIFromProj();
 		os->UpdateActiveShapeUI();
 		ClearActiveMask();
 		os->ApplySliders();
