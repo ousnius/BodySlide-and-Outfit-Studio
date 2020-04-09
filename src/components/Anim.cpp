@@ -92,6 +92,16 @@ void AnimInfo::ClearShape(const std::string& shape) {
 	shapeSkinning.erase(shape);
 }
 
+bool AnimInfo::HasSkinnedShape(NiShape* shape) {
+	if (!shape)
+		return false;
+
+	if (shapeSkinning.find(shape->GetName()) != shapeSkinning.end())
+		return true;
+	else
+		return false;
+}
+
 void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<ushort>& indices) {
 	if (indices.empty())
 		return;

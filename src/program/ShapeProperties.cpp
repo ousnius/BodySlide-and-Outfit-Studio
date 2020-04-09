@@ -15,6 +15,13 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnAddTransparency"), ShapeProperties::OnAddTransparency)
 	EVT_BUTTON(XRCID("btnRemoveTransparency"), ShapeProperties::OnRemoveTransparency)
 	EVT_BUTTON(XRCID("btnAddExtraData"), ShapeProperties::OnAddExtraData)
+	EVT_TEXT(XRCID("textScale"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textX"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textY"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textZ"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textRX"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textRY"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textRZ"), ShapeProperties::OnTransChanged)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
 	EVT_TEXT(XRCID("textScale"), ShapeProperties::OnTransChanged)
 	EVT_TEXT(XRCID("textX"), ShapeProperties::OnTransChanged)
@@ -649,6 +656,7 @@ void ShapeProperties::GetCoordTrans() {
 	oldXformGlobalToSkin = os->project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin;
 	newXformGlobalToSkin = oldXformGlobalToSkin;
 	Vector3 rotvec = RotMatToVec(newXformGlobalToSkin.rotation);
+
 	textScale->ChangeValue(wxString() << newXformGlobalToSkin.scale);
 	textX->ChangeValue(wxString() << newXformGlobalToSkin.translation.x);
 	textY->ChangeValue(wxString() << newXformGlobalToSkin.translation.y);
@@ -656,12 +664,14 @@ void ShapeProperties::GetCoordTrans() {
 	textRX->ChangeValue(wxString() << rotvec.x);
 	textRY->ChangeValue(wxString() << rotvec.y);
 	textRZ->ChangeValue(wxString() << rotvec.z);
+
 	cbTransformGeo->Disable();
 }
 
 void ShapeProperties::OnTransChanged(wxCommandEvent&) {
 	if (!textScale || !textX || !textY || !textZ || !textRX || !textRY || !textRZ)
 		return;
+
 	double scale, x, y, z, rx, ry, rz;
 	if (!textScale->GetValue().ToDouble(&scale))
 		return;
@@ -679,6 +689,7 @@ void ShapeProperties::OnTransChanged(wxCommandEvent&) {
 		return;
 	if (!textRZ->GetValue().ToDouble(&rz))
 		return;
+
 	newXformGlobalToSkin.scale = scale;
 	newXformGlobalToSkin.translation.x = x;
 	newXformGlobalToSkin.translation.y = y;
@@ -719,7 +730,7 @@ void ShapeProperties::ApplyChanges() {
 
 		shader->SetName(name);
 		shader->SetVertexColors(vertexColors->IsChecked());
-		
+
 		if (vertexColors->IsChecked() && currentVertexColors != vertexColors->IsChecked())
 			shape->SetVertexColors(true);
 
@@ -875,6 +886,7 @@ void ShapeProperties::ApplyChanges() {
 	if (!newXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin)) {
 		if (cbTransformGeo->IsChecked())
 			os->project->ApplyTransformToShapeGeometry(shape, newXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
+
 		os->project->GetWorkAnim()->ChangeGlobalToSkinTransform(shape->GetName(), newXformGlobalToSkin);
 		nif->SetShapeTransformGlobalToSkin(shape, newXformGlobalToSkin);
 	}
