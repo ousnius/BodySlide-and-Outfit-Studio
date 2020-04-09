@@ -1939,14 +1939,11 @@ void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
 	}
 
 	bool tMode = glView->GetTransformMode();
-	bool vMode = glView->GetVertexEdit();
 
 	if (tMode)
 		glView->ShowTransformTool();
-	if (vMode)
-		glView->ShowVertexEdit();
 
-	if (!tMode && !vMode)
+	if (!tMode)
 		glView->Render();
 }
 
@@ -2016,6 +2013,7 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 		CreatePartitionTree(activeItem->GetShape());
 	}
 
+	glView->Render();
 	HighlightBoneNamesWithWeights();
 }
 
@@ -3101,6 +3099,9 @@ void OutfitStudioFrame::AnimationGUIFromProj() {
 void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
 	for (auto &shape : project->GetWorkNif()->GetShapes())
 		MeshFromProj(shape, reloadTextures);
+
+	if (glView->GetVertexEdit())
+		glView->ShowVertexEdit();
 }
 
 void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) {
@@ -3116,7 +3117,6 @@ void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) 
 		glView->SetMeshTextures(shape->GetName(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures);
 
 		UpdateMeshFromSet(shape);
-		glView->Render();
 	}
 
 	std::vector<std::string> selShapes;
@@ -3129,9 +3129,6 @@ void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) 
 		glView->SetSelectedShape(activeItem->GetShape()->GetName());
 	else
 		glView->SetSelectedShape("");
-
-	if (glView->GetVertexEdit())
-		glView->ShowVertexEdit();
 }
 
 void OutfitStudioFrame::UpdateMeshFromSet(NiShape* shape) {
@@ -6847,8 +6844,8 @@ void OutfitStudioFrame::OnInvertUV(wxCommandEvent& event) {
 
 	for (auto &i : selectedItems) {
 		project->GetWorkNif()->InvertUVsForShape(i->GetShape(), invertX, invertY);
-		MeshFromProj(i->GetShape());
 	}
+	RefreshGUIFromProj();
 }
 
 void OutfitStudioFrame::OnMirror(wxCommandEvent& event) {
@@ -6863,8 +6860,8 @@ void OutfitStudioFrame::OnMirror(wxCommandEvent& event) {
 
 	for (auto &i : selectedItems) {
 		project->GetWorkNif()->MirrorShape(i->GetShape(), mirrorX, mirrorY, mirrorZ);
-		MeshFromProj(i->GetShape());
 	}
+	RefreshGUIFromProj();
 }
 
 void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
@@ -6991,8 +6988,6 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 
 	if (glView->GetTransformMode())
 		glView->ShowTransformTool();
-	if (glView->GetVertexEdit())
-		glView->ShowVertexEdit();
 }
 
 void OutfitStudioFrame::OnMoveShapeOldOffset(wxCommandEvent& event) {
@@ -7089,8 +7084,6 @@ void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
 
 	if (glView->GetTransformMode())
 		glView->ShowTransformTool();
-	if (glView->GetVertexEdit())
-		glView->ShowVertexEdit();
 }
 
 void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
@@ -7174,8 +7167,6 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool();
-		if (glView->GetVertexEdit())
-			glView->ShowVertexEdit();
 	}
 }
 
@@ -7310,8 +7301,6 @@ void OutfitStudioFrame::PreviewScale(const Vector3& scale) {
 
 	if (glView->GetTransformMode())
 		glView->ShowTransformTool();
-	if (glView->GetVertexEdit())
-		glView->ShowVertexEdit();
 }
 
 void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
@@ -7363,8 +7352,6 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool();
-		if (glView->GetVertexEdit())
-			glView->ShowVertexEdit();
 	}
 }
 
@@ -7423,8 +7410,6 @@ void OutfitStudioFrame::PreviewRotation(const Vector3& changed) {
 
 	if (glView->GetTransformMode())
 		glView->ShowTransformTool();
-	if (glView->GetVertexEdit())
-		glView->ShowVertexEdit();
 }
 
 void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
@@ -7475,8 +7460,6 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	project->GetWorkAnim()->CleanupBones();
 
 	RefreshGUIFromProj();
-
-	UpdateActiveShapeUI();
 
 	glView->ClearActiveMask();
 	ApplySliders();
@@ -7529,7 +7512,6 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	project->SetTextures();
 	RefreshGUIFromProj();
-	UpdateActiveShapeUI();
 
 	glView->ClearActiveMask();
 	ApplySliders();
@@ -8061,7 +8043,7 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		if (options.doSkinTransCopy || options.doTransformGeo)
-			MeshesFromProj();
+			RefreshGUIFromProj();
 
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
@@ -8152,7 +8134,7 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		if (options.doSkinTransCopy || options.doTransformGeo)
-			MeshesFromProj();
+			RefreshGUIFromProj();
 
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
@@ -8770,6 +8752,7 @@ void wxGLPanel::OnShown() {
 	}
 
 	os->MeshesFromProj();
+	Render();
 }
 
 void wxGLPanel::SetNotifyWindow(wxWindow* win) {
@@ -8950,8 +8933,6 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 
 			if (transformMode)
 				ShowTransformTool();
-			if (vertexEdit)
-				ShowVertexEdit();
 		}
 	}
 	else if (event.GetUnicodeKey() == '0')
@@ -9555,7 +9536,6 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 			os->project->ApplyShapeMeshUndo(shape, uss, bUndo);
 		}
 		os->RefreshGUIFromProj();
-		os->UpdateActiveShapeUI();
 		ClearActiveMask();
 		os->ApplySliders();
 	}
@@ -9769,8 +9749,6 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 			}
 		}
 	}
-
-	gls.RenderOneFrame();
 }
 
 void wxGLPanel::OnIdle(wxIdleEvent& WXUNUSED(event)) {
