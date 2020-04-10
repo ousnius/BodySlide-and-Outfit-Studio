@@ -263,7 +263,7 @@ public:
 	BoundingSphere GetBounds() { return bounds; }
 	void UpdateBounds();
 
-	virtual void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* norms);
+	virtual void Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* norms);
 	virtual void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	virtual void CalcTangentSpace();
 };
@@ -347,6 +347,7 @@ public:
 	std::vector<Vector3> rawBitangents;		// filled in CalcTangentSpace
 	std::vector<Vector2> rawUvs;			// filled by GetUVData function and returned.
 	std::vector<Color4> rawColors;			// filled by GetColorData function and returned.
+	std::vector<float> rawEyeData;
 
 	std::vector<uint> deletedTris;			// temporary storage for BSSubIndexTriShape
 
@@ -378,6 +379,7 @@ public:
 	std::vector<Vector3>* GetBitangentData(bool xform = true);
 	std::vector<Vector2>* GetUVData();
 	std::vector<Color4>* GetColorData();
+	std::vector<float>* GetEyeData();
 
 	ushort GetNumVertices();
 	void SetVertices(const bool enable);
@@ -423,7 +425,11 @@ public:
 	void CalcTangentSpace();
 	int CalcDataSizes(NiVersion& version);
 
-	virtual void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals = nullptr);
+	void SetTangentData(const std::vector<Vector3> &in);
+	void SetBitangentData(const std::vector<Vector3> &in);
+	void SetEyeData(const std::vector<float> &in);
+
+	virtual void Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* normals = nullptr);
 };
 
 
@@ -535,7 +541,7 @@ public:
 	void SetSegmentation(const NifSegmentationInfo &inf, const std::vector<int> &triParts);
 
 	void SetDefaultSegments();
-	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals = nullptr);
+	void Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* normals = nullptr);
 };
 
 class BSMeshLODTriShape : public BSTriShape {
@@ -569,7 +575,7 @@ public:
 	void CalcDynamicData();
 	BSDynamicTriShape* Clone() { return new BSDynamicTriShape(*this); }
 
-	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals = nullptr);
+	void Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* normals = nullptr);
 };
 
 class NiSkinInstance;
@@ -623,7 +629,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* norms);
+	void Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* norms);
 };
 
 struct MatchGroup {
@@ -646,7 +652,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* norms);
+	void Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* norms);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 
 	uint GetNumTriangles();

@@ -59,6 +59,23 @@ template<typename VectorType, typename IndexType> void EraseVectorIndices(Vector
 }
 
 // inds must be in sorted ascending order.
+template<typename VectorType, typename IndexType> void InsertVectorIndices(VectorType &v, const std::vector<IndexType> &inds) {
+	if (inds.empty() || inds.back() >= v.size() + inds.size())
+		return;
+	int indi = inds.size() - 1;
+	int di = v.size() + inds.size() - 1;
+	int si = v.size() - 1;
+	v.resize(di + 1);
+	while (true) {
+		while (indi >= 0 && di == inds[indi])
+			--di, --indi;
+		if (indi < 0)
+			break;
+		v[di--] = std::move(v[si--]);
+	}
+}
+
+// inds must be in sorted ascending order.
 template<typename IndexType1, typename IndexType2> std::vector<int> GenerateIndexCollapseMap(const std::vector<IndexType1> &inds, IndexType2 mapSize) {
 	std::vector<int> map(mapSize);
 	int indi = 0;
@@ -71,6 +88,34 @@ template<typename IndexType1, typename IndexType2> std::vector<int> GenerateInde
 			map[si] = di++;
 	}
 	return map;
+}
+
+// inds must be in sorted ascending order.
+template<typename IndexType1, typename IndexType2> std::vector<int> GenerateIndexExpandMap(const std::vector<IndexType1> &inds, IndexType2 mapSize) {
+	std::vector<int> map(mapSize);
+	int indi = 0;
+	for (int si = 0, di = 0; si < mapSize; ++si, ++di) {
+		while (indi < inds.size() && di == inds[indi])
+			++di, ++indi;
+		map[si] = di;
+	}
+	return map;
+}
+
+// ApplyIndexMapToMapKeys: MapType is something like
+// std::unordered_map<int, Data> or std::map<int, Data>.
+// If a MapType-key k is in the indexMap, it is deleted if indexMap[k]
+// is negative, or changed to indexMap[k] otherwise.  If k is not in
+// indexMap, defaultOffset is added to it.
+template<typename MapType> void ApplyIndexMapToMapKeys(MapType &keyMap, const std::vector<int> indexMap, int defaultOffset) {
+	MapType copy;
+	for (auto &d : keyMap) {
+		if (d.first >= indexMap.size())
+			copy[d.first + defaultOffset] = std::move(d.second);
+		else if (indexMap[d.first] >= 0)
+			copy[indexMap[d.first]] = std::move(d.second);
+	}
+	keyMap = std::move(copy);
 }
 
 template<typename IndexType> std::vector<Triangle> GenerateTrianglesFromStrips(const std::vector<std::vector<IndexType>> &strips) {

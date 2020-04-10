@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #include "DiffData.h"
 #include "../utils/PlatformUtil.h"
+#include "../NIF/NifUtil.h"
+#include "UndoState.h"
 
 #include <algorithm>
 #include <fstream>
@@ -401,34 +403,44 @@ void DiffDataSets::DeleteVerts(const std::string& target, const std::vector<usho
 		return;
 
 	ushort highestRemoved = indices.back();
-	std::vector<int> indexCollapse(highestRemoved + 1, 0);
-
-	int remCount = 0;
-	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
-		if (j < indices.size() && indices[j] == i) {	// Found one to remove
-			indexCollapse[i] = -1;						// Flag delete
-			remCount++;
-			j++;
-		}
-		else
-			indexCollapse[i] = remCount;
-	}
+	std::vector<int> indexCollapse = GenerateIndexCollapseMap(indices, highestRemoved + 1);
 
 	for (auto &data : namedSet) {
-		if (TargetMatch(data.first, target)) {
-			std::unordered_map<ushort, Vector3> indexCopy;
-			for (auto &d : data.second) {
-				if (d.first > highestRemoved)
-					indexCopy.emplace(d.first - remCount, d.second);
-				else if (indexCollapse[d.first] != -1)
-					indexCopy.emplace(d.first - indexCollapse[d.first], d.second);
-			}
+		if (TargetMatch(data.first, target))
+			ApplyIndexMapToMapKeys(data.second, indexCollapse, - static_cast<int>(indices.size()));
+	}
+}
 
-			data.second.clear();
-			data.second.reserve(indexCopy.size());
-			for (auto &copy : indexCopy)
-				data.second[copy.first] = std::move(copy.second);
-		}
+void DiffDataSets::InsertVertexIndices(const std::string& target, const std::vector<ushort>& indices) {
+	if (indices.empty())
+		return;
+
+	int highestAdded = indices.back();
+	std::vector<int> indexExpand = GenerateIndexExpandMap(indices, highestAdded + 1);
+
+	for (auto &data : namedSet) {
+		if (!TargetMatch(data.first, target))
+			continue;
+		ApplyIndexMapToMapKeys(data.second, indexExpand, indices.size());
+	}
+}
+
+void DiffDataSets::GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs) {
+	for (auto &data : namedSet) {
+		if (!TargetMatch(data.first, target))
+			continue;
+		auto dit = data.second.find(vertIndex);
+		if (dit == data.second.end())
+			continue;
+		diffs.push_back(UndoStateVertexSliderDiff{data.first, dit->second});
+	}
+}
+
+void DiffDataSets::SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs) {
+	for (const auto &diff : diffs) {
+		if (!TargetMatch(diff.setName, target))
+			continue;
+		namedSet[diff.setName][vertIndex] = diff.diff;
 	}
 }
 

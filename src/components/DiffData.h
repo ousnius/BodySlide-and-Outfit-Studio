@@ -10,6 +10,8 @@ See the included LICENSE file
 #include <map>
 #include <unordered_map>
 
+struct UndoStateVertexSliderDiff;
+
 class OSDataFile {
 	uint header;
 	uint version;
@@ -54,7 +56,12 @@ public:
 	std::unordered_map<ushort, Vector3>* GetDiffSet(const std::string& targetDataName);
 	void GetDiffIndices(const std::string& set, const std::string& target, std::vector<ushort>& outIndices, float threshold = 0.0f);
 
+	// indices must be in ascending order.
 	void DeleteVerts(const std::string& target, const std::vector<ushort>& indices);
+	// indices must be in ascending order.
+	void InsertVertexIndices(const std::string& target, const std::vector<ushort>& indices);
+	void GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs);
+	void SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs);
 	void ClearSet(const std::string& name);
 	void EmptySet(const std::string& set, const std::string& target) {
 		if (!TargetMatch(set, target))

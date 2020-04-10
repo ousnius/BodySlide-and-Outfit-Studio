@@ -212,6 +212,7 @@ public:
 	void SetVertexEdit(bool on = true) {
 		vertexEdit = on;
 		ShowVertexEdit(on);
+		Render();
 	}
 
 	bool GetTransformMode() {

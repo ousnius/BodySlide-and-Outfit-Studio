@@ -232,6 +232,18 @@ void Automorph::DeleteVerts(const std::string& shapeName, const std::vector<usho
 	resultDiffData.DeleteVerts(shapeName, indices);
 }
 
+void Automorph::InsertVertexIndices(const std::string& target, const std::vector<ushort>& indices) {
+	resultDiffData.InsertVertexIndices(target, indices);
+}
+
+void Automorph::GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs) {
+	resultDiffData.GetVertexDiffs(target, vertIndex, diffs);
+}
+
+void Automorph::SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs) {
+	resultDiffData.SetVertexDiffs(target, vertIndex, diffs);
+}
+
 void Automorph::ClearProximityCache() {
 	prox_cache.clear();
 }

@@ -23,6 +23,13 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_TEXT(XRCID("textRY"), ShapeProperties::OnTransChanged)
 	EVT_TEXT(XRCID("textRZ"), ShapeProperties::OnTransChanged)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
+	EVT_TEXT(XRCID("textScale"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textX"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textY"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textZ"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textRX"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textRY"), ShapeProperties::OnTransChanged)
+	EVT_TEXT(XRCID("textRZ"), ShapeProperties::OnTransChanged)
 wxEND_EVENT_TABLE()
 
 ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* refShape) {

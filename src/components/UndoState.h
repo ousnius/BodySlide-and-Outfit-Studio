@@ -17,7 +17,8 @@ enum UndoType {
 	UT_MASK,
 	UT_WEIGHT,
 	UT_COLOR,
-	UT_ALPHA
+	UT_ALPHA,
+	UT_MESH
 };
 
 struct UndoStateVertexWeight {
@@ -29,19 +30,52 @@ struct UndoStateBoneWeights {
 	std::unordered_map<ushort, UndoStateVertexWeight> weights;
 };
 
+struct UndoStateVertexBoneWeight {
+	std::string boneName;
+	float w;
+};
+
+struct UndoStateVertexSliderDiff {
+	std::string setName;	// NOT the slider name
+	Vector3 diff;
+};
+
+struct UndoStateVertex {
+	int index;	// index into array of vertices
+	Vector3 pos;	// position in skin coordinates
+	Vector2 uv;
+	Color4 color;
+	// normal, tangent, and bitangent are in skin CS tangent space (so
+	// only the rotation part of transforms affects them).
+	Vector3 normal, tangent, bitangent;
+	float eyeData;
+	std::vector<UndoStateVertexBoneWeight> weights;
+	std::vector<UndoStateVertexSliderDiff> diffs;
+};
+
+struct UndoStateTriangle {
+	int index;	// index into array of triangles
+	Triangle t;
+	int partID = -1;	// partition ID if there are partitions or segments
+};
+
 struct UndoStateShape {
 	std::string shapeName;
-	// pointStartState and pointEndState are only meaningful for not UT_WEIGHT.
+	// pointStartState and pointEndState are only meaningful for
+	// UT_VERTPOS, UT_MASK, UT_COLOR, and UT_ALPHA.
 	// For UT_MASK and UT_ALPHA, only the x coordinate is meaningful.
 	std::unordered_map<int, Vector3> pointStartState;
 	std::unordered_map<int, Vector3> pointEndState;
-	// boneWeights is only meaningful for UT_WEIGHT.  Index 0 is the selected
-	// bone and all others are normalize bones.
+	// boneWeights is only meaningful for UT_WEIGHT.
 	std::vector<UndoStateBoneWeights> boneWeights;
 	// startBVH, endBVH, and affectedNodes are only meaningful for UT_VERTPOS
 	std::shared_ptr<AABBTree> startBVH;
 	std::shared_ptr<AABBTree> endBVH;
 	std::unordered_set<AABBTree::AABBTreeNode*> affectedNodes;
+	// delVerts, addVerts, delTris, and addTris are only meaningful for
+	// UT_MESH.  They are stored in sorted order by index.
+	std::vector<UndoStateVertex> delVerts, addVerts;
+	std::vector<UndoStateTriangle> delTris, addTris;
 };
 
 struct UndoStateProject {
