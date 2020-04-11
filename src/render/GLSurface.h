@@ -11,6 +11,15 @@ See the included LICENSE file
 #include <wx/glcanvas.h>
 
 class GLSurface {
+public:
+	enum CursorType {
+		CenterCursor = 1,
+		PointCursor = 2,
+		CircleCursor = 4,
+		BrushCursor = CenterCursor | PointCursor | CircleCursor,
+		VertexCursor = CenterCursor | PointCursor
+	};
+private:
 	wxGLCanvas* canvas = nullptr;
 	wxGLContext* context = nullptr;
 
@@ -37,6 +46,7 @@ class GLSurface {
 	float defLineWidth = 1.0f;
 	float defPointSize = 5.0f;
 	float cursorSize = 0.5f;
+	CursorType cursorType;
 
 	GLShader::DirectionalLight frontalLight;
 	GLShader::DirectionalLight directionalLight0;
@@ -247,6 +257,9 @@ public:
 		cursorSize = newsize;
 	}
 
+	CursorType GetCursorType() const {return cursorType;}
+	void SetCursorType(CursorType newType) {cursorType = newType;}
+
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Cleanup();
 
@@ -275,6 +288,7 @@ public:
 	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverPoint = nullptr, Vector3* outHoverColor = nullptr, float* outHoverAlpha = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr);
 	void ShowCursor(bool show = true);
+	void HidePointCursor();
 
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.

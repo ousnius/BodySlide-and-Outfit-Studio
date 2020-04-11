@@ -631,7 +631,7 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
 				if (nextdist < closestdist)
 					pointid = t.p3;
 
-				if (*outIndex)
+				if (outIndex)
 					(*outIndex) = pointid;
 
 				return true;
@@ -643,9 +643,13 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
 }
 
 void GLSurface::ShowCursor(bool show) {
-	SetOverlayVisibility("cursormesh", show);
-	SetOverlayVisibility("pointhilite", show);
-	SetOverlayVisibility("cursorcenter", show);
+	SetOverlayVisibility("cursormesh", show && (cursorType & CircleCursor));
+	SetOverlayVisibility("pointhilite", show && (cursorType & PointCursor));
+	SetOverlayVisibility("cursorcenter", show && (cursorType & CenterCursor));
+}
+
+void GLSurface::HidePointCursor() {
+	SetOverlayVisibility("pointhilite", false);
 }
 
 void GLSurface::SetSize(uint w, uint h) {

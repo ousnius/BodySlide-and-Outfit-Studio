@@ -2550,6 +2550,113 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 	// That should happen when the file is saved.
 }
 
+bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices) {
+	// Get triangle data
+	int numVerts = shape->GetNumVertices();
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	std::vector<int> triParts;
+	NifSegmentationInfo inf;
+	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
+		std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+		workNif.GetShapePartitions(shape, partitionInfo, triParts);
+	}
+
+	// Note that indices is already in sorted order.
+	std::vector<int> ntris, nverts;
+	auto addneighbor = [&nverts](int vi) {
+		for (int evi : nverts)
+			if (vi == evi)
+				return;
+		nverts.push_back(vi);
+	};
+	std::vector<int> nrtris; // non-replaced triangles
+
+	for (int vi : indices) {
+		ntris.clear();
+		nverts.clear();
+
+		// Collect lists of neighboring triangles and vertices.
+		for (int ti = 0; ti < tris.size(); ++ti) {
+			const Triangle &t = tris[ti];
+			if (t.p1 != vi && t.p2 != vi && t.p3 != vi)
+				continue;
+			if (ntris.size() >= 3)
+				return false;
+			ntris.push_back(ti);
+
+			// Order of vertex collection is important, or we'll end up
+			// with a backwards triangle.
+			if (t.p1 == vi) {
+				addneighbor(t.p2);
+				addneighbor(t.p3);
+			}
+			else if (t.p2 == vi) {
+				addneighbor(t.p3);
+				addneighbor(t.p1);
+			}
+			else {
+				addneighbor(t.p1);
+				addneighbor(t.p2);
+			}
+			if (nverts.size() > 3)
+				return false;
+		}
+
+		// Make sure no neighboring vertices are welded to this vertex.
+		for (int nvi = 0; nvi < nverts.size(); ++nvi)
+			for (int ii = 0; ii < indices.size(); ++ii)
+				if (indices[ii] == nverts[nvi])
+					return false;
+
+		// Put triangles to delete in uss.delTris.
+		for (int vti = 0; vti < ntris.size(); ++vti) {
+			int ti = ntris[vti];
+			uss.delTris.push_back(UndoStateTriangle{ti, tris[ti], ti < triParts.size() ? triParts[ti] : -1});
+		}
+
+		int pti = -1;
+		if (nverts.size() == 3) {
+			// Determine preferred triangle to replace.
+			pti = 0;
+			if (!triParts.empty() && ntris.size() == 3 &&
+				triParts[ntris[0]] != triParts[ntris[1]] &&
+				triParts[ntris[1]] == triParts[ntris[2]])
+				pti = 1;
+
+			// Put new triangle in uss.
+			int ti = ntris[pti];
+			uss.addTris.push_back(UndoStateTriangle{ti, Triangle(nverts[0], nverts[1], nverts[2]), ti < triParts.size() ? triParts[ti] : -1});
+		}
+
+		// Collect list of non-replaced triangles for triangle renumbering.
+		for (int vti = 0; vti < ntris.size(); ++vti)
+			if (vti != pti)
+				nrtris.push_back(ntris[vti]);
+	}
+
+	// We've loaded all the triangle data; now load the vertex data.
+	CollectVertexData(shape, uss, indices);
+
+	// Renumber vertex and triangle indices in uss.addTris.
+	std::vector<int> vCollapse = GenerateIndexCollapseMap(indices, numVerts);
+	std::sort(nrtris.begin(), nrtris.end());
+	std::vector<int> tCollapse = GenerateIndexCollapseMap(nrtris, tris.size());
+	for (UndoStateTriangle &ust : uss.addTris) {
+		ust.t.p1 = vCollapse[ust.t.p1];
+		ust.t.p2 = vCollapse[ust.t.p2];
+		ust.t.p3 = vCollapse[ust.t.p3];
+		ust.index = tCollapse[ust.index];
+	}
+
+	// Sort uss.addTris and uss.delTris, since they weren't added in any
+	// particular order.
+	std::sort(uss.addTris.begin(), uss.addTris.end());
+	std::sort(uss.delTris.begin(), uss.delTris.end());
+
+	return true;
+}
+
 NiShape* OutfitProject::DuplicateShape(NiShape* sourceShape, const std::string& destShapeName) {
 	if (!sourceShape)
 		return nullptr;

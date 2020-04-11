@@ -59,6 +59,10 @@ struct UndoStateTriangle {
 	int partID = -1;	// partition ID if there are partitions or segments
 };
 
+inline bool operator<(const UndoStateTriangle &t1, const UndoStateTriangle &t2) {
+	return t1.index < t2.index;
+}
+
 struct UndoStateShape {
 	std::string shapeName;
 	// pointStartState and pointEndState are only meaningful for
