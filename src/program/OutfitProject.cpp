@@ -2657,20 +2657,16 @@ bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const
 	return true;
 }
 
-bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge) {
-	// Get triangle data
-	std::vector<Triangle> tris;
-	shape->GetTriangles(tris);
-	std::vector<int> triParts;
-	NifSegmentationInfo inf;
-	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
-		std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
-		workNif.GetShapePartitions(shape, partitionInfo, triParts);
-	}
-
+// FindNeighboringTriangles: finds the two triangles containing an edge,
+// if they exist.  t1 will be set to the triangle with the oriented edge
+// and t2 will be set to the triangle with the reverse oriented edge.
+// nev1 will be set to the non-edge vertex of t1, and nev2 to the non-edge
+// vertex of t2.  false is returned if two triangles are found of the
+// same orientation.
+static bool FindNeighboringTriangles(const std::vector<Triangle> &tris, const Edge &edge, int &t1, int &t2, int &nev1, int &nev2) {
 	// Find the two neighboring triangles
 	const Edge redge(edge.p2, edge.p1);
-	int t1 = -1, t2 = -1;
+	t1 = -1, t2 = -1;
 	for (int ti = 0; ti < tris.size(); ++ti) {
 		if (tris[ti].HasOrientedEdge(edge)) {
 			if (t1 != -1)
@@ -2683,20 +2679,38 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 			t2 = ti;
 		}
 	}
-	if (t1 == -1 || t2 == -1)
-		return false;
 
 	// Figure out the non-edge vertex for each triangle.
-	int nev1 = tris[t1].p3;
+	nev1 = tris[t1].p3;
 	if (tris[t1].p2 == edge.p1)
 		nev1 = tris[t1].p1;
 	else if (tris[t1].p3 == edge.p1)
 		nev1 = tris[t1].p2;
-	int nev2 = tris[t2].p3;
+	nev2 = tris[t2].p3;
 	if (tris[t2].p2 == edge.p2)
 		nev2 = tris[t2].p1;
 	else if (tris[t2].p3 == edge.p2)
 		nev2 = tris[t2].p2;
+	return true;
+}
+
+bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge) {
+	// Get triangle data
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	std::vector<int> triParts;
+	NifSegmentationInfo inf;
+	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
+		std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+		workNif.GetShapePartitions(shape, partitionInfo, triParts);
+	}
+
+	// Find the two neighboring triangles and the non-edge vertex for each.
+	int t1 = -1, t2 = -1, nev1 = -1, nev2 = -1;
+	if (!FindNeighboringTriangles(tris, edge, t1, t2, nev1, nev2))
+		return false;
+	if (t1 == -1 || t2 == -1)
+		return false;
 
 	// Put data into uss.
 	int tp1 = t1 < triParts.size() ? triParts[t1] : -1;
@@ -2710,6 +2724,185 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 	if (t2 < t1) {
 		std::swap(uss.delTris[0], uss.delTris[1]);
 		std::swap(uss.addTris[0], uss.addTris[1]);
+	}
+
+	return true;
+}
+
+bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge) {
+	// Get vertex and triangle data
+	const std::vector<Vector3> &verts = *workNif.GetRawVertsForShape(shape);
+	int newvi = verts.size();
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	std::vector<int> triParts;
+	NifSegmentationInfo inf;
+	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
+		std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+		workNif.GetShapePartitions(shape, partitionInfo, triParts);
+	}
+	int numTris = tris.size();
+
+	// Find the two neighboring triangles and the non-edge vertex for each.
+	int t1 = -1, t2 = -1, nev1 = -1, nev2 = -1;
+	if (!FindNeighboringTriangles(tris, edge, t1, t2, nev1, nev2))
+		return false;
+
+	// Put triangle data into uss.
+	if (t1 != -1) {
+		int newt1 = t1;
+		if (t2 != -1 && t2 < t1)
+			++newt1;
+		int tp = t1 < triParts.size() ? triParts[t1] : -1;
+		uss.delTris.push_back(UndoStateTriangle{t1, tris[t1], tp});
+		uss.addTris.push_back(UndoStateTriangle{newt1, Triangle(edge.p1, newvi, nev1), tp});
+		uss.addTris.push_back(UndoStateTriangle{newt1+1, Triangle(nev1, newvi, edge.p2), tp});
+	}
+	if (t2 != -1) {
+		int newt2 = t2;
+		if (t1 != -1 && t1 < t2)
+			++newt2;
+		int tp = t2 < triParts.size() ? triParts[t2] : -1;
+		uss.delTris.push_back(UndoStateTriangle{t2, tris[t2], tp});
+		uss.addTris.push_back(UndoStateTriangle{newt2, Triangle(edge.p2, newvi, nev2), tp});
+		uss.addTris.push_back(UndoStateTriangle{newt2+1, Triangle(nev2, newvi, edge.p1), tp});
+	}
+
+	// Sort delTris and addTris by index.
+	std::sort(uss.delTris.begin(), uss.delTris.end());
+	std::sort(uss.addTris.begin(), uss.addTris.end());
+
+	// Get data for the two edge vertices (in a secondary data-collection
+	// UndoStateShape).
+	UndoStateShape duss;
+	std::vector<int> edgeInds{edge.p1, edge.p2};
+	CollectVertexData(shape, duss, edgeInds);
+	const UndoStateVertex &p1d = duss.delVerts[0];
+	const UndoStateVertex &p2d = duss.delVerts[1];
+	const Vector3 &p1 = p1d.pos;
+	const Vector3 &p2 = p2d.pos;
+
+	// Create entry for new vertex
+	uss.addVerts.emplace_back();
+	UndoStateVertex &usv = uss.addVerts.back();
+	usv.index = newvi;
+
+	/* Now comes the hard part: determining a good location for the
+	new vertex.  Clearly it should lie somewhere on the plane halfway
+	between p1 and p2.  If we wanted to be lazy, we could just pick
+	the midpoint.  But that would require the user to adjust the
+	position every time.  Better would be if we could fit a circle
+	through p1, p2, and the new point so that all three have normals
+	perpendicular to the circle.  But there's no guarantee that that's
+	possible: the old normals could have different angles to the edge;
+	and they could even be non-coplanar.  So we need to average the
+	angles for the two normals somehow.  There are several stages
+	where this could be done; I choose to do it early. */
+
+	// Calculate normals at p1 and p2 by averaging their triangle normals.
+	Vector3 np1, np2;
+	for (const Triangle &t : tris) {
+		if (t.p1 == edge.p1 || t.p2 == edge.p1 || t.p3 == edge.p1) {
+			Vector3 tn;
+			t.trinormal(verts, &tn);
+			tn.Normalize();
+			np1 += tn;
+		}
+		if (t.p1 == edge.p2 || t.p2 == edge.p2 || t.p3 == edge.p2) {
+			Vector3 tn;
+			t.trinormal(verts, &tn);
+			tn.Normalize();
+			np2 += tn;
+		}
+	}
+	np1.Normalize();
+	np2.Normalize();
+
+	// Starting position of new point: midpoint between p1 and p2
+	usv.pos = (p1 + p2) * 0.5;
+
+	Vector3 u12 = p2 - p1;	// unit vector from p1 to p2 (along the edge)
+	float elen = u12.length();	// edge length
+	u12.Normalize();
+
+	// Working normal for new point: average of np1 and np2, made
+	// perpendicular to u12.  (If you want something fancy for usv.normal,
+	// calculate it later.  This calculation needs to be done this
+	// way for the circle fitter.)
+	usv.normal = np1 + np2;
+	usv.normal -= u12 * u12.dot(usv.normal);
+	usv.normal.Normalize();
+
+	// Now, the angle between npi and usv.normal, in the plane of
+	// npi and u12 (since usv.normal isn't necessarily in that plane)
+	// would be asin(u12.dot(npi)).  We want to average this for np1
+	// and np2 and carefully preserve the sign.
+	float angle = asin(u12.dot(np2 - np1) * 0.5);
+	// Now, "angle" is the desired circle angle between the new point and
+	// either p1 or p2.  It's positive for convex, negative for concave.
+	// To figure out how far off of the edge we need to go, we need to
+	// take the trigonometric tangent of the correct angle.  It turns out
+	// the correct angle is the angle we just calculated divided by 2.
+	float curveOffsetFactor = tan(angle * 0.5);
+	// Now apply the offset to the new point.  (curveOffsetFactor is positive
+	// for convex, negative for concave, and will be no larger than 1.)
+	usv.pos += usv.normal * (curveOffsetFactor * elen * 0.5);
+
+	// Calculate uv, color, tangent, bitangent, and eyeData by averaging.
+	// We need to make sure normal, tangent, and bitangent are perpendicular.
+	usv.uv = (p1d.uv + p2d.uv) * 0.5;
+	usv.color.r = (p1d.color.r + p2d.color.r) * 0.5;
+	usv.color.g = (p1d.color.g + p2d.color.g) * 0.5;
+	usv.color.b = (p1d.color.b + p2d.color.b) * 0.5;
+	usv.color.a = (p1d.color.a + p2d.color.a) * 0.5;
+	usv.eyeData = (p1d.eyeData + p2d.eyeData) * 0.5;
+	usv.tangent = (p1d.tangent + p2d.tangent) * 0.5;
+	usv.bitangent = (p1d.bitangent + p2d.bitangent) * 0.5;
+	usv.tangent -= usv.normal * usv.normal.dot(usv.tangent);
+	usv.tangent.Normalize();
+	usv.bitangent -= usv.normal * usv.normal.dot(usv.bitangent);
+	usv.bitangent -= usv.tangent * usv.tangent.dot(usv.bitangent);
+	usv.bitangent.Normalize();
+
+	// Calculate weights by averaging.  Note that the resulting weights
+	// will add up to 1 if each source's weights do.
+	for (int si = 0; si < 2; ++si) {
+		const std::vector<UndoStateVertexBoneWeight> &swts = si ? p2d.weights : p1d.weights;
+		for (const UndoStateVertexBoneWeight &sw : swts) {
+			bool found = false;
+			for (int dwi = 0; dwi < usv.weights.size() && !found; ++dwi)
+				if (usv.weights[dwi].boneName == sw.boneName) {
+					found = true;
+					usv.weights[dwi].w += sw.w;
+				}
+			if (!found)
+				usv.weights.push_back(sw);
+		}
+	}
+	for (auto &dw : usv.weights)
+		dw.w *= 0.5;
+
+	// Unfortunately, we can't just calculate diffs by averaging.  p1
+	// and p2 may have moved farther apart, which would require greater
+	// curve offset.
+	struct DiffPair {
+		Vector3 dp1, dp2;
+	};
+	// diffpairs: key is setName.
+	std::unordered_map<std::string, DiffPair> diffpairs;
+	for (auto &sd : p1d.diffs)
+		diffpairs[sd.setName].dp1 = sd.diff;
+	for (auto &sd : p2d.diffs)
+		diffpairs[sd.setName].dp2 = sd.diff;
+	for (auto &diffpair : diffpairs) {
+		// First, just average the diffs.
+		Vector3 diff = (diffpair.second.dp1 + diffpair.second.dp2) * 0.5;
+		// Calculate the distance between the moved p1 and p2.
+		float delen = (diffpair.second.dp2 + p2 - diffpair.second.dp1 - p1).length();
+		// Apply more curve offset (for delen > elen)
+		// or less (for delen < elen).
+		diff += usv.normal * (curveOffsetFactor * (delen - elen) * 0.5);
+		usv.diffs.push_back(UndoStateVertexSliderDiff{diffpair.first, diff});
 	}
 
 	return true;

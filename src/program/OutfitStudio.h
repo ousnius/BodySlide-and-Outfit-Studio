@@ -142,6 +142,7 @@ enum class ToolID {
 	AlphaBrush = 8,
 	ElimVertex,
 	FlipEdge,
+	SplitEdge,
 	Transform,
 	Pivot,
 	VertexEdit
@@ -213,6 +214,7 @@ public:
 	void UpdatePickEdge(const wxPoint& screenPos);
 	void EndPickEdge();
 	void ClickFlipEdge();
+	void ClickSplitEdge();
 
 	bool RestoreMode(UndoStateProject *usp);
 	void ApplyUndoState(UndoStateProject *usp, bool bUndo);

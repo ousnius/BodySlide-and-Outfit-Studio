@@ -152,6 +152,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnAlphaBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnElimVertexTool"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnFlipEdgeTool"), OutfitStudioFrame::OnSelectTool)
+	EVT_MENU(XRCID("btnSplitEdgeTool"), OutfitStudioFrame::OnSelectTool)
 
 	EVT_MENU(XRCID("btnViewFront"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewBack"), OutfitStudioFrame::OnSetView)
@@ -2475,6 +2476,18 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	else if (tool == ToolID::FlipEdge) {
 		menuBar->Check(XRCID("btnFlipEdgeTool"), true);
 		toolBar->ToggleTool(XRCID("btnFlipEdgeTool"), true);
+		previousMirror = glView->GetXMirror();
+		glView->SetXMirror(false);
+		menuBar->Check(XRCID("btnXMirror"), false);
+		ToggleBrushPane(true);
+		glView->SetEditMode();
+		glView->SetBrushMode(false);
+		glView->SetCursorType(GLSurface::EdgeCursor);
+		return;
+	}
+	else if (tool == ToolID::SplitEdge) {
+		menuBar->Check(XRCID("btnSplitEdgeTool"), true);
+		toolBar->ToggleTool(XRCID("btnSplitEdgeTool"), true);
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
@@ -5155,6 +5168,8 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		SelectTool(ToolID::ElimVertex);
 	else if (id == XRCID("btnFlipEdgeTool"))
 		SelectTool(ToolID::FlipEdge);
+	else if (id == XRCID("btnSplitEdgeTool"))
+		SelectTool(ToolID::SplitEdge);
 	else
 		SelectTool(ToolID::Any);
 }
@@ -5423,6 +5438,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), true);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
+		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
 		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
@@ -5438,6 +5454,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), true);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), true);
+		GetToolBar()->EnableTool(XRCID("btnSplitEdgeTool"), true);
 	}
 
 	if (id != XRCID("colorsTabButton")) {
@@ -5463,6 +5480,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), true);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
+		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
 		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
@@ -5478,6 +5496,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), true);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), true);
+		GetToolBar()->EnableTool(XRCID("btnSplitEdgeTool"), true);
 	}
 
 	if (id == XRCID("meshTabButton")) {
@@ -5562,6 +5581,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
+		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnWeightBrush"), true);
@@ -5577,6 +5597,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnSplitEdgeTool"), false);
 
 		ReselectBone();
 		glView->GetUndoHistory()->ClearHistory();
@@ -5624,6 +5645,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
+		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnColorBrush"), true);
@@ -5639,6 +5661,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnSplitEdgeTool"), false);
 	}
 	else if (id == XRCID("segmentTabButton")) {
 		outfitShapes->Hide();
@@ -5703,6 +5726,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
+		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
@@ -5717,6 +5741,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnSplitEdgeTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), false);
 
 		ShowSegment(segmentTree->GetSelection());
@@ -5776,6 +5801,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
+		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
@@ -5790,6 +5816,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnSplitEdgeTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), false);
 
 		ShowPartition(partitionTree->GetSelection());
@@ -8885,9 +8912,7 @@ void wxGLPanel::ShowShape(const std::string& shapeName, bool show) {
 	if (id < 0)
 		return;
 
-	bool changed = gls.SetMeshVisibility(id, show);
-	if (changed)
-		gls.RenderOneFrame();
+	gls.SetMeshVisibility(id, show);
 }
 
 void wxGLPanel::SetActiveShapes(const std::vector<std::string>& shapeNames) {
@@ -8903,6 +8928,9 @@ void wxGLPanel::SetActiveBrush(ToolID brushID) {
 
 	switch (brushID) {
 	case ToolID::Any:
+	case ToolID::ElimVertex:
+	case ToolID::FlipEdge:
+	case ToolID::SplitEdge:
 	default:
 		activeBrush = nullptr;
 		break;
@@ -8929,12 +8957,6 @@ void wxGLPanel::SetActiveBrush(ToolID brushID) {
 		break;
 	case ToolID::AlphaBrush:
 		activeBrush = &alphaBrush;
-		break;
-	case ToolID::ElimVertex:
-		activeBrush = nullptr;
-		break;
-	case ToolID::FlipEdge:
-		activeBrush = nullptr;
 		break;
 	}
 }
@@ -9566,6 +9588,8 @@ void wxGLPanel::EndPickEdge() {
 
 	if (activeTool == ToolID::FlipEdge)
 		ClickFlipEdge();
+	if (activeTool == ToolID::SplitEdge)
+		ClickSplitEdge();
 }
 
 void wxGLPanel::ClickFlipEdge() {
@@ -9580,6 +9604,28 @@ void wxGLPanel::ClickFlipEdge() {
 	uss.shapeName = mouseDownMeshName;
 	if (!os->project->PrepareFlipEdge(shape, uss, mouseDownEdge)) {
 		wxMessageBox(_("The edge picked is on the surface boundary.  Pick an interior edge."), _("Error"));
+		return;
+	}
+
+	// Push changes onto undo stack and execute.
+	UndoStateProject *usp = GetUndoHistory()->PushState();
+	usp->undoType = UT_MESH;
+	usp->usss.push_back(std::move(uss));
+	ApplyUndoState(usp, false);
+}
+
+void wxGLPanel::ClickSplitEdge() {
+	if (mouseDownMeshName.empty() || mouseDownEdge.p1 < 0 || mouseDownEdge.p1 == mouseDownEdge.p2)
+		return;
+	NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
+	if (!shape)
+		return;
+
+	// Prepare list of changes
+	UndoStateShape uss;
+	uss.shapeName = mouseDownMeshName;
+	if (!os->project->PrepareSplitEdge(shape, uss, mouseDownEdge)) {
+		wxMessageBox(_("The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"));
 		return;
 	}
 
@@ -10134,7 +10180,7 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 		if (meshHit)
 			isPickingVertex = true;
 	}
-	else if (activeTool == ToolID::FlipEdge) {
+	else if (activeTool == ToolID::FlipEdge || activeTool == ToolID::SplitEdge) {
 		bool meshHit = StartPickEdge();
 		if (meshHit)
 			isPickingEdge = true;

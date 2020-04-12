@@ -200,6 +200,7 @@ public:
 
 	bool PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices);
 	bool PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge);
+	bool PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge);
 
 	NiShape* DuplicateShape(NiShape* sourceShape, const std::string& destShapeName);
 	void DeleteShape(NiShape* shape);
