@@ -203,9 +203,9 @@ public:
 
 	bool SelectVertex(const wxPoint& screenPos);
 
-	bool StartVertexPick();
-	void UpdateVertexPick(const wxPoint& screenPos);
-	void EndVertexPick();
+	bool StartPickVertex();
+	void UpdatePickVertex(const wxPoint& screenPos);
+	void EndPickVertex();
 	void ClickElimVertex();
 
 	bool RestoreMode(UndoStateProject *usp);
@@ -681,7 +681,7 @@ private:
 	bool isTransforming;
 	bool isMovingPivot;
 	bool isSelecting;
-	bool isVertexPicking;
+	bool isPickingVertex;
 	bool bXMirror;
 	bool bConnectedEdit;
 	bool bGlobalBrushCollision;
@@ -878,7 +878,7 @@ public:
 	void LockShapeSelect();
 	void UnlockShapeSelect();
 	void AnimationGUIFromProj();
-	void RefreshGUIFromProj();
+	void RefreshGUIFromProj(bool render = true);
 	void MeshesFromProj(const bool reloadTextures = false);
 	void MeshFromProj(NiShape* shape, const bool reloadTextures = false);
 
