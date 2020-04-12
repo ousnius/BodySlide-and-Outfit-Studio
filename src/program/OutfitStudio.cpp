@@ -2879,7 +2879,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 	project = new OutfitProject(this);
 
 	CreateSetSliders();
-	RefreshGUIFromProj();
+	RefreshGUIFromProj(false);
 	glView->Render();
 }
 
@@ -2946,7 +2946,7 @@ void OutfitStudioFrame::UnlockShapeSelect() {
 	outfitShapes->Enable();
 }
 
-void OutfitStudioFrame::RefreshGUIFromProj() {
+void OutfitStudioFrame::RefreshGUIFromProj(bool render) {
 	LockShapeSelect();
 
 	selectedItems.clear();
@@ -3063,7 +3063,8 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 		}
 	}
 
-	glView->Render();
+	if (render)
+		glView->Render();
 }
 
 void OutfitStudioFrame::AnimationGUIFromProj() {
@@ -3580,7 +3581,7 @@ void OutfitStudioFrame::OnImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Updated shape '%s' from OBJ file '%s'.", activeItem->GetShape()->GetName(), fileName);
 	}
 
-	RefreshGUIFromProj();
+	RefreshGUIFromProj(false);
 	wxLogMessage("Imported shape(s) from OBJ.");
 	glView->Render();
 }
@@ -3690,7 +3691,7 @@ void OutfitStudioFrame::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Updated shape '%s' from FBX file '%s'.", activeItem->GetShape()->GetName(), fileName);
 	}
 
-	RefreshGUIFromProj();
+	RefreshGUIFromProj(false);
 	wxLogMessage("Imported shape(s) from FBX.");
 	glView->Render();
 }
@@ -3795,7 +3796,7 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		if (!shape)
 			return;
 
-		RefreshGUIFromProj();
+		RefreshGUIFromProj(false);
 
 		auto morphs = tri.GetMorphs();
 		for (auto &morph : morphs) {
@@ -7504,7 +7505,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	project->GetWorkAnim()->CleanupBones();
 
-	RefreshGUIFromProj();
+	RefreshGUIFromProj(false);
 
 	glView->ClearActiveMask();
 	ApplySliders();
@@ -7556,7 +7557,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	project->ApplyShapeMeshUndo(newShape, usp->usss[1], false);
 
 	project->SetTextures();
-	RefreshGUIFromProj();
+	RefreshGUIFromProj(false);
 
 	glView->ClearActiveMask();
 	ApplySliders();
@@ -8741,7 +8742,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	isTransforming = false;
 	isMovingPivot = false;
 	isSelecting = false;
-	isVertexPicking = false;
+	isPickingVertex = false;
 	isPickingEdge = false;
 	bXMirror = true;
 	bConnectedEdit = false;
@@ -9484,23 +9485,28 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 	return true;
 }
 
-bool wxGLPanel::StartVertexPick() {
+bool wxGLPanel::StartPickVertex() {
 	if (hoverMeshName.empty() || hoverPoint < 0)
 		return false;
 	mouseDownMeshName = hoverMeshName;
 	mouseDownPoint = hoverPoint;
 }
 
-void wxGLPanel::UpdateVertexPick(const wxPoint& screenPos) {
+void wxGLPanel::UpdatePickVertex(const wxPoint& screenPos) {
 	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint);
 	if (!hit || hoverMeshName != mouseDownMeshName || hoverPoint != mouseDownPoint)
 		gls.HidePointCursor();
 	gls.RenderOneFrame();
 }
 
-void wxGLPanel::EndVertexPick() {
+void wxGLPanel::EndPickVertex() {
 	if (hoverMeshName != mouseDownMeshName || hoverPoint != mouseDownPoint)
 		return;
+
+	// Clear PickVertex state so no accidents can happen
+	hoverMeshName = "";
+	gls.HidePointCursor();
+
 	if (activeTool == ToolID::ElimVertex)
 		ClickElimVertex();
 }
@@ -9682,7 +9688,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 				continue;
 			os->project->ApplyShapeMeshUndo(shape, uss, bUndo);
 		}
-		os->RefreshGUIFromProj();
+		os->RefreshGUIFromProj(false);
 		ClearActiveMask();
 		os->ApplySliders();
 	}
@@ -10003,8 +10009,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else if (isSelecting) {
 			SelectVertex(event.GetPosition());
 		}
-		else if (isVertexPicking) {
-			UpdateVertexPick(event.GetPosition());
+		else if (isPickingVertex) {
+			UpdatePickVertex(event.GetPosition());
 		}
 		else if (isPickingEdge) {
 			UpdatePickEdge(event.GetPosition());
@@ -10124,9 +10130,9 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 			isPainting = true;
 	}
 	else if (activeTool == ToolID::ElimVertex) {
-		bool meshHit = StartVertexPick();
+		bool meshHit = StartPickVertex();
 		if (meshHit)
-			isVertexPicking = true;
+			isPickingVertex = true;
 	}
 	else if (activeTool == ToolID::FlipEdge) {
 		bool meshHit = StartPickEdge();
@@ -10174,9 +10180,9 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		isPainting = false;
 	}
 
-	if (isVertexPicking) {
-		EndVertexPick();
-		isVertexPicking = false;
+	if (isPickingVertex) {
+		EndPickVertex();
+		isPickingVertex = false;
 	}
 
 	if (isPickingEdge) {
@@ -10209,9 +10215,9 @@ void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 		isPainting = false;
 	}
 
-	if (isVertexPicking) {
-		EndVertexPick();
-		isVertexPicking = false;
+	if (isPickingVertex) {
+		EndPickVertex();
+		isPickingVertex = false;
 	}
 
 	if (isPickingEdge) {
