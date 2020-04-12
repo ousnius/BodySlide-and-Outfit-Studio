@@ -16,8 +16,10 @@ public:
 		CenterCursor = 1,
 		PointCursor = 2,
 		CircleCursor = 4,
+		SegCursor = 8,
 		BrushCursor = CenterCursor | PointCursor | CircleCursor,
-		VertexCursor = CenterCursor | PointCursor
+		VertexCursor = CenterCursor | PointCursor,
+		EdgeCursor = CenterCursor | SegCursor
 	};
 private:
 	wxGLCanvas* canvas = nullptr;
@@ -285,10 +287,11 @@ public:
 
 	void GetPickRay(int ScreenX, int ScreenY, mesh* m, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
-	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverPoint = nullptr, Vector3* outHoverColor = nullptr, float* outHoverAlpha = nullptr);
+	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverPoint = nullptr, Vector3* outHoverColor = nullptr, float* outHoverAlpha = nullptr, Edge* outHoverEdge = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr);
 	void ShowCursor(bool show = true);
 	void HidePointCursor();
+	void HideSegCursor();
 
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
@@ -303,6 +306,7 @@ public:
 	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name);
 	mesh* AddVisPoint(const Vector3& p, const std::string& name = "PointMesh", const Vector3* color = nullptr);
 	mesh* AddVisPlane(const Vector3& center, const Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const Vector3* color = nullptr);
+	mesh* AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name);
 
 	mesh* AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color = nullptr);
 	void SetSkinModelMat(mesh *m, const MatTransform &xformGlobalToSkin);

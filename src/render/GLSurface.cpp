@@ -485,7 +485,12 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 	return true;
 }
 
-bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverPoint, Vector3* outHoverColor, float* outHoverAlpha) {
+inline Vector3 ApplyMat4(const glm::mat4x4 &mat, const Vector3 &p) {
+	glm::vec3 gp(mat * glm::vec4(p.x, p.y, p.z, 1.0f));
+	return Vector3(gp.x, gp.y, gp.z);
+}
+
+bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverPoint, Vector3* outHoverColor, float* outHoverAlpha, Edge* outHoverEdge) {
 	bool collided = false;
 	if (activeMeshes.empty())
 		return collided;
@@ -567,17 +572,24 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 					if (hitMeshName)
 						(*hitMeshName) = m->shapeName;
 
-					glm::vec3 orig(m->matModel * glm::vec4(origin.x, origin.y, origin.z, 1.0f));
-					origin = Vector3(orig.x, orig.y, orig.z);
+					Edge closestEdge = t.ClosestEdge(m->verts.get(), origin);
+					if (outHoverEdge)
+						*outHoverEdge = closestEdge;
+
+					Vector3 morigin = ApplyMat4(m->matModel, origin);
 
 					Vector3 norm;
 					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
-					int ringID = AddVisCircle(origin, norm, cursorSize, "cursormesh");
+					int ringID = AddVisCircle(morigin, norm, cursorSize, "cursormesh");
 					overlays[ringID]->scale = 2.0f;
 
-					glm::vec3 hl(m->matModel * glm::vec4(hilitepoint.x, hilitepoint.y, hilitepoint.z, 1.0f));
-					AddVisPoint(Vector3(hl.x, hl.y, hl.z), "pointhilite");
-					AddVisPoint(origin, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
+					Vector3 mhilitepoint = ApplyMat4(m->matModel, hilitepoint);
+					AddVisPoint(mhilitepoint, "pointhilite");
+					AddVisPoint(morigin, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
+
+					Vector3 mep1 = ApplyMat4(m->matModel, m->verts[closestEdge.p1]);
+					Vector3 mep2 = ApplyMat4(m->matModel, m->verts[closestEdge.p2]);
+					AddVisSeg(mep1, mep2, "seghilite");
 				}
 
 				allHitDistances[m] = hilitepoint;
@@ -646,10 +658,15 @@ void GLSurface::ShowCursor(bool show) {
 	SetOverlayVisibility("cursormesh", show && (cursorType & CircleCursor));
 	SetOverlayVisibility("pointhilite", show && (cursorType & PointCursor));
 	SetOverlayVisibility("cursorcenter", show && (cursorType & CenterCursor));
+	SetOverlayVisibility("seghilite", show && (cursorType & SegCursor));
 }
 
 void GLSurface::HidePointCursor() {
 	SetOverlayVisibility("pointhilite", false);
+}
+
+void GLSurface::HideSegCursor() {
+	SetOverlayVisibility("seghilite", false);
 }
 
 void GLSurface::SetSize(uint w, uint h) {
@@ -1608,6 +1625,38 @@ mesh* GLSurface::AddVisPlane(const Vector3& center, const Vector2& size, float u
 	m->tris[1] = Triangle(2, 3, 0);
 
 	m->CreateBuffers();
+	return m;
+}
+
+mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name) {
+	mesh* m = GetOverlay(name);
+	if (m) {
+		m->verts[0] = p1;
+		m->verts[1] = p2;
+		m->bVisible = true;
+		m->QueueUpdate(mesh::UpdateType::Position);
+		return m;
+	}
+
+	m = new mesh();
+
+	m->nVerts = 2;
+	m->nEdges = 1;
+	m->verts = std::make_unique<Vector3[]>(2);
+	m->edges = std::make_unique<Edge[]>(1);
+	m->verts[0] = p1;
+	m->verts[1] = p2;
+	m->edges[0].p1 = 0;
+	m->edges[0].p2 = 1;
+
+	m->shapeName = name;
+	m->color = Vector3(0.0f, 1.0f, 1.0f);
+	m->rendermode = RenderMode::UnlitWire;
+	m->material = GetPrimitiveMaterial();
+	m->CreateBuffers();
+
+	namedOverlays[m->shapeName] = overlays.size();
+	overlays.push_back(m);
 	return m;
 }
 

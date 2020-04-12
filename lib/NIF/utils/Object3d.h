@@ -279,6 +279,25 @@ struct Vector3 {
 			FloatsAreNearlyEqual(y, other.y) &&
 			FloatsAreNearlyEqual(z, other.z);
 	}
+
+	float length2() const {
+		return x*x + y*y + z*z;
+	}
+
+	float length() const {
+		return sqrt(x*x + y*y + z*z);
+	}
+
+	float DistanceToSegment(const Vector3& p1, const Vector3& p2) const {
+		Vector3 segvec(p2 - p1);
+		Vector3 diffp1(*this - p1);
+		float dp = segvec.dot(diffp1);
+		if (dp <= 0)
+			return diffp1.length();
+		else if (dp >= segvec.length2())
+			return (*this - p2).length();
+		return segvec.cross(diffp1).length() / segvec.length();
+	}
 };
 
 inline Vector3 operator*(float f, const Vector3 &v) {
@@ -989,6 +1008,22 @@ struct MatTransform {
 };
 
 
+struct Edge {
+	ushort p1;
+	ushort p2;
+
+	Edge() {
+		p1 = p2 = 0;
+	}
+	Edge(ushort P1, ushort P2) {
+		p1 = P1; p2 = P2;
+	}
+
+	bool CompareIndices(const Edge& o) {
+		return (p1 == o.p1 && p2 == o.p2) || (p1 == o.p2 && p2 == o.p1);
+	}
+};
+
 struct Triangle {
 	ushort p1;
 	ushort p2;
@@ -1036,6 +1071,23 @@ struct Triangle {
 
 	float AxisMidPointZ(Vector3* vertref) {
 		return (vertref[p1].z + vertref[p2].z + vertref[p3].z) / 3.0f;
+	}
+
+	bool HasOrientedEdge(const Edge &e) const {
+		return (e.p1 == p1 && e.p2 == p2) ||
+			(e.p1 == p2 && e.p2 == p3) ||
+			(e.p1 == p3 && e.p2 == p1);
+	}
+
+	Edge ClosestEdge(Vector3* vertref, const Vector3 &p) const {
+		float d1 = p.DistanceToSegment(vertref[p1], vertref[p2]);
+		float d2 = p.DistanceToSegment(vertref[p2], vertref[p3]);
+		float d3 = p.DistanceToSegment(vertref[p3], vertref[p1]);
+		if (d1 <= d2 && d1 <= d3)
+			return Edge(p1, p2);
+		else if (d2 < d3)
+			return Edge(p2, p3);
+		return Edge(p3, p1);
 	}
 
 	bool IntersectRay(Vector3* vertref, Vector3& origin, Vector3& direction, float* outDistance = nullptr, Vector3* worldPos = nullptr) {
@@ -1206,18 +1258,6 @@ struct Triangle {
 		else if (p3 < p1) {
 			set(p3, p1, p2);
 		}
-	}
-};
-
-struct Edge {
-	ushort p1;
-	ushort p2;
-
-	Edge() {
-		p1 = p2 = 0;
-	}
-	Edge(ushort P1, ushort P2) {
-		p1 = P1; p2 = P2;
 	}
 };
 

@@ -2657,6 +2657,64 @@ bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const
 	return true;
 }
 
+bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge) {
+	// Get triangle data
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	std::vector<int> triParts;
+	NifSegmentationInfo inf;
+	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
+		std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+		workNif.GetShapePartitions(shape, partitionInfo, triParts);
+	}
+
+	// Find the two neighboring triangles
+	const Edge redge(edge.p2, edge.p1);
+	int t1 = -1, t2 = -1;
+	for (int ti = 0; ti < tris.size(); ++ti) {
+		if (tris[ti].HasOrientedEdge(edge)) {
+			if (t1 != -1)
+				return false;
+			t1 = ti;
+		}
+		if (tris[ti].HasOrientedEdge(redge)) {
+			if (t2 != -1)
+				return false;
+			t2 = ti;
+		}
+	}
+	if (t1 == -1 || t2 == -1)
+		return false;
+
+	// Figure out the non-edge vertex for each triangle.
+	int nev1 = tris[t1].p3;
+	if (tris[t1].p2 == edge.p1)
+		nev1 = tris[t1].p1;
+	else if (tris[t1].p3 == edge.p1)
+		nev1 = tris[t1].p2;
+	int nev2 = tris[t2].p3;
+	if (tris[t2].p2 == edge.p2)
+		nev2 = tris[t2].p1;
+	else if (tris[t2].p3 == edge.p2)
+		nev2 = tris[t2].p2;
+
+	// Put data into uss.
+	int tp1 = t1 < triParts.size() ? triParts[t1] : -1;
+	int tp2 = t2 < triParts.size() ? triParts[t2] : -1;
+	uss.delTris.push_back(UndoStateTriangle{t1, tris[t1], tp1});
+	uss.delTris.push_back(UndoStateTriangle{t2, tris[t2], tp2});
+	uss.addTris.push_back(UndoStateTriangle{t1, Triangle(edge.p1, nev2, nev1), tp1});
+	uss.addTris.push_back(UndoStateTriangle{t2, Triangle(edge.p2, nev1, nev2), tp2});
+
+	// Sort delTris and addTris by index.
+	if (t2 < t1) {
+		std::swap(uss.delTris[0], uss.delTris[1]);
+		std::swap(uss.addTris[0], uss.addTris[1]);
+	}
+
+	return true;
+}
+
 NiShape* OutfitProject::DuplicateShape(NiShape* sourceShape, const std::string& destShapeName) {
 	if (!sourceShape)
 		return nullptr;

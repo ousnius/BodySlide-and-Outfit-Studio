@@ -151,6 +151,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnColorBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnAlphaBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnElimVertexTool"), OutfitStudioFrame::OnSelectTool)
+	EVT_MENU(XRCID("btnFlipEdgeTool"), OutfitStudioFrame::OnSelectTool)
 
 	EVT_MENU(XRCID("btnViewFront"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewBack"), OutfitStudioFrame::OnSetView)
@@ -2469,6 +2470,18 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
 		glView->SetCursorType(GLSurface::VertexCursor);
+		return;
+	}
+	else if (tool == ToolID::FlipEdge) {
+		menuBar->Check(XRCID("btnFlipEdgeTool"), true);
+		toolBar->ToggleTool(XRCID("btnFlipEdgeTool"), true);
+		previousMirror = glView->GetXMirror();
+		glView->SetXMirror(false);
+		menuBar->Check(XRCID("btnXMirror"), false);
+		ToggleBrushPane(true);
+		glView->SetEditMode();
+		glView->SetBrushMode(false);
+		glView->SetCursorType(GLSurface::EdgeCursor);
 		return;
 	}
 	else {
@@ -5139,6 +5152,8 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		SelectTool(ToolID::AlphaBrush);
 	else if (id == XRCID("btnElimVertexTool"))
 		SelectTool(ToolID::ElimVertex);
+	else if (id == XRCID("btnFlipEdgeTool"))
+		SelectTool(ToolID::FlipEdge);
 	else
 		SelectTool(ToolID::Any);
 }
@@ -5406,6 +5421,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), true);
+		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
 		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
@@ -5420,6 +5436,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), true);
+		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), true);
 	}
 
 	if (id != XRCID("colorsTabButton")) {
@@ -5444,6 +5461,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), true);
+		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
 		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
@@ -5458,6 +5476,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), true);
+		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), true);
 	}
 
 	if (id == XRCID("meshTabButton")) {
@@ -5541,6 +5560,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
+		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnWeightBrush"), true);
@@ -5555,6 +5575,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 
 		ReselectBone();
 		glView->GetUndoHistory()->ClearHistory();
@@ -5601,6 +5622,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
+		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnColorBrush"), true);
@@ -5615,6 +5637,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 	}
 	else if (id == XRCID("segmentTabButton")) {
 		outfitShapes->Hide();
@@ -5678,6 +5701,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
+		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
@@ -5691,6 +5715,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), false);
 
 		ShowSegment(segmentTree->GetSelection());
@@ -5749,6 +5774,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
 		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
+		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
@@ -5762,6 +5788,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), false);
 
 		ShowPartition(partitionTree->GetSelection());
@@ -8715,6 +8742,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	isMovingPivot = false;
 	isSelecting = false;
 	isVertexPicking = false;
+	isPickingEdge = false;
 	bXMirror = true;
 	bConnectedEdit = false;
 	bGlobalBrushCollision = true;
@@ -8902,6 +8930,9 @@ void wxGLPanel::SetActiveBrush(ToolID brushID) {
 		activeBrush = &alphaBrush;
 		break;
 	case ToolID::ElimVertex:
+		activeBrush = nullptr;
+		break;
+	case ToolID::FlipEdge:
 		activeBrush = nullptr;
 		break;
 	}
@@ -9505,6 +9536,54 @@ void wxGLPanel::ClickElimVertex() {
 	ApplyUndoState(usp, false);
 }
 
+bool wxGLPanel::StartPickEdge() {
+	if (hoverMeshName.empty() || hoverEdge.p1 < 0)
+		return false;
+	mouseDownMeshName = hoverMeshName;
+	mouseDownEdge = hoverEdge;
+}
+
+void wxGLPanel::UpdatePickEdge(const wxPoint& screenPos) {
+	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, nullptr, nullptr, &hoverEdge);
+	if (!hit || hoverMeshName != mouseDownMeshName || !hoverEdge.CompareIndices(mouseDownEdge))
+		gls.HideSegCursor();
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::EndPickEdge() {
+	if (hoverMeshName != mouseDownMeshName || !hoverEdge.CompareIndices(mouseDownEdge))
+		return;
+
+	// Clear PickEdge state so no accidents can happen
+	hoverMeshName = "";
+	gls.HideSegCursor();
+
+	if (activeTool == ToolID::FlipEdge)
+		ClickFlipEdge();
+}
+
+void wxGLPanel::ClickFlipEdge() {
+	if (mouseDownMeshName.empty() || mouseDownEdge.p1 < 0 || mouseDownEdge.p1 == mouseDownEdge.p2)
+		return;
+	NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
+	if (!shape)
+		return;
+
+	// Prepare list of changes
+	UndoStateShape uss;
+	uss.shapeName = mouseDownMeshName;
+	if (!os->project->PrepareFlipEdge(shape, uss, mouseDownEdge)) {
+		wxMessageBox(_("The edge picked is on the surface boundary.  Pick an interior edge."), _("Error"));
+		return;
+	}
+
+	// Push changes onto undo stack and execute.
+	UndoStateProject *usp = GetUndoHistory()->PushState();
+	usp->undoType = UT_MESH;
+	usp->usss.push_back(std::move(uss));
+	ApplyUndoState(usp, false);
+}
+
 bool wxGLPanel::RestoreMode(UndoStateProject *usp) {
 	bool modeChanged = false;
 	int undoType = usp->undoType;
@@ -9927,6 +10006,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else if (isVertexPicking) {
 			UpdateVertexPick(event.GetPosition());
 		}
+		else if (isPickingEdge) {
+			UpdatePickEdge(event.GetPosition());
+		}
 		else {
 			if (Config.MatchValue("Input/LeftMousePan", "true")) {
 				gls.PanCamera(x - lastX, y - lastY);
@@ -9941,11 +10023,12 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	if (!rbuttonDown && !lbuttonDown) {
 		hoverMeshName = "";
 		hoverPoint = -1;
+		hoverEdge.p1 = -1;
 		Vector3 hoverColor;
 		float hoverAlpha = 1.0f;
 
 		if (editMode) {
-			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, &hoverColor, &hoverAlpha);
+			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, &hoverColor, &hoverAlpha, &hoverEdge);
 		}
 		else {
 			cursorExists = false;
@@ -10045,6 +10128,11 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 		if (meshHit)
 			isVertexPicking = true;
 	}
+	else if (activeTool == ToolID::FlipEdge) {
+		bool meshHit = StartPickEdge();
+		if (meshHit)
+			isPickingEdge = true;
+	}
 	else if (vertexEdit) {
 		bool meshHit = SelectVertex(event.GetPosition());
 		if (meshHit)
@@ -10091,6 +10179,11 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		isVertexPicking = false;
 	}
 
+	if (isPickingEdge) {
+		EndPickEdge();
+		isPickingEdge = false;
+	}
+
 	if (isTransforming) {
 		EndTransform();
 		isTransforming = false;
@@ -10119,6 +10212,11 @@ void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 	if (isVertexPicking) {
 		EndVertexPick();
 		isVertexPicking = false;
+	}
+
+	if (isPickingEdge) {
+		EndPickEdge();
+		isPickingEdge = false;
 	}
 
 	if (isTransforming) {

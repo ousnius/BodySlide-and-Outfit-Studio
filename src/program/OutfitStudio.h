@@ -141,6 +141,7 @@ enum class ToolID {
 	ColorBrush = 7,
 	AlphaBrush = 8,
 	ElimVertex,
+	FlipEdge,
 	Transform,
 	Pivot,
 	VertexEdit
@@ -207,6 +208,11 @@ public:
 	void UpdateVertexPick(const wxPoint& screenPos);
 	void EndVertexPick();
 	void ClickElimVertex();
+
+	bool StartPickEdge();
+	void UpdatePickEdge(const wxPoint& screenPos);
+	void EndPickEdge();
+	void ClickFlipEdge();
 
 	bool RestoreMode(UndoStateProject *usp);
 	void ApplyUndoState(UndoStateProject *usp, bool bUndo);
@@ -662,6 +668,7 @@ private:
 	int lastY;
 	std::string hoverMeshName, mouseDownMeshName;
 	int hoverPoint, mouseDownPoint;
+	Edge hoverEdge, mouseDownEdge;
 
 	std::set<int> BVHUpdateQueue;
 
@@ -682,6 +689,7 @@ private:
 	bool isMovingPivot;
 	bool isSelecting;
 	bool isVertexPicking;
+	bool isPickingEdge;
 	bool bXMirror;
 	bool bConnectedEdit;
 	bool bGlobalBrushCollision;
