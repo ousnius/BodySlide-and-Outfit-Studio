@@ -9488,14 +9488,17 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 bool wxGLPanel::StartPickVertex() {
 	if (hoverMeshName.empty() || hoverPoint < 0)
 		return false;
+
 	mouseDownMeshName = hoverMeshName;
 	mouseDownPoint = hoverPoint;
+	return true;
 }
 
 void wxGLPanel::UpdatePickVertex(const wxPoint& screenPos) {
 	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint);
 	if (!hit || hoverMeshName != mouseDownMeshName || hoverPoint != mouseDownPoint)
 		gls.HidePointCursor();
+
 	gls.RenderOneFrame();
 }
 
@@ -9504,7 +9507,7 @@ void wxGLPanel::EndPickVertex() {
 		return;
 
 	// Clear PickVertex state so no accidents can happen
-	hoverMeshName = "";
+	hoverMeshName.clear();
 	gls.HidePointCursor();
 
 	if (activeTool == ToolID::ElimVertex)
@@ -9515,6 +9518,7 @@ void wxGLPanel::ClickElimVertex() {
 	mesh *m = GetMesh(mouseDownMeshName);
 	if (!m || mouseDownPoint < 0)
 		return;
+
 	NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
 	if (!shape)
 		return;
@@ -9525,6 +9529,7 @@ void wxGLPanel::ClickElimVertex() {
 	if (!bConnectedEdit)
 		for (int wv : m->weldVerts[mouseDownPoint])
 			verts.push_back(wv);
+
 	std::sort(verts.begin(), verts.end());
 
 	// Prepare list of changes
