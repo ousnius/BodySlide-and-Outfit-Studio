@@ -62,6 +62,9 @@ public:
 	void InsertVertexIndices(const std::string& target, const std::vector<ushort>& indices);
 	void GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs);
 	void SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs);
+
+	void ApplyTransformToDiffSet(const std::string &setName, const MatTransform &t);
+
 	void ClearSet(const std::string& name);
 	void EmptySet(const std::string& set, const std::string& target) {
 		if (!TargetMatch(set, target))

@@ -1495,8 +1495,38 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 
 	workNif.SetVertsForShape(shape, verts);
 
+	// Diffs
+	bool noRot = t.rotation.IsNearlyEqualTo(Matrix3());
+	if (noRot && FloatsAreNearlyEqual(t.scale, 1))
+		return;
+
+	std::string target = ShapeToTarget(shape->GetName());
+	// Skip the offset part of the transform for normal diffs.
+	MatTransform dt = t;
+	dt.translation = Vector3();
+	for (int si = 0; si < activeSet.size(); ++si) {
+		if (activeSet[si].bUV || activeSet[si].bZap)
+			continue;
+		std::string setName = activeSet[si].TargetDataName(target);
+		if (activeSet[si].bClamp) {
+			// Apparently clamp sliders are not diffs at all but just
+			// set the vertex to the set's value?  So they get the full
+			// transform applied, not the diff transform.
+			if (IsBaseShape(shape))
+				baseDiffData.ApplyTransformToDiffSet(setName, t);
+			else
+				morpher.ApplyTransformToDiffSet(setName, t);
+		}
+		else {
+			if (IsBaseShape(shape))
+				baseDiffData.ApplyTransformToDiffSet(setName, dt);
+			else
+				morpher.ApplyTransformToDiffSet(setName, dt);
+		}
+	}
+
 	// Normals
-	if (t.rotation.IsNearlyEqualTo(Matrix3()))
+	if (noRot)
 		return;
 
 	const std::vector<Vector3>* oldNorms = workNif.GetNormalsForShape(shape, false);

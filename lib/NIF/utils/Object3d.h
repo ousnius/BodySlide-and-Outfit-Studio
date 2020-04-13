@@ -517,6 +517,14 @@ public:
 			rows[2][0] * v.x + rows[2][1] * v.y + rows[2][2] * v.z);
 	}
 
+	Matrix3 operator*(float f) const {
+		Matrix3 res;
+		res.rows[0] = f * rows[0];
+		res.rows[1] = f * rows[1];
+		res.rows[2] = f * rows[2];
+		return res;
+	}
+
 	float Determinant() const;
 
 	// Invert attempts to invert this matrix, returning the result in
@@ -557,6 +565,10 @@ public:
 			rows[2].IsNearlyEqualTo(other.rows[2]);
 	}
 };
+
+inline Matrix3 operator*(float f, const Matrix3 &m) {
+	return m * f;
+}
 
 // RotVecToMat: converts a rotation vector to a rotation matrix.
 // (A rotation vector has direction the axis of the rotation

@@ -444,6 +444,13 @@ void DiffDataSets::SetVertexDiffs(const std::string& target, int vertIndex, cons
 	}
 }
 
+void DiffDataSets::ApplyTransformToDiffSet(const std::string& setName, const MatTransform &t) {
+	if (namedSet.find(setName) == namedSet.end())
+		return;
+	for (auto &vdiff : namedSet[setName])
+		vdiff.second = t.ApplyTransform(vdiff.second);
+}
+
 void DiffDataSets::ClearSet(const std::string& name) {
 	namedSet.erase(name);
 	dataTargets.erase(name);

@@ -68,6 +68,8 @@ public:
 	void GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs);
 	void SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs);
 
+	void ApplyTransformToDiffSet(const std::string &setName, const MatTransform &t);
+
 	void ClearProximityCache();
 	void BuildProximityCache(const std::string& shapeName, const float proximityRadius = 10.0f);
 

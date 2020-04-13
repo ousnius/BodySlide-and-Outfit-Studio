@@ -244,6 +244,10 @@ void Automorph::SetVertexDiffs(const std::string& target, int vertIndex, const s
 	resultDiffData.SetVertexDiffs(target, vertIndex, diffs);
 }
 
+void Automorph::ApplyTransformToDiffSet(const std::string &setName, const MatTransform &t) {
+	resultDiffData.ApplyTransformToDiffSet(setName, t);
+}
+
 void Automorph::ClearProximityCache() {
 	prox_cache.clear();
 }
