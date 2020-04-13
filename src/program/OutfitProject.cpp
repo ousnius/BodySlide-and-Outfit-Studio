@@ -2714,10 +2714,10 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 	// Put data into uss.
 	int tp1 = t1 < triParts.size() ? triParts[t1] : -1;
 	int tp2 = t2 < triParts.size() ? triParts[t2] : -1;
-	uss.delTris.push_back(UndoStateTriangle{t1, tris[t1], tp1});
-	uss.delTris.push_back(UndoStateTriangle{t2, tris[t2], tp2});
-	uss.addTris.push_back(UndoStateTriangle{t1, Triangle(edge.p1, nev2, nev1), tp1});
-	uss.addTris.push_back(UndoStateTriangle{t2, Triangle(edge.p2, nev1, nev2), tp2});
+	uss.delTris.push_back(UndoStateTriangle{ t1, tris[t1], tp1 });
+	uss.delTris.push_back(UndoStateTriangle{ t2, tris[t2], tp2 });
+	uss.addTris.push_back(UndoStateTriangle{ t1, Triangle(edge.p1, nev2, nev1), tp1 });
+	uss.addTris.push_back(UndoStateTriangle{ t2, Triangle(edge.p2, nev1, nev2), tp2 });
 
 	// Sort delTris and addTris by index.
 	if (t2 < t1) {
