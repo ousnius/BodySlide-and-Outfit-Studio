@@ -9552,6 +9552,7 @@ bool wxGLPanel::StartPickEdge() {
 		return false;
 	mouseDownMeshName = hoverMeshName;
 	mouseDownEdge = hoverEdge;
+	return true;
 }
 
 void wxGLPanel::UpdatePickEdge(const wxPoint& screenPos) {
