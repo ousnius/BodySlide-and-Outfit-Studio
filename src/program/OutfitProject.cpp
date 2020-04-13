@@ -2315,9 +2315,11 @@ bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<
 	// non-deleted triangles each vertex belongs to.
 	std::vector<Triangle> tris;
 	shape->GetTriangles(tris);
+
 	std::vector<int> delTriInds;
 	std::vector<int> vertTriCounts(numVerts, 0);
-	for (int ti = 0; ti < tris.size(); ++ti)
+
+	for (int ti = 0; ti < tris.size(); ++ti) {
 		if (delVertFlags[tris[ti].p1] ||
 			delVertFlags[tris[ti].p2] ||
 			delVertFlags[tris[ti].p3])
@@ -2327,6 +2329,7 @@ bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<
 			++vertTriCounts[tris[ti].p2];
 			++vertTriCounts[tris[ti].p3];
 		}
+	}
 
 	// If all triangles are deleted, then delete the whole shape.
 	if (delTriInds.size() >= tris.size())
@@ -2553,10 +2556,13 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices) {
 	// Get triangle data
 	int numVerts = shape->GetNumVertices();
+
 	std::vector<Triangle> tris;
 	shape->GetTriangles(tris);
+
 	std::vector<int> triParts;
 	NifSegmentationInfo inf;
+
 	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
 		std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 		workNif.GetShapePartitions(shape, partitionInfo, triParts);
@@ -2568,8 +2574,10 @@ bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const
 		for (int evi : nverts)
 			if (vi == evi)
 				return;
+
 		nverts.push_back(vi);
 	};
+
 	std::vector<int> nrtris; // non-replaced triangles
 
 	for (int vi : indices) {
@@ -2581,8 +2589,10 @@ bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const
 			const Triangle &t = tris[ti];
 			if (t.p1 != vi && t.p2 != vi && t.p3 != vi)
 				continue;
+
 			if (ntris.size() >= 3)
 				return false;
+
 			ntris.push_back(ti);
 
 			// Order of vertex collection is important, or we'll end up
@@ -2599,6 +2609,7 @@ bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const
 				addneighbor(t.p1);
 				addneighbor(t.p2);
 			}
+
 			if (nverts.size() > 3)
 				return false;
 		}
@@ -2612,7 +2623,7 @@ bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const
 		// Put triangles to delete in uss.delTris.
 		for (int vti = 0; vti < ntris.size(); ++vti) {
 			int ti = ntris[vti];
-			uss.delTris.push_back(UndoStateTriangle{ti, tris[ti], ti < triParts.size() ? triParts[ti] : -1});
+			uss.delTris.push_back(UndoStateTriangle{ ti, tris[ti], ti < triParts.size() ? triParts[ti] : -1 });
 		}
 
 		int pti = -1;
@@ -2626,7 +2637,7 @@ bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const
 
 			// Put new triangle in uss.
 			int ti = ntris[pti];
-			uss.addTris.push_back(UndoStateTriangle{ti, Triangle(nverts[0], nverts[1], nverts[2]), ti < triParts.size() ? triParts[ti] : -1});
+			uss.addTris.push_back(UndoStateTriangle{ ti, Triangle(nverts[0], nverts[1], nverts[2]), ti < triParts.size() ? triParts[ti] : -1 });
 		}
 
 		// Collect list of non-replaced triangles for triangle renumbering.
@@ -2640,8 +2651,10 @@ bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const
 
 	// Renumber vertex and triangle indices in uss.addTris.
 	std::vector<int> vCollapse = GenerateIndexCollapseMap(indices, numVerts);
+
 	std::sort(nrtris.begin(), nrtris.end());
 	std::vector<int> tCollapse = GenerateIndexCollapseMap(nrtris, tris.size());
+
 	for (UndoStateTriangle &ust : uss.addTris) {
 		ust.t.p1 = vCollapse[ust.t.p1];
 		ust.t.p2 = vCollapse[ust.t.p2];
