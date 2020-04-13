@@ -2767,18 +2767,18 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 		if (t2 != -1 && t2 < t1)
 			++newt1;
 		int tp = t1 < triParts.size() ? triParts[t1] : -1;
-		uss.delTris.push_back(UndoStateTriangle{t1, tris[t1], tp});
-		uss.addTris.push_back(UndoStateTriangle{newt1, Triangle(edge.p1, newvi, nev1), tp});
-		uss.addTris.push_back(UndoStateTriangle{newt1+1, Triangle(nev1, newvi, edge.p2), tp});
+		uss.delTris.push_back(UndoStateTriangle{ t1, tris[t1], tp });
+		uss.addTris.push_back(UndoStateTriangle{ newt1, Triangle(edge.p1, newvi, nev1), tp });
+		uss.addTris.push_back(UndoStateTriangle{ newt1+1, Triangle(nev1, newvi, edge.p2), tp });
 	}
 	if (t2 != -1) {
 		int newt2 = t2;
 		if (t1 != -1 && t1 < t2)
 			++newt2;
 		int tp = t2 < triParts.size() ? triParts[t2] : -1;
-		uss.delTris.push_back(UndoStateTriangle{t2, tris[t2], tp});
-		uss.addTris.push_back(UndoStateTriangle{newt2, Triangle(edge.p2, newvi, nev2), tp});
-		uss.addTris.push_back(UndoStateTriangle{newt2+1, Triangle(nev2, newvi, edge.p1), tp});
+		uss.delTris.push_back(UndoStateTriangle{ t2, tris[t2], tp });
+		uss.addTris.push_back(UndoStateTriangle{ newt2, Triangle(edge.p2, newvi, nev2), tp });
+		uss.addTris.push_back(UndoStateTriangle{ newt2+1, Triangle(nev2, newvi, edge.p1), tp });
 	}
 
 	// Sort delTris and addTris by index.

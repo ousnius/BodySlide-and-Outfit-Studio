@@ -9589,7 +9589,7 @@ void wxGLPanel::EndPickEdge() {
 		return;
 
 	// Clear PickEdge state so no accidents can happen
-	hoverMeshName = "";
+	hoverMeshName.clear();
 	gls.HideSegCursor();
 
 	if (activeTool == ToolID::FlipEdge)
