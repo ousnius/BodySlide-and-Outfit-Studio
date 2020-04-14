@@ -2567,7 +2567,9 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &tmpl : refTemplates)
 			tmplChoice->Append(tmpl.GetName());
 
-		tmplChoice->Select(0);
+		std::string lastRefTemplate = OutfitStudioConfig["LastRefTemplate"];
+		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
+			tmplChoice->Select(0);
 
 		wiz.FitToPage(pg1);
 		wiz.CenterOnParent();
@@ -2604,6 +2606,8 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
 		wxString refTemplate = XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection();
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
+
+		OutfitStudioConfig.SetValue("LastRefTemplate", refTemplate.ToStdString());
 
 		std::string tmplName{refTemplate.ToUTF8()};
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
@@ -2722,7 +2726,10 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &tmpl : refTemplates)
 			tmplChoice->Append(tmpl.GetName());
 
-		tmplChoice->Select(0);
+		std::string lastRefTemplate = OutfitStudioConfig["LastRefTemplate"];
+		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
+			tmplChoice->Select(0);
+
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
@@ -2741,6 +2748,8 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
 		wxString refTemplate = XRCCTRL(dlg, "npTemplateChoice", wxChoice)->GetStringSelection();
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
+
+		OutfitStudioConfig.SetValue("LastRefTemplate", refTemplate.ToStdString());
 
 		std::string tmplName{refTemplate.ToUTF8()};
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
