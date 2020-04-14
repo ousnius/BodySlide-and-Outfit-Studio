@@ -1881,9 +1881,9 @@
 					<radio>1</radio>
 					<enabled>0</enabled>
 				</object>
-				<object class="wxMenuItem" name="btnElimVertexTool">
-					<label>Eliminate Vertex</label>
-					<help>Eliminates vertices with no more than three connections, without creating a hole.</help>
+				<object class="wxMenuItem" name="btnCollapseVertex">
+					<label>Collapse Vertex</label>
+					<help>Deletes vertices with no more than three connections, without creating a hole.</help>
 					<radio>1</radio>
 				</object>
 				<object class="separator" />
@@ -2024,11 +2024,11 @@
 			<radio>1</radio>
 			<disabled>1</disabled>
 		</object>
-		<object class="tool" name="btnElimVertexTool">
-			<label>Eliminate Vertex</label>
-			<tooltip>Eliminates vertices with no more than three connections, without creating a hole.</tooltip>
-			<bitmap>$(AppDir)\res\images\ElimVertex.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\ElimVertex_d.png</bitmap2>
+		<object class="tool" name="btnCollapseVertex">
+			<label>Collapse Vertex</label>
+			<tooltip>Deletes vertices with no more than three connections, without creating a hole.</tooltip>
+			<bitmap>$(AppDir)\res\images\CollapseVertex.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\CollapseVertex_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="separator" />

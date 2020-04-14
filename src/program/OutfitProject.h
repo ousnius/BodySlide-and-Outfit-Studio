@@ -198,7 +198,7 @@ public:
 	bool PrepareDeleteVerts(NiShape* shape, const std::unordered_map<ushort, float>& mask, UndoStateShape &uss);
 	void ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss, bool bUndo);
 
-	bool PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices);
+	bool PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices);
 
 	NiShape* DuplicateShape(NiShape* sourceShape, const std::string& destShapeName);
 	void DeleteShape(NiShape* shape);
