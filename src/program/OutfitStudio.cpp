@@ -150,7 +150,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnWeightBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnColorBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnAlphaBrush"), OutfitStudioFrame::OnSelectTool)
-	EVT_MENU(XRCID("btnElimVertexTool"), OutfitStudioFrame::OnSelectTool)
+	EVT_MENU(XRCID("btnCollapseVertex"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnFlipEdgeTool"), OutfitStudioFrame::OnSelectTool)
 
 	EVT_MENU(XRCID("btnViewFront"), OutfitStudioFrame::OnSetView)
@@ -2460,9 +2460,9 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
 		btnSwapBrush->SetLabel(_("Edit Color"));
 	}
-	else if (tool == ToolID::ElimVertex) {
-		menuBar->Check(XRCID("btnElimVertexTool"), true);
-		toolBar->ToggleTool(XRCID("btnElimVertexTool"), true);
+	else if (tool == ToolID::CollapseVertex) {
+		menuBar->Check(XRCID("btnCollapseVertex"), true);
+		toolBar->ToggleTool(XRCID("btnCollapseVertex"), true);
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
@@ -5151,8 +5151,8 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		SelectTool(ToolID::ColorBrush);
 	else if (id == XRCID("btnAlphaBrush"))
 		SelectTool(ToolID::AlphaBrush);
-	else if (id == XRCID("btnElimVertexTool"))
-		SelectTool(ToolID::ElimVertex);
+	else if (id == XRCID("btnCollapseVertex"))
+		SelectTool(ToolID::CollapseVertex);
 	else if (id == XRCID("btnFlipEdgeTool"))
 		SelectTool(ToolID::FlipEdge);
 	else
@@ -5421,7 +5421,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), true);
+		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), true);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
@@ -5436,7 +5436,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), true);
-		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), true);
+		GetToolBar()->EnableTool(XRCID("btnCollapseVertex"), true);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), true);
 	}
 
@@ -5461,7 +5461,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), true);
+		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), true);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
@@ -5476,7 +5476,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), true);
-		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), true);
+		GetToolBar()->EnableTool(XRCID("btnCollapseVertex"), true);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), true);
 	}
 
@@ -5560,7 +5560,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
+		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
@@ -5575,7 +5575,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
-		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnCollapseVertex"), false);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 
 		ReselectBone();
@@ -5622,7 +5622,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
+		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
@@ -5637,7 +5637,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
-		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnCollapseVertex"), false);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 	}
 	else if (id == XRCID("segmentTabButton")) {
@@ -5701,7 +5701,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
-		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
+		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
@@ -5715,7 +5715,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
-		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnCollapseVertex"), false);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), false);
 
@@ -5774,7 +5774,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
-		GetMenuBar()->Enable(XRCID("btnElimVertexTool"), false);
+		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
@@ -5788,7 +5788,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
-		GetToolBar()->EnableTool(XRCID("btnElimVertexTool"), false);
+		GetToolBar()->EnableTool(XRCID("btnCollapseVertex"), false);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), false);
 
@@ -8930,7 +8930,7 @@ void wxGLPanel::SetActiveBrush(ToolID brushID) {
 	case ToolID::AlphaBrush:
 		activeBrush = &alphaBrush;
 		break;
-	case ToolID::ElimVertex:
+	case ToolID::CollapseVertex:
 		activeBrush = nullptr;
 		break;
 	case ToolID::FlipEdge:
@@ -9510,11 +9510,11 @@ void wxGLPanel::EndPickVertex() {
 	hoverMeshName.clear();
 	gls.HidePointCursor();
 
-	if (activeTool == ToolID::ElimVertex)
-		ClickElimVertex();
+	if (activeTool == ToolID::CollapseVertex)
+		ClickCollapseVertex();
 }
 
-void wxGLPanel::ClickElimVertex() {
+void wxGLPanel::ClickCollapseVertex() {
 	mesh *m = GetMesh(mouseDownMeshName);
 	if (!m || mouseDownPoint < 0)
 		return;
@@ -9535,7 +9535,7 @@ void wxGLPanel::ClickElimVertex() {
 	// Prepare list of changes
 	UndoStateShape uss;
 	uss.shapeName = mouseDownMeshName;
-	if (!os->project->PrepareElimVertex(shape, uss, verts)) {
+	if (!os->project->PrepareCollapseVertex(shape, uss, verts)) {
 		wxMessageBox(_("The vertex picked has more than three connections."), _("Error"));
 		return;
 	}
@@ -10135,7 +10135,7 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 		if (meshHit)
 			isPainting = true;
 	}
-	else if (activeTool == ToolID::ElimVertex) {
+	else if (activeTool == ToolID::CollapseVertex) {
 		bool meshHit = StartPickVertex();
 		if (meshHit)
 			isPickingVertex = true;

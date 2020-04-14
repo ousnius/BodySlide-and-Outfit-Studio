@@ -140,7 +140,7 @@ enum class ToolID {
 	WeightBrush = 6,
 	ColorBrush = 7,
 	AlphaBrush = 8,
-	ElimVertex,
+	CollapseVertex,
 	FlipEdge,
 	Transform,
 	Pivot,
@@ -207,7 +207,7 @@ public:
 	bool StartPickVertex();
 	void UpdatePickVertex(const wxPoint& screenPos);
 	void EndPickVertex();
-	void ClickElimVertex();
+	void ClickCollapseVertex();
 
 	bool StartPickEdge();
 	void UpdatePickEdge(const wxPoint& screenPos);

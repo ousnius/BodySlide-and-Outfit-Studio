@@ -2553,7 +2553,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 	// That should happen when the file is saved.
 }
 
-bool OutfitProject::PrepareElimVertex(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices) {
+bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices) {
 	// Get triangle data
 	int numVerts = shape->GetNumVertices();
 
