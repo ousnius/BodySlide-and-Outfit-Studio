@@ -129,6 +129,23 @@ struct ConformOptions {
 	int maxResults = 0;
 };
 
+enum class ToolID {
+	Any = -1,
+	Select = 0,
+	MaskBrush = 1,
+	InflateBrush = 2,
+	DeflateBrush = 3,
+	MoveBrush = 4,
+	SmoothBrush = 5,
+	WeightBrush = 6,
+	ColorBrush = 7,
+	AlphaBrush = 8,
+	CollapseVertex,
+	Transform,
+	Pivot,
+	VertexEdit
+};
+
 
 class OutfitStudioFrame;
 class EditUV;
@@ -163,7 +180,7 @@ public:
 		return &undoHistory;
 	}
 
-	void SetActiveBrush(int brushID);
+	void SetActiveBrush(ToolID brushID);
 	TweakBrush* GetActiveBrush() {
 		return activeBrush;
 	}
@@ -186,6 +203,11 @@ public:
 
 	bool SelectVertex(const wxPoint& screenPos);
 
+	bool StartPickVertex();
+	void UpdatePickVertex(const wxPoint& screenPos);
+	void EndPickVertex();
+	void ClickCollapseVertex();
+
 	bool RestoreMode(UndoStateProject *usp);
 	void ApplyUndoState(UndoStateProject *usp, bool bUndo);
 	bool UndoStroke();
@@ -205,6 +227,9 @@ public:
 	void SetEditMode(bool on = true) {
 		editMode = on;
 	}
+
+	bool GetBrushMode() {return brushMode;}
+	void SetBrushMode(bool on = true) {brushMode = on;}
 
 	bool GetVertexEdit() {
 		return vertexEdit;
@@ -351,6 +376,10 @@ public:
 		str -= 0.010f;
 		activeBrush->setStrength(str);
 		return str;
+	}
+
+	void SetCursorType(GLSurface::CursorType cursorType) {
+		gls.SetCursorType(cursorType);
 	}
 
 	void ShowWireframe() {
@@ -631,6 +660,8 @@ private:
 
 	int lastX;
 	int lastY;
+	std::string hoverMeshName, mouseDownMeshName;
+	int hoverPoint, mouseDownPoint;
 
 	std::set<int> BVHUpdateQueue;
 
@@ -639,18 +670,18 @@ private:
 	float brushSize;
 
 	bool editMode;
+	bool brushMode;
 	bool transformMode;
 	bool pivotMode;
 	bool vertexEdit;
 	bool segmentMode;
 
-	bool bMaskPaint;
-	bool bWeightPaint;
-	bool bColorPaint;
+	ToolID activeTool;
 	bool isPainting;
 	bool isTransforming;
 	bool isMovingPivot;
 	bool isSelecting;
+	bool isPickingVertex;
 	bool bXMirror;
 	bool bConnectedEdit;
 	bool bGlobalBrushCollision;
@@ -847,7 +878,7 @@ public:
 	void LockShapeSelect();
 	void UnlockShapeSelect();
 	void AnimationGUIFromProj();
-	void RefreshGUIFromProj();
+	void RefreshGUIFromProj(bool render = true);
 	void MeshesFromProj(const bool reloadTextures = false);
 	void MeshFromProj(NiShape* shape, const bool reloadTextures = false);
 
@@ -862,22 +893,6 @@ public:
 	void ExitSliderEdit();
 	void MenuEnterSliderEdit();
 	void MenuExitSliderEdit();
-
-	enum ToolID {
-		Any = -1,
-		Select = 0,
-		MaskBrush = 1,
-		InflateBrush = 2,
-		DeflateBrush = 3,
-		MoveBrush = 4,
-		SmoothBrush = 5,
-		WeightBrush = 6,
-		ColorBrush = 7,
-		AlphaBrush = 8,
-		Transform,
-		Pivot,
-		VertexEdit
-	};
 
 	void SelectTool(ToolID tool);
 

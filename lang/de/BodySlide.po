@@ -2999,3 +2999,16 @@ msgstr "Skinning entfernen"
 
 msgid "Removes skinning of all shapes and all unused nodes."
 msgstr "Skinning aller Modelle und unverwendete Nodes entfernen."
+
+msgid "Collapse Vertex"
+msgstr "Collapse Vertex"
+
+msgid ""
+"Deletes vertices with no more than three connections, without creating a "
+"hole."
+msgstr ""
+"Entfernt Vertices mit nicht mehr als drei Verbindungen ohne ein Loch dabei "
+"zu erzeugen."
+
+msgid "The vertex picked has more than three connections."
+msgstr "Das gewählte Vertex hat mehr als drei Verbindungen."
