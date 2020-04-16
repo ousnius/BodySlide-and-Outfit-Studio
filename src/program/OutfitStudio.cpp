@@ -202,6 +202,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
 	EVT_MENU(XRCID("resetTransforms"), OutfitStudioFrame::OnResetTransforms)
+	EVT_MENU(XRCID("deleteUnreferencedNodes"), OutfitStudioFrame::OnDeleteUnreferencedNodes)
 	EVT_MENU(XRCID("removeSkinning"), OutfitStudioFrame::OnRemoveSkinning)
 	EVT_MENU(XRCID("shapeProperties"), OutfitStudioFrame::OnShapeProperties)
 
@@ -8253,6 +8254,16 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnResetTransforms(wxCommandEvent& WXUNUSED(event)) {
 	project->ResetTransforms();
 	RefreshGUIFromProj();
+}
+
+void OutfitStudioFrame::OnDeleteUnreferencedNodes(wxCommandEvent& WXUNUSED(event)) {
+	int deletionCount = 0;
+	auto workNif = project->GetWorkNif();
+	if (workNif)
+		workNif->DeleteUnreferencedNodes(&deletionCount);
+
+	wxString msg = wxString::Format(_("%d unreferenced nodes were deleted."), deletionCount);
+	wxMessageBox(msg, _("Delete Unreferenced Nodes"));
 }
 
 void OutfitStudioFrame::OnRemoveSkinning(wxCommandEvent& WXUNUSED(event)) {

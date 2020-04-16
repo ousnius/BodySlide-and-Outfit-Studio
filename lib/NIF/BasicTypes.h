@@ -580,9 +580,9 @@ public:
 	int GetBlockRefCount(const int blockId);
 
 	template <class T>
-	void DeleteUnreferencedBlocks(const int rootId, bool* hadDeletions = nullptr) {
+	bool DeleteUnreferencedBlocks(const int rootId, int* deletionCount = nullptr) {
 		if (rootId == 0xFFFFFFFF)
-			return;
+			return false;
 
 		for (int i = 0; i < numBlocks; i++) {
 			if (i != rootId) {
@@ -591,14 +591,16 @@ public:
 				if (block && !IsBlockReferenced(i)) {
 					DeleteBlock(i);
 
-					// Deleting a block can cause others to become unreferenced
-					if (hadDeletions)
-						(*hadDeletions) = true;
+					if (deletionCount)
+						(*deletionCount)++;
 
-					return DeleteUnreferencedBlocks<T>(rootId > i ? rootId - 1 : rootId);
+					// Deleting a block can cause others to become unreferenced
+					return DeleteUnreferencedBlocks<T>(rootId > i ? rootId - 1 : rootId, deletionCount);
 				}
 			}
 		}
+
+		return true;
 	}
 
 	ushort AddOrFindBlockTypeId(const std::string& blockTypeName);

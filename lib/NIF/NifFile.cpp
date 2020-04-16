@@ -473,10 +473,13 @@ void NifFile::PrettySortBlocks() {
 	hdr.SetBlockOrder(newIndices);
 }
 
-void NifFile::DeleteUnreferencedNodes(bool* hadDeletions) {
+bool NifFile::DeleteUnreferencedNodes(int* deletionCount) {
+	if (hasUnknown)
+		return false;
+
 	auto root = GetRootNode();
 	if (!root)
-		return;
+		return false;
 
 	for (auto &node : GetNodes()) {
 		if (node == root)
@@ -492,13 +495,15 @@ void NifFile::DeleteUnreferencedNodes(bool* hadDeletions) {
 		if (hdr.GetBlockRefCount(blockId) < 2) {
 			hdr.DeleteBlock(blockId);
 
-			// Deleting a block can cause others to become unreferenced
-			if (hadDeletions)
-				(*hadDeletions) = true;
+			if (deletionCount)
+				(*deletionCount)++;
 
-			return DeleteUnreferencedNodes();
+			// Deleting a block can cause others to become unreferenced
+			return DeleteUnreferencedNodes(deletionCount);
 		}
 	}
+
+	return true;
 }
 
 NiNode* NifFile::AddNode(const std::string& nodeName, const MatTransform& xformToParent, NiNode* parent) {

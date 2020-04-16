@@ -115,16 +115,16 @@ public:
 	void PrettySortBlocks();
 
 	template<class T = NiObject>
-	bool DeleteUnreferencedBlocks() {
+	int DeleteUnreferencedBlocks() {
 		if (hasUnknown)
-			return false;
+			return 0;
 
-		bool hadDeletions = false;
-		hdr.DeleteUnreferencedBlocks<T>(GetBlockID(GetRootNode()), &hadDeletions);
-		return hadDeletions;
+		int deletionCount = 0;
+		hdr.DeleteUnreferencedBlocks<T>(GetBlockID(GetRootNode()), &deletionCount);
+		return deletionCount;
 	}
 
-	void DeleteUnreferencedNodes(bool* hadDeletions = nullptr);
+	bool DeleteUnreferencedNodes(int* deletionCount = nullptr);
 
 	template<class T = NiObject>
 	T* FindBlockByName(const std::string& name);

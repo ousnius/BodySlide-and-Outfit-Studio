@@ -2597,3 +2597,12 @@ msgstr ""
 
 msgid "The vertex picked has more than three connections."
 msgstr ""
+
+msgid "Delete Unreferenced Nodes"
+msgstr ""
+
+msgid "Deletes all nodes from the project that aren't used in any other block."
+msgstr ""
+
+msgid "%d unreferenced nodes were deleted."
+msgstr ""
