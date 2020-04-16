@@ -425,25 +425,6 @@ void DiffDataSets::InsertVertexIndices(const std::string& target, const std::vec
 	}
 }
 
-void DiffDataSets::GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs) {
-	for (auto &data : namedSet) {
-		if (!TargetMatch(data.first, target))
-			continue;
-		auto dit = data.second.find(vertIndex);
-		if (dit == data.second.end())
-			continue;
-		diffs.push_back(UndoStateVertexSliderDiff{data.first, dit->second});
-	}
-}
-
-void DiffDataSets::SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs) {
-	for (const auto &diff : diffs) {
-		if (!TargetMatch(diff.setName, target))
-			continue;
-		namedSet[diff.setName][vertIndex] = diff.diff;
-	}
-}
-
 void DiffDataSets::ClearSet(const std::string& name) {
 	namedSet.erase(name);
 	dataTargets.erase(name);

@@ -1890,6 +1890,16 @@
 					<help>Deletes vertices with no more than three connections, without creating a hole.</help>
 					<radio>1</radio>
 				</object>
+				<object class="wxMenuItem" name="btnFlipEdgeTool">
+					<label>Flip Edge</label>
+					<help>Flips mesh edges so that the opposite pair of vertices is connected.</help>
+					<radio>1</radio>
+				</object>
+				<object class="wxMenuItem" name="btnSplitEdgeTool">
+					<label>Split Edge</label>
+					<help>Splits a mesh edge in two with a new vertex.</help>
+					<radio>1</radio>
+				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="btnTransform">
 					<label>Transform\tF</label>
@@ -2033,6 +2043,20 @@
 			<tooltip>Deletes vertices with no more than three connections, without creating a hole.</tooltip>
 			<bitmap>$(AppDir)\res\images\CollapseVertex.png</bitmap>
 			<bitmap2>$(AppDir)\res\images\CollapseVertex_d.png</bitmap2>
+			<radio>1</radio>
+		</object>
+		<object class="tool" name="btnFlipEdgeTool">
+			<label>Flip Edge</label>
+			<tooltip>Flips mesh edges so that the opposite pair of vertices is connected.</tooltip>
+			<bitmap>$(AppDir)\res\images\FlipEdge.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\FlipEdge_d.png</bitmap2>
+			<radio>1</radio>
+		</object>
+		<object class="tool" name="btnSplitEdgeTool">
+			<label>Split Edge</label>
+			<tooltip>Splits a mesh edge in two with a new vertex.</tooltip>
+			<bitmap>$(AppDir)\res\images\SplitEdge.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\SplitEdge_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="separator" />

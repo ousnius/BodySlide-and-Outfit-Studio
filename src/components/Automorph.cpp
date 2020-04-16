@@ -236,14 +236,6 @@ void Automorph::InsertVertexIndices(const std::string& target, const std::vector
 	resultDiffData.InsertVertexIndices(target, indices);
 }
 
-void Automorph::GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs) {
-	resultDiffData.GetVertexDiffs(target, vertIndex, diffs);
-}
-
-void Automorph::SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs) {
-	resultDiffData.SetVertexDiffs(target, vertIndex, diffs);
-}
-
 void Automorph::ClearProximityCache() {
 	prox_cache.clear();
 }
@@ -286,6 +278,10 @@ int Automorph::GetResultDiffSize(const std::string& shapeName, const std::string
 		return 0;
 
 	return resultDiffData.GetDiffSet(setname)->size();
+}
+
+std::unordered_map<ushort, Vector3>* Automorph::GetDiffSet(const std::string& targetDataName) {
+	return resultDiffData.GetDiffSet(targetDataName);
 }
 
 void Automorph::ScaleResultDiff(const std::string& shapeName, const std::string& sliderName, float scaleValue) {

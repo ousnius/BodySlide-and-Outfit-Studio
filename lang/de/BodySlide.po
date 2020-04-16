@@ -3023,3 +3023,9 @@ msgstr ""
 
 msgid "%d unreferenced nodes were deleted."
 msgstr "%d unreferenzierte Nodes wurden entfernt."
+
+msgid "The shape has reached the vertex count limit."
+msgstr "Das Modell hat das Vertex-Limit erreicht."
+
+msgid "The shape has reached the triangle count limit."
+msgstr "Das Modell hat das Triangle-Limit erreicht."

@@ -2605,4 +2605,9 @@ msgid "Deletes all nodes from the project that aren't used in any other block."
 msgstr ""
 
 msgid "%d unreferenced nodes were deleted."
+
+msgid "The shape has reached the vertex count limit."
+msgstr ""
+
+msgid "The shape has reached the triangle count limit."
 msgstr ""

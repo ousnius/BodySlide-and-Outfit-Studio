@@ -36,7 +36,7 @@ struct UndoStateVertexBoneWeight {
 };
 
 struct UndoStateVertexSliderDiff {
-	std::string setName;	// NOT the slider name
+	std::string sliderName;	// NOT the set name
 	Vector3 diff;
 };
 
