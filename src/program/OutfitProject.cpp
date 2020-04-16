@@ -2273,10 +2273,23 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const
 			if (wit != aw.weights.end())
 				usv.weights.emplace_back(UndoStateVertexBoneWeight{bnp.first, wit->second});
 		}
+	}
+	// For diffs, it's more efficient to reverse the loop nesting.
+	for (int si = 0; si < activeSet.size(); ++si) {
+		std::string targetDataName = activeSet[si].TargetDataName(target);
+		std::unordered_map<ushort, Vector3>* diffSet;
 		if (IsBaseShape(shape))
-			baseDiffData.GetVertexDiffs(target, vi, usv.diffs);
+			diffSet = baseDiffData.GetDiffSet(targetDataName);
 		else
-			morpher.GetVertexDiffs(target, vi, usv.diffs);
+			diffSet = morpher.GetDiffSet(targetDataName);
+		if (!diffSet)
+			continue;
+		for (UndoStateVertex &usv : uss.delVerts) {
+			auto dit = diffSet->find(usv.index);
+			if (dit == diffSet->end())
+				continue;
+			usv.diffs.push_back(UndoStateVertexSliderDiff{ activeSet[si].name, dit->second });
+		}
 	}
 }
 
@@ -2506,10 +2519,17 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 			}
 
 			// ...in diff data
-			if (IsBaseShape(shape))
-				baseDiffData.SetVertexDiffs(target, usv.index, usv.diffs);
-			else
-				morpher.SetVertexDiffs(target, usv.index, usv.diffs);
+			for (const UndoStateVertexSliderDiff &diff : usv.diffs) {
+				std::string targetDataName = activeSet[diff.sliderName].TargetDataName(target);
+				std::unordered_map<ushort, Vector3>* diffSet;
+				if (IsBaseShape(shape))
+					diffSet = baseDiffData.GetDiffSet(targetDataName);
+				else
+					diffSet = morpher.GetDiffSet(targetDataName);
+				if (!diffSet)	// should be impossible
+					continue;
+				(*diffSet)[usv.index] = diff.diff;
+			}
 		}
 	}
 
@@ -2941,21 +2961,24 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	// and p2 may have moved farther apart, which would require greater
 	// curve offset.
 
-	// diffpairs: key is setName.
+	// diffpairs: key is sliderName.
 	std::unordered_map<std::string, std::pair<Vector3, Vector3>> diffpairs;
 	for (auto &sd : p1d.diffs)
-		diffpairs[sd.setName].first = sd.diff;
+		diffpairs[sd.sliderName].first = sd.diff;
 	for (auto &sd : p2d.diffs)
-		diffpairs[sd.setName].second = sd.diff;
+		diffpairs[sd.sliderName].second = sd.diff;
 
 	for (auto &diffpair : diffpairs) {
 		// First, just average the diffs.
 		Vector3 diff = (diffpair.second.first + diffpair.second.second) * 0.5;
-		// Calculate the distance between the moved p1 and p2.
-		float delen = (diffpair.second.second + p2 - diffpair.second.first - p1).length();
-		// Apply more curve offset (for delen > elen)
-		// or less (for delen < elen).
-		diff += usv.normal * (curveOffsetFactor * (delen - elen) * 0.5);
+		const SliderData &sd = activeSet[diffpair.first];
+		if (!sd.bUV && !sd.bClamp && !sd.bZap) {
+			// Calculate the distance between the moved p1 and p2.
+			float delen = (diffpair.second.second + p2 - diffpair.second.first - p1).length();
+			// Apply more curve offset (for delen > elen)
+			// or less (for delen < elen).
+			diff += usv.normal * (curveOffsetFactor * (delen - elen) * 0.5);
+		}
 		usv.diffs.push_back(UndoStateVertexSliderDiff{ diffpair.first, diff });
 	}
 

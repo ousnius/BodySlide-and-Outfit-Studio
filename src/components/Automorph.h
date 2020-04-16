@@ -65,8 +65,6 @@ public:
 	void DeleteVerts(const std::string& shapeName, const std::vector<ushort>& indices);
 	// indices must be in ascending order.
 	void InsertVertexIndices(const std::string& target, const std::vector<ushort>& indices);
-	void GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs);
-	void SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs);
 
 	void ClearProximityCache();
 	void BuildProximityCache(const std::string& shapeName, const float proximityRadius = 10.0f);
@@ -80,6 +78,7 @@ public:
 
 	void GetRawResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& outDiff);
 	int GetResultDiffSize(const std::string& shapeName, const std::string& sliderName);
+	std::unordered_map<ushort, Vector3>* GetDiffSet(const std::string& targetDataName);
 
 	void SetResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& diff);
 	void UpdateResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& diff);

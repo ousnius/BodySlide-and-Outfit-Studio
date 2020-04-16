@@ -60,8 +60,6 @@ public:
 	void DeleteVerts(const std::string& target, const std::vector<ushort>& indices);
 	// indices must be in ascending order.
 	void InsertVertexIndices(const std::string& target, const std::vector<ushort>& indices);
-	void GetVertexDiffs(const std::string& target, int vertIndex, std::vector<UndoStateVertexSliderDiff> &diffs);
-	void SetVertexDiffs(const std::string& target, int vertIndex, const std::vector<UndoStateVertexSliderDiff> &diffs);
 	void ClearSet(const std::string& name);
 	void EmptySet(const std::string& set, const std::string& target) {
 		if (!TargetMatch(set, target))
