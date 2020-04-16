@@ -9571,7 +9571,7 @@ void wxGLPanel::ClickCollapseVertex() {
 	UndoStateShape uss;
 	uss.shapeName = mouseDownMeshName;
 	if (!os->project->PrepareCollapseVertex(shape, uss, verts)) {
-		wxMessageBox(_("The vertex picked has more than three connections."), _("Error"));
+		wxMessageBox(_("The vertex picked has more than three connections."), _("Error"), wxICON_ERROR, os);
 		return;
 	}
 
@@ -9625,7 +9625,7 @@ void wxGLPanel::ClickFlipEdge() {
 	UndoStateShape uss;
 	uss.shapeName = mouseDownMeshName;
 	if (!os->project->PrepareFlipEdge(shape, uss, mouseDownEdge)) {
-		wxMessageBox(_("The edge picked is on the surface boundary.  Pick an interior edge."), _("Error"));
+		wxMessageBox(_("The edge picked is on the surface boundary.  Pick an interior edge."), _("Error"), wxICON_ERROR, os);
 		return;
 	}
 
@@ -9659,12 +9659,12 @@ void wxGLPanel::ClickSplitEdge() {
 		maxTriIndex = std::numeric_limits<uint>().max();
 
 	if (shape->GetNumVertices() > maxVertIndex - 2) {
-		wxMessageBox(_("The shape has reached the vertex count limit."), _("Error"));
+		wxMessageBox(_("The shape has reached the vertex count limit."), _("Error"), wxICON_ERROR, os);
 		return;
 	}
 
 	if (shape->GetNumTriangles() > maxTriIndex - 2) {
-		wxMessageBox(_("The shape has reached the triangle count limit."), _("Error"));
+		wxMessageBox(_("The shape has reached the triangle count limit."), _("Error"), wxICON_ERROR, os);
 		return;
 	}
 
@@ -9702,7 +9702,7 @@ void wxGLPanel::ClickSplitEdge() {
 	UndoStateShape uss;
 	uss.shapeName = mouseDownMeshName;
 	if (!os->project->PrepareSplitEdge(shape, uss, mouseDownEdge, redge)) {
-		wxMessageBox(_("The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"));
+		wxMessageBox(_("The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"), wxICON_ERROR, os);
 		return;
 	}
 
