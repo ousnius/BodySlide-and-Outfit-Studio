@@ -9658,13 +9658,15 @@ void wxGLPanel::ClickSplitEdge() {
 	if (workNif->GetHeader().GetVersion().IsFO4())
 		maxTriIndex = std::numeric_limits<uint>().max();
 
-	if (shape->GetNumVertices() > maxVertIndex - 2)
+	if (shape->GetNumVertices() > maxVertIndex - 2) {
 		wxMessageBox(_("The shape has reached the vertex count limit."), _("Error"));
 		return;
+	}
 
-	if (shape->GetNumTriangles() > maxTriIndex - 2)
+	if (shape->GetNumTriangles() > maxTriIndex - 2) {
 		wxMessageBox(_("The shape has reached the triangle count limit."), _("Error"));
 		return;
+	}
 
 	// Determine reverse edge
 	int p1 = mouseDownEdge.p1, p2 = mouseDownEdge.p2;
