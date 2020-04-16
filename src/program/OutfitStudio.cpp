@@ -9557,7 +9557,7 @@ void wxGLPanel::ClickCollapseVertex() {
 	// Make list of this vertex and its welded vertices.
 	std::vector<int> verts;
 	verts.push_back(mouseDownPoint);
-	if (!bConnectedEdit)
+	if (!bConnectedEdit && m->weldVerts.find(mouseDownPoint) != m->weldVerts.end())
 		for (int wv : m->weldVerts[mouseDownPoint])
 			verts.push_back(wv);
 
@@ -9632,14 +9632,43 @@ void wxGLPanel::ClickFlipEdge() {
 void wxGLPanel::ClickSplitEdge() {
 	if (mouseDownMeshName.empty() || mouseDownEdge.p1 < 0 || mouseDownEdge.p1 == mouseDownEdge.p2)
 		return;
+	mesh *m = GetMesh(mouseDownMeshName);
+	if (!m)
+		return;
 	NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
 	if (!shape)
 		return;
 
+	// Determine reverse edge
+	int p1 = mouseDownEdge.p1, p2 = mouseDownEdge.p2;
+	Edge redge(p2, p1);
+	std::vector<int> p1w, p2w;
+	if (m->weldVerts.find(p1) != m->weldVerts.end())
+		p1w = m->weldVerts[p1];
+	if (m->weldVerts.find(p2) != m->weldVerts.end())
+		p2w = m->weldVerts[p2];
+	if (!p1w.empty() || !p2w.empty()) {
+		if (p1w.empty())
+			p1w.push_back(p1);
+		if (p2w.empty())
+			p2w.push_back(p2);
+		for (int ap1 : p1w) {
+			for (int ei : m->vertEdges[ap1]) {
+				int ep2 = m->edges[ei].p1 == ap1 ? m->edges[ei].p2 : m->edges[ei].p1;
+				for (int ap2 : p2w) {
+					if (ap2 == ep2) {
+						redge.p1 = ap2;
+						redge.p2 = ap1;
+					}
+				}
+			}
+		}
+	}
+
 	// Prepare list of changes
 	UndoStateShape uss;
 	uss.shapeName = mouseDownMeshName;
-	if (!os->project->PrepareSplitEdge(shape, uss, mouseDownEdge)) {
+	if (!os->project->PrepareSplitEdge(shape, uss, mouseDownEdge, redge)) {
 		wxMessageBox(_("The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"));
 		return;
 	}

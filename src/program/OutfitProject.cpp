@@ -2742,7 +2742,7 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 	return true;
 }
 
-bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge) {
+bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge, const Edge &redge) {
 	// Get vertex and triangle data
 	const std::vector<Vector3> &verts = *workNif.GetRawVertsForShape(shape);
 	int newvi = verts.size();
@@ -2760,6 +2760,22 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	int t1 = -1, t2 = -1, nev1 = -1, nev2 = -1;
 	if (!FindNeighboringTriangles(tris, edge, t1, t2, nev1, nev2))
 		return false;
+	int newrvi = newvi;
+	bool welded = false;
+	if (redge.p1 != edge.p2 || redge.p2 != edge.p1) {
+		// If there's a welded edge, search for it too.
+		int wt1 = -1, wt2 = -1, wnev1 = -1, wnev2 = -1;
+		if (!FindNeighboringTriangles(tris, redge, wt1, wt2, wnev1, wnev2))
+			return false;
+		// Make sure main and welded edges match up properly.
+		if (t2 != -1 || wt2 != -1 || t1 == -1 || wt1 == -1)
+			return false;
+		// Main edge provides one side's triangle, welded the other.
+		t2 = wt1;
+		nev2 = wnev1;
+		++newrvi;
+		welded = true;
+	}
 
 	// Put triangle data into uss.
 	if (t1 != -1) {
@@ -2777,8 +2793,8 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 			++newt2;
 		int tp = t2 < triParts.size() ? triParts[t2] : -1;
 		uss.delTris.push_back(UndoStateTriangle{ t2, tris[t2], tp });
-		uss.addTris.push_back(UndoStateTriangle{ newt2, Triangle(edge.p2, newvi, nev2), tp });
-		uss.addTris.push_back(UndoStateTriangle{ newt2+1, Triangle(nev2, newvi, edge.p1), tp });
+		uss.addTris.push_back(UndoStateTriangle{ newt2, Triangle(redge.p1, newrvi, nev2), tp });
+		uss.addTris.push_back(UndoStateTriangle{ newt2+1, Triangle(nev2, newrvi, redge.p2), tp });
 	}
 
 	// Sort delTris and addTris by index.
@@ -2789,9 +2805,15 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	// UndoStateShape).
 	UndoStateShape duss;
 	std::vector<int> edgeInds{edge.p1, edge.p2};
+	if (welded) {
+		edgeInds.push_back(redge.p1);
+		edgeInds.push_back(redge.p2);
+	}
 	CollectVertexData(shape, duss, edgeInds);
 	const UndoStateVertex &p1d = duss.delVerts[0];
 	const UndoStateVertex &p2d = duss.delVerts[1];
+	const UndoStateVertex &rp1d = duss.delVerts[welded ? 3 : 1];
+	const UndoStateVertex &rp2d = duss.delVerts[welded ? 2 : 0];
 	const Vector3 &p1 = p1d.pos;
 	const Vector3 &p2 = p2d.pos;
 
@@ -2815,13 +2837,15 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	// Calculate normals at p1 and p2 by averaging their triangle normals.
 	Vector3 np1, np2;
 	for (const Triangle &t : tris) {
-		if (t.p1 == edge.p1 || t.p2 == edge.p1 || t.p3 == edge.p1) {
+		if (t.p1 == edge.p1 || t.p2 == edge.p1 || t.p3 == edge.p1 ||
+			t.p1 == redge.p2 || t.p2 == redge.p2 || t.p3 == redge.p2) {
 			Vector3 tn;
 			t.trinormal(verts, &tn);
 			tn.Normalize();
 			np1 += tn;
 		}
-		if (t.p1 == edge.p2 || t.p2 == edge.p2 || t.p3 == edge.p2) {
+		if (t.p1 == edge.p2 || t.p2 == edge.p2 || t.p3 == edge.p2 ||
+			t.p1 == redge.p1 || t.p2 == redge.p1 || t.p3 == redge.p1) {
 			Vector3 tn;
 			t.trinormal(verts, &tn);
 			tn.Normalize();
@@ -2916,6 +2940,14 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 		// or less (for delen < elen).
 		diff += usv.normal * (curveOffsetFactor * (delen - elen) * 0.5);
 		usv.diffs.push_back(UndoStateVertexSliderDiff{diffpair.first, diff});
+	}
+
+	if (welded) {
+		// New welded vertex gets exactly the same data except uv.
+		UndoStateVertex rusv(usv);
+		rusv.index = newrvi;
+		rusv.uv = (rp1d.uv + rp2d.uv) * 0.5;
+		uss.addVerts.push_back(std::move(rusv));
 	}
 
 	return true;
