@@ -3012,3 +3012,9 @@ msgstr ""
 
 msgid "The vertex picked has more than three connections."
 msgstr "Das gewählte Vertex hat mehr als drei Verbindungen."
+
+msgid "The shape has reached the vertex count limit."
+msgstr "Das Modell hat das Vertex-Limit erreicht."
+
+msgid "The shape has reached the triangle count limit."
+msgstr "Das Modell hat das Triangle-Limit erreicht."

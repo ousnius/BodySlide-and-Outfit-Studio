@@ -9550,7 +9550,11 @@ void wxGLPanel::ClickCollapseVertex() {
 	if (!m || mouseDownPoint < 0)
 		return;
 
-	NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
+	auto workNif = os->project->GetWorkNif();
+	if (!workNif)
+		return;
+
+	NiShape *shape = workNif->FindBlockByName<NiShape>(mouseDownMeshName);
 	if (!shape)
 		return;
 
@@ -9640,8 +9644,26 @@ void wxGLPanel::ClickSplitEdge() {
 	if (!m)
 		return;
 
-	NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
+	auto workNif = os->project->GetWorkNif();
+	if (!workNif)
+		return;
+
+	NiShape *shape = workNif->FindBlockByName<NiShape>(mouseDownMeshName);
 	if (!shape)
+		return;
+
+	ushort maxVertIndex = std::numeric_limits<ushort>().max();
+	uint maxTriIndex = std::numeric_limits<ushort>().max();
+
+	if (workNif->GetHeader().GetVersion().IsFO4())
+		maxTriIndex = std::numeric_limits<uint>().max();
+
+	if (shape->GetNumVertices() > maxVertIndex - 2)
+		wxMessageBox(_("The shape has reached the vertex count limit."), _("Error"));
+		return;
+
+	if (shape->GetNumTriangles() > maxTriIndex - 2)
+		wxMessageBox(_("The shape has reached the triangle count limit."), _("Error"));
 		return;
 
 	// Determine reverse edge
@@ -9650,13 +9672,17 @@ void wxGLPanel::ClickSplitEdge() {
 	std::vector<int> p1w, p2w;
 	if (m->weldVerts.find(p1) != m->weldVerts.end())
 		p1w = m->weldVerts[p1];
+
 	if (m->weldVerts.find(p2) != m->weldVerts.end())
 		p2w = m->weldVerts[p2];
+
 	if (!p1w.empty() || !p2w.empty()) {
 		if (p1w.empty())
 			p1w.push_back(p1);
+
 		if (p2w.empty())
 			p2w.push_back(p2);
+
 		for (int ap1 : p1w) {
 			for (int ei : m->vertEdges[ap1]) {
 				int ep2 = m->edges[ei].p1 == ap1 ? m->edges[ei].p2 : m->edges[ei].p1;
