@@ -2680,12 +2680,14 @@ static bool FindNeighboringTriangles(const std::vector<Triangle> &tris, const Ed
 	// Find the two neighboring triangles
 	const Edge redge(edge.p2, edge.p1);
 	t1 = -1, t2 = -1;
+
 	for (int ti = 0; ti < tris.size(); ++ti) {
 		if (tris[ti].HasOrientedEdge(edge)) {
 			if (t1 != -1)
 				return false;
 			t1 = ti;
 		}
+
 		if (tris[ti].HasOrientedEdge(redge)) {
 			if (t2 != -1)
 				return false;
@@ -2695,15 +2697,19 @@ static bool FindNeighboringTriangles(const std::vector<Triangle> &tris, const Ed
 
 	// Figure out the non-edge vertex for each triangle.
 	nev1 = tris[t1].p3;
+
 	if (tris[t1].p2 == edge.p1)
 		nev1 = tris[t1].p1;
 	else if (tris[t1].p3 == edge.p1)
 		nev1 = tris[t1].p2;
+
 	nev2 = tris[t2].p3;
+
 	if (tris[t2].p2 == edge.p2)
 		nev2 = tris[t2].p1;
 	else if (tris[t2].p3 == edge.p2)
 		nev2 = tris[t2].p2;
+
 	return true;
 }
 
@@ -2711,6 +2717,7 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 	// Get triangle data
 	std::vector<Triangle> tris;
 	shape->GetTriangles(tris);
+
 	std::vector<int> triParts;
 	NifSegmentationInfo inf;
 	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
@@ -2722,6 +2729,7 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 	int t1 = -1, t2 = -1, nev1 = -1, nev2 = -1;
 	if (!FindNeighboringTriangles(tris, edge, t1, t2, nev1, nev2))
 		return false;
+
 	if (t1 == -1 || t2 == -1)
 		return false;
 
@@ -2744,17 +2752,21 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 
 bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge, const Edge &redge) {
 	// Get vertex and triangle data
-	const std::vector<Vector3> &verts = *workNif.GetRawVertsForShape(shape);
-	int newvi = verts.size();
+	const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(shape);
+	if (!verts)
+		return false;
+
+	int newvi = verts->size();
+
 	std::vector<Triangle> tris;
 	shape->GetTriangles(tris);
+
 	std::vector<int> triParts;
 	NifSegmentationInfo inf;
 	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
 		std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 		workNif.GetShapePartitions(shape, partitionInfo, triParts);
 	}
-	int numTris = tris.size();
 
 	// Find the two neighboring triangles and the non-edge vertex for each.
 	int t1 = -1, t2 = -1, nev1 = -1, nev2 = -1;
@@ -2782,19 +2794,21 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 		int newt1 = t1;
 		if (t2 != -1 && t2 < t1)
 			++newt1;
+
 		int tp = t1 < triParts.size() ? triParts[t1] : -1;
 		uss.delTris.push_back(UndoStateTriangle{ t1, tris[t1], tp });
 		uss.addTris.push_back(UndoStateTriangle{ newt1, Triangle(edge.p1, newvi, nev1), tp });
-		uss.addTris.push_back(UndoStateTriangle{ newt1+1, Triangle(nev1, newvi, edge.p2), tp });
+		uss.addTris.push_back(UndoStateTriangle{ newt1 + 1, Triangle(nev1, newvi, edge.p2), tp });
 	}
 	if (t2 != -1) {
 		int newt2 = t2;
 		if (t1 != -1 && t1 < t2)
 			++newt2;
+
 		int tp = t2 < triParts.size() ? triParts[t2] : -1;
 		uss.delTris.push_back(UndoStateTriangle{ t2, tris[t2], tp });
 		uss.addTris.push_back(UndoStateTriangle{ newt2, Triangle(redge.p1, newrvi, nev2), tp });
-		uss.addTris.push_back(UndoStateTriangle{ newt2+1, Triangle(nev2, newrvi, redge.p2), tp });
+		uss.addTris.push_back(UndoStateTriangle{ newt2 + 1, Triangle(nev2, newrvi, redge.p2), tp });
 	}
 
 	// Sort delTris and addTris by index.
@@ -2804,7 +2818,7 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	// Get data for the two edge vertices (in a secondary data-collection
 	// UndoStateShape).
 	UndoStateShape duss;
-	std::vector<int> edgeInds{edge.p1, edge.p2};
+	std::vector<int> edgeInds{ edge.p1, edge.p2 };
 	if (welded) {
 		edgeInds.push_back(redge.p1);
 		edgeInds.push_back(redge.p2);
@@ -2840,18 +2854,19 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 		if (t.p1 == edge.p1 || t.p2 == edge.p1 || t.p3 == edge.p1 ||
 			t.p1 == redge.p2 || t.p2 == redge.p2 || t.p3 == redge.p2) {
 			Vector3 tn;
-			t.trinormal(verts, &tn);
+			t.trinormal(*verts, &tn);
 			tn.Normalize();
 			np1 += tn;
 		}
 		if (t.p1 == edge.p2 || t.p2 == edge.p2 || t.p3 == edge.p2 ||
 			t.p1 == redge.p1 || t.p2 == redge.p1 || t.p3 == redge.p1) {
 			Vector3 tn;
-			t.trinormal(verts, &tn);
+			t.trinormal(*verts, &tn);
 			tn.Normalize();
 			np2 += tn;
 		}
 	}
+
 	np1.Normalize();
 	np2.Normalize();
 
@@ -2907,39 +2922,41 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 		const std::vector<UndoStateVertexBoneWeight> &swts = si ? p2d.weights : p1d.weights;
 		for (const UndoStateVertexBoneWeight &sw : swts) {
 			bool found = false;
-			for (int dwi = 0; dwi < usv.weights.size() && !found; ++dwi)
+			for (int dwi = 0; dwi < usv.weights.size() && !found; ++dwi) {
 				if (usv.weights[dwi].boneName == sw.boneName) {
 					found = true;
 					usv.weights[dwi].w += sw.w;
 				}
+			}
+
 			if (!found)
 				usv.weights.push_back(sw);
 		}
 	}
+
 	for (auto &dw : usv.weights)
 		dw.w *= 0.5;
 
 	// Unfortunately, we can't just calculate diffs by averaging.  p1
 	// and p2 may have moved farther apart, which would require greater
 	// curve offset.
-	struct DiffPair {
-		Vector3 dp1, dp2;
-	};
+
 	// diffpairs: key is setName.
-	std::unordered_map<std::string, DiffPair> diffpairs;
+	std::unordered_map<std::string, std::pair<Vector3, Vector3>> diffpairs;
 	for (auto &sd : p1d.diffs)
-		diffpairs[sd.setName].dp1 = sd.diff;
+		diffpairs[sd.setName].first = sd.diff;
 	for (auto &sd : p2d.diffs)
-		diffpairs[sd.setName].dp2 = sd.diff;
+		diffpairs[sd.setName].second = sd.diff;
+
 	for (auto &diffpair : diffpairs) {
 		// First, just average the diffs.
-		Vector3 diff = (diffpair.second.dp1 + diffpair.second.dp2) * 0.5;
+		Vector3 diff = (diffpair.second.first + diffpair.second.second) * 0.5;
 		// Calculate the distance between the moved p1 and p2.
-		float delen = (diffpair.second.dp2 + p2 - diffpair.second.dp1 - p1).length();
+		float delen = (diffpair.second.second + p2 - diffpair.second.first - p1).length();
 		// Apply more curve offset (for delen > elen)
 		// or less (for delen < elen).
 		diff += usv.normal * (curveOffsetFactor * (delen - elen) * 0.5);
-		usv.diffs.push_back(UndoStateVertexSliderDiff{diffpair.first, diff});
+		usv.diffs.push_back(UndoStateVertexSliderDiff{ diffpair.first, diff });
 	}
 
 	if (welded) {

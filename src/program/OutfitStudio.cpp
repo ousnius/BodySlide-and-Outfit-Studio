@@ -471,11 +471,11 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultValue("Lights/Directional2.x", 30);
 	Config.SetDefaultValue("Lights/Directional2.y", 20);
 	Config.SetDefaultValue("Lights/Directional2.z", -100);
-	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.width", 990);
-	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.height", 757);
+	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.width", 1150);
+	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.height", 780);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.x", 100);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.y", 100);
-	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashpos", 850);
+	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashpos", 768);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashrightpos", 200);
 
 	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
@@ -9579,8 +9579,9 @@ void wxGLPanel::ClickCollapseVertex() {
 }
 
 bool wxGLPanel::StartPickEdge() {
-	if (hoverMeshName.empty() || hoverEdge.p1 < 0)
+	if (hoverMeshName.empty() || (hoverEdge.p1 == 0 && hoverEdge.p2 == 0))
 		return false;
+
 	mouseDownMeshName = hoverMeshName;
 	mouseDownEdge = hoverEdge;
 	return true;
@@ -9590,6 +9591,7 @@ void wxGLPanel::UpdatePickEdge(const wxPoint& screenPos) {
 	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, nullptr, nullptr, &hoverEdge);
 	if (!hit || hoverMeshName != mouseDownMeshName || !hoverEdge.CompareIndices(mouseDownEdge))
 		gls.HideSegCursor();
+
 	gls.RenderOneFrame();
 }
 
@@ -9610,6 +9612,7 @@ void wxGLPanel::EndPickEdge() {
 void wxGLPanel::ClickFlipEdge() {
 	if (mouseDownMeshName.empty() || mouseDownEdge.p1 < 0 || mouseDownEdge.p1 == mouseDownEdge.p2)
 		return;
+
 	NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
 	if (!shape)
 		return;
@@ -9632,9 +9635,11 @@ void wxGLPanel::ClickFlipEdge() {
 void wxGLPanel::ClickSplitEdge() {
 	if (mouseDownMeshName.empty() || mouseDownEdge.p1 < 0 || mouseDownEdge.p1 == mouseDownEdge.p2)
 		return;
+
 	mesh *m = GetMesh(mouseDownMeshName);
 	if (!m)
 		return;
+
 	NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
 	if (!shape)
 		return;
@@ -10117,9 +10122,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	}
 
 	if (!rbuttonDown && !lbuttonDown) {
-		hoverMeshName = "";
+		hoverMeshName.clear();
 		hoverPoint = -1;
-		hoverEdge.p1 = -1;
+		hoverEdge.p1 = 0;
+		hoverEdge.p2 = 0;
 		Vector3 hoverColor;
 		float hoverAlpha = 1.0f;
 
