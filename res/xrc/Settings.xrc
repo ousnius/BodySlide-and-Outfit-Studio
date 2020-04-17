@@ -234,6 +234,33 @@
 							</object>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lbColorWire">
+									<size>100,-1</size>
+									<label>Wireframe Color</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>2</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxColourPickerCtrl" name="cpColorWire">
+									<tooltip>Wireframe color of the renderer.</tooltip>
+									<value>rgb(80,80,80)</value>
+								</object>
+							</object>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="sizeritem">

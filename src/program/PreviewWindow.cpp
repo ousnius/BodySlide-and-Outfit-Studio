@@ -102,6 +102,13 @@ void PreviewWindow::OnShown() {
 		gls.SetBackgroundColor(Vector3(colorBackgroundR / 255.0f, colorBackgroundG / 255.0f, colorBackgroundB / 255.0f));
 	}
 
+	if (Config.Exists("Rendering/ColorWire")) {
+		int colorWireR = Config.GetIntValue("Rendering/ColorWire.r");
+		int colorWireG = Config.GetIntValue("Rendering/ColorWire.g");
+		int colorWireB = Config.GetIntValue("Rendering/ColorWire.b");
+		gls.SetWireColor(Vector3(colorWireR / 255.0f, colorWireG / 255.0f, colorWireB / 255.0f));
+	}
+
 	app->InitPreview();
 }
 

@@ -921,8 +921,10 @@ void GLSurface::RenderMesh(mesh* m) {
 		// Render wireframe
 		if (bWireframe && m->rendermode == RenderMode::Normal) {
 			shader.SetWireframeEnabled(true);
+			shader.SetColor(colorWire);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glDrawElements(GL_TRIANGLES, m->nTris * 3, GL_UNSIGNED_SHORT, (GLvoid*)0);
+			shader.SetColor(m->color);
 		}
 
 		if (bTextured && m->textured && m->texcoord)

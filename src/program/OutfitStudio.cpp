@@ -1554,6 +1554,14 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			cpColorBackground->SetColour(wxColour(colorBackgroundR, colorBackgroundG, colorBackgroundB));
 		}
 
+		wxColourPickerCtrl* cpColorWire = XRCCTRL(*settings, "cpColorWire", wxColourPickerCtrl);
+		if (Config.Exists("Rendering/ColorWire")) {
+			int colorWireR = Config.GetIntValue("Rendering/ColorWire.r");
+			int colorWireG = Config.GetIntValue("Rendering/ColorWire.g");
+			int colorWireB = Config.GetIntValue("Rendering/ColorWire.b");
+			cpColorWire->SetColour(wxColour(colorWireR, colorWireG, colorWireB));
+		}
+
 		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
 		fpSkeletonFile->SetPath(Config["Anim/DefaultSkeletonReference"]);
 
@@ -1603,6 +1611,11 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Rendering/ColorBackground.r", colorBackground.Red());
 			Config.SetValue("Rendering/ColorBackground.g", colorBackground.Green());
 			Config.SetValue("Rendering/ColorBackground.b", colorBackground.Blue());
+
+			wxColour colorWire = cpColorWire->GetColour();
+			Config.SetValue("Rendering/ColorWire.r", colorWire.Red());
+			Config.SetValue("Rendering/ColorWire.g", colorWire.Green());
+			Config.SetValue("Rendering/ColorWire.b", colorWire.Blue());
 
 			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());
@@ -8843,6 +8856,13 @@ void wxGLPanel::OnShown() {
 		int colorBackgroundG = Config.GetIntValue("Rendering/ColorBackground.g");
 		int colorBackgroundB = Config.GetIntValue("Rendering/ColorBackground.b");
 		gls.SetBackgroundColor(Vector3(colorBackgroundR / 255.0f, colorBackgroundG / 255.0f, colorBackgroundB / 255.0f));
+	}
+
+	if (Config.Exists("Rendering/ColorWire")) {
+		int colorWireR = Config.GetIntValue("Rendering/ColorWire.r");
+		int colorWireG = Config.GetIntValue("Rendering/ColorWire.g");
+		int colorWireB = Config.GetIntValue("Rendering/ColorWire.b");
+		gls.SetWireColor(Vector3(colorWireR / 255.0f, colorWireG / 255.0f, colorWireB / 255.0f));
 	}
 
 	os->MeshesFromProj();

@@ -2642,6 +2642,12 @@ msgstr "Hintergrundfarbe"
 msgid "Background color of the renderer."
 msgstr "Hintergrundfarbe des Renderers."
 
+msgid "Wireframe Color"
+msgstr "Wireframe-Farbe"
+
+msgid "Wireframe color of the renderer."
+msgstr "Wireframe-Farbe des Renderers."
+
 msgid "Unload Project"
 msgstr "Projekt entladen"
 

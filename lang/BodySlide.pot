@@ -2264,6 +2264,12 @@ msgstr ""
 msgid "Background color of the renderer."
 msgstr ""
 
+msgid "Wireframe Color"
+msgstr ""
+
+msgid "Wireframe color of the renderer."
+msgstr ""
+
 msgid "Unload Project"
 msgstr ""
 
@@ -2605,6 +2611,7 @@ msgid "Deletes all nodes from the project that aren't used in any other block."
 msgstr ""
 
 msgid "%d unreferenced nodes were deleted."
+msgstr ""
 
 msgid "The shape has reached the vertex count limit."
 msgstr ""
