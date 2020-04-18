@@ -815,6 +815,8 @@ void BSTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 
 	ApplyMapToTriangles(triangles, indexCollapse, &deletedTris);
 	numTriangles = triangles.size();
+
+	std::sort(deletedTris.begin(), deletedTris.end(), std::greater<>());
 }
 
 void BSTriShape::GetChildRefs(std::set<Ref*>& refs) {
