@@ -9095,7 +9095,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			tpi.facetM = -1;
 	}
 
-	n.Normalize();
+	tpi.normal.Normalize();
 
 	Vector3 v;
 	Vector3 vo;
