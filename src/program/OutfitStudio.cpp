@@ -5167,16 +5167,16 @@ void OutfitStudioFrame::UpdatePartitionNames() {
 	}
 }
 
-void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int> &triParts) {
-	int nTris = triParts.size();
+void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int> &tp) {
+	int nTris = tp.size();
 
 	// Sort triangles (via triInds) by partition number, negative partition
 	// numbers at the end.
 	std::vector<int> triInds(nTris);
 	for (int ti = 0; ti < nTris; ++ti)
 		triInds[ti] = ti;
-	std::stable_sort(triInds.begin(), triInds.end(), [&triParts](int i, int j) {
-		return triParts[j] < 0 || triParts[i] < triParts[j];
+	std::stable_sort(triInds.begin(), triInds.end(), [&tp](int i, int j) {
+		return tp[j] < 0 || tp[i] < tp[j];
 	});
 
 	// Re-order triangles
@@ -5186,9 +5186,9 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 	// Find first triangle of each sub-mesh.
 	m->subMeshes.clear();
 	for (int ti = 0; ti < nTris; ++ti) {
-		while (triParts[triInds[ti]] >= m->subMeshes.size())
+		while (tp[triInds[ti]] >= m->subMeshes.size())
 			m->subMeshes.emplace_back(ti, 0);
-		if (triParts[triInds[ti]] < 0) {
+		if (tp[triInds[ti]] < 0) {
 			m->subMeshes.emplace_back(ti, 0);
 			break;
 		}

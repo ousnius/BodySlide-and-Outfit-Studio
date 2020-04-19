@@ -881,7 +881,7 @@ public:
 	void ShowPartition(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
 	void UpdatePartitionNames();
 
-	void SetSubMeshesForPartitions(mesh *m, const std::vector<int> &triParts);
+	void SetSubMeshesForPartitions(mesh *m, const std::vector<int> &tp);
 	void SetNoSubMeshes(mesh *m);
 	void SetNoSubMeshes();
 
