@@ -76,6 +76,10 @@ public:
 	std::unique_ptr<Vector2[]> texcoord;
 
 	std::unique_ptr<Triangle[]> tris;
+	// renderTris is tris re-ordered for rendering with submeshes.  It's
+	// created automatically in CreateBuffers as a copy of tris.  If
+	// something changes tris, renderTris needs to be updated too.
+	std::unique_ptr<Triangle[]> renderTris;
 	int nTris = 0;
 
 	std::unique_ptr<Edge[]> edges;
