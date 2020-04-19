@@ -2508,17 +2508,17 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 		for (const UndoStateVertex &usv : addVerts) {
 			// ...in nif arrays
 			verts[usv.index] = usv.pos;
-			if (uvsp && uvsp->size() > usv.index)
+			if (uvsp && uvs.size() > usv.index)
 				uvs[usv.index] = usv.uv;
-			if (colorsp && colorsp->size() > usv.index)
+			if (colorsp && colors.size() > usv.index)
 				colors[usv.index] = usv.color;
-			if (normalsp && normalsp->size() > usv.index)
+			if (normalsp && normals.size() > usv.index)
 				normals[usv.index] = usv.normal;
-			if (tangentsp && tangentsp->size() > usv.index)
+			if (tangentsp && tangents.size() > usv.index)
 				tangents[usv.index] = usv.tangent;
-			if (bitangentsp && bitangentsp->size() > usv.index)
+			if (bitangentsp && bitangents.size() > usv.index)
 				bitangents[usv.index] = usv.bitangent;
-			if (eyeDatap && eyeDatap->size() > usv.index)
+			if (eyeDatap && eyeData.size() > usv.index)
 				eyeData[usv.index] = usv.eyeData;
 
 			// ...in workAnim
