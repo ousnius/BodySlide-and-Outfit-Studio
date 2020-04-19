@@ -4788,10 +4788,8 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 				m->subMeshesColor[pi].z = 0.0f;
 			}
 			else {
-				float color = (pi + 1.0f) / (nsm + 1);
-				m->subMeshesColor[pi].x = 0.0f;
-				m->subMeshesColor[pi].y = color;
-				m->subMeshesColor[pi].z = 1 - color;
+				float colorValue = (pi + 1.0f) / (nsm + 1);
+				m->subMeshesColor[pi] = glView->CreateColorRamp(colorValue);
 			}
 		}
 
@@ -5109,10 +5107,8 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 		int nsm = m->subMeshes.size();
 		m->subMeshesColor.resize(nsm);
 		for (int pi = 0; pi < nsm; ++pi) {
-			float color = (pi + 1.0f) / (nsm + 1);
-			m->subMeshesColor[pi].x = 0.0f;
-			m->subMeshesColor[pi].y = color;
-			m->subMeshesColor[pi].z = 1 - color;
+			float colorValue = (pi + 1.0f) / (nsm + 1);
+			m->subMeshesColor[pi] = glView->CreateColorRamp(colorValue);
 		}
 
 		// Set color for selected partition
