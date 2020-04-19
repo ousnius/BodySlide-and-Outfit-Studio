@@ -414,10 +414,6 @@ public:
 		gls.SetVertexColors(bVisible);
 	}
 
-	void SetSegmentsVisible(bool bVisible = true) {
-		gls.SetSegmentColors(bVisible);
-	}
-
 	void ClearMasks() {
 		for (auto &m : gls.GetMeshes())
 			m->ColorChannelFill(0, 0.0f);

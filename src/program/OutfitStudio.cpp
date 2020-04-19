@@ -5372,7 +5372,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 			glView->ClearActiveColors();
 
 		glView->SetSegmentMode(false);
-		glView->SetSegmentsVisible(false);
 		glView->SetMaskVisible();
 		glView->SetGlobalBrushCollision();
 
@@ -5403,7 +5402,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 			glView->ClearActiveColors();
 
 		glView->SetSegmentMode(false);
-		glView->SetSegmentsVisible(false);
 		glView->SetMaskVisible();
 		glView->SetGlobalBrushCollision();
 
@@ -5728,7 +5726,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		glView->SetSegmentMode();
-		glView->SetSegmentsVisible();
 		glView->SetMaskVisible(false);
 		glView->SetGlobalBrushCollision(false);
 		glView->ClearColors();
@@ -5803,7 +5800,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		glView->SetSegmentMode();
-		glView->SetSegmentsVisible();
 		glView->SetMaskVisible(false);
 		glView->SetGlobalBrushCollision(false);
 		glView->ClearColors();

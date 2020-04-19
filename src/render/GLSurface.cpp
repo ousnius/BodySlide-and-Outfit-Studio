@@ -825,6 +825,7 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.SetMatrixProjection(matProjection);
 	shader.SetMatrixModelView(matView, m->matModel);
 	shader.SetColor(m->color);
+	shader.SetSubColor(Vector3(1.0f, 1.0f, 1.0f));
 	shader.SetModelSpace(m->modelSpace);
 	shader.SetSpecularEnabled(m->specular);
 	shader.SetEmissive(m->emissive);
@@ -914,17 +915,58 @@ void GLSurface::RenderMesh(mesh* m) {
 		else
 			glPolygonOffset(0.03f, 0.03f);
 
-		// Render mesh
-		glDrawElements(GL_TRIANGLES, m->nTris * 3, GL_UNSIGNED_SHORT, (GLvoid*)0);
+		/* TESTING
+		m->subMeshes.clear();
+		m->subMeshesColor.clear();
+
+		m->subMeshes.push_back(std::make_pair(0, 1000));
+		m->subMeshes.push_back(std::make_pair(1000, 1000));
+		m->subMeshes.push_back(std::make_pair(2000, 1000));
+		m->subMeshes.push_back(std::make_pair(3000, 1000));
+
+		m->subMeshesColor.push_back(Vector3(1, 0, 0));
+		m->subMeshesColor.push_back(Vector3(0, 1, 0));
+		m->subMeshesColor.push_back(Vector3(0, 0, 1));
+		m->subMeshesColor.push_back(Vector3(1, 1, 0));
+		*/
+
+		GLuint subMeshesSize = 0;
+		if (!m->subMeshes.empty()) {
+			auto& lastSubMesh = m->subMeshes.back();
+			subMeshesSize = lastSubMesh.first + lastSubMesh.second;
+		}
+
+		// Render full mesh or remainder of it
+		glDrawElements(GL_TRIANGLES, (m->nTris - subMeshesSize) * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subMeshesSize * 3 * sizeof(GLushort)));
+
+		// Render sub meshes
+		for (int s = 0; s < m->subMeshes.size(); ++s) {
+			GLuint subIndex = m->subMeshes[s].first;
+			GLuint subSize = m->subMeshes[s].second;
+			Vector3 subColor = m->color;
+
+			if (!m->subMeshesColor.empty())
+				subColor = m->subMeshesColor[s];
+
+			shader.SetSubColor(subColor);
+			glDrawElements(GL_TRIANGLES, subSize * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subIndex * 3 * sizeof(GLushort)));
+		}
+
 		glDisable(GL_POLYGON_OFFSET_FILL);
 
-		// Render wireframe
+		// Render wireframe (full mesh or remainder of it)
 		if (bWireframe && m->rendermode == RenderMode::Normal) {
 			shader.SetWireframeEnabled(true);
 			shader.SetColor(colorWire);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glDrawElements(GL_TRIANGLES, m->nTris * 3, GL_UNSIGNED_SHORT, (GLvoid*)0);
-			shader.SetColor(m->color);
+			glDrawElements(GL_TRIANGLES, (m->nTris - subMeshesSize) * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subMeshesSize * 3 * sizeof(GLushort)));
+
+			// Render wireframes for sub meshes
+			for (int s = 0; s < m->subMeshes.size(); ++s) {
+				GLuint subIndex = m->subMeshes[s].first;
+				GLuint subSize = m->subMeshes[s].second;
+				glDrawElements(GL_TRIANGLES, subSize * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subIndex * 3 * sizeof(GLushort)));
+			}
 		}
 
 		if (bTextured && m->textured && m->texcoord)
@@ -990,7 +1032,6 @@ void GLSurface::UpdateShaders(mesh* m) {
 		shader.ShowWeight(bWeightColors && m->vcolors);
 		shader.ShowVertexColors(bVertexColors && m->vcolors && m->vertexColors);
 		shader.ShowVertexAlpha(bVertexColors && m->valpha && m->vertexColors && m->vertexAlpha);
-		shader.ShowSegments(bSegmentColors && m->vcolors);
 		shader.SetProperties(m->prop);
 	}
 }
