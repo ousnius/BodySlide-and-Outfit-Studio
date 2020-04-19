@@ -2046,9 +2046,11 @@ void NiTriShapeData::Create(const std::vector<Vector3>* verts, const std::vector
 		hasTriangles = false;
 	}
 
-	triangles.resize(numTriangles);
-	for (ushort t = 0; t < numTriangles; t++)
-		triangles[t] = (*inTris)[t];
+	if (inTris) {
+		triangles.resize(numTriangles);
+		for (ushort t = 0; t < numTriangles; t++)
+			triangles[t] = (*inTris)[t];
+	}
 
 	numMatchGroups = 0;
 }

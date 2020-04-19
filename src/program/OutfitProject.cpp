@@ -2239,6 +2239,7 @@ void OutfitProject::ConformShape(NiShape* shape, const float proximityRadius, co
 
 void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices) {
 	uss.delVerts.resize(indices.size());
+
 	const std::vector<Vector3> *verts = workNif.GetRawVertsForShape(shape);
 	const std::vector<Vector2> *uvs = workNif.GetUvsForShape(shape);
 	const std::vector<Color4> *colors = workNif.GetColorsForShape(shape->GetName());
@@ -2253,27 +2254,30 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const
 		UndoStateVertex &usv = uss.delVerts[di];
 		int vi = indices[di];
 		usv.index = vi;
-		if (verts)
+
+		if (verts && verts->size() > vi)
 			usv.pos = (*verts)[vi];
-		if (uvs)
+		if (uvs && uvs->size() > vi)
 			usv.uv = (*uvs)[vi];
-		if (colors)
+		if (colors && colors->size() > vi)
 			usv.color = (*colors)[vi];
-		if (normals)
+		if (normals && normals->size() > vi)
 			usv.normal = (*normals)[vi];
-		if (tangents)
+		if (tangents && tangents->size() > vi)
 			usv.tangent = (*tangents)[vi];
-		if (bitangents)
+		if (bitangents && bitangents->size() > vi)
 			usv.bitangent = (*bitangents)[vi];
-		if (eyeData)
+		if (eyeData && eyeData->size() > vi)
 			usv.eyeData = (*eyeData)[vi];
+
 		for (auto bnp : skin.boneNames) {
 			AnimWeight &aw = skin.boneWeights[bnp.second];
 			auto wit = aw.weights.find(vi);
 			if (wit != aw.weights.end())
-				usv.weights.emplace_back(UndoStateVertexBoneWeight{bnp.first, wit->second});
+				usv.weights.emplace_back(UndoStateVertexBoneWeight{ bnp.first, wit->second });
 		}
 	}
+
 	// For diffs, it's more efficient to reverse the loop nesting.
 	for (int si = 0; si < activeSet.size(); ++si) {
 		std::string targetDataName = activeSet[si].TargetDataName(target);
@@ -2282,12 +2286,15 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const
 			diffSet = baseDiffData.GetDiffSet(targetDataName);
 		else
 			diffSet = morpher.GetDiffSet(targetDataName);
+
 		if (!diffSet)
 			continue;
+
 		for (UndoStateVertex &usv : uss.delVerts) {
 			auto dit = diffSet->find(usv.index);
 			if (dit == diffSet->end())
 				continue;
+
 			usv.diffs.push_back(UndoStateVertexSliderDiff{ activeSet[si].name, dit->second });
 		}
 	}
@@ -2375,6 +2382,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 	// Gather data
 	std::vector<Triangle> tris;
 	shape->GetTriangles(tris);
+
 	std::vector<int> triParts;
 	NifSegmentationInfo inf;
 	bool gotsegs = workNif.GetShapeSegments(shape, inf, triParts);
@@ -2382,14 +2390,17 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 	bool gotparts = false;
 	if (!gotsegs)
 		gotparts = workNif.GetShapePartitions(shape, partitionInfo, triParts);
+
 	std::vector<Vector3> verts;
 	workNif.GetVertsForShape(shape, verts);
+
 	const std::vector<Vector2> *uvsp = workNif.GetUvsForShape(shape);
 	const std::vector<Color4> *colorsp = workNif.GetColorsForShape(shape->GetName());
 	const std::vector<Vector3> *normalsp = workNif.GetNormalsForShape(shape, false);
 	const std::vector<Vector3> *tangentsp = workNif.GetTangentsForShape(shape, false);
 	const std::vector<Vector3> *bitangentsp = workNif.GetBitangentsForShape(shape, false);
 	std::vector<float> *eyeDatap = workNif.GetEyeDataForShape(shape);
+
 	std::vector<Vector2> uvs;
 	std::vector<Color4> colors;
 	std::vector<Vector3> normals;
@@ -2417,7 +2428,9 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 		std::vector<int> delTriInds(delTris.size());
 		for (int di = 0; di < delTris.size(); ++di)
 			delTriInds[di] = delTris[di].index;
+
 		EraseVectorIndices(tris, delTriInds);
+
 		if (gotsegs || gotparts)
 			EraseVectorIndices(triParts, delTriInds);
 	}
@@ -2495,17 +2508,17 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 		for (const UndoStateVertex &usv : addVerts) {
 			// ...in nif arrays
 			verts[usv.index] = usv.pos;
-			if (uvsp)
+			if (uvsp && uvsp->size() > usv.index)
 				uvs[usv.index] = usv.uv;
-			if (colorsp)
+			if (colorsp && colorsp->size() > usv.index)
 				colors[usv.index] = usv.color;
-			if (normalsp)
+			if (normalsp && normalsp->size() > usv.index)
 				normals[usv.index] = usv.normal;
-			if (tangentsp)
+			if (tangentsp && tangentsp->size() > usv.index)
 				tangents[usv.index] = usv.tangent;
-			if (bitangentsp)
+			if (bitangentsp && bitangentsp->size() > usv.index)
 				bitangents[usv.index] = usv.bitangent;
-			if (eyeDatap)
+			if (eyeDatap && eyeDatap->size() > usv.index)
 				eyeData[usv.index] = usv.eyeData;
 
 			// ...in workAnim
@@ -2538,7 +2551,9 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 		std::vector<int> insTriInds(addTris.size());
 		for (int di = 0; di < addTris.size(); ++di)
 			insTriInds[di] = addTris[di].index;
+
 		InsertVectorIndices(tris, insTriInds);
+
 		if (gotsegs || gotparts)
 			InsertVectorIndices(triParts, insTriInds);
 
@@ -2563,7 +2578,9 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 		workNif.SetBitangentsForShape(shape, bitangents);
 	if (eyeDatap)
 		workNif.SetEyeDataForShape(shape, eyeData);
+
 	shape->SetTriangles(tris);
+
 	if (gotsegs)
 		workNif.SetShapeSegments(shape, inf, triParts);
 	if (gotparts)
