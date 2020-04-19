@@ -132,22 +132,22 @@ mesh* PreviewWindow::GetMesh(const std::string& shapeName) {
 void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 	for (int i = 0; i < shapeList.size(); i++) {
-		if (shapeName && shapeList[i] != shapeName)
-			continue;
+		std::string& shapeListName = shapeList[i];
+		if (!shapeName || (shapeName && shapeListName == shapeName)) {
+			mesh* m = gls.AddMeshFromNif(nif, shapeListName);
+			if (!m)
+				continue;
 
-		mesh* m = gls.AddMeshFromNif(nif, shapeList[i]);
-		if (!m)
-			continue;
+			NiShape* shape = nif->FindBlockByName<NiShape>(shapeListName);
+			if (shape && shape->IsSkinned()) {
+				MatTransform xformGlobalToSkin;
+				if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin))
+					gls.SetSkinModelMat(m, xformGlobalToSkin);
+			}
 
-		NiShape* shape = nif->FindBlockByName<NiShape>(shapeList[i]);
-		if (shape && shape->IsSkinned()) {
-			MatTransform xformGlobalToSkin;
-			if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin))
-				gls.SetSkinModelMat(m, xformGlobalToSkin);
+			m->BuildTriAdjacency();
+			m->CreateBuffers();
 		}
-
-		m->BuildTriAdjacency();
-		m->CreateBuffers();
 	}
 }
 
@@ -157,26 +157,29 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 		gls.DeleteAllMeshes();
 
 	for (int i = 0; i < shapeList.size(); i++) {
-		if (shapeName && shapeList[i] != shapeName)
-			continue;
-		mesh* m = gls.ReloadMeshFromNif(nif, shapeList[i]);
-		if (!m)
-			continue;
-		NiShape* shape = nif->FindBlockByName<NiShape>(shapeList[i]);
-		if (shape && shape->IsSkinned()) {
-			MatTransform xformGlobalToSkin;
-			if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin))
-				gls.SetSkinModelMat(m, xformGlobalToSkin);
-		}
-		m->BuildTriAdjacency();
-		m->SmoothNormals();
-		m->CreateBuffers();
+		std::string& shapeListName = shapeList[i];
+		if (!shapeName || (shapeName && shapeListName == shapeName)) {
+			mesh* m = gls.ReloadMeshFromNif(nif, shapeListName);
+			if (!m)
+				continue;
 
-		auto iter = shapeMaterials.find(shapeName);
-		if (iter != shapeMaterials.end())
-			m->material = iter->second;
-		else
-			AddNifShapeTextures(nif, std::string(shapeName));
+			NiShape* shape = nif->FindBlockByName<NiShape>(shapeListName);
+			if (shape && shape->IsSkinned()) {
+				MatTransform xformGlobalToSkin;
+				if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin))
+					gls.SetSkinModelMat(m, xformGlobalToSkin);
+			}
+
+			m->BuildTriAdjacency();
+			m->SmoothNormals();
+			m->CreateBuffers();
+
+			auto iter = shapeMaterials.find(shapeListName);
+			if (iter != shapeMaterials.end())
+				m->material = iter->second;
+			else
+				AddNifShapeTextures(nif, std::string(shapeListName));
+		}
 	}
 
 	gls.RenderOneFrame();
