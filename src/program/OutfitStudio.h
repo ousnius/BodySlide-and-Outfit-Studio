@@ -132,14 +132,14 @@ struct ConformOptions {
 enum class ToolID {
 	Any = -1,
 	Select = 0,
-	MaskBrush = 1,
-	InflateBrush = 2,
-	DeflateBrush = 3,
-	MoveBrush = 4,
-	SmoothBrush = 5,
-	WeightBrush = 6,
-	ColorBrush = 7,
-	AlphaBrush = 8,
+	MaskBrush,
+	InflateBrush,
+	DeflateBrush,
+	MoveBrush,
+	SmoothBrush,
+	WeightBrush,
+	ColorBrush,
+	AlphaBrush,
 	CollapseVertex,
 	FlipEdge,
 	SplitEdge,
@@ -182,7 +182,10 @@ public:
 		return &undoHistory;
 	}
 
-	void SetActiveBrush(ToolID brushID);
+	void SetActiveTool(ToolID brushID);
+	ToolID GetActiveTool() {
+		return activeTool;
+	}
 	TweakBrush* GetActiveBrush() {
 		return activeBrush;
 	}

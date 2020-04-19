@@ -2379,18 +2379,17 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	wxMenuBar* menuBar = GetMenuBar();
 	wxToolBar* toolBar = GetToolBar();
 
-	if (glView->GetActiveBrush()) {
-		int brushType = glView->GetActiveBrush()->Type();
-		if (brushType == TBT_WEIGHT || brushType == TBT_COLOR || brushType == TBT_ALPHA) {
-			glView->SetXMirror(previousMirror);
-			menuBar->Check(XRCID("btnXMirror"), previousMirror);
-		}
+	ToolID activeTool = glView->GetActiveTool();
+	if (activeTool >= ToolID::WeightBrush && activeTool <= ToolID::SplitEdge) {
+		glView->SetXMirror(previousMirror);
+		menuBar->Check(XRCID("btnXMirror"), previousMirror);
+		toolBar->ToggleTool(XRCID("btnXMirror"), previousMirror);
 	}
 
 	if (tool == ToolID::Select) {
 		glView->SetEditMode(false);
 		glView->SetBrushMode(false);
-		glView->SetActiveBrush(ToolID::Select);
+		glView->SetActiveTool(ToolID::Select);
 		menuBar->Check(XRCID("btnSelect"), true);
 		toolBar->ToggleTool(XRCID("btnSelect"), true);
 
@@ -2425,7 +2424,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		return;
 	}
 
-	glView->SetActiveBrush(tool);
+	glView->SetActiveTool(tool);
 	glView->SetCursorType(GLSurface::BrushCursor);
 
 	if (tool == ToolID::MaskBrush) {
@@ -2454,6 +2453,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
+		toolBar->ToggleTool(XRCID("btnXMirror"), false);
 	}
 	else if (tool == ToolID::ColorBrush) {
 		menuBar->Check(XRCID("btnColorBrush"), true);
@@ -2461,6 +2461,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
+		toolBar->ToggleTool(XRCID("btnXMirror"), false);
 
 		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
 		btnSwapBrush->SetLabel(_("Edit Alpha"));
@@ -2471,6 +2472,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
+		toolBar->ToggleTool(XRCID("btnXMirror"), false);
 
 		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
 		btnSwapBrush->SetLabel(_("Edit Color"));
@@ -2481,6 +2483,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
+		toolBar->ToggleTool(XRCID("btnXMirror"), false);
 		ToggleBrushPane(true);
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
@@ -2493,6 +2496,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
+		toolBar->ToggleTool(XRCID("btnXMirror"), false);
 		ToggleBrushPane(true);
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
@@ -2505,6 +2509,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
+		toolBar->ToggleTool(XRCID("btnXMirror"), false);
 		ToggleBrushPane(true);
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
@@ -2531,12 +2536,9 @@ bool OutfitStudioFrame::NotifyStrokeStarting() {
 	if (!activeItem)
 		return false;
 
-	auto activeBrush = glView->GetActiveBrush();
-	if (activeBrush) {
-		int brushType = activeBrush->Type();
-		if (brushType == TBT_MASK || brushType == TBT_WEIGHT || brushType == TBT_COLOR || brushType == TBT_ALPHA)
-			return true;
-	}
+	ToolID activeTool = glView->GetActiveTool();
+	if (activeTool == ToolID::MaskBrush || activeTool == ToolID::WeightBrush || activeTool == ToolID::ColorBrush || activeTool == ToolID::AlphaBrush)
+		return true;
 
 	if (bEditSlider && project->SliderValue(activeSlider) == 0.0) {
 		int response = wxMessageBox(_("You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"),
@@ -5464,6 +5466,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
+		GetToolBar()->ToggleTool(XRCID("btnXMirror"), previousMirror);
 		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnColorBrush"), false);
@@ -5506,6 +5509,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
+		GetToolBar()->ToggleTool(XRCID("btnXMirror"), previousMirror);
 		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnColorBrush"), false);
@@ -5608,6 +5612,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnWeightBrush"), true);
+		GetToolBar()->ToggleTool(XRCID("btnXMirror"), false);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnColorBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnAlphaBrush"), false);
@@ -5672,6 +5677,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnColorBrush"), true);
+		GetToolBar()->ToggleTool(XRCID("btnXMirror"), false);
 		GetToolBar()->EnableTool(XRCID("btnColorBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnAlphaBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), false);
@@ -5753,6 +5759,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
+		GetToolBar()->ToggleTool(XRCID("btnXMirror"), false);
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), false);
 		GetToolBar()->EnableTool(XRCID("btnSelect"), false);
 		GetToolBar()->EnableTool(XRCID("btnTransform"), false);
@@ -5828,6 +5835,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
+		GetToolBar()->ToggleTool(XRCID("btnXMirror"), false);
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), false);
 		GetToolBar()->EnableTool(XRCID("btnSelect"), false);
 		GetToolBar()->EnableTool(XRCID("btnTransform"), false);
@@ -5887,12 +5895,11 @@ void OutfitStudioFrame::OnBrushColorChanged(wxColourPickerEvent& event) {
 }
 
 void OutfitStudioFrame::OnSwapBrush(wxCommandEvent& WXUNUSED(event)) {
-	if (glView->GetActiveBrush()) {
-		if (glView->GetActiveBrush()->Type() == TBT_COLOR)
-			SelectTool(ToolID::AlphaBrush);
-		else if (glView->GetActiveBrush()->Type() == TBT_ALPHA)
-			SelectTool(ToolID::ColorBrush);
-	}
+	ToolID activeTool = glView->GetActiveTool();
+	if (activeTool == ToolID::ColorBrush)
+		SelectTool(ToolID::AlphaBrush);
+	else if (activeTool == ToolID::AlphaBrush)
+		SelectTool(ToolID::ColorBrush);
 }
 
 void OutfitStudioFrame::HighlightSlider(const std::string& name) {
@@ -8963,7 +8970,7 @@ void wxGLPanel::SetSelectedShape(const std::string& shapeName) {
 	gls.SetSelectedMesh(shapeName);
 }
 
-void wxGLPanel::SetActiveBrush(ToolID brushID) {
+void wxGLPanel::SetActiveTool(ToolID brushID) {
 	activeTool = brushID;
 
 	switch (brushID) {
