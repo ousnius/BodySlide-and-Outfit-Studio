@@ -2593,7 +2593,7 @@ void NifFile::SetTangentsForShape(NiShape* shape, const std::vector<Vector3>& in
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			geomData->SetTangents(true);
-			geomData->normals = in;
+			geomData->tangents = in;
 		}
 	}
 	else if (shape->HasType<BSTriShape>()) {
