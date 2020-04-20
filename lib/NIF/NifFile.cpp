@@ -2505,8 +2505,9 @@ void NifFile::SetVertsForShape(NiShape* shape, const std::vector<Vector3>& verts
 	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
-			if (verts.size() != bsTriShape->GetNumVertices())
+			if (verts.size() != bsTriShape->GetNumVertices()) {
 				bsTriShape->Create(&verts, nullptr, nullptr, nullptr);
+			}
 			else {
 				for (int i = 0; i < bsTriShape->GetNumVertices(); i++)
 					bsTriShape->vertData[i].vert = verts[i];
@@ -2525,9 +2526,7 @@ void NifFile::SetUvsForShape(NiShape* shape, const std::vector<Vector2>& uvs) {
 			if (uvs.size() != geomData->vertices.size())
 				return;
 
-			if (geomData->uvSets.empty())
-				geomData->uvSets.resize(1);
-
+			geomData->SetUVs(true);
 			geomData->uvSets[0] = uvs;
 		}
 	}
@@ -2536,6 +2535,8 @@ void NifFile::SetUvsForShape(NiShape* shape, const std::vector<Vector2>& uvs) {
 		if (bsTriShape) {
 			if (uvs.size() != bsTriShape->vertData.size())
 				return;
+
+			bsTriShape->SetUVs(true);
 
 			for (int i = 0; i < bsTriShape->GetNumVertices(); i++)
 				bsTriShape->vertData[i].uv = uvs[i];

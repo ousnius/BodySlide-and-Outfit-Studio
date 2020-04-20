@@ -291,19 +291,21 @@ void NiGeometryData::Create(const std::vector<Vector3>* verts, const std::vector
 		vertices[v] = (*verts)[v];
 
 	bounds = BoundingSphere(*verts);
-	numUVSets = 0;
 
 	if (texcoords) {
 		size_t uvCount = texcoords->size();
 		if (uvCount == numVertices) {
-			uvSets.resize(1);
-			uvSets[0].resize(uvCount);
+			SetUVs(true);
+
 			for (size_t uv = 0; uv < uvSets[0].size(); uv++)
 				uvSets[0][uv] = (*texcoords)[uv];
-
-			if (uvCount > 0)
-				numUVSets = 4097;
 		}
+		else {
+			SetUVs(false);
+		}
+	}
+	else {
+		SetUVs(false);
 	}
 
 	if (norms && norms->size() == numVertices) {
