@@ -981,9 +981,11 @@ void BodySlideApp::UpdatePreview() {
 			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
 
 		// Calculate result of weight
+		auto uvsz = uvs.size();
 		for (int i = 0; i < verts.size(); i++) {
 			verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
-			uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
+			if (uvsz > i)
+				uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
 		}
 
 		// Zap deleted verts before applying to the shape
