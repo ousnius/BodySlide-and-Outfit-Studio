@@ -2281,6 +2281,8 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const
 	// For diffs, it's more efficient to reverse the loop nesting.
 	for (int si = 0; si < activeSet.size(); ++si) {
 		std::string targetDataName = activeSet[si].TargetDataName(target);
+		if (targetDataName.empty())
+			targetDataName = target + activeSet[si].name;
 		std::unordered_map<ushort, Vector3>* diffSet;
 		if (IsBaseShape(shape))
 			diffSet = baseDiffData.GetDiffSet(targetDataName);
@@ -2534,6 +2536,8 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 			// ...in diff data
 			for (const UndoStateVertexSliderDiff &diff : usv.diffs) {
 				std::string targetDataName = activeSet[diff.sliderName].TargetDataName(target);
+				if (targetDataName.empty())
+					targetDataName = target + diff.sliderName;
 				std::unordered_map<ushort, Vector3>* diffSet;
 				if (IsBaseShape(shape))
 					diffSet = baseDiffData.GetDiffSet(targetDataName);
