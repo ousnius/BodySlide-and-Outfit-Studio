@@ -15,7 +15,6 @@ void TweakStroke::beginStroke(TweakPickInfo& pickInfo) {
 	for (int mi = 0; mi < nMesh; ++mi) {
 		mesh *m = refMeshes[mi];
 		usp.usss[mi].shapeName = m->shapeName;
-		usp.usss[mi].startBVH = m->bvh;
 
 		pts1[m] = std::make_unique<int[]>(m->nVerts);
 		if (refBrush->isMirrored())
@@ -65,7 +64,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 				pickInfo.origin = Vector3(morigin.x, morigin.y, morigin.z);
 			}
 
-			if (!refBrush->queryPoints(m, pickInfo, mirrorPick, nullptr, nPts1, uss.affectedNodes))
+			if (!refBrush->queryPoints(m, pickInfo, mirrorPick, nullptr, nPts1, affectedNodes[m]))
 				continue;
 
 			refBrush->brushAction(m, pickInfo, nullptr, nPts1, uss);
@@ -85,11 +84,11 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			int nPts1 = 0;
 			int nPts2 = 0;
 
-			if (!refBrush->queryPoints(m, pickInfo, mirrorPick, pts1[m].get(), nPts1, uss.affectedNodes))
+			if (!refBrush->queryPoints(m, pickInfo, mirrorPick, pts1[m].get(), nPts1, affectedNodes[m]))
 				continue;
 
 			if (refBrush->isMirrored() && !refBrush->NeedMirrorMergedQuery())
-				refBrush->queryPoints(m, mirrorPick, pickInfo, pts2[m].get(), nPts2, uss.affectedNodes);
+				refBrush->queryPoints(m, mirrorPick, pickInfo, pts2[m].get(), nPts2, affectedNodes[m]);
 
 			refBrush->brushAction(m, pickInfo, pts1[m].get(), nPts1, uss);
 
@@ -110,9 +109,11 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	lastPoint = pickInfo.origin;
 
 	if (refBrush->LiveBVH()) {
-		for (int mi = 0; mi < nMesh; ++mi)
-			for (auto &bvhNode : usp.usss[mi].affectedNodes)
+		for (int mi = 0; mi < nMesh; ++mi) {
+			mesh *m = refMeshes[mi];
+			for (auto &bvhNode : affectedNodes[m])
 				bvhNode->UpdateAABB();
+		}
 	}
 }
 
@@ -121,10 +122,9 @@ void TweakStroke::endStroke() {
 	if (refBrush->Type() == TBT_MOVE) {
 		for (int mi = 0; mi < nMesh; ++mi) {
 			mesh *m = refMeshes[mi];
-			UndoStateShape &uss = usp.usss[mi];
 			TweakBrushMeshCache* meshCache = refBrush->getCache(m);
-			uss.affectedNodes.swap(meshCache->cachedNodes);
-			uss.affectedNodes.insert(meshCache->cachedNodesM.begin(), meshCache->cachedNodesM.end());
+			affectedNodes[m].swap(meshCache->cachedNodes);
+			affectedNodes[m].insert(meshCache->cachedNodesM.begin(), meshCache->cachedNodesM.end());
 			meshCache->cachedNodes.clear();
 			meshCache->cachedNodesM.clear();
 		}
@@ -134,9 +134,11 @@ void TweakStroke::endStroke() {
 			refMeshes[mi]->CreateBVH();
 
 	if (!refBrush->LiveBVH() && refBrush->Type() != TBT_WEIGHT)
-		for (int mi = 0; mi < nMesh; ++mi)
-			for (auto &bvhNode : usp.usss[mi].affectedNodes)
+		for (int mi = 0; mi < nMesh; ++mi) {
+			mesh *m = refMeshes[mi];
+			for (auto &bvhNode : affectedNodes[m])
 				bvhNode->UpdateAABB();
+		}
 
 	if (!refBrush->LiveNormals()) {
 		for (int mi = 0; mi < nMesh; ++mi) {
@@ -156,11 +158,6 @@ void TweakStroke::endStroke() {
 			else
 				notReady = true;
 		}
-	}
-
-	for (int mi = 0; mi < nMesh; ++mi) {
-		mesh *m = refMeshes[mi];
-		usp.usss[mi].endBVH = m->bvh;
 	}
 }
 

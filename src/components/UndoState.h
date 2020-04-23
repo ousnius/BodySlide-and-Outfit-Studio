@@ -72,10 +72,6 @@ struct UndoStateShape {
 	std::unordered_map<int, Vector3> pointEndState;
 	// boneWeights is only meaningful for UT_WEIGHT.
 	std::vector<UndoStateBoneWeights> boneWeights;
-	// startBVH, endBVH, and affectedNodes are only meaningful for UT_VERTPOS
-	std::shared_ptr<AABBTree> startBVH;
-	std::shared_ptr<AABBTree> endBVH;
-	std::unordered_set<AABBTree::AABBTreeNode*> affectedNodes;
 	// delVerts, addVerts, delTris, and addTris are only meaningful for
 	// UT_MESH.  They are stored in sorted order by index.
 	std::vector<UndoStateVertex> delVerts, addVerts;
