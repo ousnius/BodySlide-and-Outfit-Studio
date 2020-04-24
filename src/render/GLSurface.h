@@ -79,6 +79,8 @@ private:
 
 	void DeleteMesh(int meshID) {
 		if (meshID < meshes.size()) {
+			SetContext();
+
 			activeMeshes.erase(std::remove(activeMeshes.begin(), activeMeshes.end(), meshes[meshID]), activeMeshes.end());
 			activeMeshesID.erase(std::remove(activeMeshesID.begin(), activeMeshesID.end(), meshID), activeMeshesID.end());
 
@@ -93,6 +95,8 @@ private:
 
 	void DeleteOverlay(int meshID) {
 		if (meshID < overlays.size()) {
+			SetContext();
+
 			delete overlays[meshID];
 			overlays.erase(overlays.begin() + meshID);
 
@@ -124,6 +128,8 @@ public:
 	}
 
 	void DeleteAllMeshes() {
+		SetContext();
+
 		for (auto &m : meshes)
 			delete m;
 
@@ -142,6 +148,8 @@ public:
 	}
 
 	void DeleteOverlays() {
+		SetContext();
+
 		for (int i = 0; i < overlays.size(); i++)
 			delete overlays[i];
 
@@ -340,6 +348,7 @@ public:
 		return &resLoader;
 	}
 
+	void SetContext();
 	void RenderOneFrame();
 	void RenderToTexture(GLMaterial* renderShader);
 	void RenderMesh(mesh* m);

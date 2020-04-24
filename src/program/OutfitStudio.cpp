@@ -8899,8 +8899,10 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 		m->BuildEdgeList();
 		m->ColorFill(Vector3());
 
-		if (extInitialized)
+		if (extInitialized) {
+			gls.SetContext();
 			m->CreateBuffers();
+		}
 	}
 }
 
