@@ -2564,7 +2564,8 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 		// Store triangle data
 		for (const UndoStateTriangle &ust : addTris) {
 			tris[ust.index] = ust.t;
-			triParts[ust.index] = ust.partID;
+			if (gotsegs || gotparts)
+				triParts[ust.index] = ust.partID;
 		}
 	}
 
