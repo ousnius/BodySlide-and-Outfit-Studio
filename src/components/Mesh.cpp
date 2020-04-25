@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "Mesh.h"
+#include "../NIF/utils/KDMatcher.h"
 
 mesh::mesh() {
 }
@@ -391,6 +392,20 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 	/* TODO: sort by distance */
 }
 
+void mesh::CalcWeldVerts() {
+	kd_matcher matcher(verts.get(), nVerts);
+	for (const std::vector<int> &matchset : matcher.matches) {
+		for (int j = 0; j < matchset.size(); ++j) {
+			std::vector<int> &wv = weldVerts[matchset[j]];
+			for (int k = 0; k < matchset.size(); ++k) {
+				if (j != k)
+					wv.push_back(matchset[k]);
+			}
+		}
+	}
+	bGotWeldVerts = true;
+}
+
 float mesh::GetSmoothThreshold() {
 	return (smoothThresh * 180) / PI;
 }
@@ -441,32 +456,27 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 		pn.Normalize();
 	}
 
-	// Smooth normals
+	// Smooth welded vertex normals
 	if (smoothSeamNormals) {
-		kd_matcher matcher(verts.get(), nVerts);
-		for (int i = 0; i < matcher.matches.size(); i++) {
-			std::pair<Vector3*, int>& a = matcher.matches[i].first;
-			std::pair<Vector3*, int>& b = matcher.matches[i].second;
+		if (!bGotWeldVerts)
+			CalcWeldVerts();
 
-			if (!vertices.empty()) {
-				if (vertices.find(a.second) == vertices.end() ||
-					vertices.find(b.second) == vertices.end())
-					continue;
-			}
+		std::unordered_map<int, Vector3> seamNorms;
 
-			Vector3& an = norms[a.second];
-			Vector3& bn = norms[b.second];
-			if (an.angle(bn) < smoothThresh) {
-				Vector3 anT = an;
-				an += bn;
-				bn += anT;
-			}
+		for (auto &wvp : weldVerts) {
+			if (!vertices.empty() && vertices.find(wvp.first) != vertices.end())
+				continue;
+			const Vector3 &n = norms[wvp.first];
+			Vector3 sn = n;
+			for (int wvi : wvp.second)
+				if (n.angle(norms[wvi]) < smoothThresh)
+					sn += norms[wvi];
+			sn.Normalize();
+			seamNorms[wvp.first] = sn;
 		}
 
-		for (int i = 0; i < nVerts; i++) {
-			Vector3& pn = norms[i];
-			pn.Normalize();
-		}
+		for (auto &snp : seamNorms)
+			norms[snp.first] = snp.second;
 	}
 
 	queueUpdate[UpdateType::Normals] = true;
