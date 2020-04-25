@@ -8899,8 +8899,10 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 		m->BuildEdgeList();
 		m->ColorFill(Vector3());
 
-		if (extInitialized)
+		if (extInitialized) {
+			gls.SetContext();
 			m->CreateBuffers();
+		}
 	}
 }
 
@@ -9779,15 +9781,22 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 	if (undoType == UT_WEIGHT) {
 		for (auto &uss : usp->usss) {
 			mesh *m = GetMesh(uss.shapeName);
-			if (!m) continue;
+			if (!m)
+				continue;
+
 			for (auto &bw : uss.boneWeights) {
-				if (bw.boneName != os->GetActiveBone()) continue;
+				if (bw.boneName != os->GetActiveBone())
+					continue;
+
 				for (auto &wIt : bw.weights)
 					m->vcolors[wIt.first].y = bUndo ? wIt.second.startVal : wIt.second.endVal;
 			}
+
 			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
+
 		os->ActiveShapesUpdated(usp, bUndo);
+
 		std::string activeBone = os->GetActiveBone();
 		if (!activeBone.empty()) {
 			int boneScalePos = os->boneScale->GetValue();
@@ -9798,44 +9807,57 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 	else if (undoType == UT_MASK || undoType == UT_COLOR) {
 		for (auto &uss : usp->usss) {
 			mesh *m = GetMesh(uss.shapeName);
-			if (!m) continue;
+			if (!m)
+				continue;
+
 			for (auto &pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->vcolors[pit.first] = pit.second;
+
 			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
+
 		if (undoType != UT_MASK)
 			os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UT_ALPHA) {
 		for (auto &uss : usp->usss) {
 			mesh *m = GetMesh(uss.shapeName);
-			if (!m) continue;
+			if (!m)
+				continue;
+
 			for (auto &pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->valpha[pit.first] = pit.second.x;
+
 			m->QueueUpdate(mesh::UpdateType::VertexAlpha);
 		}
+
 		os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UT_VERTPOS) {
 		for (auto &uss : usp->usss) {
 			mesh *m = GetMesh(uss.shapeName);
-			if (!m) continue;
+			if (!m)
+				continue;
+
 			for (auto &pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->verts[pit.first] = pit.second;
+
 			m->SmoothNormals();
-			if (uss.startBVH == uss.endBVH) {
-				for (auto &bvhNode : uss.affectedNodes)
-					bvhNode->UpdateAABB();
-			}
-			else
-				m->bvh = bUndo ? uss.startBVH : uss.endBVH;
+
+			int meshID = gls.GetMeshID(uss.shapeName);
+			BVHUpdateQueue.insert(meshID);
+
 			m->QueueUpdate(mesh::UpdateType::Position);
 		}
+
 		os->ActiveShapesUpdated(usp, bUndo);
+
 		if (usp->sliderName.empty()) {
 			for (auto &uss : usp->usss) {
 				mesh *m = GetMesh(uss.shapeName);
-				if (!m) continue;
+				if (!m)
+					continue;
+
 				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
 				if (shape)
 					os->project->UpdateShapeFromMesh(shape, m);
@@ -9847,8 +9869,10 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 			NiShape *shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
 			if (!shape)
 				continue;
+
 			os->project->ApplyShapeMeshUndo(shape, uss, bUndo);
 		}
+
 		os->RefreshGUIFromProj(false);
 		ClearActiveMask();
 		os->ApplySliders();
@@ -10066,9 +10090,14 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 }
 
 void wxGLPanel::OnIdle(wxIdleEvent& WXUNUSED(event)) {
-	for (auto &it : BVHUpdateQueue) {
+	if (wxGetKeyState(wxKeyCode::WXK_SHIFT) ||
+		wxGetKeyState(wxKeyCode::WXK_CONTROL) ||
+		wxGetKeyState(wxKeyCode::WXK_ALT))
+		return;
+
+	for (auto &it : BVHUpdateQueue)
 		gls.RecalculateMeshBVH(it);
-	}
+
 	BVHUpdateQueue.clear();
 }
 

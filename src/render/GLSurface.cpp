@@ -670,6 +670,7 @@ void GLSurface::HideSegCursor() {
 }
 
 void GLSurface::SetSize(uint w, uint h) {
+	SetContext();
 	glViewport(0, 0, w, h);
 	vpW = w;
 	vpH = h;
@@ -763,6 +764,11 @@ void GLSurface::RenderToTexture(GLMaterial* renderShader) {
 
 	// note no buffer swap
 
+}
+
+void GLSurface::SetContext() {
+	if (canvas && context)
+		canvas->SetCurrent(*context);
 }
 
 void GLSurface::RenderOneFrame() {
@@ -1247,6 +1253,8 @@ void GLSurface::SetSkinModelMat(mesh *m, const MatTransform &xformGlobalToSkin) 
 }
 
 mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Vector3* color) {
+	SetContext();
+
 	mesh* m = GetOverlay(name);
 	if (m) {
 		m->verts[0] = p;
@@ -1280,6 +1288,8 @@ mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Ve
 }
 
 int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const std::string& name) {
+	SetContext();
+
 	Matrix4 rotMat;
 	int ringMesh = GetOverlayID(name);
 	if (ringMesh >= 0)
@@ -1330,6 +1340,8 @@ int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float 
 }
 
 mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const std::string& name) {
+	SetContext();
+
 	const int nRingSegments = 36;
 	const int nRingSteps = 4;
 
@@ -1427,6 +1439,8 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 
 
 mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const std::string& name) {
+	SetContext();
+
 	const int nRingVerts = 36;
 	Matrix4 rotMat;
 
@@ -1523,6 +1537,8 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 }
 
 mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name) {
+	SetContext();
+
 	const int nCubeVerts = 8;
 	const int nCubeTris = 12;
 	mesh* m = nullptr;
@@ -1582,6 +1598,8 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 }
 
 mesh* GLSurface::AddVisPlane(const Vector3& center, const Vector2& size, float uvScale, float uvOffset, const std::string& name, const Vector3* color) {
+	SetContext();
+
 	mesh* m = nullptr;
 
 	int meshID = GetOverlayID(name);
@@ -1631,6 +1649,8 @@ mesh* GLSurface::AddVisPlane(const Vector3& center, const Vector2& size, float u
 }
 
 mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name) {
+	SetContext();
+
 	mesh* m = GetOverlay(name);
 	if (m) {
 		m->verts[0] = p1;
@@ -1796,6 +1816,8 @@ RenderMode GLSurface::SetMeshRenderMode(const std::string& name, RenderMode mode
 }
 
 GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures) {
+	SetContext();
+
 	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile, reloadTextures);
 	if (mat) {
 		std::string shaderError;
@@ -1810,6 +1832,7 @@ GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles,
 
 GLMaterial* GLSurface::GetPrimitiveMaterial() {
 	if (!primitiveMat) {
+		SetContext();
 		primitiveMat = new GLMaterial(Config["AppDir"] + "/res/shaders/primitive.vert", Config["AppDir"] + "/res/shaders/primitive.frag");
 
 		std::string shaderError;

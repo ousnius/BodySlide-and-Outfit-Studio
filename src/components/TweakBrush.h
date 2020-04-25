@@ -448,6 +448,8 @@ class TweakStroke {
 	std::unordered_map<mesh*, std::unique_ptr<int[]>> pts1;
 	std::unordered_map<mesh*, std::unique_ptr<int[]>> pts2;
 
+	std::unordered_map<mesh*, std::unordered_set<AABBTree::AABBTreeNode*>> affectedNodes;
+
 public:
 	UndoStateProject &usp;
 
