@@ -2712,47 +2712,13 @@ bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, c
 	return true;
 }
 
-// FindNeighboringTriangles: finds the two triangles containing an edge,
-// if they exist.  t1 will be set to the triangle with the oriented edge
-// and t2 will be set to the triangle with the reverse oriented edge.
-// nev1 will be set to the non-edge vertex of t1, and nev2 to the non-edge
-// vertex of t2.  false is returned if two triangles are found of the
-// same orientation.
-static bool FindNeighboringTriangles(const std::vector<Triangle> &tris, const Edge &edge, int &t1, int &t2, int &nev1, int &nev2) {
-	// Find the two neighboring triangles
-	const Edge redge(edge.p2, edge.p1);
-	t1 = -1, t2 = -1;
-
-	for (int ti = 0; ti < tris.size(); ++ti) {
-		if (tris[ti].HasOrientedEdge(edge)) {
-			if (t1 != -1)
-				return false;
-			t1 = ti;
-		}
-
-		if (tris[ti].HasOrientedEdge(redge)) {
-			if (t2 != -1)
-				return false;
-			t2 = ti;
-		}
-	}
-
-	// Figure out the non-edge vertex for each triangle.
-	nev1 = tris[t1].p3;
-
-	if (tris[t1].p2 == edge.p1)
-		nev1 = tris[t1].p1;
-	else if (tris[t1].p3 == edge.p1)
-		nev1 = tris[t1].p2;
-
-	nev2 = tris[t2].p3;
-
-	if (tris[t2].p2 == edge.p2)
-		nev2 = tris[t2].p1;
-	else if (tris[t2].p3 == edge.p2)
-		nev2 = tris[t2].p2;
-
-	return true;
+static int TriangleOppositeVertex(const Triangle &t, int p1) {
+	if (t.p1 == p1)
+		return t.p3;
+	else if (t.p2 == p1)
+		return t.p1;
+	else
+		return t.p2;
 }
 
 bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge) {
@@ -2767,13 +2733,28 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 		workNif.GetShapePartitions(shape, partitionInfo, triParts);
 	}
 
-	// Find the two neighboring triangles and the non-edge vertex for each.
-	int t1 = -1, t2 = -1, nev1 = -1, nev2 = -1;
-	if (!FindNeighboringTriangles(tris, edge, t1, t2, nev1, nev2))
-		return false;
+	// Find the two neighboring triangles
+	int t1 = -1, t2 = -1;
+	const Edge redge(edge.p2, edge.p1);
+	for (int ti = 0; ti < tris.size(); ++ti) {
+		if (tris[ti].HasOrientedEdge(edge)) {
+			if (t1 != -1)
+				return false;
+			t1 = ti;
+		}
 
+		if (tris[ti].HasOrientedEdge(redge)) {
+			if (t2 != -1)
+				return false;
+			t2 = ti;
+		}
+	}
 	if (t1 == -1 || t2 == -1)
 		return false;
+
+	// Find the non-edge vertex for each neighboring triangle.
+	int nev1 = TriangleOppositeVertex(tris[t1], edge.p1);
+	int nev2 = TriangleOppositeVertex(tris[t2], edge.p2);
 
 	// Put data into uss.
 	int tp1 = t1 < triParts.size() ? triParts[t1] : -1;
@@ -2792,7 +2773,7 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 	return true;
 }
 
-bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge, const Edge &redge) {
+bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const std::vector<int> &p1s, const std::vector<int> &p2s) {
 	// Get vertex and triangle data
 	const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(shape);
 	if (!verts)
@@ -2810,26 +2791,43 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 		workNif.GetShapePartitions(shape, partitionInfo, triParts);
 	}
 
-	// Find the two neighboring triangles and the non-edge vertex for each.
-	int t1 = -1, t2 = -1, nev1 = -1, nev2 = -1;
-	if (!FindNeighboringTriangles(tris, edge, t1, t2, nev1, nev2))
-		return false;
-	int newrvi = newvi;
-	bool welded = false;
-	if (redge.p1 != edge.p2 || redge.p2 != edge.p1) {
-		// If there's a welded edge, search for it too.
-		int wt1 = -1, wt2 = -1, wnev1 = -1, wnev2 = -1;
-		if (!FindNeighboringTriangles(tris, redge, wt1, wt2, wnev1, wnev2))
-			return false;
-		// Make sure main and welded edges match up properly.
-		if (t2 != -1 || wt2 != -1 || t1 == -1 || wt1 == -1)
-			return false;
-		// Main edge provides one side's triangle, welded the other.
-		t2 = wt1;
-		nev2 = wnev1;
-		++newrvi;
-		welded = true;
+	// Find the two neighboring triangles.
+	int t1 = -1, t2 = -1;
+	Edge edge, redge;
+	for (int ti = 0; ti < tris.size(); ++ti) {
+		for (int p1 : p1s) {
+			for (int p2 : p2s) {
+				if (tris[ti].HasOrientedEdge(Edge(p1, p2))) {
+					if (t1 != -1)
+						return false;
+					t1 = ti;
+					edge.p1 = p1;
+					edge.p2 = p2;
+				}
+				if (tris[ti].HasOrientedEdge(Edge(p2, p1))) {
+					if (t2 != -1)
+						return false;
+					t2 = ti;
+					redge.p1 = p2;
+					redge.p2 = p1;
+				}
+			}
+		}
 	}
+	if (t1 == -1)
+		return false;
+
+	// Find non-edge vertex for each neighboring triangle.
+	int nev1 = TriangleOppositeVertex(tris[t1], edge.p1);
+	int nev2 = -1;
+	if (t2 != -1)
+		nev2 = TriangleOppositeVertex(tris[t2], redge.p1);
+
+	// Determine whether we have a welded edge.
+	bool welded = t2 != -1 && (redge.p1 != edge.p2 || redge.p2 != edge.p1);
+	int newrvi = newvi;
+	if (welded)
+		++newrvi;
 
 	// Put triangle data into uss.
 	if (t1 != -1) {
@@ -2868,8 +2866,8 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	CollectVertexData(shape, duss, edgeInds);
 	const UndoStateVertex &p1d = duss.delVerts[0];
 	const UndoStateVertex &p2d = duss.delVerts[1];
-	const UndoStateVertex &rp1d = duss.delVerts[welded ? 3 : 1];
-	const UndoStateVertex &rp2d = duss.delVerts[welded ? 2 : 0];
+	const UndoStateVertex &rp1d = duss.delVerts[welded ? 2 : 1];
+	const UndoStateVertex &rp2d = duss.delVerts[welded ? 3 : 0];
 	const Vector3 &p1 = p1d.pos;
 	const Vector3 &p2 = p2d.pos;
 
@@ -2879,10 +2877,10 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	usv.index = newvi;
 
 	/* Now comes the hard part: determining a good location for the
-	new vertex.  Clearly it should lie somewhere on the plane halfway
-	between p1 and p2.  If we wanted to be lazy, we could just pick
-	the midpoint.  But that would require the user to adjust the
-	position every time.  Better would be if we could fit a circle
+	new vertex.  Clearly it should lie somewhere on the plane bisecting
+	the segment between p1 and p2.  If we wanted to be lazy, we could
+	just pick the midpoint.  But that would require the user to adjust
+	the position every time.  Better would be if we could fit a circle
 	through p1, p2, and the new point so that all three have normals
 	perpendicular to the circle.  But there's no guarantee that that's
 	possible: the old normals could have different angles to the edge;
@@ -2979,6 +2977,14 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	for (auto &dw : usv.weights)
 		dw.w *= 0.5;
 
+	UndoStateVertex rusv;
+	if (welded) {
+		// New welded vertex gets exactly the same data except uv and uv-diffs.
+		rusv = usv;
+		rusv.index = newrvi;
+		rusv.uv = (rp1d.uv + rp2d.uv) * 0.5;
+	}
+
 	// Unfortunately, we can't just calculate diffs by averaging.  p1
 	// and p2 may have moved farther apart, which would require greater
 	// curve offset.
@@ -2990,25 +2996,38 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	for (auto &sd : p2d.diffs)
 		diffpairs[sd.sliderName].second = sd.diff;
 
-	for (auto &diffpair : diffpairs) {
+	for (auto &dp : diffpairs) {
 		// First, just average the diffs.
-		Vector3 diff = (diffpair.second.first + diffpair.second.second) * 0.5;
-		const SliderData &sd = activeSet[diffpair.first];
+		Vector3 diff = (dp.second.first + dp.second.second) * 0.5;
+		const SliderData &sd = activeSet[dp.first];
 		if (!sd.bUV && !sd.bClamp && !sd.bZap) {
 			// Calculate the distance between the moved p1 and p2.
-			float delen = (diffpair.second.second + p2 - diffpair.second.first - p1).length();
+			float delen = (dp.second.second + p2 - dp.second.first - p1).length();
 			// Apply more curve offset (for delen > elen)
 			// or less (for delen < elen).
 			diff += usv.normal * (curveOffsetFactor * (delen - elen) * 0.5);
 		}
-		usv.diffs.push_back(UndoStateVertexSliderDiff{ diffpair.first, diff });
+		usv.diffs.push_back(UndoStateVertexSliderDiff{ dp.first, diff });
+		if (welded && !sd.bUV)
+			rusv.diffs.push_back(UndoStateVertexSliderDiff{ dp.first, diff });
 	}
 
 	if (welded) {
-		// New welded vertex gets exactly the same data except uv.
-		UndoStateVertex rusv(usv);
-		rusv.index = newrvi;
-		rusv.uv = (rp1d.uv + rp2d.uv) * 0.5;
+		// Repeat the diff calculation, but only for UV diffs.
+		std::unordered_map<std::string, std::pair<Vector3, Vector3>> rdiffpairs;
+		for (auto &sd : rp1d.diffs)
+			rdiffpairs[sd.sliderName].first = sd.diff;
+		for (auto &sd : rp2d.diffs)
+			rdiffpairs[sd.sliderName].second = sd.diff;
+
+		for (auto &dp : rdiffpairs) {
+			const SliderData &sd = activeSet[dp.first];
+			if (!sd.bUV)
+				continue;
+			Vector3 diff = (dp.second.first + dp.second.second) * 0.5;
+			rusv.diffs.push_back(UndoStateVertexSliderDiff{ dp.first, diff });
+		}
+
 		uss.addVerts.push_back(std::move(rusv));
 	}
 
