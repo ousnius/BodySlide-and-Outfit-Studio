@@ -10,6 +10,8 @@ See the included LICENSE file
 #include "utils/KDMatcher.h"
 #include "NifUtil.h"
 
+#include <unordered_map>
+
 void NiAdditionalGeometryData::Get(NiStream & stream) {
 	AdditionalGeomData::Get(stream);
 
