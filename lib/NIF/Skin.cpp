@@ -487,13 +487,17 @@ bool NiSkinPartition::ConvertStripsToTriangles() {
 void NiSkinPartition::PartitionBlock::GenerateTrueTrianglesFromMappedTriangles() {
 	if (vertexMap.empty() || triangles.empty()) {
 		trueTriangles.clear();
-		numTriangles = 0;
+		if (numStrips == 0)
+			numTriangles = 0;
 		return;
 	}
+
 	trueTriangles = triangles;
 	ApplyMapToTriangles(trueTriangles, vertexMap);
+
 	for (Triangle &t : trueTriangles)
 		t.rot();
+
 	if (triangles.size() != trueTriangles.size()) {
 		triangles.clear();
 		numTriangles = trueTriangles.size();
@@ -503,19 +507,25 @@ void NiSkinPartition::PartitionBlock::GenerateTrueTrianglesFromMappedTriangles()
 void NiSkinPartition::PartitionBlock::GenerateMappedTrianglesFromTrueTrianglesAndVertexMap() {
 	if (vertexMap.empty() || trueTriangles.empty()) {
 		triangles.clear();
-		numTriangles = 0;
+		if (numStrips == 0)
+			numTriangles = 0;
 		return;
 	}
+
 	std::vector<ushort> invmap(vertexMap.back() + 1);
 	for (unsigned int mi = 0; mi < vertexMap.size(); ++mi) {
 		if (vertexMap[mi] >= invmap.size())
 			invmap.resize(vertexMap[mi] + 1);
+
 		invmap[vertexMap[mi]] = mi;
 	}
+
 	triangles = trueTriangles;
 	ApplyMapToTriangles(triangles, invmap);
+
 	for (Triangle &t : triangles)
 		t.rot();
+
 	if (triangles.size() != trueTriangles.size()) {
 		trueTriangles.clear();
 		numTriangles = triangles.size();
@@ -529,11 +539,14 @@ void NiSkinPartition::PartitionBlock::GenerateVertexMapFromTrueTriangles() {
 		vertUsed[trueTriangles[i].p2] = true;
 		vertUsed[trueTriangles[i].p3] = true;
 	}
+
 	vertexMap.clear();
+
 	for (unsigned int i = 0; i < vertUsed.size(); ++i) {
 		if (vertUsed[i])
 			vertexMap.push_back(i);
 	}
+
 	numVertices = vertexMap.size();
 }
 
@@ -541,8 +554,10 @@ void NiSkinPartition::PrepareTrueTriangles() {
 	for (PartitionBlock &p : partitions) {
 		if (!p.trueTriangles.empty())
 			continue;
+
 		if (p.numStrips)
 			p.ConvertStripsToTriangles();
+
 		if (bMappedIndices)
 			p.GenerateTrueTrianglesFromMappedTriangles();
 		else
@@ -554,6 +569,7 @@ void NiSkinPartition::PrepareVertexMapsAndTriangles() {
 	for (PartitionBlock &p : partitions) {
 		if (p.vertexMap.empty())
 			p.GenerateVertexMapFromTrueTriangles();
+
 		if (p.triangles.empty()) {
 			if (bMappedIndices)
 				p.GenerateMappedTrianglesFromTrueTrianglesAndVertexMap();
