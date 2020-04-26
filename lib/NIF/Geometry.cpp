@@ -1134,7 +1134,7 @@ void BSTriShape::SetEyeData(const std::vector<float>& in) {
 		vertData[i].eyeData = in[i];
 }
 
-static void CalculateNormals(const std::vector<Vector3> &verts, const std::vector<Triangle> &tris, std::vector<Vector3> norms, const bool smooth, float smoothThresh) {
+static void CalculateNormals(const std::vector<Vector3> &verts, const std::vector<Triangle> &tris, std::vector<Vector3> &norms, const bool smooth, float smoothThresh) {
 	// Zero norms
 	norms.clear();
 	norms.resize(verts.size());
