@@ -1134,49 +1134,63 @@ void BSTriShape::SetEyeData(const std::vector<float>& in) {
 		vertData[i].eyeData = in[i];
 }
 
+static void CalculateNormals(const std::vector<Vector3> &verts, const std::vector<Triangle> &tris, std::vector<Vector3> &norms, const bool smooth, float smoothThresh) {
+	// Zero norms
+	norms.clear();
+	norms.resize(verts.size());
+
+	// Face normals
+	for (const Triangle &t : tris) {
+		Vector3 tn;
+		t.trinormal(verts, &tn);
+		norms[t.p1] += tn;
+		norms[t.p2] += tn;
+		norms[t.p3] += tn;
+	}
+
+	for (Vector3 &n : norms)
+		n.Normalize();
+
+	// Smooth normals
+	if (smooth) {
+		smoothThresh *= DEG2RAD;
+		std::vector<Vector3> seamNorms;
+		SortingMatcher matcher(verts.data(), verts.size());
+		for (const std::vector<int> &matchset : matcher.matches) {
+			seamNorms.resize(matchset.size());
+			for (int j = 0; j < matchset.size(); ++j) {
+				const Vector3 &n = norms[matchset[j]];
+				Vector3 sn = n;
+				for (int k = 0; k < matchset.size(); ++k) {
+					if (j == k)
+						continue;
+					const Vector3 &mn = norms[matchset[k]];
+					if (n.angle(mn) >= smoothThresh)
+						continue;
+					sn += mn;
+				}
+				sn.Normalize();
+				seamNorms[j] = sn;
+			}
+			for (int j = 0; j < matchset.size(); ++j)
+				norms[matchset[j]] = seamNorms[j];
+		}
+	}
+}
+
 void BSTriShape::RecalcNormals(const bool smooth, const float smoothThresh) {
 	GetRawVerts();
 	SetNormals(true);
 
 	std::vector<Vector3> verts(numVertices);
-	std::vector<Vector3> norms(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		verts[i].x = rawVertices[i].x * -0.1f;
 		verts[i].z = rawVertices[i].y * 0.1f;
 		verts[i].y = rawVertices[i].z * 0.1f;
 	}
 
-	// Face normals
-	Vector3 tn;
-	for (int t = 0; t < numTriangles; t++) {
-		triangles[t].trinormal(verts, &tn);
-		norms[triangles[t].p1] += tn;
-		norms[triangles[t].p2] += tn;
-		norms[triangles[t].p3] += tn;
-	}
-
-	for (auto &n : norms)
-		n.Normalize();
-
-	// Smooth normals
-	if (smooth) {
-		kd_matcher matcher(verts.data(), numVertices);
-		for (int i = 0; i < matcher.matches.size(); i++) {
-			std::pair<Vector3*, int>& a = matcher.matches[i].first;
-			std::pair<Vector3*, int>& b = matcher.matches[i].second;
-
-			Vector3& an = norms[a.second];
-			Vector3& bn = norms[b.second];
-			if (an.angle(bn) < smoothThresh * DEG2RAD) {
-				Vector3 anT = an;
-				an += bn;
-				bn += anT;
-			}
-		}
-
-		for (auto &n : norms)
-			n.Normalize();
-	}
+	std::vector<Vector3> norms;
+	CalculateNormals(verts, triangles, norms, smooth, smoothThresh);
 
 	rawNormals.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
@@ -2088,41 +2102,7 @@ void NiTriShapeData::RecalcNormals(const bool smooth, const float smoothThresh) 
 
 	NiTriBasedGeomData::RecalcNormals();
 
-	// Zero out existing normals
-	for (auto &n : normals)
-		n.Zero();
-
-	// Face normals
-	Vector3 tn;
-	for (int t = 0; t < numTriangles; t++) {
-		triangles[t].trinormal(vertices, &tn);
-		normals[triangles[t].p1] += tn;
-		normals[triangles[t].p2] += tn;
-		normals[triangles[t].p3] += tn;
-	}
-
-	for (auto &n : normals)
-		n.Normalize();
-
-	// Smooth normals
-	if (smooth) {
-		kd_matcher matcher(vertices.data(), numVertices);
-		for (int i = 0; i < matcher.matches.size(); i++) {
-			std::pair<Vector3*, int>& a = matcher.matches[i].first;
-			std::pair<Vector3*, int>& b = matcher.matches[i].second;
-
-			Vector3& an = normals[a.second];
-			Vector3& bn = normals[b.second];
-			if (an.angle(bn) < smoothThresh * DEG2RAD) {
-				Vector3 anT = an;
-				an += bn;
-				bn += anT;
-			}
-		}
-
-		for (auto &n : normals)
-			n.Normalize();
-	}
+	CalculateNormals(vertices, triangles, normals, smooth, smoothThresh);
 }
 
 void NiTriShapeData::CalcTangentSpace() {
@@ -2302,41 +2282,7 @@ void NiTriStripsData::RecalcNormals(const bool smooth, const float smoothThresh)
 
 	std::vector<Triangle> tris = StripsToTris();
 
-	// Zero out existing normals
-	for (auto &n : normals)
-		n.Zero();
-
-	// Face normals
-	Vector3 tn;
-	for (int t = 0; t < tris.size(); t++) {
-		tris[t].trinormal(vertices, &tn);
-		normals[tris[t].p1] += tn;
-		normals[tris[t].p2] += tn;
-		normals[tris[t].p3] += tn;
-	}
-
-	for (auto &n : normals)
-		n.Normalize();
-
-	// Smooth normals
-	if (smooth) {
-		kd_matcher matcher(vertices.data(), numVertices);
-		for (int i = 0; i < matcher.matches.size(); i++) {
-			std::pair<Vector3*, int>& a = matcher.matches[i].first;
-			std::pair<Vector3*, int>& b = matcher.matches[i].second;
-
-			Vector3& an = normals[a.second];
-			Vector3& bn = normals[b.second];
-			if (an.angle(bn) < smoothThresh * DEG2RAD) {
-				Vector3 anT = an;
-				an += bn;
-				bn += anT;
-			}
-		}
-
-		for (auto &n : normals)
-			n.Normalize();
-	}
+	CalculateNormals(vertices, tris, normals, smooth, smoothThresh);
 }
 
 void NiTriStripsData::CalcTangentSpace() {

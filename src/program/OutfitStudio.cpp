@@ -9708,40 +9708,22 @@ void wxGLPanel::ClickSplitEdge() {
 		return;
 	}
 
-	// Determine reverse edge
-	int p1 = mouseDownEdge.p1, p2 = mouseDownEdge.p2;
-	Edge redge(p2, p1);
-	std::vector<int> p1w, p2w;
-	if (m->weldVerts.find(p1) != m->weldVerts.end())
-		p1w = m->weldVerts[p1];
-
-	if (m->weldVerts.find(p2) != m->weldVerts.end())
-		p2w = m->weldVerts[p2];
-
-	if (!p1w.empty() || !p2w.empty()) {
-		if (p1w.empty())
-			p1w.push_back(p1);
-
-		if (p2w.empty())
-			p2w.push_back(p2);
-
-		for (int ap1 : p1w) {
-			for (int ei : m->vertEdges[ap1]) {
-				int ep2 = m->edges[ei].p1 == ap1 ? m->edges[ei].p2 : m->edges[ei].p1;
-				for (int ap2 : p2w) {
-					if (ap2 == ep2) {
-						redge.p1 = ap2;
-						redge.p2 = ap1;
-					}
-				}
-			}
-		}
-	}
+	// Collect welded vertices
+	int p1 = mouseDownEdge.p1;
+	int p2 = mouseDownEdge.p2;
+	std::vector<int> p1s(1, p1);
+	std::vector<int> p2s(1, p2);
+	auto wvit = m->weldVerts.find(p1);
+	if (wvit != m->weldVerts.end())
+		std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(p1s));
+	wvit = m->weldVerts.find(p2);
+	if (wvit != m->weldVerts.end())
+		std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(p2s));
 
 	// Prepare list of changes
 	UndoStateShape uss;
 	uss.shapeName = mouseDownMeshName;
-	if (!os->project->PrepareSplitEdge(shape, uss, mouseDownEdge, redge)) {
+	if (!os->project->PrepareSplitEdge(shape, uss, p1s, p2s)) {
 		wxMessageBox(_("The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"), wxICON_ERROR, os);
 		return;
 	}

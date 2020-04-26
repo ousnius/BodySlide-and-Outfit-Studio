@@ -15,63 +15,95 @@ class kd_matcher {
 public:
 	class kd_node {
 	public:
-		std::pair<Vector3*, int> p = std::pair<Vector3*, int>(nullptr, -1);
+		int p;
+		std::vector<int> matchset;
 		std::unique_ptr<kd_node> less;
 		std::unique_ptr<kd_node> more;
 
-		kd_node(const std::pair<Vector3*, int>& point) {
+		kd_node(int point) {
 			p = point;
 		}
 
-		std::pair<Vector3*, int> add(const std::pair<Vector3*, int>& point, int depth) {
-			int axis = depth % 3;
-			bool domore = false;
-			float dx = p.first->x - point.first->x;
-			float dy = p.first->y - point.first->y;
-			float dz = p.first->z - point.first->z;
+		void add(const Vector3 *pts, int point, int depth) {
+			Vector3 d = pts[p] - pts[point];
 
-			if (std::fabs(dx) < EPSILON && std::fabs(dy) < EPSILON && std::fabs(dz) < EPSILON)
-				return p;
-
-			switch (axis) {
-			case 0:
-				if (dx > 0) domore = true;
-				break;
-			case 1:
-				if (dy > 0) domore = true;
-				break;
-			case 2:
-				if (dz > 0) domore = true;
-				break;
+			if (std::fabs(d.x) < EPSILON && std::fabs(d.y) < EPSILON && std::fabs(d.z) < EPSILON) {
+				if (matchset.empty())
+					matchset.push_back(p);
+				matchset.push_back(point);
+				return;
 			}
-			if (domore) {
-				if (more) return more->add(point, depth + 1);
-				else more = std::make_unique<kd_node>(point);
+
+			if (d[depth % 3] > 0) {
+				if (more)
+					more->add(pts, point, depth + 1);
+				else
+					more = std::make_unique<kd_node>(point);
 			}
 			else {
-				if (less) return less->add(point, depth + 1);
-				else less = std::make_unique<kd_node>(point);
+				if (less)
+					less->add(pts, point, depth + 1);
+				else
+					less = std::make_unique<kd_node>(point);
 			}
-			return std::pair<Vector3*, int>(nullptr, -1);
+		}
+
+		void collect(std::vector<std::vector<int>> &matches) {
+			if (!matchset.empty())
+				matches.push_back(std::move(matchset));
+			if (more)
+				more->collect(matches);
+			if (less)
+				less->collect(matches);
 		}
 	};
 
-	std::unique_ptr<kd_node> root;
-	Vector3* points = nullptr;
-	int count;
-	std::vector<std::pair<std::pair<Vector3*, int>, std::pair<Vector3*, int>>> matches;
+	std::vector<std::vector<int>> matches;
 
-	kd_matcher(Vector3* pts, int cnt) {
+	kd_matcher(const Vector3* pts, int cnt) {
 		if (cnt <= 0)
 			return;
 
-		std::pair<Vector3*, int> pong;
-		root = std::make_unique<kd_node>(std::pair<Vector3*, int>(&pts[0], 0));
-		for (int i = 1; i < cnt; i++) {
-			std::pair<Vector3*, int> point(&pts[i], i);
-			pong = root->add(point, 0);
-			if (pong.first)
-				matches.push_back(std::pair<std::pair<Vector3*, int>, std::pair<Vector3*, int>>(point, pong));
+		kd_node root(0);
+		for (int i = 1; i < cnt; i++)
+			root.add(pts, i, 0);
+		root.collect(matches);
+	}
+};
+
+// SortingMatcher: finds matching points, just like kd_matcher,
+// but hopefully more efficiently.
+class SortingMatcher {
+public:
+	std::vector<std::vector<int>> matches;
+
+	SortingMatcher(const Vector3* pts, int cnt) {
+		if (cnt <= 0)
+			return;
+
+		std::vector<int> inds(cnt);
+		for (int i = 0; i < cnt; ++i)
+			inds[i] = i;
+
+		std::sort(inds.begin(), inds.end(), [&pts](int i, int j) {
+			if (std::fabs(pts[i].x - pts[j].x) >= EPSILON)
+				return pts[i].x < pts[j].x;
+			if (std::fabs(pts[i].y - pts[j].y) >= EPSILON)
+				return pts[i].y < pts[j].y;
+			if (std::fabs(pts[i].z - pts[j].z) >= EPSILON)
+				return pts[i].z < pts[j].z;
+			return false;
+		});
+
+		for (int si = 0, ei = 1; ei <= cnt; ++ei) {
+			if (ei < cnt &&
+				std::fabs(pts[inds[si]].x - pts[inds[ei]].x) < EPSILON &&
+				std::fabs(pts[inds[si]].y - pts[inds[ei]].y) < EPSILON &&
+				std::fabs(pts[inds[si]].z - pts[inds[ei]].z) < EPSILON)
+				continue;
+			if (ei - si > 1)
+				matches.emplace_back(std::vector<int>(inds.begin() + si, inds.begin() + ei));
+			si = ei;
 		}
 	}
 };

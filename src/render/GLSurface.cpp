@@ -1172,32 +1172,8 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		for (int t = 0; t < m->nTris; t++)
 			m->tris[t] = nifTris[t];
 
-		// Face normals
-		m->FacetNormals();
-
-		// Smooth normals
-		if (m->smoothSeamNormals) {
-			kd_matcher matcher(m->verts.get(), m->nVerts);
-			for (int i = 0; i < matcher.matches.size(); i++) {
-				std::pair<Vector3*, int>& a = matcher.matches[i].first;
-				std::pair<Vector3*, int>& b = matcher.matches[i].second;
-				m->weldVerts[a.second].push_back(b.second);
-				m->weldVerts[b.second].push_back(a.second);
-
-				Vector3& an = m->norms[a.second];
-				Vector3& bn = m->norms[b.second];
-				if (an.angle(bn) < 60.0f * DEG2RAD) {
-					Vector3 anT = an;
-					an += bn;
-					bn += anT;
-				}
-			}
-
-			for (int i = 0; i < m->nVerts; i++) {
-				Vector3& pn = m->norms[i];
-				pn.Normalize();
-			}
-		}
+		// Calc weldVerts and normals
+		m->SmoothNormals();
 	}
 	else {
 		// Already have normals, just copy the data over.
@@ -1214,13 +1190,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		}
 
 		// Virtually weld verts across UV seams
-		kd_matcher matcher(m->verts.get(), m->nVerts);
-		for (int i = 0; i < matcher.matches.size(); i++) {
-			std::pair<Vector3*, int>& a = matcher.matches[i].first;
-			std::pair<Vector3*, int>& b = matcher.matches[i].second;
-			m->weldVerts[a.second].push_back(b.second);
-			m->weldVerts[b.second].push_back(a.second);
-		}
+		m->CalcWeldVerts();
 	}
 
 	m->CalcTangentSpace();
