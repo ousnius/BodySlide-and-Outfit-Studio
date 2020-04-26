@@ -241,7 +241,8 @@ void ShapeProperties::OnChooseMaterial(wxCommandEvent& WXUNUSED(event)) {
 	if (fileName.empty())
 		return;
 
-	int index = fileName.Lower().Find("/materials/");
+	wxString findStr = wxString::Format("%cmaterials%c", PathSepChar, PathSepChar);
+	int index = fileName.Lower().Find(findStr);
 	if (index != wxNOT_FOUND && fileName.length() - 1 > index + 1)
 		fileName = fileName.Mid(index + 1);
 
