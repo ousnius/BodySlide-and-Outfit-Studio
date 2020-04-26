@@ -71,6 +71,43 @@ public:
 	}
 };
 
+// SortingMatcher: finds matching points, just like kd_matcher,
+// but hopefully more efficiently.
+class SortingMatcher {
+public:
+	std::vector<std::vector<int>> matches;
+
+	SortingMatcher(const Vector3* pts, int cnt) {
+		if (cnt <= 0)
+			return;
+
+		std::vector<int> inds(cnt);
+		for (int i = 0; i < cnt; ++i)
+			inds[i] = i;
+
+		std::sort(inds.begin(), inds.end(), [&pts](int i, int j) {
+			if (std::fabs(pts[i].x - pts[j].x) >= EPSILON)
+				return pts[i].x < pts[j].x;
+			if (std::fabs(pts[i].y - pts[j].y) >= EPSILON)
+				return pts[i].y < pts[j].y;
+			if (std::fabs(pts[i].z - pts[j].z) >= EPSILON)
+				return pts[i].z < pts[j].z;
+			return false;
+		});
+
+		for (int si = 0, ei = 1; ei <= cnt; ++ei) {
+			if (ei < cnt &&
+				std::fabs(pts[inds[si]].x - pts[inds[ei]].x) < EPSILON &&
+				std::fabs(pts[inds[si]].y - pts[inds[ei]].y) < EPSILON &&
+				std::fabs(pts[inds[si]].z - pts[inds[ei]].z) < EPSILON)
+				continue;
+			if (ei - si > 1)
+				matches.emplace_back(std::vector<int>(inds.begin() + si, inds.begin() + ei));
+			si = ei;
+		}
+	}
+};
+
 class kd_query_result {
 public:
 	Vector3* v;

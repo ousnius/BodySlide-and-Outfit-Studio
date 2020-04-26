@@ -1154,9 +1154,10 @@ static void CalculateNormals(const std::vector<Vector3> &verts, const std::vecto
 	// Smooth normals
 	if (smooth) {
 		smoothThresh *= DEG2RAD;
-		std::unordered_map<int, Vector3> seamNorms;
-		kd_matcher matcher(verts.data(), verts.size());
+		std::vector<Vector3> seamNorms;
+		SortingMatcher matcher(verts.data(), verts.size());
 		for (const std::vector<int> &matchset : matcher.matches) {
+			seamNorms.resize(matchset.size());
 			for (int j = 0; j < matchset.size(); ++j) {
 				const Vector3 &n = norms[matchset[j]];
 				Vector3 sn = n;
@@ -1171,9 +1172,9 @@ static void CalculateNormals(const std::vector<Vector3> &verts, const std::vecto
 				sn.Normalize();
 				seamNorms[j] = sn;
 			}
+			for (int j = 0; j < matchset.size(); ++j)
+				norms[matchset[j]] = seamNorms[j];
 		}
-		for (auto &snp : seamNorms)
-			norms[snp.first] = snp.second;
 	}
 }
 

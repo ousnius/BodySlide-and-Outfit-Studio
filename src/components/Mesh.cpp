@@ -393,7 +393,7 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 }
 
 void mesh::CalcWeldVerts() {
-	kd_matcher matcher(verts.get(), nVerts);
+	SortingMatcher matcher(verts.get(), nVerts);
 	for (const std::vector<int> &matchset : matcher.matches) {
 		for (int j = 0; j < matchset.size(); ++j) {
 			std::vector<int> &wv = weldVerts[matchset[j]];
@@ -461,7 +461,7 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 		if (!bGotWeldVerts)
 			CalcWeldVerts();
 
-		std::unordered_map<int, Vector3> seamNorms;
+		std::vector<std::pair<int, Vector3>> seamNorms;
 
 		for (auto &wvp : weldVerts) {
 			if (!vertices.empty() && vertices.find(wvp.first) != vertices.end())
@@ -472,7 +472,7 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 				if (n.angle(norms[wvi]) < smoothThresh)
 					sn += norms[wvi];
 			sn.Normalize();
-			seamNorms[wvp.first] = sn;
+			seamNorms.emplace_back(wvp.first, sn);
 		}
 
 		for (auto &snp : seamNorms)
