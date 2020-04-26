@@ -580,8 +580,9 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 
 					Vector3 norm;
 					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
-					int ringID = AddVisCircle(morigin, norm, cursorSize, "cursormesh");
-					overlays[ringID]->scale = 2.0f;
+
+					mesh* ringMesh = AddVisCircle(morigin, norm, cursorSize, "cursormesh");
+					ringMesh->scale = 2.0f;
 
 					Vector3 mhilitepoint = ApplyMat4(m->matModel, hilitepoint);
 					AddVisPoint(mhilitepoint, "pointhilite");
@@ -1253,8 +1254,6 @@ void GLSurface::SetSkinModelMat(mesh *m, const MatTransform &xformGlobalToSkin) 
 }
 
 mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Vector3* color) {
-	SetContext();
-
 	mesh* m = GetOverlay(name);
 	if (m) {
 		m->verts[0] = p;
@@ -1267,6 +1266,8 @@ mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Ve
 		m->QueueUpdate(mesh::UpdateType::Position);
 		return m;
 	}
+
+	SetContext();
 
 	m = new mesh();
 
@@ -1287,17 +1288,31 @@ mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Ve
 	return m;
 }
 
-int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const std::string& name) {
+mesh* GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const std::string& name) {
+	Matrix4 rotMat;
+	rotMat.Align(Vector3(0.0f, 0.0f, 1.0f), normal);
+	rotMat.Translate(center);
+
+	float rStep = DEG2RAD * 5.0f;
+
+	mesh* m = GetOverlay(name);
+	if (m) {
+		float i = 0.0f;
+		for (int j = 0; j < m->nVerts; j++) {
+			m->verts[j].x = sin(i) * radius;
+			m->verts[j].y = cos(i) * radius;
+			m->verts[j].z = 0;
+			i += rStep;
+			m->verts[j] = rotMat * m->verts[j];
+		}
+
+		m->QueueUpdate(mesh::UpdateType::Position);
+		return m;
+	}
+
 	SetContext();
 
-	Matrix4 rotMat;
-	int ringMesh = GetOverlayID(name);
-	if (ringMesh >= 0)
-		delete overlays[ringMesh];
-	else
-		ringMesh = -1;
-
-	mesh* m = new mesh();
+	m = new mesh();
 
 	m->nVerts = 360 / 5;
 	m->nEdges = m->nVerts;
@@ -1310,10 +1325,6 @@ int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float 
 	m->rendermode = RenderMode::UnlitWire;
 	m->material = GetPrimitiveMaterial();
 
-	rotMat.Align(Vector3(0.0f, 0.0f, 1.0f), normal);
-	rotMat.Translate(center);
-
-	float rStep = DEG2RAD * 5.0f;
 	float i = 0.0f;
 	for (int j = 0; j < m->nVerts; j++) {
 		m->verts[j].x = sin(i) * radius;
@@ -1328,15 +1339,10 @@ int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float 
 	m->edges[m->nEdges - 1].p2 = 0;
 	m->CreateBuffers();
 
-	if (ringMesh >= 0) {
-		overlays[ringMesh] = m;
-	}
-	else {
-		namedOverlays[m->shapeName] = overlays.size();
-		overlays.push_back(m);
-		ringMesh = overlays.size() - 1;
-	}
-	return ringMesh;
+	namedOverlays[m->shapeName] = overlays.size();
+	overlays.push_back(m);
+
+	return m;
 }
 
 mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const std::string& name) {
@@ -1649,8 +1655,6 @@ mesh* GLSurface::AddVisPlane(const Vector3& center, const Vector2& size, float u
 }
 
 mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name) {
-	SetContext();
-
 	mesh* m = GetOverlay(name);
 	if (m) {
 		m->verts[0] = p1;
@@ -1659,6 +1663,8 @@ mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::stri
 		m->QueueUpdate(mesh::UpdateType::Position);
 		return m;
 	}
+
+	SetContext();
 
 	m = new mesh();
 
