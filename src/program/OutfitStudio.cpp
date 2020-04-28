@@ -4626,6 +4626,8 @@ void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& event) {
 	inf.ssfFile = segmentSSF->GetValue().ToStdString();
 
 	project->GetWorkNif()->SetShapeSegments(activeItem->GetShape(), inf, triSParts);
+	MeshFromProj(activeItem->GetShape());
+
 	CreateSegmentTree(activeItem->GetShape());
 }
 
@@ -5171,6 +5173,7 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 	std::vector<int> triInds(nTris);
 	for (int ti = 0; ti < nTris; ++ti)
 		triInds[ti] = ti;
+
 	std::stable_sort(triInds.begin(), triInds.end(), [&tp](int i, int j) {
 		return tp[j] < 0 || tp[i] < tp[j];
 	});
@@ -5184,6 +5187,7 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 	for (int ti = 0; ti < nTris; ++ti) {
 		while (tp[triInds[ti]] >= m->subMeshes.size())
 			m->subMeshes.emplace_back(ti, 0);
+
 		if (tp[triInds[ti]] < 0) {
 			m->subMeshes.emplace_back(ti, 0);
 			break;
@@ -5194,20 +5198,28 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 	m->subMeshes.emplace_back(nTris, 0);
 	for (int si = 0; si + 1 < m->subMeshes.size(); ++si)
 		m->subMeshes[si].second = m->subMeshes[si + 1].first - m->subMeshes[si].first;
-	m->subMeshes.pop_back();
 
+	m->subMeshes.pop_back();
 	m->QueueUpdate(mesh::UpdateType::Indices);
 }
 
 void OutfitStudioFrame::SetNoSubMeshes(mesh *m) {
+	if (!m)
+		return;
+
 	m->subMeshes.clear();
 	m->subMeshesColor.clear();
+
 	for (int ti = 0; ti < m->nTris; ++ti)
 		m->renderTris[ti] = m->tris[ti];
+
 	m->QueueUpdate(mesh::UpdateType::Indices);
 }
 
 void OutfitStudioFrame::SetNoSubMeshes() {
+	if (!activeItem)
+		return;
+
 	SetNoSubMeshes(glView->GetMesh(activeItem->GetShape()->GetName()));
 }
 
