@@ -1246,6 +1246,8 @@ private:
 	void OnSetReference(wxCommandEvent& event);
 	void OnDeleteVerts(wxCommandEvent& event);
 	void OnSeparateVerts(wxCommandEvent& event);
+	void CheckCopyGeo(wxDialog &dlg);
+	void OnCopyGeo(wxCommandEvent& event);
 	void OnDupeShape(wxCommandEvent& event);
 	void OnDeleteShape(wxCommandEvent& event);
 	void OnAddBone(wxCommandEvent& event);

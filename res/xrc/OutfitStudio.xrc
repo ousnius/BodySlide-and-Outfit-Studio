@@ -1655,6 +1655,10 @@
 				<label>Separate Vertices...</label>
 				<help>Separate the current shape into two by using the mask.</help>
 			</object>
+			<object class="wxMenuItem" name="copyGeo">
+				<label>Copy Geometry...</label>
+				<help>Copies vertices and triangles from one shape to another.</help>
+			</object>
 			<object class="wxMenuItem" name="copyShape">
 				<label>Duplicate...</label>
 				<help>Duplicate the current shape.</help>
@@ -2214,6 +2218,10 @@
 		<object class="wxMenuItem" name="separateVerts">
 			<label>Separate Vertices...</label>
 			<help>Separate the current shape into two by using the mask.</help>
+		</object>
+		<object class="wxMenuItem" name="copyGeo">
+			<label>Copy Geometry...</label>
+			<help>Copies vertices and triangles from one shape to another.</help>
 		</object>
 		<object class="wxMenuItem" name="copyShape">
 			<label>Duplicate...</label>

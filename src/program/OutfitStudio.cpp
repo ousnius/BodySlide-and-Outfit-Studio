@@ -192,6 +192,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("setReference"), OutfitStudioFrame::OnSetReference)
 	EVT_MENU(XRCID("deleteVerts"), OutfitStudioFrame::OnDeleteVerts)
 	EVT_MENU(XRCID("separateVerts"), OutfitStudioFrame::OnSeparateVerts)
+	EVT_MENU(XRCID("copyGeo"), OutfitStudioFrame::OnCopyGeo)
 	EVT_MENU(XRCID("copyShape"), OutfitStudioFrame::OnDupeShape)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudioFrame::OnDeleteShape)
 	EVT_MENU(XRCID("addBone"), OutfitStudioFrame::OnAddBone)
@@ -7617,6 +7618,117 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	RefreshGUIFromProj(false);
 
 	glView->ClearActiveMask();
+	ApplySliders();
+}
+
+void OutfitStudioFrame::CheckCopyGeo(wxDialog &dlg) {
+	wxStaticText *errors = XRCCTRL(dlg, "copyGeometryErrors", wxStaticText);
+	wxChoice *sourceChoice = XRCCTRL(dlg, "sourceChoice", wxChoice);
+	wxChoice *targetChoice = XRCCTRL(dlg, "targetChoice", wxChoice);
+
+	std::string source = sourceChoice->GetString(sourceChoice->GetSelection()).ToStdString();
+	std::string target = targetChoice->GetString(targetChoice->GetSelection()).ToStdString();
+
+	std::vector<MergeCheckError> errcodes = project->CheckMerge(source, target);
+	if (errcodes.empty()) {
+		errors->SetLabel(_("No mismatches found (but not all checks have been implemented)"));
+		XRCCTRL(dlg, "wxID_OK", wxButton)->Enable();
+		return;
+	}
+
+	XRCCTRL(dlg, "wxID_OK", wxButton)->Disable();
+	wxString msg;
+	msg << _("Errors:");
+	for (MergeCheckError errcode : errcodes) {
+		switch (errcode) {
+		case MergeCheckError::PartitionsMismatch:
+			msg << _("\nPartitions do not match");
+			break;
+		case MergeCheckError::SegmentsMismatch:
+			msg << _("\nSegments do not match");
+			break;
+		case MergeCheckError::TooManyVertices:
+			msg << _("\nResulting shape would have too many vertices");
+			break;
+		case MergeCheckError::TooManyTriangles:
+			msg << _("\nResulting shape would have too many triangles");
+			break;
+		}
+	}
+	errors->SetLabel(msg);
+}
+
+void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
+	if (bEditSlider) {
+		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
+		return;
+	}
+
+	wxDialog dlg;
+	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCopyGeometry"))
+		return;
+
+	wxChoice *sourceChoice = XRCCTRL(dlg, "sourceChoice", wxChoice);
+	wxChoice *targetChoice = XRCCTRL(dlg, "targetChoice", wxChoice);
+	if (!sourceChoice || !targetChoice)
+		return;
+
+	std::string sourceShapeName;
+	if (activeItem)
+		sourceShapeName = activeItem->GetShape()->GetName();
+
+	std::vector<std::string> shapeList = GetShapeList();
+	if (shapeList.size() < 2)
+		return;
+
+	for (const std::string &shape : shapeList) {
+		sourceChoice->AppendString(shape);
+		targetChoice->AppendString(shape);
+		if (shape == sourceShapeName)
+			sourceChoice->SetSelection(sourceChoice->GetCount() - 1);
+	}
+
+	if (sourceChoice->GetSelection() == wxNOT_FOUND)
+		sourceChoice->SetSelection(0);
+	if (sourceChoice->GetSelection() == 0)
+		targetChoice->SetSelection(1);
+	else
+		targetChoice->SetSelection(0);
+
+	sourceChoice->Bind(wxEVT_CHOICE, [this,&dlg](wxCommandEvent&) {
+		CheckCopyGeo(dlg);
+	});
+	targetChoice->Bind(wxEVT_CHOICE, [this,&dlg](wxCommandEvent&) {
+		CheckCopyGeo(dlg);
+	});
+	CheckCopyGeo(dlg);
+
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
+	sourceShapeName = sourceChoice->GetString(sourceChoice->GetSelection()).ToStdString();
+	std::string targetShapeName = targetChoice->GetString(targetChoice->GetSelection()).ToStdString();
+
+	NiShape *sourceShape = project->GetWorkNif()->FindBlockByName<NiShape>(sourceShapeName);
+	if (!sourceShape)
+		return;
+	NiShape *targetShape = project->GetWorkNif()->FindBlockByName<NiShape>(targetShapeName);
+	if (!targetShape)
+		return;
+
+	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UT_MESH;
+	usp->usss.resize(1);
+	usp->usss[0].shapeName = targetShapeName;
+
+	project->PrepareCopyGeo(sourceShape, targetShape, usp->usss[0]);
+
+	project->ApplyShapeMeshUndo(targetShape, usp->usss[0], false);
+
+	if (XRCCTRL(dlg, "checkDeleteSource", wxCheckBox)->IsChecked())
+		project->DeleteShape(sourceShape);
+
+	RefreshGUIFromProj(false);
 	ApplySliders();
 }
 
