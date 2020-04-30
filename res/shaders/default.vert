@@ -12,13 +12,13 @@ uniform mat4 matView;
 uniform mat4 matModel;
 uniform mat4 matModelView;
 uniform vec3 color;
+uniform vec3 subColor;
 
 uniform bool bShowTexture;
 uniform bool bShowMask;
 uniform bool bShowWeight;
 uniform bool bShowVertexColor;
 uniform bool bShowVertexAlpha;
-uniform bool bShowSegments;
 
 uniform bool bWireframe;
 uniform bool bPoints;
@@ -55,7 +55,6 @@ out vec3 n;
 
 out float maskFactor;
 out vec3 weightColor;
-out vec3 segmentColor;
 
 out vec4 vColor;
 out vec2 vUV;
@@ -103,7 +102,6 @@ void main(void)
 	// Initialization
 	maskFactor = 1.0;
 	weightColor = vec3(1.0, 1.0, 1.0);
-	segmentColor = vec3(1.0, 1.0, 1.0);
 	vColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vUV = vertexUV;
 
@@ -179,17 +177,15 @@ void main(void)
 		}
 	}
 
-	if (bShowSegments)
+	if (!bPoints && !bWireframe)
 	{
-		weightColor = colorRamp(vertexColors.g);
-		segmentColor = colorRamp(vertexColors.b);
-	}
-	else
-	{
+		vColor.rgb *= subColor;
+
 		if (bShowMask)
 		{
 			maskFactor = 1.0 - vertexColors.r / 1.5;
 		}
+
 		if (bShowWeight)
 		{
 			weightColor = colorRamp(vertexColors.g);

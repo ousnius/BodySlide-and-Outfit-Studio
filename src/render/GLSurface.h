@@ -43,7 +43,6 @@ private:
 	bool bMaskVisible = true;
 	bool bWeightColors = false;
 	bool bVertexColors = false;
-	bool bSegmentColors = false;
 
 	float defLineWidth = 1.0f;
 	float defPointSize = 5.0f;
@@ -411,16 +410,6 @@ public:
 	void SetVertexColors(bool bVisible = true) {
 		bVertexColors = bVisible;
 		bMaskVisible = !bVisible;
-
-		for (auto &m : meshes)
-			UpdateShaders(m);
-
-		for (auto &o : overlays)
-			UpdateShaders(o);
-	}
-
-	void SetSegmentColors(bool bVisible = true) {
-		bSegmentColors = bVisible;
 
 		for (auto &m : meshes)
 			UpdateShaders(m);

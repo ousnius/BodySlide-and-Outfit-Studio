@@ -16,7 +16,6 @@ GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentS
 		ShowWeight(false);
 		ShowVertexColors(false);
 		ShowVertexAlpha(false);
-		ShowSegments(false);
 
 		SetColor(Vector3(1.0f, 1.0f, 1.0f));
 		SetModelSpace(false);
@@ -77,6 +76,12 @@ bool GLShader::LoadShaders(const std::string& vertexSource, const std::string& f
 
 void GLShader::SetColor(const Vector3& color) {
 	GLint loc = glGetUniformLocation(progID, "color");
+	if (loc >= 0)
+		glUniform3f(loc, color.x, color.y, color.z);
+}
+
+void GLShader::SetSubColor(const Vector3& color) {
+	GLint loc = glGetUniformLocation(progID, "subColor");
 	if (loc >= 0)
 		glUniform3f(loc, color.x, color.y, color.z);
 }
@@ -317,16 +322,6 @@ void GLShader::ShowVertexColors(bool bShow) {
 
 void GLShader::ShowVertexAlpha(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowVertexAlpha");
-
-	if (loc >= 0) {
-		glUseProgram(progID);
-		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
-		glUseProgram(0);
-	}
-}
-
-void GLShader::ShowSegments(bool bShow) {
-	GLint loc = glGetUniformLocation(progID, "bShowSegments");
 
 	if (loc >= 0) {
 		glUseProgram(progID);
