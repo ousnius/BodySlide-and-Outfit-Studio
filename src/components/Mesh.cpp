@@ -135,8 +135,12 @@ void mesh::CreateBuffers() {
 
 	// Element index array
 	if (tris) {
+		renderTris = std::make_unique<Triangle[]>(nTris);
+		for (int i = 0; i < nTris; ++i)
+			renderTris[i] = tris[i];
+
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nTris * sizeof(Triangle), tris.get(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nTris * sizeof(Triangle), renderTris.get(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else if (edges) {
@@ -200,7 +204,7 @@ void mesh::UpdateBuffers() {
 		if (queueUpdate[UpdateType::Indices]) {
 			if (tris) {
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nTris * sizeof(Triangle), tris.get());
+				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nTris * sizeof(Triangle), renderTris.get());
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			}
 			else if (edges) {

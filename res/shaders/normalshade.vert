@@ -7,7 +7,6 @@ uniform bool bLightEnabled;
 uniform bool bShowTexture;
 uniform bool bShowMask;
 uniform bool bShowWeight;
-uniform bool bShowSegments;
 
 uniform bool bWireframe;
 uniform bool bPoints;

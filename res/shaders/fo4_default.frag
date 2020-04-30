@@ -19,7 +19,6 @@ uniform bool bLightEnabled;
 uniform bool bShowTexture;
 uniform bool bShowMask;
 uniform bool bShowWeight;
-uniform bool bShowSegments;
 uniform bool bWireframe;
 uniform bool bPoints;
 
@@ -82,7 +81,6 @@ in vec3 n;
 
 in float maskFactor;
 in vec3 weightColor;
-in vec3 segmentColor;
 
 in vec4 vColor;
 in vec2 vUV;
@@ -414,31 +412,14 @@ void main(void)
 				color.rgb += ambient * albedo;
 			}
 
-			if (bShowSegments)
+			if (bShowMask)
 			{
-				if (segmentColor.r != 0.0 && segmentColor.g != 0.0 && segmentColor.b != 0.0 &&
-					segmentColor.rg != normalize(segmentColor.rg) &&
-					segmentColor.rb != normalize(segmentColor.rb) &&
-					segmentColor.gb != normalize(segmentColor.gb))
-				{
-					color.rgb *= weightColor;
-				}
-				else
-				{
-					color.rgb *= segmentColor;
-				}
+				color.rgb *= maskFactor;
 			}
-			else
-			{
-				if (bShowMask)
-				{
-					color.rgb *= maskFactor;
-				}
 
-				if (bShowWeight)
-				{
-					color.rgb *= weightColor;
-				}
+			if (bShowWeight)
+			{
+				color.rgb *= weightColor;
 			}
 
 			color.rgb = tonemap(color.rgb) / tonemap(vec3(1.0));

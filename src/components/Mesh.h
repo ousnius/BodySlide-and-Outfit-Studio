@@ -75,6 +75,10 @@ public:
 	std::unique_ptr<Vector2[]> texcoord;
 
 	std::unique_ptr<Triangle[]> tris;
+	// renderTris is tris re-ordered for rendering with submeshes.  It's
+	// created automatically in CreateBuffers as a copy of tris.  If
+	// something changes tris, renderTris needs to be updated too.
+	std::unique_ptr<Triangle[]> renderTris;
 	int nTris = 0;
 
 	std::unique_ptr<Edge[]> edges;
@@ -84,6 +88,9 @@ public:
 	GLuint vao = 0;
 	std::vector<GLuint> vbo = std::vector<GLuint>(7, 0);
 	GLuint ibo = 0;
+
+	std::vector<std::pair<uint, uint>> subMeshes;	// Start index and size of each sub mesh
+	std::vector<Vector3> subMeshesColor;			// Color of each sub mesh
 
 	ShaderProperties prop;
 	GLMaterial* material = nullptr;

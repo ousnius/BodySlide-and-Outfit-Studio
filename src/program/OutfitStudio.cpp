@@ -4629,6 +4629,8 @@ void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& event) {
 	inf.ssfFile = segmentSSF->GetValue().ToStdString();
 
 	project->GetWorkNif()->SetShapeSegments(activeItem->GetShape(), inf, triSParts);
+	MeshFromProj(activeItem->GetShape());
+
 	CreateSegmentTree(activeItem->GetShape());
 }
 
@@ -4779,25 +4781,32 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 	// Display segmentation colors depending on what is selected
 	mesh* m = glView->GetMesh(activeItem->GetShape()->GetName());
 	if (m) {
-		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+		SetSubMeshesForPartitions(m, triSParts);
 
-		// First, apply color to unselected partitions
-		for (int i = 0; i < triSParts.size(); ++i) {
-			if (triSParts[i] < 0 || selPartIDs[triSParts[i]])
-				continue;
-			float color = (triSParts[i] + 1.0f) / (selPartIDs.size() + 1.0f);
-			m->vcolors[tris[i].p1].y = color;
-			m->vcolors[tris[i].p2].y = color;
-			m->vcolors[tris[i].p3].y = color;
+		// Set colors for segments
+		int nsm = m->subMeshes.size();
+		m->subMeshesColor.resize(nsm);
+		for (int pi = 0; pi < nsm; ++pi) {
+			if (selPartIDs[pi]) {
+				m->subMeshesColor[pi].x = 1.0f;
+				m->subMeshesColor[pi].y = 0.0f;
+				m->subMeshesColor[pi].z = 0.0f;
+			}
+			else {
+				float colorValue = (pi + 1.0f) / (nsm + 1);
+				m->subMeshesColor[pi] = glView->CreateColorRamp(colorValue);
+			}
 		}
 
-		// Now apply selection color to selected partitions
+		// Set mask
+		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+
 		for (int i = 0; i < triSParts.size(); ++i) {
 			if (triSParts[i] < 0 || !selPartIDs[triSParts[i]])
 				continue;
-			m->vcolors[tris[i].p1].x = m->vcolors[tris[i].p1].z = 1.0f;
-			m->vcolors[tris[i].p2].x = m->vcolors[tris[i].p2].z = 1.0f;
-			m->vcolors[tris[i].p3].x = m->vcolors[tris[i].p3].z = 1.0f;
+			m->vcolors[tris[i].p1].x = 1.0f;
+			m->vcolors[tris[i].p2].x = 1.0f;
+			m->vcolors[tris[i].p3].x = 1.0f;
 		}
 	}
 
@@ -5097,28 +5106,34 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 	// Display partition colors depending on what is selected
 	mesh* m = glView->GetMesh(activeItem->GetShape()->GetName());
 	if (m) {
-		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+		SetSubMeshesForPartitions(m, triParts);
 
-		const int partIndex = partitionData ? partitionData->index : -1;
-		size_t childCount = partitionTree->GetChildrenCount(partitionRoot) + 1;
-		for (int i = 0; i < allTris.size(); ++i) {
-			if (triParts[i] == -1 || triParts[i] == partIndex)
-				continue;
-			float color = (triParts[i] + 1.0f) / childCount;
-			const Triangle &t = allTris[i];
-			m->vcolors[t.p1].y = color;
-			m->vcolors[t.p2].y = color;
-			m->vcolors[t.p3].y = color;
+		// Set colors for non-selected partitions
+		int nsm = m->subMeshes.size();
+		m->subMeshesColor.resize(nsm);
+		for (int pi = 0; pi < nsm; ++pi) {
+			float colorValue = (pi + 1.0f) / (nsm + 1);
+			m->subMeshesColor[pi] = glView->CreateColorRamp(colorValue);
 		}
+
+		// Set color for selected partition
+		if (partitionData) {
+			m->subMeshesColor[partitionData->index].x = 1.0f;
+			m->subMeshesColor[partitionData->index].y = 0.0f;
+			m->subMeshesColor[partitionData->index].z = 0.0f;
+		}
+
+		// Set mask
+		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 
 		if (partitionData) {
 			for (int i = 0; i < allTris.size(); ++i) {
-				if (triParts[i] != partIndex)
+				if (triParts[i] != partitionData->index)
 					continue;
 				const Triangle &t = allTris[i];
-				m->vcolors[t.p1].x = m->vcolors[t.p1].z = 1.0f;
-				m->vcolors[t.p2].x = m->vcolors[t.p2].z = 1.0f;
-				m->vcolors[t.p3].x = m->vcolors[t.p3].z = 1.0f;
+				m->vcolors[t.p1].x = 1.0f;
+				m->vcolors[t.p2].x = 1.0f;
+				m->vcolors[t.p3].x = 1.0f;
 			}
 		}
 	}
@@ -5151,6 +5166,64 @@ void OutfitStudioFrame::UpdatePartitionNames() {
 
 		child = partitionTree->GetNextChild(partitionRoot, cookie);
 	}
+}
+
+void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int> &tp) {
+	int nTris = tp.size();
+
+	// Sort triangles (via triInds) by partition number, negative partition
+	// numbers at the end.
+	std::vector<int> triInds(nTris);
+	for (int ti = 0; ti < nTris; ++ti)
+		triInds[ti] = ti;
+
+	std::stable_sort(triInds.begin(), triInds.end(), [&tp](int i, int j) {
+		return tp[j] < 0 || tp[i] < tp[j];
+	});
+
+	// Re-order triangles
+	for (int ti = 0; ti < nTris; ++ti)
+		m->renderTris[ti] = m->tris[triInds[ti]];
+
+	// Find first triangle of each sub-mesh.
+	m->subMeshes.clear();
+	for (int ti = 0; ti < nTris; ++ti) {
+		while (tp[triInds[ti]] >= m->subMeshes.size())
+			m->subMeshes.emplace_back(ti, 0);
+
+		if (tp[triInds[ti]] < 0) {
+			m->subMeshes.emplace_back(ti, 0);
+			break;
+		}
+	}
+
+	// Calculate size of each sub-mesh.
+	m->subMeshes.emplace_back(nTris, 0);
+	for (int si = 0; si + 1 < m->subMeshes.size(); ++si)
+		m->subMeshes[si].second = m->subMeshes[si + 1].first - m->subMeshes[si].first;
+
+	m->subMeshes.pop_back();
+	m->QueueUpdate(mesh::UpdateType::Indices);
+}
+
+void OutfitStudioFrame::SetNoSubMeshes(mesh *m) {
+	if (!m)
+		return;
+
+	m->subMeshes.clear();
+	m->subMeshesColor.clear();
+
+	for (int ti = 0; ti < m->nTris; ++ti)
+		m->renderTris[ti] = m->tris[ti];
+
+	m->QueueUpdate(mesh::UpdateType::Indices);
+}
+
+void OutfitStudioFrame::SetNoSubMeshes() {
+	if (!activeItem)
+		return;
+
+	SetNoSubMeshes(glView->GetMesh(activeItem->GetShape()->GetName()));
 }
 
 void OutfitStudioFrame::OnCheckBox(wxCommandEvent& event) {
@@ -5375,7 +5448,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 			glView->ClearActiveColors();
 
 		glView->SetSegmentMode(false);
-		glView->SetSegmentsVisible(false);
 		glView->SetMaskVisible();
 		glView->SetGlobalBrushCollision();
 
@@ -5406,7 +5478,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 			glView->ClearActiveColors();
 
 		glView->SetSegmentMode(false);
-		glView->SetSegmentsVisible(false);
 		glView->SetMaskVisible();
 		glView->SetGlobalBrushCollision();
 
@@ -5549,6 +5620,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		lightsTabButton->SetCheck(false);
 
 		masksPane->Show();
+
+		SetNoSubMeshes();
 	}
 	else if (id == XRCID("boneTabButton")) {
 		outfitShapes->Hide();
@@ -5628,6 +5701,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnSplitEdgeTool"), false);
 
+		SetNoSubMeshes();
+
 		ReselectBone();
 		glView->GetUndoHistory()->ClearHistory();
 	}
@@ -5692,6 +5767,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnCollapseVertex"), false);
 		GetToolBar()->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		GetToolBar()->EnableTool(XRCID("btnSplitEdgeTool"), false);
+
+		SetNoSubMeshes();
 	}
 	else if (id == XRCID("segmentTabButton")) {
 		outfitShapes->Hide();
@@ -5735,7 +5812,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		glView->SetSegmentMode();
-		glView->SetSegmentsVisible();
 		glView->SetMaskVisible(false);
 		glView->SetGlobalBrushCollision(false);
 		glView->ClearColors();
@@ -5811,7 +5887,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		glView->SetSegmentMode();
-		glView->SetSegmentsVisible();
 		glView->SetMaskVisible(false);
 		glView->SetGlobalBrushCollision(false);
 		glView->ClearColors();
@@ -5872,6 +5947,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		colorsTabButton->SetCheck(false);
 		segmentTabButton->SetCheck(false);
 		partitionTabButton->SetCheck(false);
+
+		SetNoSubMeshes();
 	}
 
 	CheckBrushBounds();

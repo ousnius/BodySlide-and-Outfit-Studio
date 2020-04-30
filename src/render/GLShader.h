@@ -57,6 +57,7 @@ public:
 	GLShader(const std::string& vertexSource, const std::string& fragmentSource);
 
 	void SetColor(const Vector3& color);
+	void SetSubColor(const Vector3& color);
 	void SetModelSpace(const bool enable);
 	void SetEmissive(const bool enable);
 	void SetWireframeEnabled(const bool enable);
@@ -77,7 +78,6 @@ public:
 	void ShowWeight(bool bShow = true);
 	void ShowVertexColors(bool bShow = true);
 	void ShowVertexAlpha(bool bShow = true);
-	void ShowSegments(bool bShow = true);
 	void ShowTexture(bool bShow = true);
 
 	void SetNormalMapEnabled(const bool enable);
