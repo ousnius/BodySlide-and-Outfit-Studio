@@ -219,6 +219,8 @@ public:
 	bool GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<int> &triParts);
 	void SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<int> &triParts, const bool convertSkinInstance = true);
 	void SetDefaultPartition(NiShape* shape);
+	// DeletePartitions: partInds must be in sorted ascending order.
+	void DeletePartitions(NiShape* shape, std::vector<int> &partInds);
 
 	const std::vector<Vector3>* GetRawVertsForShape(NiShape* shape);
 	bool ReorderTriangles(NiShape* shape, const std::vector<uint>& triangleIndices);

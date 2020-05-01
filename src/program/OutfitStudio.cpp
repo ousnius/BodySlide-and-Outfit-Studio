@@ -5003,6 +5003,7 @@ void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 		return;
 
 	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+	std::vector<bool> delPartFlags;
 
 	wxTreeItemIdValue cookie;
 	wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
@@ -5011,16 +5012,26 @@ void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
 		if (partitionData) {
 			const int index = partitionData->index;
-			if (index >= partitionInfo.size())
+			if (index >= partitionInfo.size()) {
 				partitionInfo.resize(index + 1);
+				delPartFlags.resize(index + 1, true);
+			}
 			partitionInfo[index].flags = PF_EDITOR_VISIBLE;
 			partitionInfo[index].partID = partitionData->type;
+			delPartFlags[index] = false;
 		}
 
 		child = partitionTree->GetNextChild(partitionRoot, cookie);
 	}
 
+	std::vector<int> delPartInds;
+	for (int pi = 0; pi < delPartFlags.size(); ++pi)
+		if (delPartFlags[pi])
+			delPartInds.push_back(pi);
+
 	project->GetWorkNif()->SetShapePartitions(shape, partitionInfo, triParts);
+	if (!delPartInds.empty())
+		project->GetWorkNif()->DeletePartitions(shape, delPartInds);
 	CreatePartitionTree(shape);
 }
 

@@ -443,22 +443,27 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 	}
 }
 
+void NiSkinPartition::DeletePartitions(const std::vector<int> &partInds) {
+	if (partInds.empty())
+		return;
+	if (!triParts.empty()) {
+		std::vector<int> piMap = GenerateIndexCollapseMap(partInds, numPartitions);
+		for (int &pi : triParts) {
+			if (pi >= 0 && pi < piMap.size())
+				pi = piMap[pi];
+		}
+	}
+	EraseVectorIndices(partitions, partInds);
+	numPartitions = partitions.size();
+}
+
 int NiSkinPartition::RemoveEmptyPartitions(std::vector<int>& outDeletedIndices) {
 	outDeletedIndices.clear();
 	for (int i = 0; i < partitions.size(); ++i)
 		if (partitions[i].numTriangles == 0)
 			outDeletedIndices.push_back(i);
-	if (!outDeletedIndices.empty()) {
-		if (!triParts.empty()) {
-			std::vector<int> piMap = GenerateIndexCollapseMap(outDeletedIndices, numPartitions);
-			for (int &pi : triParts) {
-				if (pi >= 0 && pi < piMap.size())
-					pi = piMap[pi];
-			}
-		}
-		EraseVectorIndices(partitions, outDeletedIndices);
-		numPartitions = partitions.size();
-	}
+	if (!outDeletedIndices.empty())
+		DeletePartitions(outDeletedIndices);
 	return outDeletedIndices.size();
 }
 
@@ -693,6 +698,13 @@ void BSDismemberSkinInstance::Put(NiStream& stream) {
 void BSDismemberSkinInstance::AddPartition(const BSDismemberSkinInstance::PartitionInfo& part) {
 	partitions.push_back(part);
 	numPartitions++;
+}
+
+void BSDismemberSkinInstance::DeletePartitions(const std::vector<int> &partInds) {
+	if (partInds.empty())
+		return;
+	EraseVectorIndices(partitions, partInds);
+	numPartitions = partitions.size();
 }
 
 void BSDismemberSkinInstance::RemovePartition(const int id) {

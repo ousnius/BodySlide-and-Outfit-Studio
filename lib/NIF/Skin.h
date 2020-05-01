@@ -129,6 +129,8 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
+	// DeletePartitions: partInds must be in sorted ascending order
+	void DeletePartitions(const std::vector<int> &partInds);
 	int RemoveEmptyPartitions(std::vector<int>& outDeletedIndices);
 	NiSkinPartition* Clone() { return new NiSkinPartition(*this); }
 	// ConvertStripsToTriangles returns true if any conversions were
@@ -226,6 +228,8 @@ public:
 
 	void AddPartition(const PartitionInfo& partition);
 	void RemovePartition(const int id);
+	// DeletePartitions: partInds must be in sorted ascending order.
+	void DeletePartitions(const std::vector<int> &partInds);
 	void ClearPartitions();
 
 	void SetPartitions(const std::vector<PartitionInfo>& parts) {
