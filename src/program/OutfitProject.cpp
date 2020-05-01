@@ -3034,15 +3034,13 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	return true;
 }
 
-std::vector<MergeCheckError> OutfitProject::CheckMerge(const std::string &sourceName, const std::string &targetName) {
-	std::vector<MergeCheckError> result;
-
+void OutfitProject::CheckMerge(const std::string &sourceName, const std::string &targetName, MergeCheckErrors &e) {
 	NiShape *source = workNif.FindBlockByName<NiShape>(sourceName);
 	if (!source)
-		return result;
+		return;
 	NiShape *target = workNif.FindBlockByName<NiShape>(targetName);
 	if (!target)
-		return result;
+		return;
 
 	size_t maxVertIndex = std::numeric_limits<ushort>().max();
 	size_t maxTriIndex = std::numeric_limits<ushort>().max();
@@ -3052,55 +3050,54 @@ std::vector<MergeCheckError> OutfitProject::CheckMerge(const std::string &source
 	size_t snVerts = source->GetNumVertices();
 	size_t tnVerts = target->GetNumVertices();
 	if (snVerts + tnVerts > maxVertIndex)
-		result.push_back(MergeCheckError::TooManyVertices);
+		e.tooManyVertices = true;
 
 	size_t snTris = source->GetNumTriangles();
 	size_t tnTris = target->GetNumTriangles();
 	if (snTris + tnTris > maxTriIndex)
-		result.push_back(MergeCheckError::TooManyTriangles);
+		e.tooManyTriangles = true;
 
 	std::vector<int> triParts;
 	NifSegmentationInfo sinf, tinf;
 	bool gotssegs = workNif.GetShapeSegments(source, sinf, triParts);
 	bool gottsegs = workNif.GetShapeSegments(target, tinf, triParts);
-	bool segmis = false;
 	if (gotssegs != gottsegs)
-		segmis = true;
+		e.segmentsMismatch = true;
 	else if (gotssegs) {
 		if (sinf.ssfFile != tinf.ssfFile)
-			segmis = true;
+			e.segmentsMismatch = true;
 		if (sinf.segs.size() != tinf.segs.size())
-			segmis = true;
-		for (int si = 0; !segmis && si < sinf.segs.size(); ++si) {
+			e.segmentsMismatch = true;
+		for (int si = 0; !e.segmentsMismatch && si < sinf.segs.size(); ++si) {
 			if (sinf.segs[si].subs.size() != tinf.segs[si].subs.size())
-				segmis = true;
-			for (int ssi = 0; !segmis && ssi < sinf.segs[si].subs.size(); ++ssi) {
+				e.segmentsMismatch = true;
+			for (int ssi = 0; !e.segmentsMismatch && ssi < sinf.segs[si].subs.size(); ++ssi) {
 				const NifSubSegmentInfo &sssinf = sinf.segs[si].subs[ssi];
 				const NifSubSegmentInfo &tssinf = tinf.segs[si].subs[ssi];
 				if (sssinf.userSlotID != tssinf.userSlotID ||
 					sssinf.material != tssinf.material ||
 					sssinf.extraData != tssinf.extraData)
-					segmis = true;
+					e.segmentsMismatch = true;
 			}
 		}
 	}
-	if (segmis)
-		result.push_back(MergeCheckError::SegmentsMismatch);
 
 	std::vector<BSDismemberSkinInstance::PartitionInfo> spinf, tpinf;
 	bool gotspar = workNif.GetShapePartitions(source, spinf, triParts);
 	bool gottpar = workNif.GetShapePartitions(target, tpinf, triParts);
-	bool parmis = false;
 	if (gotspar != gottpar)
-		parmis = true;
+		e.partitionsMismatch = true;
 	else if (gotspar) {
 		if (spinf.size() != tpinf.size())
-			parmis = true;
+			e.partitionsMismatch = true;
+		for (int pi = 0; !e.partitionsMismatch && pi < spinf.size(); ++pi) {
+			if (spinf[pi].partID != tpinf[pi].partID)
+				e.partitionsMismatch = true;
+		}
 	}
-	if (parmis)
-		result.push_back(MergeCheckError::PartitionsMismatch);
 
-	return result;
+	e.canMerge = !e.partitionsMismatch && !e.segmentsMismatch &&
+		!e.tooManyVertices && !e.tooManyTriangles;
 }
 
 void OutfitProject::PrepareCopyGeo(NiShape *source, NiShape *target, UndoStateShape &uss) {

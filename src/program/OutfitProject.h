@@ -15,11 +15,12 @@ See the included LICENSE file
 class OutfitStudioFrame;
 struct UndoStateShape;
 
-enum class MergeCheckError {
-	PartitionsMismatch,
-	SegmentsMismatch,
-	TooManyVertices,
-	TooManyTriangles
+struct MergeCheckErrors {
+	bool canMerge = false;
+	bool partitionsMismatch = false;
+	bool segmentsMismatch = false;
+	bool tooManyVertices = false;
+	bool tooManyTriangles = false;
 };
 
 class OutfitProject {
@@ -209,7 +210,7 @@ public:
 	bool PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge);
 	bool PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const std::vector<int> &p1s, const std::vector<int> &p2s);
 
-	std::vector<MergeCheckError> CheckMerge(const std::string &sourceName, const std::string &targetName);
+	void CheckMerge(const std::string &sourceName, const std::string &targetName, MergeCheckErrors &e);
 	void PrepareCopyGeo(NiShape *source, NiShape *target, UndoStateShape &uss);
 
 	NiShape* DuplicateShape(NiShape* sourceShape, const std::string& destShapeName);

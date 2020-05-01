@@ -7706,32 +7706,25 @@ void OutfitStudioFrame::CheckCopyGeo(wxDialog &dlg) {
 	std::string source = sourceChoice->GetString(sourceChoice->GetSelection()).ToStdString();
 	std::string target = targetChoice->GetString(targetChoice->GetSelection()).ToStdString();
 
-	std::vector<MergeCheckError> errcodes = project->CheckMerge(source, target);
-	if (errcodes.empty()) {
+	MergeCheckErrors e;
+	project->CheckMerge(source, target, e);
+	XRCCTRL(dlg, "wxID_OK", wxButton)->Enable(e.canMerge);
+
+	if (e.canMerge) {
 		errors->SetLabel(_("No mismatches found (but not all checks have been implemented)"));
-		XRCCTRL(dlg, "wxID_OK", wxButton)->Enable();
 		return;
 	}
 
-	XRCCTRL(dlg, "wxID_OK", wxButton)->Disable();
 	wxString msg;
 	msg << _("Errors:");
-	for (MergeCheckError errcode : errcodes) {
-		switch (errcode) {
-		case MergeCheckError::PartitionsMismatch:
-			msg << _("\nPartitions do not match");
-			break;
-		case MergeCheckError::SegmentsMismatch:
-			msg << _("\nSegments do not match");
-			break;
-		case MergeCheckError::TooManyVertices:
-			msg << _("\nResulting shape would have too many vertices");
-			break;
-		case MergeCheckError::TooManyTriangles:
-			msg << _("\nResulting shape would have too many triangles");
-			break;
-		}
-	}
+	if (e.partitionsMismatch)
+		msg << _("\nPartitions do not match");
+	if (e.segmentsMismatch)
+		msg << _("\nSegments do not match");
+	if (e.tooManyVertices)
+		msg << _("\nResulting shape would have too many vertices");
+	if (e.tooManyTriangles)
+		msg << _("\nResulting shape would have too many triangles");
 	errors->SetLabel(msg);
 }
 
