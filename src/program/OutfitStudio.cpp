@@ -7723,11 +7723,14 @@ void OutfitStudioFrame::CheckCopyGeo(wxDialog &dlg) {
 
 	if (e.canMerge) {
 		errors->SetLabel(_("No mismatches found (but not all checks have been implemented)"));
+		dlg.SetSize(dlg.GetBestSize());
 		return;
 	}
 
 	wxString msg;
 	msg << _("Errors:");
+	if (e.shapesSame)
+		msg << _("\nTarget must be different from source");
 	if (e.partitionsMismatch)
 		msg << _("\nPartitions do not match");
 	if (e.segmentsMismatch)
@@ -7737,6 +7740,8 @@ void OutfitStudioFrame::CheckCopyGeo(wxDialog &dlg) {
 	if (e.tooManyTriangles)
 		msg << _("\nResulting shape would have too many triangles");
 	errors->SetLabel(msg);
+
+	dlg.SetSize(dlg.GetBestSize());
 }
 
 void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {

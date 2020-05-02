@@ -17,6 +17,7 @@ struct UndoStateShape;
 
 struct MergeCheckErrors {
 	bool canMerge = false;
+	bool shapesSame = false;
 	bool partitionsMismatch = false;
 	bool segmentsMismatch = false;
 	bool tooManyVertices = false;

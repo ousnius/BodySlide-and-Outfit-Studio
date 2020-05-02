@@ -3035,6 +3035,11 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 }
 
 void OutfitProject::CheckMerge(const std::string &sourceName, const std::string &targetName, MergeCheckErrors &e) {
+	if (sourceName == targetName) {
+		e.shapesSame = true;
+		return;
+	}
+
 	NiShape *source = workNif.FindBlockByName<NiShape>(sourceName);
 	if (!source)
 		return;
