@@ -2334,9 +2334,11 @@ void NifFile::DeletePartitions(NiShape* shape, std::vector<int> &partInds) {
 
 	skinPart->DeletePartitions(partInds);
 
-	auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
-	if (bsdSkinInst)
+	if (skinInst->HasType<BSDismemberSkinInstance>()) {
+		auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
 		bsdSkinInst->DeletePartitions(partInds);
+		UpdatePartitionFlags(shape);
+	}
 }
 
 const std::vector<Vector3>* NifFile::GetRawVertsForShape(NiShape* shape) {
