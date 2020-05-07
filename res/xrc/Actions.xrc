@@ -974,7 +974,7 @@
 				<flag>wxALL|wxEXPAND</flag>
 				<border>10</border>
 				<object class="wxStaticText" name="copyGeometryDescription">
-					<label>This function copies vertices and triangles from one shape to another.  Partitions/segments of source and target shapes must match.  It is the user's responsibility to check (in NifSkope) that all other shape parameters, such as textures and transparency, match, or the results will likely be bad.</label>
+					<label>This function copies vertices and triangles from one shape to another.  Partitions/segments of source and target shapes must match.  It is the user's responsibility to check that all other shape and shader properties are compatible, or merging will likely have side effects.</label>
 					<wrap>550</wrap>
 				</object>
 			</object>

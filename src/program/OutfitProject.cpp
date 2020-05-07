@@ -3066,23 +3066,37 @@ void OutfitProject::CheckMerge(const std::string &sourceName, const std::string 
 	NifSegmentationInfo sinf, tinf;
 	bool gotssegs = workNif.GetShapeSegments(source, sinf, triParts);
 	bool gottsegs = workNif.GetShapeSegments(target, tinf, triParts);
-	if (gotssegs != gottsegs)
+	if (gotssegs != gottsegs) {
+		// Shape with segments and the other without
 		e.segmentsMismatch = true;
+	}
 	else if (gotssegs) {
-		if (sinf.ssfFile != tinf.ssfFile)
+		// Both shapes have segments
+		if (sinf.ssfFile != tinf.ssfFile) {
+			// Segment definition file path differs
 			e.segmentsMismatch = true;
-		if (sinf.segs.size() != tinf.segs.size())
+		}
+
+		if (sinf.segs.size() != tinf.segs.size()) {
+			// Shapes have different amount of segments
 			e.segmentsMismatch = true;
+		}
+
 		for (int si = 0; !e.segmentsMismatch && si < sinf.segs.size(); ++si) {
-			if (sinf.segs[si].subs.size() != tinf.segs[si].subs.size())
+			if (sinf.segs[si].subs.size() != tinf.segs[si].subs.size()) {
+				// Shapes have different amount of sub segments
 				e.segmentsMismatch = true;
+			}
+
 			for (int ssi = 0; !e.segmentsMismatch && ssi < sinf.segs[si].subs.size(); ++ssi) {
 				const NifSubSegmentInfo &sssinf = sinf.segs[si].subs[ssi];
 				const NifSubSegmentInfo &tssinf = tinf.segs[si].subs[ssi];
 				if (sssinf.userSlotID != tssinf.userSlotID ||
 					sssinf.material != tssinf.material ||
-					sssinf.extraData != tssinf.extraData)
+					sssinf.extraData != tssinf.extraData) {
+					// Sub segment information differs
 					e.segmentsMismatch = true;
+				}
 			}
 		}
 	}
@@ -3090,19 +3104,74 @@ void OutfitProject::CheckMerge(const std::string &sourceName, const std::string 
 	std::vector<BSDismemberSkinInstance::PartitionInfo> spinf, tpinf;
 	bool gotspar = workNif.GetShapePartitions(source, spinf, triParts);
 	bool gottpar = workNif.GetShapePartitions(target, tpinf, triParts);
-	if (gotspar != gottpar)
+	if (gotspar != gottpar) {
+		// Shape with partitions and the other without
 		e.partitionsMismatch = true;
+	}
 	else if (gotspar) {
-		if (spinf.size() != tpinf.size())
+		// Both shapes have partitions
+		if (spinf.size() != tpinf.size()) {
+			// Shapes have different amount of partitions
 			e.partitionsMismatch = true;
+		}
+
 		for (int pi = 0; !e.partitionsMismatch && pi < spinf.size(); ++pi) {
-			if (spinf[pi].partID != tpinf[pi].partID)
+			if (spinf[pi].partID != tpinf[pi].partID) {
+				// Partition slot differs
 				e.partitionsMismatch = true;
+			}
 		}
 	}
 
-	e.canMerge = !e.partitionsMismatch && !e.segmentsMismatch &&
-		!e.tooManyVertices && !e.tooManyTriangles;
+	auto sShader = workNif.GetShader(source);
+	auto tShader = workNif.GetShader(target);
+	if ((sShader != nullptr) != (tShader != nullptr)) {
+		// Shape with shader and the other without
+		e.shaderMismatch = true;
+	}
+	else if (sShader) {
+		// Both shapes have a shader
+		if (sShader->GetShaderType() != tShader->GetShaderType()) {
+			// Shader type differs
+			e.shaderMismatch = true;
+		}
+		else if (workNif.GetHeader().GetVersion().IsFO4()) {
+			if (!StringsEqualInsens(sShader->GetName().c_str(), tShader->GetName().c_str()) ||
+				!StringsEqualInsens(sShader->GetWetMaterialName().c_str(), tShader->GetWetMaterialName().c_str())) {
+				// Material file paths differ
+				e.shaderMismatch = true;
+			}
+		}
+
+		std::string sTexBase, tTexBase;
+		workNif.GetTextureSlot(sShader, sTexBase);
+		workNif.GetTextureSlot(tShader, tTexBase);
+
+		if (!StringsEqualInsens(sTexBase.c_str(), tTexBase.c_str())) {
+			// Base texture path differs (and possibly UV layout)
+			e.textureMismatch = true;
+		}
+	}
+
+	auto sAlphaProp = workNif.GetAlphaProperty(source);
+	auto tAlphaProp = workNif.GetAlphaProperty(target);
+	if ((sAlphaProp != nullptr) != (tAlphaProp != nullptr)) {
+		// Shape with alpha property and the other without
+		e.alphaPropMismatch = true;
+	}
+	else if (sAlphaProp) {
+		// Both shapes have an alpha property
+		if (sAlphaProp->flags != tAlphaProp->flags ||
+			sAlphaProp->threshold != tAlphaProp->threshold) {
+			// Flags or threshold differs
+			e.alphaPropMismatch = true;
+		}
+	}
+
+	e.canMerge =
+		!e.partitionsMismatch && !e.segmentsMismatch &&
+		!e.tooManyVertices && !e.tooManyTriangles &&
+		!e.shaderMismatch && !e.textureMismatch && !e.alphaPropMismatch;
 }
 
 void OutfitProject::PrepareCopyGeo(NiShape *source, NiShape *target, UndoStateShape &uss) {

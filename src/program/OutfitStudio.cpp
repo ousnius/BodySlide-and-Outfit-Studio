@@ -2089,8 +2089,8 @@ void OutfitStudioFrame::CalcAutoXMirrorBone() {
 		int flips = 0;
 		bool nomatch = false;
 		for (unsigned int i = 0; i < abLen && !nomatch; ++i) {
-			char abc = tolower(activeBone[i]);
-			char bc = tolower(b[i]);
+			char abc = std::tolower(activeBone[i]);
+			char bc = std::tolower(b[i]);
 			if (abc == 'l') {
 				if (bc == 'r')
 					++flips;
@@ -7730,7 +7730,7 @@ void OutfitStudioFrame::CheckCopyGeo(wxDialog &dlg) {
 	XRCCTRL(dlg, "wxID_OK", wxButton)->Enable(e.canMerge);
 
 	if (e.canMerge) {
-		errors->SetLabel(_("No mismatches found (but not all checks have been implemented)"));
+		errors->SetLabel(_("No errors found!"));
 		dlg.SetSize(dlg.GetBestSize());
 		return;
 	}
@@ -7738,17 +7738,23 @@ void OutfitStudioFrame::CheckCopyGeo(wxDialog &dlg) {
 	wxString msg;
 	msg << _("Errors:");
 	if (e.shapesSame)
-		msg << _("\nTarget must be different from source");
+		msg << "\n- " << _("Target must be different from source.");
 	if (e.partitionsMismatch)
-		msg << _("\nPartitions do not match");
+		msg << "\n- " << _("Partitions do not match. Make sure the amount of partitions and their slots match up.");
 	if (e.segmentsMismatch)
-		msg << _("\nSegments do not match");
+		msg << "\n- " << _("Segments do not match. Make sure the amount of segments, sub segments and their info as well as the segmentation file match.");
 	if (e.tooManyVertices)
-		msg << _("\nResulting shape would have too many vertices");
+		msg << "\n- " << _("Resulting shape would have too many vertices.");
 	if (e.tooManyTriangles)
-		msg << _("\nResulting shape would have too many triangles");
-	errors->SetLabel(msg);
+		msg << "\n- " << _("Resulting shape would have too many triangles.");
+	if (e.shaderMismatch)
+		msg << "\n- " << _("Shaders do not match. Make sure both shapes either have or don't have a shader and their shader type matches.");
+	if (e.textureMismatch)
+		msg << "\n- " << _("Base texture doesn't match. Make sure both shapes have the same base/diffuse texture path.");
+	if (e.alphaPropMismatch)
+		msg << "\n- " << _("Alpha property mismatch. Make sure both shapes either have or don't have an alpha property and their flags + threshold match.");
 
+	errors->SetLabel(msg);
 	dlg.SetSize(dlg.GetBestSize());
 }
 

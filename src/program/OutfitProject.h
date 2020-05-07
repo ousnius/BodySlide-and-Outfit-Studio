@@ -22,6 +22,9 @@ struct MergeCheckErrors {
 	bool segmentsMismatch = false;
 	bool tooManyVertices = false;
 	bool tooManyTriangles = false;
+	bool shaderMismatch = false;
+	bool textureMismatch = false;
+	bool alphaPropMismatch = false;
 };
 
 class OutfitProject {
