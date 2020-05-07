@@ -4911,6 +4911,7 @@ void OutfitStudioFrame::OnPartitionTreeContext(wxCommandEvent& WXUNUSED(event)) 
 
 void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	bool isSkyrim = wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE || wxGetApp().targetGame == SKYRIMVR;
+
 	// Find an unused partition index
 	std::set<int> partInds;
 	wxTreeItemIdValue cookie;
@@ -4921,9 +4922,10 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 			partInds.insert(partitionData->index);
 		child = partitionTree->GetNextChild(partitionRoot, cookie);
 	}
+
 	int partInd = 0;
 	while (partInds.count(partInd) != 0) ++partInd;
-	
+
 	// Create partition item
 	wxTreeItemId newItem;
 	if (!activePartition.IsOk() || partitionTree->GetChildrenCount(partitionRoot) <= 0) {
@@ -4932,6 +4934,7 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 			newItem = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1,
 				new PartitionItemData(partInd, isSkyrim ? 32 : 0));
 		}
+
 		for (int &pi : triParts)
 			pi = partInd;
 	}
@@ -4943,7 +4946,7 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 		partitionTree->UnselectAll();
 		partitionTree->SelectItem(newItem);
 	}
-	
+
 	UpdatePartitionNames();
 }
 
@@ -5122,6 +5125,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 		// Set colors for non-selected partitions
 		int nsm = m->subMeshes.size();
 		m->subMeshesColor.resize(nsm);
+
 		for (int pi = 0; pi < nsm; ++pi) {
 			float colorValue = (pi + 1.0f) / (nsm + 1);
 			m->subMeshesColor[pi] = glView->CreateColorRamp(colorValue);
@@ -5129,9 +5133,11 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 
 		// Set color for selected partition
 		if (partitionData) {
-			m->subMeshesColor[partitionData->index].x = 1.0f;
-			m->subMeshesColor[partitionData->index].y = 0.0f;
-			m->subMeshesColor[partitionData->index].z = 0.0f;
+			if (nsm > partitionData->index) {
+				m->subMeshesColor[partitionData->index].x = 1.0f;
+				m->subMeshesColor[partitionData->index].y = 0.0f;
+				m->subMeshesColor[partitionData->index].z = 0.0f;
+			}
 		}
 
 		// Set mask
@@ -5198,6 +5204,8 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 
 	// Find first triangle of each sub-mesh.
 	m->subMeshes.clear();
+	m->subMeshesColor.clear();
+
 	for (int ti = 0; ti < nTris; ++ti) {
 		while (tp[triInds[ti]] >= m->subMeshes.size())
 			m->subMeshes.emplace_back(ti, 0);
