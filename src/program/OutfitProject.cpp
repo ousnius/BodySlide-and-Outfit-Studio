@@ -3034,6 +3034,179 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	return true;
 }
 
+void OutfitProject::CheckMerge(const std::string &sourceName, const std::string &targetName, MergeCheckErrors &e) {
+	if (sourceName == targetName) {
+		e.shapesSame = true;
+		return;
+	}
+
+	NiShape *source = workNif.FindBlockByName<NiShape>(sourceName);
+	if (!source)
+		return;
+	NiShape *target = workNif.FindBlockByName<NiShape>(targetName);
+	if (!target)
+		return;
+
+	size_t maxVertIndex = std::numeric_limits<ushort>().max();
+	size_t maxTriIndex = std::numeric_limits<ushort>().max();
+	if (workNif.GetHeader().GetVersion().IsFO4())
+		maxTriIndex = std::numeric_limits<uint>().max();
+
+	size_t snVerts = source->GetNumVertices();
+	size_t tnVerts = target->GetNumVertices();
+	if (snVerts + tnVerts > maxVertIndex)
+		e.tooManyVertices = true;
+
+	size_t snTris = source->GetNumTriangles();
+	size_t tnTris = target->GetNumTriangles();
+	if (snTris + tnTris > maxTriIndex)
+		e.tooManyTriangles = true;
+
+	std::vector<int> triParts;
+	NifSegmentationInfo sinf, tinf;
+	bool gotssegs = workNif.GetShapeSegments(source, sinf, triParts);
+	bool gottsegs = workNif.GetShapeSegments(target, tinf, triParts);
+	if (gotssegs != gottsegs) {
+		// Shape with segments and the other without
+		e.segmentsMismatch = true;
+	}
+	else if (gotssegs) {
+		// Both shapes have segments
+		if (sinf.ssfFile != tinf.ssfFile) {
+			// Segment definition file path differs
+			e.segmentsMismatch = true;
+		}
+
+		if (sinf.segs.size() != tinf.segs.size()) {
+			// Shapes have different amount of segments
+			e.segmentsMismatch = true;
+		}
+
+		for (int si = 0; !e.segmentsMismatch && si < sinf.segs.size(); ++si) {
+			if (sinf.segs[si].subs.size() != tinf.segs[si].subs.size()) {
+				// Shapes have different amount of sub segments
+				e.segmentsMismatch = true;
+			}
+
+			for (int ssi = 0; !e.segmentsMismatch && ssi < sinf.segs[si].subs.size(); ++ssi) {
+				const NifSubSegmentInfo &sssinf = sinf.segs[si].subs[ssi];
+				const NifSubSegmentInfo &tssinf = tinf.segs[si].subs[ssi];
+				if (sssinf.userSlotID != tssinf.userSlotID ||
+					sssinf.material != tssinf.material ||
+					sssinf.extraData != tssinf.extraData) {
+					// Sub segment information differs
+					e.segmentsMismatch = true;
+				}
+			}
+		}
+	}
+
+	std::vector<BSDismemberSkinInstance::PartitionInfo> spinf, tpinf;
+	bool gotspar = workNif.GetShapePartitions(source, spinf, triParts);
+	bool gottpar = workNif.GetShapePartitions(target, tpinf, triParts);
+	if (gotspar != gottpar) {
+		// Shape with partitions and the other without
+		e.partitionsMismatch = true;
+	}
+	else if (gotspar) {
+		// Both shapes have partitions
+		if (spinf.size() != tpinf.size()) {
+			// Shapes have different amount of partitions
+			e.partitionsMismatch = true;
+		}
+
+		for (int pi = 0; !e.partitionsMismatch && pi < spinf.size(); ++pi) {
+			if (spinf[pi].partID != tpinf[pi].partID) {
+				// Partition slot differs
+				e.partitionsMismatch = true;
+			}
+		}
+	}
+
+	auto sShader = workNif.GetShader(source);
+	auto tShader = workNif.GetShader(target);
+	if ((sShader != nullptr) != (tShader != nullptr)) {
+		// Shape with shader and the other without
+		e.shaderMismatch = true;
+	}
+	else if (sShader) {
+		// Both shapes have a shader
+		if (sShader->GetShaderType() != tShader->GetShaderType()) {
+			// Shader type differs
+			e.shaderMismatch = true;
+		}
+		else if (workNif.GetHeader().GetVersion().IsFO4()) {
+			if (!StringsEqualInsens(sShader->GetName().c_str(), tShader->GetName().c_str()) ||
+				!StringsEqualInsens(sShader->GetWetMaterialName().c_str(), tShader->GetWetMaterialName().c_str())) {
+				// Material file paths differ
+				e.shaderMismatch = true;
+			}
+		}
+
+		std::string sTexBase, tTexBase;
+		workNif.GetTextureSlot(sShader, sTexBase);
+		workNif.GetTextureSlot(tShader, tTexBase);
+
+		if (!StringsEqualInsens(sTexBase.c_str(), tTexBase.c_str())) {
+			// Base texture path differs (and possibly UV layout)
+			e.textureMismatch = true;
+		}
+	}
+
+	auto sAlphaProp = workNif.GetAlphaProperty(source);
+	auto tAlphaProp = workNif.GetAlphaProperty(target);
+	if ((sAlphaProp != nullptr) != (tAlphaProp != nullptr)) {
+		// Shape with alpha property and the other without
+		e.alphaPropMismatch = true;
+	}
+	else if (sAlphaProp) {
+		// Both shapes have an alpha property
+		if (sAlphaProp->flags != tAlphaProp->flags ||
+			sAlphaProp->threshold != tAlphaProp->threshold) {
+			// Flags or threshold differs
+			e.alphaPropMismatch = true;
+		}
+	}
+
+	e.canMerge =
+		!e.partitionsMismatch && !e.segmentsMismatch &&
+		!e.tooManyVertices && !e.tooManyTriangles &&
+		!e.shaderMismatch && !e.textureMismatch && !e.alphaPropMismatch;
+}
+
+void OutfitProject::PrepareCopyGeo(NiShape *source, NiShape *target, UndoStateShape &uss) {
+	if (!source || !target)
+		return;
+
+	size_t snVerts = source->GetNumVertices();
+	size_t tnVerts = target->GetNumVertices();
+	size_t snTris = source->GetNumTriangles();
+	size_t tnTris = target->GetNumTriangles();
+
+	std::vector<int> vinds(snVerts);
+	std::vector<int> tinds(snTris);
+	for (int i = 0; i < snVerts; ++i)
+		vinds[i] = i;
+	for (int i = 0; i < snTris; ++i)
+		tinds[i] = i;
+
+	CollectVertexData(source, uss, vinds);
+	CollectTriangleData(source, uss, tinds);
+
+	for (int vi = 0; vi < snVerts; ++vi)
+		uss.delVerts[vi].index += tnVerts;
+
+	for (int ti = 0; ti < snTris; ++ti) {
+		uss.delTris[ti].index += tnTris;
+		uss.delTris[ti].t.p1 += tnVerts;
+		uss.delTris[ti].t.p2 += tnVerts;
+		uss.delTris[ti].t.p3 += tnVerts;
+	}
+
+	uss.delVerts.swap(uss.addVerts);
+	uss.delTris.swap(uss.addTris);
+}
+
 NiShape* OutfitProject::DuplicateShape(NiShape* sourceShape, const std::string& destShapeName) {
 	if (!sourceShape)
 		return nullptr;

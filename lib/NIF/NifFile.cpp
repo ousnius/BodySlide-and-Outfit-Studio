@@ -2320,6 +2320,27 @@ void NifFile::SetDefaultPartition(NiShape* shape) {
 	}
 }
 
+void NifFile::DeletePartitions(NiShape* shape, std::vector<int> &partInds) {
+	if (!shape)
+		return;
+
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (!skinInst)
+		return;
+
+	auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+	if (!skinPart)
+		return;
+
+	skinPart->DeletePartitions(partInds);
+
+	auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
+	if (bsdSkinInst) {
+		bsdSkinInst->DeletePartitions(partInds);
+		UpdatePartitionFlags(shape);
+	}
+}
+
 const std::vector<Vector3>* NifFile::GetRawVertsForShape(NiShape* shape) {
 	if (!shape)
 		return nullptr;
@@ -3125,14 +3146,9 @@ bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& ind
 
 			std::vector<int> emptyIndices;
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
-				if (skinInst->HasType<BSDismemberSkinInstance>()) {
-					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
-
-					// Delete partition info in descending order
-					std::sort(emptyIndices.begin(), emptyIndices.end(), std::greater<>());
-					for (auto &i : emptyIndices)
-						bsdSkinInst->RemovePartition(i);
-
+				auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
+				if (bsdSkinInst) {
+					bsdSkinInst->DeletePartitions(emptyIndices);
 					UpdatePartitionFlags(shape);
 				}
 			}

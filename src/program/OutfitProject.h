@@ -15,6 +15,18 @@ See the included LICENSE file
 class OutfitStudioFrame;
 struct UndoStateShape;
 
+struct MergeCheckErrors {
+	bool canMerge = false;
+	bool shapesSame = false;
+	bool partitionsMismatch = false;
+	bool segmentsMismatch = false;
+	bool tooManyVertices = false;
+	bool tooManyTriangles = false;
+	bool shaderMismatch = false;
+	bool textureMismatch = false;
+	bool alphaPropMismatch = false;
+};
+
 class OutfitProject {
 	OutfitStudioFrame* owner = nullptr;
 
@@ -201,6 +213,9 @@ public:
 	bool PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices);
 	bool PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge);
 	bool PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const std::vector<int> &p1s, const std::vector<int> &p2s);
+
+	void CheckMerge(const std::string &sourceName, const std::string &targetName, MergeCheckErrors &e);
+	void PrepareCopyGeo(NiShape *source, NiShape *target, UndoStateShape &uss);
 
 	NiShape* DuplicateShape(NiShape* sourceShape, const std::string& destShapeName);
 	void DeleteShape(NiShape* shape);

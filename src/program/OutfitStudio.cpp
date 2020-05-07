@@ -192,6 +192,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("setReference"), OutfitStudioFrame::OnSetReference)
 	EVT_MENU(XRCID("deleteVerts"), OutfitStudioFrame::OnDeleteVerts)
 	EVT_MENU(XRCID("separateVerts"), OutfitStudioFrame::OnSeparateVerts)
+	EVT_MENU(XRCID("copyGeo"), OutfitStudioFrame::OnCopyGeo)
 	EVT_MENU(XRCID("copyShape"), OutfitStudioFrame::OnDupeShape)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudioFrame::OnDeleteShape)
 	EVT_MENU(XRCID("addBone"), OutfitStudioFrame::OnAddBone)
@@ -2088,8 +2089,8 @@ void OutfitStudioFrame::CalcAutoXMirrorBone() {
 		int flips = 0;
 		bool nomatch = false;
 		for (unsigned int i = 0; i < abLen && !nomatch; ++i) {
-			char abc = tolower(activeBone[i]);
-			char bc = tolower(b[i]);
+			char abc = std::tolower(activeBone[i]);
+			char bc = std::tolower(b[i]);
 			if (abc == 'l') {
 				if (bc == 'r')
 					++flips;
@@ -4910,6 +4911,7 @@ void OutfitStudioFrame::OnPartitionTreeContext(wxCommandEvent& WXUNUSED(event)) 
 
 void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	bool isSkyrim = wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE || wxGetApp().targetGame == SKYRIMVR;
+
 	// Find an unused partition index
 	std::set<int> partInds;
 	wxTreeItemIdValue cookie;
@@ -4920,9 +4922,10 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 			partInds.insert(partitionData->index);
 		child = partitionTree->GetNextChild(partitionRoot, cookie);
 	}
+
 	int partInd = 0;
 	while (partInds.count(partInd) != 0) ++partInd;
-	
+
 	// Create partition item
 	wxTreeItemId newItem;
 	if (!activePartition.IsOk() || partitionTree->GetChildrenCount(partitionRoot) <= 0) {
@@ -4931,6 +4934,7 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 			newItem = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1,
 				new PartitionItemData(partInd, isSkyrim ? 32 : 0));
 		}
+
 		for (int &pi : triParts)
 			pi = partInd;
 	}
@@ -4942,7 +4946,7 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 		partitionTree->UnselectAll();
 		partitionTree->SelectItem(newItem);
 	}
-	
+
 	UpdatePartitionNames();
 }
 
@@ -5002,6 +5006,7 @@ void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 		return;
 
 	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+	std::vector<bool> delPartFlags;
 
 	wxTreeItemIdValue cookie;
 	wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
@@ -5010,16 +5015,26 @@ void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
 		if (partitionData) {
 			const int index = partitionData->index;
-			if (index >= partitionInfo.size())
+			if (index >= partitionInfo.size()) {
 				partitionInfo.resize(index + 1);
+				delPartFlags.resize(index + 1, true);
+			}
 			partitionInfo[index].flags = PF_EDITOR_VISIBLE;
 			partitionInfo[index].partID = partitionData->type;
+			delPartFlags[index] = false;
 		}
 
 		child = partitionTree->GetNextChild(partitionRoot, cookie);
 	}
 
+	std::vector<int> delPartInds;
+	for (int pi = 0; pi < delPartFlags.size(); ++pi)
+		if (delPartFlags[pi])
+			delPartInds.push_back(pi);
+
 	project->GetWorkNif()->SetShapePartitions(shape, partitionInfo, triParts);
+	if (!delPartInds.empty())
+		project->GetWorkNif()->DeletePartitions(shape, delPartInds);
 	CreatePartitionTree(shape);
 }
 
@@ -5110,6 +5125,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 		// Set colors for non-selected partitions
 		int nsm = m->subMeshes.size();
 		m->subMeshesColor.resize(nsm);
+
 		for (int pi = 0; pi < nsm; ++pi) {
 			float colorValue = (pi + 1.0f) / (nsm + 1);
 			m->subMeshesColor[pi] = glView->CreateColorRamp(colorValue);
@@ -5117,9 +5133,11 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 
 		// Set color for selected partition
 		if (partitionData) {
-			m->subMeshesColor[partitionData->index].x = 1.0f;
-			m->subMeshesColor[partitionData->index].y = 0.0f;
-			m->subMeshesColor[partitionData->index].z = 0.0f;
+			if (nsm > partitionData->index) {
+				m->subMeshesColor[partitionData->index].x = 1.0f;
+				m->subMeshesColor[partitionData->index].y = 0.0f;
+				m->subMeshesColor[partitionData->index].z = 0.0f;
+			}
 		}
 
 		// Set mask
@@ -5186,6 +5204,8 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 
 	// Find first triangle of each sub-mesh.
 	m->subMeshes.clear();
+	m->subMeshesColor.clear();
+
 	for (int ti = 0; ti < nTris; ++ti) {
 		while (tp[triInds[ti]] >= m->subMeshes.size())
 			m->subMeshes.emplace_back(ti, 0);
@@ -7694,6 +7714,121 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	RefreshGUIFromProj(false);
 
 	glView->ClearActiveMask();
+	ApplySliders();
+}
+
+void OutfitStudioFrame::CheckCopyGeo(wxDialog &dlg) {
+	wxStaticText *errors = XRCCTRL(dlg, "copyGeometryErrors", wxStaticText);
+	wxChoice *sourceChoice = XRCCTRL(dlg, "sourceChoice", wxChoice);
+	wxChoice *targetChoice = XRCCTRL(dlg, "targetChoice", wxChoice);
+
+	std::string source = sourceChoice->GetString(sourceChoice->GetSelection()).ToStdString();
+	std::string target = targetChoice->GetString(targetChoice->GetSelection()).ToStdString();
+
+	MergeCheckErrors e;
+	project->CheckMerge(source, target, e);
+	XRCCTRL(dlg, "wxID_OK", wxButton)->Enable(e.canMerge);
+
+	if (e.canMerge) {
+		errors->SetLabel(_("No errors found!"));
+		dlg.SetSize(dlg.GetBestSize());
+		return;
+	}
+
+	wxString msg;
+	msg << _("Errors:");
+	if (e.shapesSame)
+		msg << "\n- " << _("Target must be different from source.");
+	if (e.partitionsMismatch)
+		msg << "\n- " << _("Partitions do not match. Make sure the amount of partitions and their slots match up.");
+	if (e.segmentsMismatch)
+		msg << "\n- " << _("Segments do not match. Make sure the amount of segments, sub segments and their info as well as the segmentation file match.");
+	if (e.tooManyVertices)
+		msg << "\n- " << _("Resulting shape would have too many vertices.");
+	if (e.tooManyTriangles)
+		msg << "\n- " << _("Resulting shape would have too many triangles.");
+	if (e.shaderMismatch)
+		msg << "\n- " << _("Shaders do not match. Make sure both shapes either have or don't have a shader and their shader type matches.");
+	if (e.textureMismatch)
+		msg << "\n- " << _("Base texture doesn't match. Make sure both shapes have the same base/diffuse texture path.");
+	if (e.alphaPropMismatch)
+		msg << "\n- " << _("Alpha property mismatch. Make sure both shapes either have or don't have an alpha property and their flags + threshold match.");
+
+	errors->SetLabel(msg);
+	dlg.SetSize(dlg.GetBestSize());
+}
+
+void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
+	if (bEditSlider) {
+		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
+		return;
+	}
+
+	wxDialog dlg;
+	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCopyGeometry"))
+		return;
+
+	wxChoice *sourceChoice = XRCCTRL(dlg, "sourceChoice", wxChoice);
+	wxChoice *targetChoice = XRCCTRL(dlg, "targetChoice", wxChoice);
+	if (!sourceChoice || !targetChoice)
+		return;
+
+	std::string sourceShapeName;
+	if (activeItem)
+		sourceShapeName = activeItem->GetShape()->GetName();
+
+	std::vector<std::string> shapeList = GetShapeList();
+	if (shapeList.size() < 2)
+		return;
+
+	for (const std::string &shape : shapeList) {
+		sourceChoice->AppendString(shape);
+		targetChoice->AppendString(shape);
+		if (shape == sourceShapeName)
+			sourceChoice->SetSelection(sourceChoice->GetCount() - 1);
+	}
+
+	if (sourceChoice->GetSelection() == wxNOT_FOUND)
+		sourceChoice->SetSelection(0);
+	if (sourceChoice->GetSelection() == 0)
+		targetChoice->SetSelection(1);
+	else
+		targetChoice->SetSelection(0);
+
+	sourceChoice->Bind(wxEVT_CHOICE, [this,&dlg](wxCommandEvent&) {
+		CheckCopyGeo(dlg);
+	});
+	targetChoice->Bind(wxEVT_CHOICE, [this,&dlg](wxCommandEvent&) {
+		CheckCopyGeo(dlg);
+	});
+	CheckCopyGeo(dlg);
+
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
+	sourceShapeName = sourceChoice->GetString(sourceChoice->GetSelection()).ToStdString();
+	std::string targetShapeName = targetChoice->GetString(targetChoice->GetSelection()).ToStdString();
+
+	NiShape *sourceShape = project->GetWorkNif()->FindBlockByName<NiShape>(sourceShapeName);
+	if (!sourceShape)
+		return;
+	NiShape *targetShape = project->GetWorkNif()->FindBlockByName<NiShape>(targetShapeName);
+	if (!targetShape)
+		return;
+
+	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UT_MESH;
+	usp->usss.resize(1);
+	usp->usss[0].shapeName = targetShapeName;
+
+	project->PrepareCopyGeo(sourceShape, targetShape, usp->usss[0]);
+
+	project->ApplyShapeMeshUndo(targetShape, usp->usss[0], false);
+
+	if (XRCCTRL(dlg, "checkDeleteSource", wxCheckBox)->IsChecked())
+		project->DeleteShape(sourceShape);
+
+	RefreshGUIFromProj(false);
 	ApplySliders();
 }
 
