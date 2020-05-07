@@ -1,10 +1,10 @@
 #include "StringStuff.h"
-#include <ctype.h>
+#include <cctype>
 
 bool StringsEqualNInsens(const char *a, const char *b, int len)
 {
 	while (len > 0) {
-		if (tolower(*a) != tolower(*b)) return false;
+		if (std::tolower(*a) != std::tolower(*b)) return false;
 		if (*a == '\0') return true;
 		++a, ++b, --len;
 	}
@@ -14,7 +14,7 @@ bool StringsEqualNInsens(const char *a, const char *b, int len)
 bool StringsEqualInsens(const char *a, const char *b)
 {
 	while (true) {
-		if (tolower(*a) != tolower(*b)) return false;
+		if (std::tolower(*a) != std::tolower(*b)) return false;
 		if (*a == '\0') return true;
 		++a, ++b;
 	}
