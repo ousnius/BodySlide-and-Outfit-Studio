@@ -3146,10 +3146,8 @@ bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& ind
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
 				if (skinInst->HasType<BSDismemberSkinInstance>()) {
 					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
-					if (bsdSkinInst) {
-						bsdSkinInst->DeletePartitions(emptyIndices);
-						UpdatePartitionFlags(shape);
-					}
+					bsdSkinInst->DeletePartitions(emptyIndices);
+					UpdatePartitionFlags(shape);
 				}
 			}
 		}
