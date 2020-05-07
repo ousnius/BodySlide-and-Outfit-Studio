@@ -2334,8 +2334,8 @@ void NifFile::DeletePartitions(NiShape* shape, std::vector<int> &partInds) {
 
 	skinPart->DeletePartitions(partInds);
 
-	if (skinInst->HasType<BSDismemberSkinInstance>()) {
-		auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
+	auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
+	if (bsdSkinInst) {
 		bsdSkinInst->DeletePartitions(partInds);
 		UpdatePartitionFlags(shape);
 	}
@@ -3146,8 +3146,8 @@ bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& ind
 
 			std::vector<int> emptyIndices;
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
-				if (skinInst->HasType<BSDismemberSkinInstance>()) {
-					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
+				auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
+				if (bsdSkinInst) {
 					bsdSkinInst->DeletePartitions(emptyIndices);
 					UpdatePartitionFlags(shape);
 				}
