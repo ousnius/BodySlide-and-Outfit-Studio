@@ -7,339 +7,386 @@
 		<title>Outfit Studio</title>
 		<centered>1</centered>
 		<aui_managed>0</aui_managed>
-		<object class="wxSplitterWindow" name="splitter">
-			<style>wxSP_3D|wxSP_LIVE_UPDATE</style>
-			<sashpos>850</sashpos>
-			<gravity>1</gravity>
-			<minsize>250</minsize>
-			<orientation>vertical</orientation>
-			<object class="wxPanel" name="leftSplitPanel">
-				<style>wxTAB_TRAVERSAL</style>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>0</border>
+				<object class="wxToolBar" name="toolBarH">
+					<style>wxTB_HORIZONTAL|wxTB_FLAT</style>
+					<bg>#707070</bg>
+					<fg>#ffffff</fg>
+					<dontattachtoframe>1</dontattachtoframe>
+					<object class="tool" name="btnNewProject">
+						<label>New Project</label>
+						<tooltip>Create a new project by selecting a reference body slider set, and outfit model files.</tooltip>
+						<bitmap>$(AppDir)\res\images\NewProj.png</bitmap>
+					</object>
+					<object class="separator" />
+					<object class="tool" name="btnLoadProject">
+						<label>Load Project</label>
+						<tooltip>Load a previously created slider set for editing.</tooltip>
+						<bitmap>$(AppDir)\res\images\LoadProj.png</bitmap>
+					</object>
+					<object class="separator" />
+					<object class="tool" name="btnSelect">
+						<label>Select</label>
+						<tooltip>Navigate and select meshes (or vertices in vertex mode).</tooltip>
+						<bitmap>$(AppDir)\res\images\SelectBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\SelectBrush_d.png</bitmap2>
+						<radio>1</radio>
+						<checked>1</checked>
+					</object>
+					<object class="tool" name="btnMaskBrush">
+						<label>Mask</label>
+						<tooltip>Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.</tooltip>
+						<bitmap>$(AppDir)\res\images\MaskBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\MaskBrush_d.png</bitmap2>
+						<radio>1</radio>
+					</object>
+					<object class="tool" name="btnInflateBrush">
+						<label>Inflate</label>
+						<tooltip>Increase mesh volume in an area.</tooltip>
+						<bitmap>$(AppDir)\res\images\InflateBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\InflateBrush_d.png</bitmap2>
+						<radio>1</radio>
+					</object>
+					<object class="tool" name="btnDeflateBrush">
+						<label>Deflate</label>
+						<tooltip>Decrease mesh volume in an area.</tooltip>
+						<bitmap>$(AppDir)\res\images\DeflateBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\DeflateBrush_d.png</bitmap2>
+						<radio>1</radio>
+					</object>
+					<object class="tool" name="btnMoveBrush">
+						<label>Move</label>
+						<tooltip>Move vertices over a plane parallel to the view.</tooltip>
+						<bitmap>$(AppDir)\res\images\MoveBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\MoveBrush_d.png</bitmap2>
+						<radio>1</radio>
+					</object>
+					<object class="tool" name="btnSmoothBrush">
+						<label>Smooth</label>
+						<tooltip>Smooth an area of a mesh.</tooltip>
+						<bitmap>$(AppDir)\res\images\SmoothBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\SmoothBrush_d.png</bitmap2>
+						<radio>1</radio>
+					</object>
+					<object class="tool" name="btnWeightBrush">
+						<label>Weight Paint</label>
+						<tooltip>Apply animation weight values for currently selected bone.\nHold down the ALT key to weaken the weighting.</tooltip>
+						<bitmap>$(AppDir)\res\images\WeightBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\WeightBrush_d.png</bitmap2>
+						<radio>1</radio>
+						<disabled>1</disabled>
+					</object>
+					<object class="tool" name="btnColorBrush">
+						<label>Color Paint</label>
+						<tooltip>Apply vertex colors.\nHold down the ALT key to remove colors.</tooltip>
+						<bitmap>$(AppDir)\res\images\ColorBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\ColorBrush_d.png</bitmap2>
+						<radio>1</radio>
+						<disabled>1</disabled>
+					</object>
+					<object class="tool" name="btnAlphaBrush">
+						<label>Alpha Paint</label>
+						<tooltip>Apply vertex alpha.\nHold down the ALT key to remove alpha.</tooltip>
+						<bitmap>$(AppDir)\res\images\AlphaBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\AlphaBrush_d.png</bitmap2>
+						<radio>1</radio>
+						<disabled>1</disabled>
+					</object>
+					<object class="tool" name="btnCollapseVertex">
+						<label>Collapse Vertex</label>
+						<tooltip>Deletes vertices with no more than three connections, without creating a hole.</tooltip>
+						<bitmap>$(AppDir)\res\images\CollapseVertex.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\CollapseVertex_d.png</bitmap2>
+						<radio>1</radio>
+					</object>
+					<object class="tool" name="btnFlipEdgeTool">
+						<label>Flip Edge</label>
+						<tooltip>Flips mesh edges so that the opposite pair of vertices is connected.</tooltip>
+						<bitmap>$(AppDir)\res\images\FlipEdge.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\FlipEdge_d.png</bitmap2>
+						<radio>1</radio>
+					</object>
+					<object class="tool" name="btnSplitEdgeTool">
+						<label>Split Edge</label>
+						<tooltip>Splits a mesh edge in two with a new vertex.</tooltip>
+						<bitmap>$(AppDir)\res\images\SplitEdge.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\SplitEdge_d.png</bitmap2>
+						<radio>1</radio>
+					</object>
+					<object class="separator" />
+					<object class="wxSlider" name="fovSlider">
+						<size>100,25</size>
+						<value>65</value>
+						<min>20</min>
+						<max>120</max>
+						<tooltip>Field of View</tooltip>
+					</object>
+					<object class="wxStaticText" name="fovLabel">
+						<fg>#ffffff</fg>
+						<label>Field of View: 65</label>
+					</object>
+					<object class="space"/>
+					<object class="tool" name="btnDiscord">
+						<label>Discord</label>
+						<tooltip>Open Discord invite link.</tooltip>
+						<bitmap>$(AppDir)\res\images\Discord.png</bitmap>
+					</object>
+					<object class="tool" name="btnPayPal">
+						<label>PayPal</label>
+						<tooltip>Open PayPal link.</tooltip>
+						<bitmap>$(AppDir)\res\images\PayPal.png</bitmap>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>0</border>
 				<object class="wxBoxSizer">
-					<orient>wxVERTICAL</orient>
+					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxEXPAND</flag>
 						<border>0</border>
-						<object class="wxCollapsiblePane" name="brushPane">
-							<style>wxCP_DEFAULT_STYLE</style>
-							<collapsed>1</collapsed>
-							<label>Brush Settings</label>
-							<bg>wxSYS_COLOUR_MENU</bg>
-							<object class="panewindow">
-								<object class="wxFlexGridSizer">
-									<rows>0</rows>
-									<cols>3</cols>
-									<vgap>0</vgap>
-									<hgap>0</hgap>
-									<growablecols>1</growablecols>
-									<growablerows></growablerows>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxLEFT</flag>
-										<border>15</border>
-										<object class="wxStaticText" name="lbBrushSize">
-											<label>Size</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxALL|wxEXPAND</flag>
-										<border>5</border>
-										<object class="wxSlider" name="brushSize">
-											<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-											<size>-1,25</size>
-											<value>0</value>
-											<min>0</min>
-											<max>1000</max>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxRIGHT</flag>
-										<border>15</border>
-										<object class="wxStaticText" name="valSize">
-											<label>0.000</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxLEFT</flag>
-										<border>15</border>
-										<object class="wxStaticText" name="lbBrushStrength">
-											<label>Strength</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxALL|wxEXPAND</flag>
-										<border>5</border>
-										<object class="wxSlider" name="brushStr">
-											<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-											<size>-1,25</size>
-											<value>0</value>
-											<min>0</min>
-											<max>1000</max>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxRIGHT</flag>
-										<border>15</border>
-										<object class="wxStaticText" name="valStr">
-											<label>0.000</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxLEFT</flag>
-										<border>15</border>
-										<object class="wxStaticText" name="lbBrushFocus">
-											<label>Focus</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxALL|wxEXPAND</flag>
-										<border>5</border>
-										<object class="wxSlider" name="brushFocus">
-											<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-											<size>-1,25</size>
-											<value>0</value>
-											<min>0</min>
-											<max>1000</max>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxRIGHT</flag>
-										<border>15</border>
-										<object class="wxStaticText" name="valFocus">
-											<label>0.000</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxLEFT</flag>
-										<border>15</border>
-										<object class="wxStaticText" name="lbBrushSpace">
-											<label>Spacing</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxALL|wxEXPAND</flag>
-										<border>5</border>
-										<object class="wxSlider" name="brushSpace">
-											<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-											<size>-1,25</size>
-											<value>0</value>
-											<min>0</min>
-											<max>1000</max>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxRIGHT</flag>
-										<border>15</border>
-										<object class="wxStaticText" name="valSpace">
-											<label>0.000</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="spacer">
-										<option>4</option>
-										<flag>wxALL|wxEXPAND</flag>
-										<border>5</border>
-										<size>0,0</size>
-									</object>
-								</object>
+						<object class="wxToolBar" name="toolBarV">
+							<style>wxTB_VERTICAL|wxTB_FLAT</style>
+							<bg>#707070</bg>
+							<fg>#ffffff</fg>
+							<dontattachtoframe>1</dontattachtoframe>
+							<object class="tool" name="btnTransform">
+								<label>Transform</label>
+								<tooltip>Shows a transform tool to manipulate shapes and vertices with.</tooltip>
+								<bitmap>$(AppDir)\res\images\TransformTool.png</bitmap>
+								<bitmap2>$(AppDir)\res\images\TransformTool_d.png</bitmap2>
+								<toggle>1</toggle>
+							</object>
+							<object class="tool" name="btnPivot">
+								<label>Pivot</label>
+								<tooltip>Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.</tooltip>
+								<bitmap>$(AppDir)\res\images\Pivot.png</bitmap>
+								<bitmap2>$(AppDir)\res\images\Pivot_d.png</bitmap2>
+								<toggle>1</toggle>
+							</object>
+							<object class="tool" name="btnVertexEdit">
+								<label>Vertex Edit</label>
+								<tooltip>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select/unmask it.\nHold down CTRL to unselect/mask it.</tooltip>
+								<bitmap>$(AppDir)\res\images\VertexEdit.png</bitmap>
+								<bitmap2>$(AppDir)\res\images\VertexEdit_d.png</bitmap2>
+								<toggle>1</toggle>
+							</object>
+							<object class="separator" />
+							<object class="tool" name="btnXMirror">
+								<label>X Mirror</label>
+								<tooltip>Mirror edits across the X axis.</tooltip>
+								<bitmap>$(AppDir)\res\images\XMirror.png</bitmap>
+								<toggle>1</toggle>
+								<checked>1</checked>
+							</object>
+							<object class="tool" name="btnConnected">
+								<label>Edit Connected Only\tC</label>
+								<tooltip>Edit only vertices that are connected to the ones under the brush within the brush radius.</tooltip>
+								<bitmap>$(AppDir)\res\images\EditConnected.png</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnBrushCollision">
+								<label>Global Brush Collision\tC</label>
+								<tooltip>Allows for the brushes to collide with all currently selected meshes at the same time.</tooltip>
+								<bitmap>$(AppDir)\res\images\BrushCollision.png</bitmap>
+								<toggle>1</toggle>
+								<checked>1</checked>
+							</object>
+							<object class="separator" />
+							<object class="tool" name="btnViewFront">
+								<label>View Front</label>
+								<tooltip>Change camera view to the front.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewFront.png</bitmap>
+							</object>
+							<object class="tool" name="btnViewBack">
+								<label>View Back</label>
+								<tooltip>Change camera view to the back.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewBack.png</bitmap>
+							</object>
+							<object class="tool" name="btnViewLeft">
+								<label>View Left</label>
+								<tooltip>Change camera view to the left.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewLeft.png</bitmap>
+							</object>
+							<object class="tool" name="btnViewRight">
+								<label>View Right</label>
+								<tooltip>Change camera view to the right.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewRight.png</bitmap>
+							</object>
+							<object class="tool" name="btnViewPerspective">
+								<label>Perspective View</label>
+								<tooltip>Toggle perspective view.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewPerspective.png</bitmap>
+								<toggle>1</toggle>
+								<checked>1</checked>
 							</object>
 						</object>
 					</object>
 					<object class="sizeritem">
 						<option>1</option>
-						<flag>wxALL|wxEXPAND</flag>
-						<border>0</border>
-						<object class="unknown" name="mGLView" />
-					</object>
-				</object>
-			</object>
-			<object class="wxPanel" name="rightSplitPanel">
-				<style>wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW</style>
-				<bg>#707070</bg>
-				<object class="wxBoxSizer">
-					<orient>wxVERTICAL</orient>
-					<object class="sizeritem">
-						<option>1</option>
 						<flag>wxEXPAND</flag>
 						<border>0</border>
-						<object class="wxSplitterWindow" name="splitterRight">
-							<option>1</option>
+						<object class="wxSplitterWindow" name="splitter">
 							<style>wxSP_3D|wxSP_LIVE_UPDATE</style>
-							<sashpos>200</sashpos>
-							<gravity>0</gravity>
-							<minsize>100</minsize>
-							<orientation>horizontal</orientation>
-							<object class="wxPanel" name="topSplitPanel">
-								<style>wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW</style>
-								<bg>#707070</bg>
+							<sashpos>850</sashpos>
+							<gravity>1</gravity>
+							<minsize>250</minsize>
+							<orientation>vertical</orientation>
+							<object class="wxPanel" name="leftSplitPanel">
+								<style>wxTAB_TRAVERSAL</style>
 								<object class="wxBoxSizer">
 									<orient>wxVERTICAL</orient>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxEXPAND</flag>
+										<flag>wxALL|wxEXPAND</flag>
 										<border>0</border>
-										<object class="wxWrapSizer">
-											<orient>wxHORIZONTAL</orient>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALL</flag>
-												<border>0</border>
-												<object class="wxButton" name="meshTabButton" subclass="wxStateButton">
-													<size>-1,20</size>
-													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
-													<label>Meshes</label>
-													<bg>#646464</bg>
-													<default>0</default>
-												</object>
-											</object>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALL</flag>
-												<border>0</border>
-												<object class="wxButton" name="boneTabButton" subclass="wxStateButton">
-													<size>-1,20</size>
-													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
-													<label>Bones</label>
-													<bg>#646464</bg>
-													<default>0</default>
-												</object>
-											</object>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALL</flag>
-												<border>0</border>
-												<object class="wxButton" name="segmentTabButton" subclass="wxStateButton">
-													<size>-1,20</size>
-													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
-													<label>Segments</label>
-													<bg>#646464</bg>
-													<default>0</default>
-												</object>
-											</object>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALL</flag>
-												<border>0</border>
-												<object class="wxButton" name="partitionTabButton" subclass="wxStateButton">
-													<size>-1,20</size>
-													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
-													<label>Partitions</label>
-													<bg>#646464</bg>
-													<default>0</default>
-												</object>
-											</object>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALL</flag>
-												<border>0</border>
-												<object class="wxButton" name="colorsTabButton" subclass="wxStateButton">
-													<size>-1,20</size>
-													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
-													<label>Colors</label>
-													<bg>#646464</bg>
-													<default>0</default>
-												</object>
-											</object>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALL</flag>
-												<border>0</border>
-												<object class="wxButton" name="lightsTabButton" subclass="wxStateButton">
-													<size>-1,20</size>
-													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
-													<label>Lights</label>
-													<bg>#646464</bg>
-													<default>0</default>
-												</object>
-											</object>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
-										<border>2</border>
-										<object class="wxTreeCtrl" name="outfitShapes">
-											<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
-											<bg>#404040</bg>
-											<fg>#ffffff</fg>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
-										<border>2</border>
-										<object class="wxTreeCtrl" name="outfitBones">
-											<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
-											<bg>#404040</bg>
-											<fg>#ffffff</fg>
-											<hidden>1</hidden>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
-										<border>3</border>
-										<object class="wxScrolledWindow" name="colorSettings">
-											<style>wxVSCROLL</style>
-											<scrollrate>5,5</scrollrate>
-											<bg>#404040</bg>
-											<fg>#ffffff</fg>
-											<hidden>1</hidden>
-											<object class="wxBoxSizer">
-												<orient>wxVERTICAL</orient>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxEXPAND|wxTOP</flag>
-													<border>5</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
-															<border>5</border>
-															<object class="wxStaticText" name="lbBrushColor">
-																<size>100,-1</size>
-																<label>Brush Color</label>
-																<wrap>-1</wrap>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>2</option>
-															<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
-															<border>5</border>
-															<object class="wxColourPickerCtrl" name="cpBrushColor">
-																<tooltip>Color of the brush.</tooltip>
-																<value>rgb(0,0,0)</value>
-															</object>
+										<object class="wxCollapsiblePane" name="brushPane">
+											<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+											<collapsed>1</collapsed>
+											<label>Brush Settings</label>
+											<bg>wxSYS_COLOUR_MENU</bg>
+											<object class="panewindow">
+												<object class="wxFlexGridSizer">
+													<rows>0</rows>
+													<cols>3</cols>
+													<vgap>0</vgap>
+													<hgap>0</hgap>
+													<growablecols>1</growablecols>
+													<growablerows></growablerows>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER|wxLEFT</flag>
+														<border>15</border>
+														<object class="wxStaticText" name="lbBrushSize">
+															<label>Size</label>
+															<wrap>-1</wrap>
 														</object>
 													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxEXPAND|wxTOP</flag>
-													<border>5</border>
-													<object class="wxButton" name="btnSwapBrush">
-														<size>-1,25</size>
-														<label>Edit Alpha</label>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxSlider" name="brushSize">
+															<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+															<size>-1,25</size>
+															<value>0</value>
+															<min>0</min>
+															<max>1000</max>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER|wxRIGHT</flag>
+														<border>15</border>
+														<object class="wxStaticText" name="valSize">
+															<label>0.000</label>
+															<wrap>-1</wrap>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER|wxLEFT</flag>
+														<border>15</border>
+														<object class="wxStaticText" name="lbBrushStrength">
+															<label>Strength</label>
+															<wrap>-1</wrap>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxSlider" name="brushStr">
+															<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+															<size>-1,25</size>
+															<value>0</value>
+															<min>0</min>
+															<max>1000</max>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER|wxRIGHT</flag>
+														<border>15</border>
+														<object class="wxStaticText" name="valStr">
+															<label>0.000</label>
+															<wrap>-1</wrap>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER|wxLEFT</flag>
+														<border>15</border>
+														<object class="wxStaticText" name="lbBrushFocus">
+															<label>Focus</label>
+															<wrap>-1</wrap>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxSlider" name="brushFocus">
+															<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+															<size>-1,25</size>
+															<value>0</value>
+															<min>0</min>
+															<max>1000</max>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER|wxRIGHT</flag>
+														<border>15</border>
+														<object class="wxStaticText" name="valFocus">
+															<label>0.000</label>
+															<wrap>-1</wrap>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER|wxLEFT</flag>
+														<border>15</border>
+														<object class="wxStaticText" name="lbBrushSpace">
+															<label>Spacing</label>
+															<wrap>-1</wrap>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxSlider" name="brushSpace">
+															<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+															<size>-1,25</size>
+															<value>0</value>
+															<min>0</min>
+															<max>1000</max>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER|wxRIGHT</flag>
+														<border>15</border>
+														<object class="wxStaticText" name="valSpace">
+															<label>0.000</label>
+															<wrap>-1</wrap>
+														</object>
+													</object>
+													<object class="spacer">
+														<option>4</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<size>0,0</size>
 													</object>
 												</object>
 											</object>
@@ -347,1030 +394,1215 @@
 									</object>
 									<object class="sizeritem">
 										<option>1</option>
-										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
-										<border>2</border>
-										<object class="wxTreeCtrl" name="segmentTree">
-											<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS</style>
-											<bg>#404040</bg>
-											<fg>#ffffff</fg>
-											<hidden>1</hidden>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
-										<border>2</border>
-										<object class="wxTreeCtrl" name="partitionTree">
-											<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS</style>
-											<bg>#404040</bg>
-											<fg>#ffffff</fg>
-											<hidden>1</hidden>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
-										<border>3</border>
-										<object class="wxScrolledWindow" name="lightSettings">
-											<style>wxVSCROLL</style>
-											<scrollrate>5,5</scrollrate>
-											<bg>#404040</bg>
-											<fg>#ffffff</fg>
-											<hidden>1</hidden>
-											<object class="wxBoxSizer">
-												<orient>wxVERTICAL</orient>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxButton" name="lightReset">
-														<size>-1,25</size>
-														<label>Reset</label>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<object class="wxStaticText" name="lightAmbientLabel">
-																<size>75,25</size>
-																<label>Ambient</label>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxSlider" name="lightAmbientSlider">
-																<size>-1,25</size>
-																<value>0</value>
-																<min>0</min>
-																<max>100</max>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<object class="wxStaticText" name="lightFrontalLabel">
-																<size>75,25</size>
-																<label>Frontal</label>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxSlider" name="lightFrontalSlider">
-																<size>-1,25</size>
-																<value>0</value>
-																<min>0</min>
-																<max>100</max>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<object class="wxStaticText" name="lightDirectional0Label">
-																<size>75,25</size>
-																<label>Directional 1</label>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxSlider" name="lightDirectional0Slider">
-																<size>-1,25</size>
-																<value>0</value>
-																<min>0</min>
-																<max>100</max>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<object class="wxStaticText" name="lightDirectional1Label">
-																<size>75,25</size>
-																<label>Directional 2</label>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxSlider" name="lightDirectional1Slider">
-																<size>-1,25</size>
-																<value>0</value>
-																<min>0</min>
-																<max>100</max>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<object class="wxStaticText" name="lightDirectional2Label">
-																<size>75,25</size>
-																<label>Directional 3</label>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxSlider" name="lightDirectional2Slider">
-																<size>-1,25</size>
-																<value>0</value>
-																<min>0</min>
-																<max>100</max>
-															</object>
-														</object>
-													</object>
-												</object>
-											</object>
-										</object>
+										<flag>wxALL|wxEXPAND</flag>
+										<border>0</border>
+										<object class="unknown" name="mGLView" />
 									</object>
 								</object>
 							</object>
-							<object class="wxPanel" name="bottomSplitPanel">
+							<object class="wxPanel" name="rightSplitPanel">
 								<style>wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW</style>
 								<bg>#707070</bg>
 								<object class="wxBoxSizer">
 									<orient>wxVERTICAL</orient>
 									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALL|wxEXPAND|wxLEFT</flag>
-										<border>2</border>
-										<object class="wxPanel" name="editPanel">
-											<style>wxTAB_TRAVERSAL</style>
-											<object class="wxBoxSizer">
-												<orient>wxVERTICAL</orient>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>0</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-															<border>5</border>
-															<object class="wxStaticText" name="segmentTypeLabel">
-																<fg>#ffffff</fg>
-																<label>Type</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<border>5</border>
-															<object class="wxChoice" name="segmentType">
-																<selection>0</selection>
-																<content>
-																	<item>Default</item>
-																	<item>1 | Head/Hair | 0x86b72980</item>
-																	<item>1 | Neck | 0x0155094f</item>
-																	<item>Human 2 | R-Up Arm | 0xb2e2764f</item>
-																	<item>Human 2 | R-Lo Arm | 0x6fc3fbb2</item>
-																	<item>Human 4 | L-Up Arm | 0xfc03dc25</item>
-																	<item>Human 4 | L-Lo Arm | 0x212251d8</item>
-																	<item>Human 5 | R-Up Thi | 0xbf3a3cc5</item>
-																	<item>Human 5 | R-Kne-Clf | 0x22324321</item>
-																	<item>Human 5 | R-Lo Ft.-Ank | 0xc7e6bc92</item>
-																	<item>Human 6 | L-Up Leg | 0x865d8d9e</item>
-																	<item>Human 6 | L-Kne-Clf | 0x4630dac2</item>
-																	<item>Human 6 | L-Lo Ft.-Ank | 0xa3e42571</item>
-																	<item>Feral Ghoul 2 | R-Up Arm | 0x2a549ee1</item>
-																	<item>Feral Ghoul 2 | R-Lo Arm | 0xf775131c</item>
-																	<item>Feral Ghoul 2 | R-Hand | 0x85342e3c</item>
-																	<item>Feral Ghoul 4 | L-Up Arm | 0x4e560702</item>
-																	<item>Feral Ghoul 4 | L-Lo Arm | 0x93778aff</item>
-																	<item>Feral Ghoul 4 | L-Hand | 0x5ae407df</item>
-																	<item>Death Claw 1 | Neck | 0xc0f43cc3</item>
-																	<item>Death Claw 2 | R-Up-Arm | 0xf2ba1077</item>
-																	<item>Death Claw 2 | R-Elbow-4Arm | 0xf4e10d0d</item>
-																	<item>Death Claw 2 | R-Hand | 0xe2da5319</item>
-																	<item>Death Claw 4 | L-Up-Arm | 0x17932e95</item>
-																	<item>Death Claw 4 | L-Elbow-4Arm | 0x0861e2c0</item>
-																	<item>Death Claw 4 | L-Hand | 0x8beb7000</item>
-																	<item>Death Claw, Feral Ghoul 5 | R-Up Thi | 0x9af9d18c</item>
-																	<item>Death Claw, Feral Ghoul 5 | R-Lo Leg | 0x8e0daa93</item>
-																	<item>Death Claw, Feral Ghoul 5 | R-Lo Ft | 0x6bd95520</item>
-																	<item>Death Claw, Feral Ghoul 6 | L-Lo Thi | 0xa325b267</item>
-																	<item>Death Claw, Feral Ghoul 6 | L-Lo Leg | 0x51dd8370</item>
-																	<item>Death Claw, Feral Ghoul 6 | L-Lo Ft | 0xb4097cc3</item>
-																	<item>Super Mutant Hound 3 | Fr-Lf Up Leg | 0x99338c09</item>
-																	<item>Super Mutant Hound 3 | Fr-Lf Lo Leg | 0x7491a630</item>
-																	<item>Super Mutant Hound 3 | Fr-Lf Foot | 0x8a99ba3f</item>
-																	<item>Super Mutant Hound 4 | Bk-Lf Thigh | 0xa7860026</item>
-																	<item>Super Mutant Hound 4 | Bk-Lf Knee | 0xaf6a52d7</item>
-																	<item>Super Mutant Hound 4 | Bk-Lf Ankle | 0xb42c3610</item>
-																	<item>Super Mutant Hound 4 | Bk-Lf Foot | 0x6e284ec0</item>
-																	<item>Super Mutant Hound 5 | Bk-Ri Thigh | 0x0e97871c</item>
-																	<item>Super Mutant Hound 5 | Bk-Ri Knee | 0x02433b3b</item>
-																	<item>Super Mutant Hound 5 | Bk-Ri Ankle | 0x1d3db12a</item>
-																	<item>Super Mutant Hound 5 | Bk-Ri Foot | 0x20c9e4aa</item>
-																	<item>Super Mutant Hound 6 | Fr-Ri Up Leg | 0x5f96443c</item>
-																	<item>Super Mutant Hound 6 | Fr-Ri Lo Leg | 0xdd80210a</item>
-																	<item>Super Mutant Hound 6 | Fr-Ri Foot | 0x4c3c720a</item>
-																	<item>Mirelurk 2 | Fr-Ri-Up Arm | 0xa5f4be71</item>
-																	<item>Mirelurk 2 | Fr-Ri-Lo Arm | 0x99eb64eb</item>
-																	<item>Mirelurk 2 | R Claw | 0x3c9df64f</item>
-																	<item>Mirelurk 4 | L Shoulder | 0x40f66ca4</item>
-																	<item>Mirelurk 4 | L-Up Arm | 0xc1f62792</item>
-																	<item>Mirelurk 4 | L Elbow | 0xf0da47f2</item>
-																	<item>Mirelurk 4 | L Claw | 0x55acd556</item>
-																	<item>Mirelurk 5 | Fr-Ri Hip | 0x064f59cd</item>
-																	<item>Mirelurk 5 | Fr-Ri Thigh | 0x5b033df6</item>
-																	<item>Mirelurk 5 | Fr-Ri Calf | 0x15fc7bad</item>
-																	<item>Mirelurk 5 | Fr-Ri Foot | 0xf028841e</item>
-																	<item>Mirelurk 6 | Fr-Lf Hip-Thigh | 0xf62a541a</item>
-																	<item>Mirelurk 6 | Fr-Lf Kne-Clf | 0x5b1dd1c7</item>
-																	<item>Mirelurk 6 | Fr-Lf Foot | 0xbec92e74</item>
-																	<item>Mirelurk 8 | Bk-Ri Hip-Thigh | 0xfc5546b8</item>
-																	<item>Mirelurk 8 | Bk-Ri Kne-Clf | 0x24a15449</item>
-																	<item>Mirelurk 8 | Bk-Ri Foot | 0xc175abfa</item>
-																	<item>Mirelurk 9 | Bk-Lf Hip-Thigh | 0xb2b4ecd2</item>
-																	<item>Mirelurk 9 | Bk-Lf Kne-Clf | 0xc1886aab</item>
-																	<item>Mirelurk 9 | Bk-Lf Foot | 0x245c9518</item>
-																	<item>Dog 3 | Fr-Lf Knee | 0x5530c47b</item>
-																	<item>Dog 3 | Fr-Lf Calf | 0xcc3995c1</item>
-																	<item>Dog 3 | Fr-Lf Heel+Arch | 0xbd2750cf</item>
-																	<item>Dog 3 | Fr-Lf Paw | 0x77fe1ec8</item>
-																	<item>Dog 4 | Bk-Lf Knee | 0x52f7244b</item>
-																	<item>Dog 4 | Bk-Lf Calf | 0xcbfe75f1</item>
-																	<item>Dog 4 | Bk-Lf Heel+Arch | 0xfe31ace4</item>
-																	<item>Dog 4 | Bk-Lf Paw | 0x08eb5fa0</item>
-																	<item>Dog 5 | Bk-Ri Knee | 0x8d270da8</item>
-																	<item>Dog 5 | Bk-Ri Calf+Heel | 0x142e5c12</item>
-																	<item>Dog 5 | Bk-Ri Arch | 0x9a333507</item>
-																	<item>Dog 5 | Bk-Ri Paw | 0x61da7cb9</item>
-																	<item>Dog 6 | Fr-Ri Knee | 0x8ae0ed98</item>
-																	<item>Dog 6 | Fr-Ri Calf | 0x13e9bc22</item>
-																	<item>Dog 6 | Fr-Ri Heel+Arch | 0xd925c92c</item>
-																	<item>Dog 6 | Fr-Ri Paw | 0x1ecf3dd1</item>
-																	<item>Behemoth 2 | R-Arm+Elbow | 0x8c5ae189</item>
-																	<item>Behemoth 2 | R-4 Arm | 0x071dfd97</item>
-																	<item>Behemoth 2 | R-Hand | 0xded0fadf</item>
-																	<item>Behemoth 4 | L-Arm+Elbow | 0xc2bb4be3</item>
-																	<item>Behemoth 4 | L-4 Arm | 0x3e7a4ccc</item>
-																	<item>Behemoth 4 | L-Hand | 0xe7b74b84</item>
-																	<item>Behemoth 5 | R-Calf | 0xa411c600</item>
-																	<item>Behemoth 5 | R-Foot | 0xac900af3</item>
-																	<item>Behemoth 6 | L-Calf | 0xc0135fe3</item>
-																	<item>Behemoth 6 | R-Foot | 0x95f7bba8</item>
-																	<item>Robot 3 | Torso | 0x3d6644aa</item>
-																</content>
-																<hidden>1</hidden>
-																<enabled>0</enabled>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>0</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-															<border>5</border>
-															<object class="wxStaticText" name="segmentSlotLabel">
-																<fg>#ffffff</fg>
-																<label>Slot</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<border>5</border>
-															<object class="wxChoice" name="segmentSlot">
-																<selection>0</selection>
-																<content>
-																	<item>None</item>
-																	<item>30 - Hair Top</item>
-																	<item>31 - Hair Long</item>
-																	<item>32 - Head</item>
-																	<item>33 - Body</item>
-																	<item>34 - L Hand</item>
-																	<item>35 - R Hand</item>
-																	<item>36 - [U] Torso</item>
-																	<item>37 - [U] L Arm</item>
-																	<item>38 - [U] R Arm</item>
-																	<item>39 - [U] L Leg</item>
-																	<item>40 - [U] R Leg</item>
-																	<item>41 - [A] Torso</item>
-																	<item>42 - [A] L Arm</item>
-																	<item>43 - [A] R Arm</item>
-																	<item>44 - [A] L Leg</item>
-																	<item>45 - [A] R Leg</item>
-																	<item>46 - Headband</item>
-																	<item>47 - Eyes</item>
-																	<item>48 - Beard</item>
-																	<item>49 - Mouth</item>
-																	<item>50 - Neck</item>
-																	<item>51 - Ring</item>
-																	<item>52 - Scalp</item>
-																	<item>53 - Decapitation</item>
-																	<item>54 - Unnamed</item>
-																	<item>55 - Unnamed</item>
-																	<item>56 - Unnamed</item>
-																	<item>57 - Unnamed</item>
-																	<item>58 - Unnamed</item>
-																	<item>59 - Shield</item>
-																	<item>60 - Pipboy</item>
-																	<item>61 - FX</item>
-																</content>
-																<hidden>1</hidden>
-																<enabled>0</enabled>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>0</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-															<border>5</border>
-															<object class="wxStaticText" name="segmentSSFLabel">
-																<fg>#ffffff</fg>
-																<label>SSF File</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<border>5</border>
-															<object class="wxTextCtrl" name="segmentSSF">
-																<maxlength>255</maxlength>
-																<hidden>1</hidden>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>0</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<border>5</border>
-															<object class="wxButton" name="segmentApply">
-																<size>-1,25</size>
-																<label>Apply</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<border>5</border>
-															<object class="wxButton" name="segmentReset">
-																<size>-1,25</size>
-																<label>Reset</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>0</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-															<border>5</border>
-															<object class="wxStaticText" name="partitionTypeLabel">
-																<fg>#ffffff</fg>
-																<label>Type</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<border>5</border>
-															<object class="wxChoice" name="partitionType">
-																<selection>0</selection>
-																<content>
-																	<item>0 BP_TORSO</item><item>1 BP_HEAD</item><item>2 BP_HEAD2</item>
-																	<item>3 BP_LEFTARM</item><item>4 BP_LEFTARM2</item>
-																	<item>5 BP_RIGHTARM</item><item>6 BP_RIGHTARM2</item>
-																	<item>7 BP_LEFTLEG</item><item>8 BP_LEFTLEG2</item><item>9 BP_LEFTLEG3</item>
-																	<item>10 BP_RIGHTLEG</item><item>11 BP_RIGHTLEG2</item><item>12 BP_RIGHTLEG3</item>
-																	<item>13 BP_BRAIN</item>
-																	<item>30 SBP_30_HEAD</item><item>31 SBP_31_HAIR</item>
-																	<item>32 SBP_32_BODY</item><item>33 SBP_33_HANDS</item><item>34 SBP_34_FOREARMS</item>
-																	<item>35 SBP_35_AMULET</item><item>36 SBP_36_RING</item>
-																	<item>37 SBP_37_FEET</item><item>38 SBP_38_CALVES</item>
-																	<item>39 SBP_39_SHIELD</item>
-																	<item>40 SBP_40_TAIL</item><item>41 SBP_41_LONGHAIR</item>
-																	<item>42 SBP_42_CIRCLET</item><item>43 SBP_43_EARS</item>
-																	<item>44 SBP_44_DRAGON_BLOODHEAD_OR_MOD_MOUTH</item><item>45 SBP_45_DRAGON_BLOODWINGL_OR_MOD_NECK</item>
-																	<item>46 SBP_46_DRAGON_BLOODWINGR_OR_MOD_CHEST_PRIMARY</item><item>47 SBP_47_DRAGON_BLOODTAIL_OR_MOD_BACK</item>
-																	<item>48 SBP_48_MOD_MISC1</item><item>49 SBP_49_MOD_PELVIS_PRIMARY</item>
-																	<item>50 SBP_50_DECAPITATEDHEAD</item><item>51 SBP_51_DECAPITATE</item>
-																	<item>52 SBP_52_MOD_PELVIS_SECONDARY</item><item>53 SBP_53_MOD_LEG_RIGHT</item><item>54 SBP_54_MOD_LEG_LEFT</item>
-																	<item>55 SBP_55_MOD_FACE_JEWELRY</item><item>56 SBP_56_MOD_CHEST_SECONDARY</item>
-																	<item>57 SBP_57_MOD_SHOULDER</item><item>58 SBP_58_MOD_ARM_LEFT</item><item>59 SBP_59_MOD_ARM_RIGHT</item>
-																	<item>60 SBP_60_MOD_MISC2</item><item>61 SBP_61_FX01</item>
-																	<item>101 BP_SECTIONCAP_HEAD</item><item>102 BP_SECTIONCAP_HEAD2</item>
-																	<item>103 BP_SECTIONCAP_LEFTARM</item><item>104 BP_SECTIONCAP_LEFTARM2</item>
-																	<item>105 BP_SECTIONCAP_RIGHTARM</item><item>106 BP_SECTIONCAP_RIGHTARM2</item>
-																	<item>107 BP_SECTIONCAP_LEFTLEG</item><item>108 BP_SECTIONCAP_LEFTLEG2</item><item>109 BP_SECTIONCAP_LEFTLEG3</item>
-																	<item>110 BP_SECTIONCAP_RIGHTLEG</item><item>111 BP_SECTIONCAP_RIGHTLEG2</item><item>112 BP_SECTIONCAP_RIGHTLEG3</item>
-																	<item>113 BP_SECTIONCAP_BRAIN</item>
-																	<item>130 SBP_130_HEAD</item><item>131 SBP_131_HAIR</item><item>141 SBP_141_LONGHAIR</item>
-																	<item>142 SBP_142_CIRCLET</item><item>143 SBP_143_EARS</item>
-																	<item>150 SBP_150_DECAPITATEDHEAD</item>
-																	<item>201 BP_TORSOCAP_HEAD</item><item>202 BP_TORSOCAP_HEAD2</item>
-																	<item>203 BP_TORSOCAP_LEFTARM</item><item>204 BP_TORSOCAP_LEFTARM2</item>
-																	<item>205 BP_TORSOCAP_RIGHTARM</item><item>206 BP_TORSOCAP_RIGHTARM2</item>
-																	<item>207 BP_TORSOCAP_LEFTLEG</item><item>208 BP_TORSOCAP_LEFTLEG2</item><item>209 BP_TORSOCAP_LEFTLEG3</item>
-																	<item>210 BP_TORSOCAP_RIGHTLEG</item><item>211 BP_TORSOCAP_RIGHTLEG2</item><item>212 BP_TORSOCAP_RIGHTLEG3</item>
-																	<item>213 BP_TORSOCAP_BRAIN</item>
-																	<item>230 SBP_230_HEAD</item>
-																	<item>1000 BP_TORSOSECTION_HEAD</item><item>2000 BP_TORSOSECTION_HEAD2</item>
-																	<item>3000 BP_TORSOSECTION_LEFTARM</item><item>4000 BP_TORSOSECTION_LEFTARM2</item>
-																	<item>5000 BP_TORSOSECTION_RIGHTARM</item><item>6000 BP_TORSOSECTION_RIGHTARM2</item>
-																	<item>7000 BP_TORSOSECTION_LEFTLEG</item><item>8000 BP_TORSOSECTION_LEFTLEG2</item><item>9000 BP_TORSOSECTION_LEFTLEG3</item>
-																	<item>10000 BP_TORSOSECTION_RIGHTLEG</item><item>11000 BP_TORSOSECTION_RIGHTLEG2</item><item>12000 BP_TORSOSECTION_RIGHTLEG3</item>
-																	<item>13000 BP_TORSOSECTION_BRAIN</item>
-																</content>
-																<hidden>1</hidden>
-																<enabled>0</enabled>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>0</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<border>5</border>
-															<object class="wxButton" name="partitionApply">
-																<size>-1,25</size>
-																<label>Apply</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<border>5</border>
-															<object class="wxButton" name="partitionReset">
-																<size>-1,25</size>
-																<label>Reset</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxCheckBox" name="selectSliders">
-														<fg>#ffffff</fg>
-														<label>De-/Select Sliders</label>
-														<checked>1</checked>
-														<enabled>1</enabled>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxCheckBox" name="cbFixedWeight">
-														<fg>#ffffff</fg>
-														<label>Fixed Weight Brush</label>
-														<checked>0</checked>
-														<hidden>1</hidden>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxCheckBox" name="cbNormalizeWeights">
-														<fg>#ffffff</fg>
-														<label>Normalize Weights</label>
-														<checked>0</checked>
-														<hidden>1</hidden>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<flag>wxRIGHT|wxALIGN_CENTER</flag>
-															<border>15</border>
-															<object class="wxStaticText" name="xMirrorBoneLabel">
-																<fg>#ffffff</fg>
-																<label>X-Mirror Bone</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxChoice" name="cXMirrorBone">
-																<selection>0</selection>
-																<content />
-																<hidden>1</hidden>
-															</object>
-														</object>
-													</object>
-												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND</flag>
-													<border>5</border>
-													<object class="wxBoxSizer">
-														<orient>wxHORIZONTAL</orient>
-														<object class="sizeritem">
-															<option>0</option>
-															<object class="wxStaticText" name="boneScaleLabel">
-																<fg>#ffffff</fg>
-																<label>Preview Scaling</label>
-																<hidden>1</hidden>
-															</object>
-														</object>
-														<object class="sizeritem">
-															<option>1</option>
-															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxSlider" name="boneScale">
-																<size>-1,25</size>
-																<value>0</value>
-																<min>-100</min>
-																<max>100</max>
-																<hidden>1</hidden>
-															</object>
-														</object>
-													</object>
-												</object>
-											</object>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALL|wxEXPAND|wxLEFT</flag>
-										<border>2</border>
-										<object class="wxCollapsiblePane" name="masksPane">
-											<style>wxCP_DEFAULT_STYLE</style>
-											<collapsed>1</collapsed>
-											<label>Masks</label>
-											<bg>wxSYS_COLOUR_MENU</bg>
-											<hidden>0</hidden>
-											<object class="panewindow">
-												<object class="wxBoxSizer">
-													<orient>wxVERTICAL</orient>
-													<object class="sizeritem">
-														<option>0</option>
-														<flag>wxALL|wxEXPAND</flag>
-														<object class="wxBoxSizer">
-															<orient>wxHORIZONTAL</orient>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
-																<border>5</border>
-																<object class="wxChoice" name="cMaskName">
-																	<selection>0</selection>
-																	<content />
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxBOTTOM|wxEXPAND</flag>
-																<border>5</border>
-																<object class="wxButton" name="saveMask">
-																	<size>-1,25</size>
-																	<label>Save</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxBOTTOM|wxEXPAND</flag>
-																<border>5</border>
-																<object class="wxButton" name="saveAsMask">
-																	<size>-1,25</size>
-																	<label>Save As</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxBOTTOM|wxEXPAND</flag>
-																<border>5</border>
-																<object class="wxButton" name="deleteMask">
-																	<size>-1,25</size>
-																	<label>Delete</label>
-																</object>
-															</object>
-														</object>
-													</object>
-												</object>
-											</object>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALL|wxEXPAND|wxLEFT</flag>
-										<border>2</border>
-										<object class="wxCollapsiblePane" name="posePane">
-											<style>wxCP_DEFAULT_STYLE</style>
-											<collapsed>1</collapsed>
-											<label>Posing</label>
-											<bg>wxSYS_COLOUR_MENU</bg>
-											<hidden>1</hidden>
-											<object class="panewindow">
-												<object class="wxBoxSizer">
-													<orient>wxVERTICAL</orient>
-													<object class="sizeritem">
-														<option>0</option>
-														<flag>wxALL|wxEXPAND</flag>
-														<object class="wxBoxSizer">
-															<orient>wxHORIZONTAL</orient>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-																<border>5</border>
-																<object class="wxCheckBox" name="cbPose">
-																	<label>Show Pose</label>
-																	<checked>0</checked>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-																<border>5</border>
-																<object class="wxChoice" name="cPoseBone">
-																	<selection>0</selection>
-																	<content />
-																</object>
-															</object>
-														</object>
-													</object>
-													<object class="sizeritem">
-														<option>0</option>
-														<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-														<border>5</border>
-														<object class="wxBoxSizer">
-															<orient>wxHORIZONTAL</orient>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxALL|wxEXPAND</flag>
-																<object class="wxButton" name="resetBonePose">
-																	<size>-1,25</size>
-																	<label>Reset Bone</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxALL|wxEXPAND</flag>
-																<object class="wxButton" name="resetAllPose">
-																	<size>-1,25</size>
-																	<label>Reset All</label>
-																</object>
-															</object>
-														</object>
-													</object>
-													<object class="sizeritem">
-														<option>0</option>
-														<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-														<border>5</border>
-														<object class="wxFlexGridSizer">
-															<rows>0</rows>
-															<cols>3</cols>
-															<vgap>0</vgap>
-															<hgap>0</hgap>
-															<growablecols>1</growablecols>
-															<growablerows></growablerows>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxRIGHT|wxALIGN_CENTER</flag>
-																<object class="wxStaticText" name="rxLabel">
-																	<label>Rotation X</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxALL|wxEXPAND</flag>
-																<object class="wxSlider" name="rxPoseSlider">
-																	<style>wxSL_HORIZONTAL</style>
-																	<size>-1,10</size>
-																	<value>0</value>
-																	<min>-300</min>
-																	<max>300</max>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																<object class="wxTextCtrl" name="rxPoseText">
-																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																	<size>40,-1</size>
-																	<value>0</value>
-																	<maxlength>0</maxlength>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxRIGHT|wxALIGN_CENTER</flag>
-																<object class="wxStaticText" name="ryLabel">
-																	<label>Rotation Y</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxALL|wxEXPAND</flag>
-																<object class="wxSlider" name="ryPoseSlider">
-																	<style>wxSL_HORIZONTAL</style>
-																	<size>-1,10</size>
-																	<value>0</value>
-																	<min>-300</min>
-																	<max>300</max>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																<object class="wxTextCtrl" name="ryPoseText">
-																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																	<size>40,-1</size>
-																	<value>0</value>
-																	<maxlength>0</maxlength>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxRIGHT|wxALIGN_CENTER</flag>
-																<object class="wxStaticText" name="rzLabel">
-																	<label>Rotation Z</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxALL|wxEXPAND</flag>
-																<object class="wxSlider" name="rzPoseSlider">
-																	<style>wxSL_HORIZONTAL</style>
-																	<size>-1,10</size>
-																	<value>0</value>
-																	<min>-300</min>
-																	<max>300</max>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																<object class="wxTextCtrl" name="rzPoseText">
-																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																	<size>40,-1</size>
-																	<value>0</value>
-																	<maxlength>0</maxlength>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxRIGHT|wxALIGN_CENTER</flag>
-																<object class="wxStaticText" name="txLabel">
-																	<label>Offset X</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxALL|wxEXPAND</flag>
-																<object class="wxSlider" name="txPoseSlider">
-																	<style>wxSL_HORIZONTAL</style>
-																	<size>-1,10</size>
-																	<value>0</value>
-																	<min>-1000</min>
-																	<max>1000</max>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																<object class="wxTextCtrl" name="txPoseText">
-																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																	<size>40,-1</size>
-																	<value>0</value>
-																	<maxlength>0</maxlength>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxRIGHT|wxALIGN_CENTER</flag>
-																<object class="wxStaticText" name="tyLabel">
-																	<label>Offset Y</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxALL|wxEXPAND</flag>
-																<object class="wxSlider" name="tyPoseSlider">
-																	<style>wxSL_HORIZONTAL</style>
-																	<size>-1,10</size>
-																	<value>0</value>
-																	<min>-1000</min>
-																	<max>1000</max>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																<object class="wxTextCtrl" name="tyPoseText">
-																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																	<size>40,-1</size>
-																	<value>0</value>
-																	<maxlength>0</maxlength>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<border>5</border>
-																<flag>wxBOTTOM|wxALIGN_CENTER</flag>
-																<object class="wxStaticText" name="tzLabel">
-																	<label>Offset Z</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<border>5</border>
-																<flag>wxBOTTOM|wxEXPAND</flag>
-																<object class="wxSlider" name="tzPoseSlider">
-																	<style>wxSL_HORIZONTAL</style>
-																	<size>-1,10</size>
-																	<value>0</value>
-																	<min>-1000</min>
-																	<max>1000</max>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<border>5</border>
-																<flag>wxBOTTOM|wxALIGN_CENTER_VERTICAL</flag>
-																<object class="wxTextCtrl" name="tzPoseText">
-																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																	<size>40,-1</size>
-																	<value>0</value>
-																	<maxlength>0</maxlength>
-																</object>
-															</object>
-														</object>
-													</object>
-												</object>
-											</object>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>3</option>
+										<option>1</option>
 										<flag>wxEXPAND</flag>
 										<border>0</border>
-										<object class="wxScrolledWindow" name="sliderScroll">
-											<style>wxHSCROLL|wxVSCROLL</style>
-											<bg>#404040</bg>
-											<scrollrate>18,18</scrollrate>
-											<object class="wxBoxSizer">
-												<orient>wxVERTICAL</orient>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxALL|wxEXPAND|wxFIXED_MINSIZE</flag>
-													<border>1</border>
-													<object class="wxPanel" name="sliderPane">
-														<style>wxSIMPLE_BORDER|wxTAB_TRAVERSAL</style>
-														<bg>#7d4d8a</bg>
-														<object class="wxBoxSizer">
+										<object class="wxSplitterWindow" name="splitterRight">
+											<option>1</option>
+											<style>wxSP_3D|wxSP_LIVE_UPDATE</style>
+											<sashpos>200</sashpos>
+											<gravity>0</gravity>
+											<minsize>100</minsize>
+											<orientation>horizontal</orientation>
+											<object class="wxPanel" name="topSplitPanel">
+												<style>wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW</style>
+												<bg>#707070</bg>
+												<object class="wxBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxEXPAND</flag>
+														<border>0</border>
+														<object class="wxWrapSizer">
 															<orient>wxHORIZONTAL</orient>
 															<object class="sizeritem">
 																<option>0</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																<border>5</border>
-																<object class="wxCheckBox" name="sliderNameCheck">
-																	<fg>#ffffff</fg>
-																	<label>Check Me!</label>
-																	<checked>0</checked>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxALL|wxEXPAND</flag>
-																<border>5</border>
-																<object class="wxSlider" name="slider">
-																	<style>wxSL_HORIZONTAL</style>
-																	<size>-1,10</size>
-																	<value>100</value>
-																	<min>0</min>
-																	<max>100</max>
+																<flag>wxALL</flag>
+																<border>0</border>
+																<object class="wxButton" name="meshTabButton" subclass="wxStateButton">
+																	<size>-1,20</size>
+																	<style>wxNO_BORDER|wxBU_EXACTFIT</style>
+																	<label>Meshes</label>
+																	<bg>#646464</bg>
+																	<default>0</default>
 																</object>
 															</object>
 															<object class="sizeritem">
 																<option>0</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																<border>2</border>
-																<object class="wxTextCtrl" name="sliderReadout">
-																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																	<size>40,-1</size>
-																	<bg>#303030</bg>
-																	<fg>#ffffff</fg>
-																	<value>50%</value>
-																	<maxlength>0</maxlength>
+																<flag>wxALL</flag>
+																<border>0</border>
+																<object class="wxButton" name="boneTabButton" subclass="wxStateButton">
+																	<size>-1,20</size>
+																	<style>wxNO_BORDER|wxBU_EXACTFIT</style>
+																	<label>Bones</label>
+																	<bg>#646464</bg>
+																	<default>0</default>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALL</flag>
+																<border>0</border>
+																<object class="wxButton" name="segmentTabButton" subclass="wxStateButton">
+																	<size>-1,20</size>
+																	<style>wxNO_BORDER|wxBU_EXACTFIT</style>
+																	<label>Segments</label>
+																	<bg>#646464</bg>
+																	<default>0</default>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALL</flag>
+																<border>0</border>
+																<object class="wxButton" name="partitionTabButton" subclass="wxStateButton">
+																	<size>-1,20</size>
+																	<style>wxNO_BORDER|wxBU_EXACTFIT</style>
+																	<label>Partitions</label>
+																	<bg>#646464</bg>
+																	<default>0</default>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALL</flag>
+																<border>0</border>
+																<object class="wxButton" name="colorsTabButton" subclass="wxStateButton">
+																	<size>-1,20</size>
+																	<style>wxNO_BORDER|wxBU_EXACTFIT</style>
+																	<label>Colors</label>
+																	<bg>#646464</bg>
+																	<default>0</default>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALL</flag>
+																<border>0</border>
+																<object class="wxButton" name="lightsTabButton" subclass="wxStateButton">
+																	<size>-1,20</size>
+																	<style>wxNO_BORDER|wxBU_EXACTFIT</style>
+																	<label>Lights</label>
+																	<bg>#646464</bg>
+																	<default>0</default>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+														<border>2</border>
+														<object class="wxTreeCtrl" name="outfitShapes">
+															<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
+															<bg>#404040</bg>
+															<fg>#ffffff</fg>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+														<border>2</border>
+														<object class="wxTreeCtrl" name="outfitBones">
+															<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
+															<bg>#404040</bg>
+															<fg>#ffffff</fg>
+															<hidden>1</hidden>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+														<border>3</border>
+														<object class="wxScrolledWindow" name="colorSettings">
+															<style>wxVSCROLL</style>
+															<scrollrate>5,5</scrollrate>
+															<bg>#404040</bg>
+															<fg>#ffffff</fg>
+															<hidden>1</hidden>
+															<object class="wxBoxSizer">
+																<orient>wxVERTICAL</orient>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxEXPAND|wxTOP</flag>
+																	<border>5</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+																			<border>5</border>
+																			<object class="wxStaticText" name="lbBrushColor">
+																				<size>100,-1</size>
+																				<label>Brush Color</label>
+																				<wrap>-1</wrap>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>2</option>
+																			<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+																			<border>5</border>
+																			<object class="wxColourPickerCtrl" name="cpBrushColor">
+																				<tooltip>Color of the brush.</tooltip>
+																				<value>rgb(0,0,0)</value>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxEXPAND|wxTOP</flag>
+																	<border>5</border>
+																	<object class="wxButton" name="btnSwapBrush">
+																		<size>-1,25</size>
+																		<label>Edit Alpha</label>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+														<border>2</border>
+														<object class="wxTreeCtrl" name="segmentTree">
+															<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS</style>
+															<bg>#404040</bg>
+															<fg>#ffffff</fg>
+															<hidden>1</hidden>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+														<border>2</border>
+														<object class="wxTreeCtrl" name="partitionTree">
+															<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS</style>
+															<bg>#404040</bg>
+															<fg>#ffffff</fg>
+															<hidden>1</hidden>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>1</option>
+														<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+														<border>3</border>
+														<object class="wxScrolledWindow" name="lightSettings">
+															<style>wxVSCROLL</style>
+															<scrollrate>5,5</scrollrate>
+															<bg>#404040</bg>
+															<fg>#ffffff</fg>
+															<hidden>1</hidden>
+															<object class="wxBoxSizer">
+																<orient>wxVERTICAL</orient>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxButton" name="lightReset">
+																		<size>-1,25</size>
+																		<label>Reset</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<object class="wxStaticText" name="lightAmbientLabel">
+																				<size>75,25</size>
+																				<label>Ambient</label>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<object class="wxSlider" name="lightAmbientSlider">
+																				<size>-1,25</size>
+																				<value>0</value>
+																				<min>0</min>
+																				<max>100</max>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<object class="wxStaticText" name="lightFrontalLabel">
+																				<size>75,25</size>
+																				<label>Frontal</label>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<object class="wxSlider" name="lightFrontalSlider">
+																				<size>-1,25</size>
+																				<value>0</value>
+																				<min>0</min>
+																				<max>100</max>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<object class="wxStaticText" name="lightDirectional0Label">
+																				<size>75,25</size>
+																				<label>Directional 1</label>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<object class="wxSlider" name="lightDirectional0Slider">
+																				<size>-1,25</size>
+																				<value>0</value>
+																				<min>0</min>
+																				<max>100</max>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<object class="wxStaticText" name="lightDirectional1Label">
+																				<size>75,25</size>
+																				<label>Directional 2</label>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<object class="wxSlider" name="lightDirectional1Slider">
+																				<size>-1,25</size>
+																				<value>0</value>
+																				<min>0</min>
+																				<max>100</max>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<object class="wxStaticText" name="lightDirectional2Label">
+																				<size>75,25</size>
+																				<label>Directional 3</label>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<object class="wxSlider" name="lightDirectional2Slider">
+																				<size>-1,25</size>
+																				<value>0</value>
+																				<min>0</min>
+																				<max>100</max>
+																			</object>
+																		</object>
+																	</object>
 																</object>
 															</object>
 														</object>
 													</object>
 												</object>
-												<object class="sizeritem">
-													<option>0</option>
-													<flag>wxEXPAND | wxALL</flag>
-													<border>1</border>
-													<object class="wxPanel" name="m_panel191">
-														<style>wxSIMPLE_BORDER|wxTAB_TRAVERSAL</style>
-														<object class="wxBoxSizer">
-															<orient>wxHORIZONTAL</orient>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																<border>5</border>
-																<object class="wxCheckBox" name="m_checkBox3">
-																	<fg>#ffffff</fg>
-																	<label>Check Me!</label>
-																	<checked>0</checked>
+											</object>
+											<object class="wxPanel" name="bottomSplitPanel">
+												<style>wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW</style>
+												<bg>#707070</bg>
+												<object class="wxBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND|wxLEFT</flag>
+														<border>2</border>
+														<object class="wxPanel" name="editPanel">
+															<style>wxTAB_TRAVERSAL</style>
+															<object class="wxBoxSizer">
+																<orient>wxVERTICAL</orient>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>0</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																			<border>5</border>
+																			<object class="wxStaticText" name="segmentTypeLabel">
+																				<fg>#ffffff</fg>
+																				<label>Type</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxChoice" name="segmentType">
+																				<selection>0</selection>
+																				<content>
+																					<item>Default</item>
+																					<item>1 | Head/Hair | 0x86b72980</item>
+																					<item>1 | Neck | 0x0155094f</item>
+																					<item>Human 2 | R-Up Arm | 0xb2e2764f</item>
+																					<item>Human 2 | R-Lo Arm | 0x6fc3fbb2</item>
+																					<item>Human 4 | L-Up Arm | 0xfc03dc25</item>
+																					<item>Human 4 | L-Lo Arm | 0x212251d8</item>
+																					<item>Human 5 | R-Up Thi | 0xbf3a3cc5</item>
+																					<item>Human 5 | R-Kne-Clf | 0x22324321</item>
+																					<item>Human 5 | R-Lo Ft.-Ank | 0xc7e6bc92</item>
+																					<item>Human 6 | L-Up Leg | 0x865d8d9e</item>
+																					<item>Human 6 | L-Kne-Clf | 0x4630dac2</item>
+																					<item>Human 6 | L-Lo Ft.-Ank | 0xa3e42571</item>
+																					<item>Feral Ghoul 2 | R-Up Arm | 0x2a549ee1</item>
+																					<item>Feral Ghoul 2 | R-Lo Arm | 0xf775131c</item>
+																					<item>Feral Ghoul 2 | R-Hand | 0x85342e3c</item>
+																					<item>Feral Ghoul 4 | L-Up Arm | 0x4e560702</item>
+																					<item>Feral Ghoul 4 | L-Lo Arm | 0x93778aff</item>
+																					<item>Feral Ghoul 4 | L-Hand | 0x5ae407df</item>
+																					<item>Death Claw 1 | Neck | 0xc0f43cc3</item>
+																					<item>Death Claw 2 | R-Up-Arm | 0xf2ba1077</item>
+																					<item>Death Claw 2 | R-Elbow-4Arm | 0xf4e10d0d</item>
+																					<item>Death Claw 2 | R-Hand | 0xe2da5319</item>
+																					<item>Death Claw 4 | L-Up-Arm | 0x17932e95</item>
+																					<item>Death Claw 4 | L-Elbow-4Arm | 0x0861e2c0</item>
+																					<item>Death Claw 4 | L-Hand | 0x8beb7000</item>
+																					<item>Death Claw, Feral Ghoul 5 | R-Up Thi | 0x9af9d18c</item>
+																					<item>Death Claw, Feral Ghoul 5 | R-Lo Leg | 0x8e0daa93</item>
+																					<item>Death Claw, Feral Ghoul 5 | R-Lo Ft | 0x6bd95520</item>
+																					<item>Death Claw, Feral Ghoul 6 | L-Lo Thi | 0xa325b267</item>
+																					<item>Death Claw, Feral Ghoul 6 | L-Lo Leg | 0x51dd8370</item>
+																					<item>Death Claw, Feral Ghoul 6 | L-Lo Ft | 0xb4097cc3</item>
+																					<item>Super Mutant Hound 3 | Fr-Lf Up Leg | 0x99338c09</item>
+																					<item>Super Mutant Hound 3 | Fr-Lf Lo Leg | 0x7491a630</item>
+																					<item>Super Mutant Hound 3 | Fr-Lf Foot | 0x8a99ba3f</item>
+																					<item>Super Mutant Hound 4 | Bk-Lf Thigh | 0xa7860026</item>
+																					<item>Super Mutant Hound 4 | Bk-Lf Knee | 0xaf6a52d7</item>
+																					<item>Super Mutant Hound 4 | Bk-Lf Ankle | 0xb42c3610</item>
+																					<item>Super Mutant Hound 4 | Bk-Lf Foot | 0x6e284ec0</item>
+																					<item>Super Mutant Hound 5 | Bk-Ri Thigh | 0x0e97871c</item>
+																					<item>Super Mutant Hound 5 | Bk-Ri Knee | 0x02433b3b</item>
+																					<item>Super Mutant Hound 5 | Bk-Ri Ankle | 0x1d3db12a</item>
+																					<item>Super Mutant Hound 5 | Bk-Ri Foot | 0x20c9e4aa</item>
+																					<item>Super Mutant Hound 6 | Fr-Ri Up Leg | 0x5f96443c</item>
+																					<item>Super Mutant Hound 6 | Fr-Ri Lo Leg | 0xdd80210a</item>
+																					<item>Super Mutant Hound 6 | Fr-Ri Foot | 0x4c3c720a</item>
+																					<item>Mirelurk 2 | Fr-Ri-Up Arm | 0xa5f4be71</item>
+																					<item>Mirelurk 2 | Fr-Ri-Lo Arm | 0x99eb64eb</item>
+																					<item>Mirelurk 2 | R Claw | 0x3c9df64f</item>
+																					<item>Mirelurk 4 | L Shoulder | 0x40f66ca4</item>
+																					<item>Mirelurk 4 | L-Up Arm | 0xc1f62792</item>
+																					<item>Mirelurk 4 | L Elbow | 0xf0da47f2</item>
+																					<item>Mirelurk 4 | L Claw | 0x55acd556</item>
+																					<item>Mirelurk 5 | Fr-Ri Hip | 0x064f59cd</item>
+																					<item>Mirelurk 5 | Fr-Ri Thigh | 0x5b033df6</item>
+																					<item>Mirelurk 5 | Fr-Ri Calf | 0x15fc7bad</item>
+																					<item>Mirelurk 5 | Fr-Ri Foot | 0xf028841e</item>
+																					<item>Mirelurk 6 | Fr-Lf Hip-Thigh | 0xf62a541a</item>
+																					<item>Mirelurk 6 | Fr-Lf Kne-Clf | 0x5b1dd1c7</item>
+																					<item>Mirelurk 6 | Fr-Lf Foot | 0xbec92e74</item>
+																					<item>Mirelurk 8 | Bk-Ri Hip-Thigh | 0xfc5546b8</item>
+																					<item>Mirelurk 8 | Bk-Ri Kne-Clf | 0x24a15449</item>
+																					<item>Mirelurk 8 | Bk-Ri Foot | 0xc175abfa</item>
+																					<item>Mirelurk 9 | Bk-Lf Hip-Thigh | 0xb2b4ecd2</item>
+																					<item>Mirelurk 9 | Bk-Lf Kne-Clf | 0xc1886aab</item>
+																					<item>Mirelurk 9 | Bk-Lf Foot | 0x245c9518</item>
+																					<item>Dog 3 | Fr-Lf Knee | 0x5530c47b</item>
+																					<item>Dog 3 | Fr-Lf Calf | 0xcc3995c1</item>
+																					<item>Dog 3 | Fr-Lf Heel+Arch | 0xbd2750cf</item>
+																					<item>Dog 3 | Fr-Lf Paw | 0x77fe1ec8</item>
+																					<item>Dog 4 | Bk-Lf Knee | 0x52f7244b</item>
+																					<item>Dog 4 | Bk-Lf Calf | 0xcbfe75f1</item>
+																					<item>Dog 4 | Bk-Lf Heel+Arch | 0xfe31ace4</item>
+																					<item>Dog 4 | Bk-Lf Paw | 0x08eb5fa0</item>
+																					<item>Dog 5 | Bk-Ri Knee | 0x8d270da8</item>
+																					<item>Dog 5 | Bk-Ri Calf+Heel | 0x142e5c12</item>
+																					<item>Dog 5 | Bk-Ri Arch | 0x9a333507</item>
+																					<item>Dog 5 | Bk-Ri Paw | 0x61da7cb9</item>
+																					<item>Dog 6 | Fr-Ri Knee | 0x8ae0ed98</item>
+																					<item>Dog 6 | Fr-Ri Calf | 0x13e9bc22</item>
+																					<item>Dog 6 | Fr-Ri Heel+Arch | 0xd925c92c</item>
+																					<item>Dog 6 | Fr-Ri Paw | 0x1ecf3dd1</item>
+																					<item>Behemoth 2 | R-Arm+Elbow | 0x8c5ae189</item>
+																					<item>Behemoth 2 | R-4 Arm | 0x071dfd97</item>
+																					<item>Behemoth 2 | R-Hand | 0xded0fadf</item>
+																					<item>Behemoth 4 | L-Arm+Elbow | 0xc2bb4be3</item>
+																					<item>Behemoth 4 | L-4 Arm | 0x3e7a4ccc</item>
+																					<item>Behemoth 4 | L-Hand | 0xe7b74b84</item>
+																					<item>Behemoth 5 | R-Calf | 0xa411c600</item>
+																					<item>Behemoth 5 | R-Foot | 0xac900af3</item>
+																					<item>Behemoth 6 | L-Calf | 0xc0135fe3</item>
+																					<item>Behemoth 6 | R-Foot | 0x95f7bba8</item>
+																					<item>Robot 3 | Torso | 0x3d6644aa</item>
+																				</content>
+																				<hidden>1</hidden>
+																				<enabled>0</enabled>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>0</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																			<border>5</border>
+																			<object class="wxStaticText" name="segmentSlotLabel">
+																				<fg>#ffffff</fg>
+																				<label>Slot</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxChoice" name="segmentSlot">
+																				<selection>0</selection>
+																				<content>
+																					<item>None</item>
+																					<item>30 - Hair Top</item>
+																					<item>31 - Hair Long</item>
+																					<item>32 - Head</item>
+																					<item>33 - Body</item>
+																					<item>34 - L Hand</item>
+																					<item>35 - R Hand</item>
+																					<item>36 - [U] Torso</item>
+																					<item>37 - [U] L Arm</item>
+																					<item>38 - [U] R Arm</item>
+																					<item>39 - [U] L Leg</item>
+																					<item>40 - [U] R Leg</item>
+																					<item>41 - [A] Torso</item>
+																					<item>42 - [A] L Arm</item>
+																					<item>43 - [A] R Arm</item>
+																					<item>44 - [A] L Leg</item>
+																					<item>45 - [A] R Leg</item>
+																					<item>46 - Headband</item>
+																					<item>47 - Eyes</item>
+																					<item>48 - Beard</item>
+																					<item>49 - Mouth</item>
+																					<item>50 - Neck</item>
+																					<item>51 - Ring</item>
+																					<item>52 - Scalp</item>
+																					<item>53 - Decapitation</item>
+																					<item>54 - Unnamed</item>
+																					<item>55 - Unnamed</item>
+																					<item>56 - Unnamed</item>
+																					<item>57 - Unnamed</item>
+																					<item>58 - Unnamed</item>
+																					<item>59 - Shield</item>
+																					<item>60 - Pipboy</item>
+																					<item>61 - FX</item>
+																				</content>
+																				<hidden>1</hidden>
+																				<enabled>0</enabled>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>0</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																			<border>5</border>
+																			<object class="wxStaticText" name="segmentSSFLabel">
+																				<fg>#ffffff</fg>
+																				<label>SSF File</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxTextCtrl" name="segmentSSF">
+																				<maxlength>255</maxlength>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>0</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxButton" name="segmentApply">
+																				<size>-1,25</size>
+																				<label>Apply</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxButton" name="segmentReset">
+																				<size>-1,25</size>
+																				<label>Reset</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>0</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																			<border>5</border>
+																			<object class="wxStaticText" name="partitionTypeLabel">
+																				<fg>#ffffff</fg>
+																				<label>Type</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxChoice" name="partitionType">
+																				<selection>0</selection>
+																				<content>
+																					<item>0 BP_TORSO</item><item>1 BP_HEAD</item><item>2 BP_HEAD2</item>
+																					<item>3 BP_LEFTARM</item><item>4 BP_LEFTARM2</item>
+																					<item>5 BP_RIGHTARM</item><item>6 BP_RIGHTARM2</item>
+																					<item>7 BP_LEFTLEG</item><item>8 BP_LEFTLEG2</item><item>9 BP_LEFTLEG3</item>
+																					<item>10 BP_RIGHTLEG</item><item>11 BP_RIGHTLEG2</item><item>12 BP_RIGHTLEG3</item>
+																					<item>13 BP_BRAIN</item>
+																					<item>30 SBP_30_HEAD</item><item>31 SBP_31_HAIR</item>
+																					<item>32 SBP_32_BODY</item><item>33 SBP_33_HANDS</item><item>34 SBP_34_FOREARMS</item>
+																					<item>35 SBP_35_AMULET</item><item>36 SBP_36_RING</item>
+																					<item>37 SBP_37_FEET</item><item>38 SBP_38_CALVES</item>
+																					<item>39 SBP_39_SHIELD</item>
+																					<item>40 SBP_40_TAIL</item><item>41 SBP_41_LONGHAIR</item>
+																					<item>42 SBP_42_CIRCLET</item><item>43 SBP_43_EARS</item>
+																					<item>44 SBP_44_DRAGON_BLOODHEAD_OR_MOD_MOUTH</item><item>45 SBP_45_DRAGON_BLOODWINGL_OR_MOD_NECK</item>
+																					<item>46 SBP_46_DRAGON_BLOODWINGR_OR_MOD_CHEST_PRIMARY</item><item>47 SBP_47_DRAGON_BLOODTAIL_OR_MOD_BACK</item>
+																					<item>48 SBP_48_MOD_MISC1</item><item>49 SBP_49_MOD_PELVIS_PRIMARY</item>
+																					<item>50 SBP_50_DECAPITATEDHEAD</item><item>51 SBP_51_DECAPITATE</item>
+																					<item>52 SBP_52_MOD_PELVIS_SECONDARY</item><item>53 SBP_53_MOD_LEG_RIGHT</item><item>54 SBP_54_MOD_LEG_LEFT</item>
+																					<item>55 SBP_55_MOD_FACE_JEWELRY</item><item>56 SBP_56_MOD_CHEST_SECONDARY</item>
+																					<item>57 SBP_57_MOD_SHOULDER</item><item>58 SBP_58_MOD_ARM_LEFT</item><item>59 SBP_59_MOD_ARM_RIGHT</item>
+																					<item>60 SBP_60_MOD_MISC2</item><item>61 SBP_61_FX01</item>
+																					<item>101 BP_SECTIONCAP_HEAD</item><item>102 BP_SECTIONCAP_HEAD2</item>
+																					<item>103 BP_SECTIONCAP_LEFTARM</item><item>104 BP_SECTIONCAP_LEFTARM2</item>
+																					<item>105 BP_SECTIONCAP_RIGHTARM</item><item>106 BP_SECTIONCAP_RIGHTARM2</item>
+																					<item>107 BP_SECTIONCAP_LEFTLEG</item><item>108 BP_SECTIONCAP_LEFTLEG2</item><item>109 BP_SECTIONCAP_LEFTLEG3</item>
+																					<item>110 BP_SECTIONCAP_RIGHTLEG</item><item>111 BP_SECTIONCAP_RIGHTLEG2</item><item>112 BP_SECTIONCAP_RIGHTLEG3</item>
+																					<item>113 BP_SECTIONCAP_BRAIN</item>
+																					<item>130 SBP_130_HEAD</item><item>131 SBP_131_HAIR</item><item>141 SBP_141_LONGHAIR</item>
+																					<item>142 SBP_142_CIRCLET</item><item>143 SBP_143_EARS</item>
+																					<item>150 SBP_150_DECAPITATEDHEAD</item>
+																					<item>201 BP_TORSOCAP_HEAD</item><item>202 BP_TORSOCAP_HEAD2</item>
+																					<item>203 BP_TORSOCAP_LEFTARM</item><item>204 BP_TORSOCAP_LEFTARM2</item>
+																					<item>205 BP_TORSOCAP_RIGHTARM</item><item>206 BP_TORSOCAP_RIGHTARM2</item>
+																					<item>207 BP_TORSOCAP_LEFTLEG</item><item>208 BP_TORSOCAP_LEFTLEG2</item><item>209 BP_TORSOCAP_LEFTLEG3</item>
+																					<item>210 BP_TORSOCAP_RIGHTLEG</item><item>211 BP_TORSOCAP_RIGHTLEG2</item><item>212 BP_TORSOCAP_RIGHTLEG3</item>
+																					<item>213 BP_TORSOCAP_BRAIN</item>
+																					<item>230 SBP_230_HEAD</item>
+																					<item>1000 BP_TORSOSECTION_HEAD</item><item>2000 BP_TORSOSECTION_HEAD2</item>
+																					<item>3000 BP_TORSOSECTION_LEFTARM</item><item>4000 BP_TORSOSECTION_LEFTARM2</item>
+																					<item>5000 BP_TORSOSECTION_RIGHTARM</item><item>6000 BP_TORSOSECTION_RIGHTARM2</item>
+																					<item>7000 BP_TORSOSECTION_LEFTLEG</item><item>8000 BP_TORSOSECTION_LEFTLEG2</item><item>9000 BP_TORSOSECTION_LEFTLEG3</item>
+																					<item>10000 BP_TORSOSECTION_RIGHTLEG</item><item>11000 BP_TORSOSECTION_RIGHTLEG2</item><item>12000 BP_TORSOSECTION_RIGHTLEG3</item>
+																					<item>13000 BP_TORSOSECTION_BRAIN</item>
+																				</content>
+																				<hidden>1</hidden>
+																				<enabled>0</enabled>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>0</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxButton" name="partitionApply">
+																				<size>-1,25</size>
+																				<label>Apply</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxButton" name="partitionReset">
+																				<size>-1,25</size>
+																				<label>Reset</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxCheckBox" name="selectSliders">
+																		<fg>#ffffff</fg>
+																		<label>De-/Select Sliders</label>
+																		<checked>1</checked>
+																		<enabled>1</enabled>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxCheckBox" name="cbFixedWeight">
+																		<fg>#ffffff</fg>
+																		<label>Fixed Weight Brush</label>
+																		<checked>0</checked>
+																		<hidden>1</hidden>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxCheckBox" name="cbNormalizeWeights">
+																		<fg>#ffffff</fg>
+																		<label>Normalize Weights</label>
+																		<checked>0</checked>
+																		<hidden>1</hidden>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																			<border>15</border>
+																			<object class="wxStaticText" name="xMirrorBoneLabel">
+																				<fg>#ffffff</fg>
+																				<label>X-Mirror Bone</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<object class="wxChoice" name="cXMirrorBone">
+																				<selection>0</selection>
+																				<content />
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
+																	<border>5</border>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<object class="wxStaticText" name="boneScaleLabel">
+																				<fg>#ffffff</fg>
+																				<label>Preview Scaling</label>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<object class="wxSlider" name="boneScale">
+																				<size>-1,25</size>
+																				<value>0</value>
+																				<min>-100</min>
+																				<max>100</max>
+																				<hidden>1</hidden>
+																			</object>
+																		</object>
+																	</object>
 																</object>
 															</object>
-															<object class="sizeritem">
-																<option>1</option>
-																<flag>wxALL|wxEXPAND</flag>
-																<border>5</border>
-																<object class="wxSlider" name="m_slider31">
-																	<style>wxSL_HORIZONTAL</style>
-																	<size>-1,10</size>
-																	<value>100</value>
-																	<min>0</min>
-																	<max>100</max>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND|wxLEFT</flag>
+														<border>2</border>
+														<object class="wxCollapsiblePane" name="masksPane">
+															<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+															<collapsed>1</collapsed>
+															<label>Masks</label>
+															<bg>wxSYS_COLOUR_MENU</bg>
+															<hidden>0</hidden>
+															<object class="panewindow">
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<option>0</option>
+																		<flag>wxALL|wxEXPAND</flag>
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxChoice" name="cMaskName">
+																					<selection>0</selection>
+																					<content />
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxButton" name="saveMask">
+																					<size>-1,25</size>
+																					<label>Save</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxButton" name="saveAsMask">
+																					<size>-1,25</size>
+																					<label>Save As</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxButton" name="deleteMask">
+																					<size>-1,25</size>
+																					<label>Delete</label>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
 																</object>
 															</object>
-															<object class="sizeritem">
-																<option>0</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																<border>2</border>
-																<object class="wxTextCtrl" name="m_textCtrl11">
-																	<style>wxSIMPLE_BORDER</style>
-																	<size>40,-1</size>
-																	<bg>#303030</bg>
-																	<fg>#ffffff</fg>
-																	<value></value>
-																	<maxlength>0</maxlength>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND|wxLEFT</flag>
+														<border>2</border>
+														<object class="wxCollapsiblePane" name="posePane">
+															<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+															<collapsed>1</collapsed>
+															<label>Posing</label>
+															<bg>wxSYS_COLOUR_MENU</bg>
+															<hidden>1</hidden>
+															<object class="panewindow">
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<option>0</option>
+																		<flag>wxALL|wxEXPAND</flag>
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxCheckBox" name="cbPose">
+																					<label>Show Pose</label>
+																					<checked>0</checked>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxChoice" name="cPoseBone">
+																					<selection>0</selection>
+																					<content />
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>0</option>
+																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																		<border>5</border>
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<object class="wxButton" name="resetBonePose">
+																					<size>-1,25</size>
+																					<label>Reset Bone</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<object class="wxButton" name="resetAllPose">
+																					<size>-1,25</size>
+																					<label>Reset All</label>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>0</option>
+																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																		<border>5</border>
+																		<object class="wxFlexGridSizer">
+																			<rows>0</rows>
+																			<cols>3</cols>
+																			<vgap>0</vgap>
+																			<hgap>0</hgap>
+																			<growablecols>1</growablecols>
+																			<growablerows></growablerows>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<object class="wxStaticText" name="rxLabel">
+																					<label>Rotation X</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<object class="wxSlider" name="rxPoseSlider">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value>0</value>
+																					<min>-300</min>
+																					<max>300</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<object class="wxTextCtrl" name="rxPoseText">
+																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<value>0</value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<object class="wxStaticText" name="ryLabel">
+																					<label>Rotation Y</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<object class="wxSlider" name="ryPoseSlider">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value>0</value>
+																					<min>-300</min>
+																					<max>300</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<object class="wxTextCtrl" name="ryPoseText">
+																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<value>0</value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<object class="wxStaticText" name="rzLabel">
+																					<label>Rotation Z</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<object class="wxSlider" name="rzPoseSlider">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value>0</value>
+																					<min>-300</min>
+																					<max>300</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<object class="wxTextCtrl" name="rzPoseText">
+																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<value>0</value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<object class="wxStaticText" name="txLabel">
+																					<label>Offset X</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<object class="wxSlider" name="txPoseSlider">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value>0</value>
+																					<min>-1000</min>
+																					<max>1000</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<object class="wxTextCtrl" name="txPoseText">
+																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<value>0</value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<object class="wxStaticText" name="tyLabel">
+																					<label>Offset Y</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<object class="wxSlider" name="tyPoseSlider">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value>0</value>
+																					<min>-1000</min>
+																					<max>1000</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<object class="wxTextCtrl" name="tyPoseText">
+																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<value>0</value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<border>5</border>
+																				<flag>wxBOTTOM|wxALIGN_CENTER</flag>
+																				<object class="wxStaticText" name="tzLabel">
+																					<label>Offset Z</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<border>5</border>
+																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<object class="wxSlider" name="tzPoseSlider">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value>0</value>
+																					<min>-1000</min>
+																					<max>1000</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<border>5</border>
+																				<flag>wxBOTTOM|wxALIGN_CENTER_VERTICAL</flag>
+																				<object class="wxTextCtrl" name="tzPoseText">
+																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<value>0</value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>3</option>
+														<flag>wxEXPAND</flag>
+														<border>0</border>
+														<object class="wxScrolledWindow" name="sliderScroll">
+															<style>wxHSCROLL|wxVSCROLL</style>
+															<bg>#404040</bg>
+															<scrollrate>18,18</scrollrate>
+															<object class="wxBoxSizer">
+																<orient>wxVERTICAL</orient>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND|wxFIXED_MINSIZE</flag>
+																	<border>1</border>
+																	<object class="wxPanel" name="sliderPane">
+																		<style>wxSIMPLE_BORDER|wxTAB_TRAVERSAL</style>
+																		<bg>#7d4d8a</bg>
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<border>5</border>
+																				<object class="wxCheckBox" name="sliderNameCheck">
+																					<fg>#ffffff</fg>
+																					<label>Check Me!</label>
+																					<checked>0</checked>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxSlider" name="slider">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value>100</value>
+																					<min>0</min>
+																					<max>100</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<border>2</border>
+																				<object class="wxTextCtrl" name="sliderReadout">
+																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<bg>#303030</bg>
+																					<fg>#ffffff</fg>
+																					<value>50%</value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxEXPAND | wxALL</flag>
+																	<border>1</border>
+																	<object class="wxPanel" name="m_panel191">
+																		<style>wxSIMPLE_BORDER|wxTAB_TRAVERSAL</style>
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<border>5</border>
+																				<object class="wxCheckBox" name="m_checkBox3">
+																					<fg>#ffffff</fg>
+																					<label>Check Me!</label>
+																					<checked>0</checked>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxSlider" name="m_slider31">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value>100</value>
+																					<min>0</min>
+																					<max>100</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<border>2</border>
+																				<object class="wxTextCtrl" name="m_textCtrl11">
+																					<style>wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<bg>#303030</bg>
+																					<fg>#ffffff</fg>
+																					<value></value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
 																</object>
 															</object>
 														</object>
@@ -1955,208 +2187,6 @@
 				<label>Clear Mask\tCtrl+A</label>
 				<help>Clear Mask</help>
 			</object>
-		</object>
-	</object>
-
-	<object class="wxToolBar" name="toolBar">
-		<style>wxTB_HORIZONTAL|wxTB_FLAT</style>
-		<bg>#707070</bg>
-		<fg>#ffffff</fg>
-		<separation>5</separation>
-		<object class="tool" name="btnNewProject">
-			<label>New Project</label>
-			<tooltip>Create a new project by selecting a reference body slider set, and outfit model files.</tooltip>
-			<bitmap>$(AppDir)\res\images\NewProj.png</bitmap>
-		</object>
-		<object class="separator" />
-		<object class="tool" name="btnLoadProject">
-			<label>Load Project</label>
-			<tooltip>Load a previously created slider set for editing.</tooltip>
-			<bitmap>$(AppDir)\res\images\LoadProj.png</bitmap>
-		</object>
-		<object class="separator" />
-		<object class="tool" name="btnSelect">
-			<label>Select</label>
-			<tooltip>Navigate and select meshes (or vertices in vertex mode).</tooltip>
-			<bitmap>$(AppDir)\res\images\SelectBrush.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\SelectBrush_d.png</bitmap2>
-			<radio>1</radio>
-			<checked>1</checked>
-		</object>
-		<object class="tool" name="btnMaskBrush">
-			<label>Mask</label>
-			<tooltip>Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.</tooltip>
-			<bitmap>$(AppDir)\res\images\MaskBrush.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\MaskBrush_d.png</bitmap2>
-			<radio>1</radio>
-		</object>
-		<object class="tool" name="btnInflateBrush">
-			<label>Inflate</label>
-			<tooltip>Increase mesh volume in an area.</tooltip>
-			<bitmap>$(AppDir)\res\images\InflateBrush.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\InflateBrush_d.png</bitmap2>
-			<radio>1</radio>
-		</object>
-		<object class="tool" name="btnDeflateBrush">
-			<label>Deflate</label>
-			<tooltip>Decrease mesh volume in an area.</tooltip>
-			<bitmap>$(AppDir)\res\images\DeflateBrush.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\DeflateBrush_d.png</bitmap2>
-			<radio>1</radio>
-		</object>
-		<object class="tool" name="btnMoveBrush">
-			<label>Move</label>
-			<tooltip>Move vertices over a plane parallel to the view.</tooltip>
-			<bitmap>$(AppDir)\res\images\MoveBrush.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\MoveBrush_d.png</bitmap2>
-			<radio>1</radio>
-		</object>
-		<object class="tool" name="btnSmoothBrush">
-			<label>Smooth</label>
-			<tooltip>Smooth an area of a mesh.</tooltip>
-			<bitmap>$(AppDir)\res\images\SmoothBrush.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\SmoothBrush_d.png</bitmap2>
-			<radio>1</radio>
-		</object>
-		<object class="tool" name="btnWeightBrush">
-			<label>Weight Paint</label>
-			<tooltip>Apply animation weight values for currently selected bone.\nHold down the ALT key to weaken the weighting.</tooltip>
-			<bitmap>$(AppDir)\res\images\WeightBrush.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\WeightBrush_d.png</bitmap2>
-			<radio>1</radio>
-			<disabled>1</disabled>
-		</object>
-		<object class="tool" name="btnColorBrush">
-			<label>Color Paint</label>
-			<tooltip>Apply vertex colors.\nHold down the ALT key to remove colors.</tooltip>
-			<bitmap>$(AppDir)\res\images\ColorBrush.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\ColorBrush_d.png</bitmap2>
-			<radio>1</radio>
-			<disabled>1</disabled>
-		</object>
-		<object class="tool" name="btnAlphaBrush">
-			<label>Alpha Paint</label>
-			<tooltip>Apply vertex alpha.\nHold down the ALT key to remove alpha.</tooltip>
-			<bitmap>$(AppDir)\res\images\AlphaBrush.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\AlphaBrush_d.png</bitmap2>
-			<radio>1</radio>
-			<disabled>1</disabled>
-		</object>
-		<object class="tool" name="btnCollapseVertex">
-			<label>Collapse Vertex</label>
-			<tooltip>Deletes vertices with no more than three connections, without creating a hole.</tooltip>
-			<bitmap>$(AppDir)\res\images\CollapseVertex.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\CollapseVertex_d.png</bitmap2>
-			<radio>1</radio>
-		</object>
-		<object class="tool" name="btnFlipEdgeTool">
-			<label>Flip Edge</label>
-			<tooltip>Flips mesh edges so that the opposite pair of vertices is connected.</tooltip>
-			<bitmap>$(AppDir)\res\images\FlipEdge.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\FlipEdge_d.png</bitmap2>
-			<radio>1</radio>
-		</object>
-		<object class="tool" name="btnSplitEdgeTool">
-			<label>Split Edge</label>
-			<tooltip>Splits a mesh edge in two with a new vertex.</tooltip>
-			<bitmap>$(AppDir)\res\images\SplitEdge.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\SplitEdge_d.png</bitmap2>
-			<radio>1</radio>
-		</object>
-		<object class="separator" />
-		<object class="tool" name="btnTransform">
-			<label>Transform</label>
-			<tooltip>Shows a transform tool to manipulate shapes and vertices with.</tooltip>
-			<bitmap>$(AppDir)\res\images\TransformTool.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\TransformTool_d.png</bitmap2>
-			<toggle>1</toggle>
-		</object>
-		<object class="tool" name="btnPivot">
-			<label>Pivot</label>
-			<tooltip>Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.</tooltip>
-			<bitmap>$(AppDir)\res\images\Pivot.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\Pivot_d.png</bitmap2>
-			<toggle>1</toggle>
-		</object>
-		<object class="tool" name="btnVertexEdit">
-			<label>Vertex Edit</label>
-			<tooltip>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select/unmask it.\nHold down CTRL to unselect/mask it.</tooltip>
-			<bitmap>$(AppDir)\res\images\VertexEdit.png</bitmap>
-			<bitmap2>$(AppDir)\res\images\VertexEdit_d.png</bitmap2>
-			<toggle>1</toggle>
-		</object>
-		<object class="separator" />
-		<object class="tool" name="btnXMirror">
-			<label>X Mirror</label>
-			<tooltip>Mirror edits across the X axis.</tooltip>
-			<bitmap>$(AppDir)\res\images\XMirror.png</bitmap>
-			<toggle>1</toggle>
-			<checked>1</checked>
-		</object>
-		<object class="tool" name="btnConnected">
-			<label>Edit Connected Only\tC</label>
-			<tooltip>Edit only vertices that are connected to the ones under the brush within the brush radius.</tooltip>
-			<bitmap>$(AppDir)\res\images\EditConnected.png</bitmap>
-			<toggle>1</toggle>
-			<checked>0</checked>
-		</object>
-		<object class="tool" name="btnBrushCollision">
-			<label>Global Brush Collision\tC</label>
-			<tooltip>Allows for the brushes to collide with all currently selected meshes at the same time.</tooltip>
-			<bitmap>$(AppDir)\res\images\BrushCollision.png</bitmap>
-			<toggle>1</toggle>
-			<checked>1</checked>
-		</object>
-		<object class="separator" />
-		<object class="tool" name="btnViewFront">
-			<label>View Front</label>
-			<tooltip>Change camera view to the front.</tooltip>
-			<bitmap>$(AppDir)\res\images\ViewFront.png</bitmap>
-		</object>
-		<object class="tool" name="btnViewBack">
-			<label>View Back</label>
-			<tooltip>Change camera view to the back.</tooltip>
-			<bitmap>$(AppDir)\res\images\ViewBack.png</bitmap>
-		</object>
-		<object class="tool" name="btnViewLeft">
-			<label>View Left</label>
-			<tooltip>Change camera view to the left.</tooltip>
-			<bitmap>$(AppDir)\res\images\ViewLeft.png</bitmap>
-		</object>
-		<object class="tool" name="btnViewRight">
-			<label>View Right</label>
-			<tooltip>Change camera view to the right.</tooltip>
-			<bitmap>$(AppDir)\res\images\ViewRight.png</bitmap>
-		</object>
-		<object class="tool" name="btnViewPerspective">
-			<label>Perspective View</label>
-			<tooltip>Toggle perspective view.</tooltip>
-			<bitmap>$(AppDir)\res\images\ViewPerspective.png</bitmap>
-			<toggle>1</toggle>
-			<checked>1</checked>
-		</object>
-		<object class="separator" />
-		<object class="wxSlider" name="fovSlider">
-			<size>100,25</size>
-			<value>65</value>
-			<min>20</min>
-			<max>120</max>
-			<tooltip>Field of View</tooltip>
-		</object>
-		<object class="wxStaticText" name="fovLabel">
-			<fg>#ffffff</fg>
-			<label>Field of View: 65</label>
-		</object>
-		<object class="space"/>
-		<object class="tool" name="btnDiscord">
-			<label>Discord</label>
-			<tooltip>Open Discord invite link.</tooltip>
-			<bitmap>$(AppDir)\res\images\Discord.png</bitmap>
-		</object>
-		<object class="tool" name="btnPayPal">
-			<label>PayPal</label>
-			<tooltip>Open PayPal link.</tooltip>
-			<bitmap>$(AppDir)\res\images\PayPal.png</bitmap>
 		</object>
 	</object>
 

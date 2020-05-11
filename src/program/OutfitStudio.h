@@ -830,15 +830,15 @@ public:
 	std::vector<int> triParts;  // the partition index for each triangle, or -1 for none
 	std::vector<int> triSParts;  // the segment partition index for each triangle, or -1 for none
 
-	wxTreeCtrl* outfitShapes;
-	wxTreeCtrl* outfitBones;
-	wxPanel* colorSettings;
-	wxTreeCtrl* segmentTree;
-	wxTreeCtrl* partitionTree;
-	wxPanel* lightSettings;
-	wxSlider* boneScale;
-	wxChoice* cXMirrorBone;
-	wxChoice* cPoseBone;
+	wxTreeCtrl* outfitShapes = nullptr;
+	wxTreeCtrl* outfitBones = nullptr;
+	wxPanel* colorSettings = nullptr;
+	wxTreeCtrl* segmentTree = nullptr;
+	wxTreeCtrl* partitionTree = nullptr;
+	wxPanel* lightSettings = nullptr;
+	wxSlider* boneScale = nullptr;
+	wxChoice* cXMirrorBone = nullptr;
+	wxChoice* cPoseBone = nullptr;
 	wxSlider *rxPoseSlider = nullptr;
 	wxSlider *ryPoseSlider = nullptr;
 	wxSlider *rzPoseSlider = nullptr;
@@ -852,8 +852,10 @@ public:
 	wxTextCtrl *tyPoseText = nullptr;
 	wxTextCtrl *tzPoseText = nullptr;
 	wxCheckBox *cbPose = nullptr;
-	wxScrolledWindow* sliderScroll;
-	wxStatusBar* statusBar;
+	wxScrolledWindow* sliderScroll = nullptr;
+	wxToolBar* toolBarH = nullptr;
+	wxToolBar* toolBarV = nullptr;
+	wxStatusBar* statusBar = nullptr;
 	wxTreeItemId shapesRoot;
 	wxTreeItemId outfitRoot;
 	wxTreeItemId bonesRoot;
@@ -1309,21 +1311,21 @@ private:
 	void OnXMirror(wxCommandEvent& event) {
 		bool enabled = event.IsChecked();
 		GetMenuBar()->Check(event.GetId(), enabled);
-		GetToolBar()->ToggleTool(event.GetId(), enabled);
+		toolBarV->ToggleTool(event.GetId(), enabled);
 		glView->SetXMirror(enabled);
 	}
 
 	void OnConnectedOnly(wxCommandEvent& event) {
 		bool enabled = event.IsChecked();
 		GetMenuBar()->Check(event.GetId(), enabled);
-		GetToolBar()->ToggleTool(event.GetId(), enabled);
+		toolBarV->ToggleTool(event.GetId(), enabled);
 		glView->SetConnectedEdit(enabled);
 	}
 
 	void OnGlobalBrushCollision(wxCommandEvent& event) {
 		bool enabled = event.IsChecked();
 		GetMenuBar()->Check(event.GetId(), enabled);
-		GetToolBar()->ToggleTool(event.GetId(), enabled);
+		toolBarV->ToggleTool(event.GetId(), enabled);
 		glView->SetGlobalBrushCollision(enabled);
 	}
 
