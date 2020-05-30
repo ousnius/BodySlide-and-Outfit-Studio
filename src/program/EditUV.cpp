@@ -374,6 +374,17 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 			boxSelectMesh->verts[3].x = rect.GetBottomLeft().u;
 			boxSelectMesh->verts[3].y = rect.GetBottomLeft().v;
 
+			if (!wxGetKeyState(wxKeyCode::WXK_ALT)) {
+				boxSelectMesh->color.x = 1.0f;
+				boxSelectMesh->color.y = 1.0f;
+				boxSelectMesh->color.z = 0.0f;
+			}
+			else {
+				boxSelectMesh->color.x = 0.0f;
+				boxSelectMesh->color.y = 1.0f;
+				boxSelectMesh->color.z = 0.0f;
+			}
+
 			boxSelectMesh->QueueUpdate(mesh::UpdateType::Position);
 		}
 		else if (activeTool == EditUVTool::Move) {
@@ -527,6 +538,7 @@ void EditUVCanvas::OnLeftDown(wxMouseEvent& event) {
 		boxSelectMesh->verts[1] = Vector3(click.x, click.y, 0.0f);
 		boxSelectMesh->verts[2] = Vector3(click.x, click.y, 0.0f);
 		boxSelectMesh->verts[3] = Vector3(click.x, click.y, 0.0f);
+		boxSelectMesh->color = Vector3(1.0f, 1.0f, 0.0f);
 		boxSelectMesh->QueueUpdate(mesh::UpdateType::Position);
 		boxSelectMesh->bVisible = true;
 		break;
@@ -580,14 +592,25 @@ void EditUVCanvas::OnLeftUp(wxMouseEvent& event) {
 		rect.SetTopLeft(Vector2(boxSelectMesh->verts[0].x, boxSelectMesh->verts[0].y));
 		rect.SetBottomRight(Vector2(boxSelectMesh->verts[2].x, boxSelectMesh->verts[2].y));
 
-		for (int i = 0; i < uvGridMesh->nVerts; i++) {
-			if (rect.Contains(Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y))) {
-				uvGridMesh->vcolors[i].x = 1.0f;
-				uvGridMesh->vcolors[i].y = 1.0f;
-				uvGridMesh->vcolors[i].z = 0.0f;
+		if (!wxGetKeyState(wxKeyCode::WXK_ALT)) {
+			for (int i = 0; i < uvGridMesh->nVerts; i++) {
+				if (rect.Contains(Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y))) {
+					uvGridMesh->vcolors[i].x = 1.0f;
+					uvGridMesh->vcolors[i].y = 1.0f;
+					uvGridMesh->vcolors[i].z = 0.0f;
+				}
+				else {
+					if (!wxGetKeyState(wxKeyCode::WXK_SHIFT)) {
+						uvGridMesh->vcolors[i].x = 0.0f;
+						uvGridMesh->vcolors[i].y = 1.0f;
+						uvGridMesh->vcolors[i].z = 0.0f;
+					}
+				}
 			}
-			else {
-				if (!wxGetKeyState(wxKeyCode::WXK_SHIFT)) {
+		}
+		else {
+			for (int i = 0; i < uvGridMesh->nVerts; i++) {
+				if (rect.Contains(Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y))) {
 					uvGridMesh->vcolors[i].x = 0.0f;
 					uvGridMesh->vcolors[i].y = 1.0f;
 					uvGridMesh->vcolors[i].z = 0.0f;
