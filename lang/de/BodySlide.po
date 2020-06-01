@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3\n"
+"X-Generator: Poedit 2.3.1\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -162,6 +162,9 @@ msgstr "Alle auswählen\tCtrl+A"
 
 msgid "Invert Selection"
 msgstr "Auswahl umkehren"
+
+msgid "Invert Selection\tCtrl+I"
+msgstr "Auswahl umkehren\tCtrl+I"
 
 msgid "Enter preset name..."
 msgstr "Preset-Name eingeben..."

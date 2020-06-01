@@ -94,6 +94,10 @@
 				<label>Select All\tCtrl+A</label>
 				<help>Select All</help>
 			</object>
+			<object class="wxMenuItem" name="editSelectInvert">
+				<label>Invert Selection\tCtrl+I</label>
+				<help>Invert Selection</help>
+			</object>
 		</object>
 	</object>
 </resource>

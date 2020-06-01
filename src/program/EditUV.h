@@ -123,6 +123,7 @@ private:
 	void OnUndo(wxCommandEvent& event);
 	void OnRedo(wxCommandEvent& event);
 	void OnSelectAll(wxCommandEvent& event);
+	void OnSelectInvert(wxCommandEvent& event);
 	void OnApply(wxCommandEvent& event);
 	void OnCancel(wxCommandEvent& event);
 
@@ -137,6 +138,7 @@ public:
 public:
 	void SetNotifyWindow(wxWindow*);
 	void SelectAll();
+	void SelectInvert();
 
 	mesh* GetGridMesh() {
 		return uvGridMesh;

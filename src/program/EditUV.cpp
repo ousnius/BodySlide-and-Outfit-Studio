@@ -106,6 +106,7 @@ wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_MENU(XRCID("editUndo"), EditUV::OnUndo)
 	EVT_MENU(XRCID("editRedo"), EditUV::OnRedo)
 	EVT_MENU(XRCID("editSelectAll"), EditUV::OnSelectAll)
+	EVT_MENU(XRCID("editSelectInvert"), EditUV::OnSelectInvert)
 	EVT_BUTTON(wxID_OK, EditUV::OnApply)
 	EVT_BUTTON(wxID_CANCEL, EditUV::OnCancel)
 wxEND_EVENT_TABLE()
@@ -175,6 +176,10 @@ void EditUV::OnRedo(wxCommandEvent& WXUNUSED(event)) {
 
 void EditUV::OnSelectAll(wxCommandEvent& WXUNUSED(event)) {
 	canvas->SelectAll();
+}
+
+void EditUV::OnSelectInvert(wxCommandEvent& WXUNUSED(event)) {
+	canvas->SelectInvert();
 }
 
 void EditUV::Undo() {
@@ -699,6 +704,14 @@ void EditUVCanvas::SelectAll() {
 		uvGridMesh->vcolors[i].y = 1.0f;
 		uvGridMesh->vcolors[i].z = 0.0f;
 	}
+
+	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	uvSurface.RenderOneFrame();
+}
+
+void EditUVCanvas::SelectInvert() {
+	for (int i = 0; i < uvGridMesh->nVerts; i++)
+		uvGridMesh->vcolors[i].x = uvGridMesh->vcolors[i].x == 1.0f ? 0.0f : 1.0f;
 
 	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
 	uvSurface.RenderOneFrame();
