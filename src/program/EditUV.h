@@ -17,6 +17,7 @@ const int EDITUV_DIRECTION_DOWN = 0x8;
 
 enum EditUVTool {
 	BoxSelection,
+	VertexSelection,
 	Move,
 	Scale,
 	Rotate
@@ -96,6 +97,10 @@ public:
 		toolActive = toolSelected;
 	}
 
+	EditUVTool GetSelectedTool() {
+		return toolSelected;
+	}
+
 	EditUVTool GetActiveTool() {
 		return toolActive;
 	}
@@ -142,6 +147,10 @@ public:
 
 	mesh* GetGridMesh() {
 		return uvGridMesh;
+	}
+
+	void SetCursorType(GLSurface::CursorType cursorType) {
+		uvSurface.SetCursorType(cursorType);
 	}
 
 	void Render() {
@@ -200,6 +209,7 @@ private:
 
 	void InitMeshes();
 	void UpdateCursor(int ScreenX, int ScreenY, const std::string& meshName);
+	bool SelectVertex(const wxPoint& screenPos);
 
 	wxDECLARE_EVENT_TABLE();
 };

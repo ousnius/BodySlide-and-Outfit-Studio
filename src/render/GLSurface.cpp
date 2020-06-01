@@ -602,14 +602,20 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 	return collided;
 }
 
-bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
-	if (activeMeshes.empty())
+bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, mesh* hitMesh) {
+	if (!hitMesh && activeMeshes.empty())
 		return false;
 
 	if (outIndex)
 		(*outIndex) = -1;
 
-	for (auto &m : activeMeshes) {
+	std::vector<mesh*> hitMeshes;
+	if (hitMesh)
+		hitMeshes.push_back(hitMesh);
+	else
+		hitMeshes = activeMeshes;
+
+	for (auto &m : hitMeshes) {
 		Vector3 o;
 		Vector3 d;
 		GetPickRay(ScreenX, ScreenY, m, d, o);

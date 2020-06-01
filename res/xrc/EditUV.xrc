@@ -56,6 +56,13 @@
 			<radio>1</radio>
 			<checked>1</checked>
 		</object>
+		<object class="tool" name="btnVertexSelection">
+			<label>Vertex Selection</label>
+			<tooltip>Vertex Selection</tooltip>
+			<bitmap>$(AppDir)\res\images\SelectBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\SelectBrush_d.png</bitmap2>
+			<radio>1</radio>
+		</object>
 		<object class="tool" name="btnMove">
 			<label>Move</label>
 			<tooltip>Move</tooltip>

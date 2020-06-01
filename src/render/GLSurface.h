@@ -13,6 +13,7 @@ See the included LICENSE file
 class GLSurface {
 public:
 	enum CursorType {
+		None = 0,
 		CenterCursor = 1,
 		PointCursor = 2,
 		CircleCursor = 4,
@@ -47,7 +48,7 @@ private:
 	float defLineWidth = 1.0f;
 	float defPointSize = 5.0f;
 	float cursorSize = 0.5f;
-	CursorType cursorType;
+	CursorType cursorType = CursorType::None;
 
 	GLShader::DirectionalLight frontalLight;
 	GLShader::DirectionalLight directionalLight0;
@@ -304,7 +305,7 @@ public:
 	void GetPickRay(int ScreenX, int ScreenY, mesh* m, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
 	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverPoint = nullptr, Vector3* outHoverColor = nullptr, float* outHoverAlpha = nullptr, Edge* outHoverEdge = nullptr);
-	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr);
+	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, mesh* hitMesh = nullptr);
 	void ShowCursor(bool show = true);
 	void HidePointCursor();
 	void HideSegCursor();

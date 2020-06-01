@@ -100,6 +100,7 @@ bool EditUVHistory::Forward() {
 
 wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_MENU(XRCID("btnBoxSelection"), EditUV::OnSelectTool)
+	EVT_MENU(XRCID("btnVertexSelection"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnMove"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnScale"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnRotate"), EditUV::OnSelectTool)
@@ -148,9 +149,16 @@ EditUV::~EditUV() {
 void EditUV::OnSelectTool(wxCommandEvent& event) {
 	int id = event.GetId();
 
+	canvas->SetCursorType(GLSurface::None);
+
 	if (id == XRCID("btnBoxSelection")) {
 		toolSelected = EditUVTool::BoxSelection;
 		canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
+	}
+	else if (id == XRCID("btnVertexSelection")) {
+		toolSelected = EditUVTool::VertexSelection;
+		canvas->SetCursor(wxStockCursor::wxCURSOR_DEFAULT);
+		canvas->SetCursorType(GLSurface::PointCursor);
 	}
 	else if (id == XRCID("btnMove")) {
 		toolSelected = EditUVTool::Move;
@@ -328,6 +336,9 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 	int x = 0;
 	int y = 0;
 	event.GetPosition(&x, &y);
+	wxPoint p(x, y);
+
+	EditUVTool activeTool = editUV->GetActiveTool();
 
 	if (mbuttonDown) {
 		isMDragging = true;
@@ -360,7 +371,6 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 		Rect rect;
 		mesh* m = editUV->GetMesh();
 
-		EditUVTool activeTool = editUV->GetActiveTool();
 		if (activeTool == EditUVTool::BoxSelection) {
 			// Draw normalized rectangle from start to current
 			rect.SetTopLeft(Vector2(start.x, start.y));
@@ -391,6 +401,9 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 			}
 
 			boxSelectMesh->QueueUpdate(mesh::UpdateType::Position);
+		}
+		else if (activeTool == EditUVTool::VertexSelection) {
+			SelectVertex(p);
 		}
 		else if (activeTool == EditUVTool::Move) {
 			// Move alongside cursor
@@ -513,7 +526,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 		uvSurface.RenderOneFrame();
 	}
 
-	if (!lbuttonDown && !rbuttonDown && !mbuttonDown) {
+	if ((!lbuttonDown && !rbuttonDown && !mbuttonDown) || activeTool == EditUVTool::VertexSelection) {
 		UpdateCursor(x, y, "UVGrid");
 		uvSurface.RenderOneFrame();
 	}
@@ -589,6 +602,7 @@ void EditUVCanvas::OnLeftUp(wxMouseEvent& event) {
 		ReleaseMouse();
 
 	event.GetPosition(&upX, &upY);
+	wxPoint p(upX, upY);
 
 	Rect rect;
 
@@ -625,6 +639,10 @@ void EditUVCanvas::OnLeftUp(wxMouseEvent& event) {
 
 		uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
 		boxSelectMesh->bVisible = false;
+		break;
+
+	case EditUVTool::VertexSelection:
+		SelectVertex(p);
 		break;
 
 	case EditUVTool::Move:
@@ -831,7 +849,7 @@ void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& mes
 	uvSurface.GetPickRay(ScreenX, ScreenY, m, d, o);
 
 	o.z = 0.0f;
-	d = d * -1.0f;
+	//d = d * -1.0f;
 
 	std::vector<IntersectResult> results;
 	if (m->bvh && m->bvh->IntersectRay(o, d, &results)) {
@@ -875,4 +893,14 @@ void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& mes
 	}
 
 	uvSurface.ShowCursor(hoverPoint >= 0 ? true : false);
+}
+
+bool EditUVCanvas::SelectVertex(const wxPoint& screenPos) {
+	int vertIndex;
+	if (!uvSurface.GetCursorVertex(screenPos.x, screenPos.y, &vertIndex, uvGridMesh))
+		return false;
+
+	uvGridMesh->vcolors[vertIndex].x = 1.0f;
+	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	return true;
 }

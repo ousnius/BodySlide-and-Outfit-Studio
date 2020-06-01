@@ -2933,6 +2933,9 @@ msgstr "Bearbeitung der Texturkoordinaten."
 msgid "Box Selection"
 msgstr "Auswahlrechteck"
 
+msgid "Vertex Selection"
+msgstr "Vertex-Auswahl"
+
 msgid ""
 "You are trying to edit a slider's morph with that slider set to zero.  Do "
 "you wish to set the slider to one now?"

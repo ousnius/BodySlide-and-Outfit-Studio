@@ -2526,6 +2526,9 @@ msgstr ""
 msgid "Box Selection"
 msgstr ""
 
+msgid "Vertex Selection"
+msgstr ""
+
 msgid "You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"
 msgstr ""
 
