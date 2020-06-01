@@ -166,6 +166,18 @@ msgstr "Auswahl umkehren"
 msgid "Invert Selection\tCtrl+I"
 msgstr "Auswahl umkehren\tCtrl+I"
 
+msgid "Select Less\tA"
+msgstr "Weniger auswählen\tD"
+
+msgid "Select less adjacent points in the selected islands."
+msgstr "Weniger angrenzende Punkte in den ausgewählten Islands markieren."
+
+msgid "Select More\tD"
+msgstr "Mehr auswählen\tD"
+
+msgid "Select more adjacent points in the selected islands."
+msgstr "Mehr angrenzende Punkte in den ausgewählten Islands markieren."
+
 msgid "Enter preset name..."
 msgstr "Preset-Name eingeben..."
 

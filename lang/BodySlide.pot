@@ -150,6 +150,18 @@ msgstr ""
 msgid "Invert Selection\tCtrl+I"
 msgstr ""
 
+msgid "Select Less\tA"
+msgstr ""
+
+msgid "Select less adjacent points in the selected islands."
+msgstr ""
+
+msgid "Select More\tD"
+msgstr ""
+
+msgid "Select more adjacent points in the selected islands."
+msgstr ""
+
 msgid "Enter preset name..."
 msgstr ""
 

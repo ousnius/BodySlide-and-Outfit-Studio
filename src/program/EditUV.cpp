@@ -108,6 +108,8 @@ wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_MENU(XRCID("editRedo"), EditUV::OnRedo)
 	EVT_MENU(XRCID("editSelectAll"), EditUV::OnSelectAll)
 	EVT_MENU(XRCID("editSelectInvert"), EditUV::OnSelectInvert)
+	EVT_MENU(XRCID("editSelectLess"), EditUV::OnSelectLess)
+	EVT_MENU(XRCID("editSelectMore"), EditUV::OnSelectMore)
 	EVT_BUTTON(wxID_OK, EditUV::OnApply)
 	EVT_BUTTON(wxID_CANCEL, EditUV::OnCancel)
 wxEND_EVENT_TABLE()
@@ -188,6 +190,14 @@ void EditUV::OnSelectAll(wxCommandEvent& WXUNUSED(event)) {
 
 void EditUV::OnSelectInvert(wxCommandEvent& WXUNUSED(event)) {
 	canvas->SelectInvert();
+}
+
+void EditUV::OnSelectLess(wxCommandEvent& WXUNUSED(event)) {
+	canvas->SelectLess();
+}
+
+void EditUV::OnSelectMore(wxCommandEvent& WXUNUSED(event)) {
+	canvas->SelectMore();
 }
 
 void EditUV::Undo() {
@@ -735,6 +745,42 @@ void EditUVCanvas::SelectInvert() {
 	uvSurface.RenderOneFrame();
 }
 
+void EditUVCanvas::SelectLess() {
+	std::set<int> unselectPoints;
+	for (int i = 0; i < uvGridMesh->nVerts; i++) {
+		if (uvGridMesh->vcolors[i].x > 0.0f) {
+			std::set<int> adjacentPoints;
+			uvGridMesh->GetAdjacentPoints(i, adjacentPoints);
+
+			for (auto& adj : adjacentPoints) {
+				if (uvGridMesh->vcolors[adj].x == 0.0f) {
+					unselectPoints.insert(i);
+					break;
+				}
+			}
+		}
+	}
+
+	for (auto& up : unselectPoints)
+		uvGridMesh->vcolors[up].x = 0.0f;
+
+	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	uvSurface.RenderOneFrame();
+}
+
+void EditUVCanvas::SelectMore() {
+	std::set<int> adjacentPoints;
+	for (int i = 0; i < uvGridMesh->nVerts; i++)
+		if (uvGridMesh->vcolors[i].x > 0.0f)
+			uvGridMesh->GetAdjacentPoints(i, adjacentPoints);
+
+	for (auto& adj : adjacentPoints)
+		uvGridMesh->vcolors[adj].x = 1.0f;
+
+	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	uvSurface.RenderOneFrame();
+}
+
 void EditUVCanvas::InitMeshes() {
 	auto nif = editUV->GetNIF();
 	auto shape = editUV->GetShape();
@@ -806,6 +852,8 @@ void EditUVCanvas::InitMeshes() {
 	uvGridMesh->material = &uvGridMaterial;
 	uvGridMesh->shapeName = "UVGrid";
 
+	uvGridMesh->BuildTriAdjacency();
+	uvGridMesh->BuildEdgeList();
 	uvGridMesh->CreateBVH();
 	uvGridMesh->CreateBuffers();
 	uvSurface.AddOverlay(uvGridMesh);

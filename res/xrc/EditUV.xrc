@@ -105,6 +105,14 @@
 				<label>Invert Selection\tCtrl+I</label>
 				<help>Invert Selection</help>
 			</object>
+			<object class="wxMenuItem" name="editSelectLess">
+				<label>Select Less\tA</label>
+				<help>Select less adjacent points in the selected islands.</help>
+			</object>
+			<object class="wxMenuItem" name="editSelectMore">
+				<label>Select More\tD</label>
+				<help>Select more adjacent points in the selected islands.</help>
+			</object>
 		</object>
 	</object>
 </resource>
