@@ -413,7 +413,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 			boxSelectMesh->QueueUpdate(mesh::UpdateType::Position);
 		}
 		else if (activeTool == EditUVTool::VertexSelection) {
-			SelectVertex(p);
+			SelectVertex(p, wxGetKeyState(wxKeyCode::WXK_ALT));
 		}
 		else if (activeTool == EditUVTool::Move) {
 			// Move alongside cursor
@@ -652,7 +652,7 @@ void EditUVCanvas::OnLeftUp(wxMouseEvent& event) {
 		break;
 
 	case EditUVTool::VertexSelection:
-		SelectVertex(p);
+		SelectVertex(p, wxGetKeyState(wxKeyCode::WXK_ALT));
 		break;
 
 	case EditUVTool::Move:
@@ -943,12 +943,16 @@ void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& mes
 	uvSurface.ShowCursor(hoverPoint >= 0 ? true : false);
 }
 
-bool EditUVCanvas::SelectVertex(const wxPoint& screenPos) {
+bool EditUVCanvas::SelectVertex(const wxPoint& screenPos, bool unselect) {
 	int vertIndex;
 	if (!uvSurface.GetCursorVertex(screenPos.x, screenPos.y, &vertIndex, uvGridMesh))
 		return false;
 
-	uvGridMesh->vcolors[vertIndex].x = 1.0f;
+	if (unselect)
+		uvGridMesh->vcolors[vertIndex].x = 0.0f;
+	else
+		uvGridMesh->vcolors[vertIndex].x = 1.0f;
+
 	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
 	return true;
 }

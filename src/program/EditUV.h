@@ -213,7 +213,7 @@ private:
 
 	void InitMeshes();
 	void UpdateCursor(int ScreenX, int ScreenY, const std::string& meshName);
-	bool SelectVertex(const wxPoint& screenPos);
+	bool SelectVertex(const wxPoint& screenPos, bool unselect = false);
 
 	wxDECLARE_EVENT_TABLE();
 };
