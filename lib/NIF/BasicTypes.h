@@ -69,6 +69,9 @@ private:
 	uint nds = 0;
 
 public:
+    NiVersion() = default;
+    NiVersion(NiFileVersion _file, uint _user, uint _stream);
+
 	// Construct a file version enumeration from individual values
 	static NiFileVersion ToFile(byte major, byte minor, byte patch, byte internal) {
 		return NiFileVersion((major << 24) | (minor << 16) | (patch << 8) | internal);
@@ -106,6 +109,12 @@ public:
 	bool IsSK() { return file == V20_2_0_7 && stream == 83; }
 	bool IsSSE() { return file == V20_2_0_7 && stream == 100; }
 	bool IsFO4() { return file == V20_2_0_7 && stream == 130; }
+
+    static NiVersion getOB() { return NiVersion(NiFileVersion::V20_0_0_5, 11, 0); }
+    static NiVersion getFO3() { return NiVersion(NiFileVersion::V20_2_0_7, 0, 82); }
+    static NiVersion getSK() { return NiVersion(NiFileVersion::V20_2_0_7, 0, 83); }
+    static NiVersion getSSE() { return NiVersion(NiFileVersion::V20_2_0_7, 0, 100); }
+    static NiVersion getFO4() { return NiVersion(NiFileVersion::V20_2_0_7, 0, 130); }
 };
 
 enum NiEndian : byte {
