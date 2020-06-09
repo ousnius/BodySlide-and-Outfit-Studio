@@ -57,13 +57,13 @@ public:
 
 	NifFile(const std::string& fileName, const NifLoadOptions& options = NifLoadOptions()) {
 		Load(fileName, options);
-	}
+    }
 
-	NifFile(std::fstream& file, const NifLoadOptions& options = NifLoadOptions()) {
-		Load(file, options);
-	}
+    NifFile(std::iostream& file, const NifLoadOptions& options = NifLoadOptions()) {
+        Load(file, options);
+    }
 
-	NifFile(const NifFile& other) {
+    NifFile(const NifFile& other) {
 		CopyFrom(other);
 	}
 
@@ -73,14 +73,14 @@ public:
 	}
 
 	NiHeader& GetHeader() { return hdr; }
-	void CopyFrom(const NifFile& other);
+    void CopyFrom(const NifFile& other);
 
-	int Load(const std::string& fileName, const NifLoadOptions& options = NifLoadOptions());
-	int Load(std::fstream& file, const NifLoadOptions& options = NifLoadOptions());
-	int Save(const std::string& fileName, const NifSaveOptions& options = NifSaveOptions());
-	int Save(std::fstream& file, const NifSaveOptions& options = NifSaveOptions());
+    int Load(const std::string& fileName, const NifLoadOptions& options = NifLoadOptions());
+    int Load(std::iostream &file, const NifLoadOptions& options = NifLoadOptions());
+    int Save(const std::string& fileName, const NifSaveOptions& options = NifSaveOptions());
+    int Save(std::iostream& file, const NifSaveOptions& options = NifSaveOptions());
 
-	void Optimize();
+    void Optimize();
 	OptResult OptimizeFor(OptOptions& options);
 
 	void PrepareData();

@@ -168,12 +168,12 @@ int NifFile::Load(const std::string& fileName, const NifLoadOptions& options) {
 	return Load(file, options);
 }
 
-int NifFile::Load(std::fstream& file, const NifLoadOptions& options) {
+int NifFile::Load(std::iostream &file, const NifLoadOptions& options) {
 	Clear();
 
 	isTerrain = options.isTerrain;
 
-	if (file.is_open()) {
+    if (file) {
 		NiStream stream(&file, &hdr.GetVersion());
 		hdr.Get(stream);
 
@@ -914,8 +914,8 @@ int NifFile::Save(const std::string& fileName, const NifSaveOptions& options) {
 	return Save(file, options);
 }
 
-int NifFile::Save(std::fstream& file, const NifSaveOptions& options) {
-	if (file.is_open()) {
+int NifFile::Save(std::iostream &file, const NifSaveOptions& options) {
+    if (file) {
 		NiStream stream(&file, &hdr.GetVersion());
 		FinalizeData();
 
