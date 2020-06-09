@@ -158,6 +158,7 @@ void NifFile::Clear() {
 	isValid = false;
 	hasUnknown = false;
 	isTerrain = false;
+    computedSSECompatible = false;
 
 	blocks.clear();
 	hdr.Clear();
@@ -1074,27 +1075,10 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 
 				BSTriShape* bsOptShape = nullptr;
 
-				// Check if shape has strips in the geometry or skin partition
-				bool hasStrips = shape->HasType<NiTriStrips>();
-				if (!hasStrips) {
-					auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-					if (skinInst) {
-						auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-						if (skinPart) {
-							for (auto &partition : skinPart->partitions) {
-								if (partition.numStrips > 0) {
-									hasStrips = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-
-				// Check to optimize all shapes or only mandatory ones
-				const bool needsOpt = !options.mandatoryOnly || (options.headParts || hasStrips);
-				if (!needsOpt)
-					continue;
+                // Check to optimize all shapes or only mandatory ones
+                const bool needsOpt = !options.mandatoryOnly || options.headParts || !IsSSECompatible();
+                if (!needsOpt)
+                    continue;
 
 				auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
 				if (bsSegmentShape) {
@@ -1507,7 +1491,42 @@ void NifFile::FinalizeData() {
 		}
 	}
 
-	hdr.UpdateHeaderStrings(hasUnknown);
+    hdr.UpdateHeaderStrings(hasUnknown);
+}
+
+bool NifFile::IsSSECompatible() const
+{
+    if(computedSSECompatible)
+    {
+        return isSSECompatible;
+    }
+
+    // Check if shape has strips in the geometry or skin partition
+    for(const auto& shape : GetShapes())
+    {
+        if(!isSSECompatible) {
+            break;
+        }
+        if(shape->HasType<NiTriStrips>()) {
+            isSSECompatible = false;
+        }
+        else {
+            auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+            if (skinInst) {
+                auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+                if (skinPart) {
+                    for (auto &partition : skinPart->partitions) {
+                        if (partition.numStrips > 0) {
+                            isSSECompatible = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    computedSSECompatible = true;
+    return isSSECompatible;
 }
 
 std::vector<std::string> NifFile::GetShapeNames() {
@@ -1520,14 +1539,24 @@ std::vector<std::string> NifFile::GetShapeNames() {
 	return outList;
 }
 
-std::vector<NiShape*> NifFile::GetShapes() {
-	std::vector<NiShape*> outList;
+std::vector<const NiShape *> NifFile::GetShapes() const {
+    std::vector<const NiShape*> outList;
 	for (auto& block : blocks) {
 		auto shape = dynamic_cast<NiShape*>(block.get());
 		if (shape)
 			outList.push_back(shape);
 	}
 	return outList;
+}
+
+std::vector<NiShape *> NifFile::GetShapes() {
+    std::vector<NiShape*> outList;
+    for (auto& block : blocks) {
+        auto shape = dynamic_cast<NiShape*>(block.get());
+        if (shape)
+            outList.push_back(shape);
+    }
+    return outList;
 }
 
 bool NifFile::RenameShape(NiShape* shape, const std::string& newName) {

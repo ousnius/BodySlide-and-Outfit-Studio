@@ -259,7 +259,7 @@ protected:
 	int index = 0xFFFFFFFF;
 
 public:
-	int GetIndex() {
+    int GetIndex() const {
 		return index;
 	}
 
@@ -483,8 +483,8 @@ public:
 	virtual NiObject* Clone() { return new NiObject(*this); }
 
 	template <typename T>
-	bool HasType() {
-		return dynamic_cast<T*>(this) != nullptr;
+    bool HasType() const {
+        return dynamic_cast<const T*>(this) != nullptr;
 	}
 };
 
@@ -570,12 +570,17 @@ public:
 	}
 
 	template <class T>
-	T* GetBlock(const int blockId) {
+    const T* GetBlock(const int blockId) const {
 		if (blockId >= 0 && blockId < numBlocks)
 			return dynamic_cast<T*>((*blocks)[blockId].get());
 
 		return nullptr;
 	}
+
+    template <class T>
+    T* GetBlock(const int blockId) {
+        return const_cast<T*>(const_cast<const NiHeader*>(this)->GetBlock<T>(blockId));
+    }
 
 	void DeleteBlock(int blockId);
 	void DeleteBlockByType(const std::string& blockTypeStr, const bool orphanedOnly = false);
