@@ -52,21 +52,18 @@ private:
 	bool hasUnknown = false;
 	bool isTerrain = false;
 
-    mutable bool computedSSECompatible = false;
-    mutable bool isSSECompatible = true;
-
 public:
 	NifFile() {}
 
 	NifFile(const std::string& fileName, const NifLoadOptions& options = NifLoadOptions()) {
 		Load(fileName, options);
-    }
+	}
 
-    NifFile(std::iostream& file, const NifLoadOptions& options = NifLoadOptions()) {
-        Load(file, options);
-    }
+	NifFile(std::iostream& file, const NifLoadOptions& options = NifLoadOptions()) {
+		Load(file, options);
+	}
 
-    NifFile(const NifFile& other) {
+	NifFile(const NifFile& other) {
 		CopyFrom(other);
 	}
 
@@ -76,14 +73,14 @@ public:
 	}
 
 	NiHeader& GetHeader() { return hdr; }
-    void CopyFrom(const NifFile& other);
+	void CopyFrom(const NifFile& other);
 
-    int Load(const std::string& fileName, const NifLoadOptions& options = NifLoadOptions());
-    int Load(std::iostream &file, const NifLoadOptions& options = NifLoadOptions());
-    int Save(const std::string& fileName, const NifSaveOptions& options = NifSaveOptions());
-    int Save(std::iostream& file, const NifSaveOptions& options = NifSaveOptions());
+	int Load(const std::string& fileName, const NifLoadOptions& options = NifLoadOptions());
+	int Load(std::iostream &file, const NifLoadOptions& options = NifLoadOptions());
+	int Save(const std::string& fileName, const NifSaveOptions& options = NifSaveOptions());
+	int Save(std::iostream& file, const NifSaveOptions& options = NifSaveOptions());
 
-    void Optimize();
+	void Optimize();
 	OptResult OptimizeFor(OptOptions& options);
 
 	void PrepareData();
@@ -92,7 +89,7 @@ public:
 	bool IsValid() { return isValid; }
 	bool HasUnknown() { return hasUnknown; }
 	bool IsTerrain() { return isTerrain; }
-    bool IsSSECompatible() const;
+	bool IsSSECompatible() const;
 
 	void Create(const NiVersion& version);
 	void Clear();
