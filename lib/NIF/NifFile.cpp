@@ -168,12 +168,12 @@ int NifFile::Load(const std::string& fileName, const NifLoadOptions& options) {
 	return Load(file, options);
 }
 
-int NifFile::Load(std::fstream& file, const NifLoadOptions& options) {
+int NifFile::Load(std::iostream &file, const NifLoadOptions& options) {
 	Clear();
 
 	isTerrain = options.isTerrain;
 
-	if (file.is_open()) {
+	if (file) {
 		NiStream stream(&file, &hdr.GetVersion());
 		hdr.Get(stream);
 
@@ -914,8 +914,8 @@ int NifFile::Save(const std::string& fileName, const NifSaveOptions& options) {
 	return Save(file, options);
 }
 
-int NifFile::Save(std::fstream& file, const NifSaveOptions& options) {
-	if (file.is_open()) {
+int NifFile::Save(std::iostream &file, const NifSaveOptions& options) {
+	if (file) {
 		NiStream stream(&file, &hdr.GetVersion());
 		FinalizeData();
 
@@ -1074,27 +1074,10 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 
 				BSTriShape* bsOptShape = nullptr;
 
-				// Check if shape has strips in the geometry or skin partition
-				bool hasStrips = shape->HasType<NiTriStrips>();
-				if (!hasStrips) {
-					auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-					if (skinInst) {
-						auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-						if (skinPart) {
-							for (auto &partition : skinPart->partitions) {
-								if (partition.numStrips > 0) {
-									hasStrips = true;
-									break;
-								}
-							}
-						}
-					}
-				}
-
-				// Check to optimize all shapes or only mandatory ones
-				const bool needsOpt = !options.mandatoryOnly || (options.headParts || hasStrips);
-				if (!needsOpt)
-					continue;
+                // Check to optimize all shapes or only mandatory ones
+                const bool needsOpt = !options.mandatoryOnly || options.headParts || !IsSSECompatible();
+                if (!needsOpt)
+                    continue;
 
 				auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
 				if (bsSegmentShape) {
@@ -1507,7 +1490,28 @@ void NifFile::FinalizeData() {
 		}
 	}
 
-	hdr.UpdateHeaderStrings(hasUnknown);
+    hdr.UpdateHeaderStrings(hasUnknown);
+}
+
+bool NifFile::IsSSECompatible() const {
+	// Check if shape has strips in the geometry or skin partition
+	for (const auto& shape : GetShapes()) {
+		if (shape->HasType<NiTriStrips>())
+			return false;
+
+		auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+		if (skinInst) {
+			auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+			if (skinPart) {
+				for (auto &partition : skinPart->partitions) {
+					if (partition.numStrips > 0)
+						return false;
+				}
+			}
+		}
+	}
+
+	return true;
 }
 
 std::vector<std::string> NifFile::GetShapeNames() {
@@ -1520,7 +1524,17 @@ std::vector<std::string> NifFile::GetShapeNames() {
 	return outList;
 }
 
-std::vector<NiShape*> NifFile::GetShapes() {
+std::vector<const NiShape *> NifFile::GetShapes() const {
+	std::vector<const NiShape*> outList;
+	for (auto& block : blocks) {
+		auto shape = dynamic_cast<NiShape*>(block.get());
+		if (shape)
+			outList.push_back(shape);
+	}
+	return outList;
+}
+
+std::vector<NiShape *> NifFile::GetShapes() {
 	std::vector<NiShape*> outList;
 	for (auto& block : blocks) {
 		auto shape = dynamic_cast<NiShape*>(block.get());

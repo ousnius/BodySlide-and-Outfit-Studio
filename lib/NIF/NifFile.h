@@ -59,7 +59,7 @@ public:
 		Load(fileName, options);
 	}
 
-	NifFile(std::fstream& file, const NifLoadOptions& options = NifLoadOptions()) {
+	NifFile(std::iostream& file, const NifLoadOptions& options = NifLoadOptions()) {
 		Load(file, options);
 	}
 
@@ -76,9 +76,9 @@ public:
 	void CopyFrom(const NifFile& other);
 
 	int Load(const std::string& fileName, const NifLoadOptions& options = NifLoadOptions());
-	int Load(std::fstream& file, const NifLoadOptions& options = NifLoadOptions());
+	int Load(std::iostream &file, const NifLoadOptions& options = NifLoadOptions());
 	int Save(const std::string& fileName, const NifSaveOptions& options = NifSaveOptions());
-	int Save(std::fstream& file, const NifSaveOptions& options = NifSaveOptions());
+	int Save(std::iostream& file, const NifSaveOptions& options = NifSaveOptions());
 
 	void Optimize();
 	OptResult OptimizeFor(OptOptions& options);
@@ -89,6 +89,7 @@ public:
 	bool IsValid() { return isValid; }
 	bool HasUnknown() { return hasUnknown; }
 	bool IsTerrain() { return isTerrain; }
+	bool IsSSECompatible() const;
 
 	void Create(const NiVersion& version);
 	void Clear();
@@ -146,7 +147,8 @@ public:
 	int CloneNamedNode(const std::string& nodeName, NifFile* srcNif = nullptr);
 
 	std::vector<std::string> GetShapeNames();
-	std::vector<NiShape*> GetShapes();
+    std::vector<NiShape*> GetShapes();
+    std::vector<const NiShape*> GetShapes() const;
 	bool RenameShape(NiShape* shape, const std::string& newName);
 	bool RenameDuplicateShapes();
 	void TriangulateShape(NiShape* shape);

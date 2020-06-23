@@ -190,7 +190,7 @@ public:
 	int GetDataRef() { return dataRef.GetIndex(); }
 	void SetDataRef(const int datRef) { dataRef.SetIndex(datRef); }
 
-	int GetSkinPartitionRef() { return skinPartitionRef.GetIndex(); }
+    int GetSkinPartitionRef() const { return skinPartitionRef.GetIndex(); }
 	void SetSkinPartitionRef(const int skinPartRef) { skinPartitionRef.SetIndex(skinPartRef); }
 
 	int GetSkeletonRootRef() { return targetRef.GetIndex(); }

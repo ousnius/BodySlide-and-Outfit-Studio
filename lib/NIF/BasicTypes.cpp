@@ -11,6 +11,10 @@ static const std::string NIF_NETIMMERSE = "NetImmerse File Format";
 static const std::string NIF_NDS = "NDSNIF....@....@....";
 static const std::string NIF_VERSTRING = ", Version ";
 
+NiVersion::NiVersion(NiFileVersion _file, uint _user, uint _stream)
+	: file(_file), user(_user), stream(_stream)
+{}
+
 std::string NiVersion::GetVersionInfo() {
 	return vstr +
 		"\nUser Version: " + std::to_string(user) +
