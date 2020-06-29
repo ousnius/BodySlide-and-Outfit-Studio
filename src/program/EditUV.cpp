@@ -225,14 +225,12 @@ void EditUV::UpdateShapeMesh(bool apply) {
 		os->project->GetSliderDiffUV(shape, sliderName, uvs);
 
 		for (int i = 0; i < gridMesh->nVerts; i++) {
-			if (gridMesh->vcolors[i] == Vector3(1.0f, 1.0f, 0.0f)) {
-				Vector3 diff = Vector3((gridMesh->verts[i].x - uvs[i].u) / -10.0f, 0.0f, ((gridMesh->verts[i].y * -1.0f) - uvs[i].v) / 10.0f);
-				if (!diff.IsZero(true))
-					morphDiff[i] = std::move(diff);
+			Vector3 diff = Vector3((gridMesh->verts[i].x - uvs[i].u) / -10.0f, 0.0f, ((gridMesh->verts[i].y * -1.0f) - uvs[i].v) / 10.0f);
+			if (!diff.IsZero(true))
+				morphDiff[i] = std::move(diff);
 
-				shapeMesh->texcoord[i].u = gridMesh->verts[i].x;
-				shapeMesh->texcoord[i].v = gridMesh->verts[i].y * -1.0f;
-			}
+			shapeMesh->texcoord[i].u = gridMesh->verts[i].x;
+			shapeMesh->texcoord[i].v = gridMesh->verts[i].y * -1.0f;
 		}
 
 		if (apply)
@@ -240,12 +238,10 @@ void EditUV::UpdateShapeMesh(bool apply) {
 	}
 	else {
 		for (int i = 0; i < gridMesh->nVerts; i++) {
-			if (gridMesh->vcolors[i] == Vector3(1.0f, 1.0f, 0.0f)) {
-				uvs[i].u = gridMesh->verts[i].x;
-				uvs[i].v = gridMesh->verts[i].y * -1.0f;
-				shapeMesh->texcoord[i].u = uvs[i].u;
-				shapeMesh->texcoord[i].v = uvs[i].v;
-			}
+			uvs[i].u = gridMesh->verts[i].x;
+			uvs[i].v = gridMesh->verts[i].y * -1.0f;
+			shapeMesh->texcoord[i].u = uvs[i].u;
+			shapeMesh->texcoord[i].v = uvs[i].v;
 		}
 
 		if (apply)
