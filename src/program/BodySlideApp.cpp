@@ -2311,6 +2311,9 @@ void BodySlideApp::GroupBuild(const std::string& group) {
 		BodySlideConfig.SetValue("SelectedPreset", cmdPreset.ToStdString());
 	}
 
+	std::vector<std::string> groups;
+	sliderManager.LoadPresets(Config["AppDir"] + "/SliderPresets", "", groups, true);
+
 	std::map<std::string, std::string> failedOutfits;
 	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, cmdTargetDir.ToStdString());
 
