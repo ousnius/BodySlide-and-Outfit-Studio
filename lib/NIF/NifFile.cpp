@@ -1075,7 +1075,7 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 				BSTriShape* bsOptShape = nullptr;
 
                 // Check to optimize all shapes or only mandatory ones
-                const bool needsOpt = !options.mandatoryOnly || options.headParts || !IsSSECompatible();
+                const bool needsOpt = !options.mandatoryOnly || options.headParts || !IsSSECompatible(shape);
                 if (!needsOpt)
                     continue;
 
@@ -1494,24 +1494,27 @@ void NifFile::FinalizeData() {
 }
 
 bool NifFile::IsSSECompatible() const {
-	// Check if shape has strips in the geometry or skin partition
-	for (const auto& shape : GetShapes()) {
-		if (shape->HasType<NiTriStrips>())
-			return false;
+    const auto& shapes = GetShapes();
+    return std::all_of(shapes.cbegin(), shapes.cend(), [this](auto&& shape){ return IsSSECompatible(shape); });
+}
 
-		auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-		if (skinInst) {
-			auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-			if (skinPart) {
-				for (auto &partition : skinPart->partitions) {
-					if (partition.numStrips > 0)
-						return false;
-				}
-			}
-		}
-	}
+bool NifFile::IsSSECompatible(const NiShape *shape) const {
+    // Check if shape has strips in the geometry or skin partition
+    if (shape->HasType<NiTriStrips>())
+        return false;
 
-	return true;
+    auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+    if (skinInst) {
+        auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+        if (skinPart) {
+            for (auto &partition : skinPart->partitions) {
+                if (partition.numStrips > 0)
+                    return false;
+            }
+        }
+    }
+
+    return true;
 }
 
 std::vector<std::string> NifFile::GetShapeNames() {

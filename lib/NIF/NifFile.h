@@ -89,7 +89,8 @@ public:
 	bool IsValid() { return isValid; }
 	bool HasUnknown() { return hasUnknown; }
 	bool IsTerrain() { return isTerrain; }
-	bool IsSSECompatible() const;
+        bool IsSSECompatible() const;
+        bool IsSSECompatible(const NiShape* shape) const;
 
 	void Create(const NiVersion& version);
 	void Clear();
