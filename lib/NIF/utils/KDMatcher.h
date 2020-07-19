@@ -72,7 +72,7 @@ public:
 };
 
 // SortingMatcher: finds matching points, just like kd_matcher,
-// but hopefully more efficiently.
+// but more robustly and hopefully more efficiently.
 class SortingMatcher {
 public:
 	std::vector<std::vector<int>> matches;
@@ -86,24 +86,29 @@ public:
 			inds[i] = i;
 
 		std::sort(inds.begin(), inds.end(), [&pts](int i, int j) {
-			if (std::fabs(pts[i].x - pts[j].x) >= EPSILON)
-				return pts[i].x < pts[j].x;
-			if (std::fabs(pts[i].y - pts[j].y) >= EPSILON)
-				return pts[i].y < pts[j].y;
-			if (std::fabs(pts[i].z - pts[j].z) >= EPSILON)
-				return pts[i].z < pts[j].z;
-			return false;
+			return pts[i].x < pts[j].x;
 		});
 
-		for (int si = 0, ei = 1; ei <= cnt; ++ei) {
-			if (ei < cnt &&
-				std::fabs(pts[inds[si]].x - pts[inds[ei]].x) < EPSILON &&
-				std::fabs(pts[inds[si]].y - pts[inds[ei]].y) < EPSILON &&
-				std::fabs(pts[inds[si]].z - pts[inds[ei]].z) < EPSILON)
+		std::vector<bool> used(cnt, false);
+		for (int si = 0; si < cnt; ++si) {
+			if (used[si])
 				continue;
-			if (ei - si > 1)
-				matches.emplace_back(std::vector<int>(inds.begin() + si, inds.begin() + ei));
-			si = ei;
+			bool matched = false;
+			for (int mi = si + 1; mi < cnt; ++mi) {
+				if (pts[inds[mi]].x - pts[inds[si]].x >= EPSILON)
+					break;
+				if (used[mi])
+					continue;
+				if (std::fabs(pts[inds[si]].y - pts[inds[mi]].y) >= EPSILON)
+					continue;
+				if (std::fabs(pts[inds[si]].z - pts[inds[mi]].z) >= EPSILON)
+					continue;
+				if (!matched)
+					matches.emplace_back(std::vector<int>(1, inds[si]));
+				matched = true;
+				matches.back().push_back(inds[mi]);
+				used[mi] = true;
+			}
 		}
 	}
 };
