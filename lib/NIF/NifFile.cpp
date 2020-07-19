@@ -1074,10 +1074,10 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 
 				BSTriShape* bsOptShape = nullptr;
 
-                // Check to optimize all shapes or only mandatory ones
-                const bool needsOpt = !options.mandatoryOnly || options.headParts || !IsSSECompatible(shape);
-                if (!needsOpt)
-                    continue;
+				// Check to optimize all shapes or only mandatory ones
+				const bool needsOpt = !options.mandatoryOnly || options.headParts || !IsSSECompatible(shape);
+				if (!needsOpt)
+					continue;
 
 				auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
 				if (bsSegmentShape) {
@@ -1490,31 +1490,31 @@ void NifFile::FinalizeData() {
 		}
 	}
 
-    hdr.UpdateHeaderStrings(hasUnknown);
+	hdr.UpdateHeaderStrings(hasUnknown);
 }
 
 bool NifFile::IsSSECompatible() const {
-    const auto& shapes = GetShapes();
-    return std::all_of(shapes.cbegin(), shapes.cend(), [this](auto&& shape){ return IsSSECompatible(shape); });
+	const auto& shapes = GetShapes();
+	return std::all_of(shapes.cbegin(), shapes.cend(), [this](auto&& shape) { return IsSSECompatible(shape); });
 }
 
 bool NifFile::IsSSECompatible(const NiShape *shape) const {
-    // Check if shape has strips in the geometry or skin partition
-    if (shape->HasType<NiTriStrips>())
-        return false;
+	// Check if shape has strips in the geometry or skin partition
+	if (shape->HasType<NiTriStrips>())
+		return false;
 
-    auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-    if (skinInst) {
-        auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-        if (skinPart) {
-            for (auto &partition : skinPart->partitions) {
-                if (partition.numStrips > 0)
-                    return false;
-            }
-        }
-    }
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (skinInst) {
+		auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+		if (skinPart) {
+			for (auto &partition : skinPart->partitions) {
+				if (partition.numStrips > 0)
+					return false;
+			}
+		}
+	}
 
-    return true;
+	return true;
 }
 
 std::vector<std::string> NifFile::GetShapeNames() {

@@ -89,8 +89,8 @@ public:
 	bool IsValid() { return isValid; }
 	bool HasUnknown() { return hasUnknown; }
 	bool IsTerrain() { return isTerrain; }
-        bool IsSSECompatible() const;
-        bool IsSSECompatible(const NiShape* shape) const;
+	bool IsSSECompatible() const;
+	bool IsSSECompatible(const NiShape* shape) const;
 
 	void Create(const NiVersion& version);
 	void Clear();
@@ -148,8 +148,8 @@ public:
 	int CloneNamedNode(const std::string& nodeName, NifFile* srcNif = nullptr);
 
 	std::vector<std::string> GetShapeNames();
-    std::vector<NiShape*> GetShapes();
-    std::vector<const NiShape*> GetShapes() const;
+	std::vector<NiShape*> GetShapes();
+	std::vector<const NiShape*> GetShapes() const;
 	bool RenameShape(NiShape* shape, const std::string& newName);
 	bool RenameDuplicateShapes();
 	void TriangulateShape(NiShape* shape);
