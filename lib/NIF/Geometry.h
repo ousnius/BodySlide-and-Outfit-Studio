@@ -608,7 +608,7 @@ public:
 	int GetDataRef();
 	void SetDataRef(int datRef);
 
-	int GetSkinInstanceRef();
+	int GetSkinInstanceRef() const;
 	void SetSkinInstanceRef(int skinInstRef);
 
 	int GetShaderPropertyRef();

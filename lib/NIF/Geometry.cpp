@@ -1951,7 +1951,7 @@ void NiGeometry::SetDataRef(int datRef) {
 	dataRef.SetIndex(datRef);
 }
 
-int NiGeometry::GetSkinInstanceRef() {
+int NiGeometry::GetSkinInstanceRef() const {
 	return skinInstanceRef.GetIndex();
 }
 
