@@ -337,7 +337,7 @@ void BodySlideApp::LoadData() {
 	sliderView->Layout();
 
 	if (!cmdGroupBuild.IsEmpty())
-		GroupBuild(cmdGroupBuild.ToStdString());
+		GroupBuild(cmdGroupBuild.ToUTF8().data());
 }
 
 int BodySlideApp::CreateSetSliders(const std::string& outfit) {
@@ -1162,7 +1162,7 @@ bool BodySlideApp::SetDefaultConfig() {
 			wxString installPath;
 			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
 				installPath.Append("Data").Append(PathSepChar);
-				Config.SetDefaultValue("GameDataPath", installPath.ToStdString());
+				Config.SetDefaultValue("GameDataPath", installPath.ToUTF8().data());
 				wxLogMessage("Registry game data path: %s", installPath);
 			}
 			else if (Config["WarnMissingGamePath"] == "true") {
@@ -1327,8 +1327,8 @@ bool BodySlideApp::ShowSetup() {
 				break;
 			}
 
-			Config.SetValue("GameDataPath", dataDir.GetFullPath().ToStdString());
-			Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), dataDir.GetFullPath().ToStdString());
+			Config.SetValue("GameDataPath", dataDir.GetFullPath().ToUTF8().data());
+			Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), dataDir.GetFullPath().ToUTF8().data());
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			delete setup;
@@ -1628,7 +1628,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			}
 
 			response.Append(PathSepChar);
-			Config.SetValue("GameDataPath", response.ToStdString());
+			Config.SetValue("GameDataPath", response.ToUTF8().data());
 		}
 
 		outFileNameSmall = GetOutputDataPath() + activeSet.GetOutputFilePath();
@@ -2185,7 +2185,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		bool success = wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 		if (!success) {
-			failedOutfitsCon[outfit] = _("Unable to create destination directory: ") + dir.ToStdString();
+			failedOutfitsCon[outfit] = _("Unable to create destination directory: ") + dir.ToUTF8().data();
 			return;
 		}
 
@@ -2308,14 +2308,14 @@ void BodySlideApp::GroupBuild(const std::string& group) {
 	std::string preset;
 	if (!cmdPreset.IsEmpty()) {
 		preset = BodySlideConfig["SelectedPreset"];
-		BodySlideConfig.SetValue("SelectedPreset", cmdPreset.ToStdString());
+		BodySlideConfig.SetValue("SelectedPreset", cmdPreset.ToUTF8().data());
 	}
 
 	std::vector<std::string> groups;
 	sliderManager.LoadPresets(Config["AppDir"] + "/SliderPresets", "", groups, true);
 
 	std::map<std::string, std::string> failedOutfits;
-	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, cmdTargetDir.ToStdString());
+	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, cmdTargetDir.ToUTF8().data());
 
 	if (!cmdPreset.IsEmpty())
 		BodySlideConfig.SetValue("SelectedPreset", preset);
@@ -3356,11 +3356,11 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		choiceTargetGame->Select(Config.GetIntValue("TargetGame"));
 
 		wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*settings, "dpGameDataPath", wxDirPickerCtrl);
-		wxString gameDataPath = Config["GameDataPath"];
+		wxString gameDataPath = wxString::FromUTF8(Config["GameDataPath"]);
 		dpGameDataPath->SetPath(gameDataPath);
 
 		wxDirPickerCtrl* dpOutputPath = XRCCTRL(*settings, "dpOutputPath", wxDirPickerCtrl);
-		wxString outputPath = Config["OutputDataPath"];
+		wxString outputPath = wxString::FromUTF8(Config["OutputDataPath"]);
 		dpOutputPath->SetPath(outputPath);
 
 		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
@@ -3396,7 +3396,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
-		fpSkeletonFile->SetPath(Config["Anim/DefaultSkeletonReference"]);
+		fpSkeletonFile->SetPath(wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]));
 
 		wxChoice* choiceSkeletonRoot = XRCCTRL(*settings, "choiceSkeletonRoot", wxChoice);
 		choiceSkeletonRoot->SetStringSelection(Config["Anim/SkeletonRootName"]);
@@ -3412,13 +3412,13 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			if (!dpGameDataPath->GetPath().IsEmpty()) {
 				wxFileName gameDataDir = dpGameDataPath->GetDirName();
-				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
-				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToStdString());
+				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToUTF8().data());
+				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToUTF8().data());
 			}
 
 			// set OutputDataPath even if it is empty
 			wxFileName outputDataDir = dpOutputPath->GetDirName();
-			Config.SetValue("OutputDataPath", outputDataDir.GetFullPath().ToStdString());
+			Config.SetValue("OutputDataPath", outputDataDir.GetFullPath().ToUTF8().data());
 
 			wxArrayInt items;
 			wxString selectedfiles;
@@ -3427,7 +3427,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 					selectedfiles += dataFileList->GetString(i) + "; ";
 
 			selectedfiles = selectedfiles.BeforeLast(';');
-			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToStdString());
+			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToUTF8().data());
 
 			Config.SetBoolValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
@@ -3451,8 +3451,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Rendering/ColorWire.b", colorWire.Blue());
 
 			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
-			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());
-			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToStdString());
+			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToUTF8().data());
+			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToUTF8().data());
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			app->InitArchives();
