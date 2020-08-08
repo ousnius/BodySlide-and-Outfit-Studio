@@ -134,7 +134,8 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 	float o, b, s;
 
 	wxArrayString files;
-	wxDir::GetAllFiles(basePath, &files, "*.xml");
+	wxString path = wxString::FromUTF8(basePath);
+	wxDir::GetAllFiles(path, &files, "*.xml");
 
 	for (auto &file : files) {
 		FILE* fp = nullptr;
