@@ -1909,25 +1909,38 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 	}
 
 	if (Config.MatchValue("WarnBatchBuildOverride", "true")) {
+		std::vector<std::string> outFileList;
 		std::vector<wxArrayString> choicesList;
-		for (auto &filePath : outFileCount) {
-			if (filePath.second.size() > 1) {
-				wxArrayString selFilePaths;
-				for (auto &file : filePath.second) {
+		for (auto &outFile : outFileCount) {
+			if (outFile.second.size() > 1) {
+				wxArrayString selOutfits;
+				for (auto &outfit : outFile.second) {
 					// Only if it's going to be batch built
-					if (find(outfitList.begin(), outfitList.end(), file) != outfitList.end())
-						selFilePaths.Add(wxString::FromUTF8(file));
+					if (std::find(outfitList.begin(), outfitList.end(), outfit) != outfitList.end())
+						selOutfits.Add(wxString::FromUTF8(outfit));
 				}
 
 				// Same file would not be written more than once
-				if (selFilePaths.size() <= 1)
+				if (selOutfits.size() <= 1)
 					continue;
 
-				choicesList.push_back(selFilePaths);
+				outFileList.push_back(outFile.first);
+				choicesList.push_back(selOutfits);
 			}
 		}
 
 		if (!choicesList.empty()) {
+			// Load BuildSelection file or create new one
+			std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
+
+			BuildSelectionFile buildSelFile(buildSelFileName);
+
+			if (buildSelFile.GetError())
+				buildSelFile.New(buildSelFileName);
+
+			BuildSelection buildSelection;
+			buildSelFile.Get(buildSelection);
+
 			wxXmlResource* rsrc = wxXmlResource::Get();
 			wxDialog* dlgBuildOverride = rsrc->LoadDialog(sliderView, "dlgBuildOverride");
 			dlgBuildOverride->SetSize(wxSize(650, 400));
@@ -1939,12 +1952,22 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 
 			int nChoice = 1;
 			std::vector<wxRadioBox*> choiceBoxes;
-			for (auto &choices : choicesList) {
+			for (int i = 0; i < choicesList.size(); i++) {
+				auto& outFile = outFileList[i];
+				auto& choices = choicesList[i];
 				wxRadioBox* choiceBox = new wxRadioBox(scrollOverrides, wxID_ANY, _("Choose output set") + wxString::Format(" #%d", nChoice), wxDefaultPosition, wxDefaultSize, choices, 1, wxRA_SPECIFY_COLS);
 				choicesSizer->Add(choiceBox, 0, wxALL | wxEXPAND, 5);
 
 				choiceBoxes.push_back(choiceBox);
 				nChoice++;
+
+				// Check previous choices to see if radio button should be checked by default
+				std::string outputChoice = buildSelection.GetOutputChoice(outFile);
+				if (!outputChoice.empty()) {
+					wxString c = wxString::FromUTF8(outputChoice);
+					if (choices.Index(c) != wxNOT_FOUND)
+						choiceBox->SetStringSelection(c);
+				}
 			}
 
 			scrollOverrides->FitInside();
@@ -1956,17 +1979,26 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			}
 
 			for (int i = 0; i < choicesList.size(); i++) {
-				// Remove others from the list of outfits to build
-				choicesList[i].Remove(choiceBoxes[i]->GetStringSelection());
+				wxString choiceSel = choiceBoxes[i]->GetStringSelection();
 
-				for (auto &file : choicesList[i]) {
-					auto result = find(outfitList.begin(), outfitList.end(), file.ToUTF8());
+				// Add output choice to file
+				buildSelection.SetOutputChoice(outFileList[i], choiceSel.ToUTF8().data());
+
+				// Remove others from the list of outfits to build
+				choicesList[i].Remove(choiceSel);
+
+				for (auto &outfit : choicesList[i]) {
+					auto result = std::find(outfitList.begin(), outfitList.end(), outfit.ToUTF8());
 					if (result != outfitList.end())
 						outfitList.erase(result);
 				}
 			}
 
 			delete dlgBuildOverride;
+
+			// Save output choices to file
+			buildSelFile.Update(buildSelection);
+			buildSelFile.Save();
 		}
 	}
 

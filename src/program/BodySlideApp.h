@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/SliderManager.h"
 #include "../components/SliderGroup.h"
 #include "../components/SliderCategories.h"
+#include "../components/BuildSelection.h"
 #include "../files/TriFile.h"
 #include "../utils/Log.h"
 #include "../utils/ConfigurationManager.h"
