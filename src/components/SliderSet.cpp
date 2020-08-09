@@ -90,17 +90,20 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	while (shapeName) {
 		shapeName->SetName("Shape");
 
-		auto& shape = shapeAttributes[shapeName->GetText()];
-		if (shapeName->Attribute("DataFolder"))
-			shape.dataFolder = ToOSSlashes(shapeName->Attribute("DataFolder"));
-		else
-			shape.dataFolder = datafolder;
+		auto shapeText = shapeName->GetText();
+		if (shapeText) {
+			auto& shape = shapeAttributes[shapeText];
+			if (shapeName->Attribute("DataFolder"))
+				shape.dataFolder = ToOSSlashes(shapeName->Attribute("DataFolder"));
+			else
+				shape.dataFolder = datafolder;
 
-		if (shapeName->Attribute("target"))
-			shape.targetShape = shapeName->Attribute("target");
+			if (shapeName->Attribute("target"))
+				shape.targetShape = shapeName->Attribute("target");
 
-		shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals", true);
-		shape.lockNormals = shapeName->BoolAttribute("LockNormals", false);
+			shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals", true);
+			shape.lockNormals = shapeName->BoolAttribute("LockNormals", false);
+		}
 
 		shapeName = shapeName->NextSiblingElement(shapeStr.c_str());
 	}
