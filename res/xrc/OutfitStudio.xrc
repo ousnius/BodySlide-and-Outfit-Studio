@@ -143,6 +143,11 @@
 						<tooltip>Open Discord invite link.</tooltip>
 						<bitmap>$(AppDir)\res\images\Discord.png</bitmap>
 					</object>
+					<object class="tool" name="btnGitHub">
+						<label>GitHub</label>
+						<tooltip>Open GitHub link.</tooltip>
+						<bitmap>$(AppDir)\res\images\GitHub.png</bitmap>
+					</object>
 					<object class="tool" name="btnPayPal">
 						<label>PayPal</label>
 						<tooltip>Open PayPal link.</tooltip>

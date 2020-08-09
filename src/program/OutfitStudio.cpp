@@ -265,6 +265,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("lightReset"), OutfitStudioFrame::OnResetLights)
 
 	EVT_MENU(XRCID("btnDiscord"), OutfitStudioFrame::OnDiscord)
+	EVT_MENU(XRCID("btnGitHub"), OutfitStudioFrame::OnGitHub)
 	EVT_MENU(XRCID("btnPayPal"), OutfitStudioFrame::OnPayPal)
 
 	EVT_SPLITTER_SASH_POS_CHANGED(XRCID("splitter"), OutfitStudioFrame::OnSashPosChanged)

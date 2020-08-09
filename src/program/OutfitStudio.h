@@ -1439,6 +1439,11 @@ private:
 		wxLaunchDefaultBrowser(url);
 	}
 
+	void OnGitHub(wxCommandEvent& WXUNUSED(event)) {
+		wxString url = "https://github.com/ousnius/BodySlide-and-Outfit-Studio";
+		wxLaunchDefaultBrowser(url);
+	}
+
 	void OnPayPal(wxCommandEvent& WXUNUSED(event)) {
 		wxString url = "https://www.paypal.me/ousnius";
 		wxLaunchDefaultBrowser(url);
