@@ -36,6 +36,7 @@ private:
 	void RefreshUI(const bool = false);
 	void SaveGroup();
 
+	void DoRenameGroup();
 	void DoRemoveMembers();
 	void DoAddMembers();
 
@@ -43,6 +44,7 @@ private:
 	void OnSaveGroup(wxCommandEvent&);
 	void OnSaveGroupAs(wxCommandEvent&);
 	void OnSelectGroup(wxCommandEvent&);
+	void OnDblClickGroup(wxCommandEvent&);
 	void OnDblClickMember(wxCommandEvent&);
 	void OnDblClickOutfit(wxCommandEvent&);
 	void OnAddGroup(wxCommandEvent&);

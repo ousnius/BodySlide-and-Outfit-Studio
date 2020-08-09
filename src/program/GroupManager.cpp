@@ -11,6 +11,7 @@ extern ConfigurationManager Config;
 wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_FILEPICKER_CHANGED(XRCID("fpGroupXML"), GroupManager::OnLoadGroup)
 	EVT_LISTBOX(XRCID("listGroups"), GroupManager::OnSelectGroup)
+	EVT_LISTBOX_DCLICK(XRCID("listGroups"), GroupManager::OnDblClickGroup)
 	EVT_LISTBOX_DCLICK(XRCID("listMembers"), GroupManager::OnDblClickMember)
 	EVT_LISTBOX_DCLICK(XRCID("listOutfits"), GroupManager::OnDblClickOutfit)
 	EVT_BUTTON(XRCID("btAddGroup"), GroupManager::OnAddGroup)
@@ -103,6 +104,33 @@ void GroupManager::SaveGroup() {
 	btSave->Enable(dirty & !fileName.empty());
 }
 
+void GroupManager::DoRenameGroup() {
+	// Rename the selected group
+	std::string selectedGroup{ listGroups->GetStringSelection().ToUTF8() };
+	if (!selectedGroup.empty()) {
+		std::string newGroupName;
+
+		do {
+			std::string result{ wxGetTextFromUser(_("Please enter a new unique name for the group."), _("Rename Group")).ToUTF8() };
+			if (result.empty())
+				return;
+
+			newGroupName = std::move(result);
+		} while (groupMembers.find(newGroupName) != groupMembers.end());
+
+		auto it = groupMembers.find(selectedGroup);
+		if (it != groupMembers.end()) {
+			std::swap(groupMembers[newGroupName], it->second);
+			groupMembers.erase(it);
+		}
+
+		listGroups->SetString(listGroups->GetSelection(), wxString::FromUTF8(newGroupName));
+
+		dirty = true;
+		RefreshUI();
+	}
+}
+
 void GroupManager::DoRemoveMembers() {
 	wxArrayInt selections;
 	listMembers->GetSelections(selections);
@@ -183,6 +211,10 @@ void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
 
 void GroupManager::OnSelectGroup(wxCommandEvent& WXUNUSED(event)) {
 	RefreshUI();
+}
+
+void GroupManager::OnDblClickGroup(wxCommandEvent& WXUNUSED(event)) {
+	DoRenameGroup();
 }
 
 void GroupManager::OnDblClickMember(wxCommandEvent& WXUNUSED(event)) {

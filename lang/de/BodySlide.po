@@ -2553,6 +2553,12 @@ msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für das Modell ein."
 msgid "Rename Shape"
 msgstr "Modell umbenennen"
 
+msgid "Please enter a new unique name for the group."
+msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für die Gruppe ein."
+
+msgid "Rename Group"
+msgstr "Gruppe umbenennen"
+
 msgid ""
 "Rotating slider data is currently not possible using the Rotate Shape dialog."
 msgstr ""

@@ -2198,6 +2198,12 @@ msgstr ""
 msgid "Rename Shape"
 msgstr ""
 
+msgid "Please enter a new unique name for the group."
+msgstr ""
+
+msgid "Rename Group"
+msgstr ""
+
 msgid "Rotating slider data is currently not possible using the Rotate Shape dialog."
 msgstr ""
 
