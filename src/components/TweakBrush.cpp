@@ -24,6 +24,11 @@ void TweakStroke::beginStroke(TweakPickInfo& pickInfo) {
 	refBrush->strokeInit(refMeshes, pickInfo, usp);
 }
 
+void TweakStroke::beginStroke(TweakPickInfo& pickInfo, const std::vector<std::vector<Vector3>>& positionData) {
+	beginStroke(pickInfo);
+	refBrush->strokeInit(refMeshes, pickInfo, usp, positionData);
+}
+
 void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	int brushType = refBrush->Type();
 
@@ -659,6 +664,66 @@ void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 
 		refmesh->QueueUpdate(mesh::UpdateType::Position);
 	}
+}
+
+TB_Undiff::TB_Undiff() :TweakBrush() {
+	strength = 0.01f;
+	bMirror = false;
+	brushName = "Undiff Brush";
+	brushType = TBT_UNDIFF;
+}
+
+TB_Undiff::~TB_Undiff() {
+}
+
+void TB_Undiff::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<Vector3>>& positionData) {
+	cache.clear();
+
+	const int nMesh = refMeshes.size();
+	for (int mi = 0; mi < nMesh; ++mi) {
+		mesh* m = refMeshes[mi];
+		TweakBrushMeshCache* meshCache = &cache[m];
+		meshCache->positionData = std::move(positionData[mi]);
+	}
+}
+
+void TB_Undiff::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss) {
+	TweakBrushMeshCache* meshCache = &cache[m];
+	std::vector<Vector3>& basePosition = meshCache->positionData;
+
+	int p;
+	Vector3 vs;
+	Vector3 ve;
+	Vector3 vf;
+	Vector3 bp;
+	Vector3 dv;
+
+	auto& startState = uss.pointStartState;
+	auto& endState = uss.pointEndState;
+
+	for (int i = 0; i < nPoints; i++) {
+		p = points[i];
+
+		if (basePosition.size() > p) {
+			vs = m->verts[p];
+			bp = basePosition[p];
+
+			if (startState.find(p) == startState.end())
+				startState[p] = vs;
+
+			dv = bp - vs;
+			ve = dv * strength;
+
+			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+
+			ve = ve * (1.0f - m->vcolors[p].x);
+			vf = vs + ve;
+
+			endState[p] = m->verts[p] = (vf);
+		}
+	}
+
+	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
 TB_Move::TB_Move() : TweakBrush() {

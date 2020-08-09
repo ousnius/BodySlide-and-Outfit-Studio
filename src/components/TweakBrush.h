@@ -69,7 +69,8 @@ enum TweakBrushType {
 	TBT_WEIGHT,
 	TBT_COLOR,
 	TBT_ALPHA,
-	TBT_XFORM
+	TBT_XFORM,
+	TBT_UNDIFF
 };
 
 // Collecton of information that identifies the position and attributes where a brush stroke is taking place.
@@ -91,6 +92,7 @@ public:
 	int nCachedPointsM = 0;
 	std::unordered_set<AABBTree::AABBTreeNode*> cachedNodes;
 	std::unordered_set<AABBTree::AABBTreeNode*> cachedNodesM;
+	std::vector<Vector3> positionData;
 };
 
 
@@ -174,7 +176,8 @@ public:
 	virtual bool NeedMirrorMergedQuery() {return false;}
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject &) {}
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&) {}
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<Vector3>>&) {}
 
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
 	virtual bool checkSpacing(Vector3& start, Vector3& end);
@@ -264,6 +267,20 @@ public:
 	TB_Smooth();
 	virtual ~TB_Smooth();
 
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
+	virtual bool checkSpacing(Vector3&, Vector3&) {
+		return true;
+	}
+};
+
+
+// Undiff brush moving points towards their base position
+class TB_Undiff : public TweakBrush {
+public:
+	TB_Undiff();
+	virtual ~TB_Undiff();
+
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<Vector3>>&);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -460,6 +477,7 @@ public:
 	}
 
 	void beginStroke(TweakPickInfo& pickInfo);
+	void beginStroke(TweakPickInfo& pickInfo, const std::vector<std::vector<Vector3>>& positionData);
 	void updateStroke(TweakPickInfo& pickInfo);
 	void endStroke();
 

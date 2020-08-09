@@ -147,6 +147,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnDeflateBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnMoveBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnSmoothBrush"), OutfitStudioFrame::OnSelectTool)
+	EVT_MENU(XRCID("btnUndiffBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnWeightBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnColorBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnAlphaBrush"), OutfitStudioFrame::OnSelectTool)
@@ -2455,6 +2456,10 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		menuBar->Check(XRCID("btnSmoothBrush"), true);
 		toolBarH->ToggleTool(XRCID("btnSmoothBrush"), true);
 	}
+	else if (tool == ToolID::UndiffBrush) {
+		menuBar->Check(XRCID("btnUndiffBrush"), true);
+		toolBarH->ToggleTool(XRCID("btnUndiffBrush"), true);
+	}
 	else if (tool == ToolID::WeightBrush) {
 		menuBar->Check(XRCID("btnWeightBrush"), true);
 		toolBarH->ToggleTool(XRCID("btnWeightBrush"), true);
@@ -2548,17 +2553,29 @@ bool OutfitStudioFrame::NotifyStrokeStarting() {
 	if (activeTool == ToolID::MaskBrush || activeTool == ToolID::WeightBrush || activeTool == ToolID::ColorBrush || activeTool == ToolID::AlphaBrush)
 		return true;
 
-	if (bEditSlider && project->SliderValue(activeSlider) == 0.0) {
-		int response = wxMessageBox(_("You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"),
-			wxMessageBoxCaptionStr, wxYES_NO, this);
-		if (response == wxYES) {
-			SetSliderValue(activeSlider, 100);
-			ApplySliders();
+	if (bEditSlider) {
+		if (project->SliderValue(activeSlider) == 0.0) {
+			int response = wxMessageBox(_("You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"),
+				wxMessageBoxCaptionStr, wxYES_NO, this);
+
+			if (response == wxYES) {
+				SetSliderValue(activeSlider, 100);
+				ApplySliders();
+			}
+
+			return false;
 		}
-		return false;
+
+		return true;
+	}
+	else {
+		if (activeTool == ToolID::UndiffBrush) {
+			wxMessageBox(_("You can only use the undiff brush while editing a slider. Note, use the pencil button next to a slider to enable editing of that slider's morph."), wxMessageBoxCaptionStr, wxOK, this);
+			return false;
+		}
 	}
 
-	if (bEditSlider || project->AllSlidersZero())
+	if (project->AllSlidersZero())
 		return true;
 
 	int	response = wxMessageBox(_("You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph."),
@@ -5279,6 +5296,8 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		SelectTool(ToolID::MoveBrush);
 	else if (id == XRCID("btnSmoothBrush"))
 		SelectTool(ToolID::SmoothBrush);
+	else if (id == XRCID("btnUndiffBrush"))
+		SelectTool(ToolID::UndiffBrush);
 	else if (id == XRCID("btnWeightBrush"))
 		SelectTool(ToolID::WeightBrush);
 	else if (id == XRCID("btnColorBrush"))
@@ -5555,6 +5574,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), true);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
@@ -5572,6 +5592,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnDeflateBrush"), true);
 		toolBarH->EnableTool(XRCID("btnMoveBrush"), true);
 		toolBarH->EnableTool(XRCID("btnSmoothBrush"), true);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), true);
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), true);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), true);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
@@ -5598,6 +5619,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), true);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
 		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
@@ -5615,6 +5637,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnDeflateBrush"), true);
 		toolBarH->EnableTool(XRCID("btnMoveBrush"), true);
 		toolBarH->EnableTool(XRCID("btnSmoothBrush"), true);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), true);
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), true);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), true);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
@@ -5702,6 +5725,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
@@ -5719,6 +5743,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
 		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
 		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
@@ -5769,6 +5794,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
 		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
 		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
@@ -5786,6 +5812,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
 		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
 		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
@@ -5849,6 +5876,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
@@ -5868,6 +5896,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
 		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
 		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
@@ -5924,6 +5953,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
@@ -5943,6 +5973,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
 		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
 		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
@@ -9215,6 +9246,9 @@ void wxGLPanel::SetActiveTool(ToolID brushID) {
 	case ToolID::SmoothBrush:
 		activeBrush = &smoothBrush;
 		break;
+	case ToolID::UndiffBrush:
+		activeBrush = &undiffBrush;
+		break;
 	case ToolID::WeightBrush:
 		activeBrush = &weightBrush;
 		break;
@@ -9284,10 +9318,12 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 	else if (event.GetUnicodeKey() == '5')
 		os->SelectTool(ToolID::SmoothBrush);
 	else if (event.GetUnicodeKey() == '6')
-		os->SelectTool(ToolID::WeightBrush);
+		os->SelectTool(ToolID::UndiffBrush);
 	else if (event.GetUnicodeKey() == '7')
-		os->SelectTool(ToolID::ColorBrush);
+		os->SelectTool(ToolID::WeightBrush);
 	else if (event.GetUnicodeKey() == '8')
+		os->SelectTool(ToolID::ColorBrush);
+	else if (event.GetUnicodeKey() == '9')
 		os->SelectTool(ToolID::AlphaBrush);
 	else if (event.GetKeyCode() == WXK_SPACE)
 		os->ToggleBrushPane();
@@ -9441,7 +9477,37 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			sliderscale = 1.0;
 		activeStroke->usp.sliderscale = sliderscale;
 	}
-	activeStroke->beginStroke(tpi);
+
+	if (activeBrush->Type() == TBT_UNDIFF) {
+		std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
+
+		std::vector<std::vector<Vector3>> positionData;
+		positionData.resize(refMeshes.size());
+
+		for (int i = 0; i < refMeshes.size(); i++) {
+			// Get base vertex positions, not current mesh position
+			mesh* m = refMeshes[i];
+			std::vector<Vector3> basePosition;
+
+			auto workNif = os->project->GetWorkNif();
+			auto shape = workNif->FindBlockByName<NiShape>(m->shapeName);
+			if (shape)
+				workNif->GetVertsForShape(shape, basePosition);
+
+			for (auto &p : basePosition) {
+				std::swap(p.y, p.z);
+				p.x /= -10.0f;
+				p.y /= 10.0f;
+				p.z /= 10.0f;
+			}
+
+			positionData[i] = std::move(basePosition);
+		}
+
+		activeStroke->beginStroke(tpi, positionData);
+	}
+	else
+		activeStroke->beginStroke(tpi);
 
 	if (activeBrush->Type() != TBT_MOVE)
 		activeStroke->updateStroke(tpi);

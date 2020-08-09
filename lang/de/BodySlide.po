@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.3.1\n"
+"X-Generator: Poedit 2.4\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -1158,6 +1158,9 @@ msgstr "Bewegen"
 msgid "Smooth"
 msgstr "Glätten"
 
+msgid "Undiff"
+msgstr "Undiff"
+
 msgid "Weight Paint"
 msgstr "Weight Pinsel"
 
@@ -2171,6 +2174,14 @@ msgstr ""
 "Sie können das Basismodell nur bearbeiten, wenn alle Slider auf Null sind. "
 "Möchtest du jetzt alle Slider auf Null setzen? Der Pinsel-Knopf neben jedem "
 "Slider kann den Bearbeitungsmodus dieses aktivieren."
+
+msgid ""
+"You can only use the undiff brush while editing a slider. Note, use the "
+"pencil button next to a slider to enable editing of that slider's morph."
+msgstr ""
+"Sie können den Undiff Pinsel nur verwenden, während ein Slider bearbeitet "
+"wird. Der Pinsel-Knopf neben jedem Slider kann den Bearbeitungsmodus dieses "
+"aktivieren."
 
 msgid "Creating project '%s'..."
 msgstr "Erstelle Projekt '%s'..."

@@ -73,6 +73,13 @@
 						<bitmap2>$(AppDir)\res\images\SmoothBrush_d.png</bitmap2>
 						<radio>1</radio>
 					</object>
+					<object class="tool" name="btnUndiffBrush">
+						<label>Undiff</label>
+						<tooltip>Undiff an area of a slider.</tooltip>
+						<bitmap>$(AppDir)\res\images\UndiffBrush.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\UndiffBrush_d.png</bitmap2>
+						<radio>1</radio>
+					</object>
 					<object class="tool" name="btnWeightBrush">
 						<label>Weight Paint</label>
 						<tooltip>Apply animation weight values for currently selected bone.\nHold down the ALT key to weaken the weighting.</tooltip>
@@ -2101,6 +2108,11 @@
 				<object class="wxMenuItem" name="btnSmoothBrush">
 					<label>Smooth</label>
 					<help>Smooth an area of a mesh.</help>
+					<radio>1</radio>
+				</object>
+				<object class="wxMenuItem" name="btnUndiffBrush">
+					<label>Undiff</label>
+					<help>Undiff an area of a slider.</help>
 					<radio>1</radio>
 				</object>
 				<object class="wxMenuItem" name="btnWeightBrush">

@@ -137,6 +137,7 @@ enum class ToolID {
 	DeflateBrush,
 	MoveBrush,
 	SmoothBrush,
+	UndiffBrush,
 	WeightBrush,
 	ColorBrush,
 	AlphaBrush,
@@ -733,6 +734,7 @@ private:
 	TB_Deflate deflateBrush;
 	TB_Move moveBrush;
 	TB_Smooth smoothBrush;
+	TB_Undiff undiffBrush;
 	TB_Mask maskBrush;
 	TB_Unmask UnMaskBrush;
 	TB_SmoothMask smoothMaskBrush;
