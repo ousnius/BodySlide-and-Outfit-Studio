@@ -86,6 +86,7 @@ set(BSsources
 	src/program/NormalsGenDialog.cpp
 	src/program/PreviewWindow.cpp
 	src/ui/wxNormalsGenDlg.cpp
+	src/components/BuildSelection.cpp
 	)
 
 add_executable(OutfitStudio ${OSsources})
