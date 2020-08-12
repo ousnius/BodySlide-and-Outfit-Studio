@@ -138,6 +138,7 @@ void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 	loadFromFile->GetShapeBoneIDList(shape, idList);
 
 	int newID = 0;
+	std::vector<MatTransform> eachXformGlobalToSkin;
 	for (auto &id : idList) {
 		auto node = loadFromFile->GetHeader().GetBlock<NiNode>(id);
 		if (!node) continue;
@@ -151,12 +152,13 @@ void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 			// and inverting.
 			MatTransform xformBoneToGlobal;
 			if (AnimSkeleton::getInstance().GetBoneTransformToGlobal(node->GetName(), xformBoneToGlobal)) {
-				xformGlobalToSkin = xformBoneToGlobal.ComposeTransforms(boneWeights[newID].xformSkinToBone).InverseTransform();
-				gotGTS = true;
+				eachXformGlobalToSkin.push_back(xformBoneToGlobal.ComposeTransforms(boneWeights[newID].xformSkinToBone).InverseTransform());
 			}
 		}
 		newID++;
 	}
+	if (!eachXformGlobalToSkin.empty())
+		xformGlobalToSkin = CalcMedianMatTransform(eachXformGlobalToSkin);
 }
 
 bool AnimInfo::LoadFromNif(NifFile* nif) {
