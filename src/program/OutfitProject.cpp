@@ -3717,7 +3717,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 				return 100;
 		}
 
-		CreateNifShapeFromData(s, fbxShape->verts, fbxShape->tris, fbxShape->uvs, &fbxShape->normals);
+		CreateNifShapeFromData(useShapeName, fbxShape->verts, fbxShape->tris, fbxShape->uvs, &fbxShape->normals);
 
 		if (copyBaseSkinTrans)
 			workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;
