@@ -64,7 +64,7 @@ public:
 	FBXShape* GetShape(const std::string& shapeName);
 
 	void AddSkeleton(NifFile* nif, bool onlyNonSkeleton = false);
-	void AddNif(NifFile* meshNif, NiShape* shape = nullptr);
+	void AddNif(NifFile* meshNif, AnimInfo* anim, bool transToGlobal, NiShape* shape = nullptr);
 	void AddSkinning(AnimInfo* anim, NiShape* shape = nullptr);
 
 	bool ExportScene(const std::string& fileName);

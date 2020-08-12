@@ -246,5 +246,5 @@ public:
 	int ExportOBJ(const std::string& fileName, const std::vector<NiShape*>& shapes, bool transToGlobal, const Vector3& scale = Vector3(1.0f, 1.0f, 1.0f), const Vector3& offset = Vector3());
 
 	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", NiShape* mergeShape = nullptr);
-	int ExportFBX(const std::string& fileName, const std::vector<NiShape*>& shapes);
+	int ExportFBX(const std::string& fileName, const std::vector<NiShape*>& shapes, bool transToGlobal);
 };
