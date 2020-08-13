@@ -273,7 +273,8 @@ void AnimInfo::RecursiveRecalcXFormSkinToBone(const std::string& shape, AnimBone
 
 void AnimInfo::ChangeGlobalToSkinTransform(const std::string& shape, const MatTransform &newTrans) {
 	shapeSkinning[shape].xformGlobalToSkin = newTrans;
-	RecursiveRecalcXFormSkinToBone(shape, AnimSkeleton::getInstance().GetRootBonePtr());
+	for (const std::string &bone : shapeBones[shape])
+		RecalcXFormSkinToBone(shape, bone);
 }
 
 bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex) {
