@@ -153,8 +153,13 @@ Matrix3 RotVecToMat(const Vector3 &v) {
 
 Vector3 RotMatToVec(const Matrix3 &m) {
 	double cosang = (m[0][0] + m[1][1] + m[2][2] - 1) * 0.5;
-	if (cosang >= 1)
-		return Vector3(0,0,0);
+	if (cosang > 0.5) {
+		Vector3 v(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
+		double sin2ang = v.length();
+		if (sin2ang == 0)
+			return Vector3(0,0,0);
+		return v * (std::asin(sin2ang * 0.5) / sin2ang);
+	}
 	else if (cosang > -1) {
 		Vector3 v(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
 		v.Normalize();
@@ -171,4 +176,135 @@ Vector3 RotMatToVec(const Matrix3 &m) {
 		if (m[0][1] < m[1][0]) v.z = -v.z;
 		return v * PI;
 	}
+}
+
+Matrix3 CalcAverageRotation(const std::vector<Matrix3> &rots) {
+	int n = rots.size();
+	if (n <= 0)
+		return Matrix3();
+
+	// First, calculate an approximate average as a base point in
+	// the manifold of rotations.
+	Vector3 sum1;
+	for (const Matrix3 &r : rots)
+		sum1 += RotMatToVec(r);
+	sum1 /= n;
+
+	// Now, rebase each rotation to the base point and average them
+	// there.
+	Matrix3 base = RotVecToMat(sum1);
+	Matrix3 baseinv = base.Transpose();
+	Vector3 sum2;
+	for (const Matrix3 &r : rots)
+		sum2 += RotMatToVec(baseinv * r);
+
+	// The result is the new average offset from the base.
+	return base * RotVecToMat(sum2);
+}
+
+MatTransform CalcAverageMatTransform(const std::vector<MatTransform> &ts) {
+	int n = ts.size();
+	if (n <= 0)
+		return MatTransform();
+
+	std::vector<Matrix3> rots(n);
+	Vector3 sumtrans;
+	float sumscale = 0.0f;
+	for (int i = 0; i < n; ++i) {
+		rots[i] = ts[i].rotation;
+		sumtrans += ts[i].translation;
+		sumscale += ts[i].scale;
+	}
+
+	MatTransform res;
+	res.rotation = CalcAverageRotation(rots);
+	res.translation = sumtrans / n;
+	res.scale = sumscale / n;
+	return res;
+}
+
+float CalcMedianOfFloats(std::vector<float> &data) {
+	int n = data.size();
+	if (n <= 0)
+		return 0;
+
+	if (n & 1) {// n is odd
+		std::nth_element(data.begin(), data.begin() + n/2, data.end());
+		return data[n/2];
+	}
+	else {// n is even
+		std::nth_element(data.begin(), data.begin() + n/2, data.end());
+		std::nth_element(data.begin(), data.begin() + n/2-1, data.begin() + n/2);
+		return (data[n/2] + data[n/2-1]) / 2;
+	}
+}
+
+Vector3 CalcMedianOfVector3(const std::vector<Vector3> &data) {
+	int n = data.size();
+	if (n <= 0)
+		return Vector3();
+
+	Vector3 res;
+	std::vector<float> nums(n);
+
+	for (int i = 0; i < n; ++i)
+		nums[i] = data[i].x;
+	res.x = CalcMedianOfFloats(nums);
+
+	for (int i = 0; i < n; ++i)
+		nums[i] = data[i].y;
+	res.y = CalcMedianOfFloats(nums);
+
+	for (int i = 0; i < n; ++i)
+		nums[i] = data[i].z;
+	res.z = CalcMedianOfFloats(nums);
+
+	return res;
+}
+
+Matrix3 CalcMedianRotation(const std::vector<Matrix3> &rots) {
+	int n = rots.size();
+	if (n <= 0)
+		return Matrix3();
+
+	// First, calculate an approximate average as a base point in
+	// the manifold of rotations.
+	Vector3 sum1;
+	for (const Matrix3 &r : rots)
+		sum1 += RotMatToVec(r);
+	sum1 /= n;
+
+	// Now, rebase each rotation to the base point.
+	std::vector<Vector3> vecs(n);
+	Matrix3 base = RotVecToMat(sum1);
+	Matrix3 baseinv = base.Transpose();
+	for (int i = 0; i < n; ++i)
+		vecs[i] = RotMatToVec(baseinv * rots[i]);
+
+	// Calculate median of the rebased rotation vectors.
+	Vector3 mvec = CalcMedianOfVector3(vecs);
+
+	// The result is the median rebased rotation offset from the base.
+	return base * RotVecToMat(mvec);
+}
+
+MatTransform CalcMedianMatTransform(const std::vector<MatTransform> &ts) {
+	int n = ts.size();
+	if (n <= 0)
+		return MatTransform();
+
+	std::vector<Matrix3> rots(n);
+	std::vector<Vector3> trans(n);
+	std::vector<float> scales(n);
+	for (int i = 0; i < n; ++i) {
+		rots[i] = ts[i].rotation;
+		trans[i] = ts[i].translation;
+		scales[i] = ts[i].scale;
+	}
+
+	MatTransform res;
+	res.rotation = CalcMedianRotation(rots);
+	res.translation = CalcMedianOfVector3(trans);
+	res.scale = CalcMedianOfFloats(scales);
+	return res;
 }

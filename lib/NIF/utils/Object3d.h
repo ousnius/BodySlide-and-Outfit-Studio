@@ -26,6 +26,8 @@ inline bool FloatsAreNearlyEqual(float a, float b) {
 	return std::fabs(a - b) <= EPSILON * scale;
 }
 
+float CalcMedianOfFloats(const std::vector<float> &data);
+
 struct Vector2 {
 	float u;
 	float v;
@@ -304,6 +306,8 @@ inline Vector3 operator*(float f, const Vector3 &v) {
 	return Vector3(f*v.x, f*v.y, f*v.z);
 }
 
+Vector3 CalcMedianOfVector3(const std::vector<Vector3> &data);
+
 struct Vector4 {
 	float x;
 	float y;
@@ -536,6 +540,20 @@ public:
 			rows[2][0] * v.x + rows[2][1] * v.y + rows[2][2] * v.z);
 	}
 
+	Matrix3 Transpose() const {
+		Matrix3 res;
+		res[0][0] = rows[0][0];
+		res[0][1] = rows[1][0];
+		res[0][2] = rows[2][0];
+		res[1][0] = rows[0][1];
+		res[1][1] = rows[1][1];
+		res[1][2] = rows[2][1];
+		res[2][0] = rows[0][2];
+		res[2][1] = rows[1][2];
+		res[2][2] = rows[2][2];
+		return res;
+	}
+
 	float Determinant() const;
 
 	// Invert attempts to invert this matrix, returning the result in
@@ -588,6 +606,9 @@ Matrix3 RotVecToMat(const Vector3 &v);
 // Note that this function is unstable for angles near pi, but it
 // should still work.
 Vector3 RotMatToVec(const Matrix3 &m);
+
+Matrix3 CalcAverageRotation(const std::vector<Matrix3> &rots);
+Matrix3 CalcMedianRotation(const std::vector<Matrix3> &rots);
 
 // 4D Matrix class for calculating and applying transformations.
 class Matrix4 {
@@ -1006,6 +1027,9 @@ struct MatTransform {
 			FloatsAreNearlyEqual(scale, other.scale);
 	}
 };
+
+MatTransform CalcAverageMatTransform(const std::vector<MatTransform> &ts);
+MatTransform CalcMedianMatTransform(const std::vector<MatTransform> &ts);
 
 
 struct Edge {

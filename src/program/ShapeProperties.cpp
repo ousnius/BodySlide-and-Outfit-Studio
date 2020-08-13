@@ -658,13 +658,13 @@ void ShapeProperties::GetCoordTrans() {
 	newXformGlobalToSkin = oldXformGlobalToSkin;
 	Vector3 rotvec = RotMatToVec(newXformGlobalToSkin.rotation);
 
-	textScale->ChangeValue(wxString() << newXformGlobalToSkin.scale);
-	textX->ChangeValue(wxString() << newXformGlobalToSkin.translation.x);
-	textY->ChangeValue(wxString() << newXformGlobalToSkin.translation.y);
-	textZ->ChangeValue(wxString() << newXformGlobalToSkin.translation.z);
-	textRX->ChangeValue(wxString() << rotvec.x);
-	textRY->ChangeValue(wxString() << rotvec.y);
-	textRZ->ChangeValue(wxString() << rotvec.z);
+	textScale->ChangeValue(wxString::Format("%.10f", newXformGlobalToSkin.scale));
+	textX->ChangeValue(wxString::Format("%.10f", newXformGlobalToSkin.translation.x));
+	textY->ChangeValue(wxString::Format("%.10f", newXformGlobalToSkin.translation.y));
+	textZ->ChangeValue(wxString::Format("%.10f", newXformGlobalToSkin.translation.z));
+	textRX->ChangeValue(wxString::Format("%.10f", rotvec.x));
+	textRY->ChangeValue(wxString::Format("%.10f", rotvec.y));
+	textRZ->ChangeValue(wxString::Format("%.10f", rotvec.z));
 
 	cbTransformGeo->Disable();
 }
