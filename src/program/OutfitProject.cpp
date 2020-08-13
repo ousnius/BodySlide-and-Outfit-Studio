@@ -3530,6 +3530,21 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 }
 
 int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+	if (!baseShape) {
+		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.  Import anyway?"), _("Import without reference"), wxYES_NO);
+		if (res == wxNO)
+			return 1;
+	}
+
+	bool copyBaseSkinTrans = false;
+	if (baseShape && !workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform())) {
+		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's global-to-skin transform to the imported shapes?"), _("Copy skin coordinates"), wxYES_NO | wxCANCEL);
+		if (res == wxCANCEL)
+			return 1;
+		if (res == wxYES)
+			copyBaseSkinTrans = true;
+	}
+
 	ObjFile obj;
 	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
 
@@ -3585,6 +3600,9 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 		}
 
 		CreateNifShapeFromData(useShapeName, v, t, uv, &n);
+
+		if (copyBaseSkinTrans)
+			workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;
 	}
 
 	return 0;
@@ -3636,6 +3654,21 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 }
 
 int OutfitProject::ImportFBX(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+	if (!baseShape) {
+		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.  Import anyway?"), _("Import without reference"), wxYES_NO);
+		if (res == wxNO)
+			return 1;
+	}
+
+	bool copyBaseSkinTrans = false;
+	if (baseShape && !workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform())) {
+		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's global-to-skin transform to the imported shapes?"), _("Copy skin coordinates"), wxYES_NO | wxCANCEL);
+		if (res == wxCANCEL)
+			return 1;
+		if (res == wxYES)
+			copyBaseSkinTrans = true;
+	}
+
 	FBXWrangler fbxw;
 	std::string nonRefBones;
 
@@ -3684,7 +3717,10 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 				return 100;
 		}
 
-		CreateNifShapeFromData(s, fbxShape->verts, fbxShape->tris, fbxShape->uvs, &fbxShape->normals);
+		CreateNifShapeFromData(useShapeName, fbxShape->verts, fbxShape->tris, fbxShape->uvs, &fbxShape->normals);
+
+		if (copyBaseSkinTrans)
+			workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;
 
 		for (auto &bn : fbxShape->boneNames) {
 			if (!AnimSkeleton::getInstance().GetBonePtr(bn)) {
@@ -3710,12 +3746,12 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 	return 0;
 }
 
-int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiShape*>& shapes) {
+int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiShape*>& shapes, bool transToGlobal) {
 	FBXWrangler fbxw;
 	fbxw.AddSkeleton(&AnimSkeleton::getInstance().refSkeletonNif);
 
 	for (auto &s : shapes) {
-		fbxw.AddNif(&workNif, s);
+		fbxw.AddNif(&workNif, &workAnim, transToGlobal, s);
 		fbxw.AddSkinning(&workAnim, s);
 	}
 

@@ -243,7 +243,7 @@ void FBXWrangler::Priv::AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nif
 		node->AddChild(AddLimb(nif, b));
 }
 
-void FBXWrangler::AddNif(NifFile* nif, NiShape* shape) {
+void FBXWrangler::AddNif(NifFile* nif, AnimInfo* anim, bool transToGlobal, NiShape* shape) {
 	AddSkeleton(nif, true);
 
 	for (auto &s : nif->GetShapes()) {
@@ -253,6 +253,22 @@ void FBXWrangler::AddNif(NifFile* nif, NiShape* shape) {
 				const std::vector<Vector3>* verts = nif->GetRawVertsForShape(s);
 				const std::vector<Vector3>* norms = nif->GetNormalsForShape(s, false);
 				const std::vector<Vector2>* uvs = nif->GetUvsForShape(s);
+
+				std::vector<Vector3> gVerts, gNorms;
+				if (verts && transToGlobal) {
+					MatTransform toGlobal = anim->shapeSkinning[shape->GetName()].xformGlobalToSkin.InverseTransform();
+					gVerts.resize(verts->size());
+					for (int i = 0; i < gVerts.size(); ++i)
+						gVerts[i] = toGlobal.ApplyTransform((*verts)[i]);
+					verts = &gVerts;
+					if (norms) {
+						gNorms.resize(norms->size());
+						for (int i = 0; i < gNorms.size(); ++i)
+							gNorms[i] = toGlobal.rotation * (*norms)[i];
+						norms = &gNorms;
+					}
+				}
+
 				priv->AddGeometry(s, verts, norms, &tris, uvs);
 			}
 		}

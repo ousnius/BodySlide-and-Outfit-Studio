@@ -3763,6 +3763,19 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (HasUnweightedCheck())
 		return;
 
+	bool hasSkinTrans = false;
+	for (NiShape *shape : project->GetWorkNif()->GetShapes()) {
+		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+			hasSkinTrans = true;
+	}
+	bool transToGlobal = false;
+	if (hasSkinTrans) {
+		int res = wxMessageBox(_("Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?  (This is not recommended.)"), _("Transform to global"), wxYES_NO | wxCANCEL);
+		if (res == wxCANCEL)
+			return;
+		transToGlobal = (res == wxYES);
+	}
+
 	wxString fileName = wxFileSelector(_("Export project as an .fbx file"), wxEmptyString, wxEmptyString, ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.IsEmpty())
 		return;
@@ -3770,7 +3783,7 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Exporting project to OBJ file '%s'...", fileName);
 	project->ClearBoneScale();
 
-	if (!project->ExportFBX(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapes())) {
+	if (!project->ExportFBX(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapes(), transToGlobal)) {
 		wxLogError("Failed to export FBX file '%s'!", fileName);
 		wxMessageBox(_("Failed to export FBX file!"), _("Export Error"), wxICON_ERROR);
 	}
@@ -3780,6 +3793,20 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
+	}
+
+	bool hasSkinTrans = false;
+	for (auto &i : selectedItems) {
+		NiShape *shape = i->GetShape();
+		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+			hasSkinTrans = true;
+	}
+	bool transToGlobal = false;
+	if (hasSkinTrans) {
+		int res = wxMessageBox(_("Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?"), _("Transform to global"), wxYES_NO | wxCANCEL);
+		if (res == wxCANCEL)
+			return;
+		transToGlobal = (res == wxYES);
 	}
 
 	if (selectedItems.size() > 1) {
@@ -3795,7 +3822,7 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &i : selectedItems)
 			shapes.push_back(i->GetShape());
 
-		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes)) {
+		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes, transToGlobal)) {
 			wxLogError("Failed to export FBX file '%s'!", fileName);
 			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
 		}
@@ -3809,7 +3836,7 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes = { activeItem->GetShape() };
-		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes)) {
+		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes, transToGlobal)) {
 			wxLogError("Failed to export FBX file '%s'!", fileName);
 			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
 		}
