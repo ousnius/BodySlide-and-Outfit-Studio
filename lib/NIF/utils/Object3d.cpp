@@ -153,8 +153,13 @@ Matrix3 RotVecToMat(const Vector3 &v) {
 
 Vector3 RotMatToVec(const Matrix3 &m) {
 	double cosang = (m[0][0] + m[1][1] + m[2][2] - 1) * 0.5;
-	if (cosang >= 1)
-		return Vector3(0,0,0);
+	if (cosang > 0.5) {
+		Vector3 v(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
+		double sin2ang = v.length();
+		if (sin2ang == 0)
+			return Vector3(0,0,0);
+		return v * (std::asin(sin2ang * 0.5) / sin2ang);
+	}
 	else if (cosang > -1) {
 		Vector3 v(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
 		v.Normalize();
