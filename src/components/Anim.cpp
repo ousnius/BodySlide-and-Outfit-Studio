@@ -533,7 +533,17 @@ NiNode* AnimBone::AddToNif(NifFile *nif) const {
 	return nif->AddNode(boneName, xformToParent, pnode);
 }
 
+void AnimSkeleton::Clear() {
+	allBones.clear();
+	customBones.clear();
+	refSkeletonNif.Clear();
+	rootBone.clear();
+	unknownCount = 0;
+}
+
 int AnimSkeleton::LoadFromNif(const std::string& fileName) {
+	Clear();
+
 	int error = refSkeletonNif.Load(fileName);
 	if (error) {
 		wxLogError("Failed to load skeleton '%s'!", fileName);

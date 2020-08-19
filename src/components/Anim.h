@@ -191,6 +191,8 @@ public:
 
 	NifFile refSkeletonNif;
 
+	void Clear();
+
 	int LoadFromNif(const std::string& fileName);
 	AnimBone& AddStandardBone(const std::string& boneName);
 	AnimBone& AddCustomBone(const std::string& boneName);
