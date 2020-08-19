@@ -276,7 +276,7 @@ public:
 	virtual int GetDataRef();
 	virtual void SetDataRef(int dataRef);
 
-	virtual int GetSkinInstanceRef() const;
+	virtual int GetSkinInstanceRef();
 	virtual void SetSkinInstanceRef(int skinInstanceRef);
 
 	virtual int GetShaderPropertyRef();
@@ -364,7 +364,7 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	BSTriShape* Clone() { return new BSTriShape(*this); }
 
-	int GetSkinInstanceRef() const;
+	int GetSkinInstanceRef();
 	void SetSkinInstanceRef(int skinInstRef);
 
 	int GetShaderPropertyRef();
@@ -608,7 +608,7 @@ public:
 	int GetDataRef();
 	void SetDataRef(int datRef);
 
-	int GetSkinInstanceRef() const;
+	int GetSkinInstanceRef();
 	void SetSkinInstanceRef(int skinInstRef);
 
 	int GetShaderPropertyRef();

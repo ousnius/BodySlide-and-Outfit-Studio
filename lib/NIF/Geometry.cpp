@@ -346,7 +346,7 @@ void NiGeometryData::CalcTangentSpace() {
 NiGeometryData* NiShape::GetGeomData() { return nullptr; };
 void NiShape::SetGeomData(NiGeometryData*) { };
 
-int NiShape::GetSkinInstanceRef() const { return 0xFFFFFFFF; }
+int NiShape::GetSkinInstanceRef() { return 0xFFFFFFFF; }
 void NiShape::SetSkinInstanceRef(int) { }
 
 int NiShape::GetShaderPropertyRef() { return 0xFFFFFFFF; }
@@ -829,7 +829,7 @@ void BSTriShape::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&alphaPropertyRef);
 }
 
-int BSTriShape::GetSkinInstanceRef() const {
+int BSTriShape::GetSkinInstanceRef() {
 	return skinInstanceRef.GetIndex();
 }
 
@@ -1951,7 +1951,7 @@ void NiGeometry::SetDataRef(int datRef) {
 	dataRef.SetIndex(datRef);
 }
 
-int NiGeometry::GetSkinInstanceRef() const {
+int NiGeometry::GetSkinInstanceRef() {
 	return skinInstanceRef.GetIndex();
 }
 

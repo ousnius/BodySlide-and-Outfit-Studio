@@ -1493,12 +1493,12 @@ void NifFile::FinalizeData() {
 	hdr.UpdateHeaderStrings(hasUnknown);
 }
 
-bool NifFile::IsSSECompatible() const {
-	const auto& shapes = GetShapes();
+bool NifFile::IsSSECompatible() {
+	auto& shapes = GetShapes();
 	return std::all_of(shapes.cbegin(), shapes.cend(), [this](auto&& shape) { return IsSSECompatible(shape); });
 }
 
-bool NifFile::IsSSECompatible(const NiShape *shape) const {
+bool NifFile::IsSSECompatible(NiShape* shape) {
 	// Check if shape has strips in the geometry or skin partition
 	if (shape->HasType<NiTriStrips>())
 		return false;
@@ -1523,16 +1523,6 @@ std::vector<std::string> NifFile::GetShapeNames() {
 		auto shape = dynamic_cast<NiShape*>(block.get());
 		if (shape)
 			outList.push_back(shape->GetName());
-	}
-	return outList;
-}
-
-std::vector<const NiShape *> NifFile::GetShapes() const {
-	std::vector<const NiShape*> outList;
-	for (auto& block : blocks) {
-		auto shape = dynamic_cast<NiShape*>(block.get());
-		if (shape)
-			outList.push_back(shape);
 	}
 	return outList;
 }
