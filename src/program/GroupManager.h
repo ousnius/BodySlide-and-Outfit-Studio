@@ -34,6 +34,7 @@ private:
 	std::vector<std::string> allOutfits;
 
 	void RefreshUI(const bool = false);
+	bool ChooseFile();
 	void SaveGroup();
 
 	void DoRenameGroup();

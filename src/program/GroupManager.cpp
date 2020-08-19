@@ -89,6 +89,15 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 	btAddMember->Enable(groupSelected);
 }
 
+bool GroupManager::ChooseFile() {
+	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	if (file.ShowModal() != wxID_OK)
+		return false;
+
+	fileName = file.GetPath();
+	return true;
+}
+
 void GroupManager::SaveGroup() {
 	SliderSetGroupFile groupFile;
 	groupFile.New(fileName.ToUTF8().data());
@@ -201,12 +210,8 @@ void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-	if (file.ShowModal() != wxID_OK)
-		return;
-
-	fileName = file.GetPath();
-	SaveGroup();
+	if (ChooseFile())
+		SaveGroup();
 }
 
 void GroupManager::OnSelectGroup(wxCommandEvent& WXUNUSED(event)) {
@@ -272,13 +277,21 @@ void GroupManager::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {
 
 void GroupManager::OnClose(wxCloseEvent& event) {
 	if (dirty) {
-		int ret = wxMessageBox(_("Do you really want to close the group manager? All unsaved changes will be lost."), _("Save Changes"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
+		int ret = wxMessageBox(_("Save changes to group file?"), _("Save Changes"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
 		if (ret == wxCANCEL) {
 			event.Veto();
 			return;
 		}
-		else if (ret == wxYES)
+		else if (ret == wxYES) {
+			if (fileName.empty()) {
+				if (!ChooseFile()) {
+					event.Veto();
+					return;
+				}
+			}
+
 			SaveGroup();
+		}
 	}
 
 	EndModal(wxID_OK);
