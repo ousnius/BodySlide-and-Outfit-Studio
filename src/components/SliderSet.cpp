@@ -191,7 +191,7 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 	inDataStorage.LoadData(osdNames);
 }
 
-void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape) {
+void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal) {
 	std::map<std::string, std::map<std::string, std::string>> osdNames;
 	std::map<std::string, std::map<std::string, std::string>> osdNamesBase;
 
@@ -234,8 +234,8 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 				osdNamesBase[fileName][dataName] = ddf.targetName;
 		}
 
-		// Make new data local
-		ddf.bLocal = true;
+		// Make new data local or not
+		ddf.bLocal = newDataLocal;
 	};
 
 	for (auto &s : mergeSet.sliders) {
@@ -269,7 +269,9 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 	for (auto &s : mergeSet.shapeAttributes) {
 		// Copy new shapes to the set
 		if (shapeAttributes.find(s.first) == shapeAttributes.end()) {
-			s.second.dataFolder.clear();
+			if (newDataLocal)
+				s.second.dataFolder.clear();
+
 			shapeAttributes[s.first] = s.second;
 		}
 	}

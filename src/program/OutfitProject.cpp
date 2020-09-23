@@ -1883,7 +1883,7 @@ int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const st
 
 	if (loadAll) {
 		owner->StartSubProgress(10, 20);
-		return AddFromSliderSet(sourceFile, set);
+		return AddFromSliderSet(sourceFile, set, false);
 	}
 	else
 		return LoadReference(sourceFile, set, mergeSliders, shape);
@@ -2141,7 +2141,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	return 0;
 }
 
-int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName) {
+int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName, const bool newDataLocal) {
 	owner->StartProgress(_("Adding slider set..."));
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
@@ -2212,7 +2212,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 	}
 
 	owner->UpdateProgress(70, _("Updating slider data..."));
-	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->GetName() : "");
+	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->GetName() : "", newDataLocal);
 
 	owner->UpdateProgress(100, _("Finished"));
 	owner->EndProgress();

@@ -203,7 +203,7 @@ public:
 	int LoadReference(const std::string& fileName, const std::string& setName, bool mergeSliders = false, const std::string& shapeName = "");
 
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
-	int AddFromSliderSet(const std::string& fileName, const std::string& setName);
+	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true);
 
 	void CollectVertexData(NiShape *shape, UndoStateShape &uss, const std::vector<int> &indices);
 	void CollectTriangleData(NiShape *shape, UndoStateShape &uss, const std::vector<int> &indices);

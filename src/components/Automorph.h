@@ -88,7 +88,7 @@ public:
 	void ScaleResultDiff(const std::string& shapeName, const std::string& sliderName, float scaleValue);
 
 	void LoadResultDiffs(SliderSet& fromSet);
-	void MergeResultDiffs(SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape);
+	void MergeResultDiffs(SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal = true);
 
 	void ClearResultSet(const std::string& sliderName);
 

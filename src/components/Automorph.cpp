@@ -298,8 +298,8 @@ void Automorph::LoadResultDiffs(SliderSet& fromSet) {
 				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);
 }
 
-void Automorph::MergeResultDiffs(SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape) {
-	fromSet.Merge(mergeSet, resultDiffData, baseDiffData, baseShape);
+void Automorph::MergeResultDiffs(SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal) {
+	fromSet.Merge(mergeSet, resultDiffData, baseDiffData, baseShape, newDataLocal);
 	for (int i = 0; i < fromSet.size(); i++)
 		for (auto &df : fromSet[i].dataFiles)
 			if (df.dataName != (df.targetName + fromSet[i].name))
