@@ -2285,7 +2285,7 @@ void OutfitStudioFrame::UpdateShapeReference(NiShape* shape, NiShape* newShape) 
 	}
 
 	if (project->IsBaseShape(shape))
-		project->SetBaseShape(newShape);
+		project->SetBaseShape(newShape, false);
 }
 
 std::vector<ShapeItemData*>& OutfitStudioFrame::GetSelectedItems() {

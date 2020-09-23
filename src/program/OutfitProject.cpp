@@ -309,51 +309,53 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef) {
 	return true;
 }
 
-void OutfitProject::SetBaseShape(NiShape* shape) {
-	if (baseShape != shape) {
-		// Copy data from base shape to regular shape
-		if (baseShape) {
-			std::string shapeName = baseShape->GetName();
-			std::string srcTarget = ShapeToTarget(shapeName);
+void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
+	if (moveData) {
+		if (baseShape != shape) {
+			// Copy data from base shape to regular shape
+			if (baseShape) {
+				std::string shapeName = baseShape->GetName();
+				std::string srcTarget = ShapeToTarget(shapeName);
 
-			for (int i = 0; i < activeSet.size(); i++) {
-				std::string srcTargetData = activeSet[i].TargetDataName(srcTarget);
+				for (int i = 0; i < activeSet.size(); i++) {
+					std::string srcTargetData = activeSet[i].TargetDataName(srcTarget);
 
-				auto diff = baseDiffData.GetDiffSet(srcTargetData);
-				if (diff)
-					morpher.SetResultDiff(shapeName, activeSet[i].name, *diff);
+					auto diff = baseDiffData.GetDiffSet(srcTargetData);
+					if (diff)
+						morpher.SetResultDiff(shapeName, activeSet[i].name, *diff);
 
-				activeSet[i].RenameTarget(srcTarget, shapeName);
-				baseDiffData.ClearSet(srcTargetData);
-			}
-
-			activeSet.AddShapeTarget(shapeName, shapeName);
-			activeSet.Retarget(srcTarget, shapeName);
-		}
-
-		// Copy data from regular shape to base shape
-		if (shape) {
-			std::string shapeName = shape->GetName();
-			std::string target = ShapeToTarget(shapeName);
-
-			for (int i = 0; i < activeSet.size(); i++) {
-				std::string sliderName = activeSet[i].name;
-				std::string targetData = activeSet[i].TargetDataName(target);
-				if (targetData.empty()) {
-					targetData = target + sliderName;
-					activeSet[i].AddDataFile(target, target + sliderName, target + sliderName);
+					activeSet[i].RenameTarget(srcTarget, shapeName);
+					baseDiffData.ClearSet(srcTargetData);
 				}
-				else
-					activeSet[i].SetLocalData(targetData);
 
-				std::unordered_map<ushort, Vector3> diff;
-				morpher.GetRawResultDiff(shapeName, sliderName, diff);
-				morpher.ClearResultSet(targetData);
-
-				baseDiffData.LoadSet(targetData, shapeName, diff);
+				activeSet.AddShapeTarget(shapeName, shapeName);
+				activeSet.Retarget(srcTarget, shapeName);
 			}
 
-			activeSet.AddShapeTarget(shapeName, shapeName);
+			// Copy data from regular shape to base shape
+			if (shape) {
+				std::string shapeName = shape->GetName();
+				std::string target = ShapeToTarget(shapeName);
+
+				for (int i = 0; i < activeSet.size(); i++) {
+					std::string sliderName = activeSet[i].name;
+					std::string targetData = activeSet[i].TargetDataName(target);
+					if (targetData.empty()) {
+						targetData = target + sliderName;
+						activeSet[i].AddDataFile(target, target + sliderName, target + sliderName);
+					}
+					else
+						activeSet[i].SetLocalData(targetData);
+
+					std::unordered_map<ushort, Vector3> diff;
+					morpher.GetRawResultDiff(shapeName, sliderName, diff);
+					morpher.ClearResultSet(targetData);
+
+					baseDiffData.LoadSet(targetData, shapeName, diff);
+				}
+
+				activeSet.AddShapeTarget(shapeName, shapeName);
+			}
 		}
 	}
 
