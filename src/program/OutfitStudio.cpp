@@ -7953,6 +7953,9 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 	for (auto &i : selectedItems)
 		selected.push_back(*i);
 
+	activeItem = nullptr;
+	selectedItems.clear();
+
 	for (auto &i : selected) {
 		if (editUV && editUV->GetShape() == i.GetShape())
 			editUV->Close();
