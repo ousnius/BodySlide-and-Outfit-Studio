@@ -996,7 +996,7 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Un
 
 static inline void ClampWeight(float &w) {
 	if (w > 1.0f) w = 1.0f;
-	if (w < 0) w = 0;
+	if (w < EPSILON) w = 0.0f;
 }
 
 TB_Weight::TB_Weight() :TweakBrush() {
@@ -1015,40 +1015,53 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 	BoneWeightAutoNormalizer nzer;
 	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
+
 	Vector3 mOrigin = pickInfo.origin;
 	mOrigin.x = -mOrigin.x;
+
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		bool adjFlag[2] = {true, false};
+		bool adjFlag[2] = { true, false };
 		float orDist = pickInfo.origin.DistanceTo(refmesh->verts[i]);
 		float morDist = mOrigin.DistanceTo(refmesh->verts[i]);
 		float falloff = getFalloff(orDist);
 		float mFalloff = getFalloff(morDist);
 		float b0falloff = falloff;
+
 		if (bMirror && morDist < orDist)
 			b0falloff = mFalloff;
+
 		adjFlag[0] = b0falloff > 0.0;
+
 		float sw = uss.boneWeights[0].weights[i].endVal;
 		float str = bFixedWeight ? strength * 10.0f - sw : strength;
 		float maskF = 1.0f - refmesh->vcolors[i].x;
+
 		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
+
 		if (!bNormalizeWeights)
 			ClampWeight(uss.boneWeights[0].weights[i].endVal);
+
 		if (bXMirrorBone) {
 			float b1falloff = mFalloff;
 			if (bMirror && orDist < morDist)
 				b1falloff = falloff;
+
 			adjFlag[1] = b1falloff > 0.0;
 			sw = uss.boneWeights[1].weights[i].endVal;
 			str = bFixedWeight ? strength * 10.0f - sw : strength;
 			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
+
 			if (!bNormalizeWeights)
 				ClampWeight(uss.boneWeights[1].weights[i].endVal);
 		}
+
 		if (bNormalizeWeights)
 			nzer.AdjustWeights(i, adjFlag);
+
 		refmesh->vcolors[i].y = uss.boneWeights[0].weights[i].endVal;
 	}
+
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
@@ -1067,36 +1080,49 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 	BoneWeightAutoNormalizer nzer;
 	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
+
 	Vector3 mOrigin = pickInfo.origin;
 	mOrigin.x = -mOrigin.x;
+
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		bool adjFlag[2] = {true, false};
+		bool adjFlag[2] = { true, false };
 		float orDist = pickInfo.origin.DistanceTo(refmesh->verts[i]);
 		float morDist = mOrigin.DistanceTo(refmesh->verts[i]);
 		float falloff = getFalloff(orDist);
 		float mFalloff = getFalloff(morDist);
 		float b0falloff = falloff;
+
 		if (bMirror && morDist < orDist)
 			b0falloff = mFalloff;
+
 		adjFlag[0] = b0falloff > 0.0;
+
 		float maskF = 1.0f - refmesh->vcolors[i].x;
+
 		uss.boneWeights[0].weights[i].endVal += strength * maskF * b0falloff;
+
 		if (!bNormalizeWeights)
 			ClampWeight(uss.boneWeights[0].weights[i].endVal);
+
 		if (bXMirrorBone) {
 			float b1falloff = mFalloff;
 			if (bMirror && orDist < morDist)
 				b1falloff = falloff;
+
 			adjFlag[1] = b1falloff > 0.0;
 			uss.boneWeights[1].weights[i].endVal += strength * maskF * b1falloff;
+
 			if (!bNormalizeWeights)
 				ClampWeight(uss.boneWeights[1].weights[i].endVal);
 		}
+
 		if (bNormalizeWeights)
 			nzer.AdjustWeights(i, adjFlag);
+
 		refmesh->vcolors[i].y = uss.boneWeights[0].weights[i].endVal;
 	}
+
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
@@ -1120,11 +1146,14 @@ void TB_SmoothWeight::lapFilter(mesh* refmesh, const int* points, int nPoints, s
 
 	for (int i = 0; i < nPoints; i++) {
 		int c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
-		if (c == 0) continue;
+		if (c == 0)
+			continue;
+
 		// average adjacent points values, using values from last iteration.
 		float d = 0.0;
 		for (int n = 0; n < c; n++)
 			d += refmesh->vcolors[adjPoints[n]].y;
+
 		wv[points[i]] = d / (float)c;
 
 		if (refmesh->weldVerts.find(points[i]) != refmesh->weldVerts.end()) {
@@ -1140,11 +1169,14 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints,
 	std::vector<float> b(refmesh->nVerts);
 
 	int adjPoints[1000];
+
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
 		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
-		if (c == 0) continue;
+		if (c == 0)
+			continue;
+
 		// average adjacent points positions, using values from last iteration.
 		float d = 0.0;
 		for (int n = 0; n < c; n++) {
@@ -1155,24 +1187,33 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, const int* points, int nPoints,
 				d += wPtr->at(ai);
 			// otherwise the previous weight is zero
 		}
+
 		wv[i] = d / (float)c;
+
 		// Calculate the difference between the new position and a blend of the original and previous positions
 		b[i] = wv[i] - ((ubw[i].startVal * hcAlpha) + (ubw[i].endVal * (1.0f - hcAlpha)));
 	}
 
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
+
 		// Check if it's a welded vertex; only do welded vertices once.
 		bool skip = false;
 		if (refmesh->weldVerts.find(i) != refmesh->weldVerts.end())
 			for (unsigned int v = 0; v < refmesh->weldVerts[i].size(); v++)
 				if (refmesh->weldVerts[i][v] < i)
 					skip = true;
-		if (skip) continue;
+
+		if (skip)
+			continue;
+
 		// Average 'b' for adjacent points
 		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
-		if (c == 0) continue;
+		if (c == 0)
+			continue;
+
 		float d = 0.0;
+
 		for (int n = 0; n < c; n++)
 			d += b[adjPoints[n]];
 
@@ -1192,6 +1233,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 	BoneWeightAutoNormalizer nzer;
 	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
+
 	Vector3 mOrigin = pickInfo.origin;
 	mOrigin.x = -mOrigin.x;
 
@@ -1200,6 +1242,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
 		wv[i] = uss.boneWeights[0].weights[i].endVal;
+
 		if (bXMirrorBone)
 			mwv[i] = uss.boneWeights[1].weights[i].endVal;
 	}
@@ -1208,6 +1251,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 		lapFilter(refmesh, points, nPoints, wv);
 	else					// HC-laplacian smooth
 		hclapFilter(refmesh, points, nPoints, wv, uss, 0, animInfo->GetWeightsPtr(refmesh->shapeName, boneNames[0]));
+
 	if (bXMirrorBone) {
 		if (method == 0)		// laplacian smooth
 			lapFilter(refmesh, points, nPoints, mwv);
@@ -1217,34 +1261,46 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
-		bool adjFlag[2] = {true, false};
+		bool adjFlag[2] = { true, false };
 		float orDist = pickInfo.origin.DistanceTo(refmesh->verts[i]);
 		float morDist = mOrigin.DistanceTo(refmesh->verts[i]);
 		float falloff = getFalloff(orDist);
 		float mFalloff = getFalloff(morDist);
 		float b0falloff = falloff;
+
 		if (bMirror && morDist < orDist)
 			b0falloff = mFalloff;
+
 		adjFlag[0] = b0falloff > 0.0;
+
 		float str = wv[i] - uss.boneWeights[0].weights[i].endVal;
 		float maskF = 1.0f - refmesh->vcolors[i].x;
+
 		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
+
 		if (!bNormalizeWeights)
 			ClampWeight(uss.boneWeights[0].weights[i].endVal);
+
 		if (bXMirrorBone) {
 			float b1falloff = mFalloff;
+
 			if (bMirror && orDist < morDist)
 				b1falloff = falloff;
+
 			adjFlag[1] = b1falloff > 0.0;
 			str = mwv[i] - uss.boneWeights[1].weights[i].endVal;
 			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
+
 			if (!bNormalizeWeights)
 				ClampWeight(uss.boneWeights[1].weights[i].endVal);
 		}
+
 		if (bNormalizeWeights)
 			nzer.AdjustWeights(i, adjFlag);
+
 		refmesh->vcolors[i].y = uss.boneWeights[0].weights[i].endVal;
 	}
+
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
