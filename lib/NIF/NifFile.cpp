@@ -1074,11 +1074,6 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 
 				BSTriShape* bsOptShape = nullptr;
 
-				// Check to optimize all shapes or only mandatory ones
-				const bool needsOpt = !options.mandatoryOnly || options.headParts || !IsSSECompatible(shape);
-				if (!needsOpt)
-					continue;
-
 				auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
 				if (bsSegmentShape) {
 					bsOptShape = new BSSubIndexTriShape();
