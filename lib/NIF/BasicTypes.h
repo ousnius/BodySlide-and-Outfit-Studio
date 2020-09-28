@@ -292,12 +292,17 @@ public:
 class RefArray {
 protected:
 	int arraySize = 0;
+	bool keepEmptyRefs = false;
 
 public:
 	RefArray() {}
 
 	int GetSize() {
 		return arraySize;
+	}
+
+	void SetKeepEmptyRefs(const bool keep = true) {
+		keepEmptyRefs = keep;
 	}
 
 	virtual void Get(NiStream& stream) = 0;
@@ -318,6 +323,9 @@ protected:
 	std::vector<BlockRef<T>> refs;
 
 	void CleanInvalidRefs() {
+		if (keepEmptyRefs)
+			return;
+
 		refs.erase(std::remove_if(refs.begin(), refs.end(), [](BlockRef<T> r) {
 			if (r.GetIndex() == 0xFFFFFFFF)
 				return true;
@@ -351,6 +359,7 @@ public:
 	void Clear() {
 		refs.clear();
 		arraySize = 0;
+		keepEmptyRefs = false;
 	}
 
 	virtual void Get(NiStream& stream) override {

@@ -692,6 +692,7 @@ void NiMultiTargetTransformController::Get(NiStream& stream) {
 void NiMultiTargetTransformController::Put(NiStream& stream) {
 	NiInterpController::Put(stream);
 
+	targetRefs.SetKeepEmptyRefs();
 	targetRefs.Put(stream);
 }
 
