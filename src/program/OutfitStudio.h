@@ -124,11 +124,6 @@ struct WeightCopyOptions {
 	bool doTransformGeo = false;
 };
 
-struct ConformOptions {
-	float proximityRadius = 0.0f;
-	int maxResults = 0;
-};
-
 enum class ToolID {
 	Any = -1,
 	Select = 0,
@@ -150,6 +145,7 @@ enum class ToolID {
 };
 
 
+struct ConformOptions;
 class OutfitStudioFrame;
 class EditUV;
 
@@ -1232,7 +1228,7 @@ private:
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);
 	bool ShowConform(ConformOptions& options);
-	void ConformSliders(NiShape* shape, const ConformOptions options = ConformOptions());
+	void ConformSliders(NiShape* shape, const ConformOptions& options);
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);
 	void OnSliderImportBSD(wxCommandEvent& event);

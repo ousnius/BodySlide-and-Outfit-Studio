@@ -3066,3 +3066,6 @@ msgstr "Das Modell hat das Vertex-Limit erreicht."
 
 msgid "The shape has reached the triangle count limit."
 msgstr "Das Modell hat das Triangle-Limit erreicht."
+
+msgid "Axis"
+msgstr "Achse"

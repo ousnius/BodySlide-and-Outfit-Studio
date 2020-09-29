@@ -12,6 +12,14 @@ See the included LICENSE file
 
 #include <wx/arrstr.h>
 
+struct ConformOptions {
+	float proximityRadius = 10.0f;
+	int maxResults = 10;
+	bool axisX = true;
+	bool axisY = true;
+	bool axisZ = true;
+};
+
 class OutfitStudioFrame;
 struct UndoStateShape;
 
@@ -142,7 +150,7 @@ public:
 	float SliderDefault(int index, bool hi);
 
 	void InitConform();
-	void ConformShape(NiShape* shape, const float proximityRadius = 10.0f, const int maxResults = 10);
+	void ConformShape(NiShape* shape, const ConformOptions& options = ConformOptions());
 
 	const std::string& ShapeToTarget(const std::string& shapeName);
 	int GetVertexCount(NiShape* shape);

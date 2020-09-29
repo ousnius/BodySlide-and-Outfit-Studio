@@ -6971,7 +6971,7 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions options) {
+void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& options) {
 	if (project->IsBaseShape(shape))
 		return;
 
@@ -6980,7 +6980,7 @@ void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions opti
 	UpdateProgress(50, _("Conforming: ") + shapeName);
 
 	project->morpher.CopyMeshMask(glView->GetMesh(shapeName), shapeName);
-	project->ConformShape(shape, options.proximityRadius, options.maxResults);
+	project->ConformShape(shape, options);
 
 	UpdateProgress(99);
 }
@@ -7107,6 +7107,9 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options) {
 			else
 				options.maxResults = std::numeric_limits<int>::max();
 
+			options.axisX = XRCCTRL(dlg, "axisX", wxCheckBox)->IsChecked();
+			options.axisY = XRCCTRL(dlg, "axisY", wxCheckBox)->IsChecked();
+			options.axisZ = XRCCTRL(dlg, "axisZ", wxCheckBox)->IsChecked();
 			return true;
 		}
 	}

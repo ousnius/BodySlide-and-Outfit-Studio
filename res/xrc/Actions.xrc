@@ -893,26 +893,82 @@
 							<value>10</value>
 						</object>
 					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxLEFT</flag>
-				<border>10</border>
-				<object class="wxCheckBox" name="noTargetLimit">
-					<label>No Target Limit</label>
-					<checked>0</checked>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND|wxALL</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="noTargetLimitLabel">
+							<label>No Target Limit</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="noTargetLimit">
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="axisLabel">
+							<label>Axis</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="axisX">
+									<label>X</label>
+									<checked>1</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="axisY">
+									<label>Y</label>
+									<checked>1</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="axisZ">
+									<label>Z</label>
+									<checked>1</checked>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="preset">
 							<label>Preset</label>
@@ -921,21 +977,35 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxLEFT|wxBOTTOM</flag>
 						<border>5</border>
-						<object class="wxButton" name="presetDefault">
-							<size>-1,25</size>
-							<label>Default</label>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="presetDefault">
+									<size>-1,25</size>
+									<label>Default</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="presetEvenMovement">
+									<size>-1,25</size>
+									<label>Even Movement</label>
+								</object>
+							</object>
 						</object>
 					</object>
-					<object class="sizeritem">
+					<object class="spacer">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
-						<object class="wxButton" name="presetEvenMovement">
-							<size>-1,25</size>
-							<label>Even Movement</label>
-						</object>
+						<size>0,0</size>
 					</object>
 				</object>
 			</object>

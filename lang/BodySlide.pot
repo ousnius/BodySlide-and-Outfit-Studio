@@ -2648,3 +2648,6 @@ msgstr ""
 
 msgid "The shape has reached the triangle count limit."
 msgstr ""
+
+msgid "Axis"
+msgstr ""

@@ -375,7 +375,7 @@ std::string Automorph::ResultDataName(const std::string& shapeName, const std::s
 	return f->second;
 }
 
-void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, const int maxResults) {
+void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, const int maxResults, const bool axisX, const bool axisY, const bool axisZ) {
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
@@ -418,7 +418,15 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 					invDist[nearMoves] = 1.0 / weight;
 
 				invDistTotal += invDist[nearMoves];
-				effectVector[nearMoves] = diffItem->second;
+
+				auto& effect = effectVector[nearMoves];
+				if (axisX)
+					effect.x = diffItem->second.x;
+				if (axisY)
+					effect.y = diffItem->second.y;
+				if (axisZ)
+					effect.z = diffItem->second.z;
+
 				nearMoves++;
 			}
 			else if (j == 0) {

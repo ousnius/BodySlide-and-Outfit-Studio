@@ -2227,16 +2227,16 @@ void OutfitProject::InitConform() {
 	}
 }
 
-void OutfitProject::ConformShape(NiShape* shape, const float proximityRadius, const int maxResults) {
+void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) {
 	if (!workNif.IsValid() || !baseShape)
 		return;
 
-	morpher.BuildProximityCache(shape->GetName(), proximityRadius);
+	morpher.BuildProximityCache(shape->GetName(), options.proximityRadius);
 
 	std::string refTarget = ShapeToTarget(baseShape->GetName());
 	for (int i = 0; i < activeSet.size(); i++)
 		if (SliderShow(i) && !SliderZap(i) && !SliderUV(i))
-			morpher.GenerateResultDiff(shape->GetName(), activeSet[i].name, activeSet[i].TargetDataName(refTarget), maxResults);
+			morpher.GenerateResultDiff(shape->GetName(), activeSet[i].name, activeSet[i].TargetDataName(refTarget), options.maxResults, options.axisX, options.axisY, options.axisZ);
 }
 
 void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices) {
