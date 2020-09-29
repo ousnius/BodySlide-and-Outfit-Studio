@@ -887,8 +887,6 @@ public:
 	bool LoadProject(const std::string& fileName, const std::string& projectName = "", bool clearProject = true);
 	void CreateSetSliders();
 
-	bool LoadNIF(const std::string& fileName);
-
 	std::string NewSlider(const std::string& suggestedName = "", bool skipPrompt = false);
 
 	void SetSliderValue(int index, int val);

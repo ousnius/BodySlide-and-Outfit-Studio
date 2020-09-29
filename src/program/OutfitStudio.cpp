@@ -368,17 +368,52 @@ bool OutfitStudio::OnInit() {
 			wxMessageBox(_("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct."), _("Warning"), wxICON_WARNING);
 	}
 
-	if (!cmdFiles.IsEmpty()) {
-		wxFileName loadFile(cmdFiles.Item(0));
+	for (auto &file : cmdFiles) {
+		wxFileName loadFile(file);
 		if (loadFile.FileExists()) {
-			std::string fileName{loadFile.GetFullPath().ToUTF8()};
+			std::string fileName{ loadFile.GetFullPath().ToUTF8() };
 			wxString fileExt = loadFile.GetExt().MakeLower();
 			if (fileExt == "osp") {
-				std::string projectName{cmdProject.ToUTF8()};
+				std::string projectName{ cmdProject.ToUTF8() };
 				frame->LoadProject(fileName, projectName);
+				break;
 			}
-			else if (fileExt == "nif")
-				frame->LoadNIF(fileName);
+			else if (fileExt == "nif") {
+				frame->StartProgress(_("Adding NIF file..."));
+				frame->UpdateProgress(1, _("Adding NIF file..."));
+				frame->project->ImportNIF(fileName, false);
+				frame->project->SetTextures();
+
+				frame->UpdateProgress(60, _("Refreshing GUI..."));
+				frame->RefreshGUIFromProj();
+
+				frame->UpdateProgress(100, _("Finished"));
+				frame->EndProgress();
+			}
+			else if (fileExt == "obj") {
+				frame->StartProgress("Adding OBJ file...");
+				frame->UpdateProgress(1, _("Adding OBJ file..."));
+				frame->project->ImportOBJ(fileName);
+				frame->project->SetTextures();
+
+				frame->UpdateProgress(60, _("Refreshing GUI..."));
+				frame->RefreshGUIFromProj();
+
+				frame->UpdateProgress(100, _("Finished"));
+				frame->EndProgress();
+			}
+			else if (fileExt == "fbx") {
+				frame->StartProgress(_("Adding FBX file..."));
+				frame->UpdateProgress(1, _("Adding FBX file..."));
+				frame->project->ImportFBX(fileName);
+				frame->project->SetTextures();
+
+				frame->UpdateProgress(60, _("Refreshing GUI..."));
+				frame->RefreshGUIFromProj();
+
+				frame->UpdateProgress(100, _("Finished"));
+				frame->EndProgress();
+			}
 		}
 	}
 
@@ -1507,7 +1542,7 @@ void OutfitStudioFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxSt
 	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
 	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
 	for (auto& file : files) {
-		file = file.AfterLast('/').AfterLast('\\');;
+		file = file.AfterLast('/').AfterLast('\\');
 		dataFileList->Insert(file, dataFileList->GetCount());
 
 		if (fsearch.find(file.Lower()) == fsearch.end())
@@ -1824,22 +1859,6 @@ void OutfitStudioFrame::CreateSetSliders() {
 	sliderScroll->Thaw();
 
 	EndProgress();
-}
-
-bool OutfitStudioFrame::LoadNIF(const std::string& fileName) {
-	StartProgress(_("Importing NIF file..."));
-	UpdateProgress(1, _("Importing NIF file..."));
-
-	if (project->ImportNIF(fileName))
-		return false;
-
-	UpdateProgress(60, _("Refreshing GUI..."));
-	project->SetTextures();
-	RefreshGUIFromProj();
-
-	UpdateProgress(100, _("Finished."));
-	EndProgress();
-	return true;
 }
 
 void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz) {
@@ -10758,7 +10777,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			mergeShape = owner->activeItem->GetShape();
 
 		for (auto &inputFile : fileNames) {
-			wxString dataName = inputFile.AfterLast('/').AfterLast('\\');;
+			wxString dataName = inputFile.AfterLast('/').AfterLast('\\');
 			dataName = dataName.BeforeLast('.');
 
 			if (inputFile.Lower().EndsWith(".nif")) {
@@ -10812,7 +10831,7 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 			wxString inputFile;
 			inputFile = fileNames.Item(i);
 
-			wxString dataName = inputFile.AfterLast('/').AfterLast('\\');;
+			wxString dataName = inputFile.AfterLast('/').AfterLast('\\');
 			dataName = dataName.BeforeLast('.');
 
 			bool isBSD = inputFile.MakeLower().EndsWith(".bsd");
