@@ -71,7 +71,7 @@ public:
 
 	// shapeName = name of the mesh to morph (eg "IronArmor") also known as target name.
 	// sliderName = name of the morph to apply (eg "BreastsSH").
-	void GenerateResultDiff(const std::string& shapeName, const std::string& sliderName, const std::string& refDataName, const int maxResults = 10, const bool axisX = true, const bool axisY = true, const bool axisZ = true);
+	void GenerateResultDiff(const std::string& shapeName, const std::string& sliderName, const std::string& refDataName, const int maxResults = 10, const bool noSqueeze = false, const bool axisX = true, const bool axisY = true, const bool axisZ = true);
 
 	void SetResultDataName(const std::string& shapeName, const std::string& sliderName, const std::string& dataName);
 	std::string ResultDataName(const std::string& shapeName, const std::string& sliderName);

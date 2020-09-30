@@ -375,7 +375,7 @@ std::string Automorph::ResultDataName(const std::string& shapeName, const std::s
 	return f->second;
 }
 
-void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, const int maxResults, const bool axisX, const bool axisY, const bool axisZ) {
+void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, const int maxResults, const bool noSqueeze, const bool axisX, const bool axisY, const bool axisZ) {
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
@@ -409,6 +409,7 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 		std::vector<Vector3> effectVector(nValues);
 		for (int j = 0; j < nValues; j++) {
 			ushort vi = (*vertProx)[j].vertex_index;
+			Vector3* v = (*vertProx)[j].v;
 			auto diffItem = diffData->find(vi);
 			if (diffItem != diffData->end()) {
 				weight = (*vertProx)[j].distance;	// "weight" is just a placeholder here...
@@ -420,8 +421,11 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 				invDistTotal += invDist[nearMoves];
 
 				auto& effect = effectVector[nearMoves];
-				if (axisX)
-					effect.x = diffItem->second.x;
+				if (axisX) {
+					if (!noSqueeze ||
+						(noSqueeze && ((diffItem->second.x > 0.0f && v->x > 0.0f) || (diffItem->second.x < 0.0f && v->x < 0.0f))))
+						effect.x = diffItem->second.x;
+				}
 				if (axisY)
 					effect.y = diffItem->second.y;
 				if (axisZ)

@@ -15,6 +15,7 @@ See the included LICENSE file
 struct ConformOptions {
 	float proximityRadius = 10.0f;
 	int maxResults = 10;
+	bool noSqueeze = false;
 	bool axisX = true;
 	bool axisY = true;
 	bool axisZ = true;

@@ -2651,3 +2651,6 @@ msgstr ""
 
 msgid "Axis"
 msgstr ""
+
+msgid "No Squeeze"
+msgstr ""
