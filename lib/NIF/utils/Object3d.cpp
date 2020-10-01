@@ -157,7 +157,7 @@ Vector3 RotMatToVec(const Matrix3 &m) {
 		Vector3 v(m[1][2] - m[2][1], m[2][0] - m[0][2], m[0][1] - m[1][0]);
 		double sin2ang = v.length();
 		if (sin2ang == 0)
-			return Vector3(0,0,0);
+			return Vector3(0, 0, 0);
 		return v * (std::asin(sin2ang * 0.5) / sin2ang);
 	}
 	else if (cosang > -1) {
@@ -166,11 +166,18 @@ Vector3 RotMatToVec(const Matrix3 &m) {
 		return v * std::acos(cosang);
 	}
 	else { // cosang <= -1, sinang == 0
-		Vector3 v(
-			std::sqrt((m[0][0] - cosang) * 0.5),
-			std::sqrt((m[1][1] - cosang) * 0.5),
-			std::sqrt((m[2][2] - cosang) * 0.5));
+		double x = (m[0][0] - cosang) * 0.5;
+		double y = (m[1][1] - cosang) * 0.5;
+		double z = (m[2][2] - cosang) * 0.5;
+
+		// Solve precision issues that would cause NaN
+		if (x < 0.0) x = 0.0;
+		if (y < 0.0) y = 0.0;
+		if (z < 0.0) z = 0.0;
+
+		Vector3 v(std::sqrt(x), std::sqrt(y), std::sqrt(z));
 		v.Normalize();
+
 		if (m[1][2] < m[2][1]) v.x = -v.x;
 		if (m[2][0] < m[0][2]) v.y = -v.y;
 		if (m[0][1] < m[1][0]) v.z = -v.z;
