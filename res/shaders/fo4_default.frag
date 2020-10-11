@@ -374,7 +374,6 @@ void main(void)
 						{
 							// Tangent space map
 							normal = normalize(normalMap.rgb * 2.0 - 1.0);
-							normal.rg = normal.gr;
 
 							// Calculate missing blue channel
 							normal.b = sqrt(1.0 - dot(normal.rg, normal.rg));
