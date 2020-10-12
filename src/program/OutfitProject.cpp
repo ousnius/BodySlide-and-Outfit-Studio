@@ -2439,6 +2439,8 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 			EraseVectorIndices(triParts, delTriInds);
 	}
 
+	bool makeLocal = false;
+
 	if (!delVerts.empty()) {
 		// Delete vertices...
 		std::vector<ushort> delVertInds(delVerts.size());
@@ -2472,6 +2474,8 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 			EraseVectorIndices(bitangents, delVertInds);
 		if (eyeDatap)
 			EraseVectorIndices(eyeData, delVertInds);
+
+		makeLocal = true;
 	}
 
 	if (!addVerts.empty()) {
@@ -2549,6 +2553,20 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 					continue;
 				(*diffSet)[usv.index] = diff.diff;
 			}
+		}
+
+		makeLocal = true;
+	}
+
+	if (makeLocal) {
+		std::string shapeName = shape->GetName();
+		std::string target = ShapeToTarget(shapeName);
+
+		for (int i = 0; i < activeSet.size(); i++) {
+			std::string targetData = activeSet[i].TargetDataName(target);
+
+			if (!targetData.empty())
+				activeSet[i].SetLocalData(targetData);
 		}
 	}
 
