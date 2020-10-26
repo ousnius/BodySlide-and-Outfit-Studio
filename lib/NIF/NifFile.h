@@ -242,7 +242,7 @@ public:
 	void InvertUVsForShape(NiShape* shape, bool invertX, bool invertY);
 	void MirrorShape(NiShape* shape, bool mirrorX, bool mirrorY, bool mirrorZ);
 	void SetNormalsForShape(NiShape* shape, const std::vector<Vector3>& norms);
-	void CalcNormalsForShape(NiShape* shape, const bool smooth = true, const float smoothThresh = 60.0f);
+	void CalcNormalsForShape(NiShape* shape, const bool force = false, const bool smooth = true, const float smoothThresh = 60.0f);
 	void CalcTangentsForShape(NiShape* shape);
 
 	void GetRootTranslation(Vector3& outVec);

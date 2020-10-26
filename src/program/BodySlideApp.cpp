@@ -1597,7 +1597,7 @@ void BodySlideApp::LoadPresets(const std::string& sliderSet) {
 	sliderManager.LoadPresets(Config["AppDir"] + "/SliderPresets", outfit, groups_and_aliases, groups_and_aliases.empty());
 }
 
-int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
+int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNormals) {
 	std::string inputFileName = activeSet.GetInputFileName();
 	NifFile nifSmall;
 	NifFile nifBig;
@@ -1719,7 +1719,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		nifBig.SetUvsForShape(shape, uvsHigh);
 
 		if (!it->second.lockNormals)
-			nifBig.CalcNormalsForShape(shape, it->second.smoothSeamNormals);
+			nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
 
 		nifBig.CalcTangentsForShape(shape);
 		if (nifBig.DeleteVertsForShape(shape, zapIdx))
@@ -1734,7 +1734,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			nifSmall.SetUvsForShape(shapeSmall, uvsLow);
 
 			if (!it->second.lockNormals)
-				nifSmall.CalcNormalsForShape(shapeSmall, it->second.smoothSeamNormals);
+				nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
 
 			nifSmall.CalcTangentsForShape(shapeSmall);
 			if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
@@ -1871,7 +1871,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	return 0;
 }
 
-int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool clean, bool tri, const std::string& custPath) {
+int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool clean, bool tri, bool forceNormals, const std::string& custPath) {
 	std::string datapath = custPath;
 
 	wxLogMessage("Started batch build with options: Custom Path = %s, Cleaning = %s, TRI = %s",
@@ -2188,7 +2188,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			nifBig.SetUvsForShape(shape, uvsHigh);
 
 			if (!it->second.lockNormals)
-				nifBig.CalcNormalsForShape(shape, it->second.smoothSeamNormals);
+				nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
 
 			nifBig.CalcTangentsForShape(shape);
 			if (nifBig.DeleteVertsForShape(shape, zapIdx))
@@ -2200,7 +2200,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				nifSmall.SetUvsForShape(shapeSmall, uvsLow);
 
 				if (!it->second.lockNormals)
-					nifSmall.CalcNormalsForShape(shapeSmall, it->second.smoothSeamNormals);
+					nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
 
 				nifSmall.CalcTangentsForShape(shapeSmall);
 				if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
@@ -2506,6 +2506,20 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 			break;
 		}
 	}
+
+	auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
+	if (cbForceBodyNormals) {
+		bool forceBodyNormalsDef = BodySlideConfig.GetBoolValue("ForceBodyNormals");
+		cbForceBodyNormals->SetValue(forceBodyNormalsDef);
+
+		switch (app->targetGame) {
+		case SKYRIM:
+		case SKYRIMSE:
+		case SKYRIMVR:
+			cbForceBodyNormals->Show();
+			break;
+		}
+	}
 }
 
 void BodySlideFrame::OnLinkClicked(wxHtmlLinkEvent& link) {
@@ -2764,6 +2778,10 @@ void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
 	if (cbMorphs)
 		BodySlideConfig.SetBoolValue("BuildMorphs", cbMorphs->GetValue());
+
+	auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
+	if (cbForceBodyNormals)
+		BodySlideConfig.SetBoolValue("ForceBodyNormals", cbForceBodyNormals->GetValue());
 
 	int ret = BodySlideConfig.SaveConfig(Config["AppDir"] + "/BodySlide.xml", "BodySlideConfig");
 	if (ret)
@@ -3174,17 +3192,23 @@ void BodySlideFrame::OnBuildBodies(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
-	wxCheckBox* cbMorphs = (wxCheckBox*)FindWindowByName("cbMorphs");
 	bool tri = false;
+	bool forceNormals = false;
+
+	auto cbMorphs = (wxCheckBox*)FindWindowByName("cbMorphs");
 	if (cbMorphs)
 		tri = cbMorphs->IsChecked();
 
+	auto cbForceBodyNormals = (wxCheckBox*)FindWindowByName("cbForceBodyNormals");
+	if (cbForceBodyNormals)
+		forceNormals = cbForceBodyNormals->IsChecked();
+
 	if (wxGetKeyState(WXK_CONTROL))
-		app->BuildBodies(true, false, tri);
+		app->BuildBodies(true, false, tri, forceNormals);
 	else if (wxGetKeyState(WXK_ALT))
-		app->BuildBodies(false, true, tri);
+		app->BuildBodies(false, true, tri, forceNormals);
 	else
-		app->BuildBodies(false, false, tri);
+		app->BuildBodies(false, false, tri, forceNormals);
 }
 
 void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
@@ -3196,12 +3220,18 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	std::vector<std::string> outfitChoices;
 	std::vector<std::string> toBuild;
 
-	wxCheckBox* cbMorphs = (wxCheckBox*)FindWindowByName("cbMorphs");
 	bool custpath = false;
 	bool clean = false;
 	bool tri = false;
+	bool forceNormals = false;
+
+	auto cbMorphs = (wxCheckBox*)FindWindowByName("cbMorphs");
 	if (cbMorphs)
 		tri = cbMorphs->IsChecked();
+
+	auto cbForceBodyNormals = (wxCheckBox*)FindWindowByName("cbForceBodyNormals");
+	if (cbForceBodyNormals)
+		forceNormals = cbForceBodyNormals->IsChecked();
 
 	if (wxGetKeyState(WXK_CONTROL))
 		custpath = true;
@@ -3253,12 +3283,12 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		if (path.empty())
 			return;
 
-		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, path + PathSepStr);
+		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, forceNormals, path + PathSepStr);
 	}
 	else if (clean)
-		ret = app->BuildListBodies(toBuild, failedOutfits, true, tri);
+		ret = app->BuildListBodies(toBuild, failedOutfits, true, forceNormals, tri);
 	else
-		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri);
+		ret = app->BuildListBodies(toBuild, failedOutfits, false, forceNormals, tri);
 
 	wxLog::FlushActive();
 

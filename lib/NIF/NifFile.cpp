@@ -1479,6 +1479,13 @@ void NifFile::FinalizeData() {
 						skinPart->vertexSize = bsTriShape->vertexSize;
 						skinPart->vertData = bsTriShape->vertData;
 						skinPart->vertexDesc = bsTriShape->vertexDesc;
+
+						for (int partInd = 0; partInd < skinPart->numPartitions; ++partInd) {
+							NiSkinPartition::PartitionBlock &part = skinPart->partitions[partInd];
+
+							// Copy relevant data from shape to each partition
+							part.vertexDesc = bsTriShape->vertexDesc;
+						}
 					}
 				}
 			}
@@ -2770,13 +2777,13 @@ void NifFile::SetNormalsForShape(NiShape* shape, const std::vector<Vector3>& nor
 	}
 }
 
-void NifFile::CalcNormalsForShape(NiShape* shape, const bool smooth, const float smoothThresh) {
+void NifFile::CalcNormalsForShape(NiShape* shape, const bool force, const bool smooth, const float smoothThresh) {
 	if (!shape)
 		return;
 
 	if (hdr.GetVersion().IsSK() || hdr.GetVersion().IsSSE()) {
 		NiShader* shader = GetShader(shape);
-		if (shader && shader->IsModelSpace())
+		if (shader && shader->IsModelSpace() && !force)
 			return;
 	}
 

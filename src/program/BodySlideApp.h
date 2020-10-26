@@ -207,8 +207,8 @@ public:
 	void RebuildPreviewMeshes();
 	void UpdateMeshesFromSet();
 
-	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false);
-	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, const std::string& custPath = "");
+	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false, bool forceNormals = false);
+	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, bool forceNormals = false, const std::string& custPath = "");
 	void GroupBuild(const std::string& group);
 
 	void AddTriData(NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
