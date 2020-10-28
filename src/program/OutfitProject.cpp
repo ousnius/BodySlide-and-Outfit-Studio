@@ -2559,9 +2559,6 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 	}
 
 	if (makeLocal) {
-		std::string shapeName = shape->GetName();
-		std::string target = ShapeToTarget(shapeName);
-
 		for (int i = 0; i < activeSet.size(); i++) {
 			std::string targetData = activeSet[i].TargetDataName(target);
 

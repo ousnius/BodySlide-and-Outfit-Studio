@@ -1496,7 +1496,7 @@ void NifFile::FinalizeData() {
 }
 
 bool NifFile::IsSSECompatible() {
-	auto& shapes = GetShapes();
+	auto shapes = GetShapes();
 	return std::all_of(shapes.cbegin(), shapes.cend(), [this](auto&& shape) { return IsSSECompatible(shape); });
 }
 
