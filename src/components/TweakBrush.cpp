@@ -74,7 +74,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 			refBrush->brushAction(m, pickInfo, nullptr, nPts1, uss);
 
-			if (refBrush->LiveNormals()) {
+			if (refBrush->LiveNormals() && normalUpdates.empty()) {
 				auto pending = async(std::launch::async, mesh::SmoothNormalsStaticMap, m, uss.pointStartState);
 				normalUpdates.push_back(std::move(pending));
 			}
@@ -100,10 +100,11 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			if (refBrush->isMirrored() && nPts2 > 0)
 				refBrush->brushAction(m, mirrorPick, pts2[m].get(), nPts2, uss);
 
-			if (refBrush->LiveNormals()) {
+			if (refBrush->LiveNormals() && normalUpdates.empty()) {
 				auto pending1 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m].get(), nPts1);
 				normalUpdates.push_back(std::move(pending1));
-				if (refBrush->isMirrored() && nPts2 > 0) {
+
+				if (refBrush->isMirrored() && nPts2 > 0 && normalUpdates.size() <= 1) {
 					auto pending2 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts2[m].get(), nPts2);
 					normalUpdates.push_back(std::move(pending2));
 				}
@@ -145,11 +146,9 @@ void TweakStroke::endStroke() {
 				bvhNode->UpdateAABB();
 		}
 
-	if (!refBrush->LiveNormals()) {
-		for (int mi = 0; mi < nMesh; ++mi) {
-			auto pending = std::async(std::launch::async, mesh::SmoothNormalsStatic, refMeshes[mi]);
-			normalUpdates.push_back(std::move(pending));
-		}
+	for (int mi = 0; mi < nMesh; ++mi) {
+		auto pending = std::async(std::launch::async, mesh::SmoothNormalsStatic, refMeshes[mi]);
+		normalUpdates.push_back(std::move(pending));
 	}
 
 	bool notReady = true;
