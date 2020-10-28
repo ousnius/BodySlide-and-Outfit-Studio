@@ -2787,6 +2787,14 @@ void NifFile::CalcNormalsForShape(NiShape* shape, const bool force, const bool s
 			return;
 	}
 
+	std::vector<uint> lockedIndices;
+
+	for (auto &extraDataRef : shape->GetExtraData()) {
+		auto integersExtraData = hdr.GetBlock<NiIntegersExtraData>(extraDataRef.GetIndex());
+		if (integersExtraData && integersExtraData->GetName() == "LockedNormals")
+			lockedIndices = std::move(integersExtraData->GetIntegersData());
+	}
+
 	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
@@ -2795,7 +2803,7 @@ void NifFile::CalcNormalsForShape(NiShape* shape, const bool force, const bool s
 	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
-			bsTriShape->RecalcNormals(smooth, smoothThresh);
+			bsTriShape->RecalcNormals(smooth, smoothThresh, &lockedIndices);
 	}
 }
 

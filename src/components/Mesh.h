@@ -103,6 +103,8 @@ public:
 	std::unordered_map<int, std::vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
 	bool bGotWeldVerts = false;	// Whether weldVerts has been calculated yet.
 
+	std::vector<uint> lockedNormalIndices;
+
 	RenderMode rendermode = RenderMode::Normal;
 	bool doublesided = false;
 	GLenum cullMode = GL_BACK;

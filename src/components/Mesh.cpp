@@ -427,6 +427,9 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 		if (!vertices.empty() && vertices.find(i) == vertices.end())
 			continue;
 
+		if (std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), i) != lockedNormalIndices.end())
+			continue;
+
 		Vector3& pn = norms[i];
 		pn.Zero();
 	}
@@ -443,19 +446,27 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 			continue;
 
 		tris[t].trinormal(verts.get(), &tn);
-		Vector3& pn1 = norms[tris[t].p1];
-		Vector3& pn2 = norms[tris[t].p2];
-		Vector3& pn3 = norms[tris[t].p3];
 
-		if (bn1)
+		if (bn1 && std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), tris[t].p1) == lockedNormalIndices.end()) {
+			Vector3& pn1 = norms[tris[t].p1];
 			pn1 += tn;
-		if (bn2)
+		}
+
+		if (bn2 && std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), tris[t].p2) == lockedNormalIndices.end()) {
+			Vector3& pn2 = norms[tris[t].p2];
 			pn2 += tn;
-		if (bn3)
+		}
+
+		if (bn3 && std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), tris[t].p3) == lockedNormalIndices.end()) {
+			Vector3& pn3 = norms[tris[t].p3];
 			pn3 += tn;
+		}
 	}
 
 	for (int i = 0; i < nVerts; i++) {
+		if (std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), i) != lockedNormalIndices.end())
+			continue;
+
 		Vector3& pn = norms[i];
 		pn.Normalize();
 	}
@@ -470,11 +481,16 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 		for (auto &wvp : weldVerts) {
 			if (!vertices.empty() && vertices.find(wvp.first) != vertices.end())
 				continue;
+
+			if (std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), wvp.first) != lockedNormalIndices.end())
+				continue;
+
 			const Vector3 &n = norms[wvp.first];
 			Vector3 sn = n;
 			for (int wvi : wvp.second)
 				if (n.angle(norms[wvi]) < smoothThresh)
 					sn += norms[wvi];
+
 			sn.Normalize();
 			seamNorms.emplace_back(wvp.first, sn);
 		}
@@ -493,6 +509,9 @@ void mesh::FacetNormals() {
 
 	// Zero old normals
 	for (int i = 0; i < nVerts; i++) {
+		if (std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), i) != lockedNormalIndices.end())
+			continue;
+
 		Vector3& pn = norms[i];
 		pn.Zero();
 	}
@@ -504,15 +523,27 @@ void mesh::FacetNormals() {
 			continue;
 
 		tri.trinormal(verts.get(), &tn);
-		Vector3& pn1 = norms[tri.p1];
-		Vector3& pn2 = norms[tri.p2];
-		Vector3& pn3 = norms[tri.p3];
-		pn1 += tn;
-		pn2 += tn;
-		pn3 += tn;
+
+		if (std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), tri.p1) == lockedNormalIndices.end()) {
+			Vector3& pn1 = norms[tri.p1];
+			pn1 += tn;
+		}
+
+		if (std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), tri.p2) == lockedNormalIndices.end()) {
+			Vector3& pn2 = norms[tri.p2];
+			pn2 += tn;
+		}
+
+		if (std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), tri.p3) == lockedNormalIndices.end()) {
+			Vector3& pn3 = norms[tri.p3];
+			pn3 += tn;
+		}
 	}
 
 	for (int i = 0; i < nVerts; i++) {
+		if (std::find(lockedNormalIndices.begin(), lockedNormalIndices.end(), i) != lockedNormalIndices.end())
+			continue;
+
 		Vector3& pn = norms[i];
 		pn.Normalize();
 	}

@@ -1236,6 +1236,12 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 			m->norms[i].y = (*nifNorms)[i].z;
 		}
 
+		for (auto &extraDataRef : shape->GetExtraData()) {
+			auto integersExtraData = nif->GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef.GetIndex());
+			if (integersExtraData && integersExtraData->GetName() == "LockedNormals")
+				m->lockedNormalIndices = std::move(integersExtraData->GetIntegersData());
+		}
+
 		// Virtually weld verts across UV seams
 		m->CalcWeldVerts();
 	}
