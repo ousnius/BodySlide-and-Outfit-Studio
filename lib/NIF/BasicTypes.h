@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "utils/Object3d.h"
 
 #include <set>
+#include <unordered_set>
 #include <streambuf>
 #include <string>
 #include <algorithm>

@@ -421,7 +421,7 @@ public:
 	void SetVertexData(const std::vector<BSVertexData>& bsVertData);
 
 	void SetNormals(const std::vector<Vector3>& inNorms);
-	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f, std::vector<uint>* lockedIndices = nullptr);
+	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f, std::unordered_set<uint>* lockedIndices = nullptr);
 	void CalcTangentSpace();
 	int CalcDataSizes(NiVersion& version);
 

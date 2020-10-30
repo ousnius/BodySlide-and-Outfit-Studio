@@ -1178,7 +1178,7 @@ static void CalculateNormals(const std::vector<Vector3> &verts, const std::vecto
 	}
 }
 
-void BSTriShape::RecalcNormals(const bool smooth, const float smoothThresh, std::vector<uint>* lockedIndices) {
+void BSTriShape::RecalcNormals(const bool smooth, const float smoothThresh, std::unordered_set<uint>* lockedIndices) {
 	GetRawVerts();
 	SetNormals(true);
 
@@ -1196,7 +1196,7 @@ void BSTriShape::RecalcNormals(const bool smooth, const float smoothThresh, std:
 	for (int i = 0; i < numVertices; i++) {
 		if (lockedIndices) {
 			// Skip locked indices (keep current normal)
-			if (std::find(lockedIndices->begin(), lockedIndices->end(), i) != lockedIndices->end())
+			if (lockedIndices->find(i) != lockedIndices->end())
 				continue;
 		}
 

@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "NifFile.h"
 
 #include <set>
+#include <unordered_set>
 #include <queue>
 #include <regex>
 #include <fstream>
@@ -2787,12 +2788,13 @@ void NifFile::CalcNormalsForShape(NiShape* shape, const bool force, const bool s
 			return;
 	}
 
-	std::vector<uint> lockedIndices;
+	std::unordered_set<uint> lockedIndices;
 
 	for (auto &extraDataRef : shape->GetExtraData()) {
 		auto integersExtraData = hdr.GetBlock<NiIntegersExtraData>(extraDataRef.GetIndex());
-		if (integersExtraData && integersExtraData->GetName() == "LockedNormals")
-			lockedIndices = std::move(integersExtraData->GetIntegersData());
+		if (integersExtraData && integersExtraData->GetName() == "LOCKEDNORM")
+			for (auto& i : integersExtraData->GetIntegersData())
+				lockedIndices.insert(i);
 	}
 
 	if (shape->HasType<NiTriBasedGeom>()) {
