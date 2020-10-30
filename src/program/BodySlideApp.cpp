@@ -2347,7 +2347,7 @@ void BodySlideApp::GroupBuild(const std::string& group) {
 	sliderManager.LoadPresets(Config["AppDir"] + "/SliderPresets", "", groups, true);
 
 	std::map<std::string, std::string> failedOutfits;
-	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, cmdTargetDir.ToUTF8().data());
+	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, false, cmdTargetDir.ToUTF8().data());
 
 	if (!cmdPreset.IsEmpty())
 		BodySlideConfig.SetValue("SelectedPreset", preset);
@@ -3286,9 +3286,9 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, forceNormals, path + PathSepStr);
 	}
 	else if (clean)
-		ret = app->BuildListBodies(toBuild, failedOutfits, true, forceNormals, tri);
+		ret = app->BuildListBodies(toBuild, failedOutfits, true, tri, forceNormals);
 	else
-		ret = app->BuildListBodies(toBuild, failedOutfits, false, forceNormals, tri);
+		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, forceNormals);
 
 	wxLog::FlushActive();
 
