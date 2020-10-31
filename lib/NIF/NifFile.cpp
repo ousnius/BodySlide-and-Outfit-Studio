@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "NifFile.h"
+#include "NifUtil.h"
 
 #include <set>
 #include <unordered_set>
@@ -2825,6 +2826,65 @@ void NifFile::CalcTangentsForShape(NiShape* shape) {
 	}
 }
 
+int NifFile::ApplyNormalsFromFile(NifFile& srcNif, const std::string& shapeName) {
+	auto shape = FindBlockByName<NiShape>(shapeName);
+	if (!shape)
+		return -1;
+
+	auto srcShape = srcNif.FindBlockByName<NiShape>(shapeName);
+	if (!srcShape)
+		return -2;
+
+	std::unordered_set<uint> lockedNormalIndices;
+
+	// Get LOCKEDNORM from source
+	NiIntegersExtraData* integersExtraData = nullptr;
+
+	for (auto &extraDataRef : srcShape->GetExtraData()) {
+		integersExtraData = srcNif.GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef.GetIndex());
+		if (integersExtraData && integersExtraData->GetName() == "LOCKEDNORM")
+			for (auto& i : integersExtraData->GetIntegersData())
+				lockedNormalIndices.insert(i);
+	}
+
+	if (lockedNormalIndices.empty())
+		return -3;
+
+	// Get normals of target
+	auto norms = GetNormalsForShape(shape, false);
+	if (!norms)
+		return -4;
+
+	// Get normals of source
+	auto srcNorms = srcNif.GetNormalsForShape(srcShape, false);
+	if (!srcNorms)
+		return -5;
+
+	// Vertex count needs to match up
+	if (norms->size() != srcNorms->size())
+		return -6;
+
+	auto workNorms = (*norms);
+
+	// Copy locked normals of the source into the target
+	for (auto &i : lockedNormalIndices) {
+		auto &sn = srcNorms->at(i);
+		workNorms[i] = sn;
+	}
+
+	SetNormalsForShape(shape, workNorms);
+
+	for (auto &extraDataRef : shape->GetExtraData()) {
+		auto oldIntegersExtraData = hdr.GetBlock<NiIntegersExtraData>(extraDataRef.GetIndex());
+		if (oldIntegersExtraData && oldIntegersExtraData->GetName() == "LOCKEDNORM")
+			hdr.DeleteBlock(extraDataRef.GetIndex());
+	}
+
+	auto cloneIntegersExtraData = integersExtraData->Clone();
+	AssignExtraData(shape, cloneIntegersExtraData);
+	return 0;
+}
+
 void NifFile::GetRootTranslation(Vector3& outVec) {
 	auto root = GetRootNode();
 	if (root)
@@ -3171,6 +3231,31 @@ bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& ind
 					UpdatePartitionFlags(shape);
 				}
 			}
+		}
+	}
+
+	for (auto &extraDataRef : shape->GetExtraData()) {
+		auto integersExtraData = hdr.GetBlock<NiIntegersExtraData>(extraDataRef.GetIndex());
+		if (integersExtraData && integersExtraData->GetName() == "LOCKEDNORM") {
+			auto integersData = integersExtraData->GetIntegersData();
+			std::sort(integersData.begin(), integersData.end());
+
+			int highestRemoved = indices.back();
+			std::vector<int> indexCollapse = GenerateIndexCollapseMap(indices, highestRemoved + 1);
+
+			for (int i = integersData.size() - 1; i >= 0; i--) {
+				auto& val = integersData[i];
+				if (val > highestRemoved) {
+					val -= indices.size();
+				}
+				else if (indexCollapse[val] == -1) {
+					integersData.erase(integersData.begin() + i);
+				}
+				else
+					val = indexCollapse[val];
+			}
+
+			integersExtraData->SetIntegersData(integersData);
 		}
 	}
 

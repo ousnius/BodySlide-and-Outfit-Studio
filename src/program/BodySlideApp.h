@@ -88,6 +88,9 @@ class BodySlideApp : public wxApp {
 	std::vector<std::string> allGroups;
 	SliderSetGroupCollection gCollection;
 
+	/* Cache */
+	std::map<std::string, NifFile, case_insensitive_compare> refNormalsCache;	// Cache for reference normals files
+
 	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount;	// Counts how many sets write to the same output file
 
 	std::string previewBaseName;
@@ -206,6 +209,7 @@ public:
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
 	void UpdateMeshesFromSet();
+	void ApplyReferenceNormals(NifFile& nif);
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false, bool forceNormals = false);
 	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, bool forceNormals = false, const std::string& custPath = "");

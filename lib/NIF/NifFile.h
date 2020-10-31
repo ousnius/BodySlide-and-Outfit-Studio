@@ -245,6 +245,8 @@ public:
 	void CalcNormalsForShape(NiShape* shape, const bool force = false, const bool smooth = true, const float smoothThresh = 60.0f);
 	void CalcTangentsForShape(NiShape* shape);
 
+	int ApplyNormalsFromFile(NifFile& srcNif, const std::string& shapeName);
+
 	void GetRootTranslation(Vector3& outVec);
 
 	void MoveVertex(NiShape* shape, const Vector3& pos, const int id);

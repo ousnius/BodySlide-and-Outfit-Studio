@@ -1082,6 +1082,36 @@ void BodySlideApp::UpdateMeshesFromSet() {
 	}
 }
 
+void BodySlideApp::ApplyReferenceNormals(NifFile& nif) {
+	for (auto &s : nif.GetShapes()) {
+		std::string shapeName = s->GetName();
+
+		if (refNormalsCache.find(shapeName) != refNormalsCache.end()) {
+			// Apply normals from file cache
+			NifFile& srcNif = refNormalsCache[shapeName];
+			nif.ApplyNormalsFromFile(srcNif, shapeName);
+		}
+		else {
+			// Check if reference normals file exists
+			wxString fileName = wxString::Format("%s/RefNormals/%s.nif", wxString::FromUTF8(Config["AppDir"]), wxString::FromUTF8(shapeName));
+			if (wxFile::Exists(fileName)) {
+				std::fstream file;
+				PlatformUtil::OpenFileStream(file, fileName.ToUTF8().data(), std::ios::in | std::ios::binary);
+
+				NifFile srcNif;
+				if (srcNif.Load(file) != 0)
+					continue;
+
+				// Apply normals from file
+				nif.ApplyNormalsFromFile(srcNif, shapeName);
+
+				// Move file to cache
+				refNormalsCache[shapeName] = std::move(srcNif);
+			}
+		}
+	}
+}
+
 bool BodySlideApp::SetDefaultConfig() {
 	int xborder = wxSystemSettings::GetMetric(wxSYS_FRAMESIZE_X);
 	if (xborder < 0)
@@ -1678,6 +1708,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 		return 0;
 	}
 
+	refNormalsCache.clear();
+
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
 
@@ -1718,8 +1750,12 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 		nifBig.SetVertsForShape(shape, vertsHigh);
 		nifBig.SetUvsForShape(shape, uvsHigh);
 
-		if (!it->second.lockNormals)
+		if (!it->second.lockNormals) {
 			nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
+
+			if (forceNormals)
+				ApplyReferenceNormals(nifBig);
+		}
 
 		nifBig.CalcTangentsForShape(shape);
 		if (nifBig.DeleteVertsForShape(shape, zapIdx))
@@ -1733,8 +1769,12 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			nifSmall.SetVertsForShape(shapeSmall, vertsLow);
 			nifSmall.SetUvsForShape(shapeSmall, uvsLow);
 
-			if (!it->second.lockNormals)
+			if (!it->second.lockNormals) {
 				nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
+
+				if (forceNormals)
+					ApplyReferenceNormals(nifSmall);
+			}
 
 			nifSmall.CalcTangentsForShape(shapeSmall);
 			if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
@@ -2002,6 +2042,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		}
 	}
 
+	refNormalsCache.clear();
+
 	wxProgressDialog progWnd(_("Processing Outfits"), _("Starting..."), 1000, sliderView, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
 	progWnd.SetSize(400, 150);
 	float progstep = 1000.0f / outfitList.size();
@@ -2187,8 +2229,12 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			nifBig.SetVertsForShape(shape, vertsHigh);
 			nifBig.SetUvsForShape(shape, uvsHigh);
 
-			if (!it->second.lockNormals)
+			if (!it->second.lockNormals) {
 				nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
+
+				if (forceNormals)
+					ApplyReferenceNormals(nifBig);
+			}
 
 			nifBig.CalcTangentsForShape(shape);
 			if (nifBig.DeleteVertsForShape(shape, zapIdx))
@@ -2199,8 +2245,12 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				nifSmall.SetVertsForShape(shapeSmall, vertsLow);
 				nifSmall.SetUvsForShape(shapeSmall, uvsLow);
 
-				if (!it->second.lockNormals)
+				if (!it->second.lockNormals) {
 					nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
+
+					if (forceNormals)
+						ApplyReferenceNormals(nifSmall);
+				}
 
 				nifSmall.CalcTangentsForShape(shapeSmall);
 				if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
