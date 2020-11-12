@@ -40,6 +40,7 @@ private:
 	void DoRenameGroup();
 	void DoRemoveMembers();
 	void DoAddMembers();
+	void DoFilterOutfits(const std::string& filter = "");
 
 	void OnLoadGroup(wxFileDirPickerEvent&);
 	void OnSaveGroup(wxCommandEvent&);
@@ -52,6 +53,7 @@ private:
 	void OnRemoveGroup(wxCommandEvent&);
 	void OnRemoveMember(wxCommandEvent&);
 	void OnAddMember(wxCommandEvent&);
+	void OnFilterChanged(wxCommandEvent&);
 	void OnCloseButton(wxCommandEvent&);
 	void OnClose(wxCloseEvent&);
 

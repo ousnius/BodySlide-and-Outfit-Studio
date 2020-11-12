@@ -910,6 +910,12 @@
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
 			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="unknown" name="projectFilter" />
+			</object>
+			<object class="sizeritem">
 				<option>1</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>

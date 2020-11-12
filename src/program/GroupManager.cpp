@@ -6,6 +6,9 @@ See the included LICENSE file
 #include "GroupManager.h"
 #include "../utils/ConfigurationManager.h"
 
+#include <wx/srchctrl.h>
+#include <regex>
+
 extern ConfigurationManager Config;
 
 wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
@@ -20,6 +23,8 @@ wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_BUTTON(XRCID("btSaveAs"), GroupManager::OnSaveGroupAs)
 	EVT_BUTTON(XRCID("btRemoveMember"), GroupManager::OnRemoveMember)
 	EVT_BUTTON(XRCID("btAddMember"), GroupManager::OnAddMember)
+	EVT_TEXT_ENTER(XRCID("outfitFilter"), GroupManager::OnFilterChanged)
+	EVT_TEXT(XRCID("outfitFilter"), GroupManager::OnFilterChanged)
 	EVT_BUTTON(wxID_OK, GroupManager::OnCloseButton)
 	EVT_CLOSE(GroupManager::OnClose)
 wxEND_EVENT_TABLE()
@@ -46,6 +51,13 @@ GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 	listMembers = XRCCTRL(*this, "listMembers", wxListBox);
 	listOutfits = XRCCTRL(*this, "listOutfits", wxListBox);
 
+	auto search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, -1), wxTE_PROCESS_ENTER);
+	search->ShowSearchButton(true);
+	search->SetDescriptiveText("Outfit Filter");
+	search->SetToolTip("Filter outfit list by name");
+
+	xrc->AttachUnknownControl("outfitFilter", search, this);
+
 	RefreshUI();
 }
 
@@ -55,7 +67,6 @@ GroupManager::~GroupManager() {
 
 void GroupManager::RefreshUI(const bool clearGroups) {
 	listMembers->Clear();
-	listOutfits->Clear();
 
 	btSave->Enable(dirty & !fileName.empty());
 
@@ -77,13 +88,13 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 		for (auto &member : groupMembers[selectedGroup])
 			listMembers->Append(wxString::FromUTF8(member));
 
-	// Add outfits that are no members to list
-	for (auto &outfit : allOutfits)
-		if (listMembers->FindString(outfit) == wxNOT_FOUND)
-			listOutfits->Append(wxString::FromUTF8(outfit));
+	auto outfitFilter = XRCCTRL(*this, "outfitFilter", wxSearchCtrl);
+	std::string filter{ outfitFilter->GetValue().ToUTF8() };
+	DoFilterOutfits(filter);
 
 	listMembers->Enable(groupSelected);
 	listOutfits->Enable(groupSelected);
+	outfitFilter->Enable(groupSelected);
 
 	btRemoveMember->Enable(groupSelected);
 	btAddMember->Enable(groupSelected);
@@ -178,6 +189,26 @@ void GroupManager::DoAddMembers() {
 	RefreshUI();
 }
 
+void GroupManager::DoFilterOutfits(const std::string& filter) {
+	std::regex re(filter, std::regex_constants::icase);
+
+	listOutfits->Clear();
+
+	// Add outfits that are no members to list
+	for (auto &outfit : allOutfits) {
+		if (listMembers->FindString(outfit) == wxNOT_FOUND) {
+			try {
+				// Filter outfit
+				if (std::regex_search(outfit, re))
+					listOutfits->Append(wxString::FromUTF8(outfit));
+			}
+			catch (std::regex_error&) {
+				listOutfits->Append(wxString::FromUTF8(outfit));
+			}
+		}
+	}
+}
+
 void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	// Load group file
 	SliderSetGroupFile groupFile(event.GetPath().ToUTF8().data());
@@ -269,6 +300,11 @@ void GroupManager::OnRemoveMember(wxCommandEvent& WXUNUSED(event)) {
 
 void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
 	DoAddMembers();
+}
+
+void GroupManager::OnFilterChanged(wxCommandEvent& event) {
+	std::string filter{ event.GetString().ToUTF8() };
+	DoFilterOutfits(filter);
 }
 
 void GroupManager::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {

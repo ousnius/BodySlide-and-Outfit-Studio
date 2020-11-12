@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
 #include <sstream>
+#include <regex>
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
@@ -1067,11 +1068,22 @@ bool OutfitStudioFrame::CopyStreamData(wxInputStream& inputStream, wxOutputStrea
 }
 
 void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
-	wxDialog* packProjects = wxXmlResource::Get()->LoadDialog(this, "dlgPackProjects");
+	wxXmlResource* xrc = wxXmlResource::Get();
+	wxDialog* packProjects = xrc->LoadDialog(this, "dlgPackProjects");
 	if (packProjects) {
+		auto projectFilter = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, -1), wxTE_PROCESS_ENTER);
+		projectFilter->ShowSearchButton(true);
+		projectFilter->SetDescriptiveText("Project Filter");
+		projectFilter->SetToolTip("Filter project list by name");
+
+		xrc->AttachUnknownControl("projectFilter", projectFilter, packProjects);
+
 		packProjects->SetSize(wxSize(550, 300));
 		packProjects->SetMinSize(wxSize(400, 200));
 		packProjects->CenterOnParent();
+
+		std::map<std::string, SliderSet> projectSources;
+		std::set<std::string> selectedProjects;
 
 		auto projectList = XRCCTRL(*packProjects, "projectList", wxCheckListBox);
 		projectList->Bind(wxEVT_RIGHT_UP, [&](wxMouseEvent& WXUNUSED(event)) {
@@ -1079,16 +1091,29 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 			if (menu) {
 				menu->Bind(wxEVT_MENU, [&](wxCommandEvent& event) {
 					if (event.GetId() == XRCID("projectListNone")) {
-						for (int i = 0; i < projectList->GetCount(); i++)
+						for (int i = 0; i < projectList->GetCount(); i++) {
+							std::string name = projectList->GetString(i).ToUTF8();
 							projectList->Check(i, false);
+							selectedProjects.erase(name);
+						}
 					}
 					else if (event.GetId() == XRCID("projectListAll")) {
-						for (int i = 0; i < projectList->GetCount(); i++)
+						for (int i = 0; i < projectList->GetCount(); i++) {
+							std::string name = projectList->GetString(i).ToUTF8();
 							projectList->Check(i);
+							selectedProjects.insert(name);
+						}
 					}
 					else if (event.GetId() == XRCID("projectListInvert")) {
-						for (int i = 0; i < projectList->GetCount(); i++)
-							projectList->Check(i, !projectList->IsChecked(i));
+						for (int i = 0; i < projectList->GetCount(); i++) {
+							std::string name = projectList->GetString(i).ToUTF8();
+
+							bool check = !projectList->IsChecked(i);
+							projectList->Check(i, check);
+
+							if (check)
+								selectedProjects.insert(name);
+						}
 					}
 				});
 
@@ -1097,7 +1122,38 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 			}
 		});
 
-		std::map<std::string, SliderSet> projectSources;
+		projectList->Bind(wxEVT_CHECKLISTBOX, [&](wxCommandEvent& event) {
+			std::string name = event.GetString().ToUTF8();
+			int item = event.GetInt();
+			if (projectList->IsChecked(item))
+				selectedProjects.insert(name);
+			else
+				selectedProjects.erase(name);
+		});
+
+		projectFilter->Bind(wxEVT_TEXT, [&](wxCommandEvent& event) {
+			std::string filter{ event.GetString().ToUTF8() };
+			std::regex re(filter, std::regex_constants::icase);
+
+			projectList->Clear();
+
+			// Add outfits that are no members to list
+			for (auto &project : projectSources) {
+				try {
+					// Filter outfit
+					if (std::regex_search(project.first, re)) {
+						int item = projectList->Append(wxString::FromUTF8(project.first));
+						if (selectedProjects.find(project.first) != selectedProjects.end())
+							projectList->Check(item);
+					}
+				}
+				catch (std::regex_error&) {
+					int item = projectList->Append(wxString::FromUTF8(project.first));
+					if (selectedProjects.find(project.first) != selectedProjects.end())
+						projectList->Check(item);
+				}
+			}
+		});
 
 		wxArrayString files;
 		wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "/SliderSets", &files, "*.osp");
@@ -1173,11 +1229,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 			SliderSetFile projectFile;
 			projectFile.New(mergedFilePath);
 
-			wxArrayInt checkedItems;
-			projectList->GetCheckedItems(checkedItems);
-
-			for (auto &item : checkedItems) {
-				std::string setName{projectList->GetString(item).ToUTF8()};
+			for (auto &setName : selectedProjects) {
 				if (projectSources.find(setName) == projectSources.end())
 					continue;
 
@@ -1328,11 +1380,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 			wxFFileOutputStream out(fileName);
 			wxZipOutputStream zip(out);
 
-			wxArrayInt checkedItems;
-			projectList->GetCheckedItems(checkedItems);
-
-			for (auto &item : checkedItems) {
-				std::string setName{projectList->GetString(item).ToUTF8()};
+			for (auto &setName : selectedProjects) {
 				if (projectSources.find(setName) == projectSources.end())
 					continue;
 

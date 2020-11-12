@@ -150,6 +150,12 @@
 							<orient>wxVERTICAL</orient>
 							<label>Outfits</label>
 							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="unknown" name="outfitFilter" />
+							</object>
+							<object class="sizeritem">
 								<option>1</option>
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
