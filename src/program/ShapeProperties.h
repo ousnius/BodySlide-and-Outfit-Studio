@@ -34,6 +34,8 @@ private:
 	wxButton* btnAddTransparency = nullptr;
 	wxButton* btnRemoveTransparency = nullptr;
 
+	wxButton* btnCopyShaderFromShape = nullptr;
+
 	wxCheckBox* fullPrecision = nullptr;
 	wxCheckBox* subIndex = nullptr;
 	wxCheckBox* skinned = nullptr;
@@ -91,6 +93,7 @@ private:
 	void OnSetTextures(wxCommandEvent& event);
 	void OnAddTransparency(wxCommandEvent& event);
 	void OnRemoveTransparency(wxCommandEvent& event);
+	void OnCopyShaderFromShape(wxCommandEvent& event);
 	void OnAddExtraData(wxCommandEvent& event);
 	void OnChangeExtraDataType(wxCommandEvent& event);
 	void OnRemoveExtraData(wxCommandEvent& event);

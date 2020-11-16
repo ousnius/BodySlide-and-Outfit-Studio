@@ -14,6 +14,7 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnSetTextures"), ShapeProperties::OnSetTextures)
 	EVT_BUTTON(XRCID("btnAddTransparency"), ShapeProperties::OnAddTransparency)
 	EVT_BUTTON(XRCID("btnRemoveTransparency"), ShapeProperties::OnRemoveTransparency)
+	EVT_BUTTON(XRCID("btnCopyShaderFromShape"), ShapeProperties::OnCopyShaderFromShape)
 	EVT_BUTTON(XRCID("btnAddExtraData"), ShapeProperties::OnAddExtraData)
 	EVT_TEXT(XRCID("textScale"), ShapeProperties::OnTransChanged)
 	EVT_TEXT(XRCID("textX"), ShapeProperties::OnTransChanged)
@@ -73,6 +74,8 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	btnAddTransparency = XRCCTRL(*this, "btnAddTransparency", wxButton);
 	btnRemoveTransparency = XRCCTRL(*this, "btnRemoveTransparency", wxButton);
 
+	btnCopyShaderFromShape = XRCCTRL(*this, "btnCopyShaderFromShape", wxButton);
+
 	fullPrecision = XRCCTRL(*this, "fullPrecision", wxCheckBox);
 	subIndex = XRCCTRL(*this, "subIndex", wxCheckBox);
 	skinned = XRCCTRL(*this, "skinned", wxCheckBox);
@@ -127,6 +130,20 @@ void ShapeProperties::GetShader() {
 		vertexAlpha->Disable();
 	}
 	else {
+		btnAddShader->Disable();
+		btnRemoveShader->Enable();
+		btnMaterialChooser->Enable();
+		btnSetTextures->Enable();
+		shaderName->Enable();
+		shaderType->Enable();
+		specularColor->Enable();
+		specularStrength->Enable();
+		specularPower->Enable();
+		emissiveColor->Enable();
+		emissiveMultiple->Enable();
+		vertexColors->Enable();
+		vertexAlpha->Enable();
+
 		currentVertexColors = shader->HasVertexColors();
 		currentVertexAlpha = shader->HasVertexAlpha();
 
@@ -441,6 +458,62 @@ void ShapeProperties::AddTransparency() {
 
 void ShapeProperties::OnRemoveTransparency(wxCommandEvent& WXUNUSED(event)) {
 	RemoveTransparency();
+}
+
+void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
+	wxArrayString choices;
+
+	auto shapes = nif->GetShapes();
+	for (auto &s : shapes) {
+		if (s != shape) {
+			choices.Add(wxString::FromUTF8(s->GetName()));
+		}
+	}
+
+	if (choices.GetCount() > 1) {
+		std::string shapeName = wxGetSingleChoice(_("Please choose a shape to copy from"), _("Choose shape"), choices, 0, this).ToUTF8();
+		if (shapeName.empty())
+			return;
+
+		auto shapeChoice = nif->FindBlockByName<NiShape>(shapeName);
+		if (shapeChoice) {
+			auto shapeShader = nif->GetShader(shape);
+			auto shapeChoiceShader = nif->GetShader(shapeChoice);
+
+			if (!shapeShader && shapeChoiceShader) {
+				AddShader();
+				shapeShader = nif->GetShader(shape);
+
+				auto shapeAlphaProp = nif->GetAlphaProperty(shape);
+				auto shapeChoiceAlphaProp = nif->GetAlphaProperty(shapeChoice);
+				if (!shapeAlphaProp && shapeChoiceAlphaProp)
+					AddTransparency();
+			}
+			else if (shapeShader && !shapeChoiceShader)
+				RemoveShader();
+
+			auto oldShape = shape;
+			shape = shapeChoice;
+
+			GetShader();
+			GetTransparency();
+
+			shape = oldShape;
+
+			if (shapeChoiceShader) {
+				// Copy texture paths
+				for (int i = 0; i < 10; i++) {
+					std::string texPath;
+					nif->GetTextureSlot(shapeChoiceShader, texPath, i);
+					nif->SetTextureSlot(shapeShader, texPath, i);
+				}
+
+				auto texturePaths = os->project->GetShapeTextures(shapeChoice);
+				os->project->SetTextures(shape, texturePaths);
+				os->glView->Render();
+			}
+		}
+	}
 }
 
 void ShapeProperties::RemoveTransparency() {

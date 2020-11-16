@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.1\n"
+"X-Generator: Poedit 2.4.2\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -3069,3 +3069,15 @@ msgstr "Das Modell hat das Triangle-Limit erreicht."
 
 msgid "Axis"
 msgstr "Achse"
+
+msgid "No Squeeze"
+msgstr "Nicht quetschen"
+
+msgid "Copy from shape..."
+msgstr "Kopieren von Modell..."
+
+msgid "Choose shape"
+msgstr "Modell auswählen"
+
+msgid "Please choose a shape to copy from"
+msgstr "Bitte wählen Sie ein Modell für die Kopie aus"
