@@ -3528,12 +3528,16 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 	if (!workNif.IsValid())
 		return 2;
 
+	workAnim.CleanupBones();
+
 	NifFile clone(workNif);
 	ChooseClothData(clone);
 
 	for (auto &s : clone.GetShapes())
 		if (find(exportShapes.begin(), exportShapes.end(), s->GetName()) == exportShapes.end())
 			clone.DeleteShape(s);
+
+	workAnim.WriteToNif(&clone);
 
 	for (auto &s : clone.GetShapes())
 		clone.UpdateSkinPartitions(s);
