@@ -30,6 +30,13 @@ void NiNode::GetChildRefs(std::set<Ref*>& refs) {
 	effectRefs.GetIndexPtrs(refs);
 }
 
+void NiNode::GetChildIndices(std::vector<int>& indices) {
+	NiAVObject::GetChildIndices(indices);
+
+	childRefs.GetIndices(indices);
+	effectRefs.GetIndices(indices);
+}
+
 BlockRefArray<NiAVObject>& NiNode::GetChildren() {
 	return childRefs;
 }
@@ -73,6 +80,13 @@ void BSTreeNode::GetChildRefs(std::set<Ref*>& refs) {
 
 	bones1.GetIndexPtrs(refs);
 	bones2.GetIndexPtrs(refs);
+}
+
+void BSTreeNode::GetChildIndices(std::vector<int>& indices) {
+	NiNode::GetChildIndices(indices);
+
+	bones1.GetIndices(indices);
+	bones2.GetIndices(indices);
 }
 
 BlockRefArray<NiNode>& BSTreeNode::GetBones1() {
@@ -164,6 +178,12 @@ void BSMultiBound::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&dataRef);
 }
 
+void BSMultiBound::GetChildIndices(std::vector<int>& indices) {
+	NiObject::GetChildIndices(indices);
+
+	indices.push_back(dataRef.GetIndex());
+}
+
 int BSMultiBound::GetDataRef() {
 	return dataRef.GetIndex();
 }
@@ -196,6 +216,13 @@ void BSMultiBoundNode::GetChildRefs(std::set<Ref*>& refs) {
 
 	refs.insert(&multiBoundRef);
 }
+
+void BSMultiBoundNode::GetChildIndices(std::vector<int>& indices) {
+	NiNode::GetChildIndices(indices);
+
+	indices.push_back(multiBoundRef.GetIndex());
+}
+
 
 int BSMultiBoundNode::GetMultiBoundRef() {
 	return multiBoundRef.GetIndex();
@@ -321,6 +348,12 @@ void NiLODNode::GetChildRefs(std::set<Ref*>& refs) {
 	NiSwitchNode::GetChildRefs(refs);
 
 	refs.insert(&lodLevelData);
+}
+
+void NiLODNode::GetChildIndices(std::vector<int>& indices) {
+	NiSwitchNode::GetChildIndices(indices);
+
+	indices.push_back(lodLevelData.GetIndex());
 }
 
 int NiLODNode::GetLodLevelDataRef() {

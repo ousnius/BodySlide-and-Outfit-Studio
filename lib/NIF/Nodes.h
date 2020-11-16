@@ -21,6 +21,7 @@ public:
 	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiNode* Clone() { return new NiNode(*this); }
 
 	BlockRefArray<NiAVObject>& GetChildren();
@@ -75,6 +76,7 @@ public:
 	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSTreeNode* Clone() { return new BSTreeNode(*this); }
 
 	BlockRefArray<NiNode>& GetBones1();
@@ -153,6 +155,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSMultiBound* Clone() { return new BSMultiBound(*this); }
 
 	int GetDataRef();
@@ -180,6 +183,7 @@ public:
 	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSMultiBoundNode* Clone() { return new BSMultiBoundNode(*this); }
 
 	int GetMultiBoundRef();
@@ -325,6 +329,7 @@ public:
 	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiLODNode* Clone() { return new NiLODNode(*this); }
 
 	int GetLodLevelDataRef();

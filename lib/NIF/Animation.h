@@ -120,6 +120,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 };
 
 class NiBSplineFloatInterpolator : public NiBSplineInterpolator {
@@ -272,6 +273,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiBoolInterpolator* Clone() { return new NiBoolInterpolator(*this); }
 
 	int GetDataRef() { return dataRef.GetIndex(); }
@@ -298,6 +300,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiFloatInterpolator* Clone() { return new NiFloatInterpolator(*this); }
 
 	int GetDataRef() { return dataRef.GetIndex(); }
@@ -318,6 +321,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiTransformInterpolator* Clone() { return new NiTransformInterpolator(*this); }
 
 	int GetDataRef() { return dataRef.GetIndex(); }
@@ -344,6 +348,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiPoint3Interpolator* Clone() { return new NiPoint3Interpolator(*this); }
 
 	int GetDataRef() { return dataRef.GetIndex(); }
@@ -368,6 +373,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiPathInterpolator* Clone() { return new NiPathInterpolator(*this); }
 };
 
@@ -400,6 +406,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	NiLookAtInterpolator* Clone() { return new NiLookAtInterpolator(*this); }
 };
@@ -446,6 +453,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSTreadTransfInterpolator* Clone() { return new BSTreadTransfInterpolator(*this); }
 };
 
@@ -465,6 +473,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	void GetPtrs(std::set<Ref*>& ptrs);
 
 	int GetNextControllerRef() { return nextControllerRef.GetIndex(); }
@@ -506,6 +515,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiPathController* Clone() { return new NiPathController(*this); }
 };
 
@@ -545,6 +555,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiUVController* Clone() { return new NiUVController(*this); }
 };
 
@@ -559,6 +570,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSFrustumFOVController* Clone() { return new BSFrustumFOVController(*this); }
 
 	int GetInterpolatorRef() { return interpolatorRef.GetIndex(); }
@@ -616,6 +628,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSProceduralLightningController* Clone() { return new BSProceduralLightningController(*this); }
 
 	int GetGenerationInterpRef() { return generationInterpRef.GetIndex(); }
@@ -734,6 +747,10 @@ struct MorphWeight {
 	void GetChildRefs(std::set<Ref*>& refs) {
 		refs.insert(&interpRef);
 	}
+
+	void GetChildIndices(std::vector<int>& indices) {
+		indices.push_back(interpRef.GetIndex());
+	}
 };
 
 class NiGeomMorpherController : public NiInterpController {
@@ -752,6 +769,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	NiGeomMorpherController* Clone() { return new NiGeomMorpherController(*this); }
 };
@@ -764,6 +782,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	int GetInterpolatorRef() { return interpolatorRef.GetIndex(); }
 	void SetInterpolatorRef(int interpRef) { interpolatorRef.SetIndex(interpRef); }
@@ -780,6 +799,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	NiRollController* Clone() { return new NiRollController(*this); }
 };
@@ -899,6 +919,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	NiFlipController* Clone() { return new NiFlipController(*this); }
 
@@ -1263,6 +1284,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiPSysEmitterCtlr* Clone() { return new NiPSysEmitterCtlr(*this); }
 };
 
@@ -1325,6 +1347,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiSequence* Clone() { return new NiSequence(*this); }
 };
 
@@ -1370,6 +1393,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	BSAnimNotes* Clone() { return new BSAnimNotes(*this); }
 
@@ -1400,6 +1424,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	NiControllerSequence* Clone() { return new NiControllerSequence(*this); }
 
@@ -1424,6 +1449,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiControllerManager* Clone() { return new NiControllerManager(*this); }
 
 	BlockRefArray<NiControllerSequence>& GetControllerSequences();

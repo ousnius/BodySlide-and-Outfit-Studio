@@ -200,6 +200,12 @@ void NiGeometryData::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&additionalDataRef);
 }
 
+void NiGeometryData::GetChildIndices(std::vector<int>& indices) {
+	NiObject::GetChildIndices(indices);
+
+	indices.push_back(additionalDataRef.GetIndex());
+}
+
 int NiGeometryData::GetAdditionalDataRef() {
 	return additionalDataRef.GetIndex();
 }
@@ -827,6 +833,14 @@ void BSTriShape::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&skinInstanceRef);
 	refs.insert(&shaderPropertyRef);
 	refs.insert(&alphaPropertyRef);
+}
+
+void BSTriShape::GetChildIndices(std::vector<int>& indices) {
+	NiAVObject::GetChildIndices(indices);
+
+	indices.push_back(skinInstanceRef.GetIndex());
+	indices.push_back(shaderPropertyRef.GetIndex());
+	indices.push_back(alphaPropertyRef.GetIndex());
 }
 
 int BSTriShape::GetSkinInstanceRef() {
@@ -1943,6 +1957,15 @@ void NiGeometry::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&skinInstanceRef);
 	refs.insert(&shaderPropertyRef);
 	refs.insert(&alphaPropertyRef);
+}
+
+void NiGeometry::GetChildIndices(std::vector<int>& indices) {
+	NiAVObject::GetChildIndices(indices);
+
+	indices.push_back(dataRef.GetIndex());
+	indices.push_back(skinInstanceRef.GetIndex());
+	indices.push_back(shaderPropertyRef.GetIndex());
+	indices.push_back(alphaPropertyRef.GetIndex());
 }
 
 bool NiGeometry::IsSkinned() {

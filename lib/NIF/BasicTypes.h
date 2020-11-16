@@ -9,6 +9,8 @@ See the included LICENSE file
 
 #include <set>
 #include <unordered_set>
+#include <map>
+#include <unordered_map>
 #include <streambuf>
 #include <string>
 #include <algorithm>
@@ -313,7 +315,7 @@ public:
 	virtual int GetBlockRef(const int id) = 0;
 	virtual void SetBlockRef(const int id, const int index) = 0;
 	virtual void RemoveBlockRef(const int id) = 0;
-	virtual std::vector<int> GetIndices() = 0;
+	virtual void GetIndices(std::vector<int>& indices) = 0;
 	virtual void GetIndexPtrs(std::set<Ref*>& indices) = 0;
 	virtual void SetIndices(const std::vector<int>& indices) = 0;
 };
@@ -414,13 +416,9 @@ public:
 		}
 	}
 
-	virtual std::vector<int> GetIndices() override {
-		std::vector<int> indices;
-		indices.reserve(arraySize);
+	virtual void GetIndices(std::vector<int>& indices) override {
 		for (auto &r : refs)
 			indices.push_back(r.GetIndex());
-
-		return indices;
 	}
 
 	virtual void GetIndexPtrs(std::set<Ref*>& indices) override {
@@ -488,6 +486,7 @@ public:
 
 	virtual void GetStringRefs(std::set<StringRef*>&) {}
 	virtual void GetChildRefs(std::set<Ref*>&) {}
+	virtual void GetChildIndices(std::vector<int>&) {}
 	virtual void GetPtrs(std::set<Ref*>&) {}
 
 	virtual NiObject* Clone() { return new NiObject(*this); }
@@ -530,7 +529,7 @@ private:
 	std::vector<byte> embedData;
 
 	// Foreign reference to the blocks list in NifFile.
-	std::vector<std::unique_ptr<NiObject>>* blocks = nullptr;
+	std::vector<std::shared_ptr<NiObject>>* blocks = nullptr;
 
 	uint numBlocks = 0;
 	ushort numBlockTypes = 0;
@@ -571,7 +570,7 @@ public:
 	std::string GetExportInfo();
 	void SetExportInfo(const std::string& exportInfo);
 
-	void SetBlockReference(std::vector<std::unique_ptr<NiObject>>* blockRef) {
+	void SetBlockReference(std::vector<std::shared_ptr<NiObject>>* blockRef) {
 		blocks = blockRef;
 	};
 
@@ -587,11 +586,23 @@ public:
 		return nullptr;
 	}
 
+	int GetBlockID(NiObject* block) {
+		auto it = std::find_if(blocks->begin(), blocks->end(), [&block](const auto& ptr) {
+			return ptr.get() == block;
+		});
+
+		if (it != blocks->end())
+			return std::distance(blocks->begin(), it);
+
+		return 0xFFFFFFFF;
+	}
+
 	void DeleteBlock(int blockId);
 	void DeleteBlockByType(const std::string& blockTypeStr, const bool orphanedOnly = false);
 	int AddBlock(NiObject* newBlock);
 	int ReplaceBlock(int oldBlockId, NiObject* newBlock);
-	void SetBlockOrder(std::vector<std::pair<int, int>>& newIndices);
+	void SetBlockOrder(std::vector<int>& newOrder);
+	void FixBlockAlignment(const std::vector<NiObject*>& currentTree);
 
 	// Swaps two blocks, updating references in other blocks that may refer to their old indices
 	void SwapBlocks(const int blockIndexLo, const int blockIndexHi);

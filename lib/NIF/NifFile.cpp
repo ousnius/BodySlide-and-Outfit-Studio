@@ -113,7 +113,7 @@ void NifFile::CopyFrom(const NifFile& other) {
 	blocks.resize(nBlocks);
 
 	for (int i = 0; i < nBlocks; i++)
-		blocks[i] = std::move(std::unique_ptr<NiObject>(other.blocks[i]->Clone()));
+		blocks[i] = std::move(std::shared_ptr<NiObject>(other.blocks[i]->Clone()));
 
 	hdr.SetBlockReference(&blocks);
 	LinkGeomData();
@@ -195,20 +195,16 @@ int NifFile::Load(std::iostream &file, const NifLoadOptions& options) {
 
 		auto& nifactories = NiFactoryRegister::Get();
 		for (int i = 0; i < nBlocks; i++) {
-			NiObject* block = nullptr;
 			std::string blockTypeStr = hdr.GetBlockTypeStringById(i);
 
 			auto nifactory = nifactories.GetFactoryByName(blockTypeStr);
 			if (nifactory) {
-				block = nifactory->Load(stream);
+				blocks[i] = nifactory->Load(stream);
 			}
 			else {
 				hasUnknown = true;
-				block = new NiUnknown(stream, hdr.GetBlockSize(i));
+				blocks[i] = std::make_shared<NiUnknown>(stream, hdr.GetBlockSize(i));
 			}
-
-			if (block)
-				blocks[i] = std::move(std::unique_ptr<NiObject>(block));
 		}
 
 		hdr.SetBlockReference(&blocks);
@@ -274,13 +270,13 @@ void NifFile::SetShapeOrder(const std::vector<std::string>& order) {
 	} while (hadoffset);
 }
 
-void NifFile::SetSortIndex(const int id, std::vector<std::pair<int, int>>& newIndices, int& newIndex) {
-	// Assign new sort index, if not already assigned
-	if (newIndices.size() > id && newIndices[id].first == 0xFFFFFFFF)
-		newIndices[id] = std::make_pair(id, ++newIndex);
+void NifFile::SetSortIndex(const int id, std::vector<int>& newIndices, int& newIndex) {
+	// Assign new sort index
+	if (newIndices.size() > id)
+		newIndices[id] = ++newIndex;
 }
 
-void NifFile::SortAVObject(NiAVObject* avobj, std::vector<std::pair<int, int>>& newIndices, int& newIndex) {
+void NifFile::SortAVObject(NiAVObject* avobj, std::vector<int>& newIndices, int& newIndex) {
 	int id = 0xFFFFFFFF;
 	for (auto& r : avobj->GetExtraData()) {
 		id = r.GetIndex();
@@ -310,7 +306,7 @@ void NifFile::SortAVObject(NiAVObject* avobj, std::vector<std::pair<int, int>>& 
 		SetSortIndex(id, newIndices, newIndex);
 }
 
-void NifFile::SortShape(NiShape* shape, std::vector<std::pair<int, int>>& newIndices, int& newIndex) {
+void NifFile::SortShape(NiShape* shape, std::vector<int>& newIndices, int& newIndex) {
 	int id = shape->GetDataRef();
 	if (id != 0xFFFFFFFF)
 		SetSortIndex(id, newIndices, newIndex);
@@ -355,9 +351,10 @@ void NifFile::SortShape(NiShape* shape, std::vector<std::pair<int, int>>& newInd
 		SetSortIndex(id, newIndices, newIndex);
 }
 
-void NifFile::SortGraph(NiNode* root, std::vector<std::pair<int, int>>& newIndices, int& newIndex) {
+void NifFile::SortGraph(NiNode* root, std::vector<int>& newIndices, int& newIndex) {
 	auto& children = root->GetChildren();
-	std::vector<int> indices = children.GetIndices();
+	std::vector<int> indices;
+	children.GetIndices(indices);
 	children.Clear();
 
 	for (int i = 0; i < hdr.GetNumBlocks(); i++)
@@ -461,18 +458,23 @@ void NifFile::PrettySortBlocks() {
 	if (hasUnknown)
 		return;
 
-	std::vector<std::pair<int, int>> newIndices(hdr.GetNumBlocks());
-	for (int i = 0; i < newIndices.size(); i++)
-		newIndices[i] = std::make_pair(0xFFFFFFFF, i);
+	std::vector<int> newOrder(hdr.GetNumBlocks());
+	for (int i = 0; i < newOrder.size(); i++)
+		newOrder[i] = i;
 
 	auto root = GetRootNode();
 	if (root) {
 		int newIndex = GetBlockID(root);
-		SortAVObject(root, newIndices, newIndex);
-		SortGraph(root, newIndices, newIndex);
+		SortAVObject(root, newOrder, newIndex);
+		SortGraph(root, newOrder, newIndex);
 	}
 
-	hdr.SetBlockOrder(newIndices);
+	hdr.SetBlockOrder(newOrder);
+
+	std::vector<NiObject*> tree;
+	GetTree(tree);
+
+	hdr.FixBlockAlignment(tree);
 }
 
 bool NifFile::DeleteUnreferencedNodes(int* deletionCount) {
@@ -1647,6 +1649,29 @@ NiNode* NifFile::GetRootNode() {
 		}
 	}
 	return root;
+}
+
+void NifFile::GetTree(std::vector<NiObject*>& result, NiObject* parent) {
+	if (parent == nullptr) {
+		parent = GetRootNode();
+		if (parent == nullptr)
+			return;
+
+		result.push_back(parent);
+	}
+
+	std::vector<int> indices;
+	parent->GetChildIndices(indices);
+
+	for (auto& id : indices) {
+		auto child = hdr.GetBlock<NiObject>(id);
+		if (child) {
+			if (std::find(result.begin(), result.end(), child) == result.end()) {
+				result.push_back(child);
+				GetTree(result, child);
+			}
+		}
+	}
 }
 
 bool NifFile::GetNodeTransformToParent(const std::string& nodeName, MatTransform& outTransform) {

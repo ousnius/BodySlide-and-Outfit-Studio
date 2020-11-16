@@ -98,6 +98,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	NiParticleMeshesData* Clone() { return new NiParticleMeshesData(*this); }
 };
@@ -132,6 +133,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiMeshPSysData* Clone() { return new NiMeshPSysData(*this); }
 };
 
@@ -227,6 +229,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiPSysAgeDeathModifier* Clone() { return new NiPSysAgeDeathModifier(*this); }
 };
 
@@ -457,6 +460,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiPSysColorModifier* Clone() { return new NiPSysColorModifier(*this); }
 };
 
@@ -488,6 +492,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiPSysMeshUpdateModifier* Clone() { return new NiPSysMeshUpdateModifier(*this); }
 
 	BlockRefArray<NiAVObject>& GetMeshes();
@@ -505,6 +510,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 };
 
 class NiPSysVortexFieldModifier : public NiPSysFieldModifier {
@@ -633,6 +639,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSPSysHavokUpdateModifier* Clone() { return new BSPSysHavokUpdateModifier(*this); }
 
 	BlockRefArray<NiNode>& GetNodes();
@@ -667,6 +674,7 @@ public:
 	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSMasterParticleSystem* Clone() { return new BSMasterParticleSystem(*this); }
 
 	BlockRefArray<NiAVObject>& GetParticleSystems();
@@ -714,6 +722,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiParticleSystem* Clone() { return new NiParticleSystem(*this); }
 
 	int GetDataRef();
@@ -766,6 +775,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	void GetPtrs(std::set<Ref*>& ptrs);
 };
 
@@ -809,6 +819,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiPSysColliderManager* Clone() { return new NiPSysColliderManager(*this); }
 };
 
@@ -919,6 +930,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiPSysMeshEmitter* Clone() { return new NiPSysMeshEmitter(*this); }
 
 	BlockRefArray<NiAVObject>& GetMeshes();

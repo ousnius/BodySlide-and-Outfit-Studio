@@ -383,6 +383,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkNiCollisionObject* Clone() { return new bhkNiCollisionObject(*this); }
 };
 
@@ -559,6 +560,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkConvexListShape* Clone() { return new bhkConvexListShape(*this); }
 
 	BlockRefArray<bhkConvexShape>& GetShapes();
@@ -622,6 +624,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkTransformShape* Clone() { return new bhkTransformShape(*this); }
 };
 
@@ -672,6 +675,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkMoppBvTreeShape* Clone() { return new bhkMoppBvTreeShape(*this); }
 };
 
@@ -701,6 +705,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkNiTriStripsShape* Clone() { return new bhkNiTriStripsShape(*this); }
 
 	BlockRefArray<NiTriStripsData>& GetParts();
@@ -725,6 +730,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkListShape* Clone() { return new bhkListShape(*this); }
 
 	BlockRefArray<bhkShape>& GetSubShapes();
@@ -790,6 +796,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkPackedNiTriStripsShape* Clone() { return new bhkPackedNiTriStripsShape(*this); }
 };
 
@@ -847,6 +854,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkWorldObject* Clone() { return new bhkWorldObject(*this); }
 };
 
@@ -1119,6 +1127,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkRigidBody* Clone() { return new bhkRigidBody(*this); }
 
 	BlockRefArray<bhkSerializable>& GetConstraints();
@@ -1197,6 +1206,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	bhkCompressedMeshShape* Clone() { return new bhkCompressedMeshShape(*this); }
 };
@@ -1255,6 +1265,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	bhkRagdollTemplate* Clone() { return new bhkRagdollTemplate(*this); }
 
 	BlockRefArray<NiObject>& GetBones();

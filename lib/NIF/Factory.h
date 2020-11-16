@@ -20,21 +20,21 @@ See the included LICENSE file
 
 class NiFactory {
 public:
-	virtual NiObject* Create() = 0;
-	virtual NiObject* Load(NiStream& stream) = 0;
+	virtual std::shared_ptr<NiObject> Create() = 0;
+	virtual std::shared_ptr<NiObject> Load(NiStream& stream) = 0;
 };
 
 template<typename T>
 class NiFactoryType : public NiFactory {
 public:
 	// Create new NiObject
-	virtual NiObject* Create() override {
-		return new T();
+	virtual std::shared_ptr<NiObject> Create() override {
+		return std::make_shared<T>();
 	}
 
 	// Load new NiObject from file
-	virtual NiObject* Load(NiStream& stream) override {
-		T* nio = new T();
+	virtual std::shared_ptr<NiObject> Load(NiStream& stream) override {
+		auto nio = std::make_shared<T>();
 		nio->Get(stream);
 		return nio;
 	}

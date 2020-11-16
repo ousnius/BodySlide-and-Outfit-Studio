@@ -184,6 +184,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	NiSkinInstance* Clone() { return new NiSkinInstance(*this); }
 
@@ -280,6 +281,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	BSSkinInstance* Clone() { return new BSSkinInstance(*this); }
 

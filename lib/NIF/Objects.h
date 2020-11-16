@@ -23,6 +23,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	std::string GetName();
 	void SetName(const std::string& str);
@@ -52,6 +53,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	BlockRefArray<NiProperty>& GetProperties();
 
@@ -113,6 +115,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiCamera* Clone() { return new NiCamera(*this); }
 
 	int GetSceneRef();
@@ -202,6 +205,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	int GetPaletteRef();
 	void SetPaletteRef(int palRef);
@@ -293,6 +297,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiSourceTexture* Clone() { return new NiSourceTexture(*this); }
 
 	int GetDataRef();
@@ -347,6 +352,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	BlockRefArray<NiNode>& GetAffectedNodes();
 };
@@ -371,6 +377,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	NiTextureEffect* Clone() { return new NiTextureEffect(*this); }
 
 	int GetSourceTextureRef();

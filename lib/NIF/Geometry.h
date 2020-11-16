@@ -233,6 +233,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 
@@ -362,6 +363,7 @@ public:
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSTriShape* Clone() { return new BSTriShape(*this); }
 
 	int GetSkinInstanceRef();
@@ -602,6 +604,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	bool IsSkinned();
 

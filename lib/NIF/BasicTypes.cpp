@@ -228,7 +228,7 @@ int NiHeader::AddBlock(NiObject* newBlock) {
 	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices.push_back(btID);
 	blockSizes.push_back(0);
-	blocks->push_back(std::move(std::unique_ptr<NiObject>(newBlock)));
+	blocks->push_back(std::move(std::shared_ptr<NiObject>(newBlock)));
 	numBlocks = blocks->size();
 	return numBlocks - 1;
 }
@@ -254,38 +254,62 @@ int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock) {
 	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices[oldBlockId] = btID;
 	blockSizes[oldBlockId] = 0;
-	auto blockPtrSwap = std::unique_ptr<NiObject>(newBlock);
+	auto blockPtrSwap = std::shared_ptr<NiObject>(newBlock);
 	(*blocks)[oldBlockId].swap(blockPtrSwap);
 	return oldBlockId;
 }
 
-void NiHeader::SetBlockOrder(std::vector<std::pair<int, int>>& newIndices) {
-	std::sort(newIndices.begin(), newIndices.end(), [](auto& l, auto& r) {
-		return l.first < r.first && r.first >= 0;
-	});
-
-	newIndices.erase(std::remove_if(newIndices.begin(), newIndices.end(), [](auto& p) {
-		return p.first == 0xFFFFFFFF;
-	}), newIndices.end());
-
-	if (newIndices.empty())
+void NiHeader::SetBlockOrder(std::vector<int>& newOrder) {
+	if (newOrder.size() != numBlocks)
 		return;
 
-	for (int i = 0; i < newIndices.size() - 1; i++) {
-		bool swapped = false;
-		for (int j = 0; j < newIndices.size() - i - 1; j++) {
-			if (newIndices[j].second > newIndices[j + 1].second) {
-				auto id = newIndices[j].second;
-				newIndices[j].second = newIndices[j + 1].second;
-				newIndices[j + 1].second = id;
+	for (int i = 0; i < numBlocks; i++)
+		SwapBlocks(i, newOrder[i]);
+}
 
-				SwapBlocks(newIndices[j].first, newIndices[j + 1].first);
-				swapped = true;
+void NiHeader::FixBlockAlignment(const std::vector<NiObject*>& currentTree) {
+	if (currentTree.size() != numBlocks)
+		return;
+
+	std::map<int, int> indices;
+	for (int i = 0; i < numBlocks; i++)
+		indices[i] = GetBlockID(currentTree[i]);
+
+	std::vector<ushort> newBlockTypeIndices(numBlocks);
+	std::vector<uint> newBlockSizes(numBlocks);
+	std::vector<std::shared_ptr<NiObject>> newBlocks(numBlocks);
+
+	std::set<Ref*> updatedRefs;
+
+	for (auto &i : indices) {
+		for (auto &b : (*blocks)) {
+			std::set<Ref*> refs;
+			b->GetChildRefs(refs);
+			b->GetPtrs(refs);
+	
+			for (auto &r : refs) {
+				if (updatedRefs.find(r) == updatedRefs.end()) {
+					int index = r->GetIndex();
+					if (index == i.second) {
+						r->SetIndex(i.first);
+						updatedRefs.insert(r);
+					}
+				}
 			}
 		}
+	}
 
-		if (!swapped)
-			break;
+	for (auto &i : indices) {
+		int newIndex = i.second;
+		newBlockTypeIndices[i.first] = blockTypeIndices[newIndex];
+		newBlockSizes[i.first] = blockSizes[newIndex];
+		newBlocks[i.first] = blocks->at(newIndex);
+	}
+
+	for (int i = numBlocks - 1; i >= 0; i--) {
+		blockTypeIndices[i] = std::move(newBlockTypeIndices[i]);
+		blockSizes[i] = std::move(newBlockSizes[i]);
+		blocks->at(i) = std::move(newBlocks[i]);
 	}
 }
 

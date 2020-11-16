@@ -113,6 +113,10 @@ public:
 		refs.insert(&sourceRef);
 	}
 
+	void GetChildIndices(std::vector<int>& indices) {
+		indices.push_back(sourceRef.GetIndex());
+	}
+
 	int GetSourceRef() {
 		return sourceRef.GetIndex();
 	}
@@ -149,6 +153,10 @@ public:
 
 	void GetChildRefs(std::set<Ref*>& refs) {
 		data.GetChildRefs(refs);
+	}
+
+	void GetChildIndices(std::vector<int>& indices) {
+		data.GetChildIndices(indices);
 	}
 };
 
@@ -207,6 +215,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 
 	NiTexturingProperty* Clone() { return new NiTexturingProperty(*this); }
 };
@@ -493,6 +502,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSLightingShaderProperty* Clone() { return new BSLightingShaderProperty(*this); }
 
 	bool IsSkinTinted();
@@ -665,6 +675,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+	void GetChildIndices(std::vector<int>& indices);
 	BSShaderPPLightingProperty* Clone() { return new BSShaderPPLightingProperty(*this); }
 
 	bool IsSkinned();

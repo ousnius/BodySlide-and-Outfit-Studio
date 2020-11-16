@@ -46,7 +46,7 @@ struct NifSaveOptions {
 class NifFile {
 private:
 	NiHeader hdr;
-	std::vector<std::unique_ptr<NiObject>> blocks;
+	std::vector<std::shared_ptr<NiObject>> blocks;
 	bool isValid = false;
 	bool hasUnknown = false;
 	bool isTerrain = false;
@@ -109,10 +109,10 @@ public:
 
 	// Explicitly sets the order of shapes to a new one.
 	void SetShapeOrder(const std::vector<std::string>& order);
-	void SetSortIndex(const int id, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
-	void SortAVObject(NiAVObject* avobj, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
-	void SortShape(NiShape* shape, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
-	void SortGraph(NiNode* root, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
+	void SetSortIndex(const int id, std::vector<int>& newIndices, int& newIndex);
+	void SortAVObject(NiAVObject* avobj, std::vector<int>& newIndices, int& newIndex);
+	void SortShape(NiShape* shape, std::vector<int>& newIndices, int& newIndex);
+	void SortGraph(NiNode* root, std::vector<int>& newIndices, int& newIndex);
 	void PrettySortBlocks();
 
 	template<class T = NiObject>
@@ -157,6 +157,7 @@ public:
 	std::vector<T*> GetChildren(NiNode* parent = nullptr, bool searchExtraData = false);
 
 	NiNode* GetRootNode();
+	void GetTree(std::vector<NiObject*>& result, NiObject* parent = nullptr);
 	bool GetNodeTransformToParent(const std::string& nodeName, MatTransform& outTransform);
 	// GetNodeTransform is deprecated.  Use GetNodeTransformToParent instead.
 	bool GetNodeTransform(const std::string& nodeName, MatTransform& outTransform) {

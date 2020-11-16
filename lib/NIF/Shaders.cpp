@@ -230,6 +230,26 @@ void NiTexturingProperty::GetChildRefs(std::set<Ref*>& refs) {
 		t.GetChildRefs(refs);
 }
 
+void NiTexturingProperty::GetChildIndices(std::vector<int>& indices) {
+	NiProperty::GetChildIndices(indices);
+
+	baseTex.GetChildIndices(indices);
+	darkTex.GetChildIndices(indices);
+	detailTex.GetChildIndices(indices);
+	glossTex.GetChildIndices(indices);
+	glowTex.GetChildIndices(indices);
+	bumpTex.GetChildIndices(indices);
+	normalTex.GetChildIndices(indices);
+	parallaxTex.GetChildIndices(indices);
+	decalTex0.GetChildIndices(indices);
+	decalTex1.GetChildIndices(indices);
+	decalTex2.GetChildIndices(indices);
+	decalTex3.GetChildIndices(indices);
+
+	for (auto &t : shaderTex)
+		t.GetChildIndices(indices);
+}
+
 
 void NiVertexColorProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
@@ -693,6 +713,12 @@ void BSLightingShaderProperty::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&textureSetRef);
 }
 
+void BSLightingShaderProperty::GetChildIndices(std::vector<int>& indices) {
+	BSShaderProperty::GetChildIndices(indices);
+
+	indices.push_back(textureSetRef.GetIndex());
+}
+
 bool BSLightingShaderProperty::IsSkinTinted() {
 	return bslspShaderType == BSLSP_SKINTINT;
 }
@@ -960,6 +986,12 @@ void BSShaderPPLightingProperty::GetChildRefs(std::set<Ref*>& refs) {
 	BSShaderLightingProperty::GetChildRefs(refs);
 
 	refs.insert(&textureSetRef);
+}
+
+void BSShaderPPLightingProperty::GetChildIndices(std::vector<int>& indices) {
+	BSShaderLightingProperty::GetChildIndices(indices);
+
+	indices.push_back(textureSetRef.GetIndex());
 }
 
 bool BSShaderPPLightingProperty::IsSkinned() {
