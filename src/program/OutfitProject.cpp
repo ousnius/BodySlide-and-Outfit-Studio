@@ -2605,8 +2605,11 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 
 	if (gotsegs)
 		workNif.SetShapeSegments(shape, inf, triParts);
-	if (gotparts)
+
+	if (gotparts) {
 		workNif.SetShapePartitions(shape, partitionInfo, triParts);
+		workNif.RemoveEmptyPartitions(shape);
+	}
 
 	// Note that we do not restore the nif's vertex bone weights.
 	// That should happen when the file is saved.

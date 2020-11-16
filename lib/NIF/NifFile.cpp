@@ -3211,6 +3211,28 @@ void NifFile::DeleteSkinning(NiShape* shape) {
 		shader->SetSkinned(false);
 }
 
+void NifFile::RemoveEmptyPartitions(NiShape* shape) {
+	if (!shape)
+		return;
+
+	int skinRef = shape->GetSkinInstanceRef();
+
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(skinRef);
+	if (skinInst) {
+		auto skinPartition = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+		if (skinPartition) {
+			std::vector<int> emptyIndices;
+			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
+				auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
+				if (bsdSkinInst) {
+					bsdSkinInst->DeletePartitions(emptyIndices);
+					UpdatePartitionFlags(shape);
+				}
+			}
+		}
+	}
+}
+
 bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& indices) {
 	if (indices.empty())
 		return false;

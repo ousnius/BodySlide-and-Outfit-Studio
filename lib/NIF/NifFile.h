@@ -262,6 +262,7 @@ public:
 	void DeleteShape(NiShape* shape);
 	void DeleteShader(NiShape* shape);
 	void DeleteSkinning(NiShape* shape);
+	void RemoveEmptyPartitions(NiShape* shape);
 	bool DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& indices);
 
 	int CalcShapeDiff(NiShape* shape, const std::vector<Vector3>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
