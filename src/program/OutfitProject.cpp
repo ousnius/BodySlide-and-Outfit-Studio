@@ -3231,8 +3231,9 @@ NiShape* OutfitProject::DuplicateShape(NiShape* sourceShape, const std::string& 
 	if (!sourceShape)
 		return nullptr;
 
+	workAnim.CloneShape(&workNif, sourceShape, destShapeName);
+
 	auto newShape = workNif.CloneShape(sourceShape, destShapeName);
-	workAnim.LoadFromNif(&workNif, newShape);
 
 	std::string shapeName = sourceShape->GetName();
 	std::string srcTarget = ShapeToTarget(shapeName);

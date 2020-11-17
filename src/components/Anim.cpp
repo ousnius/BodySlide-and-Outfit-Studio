@@ -206,6 +206,27 @@ bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 	return true;
 }
 
+bool AnimInfo::CloneShape(NifFile* nif, NiShape* shape, const std::string& newShape) {
+	if (!shape || newShape.empty())
+		return false;
+
+	std::string shapeName = shape->GetName();
+
+	std::vector<std::string> boneNames;
+	if (!nif->GetShapeBoneList(shape, boneNames)) {
+		wxLogWarning("No skinning found in shape '%s'.", shapeName);
+		return false;
+	}
+
+	for (auto &bn : boneNames) {
+		AnimSkeleton::getInstance().RefBone(bn);
+		shapeBones[newShape].push_back(bn);
+	}
+
+	shapeSkinning[newShape] = shapeSkinning[shapeName];
+	return true;
+}
+
 int AnimInfo::GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName) {
 	auto& skin = shapeSkinning[shapeName];
 	auto bone = skin.boneNames.find(boneName);

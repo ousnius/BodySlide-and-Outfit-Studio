@@ -151,6 +151,8 @@ public:
 	// Returns false if there is no skinning information.
 	bool LoadFromNif(NifFile* nif);
 	bool LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif = true);
+	bool CloneShape(NifFile* nif, NiShape* shape, const std::string& newShape);
+
 	int GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName);
 	std::unordered_map<ushort, float>* GetWeightsPtr(const std::string& shape, const std::string& boneName);
 	bool HasWeights(const std::string& shape, const std::string& boneName);
