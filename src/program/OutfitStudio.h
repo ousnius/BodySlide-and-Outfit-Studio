@@ -236,8 +236,12 @@ public:
 		editMode = on;
 	}
 
-	bool GetBrushMode() {return brushMode;}
-	void SetBrushMode(bool on = true) {brushMode = on;}
+	bool GetBrushMode() {
+		return brushMode;
+	}
+	void SetBrushMode(bool on = true) {
+		brushMode = on;
+	}
 
 	bool GetVertexEdit() {
 		return vertexEdit;
@@ -272,20 +276,6 @@ public:
 	}
 	void SetSegmentMode(bool on = true) {
 		segmentMode = on;
-	}
-
-	bool GetXMirror() {
-		return bXMirror;
-	}
-	void SetXMirror(bool on = true) {
-		bXMirror = on;
-	}
-
-	bool GetConnectedEdit() {
-		return bConnectedEdit;
-	}
-	void SetConnectedEdit(bool on = true) {
-		bConnectedEdit = on;
 	}
 
 	bool GetGlobalBrushCollision() {
@@ -720,8 +710,6 @@ private:
 	bool isSelecting;
 	bool isPickingVertex;
 	bool isPickingEdge;
-	bool bXMirror;
-	bool bConnectedEdit;
 	bool bGlobalBrushCollision;
 
 	TweakBrush* activeBrush;
@@ -1079,7 +1067,6 @@ public:
 	}
 
 private:
-	bool previousMirror;
 	Vector3 previewMove;
 	Vector3 previewScale;
 	Vector3 previewRotation;
@@ -1308,14 +1295,20 @@ private:
 		bool enabled = event.IsChecked();
 		GetMenuBar()->Check(event.GetId(), enabled);
 		toolBarV->ToggleTool(event.GetId(), enabled);
-		glView->SetXMirror(enabled);
+
+		auto activeBrush = glView->GetActiveBrush();
+		if (activeBrush)
+			activeBrush->setMirror(enabled);
 	}
 
 	void OnConnectedOnly(wxCommandEvent& event) {
 		bool enabled = event.IsChecked();
 		GetMenuBar()->Check(event.GetId(), enabled);
 		toolBarV->ToggleTool(event.GetId(), enabled);
-		glView->SetConnectedEdit(enabled);
+
+		auto activeBrush = glView->GetActiveBrush();
+		if (activeBrush)
+			activeBrush->setConnected(enabled);
 	}
 
 	void OnGlobalBrushCollision(wxCommandEvent& event) {

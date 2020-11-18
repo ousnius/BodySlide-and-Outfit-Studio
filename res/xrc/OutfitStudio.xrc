@@ -196,8 +196,10 @@
 								<label>X Mirror</label>
 								<tooltip>Mirror edits across the X axis.</tooltip>
 								<bitmap>$(AppDir)\res\images\XMirror.png</bitmap>
+								<bitmap2>$(AppDir)\res\images\XMirror_d.png</bitmap2>
 								<toggle>1</toggle>
-								<checked>1</checked>
+								<checked>0</checked>
+								<disabled>1</disabled>
 							</object>
 							<object class="tool" name="btnConnected">
 								<label>Edit Connected Only\tC</label>
@@ -1766,7 +1768,8 @@
 				<label>X Mirror\tX</label>
 				<help>Mirror edits across the X axis.</help>
 				<checkable>1</checkable>
-				<checked>1</checked>
+				<checked>0</checked>
+				<enabled>0</enabled>
 			</object>
 			<object class="wxMenuItem" name="btnConnected">
 				<label>Edit Connected Only\tC</label>

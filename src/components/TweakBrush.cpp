@@ -168,10 +168,10 @@ void TweakStroke::endStroke() {
 TweakBrush::TweakBrush() : radius(0.45f), focus(1.00f), inset(0.00f), strength(0.0015f), spacing(0.015f) {
 	brushType = TBT_STANDARD;
 	brushName = "Standard Brush";
-	bMirror = false;
+	bMirror = true;
 	bLiveBVH = true;
 	bLiveNormals = true;
-	bConnected = true;
+	bConnected = false;
 }
 
 TweakBrush::~TweakBrush() {
@@ -423,7 +423,6 @@ TB_SmoothMask::TB_SmoothMask() :TweakBrush() {
 	hcBeta = 0.5f;
 	bLiveBVH = false;
 	bLiveNormals = false;
-	bMirror = false;
 	brushName = "Mask Smooth";
 }
 
@@ -558,7 +557,6 @@ TB_Smooth::TB_Smooth() :TweakBrush() {
 	strength = 0.01f;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
-	bMirror = false;
 	brushName = "Smooth Brush";
 }
 
@@ -667,7 +665,6 @@ void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 
 TB_Undiff::TB_Undiff() :TweakBrush() {
 	strength = 0.01f;
-	bMirror = false;
 	brushName = "Undiff Brush";
 	brushType = TBT_UNDIFF;
 }
@@ -1001,6 +998,7 @@ static inline void ClampWeight(float &w) {
 TB_Weight::TB_Weight() :TweakBrush() {
 	brushType = TBT_WEIGHT;
 	strength = 0.0015f;
+	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	bFixedWeight = false;
@@ -1067,6 +1065,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 TB_Unweight::TB_Unweight() :TweakBrush() {
 	brushType = TBT_WEIGHT;
 	strength = -0.0015f;
+	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Weight Erase";
@@ -1131,9 +1130,9 @@ TB_SmoothWeight::TB_SmoothWeight() :TweakBrush() {
 	method = 1;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
+	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
-	bMirror = false;
 	brushName = "Weight Smooth";
 }
 
@@ -1306,6 +1305,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 TB_Color::TB_Color() :TweakBrush() {
 	brushType = TBT_COLOR;
 	strength = 0.003f;
+	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Color Paint";
@@ -1354,6 +1354,7 @@ void TB_Color::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 TB_Uncolor::TB_Uncolor() :TweakBrush() {
 	brushType = TBT_COLOR;
 	strength = -0.003f;
+	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Color Erase";
@@ -1401,6 +1402,7 @@ void TB_Uncolor::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* 
 
 TB_Alpha::TB_Alpha() :TweakBrush() {
 	brushType = TBT_ALPHA;
+	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Alpha Brush";
@@ -1450,6 +1452,7 @@ void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 
 TB_Unalpha::TB_Unalpha() :TweakBrush() {
 	brushType = TBT_ALPHA;
+	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Unalpha Brush";

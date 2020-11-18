@@ -105,7 +105,7 @@ protected:
 	float strength;
 	float inset;			// Normally 0. Values between 0 and 1 increase displacement, values below 0 reduce displacement.
 	float spacing;			// Distance between points; movements less than this distance don't update the stroke.
-	bool bMirror;			// X-axis mirror function
+	bool bMirror;			// X-axis mirror enabled
 	bool bLiveBVH;			// Update BVH at each update instead of at stroke completion.
 	bool bLiveNormals;		// Update mesh normals at each update instead of at stroke completion.
 	bool bConnected;		// Operate on connected vertices only.
@@ -158,14 +158,18 @@ public:
 		return 0;
 	}
 
+	virtual bool isMirrored() {
+		return bMirror;
+	}
 	virtual void setMirror(bool wantMirror = true) {
 		bMirror = wantMirror;
 	}
+
+	virtual bool isConnected() {
+		return bConnected;
+	}
 	virtual void setConnected(bool wantConnected = true) {
 		bConnected = wantConnected;
-	}
-	virtual bool isMirrored() {
-		return bMirror;
 	}
 	virtual bool LiveBVH() {
 		return bLiveBVH;
@@ -173,7 +177,8 @@ public:
 	virtual bool LiveNormals() {
 		return bLiveNormals;
 	}
-	virtual bool NeedMirrorMergedQuery() {return false;}
+
+	virtual bool NeedMirrorMergedQuery() { return false; }
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&) {}
@@ -360,7 +365,7 @@ public:
 	TB_Weight();
 	virtual ~TB_Weight();
 	virtual UndoType GetUndoType() {return UT_WEIGHT;}
-	virtual bool NeedMirrorMergedQuery() {return bMirror || bXMirrorBone;}
+	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 };
@@ -380,7 +385,7 @@ public:
 	TB_Unweight();
 	virtual ~TB_Unweight();
 	virtual UndoType GetUndoType() {return UT_WEIGHT;}
-	virtual bool NeedMirrorMergedQuery() {return bMirror || bXMirrorBone;}
+	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 };
@@ -406,7 +411,7 @@ public:
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
 	virtual UndoType GetUndoType() {return UT_WEIGHT;}
-	virtual bool NeedMirrorMergedQuery() {return bMirror || bXMirrorBone;}
+	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 };

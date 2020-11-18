@@ -276,8 +276,12 @@ public:
 		cursorSize = newsize;
 	}
 
-	CursorType GetCursorType() const {return cursorType;}
-	void SetCursorType(CursorType newType) {cursorType = newType;}
+	CursorType GetCursorType() const {
+		return cursorType;
+	}
+	void SetCursorType(CursorType newType) {
+		cursorType = newType;
+	}
 
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Cleanup();
