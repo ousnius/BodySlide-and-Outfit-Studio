@@ -1719,6 +1719,21 @@ void BSSubIndexTriShape::SetSegmentation(const NifSegmentationInfo &inf, const s
 		while (triParts[triInds[i]] >= j)
 			partTriInds[j++] = i;
 
+	// Fill gaps for partitions that don't have any tris assigned
+	int maxInd = 0;
+	for (int i = 0; i < partTriInds.size(); ++i) {
+		if (partTriInds[i] == 0) {
+			if (maxInd != 0) {
+				partTriInds[i] = maxInd;
+			}
+		}
+		else {
+			if (partTriInds[i] > maxInd) {
+				maxInd = partTriInds[i];
+			}
+		}
+	}
+
 	partTriInds.back() = triInds.size();
 
 	segmentation = std::move(BSSITSSegmentation());
