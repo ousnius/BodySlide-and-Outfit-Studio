@@ -1656,19 +1656,40 @@ void NifFile::GetTree(std::vector<NiObject*>& result, NiObject* parent) {
 		parent = GetRootNode();
 		if (parent == nullptr)
 			return;
-
-		result.push_back(parent);
 	}
 
 	std::vector<int> indices;
 	parent->GetChildIndices(indices);
 
+	auto constraint = dynamic_cast<bhkConstraint*>(parent);
+	if (constraint) {
+		for (auto& entityId : constraint->GetEntities()) {
+			auto entity = hdr.GetBlock<NiObject>(entityId.GetIndex());
+			if (entity)
+				GetTree(result, entity);
+		}
+	}
+
 	for (auto& id : indices) {
 		auto child = hdr.GetBlock<NiObject>(id);
 		if (child) {
 			if (std::find(result.begin(), result.end(), child) == result.end()) {
-				result.push_back(child);
-				GetTree(result, child);
+				bool childBeforeParent = child->HasType<bhkRefObject>() && !child->HasType<bhkConstraint>();
+				if (childBeforeParent)
+					GetTree(result, child);
+			}
+		}
+	}
+
+	result.push_back(parent);
+
+	for (auto& id : indices) {
+		auto child = hdr.GetBlock<NiObject>(id);
+		if (child) {
+			if (std::find(result.begin(), result.end(), child) == result.end()) {
+				bool childBeforeParent = child->HasType<bhkRefObject>() && !child->HasType<bhkConstraint>();
+				if (!childBeforeParent)
+					GetTree(result, child);
 			}
 		}
 	}
