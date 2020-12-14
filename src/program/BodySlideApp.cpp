@@ -1797,7 +1797,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			wxMessageBox(wxString().Format(_("Failed to write TRI file to the following location\n\n%s"), triPath), _("Unable to process"), wxOK | wxICON_ERROR);
 		}
 
-		if (targetGame != FO4) {
+		if (targetGame != FO4 && targetGame != FO4VR && targetGame != FO76) {
 			for (auto targetShape = activeSet.ShapesBegin(); targetShape != activeSet.ShapesEnd(); ++targetShape) {
 				auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
 				if (!shape)
@@ -2285,7 +2285,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
 				wxLogError("Failed to create TRI file to '%s'!", triPath);
 
-			if (targetGame != FO4) {
+			if (targetGame != FO4 && targetGame != FO4VR && targetGame != FO76) {
 				for (auto targetShape = currentSet.ShapesBegin(); targetShape != currentSet.ShapesEnd(); ++targetShape) {
 					auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
 					if (!shape)
@@ -2550,6 +2550,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 		switch (app->targetGame) {
 		case SKYRIM:
 		case FO4:
+		case FO4VR:
 		case SKYRIMSE:
 		case SKYRIMVR:
 			cbMorphs->Show();
@@ -3410,6 +3411,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 			break;
 		case FO4:
 		case FO4VR:
+		case FO76:
 		default:
 			fpSkeletonFile->SetPath("res/skeleton_fo4.nif");
 			choiceSkeletonRoot->SetStringSelection("Root");

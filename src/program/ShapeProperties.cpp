@@ -94,7 +94,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	cbTransformGeo = XRCCTRL(*this, "cbTransformGeo", wxCheckBox);
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4 || targetGame == FO4VR) {
+	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		lbShaderName->SetLabel(_("Material"));
 		btnMaterialChooser->Show();
 		pgShader->Layout();
@@ -303,11 +303,6 @@ void ShapeProperties::AddShader() {
 		shape->GetProperties().AddBlockRef(nif->GetHeader().AddBlock(newMaterial));
 		break;
 
-	case SKYRIM:
-	case FO4:
-	case SKYRIMSE:
-	case FO4VR:
-	case SKYRIMVR:
 	default:
 		newShader = new BSLightingShaderProperty(nif->GetHeader().GetVersion());
 		shape->SetShaderPropertyRef(nif->GetHeader().AddBlock(newShader));
@@ -544,8 +539,8 @@ void ShapeProperties::GetGeometry() {
 
 		auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 		
-		subIndex->Enable(targetGame == FO4 || targetGame == FO4VR);
-		dynamic->Enable(targetGame == SKYRIMSE);
+		subIndex->Enable(targetGame == FO4 || targetGame == FO4VR || targetGame == FO76);
+		dynamic->Enable(targetGame == SKYRIMSE || targetGame == SKYRIMVR);
 	}
 }
 
@@ -866,7 +861,7 @@ void ShapeProperties::ApplyChanges() {
 		if (nif->GetHeader().GetVersion().Stream() != 100)
 			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
 
-		if ((targetGame == FO4 || targetGame == FO4VR) && currentSubIndex != subIndex->IsChecked()) {
+		if ((targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) && currentSubIndex != subIndex->IsChecked()) {
 			if (subIndex->IsChecked()) {
 				auto bsSITS = new BSSubIndexTriShape();
 				*static_cast<BSTriShape*>(bsSITS) = *bsTriShape;

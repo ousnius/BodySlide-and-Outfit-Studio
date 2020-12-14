@@ -869,7 +869,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (meshTab)
 		meshTab->SetCheck();
 
-	if (wxGetApp().targetGame != FO4 && wxGetApp().targetGame != FO4VR) {
+	if (wxGetApp().targetGame != FO4 && wxGetApp().targetGame != FO4VR && wxGetApp().targetGame != FO76) {
 		auto segmentTab = (wxStateButton*)FindWindowByName("segmentTabButton");
 		if (segmentTab)
 			segmentTab->Show(false);
@@ -1556,6 +1556,7 @@ void OutfitStudioFrame::OnChooseTargetGame(wxCommandEvent& event) {
 		break;
 	case FO4:
 	case FO4VR:
+	case FO76:
 	default:
 		fpSkeletonFile->SetPath("res/skeleton_fo4.nif");
 		choiceSkeletonRoot->SetStringSelection("Root");
@@ -9233,7 +9234,7 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<
 	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4 || targetGame == FO4VR) {
+	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
 	}
@@ -10068,7 +10069,7 @@ void wxGLPanel::ClickSplitEdge() {
 	ushort maxVertIndex = std::numeric_limits<ushort>().max();
 	uint maxTriIndex = std::numeric_limits<ushort>().max();
 
-	if (workNif->GetHeader().GetVersion().IsFO4())
+	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
 		maxTriIndex = std::numeric_limits<uint>().max();
 
 	if (shape->GetNumVertices() > maxVertIndex - 2) {

@@ -105,6 +105,7 @@ public:
 
 class NiPSysData : public NiRotatingParticlesData {
 private:
+	Vector3 unknownVector;
 	bool hasRotationSpeeds = false;
 
 public:
@@ -260,6 +261,7 @@ private:
 	Color4 color1;
 	Color4 color2;
 	Color4 color3;
+	ushort unknownShorts[26];
 
 public:
 	static constexpr const char* BlockName = "BSPSysSimpleColorModifier";
@@ -274,6 +276,8 @@ class NiPSysRotationModifier : public NiPSysModifier {
 private:
 	float initialSpeed = 0.0f;
 	float initialSpeedVariation = 0.0f;
+	Vector4 unknownVector;
+	byte unknownByte;
 	float initialAngle = 0.0f;
 	float initialAngleVariation = 0.0f;
 	bool randomSpeedSign = false;
@@ -695,6 +699,7 @@ private:
 	byte defaultMatNeedsUpdate;
 
 	BoundingSphere bounds;
+	float boundMinMax[6];
 	byte vertFlags1 = 81;
 	byte vertFlags2 = 0;
 	byte vertFlags3 = 0;

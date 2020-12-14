@@ -112,12 +112,14 @@ public:
 	bool IsSK() { return file == V20_2_0_7 && stream == 83; }
 	bool IsSSE() { return file == V20_2_0_7 && stream == 100; }
 	bool IsFO4() { return file == V20_2_0_7 && stream == 130; }
+	bool IsFO76() { return file == V20_2_0_7 && stream == 155; }
 
 	static NiVersion getOB() { return NiVersion(NiFileVersion::V20_0_0_5, 11, 0); }
 	static NiVersion getFO3() { return NiVersion(NiFileVersion::V20_2_0_7, 0, 82); }
 	static NiVersion getSK() { return NiVersion(NiFileVersion::V20_2_0_7, 0, 83); }
 	static NiVersion getSSE() { return NiVersion(NiFileVersion::V20_2_0_7, 0, 100); }
 	static NiVersion getFO4() { return NiVersion(NiFileVersion::V20_2_0_7, 0, 130); }
+	static NiVersion getFO76() { return NiVersion(NiFileVersion::V20_2_0_7, 0, 155); }
 };
 
 enum NiEndian : byte {
@@ -507,7 +509,7 @@ class NiHeader : public NiObject {
 	Maximum supported
 	Version:			20.2.0.7
 	User Version:		12
-	User Version 2:		130
+	User Version 2:		155
 	*/
 
 private:
@@ -517,6 +519,7 @@ private:
 	NiVersion version;
 	NiEndian endian = ENDIAN_LITTLE;
 	NiString creator;
+	uint unkInt1 = 0;
 	NiString exportInfo1;
 	NiString exportInfo2;
 	NiString exportInfo3;

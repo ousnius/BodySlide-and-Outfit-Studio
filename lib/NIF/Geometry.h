@@ -325,6 +325,7 @@ protected:
 	BlockRef<NiProperty> alphaPropertyRef;
 
 	BoundingSphere bounds;
+	float boundMinMax[6];
 
 	uint numTriangles = 0;
 	std::vector<Triangle> triangles;

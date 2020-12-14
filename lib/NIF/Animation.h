@@ -545,7 +545,7 @@ public:
 
 class NiUVController : public NiTimeController {
 private:
-	ushort unkShort1 = 0;
+	ushort textureSet = 0;
 	BlockRef<NiUVData> dataRef;
 
 public:

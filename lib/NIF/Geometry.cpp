@@ -545,6 +545,10 @@ void BSTriShape::Get(NiStream& stream) {
 
 	stream >> bounds;
 
+	if (stream.GetVersion().Stream() == 155)
+		for (int i = 0; i < 6; i++)
+			stream >> boundMinMax[i];
+
 	skinInstanceRef.Get(stream);
 	shaderPropertyRef.Get(stream);
 	alphaPropertyRef.Get(stream);
@@ -682,6 +686,10 @@ void BSTriShape::Put(NiStream& stream) {
 	collisionRef.Put(stream);
 
 	stream << bounds;
+
+	if (stream.GetVersion().Stream() == 155)
+		for (int i = 0; i < 6; i++)
+			stream << boundMinMax[i];
 
 	skinInstanceRef.Put(stream);
 	shaderPropertyRef.Put(stream);

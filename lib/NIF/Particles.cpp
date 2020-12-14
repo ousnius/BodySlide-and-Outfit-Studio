@@ -102,11 +102,17 @@ void NiParticleMeshesData::GetChildIndices(std::vector<int>& indices) {
 void NiPSysData::Get(NiStream& stream) {
 	NiRotatingParticlesData::Get(stream);
 
+	if (stream.GetVersion().Stream() == 155)
+		stream >> unknownVector;
+
 	stream >> hasRotationSpeeds;
 }
 
 void NiPSysData::Put(NiStream& stream) {
 	NiRotatingParticlesData::Put(stream);
+
+	if (stream.GetVersion().Stream() == 155)
+		stream << unknownVector;
 
 	stream << hasRotationSpeeds;
 }
@@ -328,6 +334,11 @@ void BSPSysSimpleColorModifier::Get(NiStream& stream) {
 	stream >> color1;
 	stream >> color2;
 	stream >> color3;
+
+	if (stream.GetVersion().Stream() == 155) {
+		for (int i = 0; i < 26; i++)
+			stream >> unknownShorts[i];
+	}
 }
 
 void BSPSysSimpleColorModifier::Put(NiStream& stream) {
@@ -342,6 +353,11 @@ void BSPSysSimpleColorModifier::Put(NiStream& stream) {
 	stream << color1;
 	stream << color2;
 	stream << color3;
+
+	if (stream.GetVersion().Stream() == 155) {
+		for (int i = 0; i < 26; i++)
+			stream << unknownShorts[i];
+	}
 }
 
 
@@ -350,6 +366,12 @@ void NiPSysRotationModifier::Get(NiStream& stream) {
 
 	stream >> initialSpeed;
 	stream >> initialSpeedVariation;
+
+	if (stream.GetVersion().Stream() == 155) {
+		stream >> unknownVector;
+		stream >> unknownByte;
+	}
+
 	stream >> initialAngle;
 	stream >> initialAngleVariation;
 	stream >> randomSpeedSign;
@@ -362,6 +384,12 @@ void NiPSysRotationModifier::Put(NiStream& stream) {
 
 	stream << initialSpeed;
 	stream << initialSpeedVariation;
+
+	if (stream.GetVersion().Stream() == 155) {
+		stream << unknownVector;
+		stream << unknownByte;
+	}
+
 	stream << initialAngle;
 	stream << initialAngleVariation;
 	stream << randomSpeedSign;
@@ -884,6 +912,11 @@ void NiParticleSystem::Get(NiStream& stream) {
 
 	if (stream.GetVersion().Stream() >= 100) {
 		stream >> bounds;
+
+		if (stream.GetVersion().Stream() == 155)
+			for (int i = 0; i < 6; i++)
+				stream >> boundMinMax[i];
+
 		skinInstanceRef.Get(stream);
 		shaderPropertyRef.Get(stream);
 		alphaPropertyRef.Get(stream);
@@ -940,6 +973,11 @@ void NiParticleSystem::Put(NiStream& stream) {
 
 	if (stream.GetVersion().Stream() >= 100) {
 		stream << bounds;
+
+		if (stream.GetVersion().Stream() == 155)
+			for (int i = 0; i < 6; i++)
+				stream << boundMinMax[i];
+
 		skinInstanceRef.Put(stream);
 		shaderPropertyRef.Put(stream);
 		alphaPropertyRef.Put(stream);

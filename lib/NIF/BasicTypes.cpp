@@ -616,10 +616,14 @@ void NiHeader::Get(NiStream& stream) {
 		version.SetStream(vstream);
 
 		creator.Get(stream, 1);
+
+		if (version.Stream() > 130)
+			stream >> unkInt1;
+
 		exportInfo1.Get(stream, 1);
 		exportInfo2.Get(stream, 1);
 
-		if (version.Stream() >= 130)
+		if (version.Stream() == 130)
 			exportInfo3.Get(stream, 1);
 	}
 	else if (version.File() >= V30_0_0_2) {
@@ -697,9 +701,14 @@ void NiHeader::Put(NiStream& stream) {
 		stream << version.Stream();
 
 		creator.Put(stream, 1);
+
+		if (version.Stream() > 130)
+			stream << unkInt1;
+
 		exportInfo1.Put(stream, 1);
 		exportInfo2.Put(stream, 1);
-		if (version.Stream() >= 130)
+
+		if (version.Stream() == 130)
 			exportInfo3.Put(stream, 1);
 	}
 	else if (version.File() >= V30_0_0_2) {

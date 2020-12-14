@@ -268,14 +268,14 @@ void NiUVData::Put(NiStream& stream) {
 void NiUVController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
 
-	stream >> unkShort1;
+	stream >> textureSet;
 	dataRef.Get(stream);
 }
 
 void NiUVController::Put(NiStream& stream) {
 	NiTimeController::Put(stream);
 
-	stream << unkShort1;
+	stream << textureSet;
 	dataRef.Put(stream);
 }
 

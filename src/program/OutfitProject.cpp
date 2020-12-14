@@ -514,6 +514,11 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 			version.SetUser(12);
 			version.SetStream(100);
 			break;
+		case FO76:
+			version.SetFile(V20_2_0_7);
+			version.SetUser(12);
+			version.SetStream(155);
+			break;
 		}
 
 		workNif.Create(version);
@@ -579,7 +584,7 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 		rootNode->GetChildren().AddBlockRef(shapeID);
 		shapeResult = nifTriShape;
 	}
-	else if (targetGame == FO4 || targetGame == FO4VR) {
+	else if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		BSTriShape* triShapeBase;
 		std::string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		auto nifBSTriShape = new BSSubIndexTriShape();
@@ -3069,7 +3074,7 @@ void OutfitProject::CheckMerge(const std::string &sourceName, const std::string 
 
 	size_t maxVertIndex = std::numeric_limits<ushort>().max();
 	size_t maxTriIndex = std::numeric_limits<ushort>().max();
-	if (workNif.GetHeader().GetVersion().IsFO4())
+	if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76())
 		maxTriIndex = std::numeric_limits<uint>().max();
 
 	size_t snVerts = source->GetNumVertices();
@@ -3155,7 +3160,7 @@ void OutfitProject::CheckMerge(const std::string &sourceName, const std::string 
 			// Shader type differs
 			e.shaderMismatch = true;
 		}
-		else if (workNif.GetHeader().GetVersion().IsFO4()) {
+		else if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76()) {
 			if (!StringsEqualInsens(sShader->GetName().c_str(), tShader->GetName().c_str()) ||
 				!StringsEqualInsens(sShader->GetWetMaterialName().c_str(), tShader->GetWetMaterialName().c_str())) {
 				// Material file paths differ
@@ -3804,6 +3809,14 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 	case SKYRIMVR:
 		match = nif.GetHeader().GetVersion().IsSSE();
 		break;
+	case FO76:
+		match = nif.GetHeader().GetVersion().IsFO76();
+		break;
+	}
+
+	if (nif.GetHeader().GetVersion().IsFO76()) {
+		wxLogWarning("NIFs of this version can not be resaved (will throw errors).");
+		return;
 	}
 
 	if (!match) {

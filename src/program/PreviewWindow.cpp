@@ -292,7 +292,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
 
 	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4 || targetGame == FO4VR) {
+	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
 	}

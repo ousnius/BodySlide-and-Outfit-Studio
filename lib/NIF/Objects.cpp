@@ -8,7 +8,7 @@ See the included LICENSE file
 void NiObjectNET::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
-	if (bBSLightingShaderProperty && stream.GetVersion().User() >= 12)
+	if (bBSLightingShaderProperty && stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() <= 130)
 		stream >> bslspShaderType;
 
 	name.Get(stream);
@@ -20,7 +20,7 @@ void NiObjectNET::Get(NiStream& stream) {
 void NiObjectNET::Put(NiStream& stream) {
 	NiObject::Put(stream);
 
-	if (bBSLightingShaderProperty && stream.GetVersion().User() >= 12)
+	if (bBSLightingShaderProperty && stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() <= 130)
 		stream << bslspShaderType;
 
 	name.Put(stream);
@@ -490,7 +490,7 @@ void NiTextureEffect::Get(NiStream& stream) {
 	NiDynamicEffect::Get(stream);
 
 	stream >> modelProjectionMatrix;
-	stream >> modelProjectionTransform;
+	stream >> modelProjectionTranslation;
 	stream >> textureFiltering;
 	stream >> textureClamping;
 	stream >> textureType;
@@ -505,7 +505,7 @@ void NiTextureEffect::Put(NiStream& stream) {
 	NiDynamicEffect::Put(stream);
 
 	stream << modelProjectionMatrix;
-	stream << modelProjectionTransform;
+	stream << modelProjectionTranslation;
 	stream << textureFiltering;
 	stream << textureClamping;
 	stream << textureType;

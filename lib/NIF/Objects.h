@@ -10,8 +10,10 @@ See the included LICENSE file
 #include "ExtraData.h"
 
 class NiObjectNET : public NiObject {
-private:
+protected:
 	StringRef name;
+
+private:
 	BlockRef<NiTimeController> controllerRef;
 	BlockRefArray<NiExtraData> extraDataRefs;
 
@@ -360,7 +362,7 @@ public:
 class NiTextureEffect : public NiDynamicEffect {
 private:
 	Matrix3 modelProjectionMatrix;
-	Vector3 modelProjectionTransform;
+	Vector3 modelProjectionTranslation;
 	TexFilterMode textureFiltering = FILTER_TRILERP;
 	TexClampMode textureClamping = WRAP_S_WRAP_T;
 	EffectType textureType = EFFECT_ENVIRONMENT_MAP;

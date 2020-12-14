@@ -920,6 +920,9 @@ int NifFile::Save(const std::string& fileName, const NifSaveOptions& options) {
 
 int NifFile::Save(std::iostream &file, const NifSaveOptions& options) {
 	if (file) {
+		if (hdr.GetVersion().IsFO76())
+			return 76;
+
 		NiStream stream(&file, &hdr.GetVersion());
 		FinalizeData();
 
