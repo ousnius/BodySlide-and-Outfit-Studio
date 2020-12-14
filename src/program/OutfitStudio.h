@@ -839,6 +839,7 @@ public:
 	wxTextCtrl *tzPoseText = nullptr;
 	wxCheckBox *cbPose = nullptr;
 	wxScrolledWindow* sliderScroll = nullptr;
+	wxMenuBar* menuBar = nullptr;
 	wxToolBar* toolBarH = nullptr;
 	wxToolBar* toolBarV = nullptr;
 	wxStatusBar* statusBar = nullptr;
@@ -980,24 +981,24 @@ public:
 		//float spacing = brush->getSpacing();
 
 		if (size >= 1.0f)
-			GetMenuBar()->Enable(XRCID("btnIncreaseSize"), false);
+			menuBar->Enable(XRCID("btnIncreaseSize"), false);
 		else
-			GetMenuBar()->Enable(XRCID("btnIncreaseSize"), true);
+			menuBar->Enable(XRCID("btnIncreaseSize"), true);
 
 		if (size <= 0.0f)
-			GetMenuBar()->Enable(XRCID("btnDecreaseSize"), false);
+			menuBar->Enable(XRCID("btnDecreaseSize"), false);
 		else
-			GetMenuBar()->Enable(XRCID("btnDecreaseSize"), true);
+			menuBar->Enable(XRCID("btnDecreaseSize"), true);
 
 		if (strength >= 1.0f)
-			GetMenuBar()->Enable(XRCID("btnIncreaseStr"), false);
+			menuBar->Enable(XRCID("btnIncreaseStr"), false);
 		else
-			GetMenuBar()->Enable(XRCID("btnIncreaseStr"), true);
+			menuBar->Enable(XRCID("btnIncreaseStr"), true);
 
 		if (strength <= 0.0f)
-			GetMenuBar()->Enable(XRCID("btnDecreaseStr"), false);
+			menuBar->Enable(XRCID("btnDecreaseStr"), false);
 		else
-			GetMenuBar()->Enable(XRCID("btnDecreaseStr"), true);
+			menuBar->Enable(XRCID("btnDecreaseStr"), true);
 	}
 
 	wxGauge* progressBar = nullptr;
@@ -1191,6 +1192,7 @@ private:
 	void OnSegmentTypeChanged(wxCommandEvent& event);
 	void OnSegmentApply(wxCommandEvent& event);
 	void OnSegmentReset(wxCommandEvent& event);
+	void OnSegmentEditSSF(wxCommandEvent& event);
 
 	void OnPartitionSelect(wxTreeEvent& event);
 	void OnPartitionContext(wxTreeEvent& event);
@@ -1293,7 +1295,7 @@ private:
 
 	void OnXMirror(wxCommandEvent& event) {
 		bool enabled = event.IsChecked();
-		GetMenuBar()->Check(event.GetId(), enabled);
+		menuBar->Check(event.GetId(), enabled);
 		toolBarV->ToggleTool(event.GetId(), enabled);
 
 		auto activeBrush = glView->GetActiveBrush();
@@ -1303,7 +1305,7 @@ private:
 
 	void OnConnectedOnly(wxCommandEvent& event) {
 		bool enabled = event.IsChecked();
-		GetMenuBar()->Check(event.GetId(), enabled);
+		menuBar->Check(event.GetId(), enabled);
 		toolBarV->ToggleTool(event.GetId(), enabled);
 
 		auto activeBrush = glView->GetActiveBrush();
@@ -1313,7 +1315,7 @@ private:
 
 	void OnGlobalBrushCollision(wxCommandEvent& event) {
 		bool enabled = event.IsChecked();
-		GetMenuBar()->Check(event.GetId(), enabled);
+		menuBar->Check(event.GetId(), enabled);
 		toolBarV->ToggleTool(event.GetId(), enabled);
 		glView->SetGlobalBrushCollision(enabled);
 	}

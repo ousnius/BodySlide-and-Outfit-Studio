@@ -238,6 +238,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CHOICE(XRCID("segmentType"), OutfitStudioFrame::OnSegmentTypeChanged)
 	EVT_BUTTON(XRCID("segmentApply"), OutfitStudioFrame::OnSegmentApply)
 	EVT_BUTTON(XRCID("segmentReset"), OutfitStudioFrame::OnSegmentReset)
+	EVT_BUTTON(XRCID("segmentSSFEdit"), OutfitStudioFrame::OnSegmentEditSSF)
 
 	EVT_TREE_SEL_CHANGED(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionContext)
@@ -854,7 +855,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	this->DragAcceptFiles(true);
 
-	xrc->LoadMenuBar(this, "menuBar");
+	menuBar = xrc->LoadMenuBar(this, "menuBar");
 
 	toolBarH = (wxToolBar*)FindWindowByName("toolBarH");
 	toolBarV = (wxToolBar*)FindWindowByName("toolBarV");
@@ -1865,7 +1866,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 
 	wxLogMessage("Project loaded.");
 	UpdateProgress(100, _("Finished"));
-	GetMenuBar()->Enable(XRCID("fileSave"), true);
+	menuBar->Enable(XRCID("fileSave"), true);
 	EndProgress();
 	return true;
 }
@@ -2082,14 +2083,14 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 		mesh* m = glView->GetMesh(activeItem->GetShape()->GetName());
 		if (m) {
 			if (m->smoothSeamNormals)
-				GetMenuBar()->Check(XRCID("btnSmoothSeams"), true);
+				menuBar->Check(XRCID("btnSmoothSeams"), true);
 			else
-				GetMenuBar()->Check(XRCID("btnSmoothSeams"), false);
+				menuBar->Check(XRCID("btnSmoothSeams"), false);
 
 			if (m->lockNormals)
-				GetMenuBar()->Check(XRCID("btnLockNormals"), true);
+				menuBar->Check(XRCID("btnLockNormals"), true);
 			else
-				GetMenuBar()->Check(XRCID("btnLockNormals"), false);
+				menuBar->Check(XRCID("btnLockNormals"), false);
 
 			if (glView->GetTransformMode())
 				glView->ShowTransformTool();
@@ -2097,8 +2098,8 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 				glView->ShowVertexEdit();
 		}
 		else {
-			GetMenuBar()->Check(XRCID("btnSmoothSeams"), true);
-			GetMenuBar()->Check(XRCID("btnLockNormals"), false);
+			menuBar->Check(XRCID("btnSmoothSeams"), true);
+			menuBar->Check(XRCID("btnLockNormals"), false);
 		}
 
 		CreateSegmentTree(activeItem->GetShape());
@@ -2436,26 +2437,22 @@ void OutfitStudioFrame::ExitSliderEdit() {
 }
 
 void OutfitStudioFrame::MenuEnterSliderEdit() {
-	wxMenuBar* menu = GetMenuBar();
-	menu->Enable(XRCID("menuImportSlider"), true);
-	menu->Enable(XRCID("menuExportSlider"), true);
-	menu->Enable(XRCID("sliderNegate"), true);
-	menu->Enable(XRCID("sliderMask"), true);
-	menu->Enable(XRCID("sliderProperties"), true);
+	menuBar->Enable(XRCID("menuImportSlider"), true);
+	menuBar->Enable(XRCID("menuExportSlider"), true);
+	menuBar->Enable(XRCID("sliderNegate"), true);
+	menuBar->Enable(XRCID("sliderMask"), true);
+	menuBar->Enable(XRCID("sliderProperties"), true);
 }
 
 void OutfitStudioFrame::MenuExitSliderEdit() {
-	wxMenuBar* menu = GetMenuBar();
-	menu->Enable(XRCID("menuImportSlider"), false);
-	menu->Enable(XRCID("menuExportSlider"), false);
-	menu->Enable(XRCID("sliderNegate"), false);
-	menu->Enable(XRCID("sliderMask"), false);
-	menu->Enable(XRCID("sliderProperties"), false);
+	menuBar->Enable(XRCID("menuImportSlider"), false);
+	menuBar->Enable(XRCID("menuExportSlider"), false);
+	menuBar->Enable(XRCID("sliderNegate"), false);
+	menuBar->Enable(XRCID("sliderMask"), false);
+	menuBar->Enable(XRCID("sliderProperties"), false);
 }
 
 void OutfitStudioFrame::SelectTool(ToolID tool) {
-	wxMenuBar* menuBar = GetMenuBar();
-
 	if (tool == ToolID::Select) {
 		glView->SetEditMode(false);
 		glView->SetBrushMode(false);
@@ -2675,7 +2672,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	if (!result)
 		return;
 
-	GetMenuBar()->Enable(XRCID("fileSave"), false);
+	menuBar->Enable(XRCID("fileSave"), false);
 
 	std::string outfitName{XRCCTRL(wiz, "npOutfitName", wxTextCtrl)->GetValue().ToUTF8()};
 
@@ -2919,7 +2916,7 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string outfitName = XRCCTRL(dlg, "npOutfitName", wxTextCtrl)->GetValue();
 
-	GetMenuBar()->Enable(XRCID("fileSave"), false);
+	menuBar->Enable(XRCID("fileSave"), false);
 
 	wxLogMessage("Loading outfit...");
 	StartProgress(_("Loading outfit..."));
@@ -2980,7 +2977,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	wxLogMessage("Unloading project...");
-	GetMenuBar()->Enable(XRCID("fileSave"), false);
+	menuBar->Enable(XRCID("fileSave"), false);
 
 	ClearProject();
 	project->ClearReference();
@@ -3533,7 +3530,7 @@ void OutfitStudioFrame::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		strGamePath, strGameFile, genWeights, copyRef);
 
 	if (error.empty()) {
-		GetMenuBar()->Enable(XRCID("fileSave"), true);
+		menuBar->Enable(XRCID("fileSave"), true);
 		RenameProject(strOutfitName.ToUTF8().data());
 	}
 	else {
@@ -4741,6 +4738,16 @@ void OutfitStudioFrame::OnSegmentReset(wxCommandEvent& event) {
 	CreateSegmentTree(activeItem->GetShape());
 }
 
+void OutfitStudioFrame::OnSegmentEditSSF(wxCommandEvent& event) {
+	auto segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+
+	wxString result = wxGetTextFromUser(_("Please enter an SSF file path."), _("SSF File"), segmentSSF->GetValue());
+	if (result.empty())
+		return;
+
+	segmentSSF->ChangeValue(result);
+}
+
 void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 	if (segmentTree->GetChildrenCount(segmentRoot) > 0) {
 		triSParts.clear(); // DeleteChildren calls OnSegmentSelect
@@ -5411,7 +5418,7 @@ void OutfitStudioFrame::OnSetView(wxCommandEvent& event) {
 
 void OutfitStudioFrame::OnTogglePerspective(wxCommandEvent& event) {
 	bool enabled = event.IsChecked();
-	GetMenuBar()->Check(event.GetId(), enabled);
+	menuBar->Check(event.GetId(), enabled);
 	toolBarV->ToggleTool(event.GetId(), enabled);
 	glView->SetPerspective(enabled);
 }
@@ -5554,6 +5561,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		wxStaticText* segmentSlotLabel = (wxStaticText*)FindWindowByName("segmentSlotLabel");
 		wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
 		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
+		wxButton* segmentSSFEdit = (wxButton*)FindWindowByName("segmentSSFEdit");
 		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
 		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
 		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
@@ -5563,6 +5571,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		segmentSlotLabel->Show(false);
 		segmentSlot->Show(false);
 		segmentSSFLabel->Show(false);
+		segmentSSFEdit->Show(false);
 		segmentSSF->Show(false);
 		segmentApply->Show(false);
 		segmentReset->Show(false);
@@ -5574,12 +5583,12 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetMaskVisible();
 		glView->SetGlobalBrushCollision();
 
-		GetMenuBar()->Check(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Enable(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Enable(XRCID("btnSelect"), true);
-		GetMenuBar()->Enable(XRCID("btnClearMask"), true);
-		GetMenuBar()->Enable(XRCID("btnInvertMask"), true);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
+		menuBar->Check(XRCID("btnBrushCollision"), true);
+		menuBar->Enable(XRCID("btnBrushCollision"), true);
+		menuBar->Enable(XRCID("btnSelect"), true);
+		menuBar->Enable(XRCID("btnClearMask"), true);
+		menuBar->Enable(XRCID("btnInvertMask"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
 
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
 		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
@@ -5604,12 +5613,12 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetMaskVisible();
 		glView->SetGlobalBrushCollision();
 
-		GetMenuBar()->Check(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Enable(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Enable(XRCID("btnSelect"), true);
-		GetMenuBar()->Enable(XRCID("btnClearMask"), true);
-		GetMenuBar()->Enable(XRCID("btnInvertMask"), true);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
+		menuBar->Check(XRCID("btnBrushCollision"), true);
+		menuBar->Enable(XRCID("btnBrushCollision"), true);
+		menuBar->Enable(XRCID("btnSelect"), true);
+		menuBar->Enable(XRCID("btnClearMask"), true);
+		menuBar->Enable(XRCID("btnInvertMask"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
 
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
 		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
@@ -5643,22 +5652,22 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		SelectTool(ToolID::InflateBrush);
 		glView->SetWeightVisible(false);
 
-		GetMenuBar()->Check(XRCID("btnInflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnTransform"), true);
-		GetMenuBar()->Enable(XRCID("btnPivot"), true);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), true);
-		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnColorBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), true);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
+		menuBar->Check(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnTransform"), true);
+		menuBar->Enable(XRCID("btnPivot"), true);
+		menuBar->Enable(XRCID("btnVertexEdit"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), false);
+		menuBar->Enable(XRCID("btnColorBrush"), false);
+		menuBar->Enable(XRCID("btnAlphaBrush"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnDeflateBrush"), true);
+		menuBar->Enable(XRCID("btnMoveBrush"), true);
+		menuBar->Enable(XRCID("btnSmoothBrush"), true);
+		menuBar->Enable(XRCID("btnUndiffBrush"), true);
+		menuBar->Enable(XRCID("btnCollapseVertex"), true);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), true);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
 
 		toolBarH->ToggleTool(XRCID("btnInflateBrush"), true);
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
@@ -5685,22 +5694,22 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		if (colorSettings->IsShown())
 			glView->ClearColors();
 
-		GetMenuBar()->Check(XRCID("btnInflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnTransform"), true);
-		GetMenuBar()->Enable(XRCID("btnPivot"), true);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), true);
-		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnColorBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), true);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
+		menuBar->Check(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnTransform"), true);
+		menuBar->Enable(XRCID("btnPivot"), true);
+		menuBar->Enable(XRCID("btnVertexEdit"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), false);
+		menuBar->Enable(XRCID("btnColorBrush"), false);
+		menuBar->Enable(XRCID("btnAlphaBrush"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnDeflateBrush"), true);
+		menuBar->Enable(XRCID("btnMoveBrush"), true);
+		menuBar->Enable(XRCID("btnSmoothBrush"), true);
+		menuBar->Enable(XRCID("btnUndiffBrush"), true);
+		menuBar->Enable(XRCID("btnCollapseVertex"), true);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), true);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
 
 		toolBarH->ToggleTool(XRCID("btnInflateBrush"), true);
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
@@ -5789,22 +5798,22 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		if (project->bPose)
 			ApplyPose();
 
-		GetMenuBar()->Check(XRCID("btnWeightBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnWeightBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnColorBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnTransform"), false);
-		GetMenuBar()->Enable(XRCID("btnPivot"), false);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
+		menuBar->Check(XRCID("btnWeightBrush"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), true);
+		menuBar->Enable(XRCID("btnColorBrush"), false);
+		menuBar->Enable(XRCID("btnAlphaBrush"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
 
 		toolBarH->ToggleTool(XRCID("btnWeightBrush"), true);
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), true);
@@ -5856,22 +5865,22 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		FillVertexColors();
 
-		GetMenuBar()->Check(XRCID("btnColorBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnColorBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnTransform"), false);
-		GetMenuBar()->Enable(XRCID("btnPivot"), false);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
+		menuBar->Check(XRCID("btnColorBrush"), true);
+		menuBar->Enable(XRCID("btnColorBrush"), true);
+		menuBar->Enable(XRCID("btnAlphaBrush"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
 
 		toolBarH->ToggleTool(XRCID("btnColorBrush"), true);
 		toolBarH->EnableTool(XRCID("btnColorBrush"), true);
@@ -5916,6 +5925,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		wxStaticText* segmentSlotLabel = (wxStaticText*)FindWindowByName("segmentSlotLabel");
 		wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
 		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
+		wxButton* segmentSSFEdit = (wxButton*)FindWindowByName("segmentSSFEdit");
 		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
 		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
 		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
@@ -5925,6 +5935,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		segmentSlotLabel->Show();
 		segmentSlot->Show();
 		segmentSSFLabel->Show();
+		segmentSSFEdit->Show();
 		segmentSSF->Show();
 		segmentApply->Show();
 		segmentReset->Show();
@@ -5935,24 +5946,24 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetGlobalBrushCollision(false);
 		glView->ClearColors();
 
-		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
-		GetMenuBar()->Check(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Enable(XRCID("btnSelect"), false);
-		GetMenuBar()->Enable(XRCID("btnTransform"), false);
-		GetMenuBar()->Enable(XRCID("btnPivot"), false);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
-		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
+		menuBar->Check(XRCID("btnMaskBrush"), true);
+		menuBar->Check(XRCID("btnBrushCollision"), false);
+		menuBar->Enable(XRCID("btnSelect"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnBrushCollision"), false);
+		menuBar->Enable(XRCID("btnClearMask"), false);
+		menuBar->Enable(XRCID("btnInvertMask"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
@@ -6008,24 +6019,24 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetGlobalBrushCollision(false);
 		glView->ClearColors();
 
-		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
-		GetMenuBar()->Check(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Enable(XRCID("btnSelect"), false);
-		GetMenuBar()->Enable(XRCID("btnTransform"), false);
-		GetMenuBar()->Enable(XRCID("btnPivot"), false);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
-		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
+		menuBar->Check(XRCID("btnMaskBrush"), true);
+		menuBar->Check(XRCID("btnBrushCollision"), false);
+		menuBar->Enable(XRCID("btnSelect"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnBrushCollision"), false);
+		menuBar->Enable(XRCID("btnClearMask"), false);
+		menuBar->Enable(XRCID("btnInvertMask"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
