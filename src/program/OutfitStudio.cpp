@@ -9587,6 +9587,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 
 	if (activeBrush->Type() == TBT_WEIGHT) {
 		for (auto &sel : os->GetSelectedItems()) {
+			os->project->GetWorkNif()->CreateSkinning(sel->GetShape());
+
 			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(sel->GetShape()->GetName(), os->GetActiveBone());
 			if (boneIndex < 0)
 				os->project->AddBoneRef(os->GetActiveBone());

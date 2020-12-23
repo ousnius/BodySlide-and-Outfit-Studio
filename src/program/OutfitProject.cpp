@@ -536,18 +536,6 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 
 		int dataID = hdr.AddBlock(nifShapeData);
 
-		auto nifSkinData = new NiSkinData();
-		int skinID = hdr.AddBlock(nifSkinData);
-
-		auto nifSkinPartition = new NiSkinPartition();
-		int partID = hdr.AddBlock(nifSkinPartition);
-
-		auto nifDismemberInst = new BSDismemberSkinInstance();
-		int dismemberID = hdr.AddBlock(nifDismemberInst);
-		nifDismemberInst->SetDataRef(skinID);
-		nifDismemberInst->SetSkinPartitionRef(partID);
-		nifDismemberInst->SetSkeletonRootRef(workNif.GetBlockID(workNif.GetRootNode()));
-
 		auto nifTexset = new BSShaderTextureSet(hdr.GetVersion());
 
 		int shaderID;
@@ -567,6 +555,8 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 			nifShader->SetTextureSetRef(hdr.AddBlock(nifTexset));
 		}
 
+		nifShader->SetSkinned(false);
+
 		auto nifTriShape = new NiTriShape();
 		int shapeID = hdr.AddBlock(nifTriShape);
 		if (targetGame < SKYRIM)
@@ -576,37 +566,29 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 
 		nifTriShape->SetName(shapeName);
 		nifTriShape->SetDataRef(dataID);
-		nifTriShape->SetSkinInstanceRef(dismemberID);
-
 		nifTriShape->SetGeomData(nifShapeData);
-		workNif.SetDefaultPartition(nifTriShape);
+		nifTriShape->SetSkinned(false);
 
 		rootNode->GetChildren().AddBlockRef(shapeID);
 		shapeResult = nifTriShape;
 	}
 	else if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
-		BSTriShape* triShapeBase;
-		std::string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		auto nifBSTriShape = new BSSubIndexTriShape();
 		nifBSTriShape->Create(&v, &t, &uv, norms);
 		int shapeID = hdr.AddBlock(nifBSTriShape);
 
-		auto nifBSSkinInstance = new BSSkinInstance();
-		int skinID = hdr.AddBlock(nifBSSkinInstance);
-		nifBSSkinInstance->SetTargetRef(workNif.GetBlockID(workNif.GetRootNode()));
-
-		auto nifBoneData = new BSSkinBoneData();
-		int boneID = hdr.AddBlock(nifBoneData);
-		nifBSSkinInstance->SetDataRef(boneID);
-		nifBSTriShape->SetSkinInstanceRef(skinID);
-		triShapeBase = nifBSTriShape;
+		BSTriShape* triShapeBase = nifBSTriShape;
+		triShapeBase->SetSkinned(false);
 
 		auto nifTexset = new BSShaderTextureSet(hdr.GetVersion());
 
 		auto nifShader = new BSLightingShaderProperty(hdr.GetVersion());
 		int shaderID = hdr.AddBlock(nifShader);
 		nifShader->SetTextureSetRef(hdr.AddBlock(nifTexset));
+
+		std::string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		nifShader->SetWetMaterialName(wetShaderName);
+		nifShader->SetSkinned(false);
 
 		triShapeBase->SetName(shapeName);
 		triShapeBase->SetShaderPropertyRef(shaderID);
@@ -619,31 +601,17 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 		triShape->Create(&v, &t, &uv, norms);
 		int shapeID = hdr.AddBlock(triShape);
 
-		auto nifSkinData = new NiSkinData();
-		int skinID = hdr.AddBlock(nifSkinData);
-
-		auto nifSkinPartition = new NiSkinPartition();
-		int partID = hdr.AddBlock(nifSkinPartition);
-
-		auto nifDismemberInst = new BSDismemberSkinInstance();
-		int dismemberID = hdr.AddBlock(nifDismemberInst);
-		nifDismemberInst->SetDataRef(skinID);
-		nifDismemberInst->SetSkinPartitionRef(partID);
-		nifDismemberInst->SetSkeletonRootRef(workNif.GetBlockID(workNif.GetRootNode()));
-		triShape->SetSkinInstanceRef(dismemberID);
-		triShape->SetSkinned(true);
+		triShape->SetSkinned(false);
 
 		auto nifTexset = new BSShaderTextureSet(hdr.GetVersion());
 
 		auto nifShader = new BSLightingShaderProperty(hdr.GetVersion());
 		int shaderID = hdr.AddBlock(nifShader);
 		nifShader->SetTextureSetRef(hdr.AddBlock(nifTexset));
+		nifShader->SetSkinned(false);
 
 		triShape->SetName(shapeName);
 		triShape->SetShaderPropertyRef(shaderID);
-
-		workNif.SetDefaultPartition(triShape);
-		workNif.UpdateSkinPartitions(triShape);
 
 		rootNode->GetChildren().AddBlockRef(shapeID);
 		shapeResult = triShape;
@@ -3747,7 +3715,11 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 				return 100;
 		}
 
-		CreateNifShapeFromData(useShapeName, fbxShape->verts, fbxShape->tris, fbxShape->uvs, &fbxShape->normals);
+		auto newShape = CreateNifShapeFromData(useShapeName, fbxShape->verts, fbxShape->tris, fbxShape->uvs, &fbxShape->normals);
+		if (!newShape)
+			continue;
+
+		workNif.CreateSkinning(newShape);
 
 		if (copyBaseSkinTrans)
 			workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;
