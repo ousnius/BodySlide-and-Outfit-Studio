@@ -553,6 +553,9 @@ void mesh::FacetNormals() {
 }
 
 void mesh::ColorFill(const Vector3& vcolor) {
+	if (!vcolors)
+		return;
+
 	for (int i = 0; i < nVerts; i++)
 		vcolors[i] = vcolor;
 
@@ -560,6 +563,9 @@ void mesh::ColorFill(const Vector3& vcolor) {
 }
 
 void mesh::AlphaFill(const float alpha) {
+	if (!valpha)
+		return;
+
 	for (int i = 0; i < nVerts; i++)
 		valpha[i] = alpha;
 
@@ -567,6 +573,9 @@ void mesh::AlphaFill(const float alpha) {
 }
 
 void mesh::ColorChannelFill(int channel, float value) {
+	if (!vcolors)
+		return;
+
 	for (int i = 0; i < nVerts; i++) {
 		if (channel == 0)
 			vcolors[i].x = value;
