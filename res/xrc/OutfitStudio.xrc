@@ -243,6 +243,12 @@
 								<toggle>1</toggle>
 								<checked>1</checked>
 							</object>
+							<object class="tool" name="btnShowNodes">
+								<label>Show Nodes</label>
+								<tooltip>Toggle rendering of nodes.</tooltip>
+								<bitmap>$(AppDir)\res\images\Nodes.png</bitmap>
+								<toggle>1</toggle>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -1830,6 +1836,10 @@
 					<label>Perspective\tShift+5</label>
 					<checkable>1</checkable>
 					<checked>1</checked>
+				</object>
+				<object class="wxMenuItem" name="btnShowNodes">
+					<label>Show Nodes\tN</label>
+					<checkable>1</checkable>
 				</object>
 			</object>
 			<object class="wxMenuItem" name="btnToggleVisibility">

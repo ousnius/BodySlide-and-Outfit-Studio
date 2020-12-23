@@ -139,7 +139,7 @@ public:
 		activeMeshes.clear();
 	}
 
-	void DeleteMesh(const std::string& shapeName) {
+	void DeleteMesh(const std::string shapeName) {
 		int id = GetMeshID(shapeName);
 		if (id >= 0) {
 			DeleteMesh(id);
@@ -155,6 +155,14 @@ public:
 
 		overlays.clear();
 		namedOverlays.clear();
+	}
+
+	void DeleteOverlay(const std::string shapeName) {
+		int id = GetOverlayID(shapeName);
+		if (id >= 0) {
+			DeleteOverlay(id);
+			namedOverlays.erase(shapeName);
+		}
 	}
 
 
@@ -352,7 +360,7 @@ public:
 		return &resLoader;
 	}
 
-	void SetContext();
+	bool SetContext();
 	void RenderOneFrame();
 	void RenderToTexture(GLMaterial* renderShader);
 	void RenderMesh(mesh* m);

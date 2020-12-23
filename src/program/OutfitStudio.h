@@ -227,6 +227,10 @@ public:
 	void ShowPivot(bool show = true);
 	void UpdatePivot();
 
+	void ShowNodes(bool show = true);
+	void UpdateNodes();
+	void UpdateNodeColors();
+
 	void ShowVertexEdit(bool show = true);
 	
 	bool GetEditMode() {
@@ -269,6 +273,14 @@ public:
 
 		if (transformMode)
 			ShowTransformTool();
+	}
+
+	bool GetNodesMode() {
+		return nodesMode;
+	}
+	void SetNodesMode(bool on = true) {
+		nodesMode = on;
+		ShowNodes(on);
 	}
 
 	bool GetSegmentMode() {
@@ -618,6 +630,9 @@ public:
 		ZPivotMesh = nullptr;
 		PivotCenterMesh = nullptr;
 
+		nodesPoints.clear();
+		nodesLines.clear();
+
 		gls.Cleanup();
 	}
 
@@ -700,6 +715,7 @@ private:
 	bool brushMode;
 	bool transformMode;
 	bool pivotMode;
+	bool nodesMode;
 	bool vertexEdit;
 	bool segmentMode;
 
@@ -753,6 +769,9 @@ private:
 	mesh* PivotCenterMesh = nullptr;
 	Vector3 pivotPosition;
 	float lastCenterPivotDistance;
+
+	std::vector<mesh*> nodesPoints;
+	std::vector<mesh*> nodesLines;
 
 	wxDECLARE_EVENT_TABLE();
 };
@@ -1210,6 +1229,7 @@ private:
 
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);
+	void OnShowNodes(wxCommandEvent& event);
 	void OnFieldOfViewSlider(wxCommandEvent& event);
 	void OnUpdateLights(wxCommandEvent& event);
 	void OnResetLights(wxCommandEvent& event);

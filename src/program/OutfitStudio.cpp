@@ -161,6 +161,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnViewLeft"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewRight"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewPerspective"), OutfitStudioFrame::OnTogglePerspective)
+
+	EVT_MENU(XRCID("btnShowNodes"), OutfitStudioFrame::OnShowNodes)
 	
 	EVT_MENU(XRCID("btnIncreaseSize"), OutfitStudioFrame::OnIncBrush)
 	EVT_MENU(XRCID("btnDecreaseSize"), OutfitStudioFrame::OnDecBrush)
@@ -3237,6 +3239,8 @@ void OutfitStudioFrame::AnimationGUIFromProj() {
 	HighlightBoneNamesWithWeights();
 	RefreshGUIWeightColors();
 	PoseToGUI();
+
+	glView->UpdateNodes();
 }
 
 void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
@@ -4343,6 +4347,7 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	else
 		activeBone = outfitBones->GetItemText(item);
 
+	glView->UpdateNodeColors();
 	RefreshGUIWeightColors();
 	CalcAutoXMirrorBone();
 }
@@ -4738,7 +4743,7 @@ void OutfitStudioFrame::OnSegmentReset(wxCommandEvent& event) {
 	CreateSegmentTree(activeItem->GetShape());
 }
 
-void OutfitStudioFrame::OnSegmentEditSSF(wxCommandEvent& event) {
+void OutfitStudioFrame::OnSegmentEditSSF(wxCommandEvent& WXUNUSED(event)) {
 	auto segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
 
 	wxString result = wxGetTextFromUser(_("Please enter an SSF file path."), _("SSF File"), segmentSSF->GetValue());
@@ -5421,6 +5426,13 @@ void OutfitStudioFrame::OnTogglePerspective(wxCommandEvent& event) {
 	menuBar->Check(event.GetId(), enabled);
 	toolBarV->ToggleTool(event.GetId(), enabled);
 	glView->SetPerspective(enabled);
+}
+
+void OutfitStudioFrame::OnShowNodes(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+	glView->ShowNodes(enabled);
 }
 
 void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& event) {
@@ -9134,6 +9146,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	brushMode = false;
 	transformMode = false;
 	pivotMode = false;
+	nodesMode = false;
 	vertexEdit = false;
 	segmentMode = false;
 	activeTool = ToolID::Select;
@@ -10438,6 +10451,113 @@ void wxGLPanel::UpdatePivot() {
 	YPivotMesh->ScaleVertices(pivotPosition, lastCenterPivotDistance);
 	ZPivotMesh->ScaleVertices(pivotPosition, lastCenterPivotDistance);
 	PivotCenterMesh->ScaleVertices(pivotPosition, lastCenterPivotDistance);
+}
+
+void wxGLPanel::ShowNodes(bool show) {
+	nodesMode = show;
+
+	for (auto &m : nodesPoints)
+		m->bVisible = show;
+
+	for (auto &m : nodesLines)
+		m->bVisible = show;
+
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateNodes() {
+	for (auto &m : nodesPoints)
+		gls.DeleteOverlay(m->shapeName);
+
+	for (auto &m : nodesLines)
+		gls.DeleteOverlay(m->shapeName);
+
+	nodesPoints.clear();
+	nodesLines.clear();
+
+	auto workNif = os->project->GetWorkNif();
+
+	std::function<void(NiNode*, NiNode*, const MatTransform&, const Vector3&)> addChildNodes = [&](NiNode* node, NiNode* parent, const MatTransform& parentXformToGlobal, const Vector3& parentPosition) {
+		MatTransform xformToParent = node->GetTransformToParent();
+		MatTransform xformToGlobal = parentXformToGlobal.ComposeTransforms(xformToParent);
+		Vector3 position = xformToGlobal.GetVector();
+
+		std::string nodeName = node->GetName();
+		if (!nodeName.empty()) {
+			Vector3 renderPosition = position;
+			std::swap(renderPosition.y, renderPosition.z);
+			renderPosition.x /= -10.0f;
+			renderPosition.y /= 10.0f;
+			renderPosition.z /= 10.0f;
+
+			auto pointMesh = gls.AddVisPoint(renderPosition, "P_" + nodeName);
+			if (pointMesh) {
+				pointMesh->bVisible = nodesMode;
+				nodesPoints.push_back(pointMesh);
+			}
+
+			if (parent) {
+				Vector3 renderParentPosition = parentPosition;
+				std::swap(renderParentPosition.y, renderParentPosition.z);
+				renderParentPosition.x /= -10.0f;
+				renderParentPosition.y /= 10.0f;
+				renderParentPosition.z /= 10.0f;
+
+				auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "L_" + nodeName);
+				if (lineMesh) {
+					lineMesh->bVisible = nodesMode;
+					nodesLines.push_back(lineMesh);
+				}
+			}
+		}
+
+		for (auto &child : node->GetChildren()) {
+			auto childNode = workNif->GetHeader().GetBlock<NiNode>(child.GetIndex());
+			if (childNode)
+				addChildNodes(childNode, node, xformToGlobal, position);
+		}
+	};
+
+	MatTransform rootXformToGlobal;
+	Vector3 rootPosition;
+
+	auto rootNode = workNif->GetRootNode();
+	if (rootNode)
+		addChildNodes(rootNode, nullptr, rootXformToGlobal, rootPosition);
+
+	UpdateNodeColors();
+}
+
+void wxGLPanel::UpdateNodeColors() {
+	std::string activeBone = os->GetActiveBone();
+
+	for (auto &m : nodesPoints) {
+		auto nodeName = m->shapeName.substr(2, m->shapeName.length() - 2);
+		if (nodeName == activeBone) {
+			m->color.x = 1.0f;
+			m->color.y = 0.0f;
+			m->color.z = 0.0f;
+		}
+		else {
+			m->color.x = 0.0f;
+			m->color.y = 1.0f;
+			m->color.z = 0.0f;
+		}
+	}
+
+	for (auto &m : nodesLines) {
+		auto nodeName = m->shapeName.substr(2, m->shapeName.length() - 2);
+		if (nodeName == activeBone) {
+			m->color.x = 0.7f;
+			m->color.y = 0.0f;
+			m->color.z = 0.0f;
+		}
+		else {
+			m->color.x = 0.0f;
+			m->color.y = 0.7f;
+			m->color.z = 0.0f;
+		}
+	}
 }
 
 void wxGLPanel::ShowVertexEdit(bool show) {

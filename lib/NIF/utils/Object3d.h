@@ -540,6 +540,13 @@ public:
 			rows[2][0] * v.x + rows[2][1] * v.y + rows[2][2] * v.z);
 	}
 
+	Vector3 operator*(const float f) const {
+		return Vector3(
+			rows[0][0] * f + rows[0][1] * f + rows[0][2] * f,
+			rows[1][0] * f + rows[1][1] * f + rows[1][2] * f,
+			rows[2][0] * f + rows[2][1] * f + rows[2][2] * f);
+	}
+
 	Matrix3 Transpose() const {
 		Matrix3 res;
 		res[0][0] = rows[0][0];
@@ -1006,6 +1013,10 @@ struct MatTransform {
 		mat[11] = translation.z;
 		return mat;
 	}
+
+	Vector3 GetVector() const {
+		return translation + rotation * scale;
+	};
 
 	// ApplyTransform applies this MatTransform to a vector v by first
 	// scaling v, then rotating the result of that, then translating the
