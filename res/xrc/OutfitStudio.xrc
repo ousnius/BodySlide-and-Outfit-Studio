@@ -249,6 +249,12 @@
 								<bitmap>$(AppDir)\res\images\Nodes.png</bitmap>
 								<toggle>1</toggle>
 							</object>
+							<object class="tool" name="btnShowFloor">
+								<label>Show Floor</label>
+								<tooltip>Toggle rendering of the floor.</tooltip>
+								<bitmap>$(AppDir)\res\images\Floor.png</bitmap>
+								<toggle>1</toggle>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -1839,6 +1845,10 @@
 				</object>
 				<object class="wxMenuItem" name="btnShowNodes">
 					<label>Show Nodes\tN</label>
+					<checkable>1</checkable>
+				</object>
+				<object class="wxMenuItem" name="btnShowFloor">
+					<label>Show Floor</label>
 					<checkable>1</checkable>
 				</object>
 			</object>

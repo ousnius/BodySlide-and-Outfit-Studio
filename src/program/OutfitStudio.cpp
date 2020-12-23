@@ -163,6 +163,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnViewPerspective"), OutfitStudioFrame::OnTogglePerspective)
 
 	EVT_MENU(XRCID("btnShowNodes"), OutfitStudioFrame::OnShowNodes)
+	EVT_MENU(XRCID("btnShowFloor"), OutfitStudioFrame::OnShowFloor)
 	
 	EVT_MENU(XRCID("btnIncreaseSize"), OutfitStudioFrame::OnIncBrush)
 	EVT_MENU(XRCID("btnDecreaseSize"), OutfitStudioFrame::OnDecBrush)
@@ -3180,6 +3181,8 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render) {
 		}
 	}
 
+	glView->UpdateFloor();
+
 	if (render)
 		glView->Render();
 }
@@ -5433,6 +5436,13 @@ void OutfitStudioFrame::OnShowNodes(wxCommandEvent& event) {
 	menuBar->Check(event.GetId(), enabled);
 	toolBarV->ToggleTool(event.GetId(), enabled);
 	glView->ShowNodes(enabled);
+}
+
+void OutfitStudioFrame::OnShowFloor(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+	glView->ShowFloor(enabled);
 }
 
 void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& event) {
@@ -9147,6 +9157,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	transformMode = false;
 	pivotMode = false;
 	nodesMode = false;
+	floorMode = false;
 	vertexEdit = false;
 	segmentMode = false;
 	activeTool = ToolID::Select;
@@ -10557,6 +10568,99 @@ void wxGLPanel::UpdateNodeColors() {
 			m->color.y = 0.7f;
 			m->color.z = 0.0f;
 		}
+	}
+}
+
+void wxGLPanel::ShowFloor(bool show) {
+	floorMode = show;
+
+	for (auto &m : floorMeshes)
+		m->bVisible = show;
+
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateFloor() {
+	for (auto &m : floorMeshes)
+		gls.DeleteMesh(m->shapeName);
+
+	floorMeshes.clear();
+
+	const float floorWidth = 100.0f;
+	const float floorWidthHalf = floorWidth / 2.0f;
+	const float floorGridStepBig = 5.0f;
+	const float floorGridStepSmall = 1.0f;
+	const int numLinesBig = (int)(floorWidth / floorGridStepBig) + 1;
+	const int numLinesSmall = (int)(floorWidth / floorGridStepSmall) + 1;
+
+	float nextLinePos = floorWidth - floorWidthHalf;
+
+	// Floor with width on X and Y axis (big grid)
+	for (int i = 0; i < numLinesBig; i++) {
+		std::string meshName = "BigFloorX_" + std::to_string(i);
+		Vector3 startPos(floorWidthHalf, 0.0f, nextLinePos);
+		Vector3 endPos(-floorWidthHalf, 0.0f, nextLinePos);
+
+		auto lineMesh = gls.AddVisSeg(startPos, endPos, meshName, true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->prop.alpha = 0.5f;
+			lineMesh->bVisible = floorMode;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		meshName = "BigFloorY_" + std::to_string(i);
+		startPos = Vector3(nextLinePos, 0.0f, floorWidthHalf);
+		endPos = Vector3(nextLinePos, 0.0f, -floorWidthHalf);
+
+		lineMesh = gls.AddVisSeg(startPos, endPos, meshName, true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->prop.alpha = 0.5f;
+			lineMesh->bVisible = floorMode;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		nextLinePos -= floorGridStepBig;
+	}
+
+	nextLinePos = floorWidth - floorWidthHalf;
+
+	// Floor with width on X and Y axis (small grid)
+	for (int i = 0; i < numLinesSmall; i++) {
+		std::string meshName = "SmallFloorX_" + std::to_string(i);
+		Vector3 startPos(floorWidthHalf, 0.0f, nextLinePos);
+		Vector3 endPos(-floorWidthHalf, 0.0f, nextLinePos);
+
+		auto lineMesh = gls.AddVisSeg(startPos, endPos, meshName, true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->prop.alpha = 0.25f;
+			lineMesh->bVisible = floorMode;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		meshName = "SmallFloorY_" + std::to_string(i);
+		startPos = Vector3(nextLinePos, 0.0f, floorWidthHalf);
+		endPos = Vector3(nextLinePos, 0.0f, -floorWidthHalf);
+
+		lineMesh = gls.AddVisSeg(startPos, endPos, meshName, true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->prop.alpha = 0.25f;
+			lineMesh->bVisible = floorMode;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		nextLinePos -= floorGridStepSmall;
 	}
 }
 

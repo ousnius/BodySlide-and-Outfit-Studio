@@ -797,13 +797,13 @@ void GLSurface::RenderOneFrame() {
 
 	// Render regular meshes
 	for (auto &m : meshes) {
-		if (!m->HasAlphaBlend() && m->bVisible && m->nTris != 0)
+		if (!m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0))
 			RenderMesh(m);
 	}
 
 	// Render meshes with alpha blending only
 	for (auto &m : meshes) {
-		if (m->HasAlphaBlend() && m->bVisible && m->nTris != 0)
+		if (m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0))
 			RenderMesh(m);
 	}
 
@@ -1007,9 +1007,11 @@ void GLSurface::RenderMesh(mesh* m) {
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(0);
 	}
-	else if (m->rendermode == RenderMode::UnlitWire) {
+	else if (m->rendermode == RenderMode::UnlitWire || m->rendermode == RenderMode::UnlitWireDepth) {
 		glDisable(GL_CULL_FACE);
-		glDisable(GL_DEPTH_TEST);
+
+		if (m->rendermode != RenderMode::UnlitWireDepth)
+			glDisable(GL_DEPTH_TEST);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
@@ -1021,9 +1023,11 @@ void GLSurface::RenderMesh(mesh* m) {
 
 		glDisableVertexAttribArray(0);
 	}
-	else if (m->rendermode == RenderMode::UnlitPoints) {
+	else if (m->rendermode == RenderMode::UnlitPoints || m->rendermode == RenderMode::UnlitPointsDepth) {
 		glDisable(GL_CULL_FACE);
-		glDisable(GL_DEPTH_TEST);
+
+		if (m->rendermode != RenderMode::UnlitPointsDepth)
+			glDisable(GL_DEPTH_TEST);
 
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
 		glEnableVertexAttribArray(0);
@@ -1690,7 +1694,7 @@ mesh* GLSurface::AddVisPlane(const Vector3& center, const Vector2& size, float u
 	return m;
 }
 
-mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name) {
+mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name, const bool asMesh) {
 	mesh* m = GetOverlay(name);
 	if (m) {
 		m->verts[0] = p1;
@@ -1716,12 +1720,20 @@ mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::stri
 
 	m->shapeName = name;
 	m->color = Vector3(0.0f, 1.0f, 1.0f);
-	m->rendermode = RenderMode::UnlitWire;
 	m->material = GetPrimitiveMaterial();
 	m->CreateBuffers();
 
-	namedOverlays[m->shapeName] = overlays.size();
-	overlays.push_back(m);
+	if (asMesh) {
+		m->rendermode = RenderMode::UnlitWireDepth;
+		namedMeshes[m->shapeName] = meshes.size();
+		meshes.push_back(m);
+	}
+	else {
+		m->rendermode = RenderMode::UnlitWire;
+		namedOverlays[m->shapeName] = overlays.size();
+		overlays.push_back(m);
+	}
+
 	return m;
 }
 

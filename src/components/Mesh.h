@@ -23,7 +23,9 @@ enum RenderMode {
 	Normal,
 	UnlitSolid,
 	UnlitWire,
+	UnlitWireDepth,
 	UnlitPoints,
+	UnlitPointsDepth,
 	LitWire
 };
 

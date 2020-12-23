@@ -231,6 +231,9 @@ public:
 	void UpdateNodes();
 	void UpdateNodeColors();
 
+	void ShowFloor(bool show = true);
+	void UpdateFloor();
+
 	void ShowVertexEdit(bool show = true);
 	
 	bool GetEditMode() {
@@ -281,6 +284,14 @@ public:
 	void SetNodesMode(bool on = true) {
 		nodesMode = on;
 		ShowNodes(on);
+	}
+
+	bool GetFloorMode() {
+		return floorMode;
+	}
+	void SetFloorMode(bool on = true) {
+		floorMode = on;
+		ShowFloor(on);
 	}
 
 	bool GetSegmentMode() {
@@ -632,6 +643,7 @@ public:
 
 		nodesPoints.clear();
 		nodesLines.clear();
+		floorMeshes.clear();
 
 		gls.Cleanup();
 	}
@@ -716,6 +728,7 @@ private:
 	bool transformMode;
 	bool pivotMode;
 	bool nodesMode;
+	bool floorMode;
 	bool vertexEdit;
 	bool segmentMode;
 
@@ -772,6 +785,7 @@ private:
 
 	std::vector<mesh*> nodesPoints;
 	std::vector<mesh*> nodesLines;
+	std::vector<mesh*> floorMeshes;
 
 	wxDECLARE_EVENT_TABLE();
 };
@@ -1230,6 +1244,7 @@ private:
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);
 	void OnShowNodes(wxCommandEvent& event);
+	void OnShowFloor(wxCommandEvent& event);
 	void OnFieldOfViewSlider(wxCommandEvent& event);
 	void OnUpdateLights(wxCommandEvent& event);
 	void OnResetLights(wxCommandEvent& event);
