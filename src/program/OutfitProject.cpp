@@ -3826,8 +3826,8 @@ void OutfitProject::ResetTransforms() {
 	for (auto &s : workNif.GetShapes()) {
 		if (s->IsSkinned()) {
 			/*
-			 * Root node, shape and overall skin transform aren't rendered for skinned meshes.
-			 * They only affect different things, e.g. bounds.
+			 * Root node, shape and global-to-skin transform aren't rendered directly for skinned meshes.
+			 * They only affect different things, e.g. bounds and the global-to-parent transforms.
 			 *
 			 * By clearing these and recalculating bounds on export we make sure that
 			 * nothing but the individual bone transforms affect visuals.
@@ -3836,10 +3836,21 @@ void OutfitProject::ResetTransforms() {
 			if (!unskinnedFound)
 				clearRoot = true;
 
-			 // Clear shape transform
+			MatTransform oldXformGlobalToSkin = workAnim.shapeSkinning[s->GetName()].xformGlobalToSkin;
+			MatTransform newXformGlobalToSkin;
+
+			// Apply global-to-skin transform to vertices
+			if (!newXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin)) {
+				ApplyTransformToShapeGeometry(s, newXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
+
+				workAnim.ChangeGlobalToSkinTransform(s->GetName(), newXformGlobalToSkin);
+				workNif.SetShapeTransformGlobalToSkin(s, newXformGlobalToSkin);
+			}
+
+			// Clear shape transform
 			s->SetTransformToParent(MatTransform());
 
-			// Clear overall skin transform
+			// Clear global-to-skin transform
 			workAnim.shapeSkinning[s->GetName()].xformGlobalToSkin.Clear();
 			workNif.SetShapeTransformGlobalToSkin(s, MatTransform());
 		}
