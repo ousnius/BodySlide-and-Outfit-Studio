@@ -584,8 +584,10 @@ bool AABBTree::AABBTreeNode::IntersectSphere(Vector3 &origin, float radius, std:
 
 void AABBTree::AABBTreeNode::UpdateAABB(AABB* childBB) {
 	if (!childBB) {
-		Vector3 bogus;
-		tree->CalcAABBandGeoAvg(mIFacets.get(), 0, nFacets - 1, mBB, bogus);
+		if (nFacets > 0) {
+			Vector3 bogus;
+			tree->CalcAABBandGeoAvg(mIFacets.get(), 0, nFacets - 1, mBB, bogus);
+		}
 	}
 	else
 		mBB.Merge((*childBB));

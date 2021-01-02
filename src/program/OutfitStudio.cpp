@@ -10685,7 +10685,8 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 void wxGLPanel::OnIdle(wxIdleEvent& WXUNUSED(event)) {
 	if (wxGetKeyState(wxKeyCode::WXK_SHIFT) ||
 		wxGetKeyState(wxKeyCode::WXK_CONTROL) ||
-		wxGetKeyState(wxKeyCode::WXK_ALT))
+		wxGetKeyState(wxKeyCode::WXK_ALT) ||
+		lbuttonDown || rbuttonDown || mbuttonDown)
 		return;
 
 	for (auto &it : BVHUpdateQueue)
