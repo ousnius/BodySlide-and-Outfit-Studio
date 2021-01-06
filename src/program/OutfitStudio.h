@@ -617,7 +617,11 @@ public:
 	}
 
 	void DeleteMesh(const std::string& shape) {
-		gls.DeleteMesh(shape);
+		mesh* m = gls.GetMesh(shape);
+		if (m) {
+			BVHUpdateQueue.erase(m);
+			gls.DeleteMesh(m);
+		}
 	}
 
 	void ClearOverlays() {
@@ -644,6 +648,8 @@ public:
 		nodesPoints.clear();
 		nodesLines.clear();
 		floorMeshes.clear();
+
+		BVHUpdateQueue.clear();
 
 		gls.Cleanup();
 	}

@@ -1316,7 +1316,7 @@ mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Ve
 	m->material = GetPrimitiveMaterial();
 	m->CreateBuffers();
 
-	overlays.push_back(m);
+	AddOverlay(m);
 	return m;
 }
 
@@ -1372,7 +1372,7 @@ mesh* GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, floa
 	m->edges[m->nEdges - 1].p2 = 0;
 	m->CreateBuffers();
 
-	overlays.push_back(m);
+	AddOverlay(m);
 	return m;
 }
 
@@ -1397,7 +1397,7 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 		m->rendermode = RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 
-		overlays.push_back(m);
+		AddOverlay(m);
 	}
 
 	m->color = color;
@@ -1489,7 +1489,7 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 		m->rendermode = RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 
-		overlays.push_back(m);
+		AddOverlay(m);
 	}
 
 	m->nEdges = 0;
@@ -1584,7 +1584,7 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 		m->rendermode = RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 
-		overlays.push_back(m);
+		AddOverlay(m);
 	}
 
 	m->color = color;
@@ -1638,7 +1638,7 @@ mesh* GLSurface::AddVisPlane(const Vector3& center, const Vector2& size, float u
 		m->rendermode = RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 
-		overlays.push_back(m);
+		AddOverlay(m);
 	}
 
 	if (color)
