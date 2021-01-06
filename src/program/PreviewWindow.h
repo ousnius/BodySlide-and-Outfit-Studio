@@ -78,15 +78,12 @@ public:
 
 	void UpdateMeshes(const std::string& shapeName, std::vector<Vector3>* verts, std::vector<Vector2>* uvs = nullptr) {
 		std::set<int> changed;
-		int id = gls.GetMeshID(shapeName);
-		if (id < 0)
+		mesh* m = gls.GetMesh(shapeName);
+		if (!m)
 			return;
 
-		gls.Update(id, verts, uvs, &changed);
-
-		mesh* m = gls.GetMesh(shapeName);
-		if (m)
-			m->SmoothNormals(changed);
+		gls.Update(m, verts, uvs, &changed);
+		m->SmoothNormals(changed);
 	}
 
 	void SetShapeTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const std::string& vShader, const std::string& fShader, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile()) {

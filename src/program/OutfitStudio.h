@@ -620,8 +620,8 @@ public:
 		gls.DeleteMesh(shape);
 	}
 
-	void DestroyOverlays() {
-		gls.DeleteOverlays();
+	void ClearOverlays() {
+		gls.ClearOverlays();
 	}
 
 	void Cleanup() {
@@ -717,7 +717,7 @@ private:
 	int hoverPoint, mouseDownPoint;
 	Edge hoverEdge, mouseDownEdge;
 
-	std::set<int> BVHUpdateQueue;
+	std::set<mesh*> BVHUpdateQueue;
 
 	OutfitStudioFrame* os = nullptr;
 

@@ -154,7 +154,7 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 	if (shapeName == nullptr)
-		gls.DeleteAllMeshes();
+		gls.ClearMeshes();
 
 	for (int i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];

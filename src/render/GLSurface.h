@@ -64,47 +64,15 @@ private:
 	ResourceLoader resLoader;
 	GLMaterial* primitiveMat = nullptr;
 
-	std::unordered_map<std::string, int> namedMeshes;
-	std::unordered_map<std::string, int> namedOverlays;
 	std::vector<mesh*> meshes;
 	std::vector<mesh*> overlays;
 
 	std::vector<mesh*> activeMeshes;
-	std::vector<int> activeMeshesID;
 	mesh* selectedMesh = nullptr;
 
 	void InitLighting();
 	void InitGLExtensions();
 	int InitGLSettings();
-
-	void DeleteMesh(int meshID) {
-		if (meshID < meshes.size()) {
-			SetContext();
-
-			activeMeshes.erase(std::remove(activeMeshes.begin(), activeMeshes.end(), meshes[meshID]), activeMeshes.end());
-			activeMeshesID.erase(std::remove(activeMeshesID.begin(), activeMeshesID.end(), meshID), activeMeshesID.end());
-
-			delete meshes[meshID];
-			meshes.erase(meshes.begin() + meshID);
-
-			// Renumber meshes after the deleted one
-			for (int i = meshID; i < meshes.size(); i++)
-				namedMeshes[meshes[i]->shapeName] = i;
-		}
-	}
-
-	void DeleteOverlay(int meshID) {
-		if (meshID < overlays.size()) {
-			SetContext();
-
-			delete overlays[meshID];
-			overlays.erase(overlays.begin() + meshID);
-
-			// Renumber overlays after the deleted one
-			for (int i = meshID; i < overlays.size(); i++)
-				namedOverlays[overlays[i]->shapeName] = i;
-		}
-	}
 
 public:
 	// Get the attributes to use for creating a wxGLCanvas
@@ -127,76 +95,79 @@ public:
 		colorWire = color;
 	}
 
-	void DeleteAllMeshes() {
+	void ClearMeshes() {
 		SetContext();
 
 		for (auto &m : meshes)
 			delete m;
 
 		meshes.clear();
-		namedMeshes.clear();
-		activeMeshesID.clear();
 		activeMeshes.clear();
 	}
 
-	void DeleteMesh(const std::string shapeName) {
-		int id = GetMeshID(shapeName);
-		if (id >= 0) {
-			DeleteMesh(id);
-			namedMeshes.erase(shapeName);
+	void DeleteMesh(mesh* m) {
+		if (!m)
+			return;
+
+		auto it = std::find(meshes.begin(), meshes.end(), m);
+		if (it != meshes.end()) {
+			int meshID = std::distance(meshes.begin(), it);
+
+			activeMeshes.erase(std::remove(activeMeshes.begin(), activeMeshes.end(), m), activeMeshes.end());
+
+			SetContext();
+
+			delete m;
+			meshes.erase(meshes.begin() + meshID);
+
+			// Renumber meshes after the deleted one
+			for (int i = meshID; i < meshes.size(); i++) {
+				m = meshes[i];
+			}
 		}
 	}
 
-	void DeleteOverlays() {
+	void DeleteMesh(const std::string& shapeName) {
+		DeleteMesh(GetMesh(shapeName));
+	}
+
+	void ClearOverlays() {
 		SetContext();
 
-		for (int i = 0; i < overlays.size(); i++)
-			delete overlays[i];
+		for (auto &m : overlays)
+			delete m;
 
 		overlays.clear();
-		namedOverlays.clear();
 	}
 
-	void DeleteOverlay(const std::string shapeName) {
-		int id = GetOverlayID(shapeName);
-		if (id >= 0) {
-			DeleteOverlay(id);
-			namedOverlays.erase(shapeName);
+	void DeleteOverlay(mesh* m) {
+		if (!m)
+			return;
+
+		auto it = std::find(overlays.begin(), overlays.end(), m);
+		if (it != overlays.end()) {
+			int meshID = std::distance(overlays.begin(), it);
+
+			SetContext();
+
+			delete m;
+			overlays.erase(overlays.begin() + meshID);
+
+			// Renumber overlays after the deleted one
+			for (int i = meshID; i < overlays.size(); i++) {
+				m = overlays[i];
+			}
 		}
 	}
 
-
-	int GetMeshID(const std::string& shapeName) {
-		auto it = namedMeshes.find(shapeName);
-		if (it != namedMeshes.end())
-			return it->second;
-
-		return -1;
-	}
-	std::string GetMeshName(int id) {
-		for (auto &mn : namedMeshes)
-			if (mn.second == id)
-				return mn.first;
-
-		return "";
+	void DeleteOverlay(const std::string& shapeName) {
+		DeleteOverlay(GetOverlay(shapeName));
 	}
 
 	void RenameMesh(const std::string& shapeName, const std::string& newShapeName) {
-		if (namedMeshes.find(shapeName) != namedMeshes.end()) {
-			int mid = namedMeshes[shapeName];
-			namedMeshes[newShapeName] = mid;
-			meshes[mid]->shapeName = newShapeName;
-			namedMeshes.erase(shapeName);
-		}
-	}
-
-
-	int GetOverlayID(const std::string& shapeName) {
-		std::unordered_map<std::string, int>::iterator it = namedOverlays.find(shapeName);
-		if (it != namedOverlays.end())
-			return it->second;
-
-		return -1;
+		mesh* m = GetMesh(shapeName);
+		if (m)
+			m->shapeName = newShapeName;
 	}
 
 	std::vector<mesh*> GetActiveMeshes() {
@@ -228,31 +199,23 @@ public:
 	}
 
 	void AddMesh(mesh* m) {
-		int id = GetMeshID(m->shapeName);
-		if (id >= 0)
-			DeleteMesh(id);
-
 		if (!m->shapeName.empty())
-			namedMeshes[m->shapeName] = meshes.size();
+			DeleteMesh(m->shapeName);
 
 		meshes.push_back(m);
 	}
 
 	void AddOverlay(mesh* m) {
-		int id = GetOverlayID(m->shapeName);
-		if (id >= 0)
-			DeleteOverlay(id);
-
 		if (!m->shapeName.empty())
-			namedOverlays[m->shapeName] = overlays.size();
+			DeleteOverlay(m->shapeName);
 
 		overlays.push_back(m);
 	}
 
 	mesh* GetMesh(const std::string& shapeName) {
-		int id = GetMeshID(shapeName);
-		if (id >= 0)
-			return meshes[id];
+		auto it = std::find_if(meshes.begin(), meshes.end(), [&shapeName](mesh* m) { return m->shapeName == shapeName; });
+		if (it != meshes.end())
+			return (*it);
 
 		return nullptr;
 	}
@@ -261,17 +224,20 @@ public:
 		return meshes;
 	}
 
-	mesh* GetOverlay(int overlayID) {
-		if (overlayID >= 0)
-			return overlays[overlayID];
+	const std::vector<mesh*> GetMeshesFiltered() {
+		std::vector<mesh*> filteredMeshes;
 
-		return nullptr;
+		for (auto &m : meshes)
+			if (m->rendermode == RenderMode::Normal)
+				filteredMeshes.push_back(m);
+
+		return filteredMeshes;
 	}
 
-	mesh* GetOverlay(const std::string& overlayName) {
-		int id = GetOverlayID(overlayName);
-		if (id >= 0)
-			return overlays[id];
+	mesh* GetOverlay(const std::string& shapeName) {
+		auto it = std::find_if(overlays.begin(), overlays.end(), [&shapeName](mesh* m) { return m->shapeName == shapeName; });
+		if (it != overlays.end())
+			return (*it);
 
 		return nullptr;
 	}
@@ -315,7 +281,7 @@ public:
 		const Vector3& directional0Dir, const Vector3& directional1Dir, const Vector3& directional2Dir);
 
 	void GetPickRay(int ScreenX, int ScreenY, mesh* m, Vector3& dirVect, Vector3& outNearPos);
-	int PickMesh(int ScreenX, int ScreenY);
+	mesh* PickMesh(int ScreenX, int ScreenY);
 	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverPoint = nullptr, Vector3* outHoverColor = nullptr, float* outHoverAlpha = nullptr, Edge* outHoverEdge = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, mesh* hitMesh = nullptr);
 	void ShowCursor(bool show = true);
@@ -335,21 +301,18 @@ public:
 	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name);
 	mesh* AddVisPoint(const Vector3& p, const std::string& name = "PointMesh", const Vector3* color = nullptr);
 	mesh* AddVisPlane(const Vector3& center, const Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const Vector3* color = nullptr);
-	mesh* AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name, const bool asMesh = false);
+	mesh* AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name = "", const bool asMesh = false);
 
 	mesh* AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color = nullptr);
 	void SetSkinModelMat(mesh *m, const MatTransform &xformGlobalToSkin);
 	void Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
-	void Update(int shapeIndex, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
+	void Update(mesh* m, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
 	mesh* ReloadMeshFromNif(NifFile* nif, std::string shapeName);
 	void RecalculateMeshBVH(const std::string& shapeName);
-	void RecalculateMeshBVH(int shapeIndex);
 
 	bool SetMeshVisibility(const std::string& name, bool visible = true);
-	bool SetMeshVisibility(int shapeIndex, bool visible = true);
 	void SetOverlayVisibility(const std::string& name, bool visible = true);
-	void SetActiveMeshesID(const std::vector<int>& shapeIndices);
-	void SetActiveMeshesID(const std::vector<std::string>& shapeNames);
+	void SetActiveMeshes(const std::vector<std::string>& shapeNames);
 	void SetSelectedMesh(const std::string& shapeName);
 
 	RenderMode SetMeshRenderMode(const std::string& name, RenderMode mode);

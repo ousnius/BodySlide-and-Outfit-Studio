@@ -3036,7 +3036,7 @@ void OutfitStudioFrame::ClearProject() {
 
 	project->mCopyRef = true;
 
-	glView->DestroyOverlays();
+	glView->ClearOverlays();
 	activePartition.Unset();
 	activeSegment.Unset();
 
@@ -9286,40 +9286,31 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<
 }
 
 void wxGLPanel::UpdateMeshVertices(const std::string& shapeName, std::vector<Vector3>* verts, bool updateBVH, bool recalcNormals, bool render, std::vector<Vector2>* uvs) {
-	int id = gls.GetMeshID(shapeName);
-	if (id < 0)
-		return;
+	mesh* m = gls.GetMesh(shapeName);
+	if (m) {
+		gls.Update(m, verts, uvs);
 
-	gls.Update(id, verts, uvs);
+		if (updateBVH)
+			BVHUpdateQueue.insert(m);
 
-	if (updateBVH)
-		BVHUpdateQueue.insert(id);
-
-	if (recalcNormals)
-		RecalcNormals(shapeName);
+		if (recalcNormals)
+			m->SmoothNormals();
+	}
 
 	if (render)
 		gls.RenderOneFrame();
 }
 
 void wxGLPanel::RecalculateMeshBVH(const std::string& shapeName) {
-	int id = gls.GetMeshID(shapeName);
-	if (id < 0)
-		return;
-
-	gls.RecalculateMeshBVH(id);
+	gls.RecalculateMeshBVH(shapeName);
 }
 
 void wxGLPanel::ShowShape(const std::string& shapeName, bool show) {
-	int id = gls.GetMeshID(shapeName);
-	if (id < 0)
-		return;
-
-	gls.SetMeshVisibility(id, show);
+	gls.SetMeshVisibility(shapeName, show);
 }
 
 void wxGLPanel::SetActiveShapes(const std::vector<std::string>& shapeNames) {
-	gls.SetActiveMeshesID(shapeNames);
+	gls.SetActiveMeshes(shapeNames);
 }
 
 void wxGLPanel::SetSelectedShape(const std::string& shapeName) {
@@ -10236,9 +10227,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 				m->verts[pit.first] = pit.second;
 
 			m->SmoothNormals();
-
-			int meshID = gls.GetMeshID(uss.shapeName);
-			BVHUpdateQueue.insert(meshID);
+			BVHUpdateQueue.insert(m);
 
 			m->QueueUpdate(mesh::UpdateType::Position);
 		}
@@ -10480,10 +10469,10 @@ void wxGLPanel::ShowNodes(bool show) {
 
 void wxGLPanel::UpdateNodes() {
 	for (auto &m : nodesPoints)
-		gls.DeleteOverlay(m->shapeName);
+		gls.DeleteOverlay(m);
 
 	for (auto &m : nodesLines)
-		gls.DeleteOverlay(m->shapeName);
+		gls.DeleteOverlay(m);
 
 	nodesPoints.clear();
 	nodesLines.clear();
@@ -10584,7 +10573,7 @@ void wxGLPanel::ShowFloor(bool show) {
 
 void wxGLPanel::UpdateFloor() {
 	for (auto &m : floorMeshes)
-		gls.DeleteMesh(m->shapeName);
+		gls.DeleteMesh(m);
 
 	floorMeshes.clear();
 
@@ -10599,11 +10588,10 @@ void wxGLPanel::UpdateFloor() {
 
 	// Floor with width on X and Y axis (big grid)
 	for (int i = 0; i < numLinesBig; i++) {
-		std::string meshName = "BigFloorX_" + std::to_string(i);
 		Vector3 startPos(floorWidthHalf, 0.0f, nextLinePos);
 		Vector3 endPos(-floorWidthHalf, 0.0f, nextLinePos);
 
-		auto lineMesh = gls.AddVisSeg(startPos, endPos, meshName, true);
+		auto lineMesh = gls.AddVisSeg(startPos, endPos, "", true);
 		if (lineMesh) {
 			lineMesh->color.x = 0.0f;
 			lineMesh->color.y = 1.0f;
@@ -10613,11 +10601,10 @@ void wxGLPanel::UpdateFloor() {
 			floorMeshes.push_back(lineMesh);
 		}
 
-		meshName = "BigFloorY_" + std::to_string(i);
 		startPos = Vector3(nextLinePos, 0.0f, floorWidthHalf);
 		endPos = Vector3(nextLinePos, 0.0f, -floorWidthHalf);
 
-		lineMesh = gls.AddVisSeg(startPos, endPos, meshName, true);
+		lineMesh = gls.AddVisSeg(startPos, endPos, "", true);
 		if (lineMesh) {
 			lineMesh->color.x = 0.0f;
 			lineMesh->color.y = 1.0f;
@@ -10634,11 +10621,10 @@ void wxGLPanel::UpdateFloor() {
 
 	// Floor with width on X and Y axis (small grid)
 	for (int i = 0; i < numLinesSmall; i++) {
-		std::string meshName = "SmallFloorX_" + std::to_string(i);
 		Vector3 startPos(floorWidthHalf, 0.0f, nextLinePos);
 		Vector3 endPos(-floorWidthHalf, 0.0f, nextLinePos);
 
-		auto lineMesh = gls.AddVisSeg(startPos, endPos, meshName, true);
+		auto lineMesh = gls.AddVisSeg(startPos, endPos, "", true);
 		if (lineMesh) {
 			lineMesh->color.x = 0.0f;
 			lineMesh->color.y = 1.0f;
@@ -10648,11 +10634,10 @@ void wxGLPanel::UpdateFloor() {
 			floorMeshes.push_back(lineMesh);
 		}
 
-		meshName = "SmallFloorY_" + std::to_string(i);
 		startPos = Vector3(nextLinePos, 0.0f, floorWidthHalf);
 		endPos = Vector3(nextLinePos, 0.0f, -floorWidthHalf);
 
-		lineMesh = gls.AddVisSeg(startPos, endPos, meshName, true);
+		lineMesh = gls.AddVisSeg(startPos, endPos, "", true);
 		if (lineMesh) {
 			lineMesh->color.x = 0.0f;
 			lineMesh->color.y = 1.0f;
@@ -10689,8 +10674,8 @@ void wxGLPanel::OnIdle(wxIdleEvent& WXUNUSED(event)) {
 		lbuttonDown || rbuttonDown || mbuttonDown)
 		return;
 
-	for (auto &it : BVHUpdateQueue)
-		gls.RecalculateMeshBVH(it);
+	for (auto &m : BVHUpdateQueue)
+		m->CreateBVH();
 
 	BVHUpdateQueue.clear();
 }
@@ -10955,9 +10940,9 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		event.GetPosition(&x, &y);
 		wxPoint p = event.GetPosition();
 
-		int meshID = gls.PickMesh(x, y);
-		if (meshID > -1)
-			os->SelectShape(gls.GetMeshName(meshID));
+		mesh* m = gls.PickMesh(x, y);
+		if (m)
+			os->SelectShape(m->shapeName);
 	}
 
 	if (isPainting) {
