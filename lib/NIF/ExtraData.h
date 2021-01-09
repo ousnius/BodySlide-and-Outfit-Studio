@@ -313,6 +313,15 @@ public:
 	void Put(NiStream& stream);
 	BSInvMarker* Clone() { return new BSInvMarker(*this); }
 
+	ushort GetRotationX() { return rotationX; }
+	void SetRotationX(const ushort x) { rotationX = x; }
+
+	ushort GetRotationY() { return rotationY; }
+	void SetRotationY(const ushort y) { rotationY = y; }
+
+	ushort GetRotationZ() { return rotationZ; }
+	void SetRotationZ(const ushort z) { rotationZ = z; }
+
 	float GetZoom() { return zoom; }
 	void SetZoom(const float z) { zoom = z; }
 };

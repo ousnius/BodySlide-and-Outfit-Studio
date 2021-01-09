@@ -1286,7 +1286,7 @@ void bhkRigidBody::Get(NiStream& stream) {
 		stream >> unkInt5;
 
 	if (stream.GetVersion().User() >= 12)
-		stream >> unkShort3;
+		stream >> bodyFlags;
 }
 
 void bhkRigidBody::Put(NiStream& stream) {
@@ -1342,7 +1342,7 @@ void bhkRigidBody::Put(NiStream& stream) {
 		stream << unkInt5;
 
 	if (stream.GetVersion().User() >= 12)
-		stream << unkShort3;
+		stream << bodyFlags;
 }
 
 void bhkRigidBody::GetChildRefs(std::set<Ref*>& refs) {

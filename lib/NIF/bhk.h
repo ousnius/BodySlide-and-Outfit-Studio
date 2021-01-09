@@ -271,6 +271,9 @@ public:
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	NiCollisionObject* Clone() { return new NiCollisionObject(*this); }
+
+	int GetTargetRef() { return targetRef.GetIndex(); }
+	void SetTargetRef(const int ref) { targetRef.SetIndex(ref); }
 };
 
 enum PropagationMode : uint {
@@ -385,6 +388,9 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	void GetChildIndices(std::vector<int>& indices);
 	bhkNiCollisionObject* Clone() { return new bhkNiCollisionObject(*this); }
+
+	int GetBodyRef() { return bodyRef.GetIndex(); }
+	void SetBodyRef(const int ref) { bodyRef.SetIndex(ref); }
 };
 
 class bhkCollisionObject : public bhkNiCollisionObject {
@@ -490,6 +496,9 @@ class bhkSerializable : public bhkRefObject {
 };
 
 class bhkShape : public bhkSerializable {
+public:
+	virtual HavokMaterial GetMaterial() { return 0; }
+	virtual void SetMaterial(HavokMaterial mat) {}
 };
 
 class bhkHeightFieldShape : public bhkShape {
@@ -511,6 +520,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	bhkPlaneShape* Clone() { return new bhkPlaneShape(*this); }
+
+	HavokMaterial GetMaterial() { return material; }
+	void SetMaterial(HavokMaterial mat) { material = mat; }
 };
 
 class bhkSphereRepShape : public bhkShape {
@@ -521,6 +533,12 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
+
+	HavokMaterial GetMaterial() { return material; }
+	void SetMaterial(HavokMaterial mat) { material = mat; }
+
+	float GetRadius() { return radius; }
+	void SetRadius(const float r) { radius = r; }
 };
 
 class bhkMultiSphereShape : public bhkSphereRepShape {
@@ -564,6 +582,12 @@ public:
 	bhkConvexListShape* Clone() { return new bhkConvexListShape(*this); }
 
 	BlockRefArray<bhkConvexShape>& GetShapes();
+
+	HavokMaterial GetMaterial() { return material; }
+	void SetMaterial(HavokMaterial mat) { material = mat; }
+
+	float GetRadius() { return radius; }
+	void SetRadius(const float r) { radius = r; }
 };
 
 class bhkConvexVerticesShape : public bhkConvexShape {
@@ -599,6 +623,12 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	bhkBoxShape* Clone() { return new bhkBoxShape(*this); }
+
+	Vector3 GetDimensions() { return dimensions; }
+	void SetDimensions(const Vector3 d) { dimensions = d; }
+
+	float GetRadius2() { return radius2; }
+	void SetRadius2(const float r) { radius2 = r; }
 };
 
 class bhkSphereShape : public bhkConvexShape {
@@ -626,6 +656,15 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	void GetChildIndices(std::vector<int>& indices);
 	bhkTransformShape* Clone() { return new bhkTransformShape(*this); }
+
+	int GetShapeRef() { return shapeRef.GetIndex(); }
+	void SetShapeRef(const int ref) { shapeRef.SetIndex(ref); }
+
+	HavokMaterial GetMaterial() { return material; }
+	void SetMaterial(HavokMaterial mat) { material = mat; }
+
+	float GetRadius() { return radius; }
+	void SetRadius(const float r) { radius = r; }
 };
 
 class bhkConvexTransformShape : public bhkTransformShape {
@@ -651,6 +690,18 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	bhkCapsuleShape* Clone() { return new bhkCapsuleShape(*this); }
+
+	Vector3 GetPoint1() { return point1; }
+	void SetPoint1(const Vector3 p) { point1 = p; }
+
+	Vector3 GetPoint2() { return point2; }
+	void SetPoint2(const Vector3 p) { point2 = p; }
+
+	float GetRadius1() { return radius1; }
+	void SetRadius1(const float r) { radius1 = r; }
+
+	float GetRadius2() { return radius2; }
+	void SetRadius2(const float r) { radius2 = r; }
 };
 
 class bhkBvTreeShape : public bhkShape {
@@ -677,6 +728,9 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	void GetChildIndices(std::vector<int>& indices);
 	bhkMoppBvTreeShape* Clone() { return new bhkMoppBvTreeShape(*this); }
+
+	int GetShapeRef() { return shapeRef.GetIndex(); }
+	void SetShapeRef(const int ref) { shapeRef.SetIndex(ref); }
 };
 
 class NiTriStripsData;
@@ -709,6 +763,12 @@ public:
 	bhkNiTriStripsShape* Clone() { return new bhkNiTriStripsShape(*this); }
 
 	BlockRefArray<NiTriStripsData>& GetParts();
+
+	HavokMaterial GetMaterial() { return material; }
+	void SetMaterial(HavokMaterial mat) { material = mat; }
+
+	float GetRadius() { return radius; }
+	void SetRadius(const float r) { radius = r; }
 };
 
 class bhkShapeCollection : public bhkShape {
@@ -734,6 +794,9 @@ public:
 	bhkListShape* Clone() { return new bhkListShape(*this); }
 
 	BlockRefArray<bhkShape>& GetSubShapes();
+
+	HavokMaterial GetMaterial() { return material; }
+	void SetMaterial(HavokMaterial mat) { material = mat; }
 };
 
 struct hkTriangleData {
@@ -798,6 +861,15 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	void GetChildIndices(std::vector<int>& indices);
 	bhkPackedNiTriStripsShape* Clone() { return new bhkPackedNiTriStripsShape(*this); }
+
+	float GetRadius() { return radius; }
+	void SetRadius(const float r) { radius = r; }
+
+	float GetRadius2() { return radius2; }
+	void SetRadius2(const float r) { radius2 = r; }
+
+	int GetDataRef() { return dataRef.GetIndex(); }
+	void SetDataRef(const int ref) { dataRef.SetIndex(ref); }
 };
 
 class bhkLiquidAction : public bhkSerializable {
@@ -839,6 +911,9 @@ public:
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	bhkOrientHingedBodyAction* Clone() { return new bhkOrientHingedBodyAction(*this); }
+
+	int GetBodyRef() { return bodyRef.GetIndex(); }
+	void SetBodyRef(const int ref) { bodyRef.SetIndex(ref); }
 };
 
 class bhkWorldObject : public bhkSerializable {
@@ -856,6 +931,15 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	void GetChildIndices(std::vector<int>& indices);
 	bhkWorldObject* Clone() { return new bhkWorldObject(*this); }
+
+	int GetShapeRef() { return shapeRef.GetIndex(); }
+	void SetShapeRef(const int ref) { shapeRef.SetIndex(ref); }
+
+	HavokFilter GetCollisionFilter() { return collisionFilter; }
+	void SetCollisionFilter(const HavokFilter cf) { collisionFilter = cf; }
+
+	byte GetBroadPhaseType() { return broadPhaseType; }
+	void SetBroadPhaseType(const byte bpt) { broadPhaseType = bpt; }
 };
 
 class bhkPhantom : public bhkWorldObject {
@@ -1118,7 +1202,7 @@ private:
 	uint unkInt4 = 0;						// User Version >= 12
 	BlockRefArray<bhkSerializable> constraintRefs;
 	uint unkInt5 = 0;						// User Version <= 11
-	ushort unkShort3 = 0;					// User Version >= 12
+	ushort bodyFlags = 0;					// User Version >= 12
 
 public:
 	static constexpr const char* BlockName = "bhkRigidBody";
@@ -1129,6 +1213,9 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	void GetChildIndices(std::vector<int>& indices);
 	bhkRigidBody* Clone() { return new bhkRigidBody(*this); }
+
+	HavokFilter GetCollisionFilterCopy() { return collisionFilterCopy; }
+	void SetCollisionFilterCopy(const HavokFilter cf) { collisionFilterCopy = cf; }
 
 	BlockRefArray<bhkSerializable>& GetConstraints();
 };
@@ -1209,6 +1296,18 @@ public:
 	void GetChildIndices(std::vector<int>& indices);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	bhkCompressedMeshShape* Clone() { return new bhkCompressedMeshShape(*this); }
+
+	int GetTargetRef() { return targetRef.GetIndex(); }
+	void SetTargetRef(const int ref) { targetRef.SetIndex(ref); }
+
+	float GetRadius() { return radius; }
+	void SetRadius(const float r) { radius = r; }
+
+	float GetRadius2() { return radius2; }
+	void SetRadius2(const float r) { radius2 = r; }
+
+	int GetDataRef() { return dataRef.GetIndex(); }
+	void SetDataRef(const int ref) { dataRef.SetIndex(ref); }
 };
 
 struct BoneMatrix {
@@ -1290,4 +1389,10 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	bhkRagdollTemplateData* Clone() { return new bhkRagdollTemplateData(*this); }
+
+	HavokMaterial GetMaterial() { return material; }
+	void SetMaterial(HavokMaterial mat) { material = mat; }
+
+	float GetRadius() { return radius; }
+	void SetRadius(const float r) { radius = r; }
 };
