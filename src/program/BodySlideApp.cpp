@@ -2566,7 +2566,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 		switch (app->targetGame) {
 		case SKYRIMSE:
 		case SKYRIMVR:
-			cbForceBodyNormals->Show();
+			//cbForceBodyNormals->Show();
 			break;
 		}
 	}

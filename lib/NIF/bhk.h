@@ -498,7 +498,7 @@ class bhkSerializable : public bhkRefObject {
 class bhkShape : public bhkSerializable {
 public:
 	virtual HavokMaterial GetMaterial() { return 0; }
-	virtual void SetMaterial(HavokMaterial mat) {}
+	virtual void SetMaterial(HavokMaterial) {}
 };
 
 class bhkHeightFieldShape : public bhkShape {
