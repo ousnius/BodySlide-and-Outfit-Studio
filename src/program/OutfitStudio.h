@@ -815,6 +815,8 @@ public:
 	virtual void OnUnhandledException();
 	virtual void OnFatalException();
 
+	void CharHook(wxKeyEvent& event);
+
 	wxString GetGameDataPath(TargetGame targ);
 	void InitLanguage();
 
@@ -1203,6 +1205,9 @@ private:
 	void OnFixedWeight(wxCommandEvent& event);
 	void OnCBNormalizeWeights(wxCommandEvent& event);
 	void OnSelectSliders(wxCommandEvent& event);
+
+	void OnSliderFilterChanged(wxCommandEvent&);
+	void DoFilterSliders();
 
 	void ToggleVisibility(wxTreeItemId firstItem = wxTreeItemId());
 	void OnShapeVisToggle(wxTreeEvent& event);

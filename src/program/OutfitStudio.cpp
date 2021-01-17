@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../files/TriFile.h"
 #include "../utils/PlatformUtil.h"
 
+#include <wx/srchctrl.h>
 #include <wx/debugrpt.h>
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
@@ -84,6 +85,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMMAND_SCROLL(wxID_ANY, OutfitStudioFrame::OnSlider)
 	EVT_BUTTON(wxID_ANY, OutfitStudioFrame::OnClickSliderButton)
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
+	EVT_TEXT_ENTER(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
+	EVT_TEXT(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
 	EVT_CHECKBOX(XRCID("cbFixedWeight"), OutfitStudioFrame::OnFixedWeight)
 	EVT_CHECKBOX(XRCID("cbNormalizeWeights"), OutfitStudioFrame::OnCBNormalizeWeights)
 	EVT_CHECKBOX(wxID_ANY, OutfitStudioFrame::OnCheckBox)
@@ -423,6 +426,8 @@ bool OutfitStudio::OnInit() {
 		}
 	}
 
+	Bind(wxEVT_CHAR_HOOK, &OutfitStudio::CharHook, this);
+
 	wxLogMessage("Outfit Studio initialized.");
 	return true;
 }
@@ -490,6 +495,33 @@ void OutfitStudio::OnFatalException() {
 	wxDebugReport report;
 	report.AddExceptionContext();
 	report.Process();
+}
+
+void OutfitStudio::CharHook(wxKeyEvent& event) {
+	wxWindow* w = (wxWindow*)event.GetEventObject();
+	if (!w) {
+		event.Skip();
+		return;
+	}
+
+#ifdef _WINDOWS
+	int keyCode = event.GetKeyCode();
+	bool charHack = keyCode > 0x40 && keyCode < 0x80;
+	bool letterHack = keyCode > 0x40 && keyCode < 0x5B;
+	if (charHack) {
+		if (letterHack && !event.ShiftDown())
+			keyCode += 32;
+
+		auto searchCtrl = dynamic_cast<wxTextCtrl*>(w);
+		if (searchCtrl) {
+			HWND hwndEdit = searchCtrl->GetHandle();
+			::SendMessage(hwndEdit, WM_CHAR, keyCode, event.GetRawKeyFlags());
+			return;
+		}
+	}
+#endif
+
+	event.Skip();
 }
 
 bool OutfitStudio::SetDefaultConfig() {
@@ -982,6 +1014,13 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		rightPanel->SetDoubleBuffered(true);
 
 	xrc->AttachUnknownControl("mGLView", glView, this);
+
+	auto search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, -1), wxTE_PROCESS_ENTER);
+	search->ShowSearchButton(true);
+	search->SetDescriptiveText("Slider Filter");
+	search->SetToolTip("Filter slider list by name");
+
+	xrc->AttachUnknownControl("sliderFilter", search, this);
 
 	project = new OutfitProject(this);	// Create empty project
 	CreateSetSliders();
@@ -1876,7 +1915,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 }
 
 void OutfitStudioFrame::CreateSetSliders() {
-	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
+	sliderScroll = XRCCTRL(*this, "sliderScroll", wxScrolledWindow);
 	if (!sliderScroll)
 		return;
 
@@ -1895,6 +1934,10 @@ void OutfitStudioFrame::CreateSetSliders() {
 
 	sliderDisplays.clear();
 
+	auto searchCtrl = XRCCTRL(*this, "sliderFilter", wxSearchCtrl);
+	if (searchCtrl)
+		searchCtrl->Clear();
+
 	wxSizer* rootSz = sliderScroll->GetSizer();
 
 	for (int i = 0; i < project->SliderCount(); i++)  {
@@ -1910,6 +1953,8 @@ void OutfitStudioFrame::CreateSetSliders() {
 
 	sliderScroll->FitInside();
 	sliderScroll->Thaw();
+
+	DoFilterSliders();
 
 	EndProgress();
 }
@@ -3966,6 +4011,7 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 	sliderScroll->Thaw();
 
 	ApplySliders();
+	DoFilterSliders();
 }
 
 void OutfitStudioFrame::OnExportTRIHead(wxCommandEvent& WXUNUSED(event)) {
@@ -4112,6 +4158,37 @@ void OutfitStudioFrame::OnSelectSliders(wxCommandEvent& event) {
 		ShowSliderEffect(sd.first, checked);
 
 	ApplySliders();
+}
+
+void OutfitStudioFrame::OnSliderFilterChanged(wxCommandEvent& WXUNUSED(event)) {
+	DoFilterSliders();
+}
+
+void OutfitStudioFrame::DoFilterSliders() {
+	auto searchCtrl = XRCCTRL(*this, "sliderFilter", wxSearchCtrl);
+	if (!searchCtrl)
+		return;
+
+	std::string filter = searchCtrl->GetValue().ToUTF8();
+	std::regex re(filter, std::regex_constants::icase);
+
+	for (auto &sd : sliderDisplays) {
+		if (!sd.second)
+			continue;
+
+		sd.second->sliderPane->Hide();
+
+		try {
+			// Filter slider
+			if (std::regex_search(sd.first, re))
+				sd.second->sliderPane->Show();
+		}
+		catch (std::regex_error&) {
+			sd.second->sliderPane->Show();
+		}
+	}
+
+	sliderScroll->FitInside();
 }
 
 void OutfitStudioFrame::OnFixedWeight(wxCommandEvent& event) {
@@ -6455,7 +6532,9 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 
 	sliderScroll->FitInside();
 	sliderScroll->Thaw();
+
 	ApplySliders();
+	DoFilterSliders();
 
 	wxLogMessage("Added morphs for the following shapes:\n%s", addedDiffs);
 	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedDiffs), _("OSD Import"));
@@ -6539,7 +6618,9 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 	sliderScroll->FitInside();
 	sliderScroll->Thaw();
+
 	ApplySliders();
+	DoFilterSliders();
 
 	wxLogMessage("Added morphs for the following shapes:\n%s", addedMorphs);
 	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedMorphs), _("TRI Import"));

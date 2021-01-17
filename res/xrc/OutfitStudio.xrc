@@ -1152,6 +1152,12 @@
 																<object class="sizeritem">
 																	<option>0</option>
 																	<flag>wxALL|wxEXPAND</flag>
+																	<border>0</border>
+																	<object class="unknown" name="sliderFilter" />
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND</flag>
 																	<border>5</border>
 																	<object class="wxCheckBox" name="cbFixedWeight">
 																		<fg>#ffffff</fg>
