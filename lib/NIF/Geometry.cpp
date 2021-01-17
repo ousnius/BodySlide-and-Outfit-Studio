@@ -283,12 +283,12 @@ void NiGeometryData::UpdateBounds() {
 	bounds = BoundingSphere(vertices);
 }
 
-void NiGeometryData::Create(const std::vector<Vector3>* verts, const std::vector<Triangle>*, const std::vector<Vector2>* texcoords, const std::vector<Vector3>* norms) {
+void NiGeometryData::Create(NiVersion&, const std::vector<Vector3>* verts, const std::vector<Triangle>*, const std::vector<Vector2>* texcoords, const std::vector<Vector3>* norms) {
 	size_t vertCount = verts->size();
 	ushort maxIndex = std::numeric_limits<ushort>().max();
 
-	if (vertCount > maxIndex)
-		numVertices = 0;
+	if (vertCount > (size_t)maxIndex)
+		numVertices = maxIndex;
 	else
 		numVertices = ushort(vertCount);
 
@@ -296,7 +296,7 @@ void NiGeometryData::Create(const std::vector<Vector3>* verts, const std::vector
 	for (int v = 0; v < numVertices; v++)
 		vertices[v] = (*verts)[v];
 
-	bounds = BoundingSphere(*verts);
+	bounds = BoundingSphere(vertices);
 
 	if (texcoords) {
 		size_t uvCount = texcoords->size();
@@ -1380,20 +1380,25 @@ int BSTriShape::CalcDataSizes(NiVersion& version) {
 	return dataSize;
 }
 
-void BSTriShape::Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* normals) {
+void BSTriShape::Create(NiVersion& version, const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* normals) {
 	flags = 14;
 
 	ushort maxVertIndex = std::numeric_limits<ushort>().max();
 	size_t vertCount = verts->size();
-	if (vertCount > maxVertIndex)
-		numVertices = 0;
+	if (vertCount > (size_t)maxVertIndex)
+		numVertices = maxVertIndex;
 	else
 		numVertices = ushort(vertCount);
 
 	uint maxTriIndex = std::numeric_limits<uint>().max();
+	if (version.User() >= 12 && version.Stream() < 130)
+		maxTriIndex = std::numeric_limits<ushort>().max();
+
 	size_t triCount = tris ? tris->size() : 0;
-	if (triCount > maxTriIndex || numVertices == 0)
+	if (numVertices == 0)
 		numTriangles = 0;
+	else if (triCount > (size_t)maxTriIndex)
+		numTriangles = maxTriIndex;
 	else
 		numTriangles = uint(triCount);
 
@@ -1423,7 +1428,7 @@ void BSTriShape::Create(const std::vector<Vector3>* verts, const std::vector<Tri
 	for (int i = 0; i < numTriangles; i++)
 		triangles[i] = (*tris)[i];
 
-	bounds = BoundingSphere(*verts);
+	bounds = BoundingSphere(*GetRawVerts());
 
 	if (normals && normals->size() == numVertices) {
 		SetNormals(*normals);
@@ -1633,8 +1638,8 @@ void BSSubIndexTriShape::SetDefaultSegments() {
 	segments.clear();
 }
 
-void BSSubIndexTriShape::Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* normals) {
-	BSTriShape::Create(verts, tris, uvs, normals);
+void BSSubIndexTriShape::Create(NiVersion& version, const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* normals) {
+	BSTriShape::Create(version, verts, tris, uvs, normals);
 
 	// Skinned most of the time
 	SetSkinned(true);
@@ -1878,13 +1883,13 @@ void BSDynamicTriShape::CalcDynamicData() {
 	}
 }
 
-void BSDynamicTriShape::Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* normals) {
-	BSTriShape::Create(verts, tris, uvs, normals);
+void BSDynamicTriShape::Create(NiVersion& version, const std::vector<Vector3>* verts, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs, const std::vector<Vector3>* normals) {
+	BSTriShape::Create(version, verts, tris, uvs, normals);
 
 	uint maxIndex = std::numeric_limits<uint>().max();
 	size_t vertCount = verts->size();
-	if (vertCount > maxIndex)
-		dynamicDataSize = 0;
+	if (vertCount > (size_t)maxIndex)
+		dynamicDataSize = maxIndex;
 	else
 		dynamicDataSize = uint(vertCount);
 
@@ -2040,16 +2045,19 @@ void NiTriBasedGeomData::Put(NiStream& stream) {
 	stream << numTriangles;
 }
 
-void NiTriBasedGeomData::Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* inTris, const std::vector<Vector2>* texcoords, const std::vector<Vector3>* norms) {
-	NiGeometryData::Create(verts, inTris, texcoords, norms);
+void NiTriBasedGeomData::Create(NiVersion& version, const std::vector<Vector3>* verts, const std::vector<Triangle>* inTris, const std::vector<Vector2>* texcoords, const std::vector<Vector3>* norms) {
+	NiGeometryData::Create(version, verts, inTris, texcoords, norms);
 
 	if (inTris) {
 		ushort maxIndex = std::numeric_limits<ushort>().max();
 		size_t triCount = inTris ? inTris->size() : 0;
-		if (triCount <= maxIndex && numVertices != 0)
-			numTriangles = ushort(triCount);
-		else
+
+		if (numVertices == 0)
 			numTriangles = 0;
+		else if (triCount > (size_t)maxIndex)
+			numTriangles = maxIndex;
+		else
+			numTriangles = ushort(triCount);
 	}
 }
 
@@ -2102,8 +2110,8 @@ void NiTriShapeData::Put(NiStream& stream) {
 	}
 }
 
-void NiTriShapeData::Create(const std::vector<Vector3>* verts, const std::vector<Triangle>* inTris, const std::vector<Vector2>* texcoords, const std::vector<Vector3>* norms) {
-	NiTriBasedGeomData::Create(verts, inTris, texcoords, norms);
+void NiTriShapeData::Create(NiVersion& version, const std::vector<Vector3>* verts, const std::vector<Triangle>* inTris, const std::vector<Vector2>* texcoords, const std::vector<Vector3>* norms) {
+	NiTriBasedGeomData::Create(version, verts, inTris, texcoords, norms);
 
 	if (numTriangles > 0) {
 		numTrianglePoints = numTriangles * 3;

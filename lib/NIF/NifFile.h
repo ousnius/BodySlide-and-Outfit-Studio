@@ -98,6 +98,9 @@ public:
 	void LinkGeomData();
 	void RemoveInvalidTris();
 
+	size_t GetVertexLimit();
+	size_t GetTriangleLimit();
+
 	NiNode* AddNode(const std::string& nodeName, const MatTransform& xformToParent, NiNode* parent = nullptr);
 	void DeleteNode(const std::string& nodeName);
 	bool CanDeleteNode(NiNode* node);

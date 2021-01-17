@@ -532,7 +532,7 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 	NiShape* shapeResult = nullptr;
 	if (targetGame <= SKYRIM) {
 		auto nifShapeData = new NiTriShapeData();
-		nifShapeData->Create(&v, &t, &uv, norms);
+		nifShapeData->Create(hdr.GetVersion(), &v, &t, &uv, norms);
 
 		int dataID = hdr.AddBlock(nifShapeData);
 
@@ -574,7 +574,7 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 	}
 	else if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		auto nifBSTriShape = new BSSubIndexTriShape();
-		nifBSTriShape->Create(&v, &t, &uv, norms);
+		nifBSTriShape->Create(hdr.GetVersion(), &v, &t, &uv, norms);
 		int shapeID = hdr.AddBlock(nifBSTriShape);
 
 		BSTriShape* triShapeBase = nifBSTriShape;
@@ -598,7 +598,7 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 	}
 	else {
 		auto triShape = new BSTriShape();
-		triShape->Create(&v, &t, &uv, norms);
+		triShape->Create(hdr.GetVersion(), &v, &t, &uv, norms);
 		int shapeID = hdr.AddBlock(triShape);
 
 		triShape->SetSkinned(false);
@@ -3569,8 +3569,11 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 			return 3;
 		}
 
+		int vertCount = v.size();
+		int triCount = t.size();
+
 		// Skip zero size groups.  
-		if (v.size() == 0)
+		if (vertCount == 0)
 			continue;
 
 		std::string useShapeName = group;
@@ -3578,7 +3581,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 		if (mergeShape) {
 			std::vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
-			if (shapeVerts.size() == v.size()) {
+			if (shapeVerts.size() == vertCount) {
 				int ret = wxMessageBox(_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
 				if (ret == wxYES) {
 					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
@@ -3597,10 +3600,22 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 				return 100;
 		}
 
-		CreateNifShapeFromData(useShapeName, v, t, uv, &n);
+		auto newShape = CreateNifShapeFromData(useShapeName, v, t, uv, &n);
+		if (newShape) {
+			int vertCountNew = newShape->GetNumVertices();
+			int triCountNew = newShape->GetNumTriangles();
+			size_t vertexLimit = workNif.GetVertexLimit();
+			size_t triLimit = workNif.GetTriangleLimit();
 
-		if (copyBaseSkinTrans)
-			workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;
+			if (vertCountNew < vertCount || triCountNew < triCount) {
+				wxMessageBox(wxString::Format(_(
+					"The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %d/%zu\nTriangles (current/max): %d/%zu"),
+					useShapeName, vertCount, vertexLimit, triCount, triLimit), _("OBJ Error"), wxICON_WARNING, owner);
+			}
+
+			if (copyBaseSkinTrans)
+				workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;
+		}
 	}
 
 	return 0;
@@ -3689,8 +3704,11 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		FBXShape* fbxShape = fbxw.GetShape(s);
 		std::string useShapeName = s;
 
+		int vertCount = fbxShape->verts.size();
+		int triCount = fbxShape->tris.size();
+
 		if (mergeShape) {
-			if (mergeShape->GetNumVertices() == fbxShape->verts.size()) {
+			if (mergeShape->GetNumVertices() == vertCount) {
 				int ret = wxMessageBox(_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
 				if (ret == wxYES) {
 					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
@@ -3720,6 +3738,17 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 			continue;
 
 		workNif.CreateSkinning(newShape);
+
+		int vertCountNew = newShape->GetNumVertices();
+		int triCountNew = newShape->GetNumTriangles();
+		size_t vertexLimit = workNif.GetVertexLimit();
+		size_t triLimit = workNif.GetTriangleLimit();
+
+		if (vertCountNew < vertCount || triCountNew < triCount) {
+			wxMessageBox(wxString::Format(_(
+				"The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %d/%zu\nTriangles (current/max): %d/%zu"),
+				useShapeName, vertCount, vertexLimit, triCount, triLimit), _("OBJ Error"), wxICON_WARNING, owner);
+		}
 
 		if (copyBaseSkinTrans)
 			workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;

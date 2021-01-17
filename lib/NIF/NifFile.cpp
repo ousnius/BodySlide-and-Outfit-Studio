@@ -144,6 +144,19 @@ void NifFile::RemoveInvalidTris() {
 	}
 }
 
+size_t NifFile::GetVertexLimit() {
+	size_t maxVertIndex = std::numeric_limits<ushort>().max();
+	return maxVertIndex;
+}
+
+size_t NifFile::GetTriangleLimit() {
+	size_t maxTriIndex = std::numeric_limits<uint>().max();
+	if (hdr.GetVersion().User() >= 12 && hdr.GetVersion().Stream() < 130)
+		maxTriIndex = std::numeric_limits<ushort>().max();
+
+	return maxTriIndex;
+}
+
 void NifFile::Create(const NiVersion& version) {
 	Clear();
 	hdr.SetVersion(version);
@@ -1103,7 +1116,7 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 
 				bsOptShape->SetTransformToParent(shape->GetTransformToParent());
 
-				bsOptShape->Create(vertices, &triangles, uvs, normals);
+				bsOptShape->Create(hdr.GetVersion(), vertices, &triangles, uvs, normals);
 				bsOptShape->flags = shape->flags;
 
 				// Move segments to new shape
@@ -1343,7 +1356,7 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 				int dataId = hdr.AddBlock(bsOptShapeData);
 				bsOptShape->SetDataRef(dataId);
 				bsOptShape->SetGeomData(bsOptShapeData);
-				bsOptShapeData->Create(vertices, &triangles, uvs, normals);
+				bsOptShapeData->Create(hdr.GetVersion(), vertices, &triangles, uvs, normals);
 
 				bsOptShape->SetName(shape->GetName());
 				bsOptShape->SetControllerRef(shape->GetControllerRef());
@@ -2578,7 +2591,7 @@ void NifFile::SetVertsForShape(NiShape* shape, const std::vector<Vector3>& verts
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (verts.size() != geomData->vertices.size())
-				geomData->Create(&verts, nullptr, nullptr, nullptr);
+				geomData->Create(hdr.GetVersion(), &verts, nullptr, nullptr, nullptr);
 			else
 				geomData->vertices = verts;
 		}
@@ -2587,7 +2600,7 @@ void NifFile::SetVertsForShape(NiShape* shape, const std::vector<Vector3>& verts
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			if (verts.size() != bsTriShape->GetNumVertices()) {
-				bsTriShape->Create(&verts, nullptr, nullptr, nullptr);
+				bsTriShape->Create(hdr.GetVersion(), &verts, nullptr, nullptr, nullptr);
 			}
 			else {
 				for (int i = 0; i < bsTriShape->GetNumVertices(); i++)
