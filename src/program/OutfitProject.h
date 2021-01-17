@@ -137,10 +137,12 @@ public:
 	void NegateSlider(const std::string& sliderName, NiShape* shape);
 	void MaskAffected(const std::string& sliderName, NiShape* shape);
 
+	bool SetSliderFromNIF(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	void SetSliderFromBSD(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	bool SetSliderFromOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	bool SetSliderFromFBX(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	void SetSliderFromDiff(const std::string& sliderName, NiShape* shape, std::unordered_map<ushort, Vector3>& diff);
+	int SaveSliderNIF(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	int SaveSliderBSD(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	int SaveSliderOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName, const bool onlyDiff = false);
 	bool WriteMorphTRI(const std::string& triPath);

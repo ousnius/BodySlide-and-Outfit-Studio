@@ -119,11 +119,13 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("sliderSavePreset"), OutfitStudioFrame::OnSavePreset)
 	EVT_MENU(XRCID("sliderConform"), OutfitStudioFrame::OnSliderConform)
 	EVT_MENU(XRCID("sliderConformAll"), OutfitStudioFrame::OnSliderConformAll)
+	EVT_MENU(XRCID("sliderImportNIF"), OutfitStudioFrame::OnSliderImportNIF)
 	EVT_MENU(XRCID("sliderImportBSD"), OutfitStudioFrame::OnSliderImportBSD)
 	EVT_MENU(XRCID("sliderImportOBJ"), OutfitStudioFrame::OnSliderImportOBJ)
 	EVT_MENU(XRCID("sliderImportFBX"), OutfitStudioFrame::OnSliderImportFBX)
 	EVT_MENU(XRCID("sliderImportOSD"), OutfitStudioFrame::OnSliderImportOSD)
 	EVT_MENU(XRCID("sliderImportTRI"), OutfitStudioFrame::OnSliderImportTRI)
+	EVT_MENU(XRCID("sliderExportNIF"), OutfitStudioFrame::OnSliderExportNIF)
 	EVT_MENU(XRCID("sliderExportBSD"), OutfitStudioFrame::OnSliderExportBSD)
 	EVT_MENU(XRCID("sliderExportOBJ"), OutfitStudioFrame::OnSliderExportOBJ)
 	EVT_MENU(XRCID("sliderExportOSD"), OutfitStudioFrame::OnSliderExportOSD)
@@ -6412,6 +6414,30 @@ void OutfitStudioFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
+void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+	if (!bEditSlider) {
+		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
+		return;
+	}
+
+	wxString fn = wxFileSelector(_("Import .nif file for slider calculation"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_FILE_MUST_EXIST, this);
+	if (fn.IsEmpty())
+		return;
+
+	wxLogMessage("Importing slider to '%s' for shape '%s' from NIF file '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+	if (!project->SetSliderFromNIF(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
+		wxLogError("No mesh found in the .nif file that matches currently selected shape!");
+		wxMessageBox(_("No mesh found in the .nif file that matches currently selected shape!"), _("Error"), wxICON_ERROR);
+		return;
+	}
+
+	ApplySliders();
+}
+
 void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
@@ -6647,6 +6673,42 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
 		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
+	}
+
+	ApplySliders();
+}
+
+void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+	if (!bEditSlider) {
+		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
+		return;
+	}
+
+	if (selectedItems.size() > 1) {
+		wxString dir = wxDirSelector(_("Export .nif slider data to directory"), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
+		if (dir.IsEmpty())
+			return;
+
+		for (auto &i : selectedItems) {
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->GetName() + "_" + activeSlider + ".nif";
+			wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->GetName(), targetFile);
+			project->SaveSliderNIF(activeSlider, i->GetShape(), targetFile);
+		}
+	}
+	else {
+		wxString fn = wxFileSelector(_("Export .nif slider data"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fn.IsEmpty())
+			return;
+
+		wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+		if (project->SaveSliderNIF(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
+			wxLogError("Failed to export NIF file '%s'!", fn);
+			wxMessageBox(_("Failed to export NIF file!"), _("Error"), wxICON_ERROR);
+		}
 	}
 
 	ApplySliders();

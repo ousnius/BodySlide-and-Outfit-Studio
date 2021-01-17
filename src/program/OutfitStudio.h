@@ -1266,11 +1266,13 @@ private:
 	void ConformSliders(NiShape* shape, const ConformOptions& options);
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);
+	void OnSliderImportNIF(wxCommandEvent& event);
 	void OnSliderImportBSD(wxCommandEvent& event);
 	void OnSliderImportOBJ(wxCommandEvent& event);
 	void OnSliderImportOSD(wxCommandEvent& event);
 	void OnSliderImportTRI(wxCommandEvent& event);
 	void OnSliderImportFBX(wxCommandEvent& event);
+	void OnSliderExportNIF(wxCommandEvent& event);
 	void OnSliderExportBSD(wxCommandEvent& event);
 	void OnSliderExportOBJ(wxCommandEvent& event);
 	void OnSliderExportOSD(wxCommandEvent& event);

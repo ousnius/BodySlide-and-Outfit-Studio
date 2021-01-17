@@ -2085,6 +2085,10 @@
 			<object class="separator" />
 			<object class="wxMenu" name="menuImportSlider">
 				<label>Import Slider Data</label>
+				<object class="wxMenuItem" name="sliderImportNIF">
+					<label>Import NIF...</label>
+					<help>Import a NIF file and overwrites the current shape's slider data.</help>
+				</object>
 				<object class="wxMenuItem" name="sliderImportBSD">
 					<label>Import BSD...</label>
 					<help>Import a BodySlide BSD file and overwrites the current shape's slider data.</help>
@@ -2101,6 +2105,10 @@
 			</object>
 			<object class="wxMenu" name="menuExportSlider">
 				<label>Export Slider Data</label>
+				<object class="wxMenuItem" name="sliderExportNIF">
+					<label>Export NIF...</label>
+					<help>Exports the current slider's data as a NIF file.</help>
+				</object>
 				<object class="wxMenuItem" name="sliderExportBSD">
 					<label>Export BSD...</label>
 					<help>Exports the current slider's data as a BodySlide BSD file.</help>

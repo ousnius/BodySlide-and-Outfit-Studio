@@ -951,6 +951,48 @@ bool OutfitProject::WriteHeadTRI(NiShape* shape, const std::string& triPath) {
 	return true;
 }
 
+int OutfitProject::SaveSliderNIF(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
+	if (!shape)
+		return 1;
+
+	std::string target = ShapeToTarget(shape->GetName());
+
+	std::vector<Vector3> outVerts;
+	std::vector<Vector2> outUVs;
+
+	if (!workNif.GetVertsForShape(shape, outVerts))
+		return 2;
+
+	workNif.GetUvsForShape(shape, outUVs);
+
+	GetSliderDiff(shape, sliderName, outVerts);
+	GetSliderDiffUV(shape, sliderName, outUVs);
+
+	NifFile nif;
+	nif.CopyFrom(workNif);
+
+	auto sliderShape = nif.FindBlockByName<NiShape>(shape->GetName());
+	if (sliderShape) {
+		for (auto &s : nif.GetShapes()) {
+			if (s != sliderShape)
+				nif.DeleteShape(s);
+		}
+
+		nif.SetVertsForShape(sliderShape, outVerts);
+		nif.SetUvsForShape(sliderShape, outUVs);
+
+		nif.DeleteUnreferencedNodes();
+	}
+
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
+
+	if (nif.Save(file) != 0)
+		return 3;
+
+	return 0;
+}
+
 int OutfitProject::SaveSliderBSD(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
 	std::string target = ShapeToTarget(shape->GetName());
 
@@ -1000,6 +1042,58 @@ int OutfitProject::SaveSliderOBJ(const std::string& sliderName, NiShape* shape, 
 		return 3;
 
 	return 0;
+}
+
+bool OutfitProject::SetSliderFromNIF(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
+	std::string target = ShapeToTarget(shape->GetName());
+
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+
+	NifFile nif;
+	if (nif.Load(file) != 0)
+		return false;
+
+	// File needs at least one shape
+	auto shapeNames = nif.GetShapeNames();
+	if (shapeNames.empty())
+		return false;
+
+	// Use first shape or shape with matching name
+	std::string srcShapeName = shapeNames.front();
+	if (std::find(shapeNames.begin(), shapeNames.end(), shape->GetName()) != shapeNames.end())
+		srcShapeName = shape->GetName();
+
+	std::vector<Vector3> verts;
+	std::vector<Vector2> uvs;
+
+	auto srcShape = nif.FindBlockByName<NiShape>(srcShapeName);
+	if (!srcShape)
+		return false;
+
+	if (!nif.GetVertsForShape(srcShape, verts))
+		return false;
+
+	nif.GetUvsForShape(srcShape, uvs);
+
+	std::unordered_map<ushort, Vector3> diff;
+	if (activeSet[sliderName].bUV) {
+		if (workNif.CalcUVDiff(shape, &uvs, diff))
+			return false;
+	}
+	else {
+		if (workNif.CalcShapeDiff(shape, &verts, diff))
+			return false;
+	}
+
+	if (IsBaseShape(shape)) {
+		std::string sliderData = activeSet[sliderName].TargetDataName(target);
+		baseDiffData.LoadSet(sliderData, target, diff);
+	}
+	else
+		morpher.SetResultDiff(target, sliderName, diff);
+
+	return true;
 }
 
 void OutfitProject::SetSliderFromBSD(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
