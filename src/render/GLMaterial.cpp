@@ -84,6 +84,8 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 		case 1:
 			if (texCache[id] != 0) {
 				shader.BindTexture(id, texCache[id], "texNormal");
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 				if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 				shader.SetNormalMapEnabled(true);
 			}
@@ -98,6 +100,8 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 
 				if (texCache[id] != 0) {
 					shader.BindTexture(id, texCache[id], "texGlowmap");
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 				}
 				else
@@ -106,6 +110,8 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 			else if (hasLightmask) {
 				if (texCache[id] != 0) {
 					shader.BindTexture(id, texCache[id], "texLightmask");
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 				}
 			}
@@ -114,8 +120,8 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 		case 3:
 			if (texCache[id] != 0) {
 				shader.BindTexture(id, texCache[id], "texGreyscale");
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 				if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 			}
 			break;
@@ -135,6 +141,8 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 			if (hasEnvMapping) {
 				if (texCache[id] != 0) {
 					shader.BindTexture(id, texCache[id], "texEnvMask");
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 					shader.SetEnvMaskEnabled(true);
 				}
@@ -147,12 +155,16 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 			if (!hasBacklightMap) {
 				if (texCache[id] != 0) {
 					shader.BindTexture(id, texCache[id], "texSpecular");
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 				}
 			}
 			else {
 				if (texCache[id] != 0) {
 					shader.BindTexture(id, texCache[id], "texBacklight");
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 				}
 				else
@@ -164,6 +176,8 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 			// Internal use for compositing and postprocessing textures, not represented by game textures.
 			if (texCache[id] != 0) {
 				shader.BindTexture(id, texCache[id], "texAlphaMask");
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 				if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 				shader.SetAlphaMaskEnabled(true);
 			}
