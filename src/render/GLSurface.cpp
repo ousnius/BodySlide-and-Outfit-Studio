@@ -1620,11 +1620,19 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 	return m;
 }
 
-mesh* GLSurface::AddVisPlane(const Vector3& center, const Vector2& size, float uvScale, float uvOffset, const std::string& name, const Vector3* color) {
+mesh* GLSurface::AddVisPlane(const Matrix4& mat, const Vector2& size, float uvScale, float uvOffset, const std::string& name, const Vector3* color, const bool asMesh) {
+	mesh* m = nullptr;
+
+	if (!name.empty()) {
+		if (asMesh)
+			m = GetMesh(name);
+		else
+			m = GetOverlay(name);
+	}
+
 	if (!SetContext())
 		return nullptr;
 
-	mesh* m = GetOverlay(name);
 	if (!m) {
 		m = new mesh();
 
@@ -1638,14 +1646,14 @@ mesh* GLSurface::AddVisPlane(const Vector3& center, const Vector2& size, float u
 		m->rendermode = RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 
-		AddOverlay(m);
+		if (asMesh)
+			AddMesh(m);
+		else
+			AddOverlay(m);
 	}
 
 	if (color)
 		m->color = *color;
-
-	Matrix4 mat;
-	mat.Translate(center);
 
 	m->verts[0] = mat * Vector3(-size.u / 2.0f, -size.v / 2.0f, 0.0f);
 	m->verts[1] = mat * Vector3(-size.u / 2.0f, size.v / 2.0f, 0.0f);

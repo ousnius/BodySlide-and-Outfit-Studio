@@ -300,7 +300,7 @@ public:
 	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const std::string& name);
 	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name);
 	mesh* AddVisPoint(const Vector3& p, const std::string& name = "PointMesh", const Vector3* color = nullptr);
-	mesh* AddVisPlane(const Vector3& center, const Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const Vector3* color = nullptr);
+	mesh* AddVisPlane(const Matrix4& mat, const Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const Vector3* color = nullptr, const bool asMesh = false);
 	mesh* AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name = "", const bool asMesh = false);
 
 	mesh* AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color = nullptr);

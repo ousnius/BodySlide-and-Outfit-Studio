@@ -10693,6 +10693,17 @@ void wxGLPanel::UpdateFloor() {
 	const int numLinesBig = (int)(floorWidth / floorGridStepBig) + 1;
 	const int numLinesSmall = (int)(floorWidth / floorGridStepSmall) + 1;
 
+	Matrix4 floorMat;
+	floorMat.Rotate(90.0f * DEG2RAD, 1.0f, 0.0f, 0.0f);
+
+	Vector3 floorColor(0.0f, 0.0f, 1.0f);
+	auto floorMesh = gls.AddVisPlane(floorMat, Vector2(floorWidth, floorWidth), 1.0f, 0.0f, "", &floorColor, true);
+	if (floorMesh) {
+		floorMesh->prop.alpha = 0.05f;
+		floorMesh->bVisible = floorMode;
+		floorMeshes.push_back(floorMesh);
+	}
+
 	float nextLinePos = floorWidth - floorWidthHalf;
 
 	// Floor with width on X and Y axis (big grid)
@@ -10705,7 +10716,6 @@ void wxGLPanel::UpdateFloor() {
 			lineMesh->color.x = 0.0f;
 			lineMesh->color.y = 1.0f;
 			lineMesh->color.z = 0.0f;
-			lineMesh->prop.alpha = 0.5f;
 			lineMesh->bVisible = floorMode;
 			floorMeshes.push_back(lineMesh);
 		}
@@ -10718,7 +10728,6 @@ void wxGLPanel::UpdateFloor() {
 			lineMesh->color.x = 0.0f;
 			lineMesh->color.y = 1.0f;
 			lineMesh->color.z = 0.0f;
-			lineMesh->prop.alpha = 0.5f;
 			lineMesh->bVisible = floorMode;
 			floorMeshes.push_back(lineMesh);
 		}
@@ -10738,7 +10747,7 @@ void wxGLPanel::UpdateFloor() {
 			lineMesh->color.x = 0.0f;
 			lineMesh->color.y = 1.0f;
 			lineMesh->color.z = 0.0f;
-			lineMesh->prop.alpha = 0.25f;
+			lineMesh->prop.alpha = 0.7f;
 			lineMesh->bVisible = floorMode;
 			floorMeshes.push_back(lineMesh);
 		}
@@ -10751,7 +10760,7 @@ void wxGLPanel::UpdateFloor() {
 			lineMesh->color.x = 0.0f;
 			lineMesh->color.y = 1.0f;
 			lineMesh->color.z = 0.0f;
-			lineMesh->prop.alpha = 0.25f;
+			lineMesh->prop.alpha = 0.7f;
 			lineMesh->bVisible = floorMode;
 			floorMeshes.push_back(lineMesh);
 		}

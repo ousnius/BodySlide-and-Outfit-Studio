@@ -784,7 +784,7 @@ void EditUVCanvas::InitMeshes() {
 	auto sliderName = editUV->GetSliderName();
 	auto& project = editUV->GetParent()->project;
 
-	planeMesh = uvSurface.AddVisPlane(Vector3(), Vector2(64.0f, 64.0f), 64.0f);
+	planeMesh = uvSurface.AddVisPlane(Matrix4(), Vector2(64.0f, 64.0f), 64.0f);
 	if (planeMesh) {
 		std::string texFile;
 		nif->GetTextureSlot(shader, texFile, 0);
