@@ -209,6 +209,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudioFrame::OnCopySelectedWeight)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
+	EVT_MENU(XRCID("maskBoneWeightedVerts"), OutfitStudioFrame::OnMaskBoneWeighted)
 	EVT_MENU(XRCID("resetTransforms"), OutfitStudioFrame::OnResetTransforms)
 	EVT_MENU(XRCID("deleteUnreferencedNodes"), OutfitStudioFrame::OnDeleteUnreferencedNodes)
 	EVT_MENU(XRCID("removeSkinning"), OutfitStudioFrame::OnRemoveSkinning)
@@ -8659,7 +8660,7 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 		if (!m)
 			continue;
 
-		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+		m->ColorChannelFill(0, 0.0f);
 
 		auto& bones = project->GetWorkAnim()->shapeBones;
 		if (bones.find(shapeName) != bones.end()) {
@@ -8670,6 +8671,33 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 						if (bw.second > 0.0f)
 							m->vcolors[bw.first].x = 1.0f;
 				}
+			}
+		}
+	}
+
+	glView->Refresh();
+}
+
+void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	for (auto &i : selectedItems) {
+		std::string shapeName = i->GetShape()->GetName();
+		mesh* m = glView->GetMesh(shapeName);
+		if (!m || !m->vcolors)
+			continue;
+
+		m->ColorChannelFill(0, 0.0f);
+
+		for (auto &b : GetSelectedBones()) {
+			auto weights = project->GetWorkAnim()->GetWeightsPtr(shapeName, b);
+			if (weights) {
+				for (auto &bw : *weights)
+					if (bw.second > 0.0f)
+						m->vcolors[bw.first].x = 1.0f;
 			}
 		}
 	}

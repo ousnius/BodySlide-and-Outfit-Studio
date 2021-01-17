@@ -1321,6 +1321,7 @@ private:
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
+	void OnMaskBoneWeighted(wxCommandEvent& event);
 	void OnResetTransforms(wxCommandEvent& event);
 	void OnDeleteUnreferencedNodes(wxCommandEvent& event);
 	void OnRemoveSkinning(wxCommandEvent& event);

@@ -2384,6 +2384,10 @@
 			<label>Edit Bone...</label>
 			<help>Edit a custom bone or view a standard bone.</help>
 		</object>
+		<object class="wxMenuItem" name="maskBoneWeightedVerts">
+			<label>Mask Weighted Vertices</label>
+			<help>Masks vertices with weights for the selected bones.</help>
+		</object>
 	</object>
 	<object class="wxMenu" name="menuBoneTreeContext">
 		<label>Bones</label>
@@ -2397,10 +2401,6 @@
 				<label>Custom Bone...</label>
 				<help>Add a custom bone to the project.</help>
 			</object>
-		</object>
-		<object class="wxMenuItem" name="editBone">
-			<label>Edit Bone...</label>
-			<help>Edit a custom bone or view a standard bone.</help>
 		</object>
 	</object>
 	<object class="wxMenu" name="menuSegmentContext">
