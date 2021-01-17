@@ -1511,6 +1511,7 @@ private:
 	void OnTZPoseTextChanged(wxCommandEvent& event);
 	void OnResetBonePose(wxCommandEvent& event);
 	void OnResetAllPose(wxCommandEvent& event);
+	void OnPoseToMesh(wxCommandEvent& event);
 	void OnPoseCheckBox(wxCommandEvent& event);
 
 	wxDECLARE_EVENT_TABLE();

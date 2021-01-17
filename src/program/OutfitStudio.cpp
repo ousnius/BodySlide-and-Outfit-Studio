@@ -78,6 +78,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TEXT(XRCID("tzPoseText"), OutfitStudioFrame::OnTZPoseTextChanged)
 	EVT_BUTTON(XRCID("resetBonePose"), OutfitStudioFrame::OnResetBonePose)
 	EVT_BUTTON(XRCID("resetAllPose"), OutfitStudioFrame::OnResetAllPose)
+	EVT_BUTTON(XRCID("poseToMesh"), OutfitStudioFrame::OnPoseToMesh)
 	EVT_CHECKBOX(XRCID("cbPose"), OutfitStudioFrame::OnPoseCheckBox)
 	
 	// The following line with "EVT_COMMAND_SCROLL(wxID_ANY" apparently
@@ -1017,6 +1018,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	auto search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, -1), wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
+	search->ShowCancelButton(true);
 	search->SetDescriptiveText("Slider Filter");
 	search->SetToolTip("Filter slider list by name");
 
@@ -9209,17 +9211,53 @@ void OutfitStudioFrame::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
 	std::vector<std::string> bones;
 	project->GetActiveBones(bones);
+
 	for (const std::string &boneName : bones) {
 		AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
-		if (!bone) continue;
-		if (bone->poseRotVec == Vector3(0,0,0) && bone->poseTranVec == Vector3(0,0,0))
+		if (!bone)
 			continue;
-		bone->poseRotVec = Vector3(0,0,0);
-		bone->poseTranVec = Vector3(0,0,0);
+
+		if (bone->poseRotVec == Vector3(0.0f, 0.0f, 0.0f) && bone->poseTranVec == Vector3(0.0f, 0.0f, 0.0f))
+			continue;
+
+		bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
+		bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
 		bone->UpdatePoseTransform();
 	}
+
 	PoseToGUI();
 	ApplyPose();
+}
+
+void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
+	if (project->bPose) {
+		for (auto &s : project->GetWorkNif()->GetShapes()) {
+			UpdateShapeSource(s);
+			project->RefreshMorphShape(s);
+		}
+
+		project->InvalidateBoneScaleCache();
+		boneScale->SetValue(0);
+
+		std::vector<std::string> bones;
+		project->GetActiveBones(bones);
+
+		for (const std::string &boneName : bones) {
+			AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			if (!bone)
+				continue;
+
+			if (bone->poseRotVec == Vector3(0.0f, 0.0f, 0.0f) && bone->poseTranVec == Vector3(0.0f, 0.0f, 0.0f))
+				continue;
+
+			bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
+			bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
+			bone->UpdatePoseTransform();
+		}
+
+		PoseToGUI();
+		ApplyPose();
+	}
 }
 
 void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {

@@ -1141,19 +1141,27 @@
 																<object class="sizeritem">
 																	<option>0</option>
 																	<flag>wxALL|wxEXPAND</flag>
-																	<border>5</border>
-																	<object class="wxCheckBox" name="selectSliders">
-																		<fg>#ffffff</fg>
-																		<label>De-/Select Sliders</label>
-																		<checked>1</checked>
-																		<enabled>1</enabled>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
 																	<border>0</border>
-																	<object class="unknown" name="sliderFilter" />
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>0</option>
+																			<flag>wxALL|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxCheckBox" name="selectSliders">
+																				<fg>#ffffff</fg>
+																				<label>De-/Select Sliders</label>
+																				<checked>1</checked>
+																				<enabled>1</enabled>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxALL</flag>
+																			<border>0</border>
+																			<object class="unknown" name="sliderFilter" />
+																		</object>
+																	</object>
 																</object>
 																<object class="sizeritem">
 																	<option>0</option>
@@ -1309,7 +1317,8 @@
 																	<orient>wxVERTICAL</orient>
 																	<object class="sizeritem">
 																		<option>0</option>
-																		<flag>wxALL|wxEXPAND</flag>
+																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																		<border>5</border>
 																		<object class="wxBoxSizer">
 																			<orient>wxHORIZONTAL</orient>
 																			<object class="sizeritem">
@@ -1330,6 +1339,14 @@
 																					<content />
 																				</object>
 																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																				<object class="wxButton" name="resetBonePose">
+																					<size>-1,25</size>
+																					<label>Reset Bone</label>
+																				</object>
+																			</object>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
@@ -1341,9 +1358,9 @@
 																			<object class="sizeritem">
 																				<option>1</option>
 																				<flag>wxALL|wxEXPAND</flag>
-																				<object class="wxButton" name="resetBonePose">
+																				<object class="wxButton" name="poseToMesh">
 																					<size>-1,25</size>
-																					<label>Reset Bone</label>
+																					<label>Apply to Mesh</label>
 																				</object>
 																			</object>
 																			<object class="sizeritem">
