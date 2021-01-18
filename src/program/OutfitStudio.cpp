@@ -9469,6 +9469,10 @@ void wxGLPanel::OnShown() {
 	}
 
 	os->MeshesFromProj();
+
+	UpdateFloor();
+	UpdateNodes();
+
 	Render();
 }
 
