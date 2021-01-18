@@ -507,13 +507,21 @@ void OutfitStudio::CharHook(wxKeyEvent& event) {
 		return;
 	}
 
+	if (!frame->IsDescendant(w)) {
+		event.Skip();
+		return;
+	}
+
 #ifdef _WINDOWS
 	int keyCode = event.GetKeyCode();
 	bool charHack = keyCode > 0x40 && keyCode < 0x80;
-	bool letterHack = keyCode > 0x40 && keyCode < 0x5B;
+	bool letterHack = (keyCode > 0x40 && keyCode < 0x5B) || (keyCode > 0x60 && keyCode < 0x7B);
 	if (charHack && !event.HasModifiers()) {
-		if (letterHack && !event.ShiftDown())
+		if (letterHack &&
+			(!event.ShiftDown() && !wxGetKeyState(wxKeyCode::WXK_CAPITAL)) ||
+			(event.ShiftDown() && wxGetKeyState(wxKeyCode::WXK_CAPITAL))) {
 			keyCode += 32;
+		}
 
 		auto searchCtrl = dynamic_cast<wxTextCtrl*>(w);
 		if (searchCtrl) {
