@@ -88,30 +88,67 @@
 							<label>Advanced</label>
 							<bg>wxSYS_COLOUR_MENU</bg>
 							<object class="panewindow">
-							<object class="wxBoxSizer">
-								<orient>wxHORIZONTAL</orient>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-									<border>5</border>
-									<object class="wxStaticText" name="lbOutputPath">
-										<size>100,-1</size>
-										<label>Output Path</label>
-										<wrap>-1</wrap>
+								<object class="wxBoxSizer">
+									<orient>wxVERTICAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxBoxSizer">
+											<orient>wxHORIZONTAL</orient>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxStaticText" name="lbOutputPath">
+													<size>100,-1</size>
+													<label>Output Path</label>
+													<wrap>-1</wrap>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>3</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxDirPickerCtrl" name="dpOutputPath">
+													<value></value>
+													<message>Select the output path...</message>
+													<style>wxDIRP_DEFAULT_STYLE</style>
+													<tooltip>Data path to build files to. If empty, Game Data Path will be used instead.</tooltip>
+												</object>
+											</object>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxBoxSizer">
+											<orient>wxHORIZONTAL</orient>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxStaticText" name="lbProjectPath">
+													<size>100,-1</size>
+													<label>Project Path</label>
+													<wrap>-1</wrap>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>3</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxDirPickerCtrl" name="dpProjectPath">
+													<value></value>
+													<message>Select the project path...</message>
+													<style>wxDIRP_DEFAULT_STYLE</style>
+													<tooltip>Project path where files related to BodySlide are loaded from. If empty, executable directory will be used instead.</tooltip>
+												</object>
+											</object>
+										</object>
 									</object>
 								</object>
-								<object class="sizeritem">
-									<option>3</option>
-									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-									<border>5</border>
-									<object class="wxDirPickerCtrl" name="dpOutputPath">
-										<value></value>
-										<message>Select the output path...</message>
-										<style>wxDIRP_DEFAULT_STYLE</style>
-										<tooltip>Data path to build files to. If empty, Game Data Path will be used instead.</tooltip>
-									</object>
-								</object>
-							</object>
 							</object>
 						</object>
 					</object>

@@ -22,6 +22,7 @@
         <SkyrimVR></SkyrimVR></GameDataPaths>
     <GameDataPath></GameDataPath>
     <OutputDataPath></OutputDataPath>
+    <ProjectPath></ProjectPath>
     <GameRegKey></GameRegKey>
     <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>

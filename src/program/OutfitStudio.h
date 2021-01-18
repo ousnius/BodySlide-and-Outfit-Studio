@@ -803,6 +803,8 @@ static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
 	{ wxCMD_LINE_NONE }
 };
 
+std::string GetProjectPath();
+
 class OutfitStudio : public wxApp {
 public:
 	virtual ~OutfitStudio();
@@ -818,6 +820,7 @@ public:
 	void CharHook(wxKeyEvent& event);
 
 	wxString GetGameDataPath(TargetGame targ);
+
 	void InitLanguage();
 
 	bool SetDefaultConfig();

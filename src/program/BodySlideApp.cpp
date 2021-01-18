@@ -177,6 +177,13 @@ bool BodySlideApp::OnInit() {
 			wxMessageBox(_("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct."), _("Warning"), wxICON_WARNING);
 	}
 
+	if (!Config["ProjectPath"].empty()) {
+		bool dirWritable = wxFileName::IsDirWritable(Config["ProjectPath"]);
+		bool dirReadable = wxFileName::IsDirReadable(Config["ProjectPath"]);
+		if (!dirWritable || !dirReadable)
+			wxMessageBox(_("No read/write permission for project path!\n\nPlease launch the program with admin elevation and make sure the project path in the settings is correct."), _("Warning"), wxICON_WARNING);
+	}
+
 	wxLogMessage("BodySlide initialized.");
 	return true;
 }
@@ -352,7 +359,7 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 		activeSet.Clear();
 		sliderManager.ClearSliders();
 		if (!sliderDoc.GetSet(outfit, activeSet)) {
-			activeSet.SetBaseDataPath(Config["AppDir"] + PathSepStr + "ShapeData");
+			activeSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
 			activeSet.LoadSetDiffData(dataSets);
 
 			sliderManager.AddSlidersInSet(activeSet);
@@ -372,6 +379,11 @@ std::string BodySlideApp::GetOutputDataPath() const {
 	return res.empty() ? Config["GameDataPath"] : res;
 }
 
+std::string BodySlideApp::GetProjectPath() const {
+	std::string res = Config["ProjectPath"];
+	return res.empty() ? Config["AppDir"] : res;
+}
+
 void BodySlideApp::RefreshOutfitList() {
 	LoadSliderSets();
 	PopulateOutfitList("");
@@ -385,8 +397,8 @@ int BodySlideApp::LoadSliderSets() {
 	outFileCount.clear();
 
 	wxArrayString files;
-	wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "/SliderSets", &files, "*.osp");
-	wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "/SliderSets", &files, "*.xml");
+	wxDir::GetAllFiles(wxString::FromUTF8(GetProjectPath()) + "/SliderSets", &files, "*.osp");
+	wxDir::GetAllFiles(wxString::FromUTF8(GetProjectPath()) + "/SliderSets", &files, "*.xml");
 
 	for (auto &file : files) {
 		std::string fileName{file.ToUTF8()};
@@ -1214,6 +1226,10 @@ bool BodySlideApp::SetDefaultConfig() {
 		wxLogMessage("Output data path in config: %s", Config["OutputDataPath"]);
 	}
 
+	if (!Config["ProjectPath"].empty()) {
+		wxLogMessage("Project path in config: %s", Config["ProjectPath"]);
+	}
+
 	return true;
 }
 
@@ -1429,7 +1445,7 @@ void BodySlideApp::InitLanguage() {
 
 void BodySlideApp::LoadAllCategories() {
 	wxLogMessage("Loading all slider categories...");
-	cCollection.LoadCategories(Config["AppDir"] + "/SliderCategories");
+	cCollection.LoadCategories(GetProjectPath() + "/SliderCategories");
 }
 
 void BodySlideApp::SetPresetGroups(const std::string& setName) {
@@ -1459,7 +1475,7 @@ void BodySlideApp::SetPresetGroups(const std::string& setName) {
 
 void BodySlideApp::LoadAllGroups() {
 	wxLogMessage("Loading all slider groups...");
-	gCollection.LoadGroups(Config["AppDir"] + "/SliderGroups");
+	gCollection.LoadGroups(GetProjectPath() + "/SliderGroups");
 
 	ungroupedOutfits.clear();
 	for (auto &o : outfitNameSource) {
@@ -1624,7 +1640,7 @@ void BodySlideApp::LoadPresets(const std::string& sliderSet) {
 				groups_and_aliases.push_back(ag.first);
 	}
 
-	sliderManager.LoadPresets(Config["AppDir"] + "/SliderPresets", outfit, groups_and_aliases, groups_and_aliases.empty());
+	sliderManager.LoadPresets(GetProjectPath() + "/SliderPresets", outfit, groups_and_aliases, groups_and_aliases.empty());
 }
 
 int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNormals) {
@@ -2089,7 +2105,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			return;
 		}
 
-		currentSet.SetBaseDataPath(Config["AppDir"] + PathSepStr + "ShapeData");
+		currentSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
 
 		// ALT key
 		if (clean && custPath.empty()) {
@@ -2394,7 +2410,7 @@ void BodySlideApp::GroupBuild(const std::string& group) {
 	}
 
 	std::vector<std::string> groups;
-	sliderManager.LoadPresets(Config["AppDir"] + "/SliderPresets", "", groups, true);
+	sliderManager.LoadPresets(GetProjectPath() + "/SliderPresets", "", groups, true);
 
 	std::map<std::string, std::string> failedOutfits;
 	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, false, cmdTargetDir.ToUTF8().data());
@@ -3105,7 +3121,7 @@ void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
-	wxFileDialog saveGroupDialog(this, _("Choose or create group file"), wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups", wxEmptyString, "Group Files (*.xml)|*.xml", wxFD_SAVE);
+	wxFileDialog saveGroupDialog(this, _("Choose or create group file"), wxString::FromUTF8(app->GetProjectPath()) + "/SliderGroups", wxEmptyString, "Group Files (*.xml)|*.xml", wxFD_SAVE);
 	if (saveGroupDialog.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -3476,6 +3492,10 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxString outputPath = wxString::FromUTF8(Config["OutputDataPath"]);
 		dpOutputPath->SetPath(outputPath);
 
+		wxDirPickerCtrl* dpProjectPath = XRCCTRL(*settings, "dpProjectPath", wxDirPickerCtrl);
+		wxString projectPath = wxString::FromUTF8(Config["ProjectPath"]);
+		dpProjectPath->SetPath(projectPath);
+
 		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
 		cbBBOverrideWarn->SetValue(Config["WarnBatchBuildOverride"] != "false");
 
@@ -3532,6 +3552,10 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			// set OutputDataPath even if it is empty
 			wxFileName outputDataDir = dpOutputPath->GetDirName();
 			Config.SetValue("OutputDataPath", outputDataDir.GetFullPath().ToUTF8().data());
+
+			// set ProjectPath even if it is empty
+			wxFileName projectDir = dpProjectPath->GetDirName();
+			Config.SetValue("ProjectPath", projectDir.GetFullPath().ToUTF8().data());
 
 			wxArrayInt items;
 			wxString selectedfiles;

@@ -39,7 +39,7 @@ GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
-	XRCCTRL(*this, "fpGroupXML", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups");
+	XRCCTRL(*this, "fpGroupXML", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(GetProjectPath()) + "/SliderGroups");
 	listGroups = XRCCTRL(*this, "listGroups", wxListBox);
 	groupName = XRCCTRL(*this, "groupName", wxTextCtrl);
 	btAddGroup = XRCCTRL(*this, "btAddGroup", wxButton);
@@ -63,6 +63,11 @@ GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 
 GroupManager::~GroupManager() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/GroupManager.xrc");
+}
+
+std::string GroupManager::GetProjectPath() const {
+	std::string res = Config["ProjectPath"];
+	return res.empty() ? Config["AppDir"] : res;
 }
 
 void GroupManager::RefreshUI(const bool clearGroups) {
@@ -101,7 +106,7 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 }
 
 bool GroupManager::ChooseFile() {
-	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(GetProjectPath()) + "/SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 	if (file.ShowModal() != wxID_OK)
 		return false;
 

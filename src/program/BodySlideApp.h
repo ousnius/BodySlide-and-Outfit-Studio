@@ -100,8 +100,6 @@ class BodySlideApp : public wxApp {
 
 	int CreateSetSliders(const std::string& outfit);
 
-	std::string GetOutputDataPath() const;
-
 public:
 	virtual ~BodySlideApp();
 	virtual bool OnInit();
@@ -118,6 +116,9 @@ public:
 	bool SetDefaultConfig();
 	bool ShowSetup();
 	wxString GetGameDataPath(TargetGame targ);
+
+	std::string GetOutputDataPath() const;
+	std::string GetProjectPath() const;
 
 	void InitLanguage();
 

@@ -41,6 +41,11 @@ PresetSaveDialog::~PresetSaveDialog() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/SavePreset.xrc");
 }
 
+std::string PresetSaveDialog::GetProjectPath() const {
+	std::string res = Config["ProjectPath"];
+	return res.empty() ? Config["AppDir"] : res;
+}
+
 void PresetSaveDialog::FilterGroups(const std::string& filter) {
 	wxCheckListBox* chkbox = XRCCTRL((*this), "spGroupDisplay", wxCheckListBox);
 	chkbox->Clear();
@@ -93,7 +98,7 @@ void PresetSaveDialog::OnSave(wxCommandEvent& WXUNUSED(event)) {
 	outPresetName = XRCCTRL((*this), "spPresetName", wxTextCtrl)->GetValue().ToUTF8();
 	std::string presetFile = outPresetName + ".xml";
 
-	wxFileDialog savePresetDialog(this, "Choose a preset file", wxString::FromUTF8(Config["AppDir"]) + "/SliderPresets", wxString::FromUTF8(presetFile), "Preset Files (*.xml)|*.xml", wxFD_SAVE);
+	wxFileDialog savePresetDialog(this, "Choose a preset file", wxString::FromUTF8(GetProjectPath()) + "/SliderPresets", wxString::FromUTF8(presetFile), "Preset Files (*.xml)|*.xml", wxFD_SAVE);
 	if (savePresetDialog.ShowModal() == wxID_OK) {
 		outFileName = savePresetDialog.GetPath().ToUTF8();
 		outGroups.assign(selectedGroups.begin(), selectedGroups.end());
