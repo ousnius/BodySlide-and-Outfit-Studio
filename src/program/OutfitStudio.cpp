@@ -511,7 +511,7 @@ void OutfitStudio::CharHook(wxKeyEvent& event) {
 	int keyCode = event.GetKeyCode();
 	bool charHack = keyCode > 0x40 && keyCode < 0x80;
 	bool letterHack = keyCode > 0x40 && keyCode < 0x5B;
-	if (charHack) {
+	if (charHack && !event.HasModifiers()) {
 		if (letterHack && !event.ShiftDown())
 			keyCode += 32;
 
