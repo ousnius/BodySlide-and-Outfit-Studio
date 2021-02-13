@@ -2231,7 +2231,7 @@
 				</object>
 				<object class="wxMenuItem" name="btnVertexEdit">
 					<label>Vertex Edit\tQ</label>
-					<help>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select/unmask it.\nHold down CTRL to unselect/mask it.</help>
+					<help>Shows vertex points and lets you mask/unmask them.\nWithout any brush active, click on a vertex to unmask it.\nHold down CTRL to mask it.</help>
 					<checkable>1</checkable>
 				</object>
 			</object>

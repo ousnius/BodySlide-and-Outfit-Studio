@@ -923,9 +923,9 @@ msgid "Vertex Edit\tQ"
 msgstr ""
 
 msgid ""
-"Lets you select vertices to add to or remove from the mask.\n"
-"Click on a vertex to select/unmask it.\n"
-"Hold down CTRL to unselect/mask it."
+"Shows vertex points and lets you mask/unmask them.\n"
+"Without any brush active, click on a vertex to unmask it.\n"
+"Hold down CTRL to mask it."
 msgstr ""
 
 msgid "Increase Brush Size\tShift++"
