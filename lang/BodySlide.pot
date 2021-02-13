@@ -543,7 +543,7 @@ msgstr ""
 msgid "Perspective\tShift+5"
 msgstr ""
 
-msgid "Toggle Visibility\tG"
+msgid "Toggle Visibility\tE"
 msgstr ""
 
 msgid "Switch between the different visibility modes for the selected shapes."

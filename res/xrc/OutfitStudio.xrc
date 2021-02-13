@@ -251,7 +251,7 @@
 							</object>
 							<object class="tool" name="btnShowFloor">
 								<label>Show Floor</label>
-								<tooltip>Toggle rendering of the floor.</tooltip>
+								<tooltip>Toggle rendering of the floor grid.</tooltip>
 								<bitmap>$(AppDir)\res\images\Floor.png</bitmap>
 								<toggle>1</toggle>
 							</object>
@@ -1871,12 +1871,12 @@
 					<checkable>1</checkable>
 				</object>
 				<object class="wxMenuItem" name="btnShowFloor">
-					<label>Show Floor</label>
+					<label>Show Floor\tG</label>
 					<checkable>1</checkable>
 				</object>
 			</object>
 			<object class="wxMenuItem" name="btnToggleVisibility">
-				<label>Toggle Visibility\tG</label>
+				<label>Toggle Visibility\tE</label>
 				<help>Switch between the different visibility modes for the selected shapes.</help>
 			</object>
 			<object class="wxMenuItem" name="btnShowWireframe">
