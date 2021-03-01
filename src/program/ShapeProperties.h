@@ -10,7 +10,7 @@ See the included LICENSE file
 
 class ShapeProperties : public wxDialog {
 public:
-	ShapeProperties(wxWindow*, NifFile*, NiShape*);
+	ShapeProperties(wxWindow*, nifly::NifFile*, nifly::NiShape*);
 	~ShapeProperties();
 
 private:
@@ -53,11 +53,11 @@ private:
 	wxTextCtrl* textRY = nullptr;
 	wxTextCtrl* textRZ = nullptr;
 	wxCheckBox* cbTransformGeo = nullptr;
-	MatTransform oldXformGlobalToSkin, newXformGlobalToSkin;
+	nifly::MatTransform oldXformGlobalToSkin, newXformGlobalToSkin;
 
 	OutfitStudioFrame* os = nullptr;
-	NifFile* nif = nullptr;
-	NiShape* shape = nullptr;
+	nifly::NifFile* nif = nullptr;
+	nifly::NiShape* shape = nullptr;
 
 	bool currentSubIndex = false;
 	bool currentDynamic = false;
@@ -76,7 +76,7 @@ private:
 	void GetGeometry();
 
 	void GetExtraData();
-	void AddExtraData(NiExtraData* extraData, bool uiOnly = false);
+	void AddExtraData(nifly::NiExtraData* extraData, bool uiOnly = false);
 	void ChangeExtraDataType(int index);
 	void RemoveExtraData(int index);
 

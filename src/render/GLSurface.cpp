@@ -13,6 +13,8 @@ See the included LICENSE file
 #include <set>
 #include <limits>
 
+using namespace nifly;
+
 extern ConfigurationManager Config;
 
 const wxGLAttributes& GLSurface::GetGLAttribs() {

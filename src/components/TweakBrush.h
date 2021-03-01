@@ -76,10 +76,10 @@ enum TweakBrushType {
 // Collecton of information that identifies the position and attributes where a brush stroke is taking place.
 class TweakPickInfo {
 public:
-	Vector3 origin;			// Point on the surface of the mesh that was touched.
-	Vector3 normal;			// Surface normal at the point of impact.
-	Vector3 view;			// View vector.
-	Vector3 center;			// Center point for a transform.
+	nifly::Vector3 origin;			// Point on the surface of the mesh that was touched.
+	nifly::Vector3 normal;			// Surface normal at the point of impact.
+	nifly::Vector3 view;			// View vector.
+	nifly::Vector3 center;			// Center point for a transform.
 	int facet = 0;			// Facet index touched.
 	int facetM = 0;			// Mirrored facet index touched (X-axis mirror).
 };
@@ -92,7 +92,7 @@ public:
 	int nCachedPointsM = 0;
 	std::unordered_set<AABBTree::AABBTreeNode*> cachedNodes;
 	std::unordered_set<AABBTree::AABBTreeNode*> cachedNodesM;
-	std::vector<Vector3> positionData;
+	std::vector<nifly::Vector3> positionData;
 };
 
 
@@ -182,16 +182,16 @@ public:
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&) {}
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<Vector3>>&) {}
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<nifly::Vector3>>&) {}
 
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
-	virtual bool checkSpacing(Vector3& start, Vector3& end);
+	virtual bool checkSpacing(nifly::Vector3& start, nifly::Vector3& end);
 
 	// Standard falloff function, used by most brushes
 	// y = (cos((pi/2)*x) * sqrt(cos((pi/2)*x))) ^ focus
 	// Focus values between 0 and 1 give a spherical curve, values over 1 give a peaked curve.
 	virtual float getFalloff(float dist);
-	virtual void applyFalloff(Vector3& deltaVec, float dist);
+	virtual void applyFalloff(nifly::Vector3& deltaVec, float dist);
 
 	// Get the list of points, facets and BVH nodes within the brush sphere of influence.
 	// Normally, the origin point is used for sphere center and assumed to be an arbitrary point on the surface.
@@ -211,7 +211,7 @@ public:
 	virtual UndoType GetUndoType() {return UT_MASK;}
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
-	virtual bool checkSpacing(Vector3&, Vector3&) {
+	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) {
 		return true;
 	}
 };
@@ -223,19 +223,19 @@ public:
 	virtual UndoType GetUndoType() {return UT_MASK;}
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
-	virtual bool checkSpacing(Vector3&, Vector3&) {
+	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) {
 		return true;
 	}
 };
 
 class TB_SmoothMask : public TweakBrush {
 public:
-	byte method;				// 0 for laplacian, 1 for HC-Smooth.
+	nifly::byte method;			// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
 
-	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, UndoStateShape &uss);
+	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv);
+	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv, UndoStateShape &uss);
 
 	TB_SmoothMask();
 	virtual ~TB_SmoothMask();
@@ -255,25 +255,25 @@ public:
 
 // Smooth brush implementing a laplacian smooth function with HC-Smooth modifier.
 class TB_Smooth : public TweakBrush {
-	byte method;				// 0 for laplacian, 1 for HC-Smooth.
+	nifly::byte method;			// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
 
 	// Laplacian smoothing filter. Points are the set of point indices into refmesh to smooth.
 	// wv is the current position of those points. This function can be called iteratively, reusing wv.
-	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
+	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv);
 
 	// Improved laplacian smoothing filter (HC-Smooth) points are the set of point indices into refmesh to smooth.
 	// wv is the current position of those points. This function can be called iteratively, reusing wv.
 	// This algo is much slower than lap, but tries to maintain mesh volume.
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, UndoStateShape &uss);
+	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv, UndoStateShape &uss);
 
 public:
 	TB_Smooth();
 	virtual ~TB_Smooth();
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
-	virtual bool checkSpacing(Vector3&, Vector3&) {
+	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) {
 		return true;
 	}
 };
@@ -285,9 +285,9 @@ public:
 	TB_Undiff();
 	virtual ~TB_Undiff();
 
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<Vector3>>&);
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<nifly::Vector3>>&);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
-	virtual bool checkSpacing(Vector3&, Vector3&) {
+	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) {
 		return true;
 	}
 };
@@ -309,11 +309,11 @@ public:
 
 	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
-	virtual bool checkSpacing(Vector3&, Vector3&) {
+	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) {
 		return true;
 	}
 
-	void GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist);
+	void GetWorkingPlane(nifly::Vector3& outPlaneNormal, float& outPlaneDist);
 	int CachedPointIndex(mesh* m, int query) {
 		TweakBrushMeshCache* meshCache = &cache[m];
 		if (query >= meshCache->nCachedPoints)
@@ -331,7 +331,7 @@ public:
 	TB_XForm();
 	virtual ~TB_XForm();
 
-	void GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist);
+	void GetWorkingPlane(nifly::Vector3& outPlaneNormal, float& outPlaneDist);
 	int CachedPointIndex(mesh*, int query) {
 		return query;
 	}
@@ -342,7 +342,7 @@ public:
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&);
 	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
-	virtual bool checkSpacing(Vector3&, Vector3&) {
+	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) {
 		return true;
 	}
 };
@@ -401,12 +401,12 @@ public:
 	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
 	bool bXMirrorBone;
 	bool bNormalizeWeights = false;
-	byte method;				// 0 for laplacian, 1 for HC-Smooth.
+	nifly::byte method;			// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
 
 	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv);
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape &uss, const int boneInd, const std::unordered_map<ushort, float> *wPtr);
+	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape &uss, const int boneInd, const std::unordered_map<nifly::ushort, float> *wPtr);
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
@@ -418,7 +418,7 @@ public:
 
 class TB_Color : public TweakBrush {
 public:
-	Vector3 color;
+	nifly::Vector3 color;
 
 	TB_Color();
 	virtual ~TB_Color();
@@ -443,7 +443,7 @@ public:
 	virtual UndoType GetUndoType() { return UT_ALPHA; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
-	virtual bool checkSpacing(Vector3&, Vector3&) {
+	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) {
 		return true;
 	}
 };
@@ -455,7 +455,7 @@ public:
 	virtual UndoType GetUndoType() { return UT_ALPHA; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
-	virtual bool checkSpacing(Vector3&, Vector3&) {
+	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) {
 		return true;
 	}
 };
@@ -464,7 +464,7 @@ class TweakStroke {
 	std::vector<mesh*> refMeshes;
 	TweakBrush* refBrush;
 	bool newStroke = true;
-	Vector3 lastPoint;
+	nifly::Vector3 lastPoint;
 
 	static std::vector<std::future<void>> normalUpdates;
 	std::unordered_map<mesh*, std::unique_ptr<int[]>> pts1;
@@ -482,7 +482,7 @@ public:
 	}
 
 	void beginStroke(TweakPickInfo& pickInfo);
-	void beginStroke(TweakPickInfo& pickInfo, const std::vector<std::vector<Vector3>>& positionData);
+	void beginStroke(TweakPickInfo& pickInfo, const std::vector<std::vector<nifly::Vector3>>& positionData);
 	void updateStroke(TweakPickInfo& pickInfo);
 	void endStroke();
 

@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "ObjFile.h"
 #include "../utils/PlatformUtil.h"
 
+using namespace nifly;
+
 ObjFile::ObjFile() {
 }
 

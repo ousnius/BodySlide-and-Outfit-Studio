@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -118,7 +118,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -141,7 +141,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -171,7 +171,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -701,25 +701,6 @@
     <ClInclude Include="lib\LZ4F\lz4frame_static.h" />
     <ClInclude Include="lib\LZ4F\lz4hc.h" />
     <ClInclude Include="lib\LZ4F\xxhash.h" />
-    <ClInclude Include="lib\NIF\Animation.h" />
-    <ClInclude Include="lib\NIF\BasicTypes.h" />
-    <ClInclude Include="lib\NIF\bhk.h" />
-    <ClInclude Include="lib\NIF\ExtraData.h" />
-    <ClInclude Include="lib\NIF\Factory.h" />
-    <ClInclude Include="lib\NIF\Geometry.h" />
-    <ClInclude Include="lib\NIF\Keys.h" />
-    <ClInclude Include="lib\NIF\NifFile.h" />
-    <ClInclude Include="lib\NIF\NifUtil.h" />
-    <ClInclude Include="lib\NIF\Nodes.h" />
-    <ClInclude Include="lib\NIF\Objects.h" />
-    <ClInclude Include="lib\NIF\Particles.h" />
-    <ClInclude Include="lib\NIF\Shaders.h" />
-    <ClInclude Include="lib\NIF\Skin.h" />
-    <ClInclude Include="lib\NIF\utils\half.hpp" />
-    <ClInclude Include="lib\NIF\utils\KDMatcher.h" />
-    <ClInclude Include="lib\NIF\utils\Miniball.hpp" />
-    <ClInclude Include="lib\NIF\utils\Object3d.h" />
-    <ClInclude Include="lib\NIF\VertexData.h" />
     <ClInclude Include="lib\SOIL2\etc1_utils.h" />
     <ClInclude Include="lib\SOIL2\image_DXT.h" />
     <ClInclude Include="lib\SOIL2\image_helper.h" />
@@ -790,19 +771,19 @@
     <ClCompile Include="lib\LZ4F\lz4frame.c" />
     <ClCompile Include="lib\LZ4F\lz4hc.c" />
     <ClCompile Include="lib\LZ4F\xxhash.c" />
-    <ClCompile Include="lib\NIF\Animation.cpp" />
-    <ClCompile Include="lib\NIF\BasicTypes.cpp" />
-    <ClCompile Include="lib\NIF\bhk.cpp" />
-    <ClCompile Include="lib\NIF\ExtraData.cpp" />
-    <ClCompile Include="lib\NIF\Factory.cpp" />
-    <ClCompile Include="lib\NIF\Geometry.cpp" />
-    <ClCompile Include="lib\NIF\NifFile.cpp" />
-    <ClCompile Include="lib\NIF\Nodes.cpp" />
-    <ClCompile Include="lib\NIF\Objects.cpp" />
-    <ClCompile Include="lib\NIF\Particles.cpp" />
-    <ClCompile Include="lib\NIF\Shaders.cpp" />
-    <ClCompile Include="lib\NIF\Skin.cpp" />
-    <ClCompile Include="lib\NIF\utils\Object3d.cpp" />
+    <ClCompile Include="lib\nifly\src\Animation.cpp" />
+    <ClCompile Include="lib\nifly\src\BasicTypes.cpp" />
+    <ClCompile Include="lib\nifly\src\bhk.cpp" />
+    <ClCompile Include="lib\nifly\src\ExtraData.cpp" />
+    <ClCompile Include="lib\nifly\src\Factory.cpp" />
+    <ClCompile Include="lib\nifly\src\Geometry.cpp" />
+    <ClCompile Include="lib\nifly\src\NifFile.cpp" />
+    <ClCompile Include="lib\nifly\src\Nodes.cpp" />
+    <ClCompile Include="lib\nifly\src\Object3d.cpp" />
+    <ClCompile Include="lib\nifly\src\Objects.cpp" />
+    <ClCompile Include="lib\nifly\src\Particles.cpp" />
+    <ClCompile Include="lib\nifly\src\Shaders.cpp" />
+    <ClCompile Include="lib\nifly\src\Skin.cpp" />
     <ClCompile Include="lib\SOIL2\etc1_utils.c" />
     <ClCompile Include="lib\SOIL2\image_DXT.c" />
     <ClCompile Include="lib\SOIL2\image_helper.c" />

@@ -4,9 +4,13 @@ See the included LICENSE file
 */
 
 #include "GLShader.h"
+#include "Object3d.hpp"
 #include "../utils/PlatformUtil.h"
+
 #include <fstream>
 #include <sstream>
+
+using namespace nifly;
 
 GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentSource) : GLShader() {
 	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource)) {

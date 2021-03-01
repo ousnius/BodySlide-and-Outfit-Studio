@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "TriFile.h"
 #include "../utils/PlatformUtil.h"
 
+using namespace nifly;
+
 bool TriFile::Read(const std::string& fileName) {
 	std::fstream triFile;
 	PlatformUtil::OpenFileStream(triFile, fileName, std::ios::in | std::ios::binary);

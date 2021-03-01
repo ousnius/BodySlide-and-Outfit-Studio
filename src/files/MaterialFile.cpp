@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "MaterialFile.h"
 #include "../utils/StringStuff.h"
 
+using namespace nifly;
+
 MaterialFile::MaterialFile(const Type& signature) {
 	this->signature = signature;
 }

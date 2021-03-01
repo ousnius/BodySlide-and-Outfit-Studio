@@ -7,6 +7,8 @@ See the included LICENSE file
 #include "WeightNorm.h"
 #include "Anim.h"
 
+using namespace nifly;
+
 std::vector<std::future<void>> TweakStroke::normalUpdates{};
 
 void TweakStroke::beginStroke(TweakPickInfo& pickInfo) {

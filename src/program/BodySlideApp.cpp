@@ -32,6 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 	#undef _PPL_H
 #endif
 
+using namespace nifly;
+
 ConfigurationManager Config;
 ConfigurationManager BodySlideConfig;
 

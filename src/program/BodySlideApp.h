@@ -89,14 +89,14 @@ class BodySlideApp : public wxApp {
 	SliderSetGroupCollection gCollection;
 
 	/* Cache */
-	std::map<std::string, NifFile, case_insensitive_compare> refNormalsCache;	// Cache for reference normals files
+	std::map<std::string, nifly::NifFile, case_insensitive_compare> refNormalsCache;	// Cache for reference normals files
 
 	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount;	// Counts how many sets write to the same output file
 
 	std::string previewBaseName;
 	std::string previewSetName;
-	NifFile* previewBaseNif = nullptr;
-	NifFile PreviewMod;
+	nifly::NifFile* previewBaseNif = nullptr;
+	nifly::NifFile PreviewMod;
 
 	int CreateSetSliders(const std::string& outfit);
 
@@ -190,8 +190,8 @@ public:
 	void EditProject(const std::string& projectName);
 	void LaunchOutfitStudio(const wxString& args = "");
 
-	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<ushort>& zapidx, std::vector<Vector2>* uvs = nullptr);
-	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices);
+	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<nifly::Vector3>& verts, std::vector<nifly::ushort>& zapidx, std::vector<nifly::Vector2>* uvs = nullptr);
+	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, nifly::NifFile& nif, std::unordered_map<std::string, std::vector<nifly::ushort>>& zapIndices);
 
 	void CopySliderValues(bool toHigh);
 	void ShowPreview();
@@ -210,13 +210,13 @@ public:
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
 	void UpdateMeshesFromSet();
-	void ApplyReferenceNormals(NifFile& nif);
+	void ApplyReferenceNormals(nifly::NifFile& nif);
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false, bool forceNormals = false);
 	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, bool forceNormals = false, const std::string& custPath = "");
 	void GroupBuild(const std::string& group);
 
-	void AddTriData(NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
+	void AddTriData(nifly::NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
 
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	bool IsUVSlider(const wxString& sliderName);

@@ -31,8 +31,8 @@ public:
 
 	GLShader& GetShader();
 
-	GLuint GetTexID(uint index);
-	std::string GetTexName(uint index);
+	GLuint GetTexID(nifly::uint index);
+	std::string GetTexName(nifly::uint index);
 
 	void BindTextures(GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklight, const bool hasLightmask);
 };

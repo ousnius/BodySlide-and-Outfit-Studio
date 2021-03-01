@@ -72,11 +72,11 @@ public:
 	void SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers);
 
 	mesh* GetMesh(const std::string& shapeName);
-	void AddMeshFromNif(NifFile* nif, char* shapeName = nullptr);
-	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
-	void AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName);
+	void AddMeshFromNif(nifly::NifFile* nif, char* shapeName = nullptr);
+	void RefreshMeshFromNif(nifly::NifFile* nif, char* shapeName = nullptr);
+	void AddNifShapeTextures(nifly::NifFile* fromNif, const std::string& shapeName);
 
-	void UpdateMeshes(const std::string& shapeName, std::vector<Vector3>* verts, std::vector<Vector2>* uvs = nullptr) {
+	void UpdateMeshes(const std::string& shapeName, std::vector<nifly::Vector3>* verts, std::vector<nifly::Vector2>* uvs = nullptr) {
 		std::set<int> changed;
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
@@ -107,7 +107,7 @@ public:
 		gls.RenderOneFrame();
 	}
 
-	void Resized(uint w, uint h) {
+	void Resized(nifly::uint w, nifly::uint h) {
 		gls.SetSize(w, h);
 	}
 

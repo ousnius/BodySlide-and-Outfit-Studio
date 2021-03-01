@@ -8,6 +8,7 @@ See the included LICENSE file
 
 extern ConfigurationManager Config;
 
+using namespace nifly;
 
 std::unordered_map<int, Vector2>& EditUVAction::GetStartState() {
 	return startState;

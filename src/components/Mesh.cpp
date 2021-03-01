@@ -4,7 +4,9 @@ See the included LICENSE file
 */
 
 #include "Mesh.h"
-#include "../NIF/utils/KDMatcher.h"
+#include "KDMatcher.hpp"
+
+using namespace nifly;
 
 mesh::mesh() {
 }

@@ -1,0 +1,3 @@
+[submodule "lib/nifly"]
+	path = lib/nifly
+	url = https://github.com/ousnius/nifly

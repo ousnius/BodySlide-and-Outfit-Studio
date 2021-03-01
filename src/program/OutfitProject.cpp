@@ -10,7 +10,7 @@ See the included LICENSE file
 #include "../program/FBXImportDialog.h"
 #include "../utils/PlatformUtil.h"
 #include "../components/WeightNorm.h"
-#include "../NIF/NifUtil.h"
+#include "NifUtil.hpp"
 
 #include "../FSEngine/FSManager.h"
 #include "../FSEngine/FSEngine.h"
@@ -19,6 +19,8 @@ See the included LICENSE file
 #include <regex>
 
 extern ConfigurationManager Config;
+
+using namespace nifly;
 
 OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 	owner = inOwner;

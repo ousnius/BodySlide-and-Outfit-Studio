@@ -27,7 +27,7 @@ struct UndoStateVertexWeight {
 
 struct UndoStateBoneWeights {
 	std::string boneName;
-	std::unordered_map<ushort, UndoStateVertexWeight> weights;
+	std::unordered_map<nifly::ushort, UndoStateVertexWeight> weights;
 };
 
 struct UndoStateVertexBoneWeight {
@@ -37,17 +37,17 @@ struct UndoStateVertexBoneWeight {
 
 struct UndoStateVertexSliderDiff {
 	std::string sliderName;	// NOT the set name
-	Vector3 diff;
+	nifly::Vector3 diff;
 };
 
 struct UndoStateVertex {
 	int index;	// index into array of vertices
-	Vector3 pos;	// position in skin coordinates
-	Vector2 uv;
-	Color4 color;
+	nifly::Vector3 pos;	// position in skin coordinates
+	nifly::Vector2 uv;
+	nifly::Color4 color;
 	// normal, tangent, and bitangent are in skin CS tangent space (so
 	// only the rotation part of transforms affects them).
-	Vector3 normal, tangent, bitangent;
+	nifly::Vector3 normal, tangent, bitangent;
 	float eyeData;
 	std::vector<UndoStateVertexBoneWeight> weights;
 	std::vector<UndoStateVertexSliderDiff> diffs;
@@ -55,7 +55,7 @@ struct UndoStateVertex {
 
 struct UndoStateTriangle {
 	int index;	// index into array of triangles
-	Triangle t;
+	nifly::Triangle t;
 	int partID = -1;	// partition ID if there are partitions or segments
 };
 
@@ -68,8 +68,8 @@ struct UndoStateShape {
 	// pointStartState and pointEndState are only meaningful for
 	// UT_VERTPOS, UT_MASK, UT_COLOR, and UT_ALPHA.
 	// For UT_MASK and UT_ALPHA, only the x coordinate is meaningful.
-	std::unordered_map<int, Vector3> pointStartState;
-	std::unordered_map<int, Vector3> pointEndState;
+	std::unordered_map<int, nifly::Vector3> pointStartState;
+	std::unordered_map<int, nifly::Vector3> pointEndState;
 	// boneWeights is only meaningful for UT_WEIGHT.
 	std::vector<UndoStateBoneWeights> boneWeights;
 	// delVerts, addVerts, delTris, and addTris are only meaningful for

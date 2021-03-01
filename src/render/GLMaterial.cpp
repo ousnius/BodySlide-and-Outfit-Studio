@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #include "GLMaterial.h"
 
+using namespace nifly;
+
 GLMaterial::GLMaterial() {
 }
 

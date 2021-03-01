@@ -53,24 +53,24 @@ enum TargetGame {
 
 
 class ShapeItemData : public wxTreeItemData  {
-	NiShape* shape = nullptr;
+	nifly::NiShape* shape = nullptr;
 
 public:
-	ShapeItemData(NiShape* inShape) {
+	ShapeItemData(nifly::NiShape* inShape) {
 		shape = inShape;
 	}
 
-	NiShape* GetShape() {
+	nifly::NiShape* GetShape() {
 		return shape;
 	}
 
-	void SetShape(NiShape* newShape) {
+	void SetShape(nifly::NiShape* newShape) {
 		shape = newShape;
 	}
 };
 
 struct ShapeItemState {
-	NiShape* shape = nullptr;
+	nifly::NiShape* shape = nullptr;
 	int state = 0;
 	bool selected = false;
 };
@@ -93,11 +93,11 @@ public:
 	// subsegment among all the segments and subsegments.  Used as a value
 	// in triSParts.  Not in the file.
 	int partID;
-	uint userSlotID;
-	uint material;
+	nifly::uint userSlotID;
+	nifly::uint material;
 	std::vector<float> extraData;
 
-	SubSegmentItemData(int inPartitionID, const uint& inUserSlotID, const uint& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
+	SubSegmentItemData(int inPartitionID, const nifly::uint& inUserSlotID, const nifly::uint& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
 		partID = inPartitionID;
 		userSlotID = inUserSlotID;
 		material = inMaterial;
@@ -108,9 +108,9 @@ public:
 class PartitionItemData : public wxTreeItemData  {
 public:
 	int index;
-	ushort type;
+	nifly::ushort type;
 
-	PartitionItemData(int inIndex, const ushort& inType) {
+	PartitionItemData(int inIndex, const nifly::ushort& inType) {
 		index = inIndex;
 		type = inType;
 	}
@@ -156,7 +156,7 @@ public:
 
 	void SetNotifyWindow(wxWindow* win);
 
-	void AddMeshFromNif(NifFile* nif, const std::string& shapeName);
+	void AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName);
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName) {
 		gls.RenameMesh(shapeName, newShapeName);
@@ -168,7 +168,7 @@ public:
 		return gls.GetMesh(shapeName);
 	}
 
-	void UpdateMeshVertices(const std::string& shapeName, std::vector<Vector3>* verts, bool updateBVH = true, bool recalcNormals = true, bool render = true, std::vector<Vector2>* uvs = nullptr);
+	void UpdateMeshVertices(const std::string& shapeName, std::vector<nifly::Vector3>* verts, bool updateBVH = true, bool recalcNormals = true, bool render = true, std::vector<nifly::Vector2>* uvs = nullptr);
 	void RecalculateMeshBVH(const std::string& shapeName);
 
 	void ShowShape(const std::string& shapeName, bool show = true);
@@ -187,7 +187,7 @@ public:
 		return activeBrush;
 	}
 
-	void SetColorBrush(const Vector3& color) {
+	void SetColorBrush(const nifly::Vector3& color) {
 		colorBrush.color = color;
 	}
 
@@ -439,15 +439,15 @@ public:
 
 	void ClearColors() {
 		for (auto &m : gls.GetMeshes())
-			m->ColorFill(Vector3());
+			m->ColorFill(nifly::Vector3());
 	}
 	
 	void ClearActiveColors() {
 		for (auto &m : gls.GetActiveMeshes())
-			m->ColorFill(Vector3());
+			m->ColorFill(nifly::Vector3());
 	}
 
-	void GetActiveMask(std::unordered_map<ushort, float>& mask) {
+	void GetActiveMask(std::unordered_map<nifly::ushort, float>& mask) {
 		if (gls.GetActiveMeshes().empty())
 			return;
 
@@ -459,7 +459,7 @@ public:
 		}
 	}
 
-	void GetActiveUnmasked(std::unordered_map<ushort, float>& mask) {
+	void GetActiveUnmasked(std::unordered_map<nifly::ushort, float>& mask) {
 		if (gls.GetActiveMeshes().empty())
 			return;
 
@@ -470,7 +470,7 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
-	void GetShapeMask(std::unordered_map<ushort, float>& mask, const std::string& shapeName) {
+	void GetShapeMask(std::unordered_map<nifly::ushort, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -481,7 +481,7 @@ public:
 		}
 	}
 
-	void GetShapeUnmasked(std::unordered_map<ushort, float>& mask, const std::string& shapeName) {
+	void GetShapeUnmasked(std::unordered_map<nifly::ushort, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -491,7 +491,7 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
-	void SetShapeMask(std::unordered_map<ushort, float>& mask, const std::string& shapeName) {
+	void SetShapeMask(std::unordered_map<nifly::ushort, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -544,12 +544,12 @@ public:
 		}
 	}
 
-	void InvertMaskTris(std::unordered_map<ushort, float>& mask, const std::string& shapeName) {
+	void InvertMaskTris(std::unordered_map<nifly::ushort, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
-		std::unordered_map<ushort, float> triMask;
+		std::unordered_map<nifly::ushort, float> triMask;
 		for (int t = 0; t < m->nTris; t++) {
 			auto& tri = m->tris[t];
 			if (mask.find(tri.p1) != mask.end() ||
@@ -561,7 +561,7 @@ public:
 			}
 		}
 
-		std::unordered_map<ushort, float> invertMask;
+		std::unordered_map<nifly::ushort, float> invertMask;
 		for (int t = 0; t < m->nTris; t++) {
 			auto& tri = m->tris[t];
 			if (triMask.find(tri.p1) == triMask.end())
@@ -584,7 +584,7 @@ public:
 		}
 	}
 
-	Vector3 CreateColorRamp(const float value) {
+	nifly::Vector3 CreateColorRamp(const float value) {
 		float r;
 		float g;
 		float b;
@@ -613,7 +613,7 @@ public:
 			b = 0.0;
 		}
 
-		return Vector3(r, g, b);
+		return nifly::Vector3(r, g, b);
 	}
 
 	void DeleteMesh(const std::string& shape) {
@@ -674,7 +674,7 @@ public:
 	}
 
 	void UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
-		const Vector3& directional0Dir = Vector3(), const Vector3& directional1Dir = Vector3(), const Vector3& directonal2Dir = Vector3())
+		const nifly::Vector3& directional0Dir = nifly::Vector3(), const nifly::Vector3& directional1Dir = nifly::Vector3(), const nifly::Vector3& directonal2Dir = nifly::Vector3())
 	{
 		gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directonal2Dir);
 		gls.RenderOneFrame();
@@ -721,7 +721,7 @@ private:
 	int lastY;
 	std::string hoverMeshName, mouseDownMeshName;
 	int hoverPoint, mouseDownPoint;
-	Edge hoverEdge, mouseDownEdge;
+	nifly::Edge hoverEdge, mouseDownEdge;
 
 	std::set<mesh*> BVHUpdateQueue;
 
@@ -779,14 +779,14 @@ private:
 	mesh* YScaleMesh = nullptr;
 	mesh* ZScaleMesh = nullptr;
 	mesh* ScaleUniformMesh = nullptr;
-	Vector3 xformCenter;		// Transform center for transform brushes (rotate, specifically cares about this)
+	nifly::Vector3 xformCenter;		// Transform center for transform brushes (rotate, specifically cares about this)
 	float lastCenterDistance;
 
 	mesh* XPivotMesh = nullptr;
 	mesh* YPivotMesh = nullptr;
 	mesh* ZPivotMesh = nullptr;
 	mesh* PivotCenterMesh = nullptr;
-	Vector3 pivotPosition;
+	nifly::Vector3 pivotPosition;
 	float lastCenterPivotDistance;
 
 	std::vector<mesh*> nodesPoints;
@@ -930,7 +930,7 @@ public:
 	void SelectShape(const std::string& shapeName);
 	std::vector<std::string> GetShapeList();
 
-	void UpdateShapeSource(NiShape* shape);
+	void UpdateShapeSource(nifly::NiShape* shape);
 
 	void ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo = false);
 	void UpdateActiveShapeUI();
@@ -956,11 +956,11 @@ public:
 	void AnimationGUIFromProj();
 	void RefreshGUIFromProj(bool render = true);
 	void MeshesFromProj(const bool reloadTextures = false);
-	void MeshFromProj(NiShape* shape, const bool reloadTextures = false);
+	void MeshFromProj(nifly::NiShape* shape, const bool reloadTextures = false);
 
-	void UpdateShapeReference(NiShape* shape, NiShape* newShape);
+	void UpdateShapeReference(nifly::NiShape* shape, nifly::NiShape* newShape);
 	std::vector<ShapeItemData*>& GetSelectedItems();
-	void ClearSelected(NiShape* shape);
+	void ClearSelected(nifly::NiShape* shape);
 	std::string GetActiveBone();
 
 	bool NotifyStrokeStarting();
@@ -1112,10 +1112,10 @@ public:
 	}
 
 private:
-	Vector3 previewMove;
-	Vector3 previewScale;
-	Vector3 previewRotation;
-	std::unordered_map<NiShape*, std::unordered_map<ushort, Vector3>> previewDiff;
+	nifly::Vector3 previewMove;
+	nifly::Vector3 previewScale;
+	nifly::Vector3 previewRotation;
+	std::unordered_map<nifly::NiShape*, std::unordered_map<nifly::ushort, nifly::Vector3>> previewDiff;
 
 	bool selectionLocked = false;
 	std::vector<ShapeItemData*> selectedItems;
@@ -1135,7 +1135,7 @@ private:
 	void ClearProject();
 	void RenameProject(const std::string& projectName);
 
-	void UpdateMeshFromSet(NiShape* shape);
+	void UpdateMeshFromSet(nifly::NiShape* shape);
 	void FillVertexColors();
 
 	bool HasUnweightedCheck();
@@ -1250,8 +1250,8 @@ private:
 	void OnPartitionApply(wxCommandEvent& event);
 	void OnPartitionReset(wxCommandEvent& event);
 
-	void CreateSegmentTree(NiShape* shape = nullptr);
-	void CreatePartitionTree(NiShape* shape = nullptr);
+	void CreateSegmentTree(nifly::NiShape* shape = nullptr);
+	void CreatePartitionTree(nifly::NiShape* shape = nullptr);
 
 	void OnSelectTool(wxCommandEvent& event);
 
@@ -1266,7 +1266,7 @@ private:
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);
 	bool ShowConform(ConformOptions& options);
-	void ConformSliders(NiShape* shape, const ConformOptions& options);
+	void ConformSliders(nifly::NiShape* shape, const ConformOptions& options);
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);
 	void OnSliderImportNIF(wxCommandEvent& event);
@@ -1300,17 +1300,17 @@ private:
 	void OnMoveShapeOldOffset(wxCommandEvent& event);
 	void OnMoveShapeSlider(wxCommandEvent& event);
 	void OnMoveShapeText(wxCommandEvent& event);
-	void PreviewMove(const Vector3& changed);
+	void PreviewMove(const nifly::Vector3& changed);
 
 	void OnScaleShape(wxCommandEvent& event);
 	void OnScaleShapeSlider(wxCommandEvent& event);
 	void OnScaleShapeText(wxCommandEvent& event);
-	void PreviewScale(const Vector3& scale);
+	void PreviewScale(const nifly::Vector3& scale);
 
 	void OnRotateShape(wxCommandEvent& event);
 	void OnRotateShapeSlider(wxCommandEvent& event);
 	void OnRotateShapeText(wxCommandEvent& event);
-	void PreviewRotation(const Vector3& changed);
+	void PreviewRotation(const nifly::Vector3& changed);
 
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetReference(wxCommandEvent& event);
@@ -1325,7 +1325,7 @@ private:
 	void OnDeleteBone(wxCommandEvent& event);
 	void OnDeleteBoneFromSelected(wxCommandEvent& event);
 	void FillParentBoneChoice(wxDialog &dlg, const std::string &selBone = "");
-	void GetBoneDlgData(wxDialog &dlg, MatTransform &xform, std::string &parentBone);
+	void GetBoneDlgData(wxDialog &dlg, nifly::MatTransform &xform, std::string &parentBone);
 	void OnEditBone(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
 	void OnCopySelectedWeight(wxCommandEvent& event);

@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "Automorph.h"
 #include "Anim.h"
 
+using namespace nifly;
+
 Automorph::Automorph() {
 }
 

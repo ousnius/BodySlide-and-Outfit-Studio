@@ -9,6 +9,8 @@ See the included LICENSE file
 #include <sstream>
 #include <regex>
 
+using namespace nifly;
+
 extern ConfigurationManager Config;
 extern ConfigurationManager BodySlideConfig;
 

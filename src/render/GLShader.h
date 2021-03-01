@@ -5,7 +5,6 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../NIF/utils/Object3d.h"
 #include "../components/Mesh.h"
 #include "GLExtensions.h"
 
@@ -47,8 +46,8 @@ class GLShader {
 
 public:
 	struct DirectionalLight {
-		Vector3 diffuse;
-		Vector3 direction;
+		nifly::Vector3 diffuse;
+		nifly::Vector3 direction;
 	};
 
 	GLShader() {}
@@ -56,8 +55,8 @@ public:
 	// Creates the shader object and runs LoadShaders followed by BuildShaders.
 	GLShader(const std::string& vertexSource, const std::string& fragmentSource);
 
-	void SetColor(const Vector3& color);
-	void SetSubColor(const Vector3& color);
+	void SetColor(const nifly::Vector3& color);
+	void SetSubColor(const nifly::Vector3& color);
 	void SetModelSpace(const bool enable);
 	void SetEmissive(const bool enable);
 	void SetWireframeEnabled(const bool enable);
@@ -65,7 +64,7 @@ public:
 	void SetLightingEnabled(const bool enable);
 	void SetMatrixProjection(const glm::mat4x4& mat);
 	void SetMatrixModelView(const glm::mat4x4& matView, const glm::mat4x4& matModel);
-	void SetAlphaProperties(const ushort flags, const float threshold, const float value);
+	void SetAlphaProperties(const nifly::ushort flags, const float threshold, const float value);
 	void SetAlphaThreshold(const float threshold);
 
 	void SetFrontalLight(const DirectionalLight& light);

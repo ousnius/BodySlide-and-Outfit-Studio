@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #include "AABBTree.h"
 
+using namespace nifly;
+
 AABB::AABB(const Vector3& newMin, const Vector3& newMax) {
 	min = newMin;
 	max = newMax;

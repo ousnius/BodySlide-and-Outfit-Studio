@@ -7,6 +7,8 @@ See the included LICENSE file
 
 extern ConfigurationManager Config;
 
+using namespace nifly;
+
 wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnMaterialChooser"), ShapeProperties::OnChooseMaterial)
 	EVT_BUTTON(XRCID("btnAddShader"), ShapeProperties::OnAddShader)

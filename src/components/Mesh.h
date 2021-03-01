@@ -48,13 +48,13 @@ public:
 	};
 
 	struct ShaderProperties {
-		Vector2 uvOffset;
-		Vector2 uvScale = Vector2(1.0f, 1.0f);
-		Vector3 specularColor = Vector3(1.0f, 1.0f, 1.0f);
+		nifly::Vector2 uvOffset;
+		nifly::Vector2 uvScale = nifly::Vector2(1.0f, 1.0f);
+		nifly::Vector3 specularColor = nifly::Vector3(1.0f, 1.0f, 1.0f);
 		float specularStrength = 1.0f;
 		float shininess = 30.0f;
 		float envReflection = 1.0f;
-		Vector3 emissiveColor = Vector3(1.0f, 1.0f, 1.0f);
+		nifly::Vector3 emissiveColor = nifly::Vector3(1.0f, 1.0f, 1.0f);
 		float emissiveMultiple = 1.0f;
 		float alpha = 1.0f;
 		float backlightPower = 0.0f;
@@ -68,22 +68,22 @@ public:
 	glm::mat4x4 matModel = glm::identity<glm::mat4x4>();
 
 	int nVerts = 0;
-	std::unique_ptr<Vector3[]> verts;
-	std::unique_ptr<Vector3[]> norms;
-	std::unique_ptr<Vector3[]> tangents;
-	std::unique_ptr<Vector3[]> bitangents;
-	std::unique_ptr<Vector3[]> vcolors;
+	std::unique_ptr<nifly::Vector3[]> verts;
+	std::unique_ptr<nifly::Vector3[]> norms;
+	std::unique_ptr<nifly::Vector3[]> tangents;
+	std::unique_ptr<nifly::Vector3[]> bitangents;
+	std::unique_ptr<nifly::Vector3[]> vcolors;
 	std::unique_ptr<float[]> valpha;
-	std::unique_ptr<Vector2[]> texcoord;
+	std::unique_ptr<nifly::Vector2[]> texcoord;
 
-	std::unique_ptr<Triangle[]> tris;
+	std::unique_ptr<nifly::Triangle[]> tris;
 	// renderTris is tris re-ordered for rendering with submeshes.  It's
 	// created automatically in CreateBuffers as a copy of tris.  If
 	// something changes tris, renderTris needs to be updated too.
-	std::unique_ptr<Triangle[]> renderTris;
+	std::unique_ptr<nifly::Triangle[]> renderTris;
 	int nTris = 0;
 
-	std::unique_ptr<Edge[]> edges;
+	std::unique_ptr<nifly::Edge[]> edges;
 	int nEdges = 0;
 
 	bool genBuffers = false;
@@ -91,21 +91,21 @@ public:
 	std::vector<GLuint> vbo = std::vector<GLuint>(7, 0);
 	GLuint ibo = 0;
 
-	std::vector<std::pair<uint, uint>> subMeshes;	// Start index and size of each sub mesh
-	std::vector<Vector3> subMeshesColor;			// Color of each sub mesh
+	std::vector<std::pair<nifly::uint, nifly::uint>> subMeshes;	// Start index and size of each sub mesh
+	std::vector<nifly::Vector3> subMeshesColor;			// Color of each sub mesh
 
 	ShaderProperties prop;
 	GLMaterial* material = nullptr;
 
 	float scale = 1.0f;								// Information only, does not cause verts to be scaled during render (except point/lines).
-	float smoothThresh = 60.0f * DEG2RAD;			// Smoothing threshold for generating smooth normals.
+	float smoothThresh = 60.0f * nifly::DEG2RAD;			// Smoothing threshold for generating smooth normals.
 
 	std::unique_ptr<std::vector<int>[]> vertTris;				// Map of triangles for which each vert is a member.
 	std::unique_ptr<std::vector<int>[]> vertEdges;				// Map of edges for which each vert is a member.
 	std::unordered_map<int, std::vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
 	bool bGotWeldVerts = false;	// Whether weldVerts has been calculated yet.
 
-	std::unordered_set<uint> lockedNormalIndices;
+	std::unordered_set<nifly::uint> lockedNormalIndices;
 
 	RenderMode rendermode = RenderMode::Normal;
 	bool doublesided = false;
@@ -131,11 +131,11 @@ public:
 	bool smoothSeamNormals = true;
 	bool lockNormals = false;
 
-	ushort alphaFlags = 0;
-	byte alphaThreshold = 0;
+	nifly::ushort alphaFlags = 0;
+	nifly::byte alphaThreshold = 0;
 
 	std::string shapeName;
-	Vector3 color;
+	nifly::Vector3 color;
 
 	mesh();
 	~mesh();
@@ -156,7 +156,7 @@ public:
 	void UpdateFromMaterialFile(const MaterialFile& matFile);
 	bool HasAlphaBlend();
 
-	void ScaleVertices(const Vector3& center, const float& factor);
+	void ScaleVertices(const nifly::Vector3& center, const float& factor);
 
 	void SetSmoothThreshold(float degrees);
 	float GetSmoothThreshold();
@@ -173,7 +173,7 @@ public:
 
 		m->SmoothNormals(verts);
 	}
-	static void SmoothNormalsStaticMap(mesh* m, const std::unordered_map<int, Vector3>& vertices) {
+	static void SmoothNormalsStaticMap(mesh* m, const std::unordered_map<int, nifly::Vector3>& vertices) {
 		std::set<int> verts;
 		for (auto &v : vertices)
 			verts.insert(v.first);
@@ -186,11 +186,11 @@ public:
 	// Retrieve connected points in a sphere's radius (squared, requires tri adjacency to be set up).
 	// Also requires pointvisit to be allocated by the caller.
 	// Recursive - large query will overflow the stack!
-	bool ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
+	bool ConnectedPointsInSphere(nifly::Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
 
 	// Similar to above, but uses an edge list to determine adjacency, with less risk of stack problems.
 	// Also requires trivisit and pointvisit to be allocated by the caller.
-	bool ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
+	bool ConnectedPointsInSphere2(nifly::Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
 
 	// Convenience function to gather connected points, taking into account "welded" vertices. Does not clear the output set.
 	void GetAdjacentPoints(int querypoint, std::set<int>& outPoints);
@@ -202,7 +202,7 @@ public:
 	int GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint);
 
 	// Creates the vertex color array (if necessary) and sets all the colors to the provided value.
-	void ColorFill(const Vector3& color);
+	void ColorFill(const nifly::Vector3& color);
 	void AlphaFill(const float alpha);
 
 	void ColorChannelFill(int channel, float value);

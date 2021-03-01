@@ -6,7 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include "GLMaterial.h"
-#include "../NIF/NifFile.h"
+#include "NifFile.hpp"
 
 #include <wx/glcanvas.h>
 
@@ -30,11 +30,11 @@ private:
 	glm::mat4x4 matView = glm::identity<glm::mat4x4>();;
 	bool perspective = true;
 	float mFov = 90.0f;
-	Vector3 camPos;
-	Vector3 camRot;		// Turntable camera emulation.
-	Vector3 camOffset;
-	uint vpW = 800;
-	uint vpH = 600;
+	nifly::Vector3 camPos;
+	nifly::Vector3 camRot;		// Turntable camera emulation.
+	nifly::Vector3 camOffset;
+	nifly::uint vpW = 800;
+	nifly::uint vpH = 600;
 
 	GLfloat largestAF = 0;
 
@@ -56,10 +56,10 @@ private:
 	GLShader::DirectionalLight directionalLight2;
 	float ambientLight = 0.2f;
 
-	Vector3 colorBackground = Vector3(0.82f, 0.82f, 0.82f);
-	Vector3 colorWire = Vector3(0.3137f, 0.3137f, 0.3137f);
-	Vector3 colorRed = Vector3(1.0f, 0.25f, 0.25f);
-	Vector3 colorGreen = Vector3(0.25f, 1.0f, 0.25f);
+	nifly::Vector3 colorBackground = nifly::Vector3(0.82f, 0.82f, 0.82f);
+	nifly::Vector3 colorWire = nifly::Vector3(0.3137f, 0.3137f, 0.3137f);
+	nifly::Vector3 colorRed = nifly::Vector3(1.0f, 0.25f, 0.25f);
+	nifly::Vector3 colorGreen = nifly::Vector3(0.25f, 1.0f, 0.25f);
 
 	ResourceLoader resLoader;
 	GLMaterial* primitiveMat = nullptr;
@@ -79,19 +79,19 @@ public:
 	static const wxGLAttributes& GetGLAttribs();
 	static const wxGLContextAttrs& GetGLContextAttribs();
 
-	Vector3 GetBackgroundColor() {
+	nifly::Vector3 GetBackgroundColor() {
 		return colorBackground;
 	}
 
-	void SetBackgroundColor(const Vector3& color) {
+	void SetBackgroundColor(const nifly::Vector3& color) {
 		colorBackground = color;
 	}
 
-	Vector3 GetWireColor() {
+	nifly::Vector3 GetWireColor() {
 		return colorWire;
 	}
 
-	void SetWireColor(const Vector3& color) {
+	void SetWireColor(const nifly::Vector3& color) {
 		colorWire = color;
 	}
 
@@ -174,25 +174,25 @@ public:
 		return activeMeshes;
 	}
 
-	Vector3 GetActiveCenter(bool useMask = true) {
+	nifly::Vector3 GetActiveCenter(bool useMask = true) {
 		if (activeMeshes.empty())
-			return Vector3();
+			return nifly::Vector3();
 
 		int count = 0;
-		Vector3 total;
+		nifly::Vector3 total;
 
 		for (auto &m : activeMeshes) {
 			for (int i = 0; i < m->nVerts; i++) {
 				if (!useMask || m->vcolors[i].x == 0.0f) {
 					glm::vec3 mv(m->matModel * glm::vec4(m->verts[i].x, m->verts[i].y, m->verts[i].z, 1.0));
-					total = total + Vector3(mv.x, mv.y, mv.z);
+					total = total + nifly::Vector3(mv.x, mv.y, mv.z);
 					count++;
 				}
 			}
 		}
 
 		if (count <= 0)
-			return Vector3();
+			return nifly::Vector3();
 
 		total = total / count;
 		return total;
@@ -260,9 +260,9 @@ public:
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Cleanup();
 
-	void SetStartingView(const Vector3& camPos, const Vector3& camRot, const uint& vpWidth, const uint& vpHeight, const float& fov = 65.0f);
-	void SetSize(uint w, uint h);
-	void GetSize(uint &w, uint &h);
+	void SetStartingView(const nifly::Vector3& camPos, const nifly::Vector3& camRot, const nifly::uint& vpWidth, const nifly::uint& vpHeight, const float& fov = 65.0f);
+	void SetSize(nifly::uint w, nifly::uint h);
+	void GetSize(nifly::uint &w, nifly::uint &h);
 	void UpdateProjection();
 
 	void RenderFullScreenQuad(GLMaterial * renderShader, unsigned int w, unsigned int h);
@@ -272,17 +272,17 @@ public:
 	void PanCamera(int dScreenX, int dScreenY);
 	void DollyCamera(int dAmount);
 	void ClampCameraPosition(char axis, float lower, float upper);
-	void UnprojectCamera(Vector3& result);
+	void UnprojectCamera(nifly::Vector3& result);
 
 	void SetView(const char type);
 	void SetPerspective(const bool enabled);
 	void SetFieldOfView(const int fieldOfView);
 	void UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
-		const Vector3& directional0Dir, const Vector3& directional1Dir, const Vector3& directional2Dir);
+		const nifly::Vector3& directional0Dir, const nifly::Vector3& directional1Dir, const nifly::Vector3& directional2Dir);
 
-	void GetPickRay(int ScreenX, int ScreenY, mesh* m, Vector3& dirVect, Vector3& outNearPos);
+	void GetPickRay(int ScreenX, int ScreenY, mesh* m, nifly::Vector3& dirVect, nifly::Vector3& outNearPos);
 	mesh* PickMesh(int ScreenX, int ScreenY);
-	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverPoint = nullptr, Vector3* outHoverColor = nullptr, float* outHoverAlpha = nullptr, Edge* outHoverEdge = nullptr);
+	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverPoint = nullptr, nifly::Vector3* outHoverColor = nullptr, float* outHoverAlpha = nullptr, nifly::Edge* outHoverEdge = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, mesh* hitMesh = nullptr);
 	void ShowCursor(bool show = true);
 	void HidePointCursor();
@@ -291,23 +291,23 @@ public:
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
 	// Screen x/y are ignored if the ray is provided.
-	bool CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, bool mirrored = false, mesh** hitMesh = nullptr, bool allMeshes = true, int* outFacet = nullptr);
-	bool CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const Vector3& inPlaneNormal, float inPlaneDist);
-	bool CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr);
+	bool CollideMeshes(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, nifly::Vector3& outNormal, bool mirrored = false, mesh** hitMesh = nullptr, bool allMeshes = true, int* outFacet = nullptr);
+	bool CollidePlane(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, const nifly::Vector3& inPlaneNormal, float inPlaneDist);
+	bool CollideOverlay(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, nifly::Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr);
 
-	mesh* AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const std::string& name = "RingMesh");
-	mesh* AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const std::string& name);
-	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const std::string& name);
-	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name);
-	mesh* AddVisPoint(const Vector3& p, const std::string& name = "PointMesh", const Vector3* color = nullptr);
-	mesh* AddVisPlane(const Matrix4& mat, const Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const Vector3* color = nullptr, const bool asMesh = false);
-	mesh* AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name = "", const bool asMesh = false);
+	mesh* AddVisCircle(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const std::string& name = "RingMesh");
+	mesh* AddVis3dRing(const nifly::Vector3& center, const nifly::Vector3& normal, float holeRadius, float ringRadius, const nifly::Vector3& color, const std::string& name);
+	mesh* AddVis3dArrow(const nifly::Vector3& origin, const nifly::Vector3& direction, float stemRadius, float pointRadius, float length, const nifly::Vector3& color, const std::string& name);
+	mesh* AddVis3dCube(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const nifly::Vector3& color, const std::string& name);
+	mesh* AddVisPoint(const nifly::Vector3& p, const std::string& name = "PointMesh", const nifly::Vector3* color = nullptr);
+	mesh* AddVisPlane(const nifly::Matrix4& mat, const nifly::Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const nifly::Vector3* color = nullptr, const bool asMesh = false);
+	mesh* AddVisSeg(const nifly::Vector3& p1, const nifly::Vector3& p2, const std::string& name = "", const bool asMesh = false);
 
-	mesh* AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color = nullptr);
-	void SetSkinModelMat(mesh *m, const MatTransform &xformGlobalToSkin);
-	void Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
-	void Update(mesh* m, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
-	mesh* ReloadMeshFromNif(NifFile* nif, std::string shapeName);
+	mesh* AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName, nifly::Vector3* color = nullptr);
+	void SetSkinModelMat(mesh *m, const nifly::MatTransform &xformGlobalToSkin);
+	void Update(const std::string& shapeName, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
+	void Update(mesh* m, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
+	mesh* ReloadMeshFromNif(nifly::NifFile* nif, std::string shapeName);
 	void RecalculateMeshBVH(const std::string& shapeName);
 
 	bool SetMeshVisibility(const std::string& name, bool visible = true);

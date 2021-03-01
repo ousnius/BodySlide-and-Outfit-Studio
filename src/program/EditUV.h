@@ -25,18 +25,18 @@ enum EditUVTool {
 
 class EditUVAction {
 	mesh* actionMesh = nullptr;
-	std::unordered_map<int, Vector2> startState;
-	std::unordered_map<int, Vector2> endState;
+	std::unordered_map<int, nifly::Vector2> startState;
+	std::unordered_map<int, nifly::Vector2> endState;
 
 public:
 	void SetActionMesh(mesh* m) {
 		actionMesh = m;
 	}
 
-	std::unordered_map<int, Vector2>& GetStartState();
-	std::unordered_map<int, Vector2>& GetEndState();
-	void SetStartState(const std::unordered_map<int, Vector2>& state);
-	void SetEndState(const std::unordered_map<int, Vector2>& state);
+	std::unordered_map<int, nifly::Vector2>& GetStartState();
+	std::unordered_map<int, nifly::Vector2>& GetEndState();
+	void SetStartState(const std::unordered_map<int, nifly::Vector2>& state);
+	void SetEndState(const std::unordered_map<int, nifly::Vector2>& state);
 	void RestoreStartState();
 	void RestoreEndState();
 };
@@ -66,18 +66,18 @@ class EditUVCanvas;
 
 class EditUV : public wxFrame {
 public:
-	EditUV(wxWindow*, NifFile*, NiShape*, mesh*, const std::string&);
+	EditUV(wxWindow*, nifly::NifFile*, nifly::NiShape*, mesh*, const std::string&);
 	~EditUV();
 
 	OutfitStudioFrame* GetParent() {
 		return os;
 	}
 
-	NifFile* GetNIF() {
+	nifly::NifFile* GetNIF() {
 		return nif;
 	}
 
-	NiShape* GetShape() {
+	nifly::NiShape* GetShape() {
 		return shape;
 	}
 
@@ -111,8 +111,8 @@ public:
 private:
 	OutfitStudioFrame* os = nullptr;
 	EditUVCanvas* canvas = nullptr;
-	NifFile* nif = nullptr;
-	NiShape* shape = nullptr;
+	nifly::NifFile* nif = nullptr;
+	nifly::NiShape* shape = nullptr;
 	mesh* shapeMesh = nullptr;
 	std::string sliderName;
 
@@ -183,7 +183,7 @@ private:
 	int lastX = 0;
 	int lastY = 0;
 
-	Vector3 currentCenter;
+	nifly::Vector3 currentCenter;
 	int lastDirection;
 	float lastAngle;
 

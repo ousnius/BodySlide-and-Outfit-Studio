@@ -8,6 +8,8 @@ See the included LICENSE file
 
 extern ConfigurationManager Config;
 
+using namespace nifly;
+
 struct FBXWrangler::Priv {
 	FbxManager* sdkManager = nullptr;
 	FbxScene* scene = nullptr;

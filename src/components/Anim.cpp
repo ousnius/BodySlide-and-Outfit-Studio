@@ -4,12 +4,14 @@ See the included LICENSE file
 */
 
 #include "Anim.h"
-#include "../NIF/NifUtil.h"
+#include "NifUtil.hpp"
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 #include <unordered_set>
 
 extern ConfigurationManager Config;
+
+using namespace nifly;
 
 bool AnimInfo::AddShapeBone(const std::string& shape, const std::string& boneName) {
 	for (auto &bone : shapeBones[shape])

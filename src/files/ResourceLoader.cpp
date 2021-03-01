@@ -78,7 +78,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 		}
 
 		if (!data.IsEmpty()) {
-			byte* texBuffer = static_cast<byte*>(data.GetData());
+			uint8_t* texBuffer = static_cast<uint8_t*>(data.GetData());
 
 			// All textures (GLI)
 			if (fileExtStr == "dds" || fileExtStr == "ktx")

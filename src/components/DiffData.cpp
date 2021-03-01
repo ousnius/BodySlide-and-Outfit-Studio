@@ -5,11 +5,13 @@ See the included LICENSE file
 
 #include "DiffData.h"
 #include "../utils/PlatformUtil.h"
-#include "../NIF/NifUtil.h"
+#include "NifUtil.hpp"
 #include "UndoState.h"
 
 #include <algorithm>
 #include <fstream>
+
+using namespace nifly;
 
 OSDataFile::OSDataFile() {
 	header = 'OSD\0';
