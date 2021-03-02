@@ -2336,7 +2336,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 		for (auto &uss : usp->usss) {
 			mesh *m = glView->GetMesh(uss.shapeName);
 			if (!m) continue;
-			std::unordered_map<ushort, Vector3> strokeDiff;
+			std::unordered_map<uint16_t, Vector3> strokeDiff;
 
 			for (auto &ps : uss.pointStartState) {
 				auto pe = uss.pointEndState.find(ps.first);
@@ -4034,7 +4034,7 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 				ShowSliderEffect(morph.morphName);
 			}
 
-			std::unordered_map<ushort, Vector3> diff;
+			std::unordered_map<uint16_t, Vector3> diff;
 			diff.reserve(morph.vertices.size());
 
 			for (int i = 0; i < morph.vertices.size(); i++)
@@ -4907,7 +4907,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 	if (!activeItem || !glView->GetSegmentMode())
 		return;
 
-	std::unordered_map<ushort, float> mask;
+	std::unordered_map<uint16_t, float> mask;
 	wxChoice* segmentType = nullptr;
 	wxChoice* segmentSlot = nullptr;
 	if (!updateFromMask) {
@@ -5304,7 +5304,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 	if (!shape)
 		return;
 
-	std::unordered_map<ushort, float> mask;
+	std::unordered_map<uint16_t, float> mask;
 	wxChoice* partitionType = nullptr;
 	wxArrayString partitionStrings;
 	if (!updateFromMask) {
@@ -6667,7 +6667,7 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 				ShowSliderEffect(morphData->name);
 			}
 
-			std::unordered_map<ushort, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
+			std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
 			project->SetSliderFromDiff(morphData->name, shape, diff);
 
 			if (morphData->type == MORPHTYPE_UV) {
@@ -6896,7 +6896,7 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	auto clearSlider = [&](const std::string& sliderName) {
-		std::unordered_map<ushort, float> mask;
+		std::unordered_map<uint16_t, float> mask;
 		for (auto &i : selectedItems) {
 			mask.clear();
 			glView->GetShapeMask(mask, i->GetShape()->GetName());
@@ -6949,7 +6949,7 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Creating new zap '%s'.", sliderName);
 	createSliderGUI(sliderName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
-	std::unordered_map<ushort, float> unmasked;
+	std::unordered_map<uint16_t, float> unmasked;
 	for (auto &i : selectedItems) {
 		unmasked.clear();
 		glView->GetShapeUnmasked(unmasked, i->GetShape()->GetName());
@@ -7459,9 +7459,9 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 			offs.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().c_str());
 		}
 
-		std::unordered_map<ushort, float> mask;
-		std::unordered_map<ushort, float>* mptr = nullptr;
-		std::unordered_map<ushort, Vector3> diff;
+		std::unordered_map<uint16_t, float> mask;
+		std::unordered_map<uint16_t, float>* mptr = nullptr;
+		std::unordered_map<uint16_t, Vector3> diff;
 		for (auto &i : selectedItems) {
 			mask.clear();
 			mptr = nullptr;
@@ -7556,9 +7556,9 @@ void OutfitStudioFrame::OnMoveShapeText(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
-	std::unordered_map<ushort, float> mask;
-	std::unordered_map<ushort, float>* mptr = nullptr;
-	std::unordered_map<ushort, Vector3> diff;
+	std::unordered_map<uint16_t, float> mask;
+	std::unordered_map<uint16_t, float>* mptr = nullptr;
+	std::unordered_map<uint16_t, Vector3> diff;
 	for (auto &i : selectedItems) {
 		mask.clear();
 		mptr = nullptr;
@@ -7630,8 +7630,8 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 		scaleNew.y *= 1.0f / previewScale.y;
 		scaleNew.z *= 1.0f / previewScale.z;
 
-		std::unordered_map<ushort, float> mask;
-		std::unordered_map<ushort, float>* mptr = nullptr;
+		std::unordered_map<uint16_t, float> mask;
+		std::unordered_map<uint16_t, float>* mptr = nullptr;
 		for (auto &i : selectedItems) {
 			mask.clear();
 			mptr = nullptr;
@@ -7765,8 +7765,8 @@ void OutfitStudioFrame::PreviewScale(const Vector3& scale) {
 	scaleNew.y *= 1.0f / previewScale.y;
 	scaleNew.z *= 1.0f / previewScale.z;
 
-	std::unordered_map<ushort, float> mask;
-	std::unordered_map<ushort, float>* mptr = nullptr;
+	std::unordered_map<uint16_t, float> mask;
+	std::unordered_map<uint16_t, float>* mptr = nullptr;
 	for (auto &i : selectedItems) {
 		mask.clear();
 		mptr = nullptr;
@@ -7849,8 +7849,8 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 
 		angle -= previewRotation;
 
-		std::unordered_map<ushort, float> mask;
-		std::unordered_map<ushort, float>* mptr = nullptr;
+		std::unordered_map<uint16_t, float> mask;
+		std::unordered_map<uint16_t, float>* mptr = nullptr;
 		for (auto &i : selectedItems) {
 			mask.clear();
 			mptr = nullptr;
@@ -7907,8 +7907,8 @@ void OutfitStudioFrame::OnRotateShapeText(wxCommandEvent& event) {
 
 
 void OutfitStudioFrame::PreviewRotation(const Vector3& changed) {
-	std::unordered_map<ushort, float> mask;
-	std::unordered_map<ushort, float>* mptr = nullptr;
+	std::unordered_map<uint16_t, float> mask;
+	std::unordered_map<uint16_t, float>* mptr = nullptr;
 	for (auto &i : selectedItems) {
 		mask.clear();
 		mptr = nullptr;
@@ -7947,7 +7947,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 		if (editUV && editUV->GetShape() == i->GetShape())
 			editUV->Close();
 
-		std::unordered_map<ushort, float> mask;
+		std::unordered_map<uint16_t, float> mask;
 		glView->GetShapeUnmasked(mask, i->GetShape()->GetName());
 		UndoStateShape uss;
 		uss.shapeName = i->GetShape()->GetName();
@@ -7992,7 +7992,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::unordered_map<ushort, float> masked;
+	std::unordered_map<uint16_t, float> masked;
 	glView->GetShapeMask(masked, activeItem->GetShape()->GetName());
 	if (masked.empty())
 		return;
@@ -8017,7 +8017,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	usp->usss[0].shapeName = activeItem->GetShape()->GetName();
 	usp->usss[1].shapeName = newShapeName;
 
-	std::unordered_map<ushort, float> unmasked = masked;
+	std::unordered_map<uint16_t, float> unmasked = masked;
 	glView->InvertMaskTris(unmasked, activeItem->GetShape()->GetName());
 
 	project->PrepareDeleteVerts(activeItem->GetShape(), masked, usp->usss[0]);
@@ -8639,7 +8639,7 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 
 		std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->GetName()];
 		std::sort(baseBones.begin(), baseBones.end());
-		std::unordered_map<ushort, float> mask;
+		std::unordered_map<uint16_t, float> mask;
 		for (int i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
@@ -8739,7 +8739,7 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 
 		UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 		usp->undoType = UT_WEIGHT;
-		std::unordered_map<ushort, float> mask;
+		std::unordered_map<uint16_t, float> mask;
 		for (int i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
@@ -8816,7 +8816,7 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 	wxLogMessage("Transferring selected bone weights to '%s' for %s...", activeItem->GetShape()->GetName(), bonesString);
 	StartProgress(_("Transferring bone weights..."));
 
-	std::unordered_map<ushort, float> mask;
+	std::unordered_map<uint16_t, float> mask;
 	glView->GetActiveMask(mask);
 	project->TransferSelectedWeights(activeItem->GetShape(), &mask, &selectedBones);
 
@@ -9101,7 +9101,7 @@ void OutfitStudioFrame::OnSelectMask(wxCommandEvent& WXUNUSED(event)) {
 	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
 	int maskSel = cMaskName->GetSelection();
 	if (maskSel != wxNOT_FOUND) {
-		auto maskData = (std::map<std::string, std::unordered_map<ushort, float>>*)cMaskName->GetClientData(maskSel);
+		auto maskData = (std::map<std::string, std::unordered_map<uint16_t, float>>*)cMaskName->GetClientData(maskSel);
 		for (auto mask : (*maskData)) {
 			glView->SetShapeMask(mask.second, mask.first);
 		}
@@ -9114,11 +9114,11 @@ void OutfitStudioFrame::OnSaveMask(wxCommandEvent& WXUNUSED(event)) {
 	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
 	int maskSel = cMaskName->GetSelection();
 	if (maskSel != wxNOT_FOUND) {
-		auto maskData = new std::map<std::string, std::unordered_map<ushort, float>>();
+		auto maskData = new std::map<std::string, std::unordered_map<uint16_t, float>>();
 
 		std::vector<std::string> shapes = GetShapeList();
 		for (auto &s : shapes) {
-			std::unordered_map<ushort, float> mask;
+			std::unordered_map<uint16_t, float> mask;
 			glView->GetShapeMask(mask, s);
 			(*maskData)[s] = std::move(mask);
 		}
@@ -9142,11 +9142,11 @@ void OutfitStudioFrame::OnSaveAsMask(wxCommandEvent& WXUNUSED(event)) {
 
 	} while (cMaskName->FindString(maskName) != wxNOT_FOUND);
 
-	auto maskData = new std::map<std::string, std::unordered_map<ushort, float>>();
+	auto maskData = new std::map<std::string, std::unordered_map<uint16_t, float>>();
 
 	std::vector<std::string> shapes = GetShapeList();
 	for (auto &s : shapes) {
-		std::unordered_map<ushort, float> mask;
+		std::unordered_map<uint16_t, float> mask;
 		glView->GetShapeMask(mask, s);
 		(*maskData)[s] = std::move(mask);
 	}
@@ -9605,7 +9605,7 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 		wxDialog dlg;
 		wxPoint cursorPos(event.GetPosition());
 
-		std::unordered_map<ushort, Vector3> diff;
+		std::unordered_map<uint16_t, Vector3> diff;
 		std::vector<Vector3> verts;
 		Vector3 newPos;
 		int vertIndex;
@@ -10340,11 +10340,11 @@ void wxGLPanel::ClickSplitEdge() {
 	if (!shape)
 		return;
 
-	ushort maxVertIndex = std::numeric_limits<ushort>().max();
-	uint maxTriIndex = std::numeric_limits<ushort>().max();
+	uint16_t maxVertIndex = std::numeric_limits<uint16_t>().max();
+	uint32_t maxTriIndex = std::numeric_limits<uint16_t>().max();
 
 	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
-		maxTriIndex = std::numeric_limits<uint>().max();
+		maxTriIndex = std::numeric_limits<uint32_t>().max();
 
 	if (shape->GetNumVertices() > maxVertIndex - 2) {
 		wxMessageBox(_("The shape has reached the vertex count limit."), _("Error"), wxICON_ERROR, os);

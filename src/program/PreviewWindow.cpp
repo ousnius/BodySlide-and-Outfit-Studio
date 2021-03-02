@@ -191,7 +191,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 	bool hasMat = false;
 	std::string matFile;
 
-	const byte MAX_TEXTURE_PATHS = 10;
+	const uint8_t MAX_TEXTURE_PATHS = 10;
 	std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
 
 	NiShader* shader = nullptr;

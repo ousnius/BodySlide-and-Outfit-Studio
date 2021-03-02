@@ -27,7 +27,7 @@ struct UndoStateVertexWeight {
 
 struct UndoStateBoneWeights {
 	std::string boneName;
-	std::unordered_map<nifly::ushort, UndoStateVertexWeight> weights;
+	std::unordered_map<uint16_t, UndoStateVertexWeight> weights;
 };
 
 struct UndoStateVertexBoneWeight {

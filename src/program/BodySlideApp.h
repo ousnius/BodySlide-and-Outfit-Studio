@@ -190,8 +190,8 @@ public:
 	void EditProject(const std::string& projectName);
 	void LaunchOutfitStudio(const wxString& args = "");
 
-	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<nifly::Vector3>& verts, std::vector<nifly::ushort>& zapidx, std::vector<nifly::Vector2>* uvs = nullptr);
-	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, nifly::NifFile& nif, std::unordered_map<std::string, std::vector<nifly::ushort>>& zapIndices);
+	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<nifly::Vector3>& verts, std::vector<uint16_t>& zapidx, std::vector<nifly::Vector2>* uvs = nullptr);
+	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, nifly::NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices);
 
 	void CopySliderValues(bool toHigh);
 	void ShowPreview();

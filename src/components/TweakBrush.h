@@ -230,7 +230,7 @@ public:
 
 class TB_SmoothMask : public TweakBrush {
 public:
-	nifly::byte method;			// 0 for laplacian, 1 for HC-Smooth.
+	uint8_t method;			// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
 
@@ -255,7 +255,7 @@ public:
 
 // Smooth brush implementing a laplacian smooth function with HC-Smooth modifier.
 class TB_Smooth : public TweakBrush {
-	nifly::byte method;			// 0 for laplacian, 1 for HC-Smooth.
+	uint8_t method;			// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
 
@@ -401,12 +401,12 @@ public:
 	// bXMirrorBone:  if true, boneNames[1] is the x-mirror bone
 	bool bXMirrorBone;
 	bool bNormalizeWeights = false;
-	nifly::byte method;			// 0 for laplacian, 1 for HC-Smooth.
+	uint8_t method;			// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;				// Blending constants.
 	float hcBeta;
 
 	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv);
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape &uss, const int boneInd, const std::unordered_map<nifly::ushort, float> *wPtr);
+	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape &uss, const int boneInd, const std::unordered_map<uint16_t, float> *wPtr);
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();

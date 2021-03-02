@@ -34,7 +34,7 @@ MaterialFile::MaterialFile(std::istream& input) {
 }
 
 int MaterialFile::Read(std::istream& input) {
-	uint magic;
+	uint32_t magic;
 	input.read((char*)&magic, 4);
 	if (magic != BGSM && magic != BGEM)
 		return 1;
@@ -43,7 +43,7 @@ int MaterialFile::Read(std::istream& input) {
 
 	input.read((char*)&version, 4);
 
-	uint tileFlags;
+	uint32_t tileFlags;
 	input.read((char*)&tileFlags, 4);
 	tileU = (tileFlags & 2) != 0;
 	tileV = (tileFlags & 1) != 0;
@@ -52,9 +52,9 @@ int MaterialFile::Read(std::istream& input) {
 	input.read((char*)&uvScale, 8);
 
 	input.read((char*)&alpha, 4);
-	byte alphaBlendMode0;
-	uint alphaBlendMode1;
-	uint alphaBlendMode2;
+	uint8_t alphaBlendMode0;
+	uint32_t alphaBlendMode1;
+	uint32_t alphaBlendMode2;
 	input.read((char*)&alphaBlendMode0, 1);
 	input.read((char*)&alphaBlendMode1, 4);
 	input.read((char*)&alphaBlendMode2, 4);
@@ -80,7 +80,7 @@ int MaterialFile::Read(std::istream& input) {
 
 	input.read((char*)&grayscaleToPaletteColor, 1);
 
-	uint length = 0;
+	uint32_t length = 0;
 	if (signature == BGSM) {
 		std::string tmp;
 		input.read((char*)&length, 4);
@@ -240,7 +240,7 @@ int MaterialFile::Write(std::ostream& output) {
 
 	output.write((char*)&version, 4);
 
-	uint tileFlags = 0;
+	uint32_t tileFlags = 0;
 	if (tileU) tileFlags += 2;
 	if (tileV) tileFlags += 1;
 	output.write((char*)&tileFlags, 4);
@@ -249,9 +249,9 @@ int MaterialFile::Write(std::ostream& output) {
 	output.write((char*)&uvScale, 8);
 
 	output.write((char*)&alpha, 4);
-	byte alphaBlendMode0;
-	uint alphaBlendMode1;
-	uint alphaBlendMode2;
+	uint8_t alphaBlendMode0;
+	uint32_t alphaBlendMode1;
+	uint32_t alphaBlendMode2;
 	ConvertAlphaBlendMode(alphaBlendMode, alphaBlendMode0, alphaBlendMode1, alphaBlendMode2);
 	output.write((char*)&alphaBlendMode0, 1);
 	output.write((char*)&alphaBlendMode1, 4);
@@ -277,7 +277,7 @@ int MaterialFile::Write(std::ostream& output) {
 
 	output.write((char*)&grayscaleToPaletteColor, 1);
 
-	uint length = 0;
+	uint32_t length = 0;
 	if (signature == BGSM) {
 		std::string tmp;
 		tmp = ToBackslashes(diffuseTexture);
@@ -432,7 +432,7 @@ int MaterialFile::Write(std::ostream& output) {
 	return 0;
 }
 
-MaterialFile::AlphaBlendModeType MaterialFile::ConvertAlphaBlendMode(const byte a, const uint b, const uint c) {
+MaterialFile::AlphaBlendModeType MaterialFile::ConvertAlphaBlendMode(const uint8_t a, const uint32_t b, const uint32_t c) {
 	if (a == 0 && b == 6 && c == 7)
 		return AlphaBlendModeType::Unknown;
 	else if (a == 0 && b == 0 && c == 0)
@@ -447,7 +447,7 @@ MaterialFile::AlphaBlendModeType MaterialFile::ConvertAlphaBlendMode(const byte 
 		return AlphaBlendModeType::None;
 }
 
-void MaterialFile::ConvertAlphaBlendMode(const AlphaBlendModeType& type, byte& a, uint& b, uint& c) {
+void MaterialFile::ConvertAlphaBlendMode(const AlphaBlendModeType& type, uint8_t& a, uint32_t& b, uint32_t& c) {
 	if (type == AlphaBlendModeType::Unknown) {
 		a = 0;
 		b = 6;

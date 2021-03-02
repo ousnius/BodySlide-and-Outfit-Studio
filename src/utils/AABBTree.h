@@ -14,11 +14,11 @@ struct AABB {
 	AABB(const nifly::Vector3& newMin, const nifly::Vector3& newMax);
 
 	AABB(nifly::Vector3* points, int nPoints);
-	AABB(nifly::Vector3* points, nifly::ushort* indices, int nPoints);
+	AABB(nifly::Vector3* points, uint16_t* indices, int nPoints);
 
 	void AddBoxToMesh(std::vector<nifly::Vector3>& verts, std::vector<nifly::Edge>& edges);
 
-	void Merge(nifly::Vector3* points, nifly::ushort* indices, int nPoints);
+	void Merge(nifly::Vector3* points, uint16_t* indices, int nPoints);
 	void Merge(AABB& other);
 
 	bool IntersectAABB(AABB& other);

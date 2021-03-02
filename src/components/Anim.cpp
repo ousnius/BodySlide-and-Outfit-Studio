@@ -103,7 +103,7 @@ bool AnimInfo::HasSkinnedShape(NiShape* shape) {
 		return false;
 }
 
-void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<ushort>& indices) {
+void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<uint16_t>& indices) {
 	if (indices.empty())
 		return;
 
@@ -116,7 +116,7 @@ void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<u
 	}
 }
 
-void AnimSkin::InsertVertexIndices(const std::vector<ushort>& indices) {
+void AnimSkin::InsertVertexIndices(const std::vector<uint16_t>& indices) {
 	if (indices.empty())
 		return;
 
@@ -238,7 +238,7 @@ int AnimInfo::GetShapeBoneIndex(const std::string& shapeName, const std::string&
 	return -1;
 }
 
-std::unordered_map<ushort, float>* AnimInfo::GetWeightsPtr(const std::string& shape, const std::string& boneName) {
+std::unordered_map<uint16_t, float>* AnimInfo::GetWeightsPtr(const std::string& shape, const std::string& boneName) {
 	int b = GetShapeBoneIndex(shape, boneName);
 	if (b < 0)
 		return nullptr;
@@ -254,7 +254,7 @@ bool AnimInfo::HasWeights(const std::string& shape, const std::string& boneName)
 	return false;
 }
 
-void AnimInfo::GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& outVertWeights) {
+void AnimInfo::GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<uint16_t, float>& outVertWeights) {
 	auto weights = GetWeightsPtr(shape, boneName);
 	if (weights)
 		outVertWeights = *weights;
@@ -332,7 +332,7 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 	return true;
 }
 
-void AnimInfo::SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& inVertWeights) {
+void AnimInfo::SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<uint16_t, float>& inVertWeights) {
 	int bid = GetShapeBoneIndex(shape, boneName);
 	if (bid == 0xFFFFFFFF)
 		return;
@@ -474,7 +474,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 
 		bool isBSShape = shape->HasType<BSTriShape>();
 
-		std::unordered_map<ushort, VertexBoneWeights> vertWeights;
+		std::unordered_map<uint16_t, VertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {
 			AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
 

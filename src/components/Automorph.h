@@ -62,9 +62,9 @@ public:
 
 	void MeshFromNifShape(mesh* m, nifly::NifFile& ref, nifly::NiShape* shape, const AnimInfo *workAnim);
 	// indices must be in ascending order.
-	void DeleteVerts(const std::string& shapeName, const std::vector<nifly::ushort>& indices);
+	void DeleteVerts(const std::string& shapeName, const std::vector<uint16_t>& indices);
 	// indices must be in ascending order.
-	void InsertVertexIndices(const std::string& target, const std::vector<nifly::ushort>& indices);
+	void InsertVertexIndices(const std::string& target, const std::vector<uint16_t>& indices);
 
 	void ClearProximityCache();
 	void BuildProximityCache(const std::string& shapeName, const float proximityRadius = 10.0f);
@@ -76,15 +76,15 @@ public:
 	void SetResultDataName(const std::string& shapeName, const std::string& sliderName, const std::string& dataName);
 	std::string ResultDataName(const std::string& shapeName, const std::string& sliderName);
 
-	void GetRawResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<nifly::ushort, nifly::Vector3>& outDiff);
+	void GetRawResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, nifly::Vector3>& outDiff);
 	int GetResultDiffSize(const std::string& shapeName, const std::string& sliderName);
-	std::unordered_map<nifly::ushort, nifly::Vector3>* GetDiffSet(const std::string& targetDataName);
+	std::unordered_map<uint16_t, nifly::Vector3>* GetDiffSet(const std::string& targetDataName);
 
-	void SetResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<nifly::ushort, nifly::Vector3>& diff);
-	void UpdateResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<nifly::ushort, nifly::Vector3>& diff);
-	void UpdateRefDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<nifly::ushort, nifly::Vector3>& diff);
+	void SetResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, nifly::Vector3>& diff);
+	void UpdateResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, nifly::Vector3>& diff);
+	void UpdateRefDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, nifly::Vector3>& diff);
 	void EmptyResultDiff(const std::string& shapeName, const std::string& sliderName);
-	void ZeroVertDiff(const std::string& shapeName, const std::string& sliderName, std::vector<nifly::ushort>* vertSet, std::unordered_map<nifly::ushort, float>* mask);
+	void ZeroVertDiff(const std::string& shapeName, const std::string& sliderName, std::vector<uint16_t>* vertSet, std::unordered_map<uint16_t, float>* mask);
 	void ScaleResultDiff(const std::string& shapeName, const std::string& sliderName, float scaleValue);
 
 	void LoadResultDiffs(SliderSet& fromSet);

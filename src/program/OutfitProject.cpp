@@ -275,7 +275,7 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef) {
 				targSlider = activeSet[i].TargetDataName(targ);
 				if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
 					if (activeSet[i].IsLocalData(targSlider)) {
-						std::unordered_map<ushort, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
+						std::unordered_map<uint16_t, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
 						osdDiffs.LoadSet(targSlider, targ, *diff);
 						osdNames[fileName][targSlider] = targ;
 					}
@@ -295,7 +295,7 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef) {
 				if (morpher.GetResultDiffSize(shapeName, activeSet[i].name) > 0) {
 					std::string shapeDataFolder = activeSet.ShapeToDataFolder(shapeName);
 					if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
-						std::unordered_map<ushort, Vector3> diff;
+						std::unordered_map<uint16_t, Vector3> diff;
 						morpher.GetRawResultDiff(shapeName, activeSet[i].name, diff);
 						osdDiffs.LoadSet(targSlider, targ, diff);
 						osdNames[fileName][targSlider] = targ;
@@ -349,7 +349,7 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 					else
 						activeSet[i].SetLocalData(targetData);
 
-					std::unordered_map<ushort, Vector3> diff;
+					std::unordered_map<uint16_t, Vector3> diff;
 					morpher.GetRawResultDiff(shapeName, sliderName, diff);
 					morpher.ClearResultSet(targetData);
 
@@ -431,8 +431,8 @@ void OutfitProject::AddEmptySlider(const std::string& newName) {
 	}
 }
 
-void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<ushort, float>& verts, NiShape* shape) {
-	std::unordered_map<ushort, Vector3> diffData;
+void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<uint16_t, float>& verts, NiShape* shape) {
+	std::unordered_map<uint16_t, Vector3> diffData;
 	Vector3 moveVec(0.0f, 1.0f, 0.0f);
 	for (auto &v : verts)
 		diffData[v.first] = moveVec;
@@ -458,7 +458,7 @@ void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<
 
 void OutfitProject::AddCombinedSlider(const std::string& newName) {
 	std::vector<Vector3> verts;
-	std::unordered_map<ushort, Vector3> diffData;
+	std::unordered_map<uint16_t, Vector3> diffData;
 
 	for (auto &s : workNif.GetShapes()) {
 		if (IsBaseShape(s))
@@ -785,7 +785,7 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 	m->ColorChannelFill(0, 0.0f);
 
 	if (IsBaseShape(shape)) {
-		std::vector<ushort> outIndices;
+		std::vector<uint16_t> outIndices;
 		std::string target = ShapeToTarget(shape->GetName());
 
 		std::string sliderData = activeSet[sliderName].TargetDataName(target);
@@ -795,7 +795,7 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 			m->vcolors[i].x = 1.0f;
 	}
 	else {
-		std::unordered_map<ushort, Vector3> outDiff;
+		std::unordered_map<uint16_t, Vector3> outDiff;
 		morpher.GetRawResultDiff(shape->GetName(), sliderName, outDiff);
 
 		for (auto &i : outDiff)
@@ -1078,7 +1078,7 @@ bool OutfitProject::SetSliderFromNIF(const std::string& sliderName, NiShape* sha
 
 	nif.GetUvsForShape(srcShape, uvs);
 
-	std::unordered_map<ushort, Vector3> diff;
+	std::unordered_map<uint16_t, Vector3> diff;
 	if (activeSet[sliderName].bUV) {
 		if (workNif.CalcUVDiff(shape, &uvs, diff))
 			return false;
@@ -1107,7 +1107,7 @@ void OutfitProject::SetSliderFromBSD(const std::string& sliderName, NiShape* sha
 	else {
 		DiffDataSets tmpSet;
 		tmpSet.LoadSet(sliderName, target, fileName);
-		std::unordered_map<ushort, Vector3>* diff = tmpSet.GetDiffSet(sliderName);
+		std::unordered_map<uint16_t, Vector3>* diff = tmpSet.GetDiffSet(sliderName);
 		morpher.SetResultDiff(target, sliderName, (*diff));
 	}
 }
@@ -1136,7 +1136,7 @@ bool OutfitProject::SetSliderFromOBJ(const std::string& sliderName, NiShape* sha
 	if (!obj.CopyDataForGroup(sourceShape, &objVerts, nullptr, &objUVs, nullptr))
 		return false;
 
-	std::unordered_map<ushort, Vector3> diff;
+	std::unordered_map<uint16_t, Vector3> diff;
 	if (activeSet[sliderName].bUV) {
 		if (workNif.CalcUVDiff(shape, &objUVs, diff))
 			return false;
@@ -1176,7 +1176,7 @@ bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, NiShape* sha
 
 	FBXShape* fbxShape = fbxw.GetShape(shape->GetName());
 
-	std::unordered_map<ushort, Vector3> diff;
+	std::unordered_map<uint16_t, Vector3> diff;
 	if (IsBaseShape(shape)) {
 		if (workNif.CalcShapeDiff(shape, &fbxShape->verts, diff, 1.0f))
 			return false;
@@ -1194,7 +1194,7 @@ bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, NiShape* sha
 	return true;
 }
 
-void OutfitProject::SetSliderFromDiff(const std::string& sliderName, NiShape* shape, std::unordered_map<ushort, Vector3>& diff) {
+void OutfitProject::SetSliderFromDiff(const std::string& sliderName, NiShape* shape, std::unordered_map<uint16_t, Vector3>& diff) {
 	std::string target = ShapeToTarget(shape->GetName());
 	if (IsBaseShape(shape)) {
 		std::string sliderData = activeSet[sliderName].TargetDataName(target);
@@ -1382,7 +1382,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 		bool hasMat = false;
 		std::string matFile;
 
-		const byte MAX_TEXTURE_PATHS = 10;
+		const uint8_t MAX_TEXTURE_PATHS = 10;
 		std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
 
 		NiShader* shader = workNif.GetShader(shape);
@@ -1501,7 +1501,7 @@ void OutfitProject::UpdateShapeFromMesh(NiShape* shape, const mesh* m) {
 	workNif.SetVertsForShape(shape, liveVerts);
 }
 
-void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderName, std::unordered_map<ushort, Vector3>& vertUpdates) {
+void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderName, std::unordered_map<uint16_t, Vector3>& vertUpdates) {
 	// Morph results are stored in two different places depending on whether it's an outfit or the base shape.
 	// The outfit morphs are stored in the automorpher, whereas the base shape diff info is stored in directly in basediffdata.
 
@@ -1538,15 +1538,15 @@ void OutfitProject::MoveVertex(NiShape* shape, const Vector3& pos, const int& id
 	workNif.MoveVertex(shape, pos, id);
 }
 
-void OutfitProject::OffsetShape(NiShape* shape, const Vector3& xlate, std::unordered_map<ushort, float>* mask) {
+void OutfitProject::OffsetShape(NiShape* shape, const Vector3& xlate, std::unordered_map<uint16_t, float>* mask) {
 	workNif.OffsetShape(shape, xlate, mask);
 }
 
-void OutfitProject::ScaleShape(NiShape* shape, const Vector3& scale, std::unordered_map<ushort, float>* mask) {
+void OutfitProject::ScaleShape(NiShape* shape, const Vector3& scale, std::unordered_map<uint16_t, float>* mask) {
 	workNif.ScaleShape(shape, scale, mask);
 }
 
-void OutfitProject::RotateShape(NiShape* shape, const Vector3& angle, std::unordered_map<ushort, float>* mask) {
+void OutfitProject::RotateShape(NiShape* shape, const Vector3& angle, std::unordered_map<uint16_t, float>* mask) {
 	workNif.RotateShape(shape, angle, mask);
 }
 
@@ -1581,7 +1581,7 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 	workNif.SetNormalsForShape(shape, norms);
 }
 
-void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
+void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
 	if (!shape || !baseShape)
 		return;
 
@@ -1647,7 +1647,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 		std::string wtSet = boneName + "_WT_";
 		morpher.GenerateResultDiff(shapeName, wtSet, wtSet, maxResults);
 
-		std::unordered_map<ushort, Vector3> diffResult;
+		std::unordered_map<uint16_t, Vector3> diffResult;
 		morpher.GetRawResultDiff(shapeName, wtSet, diffResult);
 
 		// Copy unmasked weights from diffResult into uss
@@ -1671,7 +1671,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	owner->UpdateProgress(90);
 }
 
-void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<ushort, float>* mask, std::vector<std::string>* inBoneList) {
+void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<uint16_t, float>* mask, std::vector<std::string>* inBoneList) {
 	if (!shape || !baseShape)
 		return;
 
@@ -1701,8 +1701,8 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 	owner->UpdateProgress(prog, _("Transferring bone weights..."));
 
 	for (auto &boneName : *boneList) {
-		std::unordered_map<ushort, float> weights;
-		std::unordered_map<ushort, float> oldWeights;
+		std::unordered_map<uint16_t, float> weights;
+		std::unordered_map<uint16_t, float> oldWeights;
 		workAnim.GetWeights(baseShapeName, boneName, weights);
 		workAnim.GetWeights(shapeName, boneName, oldWeights);
 
@@ -1914,7 +1914,7 @@ void OutfitProject::ClearSlider(NiShape* shape, const std::string& sliderName) {
 		morpher.EmptyResultDiff(target, sliderName);
 }
 
-void OutfitProject::ClearUnmaskedDiff(NiShape* shape, const std::string& sliderName, std::unordered_map<ushort, float>* mask) {
+void OutfitProject::ClearUnmaskedDiff(NiShape* shape, const std::string& sliderName, std::unordered_map<uint16_t, float>* mask) {
 	std::string target = ShapeToTarget(shape->GetName());
 
 	if (IsBaseShape(shape)) {
@@ -2354,7 +2354,7 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const
 		std::string targetDataName = activeSet[si].TargetDataName(target);
 		if (targetDataName.empty())
 			targetDataName = target + activeSet[si].name;
-		std::unordered_map<ushort, Vector3>* diffSet;
+		std::unordered_map<uint16_t, Vector3>* diffSet;
 		if (IsBaseShape(shape))
 			diffSet = baseDiffData.GetDiffSet(targetDataName);
 		else
@@ -2396,7 +2396,7 @@ void OutfitProject::CollectTriangleData(NiShape* shape, UndoStateShape &uss, con
 	}
 }
 
-bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<ushort, float>& mask, UndoStateShape &uss) {
+bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<uint16_t, float>& mask, UndoStateShape &uss) {
 	int numVerts = shape->GetNumVertices();
 
 	// Set flag for every vertex index in mask
@@ -2512,7 +2512,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 
 	if (!delVerts.empty()) {
 		// Delete vertices...
-		std::vector<ushort> delVertInds(delVerts.size());
+		std::vector<uint16_t> delVertInds(delVerts.size());
 		for (int di = 0; di < delVerts.size(); ++di)
 			delVertInds[di] = delVerts[di].index;
 		std::vector<int> vertCollapseMap = GenerateIndexCollapseMap(delVertInds, verts.size());
@@ -2549,7 +2549,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 
 	if (!addVerts.empty()) {
 		// Insert new vertex indices...
-		std::vector<ushort> insVertInds(addVerts.size());
+		std::vector<uint16_t> insVertInds(addVerts.size());
 		for (int di = 0; di < addVerts.size(); ++di)
 			insVertInds[di] = addVerts[di].index;
 		std::vector<int> vertExpandMap = GenerateIndexExpandMap(insVertInds, verts.size());
@@ -2613,7 +2613,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 				std::string targetDataName = activeSet[diff.sliderName].TargetDataName(target);
 				if (targetDataName.empty())
 					targetDataName = target + diff.sliderName;
-				std::unordered_map<ushort, Vector3>* diffSet;
+				std::unordered_map<uint16_t, Vector3>* diffSet;
 				if (IsBaseShape(shape))
 					diffSet = baseDiffData.GetDiffSet(targetDataName);
 				else
@@ -3136,10 +3136,10 @@ void OutfitProject::CheckMerge(const std::string &sourceName, const std::string 
 	if (!target)
 		return;
 
-	size_t maxVertIndex = std::numeric_limits<ushort>().max();
-	size_t maxTriIndex = std::numeric_limits<ushort>().max();
+	size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
+	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
 	if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76())
-		maxTriIndex = std::numeric_limits<uint>().max();
+		maxTriIndex = std::numeric_limits<uint32_t>().max();
 
 	size_t snVerts = source->GetNumVertices();
 	size_t tnVerts = target->GetNumVertices();

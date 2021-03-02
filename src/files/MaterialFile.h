@@ -27,7 +27,7 @@ public:
 
 	// Base
 	Type signature = Type::BGSM;
-	nifly::uint version = 1;
+	uint32_t version = 1;
 	bool tileU = true;
 	bool tileV = true;
 	nifly::Vector2 uvOffset;
@@ -127,7 +127,7 @@ public:
 	float falloffStartOpacity = 0.0f;
 	float falloffStopOpacity = 0.0f;
 	float lightingInfluence = 1.0f;
-	nifly::byte envmapMinLOD = 0;
+	uint8_t envmapMinLOD = 0;
 	float softDepth = 100.0f;
 
 	MaterialFile() {}
@@ -142,6 +142,6 @@ public:
 		return failed;
 	}
 
-	AlphaBlendModeType ConvertAlphaBlendMode(const nifly::byte, const nifly::uint, const nifly::uint);
-	void ConvertAlphaBlendMode(const AlphaBlendModeType&, nifly::byte&, nifly::uint&, nifly::uint&);
+	AlphaBlendModeType ConvertAlphaBlendMode(const uint8_t, const uint32_t, const uint32_t);
+	void ConvertAlphaBlendMode(const AlphaBlendModeType&, uint8_t&, uint32_t&, uint32_t&);
 };

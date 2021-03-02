@@ -222,7 +222,7 @@ void EditUV::UpdateShapeMesh(bool apply) {
 	nif->GetUvsForShape(shape, uvs);
 
 	if (!sliderName.empty()) {
-		std::unordered_map<ushort, Vector3> morphDiff;
+		std::unordered_map<uint16_t, Vector3> morphDiff;
 		os->project->GetSliderDiffUV(shape, sliderName, uvs);
 
 		for (int i = 0; i < gridMesh->nVerts; i++) {

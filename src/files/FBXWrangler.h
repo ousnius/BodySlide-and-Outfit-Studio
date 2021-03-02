@@ -16,14 +16,14 @@ class FBXShape {
 public:
 	class FBXSkin {
 	private:
-		std::unordered_map<nifly::ushort, float> vertWeights;
+		std::unordered_map<uint16_t, float> vertWeights;
 
 	public:
-		void SetWeight(nifly::ushort vert, float wt) {
+		void SetWeight(uint16_t vert, float wt) {
 			vertWeights[vert] = wt;
 		}
 
-		float GetWeight(nifly::ushort vert) {
+		float GetWeight(uint16_t vert) {
 			auto it = vertWeights.find(vert);
 			if (it == vertWeights.end())
 				return 0.0f;
@@ -31,7 +31,7 @@ public:
 			return vertWeights[vert];
 		}
 
-		std::unordered_map<nifly::ushort, float>& GetWeights() {
+		std::unordered_map<uint16_t, float>& GetWeights() {
 			return vertWeights;
 		}
 	};

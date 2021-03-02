@@ -93,11 +93,11 @@ public:
 	// subsegment among all the segments and subsegments.  Used as a value
 	// in triSParts.  Not in the file.
 	int partID;
-	nifly::uint userSlotID;
-	nifly::uint material;
+	uint32_t userSlotID;
+	uint32_t material;
 	std::vector<float> extraData;
 
-	SubSegmentItemData(int inPartitionID, const nifly::uint& inUserSlotID, const nifly::uint& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
+	SubSegmentItemData(int inPartitionID, const uint32_t& inUserSlotID, const uint32_t& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
 		partID = inPartitionID;
 		userSlotID = inUserSlotID;
 		material = inMaterial;
@@ -108,9 +108,9 @@ public:
 class PartitionItemData : public wxTreeItemData  {
 public:
 	int index;
-	nifly::ushort type;
+	uint16_t type;
 
-	PartitionItemData(int inIndex, const nifly::ushort& inType) {
+	PartitionItemData(int inIndex, const uint16_t& inType) {
 		index = inIndex;
 		type = inType;
 	}
@@ -447,7 +447,7 @@ public:
 			m->ColorFill(nifly::Vector3());
 	}
 
-	void GetActiveMask(std::unordered_map<nifly::ushort, float>& mask) {
+	void GetActiveMask(std::unordered_map<uint16_t, float>& mask) {
 		if (gls.GetActiveMeshes().empty())
 			return;
 
@@ -459,7 +459,7 @@ public:
 		}
 	}
 
-	void GetActiveUnmasked(std::unordered_map<nifly::ushort, float>& mask) {
+	void GetActiveUnmasked(std::unordered_map<uint16_t, float>& mask) {
 		if (gls.GetActiveMeshes().empty())
 			return;
 
@@ -470,7 +470,7 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
-	void GetShapeMask(std::unordered_map<nifly::ushort, float>& mask, const std::string& shapeName) {
+	void GetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -481,7 +481,7 @@ public:
 		}
 	}
 
-	void GetShapeUnmasked(std::unordered_map<nifly::ushort, float>& mask, const std::string& shapeName) {
+	void GetShapeUnmasked(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -491,7 +491,7 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
-	void SetShapeMask(std::unordered_map<nifly::ushort, float>& mask, const std::string& shapeName) {
+	void SetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -544,12 +544,12 @@ public:
 		}
 	}
 
-	void InvertMaskTris(std::unordered_map<nifly::ushort, float>& mask, const std::string& shapeName) {
+	void InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
-		std::unordered_map<nifly::ushort, float> triMask;
+		std::unordered_map<uint16_t, float> triMask;
 		for (int t = 0; t < m->nTris; t++) {
 			auto& tri = m->tris[t];
 			if (mask.find(tri.p1) != mask.end() ||
@@ -561,7 +561,7 @@ public:
 			}
 		}
 
-		std::unordered_map<nifly::ushort, float> invertMask;
+		std::unordered_map<uint16_t, float> invertMask;
 		for (int t = 0; t < m->nTris; t++) {
 			auto& tri = m->tris[t];
 			if (triMask.find(tri.p1) == triMask.end())
@@ -1115,7 +1115,7 @@ private:
 	nifly::Vector3 previewMove;
 	nifly::Vector3 previewScale;
 	nifly::Vector3 previewRotation;
-	std::unordered_map<nifly::NiShape*, std::unordered_map<nifly::ushort, nifly::Vector3>> previewDiff;
+	std::unordered_map<nifly::NiShape*, std::unordered_map<uint16_t, nifly::Vector3>> previewDiff;
 
 	bool selectionLocked = false;
 	std::vector<ShapeItemData*> selectedItems;

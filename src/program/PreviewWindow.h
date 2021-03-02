@@ -107,7 +107,7 @@ public:
 		gls.RenderOneFrame();
 	}
 
-	void Resized(nifly::uint w, nifly::uint h) {
+	void Resized(uint32_t w, uint32_t h) {
 		gls.SetSize(w, h);
 	}
 

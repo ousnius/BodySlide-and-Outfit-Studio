@@ -142,7 +142,7 @@ void GLShader::SetMatrixModelView(const glm::mat4x4& matView, const glm::mat4x4&
 	}
 }
 
-void GLShader::SetAlphaProperties(const ushort flags, const float threshold, const float value) {
+void GLShader::SetAlphaProperties(const uint16_t flags, const float threshold, const float value) {
 	static const GLenum blendMap[16] = {
 		GL_ONE, GL_ZERO, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR,
 		GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,

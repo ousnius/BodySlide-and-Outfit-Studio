@@ -196,7 +196,7 @@ void ShapeProperties::GetShaderType() {
 	shaderType->Disable();
 	shaderType->Clear();
 
-	uint type;
+	uint32_t type;
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
 		if (shader->HasType<BSLightingShaderProperty>()) {
@@ -787,7 +787,7 @@ void ShapeProperties::ApplyChanges() {
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
 		std::string name = shaderName->GetValue();
-		uint type = shaderType->GetSelection();
+		uint32_t type = shaderType->GetSelection();
 		wxColour color = specularColor->GetColour();
 		Vector3 specColor(color.Red(), color.Green(), color.Blue());
 		specColor /= 255.0f;

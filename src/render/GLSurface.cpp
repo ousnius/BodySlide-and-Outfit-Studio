@@ -177,7 +177,7 @@ void GLSurface::Cleanup() {
 	resLoader.Cleanup();
 }
 
-void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const uint& vpWidth, const uint& vpHeight, const float& fov) {
+void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const uint32_t& vpWidth, const uint32_t& vpHeight, const float& fov) {
 	perspective = true;
 	camPos = pos;
 	camRot = rot;
@@ -674,7 +674,7 @@ void GLSurface::HideSegCursor() {
 	SetOverlayVisibility("seghilite", false);
 }
 
-void GLSurface::SetSize(uint w, uint h) {
+void GLSurface::SetSize(uint32_t w, uint32_t h) {
 	if (!SetContext())
 		return;
 
@@ -683,7 +683,7 @@ void GLSurface::SetSize(uint w, uint h) {
 	vpH = h;
 }
 
-void GLSurface::GetSize(uint & w, uint & h) {
+void GLSurface::GetSize(uint32_t & w, uint32_t & h) {
 	w = vpW;
 	h = vpH;
 }

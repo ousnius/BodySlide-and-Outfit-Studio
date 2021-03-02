@@ -33,8 +33,8 @@ private:
 	nifly::Vector3 camPos;
 	nifly::Vector3 camRot;		// Turntable camera emulation.
 	nifly::Vector3 camOffset;
-	nifly::uint vpW = 800;
-	nifly::uint vpH = 600;
+	uint32_t vpW = 800;
+	uint32_t vpH = 600;
 
 	GLfloat largestAF = 0;
 
@@ -260,9 +260,9 @@ public:
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Cleanup();
 
-	void SetStartingView(const nifly::Vector3& camPos, const nifly::Vector3& camRot, const nifly::uint& vpWidth, const nifly::uint& vpHeight, const float& fov = 65.0f);
-	void SetSize(nifly::uint w, nifly::uint h);
-	void GetSize(nifly::uint &w, nifly::uint &h);
+	void SetStartingView(const nifly::Vector3& camPos, const nifly::Vector3& camRot, const uint32_t& vpWidth, const uint32_t& vpHeight, const float& fov = 65.0f);
+	void SetSize(uint32_t w, uint32_t h);
+	void GetSize(uint32_t &w, uint32_t &h);
 	void UpdateProjection();
 
 	void RenderFullScreenQuad(GLMaterial * renderShader, unsigned int w, unsigned int h);

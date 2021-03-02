@@ -716,7 +716,7 @@ void BodySlideApp::LaunchOutfitStudio(const wxString& args) {
 	}
 }
 
-void BodySlideApp::ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<ushort>& ZapIdx, std::vector<Vector2>* uvs) {
+void BodySlideApp::ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<uint16_t>& ZapIdx, std::vector<Vector2>* uvs) {
 	for (auto &slider : sliderSet) {
 		float val = slider.value;
 		if (slider.zap && !slider.uv) {
@@ -745,7 +745,7 @@ void BodySlideApp::ApplySliders(const std::string& targetShape, std::vector<Slid
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
 }
 
-bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices) {
+bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices) {
 	DiffDataSets currentDiffs;
 	sliderSet.LoadSetDiffData(currentDiffs);
 
@@ -757,7 +757,7 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 		if (!shape)
 			continue;
 
-		const std::vector<ushort>& shapeZapIndices = zapIndices[targetShape->first];
+		const std::vector<uint16_t>& shapeZapIndices = zapIndices[targetShape->first];
 
 		int shapeVertCount = shape->GetNumVertices();
 		shapeVertCount += shapeZapIndices.size();
@@ -913,7 +913,7 @@ void BodySlideApp::InitPreview() {
 
 	std::vector<Vector3> verts;
 	std::vector<Vector2> uvs;
-	std::vector<ushort> zapIdx;
+	std::vector<uint16_t> zapIdx;
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
 
@@ -976,7 +976,7 @@ void BodySlideApp::UpdatePreview() {
 	int weight = preview->GetWeight();
 	std::vector<Vector3> verts, vertsLow, vertsHigh;
 	std::vector<Vector2> uvs, uvsLow, uvsHigh;
-	std::vector<ushort> zapIdx;
+	std::vector<uint16_t> zapIdx;
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
 
@@ -1039,7 +1039,7 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	
 	std::vector<Vector3> verts, vertsLow, vertsHigh;
 	std::vector<Vector2> uvs, uvsLow, uvsHigh;
-	std::vector<ushort> zapIdx;
+	std::vector<uint16_t> zapIdx;
 	Vector3 v;
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
@@ -1744,8 +1744,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	std::vector<Vector3> vertsHigh;
 	std::vector<Vector2> uvsLow;
 	std::vector<Vector2> uvsHigh;
-	std::vector<ushort> zapIdx;
-	std::unordered_map<std::string, std::vector<ushort>> zapIdxAll;
+	std::vector<uint16_t> zapIdx;
+	std::unordered_map<std::string, std::vector<uint16_t>> zapIdxAll;
 
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		auto shape = nifBig.FindBlockByName<NiShape>(it->first);
@@ -1762,7 +1762,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			nifSmall.GetUvsForShape(shapeSmall, uvsLow);
 		}
 
-		zapIdxAll.emplace(it->first, std::vector<ushort>());
+		zapIdxAll.emplace(it->first, std::vector<uint16_t>());
 
 		ApplySliders(it->second.targetShape, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
 		nifBig.SetVertsForShape(shape, vertsHigh);
@@ -2152,8 +2152,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		std::vector<Vector3> vertsHigh;
 		std::vector<Vector2> uvsLow;
 		std::vector<Vector2> uvsHigh;
-		std::vector<ushort> zapIdx;
-		std::unordered_map<std::string, std::vector<ushort>> zapIdxAll;
+		std::vector<uint16_t> zapIdx;
+		std::unordered_map<std::string, std::vector<uint16_t>> zapIdxAll;
 
 		for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
 			auto shape = nifBig.FindBlockByName<NiShape>(it->first);
@@ -2173,7 +2173,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			float vbig = 0.0f;
 			float vsmall = 0.0f;
 			std::vector<int> clamps;
-			zapIdxAll.emplace(it->first, std::vector<ushort>());
+			zapIdxAll.emplace(it->first, std::vector<uint16_t>());
 
 			for (int s = 0; s < currentSet.size(); s++) {
 				std::string target = it->second.targetShape;

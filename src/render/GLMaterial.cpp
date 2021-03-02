@@ -41,7 +41,7 @@ GLShader& GLMaterial::GetShader() {
 	return shader;
 }
 
-GLuint GLMaterial::GetTexID(uint index) {
+GLuint GLMaterial::GetTexID(uint32_t index) {
 	if (resLoaderRef && !resLoaderRef->CacheStamp(cacheTime)) {
 		// outdated cache, rebuild it.  
 		for (int i = 0; i < texCache.size(); i++) {
@@ -51,7 +51,7 @@ GLuint GLMaterial::GetTexID(uint index) {
 	return texCache[index];
 }
 
-std::string GLMaterial::GetTexName(uint index) {
+std::string GLMaterial::GetTexName(uint32_t index) {
 	if (index < texNames.size())
 		return texNames[index];
 

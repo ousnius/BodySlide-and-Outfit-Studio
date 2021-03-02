@@ -35,7 +35,7 @@ AABB::AABB(Vector3* points, int nPoints) {
 	}
 }
 
-AABB::AABB(Vector3* points, ushort* indices, int nPoints) {
+AABB::AABB(Vector3* points, uint16_t* indices, int nPoints) {
 	if (nPoints <= 0)
 		return;
 
@@ -123,7 +123,7 @@ void AABB::AddBoxToMesh(std::vector<Vector3>& verts, std::vector<Edge>& edges) {
 	edges.push_back(e);
 }
 
-void AABB::Merge(Vector3* points, ushort* indices, int nPoints) {
+void AABB::Merge(Vector3* points, uint16_t* indices, int nPoints) {
 	if (nPoints <= 0)
 		return;
 
@@ -624,11 +624,11 @@ void AABBTree::CalcAABBandGeoAvg(std::vector<int>& forFacets, AABB& outBB, Vecto
 
 	Vector3 mid;
 	outAxisAvg = Vector3(0.0f, 0.0f, 0.0f);
-	AABB tmpBB(vertexRef, (ushort*)(&triRef[forFacets[0]]), 3);
+	AABB tmpBB(vertexRef, (uint16_t*)(&triRef[forFacets[0]]), 3);
 	for (int i = 0; i < forFacets.size(); i++) {
 		triRef[forFacets[i]].midpoint(vertexRef, mid);
 		outAxisAvg += (mid / forFacets.size());
-		tmpBB.Merge(vertexRef, (ushort*)&triRef[forFacets[i]], 3);
+		tmpBB.Merge(vertexRef, (uint16_t*)&triRef[forFacets[i]], 3);
 	}
 	outBB = tmpBB;
 }
@@ -642,14 +642,14 @@ void AABBTree::CalcAABBandGeoAvg(std::vector<int>& forFacets, int start, int end
 	//float yaxis = 0;
 	outAxisAvg = Vector3(0.0f, 0.0f, 0.0f);
 
-	AABB tmpBB(vertexRef, (ushort*)(&triRef[forFacets[start]]), 3);
+	AABB tmpBB(vertexRef, (uint16_t*)(&triRef[forFacets[start]]), 3);
 	int fcount = end - start + 1;
 	for (int i = start; i <= end; i++) {
 		triRef[forFacets[i]].midpoint(vertexRef, mid);
 		outAxisAvg.x += mid.x;
 		outAxisAvg.y += mid.y;
 		outAxisAvg.z += mid.z;
-		tmpBB.Merge(vertexRef, (ushort*)&triRef[forFacets[i]], 3);
+		tmpBB.Merge(vertexRef, (uint16_t*)&triRef[forFacets[i]], 3);
 	}
 	outAxisAvg /= fcount;
 	outBB = tmpBB;
@@ -661,14 +661,14 @@ void AABBTree::CalcAABBandGeoAvg(int forFacets[], int start, int end, AABB& outB
 	//float yaxis = 0;
 	outAxisAvg = Vector3(0.0f, 0.0f, 0.0f);
 
-	AABB tmpBB(vertexRef, (ushort*)(&triRef[forFacets[start]]), 3);
+	AABB tmpBB(vertexRef, (uint16_t*)(&triRef[forFacets[start]]), 3);
 	int fcount = end - start + 1;
 	for (int i = start; i <= end; i++) {
 		triRef[forFacets[i]].midpoint(vertexRef, mid);
 		outAxisAvg.x += mid.x;
 		outAxisAvg.y += mid.y;
 		outAxisAvg.z += mid.z;
-		tmpBB.Merge(vertexRef, (ushort*)&triRef[forFacets[i]], 3);
+		tmpBB.Merge(vertexRef, (uint16_t*)&triRef[forFacets[i]], 3);
 	}
 	outAxisAvg /= fcount;
 	outBB = tmpBB;

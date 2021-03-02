@@ -31,7 +31,7 @@ a source of input, containing the results of previous changes.
 class BoneWeightAutoNormalizer {
 	static constexpr double WEIGHT_EPSILON = .001;
 	UndoStateShape *uss;
-	std::vector<std::unordered_map<nifly::ushort, float>*> wPtrs, lWPtrs;
+	std::vector<std::unordered_map<uint16_t, float>*> wPtrs, lWPtrs;
 	int nMBones;
 	bool bSpreadWeight;
 public:

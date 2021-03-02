@@ -12,7 +12,7 @@ See the included LICENSE file
 #include <memory>
 #include <algorithm>
 
-enum MorphType : nifly::byte {
+enum MorphType : uint8_t {
 	MORPHTYPE_POSITION,
 	MORPHTYPE_UV
 };
@@ -40,8 +40,8 @@ public:
 	MorphDataPtr GetMorph(const std::string& shapeName, const std::string& morphName);
 	std::map<std::string, std::vector<MorphDataPtr>> GetMorphs();
 
-	nifly::ushort GetShapeCount(MorphType morphType);
-	nifly::ushort GetMorphCount(const std::string& shapeName, MorphType morphType);
+	uint16_t GetShapeCount(MorphType morphType);
+	uint16_t GetMorphCount(const std::string& shapeName, MorphType morphType);
 };
 
 struct TriHeadMorph {
@@ -54,20 +54,20 @@ class TriHeadFile {
 	std::string identifier = "FR";
 	std::string fileType = "TRI";
 	std::string version = "003";
-	nifly::uint numVertices = 0;
-	nifly::uint numTriangles = 0;
-	nifly::uint numQuads = 0;
-	nifly::uint unknown2 = 0;
-	nifly::uint unknown3 = 0;
-	nifly::uint numUV = 0;
-	nifly::uint flags = 1;
-	nifly::uint numMorphs = 0;
-	nifly::uint numModifiers = 0;
-	nifly::uint numModVertices = 0;
-	nifly::uint unknown7 = 0;
-	nifly::uint unknown8 = 0;
-	nifly::uint unknown9 = 0;
-	nifly::uint unknown10 = 0;
+	uint32_t numVertices = 0;
+	uint32_t numTriangles = 0;
+	uint32_t numQuads = 0;
+	uint32_t unknown2 = 0;
+	uint32_t unknown3 = 0;
+	uint32_t numUV = 0;
+	uint32_t flags = 1;
+	uint32_t numMorphs = 0;
+	uint32_t numModifiers = 0;
+	uint32_t numModVertices = 0;
+	uint32_t unknown7 = 0;
+	uint32_t unknown8 = 0;
+	uint32_t unknown9 = 0;
+	uint32_t unknown10 = 0;
 	std::vector<nifly::Vector3> vertices;
 	std::vector<nifly::Vector3> modVertices;
 	std::vector<nifly::Triangle> triangles;

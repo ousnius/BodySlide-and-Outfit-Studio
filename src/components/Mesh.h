@@ -91,7 +91,7 @@ public:
 	std::vector<GLuint> vbo = std::vector<GLuint>(7, 0);
 	GLuint ibo = 0;
 
-	std::vector<std::pair<nifly::uint, nifly::uint>> subMeshes;	// Start index and size of each sub mesh
+	std::vector<std::pair<uint32_t, uint32_t>> subMeshes;	// Start index and size of each sub mesh
 	std::vector<nifly::Vector3> subMeshesColor;			// Color of each sub mesh
 
 	ShaderProperties prop;
@@ -105,7 +105,7 @@ public:
 	std::unordered_map<int, std::vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
 	bool bGotWeldVerts = false;	// Whether weldVerts has been calculated yet.
 
-	std::unordered_set<nifly::uint> lockedNormalIndices;
+	std::unordered_set<uint32_t> lockedNormalIndices;
 
 	RenderMode rendermode = RenderMode::Normal;
 	bool doublesided = false;
@@ -131,8 +131,8 @@ public:
 	bool smoothSeamNormals = true;
 	bool lockNormals = false;
 
-	nifly::ushort alphaFlags = 0;
-	nifly::byte alphaThreshold = 0;
+	uint16_t alphaFlags = 0;
+	uint8_t alphaThreshold = 0;
 
 	std::string shapeName;
 	nifly::Vector3 color;

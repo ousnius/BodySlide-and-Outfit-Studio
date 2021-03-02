@@ -11,10 +11,10 @@ See the included LICENSE file
 #include <map>
 
 struct VertexBoneWeights {
-	std::vector<nifly::byte> boneIds;
+	std::vector<uint8_t> boneIds;
 	std::vector<float> weights;
 
-	void Add(const nifly::byte inBoneId, const float inWeight) {
+	void Add(const uint8_t inBoneId, const float inWeight) {
 		if (inWeight == 0.0f)
 			return;
 
@@ -72,7 +72,7 @@ public:
 // Vertex to weight value association. Also keeps track of skin-to-bone transform and bounding sphere.
 class AnimWeight {
 public:
-	std::unordered_map<nifly::ushort, float> weights;
+	std::unordered_map<uint16_t, float> weights;
 	nifly::MatTransform xformSkinToBone;
 	nifly::BoundingSphere bounds;
 
@@ -113,7 +113,7 @@ public:
 				bn.second--;
 	}
 
-	void InsertVertexIndices(const std::vector<nifly::ushort>& indices);
+	void InsertVertexIndices(const std::vector<uint16_t>& indices);
 };
 
 class AnimPartition {
@@ -145,7 +145,7 @@ public:
 	void Clear();
 	void ClearShape(const std::string& shape);
 	bool HasSkinnedShape(nifly::NiShape* shape);
-	void DeleteVertsForShape(const std::string& shape, const std::vector<nifly::ushort>& indices);
+	void DeleteVertsForShape(const std::string& shape, const std::vector<uint16_t>& indices);
 
 	// Loads the skinning information contained in the nif for all shapes.
 	// Returns false if there is no skinning information.
@@ -154,10 +154,10 @@ public:
 	bool CloneShape(nifly::NifFile* nif, nifly::NiShape* shape, const std::string& newShape);
 
 	int GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName);
-	std::unordered_map<nifly::ushort, float>* GetWeightsPtr(const std::string& shape, const std::string& boneName);
+	std::unordered_map<uint16_t, float>* GetWeightsPtr(const std::string& shape, const std::string& boneName);
 	bool HasWeights(const std::string& shape, const std::string& boneName);
-	void GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<nifly::ushort, float>& outVertWeights);
-	void SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<nifly::ushort, float>& inVertWeights);
+	void GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<uint16_t, float>& outVertWeights);
+	void SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<uint16_t, float>& inVertWeights);
 	bool GetXFormSkinToBone(const std::string& shape, const std::string& boneName, nifly::MatTransform& stransform);
 	void SetXFormSkinToBone(const std::string& shape, const std::string& boneName, const nifly::MatTransform& stransform);
 	// RecalcXFormSkinToBone recalculates a shape bone's xformSkinToBone

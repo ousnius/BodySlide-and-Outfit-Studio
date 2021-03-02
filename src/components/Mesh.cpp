@@ -39,9 +39,9 @@ void mesh::BuildTriAdjacency() {
 	vertTris = std::make_unique<std::vector<int>[]>(nVerts);
 	auto vt = vertTris.get();
 	for (int t = 0; t < nTris; t++) {
-		ushort i1 = tris[t].p1;
-		ushort i2 = tris[t].p2;
-		ushort i3 = tris[t].p3;
+		uint16_t i1 = tris[t].p1;
+		uint16_t i2 = tris[t].p2;
+		uint16_t i3 = tris[t].p3;
 		if (i1 >= nVerts || i2 >= nVerts || i3 >= nVerts)
 			continue;
 
@@ -62,7 +62,7 @@ void mesh::MakeEdges() {
 
 	for (int i = 0; i < nEdges; i++) {
 		// Find correct points for edge
-		ushort* points = &tris[i / 3].p1;
+		uint16_t* points = &tris[i / 3].p1;
 		int pA = i % 3;
 		int pB = i % 3 + 1;
 		if (pB >= 3)
@@ -80,8 +80,8 @@ void mesh::BuildEdgeList() {
 	vertEdges = std::make_unique<std::vector<int>[]>(nVerts);
 	auto ve = vertEdges.get();
 	for (int e = 0; e < nEdges; e++) {
-		ushort i1 = edges[e].p1;
-		ushort i2 = edges[e].p2;
+		uint16_t i1 = edges[e].p1;
+		uint16_t i2 = edges[e].p2;
 		if (i1 >= nVerts || i2 >= nVerts)
 			continue;
 
@@ -322,7 +322,7 @@ int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 		return 0;
 
 	auto vedges = vertEdges.get();
-	for (uint e = 0; e < vedges[querypoint].size(); e++) {
+	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
 		ep1 = edges[vedges[querypoint][e]].p1;
 		ep2 = edges[vedges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
@@ -333,9 +333,9 @@ int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 		}
 	}
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
+		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
 			wq = weldVerts[querypoint][v];
-			for (uint e = 0; e < vedges[wq].size(); e++) {
+			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
 				ep1 = edges[vedges[wq][e]].p1;
 				ep2 = edges[vedges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
@@ -360,7 +360,7 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 	int n = 0;
 
 	auto vedges = vertEdges.get();
-	for (uint e = 0; e < vedges[querypoint].size(); e++) {
+	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
 		ep1 = edges[vedges[querypoint][e]].p1;
 		ep2 = edges[vedges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
@@ -376,9 +376,9 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 		}
 	}
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
+		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
 			int wq = weldVerts[querypoint][v];
-			for (uint e = 0; e < vedges[wq].size(); e++) {
+			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
 				ep1 = edges[vedges[wq][e]].p1;
 				ep2 = edges[vedges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
