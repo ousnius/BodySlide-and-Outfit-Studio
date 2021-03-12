@@ -2449,10 +2449,10 @@ void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const 
 		target = nif.FindBlockByName<NiShape>(shapeName);
 
 	if (target) {
-		auto triExtraData = new NiStringExtraData();
+		auto triExtraData = std::make_unique<NiStringExtraData>();
 		triExtraData->SetName("BODYTRI");
 		triExtraData->SetStringData(triPath);
-		nif.AssignExtraData(target, triExtraData);
+		nif.AssignExtraData(target, std::move(triExtraData));
 	}
 }
 

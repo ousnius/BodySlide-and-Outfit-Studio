@@ -4104,14 +4104,14 @@ void OutfitStudioFrame::OnImportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 	if (fileName.IsEmpty())
 		return;
 
-	auto physicsBlock = new BSClothExtraData();
+	auto physicsBlock = std::make_unique<BSClothExtraData>();
 	if (!physicsBlock->FromHKX(fileName.ToUTF8().data())) {
 		wxLogError("Failed to import physics data file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to import physics data file '%s'!"), fileName), _("Import Error"), wxICON_ERROR);
 	}
 
 	auto& physicsData = project->GetClothData();
-	physicsData[fileName.ToUTF8().data()] = physicsBlock;
+	physicsData[fileName.ToUTF8().data()] = std::move(physicsBlock);
 }
 
 void OutfitStudioFrame::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {

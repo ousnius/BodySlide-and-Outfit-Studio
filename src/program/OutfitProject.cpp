@@ -37,8 +37,6 @@ OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 }
 
 OutfitProject::~OutfitProject() {
-	for (auto &cloth : clothData)
-		delete cloth.second;
 }
 
 std::string OutfitProject::Save(const wxString& strFileName,
@@ -533,90 +531,92 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std
 
 	NiShape* shapeResult = nullptr;
 	if (targetGame <= SKYRIM) {
-		auto nifShapeData = new NiTriShapeData();
-		nifShapeData->Create(hdr.GetVersion(), &v, &t, &uv, norms);
-
-		int dataID = hdr.AddBlock(nifShapeData);
-
-		auto nifTexset = new BSShaderTextureSet(hdr.GetVersion());
+		auto nifTexset = std::make_unique<BSShaderTextureSet>(hdr.GetVersion());
 
 		int shaderID;
-		BSLightingShaderProperty* nifShader = nullptr;
-		BSShaderPPLightingProperty* nifShaderPP = nullptr;
+		std::unique_ptr<BSLightingShaderProperty> nifShader = nullptr;
+		std::unique_ptr<BSShaderPPLightingProperty> nifShaderPP = nullptr;
 		switch (targetGame) {
 		case FO3:
 		case FONV:
-			nifShaderPP = new BSShaderPPLightingProperty();
-			shaderID = hdr.AddBlock(nifShaderPP);
-			nifShaderPP->SetTextureSetRef(hdr.AddBlock(nifTexset));
+			nifShaderPP = std::make_unique<BSShaderPPLightingProperty>();
+			nifShaderPP->SetTextureSetRef(hdr.AddBlock(std::move(nifTexset)));
+			nifShaderPP->SetSkinned(false);
+			shaderID = hdr.AddBlock(std::move(nifShaderPP));
 			break;
 		case SKYRIM:
 		default:
-			nifShader = new BSLightingShaderProperty(hdr.GetVersion());
-			shaderID = hdr.AddBlock(nifShader);
-			nifShader->SetTextureSetRef(hdr.AddBlock(nifTexset));
+			nifShader = std::make_unique<BSLightingShaderProperty>(hdr.GetVersion());
+			nifShader->SetTextureSetRef(hdr.AddBlock(std::move(nifTexset)));
+			nifShader->SetSkinned(false);
+			shaderID = hdr.AddBlock(std::move(nifShader));
 		}
 
-		nifShader->SetSkinned(false);
-
-		auto nifTriShape = new NiTriShape();
-		int shapeID = hdr.AddBlock(nifTriShape);
+		auto nifTriShape = std::make_unique<NiTriShape>();
 		if (targetGame < SKYRIM)
 			nifTriShape->GetProperties().AddBlockRef(shaderID);
 		else
 			nifTriShape->SetShaderPropertyRef(shaderID);
 
 		nifTriShape->SetName(shapeName);
+
+		auto nifShapeData = std::make_unique<NiTriShapeData>();
+		nifShapeData->Create(hdr.GetVersion(), &v, &t, &uv, norms);
+		nifTriShape->SetGeomData(nifShapeData.get());
+
+		int dataID = hdr.AddBlock(std::move(nifShapeData));
 		nifTriShape->SetDataRef(dataID);
-		nifTriShape->SetGeomData(nifShapeData);
 		nifTriShape->SetSkinned(false);
 
+		shapeResult = nifTriShape.get();
+
+		int shapeID = hdr.AddBlock(std::move(nifTriShape));
 		rootNode->GetChildren().AddBlockRef(shapeID);
-		shapeResult = nifTriShape;
 	}
 	else if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
-		auto nifBSTriShape = new BSSubIndexTriShape();
+		auto nifBSTriShape = std::make_unique<BSSubIndexTriShape>();
 		nifBSTriShape->Create(hdr.GetVersion(), &v, &t, &uv, norms);
-		int shapeID = hdr.AddBlock(nifBSTriShape);
+		nifBSTriShape->SetSkinned(false);
 
-		BSTriShape* triShapeBase = nifBSTriShape;
-		triShapeBase->SetSkinned(false);
+		auto nifTexset = std::make_unique<BSShaderTextureSet>(hdr.GetVersion());
 
-		auto nifTexset = new BSShaderTextureSet(hdr.GetVersion());
-
-		auto nifShader = new BSLightingShaderProperty(hdr.GetVersion());
-		int shaderID = hdr.AddBlock(nifShader);
-		nifShader->SetTextureSetRef(hdr.AddBlock(nifTexset));
+		auto nifShader = std::make_unique<BSLightingShaderProperty>(hdr.GetVersion());
+		nifShader->SetTextureSetRef(hdr.AddBlock(std::move(nifTexset)));
 
 		std::string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		nifShader->SetWetMaterialName(wetShaderName);
 		nifShader->SetSkinned(false);
 
-		triShapeBase->SetName(shapeName);
-		triShapeBase->SetShaderPropertyRef(shaderID);
+		nifBSTriShape->SetName(shapeName);
 
+		int shaderID = hdr.AddBlock(std::move(nifShader));
+		nifBSTriShape->SetShaderPropertyRef(shaderID);
+
+		shapeResult = nifBSTriShape.get();
+
+		int shapeID = hdr.AddBlock(std::move(nifBSTriShape));
 		rootNode->GetChildren().AddBlockRef(shapeID);
-		shapeResult = triShapeBase;
 	}
 	else {
-		auto triShape = new BSTriShape();
+		auto triShape = std::make_unique<BSTriShape>();
 		triShape->Create(hdr.GetVersion(), &v, &t, &uv, norms);
-		int shapeID = hdr.AddBlock(triShape);
-
 		triShape->SetSkinned(false);
 
-		auto nifTexset = new BSShaderTextureSet(hdr.GetVersion());
+		auto nifTexset = std::make_unique<BSShaderTextureSet>(hdr.GetVersion());
 
-		auto nifShader = new BSLightingShaderProperty(hdr.GetVersion());
-		int shaderID = hdr.AddBlock(nifShader);
-		nifShader->SetTextureSetRef(hdr.AddBlock(nifTexset));
+		auto nifShader = std::make_unique<BSLightingShaderProperty>(hdr.GetVersion());
+		nifShader->SetTextureSetRef(hdr.AddBlock(std::move(nifTexset)));
 		nifShader->SetSkinned(false);
 
 		triShape->SetName(shapeName);
+
+		int shaderID = hdr.AddBlock(std::move(nifShader));
 		triShape->SetShaderPropertyRef(shaderID);
 
+		shapeResult = triShape.get();
+
+		int shapeID = hdr.AddBlock(std::move(triShape));
 		rootNode->GetChildren().AddBlockRef(shapeID);
-		shapeResult = triShape;
 	}
 
 	SetTextures(shapeResult);
@@ -3583,7 +3583,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 			std::string selString{clothFileNames[sel[i]].ToUTF8()};
 			if (!selString.empty()) {
 				auto clothBlock = clothData[selString]->Clone();
-				int id = nif.GetHeader().AddBlock(clothBlock);
+				int id = nif.GetHeader().AddBlock(std::move(clothBlock));
 				if (id != 0xFFFFFFFF) {
 					auto root = nif.GetRootNode();
 					if (root)

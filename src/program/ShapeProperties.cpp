@@ -292,28 +292,28 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 
 void ShapeProperties::AddShader() {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	NiShader* newShader = nullptr;
-	NiMaterialProperty* newMaterial = nullptr;
+	std::unique_ptr<NiShader> newShader = nullptr;
+	std::unique_ptr<NiMaterialProperty> newMaterial = nullptr;
 
 	switch (targetGame) {
 	case FO3:
 	case FONV:
-		newShader = new BSShaderPPLightingProperty();
-		shape->GetProperties().AddBlockRef(nif->GetHeader().AddBlock(newShader));
+		newShader = std::make_unique<BSShaderPPLightingProperty>();
+		shape->GetProperties().AddBlockRef(nif->GetHeader().AddBlock(std::move(newShader)));
 
-		newMaterial = new NiMaterialProperty();
-		shape->GetProperties().AddBlockRef(nif->GetHeader().AddBlock(newMaterial));
+		newMaterial = std::make_unique<NiMaterialProperty>();
+		shape->GetProperties().AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
 		break;
 
 	default:
-		newShader = new BSLightingShaderProperty(nif->GetHeader().GetVersion());
-		shape->SetShaderPropertyRef(nif->GetHeader().AddBlock(newShader));
+		newShader = std::make_unique<BSLightingShaderProperty>(nif->GetHeader().GetVersion());
+		shape->SetShaderPropertyRef(nif->GetHeader().AddBlock(std::move(newShader)));
 	}
 
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
-		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->GetHeader().GetVersion());
-		shader->SetTextureSetRef(nif->GetHeader().AddBlock(nifTexSet));
+		auto nifTexSet = std::make_unique<BSShaderTextureSet>(nif->GetHeader().GetVersion());
+		shader->SetTextureSetRef(nif->GetHeader().AddBlock(std::move(nifTexSet)));
 	}
 
 	AssignDefaultTexture();
@@ -448,8 +448,8 @@ void ShapeProperties::OnAddTransparency(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::AddTransparency() {
-	auto alphaProp = new NiAlphaProperty();
-	nif->AssignAlphaProperty(shape, alphaProp);
+	auto alphaProp = std::make_unique<NiAlphaProperty>();
+	nif->AssignAlphaProperty(shape, std::move(alphaProp));
 	GetTransparency();
 }
 
@@ -585,8 +585,8 @@ void ShapeProperties::OnAddExtraData(wxCommandEvent& WXUNUSED(event)) {
 
 void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 	if (!uiOnly) {
-		auto newExtraData = static_cast<NiExtraData*>(extraData->Clone());
-		int index = nif->AssignExtraData(shape, newExtraData);
+		auto newExtraData = extraData->Clone();
+		int index = nif->AssignExtraData(shape, std::move(newExtraData));
 		extraDataIndices.push_back(index);
 	}
 
@@ -666,33 +666,33 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 	wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + id, this));
 	wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + id, this));
 
-	NiExtraData* extraDataResult = nullptr;
+	std::unique_ptr<NiExtraData> extraDataResult = nullptr;
 	switch (selection) {
 	case 0: {
-		auto strExtraData = new NiStringExtraData();
+		auto strExtraData = std::make_unique<NiStringExtraData>();
 		strExtraData->SetName(extraDataName->GetValue().ToStdString());
 		strExtraData->SetStringData(extraDataValue->GetValue().ToStdString());
-		extraDataResult = strExtraData;
+		extraDataResult = std::move(strExtraData);
 		break;
 	}
 	case 1: {
-		auto intExtraData = new NiIntegerExtraData();
+		auto intExtraData = std::make_unique<NiIntegerExtraData>();
 		intExtraData->SetName(extraDataName->GetValue().ToStdString());
 		intExtraData->SetIntegerData(0);
-		extraDataResult = intExtraData;
+		extraDataResult = std::move(intExtraData);
 		break;
 	}
 	case 2: {
-		auto floatExtraData = new NiFloatExtraData();
+		auto floatExtraData = std::make_unique<NiFloatExtraData>();
 		floatExtraData->SetName(extraDataName->GetValue().ToStdString());
 		floatExtraData->SetFloatData(0.0f);
-		extraDataResult = floatExtraData;
+		extraDataResult = std::move(floatExtraData);
 		break;
 	}
 	}
 
 	if (extraDataResult)
-		extraDataIndices[id] = nif->AssignExtraData(shape, extraDataResult);
+		extraDataIndices[id] = nif->AssignExtraData(shape, std::move(extraDataResult));
 }
 
 void ShapeProperties::OnRemoveExtraData(wxCommandEvent& event) {
@@ -858,36 +858,36 @@ void ShapeProperties::ApplyChanges() {
 		}
 	}
 
-	BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (bsTriShape) {
 		if (nif->GetHeader().GetVersion().Stream() != 100)
 			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
 
 		if ((targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) && currentSubIndex != subIndex->IsChecked()) {
 			if (subIndex->IsChecked()) {
-				auto bsSITS = new BSSubIndexTriShape();
-				*static_cast<BSTriShape*>(bsSITS) = *bsTriShape;
+				auto bsSITS = std::make_unique<BSSubIndexTriShape>();
+				*static_cast<BSTriShape*>(bsSITS.get()) = *bsTriShape;
 				bsSITS->SetDefaultSegments();
 				bsSITS->SetName(bsTriShape->GetName());
 
-				os->UpdateShapeReference(bsTriShape, bsSITS);
-				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS);
-				shape = bsSITS;
+				shape = bsSITS.get();
+				os->UpdateShapeReference(bsTriShape, shape);
+				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsSITS));
 			}
 			else {
-				auto bsTS = new BSTriShape(*bsTriShape);
+				auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
 				bsTS->SetName(bsTriShape->GetName());
 
-				os->UpdateShapeReference(bsTriShape, bsTS);
-				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
-				shape = bsTS;
+				shape = bsTS.get();
+				os->UpdateShapeReference(bsTriShape, shape);
+				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
 			}
 		}
 
 		if (targetGame == SKYRIMSE && currentDynamic != dynamic->IsChecked()) {
 			if (dynamic->IsChecked()) {
-				auto bsDTS = new BSDynamicTriShape();
-				*static_cast<BSTriShape*>(bsDTS) = *bsTriShape;
+				auto bsDTS = std::make_unique<BSDynamicTriShape>();
+				*static_cast<BSTriShape*>(bsDTS.get()) = *bsTriShape;
 				bsDTS->SetName(bsTriShape->GetName());
 
 				bsDTS->vertexDesc.RemoveFlag(VF_VERTEX);
@@ -896,12 +896,12 @@ void ShapeProperties::ApplyChanges() {
 				bsDTS->CalcDynamicData();
 				bsDTS->CalcDataSizes(nif->GetHeader().GetVersion());
 
-				os->UpdateShapeReference(bsTriShape, bsDTS);
-				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsDTS);
-				shape = bsDTS;
+				shape = bsDTS.get();
+				os->UpdateShapeReference(bsTriShape, shape);
+				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsDTS));
 			}
 			else {
-				auto bsTS = new BSTriShape(*bsTriShape);
+				auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
 				bsTS->SetName(bsTriShape->GetName());
 
 				bsTS->vertexDesc.SetFlag(VF_VERTEX);
@@ -909,9 +909,9 @@ void ShapeProperties::ApplyChanges() {
 
 				bsTS->CalcDataSizes(nif->GetHeader().GetVersion());
 
-				os->UpdateShapeReference(bsTriShape, bsTS);
-				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
-				shape = bsTS;
+				shape = bsTS.get();
+				os->UpdateShapeReference(bsTriShape, shape);
+				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
 			}
 		}
 	}

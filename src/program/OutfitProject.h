@@ -44,7 +44,7 @@ class OutfitProject {
 	nifly::NiShape* baseShape = nullptr;
 
 	// All cloth data blocks that have been loaded during work
-	std::unordered_map<std::string, nifly::BSClothExtraData*> clothData;
+	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
 
 	void ValidateNIF(nifly::NifFile& nif);
 
@@ -89,7 +89,7 @@ public:
 
 	nifly::NifFile* GetWorkNif() { return &workNif; }
 	AnimInfo* GetWorkAnim() { return &workAnim; }
-	std::unordered_map<std::string, nifly::BSClothExtraData*>& GetClothData() { return clothData; }
+	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>>& GetClothData() { return clothData; }
 
 	nifly::NiShape* GetBaseShape() { return baseShape; }
 	void SetBaseShape(nifly::NiShape* shape, const bool moveData = true);
