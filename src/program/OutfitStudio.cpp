@@ -9602,40 +9602,39 @@ void wxGLPanel::SetActiveTool(ToolID brushID) {
 
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
 	if (event.GetUnicodeKey() == 'V') {
-		wxDialog dlg;
 		wxPoint cursorPos(event.GetPosition());
 
-		std::unordered_map<uint16_t, Vector3> diff;
-		std::vector<Vector3> verts;
-		Vector3 newPos;
 		int vertIndex;
-
 		if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &vertIndex))
 			return;
 
+		wxDialog dlg;
 		if (wxXmlResource::Get()->LoadDialog(&dlg, os, "dlgMoveVertex")) {
+			std::vector<Vector3> verts;
 			os->project->GetLiveVerts(os->activeItem->GetShape(), verts);
 			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].x));
 			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].y));
 			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].z));
 
 			if (dlg.ShowModal() == wxID_OK) {
+				Vector3 newPos;
 				newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().c_str());
 				newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().c_str());
 				newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
 
 				if (os->bEditSlider) {
-					diff[vertIndex] = newPos - verts[vertIndex];
-					float diffY = diff[vertIndex].y / 10.0f;
-					float diffZ = diff[vertIndex].z / 10.0f;
-					diff[vertIndex].z = diffY;
-					diff[vertIndex].y = diffZ;
-					verts[vertIndex] = newPos;
+					std::unordered_map<uint16_t, Vector3> diff;
+					auto& vertDiff = diff[vertIndex];
+					vertDiff = (newPos - verts[vertIndex]) / 10.0f;
+					vertDiff.x *= -1;
+					std::swap(vertDiff.y, vertDiff.z);
+
 					os->project->UpdateMorphResult(os->activeItem->GetShape(), os->activeSlider, diff);
 				}
 				else {
 					os->project->MoveVertex(os->activeItem->GetShape(), newPos, vertIndex);
 				}
+
 				os->project->GetLiveVerts(os->activeItem->GetShape(), verts);
 				UpdateMeshVertices(os->activeItem->GetShape()->GetName(), &verts);
 			}
