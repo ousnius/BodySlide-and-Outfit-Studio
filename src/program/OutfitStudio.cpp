@@ -3058,8 +3058,9 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
-	int res = wxMessageBox(_("Do you really want to unload the project? All unsaved changes will be lost."), _("Unload Project"), wxYES_NO | wxICON_WARNING, this);
-	if (res != wxYES)
+	wxMessageDialog dlg(this, _("Unload the project? All unsaved changes will be lost"), _("Unload Project"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+	dlg.SetOKCancelLabels(_("Unload"), _("Cancel"));
+	if (dlg.ShowModal() != wxID_OK)
 		return;
 
 	wxLogMessage("Unloading project...");
@@ -6524,8 +6525,9 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	int result = wxMessageBox(_("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
-	if (result != wxYES)
+	wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+	dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
+	if (dlg.ShowModal() != wxID_OK)
 		return;
 
 	wxLogMessage("Importing morphs from OSD file '%s'...", fn);
@@ -6611,8 +6613,9 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	int result = wxMessageBox(_("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
-	if (result != wxYES)
+	wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+	dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
+	if (dlg.ShowModal() != wxID_OK)
 		return;
 
 	wxLogMessage("Importing morphs from TRI file '%s'...", fn);
@@ -9304,6 +9307,11 @@ void OutfitStudioFrame::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
+	wxMessageDialog dlg(this, _("Reset all bone poses?"), _("Reset Pose"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+	dlg.SetOKCancelLabels(_("Reset"), _("Cancel"));
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
 	std::vector<std::string> bones;
 	project->GetActiveBones(bones);
 
@@ -9326,6 +9334,11 @@ void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 	if (project->bPose) {
+		wxMessageDialog dlg(this, _("Permanently apply the pose to the mesh?"), _("Apply Pose to Mesh"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetOKCancelLabels(_("Apply"), _("Cancel"));
+		if (dlg.ShowModal() != wxID_OK)
+			return;
+
 		for (auto &s : project->GetWorkNif()->GetShapes()) {
 			UpdateShapeSource(s);
 			project->RefreshMorphShape(s);
@@ -9357,6 +9370,10 @@ void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {
 	project->bPose = e.IsChecked();
+
+	auto poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
+	poseToMesh->Enable(project->bPose);
+
 	ApplyPose();
 }
 

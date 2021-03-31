@@ -1323,7 +1323,7 @@
 																			<orient>wxHORIZONTAL</orient>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																				<flag>wxRIGHT|wxEXPAND</flag>
 																				<border>5</border>
 																				<object class="wxCheckBox" name="cbPose">
 																					<label>Show Pose</label>
@@ -1341,7 +1341,7 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																				<flag>wxLEFT|wxEXPAND</flag>
 																				<object class="wxButton" name="resetBonePose">
 																					<size>-1,25</size>
 																					<label>Reset Bone</label>
@@ -1351,31 +1351,7 @@
 																	</object>
 																	<object class="sizeritem">
 																		<option>0</option>
-																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-																		<border>5</border>
-																		<object class="wxBoxSizer">
-																			<orient>wxHORIZONTAL</orient>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<flag>wxALL|wxEXPAND</flag>
-																				<object class="wxButton" name="poseToMesh">
-																					<size>-1,25</size>
-																					<label>Apply to Mesh</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<flag>wxALL|wxEXPAND</flag>
-																				<object class="wxButton" name="resetAllPose">
-																					<size>-1,25</size>
-																					<label>Reset All</label>
-																				</object>
-																			</object>
-																		</object>
-																	</object>
-																	<object class="sizeritem">
-																		<option>0</option>
-																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																		<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
 																		<border>5</border>
 																		<object class="wxFlexGridSizer">
 																			<rows>0</rows>
@@ -1386,7 +1362,7 @@
 																			<growablerows></growablerows>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
 																				<object class="wxStaticText" name="rxLabel">
 																					<label>Rotation X</label>
 																				</object>
@@ -1414,7 +1390,7 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
 																				<object class="wxStaticText" name="ryLabel">
 																					<label>Rotation Y</label>
 																				</object>
@@ -1442,7 +1418,7 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
 																				<object class="wxStaticText" name="rzLabel">
 																					<label>Rotation Z</label>
 																				</object>
@@ -1470,7 +1446,7 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
 																				<object class="wxStaticText" name="txLabel">
 																					<label>Offset X</label>
 																				</object>
@@ -1498,7 +1474,7 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
 																				<object class="wxStaticText" name="tyLabel">
 																					<label>Offset Y</label>
 																				</object>
@@ -1527,7 +1503,7 @@
 																			<object class="sizeritem">
 																				<option>0</option>
 																				<border>5</border>
-																				<flag>wxBOTTOM|wxALIGN_CENTER</flag>
+																				<flag>wxBOTTOM|wxALIGN_LEFT</flag>
 																				<object class="wxStaticText" name="tzLabel">
 																					<label>Offset Z</label>
 																				</object>
@@ -1555,6 +1531,23 @@
 																					<maxlength>0</maxlength>
 																				</object>
 																			</object>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxALL|wxEXPAND</flag>
+																		<object class="wxButton" name="resetAllPose">
+																			<size>-1,25</size>
+																			<label>Reset All</label>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxALL|wxEXPAND</flag>
+																		<object class="wxButton" name="poseToMesh">
+																			<size>-1,25</size>
+																			<label>Apply to Mesh</label>
+																			<enabled>0</enabled>
 																		</object>
 																	</object>
 																</object>

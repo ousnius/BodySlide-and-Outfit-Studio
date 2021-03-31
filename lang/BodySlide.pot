@@ -2306,7 +2306,7 @@ msgstr ""
 msgid "Unloads the project and creates an empty new one."
 msgstr ""
 
-msgid "Do you really want to unload the project? All unsaved changes will be lost."
+msgid "Unload the project? All unsaved changes will be lost."
 msgstr ""
 
 msgid "Delete Vertices..."
