@@ -132,7 +132,7 @@ void Automorph::SourceShapesFromNif(NifFile &baseNif, const AnimInfo *workAnim) 
 	for (auto &s : shapes) {
 		mesh* m = new mesh();
 		MeshFromNifShape(m, baseNif, s, workAnim);
-		sourceShapes[s->GetName()] = m;
+		sourceShapes[s->name.get()] = m;
 	}
 }
 
@@ -176,7 +176,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 	std::vector<Triangle> nifTris;
 	shape->GetTriangles(nifTris);
 
-	m->shapeName = shape->GetName();
+	m->shapeName = shape->name.get();
 
 	if (!shape->IsSkinned()) {
 		// Calculate transform from shape's CS to global CS.

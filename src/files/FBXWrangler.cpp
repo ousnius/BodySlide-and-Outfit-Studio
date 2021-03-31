@@ -69,7 +69,7 @@ void FBXWrangler::Priv::AddGeometry(NiShape* shape, const std::vector<Vector3>* 
 	if (!verts || verts->empty())
 		return;
 
-	FbxMesh* m = FbxMesh::Create(sdkManager, shape->GetName().c_str());
+	FbxMesh* m = FbxMesh::Create(sdkManager, shape->name.get().c_str());
 	
 	FbxGeometryElementNormal* normElement = nullptr;
 	if (norms && !norms->empty()) {
@@ -80,7 +80,7 @@ void FBXWrangler::Priv::AddGeometry(NiShape* shape, const std::vector<Vector3>* 
 	
 	FbxGeometryElementUV* uvElement = nullptr;
 	if (uvs && !uvs->empty()) {
-		std::string uvName = shape->GetName() + "UV";
+		std::string uvName = shape->name.get() + "UV";
 		uvElement = m->CreateElementUV(uvName.c_str());
 		uvElement->SetMappingMode(FbxGeometryElement::eByControlPoint);
 		uvElement->SetReferenceMode(FbxGeometryElement::eDirect);
@@ -107,7 +107,7 @@ void FBXWrangler::Priv::AddGeometry(NiShape* shape, const std::vector<Vector3>* 
 		}
 	}
 
-	FbxNode* mNode = FbxNode::Create(sdkManager, shape->GetName().c_str());
+	FbxNode* mNode = FbxNode::Create(sdkManager, shape->name.get().c_str());
 	mNode->SetNodeAttribute(m);
 
 	// Intended for Maya
@@ -134,7 +134,7 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 		return;
 
 	if (comName.empty())
-		comName = com->GetName();
+		comName = com->name.get();
 
 	// Check if skeleton already exists
 	std::string skelName = "NifSkeleton";
@@ -161,11 +161,11 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 
 		FbxNode* parentNode = skelNode;
 		if (root) {
-			FbxSkeleton* rootBone = FbxSkeleton::Create(priv->scene, root->GetName().c_str());
+			FbxSkeleton* rootBone = FbxSkeleton::Create(priv->scene, root->name.get().c_str());
 			rootBone->SetSkeletonType(FbxSkeleton::eLimbNode);
 			rootBone->Size.Set(1.0);
 
-			FbxNode* rootNode = FbxNode::Create(priv->scene, root->GetName().c_str());
+			FbxNode* rootNode = FbxNode::Create(priv->scene, root->name.get().c_str());
 			rootNode->SetNodeAttribute(rootBone);
 
 			const MatTransform &ttp = root->GetTransformToParent();
@@ -182,11 +182,11 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 		}
 
 		if (com) {
-			FbxSkeleton* comBone = FbxSkeleton::Create(priv->scene, com->GetName().c_str());
+			FbxSkeleton* comBone = FbxSkeleton::Create(priv->scene, com->name.get().c_str());
 			comBone->SetSkeletonType(FbxSkeleton::eLimbNode);
 			comBone->Size.Set(1.0);
 
-			FbxNode* comNode = FbxNode::Create(priv->scene, com->GetName().c_str());
+			FbxNode* comNode = FbxNode::Create(priv->scene, com->name.get().c_str());
 			comNode->SetNodeAttribute(comBone);
 
 			const MatTransform &ttp = com->GetTransformToParent();
@@ -211,14 +211,14 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 }
 
 FbxNode* FBXWrangler::Priv::AddLimb(NifFile* nif, NiNode* nifBone) {
-	FbxNode* node = scene->GetRootNode()->FindChild(nifBone->GetName().c_str());
+	FbxNode* node = scene->GetRootNode()->FindChild(nifBone->name.get().c_str());
 	if (!node) {
 		// Add new bone
-		FbxSkeleton* bone = FbxSkeleton::Create(scene, nifBone->GetName().c_str());
+		FbxSkeleton* bone = FbxSkeleton::Create(scene, nifBone->name.get().c_str());
 		bone->SetSkeletonType(FbxSkeleton::eLimbNode);
 		bone->Size.Set(1.0f);
 
-		node = FbxNode::Create(scene, nifBone->GetName().c_str());
+		node = FbxNode::Create(scene, nifBone->name.get().c_str());
 		node->SetNodeAttribute(bone);
 
 		const MatTransform &ttp = nifBone->GetTransformToParent();
@@ -258,7 +258,7 @@ void FBXWrangler::AddNif(NifFile* nif, AnimInfo* anim, bool transToGlobal, NiSha
 
 				std::vector<Vector3> gVerts, gNorms;
 				if (verts && transToGlobal) {
-					MatTransform toGlobal = anim->shapeSkinning[shape->GetName()].xformGlobalToSkin.InverseTransform();
+					MatTransform toGlobal = anim->shapeSkinning[shape->name.get()].xformGlobalToSkin.InverseTransform();
 					gVerts.resize(verts->size());
 					for (int i = 0; i < gVerts.size(); ++i)
 						gVerts[i] = toGlobal.ApplyTransform((*verts)[i]);
@@ -285,7 +285,7 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, NiShape* shape) {
 		return;
 
 	for (auto &animSkin : anim->shapeSkinning) {
-		if (animSkin.first != shape->GetName() && !shape->GetName().empty())
+		if (shape->name != animSkin.first && !shape->name.get().empty())
 			continue;
 
 		std::string shapeName = animSkin.first;

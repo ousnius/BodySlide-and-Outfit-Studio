@@ -1244,10 +1244,10 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 			m->norms[i].y = (*nifNorms)[i].z;
 		}
 
-		for (auto &extraDataRef : shape->GetExtraData()) {
-			auto integersExtraData = nif->GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef.GetIndex());
-			if (integersExtraData && integersExtraData->GetName() == "LOCKEDNORM")
-				for (auto& i : integersExtraData->GetIntegersData())
+		for (auto &extraDataRef : shape->extraDataRefs) {
+			auto integersExtraData = nif->GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef);
+			if (integersExtraData && integersExtraData->name == "LOCKEDNORM")
+				for (auto& i : integersExtraData->integersData.vec)
 					m->lockedNormalIndices.insert(i);
 		}
 

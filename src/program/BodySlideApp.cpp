@@ -1098,7 +1098,7 @@ void BodySlideApp::UpdateMeshesFromSet() {
 
 void BodySlideApp::ApplyReferenceNormals(NifFile& nif) {
 	for (auto &s : nif.GetShapes()) {
-		std::string shapeName = s->GetName();
+		std::string shapeName = s->name.get();
 
 		if (refNormalsCache.find(shapeName) != refNormalsCache.end()) {
 			// Apply normals from file cache
@@ -2450,8 +2450,8 @@ void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const 
 
 	if (target) {
 		auto triExtraData = std::make_unique<NiStringExtraData>();
-		triExtraData->SetName("BODYTRI");
-		triExtraData->SetStringData(triPath);
+		triExtraData->name.get() = "BODYTRI";
+		triExtraData->stringData.get() = triPath;
 		nif.AssignExtraData(target, std::move(triExtraData));
 	}
 }

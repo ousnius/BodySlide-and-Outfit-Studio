@@ -149,7 +149,7 @@ void ShapeProperties::GetShader() {
 		currentVertexColors = shader->HasVertexColors();
 		currentVertexAlpha = shader->HasVertexAlpha();
 
-		shaderName->SetValue(shader->GetName());
+		shaderName->SetValue(shader->name.get());
 		vertexColors->SetValue(currentVertexColors);
 		vertexAlpha->SetValue(currentVertexAlpha);
 
@@ -299,21 +299,21 @@ void ShapeProperties::AddShader() {
 	case FO3:
 	case FONV:
 		newShader = std::make_unique<BSShaderPPLightingProperty>();
-		shape->GetProperties().AddBlockRef(nif->GetHeader().AddBlock(std::move(newShader)));
+		shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newShader)));
 
 		newMaterial = std::make_unique<NiMaterialProperty>();
-		shape->GetProperties().AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
+		shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
 		break;
 
 	default:
 		newShader = std::make_unique<BSLightingShaderProperty>(nif->GetHeader().GetVersion());
-		shape->SetShaderPropertyRef(nif->GetHeader().AddBlock(std::move(newShader)));
+		shape->ShaderPropertyRef()->index = nif->GetHeader().AddBlock(std::move(newShader));
 	}
 
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
 		auto nifTexSet = std::make_unique<BSShaderTextureSet>(nif->GetHeader().GetVersion());
-		shader->SetTextureSetRef(nif->GetHeader().AddBlock(std::move(nifTexSet)));
+		shader->TextureSetRef()->index = nif->GetHeader().AddBlock(std::move(nifTexSet));
 	}
 
 	AssignDefaultTexture();
@@ -411,7 +411,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			nif->TrimTexturePaths();
 
 			os->project->SetTextures(shape, texFiles);
-			os->glView->SetMeshTextures(shape->GetName(), texFiles, false, MaterialFile(), true);
+			os->glView->SetMeshTextures(shape->name.get(), texFiles, false, MaterialFile(), true);
 			os->glView->Render();
 		}
 	}
@@ -463,7 +463,7 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 	auto shapes = nif->GetShapes();
 	for (auto &s : shapes) {
 		if (s != shape) {
-			choices.Add(wxString::FromUTF8(s->GetName()));
+			choices.Add(wxString::FromUTF8(s->name.get()));
 		}
 	}
 
@@ -569,10 +569,10 @@ void ShapeProperties::GetExtraData() {
 
 	extraDataIndices.clear();
 
-	for (auto& extraDataRef : shape->GetExtraData()) {
-		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataRef.GetIndex());
+	for (auto& extraDataRef : shape->extraDataRefs) {
+		auto extraData = nif->GetHeader().GetBlock(extraDataRef);
 		if (extraData) {
-			extraDataIndices.push_back(extraDataRef.GetIndex());
+			extraDataIndices.push_back(extraDataRef.index);
 			AddExtraData(extraData, true);
 		}
 	}
@@ -613,20 +613,20 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 		if (extraData->HasType<NiStringExtraData>()) {
 			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
 			extraDataType->SetSelection(0);
-			extraDataName->SetValue(stringExtraData->GetName());
-			extraDataValue->SetValue(stringExtraData->GetStringData());
+			extraDataName->SetValue(stringExtraData->name.get());
+			extraDataValue->SetValue(stringExtraData->stringData.get());
 		}
 		else if (extraData->HasType<NiIntegerExtraData>()) {
 			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 			extraDataType->SetSelection(1);
-			extraDataName->SetValue(intExtraData->GetName());
-			extraDataValue->SetValue(wxString::Format("%d", intExtraData->GetIntegerData()));
+			extraDataName->SetValue(intExtraData->name.get());
+			extraDataValue->SetValue(wxString::Format("%d", intExtraData->integerData));
 		}
 		else if (extraData->HasType<NiFloatExtraData>()) {
 			auto floatExtraData = static_cast<NiFloatExtraData*>(extraData);
 			extraDataType->SetSelection(2);
-			extraDataName->SetValue(floatExtraData->GetName());
-			extraDataValue->SetValue(wxString::Format("%f", floatExtraData->GetFloatData()));
+			extraDataName->SetValue(floatExtraData->name.get());
+			extraDataValue->SetValue(wxString::Format("%f", floatExtraData->floatData));
 		}
 		else {
 			extraDataBtn->Destroy();
@@ -670,22 +670,22 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 	switch (selection) {
 	case 0: {
 		auto strExtraData = std::make_unique<NiStringExtraData>();
-		strExtraData->SetName(extraDataName->GetValue().ToStdString());
-		strExtraData->SetStringData(extraDataValue->GetValue().ToStdString());
+		strExtraData->name.get() = extraDataName->GetValue().ToStdString();
+		strExtraData->stringData.get() = extraDataValue->GetValue().ToStdString();
 		extraDataResult = std::move(strExtraData);
 		break;
 	}
 	case 1: {
 		auto intExtraData = std::make_unique<NiIntegerExtraData>();
-		intExtraData->SetName(extraDataName->GetValue().ToStdString());
-		intExtraData->SetIntegerData(0);
+		intExtraData->name.get() = extraDataName->GetValue().ToStdString();
+		intExtraData->integerData = 0;
 		extraDataResult = std::move(intExtraData);
 		break;
 	}
 	case 2: {
 		auto floatExtraData = std::make_unique<NiFloatExtraData>();
-		floatExtraData->SetName(extraDataName->GetValue().ToStdString());
-		floatExtraData->SetFloatData(0.0f);
+		floatExtraData->name.get() = extraDataName->GetValue().ToStdString();
+		floatExtraData->floatData = 0.0f;
 		extraDataResult = std::move(floatExtraData);
 		break;
 	}
@@ -724,7 +724,7 @@ void ShapeProperties::RemoveExtraData(int id) {
 }
 
 void ShapeProperties::GetCoordTrans() {
-	oldXformGlobalToSkin = os->project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin;
+	oldXformGlobalToSkin = os->project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin;
 	newXformGlobalToSkin = oldXformGlobalToSkin;
 	Vector3 rotvec = RotMatToVec(newXformGlobalToSkin.rotation);
 
@@ -799,7 +799,7 @@ void ShapeProperties::ApplyChanges() {
 		emisColor /= 255.0f;
 		float emisMultiple = atof(emissiveMultiple->GetValue().c_str());
 
-		shader->SetName(name);
+		shader->name.get() = name;
 		shader->SetVertexColors(vertexColors->IsChecked());
 
 		if (vertexColors->IsChecked() && currentVertexColors != vertexColors->IsChecked())
@@ -868,7 +868,7 @@ void ShapeProperties::ApplyChanges() {
 				auto bsSITS = std::make_unique<BSSubIndexTriShape>();
 				*static_cast<BSTriShape*>(bsSITS.get()) = *bsTriShape;
 				bsSITS->SetDefaultSegments();
-				bsSITS->SetName(bsTriShape->GetName());
+				bsSITS->name.get() = bsTriShape->name.get();
 
 				shape = bsSITS.get();
 				os->UpdateShapeReference(bsTriShape, shape);
@@ -876,7 +876,7 @@ void ShapeProperties::ApplyChanges() {
 			}
 			else {
 				auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
-				bsTS->SetName(bsTriShape->GetName());
+				bsTS->name.get() = bsTriShape->name.get();
 
 				shape = bsTS.get();
 				os->UpdateShapeReference(bsTriShape, shape);
@@ -888,7 +888,7 @@ void ShapeProperties::ApplyChanges() {
 			if (dynamic->IsChecked()) {
 				auto bsDTS = std::make_unique<BSDynamicTriShape>();
 				*static_cast<BSTriShape*>(bsDTS.get()) = *bsTriShape;
-				bsDTS->SetName(bsTriShape->GetName());
+				bsDTS->name.get() = bsTriShape->name.get();
 
 				bsDTS->vertexDesc.RemoveFlag(VF_VERTEX);
 				bsDTS->vertexDesc.SetFlag(VF_FULLPREC);
@@ -902,7 +902,7 @@ void ShapeProperties::ApplyChanges() {
 			}
 			else {
 				auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
-				bsTS->SetName(bsTriShape->GetName());
+				bsTS->name.get() = bsTriShape->name.get();
 
 				bsTS->vertexDesc.SetFlag(VF_VERTEX);
 				bsTS->vertexDesc.RemoveFlag(VF_FULLPREC);
@@ -921,7 +921,7 @@ void ShapeProperties::ApplyChanges() {
 	}
 	else {
 		nif->DeleteSkinning(shape);
-		os->project->GetWorkAnim()->ClearShape(shape->GetName());
+		os->project->GetWorkAnim()->ClearShape(shape->name.get());
 		os->AnimationGUIFromProj();
 	}
 
@@ -933,23 +933,23 @@ void ShapeProperties::ApplyChanges() {
 
 		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataIndices[i]);
 		if (extraData) {
-			extraData->SetName(extraDataName->GetValue().ToStdString());
+			extraData->name.get() = extraDataName->GetValue().ToStdString();
 
 			if (extraData->HasType<NiStringExtraData>()) {
 				auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
-				stringExtraData->SetStringData(extraDataValue->GetValue().ToStdString());
+				stringExtraData->stringData.get() = extraDataValue->GetValue().ToStdString();
 			}
 			else if (extraData->HasType<NiIntegerExtraData>()) {
 				auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 				unsigned long val = 0;
 				if (extraDataValue->GetValue().ToULong(&val))
-					intExtraData->SetIntegerData(val);
+					intExtraData->integerData = val;
 			}
 			else if (extraData->HasType<NiFloatExtraData>()) {
 				auto floatExtraData = static_cast<NiFloatExtraData*>(extraData);
 				double val = 0.0;
 				if (extraDataValue->GetValue().ToDouble(&val))
-					floatExtraData->SetFloatData((float)val);
+					floatExtraData->floatData = (float)val;
 			}
 		}
 	}
@@ -958,7 +958,7 @@ void ShapeProperties::ApplyChanges() {
 		if (cbTransformGeo->IsChecked())
 			os->project->ApplyTransformToShapeGeometry(shape, newXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
 
-		os->project->GetWorkAnim()->ChangeGlobalToSkinTransform(shape->GetName(), newXformGlobalToSkin);
+		os->project->GetWorkAnim()->ChangeGlobalToSkinTransform(shape->name.get(), newXformGlobalToSkin);
 		nif->SetShapeTransformGlobalToSkin(shape, newXformGlobalToSkin);
 	}
 }

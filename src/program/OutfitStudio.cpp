@@ -1907,7 +1907,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	if (clearProject) {
 		NiShape* shape = project->GetBaseShape();
 		if (shape) {
-			std::string shapeName = shape->GetName();
+			std::string shapeName = shape->name.get();
 
 			// Prevent duplication if valid reference was found
 			project->DeleteShape(shape);
@@ -2114,7 +2114,7 @@ void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
 
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
 		project->GetLiveVerts(shape, verts, &uvs);
-		glView->UpdateMeshVertices(shape->GetName(), &verts, recalcBVH, true, false, &uvs);
+		glView->UpdateMeshVertices(shape->name.get(), &verts, recalcBVH, true, false, &uvs);
 	}
 
 	bool tMode = glView->GetTransformMode();
@@ -2166,7 +2166,7 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 		outfitBones->UnselectAll();
 	}
 	else {
-		mesh* m = glView->GetMesh(activeItem->GetShape()->GetName());
+		mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 		if (m) {
 			if (m->smoothSeamNormals)
 				menuBar->Check(XRCID("btnSmoothSeams"), true);
@@ -2204,7 +2204,7 @@ void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
 
 		auto boneName = outfitBones->GetItemText(item).ToStdString();
 		for (auto &i : selectedItems) {
-			if (project->GetWorkAnim()->HasWeights(i->GetShape()->GetName(), boneName)) {
+			if (project->GetWorkAnim()->HasWeights(i->GetShape()->name.get(), boneName)) {
 				outfitBones->SetItemTextColour(item, wxColour(0, 255, 0));
 			}
 		}
@@ -2289,7 +2289,7 @@ std::string OutfitStudioFrame::GetXMirrorBone() {
 }
 
 void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
-	if (activeItem && activeItem->GetShape()->GetName() == shapeName)
+	if (activeItem && activeItem->GetShape()->name == shapeName)
 		return;
 
 	wxTreeItemId item;
@@ -2327,7 +2327,7 @@ std::vector<std::string> OutfitStudioFrame::GetShapeList() {
 }
 
 void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
-	project->UpdateShapeFromMesh(shape, glView->GetMesh(shape->GetName()));
+	project->UpdateShapeFromMesh(shape, glView->GetMesh(shape->name.get()));
 }
 
 void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo) {
@@ -2374,7 +2374,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 					auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
 					std::vector<Vector3> verts;
 					project->GetLiveVerts(shape, verts);
-					glView->UpdateMeshVertices(shape->GetName(), &verts, true, true, false);
+					glView->UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
 				}
 			}
 		}
@@ -2918,7 +2918,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 
 	NiShape* baseShape = project->GetBaseShape();
 	if (baseShape)
-		glView->DeleteMesh(baseShape->GetName());
+		glView->DeleteMesh(baseShape->name.get());
 
 	UpdateProgress(10, _("Loading reference set..."));
 	bool mergeSliders = (XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
@@ -3009,7 +3009,7 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 
 	for (auto &s : project->GetWorkNif()->GetShapes()) {
 		if (!project->IsBaseShape(s)) {
-			glView->DeleteMesh(s->GetName());
+			glView->DeleteMesh(s->name.get());
 		}
 	}
 
@@ -3191,7 +3191,7 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render) {
 	wxTreeItemId prevFirstSelItem;
 	for (auto &shape : shapes) {
 		auto itemData = new ShapeItemData(shape);
-		item = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(shape->GetName()));
+		item = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(shape->name.get()));
 		outfitShapes->SetItemState(item, 0);
 		outfitShapes->SetItemData(item, itemData);
 
@@ -3342,30 +3342,30 @@ void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) 
 		editUV->Close();
 
 	if (extInitialized) {
-		glView->DeleteMesh(shape->GetName());
-		glView->AddMeshFromNif(project->GetWorkNif(), shape->GetName());
+		glView->DeleteMesh(shape->name.get());
+		glView->AddMeshFromNif(project->GetWorkNif(), shape->name.get());
 
 		MaterialFile matFile;
 		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
-		glView->SetMeshTextures(shape->GetName(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures);
+		glView->SetMeshTextures(shape->name.get(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures);
 
 		UpdateMeshFromSet(shape);
 	}
 
 	std::vector<std::string> selShapes;
 	for (auto &i : selectedItems)
-		selShapes.push_back(i->GetShape()->GetName());
+		selShapes.push_back(i->GetShape()->name.get());
 
 	glView->SetActiveShapes(selShapes);
 
 	if (activeItem)
-		glView->SetSelectedShape(activeItem->GetShape()->GetName());
+		glView->SetSelectedShape(activeItem->GetShape()->name.get());
 	else
 		glView->SetSelectedShape("");
 }
 
 void OutfitStudioFrame::UpdateMeshFromSet(NiShape* shape) {
-	std::string shapeName = shape->GetName();
+	std::string shapeName = shape->name.get();
 	mesh* m = glView->GetMesh(shapeName);
 	if (m) {
 		m->smoothSeamNormals = project->activeSet.GetSmoothSeamNormals(shapeName);
@@ -3447,7 +3447,7 @@ void OutfitStudioFrame::OnSaveSliderSet(wxCommandEvent& event) {
 		std::vector<mesh*> shapeMeshes;
 		for (auto &s : project->GetWorkNif()->GetShapes())
 			if (!project->IsBaseShape(s))
-				shapeMeshes.push_back(glView->GetMesh(s->GetName()));
+				shapeMeshes.push_back(glView->GetMesh(s->name.get()));
 
 		project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
@@ -3612,7 +3612,7 @@ void OutfitStudioFrame::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	std::vector<mesh*> shapeMeshes;
 	for (auto &s : project->GetWorkNif()->GetShapes())
 		if (!project->IsBaseShape(s))
-			shapeMeshes.push_back(glView->GetMesh(s->GetName()));
+			shapeMeshes.push_back(glView->GetMesh(s->name.get()));
 
 	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
@@ -3696,7 +3696,7 @@ void OutfitStudioFrame::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 	std::vector<mesh*> shapeMeshes;
 	for (auto &s : project->GetWorkNif()->GetShapes())
 		if (!project->IsBaseShape(s))
-			shapeMeshes.push_back(glView->GetMesh(s->GetName()));
+			shapeMeshes.push_back(glView->GetMesh(s->name.get()));
 
 	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes);
 	if (error) {
@@ -3750,7 +3750,7 @@ void OutfitStudioFrame::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
 
 	std::vector<std::string> shapes;
 	for (auto &i : selectedItems)
-		shapes.push_back(i->GetShape()->GetName());
+		shapes.push_back(i->GetShape()->name.get());
 
 	wxLogMessage("Exporting selected shapes to NIF file '%s'.", fileName);
 	project->ClearBoneScale();
@@ -3779,7 +3779,7 @@ void OutfitStudioFrame::OnImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 			ret = project->ImportOBJ(fileName.ToUTF8().data(), project->OutfitName());
 
 		if (ret == 101)
-			wxLogMessage("Updated shape '%s' from OBJ file '%s'.", activeItem->GetShape()->GetName(), fileName);
+			wxLogMessage("Updated shape '%s' from OBJ file '%s'.", activeItem->GetShape()->name.get(), fileName);
 	}
 
 	RefreshGUIFromProj(false);
@@ -3793,7 +3793,7 @@ void OutfitStudioFrame::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 
 	bool hasSkinTrans = false;
 	for (NiShape *shape : project->GetWorkNif()->GetShapes()) {
-		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
@@ -3826,7 +3826,7 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 	bool hasSkinTrans = false;
 	for (auto &i : selectedItems) {
 		NiShape *shape = i->GetShape();
-		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
@@ -3856,11 +3856,11 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 	else {
-		wxString fileName = wxFileSelector(_("Export shape as an .obj file"), wxEmptyString, wxString(activeItem->GetShape()->GetName() + ".obj"), ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		wxString fileName = wxFileSelector(_("Export shape as an .obj file"), wxEmptyString, wxString(activeItem->GetShape()->name.get() + ".obj"), ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fileName.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->GetShape()->GetName(), fileName);
+		wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->GetShape()->name.get(), fileName);
 		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes = { activeItem->GetShape() };
@@ -3889,7 +3889,7 @@ void OutfitStudioFrame::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 			ret = project->ImportFBX(fileName.ToUTF8().data(), project->OutfitName());
 
 		if (ret == 101)
-			wxLogMessage("Updated shape '%s' from FBX file '%s'.", activeItem->GetShape()->GetName(), fileName);
+			wxLogMessage("Updated shape '%s' from FBX file '%s'.", activeItem->GetShape()->name.get(), fileName);
 	}
 
 	RefreshGUIFromProj(false);
@@ -3906,7 +3906,7 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 	bool hasSkinTrans = false;
 	for (NiShape *shape : project->GetWorkNif()->GetShapes()) {
-		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
@@ -3939,7 +3939,7 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 	bool hasSkinTrans = false;
 	for (auto &i : selectedItems) {
 		NiShape *shape = i->GetShape();
-		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
@@ -3969,11 +3969,11 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 	else {
-		wxString fileName = wxFileSelector(_("Export shape as an .fbx file"), wxEmptyString, wxString(activeItem->GetShape()->GetName() + ".fbx"), ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		wxString fileName = wxFileSelector(_("Export shape as an .fbx file"), wxEmptyString, wxString(activeItem->GetShape()->name.get() + ".fbx"), ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fileName.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting shape '%s' as FBX file to '%s'.", activeItem->GetShape()->GetName(), fileName);
+		wxLogMessage("Exporting shape '%s' as FBX file to '%s'.", activeItem->GetShape()->name.get(), fileName);
 		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes = { activeItem->GetShape() };
@@ -4067,9 +4067,9 @@ void OutfitStudioFrame::OnExportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
-		std::string fn = dir + PathSepStr + shape->GetName() + ".tri";
+		std::string fn = dir + PathSepStr + shape->name.get() + ".tri";
 
-		wxLogMessage("Exporting TRI (head) morphs of '%s' to '%s'...", shape->GetName(), fn);
+		wxLogMessage("Exporting TRI (head) morphs of '%s' to '%s'...", shape->name.get(), fn);
 		if (!project->WriteHeadTRI(shape, fn)) {
 			wxLogError("Failed to export TRI file to '%s'!", fn);
 			wxMessageBox(_("Failed to export TRI file!"), _("Error"), wxICON_ERROR);
@@ -4168,7 +4168,7 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 
 	auto baseShape = project->GetBaseShape();
 	if (baseShape) {
-		project->UpdateShapeFromMesh(baseShape, glView->GetMesh(baseShape->GetName()));
+		project->UpdateShapeFromMesh(baseShape, glView->GetMesh(baseShape->name.get()));
 		project->NegateSlider(finalName, baseShape);
 	}
 
@@ -4335,7 +4335,7 @@ void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 		if (outfitShapes->GetItemParent(i).IsOk()) {
 			auto data = (ShapeItemData*)outfitShapes->GetItemData(i);
 			if (data) {
-				shapeNames.push_back(data->GetShape()->GetName());
+				shapeNames.push_back(data->GetShape()->name.get());
 				selectedItems.push_back(data);
 
 				if (!activeItem)
@@ -4348,7 +4348,7 @@ void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 			if (subitem.IsOk()) {
 				auto data = (ShapeItemData*)outfitShapes->GetItemData(subitem);
 				if (data) {
-					shapeNames.push_back(data->GetShape()->GetName());
+					shapeNames.push_back(data->GetShape()->name.get());
 					selectedItems.push_back(data);
 
 					if (!activeItem)
@@ -4361,7 +4361,7 @@ void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 	glView->SetActiveShapes(shapeNames);
 
 	if (activeItem)
-		glView->SetSelectedShape(activeItem->GetShape()->GetName());
+		glView->SetSelectedShape(activeItem->GetShape()->name.get());
 	else
 		glView->SetSelectedShape("");
 
@@ -4412,9 +4412,9 @@ void OutfitStudioFrame::RefreshGUIWeightColors() {
 		// Show weights of selected shapes without reference
 		for (auto &s : selectedItems) {
 			if (!project->IsBaseShape(s->GetShape())) {
-				auto weights = project->GetWorkAnim()->GetWeightsPtr(s->GetShape()->GetName(), activeBone);
+				auto weights = project->GetWorkAnim()->GetWeightsPtr(s->GetShape()->name.get(), activeBone);
 
-				mesh* m = glView->GetMesh(s->GetShape()->GetName());
+				mesh* m = glView->GetMesh(s->GetShape()->name.get());
 				if (m) {
 					m->ColorChannelFill(1, 0.0f);
 					if (weights) {
@@ -4428,9 +4428,9 @@ void OutfitStudioFrame::RefreshGUIWeightColors() {
 		// Always show weights of reference shape
 		NiShape* baseShape = project->GetBaseShape();
 		if (baseShape) {
-			auto weights = project->GetWorkAnim()->GetWeightsPtr(baseShape->GetName(), activeBone);
+			auto weights = project->GetWorkAnim()->GetWeightsPtr(baseShape->name.get(), activeBone);
 
-			mesh* m = glView->GetMesh(baseShape->GetName());
+			mesh* m = glView->GetMesh(baseShape->name.get());
 			if (m) {
 				m->ColorChannelFill(1, 0.0f);
 				if (weights) {
@@ -4526,7 +4526,7 @@ void OutfitStudioFrame::OnShapeDrop(wxTreeEvent& event) {
 		dropItem = 0;
 	
 	// Duplicate item
-	wxTreeItemId movedItem = outfitShapes->InsertItem(outfitRoot, dropItem, activeItem->GetShape()->GetName());
+	wxTreeItemId movedItem = outfitShapes->InsertItem(outfitRoot, dropItem, activeItem->GetShape()->name.get());
 	if (!movedItem.IsOk())
 		return;
 
@@ -5011,7 +5011,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 	}
 
 	// Display segmentation colors depending on what is selected
-	mesh* m = glView->GetMesh(activeItem->GetShape()->GetName());
+	mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triSParts);
 
@@ -5350,7 +5350,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 	}
 
 	// Display partition colors depending on what is selected
-	mesh* m = glView->GetMesh(activeItem->GetShape()->GetName());
+	mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triParts);
 
@@ -5474,7 +5474,7 @@ void OutfitStudioFrame::SetNoSubMeshes() {
 	if (!activeItem)
 		return;
 
-	SetNoSubMeshes(glView->GetMesh(activeItem->GetShape()->GetName()));
+	SetNoSubMeshes(glView->GetMesh(activeItem->GetShape()->name.get()));
 }
 
 void OutfitStudioFrame::OnCheckBox(wxCommandEvent& event) {
@@ -5646,7 +5646,7 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 			std::vector<Vector3> verts;
 			project->ScaleMorphResult(shape, activeSlider, scale);
 			project->GetLiveVerts(shape, verts);
-			glView->UpdateMeshVertices(shape->GetName(), &verts);
+			glView->UpdateMeshVertices(shape->name.get(), &verts);
 		}
 		return;
 	}
@@ -6461,7 +6461,7 @@ void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from NIF file '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+	wxLogMessage("Importing slider to '%s' for shape '%s' from NIF file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 	if (!project->SetSliderFromNIF(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 		wxLogError("No mesh found in the .nif file that matches currently selected shape!");
 		wxMessageBox(_("No mesh found in the .nif file that matches currently selected shape!"), _("Error"), wxICON_ERROR);
@@ -6485,7 +6485,7 @@ void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from BSD file '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+	wxLogMessage("Importing slider to '%s' for shape '%s' from BSD file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 	project->SetSliderFromBSD(activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
 	ApplySliders();
 }
@@ -6504,7 +6504,7 @@ void OutfitStudioFrame::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 	if (!project->SetSliderFromOBJ(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
 		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
@@ -6569,7 +6569,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	auto diffs = osd.GetDataDiffs();
 
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
-		std::string s = shape->GetName();
+		std::string s = shape->name.get();
 		bool added = false;
 		for (auto &diff : diffs) {
 			// Diff name is supposed to begin with matching shape name
@@ -6701,7 +6701,7 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 	if (!project->SetSliderFromFBX(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
 		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
@@ -6727,8 +6727,8 @@ void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->GetName() + "_" + activeSlider + ".nif";
-			wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->GetName(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + activeSlider + ".nif";
+			wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->name.get(), targetFile);
 			project->SaveSliderNIF(activeSlider, i->GetShape(), targetFile);
 		}
 	}
@@ -6737,7 +6737,7 @@ void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
 		if (fn.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+		wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 		if (project->SaveSliderNIF(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 			wxLogError("Failed to export NIF file '%s'!", fn);
 			wxMessageBox(_("Failed to export NIF file!"), _("Error"), wxICON_ERROR);
@@ -6763,8 +6763,8 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->GetName() + "_" + activeSlider + ".bsd";
-			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->GetName(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + activeSlider + ".bsd";
+			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->name.get(), targetFile);
 			project->SaveSliderBSD(activeSlider, i->GetShape(), targetFile);
 		}
 	}
@@ -6773,7 +6773,7 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 		if (fn.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+		wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 		project->SaveSliderBSD(activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
 	}
 
@@ -6796,8 +6796,8 @@ void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->GetName() + "_" + activeSlider + ".obj";
-			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->GetName(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + activeSlider + ".obj";
+			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->name.get(), targetFile);
 			project->SaveSliderOBJ(activeSlider, i->GetShape(), targetFile);
 		}
 	}
@@ -6806,7 +6806,7 @@ void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		if (fn.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 		if (project->SaveSliderOBJ(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 			wxLogError("Failed to export OBJ file '%s'!", fn);
 			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
@@ -6868,8 +6868,8 @@ void OutfitStudioFrame::OnSliderExportToOBJs(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Exporting sliders to OBJ files in '%s'...", dir);
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
 		for (auto &slider : sliderList) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + shape->GetName() + "_" + slider + ".obj";
-			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", slider, shape->GetName(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + shape->name.get() + "_" + slider + ".obj";
+			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", slider, shape->name.get(), targetFile);
 			if (project->SaveSliderOBJ(slider, shape, targetFile, true))
 				wxLogError("Failed to export OBJ file '%s'!", targetFile);
 		}
@@ -6888,7 +6888,7 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
 	else {
-		std::string prompt = _("Are you sure you wish to clear the unmasked slider data ") + _("for the shape \"") + activeItem->GetShape()->GetName() + _("\"? This cannot be undone.");
+		std::string prompt = _("Are you sure you wish to clear the unmasked slider data ") + _("for the shape \"") + activeItem->GetShape()->name.get() + _("\"? This cannot be undone.");
 		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
 
@@ -6899,7 +6899,7 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 		std::unordered_map<uint16_t, float> mask;
 		for (auto &i : selectedItems) {
 			mask.clear();
-			glView->GetShapeMask(mask, i->GetShape()->GetName());
+			glView->GetShapeMask(mask, i->GetShape()->name.get());
 			if (mask.size() > 0)
 				project->ClearUnmaskedDiff(i->GetShape(), sliderName, &mask);
 			else
@@ -6952,7 +6952,7 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 	std::unordered_map<uint16_t, float> unmasked;
 	for (auto &i : selectedItems) {
 		unmasked.clear();
-		glView->GetShapeUnmasked(unmasked, i->GetShape()->GetName());
+		glView->GetShapeUnmasked(unmasked, i->GetShape()->name.get());
 		project->AddZapSlider(sliderName, unmasked, i->GetShape());
 	}
 
@@ -7204,7 +7204,7 @@ void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& opt
 	if (project->IsBaseShape(shape))
 		return;
 
-	std::string shapeName = shape->GetName();
+	std::string shapeName = shape->name.get();
 	wxLogMessage("Conforming '%s'...", shapeName);
 	UpdateProgress(50, _("Conforming: ") + shapeName);
 
@@ -7259,7 +7259,7 @@ void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& WXUNUSED(event)) {
 		int pos = 0;
 
 		for (auto &shape : shapes) {
-			UpdateProgress(pos * inc, _("Conforming: ") + shape->GetName());
+			UpdateProgress(pos * inc, _("Conforming: ") + shape->name.get());
 			StartSubProgress(pos * inc, pos * inc + inc);
 			ConformSliders(shape, options);
 			pos++;
@@ -7395,7 +7395,7 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
 
-	std::string shapeName = activeItem->GetShape()->GetName();
+	std::string shapeName = activeItem->GetShape()->name.get();
 	wxLogMessage("Renaming shape '%s' to '%s'.", shapeName, newShapeName);
 	project->RenameShape(activeItem->GetShape(), newShapeName);
 	glView->RenameShape(shapeName, newShapeName);
@@ -7465,7 +7465,7 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &i : selectedItems) {
 			mask.clear();
 			mptr = nullptr;
-			glView->GetShapeMask(mask, i->GetShape()->GetName());
+			glView->GetShapeMask(mask, i->GetShape()->name.get());
 			if (mask.size() > 0)
 				mptr = &mask;
 
@@ -7497,7 +7497,7 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 
 			std::vector<Vector3> verts;
 			project->GetLiveVerts(i->GetShape(), verts);
-			glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
+			glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
 		}
 		previewMove.Zero();
 	}
@@ -7562,7 +7562,7 @@ void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
 	for (auto &i : selectedItems) {
 		mask.clear();
 		mptr = nullptr;
-		glView->GetShapeMask(mask, i->GetShape()->GetName());
+		glView->GetShapeMask(mask, i->GetShape()->name.get());
 		if (mask.size() > 0)
 			mptr = &mask;
 
@@ -7593,7 +7593,7 @@ void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
 
 		std::vector<Vector3> verts;
 		project->GetLiveVerts(i->GetShape(), verts);
-		glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
+		glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
 	}
 
 	previewMove = changed;
@@ -7635,7 +7635,7 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &i : selectedItems) {
 			mask.clear();
 			mptr = nullptr;
-			glView->GetShapeMask(mask, i->GetShape()->GetName());
+			glView->GetShapeMask(mask, i->GetShape()->name.get());
 			if (mask.size() > 0)
 				mptr = &mask;
 
@@ -7675,7 +7675,7 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 				project->ScaleShape(i->GetShape(), scaleNew, mptr);
 
 			project->GetLiveVerts(i->GetShape(), verts);
-			glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
+			glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
 		}
 
 		previewScale = Vector3(1.0f, 1.0f, 1.0f);
@@ -7770,7 +7770,7 @@ void OutfitStudioFrame::PreviewScale(const Vector3& scale) {
 	for (auto &i : selectedItems) {
 		mask.clear();
 		mptr = nullptr;
-		glView->GetShapeMask(mask, i->GetShape()->GetName());
+		glView->GetShapeMask(mask, i->GetShape()->name.get());
 		if (mask.size() > 0)
 			mptr = &mask;
 
@@ -7810,7 +7810,7 @@ void OutfitStudioFrame::PreviewScale(const Vector3& scale) {
 			project->ScaleShape(i->GetShape(), scaleNew, mptr);
 
 		project->GetLiveVerts(i->GetShape(), verts);
-		glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
+		glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
 	}
 
 	previewScale = scale;
@@ -7854,14 +7854,14 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &i : selectedItems) {
 			mask.clear();
 			mptr = nullptr;
-			glView->GetShapeMask(mask, i->GetShape()->GetName());
+			glView->GetShapeMask(mask, i->GetShape()->name.get());
 			if (mask.size() > 0)
 				mptr = &mask;
 
 			std::vector<Vector3> verts;
 			project->RotateShape(i->GetShape(), angle, mptr);
 			project->GetLiveVerts(i->GetShape(), verts);
-			glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
+			glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
 		}
 
 		previewRotation.Zero();
@@ -7912,14 +7912,14 @@ void OutfitStudioFrame::PreviewRotation(const Vector3& changed) {
 	for (auto &i : selectedItems) {
 		mask.clear();
 		mptr = nullptr;
-		glView->GetShapeMask(mask, i->GetShape()->GetName());
+		glView->GetShapeMask(mask, i->GetShape()->name.get());
 		if (mask.size() > 0)
 			mptr = &mask;
 
 		std::vector<Vector3> verts;
 		project->RotateShape(i->GetShape(), changed - previewRotation, mptr);
 		project->GetLiveVerts(i->GetShape(), verts);
-		glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
+		glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
 	}
 
 	previewRotation = changed;
@@ -7948,9 +7948,9 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 			editUV->Close();
 
 		std::unordered_map<uint16_t, float> mask;
-		glView->GetShapeUnmasked(mask, i->GetShape()->GetName());
+		glView->GetShapeUnmasked(mask, i->GetShape()->name.get());
 		UndoStateShape uss;
-		uss.shapeName = i->GetShape()->GetName();
+		uss.shapeName = i->GetShape()->name.get();
 		if (project->PrepareDeleteVerts(i->GetShape(), mask, uss))
 			delShapes.push_back(i->GetShape());
 		else
@@ -7993,7 +7993,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	std::unordered_map<uint16_t, float> masked;
-	glView->GetShapeMask(masked, activeItem->GetShape()->GetName());
+	glView->GetShapeMask(masked, activeItem->GetShape()->name.get());
 	if (masked.empty())
 		return;
 
@@ -8014,11 +8014,11 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UT_MESH;
 	usp->usss.resize(2);
-	usp->usss[0].shapeName = activeItem->GetShape()->GetName();
+	usp->usss[0].shapeName = activeItem->GetShape()->name.get();
 	usp->usss[1].shapeName = newShapeName;
 
 	std::unordered_map<uint16_t, float> unmasked = masked;
-	glView->InvertMaskTris(unmasked, activeItem->GetShape()->GetName());
+	glView->InvertMaskTris(unmasked, activeItem->GetShape()->name.get());
 
 	project->PrepareDeleteVerts(activeItem->GetShape(), masked, usp->usss[0]);
 	project->PrepareDeleteVerts(newShape, unmasked, usp->usss[1]);
@@ -8091,7 +8091,7 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string sourceShapeName;
 	if (activeItem)
-		sourceShapeName = activeItem->GetShape()->GetName();
+		sourceShapeName = activeItem->GetShape()->name.get();
 
 	std::vector<std::string> shapeList = GetShapeList();
 	if (shapeList.size() < 2)
@@ -8165,7 +8165,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 			newName = std::move(result);
 		} while (project->IsValidShape(newName));
 
-		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->GetShape()->GetName(), newName);
+		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->GetShape()->name.get(), newName);
 		project->ClearBoneScale();
 
 		auto shape = project->DuplicateShape(activeItem->GetShape(), newName);
@@ -8214,7 +8214,7 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 		if (editUV && editUV->GetShape() == i.GetShape())
 			editUV->Close();
 
-		std::string shapeName = i.GetShape()->GetName();
+		std::string shapeName = i.GetShape()->name.get();
 		wxLogMessage("Deleting shape '%s'.", shapeName);
 		project->DeleteShape(i.GetShape());
 		glView->DeleteMesh(shapeName);
@@ -8275,7 +8275,7 @@ void OutfitStudioFrame::FillParentBoneChoice(wxDialog &dlg, const std::string &s
 
 	std::set<std::string> boneSet;
 	for (auto selItem : selectedItems) {
-		const std::vector<std::string> &bones = project->GetWorkAnim()->shapeBones[selItem->GetShape()->GetName()];
+		const std::vector<std::string> &bones = project->GetWorkAnim()->shapeBones[selItem->GetShape()->name.get()];
 		for (const std::string &b : bones)
 			boneSet.insert(b);
 	}
@@ -8436,7 +8436,7 @@ void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)
 		wxLogMessage("Deleting weights of bone '%s' from selected shapes.", bone);
 
 		for (auto &s : selectedItems)
-			project->GetWorkAnim()->RemoveShapeBone(s->GetShape()->GetName(), bone);
+			project->GetWorkAnim()->RemoveShapeBone(s->GetShape()->name.get(), bone);
 	}
 
 	ReselectBone();
@@ -8546,7 +8546,7 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 	if (!workAnim.HasSkinnedShape(baseShape))
 		return;
 
-	const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;
+	const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin;
 
 	// Check if any shape's skin CS is different from the base shape's
 	for (int i = 0; i < selectedItems.size(); i++) {
@@ -8557,7 +8557,7 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 		if (!workAnim.HasSkinnedShape(shape))
 			continue;
 
-		if (!workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin)) {
+		if (!workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin)) {
 			options.showSkinTransOption = true;
 			break;
 		}
@@ -8586,7 +8586,7 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 		if (shape == baseShape)
 			continue;
 
-		const MatTransform &globalToSkin = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin;
+		const MatTransform &globalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
 		if (globalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin))
 			continue;
 
@@ -8637,32 +8637,32 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 		usp->undoType = UT_WEIGHT;
 
-		std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->GetName()];
+		std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
 		std::sort(baseBones.begin(), baseBones.end());
 		std::unordered_map<uint16_t, float> mask;
 		for (int i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
-				wxLogMessage("Copying bone weights to '%s'...", shape->GetName());
+				wxLogMessage("Copying bone weights to '%s'...", shape->name.get());
 
 				if (options.doSkinTransCopy) {
-					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin;
-					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin;
+					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->name.get()].xformGlobalToSkin;
+					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
 
 					if (options.doTransformGeo && !baseXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin))
 						project->ApplyTransformToShapeGeometry(shape, baseXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
 
-					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), baseXformGlobalToSkin);
+					workAnim.ChangeGlobalToSkinTransform(shape->name.get(), baseXformGlobalToSkin);
 					project->GetWorkNif()->SetShapeTransformGlobalToSkin(shape, baseXformGlobalToSkin);
 				}
 
 				usp->usss.resize(usp->usss.size() + 1);
-				usp->usss.back().shapeName = shape->GetName();
+				usp->usss.back().shapeName = shape->name.get();
 
 				mask.clear();
-				glView->GetShapeMask(mask, shape->GetName());
+				glView->GetShapeMask(mask, shape->name.get());
 
-				std::vector<std::string> bones = workAnim.shapeBones[shape->GetName()];
+				std::vector<std::string> bones = workAnim.shapeBones[shape->name.get()];
 				std::vector<std::string> mergedBones = baseBones;
 
 				for (auto b : bones)
@@ -8743,23 +8743,23 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		for (int i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
-				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->GetName(), bonesString);
+				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->name.get(), bonesString);
 				if (options.doSkinTransCopy) {
-					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin;
-					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin;
+					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->name.get()].xformGlobalToSkin;
+					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
 
 					if (options.doTransformGeo && !baseXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin))
 						project->ApplyTransformToShapeGeometry(shape, baseXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
 
-					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), baseXformGlobalToSkin);
+					workAnim.ChangeGlobalToSkinTransform(shape->name.get(), baseXformGlobalToSkin);
 					project->GetWorkNif()->SetShapeTransformGlobalToSkin(shape, baseXformGlobalToSkin);
 				}
 
 				usp->usss.resize(usp->usss.size() + 1);
-				usp->usss.back().shapeName = shape->GetName();
+				usp->usss.back().shapeName = shape->name.get();
 
 				mask.clear();
-				glView->GetShapeMask(mask, shape->GetName());
+				glView->GetShapeMask(mask, shape->name.get());
 
 				project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, boneList, nSelBones, lockedBones, usp->usss.back(), bHasNormBones);
 			}
@@ -8813,7 +8813,7 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 	for (std::string &boneName : selectedBones)
 		bonesString += "'" + boneName + "' ";
 
-	wxLogMessage("Transferring selected bone weights to '%s' for %s...", activeItem->GetShape()->GetName(), bonesString);
+	wxLogMessage("Transferring selected bone weights to '%s' for %s...", activeItem->GetShape()->name.get(), bonesString);
 	StartProgress(_("Transferring bone weights..."));
 
 	std::unordered_map<uint16_t, float> mask;
@@ -8833,7 +8833,7 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	for (auto &i : selectedItems) {
-		std::string shapeName = i->GetShape()->GetName();
+		std::string shapeName = i->GetShape()->name.get();
 		mesh* m = glView->GetMesh(shapeName);
 		if (!m)
 			continue;
@@ -8863,7 +8863,7 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	for (auto &i : selectedItems) {
-		std::string shapeName = i->GetShape()->GetName();
+		std::string shapeName = i->GetShape()->name.get();
 		mesh* m = glView->GetMesh(shapeName);
 		if (!m || !m->vcolors)
 			continue;
@@ -9054,7 +9054,7 @@ void OutfitStudioFrame::OnBrushSettingsSlider(wxScrollEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
-	glView->RecalcNormals(activeItem->GetShape()->GetName());
+	glView->RecalcNormals(activeItem->GetShape()->name.get());
 	glView->Render();
 }
 
@@ -9062,7 +9062,7 @@ void OutfitStudioFrame::OnSmoothNormalSeams(wxCommandEvent& WXUNUSED(event)) {
 	glView->ToggleNormalSeamSmoothMode();
 
 	for (auto &s : selectedItems)
-		project->activeSet.ToggleSmoothSeamNormals(s->GetShape()->GetName());
+		project->activeSet.ToggleSmoothSeamNormals(s->GetShape()->name.get());
 
 	glView->Render();
 }
@@ -9071,7 +9071,7 @@ void OutfitStudioFrame::OnLockNormals(wxCommandEvent& WXUNUSED(event)) {
 	glView->ToggleLockNormalsMode();
 
 	for (auto &s : selectedItems)
-		project->activeSet.ToggleLockNormals(s->GetShape()->GetName());
+		project->activeSet.ToggleLockNormals(s->GetShape()->name.get());
 }
 
 void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
@@ -9085,7 +9085,7 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 
 	auto shape = activeItem->GetShape();
 	if (shape) {
-		editUV = new EditUV(this, project->GetWorkNif(), shape, glView->GetMesh(shape->GetName()), activeSlider);
+		editUV = new EditUV(this, project->GetWorkNif(), shape, glView->GetMesh(shape->name.get()), activeSlider);
 
 		editUV->Bind(wxEVT_CLOSE_WINDOW, [&](wxCloseEvent& event) {
 			editUV = nullptr;
@@ -9173,7 +9173,7 @@ void OutfitStudioFrame::ApplyPose() {
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
 		std::vector<Vector3> verts;
 		project->GetLiveVerts(shape, verts);
-		glView->UpdateMeshVertices(shape->GetName(), &verts, true, true, false);
+		glView->UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
 	}
 	if (!activeBone.empty()) {
 		int boneScalePos = boneScale->GetValue();
@@ -9636,7 +9636,7 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				}
 
 				os->project->GetLiveVerts(os->activeItem->GetShape(), verts);
-				UpdateMeshVertices(os->activeItem->GetShape()->GetName(), &verts);
+				UpdateMeshVertices(os->activeItem->GetShape()->name.get(), &verts);
 			}
 
 			if (transformMode)
@@ -9825,7 +9825,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		for (auto &sel : os->GetSelectedItems()) {
 			os->project->GetWorkNif()->CreateSkinning(sel->GetShape());
 
-			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(sel->GetShape()->GetName(), os->GetActiveBone());
+			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(sel->GetShape()->name.get(), os->GetActiveBone());
 			if (boneIndex < 0)
 				os->project->AddBoneRef(os->GetActiveBone());
 		}
@@ -10186,7 +10186,7 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 		return false;
 
 	if (os->activeItem) {
-		mesh* m = GetMesh(os->activeItem->GetShape()->GetName());
+		mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
 		if (m) {
 			if (wxGetKeyState(WXK_CONTROL))
 				m->vcolors[vertIndex].x = 1.0f;
@@ -10729,7 +10729,7 @@ void wxGLPanel::UpdateNodes() {
 		MatTransform xformToGlobal = parentXformToGlobal.ComposeTransforms(xformToParent);
 		Vector3 position = xformToGlobal.GetVector();
 
-		std::string nodeName = node->GetName();
+		std::string nodeName = node->name.get();
 		if (!nodeName.empty()) {
 			Vector3 renderPosition = position;
 			std::swap(renderPosition.y, renderPosition.z);
@@ -10758,8 +10758,8 @@ void wxGLPanel::UpdateNodes() {
 			}
 		}
 
-		for (auto &child : node->GetChildren()) {
-			auto childNode = workNif->GetHeader().GetBlock<NiNode>(child.GetIndex());
+		for (auto &child : node->childRefs) {
+			auto childNode = workNif->GetHeader().GetBlock<NiNode>(child);
 			if (childNode)
 				addChildNodes(childNode, node, xformToGlobal, position);
 		}
@@ -10912,7 +10912,7 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 
 	if (show) {
 		if (os->activeItem) {
-			mesh* m = GetMesh(os->activeItem->GetShape()->GetName());
+			mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
 			if (m) {
 				m->bShowPoints = true;
 				m->QueueUpdate(mesh::UpdateType::VertexColors);
