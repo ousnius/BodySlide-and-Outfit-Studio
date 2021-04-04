@@ -709,16 +709,16 @@ private:
 	GLSurface gls;
 	std::unique_ptr<wxGLContext> context;
 
-	bool rbuttonDown;
-	bool lbuttonDown;
-	bool mbuttonDown;
-	bool isLDragging;
-	bool isMDragging;
-	bool isRDragging;
-	bool firstPaint{true};
+	bool rbuttonDown = false;
+	bool lbuttonDown = false;
+	bool mbuttonDown = false;
+	bool isLDragging = false;
+	bool isMDragging = false;
+	bool isRDragging = false;
+	bool firstPaint = true;
 
-	int lastX;
-	int lastY;
+	int lastX = 0;
+	int lastY = 0;
 	std::string hoverMeshName, mouseDownMeshName;
 	int hoverPoint, mouseDownPoint;
 	nifly::Edge hoverEdge, mouseDownEdge;
@@ -727,27 +727,27 @@ private:
 
 	OutfitStudioFrame* os = nullptr;
 
-	float brushSize;
+	float brushSize = 0.45f;
 
-	bool editMode;
-	bool brushMode;
-	bool transformMode;
-	bool pivotMode;
-	bool nodesMode;
-	bool floorMode;
-	bool vertexEdit;
-	bool segmentMode;
+	bool editMode = false;
+	bool brushMode = false;
+	bool transformMode = false;
+	bool pivotMode = false;
+	bool nodesMode = false;
+	bool floorMode = false;
+	bool vertexEdit = false;
+	bool segmentMode = false;
 
-	ToolID activeTool;
-	bool isPainting;
-	bool isTransforming;
-	bool isMovingPivot;
-	bool isSelecting;
-	bool isPickingVertex;
-	bool isPickingEdge;
-	bool bGlobalBrushCollision;
+	ToolID activeTool = ToolID::Select;
+	bool isPainting = false;
+	bool isTransforming = false;
+	bool isMovingPivot = false;
+	bool isSelecting = false;
+	bool isPickingVertex = false;
+	bool isPickingEdge = false;
+	bool bGlobalBrushCollision = true;
 
-	TweakBrush* activeBrush;
+	TweakBrush* activeBrush = nullptr;
 	TweakBrush* savedBrush;
 	TweakBrush standardBrush;
 	TB_Deflate deflateBrush;
@@ -780,14 +780,14 @@ private:
 	mesh* ZScaleMesh = nullptr;
 	mesh* ScaleUniformMesh = nullptr;
 	nifly::Vector3 xformCenter;		// Transform center for transform brushes (rotate, specifically cares about this)
-	float lastCenterDistance;
+	float lastCenterDistance = 0.0f;
 
 	mesh* XPivotMesh = nullptr;
 	mesh* YPivotMesh = nullptr;
 	mesh* ZPivotMesh = nullptr;
 	mesh* PivotCenterMesh = nullptr;
 	nifly::Vector3 pivotPosition;
-	float lastCenterPivotDistance;
+	float lastCenterPivotDistance = 0.0f;
 
 	std::vector<mesh*> nodesPoints;
 	std::vector<mesh*> nodesLines;
@@ -887,6 +887,17 @@ public:
 	wxToolBar* toolBarH = nullptr;
 	wxToolBar* toolBarV = nullptr;
 	wxStatusBar* statusBar = nullptr;
+
+	wxStateButton* currentTabButton = nullptr;
+	wxStateButton* meshTabButton = nullptr;
+	wxStateButton* boneTabButton = nullptr;
+	wxStateButton* colorsTabButton = nullptr;
+	wxStateButton* segmentTabButton = nullptr;
+	wxStateButton* partitionTabButton = nullptr;
+	wxStateButton* lightsTabButton = nullptr;
+	wxCollapsiblePane* masksPane = nullptr;
+	wxCollapsiblePane* posePane = nullptr;
+
 	wxTreeItemId shapesRoot;
 	wxTreeItemId outfitRoot;
 	wxTreeItemId bonesRoot;
@@ -1238,7 +1249,9 @@ private:
 	void OnSegmentSlotChanged(wxCommandEvent& event);
 	void OnSegmentTypeChanged(wxCommandEvent& event);
 	void OnSegmentApply(wxCommandEvent& event);
+	void ApplySegments();
 	void OnSegmentReset(wxCommandEvent& event);
+	void ResetSegments();
 	void OnSegmentEditSSF(wxCommandEvent& event);
 
 	void OnPartitionSelect(wxTreeEvent& event);
@@ -1248,7 +1261,9 @@ private:
 	void OnDeletePartition(wxCommandEvent& event);
 	void OnPartitionTypeChanged(wxCommandEvent& event);
 	void OnPartitionApply(wxCommandEvent& event);
+	void ApplyPartitions();
 	void OnPartitionReset(wxCommandEvent& event);
+	void ResetPartitions();
 
 	void CreateSegmentTree(nifly::NiShape* shape = nullptr);
 	void CreatePartitionTree(nifly::NiShape* shape = nullptr);

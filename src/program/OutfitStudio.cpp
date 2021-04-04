@@ -930,19 +930,27 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 			fovSlider->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnFieldOfViewSlider, this);
 	}
 
-	auto meshTab = (wxStateButton*)FindWindowByName("meshTabButton");
-	if (meshTab)
-		meshTab->SetCheck();
+	meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
+	boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+	colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
+	segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
+	partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
+	lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
+	masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
+	posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
+
+	if (meshTabButton) {
+		meshTabButton->SetCheck();
+		currentTabButton = meshTabButton;
+	}
 
 	if (wxGetApp().targetGame != FO4 && wxGetApp().targetGame != FO4VR && wxGetApp().targetGame != FO76) {
-		auto segmentTab = (wxStateButton*)FindWindowByName("segmentTabButton");
-		if (segmentTab)
-			segmentTab->Show(false);
+		if (segmentTabButton)
+			segmentTabButton->Show(false);
 	}
 	else {
-		auto partitionTab = (wxStateButton*)FindWindowByName("partitionTabButton");
-		if (partitionTab)
-			partitionTab->Show(false);
+		if (partitionTabButton)
+			partitionTabButton->Show(false);
 	}
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
@@ -3124,6 +3132,9 @@ void OutfitStudioFrame::ClearProject() {
 	activePartition.Unset();
 	activeSegment.Unset();
 
+	if (currentTabButton)
+		currentTabButton->SetPendingChanges(false);
+
 	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
 	cMaskName->Clear();
 
@@ -4571,12 +4582,6 @@ void OutfitStudioFrame::OnBoneTreeContext(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnSegmentSelect(wxTreeEvent& event) {
 	ShowSegment(event.GetItem());
-
-	wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
-	segmentApply->Enable();
-
-	wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
-	segmentReset->Enable();
 }
 
 void OutfitStudioFrame::OnSegmentContext(wxTreeEvent& event) {
@@ -4646,6 +4651,7 @@ void OutfitStudioFrame::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
@@ -4674,6 +4680,7 @@ void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
@@ -4723,6 +4730,7 @@ void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
@@ -4763,6 +4771,7 @@ void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnSegmentSlotChanged(wxCommandEvent& event) {
@@ -4785,6 +4794,7 @@ void OutfitStudioFrame::OnSegmentSlotChanged(wxCommandEvent& event) {
 			}
 
 			UpdateSegmentNames();
+			segmentTabButton->SetPendingChanges();
 		}
 	}
 }
@@ -4804,13 +4814,16 @@ void OutfitStudioFrame::OnSegmentTypeChanged(wxCommandEvent& event) {
 
 			subSegmentData->material = type;
 			UpdateSegmentNames();
+			segmentTabButton->SetPendingChanges();
 		}
 	}
 }
 
-void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& event) {
-	((wxButton*)event.GetEventObject())->Enable(false);
+void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& WXUNUSED(event)) {
+	ApplySegments();
+}
 
+void OutfitStudioFrame::ApplySegments() {
 	NifSegmentationInfo inf;
 
 	wxTreeItemIdValue cookie;
@@ -4857,9 +4870,15 @@ void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& event) {
 	CreateSegmentTree(activeItem->GetShape());
 }
 
-void OutfitStudioFrame::OnSegmentReset(wxCommandEvent& event) {
-	((wxButton*)event.GetEventObject())->Enable(false);
-	CreateSegmentTree(activeItem->GetShape());
+void OutfitStudioFrame::OnSegmentReset(wxCommandEvent& WXUNUSED(event)) {
+	ResetSegments();
+}
+
+void OutfitStudioFrame::ResetSegments() {
+	if (activeItem)
+		CreateSegmentTree(activeItem->GetShape());
+	else
+		CreateSegmentTree(nullptr);
 }
 
 void OutfitStudioFrame::OnSegmentEditSSF(wxCommandEvent& WXUNUSED(event)) {
@@ -4870,6 +4889,7 @@ void OutfitStudioFrame::OnSegmentEditSSF(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	segmentSSF->ChangeValue(result);
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
@@ -4877,6 +4897,8 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 		triSParts.clear(); // DeleteChildren calls OnSegmentSelect
 		segmentTree->DeleteChildren(segmentRoot);
 	}
+
+	segmentTabButton->SetPendingChanges(false);
 
 	NifSegmentationInfo inf;
 	if (project->GetWorkNif()->GetShapeSegments(shape, inf, triSParts)) {
@@ -5109,12 +5131,6 @@ void OutfitStudioFrame::UpdateSegmentNames() {
 
 void OutfitStudioFrame::OnPartitionSelect(wxTreeEvent& event) {
 	ShowPartition(event.GetItem());
-
-	wxButton* partitionApply = (wxButton*)FindWindowByName("partitionApply");
-	partitionApply->Enable();
-
-	wxButton* partitionReset = (wxButton*)FindWindowByName("partitionReset");
-	partitionReset->Enable();
 }
 
 void OutfitStudioFrame::OnPartitionContext(wxTreeEvent& event) {
@@ -5181,6 +5197,7 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdatePartitionNames();
+	partitionTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
@@ -5214,6 +5231,7 @@ void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdatePartitionNames();
+	partitionTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnPartitionTypeChanged(wxCommandEvent& event) {
@@ -5229,11 +5247,14 @@ void OutfitStudioFrame::OnPartitionTypeChanged(wxCommandEvent& event) {
 	}
 
 	UpdatePartitionNames();
+	partitionTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
-	((wxButton*)event.GetEventObject())->Enable(false);
+void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& WXUNUSED(event)) {
+	ApplyPartitions();
+}
 
+void OutfitStudioFrame::ApplyPartitions() {
 	auto shape = activeItem->GetShape();
 	if (!shape)
 		return;
@@ -5268,12 +5289,19 @@ void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 	project->GetWorkNif()->SetShapePartitions(shape, partitionInfo, triParts);
 	if (!delPartInds.empty())
 		project->GetWorkNif()->DeletePartitions(shape, delPartInds);
+
 	CreatePartitionTree(shape);
 }
 
-void OutfitStudioFrame::OnPartitionReset(wxCommandEvent& event) {
-	((wxButton*)event.GetEventObject())->Enable(false);
-	CreatePartitionTree(activeItem->GetShape());
+void OutfitStudioFrame::OnPartitionReset(wxCommandEvent& WXUNUSED(event)) {
+	ResetPartitions();
+}
+
+void OutfitStudioFrame::ResetPartitions() {
+	if (activeItem)
+		CreatePartitionTree(activeItem->GetShape());
+	else
+		CreatePartitionTree(nullptr);
 }
 
 void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
@@ -5281,6 +5309,8 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 		triParts.clear(); // DeleteChildren calls OnPartitionSelect
 		partitionTree->DeleteChildren(partitionRoot);
 	}
+
+	partitionTabButton->SetPendingChanges(false);
 
 	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {
@@ -5688,12 +5718,33 @@ void OutfitStudioFrame::OnReadoutChange(wxCommandEvent& event) {
 void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 
-	if (id != XRCID("meshTabButton")) {
-		wxCollapsiblePane* masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
-		masksPane->Hide();
+	if (currentTabButton && currentTabButton->HasPendingChanges()) {
+		wxMessageDialog dlg(this, _("Your changes were not applied yet. Do you want to apply or reset them?"), _("Pending Changes"), wxYES_NO | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetYesNoCancelLabels(_("Apply"), _("Reset"), _("Cancel"));
+
+		int res = dlg.ShowModal();
+		if (res == wxID_YES) {
+			if (currentTabButton == partitionTabButton)
+				ApplyPartitions();
+			else if (currentTabButton == segmentTabButton)
+				ApplySegments();
+		}
+		else if (res == wxID_NO) {
+			if (currentTabButton == partitionTabButton)
+				ResetPartitions();
+			else if (currentTabButton == segmentTabButton)
+				ResetSegments();
+		}
+		else {
+			event.Skip();
+			return;
+		}
 	}
 
-	if (id != XRCID("segmentTabButton")) {
+	if (id != meshTabButton->GetId())
+		masksPane->Hide();
+
+	if (id != segmentTabButton->GetId()) {
 		wxStaticText* segmentTypeLabel = (wxStaticText*)FindWindowByName("segmentTypeLabel");
 		wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
 		wxStaticText* segmentSlotLabel = (wxStaticText*)FindWindowByName("segmentSlotLabel");
@@ -5733,7 +5784,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnSelect"), true);
 	}
 
-	if (id != XRCID("partitionTabButton")) {
+	if (id != partitionTabButton->GetId()) {
 		wxStaticText* partitionTypeLabel = (wxStaticText*)FindWindowByName("partitionTypeLabel");
 		wxChoice* partitionType = (wxChoice*)FindWindowByName("partitionType");
 		wxButton* partitionApply = (wxButton*)FindWindowByName("partitionApply");
@@ -5763,7 +5814,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnSelect"), true);
 	}
 
-	if (id != XRCID("boneTabButton")) {
+	if (id != boneTabButton->GetId()) {
 		boneScale->Show(false);
 		cXMirrorBone->Show(false);
 
@@ -5771,7 +5822,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
-		wxCollapsiblePane* posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
 
 		boneScaleLabel->Show(false);
 		cbFixedWeight->Show(false);
@@ -5824,7 +5874,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
 	}
 
-	if (id != XRCID("colorsTabButton")) {
+	if (id != colorsTabButton->GetId()) {
 		glView->SetTransformMode(false);
 		SelectTool(ToolID::InflateBrush);
 		glView->SetColorsVisible(false);
@@ -5866,20 +5916,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
 	}
 
-	if (id == XRCID("meshTabButton")) {
+	if (id == meshTabButton->GetId()) {
+		currentTabButton = meshTabButton;
+
 		outfitBones->Hide();
 		colorSettings->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		outfitShapes->Show();
-
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
-		wxCollapsiblePane* masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
 
 		boneTabButton->SetCheck(false);
 		colorsTabButton->SetCheck(false);
@@ -5891,19 +5936,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		SetNoSubMeshes();
 	}
-	else if (id == XRCID("boneTabButton")) {
+	else if (id == boneTabButton->GetId()) {
+		currentTabButton = boneTabButton;
+
 		outfitShapes->Hide();
 		colorSettings->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		outfitBones->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		colorsTabButton->SetCheck(false);
@@ -5919,7 +5960,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
-		wxCollapsiblePane* posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
 
 		boneScaleLabel->Show();
 		cbFixedWeight->Show();
@@ -5974,19 +6014,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		ReselectBone();
 		glView->GetUndoHistory()->ClearHistory();
 	}
-	else if (id == XRCID("colorsTabButton")) {
+	else if (id == colorsTabButton->GetId()) {
+		currentTabButton = colorsTabButton;
+
 		outfitShapes->Hide();
 		outfitBones->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		colorSettings->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
@@ -6038,19 +6074,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		SetNoSubMeshes();
 	}
-	else if (id == XRCID("segmentTabButton")) {
+	else if (id == segmentTabButton->GetId()) {
+		currentTabButton = segmentTabButton;
+
 		outfitShapes->Hide();
 		outfitBones->Hide();
 		colorSettings->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		segmentTree->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
@@ -6121,19 +6153,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		ShowSegment(segmentTree->GetSelection());
 	}
-	else if (id == XRCID("partitionTabButton")) {
+	else if (id == partitionTabButton->GetId()) {
+		currentTabButton = partitionTabButton;
+
 		outfitShapes->Hide();
 		outfitBones->Hide();
 		colorSettings->Hide();
 		segmentTree->Hide();
 		lightSettings->Hide();
 		partitionTree->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
@@ -6194,19 +6222,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		ShowPartition(partitionTree->GetSelection());
 	}
-	else if (id == XRCID("lightsTabButton")) {
+	else if (id == lightsTabButton->GetId()) {
+		currentTabButton = lightsTabButton;
+
 		outfitShapes->Hide();
 		outfitBones->Hide();
 		colorSettings->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
@@ -9399,36 +9423,6 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	: wxGLCanvas(parent, attribs, wxID_ANY, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE) {
 
 	context = std::make_unique<wxGLContext>(this, nullptr, &GLSurface::GetGLContextAttribs());
-	rbuttonDown = false;
-	lbuttonDown = false;
-	mbuttonDown = false;
-	isLDragging = false;
-	isRDragging = false;
-	isMDragging = false;
-
-	lastX = 0;
-	lastY = 0;
-
-	brushSize = 0.45f;
-	activeBrush = nullptr;
-	editMode = false;
-	brushMode = false;
-	transformMode = false;
-	pivotMode = false;
-	nodesMode = false;
-	floorMode = false;
-	vertexEdit = false;
-	segmentMode = false;
-	activeTool = ToolID::Select;
-	isPainting = false;
-	isTransforming = false;
-	isMovingPivot = false;
-	isSelecting = false;
-	isPickingVertex = false;
-	isPickingEdge = false;
-	bGlobalBrushCollision = true;
-
-	lastCenterDistance = 0.0f;
 }
 
 wxGLPanel::~wxGLPanel() {
@@ -9990,6 +9984,9 @@ void wxGLPanel::EndBrushStroke() {
 		if (segmentMode) {
 			os->ShowSegment(nullptr, true);
 			os->ShowPartition(nullptr, true);
+
+			if (os->currentTabButton)
+				os->currentTabButton->SetPendingChanges();
 		}
 	}
 }
