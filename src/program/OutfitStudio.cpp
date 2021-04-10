@@ -7480,57 +7480,18 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "msTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnMoveShapeText, this);
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
-		if (dlg.ShowModal() == wxID_OK) {
-			offs.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().c_str());
-			offs.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().c_str());
-			offs.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().c_str());
-		}
-
-		std::unordered_map<uint16_t, float> mask;
-		std::unordered_map<uint16_t, float>* mptr = nullptr;
-		std::unordered_map<uint16_t, Vector3> diff;
-		for (auto &i : selectedItems) {
-			mask.clear();
-			mptr = nullptr;
-			glView->GetShapeMask(mask, i->GetShape()->name.get());
-			if (mask.size() > 0)
-				mptr = &mask;
-
-			Vector3 d;
-			float diffX, diffY, diffZ;
-			if (bEditSlider) {
-				diff.clear();
-				int vertexCount = project->GetVertexCount(i->GetShape());
-				for (int j = 0; j < vertexCount; j++) {
-					d = (offs - previewMove) * (1.0f - mask[j]);
-
-					if (d.IsZero(true))
-						continue;
-
-					diff[j] = d;
-					diffX = diff[j].x / -10.0f;
-					diffY = diff[j].y / 10.0f;
-					diffZ = diff[j].z / 10.0f;
-					diff[j].z = diffY;
-					diff[j].y = diffZ;
-					diff[j].x = diffX;
+		if (dlg.ShowModal() != wxID_OK) {
+			if (!previewMove.IsZero()) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true);
+					glView->GetUndoHistory()->PopState();
 				}
-				project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
 			}
-			else {
-				d = offs - previewMove;
-				project->OffsetShape(i->GetShape(), d, mptr);
-			}
-
-			std::vector<Vector3> verts;
-			project->GetLiveVerts(i->GetShape(), verts);
-			glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
 		}
+
 		previewMove.Zero();
 	}
-
-	if (glView->GetTransformMode())
-		glView->ShowTransformTool();
 }
 
 void OutfitStudioFrame::OnMoveShapeOldOffset(wxCommandEvent& event) {
@@ -7585,43 +7546,66 @@ void OutfitStudioFrame::OnMoveShapeText(wxCommandEvent& event) {
 void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
 	std::unordered_map<uint16_t, float> mask;
 	std::unordered_map<uint16_t, float>* mptr = nullptr;
-	std::unordered_map<uint16_t, Vector3> diff;
-	for (auto &i : selectedItems) {
+	std::vector<Vector3> verts;
+
+	if (!previewMove.IsZero()) {
+		UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+		if (curState) {
+			glView->ApplyUndoState(curState, true, false);
+			glView->GetUndoHistory()->PopState();
+		}
+	}
+
+	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UT_VERTPOS;
+
+	for (auto &sel : selectedItems) {
 		mask.clear();
 		mptr = nullptr;
-		glView->GetShapeMask(mask, i->GetShape()->name.get());
-		if (mask.size() > 0)
+
+		NiShape* shape = sel->GetShape();
+		project->GetLiveVerts(shape, verts);
+		glView->GetShapeMask(mask, shape->name.get());
+
+		if (!mask.empty())
 			mptr = &mask;
 
-		Vector3 d;
-		float diffX, diffY, diffZ;
-		if (bEditSlider) {
-			int vertexCount = project->GetVertexCount(i->GetShape());
-			for (int j = 0; j < vertexCount; j++) {
-				d = (changed - previewMove) * (1.0f - mask[j]);
-
-				if (d.IsZero(true))
-					continue;
-
-				diff[j] = d;
-				diffX = diff[j].x / -10.0f;
-				diffY = diff[j].y / 10.0f;
-				diffZ = diff[j].z / 10.0f;
-				diff[j].z = diffY;
-				diff[j].y = diffZ;
-				diff[j].x = diffX;
-			}
-			project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
-		}
-		else {
-			d = changed - previewMove;
-			project->OffsetShape(i->GetShape(), d, mptr);
+		if (!bEditSlider) {
+			Vector3 diff = changed - previewMove;
+			project->OffsetShape(shape, diff, mptr);
 		}
 
-		std::vector<Vector3> verts;
-		project->GetLiveVerts(i->GetShape(), verts);
-		glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
+		UndoStateShape uss;
+		uss.shapeName = shape->name.get();
+
+		for (size_t i = 0; i < verts.size(); i++) {
+			Vector3 diff = changed;
+
+			if (mptr)
+				diff *= 1.0f - mask[i];
+
+			if (diff.IsZero(true))
+				continue;
+
+			Vector3 newPos = verts[i] + diff;
+			uss.pointStartState[i] = glView->VecToMeshCoords(verts[i]);
+			uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
+		}
+
+		usp->usss.push_back(std::move(uss));
 	}
+
+	if (bEditSlider) {
+		usp->sliderName = activeSlider;
+
+		float sliderscale = project->SliderValue(activeSlider);
+		if (sliderscale == 0.0)
+			sliderscale = 1.0;
+
+		usp->sliderscale = sliderscale;
+	}
+
+	glView->ApplyUndoState(usp, false);
 
 	previewMove = changed;
 
@@ -7677,7 +7661,6 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 				diff.clear();
 
 				Vector3 d;
-				float diffX, diffY, diffZ;
 				int vertexCount = project->GetVertexCount(i->GetShape());
 				for (int j = 0; j < vertexCount; j++) {
 					d.x = verts[j].x * scale.x - verts[j].x;
@@ -7688,13 +7671,7 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 					if (d.IsZero(true))
 						continue;
 
-					diff[j] = d;
-					diffX = diff[j].x / -10.0f;
-					diffY = diff[j].y / 10.0f;
-					diffZ = diff[j].z / 10.0f;
-					diff[j].z = diffY;
-					diff[j].y = diffZ;
-					diff[j].x = diffX;
+					diff[j] = glView->VecToMeshCoords(d);
 				}
 				project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
 			}
@@ -7812,7 +7789,6 @@ void OutfitStudioFrame::PreviewScale(const Vector3& scale) {
 			diff.clear();
 
 			Vector3 d;
-			float diffX, diffY, diffZ;
 			int vertexCount = project->GetVertexCount(i->GetShape());
 			for (int j = 0; j < vertexCount; j++) {
 				d.x = verts[j].x * scale.x - verts[j].x;
@@ -7823,13 +7799,7 @@ void OutfitStudioFrame::PreviewScale(const Vector3& scale) {
 				if (d.IsZero(true))
 					continue;
 
-				diff[j] = d;
-				diffX = diff[j].x / -10.0f;
-				diffY = diff[j].y / 10.0f;
-				diffZ = diff[j].z / 10.0f;
-				diff[j].z = diffY;
-				diff[j].y = diffZ;
-				diff[j].x = diffX;
+				diff[j] = glView->VecToMeshCoords(d);
 			}
 			project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
 		}
@@ -9621,11 +9591,15 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 
 		wxDialog dlg;
 		if (wxXmlResource::Get()->LoadDialog(&dlg, os, "dlgMoveVertex")) {
+			NiShape* shape = os->activeItem->GetShape();
+
 			std::vector<Vector3> verts;
-			os->project->GetLiveVerts(os->activeItem->GetShape(), verts);
-			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].x));
-			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].y));
-			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].z));
+			os->project->GetLiveVerts(shape, verts);
+
+			Vector3 oldPos = verts[vertIndex];
+			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.x));
+			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.y));
+			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.z));
 
 			if (dlg.ShowModal() == wxID_OK) {
 				Vector3 newPos;
@@ -9633,21 +9607,35 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().c_str());
 				newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
 
+				// Move vertex in shape directly
+				if (!os->bEditSlider)
+					os->project->MoveVertex(shape, newPos, vertIndex);
+
+				// To mesh coordinates
+				VecToMeshCoords(oldPos);
+				VecToMeshCoords(newPos);
+
+				UndoStateShape uss;
+				uss.shapeName = shape->name.get();
+				uss.pointStartState[vertIndex] = oldPos;
+				uss.pointEndState[vertIndex] = newPos;
+
+				// Push changes onto undo stack and execute
+				UndoStateProject *usp = GetUndoHistory()->PushState();
+				usp->undoType = UT_VERTPOS;
+				usp->usss.push_back(std::move(uss));
+
 				if (os->bEditSlider) {
-					std::unordered_map<uint16_t, Vector3> diff;
-					auto& vertDiff = diff[vertIndex];
-					vertDiff = (newPos - verts[vertIndex]) / 10.0f;
-					vertDiff.x *= -1;
-					std::swap(vertDiff.y, vertDiff.z);
+					usp->sliderName = os->activeSlider;
 
-					os->project->UpdateMorphResult(os->activeItem->GetShape(), os->activeSlider, diff);
-				}
-				else {
-					os->project->MoveVertex(os->activeItem->GetShape(), newPos, vertIndex);
+					float sliderscale = os->project->SliderValue(os->activeSlider);
+					if (sliderscale == 0.0)
+						sliderscale = 1.0;
+
+					usp->sliderscale = sliderscale;
 				}
 
-				os->project->GetLiveVerts(os->activeItem->GetShape(), verts);
-				UpdateMeshVertices(os->activeItem->GetShape()->name.get(), &verts);
+				ApplyUndoState(usp, false);
 			}
 
 			if (transformMode)
@@ -9869,12 +9857,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			if (shape)
 				workNif->GetVertsForShape(shape, basePosition);
 
-			for (auto &p : basePosition) {
-				std::swap(p.y, p.z);
-				p.x /= -10.0f;
-				p.y /= 10.0f;
-				p.z /= 10.0f;
-			}
+			for (auto &p : basePosition)
+				VecToMeshCoords(p);
 
 			positionData[i] = std::move(basePosition);
 		}
@@ -10419,7 +10403,7 @@ bool wxGLPanel::RestoreMode(UndoStateProject *usp) {
 	return modeChanged;
 }
 
-void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
+void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo, bool bRender) {
 	int undoType = usp->undoType;
 	if (undoType == UT_WEIGHT) {
 		for (auto &uss : usp->usss) {
@@ -10519,10 +10503,12 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 		os->ApplySliders();
 	}
 
-	if (transformMode)
-		ShowTransformTool();
-	else
-		Render();
+	if (bRender) {
+		if (transformMode)
+			ShowTransformTool();
+		else
+			Render();
+	}
 }
 
 bool wxGLPanel::UndoStroke() {
@@ -10746,10 +10732,7 @@ void wxGLPanel::UpdateNodes() {
 		std::string nodeName = node->name.get();
 		if (!nodeName.empty()) {
 			Vector3 renderPosition = position;
-			std::swap(renderPosition.y, renderPosition.z);
-			renderPosition.x /= -10.0f;
-			renderPosition.y /= 10.0f;
-			renderPosition.z /= 10.0f;
+			VecToMeshCoords(renderPosition);
 
 			auto pointMesh = gls.AddVisPoint(renderPosition, "P_" + nodeName);
 			if (pointMesh) {
@@ -10759,10 +10742,7 @@ void wxGLPanel::UpdateNodes() {
 
 			if (parent) {
 				Vector3 renderParentPosition = parentPosition;
-				std::swap(renderParentPosition.y, renderParentPosition.z);
-				renderParentPosition.x /= -10.0f;
-				renderParentPosition.y /= 10.0f;
-				renderParentPosition.z /= 10.0f;
+				VecToMeshCoords(renderParentPosition);
 
 				auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "L_" + nodeName);
 				if (lineMesh) {

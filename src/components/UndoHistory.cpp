@@ -11,6 +11,17 @@ void UndoHistory::ClearHistory() {
 	curIndex = -1;
 }
 
+bool UndoHistory::PopState() {
+	if (states.empty())
+		return false;
+
+	if (curIndex + 1 == states.size())
+		curIndex--;
+
+	states.pop_back();
+	return true;
+}
+
 UndoStateProject *UndoHistory::PushState(std::unique_ptr<UndoStateProject> uspp) {
 	int nStrokes = states.size();
 	if (curIndex + 1 < nStrokes)

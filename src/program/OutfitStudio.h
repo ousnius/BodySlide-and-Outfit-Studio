@@ -217,7 +217,7 @@ public:
 	void ClickSplitEdge();
 
 	bool RestoreMode(UndoStateProject *usp);
-	void ApplyUndoState(UndoStateProject *usp, bool bUndo);
+	void ApplyUndoState(UndoStateProject *usp, bool bUndo, bool bRender = true);
 	bool UndoStroke();
 	bool RedoStroke();
 
@@ -614,6 +614,22 @@ public:
 		}
 
 		return nifly::Vector3(r, g, b);
+	}
+
+	nifly::Vector3& VecToMeshCoords(nifly::Vector3& vec) {
+		vec.x /= -10.0f;
+		vec.y /= 10.0f;
+		vec.z /= 10.0f;
+		std::swap(vec.y, vec.z);
+		return vec;
+	}
+
+	nifly::Vector3& VecToNifCoords(nifly::Vector3& vec) {
+		vec.x *= -10.0f;
+		vec.y *= 10.0f;
+		vec.z *= 10.0f;
+		std::swap(vec.y, vec.z);
+		return vec;
 	}
 
 	void DeleteMesh(const std::string& shape) {

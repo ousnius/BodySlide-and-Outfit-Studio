@@ -1428,7 +1428,7 @@ void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderN
 
 	if (IsBaseShape(shape)) {
 		for (auto &i : vertUpdates) {
-			Vector3 diffscale = Vector3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
+			Vector3 diffscale = Vector3(i.second.x * -10.0f, i.second.z * 10.0f, i.second.y * 10.0f);
 			baseDiffData.SumDiff(dataName, target, i.first, diffscale);
 		}
 	}

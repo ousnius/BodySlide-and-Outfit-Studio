@@ -17,6 +17,7 @@ class UndoHistory {
 	std::vector<std::unique_ptr<UndoStateProject>> states;
 
 public:
+	bool PopState();
 	UndoStateProject *PushState(std::unique_ptr<UndoStateProject> uspp = std::make_unique<UndoStateProject>());
 	bool BackStepHistory();
 	bool ForwardStepHistory();
@@ -26,6 +27,12 @@ public:
 		if (curIndex == -1)
 			return nullptr;
 		return states[curIndex].get();
+	}
+
+	UndoStateProject *GetBackState() {
+		if (states.empty())
+			return nullptr;
+		return states.back().get();
 	}
 
 	UndoStateProject *GetNextState() {
