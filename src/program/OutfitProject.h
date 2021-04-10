@@ -114,7 +114,11 @@ public:
 	void AddZapSlider(const std::string& newName, std::unordered_map<uint16_t, float>& verts, nifly::NiShape* shape);
 	void AddCombinedSlider(const std::string& newName);
 
-	nifly::NiShape* CreateNifShapeFromData(const std::string& shapeName, std::vector<nifly::Vector3>& v, std::vector<nifly::Triangle>& t, std::vector<nifly::Vector2>& uv, std::vector<nifly::Vector3>* norms = nullptr);
+	nifly::NiShape* CreateNifShapeFromData(const std::string& shapeName,
+										   const std::vector<nifly::Vector3>* v,
+										   const std::vector<nifly::Triangle>* t = nullptr,
+										   const std::vector<nifly::Vector2>* uv = nullptr,
+										   const std::vector<nifly::Vector3>* norms = nullptr);
 
 	// Slider data can have a separate name from the shape target.
 	std::string SliderShapeDataName(int index, const std::string& shapeName);

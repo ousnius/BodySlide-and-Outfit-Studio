@@ -4032,7 +4032,7 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		auto verts = tri.GetVertices();
 		auto tris = tri.GetTriangles();
 		auto uvs = tri.GetUV();
-		auto shape = project->CreateNifShapeFromData(shapeName, verts, tris, uvs);
+		auto shape = project->CreateNifShapeFromData(shapeName, &verts, &tris, &uvs);
 		if (!shape)
 			return;
 
