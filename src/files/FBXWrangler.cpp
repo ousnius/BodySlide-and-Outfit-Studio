@@ -252,8 +252,8 @@ void FBXWrangler::AddNif(NifFile* nif, AnimInfo* anim, bool transToGlobal, NiSha
 		if (!shape || s == shape) {
 			std::vector<Triangle> tris;
 			if (s && s->GetTriangles(tris)) {
-				const std::vector<Vector3>* verts = nif->GetRawVertsForShape(s);
-				const std::vector<Vector3>* norms = nif->GetNormalsForShape(s, false);
+				const std::vector<Vector3>* verts = nif->GetVertsForShape(s);
+				const std::vector<Vector3>* norms = nif->GetNormalsForShape(s);
 				const std::vector<Vector2>* uvs = nif->GetUvsForShape(s);
 
 				std::vector<Vector3> gVerts, gNorms;

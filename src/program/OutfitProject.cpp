@@ -824,7 +824,7 @@ bool OutfitProject::WriteHeadTRI(NiShape* shape, const std::string& triPath) {
 	if (!shape->GetTriangles(tris))
 		return false;
 
-	const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(shape);
+	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
 	if (!verts)
 		return false;
 
@@ -928,7 +928,7 @@ int OutfitProject::SaveSliderOBJ(const std::string& sliderName, NiShape* shape, 
 	shape->GetTriangles(tris);
 
 	std::string target = ShapeToTarget(shape->name.get());
-	const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(shape);
+	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
 	if (!verts)
 		return 2;
 
@@ -1467,7 +1467,7 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 		return;
 
 	// Vertices
-	const std::vector<Vector3>* oldVerts = workNif.GetRawVertsForShape(shape);
+	const std::vector<Vector3>* oldVerts = workNif.GetVertsForShape(shape);
 	if (!oldVerts || oldVerts->empty())
 		return;
 
@@ -1482,7 +1482,7 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 	if (t.rotation.IsNearlyEqualTo(Matrix3()))
 		return;
 
-	const std::vector<Vector3>* oldNorms = workNif.GetNormalsForShape(shape, false);
+	const std::vector<Vector3>* oldNorms = workNif.GetNormalsForShape(shape);
 	if (!oldNorms || oldNorms->size() != nVerts)
 		return;
 
@@ -2223,13 +2223,13 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices) {
 	uss.delVerts.resize(indices.size());
 
-	const std::vector<Vector3> *verts = workNif.GetRawVertsForShape(shape);
+	const std::vector<Vector3> *verts = workNif.GetVertsForShape(shape);
 	const std::vector<Vector2> *uvs = workNif.GetUvsForShape(shape);
 	const std::vector<Color4> *colors = workNif.GetColorsForShape(shape->name.get());
-	const std::vector<Vector3> *normals = workNif.GetNormalsForShape(shape, false);
-	const std::vector<Vector3> *tangents = workNif.GetTangentsForShape(shape, false);
-	const std::vector<Vector3> *bitangents = workNif.GetBitangentsForShape(shape, false);
-	std::vector<float> *eyeData = workNif.GetEyeDataForShape(shape);
+	const std::vector<Vector3> *normals = workNif.GetNormalsForShape(shape);
+	const std::vector<Vector3> *tangents = workNif.GetTangentsForShape(shape);
+	const std::vector<Vector3> *bitangents = workNif.GetBitangentsForShape(shape);
+	const std::vector<float> *eyeData = workNif.GetEyeDataForShape(shape);
 	AnimSkin &skin = workAnim.shapeSkinning[shape->name.get()];
 	std::string target = ShapeToTarget(shape->name.get());
 
@@ -2381,10 +2381,10 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 
 	const std::vector<Vector2> *uvsp = workNif.GetUvsForShape(shape);
 	const std::vector<Color4> *colorsp = workNif.GetColorsForShape(shape->name.get());
-	const std::vector<Vector3> *normalsp = workNif.GetNormalsForShape(shape, false);
-	const std::vector<Vector3> *tangentsp = workNif.GetTangentsForShape(shape, false);
-	const std::vector<Vector3> *bitangentsp = workNif.GetBitangentsForShape(shape, false);
-	std::vector<float> *eyeDatap = workNif.GetEyeDataForShape(shape);
+	const std::vector<Vector3> *normalsp = workNif.GetNormalsForShape(shape);
+	const std::vector<Vector3> *tangentsp = workNif.GetTangentsForShape(shape);
+	const std::vector<Vector3> *bitangentsp = workNif.GetBitangentsForShape(shape);
+	const std::vector<float> *eyeDatap = workNif.GetEyeDataForShape(shape);
 
 	std::vector<Vector2> uvs;
 	std::vector<Color4> colors;
@@ -2776,7 +2776,7 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 
 bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const std::vector<int> &p1s, const std::vector<int> &p2s) {
 	// Get vertex and triangle data
-	const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(shape);
+	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
 	if (!verts)
 		return false;
 
@@ -3642,13 +3642,12 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 		if (!shape->GetTriangles(tris))
 			return 2;
 
-		const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(shape);
+		const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
 		if (!verts)
 			return 3;
 
-
 		const std::vector<Vector2>* uvs = workNif.GetUvsForShape(shape);
-		const std::vector<Vector3>* norms = workNif.GetNormalsForShape(shape, false);
+		const std::vector<Vector3>* norms = workNif.GetNormalsForShape(shape);
 
 		std::vector<Vector3> gVerts, gNorms;
 		if (transToGlobal) {

@@ -8570,7 +8570,7 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 	// find the average vertex position of the base shape in its own skin coordinates
 	Vector3 baseAvg;
 
-	const std::vector<Vector3> &baseVerts = *nif->GetRawVertsForShape(baseShape);
+	const std::vector<Vector3> &baseVerts = *nif->GetVertsForShape(baseShape);
 	for (int i = 0; i < baseVerts.size(); ++i)
 		baseAvg += baseVerts[i];
 
@@ -8587,7 +8587,7 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 		if (globalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin))
 			continue;
 
-		const std::vector<Vector3> &verts = *nif->GetRawVertsForShape(shape);
+		const std::vector<Vector3> &verts = *nif->GetVertsForShape(shape);
 		if (verts.empty())
 			continue;
 

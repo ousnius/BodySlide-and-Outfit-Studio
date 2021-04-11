@@ -1073,7 +1073,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	std::vector<Triangle> nifTris;
 	shape->GetTriangles(nifTris);
 
-	const std::vector<Vector3>* nifNorms = nif->GetNormalsForShape(shape, false);
+	const std::vector<Vector3>* nifNorms = nif->GetNormalsForShape(shape);
 	const std::vector<Vector2>* nifUvs = nif->GetUvsForShape(shape);
 
 	mesh* m = new mesh();
