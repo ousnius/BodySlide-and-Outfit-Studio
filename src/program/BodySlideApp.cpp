@@ -121,7 +121,9 @@ bool BodySlideApp::OnInit() {
 	wxHandleFatalExceptions();
 #endif
 
-	wxSetEnv("AppDir", wxString::FromUTF8(dataDir));
+	wxString appDirUri = wxString::FromUTF8(dataDir);
+	appDirUri.Replace("#", "%23");
+	wxSetEnv("AppDir", appDirUri);
 
 	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->SetFlags(wxXRC_USE_LOCALE | wxXRC_USE_ENVVARS);
