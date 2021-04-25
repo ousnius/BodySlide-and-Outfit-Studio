@@ -20,7 +20,7 @@ enum MorphType : uint8_t {
 struct MorphData {
 	std::string name;
 	MorphType type = MORPHTYPE_POSITION;
-	std::map<int, nifly::Vector3> offsets;
+	std::map<uint16_t, nifly::Vector3> offsets;
 };
 
 typedef std::shared_ptr<MorphData> MorphDataPtr;

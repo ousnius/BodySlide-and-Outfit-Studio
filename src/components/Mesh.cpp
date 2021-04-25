@@ -401,9 +401,9 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 void mesh::CalcWeldVerts() {
 	SortingMatcher matcher(verts.get(), nVerts);
 	for (const std::vector<int> &matchset : matcher.matches) {
-		for (int j = 0; j < matchset.size(); ++j) {
+		for (size_t j = 0; j < matchset.size(); ++j) {
 			std::vector<int> &wv = weldVerts[matchset[j]];
-			for (int k = 0; k < matchset.size(); ++k) {
+			for (size_t k = 0; k < matchset.size(); ++k) {
 				if (j != k)
 					wv.push_back(matchset[k]);
 			}

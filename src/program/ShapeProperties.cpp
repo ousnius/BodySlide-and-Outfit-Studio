@@ -262,7 +262,7 @@ void ShapeProperties::OnChooseMaterial(wxCommandEvent& WXUNUSED(event)) {
 
 	wxString findStr = wxString::Format("%cmaterials%c", PathSepChar, PathSepChar);
 	int index = fileName.Lower().Find(findStr);
-	if (index != wxNOT_FOUND && fileName.length() - 1 > index + 1)
+	if (index != wxNOT_FOUND && fileName.length() - 1 > (size_t)index + 1)
 		fileName = fileName.Mid(index + 1);
 
 	shaderName->SetValue(fileName);
@@ -548,7 +548,7 @@ void ShapeProperties::GetGeometry() {
 
 
 void ShapeProperties::GetExtraData() {
-	for (int i = 0; i < extraDataIndices.size(); i++) {
+	for (size_t i = 0; i < extraDataIndices.size(); i++) {
 		wxButton* extraDataBtn = dynamic_cast<wxButton*>(FindWindowById(1000 + i, this));
 		wxChoice* extraDataType = dynamic_cast<wxChoice*>(FindWindowById(2000 + i, this));
 		wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + i, this));
@@ -657,7 +657,7 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 	int index = extraDataIndices[id];
 	nif->GetHeader().DeleteBlock(index);
 
-	for (int i = 0; i < extraDataIndices.size(); i++)
+	for (size_t i = 0; i < extraDataIndices.size(); i++)
 		if (extraDataIndices[i] > index)
 			extraDataIndices[i]--;
 
@@ -713,7 +713,7 @@ void ShapeProperties::RemoveExtraData(int id) {
 	int index = extraDataIndices[id];
 	nif->GetHeader().DeleteBlock(index);
 
-	for (int i = 0; i < extraDataIndices.size(); i++)
+	for (size_t i = 0; i < extraDataIndices.size(); i++)
 		if (extraDataIndices[i] > index)
 			extraDataIndices[i]--;
 
@@ -925,7 +925,7 @@ void ShapeProperties::ApplyChanges() {
 		os->AnimationGUIFromProj();
 	}
 
-	for (int i = 0; i < extraDataIndices.size(); i++) {
+	for (size_t i = 0; i < extraDataIndices.size(); i++) {
 		wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + i, this));
 		wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
 		if (!extraDataName || !extraDataValue)

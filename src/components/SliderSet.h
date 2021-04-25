@@ -244,7 +244,7 @@ public:
 		return shapeAttributes.cend();
 	}
 
-	std::string ShapeToDataName(int index, const std::string& shapeName) {
+	std::string ShapeToDataName(size_t index, const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);
 		if (shape != shapeAttributes.end() && sliders.size() > index)
 			return sliders[index].TargetDataName(shape->second.targetShape);
@@ -281,7 +281,7 @@ public:
 	}
 
 	SliderData& operator [] (const std::string& sliderName) {
-		for (int i = 0; i < sliders.size(); i++)
+		for (size_t i = 0; i < sliders.size(); i++)
 			if (sliders[i].name == sliderName)
 				return sliders[i];
 
@@ -289,7 +289,7 @@ public:
 	}
 
 	bool SliderExists(const std::string& sliderName) {
-		for (int i = 0; i < sliders.size(); i++)
+		for (size_t i = 0; i < sliders.size(); i++)
 			if (sliders[i].name == sliderName)
 				return true;
 

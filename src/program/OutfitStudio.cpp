@@ -1496,7 +1496,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 				std::set<std::string> dataFiles;
 
-				for (int i = 0; i < set.size(); i++) {
+				for (size_t i = 0; i < set.size(); i++) {
 					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
 						std::string target = set.ShapeToTarget(it->first);
 						std::string targetDataName = set[i].TargetDataName(target);
@@ -1771,7 +1771,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			wxArrayInt items;
 			wxString selectedfiles;
-			for (int i = 0; i < dataFileList->GetCount(); i++)
+			for (uint32_t i = 0; i < dataFileList->GetCount(); i++)
 				if (!dataFileList->IsChecked(i))
 					selectedfiles += dataFileList->GetString(i) + "; ";
 
@@ -2244,7 +2244,7 @@ std::vector<std::string> OutfitStudioFrame::GetSelectedBones() {
 	std::vector<std::string> boneList;
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
-	for (int i = 0; i < selItems.size(); i++)
+	for (size_t i = 0; i < selItems.size(); i++)
 		boneList.push_back(outfitBones->GetItemText(selItems[i]).ToStdString());
 	return boneList;
 }
@@ -3400,7 +3400,7 @@ void OutfitStudioFrame::FillVertexColors() {
 
 		const std::vector<Color4>* vcolors = project->GetWorkNif()->GetColorsForShape(s);
 		if (vcolors) {
-			for (int v = 0; v < vcolors->size(); v++) {
+			for (size_t v = 0; v < vcolors->size(); v++) {
 				m->vcolors[v].x = vcolors->at(v).r;
 				m->vcolors[v].y = vcolors->at(v).g;
 				m->vcolors[v].z = vcolors->at(v).b;
@@ -4051,7 +4051,7 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 			std::unordered_map<uint16_t, Vector3> diff;
 			diff.reserve(morph.vertices.size());
 
-			for (int i = 0; i < morph.vertices.size(); i++)
+			for (size_t i = 0; i < morph.vertices.size(); i++)
 				diff[i] = morph.vertices[i];
 
 			project->SetSliderFromDiff(morph.morphName, shape, diff);
@@ -4639,7 +4639,7 @@ void OutfitStudioFrame::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemId newItem;
 	if (!activeSegment.IsOk() || segmentTree->GetChildrenCount(segmentRoot) <= 0) {
 		// The new segment is the only partition: assign all triangles.
-		for (int i = 0; i < triSParts.size(); ++i)
+		for (size_t i = 0; i < triSParts.size(); ++i)
 			triSParts[i] = newPartID;
 
 		newItem = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(newPartID));
@@ -4666,7 +4666,7 @@ void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
 			// the segment's triangles to it.
 			SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
 			if (segmentData)
-				for (int i = 0; i < triSParts.size(); ++i)
+				for (size_t i = 0; i < triSParts.size(); ++i)
 					if (triSParts[i] == segmentData->partID)
 						triSParts[i] = newPartID;
 		}
@@ -4719,7 +4719,7 @@ void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		// Assign triangles from old partitions to new partition.
-		for (int i = 0; i < triSParts.size(); ++i)
+		for (size_t i = 0; i < triSParts.size(); ++i)
 			if (triSParts[i] >= 0 && triSParts[i] < oldPartIDs.size() && oldPartIDs[triSParts[i]])
 				triSParts[i] = newPartID;
 
@@ -4763,7 +4763,7 @@ void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		// Assign triangles to new partition.
-		for (int i = 0; i < triSParts.size(); ++i)
+		for (size_t i = 0; i < triSParts.size(); ++i)
 			if (triSParts[i] == oldPartID)
 				triSParts[i] = newPartID;
 
@@ -4904,10 +4904,10 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 
 	NifSegmentationInfo inf;
 	if (project->GetWorkNif()->GetShapeSegments(shape, inf, triSParts)) {
-		for (int i = 0; i < inf.segs.size(); i++) {
+		for (size_t i = 0; i < inf.segs.size(); i++) {
 			wxTreeItemId segID = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(inf.segs[i].partID));
 			if (segID.IsOk()) {
-				for (int j = 0; j < inf.segs[i].subs.size(); j++) {
+				for (size_t j = 0; j < inf.segs[i].subs.size(); j++) {
 					NifSubSegmentInfo &sub = inf.segs[i].subs[j];
 					segmentTree->AppendItem(segID, "Sub Segment", -1, -1,
 						new SubSegmentItemData(sub.partID, sub.userSlotID, sub.material, sub.extraData));
@@ -4970,7 +4970,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 
 		if (updateFromMask) {
 			// Add triangles from mask
-			for (int t = 0; t < tris.size(); t++) {
+			for (size_t t = 0; t < tris.size(); t++) {
 				if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end())
 					triSParts[t] = subSegmentData->partID;
 			}
@@ -5027,7 +5027,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 
 			if (updateFromMask) {
 				// Add triangles from mask
-				for (int t = 0; t < tris.size(); t++) {
+				for (size_t t = 0; t < tris.size(); t++) {
 					if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end() && (triSParts[t] < 0 || !selPartIDs[triSParts[t]]))
 						triSParts[t] = destPartID;
 				}
@@ -5058,9 +5058,10 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 		// Set mask
 		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 
-		for (int i = 0; i < triSParts.size(); ++i) {
+		for (size_t i = 0; i < triSParts.size(); ++i) {
 			if (triSParts[i] < 0 || !selPartIDs[triSParts[i]])
 				continue;
+
 			m->vcolors[tris[i].p1].x = 1.0f;
 			m->vcolors[tris[i].p2].x = 1.0f;
 			m->vcolors[tris[i].p3].x = 1.0f;
@@ -5215,7 +5216,7 @@ void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
 			if (siblingData)
 				newIndex = siblingData->index;
 		}
-		for (int i = 0; i < triParts.size(); ++i)
+		for (size_t i = 0; i < triParts.size(); ++i)
 			if (triParts[i] == partitionData->index)
 				triParts[i] = newIndex;
 
@@ -5283,8 +5284,8 @@ void OutfitStudioFrame::ApplyPartitions() {
 		child = partitionTree->GetNextChild(partitionRoot, cookie);
 	}
 
-	std::vector<int> delPartInds;
-	for (int pi = 0; pi < delPartFlags.size(); ++pi)
+	std::vector<uint32_t> delPartInds;
+	for (uint32_t pi = 0; pi < delPartFlags.size(); ++pi)
 		if (delPartFlags[pi])
 			delPartInds.push_back(pi);
 
@@ -5374,7 +5375,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 		}
 		else {
 			// Add triangles from mask
-			for (int triInd = 0; triInd < allTris.size(); ++triInd) {
+			for (size_t triInd = 0; triInd < allTris.size(); ++triInd) {
 				const Triangle &tri = allTris[triInd];
 				if (mask.find(tri.p1) != mask.end() && mask.find(tri.p2) != mask.end() && mask.find(tri.p3) != mask.end())
 					triParts[triInd] = partitionData->index;
@@ -5409,9 +5410,10 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 
 		if (partitionData) {
-			for (int i = 0; i < allTris.size(); ++i) {
+			for (size_t i = 0; i < allTris.size(); ++i) {
 				if (triParts[i] != partitionData->index)
 					continue;
+
 				const Triangle &t = allTris[i];
 				m->vcolors[t.p1].x = 1.0f;
 				m->vcolors[t.p2].x = 1.0f;
@@ -8412,7 +8414,7 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
-	for (int i = 0; i < selItems.size(); i++) {
+	for (size_t i = 0; i < selItems.size(); i++) {
 		std::string bone = outfitBones->GetItemText(selItems[i]);
 		wxLogMessage("Deleting bone '%s' from project.", bone);
 
@@ -8430,7 +8432,7 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
-	for (int i = 0; i < selItems.size(); i++) {
+	for (size_t i = 0; i < selItems.size(); i++) {
 		std::string bone = outfitBones->GetItemText(selItems[i]);
 		wxLogMessage("Deleting weights of bone '%s' from selected shapes.", bone);
 
@@ -8573,14 +8575,14 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 	Vector3 baseAvg;
 
 	const std::vector<Vector3> &baseVerts = *nif->GetVertsForShape(baseShape);
-	for (int i = 0; i < baseVerts.size(); ++i)
+	for (size_t i = 0; i < baseVerts.size(); ++i)
 		baseAvg += baseVerts[i];
 
 	if (baseVerts.size())
 		baseAvg /= baseVerts.size();
 
 	// Now check if any shape would be better aligned by changing its global-to-skin transform
-	for (int i = 0; i < selectedItems.size(); i++) {
+	for (size_t i = 0; i < selectedItems.size(); i++) {
 		NiShape *shape = selectedItems[i]->GetShape();
 		if (shape == baseShape)
 			continue;
@@ -8598,7 +8600,7 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 		MatTransform skinToBaseSkin = baseXformGlobalToSkin.ComposeTransforms(skinToGlobal);
 
 		Vector3 oldAvg, newAvg;
-		for (int j = 0; j < verts.size(); ++j) {
+		for (size_t j = 0; j < verts.size(); ++j) {
 			oldAvg += skinToBaseSkin.ApplyTransform(verts[j]);
 			newAvg += verts[j];
 		}
@@ -8639,7 +8641,7 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
 		std::sort(baseBones.begin(), baseBones.end());
 		std::unordered_map<uint16_t, float> mask;
-		for (int i = 0; i < selectedItems.size(); i++) {
+		for (size_t i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
 				wxLogMessage("Copying bone weights to '%s'...", shape->name.get());
@@ -8739,7 +8741,7 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 		usp->undoType = UT_WEIGHT;
 		std::unordered_map<uint16_t, float> mask;
-		for (int i = 0; i < selectedItems.size(); i++) {
+		for (size_t i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
 				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->name.get(), bonesString);
@@ -9466,7 +9468,7 @@ void wxGLPanel::SetNotifyWindow(wxWindow* win) {
 void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 
-	for (int i = 0; i < shapeList.size(); i++) {
+	for (size_t i = 0; i < shapeList.size(); i++) {
 		if (!shapeName.empty() && shapeList[i] != shapeName)
 			continue;
 
@@ -9849,7 +9851,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		std::vector<std::vector<Vector3>> positionData;
 		positionData.resize(refMeshes.size());
 
-		for (int i = 0; i < refMeshes.size(); i++) {
+		for (size_t i = 0; i < refMeshes.size(); i++) {
 			// Get base vertex positions, not current mesh position
 			mesh* m = refMeshes[i];
 			std::vector<Vector3> basePosition;
@@ -11107,7 +11109,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(hoverMeshName);
 					if (shape) {
 						os->project->GetLiveVerts(shape, verts);
-						if (verts.size() > hoverPoint)
+						if (verts.size() > (size_t)hoverPoint)
 							os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hoverPoint, verts[hoverPoint].x, verts[hoverPoint].y, verts[hoverPoint].z), 1);
 					}
 				}

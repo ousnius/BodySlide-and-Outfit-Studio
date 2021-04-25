@@ -370,9 +370,9 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 
 				collided = true;
 
-				int min_i = 0;
+				size_t min_i = 0;
 				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++) {
+				for (size_t i = 1; i < results.size(); i++) {
 					if (results[i].HitDistance < minDist) {
 						minDist = results[i].HitDistance;
 						min_i = i;
@@ -430,9 +430,9 @@ bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vec
 
 				collided = true;
 
-				int min_i = 0;
+				size_t min_i = 0;
 				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++) {
+				for (size_t i = 1; i < results.size(); i++) {
 					if (results[i].HitDistance < minDist) {
 						minDist = results[i].HitDistance;
 						min_i = i;
@@ -515,9 +515,9 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 
 				collided = true;
 
-				int min_i = 0;
+				size_t min_i = 0;
 				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++) {
+				for (size_t i = 1; i < results.size(); i++) {
 					if (results[i].HitDistance < minDist) {
 						minDist = results[i].HitDistance;
 						min_i = i;
@@ -621,9 +621,9 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, mesh* h
 		std::vector<IntersectResult> results;
 		if (m->bvh && m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
-				int min_i = 0;
+				size_t min_i = 0;
 				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++) {
+				for (size_t i = 1; i < results.size(); i++) {
 					if (results[i].HitDistance < minDist) {
 						minDist = results[i].HitDistance;
 						min_i = i;
@@ -753,7 +753,7 @@ void GLSurface::RenderToTexture(GLMaterial* renderShader) {
 	GLMaterial* oldmat;
 
 	// Render regular meshes only
-	for (int i = 0; i < meshes.size(); i++) {
+	for (size_t i = 0; i < meshes.size(); i++) {
 		m = meshes[i];
 		if (!m->bVisible || m->nTris == 0)
 			continue;
@@ -957,7 +957,7 @@ void GLSurface::RenderMesh(mesh* m) {
 		glDrawElements(GL_TRIANGLES, (m->nTris - subMeshesSize) * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subMeshesSize * 3 * sizeof(GLushort)));
 
 		// Render sub meshes
-		for (int s = 0; s < m->subMeshes.size(); ++s) {
+		for (size_t s = 0; s < m->subMeshes.size(); ++s) {
 			GLuint subIndex = m->subMeshes[s].first;
 			GLuint subSize = m->subMeshes[s].second;
 			Vector3 subColor = m->color;
@@ -979,7 +979,7 @@ void GLSurface::RenderMesh(mesh* m) {
 			glDrawElements(GL_TRIANGLES, (m->nTris - subMeshesSize) * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subMeshesSize * 3 * sizeof(GLushort)));
 
 			// Render wireframes for sub meshes
-			for (int s = 0; s < m->subMeshes.size(); ++s) {
+			for (size_t s = 0; s < m->subMeshes.size(); ++s) {
 				GLuint subIndex = m->subMeshes[s].first;
 				GLuint subSize = m->subMeshes[s].second;
 				glDrawElements(GL_TRIANGLES, subSize * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subIndex * 3 * sizeof(GLushort)));

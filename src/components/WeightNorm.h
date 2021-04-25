@@ -32,7 +32,7 @@ class BoneWeightAutoNormalizer {
 	static constexpr double WEIGHT_EPSILON = .001;
 	UndoStateShape *uss;
 	std::vector<std::unordered_map<uint16_t, float>*> wPtrs, lWPtrs;
-	int nMBones;
+	uint32_t nMBones;
 	bool bSpreadWeight;
 public:
 	/* SetUp: fills in the class's private data.  ussi->boneWeights
@@ -43,7 +43,7 @@ public:
 	bones", the bones whose weights can be adjusted, and must start
 	with the bones whose weights will actually be modified; the number
 	of these modified bones is nMBones.  */
-	void SetUp(UndoStateShape *ussi, AnimInfo *animInfo, const std::string &shapeName, const std::vector<std::string> &boneNames, const std::vector<std::string> &lockedBoneNames, int nMBones, bool bSprWt);
+	void SetUp(UndoStateShape *ussi, AnimInfo *animInfo, const std::string &shapeName, const std::vector<std::string> &boneNames, const std::vector<std::string> &lockedBoneNames, uint32_t nMBones, bool bSprWt);
 
 	/* GrabOneVertexStartingWeights: initializes missing startVal
 	and endVal in uss->boneweights for normalize bones for the vertex

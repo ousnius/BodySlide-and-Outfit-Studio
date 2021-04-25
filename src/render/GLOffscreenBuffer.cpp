@@ -12,7 +12,7 @@ See the included LICENSE file
 
 #include <glm/gtx/gradient_paint.hpp>
 
-GLOffScreenBuffer::GLOffScreenBuffer(GLSurface* gls, int width, int height, unsigned int count, const std::vector<GLuint>& texIds) {
+GLOffScreenBuffer::GLOffScreenBuffer(GLSurface* gls, int width, int height, int count, const std::vector<GLuint>& texIds) {
 	// for naming textures in CreateTextures
 	static int globcount = 0;
 	globcount++;
@@ -39,7 +39,7 @@ GLOffScreenBuffer::GLOffScreenBuffer(GLSurface* gls, int width, int height, unsi
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, w, h);
 
 	for (int i = 0; i < count; i++) {
-		if (texIds.size() > i && texIds[i] != 0) {
+		if (texIds.size() > (size_t)i && texIds[i] != 0) {
 			pmtex[i] = texIds[i];
 		}
 		else {

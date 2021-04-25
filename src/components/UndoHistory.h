@@ -11,9 +11,10 @@ See the included LICENSE file
 struct UndoStateProject;
 
 class UndoHistory {
-	static constexpr int UH_MAX_UNDO = 40;
+	static constexpr uint32_t UH_NONE = 0xFFFFFFFF;
+	static constexpr uint32_t UH_MAX_UNDO = 40;
 
-	int curIndex = -1;
+	uint32_t curIndex = UH_NONE;
 	std::vector<std::unique_ptr<UndoStateProject>> states;
 
 public:
@@ -24,7 +25,7 @@ public:
 	void ClearHistory();
 
 	UndoStateProject *GetCurState() {
-		if (curIndex == -1)
+		if (curIndex == UH_NONE)
 			return nullptr;
 		return states[curIndex].get();
 	}

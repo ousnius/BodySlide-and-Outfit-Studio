@@ -82,7 +82,7 @@ public:
 	// in triSParts.  Not in the file.
 	int partID;
 
-	SegmentItemData(int inPartitionID) {
+	SegmentItemData(const int inPartitionID) {
 		partID = inPartitionID;
 	}
 };
@@ -97,7 +97,7 @@ public:
 	uint32_t material;
 	std::vector<float> extraData;
 
-	SubSegmentItemData(int inPartitionID, const uint32_t& inUserSlotID, const uint32_t& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
+	SubSegmentItemData(const int inPartitionID, const uint32_t& inUserSlotID, const uint32_t& inMaterial, const std::vector<float>& inExtraData = std::vector<float>()) {
 		partID = inPartitionID;
 		userSlotID = inUserSlotID;
 		material = inMaterial;
@@ -110,7 +110,7 @@ public:
 	int index;
 	uint16_t type;
 
-	PartitionItemData(int inIndex, const uint16_t& inType) {
+	PartitionItemData(const int inIndex, const uint16_t& inType) {
 		index = inIndex;
 		type = inType;
 	}

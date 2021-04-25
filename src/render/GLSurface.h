@@ -121,7 +121,7 @@ public:
 			meshes.erase(meshes.begin() + meshID);
 
 			// Renumber meshes after the deleted one
-			for (int i = meshID; i < meshes.size(); i++) {
+			for (size_t i = meshID; i < meshes.size(); i++) {
 				m = meshes[i];
 			}
 		}
@@ -154,7 +154,7 @@ public:
 			overlays.erase(overlays.begin() + meshID);
 
 			// Renumber overlays after the deleted one
-			for (int i = meshID; i < overlays.size(); i++) {
+			for (size_t i = meshID; i < overlays.size(); i++) {
 				m = overlays[i];
 			}
 		}

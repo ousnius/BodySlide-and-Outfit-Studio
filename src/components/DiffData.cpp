@@ -40,7 +40,7 @@ bool OSDataFile::Read(const std::string& fileName) {
 	uint8_t nameLength;
 	std::string dataName;
 	uint16_t diffSize;
-	for (int i = 0; i < dataCount; ++i) {
+	for (uint32_t i = 0; i < dataCount; ++i) {
 		file.read((char*)&nameLength, 1);
 		dataName.resize(nameLength, ' ');
 		file.read((char*)&dataName.front(), nameLength);
@@ -231,7 +231,7 @@ void DiffDataSets::DeepRename(const std::string& oldName, const std::string& new
 			dt.second = newName;
 		}
 	}
-	for (int i = 0; i < oldTargets.size(); i++) {
+	for (size_t i = 0; i < oldTargets.size(); i++) {
 		std::string ot = oldTargets[i];
 		std::string nt = newTargets[i];
 		if (dataTargets.find(ot) != dataTargets.end()) {
@@ -259,7 +259,7 @@ void DiffDataSets::DeepCopy(const std::string& srcName, const std::string& destN
 		}
 	}
 
-	for (int i = 0; i < oldTargets.size(); i++) {
+	for (size_t i = 0; i < oldTargets.size(); i++) {
 		std::string ot = oldTargets[i];
 		std::string nt = newTargets[i];
 		dataTargets[nt] = destName;

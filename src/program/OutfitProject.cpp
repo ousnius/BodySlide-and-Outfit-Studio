@@ -132,7 +132,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		step = 20 / activeSet.size();
 		owner->UpdateProgress(prog);
 
-		for (int i = 0; i < activeSet.size(); i++) {
+		for (size_t i = 0; i < activeSet.size(); i++) {
 			id = outSet.CopySlider(&activeSet[i]);
 			outSet[id].Clear();
 			if (copyRef && baseShape) {
@@ -266,7 +266,7 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef) {
 		std::map<std::string, std::map<std::string, std::string>> osdNames;
 
 		// Copy the changed reference slider data and add the outfit data to them.
-		for (int i = 0; i < activeSet.size(); i++) {
+		for (size_t i = 0; i < activeSet.size(); i++) {
 			if (copyRef && baseShape) {
 				std::string baseShapeName = baseShape->name.get();
 				targ = ShapeToTarget(baseShapeName);
@@ -317,7 +317,7 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 				std::string shapeName = baseShape->name.get();
 				std::string srcTarget = ShapeToTarget(shapeName);
 
-				for (int i = 0; i < activeSet.size(); i++) {
+				for (size_t i = 0; i < activeSet.size(); i++) {
 					std::string srcTargetData = activeSet[i].TargetDataName(srcTarget);
 
 					auto diff = baseDiffData.GetDiffSet(srcTargetData);
@@ -337,7 +337,7 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 				std::string shapeName = shape->name.get();
 				std::string target = ShapeToTarget(shapeName);
 
-				for (int i = 0; i < activeSet.size(); i++) {
+				for (size_t i = 0; i < activeSet.size(); i++) {
 					std::string sliderName = activeSet[i].name;
 					std::string targetData = activeSet[i].TargetDataName(target);
 					if (targetData.empty()) {
@@ -384,7 +384,7 @@ void OutfitProject::ReplaceForbidden(std::string& str, const char& replacer) {
 }
 
 bool OutfitProject::ValidSlider(int index) {
-	if (index >= 0 && index < activeSet.size())
+	if (index >= 0 && (size_t)index < activeSet.size())
 		return true;
 	return false;
 }
@@ -394,7 +394,7 @@ bool OutfitProject::ValidSlider(const std::string& sliderName) {
 }
 
 bool OutfitProject::AllSlidersZero() {
-	for (int i = 0; i < activeSet.size(); i++)
+	for (size_t i = 0; i < activeSet.size(); i++)
 		if (activeSet[i].curValue != 0.0f)
 			return false;
 	return true;
@@ -405,7 +405,7 @@ int OutfitProject::SliderCount() {
 }
 
 void OutfitProject::GetSliderList(std::vector<std::string>& sliderNames) {
-	for (int i = 0; i < activeSet.size(); i++)
+	for (size_t i = 0; i < activeSet.size(); i++)
 		sliderNames.push_back(activeSet[i].name);
 }
 
@@ -671,7 +671,7 @@ bool& OutfitProject::SliderShow(const std::string& sliderName) {
 }
 
 int OutfitProject::SliderIndexFromName(const std::string& sliderName) {
-	for (int i = 0; i < activeSet.size(); i++)
+	for (size_t i = 0; i < activeSet.size(); i++)
 		if (activeSet[i].name == sliderName)
 			return i;
 
@@ -734,7 +734,7 @@ bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 		if (IsBaseShape(shape))
 			bIsOutfit = false;
 
-		for (int s = 0; s < activeSet.size(); s++) {
+		for (size_t s = 0; s < activeSet.size(); s++) {
 			if (!activeSet[s].bClamp && !activeSet[s].bZap) {
 				MorphDataPtr morph = std::make_shared<MorphData>();
 				morph->name = activeSet[s].name;
@@ -835,7 +835,7 @@ bool OutfitProject::WriteHeadTRI(NiShape* shape, const std::string& triPath) {
 	if (uvs)
 		tri.SetUV(*uvs);
 
-	for (int s = 0; s < activeSet.size(); s++) {
+	for (size_t s = 0; s < activeSet.size(); s++) {
 		if (!activeSet[s].bClamp && !activeSet[s].bZap && !activeSet[s].bUV) {
 			TriHeadMorph morph;
 			morph.morphName = activeSet[s].name;
@@ -1134,7 +1134,7 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 
 	std::string target = ShapeToTarget(shape->name.get());
 	if (IsBaseShape(shape)) {
-		for (int i = 0; i < activeSet.size(); i++) {
+		for (size_t i = 0; i < activeSet.size(); i++) {
 			if (activeSet[i].bShow && activeSet[i].curValue != 0.0f) {
 				std::string targetData = activeSet.ShapeToDataName(i, shape->name.get());
 				if (targetData.empty())
@@ -1150,7 +1150,7 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 		}
 	}
 	else {
-		for (int i = 0; i < activeSet.size(); i++) {
+		for (size_t i = 0; i < activeSet.size(); i++) {
 			if (activeSet[i].bShow && activeSet[i].curValue != 0.0f) {
 				if (activeSet[i].bUV) {
 					if (outUVs)
@@ -1471,9 +1471,9 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 	if (!oldVerts || oldVerts->empty())
 		return;
 
-	int nVerts = oldVerts->size();
+	size_t nVerts = oldVerts->size();
 	std::vector<Vector3> verts(nVerts);
-	for (int i = 0; i < nVerts; ++i)
+	for (size_t i = 0; i < nVerts; ++i)
 		verts[i] = t.ApplyTransform((*oldVerts)[i]);
 
 	workNif.SetVertsForShape(shape, verts);
@@ -1487,7 +1487,7 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 		return;
 
 	std::vector<Vector3> norms(nVerts);
-	for (int i = 0; i < nVerts; ++i)
+	for (size_t i = 0; i < nVerts; ++i)
 		norms[i] = t.rotation * (*oldNorms)[i];
 
 	workNif.SetNormalsForShape(shape, norms);
@@ -1539,7 +1539,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	int prog = 40;
 	owner->UpdateProgress(prog);
 
-	for (unsigned int bi = 0; bi < nCopyBones; ++bi) {
+	for (int bi = 0; bi < nCopyBones; ++bi) {
 		const std::string &boneName = boneList[bi];
 		auto &ubw = uss.boneWeights[bi].weights;
 		// Zero out unmasked weights
@@ -1649,14 +1649,14 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 		workNif.GetVertsForShape(shape, verts);
 
 		std::unordered_map<int, int> influences;
-		for (int i = 0; i < verts.size(); i++)
+		for (size_t i = 0; i < verts.size(); i++)
 			influences.emplace(i, 0);
 
 		if (workAnim.shapeBones.find(shapeName) != workAnim.shapeBones.end()) {
 			for (auto &b : workAnim.shapeBones[shapeName]) {
 				auto weights = workAnim.GetWeightsPtr(shapeName, b);
 				if (weights) {
-					for (int i = 0; i < verts.size(); i++) {
+					for (size_t i = 0; i < verts.size(); i++) {
 						auto id = weights->find(i);
 						if (id != weights->end() && id->second > 0.0f)
 							influences.at(i)++;
@@ -1757,7 +1757,7 @@ void OutfitProject::ClearBoneScale(bool clear) {
 		it = boneScaleOffsets.find(s);
 		if (it != boneScaleOffsets.end()) {
 			if (verts->size() == it->second.size()) {
-				for (int i = 0; i < verts->size(); i++)
+				for (size_t i = 0; i < verts->size(); i++)
 					(*verts)[i] -= it->second[i];
 
 				if (clear)
@@ -2233,7 +2233,7 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const
 	AnimSkin &skin = workAnim.shapeSkinning[shape->name.get()];
 	std::string target = ShapeToTarget(shape->name.get());
 
-	for (int di = 0; di < indices.size(); ++di) {
+	for (size_t di = 0; di < indices.size(); ++di) {
 		UndoStateVertex &usv = uss.delVerts[di];
 		int vi = indices[di];
 		usv.index = vi;

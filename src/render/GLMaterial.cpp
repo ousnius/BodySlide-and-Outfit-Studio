@@ -31,7 +31,7 @@ GLMaterial::GLMaterial(ResourceLoader* resLoader, std::vector<std::string> inTex
 	resLoaderRef = resLoader;
 	resLoader->CacheStamp(cacheTime);
 	texCache.resize(inTexNames.size(), 0);
-	for (int i = 0; i < inTexNames.size(); i++)
+	for (size_t i = 0; i < inTexNames.size(); i++)
 		texCache[i] = resLoader->GetTexID(inTexNames[i]);
 
 	shader = GLShader(vertShaderProg, fragShaderProg);
@@ -44,7 +44,7 @@ GLShader& GLMaterial::GetShader() {
 GLuint GLMaterial::GetTexID(uint32_t index) {
 	if (resLoaderRef && !resLoaderRef->CacheStamp(cacheTime)) {
 		// outdated cache, rebuild it.  
-		for (int i = 0; i < texCache.size(); i++) {
+		for (size_t i = 0; i < texCache.size(); i++) {
 			texCache[i] = resLoaderRef->GetTexID(texNames[i]);
 		}
 	}
@@ -61,7 +61,7 @@ std::string GLMaterial::GetTexName(uint32_t index) {
 void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklightMap, const bool hasLightmask) {
 	if (resLoaderRef && !resLoaderRef->CacheStamp(cacheTime)) {
 		// outdated cache, rebuild it.  
-		for (int i = 0; i < texCache.size(); i++) {
+		for (size_t i = 0; i < texCache.size(); i++) {
 			texCache[i] = resLoaderRef->GetTexID(texNames[i]);
 		}
 	}
@@ -76,7 +76,7 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 	shader.BindTexture(7, 0, "texBacklight");
 	shader.BindTexture(20, 0, "texAlphaMask");
 
-	for (int id = 0; id < texCache.size(); id++) {
+	for (size_t id = 0; id < texCache.size(); id++) {
 		switch (id) {
 		case 0:
 			shader.BindTexture(id, texCache[id], "texDiffuse");

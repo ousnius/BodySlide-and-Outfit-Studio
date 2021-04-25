@@ -47,7 +47,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 		newStroke = false;
 
 	// Remove finished tasks
-	for (int i = 0; i < normalUpdates.size(); i++) {
+	for (size_t i = 0; i < normalUpdates.size(); i++) {
 		if (normalUpdates[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 			normalUpdates.erase(normalUpdates.begin() + i);
 			i--;
@@ -156,7 +156,7 @@ void TweakStroke::endStroke() {
 	bool notReady = true;
 	while (notReady) {
 		notReady = false;
-		for (int i = 0; i < normalUpdates.size(); i++) {
+		for (size_t i = 0; i < normalUpdates.size(); i++) {
 			if (normalUpdates[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 				normalUpdates.erase(normalUpdates.begin() + i);
 				i--;
@@ -702,7 +702,7 @@ void TB_Undiff::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points,
 	for (int i = 0; i < nPoints; i++) {
 		p = points[i];
 
-		if (basePosition.size() > p) {
+		if (basePosition.size() > (size_t)p) {
 			vs = m->verts[p];
 			bp = basePosition[p];
 

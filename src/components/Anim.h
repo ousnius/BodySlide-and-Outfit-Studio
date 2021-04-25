@@ -18,7 +18,7 @@ struct VertexBoneWeights {
 		if (inWeight == 0.0f)
 			return;
 
-		for (int i = 0; i < weights.size(); ++i) {
+		for (size_t i = 0; i < weights.size(); ++i) {
 			if (inWeight < weights[i])
 				continue;
 

@@ -53,7 +53,7 @@ void Automorph::RenameShape(const std::string& oldShapeName, const std::string& 
 			oldKeys.push_back(tsdn.first);
 	}
 
-	for (int i = 0; i < oldKeys.size(); i++)
+	for (size_t i = 0; i < oldKeys.size(); i++)
 		targetSliderDataNames.erase(oldKeys[i]);
 }
 
@@ -90,7 +90,7 @@ void Automorph::CopyShape(const std::string& srcShapeName, const std::string& sr
 		}
 	}
 
-	for (int i = 0; i < oldKeys.size(); i++)
+	for (size_t i = 0; i < oldKeys.size(); i++)
 		targetSliderDataNames[newKeys[i]] = newVals[i];
 }
 
@@ -297,7 +297,7 @@ void Automorph::ScaleResultDiff(const std::string& shapeName, const std::string&
 void Automorph::LoadResultDiffs(SliderSet& fromSet) {
 	fromSet.LoadSetDiffData(resultDiffData);
 	targetSliderDataNames.clear();
-	for (int i = 0; i < fromSet.size(); i++)
+	for (size_t i = 0; i < fromSet.size(); i++)
 		for (auto &df : fromSet[i].dataFiles)
 			if (df.dataName != (df.targetName + fromSet[i].name))
 				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);
@@ -305,7 +305,7 @@ void Automorph::LoadResultDiffs(SliderSet& fromSet) {
 
 void Automorph::MergeResultDiffs(SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal) {
 	fromSet.Merge(mergeSet, resultDiffData, baseDiffData, baseShape, newDataLocal);
-	for (int i = 0; i < fromSet.size(); i++)
+	for (size_t i = 0; i < fromSet.size(); i++)
 		for (auto &df : fromSet[i].dataFiles)
 			if (df.dataName != (df.targetName + fromSet[i].name))
 				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);

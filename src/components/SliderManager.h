@@ -95,19 +95,19 @@ public:
 	void AddHiddenSlider(const std::string& name, bool invert = false, bool isZap = false, bool isUV = false, const std::string& dataSetName = "");
 	void AddZapSlider(const std::string& name, const std::vector<std::string>& zapToggles, const std::string& dataSetName = "");
 	void AddUVSlider(const std::string& name, bool invert = false, bool isZap = false, const std::string& dataSetName = "");
-	void SetSliderDefaults(const std::string& slider, float bigVal, float smallVal);
-	void SetClampSlider(const std::string& slider);
-	void AddSliderLink(const std::string& slider, const std::string& dataSetName);
+	void SetSliderDefaults(const std::string& sliderName, float bigVal, float smallVal);
+	void SetClampSlider(const std::string& sliderName);
+	void AddSliderLink(const std::string& sliderName, const std::string& dataSetName);
 
-	float GetSlider(const std::string& slider, bool isSmall);
-	std::vector<std::string> GetSliderZapToggles(const std::string& slider);
-	void SetSlider(const std::string& slider, bool isSmall, float val);
-	void SetChanged(const std::string& slider, bool isSmall);
+	float GetSlider(const std::string& sliderName, bool isSmall);
+	std::vector<std::string> GetSliderZapToggles(const std::string& sliderName);
+	void SetSlider(const std::string& sliderName, bool isSmall, float val);
+	void SetChanged(const std::string& sliderName, bool isSmall);
 
 	void InitializeSliders(const std::string& presetName = "");
 
-	bool SliderHasChanged(const std::string& slider, bool getBig);
-	float SliderValue(const std::string& slider, bool getBig);
+	bool SliderHasChanged(const std::string& sliderName, bool getBig);
+	float SliderValue(const std::string& sliderName, bool getBig);
 
 	void FlagReload(bool needReload) {
 		bNeedReload = needReload;

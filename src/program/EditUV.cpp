@@ -899,9 +899,9 @@ void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& mes
 	std::vector<IntersectResult> results;
 	if (m->bvh && m->bvh->IntersectRay(o, d, &results)) {
 		if (results.size() > 0) {
-			int min_i = 0;
+			size_t min_i = 0;
 			float minDist = results[0].HitDistance;
-			for (int i = 1; i < results.size(); i++) {
+			for (size_t i = 1; i < results.size(); i++) {
 				if (results[i].HitDistance < minDist) {
 					minDist = results[i].HitDistance;
 					min_i = i;

@@ -28,7 +28,7 @@ void SliderSet::DeleteSlider(const std::string& setName) {
 	}
 
 	// Find and delete slider
-	for (int i = 0; i < sliders.size(); i++) {
+	for (size_t i = 0; i < sliders.size(); i++) {
 		if (sliders[i].name == setName) {
 			sliders.erase(sliders.begin() + i);
 			return;

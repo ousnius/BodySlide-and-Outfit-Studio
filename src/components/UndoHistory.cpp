@@ -8,7 +8,7 @@ See the included LICENSE file
 
 void UndoHistory::ClearHistory() {
 	states.clear();
-	curIndex = -1;
+	curIndex = UH_NONE;
 }
 
 bool UndoHistory::PopState() {
@@ -23,7 +23,7 @@ bool UndoHistory::PopState() {
 }
 
 UndoStateProject *UndoHistory::PushState(std::unique_ptr<UndoStateProject> uspp) {
-	int nStrokes = states.size();
+	size_t nStrokes = states.size();
 	if (curIndex + 1 < nStrokes)
 		states.resize(curIndex + 1);
 	else if (nStrokes == UH_MAX_UNDO)
@@ -34,7 +34,7 @@ UndoStateProject *UndoHistory::PushState(std::unique_ptr<UndoStateProject> uspp)
 }
 
 bool UndoHistory::BackStepHistory() {
-	if (curIndex > -1) {
+	if (curIndex != UH_NONE) {
 		curIndex--;
 		return true;
 	}
@@ -42,8 +42,11 @@ bool UndoHistory::BackStepHistory() {
 }
 
 bool UndoHistory::ForwardStepHistory() {
-	int nStrokes = states.size();
-	if (curIndex < nStrokes - 1) {
+	if (states.empty())
+		return false;
+
+	size_t nStrokes = states.size();
+	if (curIndex == UH_NONE || curIndex < nStrokes - 1) {
 		++curIndex;
 		return true;
 	}
