@@ -481,7 +481,7 @@ void BodySlideApp::ActivatePreset(const std::string &presetName, const bool upda
 	bool zapChanged = false;
 	Slider* sliderSmall = nullptr;
 	Slider* sliderBig = nullptr;
-	for (int i = 0; i < sliderManager.slidersBig.size(); i++) {
+	for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
 		sliderSmall = &sliderManager.slidersSmall[i];
 		sliderBig = &sliderManager.slidersBig[i];
 
@@ -574,7 +574,7 @@ void BodySlideApp::DeletePreset(const std::string& presetName) {
 
 void BodySlideApp::RefreshSliders() {
 	Slider* slider = nullptr;
-	for (int i = 0; i < sliderManager.slidersBig.size(); i++) {
+	for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
 		slider = &sliderManager.slidersBig[i];
 		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_HI);
 
@@ -591,7 +591,7 @@ void BodySlideApp::PopulatePresetList(const std::string& select) {
 	wxArrayString items;
 	sliderManager.GetPresetNames(presets);
 	items.reserve(presets.size());
-	for (int i = 0; i < presets.size(); i++)
+	for (size_t i = 0; i < presets.size(); i++)
 		items.Add(wxString::FromUTF8(presets[i]));
 
 	sliderView->PopulatePresetList(items, wxString::FromUTF8(select));
@@ -642,7 +642,7 @@ void BodySlideApp::DisplayActiveSet() {
 
 	// Loop slider set
 	std::vector<std::vector<int>> catSliders;
-	for (int i = 0; i < activeSet.size(); i++) {
+	for (size_t i = 0; i < activeSet.size(); i++) {
 		if (activeSet[i].bHidden)
 			continue;
 
@@ -723,14 +723,14 @@ void BodySlideApp::ApplySliders(const std::string& targetShape, std::vector<Slid
 		float val = slider.value;
 		if (slider.zap && !slider.uv) {
 			if (val > 0)
-				for (int j = 0; j < slider.linkedDataSets.size(); j++)
+				for (size_t j = 0; j < slider.linkedDataSets.size(); j++)
 					dataSets.GetDiffIndices(slider.linkedDataSets[j], targetShape, ZapIdx);
 		}
 		else {
 			if (slider.invert)
 				val = 1.0f - val;
 
-			for (int j = 0; j < slider.linkedDataSets.size(); j++) {
+			for (size_t j = 0; j < slider.linkedDataSets.size(); j++) {
 				if (slider.uv) {
 					if (uvs)
 						dataSets.ApplyUVDiff(slider.linkedDataSets[j], targetShape, val, uvs);
@@ -743,7 +743,7 @@ void BodySlideApp::ApplySliders(const std::string& targetShape, std::vector<Slid
 
 	for (auto &slider : sliderSet)
 		if (slider.clamp && slider.value > 0)
-			for (int j = 0; j < slider.linkedDataSets.size(); j++)
+			for (size_t j = 0; j < slider.linkedDataSets.size(); j++)
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
 }
 
@@ -834,7 +834,7 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 	wxLogMessage("Copying slider values to %s weight.", toHigh ? "high" : "low");
 
 	if (toHigh) {
-		for (int i = 0; i < sliderManager.slidersSmall.size(); i++) {
+		for (size_t i = 0; i < sliderManager.slidersSmall.size(); i++) {
 			Slider* slider = &sliderManager.slidersSmall[i];
 			if (slider->zap || slider->clamp)
 				continue;
@@ -847,7 +847,7 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 		}
 	}
 	else {
-		for (int i = 0; i < sliderManager.slidersBig.size(); i++) {
+		for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
 			Slider* slider = &sliderManager.slidersBig[i];
 			if (slider->zap || slider->clamp)
 				continue;
@@ -998,7 +998,7 @@ void BodySlideApp::UpdatePreview() {
 
 		// Calculate result of weight
 		auto uvsz = uvs.size();
-		for (int i = 0; i < verts.size(); i++) {
+		for (size_t i = 0; i < verts.size(); i++) {
 			verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
 			if (uvsz > i)
 				uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
@@ -1061,7 +1061,7 @@ void BodySlideApp::RebuildPreviewMeshes() {
 			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
 		
 		// Calculate result of weight
-		for (int i = 0; i < verts.size(); i++) {
+		for (size_t i = 0; i < verts.size(); i++) {
 			verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
 			uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
 		}
@@ -1495,7 +1495,7 @@ void BodySlideApp::LoadAllGroups() {
 	Config.GetValueAttributeArray("GroupAliases", "GroupAlias", "group", groups);
 
 	if (aliases.size() == groups.size())
-		for (int i = 0; i < aliases.size(); i++)
+		for (size_t i = 0; i < aliases.size(); i++)
 			groupAlias[aliases[i]] = groups[i];
 }
 
@@ -2012,7 +2012,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 
 			int nChoice = 1;
 			std::vector<wxRadioBox*> choiceBoxes;
-			for (int i = 0; i < choicesList.size(); i++) {
+			for (size_t i = 0; i < choicesList.size(); i++) {
 				auto& outFile = outFileList[i];
 				auto& choices = choicesList[i];
 				wxRadioBox* choiceBox = new wxRadioBox(scrollOverrides, wxID_ANY, _("Choose output set") + wxString::Format(" #%d", nChoice), wxDefaultPosition, wxDefaultSize, choices, 1, wxRA_SPECIFY_COLS);
@@ -2038,7 +2038,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				return 1;
 			}
 
-			for (int i = 0; i < choicesList.size(); i++) {
+			for (size_t i = 0; i < choicesList.size(); i++) {
 				wxString choiceSel = choiceBoxes[i]->GetStringSelection();
 
 				// Add output choice to file
@@ -3112,7 +3112,7 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 	chooser.SetSelections(grpSelections);
 	if (chooser.ShowModal() == wxID_OK) {
 		wxArrayInt sel = chooser.GetSelections();
-		for (int i = 0; i < sel.size(); i++) {
+		for (size_t i = 0; i < sel.size(); i++) {
 			if (i > 0) filter += ", ";
 			filter += grpChoices[sel[i]];
 		}
@@ -3329,14 +3329,14 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	batchBuildList = XRCCTRL((*batchBuildChooser), "batchBuildList", wxCheckListBox);
 	batchBuildList->Bind(wxEVT_RIGHT_UP, &BodySlideFrame::OnBatchBuildContext, this);
 	batchBuildList->Append(oChoices);
-	for (int i = 0; i < oChoices.size(); i++)
+	for (uint32_t i = 0; i < oChoices.size(); i++)
 		batchBuildList->Check(i);
 
 	if (batchBuildChooser->ShowModal() == wxID_OK) {
 		wxArrayInt sel;
 		batchBuildList->GetCheckedItems(sel);
 		toBuild.clear();
-		for (int i = 0; i < sel.size(); i++)
+		for (size_t i = 0; i < sel.size(); i++)
 			toBuild.push_back(outfitChoices[sel[i]]);
 
 		delete batchBuildChooser;
@@ -3390,15 +3390,15 @@ void BodySlideFrame::OnBatchBuildContext(wxMouseEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnBatchBuildSelect(wxCommandEvent& event) {
 	if (event.GetId() == XRCID("batchBuildNone")) {
-		for (int i = 0; i < batchBuildList->GetCount(); i++)
+		for (uint32_t i = 0; i < batchBuildList->GetCount(); i++)
 			batchBuildList->Check(i, false);
 	}
 	else if (event.GetId() == XRCID("batchBuildAll")) {
-		for (int i = 0; i < batchBuildList->GetCount(); i++)
+		for (uint32_t i = 0; i < batchBuildList->GetCount(); i++)
 			batchBuildList->Check(i);
 	}
 	else if (event.GetId() == XRCID("batchBuildInvert")) {
-		for (int i = 0; i < batchBuildList->GetCount(); i++)
+		for (uint32_t i = 0; i < batchBuildList->GetCount(); i++)
 			batchBuildList->Check(i, !batchBuildList->IsChecked(i));
 	}
 }
@@ -3563,7 +3563,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			wxArrayInt items;
 			wxString selectedfiles;
-			for (int i = 0; i < dataFileList->GetCount(); i++)
+			for (uint32_t i = 0; i < dataFileList->GetCount(); i++)
 				if (!dataFileList->IsChecked(i))
 					selectedfiles += dataFileList->GetString(i) + "; ";
 

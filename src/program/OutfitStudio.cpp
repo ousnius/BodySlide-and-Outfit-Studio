@@ -1173,21 +1173,21 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 			if (menu) {
 				menu->Bind(wxEVT_MENU, [&](wxCommandEvent& event) {
 					if (event.GetId() == XRCID("projectListNone")) {
-						for (int i = 0; i < projectList->GetCount(); i++) {
+						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
 							std::string name = projectList->GetString(i).ToUTF8();
 							projectList->Check(i, false);
 							selectedProjects.erase(name);
 						}
 					}
 					else if (event.GetId() == XRCID("projectListAll")) {
-						for (int i = 0; i < projectList->GetCount(); i++) {
+						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
 							std::string name = projectList->GetString(i).ToUTF8();
 							projectList->Check(i);
 							selectedProjects.insert(name);
 						}
 					}
 					else if (event.GetId() == XRCID("projectListInvert")) {
-						for (int i = 0; i < projectList->GetCount(); i++) {
+						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
 							std::string name = projectList->GetString(i).ToUTF8();
 
 							bool check = !projectList->IsChecked(i);
@@ -4979,10 +4979,10 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 			if (subSegmentData->material != 0xFFFFFFFF) {
 				bool typeFound = false;
 				auto typeHash = wxString::Format("0x%08x", subSegmentData->material);
-				for (int i = 0; i < segmentType->GetCount(); i++) {
+				for (uint32_t i = 0; i < segmentType->GetCount(); i++) {
 					auto typeString = segmentType->GetString(i);
 					if (typeString.Contains(typeHash)) {
-						segmentType->SetSelection(i);
+						segmentType->SetSelection((int)i);
 						typeFound = true;
 						break;
 					}
@@ -4994,11 +4994,11 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 
 			segmentType->Enable();
 
-			for (int i = 0; i < segmentSlot->GetCount(); i++) {
+			for (uint32_t i = 0; i < segmentSlot->GetCount(); i++) {
 				wxString slotPrefix = wxString::Format("%d - ", subSegmentData->userSlotID);
 				auto slotString = segmentSlot->GetString(i);
 				if (slotString.StartsWith(slotPrefix)) {
-					segmentSlot->SetSelection(i);
+					segmentSlot->SetSelection((int)i);
 					break;
 				}
 			}
@@ -5095,7 +5095,7 @@ void OutfitStudioFrame::UpdateSegmentNames() {
 				if (subSegmentData->material != 0xFFFFFFFF) {
 					bool typeFound = false;
 					auto typeHash = wxString::Format("0x%08x", subSegmentData->material);
-					for (int i = 0; i < segmentType->GetCount(); i++) {
+					for (uint32_t i = 0; i < segmentType->GetCount(); i++) {
 						auto typeString = segmentType->GetString(i);
 						if (typeString.Contains(typeHash)) {
 							subSegmentName = typeString.BeforeLast('|');
@@ -5111,7 +5111,7 @@ void OutfitStudioFrame::UpdateSegmentNames() {
 				if (subSegmentData->userSlotID >= 30) {
 					wxString slotPrefix = wxString::Format("%d - ", subSegmentData->userSlotID);
 
-					for (int i = 0; i < segmentSlot->GetCount(); i++) {
+					for (uint32_t i = 0; i < segmentSlot->GetCount(); i++) {
 						auto slotString = segmentSlot->GetString(i);
 						if (slotString.StartsWith(slotPrefix)) {
 							subSegmentSlot = wxString::Format("(Slot %s)", slotString);

@@ -198,7 +198,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 
 				auto ptIt = std::find(curPoints.begin(), curPoints.end(), pt);
 				if (ptIt != curPoints.end())
-					v_idx[i] = ptIt - curPoints.begin();
+					v_idx[i] = (uint32_t)(ptIt - curPoints.begin());
 				else
 					curPoints.push_back(pt);
 

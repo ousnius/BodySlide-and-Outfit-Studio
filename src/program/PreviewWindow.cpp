@@ -133,7 +133,7 @@ mesh* PreviewWindow::GetMesh(const std::string& shapeName) {
 
 void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
-	for (int i = 0; i < shapeList.size(); i++) {
+	for (size_t i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];
 		if (!shapeName || (shapeName && shapeListName == shapeName)) {
 			mesh* m = gls.AddMeshFromNif(nif, shapeListName);
@@ -158,7 +158,7 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 	if (shapeName == nullptr)
 		gls.ClearMeshes();
 
-	for (int i = 0; i < shapeList.size(); i++) {
+	for (size_t i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];
 		if (!shapeName || (shapeName && shapeListName == shapeName)) {
 			mesh* m = gls.ReloadMeshFromNif(nif, shapeListName);
