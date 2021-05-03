@@ -281,47 +281,47 @@ int MaterialFile::Write(std::ostream& output) {
 	if (signature == BGSM) {
 		std::string tmp;
 		tmp = ToBackslashes(diffuseTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(normalTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(smoothSpecTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(greyscaleTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(envmapTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(glowTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(innerLayerTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(wrinklesTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(displacementTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
@@ -345,7 +345,7 @@ int MaterialFile::Write(std::ostream& output) {
 		output.write((char*)&wetnessControlFresnelPower, 4);
 		output.write((char*)&wetnessControlMetalness, 4);
 
-		length = rootMaterialPath.length();
+		length = static_cast<uint32_t>(rootMaterialPath.length());
 		output.write((char*)&length, 4);
 		output.write(rootMaterialPath.c_str(), length);
 
@@ -388,27 +388,27 @@ int MaterialFile::Write(std::ostream& output) {
 	else if (signature == BGEM) {
 		std::string tmp;
 		tmp = ToBackslashes(baseTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(grayscaleTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(fxEnvmapTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(fxNormalTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 
 		tmp = ToBackslashes(envmapMaskTexture);
-		length = tmp.length();
+		length = static_cast<uint32_t>(tmp.length());
 		output.write((char*)&length, 4);
 		output.write(tmp.c_str(), length);
 

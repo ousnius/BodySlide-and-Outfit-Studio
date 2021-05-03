@@ -29,7 +29,7 @@ UndoStateProject *UndoHistory::PushState(std::unique_ptr<UndoStateProject> uspp)
 	else if (nStrokes == UH_MAX_UNDO)
 		states.erase(states.begin());
 	states.push_back(std::move(uspp));
-	curIndex = states.size() - 1;
+	curIndex = static_cast<uint32_t>(states.size() - 1);
 	return states.back().get();
 }
 

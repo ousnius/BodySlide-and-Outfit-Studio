@@ -41,7 +41,7 @@ struct UndoStateVertexSliderDiff {
 };
 
 struct UndoStateVertex {
-	int index;	// index into array of vertices
+	uint16_t index;		// index into array of vertices
 	nifly::Vector3 pos;	// position in skin coordinates
 	nifly::Vector2 uv;
 	nifly::Color4 color;
@@ -54,7 +54,7 @@ struct UndoStateVertex {
 };
 
 struct UndoStateTriangle {
-	int index;	// index into array of triangles
+	uint32_t index;		// index into array of triangles
 	nifly::Triangle t;
 	int partID = -1;	// partition ID if there are partitions or segments
 };

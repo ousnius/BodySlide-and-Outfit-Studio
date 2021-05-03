@@ -244,7 +244,7 @@ public:
 		return shapeAttributes.cend();
 	}
 
-	std::string ShapeToDataName(size_t index, const std::string& shapeName) {
+	std::string ShapeToDataName(const size_t index, const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);
 		if (shape != shapeAttributes.end() && sliders.size() > index)
 			return sliders[index].TargetDataName(shape->second.targetShape);
@@ -276,7 +276,7 @@ public:
 		return sliders.size();
 	}
 
-	SliderData& operator [] (int idx) {
+	SliderData& operator [] (const size_t idx) {
 		return sliders[idx];
 	}
 

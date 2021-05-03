@@ -192,13 +192,13 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 
 			bool skipFace = false;
 			for (size_t i = 0; i < nPoints; i++) {
-				v_idx[i] = current->verts.size();
+				v_idx[i] = static_cast<uint32_t>(current->verts.size());
 
 				ObjPoint pt(f[i], ft[i], fn[i]);
 
 				auto ptIt = std::find(curPoints.begin(), curPoints.end(), pt);
 				if (ptIt != curPoints.end())
-					v_idx[i] = (uint32_t)(ptIt - curPoints.begin());
+					v_idx[i] = static_cast<uint32_t>(ptIt - curPoints.begin());
 				else
 					curPoints.push_back(pt);
 
@@ -222,14 +222,14 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			if (skipFace)
 				continue;
 
-			t.p1 = (uint16_t)v_idx[0];
-			t.p2 = (uint16_t)v_idx[1];
-			t.p3 = (uint16_t)v_idx[2];
+			t.p1 = static_cast<uint16_t>(v_idx[0]);
+			t.p2 = static_cast<uint16_t>(v_idx[1]);
+			t.p3 = static_cast<uint16_t>(v_idx[2]);
 			current->tris.push_back(t);
 			if (nPoints == 4) {
-				t.p1 = (uint16_t)v_idx[0];
-				t.p2 = (uint16_t)v_idx[2];
-				t.p3 = (uint16_t)v_idx[3];
+				t.p1 = static_cast<uint16_t>(v_idx[0]);
+				t.p2 = static_cast<uint16_t>(v_idx[2]);
+				t.p3 = static_cast<uint16_t>(v_idx[3]);
 				current->tris.push_back(t);
 			}
 		}

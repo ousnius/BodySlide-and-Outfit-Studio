@@ -460,7 +460,7 @@ void OutfitStudio::OnInitCmdLine(wxCmdLineParser& parser) {
 bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& parser) {
 	parser.Found("proj", &cmdProject);
 
-	for (int i = 0; i < parser.GetParamCount(); i++)
+	for (size_t i = 0; i < parser.GetParamCount(); i++)
 		cmdFiles.Add(parser.GetParam(i));
 
 	return true;
@@ -1341,7 +1341,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 				std::set<std::string> dataFiles;
 
-				for (int i = 0; i < set.size(); i++) {
+				for (size_t i = 0; i < set.size(); i++) {
 					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
 						std::string target = set.ShapeToTarget(it->first);
 						std::string targetDataName = set[i].TargetDataName(target);
@@ -1987,7 +1987,7 @@ void OutfitStudioFrame::CreateSetSliders() {
 
 	wxSizer* rootSz = sliderScroll->GetSizer();
 
-	for (int i = 0; i < project->SliderCount(); i++)  {
+	for (size_t i = 0; i < project->SliderCount(); i++)  {
 		UpdateProgress(inc, _("Loading slider: ") + project->GetSliderName(i));
 		if (project->SliderClamp(i))    // clamp sliders are a special case, usually an incorrect scale
 			continue;
@@ -2006,7 +2006,7 @@ void OutfitStudioFrame::CreateSetSliders() {
 	EndProgress();
 }
 
-void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz) {
+void OutfitStudioFrame::createSliderGUI(const std::string& name, const size_t id, wxScrolledWindow* wnd, wxSizer* rootSz) {
 	wxString sn = wxString::FromUTF8(name);
 
 	auto d = new SliderDisplay();
@@ -2105,7 +2105,7 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 	return sliderName;
 }
 
-void OutfitStudioFrame::SetSliderValue(int index, int val) {
+void OutfitStudioFrame::SetSliderValue(const size_t index, int val) {
 	std::string name = project->GetSliderName(index);
 	project->SliderValue(index) = val / 100.0f;
 	sliderDisplays[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
@@ -2136,10 +2136,10 @@ void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
 		glView->Render();
 }
 
-void OutfitStudioFrame::ShowSliderEffect(int sliderID, bool show) {
+void OutfitStudioFrame::ShowSliderEffect(const size_t sliderID, bool show) {
 	if (project->ValidSlider(sliderID)) {
 		project->SliderShow(sliderID) = show;
-		wxCheckBox* sliderState = (wxCheckBox*)FindWindowById(1000 + sliderID);
+		wxCheckBox* sliderState = (wxCheckBox*)FindWindowById(static_cast<long>(1000 + sliderID));
 		if (!sliderState)
 			return;
 
@@ -4720,7 +4720,7 @@ void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
 
 		// Assign triangles from old partitions to new partition.
 		for (size_t i = 0; i < triSParts.size(); ++i)
-			if (triSParts[i] >= 0 && triSParts[i] < oldPartIDs.size() && oldPartIDs[triSParts[i]])
+			if (triSParts[i] >= 0 && triSParts[i] < static_cast<int>(oldPartIDs.size()) && oldPartIDs[triSParts[i]])
 				triSParts[i] = newPartID;
 
 		segmentTree->UnselectAll();
@@ -5262,7 +5262,7 @@ void OutfitStudioFrame::ApplyPartitions() {
 	if (!shape)
 		return;
 
-	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+	NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 	std::vector<bool> delPartFlags;
 
 	wxTreeItemIdValue cookie;
@@ -5315,7 +5315,7 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 
 	partitionTabButton->SetPendingChanges(false);
 
-	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+	NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {
 		for (int i = 0; i < partitionInfo.size(); i++) {
 			partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(i, partitionInfo[i].partID));
@@ -5453,12 +5453,12 @@ void OutfitStudioFrame::UpdatePartitionNames() {
 }
 
 void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int> &tp) {
-	int nTris = tp.size();
+	uint32_t nTris = static_cast<uint32_t>(tp.size());
 
 	// Sort triangles (via triInds) by partition number, negative partition
 	// numbers at the end.
-	std::vector<int> triInds(nTris);
-	for (int ti = 0; ti < nTris; ++ti)
+	std::vector<uint32_t> triInds(nTris);
+	for (uint32_t ti = 0; ti < nTris; ++ti)
 		triInds[ti] = ti;
 
 	std::stable_sort(triInds.begin(), triInds.end(), [&tp](int i, int j) {
@@ -5466,15 +5466,15 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 	});
 
 	// Re-order triangles
-	for (int ti = 0; ti < nTris; ++ti)
+	for (uint32_t ti = 0; ti < nTris; ++ti)
 		m->renderTris[ti] = m->tris[triInds[ti]];
 
 	// Find first triangle of each sub-mesh.
 	m->subMeshes.clear();
 	m->subMeshesColor.clear();
 
-	for (int ti = 0; ti < nTris; ++ti) {
-		while (tp[triInds[ti]] >= m->subMeshes.size())
+	for (uint32_t ti = 0; ti < nTris; ++ti) {
+		while (tp[triInds[ti]] >= static_cast<int>(m->subMeshes.size()))
 			m->subMeshes.emplace_back(ti, 0);
 
 		if (tp[triInds[ti]] < 0) {
@@ -5485,7 +5485,7 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 
 	// Calculate size of each sub-mesh.
 	m->subMeshes.emplace_back(nTris, 0);
-	for (int si = 0; si + 1 < m->subMeshes.size(); ++si)
+	for (size_t si = 0; si + 1 < m->subMeshes.size(); ++si)
 		m->subMeshes[si].second = m->subMeshes[si + 1].first - m->subMeshes[si].first;
 
 	m->subMeshes.pop_back();
@@ -5713,8 +5713,7 @@ void OutfitStudioFrame::OnReadoutChange(wxCommandEvent& event) {
 	SliderDisplay* d = sliderDisplays[sliderName];
 	d->slider->SetValue(v);
 
-	int index = project->SliderIndexFromName(sliderName);
-	project->SliderValue(index) = v / 100.0f;
+	project->SliderValue(sliderName) = v / 100.0f;
 
 	ApplySliders();
 }
@@ -6292,7 +6291,7 @@ void OutfitStudioFrame::HighlightSlider(const std::string& name) {
 
 void OutfitStudioFrame::ZeroSliders() {
 	if (!project->AllSlidersZero()) {
-		for (int s = 0; s < project->SliderCount(); s++) {
+		for (size_t s = 0; s < project->SliderCount(); s++) {
 			if (project->SliderClamp(s))
 				continue;
 
@@ -6390,7 +6389,7 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 
 		float v;
 		bool r;
-		for (int i = 0; i < project->SliderCount(); i++) {
+		for (size_t i = 0; i < project->SliderCount(); i++) {
 			if (!presets.GetSliderExists(choice, project->GetSliderName(i)))
 				continue;
 
@@ -6446,7 +6445,10 @@ void OutfitStudioFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	bool addedSlider = false;
 	PresetCollection presets;
 	for (auto &s : sliders) {
-		int index = project->SliderIndexFromName(s);
+		size_t index = 0;
+		if (!project->SliderIndexFromName(s, index))
+			continue;
+
 		if (project->SliderZap(index) || project->SliderHidden(index))
 			continue;
 
@@ -6702,7 +6704,10 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 			project->SetSliderFromDiff(morphData->name, shape, diff);
 
 			if (morphData->type == MORPHTYPE_UV) {
-				int sliderIndex = project->SliderIndexFromName(morphData->name);
+				size_t sliderIndex = 0;
+				if (!project->SliderIndexFromName(morphData->name, sliderIndex))
+					continue;
+
 				project->SetSliderUV(sliderIndex, true);
 			}
 		}
@@ -7099,6 +7104,10 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	size_t curSlider = 0;
+	if (!project->SliderIndexFromName(activeSlider, curSlider))
+		return;
+
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSliderProp")) {
 		wxTextCtrl* edSliderName = XRCCTRL(dlg, "edSliderName", wxTextCtrl);
@@ -7113,7 +7122,6 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* chkUV = XRCCTRL(dlg, "chkUV", wxCheckBox);
 		wxCheckListBox* zapToggleList = XRCCTRL(dlg, "zapToggleList", wxCheckListBox);
 
-		int curSlider = project->SliderIndexFromName(activeSlider);
 		long loVal = (int)(project->SliderDefault(curSlider, false));
 		long hiVal = (int)(project->SliderDefault(curSlider, true));
 
@@ -7140,7 +7148,7 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			chkZap->SetValue(true);
 			zapToggleList->Enable();
 
-			for (int i = 0; i < project->SliderCount(); i++)
+			for (size_t i = 0; i < project->SliderCount(); i++)
 				if (i != curSlider && (project->SliderZap(i) || project->SliderHidden(i)))
 					zapToggleList->Append(wxString::FromUTF8(project->GetSliderName(i)));
 
@@ -8257,7 +8265,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 	if (dlg.ShowModal() == wxID_OK) {
 		wxArrayTreeItemIds sel;
 		boneTree->GetSelections(sel);
-		for (int i = 0; i < sel.size(); i++) {
+		for (size_t i = 0; i < sel.size(); i++) {
 			std::string bone = boneTree->GetItemText(sel[i]);
 			wxLogMessage("Adding bone '%s' to project.", bone);
 
@@ -8550,7 +8558,7 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 	const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin;
 
 	// Check if any shape's skin CS is different from the base shape's
-	for (int i = 0; i < selectedItems.size(); i++) {
+	for (size_t i = 0; i < selectedItems.size(); i++) {
 		NiShape *shape = selectedItems[i]->GetShape();
 		if (shape == baseShape)
 			continue;
@@ -8579,7 +8587,7 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 		baseAvg += baseVerts[i];
 
 	if (baseVerts.size())
-		baseAvg /= baseVerts.size();
+		baseAvg /= static_cast<uint32_t>(baseVerts.size());
 
 	// Now check if any shape would be better aligned by changing its global-to-skin transform
 	for (size_t i = 0; i < selectedItems.size(); i++) {
@@ -8605,8 +8613,8 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 			newAvg += verts[j];
 		}
 
-		oldAvg /= verts.size();
-		newAvg /= verts.size();
+		oldAvg /= static_cast<uint32_t>(verts.size());
+		newAvg /= static_cast<uint32_t>(verts.size());
 
 		// Check whether old or new is closer to the base shape.
 		// If new is farther away, then transforming the geometry would be a good idea
@@ -10248,7 +10256,7 @@ void wxGLPanel::ClickCollapseVertex() {
 		return;
 
 	// Make list of this vertex and its welded vertices.
-	std::vector<int> verts;
+	std::vector<uint16_t> verts;
 	verts.push_back(mouseDownPoint);
 	if (m->weldVerts.find(mouseDownPoint) != m->weldVerts.end())
 		for (int wv : m->weldVerts[mouseDownPoint])
@@ -10358,13 +10366,15 @@ void wxGLPanel::ClickSplitEdge() {
 	}
 
 	// Collect welded vertices
-	int p1 = mouseDownEdge.p1;
-	int p2 = mouseDownEdge.p2;
-	std::vector<int> p1s(1, p1);
-	std::vector<int> p2s(1, p2);
+	uint16_t p1 = mouseDownEdge.p1;
+	uint16_t p2 = mouseDownEdge.p2;
+	std::vector<uint16_t> p1s(1, p1);
+	std::vector<uint16_t> p2s(1, p2);
+
 	auto wvit = m->weldVerts.find(p1);
 	if (wvit != m->weldVerts.end())
 		std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(p1s));
+
 	wvit = m->weldVerts.find(p2);
 	if (wvit != m->weldVerts.end())
 		std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(p2s));
@@ -11343,7 +11353,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 	if (owner) {
 		bool isMultiple = (fileNames.GetCount() > 1);
-		for (int i = 0; i < fileNames.GetCount(); i++)	{
+		for (size_t i = 0; i < fileNames.GetCount(); i++)	{
 			wxString inputFile;
 			inputFile = fileNames.Item(i);
 

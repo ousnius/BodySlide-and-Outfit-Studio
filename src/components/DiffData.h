@@ -36,8 +36,8 @@ class DiffDataSets {
 
 public:
 	inline bool TargetMatch(const std::string& set, const std::string& target);
-	int MoveToSet(const std::string& name, const std::string& target, std::unordered_map<uint16_t, nifly::Vector3>& inDiffData);
-	int LoadSet(const std::string& name, const std::string& target, const std::unordered_map<uint16_t, nifly::Vector3>& inDiffData);
+	void MoveToSet(const std::string& name, const std::string& target, std::unordered_map<uint16_t, nifly::Vector3>& inDiffData);
+	void LoadSet(const std::string& name, const std::string& target, const std::unordered_map<uint16_t, nifly::Vector3>& inDiffData);
 	int LoadSet(const std::string& name, const std::string& target, const std::string& fromFile);
 	int SaveSet(const std::string& name, const std::string& target, const std::string& toFile);
 	bool LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);

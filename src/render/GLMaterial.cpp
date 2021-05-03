@@ -76,7 +76,7 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 	shader.BindTexture(7, 0, "texBacklight");
 	shader.BindTexture(20, 0, "texAlphaMask");
 
-	for (size_t id = 0; id < texCache.size(); id++) {
+	for (GLint id = 0; id < static_cast<GLint>(texCache.size()); id++) {
 		switch (id) {
 		case 0:
 			shader.BindTexture(id, texCache[id], "texDiffuse");

@@ -1734,7 +1734,7 @@ void GLSurface::Update(const std::string& shapeName, std::vector<Vector3>* verti
 }
 
 void GLSurface::Update(mesh* m, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs, std::set<int>* changed) {
-	if (m->nVerts != vertices->size())
+	if (m->nVerts != static_cast<int>(vertices->size()))
 		return;
 
 	int uvSize = 0;

@@ -926,8 +926,8 @@ public:
 		wxPanel* sliderPane;
 		wxBoxSizer* paneSz;
 
-		int sliderNameCheckID;
-		int sliderID;
+		size_t sliderNameCheckID;
+		size_t sliderID;
 
 		wxBitmapButton* btnSliderEdit;
 		wxButton* btnMinus;
@@ -945,13 +945,13 @@ public:
 
 	std::string NewSlider(const std::string& suggestedName = "", bool skipPrompt = false);
 
-	void SetSliderValue(int index, int val);
+	void SetSliderValue(const size_t index, int val);
 	void SetSliderValue(const std::string& name, int val);
 	void ZeroSliders();
 
 	void ApplySliders(bool recalcBVH = true);
 
-	void ShowSliderEffect(int slider, bool show = true);
+	void ShowSliderEffect(const size_t slider, bool show = true);
 	void ShowSliderEffect(const std::string& sliderName, bool show = true);
 
 	void SelectShape(const std::string& shapeName);
@@ -1154,7 +1154,7 @@ private:
 
 	std::vector<RefTemplate> refTemplates;
 
-	void createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
+	void createSliderGUI(const std::string& name, const size_t id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const std::string& name);
 
 	void UpdateReferenceTemplates();

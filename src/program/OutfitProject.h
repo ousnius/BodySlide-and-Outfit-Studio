@@ -104,11 +104,11 @@ public:
 
 	void ReplaceForbidden(std::string& str, const char& replacer = ' ');
 
-	bool ValidSlider(int index);
+	bool ValidSlider(const size_t index);
 	bool ValidSlider(const std::string& sliderName);
 	bool AllSlidersZero();
-	int SliderCount(void);
-	std::string GetSliderName(int index);
+	size_t SliderCount();
+	std::string GetSliderName(const size_t index);
 	void GetSliderList(std::vector<std::string>& sliderNames);
 	void AddEmptySlider(const std::string& newName);
 	void AddZapSlider(const std::string& newName, std::unordered_map<uint16_t, float>& verts, nifly::NiShape* shape);
@@ -121,22 +121,22 @@ public:
 										   const std::vector<nifly::Vector3>* norms = nullptr);
 
 	// Slider data can have a separate name from the shape target.
-	std::string SliderShapeDataName(int index, const std::string& shapeName);
-	bool SliderClamp(int index);
-	bool SliderZap(int index);
-	bool SliderUV(int index);
-	wxArrayString SliderZapToggles(int index);
-	bool SliderInvert(int index);
-	bool SliderHidden(int index);
-	int SliderIndexFromName(const std::string& sliderName);
+	std::string SliderShapeDataName(const size_t index, const std::string& shapeName);
+	bool SliderClamp(const size_t index);
+	bool SliderZap(const size_t index);
+	bool SliderUV(const size_t index);
+	wxArrayString SliderZapToggles(const size_t index);
+	bool SliderInvert(const size_t index);
+	bool SliderHidden(const size_t index);
+	bool SliderIndexFromName(const std::string& sliderName, size_t& index);
 
-	void SetSliderZap(int index, bool zap);
-	void SetSliderZapToggles(int index, const wxArrayString& toggles);
-	void SetSliderInvert(int index, bool inv);
-	void SetSliderUV(int index, bool uv);
-	void SetSliderHidden(int index, bool hidden);
-	void SetSliderDefault(int index, int val, bool isHi);
-	void SetSliderName(int index, const std::string& newName);
+	void SetSliderZap(const size_t index, const bool zap);
+	void SetSliderZapToggles(const size_t index, const wxArrayString& toggles);
+	void SetSliderInvert(const size_t index, const bool inv);
+	void SetSliderUV(const size_t index, const bool uv);
+	void SetSliderHidden(const size_t index, const bool hidden);
+	void SetSliderDefault(const size_t index, const int val, const bool isHi);
+	void SetSliderName(const size_t index, const std::string& newName);
 
 	void NegateSlider(const std::string& sliderName, nifly::NiShape* shape);
 	void MaskAffected(const std::string& sliderName, nifly::NiShape* shape);
@@ -152,9 +152,9 @@ public:
 	bool WriteMorphTRI(const std::string& triPath);
 	bool WriteHeadTRI(nifly::NiShape* shape, const std::string& triPath);
 
-	float& SliderValue(int index);
+	float& SliderValue(const size_t index);
 	float& SliderValue(const std::string& name);
-	float SliderDefault(int index, bool hi);
+	float SliderDefault(const size_t index, const bool hi);
 
 	void InitConform();
 	void ConformShape(nifly::NiShape* shape, const ConformOptions& options = ConformOptions());
@@ -175,7 +175,7 @@ public:
 
 	bool IsValidShape(const std::string& shapeName);
 
-	bool& SliderShow(int index);
+	bool& SliderShow(const size_t index);
 	bool& SliderShow(const std::string& sliderName);
 
 	void RefreshMorphShape(nifly::NiShape* shape);
@@ -220,14 +220,14 @@ public:
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
 	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true);
 
-	void CollectVertexData(nifly::NiShape *shape, UndoStateShape &uss, const std::vector<int> &indices);
-	void CollectTriangleData(nifly::NiShape *shape, UndoStateShape &uss, const std::vector<int> &indices);
+	void CollectVertexData(nifly::NiShape *shape, UndoStateShape &uss, const std::vector<uint16_t> &indices);
+	void CollectTriangleData(nifly::NiShape *shape, UndoStateShape &uss, const std::vector<uint32_t> &indices);
 	bool PrepareDeleteVerts(nifly::NiShape* shape, const std::unordered_map<uint16_t, float>& mask, UndoStateShape &uss);
 	void ApplyShapeMeshUndo(nifly::NiShape* shape, const UndoStateShape &uss, bool bUndo);
 
-	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape &uss, const std::vector<int> &indices);
+	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape &uss, const std::vector<uint16_t> &indices);
 	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape &uss, const nifly::Edge &edge);
-	bool PrepareSplitEdge(nifly::NiShape* shape, UndoStateShape &uss, const std::vector<int> &p1s, const std::vector<int> &p2s);
+	bool PrepareSplitEdge(nifly::NiShape* shape, UndoStateShape &uss, const std::vector<uint16_t> &p1s, const std::vector<uint16_t> &p2s);
 
 	void CheckMerge(const std::string &sourceName, const std::string &targetName, MergeCheckErrors &e);
 	void PrepareCopyGeo(nifly::NiShape *source, nifly::NiShape *target, UndoStateShape &uss);

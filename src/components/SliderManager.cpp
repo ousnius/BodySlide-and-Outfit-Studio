@@ -14,7 +14,7 @@ SliderManager::~SliderManager() {
 }
 
 void SliderManager::AddSlidersInSet(SliderSet& inSet) {
-	int sz = inSet.size();
+	int sz = static_cast<int>(inSet.size());
 
 	for (int i = 0; i < sz; i++) {
 		if (inSet[i].bHidden) {

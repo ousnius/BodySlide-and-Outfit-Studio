@@ -17,7 +17,7 @@ mesh::~mesh() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 
-		glDeleteBuffers(vbo.size(), vbo.data());
+		glDeleteBuffers(static_cast<GLsizei>(vbo.size()), vbo.data());
 		glDeleteBuffers(1, &ibo);
 		glDeleteVertexArrays(1, &vao);
 	}
@@ -93,7 +93,7 @@ void mesh::BuildEdgeList() {
 void mesh::CreateBuffers() {
 	if (!genBuffers) {
 		glGenVertexArrays(1, &vao);
-		glGenBuffers(vbo.size(), vbo.data());
+		glGenBuffers(static_cast<GLsizei>(vbo.size()), vbo.data());
 		glGenBuffers(1, &ibo);
 	}
 
@@ -399,8 +399,8 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 }
 
 void mesh::CalcWeldVerts() {
-	SortingMatcher matcher(verts.get(), nVerts);
-	for (const std::vector<int> &matchset : matcher.matches) {
+	SortingMatcher matcher(verts.get(), static_cast<uint16_t>(nVerts));
+	for (const auto &matchset : matcher.matches) {
 		for (size_t j = 0; j < matchset.size(); ++j) {
 			std::vector<int> &wv = weldVerts[matchset[j]];
 			for (size_t k = 0; k < matchset.size(); ++k) {

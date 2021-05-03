@@ -112,7 +112,7 @@ void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<u
 
 	auto& skin = shapeSkinning[shape];
 	for (auto &w : skin.boneWeights) {
-		ApplyIndexMapToMapKeys(w.second.weights, indexCollapse, - static_cast<int>(indices.size()));
+		ApplyIndexMapToMapKeys(w.second.weights, indexCollapse, -static_cast<int>(indices.size()));
 	}
 }
 
@@ -124,7 +124,7 @@ void AnimSkin::InsertVertexIndices(const std::vector<uint16_t>& indices) {
 	std::vector<int> indexExpand = GenerateIndexExpandMap(indices, highestAdded + 1);
 
 	for (auto &w : boneWeights) {
-		ApplyIndexMapToMapKeys(w.second.weights, indexExpand, indices.size());
+		ApplyIndexMapToMapKeys(w.second.weights, indexExpand, static_cast<int>(indices.size()));
 	}
 }
 
