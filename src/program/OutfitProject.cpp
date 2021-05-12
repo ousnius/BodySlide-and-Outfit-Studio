@@ -123,7 +123,6 @@ std::string OutfitProject::Save(const wxString& strFileName,
 
 	if (activeSet.size() > 0) {
 		// Copy the reference slider info and add the outfit data to them.
-		int id;
 		std::string targ;
 		std::string targSlider;
 		std::string targSliderData;
@@ -133,8 +132,9 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		owner->UpdateProgress(prog);
 
 		for (size_t i = 0; i < activeSet.size(); i++) {
-			id = outSet.CopySlider(&activeSet[i]);
+			size_t id = outSet.CopySlider(&activeSet[i]);
 			outSet[id].Clear();
+
 			if (copyRef && baseShape) {
 				std::string baseShapeName = baseShape->name.get();
 				targ = ShapeToTarget(baseShapeName);
@@ -418,7 +418,7 @@ std::string OutfitProject::GetSliderName(const size_t index) {
 }
 
 void OutfitProject::AddEmptySlider(const std::string& newName) {
-	int sliderID = activeSet.CreateSlider(newName);
+	size_t sliderID = activeSet.CreateSlider(newName);
 	activeSet[sliderID].bShow = true;
 
 	if (baseShape) {
@@ -440,7 +440,10 @@ void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<
 	std::string target = ShapeToTarget(shape->name.get());
 	std::string shapeSlider = target + newName;
 
-	int sliderID = activeSet.CreateSlider(newName);
+	size_t sliderID = 0;
+	if (!SliderIndexFromName(newName, sliderID))
+		sliderID = activeSet.CreateSlider(newName);
+
 	activeSet[sliderID].bZap = true;
 	activeSet[sliderID].defBigValue = 0.0f;
 	activeSet[sliderID].defSmallValue = 0.0f;
@@ -470,7 +473,7 @@ void OutfitProject::AddCombinedSlider(const std::string& newName) {
 		morpher.SetResultDiff(s->name.get(), newName, diffData);
 	}
 
-	int sliderID = activeSet.CreateSlider(newName);
+	size_t sliderID = activeSet.CreateSlider(newName);
 	if (baseShape) {
 		std::string baseShapeName = baseShape->name.get();
 		std::string target = ShapeToTarget(baseShapeName);

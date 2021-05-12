@@ -77,9 +77,9 @@ public:
 	void Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal = true);
 
 	// Add an empty set.
-	int CreateSlider(const std::string& setName);
+	size_t CreateSlider(const std::string& setName);
 
-	int CopySlider(SliderData* other);
+	size_t CopySlider(SliderData* other);
 
 	void WriteSliderSet(XMLElement* sliderSetElement);
 

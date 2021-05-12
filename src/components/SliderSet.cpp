@@ -36,13 +36,14 @@ void SliderSet::DeleteSlider(const std::string& setName) {
 	}
 }
 
-int SliderSet::CreateSlider(const std::string& setName) {
+size_t SliderSet::CreateSlider(const std::string& setName) {
 	sliders.emplace_back(setName);
-	return static_cast<int>(sliders.size() - 1);
+	return sliders.size() - 1;
 }
 
-int SliderSet::CopySlider(SliderData* other) {
+size_t SliderSet::CopySlider(SliderData* other) {
 	sliders.emplace_back(other->name);
+
 	SliderData* ms = &sliders.back();
 	ms->bClamp = other->bClamp;
 	ms->bHidden = other->bHidden;
@@ -53,7 +54,7 @@ int SliderSet::CopySlider(SliderData* other) {
 	ms->defSmallValue = other->defSmallValue;
 	ms->zapToggles = other->zapToggles;
 	ms->dataFiles = other->dataFiles;
-	return static_cast<int>(sliders.size() - 1);
+	return sliders.size() - 1;
 }
 
 int SliderSet::LoadSliderSet(XMLElement* element) {
