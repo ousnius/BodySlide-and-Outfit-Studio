@@ -497,33 +497,26 @@ NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName,
 		NiVersion version;
 
 		switch (targetGame) {
+		case OB:
+			version = NiVersion::getOB();
+			break;
 		case FO3:
 		case FONV:
-			version.SetFile(V20_2_0_7);
-			version.SetUser(11);
-			version.SetStream(34);
+			version = NiVersion::getFO3();
 			break;
 		case SKYRIM:
-			version.SetFile(V20_2_0_7);
-			version.SetUser(12);
-			version.SetStream(83);
+			version = NiVersion::getSK();
 			break;
 		case FO4:
 		case FO4VR:
-			version.SetFile(V20_2_0_7);
-			version.SetUser(12);
-			version.SetStream(130);
+			version = NiVersion::getFO4();
 			break;
 		case SKYRIMSE:
 		case SKYRIMVR:
-			version.SetFile(V20_2_0_7);
-			version.SetUser(12);
-			version.SetStream(100);
+			version = NiVersion::getSSE();
 			break;
 		case FO76:
-			version.SetFile(V20_2_0_7);
-			version.SetUser(12);
-			version.SetStream(155);
+			version = NiVersion::getFO76();
 			break;
 		}
 
@@ -3857,6 +3850,9 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 	bool match = false;
 
 	switch (targetGame) {
+	case OB:
+		match = nif.GetHeader().GetVersion().IsOB();
+		break;
 	case FO3:
 	case FONV:
 		match = nif.GetHeader().GetVersion().IsFO3();

@@ -298,6 +298,10 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
 	}
+	else if (targetGame == OB) {
+		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
+		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
+	}
 
 	SetShapeTextures(shapeName, texFiles, vShader, fShader, hasMat, mat);
 }

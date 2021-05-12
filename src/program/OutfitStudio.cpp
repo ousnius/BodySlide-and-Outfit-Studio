@@ -294,7 +294,7 @@ wxIMPLEMENT_APP(OutfitStudio);
 ConfigurationManager Config;
 ConfigurationManager OutfitStudioConfig;
 
-const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR" };
+const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout 76", "Oblivion" };
 const wxLanguage SupportedLangs[] = {
 	wxLANGUAGE_ENGLISH, wxLANGUAGE_AFRIKAANS, wxLANGUAGE_ARABIC, wxLANGUAGE_CATALAN, wxLANGUAGE_CZECH, wxLANGUAGE_DANISH, wxLANGUAGE_GERMAN,
 	wxLANGUAGE_GREEK, wxLANGUAGE_SPANISH, wxLANGUAGE_BASQUE, wxLANGUAGE_FINNISH, wxLANGUAGE_FRENCH, wxLANGUAGE_HINDI,
@@ -364,6 +364,8 @@ bool OutfitStudio::OnInit() {
 	case SKYRIMSE: gameName.Append("Skyrim Special Edition"); break;
 	case FO4VR: gameName.Append("Fallout 4 VR"); break;
 	case SKYRIMVR: gameName.Append("Skyrim VR"); break;
+	case FO76: gameName.Append("Fallout 76"); break;
+	case OB: gameName.Append("Oblivion"); break;
 	default: gameName.Append("Invalid");
 	}
 	wxLogMessage(gameName);
@@ -581,6 +583,8 @@ bool OutfitStudio::SetDefaultConfig() {
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashpos", 768);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashrightpos", 200);
 
+	Config.SetDefaultValue("GameRegKey/Oblivion", "Software\\Bethesda Softworks\\Oblivion");
+	Config.SetDefaultValue("GameRegVal/Oblivion", "Installed Path");
 	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
 	Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");
 	Config.SetDefaultValue("GameRegKey/FalloutNewVegas", "Software\\Bethesda Softworks\\FalloutNV");
@@ -655,26 +659,32 @@ bool OutfitStudio::ShowSetup() {
 		setup->SetSize(wxSize(700, -1));
 		setup->CenterOnScreen();
 
+		wxButton* btOblivion = XRCCTRL(*setup, "btOblivion", wxButton);
+		btOblivion->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)OB); });
+
 		wxButton* btFallout3 = XRCCTRL(*setup, "btFallout3", wxButton);
-		btFallout3->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(0); });
+		btFallout3->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FO3); });
 
 		wxButton* btFalloutNV = XRCCTRL(*setup, "btFalloutNV", wxButton);
-		btFalloutNV->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(1); });
+		btFalloutNV->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FONV); });
 
 		wxButton* btSkyrim = XRCCTRL(*setup, "btSkyrim", wxButton);
-		btSkyrim->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(2); });
+		btSkyrim->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIM); });
 
 		wxButton* btFallout4 = XRCCTRL(*setup, "btFallout4", wxButton);
-		btFallout4->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(3); });
+		btFallout4->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FO4); });
 
 		wxButton* btSkyrimSE = XRCCTRL(*setup, "btSkyrimSE", wxButton);
-		btSkyrimSE->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(4); });
+		btSkyrimSE->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIMSE); });
 
 		wxButton* btFallout4VR = XRCCTRL(*setup, "btFallout4VR", wxButton);
-		btFallout4VR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(5); });
+		btFallout4VR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FO4VR); });
 
 		wxButton* btSkyrimVR = XRCCTRL(*setup, "btSkyrimVR", wxButton);
-		btSkyrimVR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(6); });
+		btSkyrimVR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIMVR); });
+
+		wxDirPickerCtrl* dirOblivion = XRCCTRL(*setup, "dirOblivion", wxDirPickerCtrl);
+		dirOblivion->Bind(wxEVT_DIRPICKER_CHANGED, [&dirOblivion, &btOblivion](wxFileDirPickerEvent&) { btOblivion->Enable(dirOblivion->GetDirName().DirExists()); });
 
 		wxDirPickerCtrl* dirFallout3 = XRCCTRL(*setup, "dirFallout3", wxDirPickerCtrl);
 		dirFallout3->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout3, &btFallout3](wxFileDirPickerEvent&) { btFallout3->Enable(dirFallout3->GetDirName().DirExists()); });
@@ -697,7 +707,13 @@ bool OutfitStudio::ShowSetup() {
 		wxDirPickerCtrl* dirSkyrimVR = XRCCTRL(*setup, "dirSkyrimVR", wxDirPickerCtrl);
 		dirSkyrimVR->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrimVR, &btSkyrimVR](wxFileDirPickerEvent&) { btSkyrimVR->Enable(dirSkyrimVR->GetDirName().DirExists()); });
 
-		wxFileName dir = GetGameDataPath(FO3);
+		wxFileName dir = GetGameDataPath(OB);
+		if (dir.DirExists()) {
+			dirOblivion->SetDirName(dir);
+			btOblivion->Enable();
+		}
+
+		dir = GetGameDataPath(FO3);
 		if (dir.DirExists()) {
 			dirFallout3->SetDirName(dir);
 			btFallout3->Enable();
@@ -745,6 +761,11 @@ bool OutfitStudio::ShowSetup() {
 
 			wxFileName dataDir;
 			switch (targ) {
+			case OB:
+				dataDir = dirOblivion->GetDirName();
+				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_ob.nif");
+				Config.SetValue("Anim/SkeletonRootName", "Bip01");
+				break;
 			case FO3:
 				dataDir = dirFallout3->GetDirName();
 				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo3nv.nif");
@@ -1623,6 +1644,10 @@ void OutfitStudioFrame::OnChooseTargetGame(wxCommandEvent& event) {
 
 	TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
 	switch (targ) {
+	case OB:
+		fpSkeletonFile->SetPath("res/skeleton_ob.nif");
+		choiceSkeletonRoot->SetStringSelection("Bip01");
+		break;
 	case FO3:
 	case FONV:
 		fpSkeletonFile->SetPath("res/skeleton_fo3nv.nif");
@@ -9511,6 +9536,10 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<
 	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
+	}
+	else if (targetGame == OB) {
+		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
+		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
 	}
 
 	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, reloadTextures);
