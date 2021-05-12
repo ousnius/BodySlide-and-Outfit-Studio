@@ -1373,12 +1373,12 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 			}
 			else if (shader) {
 				for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-					workNif.GetTextureSlot(shader, texFiles[i], i);
+					workNif.GetTextureSlot(shape, texFiles[i], i);
 			}
 		}
 		else if (shader) {
 			for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-				workNif.GetTextureSlot(shader, texFiles[i], i);
+				workNif.GetTextureSlot(shape, texFiles[i], i);
 		}
 
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
@@ -3188,8 +3188,8 @@ void OutfitProject::CheckMerge(const std::string &sourceName, const std::string 
 		}
 
 		std::string sTexBase, tTexBase;
-		workNif.GetTextureSlot(sShader, sTexBase);
-		workNif.GetTextureSlot(tShader, tTexBase);
+		workNif.GetTextureSlot(source, sTexBase);
+		workNif.GetTextureSlot(target, tTexBase);
 
 		if (!StringsEqualInsens(sTexBase.c_str(), tTexBase.c_str())) {
 			// Base texture path differs (and possibly UV layout)

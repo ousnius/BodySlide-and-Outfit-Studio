@@ -1144,47 +1144,47 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		m->prop.emissiveMultiple = shader->GetEmissiveMultiple();
 
 		m->prop.alpha = shader->GetAlpha();
+	}
 
-		NiMaterialProperty* material = nif->GetMaterialProperty(shape);
-		if (material) {
-			m->emissive = material->IsEmissive();
+	NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+	if (material) {
+		m->emissive = material->IsEmissive();
 
-			m->prop.specularColor = material->GetSpecularColor();
-			m->prop.shininess = material->GetGlossiness();
+		m->prop.specularColor = material->GetSpecularColor();
+		m->prop.shininess = material->GetGlossiness();
 
-			emissiveColor = material->GetEmissiveColor();
-			m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
-			m->prop.emissiveMultiple = material->GetEmissiveMultiple();
+		Color4 emissiveColor = material->GetEmissiveColor();
+		m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
+		m->prop.emissiveMultiple = material->GetEmissiveMultiple();
 
-			m->prop.alpha = material->GetAlpha();
+		m->prop.alpha = material->GetAlpha();
+	}
+
+	NiStencilProperty* stencil = nif->GetStencilProperty(shape);
+	if (stencil) {
+		int drawMode = (stencil->flags & DRAW_MASK) >> DRAW_POS;
+
+		switch (drawMode) {
+		case DRAW_CW:
+			m->doublesided = false;
+			m->cullMode = GL_FRONT;
+			break;
+		case DRAW_BOTH:
+			m->doublesided = true;
+			m->cullMode = GL_BACK;
+			break;
+		case DRAW_CCW:
+		default:
+			m->doublesided = false;
+			m->cullMode = GL_BACK;
+			break;
 		}
+	}
 
-		NiStencilProperty* stencil = nif->GetStencilProperty(shape);
-		if (stencil) {
-			int drawMode = (stencil->flags & DRAW_MASK) >> DRAW_POS;
-
-			switch (drawMode) {
-			case DRAW_CW:
-				m->doublesided = false;
-				m->cullMode = GL_FRONT;
-				break;
-			case DRAW_BOTH:
-				m->doublesided = true;
-				m->cullMode = GL_BACK;
-				break;
-			case DRAW_CCW:
-			default:
-				m->doublesided = false;
-				m->cullMode = GL_BACK;
-				break;
-			}
-		}
-
-		NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
-		if (alphaProp) {
-			m->alphaFlags = alphaProp->flags;
-			m->alphaThreshold = alphaProp->threshold;
-		}
+	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
+	if (alphaProp) {
+		m->alphaFlags = alphaProp->flags;
+		m->alphaThreshold = alphaProp->threshold;
 	}
 
 	m->nVerts = nifVerts.size();

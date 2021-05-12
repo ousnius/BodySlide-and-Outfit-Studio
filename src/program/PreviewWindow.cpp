@@ -264,12 +264,12 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 			hasMat = false;
 
 			for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-				fromNif->GetTextureSlot(shader, texFiles[i], i);
+				fromNif->GetTextureSlot(shape, texFiles[i], i);
 		}
 	}
 	else if (shader) {
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-			fromNif->GetTextureSlot(shader, texFiles[i], i);
+			fromNif->GetTextureSlot(shape, texFiles[i], i);
 	}
 
 	for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {

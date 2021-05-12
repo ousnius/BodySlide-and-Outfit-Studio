@@ -174,17 +174,18 @@ void ShapeProperties::GetShader() {
 			emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
 			emissiveMultiple->SetValue(wxString::Format("%.4f", shader->GetEmissiveMultiple()));
 		}
-		else if (shader->HasType<BSShaderPPLightingProperty>()) {
-			NiMaterialProperty* material = nif->GetMaterialProperty(shape);
-			if (material) {
-				colorVec = material->GetSpecularColor() * 255.0f;
-				specularColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
-				specularPower->SetValue(wxString::Format("%.4f", material->GetGlossiness()));
+		else if (shader->HasType<NiMaterialProperty>())
+			specularStrength->Disable();
 
-				color = material->GetEmissiveColor() * 255.0f;
-				emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
-				emissiveMultiple->SetValue(wxString::Format("%.4f", material->GetEmissiveMultiple()));
-			}
+		NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+		if (material) {
+			colorVec = material->GetSpecularColor() * 255.0f;
+			specularColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
+			specularPower->SetValue(wxString::Format("%.4f", material->GetGlossiness()));
+
+			color = material->GetEmissiveColor() * 255.0f;
+			emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
+			emissiveMultiple->SetValue(wxString::Format("%.4f", material->GetEmissiveMultiple()));
 		}
 	}
 
@@ -296,6 +297,11 @@ void ShapeProperties::AddShader() {
 	std::unique_ptr<NiMaterialProperty> newMaterial = nullptr;
 
 	switch (targetGame) {
+	case OB:
+		newMaterial = std::make_unique<NiMaterialProperty>();
+		shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
+		break;
+
 	case FO3:
 	case FONV:
 		newShader = std::make_unique<BSShaderPPLightingProperty>();
@@ -311,7 +317,7 @@ void ShapeProperties::AddShader() {
 	}
 
 	NiShader* shader = nif->GetShader(shape);
-	if (shader) {
+	if (shader && shader->HasTextureSet()) {
 		auto nifTexSet = std::make_unique<BSShaderTextureSet>(nif->GetHeader().GetVersion());
 		shader->TextureSetRef()->index = nif->GetHeader().AddBlock(std::move(nifTexSet));
 	}
@@ -375,7 +381,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		int blockType = 0;
 		for (int i = 0; i < 10; i++) {
 			std::string texPath;
-			blockType = nif->GetTextureSlot(shader, texPath, i);
+			blockType = nif->GetTextureSlot(shape, texPath, i);
 			if (!blockType)
 				continue;
 
@@ -396,13 +402,27 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			stTexGrid->HideRow(9);
 		}
 
+		// NiTexturingProperty/NiSourceTexture
+		if (blockType == 3) {
+			stTexGrid->SetRowLabelValue(0, "Base");
+			stTexGrid->SetRowLabelValue(1, "Dark");
+			stTexGrid->SetRowLabelValue(2, "Detail");
+			stTexGrid->SetRowLabelValue(3, "Gloss");
+			stTexGrid->SetRowLabelValue(4, "Glow");
+			stTexGrid->SetRowLabelValue(5, "Bump Map");
+			stTexGrid->SetRowLabelValue(6, "Decal 0");
+			stTexGrid->SetRowLabelValue(7, "Decal 1");
+			stTexGrid->SetRowLabelValue(8, "Decal 2");
+			stTexGrid->SetRowLabelValue(9, "Decal 3");
+		}
+
 		if (dlg.ShowModal() == wxID_OK) {
 			auto dataPath = Config["GameDataPath"];
 			std::vector<std::string> texFiles(10);
 			for (int i = 0; i < 10; i++) {
 				std::string texPath = stTexGrid->GetCellValue(i, 0);
 				std::string texPath_bs = ToBackslashes(texPath);
-				nif->SetTextureSlot(shader, texPath_bs, i);
+				nif->SetTextureSlot(shape, texPath_bs, i);
 
 				if (!texPath.empty())
 					texFiles[i] = dataPath + texPath;
@@ -501,8 +521,8 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 				// Copy texture paths
 				for (int i = 0; i < 10; i++) {
 					std::string texPath;
-					nif->GetTextureSlot(shapeChoiceShader, texPath, i);
-					nif->SetTextureSlot(shapeShader, texPath, i);
+					nif->GetTextureSlot(shapeChoice, texPath, i);
+					nif->SetTextureSlot(shape, texPath, i);
 				}
 
 				auto texturePaths = os->project->GetShapeTextures(shapeChoice);
@@ -527,6 +547,9 @@ void ShapeProperties::GetGeometry() {
 
 	currentDynamic = shape->HasType<BSDynamicTriShape>();
 	dynamic->SetValue(currentDynamic);
+
+	subIndex->Disable();
+	dynamic->Disable();
 
 	BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (bsTriShape) {
@@ -784,20 +807,21 @@ void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 void ShapeProperties::ApplyChanges() {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 
+	wxColour color = specularColor->GetColour();
+	Vector3 specColor(color.Red(), color.Green(), color.Blue());
+	specColor /= 255.0f;
+	float specStrength = atof(specularStrength->GetValue().c_str());
+	float specPower = atof(specularPower->GetValue().c_str());
+
+	color = emissiveColor->GetColour();
+	Color4 emisColor(color.Red(), color.Green(), color.Blue(), color.Alpha());
+	emisColor /= 255.0f;
+	float emisMultiple = atof(emissiveMultiple->GetValue().c_str());
+
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
 		std::string name = shaderName->GetValue();
 		uint32_t type = shaderType->GetSelection();
-		wxColour color = specularColor->GetColour();
-		Vector3 specColor(color.Red(), color.Green(), color.Blue());
-		specColor /= 255.0f;
-		float specStrength = atof(specularStrength->GetValue().c_str());
-		float specPower = atof(specularPower->GetValue().c_str());
-
-		color = emissiveColor->GetColour();
-		Color4 emisColor(color.Red(), color.Green(), color.Blue(), color.Alpha());
-		emisColor /= 255.0f;
-		float emisMultiple = atof(emissiveMultiple->GetValue().c_str());
 
 		shader->name.get() = name;
 		shader->SetVertexColors(vertexColors->IsChecked());
@@ -832,16 +856,16 @@ void ShapeProperties::ApplyChanges() {
 			}
 
 			shader->SetShaderType(type);
-
-			NiMaterialProperty* material = nif->GetMaterialProperty(shape);
-			if (material) {
-				material->SetSpecularColor(specColor);
-				material->SetGlossiness(specPower);
-
-				material->SetEmissiveColor(emisColor);
-				material->SetEmissiveMultiple(emisMultiple);
-			}
 		}
+	}
+
+	NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+	if (material) {
+		material->SetSpecularColor(specColor);
+		material->SetGlossiness(specPower);
+
+		material->SetEmissiveColor(emisColor);
+		material->SetEmissiveMultiple(emisMultiple);
 	}
 
 	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);

@@ -781,14 +781,13 @@ void EditUVCanvas::SelectMore() {
 void EditUVCanvas::InitMeshes() {
 	auto nif = editUV->GetNIF();
 	auto shape = editUV->GetShape();
-	auto shader = nif->GetShader(shape);
 	auto sliderName = editUV->GetSliderName();
 	auto& project = editUV->GetParent()->project;
 
 	planeMesh = uvSurface.AddVisPlane(Matrix4(), Vector2(64.0f, 64.0f), 64.0f);
 	if (planeMesh) {
 		std::string texFile;
-		nif->GetTextureSlot(shader, texFile, 0);
+		nif->GetTextureSlot(shape, texFile, 0);
 
 		texFile = std::regex_replace(texFile, std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
 		texFile = std::regex_replace(texFile, std::regex("^(.*?)/textures/", std::regex_constants::icase), "");				// Remove everything before the first occurence of "/textures/"
