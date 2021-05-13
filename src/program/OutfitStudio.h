@@ -871,6 +871,7 @@ public:
 	OutfitProject* project = nullptr;
 	ShapeItemData* activeItem = nullptr;
 	std::string activeSlider;
+	std::string lastActiveSlider;
 	bool bEditSlider;
 	std::string contextBone;
 	std::vector<int> triParts;  // the partition index for each triangle, or -1 for none
@@ -992,7 +993,7 @@ public:
 
 	bool NotifyStrokeStarting();
 
-	void EnterSliderEdit(const std::string& sliderName);
+	void EnterSliderEdit(const std::string& sliderName = "");
 	void ExitSliderEdit();
 	void MenuEnterSliderEdit();
 	void MenuExitSliderEdit();
@@ -1155,6 +1156,8 @@ private:
 	std::vector<RefTemplate> refTemplates;
 
 	void createSliderGUI(const std::string& name, const size_t id, wxScrolledWindow* wnd, wxSizer* rootSz);
+
+	void ScrollWindowIntoView(wxScrolledWindow* scrolled, wxWindow* window);
 	void HighlightSlider(const std::string& name);
 
 	void UpdateReferenceTemplates();

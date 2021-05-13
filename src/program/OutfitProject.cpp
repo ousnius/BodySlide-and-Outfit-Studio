@@ -412,7 +412,7 @@ void OutfitProject::GetSliderList(std::vector<std::string>& sliderNames) {
 
 std::string OutfitProject::GetSliderName(const size_t index) {
 	if (!ValidSlider(index))
-		return "";
+		return std::string();
 
 	return activeSet[index].name;
 }

@@ -1912,6 +1912,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 		glView->GetUndoHistory()->ClearHistory();
 
 		activeSlider.clear();
+		lastActiveSlider.clear();
 		bEditSlider = false;
 		MenuExitSliderEdit();
 
@@ -2497,7 +2498,16 @@ std::string OutfitStudioFrame::GetActiveBone() {
 }
 
 void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
-	if (sliderName.empty())
+	std::string sliderNameEdit = sliderName;
+
+	if (sliderNameEdit.empty()) {
+		if (lastActiveSlider.empty())
+			sliderNameEdit = project->GetSliderName(0);
+		else
+			sliderNameEdit = lastActiveSlider;
+	}
+
+	if (sliderNameEdit.empty())
 		return;
 
 	if (bEditSlider) {
@@ -2510,11 +2520,12 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 		}
 	}
 
-	SliderDisplay* d = sliderDisplays[sliderName];
+	SliderDisplay* d = sliderDisplays[sliderNameEdit];
 	if (!d)
 		return;
 
-	activeSlider = sliderName;
+	activeSlider = sliderNameEdit;
+	lastActiveSlider = activeSlider;
 	bEditSlider = true;
 
 	d->slider->SetValue(100);
@@ -2526,7 +2537,6 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 	}
 
 	d->sliderNameCheck->Enable(false);
-	d->slider->SetFocus();
 	d->btnMinus->Show();
 	d->btnPlus->Show();
 	d->sliderPane->Layout();
@@ -2537,19 +2547,21 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 }
 
 void OutfitStudioFrame::ExitSliderEdit() {
-	SliderDisplay* d = sliderDisplays[activeSlider];
-	if (d) {
-		d->sliderNameCheck->Enable(true);
-		d->slider->SetValue(0);
-		SetSliderValue(activeSlider, 0);
-		ShowSliderEffect(activeSlider, true);
-		d->slider->SetFocus();
-		d->btnMinus->Hide();
-		d->btnPlus->Hide();
-		d->sliderPane->Layout();
+	if (!activeSlider.empty()) {
+		SliderDisplay* d = sliderDisplays[activeSlider];
+		if (d) {
+			d->sliderNameCheck->Enable(true);
+			d->slider->SetValue(0);
+			SetSliderValue(activeSlider, 0);
+			ShowSliderEffect(activeSlider, true);
+			d->btnMinus->Hide();
+			d->btnPlus->Hide();
+			d->sliderPane->Layout();
+		}
+
+		activeSlider.clear();
 	}
 
-	activeSlider.clear();
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
@@ -2808,6 +2820,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	glView->GetUndoHistory()->ClearHistory();
 
 	activeSlider.clear();
+	lastActiveSlider.clear();
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
@@ -3109,6 +3122,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 	glView->GetUndoHistory()->ClearHistory();
 
 	activeSlider.clear();
+	lastActiveSlider.clear();
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
@@ -4222,6 +4236,7 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	glView->GetUndoHistory()->ClearHistory();
 
 	activeSlider.clear();
+	lastActiveSlider.clear();
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
@@ -6298,11 +6313,21 @@ void OutfitStudioFrame::OnSwapBrush(wxCommandEvent& WXUNUSED(event)) {
 		SelectTool(ToolID::ColorBrush);
 }
 
+void OutfitStudioFrame::ScrollWindowIntoView(wxScrolledWindow* scrolled, wxWindow* window) {
+	// "window" must be an immediate child of "scrolled"
+	int scrollRateY = 0;
+	scrolled->GetScrollPixelsPerUnit(nullptr, &scrollRateY);
+
+	wxPoint window_pos = scrolled->CalcUnscrolledPosition(window->GetPosition());
+	scrolled->Scroll(0, window_pos.y / scrollRateY);
+}
+
 void OutfitStudioFrame::HighlightSlider(const std::string& name) {
 	for (auto &d : sliderDisplays) {
 		if (d.first == name) {
 			d.second->hilite = true;
 			d.second->sliderPane->SetBackgroundColour(wxColour(125, 77, 138));
+			ScrollWindowIntoView(sliderScroll, d.second->sliderPane);
 		}
 		else {
 			d.second->hilite = false;
@@ -6621,6 +6646,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
 	activeSlider.clear();
+	lastActiveSlider.clear();
 
 	wxString addedDiffs;
 	auto diffs = osd.GetDataDiffs();
@@ -6709,6 +6735,7 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
 	activeSlider.clear();
+	lastActiveSlider.clear();
 
 	wxString addedMorphs;
 	auto morphs = tri.GetMorphs();
@@ -7117,6 +7144,7 @@ void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 
 		MenuExitSliderEdit();
 		activeSlider.clear();
+		lastActiveSlider.clear();
 		bEditSlider = false;
 	}
 
@@ -9703,8 +9731,16 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 		os->SelectTool(ToolID::ColorBrush);
 	else if (event.GetUnicodeKey() == '9')
 		os->SelectTool(ToolID::AlphaBrush);
-	else if (event.GetKeyCode() == WXK_SPACE)
-		os->ToggleBrushPane();
+	else if (event.GetKeyCode() == WXK_SPACE) {
+		if (event.ControlDown()) {
+			if (!os->activeSlider.empty())
+				os->ExitSliderEdit();
+			else
+				os->EnterSliderEdit();
+		}
+		else
+			os->ToggleBrushPane();
+	}
 
 	event.Skip();
 }
@@ -10993,9 +11029,43 @@ void wxGLPanel::OnSize(wxSizeEvent& event) {
 }
 
 void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
-	if (wxGetKeyState(wxKeyCode('S')))  {
+	int delt = event.GetWheelRotation();
+
+	if (event.ControlDown()) {
+		std::string sliderName = os->lastActiveSlider;
+
+		if (sliderName.empty())
+			sliderName = os->project->GetSliderName(0);
+
+		if (sliderName.empty())
+			return;
+
+		if (!os->activeSlider.empty())
+			os->ExitSliderEdit();
+
+		size_t sliderCount = os->project->SliderCount();
+		size_t sliderIndex = 0;
+		if (os->project->SliderIndexFromName(sliderName, sliderIndex)) {
+			if (delt < 0) {
+				++sliderIndex;
+
+				if (sliderIndex == sliderCount)
+					sliderIndex = 0;
+
+				os->EnterSliderEdit(os->project->GetSliderName(sliderIndex));
+			}
+			else {
+				if (sliderIndex == 0)
+					sliderIndex = sliderCount - 1;
+				else
+					--sliderIndex;
+
+				os->EnterSliderEdit(os->project->GetSliderName(sliderIndex));
+			}
+		}
+	}
+	else if (wxGetKeyState(wxKeyCode('S')))  {
 		wxPoint p = event.GetPosition();
-		int delt = event.GetWheelRotation();
 
 		if (brushMode) {
 			// Adjust brush size
@@ -11007,16 +11077,15 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 			os->CheckBrushBounds();
 			os->UpdateBrushPane();
 			gls.UpdateCursor(p.x, p.y, bGlobalBrushCollision);
+			gls.RenderOneFrame();
 		}
 	}
 	else {
-		int delt = event.GetWheelRotation();
 		gls.DollyCamera(delt);
 		UpdateTransformTool();
 		UpdatePivot();
+		gls.RenderOneFrame();
 	}
-
-	gls.RenderOneFrame();
 }
 
 void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
