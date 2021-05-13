@@ -946,7 +946,7 @@ void ShapeProperties::ApplyChanges() {
 	else {
 		nif->DeleteSkinning(shape);
 		os->project->GetWorkAnim()->ClearShape(shape->name.get());
-		os->AnimationGUIFromProj();
+		os->UpdateAnimationGUI();
 	}
 
 	for (size_t i = 0; i < extraDataIndices.size(); i++) {

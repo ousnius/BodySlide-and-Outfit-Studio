@@ -538,6 +538,12 @@
 														</object>
 													</object>
 													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxEXPAND</flag>
+														<border>0</border>
+														<object class="unknown" name="bonesFilter" />
+													</object>
+													<object class="sizeritem">
 														<option>1</option>
 														<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
 														<border>2</border>

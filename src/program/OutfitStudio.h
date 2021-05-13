@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/splitter.h>
 #include <wx/collpane.h>
 #include <wx/clrpicker.h>
+#include <wx/srchctrl.h>
 #include <wx/tokenzr.h>
 #include <wx/cmdline.h>
 #include <wx/stdpaths.h>
@@ -877,6 +878,9 @@ public:
 	std::vector<int> triParts;  // the partition index for each triangle, or -1 for none
 	std::vector<int> triSParts;  // the segment partition index for each triangle, or -1 for none
 
+	std::unordered_set<std::string> lastSelectedBones;
+	std::unordered_set<std::string> lastNormalizeBones;
+
 	wxTreeCtrl* outfitShapes = nullptr;
 	wxTreeCtrl* outfitBones = nullptr;
 	wxPanel* colorSettings = nullptr;
@@ -904,6 +908,9 @@ public:
 	wxToolBar* toolBarH = nullptr;
 	wxToolBar* toolBarV = nullptr;
 	wxStatusBar* statusBar = nullptr;
+
+	wxSearchCtrl* sliderFilter = nullptr;
+	wxSearchCtrl* bonesFilter = nullptr;
 
 	wxStateButton* currentTabButton = nullptr;
 	wxStateButton* meshTabButton = nullptr;
@@ -981,7 +988,8 @@ public:
 
 	void LockShapeSelect();
 	void UnlockShapeSelect();
-	void AnimationGUIFromProj();
+	void UpdateAnimationGUI();
+	void UpdateBoneTree();
 	void RefreshGUIFromProj(bool render = true);
 	void MeshesFromProj(const bool reloadTextures = false);
 	void MeshFromProj(nifly::NiShape* shape, const bool reloadTextures = false);
@@ -1241,6 +1249,8 @@ private:
 
 	void OnSliderFilterChanged(wxCommandEvent&);
 	void DoFilterSliders();
+
+	void OnBonesFilterChanged(wxCommandEvent&);
 
 	void ToggleVisibility(wxTreeItemId firstItem = wxTreeItemId());
 	void OnShapeVisToggle(wxTreeEvent& event);

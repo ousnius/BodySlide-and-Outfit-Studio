@@ -221,7 +221,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 
 	if (workNif.IsValid()) {
 		workAnim.CleanupBones();
-		owner->AnimationGUIFromProj();
+		owner->UpdateAnimationGUI();
 
 		NifFile clone(workNif);
 		ChooseClothData(clone);
@@ -3473,7 +3473,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 
 int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef) {
 	workAnim.CleanupBones();
-	owner->AnimationGUIFromProj();
+	owner->UpdateAnimationGUI();
 
 	NifFile clone(workNif);
 	ChooseClothData(clone);
