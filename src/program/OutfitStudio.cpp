@@ -7638,13 +7638,47 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgMoveShape")) {
-		XRCCTRL(dlg, "msOldOffset", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnMoveShapeOldOffset, this);
-		XRCCTRL(dlg, "msSliderX", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnMoveShapeSlider, this);
-		XRCCTRL(dlg, "msSliderY", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnMoveShapeSlider, this);
-		XRCCTRL(dlg, "msSliderZ", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnMoveShapeSlider, this);
-		XRCCTRL(dlg, "msTextX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnMoveShapeText, this);
-		XRCCTRL(dlg, "msTextY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnMoveShapeText, this);
-		XRCCTRL(dlg, "msTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnMoveShapeText, this);
+		auto sliderMoved = [this, &dlg](wxCommandEvent&) {
+			Vector3 slider;
+			slider.x = XRCCTRL(dlg, "msSliderX", wxSlider)->GetValue() / 1000.0f;
+			slider.y = XRCCTRL(dlg, "msSliderY", wxSlider)->GetValue() / 1000.0f;
+			slider.z = XRCCTRL(dlg, "msSliderZ", wxSlider)->GetValue() / 1000.0f;
+
+			XRCCTRL(dlg, "msTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.x));
+			XRCCTRL(dlg, "msTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.y));
+			XRCCTRL(dlg, "msTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.z));
+
+			UpdateMovePreview(dlg);
+		};
+
+		auto textChanged = [this, &dlg](wxCommandEvent&) {
+			Vector3 changed;
+			changed.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().c_str());
+			changed.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().c_str());
+			changed.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().c_str());
+
+			XRCCTRL(dlg, "msSliderX", wxSlider)->SetValue(changed.x * 1000);
+			XRCCTRL(dlg, "msSliderY", wxSlider)->SetValue(changed.y * 1000);
+			XRCCTRL(dlg, "msSliderZ", wxSlider)->SetValue(changed.z * 1000);
+
+			UpdateMovePreview(dlg);
+		};
+
+		auto mirrorAxisChanged = [this, &dlg](wxCommandEvent&) {
+			UpdateMovePreview(dlg);
+		};
+
+		XRCCTRL(dlg, "msSliderX", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "msSliderY", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "msSliderZ", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+
+		XRCCTRL(dlg, "msTextX", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "msTextY", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "msTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+
+		XRCCTRL(dlg, "mirrorAxisX", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
+		XRCCTRL(dlg, "mirrorAxisY", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
+		XRCCTRL(dlg, "mirrorAxisZ", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
 		if (dlg.ShowModal() != wxID_OK) {
@@ -7661,56 +7695,7 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudioFrame::OnMoveShapeOldOffset(wxCommandEvent& event) {
-	wxWindow* parent = ((wxButton*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	XRCCTRL(*parent, "msSliderX", wxSlider)->SetValue(0);
-	XRCCTRL(*parent, "msSliderY", wxSlider)->SetValue(-2544);
-	XRCCTRL(*parent, "msSliderZ", wxSlider)->SetValue(3287);
-	XRCCTRL(*parent, "msTextX", wxTextCtrl)->ChangeValue("0.00000");
-	XRCCTRL(*parent, "msTextY", wxTextCtrl)->ChangeValue("-2.54431");
-	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->ChangeValue("3.28790");
-
-	PreviewMove(Vector3(0.00000f, -2.54431f, 3.28790f));
-}
-
-void OutfitStudioFrame::OnMoveShapeSlider(wxCommandEvent& event) {
-	wxWindow* parent = ((wxSlider*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	Vector3 slider;
-	slider.x = XRCCTRL(*parent, "msSliderX", wxSlider)->GetValue() / 1000.0f;
-	slider.y = XRCCTRL(*parent, "msSliderY", wxSlider)->GetValue() / 1000.0f;
-	slider.z = XRCCTRL(*parent, "msSliderZ", wxSlider)->GetValue() / 1000.0f;
-
-	XRCCTRL(*parent, "msTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.x));
-	XRCCTRL(*parent, "msTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.y));
-	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.z));
-
-	PreviewMove(slider);
-}
-
-void OutfitStudioFrame::OnMoveShapeText(wxCommandEvent& event) {
-	wxWindow* parent = ((wxTextCtrl*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-	
-	Vector3 changed;
-	changed.x = atof(XRCCTRL(*parent, "msTextX", wxTextCtrl)->GetValue().c_str());
-	changed.y = atof(XRCCTRL(*parent, "msTextY", wxTextCtrl)->GetValue().c_str());
-	changed.z = atof(XRCCTRL(*parent, "msTextZ", wxTextCtrl)->GetValue().c_str());
-
-	XRCCTRL(*parent, "msSliderX", wxSlider)->SetValue(changed.x * 1000);
-	XRCCTRL(*parent, "msSliderY", wxSlider)->SetValue(changed.y * 1000);
-	XRCCTRL(*parent, "msSliderZ", wxSlider)->SetValue(changed.z * 1000);
-
-	PreviewMove(changed);
-}
-
-void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
+void OutfitStudioFrame::UpdateMovePreview(const wxWindow& dialog) {
 	std::unordered_map<uint16_t, float> mask;
 	std::unordered_map<uint16_t, float>* mptr = nullptr;
 	std::vector<Vector3> verts;
@@ -7722,6 +7707,15 @@ void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
 			glView->GetUndoHistory()->PopState();
 		}
 	}
+
+	Vector3 changed;
+	changed.x = atof(XRCCTRL(dialog, "msTextX", wxTextCtrl)->GetValue().c_str());
+	changed.y = atof(XRCCTRL(dialog, "msTextY", wxTextCtrl)->GetValue().c_str());
+	changed.z = atof(XRCCTRL(dialog, "msTextZ", wxTextCtrl)->GetValue().c_str());
+
+	bool mirrorAxisX = XRCCTRL(dialog, "mirrorAxisX", wxCheckBox)->IsChecked();
+	bool mirrorAxisY = XRCCTRL(dialog, "mirrorAxisY", wxCheckBox)->IsChecked();
+	bool mirrorAxisZ = XRCCTRL(dialog, "mirrorAxisZ", wxCheckBox)->IsChecked();
 
 	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UT_VERTPOS;
@@ -7737,15 +7731,11 @@ void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
 		if (!mask.empty())
 			mptr = &mask;
 
-		if (!bEditSlider) {
-			Vector3 diff = changed - previewMove;
-			project->OffsetShape(shape, diff, mptr);
-		}
-
 		UndoStateShape uss;
 		uss.shapeName = shape->name.get();
 
 		for (size_t i = 0; i < verts.size(); i++) {
+			Vector3& vertPos = verts[i];
 			Vector3 diff = changed;
 
 			if (mptr)
@@ -7754,8 +7744,15 @@ void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
 			if (diff.IsZero(true))
 				continue;
 
-			Vector3 newPos = verts[i] + diff;
-			uss.pointStartState[i] = glView->VecToMeshCoords(verts[i]);
+			if (mirrorAxisX && vertPos.x < 0.0f)
+				diff.x = -diff.x;
+			if (mirrorAxisY && vertPos.y < 0.0f)
+				diff.y = -diff.y;
+			if (mirrorAxisZ && vertPos.z < 0.0f)
+				diff.z = -diff.z;
+
+			Vector3 newPos = vertPos + diff;
+			uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
 			uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
 		}
 

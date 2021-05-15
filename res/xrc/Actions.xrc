@@ -113,14 +113,6 @@
 			<orient>wxVERTICAL</orient>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxButton" name="msOldOffset">
-					<label>CBBE to Vanilla (old)</label>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
@@ -250,6 +242,50 @@
 									<value>0.00000</value>
 								</object>
 							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxBOTTOM</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="mirrorAxisLabel">
+					<label>Mirror Axis</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxBOTTOM</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="mirrorAxisX">
+							<label>X</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="mirrorAxisY">
+							<label>Y</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="mirrorAxisZ">
+							<label>Z</label>
+							<checked>0</checked>
 						</object>
 					</object>
 				</object>

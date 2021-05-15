@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.2\n"
+"X-Generator: Poedit 2.4.3\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -1234,9 +1234,6 @@ msgstr "Sichtfeld: 65"
 
 msgid "Move Shape"
 msgstr "Modell verschieben"
-
-msgid "CBBE to Vanilla (old)"
-msgstr "CBBE zu Vanilla (alt)"
 
 msgid "Scale Shape"
 msgstr "Modell skalieren"
@@ -2685,8 +2682,7 @@ msgstr "Projekt entladen...\tCtrl+W"
 msgid "Unloads the project and creates an empty new one."
 msgstr "Entläd das Projekt und erstellt ein leeres neues."
 
-msgid ""
-"Do you really want to unload the project? All unsaved changes will be lost."
+msgid "Unload the project? All unsaved changes will be lost."
 msgstr ""
 "Wollen Sie das Projekt wirklich entladen? Alle nicht gespeicherten "
 "Änderungen gehen verloren."

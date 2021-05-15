@@ -1342,10 +1342,7 @@ private:
 	void OnEnterClose(wxKeyEvent& event);
 
 	void OnMoveShape(wxCommandEvent& event);
-	void OnMoveShapeOldOffset(wxCommandEvent& event);
-	void OnMoveShapeSlider(wxCommandEvent& event);
-	void OnMoveShapeText(wxCommandEvent& event);
-	void PreviewMove(const nifly::Vector3& changed);
+	void UpdateMovePreview(const wxWindow& dialog);
 
 	void OnScaleShape(wxCommandEvent& event);
 	void OnScaleShapeSlider(wxCommandEvent& event);
