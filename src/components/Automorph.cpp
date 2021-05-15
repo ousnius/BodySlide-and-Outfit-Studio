@@ -377,7 +377,7 @@ std::string Automorph::ResultDataName(const std::string& shapeName, const std::s
 	return f->second;
 }
 
-void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, const int maxResults, const bool noSqueeze, const bool axisX, const bool axisY, const bool axisZ) {
+void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, int maxResults, bool noSqueeze, bool solidMode, bool axisX, bool axisY, bool axisZ) {
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
@@ -386,15 +386,21 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 		return;
 
 	mesh* m = sourceShapes[shapeName];
+	std::string dataName = shapeName + sliderName;
 
-	if (resultDiffData.TargetMatch(shapeName + sliderName, shapeName)) {
+	if (resultDiffData.TargetMatch(dataName, shapeName)) {
 		if (m->vcolors)
-			resultDiffData.ZeroVertDiff(shapeName + sliderName, m->vcolors.get());
+			resultDiffData.ZeroVertDiff(dataName, m->vcolors.get());
 		else
-			resultDiffData.ClearSet(shapeName + sliderName);
+			resultDiffData.ClearSet(dataName);
 	}
 
-	resultDiffData.AddEmptySet(shapeName + sliderName, shapeName);
+	resultDiffData.AddEmptySet(dataName, shapeName);
+	auto resultDiffSet = resultDiffData.GetDiffSet(dataName);
+
+	std::vector<Vector3> totalMoveList;
+	std::vector<float> invDist;
+	std::vector<Vector3> effectVector;
 
 	for (int i = 0; i < m->nVerts; i++) {
 		std::vector<kd_query_result>* vertProx = &prox_cache[i];
@@ -403,22 +409,24 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 			nValues = maxResults;
 
 		int nearMoves = 0;
-		double invDistTotal = 0.0;
+		float invDistTotal = 0.0;
 
-		double weight;
+		float weight;
 		Vector3 totalMove;
-		std::vector<double> invDist(nValues);
-		std::vector<Vector3> effectVector(nValues);
+
+		invDist.assign(nValues, 0.0f);
+		effectVector.assign(nValues, Vector3());
+
 		for (int j = 0; j < nValues; j++) {
 			uint16_t vi = (*vertProx)[j].vertex_index;
 			const Vector3* v = (*vertProx)[j].v;
 			auto diffItem = diffData->find(vi);
 			if (diffItem != diffData->end()) {
 				weight = (*vertProx)[j].distance;	// "weight" is just a placeholder here...
-				if (weight == 0.0)
-					invDist[nearMoves] = 1000.0;	// Exact match, choose big nearness weight.
+				if (weight == 0.0f)
+					invDist[nearMoves] = 1000.0f;	// Exact match, choose big nearness weight.
 				else
-					invDist[nearMoves] = 1.0 / weight;
+					invDist[nearMoves] = 1.0f / weight;
 
 				invDistTotal += invDist[nearMoves];
 
@@ -448,15 +456,69 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 		totalMove.Zero();
 		for (int j = 0; j < nearMoves; j++) {
 			weight = invDist[j] / invDistTotal;
-			totalMove += (effectVector[j] * (float)weight);
+			totalMove += (effectVector[j] * weight);
 		}
 
 		if (m->vcolors && bEnableMask)
-			totalMove = totalMove * (1.0f - m->vcolors[i].x);
+			totalMove *= (1.0f - m->vcolors[i].x);
 
-		if (totalMove.DistanceTo(Vector3(0.0f, 0.0f, 0.0f)) < EPSILON)
+		if (totalMove.IsZero(true))
 			continue;
 
-		resultDiffData.UpdateDiff(shapeName + sliderName, shapeName, i, totalMove);
+		if (!solidMode) {
+			(*resultDiffSet)[i] = totalMove;
+		}
+		else {
+			totalMoveList.reserve(m->nVerts);
+			totalMoveList.push_back(totalMove);
+		}
+	}
+
+	if (solidMode && !totalMoveList.empty()) {
+		Vector3 totalSolidMove;
+		Vector3 totalSolidMoveNeg;
+
+		for (const auto &mv : totalMoveList) {
+			if (mv.x >= 0.0f) {
+				if (mv.x > totalSolidMove.x)
+					totalSolidMove.x = mv.x;
+			}
+			else {
+				if (mv.x < totalSolidMoveNeg.x)
+					totalSolidMoveNeg.x = mv.x;
+			}
+
+			if (mv.y >= 0.0f) {
+				if (mv.y > totalSolidMove.y)
+					totalSolidMove.y = mv.y;
+			}
+			else {
+				if (mv.y < totalSolidMoveNeg.y)
+					totalSolidMoveNeg.y = mv.y;
+			}
+
+			if (mv.z >= 0.0f) {
+				if (mv.z > totalSolidMove.z)
+					totalSolidMove.z = mv.z;
+			}
+			else {
+				if (mv.z < totalSolidMoveNeg.z)
+					totalSolidMoveNeg.z = mv.z;
+			}
+		}
+
+		totalSolidMove += totalSolidMoveNeg;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			Vector3 totalMove = totalSolidMove;
+
+			if (m->vcolors && bEnableMask)
+				totalMove *= (1.0f - m->vcolors[i].x);
+
+			if (totalMove.IsZero(true))
+				continue;
+
+			(*resultDiffSet)[i] = totalMove;
+		}
 	}
 }

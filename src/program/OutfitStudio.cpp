@@ -7477,7 +7477,7 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options) {
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->ChangeValue(wxString::Format("%d", changed));
 		});
 
-		auto noTargetLimitAction = [&]() {
+		XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->Bind(wxEVT_CHECKBOX, [&dlg](wxCommandEvent&) {
 			bool noTargetLimit = XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->IsChecked();
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Enable(!noTargetLimit);
 			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Enable(!noTargetLimit);
@@ -7486,26 +7486,38 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options) {
 				XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("5.00000");
 				XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(5000);
 			}
-		};
-
-		XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->Bind(wxEVT_CHECKBOX, [&dlg, &noTargetLimitAction](wxCommandEvent&) {
-			noTargetLimitAction();
 		});
 
-		XRCCTRL(dlg, "presetDefault", wxButton)->Bind(wxEVT_BUTTON, [&dlg, &noTargetLimitAction](wxCommandEvent&) {
+		XRCCTRL(dlg, "presetDefault", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
 			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("10.00000");
 			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(10000);
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Enable();
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Enable();
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->ChangeValue("10");
 			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->SetValue(10);
-			noTargetLimitAction();
 		});
 
-		XRCCTRL(dlg, "presetEvenMovement", wxButton)->Bind(wxEVT_BUTTON, [&dlg, &noTargetLimitAction](wxCommandEvent&) {
+		XRCCTRL(dlg, "presetEvenMovement", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
 			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(true);
 			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(true);
-			noTargetLimitAction();
+			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Disable();
+			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("5.00000");
+			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(5000);
+		});
+
+		XRCCTRL(dlg, "presetSolidObject", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
+			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Disable();
+			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("10.00000");
+			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(10000);
 		});
 
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
@@ -7520,6 +7532,7 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options) {
 				options.maxResults = std::numeric_limits<int>::max();
 
 			options.noSqueeze = XRCCTRL(dlg, "noSqueeze", wxCheckBox)->IsChecked();
+			options.solidMode = XRCCTRL(dlg, "solidMode", wxCheckBox)->IsChecked();
 			options.axisX = XRCCTRL(dlg, "axisX", wxCheckBox)->IsChecked();
 			options.axisY = XRCCTRL(dlg, "axisY", wxCheckBox)->IsChecked();
 			options.axisZ = XRCCTRL(dlg, "axisZ", wxCheckBox)->IsChecked();

@@ -943,6 +943,29 @@
 						<option>0</option>
 						<flag>wxLEFT|wxBOTTOM</flag>
 						<border>5</border>
+						<object class="wxStaticText" name="solidModeLabel">
+							<label>Solid Mode</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="solidMode">
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
 						<object class="wxStaticText" name="axisLabel">
 							<label>Axis</label>
 							<wrap>-1</wrap>
@@ -1020,6 +1043,15 @@
 								<object class="wxButton" name="presetEvenMovement">
 									<size>-1,25</size>
 									<label>Even Movement</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="presetSolidObject">
+									<size>-1,25</size>
+									<label>Solid Object</label>
 								</object>
 							</object>
 						</object>

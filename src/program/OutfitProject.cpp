@@ -2228,7 +2228,7 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 	std::string refTarget = ShapeToTarget(baseShape->name.get());
 	for (size_t i = 0; i < activeSet.size(); i++)
 		if (SliderShow(i) && !SliderZap(i) && !SliderUV(i))
-			morpher.GenerateResultDiff(shape->name.get(), activeSet[i].name, activeSet[i].TargetDataName(refTarget), options.maxResults, options.noSqueeze, options.axisX, options.axisY, options.axisZ);
+			morpher.GenerateResultDiff(shape->name.get(), activeSet[i].name, activeSet[i].TargetDataName(refTarget), options.maxResults, options.noSqueeze, options.solidMode, options.axisX, options.axisY, options.axisZ);
 }
 
 void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const std::vector<uint16_t> &indices) {
