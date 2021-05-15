@@ -1005,6 +1005,7 @@ public:
 	void ExitSliderEdit();
 	void MenuEnterSliderEdit();
 	void MenuExitSliderEdit();
+	void ScrollToActiveSlider();
 
 	void SelectTool(ToolID tool);
 

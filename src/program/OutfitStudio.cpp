@@ -2607,6 +2607,16 @@ void OutfitStudioFrame::MenuExitSliderEdit() {
 	menuBar->Enable(XRCID("sliderProperties"), false);
 }
 
+void OutfitStudioFrame::ScrollToActiveSlider() {
+	if (!activeSlider.empty()) {
+		for (auto &d : sliderDisplays) {
+			if (d.first == activeSlider) {
+				ScrollWindowIntoView(sliderScroll, d.second->sliderPane);
+			}
+		}
+	}
+}
+
 void OutfitStudioFrame::SelectTool(ToolID tool) {
 	if (tool == ToolID::Select) {
 		glView->SetEditMode(false);
@@ -6407,7 +6417,6 @@ void OutfitStudioFrame::HighlightSlider(const std::string& name) {
 		if (d.first == name) {
 			d.second->hilite = true;
 			d.second->sliderPane->SetBackgroundColour(wxColour(125, 77, 138));
-			ScrollWindowIntoView(sliderScroll, d.second->sliderPane);
 		}
 		else {
 			d.second->hilite = false;
@@ -9815,10 +9824,13 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 		os->SelectTool(ToolID::AlphaBrush);
 	else if (event.GetKeyCode() == WXK_SPACE) {
 		if (event.ControlDown()) {
-			if (!os->activeSlider.empty())
+			if (!os->activeSlider.empty()) {
 				os->ExitSliderEdit();
-			else
+			}
+			else {
 				os->EnterSliderEdit();
+				os->ScrollToActiveSlider();
+			}
 		}
 		else
 			os->ToggleBrushPane();
@@ -11135,6 +11147,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 					sliderIndex = 0;
 
 				os->EnterSliderEdit(os->project->GetSliderName(sliderIndex));
+				os->ScrollToActiveSlider();
 			}
 			else {
 				if (sliderIndex == 0)
@@ -11143,6 +11156,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 					--sliderIndex;
 
 				os->EnterSliderEdit(os->project->GetSliderName(sliderIndex));
+				os->ScrollToActiveSlider();
 			}
 		}
 	}
