@@ -165,6 +165,7 @@ public:
 	void GetLiveVerts(nifly::NiShape* shape, std::vector<nifly::Vector3>& outVerts, std::vector<nifly::Vector2>* outUVs = nullptr);
 	void GetSliderDiff(nifly::NiShape* shape, const std::string& sliderName, std::vector<nifly::Vector3>& outVerts);
 	void GetSliderDiffUV(nifly::NiShape* shape, const std::string& sliderName, std::vector<nifly::Vector2>& outUVs);
+	size_t GetActiveBoneCount();
 	void GetActiveBones(std::vector<std::string>& outBoneNames);
 
 	std::vector<std::string> GetShapeTextures(nifly::NiShape* shape);

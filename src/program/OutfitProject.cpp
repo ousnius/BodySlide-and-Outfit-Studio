@@ -1258,6 +1258,10 @@ const std::string& OutfitProject::ShapeToTarget(const std::string& shapeName) {
 	return shapeName;
 }
 
+size_t OutfitProject::GetActiveBoneCount() {
+	return AnimSkeleton::getInstance().GetActiveBoneCount();
+}
+
 void OutfitProject::GetActiveBones(std::vector<std::string>& outBoneNames) {
 	AnimSkeleton::getInstance().GetActiveBoneNames(outBoneNames);
 }

@@ -555,6 +555,26 @@
 														</object>
 													</object>
 													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+														<border>5</border>
+														<object class="wxStaticText" name="totalBoneCountLabel">
+															<fg>#ffffff</fg>
+															<label>Total Bones: 0</label>
+															<hidden>1</hidden>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+														<border>5</border>
+														<object class="wxStaticText" name="selectedBoneCountLabel">
+															<fg>#ffffff</fg>
+															<label>Shape Selection Bones: 0</label>
+															<hidden>1</hidden>
+														</object>
+													</object>
+													<object class="sizeritem">
 														<option>1</option>
 														<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
 														<border>3</border>

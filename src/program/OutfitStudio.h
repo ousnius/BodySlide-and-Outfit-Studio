@@ -975,6 +975,7 @@ public:
 
 	void ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo = false);
 	void UpdateActiveShapeUI();
+	void UpdateBoneCounts();
 	void HighlightBoneNamesWithWeights();
 	void RefreshGUIWeightColors();
 	void GetNormalizeBones(std::vector<std::string> *normBones, std::vector<std::string> *notNormBones);

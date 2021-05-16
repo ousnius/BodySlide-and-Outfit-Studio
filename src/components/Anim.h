@@ -210,6 +210,7 @@ public:
 	AnimBone* GetRootBonePtr();
 	bool GetBoneTransformToGlobal(const std::string& boneName, nifly::MatTransform& xform);
 
-	int GetActiveBoneNames(std::vector<std::string>& outBoneNames) const;
+	size_t GetActiveBoneCount() const;
+	size_t GetActiveBoneNames(std::vector<std::string>& outBoneNames) const;
 	void DisableCustomTransforms();
 };

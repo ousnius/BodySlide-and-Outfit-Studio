@@ -2451,6 +2451,27 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 
 	glView->Render();
 	HighlightBoneNamesWithWeights();
+	UpdateBoneCounts();
+}
+
+void OutfitStudioFrame::UpdateBoneCounts() {
+	auto totalBoneCountLabel = reinterpret_cast<wxStaticText*>(FindWindowByName("totalBoneCountLabel"));
+	totalBoneCountLabel->SetLabel(wxString::Format(_("Total Bones: %zu"), project->GetActiveBoneCount()));
+
+	std::vector<std::string> boneNames;
+	project->GetActiveBones(boneNames);
+
+	size_t selectedBoneCount = 0;
+	for (auto &s : selectedItems) {
+		for (auto &bone : boneNames) {
+			if (project->GetWorkAnim()->HasWeights(s->GetShape()->name.get(), bone)) {
+				selectedBoneCount++;
+			}
+		}
+	}
+
+	auto selectedBoneCountLabel = reinterpret_cast<wxStaticText*>(FindWindowByName("selectedBoneCountLabel"));
+	selectedBoneCountLabel->SetLabel(wxString::Format(_("Shape Selection Bones: %zu"), selectedBoneCount));
 }
 
 void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
@@ -3708,6 +3729,7 @@ void OutfitStudioFrame::UpdateBoneTree() {
 	recursingUI = saveRUI;
 
 	HighlightBoneNamesWithWeights();
+	UpdateBoneCounts();
 }
 
 void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
@@ -6029,11 +6051,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		boneScale->Show(false);
 		cXMirrorBone->Show(false);
 
+		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
+		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
 
+		totalBoneCountLabel->Show(false);
+		selectedBoneCountLabel->Show(false);
 		boneScaleLabel->Show(false);
 		cbFixedWeight->Show(false);
 		cbNormalizeWeights->Show(false);
@@ -6167,12 +6193,16 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		boneScale->SetValue(0);
 		boneScale->Show();
 		cXMirrorBone->Show();
-		
+
+		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
+		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
 
+		totalBoneCountLabel->Show();
+		selectedBoneCountLabel->Show();
 		boneScaleLabel->Show();
 		cbFixedWeight->Show();
 		cbNormalizeWeights->Show();
@@ -8557,6 +8587,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 			cPoseBone->AppendString(bone);
 		}
 
+		UpdateBoneCounts();
 		SetPendingChanges();
 	}
 }
@@ -8647,6 +8678,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	cXMirrorBone->AppendString(bone);
 	cPoseBone->AppendString(bone);
 
+	UpdateBoneCounts();
 	SetPendingChanges();
 }
 
@@ -8723,6 +8755,7 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	ReselectBone();
 	CalcAutoXMirrorBone();
 	glView->GetUndoHistory()->ClearHistory();
+	UpdateBoneCounts();
 	SetPendingChanges();
 }
 
@@ -8740,6 +8773,7 @@ void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)
 	ReselectBone();
 	glView->GetUndoHistory()->ClearHistory();
 	HighlightBoneNamesWithWeights();
+	UpdateBoneCounts();
 	SetPendingChanges();
 }
 
@@ -10272,7 +10306,9 @@ void wxGLPanel::EndBrushStroke() {
 					int boneScalePos = os->boneScale->GetValue();
 					if (boneScalePos != 0)
 						os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
+
 					os->HighlightBoneNamesWithWeights();
+					os->UpdateBoneCounts();
 				}
 			}
 

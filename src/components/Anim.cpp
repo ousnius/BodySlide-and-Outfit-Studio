@@ -680,8 +680,25 @@ bool AnimSkeleton::GetBoneTransformToGlobal(const std::string &boneName, MatTran
 	return true;
 }
 
-int AnimSkeleton::GetActiveBoneNames(std::vector<std::string>& outBoneNames) const {
-	int c = 0;
+size_t AnimSkeleton::GetActiveBoneCount() const {
+	size_t c = 0;
+	for (auto &ab : allBones) {
+		if (ab.second.refCount > 0) {
+			c++;
+		}
+	}
+
+	for (auto &cb : customBones) {
+		if (cb.second.refCount > 0) {
+			c++;
+		}
+	}
+
+	return c;
+}
+
+size_t AnimSkeleton::GetActiveBoneNames(std::vector<std::string>& outBoneNames) const {
+	size_t c = 0;
 	for (auto &ab : allBones) {
 		if (ab.second.refCount > 0) {
 			outBoneNames.push_back(ab.first);
@@ -695,6 +712,7 @@ int AnimSkeleton::GetActiveBoneNames(std::vector<std::string>& outBoneNames) con
 			c++;
 		}
 	}
+
 	return c;
 }
 
