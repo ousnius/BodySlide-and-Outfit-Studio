@@ -1098,8 +1098,6 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	activeItem = nullptr;
 	selectedItems.clear();
 
-	previewScale = Vector3(1.0f, 1.0f, 1.0f);
-
 	SetSize(size);
 	SetPosition(pos);
 
@@ -7745,7 +7743,91 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgMoveShape")) {
-		auto sliderMoved = [this, &dlg](wxCommandEvent&) {
+		Vector3 previewMove;
+
+		auto updateMovePreview = [&]() {
+			std::unordered_map<uint16_t, float> mask;
+			std::unordered_map<uint16_t, float>* mptr = nullptr;
+			std::vector<Vector3> verts;
+
+			if (!previewMove.IsZero()) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true, false);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
+
+			Vector3 changed;
+			changed.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().c_str());
+			changed.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().c_str());
+			changed.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().c_str());
+
+			bool mirrorAxisX = XRCCTRL(dlg, "mirrorAxisX", wxCheckBox)->IsChecked();
+			bool mirrorAxisY = XRCCTRL(dlg, "mirrorAxisY", wxCheckBox)->IsChecked();
+			bool mirrorAxisZ = XRCCTRL(dlg, "mirrorAxisZ", wxCheckBox)->IsChecked();
+
+			UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+			usp->undoType = UT_VERTPOS;
+
+			for (auto &sel : selectedItems) {
+				mask.clear();
+				mptr = nullptr;
+
+				NiShape* shape = sel->GetShape();
+				project->GetLiveVerts(shape, verts);
+				glView->GetShapeMask(mask, shape->name.get());
+
+				if (!mask.empty())
+					mptr = &mask;
+
+				UndoStateShape uss;
+				uss.shapeName = shape->name.get();
+
+				for (size_t i = 0; i < verts.size(); i++) {
+					Vector3& vertPos = verts[i];
+					Vector3 diff = changed;
+
+					if (mptr)
+						diff *= 1.0f - mask[i];
+
+					if (diff.IsZero(true))
+						continue;
+
+					if (mirrorAxisX && vertPos.x < 0.0f)
+						diff.x = -diff.x;
+					if (mirrorAxisY && vertPos.y < 0.0f)
+						diff.y = -diff.y;
+					if (mirrorAxisZ && vertPos.z < 0.0f)
+						diff.z = -diff.z;
+
+					Vector3 newPos = vertPos + diff;
+					uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
+					uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
+				}
+
+				usp->usss.push_back(std::move(uss));
+			}
+
+			if (bEditSlider) {
+				usp->sliderName = activeSlider;
+
+				float sliderscale = project->SliderValue(activeSlider);
+				if (sliderscale == 0.0)
+					sliderscale = 1.0;
+
+				usp->sliderscale = sliderscale;
+			}
+
+			glView->ApplyUndoState(usp, false);
+
+			previewMove = changed;
+
+			if (glView->GetTransformMode())
+				glView->ShowTransformTool();
+		};
+
+		auto sliderMoved = [&](wxCommandEvent&) {
 			Vector3 slider;
 			slider.x = XRCCTRL(dlg, "msSliderX", wxSlider)->GetValue() / 1000.0f;
 			slider.y = XRCCTRL(dlg, "msSliderY", wxSlider)->GetValue() / 1000.0f;
@@ -7755,10 +7837,10 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "msTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.y));
 			XRCCTRL(dlg, "msTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.z));
 
-			UpdateMovePreview(dlg);
+			updateMovePreview();
 		};
 
-		auto textChanged = [this, &dlg](wxCommandEvent&) {
+		auto textChanged = [&](wxCommandEvent&) {
 			Vector3 changed;
 			changed.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().c_str());
 			changed.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().c_str());
@@ -7768,11 +7850,11 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "msSliderY", wxSlider)->SetValue(changed.y * 1000);
 			XRCCTRL(dlg, "msSliderZ", wxSlider)->SetValue(changed.z * 1000);
 
-			UpdateMovePreview(dlg);
+			updateMovePreview();
 		};
 
-		auto mirrorAxisChanged = [this, &dlg](wxCommandEvent&) {
-			UpdateMovePreview(dlg);
+		auto mirrorAxisChanged = [&](wxCommandEvent&) {
+			updateMovePreview();
 		};
 
 		XRCCTRL(dlg, "msSliderX", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
@@ -7797,91 +7879,7 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 		}
-
-		previewMove.Zero();
 	}
-}
-
-void OutfitStudioFrame::UpdateMovePreview(const wxWindow& dialog) {
-	std::unordered_map<uint16_t, float> mask;
-	std::unordered_map<uint16_t, float>* mptr = nullptr;
-	std::vector<Vector3> verts;
-
-	if (!previewMove.IsZero()) {
-		UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
-		if (curState) {
-			glView->ApplyUndoState(curState, true, false);
-			glView->GetUndoHistory()->PopState();
-		}
-	}
-
-	Vector3 changed;
-	changed.x = atof(XRCCTRL(dialog, "msTextX", wxTextCtrl)->GetValue().c_str());
-	changed.y = atof(XRCCTRL(dialog, "msTextY", wxTextCtrl)->GetValue().c_str());
-	changed.z = atof(XRCCTRL(dialog, "msTextZ", wxTextCtrl)->GetValue().c_str());
-
-	bool mirrorAxisX = XRCCTRL(dialog, "mirrorAxisX", wxCheckBox)->IsChecked();
-	bool mirrorAxisY = XRCCTRL(dialog, "mirrorAxisY", wxCheckBox)->IsChecked();
-	bool mirrorAxisZ = XRCCTRL(dialog, "mirrorAxisZ", wxCheckBox)->IsChecked();
-
-	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
-	usp->undoType = UT_VERTPOS;
-
-	for (auto &sel : selectedItems) {
-		mask.clear();
-		mptr = nullptr;
-
-		NiShape* shape = sel->GetShape();
-		project->GetLiveVerts(shape, verts);
-		glView->GetShapeMask(mask, shape->name.get());
-
-		if (!mask.empty())
-			mptr = &mask;
-
-		UndoStateShape uss;
-		uss.shapeName = shape->name.get();
-
-		for (size_t i = 0; i < verts.size(); i++) {
-			Vector3& vertPos = verts[i];
-			Vector3 diff = changed;
-
-			if (mptr)
-				diff *= 1.0f - mask[i];
-
-			if (diff.IsZero(true))
-				continue;
-
-			if (mirrorAxisX && vertPos.x < 0.0f)
-				diff.x = -diff.x;
-			if (mirrorAxisY && vertPos.y < 0.0f)
-				diff.y = -diff.y;
-			if (mirrorAxisZ && vertPos.z < 0.0f)
-				diff.z = -diff.z;
-
-			Vector3 newPos = vertPos + diff;
-			uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
-			uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
-		}
-
-		usp->usss.push_back(std::move(uss));
-	}
-
-	if (bEditSlider) {
-		usp->sliderName = activeSlider;
-
-		float sliderscale = project->SliderValue(activeSlider);
-		if (sliderscale == 0.0)
-			sliderscale = 1.0;
-
-		usp->sliderscale = sliderscale;
-	}
-
-	glView->ApplyUndoState(usp, false);
-
-	previewMove = changed;
-
-	if (glView->GetTransformMode())
-		glView->ShowTransformTool();
 }
 
 void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
@@ -7892,7 +7890,93 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgScaleShape")) {
-		auto sliderMoved = [this, &dlg](wxCommandEvent& event) {
+		Vector3 previewScale(1.0f, 1.0f, 1.0f);
+
+		auto updateScalePreview = [&]() {
+			std::unordered_map<uint16_t, float> mask;
+			std::unordered_map<uint16_t, float>* mptr = nullptr;
+			std::vector<Vector3> verts;
+
+			if (previewScale != Vector3(1.0f, 1.0f, 1.0f)) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true, false);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
+
+			Vector3 scale;
+			scale.x = atof(XRCCTRL(dlg, "ssTextX", wxTextCtrl)->GetValue().c_str());
+			scale.y = atof(XRCCTRL(dlg, "ssTextY", wxTextCtrl)->GetValue().c_str());
+			scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
+
+			Vector3 origin;
+			int originSelection = XRCCTRL(dlg, "origin", wxChoice)->GetCurrentSelection();
+			if (originSelection == 1) {
+				// Center of selected shape(s), respecting mask
+				origin = glView->gls.GetActiveCenter();
+				glView->VecToNifCoords(origin);
+			}
+
+			UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+			usp->undoType = UT_VERTPOS;
+
+			for (auto &sel : selectedItems) {
+				mask.clear();
+				mptr = nullptr;
+
+				NiShape* shape = sel->GetShape();
+				project->GetLiveVerts(shape, verts);
+				glView->GetShapeMask(mask, shape->name.get());
+
+				if (!mask.empty())
+					mptr = &mask;
+
+				UndoStateShape uss;
+				uss.shapeName = shape->name.get();
+
+				Matrix4 xform;
+				xform.PushTranslate(origin);
+				xform.PushScale(scale.x, scale.y, scale.z);
+				xform.PushTranslate(origin * -1.0f);
+
+				for (size_t i = 0; i < verts.size(); i++) {
+					Vector3& vertPos = verts[i];
+					Vector3 diff = xform * vertPos - vertPos;
+
+					if (mptr)
+						diff *= 1.0f - mask[i];
+
+					if (diff.IsZero(true))
+						continue;
+
+					Vector3 newPos = vertPos + diff;
+					uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
+					uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
+				}
+
+				usp->usss.push_back(std::move(uss));
+			}
+
+			if (bEditSlider) {
+				usp->sliderName = activeSlider;
+
+				float sliderscale = project->SliderValue(activeSlider);
+				if (sliderscale == 0.0)
+					sliderscale = 1.0;
+
+				usp->sliderscale = sliderscale;
+			}
+
+			glView->ApplyUndoState(usp, false);
+
+			previewScale = scale;
+
+			if (glView->GetTransformMode())
+				glView->ShowTransformTool();
+		};
+
+		auto sliderMoved = [&](wxCommandEvent& event) {
 			Vector3 scale(1.0f, 1.0f, 1.0f);
 
 			bool uniform = XRCCTRL(dlg, "ssUniform", wxCheckBox)->IsChecked();
@@ -7914,10 +7998,10 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
 			XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
 
-			UpdateScalePreview(dlg);
+			updateScalePreview();
 		};
 
-		auto textChanged = [this, &dlg](wxCommandEvent& event) {
+		auto textChanged = [&](wxCommandEvent& event) {
 			Vector3 scale(1.0f, 1.0f, 1.0f);
 
 			bool uniform = XRCCTRL(dlg, "ssUniform", wxCheckBox)->IsChecked();
@@ -7954,7 +8038,11 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
 			XRCCTRL(dlg, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
 
-			UpdateScalePreview(dlg);
+			updateScalePreview();
+		};
+
+		auto originChanged = [&](wxCommandEvent&) {
+			updateScalePreview();
 		};
 
 		XRCCTRL(dlg, "ssSliderX", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
@@ -7963,6 +8051,7 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "ssTextX", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
 		XRCCTRL(dlg, "ssTextY", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
 		XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "origin", wxChoice)->Bind(wxEVT_CHOICE, originChanged);
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
 		if (dlg.ShowModal() != wxID_OK) {
@@ -7974,93 +8063,7 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 		}
-
-		previewScale = Vector3(1.0f, 1.0f, 1.0f);
 	}
-}
-
-void OutfitStudioFrame::UpdateScalePreview(const wxWindow& dialog) {
-	std::unordered_map<uint16_t, float> mask;
-	std::unordered_map<uint16_t, float>* mptr = nullptr;
-	std::vector<Vector3> verts;
-
-	if (previewScale != Vector3(1.0f, 1.0f, 1.0f)) {
-		UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
-		if (curState) {
-			glView->ApplyUndoState(curState, true, false);
-			glView->GetUndoHistory()->PopState();
-		}
-	}
-
-	Vector3 scale;
-	scale.x = atof(XRCCTRL(dialog, "ssTextX", wxTextCtrl)->GetValue().c_str());
-	scale.y = atof(XRCCTRL(dialog, "ssTextY", wxTextCtrl)->GetValue().c_str());
-	scale.z = atof(XRCCTRL(dialog, "ssTextZ", wxTextCtrl)->GetValue().c_str());
-
-	Vector3 origin;
-	int originSelection = XRCCTRL(dialog, "origin", wxChoice)->GetCurrentSelection();
-	if (originSelection == 1) {
-		// Center of selected shape(s), respecting mask
-		origin = glView->gls.GetActiveCenter();
-		glView->VecToNifCoords(origin);
-	}
-
-	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
-	usp->undoType = UT_VERTPOS;
-
-	for (auto &sel : selectedItems) {
-		mask.clear();
-		mptr = nullptr;
-
-		NiShape* shape = sel->GetShape();
-		project->GetLiveVerts(shape, verts);
-		glView->GetShapeMask(mask, shape->name.get());
-
-		if (!mask.empty())
-			mptr = &mask;
-
-		UndoStateShape uss;
-		uss.shapeName = shape->name.get();
-
-		Matrix4 xform;
-		xform.PushTranslate(origin);
-		xform.PushScale(scale.x, scale.y, scale.z);
-		xform.PushTranslate(origin * -1.0f);
-
-		for (size_t i = 0; i < verts.size(); i++) {
-			Vector3& vertPos = verts[i];
-			Vector3 diff = xform * vertPos - vertPos;
-
-			if (mptr)
-				diff *= 1.0f - mask[i];
-
-			if (diff.IsZero(true))
-				continue;
-
-			Vector3 newPos = vertPos + diff;
-			uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
-			uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
-		}
-
-		usp->usss.push_back(std::move(uss));
-	}
-
-	if (bEditSlider) {
-		usp->sliderName = activeSlider;
-
-		float sliderscale = project->SliderValue(activeSlider);
-		if (sliderscale == 0.0)
-			sliderscale = 1.0;
-
-		usp->sliderscale = sliderscale;
-	}
-
-	glView->ApplyUndoState(usp, false);
-
-	previewScale = scale;
-
-	if (glView->GetTransformMode())
-		glView->ShowTransformTool();
 }
 
 void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
@@ -8071,7 +8074,95 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgRotateShape")) {
-		auto sliderMoved = [this, &dlg](wxCommandEvent& event) {
+		Vector3 previewRotation;
+
+		auto updateRotationPreview = [&]() {
+			std::unordered_map<uint16_t, float> mask;
+			std::unordered_map<uint16_t, float>* mptr = nullptr;
+			std::vector<Vector3> verts;
+
+			if (!previewRotation.IsZero()) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true, false);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
+
+			Vector3 angle;
+			angle.x = atof(XRCCTRL(dlg, "rsTextX", wxTextCtrl)->GetValue().c_str());
+			angle.y = atof(XRCCTRL(dlg, "rsTextY", wxTextCtrl)->GetValue().c_str());
+			angle.z = atof(XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->GetValue().c_str());
+
+			Vector3 origin;
+			int originSelection = XRCCTRL(dlg, "origin", wxChoice)->GetCurrentSelection();
+			if (originSelection == 1) {
+				// Center of selected shape(s), respecting mask
+				origin = glView->gls.GetActiveCenter();
+				glView->VecToNifCoords(origin);
+			}
+
+			UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+			usp->undoType = UT_VERTPOS;
+
+			for (auto &sel : selectedItems) {
+				mask.clear();
+				mptr = nullptr;
+
+				NiShape* shape = sel->GetShape();
+				project->GetLiveVerts(shape, verts);
+				glView->GetShapeMask(mask, shape->name.get());
+
+				if (!mask.empty())
+					mptr = &mask;
+
+				UndoStateShape uss;
+				uss.shapeName = shape->name.get();
+
+				Matrix4 xform;
+				xform.PushTranslate(origin);
+				xform.PushRotate(angle.x * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
+				xform.PushRotate(angle.y * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
+				xform.PushRotate(angle.z * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
+				xform.PushTranslate(origin * -1.0f);
+
+				for (size_t i = 0; i < verts.size(); i++) {
+					Vector3& vertPos = verts[i];
+					Vector3 diff = xform * vertPos - vertPos;
+
+					if (mptr)
+						diff *= 1.0f - mask[i];
+
+					if (diff.IsZero(true))
+						continue;
+
+					Vector3 newPos = vertPos + diff;
+					uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
+					uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
+				}
+
+				usp->usss.push_back(std::move(uss));
+			}
+
+			if (bEditSlider) {
+				usp->sliderName = activeSlider;
+
+				float sliderscale = project->SliderValue(activeSlider);
+				if (sliderscale == 0.0)
+					sliderscale = 1.0;
+
+				usp->sliderscale = sliderscale;
+			}
+
+			glView->ApplyUndoState(usp, false);
+
+			previewRotation = angle;
+
+			if (glView->GetTransformMode())
+				glView->ShowTransformTool();
+		};
+
+		auto sliderMoved = [&](wxCommandEvent&) {
 			Vector3 angle;
 			angle.x = XRCCTRL(dlg, "rsSliderX", wxSlider)->GetValue() / 100.0f;
 			angle.y = XRCCTRL(dlg, "rsSliderY", wxSlider)->GetValue() / 100.0f;
@@ -8081,10 +8172,10 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "rsTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", angle.y));
 			XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", angle.z));
 
-			UpdateRotationPreview(dlg);
+			updateRotationPreview();
 		};
 
-		auto textChanged = [this, &dlg](wxCommandEvent& event) {
+		auto textChanged = [&](wxCommandEvent&) {
 			Vector3 angle;
 			angle.x = atof(XRCCTRL(dlg, "rsTextX", wxTextCtrl)->GetValue().c_str());
 			angle.y = atof(XRCCTRL(dlg, "rsTextY", wxTextCtrl)->GetValue().c_str());
@@ -8094,7 +8185,11 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "rsSliderY", wxSlider)->SetValue(angle.y * 100);
 			XRCCTRL(dlg, "rsSliderZ", wxSlider)->SetValue(angle.z * 100);
 
-			UpdateRotationPreview(dlg);
+			updateRotationPreview();
+		};
+
+		auto originChanged = [&](wxCommandEvent&) {
+			updateRotationPreview();
 		};
 
 		XRCCTRL(dlg, "rsSliderX", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
@@ -8103,6 +8198,7 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "rsTextX", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
 		XRCCTRL(dlg, "rsTextY", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
 		XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "origin", wxChoice)->Bind(wxEVT_CHOICE, originChanged);
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
 		if (dlg.ShowModal() != wxID_OK) {
@@ -8114,95 +8210,7 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 		}
-
-		previewRotation.Zero();
 	}
-}
-
-void OutfitStudioFrame::UpdateRotationPreview(const wxWindow& dialog) {
-	std::unordered_map<uint16_t, float> mask;
-	std::unordered_map<uint16_t, float>* mptr = nullptr;
-	std::vector<Vector3> verts;
-
-	if (!previewRotation.IsZero()) {
-		UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
-		if (curState) {
-			glView->ApplyUndoState(curState, true, false);
-			glView->GetUndoHistory()->PopState();
-		}
-	}
-
-	Vector3 angle;
-	angle.x = atof(XRCCTRL(dialog, "rsTextX", wxTextCtrl)->GetValue().c_str());
-	angle.y = atof(XRCCTRL(dialog, "rsTextY", wxTextCtrl)->GetValue().c_str());
-	angle.z = atof(XRCCTRL(dialog, "rsTextZ", wxTextCtrl)->GetValue().c_str());
-
-	Vector3 origin;
-	int originSelection = XRCCTRL(dialog, "origin", wxChoice)->GetCurrentSelection();
-	if (originSelection == 1) {
-		// Center of selected shape(s), respecting mask
-		origin = glView->gls.GetActiveCenter();
-		glView->VecToNifCoords(origin);
-	}
-
-	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
-	usp->undoType = UT_VERTPOS;
-
-	for (auto &sel : selectedItems) {
-		mask.clear();
-		mptr = nullptr;
-
-		NiShape* shape = sel->GetShape();
-		project->GetLiveVerts(shape, verts);
-		glView->GetShapeMask(mask, shape->name.get());
-
-		if (!mask.empty())
-			mptr = &mask;
-
-		UndoStateShape uss;
-		uss.shapeName = shape->name.get();
-
-		Matrix4 xform;
-		xform.PushTranslate(origin);
-		xform.PushRotate(angle.x * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
-		xform.PushRotate(angle.y * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
-		xform.PushRotate(angle.z * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
-		xform.PushTranslate(origin * -1.0f);
-
-		for (size_t i = 0; i < verts.size(); i++) {
-			Vector3& vertPos = verts[i];
-			Vector3 diff = xform * vertPos - vertPos;
-
-			if (mptr)
-				diff *= 1.0f - mask[i];
-
-			if (diff.IsZero(true))
-				continue;
-
-			Vector3 newPos = vertPos + diff;
-			uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
-			uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
-		}
-
-		usp->usss.push_back(std::move(uss));
-	}
-
-	if (bEditSlider) {
-		usp->sliderName = activeSlider;
-
-		float sliderscale = project->SliderValue(activeSlider);
-		if (sliderscale == 0.0)
-			sliderscale = 1.0;
-
-		usp->sliderscale = sliderscale;
-	}
-
-	glView->ApplyUndoState(usp, false);
-
-	previewRotation = angle;
-
-	if (glView->GetTransformMode())
-		glView->ShowTransformTool();
 }
 
 void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {

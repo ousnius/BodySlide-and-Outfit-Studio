@@ -1157,10 +1157,6 @@ public:
 private:
 	bool pendingChanges = false;
 
-	nifly::Vector3 previewMove;
-	nifly::Vector3 previewScale;
-	nifly::Vector3 previewRotation;
-
 	bool selectionLocked = false;
 	std::vector<ShapeItemData*> selectedItems;
 	bool recursingUI = false;
@@ -1351,13 +1347,8 @@ private:
 	void OnEnterClose(wxKeyEvent& event);
 
 	void OnMoveShape(wxCommandEvent& event);
-	void UpdateMovePreview(const wxWindow& dialog);
-
 	void OnScaleShape(wxCommandEvent& event);
-	void UpdateScalePreview(const wxWindow& dialog);
-
 	void OnRotateShape(wxCommandEvent& event);
-	void UpdateRotationPreview(const wxWindow& dialog);
 
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetReference(wxCommandEvent& event);
