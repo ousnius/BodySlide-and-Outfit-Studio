@@ -135,8 +135,8 @@ EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, mesh* srcMe
 	shapeMesh = srcMesh;
 	sliderName = srcSliderName;
 
-	xrc->LoadToolBar(this, "uvToolBar");
-	xrc->LoadMenuBar(this, "uvMenuBar");
+	uvToolBar = xrc->LoadToolBar(this, "uvToolBar");
+	uvMenuBar = xrc->LoadMenuBar(this, "uvMenuBar");
 
 	canvas = new EditUVCanvas(this, wxDefaultSize, GLSurface::GetGLAttribs());
 	canvas->SetNotifyWindow(this);
@@ -151,29 +151,17 @@ EditUV::~EditUV() {
 
 void EditUV::OnSelectTool(wxCommandEvent& event) {
 	int id = event.GetId();
-
-	canvas->SetCursorType(GLSurface::None);
-
-	if (id == XRCID("btnBoxSelection")) {
-		toolSelected = EditUVTool::BoxSelection;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
-	}
-	else if (id == XRCID("btnVertexSelection")) {
-		toolSelected = EditUVTool::VertexSelection;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_DEFAULT);
-		canvas->SetCursorType(GLSurface::PointCursor);
-	}
-	else if (id == XRCID("btnMove")) {
-		toolSelected = EditUVTool::Move;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
-	}
-	else if (id == XRCID("btnScale")) {
-		toolSelected = EditUVTool::Scale;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
-	}
-	else if (id == XRCID("btnRotate")) {
-		toolSelected = EditUVTool::Rotate;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_HAND);
+	if (id == XRCID("btnBoxSelection"))
+		SelectTool(EditUVTool::BoxSelection);
+	else if (id == XRCID("btnVertexSelection"))
+		SelectTool(EditUVTool::VertexSelection);
+	else if (id == XRCID("btnMove"))
+		SelectTool(EditUVTool::Move);
+	else if (id == XRCID("btnScale"))
+		SelectTool(EditUVTool::Scale);
+	else if (id == XRCID("btnRotate"))
+		SelectTool(EditUVTool::Rotate);
+}
 	}
 }
 
@@ -199,6 +187,35 @@ void EditUV::OnSelectLess(wxCommandEvent& WXUNUSED(event)) {
 
 void EditUV::OnSelectMore(wxCommandEvent& WXUNUSED(event)) {
 	canvas->SelectMore();
+}
+
+void EditUV::SelectTool(EditUVTool tool) {
+	canvas->SetCursorType(GLSurface::None);
+	toolSelected = tool;
+
+	switch (toolSelected) {
+	case EditUVTool::BoxSelection:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
+		uvToolBar->ToggleTool(XRCID("btnBoxSelection"), true);
+		break;
+	case EditUVTool::VertexSelection:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_DEFAULT);
+		canvas->SetCursorType(GLSurface::PointCursor);
+		uvToolBar->ToggleTool(XRCID("btnVertexSelection"), true);
+		break;
+	case EditUVTool::Move:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
+		uvToolBar->ToggleTool(XRCID("btnMove"), true);
+		break;
+	case EditUVTool::Scale:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
+		uvToolBar->ToggleTool(XRCID("btnScale"), true);
+		break;
+	case EditUVTool::Rotate:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_HAND);
+		uvToolBar->ToggleTool(XRCID("btnRotate"), true);
+		break;
+	}
 }
 
 void EditUV::Undo() {
@@ -710,10 +727,20 @@ void EditUVCanvas::OnRightUp(wxMouseEvent& WXUNUSED(event)) {
 void EditUVCanvas::OnKeyDown(wxKeyEvent& event) {
 	if (!lbuttonDown && !rbuttonDown && !mbuttonDown) {
 		switch (event.GetKeyCode()) {
-		case 'A':
-			// Unused so far
-			if (event.ControlDown()) {
-			}
+		case '1':
+			editUV->SelectTool(EditUVTool::BoxSelection);
+			break;
+		case '2':
+			editUV->SelectTool(EditUVTool::VertexSelection);
+			break;
+		case '3':
+			editUV->SelectTool(EditUVTool::Move);
+			break;
+		case '4':
+			editUV->SelectTool(EditUVTool::Scale);
+			break;
+		case '5':
+			editUV->SelectTool(EditUVTool::Rotate);
 			break;
 		}
 	}

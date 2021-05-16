@@ -50,7 +50,7 @@
 		<separation>5</separation>
 		<object class="tool" name="btnBoxSelection">
 			<label>Box Selection</label>
-			<tooltip>Box Selection</tooltip>
+			<tooltip>Box Selection\nShortcut: 1</tooltip>
 			<bitmap>$(AppDir)\res\images\MaskBrush.png</bitmap>
 			<bitmap2>$(AppDir)\res\images\MaskBrush_d.png</bitmap2>
 			<radio>1</radio>
@@ -58,28 +58,28 @@
 		</object>
 		<object class="tool" name="btnVertexSelection">
 			<label>Vertex Selection</label>
-			<tooltip>Vertex Selection</tooltip>
+			<tooltip>Vertex Selection\nShortcut: 2</tooltip>
 			<bitmap>$(AppDir)\res\images\SelectBrush.png</bitmap>
 			<bitmap2>$(AppDir)\res\images\SelectBrush_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="tool" name="btnMove">
 			<label>Move</label>
-			<tooltip>Move</tooltip>
+			<tooltip>Move\nShortcut: 3</tooltip>
 			<bitmap>$(AppDir)\res\images\MoveBrush.png</bitmap>
 			<bitmap2>$(AppDir)\res\images\MoveBrush_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="tool" name="btnScale">
 			<label>Scale</label>
-			<tooltip>Scale</tooltip>
+			<tooltip>Scale\nShortcut: 4</tooltip>
 			<bitmap>$(AppDir)\res\images\TransformTool.png</bitmap>
 			<bitmap2>$(AppDir)\res\images\TransformTool_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="tool" name="btnRotate">
 			<label>Rotate</label>
-			<tooltip>Rotate</tooltip>
+			<tooltip>Rotate\nShortcut: 5</tooltip>
 			<bitmap>$(AppDir)\res\images\RotateTool.png</bitmap>
 			<bitmap2>$(AppDir)\res\images\RotateTool_d.png</bitmap2>
 			<radio>1</radio>

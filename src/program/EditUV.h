@@ -88,6 +88,8 @@ public:
 	std::string GetSliderName() {
 		return sliderName;
 	}
+	wxToolBar* uvToolBar = nullptr;
+	wxMenuBar* uvMenuBar = nullptr;
 
 	EditUVHistory& GetHistory() {
 		return history;
@@ -105,6 +107,7 @@ public:
 		return toolActive;
 	}
 
+	void SelectTool(EditUVTool tool);
 	void Undo();
 	void Redo();
 
