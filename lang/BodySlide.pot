@@ -2201,9 +2201,6 @@ msgstr ""
 msgid "Rename Group"
 msgstr ""
 
-msgid "Rotating slider data is currently not possible using the Rotate Shape dialog."
-msgstr ""
-
 msgid "Rotate"
 msgstr ""
 

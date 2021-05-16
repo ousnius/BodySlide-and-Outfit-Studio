@@ -1357,9 +1357,7 @@ private:
 	void UpdateScalePreview(const wxWindow& dialog);
 
 	void OnRotateShape(wxCommandEvent& event);
-	void OnRotateShapeSlider(wxCommandEvent& event);
-	void OnRotateShapeText(wxCommandEvent& event);
-	void PreviewRotation(const nifly::Vector3& changed);
+	void UpdateRotationPreview(const wxWindow& dialog);
 
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetReference(wxCommandEvent& event);

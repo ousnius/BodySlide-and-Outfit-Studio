@@ -2552,12 +2552,6 @@ msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für die Gruppe ein."
 msgid "Rename Group"
 msgstr "Gruppe umbenennen"
 
-msgid ""
-"Rotating slider data is currently not possible using the Rotate Shape dialog."
-msgstr ""
-"Mit dem \"Modell rotieren\"-Dialog ist es im Moment nicht möglich, "
-"Sliderdaten zu rotieren."
-
 msgid "Rotate"
 msgstr "Rotieren"
 
