@@ -277,6 +277,7 @@ void EditUV::UpdateShapeMesh(bool apply) {
 
 void EditUV::OnApply(wxCommandEvent& WXUNUSED(event)) {
 	UpdateShapeMesh();
+	os->SetPendingChanges();
 	Close();
 }
 

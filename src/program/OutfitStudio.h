@@ -949,6 +949,11 @@ public:
 
 	std::map<std::string, SliderDisplay*> sliderDisplays;
 
+	void SetPendingChanges(bool pending = true);
+	bool CheckPendingChanges();
+
+	bool SaveProject();
+	bool SaveProjectAs();
 	bool LoadProject(const std::string& fileName, const std::string& projectName = "", bool clearProject = true);
 	void CreateSetSliders();
 
@@ -1150,6 +1155,8 @@ public:
 	}
 
 private:
+	bool pendingChanges = false;
+
 	nifly::Vector3 previewMove;
 	nifly::Vector3 previewScale;
 	nifly::Vector3 previewRotation;
@@ -1195,6 +1202,8 @@ private:
 	void OnSashPosChanged(wxSplitterEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
+
+	void UpdateTitle();
 
 	void OnNewProject(wxCommandEvent& event);
 	void OnLoadProject(wxCommandEvent &event);

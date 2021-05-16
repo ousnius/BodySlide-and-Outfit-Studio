@@ -324,6 +324,7 @@ void ShapeProperties::AddShader() {
 
 	AssignDefaultTexture();
 	GetShader();
+	os->SetPendingChanges();
 }
 
 void ShapeProperties::OnRemoveShader(wxCommandEvent& WXUNUSED(event)) {
@@ -335,6 +336,7 @@ void ShapeProperties::RemoveShader() {
 	AssignDefaultTexture();
 	GetShader();
 	GetTransparency();
+	os->SetPendingChanges();
 }
 
 void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
@@ -430,6 +432,8 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 			nif->TrimTexturePaths();
 
+			os->SetPendingChanges();
+
 			os->project->SetTextures(shape, texFiles);
 			os->glView->SetMeshTextures(shape->name.get(), texFiles, false, MaterialFile(), true);
 			os->glView->Render();
@@ -439,6 +443,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 void ShapeProperties::AssignDefaultTexture() {
 	os->project->SetTextures(shape);
+	os->SetPendingChanges();
 	os->glView->Render();
 }
 
@@ -471,6 +476,7 @@ void ShapeProperties::AddTransparency() {
 	auto alphaProp = std::make_unique<NiAlphaProperty>();
 	nif->AssignAlphaProperty(shape, std::move(alphaProp));
 	GetTransparency();
+	os->SetPendingChanges();
 }
 
 void ShapeProperties::OnRemoveTransparency(wxCommandEvent& WXUNUSED(event)) {
@@ -516,6 +522,7 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 			GetTransparency();
 
 			shape = oldShape;
+			os->SetPendingChanges();
 
 			if (shapeChoiceShader) {
 				// Copy texture paths
@@ -536,6 +543,7 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 void ShapeProperties::RemoveTransparency() {
 	nif->RemoveAlphaProperty(shape);
 	GetTransparency();
+	os->SetPendingChanges();
 }
 
 
@@ -611,6 +619,7 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 		auto newExtraData = extraData->Clone();
 		int index = nif->AssignExtraData(shape, std::move(newExtraData));
 		extraDataIndices.push_back(index);
+		os->SetPendingChanges();
 	}
 
 	if (extraDataIndices.empty())
@@ -714,8 +723,10 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 	}
 	}
 
-	if (extraDataResult)
+	if (extraDataResult) {
 		extraDataIndices[id] = nif->AssignExtraData(shape, std::move(extraDataResult));
+		os->SetPendingChanges();
+	}
 }
 
 void ShapeProperties::OnRemoveExtraData(wxCommandEvent& event) {
@@ -744,6 +755,7 @@ void ShapeProperties::RemoveExtraData(int id) {
 
 	pgExtraData->FitInside();
 	pgExtraData->Layout();
+	os->SetPendingChanges();
 }
 
 void ShapeProperties::GetCoordTrans() {
@@ -985,4 +997,6 @@ void ShapeProperties::ApplyChanges() {
 		os->project->GetWorkAnim()->ChangeGlobalToSkinTransform(shape->name.get(), newXformGlobalToSkin);
 		nif->SetShapeTransformGlobalToSkin(shape, newXformGlobalToSkin);
 	}
+
+	os->SetPendingChanges();
 }
