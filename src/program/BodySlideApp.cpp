@@ -366,8 +366,6 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 		sliderManager.ClearSliders();
 		if (!sliderDoc.GetSet(outfit, activeSet)) {
 			activeSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
-			activeSet.LoadSetDiffData(dataSets);
-
 			sliderManager.AddSlidersInSet(activeSet);
 			DisplayActiveSet();
 		}
@@ -914,6 +912,8 @@ void BodySlideApp::InitPreview() {
 	previewSetName = std::move(inputSetName);
 	
 	preview->ShowWeight(activeSet.GenWeights());
+
+	activeSet.LoadSetDiffData(dataSets);
 
 	std::vector<Vector3> verts;
 	std::vector<Vector2> uvs;
