@@ -7892,195 +7892,170 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgScaleShape")) {
-		XRCCTRL(dlg, "ssSliderX", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnScaleShapeSlider, this);
-		XRCCTRL(dlg, "ssSliderY", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnScaleShapeSlider, this);
-		XRCCTRL(dlg, "ssSliderZ", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnScaleShapeSlider, this);
-		XRCCTRL(dlg, "ssTextX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnScaleShapeText, this);
-		XRCCTRL(dlg, "ssTextY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnScaleShapeText, this);
-		XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnScaleShapeText, this);
+		auto sliderMoved = [this, &dlg](wxCommandEvent& event) {
+			Vector3 scale(1.0f, 1.0f, 1.0f);
+
+			bool uniform = XRCCTRL(dlg, "ssUniform", wxCheckBox)->IsChecked();
+			if (uniform) {
+				float uniformValue = ((wxSlider*)event.GetEventObject())->GetValue() / 1000.0f;
+				scale = Vector3(uniformValue, uniformValue, uniformValue);
+
+				XRCCTRL(dlg, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
+				XRCCTRL(dlg, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
+				XRCCTRL(dlg, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
+			}
+			else {
+				scale.x = XRCCTRL(dlg, "ssSliderX", wxSlider)->GetValue() / 1000.0f;
+				scale.y = XRCCTRL(dlg, "ssSliderY", wxSlider)->GetValue() / 1000.0f;
+				scale.z = XRCCTRL(dlg, "ssSliderZ", wxSlider)->GetValue() / 1000.0f;
+			}
+
+			XRCCTRL(dlg, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+			XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+			XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
+
+			UpdateScalePreview(dlg);
+		};
+
+		auto textChanged = [this, &dlg](wxCommandEvent& event) {
+			Vector3 scale(1.0f, 1.0f, 1.0f);
+
+			bool uniform = XRCCTRL(dlg, "ssUniform", wxCheckBox)->IsChecked();
+			if (uniform) {
+				float uniformValue = atof(((wxTextCtrl*)event.GetEventObject())->GetValue().c_str());
+				scale = Vector3(uniformValue, uniformValue, uniformValue);
+
+				XRCCTRL(dlg, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+				XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+				XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
+			}
+			else {
+				scale.x = atof(XRCCTRL(dlg, "ssTextX", wxTextCtrl)->GetValue().c_str());
+				scale.y = atof(XRCCTRL(dlg, "ssTextY", wxTextCtrl)->GetValue().c_str());
+				scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
+			}
+
+			if (scale.x < 0.01f) {
+				scale.x = 0.01f;
+				XRCCTRL(dlg, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+			}
+
+			if (scale.y < 0.01f) {
+				scale.y = 0.01f;
+				XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+			}
+
+			if (scale.z < 0.01f) {
+				scale.z = 0.01f;
+				XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
+			}
+
+			XRCCTRL(dlg, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
+			XRCCTRL(dlg, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
+			XRCCTRL(dlg, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
+
+			UpdateScalePreview(dlg);
+		};
+
+		XRCCTRL(dlg, "ssSliderX", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "ssSliderY", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "ssSliderZ", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "ssTextX", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "ssTextY", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
-		Vector3 scale(1.0f, 1.0f, 1.0f);
-		if (dlg.ShowModal() == wxID_OK) {
-			scale.x = atof(XRCCTRL(dlg, "ssTextX", wxTextCtrl)->GetValue().c_str());
-			scale.y = atof(XRCCTRL(dlg, "ssTextY", wxTextCtrl)->GetValue().c_str());
-			scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
-			SetPendingChanges();
-		}
-
-		Vector3 scaleNew = scale;
-		scaleNew.x *= 1.0f / previewScale.x;
-		scaleNew.y *= 1.0f / previewScale.y;
-		scaleNew.z *= 1.0f / previewScale.z;
-
-		std::unordered_map<uint16_t, float> mask;
-		std::unordered_map<uint16_t, float>* mptr = nullptr;
-		for (auto &i : selectedItems) {
-			mask.clear();
-			mptr = nullptr;
-			glView->GetShapeMask(mask, i->GetShape()->name.get());
-			if (mask.size() > 0)
-				mptr = &mask;
-
-			std::vector<Vector3> verts;
-			if (bEditSlider) {
-				auto& diff = previewDiff[i->GetShape()];
-				for (auto &d : diff)
-					d.second *= -1.0f;
-
-				project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
-				project->GetLiveVerts(i->GetShape(), verts);
-				diff.clear();
-
-				Vector3 d;
-				int vertexCount = project->GetVertexCount(i->GetShape());
-				for (int j = 0; j < vertexCount; j++) {
-					d.x = verts[j].x * scale.x - verts[j].x;
-					d.y = verts[j].y * scale.y - verts[j].y;
-					d.z = verts[j].z * scale.z - verts[j].z;
-					d *= 1.0f - mask[j];
-
-					if (d.IsZero(true))
-						continue;
-
-					diff[j] = glView->VecToMeshCoords(d);
+		if (dlg.ShowModal() != wxID_OK) {
+			if (previewScale != Vector3(1.0f, 1.0f, 1.0f)) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true);
+					glView->GetUndoHistory()->PopState();
 				}
-				project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
 			}
-			else
-				project->ScaleShape(i->GetShape(), scaleNew, mptr);
-
-			project->GetLiveVerts(i->GetShape(), verts);
-			glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
 		}
 
 		previewScale = Vector3(1.0f, 1.0f, 1.0f);
-		previewDiff.clear();
-
-		if (glView->GetTransformMode())
-			glView->ShowTransformTool();
 	}
 }
 
-void OutfitStudioFrame::OnScaleShapeSlider(wxCommandEvent& event) {
-	wxWindow* parent = ((wxSlider*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	Vector3 scale(1.0f, 1.0f, 1.0f);
-
-	bool uniform = XRCCTRL(*parent, "ssUniform", wxCheckBox)->IsChecked();
-	if (uniform) {
-		float uniformValue = ((wxSlider*)event.GetEventObject())->GetValue() / 1000.0f;
-		scale = Vector3(uniformValue, uniformValue, uniformValue);
-
-		XRCCTRL(*parent, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
-		XRCCTRL(*parent, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
-		XRCCTRL(*parent, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
-	}
-	else {
-		scale.x = XRCCTRL(*parent, "ssSliderX", wxSlider)->GetValue() / 1000.0f;
-		scale.y = XRCCTRL(*parent, "ssSliderY", wxSlider)->GetValue() / 1000.0f;
-		scale.z = XRCCTRL(*parent, "ssSliderZ", wxSlider)->GetValue() / 1000.0f;
-	}
-
-	XRCCTRL(*parent, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
-	XRCCTRL(*parent, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
-	XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
-
-	PreviewScale(scale);
-}
-
-void OutfitStudioFrame::OnScaleShapeText(wxCommandEvent& event) {
-	wxWindow* parent = ((wxTextCtrl*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	Vector3 scale(1.0f, 1.0f, 1.0f);
-
-	bool uniform = XRCCTRL(*parent, "ssUniform", wxCheckBox)->IsChecked();
-	if (uniform) {
-		float uniformValue = atof(((wxTextCtrl*)event.GetEventObject())->GetValue().c_str());
-		scale = Vector3(uniformValue, uniformValue, uniformValue);
-
-		XRCCTRL(*parent, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
-		XRCCTRL(*parent, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
-		XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
-	}
-	else {
-		scale.x = atof(XRCCTRL(*parent, "ssTextX", wxTextCtrl)->GetValue().c_str());
-		scale.y = atof(XRCCTRL(*parent, "ssTextY", wxTextCtrl)->GetValue().c_str());
-		scale.z = atof(XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->GetValue().c_str());
-	}
-
-	if (scale.x < 0.01f) {
-		scale.x = 0.01f;
-		XRCCTRL(*parent, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
-	}
-
-	if (scale.y < 0.01f) {
-		scale.y = 0.01f;
-		XRCCTRL(*parent, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
-	}
-
-	if (scale.z < 0.01f) {
-		scale.z = 0.01f;
-		XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
-	}
-
-	XRCCTRL(*parent, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
-	XRCCTRL(*parent, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
-	XRCCTRL(*parent, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
-
-	PreviewScale(scale);
-}
-
-void OutfitStudioFrame::PreviewScale(const Vector3& scale) {
-	Vector3 scaleNew = scale;
-	scaleNew.x *= 1.0f / previewScale.x;
-	scaleNew.y *= 1.0f / previewScale.y;
-	scaleNew.z *= 1.0f / previewScale.z;
-
+void OutfitStudioFrame::UpdateScalePreview(const wxWindow& dialog) {
 	std::unordered_map<uint16_t, float> mask;
 	std::unordered_map<uint16_t, float>* mptr = nullptr;
-	for (auto &i : selectedItems) {
+	std::vector<Vector3> verts;
+
+	if (previewScale != Vector3(1.0f, 1.0f, 1.0f)) {
+		UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+		if (curState) {
+			glView->ApplyUndoState(curState, true, false);
+			glView->GetUndoHistory()->PopState();
+		}
+	}
+
+	Vector3 scale;
+	scale.x = atof(XRCCTRL(dialog, "ssTextX", wxTextCtrl)->GetValue().c_str());
+	scale.y = atof(XRCCTRL(dialog, "ssTextY", wxTextCtrl)->GetValue().c_str());
+	scale.z = atof(XRCCTRL(dialog, "ssTextZ", wxTextCtrl)->GetValue().c_str());
+
+	Vector3 origin;
+	int originSelection = XRCCTRL(dialog, "origin", wxChoice)->GetCurrentSelection();
+	if (originSelection == 1) {
+		// Center of selected shape(s), respecting mask
+		origin = glView->gls.GetActiveCenter();
+		glView->VecToNifCoords(origin);
+	}
+
+	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UT_VERTPOS;
+
+	for (auto &sel : selectedItems) {
 		mask.clear();
 		mptr = nullptr;
-		glView->GetShapeMask(mask, i->GetShape()->name.get());
-		if (mask.size() > 0)
+
+		NiShape* shape = sel->GetShape();
+		project->GetLiveVerts(shape, verts);
+		glView->GetShapeMask(mask, shape->name.get());
+
+		if (!mask.empty())
 			mptr = &mask;
 
-		std::vector<Vector3> verts;
-		if (bEditSlider) {
-			auto& diff = previewDiff[i->GetShape()];
-			for (auto &d : diff)
-				d.second *= -1.0f;
+		UndoStateShape uss;
+		uss.shapeName = shape->name.get();
 
-			project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
-			project->GetLiveVerts(i->GetShape(), verts);
-			diff.clear();
+		Matrix4 xform;
+		xform.PushTranslate(origin);
+		xform.PushScale(scale.x, scale.y, scale.z);
+		xform.PushTranslate(origin * -1.0f);
 
-			Vector3 d;
-			int vertexCount = project->GetVertexCount(i->GetShape());
-			for (int j = 0; j < vertexCount; j++) {
-				d.x = verts[j].x * scale.x - verts[j].x;
-				d.y = verts[j].y * scale.y - verts[j].y;
-				d.z = verts[j].z * scale.z - verts[j].z;
-				d *= 1.0f - mask[j];
+		for (size_t i = 0; i < verts.size(); i++) {
+			Vector3& vertPos = verts[i];
+			Vector3 diff = xform * vertPos - vertPos;
 
-				if (d.IsZero(true))
-					continue;
+			if (mptr)
+				diff *= 1.0f - mask[i];
 
-				diff[j] = glView->VecToMeshCoords(d);
-			}
-			project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
+			if (diff.IsZero(true))
+				continue;
+
+			Vector3 newPos = vertPos + diff;
+			uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
+			uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
 		}
-		else
-			project->ScaleShape(i->GetShape(), scaleNew, mptr);
 
-		project->GetLiveVerts(i->GetShape(), verts);
-		glView->UpdateMeshVertices(i->GetShape()->name.get(), &verts);
+		usp->usss.push_back(std::move(uss));
 	}
+
+	if (bEditSlider) {
+		usp->sliderName = activeSlider;
+
+		float sliderscale = project->SliderValue(activeSlider);
+		if (sliderscale == 0.0)
+			sliderscale = 1.0;
+
+		usp->sliderscale = sliderscale;
+	}
+
+	glView->ApplyUndoState(usp, false);
 
 	previewScale = scale;
 

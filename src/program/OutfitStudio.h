@@ -1160,7 +1160,6 @@ private:
 	nifly::Vector3 previewMove;
 	nifly::Vector3 previewScale;
 	nifly::Vector3 previewRotation;
-	std::unordered_map<nifly::NiShape*, std::unordered_map<uint16_t, nifly::Vector3>> previewDiff;
 
 	bool selectionLocked = false;
 	std::vector<ShapeItemData*> selectedItems;
@@ -1355,9 +1354,7 @@ private:
 	void UpdateMovePreview(const wxWindow& dialog);
 
 	void OnScaleShape(wxCommandEvent& event);
-	void OnScaleShapeSlider(wxCommandEvent& event);
-	void OnScaleShapeText(wxCommandEvent& event);
-	void PreviewScale(const nifly::Vector3& scale);
+	void UpdateScalePreview(const wxWindow& dialog);
 
 	void OnRotateShape(wxCommandEvent& event);
 	void OnRotateShapeSlider(wxCommandEvent& event);
