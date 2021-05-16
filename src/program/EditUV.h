@@ -66,34 +66,21 @@ class EditUVCanvas;
 
 class EditUV : public wxFrame {
 public:
-	EditUV(wxWindow*, nifly::NifFile*, nifly::NiShape*, mesh*, const std::string&);
-	~EditUV();
+	OutfitStudioFrame* os = nullptr;
+	EditUVCanvas* canvas = nullptr;
+	nifly::NifFile* nif = nullptr;
+	nifly::NiShape* shape = nullptr;
+	mesh* shapeMesh = nullptr;
+	std::string sliderName;
 
-	OutfitStudioFrame* GetParent() {
-		return os;
-	}
+	EditUVAction currentAction;
+	EditUVHistory history;
 
-	nifly::NifFile* GetNIF() {
-		return nif;
-	}
-
-	nifly::NiShape* GetShape() {
-		return shape;
-	}
-
-	mesh* GetMesh() {
-		return shapeMesh;
-	}
-
-	std::string GetSliderName() {
-		return sliderName;
-	}
 	wxToolBar* uvToolBar = nullptr;
 	wxMenuBar* uvMenuBar = nullptr;
 
-	EditUVHistory& GetHistory() {
-		return history;
-	}
+	EditUV(wxWindow*, nifly::NifFile*, nifly::NiShape*, mesh*, const std::string&);
+	~EditUV();
 
 	void StartTool() {
 		toolActive = toolSelected;
@@ -112,22 +99,13 @@ public:
 	void Redo();
 
 private:
-	OutfitStudioFrame* os = nullptr;
-	EditUVCanvas* canvas = nullptr;
-	nifly::NifFile* nif = nullptr;
-	nifly::NiShape* shape = nullptr;
-	mesh* shapeMesh = nullptr;
-	std::string sliderName;
-
-	EditUVAction currentAction;
-	EditUVHistory history;
-
 	EditUVTool toolSelected = BoxSelection;
 	EditUVTool toolActive = BoxSelection;
 
 	void UpdateShapeMesh(bool apply = true);
 
 	void OnSelectTool(wxCommandEvent& event);
+	void OnSeamEdges(wxCommandEvent& event);
 	void OnUndo(wxCommandEvent& event);
 	void OnRedo(wxCommandEvent& event);
 	void OnSelectAll(wxCommandEvent& event);
@@ -136,12 +114,18 @@ private:
 	void OnSelectMore(wxCommandEvent& event);
 	void OnApply(wxCommandEvent& event);
 	void OnCancel(wxCommandEvent& event);
+	void OnClose(wxCloseEvent& event);
 
 	wxDECLARE_EVENT_TABLE();
 };
 
 class EditUVCanvas : public wxGLCanvas {
 public:
+	mesh* seamEdgesMesh = nullptr;
+	mesh* planeMesh = nullptr;
+	mesh* uvGridMesh = nullptr;
+	mesh* boxSelectMesh = nullptr;
+
 	EditUVCanvas(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs);
 	~EditUVCanvas();
 
@@ -151,10 +135,6 @@ public:
 	void SelectInvert();
 	void SelectLess();
 	void SelectMore();
-
-	mesh* GetGridMesh() {
-		return uvGridMesh;
-	}
 
 	void SetCursorType(GLSurface::CursorType cursorType) {
 		uvSurface.SetCursorType(cursorType);
@@ -191,10 +171,6 @@ private:
 	float lastAngle;
 
 	int hoverPoint = -1;
-
-	mesh* planeMesh = nullptr;
-	mesh* uvGridMesh = nullptr;
-	mesh* boxSelectMesh = nullptr;
 
 	GLMaterial uvGridMaterial;
 	GLMaterial boxSelectMaterial;

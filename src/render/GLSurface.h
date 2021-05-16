@@ -302,6 +302,7 @@ public:
 	mesh* AddVisPoint(const nifly::Vector3& p, const std::string& name = "PointMesh", const nifly::Vector3* color = nullptr);
 	mesh* AddVisPlane(const nifly::Matrix4& mat, const nifly::Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const nifly::Vector3* color = nullptr, const bool asMesh = false);
 	mesh* AddVisSeg(const nifly::Vector3& p1, const nifly::Vector3& p2, const std::string& name = "", const bool asMesh = false);
+	mesh* AddVisSeamEdges(const mesh* refMesh, bool asMesh = false);
 
 	mesh* AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName, nifly::Vector3* color = nullptr);
 	void SetSkinModelMat(mesh *m, const nifly::MatTransform &xformGlobalToSkin);

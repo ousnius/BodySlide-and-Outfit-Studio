@@ -152,6 +152,8 @@ class EditUV;
 
 class wxGLPanel : public wxGLCanvas {
 public:
+	GLSurface gls;
+
 	wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs);
 	~wxGLPanel();
 
@@ -723,7 +725,6 @@ private:
 
 	void OnCaptureLost(wxMouseCaptureLostEvent& event);
 
-	GLSurface gls;
 	std::unique_ptr<wxGLContext> context;
 
 	bool rbuttonDown = false;

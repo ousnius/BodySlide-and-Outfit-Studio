@@ -1725,6 +1725,84 @@ mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::stri
 	return m;
 }
 
+mesh* GLSurface::AddVisSeamEdges(const mesh* refMesh, bool asMesh) {
+	if (!refMesh)
+		return nullptr;
+
+	std::string name = refMesh->shapeName + "_seamedges";
+
+	if (!SetContext())
+		return nullptr;
+
+	if (!refMesh->bGotWeldVerts || refMesh->weldVerts.empty())
+		return nullptr;
+
+	std::vector<Vector3> verts(refMesh->nVerts);
+	for (int i = 0; i < refMesh->nVerts; i++)
+		verts[i] = refMesh->verts[i];
+
+	std::vector<Edge> edges;
+
+	// Find edges of welded vertices
+	for (int e = 0; e < refMesh->nEdges; e++) {
+		auto& edge = refMesh->edges[e];
+		auto p1It = refMesh->weldVerts.find(edge.p1);
+		auto p2It = refMesh->weldVerts.find(edge.p2);
+		if (p1It != refMesh->weldVerts.end() && p2It != refMesh->weldVerts.end()) {
+			// Both points of the edge are welded
+			edges.push_back(edge);
+		}
+	}
+
+	// Erase edges that aren't outer seam edges
+	for (auto it = edges.begin(); it != edges.end(); ) {
+		size_t p1Count = 0;
+		size_t p2Count = 0;
+		auto& edge = *it;
+		for (const auto& otherEdge : edges) {
+			if (otherEdge.p1 == edge.p1 || otherEdge.p2 == edge.p1)
+				p1Count++;
+			if (otherEdge.p2 == edge.p2 || otherEdge.p1 == edge.p2)
+				p2Count++;
+		}
+
+		// If both points occur three or more times, the edge is not an outer edge
+		if (p1Count >= 3 && p2Count >= 3)
+			it = edges.erase(it);
+		else
+			it++;
+	}
+
+	auto m = new mesh();
+	m->nVerts = static_cast<int>(verts.size());
+	m->nEdges = static_cast<int>(edges.size());
+
+	m->verts = std::make_unique<Vector3[]>(m->nVerts);
+	m->edges = std::make_unique<Edge[]>(m->nEdges);
+
+	for (size_t v = 0; v < verts.size(); v++)
+		m->verts[v] = verts[v];
+
+	for (size_t e = 0; e < edges.size(); e++)
+		m->edges[e] = edges[e];
+
+	m->shapeName = name;
+	m->color = Vector3(1.0f, 1.0f, 0.0f);
+	m->material = GetPrimitiveMaterial();
+	m->CreateBuffers();
+
+	if (asMesh) {
+		m->rendermode = RenderMode::UnlitWireDepth;
+		AddMesh(m);
+	}
+	else {
+		m->rendermode = RenderMode::UnlitWire;
+		AddOverlay(m);
+	}
+
+	return m;
+}
+
 void GLSurface::Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs, std::set<int>* changed) {
 	mesh* m = GetMesh(shapeName);
 	if (!m)

@@ -84,6 +84,14 @@
 			<bitmap2>$(AppDir)\res\images\RotateTool_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
+		<object class="tool" name="btnSeamEdges">
+			<label>Show Seam Edges</label>
+			<tooltip>Show Seam Edges</tooltip>
+			<bitmap>$(AppDir)\res\images\SeamEdges.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\SeamEdges_d.png</bitmap2>
+			<toggle>1</toggle>
+			<checked>1</checked>
+		</object>
 	</object>
 	<object class="wxMenuBar" name="uvMenuBar">
 		<label>Menu</label>

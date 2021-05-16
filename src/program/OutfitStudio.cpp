@@ -1128,6 +1128,9 @@ void OutfitStudioFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
+	if (editUV)
+		editUV->Close();
+
 	if (project) {
 		delete project;
 		project = nullptr;
@@ -8105,7 +8108,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	usp->undoType = UT_MESH;
 	std::vector<NiShape *> delShapes;
 	for (auto &i : selectedItems) {
-		if (editUV && editUV->GetShape() == i->GetShape())
+		if (editUV && editUV->shape == i->GetShape())
 			editUV->Close();
 
 		std::unordered_map<uint16_t, float> mask;
@@ -8167,7 +8170,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
 
-	if (editUV && editUV->GetShape() == activeItem->GetShape())
+	if (editUV && editUV->shape == activeItem->GetShape())
 		editUV->Close();
 
 	auto newShape = project->DuplicateShape(activeItem->GetShape(), newShapeName);
@@ -8372,7 +8375,7 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 	selectedItems.clear();
 
 	for (auto &i : selected) {
-		if (editUV && editUV->GetShape() == i.GetShape())
+		if (editUV && editUV->shape == i.GetShape())
 			editUV->Close();
 
 		std::string shapeName = i.GetShape()->name.get();
