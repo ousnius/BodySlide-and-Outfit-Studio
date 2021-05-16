@@ -100,8 +100,10 @@ void mesh::CreateBuffers() {
 	// NumVertices * (Position + Normal + Colors + Texture Coordinates)
 	glBindVertexArray(vao);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), verts.get(), GL_DYNAMIC_DRAW);
+	if (verts) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), verts.get(), GL_DYNAMIC_DRAW);
+	}
 
 	if (norms) {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
@@ -136,7 +138,7 @@ void mesh::CreateBuffers() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// Element index array
-	if (tris) {
+	if (verts && tris) {
 		renderTris = std::make_unique<Triangle[]>(nTris);
 		for (int i = 0; i < nTris; ++i)
 			renderTris[i] = tris[i];
@@ -145,7 +147,7 @@ void mesh::CreateBuffers() {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nTris * sizeof(Triangle), renderTris.get(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
-	else if (edges) {
+	else if (verts && edges) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nEdges * sizeof(Edge), edges.get(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -159,7 +161,7 @@ void mesh::UpdateBuffers() {
 	if (genBuffers) {
 		glBindVertexArray(vao);
 
-		if (queueUpdate[UpdateType::Position]) {
+		if (verts && queueUpdate[UpdateType::Position]) {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Position]);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), verts.get());
 			queueUpdate[UpdateType::Position] = false;
