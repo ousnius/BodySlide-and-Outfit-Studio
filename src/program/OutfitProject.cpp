@@ -714,15 +714,19 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 		std::string sliderData = activeSet[sliderName].TargetDataName(target);
 		baseDiffData.GetDiffIndices(sliderData, target, outIndices);
 
-		for (auto &i : outIndices)
-			m->vcolors[i].x = 1.0f;
+		for (auto &i : outIndices) {
+			if (m->nVerts > i)
+				m->vcolors[i].x = 1.0f;
+		}
 	}
 	else {
 		std::unordered_map<uint16_t, Vector3> outDiff;
 		morpher.GetRawResultDiff(shape->name.get(), sliderName, outDiff);
 
-		for (auto &i : outDiff)
-			m->vcolors[i.first].x = 1.0f;
+		for (auto &i : outDiff) {
+			if (m->nVerts > i.first)
+				m->vcolors[i.first].x = 1.0f;
+		}
 	}
 
 	m->QueueUpdate(mesh::UpdateType::VertexColors);
