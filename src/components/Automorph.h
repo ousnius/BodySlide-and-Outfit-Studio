@@ -67,7 +67,7 @@ public:
 	void InsertVertexIndices(const std::string& target, const std::vector<uint16_t>& indices);
 
 	void ClearProximityCache();
-	void BuildProximityCache(const std::string& shapeName, const float proximityRadius = 10.0f);
+	void BuildProximityCache(const std::string& shapeName, float proximityRadius = 10.0f, const std::set<uint16_t>* maskIndices = nullptr);
 
 	// shapeName = name of the mesh to morph (eg "IronArmor") also known as target name.
 	// sliderName = name of the morph to apply (eg "BreastsSH").

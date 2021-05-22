@@ -173,9 +173,6 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 	std::vector<Vector3> nifVerts;
 	ref.GetVertsForShape(shape, nifVerts);
 
-	std::vector<Triangle> nifTris;
-	shape->GetTriangles(nifTris);
-
 	m->shapeName = shape->name.get();
 
 	if (!shape->IsSkinned()) {
@@ -216,18 +213,11 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 	m->nVerts = nifVerts.size();
 	m->verts = std::make_unique<Vector3[]>(m->nVerts);
 
-	m->nTris = nifTris.size();
-	m->tris = std::make_unique<Triangle[]>(m->nTris);
-
 	// Load verts. No transformation is done (in contrast to the very similar code in GLSurface).
 	for (int i = 0; i < m->nVerts; i++) {
 		glm::vec4 vtmp = m->matModel * glm::vec4((nifVerts)[i].x, (nifVerts)[i].y, (nifVerts)[i].z, 1.0f);
 		m->verts[i] = Vector3(vtmp.x, vtmp.y, vtmp.z);
 	}
-
-	// Load triangles
-	for (int j = 0; j < m->nTris; j++)
-		m->tris[j] = nifTris[j];
 }
 
 void Automorph::DeleteVerts(const std::string& shapeName, const std::vector<uint16_t>& indices) {
@@ -242,7 +232,7 @@ void Automorph::ClearProximityCache() {
 	prox_cache.clear();
 }
 
-void Automorph::BuildProximityCache(const std::string& shapeName, const float proximityRadius) {
+void Automorph::BuildProximityCache(const std::string& shapeName, float proximityRadius, const std::set<uint16_t>* maskIndices) {
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
@@ -258,10 +248,18 @@ void Automorph::BuildProximityCache(const std::string& shapeName, const float pr
 			maxCount = resultCount;
 
 		std::vector<kd_query_result> indexResults;
-		for (int id = 0; id < resultCount; id++)
-			indexResults.push_back(refTree->queryResult[id]);
+		for (uint16_t id = 0; id < resultCount; id++) {
+			const auto& result = refTree->queryResult[id];
 
-		prox_cache[i] = indexResults;
+			if (maskIndices) {
+				if (maskIndices->find(result.vertex_index) != maskIndices->end())
+					continue;
+			}
+
+			indexResults.push_back(std::move(result));
+		}
+
+		prox_cache[i] = std::move(indexResults);
 	}
 }
 

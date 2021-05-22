@@ -2231,7 +2231,14 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 	if (!workNif.IsValid() || !baseShape)
 		return;
 
-	morpher.BuildProximityCache(shape->name.get(), options.proximityRadius);
+	std::unordered_map<uint16_t, float> mask;
+	owner->glView->GetShapeMask(mask, baseShape->name.get());
+
+	std::set<uint16_t> maskIndices;
+	for (auto &m : mask)
+		maskIndices.insert(m.first);
+
+	morpher.BuildProximityCache(shape->name.get(), options.proximityRadius, &maskIndices);
 
 	std::string refTarget = ShapeToTarget(baseShape->name.get());
 	for (size_t i = 0; i < activeSet.size(); i++)
