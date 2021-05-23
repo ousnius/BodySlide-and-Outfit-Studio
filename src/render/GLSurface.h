@@ -325,6 +325,12 @@ public:
 	}
 
 	bool SetContext();
+	
+	// Sort function for overlay layer
+	struct SortOverlaysLayer {
+		bool operator()(const mesh* lhs, const mesh* rhs) { return rhs->overlayLayer > lhs->overlayLayer; }
+	};
+
 	void RenderOneFrame();
 	void RenderToTexture(GLMaterial* renderShader);
 	void RenderMesh(mesh* m);

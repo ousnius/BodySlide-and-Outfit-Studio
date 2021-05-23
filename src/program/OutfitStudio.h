@@ -150,6 +150,11 @@ struct ConformOptions;
 class OutfitStudioFrame;
 class EditUV;
 
+enum OverlayLayer : uint32_t {
+	Default = 0,
+	NodeSelection = 10,
+};
+
 class wxGLPanel : public wxGLCanvas {
 public:
 	GLSurface gls;

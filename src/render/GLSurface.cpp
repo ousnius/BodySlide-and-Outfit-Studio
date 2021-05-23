@@ -806,10 +806,18 @@ void GLSurface::RenderOneFrame() {
 	}
 
 	// Render overlays on top
-	glClear(GL_DEPTH_BUFFER_BIT);
-	for (auto &o : overlays) {
-		if (o->bVisible)
+	std::vector<mesh*> renderOverlays(overlays);
+	std::sort(renderOverlays.begin(), renderOverlays.end(), SortOverlaysLayer());
+
+	uint32_t lastOverlayLayer = static_cast<uint32_t>(-1);
+	for (auto &o : renderOverlays) {
+		if (o->bVisible) {
+			if (o->overlayLayer != lastOverlayLayer)
+				glClear(GL_DEPTH_BUFFER_BIT);
+
+			lastOverlayLayer = o->overlayLayer;
 			RenderMesh(o);
+		}
 	}
 
 	canvas->SwapBuffers();
@@ -931,21 +939,6 @@ void GLSurface::RenderMesh(mesh* m) {
 			glPolygonOffset(1.0f, 1.0f);
 		else
 			glPolygonOffset(0.03f, 0.03f);
-
-		/* TESTING
-		m->subMeshes.clear();
-		m->subMeshesColor.clear();
-
-		m->subMeshes.push_back(std::make_pair(0, 1000));
-		m->subMeshes.push_back(std::make_pair(1000, 1000));
-		m->subMeshes.push_back(std::make_pair(2000, 1000));
-		m->subMeshes.push_back(std::make_pair(3000, 1000));
-
-		m->subMeshesColor.push_back(Vector3(1, 0, 0));
-		m->subMeshesColor.push_back(Vector3(0, 1, 0));
-		m->subMeshesColor.push_back(Vector3(0, 0, 1));
-		m->subMeshesColor.push_back(Vector3(1, 1, 0));
-		*/
 
 		GLuint subMeshesSize = 0;
 		if (!m->subMeshes.empty()) {
