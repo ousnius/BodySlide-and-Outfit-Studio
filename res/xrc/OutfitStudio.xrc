@@ -209,7 +209,7 @@
 								<checked>0</checked>
 							</object>
 							<object class="tool" name="btnBrushCollision">
-								<label>Global Brush Collision\tC</label>
+								<label>Global Brush Collision\tB</label>
 								<tooltip>Allows for the brushes to collide with all currently selected meshes at the same time.</tooltip>
 								<bitmap>$(AppDir)\res\images\BrushCollision.png</bitmap>
 								<toggle>1</toggle>
