@@ -249,6 +249,12 @@
 								<bitmap>$(AppDir)\res\images\Nodes.png</bitmap>
 								<toggle>1</toggle>
 							</object>
+							<object class="tool" name="btnShowBones">
+								<label>Show Bones</label>
+								<tooltip>Toggle rendering of bones.</tooltip>
+								<bitmap>$(AppDir)\res\images\Bones.png</bitmap>
+								<toggle>1</toggle>
+							</object>
 							<object class="tool" name="btnShowFloor">
 								<label>Show Floor</label>
 								<tooltip>Toggle rendering of the floor grid.</tooltip>
@@ -1887,6 +1893,10 @@
 				</object>
 				<object class="wxMenuItem" name="btnShowNodes">
 					<label>Show Nodes\tShift+N</label>
+					<checkable>1</checkable>
+				</object>
+				<object class="wxMenuItem" name="btnShowBones">
+					<label>Show Bones\tShift+B</label>
 					<checkable>1</checkable>
 				</object>
 				<object class="wxMenuItem" name="btnShowFloor">

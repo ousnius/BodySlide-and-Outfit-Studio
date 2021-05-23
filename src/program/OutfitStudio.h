@@ -239,6 +239,9 @@ public:
 	void UpdateNodes();
 	void UpdateNodeColors();
 
+	void ShowBones(bool show = true);
+	void UpdateBones();
+
 	void ShowFloor(bool show = true);
 	void UpdateFloor();
 
@@ -284,22 +287,6 @@ public:
 
 		if (transformMode)
 			ShowTransformTool();
-	}
-
-	bool GetNodesMode() {
-		return nodesMode;
-	}
-	void SetNodesMode(bool on = true) {
-		nodesMode = on;
-		ShowNodes(on);
-	}
-
-	bool GetFloorMode() {
-		return floorMode;
-	}
-	void SetFloorMode(bool on = true) {
-		floorMode = on;
-		ShowFloor(on);
 	}
 
 	bool GetSegmentMode() {
@@ -671,6 +658,8 @@ public:
 
 		nodesPoints.clear();
 		nodesLines.clear();
+		bonesPoints.clear();
+		bonesLines.clear();
 		floorMeshes.clear();
 
 		BVHUpdateQueue.clear();
@@ -757,6 +746,7 @@ private:
 	bool transformMode = false;
 	bool pivotMode = false;
 	bool nodesMode = false;
+	bool bonesMode = false;
 	bool floorMode = false;
 	bool vertexEdit = false;
 	bool segmentMode = false;
@@ -814,6 +804,8 @@ private:
 
 	std::vector<mesh*> nodesPoints;
 	std::vector<mesh*> nodesLines;
+	std::vector<mesh*> bonesPoints;
+	std::vector<mesh*> bonesLines;
 	std::vector<mesh*> floorMeshes;
 
 	wxDECLARE_EVENT_TABLE();
@@ -1314,6 +1306,7 @@ private:
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);
 	void OnShowNodes(wxCommandEvent& event);
+	void OnShowBones(wxCommandEvent& event);
 	void OnShowFloor(wxCommandEvent& event);
 	void OnFieldOfViewSlider(wxCommandEvent& event);
 	void OnUpdateLights(wxCommandEvent& event);

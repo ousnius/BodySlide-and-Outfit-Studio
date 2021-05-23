@@ -170,6 +170,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnViewPerspective"), OutfitStudioFrame::OnTogglePerspective)
 
 	EVT_MENU(XRCID("btnShowNodes"), OutfitStudioFrame::OnShowNodes)
+	EVT_MENU(XRCID("btnShowBones"), OutfitStudioFrame::OnShowBones)
 	EVT_MENU(XRCID("btnShowFloor"), OutfitStudioFrame::OnShowFloor)
 	
 	EVT_MENU(XRCID("btnIncreaseSize"), OutfitStudioFrame::OnIncBrush)
@@ -2449,7 +2450,9 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 		CreatePartitionTree(activeItem->GetShape());
 	}
 
+	glView->UpdateBones();
 	glView->Render();
+
 	HighlightBoneNamesWithWeights();
 	UpdateBoneCounts();
 }
@@ -3691,6 +3694,7 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 	PoseToGUI();
 
 	glView->UpdateNodes();
+	glView->UpdateBones();
 }
 
 void OutfitStudioFrame::UpdateBoneTree() {
@@ -5816,6 +5820,13 @@ void OutfitStudioFrame::OnShowNodes(wxCommandEvent& event) {
 	menuBar->Check(event.GetId(), enabled);
 	toolBarV->ToggleTool(event.GetId(), enabled);
 	glView->ShowNodes(enabled);
+}
+
+void OutfitStudioFrame::OnShowBones(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+	glView->ShowBones(enabled);
 }
 
 void OutfitStudioFrame::OnShowFloor(wxCommandEvent& event) {
@@ -8587,8 +8598,10 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 			cPoseBone->AppendString(bone);
 		}
 
+		glView->UpdateBones();
 		UpdateBoneCounts();
 		SetPendingChanges();
+		glView->Render();
 	}
 }
 
@@ -8678,8 +8691,10 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	cXMirrorBone->AppendString(bone);
 	cPoseBone->AppendString(bone);
 
+	glView->UpdateBones();
 	UpdateBoneCounts();
 	SetPendingChanges();
+	glView->Render();
 }
 
 void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
@@ -8733,6 +8748,7 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 	GetBoneDlgData(dlg, xform, parentBone);
 
 	project->ModifyCustomBone(bPtr, parentBone, xform);
+	glView->UpdateBones();
 	ApplyPose();
 	SetPendingChanges();
 }
@@ -8752,6 +8768,7 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 		lastNormalizeBones.erase(bone);
 	}
 
+	glView->UpdateBones();
 	ReselectBone();
 	CalcAutoXMirrorBone();
 	glView->GetUndoHistory()->ClearHistory();
@@ -8770,6 +8787,7 @@ void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)
 			project->GetWorkAnim()->RemoveShapeBone(s->GetShape()->name.get(), bone);
 	}
 
+	glView->UpdateBones();
 	ReselectBone();
 	glView->GetUndoHistory()->ClearHistory();
 	HighlightBoneNamesWithWeights();
@@ -9797,6 +9815,7 @@ void wxGLPanel::OnShown() {
 
 	UpdateFloor();
 	UpdateNodes();
+	UpdateBones();
 
 	Render();
 }
@@ -11087,10 +11106,19 @@ void wxGLPanel::UpdateNodes() {
 
 	auto workNif = os->project->GetWorkNif();
 
-	std::function<void(NiNode*, NiNode*, const MatTransform&, const Vector3&)> addChildNodes = [&](NiNode* node, NiNode* parent, const MatTransform& parentXformToGlobal, const Vector3& parentPosition) {
-		MatTransform xformToParent = node->GetTransformToParent();
-		MatTransform xformToGlobal = parentXformToGlobal.ComposeTransforms(xformToParent);
-		Vector3 position = xformToGlobal.GetVector();
+	std::function<void(NiNode*, NiNode*, const Vector3&, const Vector3&)> addChildNodes = [&](NiNode* node, NiNode* parent, const Vector3& rootPosition, const Vector3& parentPosition) {
+		MatTransform ttg = node->GetTransformToParent();
+		NiNode* parentNode = parent;
+		while (parentNode) {
+			ttg = parentNode->GetTransformToParent().ComposeTransforms(ttg);
+			parentNode = workNif->GetParentNode(parentNode);
+		}
+
+		Vector3 position = ttg.ApplyTransform(rootPosition);
+
+
+		//MatTransform xformToParent = node->GetTransformToParent();
+		//Vector3 position = xformToParent.ApplyTransform(parentPosition);
 
 		std::string nodeName = node->name.get();
 		if (!nodeName.empty()) {
@@ -11118,16 +11146,92 @@ void wxGLPanel::UpdateNodes() {
 		for (auto &child : node->childRefs) {
 			auto childNode = workNif->GetHeader().GetBlock<NiNode>(child);
 			if (childNode)
-				addChildNodes(childNode, node, xformToGlobal, position);
+				addChildNodes(childNode, node, rootPosition, position);
 		}
 	};
 
-	MatTransform rootXformToGlobal;
-	Vector3 rootPosition;
-
 	auto rootNode = workNif->GetRootNode();
 	if (rootNode)
-		addChildNodes(rootNode, nullptr, rootXformToGlobal, rootPosition);
+		addChildNodes(rootNode, nullptr, rootNode->transform.translation, rootNode->transform.translation);
+
+	UpdateNodeColors();
+}
+
+void wxGLPanel::ShowBones(bool show) {
+	bonesMode = show;
+
+	for (auto &m : bonesPoints)
+		m->bVisible = show;
+
+	for (auto &m : bonesLines)
+		m->bVisible = show;
+
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateBones() {
+	for (auto &m : bonesPoints)
+		gls.DeleteOverlay(m);
+
+	for (auto &m : bonesLines)
+		gls.DeleteOverlay(m);
+
+	bonesPoints.clear();
+	bonesLines.clear();
+
+	auto workAnim = os->project->GetWorkAnim();
+
+	std::function<bool(AnimBone*, const Vector3&)> addChildBones = [&](AnimBone* parent, const Vector3& rootPosition) {
+		bool anyBoneInSelection = false;
+
+		for (auto &cb : parent->children) {
+			bool childBonesInSelection = addChildBones(cb, rootPosition);
+
+			if (!cb->boneName.empty()) {
+				bool boneInSelection = false;
+				for (auto &si : os->GetSelectedItems()) {
+					if (workAnim->GetShapeBoneIndex(si->GetShape()->name.get(), cb->boneName) != -1) {
+						boneInSelection = true;
+						break;
+					}
+				}
+
+				if (boneInSelection || childBonesInSelection) {
+					Vector3 position = cb->xformToGlobal.ApplyTransform(rootPosition);
+					Vector3 parentPosition = parent->xformToGlobal.ApplyTransform(rootPosition);
+					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
+
+					Vector3 renderPosition = position;
+					VecToMeshCoords(renderPosition);
+
+					auto pointMesh = gls.AddVisPoint(renderPosition, "BP_" + cb->boneName);
+					if (pointMesh) {
+						pointMesh->bVisible = bonesMode;
+						bonesPoints.push_back(pointMesh);
+					}
+
+					Vector3 renderParentPosition = parentPosition;
+					VecToMeshCoords(renderParentPosition);
+
+					if (!matchesParent) {
+						auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "BL_" + cb->boneName);
+						if (lineMesh) {
+							lineMesh->bVisible = bonesMode;
+							bonesLines.push_back(lineMesh);
+						}
+					}
+
+					anyBoneInSelection = true;
+				}
+			}
+		}
+
+		return anyBoneInSelection;
+	};
+
+	AnimBone* rb = AnimSkeleton::getInstance().GetRootBonePtr();
+	if (rb)
+		addChildBones(rb, rb->xformToParent.translation);
 
 	UpdateNodeColors();
 }
@@ -11141,11 +11245,13 @@ void wxGLPanel::UpdateNodeColors() {
 			m->color.x = 1.0f;
 			m->color.y = 0.0f;
 			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::NodeSelection;
 		}
 		else {
 			m->color.x = 0.0f;
 			m->color.y = 1.0f;
 			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::Default;
 		}
 	}
 
@@ -11155,11 +11261,45 @@ void wxGLPanel::UpdateNodeColors() {
 			m->color.x = 0.7f;
 			m->color.y = 0.0f;
 			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::NodeSelection;
 		}
 		else {
 			m->color.x = 0.0f;
 			m->color.y = 0.7f;
 			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::Default;
+		}
+	}
+
+	for (auto &m : bonesPoints) {
+		auto nodeName = m->shapeName.substr(3, m->shapeName.length() - 3);
+		if (nodeName == activeBone) {
+			m->color.x = 1.0f;
+			m->color.y = 0.0f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else {
+			m->color.x = 0.0f;
+			m->color.y = 1.0f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::Default;
+		}
+	}
+
+	for (auto &m : bonesLines) {
+		auto nodeName = m->shapeName.substr(3, m->shapeName.length() - 3);
+		if (nodeName == activeBone) {
+			m->color.x = 0.7f;
+			m->color.y = 0.0f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else {
+			m->color.x = 0.0f;
+			m->color.y = 0.7f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::Default;
 		}
 	}
 }
