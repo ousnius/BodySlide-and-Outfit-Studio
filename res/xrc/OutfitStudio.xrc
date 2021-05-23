@@ -1886,7 +1886,7 @@
 					<checked>1</checked>
 				</object>
 				<object class="wxMenuItem" name="btnShowNodes">
-					<label>Show Nodes\tN</label>
+					<label>Show Nodes\tShift+N</label>
 					<checkable>1</checkable>
 				</object>
 				<object class="wxMenuItem" name="btnShowFloor">
