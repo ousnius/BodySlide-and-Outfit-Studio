@@ -62,9 +62,9 @@ class BodySlideApp : public wxApp {
 	PreviewWindow* preview = nullptr;
 
 	/* Command-Line Arguments */
-	wxString cmdGroupBuild;
-	wxString cmdTargetDir;
-	wxString cmdPreset;
+	std::vector<std::string> cmdGroupBuild;
+	std::string cmdTargetDir;
+	std::string cmdPreset;
 	bool cmdTri = false;
 
 	/* Localization */
@@ -214,7 +214,7 @@ public:
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false, bool forceNormals = false);
 	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, bool forceNormals = false, const std::string& custPath = "");
-	void GroupBuild(const std::string& group);
+	void GroupBuild(const std::vector<std::string>& groupNames);
 
 	void AddTriData(nifly::NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
 

@@ -174,8 +174,6 @@ bool BodySlideApp::OnInit() {
 	sliderView->Show();
 	SetTopWindow(sliderView);
 
-	InitArchives();
-
 	if (!GetOutputDataPath().empty()) {
 		bool dirWritable = wxFileName::IsDirWritable(GetOutputDataPath());
 		bool dirReadable = wxFileName::IsDirReadable(GetOutputDataPath());
@@ -190,7 +188,19 @@ bool BodySlideApp::OnInit() {
 			wxMessageBox(_("No read/write permission for project path!\n\nPlease launch the program with admin elevation and make sure the project path in the settings is correct."), _("Warning"), wxICON_WARNING);
 	}
 
-	wxLogMessage("BodySlide initialized.");
+	LoadAllCategories();
+	LoadAllGroups();
+	LoadSliderSets();
+
+	if (cmdGroupBuild.empty()) {
+		sliderView->delayLoad.Start(100, true);
+		wxLogMessage("BodySlide initialized.");
+	}
+	else {
+		wxLogMessage("BodySlide initialized.");
+		GroupBuild(cmdGroupBuild);
+	}
+
 	return true;
 }
 
@@ -199,9 +209,30 @@ void BodySlideApp::OnInitCmdLine(wxCmdLineParser& parser) {
 }
 
 bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
-	parser.Found("gbuild", &cmdGroupBuild);
-	parser.Found("t", &cmdTargetDir);
-	parser.Found("p", &cmdPreset);
+	wxString gbuild;
+	parser.Found("gbuild", &gbuild);
+
+	wxStringTokenizer tokenizer(gbuild, ",");
+	while (tokenizer.HasMoreTokens()) {
+		wxString token = tokenizer.GetNextToken().Trim();
+		if (!token.IsEmpty()) {
+			std::string groupName = token.ToUTF8().data();
+			cmdGroupBuild.push_back(groupName);
+		}
+	}
+
+	wxString targetDir;
+	parser.Found("t", &targetDir);
+
+	if (!targetDir.IsEmpty() && !targetDir.EndsWith(PathSepChar))
+		targetDir.Append(PathSepChar);
+
+	cmdTargetDir = targetDir.ToUTF8().data();
+
+	wxString preset;
+	parser.Found("p", &preset);
+	cmdPreset = preset.ToUTF8().data();
+
 	cmdTri = parser.Found("tri");
 	return true;
 }
@@ -306,9 +337,7 @@ void BodySlideApp::LoadData() {
 		return;
 
 	wxLogMessage("Loading initial data...");
-	LoadAllCategories();
-	LoadAllGroups();
-	LoadSliderSets();
+	InitArchives();
 
 	std::string activeOutfit = BodySlideConfig["SelectedOutfit"];
 	if (activeOutfit.empty() && !outfitNameOrder.empty()) {
@@ -348,9 +377,6 @@ void BodySlideApp::LoadData() {
 
 	sliderView->Thaw();
 	sliderView->Layout();
-
-	if (!cmdGroupBuild.IsEmpty())
-		GroupBuild(cmdGroupBuild.ToUTF8().data());
 }
 
 int BodySlideApp::CreateSetSliders(const std::string& outfit) {
@@ -651,7 +677,7 @@ void BodySlideApp::DisplayActiveSet() {
 		int iter = 0;
 		for (auto &cat : sliderCategories) {
 			catSliders.push_back(std::vector<int>());
-			if (find(std::get<1>(cat).begin(), std::get<1>(cat).end(), activeSet[i].name) != std::get<1>(cat).end()) {
+			if (std::find(std::get<1>(cat).begin(), std::get<1>(cat).end(), activeSet[i].name) != std::get<1>(cat).end()) {
 				catSliders[iter].push_back(i);
 				regularSlider = false;
 				break;
@@ -2419,28 +2445,33 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 	return 0;
 }
 
-void BodySlideApp::GroupBuild(const std::string& group) {
+void BodySlideApp::GroupBuild(const std::vector<std::string>& groupNames) {
 	std::vector<std::string> outfits;
 	for (auto &o : outfitNameSource) {
 		std::vector<std::string> groups;
 		gCollection.GetOutfitGroups(o.first, groups);
-		if (find(groups.begin(), groups.end(), group) != groups.end())
-			outfits.push_back(o.first);
+
+		for (auto &g : groups) {
+			if (std::find(groupNames.begin(), groupNames.end(), g) != groupNames.end()) {
+				outfits.push_back(o.first);
+				break;
+			}
+		}
 	}
 
 	std::string preset;
-	if (!cmdPreset.IsEmpty()) {
+	if (!cmdPreset.empty()) {
 		preset = BodySlideConfig["SelectedPreset"];
-		BodySlideConfig.SetValue("SelectedPreset", cmdPreset.ToUTF8().data());
+		BodySlideConfig.SetValue("SelectedPreset", cmdPreset);
 	}
 
 	std::vector<std::string> groups;
 	sliderManager.LoadPresets(GetProjectPath() + "/SliderPresets", "", groups, true);
 
 	std::map<std::string, std::string> failedOutfits;
-	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, false, cmdTargetDir.ToUTF8().data());
+	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, false, cmdTargetDir);
 
-	if (!cmdPreset.IsEmpty())
+	if (!cmdPreset.empty())
 		BodySlideConfig.SetValue("SelectedPreset", preset);
 
 	wxLog::FlushActive();
@@ -2543,8 +2574,6 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/BatchBuild.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Settings.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/About.xrc");
-
-	delayLoad.Start(100, true);
 
 	SetDoubleBuffered(true);
 	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "/res/images/BodySlide.png", wxBITMAP_TYPE_PNG));
