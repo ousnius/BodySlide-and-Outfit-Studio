@@ -98,7 +98,6 @@ public:
 	GLMaterial* material = nullptr;
 
 	uint32_t overlayLayer = 0;						// Layer for order of rendering overlays
-	float scale = 1.0f;								// Information only, does not cause verts to be scaled during render (except point/lines).
 	float smoothThresh = 60.0f * nifly::DEG2RAD;			// Smoothing threshold for generating smooth normals.
 
 	std::unique_ptr<std::vector<int>[]> vertTris;				// Map of triangles for which each vert is a member.

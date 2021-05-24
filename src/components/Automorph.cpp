@@ -206,10 +206,6 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 		m->matModel = glm::inverse(matSkin);
 	}
 
-
-	//float c = 0.4f + (meshes.size()*0.3f);
-	//m->color = Vector3(c,c,c);
-
 	m->nVerts = nifVerts.size();
 	m->verts = std::make_unique<Vector3[]>(m->nVerts);
 

@@ -11116,10 +11116,6 @@ void wxGLPanel::UpdateNodes() {
 
 		Vector3 position = ttg.ApplyTransform(rootPosition);
 
-
-		//MatTransform xformToParent = node->GetTransformToParent();
-		//Vector3 position = xformToParent.ApplyTransform(parentPosition);
-
 		std::string nodeName = node->name.get();
 		if (!nodeName.empty()) {
 			Vector3 renderPosition = position;

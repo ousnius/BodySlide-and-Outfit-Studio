@@ -579,8 +579,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 					Vector3 norm;
 					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
 
-					mesh* ringMesh = AddVisCircle(morigin, norm, cursorSize, "cursormesh");
-					ringMesh->scale = 2.0f;
+					AddVisCircle(morigin, norm, cursorSize, "cursormesh");
 
 					Vector3 mhilitepoint = ApplyMat4(m->matModel, hilitepoint);
 					AddVisPoint(mhilitepoint, "pointhilite");
