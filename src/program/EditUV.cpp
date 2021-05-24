@@ -976,10 +976,10 @@ void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& mes
 
 			hoverPoint = pointid;
 
-			glm::vec3 hl(m->matModel * glm::vec4(hilitepoint.x, hilitepoint.y, hilitepoint.z, 1.0f));
-			auto visPoint = uvSurface.AddVisPoint(Vector3(hl.x, hl.y, hl.z), "pointhilite");
-			if (visPoint)
-				visPoint->color = Vector3(1.0f, 0.0f, 0.0f);
+			Vector3 visPoint = mesh::ApplyMatrix4(m->matModel, hilitepoint);
+			auto visPointMesh = uvSurface.AddVisPoint(visPoint, "pointhilite");
+			if (visPointMesh)
+				visPointMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 		}
 	}
 

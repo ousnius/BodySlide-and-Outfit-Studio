@@ -184,8 +184,7 @@ public:
 		for (auto &m : activeMeshes) {
 			for (int i = 0; i < m->nVerts; i++) {
 				if (!useMask || m->vcolors[i].x == 0.0f) {
-					glm::vec3 mv(m->matModel * glm::vec4(m->verts[i].x, m->verts[i].y, m->verts[i].z, 1.0));
-					total = total + nifly::Vector3(mv.x, mv.y, mv.z);
+					total += mesh::ApplyMatrix4(m->matModel, m->verts[i]);
 					count++;
 				}
 			}
@@ -194,7 +193,7 @@ public:
 		if (count <= 0)
 			return nifly::Vector3();
 
-		total = total / count;
+		total /= count;
 		return total;
 	}
 
@@ -305,7 +304,6 @@ public:
 	mesh* AddVisSeamEdges(const mesh* refMesh, bool asMesh = false);
 
 	mesh* AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName, nifly::Vector3* color = nullptr);
-	void SetSkinModelMat(mesh *m, const nifly::MatTransform &xformGlobalToSkin);
 	void Update(const std::string& shapeName, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
 	void Update(mesh* m, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
 	mesh* ReloadMeshFromNif(nifly::NifFile* nif, std::string shapeName);

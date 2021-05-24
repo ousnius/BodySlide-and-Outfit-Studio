@@ -7843,8 +7843,8 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 						diff.z = -diff.z;
 
 					Vector3 newPos = vertPos + diff;
-					uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
-					uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
+					uss.pointStartState[i] = mesh::VecToMeshCoords(vertPos);
+					uss.pointEndState[i] = mesh::VecToMeshCoords(newPos);
 				}
 
 				usp->usss.push_back(std::move(uss));
@@ -7956,7 +7956,7 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			if (originSelection == 1) {
 				// Center of selected shape(s), respecting mask
 				origin = glView->gls.GetActiveCenter();
-				glView->VecToNifCoords(origin);
+				origin = mesh::VecToNifCoords(origin);
 			}
 
 			UndoStateProject *usp = glView->GetUndoHistory()->PushState();
@@ -7992,8 +7992,8 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 						continue;
 
 					Vector3 newPos = vertPos + diff;
-					uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
-					uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
+					uss.pointStartState[i] = mesh::VecToMeshCoords(vertPos);
+					uss.pointEndState[i] = mesh::VecToMeshCoords(newPos);
 				}
 
 				usp->usss.push_back(std::move(uss));
@@ -8140,7 +8140,7 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 			if (originSelection == 1) {
 				// Center of selected shape(s), respecting mask
 				origin = glView->gls.GetActiveCenter();
-				glView->VecToNifCoords(origin);
+				origin = mesh::VecToNifCoords(origin);
 			}
 
 			UndoStateProject *usp = glView->GetUndoHistory()->PushState();
@@ -8178,8 +8178,8 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 						continue;
 
 					Vector3 newPos = vertPos + diff;
-					uss.pointStartState[i] = glView->VecToMeshCoords(vertPos);
-					uss.pointEndState[i] = glView->VecToMeshCoords(newPos);
+					uss.pointStartState[i] = mesh::VecToMeshCoords(vertPos);
+					uss.pointEndState[i] = mesh::VecToMeshCoords(newPos);
 				}
 
 				usp->usss.push_back(std::move(uss));
@@ -9836,8 +9836,15 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 			continue;
 
 		NiShape* shape = nif->FindBlockByName<NiShape>(shapeList[i]);
-		if (shape && shape->IsSkinned())
-			gls.SetSkinModelMat(m, os->project->GetWorkAnim()->shapeSkinning[shapeList[i]].xformGlobalToSkin);
+		if (shape && shape->IsSkinned()) {
+			// Overwrite skin matrix with the one from AnimInfo
+			const auto skinning = os->project->GetWorkAnim()->shapeSkinning.find(shapeList[i]);
+			if (skinning != os->project->GetWorkAnim()->shapeSkinning.end()) {
+				MatTransform gts = skinning->second.xformGlobalToSkin;
+				gts.translation = mesh::VecToMeshCoords(gts.translation);
+				m->matModel = glm::inverse(mesh::TransformToMatrix4(gts));
+			}
+		}
 
 		m->BuildTriAdjacency();
 		m->BuildEdgeList();
@@ -9979,8 +9986,8 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 					os->project->MoveVertex(shape, newPos, vertIndex);
 
 				// To mesh coordinates
-				VecToMeshCoords(oldPos);
-				VecToMeshCoords(newPos);
+				oldPos = mesh::VecToMeshCoords(oldPos);
+				newPos = mesh::VecToMeshCoords(newPos);
 
 				UndoStateShape uss;
 				uss.shapeName = shape->name.get();
@@ -10236,7 +10243,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 				workNif->GetVertsForShape(shape, basePosition);
 
 			for (auto &p : basePosition)
-				VecToMeshCoords(p);
+				p = mesh::VecToMeshCoords(p);
 
 			positionData[i] = std::move(basePosition);
 		}
@@ -11118,8 +11125,7 @@ void wxGLPanel::UpdateNodes() {
 
 		std::string nodeName = node->name.get();
 		if (!nodeName.empty()) {
-			Vector3 renderPosition = position;
-			VecToMeshCoords(renderPosition);
+			Vector3 renderPosition = mesh::VecToMeshCoords(position);
 
 			auto pointMesh = gls.AddVisPoint(renderPosition, "P_" + nodeName);
 			if (pointMesh) {
@@ -11128,8 +11134,7 @@ void wxGLPanel::UpdateNodes() {
 			}
 
 			if (parent) {
-				Vector3 renderParentPosition = parentPosition;
-				VecToMeshCoords(renderParentPosition);
+				Vector3 renderParentPosition = mesh::VecToMeshCoords(parentPosition);
 
 				auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "L_" + nodeName);
 				if (lineMesh) {
@@ -11197,8 +11202,7 @@ void wxGLPanel::UpdateBones() {
 					Vector3 parentPosition = parent->xformToGlobal.ApplyTransform(rootPosition);
 					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
 
-					Vector3 renderPosition = position;
-					VecToMeshCoords(renderPosition);
+					Vector3 renderPosition = mesh::VecToMeshCoords(position);
 
 					auto pointMesh = gls.AddVisPoint(renderPosition, "BP_" + cb->boneName);
 					if (pointMesh) {
@@ -11206,8 +11210,7 @@ void wxGLPanel::UpdateBones() {
 						bonesPoints.push_back(pointMesh);
 					}
 
-					Vector3 renderParentPosition = parentPosition;
-					VecToMeshCoords(renderParentPosition);
+					Vector3 renderParentPosition = mesh::VecToMeshCoords(parentPosition);
 
 					if (!matchesParent) {
 						auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "BL_" + cb->boneName);

@@ -140,13 +140,6 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			if (!m)
 				continue;
 
-			NiShape* shape = nif->FindBlockByName<NiShape>(shapeListName);
-			if (shape && shape->IsSkinned()) {
-				MatTransform xformGlobalToSkin;
-				if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin))
-					gls.SetSkinModelMat(m, xformGlobalToSkin);
-			}
-
 			m->BuildTriAdjacency();
 			m->CreateBuffers();
 		}
@@ -164,13 +157,6 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			mesh* m = gls.ReloadMeshFromNif(nif, shapeListName);
 			if (!m)
 				continue;
-
-			NiShape* shape = nif->FindBlockByName<NiShape>(shapeListName);
-			if (shape && shape->IsSkinned()) {
-				MatTransform xformGlobalToSkin;
-				if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin))
-					gls.SetSkinModelMat(m, xformGlobalToSkin);
-			}
 
 			m->BuildTriAdjacency();
 			m->SmoothNormals();

@@ -483,11 +483,6 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 	return true;
 }
 
-inline Vector3 ApplyMat4(const glm::mat4x4 &mat, const Vector3 &p) {
-	glm::vec3 gp(mat * glm::vec4(p.x, p.y, p.z, 1.0f));
-	return Vector3(gp.x, gp.y, gp.z);
-}
-
 bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverPoint, Vector3* outHoverColor, float* outHoverAlpha, Edge* outHoverEdge) {
 	bool collided = false;
 	if (activeMeshes.empty())
@@ -574,19 +569,19 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 					if (outHoverEdge)
 						*outHoverEdge = closestEdge;
 
-					Vector3 morigin = ApplyMat4(m->matModel, origin);
+					Vector3 morigin = mesh::ApplyMatrix4(m->matModel, origin);
 
 					Vector3 norm;
 					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
 
 					AddVisCircle(morigin, norm, cursorSize, "cursormesh");
 
-					Vector3 mhilitepoint = ApplyMat4(m->matModel, hilitepoint);
+					Vector3 mhilitepoint = mesh::ApplyMatrix4(m->matModel, hilitepoint);
 					AddVisPoint(mhilitepoint, "pointhilite");
 					AddVisPoint(morigin, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
 
-					Vector3 mep1 = ApplyMat4(m->matModel, m->verts[closestEdge.p1]);
-					Vector3 mep2 = ApplyMat4(m->matModel, m->verts[closestEdge.p2]);
+					Vector3 mep1 = mesh::ApplyMatrix4(m->matModel, m->verts[closestEdge.p1]);
+					Vector3 mep2 = mesh::ApplyMatrix4(m->matModel, m->verts[closestEdge.p2]);
 					AddVisSeg(mep1, mep2, "seghilite");
 				}
 
@@ -1071,7 +1066,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	mesh* m = new mesh();
 
 	if (!shape->IsSkinned()) {
-		// Calculate transform from shape's CS to global CS.
+		// Calculate transform from shape's CS to global CS
 		MatTransform ttg = shape->GetTransformToParent();
 		NiNode* parent = nif->GetParentNode(shape);
 		while (parent) {
@@ -1079,21 +1074,21 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 			parent = nif->GetParentNode(parent);
 		}
 
+		ttg.translation = mesh::VecToMeshCoords(ttg.translation);
+
 		// Convert ttg to a glm::mat4x4
-		auto matShape = glm::identity<glm::mat4x4>();
-		matShape = glm::translate(matShape, glm::vec3(ttg.translation.x / -10.0f, ttg.translation.z / 10.0f, ttg.translation.y / 10.0f));
-		float y, p, r;
-		ttg.rotation.ToEulerAngles(y, p, r);
-		matShape *= glm::yawPitchRoll(r, p, y);
-		matShape = glm::scale(matShape, glm::vec3(ttg.scale, ttg.scale, ttg.scale));
-		m->matModel = matShape;
+		m->matModel = mesh::TransformToMatrix4(ttg);
 	}
 	else {
-		// For skinned meshes, SetSkinModelMat should be called with an
-		// appropriate global-to-skin transform.
+		// Skinned meshes
 		m->matModel = glm::identity<glm::mat4x4>();
-	}
 
+		MatTransform xformGlobalToSkin;
+		if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin)) {
+			xformGlobalToSkin.translation = mesh::VecToMeshCoords(xformGlobalToSkin.translation);
+			m->matModel = glm::inverse(mesh::TransformToMatrix4(xformGlobalToSkin));
+		}
+	}
 
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
@@ -1266,17 +1261,6 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	}
 
 	return m;
-}
-
-void GLSurface::SetSkinModelMat(mesh *m, const MatTransform &xformGlobalToSkin) {
-	const MatTransform &xf = xformGlobalToSkin;
-	auto matSkin = glm::identity<glm::mat4x4>();
-	float y, p, r;
-	xf.rotation.ToEulerAngles(y, p, r);
-	matSkin = glm::translate(matSkin, glm::vec3(xf.translation.x / -10.0f, xf.translation.z / 10.0f, xf.translation.y / 10.0f));
-	matSkin *= glm::yawPitchRoll(r, p, y);
-	matSkin = glm::scale(matSkin, glm::vec3(xf.scale, xf.scale, xf.scale));
-	m->matModel = glm::inverse(matSkin);
 }
 
 mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Vector3* color) {

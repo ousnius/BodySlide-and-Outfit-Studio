@@ -176,7 +176,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 	m->shapeName = shape->name.get();
 
 	if (!shape->IsSkinned()) {
-		// Calculate transform from shape's CS to global CS.
+		// Calculate transform from shape's CS to global CS
 		MatTransform ttg = shape->GetTransformToParent();
 		NiNode* parent = ref.GetParentNode(shape);
 		while (parent) {
@@ -184,36 +184,26 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 			parent = ref.GetParentNode(parent);
 		}
 
-		// Convert ttg to a glm::mat4x4.
-		auto matShape = glm::identity<glm::mat4x4>();
-		matShape = glm::translate(matShape, glm::vec3(ttg.translation.x, ttg.translation.y, ttg.translation.z));
-		float y, p, r;
-		ttg.rotation.ToEulerAngles(y, p, r);
-		matShape *= glm::yawPitchRoll(r, p, y);
-		matShape = glm::scale(matShape, glm::vec3(ttg.scale, ttg.scale, ttg.scale));
-		m->matModel = matShape;
+		// Convert ttg to a glm::mat4x4
+		m->matModel = mesh::TransformToMatrix4(ttg);
 	}
 	else {
-		// Not rendered by the game for skinned meshes
-		// Keep to counter-offset bone transforms
-		auto matSkin = glm::identity<glm::mat4x4>();
-		const MatTransform &xFormSkin = workAnim->shapeSkinning.find(m->shapeName)->second.xformGlobalToSkin;
-		float y, p, r;
-		xFormSkin.rotation.ToEulerAngles(y, p, r);
-		matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x, xFormSkin.translation.y, xFormSkin.translation.z));
-		matSkin *= glm::yawPitchRoll(r, p, y);
-		matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
-		m->matModel = glm::inverse(matSkin);
+		// For skinned meshes with appropriate global-to-skin transform
+		const auto skinning = workAnim->shapeSkinning.find(m->shapeName);
+		if (skinning != workAnim->shapeSkinning.end()) {
+			const MatTransform &gts = skinning->second.xformGlobalToSkin;
+			m->matModel = glm::inverse(mesh::TransformToMatrix4(gts));
+		}
+		else
+			m->matModel = glm::identity<glm::mat4x4>();
 	}
 
 	m->nVerts = nifVerts.size();
 	m->verts = std::make_unique<Vector3[]>(m->nVerts);
 
-	// Load verts. No transformation is done (in contrast to the very similar code in GLSurface).
-	for (int i = 0; i < m->nVerts; i++) {
-		glm::vec4 vtmp = m->matModel * glm::vec4((nifVerts)[i].x, (nifVerts)[i].y, (nifVerts)[i].z, 1.0f);
-		m->verts[i] = Vector3(vtmp.x, vtmp.y, vtmp.z);
-	}
+	// Load verts. No CS transformation is done (in contrast to the very similar code in GLSurface).
+	for (int i = 0; i < m->nVerts; i++)
+		m->verts[i] = mesh::ApplyMatrix4(m->matModel, nifVerts[i]);
 }
 
 void Automorph::DeleteVerts(const std::string& shapeName, const std::vector<uint16_t>& indices) {

@@ -206,4 +206,39 @@ public:
 	void AlphaFill(const float alpha);
 
 	void ColorChannelFill(int channel, float value);
+
+	static nifly::Vector3 VecToMeshCoords(const nifly::Vector3& vec) {
+		nifly::Vector3 vecNew = vec;
+		vecNew.x /= -10.0f;
+		vecNew.y /= 10.0f;
+		vecNew.z /= 10.0f;
+		std::swap(vecNew.y, vecNew.z);
+		return vecNew;
+	}
+
+	static nifly::Vector3 VecToNifCoords(const nifly::Vector3& vec) {
+		nifly::Vector3 vecNew = vec;
+		vecNew.x *= -10.0f;
+		vecNew.y *= 10.0f;
+		vecNew.z *= 10.0f;
+		std::swap(vecNew.y, vecNew.z);
+		return vecNew;
+	}
+
+	static glm::mat4x4 TransformToMatrix4(const nifly::MatTransform& xform) {
+		auto mat44 = glm::identity<glm::mat4x4>();
+
+		float y, p, r;
+		xform.rotation.ToEulerAngles(y, p, r);
+
+		mat44 = glm::translate(mat44, glm::vec3(xform.translation.x, xform.translation.y, xform.translation.z));
+		mat44 *= glm::eulerAngleXZY(y, p, r);
+		mat44 = glm::scale(mat44, glm::vec3(xform.scale, xform.scale, xform.scale));
+		return mat44;
+	}
+
+	static nifly::Vector3 ApplyMatrix4(const glm::mat4x4& mat, const nifly::Vector3& p) {
+		glm::vec3 gp(mat * glm::vec4(p.x, p.y, p.z, 1.0f));
+		return nifly::Vector3(gp.x, gp.y, gp.z);
+	}
 };
