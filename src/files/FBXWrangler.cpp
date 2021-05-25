@@ -10,13 +10,51 @@ extern ConfigurationManager Config;
 
 using namespace nifly;
 
+// Recursive function to get a node's global default position.
+// As a prerequisite, parent node's default local position must be already set.
+FbxAMatrix GetGlobalDefaultPosition(FbxNode* pNode) {
+	FbxAMatrix lLocalPosition;
+	FbxAMatrix lGlobalPosition;
+	FbxAMatrix lParentGlobalPosition;
+	lLocalPosition.SetT(pNode->LclTranslation.Get());
+	lLocalPosition.SetR(pNode->LclRotation.Get());
+	lLocalPosition.SetS(pNode->LclScaling.Get());
+
+	if (pNode->GetParent()) {
+		lParentGlobalPosition = GetGlobalDefaultPosition(pNode->GetParent());
+		lGlobalPosition = lParentGlobalPosition * lLocalPosition;
+	}
+	else
+		lGlobalPosition = lLocalPosition;
+
+	return lGlobalPosition;
+}
+
+// Function to set a node's local position from a global position.
+// As a prerequisite, parent node's default local position must be already set.
+void SetGlobalDefaultPosition(FbxNode* pNode, FbxAMatrix pGlobalPosition) {
+	FbxAMatrix lLocalPosition;
+	FbxAMatrix lParentGlobalPosition;
+
+	if (pNode->GetParent()) {
+		lParentGlobalPosition = GetGlobalDefaultPosition(pNode->GetParent());
+		lLocalPosition = lParentGlobalPosition.Inverse() * pGlobalPosition;
+	}
+	else
+		lLocalPosition = pGlobalPosition;
+
+	pNode->LclTranslation.Set(lLocalPosition.GetT());
+	pNode->LclRotation.Set(lLocalPosition.GetR());
+	pNode->LclScaling.Set(lLocalPosition.GetS());
+}
+
 struct FBXWrangler::Priv {
 	FbxManager* sdkManager = nullptr;
 	FbxScene* scene = nullptr;
 	std::map<std::string, FBXShape> shapes;
 
 	// Recursively add bones to the skeleton in a depth-first manner
-	FbxNode* AddLimb(NifFile* nif, NiNode* nifBone);
+	FbxNode* AddLimb(FbxNode* parent, NifFile* nif, NiNode* nifBone);
 	void AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone);
 
 	void AddGeometry(NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs);
@@ -90,7 +128,7 @@ void FBXWrangler::Priv::AddGeometry(NiShape* shape, const std::vector<Vector3>* 
 	FbxVector4* points = m->GetControlPoints();
 
 	for (int i = 0; i < m->GetControlPointsCount(); i++) {
-		points[i] = FbxVector4((*verts)[i].x, (*verts)[i].y, (*verts)[i].z);
+		points[i] = FbxVector4((*verts)[i].y, (*verts)[i].z, (*verts)[i].x);
 		if (normElement)
 			normElement->GetDirectArray().Add(FbxVector4((*norms)[i].x, (*norms)[i].y, (*norms)[i].z));
 		if (uvElement)
@@ -111,9 +149,9 @@ void FBXWrangler::Priv::AddGeometry(NiShape* shape, const std::vector<Vector3>* 
 	mNode->SetNodeAttribute(m);
 
 	// Intended for Maya
-	mNode->LclScaling.Set(FbxDouble3(1, 1, 1));
-	mNode->LclRotation.Set(FbxDouble3(-90, 0, 0));
-	mNode->LclTranslation.Set(FbxDouble3(0, 120, 0));
+	//mNode->LclScaling.Set(FbxDouble3(1, 1, 1));
+	//mNode->LclRotation.Set(FbxDouble3(-90, 0, 0));
+	//mNode->LclTranslation.Set(FbxDouble3(0, 120, 0));
 
 	FbxNode* rootNode = scene->GetRootNode();
 	rootNode->AddChild(mNode);
@@ -145,7 +183,7 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 		if (comNode) {
 			std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
 			for (auto &b : boneNodes)
-				comNode->AddChild(priv->AddLimb(nif, b));
+				priv->AddLimb(comNode, nif, b);
 		}
 	}
 	else if (!skelNode) {
@@ -155,9 +193,8 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 
 		skelNode = FbxNode::Create(priv->scene, skelName.c_str());
 		skelNode->SetNodeAttribute(skel);
-		skelNode->LclTranslation.Set(FbxDouble3(0.0, 0.0, 0.0));
-		//skelNode->LclRotation.Set(FbxDouble3(0.0, 0.0, 0.0));
-		//skelNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
+		//skelNode->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
+		//skelNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerYZX);
 
 		FbxNode* parentNode = skelNode;
 		if (root) {
@@ -169,12 +206,15 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 			rootNode->SetNodeAttribute(rootBone);
 
 			const MatTransform &ttp = root->GetTransformToParent();
-			rootNode->LclTranslation.Set(FbxDouble3(ttp.translation.x, ttp.translation.y, ttp.translation.z));
+			rootNode->LclTranslation.Set(FbxDouble3(ttp.translation.y, ttp.translation.z, ttp.translation.x));
 
 			float rx, ry, rz;
 			ttp.ToEulerDegrees(rx, ry, rz);
-			rootNode->LclRotation.Set(FbxDouble3(rx, ry, rz));
-			//rootNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
+			rootNode->LclRotation.Set(FbxDouble3(ry, rz, rx));
+			rootNode->LclScaling.Set(FbxDouble3(ttp.scale));
+
+			//rootNode->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
+			//rootNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerYZX);
 
 			// Add root as first node
 			parentNode->AddChild(rootNode);
@@ -194,8 +234,11 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 
 			float rx, ry, rz;
 			ttp.ToEulerDegrees(rx, ry, rz);
-			comNode->LclRotation.Set(FbxDouble3(rx, ry, rz));
-			//comNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
+			comNode->LclRotation.Set(FbxDouble3(ry, rz, rx));
+			comNode->LclScaling.Set(FbxDouble3(ttp.scale));
+
+			//comNode->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
+			//comNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerYZX);
 
 			// Add COM as child of root
 			parentNode->AddChild(comNode);
@@ -204,13 +247,13 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 
 		std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
 		for (auto bn : boneNodes)
-			parentNode->AddChild(priv->AddLimb(nif, bn));
+			priv->AddLimb(parentNode, nif, bn);
 
 		priv->scene->GetRootNode()->AddChild(skelNode);
 	}
 }
 
-FbxNode* FBXWrangler::Priv::AddLimb(NifFile* nif, NiNode* nifBone) {
+FbxNode* FBXWrangler::Priv::AddLimb(FbxNode* parent, NifFile* nif, NiNode* nifBone) {
 	FbxNode* node = scene->GetRootNode()->FindChild(nifBone->name.get().c_str());
 	if (!node) {
 		// Add new bone
@@ -221,13 +264,27 @@ FbxNode* FBXWrangler::Priv::AddLimb(NifFile* nif, NiNode* nifBone) {
 		node = FbxNode::Create(scene, nifBone->name.get().c_str());
 		node->SetNodeAttribute(bone);
 
-		const MatTransform &ttp = nifBone->GetTransformToParent();
-		node->LclTranslation.Set(FbxDouble3(ttp.translation.x, ttp.translation.y, ttp.translation.z));
+		//node->SetPivotState(FbxNode::eSourcePivot, FbxNode::ePivotActive);
+		//node->SetRotationOrder(FbxNode::eSourcePivot, eEulerYZX);
+
+		FbxVector4 lT, lR, lS;
+		FbxAMatrix lGM;
+		MatTransform xformGlobal;
+		nif->GetNodeTransformToGlobal(nifBone->name.get(), xformGlobal);
 
 		float rx, ry, rz;
-		ttp.ToEulerDegrees(rx, ry, rz);
-		node->LclRotation.Set(FbxDouble3(rx, ry, rz));
-		//myNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
+		xformGlobal.ToEulerDegrees(rx, ry, rz);
+
+		lT.Set(xformGlobal.translation.y, xformGlobal.translation.z, xformGlobal.translation.x);
+		lR.Set(ry, rz, rx);
+		lS.Set(xformGlobal.scale, xformGlobal.scale, xformGlobal.scale);
+
+		lGM.SetT(lT);
+		lGM.SetR(lR);
+		lGM.SetS(lS);
+
+		parent->AddChild(node);
+		SetGlobalDefaultPosition(node, lGM);
 	}
 	else {
 		// Bone already exists, but go through children and return nullptr
@@ -242,7 +299,7 @@ FbxNode* FBXWrangler::Priv::AddLimb(NifFile* nif, NiNode* nifBone) {
 void FBXWrangler::Priv::AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone) {
 	std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(nifBone);
 	for (auto &b : boneNodes)
-		node->AddChild(AddLimb(nif, b));
+		AddLimb(node, nif, b);
 }
 
 void FBXWrangler::AddNif(NifFile* nif, AnimInfo* anim, bool transToGlobal, NiShape* shape) {
@@ -314,6 +371,12 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, NiShape* shape) {
 						aCluster->AddControlPointIndex(vw.first, vw.second);
 				}
 
+				FbxAMatrix lXMatrix = rootNode->EvaluateGlobalTransform();
+				aCluster->SetTransformMatrix(lXMatrix);
+
+				lXMatrix = jointNode->EvaluateGlobalTransform();
+				aCluster->SetTransformLinkMatrix(lXMatrix);
+
 				skin->AddCluster(aCluster);
 			}
 		}
@@ -344,8 +407,6 @@ bool FBXWrangler::ExportScene(const std::string& fileName) {
 	ios->SetBoolProp(EXP_FBX_GLOBAL_SETTINGS, true);
 
 	iExporter->SetFileExportVersion(FBX_2014_00_COMPATIBLE);
-
-	priv->sdkManager->CreateMissingBindPoses(priv->scene);
 
 	FbxAxisSystem axis(FbxAxisSystem::eMax);
 	axis.ConvertScene(priv->scene);
@@ -409,7 +470,7 @@ bool FBXWrangler::Priv::LoadMeshes(const FBXImportOptions& options) {
 
 				for (int v = 0; v < numVerts; v++) {
 					FbxVector4 vert = m->GetControlPointAt(v);
-					shape.verts.emplace_back((float)vert.mData[0], (float)vert.mData[1], (float)vert.mData[2]);
+					shape.verts.emplace_back((float)vert.mData[2], (float)vert.mData[0], (float)vert.mData[1]);
 					if (uv && uv->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
 						int uIndex = v;
 						if (uv->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
