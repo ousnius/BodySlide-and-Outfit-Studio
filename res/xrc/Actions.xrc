@@ -33,7 +33,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="m_staticText3">
-							<label>X</label>
+							<label translate="0">X</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -42,7 +42,7 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="posX">
-							<value>0.0</value>
+							<value translate="0">0.0</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -50,7 +50,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="m_staticText4">
-							<label>Y</label>
+							<label translate="0">Y</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -59,7 +59,7 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="posY">
-							<value>0.0</value>
+							<value translate="0">0.0</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -67,7 +67,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="m_staticText5">
-							<label>Z</label>
+							<label translate="0">Z</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -76,7 +76,7 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="posZ">
-							<value>0.0</value>
+							<value translate="0">0.0</value>
 						</object>
 					</object>
 				</object>
@@ -128,7 +128,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="msLabelX">
-									<label>X</label>
+									<label translate="0">X</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -137,7 +137,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="msSliderX">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-25000</min>
 									<max>25000</max>
 									<size>400,-1</size>
@@ -149,7 +149,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="msTextX">
 									<size>60,-1</size>
-									<value>0.00000</value>
+									<value translate="0">0.00000</value>
 								</object>
 							</object>
 						</object>
@@ -173,7 +173,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="msLabelY">
-									<label>Y</label>
+									<label translate="0">Y</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -182,7 +182,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="msSliderY">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-25000</min>
 									<max>25000</max>
 									<size>400,-1</size>
@@ -194,7 +194,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="msTextY">
 									<size>60,-1</size>
-									<value>0.00000</value>
+									<value translate="0">0.00000</value>
 								</object>
 							</object>
 						</object>
@@ -218,7 +218,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="msLabelZ">
-									<label>Z</label>
+									<label translate="0">Z</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -227,7 +227,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="msSliderZ">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-25000</min>
 									<max>25000</max>
 									<size>400,-1</size>
@@ -239,7 +239,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="msTextZ">
 									<size>60,-1</size>
-									<value>0.00000</value>
+									<value translate="0">0.00000</value>
 								</object>
 							</object>
 						</object>
@@ -266,7 +266,7 @@
 						<flag>wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxCheckBox" name="mirrorAxisX">
-							<label>X</label>
+							<label translate="0">X</label>
 							<checked>0</checked>
 						</object>
 					</object>
@@ -275,7 +275,7 @@
 						<flag>wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxCheckBox" name="mirrorAxisY">
-							<label>Y</label>
+							<label translate="0">Y</label>
 							<checked>0</checked>
 						</object>
 					</object>
@@ -284,7 +284,7 @@
 						<flag>wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxCheckBox" name="mirrorAxisZ">
-							<label>Z</label>
+							<label translate="0">Z</label>
 							<checked>0</checked>
 						</object>
 					</object>
@@ -347,7 +347,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="ssLabelX">
-									<label>X</label>
+									<label translate="0">X</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -356,7 +356,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="ssSliderX">
-									<value>1000</value>
+									<value translate="0">1000</value>
 									<min>10</min>
 									<max>3000</max>
 									<size>400,-1</size>
@@ -368,7 +368,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="ssTextX">
 									<size>60,-1</size>
-									<value>1.00000</value>
+									<value translate="0">1.00000</value>
 								</object>
 							</object>
 						</object>
@@ -384,7 +384,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="ssLabelY">
-									<label>Y</label>
+									<label translate="0">Y</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -393,7 +393,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="ssSliderY">
-									<value>1000</value>
+									<value translate="0">1000</value>
 									<min>10</min>
 									<max>3000</max>
 									<size>400,-1</size>
@@ -405,7 +405,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="ssTextY">
 									<size>60,-1</size>
-									<value>1.00000</value>
+									<value translate="0">1.00000</value>
 								</object>
 							</object>
 						</object>
@@ -421,7 +421,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="ssLabelZ">
-									<label>Z</label>
+									<label translate="0">Z</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -430,7 +430,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="ssSliderZ">
-									<value>1000</value>
+									<value translate="0">1000</value>
 									<min>10</min>
 									<max>3000</max>
 									<size>400,-1</size>
@@ -442,7 +442,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="ssTextZ">
 									<size>60,-1</size>
-									<value>1.00000</value>
+									<value translate="0">1.00000</value>
 								</object>
 							</object>
 						</object>
@@ -535,7 +535,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="rsLabelX">
-									<label>X</label>
+									<label translate="0">X</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -544,7 +544,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="rsSliderX">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-18000</min>
 									<max>18000</max>
 									<size>400,-1</size>
@@ -556,7 +556,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="rsTextX">
 									<size>60,-1</size>
-									<value>0.0000</value>
+									<value translate="0">0.0000</value>
 								</object>
 							</object>
 						</object>
@@ -580,7 +580,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="rsLabelY">
-									<label>Y</label>
+									<label translate="0">Y</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -589,7 +589,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="rsSliderY">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-18000</min>
 									<max>18000</max>
 									<size>400,-1</size>
@@ -601,7 +601,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="rsTextY">
 									<size>60,-1</size>
-									<value>0.0000</value>
+									<value translate="0">0.0000</value>
 								</object>
 							</object>
 						</object>
@@ -625,7 +625,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="rsLabelZ">
-									<label>Z</label>
+									<label translate="0">Z</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -634,7 +634,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="rsSliderZ">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-18000</min>
 									<max>18000</max>
 									<size>400,-1</size>
@@ -646,7 +646,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="rsTextZ">
 									<size>60,-1</size>
-									<value>0.0000</value>
+									<value translate="0">0.0000</value>
 								</object>
 							</object>
 						</object>
@@ -793,7 +793,7 @@
 						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxSlider" name="proximityRadiusSlider">
-							<value>5000</value>
+							<value translate="0">5000</value>
 							<min>0</min>
 							<max>20000</max>
 							<size>400,-1</size>
@@ -805,7 +805,7 @@
 						<border>5</border>
 						<object class="wxTextCtrl" name="proximityRadiusText">
 							<size>60,-1</size>
-							<value>5.00000</value>
+							<value translate="0">5.00000</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -822,7 +822,7 @@
 						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxSlider" name="maxResultsSlider">
-							<value>4</value>
+							<value translate="0">4</value>
 							<min>1</min>
 							<max>100</max>
 							<size>400,-1</size>
@@ -834,7 +834,7 @@
 						<border>5</border>
 						<object class="wxTextCtrl" name="maxResultsText">
 							<size>60,-1</size>
-							<value>4</value>
+							<value translate="0">4</value>
 						</object>
 					</object>
 				</object>
@@ -943,7 +943,7 @@
 						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxSlider" name="proximityRadiusSlider">
-							<value>10000</value>
+							<value translate="0">10000</value>
 							<min>0</min>
 							<max>20000</max>
 							<size>400,-1</size>
@@ -955,7 +955,7 @@
 						<border>5</border>
 						<object class="wxTextCtrl" name="proximityRadiusText">
 							<size>60,-1</size>
-							<value>10.00000</value>
+							<value translate="0">10.00000</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -972,7 +972,7 @@
 						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxSlider" name="maxResultsSlider">
-							<value>10</value>
+							<value translate="0">10</value>
 							<min>1</min>
 							<max>100</max>
 							<size>400,-1</size>
@@ -984,7 +984,7 @@
 						<border>5</border>
 						<object class="wxTextCtrl" name="maxResultsText">
 							<size>60,-1</size>
-							<value>10</value>
+							<value translate="0">10</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -1076,7 +1076,7 @@
 								<flag>wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxCheckBox" name="axisX">
-									<label>X</label>
+									<label translate="0">X</label>
 									<checked>1</checked>
 								</object>
 							</object>
@@ -1085,7 +1085,7 @@
 								<flag>wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxCheckBox" name="axisY">
-									<label>Y</label>
+									<label translate="0">Y</label>
 									<checked>1</checked>
 								</object>
 							</object>
@@ -1094,7 +1094,7 @@
 								<flag>wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxCheckBox" name="axisZ">
-									<label>Z</label>
+									<label translate="0">Z</label>
 									<checked>1</checked>
 								</object>
 							</object>

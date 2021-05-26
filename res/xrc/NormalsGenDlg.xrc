@@ -141,7 +141,7 @@
 						<flag>wxEXPAND|wxLEFT</flag>
 						<border>20</border>
 						<object class="wxFilePickerCtrl" name="fpOutputFile">
-							<value></value>
+							<value translate="0"></value>
 							<message>Choose an output file...</message>
 							<wildcard>Texture Files (*.dds)|*.dds</wildcard>
 							<style>wxFLP_SAVE|wxFLP_USE_TEXTCTRL</style>

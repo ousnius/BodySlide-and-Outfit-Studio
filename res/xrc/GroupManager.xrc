@@ -29,7 +29,7 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxFilePickerCtrl" name="fpGroupXML">
-							<value></value>
+							<value translate="0"></value>
 							<message>Select a group XML file</message>
 							<wildcard>Group Files (*.xml)|*.xml</wildcard>
 							<style>wxFLP_DEFAULT_STYLE</style>
@@ -50,7 +50,7 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxButton" name="btSaveAs">
-							<label>Save As</label>
+							<label>Save As...</label>
 							<default>0</default>
 						</object>
 					</object>
@@ -89,7 +89,7 @@
 										<flag>wxALL</flag>
 										<border>5</border>
 										<object class="wxTextCtrl" name="groupName">
-											<value></value>
+											<value translate="0"></value>
 											<maxlength>75</maxlength>
 										</object>
 									</object>

@@ -274,7 +274,7 @@
 									<size>26,-1</size>
 									<fg>wxSYS_COLOUR_BTNTEXT</fg>
 									<tooltip>Copy the low weight slider values to the high weight section.</tooltip>
-									<label>&#8594;</label>
+									<label translate="0">&#8594;</label>
 								</object>
 							</object>
 							<object class="spacer">
@@ -385,7 +385,7 @@
 									<size>26,-1</size>
 									<fg>wxSYS_COLOUR_BTNTEXT</fg>
 									<tooltip>Copy the high weight slider values to the low weight section.</tooltip>
-									<label>&#8592;</label>
+									<label translate="0">&#8592;</label>
 								</object>
 							</object>
 							<object class="spacer">

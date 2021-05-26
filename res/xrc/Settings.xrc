@@ -37,15 +37,15 @@
 									<tooltip>Choose the target game you want to use the program for here.</tooltip>
 									<selection>0</selection>
 									<content>
-										<item>Fallout 3</item>
-										<item>Fallout New Vegas</item>
-										<item>Skyrim</item>
-										<item>Fallout 4</item>
-										<item>Skyrim Special Edition</item>
-										<item>Fallout 4 VR</item>
-										<item>Skyrim VR</item>
-										<item>Fallout 76</item>
-										<item>Oblivion</item>
+										<item translate="0">Fallout 3</item>
+										<item translate="0">Fallout New Vegas</item>
+										<item translate="0">Skyrim</item>
+										<item translate="0">Fallout 4</item>
+										<item translate="0">Skyrim Special Edition</item>
+										<item translate="0">Fallout 4 VR</item>
+										<item translate="0">Skyrim VR</item>
+										<item translate="0">Fallout 76</item>
+										<item translate="0">Oblivion</item>
 									</content>
 								</object>
 							</object>
@@ -72,7 +72,7 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxDirPickerCtrl" name="dpGameDataPath">
-									<value>,90,90,-1,70,0</value>
+									<value translate="0">,90,90,-1,70,0</value>
 									<message>Select the data path of the game...</message>
 									<style>wxDIRP_DEFAULT_STYLE</style>
 									<tooltip>Data path to load textures from.</tooltip>
@@ -268,7 +268,7 @@
 								<border>5</border>
 								<object class="wxColourPickerCtrl" name="cpColorBackground">
 									<tooltip>Background color of the renderer.</tooltip>
-									<value>rgb(210,210,210)</value>
+									<value translate="0">rgb(210,210,210)</value>
 								</object>
 							</object>
 						</object>
@@ -295,7 +295,7 @@
 								<border>5</border>
 								<object class="wxColourPickerCtrl" name="cpColorWire">
 									<tooltip>Wireframe color of the renderer.</tooltip>
-									<value>rgb(80,80,80)</value>
+									<value translate="0">rgb(80,80,80)</value>
 								</object>
 							</object>
 						</object>
@@ -349,7 +349,7 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxFilePickerCtrl" name="fpSkeletonFile">
-									<value>,90,90,-1,70,0</value>
+									<value translate="0">,90,90,-1,70,0</value>
 									<message>Select a reference skeleton .nif file...</message>
 									<wildcard>*.nif</wildcard>
 									<style>wxFLP_DEFAULT_STYLE</style>
@@ -382,9 +382,9 @@
 									<tooltip>The root node name of the reference skeleton. Can differ from game to game.</tooltip>
 									<selection>0</selection>
 									<content>
-										<item>Root</item>
-										<item>NPC Root [Root]</item>
-										<item>Bip01</item>
+										<item translate="0">Root</item>
+										<item translate="0">NPC Root [Root]</item>
+										<item translate="0">Bip01</item>
 									</content>
 								</object>
 							</object>

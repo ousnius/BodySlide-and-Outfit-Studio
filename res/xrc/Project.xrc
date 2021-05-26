@@ -48,7 +48,7 @@
 									<object class="wxRadioButton" name="npRefIsTemplate">
 										<style>wxRB_GROUP</style>
 										<label>From Template</label>
-										<value>1</value>
+										<value translate="0">1</value>
 									</object>
 								</object>
 								<object class="sizeritem">
@@ -67,7 +67,7 @@
 									<border>5</border>
 									<object class="wxRadioButton" name="npRefIsSliderset">
 										<label>From File</label>
-										<value>0</value>
+										<value translate="0">0</value>
 									</object>
 								</object>
 								<object class="sizeritem">
@@ -144,7 +144,7 @@
 							<border>5</border>
 							<object class="wxRadioButton" name="npRefIsBlank">
 								<label>Clear Reference</label>
-								<value>0</value>
+								<value translate="0">0</value>
 							</object>
 						</object>
 					</object>
@@ -183,7 +183,7 @@
 							<flag>wxALL|wxEXPAND</flag>
 							<border>5</border>
 							<object class="wxTextCtrl" name="npOutfitName">
-								<value>New Outfit</value>
+								<value translate="0">New Outfit</value>
 							</object>
 						</object>
 					</object>
@@ -208,7 +208,7 @@
 									<object class="wxRadioButton" name="npWorkFile">
 										<style>wxRB_GROUP</style>
 										<label>From File</label>
-										<value>0</value>
+										<value translate="0">0</value>
 									</object>
 								</object>
 								<object class="sizeritem">
@@ -230,7 +230,7 @@
 							<border>5</border>
 							<object class="wxRadioButton" name="npWorkNone">
 								<label>Clear Outfit</label>
-								<value>1</value>
+								<value translate="0">1</value>
 							</object>
 						</object>
 					</object>
@@ -255,7 +255,7 @@
 							<object class="wxRadioButton" name="npTexAuto">
 								<style>wxRB_GROUP</style>
 								<label>Automatically search for textures</label>
-								<value>1</value>
+								<value translate="0">1</value>
 							</object>
 						</object>
 						<object class="sizeritem">
@@ -270,7 +270,7 @@
 									<border>5</border>
 									<object class="wxRadioButton" name="npTexFile">
 										<label>From File</label>
-										<value>0</value>
+										<value translate="0">0</value>
 									</object>
 								</object>
 								<object class="sizeritem">
@@ -304,7 +304,7 @@
 				<border>5</border>
 				<object class="wxStaticBoxSizer">
 					<orient>wxVERTICAL</orient>
-					<label>BodySlide</label>
+					<label translate="0">BodySlide</label>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxEXPAND</flag>
@@ -369,7 +369,7 @@
 								<flag>wxALL</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="m_lowHighInfo">					
-									<label>__0/__1.nif</label>
+									<label translate="0">__0/__1.nif</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -590,7 +590,7 @@
 								<object class="wxRadioButton" name="npRefIsTemplate">
 									<style>wxRB_GROUP</style>
 									<label>From Template</label>
-									<value>1</value>
+									<value translate="0">1</value>
 								</object>
 							</object>
 							<object class="sizeritem">
@@ -609,7 +609,7 @@
 								<border>5</border>
 								<object class="wxRadioButton" name="npRefIsSliderset">
 									<label>From File</label>
-									<value>0</value>
+									<value translate="0">0</value>
 								</object>
 							</object>
 							<object class="sizeritem">
@@ -686,7 +686,7 @@
 						<border>5</border>
 						<object class="wxRadioButton" name="npRefIsBlank">
 							<label>Clear Reference</label>
-							<value>0</value>
+							<value translate="0">0</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -758,7 +758,7 @@
 						<flag>wxLEFT</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="npOutfitName">
-							<value>New Outfit</value>
+							<value translate="0">New Outfit</value>
 						</object>
 					</object>
 				</object>
@@ -783,7 +783,7 @@
 								<object class="wxRadioButton" name="npWorkFile">
 									<style>wxRB_GROUP</style>
 									<label>From File</label>
-									<value>0</value>
+									<value translate="0">0</value>
 								</object>
 							</object>
 							<object class="sizeritem">
@@ -805,7 +805,7 @@
 						<border>5</border>
 						<object class="wxRadioButton" name="npWorkNone">
 							<label>Clear Outfit</label>
-							<value>1</value>
+							<value translate="0">1</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -840,7 +840,7 @@
 						<object class="wxRadioButton" name="npTexAuto">
 							<style>wxRB_GROUP</style>
 							<label>Automatically search for textures</label>
-							<value>1</value>
+							<value translate="0">1</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -855,7 +855,7 @@
 								<border>5</border>
 								<object class="wxRadioButton" name="npTexFile">
 									<label>From File</label>
-									<value>0</value>
+									<value translate="0">0</value>
 								</object>
 							</object>
 							<object class="sizeritem">
@@ -982,7 +982,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxTOP|wxBOTTOM|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbOsp">
-							<label>.osp</label>
+							<label translate="0">.osp</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>

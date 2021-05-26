@@ -52,7 +52,7 @@
 											<border>5</border>
 											<object class="wxButton" name="btnMaterialChooser">
 												<hidden>1</hidden>
-												<label>...</label>
+												<label translate="0">...</label>
 												<size>50,18</size>
 												<default>0</default>
 											</object>
@@ -108,7 +108,7 @@
 													<flag>wxALL|wxEXPAND</flag>
 													<border>5</border>
 													<object class="wxColourPickerCtrl" name="specularColor">
-														<value>#ffffff</value>
+														<value translate="0">#ffffff</value>
 														<style>wxCLRP_DEFAULT_STYLE</style>
 													</object>
 												</object>
@@ -127,7 +127,7 @@
 													<border>5</border>
 													<object class="wxTextCtrl" name="specularStrength">
 														<style>wxTE_CENTRE</style>
-														<value>2.0000</value>
+														<value translate="0">2.0000</value>
 														<maxlength>25</maxlength>
 													</object>
 												</object>
@@ -146,7 +146,7 @@
 													<border>5</border>
 													<object class="wxTextCtrl" name="specularPower">
 														<style>wxTE_CENTRE</style>
-														<value>30.0000</value>
+														<value translate="0">30.0000</value>
 														<maxlength>25</maxlength>
 													</object>
 												</object>
@@ -185,7 +185,7 @@
 													<flag>wxALL|wxEXPAND</flag>
 													<border>5</border>
 													<object class="wxColourPickerCtrl" name="emissiveColor">
-														<value>#ffffff</value>
+														<value translate="0">#ffffff</value>
 														<style>wxCLRP_DEFAULT_STYLE</style>
 													</object>
 												</object>
@@ -204,7 +204,7 @@
 													<border>5</border>
 													<object class="wxTextCtrl" name="emissiveMultiple">
 														<style>wxTE_CENTRE</style>
-														<value>1.0000</value>
+														<value translate="0">1.0000</value>
 														<maxlength>25</maxlength>
 													</object>
 												</object>
@@ -304,7 +304,7 @@
 															<border>5</border>
 															<object class="wxTextCtrl" name="alphaThreshold">
 																<style>wxTE_CENTRE</style>
-																<value>128</value>
+																<value translate="0">128</value>
 																<maxlength>3</maxlength>
 															</object>
 														</object>
@@ -602,7 +602,7 @@
 											<flag>wxALL</flag>
 											<border>5</border>
 											<object class="wxTextCtrl" name="textScale">
-												<value>1.00000</value>
+												<value translate="0">1.00000</value>
 											</object>
 										</object>
 									</object>
@@ -650,7 +650,7 @@
 											<flag>wxLEFT|wxRIGHT|wxALIGN_CENTER</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="labelX">
-												<label>X</label>
+												<label translate="0">X</label>
 												<wrap>-1</wrap>
 											</object>
 										</object>
@@ -659,7 +659,7 @@
 											<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 											<border>5</border>
 											<object class="wxTextCtrl" name="textX">
-												<value>0.00000</value>
+												<value translate="0">0.00000</value>
 											</object>
 										</object>
 										<object class="sizeritem">
@@ -667,7 +667,7 @@
 											<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 											<border>5</border>
 											<object class="wxTextCtrl" name="textRX">
-												<value>0.00000</value>
+												<value translate="0">0.00000</value>
 											</object>
 										</object>
 										<object class="sizeritem">
@@ -675,7 +675,7 @@
 											<flag>wxLEFT|wxRIGHT|wxALIGN_CENTER</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="labelY">
-												<label>Y</label>
+												<label translate="0">Y</label>
 												<wrap>-1</wrap>
 											</object>
 										</object>
@@ -684,7 +684,7 @@
 											<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 											<border>5</border>
 											<object class="wxTextCtrl" name="textY">
-												<value>0.00000</value>
+												<value translate="0">0.00000</value>
 											</object>
 										</object>
 										<object class="sizeritem">
@@ -692,7 +692,7 @@
 											<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 											<border>5</border>
 											<object class="wxTextCtrl" name="textRY">
-												<value>0.00000</value>
+												<value translate="0">0.00000</value>
 											</object>
 										</object>
 										<object class="sizeritem">
@@ -700,7 +700,7 @@
 											<flag>wxLEFT|wxRIGHT|wxALIGN_CENTER</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="labelZ">
-												<label>Z</label>
+												<label translate="0">Z</label>
 												<wrap>-1</wrap>
 											</object>
 										</object>
@@ -709,7 +709,7 @@
 											<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 											<border>5</border>
 											<object class="wxTextCtrl" name="textZ">
-												<value>0.00000</value>
+												<value translate="0">0.00000</value>
 											</object>
 										</object>
 										<object class="sizeritem">
@@ -717,7 +717,7 @@
 											<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 											<border>5</border>
 											<object class="wxTextCtrl" name="textRZ">
-												<value>0.00000</value>
+												<value translate="0">0.00000</value>
 											</object>
 										</object>
 									</object>
