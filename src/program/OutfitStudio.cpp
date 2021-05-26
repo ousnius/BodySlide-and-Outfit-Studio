@@ -7189,11 +7189,11 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 
 	int result;
 	if (selectedItems.size() > 1) {
-		std::string prompt = _("Are you sure you wish to clear the unmasked slider data ") + _("for the selected shapes? This cannot be undone.");
+		wxString prompt = _("Are you sure you wish to clear the unmasked slider data for the selected shapes?  This action cannot be undone.");
 		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
 	else {
-		std::string prompt = _("Are you sure you wish to clear the unmasked slider data ") + _("for the shape \"") + activeItem->GetShape()->name.get() + _("\"? This cannot be undone.");
+		wxString prompt = wxString::Format(_("Are you sure you wish to clear the unmasked slider data for the shape '%s'?  This action cannot be undone."), activeItem->GetShape()->name.get());
 		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
 
@@ -7324,7 +7324,7 @@ void OutfitStudioFrame::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
-	std::string prompt = _("Are you sure you wish to delete the selected slider(s)?");
+	wxString prompt = _("Are you sure you wish to delete the selected slider(s)?");
 	int result = wxMessageBox(prompt, _("Confirm slider delete"), wxYES_NO | wxICON_WARNING, this);
 	if (result != wxYES)
 		return;
@@ -8285,7 +8285,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	// Confirm deleting shapes; then delete them.
 	if (!delShapes.empty()) {
-		if (wxMessageBox(_("Are you sure you wish to delete some of the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO) == wxNO)
+		if (wxMessageBox(_("Are you sure you wish to delete parts of the selected shapes?"), _("Confirm Delete"), wxYES_NO) == wxNO)
 			return;
 		for (NiShape *shape : delShapes)
 			project->DeleteShape(shape);
