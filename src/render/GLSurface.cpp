@@ -483,7 +483,7 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 	return true;
 }
 
-bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverPoint, Vector3* outHoverColor, float* outHoverAlpha, Edge* outHoverEdge) {
+bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverPoint, Vector3* outHoverColor, float* outHoverAlpha, Edge* outHoverEdge, Vector3* outHoverCoord) {
 	bool collided = false;
 	if (activeMeshes.empty())
 		return collided;
@@ -492,6 +492,8 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 		(*outHoverPoint) = -1;
 	if (outHoverColor)
 		(*outHoverColor) = Vector3(1.0f, 1.0f, 1.0f);
+	if (outHoverCoord)
+		outHoverCoord->Zero();
 
 	std::unordered_map<mesh*, Vector3> allHitDistances;
 	for (auto &m : activeMeshes) {
@@ -552,6 +554,9 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 
 					if (outHoverPoint)
 						(*outHoverPoint) = pointid;
+
+					if (outHoverCoord)
+						(*outHoverCoord) = origin;
 
 					if (outHoverColor) {
 						(*outHoverColor).x = std::floor(m->vcolors[pointid].x * std::pow(10, dec) + 0.5f) / std::pow(10, dec);

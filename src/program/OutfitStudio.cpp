@@ -11582,13 +11582,14 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	if (!rbuttonDown && !lbuttonDown) {
 		hoverMeshName.clear();
 		hoverPoint = -1;
+		hoverCoord.Zero();
 		hoverEdge.p1 = 0;
 		hoverEdge.p2 = 0;
 		Vector3 hoverColor;
 		float hoverAlpha = 1.0f;
 
 		if (editMode) {
-			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, &hoverColor, &hoverAlpha, &hoverEdge);
+			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, &hoverColor, &hoverAlpha, &hoverEdge, &hoverCoord);
 		}
 		else {
 			cursorExists = false;
@@ -11637,13 +11638,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 				else if (activeTool == ToolID::ColorBrush || activeTool == ToolID::AlphaBrush)
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g, Alpha: %g", hoverPoint, hoverColor.x, hoverColor.y, hoverColor.z, hoverAlpha), 1);
 				else {
-					std::vector<Vector3> verts;
-					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(hoverMeshName);
-					if (shape) {
-						os->project->GetLiveVerts(shape, verts);
-						if (verts.size() > (size_t)hoverPoint)
-							os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hoverPoint, verts[hoverPoint].x, verts[hoverPoint].y, verts[hoverPoint].z), 1);
-					}
+					Vector3 hoverCoordNif = mesh::VecToNifCoords(hoverCoord);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hoverPoint, hoverCoordNif.x, hoverCoordNif.y, hoverCoordNif.z), 1);
 				}
 			}
 			else {

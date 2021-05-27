@@ -718,6 +718,7 @@ private:
 	std::string hoverMeshName, mouseDownMeshName;
 	int hoverPoint, mouseDownPoint;
 	nifly::Edge hoverEdge, mouseDownEdge;
+	nifly::Vector3 hoverCoord;
 
 	std::set<mesh*> BVHUpdateQueue;
 
