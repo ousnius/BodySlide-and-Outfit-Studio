@@ -11,6 +11,7 @@ See the included LICENSE file
 #include "OutfitStudio.h"
 
 #include <wx/arrstr.h>
+#include <wx/filename.h>
 
 struct ConformOptions {
 	float proximityRadius = 10.0f;
@@ -77,7 +78,7 @@ public:
 	bool bPose = false;
 
 	// Returns a string error message or empty string on success.
-	std::string Save(const wxString& strFileName,
+	std::string Save(const wxFileName& sliderSetFile,
 		const wxString& strOutfitName,
 		const wxString& strDataDir,
 		const wxString& strBaseFile,

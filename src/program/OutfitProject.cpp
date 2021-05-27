@@ -39,7 +39,7 @@ OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 OutfitProject::~OutfitProject() {
 }
 
-std::string OutfitProject::Save(const wxString& strFileName,
+std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	const wxString& strOutfitName,
 	const wxString& strDataDir,
 	const wxString& strBaseFile,
@@ -66,14 +66,19 @@ std::string OutfitProject::Save(const wxString& strFileName,
 	outSet.SetOutputFile(gameFile);
 	outSet.SetGenWeights(genWeights);
 
-	wxString sliderSetsStr = "SliderSets";
-	sliderSetsStr.Append(PathSepChar);
+	const wxString sliderSetsStr = "SliderSets";
 
-	wxString ssFileName = strFileName;
-	if (ssFileName.Find(sliderSetsStr) == wxNOT_FOUND)
-		ssFileName = ssFileName.Prepend(sliderSetsStr);
+	wxFileName ssFileName(sliderSetFile);
+	int sliderSetsStrIndex = ssFileName.GetDirs().Index(sliderSetsStr);
+	if (sliderSetsStrIndex == wxNOT_FOUND) {
+		// Make path relative to "SliderSets\", only use file name
+		ssFileName = wxFileName(sliderSetsStr + sliderSetFile.GetFullName());
+	}
 
-	mFileName = ssFileName;
+	if (ssFileName.IsRelative())
+		ssFileName.MakeAbsolute(wxString::FromUTF8(GetProjectPath()));
+
+	mFileName = ssFileName.GetFullPath();
 	mOutfitName = wxString::FromUTF8(outfit);
 	mDataDir = strDataDir;
 	mBaseFile = wxString::FromUTF8(baseFile);
@@ -183,10 +188,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 	prog = 60;
 	owner->UpdateProgress(prog, _("Creating slider set file..."));
 
-	if (wxFileName(ssFileName).IsRelative())
-		ssFileName = ssFileName.Prepend(wxString::FromUTF8(GetProjectPath() + PathSepStr));
-
-	std::string ssUFileName{ssFileName.ToUTF8()};
+	std::string ssUFileName{ mFileName.ToUTF8()};
 	SliderSetFile ssf(ssUFileName);
 	if (ssf.fail()) {
 		ssf.New(ssUFileName);
@@ -196,17 +198,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		}
 	}
 
-	auto it = strFileName.rfind('/');
-	if (it == std::string::npos)
-		it = strFileName.rfind('\\');
-	if (it != std::string::npos) {
-		wxString ssNewFolder(wxString::Format("%s/%s", wxString::FromUTF8(GetProjectPath()), strFileName.substr(0, it)));
-		wxFileName::Mkdir(ssNewFolder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
-	}
-	else {
-		wxString ssNewFolder(wxString::Format("%s/%s", wxString::FromUTF8(GetProjectPath()), "SliderSets"));
-		wxFileName::Mkdir(ssNewFolder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
-	}
+	ssFileName.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 	owner->UpdateProgress(61, _("Saving slider set file..."));
 	ssf.UpdateSet(outSet);

@@ -1995,7 +1995,6 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	if (result == wxID_CANCEL)
 		return false;
 
-	wxString strFileName;
 	wxString strOutfitName;
 	wxString strDataDir;
 	wxString strBaseFile;
@@ -2004,14 +2003,14 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	bool copyRef;
 	bool genWeights;
 
-	strFileName = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName().GetFullName();
-	if (strFileName.length() <= 4) {
+	wxFileName sliderSetFile = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName();
+	if (!sliderSetFile.IsOk()) {
 		wxMessageBox(_("Invalid or no slider set file specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
 		return false;
 	}
 
-	if (!strFileName.EndsWith(".osp"))
-		strFileName = strFileName.Append(".osp");
+	if (sliderSetFile.GetExt() != "osp")
+		sliderSetFile.SetExt("osp");
 
 	strOutfitName = XRCCTRL(dlg, "sssName", wxTextCtrl)->GetValue();
 	if (strOutfitName.empty()) {
@@ -2070,7 +2069,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 
 	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
-	std::string error = project->Save(strFileName, strOutfitName, strDataDir, strBaseFile,
+	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile,
 		strGamePath, strGameFile, genWeights, copyRef);
 
 	if (error.empty()) {
