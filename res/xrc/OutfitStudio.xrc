@@ -1871,60 +1871,6 @@
 				<label>Remove Skinning</label>
 				<help>Removes skinning of all shapes and all unused nodes.</help>
 			</object>
-			<object class="separator" />
-			<object class="wxMenu" name="viewSelect">
-				<label>View</label>
-				<object class="wxMenuItem" name="btnViewFront">
-					<label>Front\tShift+1</label>
-				</object>
-				<object class="wxMenuItem" name="btnViewBack">
-					<label>Back\tShift+2</label>
-				</object>
-				<object class="wxMenuItem" name="btnViewLeft">
-					<label>Left\tShift+3</label>
-				</object>
-				<object class="wxMenuItem" name="btnViewRight">
-					<label>Right\tShift+4</label>
-				</object>
-				<object class="wxMenuItem" name="btnViewPerspective">
-					<label>Perspective\tShift+5</label>
-					<checkable>1</checkable>
-					<checked>1</checked>
-				</object>
-				<object class="wxMenuItem" name="btnShowNodes">
-					<label>Show Nodes\tShift+N</label>
-					<checkable>1</checkable>
-				</object>
-				<object class="wxMenuItem" name="btnShowBones">
-					<label>Show Bones\tShift+B</label>
-					<checkable>1</checkable>
-				</object>
-				<object class="wxMenuItem" name="btnShowFloor">
-					<label>Show Floor\tG</label>
-					<checkable>1</checkable>
-				</object>
-			</object>
-			<object class="wxMenuItem" name="btnToggleVisibility">
-				<label>Toggle Visibility\tE</label>
-				<help>Switch between the different visibility modes for the selected shapes.</help>
-			</object>
-			<object class="wxMenuItem" name="btnShowWireframe">
-				<label>Show Wireframe\tW</label>
-				<help>Show wireframe on all models.</help>
-				<checkable>1</checkable>
-			</object>
-			<object class="wxMenuItem" name="btnEnableLighting">
-				<label>Enable Lighting\tL</label>
-				<help>Turn on or off lighting.</help>
-				<checked>1</checked>
-				<checkable>1</checkable>
-			</object>
-			<object class="wxMenuItem" name="btnEnableTextures">
-				<label>Enable Textures\tT</label>
-				<help>Display texture maps on models.</help>
-				<checked>1</checked>
-				<checkable>1</checkable>
-			</object>
 		</object>
 		<object class="wxMenu" name="menuMesh">
 			<label>Shape</label>
@@ -2297,6 +2243,60 @@
 			<object class="wxMenuItem" name="btnClearMask">
 				<label>Clear Mask\tCtrl+A</label>
 				<help>Clear Mask</help>
+			</object>
+		</object>
+		<object class="wxMenu" name="menuView">
+			<label>View</label>
+			<object class="wxMenuItem" name="btnViewFront">
+				<label>Front\tShift+1</label>
+			</object>
+			<object class="wxMenuItem" name="btnViewBack">
+				<label>Back\tShift+2</label>
+			</object>
+			<object class="wxMenuItem" name="btnViewLeft">
+				<label>Left\tShift+3</label>
+			</object>
+			<object class="wxMenuItem" name="btnViewRight">
+				<label>Right\tShift+4</label>
+			</object>
+			<object class="wxMenuItem" name="btnViewPerspective">
+				<label>Perspective\tShift+5</label>
+				<checkable>1</checkable>
+				<checked>1</checked>
+			</object>
+			<object class="wxMenuItem" name="btnShowNodes">
+				<label>Show Nodes\tShift+N</label>
+				<checkable>1</checkable>
+			</object>
+			<object class="wxMenuItem" name="btnShowBones">
+				<label>Show Bones\tShift+B</label>
+				<checkable>1</checkable>
+			</object>
+			<object class="wxMenuItem" name="btnShowFloor">
+				<label>Show Floor\tG</label>
+				<checkable>1</checkable>
+			</object>
+			<object class="separator" />
+			<object class="wxMenuItem" name="btnToggleVisibility">
+				<label>Toggle Visibility\tE</label>
+				<help>Switch between the different visibility modes for the selected shapes.</help>
+			</object>
+			<object class="wxMenuItem" name="btnShowWireframe">
+				<label>Show Wireframe\tW</label>
+				<help>Show wireframe on all models.</help>
+				<checkable>1</checkable>
+			</object>
+			<object class="wxMenuItem" name="btnEnableLighting">
+				<label>Enable Lighting\tL</label>
+				<help>Turn on or off lighting.</help>
+				<checked>1</checked>
+				<checkable>1</checkable>
+			</object>
+			<object class="wxMenuItem" name="btnEnableTextures">
+				<label>Enable Textures\tT</label>
+				<help>Display texture maps on models.</help>
+				<checked>1</checked>
+				<checkable>1</checkable>
 			</object>
 		</object>
 	</object>
