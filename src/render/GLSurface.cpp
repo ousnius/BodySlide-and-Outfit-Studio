@@ -1395,7 +1395,6 @@ mesh* GLSurface::AddVis3dSphere(const nifly::Vector3& center, float radius, cons
 		m->tangents = std::make_unique<Vector3[]>(m->nVerts);
 		m->bitangents = std::make_unique<Vector3[]>(m->nVerts);
 		
-		// FIXME Triangles
 		std::vector<Triangle> tris;
 
 		for (int i = 0; i < nStacks; ++i) {
@@ -1411,16 +1410,6 @@ mesh* GLSurface::AddVis3dSphere(const nifly::Vector3& center, float radius, cons
 				// k1+1 => k2 => k2+1
 				if (i != (nStacks - 1))
 					tris.push_back(Triangle(k1 + 1, k2, k2 + 1));
-
-				// store indices for lines
-				// vertical lines for all stacks, k1 => k2
-				//lineIndices.push_back(k1);
-				//lineIndices.push_back(k2);
-				//if (i != 0)  // horizontal lines except 1st stack, k1 => k+1
-				//{
-				//	lineIndices.push_back(k1);
-				//	lineIndices.push_back(k1 + 1);
-				//}
 			}
 		}
 
