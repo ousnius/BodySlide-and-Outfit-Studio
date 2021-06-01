@@ -805,8 +805,12 @@ void GLSurface::RenderOneFrame() {
 
 	// Render meshes with alpha blending only
 	for (auto &m : meshes) {
-		if (m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0))
+		if (m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0)) {
+			glCullFace(GL_FRONT);
 			RenderMesh(m);
+			glCullFace(GL_BACK);
+			RenderMesh(m);
+		}
 	}
 
 	// Render overlays on top
@@ -829,19 +833,6 @@ void GLSurface::RenderOneFrame() {
 }
 
 void GLSurface::RenderMesh(mesh* m) {
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-	glEnable(GL_DEPTH_TEST);
-
-	if (!m->doublesided)
-		glEnable(GL_CULL_FACE);
-	else
-		glDisable(GL_CULL_FACE);
-
-	glCullFace(m->cullMode);
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	m->UpdateBuffers();
 
 	if (!m->genBuffers || !m->material)
@@ -851,6 +842,18 @@ void GLSurface::RenderMesh(mesh* m) {
 	if (!shader.Begin())
 		return;
 
+	if (!m->HasAlphaBlend()) {
+		if (!m->doublesided)
+			glEnable(GL_CULL_FACE);
+		else
+			glDisable(GL_CULL_FACE);
+
+		glCullFace(m->cullMode);
+	}
+	else
+		glEnable(GL_CULL_FACE);
+
+	shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f, m->prop.alpha);
 	shader.SetMatrixProjection(matProjection);
 	shader.SetMatrixModelView(matView, m->matModel);
 	shader.SetColor(m->color);
@@ -872,6 +875,9 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.SetEnvMaskEnabled(false);
 	shader.SetProperties(m->prop);
 
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glEnable(GL_DEPTH_TEST);
+
 	glBindVertexArray(m->vao);
 
 	if (m->rendermode == RenderMode::Normal || m->rendermode == RenderMode::LitWire || m->rendermode == RenderMode::UnlitSolid) {
@@ -886,10 +892,8 @@ void GLSurface::RenderMesh(mesh* m) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
 
-		if (m->rendermode == RenderMode::UnlitSolid) {
-			glDisable(GL_CULL_FACE);
+		if (m->rendermode == RenderMode::UnlitSolid)
 			shader.SetLightingEnabled(false);
-		}
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 
@@ -928,8 +932,6 @@ void GLSurface::RenderMesh(mesh* m) {
 		}
 
 		if (bTextured && m->textured && m->texcoord) {
-			shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f, m->prop.alpha);
-
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
 			glEnableVertexAttribArray(6);
 			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates

@@ -162,13 +162,17 @@ void GLShader::SetAlphaProperties(const uint16_t flags, const float threshold, c
 	//Always GL_GREATER right now
 	//GLenum alphaFunc = testMap[(flags >> 10) & 0x7];
 
-	if (alphaBlend)
-		glBlendFunc(alphaSrc, alphaDst);
-	else
-		glDisable(GL_BLEND);
+	glDisable(GL_BLEND);
 
-	if (!alphaBlend && value < 1.0f)
+	if (alphaBlend) {
 		glEnable(GL_BLEND);
+		glBlendFunc(alphaSrc, alphaDst);
+	}
+
+	if (!alphaBlend && value < 1.0f) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
 
 	if (alphaTest)
 		SetAlphaThreshold(threshold);
