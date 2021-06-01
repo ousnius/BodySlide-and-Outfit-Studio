@@ -1570,6 +1570,19 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 		m->verts = std::make_unique<Vector3[]>(m->nVerts);
 		m->tris = std::make_unique<Triangle[]>(m->nTris);
 
+		m->tris[0] = Triangle(0, 1, 2);
+		m->tris[1] = Triangle(2, 3, 0);
+		m->tris[2] = Triangle(1, 5, 6);
+		m->tris[3] = Triangle(6, 2, 1);
+		m->tris[4] = Triangle(7, 6, 5);
+		m->tris[5] = Triangle(5, 4, 7);
+		m->tris[6] = Triangle(4, 0, 3);
+		m->tris[7] = Triangle(3, 7, 4);
+		m->tris[8] = Triangle(4, 5, 1);
+		m->tris[9] = Triangle(1, 0, 4);
+		m->tris[10] = Triangle(3, 2, 6);
+		m->tris[11] = Triangle(6, 7, 3);
+
 		m->shapeName = name;
 		m->rendermode = RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
@@ -1592,19 +1605,6 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 	m->verts[5] = mat * Vector3(1.0f, -1.0f, -1.0f);
 	m->verts[6] = mat * Vector3(1.0f, 1.0f, -1.0f);
 	m->verts[7] = mat * Vector3(-1.0f, 1.0f, -1.0f);
-
-	m->tris[0] = Triangle(0, 1, 2);
-	m->tris[1] = Triangle(2, 3, 0);
-	m->tris[2] = Triangle(1, 5, 6);
-	m->tris[3] = Triangle(6, 2, 1);
-	m->tris[4] = Triangle(7, 6, 5);
-	m->tris[5] = Triangle(5, 4, 7);
-	m->tris[6] = Triangle(4, 0, 3);
-	m->tris[7] = Triangle(3, 7, 4);
-	m->tris[8] = Triangle(4, 5, 1);
-	m->tris[9] = Triangle(1, 0, 4);
-	m->tris[10] = Triangle(3, 2, 6);
-	m->tris[11] = Triangle(6, 7, 3);
 
 	m->CreateBuffers();
 	return m;
@@ -1632,6 +1632,9 @@ mesh* GLSurface::AddVisPlane(const Matrix4& mat, const Vector2& size, float uvSc
 		m->texcoord = std::make_unique<Vector2[]>(m->nVerts);
 		m->tris = std::make_unique<Triangle[]>(m->nTris);
 
+		m->tris[0] = Triangle(0, 1, 2);
+		m->tris[1] = Triangle(2, 3, 0);
+
 		m->shapeName = name;
 		m->rendermode = RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
@@ -1656,9 +1659,6 @@ mesh* GLSurface::AddVisPlane(const Matrix4& mat, const Vector2& size, float uvSc
 	m->texcoord[3] = Vector2(uvScale + uvOffset, uvScale + uvOffset);
 
 	m->textured = true;
-
-	m->tris[0] = Triangle(0, 1, 2);
-	m->tris[1] = Triangle(2, 3, 0);
 
 	m->CreateBuffers();
 	return m;

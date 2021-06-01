@@ -2410,7 +2410,7 @@ void OutfitStudioFrame::ShowSliderEffect(const std::string& sliderName, bool sho
 	}
 }
 
-void OutfitStudioFrame::UpdateActiveShapeUI() {
+void OutfitStudioFrame::UpdateActiveShape() {
 	if (!activeItem) {
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool(false);
@@ -4586,7 +4586,7 @@ void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 	else
 		glView->SetSelectedShape("");
 
-	UpdateActiveShapeUI();
+	UpdateActiveShape();
 	glView->GetUndoHistory()->ClearHistory();
 }
 

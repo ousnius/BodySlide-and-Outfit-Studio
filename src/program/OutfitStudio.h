@@ -956,7 +956,7 @@ public:
 	void UpdateShapeSource(nifly::NiShape* shape);
 
 	void ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo = false);
-	void UpdateActiveShapeUI();
+	void UpdateActiveShape();
 	void UpdateBoneCounts();
 	void HighlightBoneNamesWithWeights();
 	void RefreshGUIWeightColors();
