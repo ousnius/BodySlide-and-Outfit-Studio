@@ -2264,6 +2264,10 @@
 				<checkable>1</checkable>
 				<checked>1</checked>
 			</object>
+			<object class="wxMenuItem" name="btnToggleRotationCenter">
+				<label>Toggle Rotation Center\tShift+R</label>
+				<help>Switch between the different rotation center modes.</help>
+			</object>
 			<object class="wxMenuItem" name="btnShowNodes">
 				<label>Show Nodes\tShift+N</label>
 				<checkable>1</checkable>

@@ -155,9 +155,16 @@ enum OverlayLayer : uint32_t {
 	NodeSelection = 10,
 };
 
+enum RotationCenterMode {
+	Zero,
+	MeshCenter,
+	Picked
+};
+
 class wxGLPanel : public wxGLCanvas {
 public:
 	GLSurface gls;
+	RotationCenterMode rotationCenterMode = RotationCenterMode::Zero;
 
 	wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs);
 	~wxGLPanel();
@@ -228,6 +235,8 @@ public:
 	void ApplyUndoState(UndoStateProject *usp, bool bUndo, bool bRender = true);
 	bool UndoStroke();
 	bool RedoStroke();
+
+	void ShowRotationCenter(bool show = true);
 
 	void ShowTransformTool(bool show = true);
 	void UpdateTransformTool();
@@ -767,6 +776,11 @@ private:
 	std::unique_ptr<TweakStroke> activeStroke;
 	UndoHistory undoHistory;
 
+	mesh* RotationCenterMesh = nullptr;
+	mesh* RotationCenterMeshRingX = nullptr;
+	mesh* RotationCenterMeshRingY = nullptr;
+	mesh* RotationCenterMeshRingZ = nullptr;
+
 	mesh* XMoveMesh = nullptr;
 	mesh* YMoveMesh = nullptr;
 	mesh* ZMoveMesh = nullptr;
@@ -1290,6 +1304,7 @@ private:
 
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);
+	void OnToggleRotationCenter(wxCommandEvent& event);
 	void OnShowNodes(wxCommandEvent& event);
 	void OnShowBones(wxCommandEvent& event);
 	void OnShowFloor(wxCommandEvent& event);

@@ -168,6 +168,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnViewLeft"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewRight"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewPerspective"), OutfitStudioFrame::OnTogglePerspective)
+	EVT_MENU(XRCID("btnToggleRotationCenter"), OutfitStudioFrame::OnToggleRotationCenter)
 
 	EVT_MENU(XRCID("btnShowNodes"), OutfitStudioFrame::OnShowNodes)
 	EVT_MENU(XRCID("btnShowBones"), OutfitStudioFrame::OnShowBones)
@@ -2448,6 +2449,9 @@ void OutfitStudioFrame::UpdateActiveShape() {
 		CreateSegmentTree(activeItem->GetShape());
 		CreatePartitionTree(activeItem->GetShape());
 	}
+
+	if (glView->rotationCenterMode == RotationCenterMode::MeshCenter)
+		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
 
 	glView->UpdateBones();
 	glView->Render();
@@ -5812,6 +5816,19 @@ void OutfitStudioFrame::OnTogglePerspective(wxCommandEvent& event) {
 	menuBar->Check(event.GetId(), enabled);
 	toolBarV->ToggleTool(event.GetId(), enabled);
 	glView->SetPerspective(enabled);
+}
+
+void OutfitStudioFrame::OnToggleRotationCenter(wxCommandEvent& WXUNUSED(event)) {
+	if (glView->rotationCenterMode != RotationCenterMode::Zero) {
+		glView->rotationCenterMode = RotationCenterMode::Zero;
+		glView->gls.camRotOffset.Zero();
+	}
+	else {
+		glView->rotationCenterMode = RotationCenterMode::MeshCenter;
+		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
+	}
+
+	glView->Render();
 }
 
 void OutfitStudioFrame::OnShowNodes(wxCommandEvent& event) {
@@ -10927,6 +10944,34 @@ bool wxGLPanel::RedoStroke() {
 	return true;
 }
 
+void wxGLPanel::ShowRotationCenter(bool show) {
+	if (show) {
+		RotationCenterMesh = gls.AddVis3dSphere(gls.camRotOffset, 0.15f, Vector3(1.0f, 0.0f, 1.0f), "RotationCenterMesh");
+		RotationCenterMesh->prop.alpha = 0.5f;
+		RotationCenterMesh->bVisible = true;
+
+		RotationCenterMeshRingX = gls.AddVis3dRing(gls.camRotOffset, Vector3(1.0f, 0.0f, 0.0f), 0.35f, 0.01f, Vector3(1.0f, 0.0f, 0.0f), "RotationCenterMeshRingX");
+		RotationCenterMeshRingX->prop.alpha = 0.5f;
+		RotationCenterMeshRingX->bVisible = true;
+
+		RotationCenterMeshRingY = gls.AddVis3dRing(gls.camRotOffset, Vector3(0.0f, 1.0f, 0.0f), 0.35f, 0.01f, Vector3(0.0f, 1.0f, 0.0f), "RotationCenterMeshRingY");
+		RotationCenterMeshRingY->prop.alpha = 0.5f;
+		RotationCenterMeshRingY->bVisible = true;
+
+		RotationCenterMeshRingZ = gls.AddVis3dRing(gls.camRotOffset, Vector3(0.0f, 0.0f, 1.0f), 0.35f, 0.01f, Vector3(0.0f, 0.0f, 1.0f), "RotationCenterMeshRingZ");
+		RotationCenterMeshRingZ->prop.alpha = 0.5f;
+		RotationCenterMeshRingZ->bVisible = true;
+	}
+	else {
+		if (RotationCenterMesh) {
+			RotationCenterMesh->bVisible = false;
+			RotationCenterMeshRingX->bVisible = false;
+			RotationCenterMeshRingY->bVisible = false;
+			RotationCenterMeshRingZ->bVisible = false;
+		}
+	}
+}
+
 void wxGLPanel::ShowTransformTool(bool show) {
 	if (pivotMode)
 		xformCenter = pivotPosition;
@@ -11521,6 +11566,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	int y;
 	event.GetPosition(&x, &y);
 
+	ShowRotationCenter(false);
+
 	if (mbuttonDown) {
 		isMDragging = true;
 		if (wxGetKeyState(wxKeyCode::WXK_SHIFT))
@@ -11541,6 +11588,14 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else {
 			gls.TurnTableCamera(x - lastX);
 			gls.PitchCamera(y - lastY);
+			ShowRotationCenter();
+		}
+
+		if (wxGetKeyState(WXK_ALT)) {
+			if (hoverPoint != -1) {
+				rotationCenterMode = RotationCenterMode::Picked;
+				gls.camRotOffset = hoverCoord;
+			}
 		}
 
 		UpdateTransformTool();
