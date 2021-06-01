@@ -180,8 +180,9 @@ void GLSurface::Cleanup() {
 void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const uint32_t& vpWidth, const uint32_t& vpHeight, const float& fov) {
 	perspective = true;
 	camPos = pos;
-	camRot = rot;
 	camOffset.Zero();
+	camRot = rot;
+	camRotOffset.Zero();
 	vpW = vpWidth;
 	vpH = vpHeight;
 	mFov = fov;
@@ -240,9 +241,11 @@ void GLSurface::UnprojectCamera(Vector3& result) {
 }
 
 void GLSurface::SetView(const char type) {
+	camRotOffset.Zero();
+
 	if (type == 'F') {
 		camPos = Vector3(0.0f, -5.0f, -15.0f);
-		camRot = Vector3();
+		camRot.Zero();
 	}
 	else if (type == 'B') {
 		camPos = Vector3(0.0f, -5.0f, -15.0f);
@@ -696,8 +699,10 @@ void GLSurface::UpdateProjection() {
 
 	auto mat = glm::identity<glm::mat4x4>();
 	matView = glm::translate(mat, glm::vec3(camPos.x, camPos.y, camPos.z));
+	matView = glm::translate(matView, glm::vec3(camRotOffset.x, camRotOffset.y, camRotOffset.z));
 	matView = glm::rotate(matView, glm::radians(camRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
 	matView = glm::rotate(matView, glm::radians(camRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	matView = glm::translate(matView, -glm::vec3(camRotOffset.x, camRotOffset.y, camRotOffset.z));
 	matView = glm::translate(matView, glm::vec3(camOffset.x, camOffset.y, camOffset.z));
 }
 

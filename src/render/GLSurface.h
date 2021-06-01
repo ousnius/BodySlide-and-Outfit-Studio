@@ -26,13 +26,8 @@ private:
 	wxGLCanvas* canvas = nullptr;
 	wxGLContext* context = nullptr;
 
-	glm::mat4x4 matProjection = glm::identity<glm::mat4x4>();;
-	glm::mat4x4 matView = glm::identity<glm::mat4x4>();;
-	bool perspective = true;
-	float mFov = 90.0f;
-	nifly::Vector3 camPos;
-	nifly::Vector3 camRot;		// Turntable camera emulation.
-	nifly::Vector3 camOffset;
+	glm::mat4x4 matProjection = glm::identity<glm::mat4x4>();
+	glm::mat4x4 matView = glm::identity<glm::mat4x4>();
 	uint32_t vpW = 800;
 	uint32_t vpH = 600;
 
@@ -78,6 +73,13 @@ public:
 	// Get the attributes to use for creating a wxGLCanvas
 	static const wxGLAttributes& GetGLAttribs();
 	static const wxGLContextAttrs& GetGLContextAttribs();
+
+	bool perspective = true;
+	float mFov = 90.0f;
+	nifly::Vector3 camPos;
+	nifly::Vector3 camOffset;
+	nifly::Vector3 camRot;		// Turntable camera emulation.
+	nifly::Vector3 camRotOffset;
 
 	nifly::Vector3 GetBackgroundColor() {
 		return colorBackground;
