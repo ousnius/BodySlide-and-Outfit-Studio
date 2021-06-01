@@ -1366,6 +1366,119 @@ mesh* GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, floa
 	return m;
 }
 
+mesh* GLSurface::AddVis3dSphere(const nifly::Vector3& center, float radius, const nifly::Vector3& color, const std::string& name, bool asMesh) {
+	const int nStacks = 18;
+	const int nSectors = 36;
+
+	const float sectorStep = 2 * PI / nSectors;
+	const float stackStep = PI / nStacks;
+
+	mesh* m = nullptr;
+
+	if (!name.empty()) {
+		if (asMesh)
+			m = GetMesh(name);
+		else
+			m = GetOverlay(name);
+	}
+
+	if (!SetContext())
+		return nullptr;
+
+	if (!m) {
+		m = new mesh();
+
+		m->nVerts = (nStacks + 1) * (nSectors + 1);
+		m->verts = std::make_unique<Vector3[]>(m->nVerts);
+		m->texcoord = std::make_unique<Vector2[]>(m->nVerts);
+		m->norms = std::make_unique<Vector3[]>(m->nVerts);
+		m->tangents = std::make_unique<Vector3[]>(m->nVerts);
+		m->bitangents = std::make_unique<Vector3[]>(m->nVerts);
+		
+		// FIXME Triangles
+		std::vector<Triangle> tris;
+
+		for (int i = 0; i < nStacks; ++i) {
+			int k1 = i * (nSectors + 1);     // beginning of current stack
+			int k2 = k1 + nSectors + 1;      // beginning of next stack
+
+			for (int j = 0; j < nSectors; ++j, ++k1, ++k2) {
+				// 2 triangles per sector excluding first and last stacks
+				// k1 => k2 => k1+1
+				if (i != 0)
+					tris.push_back(Triangle(k1, k2, k1 + 1));
+
+				// k1+1 => k2 => k2+1
+				if (i != (nStacks - 1))
+					tris.push_back(Triangle(k1 + 1, k2, k2 + 1));
+
+				// store indices for lines
+				// vertical lines for all stacks, k1 => k2
+				//lineIndices.push_back(k1);
+				//lineIndices.push_back(k2);
+				//if (i != 0)  // horizontal lines except 1st stack, k1 => k+1
+				//{
+				//	lineIndices.push_back(k1);
+				//	lineIndices.push_back(k1 + 1);
+				//}
+			}
+		}
+
+		m->nTris = tris.size();
+		m->tris = std::make_unique<Triangle[]>(m->nTris);
+		for (int i = 0; i < m->nTris; i++)
+			m->tris[i] = tris[i];
+
+		m->shapeName = name;
+		m->rendermode = RenderMode::UnlitSolid;
+		m->material = GetPrimitiveMaterial();
+
+		if (asMesh)
+			AddMesh(m);
+		else
+			AddOverlay(m);
+	}
+
+	m->color = color;
+
+	Matrix4 mat;
+	mat.Translate(center);
+
+	int index = 0;
+	float lengthInv = 1.0f / radius;
+
+	for (int i = 0; i <= nStacks; ++i) {
+		float stackAngle = PI / 2 - i * stackStep;
+		float xy = radius * std::cos(stackAngle);
+		float z = radius * std::sin(stackAngle);
+
+		// Add (nSectors+1) vertices per stack
+		// The first and last vertices have same position and normal, but different tex coords
+		for (int j = 0; j <= nSectors; ++j) {
+			float sectorAngle = j * sectorStep;
+
+			float x = xy * std::cos(sectorAngle);
+			float y = xy * std::sin(sectorAngle);
+			m->verts[index] = mat * Vector3(x, y, z);
+
+			float nx = x * lengthInv;
+			float ny = y * lengthInv;
+			float nz = z * lengthInv;
+			m->norms[index] = Vector3(nx, ny, nz);
+
+			float u = (float)j / nSectors;
+			float v = (float)i / nStacks;
+			m->texcoord[index] = Vector2(u, v);
+
+			index++;
+		}
+	}
+
+	m->CalcTangentSpace();
+	m->CreateBuffers();
+	return m;
+}
+
 mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const std::string& name) {
 	if (!SetContext())
 		return nullptr;

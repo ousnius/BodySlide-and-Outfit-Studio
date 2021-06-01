@@ -297,6 +297,7 @@ public:
 	bool CollideOverlay(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, nifly::Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr);
 
 	mesh* AddVisCircle(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const std::string& name = "RingMesh");
+	mesh* AddVis3dSphere(const nifly::Vector3& center, float radius, const nifly::Vector3& color, const std::string& name, bool asMesh = false);
 	mesh* AddVis3dRing(const nifly::Vector3& center, const nifly::Vector3& normal, float holeRadius, float ringRadius, const nifly::Vector3& color, const std::string& name);
 	mesh* AddVis3dArrow(const nifly::Vector3& origin, const nifly::Vector3& direction, float stemRadius, float pointRadius, float length, const nifly::Vector3& color, const std::string& name);
 	mesh* AddVis3dCube(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const nifly::Vector3& color, const std::string& name);
