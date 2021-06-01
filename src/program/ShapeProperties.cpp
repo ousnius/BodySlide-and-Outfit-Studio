@@ -807,7 +807,7 @@ void ShapeProperties::OnTransChanged(wxCommandEvent&) {
 void ShapeProperties::RefreshMesh() {
 	os->project->SetTextures(shape);
 	os->MeshFromProj(shape, true);
-	os->UpdateActiveShapeUI();
+	os->UpdateActiveShape();
 }
 
 void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
