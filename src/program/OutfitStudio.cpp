@@ -9963,98 +9963,100 @@ void wxGLPanel::SetLastTool(ToolID tool) {
 }
 
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
-	if (event.GetUnicodeKey() == 'V') {
-		wxPoint cursorPos(event.GetPosition());
+	if (!event.HasAnyModifiers()) {
+		if (event.GetUnicodeKey() == 'V') {
+			wxPoint cursorPos(event.GetPosition());
 
-		int vertIndex;
-		if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &vertIndex))
-			return;
+			int vertIndex;
+			if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &vertIndex))
+				return;
 
-		wxDialog dlg;
-		if (wxXmlResource::Get()->LoadDialog(&dlg, os, "dlgMoveVertex")) {
-			NiShape* shape = os->activeItem->GetShape();
+			wxDialog dlg;
+			if (wxXmlResource::Get()->LoadDialog(&dlg, os, "dlgMoveVertex")) {
+				NiShape* shape = os->activeItem->GetShape();
 
-			std::vector<Vector3> verts;
-			os->project->GetLiveVerts(shape, verts);
+				std::vector<Vector3> verts;
+				os->project->GetLiveVerts(shape, verts);
 
-			Vector3 oldPos = verts[vertIndex];
-			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.x));
-			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.y));
-			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.z));
+				Vector3 oldPos = verts[vertIndex];
+				XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.x));
+				XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.y));
+				XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.z));
 
-			if (dlg.ShowModal() == wxID_OK) {
-				Vector3 newPos;
-				newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().c_str());
-				newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().c_str());
-				newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
+				if (dlg.ShowModal() == wxID_OK) {
+					Vector3 newPos;
+					newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().c_str());
+					newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().c_str());
+					newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
 
-				// Move vertex in shape directly
-				if (!os->bEditSlider)
-					os->project->MoveVertex(shape, newPos, vertIndex);
+					// Move vertex in shape directly
+					if (!os->bEditSlider)
+						os->project->MoveVertex(shape, newPos, vertIndex);
 
-				// To mesh coordinates
-				oldPos = mesh::VecToMeshCoords(oldPos);
-				newPos = mesh::VecToMeshCoords(newPos);
+					// To mesh coordinates
+					oldPos = mesh::VecToMeshCoords(oldPos);
+					newPos = mesh::VecToMeshCoords(newPos);
 
-				UndoStateShape uss;
-				uss.shapeName = shape->name.get();
-				uss.pointStartState[vertIndex] = oldPos;
-				uss.pointEndState[vertIndex] = newPos;
+					UndoStateShape uss;
+					uss.shapeName = shape->name.get();
+					uss.pointStartState[vertIndex] = oldPos;
+					uss.pointEndState[vertIndex] = newPos;
 
-				// Push changes onto undo stack and execute
-				UndoStateProject *usp = GetUndoHistory()->PushState();
-				usp->undoType = UT_VERTPOS;
-				usp->usss.push_back(std::move(uss));
+					// Push changes onto undo stack and execute
+					UndoStateProject *usp = GetUndoHistory()->PushState();
+					usp->undoType = UT_VERTPOS;
+					usp->usss.push_back(std::move(uss));
 
-				if (os->bEditSlider) {
-					usp->sliderName = os->activeSlider;
+					if (os->bEditSlider) {
+						usp->sliderName = os->activeSlider;
 
-					float sliderscale = os->project->SliderValue(os->activeSlider);
-					if (sliderscale == 0.0)
-						sliderscale = 1.0;
+						float sliderscale = os->project->SliderValue(os->activeSlider);
+						if (sliderscale == 0.0)
+							sliderscale = 1.0;
 
-					usp->sliderscale = sliderscale;
+						usp->sliderscale = sliderscale;
+					}
+
+					ApplyUndoState(usp, false);
 				}
 
-				ApplyUndoState(usp, false);
-			}
-
-			if (transformMode)
-				ShowTransformTool();
-		}
-	}
-	else if (event.GetUnicodeKey() == '0')
-		os->SelectTool(ToolID::Select);
-	else if (event.GetUnicodeKey() == '1')
-		os->SelectTool(ToolID::MaskBrush);
-	else if (event.GetUnicodeKey() == '2')
-		os->SelectTool(ToolID::InflateBrush);
-	else if (event.GetUnicodeKey() == '3')
-		os->SelectTool(ToolID::DeflateBrush);
-	else if (event.GetUnicodeKey() == '4')
-		os->SelectTool(ToolID::MoveBrush);
-	else if (event.GetUnicodeKey() == '5')
-		os->SelectTool(ToolID::SmoothBrush);
-	else if (event.GetUnicodeKey() == '6')
-		os->SelectTool(ToolID::UndiffBrush);
-	else if (event.GetUnicodeKey() == '7')
-		os->SelectTool(ToolID::WeightBrush);
-	else if (event.GetUnicodeKey() == '8')
-		os->SelectTool(ToolID::ColorBrush);
-	else if (event.GetUnicodeKey() == '9')
-		os->SelectTool(ToolID::AlphaBrush);
-	else if (event.GetKeyCode() == WXK_SPACE) {
-		if (event.ControlDown()) {
-			if (!os->activeSlider.empty()) {
-				os->ExitSliderEdit();
-			}
-			else {
-				os->EnterSliderEdit();
-				os->ScrollToActiveSlider();
+				if (transformMode)
+					ShowTransformTool();
 			}
 		}
-		else
-			os->ToggleBrushPane();
+		else if (event.GetUnicodeKey() == '0')
+			os->SelectTool(ToolID::Select);
+		else if (event.GetUnicodeKey() == '1')
+			os->SelectTool(ToolID::MaskBrush);
+		else if (event.GetUnicodeKey() == '2')
+			os->SelectTool(ToolID::InflateBrush);
+		else if (event.GetUnicodeKey() == '3')
+			os->SelectTool(ToolID::DeflateBrush);
+		else if (event.GetUnicodeKey() == '4')
+			os->SelectTool(ToolID::MoveBrush);
+		else if (event.GetUnicodeKey() == '5')
+			os->SelectTool(ToolID::SmoothBrush);
+		else if (event.GetUnicodeKey() == '6')
+			os->SelectTool(ToolID::UndiffBrush);
+		else if (event.GetUnicodeKey() == '7')
+			os->SelectTool(ToolID::WeightBrush);
+		else if (event.GetUnicodeKey() == '8')
+			os->SelectTool(ToolID::ColorBrush);
+		else if (event.GetUnicodeKey() == '9')
+			os->SelectTool(ToolID::AlphaBrush);
+		else if (event.GetKeyCode() == WXK_SPACE) {
+			if (event.ControlDown()) {
+				if (!os->activeSlider.empty()) {
+					os->ExitSliderEdit();
+				}
+				else {
+					os->EnterSliderEdit();
+					os->ScrollToActiveSlider();
+				}
+			}
+			else
+				os->ToggleBrushPane();
+		}
 	}
 
 	event.Skip();
