@@ -3004,7 +3004,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	UpdateBrushPane();
 }
 
-bool OutfitStudioFrame::NotifyStrokeStarting() {
+bool OutfitStudioFrame::CheckEditableState() {
 	if (!activeItem)
 		return false;
 
@@ -7791,14 +7791,15 @@ void OutfitStudioFrame::OnEnterClose(wxKeyEvent& event) {
 }
 
 void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
-	wxDialog dlg;
-	Vector3 offs;
-
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
+	if (!CheckEditableState())
+		return;
+
+	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgMoveShape")) {
 		Vector3 previewMove;
 
@@ -7944,6 +7945,9 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
+
+	if (!CheckEditableState())
+		return;
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgScaleShape")) {
@@ -8128,6 +8132,9 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
+
+	if (!CheckEditableState())
+		return;
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgRotateShape")) {
@@ -10087,7 +10094,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	if (!hit)
 		return false;
 
-	if (!os->NotifyStrokeStarting())
+	if (!os->CheckEditableState())
 		return false;
 
 	if (activeBrush->isMirrored()) {
@@ -10383,6 +10390,9 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	mesh* hitMesh;
 	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh, &tpi.facet);
 	if (!hit)
+		return false;
+
+	if (!os->CheckEditableState())
 		return false;
 
 	tpi.center = xformCenter;

@@ -1002,7 +1002,7 @@ public:
 	void ClearSelected(nifly::NiShape* shape);
 	std::string GetActiveBone();
 
-	bool NotifyStrokeStarting();
+	bool CheckEditableState();
 
 	void EnterSliderEdit(const std::string& sliderName = "");
 	void ExitSliderEdit();
