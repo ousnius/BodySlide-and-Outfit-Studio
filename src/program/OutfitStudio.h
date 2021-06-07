@@ -202,6 +202,38 @@ public:
 		return activeBrush;
 	}
 
+	void SyncBrushStates(TweakBrush* brush) {
+		if (!brush)
+			return;
+
+		int brushType = brush->Type();
+		if (brushType == TBT_STANDARD || brushType == TBT_MOVE || brushType == TBT_MASK) {
+			bool isMirrored = brush->isMirrored();
+			bool isConnected = brush->isConnected();
+
+			standardBrush.setMirror(isMirrored);
+			standardBrush.setConnected(isConnected);
+
+			deflateBrush.setMirror(isMirrored);
+			deflateBrush.setConnected(isConnected);
+
+			moveBrush.setMirror(isMirrored);
+			moveBrush.setConnected(isConnected);
+
+			smoothBrush.setMirror(isMirrored);
+			smoothBrush.setConnected(isConnected);
+
+			maskBrush.setMirror(isMirrored);
+			maskBrush.setConnected(isConnected);
+
+			UnMaskBrush.setMirror(isMirrored);
+			UnMaskBrush.setConnected(isConnected);
+
+			smoothMaskBrush.setMirror(isMirrored);
+			smoothMaskBrush.setConnected(isConnected);
+		}
+	}
+
 	void SetColorBrush(const nifly::Vector3& color) {
 		colorBrush.color = color;
 	}
@@ -1388,8 +1420,10 @@ private:
 		toolBarV->ToggleTool(event.GetId(), enabled);
 
 		auto activeBrush = glView->GetActiveBrush();
-		if (activeBrush)
+		if (activeBrush) {
 			activeBrush->setMirror(enabled);
+			glView->SyncBrushStates(activeBrush);
+		}
 	}
 
 	void OnConnectedOnly(wxCommandEvent& event) {
@@ -1398,8 +1432,10 @@ private:
 		toolBarV->ToggleTool(event.GetId(), enabled);
 
 		auto activeBrush = glView->GetActiveBrush();
-		if (activeBrush)
+		if (activeBrush) {
 			activeBrush->setConnected(enabled);
+			glView->SyncBrushStates(activeBrush);
+		}
 	}
 
 	void OnGlobalBrushCollision(wxCommandEvent& event) {
