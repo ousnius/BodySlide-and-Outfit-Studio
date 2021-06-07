@@ -198,6 +198,12 @@ public:
 	ToolID GetActiveTool() {
 		return activeTool;
 	}
+
+	void SetLastTool(ToolID tool);
+	ToolID GetLastTool() {
+		return lastTool;
+	}
+
 	TweakBrush* GetActiveBrush() {
 		return activeBrush;
 	}
@@ -778,6 +784,7 @@ private:
 	bool segmentMode = false;
 
 	ToolID activeTool = ToolID::Select;
+	ToolID lastTool = ToolID::Select;
 	bool isPainting = false;
 	bool isTransforming = false;
 	bool isMovingPivot = false;

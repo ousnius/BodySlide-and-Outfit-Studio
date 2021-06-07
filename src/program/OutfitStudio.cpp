@@ -5796,6 +5796,17 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		SelectTool(ToolID::SplitEdge);
 	else
 		SelectTool(ToolID::Any);
+
+	// Remember last standard tool used in regular tabs
+	if (meshTabButton->GetCheck() || lightsTabButton->GetCheck()) {
+		auto activeBrush = glView->GetActiveBrush();
+		if (activeBrush) {
+			int brushType = activeBrush->Type();
+			if (brushType == TBT_STANDARD || brushType == TBT_MASK || brushType == TBT_MOVE) {
+				glView->SetLastTool(glView->GetActiveTool());
+			}
+		}
+	}
 }
 
 void OutfitStudioFrame::OnSetView(wxCommandEvent& event) {
@@ -6101,51 +6112,18 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 			ApplyPose();
 		}
 
-		glView->SetTransformMode(false);
-		SelectTool(ToolID::InflateBrush);
 		glView->SetWeightVisible(false);
-
-		menuBar->Check(XRCID("btnInflateBrush"), true);
-		menuBar->Enable(XRCID("btnTransform"), true);
-		menuBar->Enable(XRCID("btnPivot"), true);
-		menuBar->Enable(XRCID("btnVertexEdit"), true);
-		menuBar->Enable(XRCID("btnWeightBrush"), false);
-		menuBar->Enable(XRCID("btnColorBrush"), false);
-		menuBar->Enable(XRCID("btnAlphaBrush"), false);
-		menuBar->Enable(XRCID("btnInflateBrush"), true);
-		menuBar->Enable(XRCID("btnDeflateBrush"), true);
-		menuBar->Enable(XRCID("btnMoveBrush"), true);
-		menuBar->Enable(XRCID("btnSmoothBrush"), true);
-		menuBar->Enable(XRCID("btnUndiffBrush"), true);
-		menuBar->Enable(XRCID("btnCollapseVertex"), true);
-		menuBar->Enable(XRCID("btnFlipEdgeTool"), true);
-		menuBar->Enable(XRCID("btnSplitEdgeTool"), true);
-		menuBar->Enable(XRCID("deleteVerts"), true);
-
-		toolBarH->ToggleTool(XRCID("btnInflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
-		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
-		toolBarH->EnableTool(XRCID("btnAlphaBrush"), false);
-		toolBarV->EnableTool(XRCID("btnTransform"), true);
-		toolBarV->EnableTool(XRCID("btnPivot"), true);
-		toolBarV->EnableTool(XRCID("btnVertexEdit"), true);
-		toolBarH->EnableTool(XRCID("btnInflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnDeflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnMoveBrush"), true);
-		toolBarH->EnableTool(XRCID("btnSmoothBrush"), true);
-		toolBarH->EnableTool(XRCID("btnUndiffBrush"), true);
-		toolBarH->EnableTool(XRCID("btnCollapseVertex"), true);
-		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), true);
-		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
 	}
 
 	if (id != colorsTabButton->GetId()) {
-		glView->SetTransformMode(false);
-		SelectTool(ToolID::InflateBrush);
 		glView->SetColorsVisible(false);
 
 		if (colorSettings->IsShown())
 			glView->ClearColors();
+	}
+
+	if (id != boneTabButton->GetId() || id != colorsTabButton->GetId()) {
+		glView->SetTransformMode(false);
 
 		menuBar->Check(XRCID("btnInflateBrush"), true);
 		menuBar->Enable(XRCID("btnTransform"), true);
@@ -6200,6 +6178,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		masksPane->Show();
 
 		SetNoSubMeshes();
+		SelectTool(glView->GetLastTool());
 	}
 	else if (id == boneTabButton->GetId()) {
 		currentTabButton = boneTabButton;
@@ -6509,6 +6488,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionTabButton->SetCheck(false);
 
 		SetNoSubMeshes();
+		SelectTool(glView->GetLastTool());
 	}
 
 	CheckBrushBounds();
@@ -9976,6 +9956,10 @@ void wxGLPanel::SetActiveTool(ToolID brushID) {
 		activeBrush = nullptr;
 		break;
 	}
+}
+
+void wxGLPanel::SetLastTool(ToolID tool) {
+	lastTool = tool;
 }
 
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
