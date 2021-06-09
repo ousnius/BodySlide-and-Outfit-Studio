@@ -3085,6 +3085,12 @@ bool OutfitStudioFrame::CheckPendingChanges() {
 	return true;
 }
 
+void OutfitStudioFrame::UpdateUndoTools() {
+	auto undoHistory = glView->GetUndoHistory();
+	toolBarH->EnableTool(XRCID("editUndo"), undoHistory->CanUndo());
+	toolBarH->EnableTool(XRCID("editRedo"), undoHistory->CanRedo());
+}
+
 void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	wxWizard wiz;
 	wxWizardPage* pg1;
@@ -3643,6 +3649,7 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render) {
 		}
 	}
 
+	UpdateUndoTools();
 	glView->UpdateFloor();
 
 	if (render)
@@ -7917,6 +7924,8 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 		}
+
+		UpdateUndoTools();
 	}
 }
 
@@ -8104,6 +8113,8 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 		}
+
+		UpdateUndoTools();
 	}
 }
 
@@ -8254,6 +8265,8 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 		}
+
+		UpdateUndoTools();
 	}
 }
 
@@ -9036,6 +9049,8 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
 
+		UpdateUndoTools();
+
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}
@@ -9126,6 +9141,8 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
+
+		UpdateUndoTools();
 
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
@@ -10018,6 +10035,7 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 					}
 
 					ApplyUndoState(usp, false);
+					os->UpdateUndoTools();
 				}
 
 				if (transformMode)
@@ -10368,6 +10386,8 @@ void wxGLPanel::EndBrushStroke() {
 			if (os->currentTabButton)
 				os->currentTabButton->SetPendingChanges();
 		}
+
+		os->UpdateUndoTools();
 	}
 }
 
@@ -10504,6 +10524,7 @@ void wxGLPanel::EndTransform() {
 	}
 
 	ShowTransformTool();
+	os->UpdateUndoTools();
 }
 
 bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
@@ -10664,6 +10685,8 @@ void wxGLPanel::ClickCollapseVertex() {
 	usp->undoType = UT_MESH;
 	usp->usss.push_back(std::move(uss));
 	ApplyUndoState(usp, false);
+
+	os->UpdateUndoTools();
 }
 
 bool wxGLPanel::StartPickEdge() {
@@ -10718,6 +10741,8 @@ void wxGLPanel::ClickFlipEdge() {
 	usp->undoType = UT_MESH;
 	usp->usss.push_back(std::move(uss));
 	ApplyUndoState(usp, false);
+
+	os->UpdateUndoTools();
 }
 
 void wxGLPanel::ClickSplitEdge() {
@@ -10779,6 +10804,8 @@ void wxGLPanel::ClickSplitEdge() {
 	usp->undoType = UT_MESH;
 	usp->usss.push_back(std::move(uss));
 	ApplyUndoState(usp, false);
+
+	os->UpdateUndoTools();
 }
 
 bool wxGLPanel::RestoreMode(UndoStateProject *usp) {

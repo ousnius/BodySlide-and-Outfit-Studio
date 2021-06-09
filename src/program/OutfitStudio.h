@@ -987,6 +987,8 @@ public:
 	void SetPendingChanges(bool pending = true);
 	bool CheckPendingChanges();
 
+	void UpdateUndoTools();
+
 	bool SaveProject();
 	bool SaveProjectAs();
 	bool LoadProject(const std::string& fileName, const std::string& projectName = "", bool clearProject = true);
@@ -1457,12 +1459,15 @@ private:
 			return;
 
 		glView->UndoStroke();
+		UpdateUndoTools();
 	}
+
 	void OnRedo(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetSegmentMode())
 			return;
 
 		glView->RedoStroke();
+		UpdateUndoTools();
 	}
 
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event));

@@ -30,6 +30,21 @@
 						<bitmap>$(AppDir)\res\images\LoadProj.png</bitmap>
 					</object>
 					<object class="separator" />
+					<object class="tool" name="editUndo">
+						<label>Undo</label>
+						<tooltip>Undo a previous action.</tooltip>
+						<bitmap>$(AppDir)\res\images\Undo.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\Undo_d.png</bitmap2>
+						<disabled>1</disabled>
+					</object>
+					<object class="tool" name="editRedo">
+						<label>Redo</label>
+						<tooltip>Redo the next undone action.</tooltip>
+						<bitmap>$(AppDir)\res\images\Redo.png</bitmap>
+						<bitmap2>$(AppDir)\res\images\Redo_d.png</bitmap2>
+						<disabled>1</disabled>
+					</object>
+					<object class="separator" />
 					<object class="tool" name="btnSelect">
 						<label>Select</label>
 						<tooltip>Navigate and select meshes (or vertices in vertex mode).</tooltip>

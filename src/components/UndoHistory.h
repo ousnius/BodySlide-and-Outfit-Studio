@@ -23,20 +23,28 @@ public:
 	bool BackStepHistory();
 	bool ForwardStepHistory();
 	void ClearHistory();
+	
+	bool CanUndo() const {
+		return curIndex != UH_NONE;
+	}
 
-	UndoStateProject *GetCurState() {
+	bool CanRedo() const {
+		return !states.empty() && curIndex + 1 < static_cast<int>(states.size());
+	}
+
+	UndoStateProject *GetCurState() const {
 		if (curIndex == UH_NONE)
 			return nullptr;
 		return states[curIndex].get();
 	}
 
-	UndoStateProject *GetBackState() {
+	UndoStateProject *GetBackState() const {
 		if (states.empty())
 			return nullptr;
 		return states.back().get();
 	}
 
-	UndoStateProject *GetNextState() {
+	UndoStateProject *GetNextState() const {
 		if (curIndex + 1 >= static_cast<int>(states.size()))
 			return nullptr;
 		return states[curIndex + 1].get();
