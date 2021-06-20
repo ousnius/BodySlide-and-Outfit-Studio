@@ -974,6 +974,7 @@ public:
 		size_t sliderID;
 
 		wxBitmapButton* btnSliderEdit;
+		wxBitmapButton* btnSliderProp;
 		wxButton* btnMinus;
 		wxButton* btnPlus;
 		wxCheckBox* sliderNameCheck;
@@ -1379,6 +1380,8 @@ private:
 	void OnMaskAffected(wxCommandEvent& event);
 	void OnClearSlider(wxCommandEvent& event);
 	void OnDeleteSlider(wxCommandEvent& event);
+
+	void ShowSliderProperties(const std::string& sliderName);
 	void OnSliderProperties(wxCommandEvent& event);
 
 	void OnInvertUV(wxCommandEvent& event);

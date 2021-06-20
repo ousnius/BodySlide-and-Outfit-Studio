@@ -2264,9 +2264,13 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, const size_t id
 	d->paneSz = new wxBoxSizer(wxHORIZONTAL);
 
 	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, sn + "|btn");
-	d->btnSliderEdit->SetBitmapDisabled(wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall_d.png", wxBITMAP_TYPE_ANY));
 	d->btnSliderEdit->SetToolTip(_("Turn on edit mode for this slider."));
 	d->paneSz->Add(d->btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL);
+
+	d->btnSliderProp = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/Settings.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, sn + "|btnSliderProp");
+	d->btnSliderProp->SetToolTip(_("Display and edit the active slider's properties."));
+	d->btnSliderProp->Hide();
+	d->paneSz->Add(d->btnSliderProp, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
 	d->btnMinus = new wxButton(d->sliderPane, wxID_ANY, "-", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, sn + "|btnMinus");
 	d->btnMinus->SetToolTip(_("Weaken slider data by 1%."));
@@ -2778,6 +2782,7 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 		SliderDisplay* od = sliderDisplays[activeSlider];
 		if (od) {
 			od->sliderNameCheck->Enable(true);
+			od->btnSliderProp->Hide();
 			od->btnMinus->Hide();
 			od->btnPlus->Hide();
 			od->sliderPane->Layout();
@@ -2801,6 +2806,7 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 	}
 
 	d->sliderNameCheck->Enable(false);
+	d->btnSliderProp->Show();
 	d->btnMinus->Show();
 	d->btnPlus->Show();
 	d->sliderPane->Layout();
@@ -2818,6 +2824,7 @@ void OutfitStudioFrame::ExitSliderEdit() {
 			d->slider->SetValue(0);
 			SetSliderValue(activeSlider, 0);
 			ShowSliderEffect(activeSlider, true);
+			d->btnSliderProp->Hide();
 			d->btnMinus->Hide();
 			d->btnPlus->Hide();
 			d->sliderPane->Layout();
@@ -5944,10 +5951,12 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 		return;
 	}
 
+	wxString buttonNameId = buttonName.AfterLast('|');
+
 	float scale = 0.0f;
-	if (buttonName.AfterLast('|') == "btnMinus")
+	if (buttonNameId == "btnMinus")
 		scale = 0.99f;
-	else if (buttonName.AfterLast('|') == "btnPlus")
+	else if (buttonNameId == "btnPlus")
 		scale = 1.01f;
 
 	if (scale != 0.0f) {
@@ -5958,6 +5967,11 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 			project->GetLiveVerts(shape, verts);
 			glView->UpdateMeshVertices(shape->name.get(), &verts);
 		}
+		return;
+	}
+
+	if (buttonNameId == "btnSliderProp") {
+		ShowSliderProperties(clickedName);
 		return;
 	}
 
@@ -6846,6 +6860,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		sd.second->slider->SetFocus();
 
 		sd.second->btnSliderEdit->Destroy();
+		sd.second->btnSliderProp->Destroy();
 		sd.second->slider->Destroy();
 		sd.second->sliderName->Destroy();
 		sd.second->sliderNameCheck->Destroy();
@@ -6936,6 +6951,7 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		sd.second->slider->SetFocus();
 
 		sd.second->btnSliderEdit->Destroy();
+		sd.second->btnSliderProp->Destroy();
 		sd.second->slider->Destroy();
 		sd.second->sliderName->Destroy();
 		sd.second->sliderNameCheck->Destroy();
@@ -7342,6 +7358,7 @@ void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 		sd->slider->SetFocus();
 
 		sd->btnSliderEdit->Destroy();
+		sd->btnSliderProp->Destroy();
 		sd->slider->Destroy();
 		sd->sliderName->Destroy();
 		sd->sliderNameCheck->Destroy();
@@ -7377,14 +7394,9 @@ void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	ApplySliders();
 }
 
-void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
-	if (!bEditSlider) {
-		wxMessageBox(_("There is no slider in edit mode to show properties for!"), _("Error"));
-		return;
-	}
-
+void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 	size_t curSlider = 0;
-	if (!project->SliderIndexFromName(activeSlider, curSlider))
+	if (!project->SliderIndexFromName(sliderName, curSlider))
 		return;
 
 	wxDialog dlg;
@@ -7498,26 +7510,40 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			project->SetSliderDefault(curSlider, loVal, false);
 			project->SetSliderDefault(curSlider, hiVal, true);
 
-			std::string sliderName{edSliderName->GetValue().ToUTF8()};
-			if (activeSlider != sliderName && !project->ValidSlider(sliderName)) {
-				project->SetSliderName(curSlider, sliderName);
-				SliderDisplay* d = sliderDisplays[activeSlider];
-				sliderDisplays[sliderName] = d;
-				sliderDisplays.erase(activeSlider);
+			std::string newSliderName{ edSliderName->GetValue().ToUTF8() };
+			if (sliderName != newSliderName && !project->ValidSlider(newSliderName)) {
+				project->SetSliderName(curSlider, newSliderName);
+				SliderDisplay* d = sliderDisplays[sliderName];
+				sliderDisplays[newSliderName] = d;
+				sliderDisplays.erase(sliderName);
 
-				wxString sn = wxString::FromUTF8(sliderName);
+				wxString sn = wxString::FromUTF8(newSliderName);
 				d->slider->SetName(sn + "|slider");
 				d->sliderName->SetName(sn + "|lbl");
 				d->btnSliderEdit->SetName(sn + "|btn");
+				d->btnSliderProp->SetName(sn + "|btnSliderProp");
+				d->btnMinus->SetName(sn + "|btnMinus");
+				d->btnPlus->SetName(sn + "|btnPlus");
 				d->sliderNameCheck->SetName(sn + "|check");
 				d->sliderReadout->SetName(sn + "|readout");
 				d->sliderName->SetLabel(sn);
-				activeSlider = std::move(sliderName);
+
+				if (sliderName == activeSlider)
+					activeSlider = std::move(newSliderName);
 			}
 
 			SetPendingChanges();
 		}
 	}
+}
+
+void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
+	if (!bEditSlider) {
+		wxMessageBox(_("There is no slider in edit mode to show properties for!"), _("Error"));
+		return;
+	}
+
+	ShowSliderProperties(activeSlider);
 }
 
 void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& options) {
