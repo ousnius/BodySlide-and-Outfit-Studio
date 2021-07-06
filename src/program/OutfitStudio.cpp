@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
 #include <sstream>
-#include <regex>
 
 using namespace nifly;
 
@@ -1250,23 +1249,17 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 		});
 
 		projectFilter->Bind(wxEVT_TEXT, [&](wxCommandEvent& event) {
-			std::string filter{ event.GetString().ToUTF8() };
-			std::regex re(filter, std::regex_constants::icase);
+			wxString filterStr = event.GetString();
+			filterStr.MakeLower();
 
 			projectList->Clear();
 
 			// Add outfits that are no members to list
 			for (auto &project : projectSources) {
-				try {
-					// Filter outfit
-					if (std::regex_search(project.first, re)) {
-						int item = projectList->Append(wxString::FromUTF8(project.first));
-						if (selectedProjects.find(project.first) != selectedProjects.end())
-							projectList->Check(item);
-					}
-				}
-				catch (std::regex_error&) {
-					int item = projectList->Append(wxString::FromUTF8(project.first));
+				// Filter outfit by name
+				wxString projectStr = wxString::FromUTF8(project.first);
+				if (projectStr.Lower().Contains(filterStr)) {
+					int item = projectList->Append(projectStr);
 					if (selectedProjects.find(project.first) != selectedProjects.end())
 						projectList->Check(item);
 				}
@@ -3722,22 +3715,20 @@ void OutfitStudioFrame::UpdateBoneTree() {
 	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
 		outfitBones->DeleteChildren(bonesRoot);
 
-	std::string filter = bonesFilter->GetValue().ToUTF8();
-	std::regex re(filter, std::regex_constants::icase);
+	wxString filterStr = bonesFilter->GetValue();
+	filterStr.MakeLower();
 
 	// Refill bone tree, re-setting normalize state and re-selecting bones
 	std::vector<std::string> activeBones;
 	project->GetActiveBones(activeBones);
 
 	for (auto &bone : activeBones) {
-		try {
-			// Filter out bone
-			if (!std::regex_search(bone, re))
-				continue;
-		}
-		catch (std::regex_error&) {}
+		// Filter out bone by name
+		wxString boneStr = wxString::FromUTF8(bone);
+		if (!boneStr.Lower().Contains(filterStr))
+			continue;
 
-		wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
+		wxTreeItemId item = outfitBones->AppendItem(bonesRoot, boneStr);
 		outfitBones->SetItemState(item, lastNormalizeBones.count(bone) != 0 ? 1 : 0);
 
 		if (lastSelectedBones.count(bone) != 0) {
@@ -4441,8 +4432,8 @@ void OutfitStudioFrame::OnSliderFilterChanged(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::DoFilterSliders() {
-	std::string filter = sliderFilter->GetValue().ToUTF8();
-	std::regex re(filter, std::regex_constants::icase);
+	wxString filterStr = sliderFilter->GetValue();
+	filterStr.MakeLower();
 
 	for (auto &sd : sliderDisplays) {
 		if (!sd.second)
@@ -4450,14 +4441,10 @@ void OutfitStudioFrame::DoFilterSliders() {
 
 		sd.second->sliderPane->Hide();
 
-		try {
-			// Filter slider
-			if (std::regex_search(sd.first, re))
-				sd.second->sliderPane->Show();
-		}
-		catch (std::regex_error&) {
+		// Filter slider by name
+		wxString sliderStr = wxString::FromUTF8(sd.first);
+		if (sliderStr.Lower().Contains(filterStr))
 			sd.second->sliderPane->Show();
-		}
 	}
 
 	sliderScroll->FitInside();

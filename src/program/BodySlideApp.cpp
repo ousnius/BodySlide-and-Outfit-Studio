@@ -1597,7 +1597,7 @@ void BodySlideApp::ApplyOutfitFilter() {
 	bool showUngrouped = false;
 	filteredOutfits.clear();
 	std::unordered_set<std::string> grpFiltOutfits;
-	std::vector<std::string> workfiltList;
+	std::vector<std::string> workFilterList;
 	static wxString lastGrps = "";
 	static std::set<std::string> grouplist;
 
@@ -1641,28 +1641,25 @@ void BodySlideApp::ApplyOutfitFilter() {
 
 	for (auto &no : outfitNameOrder)
 		if (grpFiltOutfits.find(no) != grpFiltOutfits.end())
-			workfiltList.push_back(no);
+			workFilterList.push_back(no);
 
 
 	if (outfitSrch.empty()) {
-		for (auto &w : workfiltList)
+		for (auto &w : workFilterList)
 			filteredOutfits.push_back(w);
 	}
 	else {
-		std::regex re;
-		try {
-			re.assign(outfitSrch, std::regex::icase);
-			for (auto &w : workfiltList)
-				if (std::regex_search(w, re))
-					filteredOutfits.push_back(w);
-		}
-		catch (std::regex_error&) {
-			for (auto &w : workfiltList)
-				filteredOutfits.push_back(w);
+		wxString searchStr = wxString::FromUTF8(outfitSrch);
+		searchStr.MakeLower();
+
+		for (auto &filterEntry : workFilterList) {
+			wxString entryStr = wxString::FromUTF8(filterEntry);
+			if (entryStr.Lower().Contains(searchStr))
+				filteredOutfits.push_back(entryStr.ToUTF8().data());
 		}
 	}
 
-	BodySlideConfig.SetValue("LastGroupFilter", std::string(grpSrch));
+	BodySlideConfig.SetValue("LastGroupFilter", grpSrch.ToUTF8().data());
 	BodySlideConfig.SetValue("LastOutfitFilter", outfitSrch);
 }
 

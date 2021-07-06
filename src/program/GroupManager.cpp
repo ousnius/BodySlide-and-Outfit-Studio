@@ -7,7 +7,6 @@ See the included LICENSE file
 #include "../utils/ConfigurationManager.h"
 
 #include <wx/srchctrl.h>
-#include <regex>
 
 extern ConfigurationManager Config;
 
@@ -195,21 +194,19 @@ void GroupManager::DoAddMembers() {
 }
 
 void GroupManager::DoFilterOutfits(const std::string& filter) {
-	std::regex re(filter, std::regex_constants::icase);
+	wxString filterString = wxString::FromUTF8(filter);
+	filterString.MakeLower();
 
 	listOutfits->Clear();
 
 	// Add outfits that are no members to list
 	for (auto &outfit : allOutfits) {
 		if (listMembers->FindString(outfit) == wxNOT_FOUND) {
-			try {
-				// Filter outfit
-				if (std::regex_search(outfit, re))
-					listOutfits->Append(wxString::FromUTF8(outfit));
-			}
-			catch (std::regex_error&) {
-				listOutfits->Append(wxString::FromUTF8(outfit));
-			}
+			wxString outfitName = wxString::FromUTF8(outfit);
+
+			// Filter outfit by name
+			if (outfitName.Lower().Contains(filterString))
+				listOutfits->Append(outfitName);
 		}
 	}
 }

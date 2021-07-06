@@ -55,16 +55,13 @@ void PresetSaveDialog::FilterGroups(const std::string& filter) {
 		filteredGroups.assign(allGroupNames.begin(), allGroupNames.end());
 	}
 	else {
-		try {
-			std::regex re(filter, std::regex_constants::icase);
-			for (auto &group : allGroupNames) {
-				if (std::regex_search(group, re))
-					filteredGroups.push_back(group);
-			}
-		}
-		catch (std::regex_error&) {
-			for (auto &group : allGroupNames)
-				filteredGroups.push_back(group);
+		wxString filterStr = wxString::FromUTF8(filter);
+		filterStr.MakeLower();
+
+		for (auto &group : allGroupNames) {
+			wxString groupStr = wxString::FromUTF8(group);
+			if (groupStr.Lower().Contains(filterStr))
+				filteredGroups.push_back(groupStr.ToUTF8().data());
 		}
 	}
 
