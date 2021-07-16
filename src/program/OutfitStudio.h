@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/UndoHistory.h"
 #include "../components/Automorph.h"
 #include "../components/RefTemplates.h"
+#include "../components/PoseData.h"
 #include "../utils/Log.h"
 #include "../utils/ConfigurationManager.h"
 
@@ -917,6 +918,8 @@ public:
 	std::unordered_set<std::string> lastSelectedBones;
 	std::unordered_set<std::string> lastNormalizeBones;
 
+	PoseDataCollection poseDataCollection;
+
 	wxTreeCtrl* outfitShapes = nullptr;
 	wxTreeCtrl* outfitBones = nullptr;
 	wxPanel* colorSettings = nullptr;
@@ -1606,6 +1609,10 @@ private:
 	void OnResetAllPose(wxCommandEvent& event);
 	void OnPoseToMesh(wxCommandEvent& event);
 	void OnPoseCheckBox(wxCommandEvent& event);
+	void OnSelectPose(wxCommandEvent& event);
+	void OnSavePose(wxCommandEvent& event);
+	void OnSaveAsPose(wxCommandEvent& event);
+	void OnDeletePose(wxCommandEvent& event);
 
 	wxDECLARE_EVENT_TABLE();
 };

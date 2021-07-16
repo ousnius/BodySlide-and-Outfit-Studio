@@ -80,6 +80,11 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("resetAllPose"), OutfitStudioFrame::OnResetAllPose)
 	EVT_BUTTON(XRCID("poseToMesh"), OutfitStudioFrame::OnPoseToMesh)
 	EVT_CHECKBOX(XRCID("cbPose"), OutfitStudioFrame::OnPoseCheckBox)
+
+	EVT_CHOICE(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
+	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
+	EVT_BUTTON(XRCID("saveAsPose"), OutfitStudioFrame::OnSaveAsPose)
+	EVT_BUTTON(XRCID("deletePose"), OutfitStudioFrame::OnDeletePose)
 	
 	// The following line with "EVT_COMMAND_SCROLL(wxID_ANY" apparently
 	// suppresses all following lines with EVT_COMMAND_SCROLL.
@@ -3507,8 +3512,11 @@ void OutfitStudioFrame::ClearProject() {
 	if (currentTabButton)
 		currentTabButton->SetPendingChanges(false);
 
-	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+	auto cMaskName = (wxChoice*)FindWindowByName("cMaskName");
 	cMaskName->Clear();
+
+	auto cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	cPoseName->Clear();
 
 	project->outfitName.clear();
 	UpdateTitle();
@@ -3699,6 +3707,17 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 
 	if (cPoseBone->GetSelection() == wxNOT_FOUND && cPoseBone->GetCount() > 0)
 		cPoseBone->SetSelection(0);
+
+	auto cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	cPoseName->Clear();
+
+	std::string poseDataPath = GetProjectPath() + "/PoseData";
+	poseDataCollection.LoadData(poseDataPath);
+
+	for (auto &poseData : poseDataCollection.poseData) {
+		wxString poseName = wxString::FromUTF8(poseData.name);
+		cPoseName->Append(poseName, &poseData);
+	}
 
 	RefreshGUIWeightColors();
 	PoseToGUI();
@@ -9708,7 +9727,7 @@ void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
 		if (!bone)
 			continue;
 
-		if (bone->poseRotVec == Vector3(0.0f, 0.0f, 0.0f) && bone->poseTranVec == Vector3(0.0f, 0.0f, 0.0f))
+		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
 			continue;
 
 		bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
@@ -9743,7 +9762,7 @@ void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 			if (!bone)
 				continue;
 
-			if (bone->poseRotVec == Vector3(0.0f, 0.0f, 0.0f) && bone->poseTranVec == Vector3(0.0f, 0.0f, 0.0f))
+			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
 				continue;
 
 			bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
@@ -9764,6 +9783,144 @@ void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {
 	poseToMesh->Enable(project->bPose);
 
 	ApplyPose();
+}
+
+void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	int poseSel = cPoseName->GetSelection();
+	if (poseSel != wxNOT_FOUND) {
+		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
+
+		std::vector<std::string> bones;
+		project->GetActiveBones(bones);
+
+		for (const auto &boneName : bones) {
+			AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			if (!bone)
+				continue;
+
+			auto poseBoneData = std::find_if(poseData->boneData.begin(), poseData->boneData.end(), [&boneName](const PoseBoneData& rt) { return rt.name == boneName; });
+			if (poseBoneData != poseData->boneData.end()) {
+				bone->poseRotVec = poseBoneData->rotation;
+				bone->poseTranVec = poseBoneData->translation;
+			}
+			else {
+				bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
+				bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
+			}
+
+			bone->UpdatePoseTransform();
+		}
+
+		PoseToGUI();
+		ApplyPose();
+	}
+}
+
+void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	int poseSel = cPoseName->GetSelection();
+	if (poseSel != wxNOT_FOUND) {
+		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
+		poseData->boneData.clear();
+
+		std::vector<std::string> bones;
+		project->GetActiveBones(bones);
+
+		for (const auto &boneName : bones) {
+			AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			if (!bone)
+				continue;
+
+			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+				continue;
+
+			PoseBoneData poseBoneData{};
+			poseBoneData.name = bone->boneName;
+			poseBoneData.rotation = bone->poseRotVec;
+			poseBoneData.translation = bone->poseTranVec;
+			poseData->boneData.push_back(poseBoneData);
+		}
+
+		cPoseName->SetClientData(poseSel, poseData);
+
+		wxString dirName = wxString::FromUTF8(GetProjectPath()) + "/PoseData";
+		wxFileName::Mkdir(dirName, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+		wxString fileName = dirName + "/" + wxString::FromUTF8(poseData->name) + ".xml";
+
+		PoseDataFile poseDataFile;
+		poseDataFile.New(fileName.ToUTF8().data());
+		poseDataFile.SetData(*poseData);
+		poseDataFile.Save();
+	}
+	else {
+		wxCommandEvent evt;
+		OnSaveAsPose(evt);
+	}
+}
+
+void OutfitStudioFrame::OnSaveAsPose(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+
+	wxString poseName;
+	do {
+		poseName = wxGetTextFromUser(_("Please enter a new unique name for the pose."), _("New Pose"));
+		if (poseName.empty())
+			return;
+
+	} while (cPoseName->FindString(poseName) != wxNOT_FOUND);
+
+	auto poseData = new PoseData(poseName.ToUTF8().data());
+
+	std::vector<std::string> bones;
+	project->GetActiveBones(bones);
+
+	for (const auto &boneName : bones) {
+		AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		if (!bone)
+			continue;
+
+		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+			continue;
+
+		PoseBoneData poseBoneData{};
+		poseBoneData.name = bone->boneName;
+		poseBoneData.rotation = bone->poseRotVec;
+		poseBoneData.translation = bone->poseTranVec;
+		poseData->boneData.push_back(poseBoneData);
+	}
+
+	int poseSel = cPoseName->Append(poseName, poseData);
+	cPoseName->SetSelection(poseSel);
+
+	wxString dirName = wxString::FromUTF8(GetProjectPath()) + "/PoseData";
+	wxFileName::Mkdir(dirName, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+	wxString fileName = dirName + "/" + wxString::FromUTF8(poseData->name) + ".xml";
+
+	PoseDataFile poseDataFile;
+	poseDataFile.New(fileName.ToUTF8().data());
+	poseDataFile.SetData(*poseData);
+	poseDataFile.Save();
+}
+
+void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	int poseSel = cPoseName->GetSelection();
+	if (poseSel != wxNOT_FOUND) {
+		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
+
+		wxString prompt = wxString::Format(_("Are you sure you wish to delete the pose '%s'?"), cPoseName->GetStringSelection());
+		int result = wxMessageBox(prompt, _("Confirm pose delete"), wxYES_NO | wxICON_WARNING, this);
+		if (result != wxYES)
+			return;
+
+		wxString fileName = wxString::FromUTF8(GetProjectPath()) + "/PoseData/" + wxString::FromUTF8(poseData->name) + ".xml";
+		wxRemoveFile(fileName);
+
+		cPoseName->Delete(poseSel);
+	}
 }
 
 

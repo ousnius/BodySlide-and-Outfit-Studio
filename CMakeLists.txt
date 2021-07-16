@@ -68,6 +68,7 @@ set(commonsources
 	)
 set(OSsources
 	${commonsources}
+	src/components/PoseData.cpp
 	src/components/RefTemplates.cpp
 	src/components/TweakBrush.cpp
 	src/components/UndoHistory.cpp
