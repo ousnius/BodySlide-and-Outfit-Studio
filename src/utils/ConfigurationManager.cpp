@@ -183,19 +183,22 @@ ConfigurationItem* ConfigurationItem::FindChild(const std::string& inName, bool 
 	return found;
 }
 
-ConfigurationItem* ConfigurationItem::AddChild(const std::string& inName, const std::string& val, bool isElement) {
+ConfigurationItem* ConfigurationItem::AddChild(const std::string& inName, const std::string& val, bool isElement, bool forceAdd) {
 	ConfigurationItem* found = nullptr;
 	int pos = inName.find_first_of("/.");
 	std::string tmpName = inName.substr(0, pos);
 
-	for (auto &child : children) {
-		if (child->isComment)
-			continue;
-		if (child->Match(tmpName))
-			found = child;
+	if (!forceAdd) {
+		for (auto &child : children) {
+			if (child->isComment)
+				continue;
+			if (child->Match(tmpName))
+				found = child;
+		}
 	}
+
 	if (!found) {
-		ConfigurationItem* newCI = new ConfigurationItem;
+		auto newCI = new ConfigurationItem();
 		newCI->name = inName.substr(0, pos);
 		newCI->parent = this;
 
@@ -210,7 +213,7 @@ ConfigurationItem* ConfigurationItem::AddChild(const std::string& inName, const 
 			found = newCI;
 		}
 		else if (inName.at(pos) == '/') {
-			found = newCI->AddChild(inName.substr(pos + 1), val, true);
+			found = newCI->AddChild(inName.substr(pos + 1), val, true, forceAdd);
 		}
 		else if (inName.at(pos) == '.')
 			found = newCI->AddChild(inName.substr(pos + 1), val, false);
@@ -225,12 +228,28 @@ ConfigurationItem* ConfigurationItem::AddChild(const std::string& inName, const 
 		if (pos == -1)
 			return nullptr;
 		else if (inName.at(pos) == '/')
-			found = found->AddChild(inName.substr(pos + 1), val, true);
+			found = found->AddChild(inName.substr(pos + 1), val, true, forceAdd);
 		else if (inName.at(pos) == '.')
 			found = found->AddChild(inName.substr(pos + 1), val, false);
 	}
 
 	return found;
+}
+
+void ConfigurationItem::DeleteChild(ConfigurationItem* child) {
+	if (!child)
+		return;
+
+	for (auto &p : child->properties)
+		DeleteChild(p);
+
+	child->properties.clear();
+
+	for (auto &c : child->children)
+		DeleteChild(c);
+
+	child->children.clear();
+	delete child;
 }
 
 ConfigurationItem* ConfigurationItem::FindProperty(const std::string& inName) {
@@ -239,6 +258,19 @@ ConfigurationItem* ConfigurationItem::FindProperty(const std::string& inName) {
 			return prop;
 
 	return nullptr;
+}
+
+void ConfigurationItem::ClearArrayChildren(const std::string& arrayName) {
+	auto removeIt = std::remove_if(
+		children.begin(),
+		children.end(),
+		[&](ConfigurationItem* child) { return child->Match(arrayName); }
+	);
+
+	for (auto it = removeIt; it != children.end(); it++)
+		DeleteChild((*it));
+
+	children.erase(removeIt, children.end());
 }
 
 ConfigurationManager::ConfigurationManager() {
@@ -518,6 +550,12 @@ void ConfigurationManager::GetFullKey(ConfigurationItem* from, std::string& outS
 	}
 }
 
+void ConfigurationManager::ClearValueArray(const std::string& containerName, const std::string& arrayName) {
+	ConfigurationItem* container = FindCI(containerName);
+	if (container)
+		container->ClearArrayChildren(arrayName);
+}
+
 int ConfigurationManager::GetValueArray(const std::string& containerName, const std::string& arrayName, std::vector<std::string>& outValues) {
 	int count = 0;
 
@@ -538,8 +576,23 @@ int ConfigurationManager::GetValueAttributeArray(const std::string& containerNam
 	return count;
 }
 
-void ConfigurationManager::ReplaceVars(std::string & inoutStr)
-{
+void ConfigurationManager::AppendValueArray(const std::string& containerName, const std::string& arrayName, const std::vector<std::map<std::string, std::string>> arrayEntries) {
+	ConfigurationItem* container = FindCI(containerName);
+	if (!container) {
+		container = new ConfigurationItem();
+		container->name = containerName;
+		container->path = containerName;
+		ciList.push_back(container);
+	}
+
+	for (auto &entry : arrayEntries) {
+		ConfigurationItem* arrayItem = container->AddChild(arrayName, "", true, true);
+		for (auto &kv : entry)
+			arrayItem->AddChild(kv.first, kv.second, false);
+	}
+}
+
+void ConfigurationManager::ReplaceVars(std::string & inoutStr) {
 	size_t first = inoutStr.find('%');
 	size_t second;
 	while (first != std::string::npos) {

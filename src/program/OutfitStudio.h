@@ -896,6 +896,10 @@ private:
 	wxString cmdProject;
 };
 
+struct ProjectHistoryEntry {
+	std::string fileName;
+	std::string projectName;
+};
 
 class OutfitProject;
 
@@ -914,6 +918,8 @@ public:
 	std::string contextBone;
 	std::vector<int> triParts;  // the partition index for each triangle, or -1 for none
 	std::vector<int> triSParts;  // the segment partition index for each triangle, or -1 for none
+
+	std::deque<ProjectHistoryEntry> projectHistory;
 
 	std::unordered_set<std::string> lastSelectedBones;
 	std::unordered_set<std::string> lastNormalizeBones;
@@ -1231,6 +1237,8 @@ private:
 	void OnClose(wxCloseEvent& event);
 
 	bool CopyStreamData(wxInputStream& inputStream, wxOutputStream& outputStream, wxFileOffset size);
+
+	void OnMenuItem(wxCommandEvent &event);
 	void OnPackProjects(wxCommandEvent &event);
 	void OnChooseTargetGame(wxCommandEvent& event);
 	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
@@ -1241,6 +1249,9 @@ private:
 	void OnSetSize(wxSizeEvent& event);
 
 	void UpdateTitle();
+
+	void AddProjectHistory(const std::string& fileName, const std::string& projectName);
+	void UpdateProjectHistory();
 
 	void OnNewProject(wxCommandEvent& event);
 	void OnLoadProject(wxCommandEvent &event);

@@ -39,6 +39,8 @@ using namespace nifly;
 wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CLOSE(OutfitStudioFrame::OnClose)
 	EVT_MENU(XRCID("fileExit"), OutfitStudioFrame::OnExit)
+
+	EVT_MENU(wxID_ANY, OutfitStudioFrame::OnMenuItem)
 	EVT_MENU(XRCID("packProjects"), OutfitStudioFrame::OnPackProjects)
 	EVT_MENU(XRCID("fileSettings"), OutfitStudioFrame::OnSettings)
 	EVT_MENU(XRCID("btnNewProject"), OutfitStudioFrame::OnNewProject)
@@ -951,6 +953,15 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	menuBar = xrc->LoadMenuBar(this, "menuBar");
 
+	std::vector<std::string> projectHistoryFiles;
+	OutfitStudioConfig.GetValueAttributeArray("ProjectHistory", "Project", "file", projectHistoryFiles);
+	std::vector<std::string> projectHistoryNames;
+	OutfitStudioConfig.GetValueAttributeArray("ProjectHistory", "Project", "name", projectHistoryNames);
+
+	if (projectHistoryFiles.size() == projectHistoryNames.size())
+		for (size_t i = 0; i < projectHistoryFiles.size(); i++)
+			AddProjectHistory(projectHistoryFiles[i], projectHistoryNames[i]);
+
 	toolBarH = (wxToolBar*)FindWindowByName("toolBarH");
 	toolBarV = (wxToolBar*)FindWindowByName("toolBarV");
 
@@ -1149,6 +1160,18 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	if (glView)
 		delete glView;
 
+	OutfitStudioConfig.ClearValueArray("ProjectHistory", "Project");
+
+	std::vector<std::map<std::string, std::string>> phArrayEntries;
+	for (auto &ph : projectHistory) {
+		std::map<std::string, std::string> attributeValues;
+		attributeValues["name"] = ph.projectName;
+		attributeValues["file"] = ph.fileName;
+		phArrayEntries.push_back(attributeValues);
+	}
+
+	OutfitStudioConfig.AppendValueArray("ProjectHistory", "Project", phArrayEntries);
+
 	int ret = OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
 	if (ret)
 		wxLogWarning("Failed to save configuration (%d)!", ret);
@@ -1187,6 +1210,22 @@ bool OutfitStudioFrame::CopyStreamData(wxInputStream& inputStream, wxOutputStrea
 	}
 
 	return true;
+}
+
+void OutfitStudioFrame::OnMenuItem(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id >= 1000 && id < 2000) {
+		// Load project history entry
+		if (projectHistory.size() > id - 1000) {
+			if (!CheckPendingChanges())
+				return;
+
+			auto projectHistoryEntry = projectHistory[id - 1000];
+			LoadProject(projectHistoryEntry.fileName, projectHistoryEntry.projectName);
+		}
+	}
+	else
+		event.Skip();
 }
 
 void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
@@ -2199,6 +2238,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	ShowSliderEffect(0);
 
 	UpdateTitle();
+	AddProjectHistory(fileName, outfit);
 
 	wxLogMessage("Project loaded.");
 	UpdateProgress(100, _("Finished"));
@@ -3061,6 +3101,48 @@ void OutfitStudioFrame::UpdateTitle() {
 	}
 	else
 		SetTitle("Outfit Studio");
+}
+
+void OutfitStudioFrame::AddProjectHistory(const std::string& fileName, const std::string& projectName) {
+	projectHistory.erase(
+		std::remove_if(
+			projectHistory.begin(),
+			projectHistory.end(),
+			[&fileName, &projectName](const ProjectHistoryEntry& rt) { return rt.fileName == fileName && rt.projectName == projectName; }
+		),
+		projectHistory.end()
+	);
+
+	ProjectHistoryEntry projectHistoryEntry{};
+	projectHistoryEntry.fileName = fileName;
+	projectHistoryEntry.projectName = projectName;
+
+	constexpr int MAX_PROJECT_HISTORY = 15;
+	if (projectHistory.size() == MAX_PROJECT_HISTORY)
+		projectHistory.pop_back();
+
+	projectHistory.push_front(projectHistoryEntry);
+	UpdateProjectHistory();
+}
+
+void OutfitStudioFrame::UpdateProjectHistory() {
+	wxMenuItem* menuItemRecentProjects = menuBar->FindItem(XRCID("menuRecentProjects"));
+	if (menuItemRecentProjects && menuItemRecentProjects->IsSubMenu()) {
+		wxMenu* menuRecentProjects = menuItemRecentProjects->GetSubMenu();
+		if (menuRecentProjects) {
+			auto menuItemList = menuRecentProjects->GetMenuItems();
+			for (auto menuItem : menuItemList)
+				menuRecentProjects->Delete(menuItem);
+
+			int itemId = 0;
+			for (const auto& projectHistoryEntry : projectHistory) {
+				menuRecentProjects->Append(1000 + itemId, wxString::FromUTF8(projectHistoryEntry.projectName), wxString::FromUTF8(projectHistoryEntry.fileName));
+				++itemId;
+			}
+
+			menuBar->Enable(XRCID("menuRecentProjects"), itemId > 0);
+		}
+	}
 }
 
 void OutfitStudioFrame::SetPendingChanges(bool pending) {

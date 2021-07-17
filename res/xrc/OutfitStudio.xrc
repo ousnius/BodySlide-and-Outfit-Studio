@@ -1788,6 +1788,10 @@
 				<label>Unload Project...\tCtrl+W</label>
 				<help>Unloads the project and creates an empty new one.</help>
 			</object>
+			<object class="wxMenu" name="menuRecentProjects">
+				<label>Recent Projects...</label>
+				<enabled>0</enabled>
+			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="fileLoadRef">
 				<label>Load Reference...</label>
