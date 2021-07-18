@@ -169,7 +169,7 @@ msgid "Solid Object"
 msgstr ""
 
 #: res/xrc/Actions.xrc:1187
-msgid "Copy Geometry"
+msgid "Merge Geometry"
 msgstr ""
 
 #: res/xrc/Actions.xrc:1196
@@ -1493,7 +1493,7 @@ msgid "Separate the current shape into two by using the mask."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1989 res/xrc/OutfitStudio.xrc:2364
-msgid "Copy Geometry..."
+msgid "Merge Geometry..."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1990 res/xrc/OutfitStudio.xrc:2365

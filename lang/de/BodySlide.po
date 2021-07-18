@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: Poedit 3.0\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -131,7 +131,7 @@ msgstr ""
 
 #: res/xrc/Actions.xrc:866
 msgid "Copy skin transform from reference"
-msgstr ""
+msgstr "Skin-Transformation der Referenz kopieren"
 
 #: res/xrc/Actions.xrc:876 res/xrc/ShapeProperties.xrc:730
 msgid "Recalculate geometry's coordinates so it doesn't move"
@@ -165,7 +165,7 @@ msgstr "Nicht quetschen"
 
 #: res/xrc/Actions.xrc:1041
 msgid "Solid Mode"
-msgstr ""
+msgstr "Festmodus"
 
 #: res/xrc/Actions.xrc:1064
 msgid "Axis"
@@ -189,8 +189,8 @@ msgid "Solid Object"
 msgstr "Festes Objekt"
 
 #: res/xrc/Actions.xrc:1187
-msgid "Copy Geometry"
-msgstr "Geometrie kopieren"
+msgid "Merge Geometry"
+msgstr "Geometrie zusammenführen"
 
 #: res/xrc/Actions.xrc:1196
 msgid ""
@@ -848,6 +848,8 @@ msgstr "Kante umkehren"
 #: res/xrc/OutfitStudio.xrc:116 res/xrc/OutfitStudio.xrc:2242
 msgid "Flips mesh edges so that the opposite pair of vertices is connected."
 msgstr ""
+"Kehrt Kanten um, sodass das gegenüberliegende Paar an Vertices verbunden "
+"wird."
 
 #: res/xrc/OutfitStudio.xrc:122 res/xrc/OutfitStudio.xrc:2246
 msgid "Split Edge"
@@ -904,20 +906,15 @@ msgid "Vertex Edit"
 msgstr "Vertex Bearbeitung"
 
 #: res/xrc/OutfitStudio.xrc:189
-#, fuzzy
-#| msgid ""
-#| "Shows vertex points and lets you mask/unmask them.\n"
-#| "Without any brush active, click on a vertex to unmask it.\n"
-#| "Hold down CTRL to mask it."
 msgid ""
 "Lets you select vertices to add to or remove from the mask.\n"
 "Click on a vertex to select/unmask it.\n"
 "Hold down CTRL to unselect/mask it."
 msgstr ""
-"Zeigt Vertexpunkte und ermöglicht es, diese zur Maske hinzuzufügen oder zu "
-"entfernen.\n"
-"Ohne einen aktiven Pinsel auf einen Vertex klicken, um ihn zu demaskieren.\n"
-"STRG gedrückt halten, um ihn zu maskieren."
+"Hier können Sie Vertices auswählen, die der Maske hinzugefügt oder daraus "
+"entfernt werden sollen.\n"
+"Klicken Sie auf einen Vertex, um ihn auszuwählen/zu demaskieren.\n"
+"Halten Sie die STRG gedrückt zum maskieren."
 
 #: res/xrc/OutfitStudio.xrc:196
 msgid "X Mirror"
@@ -1624,8 +1621,8 @@ msgid "Separate the current shape into two by using the mask."
 msgstr "Teilt das ausgewählte Modell mithilfe der Maske in zwei auf."
 
 #: res/xrc/OutfitStudio.xrc:1989 res/xrc/OutfitStudio.xrc:2364
-msgid "Copy Geometry..."
-msgstr "Geometrie kopieren..."
+msgid "Merge Geometry..."
+msgstr "Geometrie zusammenführen..."
 
 #: res/xrc/OutfitStudio.xrc:1990 res/xrc/OutfitStudio.xrc:2365
 msgid "Copies vertices and triangles from one shape to another."
@@ -2524,14 +2521,14 @@ msgstr "Ausgabe Ordner"
 
 #: res/xrc/Settings.xrc:117
 msgid "Select the output path..."
-msgstr "Wählen Sie den Ausgabe Ordner aus..."
+msgstr "Wählen Sie den Ausgabeordner aus..."
 
 #: res/xrc/Settings.xrc:119
 msgid ""
 "Data path to build files to. If empty, Game Data Path will be used instead."
 msgstr ""
-"Verzeichnis, in dem Ausgabe Dateien erstellt werden sollen. Falls leer, wird "
-"stattdessen der Data Ordner verwendet."
+"Verzeichnis, in dem Ausgabedateien erstellt werden sollen. Falls leer, wird "
+"stattdessen der Data-Ordner verwendet."
 
 #: res/xrc/Settings.xrc:136
 msgid "Project Path"
@@ -2539,13 +2536,15 @@ msgstr "Projekt-Pfad"
 
 #: res/xrc/Settings.xrc:146
 msgid "Select the project path..."
-msgstr "Wählen Sie den Projekte Ordner aus..."
+msgstr "Wählen Sie den Projektordner aus..."
 
 #: res/xrc/Settings.xrc:148
 msgid ""
 "Project path where files related to BodySlide are loaded from. If empty, "
 "executable directory will be used instead."
 msgstr ""
+"Projektverzeichnis, aus dem BodySlide-Dateien geladen werden sollen. Falls "
+"leer, wird stattdessen das Programmverzeichnis verwendet."
 
 #: res/xrc/Settings.xrc:165
 msgid "General"
@@ -2651,6 +2650,9 @@ msgid ""
 "You can only choose one game at a time, but it is possible to change the "
 "selection in the settings."
 msgstr ""
+"Bitte wählen Sie den Data-Ordner und Ihr Spiel.\n"
+"Es kann nur ein Spiel gleichzeitig aktiv sein, aber es ist in den "
+"Einstellungen möglich die Auswahl abzuändern."
 
 #: res/xrc/Setup.xrc:44 res/xrc/Setup.xrc:73 res/xrc/Setup.xrc:102
 #: res/xrc/Setup.xrc:131 res/xrc/Setup.xrc:160 res/xrc/Setup.xrc:189
@@ -3645,6 +3647,11 @@ msgid ""
 "Vertices (current/max): %d/%zu\n"
 "Triangles (current/max): %d/%zu"
 msgstr ""
+"Das Vertex- oder Triangle Limit für '%s' wurde überschritten.\n"
+"Die übrigen Daten wurden entfernt.\n"
+"\n"
+"Vertices (current/max): %d/%zu\n"
+"Triangles (current/max): %d/%zu"
 
 #: src/program/OutfitProject.cpp:3743
 msgid ""
@@ -4243,6 +4250,8 @@ msgstr "Sichtfeld: %d"
 #: src/program/OutfitStudio.cpp:5966
 msgid "Your changes were not applied yet. Do you want to apply or reset them?"
 msgstr ""
+"Ihre Änderungen wurden noch nicht angewandt. Wollen Sie diese anwenden oder "
+"zurücksetzen?"
 
 #: src/program/OutfitStudio.cpp:5966
 msgid "Pending Changes"
@@ -4465,45 +4474,57 @@ msgstr "Fehler:"
 
 #: src/program/OutfitStudio.cpp:8385
 msgid "Target must be different from source."
-msgstr ""
+msgstr "Ziel muss sich von der Quelle unterscheiden."
 
 #: src/program/OutfitStudio.cpp:8387
 msgid ""
 "Partitions do not match. Make sure the amount of partitions and their slots "
 "match up."
 msgstr ""
+"Partitionen stimmen nicht überein. Bitte stellen Sie sicher, dass die Anzahl "
+"und Slots der Partitionen übereinstimmen."
 
 #: src/program/OutfitStudio.cpp:8389
 msgid ""
 "Segments do not match. Make sure the amount of segments, sub segments and "
 "their info as well as the segmentation file match."
 msgstr ""
+"Segmente stimmen nicht überein. Bitte stellen Sie sicher, dass die Anzahl "
+"und Informationen der Segmente und Untersegmente übereinstimmen."
 
 #: src/program/OutfitStudio.cpp:8391
 msgid "Resulting shape would have too many vertices."
-msgstr ""
+msgstr "Entstehendes Modell hätte zu viele Vertices."
 
 #: src/program/OutfitStudio.cpp:8393
 msgid "Resulting shape would have too many triangles."
-msgstr ""
+msgstr "Entstehendes Modell hätte zu viele Triangles."
 
 #: src/program/OutfitStudio.cpp:8395
 msgid ""
 "Shaders do not match. Make sure both shapes either have or don't have a "
 "shader and their shader type matches."
 msgstr ""
+"Shader stimmen nicht überein. Bitte stellen Sie sicher, dass beide Modelle "
+"entweder einen Shader haben oder nicht haben und deren Shadertyp "
+"übereinstimmt."
 
 #: src/program/OutfitStudio.cpp:8397
 msgid ""
 "Base texture doesn't match. Make sure both shapes have the same base/diffuse "
 "texture path."
 msgstr ""
+"Basistextur stimmt nicht überein. Bitte stellen Sie sicher, dass beide "
+"Modelle den selben Basis-/Diffuse-Texturpfad besitzen."
 
 #: src/program/OutfitStudio.cpp:8399
 msgid ""
 "Alpha property mismatch. Make sure both shapes either have or don't have an "
 "alpha property and their flags + threshold match."
 msgstr ""
+"Alpha-Property stimmt nicht überein. Bitte stellen Sie sicher, dass beide "
+"Modelle entweder eine Alpha-Property haben oder nicht haben und deren Flags "
+"+ Threshold übereinstimmt."
 
 #: src/program/OutfitStudio.cpp:8485
 msgid ""
@@ -4635,6 +4656,8 @@ msgid ""
 "The edge picked has multiple triangles of the same orientation.  Correct the "
 "orientations before splitting."
 msgstr ""
+"Die ausgewählte Kante hat mehrere Triangles mit der selben Ausrichtung. "
+"Bitte korrigieren Sie die Ausrichtung vor der Aufteilung."
 
 #: src/program/OutfitStudio.cpp:11902 src/program/OutfitStudio.cpp:11903
 msgid "Loading slider file..."
@@ -4663,3 +4686,6 @@ msgstr "Bitte wählen Sie ein Modell für die Kopie aus"
 #: src/program/ShapeProperties.cpp:497
 msgid "Choose shape"
 msgstr "Modell auswählen"
+
+#~ msgid "Copy Geometry"
+#~ msgstr "Geometrie kopieren"

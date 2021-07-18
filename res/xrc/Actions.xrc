@@ -1184,7 +1184,7 @@
 	<object class="wxDialog" name="dlgCopyGeometry">
 		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
 		<size>414,169</size>
-		<title>Copy Geometry</title>
+		<title>Merge Geometry</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
