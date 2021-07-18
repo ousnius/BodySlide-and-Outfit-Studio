@@ -894,6 +894,7 @@ struct ProjectHistoryEntry {
 };
 
 class OutfitProject;
+class wxBrushSettingsPopup;
 
 class OutfitStudioFrame : public wxFrame {
 public:
@@ -956,6 +957,7 @@ public:
 	wxStateButton* segmentTabButton = nullptr;
 	wxStateButton* partitionTabButton = nullptr;
 	wxStateButton* lightsTabButton = nullptr;
+	wxBrushSettingsPopup* brushSettingsPopup = nullptr;
 	wxCollapsiblePane* masksPane = nullptr;
 	wxCollapsiblePane* posePane = nullptr;
 
@@ -1055,47 +1057,8 @@ public:
 
 	void SelectTool(ToolID tool);
 
-	void ToggleBrushPane(bool forceCollapse = false) {
-		wxCollapsiblePane* brushPane = (wxCollapsiblePane*)FindWindowByName("brushPane");
-		if (!brushPane)
-			return;
-
-		brushPane->Collapse(!brushPane->IsCollapsed() || forceCollapse);
-
-		wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
-		if (leftPanel)
-			leftPanel->Layout();
-	}
-
-	void UpdateBrushPane() {
-		TweakBrush* brush = glView->GetActiveBrush();
-		if (!brush)
-			return;
-
-		wxCollapsiblePane* parent = (wxCollapsiblePane*)FindWindowByName("brushPane");
-		if (!parent)
-			return;
-
-		XRCCTRL(*parent, "brushSize", wxSlider)->SetValue(glView->GetBrushSize() * 1000.0f);
-		wxStaticText* valSize = (wxStaticText*)XRCCTRL(*parent, "valSize", wxStaticText);
-		wxString valSizeStr = wxString::Format("%0.3f", glView->GetBrushSize());
-		valSize->SetLabel(valSizeStr);
-
-		XRCCTRL(*parent, "brushStr", wxSlider)->SetValue(brush->getStrength() * 1000.0f);
-		wxStaticText* valStr = (wxStaticText*)XRCCTRL(*parent, "valStr", wxStaticText);
-		wxString valStrengthStr = wxString::Format("%0.3f", brush->getStrength());
-		valStr->SetLabel(valStrengthStr);
-
-		XRCCTRL(*parent, "brushFocus", wxSlider)->SetValue(brush->getFocus() * 1000.0f);
-		wxStaticText* valFocus = (wxStaticText*)XRCCTRL(*parent, "valFocus", wxStaticText);
-		wxString valFocusStr = wxString::Format("%0.3f", brush->getFocus());
-		valFocus->SetLabel(valFocusStr);
-
-		XRCCTRL(*parent, "brushSpace", wxSlider)->SetValue(brush->getSpacing() * 1000.0f);
-		wxStaticText* valSpace = (wxStaticText*)XRCCTRL(*parent, "valSpace", wxStaticText);
-		wxString valSpacingStr = wxString::Format("%0.3f", brush->getSpacing());
-		valSpace->SetLabel(valSpacingStr);
-	}
+	void PopupBrushSettings();
+	void UpdateBrushSettings();
 
 	void CheckBrushBounds() {
 		TweakBrush* brush = glView->GetActiveBrush();
@@ -1284,8 +1247,6 @@ private:
 	void OnSaveSliderSet(wxCommandEvent &event);
 	void OnSaveSliderSetAs(wxCommandEvent &event);
 
-	void OnBrushPane(wxCollapsiblePaneEvent &event);
-
 	void OnSlider(wxScrollEvent& event);
 	void OnClickSliderButton(wxCommandEvent &event);
 	void OnReadoutChange(wxCommandEvent& event);
@@ -1356,6 +1317,7 @@ private:
 	void OnShowNodes(wxCommandEvent& event);
 	void OnShowBones(wxCommandEvent& event);
 	void OnShowFloor(wxCommandEvent& event);
+	void OnBrushSettings(wxCommandEvent& event);
 	void OnFieldOfViewSlider(wxCommandEvent& event);
 	void OnUpdateLights(wxCommandEvent& event);
 	void OnResetLights(wxCommandEvent& event);
@@ -1429,8 +1391,6 @@ private:
 
 	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);
 	void OnNPWizChangeSetNameChoice(wxCommandEvent& event);
-
-	void OnBrushSettingsSlider(wxScrollEvent& event);
 
 	void OnXMirror(wxCommandEvent& event) {
 		bool enabled = event.IsChecked();
@@ -1511,7 +1471,7 @@ private:
 				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
 
 			CheckBrushBounds();
-			UpdateBrushPane();
+			UpdateBrushSettings();
 		}
 	}
 	void OnDecBrush(wxCommandEvent& WXUNUSED(event)) {
@@ -1521,7 +1481,7 @@ private:
 				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
 
 			CheckBrushBounds();
-			UpdateBrushPane();
+			UpdateBrushSettings();
 		}
 	}
 	void OnIncStr(wxCommandEvent& WXUNUSED(event)) {
@@ -1531,7 +1491,7 @@ private:
 				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
 
 			CheckBrushBounds();
-			UpdateBrushPane();
+			UpdateBrushSettings();
 		}
 	}
 	void OnDecStr(wxCommandEvent& WXUNUSED(event)) {
@@ -1541,7 +1501,7 @@ private:
 				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
 
 			CheckBrushBounds();
-			UpdateBrushPane();
+			UpdateBrushSettings();
 		}
 	}
 

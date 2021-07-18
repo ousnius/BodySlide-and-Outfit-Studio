@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PresetSaveDialog.h"
 #include "GroupManager.h"
 #include "EditUV.h"
+#include "../ui/wxBrushSettingsPopup.h"
 #include "../components/SliderPresets.h"
 #include "../components/SliderGroup.h"
 #include "../files/TriFile.h"
@@ -51,12 +52,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("fileSave"), OutfitStudioFrame::OnSaveSliderSet)
 	EVT_MENU(XRCID("fileSaveAs"), OutfitStudioFrame::OnSaveSliderSetAs)
 	EVT_MENU(XRCID("fileUnload"), OutfitStudioFrame::OnUnloadProject)
-
-	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("brushPane"), OutfitStudioFrame::OnBrushPane)
-	EVT_COMMAND_SCROLL(XRCID("brushSize"), OutfitStudioFrame::OnBrushSettingsSlider)
-	EVT_COMMAND_SCROLL(XRCID("brushStr"), OutfitStudioFrame::OnBrushSettingsSlider)
-	EVT_COMMAND_SCROLL(XRCID("brushFocus"), OutfitStudioFrame::OnBrushSettingsSlider)
-	EVT_COMMAND_SCROLL(XRCID("brushSpace"), OutfitStudioFrame::OnBrushSettingsSlider)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("masksPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_CHOICE(XRCID("cMaskName"), OutfitStudioFrame::OnSelectMask)
@@ -966,7 +961,11 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	toolBarV = (wxToolBar*)FindWindowByName("toolBarV");
 
 	if (toolBarH) {
-		wxSlider* fovSlider = (wxSlider*)toolBarH->FindWindowByName("fovSlider");
+		auto brushSettings = reinterpret_cast<wxButton*>(toolBarH->FindWindowByName("brushSettings"));
+		if (brushSettings)
+			brushSettings->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnBrushSettings, this);
+
+		auto fovSlider = reinterpret_cast<wxSlider*>(toolBarH->FindWindowByName("fovSlider"));
 		if (fovSlider)
 			fovSlider->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnFieldOfViewSlider, this);
 	}
@@ -2918,8 +2917,6 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		menuBar->Enable(XRCID("btnXMirror"), false);
 		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
 		toolBarV->EnableTool(XRCID("btnXMirror"), false);
-
-		ToggleBrushPane(true);
 		return;
 	}
 
@@ -3010,7 +3007,6 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	else if (tool == ToolID::CollapseVertex) {
 		menuBar->Check(XRCID("btnCollapseVertex"), true);
 		toolBarH->ToggleTool(XRCID("btnCollapseVertex"), true);
-		ToggleBrushPane(true);
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
 		glView->SetCursorType(GLSurface::VertexCursor);
@@ -3019,7 +3015,6 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	else if (tool == ToolID::FlipEdge) {
 		menuBar->Check(XRCID("btnFlipEdgeTool"), true);
 		toolBarH->ToggleTool(XRCID("btnFlipEdgeTool"), true);
-		ToggleBrushPane(true);
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
 		glView->SetCursorType(GLSurface::EdgeCursor);
@@ -3028,7 +3023,6 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	else if (tool == ToolID::SplitEdge) {
 		menuBar->Check(XRCID("btnSplitEdgeTool"), true);
 		toolBarH->ToggleTool(XRCID("btnSplitEdgeTool"), true);
-		ToggleBrushPane(true);
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
 		glView->SetCursorType(GLSurface::EdgeCursor);
@@ -3047,7 +3041,40 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	glView->SetBrushSize(glView->GetBrushSize());
 
 	CheckBrushBounds();
-	UpdateBrushPane();
+	UpdateBrushSettings();
+}
+
+void OutfitStudioFrame::PopupBrushSettings() {
+	if (brushSettingsPopup) {
+		brushSettingsPopup->Destroy();
+		brushSettingsPopup = nullptr;
+	}
+
+	if (!glView->GetBrushMode())
+		return;
+
+	wxPoint mousePos = wxGetMousePosition();
+	wxSize popupSize(10, 10);
+
+	brushSettingsPopup = new wxBrushSettingsPopup(this);
+	brushSettingsPopup->Position(mousePos, popupSize);
+	brushSettingsPopup->Popup();
+
+	UpdateBrushSettings();
+}
+
+void OutfitStudioFrame::UpdateBrushSettings() {
+	if (!brushSettingsPopup)
+		return;
+
+	TweakBrush* brush = glView->GetActiveBrush();
+	if (!brush)
+		return;
+
+	brushSettingsPopup->SetBrushSize(glView->GetBrushSize());
+	brushSettingsPopup->SetBrushStrength(brush->getStrength());
+	brushSettingsPopup->SetBrushFocus(brush->getFocus());
+	brushSettingsPopup->SetBrushSpacing(brush->getSpacing());
 }
 
 bool OutfitStudioFrame::CheckEditableState() {
@@ -3950,15 +3977,6 @@ void OutfitStudioFrame::OnSaveSliderSet(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	SaveProjectAs();
-}
-
-void OutfitStudioFrame::OnBrushPane(wxCollapsiblePaneEvent& event) {
-	if (!event.GetCollapsed())
-		if (!glView->GetBrushMode())
-			event.SetCollapsed(true);
-
-	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
-	leftPanel->Layout();
 }
 
 void OutfitStudioFrame::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
@@ -5966,8 +5984,12 @@ void OutfitStudioFrame::OnShowFloor(wxCommandEvent& event) {
 	glView->ShowFloor(enabled);
 }
 
+void OutfitStudioFrame::OnBrushSettings(wxCommandEvent& WXUNUSED(event)) {
+	PopupBrushSettings();
+}
+
 void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& event) {
-	wxSlider* fovSlider = (wxSlider*)event.GetEventObject();
+	auto fovSlider = reinterpret_cast<wxSlider*>(event.GetEventObject());
 	int fieldOfView = fovSlider->GetValue();
 
 	wxStaticText* fovLabel = (wxStaticText*)toolBarH->FindWindowByName("fovLabel");
@@ -6602,7 +6624,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	}
 
 	CheckBrushBounds();
-	UpdateBrushPane();
+	UpdateBrushSettings();
 
 	wxPanel* topSplitPanel = (wxPanel*)FindWindowByName("topSplitPanel");
 	wxPanel* bottomSplitPanel = (wxPanel*)FindWindowByName("bottomSplitPanel");
@@ -9511,41 +9533,6 @@ void OutfitStudioFrame::OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event) {
 	XRCCTRL((*win), "npTexFile", wxRadioButton)->SetValue(true);
 }
 
-void OutfitStudioFrame::OnBrushSettingsSlider(wxScrollEvent& WXUNUSED(event)) {
-	TweakBrush* brush = glView->GetActiveBrush();
-	wxCollapsiblePane* parent = (wxCollapsiblePane*)FindWindowByName("brushPane");
-	if (!parent)
-		return;
-
-	wxStaticText* valSize = (wxStaticText*)XRCCTRL(*parent, "valSize", wxStaticText);
-	wxStaticText* valStrength = (wxStaticText*)XRCCTRL(*parent, "valStr", wxStaticText);
-	wxStaticText* valFocus = (wxStaticText*)XRCCTRL(*parent, "valFocus", wxStaticText);
-	wxStaticText* valSpacing = (wxStaticText*)XRCCTRL(*parent, "valSpace", wxStaticText);
-
-	float slideSize = XRCCTRL(*parent, "brushSize", wxSlider)->GetValue() / 1000.0f;
-	float slideStr = XRCCTRL(*parent, "brushStr", wxSlider)->GetValue() / 1000.0f;
-	float slideFocus = XRCCTRL(*parent, "brushFocus", wxSlider)->GetValue() / 1000.0f;
-	float slideSpace = XRCCTRL(*parent, "brushSpace", wxSlider)->GetValue() / 1000.0f;
-
-	wxString valSizeStr = wxString::Format("%0.3f", slideSize);
-	wxString valStrengthStr = wxString::Format("%0.3f", slideStr);
-	wxString valFocusStr = wxString::Format("%0.3f", slideFocus);
-	wxString valSpacingStr = wxString::Format("%0.3f", slideSpace);
-
-	valSize->SetLabel(valSizeStr);
-	valStrength->SetLabel(valStrengthStr);
-	valFocus->SetLabel(valFocusStr);
-	valSpacing->SetLabel(valSpacingStr);
-
-	if (brush) {
-		glView->SetBrushSize(slideSize);
-		brush->setStrength(slideStr);
-		brush->setFocus(slideFocus);
-		brush->setSpacing(slideSpace);
-		CheckBrushBounds();
-	}
-}
-
 void OutfitStudioFrame::OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
 	for (auto &s : selectedItems)
 		glView->RecalcNormals(s->GetShape()->name.get());
@@ -10330,7 +10317,7 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				}
 			}
 			else
-				os->ToggleBrushPane();
+				os->PopupBrushSettings();
 		}
 	}
 
@@ -11824,7 +11811,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 				IncBrush();
 
 			os->CheckBrushBounds();
-			os->UpdateBrushPane();
+			os->UpdateBrushSettings();
 			gls.UpdateCursor(p.x, p.y, bGlobalBrushCollision);
 			gls.RenderOneFrame();
 		}
