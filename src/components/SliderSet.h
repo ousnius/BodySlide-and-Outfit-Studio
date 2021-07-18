@@ -111,18 +111,11 @@ public:
 		return true;
 	}
 
-	void SetSmoothSeamNormals(const std::string& shapeName, const bool smooth) {
+	void SetSmoothSeamNormals(const std::string& shapeName, bool smooth) {
 		AddMissingTarget(shapeName);
 
 		auto& shape = shapeAttributes[shapeName];
 		shape.smoothSeamNormals = smooth;
-	}
-
-	void ToggleSmoothSeamNormals(const std::string& shapeName) {
-		AddMissingTarget(shapeName);
-
-		auto& shape = shapeAttributes[shapeName];
-		shape.smoothSeamNormals = !shape.smoothSeamNormals;
 	}
 
 	bool GetLockNormals(const std::string& shapeName) {
@@ -133,18 +126,11 @@ public:
 		return false;
 	}
 
-	void SetLockNormals(const std::string& shapeName, const bool lock) {
+	void SetLockNormals(const std::string& shapeName, bool lock) {
 		AddMissingTarget(shapeName);
 
 		auto& shape = shapeAttributes[shapeName];
 		shape.lockNormals = lock;
-	}
-
-	void ToggleLockNormals(const std::string& shapeName) {
-		AddMissingTarget(shapeName);
-
-		auto& shape = shapeAttributes[shapeName];
-		shape.lockNormals = !shape.lockNormals;
 	}
 
 	// Gets the target names in the targetdatafolders map - these are the shapes with non-local or referenced data.

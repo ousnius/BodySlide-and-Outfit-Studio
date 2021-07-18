@@ -362,24 +362,16 @@ public:
 			m->rendermode = RenderMode::Normal;
 	}
 
-	void ToggleNormalSeamSmoothMode() {
+	void SetNormalSeamSmoothMode(bool enable) {
 		for (auto &m : gls.GetActiveMeshes()) {
-			if (m->smoothSeamNormals == true)
-				m->smoothSeamNormals = false;
-			else
-				m->smoothSeamNormals = true;
-
+			m->smoothSeamNormals = enable;
 			m->SmoothNormals();
 		}
 	}
 
-	void ToggleLockNormalsMode() {
-		for (auto &m : gls.GetActiveMeshes()) {
-			if (m->lockNormals == true)
-				m->lockNormals = false;
-			else
-				m->lockNormals = true;
-		}
+	void SetLockNormalsMode(bool enable) {
+		for (auto &m : gls.GetActiveMeshes())
+			m->lockNormals = enable;
 	}
 
 	void RecalcNormals(const std::string& shapeName) {

@@ -2454,6 +2454,9 @@ void OutfitStudioFrame::ShowSliderEffect(const std::string& sliderName, bool sho
 }
 
 void OutfitStudioFrame::UpdateActiveShape() {
+	bool smoothSeamNormals = true;
+	bool lockNormals = false;
+
 	if (!activeItem) {
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool(false);
@@ -2464,33 +2467,31 @@ void OutfitStudioFrame::UpdateActiveShape() {
 		CreatePartitionTree();
 		outfitBones->UnselectAll();
 		lastSelectedBones.clear();
+
+		menuBar->Enable(XRCID("btnSmoothSeams"), false);
+		menuBar->Enable(XRCID("btnLockNormals"), false);
 	}
 	else {
 		mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 		if (m) {
-			if (m->smoothSeamNormals)
-				menuBar->Check(XRCID("btnSmoothSeams"), true);
-			else
-				menuBar->Check(XRCID("btnSmoothSeams"), false);
-
-			if (m->lockNormals)
-				menuBar->Check(XRCID("btnLockNormals"), true);
-			else
-				menuBar->Check(XRCID("btnLockNormals"), false);
+			smoothSeamNormals = m->smoothSeamNormals;
+			lockNormals = m->lockNormals;
 
 			if (glView->GetTransformMode())
 				glView->ShowTransformTool();
 			if (glView->GetVertexEdit())
 				glView->ShowVertexEdit();
 		}
-		else {
-			menuBar->Check(XRCID("btnSmoothSeams"), true);
-			menuBar->Check(XRCID("btnLockNormals"), false);
-		}
+
+		menuBar->Enable(XRCID("btnSmoothSeams"), m != nullptr);
+		menuBar->Enable(XRCID("btnLockNormals"), m != nullptr);
 
 		CreateSegmentTree(activeItem->GetShape());
 		CreatePartitionTree(activeItem->GetShape());
 	}
+
+	menuBar->Check(XRCID("btnSmoothSeams"), smoothSeamNormals);
+	menuBar->Check(XRCID("btnLockNormals"), lockNormals);
 
 	if (glView->rotationCenterMode == RotationCenterMode::MeshCenter)
 		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
@@ -9546,24 +9547,28 @@ void OutfitStudioFrame::OnBrushSettingsSlider(wxScrollEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
-	glView->RecalcNormals(activeItem->GetShape()->name.get());
-	glView->Render();
-}
-
-void OutfitStudioFrame::OnSmoothNormalSeams(wxCommandEvent& WXUNUSED(event)) {
-	glView->ToggleNormalSeamSmoothMode();
-
 	for (auto &s : selectedItems)
-		project->activeSet.ToggleSmoothSeamNormals(s->GetShape()->name.get());
+		glView->RecalcNormals(s->GetShape()->name.get());
 
 	glView->Render();
 }
 
-void OutfitStudioFrame::OnLockNormals(wxCommandEvent& WXUNUSED(event)) {
-	glView->ToggleLockNormalsMode();
+void OutfitStudioFrame::OnSmoothNormalSeams(wxCommandEvent& event) {
+	bool enable = event.IsChecked();
+	glView->SetNormalSeamSmoothMode(enable);
 
 	for (auto &s : selectedItems)
-		project->activeSet.ToggleLockNormals(s->GetShape()->name.get());
+		project->activeSet.SetSmoothSeamNormals(s->GetShape()->name.get(), enable);
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnLockNormals(wxCommandEvent& event) {
+	bool enable = event.IsChecked();
+	glView->SetLockNormalsMode(enable);
+
+	for (auto &s : selectedItems)
+		project->activeSet.SetLockNormals(s->GetShape()->name.get(), enable);
 }
 
 void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
