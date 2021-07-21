@@ -5,13 +5,6 @@ See the included LICENSE file
 
 #include "wxBrushSettingsPopup.h"
 
-/*
-EVT_COMMAND_SCROLL(XRCID("brushSize"), OutfitStudioFrame::OnBrushSettingsSlider)
-EVT_COMMAND_SCROLL(XRCID("brushStr"), OutfitStudioFrame::OnBrushSettingsSlider)
-EVT_COMMAND_SCROLL(XRCID("brushFocus"), OutfitStudioFrame::OnBrushSettingsSlider)
-EVT_COMMAND_SCROLL(XRCID("brushSpace"), OutfitStudioFrame::OnBrushSettingsSlider)
-*/
-
 wxBrushSettingsPopup::wxBrushSettingsPopup(OutfitStudioFrame* parent)
 	: wxPopupTransientWindow(parent, wxBORDER_SIMPLE | wxPU_CONTAINS_CONTROLS) {
 	os = parent;
@@ -25,6 +18,7 @@ wxBrushSettingsPopup::wxBrushSettingsPopup(OutfitStudioFrame* parent)
 	flexGridSizer->Add(lbBrushSize, 0, wxALL, 5);
 
 	brushSize = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, wxSize(150, -1), wxSL_BOTH | wxSL_HORIZONTAL);
+	brushSize->SetToolTip(_("Shortcut: 'S' + mouse wheel"));
 	brushSize->Bind(wxEVT_SLIDER, &wxBrushSettingsPopup::OnBrushSettingsSlider, this);
 	flexGridSizer->Add(brushSize, 1, wxALL, 5);
 

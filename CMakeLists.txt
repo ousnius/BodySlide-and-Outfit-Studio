@@ -74,6 +74,7 @@ set(OSsources
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
+	src/ui/wxBrushSettingsPopup.cpp
 	src/program/EditUV.cpp
 	src/program/FBXImportDialog.cpp
 	src/program/OutfitProject.cpp
