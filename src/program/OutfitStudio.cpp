@@ -1955,6 +1955,7 @@ bool OutfitStudioFrame::SaveProject() {
 		return false;
 	}
 
+	SetPendingChanges(false);
 	EndProgress();
 	return true;
 }
@@ -2115,7 +2116,9 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		strGamePath, strGameFile, genWeights, copyRef);
 
 	if (error.empty()) {
+		SetPendingChanges(false);
 		menuBar->Enable(XRCID("fileSave"), true);
+
 		RenameProject(strOutfitName.ToUTF8().data());
 		EndProgress();
 	}
@@ -3218,14 +3221,10 @@ bool OutfitStudioFrame::CheckPendingChanges() {
 
 		int res = dlg.ShowModal();
 		if (res == wxID_YES) {
-			if (SaveProject())
-				SetPendingChanges(false);
-			else
+			if (!SaveProject())
 				return false;
 		}
-		else if (res == wxID_NO)
-			SetPendingChanges(false);
-		else
+		else if (res == wxID_CANCEL)
 			return false;
 	}
 
