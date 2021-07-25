@@ -113,19 +113,11 @@ public:
 
 		auto it = std::find(meshes.begin(), meshes.end(), m);
 		if (it != meshes.end()) {
-			int meshID = std::distance(meshes.begin(), it);
-
 			activeMeshes.erase(std::remove(activeMeshes.begin(), activeMeshes.end(), m), activeMeshes.end());
+			meshes.erase(it);
 
 			SetContext();
-
 			delete m;
-			meshes.erase(meshes.begin() + meshID);
-
-			// Renumber meshes after the deleted one
-			for (size_t i = meshID; i < meshes.size(); i++) {
-				m = meshes[i];
-			}
 		}
 	}
 

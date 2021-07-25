@@ -680,6 +680,11 @@ public:
 		ZPivotMesh = nullptr;
 		PivotCenterMesh = nullptr;
 
+		RotationCenterMesh = nullptr;
+		RotationCenterMeshRingX = nullptr;
+		RotationCenterMeshRingY = nullptr;
+		RotationCenterMeshRingZ = nullptr;
+
 		nodesPoints.clear();
 		nodesLines.clear();
 		bonesPoints.clear();
