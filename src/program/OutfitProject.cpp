@@ -66,7 +66,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	outSet.SetOutputFile(gameFile);
 	outSet.SetGenWeights(genWeights);
 
-	const wxString sliderSetsStr = "SliderSets";
+	const wxString sliderSetsStr = "SliderSets\\";
 
 	wxFileName ssFileName(sliderSetFile);
 	int sliderSetsStrIndex = ssFileName.GetDirs().Index(sliderSetsStr);
