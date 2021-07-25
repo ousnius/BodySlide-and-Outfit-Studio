@@ -435,7 +435,7 @@
 													</object>
 													<object class="sizeritem">
 														<option>0</option>
-														<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+														<flag>wxLEFT|wxRIGHT</flag>
 														<border>5</border>
 														<object class="wxStaticText" name="totalBoneCountLabel">
 															<fg>#ffffff</fg>
@@ -445,7 +445,7 @@
 													</object>
 													<object class="sizeritem">
 														<option>0</option>
-														<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+														<flag>wxLEFT|wxRIGHT</flag>
 														<border>5</border>
 														<object class="wxStaticText" name="selectedBoneCountLabel">
 															<fg>#ffffff</fg>
