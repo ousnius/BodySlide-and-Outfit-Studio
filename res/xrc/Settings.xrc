@@ -207,6 +207,16 @@
 									<checked>0</checked>
 								</object>
 							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbBrushSettingsNearCursor">
+									<tooltip>Enables/disables opening the brush settings near the mouse cursor when hitting the 'space' key.</tooltip>
+									<label>Brush Settings Near Cursor</label>
+									<checked>0</checked>
+								</object>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">

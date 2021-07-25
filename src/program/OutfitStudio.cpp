@@ -566,6 +566,7 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultBoolValue("UseSystemLanguage", false);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
+	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", false);
 	Config.SetDefaultValue("Lights/Ambient", 20);
 	Config.SetDefaultValue("Lights/Frontal", 20);
 	Config.SetDefaultValue("Lights/Directional0", 60);
@@ -1785,13 +1786,16 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		dpProjectPath->SetPath(projectPath);
 
 		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
-		cbBBOverrideWarn->SetValue(Config["WarnBatchBuildOverride"] != "false");
+		cbBBOverrideWarn->SetValue(Config.GetBoolValue("WarnBatchBuildOverride"));
 
 		wxCheckBox* cbBSATextures = XRCCTRL(*settings, "cbBSATextures", wxCheckBox);
-		cbBSATextures->SetValue(Config["BSATextureScan"] != "false");
+		cbBSATextures->SetValue(Config.GetBoolValue("BSATextureScan"));
 
 		wxCheckBox* cbLeftMousePan = XRCCTRL(*settings, "cbLeftMousePan", wxCheckBox);
-		cbLeftMousePan->SetValue(Config["Input/LeftMousePan"] != "false");
+		cbLeftMousePan->SetValue(Config.GetBoolValue("Input/LeftMousePan"));
+
+		wxCheckBox* cbBrushSettingsNearCursor = XRCCTRL(*settings, "cbBrushSettingsNearCursor", wxCheckBox);
+		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
 
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
 		for (int i = 0; i < std::extent<decltype(SupportedLangs)>::value; i++)
@@ -1857,6 +1861,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetBoolValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
+			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
 
 			int oldLang = Config.GetIntValue("Language");
 			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
@@ -3044,37 +3049,64 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	UpdateBrushSettings();
 }
 
-void OutfitStudioFrame::PopupBrushSettings() {
+void OutfitStudioFrame::CloseBrushSettings() {
 	if (brushSettingsPopup) {
 		brushSettingsPopup->Destroy();
 		brushSettingsPopup = nullptr;
 	}
 
+	if (brushSettingsPopupTransient) {
+		brushSettingsPopupTransient->Destroy();
+		brushSettingsPopupTransient = nullptr;
+	}
+}
+
+void OutfitStudioFrame::PopupBrushSettings(bool transient) {
+	CloseBrushSettings();
+
 	if (!glView->GetBrushMode())
 		return;
 
-	wxPoint mousePos = wxGetMousePosition();
-	wxSize popupSize(10, 10);
+	if (transient) {
+		wxPoint mousePos = wxGetMousePosition();
+		wxSize popupSize(10, 10);
 
-	brushSettingsPopup = new wxBrushSettingsPopup(this);
-	brushSettingsPopup->Position(mousePos, popupSize);
-	brushSettingsPopup->Popup();
+		brushSettingsPopupTransient = new wxBrushSettingsPopupTransient(this);
+		brushSettingsPopupTransient->Position(mousePos, popupSize);
+		brushSettingsPopupTransient->Popup();
+	}
+	else {
+		auto brushSettings = XRCCTRL(*this, "brushSettings", wxButton);
+
+		wxPoint mousePos = brushSettings->GetScreenPosition();
+		wxSize popupSize(0, brushSettings->GetSize().y);
+
+		brushSettingsPopup = new wxBrushSettingsPopup(this);
+		brushSettingsPopup->Position(mousePos, popupSize);
+		brushSettingsPopup->Show();
+	}
 
 	UpdateBrushSettings();
 }
 
 void OutfitStudioFrame::UpdateBrushSettings() {
-	if (!brushSettingsPopup)
-		return;
-
 	TweakBrush* brush = glView->GetActiveBrush();
 	if (!brush)
 		return;
 
-	brushSettingsPopup->SetBrushSize(glView->GetBrushSize());
-	brushSettingsPopup->SetBrushStrength(brush->getStrength());
-	brushSettingsPopup->SetBrushFocus(brush->getFocus());
-	brushSettingsPopup->SetBrushSpacing(brush->getSpacing());
+	if (brushSettingsPopup) {
+		brushSettingsPopup->SetBrushSize(glView->GetBrushSize());
+		brushSettingsPopup->SetBrushStrength(brush->getStrength());
+		brushSettingsPopup->SetBrushFocus(brush->getFocus());
+		brushSettingsPopup->SetBrushSpacing(brush->getSpacing());
+	}
+
+	if (brushSettingsPopupTransient) {
+		brushSettingsPopupTransient->SetBrushSize(glView->GetBrushSize());
+		brushSettingsPopupTransient->SetBrushStrength(brush->getStrength());
+		brushSettingsPopupTransient->SetBrushFocus(brush->getFocus());
+		brushSettingsPopupTransient->SetBrushSpacing(brush->getSpacing());
+	}
 }
 
 bool OutfitStudioFrame::CheckEditableState() {
@@ -5985,7 +6017,10 @@ void OutfitStudioFrame::OnShowFloor(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::OnBrushSettings(wxCommandEvent& WXUNUSED(event)) {
-	PopupBrushSettings();
+	if (brushSettingsPopup)
+		CloseBrushSettings();
+	else
+		PopupBrushSettings(false);
 }
 
 void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& event) {
@@ -10316,9 +10351,18 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 					os->ScrollToActiveSlider();
 				}
 			}
-			else
-				os->PopupBrushSettings();
+			else {
+				if (os->brushSettingsPopup) {
+					os->CloseBrushSettings();
+				}
+				else {
+					bool transient = Config.GetBoolValue("Input/BrushSettingsNearCursor");
+					os->PopupBrushSettings(transient);
+				}
+			}
 		}
+		else if (event.GetKeyCode() == WXK_ESCAPE)
+			os->CloseBrushSettings();
 	}
 
 	event.Skip();

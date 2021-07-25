@@ -9,7 +9,7 @@ See the included LICENSE file
 
 #include <wx/popupwin.h>
 
-class wxBrushSettingsPopup : public wxPopupTransientWindow {
+class wxBrushSettingsPopupBase {
 protected:
 	OutfitStudioFrame* os = nullptr;
 
@@ -33,14 +33,23 @@ protected:
 	wxSlider* brushSpacing = nullptr;
 	wxStaticText* lbBrushSpacingVal = nullptr;
 
-	void OnBrushSettingsSlider(wxCommandEvent& event);
+	void Setup(wxWindow* popupWin);
 
 public:
-	wxBrushSettingsPopup(OutfitStudioFrame* parent);
-	virtual ~wxBrushSettingsPopup();
+	wxBrushSettingsPopupBase(OutfitStudioFrame* parent, wxWindow* popupWin);
 
 	void SetBrushSize(float value);
 	void SetBrushStrength(float value);
 	void SetBrushFocus(float value);
 	void SetBrushSpacing(float value);
+};
+
+class wxBrushSettingsPopup : public wxPopupWindow, public wxBrushSettingsPopupBase {
+public:
+	wxBrushSettingsPopup(OutfitStudioFrame* parent);
+};
+
+class wxBrushSettingsPopupTransient : public wxPopupTransientWindow, public wxBrushSettingsPopupBase {
+public:
+	wxBrushSettingsPopupTransient(OutfitStudioFrame* parent);
 };
