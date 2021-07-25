@@ -56,10 +56,11 @@ int PoseDataCollection::LoadData(const std::string& basePath) {
 	for (auto &file : files) {
 		PoseDataFile poseDataFile(file.ToUTF8().data());
 
-		PoseData poseDataEntry;
-		poseDataFile.GetData(poseDataEntry);
+		std::vector<PoseData> poseDataEntries;
+		poseDataFile.GetData(poseDataEntries);
 
-		poseData.push_back(poseDataEntry);
+		for (auto &pd : poseDataEntries)
+			poseData.push_back(pd);
 	}
 
 	return 0;
@@ -103,17 +104,6 @@ void PoseDataFile::Open(const std::string& srcFileName) {
 		return;
 	}
 
-	XMLElement* element = root->FirstChildElement("Pose");
-	while (element) {
-		poseElement = element;
-		break;
-	}
-
-	if (!poseElement) {
-		error = 3;
-		return;
-	}
-
 	error = 0;
 }
 
@@ -135,7 +125,6 @@ void PoseDataFile::New(const std::string& newFileName) {
 void PoseDataFile::Clear() {
 	doc.Clear();
 	root = nullptr;
-	poseElement = nullptr;
 	error = 0;
 }
 
@@ -143,16 +132,14 @@ void PoseDataFile::Rename(const std::string& newFileName) {
 	fileName = newFileName;
 }
 
-int PoseDataFile::SetData(const PoseData& data) {
-	if (poseElement) {
-		data.WriteElement(poseElement);
-	}
-	else {
+int PoseDataFile::SetData(const std::vector<PoseData>& data) {
+	root->DeleteChildren();
+
+	for (auto &pd : data) {
 		XMLElement* newElement = doc.NewElement("Pose");
 		XMLElement* element = root->InsertEndChild(newElement)->ToElement();
-		element->SetAttribute("name", data.name.c_str());
-		data.WriteElement(element);
-		poseElement = element;
+		element->SetAttribute("name", pd.name.c_str());
+		pd.WriteElement(element);
 	}
 
 	return 0;
@@ -188,7 +175,15 @@ bool PoseDataFile::Save() {
 	return true;
 }
 
-int PoseDataFile::GetData(PoseData& outData) {
-	outData.LoadElement(poseElement);
+int PoseDataFile::GetData(std::vector<PoseData>& outData) {
+	XMLElement* poseElement = root->FirstChildElement("Pose");
+	while (poseElement) {
+		PoseData poseData{};
+		poseData.LoadElement(poseElement);
+		outData.push_back(poseData);
+
+		poseElement = poseElement->NextSiblingElement("Pose");
+	}
+
 	return 0;
 }

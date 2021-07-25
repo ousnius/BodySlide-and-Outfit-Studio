@@ -57,7 +57,6 @@ public:
 class PoseDataFile {
 	XMLDocument doc;
 	XMLElement* root = nullptr;
-	XMLElement* poseElement = nullptr;
 	int error = 0;
 
 public:
@@ -88,11 +87,11 @@ public:
 	void Rename(const std::string& newFileName);
 
 	// Updates data in the XML document with the provided information.
-	int SetData(const PoseData& data);
+	int SetData(const std::vector<PoseData>& data);
 
 	// Writes the xml file using the internal fileName (use Rename() to change the name).
 	bool Save();
 
 	// Reads data of the pose element.
-	int GetData(PoseData& outData);
+	int GetData(std::vector<PoseData>& outData);
 };

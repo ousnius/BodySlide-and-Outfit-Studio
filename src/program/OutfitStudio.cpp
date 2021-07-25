@@ -9960,7 +9960,11 @@ void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
 
 		PoseDataFile poseDataFile;
 		poseDataFile.New(fileName.ToUTF8().data());
-		poseDataFile.SetData(*poseData);
+
+		std::vector<PoseData> poses;
+		poses.push_back(*poseData);
+
+		poseDataFile.SetData(poses);
 		poseDataFile.Save();
 	}
 	else {
@@ -10010,7 +10014,11 @@ void OutfitStudioFrame::OnSaveAsPose(wxCommandEvent& WXUNUSED(event)) {
 
 	PoseDataFile poseDataFile;
 	poseDataFile.New(fileName.ToUTF8().data());
-	poseDataFile.SetData(*poseData);
+
+	std::vector<PoseData> poses;
+	poses.push_back(*poseData);
+
+	poseDataFile.SetData(poses);
 	poseDataFile.Save();
 }
 
