@@ -1170,6 +1170,7 @@
 																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
 																				<object class="wxChoice" name="cMaskName">
+																					<style>wxCB_SORT</style>
 																					<selection>0</selection>
 																					<content />
 																				</object>
@@ -1230,6 +1231,7 @@
 																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
 																				<object class="wxChoice" name="cPoseName">
+																					<style>wxCB_SORT</style>
 																					<selection>0</selection>
 																					<content />
 																				</object>
