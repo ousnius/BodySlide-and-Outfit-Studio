@@ -3660,6 +3660,7 @@ void OutfitStudioFrame::ClearProject() {
 	cPoseName->Clear();
 
 	project->outfitName.clear();
+	pendingChanges = false;
 	UpdateTitle();
 }
 
