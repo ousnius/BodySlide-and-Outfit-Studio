@@ -140,17 +140,10 @@ public:
 
 		auto it = std::find(overlays.begin(), overlays.end(), m);
 		if (it != overlays.end()) {
-			int meshID = std::distance(overlays.begin(), it);
+			overlays.erase(it);
 
 			SetContext();
-
 			delete m;
-			overlays.erase(overlays.begin() + meshID);
-
-			// Renumber overlays after the deleted one
-			for (size_t i = meshID; i < overlays.size(); i++) {
-				m = overlays[i];
-			}
 		}
 	}
 

@@ -1740,6 +1740,7 @@ mesh* GLSurface::AddVisPlane(const Matrix4& mat, const Vector2& size, float uvSc
 		m->shapeName = name;
 		m->rendermode = RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
+		m->doublesided = true;
 
 		if (asMesh)
 			AddMesh(m);
