@@ -53,7 +53,8 @@ private:
 	wxTextCtrl* textRY = nullptr;
 	wxTextCtrl* textRZ = nullptr;
 	wxCheckBox* cbTransformGeo = nullptr;
-	nifly::MatTransform oldXformGlobalToSkin, newXformGlobalToSkin;
+	nifly::MatTransform oldTransform;
+	nifly::MatTransform newTransform;
 
 	OutfitStudioFrame* os = nullptr;
 	nifly::NifFile* nif = nullptr;

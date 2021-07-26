@@ -26,13 +26,6 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_TEXT(XRCID("textRY"), ShapeProperties::OnTransChanged)
 	EVT_TEXT(XRCID("textRZ"), ShapeProperties::OnTransChanged)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
-	EVT_TEXT(XRCID("textScale"), ShapeProperties::OnTransChanged)
-	EVT_TEXT(XRCID("textX"), ShapeProperties::OnTransChanged)
-	EVT_TEXT(XRCID("textY"), ShapeProperties::OnTransChanged)
-	EVT_TEXT(XRCID("textZ"), ShapeProperties::OnTransChanged)
-	EVT_TEXT(XRCID("textRX"), ShapeProperties::OnTransChanged)
-	EVT_TEXT(XRCID("textRY"), ShapeProperties::OnTransChanged)
-	EVT_TEXT(XRCID("textRZ"), ShapeProperties::OnTransChanged)
 wxEND_EVENT_TABLE()
 
 ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* refShape) {
@@ -759,17 +752,26 @@ void ShapeProperties::RemoveExtraData(int id) {
 }
 
 void ShapeProperties::GetCoordTrans() {
-	oldXformGlobalToSkin = os->project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin;
-	newXformGlobalToSkin = oldXformGlobalToSkin;
-	Vector3 rotvec = RotMatToVec(newXformGlobalToSkin.rotation);
+	Vector3 rotationVec;
 
-	textScale->ChangeValue(wxString::Format("%.10f", newXformGlobalToSkin.scale));
-	textX->ChangeValue(wxString::Format("%.10f", newXformGlobalToSkin.translation.x));
-	textY->ChangeValue(wxString::Format("%.10f", newXformGlobalToSkin.translation.y));
-	textZ->ChangeValue(wxString::Format("%.10f", newXformGlobalToSkin.translation.z));
-	textRX->ChangeValue(wxString::Format("%.10f", rotvec.x));
-	textRY->ChangeValue(wxString::Format("%.10f", rotvec.y));
-	textRZ->ChangeValue(wxString::Format("%.10f", rotvec.z));
+	if (shape->IsSkinned()) {
+		oldTransform = os->project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin;
+		newTransform = oldTransform;
+		rotationVec = RotMatToVec(newTransform.rotation);
+	}
+	else {
+		oldTransform = shape->GetTransformToParent();
+		newTransform = oldTransform;
+		rotationVec = RotMatToVec(newTransform.rotation);
+	}
+
+	textScale->ChangeValue(wxString::Format("%.10f", newTransform.scale));
+	textX->ChangeValue(wxString::Format("%.10f", newTransform.translation.x));
+	textY->ChangeValue(wxString::Format("%.10f", newTransform.translation.y));
+	textZ->ChangeValue(wxString::Format("%.10f", newTransform.translation.z));
+	textRX->ChangeValue(wxString::Format("%.10f", rotationVec.x));
+	textRY->ChangeValue(wxString::Format("%.10f", rotationVec.y));
+	textRZ->ChangeValue(wxString::Format("%.10f", rotationVec.z));
 
 	cbTransformGeo->Disable();
 }
@@ -796,12 +798,12 @@ void ShapeProperties::OnTransChanged(wxCommandEvent&) {
 	if (!textRZ->GetValue().ToDouble(&rz))
 		return;
 
-	newXformGlobalToSkin.scale = scale;
-	newXformGlobalToSkin.translation.x = x;
-	newXformGlobalToSkin.translation.y = y;
-	newXformGlobalToSkin.translation.z = z;
-	newXformGlobalToSkin.rotation = RotVecToMat(Vector3(rx, ry, rz));
-	cbTransformGeo->Enable(!newXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin));
+	newTransform.scale = scale;
+	newTransform.translation.x = x;
+	newTransform.translation.y = y;
+	newTransform.translation.z = z;
+	newTransform.rotation = RotVecToMat(Vector3(rx, ry, rz));
+	cbTransformGeo->Enable(!newTransform.IsNearlyEqualTo(oldTransform));
 }
 
 void ShapeProperties::RefreshMesh() {
@@ -990,12 +992,20 @@ void ShapeProperties::ApplyChanges() {
 		}
 	}
 
-	if (!newXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin)) {
-		if (cbTransformGeo->IsChecked())
-			os->project->ApplyTransformToShapeGeometry(shape, newXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
+	if (!newTransform.IsNearlyEqualTo(oldTransform)) {
+		if (cbTransformGeo->IsChecked()) {
+			if (shape->IsSkinned())
+				os->project->ApplyTransformToShapeGeometry(shape, newTransform.ComposeTransforms(oldTransform.InverseTransform()));
+			else
+				os->project->ApplyTransformToShapeGeometry(shape, newTransform.ComposeTransforms(oldTransform));
+		}
 
-		os->project->GetWorkAnim()->ChangeGlobalToSkinTransform(shape->name.get(), newXformGlobalToSkin);
-		nif->SetShapeTransformGlobalToSkin(shape, newXformGlobalToSkin);
+		if (shape->IsSkinned()) {
+			os->project->GetWorkAnim()->ChangeGlobalToSkinTransform(shape->name.get(), newTransform);
+			nif->SetShapeTransformGlobalToSkin(shape, newTransform);
+		}
+		else
+			shape->SetTransformToParent(newTransform);
 	}
 
 	os->SetPendingChanges();
