@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4.3\n"
+"X-Generator: Poedit 3.0\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
@@ -1639,8 +1639,8 @@ msgid "Mirror the selected shapes on the Z-axis."
 msgstr "Miroir les formes sélectionnées sur l'axe Z."
 
 #: res/xrc/OutfitStudio.xrc:1981 res/xrc/OutfitStudio.xrc:2356
-msgid "Delete Vertices..."
-msgstr "Effacer Vertices..."
+msgid "Delete Vertices...\tShift+Del"
+msgstr "Effacer Vertices...\tShift+Del"
 
 #: res/xrc/OutfitStudio.xrc:1982 res/xrc/OutfitStudio.xrc:2357
 msgid "Deletes all unmasked vertices of the currently selected shapes."
@@ -1649,8 +1649,8 @@ msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1985 res/xrc/OutfitStudio.xrc:2360
 #: src/program/OutfitStudio.cpp:8329
-msgid "Separate Vertices..."
-msgstr "Vertices séparés ..."
+msgid "Separate Vertices...\tShift+S"
+msgstr "Vertices séparés...\tShift+S"
 
 #: res/xrc/OutfitStudio.xrc:1986 res/xrc/OutfitStudio.xrc:2361
 msgid "Separate the current shape into two by using the mask."

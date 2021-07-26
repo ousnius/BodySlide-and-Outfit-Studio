@@ -1410,7 +1410,7 @@ msgid "Mirror the selected shapes on the Z-axis."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1847 res/xrc/OutfitStudio.xrc:2280
-msgid "Delete Vertices..."
+msgid "Delete Vertices...\tShift+Del"
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1848 res/xrc/OutfitStudio.xrc:2281
@@ -1419,7 +1419,7 @@ msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1851 res/xrc/OutfitStudio.xrc:2284
 #: src/program/OutfitStudio.cpp:8482
-msgid "Separate Vertices..."
+msgid "Separate Vertices...\tShift+S"
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1852 res/xrc/OutfitStudio.xrc:2285

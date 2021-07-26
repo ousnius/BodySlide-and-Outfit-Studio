@@ -1535,8 +1535,8 @@ msgid "Mirror the selected shapes on the Z-axis."
 msgstr "Spiegelt die ausgewählten Modelle auf der Z-Achse."
 
 #: res/xrc/OutfitStudio.xrc:1847 res/xrc/OutfitStudio.xrc:2280
-msgid "Delete Vertices..."
-msgstr "Vertices löschen..."
+msgid "Delete Vertices...\tShift+Del"
+msgstr "Vertices löschen...\tShift+Del"
 
 #: res/xrc/OutfitStudio.xrc:1848 res/xrc/OutfitStudio.xrc:2281
 msgid "Deletes all unmasked vertices of the currently selected shapes."
@@ -1545,8 +1545,8 @@ msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1851 res/xrc/OutfitStudio.xrc:2284
 #: src/program/OutfitStudio.cpp:8482
-msgid "Separate Vertices..."
-msgstr "Vertices aufteilen..."
+msgid "Separate Vertices...\tShift+S"
+msgstr "Vertices aufteilen...\tShift+S"
 
 #: res/xrc/OutfitStudio.xrc:1852 res/xrc/OutfitStudio.xrc:2285
 msgid "Separate the current shape into two by using the mask."

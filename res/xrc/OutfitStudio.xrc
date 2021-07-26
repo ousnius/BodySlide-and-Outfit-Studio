@@ -1846,11 +1846,11 @@
 				</object>
 			</object>
 			<object class="wxMenuItem" name="deleteVerts">
-				<label>Delete Vertices...</label>
+				<label>Delete Vertices...\tShift+Del</label>
 				<help>Deletes all unmasked vertices of the currently selected shapes.</help>
 			</object>
 			<object class="wxMenuItem" name="separateVerts">
-				<label>Separate Vertices...</label>
+				<label>Separate Vertices...\tShift+S</label>
 				<help>Separate the current shape into two by using the mask.</help>
 			</object>
 			<object class="wxMenuItem" name="copyGeo">
@@ -2279,11 +2279,11 @@
 			</object>
 		</object>
 		<object class="wxMenuItem" name="deleteVerts">
-			<label>Delete Vertices...</label>
+			<label>Delete Vertices...\tShift+Del</label>
 			<help>Deletes all unmasked vertices of the currently selected shapes.</help>
 		</object>
 		<object class="wxMenuItem" name="separateVerts">
-			<label>Separate Vertices...</label>
+			<label>Separate Vertices...\tShift+S</label>
 			<help>Separate the current shape into two by using the mask.</help>
 		</object>
 		<object class="wxMenuItem" name="copyGeo">
