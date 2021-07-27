@@ -104,9 +104,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 
 		if (dump.compare("v") == 0) {
 			base >> v.x >> v.y >> v.z;
-
-			if (verts.size() < maxVertexCount)
-				verts.push_back(v);
+			verts.push_back(v);
 		}
 		else if (dump.compare("o") == 0 || dump.compare("g") == 0) {
 			base >> curgrp;
@@ -222,11 +220,20 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			if (skipFace)
 				continue;
 
+			if (v_idx[0] >= maxVertexCount ||
+				v_idx[1] >= maxVertexCount ||
+				v_idx[2] >= maxVertexCount)
+				continue;
+
 			t.p1 = static_cast<uint16_t>(v_idx[0]);
 			t.p2 = static_cast<uint16_t>(v_idx[1]);
 			t.p3 = static_cast<uint16_t>(v_idx[2]);
 			current->tris.push_back(t);
+
 			if (nPoints == 4) {
+				if (v_idx[3] >= maxVertexCount)
+					continue;
+
 				t.p1 = static_cast<uint16_t>(v_idx[0]);
 				t.p2 = static_cast<uint16_t>(v_idx[2]);
 				t.p3 = static_cast<uint16_t>(v_idx[3]);

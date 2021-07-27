@@ -3293,8 +3293,8 @@ msgid ""
 "The vertex or triangle limit for '%s' was exceeded.\n"
 "Remaining data was dropped.\n"
 "\n"
-"Vertices (current/max): %d/%zu\n"
-"Triangles (current/max): %d/%zu"
+"Vertices (current/max): %zu/%zu\n"
+"Triangles (current/max): %zu/%zu"
 msgstr ""
 
 #: src/program/OutfitProject.cpp:3735

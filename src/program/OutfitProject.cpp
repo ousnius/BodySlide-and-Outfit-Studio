@@ -3630,8 +3630,8 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 			return 3;
 		}
 
-		uint16_t vertCount = static_cast<uint16_t>(v.size());
-		uint32_t triCount = static_cast<uint32_t>(t.size());
+		size_t vertCount = v.size();
+		size_t triCount = t.size();
 
 		// Skip zero size groups.  
 		if (vertCount == 0)
@@ -3670,7 +3670,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 
 			if (vertCountNew < vertCount || triCountNew < triCount) {
 				wxMessageBox(wxString::Format(_(
-					"The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %d/%zu\nTriangles (current/max): %d/%zu"),
+					"The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles (current/max): %zu/%zu"),
 					useShapeName, vertCount, vertexLimit, triCount, triLimit), _("OBJ Error"), wxICON_WARNING, owner);
 			}
 
@@ -3768,8 +3768,8 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		FBXShape* fbxShape = fbxw.GetShape(s);
 		std::string useShapeName = s;
 
-		int vertCount = fbxShape->verts.size();
-		int triCount = fbxShape->tris.size();
+		size_t vertCount = fbxShape->verts.size();
+		size_t triCount = fbxShape->tris.size();
 
 		if (mergeShape) {
 			if (mergeShape->GetNumVertices() == vertCount) {
@@ -3803,14 +3803,14 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 		workNif.CreateSkinning(newShape);
 
-		int vertCountNew = newShape->GetNumVertices();
-		int triCountNew = newShape->GetNumTriangles();
+		uint16_t vertCountNew = newShape->GetNumVertices();
+		uint32_t triCountNew = newShape->GetNumTriangles();
 		size_t vertexLimit = workNif.GetVertexLimit();
 		size_t triLimit = workNif.GetTriangleLimit();
 
 		if (vertCountNew < vertCount || triCountNew < triCount) {
 			wxMessageBox(wxString::Format(_(
-				"The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %d/%zu\nTriangles (current/max): %d/%zu"),
+				"The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles (current/max): %zu/%zu"),
 				useShapeName, vertCount, vertexLimit, triCount, triLimit), _("OBJ Error"), wxICON_WARNING, owner);
 		}
 
