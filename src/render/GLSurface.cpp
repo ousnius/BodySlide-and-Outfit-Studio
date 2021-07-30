@@ -559,7 +559,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 						(*outHoverPoint) = pointid;
 
 					if (outHoverCoord)
-						(*outHoverCoord) = origin;
+						(*outHoverCoord) = hilitepoint;
 
 					if (outHoverColor) {
 						(*outHoverColor).x = std::floor(m->vcolors[pointid].x * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
