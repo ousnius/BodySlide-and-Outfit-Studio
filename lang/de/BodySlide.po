@@ -3889,8 +3889,8 @@ msgstr "Erstelle Outfit..."
 #: src/program/OutfitStudio.cpp:2233 src/program/OutfitStudio.cpp:3342
 #: src/program/OutfitStudio.cpp:3468
 #, c-format
-msgid "Creating %d slider(s)..."
-msgstr "Erstelle %d Slider..."
+msgid "Creating %zu slider(s)..."
+msgstr "Erstelle %zu Slider..."
 
 #: src/program/OutfitStudio.cpp:2257
 msgid "Creating sliders..."

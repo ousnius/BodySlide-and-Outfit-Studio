@@ -2237,8 +2237,8 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	UpdateProgress(80, _("Creating outfit..."));
 	RefreshGUIFromProj();
 
-	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(90, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
+	wxLogMessage("Creating %zu slider(s)...", project->SliderCount());
+	UpdateProgress(90, wxString::Format(_("Creating %zu slider(s)..."), project->SliderCount()));
 	StartSubProgress(90, 99);
 	CreateSetSliders();
 
@@ -3369,8 +3369,8 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	RefreshGUIFromProj();
 
-	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(90, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
+	wxLogMessage("Creating %zu slider(s)...", project->SliderCount());
+	UpdateProgress(90, wxString::Format(_("Creating %zu slider(s)..."), project->SliderCount()));
 	StartSubProgress(90, 99);
 	CreateSetSliders();
 
@@ -3495,8 +3495,8 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(60, _("Creating reference..."));
 	RefreshGUIFromProj();
 
-	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(70, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
+	wxLogMessage("Creating %zu slider(s)...", project->SliderCount());
+	UpdateProgress(70, wxString::Format(_("Creating %zu slider(s)..."), project->SliderCount()));
 	StartSubProgress(70, 99);
 	CreateSetSliders();
 
@@ -7729,7 +7729,7 @@ void OutfitStudioFrame::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 
 		SetPendingChanges();
 
-		wxLogMessage("%d shape(s) conformed.", selectedItems.size());
+		wxLogMessage("%zu shape(s) conformed.", selectedItems.size());
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}

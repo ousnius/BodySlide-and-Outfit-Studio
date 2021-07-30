@@ -3506,7 +3506,7 @@ msgstr ""
 #: src/program/OutfitStudio.cpp:2233 src/program/OutfitStudio.cpp:3342
 #: src/program/OutfitStudio.cpp:3468
 #, c-format
-msgid "Creating %d slider(s)..."
+msgid "Creating %zu slider(s)..."
 msgstr ""
 
 #: src/program/OutfitStudio.cpp:2257
