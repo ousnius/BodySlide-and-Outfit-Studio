@@ -1712,18 +1712,22 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 	ClearBoneScale(false);
 
 	AnimBone *bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
-	if (!bptr) return;
+	if (!bptr)
+		return;
+
 	MatTransform xform = bPose ? bptr->xformPoseToGlobal : bptr->xformToGlobal;
 
 	for (auto &s : workNif.GetShapeNames()) {
 		auto it = boneScaleVerts.find(s);
 		if (it == boneScaleVerts.end()) {
 			mesh* m = owner->glView->GetMesh(s);
-			boneScaleVerts.emplace(s, std::vector<Vector3>(m->nVerts));
-			it = boneScaleVerts.find(s);
-			for (int i = 0; i < m->nVerts; i++) {
-				auto& vertex = m->verts[i];
-				it->second[i] = std::move(Vector3(vertex.x * -10.0f, vertex.z * 10.0f, vertex.y * 10.0f));
+			if (m) {
+				boneScaleVerts.emplace(s, std::vector<Vector3>(m->nVerts));
+				it = boneScaleVerts.find(s);
+				for (int i = 0; i < m->nVerts; i++) {
+					auto& vertex = m->verts[i];
+					it->second[i] = std::move(Vector3(vertex.x * -10.0f, vertex.z * 10.0f, vertex.y * 10.0f));
+				}
 			}
 		}
 

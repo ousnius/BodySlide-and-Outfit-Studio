@@ -1939,9 +1939,13 @@ bool OutfitStudioFrame::SaveProject() {
 	project->ClearBoneScale();
 
 	std::vector<mesh*> shapeMeshes;
-	for (auto &s : project->GetWorkNif()->GetShapes())
-		if (!project->IsBaseShape(s))
-			shapeMeshes.push_back(glView->GetMesh(s->name.get()));
+	for (auto &s : project->GetWorkNif()->GetShapes()) {
+		if (!project->IsBaseShape(s)) {
+			mesh* m = glView->GetMesh(s->name.get());
+			if (m)
+				shapeMeshes.push_back(m);
+		}
+	}
 
 	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
@@ -2106,9 +2110,13 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	project->ClearBoneScale();
 
 	std::vector<mesh*> shapeMeshes;
-	for (auto &s : project->GetWorkNif()->GetShapes())
-		if (!project->IsBaseShape(s))
-			shapeMeshes.push_back(glView->GetMesh(s->name.get()));
+	for (auto &s : project->GetWorkNif()->GetShapes()) {
+		if (!project->IsBaseShape(s)) {
+			mesh* m = glView->GetMesh(s->name.get());
+			if (m)
+				shapeMeshes.push_back(m);
+		}
+	}
 
 	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
@@ -2675,7 +2683,9 @@ std::vector<std::string> OutfitStudioFrame::GetShapeList() {
 }
 
 void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
-	project->UpdateShapeFromMesh(shape, glView->GetMesh(shape->name.get()));
+	mesh* m = glView->GetMesh(shape->name.get());
+	if (m)
+		project->UpdateShapeFromMesh(shape, m);
 }
 
 void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo) {
@@ -2683,7 +2693,9 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 		float sliderscale = 1 / usp->sliderscale;
 		for (auto &uss : usp->usss) {
 			mesh *m = glView->GetMesh(uss.shapeName);
-			if (!m) continue;
+			if (!m)
+				continue;
+
 			std::unordered_map<uint16_t, Vector3> strokeDiff;
 
 			for (auto &ps : uss.pointStartState) {
@@ -2704,7 +2716,9 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 		if (usp->undoType == UT_WEIGHT) {
 			for (auto &uss : usp->usss) {
 				mesh *m = glView->GetMesh(uss.shapeName);
-				if (!m) continue;
+				if (!m)
+					continue;
+
 				for (auto &bw : uss.boneWeights) {
 					if (bw.weights.empty()) continue;
 					project->GetWorkAnim()->AddShapeBone(m->shapeName, bw.boneName);
@@ -2729,7 +2743,9 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 		else if (usp->undoType == UT_COLOR) {
 			for (auto &uss : usp->usss) {
 				mesh *m = glView->GetMesh(uss.shapeName);
-				if (!m) continue;
+				if (!m)
+					continue;
+
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
 					continue;
@@ -2757,7 +2773,9 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 		else if (usp->undoType == UT_ALPHA) {
 			for (auto &uss : usp->usss) {
 				mesh *m = glView->GetMesh(uss.shapeName);
-				if (!m) continue;
+				if (!m)
+					continue;
+
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
 					continue;
@@ -4067,9 +4085,13 @@ void OutfitStudioFrame::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearBoneScale();
 
 	std::vector<mesh*> shapeMeshes;
-	for (auto &s : project->GetWorkNif()->GetShapes())
-		if (!project->IsBaseShape(s))
-			shapeMeshes.push_back(glView->GetMesh(s->name.get()));
+	for (auto &s : project->GetWorkNif()->GetShapes()) {
+		if (!project->IsBaseShape(s)) {
+			mesh* m = glView->GetMesh(s->name.get());
+			if (m)
+				shapeMeshes.push_back(m);
+		}
+	}
 
 	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes);
 	if (error) {
@@ -4098,8 +4120,11 @@ void OutfitStudioFrame::OnExportNIFWithRef(wxCommandEvent& event) {
 	project->ClearBoneScale();
 
 	std::vector<mesh*> shapeMeshes;
-	for (auto &s : project->GetWorkNif()->GetShapeNames())
-		shapeMeshes.push_back(glView->GetMesh(s));
+	for (auto &s : project->GetWorkNif()->GetShapeNames()) {
+		mesh* m = glView->GetMesh(s);
+		if (m)
+			shapeMeshes.push_back(m);
+	}
 
 	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes, true);
 	if (error) {
@@ -4549,7 +4574,10 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 
 	auto baseShape = project->GetBaseShape();
 	if (baseShape) {
-		project->UpdateShapeFromMesh(baseShape, glView->GetMesh(baseShape->name.get()));
+		mesh* m = glView->GetMesh(baseShape->name.get());
+		if (m)
+			project->UpdateShapeFromMesh(baseShape, m);
+
 		project->NegateSlider(finalName, baseShape);
 	}
 
@@ -7700,8 +7728,11 @@ void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& opt
 	wxLogMessage("Conforming '%s'...", shapeName);
 	UpdateProgress(50, _("Conforming: ") + shapeName);
 
-	project->morpher.CopyMeshMask(glView->GetMesh(shapeName), shapeName);
-	project->ConformShape(shape, options);
+	mesh* m = glView->GetMesh(shapeName);
+	if (m) {
+		project->morpher.CopyMeshMask(m, shapeName);
+		project->ConformShape(shape, options);
+	}
 
 	UpdateProgress(99);
 }
@@ -9603,8 +9634,9 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	auto shape = activeItem->GetShape();
-	if (shape) {
-		editUV = new EditUV(this, project->GetWorkNif(), shape, glView->GetMesh(shape->name.get()), activeSlider);
+	mesh* m = glView->GetMesh(shape->name.get());
+	if (shape && m) {
+		editUV = new EditUV(this, project->GetWorkNif(), shape, m, activeSlider);
 
 		editUV->Bind(wxEVT_CLOSE_WINDOW, [&](wxCloseEvent& event) {
 			editUV = nullptr;
