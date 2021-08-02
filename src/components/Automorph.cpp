@@ -374,7 +374,7 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 
 	if (resultDiffData.TargetMatch(dataName, shapeName)) {
 		if (m->vcolors)
-			resultDiffData.ZeroVertDiff(dataName, m->vcolors.get());
+			resultDiffData.ZeroVertDiff(dataName, m->nVerts, m->vcolors.get());
 		else
 			resultDiffData.ClearSet(dataName);
 	}
