@@ -1787,6 +1787,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	if (activeSet.GenWeights())
 		nifSmall.CopyFrom(nifBig);
 
+	dataSets.Clear();
+	activeSet.LoadSetDiffData(dataSets);
+
 	std::vector<Vector3> vertsLow;
 	std::vector<Vector3> vertsHigh;
 	std::vector<Vector2> uvsLow;
