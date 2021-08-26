@@ -1067,6 +1067,7 @@ public:
 	void CloseBrushSettings();
 	void PopupBrushSettings(bool transient);
 	void UpdateBrushSettings();
+	void DeleteSliders(bool keepZaps = false);
 
 	void CheckBrushBounds() {
 		TweakBrush* brush = glView->GetActiveBrush();

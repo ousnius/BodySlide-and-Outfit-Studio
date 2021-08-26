@@ -1870,7 +1870,7 @@ int OutfitProject::LoadSkeletonReference(const std::string& skeletonFileName) {
 	return AnimSkeleton::getInstance().LoadFromNif(skeletonFileName);
 }
 
-int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders) {
+int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool keepZaps) {
 	if (sourceFile.empty() || set.empty()) {
 		wxLogError("Template source entries are invalid.");
 		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR, owner);
@@ -1882,10 +1882,10 @@ int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const st
 		return AddFromSliderSet(sourceFile, set, false);
 	}
 	else
-		return LoadReference(sourceFile, set, mergeSliders, shape);
+		return LoadReference(sourceFile, set, mergeSliders, shape, keepZaps);
 }
 
-int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders) {
+int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders, bool keepZaps) {
 	if (mergeSliders)
 		DeleteShape(baseShape);
 	else
@@ -1937,12 +1937,16 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	}
 
 	baseShape = workNif.FindBlockByName<NiShape>(shapeName);
+
+	if(keepZaps)
+		owner->DeleteSliders(true);
+	
 	activeSet.LoadSetDiffData(baseDiffData);
 	return 0;
 }
 
-int OutfitProject::LoadReference(const std::string& fileName, const std::string& setName, bool mergeSliders, const std::string& shapeName) {
-	if (mergeSliders)
+int OutfitProject::LoadReference(const std::string& fileName, const std::string& setName, bool mergeSliders, const std::string& shapeName, bool keepZaps) {
+	if (keepZaps || mergeSliders)
 		DeleteShape(baseShape);
 	else
 		ClearReference();
@@ -2037,11 +2041,15 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 
 	baseShape = workNif.FindBlockByName<NiShape>(shape);
 
+	if(keepZaps)
+		owner->DeleteSliders(true);
+	
 	if (mergeSliders)
 		activeSet.LoadSetDiffData(baseDiffData, shape);
 	else
 		activeSet.LoadSetDiffData(baseDiffData);
 
+	
 	activeSet.SetReferencedData(shape);
 	for (auto &dn : dataNames)
 		activeSet.SetReferencedDataByName(shape, dn, true);
