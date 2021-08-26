@@ -1233,6 +1233,7 @@ private:
 	void OnImportNIF(wxCommandEvent &event);
 	void OnExportNIF(wxCommandEvent &event);
 	void OnExportNIFWithRef(wxCommandEvent &event);
+	void OnBakeNifInPlace(wxCommandEvent &event);
 	void OnExportShapeNIF(wxCommandEvent& event);
 
 	void OnImportOBJ(wxCommandEvent& event);

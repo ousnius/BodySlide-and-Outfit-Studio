@@ -100,6 +100,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("importNIF"), OutfitStudioFrame::OnImportNIF)
 	EVT_MENU(XRCID("exportNIF"), OutfitStudioFrame::OnExportNIF)
 	EVT_MENU(XRCID("exportNIFWithRef"), OutfitStudioFrame::OnExportNIFWithRef)
+	EVT_MENU(XRCID("bakeNifInPlace"), OutfitStudioFrame::OnBakeNifInPlace)
 	EVT_MENU(XRCID("exportShapeNIF"), OutfitStudioFrame::OnExportShapeNIF)
 
 	EVT_MENU(XRCID("importOBJ"), OutfitStudioFrame::OnImportOBJ)
@@ -4131,6 +4132,27 @@ void OutfitStudioFrame::OnExportNIFWithRef(wxCommandEvent& event) {
 	if (error) {
 		wxLogError("Failed to save NIF file '%s' with reference!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s' with reference!"), fileName), _("Export Error"), wxICON_ERROR);
+	}
+}
+
+void OutfitStudioFrame::OnBakeNifInPlace(wxCommandEvent& event) {
+	if (!project->GetWorkNif()->IsValid())
+		return;
+
+	wxLogMessage("Baking nif with reference");
+	project->ClearBoneScale();
+
+	std::vector<mesh*> shapeMeshes;
+	for (auto &s : project->GetWorkNif()->GetShapeNames()) {
+		mesh* m = glView->GetMesh(s);
+		if (m)
+			shapeMeshes.push_back(m);
+	}
+
+	int error = project->BakeNifInPlace(shapeMeshes, project->GetBaseShape() != nullptr);
+	if (error) {
+		wxLogError("Failed to bake NIF");
+		wxMessageBox("Failed to bake NIF", _("Export Error"), wxICON_ERROR);
 	}
 }
 
