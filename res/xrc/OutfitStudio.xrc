@@ -1662,10 +1662,10 @@
 				<help>Load a NIF file as the working outfit, replacing any current outfit objects.</help>
 			</object>
       <object class="separator" />
-      <object class="wxMenuItem" name="fileConvBodyRef">
-        <label>Convert Body Reference...</label>
-        <help>Convert an outfits body reference to use a different reference</help>
-      </object>
+			<object class="wxMenuItem" name="fileConvBodyRef">
+				<label>Convert Body Reference...</label>
+				<help>Convert an outfits body reference to use a different reference</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="fileSave">
 				<label>Save Project\tCtrl+S</label>
@@ -1964,10 +1964,10 @@
 				<help>Create a new Zap slider based on unmasked vertices</help>
 			</object>
 			<object class="separator" />
-      <object class="wxMenuItem" name="bakeNifInPlace">
-        <label>Bake Conversion Ref</label>
-        <help>Bake the conversion slider</help>
-      </object>
+			<object class="wxMenuItem" name="bakeNifInPlace">
+				<label>Bake Conversion Ref</label>
+				<help>Bake the conversion slider</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="sliderImportOSD">
 				<label>Import OSD...</label>
