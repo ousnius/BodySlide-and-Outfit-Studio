@@ -3506,55 +3506,6 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	return 0;
 }
 
-int OutfitProject::BakeConversionReference(const std::vector<mesh*>& modMeshes, bool withRef) {
-	workAnim.CleanupBones();
-	owner->UpdateAnimationGUI();
-
-	std::vector<Vector3> liveVerts;
-	std::vector<Vector3> liveNorms;
-	for (auto &m : modMeshes) {
-		auto shape = workNif.FindBlockByName<NiShape>(m->shapeName);
-		if (shape) {
-			liveVerts.clear();
-			liveNorms.clear();
-
-			for (int i = 0; i < m->nVerts; i++) {
-				liveVerts.emplace_back(std::move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
-				liveNorms.emplace_back(std::move(Vector3(m->norms[i].x * -1, m->norms[i].z, m->norms[i].y)));
-			}
-
-			workNif.SetVertsForShape(shape, liveVerts);
-
-			if (workNif.GetHeader().GetVersion().IsSK() || workNif.GetHeader().GetVersion().IsSSE()) {
-				NiShader* shader = workNif.GetShader(shape);
-				if (shader && shader->IsModelSpace())
-					continue;
-			}
-
-			workNif.SetNormalsForShape(shape, liveNorms);
-			workNif.CalcTangentsForShape(shape);
-		}
-	}
-
-	if (!withRef && baseShape) {
-		std::string baseShapeName = baseShape->name.get();
-		auto bshape = workNif.FindBlockByName<NiShape>(baseShapeName);
-		workNif.DeleteShape(bshape);
-		workAnim.WriteToNif(&workNif, baseShapeName);
-	}
-	else
-		workAnim.WriteToNif(&workNif);
-
-	DeleteShape(baseShape);
-	owner->DeleteSliders(true);
-	
-	workAnim.Clear();
-
-	owner->RefreshGUIFromProj(false);
-	
-	return 0;
-}
-
 int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef) {
 	workAnim.CleanupBones();
 	owner->UpdateAnimationGUI();

@@ -1233,14 +1233,13 @@ private:
 	void OnLoadOutfitFP_File(wxFileDirPickerEvent& event);
 	void OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event);
 
+	
 	void OnSetBaseShape(wxCommandEvent &event);
 	void OnMakeConvRef(wxCommandEvent& event);
 
-	int BakeConversionReference() const;
 	void OnImportNIF(wxCommandEvent &event);
 	void OnExportNIF(wxCommandEvent &event);
 	void OnExportNIFWithRef(wxCommandEvent &event);
-	void OnBakeConversionReference(wxCommandEvent &event);
 	void OnExportShapeNIF(wxCommandEvent& event);
 
 	void OnImportOBJ(wxCommandEvent& event);
@@ -1263,6 +1262,7 @@ private:
 	void OnSSSGenWeightsFalse(wxCommandEvent& event);
 	void OnSaveSliderSet(wxCommandEvent &event);
 	void OnSaveSliderSetAs(wxCommandEvent &event);
+	void SetBaseShape();
 
 	void OnSlider(wxScrollEvent& event);
 	void OnClickSliderButton(wxCommandEvent &event);

@@ -1964,11 +1964,6 @@
 				<help>Create a new Zap slider based on unmasked vertices</help>
 			</object>
 			<object class="separator" />
-			<object class="wxMenuItem" name="bakeNifInPlace">
-				<label>Bake Conversion Ref</label>
-				<help>Bake the conversion slider</help>
-			</object>
-			<object class="separator" />
 			<object class="wxMenuItem" name="sliderImportOSD">
 				<label>Import OSD...</label>
 				<help>Imports OSD file and creates sliders for shapes with a matching name.</help>

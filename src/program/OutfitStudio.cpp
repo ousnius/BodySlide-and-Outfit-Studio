@@ -3655,6 +3655,7 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	auto shapes = project->GetWorkNif()->GetShapes(); // get outfit shapes
 
 	UpdateProgress(5, _("Loading conversion reference..."));
+
 	if (AlertProgressError(LoadReferenceTemplate(conversionRefTemplate, keepZapSliders), "Load Error", "Failed to load conversion reference"))
 		return;
 
@@ -3666,10 +3667,13 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	SetSliderValue(project->activeSet.size() - 1, 100);
 	ApplySliders();
 
-	UpdateProgress(30, _("Baking conversion reference..."));
-	if (AlertProgressError(BakeConversionReference(), "Bake Error", "Failed to bake conversion reference"))
-		return;
-
+	UpdateProgress(30, _("Setting the base shape and removing the conversion reference"));
+	SetBaseShape();
+	project->DeleteShape(project->GetBaseShape());
+	DeleteSliders(true);
+	project->GetWorkAnim()->Clear();
+	RefreshGUIFromProj();
+	
 	UpdateProgress(40, _("Loading new reference..."));
 	if (AlertProgressError(LoadReferenceTemplate(newRefTemplate, keepZapSliders), "Load Error", "Failed to load new reference"))
 		return;
@@ -4194,8 +4198,7 @@ void OutfitStudioFrame::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	SaveProjectAs();
 }
 
-void OutfitStudioFrame::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
-	wxLogMessage("Setting new base shape.");
+void OutfitStudioFrame::SetBaseShape() {
 	project->ClearBoneScale();
 
 	for (auto &s : project->GetWorkNif()->GetShapes())
@@ -4209,6 +4212,11 @@ void OutfitStudioFrame::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 		HighlightSlider("");
 		activeSlider.clear();
 	}
+}
+
+void OutfitStudioFrame::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
+	wxLogMessage("Setting new base shape.");
+	SetBaseShape();
 }
 
 void OutfitStudioFrame::OnImportNIF(wxCommandEvent& WXUNUSED(event)) {
@@ -4295,31 +4303,6 @@ void OutfitStudioFrame::OnExportNIFWithRef(wxCommandEvent& event) {
 	if (error) {
 		wxLogError("Failed to save NIF file '%s' with reference!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s' with reference!"), fileName), _("Export Error"), wxICON_ERROR);
-	}
-}
-
-int OutfitStudioFrame::BakeConversionReference() const {
-	if (!project->GetWorkNif()->IsValid())
-		return 1;
-
-	wxLogMessage("Baking nif with reference");
-	project->ClearBoneScale();
-
-	std::vector<mesh*> shapeMeshes;
-	for (auto& s : project->GetWorkNif()->GetShapeNames()) {
-		mesh* m = glView->GetMesh(s);
-		if (m)
-			shapeMeshes.push_back(m);
-	}
-
-	return project->BakeConversionReference(shapeMeshes, project->GetBaseShape() != nullptr);
-}
-
-void OutfitStudioFrame::OnBakeConversionReference(wxCommandEvent& event) {
-	int error = BakeConversionReference();
-	if (error) {
-		wxLogError("Failed to bake conversion reference");
-		wxMessageBox("Failed to bake conversion reference", _("Bake Error"), wxICON_ERROR);
 	}
 }
 
