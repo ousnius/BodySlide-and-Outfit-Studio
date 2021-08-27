@@ -293,7 +293,7 @@
 	</object>
 	<object class="wxDialog" name="dlgSaveProject">
 		<style>wxDEFAULT_DIALOG_STYLE</style>
-		<size>486,345</size>
+		<size>486,365</size>
 		<title>Save Project As...</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -707,7 +707,7 @@
 							<checked>0</checked>
 						</object>
 					</object>
-				</object>
+        </object>
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
@@ -1050,6 +1050,159 @@
 		</object>
 		<object class="wxMenuItem" name="projectListInvert">
 			<label>Invert Selection</label>
+		</object>
+	</object>
+	<object class="wxDialog" name="dlgConvertBodyRef">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<title>Convert Body Reference</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+      <object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Reference</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="npConvRef">
+									<style>wxRB_GROUP</style>
+									<label>Conversion Body Reference</label>
+									<value translate="0">1</value>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+                <minsize>200,30</minsize>
+                <object class="wxChoice" name="npConvRefChoice">
+									<style>wxCB_SORT</style>
+									<selection>0</selection>
+									<content />
+								</object>
+							</object>
+              <object class="sizeritem">
+                <option>1</option>
+                <flag>wxALL|wxEXPAND</flag>
+                <border>5</border>
+                <object class="wxStaticText" name="npNewRef">
+                  <style>wxRB_GROUP</style>
+                  <label>New Body Reference</label>
+                  <value translate="0">1</value>
+                </object>
+              </object>
+              <object class="sizeritem">
+                <option>1</option>
+                <flag>wxALL|wxEXPAND</flag>
+                <border>5</border>
+                <minsize>200,30</minsize>
+                <object class="wxChoice" name="npNewRefChoice">
+                  <style>wxCB_SORT</style>
+                  <selection>0</selection>
+                  <content />
+                </object>
+              </object>
+              <object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>0,0</size>
+							</object>
+            </object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+            <object class="wxCheckBox" name="chkKeepZapSliders">
+              <label>Keep Zap Sliders</label>
+              <checked>1</checked>
+            </object>
+				  </object>
+          <object class="sizeritem">
+            <option>0</option>
+            <flag>wxEXPAND</flag>
+            <border>5</border>
+            <object class="wxFlexGridSizer">
+              <rows>0</rows>
+              <cols>2</cols>
+              <vgap>0</vgap>
+              <hgap>0</hgap>
+              <growablecols>1</growablecols>
+              <growablerows></growablerows>
+              <object class="sizeritem">
+                <option>1</option>
+                <flag>wxALL|wxEXPAND</flag>
+                <border>5</border>
+                <object class="wxStaticText">
+                  <style>wxRB_GROUP</style>
+                  <label>Remove from project names</label>
+                  <value translate="0">1</value>
+                </object>
+              </object>
+              <object class="sizeritem">
+                <border>5</border>
+                <minsize>200,22</minsize>
+                <object class="wxTextCtrl" name="npRemoveText">
+                </object>
+              </object>
+              <object class="sizeritem">
+                <option>1</option>
+                <flag>wxALL|wxEXPAND</flag>
+                <border>5</border>
+                <object class="wxStaticText">
+                  <style>wxRB_GROUP</style>
+                  <label>Append to project names</label>
+                  <value translate="0">1</value>
+                </object>
+              </object>
+              <object class="sizeritem">
+                <border>5</border>
+                <minsize>200,22</minsize>
+                <object class="wxTextCtrl" name="npAppendText">
+                </object>
+              </object>
+            </object>
+          </object>
+        </object>
+      </object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>10</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
 		</object>
 	</object>
 </resource>

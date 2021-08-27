@@ -1194,7 +1194,7 @@ private:
 
 	bool HasUnweightedCheck();
 	void CalcCopySkinTransOption(WeightCopyOptions &options);
-	bool ShowWeightCopy(WeightCopyOptions& options);
+	bool ShowWeightCopy(WeightCopyOptions& options, bool silent = false);
 	void ReselectBone();
 
 	void OnExit(wxCommandEvent& event);
@@ -1217,10 +1217,16 @@ private:
 	void AddProjectHistory(const std::string& fileName, const std::string& projectName);
 	void UpdateProjectHistory();
 
+	int LoadReferenceTemplate(const wxString& refTemplate, bool keepZapSliders);
+	void LoadDialogChoice(wxDialog& dlg, const char* dlgProperty) const;
+	void LoadDialogText(wxDialog& dlg, const char* dlgProperty) const;
+	bool AlertProgressError(int error, const wxString& title, const wxString& message);
+
 	void OnNewProject(wxCommandEvent& event);
 	void OnLoadProject(wxCommandEvent &event);
 	void OnAddProject(wxCommandEvent &event);
 	void OnLoadReference(wxCommandEvent &event);
+	void OnConvertBodyReference(wxCommandEvent &event);
 	void OnLoadOutfit(wxCommandEvent& event);
 	void OnUnloadProject(wxCommandEvent &event);
 
@@ -1230,10 +1236,11 @@ private:
 	void OnSetBaseShape(wxCommandEvent &event);
 	void OnMakeConvRef(wxCommandEvent& event);
 
+	int BakeConversionReference() const;
 	void OnImportNIF(wxCommandEvent &event);
 	void OnExportNIF(wxCommandEvent &event);
 	void OnExportNIFWithRef(wxCommandEvent &event);
-	void OnBakeNifInPlace(wxCommandEvent &event);
+	void OnBakeConversionReference(wxCommandEvent &event);
 	void OnExportShapeNIF(wxCommandEvent& event);
 
 	void OnImportOBJ(wxCommandEvent& event);
@@ -1334,8 +1341,9 @@ private:
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);
-	bool ShowConform(ConformOptions& options);
-	void ConformSliders(nifly::NiShape* shape, const ConformOptions& options);
+	bool ShowConform(ConformOptions& options, bool silent = false);
+	int ConformShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
+	void ConformSliders(nifly::NiShape* shape, const ConformOptions& options, bool silent = false);
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);
 	void OnSliderImportNIF(wxCommandEvent& event);
@@ -1387,6 +1395,7 @@ private:
 	void GetBoneDlgData(wxDialog &dlg, nifly::MatTransform &xform, std::string &parentBone);
 	void OnEditBone(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
+	void MaskWeightedOnShape(std::string& shapeName) const;
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
@@ -1395,7 +1404,8 @@ private:
 	void OnDeleteUnreferencedNodes(wxCommandEvent& event);
 	void OnRemoveSkinning(wxCommandEvent& event);
 	void OnShapeProperties(wxCommandEvent& event);
-
+	int CopyBoneWeightForShapes(std::vector<nifly::NiShape*> shapes, int addedRadius = 0, bool maskWeighted = false, bool silent = false);
+	
 	void OnMaskLess(wxCommandEvent& event);
 	void OnMaskMore(wxCommandEvent& event);
 

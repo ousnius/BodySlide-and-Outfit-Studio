@@ -1504,18 +1504,20 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 	workNif.SetNormalsForShape(shape, norms);
 }
 
-void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
+void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight, bool silent) {
 	if (!shape || !baseShape)
 		return;
 
 	std::string shapeName = shape->name.get();
 	std::string baseShapeName = baseShape->name.get();
 
-	owner->UpdateProgress(1, _("Gathering bones..."));
+	if(!silent)
+		owner->UpdateProgress(1, _("Gathering bones..."));
 
 	int nBones = boneList.size();
 	if (nBones <= 0 || nCopyBones <= 0) {
-		owner->UpdateProgress(90);
+		if(!silent)
+			owner->UpdateProgress(90);
 		return;
 	}
 
@@ -1539,7 +1541,8 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	nzer.SetUp(&uss, &workAnim, shapeName, boneList, lockedBones, nCopyBones, bSpreadWeight);
 	std::unordered_set<int> vertList;
 
-	owner->UpdateProgress(10, _("Initializing proximity data..."));
+	if(!silent)
+		owner->UpdateProgress(10, _("Initializing proximity data..."));
 
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
@@ -1548,7 +1551,8 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 
 	int step = 40 / nCopyBones;
 	int prog = 40;
-	owner->UpdateProgress(prog);
+	if(!silent)
+		owner->UpdateProgress(prog);
 
 	for (int bi = 0; bi < nCopyBones; ++bi) {
 		const std::string &boneName = boneList[bi];
@@ -1582,8 +1586,8 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 			}
 			ubw[dr.first].endVal = dr.second.y;
 		}
-
-		owner->UpdateProgress(prog += step, _("Copying bone weights..."));
+		if(!silent)
+			owner->UpdateProgress(prog += step, _("Copying bone weights..."));
 	}
 	morpher.UnlinkRefDiffData();
 
@@ -1591,7 +1595,8 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	for (auto vInd : vertList)
 		nzer.AdjustWeights(vInd);
 
-	owner->UpdateProgress(90);
+	if(!silent)
+		owner->UpdateProgress(90);
 }
 
 void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<uint16_t, float>* mask, std::vector<std::string>* inBoneList) {
@@ -1870,7 +1875,7 @@ int OutfitProject::LoadSkeletonReference(const std::string& skeletonFileName) {
 	return AnimSkeleton::getInstance().LoadFromNif(skeletonFileName);
 }
 
-int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool keepZaps) {
+int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool keepZaps, bool silent) {
 	if (sourceFile.empty() || set.empty()) {
 		wxLogError("Template source entries are invalid.");
 		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR, owner);
@@ -1878,8 +1883,9 @@ int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const st
 	}
 
 	if (loadAll) {
-		owner->StartSubProgress(10, 20);
-		return AddFromSliderSet(sourceFile, set, false);
+		if(!silent)
+			owner->StartSubProgress(10, 20);
+		return AddFromSliderSet(sourceFile, set, false, silent);
 	}
 	else
 		return LoadReference(sourceFile, set, mergeSliders, shape, keepZaps);
@@ -2145,18 +2151,22 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	return 0;
 }
 
-int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName, const bool newDataLocal) {
-	owner->StartProgress(_("Adding slider set..."));
+int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName, const bool newDataLocal, bool silent) {
+	if(!silent)
+		owner->StartProgress(_("Adding slider set..."));
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
-		owner->EndProgress();
+		if(!silent)
+			owner->EndProgress();
 		return 1;
 	}
 
 	SliderSet addSet;
-	owner->UpdateProgress(20, _("Retrieving sliders..."));
+	if(!silent)
+		owner->UpdateProgress(20, _("Retrieving sliders..."));
 	if (InSS.GetSet(sliderSetName, addSet)) {
-		owner->EndProgress();
+		if(!silent)
+			owner->EndProgress();
 		return 2;
 	}
 
@@ -2164,9 +2174,11 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 	std::string inputNif = addSet.GetInputFileName();
 
 	std::map<std::string, std::string> renamedShapes;
-	owner->UpdateProgress(30, _("Adding outfit shapes..."));
+	if(!silent)
+		owner->UpdateProgress(30, _("Adding outfit shapes..."));
 	if (ImportNIF(inputNif, false, "", &renamedShapes)) {
-		owner->EndProgress();
+		if(!silent)
+			owner->EndProgress();
 		return 3;
 	}
 
@@ -2215,11 +2227,15 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 		wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."), shapesJoin), _("Renamed Shapes"), wxOK | wxICON_WARNING, owner);
 	}
 
-	owner->UpdateProgress(70, _("Updating slider data..."));
+	if(!silent)
+		owner->UpdateProgress(70, _("Updating slider data..."));
 	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->name.get() : "", newDataLocal);
 
-	owner->UpdateProgress(100, _("Finished"));
-	owner->EndProgress();
+	if(!silent)
+	{
+		owner->UpdateProgress(100, _("Finished"));
+		owner->EndProgress();
+	}
 	return 0;
 }
 
@@ -3490,7 +3506,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	return 0;
 }
 
-int OutfitProject::BakeNifInPlace(const std::vector<mesh*>& modMeshes, bool withRef) {
+int OutfitProject::BakeConversionReference(const std::vector<mesh*>& modMeshes, bool withRef) {
 	workAnim.CleanupBones();
 	owner->UpdateAnimationGUI();
 
