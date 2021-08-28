@@ -9447,7 +9447,7 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 
 		UpdateUndoTools();
 
-		UpdateProgress(90, _("Finished"));
+		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}
 
