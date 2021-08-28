@@ -3538,9 +3538,9 @@ int OutfitStudioFrame::LoadReferenceTemplate(const wxString& refTemplate, bool k
 	auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 	if (tmpl != refTemplates.end()) {
 		if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-			error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), false, keepZapSliders, true);
+			error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), false, keepZapSliders);
 		else
-			error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), false, keepZapSliders, true);
+			error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), false, keepZapSliders);
 	}
 	else
 		error = 1;
@@ -3549,10 +3549,6 @@ int OutfitStudioFrame::LoadReferenceTemplate(const wxString& refTemplate, bool k
 		// since some reference files have multiple shapes, just update all textures
 		for (auto& s : project->GetWorkNif()->GetShapes())
 			project->SetTextures(s);
-
-		RefreshGUIFromProj();
-		CreateSetSliders();
-		ShowSliderEffect(0);
 	}
 
 	return error;
@@ -3656,14 +3652,16 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	auto shapes = project->GetWorkNif()->GetShapes(); // get outfit shapes
 
 	UpdateProgress(5, _("Loading conversion reference..."));
-	StartSubProgress(5, 20);
-	if (AlertProgressError(LoadReferenceTemplate(conversionRefTemplate, keepZapSliders), "Load Error", "Failed to load conversion reference")){
-		EndProgress();
+	if (AlertProgressError(LoadReferenceTemplate(conversionRefTemplate, keepZapSliders), "Load Error", "Failed to load conversion reference"))
 		return;
-	}
+
+	StartSubProgress(10, 20);
+	CreateSetSliders();
+	RefreshGUIFromProj();
 
 	UpdateProgress(20, _("Conforming outfit parts..."));
-	if (AlertProgressError(ConformShapes(shapes, true, 20, 35), "Conform Error", "Failed to conform shapes"))
+	StartSubProgress(20, 35);
+	if (AlertProgressError(ConformShapes(shapes, true), "Conform Error", "Failed to conform shapes"))
 		return;
 
 	UpdateProgress(35, _("Updating conversion Slider..."));
@@ -3678,22 +3676,26 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	RefreshGUIFromProj();
 	
 	UpdateProgress(50, _("Loading new reference..."));
-	StartSubProgress(50, 65);
-	if (AlertProgressError(LoadReferenceTemplate(newRefTemplate, keepZapSliders), "Load Error", "Failed to load new reference")) {
-		EndProgress();
+	if (AlertProgressError(LoadReferenceTemplate(newRefTemplate, keepZapSliders), "Load Error", "Failed to load new reference"))
 		return;
-	}
+
+	StartSubProgress(55, 65);
+	CreateSetSliders();
+	RefreshGUIFromProj();
 	
 	UpdateProgress(65, _("Copying bones..."));
-	if (AlertProgressError(CopyBoneWeightForShapes(shapes, true, 65, 85), "Copy Bone Weights Error", "Failed to copy bone weights"))
+	StartSubProgress(65, 85);
+	if (AlertProgressError(CopyBoneWeightForShapes(shapes, true), "Copy Bone Weights Error", "Failed to copy bone weights"))
 		return;
 
 	UpdateProgress(85, _("Conforming outfit parts..."));
-	if (AlertProgressError(ConformShapes(shapes, true, 85, 100), "Conform Error", "Failed to conform shapes"))
+	StartSubProgress(85, 100);
+	if (AlertProgressError(ConformShapes(shapes, true), "Conform Error", "Failed to conform shapes"))
 		return;
 
 	RefreshGUIFromProj();
 	ApplySliders();
+	ShowSliderEffect(0);
 
 	wxLogMessage("Finished conversion.");
 	UpdateProgress(100, _("Finished"));
@@ -7908,13 +7910,13 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 	ShowSliderProperties(activeSlider);
 }
 
-void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& options, int minProgress, int maxProgress) {
+void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& options) {
 	if (project->IsBaseShape(shape))
 		return;
 
 	std::string shapeName = shape->name.get();
 	wxLogMessage("Conforming '%s'...", shapeName);
-	UpdateProgress(minProgress, _("Conforming: ") + shapeName);
+	UpdateProgress(50, _("Conforming: ") + shapeName);
 
 	mesh* m = glView->GetMesh(shapeName);
 	if (m) {
@@ -7922,7 +7924,7 @@ void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& opt
 		project->ConformShape(shape, options);
 	}
 
-	UpdateProgress(maxProgress);
+	UpdateProgress(99);
 }
 
 void OutfitStudioFrame::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
@@ -7945,7 +7947,7 @@ void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& WXUNUSED(event)) {
 }
 
 
-int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent, int minProgress, int maxProgress) {
+int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent) {
 	
 	ConformOptions options;
 	if (ShowConform(options, silent)) {
@@ -7953,27 +7955,17 @@ int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent, 
 
 		ZeroSliders();
 
-		if(!progressBar)
-			StartProgress(_("Conforming all shapes..."));
-		else
-			StartSubProgress(minProgress, maxProgress);
-		
+		StartProgress(_("Conforming all shapes..."));
 		project->InitConform();
 
-		const double totalSubProgress = maxProgress - minProgress;
-		const double inc = totalSubProgress / (static_cast<double>(shapes.size()) - 1);
+		int inc = 100 / shapes.size() - 1;
 		int pos = 0;
 
 		for (auto& shape : shapes) {
 			wxLogMessage(_("Conforming: ") + shape->name.get());
-
-			double stepMinProgress = pos * inc + minProgress;
-			double stepMaxProgress = pos * inc + inc + minProgress;
-			StartSubProgress(stepMinProgress, stepMaxProgress);
-			
-			int min = static_cast<int>(inc * 0.50 + stepMinProgress); 
-			int max = static_cast<int>(inc * 0.99 + stepMinProgress);
-			ConformSliders(shape, options, min, max);
+            UpdateProgress(pos * inc, _("Conforming: ") + shape->name.get());
+            StartSubProgress(pos * inc, pos * inc + inc);
+            ConformSliders(shape, options);
 			pos++;
 			EndProgress();
 		}
@@ -7984,7 +7976,7 @@ int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent, 
 		SetPendingChanges();
 
 		wxLogMessage("All shapes conformed.");
-		UpdateProgress(maxProgress, _("Finished"));
+		UpdateProgress(100, _("Finished"));
 		EndProgress();
 		
 		return 0;
@@ -9394,17 +9386,14 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	CopyBoneWeightForShapes(selectedShapes);
 }
 
-int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, bool silent, int minProgress, int maxProgress) {
+int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, bool silent) {
 
 	WeightCopyOptions options;
 	CalcCopySkinTransOption(options);
 	AnimInfo &workAnim = *project->GetWorkAnim();
 
 	if (ShowWeightCopy(options, silent)) {
-		if(!progressBar)
-			StartProgress(_("Copying bone weights..."));
-		else 
-			StartSubProgress(minProgress, maxProgress);
+		StartProgress(_("Copying bone weights..."));
 
 		UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 		usp->undoType = UT_WEIGHT;
@@ -9413,12 +9402,13 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 		std::sort(baseBones.begin(), baseBones.end());
 		std::unordered_map<uint16_t, float> mask;
 
-		double totalSubProgress = maxProgress - minProgress;
-		double inc = totalSubProgress / (static_cast<double>(shapes.size()) - 1);
+		const int inc = 100 / shapes.size() - 1;
+		
 		for (size_t i = 0; i < shapes.size(); i++) {
 			NiShape *shape = shapes[i];
 			wxLogMessage("Copying bone weights to '%s'...", shape->name.get());
-
+			StartSubProgress(i * inc, i * inc + inc);
+			
 			if (options.doSkinTransCopy) {
 				const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->name.get()].xformGlobalToSkin;
 				const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
@@ -9445,10 +9435,8 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 
 			std::vector<std::string> lockedBones;
 
-			double stepMinProgress = i * inc + minProgress;
-			int min = static_cast<int>(inc * 0.01 + stepMinProgress); 
-			int max = static_cast<int>(inc * 0.9 + stepMinProgress);
-			project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, mergedBones, baseBones.size(), lockedBones, usp->usss.back(), false, min, max);
+			project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, mergedBones, baseBones.size(), lockedBones, usp->usss.back(), false);
+			EndProgress();
 		}
 
 		if (options.doSkinTransCopy || options.doTransformGeo)
@@ -9459,7 +9447,7 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 
 		UpdateUndoTools();
 
-		UpdateProgress(maxProgress, _("Finished"));
+		UpdateProgress(90, _("Finished"));
 		EndProgress();
 	}
 

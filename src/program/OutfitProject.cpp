@@ -1504,18 +1504,18 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 	workNif.SetNormalsForShape(shape, norms);
 }
 
-void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight, int minProgress, int maxProgress) {
+void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
 	if (!shape || !baseShape)
 		return;
 
 	std::string shapeName = shape->name.get();
 	std::string baseShapeName = baseShape->name.get();
 
-	owner->UpdateProgress(minProgress, _("Gathering bones..."));
+    owner->UpdateProgress(1, _("Gathering bones..."));
 
 	int nBones = boneList.size();
 	if (nBones <= 0 || nCopyBones <= 0) {
-		owner->UpdateProgress(maxProgress);
+        owner->UpdateProgress(90);
 		return;
 	}
 
@@ -1539,19 +1539,16 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	nzer.SetUp(&uss, &workAnim, shapeName, boneList, lockedBones, nCopyBones, bSpreadWeight);
 	std::unordered_set<int> vertList;
 
-	int totalProgress = maxProgress - minProgress;
-	double prog = totalProgress * 0.1;
+    owner->UpdateProgress(10, _("Initializing proximity data..."));
 	
-	owner->UpdateProgress(static_cast<int>(prog) + minProgress, _("Initializing proximity data..."));
-
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
 	morpher.BuildProximityCache(shapeName, proximityRadius);
 	workNif.CreateSkinning(shape);
 
-	prog = totalProgress * 0.4 + prog;
-	owner->UpdateProgress(static_cast<int>(prog) + minProgress);
-	double step = (totalProgress - prog) / nCopyBones;
+    int step = 40 / nCopyBones;
+    int prog = 40;
+    owner->UpdateProgress(prog);
 
 	for (int bi = 0; bi < nCopyBones; ++bi) {
 		const std::string &boneName = boneList[bi];
@@ -1586,7 +1583,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 			ubw[dr.first].endVal = dr.second.y;
 		}
 
-		owner->UpdateProgress(static_cast<int>(prog += step) + minProgress, _("Copying bone weights..."));
+		owner->UpdateProgress(prog += step, _("Copying bone weights..."));
 	}
 	morpher.UnlinkRefDiffData();
 
@@ -1594,7 +1591,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	for (auto vInd : vertList)
 		nzer.AdjustWeights(vInd);
 
-	owner->UpdateProgress(maxProgress);
+	owner->UpdateProgress(90);
 }
 
 void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<uint16_t, float>* mask, std::vector<std::string>* inBoneList) {
@@ -1873,7 +1870,7 @@ int OutfitProject::LoadSkeletonReference(const std::string& skeletonFileName) {
 	return AnimSkeleton::getInstance().LoadFromNif(skeletonFileName);
 }
 
-int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool keepZaps, bool silent) {
+int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool keepZaps) {
 	if (sourceFile.empty() || set.empty()) {
 		wxLogError("Template source entries are invalid.");
 		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR, owner);
@@ -1881,9 +1878,8 @@ int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const st
 	}
 
 	if (loadAll) {
-		if(!silent)
-			owner->StartSubProgress(10, 20);
-		return AddFromSliderSet(sourceFile, set, false, silent);
+		owner->StartSubProgress(10, 20);
+		return AddFromSliderSet(sourceFile, set);
 	}
 	else
 		return LoadReference(sourceFile, set, mergeSliders, shape, keepZaps);
@@ -2149,22 +2145,19 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	return 0;
 }
 
-int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName, const bool newDataLocal, bool silent) {
-	if(!silent)
-		owner->StartProgress(_("Adding slider set..."));
+int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName, const bool newDataLocal) {
+	owner->StartProgress(_("Adding slider set..."));
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
-		if(!silent)
-			owner->EndProgress();
+		owner->EndProgress();
 		return 1;
 	}
 
 	SliderSet addSet;
-	if(!silent)
-		owner->UpdateProgress(20, _("Retrieving sliders..."));
+	
+	owner->UpdateProgress(20, _("Retrieving sliders..."));
 	if (InSS.GetSet(sliderSetName, addSet)) {
-		if(!silent)
-			owner->EndProgress();
+		owner->EndProgress();
 		return 2;
 	}
 
@@ -2172,11 +2165,9 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 	std::string inputNif = addSet.GetInputFileName();
 
 	std::map<std::string, std::string> renamedShapes;
-	if(!silent)
-		owner->UpdateProgress(30, _("Adding outfit shapes..."));
+	owner->UpdateProgress(30, _("Adding outfit shapes..."));
 	if (ImportNIF(inputNif, false, "", &renamedShapes)) {
-		if(!silent)
-			owner->EndProgress();
+		owner->EndProgress();
 		return 3;
 	}
 
@@ -2225,15 +2216,12 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 		wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."), shapesJoin), _("Renamed Shapes"), wxOK | wxICON_WARNING, owner);
 	}
 
-	if(!silent)
-		owner->UpdateProgress(70, _("Updating slider data..."));
+	owner->UpdateProgress(70, _("Updating slider data..."));
 	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->name.get() : "", newDataLocal);
 
-	if(!silent)
-	{
-		owner->UpdateProgress(100, _("Finished"));
-		owner->EndProgress();
-	}
+	owner->UpdateProgress(100, _("Finished"));
+	owner->EndProgress();
+	
 	return 0;
 }
 

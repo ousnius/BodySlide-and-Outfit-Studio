@@ -195,7 +195,7 @@ public:
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
 	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
 	// The resulting data is then written back to the outfit shape as the green color channel.
-	void CopyBoneWeights(nifly::NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight, int minProgress = 1, int maxProgress = 90);
+	void CopyBoneWeights(nifly::NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
 	void TransferSelectedWeights(nifly::NiShape* shape, std::unordered_map<uint16_t, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
@@ -216,12 +216,12 @@ public:
 	void DeleteSlider(const std::string& sliderName);
 
 	int LoadSkeletonReference(const std::string& skeletonFileName);
-	int LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll = false, bool mergeSliders = false, bool keepZaps = false, bool silent = false);
+	int LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll = false, bool mergeSliders = false, bool keepZaps = false);
 	int LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders = false, bool keepZaps = false);
 	int LoadReference(const std::string& fileName, const std::string& setName, bool mergeSliders = false, const std::string& shapeName = "", bool keepZaps = false);
 
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
-	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true, bool silent = false);
+	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true);
 
 	void CollectVertexData(nifly::NiShape *shape, UndoStateShape &uss, const std::vector<uint16_t> &indices);
 	void CollectTriangleData(nifly::NiShape *shape, UndoStateShape &uss, const std::vector<uint32_t> &indices);
