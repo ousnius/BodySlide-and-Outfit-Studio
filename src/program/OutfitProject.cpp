@@ -1511,11 +1511,11 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	std::string shapeName = shape->name.get();
 	std::string baseShapeName = baseShape->name.get();
 
-    owner->UpdateProgress(1, _("Gathering bones..."));
+	owner->UpdateProgress(1, _("Gathering bones..."));
 
 	int nBones = boneList.size();
 	if (nBones <= 0 || nCopyBones <= 0) {
-        owner->UpdateProgress(90);
+		owner->UpdateProgress(90);
 		return;
 	}
 
@@ -1539,16 +1539,16 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	nzer.SetUp(&uss, &workAnim, shapeName, boneList, lockedBones, nCopyBones, bSpreadWeight);
 	std::unordered_set<int> vertList;
 
-    owner->UpdateProgress(10, _("Initializing proximity data..."));
+	owner->UpdateProgress(10, _("Initializing proximity data..."));
 	
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
 	morpher.BuildProximityCache(shapeName, proximityRadius);
 	workNif.CreateSkinning(shape);
 
-    int step = 40 / nCopyBones;
-    int prog = 40;
-    owner->UpdateProgress(prog);
+	int step = 40 / nCopyBones;
+	int prog = 40;
+	owner->UpdateProgress(prog);
 
 	for (int bi = 0; bi < nCopyBones; ++bi) {
 		const std::string &boneName = boneList[bi];
@@ -1879,7 +1879,7 @@ int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const st
 
 	if (loadAll) {
 		owner->StartSubProgress(10, 20);
-		return AddFromSliderSet(sourceFile, set);
+		return AddFromSliderSet(sourceFile, set, false);
 	}
 	else
 		return LoadReference(sourceFile, set, mergeSliders, shape, keepZaps);
@@ -1935,7 +1935,6 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 			if (s->name != shapeName)
 				DeleteShape(s);
 	}
-
 	baseShape = workNif.FindBlockByName<NiShape>(shapeName);
 
 	if(keepZaps)
@@ -2048,7 +2047,6 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		activeSet.LoadSetDiffData(baseDiffData, shape);
 	else
 		activeSet.LoadSetDiffData(baseDiffData);
-
 	
 	activeSet.SetReferencedData(shape);
 	for (auto &dn : dataNames)
@@ -2154,7 +2152,6 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 	}
 
 	SliderSet addSet;
-	
 	owner->UpdateProgress(20, _("Retrieving sliders..."));
 	if (InSS.GetSet(sliderSetName, addSet)) {
 		owner->EndProgress();
@@ -2221,7 +2218,6 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 
 	owner->UpdateProgress(100, _("Finished"));
 	owner->EndProgress();
-	
 	return 0;
 }
 
