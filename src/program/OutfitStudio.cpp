@@ -3576,7 +3576,7 @@ bool OutfitStudioFrame::AlertProgressError(int error, const wxString& title, con
 
 	wxLogError(message);
 	wxMessageBox(message, _(title), wxICON_ERROR);
-	EndProgress();
+	EndProgress("", true);
 	RefreshGUIFromProj();
 	return true;
 }
@@ -3652,9 +3652,11 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	auto shapes = project->GetWorkNif()->GetShapes(); // get outfit shapes
 
 	UpdateProgress(5, _("Loading conversion reference..."));
+	StartSubProgress(5, 10);
 	if (AlertProgressError(LoadReferenceTemplate(conversionRefTemplate, keepZapSliders), "Load Error", "Failed to load conversion reference"))
 		return;
-
+	EndProgress();
+	
 	StartSubProgress(10, 20);
 	CreateSetSliders();
 	RefreshGUIFromProj();
@@ -3663,7 +3665,7 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	StartSubProgress(20, 35);
 	if (AlertProgressError(ConformShapes(shapes, true), "Conform Error", "Failed to conform shapes"))
 		return;
-
+	
 	UpdateProgress(35, _("Updating conversion Slider..."));
 	SetSliderValue(project->activeSet.size() - 1, 100);
 	ApplySliders();
@@ -3676,9 +3678,11 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	RefreshGUIFromProj();
 	
 	UpdateProgress(50, _("Loading new reference..."));
+	StartSubProgress(50, 55);
 	if (AlertProgressError(LoadReferenceTemplate(newRefTemplate, keepZapSliders), "Load Error", "Failed to load new reference"))
 		return;
-
+	EndProgress();
+	
 	StartSubProgress(55, 65);
 	CreateSetSliders();
 	RefreshGUIFromProj();
