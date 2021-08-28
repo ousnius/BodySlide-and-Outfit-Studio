@@ -1504,20 +1504,18 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 	workNif.SetNormalsForShape(shape, norms);
 }
 
-void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight, bool silent) {
+void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight, int minProgress, int maxProgress) {
 	if (!shape || !baseShape)
 		return;
 
 	std::string shapeName = shape->name.get();
 	std::string baseShapeName = baseShape->name.get();
 
-	if(!silent)
-		owner->UpdateProgress(1, _("Gathering bones..."));
+	owner->UpdateProgress(minProgress, _("Gathering bones..."));
 
 	int nBones = boneList.size();
 	if (nBones <= 0 || nCopyBones <= 0) {
-		if(!silent)
-			owner->UpdateProgress(90);
+		owner->UpdateProgress(maxProgress);
 		return;
 	}
 
@@ -1541,18 +1539,19 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	nzer.SetUp(&uss, &workAnim, shapeName, boneList, lockedBones, nCopyBones, bSpreadWeight);
 	std::unordered_set<int> vertList;
 
-	if(!silent)
-		owner->UpdateProgress(10, _("Initializing proximity data..."));
+	int totalProgress = maxProgress - minProgress;
+	double prog = totalProgress * 0.1;
+	
+	owner->UpdateProgress(static_cast<int>(prog) + minProgress, _("Initializing proximity data..."));
 
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
 	morpher.BuildProximityCache(shapeName, proximityRadius);
 	workNif.CreateSkinning(shape);
 
-	int step = 40 / nCopyBones;
-	int prog = 40;
-	if(!silent)
-		owner->UpdateProgress(prog);
+	prog = totalProgress * 0.4 + prog;
+	owner->UpdateProgress(static_cast<int>(prog) + minProgress);
+	double step = (totalProgress - prog) / nCopyBones;
 
 	for (int bi = 0; bi < nCopyBones; ++bi) {
 		const std::string &boneName = boneList[bi];
@@ -1586,8 +1585,8 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 			}
 			ubw[dr.first].endVal = dr.second.y;
 		}
-		if(!silent)
-			owner->UpdateProgress(prog += step, _("Copying bone weights..."));
+
+		owner->UpdateProgress(static_cast<int>(prog += step) + minProgress, _("Copying bone weights..."));
 	}
 	morpher.UnlinkRefDiffData();
 
@@ -1595,8 +1594,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	for (auto vInd : vertList)
 		nzer.AdjustWeights(vInd);
 
-	if(!silent)
-		owner->UpdateProgress(90);
+	owner->UpdateProgress(maxProgress);
 }
 
 void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<uint16_t, float>* mask, std::vector<std::string>* inBoneList) {

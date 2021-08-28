@@ -1342,8 +1342,8 @@ private:
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);
 	bool ShowConform(ConformOptions& options, bool silent = false);
-	int ConformShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
-	void ConformSliders(nifly::NiShape* shape, const ConformOptions& options, bool silent = false);
+	int ConformShapes(std::vector<nifly::NiShape*> shapes, bool silent = false, int minProgress = 0, int maxProgress = 100);
+	void ConformSliders(nifly::NiShape* shape, const ConformOptions& options, int minProgress = 0, int maxProgress = 100);
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);
 	void OnSliderImportNIF(wxCommandEvent& event);
@@ -1404,7 +1404,7 @@ private:
 	void OnDeleteUnreferencedNodes(wxCommandEvent& event);
 	void OnRemoveSkinning(wxCommandEvent& event);
 	void OnShapeProperties(wxCommandEvent& event);
-	int CopyBoneWeightForShapes(std::vector<nifly::NiShape*> shapes, int addedRadius = 0, bool maskWeighted = false, bool silent = false);
+	int CopyBoneWeightForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false, int minProgress = 0, int maxProgress = 100);
 	
 	void OnMaskLess(wxCommandEvent& event);
 	void OnMaskMore(wxCommandEvent& event);

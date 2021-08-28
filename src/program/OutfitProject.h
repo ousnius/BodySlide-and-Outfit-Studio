@@ -195,7 +195,7 @@ public:
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
 	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
 	// The resulting data is then written back to the outfit shape as the green color channel.
-	void CopyBoneWeights(nifly::NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight, bool silent = false);
+	void CopyBoneWeights(nifly::NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight, int minProgress = 1, int maxProgress = 90);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
 	void TransferSelectedWeights(nifly::NiShape* shape, std::unordered_map<uint16_t, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
