@@ -3450,11 +3450,14 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
 			tmplChoice->Select(0);
 
+		LoadDialogCheckBox(dlg, "chkKeepZapSliders");
+		
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
 		return;
 
+	
 	StartProgress(_("Loading reference..."));
 
 	NiShape* baseShape = project->GetBaseShape();
@@ -3464,6 +3467,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(10, _("Loading reference set..."));
 	bool mergeSliders = (XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
 	bool keepZapSliders = (XRCCTRL(dlg, "chkKeepZapSliders", wxCheckBox)->IsChecked());
+	OutfitStudioConfig.SetBoolValue("chkKeepZapSliders", keepZapSliders);
 
 	int error = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
@@ -3570,6 +3574,12 @@ void OutfitStudioFrame::LoadDialogText(wxDialog& dlg, const char* dlgProperty) c
 	tmplChoice->SetValue(lastValue);
 }
 
+void OutfitStudioFrame::LoadDialogCheckBox(wxDialog& dlg, const char* dlgProperty) const {
+	wxCheckBox* tmplChoice = XRCCTRL(dlg, dlgProperty, wxCheckBox);
+	bool lastValue = OutfitStudioConfig.GetBoolValue(dlgProperty);
+	tmplChoice->SetValue(lastValue);
+}
+
 bool OutfitStudioFrame::AlertProgressError(int error, const wxString& title, const wxString& message) {
 	if (error == 0)
 		return false;
@@ -3582,6 +3592,12 @@ bool OutfitStudioFrame::AlertProgressError(int error, const wxString& title, con
 }
 
 void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) {
+	
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		return;
+	}
+	
 	if (bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
@@ -3597,6 +3613,9 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 		LoadDialogChoice(dlg, "npNewRefChoice");
 		LoadDialogText(dlg, "npRemoveText");
 		LoadDialogText(dlg, "npAppendText");
+		LoadDialogCheckBox(dlg, "chkKeepZapSliders");
+		LoadDialogCheckBox(dlg, "chkSkipConformPopup");
+		LoadDialogCheckBox(dlg, "chkSkipCopyBonesPopup");
 
 		result = dlg.ShowModal();
 	}
@@ -3606,32 +3625,47 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	StartProgress(_("Start Conversion.."));
 
 	bool keepZapSliders = (XRCCTRL(dlg, "chkKeepZapSliders", wxCheckBox)->IsChecked());
+	OutfitStudioConfig.SetBoolValue("chkKeepZapSliders", keepZapSliders);
+	
+	bool skipConformPopup = (XRCCTRL(dlg, "chkSkipConformPopup", wxCheckBox)->IsChecked());
+	OutfitStudioConfig.SetBoolValue("chkSkipConformPopup", skipConformPopup);
+	
+	bool skipCopyBonesPopup = (XRCCTRL(dlg, "chkSkipCopyBonesPopup", wxCheckBox)->IsChecked());
+	OutfitStudioConfig.SetBoolValue("chkSkipCopyBonesPopup", skipCopyBonesPopup);
+	
 	wxString conversionRefTemplate = XRCCTRL(dlg, "npConvRefChoice", wxChoice)->GetStringSelection();
-	wxString newRefTemplate = XRCCTRL(dlg, "npNewRefChoice", wxChoice)->GetStringSelection();
-	wxString removeFromProjectText = XRCCTRL(dlg, "npRemoveText", wxTextCtrl)->GetValue();
-	wxString appendToProjectText = XRCCTRL(dlg, "npAppendText", wxTextCtrl)->GetValue();
 	OutfitStudioConfig.SetValue("npConvRefChoice", conversionRefTemplate.ToStdString());
+	
+	wxString newRefTemplate = XRCCTRL(dlg, "npNewRefChoice", wxChoice)->GetStringSelection();
 	OutfitStudioConfig.SetValue("npNewRefChoice", newRefTemplate.ToStdString());
+	
+	wxString removeFromProjectText = XRCCTRL(dlg, "npRemoveText", wxTextCtrl)->GetValue();
 	OutfitStudioConfig.SetValue("npRemoveText", removeFromProjectText.ToStdString());
+	
+	wxString appendToProjectText = XRCCTRL(dlg, "npAppendText", wxTextCtrl)->GetValue();
 	OutfitStudioConfig.SetValue("npAppendText", appendToProjectText.ToStdString());
+	
 	Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 
 	UpdateProgress(1, _("Updating Project Output Settings"));
 
-	wxStringTokenizer tkz(removeFromProjectText, wxT(","));
-	bool modifiedName = false;
-	while (tkz.HasMoreTokens()) {
-		wxString token = tkz.GetNextToken();
-		if (!modifiedName && !appendToProjectText.IsEmpty() && project->mFileName.Contains(token)) {
-			project->mFileName.Replace(token, appendToProjectText);
-			modifiedName = true;
+	if(!removeFromProjectText.IsEmpty())
+	{
+		wxStringTokenizer tkz(removeFromProjectText, wxT(","));
+		bool modifiedName = false;
+		while (tkz.HasMoreTokens()) {
+			wxString token = tkz.GetNextToken();
+			if (!modifiedName && !appendToProjectText.IsEmpty() && project->mFileName.Contains(token)) {
+				project->mFileName.Replace(token, appendToProjectText);
+				modifiedName = true;
+			}
+			else {
+				project->mFileName.Replace(token, "");
+			}
+			project->mOutfitName.Replace(token, "");
+			project->mDataDir.Replace(token, "");
+			project->mBaseFile.Replace(token, "");
 		}
-		else {
-			project->mFileName.Replace(token, "");
-		}
-		project->mOutfitName.Replace(token, "");
-		project->mDataDir.Replace(token, "");
-		project->mBaseFile.Replace(token, "");
 	}
 	if (!appendToProjectText.IsEmpty()) {
 		if (project->mOutfitName[0] != ' ')
@@ -3663,6 +3697,8 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 
 	UpdateProgress(20, _("Conforming outfit parts..."));
 	StartSubProgress(20, 35);
+
+	// We shouldn't ever need to skip using default for this case as a correct conversion reference should always conform accurately
 	if (AlertProgressError(ConformShapes(shapes, true), "Conform Error", "Failed to conform shapes"))
 		return;
 	
@@ -3689,12 +3725,12 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	
 	UpdateProgress(65, _("Copying bones..."));
 	StartSubProgress(65, 85);
-	if (AlertProgressError(CopyBoneWeightForShapes(shapes, true), "Copy Bone Weights Error", "Failed to copy bone weights"))
+	if (AlertProgressError(CopyBoneWeightForShapes(shapes, skipCopyBonesPopup), "Copy Bone Weights Error", "Failed to copy bone weights"))
 		return;
 
 	UpdateProgress(85, _("Conforming outfit parts..."));
 	StartSubProgress(85, 100);
-	if (AlertProgressError(ConformShapes(shapes, true), "Conform Error", "Failed to conform shapes"))
+	if (AlertProgressError(ConformShapes(shapes, skipConformPopup), "Conform Error", "Failed to conform shapes"))
 		return;
 
 	RefreshGUIFromProj();
