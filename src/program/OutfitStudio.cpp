@@ -3616,6 +3616,7 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 		LoadDialogCheckBox(dlg, "chkKeepZapSliders");
 		LoadDialogCheckBox(dlg, "chkSkipConformPopup");
 		LoadDialogCheckBox(dlg, "chkSkipCopyBonesPopup");
+		LoadDialogCheckBox(dlg, "chkDeleteReferenceOnComplete");
 
 		result = dlg.ShowModal();
 	}
@@ -3632,6 +3633,9 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	
 	bool skipCopyBonesPopup = (XRCCTRL(dlg, "chkSkipCopyBonesPopup", wxCheckBox)->IsChecked());
 	OutfitStudioConfig.SetBoolValue("chkSkipCopyBonesPopup", skipCopyBonesPopup);
+
+	bool deleteReferenceOnCompleted = (XRCCTRL(dlg, "chkDeleteReferenceOnComplete", wxCheckBox)->IsChecked());
+	OutfitStudioConfig.SetBoolValue("chkDeleteReferenceOnComplete", deleteReferenceOnCompleted);
 	
 	wxString conversionRefTemplate = XRCCTRL(dlg, "npConvRefChoice", wxChoice)->GetStringSelection();
 	OutfitStudioConfig.SetValue("npConvRefChoice", conversionRefTemplate.ToStdString());
@@ -3683,7 +3687,7 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	}
 
 	project->DeleteShape(project->GetBaseShape());
-	auto shapes = project->GetWorkNif()->GetShapes(); // get outfit shapes
+	auto outfitShapes = project->GetWorkNif()->GetShapes(); // get outfit shapes
 
 	UpdateProgress(5, _("Loading conversion reference..."));
 	StartSubProgress(5, 10);
@@ -3699,7 +3703,7 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	StartSubProgress(20, 35);
 
 	// We shouldn't ever need to skip using default for this case as a correct conversion reference should always conform accurately
-	if (AlertProgressError(ConformShapes(shapes, true), "Conform Error", "Failed to conform shapes"))
+	if (AlertProgressError(ConformShapes(outfitShapes, true), "Conform Error", "Failed to conform shapes"))
 		return;
 	
 	UpdateProgress(35, _("Updating conversion Slider..."));
@@ -3725,14 +3729,22 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	
 	UpdateProgress(65, _("Copying bones..."));
 	StartSubProgress(65, 85);
-	if (AlertProgressError(CopyBoneWeightForShapes(shapes, skipCopyBonesPopup), "Copy Bone Weights Error", "Failed to copy bone weights"))
+	if (AlertProgressError(CopyBoneWeightForShapes(outfitShapes, skipCopyBonesPopup), "Copy Bone Weights Error", "Failed to copy bone weights"))
 		return;
 
 	UpdateProgress(85, _("Conforming outfit parts..."));
 	StartSubProgress(85, 100);
-	if (AlertProgressError(ConformShapes(shapes, skipConformPopup), "Conform Error", "Failed to conform shapes"))
+	if (AlertProgressError(ConformShapes(outfitShapes, skipConformPopup), "Conform Error", "Failed to conform shapes"))
 		return;
 
+	if(deleteReferenceOnCompleted) {
+		auto allShapes = project->GetWorkNif()->GetShapes();
+		for(auto &s : allShapes) {
+			if(std::find(outfitShapes.begin(), outfitShapes.end(), s) == outfitShapes.end())
+				project->DeleteShape(s);
+		}
+	}
+	
 	RefreshGUIFromProj();
 	ApplySliders();
 	ShowSliderEffect(0);

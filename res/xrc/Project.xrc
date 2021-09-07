@@ -1301,6 +1301,15 @@
 							<checked>0</checked>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkDeleteReferenceOnComplete">
+							<label>Delete Reference On Completed</label>
+							<checked>0</checked>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="sizeritem">
