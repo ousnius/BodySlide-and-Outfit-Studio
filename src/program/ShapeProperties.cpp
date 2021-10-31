@@ -167,7 +167,7 @@ void ShapeProperties::GetShader() {
 			emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
 			emissiveMultiple->SetValue(wxString::Format("%.4f", shader->GetEmissiveMultiple()));
 		}
-		else if (shader->HasType<NiMaterialProperty>())
+		else if (shader->HasType<BSShaderPPLightingProperty>() || shader->HasType<NiMaterialProperty>())
 			specularStrength->Disable();
 
 		NiMaterialProperty* material = nif->GetMaterialProperty(shape);
