@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include <map>
 #include <vector>
+#include <string>
 
 class SliderPreset {
 public:

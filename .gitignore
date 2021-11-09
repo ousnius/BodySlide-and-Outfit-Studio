@@ -20,3 +20,5 @@
 *.db-shm
 *.ilk
 *.vs
+
+/build
