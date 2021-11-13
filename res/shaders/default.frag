@@ -72,9 +72,8 @@ in vec3 lightDirectional1;
 in vec3 lightDirectional2;
 
 in vec3 viewDir;
-in vec3 t;
-in vec3 b;
 in vec3 n;
+in mat3 mv_tbn;
 
 in float maskFactor;
 in vec3 weightColor;
@@ -237,7 +236,7 @@ void main(void)
 						else
 						{
 							// Tangent Space Normal Map
-							normal = normalize(normalMap.rgb * 2.0 - 1.0);
+							normal = normalize(mv_tbn * (normalMap.rgb * 2.0 - 1.0));
 
 							if (bSpecular)
 							{
@@ -255,8 +254,7 @@ void main(void)
 				if (bCubemap && bShowTexture)
 				{
 					vec3 reflected = reflect(-viewDir, normal);
-					vec3 reflectedVS = b * reflected.x + t * reflected.y + n * reflected.z;
-					vec3 reflectedWS = mat3(matModelView) * reflectedVS;
+					vec3 reflectedWS = mat3(matModelView) * reflected;
 					reflectedWS = normalize(reflectedWS);
 
 					vec4 cubeMap = texture(texCubemap, reflectedWS);
