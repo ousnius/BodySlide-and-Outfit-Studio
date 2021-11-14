@@ -9,8 +9,8 @@
 
 uniform mat4 matProjection;
 uniform mat4 matView;
-uniform mat4 matModel;
 uniform mat4 matModelView;
+uniform mat3 mv_normalMatrix;
 uniform vec3 color;
 uniform vec3 subColor;
 
@@ -122,7 +122,6 @@ void main(void)
 
 	if (!bModelSpace)
 	{
-		mat3 mv_normalMatrix = transpose(inverse(mat3(matModelView)));
 		vec3 mv_normal = mv_normalMatrix * n;
 		vec3 mv_tangent = mv_normalMatrix * vertexTangent;
 		vec3 mv_bitangent = mv_normalMatrix * vertexBitangent;

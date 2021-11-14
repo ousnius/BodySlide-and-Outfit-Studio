@@ -34,7 +34,9 @@ uniform bool bRimlight;
 uniform bool bSoftlight;
 uniform bool bGlowmap;
 
-uniform mat4 matModelView;
+uniform mat4 matModel;
+uniform mat4 matModelViewInverse;
+uniform mat3 mv_normalMatrix;
 
 struct Properties
 {
@@ -212,7 +214,7 @@ void main(void)
 				if (bModelSpace)
 				{
 					// Vertex normal for shading with disabled maps
-					normal = mat3(matModelView) * n;
+					normal = mv_normalMatrix * n;
 					normal = normalize(normal);
 				}
 
@@ -225,7 +227,7 @@ void main(void)
 							// Model Space Normal Map
 							normal = normalize(normalMap.rgb * 2.0 - 1.0);
 							normal.r = -normal.r;
-							normal = mat3(matModelView) * normal;
+							normal = mv_normalMatrix * normal;
 							normal = normalize(normal);
 
 							if (bSpecular)
@@ -254,8 +256,7 @@ void main(void)
 				if (bCubemap && bShowTexture)
 				{
 					vec3 reflected = reflect(-viewDir, normal);
-					vec3 reflectedWS = mat3(matModelView) * reflected;
-					reflectedWS = normalize(reflectedWS);
+					vec3 reflectedWS = vec3(matModel * (matModelViewInverse * vec4(reflected, 0.0)));
 
 					vec4 cubeMap = texture(texCubemap, reflectedWS);
 					cubeMap.rgb *= prop.envReflection;
