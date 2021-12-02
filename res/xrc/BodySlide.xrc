@@ -13,7 +13,7 @@
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxFlexGridSizer">
-					<rows>2</rows>
+					<rows>3</rows>
 					<cols>5</cols>
 					<vgap>0</vgap>
 					<hgap>0</hgap>
@@ -164,6 +164,51 @@
 							<tooltip>Opens the group manager where you can edit existing or create new groups</tooltip>
 							<label>Group Manager</label>
 						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER</flag>
+						<border>5</border>
+						<object class="wxStaticText">
+							<fg>#c8c8c8</fg>
+							<label>Output Path</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbDefaultOutfit">
+									<fg>#c8c8c8</fg>
+									<tooltip>Default outfit choice in Batch Build</tooltip>
+									<label></label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxALIGN_LEFT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="conflictLabel">
+									<fg>#c8c8d8</fg>
+									<tooltip>Right click for conflicting outfit(s)</tooltip>
+									<label></label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+					</object>
+					<object class="sizeritem">
+					</object>
+					<object class="sizeritem">
 					</object>
 				</object>
 			</object>
@@ -470,5 +515,7 @@
 		<object class="wxMenuItem" name="batchBuildInvert">
 			<label>Invert Selection</label>
 		</object>
+	</object>
+	<object class="wxMenu" name="menuFileCollision">
 	</object>
 </resource>

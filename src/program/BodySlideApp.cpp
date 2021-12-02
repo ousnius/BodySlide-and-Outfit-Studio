@@ -62,6 +62,7 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 
 	EVT_BUTTON(XRCID("btnDeleteProject"), BodySlideFrame::OnDeleteProject)
 	EVT_BUTTON(XRCID("btnDeletePreset"), BodySlideFrame::OnDeletePreset)
+	EVT_CHECKBOX(XRCID("cbDefaultOutfit"), BodySlideFrame::OnDefaultSelect)
 
 	EVT_BUTTON(XRCID("btnPreview"), BodySlideFrame::OnPreview)
 	EVT_BUTTON(XRCID("btnHighToLow"), BodySlideFrame::OnHighToLow)
@@ -713,6 +714,48 @@ void BodySlideApp::DisplayActiveSet() {
 			iter++;
 		}
 	}
+	UpdateConflictManager(false);
+}
+
+void BodySlideApp::UpdateConflictManager(bool setActive) {
+	// Populate Conflict UI
+	auto conflictCheckBox = (wxCheckBox*)wxWindowBase::FindWindowByName("cbDefaultOutfit");
+	auto conflictLabel = (wxStaticText*)wxWindowBase::FindWindowByName("conflictLabel");
+	auto outputFilePath = activeSet.GetOutputFilePath();
+	bool isDefault = true;
+	conflictLabel->SetLabel(outputFilePath);
+	auto& col = outFileCount[outputFilePath];
+	std::string textColourName = "WHITE";
+	if (1 < col.size()) {
+		if (!setActive) {
+			std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
+			BuildSelectionFile buildSelFile(buildSelFileName);
+			if (buildSelFile.GetError())
+				buildSelFile.New(buildSelFileName);
+			BuildSelection buildSelection;
+			buildSelFile.Get(buildSelection);
+			std::string outputChoice = buildSelection.GetOutputChoice(outputFilePath);
+			isDefault = outputChoice == activeSet.GetName();
+		}
+		textColourName = isDefault ? "CYAN" : "RED";
+	}
+	conflictCheckBox->SetValue(isDefault);
+	conflictLabel->SetForegroundColour(wxTheColourDatabase->Find(textColourName));
+}
+
+void BodySlideApp::SetDefaultBuildSelection() {
+	auto outputFilePath = activeSet.GetOutputFilePath();
+	std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
+	BuildSelectionFile buildSelFile(buildSelFileName);
+	if (buildSelFile.GetError())
+		buildSelFile.New(buildSelFileName);
+	BuildSelection buildSelection;
+	buildSelFile.Get(buildSelection);
+	buildSelection.SetOutputChoice(outputFilePath, activeSet.GetName());
+	buildSelFile.Update(buildSelection);
+	buildSelFile.Save();
+	UpdateConflictManager(true);
+	sliderView->Refresh();
 }
 
 void BodySlideApp::EditProject(const std::string& projectName) {
@@ -2583,6 +2626,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	batchBuildList = nullptr;
 	wxMenu* srchMenu = xrc->LoadMenu("menuGroupContext");
 	wxMenu* outfitsrchMenu = xrc->LoadMenu("menuOutfitSrchContext");
+	fileCollisionMenu = xrc->LoadMenu("menuFileCollision");
 
 	search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
@@ -2597,6 +2641,9 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	outfitsearch->SetDescriptiveText(_("Outfit Filter"));
 	outfitsearch->SetToolTip(_("Filter by outfit"));
 	outfitsearch->SetMenu(outfitsrchMenu);
+
+	auto conflictLabel= (wxStaticText*)this->FindWindowByName("conflictLabel");
+	conflictLabel->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
 
 	xrc->AttachUnknownControl("searchHolder", search, this);
 	xrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
@@ -3292,6 +3339,22 @@ void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
 	GroupManager gm(this, outfits);
 	gm.ShowModal();
 	app->LoadPresets("");
+}
+
+void BodySlideFrame::OnConflictPopup(wxMouseEvent& WXUNUSED(event)) {
+	std::vector<std::string> conflictingOutfits = app->GetConflictingOutfits();
+	std::string currentOutfitName = BodySlideConfig["SelectedOutfit"];
+	int id = fileCollisionMenu->GetMenuItemCount();
+	while (id--) fileCollisionMenu->Delete(id);
+	for (id = 0; id < conflictingOutfits.size(); id++) fileCollisionMenu->Append(id, conflictingOutfits[id], "", wxITEM_NORMAL);
+	id = GetPopupMenuSelectionFromUser(*fileCollisionMenu, wxDefaultPosition);
+	if (0 > id) return;
+	std::string selectedOutfitName = conflictingOutfits[id];
+	if (selectedOutfitName != currentOutfitName) app->ActivateOutfit(selectedOutfitName);
+}
+
+void BodySlideFrame::OnDefaultSelect(wxCommandEvent& WXUNUSED(event)) {
+	app->SetDefaultBuildSelection();
 }
 
 void BodySlideFrame::OnHighToLow(wxCommandEvent& WXUNUSED(event)) {

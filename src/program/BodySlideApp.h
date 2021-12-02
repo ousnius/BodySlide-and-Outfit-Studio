@@ -175,6 +175,8 @@ public:
 	void PopulatePresetList(const std::string& select);
 	void PopulateOutfitList(const std::string& select);
 	void DisplayActiveSet();
+	void UpdateConflictManager(bool setActive);
+	void SetDefaultBuildSelection();
 
 	int LoadSliderSets();
 	void RefreshOutfitList();
@@ -183,6 +185,10 @@ public:
 
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
+
+	std::vector<std::string> GetConflictingOutfits() {
+		return outFileCount.find(activeSet.GetOutputFilePath())->second;
+	}
 
 	void DeleteOutfit(const std::string& outfitName);
 	void DeletePreset(const std::string& presetName);
@@ -265,6 +271,7 @@ public:
 	wxSearchCtrl* search = nullptr;
 	wxSearchCtrl* outfitsearch = nullptr;
 	wxCheckListBox* batchBuildList = nullptr;
+	wxMenu* fileCollisionMenu = nullptr;
 
 	BodySlideFrame(BodySlideApp* app, const wxSize& size);
 	~BodySlideFrame() {
@@ -331,6 +338,8 @@ private:
 	void OnSavePreset(wxCommandEvent& event);
 	void OnSavePresetAs(wxCommandEvent& event);
 	void OnGroupManager(wxCommandEvent& event);
+	void OnConflictPopup(wxMouseEvent& event);
+	void OnDefaultSelect(wxCommandEvent& event);
 
 	void OnPreview(wxCommandEvent& event);
 	void OnHighToLow(wxCommandEvent& event);
