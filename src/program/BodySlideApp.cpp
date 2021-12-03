@@ -62,7 +62,7 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 
 	EVT_BUTTON(XRCID("btnDeleteProject"), BodySlideFrame::OnDeleteProject)
 	EVT_BUTTON(XRCID("btnDeletePreset"), BodySlideFrame::OnDeletePreset)
-	EVT_CHECKBOX(XRCID("cbDefaultOutfit"), BodySlideFrame::OnDefaultSelect)
+	EVT_CHECKBOX(XRCID("cbIsOutfitChoice"), BodySlideFrame::OnOutfitChoiceSelect)
 
 	EVT_BUTTON(XRCID("btnPreview"), BodySlideFrame::OnPreview)
 	EVT_BUTTON(XRCID("btnHighToLow"), BodySlideFrame::OnHighToLow)
@@ -719,10 +719,10 @@ void BodySlideApp::DisplayActiveSet() {
 
 void BodySlideApp::UpdateConflictManager(bool setActive) {
 	// Populate Conflict UI
-	auto conflictCheckBox = (wxCheckBox*)wxWindowBase::FindWindowByName("cbDefaultOutfit");
+	auto conflictCheckBox = (wxCheckBox*)wxWindowBase::FindWindowByName("cbIsOutfitChoice");
 	auto conflictLabel = (wxStaticText*)wxWindowBase::FindWindowByName("conflictLabel");
 	auto outputFilePath = activeSet.GetOutputFilePath();
-	bool isDefault = true;
+	bool isOutputChoice3 = true;
 	conflictLabel->SetLabel(outputFilePath);
 	auto& col = outFileCount[outputFilePath];
 	std::string textColourName = "WHITE";
@@ -735,11 +735,11 @@ void BodySlideApp::UpdateConflictManager(bool setActive) {
 			BuildSelection buildSelection;
 			buildSelFile.Get(buildSelection);
 			std::string outputChoice = buildSelection.GetOutputChoice(outputFilePath);
-			isDefault = outputChoice == activeSet.GetName();
+			isOutputChoice3 = outputChoice == activeSet.GetName();
 		}
-		textColourName = isDefault ? "CYAN" : "RED";
+		textColourName = isOutputChoice3 ? "CYAN" : "RED";
 	}
-	conflictCheckBox->SetValue(isDefault);
+	conflictCheckBox->SetValue(isOutputChoice3);
 	conflictLabel->SetForegroundColour(wxTheColourDatabase->Find(textColourName));
 }
 
@@ -3353,7 +3353,7 @@ void BodySlideFrame::OnConflictPopup(wxMouseEvent& WXUNUSED(event)) {
 	if (selectedOutfitName != currentOutfitName) app->ActivateOutfit(selectedOutfitName);
 }
 
-void BodySlideFrame::OnDefaultSelect(wxCommandEvent& WXUNUSED(event)) {
+void BodySlideFrame::OnOutfitChoiceSelect(wxCommandEvent& WXUNUSED(event)) {
 	app->SetDefaultBuildSelection();
 }
 

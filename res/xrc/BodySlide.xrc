@@ -185,7 +185,7 @@
 								<option>0</option>
 								<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
 								<border>5</border>
-								<object class="wxCheckBox" name="cbDefaultOutfit">
+								<object class="wxCheckBox" name="cbIsOutfitChoice">
 									<fg>#c8c8c8</fg>
 									<tooltip>Default outfit choice in Batch Build</tooltip>
 									<label></label>

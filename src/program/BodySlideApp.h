@@ -339,7 +339,7 @@ private:
 	void OnSavePresetAs(wxCommandEvent& event);
 	void OnGroupManager(wxCommandEvent& event);
 	void OnConflictPopup(wxMouseEvent& event);
-	void OnDefaultSelect(wxCommandEvent& event);
+	void OnOutfitChoiceSelect(wxCommandEvent& event);
 
 	void OnPreview(wxCommandEvent& event);
 	void OnHighToLow(wxCommandEvent& event);
