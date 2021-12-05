@@ -321,6 +321,7 @@ private:
 	void OnRefreshGroups(wxCommandEvent& event);
 	void OnSaveGroups(wxCommandEvent& event);
 	void OnRefreshOutfits(wxCommandEvent& event);
+	void OnRegexOutfits(wxCommandEvent& event);
 
 	void OnChooseOutfit(wxCommandEvent& event);
 	void OnChoosePreset(wxCommandEvent& event);

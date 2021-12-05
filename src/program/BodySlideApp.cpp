@@ -81,6 +81,7 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_MENU(XRCID("menuChooseGroups"), BodySlideFrame::OnChooseGroups)	
 	EVT_MENU(XRCID("menuRefreshGroups"), BodySlideFrame::OnRefreshGroups)
 	EVT_MENU(XRCID("menuRefreshOutfits"), BodySlideFrame::OnRefreshOutfits)
+	EVT_MENU(XRCID("menuRegexOutfits"), BodySlideFrame::OnRegexOutfits)
 	EVT_MENU(XRCID("menuSaveGroups"), BodySlideFrame::OnSaveGroups)
 	
 	EVT_MOVE_END(BodySlideFrame::OnMoveWindow)
@@ -1176,6 +1177,7 @@ bool BodySlideApp::SetDefaultConfig() {
 	BodySlideConfig.SetDefaultValue("SelectedOutfit", "");
 	BodySlideConfig.SetDefaultValue("SelectedPreset", "");
 	BodySlideConfig.SetDefaultBoolValue("BuildMorphs", false);
+	BodySlideConfig.SetDefaultBoolValue("RegexFilterOutfits", false);
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
@@ -1602,6 +1604,13 @@ void BodySlideApp::ApplyOutfitFilter() {
 	static wxString lastGrps = "";
 	static std::set<std::string> grouplist;
 
+	bool regexFilterOutfits = false;
+	auto menuOutfitSrchContext = sliderView->outfitsearch->GetMenu();
+	if (menuOutfitSrchContext) {
+		auto menuRegexOutfits = menuOutfitSrchContext->FindItem(XRCID("menuRegexOutfits"));
+		if (menuRegexOutfits)
+			regexFilterOutfits = menuRegexOutfits->IsChecked();
+	}
 
 	wxString grpSrch = sliderView->search->GetValue();
 	std::string outfitSrch{sliderView->outfitsearch->GetValue()};
@@ -1653,10 +1662,24 @@ void BodySlideApp::ApplyOutfitFilter() {
 		wxString searchStr = wxString::FromUTF8(outfitSrch);
 		searchStr.MakeLower();
 
-		for (auto &filterEntry : workFilterList) {
-			wxString entryStr = wxString::FromUTF8(filterEntry);
-			if (entryStr.Lower().Contains(searchStr))
-				filteredOutfits.push_back(entryStr.ToUTF8().data());
+		if (regexFilterOutfits) {
+			std::regex re;
+
+			for (auto& filterEntry : workFilterList) {
+				try {
+					re.assign(outfitSrch, std::regex::icase);
+					if (std::regex_search(filterEntry, re))
+						filteredOutfits.push_back(filterEntry);
+				}
+				catch (std::regex_error&) {}
+			}
+		}
+		else {
+			for (auto& filterEntry : workFilterList) {
+				wxString entryStr = wxString::FromUTF8(filterEntry);
+				if (entryStr.Lower().Contains(searchStr))
+					filteredOutfits.push_back(entryStr.ToUTF8().data());
+			}
 		}
 	}
 
@@ -2581,8 +2604,17 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	SetSize(size);
 
 	batchBuildList = nullptr;
-	wxMenu* srchMenu = xrc->LoadMenu("menuGroupContext");
-	wxMenu* outfitsrchMenu = xrc->LoadMenu("menuOutfitSrchContext");
+
+	auto srchMenu = xrc->LoadMenu("menuGroupContext");
+	auto outfitsrchMenu = xrc->LoadMenu("menuOutfitSrchContext");
+
+	if (outfitsrchMenu) {
+		auto menuRegexOutfits = outfitsrchMenu->FindItem(XRCID("menuRegexOutfits"));
+		if (menuRegexOutfits) {
+			bool regexFilterOutfits = BodySlideConfig.GetBoolValue("RegexFilterOutfits");
+			menuRegexOutfits->Check(regexFilterOutfits);
+		}
+	}
 
 	search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
@@ -2904,6 +2936,13 @@ void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	if (cbForceBodyNormals)
 		BodySlideConfig.SetBoolValue("ForceBodyNormals", cbForceBodyNormals->GetValue());
 
+	auto menuOutfitSrchContext = outfitsearch->GetMenu();
+	if (menuOutfitSrchContext) {
+		auto menuRegexOutfits = menuOutfitSrchContext->FindItem(XRCID("menuRegexOutfits"));
+		if (menuRegexOutfits)
+			BodySlideConfig.SetBoolValue("RegexFilterOutfits", menuRegexOutfits->IsChecked());
+	}
+
 	int ret = BodySlideConfig.SaveConfig(Config["AppDir"] + "/BodySlide.xml", "BodySlideConfig");
 	if (ret)
 		wxLogWarning("Failed to save configuration (%d)!", ret);
@@ -3209,6 +3248,10 @@ void BodySlideFrame::OnRefreshOutfits(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string outfitName = BodySlideConfig["SelectedOutfit"];
 	app->ActivateOutfit(outfitName);
+}
+
+void BodySlideFrame::OnRegexOutfits(wxCommandEvent& event) {
+	OnRefreshOutfits(event);
 }
 
 void BodySlideFrame::OnChooseOutfit(wxCommandEvent& event) {
