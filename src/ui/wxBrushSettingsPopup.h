@@ -19,19 +19,19 @@ protected:
 
 	wxStaticText* lbBrushSize = nullptr;
 	wxSlider* brushSize = nullptr;
-	wxStaticText* lbBrushSizeVal = nullptr;
+	wxTextCtrl* brushSizeVal = nullptr;
 
 	wxStaticText* lbBrushStrength = nullptr;
 	wxSlider* brushStrength = nullptr;
-	wxStaticText* lbBrushStrengthVal = nullptr;
+	wxTextCtrl* brushStrengthVal = nullptr;
 
 	wxStaticText* lbBrushFocus = nullptr;
 	wxSlider* brushFocus = nullptr;
-	wxStaticText* lbBrushFocusVal = nullptr;
+	wxTextCtrl* brushFocusVal = nullptr;
 
 	wxStaticText* lbBrushSpacing = nullptr;
 	wxSlider* brushSpacing = nullptr;
-	wxStaticText* lbBrushSpacingVal = nullptr;
+	wxTextCtrl* brushSpacingVal = nullptr;
 
 	void Setup(wxWindow* popupWin);
 
@@ -44,12 +44,15 @@ public:
 	void SetBrushSpacing(float value);
 };
 
-class wxBrushSettingsPopup : public wxPopupWindow, public wxBrushSettingsPopupBase {
-public:
-	wxBrushSettingsPopup(OutfitStudioFrame* parent);
-};
-
 class wxBrushSettingsPopupTransient : public wxPopupTransientWindow, public wxBrushSettingsPopupBase {
+private:
+	bool stayOpen = false;
+
 public:
-	wxBrushSettingsPopupTransient(OutfitStudioFrame* parent);
+	wxBrushSettingsPopupTransient(OutfitStudioFrame* parent, bool stayOpen);
+
+	void Dismiss() override {
+		if (!stayOpen || !GetParent()->IsMouseInWindow())
+			Hide();
+	}
 };
