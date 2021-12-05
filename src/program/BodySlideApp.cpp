@@ -720,43 +720,58 @@ void BodySlideApp::DisplayActiveSet() {
 
 void BodySlideApp::UpdateConflictManager() {
 	// Populate Conflict UI
-	auto conflictCheckBox = (wxCheckBox*)wxWindowBase::FindWindowByName("cbIsOutfitChoice");
-	auto conflictLabel = (wxStaticText*)wxWindowBase::FindWindowByName("conflictLabel");
+	auto conflictCheckBox = (wxCheckBox*)sliderView->FindWindowByName("cbIsOutfitChoice");
+	auto conflictLabel = (wxStaticText*)sliderView->FindWindowByName("conflictLabel");
+	auto conflictInfo = (wxStaticText*)sliderView->FindWindowByName("conflictInfo");
+
 	auto outputFilePath = activeSet.GetOutputFilePath();
-	bool isOutputChoice = true;
 	auto& col = outFileCount[outputFilePath];
+
+	bool isOutputChoice = true;
 	std::string textColourName = "WHITE";
+
 	if (1 < col.size()) {
 		std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
+
 		BuildSelectionFile buildSelFile(buildSelFileName);
 		if (buildSelFile.GetError())
 			buildSelFile.New(buildSelFileName);
+
 		BuildSelection buildSelection;
 		buildSelFile.Get(buildSelection);
+
 		std::string outputChoice = buildSelection.GetOutputChoice(outputFilePath);
 		isOutputChoice = outputChoice == activeSet.GetName();
 		textColourName = isOutputChoice ? "CYAN" : "RED";
 	}
+
 	conflictCheckBox->SetValue(isOutputChoice);
+	conflictCheckBox->Show();
+
 	if (activeSet.GenWeights()) {
 		std::regex prefix(".*[/\\\\]");
 		std::string filePart = std::regex_replace(outputFilePath, prefix, "");
-		conflictLabel->SetLabel(outputFilePath + "_0.nif  and  " + filePart + "_1.nif");
+		conflictLabel->SetLabel(outputFilePath + "_0.nif (and _1.nif)");
 	}
-	else {
+	else
 		conflictLabel->SetLabel(outputFilePath + ".nif");
-	}
+
 	conflictLabel->SetForegroundColour(wxTheColourDatabase->Find(textColourName));
+	conflictLabel->Show();
+	conflictInfo->Show();
 }
 
 void BodySlideApp::SetDefaultBuildSelection() {
 	auto outputFilePath = activeSet.GetOutputFilePath();
 	std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
+
 	BuildSelectionFile buildSelFile(buildSelFileName);
 	if (buildSelFile.GetError())
 		buildSelFile.New(buildSelFileName);
+
 	BuildSelection buildSelection;
 	buildSelFile.Get(buildSelection);
+
 	std::string choiceName = activeSet.GetName();
 	bool willSet = 0 != choiceName.compare(buildSelection.GetOutputChoice(outputFilePath));
 	if (willSet) {
@@ -767,7 +782,9 @@ void BodySlideApp::SetDefaultBuildSelection() {
 		buildSelection.SetOutputChoice(outputFilePath, "");
 		buildSelFile.Remove(outputFilePath);
 	}
+
 	buildSelFile.Save();
+
 	UpdateConflictManager();
 	sliderView->Refresh();
 }
@@ -2686,7 +2703,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	outfitsearch->SetToolTip(_("Filter by outfit"));
 	outfitsearch->SetMenu(outfitsrchMenu);
 
-	auto conflictLabel= (wxStaticText*)this->FindWindowByName("conflictLabel");
+	auto conflictLabel = (wxStaticText*)this->FindWindowByName("conflictLabel");
 	conflictLabel->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
 
 	xrc->AttachUnknownControl("searchHolder", search, this);

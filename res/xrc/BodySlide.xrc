@@ -278,19 +278,10 @@
 					<object class="sizeritem">
 						<cellpos>1,0</cellpos>
 						<cellspan>1,3</cellspan>
+						<flag>wxLEFT</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL|wxALIGN_CENTER</flag>
-								<border>5</border>
-								<object class="wxStaticText">
-									<fg>#c8c8c8</fg>
-									<label>Output Path</label>
-									<wrap>-1</wrap>
-								</object>
-							</object>
 							<object class="sizeritem">
 								<option>0</option>
 								<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
@@ -299,17 +290,30 @@
 									<fg>#c8c8c8</fg>
 									<tooltip>Default outfit choice in Batch Build</tooltip>
 									<label></label>
+									<hidden>1</hidden>
 								</object>
 							</object>
 							<object class="sizeritem">
 								<option>1</option>
-								<flag>wxALL|wxALIGN_LEFT</flag>
+								<flag>wxLEFT|wxALIGN_LEFT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="conflictLabel">
 									<fg>#c8c8d8</fg>
-									<tooltip>Right click for conflicting outfit(s)</tooltip>
+									<tooltip>Right-click to view conflicts</tooltip>
 									<label></label>
 									<wrap>-1</wrap>
+									<hidden>1</hidden>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxALIGN_LEFT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="conflictInfo">
+									<fg>#c8c8d8</fg>
+									<label>(right-click to view conflicts)</label>
+									<wrap>-1</wrap>
+									<hidden>1</hidden>
 								</object>
 							</object>
 						</object>

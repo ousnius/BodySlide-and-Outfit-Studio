@@ -197,14 +197,12 @@ int BuildSelectionFile::Update(BuildSelection& inBuildSel) {
 
 // Removes a single choice from BuildSelection 
 void BuildSelectionFile::Remove(std::string& path) {
-	BuildSelection bsFile = root;
 	XMLElement* elem = root->FirstChildElement("OutputChoice");
 	while (elem) {
 		if (0 == path.compare(elem->Attribute("path"))) {
 			root->DeleteChild(elem);
-				return;
+			return;
 		}
 		elem = elem->NextSiblingElement("OutputChoice");
 	}
 }
-
