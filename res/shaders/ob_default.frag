@@ -57,9 +57,7 @@ in vec3 lightDirectional1;
 in vec3 lightDirectional2;
 
 in vec3 viewDir;
-in vec3 t;
-in vec3 b;
-in vec3 n;
+in mat3 mv_tbn;
 
 in float maskFactor;
 in vec3 weightColor;
@@ -129,7 +127,7 @@ void main(void)
 				vec3 outSpecular = vec3(0.0);
 
 				// Start off neutral
-				normal = normalize(vec3(0.0, 0.0, 0.5));
+				normal = normalize(mv_tbn * vec3(0.0, 0.0, 0.5));
 				specFactor = 0.0;
 
 				directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);

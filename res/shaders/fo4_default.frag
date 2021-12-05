@@ -34,7 +34,8 @@ uniform bool bSoftlight;
 uniform bool bGlowmap;
 uniform bool bGreyscaleColor;
 
-uniform mat4 matModelView;
+uniform mat4 matModel;
+uniform mat4 matModelViewInverse;
 
 struct Properties
 {
@@ -75,9 +76,7 @@ in vec3 lightDirectional1;
 in vec3 lightDirectional2;
 
 in vec3 viewDir;
-in vec3 t;
-in vec3 b;
-in vec3 n;
+in mat3 mv_tbn;
 
 in float maskFactor;
 in vec3 weightColor;
@@ -252,9 +251,7 @@ void directionalLight(in DirectionalLight light, in vec3 lightDir, inout vec3 ou
 	if (bCubemap && bShowTexture)
 	{
 		vec3 reflected = reflect(viewDir, normal);
-		vec3 reflectedVS = t * reflected.x + b * reflected.y + n * reflected.z;
-		vec3 reflectedWS = mat3(matModelView) * reflectedVS;
-		reflectedWS = normalize(reflectedWS);
+		vec3 reflectedWS = vec3(matModel * (matModelViewInverse * vec4(reflected, 0.0)));
 
 		vec4 cube = textureLod(texCubemap, reflectedWS, 8.0 - smoothness * 8.0);
 		cube.rgb *= prop.envReflection * prop.specularStrength;
@@ -358,7 +355,7 @@ void main(void)
 				vec3 outSpecular = vec3(0.0);
 
 				// Start off neutral
-				normal = normalize(vec3(0.0, 0.0, 0.5));
+				normal = normalize(mv_tbn * vec3(0.0, 0.0, 0.5));
 
 				if (bShowTexture)
 				{
@@ -373,7 +370,7 @@ void main(void)
 						else
 						{
 							// Tangent space map
-							normal = normalize(normalMap.rgb * 2.0 - 1.0);
+							normal = normalize(mv_tbn * (normalMap.rgb * 2.0 - 1.0));
 
 							// Calculate missing blue channel
 							normal.b = sqrt(1.0 - dot(normal.rg, normal.rg));

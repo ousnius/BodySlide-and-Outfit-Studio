@@ -139,6 +139,16 @@ void GLShader::SetMatrixModelView(const glm::mat4x4& matView, const glm::mat4x4&
 	if (loc >= 0) {
 		glm::mat4x4 matModelView = matView * matModel;
 		glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&matModelView);
+		loc = glGetUniformLocation(progID, "matModelViewInverse");
+		if (loc >= 0) {
+			glm::mat4x4 matModelViewInverse = glm::inverse(matModelView);
+			glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&matModelViewInverse);
+		}
+		loc = glGetUniformLocation(progID, "mv_normalMatrix");
+		if (loc >= 0) {
+			glm::mat3x3 mv_normalMatrix = glm::transpose(glm::inverse(glm::mat3(matModelView)));
+			glUniformMatrix3fv(loc, 1, GL_FALSE, (GLfloat*)&mv_normalMatrix);
+		}
 	}
 }
 
