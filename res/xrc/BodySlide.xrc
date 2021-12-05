@@ -471,6 +471,11 @@
 			<label>Refresh Outfits</label>
 			<help>Reloads outfit list</help>
 		</object>
+		<object class="wxMenuItem" name="menuRegexOutfits">
+			<label>Regular Expressions</label>
+			<help>Allow the use of regular expressions (regex) for filtering.</help>
+			<checkable>1</checkable>
+		</object>
 	</object>
 	<object class="wxMenu" name="batchBuildContext">
 		<object class="wxMenuItem" name="batchBuildNone">

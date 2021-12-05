@@ -899,7 +899,6 @@ struct ProjectHistoryEntry {
 };
 
 class OutfitProject;
-class wxBrushSettingsPopup;
 class wxBrushSettingsPopupTransient;
 
 class OutfitStudioFrame : public wxFrame {
@@ -963,7 +962,8 @@ public:
 	wxStateButton* segmentTabButton = nullptr;
 	wxStateButton* partitionTabButton = nullptr;
 	wxStateButton* lightsTabButton = nullptr;
-	wxBrushSettingsPopup* brushSettingsPopup = nullptr;
+	wxButton* brushSettings = nullptr;
+	wxSlider* fovSlider = nullptr;
 	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
 	wxCollapsiblePane* masksPane = nullptr;
 	wxCollapsiblePane* posePane = nullptr;
@@ -1065,7 +1065,7 @@ public:
 	void SelectTool(ToolID tool);
 
 	void CloseBrushSettings();
-	void PopupBrushSettings(bool transient);
+	void PopupBrushSettings(wxWindow* popupAt = nullptr);
 	void UpdateBrushSettings();
 
 	void CheckBrushBounds() {
@@ -1208,7 +1208,8 @@ private:
 	void OnSettings(wxCommandEvent& event);
 
 	void OnSashPosChanged(wxSplitterEvent& event);
-	void OnMoveWindow(wxMoveEvent& event);
+	void OnMoveWindowStart(wxMoveEvent& event);
+	void OnMoveWindowEnd(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
 
 	void UpdateTitle();
