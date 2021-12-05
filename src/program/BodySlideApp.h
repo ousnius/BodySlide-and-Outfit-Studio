@@ -175,7 +175,7 @@ public:
 	void PopulatePresetList(const std::string& select);
 	void PopulateOutfitList(const std::string& select);
 	void DisplayActiveSet();
-	void UpdateConflictManager(bool setActive);
+	void UpdateConflictManager();
 	void SetDefaultBuildSelection();
 
 	int LoadSliderSets();

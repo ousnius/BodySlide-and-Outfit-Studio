@@ -714,32 +714,37 @@ void BodySlideApp::DisplayActiveSet() {
 			iter++;
 		}
 	}
-	UpdateConflictManager(false);
+	UpdateConflictManager();
 }
 
-void BodySlideApp::UpdateConflictManager(bool setActive) {
+void BodySlideApp::UpdateConflictManager() {
 	// Populate Conflict UI
 	auto conflictCheckBox = (wxCheckBox*)wxWindowBase::FindWindowByName("cbIsOutfitChoice");
 	auto conflictLabel = (wxStaticText*)wxWindowBase::FindWindowByName("conflictLabel");
 	auto outputFilePath = activeSet.GetOutputFilePath();
-	bool isOutputChoice3 = true;
-	conflictLabel->SetLabel(outputFilePath);
+	bool isOutputChoice = true;
 	auto& col = outFileCount[outputFilePath];
 	std::string textColourName = "WHITE";
 	if (1 < col.size()) {
-		if (!setActive) {
-			std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
-			BuildSelectionFile buildSelFile(buildSelFileName);
-			if (buildSelFile.GetError())
-				buildSelFile.New(buildSelFileName);
-			BuildSelection buildSelection;
-			buildSelFile.Get(buildSelection);
-			std::string outputChoice = buildSelection.GetOutputChoice(outputFilePath);
-			isOutputChoice3 = outputChoice == activeSet.GetName();
-		}
-		textColourName = isOutputChoice3 ? "CYAN" : "RED";
+		std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
+		BuildSelectionFile buildSelFile(buildSelFileName);
+		if (buildSelFile.GetError())
+			buildSelFile.New(buildSelFileName);
+		BuildSelection buildSelection;
+		buildSelFile.Get(buildSelection);
+		std::string outputChoice = buildSelection.GetOutputChoice(outputFilePath);
+		isOutputChoice = outputChoice == activeSet.GetName();
+		textColourName = isOutputChoice ? "CYAN" : "RED";
 	}
-	conflictCheckBox->SetValue(isOutputChoice3);
+	conflictCheckBox->SetValue(isOutputChoice);
+	if (activeSet.GenWeights()) {
+		std::regex prefix(".*[/\\\\]");
+		std::string filePart = std::regex_replace(outputFilePath, prefix, "");
+		conflictLabel->SetLabel(outputFilePath + "_0.nif  and  " + filePart + "_1.nif");
+	}
+	else {
+		conflictLabel->SetLabel(outputFilePath + ".nif");
+	}
 	conflictLabel->SetForegroundColour(wxTheColourDatabase->Find(textColourName));
 }
 
@@ -751,10 +756,18 @@ void BodySlideApp::SetDefaultBuildSelection() {
 		buildSelFile.New(buildSelFileName);
 	BuildSelection buildSelection;
 	buildSelFile.Get(buildSelection);
-	buildSelection.SetOutputChoice(outputFilePath, activeSet.GetName());
-	buildSelFile.Update(buildSelection);
+	std::string choiceName = activeSet.GetName();
+	bool willSet = 0 != choiceName.compare(buildSelection.GetOutputChoice(outputFilePath));
+	if (willSet) {
+		buildSelection.SetOutputChoice(outputFilePath, activeSet.GetName());
+		buildSelFile.Update(buildSelection);
+	}
+	else {
+		buildSelection.SetOutputChoice(outputFilePath, "");
+		buildSelFile.Remove(outputFilePath);
+	}
 	buildSelFile.Save();
-	UpdateConflictManager(true);
+	UpdateConflictManager();
 	sliderView->Refresh();
 }
 

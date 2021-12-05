@@ -56,6 +56,10 @@ void BuildSelection::SetOutputChoice(const std::string& outputPath, const std::s
 	outputChoice[outputPath] = choice;
 }
 
+void BuildSelection::RemoveOutputChoice(const std::string& outputPath) {
+	outputChoice.erase(outputPath);
+}
+
 BuildSelectionFile::BuildSelectionFile(const std::string& srcFileName) {
 	root = nullptr;
 	error = 0;
@@ -190,3 +194,17 @@ int BuildSelectionFile::Update(BuildSelection& inBuildSel) {
 
 	return 0;
 }
+
+// Removes a single choice from BuildSelection 
+void BuildSelectionFile::Remove(std::string& path) {
+	BuildSelection bsFile = root;
+	XMLElement* elem = root->FirstChildElement("OutputChoice");
+	while (elem) {
+		if (0 == path.compare(elem->Attribute("path"))) {
+			root->DeleteChild(elem);
+				return;
+		}
+		elem = elem->NextSiblingElement("OutputChoice");
+	}
+}
+

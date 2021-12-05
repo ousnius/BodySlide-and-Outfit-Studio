@@ -13,7 +13,7 @@
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxFlexGridSizer">
-					<rows>3</rows>
+					<rows>2</rows>
 					<cols>5</cols>
 					<vgap>0</vgap>
 					<hgap>0</hgap>
@@ -165,51 +165,6 @@
 							<label>Group Manager</label>
 						</object>
 					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL|wxALIGN_CENTER</flag>
-						<border>5</border>
-						<object class="wxStaticText">
-							<fg>#c8c8c8</fg>
-							<label>Output Path</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxEXPAND</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
-								<border>5</border>
-								<object class="wxCheckBox" name="cbIsOutfitChoice">
-									<fg>#c8c8c8</fg>
-									<tooltip>Default outfit choice in Batch Build</tooltip>
-									<label></label>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>1</option>
-								<flag>wxALL|wxALIGN_LEFT</flag>
-								<border>5</border>
-								<object class="wxStaticText" name="conflictLabel">
-									<fg>#c8c8d8</fg>
-									<tooltip>Right click for conflicting outfit(s)</tooltip>
-									<label></label>
-									<wrap>-1</wrap>
-								</object>
-							</object>
-						</object>
-					</object>
-					<object class="sizeritem">
-					</object>
-					<object class="sizeritem">
-					</object>
-					<object class="sizeritem">
-					</object>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -301,77 +256,107 @@
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
+				<flag>wxALL|wxEXPAND</flag>
+				<object class="wxGridBagSizer">
+					<cols>3</cols>
+					<hgap>5</hgap>
+					<vgap>5</vgap>
+					<growablecols>0,1,2</growablecols>
+					<growablerows></growablerows>
 					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
+						<cellpos>0,0</cellpos>
+						<cellspan>1,1</cellspan>
+						<flag>wxALIGN_CENTER|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnLowToHigh">
+							<size>26,-1</size>
+							<fg>wxSYS_COLOUR_BTNTEXT</fg>
+							<tooltip>Copy the low weight slider values to the high weight section.</tooltip>
+							<label translate="0">&#8594;</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<cellpos>1,0</cellpos>
+						<cellspan>1,3</cellspan>
 						<border>5</border>
 						<object class="wxBoxSizer">
-							<orient>wxVERTICAL</orient>
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxALIGN_CENTER</flag>
+								<border>5</border>
+								<object class="wxStaticText">
+									<fg>#c8c8c8</fg>
+									<label>Output Path</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbIsOutfitChoice">
+									<fg>#c8c8c8</fg>
+									<tooltip>Default outfit choice in Batch Build</tooltip>
+									<label></label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxALIGN_LEFT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="conflictLabel">
+									<fg>#c8c8d8</fg>
+									<tooltip>Right click for conflicting outfit(s)</tooltip>
+									<label></label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<cellpos>2,0</cellpos>
+						<cellspan>1,1</cellspan>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
 								<option>0</option>
 								<flag>wxALIGN_CENTER|wxALL</flag>
 								<border>5</border>
-								<object class="wxButton" name="btnLowToHigh">
-									<size>26,-1</size>
+								<object class="wxButton" name="btnBuildBatch">
 									<fg>wxSYS_COLOUR_BTNTEXT</fg>
-									<tooltip>Copy the low weight slider values to the high weight section.</tooltip>
-									<label translate="0">&#8594;</label>
+									<tooltip>Build multiple outfits using the currently active slider values.\n\nHold CTRL = Build to custom directory\nHold ALT = Delete from output directory</tooltip>
+									<label>Batch Build...</label>
 								</object>
-							</object>
-							<object class="spacer">
-								<option>1</option>
-								<flag>wxEXPAND</flag>
-								<border>5</border>
-								<size>0,15</size>
 							</object>
 							<object class="sizeritem">
 								<option>0</option>
-								<flag>wxALL</flag>
+								<flag>wxALIGN_CENTER|wxALL</flag>
 								<border>5</border>
 								<object class="wxBoxSizer">
-									<orient>wxHORIZONTAL</orient>
+									<orient>wxVERTICAL</orient>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
-										<object class="wxButton" name="btnBuildBatch">
-											<fg>wxSYS_COLOUR_BTNTEXT</fg>
-											<tooltip>Build multiple outfits using the currently active slider values.\n\nHold CTRL = Build to custom directory\nHold ALT = Delete from output directory</tooltip>
-											<label>Batch Build...</label>
+										<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+										<border>0</border>
+										<object class="wxCheckBox" name="cbMorphs">
+											<fg>#c8c8c8</fg>
+											<label>Build Morphs</label>
+											<tooltip>Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires other mods to make use of the morph data.</tooltip>
+											<hidden>1</hidden>
 										</object>
 									</object>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
-										<object class="wxBoxSizer">
-											<orient>wxVERTICAL</orient>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-												<border>0</border>
-												<object class="wxCheckBox" name="cbMorphs">
-													<fg>#c8c8c8</fg>
-													<label>Build Morphs</label>
-													<tooltip>Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires other mods to make use of the morph data.</tooltip>
-													<hidden>1</hidden>
-												</object>
-											</object>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-												<border>0</border>
-												<object class="wxCheckBox" name="cbForceBodyNormals">
-													<fg>#c8c8c8</fg>
-													<label>Force Body Normals</label>
-													<tooltip>Adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.</tooltip>
-													<hidden>1</hidden>
-												</object>
-											</object>
+										<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+										<border>0</border>
+										<object class="wxCheckBox" name="cbForceBodyNormals">
+											<fg>#c8c8c8</fg>
+											<label>Force Body Normals</label>
+											<tooltip>Adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.</tooltip>
+											<hidden>1</hidden>
 										</object>
 									</object>
 								</object>
@@ -379,102 +364,84 @@
 						</object>
 					</object>
 					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxEXPAND</flag>
+						<cellpos>0,1</cellpos>
+						<cellspan>1,1</cellspan>
+						<flag>wxALIGN_CENTER|wxALL</flag>
 						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxVERTICAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALIGN_CENTER|wxALL</flag>
-								<border>5</border>
-								<object class="wxButton" name="btnPreview">
-									<size>128,-1</size>
-									<fg>wxSYS_COLOUR_BTNTEXT</fg>
-									<tooltip>Show a preview window for this outfit.</tooltip>
-									<label>Preview</label>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALIGN_CENTER|wxALL</flag>
-								<border>5</border>
-								<object class="wxButton" name="btnBuild">
-									<size>128,45</size>
-									<font>
-										<size>12</size>
-										<style>normal</style>
-										<weight>normal</weight>
-										<underlined>0</underlined>
-										<face>Andalus</face>
-									</font>
-									<fg>wxSYS_COLOUR_BTNTEXT</fg>
-									<tooltip>Creates the currently selected outfit/body.\n\nHold CTRL = Build to working directory\nHold ALT = Delete from output directory</tooltip>
-									<label>Build</label>
-									<default>0</default>
-								</object>
-							</object>
+						<object class="wxButton" name="btnPreview">
+							<size>128,-1</size>
+							<fg>wxSYS_COLOUR_BTNTEXT</fg>
+							<tooltip>Show a preview window for this outfit.</tooltip>
+							<label>Preview</label>
 						</object>
 					</object>
 					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
+						<cellpos>2,1</cellpos>
+						<cellspan>1,1</cellspan>
+						<flag>wxALIGN_CENTER|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnBuild">
+							<size>128,45</size>
+							<font>
+								<size>12</size>
+								<style>normal</style>
+								<weight>normal</weight>
+								<underlined>0</underlined>
+								<face>Andalus</face>
+							</font>
+							<fg>wxSYS_COLOUR_BTNTEXT</fg>
+							<tooltip>Creates the currently selected outfit/body.\n\nHold CTRL = Build to working directory\nHold ALT = Delete from output directory</tooltip>
+							<label>Build</label>
+							<default>0</default>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<cellpos>0,2</cellpos>
+						<cellspan>1,1</cellspan>
+						<flag>wxALIGN_CENTER|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnHighToLow">
+							<size>26,-1</size>
+							<fg>wxSYS_COLOUR_BTNTEXT</fg>
+							<tooltip>Copy the high weight slider values to the low weight section.</tooltip>
+							<label translate="0">&#8592;</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<cellpos>2,2</cellpos>
+						<cellspan>1,1</cellspan>
+						<flag>wxALIGN_RIGHT|wxALL</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
-							<orient>wxVERTICAL</orient>
+							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
 								<option>0</option>
 								<flag>wxALIGN_CENTER|wxALL</flag>
 								<border>5</border>
-								<object class="wxButton" name="btnHighToLow">
-									<size>26,-1</size>
-									<fg>wxSYS_COLOUR_BTNTEXT</fg>
-									<tooltip>Copy the high weight slider values to the low weight section.</tooltip>
-									<label translate="0">&#8592;</label>
+								<object class="wxButton" name="btnAbout">
+									<size>24,24</size>
+									<bitmap stock_id="wxART_INFORMATION"/>
+									<tooltip>About</tooltip>
 								</object>
-							</object>
-							<object class="spacer">
-								<option>1</option>
-								<flag>wxEXPAND</flag>
-								<border>5</border>
-								<size>0,15</size>
 							</object>
 							<object class="sizeritem">
 								<option>0</option>
-								<flag>wxALIGN_RIGHT|wxALL</flag>
+								<flag>wxALIGN_CENTER|wxALL</flag>
 								<border>5</border>
-								<object class="wxBoxSizer">
-									<orient>wxHORIZONTAL</orient>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
-										<object class="wxButton" name="btnAbout">
-											<size>24,24</size>
-											<bitmap stock_id="wxART_INFORMATION"/>
-											<tooltip>About</tooltip>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
-										<object class="wxButton" name="btnSettings">
-											<fg>wxSYS_COLOUR_BTNTEXT</fg>
-											<tooltip>Open settings dialog.</tooltip>
-											<label>Settings</label>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
-										<object class="wxButton" name="btnOutfitStudio">
-											<fg>wxSYS_COLOUR_BTNTEXT</fg>
-											<tooltip>Open Outfit Studio, a full-featured tool for creating and converting outfits.</tooltip>
-											<label>Outfit Studio</label>
-										</object>
-									</object>
+								<object class="wxButton" name="btnSettings">
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Open settings dialog.</tooltip>
+									<label>Settings</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER|wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnOutfitStudio">
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Open Outfit Studio, a full-featured tool for creating and converting outfits.</tooltip>
+									<label>Outfit Studio</label>
 								</object>
 							</object>
 						</object>
