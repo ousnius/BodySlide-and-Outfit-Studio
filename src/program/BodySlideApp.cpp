@@ -2703,8 +2703,13 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	outfitsearch->SetToolTip(_("Filter by outfit"));
 	outfitsearch->SetMenu(outfitsrchMenu);
 
-	auto conflictLabel = (wxStaticText*)this->FindWindowByName("conflictLabel");
-	conflictLabel->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
+	auto conflictLabel = (wxStaticText*)FindWindowByName("conflictLabel");
+	if (conflictLabel)
+		conflictLabel->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
+
+	auto conflictInfo = (wxStaticText*)FindWindowByName("conflictInfo");
+	if (conflictInfo)
+		conflictInfo->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
 
 	xrc->AttachUnknownControl("searchHolder", search, this);
 	xrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
