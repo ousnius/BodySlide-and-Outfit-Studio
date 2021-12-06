@@ -3120,6 +3120,7 @@ void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
 
 	w->ChangeValue(wxString::Format("%0.0f%%", v));
 	app->SetSliderValue(name, isLo, (float)v / 100.0f);
+	app->SetSliderChanged(name, isLo);
 
 	if (isLo)
 		sd->sliderLo->SetValue(v);
