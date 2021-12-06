@@ -141,6 +141,7 @@
 									<fg>wxSYS_COLOUR_BTNTEXT</fg>
 									<tooltip>Saves the new slider values to the currently selected preset</tooltip>
 									<label>Save</label>
+									<enabled>0</enabled>
 								</object>
 							</object>
 							<object class="sizeritem">

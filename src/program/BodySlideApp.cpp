@@ -526,6 +526,8 @@ void BodySlideApp::ActivatePreset(const std::string &presetName, const bool upda
 		sliderView->SetSliderPosition(sliderBig->name.c_str(), sliderBig->value, SLIDER_HI);
 	}
 
+	sliderView->SetPresetChanged(false);
+
 	if (preview && updatePreview)
 		zapChanged ? RebuildPreviewMeshes() : UpdatePreview();
 }
@@ -964,6 +966,8 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 			}
 		}
 	}
+
+	sliderView->SetPresetChanged();
 
 	if (preview)
 		UpdatePreview();
@@ -2673,6 +2677,8 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 		return;
 	}
 
+	btnSavePreset = (wxButton*)FindWindowByName("btnSavePreset", this);
+
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/BatchBuild.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Settings.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/About.xrc");
@@ -2708,11 +2714,11 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	outfitsearch->SetToolTip(_("Filter by outfit"));
 	outfitsearch->SetMenu(outfitsrchMenu);
 
-	auto conflictLabel = (wxStaticText*)FindWindowByName("conflictLabel");
+	auto conflictLabel = (wxStaticText*)FindWindowByName("conflictLabel", this);
 	if (conflictLabel)
 		conflictLabel->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
 
-	auto conflictInfo = (wxStaticText*)FindWindowByName("conflictInfo");
+	auto conflictInfo = (wxStaticText*)FindWindowByName("conflictInfo", this);
 	if (conflictInfo)
 		conflictInfo->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
 
@@ -2952,6 +2958,11 @@ void BodySlideFrame::ClearSliderGUI() {
 	rowCount = 0;
 }
 
+void BodySlideFrame::SetPresetChanged(bool changed) {
+	if (btnSavePreset)
+		btnSavePreset->Enable(changed);
+}
+
 void BodySlideFrame::PopulateOutfitList(const wxArrayString& items, const wxString& selectItem) {
 	wxChoice* outfitChoice = (wxChoice*)FindWindowByName("outfitChoice", this);
 	if (!outfitChoice)
@@ -3092,6 +3103,7 @@ void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
 	else
 		sd->sliderReadoutHi->ChangeValue(wxString::Format("%d%%", event.GetPosition()));
 
+	SetPresetChanged();
 	app->UpdatePreview();
 }
 
@@ -3127,6 +3139,7 @@ void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
 	else
 		sd->sliderHi->SetValue(v);
 
+	SetPresetChanged();
 	app->UpdatePreview();
 }
 
@@ -3235,6 +3248,8 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 				slider->zapCheckLo->SetValue(!slider->zapCheckLo->GetValue());
 		}
 	}
+
+	SetPresetChanged();
 
 	wxBeginBusyCursor();
 	if (app->IsUVSlider(sn))
@@ -3370,6 +3385,9 @@ void BodySlideFrame::OnDeletePreset(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
+	if (!btnSavePreset->IsEnabled())
+		return;
+
 	if (OutfitIsEmpty())
 		return;
 
@@ -3383,6 +3401,7 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 		wxMessageBox(wxString::Format(_("Failed to save preset (%d)!"), error), _("Error"));
 	}
 
+	SetPresetChanged(false);
 	app->LoadPresets("");
 	app->PopulatePresetList(presetName);
 }
@@ -3410,6 +3429,7 @@ void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {
 		wxMessageBox(wxString::Format(_("Failed to save preset as '%s' (%d)!"), fname, error), "Error");
 	}
 
+	SetPresetChanged(false);
 	app->LoadPresets("");
 	app->PopulatePresetList(presetName);
 	BodySlideConfig.SetValue("SelectedPreset", presetName);

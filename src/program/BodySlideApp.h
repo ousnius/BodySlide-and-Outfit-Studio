@@ -268,6 +268,7 @@ public:
 	std::unordered_map<std::string, SliderDisplay*> sliderDisplays;
 
 	wxTimer delayLoad;
+	wxButton* btnSavePreset = nullptr;
 	wxSearchCtrl* search = nullptr;
 	wxSearchCtrl* outfitsearch = nullptr;
 	wxCheckListBox* batchBuildList = nullptr;
@@ -292,6 +293,7 @@ public:
 	void ClearPresetList();
 	void ClearOutfitList();
 	void ClearSliderGUI();
+	void SetPresetChanged(bool changed = true);
 
 	void PopulateOutfitList(const wxArrayString& items, const wxString& selectItem);
 	void PopulatePresetList(const wxArrayString& items, const wxString& selectItem);
