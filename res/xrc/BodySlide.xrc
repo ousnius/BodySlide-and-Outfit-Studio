@@ -299,7 +299,7 @@
 								<border>5</border>
 								<object class="wxStaticText" name="conflictLabel">
 									<fg>#c8c8d8</fg>
-									<tooltip>Right-click to view conflicts</tooltip>
+									<tooltip>Output Path (which the game would use for this outfit)</tooltip>
 									<label></label>
 									<wrap>-1</wrap>
 									<hidden>1</hidden>

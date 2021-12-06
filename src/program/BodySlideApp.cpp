@@ -758,7 +758,12 @@ void BodySlideApp::UpdateConflictManager() {
 
 	conflictLabel->SetForegroundColour(wxTheColourDatabase->Find(textColourName));
 	conflictLabel->Show();
-	conflictInfo->Show();
+	if (1 < col.size()) {
+		conflictInfo->Show();
+	}
+	else {
+		conflictInfo->Hide();
+	}
 }
 
 void BodySlideApp::SetDefaultBuildSelection() {
