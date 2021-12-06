@@ -126,39 +126,7 @@ public:
 	void GetArchiveFiles(std::vector<std::string>& outList);
 
 	void LoadData();
-	void CharHook(wxKeyEvent& event) {
-		wxWindow* w = (wxWindow*)event.GetEventObject();
-		if (!w) {
-			event.Skip();
-			return;
-		}
-
-		wxString nm = w->GetName();
-		if (event.GetKeyCode() == wxKeyCode::WXK_F5) {
-			if (nm == "outfitChoice") {
-				RefreshOutfitList();
-			}
-			event.Skip();
-			return;
-		}
-
-#ifdef _WINDOWS
-		std::string stupidkeys = "0123456789-";
-		bool stupidHack = false;
-		if (event.GetKeyCode() < 256 && stupidkeys.find(event.GetKeyCode()) != std::string::npos)
-			stupidHack = true;
-
-		if (stupidHack && nm.EndsWith("|readout")) {
-			wxTextCtrl* e = (wxTextCtrl*)w;
-			HWND hwndEdit = e->GetHandle();
-			::SendMessage(hwndEdit, WM_CHAR, event.GetKeyCode(), event.GetRawKeyFlags());
-		}
-		else
-#endif
-		{
-			event.Skip();
-		}
-	}
+	void CharHook(wxKeyEvent& event);
 
 	void LoadAllCategories();
 
@@ -268,6 +236,9 @@ public:
 	std::unordered_map<std::string, SliderDisplay*> sliderDisplays;
 
 	wxTimer delayLoad;
+
+	wxChoice* outfitChoice = nullptr;
+	wxChoice* presetChoice = nullptr;
 	wxButton* btnSavePreset = nullptr;
 	wxSearchCtrl* search = nullptr;
 	wxSearchCtrl* outfitsearch = nullptr;
@@ -362,7 +333,6 @@ private:
 	void OnEditProject(wxCommandEvent& event);
 
 	bool OutfitIsEmpty() {
-		wxChoice* outfitChoice = (wxChoice*)FindWindowByName("outfitChoice");
 		if (outfitChoice && !outfitChoice->GetStringSelection().empty())
 			return false;
 
