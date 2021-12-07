@@ -268,7 +268,19 @@ public:
 
 	void GetPickRay(int ScreenX, int ScreenY, mesh* m, nifly::Vector3& dirVect, nifly::Vector3& outNearPos);
 	mesh* PickMesh(int ScreenX, int ScreenY);
-	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverPoint = nullptr, nifly::Vector3* outHoverColor = nullptr, float* outHoverAlpha = nullptr, nifly::Edge* outHoverEdge = nullptr, nifly::Vector3* outHoverCoord = nullptr);
+
+	struct CursorHitResult {
+		mesh* hitMesh = nullptr;
+		std::string hitMeshName;
+		int hoverPoint = -1;
+		nifly::Vector3 hoverColor = nifly::Vector3(1.0f, 1.0f, 1.0f);
+		float hoverAlpha = 1.0f;
+		nifly::Edge hoverEdge;
+		nifly::Vector3 hoverMeshCoord;
+		nifly::Vector3 hoverRealCoord;
+	};
+
+	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, CursorHitResult* hitResult = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, mesh* hitMesh = nullptr);
 	void ShowCursor(bool show = true);
 	void HidePointCursor();

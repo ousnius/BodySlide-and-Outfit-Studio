@@ -10988,28 +10988,30 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 }
 
 bool wxGLPanel::StartPickVertex() {
-	if (hoverMeshName.empty() || hoverPoint < 0)
+	if (lastHitResult.hitMeshName.empty() || lastHitResult.hoverPoint < 0)
 		return false;
 
-	mouseDownMeshName = hoverMeshName;
-	mouseDownPoint = hoverPoint;
+	mouseDownMeshName = lastHitResult.hitMeshName;
+	mouseDownPoint = lastHitResult.hoverPoint;
 	return true;
 }
 
 void wxGLPanel::UpdatePickVertex(const wxPoint& screenPos) {
-	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint);
-	if (!hit || hoverMeshName != mouseDownMeshName || hoverPoint != mouseDownPoint)
+	GLSurface::CursorHitResult hitResult{};
+
+	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hitResult);
+	if (!hit || hitResult.hitMeshName != mouseDownMeshName || hitResult.hoverPoint != mouseDownPoint)
 		gls.HidePointCursor();
 
 	gls.RenderOneFrame();
 }
 
 void wxGLPanel::EndPickVertex() {
-	if (hoverMeshName != mouseDownMeshName || hoverPoint != mouseDownPoint)
+	if (lastHitResult.hitMeshName != mouseDownMeshName || lastHitResult.hoverPoint != mouseDownPoint)
 		return;
 
 	// Clear PickVertex state so no accidents can happen
-	hoverMeshName.clear();
+	lastHitResult.hitMeshName.clear();
 	gls.HidePointCursor();
 
 	if (activeTool == ToolID::CollapseVertex)
@@ -11056,28 +11058,30 @@ void wxGLPanel::ClickCollapseVertex() {
 }
 
 bool wxGLPanel::StartPickEdge() {
-	if (hoverMeshName.empty() || (hoverEdge.p1 == 0 && hoverEdge.p2 == 0))
+	if (lastHitResult.hitMeshName.empty() || (lastHitResult.hoverEdge.p1 == 0 && lastHitResult.hoverEdge.p2 == 0))
 		return false;
 
-	mouseDownMeshName = hoverMeshName;
-	mouseDownEdge = hoverEdge;
+	mouseDownMeshName = lastHitResult.hitMeshName;
+	mouseDownEdge = lastHitResult.hoverEdge;
 	return true;
 }
 
 void wxGLPanel::UpdatePickEdge(const wxPoint& screenPos) {
-	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, nullptr, nullptr, &hoverEdge);
-	if (!hit || hoverMeshName != mouseDownMeshName || !hoverEdge.CompareIndices(mouseDownEdge))
+	GLSurface::CursorHitResult hitResult{};
+
+	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hitResult);
+	if (!hit || hitResult.hitMeshName != mouseDownMeshName || !hitResult.hoverEdge.CompareIndices(mouseDownEdge))
 		gls.HideSegCursor();
 
 	gls.RenderOneFrame();
 }
 
 void wxGLPanel::EndPickEdge() {
-	if (hoverMeshName != mouseDownMeshName || !hoverEdge.CompareIndices(mouseDownEdge))
+	if (lastHitResult.hitMeshName != mouseDownMeshName || !lastHitResult.hoverEdge.CompareIndices(mouseDownEdge))
 		return;
 
 	// Clear PickEdge state so no accidents can happen
-	hoverMeshName.clear();
+	lastHitResult.hitMeshName.clear();
 	gls.HideSegCursor();
 
 	if (activeTool == ToolID::FlipEdge)
@@ -11977,6 +11981,14 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 	if (rbuttonDown) {
 		isRDragging = true;
+
+		if (wxGetKeyState(WXK_ALT)) {
+			if (lastHitResult.hoverPoint != -1) {
+				rotationCenterMode = RotationCenterMode::Picked;
+				gls.camRotOffset = lastHitResult.hoverRealCoord;
+			}
+		}
+
 		if (wxGetKeyState(WXK_SHIFT)) {
 			gls.PanCamera(x - lastX, y - lastY);
 		}
@@ -11984,13 +11996,6 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.TurnTableCamera(x - lastX);
 			gls.PitchCamera(y - lastY);
 			ShowRotationCenter();
-		}
-
-		if (wxGetKeyState(WXK_ALT)) {
-			if (hoverPoint != -1) {
-				rotationCenterMode = RotationCenterMode::Picked;
-				gls.camRotOffset = hoverCoord;
-			}
 		}
 
 		UpdateTransformTool();
@@ -12030,21 +12035,17 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	}
 
 	if (!rbuttonDown && !lbuttonDown) {
-		hoverMeshName.clear();
-		hoverPoint = -1;
-		hoverCoord.Zero();
-		hoverEdge.p1 = 0;
-		hoverEdge.p2 = 0;
-		Vector3 hoverColor;
-		float hoverAlpha = 1.0f;
+		GLSurface::CursorHitResult hitResult{};
 
 		if (editMode) {
-			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, &hoverColor, &hoverAlpha, &hoverEdge, &hoverCoord);
+			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitResult);
 		}
 		else {
 			cursorExists = false;
 			gls.ShowCursor(false);
 		}
+
+		lastHitResult = hitResult;
 
 		if ((transformMode || pivotMode) && !isTransforming && !isMovingPivot) {
 			if (XMoveMesh) {
@@ -12082,14 +12083,14 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		if (os->statusBar) {
 			if (cursorExists) {
 				if (activeTool == ToolID::MaskBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hoverPoint, hoverColor.x), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hitResult.hoverPoint, hitResult.hoverColor.x), 1);
 				else if (activeTool == ToolID::WeightBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", hoverPoint, hoverColor.y), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", hitResult.hoverPoint, hitResult.hoverColor.y), 1);
 				else if (activeTool == ToolID::ColorBrush || activeTool == ToolID::AlphaBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g, Alpha: %g", hoverPoint, hoverColor.x, hoverColor.y, hoverColor.z, hoverAlpha), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g, Alpha: %g", hitResult.hoverPoint, hitResult.hoverColor.x, hitResult.hoverColor.y, hitResult.hoverColor.z, hitResult.hoverAlpha), 1);
 				else {
-					Vector3 hoverCoordNif = mesh::VecToNifCoords(hoverCoord);
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hoverPoint, hoverCoordNif.x, hoverCoordNif.y, hoverCoordNif.z), 1);
+					Vector3 hoverCoordNif = mesh::VecToNifCoords(hitResult.hoverMeshCoord);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hitResult.hoverPoint, hoverCoordNif.x, hoverCoordNif.y, hoverCoordNif.z), 1);
 				}
 			}
 			else {

@@ -486,17 +486,10 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 	return true;
 }
 
-bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverPoint, Vector3* outHoverColor, float* outHoverAlpha, Edge* outHoverEdge, Vector3* outHoverCoord) {
+bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHitResult* hitResult) {
 	bool collided = false;
 	if (activeMeshes.empty())
 		return collided;
-
-	if (outHoverPoint)
-		(*outHoverPoint) = -1;
-	if (outHoverColor)
-		(*outHoverColor) = Vector3(1.0f, 1.0f, 1.0f);
-	if (outHoverCoord)
-		outHoverCoord->Zero();
 
 	std::unordered_map<mesh*, Vector3> allHitDistances;
 	for (auto &m : activeMeshes) {
@@ -554,28 +547,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 
 				if (closest) {
 					const int dec = 5;
-
-					if (outHoverPoint)
-						(*outHoverPoint) = pointid;
-
-					if (outHoverCoord)
-						(*outHoverCoord) = hilitepoint;
-
-					if (outHoverColor) {
-						(*outHoverColor).x = std::floor(m->vcolors[pointid].x * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
-						(*outHoverColor).y = std::floor(m->vcolors[pointid].y * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
-						(*outHoverColor).z = std::floor(m->vcolors[pointid].z * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
-					}
-
-					if (outHoverAlpha)
-						(*outHoverAlpha) = std::floor(m->valpha[pointid] * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
-
-					if (hitMeshName)
-						(*hitMeshName) = m->shapeName;
-
 					Edge closestEdge = t.ClosestEdge(m->verts.get(), origin);
-					if (outHoverEdge)
-						*outHoverEdge = closestEdge;
 
 					Vector3 morigin = mesh::ApplyMatrix4(m->matModel, origin);
 
@@ -591,6 +563,19 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 					Vector3 mep1 = mesh::ApplyMatrix4(m->matModel, m->verts[closestEdge.p1]);
 					Vector3 mep2 = mesh::ApplyMatrix4(m->matModel, m->verts[closestEdge.p2]);
 					AddVisSeg(mep1, mep2, "seghilite");
+
+					if (hitResult) {
+						hitResult->hoverPoint = pointid;
+						hitResult->hoverMeshCoord = hilitepoint;
+						hitResult->hoverRealCoord = mhilitepoint;
+						hitResult->hoverColor.x = std::floor(m->vcolors[pointid].x * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
+						hitResult->hoverColor.y = std::floor(m->vcolors[pointid].y * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
+						hitResult->hoverColor.z = std::floor(m->vcolors[pointid].z * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
+						hitResult->hoverAlpha = std::floor(m->valpha[pointid] * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
+						hitResult->hitMesh = m;
+						hitResult->hitMeshName = m->shapeName;
+						hitResult->hoverEdge = closestEdge;
+					}
 				}
 
 				allHitDistances[m] = hilitepoint;

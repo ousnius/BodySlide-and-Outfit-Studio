@@ -760,10 +760,10 @@ private:
 
 	int lastX = 0;
 	int lastY = 0;
-	std::string hoverMeshName, mouseDownMeshName;
-	int hoverPoint, mouseDownPoint;
-	nifly::Edge hoverEdge, mouseDownEdge;
-	nifly::Vector3 hoverCoord;
+	GLSurface::CursorHitResult lastHitResult{};
+	std::string mouseDownMeshName;
+	int mouseDownPoint;
+	nifly::Edge mouseDownEdge;
 
 	std::set<mesh*> BVHUpdateQueue;
 
