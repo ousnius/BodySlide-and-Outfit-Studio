@@ -11335,20 +11335,20 @@ bool wxGLPanel::RedoStroke() {
 
 void wxGLPanel::ShowRotationCenter(bool show) {
 	if (show) {
-		RotationCenterMesh = gls.AddVis3dSphere(gls.camRotOffset, 0.15f, Vector3(1.0f, 0.0f, 1.0f), "RotationCenterMesh");
-		RotationCenterMesh->prop.alpha = 0.5f;
+		RotationCenterMesh = gls.AddVis3dSphere(gls.camRotOffset, 0.08f, Vector3(1.0f, 0.0f, 1.0f), "RotationCenterMesh");
+		RotationCenterMesh->prop.alpha = 0.25f;
 		RotationCenterMesh->bVisible = true;
 
-		RotationCenterMeshRingX = gls.AddVis3dRing(gls.camRotOffset, Vector3(1.0f, 0.0f, 0.0f), 0.35f, 0.01f, Vector3(1.0f, 0.0f, 0.0f), "RotationCenterMeshRingX");
-		RotationCenterMeshRingX->prop.alpha = 0.5f;
+		RotationCenterMeshRingX = gls.AddVis3dRing(gls.camRotOffset, Vector3(1.0f, 0.0f, 0.0f), 0.25f, 0.01f, Vector3(1.0f, 0.0f, 0.0f), "RotationCenterMeshRingX");
+		RotationCenterMeshRingX->prop.alpha = 0.25f;
 		RotationCenterMeshRingX->bVisible = true;
 
-		RotationCenterMeshRingY = gls.AddVis3dRing(gls.camRotOffset, Vector3(0.0f, 1.0f, 0.0f), 0.35f, 0.01f, Vector3(0.0f, 1.0f, 0.0f), "RotationCenterMeshRingY");
-		RotationCenterMeshRingY->prop.alpha = 0.5f;
+		RotationCenterMeshRingY = gls.AddVis3dRing(gls.camRotOffset, Vector3(0.0f, 1.0f, 0.0f), 0.25f, 0.01f, Vector3(0.0f, 1.0f, 0.0f), "RotationCenterMeshRingY");
+		RotationCenterMeshRingY->prop.alpha = 0.25f;
 		RotationCenterMeshRingY->bVisible = true;
 
-		RotationCenterMeshRingZ = gls.AddVis3dRing(gls.camRotOffset, Vector3(0.0f, 0.0f, 1.0f), 0.35f, 0.01f, Vector3(0.0f, 0.0f, 1.0f), "RotationCenterMeshRingZ");
-		RotationCenterMeshRingZ->prop.alpha = 0.5f;
+		RotationCenterMeshRingZ = gls.AddVis3dRing(gls.camRotOffset, Vector3(0.0f, 0.0f, 1.0f), 0.25f, 0.01f, Vector3(0.0f, 0.0f, 1.0f), "RotationCenterMeshRingZ");
+		RotationCenterMeshRingZ->prop.alpha = 0.25f;
 		RotationCenterMeshRingZ->bVisible = true;
 	}
 	else {
@@ -11369,12 +11369,18 @@ void wxGLPanel::ShowTransformTool(bool show) {
 
 	if (show) {
 		XMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
+		XMoveMesh->prop.alpha = 0.6f;
 		YMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
+		YMoveMesh->prop.alpha = 0.6f;
 		ZMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
+		ZMoveMesh->prop.alpha = 0.6f;
 
 		XRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 1.25f, 0.04f, Vector3(1.0f, 0.0f, 0.0f), "XRotateMesh");
+		XRotateMesh->prop.alpha = 0.6f;
 		YRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 1.25f, 0.04f, Vector3(0.0f, 1.0f, 0.0f), "YRotateMesh");
+		YRotateMesh->prop.alpha = 0.6f;
 		ZRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 1.25f, 0.04f, Vector3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
+		ZRotateMesh->prop.alpha = 0.6f;
 
 		XScaleMesh = gls.AddVis3dCube(xformCenter + Vector3(0.75f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f), 0.12f, Vector3(1.0f, 0.0f, 0.0f), "XScaleMesh");
 		YScaleMesh = gls.AddVis3dCube(xformCenter + Vector3(0.0f, 0.75f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), 0.12f, Vector3(0.0f, 1.0f, 0.0f), "YScaleMesh");
