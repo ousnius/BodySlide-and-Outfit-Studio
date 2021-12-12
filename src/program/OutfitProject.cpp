@@ -2550,8 +2550,14 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 			// ...in diff data
 			for (const UndoStateVertexSliderDiff &diff : usv.diffs) {
 				std::string targetDataName = activeSet[diff.sliderName].TargetDataName(target);
-				if (targetDataName.empty())
+				if (targetDataName.empty()) {
 					targetDataName = target + diff.sliderName;
+
+					if (IsBaseShape(shape))
+						baseDiffData.AddEmptySet(targetDataName, target);
+					else
+						morpher.AddEmptySet(shape->name.get(), diff.sliderName);
+				}
 
 				std::unordered_map<uint16_t, Vector3>* diffSet;
 				if (IsBaseShape(shape))

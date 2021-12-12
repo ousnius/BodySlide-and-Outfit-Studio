@@ -80,6 +80,7 @@ public:
 	int GetResultDiffSize(const std::string& shapeName, const std::string& sliderName);
 	std::unordered_map<uint16_t, nifly::Vector3>* GetDiffSet(const std::string& targetDataName);
 
+	void AddEmptySet(const std::string& shapeName, const std::string& sliderName);
 	void SetResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, nifly::Vector3>& diff);
 	void UpdateResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, nifly::Vector3>& diff);
 	void UpdateRefDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, nifly::Vector3>& diff);

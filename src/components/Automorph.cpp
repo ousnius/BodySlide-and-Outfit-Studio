@@ -304,6 +304,13 @@ void Automorph::SaveResultDiff(const std::string& shapeName, const std::string& 
 	resultDiffData.SaveSet(setName, shapeName, fileName);
 }
 
+void Automorph::AddEmptySet(const std::string& shapeName, const std::string& sliderName) {
+	std::string setName = ResultDataName(shapeName, sliderName);
+
+	if (!resultDiffData.TargetMatch(setName, shapeName))
+		resultDiffData.AddEmptySet(setName, shapeName);
+}
+
 void Automorph::SetResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, Vector3>& diff) {
 	std::string setName = ResultDataName(shapeName, sliderName);
 
