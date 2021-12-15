@@ -207,45 +207,39 @@ void main(void)
 				vec3 outDiffuse = vec3(0.0);
 				vec3 outSpecular = vec3(0.0);
 
-				// Start off neutral
-				normal = normalize(vec3(0.0, 0.0, 0.5));
 				specFactor = 0.0;
 
-				if (bModelSpace)
+				if (bShowTexture && bNormalMap)
+				{
+					if (bModelSpace)
+					{
+						// Model Space Normal Map
+						normal = normalize(normalMap.rgb * 2.0 - 1.0);
+						normal.r = -normal.r;
+						normal = mv_normalMatrix * normal;
+						normal = normalize(normal);
+
+						if (bSpecular)
+						{
+							specFactor = specMap.r;
+						}
+					}
+					else
+					{
+						// Tangent Space Normal Map
+						normal = normalize(mv_tbn * (normalMap.rgb * 2.0 - 1.0));
+
+						if (bSpecular)
+						{
+							specFactor = normalMap.a;
+						}
+					}
+				}
+				else
 				{
 					// Vertex normal for shading with disabled maps
 					normal = mv_normalMatrix * n;
 					normal = normalize(normal);
-				}
-
-				if (bShowTexture)
-				{
-					if (bNormalMap)
-					{
-						if (bModelSpace)
-						{
-							// Model Space Normal Map
-							normal = normalize(normalMap.rgb * 2.0 - 1.0);
-							normal.r = -normal.r;
-							normal = mv_normalMatrix * normal;
-							normal = normalize(normal);
-
-							if (bSpecular)
-							{
-								specFactor = specMap.r;
-							}
-						}
-						else
-						{
-							// Tangent Space Normal Map
-							normal = normalize(mv_tbn * (normalMap.rgb * 2.0 - 1.0));
-
-							if (bSpecular)
-							{
-								specFactor = normalMap.a;
-							}
-						}
-					}
 				}
 
 				directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);
