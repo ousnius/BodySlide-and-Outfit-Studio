@@ -369,11 +369,13 @@ void main(void)
 						}
 						else
 						{
-							// Tangent space map
-							normal = normalize(mv_tbn * (normalMap.rgb * 2.0 - 1.0));
+							normal = (normalMap.rgb * 2.0 - 1.0);
 
 							// Calculate missing blue channel
 							normal.b = sqrt(1.0 - dot(normal.rg, normal.rg));
+
+							// Tangent space map
+							normal = normalize(mv_tbn * normal);
 						}
 					}
 
