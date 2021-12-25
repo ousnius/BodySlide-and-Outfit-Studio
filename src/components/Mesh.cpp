@@ -427,11 +427,12 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 		return;
 
 	// Zero old normals
+	bool noVertices = vertices.empty();
 	for (int i = 0; i < nVerts; i++) {
-		if (!vertices.empty() && vertices.find(i) == vertices.end())
+		if (!noVertices && vertices.count(i) == 0)
 			continue;
 
-		if (lockedNormalIndices.find(i) != lockedNormalIndices.end())
+		if (lockedNormalIndices.count(i) != 0)
 			continue;
 
 		Vector3& pn = norms[i];
@@ -441,34 +442,35 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 	// Face normals
 	Vector3 tn;
 	for (int t = 0; t < nTris; t++) {
-		bool bn1 = (vertices.empty() || vertices.find(tris[t].p1) != vertices.end());
-		bool bn2 = (vertices.empty() || vertices.find(tris[t].p2) != vertices.end());
-		bool bn3 = (vertices.empty() || vertices.find(tris[t].p3) != vertices.end());
+		Triangle& tri = tris[t];
+		bool bn1 = (noVertices || vertices.count(tri.p1) != 0);
+		bool bn2 = (noVertices || vertices.count(tri.p2) != 0);
+		bool bn3 = (noVertices || vertices.count(tri.p3) != 0);
 
 		// None of the three normals should change
 		if (!bn1 && !bn2 && !bn3)
 			continue;
 
-		tris[t].trinormal(verts.get(), &tn);
+		tri.trinormal(verts.get(), &tn);
 
-		if (bn1 && lockedNormalIndices.find(tris[t].p1) == lockedNormalIndices.end()) {
-			Vector3& pn1 = norms[tris[t].p1];
+		if (bn1 && lockedNormalIndices.count(tri.p1) == 0) {
+			Vector3& pn1 = norms[tri.p1];
 			pn1 += tn;
 		}
 
-		if (bn2 && lockedNormalIndices.find(tris[t].p2) == lockedNormalIndices.end()) {
-			Vector3& pn2 = norms[tris[t].p2];
+		if (bn2 && lockedNormalIndices.count(tri.p2) == 0) {
+			Vector3& pn2 = norms[tri.p2];
 			pn2 += tn;
 		}
 
-		if (bn3 && lockedNormalIndices.find(tris[t].p3) == lockedNormalIndices.end()) {
-			Vector3& pn3 = norms[tris[t].p3];
+		if (bn3 && lockedNormalIndices.count(tri.p3) == 0) {
+			Vector3& pn3 = norms[tri.p3];
 			pn3 += tn;
 		}
 	}
 
 	for (int i = 0; i < nVerts; i++) {
-		if (lockedNormalIndices.find(i) != lockedNormalIndices.end())
+		if (lockedNormalIndices.count(i) != 0)
 			continue;
 
 		Vector3& pn = norms[i];
@@ -483,20 +485,22 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 		std::vector<std::pair<int, Vector3>> seamNorms;
 
 		for (auto &wvp : weldVerts) {
-			if (!vertices.empty() && vertices.find(wvp.first) != vertices.end())
+			auto& key = wvp.first;
+			if (!noVertices && vertices.count(key) != 0)
 				continue;
 
-			if (lockedNormalIndices.find(wvp.first) != lockedNormalIndices.end())
+			if (lockedNormalIndices.count(key) != 0)
 				continue;
 
-			const Vector3 &n = norms[wvp.first];
+			const Vector3 &n = norms[key];
 			Vector3 sn = n;
-			for (int wvi : wvp.second)
+			auto& value = wvp.second;
+			for (int wvi : value)
 				if (n.angle(norms[wvi]) < smoothThresh)
 					sn += norms[wvi];
 
 			sn.Normalize();
-			seamNorms.emplace_back(wvp.first, sn);
+			seamNorms.emplace_back(key, sn);
 		}
 
 		for (auto &snp : seamNorms)
