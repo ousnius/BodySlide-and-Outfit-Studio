@@ -10662,7 +10662,6 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 
 	if (activeStroke) {
 		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
-		gls.RenderOneFrame();
 
 		if (activeBrush->Type() == TBT_MOVE) {
 			Vector3 pn;
