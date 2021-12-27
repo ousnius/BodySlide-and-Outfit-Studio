@@ -3155,6 +3155,8 @@ void OutfitStudioFrame::AddProjectHistory(const std::string& fileName, const std
 }
 
 void OutfitStudioFrame::UpdateProjectHistory() {
+	menuBar->Freeze();
+
 	wxMenuItem* menuItemRecentProjects = menuBar->FindItem(XRCID("menuRecentProjects"));
 	if (menuItemRecentProjects && menuItemRecentProjects->IsSubMenu()) {
 		wxMenu* menuRecentProjects = menuItemRecentProjects->GetSubMenu();
@@ -3172,6 +3174,8 @@ void OutfitStudioFrame::UpdateProjectHistory() {
 			menuBar->Enable(XRCID("menuRecentProjects"), itemId > 0);
 		}
 	}
+
+	menuBar->Thaw();
 }
 
 void OutfitStudioFrame::SetPendingChanges(bool pending) {
@@ -3793,23 +3797,30 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 
 	UpdateBoneTree();
 
+	cXMirrorBone->Freeze();
 	cXMirrorBone->Clear();
 	cXMirrorBone->AppendString("None");
 	cXMirrorBone->AppendString("Auto");
 	cXMirrorBone->SetSelection(xMChoice == 1 ? 1 : 0);
+
+	cPoseBone->Freeze();
 	cPoseBone->Clear();
 
 	std::vector<std::string> activeBones;
 	project->GetActiveBones(activeBones);
 
+	wxArrayString activeBonesArr;
+	activeBonesArr.resize(activeBones.size());
+	for (auto& bone : activeBones)
+		activeBonesArr.Add(bone);
+
+	cXMirrorBone->Append(activeBonesArr);
+	cPoseBone->Append(activeBonesArr);
+
 	// Re-fill mirror and pose bone lists
 	for (auto &bone : activeBones) {
-		cXMirrorBone->AppendString(bone);
-
 		if (xMChoice >= 2 && bone == manualXMirrorBone)
 			cXMirrorBone->SetSelection(cXMirrorBone->GetCount() - 1);
-
-		cPoseBone->AppendString(bone);
 
 		if (poseBone == bone)
 			cPoseBone->SetSelection(cPoseBone->GetCount() - 1);
@@ -3819,6 +3830,9 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 
 	if (cPoseBone->GetSelection() == wxNOT_FOUND && cPoseBone->GetCount() > 0)
 		cPoseBone->SetSelection(0);
+
+	cXMirrorBone->Thaw();
+	cPoseBone->Thaw();
 
 	auto cPoseName = (wxChoice*)FindWindowByName("cPoseName");
 	cPoseName->Clear();
@@ -3841,6 +3855,8 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 void OutfitStudioFrame::UpdateBoneTree() {
 	bool saveRUI = recursingUI;
 	recursingUI = true;
+
+	outfitBones->Freeze();
 
 	// Clear bone tree
 	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
@@ -3868,6 +3884,8 @@ void OutfitStudioFrame::UpdateBoneTree() {
 				activeBone = bone;
 		}
 	}
+
+	outfitBones->Thaw();
 
 	recursingUI = saveRUI;
 
