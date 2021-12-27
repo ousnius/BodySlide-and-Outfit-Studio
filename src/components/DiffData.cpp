@@ -22,6 +22,11 @@ OSDataFile::OSDataFile() {
 OSDataFile::~OSDataFile() {
 }
 
+struct DiffStruct {
+	uint16_t index;
+	Vector3 diff;
+};
+
 bool OSDataFile::Read(const std::string& fileName) {
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
@@ -49,13 +54,13 @@ bool OSDataFile::Read(const std::string& fileName) {
 		file.read((char*)&diffSize, 2);
 		diffs.reserve(diffSize);
 
+		std::vector<DiffStruct> diffData(diffSize);
+		file.read((char*)diffData.data(), diffSize * (2 + sizeof(Vector3)));
+
 		for (int j = 0; j < diffSize; ++j) {
-			uint16_t index;
-			Vector3 diff;
-			file.read((char*)&index, 2);
-			file.read((char*)&diff, sizeof(Vector3));
-			diff.clampEpsilon();
-			diffs.emplace(index, std::move(diff));
+			auto& diffEntry = diffData[j];
+			diffEntry.diff.clampEpsilon();
+			diffs.emplace(diffEntry.index, std::move(diffEntry.diff));
 		}
 
 		dataDiffs.emplace(dataName, std::move(diffs));
