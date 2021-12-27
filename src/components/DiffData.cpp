@@ -22,10 +22,12 @@ OSDataFile::OSDataFile() {
 OSDataFile::~OSDataFile() {
 }
 
+#pragma pack(push, 1)
 struct DiffStruct {
 	uint16_t index;
 	Vector3 diff;
 };
+#pragma pack(pop)
 
 bool OSDataFile::Read(const std::string& fileName) {
 	std::fstream file;
@@ -55,7 +57,7 @@ bool OSDataFile::Read(const std::string& fileName) {
 		diffs.reserve(diffSize);
 
 		std::vector<DiffStruct> diffData(diffSize);
-		file.read((char*)diffData.data(), diffSize * (2 + sizeof(Vector3)));
+		file.read((char*)diffData.data(), diffSize * sizeof(DiffStruct));
 
 		for (int j = 0; j < diffSize; ++j) {
 			auto& diffEntry = diffData[j];
