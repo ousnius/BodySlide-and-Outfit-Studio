@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "OutfitProject.h"
 #include "../ui/wxStateButton.h"
+#include "../ui/wxSliderPanel.h"
 #include "../render/GLSurface.h"
 #include "../components/TweakBrush.h"
 #include "../components/UndoHistory.h"
@@ -974,26 +975,7 @@ public:
 	wxTreeItemId segmentRoot;
 	wxTreeItemId partitionRoot;
 
-	class SliderDisplay {
-	public:
-		bool hilite;
-		wxPanel* sliderPane;
-		wxBoxSizer* paneSz;
-
-		size_t sliderNameCheckID;
-		size_t sliderID;
-
-		wxBitmapButton* btnSliderEdit;
-		wxBitmapButton* btnSliderProp;
-		wxButton* btnMinus;
-		wxButton* btnPlus;
-		wxCheckBox* sliderNameCheck;
-		wxStaticText* sliderName;
-		wxSlider* slider;
-		wxTextCtrl* sliderReadout;
-	};
-
-	std::map<std::string, SliderDisplay*> sliderDisplays;
+	std::map<std::string, wxSliderPanel*> sliderPanels;
 
 	void SetPendingChanges(bool pending = true);
 	bool CheckPendingChanges();
@@ -1177,6 +1159,9 @@ private:
 	wxTreeItemId activePartition;
 
 	std::vector<RefTemplate> refTemplates;
+
+	wxBitmap* bmpEditSlider = nullptr;
+	wxBitmap* bmpSliderSettings = nullptr;
 
 	void createSliderGUI(const std::string& name, const size_t id, wxScrolledWindow* wnd, wxSizer* rootSz);
 
