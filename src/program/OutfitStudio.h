@@ -1458,6 +1458,19 @@ private:
 		glView->Render();
 	}
 
+	void OnEnableVertexColors(wxCommandEvent& e) {
+		if (colorSettings->IsShown())
+			return;
+
+		glView->SetColorsVisible(e.IsChecked());
+		if (e.IsChecked())
+			FillVertexColors();
+		else
+			glView->ClearColors();
+
+		glView->Render();
+	}
+
 	void OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetBrushSize() < 1.0f) {
 			float v = glView->IncBrush() / 3.0f;

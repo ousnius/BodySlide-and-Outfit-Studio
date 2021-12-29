@@ -192,6 +192,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnShowWireframe"), OutfitStudioFrame::OnShowWireframe)
 	EVT_MENU(XRCID("btnEnableLighting"), OutfitStudioFrame::OnEnableLighting)
 	EVT_MENU(XRCID("btnEnableTextures"), OutfitStudioFrame::OnEnableTextures)
+	EVT_MENU(XRCID("btnEnableVertexColors"), OutfitStudioFrame::OnEnableVertexColors)
 
 	EVT_MENU(XRCID("uvEdit"), OutfitStudioFrame::OnEditUV)
 	EVT_MENU(XRCID("uvInvertX"), OutfitStudioFrame::OnInvertUV)
@@ -6279,10 +6280,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetWeightVisible(false);
 	}
 
-	if (id != colorsTabButton->GetId()) {
-		glView->SetColorsVisible(false);
-
-		if (colorSettings->IsShown())
+	if (id != colorsTabButton->GetId()) 
+	{
+		bool enableVertexColors = menuBar->IsChecked(XRCID("btnEnableVertexColors"));
+		glView->SetColorsVisible(enableVertexColors);
+		if (enableVertexColors)
+			FillVertexColors();
+		else if (colorSettings->IsShown())
 			glView->ClearColors();
 	}
 

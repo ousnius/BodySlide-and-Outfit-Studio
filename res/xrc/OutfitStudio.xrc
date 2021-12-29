@@ -2224,7 +2224,13 @@
 				<checked>1</checked>
 				<checkable>1</checkable>
 			</object>
-		</object>
+      <object class="wxMenuItem" name="btnEnableVertexColors">
+        <label>Enable Vertex Colors</label>
+        <help>Display vertex colors on models.</help>
+        <checked>0</checked>
+        <checkable>1</checkable>
+      </object>
+    </object>
 	</object>
 
 	<object class="wxMenu" name="menuMeshContext">
