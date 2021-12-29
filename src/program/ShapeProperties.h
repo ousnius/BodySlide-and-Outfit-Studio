@@ -31,6 +31,7 @@ private:
 
 	wxTextCtrl* alphaThreshold = nullptr;
 	wxCheckBox* vertexAlpha = nullptr;
+	wxCheckBox* alphaBlend = nullptr;
 	wxButton* btnAddTransparency = nullptr;
 	wxButton* btnRemoveTransparency = nullptr;
 
