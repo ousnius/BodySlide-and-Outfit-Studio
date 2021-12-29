@@ -324,10 +324,10 @@
 													<border>5</border>
 													<object class="wxFlexGridSizer">
 														<rows>0</rows>
-														<cols>4</cols>
+														<cols>6</cols>
 														<vgap>0</vgap>
 														<hgap>0</hgap>
-														<growablecols>3</growablecols>
+														<growablecols>5</growablecols>
 														<growablerows></growablerows>
 														<object class="sizeritem">
 															<option>0</option>
@@ -346,6 +346,24 @@
 																<checked>0</checked>
 																<enabled>0</enabled>
 															</object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+                              <border>5</border>
+                              <object class="wxStaticText" name="lbAlphaTest">
+                                <label>AlphaTest</label>
+                                <wrap>-1</wrap>
+                              </object>
+                            </object>
+                            <object class="sizeritem">
+                              <option>0</option>
+                              <flag>wxALL|wxEXPAND</flag>
+                              <border>5</border>
+                              <object class="wxCheckBox" name="alphaTest">
+                                <checked>0</checked>
+                                <enabled>0</enabled>
+                              </object>
                             </object>
 														<object class="sizeritem">
 															<option>0</option>
