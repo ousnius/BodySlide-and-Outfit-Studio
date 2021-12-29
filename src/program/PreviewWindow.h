@@ -103,6 +103,18 @@ public:
 		}
 	}
 
+	void SetShapeVertexColors(nifly::NifFile* nif, const std::string& shapeName,  mesh* mesh) {
+		const std::vector<nifly::Color4>* vcolors = nif->GetColorsForShape(shapeName);
+		if (vcolors) {
+			for (size_t v = 0; v < vcolors->size(); v++) {
+				mesh->vcolors[v].x = vcolors->at(v).r;
+				mesh->vcolors[v].y = vcolors->at(v).g;
+				mesh->vcolors[v].z = vcolors->at(v).b;
+				mesh->valpha[v] = vcolors->at(v).a;
+			}
+		}
+	}
+
 	void Render() {
 		gls.RenderOneFrame();
 	}

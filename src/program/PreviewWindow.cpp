@@ -71,6 +71,7 @@ void PreviewWindow::OnShown() {
 	gls.Initialize(canvas, context.get());
 	auto size = canvas->GetSize();
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight(), 65.0);
+	gls.SetVertexColors(true);
 
 	//offscreen = new GLOffScreenBuffer(4096, 4096);
 
@@ -140,6 +141,7 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			if (!m)
 				continue;
 
+			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildTriAdjacency();
 			m->CreateBuffers();
 		}
@@ -158,6 +160,7 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			if (!m)
 				continue;
 
+			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildTriAdjacency();
 			m->SmoothNormals();
 			m->CreateBuffers();
