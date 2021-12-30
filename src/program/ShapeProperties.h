@@ -24,6 +24,7 @@ private:
 	wxTextCtrl* specularPower = nullptr;
 	wxColourPickerCtrl* emissiveColor = nullptr;
 	wxTextCtrl* emissiveMultiple = nullptr;
+	wxTextCtrl* alpha = nullptr;
 	wxCheckBox* vertexColors = nullptr;
 	wxButton* btnAddShader = nullptr;
 	wxButton* btnRemoveShader = nullptr;

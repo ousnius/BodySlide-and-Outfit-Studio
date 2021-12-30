@@ -212,6 +212,25 @@
 													<option>0</option>
 													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 													<border>5</border>
+													<object class="wxStaticText" name="lbAlpha">
+														<label>Alpha</label>
+														<wrap>-1</wrap>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxTextCtrl" name="alpha">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.0000</value>
+														<maxlength>25</maxlength>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>5</border>
 													<object class="wxStaticText" name="lbVertexColors">
 														<label>Vertex Colors</label>
 														<wrap>-1</wrap>

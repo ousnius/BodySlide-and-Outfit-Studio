@@ -59,6 +59,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	specularPower = XRCCTRL(*this, "specularPower", wxTextCtrl);
 	emissiveColor = XRCCTRL(*this, "emissiveColor", wxColourPickerCtrl);
 	emissiveMultiple = XRCCTRL(*this, "emissiveMultiple", wxTextCtrl);
+	alpha = XRCCTRL(*this, "alpha", wxTextCtrl);
 	vertexColors = XRCCTRL(*this, "vertexColors", wxCheckBox);
 	btnAddShader = XRCCTRL(*this, "btnAddShader", wxButton);
 	btnRemoveShader = XRCCTRL(*this, "btnRemoveShader", wxButton);
@@ -121,11 +122,13 @@ void ShapeProperties::GetShader() {
 		specularPower->Disable();
 		emissiveColor->Disable();
 		emissiveMultiple->Disable();
+		alpha->Disable();
 		vertexColors->Disable();
 		vertexAlpha->Disable();
 	}
 	else {
 		btnAddShader->Disable();
+		alpha->Disable();
 		btnRemoveShader->Enable();
 		btnMaterialChooser->Enable();
 		btnSetTextures->Enable();
@@ -156,8 +159,10 @@ void ShapeProperties::GetShader() {
 			color = shader->GetEmissiveColor() * 255.0f;
 			emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
 			emissiveMultiple->SetValue(wxString::Format("%.4f", shader->GetEmissiveMultiple()));
+			alpha->SetValue(wxString::Format("%.4f", shader->GetAlpha()));
 		}
 		else if (shader->HasType<BSLightingShaderProperty>()) {
+			alpha->Enable();
 			colorVec = shader->GetSpecularColor() * 255.0f;
 			specularColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
 			specularStrength->SetValue(wxString::Format("%.4f", shader->GetSpecularStrength()));
@@ -166,12 +171,14 @@ void ShapeProperties::GetShader() {
 			color = shader->GetEmissiveColor() * 255.0f;
 			emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
 			emissiveMultiple->SetValue(wxString::Format("%.4f", shader->GetEmissiveMultiple()));
+			alpha->SetValue(wxString::Format("%.4f", shader->GetAlpha()));
 		}
 		else if (shader->HasType<BSShaderPPLightingProperty>() || shader->HasType<NiMaterialProperty>())
 			specularStrength->Disable();
 
 		NiMaterialProperty* material = nif->GetMaterialProperty(shape);
 		if (material) {
+			alpha->Enable();
 			colorVec = material->GetSpecularColor() * 255.0f;
 			specularColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
 			specularPower->SetValue(wxString::Format("%.4f", material->GetGlossiness()));
@@ -179,6 +186,7 @@ void ShapeProperties::GetShader() {
 			color = material->GetEmissiveColor() * 255.0f;
 			emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
 			emissiveMultiple->SetValue(wxString::Format("%.4f", material->GetEmissiveMultiple()));
+			alpha->SetValue(wxString::Format("%.4f", material->GetAlpha()));
 		}
 	}
 
@@ -276,6 +284,7 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 	specularPower->Enable();
 	emissiveColor->Enable();
 	emissiveMultiple->Enable();
+	alpha->Enable();
 	vertexColors->Enable();
 
 	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
@@ -831,6 +840,7 @@ void ShapeProperties::ApplyChanges() {
 	Color4 emisColor(color.Red(), color.Green(), color.Blue(), color.Alpha());
 	emisColor /= 255.0f;
 	float emisMultiple = atof(emissiveMultiple->GetValue().c_str());
+	float alphaValue = atof(alpha->GetValue().c_str());
 
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
@@ -846,6 +856,7 @@ void ShapeProperties::ApplyChanges() {
 		if (shader->HasType<BSEffectShaderProperty>()) {
 			shader->SetEmissiveColor(emisColor);
 			shader->SetEmissiveMultiple(emisMultiple);
+			shader->SetEmissiveMultiple(emisMultiple);
 		}
 		else if (shader->HasType<BSLightingShaderProperty>()) {
 			shader->SetShaderType(type);
@@ -856,6 +867,8 @@ void ShapeProperties::ApplyChanges() {
 
 			shader->SetEmissiveColor(emisColor);
 			shader->SetEmissiveMultiple(emisMultiple);
+
+			shader->SetAlpha(alphaValue);
 		}
 		else if (shader->HasType<BSShaderPPLightingProperty>()) {
 			switch (type) {
@@ -880,6 +893,7 @@ void ShapeProperties::ApplyChanges() {
 
 		material->SetEmissiveColor(emisColor);
 		material->SetEmissiveMultiple(emisMultiple);
+		material->SetAlpha(alphaValue);
 	}
 
 	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
