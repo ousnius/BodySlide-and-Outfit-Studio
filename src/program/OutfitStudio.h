@@ -1002,6 +1002,7 @@ public:
 	std::vector<std::string> GetShapeList();
 
 	void UpdateShapeSource(nifly::NiShape* shape);
+	void UpdateVertexColors();
 
 	void ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo = false);
 	void UpdateActiveShape();

@@ -243,6 +243,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	}
 
 	owner->ShowPartition();
+	owner->UpdateVertexColors();
 	owner->UpdateProgress(100, _("Finished"));
 	return errmsg;
 }
