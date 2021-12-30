@@ -9,7 +9,10 @@ See the included LICENSE file
 #include "UndoState.h"
 
 #include <algorithm>
+#include <concurrent_unordered_map.h>
 #include <fstream>
+#include <ppl.h>
+#include <ppltasks.h>
 
 using namespace nifly;
 
@@ -159,18 +162,24 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, co
 }
 
 bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
-	for (auto &osd : osdNames) {
+
+	Concurrency::concurrent_unordered_map<std::string, OSDataFile> loaded;
+	Concurrency::parallel_for_each(osdNames.begin(), osdNames.end(), [&](auto& osd) {
 		OSDataFile osdFile;
 		if (!osdFile.Read(osd.first))
+			return;
+		loaded[osd.first] = std::move(osdFile);
+	});
+	for (auto& osd : osdNames) {
+		auto kvp = loaded.find(osd.first);
+		if (kvp == loaded.end())
 			continue;
-
-		for (auto &dataNames : osd.second) {
-			auto diff = osdFile.GetDataDiff(dataNames.first);
+		for (auto& dataNames : osd.second) {
+			auto diff = kvp->second.GetDataDiff(dataNames.first);
 			if (diff)
 				MoveToSet(dataNames.first, dataNames.second, *diff);
 		}
 	}
-
 	return true;
 }
 
