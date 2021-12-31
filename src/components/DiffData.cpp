@@ -12,7 +12,7 @@ See the included LICENSE file
 #include <concurrent_unordered_map.h>
 #include <fstream>
 
-#ifdef WIN64
+#ifdef _PPL_H
 #include <ppl.h>
 #else
 #undef _PPL_H
@@ -181,7 +181,7 @@ bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, st
 		auto kvp = loaded.find(osd.first);
 		if (kvp == loaded.end())
 			continue;
-		auto osdFile = kvp->second;
+		auto& osdFile = kvp->second;
 #else
 		OSDataFile osdFile;
 		if (!osdFile.Read(osd.first))
