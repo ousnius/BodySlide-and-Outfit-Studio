@@ -759,6 +759,14 @@ void BodySlideApp::DisplayActiveSet() {
 			continue;
 	}
 
+	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)sliderView->FindWindowByName("SliderScrollWindow", sliderView);
+	if (!scrollWindow)
+		return;
+
+	wxSizer* sliderLayout = scrollWindow->GetSizer();
+	if (!sliderLayout)
+		return;
+
 	// Loop slider set
 	std::vector<std::vector<int>> catSliders;
 	for (size_t i = 0; i < activeSet.size(); i++) {
@@ -780,7 +788,7 @@ void BodySlideApp::DisplayActiveSet() {
 
 		// Not in a category
 		if (regularSlider)
-			sliderView->AddSliderGUI(activeSet[i].name, activeSet[i].name, activeSet[i].bZap, !activeSet.GenWeights());
+			sliderView->AddSliderGUI(scrollWindow, sliderLayout, activeSet[i].name, activeSet[i].name, activeSet[i].bZap, !activeSet.GenWeights());
 	}
 
 	// Create category UI
@@ -799,13 +807,14 @@ void BodySlideApp::DisplayActiveSet() {
 						if (displayName.empty())
 							displayName = activeSet[s].name;
 
-						sliderView->AddSliderGUI(activeSet[s].name, displayName, activeSet[s].bZap, !activeSet.GenWeights());
+						sliderView->AddSliderGUI(scrollWindow, sliderLayout, activeSet[s].name, displayName, activeSet[s].bZap, !activeSet.GenWeights());
 					}
 				}
 			}
 			iter++;
 		}
 	}
+	scrollWindow->FitInside();
 	UpdateConflictManager();
 }
 
@@ -2959,15 +2968,7 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool o
 	scrollWindow->FitInside();
 }
 
-void BodySlideFrame::AddSliderGUI(const std::string& name, const std::string& display, bool isZap, bool oneSize) {
-	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-	if (!scrollWindow)
-		return;
-
-	wxSizer* sliderLayout = scrollWindow->GetSizer();
-	if (!sliderLayout)
-		return;
-
+void BodySlideFrame::AddSliderGUI(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, bool isZap, bool oneSize) {
 	wxString sliderName = wxString::FromUTF8(name);
 	wxString displayName = wxString::FromUTF8(display);
 
@@ -3029,7 +3030,6 @@ void BodySlideFrame::AddSliderGUI(const std::string& name, const std::string& di
 	sd->sliderName = name;
 	sliderDisplays[sd->sliderName] = sd;
 
-	scrollWindow->FitInside();
 	rowCount++;
 }
 

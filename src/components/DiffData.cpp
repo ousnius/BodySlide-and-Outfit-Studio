@@ -11,6 +11,13 @@ See the included LICENSE file
 #include <algorithm>
 #include <fstream>
 
+#ifdef WIN64
+#include <ppl.h>
+#include <concurrent_unordered_map.h>
+#else
+#undef _PPL_H
+#endif
+
 using namespace nifly;
 
 OSDataFile::OSDataFile() {
@@ -159,18 +166,33 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, co
 }
 
 bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
-	for (auto &osd : osdNames) {
+
+#ifdef _PPL_H
+	Concurrency::concurrent_unordered_map<std::string, OSDataFile> loaded;
+	Concurrency::parallel_for_each(osdNames.begin(), osdNames.end(), [&](auto& osd) {
+	OSDataFile osdFile;
+		if (!osdFile.Read(osd.first))
+			return;
+		loaded[osd.first] = std::move(osdFile);
+	});
+#endif
+	for (auto& osd : osdNames) {
+#ifdef _PPL_H
+		auto kvp = loaded.find(osd.first);
+		if (kvp == loaded.end())
+			continue;
+		auto& osdFile = kvp->second;
+#else
 		OSDataFile osdFile;
 		if (!osdFile.Read(osd.first))
 			continue;
-
-		for (auto &dataNames : osd.second) {
+#endif
+		for (auto& dataNames : osd.second) {
 			auto diff = osdFile.GetDataDiff(dataNames.first);
 			if (diff)
 				MoveToSet(dataNames.first, dataNames.second, *diff);
 		}
 	}
-
 	return true;
 }
 
