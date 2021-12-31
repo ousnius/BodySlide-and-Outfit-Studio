@@ -856,7 +856,6 @@ void ShapeProperties::ApplyChanges() {
 		if (shader->HasType<BSEffectShaderProperty>()) {
 			shader->SetEmissiveColor(emisColor);
 			shader->SetEmissiveMultiple(emisMultiple);
-			shader->SetEmissiveMultiple(emisMultiple);
 		}
 		else if (shader->HasType<BSLightingShaderProperty>()) {
 			shader->SetShaderType(type);
