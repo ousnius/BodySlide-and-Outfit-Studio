@@ -11,7 +11,7 @@ See the included LICENSE file
 #include <algorithm>
 #include <fstream>
 
-#ifdef _PPL_H
+#ifdef WIN64
 #include <ppl.h>
 #include <concurrent_unordered_map.h>
 #else

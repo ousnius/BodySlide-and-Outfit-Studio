@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <regex>
 #include <atomic>
 
-#ifdef _PPL_H
+#ifdef WIN64
 	#include <ppl.h>
 	#include <ppltasks.h>
 	#include <concurrent_unordered_map.h>
