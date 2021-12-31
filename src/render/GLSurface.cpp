@@ -924,6 +924,18 @@ void GLSurface::RenderMesh(mesh* m) {
 			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
 		}
 
+		if (m->mask) {
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[7]);
+			glEnableVertexAttribArray(7);
+			glVertexAttribPointer(7, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Mask
+		}
+
+		if (m->weight) {
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[8]);
+			glEnableVertexAttribArray(8);
+			glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Weight
+		}
+
 		// Offset triangles so that points can be visible
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		if (m->bShowPoints)
@@ -974,7 +986,7 @@ void GLSurface::RenderMesh(mesh* m) {
 			glDisableVertexAttribArray(6);
 
 		// Render points
-		if (m->bShowPoints && m->vcolors) {
+		if (m->bShowPoints && m->mask) {
 			glDisable(GL_CULL_FACE);
 			shader.SetLightingEnabled(false);
 
@@ -1033,8 +1045,8 @@ void GLSurface::UpdateShaders(mesh* m) {
 		GLShader& shader = m->material->GetShader();
 		shader.ShowTexture(bTextured);
 		shader.ShowLighting(bLighting);
-		shader.ShowMask(bMaskVisible && m->vcolors);
-		shader.ShowWeight(bWeightColors && m->vcolors);
+		shader.ShowMask(bMaskVisible && m->mask);
+		shader.ShowWeight(bWeightColors && m->weight);
 		shader.ShowVertexColors(bVertexColors && m->vcolors && m->vertexColors);
 		shader.ShowVertexAlpha(bVertexColors && m->valpha && m->vertexColors && m->vertexAlpha);
 		shader.SetProperties(m->prop);
@@ -1182,6 +1194,8 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		m->vcolors = std::make_unique<Vector3[]>(m->nVerts);
 		m->valpha = std::make_unique<float[]>(m->nVerts);
 		m->texcoord = std::make_unique<Vector2[]>(m->nVerts);
+		m->mask = std::make_unique<float[]>(m->nVerts);
+		m->weight = std::make_unique<float[]>(m->nVerts);
 	}
 
 	if (m->nTris > 0)

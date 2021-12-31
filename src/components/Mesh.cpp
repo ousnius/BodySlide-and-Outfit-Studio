@@ -135,6 +135,16 @@ void mesh::CreateBuffers() {
 		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord.get(), GL_DYNAMIC_DRAW);
 	}
 
+	if (mask) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[7]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(float), mask.get(), GL_DYNAMIC_DRAW);
+	}
+
+	if (weight) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[8]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(float), weight.get(), GL_DYNAMIC_DRAW);
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// Element index array
@@ -201,6 +211,18 @@ void mesh::UpdateBuffers() {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::TextureCoordinates]);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector2), texcoord.get());
 			queueUpdate[UpdateType::TextureCoordinates] = false;
+		}
+
+		if (mask && queueUpdate[UpdateType::Mask]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Mask]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(float), mask.get());
+			queueUpdate[UpdateType::Mask] = false;
+		}
+
+		if (weight && queueUpdate[UpdateType::Weight]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Weight]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(float), weight.get());
+			queueUpdate[UpdateType::Weight] = false;
 		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -570,7 +592,7 @@ void mesh::ColorFill(const Vector3& vcolor) {
 	queueUpdate[UpdateType::VertexColors] = true;
 }
 
-void mesh::AlphaFill(const float alpha) {
+void mesh::AlphaFill(float alpha) {
 	if (!valpha)
 		return;
 
@@ -578,6 +600,26 @@ void mesh::AlphaFill(const float alpha) {
 		valpha[i] = alpha;
 
 	queueUpdate[UpdateType::VertexAlpha] = true;
+}
+
+void mesh::MaskFill(float maskValue) {
+	if (!mask)
+		return;
+
+	for (int i = 0; i < nVerts; i++)
+		mask[i] = maskValue;
+
+	queueUpdate[UpdateType::Mask] = true;
+}
+
+void mesh::WeightFill(float weightValue) {
+	if (!weight)
+		return;
+
+	for (int i = 0; i < nVerts; i++)
+		weight[i] = weightValue;
+
+	queueUpdate[UpdateType::Weight] = true;
 }
 
 void mesh::ColorChannelFill(int channel, float value) {

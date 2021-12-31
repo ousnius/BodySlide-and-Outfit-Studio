@@ -69,10 +69,10 @@ public:
 	}
 
 
-	void ZeroVertDiff(const std::string& set, int vertCount, nifly::Vector3* vColorMask) {
+	void ZeroVertDiff(const std::string& set, int vertCount, float* vColorMask) {
 		for (auto &ns : namedSet[set]) {
 			if (ns.first < vertCount) {
-				float f = vColorMask[ns.first].x;
+				float f = vColorMask[ns.first];
 				if (f == 1.0f)
 					continue;
 				else if (f == 0.0f)

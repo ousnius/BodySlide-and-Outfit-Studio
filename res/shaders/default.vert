@@ -31,6 +31,8 @@ layout(location = 3) in vec3 vertexBitangent;
 layout(location = 4) in vec3 vertexColors;
 layout(location = 5) in float vertexAlpha;
 layout(location = 6) in vec2 vertexUV;
+layout(location = 7) in float vertexMask;
+layout(location = 8) in float vertexWeight;
 
 struct DirectionalLight
 {
@@ -145,7 +147,7 @@ void main(void)
 	}
 	else
 	{
-		if (vertexColors.x > 0.0)
+		if (vertexMask > 0.0)
 		{
 			vColor = vec4(1.0, 0.0, 0.0, 1.0);
 		}
@@ -161,12 +163,12 @@ void main(void)
 
 		if (bShowMask)
 		{
-			maskFactor = 1.0 - vertexColors.r / 1.5;
+			maskFactor = 1.0 - vertexMask / 1.5;
 		}
 
 		if (bShowWeight)
 		{
-			weightColor = colorRamp(vertexColors.g);
+			weightColor = colorRamp(vertexWeight);
 		}
 	}
 }

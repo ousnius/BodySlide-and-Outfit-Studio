@@ -697,7 +697,7 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 	if (!m)
 		return;
 
-	m->ColorChannelFill(0, 0.0f);
+	m->MaskFill(0.0f);
 
 	if (IsBaseShape(shape)) {
 		std::vector<uint16_t> outIndices;
@@ -708,7 +708,7 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 
 		for (auto &i : outIndices) {
 			if (m->nVerts > i)
-				m->vcolors[i].x = 1.0f;
+				m->mask[i] = 1.0f;
 		}
 	}
 	else {
@@ -717,11 +717,11 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 
 		for (auto &i : outDiff) {
 			if (m->nVerts > i.first)
-				m->vcolors[i.first].x = 1.0f;
+				m->mask[i.first] = 1.0f;
 		}
 	}
 
-	m->QueueUpdate(mesh::UpdateType::VertexColors);
+	m->QueueUpdate(mesh::UpdateType::Mask);
 }
 
 bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
@@ -1682,9 +1682,9 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 			for (auto &i : influences) {
 				if (i.second == 0) {
 					if (!shapeUnweighted)
-						m->ColorChannelFill(0, 0.0f);
+						m->MaskFill(0.0f);
 
-					m->vcolors[i.first].x = 1.0f;
+					m->mask[i.first] = 1.0f;
 					shapeUnweighted = true;
 				}
 			}
@@ -1696,7 +1696,7 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 					shapeNames->push_back(shapeName);
 			}
 
-			m->QueueUpdate(mesh::UpdateType::VertexColors);
+			m->QueueUpdate(mesh::UpdateType::Mask);
 		}
 	}
 

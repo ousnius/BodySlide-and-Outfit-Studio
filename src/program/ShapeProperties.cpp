@@ -66,6 +66,8 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 
 	alphaThreshold = XRCCTRL(*this, "alphaThreshold", wxTextCtrl);
 	vertexAlpha = XRCCTRL(*this, "vertexAlpha", wxCheckBox);
+	alphaTest = XRCCTRL(*this, "alphaTest", wxCheckBox);
+	alphaBlend = XRCCTRL(*this, "alphaBlend", wxCheckBox);
 	btnAddTransparency = XRCCTRL(*this, "btnAddTransparency", wxButton);
 	btnRemoveTransparency = XRCCTRL(*this, "btnRemoveTransparency", wxButton);
 
@@ -123,6 +125,8 @@ void ShapeProperties::GetShader() {
 		emissiveMultiple->Disable();
 		vertexColors->Disable();
 		vertexAlpha->Disable();
+		alphaTest->Disable();
+		alphaBlend->Disable();
 	}
 	else {
 		btnAddShader->Disable();
@@ -138,10 +142,11 @@ void ShapeProperties::GetShader() {
 		emissiveMultiple->Enable();
 		vertexColors->Enable();
 		vertexAlpha->Enable();
+		alphaTest->Enable();
+		alphaBlend->Enable();
 
 		currentVertexColors = shader->HasVertexColors();
 		currentVertexAlpha = shader->HasVertexAlpha();
-
 		shaderName->SetValue(shader->name.get());
 		vertexColors->SetValue(currentVertexColors);
 		vertexAlpha->SetValue(currentVertexAlpha);
@@ -281,6 +286,8 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
 	if (alphaProp) {
 		vertexAlpha->Enable();
+		alphaTest->Enable();
+		alphaBlend->Enable();
 	}
 }
 
@@ -447,6 +454,10 @@ void ShapeProperties::GetTransparency() {
 		alphaThreshold->Enable();
 		btnAddTransparency->Disable();
 		btnRemoveTransparency->Enable();
+		alphaTest->Enable();
+		alphaTest->SetValue(alphaProp->flags & (1 << 9));
+		alphaBlend->Enable();
+		alphaBlend->SetValue(alphaProp->flags & 1);
 
 		NiShader* shader = nif->GetShader(shape);
 		if (shader) {
@@ -456,6 +467,8 @@ void ShapeProperties::GetTransparency() {
 	else {
 		alphaThreshold->Disable();
 		vertexAlpha->Disable();
+		alphaTest->Disable();
+		alphaBlend->Disable();
 		btnAddTransparency->Enable();
 		btnRemoveTransparency->Disable();
 	}
@@ -885,6 +898,16 @@ void ShapeProperties::ApplyChanges() {
 	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
 	if (alphaProp) {
 		alphaProp->threshold = atoi(alphaThreshold->GetValue().c_str());
+
+		if (alphaBlend->IsChecked())
+			alphaProp->flags |= 1;
+		else
+			alphaProp->flags &= ~1;
+
+		if (alphaTest->IsChecked())
+			alphaProp->flags |= 1 << 9;
+		else
+			alphaProp->flags &= ~(1 << 9);
 
 		if (shader) {
 			shader->SetVertexAlpha(vertexAlpha->IsChecked());
