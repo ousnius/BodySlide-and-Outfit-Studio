@@ -9,11 +9,11 @@ See the included LICENSE file
 #include "UndoState.h"
 
 #include <algorithm>
-#include <concurrent_unordered_map.h>
 #include <fstream>
 
 #ifdef _PPL_H
 #include <ppl.h>
+#include <concurrent_unordered_map.h>
 #else
 #undef _PPL_H
 #endif
@@ -167,7 +167,7 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, co
 
 bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
 
-#ifdef WIN64
+#ifdef _PPL_H
 	Concurrency::concurrent_unordered_map<std::string, OSDataFile> loaded;
 	Concurrency::parallel_for_each(osdNames.begin(), osdNames.end(), [&](auto& osd) {
 	OSDataFile osdFile;
@@ -177,7 +177,7 @@ bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, st
 	});
 #endif
 	for (auto& osd : osdNames) {
-#ifdef WIN64
+#ifdef _PPL_H
 		auto kvp = loaded.find(osd.first);
 		if (kvp == loaded.end())
 			continue;
