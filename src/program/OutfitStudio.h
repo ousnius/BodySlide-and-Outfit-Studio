@@ -465,12 +465,12 @@ public:
 
 	void ClearMasks() {
 		for (auto &m : gls.GetMeshes())
-			m->ColorChannelFill(0, 0.0f);
+			m->MaskFill(0.0f);
 	}
 
 	void ClearActiveMask() {
 		for (auto &m : gls.GetActiveMeshes())
-			m->ColorChannelFill(0, 0.0f);
+			m->MaskFill(0.0f);
 	}
 
 	void ClearColors() {
@@ -490,8 +490,8 @@ public:
 		mesh* m = gls.GetActiveMeshes().back();
 
 		for (int i = 0; i < m->nVerts; i++) {
-			if (m->vcolors[i].x != 0.0f)
-				mask[i] = m->vcolors[i].x;
+			if (m->mask[i] != 0.0f)
+				mask[i] = m->mask[i];
 		}
 	}
 
@@ -502,8 +502,8 @@ public:
 		mesh* m = gls.GetActiveMeshes().back();
 
 		for (int i = 0; i < m->nVerts; i++)
-			if (m->vcolors[i].x == 0.0f)
-				mask[i] = m->vcolors[i].x;
+			if (m->mask[i] == 0.0f)
+				mask[i] = m->mask[i];
 	}
 
 	void GetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
@@ -512,8 +512,8 @@ public:
 			return;
 
 		for (int i = 0; i < m->nVerts; i++) {
-			if (m->vcolors[i].x != 0.0f)
-				mask[i] = m->vcolors[i].x;
+			if (m->mask[i] != 0.0f)
+				mask[i] = m->mask[i];
 		}
 	}
 
@@ -523,8 +523,8 @@ public:
 			return;
 
 		for (int i = 0; i < m->nVerts; i++)
-			if (m->vcolors[i].x == 0.0f)
-				mask[i] = m->vcolors[i].x;
+			if (m->mask[i] == 0.0f)
+				mask[i] = m->mask[i];
 	}
 
 	void SetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
@@ -534,24 +534,24 @@ public:
 
 		for (int i = 0; i < m->nVerts; i++) {
 			if (mask.find(i) != mask.end())
-				m->vcolors[i].x = mask[i];
+				m->mask[i] = mask[i];
 			else
-				m->vcolors[i].x = 0.0f;
+				m->mask[i] = 0.0f;
 		}
 
-		m->QueueUpdate(mesh::UpdateType::VertexColors);
+		m->QueueUpdate(mesh::UpdateType::Mask);
 	}
 
 	void MaskLess() {
 		for (auto &m : gls.GetActiveMeshes()) {
 			std::set<int> unmaskPoints;
 			for (int i = 0; i < m->nVerts; i++) {
-				if (m->vcolors[i].x > 0.0f) {
+				if (m->mask[i] > 0.0f) {
 					std::set<int> adjacentPoints;
 					m->GetAdjacentPoints(i, adjacentPoints);
 
 					for (auto& adj : adjacentPoints) {
-						if (m->vcolors[adj].x == 0.0f) {
+						if (m->mask[adj] == 0.0f) {
 							unmaskPoints.insert(i);
 							break;
 						}
@@ -560,9 +560,9 @@ public:
 			}
 
 			for (auto& up : unmaskPoints)
-				m->vcolors[up].x = 0.0f;
+				m->mask[up] = 0.0f;
 
-			m->QueueUpdate(mesh::UpdateType::VertexColors);
+			m->QueueUpdate(mesh::UpdateType::Mask);
 		}
 	}
 
@@ -570,13 +570,13 @@ public:
 		for (auto &m : gls.GetActiveMeshes()) {
 			std::set<int> adjacentPoints;
 			for (int i = 0; i < m->nVerts; i++)
-				if (m->vcolors[i].x > 0.0f)
+				if (m->mask[i] > 0.0f)
 					m->GetAdjacentPoints(i, adjacentPoints);
 
 			for (auto& adj : adjacentPoints)
-				m->vcolors[adj].x = 1.0f;
+				m->mask[adj] = 1.0f;
 
-			m->QueueUpdate(mesh::UpdateType::VertexColors);
+			m->QueueUpdate(mesh::UpdateType::Mask);
 		}
 	}
 
@@ -614,9 +614,9 @@ public:
 	void InvertMask() {
 		for (auto &m : gls.GetActiveMeshes()) {
 			for (int i = 0; i < m->nVerts; i++)
-				m->vcolors[i].x = 1.0f - m->vcolors[i].x;
+				m->mask[i] = 1.0f - m->mask[i];
 
-			m->QueueUpdate(mesh::UpdateType::VertexColors);
+			m->QueueUpdate(mesh::UpdateType::Mask);
 		}
 	}
 

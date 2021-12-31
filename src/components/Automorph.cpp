@@ -159,14 +159,14 @@ void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 	if (dm->nVerts != m->nVerts)
 		return;
 
-	if (!m->vcolors)
+	if (!m->mask)
 		return;
 
-	if (!dm->vcolors)
-		dm->vcolors = std::make_unique<Vector3[]>(dm->nVerts);
+	if (!dm->mask)
+		dm->mask = std::make_unique<float[]>(dm->nVerts);
 
 	for (int i = 0; i < dm->nVerts; i++)
-		dm->vcolors[i] = m->vcolors[i];
+		dm->mask[i] = m->mask[i];
 }
 
 void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const AnimInfo *workAnim) {
@@ -380,8 +380,8 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 	std::string dataName = shapeName + sliderName;
 
 	if (resultDiffData.TargetMatch(dataName, shapeName)) {
-		if (m->vcolors)
-			resultDiffData.ZeroVertDiff(dataName, m->nVerts, m->vcolors.get());
+		if (m->mask)
+			resultDiffData.ZeroVertDiff(dataName, m->nVerts, m->mask.get());
 		else
 			resultDiffData.ClearSet(dataName);
 	}
@@ -450,8 +450,8 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 			totalMove += (effectVector[j] * weight);
 		}
 
-		if (m->vcolors && bEnableMask)
-			totalMove *= (1.0f - m->vcolors[i].x);
+		if (m->mask && bEnableMask)
+			totalMove *= (1.0f - m->mask[i]);
 
 		if (totalMove.IsZero(true))
 			continue;
@@ -503,8 +503,8 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 		for (int i = 0; i < m->nVerts; i++) {
 			Vector3 totalMove = totalSolidMove;
 
-			if (m->vcolors && bEnableMask)
-				totalMove *= (1.0f - m->vcolors[i].x);
+			if (m->mask && bEnableMask)
+				totalMove *= (1.0f - m->mask[i]);
 
 			if (totalMove.IsZero(true))
 				continue;

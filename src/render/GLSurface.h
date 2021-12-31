@@ -170,7 +170,7 @@ public:
 
 		for (auto &m : activeMeshes) {
 			for (int i = 0; i < m->nVerts; i++) {
-				if (!useMask || m->vcolors[i].x == 0.0f) {
+				if (!useMask || m->mask[i] == 0.0f) {
 					total += mesh::ApplyMatrix4(m->matModel, m->verts[i]);
 					count++;
 				}
@@ -390,7 +390,6 @@ public:
 
 	void SetVertexColors(bool bVisible = true) {
 		bVertexColors = bVisible;
-		bMaskVisible = !bVisible;
 
 		for (auto &m : meshes)
 			UpdateShaders(m);
