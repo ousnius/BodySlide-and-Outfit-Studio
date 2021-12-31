@@ -1113,7 +1113,6 @@ void BodySlideApp::InitPreview() {
 	activeSet.LoadSetDiffData(dataSets);
 
 	std::vector<Vector3> verts;
-	std::vector<Color4> colors;
 	std::vector<Vector2> uvs;
 	std::vector<uint16_t> zapIdx;
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
