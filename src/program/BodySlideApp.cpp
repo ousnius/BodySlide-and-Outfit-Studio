@@ -814,6 +814,7 @@ void BodySlideApp::DisplayActiveSet() {
 			iter++;
 		}
 	}
+
 	scrollWindow->FitInside();
 	UpdateConflictManager();
 }
@@ -2824,11 +2825,14 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	xrc->AttachUnknownControl("searchHolder", search, this);
 	xrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
 
+	wxFlexGridSizer* sliderLayout = nullptr;
 	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	if (scrollWindow) {
 		scrollWindow->SetScrollRate(5, 26);
 		scrollWindow->SetFocusIgnoringChildren();
 		scrollWindow->Bind(wxEVT_ENTER_WINDOW, &BodySlideFrame::OnEnterSliderWindow, this);
+
+		sliderLayout = (wxFlexGridSizer*)scrollWindow->GetSizer();
 	}
 
 	wxString val = BodySlideConfig["LastGroupFilter"];
@@ -2863,6 +2867,12 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 			//cbForceBodyNormals->Show();
 			break;
 		}
+	}
+
+	// Create initial slider pool
+	if (scrollWindow && sliderLayout) {
+		const size_t minSliderPoolSize = 100;
+		sliderPool.CreatePool(minSliderPoolSize, scrollWindow, sliderLayout);
 	}
 
 	// Set up accelerator entries
@@ -2900,6 +2910,30 @@ void BodySlideFrame::OnEnterSliderWindow(wxMouseEvent& event) {
 			sw->SetFocusIgnoringChildren();
 		}
 	}
+}
+
+void BodySlideFrame::HideSlider(SliderDisplay* slider) {
+	if (!slider)
+		return;
+
+	slider->zapCheckLo->Unbind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
+	slider->sliderLo->Unbind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
+	slider->sliderReadoutLo->Disconnect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), nullptr, this);
+
+	slider->zapCheckHi->Unbind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
+	slider->sliderHi->Unbind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
+	slider->sliderReadoutHi->Disconnect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), nullptr, this);
+
+	slider->lblSliderLo->Hide();
+	slider->sliderLo->Hide();
+	slider->sliderReadoutLo->Hide();
+	slider->lblSliderHi->Hide();
+	slider->sliderHi->Hide();
+	slider->sliderReadoutHi->Hide();
+	slider->zapCheckHi->Hide();
+	slider->zapCheckLo->Hide();
+
+	slider->isShown = false;
 }
 
 void BodySlideFrame::ShowLowColumn(bool show) {
@@ -2945,6 +2979,7 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool o
 		child = new wxPanel(scrollWindow);
 		child->SetBackgroundColour(wxColour(90, 90, 90));
 		sliderLayout->Add(child, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
+		categoryWidgets.push_back(child);
 	}
 
 	wxCheckBox* check = new wxCheckBox(scrollWindow, wxID_ANY, "");
@@ -2952,84 +2987,47 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool o
 	sliderLayout->Add(check, 0, wxRIGHT | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 5);
 	check->SetValue(show);
 	check->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnCategoryCheckChanged, this);
+	categoryWidgets.push_back(check);
 
 	child = new wxStaticText(scrollWindow, wxID_ANY, name);
 	child->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Andalus"));
 	child->SetForegroundColour(wxColour(200, 200, 200));
 	sliderLayout->Add(child, 0, wxLEFT | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
+	categoryWidgets.push_back(child);
 
 	if (!oneSize) {
 		child = new wxPanel(scrollWindow);
 		child->SetBackgroundColour(wxColour(90, 90, 90));
 		sliderLayout->Add(child, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
+		categoryWidgets.push_back(child);
 	}
 
 	sliderLayout->AddSpacer(0);
-	scrollWindow->FitInside();
 }
 
 void BodySlideFrame::AddSliderGUI(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, bool isZap, bool oneSize) {
-	wxString sliderName = wxString::FromUTF8(name);
-	wxString displayName = wxString::FromUTF8(display);
-
-	auto sd = new SliderDisplay();
-	sd->isZap = isZap;
-	sd->oneSize = oneSize;
+	SliderDisplay* sd = sliderPool.GetNext();
+	if (!sd)
+		return;
 
 	int minValue = Config.GetIntValue("Input/SliderMinimum");
 	int maxValue = Config.GetIntValue("Input/SliderMaximum");
 
-	if (!oneSize) {
-		sd->lblSliderLo = new wxStaticText(scrollWindow, wxID_ANY, displayName, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
-		sd->lblSliderLo->SetForegroundColour(wxColour(200, 200, 200));
-		sliderLayout->Add(sd->lblSliderLo, 0, wxLEFT | wxALIGN_CENTER, 5);
+	if (!sd->Create(scrollWindow, sliderLayout, name, display, minValue, maxValue, isZap, oneSize))
+		return;
 
-		if (isZap) {
-			sd->zapCheckLo = new wxCheckBox(scrollWindow, wxID_ANY, " ", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, sliderName + "|ZLO");
-			sd->zapCheckLo->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
-			sliderLayout->AddStretchSpacer();
-			sliderLayout->Add(sd->zapCheckLo, 0, wxALIGN_LEFT, 0);
-		}
-		else {
-			sd->sliderLo = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 24), wxSL_AUTOTICKS | wxSL_BOTTOM | wxSL_HORIZONTAL);
-			sd->sliderLo->SetTickFreq(5);
-			sd->sliderLo->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
-			sd->sliderLo->SetName(sliderName + "|LO");
-			sliderLayout->Add(sd->sliderLo, 1, wxEXPAND, 0);
+	sd->zapCheckLo->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
+	sd->sliderLo->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
+	sd->sliderReadoutLo->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), nullptr, this);
 
-			sd->sliderReadoutLo = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(50, -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
-			sd->sliderReadoutLo->SetName(sliderName + "|RLO");
-			sd->sliderReadoutLo->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), nullptr, this);
-			sliderLayout->Add(sd->sliderReadoutLo, 0, wxALL | wxALIGN_CENTER, 0);
-		}
-	}
+	sd->zapCheckHi->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
+	sd->sliderHi->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
+	sd->sliderReadoutHi->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), nullptr, this);
 
-	sd->lblSliderHi = new wxStaticText(scrollWindow, wxID_ANY, displayName, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
-	sd->lblSliderHi->SetForegroundColour(wxColour(200, 200, 200));
-	sliderLayout->Add(sd->lblSliderHi, 0, wxLEFT | wxALIGN_CENTER, 5);
+	if (!sd->isShown)
+		sd->Show();
 
-	if (isZap) {
-		sd->zapCheckHi = new wxCheckBox(scrollWindow, wxID_ANY, " ", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, sliderName + "|ZHI");
-		sd->zapCheckHi->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
-		sliderLayout->AddStretchSpacer();
-		sliderLayout->Add(sd->zapCheckHi, 0, wxALIGN_LEFT, 0);
-	}
-	else {
-		sd->sliderHi = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 24), wxSL_AUTOTICKS | wxSL_HORIZONTAL);
-		sd->sliderHi->SetTickFreq(5);
-		sd->sliderHi->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
-		sd->sliderHi->SetName(sliderName + "|HI");
-		sliderLayout->Add(sd->sliderHi, 1, wxEXPAND, 0);
-
-		sd->sliderReadoutHi = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(50, -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
-		sd->sliderReadoutHi->SetName(sliderName + "|RHI");
-		sd->sliderReadoutHi->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), nullptr, this);
-		sliderLayout->Add(sd->sliderReadoutHi, 0, wxRIGHT | wxALIGN_CENTER, 10);
-	}
-
-	sd->sliderName = name;
 	sliderDisplays[sd->sliderName] = sd;
-
 	rowCount++;
 }
 
@@ -3044,16 +3042,18 @@ void  BodySlideFrame::ClearOutfitList() {
 }
 
 void BodySlideFrame::ClearSliderGUI() {
+	for (auto& sd : sliderDisplays)
+		HideSlider(sd.second);
+
 	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-	if (scrollWindow) {
+	if (scrollWindow)
 		scrollWindow->GetSizer()->Clear();
-		scrollWindow->DestroyChildren();
-	}
-	for (auto &sd : sliderDisplays)
-		delete sd.second;
+
+	for (auto& w : categoryWidgets)
+		w->Destroy();
 
 	sliderDisplays.clear();
-
+	categoryWidgets.clear();
 	rowCount = 0;
 }
 
@@ -3093,7 +3093,7 @@ void BodySlideFrame::PopulatePresetList(const wxArrayString& items, const wxStri
 void BodySlideFrame::SetSliderPosition(const wxString &name, float newValue, short HiLo) {
 	int intval = (int)(newValue * 100.0f);
 
-	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToUTF8().data());
+	SliderDisplay* sd = GetSliderDisplay(name.ToUTF8().data());
 	if (!sd)
 		return;
 
@@ -3121,6 +3121,9 @@ void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	app->ClosePreview();
+
+	sliderPool.Clear();
+	sliderDisplays.clear();
 
 	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
 	if (cbMorphs)
@@ -3189,7 +3192,8 @@ void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
 		if (!fullname.EndsWith("|HI", &name))
 			return;
 	}
-	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToUTF8().data());
+
+	SliderDisplay* sd = GetSliderDisplay(name.ToUTF8().data());
 	if (!sd)
 		return;
 
@@ -3217,7 +3221,8 @@ void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
 		if (!fullname.EndsWith("|RHI", &name))
 			return;
 	}
-	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToUTF8().data());
+
+	SliderDisplay* sd = GetSliderDisplay(name.ToUTF8().data());
 	if (!sd)
 		return;
 
@@ -3960,4 +3965,206 @@ void BodySlideFrame::OnSetSize(wxSizeEvent& event) {
 void BodySlideFrame::OnEditProject(wxCommandEvent& WXUNUSED(event)) {
 	std::string projectName = BodySlideConfig["SelectedOutfit"];
 	app->EditProject(projectName);
+}
+
+
+SliderDisplay::SliderDisplay() {
+}
+
+bool SliderDisplay::Create(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, int minValue, int maxValue, bool pIsZap, bool pOneSize) {
+	isZap = pIsZap;
+	oneSize = pOneSize;
+
+	wxString nameStr = wxString::FromUTF8(name);
+	wxString displayName = wxString::FromUTF8(display);
+
+	if (isCreated) {
+		if (lblSliderLo->GetLabel() != displayName)
+			lblSliderLo->SetLabel(displayName);
+
+		lblSliderLo->Show(!oneSize);
+
+		if (!oneSize)
+			sliderLayout->Add(lblSliderLo, 0, wxLEFT | wxALIGN_CENTER, 5);
+
+		zapCheckLo->SetName(nameStr + "|ZLO");
+		zapCheckLo->Show(!oneSize && isZap);
+
+		if (!oneSize && isZap) {
+			sliderLayout->AddStretchSpacer();
+			sliderLayout->Add(zapCheckLo, 0, wxALIGN_LEFT, 0);
+		}
+
+		sliderLo->SetName(nameStr + "|LO");
+		sliderLo->SetMin(minValue);
+		sliderLo->SetMax(maxValue);
+		sliderLo->Show(!oneSize && !isZap);
+
+		if (!oneSize && !isZap)
+			sliderLayout->Add(sliderLo, 1, wxEXPAND, 0);
+
+		sliderReadoutLo->SetName(nameStr + "|RLO");
+		sliderReadoutLo->Show(!oneSize && !isZap);
+
+		if (!oneSize && !isZap)
+			sliderLayout->Add(sliderReadoutLo, 0, wxALL | wxALIGN_CENTER, 0);
+
+		if (lblSliderHi->GetLabel() != displayName)
+			lblSliderHi->SetLabel(displayName);
+
+		sliderLayout->Add(lblSliderHi, 0, wxLEFT | wxALIGN_CENTER, 5);
+
+		zapCheckHi->SetName(nameStr + "|ZHI");
+		zapCheckHi->Show(isZap);
+
+		if (isZap) {
+			sliderLayout->AddStretchSpacer();
+			sliderLayout->Add(zapCheckHi, 0, wxALIGN_LEFT, 0);
+		}
+
+		sliderHi->SetName(nameStr + "|HI");
+		sliderHi->SetMin(minValue);
+		sliderHi->SetMax(maxValue);
+		sliderHi->Show(!isZap);
+
+		if (!isZap)
+			sliderLayout->Add(sliderHi, 1, wxEXPAND, 0);
+
+		sliderReadoutHi->SetName(nameStr + "|RHI");
+		sliderReadoutHi->Show(!isZap);
+
+		if (!isZap)
+			sliderLayout->Add(sliderReadoutHi, 0, wxRIGHT | wxALIGN_CENTER, 10);
+
+		sliderName = name;
+		Show();
+		return true;
+	}
+
+	lblSliderLo = new wxStaticText(scrollWindow, wxID_ANY, display, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+	lblSliderLo->SetForegroundColour(wxColour(200, 200, 200));
+	lblSliderLo->Show(!oneSize);
+
+	if (!oneSize)
+		sliderLayout->Add(lblSliderLo, 0, wxLEFT | wxALIGN_CENTER, 5);
+
+	zapCheckLo = new wxCheckBox(scrollWindow, wxID_ANY, " ", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, nameStr + "|ZLO");
+	zapCheckLo->Show(!oneSize && isZap);
+
+	if (!oneSize && isZap) {
+		sliderLayout->AddStretchSpacer();
+		sliderLayout->Add(zapCheckLo, 0, wxALIGN_LEFT, 0);
+	}
+
+	sliderLo = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 24), wxSL_AUTOTICKS | wxSL_BOTTOM | wxSL_HORIZONTAL);
+	sliderLo->SetTickFreq(5);
+	sliderLo->SetName(nameStr + "|LO");
+	sliderLo->Show(!oneSize && !isZap);
+
+	if (!oneSize && !isZap)
+		sliderLayout->Add(sliderLo, 1, wxEXPAND, 0);
+
+	sliderReadoutLo = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(50, -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
+	sliderReadoutLo->Show(!oneSize && !isZap);
+	sliderReadoutLo->SetName(nameStr + "|RLO");
+
+	if (!oneSize && !isZap)
+		sliderLayout->Add(sliderReadoutLo, 0, wxALL | wxALIGN_CENTER, 0);
+
+	lblSliderHi = new wxStaticText(scrollWindow, wxID_ANY, display, wxDefaultPosition, wxDefaultSize, wxALIGN_CENTER_HORIZONTAL);
+	lblSliderHi->SetForegroundColour(wxColour(200, 200, 200));
+	sliderLayout->Add(lblSliderHi, 0, wxLEFT | wxALIGN_CENTER, 5);
+
+	zapCheckHi = new wxCheckBox(scrollWindow, wxID_ANY, " ", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, nameStr + "|ZHI");
+	zapCheckHi->Show(isZap);
+
+	if (isZap) {
+		sliderLayout->AddStretchSpacer();
+		sliderLayout->Add(zapCheckHi, 0, wxALIGN_LEFT, 0);
+	}
+
+	sliderHi = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 24), wxSL_AUTOTICKS | wxSL_HORIZONTAL);
+	sliderHi->SetTickFreq(5);
+	sliderHi->SetName(nameStr + "|HI");
+	sliderHi->Show(!isZap);
+
+	if (!isZap)
+		sliderLayout->Add(sliderHi, 1, wxEXPAND, 0);
+
+	sliderReadoutHi = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(50, -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
+	sliderReadoutHi->Show(!isZap);
+	sliderReadoutHi->SetName(nameStr + "|RHI");
+
+	if (!isZap)
+		sliderLayout->Add(sliderReadoutHi, 0, wxRIGHT | wxALIGN_CENTER, 10);
+
+	sliderName = name;
+
+	Show(false);
+	isCreated = true;
+	return true;
+}
+
+void SliderDisplay::Show(bool show) {
+	lblSliderLo->Show(show && !oneSize);
+	zapCheckLo->Show(show && !oneSize && isZap);
+	sliderLo->Show(show && !oneSize && !isZap);
+	sliderReadoutLo->Show(show && !oneSize && !isZap);
+	lblSliderHi->Show(show);
+	zapCheckHi->Show(show && isZap);
+	sliderHi->Show(show && !isZap);
+	sliderReadoutHi->Show(show && !isZap);
+	isShown = show;
+}
+
+
+SliderDisplay* SliderDisplayPool::Push() {
+	if (pool.size() < MaxPoolSize) {
+		auto entry = new SliderDisplay();
+		pool.push_back(entry);
+		return entry;
+	}
+
+	return nullptr;
+}
+
+void SliderDisplayPool::CreatePool(size_t poolSize, wxScrolledWindow* scrollWindow, wxSizer* sliderLayout) {
+	if (poolSize > MaxPoolSize)
+		poolSize = MaxPoolSize;
+
+	pool.resize(poolSize, nullptr);
+
+	for (auto& p : pool) {
+		if (!p)
+			p = new SliderDisplay();
+
+		if (!p->IsCreated())
+			p->Create(scrollWindow, sliderLayout, "sliderPoolDummy", "sliderPoolDummy", 0, 100, false);
+	}
+}
+
+SliderDisplay* SliderDisplayPool::Get(size_t index) {
+	if (pool.size() > index)
+		return pool[index];
+
+	return nullptr;
+}
+
+SliderDisplay* SliderDisplayPool::GetNext() {
+	for (size_t i = 0; i < pool.size(); ++i) {
+		SliderDisplay* entry = pool[i];
+
+		// Index of a slider that is invisible can be reused
+		if (entry && !entry->isShown)
+			return entry;
+	}
+
+	return Push();
+}
+
+void SliderDisplayPool::Clear() {
+	for (auto& p : pool)
+		delete p;
+
+	pool.clear();
 }

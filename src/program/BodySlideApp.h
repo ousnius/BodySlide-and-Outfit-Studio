@@ -214,26 +214,51 @@ static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
 #define SLIDER_LO 1
 #define SLIDER_HI 2
 
+class SliderDisplay {
+	bool isCreated = false;
+
+public:
+	bool isShown = false;
+	bool isZap = false;
+	bool oneSize = false;
+	std::string sliderName;
+	wxStaticText* lblSliderLo = nullptr;
+	wxSlider* sliderLo = nullptr;
+	wxTextCtrl* sliderReadoutLo = nullptr;
+	wxStaticText* lblSliderHi = nullptr;
+	wxSlider* sliderHi = nullptr;
+	wxTextCtrl* sliderReadoutHi = nullptr;
+	wxCheckBox* zapCheckHi = nullptr;
+	wxCheckBox* zapCheckLo = nullptr;
+
+	SliderDisplay();
+
+	bool IsCreated() {
+		return isCreated;
+	}
+
+	bool Create(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, int minValue, int maxValue, bool pIsZap, bool pOneSize = false);
+	void Show(bool show = true);
+};
+
+class SliderDisplayPool {
+	std::vector<SliderDisplay*> pool;
+
+	const size_t MaxPoolSize = 500;
+
+public:
+	SliderDisplay* Push();
+	void CreatePool(size_t poolSize, wxScrolledWindow* scrollWindow, wxSizer* sliderLayout);
+	SliderDisplay* Get(size_t index);
+	SliderDisplay* GetNext();
+	void Clear();
+};
+
 class BodySlideFrame : public wxFrame {
 public:
-	class SliderDisplay {
-	public:
-		bool isZap = false;
-		bool oneSize = false;
-		std::string sliderName;
-		wxStaticText* lblSliderLo = nullptr;
-		wxSlider* sliderLo = nullptr;
-		wxTextCtrl* sliderReadoutLo = nullptr;
-		wxStaticText* lblSliderHi = nullptr;
-		wxSlider* sliderHi = nullptr;
-		wxTextCtrl* sliderReadoutHi = nullptr;
-		wxCheckBox* zapCheckHi = nullptr;
-		wxCheckBox* zapCheckLo = nullptr;
-
-		SliderDisplay() {}
-	};
-
+	SliderDisplayPool sliderPool;
 	std::unordered_map<std::string, SliderDisplay*> sliderDisplays;
+	std::vector<wxWindow*> categoryWidgets;
 
 	wxTimer delayLoad;
 
@@ -246,15 +271,14 @@ public:
 	wxMenu* fileCollisionMenu = nullptr;
 
 	BodySlideFrame(BodySlideApp* app, const wxSize& size);
-	~BodySlideFrame() {
-		ClearSliderGUI();
-	}
+	~BodySlideFrame() { }
 
+	void HideSlider(SliderDisplay* slider);
 	void ShowLowColumn(bool show);
 	void AddCategorySliderUI(const wxString& name, bool show, bool oneSize);
 	void AddSliderGUI(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, bool isZap, bool oneSize = false);
 
-	BodySlideFrame::SliderDisplay* GetSliderDisplay(const std::string& name) {
+	SliderDisplay* GetSliderDisplay(const std::string& name) {
 		if (sliderDisplays.find(name) != sliderDisplays.end())
 			return sliderDisplays[name];
 
