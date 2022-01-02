@@ -3421,6 +3421,9 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
 			tmplChoice->Select(0);
 
+		LoadDialogCheckBox(dlg, "chkKeepZapSliders");
+		LoadDialogCheckBox(dlg, "chkClearSliders");
+		
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
@@ -3435,6 +3438,8 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(10, _("Loading reference set..."));
 	bool mergeSliders = (XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
 	bool keepZapSliders = (XRCCTRL(dlg, "chkKeepZapSliders", wxCheckBox)->IsChecked());
+	OutfitStudioConfig.SetBoolValue("chkClearSliders", mergeSliders);
+	OutfitStudioConfig.SetBoolValue("chkKeepZapSliders", keepZapSliders);
 
 	int error = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
@@ -3494,6 +3499,12 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Reference loaded.");
 	UpdateProgress(100, _("Finished"));
 	EndProgress();
+}
+
+void OutfitStudioFrame::LoadDialogCheckBox(wxDialog& dlg, const char* dlgProperty) const {
+	wxCheckBox* tmplChoice = XRCCTRL(dlg, dlgProperty, wxCheckBox);
+	bool lastValue = OutfitStudioConfig.GetBoolValue(dlgProperty);
+	tmplChoice->SetValue(lastValue);
 }
 
 void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
