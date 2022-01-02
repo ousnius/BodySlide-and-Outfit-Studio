@@ -117,23 +117,28 @@ bool wxSliderPanel::Create(wxWindow* parent, const wxString& name, const wxBitma
 }
 
 
-void wxSliderPanelPool::IncreaseSize(size_t poolSize) {
-	if (poolSize <= MaxPoolSize && pool.size() < poolSize) {
-		pool.resize(poolSize, nullptr);
-
-		for (auto& p : pool) {
-			if (!p) {
-				p = new wxSliderPanel();
-			}
-		}
+wxSliderPanel* wxSliderPanelPool::Push() {
+	if (pool.size() < MaxPoolSize) {
+		auto entry = new wxSliderPanel();
+		pool.push_back(entry);
+		return entry;
 	}
+
+	return nullptr;
 }
 
-void wxSliderPanelPool::CreatePool(wxWindow* parent, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings) {
+void wxSliderPanelPool::CreatePool(size_t poolSize, wxWindow* parent, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings) {
+	if (poolSize > MaxPoolSize)
+		poolSize = MaxPoolSize;
+
+	pool.resize(poolSize, nullptr);
+
 	for (auto& p : pool) {
-		if (!p->IsCreated()) {
+		if (!p)
+			p = new wxSliderPanel();
+
+		if (!p->IsCreated())
 			p->Create(parent, "sliderPoolDummy", bmpEdit, bmpSettings);
-		}
 	}
 }
 
@@ -142,6 +147,18 @@ wxSliderPanel* wxSliderPanelPool::Get(size_t index) {
 		return pool[index];
 
 	return nullptr;
+}
+
+wxSliderPanel* wxSliderPanelPool::GetNext() {
+	for (size_t i = 0; i < pool.size(); ++i) {
+		wxSliderPanel* sliderPanel = pool[i];
+
+		// Index of a slider panel that is invisible can be reused
+		if (sliderPanel && !sliderPanel->IsShown())
+			return sliderPanel;
+	}
+
+	return Push();
 }
 
 void wxSliderPanelPool::Clear() {

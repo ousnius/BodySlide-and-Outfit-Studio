@@ -996,7 +996,6 @@ public:
 
 	void ApplySliders(bool recalcBVH = true);
 
-	void ShowSliderEffect(const size_t slider, bool show = true);
 	void ShowSliderEffect(const std::string& sliderName, bool show = true);
 
 	void SelectShape(const std::string& shapeName);
@@ -1039,8 +1038,6 @@ public:
 	std::string GetActiveBone();
 
 	bool CheckEditableState();
-
-	size_t GetNextSliderIndex();
 
 	void HideSliderPanel(wxSliderPanel* sliderPanel);
 	void EnterSliderEdit(const std::string& sliderName = "");
@@ -1168,7 +1165,7 @@ private:
 	wxBitmap* bmpEditSlider = nullptr;
 	wxBitmap* bmpSliderSettings = nullptr;
 
-	void createSliderGUI(const std::string& name, const size_t id, wxScrolledWindow* wnd, wxSizer* rootSz);
+	void createSliderGUI(const std::string& name, wxScrolledWindow* wnd, wxSizer* rootSz);
 
 	void ScrollWindowIntoView(wxScrolledWindow* scrolled, wxWindow* window);
 	void HighlightSlider(const std::string& name);

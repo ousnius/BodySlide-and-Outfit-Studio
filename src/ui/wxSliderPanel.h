@@ -41,11 +41,9 @@ class wxSliderPanelPool {
 	const size_t MaxPoolSize = 500;
 
 public:
-	void IncreaseSize(size_t poolSize);
-	void CreatePool(wxWindow* parent, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
-	size_t GetSize() {
-		return pool.size();
-	}
+	wxSliderPanel* Push();
+	void CreatePool(size_t poolSize, wxWindow* parent, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
 	wxSliderPanel* Get(size_t index);
+	wxSliderPanel* GetNext();
 	void Clear();
 };
