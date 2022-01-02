@@ -2340,6 +2340,9 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, wxScrolledWindo
 
 			rootSz->Add(sliderPanel, 0, wxALL | wxEXPAND | wxFIXED_MINSIZE, 1);
 
+			if (!sliderPanel->IsShown())
+				sliderPanel->Show();
+
 			ShowSliderEffect(name);
 			sliderPanels[name] = sliderPanel;
 		}
