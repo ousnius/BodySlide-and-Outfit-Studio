@@ -1253,6 +1253,16 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		m->CalcWeldVerts();
 	}
 
+	std::vector<Color4> vColors;
+	if (nif->GetColorsForShape(shape, vColors)) {
+		for (size_t v = 0; v < vColors.size(); v++) {
+			m->vcolors[v].x = vColors.at(v).r;
+			m->vcolors[v].y = vColors.at(v).g;
+			m->vcolors[v].z = vColors.at(v).b;
+			m->valpha[v] = vColors.at(v).a;
+		}
+	}
+
 	m->CalcTangentSpace();
 	m->CreateBVH();
 
