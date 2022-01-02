@@ -693,6 +693,15 @@
 						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
+						<object class="wxCheckBox" name="chkKeepZapSliders">
+							<label>Keep Zap Sliders</label>
+							<checked>1</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
 						<object class="wxCheckBox" name="chkClearSliders">
 							<label>Merge new sliders with existing sliders</label>
 							<checked>0</checked>
