@@ -1886,7 +1886,6 @@ int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const st
 }
 
 int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders, bool mergeZaps) {
-
 	if (mergeZaps || mergeSliders) {
 		owner->DeleteSliders(mergeSliders, mergeZaps);
 		DeleteShape(baseShape);
@@ -1945,7 +1944,6 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 }
 
 int OutfitProject::LoadReference(const std::string& fileName, const std::string& setName, const std::string& shapeName, bool mergeSliders, bool mergeZaps) {
-
 	if (mergeZaps || mergeSliders) {
 		owner->DeleteSliders(mergeSliders, mergeZaps);
 		DeleteShape(baseShape);

@@ -715,6 +715,7 @@
 								<border>5</border>
 								<object class="wxCheckBox" name="chkMergeZaps">
 									<label>Zaps</label>
+									<tooltip>Merge existing zaps with new sliders</tooltip>
 									<checked>1</checked>
 								</object>
 							</object>
@@ -724,6 +725,7 @@
 								<border>5</border>
 								<object class="wxCheckBox" name="chkMergeSliders">
 									<label>Sliders</label>
+									<tooltip>Merge new sliders with existing sliders</tooltip>
 									<checked>0</checked>
 								</object>
 							</object>
