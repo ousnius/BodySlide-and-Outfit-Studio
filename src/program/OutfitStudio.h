@@ -1051,6 +1051,7 @@ public:
 	void CloseBrushSettings();
 	void PopupBrushSettings(wxWindow* popupAt = nullptr);
 	void UpdateBrushSettings();
+	void DeleteSliders(bool keepSliders = false, bool keepZaps = false);
 
 	void CheckBrushBounds() {
 		TweakBrush* brush = glView->GetActiveBrush();
@@ -1203,6 +1204,8 @@ private:
 
 	void AddProjectHistory(const std::string& fileName, const std::string& projectName);
 	void UpdateProjectHistory();
+
+	void LoadDialogCheckBox(wxDialog& dlg, const char* dlgProperty) const;
 
 	void OnNewProject(wxCommandEvent& event);
 	void OnLoadProject(wxCommandEvent &event);

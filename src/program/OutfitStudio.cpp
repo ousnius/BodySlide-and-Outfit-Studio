@@ -2248,7 +2248,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 			wxLogMessage("Loading reference shape '%s'...", shapeName);
 			UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shapeName));
 
-			error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shapeName, true);
+			error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shapeName, true, true);
 			if (error) {
 				EndProgress();
 				RefreshGUIFromProj();
@@ -3318,8 +3318,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
 
-			error = project->LoadReference(fileName.ToUTF8().data(),
-				sliderSetName.ToUTF8().data(), false, refShape.ToUTF8().data());
+			error = project->LoadReference(fileName.ToUTF8().data(), sliderSetName.ToUTF8().data(), refShape.ToUTF8().data());
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
@@ -3424,6 +3423,9 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
 			tmplChoice->Select(0);
 
+		LoadDialogCheckBox(dlg, "chkMergeSliders");
+		LoadDialogCheckBox(dlg, "chkMergeZaps");
+
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
@@ -3436,7 +3438,10 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		glView->DeleteMesh(baseShape->name.get());
 
 	UpdateProgress(10, _("Loading reference set..."));
-	bool mergeSliders = (XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
+	bool mergeSliders = (XRCCTRL(dlg, "chkMergeSliders", wxCheckBox)->IsChecked());
+	bool mergeZaps = (XRCCTRL(dlg, "chkMergeZaps", wxCheckBox)->IsChecked());
+	OutfitStudioConfig.SetBoolValue("chkMergeSliders", mergeSliders);
+	OutfitStudioConfig.SetBoolValue("chkMergeZaps", mergeZaps);
 
 	int error = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
@@ -3449,9 +3454,9 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
 			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-				error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders);
+				error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps);
 			else
-				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders);
+				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps);
 		}
 		else
 			error = 1;
@@ -3465,12 +3470,11 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
 
-			error = project->LoadReference(fileName.ToUTF8().data(),
-				sliderSetName.ToUTF8().data(), mergeSliders, refShape.ToUTF8().data());
+			error = project->LoadReference(fileName.ToUTF8().data(), sliderSetName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders, mergeZaps);
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
-			error = project->LoadReferenceNif(fileName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders);
+			error = project->LoadReferenceNif(fileName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders, mergeZaps);
 		}
 	}
 	else
@@ -3496,6 +3500,12 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Reference loaded.");
 	UpdateProgress(100, _("Finished"));
 	EndProgress();
+}
+
+void OutfitStudioFrame::LoadDialogCheckBox(wxDialog& dlg, const char* dlgProperty) const {
+	wxCheckBox* tmplChoice = XRCCTRL(dlg, dlgProperty, wxCheckBox);
+	bool lastValue = OutfitStudioConfig.GetBoolValue(dlgProperty);
+	tmplChoice->SetValue(lastValue);
 }
 
 void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
@@ -7482,6 +7492,14 @@ void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	if (result != wxYES)
 		return;
 
+	DeleteSliders();
+}
+
+void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
+
+	if (keepSliders && keepZaps)
+		return;
+
 	auto deleteSlider = [&](const std::string& sliderName) {
 		wxLogMessage("Deleting slider '%s'.", sliderName);
 
@@ -7499,6 +7517,11 @@ void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	if (!bEditSlider) {
 		for (auto it = sliderPanels.begin(); it != sliderPanels.end();) {
 			if (it->second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED) {
+				if ((keepZaps && project->activeSet[it->first].bZap) ||
+					(keepSliders && !project->activeSet[it->first].bZap)) {
+					++it;
+					continue;
+				}
 				deleteSlider(it->first);
 				it = sliderPanels.erase(it);
 			}

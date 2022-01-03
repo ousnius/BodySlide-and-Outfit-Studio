@@ -689,13 +689,46 @@
 							<value translate="0">0</value>
 						</object>
 					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Merge</label>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL</flag>
+						<flag>wxEXPAND</flag>
 						<border>5</border>
-						<object class="wxCheckBox" name="chkClearSliders">
-							<label>Merge new sliders with existing sliders</label>
-							<checked>0</checked>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="chkMergeZaps">
+									<label>Zaps</label>
+									<tooltip>Merge existing zaps with new sliders</tooltip>
+									<checked>1</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="chkMergeSliders">
+									<label>Sliders</label>
+									<tooltip>Merge new sliders with existing sliders</tooltip>
+									<checked>0</checked>
+								</object>
+							</object>
 						</object>
 					</object>
 				</object>
