@@ -3421,9 +3421,9 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
 			tmplChoice->Select(0);
 
-		LoadDialogCheckBox(dlg, "chkKeepZapSliders");
-		LoadDialogCheckBox(dlg, "chkClearSliders");
-		
+		LoadDialogCheckBox(dlg, "chkMergeSliders");
+		LoadDialogCheckBox(dlg, "chkMergeZaps");
+
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
@@ -3436,10 +3436,10 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		glView->DeleteMesh(baseShape->name.get());
 
 	UpdateProgress(10, _("Loading reference set..."));
-	bool mergeSliders = (XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
-	bool keepZapSliders = (XRCCTRL(dlg, "chkKeepZapSliders", wxCheckBox)->IsChecked());
-	OutfitStudioConfig.SetBoolValue("chkClearSliders", mergeSliders);
-	OutfitStudioConfig.SetBoolValue("chkKeepZapSliders", keepZapSliders);
+	bool mergeSliders = (XRCCTRL(dlg, "chkMergeSliders", wxCheckBox)->IsChecked());
+	bool mergeZaps = (XRCCTRL(dlg, "chkMergeZaps", wxCheckBox)->IsChecked());
+	OutfitStudioConfig.SetBoolValue("chkMergeSliders", mergeSliders);
+	OutfitStudioConfig.SetBoolValue("chkMergeZaps", mergeZaps);
 
 	int error = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
@@ -3452,9 +3452,9 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
 			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-				error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, keepZapSliders);
+				error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps);
 			else
-				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, keepZapSliders);
+				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps);
 		}
 		else
 			error = 1;
@@ -3469,11 +3469,11 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 				refShape, sliderSetName, fileName);
 
 			error = project->LoadReference(fileName.ToUTF8().data(),
-				sliderSetName.ToUTF8().data(), mergeSliders, refShape.ToUTF8().data(), keepZapSliders);
+				sliderSetName.ToUTF8().data(), mergeSliders, refShape.ToUTF8().data(), mergeZaps);
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
-			error = project->LoadReferenceNif(fileName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders, keepZapSliders);
+			error = project->LoadReferenceNif(fileName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders, mergeZaps);
 		}
 	}
 	else
