@@ -3839,9 +3839,8 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 	project->GetActiveBones(activeBones);
 
 	wxArrayString activeBonesArr;
-	activeBonesArr.resize(activeBones.size());
 	for (auto& bone : activeBones)
-		activeBonesArr.Add(bone);
+		activeBonesArr.Add(wxString::FromUTF8(bone));
 
 	cXMirrorBone->Append(activeBonesArr);
 	cPoseBone->Append(activeBonesArr);
