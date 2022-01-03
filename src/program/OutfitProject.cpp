@@ -1870,7 +1870,7 @@ int OutfitProject::LoadSkeletonReference(const std::string& skeletonFileName) {
 	return AnimSkeleton::getInstance().LoadFromNif(skeletonFileName);
 }
 
-int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool keepZaps) {
+int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool mergeZaps) {
 	if (sourceFile.empty() || set.empty()) {
 		wxLogError("Template source entries are invalid.");
 		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR, owner);
@@ -1882,16 +1882,15 @@ int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const st
 		return AddFromSliderSet(sourceFile, set);
 	}
 	else
-		return LoadReference(sourceFile, set, mergeSliders, shape, keepZaps);
+		return LoadReference(sourceFile, set, shape, mergeSliders, mergeZaps);
 }
 
-int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders, bool keepZaps) {
+int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders, bool mergeZaps) {
 
-	if (!mergeSliders && keepZaps)
-		owner->DeleteSliders(true);
-
-	if (keepZaps || mergeSliders)
+	if (mergeZaps || mergeSliders) {
+		owner->DeleteSliders(mergeSliders, mergeZaps);
 		DeleteShape(baseShape);
+	}
 	else
 		ClearReference();
 
@@ -1945,13 +1944,12 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	return 0;
 }
 
-int OutfitProject::LoadReference(const std::string& fileName, const std::string& setName, bool mergeSliders, const std::string& shapeName, bool keepZaps) {
+int OutfitProject::LoadReference(const std::string& fileName, const std::string& setName, const std::string& shapeName, bool mergeSliders, bool mergeZaps) {
 
-	if (!mergeSliders && keepZaps)
-		owner->DeleteSliders(true);
-
-	if (keepZaps || mergeSliders)
+	if (mergeZaps || mergeSliders) {
+		owner->DeleteSliders(mergeSliders, mergeZaps);
 		DeleteShape(baseShape);
+	}
 	else
 		ClearReference();
 

@@ -2248,7 +2248,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 			wxLogMessage("Loading reference shape '%s'...", shapeName);
 			UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shapeName));
 
-			error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shapeName, true);
+			error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shapeName, true, true);
 			if (error) {
 				EndProgress();
 				RefreshGUIFromProj();
@@ -3315,8 +3315,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
 
-			error = project->LoadReference(fileName.ToUTF8().data(),
-				sliderSetName.ToUTF8().data(), false, refShape.ToUTF8().data());
+			error = project->LoadReference(fileName.ToUTF8().data(), sliderSetName.ToUTF8().data(), refShape.ToUTF8().data());
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
@@ -3468,8 +3467,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
 
-			error = project->LoadReference(fileName.ToUTF8().data(),
-				sliderSetName.ToUTF8().data(), mergeSliders, refShape.ToUTF8().data(), mergeZaps);
+			error = project->LoadReference(fileName.ToUTF8().data(), sliderSetName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders, mergeZaps);
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
@@ -7494,7 +7492,10 @@ void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	DeleteSliders();
 }
 
-void OutfitStudioFrame::DeleteSliders(bool keepZaps) {
+void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
+
+	if (keepSliders && keepZaps)
+		return;
 
 	auto deleteSlider = [&](const std::string& sliderName) {
 		wxLogMessage("Deleting slider '%s'.", sliderName);
@@ -7513,7 +7514,8 @@ void OutfitStudioFrame::DeleteSliders(bool keepZaps) {
 	if (!bEditSlider) {
 		for (auto it = sliderPanels.begin(); it != sliderPanels.end();) {
 			if (it->second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED) {
-				if (keepZaps && project->activeSet[it->first].bZap) {
+				if ((keepZaps && project->activeSet[it->first].bZap) ||
+					(keepSliders && !project->activeSet[it->first].bZap)) {
 					++it;
 					continue;
 				}

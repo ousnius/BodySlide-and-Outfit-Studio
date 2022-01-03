@@ -1051,7 +1051,7 @@ public:
 	void CloseBrushSettings();
 	void PopupBrushSettings(wxWindow* popupAt = nullptr);
 	void UpdateBrushSettings();
-	void DeleteSliders(bool keepZaps = false);
+	void DeleteSliders(bool keepSliders = false, bool keepZaps = false);
 
 	void CheckBrushBounds() {
 		TweakBrush* brush = glView->GetActiveBrush();
