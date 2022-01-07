@@ -956,8 +956,8 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	OutfitStudioConfig.GetValueAttributeArray("ProjectHistory", "Project", "name", projectHistoryNames);
 
 	if (projectHistoryFiles.size() == projectHistoryNames.size())
-		for (size_t i = 0; i < projectHistoryFiles.size(); i++)
-			AddProjectHistory(projectHistoryFiles[i], projectHistoryNames[i]);
+		for (size_t i = projectHistoryFiles.size(); i > 0; --i)
+			AddProjectHistory(projectHistoryFiles[i - 1], projectHistoryNames[i - 1]);
 
 	toolBarH = (wxToolBar*)FindWindowByName("toolBarH");
 	toolBarV = (wxToolBar*)FindWindowByName("toolBarV");
