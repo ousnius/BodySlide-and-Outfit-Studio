@@ -254,11 +254,7 @@ void Automorph::GetRawResultDiff(const std::string& shapeName, const std::string
 	if (!resultDiffData.TargetMatch(setName, shapeName))
 		return;
 
-	outDiff.clear();
-
-	std::unordered_map<uint16_t, Vector3>* set = resultDiffData.GetDiffSet(setName);
-	for (auto &i : *set)
-		outDiff[i.first] = i.second;
+	outDiff = *resultDiffData.GetDiffSet(setName);
 }
 
 int Automorph::GetResultDiffSize(const std::string& shapeName, const std::string& sliderName) {

@@ -97,11 +97,19 @@ bool OSDataFile::Write(const std::string& fileName) {
 		file.write(diffs.first.c_str(), nameLength);
 
 		diffSize = static_cast<uint16_t>(diffs.second.size());
-		file.write((char*)&diffSize, 2);
-		for (auto &diff : diffs.second) {
-			file.write((char*)&diff.first, 2);
-			file.write((char*)&diff.second, sizeof(Vector3));
+
+		std::vector<DiffStruct> diffData(diffSize);
+		diffData.resize(diffSize);
+
+		for (auto& diff : diffs.second) {
+			if (diff.first < diffSize) {
+				diffData[diff.first].index = diff.first;
+				diffData[diff.first].diff = diff.second;
+			}
 		}
+
+		file.write((char*)&diffSize, 2);
+		file.write((char*)diffData.data(), diffSize * sizeof(DiffStruct));
 	}
 
 	return true;
@@ -223,11 +231,11 @@ bool DiffDataSets::SaveData(const std::map<std::string, std::map<std::string, st
 	for (auto &osd : osdNames) {
 		OSDataFile osdFile;
 		for (auto &dataNames : osd.second) {
-			std::unordered_map<uint16_t, Vector3>* data = &namedSet[dataNames.first];
+			auto& data = namedSet[dataNames.first];
 			if (!TargetMatch(dataNames.first, dataNames.second))
 				continue;
 
-			osdFile.SetDataDiff(dataNames.first, *data);
+			osdFile.SetDataDiff(dataNames.first, data);
 		}
 
 		if (!osdFile.Write(osd.first))
