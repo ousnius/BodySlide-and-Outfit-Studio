@@ -91,8 +91,6 @@ class BodySlideApp : public wxApp {
 	/* Cache */
 	std::map<std::string, nifly::NifFile, case_insensitive_compare> refNormalsCache;	// Cache for reference normals files
 
-	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount;	// Counts how many sets write to the same output file
-
 	std::string previewBaseName;
 	std::string previewSetName;
 	nifly::NifFile* previewBaseNif = nullptr;
@@ -112,6 +110,7 @@ public:
 	
 	SliderCategoryCollection cCollection;
 	TargetGame targetGame;
+	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount;	// Counts how many sets write to the same output file
 
 	bool SetDefaultConfig();
 	bool ShowSetup();

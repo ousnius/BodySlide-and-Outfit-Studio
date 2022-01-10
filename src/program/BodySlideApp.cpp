@@ -3605,7 +3605,6 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	wxArrayString oChoices;
-	wxArrayInt oSelections;
 	std::vector<std::string> outfitChoices;
 	std::vector<std::string> toBuild;
 
@@ -3629,10 +3628,12 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 
 	app->GetFilteredOutfits(outfitChoices);
 
-	int idx = 0;
-	for (auto &o : outfitChoices) {
+	std::map<std::string, uint32_t> outfitIndices;
+
+	uint32_t idx = 0;
+	for (auto& o : outfitChoices) {
 		oChoices.Add(wxString::FromUTF8(o));
-		oSelections.Add(idx);
+		outfitIndices[o] = idx;
 		idx++;
 	}
 
@@ -3645,11 +3646,49 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	batchBuildChooser->SetSizeHints(wxSize(650, 300), wxSize(650, -1));
 	batchBuildChooser->CenterOnParent();
 
+	// Load BuildSelection file
+	std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
+
+	BuildSelectionFile buildSelFile(buildSelFileName);
+
+	if (buildSelFile.GetError())
+		buildSelFile.New(buildSelFileName);
+
+	BuildSelection buildSelection;
+	buildSelFile.Get(buildSelection);
+
 	batchBuildList = XRCCTRL((*batchBuildChooser), "batchBuildList", wxCheckListBox);
 	batchBuildList->Bind(wxEVT_RIGHT_UP, &BodySlideFrame::OnBatchBuildContext, this);
+
 	batchBuildList->Append(oChoices);
+
 	for (uint32_t i = 0; i < oChoices.size(); i++)
 		batchBuildList->Check(i);
+
+	for (auto& outFile : app->outFileCount) {
+		if (outFile.second.size() > 1) {
+			std::vector<std::string> outfitsInBuild;
+			for (auto& outfit : outFile.second) {
+				// Only if it's going to be batch built
+				if (std::find(outfitChoices.begin(), outfitChoices.end(), outfit) != outfitChoices.end())
+					outfitsInBuild.push_back(outfit);
+			}
+
+			// Same file would not be written more than once
+			if (outfitsInBuild.size() <= 1)
+				continue;
+
+			std::string outputChoice = buildSelection.GetOutputChoice(outFile.first);
+			if (!outputChoice.empty()) {
+				for (auto& outfit : outfitsInBuild) {
+					if (outfit != outputChoice) {
+						// Uncheck choice by default
+						batchBuildList->Check(outfitIndices[outfit], false);
+					}
+				}
+			}
+		}
+	}
 
 	if (batchBuildChooser->ShowModal() == wxID_OK) {
 		wxArrayInt sel;
