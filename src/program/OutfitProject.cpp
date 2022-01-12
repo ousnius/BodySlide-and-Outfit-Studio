@@ -66,13 +66,13 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	outSet.SetOutputFile(gameFile);
 	outSet.SetGenWeights(genWeights);
 
-	const wxString sliderSetsStr = "SliderSets\\";
+	const wxString sliderSetsStr = "SliderSets";
 
 	wxFileName ssFileName(sliderSetFile);
 	int sliderSetsStrIndex = ssFileName.GetDirs().Index(sliderSetsStr);
 	if (sliderSetsStrIndex == wxNOT_FOUND) {
 		// Make path relative to "SliderSets\", only use file name
-		ssFileName = wxFileName(sliderSetsStr + sliderSetFile.GetFullName());
+		ssFileName = wxFileName(sliderSetsStr + PathSepStr + sliderSetFile.GetFullName());
 	}
 
 	if (ssFileName.IsRelative())
