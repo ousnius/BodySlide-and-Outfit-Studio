@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/SliderGroup.h"
 #include "../files/TriFile.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/ConfigDialogUtil.h"
 
 #include <wx/debugrpt.h>
 #include <wx/wfstream.h>
@@ -3423,9 +3424,9 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
 			tmplChoice->Select(0);
 
-		LoadDialogCheckBox(dlg, "chkMergeSliders");
-		LoadDialogCheckBox(dlg, "chkMergeZaps");
-
+		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "chkMergeSliders");
+		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "chkMergeZaps");
+		
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
@@ -3438,10 +3439,8 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		glView->DeleteMesh(baseShape->name.get());
 
 	UpdateProgress(10, _("Loading reference set..."));
-	bool mergeSliders = (XRCCTRL(dlg, "chkMergeSliders", wxCheckBox)->IsChecked());
-	bool mergeZaps = (XRCCTRL(dlg, "chkMergeZaps", wxCheckBox)->IsChecked());
-	OutfitStudioConfig.SetBoolValue("chkMergeSliders", mergeSliders);
-	OutfitStudioConfig.SetBoolValue("chkMergeZaps", mergeZaps);
+	bool mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "chkMergeSliders");
+	bool mergeZaps = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "chkMergeZaps");
 
 	int error = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
