@@ -1107,21 +1107,27 @@ public:
 	}
 
 	void StartSubProgress(int min, int max) {
-		int range = progressStack.back().second - progressStack.front().first;
+		int range = progressStack.back().second - progressStack.back().first;
 		float mindiv = min / 100.0f;
 		float maxdiv = max / 100.0f;
 		int minoff = mindiv * range + 1;
 		int maxoff = maxdiv * range + 1;
-		progressStack.emplace_back(progressStack.front().first + minoff, progressStack.front().first + maxoff);
+		progressStack.emplace_back(minoff + progressStack.back().first, maxoff + progressStack.back().first);
 	}
 
-	void EndProgress(const wxString& msg = "") {
+	void EndProgress(const wxString& msg = "", bool forceEmpty = false) {
 		if (progressStack.empty())
 			return;
 
-		progressBar->SetValue(progressStack.back().second);
-		progressStack.pop_back();
-
+		if(forceEmpty) {
+			progressBar->SetValue(progressStack.front().second);
+			progressStack.clear();
+		}
+		else {
+			progressBar->SetValue(progressStack.back().second);
+			progressStack.pop_back();
+		}
+		
 		if (progressStack.empty()) {
 			if (msg.IsEmpty())
 				statusBar->SetStatusText(_("Ready!"));
