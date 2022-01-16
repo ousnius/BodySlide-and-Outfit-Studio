@@ -363,7 +363,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		stTexGrid->SetMargins(0, 0);
 
 		// Columns
-		stTexGrid->SetColSize(0, 350);
+		stTexGrid->SetColSize(0, 700);
 		stTexGrid->EnableDragColMove(false);
 		stTexGrid->EnableDragColSize(false);
 		stTexGrid->SetColLabelSize(30);
