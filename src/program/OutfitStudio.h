@@ -1119,9 +1119,6 @@ public:
 		if (progressStack.empty())
 			return;
 
-		progressBar->SetValue(progressStack.back().second);
-		progressStack.pop_back();
-
 		if(forceEmpty) {
 			progressBar->SetValue(progressStack.front().second);
 			progressStack.clear();
