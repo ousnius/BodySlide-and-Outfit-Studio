@@ -3487,12 +3487,6 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	EndProgress();
 }
 
-void OutfitStudioFrame::LoadDialogCheckBox(wxDialog& dlg, const char* dlgProperty) const {
-	wxCheckBox* tmplChoice = XRCCTRL(dlg, dlgProperty, wxCheckBox);
-	bool lastValue = OutfitStudioConfig.GetBoolValue(dlgProperty);
-	tmplChoice->SetValue(lastValue);
-}
-
 void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	int result = wxID_CANCEL;
