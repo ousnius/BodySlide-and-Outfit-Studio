@@ -1205,8 +1205,6 @@ private:
 	void AddProjectHistory(const std::string& fileName, const std::string& projectName);
 	void UpdateProjectHistory();
 
-	void LoadDialogCheckBox(wxDialog& dlg, const char* dlgProperty) const;
-
 	void OnNewProject(wxCommandEvent& event);
 	void OnLoadProject(wxCommandEvent &event);
 	void OnAddProject(wxCommandEvent &event);

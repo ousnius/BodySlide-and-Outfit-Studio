@@ -15,7 +15,13 @@ See the included LICENSE file
 
 using namespace tinyxml2;
 
-class RefTemplate {
+class NamedValue
+{
+public:
+	virtual std::string GetName() const = 0;
+};
+
+class RefTemplate : NamedValue {
 	std::string name;
 	std::string source;
 	std::string set;
@@ -29,7 +35,8 @@ public:
 		Load(srcElement);
 	}
 
-	std::string GetName() const {
+	std::string GetName() const override
+	{
 		return name;
 	}
 	void SetName(const std::string& inName) {

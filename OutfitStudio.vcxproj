@@ -766,6 +766,7 @@
     <ClInclude Include="src\ui\wxStateButton.h" />
     <ClInclude Include="src\utils\AABBTree.h" />
     <ClInclude Include="src\utils\ConfigurationManager.h" />
+    <ClInclude Include="src\utils\ConfigDialogUtil.h" />
     <ClInclude Include="src\utils\Log.h" />
     <ClInclude Include="src\utils\PlatformUtil.h" />
     <ClInclude Include="src\utils\StringStuff.h" />

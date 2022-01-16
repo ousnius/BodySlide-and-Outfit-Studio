@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/SliderGroup.h"
 #include "../files/TriFile.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/ConfigDialogUtil.h"
 
 #include <wx/debugrpt.h>
 #include <wx/wfstream.h>
@@ -3251,13 +3252,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(wiz, "npWorkFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_File, this);
 		XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_Texture, this);
 
-		wxChoice* tmplChoice = XRCCTRL(wiz, "npTemplateChoice", wxChoice);
-		for (auto &tmpl : refTemplates)
-			tmplChoice->Append(tmpl.GetName());
-
-		std::string lastRefTemplate = OutfitStudioConfig["LastRefTemplate"];
-		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
-			tmplChoice->Select(0);
+		ConfigDialogUtil::LoadDialogChoices(OutfitStudioConfig, wiz, "npTemplateChoice", refTemplates);
 
 		wiz.FitToPage(pg1);
 		wiz.CenterOnParent();
@@ -3293,10 +3288,9 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	int error = 0;
 	if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
-		wxString refTemplate = XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection();
-		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
-		OutfitStudioConfig.SetValue("LastRefTemplate", refTemplate.ToStdString());
+		wxString refTemplate = ConfigDialogUtil::SetStringFromDialogChoice(OutfitStudioConfig, wiz, "npTemplateChoice");
+		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
 		std::string tmplName{refTemplate.ToUTF8()};
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
@@ -3415,17 +3409,11 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnNPWizChangeSliderSetFile, this);
 		XRCCTRL(dlg, "npSliderSetName", wxChoice)->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnNPWizChangeSetNameChoice, this);
 
-		wxChoice* tmplChoice = XRCCTRL(dlg, "npTemplateChoice", wxChoice);
-		for (auto &tmpl : refTemplates)
-			tmplChoice->Append(tmpl.GetName());
+		ConfigDialogUtil::LoadDialogChoices(OutfitStudioConfig, dlg, "npTemplateChoice", refTemplates);
 
-		std::string lastRefTemplate = OutfitStudioConfig["LastRefTemplate"];
-		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
-			tmplChoice->Select(0);
-
-		LoadDialogCheckBox(dlg, "chkMergeSliders");
-		LoadDialogCheckBox(dlg, "chkMergeZaps");
-
+		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "chkMergeSliders");
+		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "chkMergeZaps");
+		
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
@@ -3438,17 +3426,14 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		glView->DeleteMesh(baseShape->name.get());
 
 	UpdateProgress(10, _("Loading reference set..."));
-	bool mergeSliders = (XRCCTRL(dlg, "chkMergeSliders", wxCheckBox)->IsChecked());
-	bool mergeZaps = (XRCCTRL(dlg, "chkMergeZaps", wxCheckBox)->IsChecked());
-	OutfitStudioConfig.SetBoolValue("chkMergeSliders", mergeSliders);
-	OutfitStudioConfig.SetBoolValue("chkMergeZaps", mergeZaps);
+	bool mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "chkMergeSliders");
+	bool mergeZaps = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "chkMergeZaps");
 
 	int error = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
-		wxString refTemplate = XRCCTRL(dlg, "npTemplateChoice", wxChoice)->GetStringSelection();
-		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
-		OutfitStudioConfig.SetValue("LastRefTemplate", refTemplate.ToStdString());
+		wxString refTemplate = ConfigDialogUtil::SetStringFromDialogChoice(OutfitStudioConfig, dlg, "npTemplateChoice");
+		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
 		std::string tmplName{refTemplate.ToUTF8()};
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
@@ -3500,12 +3485,6 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Reference loaded.");
 	UpdateProgress(100, _("Finished"));
 	EndProgress();
-}
-
-void OutfitStudioFrame::LoadDialogCheckBox(wxDialog& dlg, const char* dlgProperty) const {
-	wxCheckBox* tmplChoice = XRCCTRL(dlg, dlgProperty, wxCheckBox);
-	bool lastValue = OutfitStudioConfig.GetBoolValue(dlgProperty);
-	tmplChoice->SetValue(lastValue);
 }
 
 void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
