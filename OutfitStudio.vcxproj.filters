@@ -647,6 +647,9 @@
     <None Include="lib\gli\glm\gtx\color_space_YCoCg.inl">
       <Filter>Libraries\gli\glm\gtx</Filter>
     </None>
+    <None Include="res\xrc\ConvertBodyReference.xrc">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -1753,6 +1756,9 @@
     <ClInclude Include="src\ui\wxSliderPanel.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\ConvertBodyReferenceDialog.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="src\utils\ConfigDialogUtil.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -1961,6 +1967,9 @@
     </ClCompile>
     <ClCompile Include="src\ui\wxSliderPanel.cpp">
       <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp">
+      <Filter>Program</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

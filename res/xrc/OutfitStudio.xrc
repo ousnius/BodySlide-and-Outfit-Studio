@@ -1569,6 +1569,11 @@
 				<help>Load a NIF file as the working outfit, replacing any current outfit objects.</help>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="fileConvBodyRef">
+				<label>Convert Body Reference...\tCtrl+Shift+R</label>
+				<help>Convert an outfits body reference to use a different reference</help>
+			</object>
+			<object class="separator" />
 			<object class="wxMenuItem" name="fileSave">
 				<label>Save Project\tCtrl+S</label>
 				<help>Save the project.</help>

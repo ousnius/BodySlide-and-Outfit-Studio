@@ -1052,6 +1052,10 @@ public:
 	void PopupBrushSettings(wxWindow* popupAt = nullptr);
 	void UpdateBrushSettings();
 	void DeleteSliders(bool keepSliders = false, bool keepZaps = false);
+	int CopyBoneWeightForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
+	int ConformShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
+	void SetBaseShape();
+	void UpdateTitle();
 
 	void CheckBrushBounds() {
 		TweakBrush* brush = glView->GetActiveBrush();
@@ -1187,7 +1191,7 @@ private:
 
 	bool HasUnweightedCheck();
 	void CalcCopySkinTransOption(WeightCopyOptions &options);
-	bool ShowWeightCopy(WeightCopyOptions& options);
+	bool ShowWeightCopy(WeightCopyOptions& options, bool silent = false);
 	void ReselectBone();
 
 	void OnExit(wxCommandEvent& event);
@@ -1206,8 +1210,6 @@ private:
 	void OnMoveWindowEnd(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
 
-	void UpdateTitle();
-
 	void AddProjectHistory(const std::string& fileName, const std::string& projectName);
 	void UpdateProjectHistory();
 
@@ -1215,6 +1217,7 @@ private:
 	void OnLoadProject(wxCommandEvent &event);
 	void OnAddProject(wxCommandEvent &event);
 	void OnLoadReference(wxCommandEvent &event);
+	void OnConvertBodyReference(wxCommandEvent &event);
 	void OnLoadOutfit(wxCommandEvent& event);
 	void OnUnloadProject(wxCommandEvent &event);
 
@@ -1329,7 +1332,7 @@ private:
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);
-	bool ShowConform(ConformOptions& options);
+	bool ShowConform(ConformOptions& options, bool silent = false);
 	void ConformSliders(nifly::NiShape* shape, const ConformOptions& options);
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);
@@ -1382,6 +1385,7 @@ private:
 	void GetBoneDlgData(wxDialog &dlg, nifly::MatTransform &xform, std::string &parentBone);
 	void OnEditBone(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
+	void MaskWeightedOnShape(std::string& shapeName) const;
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
