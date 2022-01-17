@@ -272,6 +272,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("lightsTabButton"), OutfitStudioFrame::OnTabButtonClick)
 
 	EVT_COLOURPICKER_CHANGED(XRCID("cpBrushColor"), OutfitStudioFrame::OnBrushColorChanged)
+	EVT_SLIDER(XRCID("cpClampMaxValueSlider"), OutfitStudioFrame::OnColorClampMaxValueSlider)
+	EVT_TEXT_ENTER(XRCID("cpClampMaxValueTxt"), OutfitStudioFrame::OnColorClampMaxValueChanged)
+	EVT_TEXT(XRCID("cpClampMaxValueTxt"), OutfitStudioFrame::OnColorClampMaxValueChanged)
 	EVT_BUTTON(XRCID("btnSwapBrush"), OutfitStudioFrame::OnSwapBrush)
 
 	EVT_SLIDER(XRCID("lightAmbientSlider"), OutfitStudioFrame::OnUpdateLights)
@@ -6689,6 +6692,28 @@ void OutfitStudioFrame::OnBrushColorChanged(wxColourPickerEvent& event) {
 	brushColor.y = color.Green() / 255.0f;
 	brushColor.z = color.Blue() / 255.0f;
 	glView->SetColorBrush(brushColor);
+}
+
+void OutfitStudioFrame::OnColorClampMaxValueSlider(wxCommandEvent& event) {
+	wxSlider* slider = (wxSlider*)colorSettings->FindWindowByName("cpClampMaxValueSlider");
+	wxTextCtrl* txtControl = (wxTextCtrl*)colorSettings->FindWindowByName("cpClampMaxValueTxt");
+	int clampMaxValue = slider->GetValue();
+	txtControl->SetValue(wxString::Format("%d", clampMaxValue));
+
+	ClampBrush* clampBrush = dynamic_cast<ClampBrush*>(glView->GetActiveBrush());
+	if (clampBrush)
+		clampBrush->clampMaxValue = clampMaxValue / 255.0f;
+}
+
+void OutfitStudioFrame::OnColorClampMaxValueChanged(wxCommandEvent& event) {
+	wxTextCtrl* txtControl = (wxTextCtrl*)colorSettings->FindWindowByName("cpClampMaxValueTxt");
+	wxSlider* slider = (wxSlider*)colorSettings->FindWindowByName("cpClampMaxValueSlider");
+	int clampMaxValue = std::clamp(atoi(txtControl->GetValue().c_str()),0,255);
+	slider->SetValue(clampMaxValue);
+
+	ClampBrush* clampBrush = dynamic_cast<ClampBrush*>(glView->GetActiveBrush());
+	if (clampBrush)
+		clampBrush->clampMaxValue = clampMaxValue / 255.0f;
 }
 
 void OutfitStudioFrame::OnSwapBrush(wxCommandEvent& WXUNUSED(event)) {

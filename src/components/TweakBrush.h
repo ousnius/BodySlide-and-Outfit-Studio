@@ -204,6 +204,12 @@ public:
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 };
 
+class ClampBrush
+{
+public:
+	float clampMaxValue = 1.0f;
+};
+
 class TB_Mask : public TweakBrush {
 public:
 	TB_Mask();
@@ -436,7 +442,7 @@ public:
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape &uss);
 };
 
-class TB_Alpha : public TweakBrush {
+class TB_Alpha : public TweakBrush, public ClampBrush {
 public:
 	TB_Alpha();
 	virtual ~TB_Alpha();

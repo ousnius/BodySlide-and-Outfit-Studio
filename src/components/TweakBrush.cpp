@@ -1441,8 +1441,8 @@ void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 			applyFalloff(vev, originToV);
 
 		vf = vc + vev.x;
-		if (vf < 0.0f)
-			vf = 0.0f;
+		if (vf < clampMaxValue)
+			vf = clampMaxValue;
 
 		endState[points[i]].x = refmesh->valpha[points[i]] = vf;
 	}
