@@ -526,7 +526,7 @@
 																						<object class="wxSlider" name="cpClampMaxValueSlider">
 																							<style>wxSL_INVERSE</style>
 																							<size>-1,25</size>
-																							<value translate="0">255</value>
+																							<value translate="0">0</value>
 																							<min>0</min>
 																							<max>255</max>
 																						</object>
@@ -538,7 +538,7 @@
 																						<object class="wxTextCtrl" name="cpClampMaxValueTxt">
 																							<style>wxTE_CENTRE</style>
 																							<size>50,-1</size>
-																							<value translate="0">255</value>
+																							<value translate="0">0</value>
 																							<maxlength>25</maxlength>
 																						</object>
 																					</object>

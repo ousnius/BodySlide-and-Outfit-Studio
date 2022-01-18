@@ -207,7 +207,7 @@ public:
 class ClampBrush
 {
 public:
-	float clampMaxValue = 1.0f;
+	float clampMaxValue = 0.0f;
 };
 
 class TB_Mask : public TweakBrush {
