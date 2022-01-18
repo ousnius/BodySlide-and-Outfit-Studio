@@ -6700,7 +6700,7 @@ void OutfitStudioFrame::OnBrushColorChanged(wxColourPickerEvent& event) {
 	glView->SetColorBrush(brushColor);
 }
 
-void OutfitStudioFrame::OnColorClampMaxValueSlider(wxCommandEvent& event) {
+void OutfitStudioFrame::OnColorClampMaxValueSlider(wxCommandEvent& WXUNUSED(event)) {
 	wxSlider* slider = (wxSlider*)colorSettings->FindWindowByName("cpClampMaxValueSlider");
 	wxTextCtrl* txtControl = (wxTextCtrl*)colorSettings->FindWindowByName("cpClampMaxValueTxt");
 	int clampMaxValue = slider->GetValue();
@@ -6711,7 +6711,7 @@ void OutfitStudioFrame::OnColorClampMaxValueSlider(wxCommandEvent& event) {
 		clampBrush->clampMaxValue = clampMaxValue / 255.0f;
 }
 
-void OutfitStudioFrame::OnColorClampMaxValueChanged(wxCommandEvent& event) {
+void OutfitStudioFrame::OnColorClampMaxValueChanged(wxCommandEvent& WXUNUSED(event)) {
 	wxTextCtrl* txtControl = (wxTextCtrl*)colorSettings->FindWindowByName("cpClampMaxValueTxt");
 	wxSlider* slider = (wxSlider*)colorSettings->FindWindowByName("cpClampMaxValueSlider");
 	int clampMaxValue = std::clamp(atoi(txtControl->GetValue().c_str()),0,255);
