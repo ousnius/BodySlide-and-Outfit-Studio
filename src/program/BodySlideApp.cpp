@@ -2856,16 +2856,18 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 		}
 	}
 
-	auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
-	if (cbForceBodyNormals) {
-		bool forceBodyNormalsDef = BodySlideConfig.GetBoolValue("ForceBodyNormals");
-		cbForceBodyNormals->SetValue(forceBodyNormalsDef);
+	if (Config.GetBoolValue("ShowForceBodyNormals")) {
+		auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
+		if (cbForceBodyNormals) {
+			bool forceBodyNormalsDef = BodySlideConfig.GetBoolValue("ForceBodyNormals");
+			cbForceBodyNormals->SetValue(forceBodyNormalsDef);
 
-		switch (app->targetGame) {
-		case SKYRIMSE:
-		case SKYRIMVR:
-			//cbForceBodyNormals->Show();
-			break;
+			switch (app->targetGame) {
+			case SKYRIMSE:
+			case SKYRIMVR:
+				cbForceBodyNormals->Show();
+				break;
+			}
 		}
 	}
 
@@ -3862,6 +3864,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxString projectPath = wxString::FromUTF8(Config["ProjectPath"]);
 		dpProjectPath->SetPath(projectPath);
 
+		wxCheckBox* cbShowForceBodyNormals = XRCCTRL(*settings, "cbShowForceBodyNormals", wxCheckBox);
+		cbShowForceBodyNormals->SetValue(Config.GetBoolValue("ShowForceBodyNormals"));
+
 		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
 		cbBBOverrideWarn->SetValue(Config.GetBoolValue("WarnBatchBuildOverride"));
 
@@ -3935,6 +3940,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			selectedfiles = selectedfiles.BeforeLast(';');
 			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToUTF8().data());
 
+			Config.SetBoolValue("ShowForceBodyNormals", cbShowForceBodyNormals->IsChecked());
 			Config.SetBoolValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
@@ -3963,6 +3969,25 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			app->InitArchives();
+
+			auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
+			if (cbForceBodyNormals) {
+				if (Config.GetBoolValue("ShowForceBodyNormals")) {
+					bool forceBodyNormalsDef = BodySlideConfig.GetBoolValue("ForceBodyNormals");
+					cbForceBodyNormals->SetValue(forceBodyNormalsDef);
+
+					switch (app->targetGame) {
+					case SKYRIMSE:
+					case SKYRIMVR:
+						cbForceBodyNormals->Show();
+						break;
+					}
+				}
+				else
+					cbForceBodyNormals->Hide();
+			}
+
+			Layout();
 		}
 
 		delete settings;

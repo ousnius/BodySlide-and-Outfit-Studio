@@ -1801,6 +1801,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxString projectPath = wxString::FromUTF8(Config["ProjectPath"]);
 		dpProjectPath->SetPath(projectPath);
 
+		wxCheckBox* cbShowForceBodyNormals = XRCCTRL(*settings, "cbShowForceBodyNormals", wxCheckBox);
+		cbShowForceBodyNormals->SetValue(Config.GetBoolValue("ShowForceBodyNormals"));
+
 		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
 		cbBBOverrideWarn->SetValue(Config.GetBoolValue("WarnBatchBuildOverride"));
 
@@ -1874,6 +1877,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			selectedfiles = selectedfiles.BeforeLast(';');
 			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToUTF8().data());
 
+			Config.SetBoolValue("ShowForceBodyNormals", cbShowForceBodyNormals->IsChecked());
 			Config.SetBoolValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
@@ -1902,6 +1906,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			wxGetApp().InitArchives();
+
 		}
 
 		delete settings;

@@ -150,6 +150,24 @@
 											</object>
 										</object>
 									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxBoxSizer">
+											<orient>wxHORIZONTAL</orient>
+											<object class="sizeritem">
+												<option>1</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxCheckBox" name="cbShowForceBodyNormals">
+													<tooltip>With this turned on, BodySlide receives a new checkbox "Force Body Normals". Using it when building adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.</tooltip>
+													<label>Show &apos;Force Body Normals&apos;</label>
+													<checked>0</checked>
+												</object>
+											</object>
+										</object>
+									</object>
 								</object>
 							</object>
 						</object>
