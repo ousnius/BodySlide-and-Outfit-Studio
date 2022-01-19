@@ -1259,6 +1259,8 @@ private:
 
 	void OnTabButtonClick(wxCommandEvent& event);
 	void OnBrushColorChanged(wxColourPickerEvent& event);
+	void OnColorClampMaxValueSlider(wxCommandEvent& event);
+	void OnColorClampMaxValueChanged(wxCommandEvent& event);
 	void OnSwapBrush(wxCommandEvent& event);
 	void OnFixedWeight(wxCommandEvent& event);
 	void OnCBNormalizeWeights(wxCommandEvent& event);
