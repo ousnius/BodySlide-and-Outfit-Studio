@@ -662,7 +662,8 @@ bool OutfitStudio::ShowSetup() {
 		return false;
 	}
 
-	frame->CloseBrushSettings();
+	if(frame)
+		frame->CloseBrushSettings();
 
 	wxDialog* setup = xrc->LoadDialog(nullptr, "dlgSetup");
 	if (setup) {
