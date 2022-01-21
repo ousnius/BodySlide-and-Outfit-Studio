@@ -14,7 +14,7 @@ SliderManager::~SliderManager() {
 }
 
 void SliderManager::AddSlidersInSet(SliderSet& inSet) {
-	int sz = inSet.size();
+	int sz = static_cast<int>(inSet.size());
 
 	for (int i = 0; i < sz; i++) {
 		if (inSet[i].bHidden) {
@@ -35,7 +35,7 @@ void SliderManager::AddSlidersInSet(SliderSet& inSet) {
 		if (inSet[i].bClamp)
 			SetClampSlider(inSet[i].name);
 
-		for (int j = 0; j < inSet[i].dataFiles.size(); j++)
+		for (size_t j = 0; j < inSet[i].dataFiles.size(); j++)
 			AddSliderLink(inSet[i].name, inSet[i].dataFiles[j].dataName);
 	}
 }
@@ -116,92 +116,92 @@ void SliderManager::AddHiddenSlider(const std::string& name, bool invert, bool i
 	slidersBig.push_back(s);
 }
 
-void SliderManager::SetSliderDefaults(const std::string& slider, float bigVal, float smallVal) {
-	for (int i = 0; i < slidersBig.size(); i++)
-		if (slidersBig[i].name == slider)
-			slidersBig[i].defValue = bigVal;
+void SliderManager::SetSliderDefaults(const std::string& sliderName, float bigVal, float smallVal) {
+	for (auto& slider : slidersBig)
+		if (slider.name == sliderName)
+			slider.defValue = bigVal;
 
-	for (int i = 0; i < slidersSmall.size(); i++)
-		if (slidersSmall[i].name == slider)
-			slidersSmall[i].defValue = smallVal;
+	for (auto& slider : slidersSmall)
+		if (slider.name == sliderName)
+			slider.defValue = smallVal;
 }
 
-void SliderManager::SetClampSlider(const std::string& slider) {
-	for (int i = 0; i < slidersBig.size(); i++)
-		if (slidersBig[i].name == slider)
-			slidersBig[i].clamp = true;
+void SliderManager::SetClampSlider(const std::string& sliderName) {
+	for (auto& slider : slidersBig)
+		if (slider.name == sliderName)
+			slider.clamp = true;
 
-	for (int i = 0; i < slidersSmall.size(); i++)
-		if (slidersSmall[i].name == slider)
-			slidersSmall[i].clamp = true;
+	for (auto& slider : slidersSmall)
+		if (slider.name == sliderName)
+			slider.clamp = true;
 }
 
-void SliderManager::AddSliderLink(const std::string& slider, const std::string& dataSetName) {
-	for (int i = 0; i < slidersBig.size(); i++)
-		if (slidersBig[i].name == slider)
-			slidersBig[i].linkedDataSets.push_back(dataSetName);
+void SliderManager::AddSliderLink(const std::string& sliderName, const std::string& dataSetName) {
+	for (auto& slider : slidersBig)
+		if (slider.name == sliderName)
+			slider.linkedDataSets.push_back(dataSetName);
 
-	for (int i = 0; i < slidersSmall.size(); i++)
-		if (slidersSmall[i].name == slider)
-			slidersSmall[i].linkedDataSets.push_back(dataSetName);
+	for (auto& slider : slidersSmall)
+		if (slider.name == sliderName)
+			slider.linkedDataSets.push_back(dataSetName);
 }
 
-float SliderManager::GetSlider(const std::string& slider, bool isSmall) {
+float SliderManager::GetSlider(const std::string& sliderName, bool isSmall) {
 	if (!isSmall) {
-		for (int i = 0; i < slidersBig.size(); i++)
-			if (slidersBig[i].name == slider)
-				return slidersBig[i].value;
+		for (auto& slider : slidersBig)
+			if (slider.name == sliderName)
+				return slider.value;
 	}
 	else {
-		for (int i = 0; i < slidersSmall.size(); i++)
-			if (slidersSmall[i].name == slider)
-				return slidersSmall[i].value;
+		for (auto& slider : slidersSmall)
+			if (slider.name == sliderName)
+				return slider.value;
 	}
 	return 0.0f;
 }
 
-std::vector<std::string> SliderManager::GetSliderZapToggles(const std::string& slider) {
-	for (int i = 0; i < slidersBig.size(); i++)
-		if (slidersBig[i].name == slider)
-			return slidersBig[i].zapToggles;
+std::vector<std::string> SliderManager::GetSliderZapToggles(const std::string& sliderName) {
+	for (auto& slider : slidersBig)
+		if (slider.name == sliderName)
+			return slider.zapToggles;
 
 	return std::vector<std::string>();
 }
 
-void SliderManager::SetSlider(const std::string& slider, bool isSmall, float val) {
+void SliderManager::SetSlider(const std::string& sliderName, bool isSmall, float val) {
 	if (!isSmall) {
-		for (int i = 0; i < slidersBig.size(); i++) {
-			if (slidersBig[i].name == slider) {
-				if (slidersBig[i].zap) {
+		for (auto& slider : slidersBig) {
+			if (slider.name == sliderName) {
+				if (slider.zap) {
 					FlagReload(true);
 					if (val > 0.0f)
 						val = 1.0f;
 				}
-				slidersBig[i].value = val;
+				slider.value = val;
 				return;
 			}
 		}
 	}
 	else {
-		for (int i = 0; i < slidersSmall.size(); i++) {
-			if (slidersSmall[i].name == slider) {
-				if (slidersSmall[i].zap) {
+		for (auto& slider : slidersSmall) {
+			if (slider.name == sliderName) {
+				if (slider.zap) {
 					FlagReload(true);
 					if (val > 0.0f)
 						val = 1.0f;
 				}
-				slidersSmall[i].value = val;
+				slider.value = val;
 				return;
 			}
 		}
 	}
 }
 
-void SliderManager::SetChanged(const std::string& slider, bool isSmall) {
+void SliderManager::SetChanged(const std::string& sliderName, bool isSmall) {
 	if (!isSmall) {
-		for (int i = 0; i < slidersBig.size(); i++) {
+		for (size_t i = 0; i < slidersBig.size(); i++) {
 			auto& sl = slidersBig[i];
-			if (sl.name == slider) {
+			if (sl.name == sliderName) {
 				sl.changed = true;
 
 				if (sl.zap && slidersSmall.size() > i) {
@@ -214,9 +214,9 @@ void SliderManager::SetChanged(const std::string& slider, bool isSmall) {
 		}
 	}
 	else {
-		for (int i = 0; i < slidersSmall.size(); i++) {
+		for (size_t i = 0; i < slidersSmall.size(); i++) {
 			auto& sl = slidersSmall[i];
-			if (sl.name == slider) {
+			if (sl.name == sliderName) {
 				sl.changed = true;
 
 				if (sl.zap && slidersBig.size() > i) {
@@ -247,59 +247,61 @@ float SliderManager::GetSmallPresetValue(const std::string& presetName, const st
 }
 
 void SliderManager::InitializeSliders(const std::string& presetName) {
-	float ps;
-	for (int i = 0; i < slidersBig.size(); i++) {
-		if (!presetCollection.GetBigPreset(presetName, slidersBig[i].name, ps)) {
-			ps = slidersBig[i].defValue;
-			slidersBig[i].changed = false;
+	float ps = 0.0f;
+
+	for (auto& slider : slidersBig) {
+		if (!presetCollection.GetBigPreset(presetName, slider.name, ps)) {
+			ps = slider.defValue;
+			slider.changed = false;
 		}
 
-		slidersBig[i].value = ps;
+		slider.value = ps;
 	}
-	for (int i = 0; i < slidersSmall.size(); i++) {
-		if (!presetCollection.GetSmallPreset(presetName, slidersSmall[i].name, ps)) {
-			ps = slidersSmall[i].defValue;
-			slidersSmall[i].changed = false;
+
+	for (auto& slider : slidersSmall) {
+		if (!presetCollection.GetSmallPreset(presetName, slider.name, ps)) {
+			ps = slider.defValue;
+			slider.changed = false;
 		}
 
-		slidersSmall[i].value = ps;
+		slider.value = ps;
 	}
 }
 
-bool SliderManager::SliderHasChanged(const std::string& slider, bool getBig) {
+bool SliderManager::SliderHasChanged(const std::string& sliderName, bool getBig) {
 	if (getBig) {
-		for (int i = 0; i < slidersBig.size(); i++)
-			if (slidersBig[i].name == slider)
-				return (slidersBig[i].defValue != slidersBig[i].value || (slidersBig[i].changed && slidersBig[i].zap));
+		for (auto& slider : slidersBig)
+			if (slider.name == sliderName)
+				return (slider.defValue != slider.value || (slider.changed && slider.zap));
 	}
 	else {
-		for (int i = 0; i < slidersSmall.size(); i++)
-			if (slidersSmall[i].name == slider)
-				return (slidersSmall[i].defValue != slidersSmall[i].value || (slidersSmall[i].changed && slidersSmall[i].zap));
+		for (auto& slider : slidersSmall)
+			if (slider.name == sliderName)
+				return (slider.defValue != slider.value || (slider.changed && slider.zap));
 	}
 	return false;
 }
 
-float SliderManager::SliderValue(const std::string& slider, bool getBig) {
+float SliderManager::SliderValue(const std::string& sliderName, bool getBig) {
 	if (getBig) {
-		for (int i = 0; i < slidersBig.size(); i++)
-			if (slidersBig[i].name == slider)
-				return slidersBig[i].value;
+		for (auto& slider : slidersBig)
+			if (slider.name == sliderName)
+				return slider.value;
 	}
 	else {
-		for (int i = 0; i < slidersSmall.size(); i++)
-			if (slidersSmall[i].name == slider)
-				return slidersSmall[i].value;
+		for (auto& slider : slidersSmall)
+			if (slider.name == sliderName)
+				return slider.value;
 	}
 	return 0.0f;
 }
 
 void SliderManager::GetSmallSliderList(std::vector<std::string>& names) {
-	for (int i = 0; i < slidersSmall.size(); i++)
-		names.push_back(slidersSmall[i].name);
+	for (auto& slider : slidersSmall)
+		names.push_back(slider.name);
 }
 
 void SliderManager::GetBigSliderList(std::vector<std::string>& names) {
-	for (int i = 0; i < slidersBig.size(); i++)
-		names.push_back(slidersBig[i].name);
+	for (auto& slider : slidersBig)
+		names.push_back(slider.name);
 }

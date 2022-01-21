@@ -8,7 +8,7 @@ See the included LICENSE file
 #include "../components/Mesh.h"	
 #include "../components/Anim.h"
 #include "../program/FBXImportOptions.h"
-#include "../NIF/NifFile.h"
+#include "NifFile.hpp"
 #include <memory>
 
 
@@ -16,14 +16,14 @@ class FBXShape {
 public:
 	class FBXSkin {
 	private:
-		std::unordered_map<ushort, float> vertWeights;
+		std::unordered_map<uint16_t, float> vertWeights;
 
 	public:
-		void SetWeight(ushort vert, float wt) {
+		void SetWeight(uint16_t vert, float wt) {
 			vertWeights[vert] = wt;
 		}
 
-		float GetWeight(ushort vert) {
+		float GetWeight(uint16_t vert) {
 			auto it = vertWeights.find(vert);
 			if (it == vertWeights.end())
 				return 0.0f;
@@ -31,16 +31,16 @@ public:
 			return vertWeights[vert];
 		}
 
-		std::unordered_map<ushort, float>& GetWeights() {
+		std::unordered_map<uint16_t, float>& GetWeights() {
 			return vertWeights;
 		}
 	};
 
 	std::string name;
-	std::vector<Vector3> verts;
-	std::vector<Triangle> tris;
-	std::vector<Vector2> uvs;
-	std::vector<Vector3> normals;
+	std::vector<nifly::Vector3> verts;
+	std::vector<nifly::Triangle> tris;
+	std::vector<nifly::Vector2> uvs;
+	std::vector<nifly::Vector3> normals;
 
 	std::unordered_map<std::string, FBXSkin> boneSkin;
 	std::set<std::string> boneNames;
@@ -63,9 +63,9 @@ public:
 	void GetShapeNames(std::vector<std::string>& outNames);
 	FBXShape* GetShape(const std::string& shapeName);
 
-	void AddSkeleton(NifFile* nif, bool onlyNonSkeleton = false);
-	void AddNif(NifFile* meshNif, NiShape* shape = nullptr);
-	void AddSkinning(AnimInfo* anim, NiShape* shape = nullptr);
+	void AddSkeleton(nifly::NifFile* nif, bool onlyNonSkeleton = false);
+	void AddNif(nifly::NifFile* meshNif, AnimInfo* anim, bool transToGlobal, nifly::NiShape* shape = nullptr);
+	void AddSkinning(AnimInfo* anim, nifly::NiShape* shape = nullptr);
 
 	bool ExportScene(const std::string& fileName);
 	bool ImportScene(const std::string& fileName, const FBXImportOptions& options = FBXImportOptions());

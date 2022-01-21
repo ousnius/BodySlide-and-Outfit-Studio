@@ -9,6 +9,7 @@ See the included LICENSE file
 
 class wxStateButton : public wxButton {
 	bool m_bChecked = false;
+	bool m_bPendingChanges = false;
 	wxString text;
 
 public:
@@ -23,6 +24,9 @@ public:
 
 	bool GetCheck() { return m_bChecked; }
 	void SetCheck(bool newCheck = true) { m_bChecked = newCheck; }
+
+	bool HasPendingChanges() { return m_bPendingChanges; }
+	void SetPendingChanges(bool newPending = true);
 
 	void mouseDown(wxMouseEvent& WXUNUSED(event));
 	void mouseReleased(wxMouseEvent& event);

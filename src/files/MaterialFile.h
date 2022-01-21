@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../NIF/utils/Object3d.h"
+#include "Object3d.hpp"
 #include <fstream>
 
 class MaterialFile {
@@ -27,11 +27,11 @@ public:
 
 	// Base
 	Type signature = Type::BGSM;
-	uint version = 1;
+	uint32_t version = 1;
 	bool tileU = true;
 	bool tileV = true;
-	Vector2 uvOffset;
-	Vector2 uvScale{ 1.0f, 1.0f };
+	nifly::Vector2 uvOffset;
+	nifly::Vector2 uvScale{ 1.0f, 1.0f };
 	float alpha = 1.0f;
 	AlphaBlendModeType alphaBlendMode = AlphaBlendModeType::Unknown;
 	char alphaTestRef = -128;
@@ -68,7 +68,7 @@ public:
 	bool subsurfaceLighting = false;
 	float subsurfaceLightingRolloff = 0.3f;
 	bool specularEnabled = false;
-	Vector3 specularColor = { 1.0f, 1.0f, 1.0f };
+	nifly::Vector3 specularColor = { 1.0f, 1.0f, 1.0f };
 	float specularMult = 1.0f;
 	float smoothness = 1.0f;
 	float fresnelPower = 5.0f;
@@ -81,7 +81,7 @@ public:
 	std::string rootMaterialPath;
 	bool anisoLighting = false;
 	bool emitEnabled = false;
-	Vector3 emittanceColor = { 1.0f, 1.0f, 1.0f };
+	nifly::Vector3 emittanceColor = { 1.0f, 1.0f, 1.0f };
 	float emittanceMult = 1.0f;
 	bool modelSpaceNormals = false;
 	bool externalEmittance = false;
@@ -95,7 +95,7 @@ public:
 	bool environmentMappingWindow = false;
 	bool environmentMappingEye = false;
 	bool hair = false;
-	Vector3 hairTintColor = { 0.5f, 0.5f, 0.5f };
+	nifly::Vector3 hairTintColor = { 0.5f, 0.5f, 0.5f };
 	bool tree = false;
 	bool facegen = false;
 	bool skinTint = false;
@@ -120,14 +120,14 @@ public:
 	bool falloffColorEnabled = false;
 	bool grayscaleToPaletteAlpha = false;
 	bool softEnabled = false;
-	Vector3 baseColor = { 1.0f, 1.0f, 1.0f };
+	nifly::Vector3 baseColor = { 1.0f, 1.0f, 1.0f };
 	float baseColorScale = 1.0f;
 	float falloffStartAngle = 1.0f;
 	float falloffStopAngle = 1.0f;
 	float falloffStartOpacity = 0.0f;
 	float falloffStopOpacity = 0.0f;
 	float lightingInfluence = 1.0f;
-	byte envmapMinLOD = 0;
+	uint8_t envmapMinLOD = 0;
 	float softDepth = 100.0f;
 
 	MaterialFile() {}
@@ -142,6 +142,6 @@ public:
 		return failed;
 	}
 
-	AlphaBlendModeType ConvertAlphaBlendMode(const byte, const uint, const uint);
-	void ConvertAlphaBlendMode(const AlphaBlendModeType&, byte&, uint&, uint&);
+	AlphaBlendModeType ConvertAlphaBlendMode(const uint8_t, const uint32_t, const uint32_t);
+	void ConvertAlphaBlendMode(const AlphaBlendModeType&, uint8_t&, uint32_t&, uint32_t&);
 };

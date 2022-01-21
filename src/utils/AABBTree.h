@@ -1,43 +1,43 @@
 #pragma once
 
-#include "../NIF/utils/Object3d.h"
+#include "Object3d.hpp"
 
 #include <memory>
 
 struct IntersectResult;
 
 struct AABB {
-	Vector3 min;
-	Vector3 max;
+	nifly::Vector3 min;
+	nifly::Vector3 max;
 
 	AABB() {}
-	AABB(const Vector3& newMin, const Vector3& newMax);
+	AABB(const nifly::Vector3& newMin, const nifly::Vector3& newMax);
 
-	AABB(Vector3* points, int nPoints);
-	AABB(Vector3* points, ushort* indices, int nPoints);
+	AABB(const nifly::Vector3* points, const uint16_t nPoints);
+	AABB(const nifly::Vector3* points, const uint16_t* indices, const uint16_t nPoints);
 
-	void AddBoxToMesh(std::vector<Vector3>& verts, std::vector<Edge>& edges);
+	void AddBoxToMesh(std::vector<nifly::Vector3>& verts, std::vector<nifly::Edge>& edges);
 
-	void Merge(Vector3* points, ushort* indices, int nPoints);
-	void Merge(AABB& other);
+	void Merge(const nifly::Vector3* points, const uint16_t* indices, const uint16_t nPoints);
+	void Merge(const AABB& other);
 
-	bool IntersectAABB(AABB& other);
+	bool IntersectAABB(const AABB& other);
 
-	bool IntersectRay(Vector3& Origin, Vector3& Direction, Vector3* outCoord);
+	bool IntersectRay(const nifly::Vector3& Origin, const nifly::Vector3& Direction, nifly::Vector3* outCoord);
 
-	bool IntersectSphere(Vector3& Origin, float radius);
+	bool IntersectSphere(const nifly::Vector3& Origin, const float radius);
 };
 
 class AABBTree {
-	int max_depth = 100;
-	int min_facets = 2;
-	Vector3* vertexRef = nullptr;
-	Triangle* triRef = nullptr;
+	uint32_t max_depth = 100;
+	uint32_t min_facets = 2;
+	nifly::Vector3* vertexRef = nullptr;
+	nifly::Triangle* triRef = nullptr;
 
 public:
 	bool bFlag = false;
-	int depthCounter = 0;
-	int sentinel = 0;
+	uint32_t depthCounter = 0;
+	uint32_t sentinel = 0;
 
 	class AABBTreeNode {
 		std::unique_ptr<AABBTreeNode> N;
@@ -45,54 +45,54 @@ public:
 		AABBTreeNode* parent = nullptr;
 		AABB mBB;
 		AABBTree* tree = nullptr;
-		std::unique_ptr<int[]> mIFacets;
-		int nFacets = 0;
+		std::unique_ptr<uint32_t[]> mIFacets;
+		uint32_t nFacets = 0;
 
 	public:
 		AABBTreeNode() {}
 
 		// Recursively generates AABB Tree nodes using the referenced data.
-		AABBTreeNode(std::vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parentRef, int depth);
+		AABBTreeNode(std::vector<uint32_t>& facetIndices, AABBTree* treeRef, AABBTreeNode* parentRef, const uint32_t depth);
 
 		// As above, but facetIndices is modified with in-place sorting rather than using vector::push_back to generate sub lists.
 		// Sorting swaps from front of list to end when pos midpoints are found at the beginning of the list.
-		AABBTreeNode(std::vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parentRef, int depth);
+		AABBTreeNode(std::vector<uint32_t>& facetIndices, const uint32_t start, const uint32_t end, AABBTree* treeRef, AABBTreeNode* parentRef, const uint32_t depth);
 
-		Vector3 Center();
+		nifly::Vector3 Center();
 
-		void AddDebugFrames(std::vector<Vector3>& verts, std::vector<Edge>& edges, int maxdepth = 0, int curdepth = 0);
-		void AddRayIntersectFrames(Vector3& origin, Vector3& direction, std::vector<Vector3>& verts, std::vector<Edge>& edges);
-		bool IntersectRay(Vector3& origin, Vector3& direction, std::vector<IntersectResult>* results);
-		bool IntersectSphere(Vector3& origin, float radius, std::vector<IntersectResult>* results);
-		void UpdateAABB(AABB* childBB = nullptr);
+		void AddDebugFrames(std::vector<nifly::Vector3>& verts, std::vector<nifly::Edge>& edges, const uint32_t maxdepth = 0, const uint32_t curdepth = 0);
+		void AddRayIntersectFrames(nifly::Vector3& origin, nifly::Vector3& direction, std::vector<nifly::Vector3>& verts, std::vector<nifly::Edge>& edges);
+		bool IntersectRay(nifly::Vector3& origin, nifly::Vector3& direction, std::vector<IntersectResult>* results);
+		bool IntersectSphere(nifly::Vector3& origin, const float radius, std::vector<IntersectResult>* results);
+		void UpdateAABB(const AABB* childBB = nullptr);
 	};
 
 	std::unique_ptr<AABBTreeNode> root;
 
 public:
 	AABBTree() {}
-	AABBTree(Vector3* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets);
+	AABBTree(nifly::Vector3* vertices, nifly::Triangle* facets, const uint32_t nFacets, const uint32_t maxDepth, const uint32_t minFacets);
 
-	int MinFacets();
-	int MaxDepth();
+	uint32_t MinFacets();
+	uint32_t MaxDepth();
 
-	Vector3 Center();
+	nifly::Vector3 Center();
 
 	// Calculate bounding box and geometric average.
-	void CalcAABBandGeoAvg(std::vector<int>& forFacets, AABB& outBB, Vector3& outAxisAvg);
+	void CalcAABBandGeoAvg(std::vector<uint32_t>& forFacets, AABB& outBB, nifly::Vector3& outAxisAvg);
 
 	// Calculate bounding box and geometric average for sub list.
-	void CalcAABBandGeoAvg(std::vector<int>& forFacets, int start, int end, AABB& outBB, Vector3& outAxisAvg);
-	void CalcAABBandGeoAvg(int forFacets[], int start, int end, AABB& outBB, Vector3& outAxisAvg);
-	void BuildDebugFrames(Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
-	void BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
-	bool IntersectRay(Vector3& origin, Vector3& direction, std::vector<IntersectResult>* results = nullptr);
-	bool IntersectSphere(Vector3& origin, float radius, std::vector<IntersectResult>* results = nullptr);
+	void CalcAABBandGeoAvg(std::vector<uint32_t>& forFacets, const uint32_t start, const uint32_t end, AABB& outBB, nifly::Vector3& outAxisAvg);
+	void CalcAABBandGeoAvg(const uint32_t forFacets[], const uint32_t start, const uint32_t end, AABB& outBB, nifly::Vector3& outAxisAvg);
+	void BuildDebugFrames(nifly::Vector3** outVerts, uint16_t* outNumVerts, nifly::Edge** outEdges, uint32_t* outNumEdges);
+	void BuildRayIntersectFrames(nifly::Vector3& origin, nifly::Vector3& direction, nifly::Vector3** outVerts, uint16_t* outNumVerts, nifly::Edge** outEdges, uint32_t* outNumEdges);
+	bool IntersectRay(nifly::Vector3& origin, nifly::Vector3& direction, std::vector<IntersectResult>* results = nullptr);
+	bool IntersectSphere(nifly::Vector3& origin, const float radius, std::vector<IntersectResult>* results = nullptr);
 };
 
 struct IntersectResult {
-	int HitFacet = 0;
+	uint32_t HitFacet = 0;
 	float HitDistance = 0.0f;
-	Vector3 HitCoord;
+	nifly::Vector3 HitCoord;
 	AABBTree::AABBTreeNode* bvhNode = nullptr;
 };

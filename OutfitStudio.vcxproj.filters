@@ -56,17 +56,17 @@
     <Filter Include="Libraries\SOIL2">
       <UniqueIdentifier>{746df173-aa97-45f5-9200-676a6b050846}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Libraries\NIF">
-      <UniqueIdentifier>{d5f75115-c5ce-431b-8980-64f7e6301cba}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Libraries\NIF\Utilities">
-      <UniqueIdentifier>{87e732ef-b103-43f4-8637-0929f126386c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Libraries\gli\glm\ext">
       <UniqueIdentifier>{29047cf6-171b-41a4-9dd3-9725559f19dd}</UniqueIdentifier>
     </Filter>
     <Filter Include="Libraries\gli\glm\simd">
       <UniqueIdentifier>{c651ea53-1ed3-4f8d-8e11-0aa04e6b9ad6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\nifly">
+      <UniqueIdentifier>{1e51341d-129d-409d-90b0-f83a0c40f24d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\nifly\src">
+      <UniqueIdentifier>{d95f2d14-c32c-42eb-8742-c174b699d5fe}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -826,68 +826,11 @@
     <ClInclude Include="lib\SOIL2\image_helper.h">
       <Filter>Libraries\SOIL2</Filter>
     </ClInclude>
-    <ClInclude Include="lib\NIF\NifFile.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\NifUtil.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\utils\Miniball.hpp">
-      <Filter>Libraries\NIF\Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\utils\Object3d.h">
-      <Filter>Libraries\NIF\Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\utils\half.hpp">
-      <Filter>Libraries\NIF\Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\utils\KDMatcher.h">
-      <Filter>Libraries\NIF\Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\Animation.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\BasicTypes.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\ExtraData.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\Keys.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\bhk.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\Particles.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\Geometry.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\Skin.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\Objects.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\Shaders.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\VertexData.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\Nodes.h">
-      <Filter>Libraries\NIF</Filter>
-    </ClInclude>
     <ClInclude Include="src\utils\PlatformUtil.h">
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\StringStuff.h">
       <Filter>Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\NIF\Factory.h">
-      <Filter>Libraries\NIF</Filter>
     </ClInclude>
     <ClInclude Include="lib\gli\core\coord.hpp">
       <Filter>Libraries\gli\core</Filter>
@@ -1801,6 +1744,18 @@
     <ClInclude Include="src\components\RefTemplates.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\PoseData.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\wxBrushSettingsPopup.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\wxSliderPanel.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\ConfigDialogUtil.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1932,50 +1887,11 @@
     <ClCompile Include="lib\SOIL2\image_helper.c">
       <Filter>Libraries\SOIL2</Filter>
     </ClCompile>
-    <ClCompile Include="lib\NIF\NifFile.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\utils\Object3d.cpp">
-      <Filter>Libraries\NIF\Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\Animation.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\BasicTypes.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\ExtraData.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\bhk.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\Particles.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\Geometry.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\Skin.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\Objects.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\Shaders.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\Nodes.cpp">
-      <Filter>Libraries\NIF</Filter>
-    </ClCompile>
     <ClCompile Include="src\utils\PlatformUtil.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\StringStuff.cpp">
       <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\NIF\Factory.cpp">
-      <Filter>Libraries\NIF</Filter>
     </ClCompile>
     <ClCompile Include="lib\gli\core\dummy.cpp">
       <Filter>Libraries\gli\core</Filter>
@@ -1997,6 +1913,54 @@
     </ClCompile>
     <ClCompile Include="src\components\RefTemplates.cpp">
       <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Animation.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\BasicTypes.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\bhk.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\ExtraData.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Factory.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Geometry.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\NifFile.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Nodes.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Object3d.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Objects.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Particles.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Shaders.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Skin.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseData.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\wxSliderPanel.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

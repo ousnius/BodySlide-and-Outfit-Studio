@@ -30,6 +30,7 @@ public:
 	std::unordered_map<std::string, std::string> GetOutputChoices();
 	std::string GetOutputChoice(const std::string& outputPath);
 	void SetOutputChoice(const std::string& outputPath, const std::string& choice);
+	void RemoveOutputChoice(const std::string& outputPath);
 
 	int LoadBuildSelection(XMLElement* srcElement);
 };
@@ -75,4 +76,7 @@ public:
 
 	// Updates or adds a build selection in the XML document
 	int Update(BuildSelection& inBuildSel);
+
+	// Removes a single element from the XML document
+	void Remove(std::string& path);
 };

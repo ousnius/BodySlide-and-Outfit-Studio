@@ -60,6 +60,7 @@ set(commonsources
 	src/render/GLShader.cpp
 	src/render/GLSurface.cpp
 	src/ui/wxStateButton.cpp
+	src/ui/wxSliderPanel.cpp
 	src/utils/AABBTree.cpp
 	src/utils/ConfigurationManager.cpp
 	src/utils/Log.cpp
@@ -68,11 +69,13 @@ set(commonsources
 	)
 set(OSsources
 	${commonsources}
+	src/components/PoseData.cpp
 	src/components/RefTemplates.cpp
 	src/components/TweakBrush.cpp
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
+	src/ui/wxBrushSettingsPopup.cpp
 	src/program/EditUV.cpp
 	src/program/FBXImportDialog.cpp
 	src/program/OutfitProject.cpp

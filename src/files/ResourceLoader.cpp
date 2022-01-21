@@ -78,7 +78,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 		}
 
 		if (!data.IsEmpty()) {
-			byte* texBuffer = static_cast<byte*>(data.GetData());
+			uint8_t* texBuffer = static_cast<uint8_t*>(data.GetData());
 
 			// All textures (GLI)
 			if (fileExtStr == "dds" || fileExtStr == "ktx")
@@ -315,7 +315,7 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 	}
 
 	std::vector<GLuint> texRefs(texFiles.size(), 0);
-	for (int i = 0; i < texFiles.size(); i++) {
+	for (size_t i = 0; i < texFiles.size(); i++) {
 		if (texFiles[i].empty())
 			continue;
 
@@ -362,7 +362,7 @@ size_t ResourceLoader::MatKeyHash::operator()(const MaterialKey& key) const {
 	std::hash<std::string> strHash;
 	size_t resHash = strHash(std::get<1>(key)) ^ strHash(std::get<2>(key));
 
-	for (int i = 0; i < std::get<0>(key).size(); i++)
+	for (size_t i = 0; i < std::get<0>(key).size(); i++)
 		resHash ^= strHash(std::get<0>(key)[i]);
 
 	return resHash;

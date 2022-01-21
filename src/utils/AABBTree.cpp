@@ -5,18 +5,20 @@ See the included LICENSE file
 
 #include "AABBTree.h"
 
+using namespace nifly;
+
 AABB::AABB(const Vector3& newMin, const Vector3& newMax) {
 	min = newMin;
 	max = newMax;
 }
 
-AABB::AABB(Vector3* points, int nPoints) {
+AABB::AABB(const Vector3* points, const uint16_t nPoints) {
 	if (nPoints <= 0)
 		return;
 
 	min = points[0];
 	max = points[0];
-	for (int i = 1; i < nPoints; i++) {
+	for (uint16_t i = 1; i < nPoints; i++) {
 		if (points[i].x < min.x)
 			min.x = points[i].x;
 		if (points[i].y < min.y)
@@ -33,14 +35,14 @@ AABB::AABB(Vector3* points, int nPoints) {
 	}
 }
 
-AABB::AABB(Vector3* points, ushort* indices, int nPoints) {
+AABB::AABB(const Vector3* points, const uint16_t* indices, const uint16_t nPoints) {
 	if (nPoints <= 0)
 		return;
 
 	min = points[indices[0]];
 	max = points[indices[0]];
-	int idx;
-	for (int i = 1; i < nPoints; i++) {
+	uint16_t idx;
+	for (uint16_t i = 1; i < nPoints; i++) {
 		idx = indices[i];
 		if (points[idx].x < min.x)
 			min.x = points[idx].x;
@@ -61,7 +63,7 @@ AABB::AABB(Vector3* points, ushort* indices, int nPoints) {
 void AABB::AddBoxToMesh(std::vector<Vector3>& verts, std::vector<Edge>& edges) {
 	Vector3 v;
 	Edge e;
-	int s = verts.size();
+	uint16_t s = static_cast<uint16_t>(verts.size());
 
 	v.x = min.x;
 	v.y = min.y;
@@ -121,12 +123,12 @@ void AABB::AddBoxToMesh(std::vector<Vector3>& verts, std::vector<Edge>& edges) {
 	edges.push_back(e);
 }
 
-void AABB::Merge(Vector3* points, ushort* indices, int nPoints) {
+void AABB::Merge(const Vector3* points, const uint16_t* indices, const uint16_t nPoints) {
 	if (nPoints <= 0)
 		return;
 
-	int idx;
-	for (int i = 0; i < nPoints; i++) {
+	uint16_t idx;
+	for (uint16_t i = 0; i < nPoints; i++) {
 		idx = indices[i];
 		if (points[idx].x < min.x) min.x = points[idx].x;
 		if (points[idx].y < min.y) min.y = points[idx].y;
@@ -138,7 +140,7 @@ void AABB::Merge(Vector3* points, ushort* indices, int nPoints) {
 	}
 }
 
-void AABB::Merge(AABB& other) {
+void AABB::Merge(const AABB& other) {
 	if (other.min.x < min.x) min.x = other.min.x;
 	if (other.min.y < min.y) min.y = other.min.y;
 	if (other.min.z < min.z) min.z = other.min.z;
@@ -148,7 +150,7 @@ void AABB::Merge(AABB& other) {
 	if (other.max.z > max.z) max.z = other.max.z;
 }
 
-bool AABB::IntersectAABB(AABB& other) {
+bool AABB::IntersectAABB(const AABB& other) {
 	if (min.x > other.max.x) return false;
 	if (min.y > other.max.y) return false;
 	if (min.z > other.max.z) return false;
@@ -158,7 +160,7 @@ bool AABB::IntersectAABB(AABB& other) {
 	return true;
 }
 
-bool AABB::IntersectRay(Vector3& Origin, Vector3& Direction, Vector3* outCoord) {
+bool AABB::IntersectRay(const Vector3& Origin, const Vector3& Direction, Vector3* outCoord) {
 	//char side[3];  // side of potential collision plane: 0=left 1=right 2 = middle
 	float candidatePlane[3]; // x,y,z values for potential candidate plane intersection.
 	Vector3 maxT(-1, -1, -1);
@@ -257,7 +259,7 @@ bool AABB::IntersectRay(Vector3& Origin, Vector3& Direction, Vector3* outCoord) 
 	return true;
 }
 
-bool AABB::IntersectSphere(Vector3& Origin, float radius) {
+bool AABB::IntersectSphere(const Vector3& Origin, const float radius) {
 	float s, d = 0;
 
 	if (Origin.x < min.x) {
@@ -288,12 +290,12 @@ bool AABB::IntersectSphere(Vector3& Origin, float radius) {
 	return d <= radius * radius;
 }
 
-AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parentRef, int depth) {
+AABBTree::AABBTreeNode::AABBTreeNode(std::vector<uint32_t>& facetIndices, const uint32_t start, const uint32_t end, AABBTree* treeRef, AABBTreeNode* parentRef, const uint32_t depth) {
 	int axis;
 	Vector3 axis_avg;
 	tree = treeRef;
 	parent = parentRef;
-	int moreStart = 0;
+	uint32_t moreStart = 0;
 
 	if (facetIndices.size() < treeRef->MinFacets())
 		return;
@@ -304,9 +306,9 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, int start, 
 	// Force a leaf if the facet count gets below a certain threshold or the depth becomes too large.
 	if ((end - start + 1) <= treeRef->MinFacets() || depth > treeRef->MaxDepth()) {
 		nFacets = end - start + 1;
-		mIFacets = std::make_unique<int[]>(nFacets);
+		mIFacets = std::make_unique<uint32_t[]>(nFacets);
 		int p = 0;
-		for (int f = start; f <= end; f++)
+		for (uint32_t f = start; f <= end; f++)
 			mIFacets[p++] = facetIndices[f];
 
 		return;
@@ -324,10 +326,10 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, int start, 
 	if (diag.z > curmax)
 		axis = 2;
 
-	int l = start;
+	uint32_t l = start;
 	float lval;
 
-	int r = end;
+	uint32_t r = end;
 	float rval;
 
 	switch (axis) {
@@ -399,8 +401,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, int start, 
 	N = std::make_unique<AABBTreeNode>(facetIndices, start, moreStart - 1, treeRef, this, depth + 1);
 }
 
-AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parentRef, int depth) {
-	int axis;
+AABBTree::AABBTreeNode::AABBTreeNode(std::vector<uint32_t>& facetIndices, AABBTree* treeRef, AABBTreeNode* parentRef, const uint32_t depth) {
 	Vector3 axis_avg;
 	tree = treeRef;
 	parent = parentRef;
@@ -408,24 +409,24 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* t
 	// Force a leaf if the facet count gets below a certain threshold or the depth becomes too large.
 	if (facetIndices.size() <= treeRef->MinFacets() || depth > treeRef->MaxDepth()) {
 		treeRef->CalcAABBandGeoAvg(facetIndices, mBB, axis_avg);
-		nFacets = facetIndices.size();
-		mIFacets = std::make_unique<int[]>(nFacets);
-		for (int f = 0; f < facetIndices.size(); f++)
+		nFacets = static_cast<uint32_t>(facetIndices.size());
+		mIFacets = std::make_unique<uint32_t[]>(nFacets);
+		for (uint32_t f = 0; f < nFacets; f++)
 			mIFacets[f] = facetIndices[f];
 
 		return;
 	}
 
 	// less and more indx lists
-	std::vector<int> less;
-	std::vector<int> more;
+	std::vector<uint32_t> less;
+	std::vector<uint32_t> more;
 
 	// calculate this node's containing AABB and the geometric average
 	treeRef->CalcAABBandGeoAvg(facetIndices, mBB, axis_avg);
 
 	// determine split axis
 	Vector3 diag = mBB.max - mBB.min;
-	axis = 0;
+	uint32_t axis = 0;
 	float curmax = diag.x;
 	if (diag.y > curmax) {
 		axis = 1;
@@ -438,7 +439,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* t
 	int facetnum;
 	switch (axis) {
 	case 0:
-		for (int i = 0; i < facetIndices.size(); i++) {
+		for (uint32_t i = 0; i < static_cast<uint32_t>(facetIndices.size()); i++) {
 			facetnum = facetIndices[i];
 			if (treeRef->triRef[facetnum].AxisMidPointX(treeRef->vertexRef) < axis_avg.x) {
 				less.push_back(facetnum);
@@ -450,7 +451,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* t
 		break;
 
 	case 1:
-		for (int i = 0; i < facetIndices.size(); i++) {
+		for (uint32_t i = 0; i < static_cast<uint32_t>(facetIndices.size()); i++) {
 			facetnum = facetIndices[i];
 			if (treeRef->triRef[facetnum].AxisMidPointY(treeRef->vertexRef) < axis_avg.y) {
 				less.push_back(facetnum);
@@ -461,7 +462,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* t
 		break;
 
 	case 2:
-		for (int i = 0; i < facetIndices.size(); i++) {
+		for (uint32_t i = 0; i < static_cast<uint32_t>(facetIndices.size()); i++) {
 			facetnum = facetIndices[i];
 			if (treeRef->triRef[facetnum].AxisMidPointZ(treeRef->vertexRef) < axis_avg.z) {
 				less.push_back(facetnum);
@@ -473,8 +474,8 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* t
 	}
 
 	//  Split lists when all midpoints fall on one side of axis or the other
-	int sz = more.size();
-	int numFacets = facetIndices.size();
+	uint32_t sz = static_cast<uint32_t>(more.size());
+	uint32_t numFacets = static_cast<uint32_t>(facetIndices.size());
 	if (sz == 0 || sz == numFacets) {
 		if (sz > less.size()) {
 			sz = sz / 2;
@@ -482,7 +483,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* t
 			more.erase(more.begin(), more.begin() + sz);
 		}
 		else {
-			sz = less.size() / 2;
+			sz = static_cast<uint32_t>(less.size() / 2);
 			more.assign(less.begin(), less.begin() + sz);
 			less.erase(less.begin(), less.begin() + sz);
 		}
@@ -496,7 +497,7 @@ Vector3 AABBTree::AABBTreeNode::Center() {
 	return ((mBB.max + mBB.min) / 2);
 }
 
-void AABBTree::AABBTreeNode::AddDebugFrames(std::vector<Vector3>& verts, std::vector<Edge>& edges, int maxdepth, int curdepth) {
+void AABBTree::AABBTreeNode::AddDebugFrames(std::vector<Vector3>& verts, std::vector<Edge>& edges, const uint32_t maxdepth, const uint32_t curdepth) {
 	if (curdepth <= maxdepth) {
 		mBB.AddBoxToMesh(verts, edges);
 	} // else return;
@@ -522,8 +523,8 @@ bool AABBTree::AABBTreeNode::IntersectRay(Vector3& origin, Vector3& direction, s
 	if (!collision) return false;
 
 	if (!P && !N) {
-		for (int i = 0; i < nFacets; i++) {
-			int f = mIFacets[i];
+		for (uint32_t i = 0; i < nFacets; i++) {
+			uint32_t f = mIFacets[i];
 			if (tree->triRef[f].IntersectRay(tree->vertexRef, origin, direction, &r.HitDistance, &r.HitCoord)) {
 				if (results) {
 					r.HitFacet = mIFacets[i];
@@ -547,7 +548,7 @@ bool AABBTree::AABBTreeNode::IntersectRay(Vector3& origin, Vector3& direction, s
 	return Pcollide || Ncollide;
 }
 
-bool AABBTree::AABBTreeNode::IntersectSphere(Vector3 &origin, float radius, std::vector<IntersectResult> *results) {
+bool AABBTree::AABBTreeNode::IntersectSphere(Vector3 &origin, const float radius, std::vector<IntersectResult> *results) {
 	IntersectResult r;
 	bool collision = mBB.IntersectSphere(origin, radius);
 	if (!collision)
@@ -555,8 +556,8 @@ bool AABBTree::AABBTreeNode::IntersectSphere(Vector3 &origin, float radius, std:
 
 	if (!P && !N) {
 		bool found = false;
-		for (int i = 0; i < nFacets; i++) {
-			int f = mIFacets[i];
+		for (uint32_t i = 0; i < nFacets; i++) {
+			uint32_t f = mIFacets[i];
 			if (tree->triRef[f].IntersectSphere(tree->vertexRef, origin, radius, &r.HitDistance)) {
 				if (results) {
 					r.HitFacet = mIFacets[i];
@@ -582,10 +583,12 @@ bool AABBTree::AABBTreeNode::IntersectSphere(Vector3 &origin, float radius, std:
 	return Pcollide || Ncollide;
 }
 
-void AABBTree::AABBTreeNode::UpdateAABB(AABB* childBB) {
+void AABBTree::AABBTreeNode::UpdateAABB(const AABB* childBB) {
 	if (!childBB) {
-		Vector3 bogus;
-		tree->CalcAABBandGeoAvg(mIFacets.get(), 0, nFacets - 1, mBB, bogus);
+		if (nFacets > 0) {
+			Vector3 bogus;
+			tree->CalcAABBandGeoAvg(mIFacets.get(), 0, nFacets - 1, mBB, bogus);
+		}
 	}
 	else
 		mBB.Merge((*childBB));
@@ -594,42 +597,47 @@ void AABBTree::AABBTreeNode::UpdateAABB(AABB* childBB) {
 		parent->UpdateAABB(&mBB);
 }
 
-AABBTree::AABBTree(Vector3* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets) {
+AABBTree::AABBTree(Vector3* vertices, Triangle* facets, const uint32_t nFacets, const uint32_t maxDepth, const uint32_t minFacets) {
 	triRef = facets;
 	vertexRef = vertices;
 	max_depth = maxDepth;
 	min_facets = minFacets;
 
-	std::vector<int> facetIndices(nFacets, 0);
-	for (int i = 0; i < nFacets; i++)
+	std::vector<uint32_t> facetIndices(nFacets, 0);
+	for (uint32_t i = 0; i < nFacets; i++)
 		facetIndices[i] = i;
 
-	root = std::make_unique<AABBTreeNode>(facetIndices, 0, nFacets - 1, this, nullptr, 0);
+	uint32_t start = 0;
+	uint32_t depth = 0;
+	root = std::make_unique<AABBTreeNode>(facetIndices, start, nFacets - 1, this, nullptr, depth);
 }
 
-int AABBTree::MinFacets() { return min_facets; }
-int AABBTree::MaxDepth() { return max_depth; }
+uint32_t AABBTree::MinFacets() { return min_facets; }
+uint32_t AABBTree::MaxDepth() { return max_depth; }
 
 Vector3 AABBTree::Center() {
 	return root->Center();
 }
 
-void AABBTree::CalcAABBandGeoAvg(std::vector<int>& forFacets, AABB& outBB, Vector3& outAxisAvg) {
+void AABBTree::CalcAABBandGeoAvg(std::vector<uint32_t>& forFacets, AABB& outBB, Vector3& outAxisAvg) {
 	if (forFacets.empty())
 		return;
 
-	Vector3 mid;
 	outAxisAvg = Vector3(0.0f, 0.0f, 0.0f);
-	AABB tmpBB(vertexRef, (ushort*)(&triRef[forFacets[0]]), 3);
-	for (int i = 0; i < forFacets.size(); i++) {
+
+	Vector3 mid;
+	AABB tmpBB(vertexRef, (uint16_t*)(&triRef[forFacets[0]]), 3);
+
+	uint32_t forFacetsSize = static_cast<uint32_t>(forFacets.size());
+	for (uint32_t i = 0; i < forFacetsSize; i++) {
 		triRef[forFacets[i]].midpoint(vertexRef, mid);
-		outAxisAvg += (mid / forFacets.size());
-		tmpBB.Merge(vertexRef, (ushort*)&triRef[forFacets[i]], 3);
+		outAxisAvg += (mid / forFacetsSize);
+		tmpBB.Merge(vertexRef, (uint16_t*)&triRef[forFacets[i]], 3);
 	}
 	outBB = tmpBB;
 }
 
-void AABBTree::CalcAABBandGeoAvg(std::vector<int>& forFacets, int start, int end, AABB& outBB, Vector3& outAxisAvg) {
+void AABBTree::CalcAABBandGeoAvg(std::vector<uint32_t>& forFacets, const uint32_t start, const uint32_t end, AABB& outBB, Vector3& outAxisAvg) {
 	if (forFacets.empty())
 		return;
 
@@ -638,39 +646,40 @@ void AABBTree::CalcAABBandGeoAvg(std::vector<int>& forFacets, int start, int end
 	//float yaxis = 0;
 	outAxisAvg = Vector3(0.0f, 0.0f, 0.0f);
 
-	AABB tmpBB(vertexRef, (ushort*)(&triRef[forFacets[start]]), 3);
-	int fcount = end - start + 1;
-	for (int i = start; i <= end; i++) {
+	AABB tmpBB(vertexRef, (uint16_t*)(&triRef[forFacets[start]]), 3);
+	uint32_t fcount = end - start + 1;
+	for (uint32_t i = start; i <= end; i++) {
 		triRef[forFacets[i]].midpoint(vertexRef, mid);
 		outAxisAvg.x += mid.x;
 		outAxisAvg.y += mid.y;
 		outAxisAvg.z += mid.z;
-		tmpBB.Merge(vertexRef, (ushort*)&triRef[forFacets[i]], 3);
+		tmpBB.Merge(vertexRef, (uint16_t*)&triRef[forFacets[i]], 3);
 	}
+
 	outAxisAvg /= fcount;
 	outBB = tmpBB;
 }
 
-void AABBTree::CalcAABBandGeoAvg(int forFacets[], int start, int end, AABB& outBB, Vector3& outAxisAvg) {
+void AABBTree::CalcAABBandGeoAvg(const uint32_t forFacets[], const uint32_t start, const uint32_t end, AABB& outBB, Vector3& outAxisAvg) {
 	Vector3 mid;
 	//float ytot = 0;
 	//float yaxis = 0;
 	outAxisAvg = Vector3(0.0f, 0.0f, 0.0f);
 
-	AABB tmpBB(vertexRef, (ushort*)(&triRef[forFacets[start]]), 3);
-	int fcount = end - start + 1;
-	for (int i = start; i <= end; i++) {
+	AABB tmpBB(vertexRef, (uint16_t*)(&triRef[forFacets[start]]), 3);
+	uint32_t fcount = end - start + 1;
+	for (uint32_t i = start; i <= end; i++) {
 		triRef[forFacets[i]].midpoint(vertexRef, mid);
 		outAxisAvg.x += mid.x;
 		outAxisAvg.y += mid.y;
 		outAxisAvg.z += mid.z;
-		tmpBB.Merge(vertexRef, (ushort*)&triRef[forFacets[i]], 3);
+		tmpBB.Merge(vertexRef, (uint16_t*)&triRef[forFacets[i]], 3);
 	}
 	outAxisAvg /= fcount;
 	outBB = tmpBB;
 }
 
-void AABBTree::BuildDebugFrames(Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges) {
+void AABBTree::BuildDebugFrames(Vector3** outVerts, uint16_t* outNumVerts, Edge** outEdges, uint32_t* outNumEdges) {
 	std::vector<Vector3> v;
 	std::vector<Edge> e;
 
@@ -684,19 +693,20 @@ void AABBTree::BuildDebugFrames(Vector3** outVerts, int* outNumVerts, Edge** out
 	//	m->nEdges = e.size();
 	//	m->edges = new Edge[m->nEdges];
 
-	int vc = v.size();
+	auto vc = static_cast<uint16_t>(v.size());
 	(*outNumVerts) = vc;
 	(*outVerts) = new Vector3[vc];
 
-	int ec = e.size();
+	auto ec = static_cast<uint32_t>(e.size());
 	(*outNumEdges) = ec;
 	(*outEdges) = new Edge[ec];
 
-	for (int i = 0; i < vc; i++){
+	for (uint16_t i = 0; i < vc; i++) {
 		//m->verts[i] = v[i];
 		(*outVerts)[i] = v[i];
 	}
-	for (int i = 0; i < ec; i++) {
+
+	for (uint32_t i = 0; i < ec; i++) {
 		//m->edges[i].p1 = e[i].p1;
 		//m->edges[i].p2 = e[i].p2;
 		(*outEdges)[i].p1 = e[i].p1;
@@ -704,7 +714,7 @@ void AABBTree::BuildDebugFrames(Vector3** outVerts, int* outNumVerts, Edge** out
 	}
 }
 
-void AABBTree::BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges) {
+void AABBTree::BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vector3** outVerts, uint16_t* outNumVerts, Edge** outEdges, uint32_t* outNumEdges) {
 	std::vector<Vector3> v;
 	std::vector<Edge> e;
 	bFlag = false;
@@ -727,18 +737,18 @@ void AABBTree::BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vect
 	//	m->edges[i].p2 = e[i].p2;
 	//}
 
-	int vc = v.size();
+	auto vc = static_cast<uint16_t>(v.size());
 	(*outNumVerts) = vc;
 	(*outVerts) = new Vector3[vc];
 
-	int ec = e.size();
+	auto ec = static_cast<uint32_t>(e.size());
 	(*outNumEdges) = ec;
 	(*outEdges) = new Edge[ec];
 
-	for (int i = 0; i < vc; i++){
+	for (uint16_t i = 0; i < vc; i++)
 		(*outVerts)[i] = v[i];
-	}
-	for (int i = 0; i < ec; i++) {
+
+	for (uint32_t i = 0; i < ec; i++) {
 		(*outEdges)[i].p1 = e[i].p1;
 		(*outEdges)[i].p2 = e[i].p2;
 	}
@@ -748,6 +758,6 @@ bool AABBTree::IntersectRay(Vector3& origin, Vector3& direction, std::vector<Int
 	return root->IntersectRay(origin, direction, results);
 }
 
-bool AABBTree::IntersectSphere(Vector3& origin, float radius, std::vector<IntersectResult>* results) {
+bool AABBTree::IntersectSphere(Vector3& origin, const float radius, std::vector<IntersectResult>* results) {
 	return root->IntersectSphere(origin, radius, results);
 }

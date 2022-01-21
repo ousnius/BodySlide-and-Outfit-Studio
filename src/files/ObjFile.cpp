@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "ObjFile.h"
 #include "../utils/PlatformUtil.h"
 
+using namespace nifly;
+
 ObjFile::ObjFile() {
 }
 
@@ -40,6 +42,8 @@ int ObjFile::LoadForNif(const std::string& fileName, const ObjOptionsImport& opt
 }
 
 int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
+	constexpr auto maxVertexCount = std::numeric_limits<uint16_t>::max();
+
 	auto current = new ObjData();
 
 	Vector3 v;
@@ -53,11 +57,11 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 	std::string facept2;
 	std::string facept3;
 	std::string facept4;
-	int f[4];
-	int ft[4];
-	int fn[4];
-	int nPoints = 0;
-	int v_idx[4];
+	uint32_t f[4];
+	uint32_t ft[4];
+	uint32_t fn[4];
+	uint32_t nPoints = 0;
+	uint32_t v_idx[4];
 
 	std::vector<Vector3> verts;
 	std::vector<Vector2> uvs;
@@ -185,14 +189,14 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			auto& curPoints = grpPoints[curgrp];
 
 			bool skipFace = false;
-			for (int i = 0; i < nPoints; i++) {
-				v_idx[i] = current->verts.size();
+			for (size_t i = 0; i < nPoints; i++) {
+				v_idx[i] = static_cast<uint32_t>(current->verts.size());
 
 				ObjPoint pt(f[i], ft[i], fn[i]);
 
 				auto ptIt = std::find(curPoints.begin(), curPoints.end(), pt);
 				if (ptIt != curPoints.end())
-					v_idx[i] = ptIt - curPoints.begin();
+					v_idx[i] = static_cast<uint32_t>(ptIt - curPoints.begin());
 				else
 					curPoints.push_back(pt);
 
@@ -216,14 +220,23 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			if (skipFace)
 				continue;
 
-			t.p1 = v_idx[0];
-			t.p2 = v_idx[1];
-			t.p3 = v_idx[2];
+			if (v_idx[0] >= maxVertexCount ||
+				v_idx[1] >= maxVertexCount ||
+				v_idx[2] >= maxVertexCount)
+				continue;
+
+			t.p1 = static_cast<uint16_t>(v_idx[0]);
+			t.p2 = static_cast<uint16_t>(v_idx[1]);
+			t.p3 = static_cast<uint16_t>(v_idx[2]);
 			current->tris.push_back(t);
+
 			if (nPoints == 4) {
-				t.p1 = v_idx[0];
-				t.p2 = v_idx[2];
-				t.p3 = v_idx[3];
+				if (v_idx[3] >= maxVertexCount)
+					continue;
+
+				t.p1 = static_cast<uint16_t>(v_idx[0]);
+				t.p2 = static_cast<uint16_t>(v_idx[2]);
+				t.p3 = static_cast<uint16_t>(v_idx[3]);
 				current->tris.push_back(t);
 			}
 		}
@@ -263,7 +276,7 @@ int ObjFile::Save(const std::string &fileName) {
 		file << "# " << d.second->norms.size() << " normals" << std::endl;
 		file << "# " << d.second->tris.size() << " triangles" << std::endl;
 
-		for (int i = 0; i < d.second->verts.size(); i++) {
+		for (size_t i = 0; i < d.second->verts.size(); i++) {
 			file << "v " << (d.second->verts[i].x + offset.x) * scale.x
 				<< " " << (d.second->verts[i].y + offset.y) * scale.y
 				<< " " << (d.second->verts[i].z + offset.z) * scale.z
@@ -271,14 +284,14 @@ int ObjFile::Save(const std::string &fileName) {
 		}
 		file << std::endl;
 
-		for (int i = 0; i < d.second->uvs.size(); i++) {
+		for (size_t i = 0; i < d.second->uvs.size(); i++) {
 			file << "vt " << d.second->uvs[i].u << " "
 				<< (1.0f - d.second->uvs[i].v)
 				<< std::endl;
 		}
 		file << std::endl;
 
-		for (int i = 0; i < d.second->norms.size(); i++) {
+		for (size_t i = 0; i < d.second->norms.size(); i++) {
 			file << "vn " << d.second->norms[i].x << " "
 				<< d.second->norms[i].y << " "
 				<< d.second->norms[i].z
@@ -291,7 +304,7 @@ int ObjFile::Save(const std::string &fileName) {
 
 		file << "s 1" << std::endl;
 
-		for (int i = 0; i < d.second->tris.size(); i++) {
+		for (size_t i = 0; i < d.second->tris.size(); i++) {
 			file << "f " << d.second->tris[i].p1 + pointOffset;
 
 			if (!d.second->uvs.empty())
@@ -348,7 +361,7 @@ bool ObjFile::CopyDataForGroup(const std::string &name, std::vector<Vector3> *v,
 	if (v) {
 		v->clear();
 		v->resize(od->verts.size());
-		for (int i = 0; i < od->verts.size(); i++) {
+		for (size_t i = 0; i < od->verts.size(); i++) {
 			(*v)[i].x = (od->verts[i].x + offset.x) * scale.x;
 			(*v)[i].y = (od->verts[i].y + offset.y) * scale.y;
 			(*v)[i].z = (od->verts[i].z + offset.z) * scale.z;
@@ -358,21 +371,21 @@ bool ObjFile::CopyDataForGroup(const std::string &name, std::vector<Vector3> *v,
 	if (t) {
 		t->clear();
 		t->resize(od->tris.size());
-		for (int i = 0; i < od->tris.size(); i++)
+		for (size_t i = 0; i < od->tris.size(); i++)
 			(*t)[i] = od->tris[i];
 	}
 
 	if (uv) {
 		uv->clear();
 		uv->resize(od->uvs.size());
-		for (int i = 0; i < od->uvs.size(); i++)
+		for (size_t i = 0; i < od->uvs.size(); i++)
 			(*uv)[i] = od->uvs[i];
 	}
 
 	if (norms) {
 		norms->clear();
 		norms->resize(od->norms.size());
-		for (int i = 0; i < od->norms.size(); i++)
+		for (size_t i = 0; i < od->norms.size(); i++)
 			(*norms)[i] = od->norms[i];
 	}
 

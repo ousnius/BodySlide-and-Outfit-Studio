@@ -21,7 +21,7 @@
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxTextCtrl" name="spPresetName">
-					<value>CustomPreset</value>
+					<value translate="0">CustomPreset</value>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -60,9 +60,9 @@
 				<object class="wxCheckListBox" name="spGroupDisplay">
 					<style>wxLB_HSCROLL|wxLB_NEEDED_SB|wxLB_SORT</style>
 					<content>
-						<item>one</item>
-						<item>two</item>
-						<item>three</item>
+						<item translate="0">one</item>
+						<item translate="0">two</item>
+						<item translate="0">three</item>
 					</content>
 				</object>
 			</object>

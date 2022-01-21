@@ -33,7 +33,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="m_staticText3">
-							<label>X</label>
+							<label translate="0">X</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -42,7 +42,7 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="posX">
-							<value>0.0</value>
+							<value translate="0">0.0</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -50,7 +50,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="m_staticText4">
-							<label>Y</label>
+							<label translate="0">Y</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -59,7 +59,7 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="posY">
-							<value>0.0</value>
+							<value translate="0">0.0</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -67,7 +67,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="m_staticText5">
-							<label>Z</label>
+							<label translate="0">Z</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -76,7 +76,7 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="posZ">
-							<value>0.0</value>
+							<value translate="0">0.0</value>
 						</object>
 					</object>
 				</object>
@@ -113,14 +113,6 @@
 			<orient>wxVERTICAL</orient>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxButton" name="msOldOffset">
-					<label>CBBE to Vanilla (old)</label>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
@@ -136,7 +128,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="msLabelX">
-									<label>X</label>
+									<label translate="0">X</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -145,7 +137,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="msSliderX">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-25000</min>
 									<max>25000</max>
 									<size>400,-1</size>
@@ -157,7 +149,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="msTextX">
 									<size>60,-1</size>
-									<value>0.00000</value>
+									<value translate="0">0.00000</value>
 								</object>
 							</object>
 						</object>
@@ -181,7 +173,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="msLabelY">
-									<label>Y</label>
+									<label translate="0">Y</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -190,7 +182,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="msSliderY">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-25000</min>
 									<max>25000</max>
 									<size>400,-1</size>
@@ -202,7 +194,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="msTextY">
 									<size>60,-1</size>
-									<value>0.00000</value>
+									<value translate="0">0.00000</value>
 								</object>
 							</object>
 						</object>
@@ -226,7 +218,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="msLabelZ">
-									<label>Z</label>
+									<label translate="0">Z</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -235,7 +227,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="msSliderZ">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-25000</min>
 									<max>25000</max>
 									<size>400,-1</size>
@@ -247,9 +239,53 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="msTextZ">
 									<size>60,-1</size>
-									<value>0.00000</value>
+									<value translate="0">0.00000</value>
 								</object>
 							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxBOTTOM</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="mirrorAxisLabel">
+					<label>Mirror Axis</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxBOTTOM</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="mirrorAxisX">
+							<label translate="0">X</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="mirrorAxisY">
+							<label translate="0">Y</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="mirrorAxisZ">
+							<label translate="0">Z</label>
+							<checked>0</checked>
 						</object>
 					</object>
 				</object>
@@ -296,14 +332,14 @@
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALL</flag>
-						<border>5</border>
+						<border>0</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
@@ -311,7 +347,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="ssLabelX">
-									<label>X</label>
+									<label translate="0">X</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -320,7 +356,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="ssSliderX">
-									<value>1000</value>
+									<value translate="0">1000</value>
 									<min>10</min>
 									<max>3000</max>
 									<size>400,-1</size>
@@ -332,7 +368,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="ssTextX">
 									<size>60,-1</size>
-									<value>1.00000</value>
+									<value translate="0">1.00000</value>
 								</object>
 							</object>
 						</object>
@@ -340,7 +376,7 @@
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALL</flag>
-						<border>5</border>
+						<border>0</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
@@ -348,7 +384,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="ssLabelY">
-									<label>Y</label>
+									<label translate="0">Y</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -357,7 +393,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="ssSliderY">
-									<value>1000</value>
+									<value translate="0">1000</value>
 									<min>10</min>
 									<max>3000</max>
 									<size>400,-1</size>
@@ -369,7 +405,44 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="ssTextY">
 									<size>60,-1</size>
-									<value>1.00000</value>
+									<value translate="0">1.00000</value>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>0</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="ssLabelZ">
+									<label translate="0">Z</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="ssSliderZ">
+									<value translate="0">1000</value>
+									<min>10</min>
+									<max>3000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="ssTextZ">
+									<size>60,-1</size>
+									<value translate="0">1.00000</value>
 								</object>
 							</object>
 						</object>
@@ -382,10 +455,10 @@
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
 								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
+								<flag>wxALIGN_CENTER_VERTICAL|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxStaticText" name="ssLabelZ">
-									<label>Z</label>
+								<object class="wxStaticText" name="originLabel">
+									<label>Origin</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -393,20 +466,12 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxSlider" name="ssSliderZ">
-									<value>1000</value>
-									<min>10</min>
-									<max>3000</max>
-									<size>400,-1</size>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxTextCtrl" name="ssTextZ">
-									<size>60,-1</size>
-									<value>1.00000</value>
+								<object class="wxChoice" name="origin">
+									<selection>0</selection>
+									<content>
+										<item>Zero (0, 0, 0)</item>
+										<item>Center of selected shapes(s)</item>
+									</content>
 								</object>
 							</object>
 						</object>
@@ -455,14 +520,14 @@
 			<orient>wxVERTICAL</orient>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALL</flag>
-						<border>5</border>
+						<border>0</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
@@ -470,7 +535,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="rsLabelX">
-									<label>X</label>
+									<label translate="0">X</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -479,7 +544,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="rsSliderX">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-18000</min>
 									<max>18000</max>
 									<size>400,-1</size>
@@ -491,7 +556,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="rsTextX">
 									<size>60,-1</size>
-									<value>0.0000</value>
+									<value translate="0">0.0000</value>
 								</object>
 							</object>
 						</object>
@@ -500,14 +565,14 @@
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALL</flag>
-						<border>5</border>
+						<border>0</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
@@ -515,7 +580,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="rsLabelY">
-									<label>Y</label>
+									<label translate="0">Y</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -524,7 +589,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="rsSliderY">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-18000</min>
 									<max>18000</max>
 									<size>400,-1</size>
@@ -536,7 +601,7 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="rsTextY">
 									<size>60,-1</size>
-									<value>0.0000</value>
+									<value translate="0">0.0000</value>
 								</object>
 							</object>
 						</object>
@@ -545,14 +610,14 @@
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALL</flag>
-						<border>5</border>
+						<border>0</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
@@ -560,7 +625,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="rsLabelZ">
-									<label>Z</label>
+									<label translate="0">Z</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -569,7 +634,7 @@
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
 								<object class="wxSlider" name="rsSliderZ">
-									<value>0</value>
+									<value translate="0">0</value>
 									<min>-18000</min>
 									<max>18000</max>
 									<size>400,-1</size>
@@ -581,9 +646,38 @@
 								<border>5</border>
 								<object class="wxTextCtrl" name="rsTextZ">
 									<size>60,-1</size>
-									<value>0.0000</value>
+									<value translate="0">0.0000</value>
 								</object>
 							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="originLabel">
+							<label>Origin</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxChoice" name="origin">
+							<selection>0</selection>
+							<content>
+								<item>Zero (0, 0, 0)</item>
+								<item>Center of selected shapes(s)</item>
+							</content>
 						</object>
 					</object>
 				</object>
@@ -624,7 +718,7 @@
 				<border>5</border>
 				<object class="wxGrid" name="stTexGrid">
 					<style>wxALWAYS_SHOW_SB</style>
-					<size>446,260</size>
+					<size>800,260</size>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -699,7 +793,7 @@
 						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxSlider" name="proximityRadiusSlider">
-							<value>5000</value>
+							<value translate="0">5000</value>
 							<min>0</min>
 							<max>20000</max>
 							<size>400,-1</size>
@@ -711,7 +805,7 @@
 						<border>5</border>
 						<object class="wxTextCtrl" name="proximityRadiusText">
 							<size>60,-1</size>
-							<value>5.00000</value>
+							<value translate="0">5.00000</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -728,7 +822,7 @@
 						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxSlider" name="maxResultsSlider">
-							<value>4</value>
+							<value translate="0">4</value>
 							<min>1</min>
 							<max>100</max>
 							<size>400,-1</size>
@@ -740,7 +834,7 @@
 						<border>5</border>
 						<object class="wxTextCtrl" name="maxResultsText">
 							<size>60,-1</size>
-							<value>4</value>
+							<value translate="0">4</value>
 						</object>
 					</object>
 				</object>
@@ -849,7 +943,7 @@
 						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxSlider" name="proximityRadiusSlider">
-							<value>10000</value>
+							<value translate="0">10000</value>
 							<min>0</min>
 							<max>20000</max>
 							<size>400,-1</size>
@@ -861,7 +955,7 @@
 						<border>5</border>
 						<object class="wxTextCtrl" name="proximityRadiusText">
 							<size>60,-1</size>
-							<value>10.00000</value>
+							<value translate="0">10.00000</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -878,7 +972,7 @@
 						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxSlider" name="maxResultsSlider">
-							<value>10</value>
+							<value translate="0">10</value>
 							<min>1</min>
 							<max>100</max>
 							<size>400,-1</size>
@@ -890,29 +984,131 @@
 						<border>5</border>
 						<object class="wxTextCtrl" name="maxResultsText">
 							<size>60,-1</size>
-							<value>10</value>
+							<value translate="0">10</value>
 						</object>
 					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxLEFT</flag>
-				<border>10</border>
-				<object class="wxCheckBox" name="noTargetLimit">
-					<label>No Target Limit</label>
-					<checked>0</checked>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND|wxALL</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="noTargetLimitLabel">
+							<label>No Target Limit</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="noTargetLimit">
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="noSqueezeLabel">
+							<label>No Squeeze</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="noSqueeze">
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="solidModeLabel">
+							<label>Solid Mode</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="solidMode">
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="axisLabel">
+							<label>Axis</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="axisX">
+									<label translate="0">X</label>
+									<checked>1</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="axisY">
+									<label translate="0">Y</label>
+									<checked>1</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="axisZ">
+									<label translate="0">Z</label>
+									<checked>1</checked>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="preset">
 							<label>Preset</label>
@@ -921,21 +1117,44 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxLEFT|wxBOTTOM</flag>
 						<border>5</border>
-						<object class="wxButton" name="presetDefault">
-							<size>-1,25</size>
-							<label>Default</label>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="presetDefault">
+									<size>-1,25</size>
+									<label>Default</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="presetEvenMovement">
+									<size>-1,25</size>
+									<label>Even Movement</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="presetSolidObject">
+									<size>-1,25</size>
+									<label>Solid Object</label>
+								</object>
+							</object>
 						</object>
 					</object>
-					<object class="sizeritem">
+					<object class="spacer">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT</flag>
 						<border>5</border>
-						<object class="wxButton" name="presetEvenMovement">
-							<size>-1,25</size>
-							<label>Even Movement</label>
-						</object>
+						<size>0,0</size>
 					</object>
 				</object>
 			</object>
@@ -965,7 +1184,7 @@
 	<object class="wxDialog" name="dlgCopyGeometry">
 		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
 		<size>414,169</size>
-		<title>Copy Geometry</title>
+		<title>Merge Geometry</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>

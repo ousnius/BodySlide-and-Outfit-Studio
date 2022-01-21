@@ -148,7 +148,7 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelX">
-							<label>X</label>
+							<label translate="0">X</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -157,7 +157,7 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="textX">
-							<value>0.00000</value>
+							<value translate="0">0.00000</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -165,7 +165,7 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="textRX">
-							<value>0.00000</value>
+							<value translate="0">0.00000</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -173,7 +173,7 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelY">
-							<label>Y</label>
+							<label translate="0">Y</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -182,7 +182,7 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="textY">
-							<value>0.00000</value>
+							<value translate="0">0.00000</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -190,7 +190,7 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="textRY">
-							<value>0.00000</value>
+							<value translate="0">0.00000</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -198,7 +198,7 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelZ">
-							<label>Z</label>
+							<label translate="0">Z</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -207,7 +207,7 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="textZ">
-							<value>0.00000</value>
+							<value translate="0">0.00000</value>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -215,7 +215,7 @@
 						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="textRZ">
-							<value>0.00000</value>
+							<value translate="0">0.00000</value>
 						</object>
 					</object>
 				</object>

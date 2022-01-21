@@ -51,7 +51,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 enum TargetGame {
-	FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR
+	FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB
 };
 
 class BodySlideFrame;
@@ -62,9 +62,9 @@ class BodySlideApp : public wxApp {
 	PreviewWindow* preview = nullptr;
 
 	/* Command-Line Arguments */
-	wxString cmdGroupBuild;
-	wxString cmdTargetDir;
-	wxString cmdPreset;
+	std::vector<std::string> cmdGroupBuild;
+	std::string cmdTargetDir;
+	std::string cmdPreset;
 	bool cmdTri = false;
 
 	/* Localization */
@@ -88,16 +88,15 @@ class BodySlideApp : public wxApp {
 	std::vector<std::string> allGroups;
 	SliderSetGroupCollection gCollection;
 
-	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount;	// Counts how many sets write to the same output file
+	/* Cache */
+	std::map<std::string, nifly::NifFile, case_insensitive_compare> refNormalsCache;	// Cache for reference normals files
 
 	std::string previewBaseName;
 	std::string previewSetName;
-	NifFile* previewBaseNif = nullptr;
-	NifFile PreviewMod;
+	nifly::NifFile* previewBaseNif = nullptr;
+	nifly::NifFile PreviewMod;
 
 	int CreateSetSliders(const std::string& outfit);
-
-	std::string GetOutputDataPath() const;
 
 public:
 	virtual ~BodySlideApp();
@@ -111,10 +110,14 @@ public:
 	
 	SliderCategoryCollection cCollection;
 	TargetGame targetGame;
+	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount;	// Counts how many sets write to the same output file
 
 	bool SetDefaultConfig();
 	bool ShowSetup();
 	wxString GetGameDataPath(TargetGame targ);
+
+	std::string GetOutputDataPath() const;
+	std::string GetProjectPath() const;
 
 	void InitLanguage();
 
@@ -122,39 +125,7 @@ public:
 	void GetArchiveFiles(std::vector<std::string>& outList);
 
 	void LoadData();
-	void CharHook(wxKeyEvent& event) {
-		wxWindow* w = (wxWindow*)event.GetEventObject();
-		if (!w) {
-			event.Skip();
-			return;
-		}
-
-		wxString nm = w->GetName();
-		if (event.GetKeyCode() == wxKeyCode::WXK_F5) {
-			if (nm == "outfitChoice") {
-				RefreshOutfitList();
-			}
-			event.Skip();
-			return;
-		}
-
-#ifdef _WINDOWS
-		std::string stupidkeys = "0123456789-";
-		bool stupidHack = false;
-		if (event.GetKeyCode() < 256 && stupidkeys.find(event.GetKeyCode()) != std::string::npos)
-			stupidHack = true;
-
-		if (stupidHack && nm.EndsWith("|readout")) {
-			wxTextCtrl* e = (wxTextCtrl*)w;
-			HWND hwndEdit = e->GetHandle();
-			::SendMessage(hwndEdit, WM_CHAR, event.GetKeyCode(), event.GetRawKeyFlags());
-		}
-		else
-#endif
-		{
-			event.Skip();
-		}
-	}
+	void CharHook(wxKeyEvent& event);
 
 	void LoadAllCategories();
 
@@ -171,6 +142,8 @@ public:
 	void PopulatePresetList(const std::string& select);
 	void PopulateOutfitList(const std::string& select);
 	void DisplayActiveSet();
+	void UpdateConflictManager();
+	void SetDefaultBuildSelection();
 
 	int LoadSliderSets();
 	void RefreshOutfitList();
@@ -180,14 +153,18 @@ public:
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
 
+	std::vector<std::string> GetConflictingOutfits() {
+		return outFileCount.find(activeSet.GetOutputFilePath())->second;
+	}
+
 	void DeleteOutfit(const std::string& outfitName);
 	void DeletePreset(const std::string& presetName);
 
 	void EditProject(const std::string& projectName);
 	void LaunchOutfitStudio(const wxString& args = "");
 
-	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<ushort>& zapidx, std::vector<Vector2>* uvs = nullptr);
-	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices);
+	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<nifly::Vector3>& verts, std::vector<uint16_t>& zapidx, std::vector<nifly::Vector2>* uvs = nullptr);
+	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, nifly::NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices);
 
 	void CopySliderValues(bool toHigh);
 	void ShowPreview();
@@ -206,12 +183,13 @@ public:
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
 	void UpdateMeshesFromSet();
+	void ApplyReferenceNormals(nifly::NifFile& nif);
 
-	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false);
-	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, const std::string& custPath = "");
-	void GroupBuild(const std::string& group);
+	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false, bool forceNormals = false);
+	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, bool forceNormals = false, const std::string& custPath = "");
+	void GroupBuild(const std::vector<std::string>& groupNames);
 
-	void AddTriData(NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
+	void AddTriData(nifly::NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
 
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	bool IsUVSlider(const wxString& sliderName);
@@ -235,42 +213,71 @@ static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
 #define SLIDER_LO 1
 #define SLIDER_HI 2
 
+class SliderDisplay {
+	bool isCreated = false;
+
+public:
+	bool isShown = false;
+	bool isZap = false;
+	bool oneSize = false;
+	std::string sliderName;
+	wxStaticText* lblSliderLo = nullptr;
+	wxSlider* sliderLo = nullptr;
+	wxTextCtrl* sliderReadoutLo = nullptr;
+	wxStaticText* lblSliderHi = nullptr;
+	wxSlider* sliderHi = nullptr;
+	wxTextCtrl* sliderReadoutHi = nullptr;
+	wxCheckBox* zapCheckHi = nullptr;
+	wxCheckBox* zapCheckLo = nullptr;
+
+	SliderDisplay();
+
+	bool IsCreated() {
+		return isCreated;
+	}
+
+	bool Create(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, int minValue, int maxValue, bool pIsZap, bool pOneSize = false);
+	void Show(bool show = true);
+};
+
+class SliderDisplayPool {
+	std::vector<SliderDisplay*> pool;
+
+	const size_t MaxPoolSize = 500;
+
+public:
+	SliderDisplay* Push();
+	void CreatePool(size_t poolSize, wxScrolledWindow* scrollWindow, wxSizer* sliderLayout);
+	SliderDisplay* Get(size_t index);
+	SliderDisplay* GetNext();
+	void Clear();
+};
+
 class BodySlideFrame : public wxFrame {
 public:
-	class SliderDisplay {
-	public:
-		bool isZap = false;
-		bool oneSize = false;
-		std::string sliderName;
-		wxStaticText* lblSliderLo = nullptr;
-		wxSlider* sliderLo = nullptr;
-		wxTextCtrl* sliderReadoutLo = nullptr;
-		wxStaticText* lblSliderHi = nullptr;
-		wxSlider* sliderHi = nullptr;
-		wxTextCtrl* sliderReadoutHi = nullptr;
-		wxCheckBox* zapCheckHi = nullptr;
-		wxCheckBox* zapCheckLo = nullptr;
-
-		SliderDisplay() {}
-	};
-
+	SliderDisplayPool sliderPool;
 	std::unordered_map<std::string, SliderDisplay*> sliderDisplays;
+	std::vector<wxWindow*> categoryWidgets;
 
 	wxTimer delayLoad;
+
+	wxChoice* outfitChoice = nullptr;
+	wxChoice* presetChoice = nullptr;
+	wxButton* btnSavePreset = nullptr;
 	wxSearchCtrl* search = nullptr;
 	wxSearchCtrl* outfitsearch = nullptr;
 	wxCheckListBox* batchBuildList = nullptr;
+	wxMenu* fileCollisionMenu = nullptr;
 
 	BodySlideFrame(BodySlideApp* app, const wxSize& size);
-	~BodySlideFrame() {
-		ClearSliderGUI();
-	}
+	~BodySlideFrame() { }
 
+	void HideSlider(SliderDisplay* slider);
 	void ShowLowColumn(bool show);
 	void AddCategorySliderUI(const wxString& name, bool show, bool oneSize);
-	void AddSliderGUI(const std::string& name, const std::string& display, bool isZap, bool oneSize = false);
+	void AddSliderGUI(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, bool isZap, bool oneSize = false);
 
-	BodySlideFrame::SliderDisplay* GetSliderDisplay(const std::string& name) {
+	SliderDisplay* GetSliderDisplay(const std::string& name) {
 		if (sliderDisplays.find(name) != sliderDisplays.end())
 			return sliderDisplays[name];
 
@@ -280,6 +287,7 @@ public:
 	void ClearPresetList();
 	void ClearOutfitList();
 	void ClearSliderGUI();
+	void SetPresetChanged(bool changed = true);
 
 	void PopulateOutfitList(const wxArrayString& items, const wxString& selectItem);
 	void PopulatePresetList(const wxArrayString& items, const wxString& selectItem);
@@ -316,6 +324,7 @@ private:
 	void OnRefreshGroups(wxCommandEvent& event);
 	void OnSaveGroups(wxCommandEvent& event);
 	void OnRefreshOutfits(wxCommandEvent& event);
+	void OnRegexOutfits(wxCommandEvent& event);
 
 	void OnChooseOutfit(wxCommandEvent& event);
 	void OnChoosePreset(wxCommandEvent& event);
@@ -326,6 +335,8 @@ private:
 	void OnSavePreset(wxCommandEvent& event);
 	void OnSavePresetAs(wxCommandEvent& event);
 	void OnGroupManager(wxCommandEvent& event);
+	void OnConflictPopup(wxMouseEvent& event);
+	void OnOutfitChoiceSelect(wxCommandEvent& event);
 
 	void OnPreview(wxCommandEvent& event);
 	void OnHighToLow(wxCommandEvent& event);
@@ -345,7 +356,6 @@ private:
 	void OnEditProject(wxCommandEvent& event);
 
 	bool OutfitIsEmpty() {
-		wxChoice* outfitChoice = (wxChoice*)FindWindowByName("outfitChoice");
 		if (outfitChoice && !outfitChoice->GetStringSelection().empty())
 			return false;
 

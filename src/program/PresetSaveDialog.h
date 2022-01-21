@@ -18,8 +18,11 @@ public:
 	std::string outFileName;
 	std::string outPresetName;
 	std::vector<std::string> outGroups;
+
 	PresetSaveDialog(wxWindow* parent);
 	~PresetSaveDialog();
+
+	std::string GetProjectPath() const;
 
 	void FilterGroups(const std::string& filter = "");
 

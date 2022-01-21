@@ -40,7 +40,7 @@ class GLOffScreenBuffer {
 	}
 
 public:
-	GLOffScreenBuffer(GLSurface* gls, int width, int height, unsigned int count = 1, const std::vector<GLuint>& texIds = std::vector<GLuint>());
+	GLOffScreenBuffer(GLSurface* gls, int width, int height, int count = 1, const std::vector<GLuint>& texIds = std::vector<GLuint>());
 
 	std::string texName(int index = -1);
 

@@ -47,6 +47,7 @@ PFNGLUNIFORM1FPROC glUniform1f = nullptr;
 PFNGLUNIFORM1IPROC glUniform1i = nullptr;
 PFNGLUNIFORM2FPROC glUniform2f = nullptr;
 PFNGLUNIFORM3FPROC glUniform3f = nullptr;
+PFNGLUNIFORMMATRIX3FVPROC glUniformMatrix3fv = nullptr;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv = nullptr;
 
 PFNGLGETSHADERIVPROC glGetShaderiv = nullptr;
@@ -128,6 +129,7 @@ void InitExtensions() {
 		glUniform1i = (PFNGLUNIFORM1IPROC)wglGetProcAddress("glUniform1i");
 		glUniform2f = (PFNGLUNIFORM2FPROC)wglGetProcAddress("glUniform2f");
 		glUniform3f = (PFNGLUNIFORM3FPROC)wglGetProcAddress("glUniform3f");
+		glUniformMatrix3fv = (PFNGLUNIFORMMATRIX3FVPROC)wglGetProcAddress("glUniformMatrix3fv");
 		glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)wglGetProcAddress("glUniformMatrix4fv");
 
 		glActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");

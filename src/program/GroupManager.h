@@ -33,12 +33,16 @@ private:
 	std::map<std::string, std::vector<std::string>> groupMembers;
 	std::vector<std::string> allOutfits;
 
+	std::string GetProjectPath() const;
+
 	void RefreshUI(const bool = false);
+	bool ChooseFile();
 	void SaveGroup();
 
 	void DoRenameGroup();
 	void DoRemoveMembers();
 	void DoAddMembers();
+	void DoFilterOutfits(const std::string& filter = "");
 
 	void OnLoadGroup(wxFileDirPickerEvent&);
 	void OnSaveGroup(wxCommandEvent&);
@@ -51,6 +55,7 @@ private:
 	void OnRemoveGroup(wxCommandEvent&);
 	void OnRemoveMember(wxCommandEvent&);
 	void OnAddMember(wxCommandEvent&);
+	void OnFilterChanged(wxCommandEvent&);
 	void OnCloseButton(wxCommandEvent&);
 	void OnClose(wxCloseEvent&);
 

@@ -74,12 +74,12 @@ public:
 	int LoadSliderSet(XMLElement* sliderSetSource);
 	void LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& forShape = "");
 
-	void Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape);
+	void Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal = true);
 
 	// Add an empty set.
-	int CreateSlider(const std::string& setName);
+	size_t CreateSlider(const std::string& setName);
 
-	int CopySlider(SliderData* other);
+	size_t CopySlider(SliderData* other);
 
 	void WriteSliderSet(XMLElement* sliderSetElement);
 
@@ -111,18 +111,11 @@ public:
 		return true;
 	}
 
-	void SetSmoothSeamNormals(const std::string& shapeName, const bool smooth) {
+	void SetSmoothSeamNormals(const std::string& shapeName, bool smooth) {
 		AddMissingTarget(shapeName);
 
 		auto& shape = shapeAttributes[shapeName];
 		shape.smoothSeamNormals = smooth;
-	}
-
-	void ToggleSmoothSeamNormals(const std::string& shapeName) {
-		AddMissingTarget(shapeName);
-
-		auto& shape = shapeAttributes[shapeName];
-		shape.smoothSeamNormals = !shape.smoothSeamNormals;
 	}
 
 	bool GetLockNormals(const std::string& shapeName) {
@@ -133,18 +126,11 @@ public:
 		return false;
 	}
 
-	void SetLockNormals(const std::string& shapeName, const bool lock) {
+	void SetLockNormals(const std::string& shapeName, bool lock) {
 		AddMissingTarget(shapeName);
 
 		auto& shape = shapeAttributes[shapeName];
 		shape.lockNormals = lock;
-	}
-
-	void ToggleLockNormals(const std::string& shapeName) {
-		AddMissingTarget(shapeName);
-
-		auto& shape = shapeAttributes[shapeName];
-		shape.lockNormals = !shape.lockNormals;
 	}
 
 	// Gets the target names in the targetdatafolders map - these are the shapes with non-local or referenced data.
@@ -244,7 +230,7 @@ public:
 		return shapeAttributes.cend();
 	}
 
-	std::string ShapeToDataName(int index, const std::string& shapeName) {
+	std::string ShapeToDataName(const size_t index, const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);
 		if (shape != shapeAttributes.end() && sliders.size() > index)
 			return sliders[index].TargetDataName(shape->second.targetShape);
@@ -276,12 +262,12 @@ public:
 		return sliders.size();
 	}
 
-	SliderData& operator [] (int idx) {
+	SliderData& operator [] (const size_t idx) {
 		return sliders[idx];
 	}
 
 	SliderData& operator [] (const std::string& sliderName) {
-		for (int i = 0; i < sliders.size(); i++)
+		for (size_t i = 0; i < sliders.size(); i++)
 			if (sliders[i].name == sliderName)
 				return sliders[i];
 
@@ -289,7 +275,7 @@ public:
 	}
 
 	bool SliderExists(const std::string& sliderName) {
-		for (int i = 0; i < sliders.size(); i++)
+		for (size_t i = 0; i < sliders.size(); i++)
 			if (sliders[i].name == sliderName)
 				return true;
 

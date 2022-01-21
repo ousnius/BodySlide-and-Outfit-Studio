@@ -4,7 +4,9 @@ See the included LICENSE file
 */
 
 #include "Mesh.h"
-#include "../NIF/utils/KDMatcher.h"
+#include "KDMatcher.hpp"
+
+using namespace nifly;
 
 mesh::mesh() {
 }
@@ -15,7 +17,7 @@ mesh::~mesh() {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glBindVertexArray(0);
 
-		glDeleteBuffers(vbo.size(), vbo.data());
+		glDeleteBuffers(static_cast<GLsizei>(vbo.size()), vbo.data());
 		glDeleteBuffers(1, &ibo);
 		glDeleteVertexArrays(1, &vao);
 	}
@@ -37,9 +39,9 @@ void mesh::BuildTriAdjacency() {
 	vertTris = std::make_unique<std::vector<int>[]>(nVerts);
 	auto vt = vertTris.get();
 	for (int t = 0; t < nTris; t++) {
-		ushort i1 = tris[t].p1;
-		ushort i2 = tris[t].p2;
-		ushort i3 = tris[t].p3;
+		uint16_t i1 = tris[t].p1;
+		uint16_t i2 = tris[t].p2;
+		uint16_t i3 = tris[t].p3;
 		if (i1 >= nVerts || i2 >= nVerts || i3 >= nVerts)
 			continue;
 
@@ -60,7 +62,7 @@ void mesh::MakeEdges() {
 
 	for (int i = 0; i < nEdges; i++) {
 		// Find correct points for edge
-		ushort* points = &tris[i / 3].p1;
+		uint16_t* points = &tris[i / 3].p1;
 		int pA = i % 3;
 		int pB = i % 3 + 1;
 		if (pB >= 3)
@@ -78,8 +80,8 @@ void mesh::BuildEdgeList() {
 	vertEdges = std::make_unique<std::vector<int>[]>(nVerts);
 	auto ve = vertEdges.get();
 	for (int e = 0; e < nEdges; e++) {
-		ushort i1 = edges[e].p1;
-		ushort i2 = edges[e].p2;
+		uint16_t i1 = edges[e].p1;
+		uint16_t i2 = edges[e].p2;
 		if (i1 >= nVerts || i2 >= nVerts)
 			continue;
 
@@ -91,15 +93,17 @@ void mesh::BuildEdgeList() {
 void mesh::CreateBuffers() {
 	if (!genBuffers) {
 		glGenVertexArrays(1, &vao);
-		glGenBuffers(vbo.size(), vbo.data());
+		glGenBuffers(static_cast<GLsizei>(vbo.size()), vbo.data());
 		glGenBuffers(1, &ibo);
 	}
 
 	// NumVertices * (Position + Normal + Colors + Texture Coordinates)
 	glBindVertexArray(vao);
 
-	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), verts.get(), GL_DYNAMIC_DRAW);
+	if (verts) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), verts.get(), GL_DYNAMIC_DRAW);
+	}
 
 	if (norms) {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
@@ -131,10 +135,20 @@ void mesh::CreateBuffers() {
 		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord.get(), GL_DYNAMIC_DRAW);
 	}
 
+	if (mask) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[7]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(float), mask.get(), GL_DYNAMIC_DRAW);
+	}
+
+	if (weight) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[8]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(float), weight.get(), GL_DYNAMIC_DRAW);
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// Element index array
-	if (tris) {
+	if (verts && tris) {
 		renderTris = std::make_unique<Triangle[]>(nTris);
 		for (int i = 0; i < nTris; ++i)
 			renderTris[i] = tris[i];
@@ -143,7 +157,7 @@ void mesh::CreateBuffers() {
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nTris * sizeof(Triangle), renderTris.get(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
-	else if (edges) {
+	else if (verts && edges) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nEdges * sizeof(Edge), edges.get(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -157,7 +171,7 @@ void mesh::UpdateBuffers() {
 	if (genBuffers) {
 		glBindVertexArray(vao);
 
-		if (queueUpdate[UpdateType::Position]) {
+		if (verts && queueUpdate[UpdateType::Position]) {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Position]);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), verts.get());
 			queueUpdate[UpdateType::Position] = false;
@@ -197,6 +211,18 @@ void mesh::UpdateBuffers() {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::TextureCoordinates]);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector2), texcoord.get());
 			queueUpdate[UpdateType::TextureCoordinates] = false;
+		}
+
+		if (mask && queueUpdate[UpdateType::Mask]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Mask]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(float), mask.get());
+			queueUpdate[UpdateType::Mask] = false;
+		}
+
+		if (weight && queueUpdate[UpdateType::Weight]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Weight]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(float), weight.get());
+			queueUpdate[UpdateType::Weight] = false;
 		}
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -320,7 +346,7 @@ int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 		return 0;
 
 	auto vedges = vertEdges.get();
-	for (uint e = 0; e < vedges[querypoint].size(); e++) {
+	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
 		ep1 = edges[vedges[querypoint][e]].p1;
 		ep2 = edges[vedges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
@@ -331,9 +357,9 @@ int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 		}
 	}
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
+		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
 			wq = weldVerts[querypoint][v];
-			for (uint e = 0; e < vedges[wq].size(); e++) {
+			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
 				ep1 = edges[vedges[wq][e]].p1;
 				ep2 = edges[vedges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
@@ -358,7 +384,7 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 	int n = 0;
 
 	auto vedges = vertEdges.get();
-	for (uint e = 0; e < vedges[querypoint].size(); e++) {
+	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
 		ep1 = edges[vedges[querypoint][e]].p1;
 		ep2 = edges[vedges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
@@ -374,9 +400,9 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 		}
 	}
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
+		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
 			int wq = weldVerts[querypoint][v];
-			for (uint e = 0; e < vedges[wq].size(); e++) {
+			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
 				ep1 = edges[vedges[wq][e]].p1;
 				ep2 = edges[vedges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
@@ -397,11 +423,11 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 }
 
 void mesh::CalcWeldVerts() {
-	SortingMatcher matcher(verts.get(), nVerts);
-	for (const std::vector<int> &matchset : matcher.matches) {
-		for (int j = 0; j < matchset.size(); ++j) {
+	SortingMatcher matcher(verts.get(), static_cast<uint16_t>(nVerts));
+	for (const auto &matchset : matcher.matches) {
+		for (size_t j = 0; j < matchset.size(); ++j) {
 			std::vector<int> &wv = weldVerts[matchset[j]];
-			for (int k = 0; k < matchset.size(); ++k) {
+			for (size_t k = 0; k < matchset.size(); ++k) {
 				if (j != k)
 					wv.push_back(matchset[k]);
 			}
@@ -423,8 +449,12 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 		return;
 
 	// Zero old normals
+	bool noVertices = vertices.empty();
 	for (int i = 0; i < nVerts; i++) {
-		if (!vertices.empty() && vertices.find(i) == vertices.end())
+		if (!noVertices && vertices.count(i) == 0)
+			continue;
+
+		if (lockedNormalIndices.count(i) != 0)
 			continue;
 
 		Vector3& pn = norms[i];
@@ -434,28 +464,37 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 	// Face normals
 	Vector3 tn;
 	for (int t = 0; t < nTris; t++) {
-		bool bn1 = (vertices.empty() || vertices.find(tris[t].p1) != vertices.end());
-		bool bn2 = (vertices.empty() || vertices.find(tris[t].p2) != vertices.end());
-		bool bn3 = (vertices.empty() || vertices.find(tris[t].p3) != vertices.end());
+		Triangle& tri = tris[t];
+		bool bn1 = (noVertices || vertices.count(tri.p1) != 0);
+		bool bn2 = (noVertices || vertices.count(tri.p2) != 0);
+		bool bn3 = (noVertices || vertices.count(tri.p3) != 0);
 
 		// None of the three normals should change
 		if (!bn1 && !bn2 && !bn3)
 			continue;
 
-		tris[t].trinormal(verts.get(), &tn);
-		Vector3& pn1 = norms[tris[t].p1];
-		Vector3& pn2 = norms[tris[t].p2];
-		Vector3& pn3 = norms[tris[t].p3];
+		tri.trinormal(verts.get(), &tn);
 
-		if (bn1)
+		if (bn1 && lockedNormalIndices.count(tri.p1) == 0) {
+			Vector3& pn1 = norms[tri.p1];
 			pn1 += tn;
-		if (bn2)
+		}
+
+		if (bn2 && lockedNormalIndices.count(tri.p2) == 0) {
+			Vector3& pn2 = norms[tri.p2];
 			pn2 += tn;
-		if (bn3)
+		}
+
+		if (bn3 && lockedNormalIndices.count(tri.p3) == 0) {
+			Vector3& pn3 = norms[tri.p3];
 			pn3 += tn;
+		}
 	}
 
 	for (int i = 0; i < nVerts; i++) {
+		if (lockedNormalIndices.count(i) != 0)
+			continue;
+
 		Vector3& pn = norms[i];
 		pn.Normalize();
 	}
@@ -468,15 +507,22 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 		std::vector<std::pair<int, Vector3>> seamNorms;
 
 		for (auto &wvp : weldVerts) {
-			if (!vertices.empty() && vertices.find(wvp.first) != vertices.end())
+			auto& key = wvp.first;
+			if (!noVertices && vertices.count(key) != 0)
 				continue;
-			const Vector3 &n = norms[wvp.first];
+
+			if (lockedNormalIndices.count(key) != 0)
+				continue;
+
+			const Vector3 &n = norms[key];
 			Vector3 sn = n;
-			for (int wvi : wvp.second)
+			auto& value = wvp.second;
+			for (int wvi : value)
 				if (n.angle(norms[wvi]) < smoothThresh)
 					sn += norms[wvi];
+
 			sn.Normalize();
-			seamNorms.emplace_back(wvp.first, sn);
+			seamNorms.emplace_back(key, sn);
 		}
 
 		for (auto &snp : seamNorms)
@@ -493,6 +539,9 @@ void mesh::FacetNormals() {
 
 	// Zero old normals
 	for (int i = 0; i < nVerts; i++) {
+		if (lockedNormalIndices.find(i) != lockedNormalIndices.end())
+			continue;
+
 		Vector3& pn = norms[i];
 		pn.Zero();
 	}
@@ -504,15 +553,27 @@ void mesh::FacetNormals() {
 			continue;
 
 		tri.trinormal(verts.get(), &tn);
-		Vector3& pn1 = norms[tri.p1];
-		Vector3& pn2 = norms[tri.p2];
-		Vector3& pn3 = norms[tri.p3];
-		pn1 += tn;
-		pn2 += tn;
-		pn3 += tn;
+
+		if (lockedNormalIndices.find(tri.p1) == lockedNormalIndices.end()) {
+			Vector3& pn1 = norms[tri.p1];
+			pn1 += tn;
+		}
+
+		if (lockedNormalIndices.find(tri.p2) == lockedNormalIndices.end()) {
+			Vector3& pn2 = norms[tri.p2];
+			pn2 += tn;
+		}
+
+		if (lockedNormalIndices.find(tri.p3) == lockedNormalIndices.end()) {
+			Vector3& pn3 = norms[tri.p3];
+			pn3 += tn;
+		}
 	}
 
 	for (int i = 0; i < nVerts; i++) {
+		if (lockedNormalIndices.find(i) != lockedNormalIndices.end())
+			continue;
+
 		Vector3& pn = norms[i];
 		pn.Normalize();
 	}
@@ -522,20 +583,49 @@ void mesh::FacetNormals() {
 }
 
 void mesh::ColorFill(const Vector3& vcolor) {
+	if (!vcolors)
+		return;
+
 	for (int i = 0; i < nVerts; i++)
 		vcolors[i] = vcolor;
 
 	queueUpdate[UpdateType::VertexColors] = true;
 }
 
-void mesh::AlphaFill(const float alpha) {
+void mesh::AlphaFill(float alpha) {
+	if (!valpha)
+		return;
+
 	for (int i = 0; i < nVerts; i++)
 		valpha[i] = alpha;
 
 	queueUpdate[UpdateType::VertexAlpha] = true;
 }
 
+void mesh::MaskFill(float maskValue) {
+	if (!mask)
+		return;
+
+	for (int i = 0; i < nVerts; i++)
+		mask[i] = maskValue;
+
+	queueUpdate[UpdateType::Mask] = true;
+}
+
+void mesh::WeightFill(float weightValue) {
+	if (!weight)
+		return;
+
+	for (int i = 0; i < nVerts; i++)
+		weight[i] = weightValue;
+
+	queueUpdate[UpdateType::Weight] = true;
+}
+
 void mesh::ColorChannelFill(int channel, float value) {
+	if (!vcolors)
+		return;
+
 	for (int i = 0; i < nVerts; i++) {
 		if (channel == 0)
 			vcolors[i].x = value;

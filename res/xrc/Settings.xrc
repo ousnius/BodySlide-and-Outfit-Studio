@@ -37,13 +37,15 @@
 									<tooltip>Choose the target game you want to use the program for here.</tooltip>
 									<selection>0</selection>
 									<content>
-										<item>Fallout 3</item>
-										<item>Fallout New Vegas</item>
-										<item>Skyrim</item>
-										<item>Fallout 4</item>
-										<item>Skyrim Special Edition</item>
-										<item>Fallout 4 VR</item>
-										<item>Skyrim VR</item>
+										<item translate="0">Fallout 3</item>
+										<item translate="0">Fallout New Vegas</item>
+										<item translate="0">Skyrim</item>
+										<item translate="0">Fallout 4</item>
+										<item translate="0">Skyrim Special Edition</item>
+										<item translate="0">Fallout 4 VR</item>
+										<item translate="0">Skyrim VR</item>
+										<item translate="0">Fallout 76</item>
+										<item translate="0">Oblivion</item>
 									</content>
 								</object>
 							</object>
@@ -70,7 +72,7 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxDirPickerCtrl" name="dpGameDataPath">
-									<value>,90,90,-1,70,0</value>
+									<value translate="0">,90,90,-1,70,0</value>
 									<message>Select the data path of the game...</message>
 									<style>wxDIRP_DEFAULT_STYLE</style>
 									<tooltip>Data path to load textures from.</tooltip>
@@ -88,30 +90,85 @@
 							<label>Advanced</label>
 							<bg>wxSYS_COLOUR_MENU</bg>
 							<object class="panewindow">
-							<object class="wxBoxSizer">
-								<orient>wxHORIZONTAL</orient>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-									<border>5</border>
-									<object class="wxStaticText" name="lbOutputPath">
-										<size>100,-1</size>
-										<label>Output Path</label>
-										<wrap>-1</wrap>
+								<object class="wxBoxSizer">
+									<orient>wxVERTICAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxBoxSizer">
+											<orient>wxHORIZONTAL</orient>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxStaticText" name="lbOutputPath">
+													<size>100,-1</size>
+													<label>Output Path</label>
+													<wrap>-1</wrap>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>3</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxDirPickerCtrl" name="dpOutputPath">
+													<value></value>
+													<message>Select the output path...</message>
+													<style>wxDIRP_DEFAULT_STYLE</style>
+													<tooltip>Data path to build files to. If empty, Game Data Path will be used instead.</tooltip>
+												</object>
+											</object>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxBoxSizer">
+											<orient>wxHORIZONTAL</orient>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxStaticText" name="lbProjectPath">
+													<size>100,-1</size>
+													<label>Project Path</label>
+													<wrap>-1</wrap>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>3</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxDirPickerCtrl" name="dpProjectPath">
+													<value></value>
+													<message>Select the project path...</message>
+													<style>wxDIRP_DEFAULT_STYLE</style>
+													<tooltip>Project path where files related to BodySlide are loaded from. If empty, executable directory will be used instead.</tooltip>
+												</object>
+											</object>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxBoxSizer">
+											<orient>wxHORIZONTAL</orient>
+											<object class="sizeritem">
+												<option>1</option>
+												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+												<border>5</border>
+												<object class="wxCheckBox" name="cbShowForceBodyNormals">
+													<tooltip>With this turned on, BodySlide receives a new checkbox "Force Body Normals". Using it when building adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.</tooltip>
+													<label>Show &apos;Force Body Normals&apos;</label>
+													<checked>0</checked>
+												</object>
+											</object>
+										</object>
 									</object>
 								</object>
-								<object class="sizeritem">
-									<option>3</option>
-									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-									<border>5</border>
-									<object class="wxDirPickerCtrl" name="dpOutputPath">
-										<value></value>
-										<message>Select the output path...</message>
-										<style>wxDIRP_DEFAULT_STYLE</style>
-										<tooltip>Data path to build files to. If empty, Game Data Path will be used instead.</tooltip>
-									</object>
-								</object>
-							</object>
 							</object>
 						</object>
 					</object>
@@ -165,6 +222,16 @@
 								<object class="wxCheckBox" name="cbLeftMousePan">
 									<tooltip>Enables/disables panning the camera with the left mouse button in Outfit Studio.</tooltip>
 									<label>Left Mouse Pan</label>
+									<checked>0</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbBrushSettingsNearCursor">
+									<tooltip>Enables/disables opening the brush settings near the mouse cursor when hitting the 'space' key.</tooltip>
+									<label>Brush Settings Near Cursor</label>
 									<checked>0</checked>
 								</object>
 							</object>
@@ -229,7 +296,7 @@
 								<border>5</border>
 								<object class="wxColourPickerCtrl" name="cpColorBackground">
 									<tooltip>Background color of the renderer.</tooltip>
-									<value>rgb(210,210,210)</value>
+									<value translate="0">rgb(210,210,210)</value>
 								</object>
 							</object>
 						</object>
@@ -256,7 +323,7 @@
 								<border>5</border>
 								<object class="wxColourPickerCtrl" name="cpColorWire">
 									<tooltip>Wireframe color of the renderer.</tooltip>
-									<value>rgb(80,80,80)</value>
+									<value translate="0">rgb(80,80,80)</value>
 								</object>
 							</object>
 						</object>
@@ -310,7 +377,7 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxFilePickerCtrl" name="fpSkeletonFile">
-									<value>,90,90,-1,70,0</value>
+									<value translate="0">,90,90,-1,70,0</value>
 									<message>Select a reference skeleton .nif file...</message>
 									<wildcard>*.nif</wildcard>
 									<style>wxFLP_DEFAULT_STYLE</style>
@@ -343,9 +410,9 @@
 									<tooltip>The root node name of the reference skeleton. Can differ from game to game.</tooltip>
 									<selection>0</selection>
 									<content>
-										<item>Root</item>
-										<item>NPC Root [Root]</item>
-										<item>Bip01</item>
+										<item translate="0">Root</item>
+										<item translate="0">NPC Root [Root]</item>
+										<item translate="0">Bip01</item>
 									</content>
 								</object>
 							</object>

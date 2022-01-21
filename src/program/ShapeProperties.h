@@ -10,7 +10,7 @@ See the included LICENSE file
 
 class ShapeProperties : public wxDialog {
 public:
-	ShapeProperties(wxWindow*, NifFile*, NiShape*);
+	ShapeProperties(wxWindow*, nifly::NifFile*, nifly::NiShape*);
 	~ShapeProperties();
 
 private:
@@ -24,6 +24,7 @@ private:
 	wxTextCtrl* specularPower = nullptr;
 	wxColourPickerCtrl* emissiveColor = nullptr;
 	wxTextCtrl* emissiveMultiple = nullptr;
+	wxTextCtrl* alpha = nullptr;
 	wxCheckBox* vertexColors = nullptr;
 	wxButton* btnAddShader = nullptr;
 	wxButton* btnRemoveShader = nullptr;
@@ -31,8 +32,12 @@ private:
 
 	wxTextCtrl* alphaThreshold = nullptr;
 	wxCheckBox* vertexAlpha = nullptr;
+	wxCheckBox* alphaTest = nullptr;
+	wxCheckBox* alphaBlend = nullptr;
 	wxButton* btnAddTransparency = nullptr;
 	wxButton* btnRemoveTransparency = nullptr;
+
+	wxButton* btnCopyShaderFromShape = nullptr;
 
 	wxCheckBox* fullPrecision = nullptr;
 	wxCheckBox* subIndex = nullptr;
@@ -51,11 +56,12 @@ private:
 	wxTextCtrl* textRY = nullptr;
 	wxTextCtrl* textRZ = nullptr;
 	wxCheckBox* cbTransformGeo = nullptr;
-	MatTransform oldXformGlobalToSkin, newXformGlobalToSkin;
+	nifly::MatTransform oldTransform;
+	nifly::MatTransform newTransform;
 
 	OutfitStudioFrame* os = nullptr;
-	NifFile* nif = nullptr;
-	NiShape* shape = nullptr;
+	nifly::NifFile* nif = nullptr;
+	nifly::NiShape* shape = nullptr;
 
 	bool currentSubIndex = false;
 	bool currentDynamic = false;
@@ -74,7 +80,7 @@ private:
 	void GetGeometry();
 
 	void GetExtraData();
-	void AddExtraData(NiExtraData* extraData, bool uiOnly = false);
+	void AddExtraData(nifly::NiExtraData* extraData, bool uiOnly = false);
 	void ChangeExtraDataType(int index);
 	void RemoveExtraData(int index);
 
@@ -91,6 +97,7 @@ private:
 	void OnSetTextures(wxCommandEvent& event);
 	void OnAddTransparency(wxCommandEvent& event);
 	void OnRemoveTransparency(wxCommandEvent& event);
+	void OnCopyShaderFromShape(wxCommandEvent& event);
 	void OnAddExtraData(wxCommandEvent& event);
 	void OnChangeExtraDataType(wxCommandEvent& event);
 	void OnRemoveExtraData(wxCommandEvent& event);

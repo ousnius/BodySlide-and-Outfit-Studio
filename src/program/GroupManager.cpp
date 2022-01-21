@@ -6,6 +6,8 @@ See the included LICENSE file
 #include "GroupManager.h"
 #include "../utils/ConfigurationManager.h"
 
+#include <wx/srchctrl.h>
+
 extern ConfigurationManager Config;
 
 wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
@@ -20,6 +22,8 @@ wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_BUTTON(XRCID("btSaveAs"), GroupManager::OnSaveGroupAs)
 	EVT_BUTTON(XRCID("btRemoveMember"), GroupManager::OnRemoveMember)
 	EVT_BUTTON(XRCID("btAddMember"), GroupManager::OnAddMember)
+	EVT_TEXT_ENTER(XRCID("outfitFilter"), GroupManager::OnFilterChanged)
+	EVT_TEXT(XRCID("outfitFilter"), GroupManager::OnFilterChanged)
 	EVT_BUTTON(wxID_OK, GroupManager::OnCloseButton)
 	EVT_CLOSE(GroupManager::OnClose)
 wxEND_EVENT_TABLE()
@@ -34,7 +38,7 @@ GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
-	XRCCTRL(*this, "fpGroupXML", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups");
+	XRCCTRL(*this, "fpGroupXML", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(GetProjectPath()) + "/SliderGroups");
 	listGroups = XRCCTRL(*this, "listGroups", wxListBox);
 	groupName = XRCCTRL(*this, "groupName", wxTextCtrl);
 	btAddGroup = XRCCTRL(*this, "btAddGroup", wxButton);
@@ -46,6 +50,13 @@ GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 	listMembers = XRCCTRL(*this, "listMembers", wxListBox);
 	listOutfits = XRCCTRL(*this, "listOutfits", wxListBox);
 
+	auto search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, -1), wxTE_PROCESS_ENTER);
+	search->ShowSearchButton(true);
+	search->SetDescriptiveText("Outfit Filter");
+	search->SetToolTip("Filter outfit list by name");
+
+	xrc->AttachUnknownControl("outfitFilter", search, this);
+
 	RefreshUI();
 }
 
@@ -53,9 +64,13 @@ GroupManager::~GroupManager() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/GroupManager.xrc");
 }
 
+std::string GroupManager::GetProjectPath() const {
+	std::string res = Config["ProjectPath"];
+	return res.empty() ? Config["AppDir"] : res;
+}
+
 void GroupManager::RefreshUI(const bool clearGroups) {
 	listMembers->Clear();
-	listOutfits->Clear();
 
 	btSave->Enable(dirty & !fileName.empty());
 
@@ -77,16 +92,25 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 		for (auto &member : groupMembers[selectedGroup])
 			listMembers->Append(wxString::FromUTF8(member));
 
-	// Add outfits that are no members to list
-	for (auto &outfit : allOutfits)
-		if (listMembers->FindString(outfit) == wxNOT_FOUND)
-			listOutfits->Append(wxString::FromUTF8(outfit));
+	auto outfitFilter = XRCCTRL(*this, "outfitFilter", wxSearchCtrl);
+	std::string filter{ outfitFilter->GetValue().ToUTF8() };
+	DoFilterOutfits(filter);
 
 	listMembers->Enable(groupSelected);
 	listOutfits->Enable(groupSelected);
+	outfitFilter->Enable(groupSelected);
 
 	btRemoveMember->Enable(groupSelected);
 	btAddMember->Enable(groupSelected);
+}
+
+bool GroupManager::ChooseFile() {
+	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(GetProjectPath()) + "/SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	if (file.ShowModal() != wxID_OK)
+		return false;
+
+	fileName = file.GetPath();
+	return true;
 }
 
 void GroupManager::SaveGroup() {
@@ -169,6 +193,24 @@ void GroupManager::DoAddMembers() {
 	RefreshUI();
 }
 
+void GroupManager::DoFilterOutfits(const std::string& filter) {
+	wxString filterString = wxString::FromUTF8(filter);
+	filterString.MakeLower();
+
+	listOutfits->Clear();
+
+	// Add outfits that are no members to list
+	for (auto &outfit : allOutfits) {
+		if (listMembers->FindString(outfit) == wxNOT_FOUND) {
+			wxString outfitName = wxString::FromUTF8(outfit);
+
+			// Filter outfit by name
+			if (outfitName.Lower().Contains(filterString))
+				listOutfits->Append(outfitName);
+		}
+	}
+}
+
 void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	// Load group file
 	SliderSetGroupFile groupFile(event.GetPath().ToUTF8().data());
@@ -201,12 +243,8 @@ void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
-	if (file.ShowModal() != wxID_OK)
-		return;
-
-	fileName = file.GetPath();
-	SaveGroup();
+	if (ChooseFile())
+		SaveGroup();
 }
 
 void GroupManager::OnSelectGroup(wxCommandEvent& WXUNUSED(event)) {
@@ -266,19 +304,32 @@ void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
 	DoAddMembers();
 }
 
+void GroupManager::OnFilterChanged(wxCommandEvent& event) {
+	std::string filter{ event.GetString().ToUTF8() };
+	DoFilterOutfits(filter);
+}
+
 void GroupManager::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {
 	Close();
 }
 
 void GroupManager::OnClose(wxCloseEvent& event) {
 	if (dirty) {
-		int ret = wxMessageBox(_("Do you really want to close the group manager? All unsaved changes will be lost."), _("Save Changes"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
+		int ret = wxMessageBox(_("Save changes to group file?"), _("Save Changes"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
 		if (ret == wxCANCEL) {
 			event.Veto();
 			return;
 		}
-		else if (ret == wxYES)
+		else if (ret == wxYES) {
+			if (fileName.empty()) {
+				if (!ChooseFile()) {
+					event.Veto();
+					return;
+				}
+			}
+
 			SaveGroup();
+		}
 	}
 
 	EndModal(wxID_OK);

@@ -67,14 +67,27 @@ void wxStateButton::render(wxDC& dc) {
 	wxRect r = GetClientRect();
 	dc.DrawRectangle(0, 0, w, h);
 	dc.SetFont(wxSystemSettings::GetFont(wxSystemFont::wxSYS_DEFAULT_GUI_FONT));
-	dc.DrawLabel(GetLabel(), r, wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL);
+
+	if (m_bPendingChanges)
+		dc.DrawLabel("* " + GetLabel(), r, wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL);
+	else
+		dc.DrawLabel(GetLabel(), r, wxALIGN_CENTER_VERTICAL | wxALIGN_CENTER_HORIZONTAL);
+}
+
+void wxStateButton::SetPendingChanges(bool newPending) {
+	if (m_bPendingChanges != newPending) {
+		m_bPendingChanges = newPending;
+		Refresh();
+	}
 }
  
 void wxStateButton::mouseDown(wxMouseEvent& WXUNUSED(event)) {
-	m_bChecked = true;
 	wxCommandEvent evt(wxEVT_COMMAND_BUTTON_CLICKED, GetId());
 	evt.SetEventObject(this);
 	ProcessEvent(evt);
+
+	if (!evt.GetSkipped())
+		m_bChecked = true;
 }
 
 void wxStateButton::mouseReleased(wxMouseEvent& event) {

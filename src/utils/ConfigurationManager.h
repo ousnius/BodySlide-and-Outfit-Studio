@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "../utils/StringStuff.h"
 
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include <wx/string.h>
 
@@ -57,9 +58,12 @@ public:
 	int EnumerateChildren(const std::string& inName, std::vector<std::string>& outValueList);
 	int EnumerateChildrenProperty(const std::string& inName, const std::string& propertyName, std::vector<std::string>& outValueList);
 	ConfigurationItem* FindChild(const std::string& inName, bool recurse = true);
-	ConfigurationItem* AddChild(const std::string& inName, const std::string& value, bool isElement = true);
+	ConfigurationItem* AddChild(const std::string& inName, const std::string& value, bool isElement = true, bool forceAdd = false);
+	void DeleteChild(ConfigurationItem* child);
 
 	ConfigurationItem* FindProperty(const std::string& inName);
+
+	void ClearArrayChildren(const std::string& arrayName);
 
 	bool Match(const std::string& otherName) {
 		return StringsEqualInsens(name.c_str(), otherName.c_str());
@@ -105,8 +109,12 @@ public:
 
 	void GetFullKey(ConfigurationItem* from, std::string& outstr);
 
+	void ClearValueArray(const std::string& containerName, const std::string& arrayName);
+
 	int GetValueArray(const std::string& containerName, const std::string& arrayName, std::vector<std::string>& outValues);
 	int GetValueAttributeArray(const std::string& containerName, const std::string& arrayName, const std::string& attributeName, std::vector<std::string>& outValues);
+
+	void AppendValueArray(const std::string& containerName, const std::string& arrayName, const std::vector<std::map<std::string, std::string>> arrayEntries);
 
 	std::string operator [] (const char* inName) {
 		return GetString(std::string(inName));

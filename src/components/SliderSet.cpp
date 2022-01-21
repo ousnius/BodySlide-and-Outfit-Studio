@@ -28,7 +28,7 @@ void SliderSet::DeleteSlider(const std::string& setName) {
 	}
 
 	// Find and delete slider
-	for (int i = 0; i < sliders.size(); i++) {
+	for (size_t i = 0; i < sliders.size(); i++) {
 		if (sliders[i].name == setName) {
 			sliders.erase(sliders.begin() + i);
 			return;
@@ -36,13 +36,14 @@ void SliderSet::DeleteSlider(const std::string& setName) {
 	}
 }
 
-int SliderSet::CreateSlider(const std::string& setName) {
+size_t SliderSet::CreateSlider(const std::string& setName) {
 	sliders.emplace_back(setName);
 	return sliders.size() - 1;
 }
 
-int SliderSet::CopySlider(SliderData* other) {
+size_t SliderSet::CopySlider(SliderData* other) {
 	sliders.emplace_back(other->name);
+
 	SliderData* ms = &sliders.back();
 	ms->bClamp = other->bClamp;
 	ms->bHidden = other->bHidden;
@@ -172,10 +173,10 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 			// OSD format
 			else {
 				// Split file name to get file and data name in it
-				int split = fullFilePath.find_last_of('/');
-				if (split < 0)
+				size_t split = fullFilePath.find_last_of('/');
+				if (split == std::string::npos)
 					split = fullFilePath.find_last_of('\\');
-				if (split < 0)
+				if (split == std::string::npos)
 					continue;
 
 				std::string dataName = fullFilePath.substr(split + 1);
@@ -191,7 +192,7 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 	inDataStorage.LoadData(osdNames);
 }
 
-void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape) {
+void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal) {
 	std::map<std::string, std::map<std::string, std::string>> osdNames;
 	std::map<std::string, std::map<std::string, std::string>> osdNamesBase;
 
@@ -218,10 +219,10 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 		// OSD format
 		else {
 			// Split file name to get file and data name in it
-			int split = fullFilePath.find_last_of('/');
-			if (split < 0)
+			size_t split = fullFilePath.find_last_of('/');
+			if (split == std::string::npos)
 				split = fullFilePath.find_last_of('\\');
-			if (split < 0)
+			if (split == std::string::npos)
 				return;
 
 			std::string dataName = fullFilePath.substr(split + 1);
@@ -234,8 +235,8 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 				osdNamesBase[fileName][dataName] = ddf.targetName;
 		}
 
-		// Make new data local
-		ddf.bLocal = true;
+		// Make new data local or not
+		ddf.bLocal = newDataLocal;
 	};
 
 	for (auto &s : mergeSet.sliders) {
@@ -253,7 +254,7 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 				});
 
 				if (sliderDataIt == sliderIt->dataFiles.end()) {
-					int df = sliderIt->AddDataFile(sd.targetName, sd.dataName, sd.fileName, sd.bLocal);
+					size_t df = sliderIt->AddDataFile(sd.targetName, sd.dataName, sd.fileName, sd.bLocal);
 					addSlider(sliderIt->dataFiles[df]);
 				}
 			}
@@ -269,7 +270,9 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 	for (auto &s : mergeSet.shapeAttributes) {
 		// Copy new shapes to the set
 		if (shapeAttributes.find(s.first) == shapeAttributes.end()) {
-			s.second.dataFolder.clear();
+			if (newDataLocal)
+				s.second.dataFolder.clear();
+
 			shapeAttributes[s.first] = s.second;
 		}
 	}
@@ -467,7 +470,7 @@ int SliderSetFile::GetSetNames(std::vector<std::string> &outSetNames, bool appen
 	for (auto &xmlit : setsInFile)
 		outSetNames.push_back(xmlit.first);
 
-	return outSetNames.size();
+	return static_cast<int>(outSetNames.size());
 }
 
 int SliderSetFile::GetSetNamesUnsorted(std::vector<std::string> &outSetNames, bool append) {
@@ -478,7 +481,7 @@ int SliderSetFile::GetSetNamesUnsorted(std::vector<std::string> &outSetNames, bo
 	else
 		outSetNames.insert(outSetNames.end(), setsOrder.begin(), setsOrder.end());
 
-	return outSetNames.size();
+	return static_cast<int>(outSetNames.size());
 }
 
 bool SliderSetFile::HasSet(const std::string& querySetName) {

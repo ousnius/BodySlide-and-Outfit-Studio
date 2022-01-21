@@ -72,21 +72,18 @@ public:
 	void SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers);
 
 	mesh* GetMesh(const std::string& shapeName);
-	void AddMeshFromNif(NifFile* nif, char* shapeName = nullptr);
-	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
-	void AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName);
+	void AddMeshFromNif(nifly::NifFile* nif, char* shapeName = nullptr);
+	void RefreshMeshFromNif(nifly::NifFile* nif, char* shapeName = nullptr);
+	void AddNifShapeTextures(nifly::NifFile* fromNif, const std::string& shapeName);
 
-	void UpdateMeshes(const std::string& shapeName, std::vector<Vector3>* verts, std::vector<Vector2>* uvs = nullptr) {
+	void UpdateMeshes(const std::string& shapeName, std::vector<nifly::Vector3>* verts, std::vector<nifly::Vector2>* uvs = nullptr) {
 		std::set<int> changed;
-		int id = gls.GetMeshID(shapeName);
-		if (id < 0)
+		mesh* m = gls.GetMesh(shapeName);
+		if (!m)
 			return;
 
-		gls.Update(id, verts, uvs, &changed);
-
-		mesh* m = gls.GetMesh(shapeName);
-		if (m)
-			m->SmoothNormals(changed);
+		gls.Update(m, verts, uvs, &changed);
+		m->SmoothNormals(changed);
 	}
 
 	void SetShapeTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const std::string& vShader, const std::string& fShader, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile()) {
@@ -106,11 +103,23 @@ public:
 		}
 	}
 
+	void SetShapeVertexColors(nifly::NifFile* nif, const std::string& shapeName,  mesh* mesh) {
+		const std::vector<nifly::Color4>* vcolors = nif->GetColorsForShape(shapeName);
+		if (vcolors) {
+			for (size_t v = 0; v < vcolors->size(); v++) {
+				mesh->vcolors[v].x = vcolors->at(v).r;
+				mesh->vcolors[v].y = vcolors->at(v).g;
+				mesh->vcolors[v].z = vcolors->at(v).b;
+				mesh->valpha[v] = vcolors->at(v).a;
+			}
+		}
+	}
+
 	void Render() {
 		gls.RenderOneFrame();
 	}
 
-	void Resized(uint w, uint h) {
+	void Resized(uint32_t w, uint32_t h) {
 		gls.SetSize(w, h);
 	}
 

@@ -8,6 +8,7 @@ See the included LICENSE file
 
 extern ConfigurationManager Config;
 
+using namespace nifly;
 
 std::unordered_map<int, Vector2>& EditUVAction::GetStartState() {
 	return startState;
@@ -104,6 +105,7 @@ wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_MENU(XRCID("btnMove"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnScale"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnRotate"), EditUV::OnSelectTool)
+	EVT_MENU(XRCID("btnSeamEdges"), EditUV::OnSeamEdges)
 	EVT_MENU(XRCID("editUndo"), EditUV::OnUndo)
 	EVT_MENU(XRCID("editRedo"), EditUV::OnRedo)
 	EVT_MENU(XRCID("editSelectAll"), EditUV::OnSelectAll)
@@ -112,6 +114,7 @@ wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_MENU(XRCID("editSelectMore"), EditUV::OnSelectMore)
 	EVT_BUTTON(wxID_OK, EditUV::OnApply)
 	EVT_BUTTON(wxID_CANCEL, EditUV::OnCancel)
+	EVT_CLOSE(EditUV::OnClose)
 wxEND_EVENT_TABLE()
 
 EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, mesh* srcMesh, const std::string& srcSliderName) {
@@ -134,8 +137,8 @@ EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, mesh* srcMe
 	shapeMesh = srcMesh;
 	sliderName = srcSliderName;
 
-	xrc->LoadToolBar(this, "uvToolBar");
-	xrc->LoadMenuBar(this, "uvMenuBar");
+	uvToolBar = xrc->LoadToolBar(this, "uvToolBar");
+	uvMenuBar = xrc->LoadMenuBar(this, "uvMenuBar");
 
 	canvas = new EditUVCanvas(this, wxDefaultSize, GLSurface::GetGLAttribs());
 	canvas->SetNotifyWindow(this);
@@ -150,29 +153,22 @@ EditUV::~EditUV() {
 
 void EditUV::OnSelectTool(wxCommandEvent& event) {
 	int id = event.GetId();
+	if (id == XRCID("btnBoxSelection"))
+		SelectTool(EditUVTool::BoxSelection);
+	else if (id == XRCID("btnVertexSelection"))
+		SelectTool(EditUVTool::VertexSelection);
+	else if (id == XRCID("btnMove"))
+		SelectTool(EditUVTool::Move);
+	else if (id == XRCID("btnScale"))
+		SelectTool(EditUVTool::Scale);
+	else if (id == XRCID("btnRotate"))
+		SelectTool(EditUVTool::Rotate);
+}
 
-	canvas->SetCursorType(GLSurface::None);
-
-	if (id == XRCID("btnBoxSelection")) {
-		toolSelected = EditUVTool::BoxSelection;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
-	}
-	else if (id == XRCID("btnVertexSelection")) {
-		toolSelected = EditUVTool::VertexSelection;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_DEFAULT);
-		canvas->SetCursorType(GLSurface::PointCursor);
-	}
-	else if (id == XRCID("btnMove")) {
-		toolSelected = EditUVTool::Move;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
-	}
-	else if (id == XRCID("btnScale")) {
-		toolSelected = EditUVTool::Scale;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
-	}
-	else if (id == XRCID("btnRotate")) {
-		toolSelected = EditUVTool::Rotate;
-		canvas->SetCursor(wxStockCursor::wxCURSOR_HAND);
+void EditUV::OnSeamEdges(wxCommandEvent& event) {
+	if (canvas->seamEdgesMesh) {
+		canvas->seamEdgesMesh->bVisible = event.IsChecked();
+		os->glView->Render();
 	}
 }
 
@@ -200,6 +196,35 @@ void EditUV::OnSelectMore(wxCommandEvent& WXUNUSED(event)) {
 	canvas->SelectMore();
 }
 
+void EditUV::SelectTool(EditUVTool tool) {
+	canvas->SetCursorType(GLSurface::None);
+	toolSelected = tool;
+
+	switch (toolSelected) {
+	case EditUVTool::BoxSelection:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
+		uvToolBar->ToggleTool(XRCID("btnBoxSelection"), true);
+		break;
+	case EditUVTool::VertexSelection:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_DEFAULT);
+		canvas->SetCursorType(GLSurface::PointCursor);
+		uvToolBar->ToggleTool(XRCID("btnVertexSelection"), true);
+		break;
+	case EditUVTool::Move:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
+		uvToolBar->ToggleTool(XRCID("btnMove"), true);
+		break;
+	case EditUVTool::Scale:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
+		uvToolBar->ToggleTool(XRCID("btnScale"), true);
+		break;
+	case EditUVTool::Rotate:
+		canvas->SetCursor(wxStockCursor::wxCURSOR_HAND);
+		uvToolBar->ToggleTool(XRCID("btnRotate"), true);
+		break;
+	}
+}
+
 void EditUV::Undo() {
 	history.Back();
 	canvas->Render();
@@ -215,31 +240,29 @@ void EditUV::Redo() {
 }
 
 void EditUV::UpdateShapeMesh(bool apply) {
-	mesh* gridMesh = canvas->GetGridMesh();
-
 	std::vector<Vector2> uvs;
 	nif->GetUvsForShape(shape, uvs);
 
 	if (!sliderName.empty()) {
-		std::unordered_map<ushort, Vector3> morphDiff;
+		std::unordered_map<uint16_t, Vector3> morphDiff;
 		os->project->GetSliderDiffUV(shape, sliderName, uvs);
 
-		for (int i = 0; i < gridMesh->nVerts; i++) {
-			Vector3 diff = Vector3((gridMesh->verts[i].x - uvs[i].u) / -10.0f, 0.0f, ((gridMesh->verts[i].y * -1.0f) - uvs[i].v) / 10.0f);
+		for (int i = 0; i < canvas->uvGridMesh->nVerts; i++) {
+			Vector3 diff = Vector3((canvas->uvGridMesh->verts[i].x - uvs[i].u) / -10.0f, 0.0f, ((canvas->uvGridMesh->verts[i].y * -1.0f) - uvs[i].v) / 10.0f);
 			if (!diff.IsZero(true))
 				morphDiff[i] = std::move(diff);
 
-			shapeMesh->texcoord[i].u = gridMesh->verts[i].x;
-			shapeMesh->texcoord[i].v = gridMesh->verts[i].y * -1.0f;
+			shapeMesh->texcoord[i].u = canvas->uvGridMesh->verts[i].x;
+			shapeMesh->texcoord[i].v = canvas->uvGridMesh->verts[i].y * -1.0f;
 		}
 
 		if (apply)
 			os->project->UpdateMorphResult(shape, sliderName, morphDiff);
 	}
 	else {
-		for (int i = 0; i < gridMesh->nVerts; i++) {
-			uvs[i].u = gridMesh->verts[i].x;
-			uvs[i].v = gridMesh->verts[i].y * -1.0f;
+		for (int i = 0; i < canvas->uvGridMesh->nVerts; i++) {
+			uvs[i].u = canvas->uvGridMesh->verts[i].x;
+			uvs[i].v = canvas->uvGridMesh->verts[i].y * -1.0f;
 			shapeMesh->texcoord[i].u = uvs[i].u;
 			shapeMesh->texcoord[i].v = uvs[i].v;
 		}
@@ -254,12 +277,20 @@ void EditUV::UpdateShapeMesh(bool apply) {
 
 void EditUV::OnApply(wxCommandEvent& WXUNUSED(event)) {
 	UpdateShapeMesh();
+	os->SetPendingChanges();
 	Close();
 }
 
 void EditUV::OnCancel(wxCommandEvent& WXUNUSED(event)) {
 	os->ApplySliders(false);
 	Close();
+}
+
+void EditUV::OnClose(wxCloseEvent& WXUNUSED(event)) {
+	if (canvas)
+		delete canvas;
+
+	Destroy();
 }
 
 
@@ -285,6 +316,9 @@ EditUVCanvas::EditUVCanvas(wxWindow* parent, const wxSize& size, const wxGLAttri
 }
 
 EditUVCanvas::~EditUVCanvas() {
+	editUV->os->glView->gls.DeleteMesh(seamEdgesMesh);
+	editUV->os->glView->Render();
+
 	uvSurface.Cleanup();
 	uvSurface.RenderOneFrame();
 }
@@ -375,7 +409,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 		uvSurface.GetPickRay(lastX, lastY, nullptr, d, last);
 
 		Rect rect;
-		mesh* m = editUV->GetMesh();
+		mesh* m = editUV->shapeMesh;
 
 		if (activeTool == EditUVTool::BoxSelection) {
 			// Draw normalized rectangle from start to current
@@ -426,7 +460,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 			uvGridMesh->QueueUpdate(mesh::UpdateType::Position);
 
 			m->QueueUpdate(mesh::UpdateType::TextureCoordinates);
-			editUV->GetParent()->glView->Render();
+			editUV->os->glView->Render();
 		}
 		else if (activeTool == EditUVTool::Scale) {
 			// Store the initial direction
@@ -476,7 +510,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 					scale.x = scale.y;
 			}
 
-			auto curState = editUV->GetHistory().GetCurState();
+			auto curState = editUV->history.GetCurState();
 			if (curState) {
 				auto& startState = curState->GetStartState();
 
@@ -494,7 +528,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 				uvGridMesh->QueueUpdate(mesh::UpdateType::Position);
 
 				m->QueueUpdate(mesh::UpdateType::TextureCoordinates);
-				editUV->GetParent()->glView->Render();
+				editUV->os->glView->Render();
 			}
 		}
 		else if (activeTool == EditUVTool::Rotate) {
@@ -503,7 +537,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 			float angleSin = std::sin(angleDiff);
 			float angleCos = std::cos(angleDiff);
 
-			auto curState = editUV->GetHistory().GetCurState();
+			auto curState = editUV->history.GetCurState();
 			if (curState) {
 				auto& startState = curState->GetStartState();
 
@@ -525,7 +559,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 				uvGridMesh->QueueUpdate(mesh::UpdateType::Position);
 
 				m->QueueUpdate(mesh::UpdateType::TextureCoordinates);
-				editUV->GetParent()->glView->Render();
+				editUV->os->glView->Render();
 			}
 		}
 
@@ -596,7 +630,7 @@ void EditUVCanvas::OnLeftDown(wxMouseEvent& event) {
 		auto action = new EditUVAction();
 		action->SetActionMesh(uvGridMesh);
 		action->SetStartState(state);
-		editUV->GetHistory().Add(action);
+		editUV->history.Add(action);
 		break;
 	}
 
@@ -660,7 +694,7 @@ void EditUVCanvas::OnLeftUp(wxMouseEvent& event) {
 		for (int i = 0; i < uvGridMesh->nVerts; i++)
 			state[i] = Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
 
-		auto action = editUV->GetHistory().GetCurState();
+		auto action = editUV->history.GetCurState();
 		if (action)
 			action->SetEndState(state);
 
@@ -709,10 +743,20 @@ void EditUVCanvas::OnRightUp(wxMouseEvent& WXUNUSED(event)) {
 void EditUVCanvas::OnKeyDown(wxKeyEvent& event) {
 	if (!lbuttonDown && !rbuttonDown && !mbuttonDown) {
 		switch (event.GetKeyCode()) {
-		case 'A':
-			// Unused so far
-			if (event.ControlDown()) {
-			}
+		case '1':
+			editUV->SelectTool(EditUVTool::BoxSelection);
+			break;
+		case '2':
+			editUV->SelectTool(EditUVTool::VertexSelection);
+			break;
+		case '3':
+			editUV->SelectTool(EditUVTool::Move);
+			break;
+		case '4':
+			editUV->SelectTool(EditUVTool::Scale);
+			break;
+		case '5':
+			editUV->SelectTool(EditUVTool::Rotate);
 			break;
 		}
 	}
@@ -778,16 +822,19 @@ void EditUVCanvas::SelectMore() {
 }
 
 void EditUVCanvas::InitMeshes() {
-	auto nif = editUV->GetNIF();
-	auto shape = editUV->GetShape();
-	auto shader = nif->GetShader(shape);
-	auto sliderName = editUV->GetSliderName();
-	auto& project = editUV->GetParent()->project;
+	auto project = editUV->os->project;
+	auto glView = editUV->os->glView;
 
-	planeMesh = uvSurface.AddVisPlane(Vector3(), Vector2(64.0f, 64.0f), 64.0f);
+	auto seamEdgesRefMesh = glView->GetMesh(editUV->shape->name.get());
+	if (seamEdgesRefMesh) {
+		seamEdgesMesh = glView->gls.AddVisSeamEdges(seamEdgesRefMesh, true);
+		glView->Render();
+	}
+
+	planeMesh = uvSurface.AddVisPlane(Matrix4(), Vector2(64.0f, 64.0f), 64.0f);
 	if (planeMesh) {
 		std::string texFile;
-		nif->GetTextureSlot(shader, texFile, 0);
+		editUV->nif->GetTextureSlot(editUV->shape, texFile, 0);
 
 		texFile = std::regex_replace(texFile, std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
 		texFile = std::regex_replace(texFile, std::regex("^(.*?)/textures/", std::regex_constants::icase), "");				// Remove everything before the first occurence of "/textures/"
@@ -804,20 +851,20 @@ void EditUVCanvas::InitMeshes() {
 		uvSurface.UpdateShaders(planeMesh);
 	}
 
-	std::vector<Vector3> verts(shape->GetNumVertices());
-	std::vector<Vector2> uvs(shape->GetNumVertices());
-	nif->GetUvsForShape(shape, uvs);
+	std::vector<Vector3> verts(editUV->shape->GetNumVertices());
+	std::vector<Vector2> uvs(editUV->shape->GetNumVertices());
+	editUV->nif->GetUvsForShape(editUV->shape, uvs);
 
 	if (uvs.size() != verts.size()) {
 		editUV->Close();
 		return;
 	}
 
-	if (!sliderName.empty())
-		project->GetSliderDiffUV(shape, sliderName, uvs);
+	if (!editUV->sliderName.empty())
+		project->GetSliderDiffUV(editUV->shape, editUV->sliderName, uvs);
 
 	std::vector<Triangle> tris;
-	shape->GetTriangles(tris);
+	editUV->shape->GetTriangles(tris);
 
 	uvGridMesh = new mesh();
 	uvGridMesh->nVerts = verts.size();
@@ -898,9 +945,9 @@ void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& mes
 	std::vector<IntersectResult> results;
 	if (m->bvh && m->bvh->IntersectRay(o, d, &results)) {
 		if (results.size() > 0) {
-			int min_i = 0;
+			size_t min_i = 0;
 			float minDist = results[0].HitDistance;
-			for (int i = 1; i < results.size(); i++) {
+			for (size_t i = 1; i < results.size(); i++) {
 				if (results[i].HitDistance < minDist) {
 					minDist = results[i].HitDistance;
 					min_i = i;
@@ -929,10 +976,10 @@ void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& mes
 
 			hoverPoint = pointid;
 
-			glm::vec3 hl(m->matModel * glm::vec4(hilitepoint.x, hilitepoint.y, hilitepoint.z, 1.0f));
-			auto visPoint = uvSurface.AddVisPoint(Vector3(hl.x, hl.y, hl.z), "pointhilite");
-			if (visPoint)
-				visPoint->color = Vector3(1.0f, 0.0f, 0.0f);
+			Vector3 visPoint = mesh::ApplyMatrix4(m->matModel, hilitepoint);
+			auto visPointMesh = uvSurface.AddVisPoint(visPoint, "pointhilite");
+			if (visPointMesh)
+				visPointMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 		}
 	}
 

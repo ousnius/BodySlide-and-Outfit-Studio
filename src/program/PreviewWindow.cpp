@@ -9,6 +9,8 @@ See the included LICENSE file
 #include <sstream>
 #include <regex>
 
+using namespace nifly;
+
 extern ConfigurationManager Config;
 extern ConfigurationManager BodySlideConfig;
 
@@ -69,6 +71,7 @@ void PreviewWindow::OnShown() {
 	gls.Initialize(canvas, context.get());
 	auto size = canvas->GetSize();
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight(), 65.0);
+	gls.SetVertexColors(true);
 
 	//offscreen = new GLOffScreenBuffer(4096, 4096);
 
@@ -131,20 +134,14 @@ mesh* PreviewWindow::GetMesh(const std::string& shapeName) {
 
 void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
-	for (int i = 0; i < shapeList.size(); i++) {
+	for (size_t i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];
 		if (!shapeName || (shapeName && shapeListName == shapeName)) {
 			mesh* m = gls.AddMeshFromNif(nif, shapeListName);
 			if (!m)
 				continue;
 
-			NiShape* shape = nif->FindBlockByName<NiShape>(shapeListName);
-			if (shape && shape->IsSkinned()) {
-				MatTransform xformGlobalToSkin;
-				if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin))
-					gls.SetSkinModelMat(m, xformGlobalToSkin);
-			}
-
+			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildTriAdjacency();
 			m->CreateBuffers();
 		}
@@ -154,22 +151,16 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 	if (shapeName == nullptr)
-		gls.DeleteAllMeshes();
+		gls.ClearMeshes();
 
-	for (int i = 0; i < shapeList.size(); i++) {
+	for (size_t i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];
 		if (!shapeName || (shapeName && shapeListName == shapeName)) {
 			mesh* m = gls.ReloadMeshFromNif(nif, shapeListName);
 			if (!m)
 				continue;
 
-			NiShape* shape = nif->FindBlockByName<NiShape>(shapeListName);
-			if (shape && shape->IsSkinned()) {
-				MatTransform xformGlobalToSkin;
-				if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin))
-					gls.SetSkinModelMat(m, xformGlobalToSkin);
-			}
-
+			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildTriAdjacency();
 			m->SmoothNormals();
 			m->CreateBuffers();
@@ -189,7 +180,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 	bool hasMat = false;
 	std::string matFile;
 
-	const byte MAX_TEXTURE_PATHS = 10;
+	const uint8_t MAX_TEXTURE_PATHS = 10;
 	std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
 
 	NiShader* shader = nullptr;
@@ -199,7 +190,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 		if (shader) {
 			// Find material file
 			if (fromNif->GetHeader().GetVersion().User() == 12 && fromNif->GetHeader().GetVersion().Stream() >= 130) {
-				matFile = shader->GetName();
+				matFile = shader->name.get();
 				if (!matFile.empty())
 					hasMat = true;
 			}
@@ -262,12 +253,12 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 			hasMat = false;
 
 			for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-				fromNif->GetTextureSlot(shader, texFiles[i], i);
+				fromNif->GetTextureSlot(shape, texFiles[i], i);
 		}
 	}
 	else if (shader) {
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-			fromNif->GetTextureSlot(shader, texFiles[i], i);
+			fromNif->GetTextureSlot(shape, texFiles[i], i);
 	}
 
 	for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
@@ -292,9 +283,13 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
 
 	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4 || targetGame == FO4VR) {
+	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
+	}
+	else if (targetGame == OB) {
+		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
+		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
 	}
 
 	SetShapeTextures(shapeName, texFiles, vShader, fShader, hasMat, mat);

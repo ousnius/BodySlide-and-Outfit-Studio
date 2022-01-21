@@ -25,18 +25,18 @@ enum EditUVTool {
 
 class EditUVAction {
 	mesh* actionMesh = nullptr;
-	std::unordered_map<int, Vector2> startState;
-	std::unordered_map<int, Vector2> endState;
+	std::unordered_map<int, nifly::Vector2> startState;
+	std::unordered_map<int, nifly::Vector2> endState;
 
 public:
 	void SetActionMesh(mesh* m) {
 		actionMesh = m;
 	}
 
-	std::unordered_map<int, Vector2>& GetStartState();
-	std::unordered_map<int, Vector2>& GetEndState();
-	void SetStartState(const std::unordered_map<int, Vector2>& state);
-	void SetEndState(const std::unordered_map<int, Vector2>& state);
+	std::unordered_map<int, nifly::Vector2>& GetStartState();
+	std::unordered_map<int, nifly::Vector2>& GetEndState();
+	void SetStartState(const std::unordered_map<int, nifly::Vector2>& state);
+	void SetEndState(const std::unordered_map<int, nifly::Vector2>& state);
 	void RestoreStartState();
 	void RestoreEndState();
 };
@@ -66,32 +66,21 @@ class EditUVCanvas;
 
 class EditUV : public wxFrame {
 public:
-	EditUV(wxWindow*, NifFile*, NiShape*, mesh*, const std::string&);
+	OutfitStudioFrame* os = nullptr;
+	EditUVCanvas* canvas = nullptr;
+	nifly::NifFile* nif = nullptr;
+	nifly::NiShape* shape = nullptr;
+	mesh* shapeMesh = nullptr;
+	std::string sliderName;
+
+	EditUVAction currentAction;
+	EditUVHistory history;
+
+	wxToolBar* uvToolBar = nullptr;
+	wxMenuBar* uvMenuBar = nullptr;
+
+	EditUV(wxWindow*, nifly::NifFile*, nifly::NiShape*, mesh*, const std::string&);
 	~EditUV();
-
-	OutfitStudioFrame* GetParent() {
-		return os;
-	}
-
-	NifFile* GetNIF() {
-		return nif;
-	}
-
-	NiShape* GetShape() {
-		return shape;
-	}
-
-	mesh* GetMesh() {
-		return shapeMesh;
-	}
-
-	std::string GetSliderName() {
-		return sliderName;
-	}
-
-	EditUVHistory& GetHistory() {
-		return history;
-	}
 
 	void StartTool() {
 		toolActive = toolSelected;
@@ -105,26 +94,18 @@ public:
 		return toolActive;
 	}
 
+	void SelectTool(EditUVTool tool);
 	void Undo();
 	void Redo();
 
 private:
-	OutfitStudioFrame* os = nullptr;
-	EditUVCanvas* canvas = nullptr;
-	NifFile* nif = nullptr;
-	NiShape* shape = nullptr;
-	mesh* shapeMesh = nullptr;
-	std::string sliderName;
-
-	EditUVAction currentAction;
-	EditUVHistory history;
-
 	EditUVTool toolSelected = BoxSelection;
 	EditUVTool toolActive = BoxSelection;
 
 	void UpdateShapeMesh(bool apply = true);
 
 	void OnSelectTool(wxCommandEvent& event);
+	void OnSeamEdges(wxCommandEvent& event);
 	void OnUndo(wxCommandEvent& event);
 	void OnRedo(wxCommandEvent& event);
 	void OnSelectAll(wxCommandEvent& event);
@@ -133,12 +114,18 @@ private:
 	void OnSelectMore(wxCommandEvent& event);
 	void OnApply(wxCommandEvent& event);
 	void OnCancel(wxCommandEvent& event);
+	void OnClose(wxCloseEvent& event);
 
 	wxDECLARE_EVENT_TABLE();
 };
 
 class EditUVCanvas : public wxGLCanvas {
 public:
+	mesh* seamEdgesMesh = nullptr;
+	mesh* planeMesh = nullptr;
+	mesh* uvGridMesh = nullptr;
+	mesh* boxSelectMesh = nullptr;
+
 	EditUVCanvas(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs);
 	~EditUVCanvas();
 
@@ -148,10 +135,6 @@ public:
 	void SelectInvert();
 	void SelectLess();
 	void SelectMore();
-
-	mesh* GetGridMesh() {
-		return uvGridMesh;
-	}
 
 	void SetCursorType(GLSurface::CursorType cursorType) {
 		uvSurface.SetCursorType(cursorType);
@@ -183,15 +166,11 @@ private:
 	int lastX = 0;
 	int lastY = 0;
 
-	Vector3 currentCenter;
+	nifly::Vector3 currentCenter;
 	int lastDirection;
 	float lastAngle;
 
 	int hoverPoint = -1;
-
-	mesh* planeMesh = nullptr;
-	mesh* uvGridMesh = nullptr;
-	mesh* boxSelectMesh = nullptr;
 
 	GLMaterial uvGridMaterial;
 	GLMaterial boxSelectMaterial;

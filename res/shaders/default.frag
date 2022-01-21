@@ -34,7 +34,9 @@ uniform bool bRimlight;
 uniform bool bSoftlight;
 uniform bool bGlowmap;
 
-uniform mat4 matModelView;
+uniform mat4 matModel;
+uniform mat4 matModelViewInverse;
+uniform mat3 mv_normalMatrix;
 
 struct Properties
 {
@@ -72,9 +74,8 @@ in vec3 lightDirectional1;
 in vec3 lightDirectional2;
 
 in vec3 viewDir;
-in vec3 t;
-in vec3 b;
 in vec3 n;
+in mat3 mv_tbn;
 
 in float maskFactor;
 in vec3 weightColor;
@@ -206,45 +207,39 @@ void main(void)
 				vec3 outDiffuse = vec3(0.0);
 				vec3 outSpecular = vec3(0.0);
 
-				// Start off neutral
-				normal = normalize(vec3(0.0, 0.0, 0.5));
 				specFactor = 0.0;
 
-				if (bModelSpace)
+				if (bShowTexture && bNormalMap)
 				{
-					// Vertex normal for shading with disabled maps
-					normal = mat3(matModelView) * n;
-					normal = normalize(normal);
-				}
-
-				if (bShowTexture)
-				{
-					if (bNormalMap)
+					if (bModelSpace)
 					{
-						if (bModelSpace)
-						{
-							// Model Space Normal Map
-							normal = normalize(normalMap.rgb * 2.0 - 1.0);
-							normal.r = -normal.r;
-							normal = mat3(matModelView) * normal;
-							normal = normalize(normal);
+						// Model Space Normal Map
+						normal = normalize(normalMap.rgb * 2.0 - 1.0);
+						normal.r = -normal.r;
+						normal = mv_normalMatrix * normal;
+						normal = normalize(normal);
 
-							if (bSpecular)
-							{
-								specFactor = specMap.r;
-							}
-						}
-						else
+						if (bSpecular)
 						{
-							// Tangent Space Normal Map
-							normal = normalize(normalMap.rgb * 2.0 - 1.0);
-
-							if (bSpecular)
-							{
-								specFactor = normalMap.a;
-							}
+							specFactor = specMap.r;
 						}
 					}
+					else
+					{
+						// Tangent Space Normal Map
+						normal = normalize(mv_tbn * (normalMap.rgb * 2.0 - 1.0));
+
+						if (bSpecular)
+						{
+							specFactor = normalMap.a;
+						}
+					}
+				}
+				else
+				{
+					// Vertex normal for shading with disabled maps
+					normal = mv_normalMatrix * n;
+					normal = normalize(normal);
 				}
 
 				directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);
@@ -255,9 +250,7 @@ void main(void)
 				if (bCubemap && bShowTexture)
 				{
 					vec3 reflected = reflect(-viewDir, normal);
-					vec3 reflectedVS = b * reflected.x + t * reflected.y + n * reflected.z;
-					vec3 reflectedWS = mat3(matModelView) * reflectedVS;
-					reflectedWS = normalize(reflectedWS);
+					vec3 reflectedWS = vec3(matModel * (matModelViewInverse * vec4(reflected, 0.0)));
 
 					vec4 cubeMap = texture(texCubemap, reflectedWS);
 					cubeMap.rgb *= prop.envReflection;

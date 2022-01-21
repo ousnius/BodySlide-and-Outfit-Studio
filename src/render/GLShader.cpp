@@ -4,9 +4,13 @@ See the included LICENSE file
 */
 
 #include "GLShader.h"
+#include "Object3d.hpp"
 #include "../utils/PlatformUtil.h"
+
 #include <fstream>
 #include <sstream>
+
+using namespace nifly;
 
 GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentSource) : GLShader() {
 	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource)) {
@@ -135,10 +139,20 @@ void GLShader::SetMatrixModelView(const glm::mat4x4& matView, const glm::mat4x4&
 	if (loc >= 0) {
 		glm::mat4x4 matModelView = matView * matModel;
 		glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&matModelView);
+		loc = glGetUniformLocation(progID, "matModelViewInverse");
+		if (loc >= 0) {
+			glm::mat4x4 matModelViewInverse = glm::inverse(matModelView);
+			glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&matModelViewInverse);
+		}
+		loc = glGetUniformLocation(progID, "mv_normalMatrix");
+		if (loc >= 0) {
+			glm::mat3x3 mv_normalMatrix = glm::transpose(glm::inverse(glm::mat3(matModelView)));
+			glUniformMatrix3fv(loc, 1, GL_FALSE, (GLfloat*)&mv_normalMatrix);
+		}
 	}
 }
 
-void GLShader::SetAlphaProperties(const ushort flags, const float threshold, const float value) {
+void GLShader::SetAlphaProperties(const uint16_t flags, const float threshold, const float value) {
 	static const GLenum blendMap[16] = {
 		GL_ONE, GL_ZERO, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR,
 		GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
@@ -158,13 +172,17 @@ void GLShader::SetAlphaProperties(const ushort flags, const float threshold, con
 	//Always GL_GREATER right now
 	//GLenum alphaFunc = testMap[(flags >> 10) & 0x7];
 
-	if (alphaBlend)
-		glBlendFunc(alphaSrc, alphaDst);
-	else
-		glDisable(GL_BLEND);
+	glDisable(GL_BLEND);
 
-	if (!alphaBlend && value < 1.0f)
+	if (alphaBlend) {
 		glEnable(GL_BLEND);
+		glBlendFunc(alphaSrc, alphaDst);
+	}
+
+	if (!alphaBlend && value < 1.0f) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	}
 
 	if (alphaTest)
 		SetAlphaThreshold(threshold);

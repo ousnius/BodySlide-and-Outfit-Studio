@@ -20,15 +20,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PresetSaveDialog.h"
 #include "GroupManager.h"
 #include "EditUV.h"
+#include "../ui/wxBrushSettingsPopup.h"
 #include "../components/SliderPresets.h"
 #include "../components/SliderGroup.h"
 #include "../files/TriFile.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/ConfigDialogUtil.h"
 
 #include <wx/debugrpt.h>
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
 #include <sstream>
+
+using namespace nifly;
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
@@ -37,6 +41,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CLOSE(OutfitStudioFrame::OnClose)
 	EVT_MENU(XRCID("fileExit"), OutfitStudioFrame::OnExit)
+
+	EVT_MENU(wxID_ANY, OutfitStudioFrame::OnMenuItem)
 	EVT_MENU(XRCID("packProjects"), OutfitStudioFrame::OnPackProjects)
 	EVT_MENU(XRCID("fileSettings"), OutfitStudioFrame::OnSettings)
 	EVT_MENU(XRCID("btnNewProject"), OutfitStudioFrame::OnNewProject)
@@ -47,12 +53,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("fileSave"), OutfitStudioFrame::OnSaveSliderSet)
 	EVT_MENU(XRCID("fileSaveAs"), OutfitStudioFrame::OnSaveSliderSetAs)
 	EVT_MENU(XRCID("fileUnload"), OutfitStudioFrame::OnUnloadProject)
-
-	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("brushPane"), OutfitStudioFrame::OnBrushPane)
-	EVT_COMMAND_SCROLL(XRCID("brushSize"), OutfitStudioFrame::OnBrushSettingsSlider)
-	EVT_COMMAND_SCROLL(XRCID("brushStr"), OutfitStudioFrame::OnBrushSettingsSlider)
-	EVT_COMMAND_SCROLL(XRCID("brushFocus"), OutfitStudioFrame::OnBrushSettingsSlider)
-	EVT_COMMAND_SCROLL(XRCID("brushSpace"), OutfitStudioFrame::OnBrushSettingsSlider)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("masksPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_CHOICE(XRCID("cMaskName"), OutfitStudioFrame::OnSelectMask)
@@ -76,16 +76,19 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TEXT(XRCID("tzPoseText"), OutfitStudioFrame::OnTZPoseTextChanged)
 	EVT_BUTTON(XRCID("resetBonePose"), OutfitStudioFrame::OnResetBonePose)
 	EVT_BUTTON(XRCID("resetAllPose"), OutfitStudioFrame::OnResetAllPose)
+	EVT_BUTTON(XRCID("poseToMesh"), OutfitStudioFrame::OnPoseToMesh)
 	EVT_CHECKBOX(XRCID("cbPose"), OutfitStudioFrame::OnPoseCheckBox)
+
+	EVT_CHOICE(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
+	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
+	EVT_BUTTON(XRCID("saveAsPose"), OutfitStudioFrame::OnSaveAsPose)
+	EVT_BUTTON(XRCID("deletePose"), OutfitStudioFrame::OnDeletePose)
 	
-	// The following line with "EVT_COMMAND_SCROLL(wxID_ANY" apparently
-	// suppresses all following lines with EVT_COMMAND_SCROLL.
-	EVT_COMMAND_SCROLL(wxID_ANY, OutfitStudioFrame::OnSlider)
-	EVT_BUTTON(wxID_ANY, OutfitStudioFrame::OnClickSliderButton)
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
+	EVT_TEXT_ENTER(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
+	EVT_TEXT(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
 	EVT_CHECKBOX(XRCID("cbFixedWeight"), OutfitStudioFrame::OnFixedWeight)
 	EVT_CHECKBOX(XRCID("cbNormalizeWeights"), OutfitStudioFrame::OnCBNormalizeWeights)
-	EVT_CHECKBOX(wxID_ANY, OutfitStudioFrame::OnCheckBox)
 
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudioFrame::OnSetBaseShape)
 	EVT_MENU(XRCID("makeConvRef"), OutfitStudioFrame::OnMakeConvRef)
@@ -114,11 +117,13 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("sliderSavePreset"), OutfitStudioFrame::OnSavePreset)
 	EVT_MENU(XRCID("sliderConform"), OutfitStudioFrame::OnSliderConform)
 	EVT_MENU(XRCID("sliderConformAll"), OutfitStudioFrame::OnSliderConformAll)
+	EVT_MENU(XRCID("sliderImportNIF"), OutfitStudioFrame::OnSliderImportNIF)
 	EVT_MENU(XRCID("sliderImportBSD"), OutfitStudioFrame::OnSliderImportBSD)
 	EVT_MENU(XRCID("sliderImportOBJ"), OutfitStudioFrame::OnSliderImportOBJ)
 	EVT_MENU(XRCID("sliderImportFBX"), OutfitStudioFrame::OnSliderImportFBX)
 	EVT_MENU(XRCID("sliderImportOSD"), OutfitStudioFrame::OnSliderImportOSD)
 	EVT_MENU(XRCID("sliderImportTRI"), OutfitStudioFrame::OnSliderImportTRI)
+	EVT_MENU(XRCID("sliderExportNIF"), OutfitStudioFrame::OnSliderExportNIF)
 	EVT_MENU(XRCID("sliderExportBSD"), OutfitStudioFrame::OnSliderExportBSD)
 	EVT_MENU(XRCID("sliderExportOBJ"), OutfitStudioFrame::OnSliderExportOBJ)
 	EVT_MENU(XRCID("sliderExportOSD"), OutfitStudioFrame::OnSliderExportOSD)
@@ -160,6 +165,11 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnViewLeft"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewRight"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewPerspective"), OutfitStudioFrame::OnTogglePerspective)
+	EVT_MENU(XRCID("btnToggleRotationCenter"), OutfitStudioFrame::OnToggleRotationCenter)
+
+	EVT_MENU(XRCID("btnShowNodes"), OutfitStudioFrame::OnShowNodes)
+	EVT_MENU(XRCID("btnShowBones"), OutfitStudioFrame::OnShowBones)
+	EVT_MENU(XRCID("btnShowFloor"), OutfitStudioFrame::OnShowFloor)
 	
 	EVT_MENU(XRCID("btnIncreaseSize"), OutfitStudioFrame::OnIncBrush)
 	EVT_MENU(XRCID("btnDecreaseSize"), OutfitStudioFrame::OnDecBrush)
@@ -178,6 +188,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnShowWireframe"), OutfitStudioFrame::OnShowWireframe)
 	EVT_MENU(XRCID("btnEnableLighting"), OutfitStudioFrame::OnEnableLighting)
 	EVT_MENU(XRCID("btnEnableTextures"), OutfitStudioFrame::OnEnableTextures)
+	EVT_MENU(XRCID("btnEnableVertexColors"), OutfitStudioFrame::OnEnableVertexColors)
 
 	EVT_MENU(XRCID("uvEdit"), OutfitStudioFrame::OnEditUV)
 	EVT_MENU(XRCID("uvInvertX"), OutfitStudioFrame::OnInvertUV)
@@ -205,6 +216,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudioFrame::OnCopySelectedWeight)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
+	EVT_MENU(XRCID("maskBoneWeightedVerts"), OutfitStudioFrame::OnMaskBoneWeighted)
 	EVT_MENU(XRCID("resetTransforms"), OutfitStudioFrame::OnResetTransforms)
 	EVT_MENU(XRCID("deleteUnreferencedNodes"), OutfitStudioFrame::OnDeleteUnreferencedNodes)
 	EVT_MENU(XRCID("removeSkinning"), OutfitStudioFrame::OnRemoveSkinning)
@@ -221,6 +233,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TREE_BEGIN_DRAG(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeDrag)
 	EVT_TREE_END_DRAG(XRCID("outfitShapes"), OutfitStudioFrame::OnShapeDrop)
 
+	EVT_TEXT_ENTER(XRCID("bonesFilter"), OutfitStudioFrame::OnBonesFilterChanged)
+	EVT_TEXT(XRCID("bonesFilter"), OutfitStudioFrame::OnBonesFilterChanged)
 	EVT_TREE_STATE_IMAGE_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneStateToggle)
 	EVT_TREE_SEL_CHANGED(XRCID("outfitBones"), OutfitStudioFrame::OnBoneSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneContext)
@@ -237,6 +251,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CHOICE(XRCID("segmentType"), OutfitStudioFrame::OnSegmentTypeChanged)
 	EVT_BUTTON(XRCID("segmentApply"), OutfitStudioFrame::OnSegmentApply)
 	EVT_BUTTON(XRCID("segmentReset"), OutfitStudioFrame::OnSegmentReset)
+	EVT_BUTTON(XRCID("segmentSSFEdit"), OutfitStudioFrame::OnSegmentEditSSF)
 
 	EVT_TREE_SEL_CHANGED(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionContext)
@@ -246,7 +261,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CHOICE(XRCID("partitionType"), OutfitStudioFrame::OnPartitionTypeChanged)
 	EVT_BUTTON(XRCID("partitionApply"), OutfitStudioFrame::OnPartitionApply)
 	EVT_BUTTON(XRCID("partitionReset"), OutfitStudioFrame::OnPartitionReset)
-	
+
+	EVT_SLIDER(XRCID("boneScale"), OutfitStudioFrame::OnBoneScaleSlider)
+
 	EVT_BUTTON(XRCID("meshTabButton"), OutfitStudioFrame::OnTabButtonClick)
 	EVT_BUTTON(XRCID("boneTabButton"), OutfitStudioFrame::OnTabButtonClick)
 	EVT_BUTTON(XRCID("segmentTabButton"), OutfitStudioFrame::OnTabButtonClick)
@@ -255,6 +272,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("lightsTabButton"), OutfitStudioFrame::OnTabButtonClick)
 
 	EVT_COLOURPICKER_CHANGED(XRCID("cpBrushColor"), OutfitStudioFrame::OnBrushColorChanged)
+	EVT_SLIDER(XRCID("cpClampMaxValueSlider"), OutfitStudioFrame::OnColorClampMaxValueSlider)
+	EVT_TEXT_ENTER(XRCID("cpClampMaxValueTxt"), OutfitStudioFrame::OnColorClampMaxValueChanged)
+	EVT_TEXT(XRCID("cpClampMaxValueTxt"), OutfitStudioFrame::OnColorClampMaxValueChanged)
 	EVT_BUTTON(XRCID("btnSwapBrush"), OutfitStudioFrame::OnSwapBrush)
 
 	EVT_SLIDER(XRCID("lightAmbientSlider"), OutfitStudioFrame::OnUpdateLights)
@@ -270,7 +290,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 
 	EVT_SPLITTER_SASH_POS_CHANGED(XRCID("splitter"), OutfitStudioFrame::OnSashPosChanged)
 	EVT_SPLITTER_SASH_POS_CHANGED(XRCID("splitterRight"), OutfitStudioFrame::OnSashPosChanged)
-	EVT_MOVE_END(OutfitStudioFrame::OnMoveWindow)
+	EVT_MOVE_START(OutfitStudioFrame::OnMoveWindowStart)
+	EVT_MOVE_END(OutfitStudioFrame::OnMoveWindowEnd)
 	EVT_SIZE(OutfitStudioFrame::OnSetSize)
 wxEND_EVENT_TABLE()
 
@@ -280,7 +301,7 @@ wxIMPLEMENT_APP(OutfitStudio);
 ConfigurationManager Config;
 ConfigurationManager OutfitStudioConfig;
 
-const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR" };
+const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout 76", "Oblivion" };
 const wxLanguage SupportedLangs[] = {
 	wxLANGUAGE_ENGLISH, wxLANGUAGE_AFRIKAANS, wxLANGUAGE_ARABIC, wxLANGUAGE_CATALAN, wxLANGUAGE_CZECH, wxLANGUAGE_DANISH, wxLANGUAGE_GERMAN,
 	wxLANGUAGE_GREEK, wxLANGUAGE_SPANISH, wxLANGUAGE_BASQUE, wxLANGUAGE_FINNISH, wxLANGUAGE_FRENCH, wxLANGUAGE_HINDI,
@@ -289,6 +310,12 @@ const wxLanguage SupportedLangs[] = {
 	wxLANGUAGE_PORTUGUESE, wxLANGUAGE_ROMANIAN, wxLANGUAGE_RUSSIAN, wxLANGUAGE_SLOVAK, wxLANGUAGE_SLOVENIAN, wxLANGUAGE_ALBANIAN,
 	wxLANGUAGE_SWEDISH, wxLANGUAGE_TAMIL, wxLANGUAGE_TURKISH, wxLANGUAGE_UKRAINIAN, wxLANGUAGE_VIETNAMESE, wxLANGUAGE_CHINESE
 };
+
+std::string GetProjectPath() {
+	std::string res = Config["ProjectPath"];
+	return res.empty() ? Config["AppDir"] : res;
+}
+
 
 OutfitStudio::~OutfitStudio() {
 	delete locale;
@@ -319,7 +346,9 @@ bool OutfitStudio::OnInit() {
 	wxHandleFatalExceptions();
 #endif
 
-	wxSetEnv("AppDir", wxString::FromUTF8(dataDir));
+	wxString appDirUri = wxString::FromUTF8(dataDir);
+	appDirUri.Replace("#", "%23");
+	wxSetEnv("AppDir", appDirUri);
 
 	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->SetFlags(wxXRC_USE_LOCALE | wxXRC_USE_ENVVARS);
@@ -342,6 +371,8 @@ bool OutfitStudio::OnInit() {
 	case SKYRIMSE: gameName.Append("Skyrim Special Edition"); break;
 	case FO4VR: gameName.Append("Fallout 4 VR"); break;
 	case SKYRIMVR: gameName.Append("Skyrim VR"); break;
+	case FO76: gameName.Append("Fallout 76"); break;
+	case OB: gameName.Append("Oblivion"); break;
 	default: gameName.Append("Invalid");
 	}
 	wxLogMessage(gameName);
@@ -368,19 +399,63 @@ bool OutfitStudio::OnInit() {
 			wxMessageBox(_("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct."), _("Warning"), wxICON_WARNING);
 	}
 
-	if (!cmdFiles.IsEmpty()) {
-		wxFileName loadFile(cmdFiles.Item(0));
+	if (!Config["ProjectPath"].empty()) {
+		bool dirWritable = wxFileName::IsDirWritable(Config["ProjectPath"]);
+		bool dirReadable = wxFileName::IsDirReadable(Config["ProjectPath"]);
+		if (!dirWritable || !dirReadable)
+			wxMessageBox(_("No read/write permission for project path!\n\nPlease launch the program with admin elevation and make sure the project path in the settings is correct."), _("Warning"), wxICON_WARNING);
+	}
+
+	for (auto &file : cmdFiles) {
+		wxFileName loadFile(file);
 		if (loadFile.FileExists()) {
-			std::string fileName{loadFile.GetFullPath().ToUTF8()};
+			std::string fileName{ loadFile.GetFullPath().ToUTF8() };
 			wxString fileExt = loadFile.GetExt().MakeLower();
 			if (fileExt == "osp") {
-				std::string projectName{cmdProject.ToUTF8()};
+				std::string projectName{ cmdProject.ToUTF8() };
 				frame->LoadProject(fileName, projectName);
+				break;
 			}
-			else if (fileExt == "nif")
-				frame->LoadNIF(fileName);
+			else if (fileExt == "nif") {
+				frame->StartProgress(_("Adding NIF file..."));
+				frame->UpdateProgress(1, _("Adding NIF file..."));
+				frame->project->ImportNIF(fileName, false);
+				frame->project->SetTextures();
+
+				frame->UpdateProgress(60, _("Refreshing GUI..."));
+				frame->RefreshGUIFromProj();
+
+				frame->UpdateProgress(100, _("Finished"));
+				frame->EndProgress();
+			}
+			else if (fileExt == "obj") {
+				frame->StartProgress("Adding OBJ file...");
+				frame->UpdateProgress(1, _("Adding OBJ file..."));
+				frame->project->ImportOBJ(fileName);
+				frame->project->SetTextures();
+
+				frame->UpdateProgress(60, _("Refreshing GUI..."));
+				frame->RefreshGUIFromProj();
+
+				frame->UpdateProgress(100, _("Finished"));
+				frame->EndProgress();
+			}
+			else if (fileExt == "fbx") {
+				frame->StartProgress(_("Adding FBX file..."));
+				frame->UpdateProgress(1, _("Adding FBX file..."));
+				frame->project->ImportFBX(fileName);
+				frame->project->SetTextures();
+
+				frame->UpdateProgress(60, _("Refreshing GUI..."));
+				frame->RefreshGUIFromProj();
+
+				frame->UpdateProgress(100, _("Finished"));
+				frame->EndProgress();
+			}
 		}
 	}
+
+	Bind(wxEVT_CHAR_HOOK, &OutfitStudio::CharHook, this);
 
 	wxLogMessage("Outfit Studio initialized.");
 	return true;
@@ -394,7 +469,7 @@ void OutfitStudio::OnInitCmdLine(wxCmdLineParser& parser) {
 bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& parser) {
 	parser.Found("proj", &cmdProject);
 
-	for (int i = 0; i < parser.GetParamCount(); i++)
+	for (size_t i = 0; i < parser.GetParamCount(); i++)
 		cmdFiles.Add(parser.GetParam(i));
 
 	return true;
@@ -451,6 +526,39 @@ void OutfitStudio::OnFatalException() {
 	report.Process();
 }
 
+void OutfitStudio::CharHook(wxKeyEvent& event) {
+	wxWindow* w = (wxWindow*)event.GetEventObject();
+	if (!w) {
+		event.Skip();
+		return;
+	}
+
+	if (!frame->IsDescendant(w)) {
+		event.Skip();
+		return;
+	}
+
+#ifdef _WINDOWS
+	int keyCode = event.GetKeyCode();
+	bool letterHack = (keyCode > 0x40 && keyCode < 0x5B) || (keyCode > 0x60 && keyCode < 0x7B);
+	if (letterHack && !event.HasModifiers()) {
+		if ((!event.ShiftDown() && !wxGetKeyState(wxKeyCode::WXK_CAPITAL)) ||
+			(event.ShiftDown() && wxGetKeyState(wxKeyCode::WXK_CAPITAL))) {
+			keyCode += 32;
+		}
+
+		auto searchCtrl = dynamic_cast<wxTextCtrl*>(w);
+		if (searchCtrl) {
+			HWND hwndEdit = searchCtrl->GetHandle();
+			::SendMessage(hwndEdit, WM_CHAR, keyCode, event.GetRawKeyFlags());
+			return;
+		}
+	}
+#endif
+
+	event.Skip();
+}
+
 bool OutfitStudio::SetDefaultConfig() {
 	int currentTarget = -1;
 	Config.SetDefaultValue("TargetGame", currentTarget);
@@ -461,6 +569,7 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultBoolValue("UseSystemLanguage", false);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
+	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", true);
 	Config.SetDefaultValue("Lights/Ambient", 20);
 	Config.SetDefaultValue("Lights/Frontal", 20);
 	Config.SetDefaultValue("Lights/Directional0", 60);
@@ -482,6 +591,8 @@ bool OutfitStudio::SetDefaultConfig() {
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashpos", 768);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashrightpos", 200);
 
+	Config.SetDefaultValue("GameRegKey/Oblivion", "Software\\Bethesda Softworks\\Oblivion");
+	Config.SetDefaultValue("GameRegVal/Oblivion", "Installed Path");
 	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
 	Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");
 	Config.SetDefaultValue("GameRegKey/FalloutNewVegas", "Software\\Bethesda Softworks\\FalloutNV");
@@ -536,6 +647,10 @@ bool OutfitStudio::SetDefaultConfig() {
 		wxLogMessage("Output data path in config: %s", Config["OutputDataPath"]);
 	}
 
+	if (!Config["ProjectPath"].empty()) {
+		wxLogMessage("Project path in config: %s", Config["ProjectPath"]);
+	}
+
 	return true;
 }
 
@@ -552,26 +667,32 @@ bool OutfitStudio::ShowSetup() {
 		setup->SetSize(wxSize(700, -1));
 		setup->CenterOnScreen();
 
+		wxButton* btOblivion = XRCCTRL(*setup, "btOblivion", wxButton);
+		btOblivion->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)OB); });
+
 		wxButton* btFallout3 = XRCCTRL(*setup, "btFallout3", wxButton);
-		btFallout3->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(0); });
+		btFallout3->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FO3); });
 
 		wxButton* btFalloutNV = XRCCTRL(*setup, "btFalloutNV", wxButton);
-		btFalloutNV->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(1); });
+		btFalloutNV->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FONV); });
 
 		wxButton* btSkyrim = XRCCTRL(*setup, "btSkyrim", wxButton);
-		btSkyrim->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(2); });
+		btSkyrim->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIM); });
 
 		wxButton* btFallout4 = XRCCTRL(*setup, "btFallout4", wxButton);
-		btFallout4->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(3); });
+		btFallout4->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FO4); });
 
 		wxButton* btSkyrimSE = XRCCTRL(*setup, "btSkyrimSE", wxButton);
-		btSkyrimSE->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(4); });
+		btSkyrimSE->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIMSE); });
 
 		wxButton* btFallout4VR = XRCCTRL(*setup, "btFallout4VR", wxButton);
-		btFallout4VR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(5); });
+		btFallout4VR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)FO4VR); });
 
 		wxButton* btSkyrimVR = XRCCTRL(*setup, "btSkyrimVR", wxButton);
-		btSkyrimVR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(6); });
+		btSkyrimVR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIMVR); });
+
+		wxDirPickerCtrl* dirOblivion = XRCCTRL(*setup, "dirOblivion", wxDirPickerCtrl);
+		dirOblivion->Bind(wxEVT_DIRPICKER_CHANGED, [&dirOblivion, &btOblivion](wxFileDirPickerEvent&) { btOblivion->Enable(dirOblivion->GetDirName().DirExists()); });
 
 		wxDirPickerCtrl* dirFallout3 = XRCCTRL(*setup, "dirFallout3", wxDirPickerCtrl);
 		dirFallout3->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout3, &btFallout3](wxFileDirPickerEvent&) { btFallout3->Enable(dirFallout3->GetDirName().DirExists()); });
@@ -594,7 +715,13 @@ bool OutfitStudio::ShowSetup() {
 		wxDirPickerCtrl* dirSkyrimVR = XRCCTRL(*setup, "dirSkyrimVR", wxDirPickerCtrl);
 		dirSkyrimVR->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrimVR, &btSkyrimVR](wxFileDirPickerEvent&) { btSkyrimVR->Enable(dirSkyrimVR->GetDirName().DirExists()); });
 
-		wxFileName dir = GetGameDataPath(FO3);
+		wxFileName dir = GetGameDataPath(OB);
+		if (dir.DirExists()) {
+			dirOblivion->SetDirName(dir);
+			btOblivion->Enable();
+		}
+
+		dir = GetGameDataPath(FO3);
 		if (dir.DirExists()) {
 			dirFallout3->SetDirName(dir);
 			btFallout3->Enable();
@@ -642,6 +769,11 @@ bool OutfitStudio::ShowSetup() {
 
 			wxFileName dataDir;
 			switch (targ) {
+			case OB:
+				dataDir = dirOblivion->GetDirName();
+				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_ob.nif");
+				Config.SetValue("Anim/SkeletonRootName", "Bip01");
+				break;
 			case FO3:
 				dataDir = dirFallout3->GetDirName();
 				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo3nv.nif");
@@ -818,30 +950,55 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	this->DragAcceptFiles(true);
 
-	xrc->LoadMenuBar(this, "menuBar");
+	menuBar = xrc->LoadMenuBar(this, "menuBar");
+
+	std::vector<std::string> projectHistoryFiles;
+	OutfitStudioConfig.GetValueAttributeArray("ProjectHistory", "Project", "file", projectHistoryFiles);
+	std::vector<std::string> projectHistoryNames;
+	OutfitStudioConfig.GetValueAttributeArray("ProjectHistory", "Project", "name", projectHistoryNames);
+
+	if (projectHistoryFiles.size() == projectHistoryNames.size())
+		for (size_t i = projectHistoryFiles.size(); i > 0; --i)
+			AddProjectHistory(projectHistoryFiles[i - 1], projectHistoryNames[i - 1]);
 
 	toolBarH = (wxToolBar*)FindWindowByName("toolBarH");
 	toolBarV = (wxToolBar*)FindWindowByName("toolBarV");
 
 	if (toolBarH) {
-		wxSlider* fovSlider = (wxSlider*)toolBarH->FindWindowByName("fovSlider");
+		brushSettings = reinterpret_cast<wxButton*>(toolBarH->FindWindowByName("brushSettings"));
+		if (brushSettings)
+			brushSettings->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnBrushSettings, this);
+
+		fovSlider = reinterpret_cast<wxSlider*>(toolBarH->FindWindowByName("fovSlider"));
 		if (fovSlider)
 			fovSlider->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnFieldOfViewSlider, this);
 	}
 
-	auto meshTab = (wxStateButton*)FindWindowByName("meshTabButton");
-	if (meshTab)
-		meshTab->SetCheck();
+	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
+	bmpEditSlider = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall.png", wxBITMAP_TYPE_ANY);
+	bmpSliderSettings = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/Settings.png", wxBITMAP_TYPE_ANY);
 
-	if (wxGetApp().targetGame != FO4 && wxGetApp().targetGame != FO4VR) {
-		auto segmentTab = (wxStateButton*)FindWindowByName("segmentTabButton");
-		if (segmentTab)
-			segmentTab->Show(false);
+	meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
+	boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+	colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
+	segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
+	partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
+	lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
+	masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
+	posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
+
+	if (meshTabButton) {
+		meshTabButton->SetCheck();
+		currentTabButton = meshTabButton;
+	}
+
+	if (wxGetApp().targetGame != FO4 && wxGetApp().targetGame != FO4VR && wxGetApp().targetGame != FO76) {
+		if (segmentTabButton)
+			segmentTabButton->Show(false);
 	}
 	else {
-		auto partitionTab = (wxStateButton*)FindWindowByName("partitionTabButton");
-		if (partitionTab)
-			partitionTab->Show(false);
+		if (partitionTabButton)
+			partitionTabButton->Show(false);
 	}
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
@@ -942,15 +1099,28 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	xrc->AttachUnknownControl("mGLView", glView, this);
 
+	sliderFilter = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), wxTE_PROCESS_ENTER);
+	sliderFilter->ShowSearchButton(true);
+	sliderFilter->ShowCancelButton(true);
+	sliderFilter->SetDescriptiveText("Slider Filter");
+	sliderFilter->SetToolTip("Filter slider list by name");
+
+	bonesFilter = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(-1, -1), wxTE_PROCESS_ENTER);
+	bonesFilter->ShowSearchButton(true);
+	bonesFilter->ShowCancelButton(true);
+	bonesFilter->SetDescriptiveText("Filter");
+	bonesFilter->SetToolTip("Filter bone list by name");
+
+	xrc->AttachUnknownControl("sliderFilter", sliderFilter, this);
+	xrc->AttachUnknownControl("bonesFilter", bonesFilter, this);
+	bonesFilter->GetParent()->Hide();
+
 	project = new OutfitProject(this);	// Create empty project
 	CreateSetSliders();
 
 	bEditSlider = false;
 	activeItem = nullptr;
 	selectedItems.clear();
-
-	previousMirror = true;
-	previewScale = Vector3(1.0f, 1.0f, 1.0f);
 
 	SetSize(size);
 	SetPosition(pos);
@@ -972,6 +1142,10 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	SetDropTarget(new DnDFile(this));
 
+	// Create initial slider pool
+	const size_t minSliderPoolSize = 100;
+	sliderPool.CreatePool(minSliderPoolSize, sliderScroll, *bmpEditSlider, *bmpSliderSettings);
+
 	wxLogMessage("Outfit Studio frame loaded.");
 }
 
@@ -980,16 +1154,38 @@ void OutfitStudioFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
+	if (!CheckPendingChanges())
+		return;
+
+	if (editUV)
+		editUV->Close();
+
 	if (project) {
 		delete project;
 		project = nullptr;
 	}
 
-	for (auto &sd : sliderDisplays)
-		delete sd.second;
+	sliderPool.Clear();
 
 	if (glView)
 		delete glView;
+
+	if (bmpEditSlider)
+		delete bmpEditSlider;
+	if (bmpSliderSettings)
+		delete bmpSliderSettings;
+
+	OutfitStudioConfig.ClearValueArray("ProjectHistory", "Project");
+
+	std::vector<std::map<std::string, std::string>> phArrayEntries;
+	for (auto &ph : projectHistory) {
+		std::map<std::string, std::string> attributeValues;
+		attributeValues["name"] = ph.projectName;
+		attributeValues["file"] = ph.fileName;
+		phArrayEntries.push_back(attributeValues);
+	}
+
+	OutfitStudioConfig.AppendValueArray("ProjectHistory", "Project", phArrayEntries);
 
 	int ret = OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
 	if (ret)
@@ -1031,12 +1227,41 @@ bool OutfitStudioFrame::CopyStreamData(wxInputStream& inputStream, wxOutputStrea
 	return true;
 }
 
+void OutfitStudioFrame::OnMenuItem(wxCommandEvent& event) {
+	int id = event.GetId();
+	if (id >= 1000 && id < 2000) {
+		// Load project history entry
+		if (projectHistory.size() > id - 1000) {
+			if (!CheckPendingChanges())
+				return;
+
+			auto projectHistoryEntry = projectHistory[id - 1000];
+			LoadProject(projectHistoryEntry.fileName, projectHistoryEntry.projectName);
+		}
+	}
+	else
+		event.Skip();
+}
+
 void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
-	wxDialog* packProjects = wxXmlResource::Get()->LoadDialog(this, "dlgPackProjects");
+	CloseBrushSettings();
+
+	wxXmlResource* xrc = wxXmlResource::Get();
+	wxDialog* packProjects = xrc->LoadDialog(this, "dlgPackProjects");
 	if (packProjects) {
+		auto projectFilter = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, -1), wxTE_PROCESS_ENTER);
+		projectFilter->ShowSearchButton(true);
+		projectFilter->SetDescriptiveText("Project Filter");
+		projectFilter->SetToolTip("Filter project list by name");
+
+		xrc->AttachUnknownControl("projectFilter", projectFilter, packProjects);
+
 		packProjects->SetSize(wxSize(550, 300));
 		packProjects->SetMinSize(wxSize(400, 200));
 		packProjects->CenterOnParent();
+
+		std::map<std::string, SliderSet> projectSources;
+		std::set<std::string> selectedProjects;
 
 		auto projectList = XRCCTRL(*packProjects, "projectList", wxCheckListBox);
 		projectList->Bind(wxEVT_RIGHT_UP, [&](wxMouseEvent& WXUNUSED(event)) {
@@ -1044,16 +1269,29 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 			if (menu) {
 				menu->Bind(wxEVT_MENU, [&](wxCommandEvent& event) {
 					if (event.GetId() == XRCID("projectListNone")) {
-						for (int i = 0; i < projectList->GetCount(); i++)
+						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
+							std::string name = projectList->GetString(i).ToUTF8();
 							projectList->Check(i, false);
+							selectedProjects.erase(name);
+						}
 					}
 					else if (event.GetId() == XRCID("projectListAll")) {
-						for (int i = 0; i < projectList->GetCount(); i++)
+						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
+							std::string name = projectList->GetString(i).ToUTF8();
 							projectList->Check(i);
+							selectedProjects.insert(name);
+						}
 					}
 					else if (event.GetId() == XRCID("projectListInvert")) {
-						for (int i = 0; i < projectList->GetCount(); i++)
-							projectList->Check(i, !projectList->IsChecked(i));
+						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
+							std::string name = projectList->GetString(i).ToUTF8();
+
+							bool check = !projectList->IsChecked(i);
+							projectList->Check(i, check);
+
+							if (check)
+								selectedProjects.insert(name);
+						}
 					}
 				});
 
@@ -1062,11 +1300,36 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 			}
 		});
 
-		std::map<std::string, SliderSet> projectSources;
+		projectList->Bind(wxEVT_CHECKLISTBOX, [&](wxCommandEvent& event) {
+			std::string name = event.GetString().ToUTF8();
+			int item = event.GetInt();
+			if (projectList->IsChecked(item))
+				selectedProjects.insert(name);
+			else
+				selectedProjects.erase(name);
+		});
+
+		projectFilter->Bind(wxEVT_TEXT, [&](wxCommandEvent& event) {
+			wxString filterStr = event.GetString();
+			filterStr.MakeLower();
+
+			projectList->Clear();
+
+			// Add outfits that are no members to list
+			for (auto &project : projectSources) {
+				// Filter outfit by name
+				wxString projectStr = wxString::FromUTF8(project.first);
+				if (projectStr.Lower().Contains(filterStr)) {
+					int item = projectList->Append(projectStr);
+					if (selectedProjects.find(project.first) != selectedProjects.end())
+						projectList->Check(item);
+				}
+			}
+		});
 
 		wxArrayString files;
-		wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "/SliderSets", &files, "*.osp");
-		wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "/SliderSets", &files, "*.xml");
+		wxDir::GetAllFiles(wxString::FromUTF8(GetProjectPath()) + "/SliderSets", &files, "*.osp");
+		wxDir::GetAllFiles(wxString::FromUTF8(GetProjectPath()) + "/SliderSets", &files, "*.xml");
 
 		for (auto &file : files) {
 			std::string fileName{file.ToUTF8()};
@@ -1112,7 +1375,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 		});
 
 		auto groupFile = XRCCTRL(*packProjects, "groupFile", wxFilePickerCtrl);
-		groupFile->SetInitialDirectory(wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups");
+		groupFile->SetInitialDirectory(wxString::FromUTF8(GetProjectPath()) + "/SliderGroups");
 
 		auto mergedFileName = XRCCTRL(*packProjects, "mergedFileName", wxTextCtrl);
 		auto packFolder = XRCCTRL(*packProjects, "packFolder", wxButton);
@@ -1138,11 +1401,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 			SliderSetFile projectFile;
 			projectFile.New(mergedFilePath);
 
-			wxArrayInt checkedItems;
-			projectList->GetCheckedItems(checkedItems);
-
-			for (auto &item : checkedItems) {
-				std::string setName{projectList->GetString(item).ToUTF8()};
+			for (auto &setName : selectedProjects) {
 				if (projectSources.find(setName) == projectSources.end())
 					continue;
 
@@ -1150,7 +1409,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				projectFile.UpdateSet(set);
 
 				// Add input file to folder
-				wxString inputFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + set.GetInputFileName());
+				wxString inputFilePath = wxString::FromUTF8(GetProjectPath() + sep + "ShapeData" + sep + set.GetInputFileName());
 				wxFileInputStream inputFileStream(inputFilePath);
 				if (!inputFileStream.IsOk()) {
 					wxLogError("Failed to open input file '%s'!", inputFilePath);
@@ -1172,7 +1431,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 				std::set<std::string> dataFiles;
 
-				for (int i = 0; i < set.size(); i++) {
+				for (size_t i = 0; i < set.size(); i++) {
 					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
 						std::string target = set.ShapeToTarget(it->first);
 						std::string targetDataName = set[i].TargetDataName(target);
@@ -1198,7 +1457,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 				// Add data files to folder
 				for (auto &df : dataFiles) {
-					wxString dataFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + df);
+					wxString dataFilePath = wxString::FromUTF8(GetProjectPath() + sep + "ShapeData" + sep + df);
 					wxFileInputStream dataFileStream(dataFilePath);
 					if (!dataFileStream.IsOk()) {
 						wxLogError("Failed to open input file '%s'!", dataFilePath);
@@ -1293,11 +1552,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 			wxFFileOutputStream out(fileName);
 			wxZipOutputStream zip(out);
 
-			wxArrayInt checkedItems;
-			projectList->GetCheckedItems(checkedItems);
-
-			for (auto &item : checkedItems) {
-				std::string setName{projectList->GetString(item).ToUTF8()};
+			for (auto &setName : selectedProjects) {
 				if (projectSources.find(setName) == projectSources.end())
 					continue;
 
@@ -1305,7 +1560,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				projectFile.UpdateSet(set);
 
 				// Add input file to archive
-				wxString inputFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + set.GetInputFileName());
+				wxString inputFilePath = wxString::FromUTF8(GetProjectPath() + sep + "ShapeData" + sep + set.GetInputFileName());
 				wxFileInputStream inputFileStream(inputFilePath);
 				if (!inputFileStream.IsOk()) {
 					wxLogError("Failed to open input file '%s'!", inputFilePath);
@@ -1331,7 +1586,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 				std::set<std::string> dataFiles;
 
-				for (int i = 0; i < set.size(); i++) {
+				for (size_t i = 0; i < set.size(); i++) {
 					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
 						std::string target = set.ShapeToTarget(it->first);
 						std::string targetDataName = set[i].TargetDataName(target);
@@ -1357,7 +1612,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 				// Add data files to archive
 				for (auto &df : dataFiles) {
-					wxString dataFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + df);
+					wxString dataFilePath = wxString::FromUTF8(GetProjectPath() + sep + "ShapeData" + sep + df);
 					wxFileInputStream dataFileStream(dataFilePath);
 					if (!dataFileStream.IsOk()) {
 						wxLogError("Failed to open data file '%s'!", dataFilePath);
@@ -1458,6 +1713,10 @@ void OutfitStudioFrame::OnChooseTargetGame(wxCommandEvent& event) {
 
 	TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
 	switch (targ) {
+	case OB:
+		fpSkeletonFile->SetPath("res/skeleton_ob.nif");
+		choiceSkeletonRoot->SetStringSelection("Bip01");
+		break;
 	case FO3:
 	case FONV:
 		fpSkeletonFile->SetPath("res/skeleton_fo3nv.nif");
@@ -1474,6 +1733,7 @@ void OutfitStudioFrame::OnChooseTargetGame(wxCommandEvent& event) {
 		break;
 	case FO4:
 	case FO4VR:
+	case FO76:
 	default:
 		fpSkeletonFile->SetPath("res/skeleton_fo4.nif");
 		choiceSkeletonRoot->SetStringSelection("Root");
@@ -1507,7 +1767,7 @@ void OutfitStudioFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxSt
 	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
 	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
 	for (auto& file : files) {
-		file = file.AfterLast('/').AfterLast('\\');;
+		file = file.AfterLast('/').AfterLast('\\');
 		dataFileList->Insert(file, dataFileList->GetCount());
 
 		if (fsearch.find(file.Lower()) == fsearch.end())
@@ -1516,6 +1776,9 @@ void OutfitStudioFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxSt
 }
 
 void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
+
+	CloseBrushSettings();
+
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
 		settings->SetSize(wxSize(525, -1));
@@ -1538,14 +1801,24 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxString outputPath = wxString::FromUTF8(Config["OutputDataPath"]);
 		dpOutputPath->SetPath(outputPath);
 
+		wxDirPickerCtrl* dpProjectPath = XRCCTRL(*settings, "dpProjectPath", wxDirPickerCtrl);
+		wxString projectPath = wxString::FromUTF8(Config["ProjectPath"]);
+		dpProjectPath->SetPath(projectPath);
+
+		wxCheckBox* cbShowForceBodyNormals = XRCCTRL(*settings, "cbShowForceBodyNormals", wxCheckBox);
+		cbShowForceBodyNormals->SetValue(Config.GetBoolValue("ShowForceBodyNormals"));
+
 		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
-		cbBBOverrideWarn->SetValue(Config["WarnBatchBuildOverride"] != "false");
+		cbBBOverrideWarn->SetValue(Config.GetBoolValue("WarnBatchBuildOverride"));
 
 		wxCheckBox* cbBSATextures = XRCCTRL(*settings, "cbBSATextures", wxCheckBox);
-		cbBSATextures->SetValue(Config["BSATextureScan"] != "false");
+		cbBSATextures->SetValue(Config.GetBoolValue("BSATextureScan"));
 
 		wxCheckBox* cbLeftMousePan = XRCCTRL(*settings, "cbLeftMousePan", wxCheckBox);
-		cbLeftMousePan->SetValue(Config["Input/LeftMousePan"] != "false");
+		cbLeftMousePan->SetValue(Config.GetBoolValue("Input/LeftMousePan"));
+
+		wxCheckBox* cbBrushSettingsNearCursor = XRCCTRL(*settings, "cbBrushSettingsNearCursor", wxCheckBox);
+		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
 
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
 		for (int i = 0; i < std::extent<decltype(SupportedLangs)>::value; i++)
@@ -1595,18 +1868,24 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			wxFileName outputDataDir = dpOutputPath->GetDirName();
 			Config.SetValue("OutputDataPath", outputDataDir.GetFullPath().ToUTF8().data());
 
+			// set ProjectPath even if it is empty
+			wxFileName projectDir = dpProjectPath->GetDirName();
+			Config.SetValue("ProjectPath", projectDir.GetFullPath().ToUTF8().data());
+
 			wxArrayInt items;
 			wxString selectedfiles;
-			for (int i = 0; i < dataFileList->GetCount(); i++)
+			for (uint32_t i = 0; i < dataFileList->GetCount(); i++)
 				if (!dataFileList->IsChecked(i))
 					selectedfiles += dataFileList->GetString(i) + "; ";
 
 			selectedfiles = selectedfiles.BeforeLast(';');
 			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToUTF8().data());
 
+			Config.SetBoolValue("ShowForceBodyNormals", cbShowForceBodyNormals->IsChecked());
 			Config.SetBoolValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
+			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
 
 			int oldLang = Config.GetIntValue("Language");
 			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
@@ -1631,6 +1910,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			wxGetApp().InitArchives();
+
 		}
 
 		delete settings;
@@ -1648,7 +1928,11 @@ void OutfitStudioFrame::OnSashPosChanged(wxSplitterEvent& event) {
 		OutfitStudioConfig.SetValue("OutfitStudioFrame.sashrightpos", pos);
 }
 
-void OutfitStudioFrame::OnMoveWindow(wxMoveEvent& event) {
+void OutfitStudioFrame::OnMoveWindowStart(wxMoveEvent& WXUNUSED(event)) {
+	CloseBrushSettings();
+}
+
+void OutfitStudioFrame::OnMoveWindowEnd(wxMoveEvent& event) {
 	wxPoint p = GetPosition();
 	OutfitStudioConfig.SetValue("OutfitStudioFrame.x", p.x);
 	OutfitStudioConfig.SetValue("OutfitStudioFrame.y", p.y);
@@ -1656,6 +1940,8 @@ void OutfitStudioFrame::OnMoveWindow(wxMoveEvent& event) {
 }
 
 void OutfitStudioFrame::OnSetSize(wxSizeEvent& event) {
+	CloseBrushSettings();
+
 	bool maximized = IsMaximized();
 	if (!maximized) {
 		wxSize p = event.GetSize();
@@ -1665,6 +1951,226 @@ void OutfitStudioFrame::OnSetSize(wxSizeEvent& event) {
 
 	OutfitStudioConfig.SetBoolValue("OutfitStudioFrame.maximized", maximized);
 	event.Skip();
+}
+
+bool OutfitStudioFrame::SaveProject() {
+	if (project->mFileName.empty())
+		return SaveProjectAs();
+
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		return false;
+	}
+
+	if (HasUnweightedCheck())
+		return false;
+
+	wxLogMessage("Saving project '%s'...", wxString::FromUTF8(project->OutfitName()));
+	StartProgress(wxString::Format(_("Saving project '%s'..."), wxString::FromUTF8(project->OutfitName())));
+	project->ClearBoneScale();
+
+	std::vector<mesh*> shapeMeshes;
+	for (auto &s : project->GetWorkNif()->GetShapes()) {
+		if (!project->IsBaseShape(s)) {
+			mesh* m = glView->GetMesh(s->name.get());
+			if (m)
+				shapeMeshes.push_back(m);
+		}
+	}
+
+	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
+
+	std::string error = project->Save(project->mFileName, project->mOutfitName, project->mDataDir, project->mBaseFile,
+		project->mGamePath, project->mGameFile, project->mGenWeights, project->mCopyRef);
+
+	if (!error.empty()) {
+		wxLogError(error.c_str());
+		wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
+		EndProgress();
+		return false;
+	}
+
+	SetPendingChanges(false);
+	EndProgress();
+	return true;
+}
+
+bool OutfitStudioFrame::SaveProjectAs() {
+	wxDialog dlg;
+	int result = wxID_CANCEL;
+
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		return false;
+	}
+
+	if (HasUnweightedCheck())
+		return false;
+
+	CloseBrushSettings();
+
+	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgSaveProject", "wxDialog")) {
+		XRCCTRL(dlg, "sssNameCopy", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnSSSNameCopy, this);
+		XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudioFrame::OnSSSGenWeightsTrue, this);
+		XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudioFrame::OnSSSGenWeightsFalse, this);
+
+		std::string outName;
+		if (!project->mOutfitName.empty())
+			outName = project->mOutfitName.ToUTF8();
+		else if (!project->OutfitName().empty())
+			outName = project->OutfitName();
+		else
+			outName = "New Outfit";
+
+		project->ReplaceForbidden(outName);
+
+		wxString sssName = wxString::FromUTF8(outName);
+
+		XRCCTRL(dlg, "sssName", wxTextCtrl)->SetValue(sssName);
+		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(GetProjectPath()) + "/SliderSets");
+
+		if (!project->mFileName.empty())
+			XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetPath(project->mFileName);
+		else
+			XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetPath(sssName + ".osp");
+
+		if (!project->mDataDir.empty())
+			XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->SetPath(project->mDataDir);
+		else
+			XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->SetPath(sssName);
+
+		if (!project->mBaseFile.empty())
+			XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->SetPath(project->mBaseFile);
+		else
+			XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->SetPath(sssName + ".nif");
+
+		if (!project->mGamePath.empty())
+			XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->ChangeValue(project->mGamePath);
+		else
+			XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->ChangeValue(wxString::Format("meshes%carmor%c%s", PathSepChar, PathSepChar, sssName));
+
+		if (!project->mGameFile.empty())
+			XRCCTRL(dlg, "sssOutputFileName", wxTextCtrl)->ChangeValue(project->mGameFile);
+		else
+			XRCCTRL(dlg, "sssOutputFileName", wxTextCtrl)->ChangeValue(sssName);
+
+		if (project->mGenWeights) {
+			XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->SetValue(true);
+			XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->SetValue(false);
+		}
+		else {
+			XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->SetValue(false);
+			XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->SetValue(true);
+		}
+
+		if (!project->GetBaseShape()) {
+			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->Disable();
+		}
+		else
+			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(project->mCopyRef);
+
+		result = dlg.ShowModal();
+	}
+	if (result == wxID_CANCEL)
+		return false;
+
+	wxString strOutfitName;
+	wxString strDataDir;
+	wxString strBaseFile;
+	wxString strGamePath;
+	wxString strGameFile;
+	bool copyRef;
+	bool genWeights;
+
+	wxFileName sliderSetFile = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName();
+	if (!sliderSetFile.IsOk()) {
+		wxMessageBox(_("Invalid or no slider set file specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
+		return false;
+	}
+
+	if (sliderSetFile.GetExt() != "osp")
+		sliderSetFile.SetExt("osp");
+
+	strOutfitName = XRCCTRL(dlg, "sssName", wxTextCtrl)->GetValue();
+	if (strOutfitName.empty()) {
+		wxMessageBox(_("No outfit name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
+		return false;
+	}
+
+	strDataDir = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->GetDirName().GetFullName();
+	if (strDataDir.empty()) {
+		strDataDir = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->GetPath();
+		if (strDataDir.empty()) {
+			wxMessageBox(_("No data folder specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
+			return false;
+		}
+	}
+
+	wxFileName relativeFolder(strDataDir);
+	if (!relativeFolder.IsRelative()) {
+		wxString dataFolder(wxString::Format("%s/%s", wxString::FromUTF8(GetProjectPath()), "ShapeData"));
+		relativeFolder.MakeRelativeTo(dataFolder);
+		strDataDir = relativeFolder.GetFullPath();
+	}
+
+	strBaseFile = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
+	if (strBaseFile.length() <= 4) {
+		wxMessageBox(_("An invalid or no base outfit .nif file name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
+		return false;
+	}
+
+	if (!strBaseFile.EndsWith(".nif"))
+		strBaseFile = strBaseFile.Append(".nif");
+
+	strGamePath = XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->GetValue();
+	if (strGamePath.empty()) {
+		wxMessageBox(_("No game file path specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
+		return false;
+	}
+
+	strGameFile = XRCCTRL(dlg, "sssOutputFileName", wxTextCtrl)->GetValue();
+	if (strGameFile.empty()) {
+		wxMessageBox(_("No game file name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
+		return false;
+	}
+
+	copyRef = XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->GetValue();
+	genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
+
+	wxLogMessage("Saving project '%s'...", strOutfitName);
+	StartProgress(wxString::Format(_("Saving project '%s'..."), strOutfitName));
+	project->ClearBoneScale();
+
+	std::vector<mesh*> shapeMeshes;
+	for (auto &s : project->GetWorkNif()->GetShapes()) {
+		if (!project->IsBaseShape(s)) {
+			mesh* m = glView->GetMesh(s->name.get());
+			if (m)
+				shapeMeshes.push_back(m);
+		}
+	}
+
+	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
+
+	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile,
+		strGamePath, strGameFile, genWeights, copyRef);
+
+	if (error.empty()) {
+		SetPendingChanges(false);
+		menuBar->Enable(XRCID("fileSave"), true);
+
+		RenameProject(strOutfitName.ToUTF8().data());
+		EndProgress();
+	}
+	else {
+		wxLogError(error.c_str());
+		wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
+		EndProgress();
+		return false;
+	}
+
+	return true;
 }
 
 bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::string& projectName, bool clearProject) {
@@ -1713,6 +2219,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 		glView->GetUndoHistory()->ClearHistory();
 
 		activeSlider.clear();
+		lastActiveSlider.clear();
 		bEditSlider = false;
 		MenuExitSliderEdit();
 
@@ -1743,7 +2250,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	if (clearProject) {
 		NiShape* shape = project->GetBaseShape();
 		if (shape) {
-			std::string shapeName = shape->GetName();
+			std::string shapeName = shape->name.get();
 
 			// Prevent duplication if valid reference was found
 			project->DeleteShape(shape);
@@ -1751,7 +2258,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 			wxLogMessage("Loading reference shape '%s'...", shapeName);
 			UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shapeName));
 
-			error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shapeName, true);
+			error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shapeName, true, true);
 			if (error) {
 				EndProgress();
 				RefreshGUIFromProj();
@@ -1771,26 +2278,23 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	UpdateProgress(80, _("Creating outfit..."));
 	RefreshGUIFromProj();
 
-	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(90, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
+	wxLogMessage("Creating %zu slider(s)...", project->SliderCount());
+	UpdateProgress(90, wxString::Format(_("Creating %zu slider(s)..."), project->SliderCount()));
 	StartSubProgress(90, 99);
 	CreateSetSliders();
 
-	ShowSliderEffect(0);
-
-	SetTitle("Outfit Studio - " + wxString::FromUTF8(project->OutfitName()));
+	UpdateTitle();
+	AddProjectHistory(fileName, outfit);
 
 	wxLogMessage("Project loaded.");
 	UpdateProgress(100, _("Finished"));
-	GetMenuBar()->Enable(XRCID("fileSave"), true);
+	menuBar->Enable(XRCID("fileSave"), true);
 	EndProgress();
 	return true;
 }
 
 void OutfitStudioFrame::CreateSetSliders() {
-	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
-	if (!sliderScroll)
-		return;
+	wxSizer* rootSz = sliderScroll->GetSizer();
 
 	int inc = 1;
 	if (project->SliderCount()) {
@@ -1801,20 +2305,19 @@ void OutfitStudioFrame::CreateSetSliders() {
 	UpdateProgress(0, _("Clearing old sliders..."));
 
 	sliderScroll->Freeze();
-	sliderScroll->DestroyChildren();
-	for (auto &sd : sliderDisplays)
-		delete sd.second;
 
-	sliderDisplays.clear();
+	for (auto& sliderPanel : sliderPanels)
+		HideSliderPanel(sliderPanel.second);
 
-	wxSizer* rootSz = sliderScroll->GetSizer();
+	sliderPanels.clear();
+	sliderFilter->Clear();
 
-	for (int i = 0; i < project->SliderCount(); i++)  {
+	for (size_t i = 0; i < project->SliderCount(); i++)  {
 		UpdateProgress(inc, _("Loading slider: ") + project->GetSliderName(i));
 		if (project->SliderClamp(i))    // clamp sliders are a special case, usually an incorrect scale
 			continue;
 
-		createSliderGUI(project->GetSliderName(i), i, sliderScroll, rootSz);
+		createSliderGUI(project->GetSliderName(i), sliderScroll, rootSz);
 	}
 
 	if (!sliderScroll->GetDropTarget())
@@ -1823,89 +2326,37 @@ void OutfitStudioFrame::CreateSetSliders() {
 	sliderScroll->FitInside();
 	sliderScroll->Thaw();
 
+	DoFilterSliders();
+
 	EndProgress();
 }
 
-bool OutfitStudioFrame::LoadNIF(const std::string& fileName) {
-	StartProgress(_("Importing NIF file..."));
-	UpdateProgress(1, _("Importing NIF file..."));
+void OutfitStudioFrame::createSliderGUI(const std::string& name, wxScrolledWindow* wnd, wxSizer* rootSz) {
+	wxString sliderName = wxString::FromUTF8(name);
 
-	if (project->ImportNIF(fileName))
-		return false;
+	wxSliderPanel* sliderPanel = sliderPool.GetNext();
+	if (sliderPanel) {
+		if (sliderPanel->Create(wnd, sliderName, *bmpEditSlider, *bmpSliderSettings)) {
+			sliderPanel->btnSliderEdit->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+			sliderPanel->btnSliderProp->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+			sliderPanel->btnMinus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+			sliderPanel->btnPlus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+			sliderPanel->sliderCheck->Bind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnSliderCheckBox, this);
+			sliderPanel->slider->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
+			sliderPanel->sliderReadout->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
 
-	UpdateProgress(60, _("Refreshing GUI..."));
-	project->SetTextures();
-	RefreshGUIFromProj();
+			if (sliderPanel->GetContainingSizer())
+				rootSz->Detach(sliderPanel);
 
-	UpdateProgress(100, _("Finished."));
-	EndProgress();
-	return true;
-}
+			rootSz->Add(sliderPanel, 0, wxALL | wxEXPAND | wxFIXED_MINSIZE, 1);
 
-void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz) {
-	wxString sn = wxString::FromUTF8(name);
+			if (!sliderPanel->IsShown())
+				sliderPanel->Show();
 
-	auto d = new SliderDisplay();
-	d->sliderPane = new wxPanel(wnd, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER | wxTAB_TRAVERSAL);
-	d->sliderPane->SetBackgroundColour(wxColour(64, 64, 64));
-	d->sliderPane->SetMinSize(wxSize(-1, 25));
-	d->sliderPane->SetMaxSize(wxSize(-1, 25));
-
-	d->paneSz = new wxBoxSizer(wxHORIZONTAL);
-
-	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, sn + "|btn");
-	d->btnSliderEdit->SetBitmapDisabled(wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall_d.png", wxBITMAP_TYPE_ANY));
-	d->btnSliderEdit->SetToolTip(_("Turn on edit mode for this slider."));
-	d->paneSz->Add(d->btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL);
-
-	d->btnMinus = new wxButton(d->sliderPane, wxID_ANY, "-", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, sn + "|btnMinus");
-	d->btnMinus->SetToolTip(_("Weaken slider data by 1%."));
-	d->btnMinus->SetForegroundColour(wxTransparentColour);
-	d->btnMinus->Hide();
-	d->paneSz->Add(d->btnMinus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
-
-	d->btnPlus = new wxButton(d->sliderPane, wxID_ANY, "+", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, sn + "|btnPlus");
-	d->btnPlus->SetToolTip(_("Strengthen slider data by 1%."));
-	d->btnPlus->SetForegroundColour(wxTransparentColour);
-	d->btnPlus->Hide();
-	d->paneSz->Add(d->btnPlus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
-
-	d->sliderNameCheckID = 1000 + id;
-	d->sliderNameCheck = new wxCheckBox(d->sliderPane, d->sliderNameCheckID, "", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, sn + "|check");
-	d->sliderNameCheck->SetForegroundColour(wxColour(255, 255, 255));
-	d->paneSz->Add(d->sliderNameCheck, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
-
-	d->sliderName = new wxStaticText(d->sliderPane, wxID_ANY, sn, wxDefaultPosition, wxDefaultSize, 0, sn + "|lbl");
-	d->sliderName->SetForegroundColour(wxColour(255, 255, 255));
-	d->paneSz->Add(d->sliderName, 0, wxALIGN_CENTER_VERTICAL | wxALL);
-
-	d->sliderID = 2000 + id;
-	d->slider = new wxSlider(d->sliderPane, d->sliderID, 0, 0, 100, wxDefaultPosition, wxSize(-1, -1), wxSL_HORIZONTAL, wxDefaultValidator, sn + "|slider");
-	d->slider->SetMinSize(wxSize(-1, 20));
-	d->slider->SetMaxSize(wxSize(-1, 20));
-
-	d->paneSz->Add(d->slider, 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
-
-	d->sliderReadout = new wxTextCtrl(d->sliderPane, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, -1), wxTE_RIGHT | wxTE_PROCESS_ENTER | wxSIMPLE_BORDER, wxDefaultValidator, sn + "|readout");
-	d->sliderReadout->SetMaxLength(0);
-	d->sliderReadout->SetForegroundColour(wxColour(255, 255, 255));
-	d->sliderReadout->SetBackgroundColour(wxColour(48, 48, 48));
-	d->sliderReadout->SetMinSize(wxSize(40, 20));
-	d->sliderReadout->SetMaxSize(wxSize(40, 20));
-	d->sliderReadout->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
-	//d->sliderReadout->Bind(wxEVT_KILL_FOCUS, &OutfitStudioFrame::OnReadoutChange, this);
-
-	d->paneSz->Add(d->sliderReadout, 0, wxALIGN_CENTER_VERTICAL | wxALL, 2);
-
-	d->sliderPane->SetSizer(d->paneSz);
-	d->sliderPane->Layout();
-	d->paneSz->Fit(d->sliderPane);
-	rootSz->Add(d->sliderPane, 0, wxALL | wxEXPAND | wxFIXED_MINSIZE, 1);
-
-	d->hilite = false;
-
-	ShowSliderEffect(id);
-	sliderDisplays[name] = d;
+			ShowSliderEffect(name);
+			sliderPanels[name] = sliderPanel;
+		}
+	}
 }
 
 std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool skipPrompt) {
@@ -1932,26 +2383,27 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 
 	wxLogMessage("Creating new slider '%s'.", sliderName);
 
-	createSliderGUI(sliderName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
 
 	project->AddEmptySlider(sliderName);
 	ShowSliderEffect(sliderName);
 	sliderScroll->FitInside();
+	SetPendingChanges();
 
 	return sliderName;
 }
 
-void OutfitStudioFrame::SetSliderValue(int index, int val) {
+void OutfitStudioFrame::SetSliderValue(const size_t index, int val) {
 	std::string name = project->GetSliderName(index);
 	project->SliderValue(index) = val / 100.0f;
-	sliderDisplays[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
-	sliderDisplays[name]->slider->SetValue(val);
+	sliderPanels[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
+	sliderPanels[name]->slider->SetValue(val);
 }
 
 void OutfitStudioFrame::SetSliderValue(const std::string& name, int val) {
 	project->SliderValue(name) = val / 100.0f;
-	sliderDisplays[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
-	sliderDisplays[name]->slider->SetValue(val);
+	sliderPanels[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
+	sliderPanels[name]->slider->SetValue(val);
 }
 
 void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
@@ -1960,7 +2412,7 @@ void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
 
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
 		project->GetLiveVerts(shape, verts, &uvs);
-		glView->UpdateMeshVertices(shape->GetName(), &verts, recalcBVH, true, false, &uvs);
+		glView->UpdateMeshVertices(shape->name.get(), &verts, recalcBVH, true, false, &uvs);
 	}
 
 	bool tMode = glView->GetTransformMode();
@@ -1972,35 +2424,24 @@ void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
 		glView->Render();
 }
 
-void OutfitStudioFrame::ShowSliderEffect(int sliderID, bool show) {
-	if (project->ValidSlider(sliderID)) {
-		project->SliderShow(sliderID) = show;
-		wxCheckBox* sliderState = (wxCheckBox*)FindWindowById(1000 + sliderID);
-		if (!sliderState)
-			return;
-
-		if (show)
-			sliderState->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-		else
-			sliderState->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
-	}
-}
-
 void OutfitStudioFrame::ShowSliderEffect(const std::string& sliderName, bool show) {
 	if (project->ValidSlider(sliderName)) {
 		project->SliderShow(sliderName) = show;
 
-		SliderDisplay* d = sliderDisplays[sliderName];
-		if (d) {
+		wxSliderPanel* sliderPanel = sliderPanels[sliderName];
+		if (sliderPanel) {
 			if (show)
-				d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+				sliderPanel->sliderCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
 			else
-				d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
+				sliderPanel->sliderCheck->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
 		}
 	}
 }
 
-void OutfitStudioFrame::UpdateActiveShapeUI() {
+void OutfitStudioFrame::UpdateActiveShape() {
+	bool smoothSeamNormals = true;
+	bool lockNormals = false;
+
 	if (!activeItem) {
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool(false);
@@ -2010,36 +2451,70 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 		CreateSegmentTree();
 		CreatePartitionTree();
 		outfitBones->UnselectAll();
+		lastSelectedBones.clear();
+
+		menuBar->Enable(XRCID("btnSmoothSeams"), false);
+		menuBar->Enable(XRCID("btnLockNormals"), false);
 	}
 	else {
-		mesh* m = glView->GetMesh(activeItem->GetShape()->GetName());
+		mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 		if (m) {
-			if (m->smoothSeamNormals)
-				GetMenuBar()->Check(XRCID("btnSmoothSeams"), true);
-			else
-				GetMenuBar()->Check(XRCID("btnSmoothSeams"), false);
-
-			if (m->lockNormals)
-				GetMenuBar()->Check(XRCID("btnLockNormals"), true);
-			else
-				GetMenuBar()->Check(XRCID("btnLockNormals"), false);
+			smoothSeamNormals = m->smoothSeamNormals;
+			lockNormals = m->lockNormals;
 
 			if (glView->GetTransformMode())
 				glView->ShowTransformTool();
 			if (glView->GetVertexEdit())
 				glView->ShowVertexEdit();
 		}
-		else {
-			GetMenuBar()->Check(XRCID("btnSmoothSeams"), true);
-			GetMenuBar()->Check(XRCID("btnLockNormals"), false);
-		}
+
+		menuBar->Enable(XRCID("btnSmoothSeams"), m != nullptr);
+		menuBar->Enable(XRCID("btnLockNormals"), m != nullptr);
 
 		CreateSegmentTree(activeItem->GetShape());
 		CreatePartitionTree(activeItem->GetShape());
 	}
 
+	menuBar->Check(XRCID("btnSmoothSeams"), smoothSeamNormals);
+	menuBar->Check(XRCID("btnLockNormals"), lockNormals);
+
+	if (glView->rotationCenterMode == RotationCenterMode::MeshCenter)
+		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
+
+	glView->UpdateBones();
 	glView->Render();
+
 	HighlightBoneNamesWithWeights();
+	UpdateBoneCounts();
+}
+
+void OutfitStudioFrame::UpdateVertexColors() {
+	bool enableVertexColors = menuBar->IsChecked(XRCID("btnEnableVertexColors"));
+	glView->SetColorsVisible(enableVertexColors);
+	if (enableVertexColors)
+		FillVertexColors();
+	else if (colorSettings->IsShown())
+		glView->ClearColors();
+}
+
+void OutfitStudioFrame::UpdateBoneCounts() {
+	auto totalBoneCountLabel = reinterpret_cast<wxStaticText*>(FindWindowByName("totalBoneCountLabel"));
+	totalBoneCountLabel->SetLabel(wxString::Format(_("Total Bones: %zu"), project->GetActiveBoneCount()));
+
+	std::vector<std::string> boneNames;
+	project->GetActiveBones(boneNames);
+
+	size_t selectedBoneCount = 0;
+	for (auto &s : selectedItems) {
+		for (auto &bone : boneNames) {
+			if (project->GetWorkAnim()->HasWeights(s->GetShape()->name.get(), bone)) {
+				selectedBoneCount++;
+			}
+		}
+	}
+
+	auto selectedBoneCountLabel = reinterpret_cast<wxStaticText*>(FindWindowByName("selectedBoneCountLabel"));
+	selectedBoneCountLabel->SetLabel(wxString::Format(_("Shape Selection Bones: %zu"), selectedBoneCount));
 }
 
 void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
@@ -2050,7 +2525,7 @@ void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
 
 		auto boneName = outfitBones->GetItemText(item).ToStdString();
 		for (auto &i : selectedItems) {
-			if (project->GetWorkAnim()->HasWeights(i->GetShape()->GetName(), boneName)) {
+			if (project->GetWorkAnim()->HasWeights(i->GetShape()->name.get(), boneName)) {
 				outfitBones->SetItemTextColour(item, wxColour(0, 255, 0));
 			}
 		}
@@ -2060,42 +2535,51 @@ void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
 }
 
 void OutfitStudioFrame::GetNormalizeBones(std::vector<std::string> *normBones, std::vector<std::string> *notNormBones) {
-	wxTreeItemIdValue cookie;
-	wxTreeItemId item = outfitBones->GetFirstChild(bonesRoot, cookie);
-	while (item.IsOk()) {
-		std::string boneName = outfitBones->GetItemText(item).ToStdString();
-		if (outfitBones->GetItemState(item) == 0) {
-			if (notNormBones)
-				notNormBones->push_back(boneName);
-		}
-		else {
+	std::vector<std::string> activeBones;
+	project->GetActiveBones(activeBones);
+
+	for (auto &boneName : activeBones) {
+		if (lastNormalizeBones.find(boneName) != lastNormalizeBones.end()) {
 			if (normBones)
 				normBones->push_back(boneName);
 		}
-		item = outfitBones->GetNextChild(bonesRoot, cookie);
+		else {
+			if (notNormBones)
+				notNormBones->push_back(boneName);
+		}
 	}
 }
 
 std::vector<std::string> OutfitStudioFrame::GetSelectedBones() {
+	std::vector<std::string> activeBones;
+	project->GetActiveBones(activeBones);
+
 	std::vector<std::string> boneList;
-	wxArrayTreeItemIds selItems;
-	outfitBones->GetSelections(selItems);
-	for (int i = 0; i < selItems.size(); i++)
-		boneList.push_back(outfitBones->GetItemText(selItems[i]).ToStdString());
+
+	for (auto &selBone : lastSelectedBones) {
+		if (std::find(activeBones.begin(), activeBones.end(), selBone) != activeBones.end()) {
+			boneList.push_back(selBone);
+		}
+	}
+
 	return boneList;
 }
 
 void OutfitStudioFrame::CalcAutoXMirrorBone() {
 	autoXMirrorBone.clear();
-	const unsigned int abLen = activeBone.length();
+
+	const size_t abLen = activeBone.length();
 	std::vector<std::string> bones;
 	project->GetActiveBones(bones);
+
 	int bestFlips = 0;
 	for (const std::string &b : bones) {
-		if (abLen != b.length()) continue;
+		if (abLen != b.length())
+			continue;
+
 		int flips = 0;
 		bool nomatch = false;
-		for (unsigned int i = 0; i < abLen && !nomatch; ++i) {
+		for (size_t i = 0; i < abLen && !nomatch; ++i) {
 			char abc = std::tolower(activeBone[i]);
 			char bc = std::tolower(b[i]);
 			if (abc == 'l') {
@@ -2113,11 +2597,16 @@ void OutfitStudioFrame::CalcAutoXMirrorBone() {
 			else
 				nomatch = bc != abc;
 		}
-		if (nomatch) continue;
-		if (flips <= bestFlips) continue;
+
+		if (nomatch)
+			continue;
+		if (flips <= bestFlips)
+			continue;
+
 		bestFlips = flips;
 		autoXMirrorBone = b;
 	}
+
 	if (autoXMirrorBone.empty())
 		cXMirrorBone->SetString(1, "Auto: None");
 	else
@@ -2135,7 +2624,7 @@ std::string OutfitStudioFrame::GetXMirrorBone() {
 }
 
 void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
-	if (activeItem && activeItem->GetShape()->GetName() == shapeName)
+	if (activeItem && activeItem->GetShape()->name == shapeName)
 		return;
 
 	wxTreeItemId item;
@@ -2173,7 +2662,9 @@ std::vector<std::string> OutfitStudioFrame::GetShapeList() {
 }
 
 void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
-	project->UpdateShapeFromMesh(shape, glView->GetMesh(shape->GetName()));
+	mesh* m = glView->GetMesh(shape->name.get());
+	if (m)
+		project->UpdateShapeFromMesh(shape, m);
 }
 
 void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo) {
@@ -2181,8 +2672,10 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 		float sliderscale = 1 / usp->sliderscale;
 		for (auto &uss : usp->usss) {
 			mesh *m = glView->GetMesh(uss.shapeName);
-			if (!m) continue;
-			std::unordered_map<ushort, Vector3> strokeDiff;
+			if (!m)
+				continue;
+
+			std::unordered_map<uint16_t, Vector3> strokeDiff;
 
 			for (auto &ps : uss.pointStartState) {
 				auto pe = uss.pointEndState.find(ps.first);
@@ -2202,7 +2695,9 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 		if (usp->undoType == UT_WEIGHT) {
 			for (auto &uss : usp->usss) {
 				mesh *m = glView->GetMesh(uss.shapeName);
-				if (!m) continue;
+				if (!m)
+					continue;
+
 				for (auto &bw : uss.boneWeights) {
 					if (bw.weights.empty()) continue;
 					project->GetWorkAnim()->AddShapeBone(m->shapeName, bw.boneName);
@@ -2220,14 +2715,16 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 					auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
 					std::vector<Vector3> verts;
 					project->GetLiveVerts(shape, verts);
-					glView->UpdateMeshVertices(shape->GetName(), &verts, true, true, false);
+					glView->UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
 				}
 			}
 		}
 		else if (usp->undoType == UT_COLOR) {
 			for (auto &uss : usp->usss) {
 				mesh *m = glView->GetMesh(uss.shapeName);
-				if (!m) continue;
+				if (!m)
+					continue;
+
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
 					continue;
@@ -2255,7 +2752,9 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 		else if (usp->undoType == UT_ALPHA) {
 			for (auto &uss : usp->usss) {
 				mesh *m = glView->GetMesh(uss.shapeName);
-				if (!m) continue;
+				if (!m)
+					continue;
+
 				auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
 				if (!colorPtr || colorPtr->empty())
 					continue;
@@ -2275,6 +2774,8 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo)
 			}
 		}
 	}
+
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::UpdateShapeReference(NiShape* shape, NiShape* newShape) {
@@ -2285,7 +2786,7 @@ void OutfitStudioFrame::UpdateShapeReference(NiShape* shape, NiShape* newShape) 
 	}
 
 	if (project->IsBaseShape(shape))
-		project->SetBaseShape(newShape);
+		project->SetBaseShape(newShape, false);
 }
 
 std::vector<ShapeItemData*>& OutfitStudioFrame::GetSelectedItems() {
@@ -2307,40 +2808,66 @@ std::string OutfitStudioFrame::GetActiveBone() {
 	return activeBone;
 }
 
+void OutfitStudioFrame::HideSliderPanel(wxSliderPanel* sliderPanel) {
+	if (!sliderPanel)
+		return;
+
+	sliderPanel->btnSliderEdit->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+	sliderPanel->btnSliderProp->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+	sliderPanel->btnMinus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+	sliderPanel->btnPlus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+	sliderPanel->sliderCheck->Unbind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnSliderCheckBox, this);
+	sliderPanel->slider->Unbind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
+	sliderPanel->sliderReadout->Unbind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
+
+	sliderPanel->Hide();
+}
+
 void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
-	if (sliderName.empty())
+	std::string sliderNameEdit = sliderName;
+
+	if (sliderNameEdit.empty()) {
+		if (lastActiveSlider.empty())
+			sliderNameEdit = project->GetSliderName(0);
+		else
+			sliderNameEdit = lastActiveSlider;
+	}
+
+	if (sliderNameEdit.empty())
 		return;
 
 	if (bEditSlider) {
-		SliderDisplay* od = sliderDisplays[activeSlider];
-		if (od) {
-			od->sliderNameCheck->Enable(true);
-			od->btnMinus->Hide();
-			od->btnPlus->Hide();
-			od->sliderPane->Layout();
+		wxSliderPanel* sliderPanel = sliderPanels[activeSlider];
+		if (sliderPanel) {
+			sliderPanel->sliderCheck->Enable(true);
+			sliderPanel->btnSliderProp->Hide();
+			sliderPanel->btnMinus->Hide();
+			sliderPanel->btnPlus->Hide();
+			sliderPanel->Layout();
 		}
 	}
 
-	SliderDisplay* d = sliderDisplays[sliderName];
-	if (!d)
+	wxSliderPanel* sliderPanel = sliderPanels[sliderNameEdit];
+	if (!sliderPanel)
 		return;
 
-	activeSlider = sliderName;
+	activeSlider = sliderNameEdit;
+	lastActiveSlider = activeSlider;
 	bEditSlider = true;
 
-	d->slider->SetValue(100);
+	sliderPanel->slider->SetValue(100);
 	SetSliderValue(activeSlider, 100);
 
-	if (d->sliderNameCheck->Get3StateValue() == wxCheckBoxState::wxCHK_UNCHECKED) {
-		d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-		ShowSliderEffect(d->sliderID - 2000, true);
+	if (sliderPanel->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_UNCHECKED) {
+		sliderPanel->sliderCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+		ShowSliderEffect(activeSlider, true);
 	}
 
-	d->sliderNameCheck->Enable(false);
-	d->slider->SetFocus();
-	d->btnMinus->Show();
-	d->btnPlus->Show();
-	d->sliderPane->Layout();
+	sliderPanel->sliderCheck->Enable(false);
+	sliderPanel->btnSliderProp->Show();
+	sliderPanel->btnMinus->Show();
+	sliderPanel->btnPlus->Show();
+	sliderPanel->Layout();
 	MenuEnterSliderEdit();
 
 	HighlightSlider(activeSlider);
@@ -2348,19 +2875,22 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 }
 
 void OutfitStudioFrame::ExitSliderEdit() {
-	SliderDisplay* d = sliderDisplays[activeSlider];
-	if (d) {
-		d->sliderNameCheck->Enable(true);
-		d->slider->SetValue(0);
-		SetSliderValue(activeSlider, 0);
-		ShowSliderEffect(activeSlider, true);
-		d->slider->SetFocus();
-		d->btnMinus->Hide();
-		d->btnPlus->Hide();
-		d->sliderPane->Layout();
+	if (!activeSlider.empty()) {
+		wxSliderPanel* sliderPanel = sliderPanels[activeSlider];
+		if (sliderPanel) {
+			sliderPanel->sliderCheck->Enable(true);
+			sliderPanel->slider->SetValue(0);
+			SetSliderValue(activeSlider, 0);
+			ShowSliderEffect(activeSlider, true);
+			sliderPanel->btnSliderProp->Hide();
+			sliderPanel->btnMinus->Hide();
+			sliderPanel->btnPlus->Hide();
+			sliderPanel->Layout();
+		}
+
+		activeSlider.clear();
 	}
 
-	activeSlider.clear();
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
@@ -2369,41 +2899,44 @@ void OutfitStudioFrame::ExitSliderEdit() {
 }
 
 void OutfitStudioFrame::MenuEnterSliderEdit() {
-	wxMenuBar* menu = GetMenuBar();
-	menu->Enable(XRCID("menuImportSlider"), true);
-	menu->Enable(XRCID("menuExportSlider"), true);
-	menu->Enable(XRCID("sliderNegate"), true);
-	menu->Enable(XRCID("sliderMask"), true);
-	menu->Enable(XRCID("sliderProperties"), true);
+	menuBar->Enable(XRCID("menuImportSlider"), true);
+	menuBar->Enable(XRCID("menuExportSlider"), true);
+	menuBar->Enable(XRCID("sliderNegate"), true);
+	menuBar->Enable(XRCID("sliderMask"), true);
+	menuBar->Enable(XRCID("sliderProperties"), true);
 }
 
 void OutfitStudioFrame::MenuExitSliderEdit() {
-	wxMenuBar* menu = GetMenuBar();
-	menu->Enable(XRCID("menuImportSlider"), false);
-	menu->Enable(XRCID("menuExportSlider"), false);
-	menu->Enable(XRCID("sliderNegate"), false);
-	menu->Enable(XRCID("sliderMask"), false);
-	menu->Enable(XRCID("sliderProperties"), false);
+	menuBar->Enable(XRCID("menuImportSlider"), false);
+	menuBar->Enable(XRCID("menuExportSlider"), false);
+	menuBar->Enable(XRCID("sliderNegate"), false);
+	menuBar->Enable(XRCID("sliderMask"), false);
+	menuBar->Enable(XRCID("sliderProperties"), false);
+}
+
+void OutfitStudioFrame::ScrollToActiveSlider() {
+	if (!activeSlider.empty()) {
+		for (auto &sliderPanel : sliderPanels) {
+			if (sliderPanel.first == activeSlider) {
+				ScrollWindowIntoView(sliderScroll, sliderPanel.second);
+			}
+		}
+	}
 }
 
 void OutfitStudioFrame::SelectTool(ToolID tool) {
-	wxMenuBar* menuBar = GetMenuBar();
-
-	ToolID activeTool = glView->GetActiveTool();
-	if (activeTool >= ToolID::WeightBrush && activeTool <= ToolID::SplitEdge) {
-		glView->SetXMirror(previousMirror);
-		menuBar->Check(XRCID("btnXMirror"), previousMirror);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), previousMirror);
-	}
-
 	if (tool == ToolID::Select) {
 		glView->SetEditMode(false);
 		glView->SetBrushMode(false);
-		glView->SetActiveTool(ToolID::Select);
+		glView->SetActiveTool(tool);
+
 		menuBar->Check(XRCID("btnSelect"), true);
 		toolBarH->ToggleTool(XRCID("btnSelect"), true);
 
-		ToggleBrushPane(true);
+		menuBar->Check(XRCID("btnXMirror"), false);
+		menuBar->Enable(XRCID("btnXMirror"), false);
+		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
+		toolBarV->EnableTool(XRCID("btnXMirror"), false);
 		return;
 	}
 
@@ -2437,6 +2970,18 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	glView->SetActiveTool(tool);
 	glView->SetCursorType(GLSurface::BrushCursor);
 
+	auto activeBrush = glView->GetActiveBrush();
+	if (activeBrush) {
+		menuBar->Enable(XRCID("btnXMirror"), true);
+		menuBar->Check(XRCID("btnXMirror"), activeBrush->isMirrored());
+		toolBarV->EnableTool(XRCID("btnXMirror"), true);
+		toolBarV->ToggleTool(XRCID("btnXMirror"), activeBrush->isMirrored());
+	}
+	else {
+		menuBar->Enable(XRCID("btnXMirror"), false);
+		toolBarV->EnableTool(XRCID("btnXMirror"), false);
+	}
+
 	if (tool == ToolID::MaskBrush) {
 		menuBar->Check(XRCID("btnMaskBrush"), true);
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
@@ -2464,41 +3009,30 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	else if (tool == ToolID::WeightBrush) {
 		menuBar->Check(XRCID("btnWeightBrush"), true);
 		toolBarH->ToggleTool(XRCID("btnWeightBrush"), true);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
-		menuBar->Check(XRCID("btnXMirror"), false);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
 	}
 	else if (tool == ToolID::ColorBrush) {
 		menuBar->Check(XRCID("btnColorBrush"), true);
 		toolBarH->ToggleTool(XRCID("btnColorBrush"), true);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
-		menuBar->Check(XRCID("btnXMirror"), false);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
 
+		FindWindowById(XRCID("colorPalette"), colorSettings)->Show();
+		FindWindowById(XRCID("clampMaxValue"), colorSettings)->Hide();
+		colorSettings->Layout();
 		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
 		btnSwapBrush->SetLabel(_("Edit Alpha"));
 	}
 	else if (tool == ToolID::AlphaBrush) {
 		menuBar->Check(XRCID("btnAlphaBrush"), true);
 		toolBarH->ToggleTool(XRCID("btnAlphaBrush"), true);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
-		menuBar->Check(XRCID("btnXMirror"), false);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
 
+		FindWindowById(XRCID("colorPalette"), colorSettings)->Hide();
+		FindWindowById(XRCID("clampMaxValue"), colorSettings)->Show();
+		colorSettings->Layout();
 		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
 		btnSwapBrush->SetLabel(_("Edit Color"));
 	}
 	else if (tool == ToolID::CollapseVertex) {
 		menuBar->Check(XRCID("btnCollapseVertex"), true);
 		toolBarH->ToggleTool(XRCID("btnCollapseVertex"), true);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
-		menuBar->Check(XRCID("btnXMirror"), false);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
-		ToggleBrushPane(true);
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
 		glView->SetCursorType(GLSurface::VertexCursor);
@@ -2507,11 +3041,6 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	else if (tool == ToolID::FlipEdge) {
 		menuBar->Check(XRCID("btnFlipEdgeTool"), true);
 		toolBarH->ToggleTool(XRCID("btnFlipEdgeTool"), true);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
-		menuBar->Check(XRCID("btnXMirror"), false);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
-		ToggleBrushPane(true);
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
 		glView->SetCursorType(GLSurface::EdgeCursor);
@@ -2520,11 +3049,6 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	else if (tool == ToolID::SplitEdge) {
 		menuBar->Check(XRCID("btnSplitEdgeTool"), true);
 		toolBarH->ToggleTool(XRCID("btnSplitEdgeTool"), true);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
-		menuBar->Check(XRCID("btnXMirror"), false);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
-		ToggleBrushPane(true);
 		glView->SetEditMode();
 		glView->SetBrushMode(false);
 		glView->SetCursorType(GLSurface::EdgeCursor);
@@ -2543,10 +3067,57 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	glView->SetBrushSize(glView->GetBrushSize());
 
 	CheckBrushBounds();
-	UpdateBrushPane();
+	UpdateBrushSettings();
 }
 
-bool OutfitStudioFrame::NotifyStrokeStarting() {
+void OutfitStudioFrame::CloseBrushSettings() {
+	if (brushSettingsPopupTransient) {
+		brushSettingsPopupTransient->Destroy();
+		brushSettingsPopupTransient = nullptr;
+	}
+}
+
+void OutfitStudioFrame::PopupBrushSettings(wxWindow* popupAt) {
+	CloseBrushSettings();
+
+	if (!glView->GetBrushMode())
+		return;
+
+	wxPoint popupPos;
+	wxSize popupSize;
+
+	if (popupAt) {
+		popupPos = popupAt->GetScreenPosition();
+		popupSize.y = popupAt->GetSize().y;
+	}
+	else {
+		popupPos = wxGetMousePosition();
+		popupSize.x = 10;
+		popupSize.y = 10;
+	}
+
+	bool stayOpen = popupAt != nullptr;
+	brushSettingsPopupTransient = new wxBrushSettingsPopupTransient(this, stayOpen);
+	brushSettingsPopupTransient->Position(popupPos, popupSize);
+	brushSettingsPopupTransient->Popup();
+
+	UpdateBrushSettings();
+}
+
+void OutfitStudioFrame::UpdateBrushSettings() {
+	TweakBrush* brush = glView->GetActiveBrush();
+	if (!brush)
+		return;
+
+	if (brushSettingsPopupTransient) {
+		brushSettingsPopupTransient->SetBrushSize(glView->GetBrushSize());
+		brushSettingsPopupTransient->SetBrushStrength(brush->getStrength());
+		brushSettingsPopupTransient->SetBrushFocus(brush->getFocus());
+		brushSettingsPopupTransient->SetBrushSpacing(brush->getSpacing());
+	}
+}
+
+bool OutfitStudioFrame::CheckEditableState() {
 	if (!activeItem)
 		return false;
 
@@ -2588,12 +3159,103 @@ bool OutfitStudioFrame::NotifyStrokeStarting() {
 	return false;
 }
 
+void OutfitStudioFrame::UpdateTitle() {
+	std::string outfitName = project->OutfitName();
+	if (!outfitName.empty()) {
+		if (pendingChanges)
+			SetTitle(wxString::FromUTF8(outfitName) + "* - Outfit Studio");
+		else
+			SetTitle(wxString::FromUTF8(outfitName) + " - Outfit Studio");
+	}
+	else
+		SetTitle("Outfit Studio");
+}
+
+void OutfitStudioFrame::AddProjectHistory(const std::string& fileName, const std::string& projectName) {
+	projectHistory.erase(
+		std::remove_if(
+			projectHistory.begin(),
+			projectHistory.end(),
+			[&fileName, &projectName](const ProjectHistoryEntry& rt) { return rt.fileName == fileName && rt.projectName == projectName; }
+		),
+		projectHistory.end()
+	);
+
+	ProjectHistoryEntry projectHistoryEntry{};
+	projectHistoryEntry.fileName = fileName;
+	projectHistoryEntry.projectName = projectName;
+
+	constexpr int MAX_PROJECT_HISTORY = 15;
+	if (projectHistory.size() == MAX_PROJECT_HISTORY)
+		projectHistory.pop_back();
+
+	projectHistory.push_front(projectHistoryEntry);
+	UpdateProjectHistory();
+}
+
+void OutfitStudioFrame::UpdateProjectHistory() {
+	menuBar->Freeze();
+
+	wxMenuItem* menuItemRecentProjects = menuBar->FindItem(XRCID("menuRecentProjects"));
+	if (menuItemRecentProjects && menuItemRecentProjects->IsSubMenu()) {
+		wxMenu* menuRecentProjects = menuItemRecentProjects->GetSubMenu();
+		if (menuRecentProjects) {
+			auto menuItemList = menuRecentProjects->GetMenuItems();
+			for (auto menuItem : menuItemList)
+				menuRecentProjects->Delete(menuItem);
+
+			int itemId = 0;
+			for (const auto& projectHistoryEntry : projectHistory) {
+				menuRecentProjects->Append(1000 + itemId, wxString::FromUTF8(projectHistoryEntry.projectName), wxString::FromUTF8(projectHistoryEntry.fileName));
+				++itemId;
+			}
+
+			menuBar->Enable(XRCID("menuRecentProjects"), itemId > 0);
+		}
+	}
+
+	menuBar->Thaw();
+}
+
+void OutfitStudioFrame::SetPendingChanges(bool pending) {
+	if (pendingChanges != pending) {
+		pendingChanges = pending;
+		UpdateTitle();
+	}
+}
+
+bool OutfitStudioFrame::CheckPendingChanges() {
+	if (pendingChanges) {
+		wxMessageDialog dlg(this, wxString::Format(_("You have unsaved changes to '%s'. Would you like to save them now?"), project->OutfitName()), _("Unsaved Changes"), wxYES_NO | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+
+		int res = dlg.ShowModal();
+		if (res == wxID_YES) {
+			if (!SaveProject())
+				return false;
+		}
+		else if (res == wxID_CANCEL)
+			return false;
+	}
+
+	return true;
+}
+
+void OutfitStudioFrame::UpdateUndoTools() {
+	auto undoHistory = glView->GetUndoHistory();
+	toolBarH->EnableTool(XRCID("editUndo"), undoHistory->CanUndo());
+	toolBarH->EnableTool(XRCID("editRedo"), undoHistory->CanRedo());
+}
+
 void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	wxWizard wiz;
 	wxWizardPage* pg1;
 	wxWizardPage* pg2;
 	bool result = false;
 
+	if (!CheckPendingChanges())
+		return;
+
+	CloseBrushSettings();
 	UpdateReferenceTemplates();
 
 	if (wxXmlResource::Get()->LoadObject((wxObject*)&wiz, this, "wizNewProject", "wxWizard")) {
@@ -2605,13 +3267,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(wiz, "npWorkFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_File, this);
 		XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_Texture, this);
 
-		wxChoice* tmplChoice = XRCCTRL(wiz, "npTemplateChoice", wxChoice);
-		for (auto &tmpl : refTemplates)
-			tmplChoice->Append(tmpl.GetName());
-
-		std::string lastRefTemplate = OutfitStudioConfig["LastRefTemplate"];
-		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
-			tmplChoice->Select(0);
+		ConfigDialogUtil::LoadDialogChoices(OutfitStudioConfig, wiz, "npTemplateChoice", refTemplates);
 
 		wiz.FitToPage(pg1);
 		wiz.CenterOnParent();
@@ -2621,7 +3277,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	if (!result)
 		return;
 
-	GetMenuBar()->Enable(XRCID("fileSave"), false);
+	menuBar->Enable(XRCID("fileSave"), false);
 
 	std::string outfitName{XRCCTRL(wiz, "npOutfitName", wxTextCtrl)->GetValue().ToUTF8()};
 
@@ -2636,6 +3292,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	glView->GetUndoHistory()->ClearHistory();
 
 	activeSlider.clear();
+	lastActiveSlider.clear();
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
@@ -2646,16 +3303,15 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	int error = 0;
 	if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
-		wxString refTemplate = XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection();
-		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
-		OutfitStudioConfig.SetValue("LastRefTemplate", refTemplate.ToStdString());
+		wxString refTemplate = ConfigDialogUtil::SetStringFromDialogChoice(OutfitStudioConfig, wiz, "npTemplateChoice");
+		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
 		std::string tmplName{refTemplate.ToUTF8()};
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
 			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-				error = project->LoadReferenceTemplate(Config["AppDir"] + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll());
+				error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll());
 			else
 				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll());
 		}
@@ -2671,8 +3327,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
 
-			error = project->LoadReference(fileName.ToUTF8().data(),
-				sliderSetName.ToUTF8().data(), false, refShape.ToUTF8().data());
+			error = project->LoadReference(fileName.ToUTF8().data(), sliderSetName.ToUTF8().data(), refShape.ToUTF8().data());
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
@@ -2716,15 +3371,13 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	RefreshGUIFromProj();
 
-	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(90, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
+	wxLogMessage("Creating %zu slider(s)...", project->SliderCount());
+	UpdateProgress(90, wxString::Format(_("Creating %zu slider(s)..."), project->SliderCount()));
 	StartSubProgress(90, 99);
 	CreateSetSliders();
 
-	ShowSliderEffect(0);
-
 	if (!outfitName.empty())
-		SetTitle("Outfit Studio - " + wxString::FromUTF8(outfitName));
+		UpdateTitle();
 
 	wxLogMessage("Project created.");
 	UpdateProgress(100, _("Finished"));
@@ -2733,8 +3386,11 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog loadProjectDialog(this, _("Select a slider set to load"), wxString::FromUTF8(Config["AppDir"]) + "/SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
+	wxFileDialog loadProjectDialog(this, _("Select a slider set to load"), wxString::FromUTF8(GetProjectPath()) + "/SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
 	if (loadProjectDialog.ShowModal() == wxID_CANCEL)
+		return;
+
+	if (!CheckPendingChanges())
 		return;
 
 	std::string fileName{loadProjectDialog.GetPath().ToUTF8()};
@@ -2742,8 +3398,11 @@ void OutfitStudioFrame::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnAddProject(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog addProjectDialog(this, _("Select a slider set to add"), wxString::FromUTF8(Config["AppDir"]) + "/SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
+	wxFileDialog addProjectDialog(this, _("Select a slider set to add"), wxString::FromUTF8(GetProjectPath()) + "/SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
 	if (addProjectDialog.ShowModal() == wxID_CANCEL)
+		return;
+
+	if (!CheckPendingChanges())
 		return;
 
 	std::string fileName{addProjectDialog.GetPath().ToUTF8()};
@@ -2756,6 +3415,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	CloseBrushSettings();
 	UpdateReferenceTemplates();
 
 	wxDialog dlg;
@@ -2764,14 +3424,11 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnNPWizChangeSliderSetFile, this);
 		XRCCTRL(dlg, "npSliderSetName", wxChoice)->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnNPWizChangeSetNameChoice, this);
 
-		wxChoice* tmplChoice = XRCCTRL(dlg, "npTemplateChoice", wxChoice);
-		for (auto &tmpl : refTemplates)
-			tmplChoice->Append(tmpl.GetName());
+		ConfigDialogUtil::LoadDialogChoices(OutfitStudioConfig, dlg, "npTemplateChoice", refTemplates);
 
-		std::string lastRefTemplate = OutfitStudioConfig["LastRefTemplate"];
-		if (!tmplChoice->SetStringSelection(wxString::FromUTF8(lastRefTemplate)))
-			tmplChoice->Select(0);
-
+		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "chkMergeSliders");
+		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "chkMergeZaps");
+		
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
@@ -2781,25 +3438,25 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 
 	NiShape* baseShape = project->GetBaseShape();
 	if (baseShape)
-		glView->DeleteMesh(baseShape->GetName());
+		glView->DeleteMesh(baseShape->name.get());
 
 	UpdateProgress(10, _("Loading reference set..."));
-	bool mergeSliders = (XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
+	bool mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "chkMergeSliders");
+	bool mergeZaps = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "chkMergeZaps");
 
 	int error = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
-		wxString refTemplate = XRCCTRL(dlg, "npTemplateChoice", wxChoice)->GetStringSelection();
-		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
-		OutfitStudioConfig.SetValue("LastRefTemplate", refTemplate.ToStdString());
+		wxString refTemplate = ConfigDialogUtil::SetStringFromDialogChoice(OutfitStudioConfig, dlg, "npTemplateChoice");
+		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
 		std::string tmplName{refTemplate.ToUTF8()};
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
 			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-				error = project->LoadReferenceTemplate(Config["AppDir"] + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders);
+				error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps);
 			else
-				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders);
+				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps);
 		}
 		else
 			error = 1;
@@ -2813,12 +3470,11 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
 
-			error = project->LoadReference(fileName.ToUTF8().data(),
-				sliderSetName.ToUTF8().data(), mergeSliders, refShape.ToUTF8().data());
+			error = project->LoadReference(fileName.ToUTF8().data(), sliderSetName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders, mergeZaps);
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
-			error = project->LoadReferenceNif(fileName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders);
+			error = project->LoadReferenceNif(fileName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders, mergeZaps);
 		}
 	}
 	else
@@ -2836,12 +3492,10 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(60, _("Creating reference..."));
 	RefreshGUIFromProj();
 
-	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(70, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
+	wxLogMessage("Creating %zu slider(s)...", project->SliderCount());
+	UpdateProgress(70, wxString::Format(_("Creating %zu slider(s)..."), project->SliderCount()));
 	StartSubProgress(70, 99);
 	CreateSetSliders();
-
-	ShowSliderEffect(0);
 
 	wxLogMessage("Reference loaded.");
 	UpdateProgress(100, _("Finished"));
@@ -2851,6 +3505,8 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	int result = wxID_CANCEL;
+
+	CloseBrushSettings();
 
 	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgLoadOutfit", "wxDialog")) {
 		XRCCTRL(dlg, "npWorkFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_File, this);
@@ -2865,14 +3521,14 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string outfitName = XRCCTRL(dlg, "npOutfitName", wxTextCtrl)->GetValue();
 
-	GetMenuBar()->Enable(XRCID("fileSave"), false);
+	menuBar->Enable(XRCID("fileSave"), false);
 
 	wxLogMessage("Loading outfit...");
 	StartProgress(_("Loading outfit..."));
 
 	for (auto &s : project->GetWorkNif()->GetShapes()) {
 		if (!project->IsBaseShape(s)) {
-			glView->DeleteMesh(s->GetName());
+			glView->DeleteMesh(s->name.get());
 		}
 	}
 
@@ -2913,7 +3569,7 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(50, _("Creating outfit..."));
 	RefreshGUIFromProj();
 
-	SetTitle("Outfit Studio - " + wxString::FromUTF8(project->OutfitName()));
+	UpdateTitle();
 
 	wxLogMessage("Outfit loaded.");
 	UpdateProgress(100, _("Finished"));
@@ -2921,12 +3577,13 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
-	int res = wxMessageBox(_("Do you really want to unload the project? All unsaved changes will be lost."), _("Unload Project"), wxYES_NO | wxICON_WARNING, this);
-	if (res != wxYES)
+	wxMessageDialog dlg(this, _("Unload the project? All unsaved changes will be lost"), _("Unload Project"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+	dlg.SetOKCancelLabels(_("Unload"), _("Cancel"));
+	if (dlg.ShowModal() != wxID_OK)
 		return;
 
 	wxLogMessage("Unloading project...");
-	GetMenuBar()->Enable(XRCID("fileSave"), false);
+	menuBar->Enable(XRCID("fileSave"), false);
 
 	ClearProject();
 	project->ClearReference();
@@ -2936,6 +3593,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 	glView->GetUndoHistory()->ClearHistory();
 
 	activeSlider.clear();
+	lastActiveSlider.clear();
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
@@ -2950,14 +3608,14 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::UpdateReferenceTemplates() {
 	refTemplates.clear();
 
-	std::string fileName = Config["AppDir"] + "/RefTemplates.xml";
+	std::string fileName = GetProjectPath() + "/RefTemplates.xml";
 	if (wxFileName::IsFileReadable(fileName)) {
 		RefTemplateFile refTemplateFile(fileName);
 		refTemplateFile.GetAll(refTemplates);
 	}
 
 	RefTemplateCollection refTemplateCol;
-	refTemplateCol.Load(Config["AppDir"] + "/RefTemplates");
+	refTemplateCol.Load(GetProjectPath() + "/RefTemplates");
 	refTemplateCol.GetAll(refTemplates);
 }
 
@@ -2982,14 +3640,25 @@ void OutfitStudioFrame::ClearProject() {
 
 	project->mCopyRef = true;
 
-	glView->DestroyOverlays();
+	glView->ClearOverlays();
 	activePartition.Unset();
 	activeSegment.Unset();
 
-	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+	lastSelectedBones.clear();
+	lastNormalizeBones.clear();
+
+	if (currentTabButton)
+		currentTabButton->SetPendingChanges(false);
+
+	auto cMaskName = (wxChoice*)FindWindowByName("cMaskName");
 	cMaskName->Clear();
 
-	SetTitle("Outfit Studio");
+	auto cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	cPoseName->Clear();
+
+	project->outfitName.clear();
+	pendingChanges = false;
+	UpdateTitle();
 }
 
 void OutfitStudioFrame::RenameProject(const std::string& projectName) {
@@ -2997,7 +3666,7 @@ void OutfitStudioFrame::RenameProject(const std::string& projectName) {
 	if (outfitRoot.IsOk())
 		outfitShapes->SetItemText(outfitRoot, wxString::FromUTF8(projectName));
 
-	SetTitle("Outfit Studio - " + wxString::FromUTF8(projectName));
+	UpdateTitle();
 }
 
 void OutfitStudioFrame::LockShapeSelect() {
@@ -3054,7 +3723,7 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render) {
 	wxTreeItemId prevFirstSelItem;
 	for (auto &shape : shapes) {
 		auto itemData = new ShapeItemData(shape);
-		item = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(shape->GetName()));
+		item = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(shape->name.get()));
 		outfitShapes->SetItemState(item, 0);
 		outfitShapes->SetItemData(item, itemData);
 
@@ -3095,7 +3764,7 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render) {
 	outfitShapes->ExpandAll();
 	MeshesFromProj();
 
-	AnimationGUIFromProj();
+	UpdateAnimationGUI();
 
 	if (outfitRoot.IsOk()) {
 		wxTreeItemIdValue cookie;
@@ -3127,65 +3796,123 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render) {
 		}
 	}
 
+	UpdateUndoTools();
+	glView->UpdateFloor();
+
 	if (render)
 		glView->Render();
 }
 
-void OutfitStudioFrame::AnimationGUIFromProj() {
-	// Preserve selected, normalize, x-mirror, and pose bones
-	std::vector<std::string> selBones = GetSelectedBones();
-	std::vector<std::string> normBones;
-	GetNormalizeBones(&normBones, nullptr);
-	std::unordered_set<std::string> normBonesS{normBones.begin(), normBones.end()};
-	std::unordered_set<std::string> selBonesS{selBones.begin(), selBones.end()};
+void OutfitStudioFrame::UpdateAnimationGUI() {
+	// Preserve x-mirror and pose bones
 	int xMChoice = cXMirrorBone->GetSelection();
-	std::string ManualXMirrorBone;
+	std::string manualXMirrorBone;
 	if (xMChoice >= 2)
-		ManualXMirrorBone = cXMirrorBone->GetString(xMChoice);
+		manualXMirrorBone = cXMirrorBone->GetString(xMChoice);
+
 	std::string poseBone;
 	int poseBoneSel = cPoseBone->GetSelection();
 	if (poseBoneSel != wxNOT_FOUND)
 		poseBone = cPoseBone->GetString(poseBoneSel).ToStdString();
 
-	// Clear GUI's bone list
-	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
-		outfitBones->DeleteChildren(bonesRoot);
-	if (selBonesS.count(activeBone) == 0)
+	if (lastSelectedBones.count(activeBone) == 0)
 		activeBone.clear();
+
+	UpdateBoneTree();
+
+	cXMirrorBone->Freeze();
 	cXMirrorBone->Clear();
 	cXMirrorBone->AppendString("None");
 	cXMirrorBone->AppendString("Auto");
 	cXMirrorBone->SetSelection(xMChoice == 1 ? 1 : 0);
+
+	cPoseBone->Freeze();
 	cPoseBone->Clear();
 
-	// Refill GUI's bone list, re-setting normalize flags and re-selecting
 	std::vector<std::string> activeBones;
 	project->GetActiveBones(activeBones);
+
+	wxArrayString activeBonesArr;
+	for (auto& bone : activeBones)
+		activeBonesArr.Add(wxString::FromUTF8(bone));
+
+	cXMirrorBone->Append(activeBonesArr);
+	cPoseBone->Append(activeBonesArr);
+
+	// Re-fill mirror and pose bone lists
+	for (auto &bone : activeBones) {
+		if (xMChoice >= 2 && bone == manualXMirrorBone)
+			cXMirrorBone->SetSelection(cXMirrorBone->GetCount() - 1);
+
+		if (poseBone == bone)
+			cPoseBone->SetSelection(cPoseBone->GetCount() - 1);
+	}
+
+	CalcAutoXMirrorBone();
+
+	if (cPoseBone->GetSelection() == wxNOT_FOUND && cPoseBone->GetCount() > 0)
+		cPoseBone->SetSelection(0);
+
+	cXMirrorBone->Thaw();
+	cPoseBone->Thaw();
+
+	auto cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	cPoseName->Clear();
+
+	std::string poseDataPath = GetProjectPath() + "/PoseData";
+	poseDataCollection.LoadData(poseDataPath);
+
+	for (auto &poseData : poseDataCollection.poseData) {
+		wxString poseName = wxString::FromUTF8(poseData.name);
+		cPoseName->Append(poseName, &poseData);
+	}
+
+	RefreshGUIWeightColors();
+	PoseToGUI();
+
+	glView->UpdateNodes();
+	glView->UpdateBones();
+}
+
+void OutfitStudioFrame::UpdateBoneTree() {
 	bool saveRUI = recursingUI;
 	recursingUI = true;
+
+	outfitBones->Freeze();
+
+	// Clear bone tree
+	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
+		outfitBones->DeleteChildren(bonesRoot);
+
+	wxString filterStr = bonesFilter->GetValue();
+	filterStr.MakeLower();
+
+	// Refill bone tree, re-setting normalize state and re-selecting bones
+	std::vector<std::string> activeBones;
+	project->GetActiveBones(activeBones);
+
 	for (auto &bone : activeBones) {
-		wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
-		outfitBones->SetItemState(item, normBonesS.count(bone) != 0 ? 1 : 0);
-		if (selBonesS.count(bone) != 0) {
+		// Filter out bone by name
+		wxString boneStr = wxString::FromUTF8(bone);
+		if (!boneStr.Lower().Contains(filterStr))
+			continue;
+
+		wxTreeItemId item = outfitBones->AppendItem(bonesRoot, boneStr);
+		outfitBones->SetItemState(item, lastNormalizeBones.count(bone) != 0 ? 1 : 0);
+
+		if (lastSelectedBones.count(bone) != 0) {
 			outfitBones->SelectItem(item);
 			if (activeBone.empty())
 				activeBone = bone;
 		}
-		cXMirrorBone->AppendString(bone);
-		if (xMChoice >= 2 && bone == ManualXMirrorBone)
-			cXMirrorBone->SetSelection(cXMirrorBone->GetCount()-1);
-		cPoseBone->AppendString(bone);
-		if (poseBone == bone)
-			cPoseBone->SetSelection(cPoseBone->GetCount()-1);
 	}
+
+	outfitBones->Thaw();
+
 	recursingUI = saveRUI;
-	CalcAutoXMirrorBone();
-	if (cPoseBone->GetSelection() == wxNOT_FOUND && cPoseBone->GetCount() > 0)
-		cPoseBone->SetSelection(0);
 
 	HighlightBoneNamesWithWeights();
-	RefreshGUIWeightColors();
-	PoseToGUI();
+	UpdateBoneCounts();
 }
 
 void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
@@ -3201,30 +3928,30 @@ void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) 
 		editUV->Close();
 
 	if (extInitialized) {
-		glView->DeleteMesh(shape->GetName());
-		glView->AddMeshFromNif(project->GetWorkNif(), shape->GetName());
+		glView->DeleteMesh(shape->name.get());
+		glView->AddMeshFromNif(project->GetWorkNif(), shape->name.get());
 
 		MaterialFile matFile;
 		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
-		glView->SetMeshTextures(shape->GetName(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures);
+		glView->SetMeshTextures(shape->name.get(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures);
 
 		UpdateMeshFromSet(shape);
 	}
 
 	std::vector<std::string> selShapes;
 	for (auto &i : selectedItems)
-		selShapes.push_back(i->GetShape()->GetName());
+		selShapes.push_back(i->GetShape()->name.get());
 
 	glView->SetActiveShapes(selShapes);
 
 	if (activeItem)
-		glView->SetSelectedShape(activeItem->GetShape()->GetName());
+		glView->SetSelectedShape(activeItem->GetShape()->name.get());
 	else
 		glView->SetSelectedShape("");
 }
 
 void OutfitStudioFrame::UpdateMeshFromSet(NiShape* shape) {
-	std::string shapeName = shape->GetName();
+	std::string shapeName = shape->name.get();
 	mesh* m = glView->GetMesh(shapeName);
 	if (m) {
 		m->smoothSeamNormals = project->activeSet.GetSmoothSeamNormals(shapeName);
@@ -3245,7 +3972,7 @@ void OutfitStudioFrame::FillVertexColors() {
 
 		const std::vector<Color4>* vcolors = project->GetWorkNif()->GetColorsForShape(s);
 		if (vcolors) {
-			for (int v = 0; v < vcolors->size(); v++) {
+			for (size_t v = 0; v < vcolors->size(); v++) {
 				m->vcolors[v].x = vcolors->at(v).r;
 				m->vcolors[v].y = vcolors->at(v).g;
 				m->vcolors[v].z = vcolors->at(v).b;
@@ -3286,217 +4013,12 @@ void OutfitStudioFrame::OnSSSGenWeightsFalse(wxCommandEvent& event) {
 	XRCCTRL(*win, "m_lowHighInfo", wxStaticText)->SetLabel(".nif");
 }
 
-void OutfitStudioFrame::OnSaveSliderSet(wxCommandEvent& event) {
-	if (project->mFileName.empty()) {
-		OnSaveSliderSetAs(event);
-	}
-	else {
-		if (!project->GetWorkNif()->IsValid()) {
-			wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
-			return;
-		}
-
-		if (HasUnweightedCheck())
-			return;
-
-		wxLogMessage("Saving project '%s'...", wxString::FromUTF8(project->OutfitName()));
-		StartProgress(wxString::Format(_("Saving project '%s'..."), wxString::FromUTF8(project->OutfitName())));
-		project->ClearBoneScale();
-
-		std::vector<mesh*> shapeMeshes;
-		for (auto &s : project->GetWorkNif()->GetShapes())
-			if (!project->IsBaseShape(s))
-				shapeMeshes.push_back(glView->GetMesh(s->GetName()));
-
-		project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
-
-		std::string error = project->Save(project->mFileName, project->mOutfitName, project->mDataDir, project->mBaseFile,
-			project->mGamePath, project->mGameFile, project->mGenWeights, project->mCopyRef);
-
-		if (!error.empty()) {
-			wxLogError(error.c_str());
-			wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
-		}
-
-		EndProgress();
-	}
+void OutfitStudioFrame::OnSaveSliderSet(wxCommandEvent& WXUNUSED(event)) {
+	SaveProject();
 }
 
 void OutfitStudioFrame::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
-	wxDialog dlg;
-	int result = wxID_CANCEL;
-
-	if (!project->GetWorkNif()->IsValid()) {
-		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
-		return;
-	}
-
-	if (HasUnweightedCheck())
-		return;
-
-	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgSaveProject", "wxDialog")) {
-		XRCCTRL(dlg, "sssNameCopy", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnSSSNameCopy, this);
-		XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudioFrame::OnSSSGenWeightsTrue, this);
-		XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudioFrame::OnSSSGenWeightsFalse, this);
-
-		std::string outName;
-		if (!project->mOutfitName.empty())
-			outName = project->mOutfitName.ToUTF8();
-		else if (!project->OutfitName().empty())
-			outName = project->OutfitName();
-		else
-			outName = "New Outfit";
-
-		project->ReplaceForbidden(outName);
-
-		wxString sssName = wxString::FromUTF8(outName);
-
-		XRCCTRL(dlg, "sssName", wxTextCtrl)->SetValue(sssName);
-		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(Config["AppDir"]) + "/SliderSets");
-
-		if (!project->mFileName.empty())
-			XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetPath(project->mFileName);
-		else
-			XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetPath(sssName + ".osp");
-
-		if (!project->mDataDir.empty())
-			XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->SetPath(project->mDataDir);
-		else
-			XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->SetPath(sssName);
-
-		if (!project->mBaseFile.empty())
-			XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->SetPath(project->mBaseFile);
-		else
-			XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->SetPath(sssName + ".nif");
-
-		if (!project->mGamePath.empty())
-			XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->ChangeValue(project->mGamePath);
-		else
-			XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->ChangeValue(wxString::Format("meshes%carmor%c%s", PathSepChar, PathSepChar, sssName));
-
-		if (!project->mGameFile.empty())
-			XRCCTRL(dlg, "sssOutputFileName", wxTextCtrl)->ChangeValue(project->mGameFile);
-		else
-			XRCCTRL(dlg, "sssOutputFileName", wxTextCtrl)->ChangeValue(sssName);
-
-		if (project->mGenWeights) {
-			XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->SetValue(true);
-			XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->SetValue(false);
-		}
-		else {
-			XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->SetValue(false);
-			XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->SetValue(true);
-		}
-
-		if (!project->GetBaseShape()) {
-			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(false);
-			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->Disable();
-		}
-		else
-			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(project->mCopyRef);
-
-		result = dlg.ShowModal();
-	}
-	if (result == wxID_CANCEL)
-		return;
-
-	wxString strFileName;
-	wxString strOutfitName;
-	wxString strDataDir;
-	wxString strBaseFile;
-	wxString strGamePath;
-	wxString strGameFile;
-	bool copyRef;
-	bool genWeights;
-
-	strFileName = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName().GetFullName();
-	if (strFileName.length() <= 4) {
-		wxMessageBox(_("Invalid or no slider set file specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
-		return;
-	}
-
-	if (!strFileName.EndsWith(".osp"))
-		strFileName = strFileName.Append(".osp");
-
-	strOutfitName = XRCCTRL(dlg, "sssName", wxTextCtrl)->GetValue();
-	if (strOutfitName.empty()) {
-		wxMessageBox(_("No outfit name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
-		return;
-	}
-
-	strDataDir = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->GetDirName().GetFullName();
-	if (strDataDir.empty()) {
-		strDataDir = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->GetPath();
-		if (strDataDir.empty()) {
-			wxMessageBox(_("No data folder specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
-			return;
-		}
-	}
-
-	wxFileName relativeFolder(strDataDir);
-	if (!relativeFolder.IsRelative()) {
-		wxString dataFolder(wxString::Format("%s/%s", wxString::FromUTF8(Config["AppDir"]), "ShapeData"));
-		relativeFolder.MakeRelativeTo(dataFolder);
-		strDataDir = relativeFolder.GetFullPath();
-	}
-
-	strBaseFile = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
-	if (strBaseFile.length() <= 4) {
-		wxMessageBox(_("An invalid or no base outfit .nif file name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
-		return;
-	}
-
-	if (!strBaseFile.EndsWith(".nif"))
-		strBaseFile = strBaseFile.Append(".nif");
-
-	strGamePath = XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->GetValue();
-	if (strGamePath.empty()) {
-		wxMessageBox(_("No game file path specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
-		return;
-	}
-
-	strGameFile = XRCCTRL(dlg, "sssOutputFileName", wxTextCtrl)->GetValue();
-	if (strGameFile.empty()) {
-		wxMessageBox(_("No game file name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
-		return;
-	}
-
-	copyRef = XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->GetValue();
-	genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
-
-	wxLogMessage("Saving project '%s'...", strOutfitName);
-	StartProgress(wxString::Format(_("Saving project '%s'..."), strOutfitName));
-	project->ClearBoneScale();
-
-	std::vector<mesh*> shapeMeshes;
-	for (auto &s : project->GetWorkNif()->GetShapes())
-		if (!project->IsBaseShape(s))
-			shapeMeshes.push_back(glView->GetMesh(s->GetName()));
-
-	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
-
-	std::string error = project->Save(strFileName, strOutfitName, strDataDir, strBaseFile,
-		strGamePath, strGameFile, genWeights, copyRef);
-
-	if (error.empty()) {
-		GetMenuBar()->Enable(XRCID("fileSave"), true);
-		RenameProject(strOutfitName.ToUTF8().data());
-	}
-	else {
-		wxLogError(error.c_str());
-		wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
-	}
-
-	EndProgress();
-}
-
-void OutfitStudioFrame::OnBrushPane(wxCollapsiblePaneEvent& event) {
-	if (!event.GetCollapsed())
-		if (!glView->GetBrushMode())
-			event.SetCollapsed(true);
-
-	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
-	leftPanel->Layout();
+	SaveProjectAs();
 }
 
 void OutfitStudioFrame::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
@@ -3509,8 +4031,8 @@ void OutfitStudioFrame::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 	ZeroSliders();
 	if (!activeSlider.empty()) {
 		bEditSlider = false;
-		SliderDisplay* d = sliderDisplays[activeSlider];
-		d->slider->SetFocus();
+		wxSliderPanel* sliderPanel = sliderPanels[activeSlider];
+		sliderPanel->slider->SetFocus();
 		HighlightSlider("");
 		activeSlider.clear();
 	}
@@ -3532,6 +4054,8 @@ void OutfitStudioFrame::OnImportNIF(wxCommandEvent& WXUNUSED(event)) {
 
 	UpdateProgress(60, _("Refreshing GUI..."));
 	project->SetTextures();
+
+	SetPendingChanges();
 	RefreshGUIFromProj();
 
 	UpdateProgress(100, _("Finished."));
@@ -3553,9 +4077,13 @@ void OutfitStudioFrame::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearBoneScale();
 
 	std::vector<mesh*> shapeMeshes;
-	for (auto &s : project->GetWorkNif()->GetShapes())
-		if (!project->IsBaseShape(s))
-			shapeMeshes.push_back(glView->GetMesh(s->GetName()));
+	for (auto &s : project->GetWorkNif()->GetShapes()) {
+		if (!project->IsBaseShape(s)) {
+			mesh* m = glView->GetMesh(s->name.get());
+			if (m)
+				shapeMeshes.push_back(m);
+		}
+	}
 
 	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes);
 	if (error) {
@@ -3584,8 +4112,11 @@ void OutfitStudioFrame::OnExportNIFWithRef(wxCommandEvent& event) {
 	project->ClearBoneScale();
 
 	std::vector<mesh*> shapeMeshes;
-	for (auto &s : project->GetWorkNif()->GetShapeNames())
-		shapeMeshes.push_back(glView->GetMesh(s));
+	for (auto &s : project->GetWorkNif()->GetShapeNames()) {
+		mesh* m = glView->GetMesh(s);
+		if (m)
+			shapeMeshes.push_back(m);
+	}
 
 	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes, true);
 	if (error) {
@@ -3609,7 +4140,7 @@ void OutfitStudioFrame::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
 
 	std::vector<std::string> shapes;
 	for (auto &i : selectedItems)
-		shapes.push_back(i->GetShape()->GetName());
+		shapes.push_back(i->GetShape()->name.get());
 
 	wxLogMessage("Exporting selected shapes to NIF file '%s'.", fileName);
 	project->ClearBoneScale();
@@ -3638,10 +4169,12 @@ void OutfitStudioFrame::OnImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 			ret = project->ImportOBJ(fileName.ToUTF8().data(), project->OutfitName());
 
 		if (ret == 101)
-			wxLogMessage("Updated shape '%s' from OBJ file '%s'.", activeItem->GetShape()->GetName(), fileName);
+			wxLogMessage("Updated shape '%s' from OBJ file '%s'.", activeItem->GetShape()->name.get(), fileName);
 	}
 
 	RefreshGUIFromProj(false);
+	SetPendingChanges();
+
 	wxLogMessage("Imported shape(s) from OBJ.");
 	glView->Render();
 }
@@ -3652,7 +4185,7 @@ void OutfitStudioFrame::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 
 	bool hasSkinTrans = false;
 	for (NiShape *shape : project->GetWorkNif()->GetShapes()) {
-		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
@@ -3685,7 +4218,7 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 	bool hasSkinTrans = false;
 	for (auto &i : selectedItems) {
 		NiShape *shape = i->GetShape();
-		if (!project->GetWorkAnim()->shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
@@ -3715,11 +4248,11 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 	else {
-		wxString fileName = wxFileSelector(_("Export shape as an .obj file"), wxEmptyString, wxString(activeItem->GetShape()->GetName() + ".obj"), ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		wxString fileName = wxFileSelector(_("Export shape as an .obj file"), wxEmptyString, wxString(activeItem->GetShape()->name.get() + ".obj"), ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fileName.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->GetShape()->GetName(), fileName);
+		wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->GetShape()->name.get(), fileName);
 		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes = { activeItem->GetShape() };
@@ -3748,10 +4281,12 @@ void OutfitStudioFrame::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 			ret = project->ImportFBX(fileName.ToUTF8().data(), project->OutfitName());
 
 		if (ret == 101)
-			wxLogMessage("Updated shape '%s' from FBX file '%s'.", activeItem->GetShape()->GetName(), fileName);
+			wxLogMessage("Updated shape '%s' from FBX file '%s'.", activeItem->GetShape()->name.get(), fileName);
 	}
 
 	RefreshGUIFromProj(false);
+	SetPendingChanges();
+
 	wxLogMessage("Imported shape(s) from FBX.");
 	glView->Render();
 }
@@ -3763,6 +4298,19 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (HasUnweightedCheck())
 		return;
 
+	bool hasSkinTrans = false;
+	for (NiShape *shape : project->GetWorkNif()->GetShapes()) {
+		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+			hasSkinTrans = true;
+	}
+	bool transToGlobal = false;
+	if (hasSkinTrans) {
+		int res = wxMessageBox(_("Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?  (This is not recommended.)"), _("Transform to global"), wxYES_NO | wxCANCEL);
+		if (res == wxCANCEL)
+			return;
+		transToGlobal = (res == wxYES);
+	}
+
 	wxString fileName = wxFileSelector(_("Export project as an .fbx file"), wxEmptyString, wxEmptyString, ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.IsEmpty())
 		return;
@@ -3770,7 +4318,7 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Exporting project to OBJ file '%s'...", fileName);
 	project->ClearBoneScale();
 
-	if (!project->ExportFBX(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapes())) {
+	if (!project->ExportFBX(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapes(), transToGlobal)) {
 		wxLogError("Failed to export FBX file '%s'!", fileName);
 		wxMessageBox(_("Failed to export FBX file!"), _("Export Error"), wxICON_ERROR);
 	}
@@ -3780,6 +4328,20 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
+	}
+
+	bool hasSkinTrans = false;
+	for (auto &i : selectedItems) {
+		NiShape *shape = i->GetShape();
+		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+			hasSkinTrans = true;
+	}
+	bool transToGlobal = false;
+	if (hasSkinTrans) {
+		int res = wxMessageBox(_("Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?"), _("Transform to global"), wxYES_NO | wxCANCEL);
+		if (res == wxCANCEL)
+			return;
+		transToGlobal = (res == wxYES);
 	}
 
 	if (selectedItems.size() > 1) {
@@ -3795,21 +4357,21 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &i : selectedItems)
 			shapes.push_back(i->GetShape());
 
-		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes)) {
+		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes, transToGlobal)) {
 			wxLogError("Failed to export FBX file '%s'!", fileName);
 			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
 		}
 	}
 	else {
-		wxString fileName = wxFileSelector(_("Export shape as an .fbx file"), wxEmptyString, wxString(activeItem->GetShape()->GetName() + ".fbx"), ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		wxString fileName = wxFileSelector(_("Export shape as an .fbx file"), wxEmptyString, wxString(activeItem->GetShape()->name.get() + ".fbx"), ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fileName.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting shape '%s' as FBX file to '%s'.", activeItem->GetShape()->GetName(), fileName);
+		wxLogMessage("Exporting shape '%s' as FBX file to '%s'.", activeItem->GetShape()->name.get(), fileName);
 		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes = { activeItem->GetShape() };
-		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes)) {
+		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes, transToGlobal)) {
 			wxLogError("Failed to export FBX file '%s'!", fileName);
 			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
 		}
@@ -3852,7 +4414,7 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		auto verts = tri.GetVertices();
 		auto tris = tri.GetTriangles();
 		auto uvs = tri.GetUV();
-		auto shape = project->CreateNifShapeFromData(shapeName, verts, tris, uvs);
+		auto shape = project->CreateNifShapeFromData(shapeName, &verts, &tris, &uvs);
 		if (!shape)
 			return;
 
@@ -3861,15 +4423,15 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		auto morphs = tri.GetMorphs();
 		for (auto &morph : morphs) {
 			if (!project->ValidSlider(morph.morphName)) {
-				createSliderGUI(morph.morphName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+				createSliderGUI(morph.morphName, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(morph.morphName);
 				ShowSliderEffect(morph.morphName);
 			}
 
-			std::unordered_map<ushort, Vector3> diff;
+			std::unordered_map<uint16_t, Vector3> diff;
 			diff.reserve(morph.vertices.size());
 
-			for (int i = 0; i < morph.vertices.size(); i++)
+			for (size_t i = 0; i < morph.vertices.size(); i++)
 				diff[i] = morph.vertices[i];
 
 			project->SetSliderFromDiff(morph.morphName, shape, diff);
@@ -3879,7 +4441,10 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 	sliderScroll->FitInside();
 	sliderScroll->Thaw();
 
+	SetPendingChanges();
+
 	ApplySliders();
+	DoFilterSliders();
 }
 
 void OutfitStudioFrame::OnExportTRIHead(wxCommandEvent& WXUNUSED(event)) {
@@ -3898,9 +4463,9 @@ void OutfitStudioFrame::OnExportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
-		std::string fn = dir + PathSepStr + shape->GetName() + ".tri";
+		std::string fn = dir + PathSepStr + shape->name.get() + ".tri";
 
-		wxLogMessage("Exporting TRI (head) morphs of '%s' to '%s'...", shape->GetName(), fn);
+		wxLogMessage("Exporting TRI (head) morphs of '%s' to '%s'...", shape->name.get(), fn);
 		if (!project->WriteHeadTRI(shape, fn)) {
 			wxLogError("Failed to export TRI file to '%s'!", fn);
 			wxMessageBox(_("Failed to export TRI file!"), _("Error"), wxICON_ERROR);
@@ -3935,14 +4500,16 @@ void OutfitStudioFrame::OnImportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 	if (fileName.IsEmpty())
 		return;
 
-	auto physicsBlock = new BSClothExtraData();
+	auto physicsBlock = std::make_unique<BSClothExtraData>();
 	if (!physicsBlock->FromHKX(fileName.ToUTF8().data())) {
 		wxLogError("Failed to import physics data file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to import physics data file '%s'!"), fileName), _("Import Error"), wxICON_ERROR);
 	}
 
 	auto& physicsData = project->GetClothData();
-	physicsData[fileName.ToUTF8().data()] = physicsBlock;
+	physicsData[fileName.ToUTF8().data()] = std::move(physicsBlock);
+
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
@@ -3985,7 +4552,7 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	char thename[256];
 	snprintf(thename, 256, "%s", namebase.c_str());
 	int count = 1;
-	while (sliderDisplays.find(thename) != sliderDisplays.end())
+	while (sliderPanels.find(thename) != sliderPanels.end())
 		snprintf(thename, 256, "%s%d", namebase.c_str(), count++);
 
 	std::string finalName{wxGetTextFromUser(_("Create a conversion slider for the current slider settings with the following name: "), _("Create New Conversion Slider"), thename, this).ToUTF8()};
@@ -3999,7 +4566,10 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 
 	auto baseShape = project->GetBaseShape();
 	if (baseShape) {
-		project->UpdateShapeFromMesh(baseShape, glView->GetMesh(baseShape->GetName()));
+		mesh* m = glView->GetMesh(baseShape->name.get());
+		if (m)
+			project->UpdateShapeFromMesh(baseShape, m);
+
 		project->NegateSlider(finalName, baseShape);
 	}
 
@@ -4014,6 +4584,7 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	glView->GetUndoHistory()->ClearHistory();
 
 	activeSlider.clear();
+	lastActiveSlider.clear();
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
@@ -4022,10 +4593,41 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnSelectSliders(wxCommandEvent& event) {
 	bool checked = event.IsChecked();
-	for (auto &sd : sliderDisplays)
-		ShowSliderEffect(sd.first, checked);
+	for (auto& sliderPanel : sliderPanels)
+		ShowSliderEffect(sliderPanel.first, checked);
 
 	ApplySliders();
+}
+
+void OutfitStudioFrame::OnSliderFilterChanged(wxCommandEvent& WXUNUSED(event)) {
+	DoFilterSliders();
+}
+
+void OutfitStudioFrame::DoFilterSliders() {
+	wxString filterStr = sliderFilter->GetValue();
+	filterStr.MakeLower();
+
+	for (auto& sliderPanel : sliderPanels) {
+		if (!sliderPanel.second)
+			continue;
+
+		// Filter slider by name
+		wxString sliderStr = wxString::FromUTF8(sliderPanel.first);
+		if (sliderStr.Lower().Contains(filterStr)) {
+			if (!sliderPanel.second->IsShown())
+				sliderPanel.second->Show();
+		}
+		else {
+			if (sliderPanel.second->IsShown())
+				sliderPanel.second->Hide();
+		}
+	}
+
+	sliderScroll->FitInside();
+}
+
+void OutfitStudioFrame::OnBonesFilterChanged(wxCommandEvent& WXUNUSED(event)) {
+	UpdateBoneTree();
 }
 
 void OutfitStudioFrame::OnFixedWeight(wxCommandEvent& event) {
@@ -4135,7 +4737,7 @@ void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 		if (outfitShapes->GetItemParent(i).IsOk()) {
 			auto data = (ShapeItemData*)outfitShapes->GetItemData(i);
 			if (data) {
-				shapeNames.push_back(data->GetShape()->GetName());
+				shapeNames.push_back(data->GetShape()->name.get());
 				selectedItems.push_back(data);
 
 				if (!activeItem)
@@ -4148,7 +4750,7 @@ void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 			if (subitem.IsOk()) {
 				auto data = (ShapeItemData*)outfitShapes->GetItemData(subitem);
 				if (data) {
-					shapeNames.push_back(data->GetShape()->GetName());
+					shapeNames.push_back(data->GetShape()->name.get());
 					selectedItems.push_back(data);
 
 					if (!activeItem)
@@ -4161,11 +4763,11 @@ void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 	glView->SetActiveShapes(shapeNames);
 
 	if (activeItem)
-		glView->SetSelectedShape(activeItem->GetShape()->GetName());
+		glView->SetSelectedShape(activeItem->GetShape()->name.get());
 	else
 		glView->SetSelectedShape("");
 
-	UpdateActiveShapeUI();
+	UpdateActiveShape();
 	glView->GetUndoHistory()->ClearHistory();
 }
 
@@ -4184,13 +4786,17 @@ void OutfitStudioFrame::ToggleBoneState(wxTreeItemId item) {
 	if (!item.IsOk())
 		return;
 
+	std::string text = outfitBones->GetItemText(item).ToStdString();
 	int state = outfitBones->GetItemState(item);
+
 	switch (state) {
 	case 0:
 		outfitBones->SetItemState(item, 1);
+		lastNormalizeBones.insert(text);
 		break;
 	default:
 		outfitBones->SetItemState(item, 0);
+		lastNormalizeBones.erase(text);
 		break;
 	}
 }
@@ -4201,25 +4807,25 @@ void OutfitStudioFrame::OnBoneStateToggle(wxTreeEvent& event) {
 }
 
 void OutfitStudioFrame::RefreshGUIWeightColors() {
-	// Clear vcolors of all shapes
+	// Clear weight color of all shapes
 	for (auto &s : project->GetWorkNif()->GetShapeNames()) {
 		mesh* m = glView->GetMesh(s);
 		if (m)
-			m->ColorChannelFill(1, 0.0f);
+			m->WeightFill(0.0f);
 	}
 
 	if (!activeBone.empty()) {
 		// Show weights of selected shapes without reference
 		for (auto &s : selectedItems) {
 			if (!project->IsBaseShape(s->GetShape())) {
-				auto weights = project->GetWorkAnim()->GetWeightsPtr(s->GetShape()->GetName(), activeBone);
+				auto weights = project->GetWorkAnim()->GetWeightsPtr(s->GetShape()->name.get(), activeBone);
 
-				mesh* m = glView->GetMesh(s->GetShape()->GetName());
+				mesh* m = glView->GetMesh(s->GetShape()->name.get());
 				if (m) {
-					m->ColorChannelFill(1, 0.0f);
+					m->WeightFill(0.0f);
 					if (weights) {
 						for (auto &bw : *weights)
-							m->vcolors[bw.first].y = bw.second;
+							m->weight[bw.first] = bw.second;
 					}
 				}
 			}
@@ -4228,14 +4834,14 @@ void OutfitStudioFrame::RefreshGUIWeightColors() {
 		// Always show weights of reference shape
 		NiShape* baseShape = project->GetBaseShape();
 		if (baseShape) {
-			auto weights = project->GetWorkAnim()->GetWeightsPtr(baseShape->GetName(), activeBone);
+			auto weights = project->GetWorkAnim()->GetWeightsPtr(baseShape->name.get(), activeBone);
 
-			mesh* m = glView->GetMesh(baseShape->GetName());
+			mesh* m = glView->GetMesh(baseShape->name.get());
 			if (m) {
-				m->ColorChannelFill(1, 0.0f);
+				m->WeightFill(0.0f);
 				if (weights) {
 					for (auto &bw : *weights)
-						m->vcolors[bw.first].y = bw.second;
+						m->weight[bw.first] = bw.second;
 				}
 			}
 		}
@@ -4245,7 +4851,9 @@ void OutfitStudioFrame::RefreshGUIWeightColors() {
 }
 
 void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
-	if (recursingUI) return;
+	if (recursingUI)
+		return;
+
 	project->ClearBoneScale();
 	boneScale->SetValue(0);
 
@@ -4253,18 +4861,37 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	if (!activeItem || !item.IsOk())
 		return;
 
+	wxArrayTreeItemIds selected;
+	outfitBones->GetSelections(selected);
+
 	activeBone.clear();
+	std::string selBone = outfitBones->GetItemText(item);
 
 	if (!outfitBones->IsSelected(item)) {
-		wxArrayTreeItemIds selected;
-		outfitBones->GetSelections(selected);
-
-		if (!selected.IsEmpty())
-			activeBone = outfitBones->GetItemText(selected.front());
+		if (!selected.IsEmpty()) {
+			std::string frontBone = outfitBones->GetItemText(selected.front());
+			activeBone = frontBone;
+		}
 	}
-	else
-		activeBone = outfitBones->GetItemText(item);
+	else {
+		activeBone = selBone;
+		if (selected.GetCount() == 1)
+			lastSelectedBones.clear();
+	}
 
+	wxTreeItemIdValue cookie;
+	wxTreeItemId itemTree = outfitBones->GetFirstChild(bonesRoot, cookie);
+	while (itemTree.IsOk()) {
+		std::string boneName = outfitBones->GetItemText(itemTree).ToStdString();
+		if (outfitBones->IsSelected(itemTree))
+			lastSelectedBones.insert(boneName);
+		else
+			lastSelectedBones.erase(boneName);
+
+		itemTree = outfitBones->GetNextChild(bonesRoot, cookie);
+	}
+
+	glView->UpdateNodeColors();
 	RefreshGUIWeightColors();
 	CalcAutoXMirrorBone();
 }
@@ -4325,7 +4952,7 @@ void OutfitStudioFrame::OnShapeDrop(wxTreeEvent& event) {
 		dropItem = 0;
 	
 	// Duplicate item
-	wxTreeItemId movedItem = outfitShapes->InsertItem(outfitRoot, dropItem, activeItem->GetShape()->GetName());
+	wxTreeItemId movedItem = outfitShapes->InsertItem(outfitRoot, dropItem, activeItem->GetShape()->name.get());
 	if (!movedItem.IsOk())
 		return;
 
@@ -4369,12 +4996,6 @@ void OutfitStudioFrame::OnBoneTreeContext(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnSegmentSelect(wxTreeEvent& event) {
 	ShowSegment(event.GetItem());
-
-	wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
-	segmentApply->Enable();
-
-	wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
-	segmentReset->Enable();
 }
 
 void OutfitStudioFrame::OnSegmentContext(wxTreeEvent& event) {
@@ -4430,7 +5051,7 @@ void OutfitStudioFrame::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemId newItem;
 	if (!activeSegment.IsOk() || segmentTree->GetChildrenCount(segmentRoot) <= 0) {
 		// The new segment is the only partition: assign all triangles.
-		for (int i = 0; i < triSParts.size(); ++i)
+		for (size_t i = 0; i < triSParts.size(); ++i)
 			triSParts[i] = newPartID;
 
 		newItem = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(newPartID));
@@ -4444,6 +5065,7 @@ void OutfitStudioFrame::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
@@ -4456,7 +5078,7 @@ void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
 			// the segment's triangles to it.
 			SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
 			if (segmentData)
-				for (int i = 0; i < triSParts.size(); ++i)
+				for (size_t i = 0; i < triSParts.size(); ++i)
 					if (triSParts[i] == segmentData->partID)
 						triSParts[i] = newPartID;
 		}
@@ -4472,6 +5094,7 @@ void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
@@ -4508,8 +5131,8 @@ void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		// Assign triangles from old partitions to new partition.
-		for (int i = 0; i < triSParts.size(); ++i)
-			if (triSParts[i] >= 0 && triSParts[i] < oldPartIDs.size() && oldPartIDs[triSParts[i]])
+		for (size_t i = 0; i < triSParts.size(); ++i)
+			if (triSParts[i] >= 0 && triSParts[i] < static_cast<int>(oldPartIDs.size()) && oldPartIDs[triSParts[i]])
 				triSParts[i] = newPartID;
 
 		segmentTree->UnselectAll();
@@ -4521,6 +5144,7 @@ void OutfitStudioFrame::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
@@ -4551,7 +5175,7 @@ void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		// Assign triangles to new partition.
-		for (int i = 0; i < triSParts.size(); ++i)
+		for (size_t i = 0; i < triSParts.size(); ++i)
 			if (triSParts[i] == oldPartID)
 				triSParts[i] = newPartID;
 
@@ -4561,6 +5185,7 @@ void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdateSegmentNames();
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnSegmentSlotChanged(wxCommandEvent& event) {
@@ -4583,6 +5208,7 @@ void OutfitStudioFrame::OnSegmentSlotChanged(wxCommandEvent& event) {
 			}
 
 			UpdateSegmentNames();
+			segmentTabButton->SetPendingChanges();
 		}
 	}
 }
@@ -4602,13 +5228,16 @@ void OutfitStudioFrame::OnSegmentTypeChanged(wxCommandEvent& event) {
 
 			subSegmentData->material = type;
 			UpdateSegmentNames();
+			segmentTabButton->SetPendingChanges();
 		}
 	}
 }
 
-void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& event) {
-	((wxButton*)event.GetEventObject())->Enable(false);
+void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& WXUNUSED(event)) {
+	ApplySegments();
+}
 
+void OutfitStudioFrame::ApplySegments() {
 	NifSegmentationInfo inf;
 
 	wxTreeItemIdValue cookie;
@@ -4653,11 +5282,29 @@ void OutfitStudioFrame::OnSegmentApply(wxCommandEvent& event) {
 	MeshFromProj(activeItem->GetShape());
 
 	CreateSegmentTree(activeItem->GetShape());
+	SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnSegmentReset(wxCommandEvent& event) {
-	((wxButton*)event.GetEventObject())->Enable(false);
-	CreateSegmentTree(activeItem->GetShape());
+void OutfitStudioFrame::OnSegmentReset(wxCommandEvent& WXUNUSED(event)) {
+	ResetSegments();
+}
+
+void OutfitStudioFrame::ResetSegments() {
+	if (activeItem)
+		CreateSegmentTree(activeItem->GetShape());
+	else
+		CreateSegmentTree(nullptr);
+}
+
+void OutfitStudioFrame::OnSegmentEditSSF(wxCommandEvent& WXUNUSED(event)) {
+	auto segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+
+	wxString result = wxGetTextFromUser(_("Please enter an SSF file path."), _("SSF File"), segmentSSF->GetValue());
+	if (result.empty())
+		return;
+
+	segmentSSF->ChangeValue(result);
+	segmentTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
@@ -4666,12 +5313,14 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 		segmentTree->DeleteChildren(segmentRoot);
 	}
 
+	segmentTabButton->SetPendingChanges(false);
+
 	NifSegmentationInfo inf;
 	if (project->GetWorkNif()->GetShapeSegments(shape, inf, triSParts)) {
-		for (int i = 0; i < inf.segs.size(); i++) {
+		for (size_t i = 0; i < inf.segs.size(); i++) {
 			wxTreeItemId segID = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(inf.segs[i].partID));
 			if (segID.IsOk()) {
-				for (int j = 0; j < inf.segs[i].subs.size(); j++) {
+				for (size_t j = 0; j < inf.segs[i].subs.size(); j++) {
 					NifSubSegmentInfo &sub = inf.segs[i].subs[j];
 					segmentTree->AppendItem(segID, "Sub Segment", -1, -1,
 						new SubSegmentItemData(sub.partID, sub.userSlotID, sub.material, sub.extraData));
@@ -4696,7 +5345,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 	if (!activeItem || !glView->GetSegmentMode())
 		return;
 
-	std::unordered_map<ushort, float> mask;
+	std::unordered_map<uint16_t, float> mask;
 	wxChoice* segmentType = nullptr;
 	wxChoice* segmentSlot = nullptr;
 	if (!updateFromMask) {
@@ -4734,7 +5383,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 
 		if (updateFromMask) {
 			// Add triangles from mask
-			for (int t = 0; t < tris.size(); t++) {
+			for (size_t t = 0; t < tris.size(); t++) {
 				if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end())
 					triSParts[t] = subSegmentData->partID;
 			}
@@ -4743,10 +5392,10 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 			if (subSegmentData->material != 0xFFFFFFFF) {
 				bool typeFound = false;
 				auto typeHash = wxString::Format("0x%08x", subSegmentData->material);
-				for (int i = 0; i < segmentType->GetCount(); i++) {
+				for (uint32_t i = 0; i < segmentType->GetCount(); i++) {
 					auto typeString = segmentType->GetString(i);
 					if (typeString.Contains(typeHash)) {
-						segmentType->SetSelection(i);
+						segmentType->SetSelection((int)i);
 						typeFound = true;
 						break;
 					}
@@ -4758,11 +5407,11 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 
 			segmentType->Enable();
 
-			for (int i = 0; i < segmentSlot->GetCount(); i++) {
+			for (uint32_t i = 0; i < segmentSlot->GetCount(); i++) {
 				wxString slotPrefix = wxString::Format("%d - ", subSegmentData->userSlotID);
 				auto slotString = segmentSlot->GetString(i);
 				if (slotString.StartsWith(slotPrefix)) {
-					segmentSlot->SetSelection(i);
+					segmentSlot->SetSelection((int)i);
 					break;
 				}
 			}
@@ -4791,7 +5440,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 
 			if (updateFromMask) {
 				// Add triangles from mask
-				for (int t = 0; t < tris.size(); t++) {
+				for (size_t t = 0; t < tris.size(); t++) {
 					if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end() && (triSParts[t] < 0 || !selPartIDs[triSParts[t]]))
 						triSParts[t] = destPartID;
 				}
@@ -4800,7 +5449,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 	}
 
 	// Display segmentation colors depending on what is selected
-	mesh* m = glView->GetMesh(activeItem->GetShape()->GetName());
+	mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triSParts);
 
@@ -4820,14 +5469,15 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 		}
 
 		// Set mask
-		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+		m->MaskFill(0.0f);
 
-		for (int i = 0; i < triSParts.size(); ++i) {
+		for (size_t i = 0; i < triSParts.size(); ++i) {
 			if (triSParts[i] < 0 || !selPartIDs[triSParts[i]])
 				continue;
-			m->vcolors[tris[i].p1].x = 1.0f;
-			m->vcolors[tris[i].p2].x = 1.0f;
-			m->vcolors[tris[i].p3].x = 1.0f;
+
+			m->mask[tris[i].p1] = 1.0f;
+			m->mask[tris[i].p2] = 1.0f;
+			m->mask[tris[i].p3] = 1.0f;
 		}
 	}
 
@@ -4858,7 +5508,7 @@ void OutfitStudioFrame::UpdateSegmentNames() {
 				if (subSegmentData->material != 0xFFFFFFFF) {
 					bool typeFound = false;
 					auto typeHash = wxString::Format("0x%08x", subSegmentData->material);
-					for (int i = 0; i < segmentType->GetCount(); i++) {
+					for (uint32_t i = 0; i < segmentType->GetCount(); i++) {
 						auto typeString = segmentType->GetString(i);
 						if (typeString.Contains(typeHash)) {
 							subSegmentName = typeString.BeforeLast('|');
@@ -4874,7 +5524,7 @@ void OutfitStudioFrame::UpdateSegmentNames() {
 				if (subSegmentData->userSlotID >= 30) {
 					wxString slotPrefix = wxString::Format("%d - ", subSegmentData->userSlotID);
 
-					for (int i = 0; i < segmentSlot->GetCount(); i++) {
+					for (uint32_t i = 0; i < segmentSlot->GetCount(); i++) {
 						auto slotString = segmentSlot->GetString(i);
 						if (slotString.StartsWith(slotPrefix)) {
 							subSegmentSlot = wxString::Format("(Slot %s)", slotString);
@@ -4897,12 +5547,6 @@ void OutfitStudioFrame::UpdateSegmentNames() {
 
 void OutfitStudioFrame::OnPartitionSelect(wxTreeEvent& event) {
 	ShowPartition(event.GetItem());
-
-	wxButton* partitionApply = (wxButton*)FindWindowByName("partitionApply");
-	partitionApply->Enable();
-
-	wxButton* partitionReset = (wxButton*)FindWindowByName("partitionReset");
-	partitionReset->Enable();
 }
 
 void OutfitStudioFrame::OnPartitionContext(wxTreeEvent& event) {
@@ -4969,6 +5613,7 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdatePartitionNames();
+	partitionTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
@@ -4984,7 +5629,7 @@ void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
 			if (siblingData)
 				newIndex = siblingData->index;
 		}
-		for (int i = 0; i < triParts.size(); ++i)
+		for (size_t i = 0; i < triParts.size(); ++i)
 			if (triParts[i] == partitionData->index)
 				triParts[i] = newIndex;
 
@@ -5002,6 +5647,7 @@ void OutfitStudioFrame::OnDeletePartition(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	UpdatePartitionNames();
+	partitionTabButton->SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnPartitionTypeChanged(wxCommandEvent& event) {
@@ -5017,16 +5663,19 @@ void OutfitStudioFrame::OnPartitionTypeChanged(wxCommandEvent& event) {
 	}
 
 	UpdatePartitionNames();
+	partitionTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
-	((wxButton*)event.GetEventObject())->Enable(false);
+void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& WXUNUSED(event)) {
+	ApplyPartitions();
+}
 
+void OutfitStudioFrame::ApplyPartitions() {
 	auto shape = activeItem->GetShape();
 	if (!shape)
 		return;
 
-	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+	NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 	std::vector<bool> delPartFlags;
 
 	wxTreeItemIdValue cookie;
@@ -5048,20 +5697,28 @@ void OutfitStudioFrame::OnPartitionApply(wxCommandEvent& event) {
 		child = partitionTree->GetNextChild(partitionRoot, cookie);
 	}
 
-	std::vector<int> delPartInds;
-	for (int pi = 0; pi < delPartFlags.size(); ++pi)
+	std::vector<uint32_t> delPartInds;
+	for (uint32_t pi = 0; pi < delPartFlags.size(); ++pi)
 		if (delPartFlags[pi])
 			delPartInds.push_back(pi);
 
 	project->GetWorkNif()->SetShapePartitions(shape, partitionInfo, triParts);
 	if (!delPartInds.empty())
 		project->GetWorkNif()->DeletePartitions(shape, delPartInds);
+
 	CreatePartitionTree(shape);
+	SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnPartitionReset(wxCommandEvent& event) {
-	((wxButton*)event.GetEventObject())->Enable(false);
-	CreatePartitionTree(activeItem->GetShape());
+void OutfitStudioFrame::OnPartitionReset(wxCommandEvent& WXUNUSED(event)) {
+	ResetPartitions();
+}
+
+void OutfitStudioFrame::ResetPartitions() {
+	if (activeItem)
+		CreatePartitionTree(activeItem->GetShape());
+	else
+		CreatePartitionTree(nullptr);
 }
 
 void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
@@ -5070,7 +5727,9 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 		partitionTree->DeleteChildren(partitionRoot);
 	}
 
-	std::vector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+	partitionTabButton->SetPendingChanges(false);
+
+	NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {
 		for (int i = 0; i < partitionInfo.size(); i++) {
 			partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(i, partitionInfo[i].partID));
@@ -5093,7 +5752,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 	if (!shape)
 		return;
 
-	std::unordered_map<ushort, float> mask;
+	std::unordered_map<uint16_t, float> mask;
 	wxChoice* partitionType = nullptr;
 	wxArrayString partitionStrings;
 	if (!updateFromMask) {
@@ -5130,7 +5789,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 		}
 		else {
 			// Add triangles from mask
-			for (int triInd = 0; triInd < allTris.size(); ++triInd) {
+			for (size_t triInd = 0; triInd < allTris.size(); ++triInd) {
 				const Triangle &tri = allTris[triInd];
 				if (mask.find(tri.p1) != mask.end() && mask.find(tri.p2) != mask.end() && mask.find(tri.p3) != mask.end())
 					triParts[triInd] = partitionData->index;
@@ -5139,7 +5798,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 	}
 
 	// Display partition colors depending on what is selected
-	mesh* m = glView->GetMesh(activeItem->GetShape()->GetName());
+	mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triParts);
 
@@ -5162,16 +5821,17 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 		}
 
 		// Set mask
-		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+		m->MaskFill(0.0f);
 
 		if (partitionData) {
-			for (int i = 0; i < allTris.size(); ++i) {
+			for (size_t i = 0; i < allTris.size(); ++i) {
 				if (triParts[i] != partitionData->index)
 					continue;
+
 				const Triangle &t = allTris[i];
-				m->vcolors[t.p1].x = 1.0f;
-				m->vcolors[t.p2].x = 1.0f;
-				m->vcolors[t.p3].x = 1.0f;
+				m->mask[t.p1] = 1.0f;
+				m->mask[t.p2] = 1.0f;
+				m->mask[t.p3] = 1.0f;
 			}
 		}
 	}
@@ -5207,12 +5867,12 @@ void OutfitStudioFrame::UpdatePartitionNames() {
 }
 
 void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int> &tp) {
-	int nTris = tp.size();
+	uint32_t nTris = static_cast<uint32_t>(tp.size());
 
 	// Sort triangles (via triInds) by partition number, negative partition
 	// numbers at the end.
-	std::vector<int> triInds(nTris);
-	for (int ti = 0; ti < nTris; ++ti)
+	std::vector<uint32_t> triInds(nTris);
+	for (uint32_t ti = 0; ti < nTris; ++ti)
 		triInds[ti] = ti;
 
 	std::stable_sort(triInds.begin(), triInds.end(), [&tp](int i, int j) {
@@ -5220,15 +5880,15 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 	});
 
 	// Re-order triangles
-	for (int ti = 0; ti < nTris; ++ti)
+	for (uint32_t ti = 0; ti < nTris; ++ti)
 		m->renderTris[ti] = m->tris[triInds[ti]];
 
 	// Find first triangle of each sub-mesh.
 	m->subMeshes.clear();
 	m->subMeshesColor.clear();
 
-	for (int ti = 0; ti < nTris; ++ti) {
-		while (tp[triInds[ti]] >= m->subMeshes.size())
+	for (uint32_t ti = 0; ti < nTris; ++ti) {
+		while (tp[triInds[ti]] >= static_cast<int>(m->subMeshes.size()))
 			m->subMeshes.emplace_back(ti, 0);
 
 		if (tp[triInds[ti]] < 0) {
@@ -5239,7 +5899,7 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh *m, const std::vector<int
 
 	// Calculate size of each sub-mesh.
 	m->subMeshes.emplace_back(nTris, 0);
-	for (int si = 0; si + 1 < m->subMeshes.size(); ++si)
+	for (size_t si = 0; si + 1 < m->subMeshes.size(); ++si)
 		m->subMeshes[si].second = m->subMeshes[si + 1].first - m->subMeshes[si].first;
 
 	m->subMeshes.pop_back();
@@ -5263,10 +5923,10 @@ void OutfitStudioFrame::SetNoSubMeshes() {
 	if (!activeItem)
 		return;
 
-	SetNoSubMeshes(glView->GetMesh(activeItem->GetShape()->GetName()));
+	SetNoSubMeshes(glView->GetMesh(activeItem->GetShape()->name.get()));
 }
 
-void OutfitStudioFrame::OnCheckBox(wxCommandEvent& event) {
+void OutfitStudioFrame::OnSliderCheckBox(wxCommandEvent& event) {
 	wxCheckBox* box = (wxCheckBox*)event.GetEventObject();
 	if (!box)
 		return;
@@ -5313,6 +5973,17 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		SelectTool(ToolID::SplitEdge);
 	else
 		SelectTool(ToolID::Any);
+
+	// Remember last standard tool used in regular tabs
+	if (meshTabButton->GetCheck() || lightsTabButton->GetCheck()) {
+		auto activeBrush = glView->GetActiveBrush();
+		if (activeBrush) {
+			int brushType = activeBrush->Type();
+			if (brushType == TBT_STANDARD || brushType == TBT_MASK || brushType == TBT_MOVE) {
+				glView->SetLastTool(glView->GetActiveTool());
+			}
+		}
+	}
 }
 
 void OutfitStudioFrame::OnSetView(wxCommandEvent& event) {
@@ -5330,13 +6001,53 @@ void OutfitStudioFrame::OnSetView(wxCommandEvent& event) {
 
 void OutfitStudioFrame::OnTogglePerspective(wxCommandEvent& event) {
 	bool enabled = event.IsChecked();
-	GetMenuBar()->Check(event.GetId(), enabled);
+	menuBar->Check(event.GetId(), enabled);
 	toolBarV->ToggleTool(event.GetId(), enabled);
 	glView->SetPerspective(enabled);
 }
 
-void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& event) {
-	wxSlider* fovSlider = (wxSlider*)event.GetEventObject();
+void OutfitStudioFrame::OnToggleRotationCenter(wxCommandEvent& WXUNUSED(event)) {
+	if (glView->rotationCenterMode != RotationCenterMode::Zero) {
+		glView->rotationCenterMode = RotationCenterMode::Zero;
+		glView->gls.camRotOffset.Zero();
+	}
+	else {
+		glView->rotationCenterMode = RotationCenterMode::MeshCenter;
+		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
+	}
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnShowNodes(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+	glView->ShowNodes(enabled);
+}
+
+void OutfitStudioFrame::OnShowBones(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+	glView->ShowBones(enabled);
+}
+
+void OutfitStudioFrame::OnShowFloor(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	menuBar->Check(event.GetId(), enabled);
+	toolBarV->ToggleTool(event.GetId(), enabled);
+	glView->ShowFloor(enabled);
+}
+
+void OutfitStudioFrame::OnBrushSettings(wxCommandEvent& WXUNUSED(event)) {
+	if (brushSettingsPopupTransient && brushSettingsPopupTransient->IsShown())
+		CloseBrushSettings();
+	else
+		PopupBrushSettings(brushSettings);
+}
+
+void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& WXUNUSED(event)) {
 	int fieldOfView = fovSlider->GetValue();
 
 	wxStaticText* fovLabel = (wxStaticText*)toolBarH->FindWindowByName("fovLabel");
@@ -5409,10 +6120,12 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 		return;
 	}
 
+	wxString buttonNameId = buttonName.AfterLast('|');
+
 	float scale = 0.0f;
-	if (buttonName.AfterLast('|') == "btnMinus")
+	if (buttonNameId == "btnMinus")
 		scale = 0.99f;
-	else if (buttonName.AfterLast('|') == "btnPlus")
+	else if (buttonNameId == "btnPlus")
 		scale = 1.01f;
 
 	if (scale != 0.0f) {
@@ -5421,8 +6134,13 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 			std::vector<Vector3> verts;
 			project->ScaleMorphResult(shape, activeSlider, scale);
 			project->GetLiveVerts(shape, verts);
-			glView->UpdateMeshVertices(shape->GetName(), &verts);
+			glView->UpdateMeshVertices(shape->name.get(), &verts);
 		}
+		return;
+	}
+
+	if (buttonNameId == "btnSliderProp") {
+		ShowSliderProperties(clickedName);
 		return;
 	}
 
@@ -5450,29 +6168,57 @@ void OutfitStudioFrame::OnReadoutChange(wxCommandEvent& event) {
 	if (!val.ToDouble(&v))
 		return;
 
-	SliderDisplay* d = sliderDisplays[sliderName];
-	d->slider->SetValue(v);
+	wxSliderPanel* sliderPanel = sliderPanels[sliderName];
+	sliderPanel->slider->SetValue(v);
 
-	int index = project->SliderIndexFromName(sliderName);
-	project->SliderValue(index) = v / 100.0f;
+	project->SliderValue(sliderName) = v / 100.0f;
 
 	ApplySliders();
+}
+
+void OutfitStudioFrame::OnBoneScaleSlider(wxCommandEvent& event) {
+	if (!activeBone.empty())
+		project->ApplyBoneScale(activeBone, event.GetInt(), true);
+
+	glView->Render();
 }
 
 void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 
-	if (id != XRCID("meshTabButton")) {
-		wxCollapsiblePane* masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
-		masksPane->Hide();
+	if (currentTabButton && currentTabButton->HasPendingChanges()) {
+		wxMessageDialog dlg(this, _("Your changes were not applied yet. Do you want to apply or reset them?"), _("Pending Changes"), wxYES_NO | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetYesNoCancelLabels(_("Apply"), _("Reset"), _("Cancel"));
+
+		int res = dlg.ShowModal();
+		if (res == wxID_YES) {
+			if (currentTabButton == partitionTabButton)
+				ApplyPartitions();
+			else if (currentTabButton == segmentTabButton)
+				ApplySegments();
+		}
+		else if (res == wxID_NO) {
+			if (currentTabButton == partitionTabButton)
+				ResetPartitions();
+			else if (currentTabButton == segmentTabButton)
+				ResetSegments();
+		}
+		else {
+			event.Skip();
+			return;
+		}
 	}
 
-	if (id != XRCID("segmentTabButton")) {
+	if (id != meshTabButton->GetId())
+		masksPane->Hide();
+
+	if (id != segmentTabButton->GetId()) {
 		wxStaticText* segmentTypeLabel = (wxStaticText*)FindWindowByName("segmentTypeLabel");
 		wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
 		wxStaticText* segmentSlotLabel = (wxStaticText*)FindWindowByName("segmentSlotLabel");
 		wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
 		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
+		wxButton* segmentSSFEdit = (wxButton*)FindWindowByName("segmentSSFEdit");
 		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
 		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
 		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
@@ -5482,30 +6228,31 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		segmentSlotLabel->Show(false);
 		segmentSlot->Show(false);
 		segmentSSFLabel->Show(false);
+		segmentSSFEdit->Show(false);
 		segmentSSF->Show(false);
 		segmentApply->Show(false);
 		segmentReset->Show(false);
 
 		if (glView->GetSegmentMode())
-			glView->ClearActiveColors();
+			glView->ClearActiveMask();
 
 		glView->SetSegmentMode(false);
 		glView->SetMaskVisible();
 		glView->SetGlobalBrushCollision();
 
-		GetMenuBar()->Check(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Enable(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Enable(XRCID("btnSelect"), true);
-		GetMenuBar()->Enable(XRCID("btnClearMask"), true);
-		GetMenuBar()->Enable(XRCID("btnInvertMask"), true);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
+		menuBar->Check(XRCID("btnBrushCollision"), true);
+		menuBar->Enable(XRCID("btnBrushCollision"), true);
+		menuBar->Enable(XRCID("btnSelect"), true);
+		menuBar->Enable(XRCID("btnClearMask"), true);
+		menuBar->Enable(XRCID("btnInvertMask"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
 
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
 		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
 		toolBarH->EnableTool(XRCID("btnSelect"), true);
 	}
 
-	if (id != XRCID("partitionTabButton")) {
+	if (id != partitionTabButton->GetId()) {
 		wxStaticText* partitionTypeLabel = (wxStaticText*)FindWindowByName("partitionTypeLabel");
 		wxChoice* partitionType = (wxChoice*)FindWindowByName("partitionType");
 		wxButton* partitionApply = (wxButton*)FindWindowByName("partitionApply");
@@ -5517,39 +6264,43 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionReset->Show(false);
 
 		if (glView->GetSegmentMode())
-			glView->ClearActiveColors();
+			glView->ClearActiveMask();
 
 		glView->SetSegmentMode(false);
 		glView->SetMaskVisible();
 		glView->SetGlobalBrushCollision();
 
-		GetMenuBar()->Check(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Enable(XRCID("btnBrushCollision"), true);
-		GetMenuBar()->Enable(XRCID("btnSelect"), true);
-		GetMenuBar()->Enable(XRCID("btnClearMask"), true);
-		GetMenuBar()->Enable(XRCID("btnInvertMask"), true);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
+		menuBar->Check(XRCID("btnBrushCollision"), true);
+		menuBar->Enable(XRCID("btnBrushCollision"), true);
+		menuBar->Enable(XRCID("btnSelect"), true);
+		menuBar->Enable(XRCID("btnClearMask"), true);
+		menuBar->Enable(XRCID("btnInvertMask"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
 
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
 		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
 		toolBarH->EnableTool(XRCID("btnSelect"), true);
 	}
 
-	if (id != XRCID("boneTabButton")) {
+	if (id != boneTabButton->GetId()) {
 		boneScale->Show(false);
 		cXMirrorBone->Show(false);
 
+		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
+		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
-		wxCollapsiblePane* posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
 
+		totalBoneCountLabel->Show(false);
+		selectedBoneCountLabel->Show(false);
 		boneScaleLabel->Show(false);
 		cbFixedWeight->Show(false);
 		cbNormalizeWeights->Show(false);
 		xMirrorBoneLabel->Show(false);
 		posePane->Show(false);
+		bonesFilter->GetParent()->Show(false);
 
 		project->ClearBoneScale();
 
@@ -5558,75 +6309,33 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 			ApplyPose();
 		}
 
-		glView->SetXMirror(previousMirror);
-		glView->SetTransformMode(false);
-		SelectTool(ToolID::InflateBrush);
 		glView->SetWeightVisible(false);
-
-		GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
-		GetMenuBar()->Check(XRCID("btnInflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnTransform"), true);
-		GetMenuBar()->Enable(XRCID("btnPivot"), true);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), true);
-		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnColorBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), true);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
-
-		toolBarV->ToggleTool(XRCID("btnXMirror"), previousMirror);
-		toolBarH->ToggleTool(XRCID("btnInflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
-		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
-		toolBarH->EnableTool(XRCID("btnAlphaBrush"), false);
-		toolBarV->EnableTool(XRCID("btnTransform"), true);
-		toolBarV->EnableTool(XRCID("btnPivot"), true);
-		toolBarV->EnableTool(XRCID("btnVertexEdit"), true);
-		toolBarH->EnableTool(XRCID("btnInflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnDeflateBrush"), true);
-		toolBarH->EnableTool(XRCID("btnMoveBrush"), true);
-		toolBarH->EnableTool(XRCID("btnSmoothBrush"), true);
-		toolBarH->EnableTool(XRCID("btnUndiffBrush"), true);
-		toolBarH->EnableTool(XRCID("btnCollapseVertex"), true);
-		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), true);
-		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
 	}
 
-	if (id != XRCID("colorsTabButton")) {
-		glView->SetXMirror(previousMirror);
+	if (id != colorsTabButton->GetId()) {
+		UpdateVertexColors();
+	}
+
+	if (id != boneTabButton->GetId() || id != colorsTabButton->GetId()) {
 		glView->SetTransformMode(false);
-		SelectTool(ToolID::InflateBrush);
-		glView->SetColorsVisible(false);
 
-		if (colorSettings->IsShown())
-			glView->ClearColors();
+		menuBar->Check(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnTransform"), true);
+		menuBar->Enable(XRCID("btnPivot"), true);
+		menuBar->Enable(XRCID("btnVertexEdit"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), false);
+		menuBar->Enable(XRCID("btnColorBrush"), false);
+		menuBar->Enable(XRCID("btnAlphaBrush"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnDeflateBrush"), true);
+		menuBar->Enable(XRCID("btnMoveBrush"), true);
+		menuBar->Enable(XRCID("btnSmoothBrush"), true);
+		menuBar->Enable(XRCID("btnUndiffBrush"), true);
+		menuBar->Enable(XRCID("btnCollapseVertex"), true);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), true);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), true);
+		menuBar->Enable(XRCID("deleteVerts"), true);
 
-		GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
-		GetMenuBar()->Check(XRCID("btnInflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnTransform"), true);
-		GetMenuBar()->Enable(XRCID("btnPivot"), true);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), true);
-		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnColorBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), true);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), true);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), true);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
-
-		toolBarV->ToggleTool(XRCID("btnXMirror"), previousMirror);
 		toolBarH->ToggleTool(XRCID("btnInflateBrush"), true);
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
 		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
@@ -5644,20 +6353,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
 	}
 
-	if (id == XRCID("meshTabButton")) {
+	if (id == meshTabButton->GetId()) {
+		currentTabButton = meshTabButton;
+
 		outfitBones->Hide();
 		colorSettings->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		outfitShapes->Show();
-
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
-		wxCollapsiblePane* masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
 
 		boneTabButton->SetCheck(false);
 		colorsTabButton->SetCheck(false);
@@ -5668,20 +6372,17 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		masksPane->Show();
 
 		SetNoSubMeshes();
+		SelectTool(glView->GetLastTool());
 	}
-	else if (id == XRCID("boneTabButton")) {
+	else if (id == boneTabButton->GetId()) {
+		currentTabButton = boneTabButton;
+
 		outfitShapes->Hide();
 		colorSettings->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		outfitBones->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		colorsTabButton->SetCheck(false);
@@ -5692,18 +6393,22 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		boneScale->SetValue(0);
 		boneScale->Show();
 		cXMirrorBone->Show();
-		
+
+		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
+		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
-		wxCollapsiblePane* posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
 
+		totalBoneCountLabel->Show();
+		selectedBoneCountLabel->Show();
 		boneScaleLabel->Show();
 		cbFixedWeight->Show();
 		cbNormalizeWeights->Show();
 		xMirrorBoneLabel->Show();
 		posePane->Show();
+		bonesFilter->GetParent()->Show();
 		
 		glView->SetTransformMode(false);
 		SelectTool(ToolID::WeightBrush);
@@ -5714,26 +6419,24 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		if (project->bPose)
 			ApplyPose();
 
-		GetMenuBar()->Check(XRCID("btnWeightBrush"), true);
-		GetMenuBar()->Check(XRCID("btnXMirror"), false);
-		GetMenuBar()->Enable(XRCID("btnWeightBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnColorBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnTransform"), false);
-		GetMenuBar()->Enable(XRCID("btnPivot"), false);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
+		menuBar->Check(XRCID("btnWeightBrush"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), true);
+		menuBar->Enable(XRCID("btnColorBrush"), false);
+		menuBar->Enable(XRCID("btnAlphaBrush"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
 
 		toolBarH->ToggleTool(XRCID("btnWeightBrush"), true);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), true);
 		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
 		toolBarH->EnableTool(XRCID("btnAlphaBrush"), false);
@@ -5754,19 +6457,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		ReselectBone();
 		glView->GetUndoHistory()->ClearHistory();
 	}
-	else if (id == XRCID("colorsTabButton")) {
+	else if (id == colorsTabButton->GetId()) {
+		currentTabButton = colorsTabButton;
+
 		outfitShapes->Hide();
 		outfitBones->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		colorSettings->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
@@ -5783,26 +6482,24 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		FillVertexColors();
 
-		GetMenuBar()->Check(XRCID("btnColorBrush"), true);
-		GetMenuBar()->Check(XRCID("btnXMirror"), false);
-		GetMenuBar()->Enable(XRCID("btnColorBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), true);
-		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnTransform"), false);
-		GetMenuBar()->Enable(XRCID("btnPivot"), false);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
+		menuBar->Check(XRCID("btnColorBrush"), true);
+		menuBar->Enable(XRCID("btnColorBrush"), true);
+		menuBar->Enable(XRCID("btnAlphaBrush"), true);
+		menuBar->Enable(XRCID("btnWeightBrush"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
 
 		toolBarH->ToggleTool(XRCID("btnColorBrush"), true);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
 		toolBarH->EnableTool(XRCID("btnColorBrush"), true);
 		toolBarH->EnableTool(XRCID("btnAlphaBrush"), true);
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
@@ -5820,19 +6517,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		SetNoSubMeshes();
 	}
-	else if (id == XRCID("segmentTabButton")) {
+	else if (id == segmentTabButton->GetId()) {
+		currentTabButton = segmentTabButton;
+
 		outfitShapes->Hide();
 		outfitBones->Hide();
 		colorSettings->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		segmentTree->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
@@ -5845,6 +6538,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		wxStaticText* segmentSlotLabel = (wxStaticText*)FindWindowByName("segmentSlotLabel");
 		wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
 		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
+		wxButton* segmentSSFEdit = (wxButton*)FindWindowByName("segmentSSFEdit");
 		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
 		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
 		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
@@ -5854,40 +6548,37 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		segmentSlotLabel->Show();
 		segmentSlot->Show();
 		segmentSSFLabel->Show();
+		segmentSSFEdit->Show();
 		segmentSSF->Show();
 		segmentApply->Show();
 		segmentReset->Show();
 
 		SelectTool(ToolID::MaskBrush);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
 		glView->SetSegmentMode();
 		glView->SetMaskVisible(false);
 		glView->SetGlobalBrushCollision(false);
-		glView->ClearColors();
+		glView->ClearMasks();
 
-		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
-		GetMenuBar()->Check(XRCID("btnXMirror"), false);
-		GetMenuBar()->Check(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Enable(XRCID("btnSelect"), false);
-		GetMenuBar()->Enable(XRCID("btnTransform"), false);
-		GetMenuBar()->Enable(XRCID("btnPivot"), false);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
-		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
+		menuBar->Check(XRCID("btnMaskBrush"), true);
+		menuBar->Check(XRCID("btnBrushCollision"), false);
+		menuBar->Enable(XRCID("btnSelect"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnBrushCollision"), false);
+		menuBar->Enable(XRCID("btnClearMask"), false);
+		menuBar->Enable(XRCID("btnInvertMask"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
 		toolBarH->EnableTool(XRCID("btnSelect"), false);
 		toolBarV->EnableTool(XRCID("btnTransform"), false);
@@ -5905,19 +6596,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		ShowSegment(segmentTree->GetSelection());
 	}
-	else if (id == XRCID("partitionTabButton")) {
+	else if (id == partitionTabButton->GetId()) {
+		currentTabButton = partitionTabButton;
+
 		outfitShapes->Hide();
 		outfitBones->Hide();
 		colorSettings->Hide();
 		segmentTree->Hide();
 		lightSettings->Hide();
 		partitionTree->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
@@ -5936,35 +6623,31 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionReset->Show();
 
 		SelectTool(ToolID::MaskBrush);
-		previousMirror = glView->GetXMirror();
-		glView->SetXMirror(false);
 		glView->SetSegmentMode();
 		glView->SetMaskVisible(false);
 		glView->SetGlobalBrushCollision(false);
-		glView->ClearColors();
+		glView->ClearMasks();
 
-		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
-		GetMenuBar()->Check(XRCID("btnXMirror"), false);
-		GetMenuBar()->Check(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Enable(XRCID("btnSelect"), false);
-		GetMenuBar()->Enable(XRCID("btnTransform"), false);
-		GetMenuBar()->Enable(XRCID("btnPivot"), false);
-		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
-		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnUndiffBrush"), false);
-		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
-		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
-		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
-		GetMenuBar()->Enable(XRCID("btnCollapseVertex"), false);
-		GetMenuBar()->Enable(XRCID("btnFlipEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("btnSplitEdgeTool"), false);
-		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
+		menuBar->Check(XRCID("btnMaskBrush"), true);
+		menuBar->Check(XRCID("btnBrushCollision"), false);
+		menuBar->Enable(XRCID("btnSelect"), false);
+		menuBar->Enable(XRCID("btnTransform"), false);
+		menuBar->Enable(XRCID("btnPivot"), false);
+		menuBar->Enable(XRCID("btnVertexEdit"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), false);
+		menuBar->Enable(XRCID("btnDeflateBrush"), false);
+		menuBar->Enable(XRCID("btnMoveBrush"), false);
+		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnBrushCollision"), false);
+		menuBar->Enable(XRCID("btnClearMask"), false);
+		menuBar->Enable(XRCID("btnInvertMask"), false);
+		menuBar->Enable(XRCID("btnCollapseVertex"), false);
+		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
+		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("deleteVerts"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
 		toolBarH->EnableTool(XRCID("btnSelect"), false);
 		toolBarV->EnableTool(XRCID("btnTransform"), false);
@@ -5982,19 +6665,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		ShowPartition(partitionTree->GetSelection());
 	}
-	else if (id == XRCID("lightsTabButton")) {
+	else if (id == lightsTabButton->GetId()) {
+		currentTabButton = lightsTabButton;
+
 		outfitShapes->Hide();
 		outfitBones->Hide();
 		colorSettings->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Show();
-
-		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
-		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
-		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
@@ -6003,10 +6682,11 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionTabButton->SetCheck(false);
 
 		SetNoSubMeshes();
+		SelectTool(glView->GetLastTool());
 	}
 
 	CheckBrushBounds();
-	UpdateBrushPane();
+	UpdateBrushSettings();
 
 	wxPanel* topSplitPanel = (wxPanel*)FindWindowByName("topSplitPanel");
 	wxPanel* bottomSplitPanel = (wxPanel*)FindWindowByName("bottomSplitPanel");
@@ -6026,6 +6706,28 @@ void OutfitStudioFrame::OnBrushColorChanged(wxColourPickerEvent& event) {
 	glView->SetColorBrush(brushColor);
 }
 
+void OutfitStudioFrame::OnColorClampMaxValueSlider(wxCommandEvent& WXUNUSED(event)) {
+	wxSlider* slider = (wxSlider*)colorSettings->FindWindowByName("cpClampMaxValueSlider");
+	wxTextCtrl* txtControl = (wxTextCtrl*)colorSettings->FindWindowByName("cpClampMaxValueTxt");
+	int clampMaxValue = slider->GetValue();
+	txtControl->SetValue(wxString::Format("%d", clampMaxValue));
+
+	ClampBrush* clampBrush = dynamic_cast<ClampBrush*>(glView->GetActiveBrush());
+	if (clampBrush)
+		clampBrush->clampMaxValue = clampMaxValue / 255.0f;
+}
+
+void OutfitStudioFrame::OnColorClampMaxValueChanged(wxCommandEvent& WXUNUSED(event)) {
+	wxTextCtrl* txtControl = (wxTextCtrl*)colorSettings->FindWindowByName("cpClampMaxValueTxt");
+	wxSlider* slider = (wxSlider*)colorSettings->FindWindowByName("cpClampMaxValueSlider");
+	int clampMaxValue = std::clamp(atoi(txtControl->GetValue().c_str()),0,255);
+	slider->SetValue(clampMaxValue);
+
+	ClampBrush* clampBrush = dynamic_cast<ClampBrush*>(glView->GetActiveBrush());
+	if (clampBrush)
+		clampBrush->clampMaxValue = clampMaxValue / 255.0f;
+}
+
 void OutfitStudioFrame::OnSwapBrush(wxCommandEvent& WXUNUSED(event)) {
 	ToolID activeTool = glView->GetActiveTool();
 	if (activeTool == ToolID::ColorBrush)
@@ -6034,17 +6736,24 @@ void OutfitStudioFrame::OnSwapBrush(wxCommandEvent& WXUNUSED(event)) {
 		SelectTool(ToolID::ColorBrush);
 }
 
+void OutfitStudioFrame::ScrollWindowIntoView(wxScrolledWindow* scrolled, wxWindow* window) {
+	// "window" must be an immediate child of "scrolled"
+	int scrollRateY = 0;
+	scrolled->GetScrollPixelsPerUnit(nullptr, &scrollRateY);
+
+	wxPoint window_pos = scrolled->CalcUnscrolledPosition(window->GetPosition());
+	scrolled->Scroll(0, window_pos.y / scrollRateY);
+}
+
 void OutfitStudioFrame::HighlightSlider(const std::string& name) {
-	for (auto &d : sliderDisplays) {
+	for (auto &d : sliderPanels) {
 		if (d.first == name) {
-			d.second->hilite = true;
-			d.second->sliderPane->SetBackgroundColour(wxColour(125, 77, 138));
+			d.second->editing = true;
+			d.second->SetBackgroundColour(wxColour(125, 77, 138));
 		}
 		else {
-			d.second->hilite = false;
-			d.second->sliderPane->SetBackgroundColour(wxColour(64, 64, 64));
-			d.second->slider->Disable();
-			d.second->slider->Enable();
+			d.second->editing = false;
+			d.second->SetBackgroundColour(wxColour(64, 64, 64));
 		}
 	}
 	sliderScroll->Refresh();
@@ -6052,55 +6761,31 @@ void OutfitStudioFrame::HighlightSlider(const std::string& name) {
 
 void OutfitStudioFrame::ZeroSliders() {
 	if (!project->AllSlidersZero()) {
-		for (int s = 0; s < project->SliderCount(); s++) {
+		for (size_t s = 0; s < project->SliderCount(); s++) {
 			if (project->SliderClamp(s))
 				continue;
 
 			SetSliderValue(s, 0);
-			sliderDisplays[project->GetSliderName(s)]->slider->SetValue(0);
+			sliderPanels[project->GetSliderName(s)]->slider->SetValue(0);
 		}
 		ApplySliders();
 	}
 }
 
-void OutfitStudioFrame::OnSlider(wxScrollEvent& event) {
+void OutfitStudioFrame::OnSlider(wxCommandEvent& event) {
 	wxSlider* s = ((wxSlider*)event.GetEventObject());
 	if (!s)
 		return;
 
+	project->ClearBoneScale(false);
+	boneScale->SetValue(0);
+
 	wxString sliderName = s->GetName();
-	// Note that this function should never be called for any of the
-	// sliders checked in the next 'if' statement.
-	if (sliderName == "brushSize" ||
-		sliderName == "brushStrength" ||
-		sliderName == "brushFocus" ||
-		sliderName == "brushSpacing" ||
-		sliderName == "rxPoseSlider" ||
-		sliderName == "ryPoseSlider" ||
-		sliderName == "rzPoseSlider" ||
-		sliderName == "txPoseSlider" ||
-		sliderName == "tyPoseSlider" ||
-		sliderName == "tzPoseSlider")
-		return;
-
-	if (sliderName != "boneScale") {
-		project->ClearBoneScale(false);
-		boneScale->SetValue(0);
-	}
-
-	if (sliderName == "boneScale") {
-		if (!activeBone.empty())
-			project->ApplyBoneScale(activeBone, event.GetPosition(), true);
-
-		glView->Render();
-		return;
-	}
-
 	std::string sn{sliderName.BeforeLast('|').ToUTF8()};
 	if (sn.empty())
 		return;
 
-	SetSliderValue(sn, event.GetPosition());
+	SetSliderValue(sn, event.GetInt());
 
 	if (!bEditSlider && event.GetEventType() == wxEVT_SCROLL_CHANGED)
 		ApplySliders(true);
@@ -6117,7 +6802,9 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 	std::string choice;
 	bool hi = true;
 
-	presets.LoadPresets(Config["AppDir"] + "/SliderPresets", choice, names, true);
+	CloseBrushSettings();
+
+	presets.LoadPresets(GetProjectPath() + "/SliderPresets", choice, names, true);
 	presets.GetPresetNames(names);
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgChoosePreset")) {
@@ -6150,7 +6837,7 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 
 		float v;
 		bool r;
-		for (int i = 0; i < project->SliderCount(); i++) {
+		for (size_t i = 0; i < project->SliderCount(); i++) {
 			if (!presets.GetSliderExists(choice, project->GetSliderName(i)))
 				continue;
 
@@ -6183,8 +6870,10 @@ void OutfitStudioFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	CloseBrushSettings();
+
 	SliderSetGroupCollection groupCollection;
-	groupCollection.LoadGroups(Config["AppDir"] + "/SliderGroups");
+	groupCollection.LoadGroups(GetProjectPath() + "/SliderGroups");
 
 	std::set<std::string> allGroups;
 	groupCollection.GetAllGroups(allGroups);
@@ -6206,7 +6895,10 @@ void OutfitStudioFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	bool addedSlider = false;
 	PresetCollection presets;
 	for (auto &s : sliders) {
-		int index = project->SliderIndexFromName(s);
+		size_t index = 0;
+		if (!project->SliderIndexFromName(s, index))
+			continue;
+
 		if (project->SliderZap(index) || project->SliderHidden(index))
 			continue;
 
@@ -6236,6 +6928,31 @@ void OutfitStudioFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
+void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+	if (!bEditSlider) {
+		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
+		return;
+	}
+
+	wxString fn = wxFileSelector(_("Import .nif file for slider calculation"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_FILE_MUST_EXIST, this);
+	if (fn.IsEmpty())
+		return;
+
+	wxLogMessage("Importing slider to '%s' for shape '%s' from NIF file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
+	if (!project->SetSliderFromNIF(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
+		wxLogError("No mesh found in the .nif file that matches currently selected shape!");
+		wxMessageBox(_("No mesh found in the .nif file that matches currently selected shape!"), _("Error"), wxICON_ERROR);
+		return;
+	}
+
+	SetPendingChanges();
+	ApplySliders();
+}
+
 void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
@@ -6250,8 +6967,10 @@ void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from BSD file '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+	wxLogMessage("Importing slider to '%s' for shape '%s' from BSD file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 	project->SetSliderFromBSD(activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
+
+	SetPendingChanges();
 	ApplySliders();
 }
 
@@ -6269,13 +6988,14 @@ void OutfitStudioFrame::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 	if (!project->SetSliderFromOBJ(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
 		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
 	}
 
+	SetPendingChanges();
 	ApplySliders();
 }
 
@@ -6289,8 +7009,9 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	int result = wxMessageBox(_("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
-	if (result != wxYES)
+	wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+	dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
+	if (dlg.ShowModal() != wxID_OK)
 		return;
 
 	wxLogMessage("Importing morphs from OSD file '%s'...", fn);
@@ -6305,36 +7026,30 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	// Deleting sliders
 	sliderScroll->Freeze();
 	std::vector<std::string> erase;
-	for (auto &sd : sliderDisplays) {
-		sd.second->slider->SetValue(0);
-		SetSliderValue(sd.first, 0);
-		ShowSliderEffect(sd.first, true);
-		sd.second->slider->SetFocus();
+	for (auto &sliderPanel : sliderPanels) {
+		sliderPanel.second->slider->SetValue(0);
+		SetSliderValue(sliderPanel.first, 0);
+		ShowSliderEffect(sliderPanel.first, true);
+		sliderPanel.second->slider->SetFocus();
+		HideSliderPanel(sliderPanel.second);
 
-		sd.second->btnSliderEdit->Destroy();
-		sd.second->slider->Destroy();
-		sd.second->sliderName->Destroy();
-		sd.second->sliderNameCheck->Destroy();
-		sd.second->sliderReadout->Destroy();
-		sd.second->sliderPane->Destroy();
-		delete sd.second;
-
-		erase.push_back(sd.first);
-		project->DeleteSlider(sd.first);
+		erase.push_back(sliderPanel.first);
+		project->DeleteSlider(sliderPanel.first);
 	}
 
 	for (auto &e : erase)
-		sliderDisplays.erase(e);
+		sliderPanels.erase(e);
 
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
 	activeSlider.clear();
+	lastActiveSlider.clear();
 
 	wxString addedDiffs;
 	auto diffs = osd.GetDataDiffs();
 
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
-		std::string s = shape->GetName();
+		std::string s = shape->name.get();
 		bool added = false;
 		for (auto &diff : diffs) {
 			// Diff name is supposed to begin with matching shape name
@@ -6343,7 +7058,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 
 			std::string diffName = diff.first.substr(s.length(), diff.first.length() - s.length() + 1);
 			if (!project->ValidSlider(diffName)) {
-				createSliderGUI(diffName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+				createSliderGUI(diffName, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(diffName);
 				ShowSliderEffect(diffName);
 			}
@@ -6358,7 +7073,10 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 
 	sliderScroll->FitInside();
 	sliderScroll->Thaw();
+
+	SetPendingChanges();
 	ApplySliders();
+	DoFilterSliders();
 
 	wxLogMessage("Added morphs for the following shapes:\n%s", addedDiffs);
 	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedDiffs), _("OSD Import"));
@@ -6374,8 +7092,9 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	int result = wxMessageBox(_("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
-	if (result != wxYES)
+	wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+	dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
+	if (dlg.ShowModal() != wxID_OK)
 		return;
 
 	wxLogMessage("Importing morphs from TRI file '%s'...", fn);
@@ -6390,30 +7109,24 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	// Deleting sliders
 	sliderScroll->Freeze();
 	std::vector<std::string> erase;
-	for (auto &sd : sliderDisplays) {
-		sd.second->slider->SetValue(0);
-		SetSliderValue(sd.first, 0);
-		ShowSliderEffect(sd.first, true);
-		sd.second->slider->SetFocus();
+	for (auto &sliderPanel : sliderPanels) {
+		sliderPanel.second->slider->SetValue(0);
+		SetSliderValue(sliderPanel.first, 0);
+		ShowSliderEffect(sliderPanel.first, true);
+		sliderPanel.second->slider->SetFocus();
+		HideSliderPanel(sliderPanel.second);
 
-		sd.second->btnSliderEdit->Destroy();
-		sd.second->slider->Destroy();
-		sd.second->sliderName->Destroy();
-		sd.second->sliderNameCheck->Destroy();
-		sd.second->sliderReadout->Destroy();
-		sd.second->sliderPane->Destroy();
-		delete sd.second;
-
-		erase.push_back(sd.first);
-		project->DeleteSlider(sd.first);
+		erase.push_back(sliderPanel.first);
+		project->DeleteSlider(sliderPanel.first);
 	}
 
 	for (auto &e : erase)
-		sliderDisplays.erase(e);
+		sliderPanels.erase(e);
 
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
 	activeSlider.clear();
+	lastActiveSlider.clear();
 
 	wxString addedMorphs;
 	auto morphs = tri.GetMorphs();
@@ -6425,16 +7138,19 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		addedMorphs += morph.first + "\n";
 		for (auto &morphData : morph.second) {
 			if (!project->ValidSlider(morphData->name)) {
-				createSliderGUI(morphData->name, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+				createSliderGUI(morphData->name, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(morphData->name);
 				ShowSliderEffect(morphData->name);
 			}
 
-			std::unordered_map<ushort, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
+			std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
 			project->SetSliderFromDiff(morphData->name, shape, diff);
 
 			if (morphData->type == MORPHTYPE_UV) {
-				int sliderIndex = project->SliderIndexFromName(morphData->name);
+				size_t sliderIndex = 0;
+				if (!project->SliderIndexFromName(morphData->name, sliderIndex))
+					continue;
+
 				project->SetSliderUV(sliderIndex, true);
 			}
 		}
@@ -6442,7 +7158,10 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 	sliderScroll->FitInside();
 	sliderScroll->Thaw();
+
+	SetPendingChanges();
 	ApplySliders();
+	DoFilterSliders();
 
 	wxLogMessage("Added morphs for the following shapes:\n%s", addedMorphs);
 	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedMorphs), _("TRI Import"));
@@ -6462,11 +7181,48 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 	if (!project->SetSliderFromFBX(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
 		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
+	}
+
+	SetPendingChanges();
+	ApplySliders();
+}
+
+void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+	if (!bEditSlider) {
+		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
+		return;
+	}
+
+	if (selectedItems.size() > 1) {
+		wxString dir = wxDirSelector(_("Export .nif slider data to directory"), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
+		if (dir.IsEmpty())
+			return;
+
+		for (auto &i : selectedItems) {
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + activeSlider + ".nif";
+			wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->name.get(), targetFile);
+			project->SaveSliderNIF(activeSlider, i->GetShape(), targetFile);
+		}
+	}
+	else {
+		wxString fn = wxFileSelector(_("Export .nif slider data"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fn.IsEmpty())
+			return;
+
+		wxLogMessage("Exporting NIF slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
+		if (project->SaveSliderNIF(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
+			wxLogError("Failed to export NIF file '%s'!", fn);
+			wxMessageBox(_("Failed to export NIF file!"), _("Error"), wxICON_ERROR);
+		}
 	}
 
 	ApplySliders();
@@ -6488,8 +7244,8 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->GetName() + "_" + activeSlider + ".bsd";
-			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->GetName(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + activeSlider + ".bsd";
+			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->name.get(), targetFile);
 			project->SaveSliderBSD(activeSlider, i->GetShape(), targetFile);
 		}
 	}
@@ -6498,7 +7254,7 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 		if (fn.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+		wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 		project->SaveSliderBSD(activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
 	}
 
@@ -6521,8 +7277,8 @@ void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->GetName() + "_" + activeSlider + ".obj";
-			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->GetName(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + i->GetShape()->name.get() + "_" + activeSlider + ".obj";
+			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->name.get(), targetFile);
 			project->SaveSliderOBJ(activeSlider, i->GetShape(), targetFile);
 		}
 	}
@@ -6531,7 +7287,7 @@ void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		if (fn.IsEmpty())
 			return;
 
-		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->GetName(), fn);
+		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 		if (project->SaveSliderOBJ(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 			wxLogError("Failed to export OBJ file '%s'!", fn);
 			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
@@ -6593,8 +7349,8 @@ void OutfitStudioFrame::OnSliderExportToOBJs(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Exporting sliders to OBJ files in '%s'...", dir);
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
 		for (auto &slider : sliderList) {
-			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + shape->GetName() + "_" + slider + ".obj";
-			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", slider, shape->GetName(), targetFile);
+			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + shape->name.get() + "_" + slider + ".obj";
+			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", slider, shape->name.get(), targetFile);
 			if (project->SaveSliderOBJ(slider, shape, targetFile, true))
 				wxLogError("Failed to export OBJ file '%s'!", targetFile);
 		}
@@ -6609,11 +7365,11 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 
 	int result;
 	if (selectedItems.size() > 1) {
-		std::string prompt = _("Are you sure you wish to clear the unmasked slider data ") + _("for the selected shapes? This cannot be undone.");
+		wxString prompt = _("Are you sure you wish to clear the unmasked slider data for the selected shapes?  This action cannot be undone.");
 		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
 	else {
-		std::string prompt = _("Are you sure you wish to clear the unmasked slider data ") + _("for the shape \"") + activeItem->GetShape()->GetName() + _("\"? This cannot be undone.");
+		wxString prompt = wxString::Format(_("Are you sure you wish to clear the unmasked slider data for the shape '%s'?  This action cannot be undone."), activeItem->GetShape()->name.get());
 		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
 
@@ -6621,10 +7377,10 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	auto clearSlider = [&](const std::string& sliderName) {
-		std::unordered_map<ushort, float> mask;
+		std::unordered_map<uint16_t, float> mask;
 		for (auto &i : selectedItems) {
 			mask.clear();
-			glView->GetShapeMask(mask, i->GetShape()->GetName());
+			glView->GetShapeMask(mask, i->GetShape()->name.get());
 			if (mask.size() > 0)
 				project->ClearUnmaskedDiff(i->GetShape(), sliderName, &mask);
 			else
@@ -6634,15 +7390,16 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 
 	if (!bEditSlider) {
 		wxLogMessage("Clearing slider data of the checked sliders for the selected shapes.");
-		for (auto &sd : sliderDisplays)
-			if (sd.second->sliderNameCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED)
-				clearSlider(sd.first);
+		for (auto & sliderPanel : sliderPanels)
+			if (sliderPanel.second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED)
+				clearSlider(sliderPanel.first);
 	}
 	else {
 		wxLogMessage("Clearing slider data of '%s' for the selected shapes.", activeSlider);
 		clearSlider(activeSlider);
 	}
 
+	SetPendingChanges();
 	ApplySliders();
 }
 
@@ -6672,17 +7429,19 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 	} while (project->ValidSlider(sliderName));
 
 	wxLogMessage("Creating new zap '%s'.", sliderName);
-	createSliderGUI(sliderName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
-	std::unordered_map<ushort, float> unmasked;
+	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
+
+	std::unordered_map<uint16_t, float> unmasked;
 	for (auto &i : selectedItems) {
 		unmasked.clear();
-		glView->GetShapeUnmasked(unmasked, i->GetShape()->GetName());
+		glView->GetShapeUnmasked(unmasked, i->GetShape()->name.get());
 		project->AddZapSlider(sliderName, unmasked, i->GetShape());
 	}
 
 	ShowSliderEffect(sliderName);
 	sliderScroll->FitInside();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
@@ -6702,10 +7461,12 @@ void OutfitStudioFrame::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 	} while (project->ValidSlider(sliderName));
 
 	wxLogMessage("Creating new combined slider '%s'.", sliderName);
-	createSliderGUI(sliderName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+
+	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
 
 	project->AddCombinedSlider(sliderName);
 	sliderScroll->FitInside();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
@@ -6721,6 +7482,8 @@ void OutfitStudioFrame::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Negating slider '%s' for the selected shapes.", activeSlider);
 	for (auto &i : selectedItems)
 		project->NegateSlider(activeSlider, i->GetShape());
+
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
@@ -6739,37 +7502,43 @@ void OutfitStudioFrame::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
-	std::string prompt = _("Are you sure you wish to delete the selected slider(s)?");
+	wxString prompt = _("Are you sure you wish to delete the selected slider(s)?");
 	int result = wxMessageBox(prompt, _("Confirm slider delete"), wxYES_NO | wxICON_WARNING, this);
 	if (result != wxYES)
+		return;
+
+	DeleteSliders();
+}
+
+void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
+
+	if (keepSliders && keepZaps)
 		return;
 
 	auto deleteSlider = [&](const std::string& sliderName) {
 		wxLogMessage("Deleting slider '%s'.", sliderName);
 
-		SliderDisplay* sd = sliderDisplays[sliderName];
-		sd->slider->SetValue(0);
+		wxSliderPanel* sliderPanel = sliderPanels[sliderName];
+		sliderPanel->slider->SetValue(0);
 		SetSliderValue(sliderName, 0);
 		ShowSliderEffect(sliderName, true);
-		sd->slider->SetFocus();
-
-		sd->btnSliderEdit->Destroy();
-		sd->slider->Destroy();
-		sd->sliderName->Destroy();
-		sd->sliderNameCheck->Destroy();
-		sd->sliderReadout->Destroy();
-		sd->sliderPane->Destroy();
+		sliderPanel->slider->SetFocus();
+		HideSliderPanel(sliderPanel);
 
 		sliderScroll->FitInside();
-		delete sd;
 		project->DeleteSlider(sliderName);
 	};
 
 	if (!bEditSlider) {
-		for (auto it = sliderDisplays.begin(); it != sliderDisplays.end();) {
-			if (it->second->sliderNameCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED) {
+		for (auto it = sliderPanels.begin(); it != sliderPanels.end();) {
+			if (it->second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED) {
+				if ((keepZaps && project->activeSet[it->first].bZap) ||
+					(keepSliders && !project->activeSet[it->first].bZap)) {
+					++it;
+					continue;
+				}
 				deleteSlider(it->first);
-				it = sliderDisplays.erase(it);
+				it = sliderPanels.erase(it);
 			}
 			else
 				++it;
@@ -6777,21 +7546,24 @@ void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	}
 	else {
 		deleteSlider(activeSlider);
-		sliderDisplays.erase(activeSlider);
+		sliderPanels.erase(activeSlider);
 
 		MenuExitSliderEdit();
 		activeSlider.clear();
+		lastActiveSlider.clear();
 		bEditSlider = false;
 	}
 
+	SetPendingChanges();
 	ApplySliders();
 }
 
-void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
-	if (!bEditSlider) {
-		wxMessageBox(_("There is no slider in edit mode to show properties for!"), _("Error"));
+void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
+	size_t curSlider = 0;
+	if (!project->SliderIndexFromName(sliderName, curSlider))
 		return;
-	}
+
+	CloseBrushSettings();
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSliderProp")) {
@@ -6807,7 +7579,6 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* chkUV = XRCCTRL(dlg, "chkUV", wxCheckBox);
 		wxCheckListBox* zapToggleList = XRCCTRL(dlg, "zapToggleList", wxCheckListBox);
 
-		int curSlider = project->SliderIndexFromName(activeSlider);
 		long loVal = (int)(project->SliderDefault(curSlider, false));
 		long hiVal = (int)(project->SliderDefault(curSlider, true));
 
@@ -6834,7 +7605,7 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			chkZap->SetValue(true);
 			zapToggleList->Enable();
 
-			for (int i = 0; i < project->SliderCount(); i++)
+			for (size_t i = 0; i < project->SliderCount(); i++)
 				if (i != curSlider && (project->SliderZap(i) || project->SliderHidden(i)))
 					zapToggleList->Append(wxString::FromUTF8(project->GetSliderName(i)));
 
@@ -6905,36 +7676,55 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			project->SetSliderDefault(curSlider, loVal, false);
 			project->SetSliderDefault(curSlider, hiVal, true);
 
-			std::string sliderName{edSliderName->GetValue().ToUTF8()};
-			if (activeSlider != sliderName && !project->ValidSlider(sliderName)) {
-				project->SetSliderName(curSlider, sliderName);
-				SliderDisplay* d = sliderDisplays[activeSlider];
-				sliderDisplays[sliderName] = d;
-				sliderDisplays.erase(activeSlider);
+			std::string newSliderName{ edSliderName->GetValue().ToUTF8() };
+			if (sliderName != newSliderName && !project->ValidSlider(newSliderName)) {
+				project->SetSliderName(curSlider, newSliderName);
+				wxSliderPanel* d = sliderPanels[sliderName];
+				sliderPanels[newSliderName] = d;
+				sliderPanels.erase(sliderName);
 
-				wxString sn = wxString::FromUTF8(sliderName);
+				wxString sn = wxString::FromUTF8(newSliderName);
 				d->slider->SetName(sn + "|slider");
 				d->sliderName->SetName(sn + "|lbl");
 				d->btnSliderEdit->SetName(sn + "|btn");
-				d->sliderNameCheck->SetName(sn + "|check");
+				d->btnSliderProp->SetName(sn + "|btnSliderProp");
+				d->btnMinus->SetName(sn + "|btnMinus");
+				d->btnPlus->SetName(sn + "|btnPlus");
+				d->sliderCheck->SetName(sn + "|check");
 				d->sliderReadout->SetName(sn + "|readout");
 				d->sliderName->SetLabel(sn);
-				activeSlider = std::move(sliderName);
+
+				if (sliderName == activeSlider)
+					activeSlider = std::move(newSliderName);
 			}
+
+			SetPendingChanges();
 		}
 	}
 }
 
-void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions options) {
+void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
+	if (!bEditSlider) {
+		wxMessageBox(_("There is no slider in edit mode to show properties for!"), _("Error"));
+		return;
+	}
+
+	ShowSliderProperties(activeSlider);
+}
+
+void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& options) {
 	if (project->IsBaseShape(shape))
 		return;
 
-	std::string shapeName = shape->GetName();
+	std::string shapeName = shape->name.get();
 	wxLogMessage("Conforming '%s'...", shapeName);
 	UpdateProgress(50, _("Conforming: ") + shapeName);
 
-	project->morpher.CopyMeshMask(glView->GetMesh(shapeName), shapeName);
-	project->ConformShape(shape, options.proximityRadius, options.maxResults);
+	mesh* m = glView->GetMesh(shapeName);
+	if (m) {
+		project->morpher.CopyMeshMask(m, shapeName);
+		project->ConformShape(shape, options);
+	}
 
 	UpdateProgress(99);
 }
@@ -6960,7 +7750,9 @@ void OutfitStudioFrame::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 		if (statusBar)
 			statusBar->SetStatusText(_("Shape(s) conformed."));
 
-		wxLogMessage("%d shape(s) conformed.", selectedItems.size());
+		SetPendingChanges();
+
+		wxLogMessage("%zu shape(s) conformed.", selectedItems.size());
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}
@@ -6984,7 +7776,7 @@ void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& WXUNUSED(event)) {
 		int pos = 0;
 
 		for (auto &shape : shapes) {
-			UpdateProgress(pos * inc, _("Conforming: ") + shape->GetName());
+			UpdateProgress(pos * inc, _("Conforming: ") + shape->name.get());
 			StartSubProgress(pos * inc, pos * inc + inc);
 			ConformSliders(shape, options);
 			pos++;
@@ -6997,6 +7789,8 @@ void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& WXUNUSED(event)) {
 		if (statusBar)
 			statusBar->SetStatusText(_("All shapes conformed."));
 
+		SetPendingChanges();
+
 		wxLogMessage("All shapes conformed.");
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
@@ -7004,6 +7798,8 @@ void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& WXUNUSED(event)) {
 }
 
 bool OutfitStudioFrame::ShowConform(ConformOptions& options) {
+	CloseBrushSettings();
+
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgConforming")) {
 		XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
@@ -7021,7 +7817,7 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options) {
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->ChangeValue(wxString::Format("%d", changed));
 		});
 
-		auto noTargetLimitAction = [&]() {
+		XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->Bind(wxEVT_CHECKBOX, [&dlg](wxCommandEvent&) {
 			bool noTargetLimit = XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->IsChecked();
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Enable(!noTargetLimit);
 			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Enable(!noTargetLimit);
@@ -7030,24 +7826,38 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options) {
 				XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("5.00000");
 				XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(5000);
 			}
-		};
-
-		XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->Bind(wxEVT_CHECKBOX, [&dlg, &noTargetLimitAction](wxCommandEvent&) {
-			noTargetLimitAction();
 		});
 
-		XRCCTRL(dlg, "presetDefault", wxButton)->Bind(wxEVT_BUTTON, [&dlg, &noTargetLimitAction](wxCommandEvent&) {
+		XRCCTRL(dlg, "presetDefault", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
 			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("10.00000");
 			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(10000);
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Enable();
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Enable();
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->ChangeValue("10");
 			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->SetValue(10);
-			noTargetLimitAction();
 		});
 
-		XRCCTRL(dlg, "presetEvenMovement", wxButton)->Bind(wxEVT_BUTTON, [&dlg, &noTargetLimitAction](wxCommandEvent&) {
+		XRCCTRL(dlg, "presetEvenMovement", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
 			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(true);
-			noTargetLimitAction();
+			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Disable();
+			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("5.00000");
+			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(5000);
+		});
+
+		XRCCTRL(dlg, "presetSolidObject", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
+			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Disable();
+			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("10.00000");
+			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(10000);
 		});
 
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
@@ -7061,6 +7871,11 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options) {
 			else
 				options.maxResults = std::numeric_limits<int>::max();
 
+			options.noSqueeze = XRCCTRL(dlg, "noSqueeze", wxCheckBox)->IsChecked();
+			options.solidMode = XRCCTRL(dlg, "solidMode", wxCheckBox)->IsChecked();
+			options.axisX = XRCCTRL(dlg, "axisX", wxCheckBox)->IsChecked();
+			options.axisY = XRCCTRL(dlg, "axisY", wxCheckBox)->IsChecked();
+			options.axisZ = XRCCTRL(dlg, "axisZ", wxCheckBox)->IsChecked();
 			return true;
 		}
 	}
@@ -7080,7 +7895,9 @@ void OutfitStudioFrame::OnInvertUV(wxCommandEvent& event) {
 	for (auto &i : selectedItems) {
 		project->GetWorkNif()->InvertUVsForShape(i->GetShape(), invertX, invertY);
 	}
+
 	RefreshGUIFromProj();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnMirror(wxCommandEvent& event) {
@@ -7096,10 +7913,14 @@ void OutfitStudioFrame::OnMirror(wxCommandEvent& event) {
 	for (auto &i : selectedItems) {
 		project->GetWorkNif()->MirrorShape(i->GetShape(), mirrorX, mirrorY, mirrorZ);
 	}
+
 	RefreshGUIFromProj();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
+	CloseBrushSettings();
+
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
@@ -7114,12 +7935,13 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
 
-	std::string shapeName = activeItem->GetShape()->GetName();
+	std::string shapeName = activeItem->GetShape()->name.get();
 	wxLogMessage("Renaming shape '%s' to '%s'.", shapeName, newShapeName);
 	project->RenameShape(activeItem->GetShape(), newShapeName);
 	glView->RenameShape(shapeName, newShapeName);
 
 	outfitShapes->SetItemText(activeItem->GetId(), wxString::FromUTF8(newShapeName));
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
@@ -7138,6 +7960,7 @@ void OutfitStudioFrame::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
 		project->SetTextures(shape);
 
 	RefreshGUIFromProj();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnEnterClose(wxKeyEvent& event) {
@@ -7154,497 +7977,502 @@ void OutfitStudioFrame::OnEnterClose(wxKeyEvent& event) {
 }
 
 void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
-	wxDialog dlg;
-	Vector3 offs;
+	CloseBrushSettings();
 
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
+	if (!CheckEditableState())
+		return;
+
+	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgMoveShape")) {
-		XRCCTRL(dlg, "msOldOffset", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnMoveShapeOldOffset, this);
-		XRCCTRL(dlg, "msSliderX", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnMoveShapeSlider, this);
-		XRCCTRL(dlg, "msSliderY", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnMoveShapeSlider, this);
-		XRCCTRL(dlg, "msSliderZ", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnMoveShapeSlider, this);
-		XRCCTRL(dlg, "msTextX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnMoveShapeText, this);
-		XRCCTRL(dlg, "msTextY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnMoveShapeText, this);
-		XRCCTRL(dlg, "msTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnMoveShapeText, this);
-		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+		Vector3 previewMove;
 
-		if (dlg.ShowModal() == wxID_OK) {
-			offs.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().c_str());
-			offs.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().c_str());
-			offs.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().c_str());
-		}
+		auto updateMovePreview = [&]() {
+			std::unordered_map<uint16_t, float> mask;
+			std::unordered_map<uint16_t, float>* mptr = nullptr;
+			std::vector<Vector3> verts;
 
-		std::unordered_map<ushort, float> mask;
-		std::unordered_map<ushort, float>* mptr = nullptr;
-		std::unordered_map<ushort, Vector3> diff;
-		for (auto &i : selectedItems) {
-			mask.clear();
-			mptr = nullptr;
-			glView->GetShapeMask(mask, i->GetShape()->GetName());
-			if (mask.size() > 0)
-				mptr = &mask;
+			if (!previewMove.IsZero()) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true, false);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
 
-			Vector3 d;
-			float diffX, diffY, diffZ;
-			if (bEditSlider) {
-				diff.clear();
-				int vertexCount = project->GetVertexCount(i->GetShape());
-				for (int j = 0; j < vertexCount; j++) {
-					d = (offs - previewMove) * (1.0f - mask[j]);
+			Vector3 changed;
+			changed.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().c_str());
+			changed.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().c_str());
+			changed.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().c_str());
 
-					if (d.IsZero(true))
+			bool mirrorAxisX = XRCCTRL(dlg, "mirrorAxisX", wxCheckBox)->IsChecked();
+			bool mirrorAxisY = XRCCTRL(dlg, "mirrorAxisY", wxCheckBox)->IsChecked();
+			bool mirrorAxisZ = XRCCTRL(dlg, "mirrorAxisZ", wxCheckBox)->IsChecked();
+
+			UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+			usp->undoType = UT_VERTPOS;
+
+			for (auto &sel : selectedItems) {
+				mask.clear();
+				mptr = nullptr;
+
+				NiShape* shape = sel->GetShape();
+				project->GetLiveVerts(shape, verts);
+				glView->GetShapeMask(mask, shape->name.get());
+
+				if (!mask.empty())
+					mptr = &mask;
+
+				UndoStateShape uss;
+				uss.shapeName = shape->name.get();
+
+				for (size_t i = 0; i < verts.size(); i++) {
+					Vector3& vertPos = verts[i];
+					Vector3 diff = changed;
+
+					if (mptr)
+						diff *= 1.0f - mask[i];
+
+					if (diff.IsZero(true))
 						continue;
 
-					diff[j] = d;
-					diffX = diff[j].x / -10.0f;
-					diffY = diff[j].y / 10.0f;
-					diffZ = diff[j].z / 10.0f;
-					diff[j].z = diffY;
-					diff[j].y = diffZ;
-					diff[j].x = diffX;
+					if (mirrorAxisX && vertPos.x < 0.0f)
+						diff.x = -diff.x;
+					if (mirrorAxisY && vertPos.y < 0.0f)
+						diff.y = -diff.y;
+					if (mirrorAxisZ && vertPos.z < 0.0f)
+						diff.z = -diff.z;
+
+					Vector3 newPos = vertPos + diff;
+					uss.pointStartState[i] = mesh::VecToMeshCoords(vertPos);
+					uss.pointEndState[i] = mesh::VecToMeshCoords(newPos);
 				}
-				project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
-			}
-			else {
-				d = offs - previewMove;
-				project->OffsetShape(i->GetShape(), d, mptr);
+
+				usp->usss.push_back(std::move(uss));
 			}
 
-			std::vector<Vector3> verts;
-			project->GetLiveVerts(i->GetShape(), verts);
-			glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
+			if (bEditSlider) {
+				usp->sliderName = activeSlider;
+
+				float sliderscale = project->SliderValue(activeSlider);
+				if (sliderscale == 0.0)
+					sliderscale = 1.0;
+
+				usp->sliderscale = sliderscale;
+			}
+
+			glView->ApplyUndoState(usp, false);
+
+			previewMove = changed;
+
+			if (glView->GetTransformMode())
+				glView->ShowTransformTool();
+		};
+
+		auto sliderMoved = [&](wxCommandEvent&) {
+			Vector3 slider;
+			slider.x = XRCCTRL(dlg, "msSliderX", wxSlider)->GetValue() / 1000.0f;
+			slider.y = XRCCTRL(dlg, "msSliderY", wxSlider)->GetValue() / 1000.0f;
+			slider.z = XRCCTRL(dlg, "msSliderZ", wxSlider)->GetValue() / 1000.0f;
+
+			XRCCTRL(dlg, "msTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.x));
+			XRCCTRL(dlg, "msTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.y));
+			XRCCTRL(dlg, "msTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.z));
+
+			updateMovePreview();
+		};
+
+		auto textChanged = [&](wxCommandEvent&) {
+			Vector3 changed;
+			changed.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().c_str());
+			changed.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().c_str());
+			changed.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().c_str());
+
+			XRCCTRL(dlg, "msSliderX", wxSlider)->SetValue(changed.x * 1000);
+			XRCCTRL(dlg, "msSliderY", wxSlider)->SetValue(changed.y * 1000);
+			XRCCTRL(dlg, "msSliderZ", wxSlider)->SetValue(changed.z * 1000);
+
+			updateMovePreview();
+		};
+
+		auto mirrorAxisChanged = [&](wxCommandEvent&) {
+			updateMovePreview();
+		};
+
+		XRCCTRL(dlg, "msSliderX", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "msSliderY", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "msSliderZ", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+
+		XRCCTRL(dlg, "msTextX", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "msTextY", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "msTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+
+		XRCCTRL(dlg, "mirrorAxisX", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
+		XRCCTRL(dlg, "mirrorAxisY", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
+		XRCCTRL(dlg, "mirrorAxisZ", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+
+		if (dlg.ShowModal() != wxID_OK) {
+			if (!previewMove.IsZero()) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
 		}
-		previewMove.Zero();
+
+		UpdateUndoTools();
 	}
-
-	if (glView->GetTransformMode())
-		glView->ShowTransformTool();
-}
-
-void OutfitStudioFrame::OnMoveShapeOldOffset(wxCommandEvent& event) {
-	wxWindow* parent = ((wxButton*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	XRCCTRL(*parent, "msSliderX", wxSlider)->SetValue(0);
-	XRCCTRL(*parent, "msSliderY", wxSlider)->SetValue(-2544);
-	XRCCTRL(*parent, "msSliderZ", wxSlider)->SetValue(3287);
-	XRCCTRL(*parent, "msTextX", wxTextCtrl)->ChangeValue("0.00000");
-	XRCCTRL(*parent, "msTextY", wxTextCtrl)->ChangeValue("-2.54431");
-	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->ChangeValue("3.28790");
-
-	PreviewMove(Vector3(0.00000f, -2.54431f, 3.28790f));
-}
-
-void OutfitStudioFrame::OnMoveShapeSlider(wxCommandEvent& event) {
-	wxWindow* parent = ((wxSlider*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	Vector3 slider;
-	slider.x = XRCCTRL(*parent, "msSliderX", wxSlider)->GetValue() / 1000.0f;
-	slider.y = XRCCTRL(*parent, "msSliderY", wxSlider)->GetValue() / 1000.0f;
-	slider.z = XRCCTRL(*parent, "msSliderZ", wxSlider)->GetValue() / 1000.0f;
-
-	XRCCTRL(*parent, "msTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.x));
-	XRCCTRL(*parent, "msTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.y));
-	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.z));
-
-	PreviewMove(slider);
-}
-
-void OutfitStudioFrame::OnMoveShapeText(wxCommandEvent& event) {
-	wxWindow* parent = ((wxTextCtrl*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-	
-	Vector3 changed;
-	changed.x = atof(XRCCTRL(*parent, "msTextX", wxTextCtrl)->GetValue().c_str());
-	changed.y = atof(XRCCTRL(*parent, "msTextY", wxTextCtrl)->GetValue().c_str());
-	changed.z = atof(XRCCTRL(*parent, "msTextZ", wxTextCtrl)->GetValue().c_str());
-
-	XRCCTRL(*parent, "msSliderX", wxSlider)->SetValue(changed.x * 1000);
-	XRCCTRL(*parent, "msSliderY", wxSlider)->SetValue(changed.y * 1000);
-	XRCCTRL(*parent, "msSliderZ", wxSlider)->SetValue(changed.z * 1000);
-
-	PreviewMove(changed);
-}
-
-void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
-	std::unordered_map<ushort, float> mask;
-	std::unordered_map<ushort, float>* mptr = nullptr;
-	std::unordered_map<ushort, Vector3> diff;
-	for (auto &i : selectedItems) {
-		mask.clear();
-		mptr = nullptr;
-		glView->GetShapeMask(mask, i->GetShape()->GetName());
-		if (mask.size() > 0)
-			mptr = &mask;
-
-		Vector3 d;
-		float diffX, diffY, diffZ;
-		if (bEditSlider) {
-			int vertexCount = project->GetVertexCount(i->GetShape());
-			for (int j = 0; j < vertexCount; j++) {
-				d = (changed - previewMove) * (1.0f - mask[j]);
-
-				if (d.IsZero(true))
-					continue;
-
-				diff[j] = d;
-				diffX = diff[j].x / -10.0f;
-				diffY = diff[j].y / 10.0f;
-				diffZ = diff[j].z / 10.0f;
-				diff[j].z = diffY;
-				diff[j].y = diffZ;
-				diff[j].x = diffX;
-			}
-			project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
-		}
-		else {
-			d = changed - previewMove;
-			project->OffsetShape(i->GetShape(), d, mptr);
-		}
-
-		std::vector<Vector3> verts;
-		project->GetLiveVerts(i->GetShape(), verts);
-		glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
-	}
-
-	previewMove = changed;
-
-	if (glView->GetTransformMode())
-		glView->ShowTransformTool();
 }
 
 void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
+	CloseBrushSettings();
+
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
+
+	if (!CheckEditableState())
+		return;
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgScaleShape")) {
-		XRCCTRL(dlg, "ssSliderX", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnScaleShapeSlider, this);
-		XRCCTRL(dlg, "ssSliderY", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnScaleShapeSlider, this);
-		XRCCTRL(dlg, "ssSliderZ", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnScaleShapeSlider, this);
-		XRCCTRL(dlg, "ssTextX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnScaleShapeText, this);
-		XRCCTRL(dlg, "ssTextY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnScaleShapeText, this);
-		XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnScaleShapeText, this);
-		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+		Vector3 previewScale(1.0f, 1.0f, 1.0f);
 
-		Vector3 scale(1.0f, 1.0f, 1.0f);
-		if (dlg.ShowModal() == wxID_OK) {
+		auto updateScalePreview = [&]() {
+			std::unordered_map<uint16_t, float> mask;
+			std::unordered_map<uint16_t, float>* mptr = nullptr;
+			std::vector<Vector3> verts;
+
+			if (previewScale != Vector3(1.0f, 1.0f, 1.0f)) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true, false);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
+
+			Vector3 scale;
 			scale.x = atof(XRCCTRL(dlg, "ssTextX", wxTextCtrl)->GetValue().c_str());
 			scale.y = atof(XRCCTRL(dlg, "ssTextY", wxTextCtrl)->GetValue().c_str());
 			scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
-		}
 
-		Vector3 scaleNew = scale;
-		scaleNew.x *= 1.0f / previewScale.x;
-		scaleNew.y *= 1.0f / previewScale.y;
-		scaleNew.z *= 1.0f / previewScale.z;
+			Vector3 origin;
+			int originSelection = XRCCTRL(dlg, "origin", wxChoice)->GetCurrentSelection();
+			if (originSelection == 1) {
+				// Center of selected shape(s), respecting mask
+				origin = glView->gls.GetActiveCenter();
+				origin = mesh::VecToNifCoords(origin);
+			}
 
-		std::unordered_map<ushort, float> mask;
-		std::unordered_map<ushort, float>* mptr = nullptr;
-		for (auto &i : selectedItems) {
-			mask.clear();
-			mptr = nullptr;
-			glView->GetShapeMask(mask, i->GetShape()->GetName());
-			if (mask.size() > 0)
-				mptr = &mask;
+			UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+			usp->undoType = UT_VERTPOS;
 
-			std::vector<Vector3> verts;
-			if (bEditSlider) {
-				auto& diff = previewDiff[i->GetShape()];
-				for (auto &d : diff)
-					d.second *= -1.0f;
+			for (auto &sel : selectedItems) {
+				mask.clear();
+				mptr = nullptr;
 
-				project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
-				project->GetLiveVerts(i->GetShape(), verts);
-				diff.clear();
+				NiShape* shape = sel->GetShape();
+				project->GetLiveVerts(shape, verts);
+				glView->GetShapeMask(mask, shape->name.get());
 
-				Vector3 d;
-				float diffX, diffY, diffZ;
-				int vertexCount = project->GetVertexCount(i->GetShape());
-				for (int j = 0; j < vertexCount; j++) {
-					d.x = verts[j].x * scale.x - verts[j].x;
-					d.y = verts[j].y * scale.y - verts[j].y;
-					d.z = verts[j].z * scale.z - verts[j].z;
-					d *= 1.0f - mask[j];
+				if (!mask.empty())
+					mptr = &mask;
 
-					if (d.IsZero(true))
+				UndoStateShape uss;
+				uss.shapeName = shape->name.get();
+
+				Matrix4 xform;
+				xform.PushTranslate(origin);
+				xform.PushScale(scale.x, scale.y, scale.z);
+				xform.PushTranslate(origin * -1.0f);
+
+				for (size_t i = 0; i < verts.size(); i++) {
+					Vector3& vertPos = verts[i];
+					Vector3 diff = xform * vertPos - vertPos;
+
+					if (mptr)
+						diff *= 1.0f - mask[i];
+
+					if (diff.IsZero(true))
 						continue;
 
-					diff[j] = d;
-					diffX = diff[j].x / -10.0f;
-					diffY = diff[j].y / 10.0f;
-					diffZ = diff[j].z / 10.0f;
-					diff[j].z = diffY;
-					diff[j].y = diffZ;
-					diff[j].x = diffX;
+					Vector3 newPos = vertPos + diff;
+					uss.pointStartState[i] = mesh::VecToMeshCoords(vertPos);
+					uss.pointEndState[i] = mesh::VecToMeshCoords(newPos);
 				}
-				project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
-			}
-			else
-				project->ScaleShape(i->GetShape(), scaleNew, mptr);
 
-			project->GetLiveVerts(i->GetShape(), verts);
-			glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
+				usp->usss.push_back(std::move(uss));
+			}
+
+			if (bEditSlider) {
+				usp->sliderName = activeSlider;
+
+				float sliderscale = project->SliderValue(activeSlider);
+				if (sliderscale == 0.0)
+					sliderscale = 1.0;
+
+				usp->sliderscale = sliderscale;
+			}
+
+			glView->ApplyUndoState(usp, false);
+
+			previewScale = scale;
+
+			if (glView->GetTransformMode())
+				glView->ShowTransformTool();
+		};
+
+		auto sliderMoved = [&](wxCommandEvent& event) {
+			Vector3 scale(1.0f, 1.0f, 1.0f);
+
+			bool uniform = XRCCTRL(dlg, "ssUniform", wxCheckBox)->IsChecked();
+			if (uniform) {
+				float uniformValue = ((wxSlider*)event.GetEventObject())->GetValue() / 1000.0f;
+				scale = Vector3(uniformValue, uniformValue, uniformValue);
+
+				XRCCTRL(dlg, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
+				XRCCTRL(dlg, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
+				XRCCTRL(dlg, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
+			}
+			else {
+				scale.x = XRCCTRL(dlg, "ssSliderX", wxSlider)->GetValue() / 1000.0f;
+				scale.y = XRCCTRL(dlg, "ssSliderY", wxSlider)->GetValue() / 1000.0f;
+				scale.z = XRCCTRL(dlg, "ssSliderZ", wxSlider)->GetValue() / 1000.0f;
+			}
+
+			XRCCTRL(dlg, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+			XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+			XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
+
+			updateScalePreview();
+		};
+
+		auto textChanged = [&](wxCommandEvent& event) {
+			Vector3 scale(1.0f, 1.0f, 1.0f);
+
+			bool uniform = XRCCTRL(dlg, "ssUniform", wxCheckBox)->IsChecked();
+			if (uniform) {
+				float uniformValue = atof(((wxTextCtrl*)event.GetEventObject())->GetValue().c_str());
+				scale = Vector3(uniformValue, uniformValue, uniformValue);
+
+				XRCCTRL(dlg, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+				XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+				XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
+			}
+			else {
+				scale.x = atof(XRCCTRL(dlg, "ssTextX", wxTextCtrl)->GetValue().c_str());
+				scale.y = atof(XRCCTRL(dlg, "ssTextY", wxTextCtrl)->GetValue().c_str());
+				scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
+			}
+
+			if (scale.x < 0.01f) {
+				scale.x = 0.01f;
+				XRCCTRL(dlg, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+			}
+
+			if (scale.y < 0.01f) {
+				scale.y = 0.01f;
+				XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+			}
+
+			if (scale.z < 0.01f) {
+				scale.z = 0.01f;
+				XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
+			}
+
+			XRCCTRL(dlg, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
+			XRCCTRL(dlg, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
+			XRCCTRL(dlg, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
+
+			updateScalePreview();
+		};
+
+		auto originChanged = [&](wxCommandEvent&) {
+			updateScalePreview();
+		};
+
+		XRCCTRL(dlg, "ssSliderX", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "ssSliderY", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "ssSliderZ", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "ssTextX", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "ssTextY", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "origin", wxChoice)->Bind(wxEVT_CHOICE, originChanged);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+
+		if (dlg.ShowModal() != wxID_OK) {
+			if (previewScale != Vector3(1.0f, 1.0f, 1.0f)) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
 		}
 
-		previewScale = Vector3(1.0f, 1.0f, 1.0f);
-		previewDiff.clear();
-
-		if (glView->GetTransformMode())
-			glView->ShowTransformTool();
+		UpdateUndoTools();
 	}
-}
-
-void OutfitStudioFrame::OnScaleShapeSlider(wxCommandEvent& event) {
-	wxWindow* parent = ((wxSlider*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	Vector3 scale(1.0f, 1.0f, 1.0f);
-
-	bool uniform = XRCCTRL(*parent, "ssUniform", wxCheckBox)->IsChecked();
-	if (uniform) {
-		float uniformValue = ((wxSlider*)event.GetEventObject())->GetValue() / 1000.0f;
-		scale = Vector3(uniformValue, uniformValue, uniformValue);
-
-		XRCCTRL(*parent, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
-		XRCCTRL(*parent, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
-		XRCCTRL(*parent, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
-	}
-	else {
-		scale.x = XRCCTRL(*parent, "ssSliderX", wxSlider)->GetValue() / 1000.0f;
-		scale.y = XRCCTRL(*parent, "ssSliderY", wxSlider)->GetValue() / 1000.0f;
-		scale.z = XRCCTRL(*parent, "ssSliderZ", wxSlider)->GetValue() / 1000.0f;
-	}
-
-	XRCCTRL(*parent, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
-	XRCCTRL(*parent, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
-	XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
-
-	PreviewScale(scale);
-}
-
-void OutfitStudioFrame::OnScaleShapeText(wxCommandEvent& event) {
-	wxWindow* parent = ((wxTextCtrl*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	Vector3 scale(1.0f, 1.0f, 1.0f);
-
-	bool uniform = XRCCTRL(*parent, "ssUniform", wxCheckBox)->IsChecked();
-	if (uniform) {
-		float uniformValue = atof(((wxTextCtrl*)event.GetEventObject())->GetValue().c_str());
-		scale = Vector3(uniformValue, uniformValue, uniformValue);
-
-		XRCCTRL(*parent, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
-		XRCCTRL(*parent, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
-		XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
-	}
-	else {
-		scale.x = atof(XRCCTRL(*parent, "ssTextX", wxTextCtrl)->GetValue().c_str());
-		scale.y = atof(XRCCTRL(*parent, "ssTextY", wxTextCtrl)->GetValue().c_str());
-		scale.z = atof(XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->GetValue().c_str());
-	}
-
-	if (scale.x < 0.01f) {
-		scale.x = 0.01f;
-		XRCCTRL(*parent, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
-	}
-
-	if (scale.y < 0.01f) {
-		scale.y = 0.01f;
-		XRCCTRL(*parent, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
-	}
-
-	if (scale.z < 0.01f) {
-		scale.z = 0.01f;
-		XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
-	}
-
-	XRCCTRL(*parent, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
-	XRCCTRL(*parent, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
-	XRCCTRL(*parent, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
-
-	PreviewScale(scale);
-}
-
-void OutfitStudioFrame::PreviewScale(const Vector3& scale) {
-	Vector3 scaleNew = scale;
-	scaleNew.x *= 1.0f / previewScale.x;
-	scaleNew.y *= 1.0f / previewScale.y;
-	scaleNew.z *= 1.0f / previewScale.z;
-
-	std::unordered_map<ushort, float> mask;
-	std::unordered_map<ushort, float>* mptr = nullptr;
-	for (auto &i : selectedItems) {
-		mask.clear();
-		mptr = nullptr;
-		glView->GetShapeMask(mask, i->GetShape()->GetName());
-		if (mask.size() > 0)
-			mptr = &mask;
-
-		std::vector<Vector3> verts;
-		if (bEditSlider) {
-			auto& diff = previewDiff[i->GetShape()];
-			for (auto &d : diff)
-				d.second *= -1.0f;
-
-			project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
-			project->GetLiveVerts(i->GetShape(), verts);
-			diff.clear();
-
-			Vector3 d;
-			float diffX, diffY, diffZ;
-			int vertexCount = project->GetVertexCount(i->GetShape());
-			for (int j = 0; j < vertexCount; j++) {
-				d.x = verts[j].x * scale.x - verts[j].x;
-				d.y = verts[j].y * scale.y - verts[j].y;
-				d.z = verts[j].z * scale.z - verts[j].z;
-				d *= 1.0f - mask[j];
-
-				if (d.IsZero(true))
-					continue;
-
-				diff[j] = d;
-				diffX = diff[j].x / -10.0f;
-				diffY = diff[j].y / 10.0f;
-				diffZ = diff[j].z / 10.0f;
-				diff[j].z = diffY;
-				diff[j].y = diffZ;
-				diff[j].x = diffX;
-			}
-			project->UpdateMorphResult(i->GetShape(), activeSlider, diff);
-		}
-		else
-			project->ScaleShape(i->GetShape(), scaleNew, mptr);
-
-		project->GetLiveVerts(i->GetShape(), verts);
-		glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
-	}
-
-	previewScale = scale;
-
-	if (glView->GetTransformMode())
-		glView->ShowTransformTool();
 }
 
 void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
+	CloseBrushSettings();
+
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
-	if (bEditSlider) {
-		wxMessageBox(_("Rotating slider data is currently not possible using the Rotate Shape dialog."), _("Rotate"), wxICON_INFORMATION, this);
+	if (!CheckEditableState())
 		return;
-	}
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgRotateShape")) {
-		XRCCTRL(dlg, "rsSliderX", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnRotateShapeSlider, this);
-		XRCCTRL(dlg, "rsSliderY", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnRotateShapeSlider, this);
-		XRCCTRL(dlg, "rsSliderZ", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnRotateShapeSlider, this);
-		XRCCTRL(dlg, "rsTextX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnRotateShapeText, this);
-		XRCCTRL(dlg, "rsTextY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnRotateShapeText, this);
-		XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnRotateShapeText, this);
-		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+		Vector3 previewRotation;
 
-		Vector3 angle;
-		if (dlg.ShowModal() == wxID_OK) {
+		auto updateRotationPreview = [&]() {
+			std::unordered_map<uint16_t, float> mask;
+			std::unordered_map<uint16_t, float>* mptr = nullptr;
+			std::vector<Vector3> verts;
+
+			if (!previewRotation.IsZero()) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true, false);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
+
+			Vector3 angle;
 			angle.x = atof(XRCCTRL(dlg, "rsTextX", wxTextCtrl)->GetValue().c_str());
 			angle.y = atof(XRCCTRL(dlg, "rsTextY", wxTextCtrl)->GetValue().c_str());
 			angle.z = atof(XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->GetValue().c_str());
+
+			Vector3 origin;
+			int originSelection = XRCCTRL(dlg, "origin", wxChoice)->GetCurrentSelection();
+			if (originSelection == 1) {
+				// Center of selected shape(s), respecting mask
+				origin = glView->gls.GetActiveCenter();
+				origin = mesh::VecToNifCoords(origin);
+			}
+
+			UndoStateProject *usp = glView->GetUndoHistory()->PushState();
+			usp->undoType = UT_VERTPOS;
+
+			for (auto &sel : selectedItems) {
+				mask.clear();
+				mptr = nullptr;
+
+				NiShape* shape = sel->GetShape();
+				project->GetLiveVerts(shape, verts);
+				glView->GetShapeMask(mask, shape->name.get());
+
+				if (!mask.empty())
+					mptr = &mask;
+
+				UndoStateShape uss;
+				uss.shapeName = shape->name.get();
+
+				Matrix4 xform;
+				xform.PushTranslate(origin);
+				xform.PushRotate(angle.x * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
+				xform.PushRotate(angle.y * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
+				xform.PushRotate(angle.z * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
+				xform.PushTranslate(origin * -1.0f);
+
+				for (size_t i = 0; i < verts.size(); i++) {
+					Vector3& vertPos = verts[i];
+					Vector3 diff = xform * vertPos - vertPos;
+
+					if (mptr)
+						diff *= 1.0f - mask[i];
+
+					if (diff.IsZero(true))
+						continue;
+
+					Vector3 newPos = vertPos + diff;
+					uss.pointStartState[i] = mesh::VecToMeshCoords(vertPos);
+					uss.pointEndState[i] = mesh::VecToMeshCoords(newPos);
+				}
+
+				usp->usss.push_back(std::move(uss));
+			}
+
+			if (bEditSlider) {
+				usp->sliderName = activeSlider;
+
+				float sliderscale = project->SliderValue(activeSlider);
+				if (sliderscale == 0.0)
+					sliderscale = 1.0;
+
+				usp->sliderscale = sliderscale;
+			}
+
+			glView->ApplyUndoState(usp, false);
+
+			previewRotation = angle;
+
+			if (glView->GetTransformMode())
+				glView->ShowTransformTool();
+		};
+
+		auto sliderMoved = [&](wxCommandEvent&) {
+			Vector3 angle;
+			angle.x = XRCCTRL(dlg, "rsSliderX", wxSlider)->GetValue() / 100.0f;
+			angle.y = XRCCTRL(dlg, "rsSliderY", wxSlider)->GetValue() / 100.0f;
+			angle.z = XRCCTRL(dlg, "rsSliderZ", wxSlider)->GetValue() / 100.0f;
+
+			XRCCTRL(dlg, "rsTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", angle.x));
+			XRCCTRL(dlg, "rsTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", angle.y));
+			XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", angle.z));
+
+			updateRotationPreview();
+		};
+
+		auto textChanged = [&](wxCommandEvent&) {
+			Vector3 angle;
+			angle.x = atof(XRCCTRL(dlg, "rsTextX", wxTextCtrl)->GetValue().c_str());
+			angle.y = atof(XRCCTRL(dlg, "rsTextY", wxTextCtrl)->GetValue().c_str());
+			angle.z = atof(XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->GetValue().c_str());
+
+			XRCCTRL(dlg, "rsSliderX", wxSlider)->SetValue(angle.x * 100);
+			XRCCTRL(dlg, "rsSliderY", wxSlider)->SetValue(angle.y * 100);
+			XRCCTRL(dlg, "rsSliderZ", wxSlider)->SetValue(angle.z * 100);
+
+			updateRotationPreview();
+		};
+
+		auto originChanged = [&](wxCommandEvent&) {
+			updateRotationPreview();
+		};
+
+		XRCCTRL(dlg, "rsSliderX", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "rsSliderY", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "rsSliderZ", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "rsTextX", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "rsTextY", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "origin", wxChoice)->Bind(wxEVT_CHOICE, originChanged);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+
+		if (dlg.ShowModal() != wxID_OK) {
+			if (!previewRotation.IsZero()) {
+				UndoStateProject *curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
 		}
 
-		angle -= previewRotation;
-
-		std::unordered_map<ushort, float> mask;
-		std::unordered_map<ushort, float>* mptr = nullptr;
-		for (auto &i : selectedItems) {
-			mask.clear();
-			mptr = nullptr;
-			glView->GetShapeMask(mask, i->GetShape()->GetName());
-			if (mask.size() > 0)
-				mptr = &mask;
-
-			std::vector<Vector3> verts;
-			project->RotateShape(i->GetShape(), angle, mptr);
-			project->GetLiveVerts(i->GetShape(), verts);
-			glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
-		}
-
-		previewRotation.Zero();
-
-		if (glView->GetTransformMode())
-			glView->ShowTransformTool();
+		UpdateUndoTools();
 	}
-}
-
-void OutfitStudioFrame::OnRotateShapeSlider(wxCommandEvent& event) {
-	wxWindow* parent = ((wxSlider*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	Vector3 slider;
-	slider.x = XRCCTRL(*parent, "rsSliderX", wxSlider)->GetValue() / 100.0f;
-	slider.y = XRCCTRL(*parent, "rsSliderY", wxSlider)->GetValue() / 100.0f;
-	slider.z = XRCCTRL(*parent, "rsSliderZ", wxSlider)->GetValue() / 100.0f;
-
-	XRCCTRL(*parent, "rsTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", slider.x));
-	XRCCTRL(*parent, "rsTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", slider.y));
-	XRCCTRL(*parent, "rsTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", slider.z));
-
-	PreviewRotation(slider);
-}
-
-void OutfitStudioFrame::OnRotateShapeText(wxCommandEvent& event) {
-	wxWindow* parent = ((wxTextCtrl*)event.GetEventObject())->GetParent();
-	if (!parent)
-		return;
-
-	Vector3 changed;
-	changed.x = atof(XRCCTRL(*parent, "rsTextX", wxTextCtrl)->GetValue().c_str());
-	changed.y = atof(XRCCTRL(*parent, "rsTextY", wxTextCtrl)->GetValue().c_str());
-	changed.z = atof(XRCCTRL(*parent, "rsTextZ", wxTextCtrl)->GetValue().c_str());
-
-	XRCCTRL(*parent, "rsSliderX", wxSlider)->SetValue(changed.x * 100);
-	XRCCTRL(*parent, "rsSliderY", wxSlider)->SetValue(changed.y * 100);
-	XRCCTRL(*parent, "rsSliderZ", wxSlider)->SetValue(changed.z * 100);
-
-	PreviewRotation(changed);
-}
-
-
-void OutfitStudioFrame::PreviewRotation(const Vector3& changed) {
-	std::unordered_map<ushort, float> mask;
-	std::unordered_map<ushort, float>* mptr = nullptr;
-	for (auto &i : selectedItems) {
-		mask.clear();
-		mptr = nullptr;
-		glView->GetShapeMask(mask, i->GetShape()->GetName());
-		if (mask.size() > 0)
-			mptr = &mask;
-
-		std::vector<Vector3> verts;
-		project->RotateShape(i->GetShape(), changed - previewRotation, mptr);
-		project->GetLiveVerts(i->GetShape(), verts);
-		glView->UpdateMeshVertices(i->GetShape()->GetName(), &verts);
-	}
-
-	previewRotation = changed;
-
-	if (glView->GetTransformMode())
-		glView->ShowTransformTool();
 }
 
 void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
@@ -7663,13 +8491,13 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	usp->undoType = UT_MESH;
 	std::vector<NiShape *> delShapes;
 	for (auto &i : selectedItems) {
-		if (editUV && editUV->GetShape() == i->GetShape())
+		if (editUV && editUV->shape == i->GetShape())
 			editUV->Close();
 
-		std::unordered_map<ushort, float> mask;
-		glView->GetShapeUnmasked(mask, i->GetShape()->GetName());
+		std::unordered_map<uint16_t, float> mask;
+		glView->GetShapeUnmasked(mask, i->GetShape()->name.get());
 		UndoStateShape uss;
-		uss.shapeName = i->GetShape()->GetName();
+		uss.shapeName = i->GetShape()->name.get();
 		if (project->PrepareDeleteVerts(i->GetShape(), mask, uss))
 			delShapes.push_back(i->GetShape());
 		else
@@ -7678,7 +8506,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	// Confirm deleting shapes; then delete them.
 	if (!delShapes.empty()) {
-		if (wxMessageBox(_("Are you sure you wish to delete some of the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO) == wxNO)
+		if (wxMessageBox(_("Are you sure you wish to delete parts of the selected shapes?"), _("Confirm Delete"), wxYES_NO) == wxNO)
 			return;
 		for (NiShape *shape : delShapes)
 			project->DeleteShape(shape);
@@ -7695,6 +8523,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	project->GetWorkAnim()->CleanupBones();
 
 	RefreshGUIFromProj(false);
+	SetPendingChanges();
 
 	glView->ClearActiveMask();
 	ApplySliders();
@@ -7711,8 +8540,8 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::unordered_map<ushort, float> masked;
-	glView->GetShapeMask(masked, activeItem->GetShape()->GetName());
+	std::unordered_map<uint16_t, float> masked;
+	glView->GetShapeMask(masked, activeItem->GetShape()->name.get());
 	if (masked.empty())
 		return;
 
@@ -7725,7 +8554,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
 
-	if (editUV && editUV->GetShape() == activeItem->GetShape())
+	if (editUV && editUV->shape == activeItem->GetShape())
 		editUV->Close();
 
 	auto newShape = project->DuplicateShape(activeItem->GetShape(), newShapeName);
@@ -7733,11 +8562,11 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UT_MESH;
 	usp->usss.resize(2);
-	usp->usss[0].shapeName = activeItem->GetShape()->GetName();
+	usp->usss[0].shapeName = activeItem->GetShape()->name.get();
 	usp->usss[1].shapeName = newShapeName;
 
-	std::unordered_map<ushort, float> unmasked = masked;
-	glView->InvertMaskTris(unmasked, activeItem->GetShape()->GetName());
+	std::unordered_map<uint16_t, float> unmasked = masked;
+	glView->InvertMaskTris(unmasked, activeItem->GetShape()->name.get());
 
 	project->PrepareDeleteVerts(activeItem->GetShape(), masked, usp->usss[0]);
 	project->PrepareDeleteVerts(newShape, unmasked, usp->usss[1]);
@@ -7747,6 +8576,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	project->SetTextures();
 	RefreshGUIFromProj(false);
+	SetPendingChanges();
 
 	glView->ClearActiveMask();
 	ApplySliders();
@@ -7810,11 +8640,13 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string sourceShapeName;
 	if (activeItem)
-		sourceShapeName = activeItem->GetShape()->GetName();
+		sourceShapeName = activeItem->GetShape()->name.get();
 
 	std::vector<std::string> shapeList = GetShapeList();
 	if (shapeList.size() < 2)
 		return;
+
+	CloseBrushSettings();
 
 	for (const std::string &shape : shapeList) {
 		sourceChoice->AppendString(shape);
@@ -7864,6 +8696,7 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 		project->DeleteShape(sourceShape);
 
 	RefreshGUIFromProj(false);
+	SetPendingChanges();
 	ApplySliders();
 }
 
@@ -7876,6 +8709,8 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 			return;
 		}
 
+		CloseBrushSettings();
+
 		do {
 			std::string result{wxGetTextFromUser(_("Please enter a unique name for the duplicated shape."), _("Duplicate Shape")).ToUTF8()};
 			if (result.empty())
@@ -7884,7 +8719,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 			newName = std::move(result);
 		} while (project->IsValidShape(newName));
 
-		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->GetShape()->GetName(), newName);
+		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->GetShape()->name.get(), newName);
 		project->ClearBoneScale();
 
 		auto shape = project->DuplicateShape(activeItem->GetShape(), newName);
@@ -7903,6 +8738,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 
 			outfitShapes->UnselectAll();
 			outfitShapes->SelectItem(subitem);
+			SetPendingChanges();
 		}
 	}
 }
@@ -7926,11 +8762,14 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 	for (auto &i : selectedItems)
 		selected.push_back(*i);
 
+	activeItem = nullptr;
+	selectedItems.clear();
+
 	for (auto &i : selected) {
-		if (editUV && editUV->GetShape() == i.GetShape())
+		if (editUV && editUV->shape == i.GetShape())
 			editUV->Close();
 
-		std::string shapeName = i.GetShape()->GetName();
+		std::string shapeName = i.GetShape()->name.get();
 		wxLogMessage("Deleting shape '%s'.", shapeName);
 		project->DeleteShape(i.GetShape());
 		glView->DeleteMesh(shapeName);
@@ -7938,7 +8777,8 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 		outfitShapes->Delete(item);
 	}
 
-	AnimationGUIFromProj();
+	SetPendingChanges();
+	UpdateAnimationGUI();
 	glView->Render();
 }
 
@@ -7946,6 +8786,8 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSkeletonBones"))
 		return;
+
+	CloseBrushSettings();
 
 	dlg.SetSize(450, 470);
 	dlg.CenterOnParent();
@@ -7972,7 +8814,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 	if (dlg.ShowModal() == wxID_OK) {
 		wxArrayTreeItemIds sel;
 		boneTree->GetSelections(sel);
-		for (int i = 0; i < sel.size(); i++) {
+		for (size_t i = 0; i < sel.size(); i++) {
 			std::string bone = boneTree->GetItemText(sel[i]);
 			wxLogMessage("Adding bone '%s' to project.", bone);
 
@@ -7982,6 +8824,11 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 			cXMirrorBone->AppendString(bone);
 			cPoseBone->AppendString(bone);
 		}
+
+		glView->UpdateBones();
+		UpdateBoneCounts();
+		SetPendingChanges();
+		glView->Render();
 	}
 }
 
@@ -7991,7 +8838,7 @@ void OutfitStudioFrame::FillParentBoneChoice(wxDialog &dlg, const std::string &s
 
 	std::set<std::string> boneSet;
 	for (auto selItem : selectedItems) {
-		const std::vector<std::string> &bones = project->GetWorkAnim()->shapeBones[selItem->GetShape()->GetName()];
+		const std::vector<std::string> &bones = project->GetWorkAnim()->shapeBones[selItem->GetShape()->name.get()];
 		for (const std::string &b : bones)
 			boneSet.insert(b);
 	}
@@ -8038,6 +8885,8 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone"))
 		return;
 
+	CloseBrushSettings();
+
 	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 	FillParentBoneChoice(dlg, contextBone);
 
@@ -8070,6 +8919,11 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	outfitBones->SetItemState(newItem, 0);
 	cXMirrorBone->AppendString(bone);
 	cPoseBone->AppendString(bone);
+
+	glView->UpdateBones();
+	UpdateBoneCounts();
+	SetPendingChanges();
+	glView->Render();
 }
 
 void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
@@ -8080,6 +8934,8 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone"))
 		return;
+
+	CloseBrushSettings();
 
 	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
@@ -8123,13 +8979,15 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 	GetBoneDlgData(dlg, xform, parentBone);
 
 	project->ModifyCustomBone(bPtr, parentBone, xform);
+	glView->UpdateBones();
 	ApplyPose();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
-	for (int i = 0; i < selItems.size(); i++) {
+	for (size_t i = 0; i < selItems.size(); i++) {
 		std::string bone = outfitBones->GetItemText(selItems[i]);
 		wxLogMessage("Deleting bone '%s' from project.", bone);
 
@@ -8137,27 +8995,35 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 		activeBone.clear();
 
 		outfitBones->Delete(selItems[i]);
+		lastSelectedBones.erase(bone);
+		lastNormalizeBones.erase(bone);
 	}
 
+	glView->UpdateBones();
 	ReselectBone();
 	CalcAutoXMirrorBone();
 	glView->GetUndoHistory()->ClearHistory();
+	UpdateBoneCounts();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
-	for (int i = 0; i < selItems.size(); i++) {
+	for (size_t i = 0; i < selItems.size(); i++) {
 		std::string bone = outfitBones->GetItemText(selItems[i]);
 		wxLogMessage("Deleting weights of bone '%s' from selected shapes.", bone);
 
 		for (auto &s : selectedItems)
-			project->GetWorkAnim()->RemoveShapeBone(s->GetShape()->GetName(), bone);
+			project->GetWorkAnim()->RemoveShapeBone(s->GetShape()->name.get(), bone);
 	}
 
+	glView->UpdateBones();
 	ReselectBone();
 	glView->GetUndoHistory()->ClearHistory();
 	HighlightBoneNamesWithWeights();
+	UpdateBoneCounts();
+	SetPendingChanges();
 }
 
 bool OutfitStudioFrame::HasUnweightedCheck() {
@@ -8175,6 +9041,8 @@ bool OutfitStudioFrame::HasUnweightedCheck() {
 }
 
 bool OutfitStudioFrame::ShowWeightCopy(WeightCopyOptions& options) {
+	CloseBrushSettings();
+
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCopyWeights")) {
 		XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
@@ -8262,10 +9130,10 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 	if (!workAnim.HasSkinnedShape(baseShape))
 		return;
 
-	const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[baseShape->GetName()].xformGlobalToSkin;
+	const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin;
 
 	// Check if any shape's skin CS is different from the base shape's
-	for (int i = 0; i < selectedItems.size(); i++) {
+	for (size_t i = 0; i < selectedItems.size(); i++) {
 		NiShape *shape = selectedItems[i]->GetShape();
 		if (shape == baseShape)
 			continue;
@@ -8273,7 +9141,7 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 		if (!workAnim.HasSkinnedShape(shape))
 			continue;
 
-		if (!workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin)) {
+		if (!workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin)) {
 			options.showSkinTransOption = true;
 			break;
 		}
@@ -8289,24 +9157,24 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 	// find the average vertex position of the base shape in its own skin coordinates
 	Vector3 baseAvg;
 
-	const std::vector<Vector3> &baseVerts = *nif->GetRawVertsForShape(baseShape);
-	for (int i = 0; i < baseVerts.size(); ++i)
+	const std::vector<Vector3> &baseVerts = *nif->GetVertsForShape(baseShape);
+	for (size_t i = 0; i < baseVerts.size(); ++i)
 		baseAvg += baseVerts[i];
 
 	if (baseVerts.size())
-		baseAvg /= baseVerts.size();
+		baseAvg /= static_cast<uint32_t>(baseVerts.size());
 
 	// Now check if any shape would be better aligned by changing its global-to-skin transform
-	for (int i = 0; i < selectedItems.size(); i++) {
+	for (size_t i = 0; i < selectedItems.size(); i++) {
 		NiShape *shape = selectedItems[i]->GetShape();
 		if (shape == baseShape)
 			continue;
 
-		const MatTransform &globalToSkin = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin;
+		const MatTransform &globalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
 		if (globalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin))
 			continue;
 
-		const std::vector<Vector3> &verts = *nif->GetRawVertsForShape(shape);
+		const std::vector<Vector3> &verts = *nif->GetVertsForShape(shape);
 		if (verts.empty())
 			continue;
 
@@ -8315,13 +9183,13 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions &options) {
 		MatTransform skinToBaseSkin = baseXformGlobalToSkin.ComposeTransforms(skinToGlobal);
 
 		Vector3 oldAvg, newAvg;
-		for (int j = 0; j < verts.size(); ++j) {
+		for (size_t j = 0; j < verts.size(); ++j) {
 			oldAvg += skinToBaseSkin.ApplyTransform(verts[j]);
 			newAvg += verts[j];
 		}
 
-		oldAvg /= verts.size();
-		newAvg /= verts.size();
+		oldAvg /= static_cast<uint32_t>(verts.size());
+		newAvg /= static_cast<uint32_t>(verts.size());
 
 		// Check whether old or new is closer to the base shape.
 		// If new is farther away, then transforming the geometry would be a good idea
@@ -8353,32 +9221,32 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 		usp->undoType = UT_WEIGHT;
 
-		std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->GetName()];
+		std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
 		std::sort(baseBones.begin(), baseBones.end());
-		std::unordered_map<ushort, float> mask;
-		for (int i = 0; i < selectedItems.size(); i++) {
+		std::unordered_map<uint16_t, float> mask;
+		for (size_t i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
-				wxLogMessage("Copying bone weights to '%s'...", shape->GetName());
+				wxLogMessage("Copying bone weights to '%s'...", shape->name.get());
 
 				if (options.doSkinTransCopy) {
-					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin;
-					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin;
+					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->name.get()].xformGlobalToSkin;
+					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
 
 					if (options.doTransformGeo && !baseXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin))
 						project->ApplyTransformToShapeGeometry(shape, baseXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
 
-					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), baseXformGlobalToSkin);
+					workAnim.ChangeGlobalToSkinTransform(shape->name.get(), baseXformGlobalToSkin);
 					project->GetWorkNif()->SetShapeTransformGlobalToSkin(shape, baseXformGlobalToSkin);
 				}
 
 				usp->usss.resize(usp->usss.size() + 1);
-				usp->usss.back().shapeName = shape->GetName();
+				usp->usss.back().shapeName = shape->name.get();
 
 				mask.clear();
-				glView->GetShapeMask(mask, shape->GetName());
+				glView->GetShapeMask(mask, shape->name.get());
 
-				std::vector<std::string> bones = workAnim.shapeBones[shape->GetName()];
+				std::vector<std::string> bones = workAnim.shapeBones[shape->name.get()];
 				std::vector<std::string> mergedBones = baseBones;
 
 				for (auto b : bones)
@@ -8398,12 +9266,14 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
 
+		UpdateUndoTools();
+
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}
 
 	workAnim.CleanupBones();
-	AnimationGUIFromProj();
+	UpdateAnimationGUI();
 }
 
 void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
@@ -8455,27 +9325,27 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 
 		UndoStateProject *usp = glView->GetUndoHistory()->PushState();
 		usp->undoType = UT_WEIGHT;
-		std::unordered_map<ushort, float> mask;
-		for (int i = 0; i < selectedItems.size(); i++) {
+		std::unordered_map<uint16_t, float> mask;
+		for (size_t i = 0; i < selectedItems.size(); i++) {
 			NiShape *shape = selectedItems[i]->GetShape();
 			if (!project->IsBaseShape(shape)) {
-				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->GetName(), bonesString);
+				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->name.get(), bonesString);
 				if (options.doSkinTransCopy) {
-					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->GetName()].xformGlobalToSkin;
-					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->GetName()].xformGlobalToSkin;
+					const MatTransform &baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->name.get()].xformGlobalToSkin;
+					const MatTransform &oldXformGlobalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
 
 					if (options.doTransformGeo && !baseXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin))
 						project->ApplyTransformToShapeGeometry(shape, baseXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
 
-					workAnim.ChangeGlobalToSkinTransform(shape->GetName(), baseXformGlobalToSkin);
+					workAnim.ChangeGlobalToSkinTransform(shape->name.get(), baseXformGlobalToSkin);
 					project->GetWorkNif()->SetShapeTransformGlobalToSkin(shape, baseXformGlobalToSkin);
 				}
 
 				usp->usss.resize(usp->usss.size() + 1);
-				usp->usss.back().shapeName = shape->GetName();
+				usp->usss.back().shapeName = shape->name.get();
 
 				mask.clear();
-				glView->GetShapeMask(mask, shape->GetName());
+				glView->GetShapeMask(mask, shape->name.get());
 
 				project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, boneList, nSelBones, lockedBones, usp->usss.back(), bHasNormBones);
 			}
@@ -8489,12 +9359,14 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		ActiveShapesUpdated(usp, false);
 		project->morpher.ClearProximityCache();
 
+		UpdateUndoTools();
+
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}
 
 	workAnim.CleanupBones();
-	AnimationGUIFromProj();
+	UpdateAnimationGUI();
 }
 
 void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
@@ -8529,17 +9401,19 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 	for (std::string &boneName : selectedBones)
 		bonesString += "'" + boneName + "' ";
 
-	wxLogMessage("Transferring selected bone weights to '%s' for %s...", activeItem->GetShape()->GetName(), bonesString);
+	wxLogMessage("Transferring selected bone weights to '%s' for %s...", activeItem->GetShape()->name.get(), bonesString);
 	StartProgress(_("Transferring bone weights..."));
 
-	std::unordered_map<ushort, float> mask;
+	std::unordered_map<uint16_t, float> mask;
 	glView->GetActiveMask(mask);
 	project->TransferSelectedWeights(activeItem->GetShape(), &mask, &selectedBones);
 
-	AnimationGUIFromProj();
+	UpdateAnimationGUI();
 
 	UpdateProgress(100, _("Finished"));
 	EndProgress();
+
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
@@ -8549,12 +9423,12 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	for (auto &i : selectedItems) {
-		std::string shapeName = i->GetShape()->GetName();
+		std::string shapeName = i->GetShape()->name.get();
 		mesh* m = glView->GetMesh(shapeName);
 		if (!m)
 			continue;
 
-		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+		m->MaskFill(0.0f);
 
 		auto& bones = project->GetWorkAnim()->shapeBones;
 		if (bones.find(shapeName) != bones.end()) {
@@ -8563,8 +9437,35 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 				if (weights) {
 					for (auto &bw : *weights)
 						if (bw.second > 0.0f)
-							m->vcolors[bw.first].x = 1.0f;
+							m->mask[bw.first] = 1.0f;
 				}
+			}
+		}
+	}
+
+	glView->Refresh();
+}
+
+void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	for (auto &i : selectedItems) {
+		std::string shapeName = i->GetShape()->name.get();
+		mesh* m = glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		m->MaskFill(0.0f);
+
+		for (auto &b : GetSelectedBones()) {
+			auto weights = project->GetWorkAnim()->GetWeightsPtr(shapeName, b);
+			if (weights) {
+				for (auto &bw : *weights)
+					if (bw.second > 0.0f)
+						m->mask[bw.first] = 1.0f;
 			}
 		}
 	}
@@ -8575,6 +9476,7 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnResetTransforms(wxCommandEvent& WXUNUSED(event)) {
 	project->ResetTransforms();
 	RefreshGUIFromProj();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeleteUnreferencedNodes(wxCommandEvent& WXUNUSED(event)) {
@@ -8583,6 +9485,9 @@ void OutfitStudioFrame::OnDeleteUnreferencedNodes(wxCommandEvent& WXUNUSED(event
 	if (workNif)
 		workNif->DeleteUnreferencedNodes(&deletionCount);
 
+	if (deletionCount > 0)
+		SetPendingChanges();
+
 	wxString msg = wxString::Format(_("%d unreferenced nodes were deleted."), deletionCount);
 	wxMessageBox(msg, _("Delete Unreferenced Nodes"));
 }
@@ -8590,9 +9495,12 @@ void OutfitStudioFrame::OnDeleteUnreferencedNodes(wxCommandEvent& WXUNUSED(event
 void OutfitStudioFrame::OnRemoveSkinning(wxCommandEvent& WXUNUSED(event)) {
 	project->RemoveSkinning();
 	RefreshGUIFromProj();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
+	CloseBrushSettings();
+
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
@@ -8707,60 +9615,29 @@ void OutfitStudioFrame::OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event) {
 	XRCCTRL((*win), "npTexFile", wxRadioButton)->SetValue(true);
 }
 
-void OutfitStudioFrame::OnBrushSettingsSlider(wxScrollEvent& WXUNUSED(event)) {
-	TweakBrush* brush = glView->GetActiveBrush();
-	wxCollapsiblePane* parent = (wxCollapsiblePane*)FindWindowByName("brushPane");
-	if (!parent)
-		return;
-
-	wxStaticText* valSize = (wxStaticText*)XRCCTRL(*parent, "valSize", wxStaticText);
-	wxStaticText* valStrength = (wxStaticText*)XRCCTRL(*parent, "valStr", wxStaticText);
-	wxStaticText* valFocus = (wxStaticText*)XRCCTRL(*parent, "valFocus", wxStaticText);
-	wxStaticText* valSpacing = (wxStaticText*)XRCCTRL(*parent, "valSpace", wxStaticText);
-
-	float slideSize = XRCCTRL(*parent, "brushSize", wxSlider)->GetValue() / 1000.0f;
-	float slideStr = XRCCTRL(*parent, "brushStr", wxSlider)->GetValue() / 1000.0f;
-	float slideFocus = XRCCTRL(*parent, "brushFocus", wxSlider)->GetValue() / 1000.0f;
-	float slideSpace = XRCCTRL(*parent, "brushSpace", wxSlider)->GetValue() / 1000.0f;
-
-	wxString valSizeStr = wxString::Format("%0.3f", slideSize);
-	wxString valStrengthStr = wxString::Format("%0.3f", slideStr);
-	wxString valFocusStr = wxString::Format("%0.3f", slideFocus);
-	wxString valSpacingStr = wxString::Format("%0.3f", slideSpace);
-
-	valSize->SetLabel(valSizeStr);
-	valStrength->SetLabel(valStrengthStr);
-	valFocus->SetLabel(valFocusStr);
-	valSpacing->SetLabel(valSpacingStr);
-
-	if (brush) {
-		glView->SetBrushSize(slideSize);
-		brush->setStrength(slideStr);
-		brush->setFocus(slideFocus);
-		brush->setSpacing(slideSpace);
-		CheckBrushBounds();
-	}
-}
-
 void OutfitStudioFrame::OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
-	glView->RecalcNormals(activeItem->GetShape()->GetName());
-	glView->Render();
-}
-
-void OutfitStudioFrame::OnSmoothNormalSeams(wxCommandEvent& WXUNUSED(event)) {
-	glView->ToggleNormalSeamSmoothMode();
-
 	for (auto &s : selectedItems)
-		project->activeSet.ToggleSmoothSeamNormals(s->GetShape()->GetName());
+		glView->RecalcNormals(s->GetShape()->name.get());
 
 	glView->Render();
 }
 
-void OutfitStudioFrame::OnLockNormals(wxCommandEvent& WXUNUSED(event)) {
-	glView->ToggleLockNormalsMode();
+void OutfitStudioFrame::OnSmoothNormalSeams(wxCommandEvent& event) {
+	bool enable = event.IsChecked();
+	glView->SetNormalSeamSmoothMode(enable);
 
 	for (auto &s : selectedItems)
-		project->activeSet.ToggleLockNormals(s->GetShape()->GetName());
+		project->activeSet.SetSmoothSeamNormals(s->GetShape()->name.get(), enable);
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnLockNormals(wxCommandEvent& event) {
+	bool enable = event.IsChecked();
+	glView->SetLockNormalsMode(enable);
+
+	for (auto &s : selectedItems)
+		project->activeSet.SetLockNormals(s->GetShape()->name.get(), enable);
 }
 
 void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
@@ -8773,8 +9650,9 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	auto shape = activeItem->GetShape();
-	if (shape) {
-		editUV = new EditUV(this, project->GetWorkNif(), shape, glView->GetMesh(shape->GetName()), activeSlider);
+	mesh* m = glView->GetMesh(shape->name.get());
+	if (shape && m) {
+		editUV = new EditUV(this, project->GetWorkNif(), shape, m, activeSlider);
 
 		editUV->Bind(wxEVT_CLOSE_WINDOW, [&](wxCloseEvent& event) {
 			editUV = nullptr;
@@ -8790,7 +9668,7 @@ void OutfitStudioFrame::OnSelectMask(wxCommandEvent& WXUNUSED(event)) {
 	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
 	int maskSel = cMaskName->GetSelection();
 	if (maskSel != wxNOT_FOUND) {
-		auto maskData = (std::map<std::string, std::unordered_map<ushort, float>>*)cMaskName->GetClientData(maskSel);
+		auto maskData = (std::map<std::string, std::unordered_map<uint16_t, float>>*)cMaskName->GetClientData(maskSel);
 		for (auto mask : (*maskData)) {
 			glView->SetShapeMask(mask.second, mask.first);
 		}
@@ -8803,11 +9681,11 @@ void OutfitStudioFrame::OnSaveMask(wxCommandEvent& WXUNUSED(event)) {
 	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
 	int maskSel = cMaskName->GetSelection();
 	if (maskSel != wxNOT_FOUND) {
-		auto maskData = new std::map<std::string, std::unordered_map<ushort, float>>();
+		auto maskData = new std::map<std::string, std::unordered_map<uint16_t, float>>();
 
 		std::vector<std::string> shapes = GetShapeList();
 		for (auto &s : shapes) {
-			std::unordered_map<ushort, float> mask;
+			std::unordered_map<uint16_t, float> mask;
 			glView->GetShapeMask(mask, s);
 			(*maskData)[s] = std::move(mask);
 		}
@@ -8831,11 +9709,11 @@ void OutfitStudioFrame::OnSaveAsMask(wxCommandEvent& WXUNUSED(event)) {
 
 	} while (cMaskName->FindString(maskName) != wxNOT_FOUND);
 
-	auto maskData = new std::map<std::string, std::unordered_map<ushort, float>>();
+	auto maskData = new std::map<std::string, std::unordered_map<uint16_t, float>>();
 
 	std::vector<std::string> shapes = GetShapeList();
 	for (auto &s : shapes) {
-		std::unordered_map<ushort, float> mask;
+		std::unordered_map<uint16_t, float> mask;
 		glView->GetShapeMask(mask, s);
 		(*maskData)[s] = std::move(mask);
 	}
@@ -8862,7 +9740,7 @@ void OutfitStudioFrame::ApplyPose() {
 	for (auto &shape : project->GetWorkNif()->GetShapes()) {
 		std::vector<Vector3> verts;
 		project->GetLiveVerts(shape, verts);
-		glView->UpdateMeshVertices(shape->GetName(), &verts, true, true, false);
+		glView->UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
 	}
 	if (!activeBone.empty()) {
 		int boneScalePos = boneScale->GetValue();
@@ -8993,24 +9871,221 @@ void OutfitStudioFrame::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
+	wxMessageDialog dlg(this, _("Reset all bone poses?"), _("Reset Pose"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+	dlg.SetOKCancelLabels(_("Reset"), _("Cancel"));
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
 	std::vector<std::string> bones;
 	project->GetActiveBones(bones);
+
 	for (const std::string &boneName : bones) {
 		AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
-		if (!bone) continue;
-		if (bone->poseRotVec == Vector3(0,0,0) && bone->poseTranVec == Vector3(0,0,0))
+		if (!bone)
 			continue;
-		bone->poseRotVec = Vector3(0,0,0);
-		bone->poseTranVec = Vector3(0,0,0);
+
+		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+			continue;
+
+		bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
+		bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
 		bone->UpdatePoseTransform();
 	}
+
 	PoseToGUI();
 	ApplyPose();
 }
 
+void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
+	if (project->bPose) {
+		wxMessageDialog dlg(this, _("Permanently apply the pose to the mesh?"), _("Apply Pose to Mesh"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetOKCancelLabels(_("Apply"), _("Cancel"));
+		if (dlg.ShowModal() != wxID_OK)
+			return;
+
+		for (auto &s : project->GetWorkNif()->GetShapes()) {
+			UpdateShapeSource(s);
+			project->RefreshMorphShape(s);
+		}
+
+		project->InvalidateBoneScaleCache();
+		boneScale->SetValue(0);
+
+		std::vector<std::string> bones;
+		project->GetActiveBones(bones);
+
+		for (const std::string &boneName : bones) {
+			AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			if (!bone)
+				continue;
+
+			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+				continue;
+
+			bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
+			bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
+			bone->UpdatePoseTransform();
+		}
+
+		PoseToGUI();
+		ApplyPose();
+		SetPendingChanges();
+	}
+}
+
 void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {
 	project->bPose = e.IsChecked();
+
+	auto poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
+	poseToMesh->Enable(project->bPose);
+
 	ApplyPose();
+}
+
+void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	int poseSel = cPoseName->GetSelection();
+	if (poseSel != wxNOT_FOUND) {
+		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
+
+		std::vector<std::string> bones;
+		project->GetActiveBones(bones);
+
+		for (const auto &boneName : bones) {
+			AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			if (!bone)
+				continue;
+
+			auto poseBoneData = std::find_if(poseData->boneData.begin(), poseData->boneData.end(), [&boneName](const PoseBoneData& rt) { return rt.name == boneName; });
+			if (poseBoneData != poseData->boneData.end()) {
+				bone->poseRotVec = poseBoneData->rotation;
+				bone->poseTranVec = poseBoneData->translation;
+			}
+			else {
+				bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
+				bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
+			}
+
+			bone->UpdatePoseTransform();
+		}
+
+		PoseToGUI();
+		ApplyPose();
+	}
+}
+
+void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	int poseSel = cPoseName->GetSelection();
+	if (poseSel != wxNOT_FOUND) {
+		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
+		poseData->boneData.clear();
+
+		std::vector<std::string> bones;
+		project->GetActiveBones(bones);
+
+		for (const auto &boneName : bones) {
+			AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+			if (!bone)
+				continue;
+
+			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+				continue;
+
+			PoseBoneData poseBoneData{};
+			poseBoneData.name = bone->boneName;
+			poseBoneData.rotation = bone->poseRotVec;
+			poseBoneData.translation = bone->poseTranVec;
+			poseData->boneData.push_back(poseBoneData);
+		}
+
+		cPoseName->SetClientData(poseSel, poseData);
+
+		wxString dirName = wxString::FromUTF8(GetProjectPath()) + "/PoseData";
+		wxFileName::Mkdir(dirName, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+		wxString fileName = dirName + "/" + wxString::FromUTF8(poseData->name) + ".xml";
+
+		PoseDataFile poseDataFile;
+		poseDataFile.New(fileName.ToUTF8().data());
+
+		std::vector<PoseData> poses;
+		poses.push_back(*poseData);
+
+		poseDataFile.SetData(poses);
+		poseDataFile.Save();
+	}
+	else {
+		wxCommandEvent evt;
+		OnSaveAsPose(evt);
+	}
+}
+
+void OutfitStudioFrame::OnSaveAsPose(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+
+	wxString poseName;
+	do {
+		poseName = wxGetTextFromUser(_("Please enter a new unique name for the pose."), _("New Pose"));
+		if (poseName.empty())
+			return;
+
+	} while (cPoseName->FindString(poseName) != wxNOT_FOUND);
+
+	auto poseData = new PoseData(poseName.ToUTF8().data());
+
+	std::vector<std::string> bones;
+	project->GetActiveBones(bones);
+
+	for (const auto &boneName : bones) {
+		AnimBone *bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		if (!bone)
+			continue;
+
+		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+			continue;
+
+		PoseBoneData poseBoneData{};
+		poseBoneData.name = bone->boneName;
+		poseBoneData.rotation = bone->poseRotVec;
+		poseBoneData.translation = bone->poseTranVec;
+		poseData->boneData.push_back(poseBoneData);
+	}
+
+	int poseSel = cPoseName->Append(poseName, poseData);
+	cPoseName->SetSelection(poseSel);
+
+	wxString dirName = wxString::FromUTF8(GetProjectPath()) + "/PoseData";
+	wxFileName::Mkdir(dirName, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+	wxString fileName = dirName + "/" + wxString::FromUTF8(poseData->name) + ".xml";
+
+	PoseDataFile poseDataFile;
+	poseDataFile.New(fileName.ToUTF8().data());
+
+	std::vector<PoseData> poses;
+	poses.push_back(*poseData);
+
+	poseDataFile.SetData(poses);
+	poseDataFile.Save();
+}
+
+void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
+	wxChoice* cPoseName = (wxChoice*)FindWindowByName("cPoseName");
+	int poseSel = cPoseName->GetSelection();
+	if (poseSel != wxNOT_FOUND) {
+		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
+
+		wxString prompt = wxString::Format(_("Are you sure you wish to delete the pose '%s'?"), cPoseName->GetStringSelection());
+		int result = wxMessageBox(prompt, _("Confirm pose delete"), wxYES_NO | wxICON_WARNING, this);
+		if (result != wxYES)
+			return;
+
+		wxString fileName = wxString::FromUTF8(GetProjectPath()) + "/PoseData/" + wxString::FromUTF8(poseData->name) + ".xml";
+		wxRemoveFile(fileName);
+
+		cPoseName->Delete(poseSel);
+	}
 }
 
 
@@ -9035,36 +10110,6 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	: wxGLCanvas(parent, attribs, wxID_ANY, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE) {
 
 	context = std::make_unique<wxGLContext>(this, nullptr, &GLSurface::GetGLContextAttribs());
-	rbuttonDown = false;
-	lbuttonDown = false;
-	mbuttonDown = false;
-	isLDragging = false;
-	isRDragging = false;
-	isMDragging = false;
-
-	lastX = 0;
-	lastY = 0;
-
-	brushSize = 0.45f;
-	activeBrush = nullptr;
-	editMode = false;
-	brushMode = false;
-	transformMode = false;
-	pivotMode = false;
-	vertexEdit = false;
-	segmentMode = false;
-	activeTool = ToolID::Select;
-	isPainting = false;
-	isTransforming = false;
-	isMovingPivot = false;
-	isSelecting = false;
-	isPickingVertex = false;
-	isPickingEdge = false;
-	bXMirror = true;
-	bConnectedEdit = false;
-	bGlobalBrushCollision = true;
-
-	lastCenterDistance = 0.0f;
 }
 
 wxGLPanel::~wxGLPanel() {
@@ -9122,6 +10167,11 @@ void wxGLPanel::OnShown() {
 	}
 
 	os->MeshesFromProj();
+
+	UpdateFloor();
+	UpdateNodes();
+	UpdateBones();
+
 	Render();
 }
 
@@ -9132,7 +10182,7 @@ void wxGLPanel::SetNotifyWindow(wxWindow* win) {
 void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 
-	for (int i = 0; i < shapeList.size(); i++) {
+	for (size_t i = 0; i < shapeList.size(); i++) {
 		if (!shapeName.empty() && shapeList[i] != shapeName)
 			continue;
 
@@ -9141,12 +10191,20 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 			continue;
 
 		NiShape* shape = nif->FindBlockByName<NiShape>(shapeList[i]);
-		if (shape && shape->IsSkinned())
-			gls.SetSkinModelMat(m, os->project->GetWorkAnim()->shapeSkinning[shapeList[i]].xformGlobalToSkin);
+		if (shape && shape->IsSkinned()) {
+			// Overwrite skin matrix with the one from AnimInfo
+			const auto skinning = os->project->GetWorkAnim()->shapeSkinning.find(shapeList[i]);
+			if (skinning != os->project->GetWorkAnim()->shapeSkinning.end()) {
+				MatTransform gts = skinning->second.xformGlobalToSkin;
+				gts.translation = mesh::VecToMeshCoords(gts.translation);
+				m->matModel = glm::inverse(mesh::TransformToMatrix4(gts));
+			}
+		}
 
 		m->BuildTriAdjacency();
 		m->BuildEdgeList();
-		m->ColorFill(Vector3());
+		m->MaskFill(0.0f);
+		m->WeightFill(0.0f);
 
 		if (extInitialized) {
 			gls.SetContext();
@@ -9164,9 +10222,13 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<
 	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4 || targetGame == FO4VR) {
+	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
+	}
+	else if (targetGame == OB) {
+		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
+		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
 	}
 
 	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, reloadTextures);
@@ -9181,40 +10243,31 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<
 }
 
 void wxGLPanel::UpdateMeshVertices(const std::string& shapeName, std::vector<Vector3>* verts, bool updateBVH, bool recalcNormals, bool render, std::vector<Vector2>* uvs) {
-	int id = gls.GetMeshID(shapeName);
-	if (id < 0)
-		return;
+	mesh* m = gls.GetMesh(shapeName);
+	if (m) {
+		gls.Update(m, verts, uvs);
 
-	gls.Update(id, verts, uvs);
+		if (updateBVH)
+			BVHUpdateQueue.insert(m);
 
-	if (updateBVH)
-		BVHUpdateQueue.insert(id);
-
-	if (recalcNormals)
-		RecalcNormals(shapeName);
+		if (recalcNormals)
+			m->SmoothNormals();
+	}
 
 	if (render)
 		gls.RenderOneFrame();
 }
 
 void wxGLPanel::RecalculateMeshBVH(const std::string& shapeName) {
-	int id = gls.GetMeshID(shapeName);
-	if (id < 0)
-		return;
-
-	gls.RecalculateMeshBVH(id);
+	gls.RecalculateMeshBVH(shapeName);
 }
 
 void wxGLPanel::ShowShape(const std::string& shapeName, bool show) {
-	int id = gls.GetMeshID(shapeName);
-	if (id < 0)
-		return;
-
-	gls.SetMeshVisibility(id, show);
+	gls.SetMeshVisibility(shapeName, show);
 }
 
 void wxGLPanel::SetActiveShapes(const std::vector<std::string>& shapeNames) {
-	gls.SetActiveMeshesID(shapeNames);
+	gls.SetActiveMeshes(shapeNames);
 }
 
 void wxGLPanel::SetSelectedShape(const std::string& shapeName) {
@@ -9225,13 +10278,6 @@ void wxGLPanel::SetActiveTool(ToolID brushID) {
 	activeTool = brushID;
 
 	switch (brushID) {
-	case ToolID::Any:
-	case ToolID::CollapseVertex:
-	case ToolID::FlipEdge:
-	case ToolID::SplitEdge:
-	default:
-		activeBrush = nullptr;
-		break;
 	case ToolID::MaskBrush:
 		activeBrush = &maskBrush;
 		break;
@@ -9259,75 +10305,127 @@ void wxGLPanel::SetActiveTool(ToolID brushID) {
 	case ToolID::AlphaBrush:
 		activeBrush = &alphaBrush;
 		break;
+	default:
+		activeBrush = nullptr;
+		break;
 	}
 }
 
+void wxGLPanel::SetLastTool(ToolID tool) {
+	lastTool = tool;
+}
+
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
-	if (event.GetUnicodeKey() == 'V') {
-		wxDialog dlg;
-		wxPoint cursorPos(event.GetPosition());
+	if (!event.HasAnyModifiers()) {
+		if (event.GetUnicodeKey() == 'V') {
+			wxPoint cursorPos(event.GetPosition());
 
-		std::unordered_map<ushort, Vector3> diff;
-		std::vector<Vector3> verts;
-		Vector3 newPos;
-		int vertIndex;
+			int vertIndex;
+			if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &vertIndex))
+				return;
 
-		if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &vertIndex))
-			return;
+			os->CloseBrushSettings();
 
-		if (wxXmlResource::Get()->LoadDialog(&dlg, os, "dlgMoveVertex")) {
-			os->project->GetLiveVerts(os->activeItem->GetShape(), verts);
-			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].x));
-			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].y));
-			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].z));
+			wxDialog dlg;
+			if (wxXmlResource::Get()->LoadDialog(&dlg, os, "dlgMoveVertex")) {
+				NiShape* shape = os->activeItem->GetShape();
 
-			if (dlg.ShowModal() == wxID_OK) {
-				newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().c_str());
-				newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().c_str());
-				newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
+				std::vector<Vector3> verts;
+				os->project->GetLiveVerts(shape, verts);
 
-				if (os->bEditSlider) {
-					diff[vertIndex] = newPos - verts[vertIndex];
-					float diffY = diff[vertIndex].y / 10.0f;
-					float diffZ = diff[vertIndex].z / 10.0f;
-					diff[vertIndex].z = diffY;
-					diff[vertIndex].y = diffZ;
-					verts[vertIndex] = newPos;
-					os->project->UpdateMorphResult(os->activeItem->GetShape(), os->activeSlider, diff);
+				Vector3 oldPos = verts[vertIndex];
+				XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.x));
+				XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.y));
+				XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.z));
+
+				if (dlg.ShowModal() == wxID_OK) {
+					Vector3 newPos;
+					newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().c_str());
+					newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().c_str());
+					newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
+
+					// Move vertex in shape directly
+					if (!os->bEditSlider)
+						os->project->MoveVertex(shape, newPos, vertIndex);
+
+					// To mesh coordinates
+					oldPos = mesh::VecToMeshCoords(oldPos);
+					newPos = mesh::VecToMeshCoords(newPos);
+
+					UndoStateShape uss;
+					uss.shapeName = shape->name.get();
+					uss.pointStartState[vertIndex] = oldPos;
+					uss.pointEndState[vertIndex] = newPos;
+
+					// Push changes onto undo stack and execute
+					UndoStateProject *usp = GetUndoHistory()->PushState();
+					usp->undoType = UT_VERTPOS;
+					usp->usss.push_back(std::move(uss));
+
+					if (os->bEditSlider) {
+						usp->sliderName = os->activeSlider;
+
+						float sliderscale = os->project->SliderValue(os->activeSlider);
+						if (sliderscale == 0.0)
+							sliderscale = 1.0;
+
+						usp->sliderscale = sliderscale;
+					}
+
+					ApplyUndoState(usp, false);
+					os->UpdateUndoTools();
+				}
+
+				if (transformMode)
+					ShowTransformTool();
+			}
+		}
+		else if (event.GetUnicodeKey() == '0')
+			os->SelectTool(ToolID::Select);
+		else if (event.GetUnicodeKey() == '1')
+			os->SelectTool(ToolID::MaskBrush);
+		else if (event.GetUnicodeKey() == '2')
+			os->SelectTool(ToolID::InflateBrush);
+		else if (event.GetUnicodeKey() == '3')
+			os->SelectTool(ToolID::DeflateBrush);
+		else if (event.GetUnicodeKey() == '4')
+			os->SelectTool(ToolID::MoveBrush);
+		else if (event.GetUnicodeKey() == '5')
+			os->SelectTool(ToolID::SmoothBrush);
+		else if (event.GetUnicodeKey() == '6')
+			os->SelectTool(ToolID::UndiffBrush);
+		else if (event.GetUnicodeKey() == '7')
+			os->SelectTool(ToolID::WeightBrush);
+		else if (event.GetUnicodeKey() == '8')
+			os->SelectTool(ToolID::ColorBrush);
+		else if (event.GetUnicodeKey() == '9')
+			os->SelectTool(ToolID::AlphaBrush);
+		else if (event.GetKeyCode() == WXK_SPACE) {
+			if (event.ControlDown()) {
+				if (!os->activeSlider.empty()) {
+					os->ExitSliderEdit();
 				}
 				else {
-					os->project->MoveVertex(os->activeItem->GetShape(), newPos, vertIndex);
+					os->EnterSliderEdit();
+					os->ScrollToActiveSlider();
 				}
-				os->project->GetLiveVerts(os->activeItem->GetShape(), verts);
-				UpdateMeshVertices(os->activeItem->GetShape()->GetName(), &verts);
 			}
-
-			if (transformMode)
-				ShowTransformTool();
+			else {
+				if (os->brushSettingsPopupTransient && os->brushSettingsPopupTransient->IsShown()) {
+					os->CloseBrushSettings();
+				}
+				else {
+					bool brushSettingsNearCursor = Config.GetBoolValue("Input/BrushSettingsNearCursor");
+					if (brushSettingsNearCursor)
+						os->PopupBrushSettings();
+					else
+						os->PopupBrushSettings(os->brushSettings);
+				}
+			}
 		}
+		else if (event.GetKeyCode() == WXK_ESCAPE)
+			os->CloseBrushSettings();
 	}
-	else if (event.GetUnicodeKey() == '0')
-		os->SelectTool(ToolID::Select);
-	else if (event.GetUnicodeKey() == '1')
-		os->SelectTool(ToolID::MaskBrush);
-	else if (event.GetUnicodeKey() == '2')
-		os->SelectTool(ToolID::InflateBrush);
-	else if (event.GetUnicodeKey() == '3')
-		os->SelectTool(ToolID::DeflateBrush);
-	else if (event.GetUnicodeKey() == '4')
-		os->SelectTool(ToolID::MoveBrush);
-	else if (event.GetUnicodeKey() == '5')
-		os->SelectTool(ToolID::SmoothBrush);
-	else if (event.GetUnicodeKey() == '6')
-		os->SelectTool(ToolID::UndiffBrush);
-	else if (event.GetUnicodeKey() == '7')
-		os->SelectTool(ToolID::WeightBrush);
-	else if (event.GetUnicodeKey() == '8')
-		os->SelectTool(ToolID::ColorBrush);
-	else if (event.GetUnicodeKey() == '9')
-		os->SelectTool(ToolID::AlphaBrush);
-	else if (event.GetKeyCode() == WXK_SPACE)
-		os->ToggleBrushPane();
 
 	event.Skip();
 }
@@ -9350,10 +10448,10 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	if (!hit)
 		return false;
 
-	if (!os->NotifyStrokeStarting())
+	if (!os->CheckEditableState())
 		return false;
 
-	if (bXMirror) {
+	if (activeBrush->isMirrored()) {
 		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
 			tpi.facetM = -1;
 	}
@@ -9381,17 +10479,22 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	else if (activeBrush == &weightBrush) {
 		std::vector<std::string> normBones, notNormBones, brushBones, lockedBones;
 		os->GetNormalizeBones(&normBones, &notNormBones);
+
 		std::string activeBone = os->GetActiveBone();
 		std::string xMirrorBone = os->GetXMirrorBone();
 		brushBones.push_back(activeBone);
+
 		if (!xMirrorBone.empty())
 			brushBones.push_back(xMirrorBone);
+
 		bool bHasNormBones = false;
-		for (auto &bone : normBones)
+		for (auto &bone : normBones) {
 			if (bone != activeBone && bone != xMirrorBone) {
 				brushBones.push_back(bone);
 				bHasNormBones = true;
 			}
+		}
+
 		if (bHasNormBones) {
 			for (auto &bone : notNormBones)
 				if (bone != activeBone && bone != xMirrorBone)
@@ -9402,6 +10505,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 				if (bone != activeBone && bone != xMirrorBone)
 					brushBones.push_back(bone);
 		}
+
 		if (wxGetKeyState(WXK_ALT)) {
 			unweightBrush.animInfo = os->project->GetWorkAnim();
 			unweightBrush.boneNames = brushBones;
@@ -9410,6 +10514,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			unweightBrush.bXMirrorBone = !xMirrorBone.empty();
 			unweightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			unweightBrush.setStrength(-weightBrush.getStrength());
+			unweightBrush.setMirror(weightBrush.isMirrored());
+			unweightBrush.setConnected(weightBrush.isConnected());
 			activeBrush = &unweightBrush;
 		}
 		else if (wxGetKeyState(WXK_SHIFT)) {
@@ -9420,6 +10526,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			smoothWeightBrush.bXMirrorBone = !xMirrorBone.empty();
 			smoothWeightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
+			smoothWeightBrush.setMirror(weightBrush.isMirrored());
+			smoothWeightBrush.setConnected(weightBrush.isConnected());
 			activeBrush = &smoothWeightBrush;
 		}
 		else {
@@ -9432,35 +10540,53 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	}
 	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {
 		if (activeBrush == &standardBrush) {
+			deflateBrush.setMirror(activeBrush->isMirrored());
+			deflateBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &deflateBrush;
 		}
 		else if (activeBrush == &deflateBrush) {
+			standardBrush.setMirror(activeBrush->isMirrored());
+			standardBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &standardBrush;
 		}
 		else if (activeBrush == &maskBrush) {
-			UnMaskBrush.setStrength(-maskBrush.getStrength());
+			UnMaskBrush.setStrength(-activeBrush->getStrength());
+			UnMaskBrush.setMirror(activeBrush->isMirrored());
+			UnMaskBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &UnMaskBrush;
 		}
 		else if (activeBrush == &colorBrush) {
-			uncolorBrush.setStrength(-colorBrush.getStrength());
+			uncolorBrush.setStrength(-activeBrush->getStrength());
+			uncolorBrush.setMirror(activeBrush->isMirrored());
+			uncolorBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &uncolorBrush;
 		}
 		else if (activeBrush == &alphaBrush) {
-			unalphaBrush.setStrength(-alphaBrush.getStrength());
+			unalphaBrush.setStrength(-activeBrush->getStrength());
+			unalphaBrush.setMirror(activeBrush->isMirrored());
+			unalphaBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &unalphaBrush;
 		}
 	}
 	else if (activeBrush == &maskBrush && wxGetKeyState(WXK_SHIFT)) {
-		smoothMaskBrush.setStrength(maskBrush.getStrength() * 15.0f);
+		smoothMaskBrush.setStrength(activeBrush->getStrength() * 15.0f);
+		smoothMaskBrush.setMirror(activeBrush->isMirrored());
+		smoothMaskBrush.setConnected(activeBrush->isConnected());
 		activeBrush = &smoothMaskBrush;
 	}
 	else if (activeBrush != &weightBrush && activeBrush != &maskBrush && wxGetKeyState(WXK_SHIFT)) {
+		smoothBrush.setMirror(activeBrush->isMirrored());
+		smoothBrush.setConnected(activeBrush->isConnected());
 		activeBrush = &smoothBrush;
 	}
 
+	activeBrush->setRadius(brushSize);
+
 	if (activeBrush->Type() == TBT_WEIGHT) {
 		for (auto &sel : os->GetSelectedItems()) {
-			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(sel->GetShape()->GetName(), os->GetActiveBone());
+			os->project->GetWorkNif()->CreateSkinning(sel->GetShape());
+
+			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(sel->GetShape()->name.get(), os->GetActiveBone());
 			if (boneIndex < 0)
 				os->project->AddBoneRef(os->GetActiveBone());
 		}
@@ -9468,14 +10594,12 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 
 	activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), activeBrush, *undoHistory.PushState());
 
-	activeBrush->setConnected(bConnectedEdit);
-	activeBrush->setMirror(bXMirror);
-	activeBrush->setRadius(brushSize);
 	if (os->bEditSlider) {
 		activeStroke->usp.sliderName = os->activeSlider;
 		float sliderscale = os->project->SliderValue(os->activeSlider);
 		if (sliderscale == 0.0)
 			sliderscale = 1.0;
+
 		activeStroke->usp.sliderscale = sliderscale;
 	}
 
@@ -9485,7 +10609,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		std::vector<std::vector<Vector3>> positionData;
 		positionData.resize(refMeshes.size());
 
-		for (int i = 0; i < refMeshes.size(); i++) {
+		for (size_t i = 0; i < refMeshes.size(); i++) {
 			// Get base vertex positions, not current mesh position
 			mesh* m = refMeshes[i];
 			std::vector<Vector3> basePosition;
@@ -9495,12 +10619,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			if (shape)
 				workNif->GetVertsForShape(shape, basePosition);
 
-			for (auto &p : basePosition) {
-				std::swap(p.y, p.z);
-				p.x /= -10.0f;
-				p.y /= 10.0f;
-				p.z /= 10.0f;
-			}
+			for (auto &p : basePosition)
+				p = mesh::VecToMeshCoords(p);
 
 			positionData[i] = std::move(basePosition);
 		}
@@ -9526,7 +10646,6 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 
 	if (activeStroke) {
 		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
-		gls.RenderOneFrame();
 
 		if (activeBrush->Type() == TBT_MOVE) {
 			Vector3 pn;
@@ -9539,7 +10658,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 				return;
 
 			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, bGlobalBrushCollision, &tpi.facet);
-			if (bXMirror) {
+			if (activeBrush->isMirrored()) {
 				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
 					tpi.facetM = -1;
 			}
@@ -9589,7 +10708,9 @@ void wxGLPanel::EndBrushStroke() {
 					int boneScalePos = os->boneScale->GetValue();
 					if (boneScalePos != 0)
 						os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
+
 					os->HighlightBoneNamesWithWeights();
+					os->UpdateBoneCounts();
 				}
 			}
 
@@ -9610,7 +10731,12 @@ void wxGLPanel::EndBrushStroke() {
 		if (segmentMode) {
 			os->ShowSegment(nullptr, true);
 			os->ShowPartition(nullptr, true);
+
+			if (os->currentTabButton)
+				os->currentTabButton->SetPendingChanges();
 		}
+
+		os->UpdateUndoTools();
 	}
 }
 
@@ -9619,6 +10745,9 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	mesh* hitMesh;
 	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh, &tpi.facet);
 	if (!hit)
+		return false;
+
+	if (!os->CheckEditableState())
 		return false;
 
 	tpi.center = xformCenter;
@@ -9744,6 +10873,7 @@ void wxGLPanel::EndTransform() {
 	}
 
 	ShowTransformTool();
+	os->UpdateUndoTools();
 }
 
 bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
@@ -9823,14 +10953,14 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 		return false;
 
 	if (os->activeItem) {
-		mesh* m = GetMesh(os->activeItem->GetShape()->GetName());
+		mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
 		if (m) {
 			if (wxGetKeyState(WXK_CONTROL))
-				m->vcolors[vertIndex].x = 1.0f;
+				m->mask[vertIndex] = 1.0f;
 			else if (!segmentMode)
-				m->vcolors[vertIndex].x = 0.0f;
+				m->mask[vertIndex] = 0.0f;
 
-			m->QueueUpdate(mesh::UpdateType::VertexColors);
+			m->QueueUpdate(mesh::UpdateType::Mask);
 		}
 	}
 
@@ -9841,28 +10971,30 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 }
 
 bool wxGLPanel::StartPickVertex() {
-	if (hoverMeshName.empty() || hoverPoint < 0)
+	if (lastHitResult.hitMeshName.empty() || lastHitResult.hoverPoint < 0)
 		return false;
 
-	mouseDownMeshName = hoverMeshName;
-	mouseDownPoint = hoverPoint;
+	mouseDownMeshName = lastHitResult.hitMeshName;
+	mouseDownPoint = lastHitResult.hoverPoint;
 	return true;
 }
 
 void wxGLPanel::UpdatePickVertex(const wxPoint& screenPos) {
-	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint);
-	if (!hit || hoverMeshName != mouseDownMeshName || hoverPoint != mouseDownPoint)
+	GLSurface::CursorHitResult hitResult{};
+
+	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hitResult);
+	if (!hit || hitResult.hitMeshName != mouseDownMeshName || hitResult.hoverPoint != mouseDownPoint)
 		gls.HidePointCursor();
 
 	gls.RenderOneFrame();
 }
 
 void wxGLPanel::EndPickVertex() {
-	if (hoverMeshName != mouseDownMeshName || hoverPoint != mouseDownPoint)
+	if (lastHitResult.hitMeshName != mouseDownMeshName || lastHitResult.hoverPoint != mouseDownPoint)
 		return;
 
 	// Clear PickVertex state so no accidents can happen
-	hoverMeshName.clear();
+	lastHitResult.hitMeshName.clear();
 	gls.HidePointCursor();
 
 	if (activeTool == ToolID::CollapseVertex)
@@ -9883,9 +11015,9 @@ void wxGLPanel::ClickCollapseVertex() {
 		return;
 
 	// Make list of this vertex and its welded vertices.
-	std::vector<int> verts;
+	std::vector<uint16_t> verts;
 	verts.push_back(mouseDownPoint);
-	if (!bConnectedEdit && m->weldVerts.find(mouseDownPoint) != m->weldVerts.end())
+	if (m->weldVerts.find(mouseDownPoint) != m->weldVerts.end())
 		for (int wv : m->weldVerts[mouseDownPoint])
 			verts.push_back(wv);
 
@@ -9904,31 +11036,35 @@ void wxGLPanel::ClickCollapseVertex() {
 	usp->undoType = UT_MESH;
 	usp->usss.push_back(std::move(uss));
 	ApplyUndoState(usp, false);
+
+	os->UpdateUndoTools();
 }
 
 bool wxGLPanel::StartPickEdge() {
-	if (hoverMeshName.empty() || (hoverEdge.p1 == 0 && hoverEdge.p2 == 0))
+	if (lastHitResult.hitMeshName.empty() || (lastHitResult.hoverEdge.p1 == 0 && lastHitResult.hoverEdge.p2 == 0))
 		return false;
 
-	mouseDownMeshName = hoverMeshName;
-	mouseDownEdge = hoverEdge;
+	mouseDownMeshName = lastHitResult.hitMeshName;
+	mouseDownEdge = lastHitResult.hoverEdge;
 	return true;
 }
 
 void wxGLPanel::UpdatePickEdge(const wxPoint& screenPos) {
-	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, nullptr, nullptr, &hoverEdge);
-	if (!hit || hoverMeshName != mouseDownMeshName || !hoverEdge.CompareIndices(mouseDownEdge))
+	GLSurface::CursorHitResult hitResult{};
+
+	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hitResult);
+	if (!hit || hitResult.hitMeshName != mouseDownMeshName || !hitResult.hoverEdge.CompareIndices(mouseDownEdge))
 		gls.HideSegCursor();
 
 	gls.RenderOneFrame();
 }
 
 void wxGLPanel::EndPickEdge() {
-	if (hoverMeshName != mouseDownMeshName || !hoverEdge.CompareIndices(mouseDownEdge))
+	if (lastHitResult.hitMeshName != mouseDownMeshName || !lastHitResult.hoverEdge.CompareIndices(mouseDownEdge))
 		return;
 
 	// Clear PickEdge state so no accidents can happen
-	hoverMeshName.clear();
+	lastHitResult.hitMeshName.clear();
 	gls.HideSegCursor();
 
 	if (activeTool == ToolID::FlipEdge)
@@ -9958,6 +11094,8 @@ void wxGLPanel::ClickFlipEdge() {
 	usp->undoType = UT_MESH;
 	usp->usss.push_back(std::move(uss));
 	ApplyUndoState(usp, false);
+
+	os->UpdateUndoTools();
 }
 
 void wxGLPanel::ClickSplitEdge() {
@@ -9976,11 +11114,11 @@ void wxGLPanel::ClickSplitEdge() {
 	if (!shape)
 		return;
 
-	ushort maxVertIndex = std::numeric_limits<ushort>().max();
-	uint maxTriIndex = std::numeric_limits<ushort>().max();
+	uint16_t maxVertIndex = std::numeric_limits<uint16_t>().max();
+	uint32_t maxTriIndex = std::numeric_limits<uint16_t>().max();
 
-	if (workNif->GetHeader().GetVersion().IsFO4())
-		maxTriIndex = std::numeric_limits<uint>().max();
+	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
+		maxTriIndex = std::numeric_limits<uint32_t>().max();
 
 	if (shape->GetNumVertices() > maxVertIndex - 2) {
 		wxMessageBox(_("The shape has reached the vertex count limit."), _("Error"), wxICON_ERROR, os);
@@ -9993,13 +11131,15 @@ void wxGLPanel::ClickSplitEdge() {
 	}
 
 	// Collect welded vertices
-	int p1 = mouseDownEdge.p1;
-	int p2 = mouseDownEdge.p2;
-	std::vector<int> p1s(1, p1);
-	std::vector<int> p2s(1, p2);
+	uint16_t p1 = mouseDownEdge.p1;
+	uint16_t p2 = mouseDownEdge.p2;
+	std::vector<uint16_t> p1s(1, p1);
+	std::vector<uint16_t> p2s(1, p2);
+
 	auto wvit = m->weldVerts.find(p1);
 	if (wvit != m->weldVerts.end())
 		std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(p1s));
+
 	wvit = m->weldVerts.find(p2);
 	if (wvit != m->weldVerts.end())
 		std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(p2s));
@@ -10017,6 +11157,8 @@ void wxGLPanel::ClickSplitEdge() {
 	usp->undoType = UT_MESH;
 	usp->usss.push_back(std::move(uss));
 	ApplyUndoState(usp, false);
+
+	os->UpdateUndoTools();
 }
 
 bool wxGLPanel::RestoreMode(UndoStateProject *usp) {
@@ -10042,7 +11184,7 @@ bool wxGLPanel::RestoreMode(UndoStateProject *usp) {
 	return modeChanged;
 }
 
-void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
+void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo, bool bRender) {
 	int undoType = usp->undoType;
 	if (undoType == UT_WEIGHT) {
 		for (auto &uss : usp->usss) {
@@ -10055,10 +11197,10 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 					continue;
 
 				for (auto &wIt : bw.weights)
-					m->vcolors[wIt.first].y = bUndo ? wIt.second.startVal : wIt.second.endVal;
+					m->weight[wIt.first] = bUndo ? wIt.second.startVal : wIt.second.endVal;
 			}
 
-			m->QueueUpdate(mesh::UpdateType::VertexColors);
+			m->QueueUpdate(mesh::UpdateType::Weight);
 		}
 
 		os->ActiveShapesUpdated(usp, bUndo);
@@ -10070,19 +11212,34 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 				os->project->ApplyBoneScale(activeBone, boneScalePos, true);
 		}
 	}
-	else if (undoType == UT_MASK || undoType == UT_COLOR) {
+	else if (undoType == UT_MASK) {
 		for (auto &uss : usp->usss) {
 			mesh *m = GetMesh(uss.shapeName);
 			if (!m)
 				continue;
 
 			for (auto &pit : (bUndo ? uss.pointStartState : uss.pointEndState))
+				m->mask[pit.first] = pit.second.x;
+
+			m->QueueUpdate(mesh::UpdateType::Mask);
+		}
+
+		if (undoType != UT_MASK)
+			os->ActiveShapesUpdated(usp, bUndo);
+	}
+	else if (undoType == UT_COLOR) {
+		for (auto& uss : usp->usss) {
+			mesh* m = GetMesh(uss.shapeName);
+			if (!m)
+				continue;
+
+			for (auto& pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->vcolors[pit.first] = pit.second;
 
 			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
 
-		if (undoType != UT_MASK)
+		if (undoType != UT_COLOR)
 			os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UT_ALPHA) {
@@ -10109,9 +11266,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 				m->verts[pit.first] = pit.second;
 
 			m->SmoothNormals();
-
-			int meshID = gls.GetMeshID(uss.shapeName);
-			BVHUpdateQueue.insert(meshID);
+			BVHUpdateQueue.insert(m);
 
 			m->QueueUpdate(mesh::UpdateType::Position);
 		}
@@ -10144,10 +11299,12 @@ void wxGLPanel::ApplyUndoState(UndoStateProject *usp, bool bUndo) {
 		os->ApplySliders();
 	}
 
-	if (transformMode)
-		ShowTransformTool();
-	else
-		Render();
+	if (bRender) {
+		if (transformMode)
+			ShowTransformTool();
+		else
+			Render();
+	}
 }
 
 bool wxGLPanel::UndoStroke() {
@@ -10178,6 +11335,34 @@ bool wxGLPanel::RedoStroke() {
 	return true;
 }
 
+void wxGLPanel::ShowRotationCenter(bool show) {
+	if (show) {
+		RotationCenterMesh = gls.AddVis3dSphere(gls.camRotOffset, 0.08f, Vector3(1.0f, 0.0f, 1.0f), "RotationCenterMesh");
+		RotationCenterMesh->prop.alpha = 0.25f;
+		RotationCenterMesh->bVisible = true;
+
+		RotationCenterMeshRingX = gls.AddVis3dRing(gls.camRotOffset, Vector3(1.0f, 0.0f, 0.0f), 0.25f, 0.01f, Vector3(1.0f, 0.0f, 0.0f), "RotationCenterMeshRingX");
+		RotationCenterMeshRingX->prop.alpha = 0.25f;
+		RotationCenterMeshRingX->bVisible = true;
+
+		RotationCenterMeshRingY = gls.AddVis3dRing(gls.camRotOffset, Vector3(0.0f, 1.0f, 0.0f), 0.25f, 0.01f, Vector3(0.0f, 1.0f, 0.0f), "RotationCenterMeshRingY");
+		RotationCenterMeshRingY->prop.alpha = 0.25f;
+		RotationCenterMeshRingY->bVisible = true;
+
+		RotationCenterMeshRingZ = gls.AddVis3dRing(gls.camRotOffset, Vector3(0.0f, 0.0f, 1.0f), 0.25f, 0.01f, Vector3(0.0f, 0.0f, 1.0f), "RotationCenterMeshRingZ");
+		RotationCenterMeshRingZ->prop.alpha = 0.25f;
+		RotationCenterMeshRingZ->bVisible = true;
+	}
+	else {
+		if (RotationCenterMesh) {
+			RotationCenterMesh->bVisible = false;
+			RotationCenterMeshRingX->bVisible = false;
+			RotationCenterMeshRingY->bVisible = false;
+			RotationCenterMeshRingZ->bVisible = false;
+		}
+	}
+}
+
 void wxGLPanel::ShowTransformTool(bool show) {
 	if (pivotMode)
 		xformCenter = pivotPosition;
@@ -10186,12 +11371,18 @@ void wxGLPanel::ShowTransformTool(bool show) {
 
 	if (show) {
 		XMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
+		XMoveMesh->prop.alpha = 0.6f;
 		YMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
+		YMoveMesh->prop.alpha = 0.6f;
 		ZMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
+		ZMoveMesh->prop.alpha = 0.6f;
 
 		XRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 1.25f, 0.04f, Vector3(1.0f, 0.0f, 0.0f), "XRotateMesh");
+		XRotateMesh->prop.alpha = 0.6f;
 		YRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 1.25f, 0.04f, Vector3(0.0f, 1.0f, 0.0f), "YRotateMesh");
+		YRotateMesh->prop.alpha = 0.6f;
 		ZRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 1.25f, 0.04f, Vector3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
+		ZRotateMesh->prop.alpha = 0.6f;
 
 		XScaleMesh = gls.AddVis3dCube(xformCenter + Vector3(0.75f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f), 0.12f, Vector3(1.0f, 0.0f, 0.0f), "XScaleMesh");
 		YScaleMesh = gls.AddVis3dCube(xformCenter + Vector3(0.0f, 0.75f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), 0.12f, Vector3(0.0f, 1.0f, 0.0f), "YScaleMesh");
@@ -10339,6 +11530,318 @@ void wxGLPanel::UpdatePivot() {
 	PivotCenterMesh->ScaleVertices(pivotPosition, lastCenterPivotDistance);
 }
 
+void wxGLPanel::ShowNodes(bool show) {
+	nodesMode = show;
+
+	for (auto &m : nodesPoints)
+		m->bVisible = show;
+
+	for (auto &m : nodesLines)
+		m->bVisible = show;
+
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateNodes() {
+	for (auto &m : nodesPoints)
+		gls.DeleteOverlay(m);
+
+	for (auto &m : nodesLines)
+		gls.DeleteOverlay(m);
+
+	nodesPoints.clear();
+	nodesLines.clear();
+
+	auto workNif = os->project->GetWorkNif();
+
+	std::function<void(NiNode*, NiNode*, const Vector3&, const Vector3&)> addChildNodes = [&](NiNode* node, NiNode* parent, const Vector3& rootPosition, const Vector3& parentPosition) {
+		MatTransform ttg = node->GetTransformToParent();
+		NiNode* parentNode = parent;
+		while (parentNode) {
+			ttg = parentNode->GetTransformToParent().ComposeTransforms(ttg);
+			parentNode = workNif->GetParentNode(parentNode);
+		}
+
+		Vector3 position = ttg.ApplyTransform(rootPosition);
+
+		std::string nodeName = node->name.get();
+		if (!nodeName.empty()) {
+			Vector3 renderPosition = mesh::VecToMeshCoords(position);
+
+			auto pointMesh = gls.AddVisPoint(renderPosition, "P_" + nodeName);
+			if (pointMesh) {
+				pointMesh->bVisible = nodesMode;
+				nodesPoints.push_back(pointMesh);
+			}
+
+			if (parent) {
+				Vector3 renderParentPosition = mesh::VecToMeshCoords(parentPosition);
+
+				auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "L_" + nodeName);
+				if (lineMesh) {
+					lineMesh->bVisible = nodesMode;
+					nodesLines.push_back(lineMesh);
+				}
+			}
+		}
+
+		for (auto &child : node->childRefs) {
+			auto childNode = workNif->GetHeader().GetBlock<NiNode>(child);
+			if (childNode)
+				addChildNodes(childNode, node, rootPosition, position);
+		}
+	};
+
+	auto rootNode = workNif->GetRootNode();
+	if (rootNode)
+		addChildNodes(rootNode, nullptr, rootNode->transform.translation, rootNode->transform.translation);
+
+	UpdateNodeColors();
+}
+
+void wxGLPanel::ShowBones(bool show) {
+	bonesMode = show;
+
+	for (auto &m : bonesPoints)
+		m->bVisible = show;
+
+	for (auto &m : bonesLines)
+		m->bVisible = show;
+
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateBones() {
+	for (auto &m : bonesPoints)
+		gls.DeleteOverlay(m);
+
+	for (auto &m : bonesLines)
+		gls.DeleteOverlay(m);
+
+	bonesPoints.clear();
+	bonesLines.clear();
+
+	auto workAnim = os->project->GetWorkAnim();
+
+	std::function<bool(AnimBone*, const Vector3&)> addChildBones = [&](AnimBone* parent, const Vector3& rootPosition) {
+		bool anyBoneInSelection = false;
+
+		for (auto &cb : parent->children) {
+			bool childBonesInSelection = addChildBones(cb, rootPosition);
+
+			if (!cb->boneName.empty()) {
+				bool boneInSelection = false;
+				for (auto &si : os->GetSelectedItems()) {
+					if (workAnim->GetShapeBoneIndex(si->GetShape()->name.get(), cb->boneName) != -1) {
+						boneInSelection = true;
+						break;
+					}
+				}
+
+				if (boneInSelection || childBonesInSelection) {
+					Vector3 position = cb->xformToGlobal.ApplyTransform(rootPosition);
+					Vector3 parentPosition = parent->xformToGlobal.ApplyTransform(rootPosition);
+					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
+
+					Vector3 renderPosition = mesh::VecToMeshCoords(position);
+
+					auto pointMesh = gls.AddVisPoint(renderPosition, "BP_" + cb->boneName);
+					if (pointMesh) {
+						pointMesh->bVisible = bonesMode;
+						bonesPoints.push_back(pointMesh);
+					}
+
+					Vector3 renderParentPosition = mesh::VecToMeshCoords(parentPosition);
+
+					if (!matchesParent) {
+						auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "BL_" + cb->boneName);
+						if (lineMesh) {
+							lineMesh->bVisible = bonesMode;
+							bonesLines.push_back(lineMesh);
+						}
+					}
+
+					anyBoneInSelection = true;
+				}
+			}
+		}
+
+		return anyBoneInSelection;
+	};
+
+	AnimBone* rb = AnimSkeleton::getInstance().GetRootBonePtr();
+	if (rb)
+		addChildBones(rb, rb->xformToParent.translation);
+
+	UpdateNodeColors();
+}
+
+void wxGLPanel::UpdateNodeColors() {
+	std::string activeBone = os->GetActiveBone();
+
+	for (auto &m : nodesPoints) {
+		auto nodeName = m->shapeName.substr(2, m->shapeName.length() - 2);
+		if (nodeName == activeBone) {
+			m->color.x = 1.0f;
+			m->color.y = 0.0f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else {
+			m->color.x = 0.0f;
+			m->color.y = 1.0f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::Default;
+		}
+	}
+
+	for (auto &m : nodesLines) {
+		auto nodeName = m->shapeName.substr(2, m->shapeName.length() - 2);
+		if (nodeName == activeBone) {
+			m->color.x = 0.7f;
+			m->color.y = 0.0f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else {
+			m->color.x = 0.0f;
+			m->color.y = 0.7f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::Default;
+		}
+	}
+
+	for (auto &m : bonesPoints) {
+		auto nodeName = m->shapeName.substr(3, m->shapeName.length() - 3);
+		if (nodeName == activeBone) {
+			m->color.x = 1.0f;
+			m->color.y = 0.0f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else {
+			m->color.x = 0.0f;
+			m->color.y = 1.0f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::Default;
+		}
+	}
+
+	for (auto &m : bonesLines) {
+		auto nodeName = m->shapeName.substr(3, m->shapeName.length() - 3);
+		if (nodeName == activeBone) {
+			m->color.x = 0.7f;
+			m->color.y = 0.0f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::NodeSelection;
+		}
+		else {
+			m->color.x = 0.0f;
+			m->color.y = 0.7f;
+			m->color.z = 0.0f;
+			m->overlayLayer = OverlayLayer::Default;
+		}
+	}
+}
+
+void wxGLPanel::ShowFloor(bool show) {
+	floorMode = show;
+
+	for (auto &m : floorMeshes)
+		m->bVisible = show;
+
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateFloor() {
+	for (auto &m : floorMeshes)
+		gls.DeleteMesh(m);
+
+	floorMeshes.clear();
+
+	const float floorWidth = 100.0f;
+	const float floorWidthHalf = floorWidth / 2.0f;
+	const float floorGridStepBig = 5.0f;
+	const float floorGridStepSmall = 1.0f;
+	const int numLinesBig = (int)(floorWidth / floorGridStepBig) + 1;
+	const int numLinesSmall = (int)(floorWidth / floorGridStepSmall) + 1;
+
+	Matrix4 floorMat;
+	floorMat.Rotate(90.0f * DEG2RAD, 1.0f, 0.0f, 0.0f);
+
+	Vector3 floorColor(0.0f, 0.0f, 1.0f);
+	auto floorMesh = gls.AddVisPlane(floorMat, Vector2(floorWidth, floorWidth), 1.0f, 0.0f, "", &floorColor, true);
+	if (floorMesh) {
+		floorMesh->prop.alpha = 0.05f;
+		floorMesh->bVisible = floorMode;
+		floorMeshes.push_back(floorMesh);
+	}
+
+	float nextLinePos = floorWidth - floorWidthHalf;
+
+	// Floor with width on X and Y axis (big grid)
+	for (int i = 0; i < numLinesBig; i++) {
+		Vector3 startPos(floorWidthHalf, 0.0f, nextLinePos);
+		Vector3 endPos(-floorWidthHalf, 0.0f, nextLinePos);
+
+		auto lineMesh = gls.AddVisSeg(startPos, endPos, "", true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->bVisible = floorMode;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		startPos = Vector3(nextLinePos, 0.0f, floorWidthHalf);
+		endPos = Vector3(nextLinePos, 0.0f, -floorWidthHalf);
+
+		lineMesh = gls.AddVisSeg(startPos, endPos, "", true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->bVisible = floorMode;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		nextLinePos -= floorGridStepBig;
+	}
+
+	nextLinePos = floorWidth - floorWidthHalf;
+
+	// Floor with width on X and Y axis (small grid)
+	for (int i = 0; i < numLinesSmall; i++) {
+		Vector3 startPos(floorWidthHalf, 0.0f, nextLinePos);
+		Vector3 endPos(-floorWidthHalf, 0.0f, nextLinePos);
+
+		auto lineMesh = gls.AddVisSeg(startPos, endPos, "", true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->prop.alpha = 0.7f;
+			lineMesh->bVisible = floorMode;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		startPos = Vector3(nextLinePos, 0.0f, floorWidthHalf);
+		endPos = Vector3(nextLinePos, 0.0f, -floorWidthHalf);
+
+		lineMesh = gls.AddVisSeg(startPos, endPos, "", true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->prop.alpha = 0.7f;
+			lineMesh->bVisible = floorMode;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		nextLinePos -= floorGridStepSmall;
+	}
+}
+
 void wxGLPanel::ShowVertexEdit(bool show) {
 	for (auto &m : gls.GetMeshes())
 		if (m)
@@ -10346,10 +11849,10 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 
 	if (show) {
 		if (os->activeItem) {
-			mesh* m = GetMesh(os->activeItem->GetShape()->GetName());
+			mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
 			if (m) {
 				m->bShowPoints = true;
-				m->QueueUpdate(mesh::UpdateType::VertexColors);
+				m->QueueUpdate(mesh::UpdateType::Mask);
 			}
 		}
 	}
@@ -10358,11 +11861,12 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 void wxGLPanel::OnIdle(wxIdleEvent& WXUNUSED(event)) {
 	if (wxGetKeyState(wxKeyCode::WXK_SHIFT) ||
 		wxGetKeyState(wxKeyCode::WXK_CONTROL) ||
-		wxGetKeyState(wxKeyCode::WXK_ALT))
+		wxGetKeyState(wxKeyCode::WXK_ALT) ||
+		lbuttonDown || rbuttonDown || mbuttonDown)
 		return;
 
-	for (auto &it : BVHUpdateQueue)
-		gls.RecalculateMeshBVH(it);
+	for (auto &m : BVHUpdateQueue)
+		m->CreateBVH();
 
 	BVHUpdateQueue.clear();
 }
@@ -10389,9 +11893,45 @@ void wxGLPanel::OnSize(wxSizeEvent& event) {
 }
 
 void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
-	if (wxGetKeyState(wxKeyCode('S')))  {
+	int delt = event.GetWheelRotation();
+
+	if (event.ControlDown()) {
+		std::string sliderName = os->lastActiveSlider;
+
+		if (sliderName.empty())
+			sliderName = os->project->GetSliderName(0);
+
+		if (sliderName.empty())
+			return;
+
+		if (!os->activeSlider.empty())
+			os->ExitSliderEdit();
+
+		size_t sliderCount = os->project->SliderCount();
+		size_t sliderIndex = 0;
+		if (os->project->SliderIndexFromName(sliderName, sliderIndex)) {
+			if (delt < 0) {
+				++sliderIndex;
+
+				if (sliderIndex == sliderCount)
+					sliderIndex = 0;
+
+				os->EnterSliderEdit(os->project->GetSliderName(sliderIndex));
+				os->ScrollToActiveSlider();
+			}
+			else {
+				if (sliderIndex == 0)
+					sliderIndex = sliderCount - 1;
+				else
+					--sliderIndex;
+
+				os->EnterSliderEdit(os->project->GetSliderName(sliderIndex));
+				os->ScrollToActiveSlider();
+			}
+		}
+	}
+	else if (wxGetKeyState(wxKeyCode('S')))  {
 		wxPoint p = event.GetPosition();
-		int delt = event.GetWheelRotation();
 
 		if (brushMode) {
 			// Adjust brush size
@@ -10401,18 +11941,17 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 				IncBrush();
 
 			os->CheckBrushBounds();
-			os->UpdateBrushPane();
+			os->UpdateBrushSettings();
 			gls.UpdateCursor(p.x, p.y, bGlobalBrushCollision);
+			gls.RenderOneFrame();
 		}
 	}
 	else {
-		int delt = event.GetWheelRotation();
 		gls.DollyCamera(delt);
 		UpdateTransformTool();
 		UpdatePivot();
+		gls.RenderOneFrame();
 	}
-
-	gls.RenderOneFrame();
 }
 
 void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
@@ -10423,6 +11962,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	int x;
 	int y;
 	event.GetPosition(&x, &y);
+
+	ShowRotationCenter(false);
 
 	if (mbuttonDown) {
 		isMDragging = true;
@@ -10438,12 +11979,21 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 	if (rbuttonDown) {
 		isRDragging = true;
+
+		if (wxGetKeyState(WXK_ALT)) {
+			if (lastHitResult.hoverPoint != -1) {
+				rotationCenterMode = RotationCenterMode::Picked;
+				gls.camRotOffset = lastHitResult.hoverRealCoord;
+			}
+		}
+
 		if (wxGetKeyState(WXK_SHIFT)) {
 			gls.PanCamera(x - lastX, y - lastY);
 		}
 		else {
 			gls.TurnTableCamera(x - lastX);
 			gls.PitchCamera(y - lastY);
+			ShowRotationCenter();
 		}
 
 		UpdateTransformTool();
@@ -10483,20 +12033,17 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	}
 
 	if (!rbuttonDown && !lbuttonDown) {
-		hoverMeshName.clear();
-		hoverPoint = -1;
-		hoverEdge.p1 = 0;
-		hoverEdge.p2 = 0;
-		Vector3 hoverColor;
-		float hoverAlpha = 1.0f;
+		GLSurface::CursorHitResult hitResult{};
 
 		if (editMode) {
-			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hoverMeshName, &hoverPoint, &hoverColor, &hoverAlpha, &hoverEdge);
+			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitResult);
 		}
 		else {
 			cursorExists = false;
 			gls.ShowCursor(false);
 		}
+
+		lastHitResult = hitResult;
 
 		if ((transformMode || pivotMode) && !isTransforming && !isMovingPivot) {
 			if (XMoveMesh) {
@@ -10534,19 +12081,14 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		if (os->statusBar) {
 			if (cursorExists) {
 				if (activeTool == ToolID::MaskBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hoverPoint, hoverColor.x), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hitResult.hoverPoint, hitResult.hoverColor.x), 1);
 				else if (activeTool == ToolID::WeightBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", hoverPoint, hoverColor.y), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", hitResult.hoverPoint, hitResult.hoverColor.y), 1);
 				else if (activeTool == ToolID::ColorBrush || activeTool == ToolID::AlphaBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g, Alpha: %g", hoverPoint, hoverColor.x, hoverColor.y, hoverColor.z, hoverAlpha), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g, Alpha: %g", hitResult.hoverPoint, hitResult.hoverColor.x, hitResult.hoverColor.y, hitResult.hoverColor.z, hitResult.hoverAlpha), 1);
 				else {
-					std::vector<Vector3> verts;
-					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(hoverMeshName);
-					if (shape) {
-						os->project->GetLiveVerts(shape, verts);
-						if (verts.size() > hoverPoint)
-							os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hoverPoint, verts[hoverPoint].x, verts[hoverPoint].y, verts[hoverPoint].z), 1);
-					}
+					Vector3 hoverCoordNif = mesh::VecToNifCoords(hitResult.hoverMeshCoord);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hitResult.hoverPoint, hoverCoordNif.x, hoverCoordNif.y, hoverCoordNif.z), 1);
 				}
 			}
 			else {
@@ -10627,9 +12169,9 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		event.GetPosition(&x, &y);
 		wxPoint p = event.GetPosition();
 
-		int meshID = gls.PickMesh(x, y);
-		if (meshID > -1)
-			os->SelectShape(gls.GetMeshName(meshID));
+		mesh* m = gls.PickMesh(x, y);
+		if (m)
+			os->SelectShape(m->shapeName);
 	}
 
 	if (isPainting) {
@@ -10728,7 +12270,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			mergeShape = owner->activeItem->GetShape();
 
 		for (auto &inputFile : fileNames) {
-			wxString dataName = inputFile.AfterLast('/').AfterLast('\\');;
+			wxString dataName = inputFile.AfterLast('/').AfterLast('\\');
 			dataName = dataName.BeforeLast('.');
 
 			if (inputFile.Lower().EndsWith(".nif")) {
@@ -10778,11 +12320,11 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 	if (owner) {
 		bool isMultiple = (fileNames.GetCount() > 1);
-		for (int i = 0; i < fileNames.GetCount(); i++)	{
+		for (size_t i = 0; i < fileNames.GetCount(); i++)	{
 			wxString inputFile;
 			inputFile = fileNames.Item(i);
 
-			wxString dataName = inputFile.AfterLast('/').AfterLast('\\');;
+			wxString dataName = inputFile.AfterLast('/').AfterLast('\\');
 			dataName = dataName.BeforeLast('.');
 
 			bool isBSD = inputFile.MakeLower().EndsWith(".bsd");
@@ -10835,8 +12377,8 @@ wxDragResult DnDSliderFile::OnDragOver(wxCoord x, wxCoord y, wxDragResult defRes
 		return lastResult;
 
 	if (owner) {
-		for (auto &child : owner->sliderDisplays) {
-			if (child.second->sliderPane->GetRect().Contains(x, y)) {
+		for (auto &child : owner->sliderPanels) {
+			if (child.second->GetRect().Contains(x, y)) {
 				targetSlider = child.first;
 				lastResult = wxDragMove;
 				break;

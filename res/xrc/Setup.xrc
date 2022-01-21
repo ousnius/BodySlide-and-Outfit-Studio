@@ -31,8 +31,37 @@
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
 						<border>5</border>
+						<object class="wxStaticText" name="lbOblivion">
+							<label translate="0">Oblivion</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxDirPickerCtrl" name="dirOblivion">
+							<value>Game not found! Select the data folder manually...</value>
+							<message>Select a folder</message>
+							<style>wxDIRP_DEFAULT_STYLE|wxDIRP_SMALL</style>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxButton" name="btOblivion">
+							<enabled>0</enabled>
+							<label>Choose Game</label>
+							<default>0</default>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<border>5</border>
 						<object class="wxStaticText" name="lbFallout3">
-							<label>Fallout 3</label>
+							<label translate="0">Fallout 3</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -61,7 +90,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbFalloutNV">
-							<label>Fallout New Vegas</label>
+							<label translate="0">Fallout New Vegas</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -90,7 +119,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbSkyrim">
-							<label>Skyrim</label>
+							<label translate="0">Skyrim</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -119,7 +148,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbFallout4">
-							<label>Fallout 4</label>
+							<label translate="0">Fallout 4</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -148,7 +177,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbSkyrimSE">
-							<label>Skyrim Special Edition</label>
+							<label translate="0">Skyrim Special Edition</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -177,7 +206,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbFallout4VR">
-							<label>Fallout 4 VR</label>
+							<label translate="0">Fallout 4 VR</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
@@ -206,7 +235,7 @@
 						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbSkyrimVR">
-							<label>Skyrim VR</label>
+							<label translate="0">Skyrim VR</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>

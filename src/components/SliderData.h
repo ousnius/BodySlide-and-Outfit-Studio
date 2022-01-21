@@ -78,7 +78,7 @@ public:
 	}
 
 	// Creates a data file record and returns the record index.  
-	int AddDataFile(const std::string& shapeTarget, const std::string& dataAlias, const std::string& fileName, bool localData = true) {
+	size_t AddDataFile(const std::string& shapeTarget, const std::string& dataAlias, const std::string& fileName, bool localData = true) {
 		dataFiles.emplace_back(localData, dataAlias, shapeTarget, fileName);
 		return dataFiles.size() - 1;
 	}

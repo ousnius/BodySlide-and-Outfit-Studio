@@ -9,55 +9,279 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.4\n"
+"X-Generator: Poedit 3.0\n"
 "Language: en\n"
 "X-Poedit-KeywordsList: _\n"
+"X-Poedit-Basepath: ..\n"
+"X-Poedit-SearchPath-0: src\n"
+"X-Poedit-SearchPath-1: lang/xrctext.cpp\n"
 
-msgid "Outfit/Body"
+#: res/xrc/About.xrc:5 res/xrc/BodySlide.xrc:410
+msgid "About"
 msgstr ""
 
-msgid "Select an outfit to modify"
+#: res/xrc/About.xrc:145 res/xrc/GroupManager.xrc:189
+msgid "Close"
 msgstr ""
 
+#: res/xrc/Actions.xrc:6
+msgid "Apply a vertex position"
+msgstr ""
+
+#: res/xrc/Actions.xrc:15
+msgid "This permanently moves a single vertex straight to the given location."
+msgstr ""
+
+#: res/xrc/Actions.xrc:93 res/xrc/Actions.xrc:302 res/xrc/Actions.xrc:499
+#: res/xrc/Actions.xrc:694 res/xrc/Actions.xrc:741 res/xrc/Actions.xrc:891
+#: res/xrc/Actions.xrc:1170 res/xrc/Actions.xrc:1271 res/xrc/BatchBuild.xrc:103
+#: res/xrc/EditUV.xrc:32 res/xrc/FBXImport.xrc:45 res/xrc/Project.xrc:712
+#: res/xrc/Project.xrc:891 res/xrc/Settings.xrc:410
+#: res/xrc/ShapeProperties.xrc:755 res/xrc/Skeleton.xrc:36
+#: res/xrc/Skeleton.xrc:232 res/xrc/Slider.xrc:64 res/xrc/Slider.xrc:238
+msgid "&OK"
+msgstr ""
+
+#: res/xrc/Actions.xrc:100 res/xrc/Actions.xrc:309 res/xrc/Actions.xrc:506
+#: res/xrc/Actions.xrc:701 res/xrc/Actions.xrc:748 res/xrc/Actions.xrc:898
+#: res/xrc/Actions.xrc:1177 res/xrc/Actions.xrc:1278 res/xrc/BatchBuild.xrc:57
+#: res/xrc/BatchBuild.xrc:110 res/xrc/EditUV.xrc:39 res/xrc/FBXImport.xrc:52
+#: res/xrc/Project.xrc:546 res/xrc/Project.xrc:719 res/xrc/Project.xrc:898
+#: res/xrc/SavePreset.xrc:85 res/xrc/Settings.xrc:417 res/xrc/Setup.xrc:273
+#: res/xrc/ShapeProperties.xrc:762 res/xrc/Skeleton.xrc:43
+#: res/xrc/Skeleton.xrc:239 res/xrc/Slider.xrc:71 res/xrc/Slider.xrc:246
+msgid "&Cancel"
+msgstr ""
+
+#: res/xrc/Actions.xrc:110
+msgid "Move Shape"
+msgstr ""
+
+#: res/xrc/Actions.xrc:254
+msgid "Mirror Axis"
+msgstr ""
+
+#: res/xrc/Actions.xrc:320
+msgid "Scale Shape"
+msgstr ""
+
+#: res/xrc/Actions.xrc:329
+msgid "Scaling will adjust the size of a mesh. This permanently affects vertices."
+msgstr ""
+
+#: res/xrc/Actions.xrc:461 res/xrc/Actions.xrc:667
+#: res/xrc/ShapeProperties.xrc:635 res/xrc/Skeleton.xrc:133
+msgid "Origin"
+msgstr ""
+
+#: res/xrc/Actions.xrc:472 res/xrc/Actions.xrc:678
+msgid "Zero (0, 0, 0)"
+msgstr ""
+
+#: res/xrc/Actions.xrc:473 res/xrc/Actions.xrc:679
+msgid "Center of selected shapes(s)"
+msgstr ""
+
+#: res/xrc/Actions.xrc:484
+msgid "Uniform (XYZ)"
+msgstr ""
+
+#: res/xrc/Actions.xrc:517
+msgid "Rotate Shape"
+msgstr ""
+
+#: res/xrc/Actions.xrc:711
+msgid "Set Shape Textures"
+msgstr ""
+
+#: res/xrc/Actions.xrc:758 res/xrc/OutfitStudio.xrc:1897
+#: res/xrc/OutfitStudio.xrc:2318
+msgid "Copy Bone Weights"
+msgstr ""
+
+#: res/xrc/Actions.xrc:767
+msgid "Each vertex of the reference will copy its weights to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become weighted and work well. Often, the default values are sufficient."
+msgstr ""
+
+#: res/xrc/Actions.xrc:787 res/xrc/Actions.xrc:937
+msgid "Search Radius"
+msgstr ""
+
+#: res/xrc/Actions.xrc:816 res/xrc/Actions.xrc:966
+msgid "Max Vertex Targets"
+msgstr ""
+
+#: res/xrc/Actions.xrc:847 res/xrc/Actions.xrc:995
+msgid "No Target Limit"
+msgstr ""
+
+#: res/xrc/Actions.xrc:856
+msgid "The skin coordinate system doesn't match the reference shape's. Do you want to copy the transforms?"
+msgstr ""
+
+#: res/xrc/Actions.xrc:866
+msgid "Copy skin transform from reference"
+msgstr ""
+
+#: res/xrc/Actions.xrc:876 res/xrc/ShapeProperties.xrc:730
+msgid "Recalculate geometry's coordinates so it doesn't move"
+msgstr ""
+
+#: res/xrc/Actions.xrc:877 res/xrc/ShapeProperties.xrc:731
+msgid "Transform geometry so its position in global coordinates does not change."
+msgstr ""
+
+#: res/xrc/Actions.xrc:908
+msgid "Conforming..."
+msgstr ""
+
+#: res/xrc/Actions.xrc:917
+msgid "Each vertex of the reference will copy its slider data to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become conformed and work well. Often, the default values are sufficient."
+msgstr ""
+
+#: res/xrc/Actions.xrc:1018
+msgid "No Squeeze"
+msgstr ""
+
+#: res/xrc/Actions.xrc:1041
+msgid "Solid Mode"
+msgstr ""
+
+#: res/xrc/Actions.xrc:1064
+msgid "Axis"
+msgstr ""
+
+#: res/xrc/Actions.xrc:1114 res/xrc/BodySlide.xrc:97
+#: res/xrc/NormalsGenDlg.xrc:191
 msgid "Preset"
 msgstr ""
 
-msgid "Choose from a list of slider settings presets"
+#: res/xrc/Actions.xrc:1130
+msgid "Default"
 msgstr ""
 
-msgid "Saves the new slider values to the currently selected preset"
+#: res/xrc/Actions.xrc:1139
+msgid "Even Movement"
 msgstr ""
 
-msgid "Save"
+#: res/xrc/Actions.xrc:1148
+msgid "Solid Object"
 msgstr ""
 
-msgid "Save the current slider settings as a new preset"
+#: res/xrc/Actions.xrc:1187
+msgid "Merge Geometry"
 msgstr ""
 
-msgid "Save As..."
+#: res/xrc/Actions.xrc:1196
+msgid "This function copies vertices and triangles from one shape to another.  Partitions/segments of source and target shapes must match.  It is the user's responsibility to check that all other shape and shader properties are compatible, or merging will likely have side effects."
 msgstr ""
 
-msgid "Opens the group manager where you can edit existing or create new groups"
+#: res/xrc/Actions.xrc:1211
+msgid "Source"
 msgstr ""
 
-msgid "Group Manager"
+#: res/xrc/Actions.xrc:1229
+msgid "Target"
 msgstr ""
 
+#: res/xrc/Actions.xrc:1258
+msgid "Delete source shape"
+msgstr ""
+
+#: res/xrc/BatchBuild.xrc:6
+msgid "Batch Build"
+msgstr ""
+
+#: res/xrc/BatchBuild.xrc:21
+msgid "Select the slider sets for the batch build process. Use the group and outfit filters to show the outfits you want!"
+msgstr ""
+
+#: res/xrc/BatchBuild.xrc:50
+msgid "&Build"
+msgstr ""
+
+#: res/xrc/BatchBuild.xrc:67 src/program/BodySlideApp.cpp:2062
+msgid "Choose output set"
+msgstr ""
+
+#: res/xrc/BatchBuild.xrc:78
+msgid ""
+"The following sets will override the same files.\n"
+"Please decide which one to use and select it in the list below."
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:7
+msgid "BodySlide"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:28
+msgid "Outfit/Body"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:44
+msgid "Select an outfit to modify"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:58
+msgid "Deletes a project from its project file"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:74
 msgid "Opens the current project in Outfit Studio"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:113
+msgid "Choose from a list of slider settings presets"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:127
+msgid "Deletes a preset from its preset file"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:142
+msgid "Saves the new slider values to the currently selected preset"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:143 res/xrc/GroupManager.xrc:44
+#: res/xrc/OutfitStudio.xrc:1183 res/xrc/OutfitStudio.xrc:1243
+msgid "Save"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:152
+msgid "Save the current slider settings as a new preset"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:153 res/xrc/GroupManager.xrc:53
+#: res/xrc/OutfitStudio.xrc:1192 res/xrc/OutfitStudio.xrc:1252
+msgid "Save As..."
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:164
+msgid "Opens the group manager where you can edit existing or create new groups"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:165 res/xrc/GroupManager.xrc:7
+#: res/xrc/Project.xrc:1020
+msgid "Group Manager"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:189
 msgid "Single Weight"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:216
 msgid "Low Weight"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:233
 msgid "High Weight"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:276
 msgid "Copy the low weight slider values to the high weight section."
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:298
 msgid ""
 "Build multiple outfits using the currently active slider values.\n"
 "\n"
@@ -65,21 +289,36 @@ msgid ""
 "Hold ALT = Delete from output directory"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:299
 msgid "Batch Build..."
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:314
 msgid "Build Morphs"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:315
 msgid "Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires other mods to make use of the morph data."
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:325
+msgid "Force Body Normals"
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:326
+msgid "Adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod."
+msgstr ""
+
+#: res/xrc/BodySlide.xrc:349
 msgid "Show a preview window for this outfit."
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:350 res/xrc/NormalsGenDlg.xrc:166
+#: src/program/PreviewWindow.cpp:28
 msgid "Preview"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:367
 msgid ""
 "Creates the currently selected outfit/body.\n"
 "\n"
@@ -87,2564 +326,3906 @@ msgid ""
 "Hold ALT = Delete from output directory"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:368
 msgid "Build"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:387
 msgid "Copy the high weight slider values to the low weight section."
 msgstr ""
 
-msgid "About"
-msgstr ""
-
+#: res/xrc/BodySlide.xrc:419 res/xrc/OutfitStudio.xrc:1740
 msgid "Open settings dialog."
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:420 res/xrc/OutfitStudio.xrc:1739
+#: res/xrc/Settings.xrc:5
 msgid "Settings"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:429
 msgid "Open Outfit Studio, a full-featured tool for creating and converting outfits."
 msgstr ""
 
-msgid "Failed to launch Outfit Studio executable!"
+#: res/xrc/BodySlide.xrc:430 res/xrc/OutfitStudio.xrc:7
+msgid "Outfit Studio"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:442 res/xrc/BodySlide.xrc:453
 msgid "Filter Options"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:444
 msgid "Choose groups..."
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:445
 msgid "Choose groups to display in the Outfit menu"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:448
 msgid "Refresh Groups"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:449
 msgid "Refresh group information"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:455
 msgid "Save Outfit list as group..."
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:456
 msgid "Save the current filtered outfit list as a group"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:459
 msgid "Refresh Outfits"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:460
 msgid "Reloads outfit list"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:465 res/xrc/Project.xrc:1037
 msgid "Select None"
 msgstr ""
 
+#: res/xrc/BodySlide.xrc:468 res/xrc/EditUV.xrc:110 res/xrc/Project.xrc:1040
 msgid "Select All"
 msgstr ""
 
-msgid "Select All\tCtrl+A"
-msgstr ""
-
+#: res/xrc/BodySlide.xrc:471 res/xrc/EditUV.xrc:114 res/xrc/Project.xrc:1043
 msgid "Invert Selection"
 msgstr ""
 
-msgid "Invert Selection\tCtrl+I"
+#: res/xrc/EditUV.xrc:5
+msgid "Edit UV"
 msgstr ""
 
-msgid "Select Less\tA"
+#: res/xrc/EditUV.xrc:52
+msgid "Box Selection"
 msgstr ""
 
-msgid "Select less adjacent points in the selected islands."
+#: res/xrc/EditUV.xrc:53
+msgid ""
+"Box Selection\n"
+"Shortcut: 1"
 msgstr ""
 
-msgid "Select More\tD"
+#: res/xrc/EditUV.xrc:60
+msgid "Vertex Selection"
 msgstr ""
 
-msgid "Select more adjacent points in the selected islands."
+#: res/xrc/EditUV.xrc:61
+msgid ""
+"Vertex Selection\n"
+"Shortcut: 2"
 msgstr ""
 
-msgid "Enter preset name..."
+#: res/xrc/EditUV.xrc:67 res/xrc/OutfitStudio.xrc:78
+#: res/xrc/OutfitStudio.xrc:2069
+msgid "Move"
 msgstr ""
 
-msgid "Please enter a name for the new preset:"
+#: res/xrc/EditUV.xrc:68
+msgid ""
+"Move\n"
+"Shortcut: 3"
 msgstr ""
 
-msgid "Select groups to assign to the new preset:"
+#: res/xrc/EditUV.xrc:74 res/xrc/ShapeProperties.xrc:596
+#: src/program/NormalsGenDialog.cpp:320
+msgid "Scale"
 msgstr ""
 
-msgid "Deletes a project from its project file"
+#: res/xrc/EditUV.xrc:75
+msgid ""
+"Scale\n"
+"Shortcut: 4"
 msgstr ""
 
-msgid "Delete Project"
+#: res/xrc/EditUV.xrc:81
+msgid "Rotate"
 msgstr ""
 
-msgid "Do you really wish to delete the selected project?"
+#: res/xrc/EditUV.xrc:82
+msgid ""
+"Rotate\n"
+"Shortcut: 5"
 msgstr ""
 
-msgid "Deletes a preset from its preset file"
+#: res/xrc/EditUV.xrc:88 res/xrc/EditUV.xrc:89
+msgid "Show Seam Edges"
 msgstr ""
 
-msgid "Delete Preset"
-msgstr ""
-
-msgid "Do you really wish to delete the selected preset?"
-msgstr ""
-
-msgid "&Save"
-msgstr ""
-
-msgid "&OK"
-msgstr ""
-
-msgid "&Cancel"
-msgstr ""
-
-msgid "Choose a group and add or remove members by selecting them in the lists."
-msgstr ""
-
-msgid "Select a group XML file"
-msgstr ""
-
-msgid "Save As"
-msgstr ""
-
-msgid "Groups"
-msgstr ""
-
-msgid "Add Group"
-msgstr ""
-
-msgid "Remove Group"
-msgstr ""
-
-msgid "Members"
-msgstr ""
-
-msgid "Remove >>"
-msgstr ""
-
-msgid "Outfits"
-msgstr ""
-
-msgid "<< Add"
-msgstr ""
-
-msgid "Save Changes"
-msgstr ""
-
-msgid "Do you really want to close the group manager? All unsaved changes will be lost."
-msgstr ""
-
-msgid "Batch Build"
-msgstr ""
-
-msgid "Select the slider sets for the batch build process. Use the group and outfit filters to show the outfits you want!"
-msgstr ""
-
-msgid "&Build"
-msgstr ""
-
-msgid "Game"
-msgstr ""
-
-msgid "Target Game"
-msgstr ""
-
-msgid "Choose the target game you want to use the program for here."
-msgstr ""
-
-msgid "Fallout 3"
-msgstr ""
-
-msgid "Fallout New Vegas"
-msgstr ""
-
-msgid "Skyrim"
-msgstr ""
-
-msgid "Fallout 4"
-msgstr ""
-
-msgid "Advanced"
-msgstr ""
-
-msgid "Game Data Path"
-msgstr ""
-
-msgid "Select the data path of the game..."
-msgstr ""
-
-msgid "Data path to load textures from."
-msgstr ""
-
-msgid "Output Path"
-msgstr ""
-
-msgid "Select the output path..."
-msgstr ""
-
-msgid "Data path to build files to. If empty, Game Data Path will be used instead."
-msgstr ""
-
-msgid "General"
-msgstr ""
-
-msgid "Enables/disables the dialog for choosing which set to build during a batch build if overrides happen."
-msgstr ""
-
-msgid "Override Warning"
-msgstr ""
-
-msgid "Enables/disables scanning BSAs in the game data folder for textures to load."
-msgstr ""
-
-msgid "BSA Textures"
-msgstr ""
-
-msgid "Enables/disables panning the camera with the left mouse button in Outfit Studio."
-msgstr ""
-
-msgid "Left Mouse Pan"
-msgstr ""
-
-msgid "Data Files"
-msgstr ""
-
-msgid "Reference Skeleton"
-msgstr ""
-
-msgid "File"
-msgstr ""
-
-msgid "Select a reference skeleton .nif file..."
-msgstr ""
-
-msgid "The reference skeleton file for Outfit Studio."
-msgstr ""
-
-msgid "Root Node"
-msgstr ""
-
-msgid "The root node name of the reference skeleton. Can differ from game to game."
-msgstr ""
-
-msgid "Close"
-msgstr ""
-
-msgid "Brush Settings"
-msgstr ""
-
-msgid "Size"
-msgstr ""
-
-msgid "Strength"
-msgstr ""
-
-msgid "Focus"
-msgstr ""
-
-msgid "Spacing"
-msgstr ""
-
-msgid "Meshes"
-msgstr ""
-
-msgid "Bones"
-msgstr ""
-
-msgid "Lights"
-msgstr ""
-
-msgid "Reset"
-msgstr ""
-
-msgid "Ambient"
-msgstr ""
-
-msgid "Frontal"
-msgstr ""
-
-msgid "Directional 1"
-msgstr ""
-
-msgid "Directional 2"
-msgstr ""
-
-msgid "Directional 3"
-msgstr ""
-
-msgid "De-/Select Sliders"
-msgstr ""
-
-msgid "Fixed Weight Brush"
-msgstr ""
-
-msgid "Preview Scaling"
-msgstr ""
-
+#: res/xrc/EditUV.xrc:97 res/xrc/OutfitStudio.xrc:1630
 msgid "Menu"
 msgstr ""
 
-msgid "New Project...\tCtrl+N"
-msgstr ""
-
-msgid "Create a new outfit project."
-msgstr ""
-
-msgid "Load Project..\tCtrl+O"
-msgstr ""
-
-msgid "Load a project."
-msgstr ""
-
-msgid "Add Project..\tCtrl+Shift+O"
-msgstr ""
-
-msgid "Add a project without replacing the current one."
-msgstr ""
-
-msgid "Load Reference..."
-msgstr ""
-
-msgid "Load a new reference slider set, replacing any current reference objects."
-msgstr ""
-
-msgid "Load Outfit..."
-msgstr ""
-
-msgid "Load a NIF file as the working outfit, replacing any current outfit objects."
-msgstr ""
-
-msgid "Disable for a different way of loading NIF files to see if that puts it into the right (or a better) spot."
-msgstr ""
-
-msgid "Save Project\tCtrl+S"
-msgstr ""
-
-msgid "Save the project."
-msgstr ""
-
-msgid "Save Project As...\tCtrl+Shift+S"
-msgstr ""
-
-msgid "Save the project under a new name."
-msgstr ""
-
-msgid "Import"
-msgstr ""
-
-msgid "From NIF..."
-msgstr ""
-
-msgid "Choose a NIF file to import into the project."
-msgstr ""
-
-msgid "Import Data"
-msgstr ""
-
-msgid "Import BSClothExtraData From HKX"
-msgstr ""
-
-msgid "Choose an HKX file to import as a BSClothExtraData block into the project."
-msgstr ""
-
-msgid "Export"
-msgstr ""
-
-msgid "Save the current project as a NIF file (without reference)"
-msgstr ""
-
-msgid "To NIF With Reference..."
-msgstr ""
-
-msgid "Save the current project as a NIF file (including reference)"
-msgstr ""
-
-msgid "Export Data"
-msgstr ""
-
-msgid "Export BSClothExtraData As HKX"
-msgstr ""
-
-msgid "Save one of the currently loaded BSClothExtraData blocks to an HKX file."
-msgstr ""
-
-msgid "Make Conversion Reference"
-msgstr ""
-
-msgid "Using the current slider settings for the reference shape, create a new reference that will morph from the current shape back to the base shape."
-msgstr ""
-
-msgid "Exit\tAlt+F4"
-msgstr ""
-
-msgid "Exit Outfit Studio."
-msgstr ""
-
+#: res/xrc/EditUV.xrc:99 res/xrc/OutfitStudio.xrc:1748
 msgid "Edit"
 msgstr ""
 
+#: res/xrc/EditUV.xrc:101 res/xrc/OutfitStudio.xrc:1750
 msgid "Undo\tCtrl+Z"
 msgstr ""
 
+#: res/xrc/EditUV.xrc:102 res/xrc/OutfitStudio.xrc:1751
 msgid "Undo the previous action."
 msgstr ""
 
+#: res/xrc/EditUV.xrc:105 res/xrc/OutfitStudio.xrc:1754
 msgid "Redo\tCtrl+Y"
 msgstr ""
 
+#: res/xrc/EditUV.xrc:106 res/xrc/OutfitStudio.xrc:42
+#: res/xrc/OutfitStudio.xrc:1755
 msgid "Redo the next undone action."
 msgstr ""
 
-msgid "X Mirror\tX"
+#: res/xrc/EditUV.xrc:109
+msgid "Select All\tCtrl+A"
 msgstr ""
 
-msgid "Mirror edits across the X axis."
+#: res/xrc/EditUV.xrc:113
+msgid "Invert Selection\tCtrl+I"
 msgstr ""
 
-msgid "Edit Connected Only\tC"
+#: res/xrc/EditUV.xrc:117
+msgid "Select Less\tA"
 msgstr ""
 
-msgid "Edit only vertices that are connected to the ones under the brush within the brush radius"
+#: res/xrc/EditUV.xrc:118
+msgid "Select less adjacent points in the selected islands."
 msgstr ""
 
-msgid "Global Brush Collision\tB"
+#: res/xrc/EditUV.xrc:121
+msgid "Select More\tD"
 msgstr ""
 
-msgid "Allows for the brushes to collide with all currently selected meshes at the same time"
+#: res/xrc/EditUV.xrc:122
+msgid "Select more adjacent points in the selected islands."
 msgstr ""
 
-msgid "Recalculate Normals\tR"
+#: res/xrc/FBXImport.xrc:6
+msgid "FBX Import Options..."
 msgstr ""
 
-msgid "Recalculate normals on active mesh"
+#: res/xrc/FBXImport.xrc:21
+msgid "Invert U"
 msgstr ""
 
-msgid "Reset Transforms"
+#: res/xrc/FBXImport.xrc:30
+msgid "Invert V"
 msgstr ""
 
-msgid "Resets the shape and skin transforms."
+#: res/xrc/GroupManager.xrc:17
+msgid "Choose a group and add or remove members by selecting them in the lists."
 msgstr ""
 
-msgid "View"
+#: res/xrc/GroupManager.xrc:33 res/xrc/Project.xrc:952
+msgid "Select a group XML file"
 msgstr ""
 
-msgid "Front\tShift+1"
+#: res/xrc/GroupManager.xrc:71
+msgid "Groups"
 msgstr ""
 
-msgid "Back\tShift+2"
+#: res/xrc/GroupManager.xrc:101
+msgid "Add Group"
 msgstr ""
 
-msgid "Left\tShift+3"
+#: res/xrc/GroupManager.xrc:110
+msgid "Remove Group"
 msgstr ""
 
-msgid "Right\tShift+4"
+#: res/xrc/GroupManager.xrc:122
+msgid "Members"
 msgstr ""
 
-msgid "Perspective\tShift+5"
+#: res/xrc/GroupManager.xrc:137
+msgid "Remove >>"
 msgstr ""
 
-msgid "Toggle Visibility\tG"
+#: res/xrc/GroupManager.xrc:151
+msgid "Outfits"
 msgstr ""
 
-msgid "Switch between the different visibility modes for the selected shapes."
+#: res/xrc/GroupManager.xrc:172
+msgid "<< Add"
 msgstr ""
 
-msgid "Show Wireframe\tW"
+#: res/xrc/NormalsGenDlg.xrc:6
+msgid "Normal Map Generator"
 msgstr ""
 
-msgid "Show wireframe on all models."
+#: res/xrc/NormalsGenDlg.xrc:21
+msgid "Layers"
 msgstr ""
 
-msgid "Enable Lighting\tL"
+#: res/xrc/NormalsGenDlg.xrc:37
+msgid "Load or save preset layer settings."
 msgstr ""
 
-msgid "Turn on or off lighting."
+#: res/xrc/NormalsGenDlg.xrc:61
+msgid "Add a new layer after the current one in the layer list."
 msgstr ""
 
-msgid "Enable Textures\tT"
+#: res/xrc/NormalsGenDlg.xrc:62
+msgid "Add Layer"
 msgstr ""
 
-msgid "Display texture maps on models."
+#: res/xrc/NormalsGenDlg.xrc:71
+msgid "Move selected layer up one position."
 msgstr ""
 
-msgid "Shape"
+#: res/xrc/NormalsGenDlg.xrc:72
+msgid "Move Up"
 msgstr ""
 
-msgid "From OBJ..."
+#: res/xrc/NormalsGenDlg.xrc:87
+msgid "Delete the selected layer."
 msgstr ""
 
-msgid "Import an OBJ file as a new shape in the outfit."
+#: res/xrc/NormalsGenDlg.xrc:88
+msgid "Delete Layer"
 msgstr ""
 
-msgid "From FBX..."
+#: res/xrc/NormalsGenDlg.xrc:108 res/xrc/Slider.xrc:161
+msgid "Options"
 msgstr ""
 
-msgid "Import an FBX file as a new shape in the outfit."
+#: res/xrc/NormalsGenDlg.xrc:114
+msgid "Save a copy of an existing normal map if one already exists. File is saved in the original directory."
 msgstr ""
 
-msgid "From TRI (Head)..."
+#: res/xrc/NormalsGenDlg.xrc:115
+msgid "Backup destination file"
 msgstr ""
 
-msgid "Import shape and morphs from a head TRI file."
+#: res/xrc/NormalsGenDlg.xrc:124
+msgid "Compress output file using BC7 compression. This can make saving the file take a VERY long time!"
 msgstr ""
 
-msgid "To NIF..."
+#: res/xrc/NormalsGenDlg.xrc:125
+msgid "Compress output "
 msgstr ""
 
-msgid "Export only the selected shapes to a NIF file."
+#: res/xrc/NormalsGenDlg.xrc:134
+msgid "Use the file name specified in the background layer to save the normal map."
 msgstr ""
 
-msgid "Export selected shapes to NIF"
+#: res/xrc/NormalsGenDlg.xrc:135
+msgid "Save to background layer file"
 msgstr ""
 
-msgid "Failed to export selected shapes to NIF file!"
+#: res/xrc/NormalsGenDlg.xrc:145
+msgid "Choose an output file..."
 msgstr ""
 
-msgid "To OBJ..."
+#: res/xrc/NormalsGenDlg.xrc:149
+msgid "Location to save normal map to."
 msgstr ""
 
-msgid "Export the current project as an OBJ file."
+#: res/xrc/NormalsGenDlg.xrc:165
+msgid "Display current settings on mesh in preview window."
 msgstr ""
 
-msgid "To FBX..."
+#: res/xrc/NormalsGenDlg.xrc:181
+msgid "Generate and save the normal map file."
 msgstr ""
 
-msgid "Export only the selected shapes to an FBX file."
+#: res/xrc/NormalsGenDlg.xrc:182
+msgid "Generate"
 msgstr ""
 
-msgid "To TRI (Head)..."
-msgstr ""
-
-msgid "Export head morphs to a TRI file."
-msgstr ""
-
-msgid "UV"
-msgstr ""
-
-msgid "Invert X"
-msgstr ""
-
-msgid "Inverts the X-axis of the texture coordinates."
-msgstr ""
-
-msgid "Invert Y"
-msgstr ""
-
-msgid "Inverts the Y-axis of the texture coordinates."
-msgstr ""
-
-msgid "Mirror"
-msgstr ""
-
-msgid "Mirror the selected shapes on the X-axis."
-msgstr ""
-
-msgid "Mirror the selected shapes on the Y-axis."
-msgstr ""
-
-msgid "Mirror the selected shapes on the Z-axis."
-msgstr ""
-
-msgid "Duplicate..."
-msgstr ""
-
-msgid "Duplicate the current shape."
-msgstr ""
-
-msgid "Rename...\tF2"
-msgstr ""
-
-msgid "Change the name of the current shape."
-msgstr ""
-
-msgid "Set Reference"
-msgstr ""
-
-msgid "Turn the shape into the reference shape of the project."
-msgstr ""
-
-msgid "Move..."
-msgstr ""
-
-msgid "Apply an offset adjustment to the mesh vertices. This permanently moves vertices."
-msgstr ""
-
-msgid "Scale..."
-msgstr ""
-
-msgid "Apply a scale adjustment to the shape. This permanently moves vertices."
-msgstr ""
-
-msgid "Rotate..."
-msgstr ""
-
-msgid "Apply a rotation to the mesh vertices. This permanently moves vertices."
-msgstr ""
-
-msgid "Smooth Seam Normals"
-msgstr ""
-
-msgid "Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape."
-msgstr ""
-
-msgid "Lock Normals"
-msgstr ""
-
-msgid "Locks the mesh normals. Enable if you want to keep custom normals intact."
-msgstr ""
-
-msgid "Copy Bone Weights"
-msgstr ""
-
-msgid "Copies all bone weights from the reference shape to the current shape."
-msgstr ""
-
-msgid "Copy Selected Weights"
-msgstr ""
-
-msgid "Copies selected bone weights from the reference shape to the current shape."
-msgstr ""
-
-msgid "Transfer Selected Weights"
-msgstr ""
-
-msgid "Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order."
-msgstr ""
-
-msgid "Mask Weighted Vertices"
-msgstr ""
-
-msgid "Masks vertices with bone weights, so you can manually assign weights to unweighted vertices."
-msgstr ""
-
-msgid "Delete\tDel"
-msgstr ""
-
-msgid "Removes the currently selected shape from the outfit."
-msgstr ""
-
-msgid "Properties..."
-msgstr ""
-
-msgid "Opens the properties dialog for shader, texture and more settings of the selected shape."
-msgstr ""
-
-msgid "Slider"
-msgstr ""
-
-msgid "Conform Selected\tCtrl+C"
-msgstr ""
-
-msgid "Conform selected outfit shape to all checked sliders."
-msgstr ""
-
-msgid "Conform All\tCtrl+Shift+C"
-msgstr ""
-
-msgid "Conform all outfit shapes to all checked sliders."
-msgstr ""
-
-msgid "Set Base Shape"
-msgstr ""
-
-msgid "Set the current outfit shape as the base shape and clear slider data."
-msgstr ""
-
+#: res/xrc/NormalsGenDlg.xrc:193 res/xrc/OutfitStudio.xrc:1939
 msgid "Load Preset..."
 msgstr ""
 
-msgid "Load and preview a slider preset. Inverted sliders will have inverted values."
-msgstr ""
-
+#: res/xrc/NormalsGenDlg.xrc:197 res/xrc/OutfitStudio.xrc:1943
 msgid "Save Preset..."
 msgstr ""
 
-msgid "Save a slider preset with the current values. Inverted sliders will have inverted values."
+#: res/xrc/OutfitStudio.xrc:22 res/xrc/Project.xrc:5
+msgid "New Project"
 msgstr ""
 
-msgid "New Slider"
+#: res/xrc/OutfitStudio.xrc:23
+msgid "Create a new project by selecting a reference body slider set, and outfit model files."
 msgstr ""
 
-msgid "Create a new shape transformation slider."
+#: res/xrc/OutfitStudio.xrc:28
+msgid "Load Project"
 msgstr ""
 
-msgid "Coalesce sliders"
+#: res/xrc/OutfitStudio.xrc:29
+msgid "Load a previously created slider set for editing."
 msgstr ""
 
-msgid "Create a new shape transformation slider based on the current slider values"
+#: res/xrc/OutfitStudio.xrc:34
+msgid "Undo"
 msgstr ""
 
-msgid "New Zap Slider"
+#: res/xrc/OutfitStudio.xrc:35
+msgid "Undo a previous action."
 msgstr ""
 
-msgid "Create a new Zap slider based on unmasked vertices"
+#: res/xrc/OutfitStudio.xrc:41
+msgid "Redo"
 msgstr ""
 
-msgid "Import OSD..."
+#: res/xrc/OutfitStudio.xrc:49 res/xrc/OutfitStudio.xrc:2048
+msgid "Select"
 msgstr ""
 
-msgid "Imports OSD file and creates sliders for shapes with a matching name."
-msgstr ""
-
-msgid "Export OSD..."
-msgstr ""
-
-msgid "Exports all currently loaded slider data to an OSD file."
-msgstr ""
-
-msgid "Import TRI Morphs..."
-msgstr ""
-
-msgid "Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name."
-msgstr ""
-
-msgid "Export TRI Morphs..."
-msgstr ""
-
-msgid "Exports TRI morphs to a TRI file."
-msgstr ""
-
-msgid "Export to OBJs..."
-msgstr ""
-
-msgid "Export all sliders to an OBJ file per slider."
-msgstr ""
-
-msgid "Import Slider Data"
-msgstr ""
-
-msgid "Import BSD..."
-msgstr ""
-
-msgid "Import a BodySlide BSD file and overwrites the current shape's slider data."
-msgstr ""
-
-msgid "Import OBJ..."
-msgstr ""
-
-msgid "Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference."
-msgstr ""
-
-msgid "Import FBX..."
-msgstr ""
-
-msgid "Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference."
-msgstr ""
-
-msgid "Export Slider Data"
-msgstr ""
-
-msgid "Export BSD..."
-msgstr ""
-
-msgid "Exports the current slider's data as a BodySlide BSD file."
-msgstr ""
-
-msgid "Export OBJ..."
-msgstr ""
-
-msgid "Export only the selected shapes to an OBJ file."
-msgstr ""
-
-msgid "Negate Slider"
-msgstr ""
-
-msgid "Negates the current slider, reversing it's effect"
-msgstr ""
-
-msgid "Mask Affected Vertices"
-msgstr ""
-
-msgid "Masks the vertices the slider is affecting for all selected shapes."
-msgstr ""
-
-msgid "Clear Slider Data"
-msgstr ""
-
-msgid "Erases the slider data without removing the slider itself. (Cannot be undone)"
-msgstr ""
-
-msgid "Delete Slider"
-msgstr ""
-
-msgid "Delete the active slider from the project. (Cannot be undone)"
-msgstr ""
-
-msgid "Properties...\tTab"
-msgstr ""
-
-msgid "Display and edit the active slider's properties."
-msgstr ""
-
-msgid "Tool"
-msgstr ""
-
-msgid "Current Tool"
-msgstr ""
-
+#: res/xrc/OutfitStudio.xrc:50 res/xrc/OutfitStudio.xrc:2049
 msgid "Navigate and select meshes (or vertices in vertex mode)."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:57 res/xrc/OutfitStudio.xrc:2053
+#: src/program/NormalsGenDialog.cpp:311
+msgid "Mask"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:58 res/xrc/OutfitStudio.xrc:2054
 msgid ""
 "Mask vertices to prevent them from being transformed.\n"
 "Hold down the ALT key to remove masking."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:64 res/xrc/OutfitStudio.xrc:2058
+msgid "Inflate"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:65 res/xrc/OutfitStudio.xrc:2059
 msgid "Increase mesh volume in an area."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:71 res/xrc/OutfitStudio.xrc:2064
+msgid "Deflate"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:72 res/xrc/OutfitStudio.xrc:2065
 msgid "Decrease mesh volume in an area."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:79 res/xrc/OutfitStudio.xrc:2070
 msgid "Move vertices over a plane parallel to the view."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:85 res/xrc/OutfitStudio.xrc:2074
+msgid "Smooth"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:86 res/xrc/OutfitStudio.xrc:2075
 msgid "Smooth an area of a mesh."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:92 res/xrc/OutfitStudio.xrc:2079
+msgid "Undiff"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:93 res/xrc/OutfitStudio.xrc:2080
+msgid "Undiff an area of a slider."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:99 res/xrc/OutfitStudio.xrc:2084
+msgid "Weight Paint"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:100
 msgid ""
-"Apply animation weight values for the currently selected bone.\n"
+"Apply animation weight values for currently selected bone.\n"
 "Hold down the ALT key to weaken the weighting."
 msgstr ""
 
-msgid "Transform\tF"
+#: res/xrc/OutfitStudio.xrc:107 res/xrc/OutfitStudio.xrc:2090
+msgid "Color Paint"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:108 res/xrc/OutfitStudio.xrc:2091
+msgid ""
+"Apply vertex colors.\n"
+"Hold down the ALT key to remove colors."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:115 res/xrc/OutfitStudio.xrc:2096
+msgid "Alpha Paint"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:116 res/xrc/OutfitStudio.xrc:2097
+msgid ""
+"Apply vertex alpha.\n"
+"Hold down the ALT key to remove alpha."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:123 res/xrc/OutfitStudio.xrc:2102
+msgid "Collapse Vertex"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:124 res/xrc/OutfitStudio.xrc:2103
+msgid "Deletes vertices with no more than three connections, without creating a hole."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:130 res/xrc/OutfitStudio.xrc:2107
+msgid "Flip Edge"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:131 res/xrc/OutfitStudio.xrc:2108
+msgid "Flips mesh edges so that the opposite pair of vertices is connected."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:137 res/xrc/OutfitStudio.xrc:2112
+msgid "Split Edge"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:138 res/xrc/OutfitStudio.xrc:2113
+msgid "Splits a mesh edge in two with a new vertex."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:149
+msgid "Field of View"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:153
+msgid "Field of View: 65"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:158
+msgid "Brush Settings"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:163
+msgid "Open Discord invite link."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:168
+msgid "Open GitHub link."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:173
+msgid "Open PayPal link."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:194
+msgid "Transform"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:195 res/xrc/OutfitStudio.xrc:2119
 msgid "Shows a transform tool to manipulate shapes and vertices with."
 msgstr ""
 
-msgid "Pivot\tF"
+#: res/xrc/OutfitStudio.xrc:201
+msgid "Pivot"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:202 res/xrc/OutfitStudio.xrc:2124
 msgid "Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale."
 msgstr ""
 
-msgid "Vertex Edit\tQ"
+#: res/xrc/OutfitStudio.xrc:208
+msgid "Vertex Edit"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:209
 msgid ""
 "Lets you select vertices to add to or remove from the mask.\n"
 "Click on a vertex to select/unmask it.\n"
 "Hold down CTRL to unselect/mask it."
 msgstr ""
 
-msgid "Increase Brush Size\tShift++"
-msgstr ""
-
-msgid "Increase brush diameter"
-msgstr ""
-
-msgid "Decrease Brush Size\tShift+-"
-msgstr ""
-
-msgid "Decrease brush diameter"
-msgstr ""
-
-msgid "Increase Brush Strength\tCtrl++"
-msgstr ""
-
-msgid "Increase brush strength"
-msgstr ""
-
-msgid "Decrease Brush Strength\tCtrl+-"
-msgstr ""
-
-msgid "Decrease brush strength"
-msgstr ""
-
-msgid "Mask Less\tA"
-msgstr ""
-
-msgid "Mask Less"
-msgstr ""
-
-msgid "Mask More\tD"
-msgstr ""
-
-msgid "Mask More"
-msgstr ""
-
-msgid "Invert Mask\tCtrl+I"
-msgstr ""
-
-msgid "Invert Mask"
-msgstr ""
-
-msgid "Clear Mask\tCtrl+A"
-msgstr ""
-
-msgid "Clear Mask"
-msgstr ""
-
-msgid "Show Mask\tM"
-msgstr ""
-
-msgid "Shade meshes to indicate areas that are currently masked."
-msgstr ""
-
-msgid "New Project"
-msgstr ""
-
-msgid "Create a new project by selecting a reference body slider set, and outfit model files."
-msgstr ""
-
-msgid "Load Project"
-msgstr ""
-
-msgid "Load a previously created slider set for editing."
-msgstr ""
-
-msgid "Select"
-msgstr ""
-
-msgid "Mask"
-msgstr ""
-
-msgid "Inflate"
-msgstr ""
-
-msgid "Deflate"
-msgstr ""
-
-msgid "Move"
-msgstr ""
-
-msgid "Smooth"
-msgstr ""
-
-msgid "Undiff"
-msgstr ""
-
-msgid "Weight Paint"
-msgstr ""
-
-msgid ""
-"Apply animation weight values for currently selected bone.\n"
-"Hold down the ALT key to weaken the weighting."
-msgstr ""
-
-msgid "Transform"
-msgstr ""
-
-msgid "Pivot"
-msgstr ""
-
-msgid "Vertex Edit"
-msgstr ""
-
+#: res/xrc/OutfitStudio.xrc:216
 msgid "X Mirror"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:217 res/xrc/OutfitStudio.xrc:1760
+msgid "Mirror edits across the X axis."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:225 res/xrc/OutfitStudio.xrc:1766
+msgid "Edit Connected Only\tC"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:226
 msgid "Edit only vertices that are connected to the ones under the brush within the brush radius."
 msgstr ""
 
-msgid "Global Brush Collision\tC"
+#: res/xrc/OutfitStudio.xrc:232 res/xrc/OutfitStudio.xrc:1772
+msgid "Global Brush Collision\tB"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:233
 msgid "Allows for the brushes to collide with all currently selected meshes at the same time."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:240
 msgid "View Front"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:241
 msgid "Change camera view to the front."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:245
 msgid "View Back"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:246
 msgid "Change camera view to the back."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:250
 msgid "View Left"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:251
 msgid "Change camera view to the left."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:255
 msgid "View Right"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:256
 msgid "Change camera view to the right."
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:260
 msgid "Perspective View"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:261
 msgid "Toggle perspective view."
 msgstr ""
 
-msgid "Field of View"
+#: res/xrc/OutfitStudio.xrc:267
+msgid "Show Nodes"
 msgstr ""
 
-msgid "Field of View: 65"
+#: res/xrc/OutfitStudio.xrc:268
+msgid "Toggle rendering of nodes."
 msgstr ""
 
-msgid "Move Shape"
+#: res/xrc/OutfitStudio.xrc:273
+msgid "Show Bones"
 msgstr ""
 
-msgid "CBBE to Vanilla (old)"
+#: res/xrc/OutfitStudio.xrc:274
+msgid "Toggle rendering of bones."
 msgstr ""
 
-msgid "Scale Shape"
+#: res/xrc/OutfitStudio.xrc:279
+msgid "Show Floor"
 msgstr ""
 
-msgid "Scaling will adjust the size of a mesh. This permanently affects vertices."
+#: res/xrc/OutfitStudio.xrc:280
+msgid "Toggle rendering of the floor grid."
 msgstr ""
 
-msgid "Scale"
+#: res/xrc/OutfitStudio.xrc:342
+msgid "Meshes"
 msgstr ""
 
-msgid "Rotate Shape"
+#: res/xrc/OutfitStudio.xrc:354 res/xrc/OutfitStudio.xrc:2344
+#: res/xrc/OutfitStudio.xrc:2377
+msgid "Bones"
 msgstr ""
 
-msgid "Apply a vertex position"
+#: res/xrc/OutfitStudio.xrc:366 res/xrc/OutfitStudio.xrc:2391
+#: res/xrc/OutfitStudio.xrc:2417
+msgid "Segments"
 msgstr ""
 
-msgid "This permanently moves a single vertex straight to the given location."
+#: res/xrc/OutfitStudio.xrc:378 res/xrc/OutfitStudio.xrc:2424
+#: res/xrc/OutfitStudio.xrc:2435
+msgid "Partitions"
 msgstr ""
 
+#: res/xrc/OutfitStudio.xrc:390
+msgid "Colors"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:402
+msgid "Lights"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:442
+msgid "Total Bones: 0"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:452
+msgid "Shape Selection Bones: 0"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:480
+msgid "Brush Color"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:489
+msgid "Color of the brush."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:501 src/program/OutfitStudio.cpp:2998
+#: src/program/OutfitStudio.cpp:6419
+msgid "Edit Alpha"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:547 res/xrc/OutfitStudio.xrc:939
+#: res/xrc/OutfitStudio.xrc:1040 src/program/OutfitStudio.cpp:6126
+#: src/program/OutfitStudio.cpp:9792
+msgid "Reset"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:560
+msgid "Ambient"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:585
+msgid "Frontal"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:610
+msgid "Directional 1"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:635
+msgid "Directional 2"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:660
+msgid "Directional 3"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:705 res/xrc/OutfitStudio.xrc:957
+#: res/xrc/ShapeProperties.xrc:84 res/xrc/ShapeProperties.xrc:544
+msgid "Type"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:828
+msgid "Slot"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:891 src/program/OutfitStudio.cpp:5246
+msgid "SSF File"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:911
+msgid "Set"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:929 res/xrc/OutfitStudio.xrc:1030
+#: src/program/OutfitStudio.cpp:6126 src/program/OutfitStudio.cpp:9819
+msgid "Apply"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1058
+msgid "De-/Select Sliders"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1077
+msgid "Fixed Weight Brush"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1088
+msgid "Normalize Weights"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1105
+msgid "X-Mirror Bone"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1130
+msgid "Preview Scaling"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1157
+msgid "Masks"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1201 res/xrc/OutfitStudio.xrc:1261
+#: res/xrc/OutfitStudio.xrc:2357
+msgid "Delete"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1217
+msgid "Posing"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1277
+msgid "Show Pose"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1295
+msgid "Reset Bone"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1315
+msgid "Rotation X"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1343
+msgid "Rotation Y"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1371
+msgid "Rotation Z"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1399
+msgid "Offset X"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1427
+msgid "Offset Y"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1456
+msgid "Offset Z"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1489
+msgid "Reset All"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1497
+msgid "Apply to Mesh"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1632 res/xrc/Settings.xrc:343
+#: src/program/NormalsGenDialog.cpp:304
+msgid "File"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1634
+msgid "New Project...\tCtrl+N"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1635
+msgid "Create a new outfit project."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1638
+msgid "Load Project..\tCtrl+O"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1639
+msgid "Load a project."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1642
+msgid "Add Project..\tCtrl+Shift+O"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1643
+msgid "Add a project without replacing the current one."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1646
+msgid "Unload Project...\tCtrl+W"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1647
+msgid "Unloads the project and creates an empty new one."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1650
+msgid "Recent Projects..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1655
+msgid "Load Reference..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1656
+msgid "Load a new reference slider set, replacing any current reference objects."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1659
+msgid "Load Outfit..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1660
+msgid "Load a NIF file as the working outfit, replacing any current outfit objects."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1664
+msgid "Save Project\tCtrl+S"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1665
+msgid "Save the project."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1669
+msgid "Save Project As...\tCtrl+Shift+S"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1670
+msgid "Save the project under a new name."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1674 src/program/OutfitStudio.cpp:6951
+#: src/program/OutfitStudio.cpp:7042
+msgid "Import"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1676
+msgid "From NIF..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1677
+msgid "Choose a NIF file to import into the project."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1680
+msgid "From OBJ..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1681
+msgid "Import an OBJ file as a new shape in the outfit."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1684
+msgid "From FBX..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1685
+msgid "Import an FBX file as a new shape in the outfit."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1688
+msgid "From TRI (Head)..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1689
+msgid "Import shape and morphs from a head TRI file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1692
+msgid "Import Data"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1694
+msgid "Import BSClothExtraData From HKX"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1695
+msgid "Choose an HKX file to import as a BSClothExtraData block into the project."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1700 res/xrc/OutfitStudio.xrc:1798
+#: res/xrc/OutfitStudio.xrc:2231
+msgid "Export"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1702
+msgid "To NIF...\tCtrl+E"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1703
+msgid "Save the current project as a NIF file (without reference)"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1706
+msgid "To NIF With Reference...\tCtrl+Alt+E"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1707
+msgid "Save the current project as a NIF file (including reference)"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1710 res/xrc/OutfitStudio.xrc:1804
+#: res/xrc/OutfitStudio.xrc:2237
+msgid "To OBJ..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1711
+msgid "Export the current project as an OBJ file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1714 res/xrc/OutfitStudio.xrc:1808
+#: res/xrc/OutfitStudio.xrc:2241
+msgid "To FBX..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1715
+msgid "Export the current project as an FBX file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1718 res/xrc/OutfitStudio.xrc:1812
+#: res/xrc/OutfitStudio.xrc:2245
+msgid "To TRI (Head)..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1719 res/xrc/OutfitStudio.xrc:1813
+#: res/xrc/OutfitStudio.xrc:2246
+msgid "Export head morphs to a TRI file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1722
+msgid "Export Data"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1724
+msgid "Export BSClothExtraData As HKX"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1725
+msgid "Save one of the currently loaded BSClothExtraData blocks to an HKX file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1730
+msgid "Make Conversion Reference"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1731
+msgid "Using the current slider settings for the reference shape, create a new reference that will morph from the current shape back to the base shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1735 res/xrc/Project.xrc:908
+msgid "Pack Projects..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1736
+msgid "Pack one or more projects into a folder or archive for sharing."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1743
+msgid "Exit\tAlt+F4"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1744
+msgid "Exit Outfit Studio."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1759
+msgid "X Mirror\tX"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1767
+msgid "Edit only vertices that are connected to the ones under the brush within the brush radius"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1773
+msgid "Allows for the brushes to collide with all currently selected meshes at the same time"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1779
+msgid "Recalculate Normals\tR"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1780
+msgid "Recalculate normals on active mesh"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1783
+msgid "Reset Transforms"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1784
+msgid "Resets the shape and skin transforms."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1787 src/program/OutfitStudio.cpp:9412
+msgid "Delete Unreferenced Nodes"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1788
+msgid "Deletes all nodes from the project that aren't used in any other block."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1791
+msgid "Remove Skinning"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1792
+msgid "Removes skinning of all shapes and all unused nodes."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1796 res/xrc/OutfitStudio.xrc:2229
+msgid "Shape"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1800 res/xrc/OutfitStudio.xrc:2233
+msgid "To NIF..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1801 res/xrc/OutfitStudio.xrc:2234
+msgid "Export only the selected shapes to a NIF file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1805 res/xrc/OutfitStudio.xrc:2238
+msgid "Export only the selected shapes to an OBJ file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1809 res/xrc/OutfitStudio.xrc:2242
+msgid "Export only the selected shapes to an FBX file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1817 res/xrc/OutfitStudio.xrc:2250
+#: res/xrc/Slider.xrc:200
+msgid "UV"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1819 res/xrc/OutfitStudio.xrc:2252
+msgid "Edit..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1820 res/xrc/OutfitStudio.xrc:2253
+msgid "Edit the texture coordinates."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1823 res/xrc/OutfitStudio.xrc:2256
+msgid "Invert X"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1824 res/xrc/OutfitStudio.xrc:2257
+msgid "Inverts the X-axis of the texture coordinates."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1827 res/xrc/OutfitStudio.xrc:2260
+msgid "Invert Y"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1828 res/xrc/OutfitStudio.xrc:2261
+msgid "Inverts the Y-axis of the texture coordinates."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1832 res/xrc/OutfitStudio.xrc:2265
+msgid "Mirror"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1835 res/xrc/OutfitStudio.xrc:2268
+msgid "Mirror the selected shapes on the X-axis."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1839 res/xrc/OutfitStudio.xrc:2272
+msgid "Mirror the selected shapes on the Y-axis."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1843 res/xrc/OutfitStudio.xrc:2276
+msgid "Mirror the selected shapes on the Z-axis."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1847 res/xrc/OutfitStudio.xrc:2280
+msgid "Delete Vertices...\tShift+Del"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1848 res/xrc/OutfitStudio.xrc:2281
+msgid "Deletes all unmasked vertices of the currently selected shapes."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1851 res/xrc/OutfitStudio.xrc:2284
+#: src/program/OutfitStudio.cpp:8482
+msgid "Separate Vertices...\tShift+S"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1852 res/xrc/OutfitStudio.xrc:2285
+msgid "Separate the current shape into two by using the mask."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1855 res/xrc/OutfitStudio.xrc:2288
+msgid "Merge Geometry..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1856 res/xrc/OutfitStudio.xrc:2289
+msgid "Copies vertices and triangles from one shape to another."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1859 res/xrc/OutfitStudio.xrc:2292
+msgid "Duplicate..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1860 res/xrc/OutfitStudio.xrc:2293
+msgid "Duplicate the current shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1863 res/xrc/OutfitStudio.xrc:2296
+msgid "Rename...\tF2"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1864 res/xrc/OutfitStudio.xrc:2297
+msgid "Change the name of the current shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1867 res/xrc/OutfitStudio.xrc:2300
+msgid "Set Reference"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1868 res/xrc/OutfitStudio.xrc:2301
+msgid "Turn the shape into the reference shape of the project."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1872 res/xrc/OutfitStudio.xrc:2305
+msgid "Move..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1873 res/xrc/OutfitStudio.xrc:2306
+msgid "Apply an offset adjustment to the mesh vertices. This permanently moves vertices."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1876 res/xrc/OutfitStudio.xrc:2309
+msgid "Scale..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1877 res/xrc/OutfitStudio.xrc:2310
+msgid "Apply a scale adjustment to the shape. This permanently moves vertices."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1880 res/xrc/OutfitStudio.xrc:2313
+msgid "Rotate..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1881 res/xrc/OutfitStudio.xrc:2314
+msgid "Apply a rotation to the mesh vertices. This permanently moves vertices."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1884
+msgid "Smooth Seam Normals"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1885
+msgid "Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1890
+msgid "Lock Normals"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1891
+msgid "Locks the mesh normals. Enable if you want to keep custom normals intact."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1898 res/xrc/OutfitStudio.xrc:2319
+msgid "Copies all bone weights from the reference shape to the current shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1901 res/xrc/OutfitStudio.xrc:2322
+msgid "Copy Selected Weights"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1902 res/xrc/OutfitStudio.xrc:2323
+msgid "Copies selected bone weights from the reference shape to the current shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1905 res/xrc/OutfitStudio.xrc:2326
+msgid "Transfer Selected Weights"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1906 res/xrc/OutfitStudio.xrc:2327
+msgid "Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1909 res/xrc/OutfitStudio.xrc:2330
+#: res/xrc/OutfitStudio.xrc:2372
+msgid "Mask Weighted Vertices"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1910 res/xrc/OutfitStudio.xrc:2331
+msgid "Masks vertices with bone weights, so you can manually assign weights to unweighted vertices."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1914 res/xrc/OutfitStudio.xrc:2335
+msgid "Delete\tDel"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1915 res/xrc/OutfitStudio.xrc:2336
+msgid "Removes the currently selected shape from the outfit."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1918 res/xrc/OutfitStudio.xrc:2339
+msgid "Properties..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1919 res/xrc/OutfitStudio.xrc:2340
+msgid "Opens the properties dialog for shader, texture and more settings of the selected shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1923
+msgid "Slider"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1925
+msgid "Conform Selected\tCtrl+C"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1926
+msgid "Conform selected outfit shape to all checked sliders."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1929
+msgid "Conform All\tCtrl+Shift+C"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1930
+msgid "Conform all outfit shapes to all checked sliders."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1934
+msgid "Set Base Shape"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1935
+msgid "Set the current outfit shape as the base shape and clear slider data."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1940
+msgid "Load and preview a slider preset. Inverted sliders will have inverted values."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1944
+msgid "Save a slider preset with the current values. Inverted sliders will have inverted values."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1948
+msgid "New Slider"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1949
+msgid "Create a new shape transformation slider."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1952
+msgid "Coalesce sliders"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1953
+msgid "Create a new shape transformation slider based on the current slider values"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1956
+msgid "New Zap Slider"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1957
+msgid "Create a new Zap slider based on unmasked vertices"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1961
+msgid "Import OSD..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1962
+msgid "Imports OSD file and creates sliders for shapes with a matching name."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1965
+msgid "Export OSD..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1966
+msgid "Exports all currently loaded slider data to an OSD file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1969
+msgid "Import TRI Morphs..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1970
+msgid "Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1973
+msgid "Export TRI Morphs..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1974
+msgid "Exports TRI morphs to a TRI file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1977
+msgid "Export to OBJs..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1978
+msgid "Export all sliders to an OBJ file per slider."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1982
+msgid "Import Slider Data"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1984
+msgid "Import NIF..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1985
+msgid "Import a NIF file and overwrites the current shape's slider data."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1988
+msgid "Import BSD..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1989
+msgid "Import a BodySlide BSD file and overwrites the current shape's slider data."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1992
+msgid "Import OBJ..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1993
+msgid "Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1996
+msgid "Import FBX..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1997
+msgid "Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2002
+msgid "Export Slider Data"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2004
+msgid "Export NIF..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2005
+msgid "Exports the current slider's data as a NIF file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2008
+msgid "Export BSD..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2009
+msgid "Exports the current slider's data as a BodySlide BSD file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2012
+msgid "Export OBJ..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2013
+msgid "Exports the current slider's data as an OBJ file."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2019
+msgid "Negate Slider"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2020
+msgid "Negates the current slider, reversing it's effect"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2024
+msgid "Mask Affected Vertices"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2025
+msgid "Masks the vertices the slider is affecting for all selected shapes."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2029
+msgid "Clear Slider Data"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2030
+msgid "Erases the slider data without removing the slider itself. (Cannot be undone)"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2033
+msgid "Delete Slider"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2034
+msgid "Delete the active slider from the project. (Cannot be undone)"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2038
+msgid "Properties...\tTab"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2039 src/program/OutfitStudio.cpp:2308
+msgid "Display and edit the active slider's properties."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2044
+msgid "Tool"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2046
+msgid "Current Tool"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2085
+msgid ""
+"Apply animation weight values for the currently selected bone.\n"
+"Hold down the ALT key to weaken the weighting."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2118
+msgid "Transform\tF"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2123
+msgid "Pivot\tP"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2128
+msgid "Vertex Edit\tQ"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2129
+msgid ""
+"Shows vertex points and lets you mask/unmask them.\n"
+"Without any brush active, click on a vertex to unmask it.\n"
+"Hold down CTRL to mask it."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2134
+msgid "Increase Brush Size\tShift++"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2135
+msgid "Increase brush diameter"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2138
+msgid "Decrease Brush Size\tShift+-"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2139
+msgid "Decrease brush diameter"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2142
+msgid "Increase Brush Strength\tCtrl++"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2143
+msgid "Increase brush strength"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2146
+msgid "Decrease Brush Strength\tCtrl+-"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2147
+msgid "Decrease brush strength"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2151
+msgid "Mask Less\tA"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2152
+msgid "Mask Less"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2155
+msgid "Mask More\tD"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2156
+msgid "Mask More"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2160
+msgid "Invert Mask\tCtrl+I"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2161
+msgid "Invert Mask"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2164
+msgid "Clear Mask\tCtrl+A"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2165
+msgid "Clear Mask"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2169
+msgid "View"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2171
+msgid "Front\tShift+1"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2174
+msgid "Back\tShift+2"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2177
+msgid "Left\tShift+3"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2180
+msgid "Right\tShift+4"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2183
+msgid "Perspective\tShift+5"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2188
+msgid "Toggle Rotation Center\tShift+R"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2189
+msgid "Switch between the different rotation center modes."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2192
+msgid "Show Nodes\tShift+N"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2196
+msgid "Show Bones\tShift+B"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2200
+msgid "Show Floor\tG"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2205
+msgid "Toggle Visibility\tE"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2206
+msgid "Switch between the different visibility modes for the selected shapes."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2209
+msgid "Show Wireframe\tW"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2210
+msgid "Show wireframe on all models."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2214
+msgid "Enable Lighting\tL"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2215
+msgid "Turn on or off lighting."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2220
+msgid "Enable Textures\tT"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2221
+msgid "Display texture maps on models."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2346 res/xrc/OutfitStudio.xrc:2379
+#: res/xrc/ShapeProperties.xrc:244 res/xrc/ShapeProperties.xrc:366
+#: res/xrc/ShapeProperties.xrc:535
+msgid "Add"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2348 res/xrc/OutfitStudio.xrc:2381
+msgid "From Skeleton..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2349 res/xrc/OutfitStudio.xrc:2382
+msgid "Choose a bone from the reference skeleton to add to the project."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2352 res/xrc/OutfitStudio.xrc:2385
+msgid "Custom Bone..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2353 res/xrc/OutfitStudio.xrc:2386
+msgid "Add a custom bone to the project."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2359
+msgid "From Project"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2360
+msgid "Delete bone(s) from all shapes of the project."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2363
+msgid "From Selected Shapes"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2364
+msgid "Delete bone(s) from only the selected shapes."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2368
+msgid "Edit Bone..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2369
+msgid "Edit a custom bone or view a standard bone."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2373
+msgid "Masks vertices with weights for the selected bones."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2393 res/xrc/OutfitStudio.xrc:2419
+msgid "Add Segment..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2394 res/xrc/OutfitStudio.xrc:2420
+msgid "Choose a segment to add to the shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2397 res/xrc/OutfitStudio.xrc:2408
+msgid "Add Sub Segment..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2398 res/xrc/OutfitStudio.xrc:2409
+msgid "Add a new sub segment to the currently selected segment."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2401
+msgid "Delete Segment..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2402
+msgid "Delete segment and all of its sub segments from the shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2406
+msgid "Sub Segments"
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2412
+msgid "Delete Sub Segment..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2413
+msgid "Delete the selected sub segment."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2426 res/xrc/OutfitStudio.xrc:2437
+msgid "Add Partition..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2427 res/xrc/OutfitStudio.xrc:2438
+msgid "Adds a new partition to the shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2430
+msgid "Delete Partition..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2431
+msgid "Deletes the partition from the shape."
+msgstr ""
+
+#: res/xrc/Project.xrc:16
 msgid ""
 "Welcome to the New Project wizard!\n"
 "\n"
 "First, please choose a reference. Typically, this is a body (such as CBBE) or a conversion set (such as Vanilla To CBBE) and comes with its sliders."
 msgstr ""
 
+#: res/xrc/Project.xrc:32 res/xrc/Project.xrc:574
 msgid "Reference"
 msgstr ""
 
+#: res/xrc/Project.xrc:50 res/xrc/Project.xrc:592
 msgid "From Template"
 msgstr ""
 
+#: res/xrc/Project.xrc:69 res/xrc/Project.xrc:210 res/xrc/Project.xrc:272
+#: res/xrc/Project.xrc:611 res/xrc/Project.xrc:785 res/xrc/Project.xrc:857
 msgid "From File"
 msgstr ""
 
+#: res/xrc/Project.xrc:79 res/xrc/Project.xrc:621
 msgid "Select a project or NIF file"
 msgstr ""
 
+#: res/xrc/Project.xrc:106 res/xrc/Project.xrc:648
 msgid "Slider Set:"
 msgstr ""
 
+#: res/xrc/Project.xrc:124 res/xrc/Project.xrc:666
 msgid "Shape:"
 msgstr ""
 
+#: res/xrc/Project.xrc:146 res/xrc/Project.xrc:688
 msgid "Clear Reference"
 msgstr ""
 
+#: res/xrc/Project.xrc:162
 msgid "Next, select an outfit/mesh to work on and enter a display name for it."
 msgstr ""
 
+#: res/xrc/Project.xrc:177 res/xrc/Project.xrc:319 res/xrc/Project.xrc:752
 msgid "Display Name"
 msgstr ""
 
-msgid "New Outfit"
-msgstr ""
-
+#: res/xrc/Project.xrc:197 res/xrc/Project.xrc:772
 msgid "Outfit/Mesh"
 msgstr ""
 
+#: res/xrc/Project.xrc:220 res/xrc/Project.xrc:795
 msgid "Select a file to load as an outfit/mesh"
 msgstr ""
 
+#: res/xrc/Project.xrc:232 res/xrc/Project.xrc:807
 msgid "Clear Outfit"
 msgstr ""
 
+#: res/xrc/Project.xrc:250 res/xrc/Project.xrc:835
 msgid "Textures"
 msgstr ""
 
+#: res/xrc/Project.xrc:257 res/xrc/Project.xrc:842
 msgid "Automatically search for textures"
 msgstr ""
 
+#: res/xrc/Project.xrc:282 res/xrc/Project.xrc:867
 msgid "Select a texture file"
 msgstr ""
 
-msgid "Select a slider preset"
-msgstr ""
-
-msgid "Choose a preset:"
-msgstr ""
-
-msgid "Low weight"
-msgstr ""
-
-msgid "High weight"
-msgstr ""
-
-msgid "Set Shape Textures"
-msgstr ""
-
-msgid "Display Texture:"
-msgstr ""
-
-msgid "Applies the current diffuse texture path to the Outfit Studio display texture path."
-msgstr ""
-
-msgid "Apply Diffuse"
-msgstr ""
-
-msgid "Load Reference"
-msgstr ""
-
-msgid "Please choose a reference. Typically, this is a body (such as CBBE) or a conversion set (such as Vanilla To CBBE) and comes with its sliders."
-msgstr ""
-
-msgid "Merge new sliders with existing sliders"
-msgstr ""
-
-msgid "Load Outfit"
-msgstr ""
-
-msgid "Please select an outfit/mesh to work on and enter a display name for it."
-msgstr ""
-
-msgid "Keep other shapes"
-msgstr ""
-
-msgid "Add"
-msgstr ""
-
-msgid "Delete"
-msgstr ""
-
-msgid "From Project"
-msgstr ""
-
-msgid "Delete bone(s) from all shapes of the project."
-msgstr ""
-
-msgid "From Selected Shapes"
-msgstr ""
-
-msgid "Delete bone(s) from only the selected shapes."
-msgstr ""
-
-msgid "From Skeleton..."
-msgstr ""
-
-msgid "Choose a bone from the reference skeleton to add to the project."
-msgstr ""
-
-msgid "Custom Bone..."
-msgstr ""
-
-msgid "Add a custom bone to the project."
-msgstr ""
-
-msgid "Select a bone to add"
-msgstr ""
-
-msgid "Bones in the current reference skeleton:"
-msgstr ""
-
-msgid "Add Custom Bone"
-msgstr ""
-
-msgid "Name"
-msgstr ""
-
-msgid "Slider Properties"
-msgstr ""
-
-msgid "Slider Name"
-msgstr ""
-
-msgid "Default Values"
-msgstr ""
-
-msgid "Low"
-msgstr ""
-
-msgid "High"
-msgstr ""
-
-msgid "Zapped"
-msgstr ""
-
-msgid "Options"
-msgstr ""
-
-msgid "Invert"
-msgstr ""
-
-msgid "Hidden"
-msgstr ""
-
-msgid "Zap"
-msgstr ""
-
+#: res/xrc/Project.xrc:297
 msgid "Save Project As..."
 msgstr ""
 
+#: res/xrc/Project.xrc:328
 msgid "The name of the outfit and slider set, as it will appear in BodySlide."
 msgstr ""
 
+#: res/xrc/Project.xrc:337
 msgid "Copies the current display name to the project text fields below."
 msgstr ""
 
+#: res/xrc/Project.xrc:338
 msgid "To Project"
 msgstr ""
 
+#: res/xrc/Project.xrc:354
 msgid "Output File Name"
 msgstr ""
 
+#: res/xrc/Project.xrc:363
 msgid "The name of the outfit file that will end up in the game data path when BodySlide builds it. Should not include _1 or _0 in the name, e.g: lovelydress"
 msgstr ""
 
-msgid "_0/_1.nif"
-msgstr ""
-
+#: res/xrc/Project.xrc:389
 msgid "Output Data Path"
 msgstr ""
 
+#: res/xrc/Project.xrc:398
 msgid "The location in the game's data path where BodySlide-built outfit files will be placed, e.g: meshes\\clothes\\lovelydress"
 msgstr ""
 
+#: res/xrc/Project.xrc:410
 msgid "If this is enabled, BodySlide creates a low and high weight model when it generates the final outfit."
 msgstr ""
 
+#: res/xrc/Project.xrc:411
 msgid "Low/High Weight Output"
 msgstr ""
 
+#: res/xrc/Project.xrc:419
 msgid "If this is enabled, only one output file will be created (useful for single-weighted things like hair)."
 msgstr ""
 
+#: res/xrc/Project.xrc:420
 msgid "Single Weight Output"
 msgstr ""
 
+#: res/xrc/Project.xrc:431
 msgid "Project"
 msgstr ""
 
+#: res/xrc/Project.xrc:443
 msgid "Slider Set File"
 msgstr ""
 
+#: res/xrc/Project.xrc:453
 msgid "The .osp slider set project file"
 msgstr ""
 
+#: res/xrc/Project.xrc:454
 msgid "Select slider set .osp file name"
 msgstr ""
 
+#: res/xrc/Project.xrc:472
 msgid "Shape Data Folder"
 msgstr ""
 
+#: res/xrc/Project.xrc:482
 msgid "The folder where all the slider data will go, as well as the base outfit NIF file."
 msgstr ""
 
+#: res/xrc/Project.xrc:483
 msgid "Select slider data folder"
 msgstr ""
 
+#: res/xrc/Project.xrc:500
 msgid "Shape Data File"
 msgstr ""
 
+#: res/xrc/Project.xrc:510
 msgid "The name of the output's base NIF file."
 msgstr ""
 
+#: res/xrc/Project.xrc:511
 msgid "Select output NIF file name"
 msgstr ""
 
+#: res/xrc/Project.xrc:523
 msgid "Outfits require the reference body to be a part of the output file. Disable this if you've already copied the reference over or you don't want it included."
 msgstr ""
 
+#: res/xrc/Project.xrc:524
 msgid "Copy reference shape into output"
 msgstr ""
 
+#: res/xrc/Project.xrc:539 res/xrc/SavePreset.xrc:78
+msgid "&Save"
+msgstr ""
+
+#: res/xrc/Project.xrc:555
+msgid "Load Reference"
+msgstr ""
+
+#: res/xrc/Project.xrc:564
+msgid "Please choose a reference. Typically, this is a body (such as CBBE) or a conversion set (such as Vanilla To CBBE) and comes with its sliders."
+msgstr ""
+
+#: res/xrc/Project.xrc:697
+msgid "Merge new sliders with existing sliders"
+msgstr ""
+
+#: res/xrc/Project.xrc:728
+msgid "Load Outfit"
+msgstr ""
+
+#: res/xrc/Project.xrc:737
+msgid "Please select an outfit/mesh to work on and enter a display name for it."
+msgstr ""
+
+#: res/xrc/Project.xrc:816
+msgid "Keep other shapes"
+msgstr ""
+
+#: res/xrc/Project.xrc:942
+msgid "Group file (optional):"
+msgstr ""
+
+#: res/xrc/Project.xrc:951
+msgid "Group file to pack (optional)."
+msgstr ""
+
+#: res/xrc/Project.xrc:968
+msgid "Merged file name:"
+msgstr ""
+
+#: res/xrc/Project.xrc:976
+msgid "File name to use for the merged project file."
+msgstr ""
+
+#: res/xrc/Project.xrc:1002
+msgid "Pack Folder..."
+msgstr ""
+
+#: res/xrc/Project.xrc:1011
+msgid "Pack Archive..."
+msgstr ""
+
+#: res/xrc/Project.xrc:1028 src/program/OutfitStudio.cpp:3553
+#: src/program/OutfitStudio.cpp:6126 src/program/OutfitStudio.cpp:6951
+#: src/program/OutfitStudio.cpp:7042 src/program/OutfitStudio.cpp:9792
+#: src/program/OutfitStudio.cpp:9819
+msgid "Cancel"
+msgstr ""
+
+#: res/xrc/SavePreset.xrc:6
+msgid "Enter preset name..."
+msgstr ""
+
+#: res/xrc/SavePreset.xrc:15
+msgid "Please enter a name for the new preset:"
+msgstr ""
+
+#: res/xrc/SavePreset.xrc:38
+msgid "Select groups to assign to the new preset:"
+msgstr ""
+
+#: res/xrc/Settings.xrc:15
+msgid "Game"
+msgstr ""
+
+#: res/xrc/Settings.xrc:28 src/program/OutfitProject.cpp:3894
+msgid "Target Game"
+msgstr ""
+
+#: res/xrc/Settings.xrc:37
+msgid "Choose the target game you want to use the program for here."
+msgstr ""
+
+#: res/xrc/Settings.xrc:66
+msgid "Game Data Path"
+msgstr ""
+
+#: res/xrc/Settings.xrc:76
+msgid "Select the data path of the game..."
+msgstr ""
+
+#: res/xrc/Settings.xrc:78
+msgid "Data path to load textures from."
+msgstr ""
+
+#: res/xrc/Settings.xrc:90
+msgid "Advanced"
+msgstr ""
+
+#: res/xrc/Settings.xrc:107
+msgid "Output Path"
+msgstr ""
+
+#: res/xrc/Settings.xrc:117
+msgid "Select the output path..."
+msgstr ""
+
+#: res/xrc/Settings.xrc:119
+msgid "Data path to build files to. If empty, Game Data Path will be used instead."
+msgstr ""
+
+#: res/xrc/Settings.xrc:136
+msgid "Project Path"
+msgstr ""
+
+#: res/xrc/Settings.xrc:146
+msgid "Select the project path..."
+msgstr ""
+
+#: res/xrc/Settings.xrc:148
+msgid "Project path where files related to BodySlide are loaded from. If empty, executable directory will be used instead."
+msgstr ""
+
+#: res/xrc/Settings.xrc:165
+msgid "General"
+msgstr ""
+
+#: res/xrc/Settings.xrc:177
+msgid "Enables/disables the dialog for choosing which set to build during a batch build if overrides happen."
+msgstr ""
+
+#: res/xrc/Settings.xrc:178
+msgid "Override Warning"
+msgstr ""
+
+#: res/xrc/Settings.xrc:187
+msgid "Enables/disables scanning BSAs in the game data folder for textures to load."
+msgstr ""
+
+#: res/xrc/Settings.xrc:188
+msgid "BSA Textures"
+msgstr ""
+
+#: res/xrc/Settings.xrc:205
+msgid "Enables/disables panning the camera with the left mouse button in Outfit Studio."
+msgstr ""
+
+#: res/xrc/Settings.xrc:206
+msgid "Left Mouse Pan"
+msgstr ""
+
+#: res/xrc/Settings.xrc:224
+msgid "Language"
+msgstr ""
+
+#: res/xrc/Settings.xrc:233
+msgid "Use the selected language for the program."
+msgstr ""
+
+#: res/xrc/Settings.xrc:248
+msgid "Rendering"
+msgstr ""
+
+#: res/xrc/Settings.xrc:261
+msgid "Background Color"
+msgstr ""
+
+#: res/xrc/Settings.xrc:270
+msgid "Background color of the renderer."
+msgstr ""
+
+#: res/xrc/Settings.xrc:288
+msgid "Wireframe Color"
+msgstr ""
+
+#: res/xrc/Settings.xrc:297
+msgid "Wireframe color of the renderer."
+msgstr ""
+
+#: res/xrc/Settings.xrc:312
+msgid "Data Files"
+msgstr ""
+
+#: res/xrc/Settings.xrc:330
+msgid "Reference Skeleton"
+msgstr ""
+
+#: res/xrc/Settings.xrc:353
+msgid "Select a reference skeleton .nif file..."
+msgstr ""
+
+#: res/xrc/Settings.xrc:356
+msgid "The reference skeleton file for Outfit Studio."
+msgstr ""
+
+#: res/xrc/Settings.xrc:373
+msgid "Root Node"
+msgstr ""
+
+#: res/xrc/Settings.xrc:382
+msgid "The root node name of the reference skeleton. Can differ from game to game."
+msgstr ""
+
+#: res/xrc/Setup.xrc:5
+msgid "Setup"
+msgstr ""
+
+#: res/xrc/Setup.xrc:15
+msgid ""
+"Please select the data folder and your target game.\n"
+"You can only choose one game at a time, but it is possible to change the selection in the settings."
+msgstr ""
+
+#: res/xrc/Setup.xrc:44 res/xrc/Setup.xrc:73 res/xrc/Setup.xrc:102
+#: res/xrc/Setup.xrc:131 res/xrc/Setup.xrc:160 res/xrc/Setup.xrc:189
+#: res/xrc/Setup.xrc:218 res/xrc/Setup.xrc:247
+msgid "Game not found! Select the data folder manually..."
+msgstr ""
+
+#: res/xrc/Setup.xrc:45 res/xrc/Setup.xrc:74 res/xrc/Setup.xrc:103
+#: res/xrc/Setup.xrc:132 res/xrc/Setup.xrc:161 res/xrc/Setup.xrc:190
+#: res/xrc/Setup.xrc:219 res/xrc/Setup.xrc:248
+msgid "Select a folder"
+msgstr ""
+
+#: res/xrc/Setup.xrc:55 res/xrc/Setup.xrc:84 res/xrc/Setup.xrc:113
+#: res/xrc/Setup.xrc:142 res/xrc/Setup.xrc:171 res/xrc/Setup.xrc:200
+#: res/xrc/Setup.xrc:229 res/xrc/Setup.xrc:258
+msgid "Choose Game"
+msgstr ""
+
+#: res/xrc/ShapeProperties.xrc:5
 msgid "Shape Properties"
 msgstr ""
 
-msgid "Material"
-msgstr ""
-
-msgid "Choose material file"
-msgstr ""
-
+#: res/xrc/ShapeProperties.xrc:16
 msgid "Shader"
 msgstr ""
 
-msgid "Type"
+#: res/xrc/ShapeProperties.xrc:31 res/xrc/ShapeProperties.xrc:553
+#: res/xrc/Skeleton.xrc:68
+msgid "Name"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:102
 msgid "Specular Color"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:120
 msgid "Specular Strength"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:139
 msgid "Specular Power"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:179
 msgid "Emissive Color"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:197
 msgid "Emissive Multiple"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:216
+msgid "Vertex Colors"
+msgstr ""
+
+#: res/xrc/ShapeProperties.xrc:253 res/xrc/ShapeProperties.xrc:375
 msgid "Remove"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:262
 msgid "Textures..."
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:274
 msgid "Transparency"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:297
 msgid "Threshold"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:337
+msgid "Vertex Alpha"
+msgstr ""
+
+#: res/xrc/ShapeProperties.xrc:388
+msgid "Copy from shape..."
+msgstr ""
+
+#: res/xrc/ShapeProperties.xrc:396
 msgid "Geometry"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:416
 msgid "Full Precision"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:434
 msgid "Sub Index"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:452
+msgid "Skinned"
+msgstr ""
+
+#: res/xrc/ShapeProperties.xrc:469
 msgid "Dynamic"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:514
 msgid "Extra Data"
 msgstr ""
 
+#: res/xrc/ShapeProperties.xrc:562
 msgid "Value"
 msgstr ""
 
-msgid "Segments"
+#: res/xrc/ShapeProperties.xrc:572
+msgid "Coordinates"
 msgstr ""
 
-msgid "Apply"
+#: res/xrc/ShapeProperties.xrc:581
+msgid "Transform from global to skin coordinates:"
 msgstr ""
 
-msgid "SSF File"
+#: res/xrc/ShapeProperties.xrc:644 res/xrc/Skeleton.xrc:142
+msgid "Rotation"
 msgstr ""
 
-msgid "Partitions"
+#: res/xrc/Skeleton.xrc:6
+msgid "Select a bone to add"
 msgstr ""
 
-msgid "Add Partition..."
+#: res/xrc/Skeleton.xrc:15
+msgid "Bones in the current reference skeleton:"
 msgstr ""
 
-msgid "Adds a new partition to the shape."
+#: res/xrc/Skeleton.xrc:53
+msgid "Add Custom Bone"
 msgstr ""
 
-msgid "Delete Partition..."
+#: res/xrc/Skeleton.xrc:93
+msgid "Parent"
 msgstr ""
 
-msgid "Deletes the partition from the shape."
+#: res/xrc/Slider.xrc:6
+msgid "Select a slider preset"
 msgstr ""
 
-msgid "FBX Import Options..."
+#: res/xrc/Slider.xrc:15
+msgid "Choose a preset:"
 msgstr ""
 
-msgid "Invert U"
+#: res/xrc/Slider.xrc:40
+msgid "Low weight"
 msgstr ""
 
-msgid "Invert V"
+#: res/xrc/Slider.xrc:49
+msgid "High weight"
 msgstr ""
 
-msgid "Toggle:"
+#: res/xrc/Slider.xrc:81
+msgid "Slider Properties"
 msgstr ""
 
-msgid "Search Radius"
+#: res/xrc/Slider.xrc:91
+msgid "Slider Name"
 msgstr ""
 
-msgid "Max Vertex Targets"
+#: res/xrc/Slider.xrc:108
+msgid "Default Values"
 msgstr ""
 
-msgid "Each vertex of the reference will copy its weights to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become weighted and work well. Often, the default values are sufficient."
+#: res/xrc/Slider.xrc:114
+msgid "Low"
 msgstr ""
 
-msgid "Each vertex of the reference will copy its slider data to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become conformed and work well. Often, the default values are sufficient."
+#: res/xrc/Slider.xrc:131
+msgid "High"
 msgstr ""
 
+#: res/xrc/Slider.xrc:148
+msgid "Zapped"
+msgstr ""
+
+#: res/xrc/Slider.xrc:173
+msgid "Invert"
+msgstr ""
+
+#: res/xrc/Slider.xrc:182
+msgid "Hidden"
+msgstr ""
+
+#: res/xrc/Slider.xrc:191
+msgid "Zap"
+msgstr ""
+
+#: res/xrc/Slider.xrc:211
+msgid "Toggle Zaps:"
+msgstr ""
+
+#: src/components/Anim.cpp:509
 msgid "Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export."
 msgstr ""
 
-msgid "No Target Limit"
-msgstr ""
-
-msgid "Default"
-msgstr ""
-
-msgid "Even Movement"
-msgstr ""
-
+#: src/components/Anim.cpp:509
 msgid "Export Warning"
 msgstr ""
 
+#: src/components/Anim.cpp:575
+#, c-format
 msgid "Failed to load skeleton '%s'!"
 msgstr ""
 
+#: src/components/Anim.cpp:583
+#, c-format
 msgid "Root '%s' not found in skeleton '%s'!"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:181 src/program/OutfitStudio.cpp:396
 msgid ""
 "No read/write permission for game data path!\n"
 "\n"
 "Please launch the program with admin elevation and make sure the game data path in the settings is correct."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:181 src/program/BodySlideApp.cpp:188
+#: src/program/BodySlideApp.cpp:1246 src/program/BodySlideApp.cpp:1253
+#: src/program/OutfitStudio.cpp:396 src/program/OutfitStudio.cpp:403
+#: src/program/OutfitStudio.cpp:629 src/program/OutfitStudio.cpp:636
 msgid "Warning"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:188 src/program/OutfitStudio.cpp:403
+msgid ""
+"No read/write permission for project path!\n"
+"\n"
+"Please launch the program with admin elevation and make sure the project path in the settings is correct."
+msgstr ""
+
+#: src/program/BodySlideApp.cpp:259 src/program/OutfitStudio.cpp:491
+#, c-format
 msgid "Unexpected exception has occurred: %s, the program will terminate."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:259 src/program/OutfitStudio.cpp:491
 msgid "Unexpected exception"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:282 src/program/OutfitStudio.cpp:511
+#, c-format
 msgid "Unhandled exception has occurred: %s, the program will terminate."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:282 src/program/OutfitStudio.cpp:511
 msgid "Unhandled exception"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:293 src/program/OutfitStudio.cpp:519
 msgid "Fatal exception has occurred, the program will terminate."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:293 src/program/OutfitStudio.cpp:519
 msgid "Fatal exception"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:743
+msgid "Failed to launch Outfit Studio executable!"
+msgstr ""
+
+#: src/program/BodySlideApp.cpp:743 src/program/BodySlideApp.cpp:1274
+#: src/program/BodySlideApp.cpp:1566 src/program/BodySlideApp.cpp:2559
+#: src/program/BodySlideApp.cpp:2566 src/program/BodySlideApp.cpp:3249
+#: src/program/OutfitStudio.cpp:920 src/program/OutfitStudio.cpp:926
+#: src/program/OutfitStudio.cpp:1398 src/program/OutfitStudio.cpp:1409
+#: src/program/OutfitStudio.cpp:1446 src/program/OutfitStudio.cpp:1457
+#: src/program/OutfitStudio.cpp:1467 src/program/OutfitStudio.cpp:1476
+#: src/program/OutfitStudio.cpp:1487 src/program/OutfitStudio.cpp:1498
+#: src/program/OutfitStudio.cpp:1510 src/program/OutfitStudio.cpp:1549
+#: src/program/OutfitStudio.cpp:1557 src/program/OutfitStudio.cpp:1564
+#: src/program/OutfitStudio.cpp:1601 src/program/OutfitStudio.cpp:1609
+#: src/program/OutfitStudio.cpp:1616 src/program/OutfitStudio.cpp:1626
+#: src/program/OutfitStudio.cpp:1635 src/program/OutfitStudio.cpp:1643
+#: src/program/OutfitStudio.cpp:1650 src/program/OutfitStudio.cpp:1661
+#: src/program/OutfitStudio.cpp:1670 src/program/OutfitStudio.cpp:1677
+#: src/program/OutfitStudio.cpp:1925 src/program/OutfitStudio.cpp:1948
+#: src/program/OutfitStudio.cpp:1962 src/program/OutfitStudio.cpp:2045
+#: src/program/OutfitStudio.cpp:2054 src/program/OutfitStudio.cpp:2062
+#: src/program/OutfitStudio.cpp:2076 src/program/OutfitStudio.cpp:2085
+#: src/program/OutfitStudio.cpp:2091 src/program/OutfitStudio.cpp:2119
+#: src/program/OutfitStudio.cpp:4081 src/program/OutfitStudio.cpp:4101
+#: src/program/OutfitStudio.cpp:4165 src/program/OutfitStudio.cpp:4198
+#: src/program/OutfitStudio.cpp:4212 src/program/OutfitStudio.cpp:4280
+#: src/program/OutfitStudio.cpp:4313 src/program/OutfitStudio.cpp:4327
+#: src/program/OutfitStudio.cpp:4352 src/program/OutfitStudio.cpp:4403
+#: src/program/OutfitStudio.cpp:4408 src/program/OutfitStudio.cpp:4422
+#: src/program/OutfitStudio.cpp:4429 src/program/OutfitStudio.cpp:4434
+#: src/program/OutfitStudio.cpp:4445 src/program/OutfitStudio.cpp:6809
+#: src/program/OutfitStudio.cpp:6865 src/program/OutfitStudio.cpp:6871
+#: src/program/OutfitStudio.cpp:6875 src/program/OutfitStudio.cpp:6886
+#: src/program/OutfitStudio.cpp:6896 src/program/OutfitStudio.cpp:6900
+#: src/program/OutfitStudio.cpp:6917 src/program/OutfitStudio.cpp:6921
+#: src/program/OutfitStudio.cpp:6932 src/program/OutfitStudio.cpp:6942
+#: src/program/OutfitStudio.cpp:6960 src/program/OutfitStudio.cpp:7033
+#: src/program/OutfitStudio.cpp:7051 src/program/OutfitStudio.cpp:7126
+#: src/program/OutfitStudio.cpp:7130 src/program/OutfitStudio.cpp:7141
+#: src/program/OutfitStudio.cpp:7151 src/program/OutfitStudio.cpp:7155
+#: src/program/OutfitStudio.cpp:7178 src/program/OutfitStudio.cpp:7187
+#: src/program/OutfitStudio.cpp:7191 src/program/OutfitStudio.cpp:7220
+#: src/program/OutfitStudio.cpp:7224 src/program/OutfitStudio.cpp:7247
+#: src/program/OutfitStudio.cpp:7256 src/program/OutfitStudio.cpp:7267
+#: src/program/OutfitStudio.cpp:7274 src/program/OutfitStudio.cpp:7285
+#: src/program/OutfitStudio.cpp:7292 src/program/OutfitStudio.cpp:7316
+#: src/program/OutfitStudio.cpp:7366 src/program/OutfitStudio.cpp:7426
+#: src/program/OutfitStudio.cpp:7430 src/program/OutfitStudio.cpp:7443
+#: src/program/OutfitStudio.cpp:7447 src/program/OutfitStudio.cpp:7653
+#: src/program/OutfitStudio.cpp:7828 src/program/OutfitStudio.cpp:7845
+#: src/program/OutfitStudio.cpp:7863 src/program/OutfitStudio.cpp:7887
+#: src/program/OutfitStudio.cpp:7919 src/program/OutfitStudio.cpp:8071
+#: src/program/OutfitStudio.cpp:8260 src/program/OutfitStudio.cpp:8412
+#: src/program/OutfitStudio.cpp:8466 src/program/OutfitStudio.cpp:8682
+#: src/program/OutfitStudio.cpp:8822 src/program/OutfitStudio.cpp:8830
+#: src/program/OutfitStudio.cpp:9125 src/program/OutfitStudio.cpp:9130
+#: src/program/OutfitStudio.cpp:9201 src/program/OutfitStudio.cpp:9206
+#: src/program/OutfitStudio.cpp:9294 src/program/OutfitStudio.cpp:9300
+#: src/program/OutfitStudio.cpp:9305 src/program/OutfitStudio.cpp:9312
+#: src/program/OutfitStudio.cpp:9341 src/program/OutfitStudio.cpp:9371
+#: src/program/OutfitStudio.cpp:9423 src/program/OutfitStudio.cpp:9566
+#: src/program/OutfitStudio.cpp:10923 src/program/OutfitStudio.cpp:10979
+#: src/program/OutfitStudio.cpp:11015 src/program/OutfitStudio.cpp:11020
+#: src/program/OutfitStudio.cpp:11042 src/program/OutfitStudio.cpp:12208
+msgid "Error"
+msgstr ""
+
+#: src/program/BodySlideApp.cpp:1246 src/program/OutfitStudio.cpp:629
 msgid "Failed to find game install path registry value or GameDataPath in the config."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1253 src/program/OutfitStudio.cpp:636
 msgid "Failed to find game install path registry key or GameDataPath in the config."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1479 src/program/OutfitStudio.cpp:862
+#, c-format
 msgid "System language '%d' is wrong."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1488 src/program/OutfitStudio.cpp:871
+#, c-format
 msgid "The system language '%d' is not supported by your system. Try installing support for this language."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1566
 msgid "Failed to create group file."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1580
 msgid "That group already exists in the specified file, do you wish to overwrite the group?"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1580
 msgid "Group already exists"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1711
 msgid "WARNING: Game data path not configured. Would you like to show BodySlide where it is?"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1711 src/program/BodySlideApp.cpp:1998
+#: src/program/BodySlideApp.cpp:2002
 msgid "Game not found"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1718
 msgid "Please choose a directory to set as your Data path"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1736
 msgid ""
 "WARNING: This will delete the output files from the output folder, potentially causing crashes.\n"
 "\n"
 "Do you want to continue?"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1736
 msgid "Clean Build"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1743
 msgid "Removed the following files:\n"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1755 src/program/BodySlideApp.cpp:1768
 msgid " (no action)\n"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1759 src/program/BodySlideApp.cpp:1771
+#: src/program/BodySlideApp.cpp:1974
 msgid "Process Successful"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1861
+#, c-format
 msgid ""
 "Failed to write TRI file to the following location\n"
 "\n"
 "%s"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1861 src/program/BodySlideApp.cpp:1917
+#: src/program/BodySlideApp.cpp:1952
 msgid "Unable to process"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1917 src/program/BodySlideApp.cpp:1952
+#, c-format
 msgid ""
 "Failed to build set to the following location\n"
 "\n"
 "%s"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1919 src/program/BodySlideApp.cpp:1954
 msgid "Choose alternate file name"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1966
 msgid "Successfully processed the following files:\n"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1985
 msgid ""
 "WARNING: This will delete the output files from the output folders, potentially causing crashes.\n"
 "\n"
 "Do you want to continue?"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1985
 msgid "Clean Batch Build"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:1998
 msgid "WARNING: Game data path not configured. Files can't be removed that way."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2002
 msgid "WARNING: Game data path not configured. Continue saving files to the working directory?"
 msgstr ""
 
-msgid ""
-"The following sets will override the same files.\n"
-"Please decide which one to use and select it in the list below."
-msgstr ""
-
-msgid "Choose output set"
-msgstr ""
-
+#: src/program/BodySlideApp.cpp:2111
 msgid "Processing Outfits"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2111 src/program/OutfitStudio.h:1110
 msgid "Starting..."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2128
+#, c-format
 msgid "Processing '%s' (%d of %d)..."
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2136
 msgid "No recorded outfit name source"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2147
 msgid "Unable to get slider set from file: "
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2152
 msgid "Unable to open slider set file: "
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2187
 msgid "Unable to load input nif: "
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2334
 msgid "Unable to create destination directory: "
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2398 src/program/BodySlideApp.cpp:2406
+#: src/program/BodySlideApp.cpp:2417
 msgid "Unable to save nif file: "
 msgstr ""
 
-msgid "All group build sets processed successfully!"
-msgstr ""
-
-msgid "Complete"
-msgstr ""
-
+#: src/program/BodySlideApp.cpp:2487 src/program/BodySlideApp.cpp:3424
 msgid "The following sets failed"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2487 src/program/BodySlideApp.cpp:3424
 msgid "Failed"
 msgstr ""
 
-msgid "Failed to load BodyslideFrame.xrc file!"
+#: src/program/BodySlideApp.cpp:2559
+msgid "Failed to load BodySlide.xrc file!"
 msgstr ""
 
-msgid "Error"
-msgstr ""
-
+#: src/program/BodySlideApp.cpp:2566
 msgid "Failed to load BodySlide frame!"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2586
 msgid "Group Filter"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2587
 msgid "Filter by group"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2593
 msgid "Outfit Filter"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:2594
 msgid "Filter by outfit"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3158
 msgid "Choose groups to filter outfit list"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3158
 msgid "Choose Groups"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3175
 msgid "Choose or create group file"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3184
 msgid "What would you like the new group to be called?"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3184
 msgid "New Group Name"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3221
+msgid "Do you really wish to delete the selected project?"
+msgstr ""
+
+#: src/program/BodySlideApp.cpp:3221
+msgid "Delete Project"
+msgstr ""
+
+#: src/program/BodySlideApp.cpp:3230
+msgid "Do you really wish to delete the selected preset?"
+msgstr ""
+
+#: src/program/BodySlideApp.cpp:3230
+msgid "Delete Preset"
+msgstr ""
+
+#: src/program/BodySlideApp.cpp:3249 src/program/OutfitStudio.cpp:6865
+#, c-format
 msgid "Failed to save preset (%d)!"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3276
+#, c-format
 msgid "Failed to save preset as '%s' (%d)!"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3399
 msgid "Choose a folder to contain the saved files"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3414
 msgid "All sets processed successfully!"
 msgstr ""
 
+#: src/program/BodySlideApp.cpp:3414
+msgid "Complete"
+msgstr ""
+
+#: src/program/EditUV.cpp:329 src/program/OutfitStudio.cpp:10032
+msgid "Outfit Studio: OpenGL context is not OK."
+msgstr ""
+
+#: src/program/EditUV.cpp:329 src/program/OutfitStudio.cpp:10032
+#: src/program/PreviewWindow.cpp:66 src/render/GLSurface.cpp:1994
+#: src/render/GLSurface.cpp:2011
 msgid "OpenGL Error"
 msgstr ""
 
+#: src/program/GroupManager.cpp:138
+msgid "Please enter a new unique name for the group."
+msgstr ""
+
+#: src/program/GroupManager.cpp:138
+msgid "Rename Group"
+msgstr ""
+
+#: src/program/GroupManager.cpp:318
+msgid "Save changes to group file?"
+msgstr ""
+
+#: src/program/GroupManager.cpp:318
+msgid "Save Changes"
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:97
+msgid "Enter a name for the new layer."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:97
+msgid "Name new layer"
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:220
+msgid "Choose a normals generator preset file..."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:238
+msgid "Save normals generator preset to..."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:257
+msgid "Layer"
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:282
+msgid "Background File"
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:283
+msgid "File source for this layer."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:284
+msgid "Color"
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:285
+msgid "Solid background color (if file is not set)."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:286
+msgid "Resolution"
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:288
+msgid "Output texture dimensions. By default all images will be scaled to fit this size."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:306
+msgid "File containing normals data to combine. Note this file should fit the mesh UVs."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:308
+msgid "Is Tangent Space?"
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:309
+msgid "True if the normals data in the layer file is in tangent space, false if they are in model space (msn)."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:312
+msgid "A greyscale image used to mask updates to destination image."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:314
+msgid "X Offset"
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:315 src/program/NormalsGenDialog.cpp:318
+msgid "Offset to apply to image position."
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:317
+msgid "Y Offset"
+msgstr ""
+
+#: src/program/NormalsGenDialog.cpp:321
+msgid "If true, scale image to match background resolution."
+msgstr ""
+
+#: src/program/OutfitProject.cpp:51
 msgid "Checking destination..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:106
 msgid "Adding reference shapes..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:124 src/program/OutfitProject.cpp:2155
 msgid "Adding outfit shapes..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:181
 msgid "Calculating slider data..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:189
 msgid "Creating slider set file..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:196
 msgid "Failed to open or create slider set file: "
 msgstr ""
 
+#: src/program/OutfitProject.cpp:203
 msgid "Saving slider set file..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:206
 msgid "Failed to write to slider set file: "
 msgstr ""
 
+#: src/program/OutfitProject.cpp:210
 msgid "Saving NIF file..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:240
 msgid "Failed to write base .nif file: "
 msgstr ""
 
+#: src/program/OutfitProject.cpp:246 src/program/OutfitProject.cpp:1618
+#: src/program/OutfitProject.cpp:1648 src/program/OutfitProject.cpp:2131
+#: src/program/OutfitProject.cpp:2209 src/program/OutfitStudio.cpp:425
+#: src/program/OutfitStudio.cpp:437 src/program/OutfitStudio.cpp:449
+#: src/program/OutfitStudio.cpp:2243 src/program/OutfitStudio.cpp:3352
+#: src/program/OutfitStudio.cpp:3475 src/program/OutfitStudio.cpp:3547
+#: src/program/OutfitStudio.cpp:7698 src/program/OutfitStudio.cpp:7737
+#: src/program/OutfitStudio.cpp:9191 src/program/OutfitStudio.cpp:9284
+#: src/program/OutfitStudio.cpp:9333 src/program/OutfitStudio.cpp:12158
+#: src/program/OutfitStudio.cpp:12170 src/program/OutfitStudio.cpp:12182
+#: src/program/OutfitStudio.cpp:12232
 msgid "Finished"
 msgstr ""
 
-msgid "Could not load OBJ file '%s'!"
-msgstr ""
-
-msgid "OBJ Error"
-msgstr ""
-
-msgid "Could not copy data from OBJ file '%s'!"
-msgstr ""
-
-msgid "The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"
-msgstr ""
-
-msgid "Merge or New"
-msgstr ""
-
-msgid "Update Vertex Positions?"
-msgstr ""
-
-msgid "Vertex Position Update"
-msgstr ""
-
-msgid "Update Texture Coordinates?"
-msgstr ""
-
-msgid "UV Update"
-msgstr ""
-
-msgid "Please specify a name for the new shape"
-msgstr ""
-
-msgid "New Shape Name"
-msgstr ""
-
-msgid "Import Data Error"
-msgstr ""
-
+#: src/program/OutfitProject.cpp:1514 src/program/OutfitProject.cpp:1604
 msgid "Gathering bones..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:1542
 msgid "Initializing proximity data..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:1586 src/program/OutfitStudio.cpp:9139
 msgid "Copying bone weights..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:1624 src/program/OutfitStudio.cpp:9325
 msgid "Transferring bone weights..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:1872
 msgid "Template source entries are invalid."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:1872 src/program/OutfitProject.cpp:1901
+#: src/program/OutfitProject.cpp:1906 src/program/OutfitProject.cpp:1949
+#: src/program/OutfitProject.cpp:1972 src/program/OutfitProject.cpp:1979
+#: src/program/OutfitProject.cpp:1989 src/program/OutfitProject.cpp:2001
 msgid "Reference Error"
 msgstr ""
 
+#: src/program/OutfitProject.cpp:1897 src/program/OutfitProject.cpp:1968
+#: src/program/OutfitProject.cpp:3402
+#, c-format
 msgid ""
 "NIF version not supported!\n"
 "\n"
 "File: %s\n"
-"%s\n"
-"User Version: %i\n"
-"User Version 2: %i"
+"%s"
 msgstr ""
 
+#: src/program/OutfitProject.cpp:1906 src/program/OutfitProject.cpp:1979
+#, c-format
 msgid "Could not load reference NIF file '%s'!"
 msgstr ""
 
+#: src/program/OutfitProject.cpp:1949
+#, c-format
 msgid "Could not load slider set file '%s'!"
 msgstr ""
 
+#: src/program/OutfitProject.cpp:1989
+#, c-format
 msgid "Reference NIF file '%s' does not contain any shapes."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:2001
+#, c-format
 msgid "Shape '%s' not found in reference NIF file '%s'!"
 msgstr ""
 
-msgid "NIF Error"
-msgstr ""
-
-msgid "Could not load NIF file '%s'!"
-msgstr ""
-
+#: src/program/OutfitProject.cpp:2053
 msgid "Loading slider set..."
 msgstr ""
 
-msgid "Adding slider set..."
-msgstr ""
-
+#: src/program/OutfitProject.cpp:2060 src/program/OutfitProject.cpp:2145
 msgid "Retrieving sliders..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:2070
 msgid "Loading outfit shapes..."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:2113 src/program/OutfitProject.cpp:2206
 msgid "Updating slider data..."
 msgstr ""
 
-msgid "There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."
+#: src/program/OutfitProject.cpp:2137
+msgid "Adding slider set..."
 msgstr ""
 
-msgid "Choose cloth data"
-msgstr ""
-
-msgid "The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"
-msgstr ""
-
-msgid "Update Animation Weighting?"
-msgstr ""
-
-msgid "Animation Weight Update"
-msgstr ""
-
-msgid "Failed to load outfitStudio.xrc file!"
-msgstr ""
-
-msgid "Failed to load Outfit Studio frame!"
-msgstr ""
-
-msgid "Ready!"
-msgstr ""
-
-msgid "Creating sliders..."
-msgstr ""
-
-msgid "Clearing old sliders..."
-msgstr ""
-
-msgid "Loading slider: "
-msgstr ""
-
-msgid "Turn on edit mode for this slider."
-msgstr ""
-
-msgid "Weaken slider data by 1%."
-msgstr ""
-
-msgid "Strengthen slider data by 1%."
-msgstr ""
-
-msgid "Enter a name for the new slider:"
-msgstr ""
-
-msgid "Create New Slider"
-msgstr ""
-
-msgid "You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph."
-msgstr ""
-
-msgid "You can only use the undiff brush while editing a slider. Note, use the pencil button next to a slider to enable editing of that slider's morph."
-msgstr ""
-
-msgid "Creating project '%s'..."
-msgstr ""
-
-msgid "Loading reference..."
-msgstr ""
-
-msgid "Loading outfit..."
-msgstr ""
-
-msgid "Creating outfit..."
-msgstr ""
-
-msgid "Creating %d slider(s)..."
-msgstr ""
-
-msgid "Select a slider set to load"
-msgstr ""
-
-msgid "Select a slider set to add"
-msgstr ""
-
-msgid "Failed to open '%s' as a slider set file!"
-msgstr ""
-
-msgid "Slider Set Error"
-msgstr ""
-
-msgid "Please choose an outfit to load"
-msgstr ""
-
-msgid "Load a slider set"
-msgstr ""
-
-msgid "Loading project..."
-msgstr ""
-
-msgid "Loading outfit data..."
-msgstr ""
-
-msgid "Failed to create project '%s' from file '%s' (%d)!"
-msgstr ""
-
-msgid "Loading reference shape '%s'..."
-msgstr ""
-
-msgid "Loading textures..."
-msgstr ""
-
-msgid "You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."
-msgstr ""
-
-msgid "Loading reference set..."
-msgstr ""
-
-msgid "Creating reference..."
-msgstr ""
-
-msgid "There are no valid shapes loaded!"
-msgstr ""
-
-msgid "The following shapes have unweighted vertices, which can cause issues. The affected vertices have been put under a mask. Do you want to save anyway?"
-msgstr ""
-
-msgid "Unweighted Vertices"
-msgstr ""
-
+#: src/program/OutfitProject.cpp:2203
 msgid "The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."
 msgstr ""
 
+#: src/program/OutfitProject.cpp:2203
 msgid "Renamed Shapes"
 msgstr ""
 
-msgid "Saving project '%s'..."
+#: src/program/OutfitProject.cpp:3406 src/program/OutfitProject.cpp:3411
+msgid "NIF Error"
 msgstr ""
 
-msgid "Invalid or no slider set file specified! Please try again."
+#: src/program/OutfitProject.cpp:3411
+#, c-format
+msgid "Could not load NIF file '%s'!"
 msgstr ""
 
-msgid "No outfit name specified! Please try again."
+#: src/program/OutfitProject.cpp:3542
+msgid "There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."
 msgstr ""
 
-msgid "No data folder specified! Please try again."
+#: src/program/OutfitProject.cpp:3542
+msgid "Choose cloth data"
 msgstr ""
 
-msgid "An invalid or no base outfit .nif file name specified! Please try again."
+#: src/program/OutfitProject.cpp:3593
+msgid "No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.  Import anyway?"
 msgstr ""
 
-msgid "No game file path specified! Please try again."
+#: src/program/OutfitProject.cpp:3593 src/program/OutfitProject.cpp:3735
+msgid "Import without reference"
 msgstr ""
 
-msgid "No game file name specified! Please try again."
+#: src/program/OutfitProject.cpp:3600 src/program/OutfitProject.cpp:3742
+msgid "The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's global-to-skin transform to the imported shapes?"
 msgstr ""
 
-msgid "Import NIF file"
+#: src/program/OutfitProject.cpp:3600 src/program/OutfitProject.cpp:3742
+msgid "Copy skin coordinates"
 msgstr ""
 
-msgid "Importing NIF file..."
+#: src/program/OutfitProject.cpp:3617
+#, c-format
+msgid "Could not load OBJ file '%s'!"
 msgstr ""
 
+#: src/program/OutfitProject.cpp:3617 src/program/OutfitProject.cpp:3629
+#: src/program/OutfitProject.cpp:3674 src/program/OutfitProject.cpp:3814
+msgid "OBJ Error"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3629
+#, c-format
+msgid "Could not copy data from OBJ file '%s'!"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3646
+msgid "The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3646 src/program/OutfitProject.cpp:3776
+msgid "Merge or New"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3648 src/program/OutfitProject.cpp:3778
+msgid "Update Vertex Positions?"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3648 src/program/OutfitProject.cpp:3778
+msgid "Vertex Position Update"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3652 src/program/OutfitProject.cpp:3782
+msgid "Update Texture Coordinates?"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3652 src/program/OutfitProject.cpp:3782
+msgid "UV Update"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3659 src/program/OutfitProject.cpp:3795
+msgid "Please specify a name for the new shape"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3659 src/program/OutfitProject.cpp:3795
+msgid "New Shape Name"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3673 src/program/OutfitProject.cpp:3813
+#, c-format
+msgid ""
+"The vertex or triangle limit for '%s' was exceeded.\n"
+"Remaining data was dropped.\n"
+"\n"
+"Vertices (current/max): %zu/%zu\n"
+"Triangles (current/max): %zu/%zu"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3735
+msgid "No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.  Import anyway?"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3776
+msgid "The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3786
+msgid "Update Animation Weighting?"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3786
+msgid "Animation Weight Update"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3894
+msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3911
+msgid "Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again."
+msgstr ""
+
+#: src/program/OutfitProject.cpp:3911
+msgid "Version"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:417 src/program/OutfitStudio.cpp:418
+#: src/program/OutfitStudio.cpp:12150 src/program/OutfitStudio.cpp:12151
+msgid "Adding NIF file..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:422 src/program/OutfitStudio.cpp:434
+#: src/program/OutfitStudio.cpp:446 src/program/OutfitStudio.cpp:4013
+#: src/program/OutfitStudio.cpp:12155 src/program/OutfitStudio.cpp:12167
+#: src/program/OutfitStudio.cpp:12179
 msgid "Refreshing GUI..."
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:430 src/program/OutfitStudio.cpp:12163
+msgid "Adding OBJ file..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:441 src/program/OutfitStudio.cpp:442
+#: src/program/OutfitStudio.cpp:12174 src/program/OutfitStudio.cpp:12175
+msgid "Adding FBX file..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:920
+msgid "Failed to load OutfitStudio.xrc file!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:926
+msgid "Failed to load Outfit Studio frame!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:944 src/program/OutfitStudio.h:1134
+msgid "Ready!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1372 src/program/OutfitStudio.cpp:1377
+msgid "Packing projects to folder..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1398 src/program/OutfitStudio.cpp:1446
+#: src/program/OutfitStudio.cpp:1549
+#, c-format
+msgid "Failed to open input file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1409
+#, c-format
+msgid "Failed to copy input file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1457
+#, c-format
+msgid "Failed to copy data file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1467 src/program/OutfitStudio.cpp:1626
+#, c-format
+msgid "Failed to save merged project file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1476 src/program/OutfitStudio.cpp:1635
+#, c-format
+msgid "Failed to open project file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1487
+#, c-format
+msgid "Failed to copy merged project file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1498 src/program/OutfitStudio.cpp:1661
+#, c-format
+msgid "Failed to open group file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1510
+#, c-format
+msgid "Failed to copy group file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1520 src/program/OutfitStudio.cpp:1525
+msgid "Packing projects to archive..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1557 src/program/OutfitStudio.cpp:1609
+#: src/program/OutfitStudio.cpp:1643 src/program/OutfitStudio.cpp:1670
+msgid "Failed to put new entry into archive!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1564 src/program/OutfitStudio.cpp:1616
+#: src/program/OutfitStudio.cpp:1650 src/program/OutfitStudio.cpp:1677
+msgid "Failed to copy file contents to archive!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1601
+#, c-format
+msgid "Failed to open data file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1925 src/program/OutfitStudio.cpp:1962
+#: src/program/OutfitStudio.cpp:4403 src/program/OutfitStudio.cpp:4429
+#: src/program/OutfitStudio.cpp:6942 src/program/OutfitStudio.cpp:7033
+#: src/program/OutfitStudio.cpp:7256 src/program/OutfitStudio.cpp:7274
+#: src/program/OutfitStudio.cpp:7292
+msgid "There are no valid shapes loaded!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:1933 src/program/OutfitStudio.cpp:2099
+#, c-format
+msgid "Saving project '%s'..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2045
+msgid "Invalid or no slider set file specified! Please try again."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2054
+msgid "No outfit name specified! Please try again."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2062
+msgid "No data folder specified! Please try again."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2076
+msgid "An invalid or no base outfit .nif file name specified! Please try again."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2085
+msgid "No game file path specified! Please try again."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2091
+msgid "No game file name specified! Please try again."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2132
+#, c-format
+msgid "Failed to open '%s' as a slider set file!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2132 src/program/OutfitStudio.cpp:2196
+msgid "Slider Set Error"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2151
+msgid "Please choose an outfit to load"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2151
+msgid "Load a slider set"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2162
+msgid "Loading project..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2182
+msgid "Loading outfit data..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2196
+#, c-format
+msgid "Failed to create project '%s' from file '%s' (%d)!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2210
+#, c-format
+msgid "Loading reference shape '%s'..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2224
+msgid "Loading textures..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2229 src/program/OutfitStudio.cpp:3332
+#: src/program/OutfitStudio.cpp:3541
+msgid "Creating outfit..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2233 src/program/OutfitStudio.cpp:3342
+#: src/program/OutfitStudio.cpp:3468
+#, c-format
+msgid "Creating %zu slider(s)..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2257
+msgid "Creating sliders..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2260
+msgid "Clearing old sliders..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2274
+msgid "Loading slider: "
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2304
+msgid "Turn on edit mode for this slider."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2313
+msgid "Weaken slider data by 1%."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2319
+msgid "Strengthen slider data by 1%."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2376 src/program/OutfitStudio.cpp:7411
+msgid "Enter a name for the new slider:"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2376 src/program/OutfitStudio.cpp:7411
+msgid "Create New Slider"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2507
+#, c-format
+msgid "Total Bones: %zu"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:2522
+#, c-format
+msgid "Shape Selection Bones: %zu"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3005
+msgid "Edit Color"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3090
+msgid "You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3105
+msgid "You can only use the undiff brush while editing a slider. Note, use the pencil button next to a slider to enable editing of that slider's morph."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3113
+msgid "You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3185
+#, c-format
+msgid "You have unsaved changes to '%s'. Would you like to save them now?"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3185
+msgid "Unsaved Changes"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3250
+#, c-format
+msgid "Creating project '%s'..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3267 src/program/OutfitStudio.cpp:3408
+msgid "Loading reference..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3311 src/program/OutfitStudio.cpp:3499
+#: src/program/OutfitStudio.cpp:3508
+msgid "Loading outfit..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3358
+msgid "Select a slider set to load"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3370
+msgid "Select a slider set to add"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3383 src/program/OutfitStudio.cpp:8417
+#: src/program/OutfitStudio.cpp:8471 src/program/OutfitStudio.cpp:8560
+msgid "You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3414
+msgid "Loading reference set..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3464
+msgid "Creating reference..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3552
+msgid "Unload the project? All unsaved changes will be lost"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3552
+msgid "Unload Project"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:3553
+msgid "Unload"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4000
+msgid "Import NIF file"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4007 src/program/OutfitStudio.cpp:4008
+msgid "Importing NIF file..."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4019
 msgid "Finished."
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:4030
 msgid "Export outfit NIF"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:4045
+#, c-format
 msgid "Failed to save NIF file '%s'!"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:4045 src/program/OutfitStudio.cpp:4075
+#: src/program/OutfitStudio.cpp:4159 src/program/OutfitStudio.cpp:4274
+#: src/program/OutfitStudio.cpp:4491
 msgid "Export Error"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:4061
 msgid "Export project NIF"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:4075
+#, c-format
 msgid "Failed to save NIF file '%s' with reference!"
 msgstr ""
 
-msgid "Import physics data to project"
-msgstr ""
-
-msgid "Failed to import physics data file '%s'!"
-msgstr ""
-
-msgid "Import Error"
-msgstr ""
-
-msgid "There is no physics data loaded!"
-msgstr ""
-
-msgid "Info"
-msgstr ""
-
-msgid "Please choose the physics data source you want to export."
-msgstr ""
-
-msgid "Choose physics data"
-msgstr ""
-
-msgid "Export physics data"
-msgstr ""
-
-msgid "Failed to save physics data file '%s'!"
-msgstr ""
-
-msgid "This function requires at least one slider position to be non-zero."
-msgstr ""
-
-msgid "Create a conversion slider for the current slider settings with the following name: "
-msgstr ""
-
-msgid "Create New Conversion Slider"
-msgstr ""
-
-msgid "Field of View: %d"
-msgstr ""
-
-msgid "There are no sliders loaded!"
-msgstr ""
-
-msgid "No changes were made to the sliders, so no preset was saved!"
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:4081 src/program/OutfitStudio.cpp:4165
+#: src/program/OutfitStudio.cpp:4280 src/program/OutfitStudio.cpp:4408
+#: src/program/OutfitStudio.cpp:4434 src/program/OutfitStudio.cpp:6871
+#: src/program/OutfitStudio.cpp:6896 src/program/OutfitStudio.cpp:6917
+#: src/program/OutfitStudio.cpp:7126 src/program/OutfitStudio.cpp:7151
+#: src/program/OutfitStudio.cpp:7187 src/program/OutfitStudio.cpp:7220
+#: src/program/OutfitStudio.cpp:7316 src/program/OutfitStudio.cpp:7366
+#: src/program/OutfitStudio.cpp:7426 src/program/OutfitStudio.cpp:7443
+#: src/program/OutfitStudio.cpp:7828 src/program/OutfitStudio.cpp:7845
+#: src/program/OutfitStudio.cpp:7863 src/program/OutfitStudio.cpp:7887
+#: src/program/OutfitStudio.cpp:7919 src/program/OutfitStudio.cpp:8071
+#: src/program/OutfitStudio.cpp:8260 src/program/OutfitStudio.cpp:8412
+#: src/program/OutfitStudio.cpp:8466 src/program/OutfitStudio.cpp:8682
+#: src/program/OutfitStudio.cpp:9125 src/program/OutfitStudio.cpp:9201
+#: src/program/OutfitStudio.cpp:9294 src/program/OutfitStudio.cpp:9341
+#: src/program/OutfitStudio.cpp:9371 src/program/OutfitStudio.cpp:9423
+#: src/program/OutfitStudio.cpp:9566 src/program/OutfitStudio.cpp:12208
 msgid "There is no shape selected!"
 msgstr ""
 
-msgid "There is no reference shape!"
+#: src/program/OutfitStudio.cpp:4088
+msgid "Export selected shapes to NIF"
 msgstr ""
 
-msgid "There is no slider in edit mode to import data to!"
+#: src/program/OutfitStudio.cpp:4101
+msgid "Failed to export selected shapes to NIF file!"
 msgstr ""
 
-msgid "Import .bsd slider data"
+#: src/program/OutfitStudio.cpp:4106
+msgid "Import .obj file for new shape"
 msgstr ""
 
-msgid "Import .obj file for slider calculation"
+#: src/program/OutfitStudio.cpp:4144
+msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?  (This is not recommended.)"
 msgstr ""
 
-msgid "Vertex count of .obj file mesh does not match currently selected shape!"
+#: src/program/OutfitStudio.cpp:4144 src/program/OutfitStudio.cpp:4177
+#: src/program/OutfitStudio.cpp:4259 src/program/OutfitStudio.cpp:4292
+msgid "Transform to global"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:4150
+msgid "Export project as an .obj file"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4159 src/program/OutfitStudio.cpp:4198
+#: src/program/OutfitStudio.cpp:4212 src/program/OutfitStudio.cpp:7247
+msgid "Failed to export OBJ file!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4177
+msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4184
+msgid "Export selected shapes as an .obj file"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4202
+msgid "Export shape as an .obj file"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4218
+msgid "Import .fbx file for new shape"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4259
+msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?  (This is not recommended.)"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4265
+msgid "Export project as an .fbx file"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4274 src/program/OutfitStudio.cpp:4313
+#: src/program/OutfitStudio.cpp:4327
+msgid "Failed to export FBX file!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4292
+msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4299
+msgid "Export selected shapes as an .fbx file"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4317
+msgid "Export shape as an .fbx file"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4333 src/program/OutfitStudio.cpp:7037
 msgid "Import .tri morphs"
 msgstr ""
 
-msgid "This will delete all loaded sliders. Are you sure?"
-msgstr ""
-
-msgid "TRI Import"
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:4352 src/program/OutfitStudio.cpp:7051
 msgid "Failed to load TRI file!"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:4358 src/program/OutfitStudio.cpp:7869
+msgid "Please enter a new unique name for the shape."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4358 src/program/OutfitStudio.cpp:7869
+msgid "Rename Shape"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4412 src/program/OutfitStudio.cpp:4438
+#: src/program/OutfitStudio.cpp:7278
+msgid "Export .tri morphs"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4422 src/program/OutfitStudio.cpp:4445
+#: src/program/OutfitStudio.cpp:7285
+msgid "Failed to export TRI file!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4450
+msgid "Import physics data to project"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4457
+#, c-format
+msgid "Failed to import physics data file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4457
+msgid "Import Error"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4469
+msgid "There is no physics data loaded!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4469 src/program/OutfitStudio.cpp:6858
+msgid "Info"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4477
+msgid "Please choose the physics data source you want to export."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4477
+msgid "Choose physics data"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4485
+msgid "Export physics data"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4491
+#, c-format
+msgid "Failed to save physics data file '%s'!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4498
+msgid "This function requires at least one slider position to be non-zero."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4509
+msgid "Create a conversion slider for the current slider settings with the following name: "
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:4509
+msgid "Create New Conversion Slider"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:5246
+msgid "Please enter an SSF file path."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:5996
+#, c-format
+msgid "Field of View: %d"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6125
+msgid "Your changes were not applied yet. Do you want to apply or reset them?"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6125
+msgid "Pending Changes"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6809
+msgid "There are no sliders loaded!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6858
+msgid "No changes were made to the sliders, so no preset was saved!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6875 src/program/OutfitStudio.cpp:6900
+#: src/program/OutfitStudio.cpp:6921 src/program/OutfitStudio.cpp:7130
+msgid "There is no slider in edit mode to import data to!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6879
+msgid "Import .nif file for slider calculation"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6886
+msgid "No mesh found in the .nif file that matches currently selected shape!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6904
+msgid "Import .bsd slider data"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6925
+msgid "Import .obj file for slider calculation"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6932 src/program/OutfitStudio.cpp:7141
+msgid "Vertex count of .obj file mesh does not match currently selected shape!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6946
+msgid "Import .osd file"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6950 src/program/OutfitStudio.cpp:7041
+msgid "This will delete all loaded sliders. Are you sure?"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6950 src/program/OutfitStudio.cpp:7028
+msgid "OSD Import"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:6960
+msgid "Failed to import OSD file!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:7028 src/program/OutfitStudio.cpp:7121
+#, c-format
 msgid ""
 "Added morphs for the following shapes:\n"
 "\n"
 "%s"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7041 src/program/OutfitStudio.cpp:7121
+msgid "TRI Import"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:7134
 msgid "Import .fbx file for slider calculation"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7155 src/program/OutfitStudio.cpp:7191
+#: src/program/OutfitStudio.cpp:7224
 msgid "There is no slider in edit mode to export data from!"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7160
+msgid "Export .nif slider data to directory"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:7171
+msgid "Export .nif slider data"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:7178
+msgid "Failed to export NIF file!"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:7196
 msgid "Export .bsd slider data to directory"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7207
 msgid "Export .bsd slider data"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7229 src/program/OutfitStudio.cpp:7296
 msgid "Export .obj slider data to directory"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7240
 msgid "Export .obj slider data"
 msgstr ""
 
-msgid "Failed to export OBJ file!"
-msgstr ""
-
-msgid "Failed to export FBX file!"
-msgstr ""
-
-msgid "OSD Import"
-msgstr ""
-
-msgid "Import .osd file"
-msgstr ""
-
-msgid "Failed to import OSD file!"
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:7260
 msgid "Export .osd file"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7267
 msgid "Failed to export OSD file!"
 msgstr ""
 
-msgid "Export .tri morphs"
+#: src/program/OutfitStudio.cpp:7322
+msgid "Are you sure you wish to clear the unmasked slider data for the selected shapes?  This action cannot be undone."
 msgstr ""
 
-msgid "Failed to export TRI file!"
-msgstr ""
-
-msgid "Are you sure you wish to clear the unmasked slider data "
-msgstr ""
-
-msgid "for the selected shapes? This cannot be undone."
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:7323 src/program/OutfitStudio.cpp:7327
 msgid "Confirm data erase"
 msgstr ""
 
-msgid "for the shape \""
+#: src/program/OutfitStudio.cpp:7326
+#, c-format
+msgid "Are you sure you wish to clear the unmasked slider data for the shape '%s'?  This action cannot be undone."
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7380
 msgid "Enter a name for the new zap:"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7380
 msgid "Create New Zap"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7430
 msgid "There is no slider in edit mode to negate!"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7447
 msgid "There is no slider in edit mode to create a mask from!"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7457
 msgid "Are you sure you wish to delete the selected slider(s)?"
 msgstr ""
 
-msgid "\"? This cannot be undone."
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:7458
 msgid "Confirm slider delete"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7653
 msgid "There is no slider in edit mode to show properties for!"
 msgstr ""
 
-msgid "Conforming all shapes..."
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:7666 src/program/OutfitStudio.cpp:7721
 msgid "Conforming: "
 msgstr ""
 
-msgid "All shapes conformed."
-msgstr ""
-
-msgid "Conforming..."
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:7683
 msgid "Initializing data..."
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:7693
 msgid "Shape(s) conformed."
 msgstr ""
 
-msgid "Import .obj file for new shape"
+#: src/program/OutfitStudio.cpp:7714
+msgid "Conforming all shapes..."
 msgstr ""
 
-msgid "Export selected shapes as an .obj file"
+#: src/program/OutfitStudio.cpp:7732
+msgid "All shapes conformed."
 msgstr ""
 
-msgid "Export shape as an .obj file"
+#: src/program/OutfitStudio.cpp:8441
+msgid "Are you sure you wish to delete parts of the selected shapes?"
 msgstr ""
 
-msgid "Export project as an .obj file"
-msgstr ""
-
-msgid "Export project as an .fbx file"
-msgstr ""
-
-msgid "Export shape as an .fbx file"
-msgstr ""
-
-msgid "Export selected shapes as an .fbx file"
-msgstr ""
-
-msgid "Import .fbx file for new shape"
-msgstr ""
-
-msgid "Please enter a new unique name for the shape."
-msgstr ""
-
-msgid "Rename Shape"
-msgstr ""
-
-msgid "Please enter a new unique name for the group."
-msgstr ""
-
-msgid "Rename Group"
-msgstr ""
-
-msgid "Rotating slider data is currently not possible using the Rotate Shape dialog."
-msgstr ""
-
-msgid "Rotate"
-msgstr ""
-
-msgid "You can only copy shapes into an outfit, and there is no outfit in the current project. Load one first!"
-msgstr ""
-
-msgid "Please enter a unique name for the duplicated shape."
-msgstr ""
-
-msgid "Duplicate Shape"
-msgstr ""
-
-msgid "Are you sure you wish to delete the unmasked vertices of the selected shapes?  This action cannot be undone."
-msgstr ""
-
-msgid "Are you sure you wish to delete the selected shapes?  This action cannot be undone."
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:8441 src/program/OutfitStudio.cpp:8686
 msgid "Confirm Delete"
 msgstr ""
 
-msgid "No bone name was entered!"
-msgstr ""
-
-msgid "Bone '%s' already exists in the project!"
-msgstr ""
-
-msgid "Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."
-msgstr ""
-
-msgid "Can't copy weights"
-msgstr ""
-
-msgid "Copying selected bone weights..."
-msgstr ""
-
-msgid "Sorry, you can't copy weights from the reference shape to itself."
-msgstr ""
-
-msgid "The vertex count of the reference and chosen shape is not the same!"
-msgstr ""
-
-msgid "Outfit Studio: OpenGL context is not OK."
-msgstr ""
-
-msgid "Adding NIF file..."
-msgstr ""
-
-msgid "Adding OBJ file..."
-msgstr ""
-
-msgid "Adding FBX file..."
-msgstr ""
-
-msgid "Loading slider file..."
-msgstr ""
-
-msgid "Preview failed: OpenGL context is not OK."
-msgstr ""
-
-msgid "Version"
-msgstr ""
-
-msgid "Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again."
-msgstr ""
-
-msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
-msgstr ""
-
-msgid "Language"
-msgstr ""
-
-msgid "Use the selected language for the program."
-msgstr ""
-
-msgid "Rendering"
-msgstr ""
-
-msgid "Background Color"
-msgstr ""
-
-msgid "Background color of the renderer."
-msgstr ""
-
-msgid "Wireframe Color"
-msgstr ""
-
-msgid "Wireframe color of the renderer."
-msgstr ""
-
-msgid "Unload Project"
-msgstr ""
-
-msgid "Unload Project...\tCtrl+W"
-msgstr ""
-
-msgid "Unloads the project and creates an empty new one."
-msgstr ""
-
-msgid "Do you really want to unload the project? All unsaved changes will be lost."
-msgstr ""
-
-msgid "Delete Vertices..."
-msgstr ""
-
-msgid "Deletes all unmasked vertices of the currently selected shapes."
-msgstr ""
-
-msgid "Separate Vertices..."
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:8482
 msgid "Please enter a unique name for the new separated shape."
 msgstr ""
 
-msgid "Separate the current shape into two by using the mask."
+#: src/program/OutfitStudio.cpp:8530
+msgid "No errors found!"
 msgstr ""
 
-msgid "Show the Normal Map Generator dialog."
+#: src/program/OutfitStudio.cpp:8536
+msgid "Errors:"
 msgstr ""
 
-msgid "Normal Map Generator"
+#: src/program/OutfitStudio.cpp:8538
+msgid "Target must be different from source."
 msgstr ""
 
-msgid "Layers"
+#: src/program/OutfitStudio.cpp:8540
+msgid "Partitions do not match. Make sure the amount of partitions and their slots match up."
 msgstr ""
 
-msgid "Load or save preset layer settings."
+#: src/program/OutfitStudio.cpp:8542
+msgid "Segments do not match. Make sure the amount of segments, sub segments and their info as well as the segmentation file match."
 msgstr ""
 
-msgid "Choose a normals generator preset file..."
+#: src/program/OutfitStudio.cpp:8544
+msgid "Resulting shape would have too many vertices."
 msgstr ""
 
-msgid "Save normals generator preset to..."
+#: src/program/OutfitStudio.cpp:8546
+msgid "Resulting shape would have too many triangles."
 msgstr ""
 
-msgid "Background"
+#: src/program/OutfitStudio.cpp:8548
+msgid "Shaders do not match. Make sure both shapes either have or don't have a shader and their shader type matches."
 msgstr ""
 
-msgid "Background File"
+#: src/program/OutfitStudio.cpp:8550
+msgid "Base texture doesn't match. Make sure both shapes have the same base/diffuse texture path."
 msgstr ""
 
-msgid "File source for this layer."
+#: src/program/OutfitStudio.cpp:8552
+msgid "Alpha property mismatch. Make sure both shapes either have or don't have an alpha property and their flags + threshold match."
 msgstr ""
 
-msgid "File containing normals data to combine. Note this file should fit the mesh UVs."
+#: src/program/OutfitStudio.cpp:8638
+msgid "You can only copy shapes into an outfit, and there is no outfit in the current project. Load one first!"
 msgstr ""
 
-msgid "Color"
+#: src/program/OutfitStudio.cpp:8643
+msgid "Please enter a unique name for the duplicated shape."
 msgstr ""
 
-msgid "Solid background color (if file is not set)."
+#: src/program/OutfitStudio.cpp:8643
+msgid "Duplicate Shape"
 msgstr ""
 
-msgid "Resolution"
+#: src/program/OutfitStudio.cpp:8686
+msgid "Are you sure you wish to delete the selected shapes?  This action cannot be undone."
 msgstr ""
 
-msgid "Output texture dimensions. By default all images will be scaled to fit this size."
+#: src/program/OutfitStudio.cpp:8822
+msgid "No bone name was entered!"
 msgstr ""
 
-msgid "Is Tangent Space?"
+#: src/program/OutfitStudio.cpp:8830
+#, c-format
+msgid "Bone '%s' already exists in the project!"
 msgstr ""
 
-msgid "True if the normals data in the layer file is in tangent space, false if they are in model space (msn)."
+#: src/program/OutfitStudio.cpp:8957
+msgid "The following shapes have unweighted vertices, which can cause issues. The affected vertices have been put under a mask. Do you want to save anyway?"
 msgstr ""
 
-msgid "A greyscale image used to mask updates to destination image."
+#: src/program/OutfitStudio.cpp:8957
+msgid "Unweighted Vertices"
 msgstr ""
 
-msgid "X Offset"
+#: src/program/OutfitStudio.cpp:9130 src/program/OutfitStudio.cpp:9206
+#: src/program/OutfitStudio.cpp:9300
+msgid "There is no reference shape!"
 msgstr ""
 
-msgid "Y Offset"
+#: src/program/OutfitStudio.cpp:9180 src/program/OutfitStudio.cpp:9273
+msgid "Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."
 msgstr ""
 
-msgid "Offset to apply to image position."
+#: src/program/OutfitStudio.cpp:9180 src/program/OutfitStudio.cpp:9273
+msgid "Can't copy weights"
 msgstr ""
 
-msgid "If true, scale image to match background resolution."
+#: src/program/OutfitStudio.cpp:9244
+msgid "Copying selected bone weights..."
 msgstr ""
 
-msgid "Add Layer"
+#: src/program/OutfitStudio.cpp:9305
+msgid "Sorry, you can't copy weights from the reference shape to itself."
 msgstr ""
 
-msgid "Add a new layer after the current one in the layer list."
+#: src/program/OutfitStudio.cpp:9312
+msgid "The vertex count of the reference and chosen shape is not the same!"
 msgstr ""
 
-msgid "Move Up"
-msgstr ""
-
-msgid "Move selected layer up one position."
-msgstr ""
-
-msgid "Delete Layer"
-msgstr ""
-
-msgid "Delete the selected layer."
-msgstr ""
-
-msgid "Backup destination file"
-msgstr ""
-
-msgid "Save a copy of an existing normal map if one already exists. File is saved in the original directory."
-msgstr ""
-
-msgid "Compress output"
-msgstr ""
-
-msgid "Compress output file using BC7 compression. This can make saving the file take a VERY long time!"
-msgstr ""
-
-msgid "Save to background layer file"
-msgstr ""
-
-msgid "Use the file name specified in the background layer to save the normal map."
-msgstr ""
-
-msgid "Location to save normal map to."
-msgstr ""
-
-msgid "Choose an output file..."
-msgstr ""
-
-msgid "Display current settings on mesh in preview window."
-msgstr ""
-
-msgid "Generate"
-msgstr ""
-
-msgid "Generate and save the normal map file."
-msgstr ""
-
-msgid "Colors"
-msgstr ""
-
-msgid "Brush Color"
-msgstr ""
-
-msgid "Color of the brush."
-msgstr ""
-
-msgid "Edit Color"
-msgstr ""
-
-msgid "Edit Alpha"
-msgstr ""
-
-msgid "Color Paint"
-msgstr ""
-
-msgid ""
-"Apply vertex colors.\n"
-"Hold down the ALT key to remove colors."
-msgstr ""
-
-msgid "Alpha Paint"
-msgstr ""
-
-msgid ""
-"Apply vertex alpha.\n"
-"Hold down the ALT key to remove alpha."
-msgstr ""
-
-msgid "Vertex Colors"
-msgstr ""
-
-msgid "Vertex Alpha"
-msgstr ""
-
-msgid "Pack Projects..."
-msgstr ""
-
-msgid "Pack one or more projects into a folder or archive for sharing."
-msgstr ""
-
-msgid "Merged file name:"
-msgstr ""
-
-msgid "File name to use for the merged project file."
-msgstr ""
-
-msgid "Pack Folder..."
-msgstr ""
-
-msgid "Pack Archive..."
-msgstr ""
-
-msgid "Packing projects to folder..."
-msgstr ""
-
-msgid "Packing projects to archive..."
-msgstr ""
-
-msgid "Failed to open input file '%s'!"
-msgstr ""
-
-msgid "Failed to copy input file '%s'!"
-msgstr ""
-
-msgid "Failed to open data file '%s'!"
-msgstr ""
-
-msgid "Failed to copy data file '%s'!"
-msgstr ""
-
-msgid "Failed to save merged project file '%s'!"
-msgstr ""
-
-msgid "Failed to open project file '%s'!"
-msgstr ""
-
-msgid "Failed to copy merged project file '%s'!"
-msgstr ""
-
-msgid "Failed to put new entry into archive!"
-msgstr ""
-
-msgid "Failed to copy file contents to archive!"
-msgstr ""
-
-msgid "Group file (optional):"
-msgstr ""
-
-msgid "Group file to pack (optional)."
-msgstr ""
-
-msgid "Failed to open group file '%s'!"
-msgstr ""
-
-msgid "Failed to copy group file '%s'!"
-msgstr ""
-
-msgid "Edit..."
-msgstr ""
-
-msgid "Edit UV"
-msgstr ""
-
-msgid "Edit the texture coordinates."
-msgstr ""
-
-msgid "Box Selection"
-msgstr ""
-
-msgid "Vertex Selection"
-msgstr ""
-
-msgid "You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"
-msgstr ""
-
-msgid "Slot"
-msgstr ""
-
-msgid "X-Mirror Bone"
-msgstr ""
-
-msgid "Posing"
-msgstr ""
-
-msgid "Show Pose"
-msgstr ""
-
-msgid "Reset Bone"
-msgstr ""
-
-msgid "Reset All"
-msgstr ""
-
-msgid "Rotation X"
-msgstr ""
-
-msgid "Rotation Y"
-msgstr ""
-
-msgid "Rotation Z"
-msgstr ""
-
-msgid "Offset X"
-msgstr ""
-
-msgid "Offset Y"
-msgstr ""
-
-msgid "Offset Z"
-msgstr ""
-
-msgid "Edit Bone..."
-msgstr ""
-
-msgid "Edit a custom bone or view a standard bone."
-msgstr ""
-
-msgid "Parent"
-msgstr ""
-
-msgid "Origin"
-msgstr ""
-
-msgid "Rotation"
-msgstr ""
-
-msgid "Masks"
-msgstr ""
-
-msgid "New Mask"
-msgstr ""
-
-msgid "Please enter a new unique name for the mask."
-msgstr ""
-
-msgid "Normalize Weights"
-msgstr ""
-
-msgid "Remove Skinning"
-msgstr ""
-
-msgid "Removes skinning of all shapes and all unused nodes."
-msgstr ""
-
-msgid "Collapse Vertex"
-msgstr ""
-
-msgid "Deletes vertices with no more than three connections, without creating a hole."
-msgstr ""
-
-msgid "The vertex picked has more than three connections."
-msgstr ""
-
-msgid "Delete Unreferenced Nodes"
-msgstr ""
-
-msgid "Deletes all nodes from the project that aren't used in any other block."
-msgstr ""
-
+#: src/program/OutfitStudio.cpp:9411
+#, c-format
 msgid "%d unreferenced nodes were deleted."
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:9623
+msgid "Please enter a new unique name for the mask."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9623
+msgid "New Mask"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9791
+msgid "Reset all bone poses?"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9791
+msgid "Reset Pose"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9818
+msgid "Permanently apply the pose to the mesh?"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9818
+msgid "Apply Pose to Mesh"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9942
+msgid "Please enter a new unique name for the pose."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9942
+msgid "New Pose"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9988
+#, c-format
+msgid "Are you sure you wish to delete the pose '%s'?"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9989
+msgid "Confirm pose delete"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:10923
+msgid "The vertex picked has more than three connections."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:10979
+msgid "The edge picked is on the surface boundary.  Pick an interior edge."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:11015
 msgid "The shape has reached the vertex count limit."
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:11020
 msgid "The shape has reached the triangle count limit."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:11042
+msgid "The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:12219 src/program/OutfitStudio.cpp:12220
+msgid "Loading slider file..."
+msgstr ""
+
+#: src/program/PreviewWindow.cpp:39
+msgid "Show the Normal Map Generator dialog."
+msgstr ""
+
+#: src/program/PreviewWindow.cpp:66
+msgid "Preview failed: OpenGL context is not OK."
+msgstr ""
+
+#: src/program/ShapeProperties.cpp:100
+msgid "Material"
+msgstr ""
+
+#: src/program/ShapeProperties.cpp:260
+msgid "Choose material file"
+msgstr ""
+
+#: src/program/ShapeProperties.cpp:497
+msgid "Please choose a shape to copy from"
+msgstr ""
+
+#: src/program/ShapeProperties.cpp:497
+msgid "Choose shape"
+msgstr ""
+
+#: src/ui/wxBrushSettingsPopup.cpp:24
+msgid "Size"
+msgstr ""
+
+#: src/ui/wxBrushSettingsPopup.cpp:34
+msgid "Strength"
+msgstr ""
+
+#: src/ui/wxBrushSettingsPopup.cpp:44
+msgid "Focus"
+msgstr ""
+
+#: src/ui/wxBrushSettingsPopup.cpp:54
+msgid "Spacing"
 msgstr ""
