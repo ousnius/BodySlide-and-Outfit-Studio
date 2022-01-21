@@ -509,7 +509,7 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (choices.GetCount() > 0) {
-		std::string shapeName = wxGetSingleChoice(_("Please choose a shape to copy from"), _("Choose shape"), choices, 0, this).ToUTF8();
+		std::string shapeName{wxGetSingleChoice(_("Please choose a shape to copy from"), _("Choose shape"), choices, 0, this).ToUTF8()};
 		if (shapeName.empty())
 			return;
 

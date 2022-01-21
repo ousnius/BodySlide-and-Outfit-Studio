@@ -51,8 +51,11 @@ private:
 public:
 	wxBrushSettingsPopupTransient(OutfitStudioFrame* parent, bool stayOpen);
 
+#ifdef _WINDOWS
+	// IsMouseInWindow is only available on Windows
 	void Dismiss() override {
 		if (!stayOpen || !GetParent()->IsMouseInWindow())
 			Hide();
 	}
+#endif
 };
