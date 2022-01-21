@@ -31,8 +31,12 @@ ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfit
 	wxChoice* choice = XRCCTRL((*this), "npConvRefChoice", wxChoice);
 	choice->Append("None");
 
-	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npConvRefChoice", refTemplates);
-	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npNewRefChoice", refTemplates);
+	std::vector<RefTemplate> converters;
+	std::vector<RefTemplate> bodies;
+	std::copy_if(refTemplates.begin(), refTemplates.end(), std::back_inserter(converters), [](const RefTemplate& refTemplate) {return strstr(refTemplate.GetName().c_str(), "Convert");});
+	std::copy_if(refTemplates.begin(), refTemplates.end(), std::back_inserter(bodies), [](const RefTemplate& refTemplate) {return !strstr(refTemplate.GetName().c_str(), "Convert") && !strstr(refTemplate.GetName().c_str(), "Sliders");});
+	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npConvRefChoice", converters);
+	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npNewRefChoice", bodies);
 	ConfigDialogUtil::LoadDialogText(config, (*this), "npRemoveText");
 	ConfigDialogUtil::LoadDialogText(config, (*this), "npAppendText");
 	ConfigDialogUtil::LoadDialogText(config, (*this), "npDeleteShapesText");
