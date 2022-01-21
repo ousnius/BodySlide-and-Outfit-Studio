@@ -36,6 +36,10 @@ void SliderSet::DeleteSlider(const std::string& setName) {
 	}
 }
 
+void SliderSet::DeleteShapeAttribute(const std::string& shapeName) {
+	shapeAttributes.erase(shapeName);
+}
+
 size_t SliderSet::CreateSlider(const std::string& setName) {
 	sliders.emplace_back(setName);
 	return sliders.size() - 1;
@@ -269,7 +273,8 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 
 	for (auto &s : mergeSet.shapeAttributes) {
 		// Copy new shapes to the set
-		if (shapeAttributes.find(s.first) == shapeAttributes.end()) {
+		auto it = shapeAttributes.find(s.first);
+		if (it == shapeAttributes.end()) {
 			if (newDataLocal)
 				s.second.dataFolder.clear();
 
