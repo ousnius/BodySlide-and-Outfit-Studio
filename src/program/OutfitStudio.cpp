@@ -1270,21 +1270,21 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				menu->Bind(wxEVT_MENU, [&](wxCommandEvent& event) {
 					if (event.GetId() == XRCID("projectListNone")) {
 						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
-							std::string name = projectList->GetString(i).ToUTF8();
+							std::string name{projectList->GetString(i).ToUTF8()};
 							projectList->Check(i, false);
 							selectedProjects.erase(name);
 						}
 					}
 					else if (event.GetId() == XRCID("projectListAll")) {
 						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
-							std::string name = projectList->GetString(i).ToUTF8();
+							std::string name{projectList->GetString(i).ToUTF8()};
 							projectList->Check(i);
 							selectedProjects.insert(name);
 						}
 					}
 					else if (event.GetId() == XRCID("projectListInvert")) {
 						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
-							std::string name = projectList->GetString(i).ToUTF8();
+							std::string name{projectList->GetString(i).ToUTF8()};
 
 							bool check = !projectList->IsChecked(i);
 							projectList->Check(i, check);
@@ -1301,7 +1301,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 		});
 
 		projectList->Bind(wxEVT_CHECKLISTBOX, [&](wxCommandEvent& event) {
-			std::string name = event.GetString().ToUTF8();
+			std::string name{event.GetString().ToUTF8()};
 			int item = event.GetInt();
 			if (projectList->IsChecked(item))
 				selectedProjects.insert(name);
@@ -6723,6 +6723,7 @@ void OutfitStudioFrame::OnColorClampMaxValueChanged(wxCommandEvent& WXUNUSED(eve
 	int clampMaxValue = std::clamp(atoi(txtControl->GetValue().c_str()),0,255);
 	slider->SetValue(clampMaxValue);
 
+	if (!glView) return;
 	ClampBrush* clampBrush = dynamic_cast<ClampBrush*>(glView->GetActiveBrush());
 	if (clampBrush)
 		clampBrush->clampMaxValue = clampMaxValue / 255.0f;

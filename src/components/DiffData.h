@@ -9,6 +9,7 @@ See the included LICENSE file
 
 #include <map>
 #include <unordered_map>
+#include <string>
 
 struct UndoStateVertexSliderDiff;
 
