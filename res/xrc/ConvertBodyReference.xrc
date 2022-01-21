@@ -11,7 +11,7 @@
         <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
         <border>10</border>
         <object class="wxStaticText" name="lbLoadRef">
-          <label>This tool aids in the conversion process between different body references (ie. CBBE to BHUNP).</label>
+          <label>This tool aids in the conversion or replacement process of body references.</label>
         </object>
       </object>
       <object class="sizeritem">
@@ -31,7 +31,7 @@
             <option>0</option>
             <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
             <object class="wxStaticText" name="lbLoadRef">
-              <label>1) Select a conversion reference (ie.'Convert: CBBE SE to BHUNP'):</label>
+              <label>Select a conversion reference (or 'None' to skip converting):</label>
               <wrap>380</wrap>
             </object>
           </object>
@@ -73,7 +73,7 @@
             <option>0</option>
             <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
             <object class="wxStaticText" name="lbLoadRef">
-              <label>2) Select a body reference to convert to (ie.'BHUNP 3BBB Advanced'):</label>
+              <label>Select a body reference to convert to:</label>
               <wrap>380</wrap>
             </object>
           </object>
@@ -136,11 +136,10 @@
             <option>0</option>
             <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
             <object class="wxStaticText" name="lbLoadRef">
-              <label>3) Specify text to be removed from the project output names (comma delimited):</label>
+              <label>Specify text to be removed from the project output names (comma delimited):</label>
             </object>
           </object>
-
-          <object class="sizeritem">
+	        <object class="sizeritem">
             <option>0</option>
             <flag>wxEXPAND</flag>
             <border>5</border>
@@ -173,7 +172,7 @@
             <option>0</option>
             <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
             <object class="wxStaticText" name="lbLoadRef">
-              <label>4) Specify any text to be prepended to project names:</label>
+              <label>Specify any text to be prepended to project names:</label>
             </object>
           </object>
           <object class="sizeritem">
@@ -231,7 +230,7 @@
             <option>0</option>
             <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
             <object class="wxStaticText" name="lbLoadRef">
-              <label>5) Automatically remove the following shapes before conversion (comma delimited):</label>
+              <label>Automatically remove the following shapes before conversion (comma delimited):</label>
             </object>
           </object>
 
@@ -268,7 +267,7 @@
             <option>0</option>
             <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
             <object class="wxStaticText" name="lbLoadRef">
-              <label>6) Automatically add the following bones after conversion(comma delimited):</label>
+              <label>Automatically add the following bones after conversion(comma delimited):</label>
             </object>
           </object>
           <object class="sizeritem">
