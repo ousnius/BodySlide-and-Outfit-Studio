@@ -309,13 +309,22 @@
         <object class="wxStaticBoxSizer">
           <orient>wxVERTICAL</orient>
           <label>Options</label>
+	        <object class="sizeritem">
+		        <option>0</option>
+		        <flag>wxALL</flag>
+		        <border>5</border>
+		        <object class="wxCheckBox" name="chkConvertMergeSliders">
+			        <label>Merge Sliders</label>
+			        <checked>1</checked>
+		        </object>
+	        </object>
           <object class="sizeritem">
             <option>0</option>
             <flag>wxALL</flag>
             <border>5</border>
-            <object class="wxCheckBox" name="chkKeepZapSliders">
-              <label>Keep Zap Sliders</label>
-              <checked>0</checked>
+            <object class="wxCheckBox" name="chkConvertMergeZaps">
+              <label>Merge Zaps</label>
+              <checked>1</checked>
             </object>
           </object>
           <object class="sizeritem">

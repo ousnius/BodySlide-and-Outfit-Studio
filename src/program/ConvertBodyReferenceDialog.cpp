@@ -37,7 +37,8 @@ ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfit
 	ConfigDialogUtil::LoadDialogText(config, (*this), "npAppendText");
 	ConfigDialogUtil::LoadDialogText(config, (*this), "npDeleteShapesText");
 	ConfigDialogUtil::LoadDialogText(config, (*this), "npAddBonesText");
-	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkKeepZapSliders");
+	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkConvertMergeSliders");
+	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkConvertMergeZaps");
 	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkSkipConformPopup");
 	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkSkipCopyBonesPopup");
 	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkDeleteReferenceOnComplete");
@@ -54,7 +55,8 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const
 {
 	outfitStudio->StartProgress(_("Start Conversion.."));
 
-	bool keepZapSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkKeepZapSliders");
+	bool mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkConvertMergeSliders");
+	bool mergeZaps = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkConvertMergeZaps");
 	bool skipConformPopup = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkSkipConformPopup");
 	bool skipCopyBonesPopup = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkSkipCopyBonesPopup");
 	bool deleteReferenceOnCompleted = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkDeleteReferenceOnComplete");
@@ -102,7 +104,7 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const
 		outfitStudio->UpdateTitle();
 	}
 
-	outfitStudio->DeleteSliders(false, true); // we need to do this first so we can clear any broken sliders
+	outfitStudio->DeleteSliders(mergeSliders, mergeZaps); // we need to do this first so we can clear any broken sliders
 	project->ResetTransforms();
 
 	auto originalShapes = project->GetWorkNif()->GetShapes(); // get outfit shapes
@@ -132,7 +134,7 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const
 	{
 		outfitStudio->UpdateProgress(5, _("Loading conversion reference..."));
 		outfitStudio->StartSubProgress(5, 10);
-		if (AlertProgressError(LoadReferenceTemplate(conversionRefTemplate, keepZapSliders), "Load Error", "Failed to load conversion reference"))
+		if (AlertProgressError(LoadReferenceTemplate(conversionRefTemplate, mergeSliders, mergeZaps), "Load Error", "Failed to load conversion reference"))
 			return;
 		outfitStudio->EndProgress();
 
@@ -154,7 +156,7 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const
 		outfitStudio->UpdateProgress(40, _("Setting the base shape and removing the conversion reference"));
 		outfitStudio->SetBaseShape();
 		project->DeleteShape(project->GetBaseShape());
-		outfitStudio->DeleteSliders(false, keepZapSliders);
+		outfitStudio->DeleteSliders(mergeSliders, mergeZaps);
 		project->GetWorkAnim()->Clear();
 	}
 	else {
@@ -165,7 +167,7 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const
 
 	outfitStudio->UpdateProgress(50, _("Loading new reference..."));
 	outfitStudio->StartSubProgress(50, 55);
-	if (AlertProgressError(LoadReferenceTemplate(newRefTemplate, keepZapSliders), "Load Error", "Failed to load new reference"))
+	if (AlertProgressError(LoadReferenceTemplate(newRefTemplate, mergeSliders, mergeZaps), "Load Error", "Failed to load new reference"))
 		return;
 	outfitStudio->EndProgress();
 
@@ -221,7 +223,7 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const
 	outfitStudio->EndProgress();
 }
 
-int ConvertBodyReferenceDialog::LoadReferenceTemplate(const wxString& refTemplate, bool keepZapSliders) const
+int ConvertBodyReferenceDialog::LoadReferenceTemplate(const wxString& refTemplate, bool mergeSliders, bool mergeZaps) const
 {
 	nifly::NiShape* baseShape = project->GetBaseShape();
 	if (baseShape)
@@ -233,9 +235,9 @@ int ConvertBodyReferenceDialog::LoadReferenceTemplate(const wxString& refTemplat
 	auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 	if (tmpl != refTemplates.end()) {
 		if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-			error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), false, keepZapSliders);
+			error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps);
 		else
-			error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), false, keepZapSliders);
+			error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps);
 	}
 	else
 		error = 1;

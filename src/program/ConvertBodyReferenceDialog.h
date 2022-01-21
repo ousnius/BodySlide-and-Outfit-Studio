@@ -27,6 +27,6 @@ private:
 	ConfigurationManager& config;
 	const std::vector<RefTemplate>& refTemplates;
 
-	int LoadReferenceTemplate(const wxString& refTemplate, bool keepZapSliders) const;
+	int LoadReferenceTemplate(const wxString& refTemplate, bool mergeSliders, bool mergeZaps) const;
 	bool AlertProgressError(int error, const wxString& title, const wxString& message) const;
 };
