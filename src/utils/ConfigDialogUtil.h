@@ -31,7 +31,7 @@ namespace ConfigDialogUtil {
 
 	inline void LoadDialogCheckBox(ConfigurationManager& configManager, const wxDialog& dlg, const char* dlgProperty) {
 		wxCheckBox* tmplChoice = XRCCTRL(dlg, dlgProperty, wxCheckBox);
-		bool lastValue = configManager.GetBoolValue(dlgProperty);
+		bool lastValue = configManager.GetBoolValue(dlgProperty, tmplChoice->GetValue());
 		tmplChoice->SetValue(lastValue);
 	}
 
