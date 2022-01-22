@@ -2,7 +2,7 @@
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
 	<object class="wxDialog" name="dlgConvertBodyRef">
 		<style>wxDEFAULT_DIALOG_STYLE</style>
-		<title>Convert Body Reference</title>
+		<title>Convert / Replace Body Reference</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>

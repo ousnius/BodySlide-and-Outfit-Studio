@@ -1625,8 +1625,8 @@
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="fileConvBodyRef">
-				<label>Convert Body Reference...\tCtrl+Shift+R</label>
-				<help>Convert an outfits body reference to use a different reference</help>
+				<label>Convert / Replace Body Reference\tCtrl+Shift+R</label>
+				<help>Convert or replace an outfits body reference</help>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="fileSave">
