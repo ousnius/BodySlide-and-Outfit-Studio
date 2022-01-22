@@ -18,19 +18,23 @@ using namespace std;
 class RefTemplate;
 extern ConfigurationManager Config;
 
-wxBEGIN_EVENT_TABLE(ConvertBodyReferenceDialog, wxDialog)
+wxBEGIN_EVENT_TABLE(ConvertBodyReferenceDialog, wxWizard)
 
 wxEND_EVENT_TABLE()
 
 const char* CONVERT_SLIDER_PREFIX = "Convert";
 const char* SLIDER_SET_PREFIX = "Sliders";
+
+
 ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project, ConfigurationManager& config, const std::vector<RefTemplate>& refTemplates)
-	: outfitStudio(outfitStudio), project(project), config(config), refTemplates(refTemplates) {
+	: outfitStudio(outfitStudio), project(project), config(config), refTemplates(refTemplates), pg1(nullptr), pg2(nullptr){
 
 	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/ConvertBodyReference.xrc");
-	xrc->LoadDialog(this, outfitStudio, "dlgConvertBodyRef");
+	xrc->LoadObject(this, outfitStudio, "wizConvertBodyRef", "wxWizard");
 
+	pg1 = (wxWizardPage*)XRCCTRL(*this, "wizpgConvertBodyRef1", wxWizardPageSimple);
+	pg2 = (wxWizardPage*)XRCCTRL(*this, "wizpgConvertBodyRef2", wxWizardPageSimple);
 	wxChoice* choice = XRCCTRL((*this), "npConvRefChoice", wxChoice);
 	choice->Append("None");
 
@@ -68,6 +72,11 @@ ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfit
 	
 ConvertBodyReferenceDialog::~ConvertBodyReferenceDialog() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/ConvertBodyReferenceDialog.xrc");
+}
+
+bool ConvertBodyReferenceDialog::Load() {
+	FitToPage(pg1);
+	return RunWizard(pg1);
 }
 
 void ConvertBodyReferenceDialog::ConvertBodyReference() const

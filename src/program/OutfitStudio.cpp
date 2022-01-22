@@ -3520,8 +3520,7 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 	UpdateReferenceTemplates();
 
 	ConvertBodyReferenceDialog dlg(this, project, OutfitStudioConfig, refTemplates);
-	int result = dlg.ShowModal();
-	if (result == wxID_CANCEL)
+	if (!dlg.Load())
 		return;
 
 	dlg.ConvertBodyReference();
