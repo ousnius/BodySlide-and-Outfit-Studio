@@ -3514,7 +3514,7 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 
 	auto shapes = project->GetWorkNif()->GetShapes();
 	auto baseShape = project->GetBaseShape();
-	if (shapes.size() == 0 || baseShape && shapes.size() == 1) {
+	if (shapes.size() == 0 || (baseShape && shapes.size() == 1)) {
 		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
 		return;
 	}
