@@ -14,6 +14,7 @@ See the included LICENSE file
 
 #include "OutfitStudio.h"
 
+using namespace std;
 class RefTemplate;
 extern ConfigurationManager Config;
 
@@ -31,10 +32,21 @@ ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfit
 	wxChoice* choice = XRCCTRL((*this), "npConvRefChoice", wxChoice);
 	choice->Append("None");
 
-	std::vector<RefTemplate> converters;
-	std::vector<RefTemplate> bodies;
-	std::copy_if(refTemplates.begin(), refTemplates.end(), std::back_inserter(converters), [](const RefTemplate& refTemplate) {return strstr(refTemplate.GetName().c_str(), "Convert");});
-	std::copy_if(refTemplates.begin(), refTemplates.end(), std::back_inserter(bodies), [](const RefTemplate& refTemplate) {return !strstr(refTemplate.GetName().c_str(), "Convert") && !strstr(refTemplate.GetName().c_str(), "Sliders");});
+	std::vector<RefTemplate> converters = refTemplates;
+	std::vector<RefTemplate> bodies = refTemplates;
+
+	auto sortTemplates = [&](const RefTemplate& first, const RefTemplate& second, vector<string> prioritizeNames, bool ascendingPriority)
+	{
+		const bool firstHasPriorityName = std::any_of(prioritizeNames.begin(), prioritizeNames.end(), [first](const string& name) { return strstr(first.GetName().c_str(), name.c_str());});
+		const bool secondHasPriorityName = std::any_of(prioritizeNames.begin(), prioritizeNames.end(), [second](const string& name) { return strstr(second.GetName().c_str(), name.c_str());});
+		if (firstHasPriorityName && secondHasPriorityName || !firstHasPriorityName && !secondHasPriorityName)
+			return (first.GetName().compare(second.GetName()) > 0) ^ ascendingPriority;
+		return (!firstHasPriorityName && secondHasPriorityName) ^ ascendingPriority;
+	};
+
+	std::sort(converters.begin(), converters.end(), [&](const RefTemplate& first, const RefTemplate& second) {return sortTemplates(first, second, { "Convert" }, true);});
+	std::sort(bodies.begin(), bodies.end(), [&](const RefTemplate& first, const RefTemplate& second) {return sortTemplates(first, second, { "Convert", "Sliders"}, false);});
+
 	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npConvRefChoice", converters);
 	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npNewRefChoice", bodies);
 	ConfigDialogUtil::LoadDialogText(config, (*this), "npRemoveText");
