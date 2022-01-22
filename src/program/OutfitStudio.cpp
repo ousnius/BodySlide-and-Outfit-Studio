@@ -3511,7 +3511,14 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
 		return;
 	}
-	
+
+	auto shapes = project->GetWorkNif()->GetShapes();
+	auto baseShape = project->GetBaseShape();
+	if (baseShape && shapes.size() == 1) {
+		wxMessageBox(_("There is no outfit loaded!"), _("Error"));
+		return;
+	}
+
 	if (bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
