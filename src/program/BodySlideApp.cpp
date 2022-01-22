@@ -2281,6 +2281,23 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				}
 			}
 
+			wxTextCtrl* chooseText = XRCCTRL(*dlgBuildOverride, "chooseText", wxTextCtrl);
+			if (chooseText) {
+				chooseText->Bind(wxEVT_TEXT_ENTER, [&](wxCommandEvent& WXUNUSED(event)) {
+					wxString text = chooseText->GetValue();
+					if (!text.IsEmpty()) {
+						for (size_t i = 0; i < choicesList.size(); i++) {
+							for (auto& outfit : choicesList[i]) {
+								if (outfit.Contains(text)) {
+									choiceBoxes[i]->SetStringSelection(outfit);
+									break;
+								}
+							}
+						}
+					}
+				});
+			}
+
 			scrollOverrides->FitInside();
 
 			if (dlgBuildOverride->ShowModal() == wxID_CANCEL) {

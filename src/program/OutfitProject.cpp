@@ -3310,6 +3310,7 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 	owner->glView->DeleteMesh(shapeName);
 	shapeTextures.erase(shapeName);
 	shapeMaterialFiles.erase(shapeName);
+	activeSet.DeleteShapeAttribute(shapeName);
 
 	if (IsBaseShape(shape)) {
 		morpher.UnlinkRefDiffData();
