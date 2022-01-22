@@ -469,25 +469,80 @@
 																	<option>0</option>
 																	<flag>wxEXPAND|wxTOP</flag>
 																	<border>5</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
-																			<border>5</border>
-																			<object class="wxStaticText" name="lbBrushColor">
-																				<size>100,-1</size>
-																				<label>Brush Color</label>
-																				<wrap>-1</wrap>
+																	<object class="wxPanel" name ="colorPalette">
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+																				<border>5</border>
+																				<object class="wxStaticText" name="lbBrushColor">
+																					<fg>#ffffff</fg>
+																					<size>100,-1</size>
+																					<label>Brush Color</label>
+																					<wrap>-1</wrap>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>2</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+																				<border>5</border>
+																				<object class="wxColourPickerCtrl" name="cpBrushColor">
+																					<tooltip>Color of the brush.</tooltip>
+																					<value translate="0">rgb(0,0,0)</value>
+																				</object>
 																			</object>
 																		</object>
-																		<object class="sizeritem">
-																			<option>2</option>
-																			<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
-																			<border>5</border>
-																			<object class="wxColourPickerCtrl" name="cpBrushColor">
-																				<tooltip>Color of the brush.</tooltip>
-																				<value translate="0">rgb(0,0,0)</value>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxEXPAND|wxTOP</flag>
+																	<border>5</border>
+																	<object class="wxPanel" name="clampMaxValue">
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+																				<border>5</border>
+																				<object class="wxStaticText">
+																					<fg>#ffffff</fg>
+																					<wrap>-1</wrap>
+																					<size>100,-1</size>
+																					<label>Clamp Max Value</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>2</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxRIGHT</flag>
+																				<border>5</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+																						<border>0</border>
+																						<object class="wxSlider" name="cpClampMaxValueSlider">
+																							<style>wxSL_INVERSE</style>
+																							<size>-1,25</size>
+																							<value translate="0">0</value>
+																							<min>0</min>
+																							<max>255</max>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+																						<border>0</border>
+																						<object class="wxTextCtrl" name="cpClampMaxValueTxt">
+																							<style>wxTE_CENTRE</style>
+																							<size>50,-1</size>
+																							<value translate="0">0</value>
+																							<maxlength>25</maxlength>
+																						</object>
+																					</object>
+																				</object>
 																			</object>
 																		</object>
 																	</object>

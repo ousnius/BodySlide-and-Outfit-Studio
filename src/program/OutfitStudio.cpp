@@ -275,6 +275,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("lightsTabButton"), OutfitStudioFrame::OnTabButtonClick)
 
 	EVT_COLOURPICKER_CHANGED(XRCID("cpBrushColor"), OutfitStudioFrame::OnBrushColorChanged)
+	EVT_SLIDER(XRCID("cpClampMaxValueSlider"), OutfitStudioFrame::OnColorClampMaxValueSlider)
+	EVT_TEXT_ENTER(XRCID("cpClampMaxValueTxt"), OutfitStudioFrame::OnColorClampMaxValueChanged)
+	EVT_TEXT(XRCID("cpClampMaxValueTxt"), OutfitStudioFrame::OnColorClampMaxValueChanged)
 	EVT_BUTTON(XRCID("btnSwapBrush"), OutfitStudioFrame::OnSwapBrush)
 
 	EVT_SLIDER(XRCID("lightAmbientSlider"), OutfitStudioFrame::OnUpdateLights)
@@ -661,8 +664,6 @@ bool OutfitStudio::ShowSetup() {
 		wxMessageBox("Failed to load Setup.xrc file!", "Error", wxICON_ERROR);
 		return false;
 	}
-
-	frame->CloseBrushSettings();
 
 	wxDialog* setup = xrc->LoadDialog(nullptr, "dlgSetup");
 	if (setup) {
@@ -1272,21 +1273,21 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				menu->Bind(wxEVT_MENU, [&](wxCommandEvent& event) {
 					if (event.GetId() == XRCID("projectListNone")) {
 						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
-							std::string name = projectList->GetString(i).ToUTF8();
+							std::string name{projectList->GetString(i).ToUTF8()};
 							projectList->Check(i, false);
 							selectedProjects.erase(name);
 						}
 					}
 					else if (event.GetId() == XRCID("projectListAll")) {
 						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
-							std::string name = projectList->GetString(i).ToUTF8();
+							std::string name{projectList->GetString(i).ToUTF8()};
 							projectList->Check(i);
 							selectedProjects.insert(name);
 						}
 					}
 					else if (event.GetId() == XRCID("projectListInvert")) {
 						for (uint32_t i = 0; i < projectList->GetCount(); i++) {
-							std::string name = projectList->GetString(i).ToUTF8();
+							std::string name{projectList->GetString(i).ToUTF8()};
 
 							bool check = !projectList->IsChecked(i);
 							projectList->Check(i, check);
@@ -1303,7 +1304,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 		});
 
 		projectList->Bind(wxEVT_CHECKLISTBOX, [&](wxCommandEvent& event) {
-			std::string name = event.GetString().ToUTF8();
+			std::string name{event.GetString().ToUTF8()};
 			int item = event.GetInt();
 			if (projectList->IsChecked(item))
 				selectedProjects.insert(name);
@@ -1778,6 +1779,9 @@ void OutfitStudioFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxSt
 }
 
 void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
+
+	CloseBrushSettings();
+
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
 		settings->SetSize(wxSize(525, -1));
@@ -1803,6 +1807,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxDirPickerCtrl* dpProjectPath = XRCCTRL(*settings, "dpProjectPath", wxDirPickerCtrl);
 		wxString projectPath = wxString::FromUTF8(Config["ProjectPath"]);
 		dpProjectPath->SetPath(projectPath);
+
+		wxCheckBox* cbShowForceBodyNormals = XRCCTRL(*settings, "cbShowForceBodyNormals", wxCheckBox);
+		cbShowForceBodyNormals->SetValue(Config.GetBoolValue("ShowForceBodyNormals"));
 
 		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
 		cbBBOverrideWarn->SetValue(Config.GetBoolValue("WarnBatchBuildOverride"));
@@ -1877,6 +1884,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			selectedfiles = selectedfiles.BeforeLast(';');
 			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToUTF8().data());
 
+			Config.SetBoolValue("ShowForceBodyNormals", cbShowForceBodyNormals->IsChecked());
 			Config.SetBoolValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
@@ -1905,6 +1913,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			wxGetApp().InitArchives();
+
 		}
 
 		delete settings;
@@ -3008,6 +3017,9 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		menuBar->Check(XRCID("btnColorBrush"), true);
 		toolBarH->ToggleTool(XRCID("btnColorBrush"), true);
 
+		FindWindowById(XRCID("colorPalette"), colorSettings)->Show();
+		FindWindowById(XRCID("clampMaxValue"), colorSettings)->Hide();
+		colorSettings->Layout();
 		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
 		btnSwapBrush->SetLabel(_("Edit Alpha"));
 	}
@@ -3015,6 +3027,9 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		menuBar->Check(XRCID("btnAlphaBrush"), true);
 		toolBarH->ToggleTool(XRCID("btnAlphaBrush"), true);
 
+		FindWindowById(XRCID("colorPalette"), colorSettings)->Hide();
+		FindWindowById(XRCID("clampMaxValue"), colorSettings)->Show();
+		colorSettings->Layout();
 		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
 		btnSwapBrush->SetLabel(_("Edit Color"));
 	}
@@ -6719,6 +6734,29 @@ void OutfitStudioFrame::OnBrushColorChanged(wxColourPickerEvent& event) {
 	brushColor.y = color.Green() / 255.0f;
 	brushColor.z = color.Blue() / 255.0f;
 	glView->SetColorBrush(brushColor);
+}
+
+void OutfitStudioFrame::OnColorClampMaxValueSlider(wxCommandEvent& WXUNUSED(event)) {
+	wxSlider* slider = (wxSlider*)colorSettings->FindWindowByName("cpClampMaxValueSlider");
+	wxTextCtrl* txtControl = (wxTextCtrl*)colorSettings->FindWindowByName("cpClampMaxValueTxt");
+	int clampMaxValue = slider->GetValue();
+	txtControl->SetValue(wxString::Format("%d", clampMaxValue));
+
+	ClampBrush* clampBrush = dynamic_cast<ClampBrush*>(glView->GetActiveBrush());
+	if (clampBrush)
+		clampBrush->clampMaxValue = clampMaxValue / 255.0f;
+}
+
+void OutfitStudioFrame::OnColorClampMaxValueChanged(wxCommandEvent& WXUNUSED(event)) {
+	wxTextCtrl* txtControl = (wxTextCtrl*)colorSettings->FindWindowByName("cpClampMaxValueTxt");
+	wxSlider* slider = (wxSlider*)colorSettings->FindWindowByName("cpClampMaxValueSlider");
+	int clampMaxValue = std::clamp(atoi(txtControl->GetValue().c_str()),0,255);
+	slider->SetValue(clampMaxValue);
+
+	if (!glView) return;
+	ClampBrush* clampBrush = dynamic_cast<ClampBrush*>(glView->GetActiveBrush());
+	if (clampBrush)
+		clampBrush->clampMaxValue = clampMaxValue / 255.0f;
 }
 
 void OutfitStudioFrame::OnSwapBrush(wxCommandEvent& WXUNUSED(event)) {

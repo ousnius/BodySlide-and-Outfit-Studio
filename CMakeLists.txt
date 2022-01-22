@@ -19,19 +19,19 @@ set(commonsources
 	lib/LZ4F/lz4frame.c
 	lib/LZ4F/lz4hc.c
 	lib/LZ4F/xxhash.c
-	lib/NIF/Animation.cpp
-	lib/NIF/BasicTypes.cpp
-	lib/NIF/bhk.cpp
-	lib/NIF/ExtraData.cpp
-	lib/NIF/Factory.cpp
-	lib/NIF/Geometry.cpp
-	lib/NIF/NifFile.cpp
-	lib/NIF/Nodes.cpp
-	lib/NIF/Objects.cpp
-	lib/NIF/Particles.cpp
-	lib/NIF/Shaders.cpp
-	lib/NIF/Skin.cpp
-	lib/NIF/utils/Object3d.cpp
+	lib/nifly/src/Animation.cpp
+	lib/nifly/src/BasicTypes.cpp
+	lib/nifly/src/bhk.cpp
+	lib/nifly/src/ExtraData.cpp
+	lib/nifly/src/Factory.cpp
+	lib/nifly/src/Geometry.cpp
+	lib/nifly/src/NifFile.cpp
+	lib/nifly/src/Nodes.cpp
+	lib/nifly/src/Object3d.cpp
+	lib/nifly/src/Objects.cpp
+	lib/nifly/src/Particles.cpp
+	lib/nifly/src/Shaders.cpp
+	lib/nifly/src/Skin.cpp
 	lib/SOIL2/etc1_utils.c
 	lib/SOIL2/image_DXT.c
 	lib/SOIL2/image_helper.c
@@ -103,8 +103,16 @@ target_include_directories(OutfitStudio SYSTEM PRIVATE
 target_include_directories(BodySlide SYSTEM PRIVATE
 	/usr/include/wine/windows
 	)
-target_include_directories(OutfitStudio PUBLIC lib/gli)
-target_include_directories(BodySlide PUBLIC lib/gli)
+target_include_directories(OutfitStudio PUBLIC
+	lib/gli
+	lib/nifly/include
+	lib/nifly/external
+	)
+target_include_directories(BodySlide PUBLIC
+	lib/gli
+	lib/nifly/include
+	lib/nifly/external
+	)
 
 target_link_libraries(OutfitStudio
 	${wxWidgets_LIBRARIES}
