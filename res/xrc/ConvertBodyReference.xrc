@@ -1,381 +1,381 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
-  <object class="wxDialog" name="dlgConvertBodyRef">
-    <style>wxDEFAULT_DIALOG_STYLE</style>
-    <title>Convert Body Reference</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-        <border>10</border>
-        <object class="wxStaticText" name="lbLoadRef">
-          <label>This tool aids in the conversion or replacement process of body references.</label>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>10</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxVERTICAL</orient>
-          <label>Reference Bodies</label>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,5</size>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-            <object class="wxStaticText" name="lbLoadRef">
-              <label>Select a conversion reference (or 'None' to skip converting):</label>
-              <wrap>380</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxFlexGridSizer">
-              <rows>0</rows>
-              <cols>2</cols>
-              <vgap>0</vgap>
-              <hgap>0</hgap>
-              <growablecols>1</growablecols>
-              <growablerows></growablerows>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <minsize>170,25</minsize>
-                <object class="wxStaticText" name="npConvRef">
-                  <style>wxRB_GROUP</style>
-                  <label>Conversion Body Reference</label>
-                  <value translate="0">1</value>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <minsize>200,30</minsize>
-                <object class="wxChoice" name="npConvRefChoice">
-                  <selection>0</selection>
-                  <content />
-                </object>
-              </object>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-            <object class="wxStaticText" name="lbLoadRef">
-              <label>Select a body reference to convert to:</label>
-              <wrap>380</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxFlexGridSizer">
-              <rows>0</rows>
-              <cols>2</cols>
-              <vgap>0</vgap>
-              <hgap>0</hgap>
-              <growablecols>1</growablecols>
-              <growablerows></growablerows>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <minsize>170,25</minsize>
-                <object class="wxStaticText" name="npNewRef">
-                  <style>wxRB_GROUP</style>
-                  <label>New Body Reference</label>
-                  <value translate="0">1</value>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <object class="wxChoice" name="npNewRefChoice">
-                  <style>wxCB_SORT</style>
-                  <selection>0</selection>
-                  <content />
-                </object>
-              </object>
-              <object class="spacer">
-                <option>1</option>
-                <flag>wxEXPAND</flag>
-                <border>5</border>
-                <size>0,0</size>
-              </object>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>10</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxVERTICAL</orient>
-          <label>Project Rename</label>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,5</size>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-            <object class="wxStaticText" name="lbLoadRef">
-              <label>Specify text to be removed from the project output names (comma delimited):</label>
-            </object>
-          </object>
-	        <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxFlexGridSizer">
-              <rows>0</rows>
-              <cols>2</cols>
-              <vgap>0</vgap>
-              <hgap>0</hgap>
-              <growablecols>1</growablecols>
-              <growablerows></growablerows>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <minsize>170,20</minsize>
-                <object class="wxStaticText">
-                  <style>wxRB_GROUP</style>
-                  <label>Remove from project names</label>
-                  <value translate="0">1</value>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <border>5</border>
-                <flag>wxALL|wxEXPAND</flag>
-                <object class="wxTextCtrl" name="npRemoveText"></object>
-              </object>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-            <object class="wxStaticText" name="lbLoadRef">
-              <label>Specify any text to be prepended to project names:</label>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxFlexGridSizer">
-              <rows>0</rows>
-              <cols>2</cols>
-              <vgap>0</vgap>
-              <hgap>0</hgap>
-              <growablecols>1</growablecols>
-              <growablerows></growablerows>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <minsize>170,20</minsize>
-                <object class="wxStaticText">
-                  <style>wxRB_GROUP</style>
-                  <label>Prepend to project names</label>
-                  <value translate="0">1</value>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <border>5</border>
-                <flag>wxALL|wxEXPAND</flag>
-                <object class="wxTextCtrl" name="npAppendText"></object>
-              </object>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-            <object class="wxStaticText" name="lbLoadRef">
-              <label>Note. Game file output path is unaffected by this</label>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>10</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxVERTICAL</orient>
-          <label>Additional</label>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,5</size>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-            <object class="wxStaticText" name="lbLoadRef">
-              <label>Automatically remove the following shapes before conversion (comma delimited):</label>
-            </object>
-          </object>
+	<object class="wxDialog" name="dlgConvertBodyRef">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<title>Convert Body Reference</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticText" name="lbLoadRef">
+					<label>This tool aids in the conversion or replacement process of body references.</label>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Reference Bodies</label>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,5</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+						<object class="wxStaticText" name="lbLoadRef">
+							<label>Select a conversion reference (or 'None' to skip converting):</label>
+							<wrap>380</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<minsize>170,25</minsize>
+								<object class="wxStaticText" name="npConvRef">
+									<style>wxRB_GROUP</style>
+									<label>Conversion Body Reference</label>
+									<value translate="0">1</value>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<minsize>200,30</minsize>
+								<object class="wxChoice" name="npConvRefChoice">
+									<selection>0</selection>
+									<content />
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+						<object class="wxStaticText" name="lbLoadRef">
+							<label>Select a body reference to convert to:</label>
+							<wrap>380</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<minsize>170,25</minsize>
+								<object class="wxStaticText" name="npNewRef">
+									<style>wxRB_GROUP</style>
+									<label>New Body Reference</label>
+									<value translate="0">1</value>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxChoice" name="npNewRefChoice">
+									<style>wxCB_SORT</style>
+									<selection>0</selection>
+									<content />
+								</object>
+							</object>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>0,0</size>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Rename Project (optional)</label>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,5</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+						<object class="wxStaticText" name="lbLoadRef">
+							<label>Specify text to be removed from the project name (comma-delimited):</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<minsize>170,20</minsize>
+								<object class="wxStaticText">
+									<style>wxRB_GROUP</style>
+									<label>Remove from project name</label>
+									<value translate="0">1</value>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<border>5</border>
+								<flag>wxALL|wxEXPAND</flag>
+								<object class="wxTextCtrl" name="npRemoveText"></object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+						<object class="wxStaticText" name="lbLoadRef">
+							<label>Specify any text to be prepended to project name:</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<minsize>170,20</minsize>
+								<object class="wxStaticText">
+									<style>wxRB_GROUP</style>
+									<label>Prepend to project name</label>
+									<value translate="0">1</value>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<border>5</border>
+								<flag>wxALL|wxEXPAND</flag>
+								<object class="wxTextCtrl" name="npAppendText"></object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+						<object class="wxStaticText" name="lbLoadRef">
+							<label>NOTE: Game file output path is unaffected by this</label>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Extras (optional)</label>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,5</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+						<object class="wxStaticText" name="lbLoadRef">
+							<label>Remove the following shapes before conversion (comma-delimited):</label>
+						</object>
+					</object>
 
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxFlexGridSizer">
-              <rows>0</rows>
-              <cols>2</cols>
-              <vgap>0</vgap>
-              <hgap>0</hgap>
-              <growablecols>1</growablecols>
-              <growablerows></growablerows>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <minsize>170,20</minsize>
-                <object class="wxStaticText">
-                  <style>wxRB_GROUP</style>
-                  <label>Shapes to Delete</label>
-                  <value translate="0">1</value>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <border>5</border>
-                <flag>wxALL|wxEXPAND</flag>
-                <object class="wxTextCtrl" name="npDeleteShapesText"></object>
-              </object>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-            <object class="wxStaticText" name="lbLoadRef">
-              <label>Automatically add the following bones after conversion(comma delimited):</label>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxFlexGridSizer">
-              <rows>0</rows>
-              <cols>2</cols>
-              <vgap>0</vgap>
-              <hgap>0</hgap>
-              <growablecols>1</growablecols>
-              <growablerows></growablerows>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <minsize>170,20</minsize>
-                <object class="wxStaticText">
-                  <style>wxRB_GROUP</style>
-                  <label>Bone Names to Add</label>
-                  <value translate="0">1</value>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <border>5</border>
-                <flag>wxALL|wxEXPAND</flag>
-                <object class="wxTextCtrl" name="npAddBonesText"></object>
-              </object>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>10</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxVERTICAL</orient>
-          <label>Options</label>
-	        <object class="sizeritem">
-		        <option>0</option>
-		        <flag>wxALL</flag>
-		        <border>5</border>
-		        <object class="wxCheckBox" name="chkConvertMergeSliders">
-			        <label>Merge Sliders</label>
-			        <checked>1</checked>
-		        </object>
-	        </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxCheckBox" name="chkConvertMergeZaps">
-              <label>Merge Zaps</label>
-              <checked>1</checked>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxCheckBox" name="chkSkipConformPopup">
-              <label>Skip Conform Popup (Use Default Settings)</label>
-              <checked>0</checked>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxCheckBox" name="chkSkipCopyBonesPopup">
-              <label>Skip Copy Bones Popup (Use Default Settings)</label>
-              <checked>0</checked>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxCheckBox" name="chkDeleteReferenceOnComplete">
-              <label>Delete Reference On Completed</label>
-              <checked>0</checked>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>10</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<minsize>170,20</minsize>
+								<object class="wxStaticText">
+									<style>wxRB_GROUP</style>
+									<label>Shapes to delete</label>
+									<value translate="0">1</value>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<border>5</border>
+								<flag>wxALL|wxEXPAND</flag>
+								<object class="wxTextCtrl" name="npDeleteShapesText"></object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+						<object class="wxStaticText" name="lbLoadRef">
+							<label>Add the following bones after conversion (comma-delimited):</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<minsize>170,20</minsize>
+								<object class="wxStaticText">
+									<style>wxRB_GROUP</style>
+									<label>Bones to add</label>
+									<value translate="0">1</value>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<border>5</border>
+								<flag>wxALL|wxEXPAND</flag>
+								<object class="wxTextCtrl" name="npAddBonesText"></object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Options</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkConvertMergeSliders">
+							<label>Merge Sliders</label>
+							<checked>1</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkConvertMergeZaps">
+							<label>Merge Zaps</label>
+							<checked>1</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkSkipConformPopup">
+							<label>Skip conform popup (use default settings)</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkSkipCopyBonesPopup">
+							<label>Skip bone weights popup (use default settings)</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkDeleteReferenceOnComplete">
+							<label>Delete reference after completion</label>
+							<checked>0</checked>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>10</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
 </resource>
