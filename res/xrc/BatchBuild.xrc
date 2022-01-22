@@ -80,6 +80,15 @@
 				</object>
 			</object>
 			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxTextCtrl" name="chooseText">
+					<style>wxTE_PROCESS_ENTER</style>
+					<hint>Type and hit enter to choose output...</hint>
+				</object>
+			</object>
+			<object class="sizeritem">
 				<option>1</option>
 				<flag>wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</flag>
 				<border>5</border>
