@@ -22,6 +22,8 @@ wxBEGIN_EVENT_TABLE(ConvertBodyReferenceDialog, wxDialog)
 
 wxEND_EVENT_TABLE()
 
+const char* CONVERT_SLIDER_PREFIX = "Convert";
+const char* SLIDER_SET_PREFIX = "Sliders";
 ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project, ConfigurationManager& config, const std::vector<RefTemplate>& refTemplates)
 	: outfitStudio(outfitStudio), project(project), config(config), refTemplates(refTemplates) {
 
@@ -39,13 +41,14 @@ ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfit
 	{
 		const bool firstHasPriorityName = std::any_of(prioritizeNames.begin(), prioritizeNames.end(), [first](const string& name) { return strstr(first.GetName().c_str(), name.c_str());});
 		const bool secondHasPriorityName = std::any_of(prioritizeNames.begin(), prioritizeNames.end(), [second](const string& name) { return strstr(second.GetName().c_str(), name.c_str());});
-		if (firstHasPriorityName && secondHasPriorityName || !firstHasPriorityName && !secondHasPriorityName)
-			return (first.GetName().compare(second.GetName()) > 0) ^ ascendingPriority;
-		return (!firstHasPriorityName && secondHasPriorityName) ^ ascendingPriority;
+		if (firstHasPriorityName == secondHasPriorityName)
+			return first.GetName().compare(second.GetName()) <= 0;
+		return static_cast<bool>((!firstHasPriorityName && secondHasPriorityName) ^ ascendingPriority);
 	};
 
-	std::sort(converters.begin(), converters.end(), [&](const RefTemplate& first, const RefTemplate& second) {return sortTemplates(first, second, { "Convert" }, true);});
-	std::sort(bodies.begin(), bodies.end(), [&](const RefTemplate& first, const RefTemplate& second) {return sortTemplates(first, second, { "Convert", "Sliders"}, false);});
+
+	std::sort(converters.begin(), converters.end(), [&](const RefTemplate& first, const RefTemplate& second) {return sortTemplates(first, second, { CONVERT_SLIDER_PREFIX }, true);});
+	std::sort(bodies.begin(), bodies.end(), [&](const RefTemplate& first, const RefTemplate& second) {return sortTemplates(first, second, { CONVERT_SLIDER_PREFIX, SLIDER_SET_PREFIX }, false);});
 
 	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npConvRefChoice", converters);
 	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npNewRefChoice", bodies);
