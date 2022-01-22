@@ -13,7 +13,7 @@
 					<flag>wxALL|wxEXPAND</flag>
 					<border>5</border>
 					<object class="wxStaticText" name="lbLoadRef">
-						<label>This wizard aids in the conversion / replacement process of body references.</label>
+						<label>This wizard aids in the conversion to another body/reference..</label>
 					</object>
 				</object>
 				<object class="sizeritem">
@@ -185,7 +185,7 @@
 					<flag>wxALL|wxEXPAND</flag>
 					<border>5</border>
 					<object class="wxStaticText" name="lbLoadRef">
-						<label>This wizard aids in the conversion / replacement process of body references.</label>
+						<label>This wizard aids in the conversion to another body/reference..</label>
 					</object>
 				</object>
 				<object class="sizeritem">
