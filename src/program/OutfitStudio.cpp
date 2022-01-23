@@ -7097,7 +7097,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 
 	std::unordered_map<std::string, std::vector<std::tuple<std::string, nifly::NiShape*>>> newNameToDiffNameAndShape;
 	auto diffs = osd.GetDataDiffs();
-	auto& shapes = project->GetWorkNif()->GetShapes();
+	auto shapes = project->GetWorkNif()->GetShapes();
 	for (auto& diff : diffs) {
 		std::string bestShapeName;
 		nifly::NiShape* bestShape = nullptr;
