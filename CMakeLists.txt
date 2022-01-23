@@ -82,6 +82,7 @@ set(OSsources
 	src/program/OutfitStudio.cpp
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp
+	src/program/SliderDataImportDialog.cpp
 	)
 set(BSsources
 	${commonsources}
