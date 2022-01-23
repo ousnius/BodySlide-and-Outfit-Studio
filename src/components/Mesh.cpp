@@ -8,8 +8,7 @@ See the included LICENSE file
 
 using namespace nifly;
 
-mesh::mesh() {
-}
+mesh::mesh() {}
 
 mesh::~mesh() {
 	if (genBuffers) {
@@ -396,7 +395,6 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 				outPoints[n++] = ep2;
 				visPoint[ep2] = true;
 			}
-
 		}
 	}
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
@@ -424,9 +422,9 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 
 void mesh::CalcWeldVerts() {
 	SortingMatcher matcher(verts.get(), static_cast<uint16_t>(nVerts));
-	for (const auto &matchset : matcher.matches) {
+	for (const auto& matchset : matcher.matches) {
 		for (size_t j = 0; j < matchset.size(); ++j) {
-			std::vector<int> &wv = weldVerts[matchset[j]];
+			std::vector<int>& wv = weldVerts[matchset[j]];
 			for (size_t k = 0; k < matchset.size(); ++k) {
 				if (j != k)
 					wv.push_back(matchset[k]);
@@ -506,7 +504,7 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 
 		std::vector<std::pair<int, Vector3>> seamNorms;
 
-		for (auto &wvp : weldVerts) {
+		for (auto& wvp : weldVerts) {
 			auto& key = wvp.first;
 			if (!noVertices && vertices.count(key) != 0)
 				continue;
@@ -514,7 +512,7 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 			if (lockedNormalIndices.count(key) != 0)
 				continue;
 
-			const Vector3 &n = norms[key];
+			const Vector3& n = norms[key];
 			Vector3 sn = n;
 			auto& value = wvp.second;
 			for (int wvi : value)
@@ -525,7 +523,7 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 			seamNorms.emplace_back(key, sn);
 		}
 
-		for (auto &snp : seamNorms)
+		for (auto& snp : seamNorms)
 			norms[snp.first] = snp.second;
 	}
 
@@ -728,7 +726,7 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 		pointvisit[tris[startTri].p1] = true;
 		auto wv = weldVerts.find(tris[startTri].p1);
 		if (wv != weldVerts.end()) {
-			for (auto &w : wv->second) {
+			for (auto& w : wv->second) {
 				if (pointvisit[w])
 					continue;
 				outPoints[nOutPoints++] = w;
@@ -742,7 +740,7 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 		pointvisit[tris[startTri].p2] = true;
 		auto wv = weldVerts.find(tris[startTri].p2);
 		if (wv != weldVerts.end()) {
-			for (auto &w : wv->second) {
+			for (auto& w : wv->second) {
 				if (pointvisit[w])
 					continue;
 				outPoints[nOutPoints++] = w;
@@ -756,7 +754,7 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 		pointvisit[tris[startTri].p3] = true;
 		auto wv = weldVerts.find(tris[startTri].p3);
 		if (wv != weldVerts.end()) {
-			for (auto &w : wv->second) {
+			for (auto& w : wv->second) {
 				if (pointvisit[w])
 					continue;
 				outPoints[nOutPoints++] = w;
@@ -795,15 +793,15 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 			pointvisit[tris[startTri].p1] = true;
 			outPoints[nOutPoints++] = tris[startTri].p1;
 		}
-		for (auto &t : vtris[tris[startTri].p1]) {
+		for (auto& t : vtris[tris[startTri].p1]) {
 			if (trivisit[t])
 				continue;
 			ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
 		}
 		auto wv = weldVerts.find(tris[startTri].p1);
 		if (wv != weldVerts.end()) {
-			for (auto &w : wv->second) {
-				for (auto &t : vtris[w]) {
+			for (auto& w : wv->second) {
+				for (auto& t : vtris[w]) {
 					if (trivisit[t])
 						continue;
 					ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
@@ -816,16 +814,16 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 		if (!pointvisit[tris[startTri].p2]) {
 			pointvisit[tris[startTri].p2] = true;
 			outPoints[nOutPoints++] = tris[startTri].p2;
-		}		
-		for (auto &t : vtris[tris[startTri].p2]) {
+		}
+		for (auto& t : vtris[tris[startTri].p2]) {
 			if (trivisit[t])
 				continue;
 			ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
 		}
 		auto wv = weldVerts.find(tris[startTri].p2);
 		if (wv != weldVerts.end()) {
-			for (auto &w : wv->second) {
-				for (auto &t : vtris[w]) {
+			for (auto& w : wv->second) {
+				for (auto& t : vtris[w]) {
 					if (trivisit[t])
 						continue;
 					ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
@@ -838,15 +836,15 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 			pointvisit[tris[startTri].p3] = true;
 			outPoints[nOutPoints++] = tris[startTri].p3;
 		}
-		for (auto &t : vtris[tris[startTri].p3]) {
+		for (auto& t : vtris[tris[startTri].p3]) {
 			if (trivisit[t])
 				continue;
 			ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
 		}
 		auto wv = weldVerts.find(tris[startTri].p3);
 		if (wv != weldVerts.end()) {
-			for (auto &w : wv->second) {
-				for (auto &t : vtris[w]) {
+			for (auto& w : wv->second) {
+				for (auto& t : vtris[w]) {
 					if (trivisit[t])
 						continue;
 					ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);

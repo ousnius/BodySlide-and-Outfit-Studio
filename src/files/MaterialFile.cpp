@@ -241,8 +241,10 @@ int MaterialFile::Write(std::ostream& output) {
 	output.write((char*)&version, 4);
 
 	uint32_t tileFlags = 0;
-	if (tileU) tileFlags += 2;
-	if (tileV) tileFlags += 1;
+	if (tileU)
+		tileFlags += 2;
+	if (tileV)
+		tileFlags += 1;
 	output.write((char*)&tileFlags, 4);
 
 	output.write((char*)&uvOffset, 8);

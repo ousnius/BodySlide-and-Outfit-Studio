@@ -5,49 +5,30 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../utils/AABBTree.h"
-#include "../render/GLExtensions.h"
 #include "../files/MaterialFile.h"
+#include "../render/GLExtensions.h"
+#include "../utils/AABBTree.h"
 
-#pragma warning (push, 0)
+#pragma warning(push, 0)
 #include "../gli/glm/gtc/matrix_transform.hpp"
 #include "../gli/glm/gtx/euler_angles.hpp"
-#pragma warning (pop)
+#pragma warning(pop)
 
+#include <array>
+#include <memory>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
-#include <set>
-#include <memory>
-
-enum RenderMode {
-	Normal,
-	UnlitSolid,
-	UnlitWire,
-	UnlitWireDepth,
-	UnlitPoints,
-	UnlitPointsDepth,
-	LitWire
-};
 
 class GLMaterial;
 
 class mesh {
 private:
-	bool queueUpdate[10] = { false };
+	std::array<bool, 10> queueUpdate = {false};
 
 public:
-	enum UpdateType {
-		Position,
-		Normals,
-		Tangents,
-		Bitangents,
-		VertexColors,
-		VertexAlpha,
-		TextureCoordinates,
-		Mask,
-		Weight,
-		Indices
-	};
+	enum class RenderMode { Normal, UnlitSolid, UnlitWire, UnlitWireDepth, UnlitPoints, UnlitPointsDepth, LitWire };
+	enum UpdateType { Position, Normals, Tangents, Bitangents, VertexColors, VertexAlpha, TextureCoordinates, Mask, Weight, Indices };
 
 	struct ShaderProperties {
 		nifly::Vector2 uvOffset;
@@ -95,19 +76,19 @@ public:
 	std::vector<GLuint> vbo = std::vector<GLuint>(9, 0);
 	GLuint ibo = 0;
 
-	std::vector<std::pair<uint32_t, uint32_t>> subMeshes;	// Start index and size of each sub mesh
-	std::vector<nifly::Vector3> subMeshesColor;			// Color of each sub mesh
+	std::vector<std::pair<uint32_t, uint32_t>> subMeshes; // Start index and size of each sub mesh
+	std::vector<nifly::Vector3> subMeshesColor;			  // Color of each sub mesh
 
 	ShaderProperties prop;
 	GLMaterial* material = nullptr;
 
-	uint32_t overlayLayer = 0;						// Layer for order of rendering overlays
-	float smoothThresh = 60.0f * nifly::DEG2RAD;			// Smoothing threshold for generating smooth normals.
+	uint32_t overlayLayer = 0;					 // Layer for order of rendering overlays
+	float smoothThresh = 60.0f * nifly::DEG2RAD; // Smoothing threshold for generating smooth normals.
 
-	std::unique_ptr<std::vector<int>[]> vertTris;				// Map of triangles for which each vert is a member.
-	std::unique_ptr<std::vector<int>[]> vertEdges;				// Map of edges for which each vert is a member.
-	std::unordered_map<int, std::vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
-	bool bGotWeldVerts = false;	// Whether weldVerts has been calculated yet.
+	std::unique_ptr<std::vector<int>[]> vertTris;		 // Map of triangles for which each vert is a member.
+	std::unique_ptr<std::vector<int>[]> vertEdges;		 // Map of edges for which each vert is a member.
+	std::unordered_map<int, std::vector<int>> weldVerts; // Verts that are duplicated for UVs but are in the same position.
+	bool bGotWeldVerts = false;							 // Whether weldVerts has been calculated yet.
 
 	std::unordered_set<uint32_t> lockedNormalIndices;
 
@@ -147,10 +128,10 @@ public:
 	// Creates a new bvh tree for the mesh.
 	std::shared_ptr<AABBTree> CreateBVH();
 
-	void MakeEdges();			// Creates the list of edges from the list of triangles.
+	void MakeEdges(); // Creates the list of edges from the list of triangles.
 
-	void BuildTriAdjacency();	// Triangle adjacency optional to reduce overhead when it's not needed.
-	void BuildEdgeList();		// Edge list optional to reduce overhead when it's not needed.
+	void BuildTriAdjacency(); // Triangle adjacency optional to reduce overhead when it's not needed.
+	void BuildEdgeList();	  // Edge list optional to reduce overhead when it's not needed.
 
 	void CalcWeldVerts();
 
@@ -167,9 +148,7 @@ public:
 
 	void FacetNormals();
 	void SmoothNormals(const std::set<int>& vertices = std::set<int>());
-	static void SmoothNormalsStatic(mesh* m) {
-		m->SmoothNormals();
-	}
+	static void SmoothNormalsStatic(mesh* m) { m->SmoothNormals(); }
 	static void SmoothNormalsStaticArray(mesh* m, int* vertices, int nVertices) {
 		std::set<int> verts;
 		for (int i = 0; i < nVertices; i++)
@@ -179,7 +158,7 @@ public:
 	}
 	static void SmoothNormalsStaticMap(mesh* m, const std::unordered_map<int, nifly::Vector3>& vertices) {
 		std::set<int> verts;
-		for (auto &v : vertices)
+		for (auto& v : vertices)
 			verts.insert(v.first);
 
 		m->SmoothNormals(verts);
@@ -190,11 +169,13 @@ public:
 	// Retrieve connected points in a sphere's radius (squared, requires tri adjacency to be set up).
 	// Also requires pointvisit to be allocated by the caller.
 	// Recursive - large query will overflow the stack!
-	bool ConnectedPointsInSphere(nifly::Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
+	bool ConnectedPointsInSphere(
+		nifly::Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
 
 	// Similar to above, but uses an edge list to determine adjacency, with less risk of stack problems.
 	// Also requires trivisit and pointvisit to be allocated by the caller.
-	bool ConnectedPointsInSphere2(nifly::Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
+	bool ConnectedPointsInSphere2(
+		nifly::Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
 
 	// Convenience function to gather connected points, taking into account "welded" vertices. Does not clear the output set.
 	void GetAdjacentPoints(int querypoint, std::set<int>& outPoints);

@@ -6,16 +6,15 @@ See the included LICENSE file
 #include "../render/GLMaterial.h"
 #include "../utils/ConfigurationManager.h"
 
-#include "../FSEngine/FSManager.h"
 #include "../FSEngine/FSEngine.h"
+#include "../FSEngine/FSManager.h"
 
 #include <wx/filename.h>
 #include <wx/log.h>
 
 extern ConfigurationManager Config;
 
-ResourceLoader::ResourceLoader() {
-}
+ResourceLoader::ResourceLoader() {}
 
 ResourceLoader::~ResourceLoader() {
 	Cleanup();
@@ -63,7 +62,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 		wxString texFile = inFileName;
 		texFile.Replace(wxString(Config["GameDataPath"]), "");
 		texFile.Replace("\\", "/");
-		for (FSArchiveFile *archive : FSManager::archiveList()) {
+		for (FSArchiveFile* archive : FSManager::archiveList()) {
 			if (archive) {
 				if (archive->hasFile(texFile.ToStdString())) {
 					wxMemoryBuffer outData;
@@ -90,7 +89,11 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 			// Texture and image fallback (SOIL)
 			if (!textureID)
-				textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetDataLen(), SOIL_LOAD_AUTO, textureID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+				textureID = SOIL_load_OGL_texture_from_memory(texBuffer,
+															  data.GetDataLen(),
+															  SOIL_LOAD_AUTO,
+															  textureID,
+															  SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 		}
 		else {
 			wxLogWarning("Texture file '%s' not found.", inFileName);
@@ -185,31 +188,26 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureI
 	GLsizei const faceTotal = static_cast<GLsizei>(texture.layers() * texture.faces());
 
 	switch (texture.target()) {
-	case gli::TARGET_1D:
-		glTexStorage1D(
-			target, static_cast<GLint>(texture.levels()), format.Internal, textureExtent.x);
-		break;
+		case gli::TARGET_1D: glTexStorage1D(target, static_cast<GLint>(texture.levels()), format.Internal, textureExtent.x); break;
 
-	case gli::TARGET_1D_ARRAY:
-	case gli::TARGET_2D:
-	case gli::TARGET_CUBE:
-		glTexStorage2D(
-			target, static_cast<GLint>(texture.levels()), format.Internal,
-			textureExtent.x, texture.target() != gli::TARGET_1D_ARRAY ? textureExtent.y : faceTotal);
-		break;
+		case gli::TARGET_1D_ARRAY:
+		case gli::TARGET_2D:
+		case gli::TARGET_CUBE:
+			glTexStorage2D(target, static_cast<GLint>(texture.levels()), format.Internal, textureExtent.x, texture.target() != gli::TARGET_1D_ARRAY ? textureExtent.y : faceTotal);
+			break;
 
-	case gli::TARGET_2D_ARRAY:
-	case gli::TARGET_3D:
-	case gli::TARGET_CUBE_ARRAY:
-		glTexStorage3D(
-			target, static_cast<GLint>(texture.levels()), format.Internal,
-			textureExtent.x, textureExtent.y,
-			texture.target() == gli::TARGET_3D ? textureExtent.z : faceTotal);
-		break;
+		case gli::TARGET_2D_ARRAY:
+		case gli::TARGET_3D:
+		case gli::TARGET_CUBE_ARRAY:
+			glTexStorage3D(target,
+						   static_cast<GLint>(texture.levels()),
+						   format.Internal,
+						   textureExtent.x,
+						   textureExtent.y,
+						   texture.target() == gli::TARGET_3D ? textureExtent.z : faceTotal);
+			break;
 
-	default:
-		assert(0);
-		break;
+		default: assert(0); break;
 	}
 
 	for (size_t layer = 0; layer < texture.layers(); ++layer) {
@@ -217,69 +215,77 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureI
 			for (size_t level = 0; level < texture.levels(); ++level) {
 				GLsizei const layerGL = static_cast<GLsizei>(layer);
 				glm::tvec3<GLsizei> textureLevelExtent(texture.extent(level));
-				target = gli::is_target_cube(texture.target())
-					? static_cast<GLenum>(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face)
-					: target;
+				target = gli::is_target_cube(texture.target()) ? static_cast<GLenum>(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face) : target;
 
 				switch (texture.target()) {
-				case gli::TARGET_1D:
-					if (gli::is_compressed(texture.format()))
-						glCompressedTexSubImage1D(
-						target, static_cast<GLint>(level), 0, textureLevelExtent.x,
-						format.Internal, static_cast<GLsizei>(texture.size(level)),
-						texture.data(layer, face, level));
-					else
-						glTexSubImage1D(
-						target, static_cast<GLint>(level), 0, textureLevelExtent.x,
-						format.External, format.Type,
-						texture.data(layer, face, level));
-					break;
+					case gli::TARGET_1D:
+						if (gli::is_compressed(texture.format()))
+							glCompressedTexSubImage1D(target,
+													  static_cast<GLint>(level),
+													  0,
+													  textureLevelExtent.x,
+													  format.Internal,
+													  static_cast<GLsizei>(texture.size(level)),
+													  texture.data(layer, face, level));
+						else
+							glTexSubImage1D(target, static_cast<GLint>(level), 0, textureLevelExtent.x, format.External, format.Type, texture.data(layer, face, level));
+						break;
 
-				case gli::TARGET_1D_ARRAY:
-				case gli::TARGET_2D:
-				case gli::TARGET_CUBE:
-					if (gli::is_compressed(texture.format()))
-						glCompressedTexSubImage2D(
-						target, static_cast<GLint>(level),
-						0, 0,
-						textureLevelExtent.x,
-						texture.target() == gli::TARGET_1D_ARRAY ? layerGL : textureLevelExtent.y,
-						format.Internal, static_cast<GLsizei>(texture.size(level)),
-						texture.data(layer, face, level));
-					else
-						glTexSubImage2D(
-						target, static_cast<GLint>(level),
-						0, 0,
-						textureLevelExtent.x,
-						texture.target() == gli::TARGET_1D_ARRAY ? layerGL : textureLevelExtent.y,
-						format.External, format.Type,
-						texture.data(layer, face, level));
-					break;
+					case gli::TARGET_1D_ARRAY:
+					case gli::TARGET_2D:
+					case gli::TARGET_CUBE:
+						if (gli::is_compressed(texture.format()))
+							glCompressedTexSubImage2D(target,
+													  static_cast<GLint>(level),
+													  0,
+													  0,
+													  textureLevelExtent.x,
+													  texture.target() == gli::TARGET_1D_ARRAY ? layerGL : textureLevelExtent.y,
+													  format.Internal,
+													  static_cast<GLsizei>(texture.size(level)),
+													  texture.data(layer, face, level));
+						else
+							glTexSubImage2D(target,
+											static_cast<GLint>(level),
+											0,
+											0,
+											textureLevelExtent.x,
+											texture.target() == gli::TARGET_1D_ARRAY ? layerGL : textureLevelExtent.y,
+											format.External,
+											format.Type,
+											texture.data(layer, face, level));
+						break;
 
-				case gli::TARGET_2D_ARRAY:
-				case gli::TARGET_3D:
-				case gli::TARGET_CUBE_ARRAY:
-					if (gli::is_compressed(texture.format()))
-						glCompressedTexSubImage3D(
-						target, static_cast<GLint>(level),
-						0, 0, 0,
-						textureLevelExtent.x, textureLevelExtent.y,
-						texture.target() == gli::TARGET_3D ? textureLevelExtent.z : layerGL,
-						format.Internal, static_cast<GLsizei>(texture.size(level)),
-						texture.data(layer, face, level));
-					else
-						glTexSubImage3D(
-						target, static_cast<GLint>(level),
-						0, 0, 0,
-						textureLevelExtent.x, textureLevelExtent.y,
-						texture.target() == gli::TARGET_3D ? textureLevelExtent.z : layerGL,
-						format.External, format.Type,
-						texture.data(layer, face, level));
-					break;
+					case gli::TARGET_2D_ARRAY:
+					case gli::TARGET_3D:
+					case gli::TARGET_CUBE_ARRAY:
+						if (gli::is_compressed(texture.format()))
+							glCompressedTexSubImage3D(target,
+													  static_cast<GLint>(level),
+													  0,
+													  0,
+													  0,
+													  textureLevelExtent.x,
+													  textureLevelExtent.y,
+													  texture.target() == gli::TARGET_3D ? textureLevelExtent.z : layerGL,
+													  format.Internal,
+													  static_cast<GLsizei>(texture.size(level)),
+													  texture.data(layer, face, level));
+						else
+							glTexSubImage3D(target,
+											static_cast<GLint>(level),
+											0,
+											0,
+											0,
+											textureLevelExtent.x,
+											textureLevelExtent.y,
+											texture.target() == gli::TARGET_3D ? textureLevelExtent.z : layerGL,
+											format.External,
+											format.Type,
+											texture.data(layer, face, level));
+						break;
 
-				default:
-					assert(0);
-					break;
+					default: assert(0); break;
 				}
 			}
 		}
@@ -351,7 +357,7 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 }
 
 void ResourceLoader::Cleanup() {
-	for (auto &tp : textures)
+	for (auto& tp : textures)
 		glDeleteTextures(1, &tp.second);
 
 	textures.clear();

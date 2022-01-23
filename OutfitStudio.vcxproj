@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -120,7 +120,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -145,7 +145,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -176,7 +176,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -391,6 +391,7 @@
     <None Include="lib\gli\glm\gtx\wrap.inl" />
     <None Include="res\xrc\About.xrc" />
     <None Include="res\xrc\Actions.xrc" />
+    <None Include="res\xrc\ConvertBodyReference.xrc" />
     <None Include="res\xrc\OutfitStudio.xrc" />
     <None Include="res\xrc\Project.xrc" />
     <None Include="res\xrc\SavePreset.xrc" />
@@ -748,6 +749,7 @@
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
     <ClInclude Include="src\files\TriFile.h" />
+    <ClInclude Include="src\program\ConvertBodyReferenceDialog.h" />
     <ClInclude Include="src\program\EditUV.h" />
     <ClInclude Include="src\program\FBXImportDialog.h" />
     <ClInclude Include="src\program\FBXImportOptions.h" />
@@ -820,6 +822,7 @@
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
+    <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp" />
     <ClCompile Include="src\program\EditUV.cpp" />
     <ClCompile Include="src\program\FBXImportDialog.cpp" />
     <ClCompile Include="src\program\GroupManager.cpp" />

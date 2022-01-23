@@ -5,14 +5,15 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../TinyXML-2/tinyxml2.h"
-#include "SliderData.h"
+#include <tinyxml2.h>
+
 #include "../components/NormalGenLayers.h"
+#include "SliderData.h"
 
 using namespace tinyxml2;
 
 struct SliderSetShape {
-	std::string targetShape;								// Target names mapped to nif file shape names.
+	std::string targetShape; // Target names mapped to nif file shape names.
 	std::string dataFolder;
 	bool smoothSeamNormals = true;
 	bool lockNormals = false;
@@ -20,12 +21,12 @@ struct SliderSetShape {
 
 class SliderSet {
 	std::string name;
-	std::string baseDataPath;								// Base data path - from application configuration.
-	std::string datafolder;									// Default data folder specified for a slider set (overridden by target data folders, usually).
+	std::string baseDataPath; // Base data path - from application configuration.
+	std::string datafolder;	  // Default data folder specified for a slider set (overridden by target data folders, usually).
 	std::string inputfile;
 	std::string outputpath;
 	std::string outputfile;
-	bool genWeights = false;								// Generate both low and high weight meshes on output.
+	bool genWeights = false; // Generate both low and high weight meshes on output.
 
 	std::map<std::string, SliderSetShape> shapeAttributes;
 
@@ -39,37 +40,21 @@ public:
 	SliderSet(XMLElement* sliderSetSource);
 	~SliderSet();
 
-	void SetName(const std::string& newName) {
-		name = newName;
-	}
-	void SetDataFolder(const std::string& newDataFolder) {
-		datafolder = newDataFolder;
-	}
-	void SetInputFile(const std::string& newInputFile) {
-		inputfile = newInputFile;
-	}
-	void SetOutputPath(const std::string& newOutputpath) {
-		outputpath = newOutputpath;
-	}
-	void SetOutputFile(const std::string& newOutputFile) {
-		outputfile = newOutputFile;
-	}
-	void SetGenWeights(bool inGenWeights) {
-		genWeights = inGenWeights;
-	}
+	void SetName(const std::string& newName) { name = newName; }
+	void SetDataFolder(const std::string& newDataFolder) { datafolder = newDataFolder; }
+	void SetInputFile(const std::string& newInputFile) { inputfile = newInputFile; }
+	void SetOutputPath(const std::string& newOutputpath) { outputpath = newOutputpath; }
+	void SetOutputFile(const std::string& newOutputFile) { outputfile = newOutputFile; }
+	void SetGenWeights(bool inGenWeights) { genWeights = inGenWeights; }
 
 	void Clear() {
 		shapeAttributes.clear();
 		sliders.clear();
 	}
 
-	void SetBaseDataPath(const std::string& inPath) {
-		baseDataPath = inPath;
-	}
+	void SetBaseDataPath(const std::string& inPath) { baseDataPath = inPath; }
 
-	std::vector<NormalGenLayer>& GetNormalsGenLayers() {
-		return defNormalGen;
-	}
+	std::vector<NormalGenLayer>& GetNormalsGenLayers() { return defNormalGen; }
 
 	int LoadSliderSet(XMLElement* sliderSetSource);
 	void LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& forShape = "");
@@ -86,21 +71,13 @@ public:
 	void DeleteSlider(const std::string& setName);
 	void DeleteShapeAttribute(const std::string& shapeName);
 
-	std::string GetName() {
-		return name;
-	}
+	std::string GetName() { return name; }
 
 	std::string GetInputFileName();
-	std::string GetOutputPath() {
-		return outputpath;
-	}
-	std::string GetOutputFile() {
-		return outputfile;
-	}
+	std::string GetOutputPath() { return outputpath; }
+	std::string GetOutputFile() { return outputfile; }
 	std::string GetOutputFilePath();
-	std::string GetDefaultDataFolder() {
-		return datafolder;
-	}
+	std::string GetDefaultDataFolder() { return datafolder; }
 
 	bool GenWeights();
 
@@ -136,24 +113,24 @@ public:
 
 	// Gets the target names in the targetdatafolders map - these are the shapes with non-local or referenced data.
 	// Use TargetToShape to get the NIF file shape name.
-	void GetReferencedTargets(std::vector<std::string> &outTargets) {
-		for (auto &s : shapeAttributes)
+	void GetReferencedTargets(std::vector<std::string>& outTargets) {
+		for (auto& s : shapeAttributes)
 			if (s.second.dataFolder != datafolder)
 				outTargets.push_back(s.second.targetShape);
 	}
 
 	void SetReferencedData(const std::string& shapeName, const bool local = false) {
 		std::string targetName = ShapeToTarget(shapeName);
-		for (auto &s : sliders)
-			for (auto &df : s.dataFiles)
+		for (auto& s : sliders)
+			for (auto& df : s.dataFiles)
 				if (df.targetName == targetName)
 					df.bLocal = local;
 	}
 
 	void SetReferencedDataByName(const std::string& shapeName, const std::string& dataName, const bool local = false) {
 		std::string targetName = ShapeToTarget(shapeName);
-		for (auto &s : sliders)
-			for (auto &df : s.dataFiles)
+		for (auto& s : sliders)
+			for (auto& df : s.dataFiles)
 				if (df.targetName == targetName && df.dataName == dataName)
 					df.bLocal = local;
 	}
@@ -161,8 +138,8 @@ public:
 	std::vector<std::string> GetLocalData(const std::string& shapeName) {
 		std::vector<std::string> outDataNames;
 		std::string targetName = ShapeToTarget(shapeName);
-		for (auto &s : sliders)
-			for (auto &df : s.dataFiles)
+		for (auto& s : sliders)
+			for (auto& df : s.dataFiles)
 				if (df.targetName == targetName && df.bLocal)
 					outDataNames.push_back(df.dataName);
 
@@ -170,7 +147,7 @@ public:
 	}
 
 	std::string TargetToShape(const std::string& targetName) {
-		for (auto &s : shapeAttributes)
+		for (auto& s : shapeAttributes)
 			if (s.second.targetShape == targetName)
 				return s.first;
 
@@ -178,7 +155,7 @@ public:
 	}
 
 	void ClearTargets(const std::string& oldTarget) {
-		for (auto &s : shapeAttributes) {
+		for (auto& s : shapeAttributes) {
 			if (s.second.targetShape == oldTarget) {
 				s.second.targetShape.clear();
 				s.second.dataFolder.clear();
@@ -187,8 +164,8 @@ public:
 	}
 
 	void Retarget(const std::string& oldTarget, const std::string& newTarget) {
-		for (auto &s : sliders)
-			for (auto &df : s.dataFiles)
+		for (auto& s : sliders)
+			for (auto& df : s.dataFiles)
 				if (df.targetName == oldTarget)
 					df.targetName = newTarget;
 	}
@@ -219,17 +196,13 @@ public:
 	}
 
 	void AddTargetDataFolder(const std::string& targetName, const std::string& dataFolder) {
-		for (auto &s : shapeAttributes)
+		for (auto& s : shapeAttributes)
 			if (s.second.targetShape == targetName)
 				s.second.dataFolder = dataFolder;
 	}
 
-	std::map<std::string, SliderSetShape>::const_iterator ShapesBegin() {
-		return shapeAttributes.cbegin();
-	}
-	std::map<std::string, SliderSetShape>::const_iterator ShapesEnd() {
-		return shapeAttributes.cend();
-	}
+	std::map<std::string, SliderSetShape>::const_iterator ShapesBegin() { return shapeAttributes.cbegin(); }
+	std::map<std::string, SliderSetShape>::const_iterator ShapesEnd() { return shapeAttributes.cend(); }
 
 	std::string ShapeToDataName(const size_t index, const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);
@@ -259,20 +232,16 @@ public:
 		return datafolder;
 	}
 
-	size_t size() {
-		return sliders.size();
-	}
+	size_t size() { return sliders.size(); }
 
-	SliderData& operator [] (const size_t idx) {
-		return sliders[idx];
-	}
+	SliderData& operator[](const size_t idx) { return sliders[idx]; }
 
-	SliderData& operator [] (const std::string& sliderName) {
+	SliderData& operator[](const std::string& sliderName) {
 		for (size_t i = 0; i < sliders.size(); i++)
 			if (sliders[i].name == sliderName)
 				return sliders[i];
 
-		return Empty;			// Err... sorry... this is bad, but I really like returning references.
+		return Empty; // Err... sorry... this is bad, but I really like returning references.
 	}
 
 	bool SliderExists(const std::string& sliderName) {
@@ -302,12 +271,8 @@ public:
 	SliderSetFile() {}
 	SliderSetFile(const std::string& srcFileName);
 
-	bool fail() {
-		return error != 0;
-	}
-	int GetError() {
-		return error;
-	}
+	bool fail() { return error != 0; }
+	int GetError() { return error; }
 
 	// Loads the XML document and identifies included slider set names. On a failure, sets the internal error value.
 	void Open(const std::string& srcFileName);

@@ -5,19 +5,19 @@ See the included LICENSE file
 
 #pragma once
 
-#include "SliderSet.h"
 #include "SliderPresets.h"
+#include "SliderSet.h"
 
 class Slider {
 public:
 	std::string name;
-	bool invert;
-	bool zap;
-	bool clamp;
-	bool uv;
-	bool changed;
-	float defValue;
-	float value;
+	bool invert = false;
+	bool zap = false;
+	bool clamp = false;
+	bool uv = false;
+	bool changed = false;
+	float defValue = 0.0f;
+	float value = 0.0f;
 	std::vector<std::string> zapToggles;
 	std::vector<std::string> linkedDataSets;
 };
@@ -46,7 +46,7 @@ public:
 
 	int SavePreset(const std::string& filePath, const std::string& presetName, const std::string& sliderSetName, std::vector<std::string>& assignGroups) {
 		int index = 0;
-		for (auto &s : slidersBig) {
+		for (auto& s : slidersBig) {
 			if (SliderHasChanged(s.name, true))
 				presetCollection.SetSliderPreset(presetName, s.name, s.value);
 			else
@@ -62,9 +62,7 @@ public:
 		return presetCollection.SavePreset(filePath, presetName, sliderSetName, assignGroups);
 	}
 
-	int DeletePreset(const std::string& filePath, const std::string& presetName) {
-		return presetCollection.DeletePreset(filePath, presetName);
-	}
+	int DeletePreset(const std::string& filePath, const std::string& presetName) { return presetCollection.DeletePreset(filePath, presetName); }
 
 	void SetSliderPreset(const std::string& presetName, const std::string& slider, float big = -1, float little = -1) {
 		presetCollection.SetSliderPreset(presetName, slider, big, little);
@@ -73,21 +71,13 @@ public:
 	float GetBigPresetValue(const std::string& presetName, const std::string& sliderName, float defVal = 0.0f);
 	float GetSmallPresetValue(const std::string& presetName, const std::string& sliderName, float defVal = 0.0f);
 
-	void GetPresetNames(std::vector<std::string>& outNames) {
-		presetCollection.GetPresetNames(outNames);
-	}
+	void GetPresetNames(std::vector<std::string>& outNames) { presetCollection.GetPresetNames(outNames); }
 
-	std::string GetPresetFileNames(const std::string& set) {
-		return presetCollection.GetPresetFileName(set);
-	}
+	std::string GetPresetFileNames(const std::string& set) { return presetCollection.GetPresetFileName(set); }
 
-	void GetPresetGroups(const std::string& set, std::vector<std::string>& outGroups) {
-		presetCollection.GetPresetGroups(set, outGroups);
-	}
+	void GetPresetGroups(const std::string& set, std::vector<std::string>& outGroups) { presetCollection.GetPresetGroups(set, outGroups); }
 
-	void ClearPresets() {
-		presetCollection.Clear();
-	}
+	void ClearPresets() { presetCollection.Clear(); }
 
 	void AddSlidersInSet(SliderSet& inSet);
 
@@ -109,13 +99,9 @@ public:
 	bool SliderHasChanged(const std::string& sliderName, bool getBig);
 	float SliderValue(const std::string& sliderName, bool getBig);
 
-	void FlagReload(bool needReload) {
-		bNeedReload = needReload;
-	}
+	void FlagReload(bool needReload) { bNeedReload = needReload; }
 
-	bool NeedReload() {
-		return bNeedReload;
-	}
+	bool NeedReload() { return bNeedReload; }
 
 	void GetSmallSliderList(std::vector<std::string>& names);
 	void GetBigSliderList(std::vector<std::string>& names);

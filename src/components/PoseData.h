@@ -5,14 +5,15 @@ See the included LICENSE file
 
 #pragma once
 
-#include "Object3d.hpp"
-#include "../TinyXML-2/tinyxml2.h"
+#include <tinyxml2.h>
 
-#include <wx/dir.h>
-#include <vector>
+#include "Object3d.hpp"
+
 #include <map>
 #include <set>
 #include <unordered_set>
+#include <vector>
+#include <wx/dir.h>
 
 using namespace tinyxml2;
 
@@ -29,18 +30,14 @@ public:
 
 	PoseData() {}
 
-	PoseData(const std::string& name) {
-		this->name = name;
-	}
+	PoseData(const std::string& name) { this->name = name; }
 
 	PoseData(const std::string& name, const std::vector<PoseBoneData>& boneData) {
 		this->name = name;
 		this->boneData = boneData;
 	}
 
-	PoseData(XMLElement* srcElement) {
-		LoadElement(srcElement);
-	}
+	PoseData(XMLElement* srcElement) { LoadElement(srcElement); }
 
 	bool LoadElement(XMLElement* srcElement);
 	void WriteElement(XMLElement* element, bool append = false) const;
@@ -62,16 +59,12 @@ class PoseDataFile {
 public:
 	std::string fileName;
 
-	PoseDataFile() { }
+	PoseDataFile() {}
 	PoseDataFile(const std::string& srcFileName);
-	~PoseDataFile() { }
+	~PoseDataFile() {}
 
-	bool fail() {
-		return error != 0;
-	}
-	int GetError() {
-		return error;
-	}
+	bool fail() { return error != 0; }
+	int GetError() { return error; }
 
 	// Loads the XML document and identifies included pose. On a failure, sets the internal error value.
 	void Open(const std::string& srcFileName);

@@ -8,11 +8,9 @@ See the included LICENSE file
 #include "../utils/StringStuff.h"
 
 
-SliderSet::SliderSet() {
-}
+SliderSet::SliderSet() {}
 
-SliderSet::~SliderSet() {
-}
+SliderSet::~SliderSet() {}
 
 SliderSet::SliderSet(XMLElement* element) {
 	LoadSliderSet(element);
@@ -21,10 +19,8 @@ SliderSet::SliderSet(XMLElement* element) {
 
 void SliderSet::DeleteSlider(const std::string& setName) {
 	// Delete toggles from other sliders
-	for (auto &slider : sliders) {
-		slider.zapToggles.erase(
-			std::remove(slider.zapToggles.begin(), slider.zapToggles.end(), setName),
-			slider.zapToggles.end());
+	for (auto& slider : sliders) {
+		slider.zapToggles.erase(std::remove(slider.zapToggles.begin(), slider.zapToggles.end(), setName), slider.zapToggles.end());
 	}
 
 	// Find and delete slider
@@ -62,7 +58,7 @@ size_t SliderSet::CopySlider(SliderData* other) {
 }
 
 int SliderSet::LoadSliderSet(XMLElement* element) {
-	XMLElement *root = element->Parent()->ToElement();
+	XMLElement* root = element->Parent()->ToElement();
 	int version = root->IntAttribute("version");
 
 	std::string shapeStr = version >= 1 ? "Shape" : "BaseShapeName";
@@ -118,10 +114,10 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 		SliderData tmpSlider;
 		if (tmpSlider.LoadSliderData(sliderEntry, genWeights) == 0) {
 			// Check if slider already exists
-			for (auto &s : sliders) {
+			for (auto& s : sliders) {
 				if (s.name == tmpSlider.name) {
 					// Merge data of existing sliders
-					for (auto &df : tmpSlider.dataFiles)
+					for (auto& df : tmpSlider.dataFiles)
 						s.AddDataFile(df.targetName, df.dataName, df.fileName, df.bLocal);
 
 					break;
@@ -136,7 +132,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	}
 
 	// A slider set/project can optionally specify a default normals generation configuration.  If present,
-	// it activates the normals generation functionality in the preview window. Note customized normals generation settings 
+	// it activates the normals generation functionality in the preview window. Note customized normals generation settings
 	// are saved in separate xml files -- the project-homed ones are default settings only.
 	XMLElement* normalsGeneration = element->FirstChildElement("NormalsGeneration");
 	if (normalsGeneration) {
@@ -153,8 +149,8 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& forShape) {
 	std::map<std::string, std::map<std::string, std::string>> osdNames;
 
-	for (auto &slider : sliders) {
-		for (auto &ddf : slider.dataFiles) {
+	for (auto& slider : sliders) {
+		for (auto& ddf : slider.dataFiles) {
 			if (ddf.fileName.size() <= 4)
 				continue;
 
@@ -243,14 +239,12 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 		ddf.bLocal = newDataLocal;
 	};
 
-	for (auto &s : mergeSet.sliders) {
-		auto sliderIt = std::find_if(sliders.begin(), sliders.end(), [&s](const SliderData& rs) {
-			return rs.name == s.name;
-		});
+	for (auto& s : mergeSet.sliders) {
+		auto sliderIt = std::find_if(sliders.begin(), sliders.end(), [&s](const SliderData& rs) { return rs.name == s.name; });
 
 		if (sliderIt != sliders.end()) {
 			// Copy missing data of existing slider
-			for (auto &sd : s.dataFiles) {
+			for (auto& sd : s.dataFiles) {
 				auto sliderDataIt = std::find_if(sliderIt->dataFiles.begin(), sliderIt->dataFiles.end(), [&](const DiffInfo& rd) {
 					std::string shapeName = TargetToShape(rd.targetName);
 					std::string shapeNameMerge = mergeSet.TargetToShape(sd.targetName);
@@ -266,12 +260,12 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 		else {
 			// Copy new slider to the set
 			sliders.push_back(s);
-			for (auto &ddf : sliders.back().dataFiles)
+			for (auto& ddf : sliders.back().dataFiles)
 				addSlider(ddf);
 		}
 	}
 
-	for (auto &s : mergeSet.shapeAttributes) {
+	for (auto& s : mergeSet.shapeAttributes) {
 		// Copy new shapes to the set
 		if (shapeAttributes.find(s.first) == shapeAttributes.end()) {
 			if (newDataLocal)
@@ -316,7 +310,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	XMLElement* sliderElement;
 	XMLElement* dataFileElement;
 
-	for (auto &s : shapeAttributes) {
+	for (auto& s : shapeAttributes) {
 		newElement = sliderSetElement->GetDocument()->NewElement("Shape");
 		baseShapeElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
 
@@ -338,7 +332,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		baseShapeElement->InsertEndChild(newText);
 	}
 
-	for (auto &slider : sliders) {
+	for (auto& slider : sliders) {
 		if (slider.dataFiles.size() == 0)
 			continue;
 
@@ -363,7 +357,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			sliderElement->SetAttribute("zap", true);
 
 			std::string zapToggles;
-			for (auto &toggle : slider.zapToggles) {
+			for (auto& toggle : slider.zapToggles) {
 				zapToggles.append(toggle);
 				zapToggles.append(";");
 			}
@@ -375,7 +369,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		if (slider.bUV)
 			sliderElement->SetAttribute("uv", true);
 
-		for (auto &df : slider.dataFiles) {
+		for (auto& df : slider.dataFiles) {
 			newElement = sliderSetElement->GetDocument()->NewElement("Data");
 			dataFileElement = sliderElement->InsertEndChild(newElement)->ToElement();
 			dataFileElement->SetAttribute("name", df.dataName.c_str());
@@ -406,7 +400,8 @@ bool SliderSet::GenWeights() {
 	return genWeights;
 }
 
-SliderSetFile::SliderSetFile(const std::string& srcFileName) :error(0) {
+SliderSetFile::SliderSetFile(const std::string& srcFileName)
+	: error(0) {
 	Open(srcFileName);
 }
 
@@ -418,7 +413,7 @@ void SliderSetFile::Open(const std::string& srcFileName) {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (error)
+	if (error || !fp)
 		return;
 #else
 	fp = fopen(srcFileName.c_str(), "rb");
@@ -467,17 +462,17 @@ void SliderSetFile::New(const std::string& newFileName) {
 	root = doc.FirstChildElement("SliderSetInfo");
 }
 
-int SliderSetFile::GetSetNames(std::vector<std::string> &outSetNames, bool append) {
+int SliderSetFile::GetSetNames(std::vector<std::string>& outSetNames, bool append) {
 	if (!append)
 		outSetNames.clear();
 
-	for (auto &xmlit : setsInFile)
+	for (auto& xmlit : setsInFile)
 		outSetNames.push_back(xmlit.first);
 
 	return static_cast<int>(outSetNames.size());
 }
 
-int SliderSetFile::GetSetNamesUnsorted(std::vector<std::string> &outSetNames, bool append) {
+int SliderSetFile::GetSetNamesUnsorted(std::vector<std::string>& outSetNames, bool append) {
 	if (!append) {
 		outSetNames.clear();
 		outSetNames.assign(setsOrder.begin(), setsOrder.end());
@@ -504,7 +499,7 @@ void SliderSetFile::SetShapes(const std::string& set, std::vector<std::string>& 
 	}
 }
 
-int SliderSetFile::GetSet(const std::string& setName, SliderSet &outSliderSet) {
+int SliderSetFile::GetSet(const std::string& setName, SliderSet& outSliderSet) {
 	XMLElement* setPtr;
 	if (!HasSet(setName))
 		return 1;
@@ -517,10 +512,10 @@ int SliderSetFile::GetSet(const std::string& setName, SliderSet &outSliderSet) {
 	return ret;
 }
 
-int SliderSetFile::GetAllSets(std::vector<SliderSet> &outAppendSets) {
+int SliderSetFile::GetAllSets(std::vector<SliderSet>& outAppendSets) {
 	int err;
 	SliderSet tmpSet;
-	for (auto &xmlit : setsInFile) {
+	for (auto& xmlit : setsInFile) {
 		err = tmpSet.LoadSliderSet(xmlit.second);
 		if (err)
 			return err;
@@ -547,7 +542,7 @@ void SliderSetFile::GetSetOutputFilePath(const std::string& setName, std::string
 	}
 }
 
-int SliderSetFile::UpdateSet(SliderSet &inSliderSet) {
+int SliderSetFile::UpdateSet(SliderSet& inSliderSet) {
 	XMLElement* setPtr;
 	std::string setName;
 	setName = inSliderSet.GetName();
@@ -581,7 +576,7 @@ bool SliderSetFile::Save() {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (error)
+	if (error || !fp)
 		return false;
 #else
 	fp = fopen(fileName.c_str(), "w");

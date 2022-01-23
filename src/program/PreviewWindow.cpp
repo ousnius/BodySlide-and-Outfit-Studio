@@ -6,8 +6,8 @@ See the included LICENSE file
 #include "PreviewWindow.h"
 #include "BodySlideApp.h"
 
-#include <sstream>
 #include <regex>
+#include <sstream>
 
 using namespace nifly;
 
@@ -21,19 +21,19 @@ wxBEGIN_EVENT_TABLE(PreviewWindow, wxFrame)
 	EVT_SIZE(PreviewWindow::OnSetSize)
 wxEND_EVENT_TABLE()
 
-PreviewWindow::~PreviewWindow() {
-}
+PreviewWindow::~PreviewWindow() {}
 
 PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideApp* app)
-	: wxFrame(nullptr, wxID_ANY, _("Preview"), pos, size), app(app), refNormalGenLayers(emptyLayers) {
+	: wxFrame(nullptr, wxID_ANY, _("Preview"), pos, size)
+	, app(app)
+	, refNormalGenLayers(emptyLayers) {
 	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "/res/images/BodySlide.png", wxBITMAP_TYPE_PNG));
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);
 
 	wxPanel* uiPanel = new wxPanel(this);
-	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100,
-		wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
+	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
 
 	optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, wxSize(25, 25));
 	optButton->SetToolTip(_("Show the Normal Map Generator dialog."));
@@ -132,7 +132,7 @@ mesh* PreviewWindow::GetMesh(const std::string& shapeName) {
 	return gls.GetMesh(shapeName);
 }
 
-void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
+void PreviewWindow::AddMeshFromNif(NifFile* nif, char* shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 	for (size_t i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];
@@ -199,10 +199,17 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 
 	MaterialFile mat(MaterialFile::BGSM);
 	if (hasMat) {
-		matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
-		matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "");			// Remove everything before the first occurence of "/materials/"
-		matFile = std::regex_replace(matFile, std::regex("^/+"), "");														// Remove all slashes from the front
-		matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");	// If the path doesn't start with "materials/", add it to the front
+		// Replace all backward slashes with one forward slash
+		matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");
+
+		// Remove everything before the first occurence of "/materials/"
+		matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "");
+
+		// Remove all slashes from the front
+		matFile = std::regex_replace(matFile, std::regex("^/+"), "");
+
+		// If the path doesn't start with "materials/", add it to the front
+		matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");
 
 		// Attempt to read loose material file
 		mat = MaterialFile(baseDataPath + matFile);
@@ -210,7 +217,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 		if (mat.Failed()) {
 			// Search for material file in archives
 			wxMemoryBuffer data;
-			for (FSArchiveFile *archive : FSManager::archiveList()) {
+			for (FSArchiveFile* archive : FSManager::archiveList()) {
 				if (archive) {
 					if (archive->hasFile(matFile)) {
 						wxMemoryBuffer outData;
@@ -263,11 +270,15 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 
 	for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
 		if (!texFiles[i].empty()) {
-			texFiles[i] = std::regex_replace(texFiles[i], std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
-			texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(.*?)/textures/", std::regex_constants::icase), "");				// Remove everything before the first occurence of "/textures/"
-			texFiles[i] = std::regex_replace(texFiles[i], std::regex("^/+"), "");														// Remove all slashes from the front
-			texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(?!^textures/)", std::regex_constants::icase), "textures/");		// If the path doesn't start with "textures/", add it to the front
-			
+			texFiles[i] = std::regex_replace(texFiles[i], std::regex("\\\\+"), "/"); // Replace all backward slashes with one forward slash
+			texFiles[i] = std::regex_replace(texFiles[i],
+											 std::regex("^(.*?)/textures/", std::regex_constants::icase),
+											 "");								  // Remove everything before the first occurence of "/textures/"
+			texFiles[i] = std::regex_replace(texFiles[i], std::regex("^/+"), ""); // Remove all slashes from the front
+			texFiles[i] = std::regex_replace(texFiles[i],
+											 std::regex("^(?!^textures/)", std::regex_constants::icase),
+											 "textures/"); // If the path doesn't start with "textures/", add it to the front
+
 			texFiles[i] = baseDataPath + texFiles[i];
 		}
 	}
@@ -340,7 +351,7 @@ void PreviewWindow::OnSetSize(wxSizeEvent& event) {
 	event.Skip();
 }
 
-void PreviewWindow::ShowNormalGenWindow(wxCommandEvent & WXUNUSED(event)) {
+void PreviewWindow::ShowNormalGenWindow(wxCommandEvent& WXUNUSED(event)) {
 	if (!normalsGenDlg)
 		normalsGenDlg = new NormalsGenDialog(this, refNormalGenLayers);
 	else
@@ -376,9 +387,8 @@ wxBEGIN_EVENT_TABLE(PreviewCanvas, wxGLCanvas)
 wxEND_EVENT_TABLE()
 
 PreviewCanvas::PreviewCanvas(PreviewWindow* pw, const wxGLAttributes& attribs)
-	: wxGLCanvas(pw, attribs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE),
-		previewWindow(pw) {
-}
+	: wxGLCanvas(pw, attribs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
+	, previewWindow(pw) {}
 
 void PreviewCanvas::OnPaint(wxPaintEvent& WXUNUSED(event)) {
 	// Initialize OpenGL the first time the window is painted.
@@ -396,18 +406,12 @@ void PreviewCanvas::OnPaint(wxPaintEvent& WXUNUSED(event)) {
 void PreviewCanvas::OnKeyUp(wxKeyEvent& event) {
 	int key = event.GetKeyCode();
 	switch (key) {
-	case 'T':
-		previewWindow->ToggleTextures();
-		break;
-	case 'W':
-		previewWindow->ToggleWireframe();
-		break;
-	case 'L':
-		previewWindow->ToggleLighting();
-		break;
-	case 'G':
-		//previewWindow->RenderNormalMap();
-		break;
+		case 'T': previewWindow->ToggleTextures(); break;
+		case 'W': previewWindow->ToggleWireframe(); break;
+		case 'L': previewWindow->ToggleLighting(); break;
+		case 'G':
+			//previewWindow->RenderNormalMap();
+			break;
 	}
 }
 

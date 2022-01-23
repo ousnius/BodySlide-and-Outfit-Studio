@@ -6,18 +6,18 @@ See the included LICENSE file
 #pragma once
 
 #if defined(_WIN32)
-	#include <Windows.h>
-	#include <GL/gl.h>
-	#include <GL/glu.h>
-	#include <GL/glext.h>
+#include <Windows.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
 #elif defined(__APPLE__)
-	#include <OpenGL/gl.h>
-	#include <OpenGL/glu.h>
-	#include <OpenGL/glext.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <OpenGL/glext.h>
 #elif defined(__linux__)
-	#include <GL/glew.h>
+#include <GL/glew.h>
 #else
-	#error Platform OpenGL headers not defined yet!
+#error Platform OpenGL headers not defined yet!
 #endif
 
 extern bool extInitialized;

@@ -34,7 +34,7 @@ void PoseData::WriteElement(XMLElement* element, bool append) const {
 	if (!append)
 		element->DeleteChildren();
 
-	for (auto &bone : boneData) {
+	for (auto& bone : boneData) {
 		XMLElement* newElement = element->GetDocument()->NewElement("Bone");
 		newElement = element->InsertEndChild(newElement)->ToElement();
 		newElement->SetAttribute("name", bone.name.c_str());
@@ -53,13 +53,13 @@ int PoseDataCollection::LoadData(const std::string& basePath) {
 	wxArrayString files;
 	wxDir::GetAllFiles(basePath, &files, "*.xml");
 
-	for (auto &file : files) {
+	for (auto& file : files) {
 		PoseDataFile poseDataFile(file.ToUTF8().data());
 
 		std::vector<PoseData> poseDataEntries;
 		poseDataFile.GetData(poseDataEntries);
 
-		for (auto &pd : poseDataEntries)
+		for (auto& pd : poseDataEntries)
 			poseData.push_back(pd);
 	}
 
@@ -81,7 +81,7 @@ void PoseDataFile::Open(const std::string& srcFileName) {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (error)
+	if (error || !fp)
 		return;
 #else
 	fp = fopen(srcFileName.c_str(), "rb");
@@ -135,7 +135,7 @@ void PoseDataFile::Rename(const std::string& newFileName) {
 int PoseDataFile::SetData(const std::vector<PoseData>& data) {
 	root->DeleteChildren();
 
-	for (auto &pd : data) {
+	for (auto& pd : data) {
 		XMLElement* newElement = doc.NewElement("Pose");
 		XMLElement* element = root->InsertEndChild(newElement)->ToElement();
 		element->SetAttribute("name", pd.name.c_str());
@@ -151,7 +151,7 @@ bool PoseDataFile::Save() {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (error)
+	if (error || !fp)
 		return false;
 #else
 	fp = fopen(fileName.c_str(), "w");

@@ -6,14 +6,15 @@ See the included LICENSE file
 #include "wxSliderPanel.h"
 
 IMPLEMENT_DYNAMIC_CLASS(wxSliderPanel, wxPanel)
- 
+
 BEGIN_EVENT_TABLE(wxSliderPanel, wxPanel)
 END_EVENT_TABLE()
 
-wxSliderPanel::wxSliderPanel() : wxPanel() {
-}
+wxSliderPanel::wxSliderPanel()
+	: wxPanel() {}
 
-wxSliderPanel::wxSliderPanel(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings) : wxPanel() {
+wxSliderPanel::wxSliderPanel(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings)
+	: wxPanel() {
 	Create(parent, name, bmpEdit, bmpSettings);
 }
 

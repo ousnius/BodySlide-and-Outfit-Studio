@@ -30,10 +30,11 @@ a source of input, containing the results of previous changes.
 */
 class BoneWeightAutoNormalizer {
 	static constexpr double WEIGHT_EPSILON = .001;
-	UndoStateShape *uss;
+	UndoStateShape* uss = nullptr;
 	std::vector<std::unordered_map<uint16_t, float>*> wPtrs, lWPtrs;
 	uint32_t nMBones;
 	bool bSpreadWeight;
+
 public:
 	/* SetUp: fills in the class's private data.  ussi->boneWeights
 	must either already match boneNames or be empty, in which case
@@ -43,7 +44,13 @@ public:
 	bones", the bones whose weights can be adjusted, and must start
 	with the bones whose weights will actually be modified; the number
 	of these modified bones is nMBones.  */
-	void SetUp(UndoStateShape *ussi, AnimInfo *animInfo, const std::string &shapeName, const std::vector<std::string> &boneNames, const std::vector<std::string> &lockedBoneNames, uint32_t nMBones, bool bSprWt);
+	void SetUp(UndoStateShape* ussi,
+			   AnimInfo* animInfo,
+			   const std::string& shapeName,
+			   const std::vector<std::string>& boneNames,
+			   const std::vector<std::string>& lockedBoneNames,
+			   uint32_t nMBones,
+			   bool bSprWt);
 
 	/* GrabOneVertexStartingWeights: initializes missing startVal
 	and endVal in uss->boneweights for normalize bones for the vertex
@@ -53,7 +60,7 @@ public:
 
 	/* GrabStartingWeights: calls GrabOneVertexStartingWeights for
 	the given vertex indices. */
-	void GrabStartingWeights(const int *points, int nPoints);
+	void GrabStartingWeights(const int* points, int nPoints);
 
 	/* AdjustWeights: normalizes the weights for the vertex, preferring
 	to adjust weights for bones with index >= nMBones (the unmodified
@@ -63,7 +70,7 @@ public:
 	weight for that bone was adjusted or not.  Note that only weight
 	data in uss is accessed for unlocked bones, so you must ensure
 	that all necessary data is grabbed first. */
-	void AdjustWeights(int ptInd, bool *adjFlag = nullptr);
+	void AdjustWeights(int ptInd, bool* adjFlag = nullptr);
 
 	/* SetWeight: sets the weight for the vertex with the given
 	index for bone 0 (indexed into boneNames or uss->boneWeights) and

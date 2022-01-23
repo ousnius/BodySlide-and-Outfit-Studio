@@ -13,11 +13,11 @@ int RefTemplateCollection::Load(const std::string& basePath) {
 	wxArrayString files;
 	wxDir::GetAllFiles(basePath, &files, "*.xml");
 
-	for (auto &file : files) {
+	for (auto& file : files) {
 		RefTemplateFile templateFile(file.ToUTF8().data());
 		std::vector<std::string> templates;
 		templateFile.GetNames(templates);
-		for (auto &t : templates) {
+		for (auto& t : templates) {
 			RefTemplate refTemplate;
 			templateFile.Get(t, refTemplate);
 			refTemplates.push_back(std::move(refTemplate));
@@ -30,7 +30,7 @@ int RefTemplateCollection::Load(const std::string& basePath) {
 int RefTemplateCollection::GetAll(std::vector<RefTemplate>& outAppend) {
 	int count = 0;
 
-	for (auto &rt : refTemplates) {
+	for (auto& rt : refTemplates) {
 		outAppend.emplace_back(rt);
 		count++;
 	}
@@ -76,7 +76,7 @@ void RefTemplateFile::Open(const std::string& srcFileName) {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (error)
+	if (error || !fp)
 		return;
 #else
 	fp = fopen(srcFileName.c_str(), "rb");
@@ -125,7 +125,7 @@ int RefTemplateFile::GetNames(std::vector<std::string>& outNames, bool append, b
 	if (unique)
 		existingNames.insert(outNames.begin(), outNames.end());
 
-	for (auto &rt : refTemplatesInFile) {
+	for (auto& rt : refTemplatesInFile) {
 		if (unique && existingNames.find(rt.first) != existingNames.end())
 			continue;
 		else if (unique)
@@ -147,7 +147,7 @@ bool RefTemplateFile::Has(const std::string& queryName) {
 int RefTemplateFile::GetAll(std::vector<RefTemplate>& outAppend) {
 	int count = 0;
 
-	for (auto &rt : refTemplatesInFile) {
+	for (auto& rt : refTemplatesInFile) {
 		RefTemplate refTemplate;
 		refTemplate.Load(rt.second);
 
@@ -159,7 +159,9 @@ int RefTemplateFile::GetAll(std::vector<RefTemplate>& outAppend) {
 }
 
 int RefTemplateFile::Get(const std::string& templateName, RefTemplate& outTemplates) {
-	auto tmpl = std::find_if(refTemplatesInFile.begin(), refTemplatesInFile.end(), [&templateName](const std::pair<std::string, XMLElement*>& rt) { return rt.first == templateName; });
+	auto tmpl = std::find_if(refTemplatesInFile.begin(), refTemplatesInFile.end(), [&templateName](const std::pair<std::string, XMLElement*>& rt) {
+		return rt.first == templateName;
+	});
 	if (tmpl != refTemplatesInFile.end())
 		outTemplates.Load(tmpl->second);
 	else

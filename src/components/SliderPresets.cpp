@@ -3,8 +3,8 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
-#include "../TinyXML-2/tinyxml2.h"
 #include "SliderPresets.h"
+#include "../TinyXML-2/tinyxml2.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 
@@ -28,7 +28,7 @@ void PresetCollection::ClearSlider(const std::string& presetName, const std::str
 }
 
 void PresetCollection::GetPresetNames(std::vector<std::string>& outNames) {
-	for (auto &it : namedSliderPresets)
+	for (auto& it : namedSliderPresets)
 		outNames.push_back(it.first);
 }
 
@@ -137,13 +137,13 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 	wxString path = wxString::FromUTF8(basePath);
 	wxDir::GetAllFiles(path, &files, "*.xml");
 
-	for (auto &file : files) {
+	for (auto& file : files) {
 		FILE* fp = nullptr;
 
 #ifdef _WINDOWS
 		std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(file.ToUTF8().data());
 		int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-		if (ret)
+		if (ret || !fp)
 			continue;
 #else
 		fp = fopen(file.ToUTF8().data(), "rb");
@@ -171,7 +171,7 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 				std::string groupName = g->Attribute("name");
 				groups.push_back(groupName);
 
-				for (auto &filter : groupFilter) {
+				for (auto& filter : groupFilter) {
 					if (groupName == filter) {
 						skip = false;
 						break;
@@ -233,7 +233,7 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
 	int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (ret == 0)
+	if (ret == 0 && fp)
 		loaded = true;
 #else
 	fp = fopen(filePath.c_str(), "rb");
@@ -276,12 +276,12 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 	presetElem->SetAttribute("set", sliderSetName.c_str());
 
 	XMLElement* sliderElem;
-	for (auto &group : assignGroups) {
+	for (auto& group : assignGroups) {
 		newElement = outDoc.NewElement("Group");
 		sliderElem = presetElem->InsertEndChild(newElement)->ToElement();
 		sliderElem->SetAttribute("name", group.c_str());
 	}
-	for (auto &p : namedSliderPresets[presetName]) {
+	for (auto& p : namedSliderPresets[presetName]) {
 		if (p.second.big > -10000.0f) {
 			newElement = outDoc.NewElement("SetSlider");
 			sliderElem = presetElem->InsertEndChild(newElement)->ToElement();
@@ -301,7 +301,7 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 #ifdef _WINDOWS
 	winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
 	ret = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (ret)
+	if (ret || !fp)
 		return 1;
 #else
 	fp = fopen(filePath.c_str(), "w");
@@ -329,7 +329,7 @@ int PresetCollection::DeletePreset(const std::string& filePath, const std::strin
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
 	int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (ret)
+	if (ret || !fp)
 		return -1;
 #else
 	fp = fopen(filePath.c_str(), "rb");
@@ -361,7 +361,7 @@ int PresetCollection::DeletePreset(const std::string& filePath, const std::strin
 #ifdef _WINDOWS
 	winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
 	ret = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (ret)
+	if (ret || !fp)
 		return -1;
 #else
 	fp = fopen(filePath.c_str(), "w");

@@ -9,11 +9,9 @@ See the included LICENSE file
 #include "wx/image.h"
 
 
-class WXDLLIMPEXP_CORE wxDDSHandler : public wxImageHandler
-{
+class WXDLLIMPEXP_CORE wxDDSHandler : public wxImageHandler {
 public:
-	inline wxDDSHandler()
-	{
+	inline wxDDSHandler() {
 		m_name = wxT("DDS file");
 		m_extension = wxT("dds");
 		m_type = wxBITMAP_TYPE_ANY;
@@ -21,8 +19,9 @@ public:
 	}
 
 #if wxUSE_STREAMS
-	virtual bool LoadFile(wxImage *image, wxInputStream& stream, bool verbose = true, int index = -1) wxOVERRIDE;
-	virtual bool SaveFile(wxImage *image, wxOutputStream& stream, bool verbose = true) wxOVERRIDE;
+	virtual bool LoadFile(wxImage* image, wxInputStream& stream, bool verbose = true, int index = -1) wxOVERRIDE;
+	virtual bool SaveFile(wxImage* image, wxOutputStream& stream, bool verbose = true) wxOVERRIDE;
+
 protected:
 	virtual bool DoCanRead(wxInputStream& stream) wxOVERRIDE;
 #endif

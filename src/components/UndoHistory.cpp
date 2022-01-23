@@ -22,7 +22,7 @@ bool UndoHistory::PopState() {
 	return true;
 }
 
-UndoStateProject *UndoHistory::PushState(std::unique_ptr<UndoStateProject> uspp) {
+UndoStateProject* UndoHistory::PushState(std::unique_ptr<UndoStateProject> uspp) {
 	size_t nStrokes = states.size();
 	if (curIndex + 1 < nStrokes)
 		states.resize(curIndex + 1);

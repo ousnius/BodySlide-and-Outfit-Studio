@@ -34,7 +34,7 @@ int BuildSelection::LoadBuildSelection(XMLElement* srcElement) {
 }
 
 bool BuildSelection::HasOutputPath(const std::string& search) {
-	for (auto &c : outputChoice)
+	for (auto& c : outputChoice)
 		if (c.first.compare(search) == 0)
 			return true;
 
@@ -48,7 +48,7 @@ std::unordered_map<std::string, std::string> BuildSelection::GetOutputChoices() 
 std::string BuildSelection::GetOutputChoice(const std::string& outputPath) {
 	if (!HasOutputPath(outputPath))
 		return "";
-	
+
 	return outputChoice[outputPath];
 }
 
@@ -97,11 +97,11 @@ void BuildSelectionFile::Open(const std::string& srcFileName) {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (error)
+	if (error || !fp)
 		return;
 #else
 	fp = fopen(srcFileName.c_str(), "rb");
-	if (!fp){
+	if (!fp) {
 		error = errno;
 		return;
 	}
@@ -133,11 +133,11 @@ bool BuildSelectionFile::Save() {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (error)
+	if (error || !fp)
 		return false;
 #else
 	fp = fopen(fileName.c_str(), "w");
-	if (!fp){
+	if (!fp) {
 		error = errno;
 		return false;
 	}
@@ -166,7 +166,7 @@ void BuildSelectionFile::Get(BuildSelection& outBuildSel) {
 int BuildSelectionFile::Update(BuildSelection& inBuildSel) {
 	BuildSelection bsFile = root;
 
-	for (auto &choice : inBuildSel.GetOutputChoices()) {
+	for (auto& choice : inBuildSel.GetOutputChoices()) {
 		XMLElement* elem = nullptr;
 
 		if (bsFile.HasOutputPath(choice.first)) {
@@ -195,7 +195,7 @@ int BuildSelectionFile::Update(BuildSelection& inBuildSel) {
 	return 0;
 }
 
-// Removes a single choice from BuildSelection 
+// Removes a single choice from BuildSelection
 void BuildSelectionFile::Remove(std::string& path) {
 	XMLElement* elem = root->FirstChildElement("OutputChoice");
 	while (elem) {

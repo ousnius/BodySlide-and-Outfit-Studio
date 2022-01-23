@@ -9,7 +9,7 @@ See the included LICENSE file
 
 extern ConfigurationManager Config;
 
-void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::vector<NormalGenLayer>& outLayers) {
+void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement* normalGenSource, std::vector<NormalGenLayer>& outLayers) {
 	tinyxml2::XMLElement* layer = normalGenSource->FirstChildElement("NormalsLayer");
 	if (layer)
 		outLayers.clear();
@@ -117,10 +117,10 @@ void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::ve
 	}
 }
 
-void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vector<NormalGenLayer>& layers) {
+void NormalGenLayer::SaveToXML(tinyxml2::XMLElement* container, const std::vector<NormalGenLayer>& layers) {
 	std::string gamepath = Config["GameDataPath"];
 	std::string relfn;
-	for (auto &l : layers) {
+	for (auto& l : layers) {
 		tinyxml2::XMLElement* layerelem = container->GetDocument()->NewElement("NormalsLayer");
 		layerelem->SetAttribute("name", l.layerName.c_str());
 
@@ -133,7 +133,7 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 		elem->SetText(relfn.c_str());
 		layerelem->InsertEndChild(elem);
 
-		if (l.layerName == "Background") {			// Background is a Special layer with limited properties.
+		if (l.layerName == "Background") { // Background is a Special layer with limited properties.
 
 			elem = container->GetDocument()->NewElement("FillColor");
 			std::string s = std::to_string((unsigned char)l.fillColor[0]) + " ";
@@ -154,7 +154,7 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 
 			layerelem->InsertEndChild(elem);
 
-			if (l.useMeshNormalsSource) {				// not outputting some default values 
+			if (l.useMeshNormalsSource) { // not outputting some default values
 				elem = container->GetDocument()->NewElement("UseMeshNormalSource");
 				elem->SetText(true);
 				layerelem->InsertEndChild(elem);
@@ -184,22 +184,22 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 
 			layerelem->InsertEndChild(elem);
 
-			if (l.swapRG) {				// not outputting some default values 
+			if (l.swapRG) { // not outputting some default values
 				elem = container->GetDocument()->NewElement("SwapRG");
 				elem->SetText(true);
 				layerelem->InsertEndChild(elem);
 			}
-			if (l.invertRed) {				// not outputting some default values 
+			if (l.invertRed) { // not outputting some default values
 				elem = container->GetDocument()->NewElement("InvertRed");
 				elem->SetText(true);
 				layerelem->InsertEndChild(elem);
 			}
-			if (l.invertGreen) {				// not outputting some default values 
+			if (l.invertGreen) { // not outputting some default values
 				elem = container->GetDocument()->NewElement("InvertGreen");
 				elem->SetText(true);
 				layerelem->InsertEndChild(elem);
 			}
-			if (l.invertBlue) {				// not outputting some default values 
+			if (l.invertBlue) { // not outputting some default values
 				elem = container->GetDocument()->NewElement("InvertBlue");
 				elem->SetText(true);
 				layerelem->InsertEndChild(elem);

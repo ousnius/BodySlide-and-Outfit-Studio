@@ -4,19 +4,19 @@ See the included LICENSE file
 */
 
 #include "OutfitProject.h"
+#include "../components/WeightNorm.h"
+#include "../files/FBXWrangler.h"
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
-#include "../files/FBXWrangler.h"
 #include "../program/FBXImportDialog.h"
 #include "../utils/PlatformUtil.h"
-#include "../components/WeightNorm.h"
 #include "NifUtil.hpp"
 
-#include "../FSEngine/FSManager.h"
 #include "../FSEngine/FSEngine.h"
+#include "../FSEngine/FSManager.h"
 
-#include <sstream>
 #include <regex>
+#include <sstream>
 
 extern ConfigurationManager Config;
 
@@ -36,18 +36,16 @@ OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 		mGenWeights = true;
 }
 
-OutfitProject::~OutfitProject() {
-}
+OutfitProject::~OutfitProject() {}
 
 std::string OutfitProject::Save(const wxFileName& sliderSetFile,
-	const wxString& strOutfitName,
-	const wxString& strDataDir,
-	const wxString& strBaseFile,
-	const wxString& strGamePath,
-	const wxString& strGameFile,
-	bool genWeights,
-	bool copyRef) {
-
+								const wxString& strOutfitName,
+								const wxString& strDataDir,
+								const wxString& strBaseFile,
+								const wxString& strGamePath,
+								const wxString& strGameFile,
+								bool genWeights,
+								bool copyRef) {
 	owner->UpdateProgress(1, _("Checking destination..."));
 	std::string errmsg = "";
 	std::string outfit{strOutfitName.ToUTF8()};
@@ -107,7 +105,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	}
 
 	// Add all the outfit shapes to the target list.
-	for (auto &s : shapes) {
+	for (auto& s : shapes) {
 		if (IsBaseShape(s))
 			continue;
 
@@ -156,7 +154,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 				}
 			}
 
-			for (auto &s : shapes) {
+			for (auto& s : shapes) {
 				if (IsBaseShape(s))
 					continue;
 
@@ -188,7 +186,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	prog = 60;
 	owner->UpdateProgress(prog, _("Creating slider set file..."));
 
-	std::string ssUFileName{ mFileName.ToUTF8()};
+	std::string ssUFileName{mFileName.ToUTF8()};
 	SliderSetFile ssf(ssUFileName);
 	if (ssf.fail()) {
 		ssf.New(ssUFileName);
@@ -227,7 +225,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		else
 			workAnim.WriteToNif(&clone);
 
-		for (auto &s : clone.GetShapes())
+		for (auto& s : clone.GetShapes())
 			clone.UpdateSkinPartitions(s);
 
 		clone.SetShapeOrder(owner->GetShapeList());
@@ -272,7 +270,7 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef) {
 				}
 			}
 
-			for (auto &s : shapes) {
+			for (auto& s : shapes) {
 				if (IsBaseShape(s))
 					continue;
 
@@ -370,9 +368,7 @@ std::string OutfitProject::OutfitName() {
 void OutfitProject::ReplaceForbidden(std::string& str, const char& replacer) {
 	const std::string forbiddenChars = "\\/:*?\"<>|";
 
-	std::transform(str.begin(), str.end(), str.begin(), [&forbiddenChars, &replacer](char c) {
-		return forbiddenChars.find(c) != std::string::npos ? replacer : c;
-	});
+	std::transform(str.begin(), str.end(), str.begin(), [&forbiddenChars, &replacer](char c) { return forbiddenChars.find(c) != std::string::npos ? replacer : c; });
 }
 
 bool OutfitProject::ValidSlider(const size_t index) {
@@ -426,7 +422,7 @@ void OutfitProject::AddEmptySlider(const std::string& newName) {
 void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<uint16_t, float>& verts, NiShape* shape) {
 	std::unordered_map<uint16_t, Vector3> diffData;
 	Vector3 moveVec(0.0f, 1.0f, 0.0f);
-	for (auto &v : verts)
+	for (auto& v : verts)
 		diffData[v.first] = moveVec;
 
 	std::string target = ShapeToTarget(shape->name.get());
@@ -444,7 +440,7 @@ void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(shape->name.get(), target);
 		baseDiffData.AddEmptySet(shapeSlider, target);
-		for (auto &i : diffData)
+		for (auto& i : diffData)
 			baseDiffData.SumDiff(shapeSlider, target, i.first, i.second);
 	}
 	else
@@ -455,7 +451,7 @@ void OutfitProject::AddCombinedSlider(const std::string& newName) {
 	std::vector<Vector3> verts;
 	std::unordered_map<uint16_t, Vector3> diffData;
 
-	for (auto &s : workNif.GetShapes()) {
+	for (auto& s : workNif.GetShapes()) {
 		if (IsBaseShape(s))
 			continue;
 
@@ -476,43 +472,28 @@ void OutfitProject::AddCombinedSlider(const std::string& newName) {
 		GetLiveVerts(baseShape, verts);
 		workNif.CalcShapeDiff(baseShape, &verts, diffData);
 
-		for (auto &i : diffData)
+		for (auto& i : diffData)
 			baseDiffData.SumDiff(shapeSlider, target, i.first, i.second);
 	}
 }
 
-NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName,
-											   const std::vector<Vector3>* v,
-											   const std::vector<Triangle>* t,
-											   const std::vector<Vector2>* uv,
-											   const std::vector<Vector3>* norms) {
+NiShape* OutfitProject::CreateNifShapeFromData(
+	const std::string& shapeName, const std::vector<Vector3>* v, const std::vector<Triangle>* t, const std::vector<Vector2>* uv, const std::vector<Vector3>* norms) {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 
 	if (!workNif.IsValid()) {
 		NiVersion version;
 
 		switch (targetGame) {
-		case OB:
-			version = NiVersion::getOB();
-			break;
-		case FO3:
-		case FONV:
-			version = NiVersion::getFO3();
-			break;
-		case SKYRIM:
-			version = NiVersion::getSK();
-			break;
-		case FO4:
-		case FO4VR:
-			version = NiVersion::getFO4();
-			break;
-		case SKYRIMSE:
-		case SKYRIMVR:
-			version = NiVersion::getSSE();
-			break;
-		case FO76:
-			version = NiVersion::getFO76();
-			break;
+			case OB: version = NiVersion::getOB(); break;
+			case FO3:
+			case FONV: version = NiVersion::getFO3(); break;
+			case SKYRIM: version = NiVersion::getSK(); break;
+			case FO4:
+			case FO4VR: version = NiVersion::getFO4(); break;
+			case SKYRIMSE:
+			case SKYRIMVR: version = NiVersion::getSSE(); break;
+			case FO76: version = NiVersion::getFO76(); break;
 		}
 
 		workNif.Create(version);
@@ -556,7 +537,7 @@ bool OutfitProject::SliderUV(const size_t index) {
 wxArrayString OutfitProject::SliderZapToggles(const size_t index) {
 	wxArrayString toggles;
 	if (ValidSlider(index))
-		for (auto &toggle : activeSet[index].zapToggles)
+		for (auto& toggle : activeSet[index].zapToggles)
 			toggles.Add(wxString::FromUTF8(toggle));
 
 	return toggles;
@@ -588,7 +569,7 @@ void OutfitProject::SetSliderZapToggles(const size_t index, const wxArrayString&
 		return;
 
 	std::vector<std::string> zapToggles;
-	for (auto &s : toggles)
+	for (auto& s : toggles)
 		zapToggles.push_back(s.ToUTF8().data());
 
 	activeSet[index].zapToggles = zapToggles;
@@ -630,7 +611,7 @@ void OutfitProject::SetSliderName(const size_t index, const std::string& newName
 		return;
 
 	std::string oldName = activeSet[index].name;
-	for (auto &s : workNif.GetShapes()) {
+	for (auto& s : workNif.GetShapes()) {
 		std::string shapeName = s->name.get();
 		std::string oldDT = shapeName + oldName;
 		std::string newDT = shapeName + newName;
@@ -706,7 +687,7 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 		std::string sliderData = activeSet[sliderName].TargetDataName(target);
 		baseDiffData.GetDiffIndices(sliderData, target, outIndices);
 
-		for (auto &i : outIndices) {
+		for (auto& i : outIndices) {
 			if (m->nVerts > i)
 				m->mask[i] = 1.0f;
 		}
@@ -715,7 +696,7 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 		std::unordered_map<uint16_t, Vector3> outDiff;
 		morpher.GetRawResultDiff(shape->name.get(), sliderName, outDiff);
 
-		for (auto &i : outDiff) {
+		for (auto& i : outDiff) {
 			if (m->nVerts > i.first)
 				m->mask[i.first] = 1.0f;
 		}
@@ -731,7 +712,7 @@ bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 	TriFile tri;
 	std::string triFilePath = triPath;
 
-	for (auto &shape : workNif.GetShapes()) {
+	for (auto& shape : workNif.GetShapes()) {
 		int shapeVertCount = GetVertexCount(shape);
 		if (shapeVertCount <= 0)
 			continue;
@@ -764,7 +745,7 @@ bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 						morpher.ApplyResultToUVs(morph->name, target, &uvs);
 
 					int i = 0;
-					for (auto &uv : uvs) {
+					for (auto& uv : uvs) {
 						Vector3 v(uv.u, uv.v, 0.0f);
 						if (!v.IsZero(true))
 							morph->offsets.emplace(i, v);
@@ -789,7 +770,7 @@ bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 						morpher.ApplyResultToVerts(morph->name, target, &verts);
 
 					int i = 0;
-					for (auto &v : verts) {
+					for (auto& v : verts) {
 						if (!v.IsZero(true))
 							morph->offsets.emplace(i, v);
 						i++;
@@ -894,7 +875,7 @@ int OutfitProject::SaveSliderNIF(const std::string& sliderName, NiShape* shape, 
 
 	auto sliderShape = nif.FindBlockByName<NiShape>(shape->name.get());
 	if (sliderShape) {
-		for (auto &s : nif.GetShapes()) {
+		for (auto& s : nif.GetShapes()) {
 			if (s != sliderShape)
 				nif.DeleteShape(s);
 		}
@@ -1083,10 +1064,10 @@ bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, NiShape* sha
 	if (!result)
 		return 1;
 
-	std::vector<std::string>shapes;
+	std::vector<std::string> shapes;
 	fbxw.GetShapeNames(shapes);
 	bool found = false;
-	for (auto &s : shapes)
+	for (auto& s : shapes)
 		if (s == shape->name.get())
 			found = true;
 
@@ -1173,16 +1154,16 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 		int nv = outVerts.size();
 		std::vector<Vector3> pv(nv);
 		std::vector<float> wv(nv, 0.0f);
-		AnimSkin &animSkin = workAnim.shapeSkinning[shape->name.get()];
+		AnimSkin& animSkin = workAnim.shapeSkinning[shape->name.get()];
 
-		for (auto &boneNamesIt : animSkin.boneNames) {
-			AnimBone *animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
+		for (auto& boneNamesIt : animSkin.boneNames) {
+			AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
 			if (animB) {
-				AnimWeight &animW = animSkin.boneWeights[boneNamesIt.second];
+				AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
 				// Compose transform: skin -> (posed) bone -> global -> skin
 				MatTransform t = animSkin.xformGlobalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
 				// Add weighted contributions to vertex for this bone
-				for (auto &wIt : animW.weights) {
+				for (auto& wIt : animW.weights) {
 					int ind = wIt.first;
 					float w = wIt.second;
 					pv[ind] += w * t.ApplyTransform(outVerts[ind]);
@@ -1283,12 +1264,12 @@ bool OutfitProject::GetShapeMaterialFile(NiShape* shape, MaterialFile& outMatFil
 }
 
 void OutfitProject::SetTextures() {
-	for (auto &s : workNif.GetShapes())
+	for (auto& s : workNif.GetShapes())
 		SetTextures(s);
 }
 
 void OutfitProject::SetTextures(const std::vector<std::string>& textureFiles) {
-	for (auto &s : workNif.GetShapes())
+	for (auto& s : workNif.GetShapes())
 		SetTextures(s, textureFiles);
 }
 
@@ -1322,10 +1303,17 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 
 		MaterialFile mat(MaterialFile::BGSM);
 		if (hasMat) {
-			matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
-			matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "");			// Remove everything before the first occurence of "/materials/"
-			matFile = std::regex_replace(matFile, std::regex("^/+"), "");														// Remove all slashes from the front
-			matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");	// If the path doesn't start with "materials/", add it to the front
+			// Replace all backward slashes with one forward slash
+			matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");
+
+			// Remove everything before the first occurence of "/materials/"
+			matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "");
+
+			// Remove all slashes from the front
+			matFile = std::regex_replace(matFile, std::regex("^/+"), "");
+
+			// If the path doesn't start with "materials/", add it to the front
+			matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");
 
 			// Attempt to read loose material file
 			mat = MaterialFile(texturesDir + matFile);
@@ -1333,7 +1321,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 			if (mat.Failed()) {
 				// Search for material file in archives
 				wxMemoryBuffer data;
-				for (FSArchiveFile *archive : FSManager::archiveList()) {
+				for (FSArchiveFile* archive : FSManager::archiveList()) {
 					if (archive) {
 						if (archive->hasFile(matFile)) {
 							wxMemoryBuffer outData;
@@ -1386,10 +1374,14 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
 			if (!texFiles[i].empty()) {
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(.*?)/textures/", std::regex_constants::icase), "");				// Remove everything before the first occurence of "/textures/"
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^/+"), "");														// Remove all slashes from the front
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(?!^textures/)", std::regex_constants::icase), "textures/");		// If the path doesn't start with "textures/", add it to the front
+				texFiles[i] = std::regex_replace(texFiles[i], std::regex("\\\\+"), "/"); // Replace all backward slashes with one forward slash
+				texFiles[i] = std::regex_replace(texFiles[i],
+												 std::regex("^(.*?)/textures/", std::regex_constants::icase),
+												 "");								  // Remove everything before the first occurence of "/textures/"
+				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^/+"), ""); // Remove all slashes from the front
+				texFiles[i] = std::regex_replace(texFiles[i],
+												 std::regex("^(?!^textures/)", std::regex_constants::icase),
+												 "textures/"); // If the path doesn't start with "textures/", add it to the front
 
 				texFiles[i] = texturesDir + texFiles[i];
 			}
@@ -1402,7 +1394,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 }
 
 bool OutfitProject::IsValidShape(const std::string& shapeName) {
-	for (auto &s : workNif.GetShapeNames())
+	for (auto& s : workNif.GetShapeNames())
 		if (s == shapeName)
 			return true;
 
@@ -1438,7 +1430,7 @@ void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderN
 	}
 
 	if (IsBaseShape(shape)) {
-		for (auto &i : vertUpdates) {
+		for (auto& i : vertUpdates) {
 			Vector3 diffscale = Vector3(i.second.x * -10.0f, i.second.z * 10.0f, i.second.y * 10.0f);
 			baseDiffData.SumDiff(dataName, target, i.first, diffscale);
 		}
@@ -1473,7 +1465,7 @@ void OutfitProject::RotateShape(NiShape* shape, const Vector3& angle, std::unord
 	workNif.RotateShape(shape, angle, mask);
 }
 
-void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTransform &t) {
+void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTransform& t) {
 	if (!shape)
 		return;
 
@@ -1504,7 +1496,15 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 	workNif.SetNormalsForShape(shape, norms);
 }
 
-void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight) {
+void OutfitProject::CopyBoneWeights(NiShape* shape,
+									const float proximityRadius,
+									const int maxResults,
+									std::unordered_map<uint16_t, float>& mask,
+									const std::vector<std::string>& boneList,
+									int nCopyBones,
+									const std::vector<std::string>& lockedBones,
+									UndoStateShape& uss,
+									bool bSpreadWeight) {
 	if (!shape || !baseShape)
 		return;
 
@@ -1521,13 +1521,13 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 
 	DiffDataSets dds;
 	for (int bi = 0; bi < nCopyBones; ++bi) {
-		const std::string &bone = boneList[bi];
+		const std::string& bone = boneList[bi];
 		std::string wtSet = bone + "_WT_";
 		dds.AddEmptySet(wtSet, "Weight");
 
 		auto weights = workAnim.GetWeightsPtr(baseShapeName, bone);
 		if (weights) {
-			for (auto &w : *weights) {
+			for (auto& w : *weights) {
 				Vector3 tmp;
 				tmp.y = w.second;
 				dds.UpdateDiff(wtSet, "Weight", w.first, tmp);
@@ -1551,13 +1551,14 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 	owner->UpdateProgress(prog);
 
 	for (int bi = 0; bi < nCopyBones; ++bi) {
-		const std::string &boneName = boneList[bi];
-		auto &ubw = uss.boneWeights[bi].weights;
+		const std::string& boneName = boneList[bi];
+		auto& ubw = uss.boneWeights[bi].weights;
 		// Zero out unmasked weights
 		auto weights = workAnim.GetWeightsPtr(shapeName, boneName);
 		if (weights) {
-			for (auto &pi : *weights) {
-				if (mask[pi.first] > 0.0f) continue;
+			for (auto& pi : *weights) {
+				if (mask[pi.first] > 0.0f)
+					continue;
 				if (vertList.find(pi.first) == vertList.end()) {
 					vertList.insert(pi.first);
 					nzer.GrabOneVertexStartingWeights(pi.first);
@@ -1574,8 +1575,9 @@ void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius,
 		morpher.GetRawResultDiff(shapeName, wtSet, diffResult);
 
 		// Copy unmasked weights from diffResult into uss
-		for (auto &dr : diffResult) {
-			if (mask[dr.first] > 0.0f) continue;
+		for (auto& dr : diffResult) {
+			if (mask[dr.first] > 0.0f)
+				continue;
 			if (vertList.find(dr.first) == vertList.end()) {
 				vertList.insert(dr.first);
 				nzer.GrabOneVertexStartingWeights(dr.first);
@@ -1606,7 +1608,7 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 	std::vector<std::string>* boneList;
 	std::vector<std::string> allBoneList;
 	if (!inBoneList) {
-		for (auto &boneName : workAnim.shapeBones[baseShapeName])
+		for (auto& boneName : workAnim.shapeBones[baseShapeName])
 			allBoneList.push_back(boneName);
 
 		boneList = &allBoneList;
@@ -1623,13 +1625,13 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 	int prog = 40;
 	owner->UpdateProgress(prog, _("Transferring bone weights..."));
 
-	for (auto &boneName : *boneList) {
+	for (auto& boneName : *boneList) {
 		std::unordered_map<uint16_t, float> weights;
 		std::unordered_map<uint16_t, float> oldWeights;
 		workAnim.GetWeights(baseShapeName, boneName, weights);
 		workAnim.GetWeights(shapeName, boneName, oldWeights);
 
-		for (auto &w : weights) {
+		for (auto& w : weights) {
 			if (mask) {
 				if (1.0f - (*mask)[w.first] > 0.0f)
 					weights[w.first] = w.second * (1.0f - (*mask)[w.first]);
@@ -1651,7 +1653,7 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 	bool hasUnweighted = false;
 
-	for (auto &shape : workNif.GetShapes()) {
+	for (auto& shape : workNif.GetShapes()) {
 		if (!shape || !shape->IsSkinned())
 			continue;
 
@@ -1664,7 +1666,7 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 			influences.emplace(i, 0);
 
 		if (workAnim.shapeBones.find(shapeName) != workAnim.shapeBones.end()) {
-			for (auto &b : workAnim.shapeBones[shapeName]) {
+			for (auto& b : workAnim.shapeBones[shapeName]) {
 				auto weights = workAnim.GetWeightsPtr(shapeName, b);
 				if (weights) {
 					for (size_t i = 0; i < verts.size(); i++) {
@@ -1679,7 +1681,7 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 		bool shapeUnweighted = false;
 		mesh* m = owner->glView->GetMesh(shapeName);
 		if (m) {
-			for (auto &i : influences) {
+			for (auto& i : influences) {
 				if (i.second == 0) {
 					if (!shapeUnweighted)
 						m->MaskFill(0.0f);
@@ -1711,13 +1713,13 @@ void OutfitProject::InvalidateBoneScaleCache() {
 void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool clear) {
 	ClearBoneScale(false);
 
-	AnimBone *bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
+	AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
 	if (!bptr)
 		return;
 
 	MatTransform xform = bPose ? bptr->xformPoseToGlobal : bptr->xformToGlobal;
 
-	for (auto &s : workNif.GetShapeNames()) {
+	for (auto& s : workNif.GetShapeNames()) {
 		auto it = boneScaleVerts.find(s);
 		if (it == boneScaleVerts.end()) {
 			mesh* m = owner->glView->GetMesh(s);
@@ -1738,11 +1740,11 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 			boneScaleOffsets.emplace(s, std::vector<Vector3>(verts->size()));
 		it = boneScaleOffsets.find(s);
 
-		for (auto &b : workAnim.shapeBones[s]) {
+		for (auto& b : workAnim.shapeBones[s]) {
 			if (b == bone) {
 				auto weights = workAnim.GetWeightsPtr(s, b);
 				if (weights) {
-					for (auto &w : *weights) {
+					for (auto& w : *weights) {
 						Vector3 dir = (*verts)[w.first] - xform.translation;
 						dir.Normalize();
 						Vector3 offset = dir * w.second * sliderPos / 5.0f;
@@ -1765,7 +1767,7 @@ void OutfitProject::ClearBoneScale(bool clear) {
 	if (boneScaleOffsets.empty())
 		return;
 
-	for (auto &s : workNif.GetShapeNames()) {
+	for (auto& s : workNif.GetShapeNames()) {
 		auto it = boneScaleVerts.find(s);
 		std::vector<Vector3>* verts = &it->second;
 
@@ -1788,24 +1790,24 @@ void OutfitProject::ClearBoneScale(bool clear) {
 }
 
 void OutfitProject::AddBoneRef(const std::string& boneName) {
-	for (auto &s : workNif.GetShapeNames())
+	for (auto& s : workNif.GetShapeNames())
 		workAnim.AddShapeBone(s, boneName);
 }
 
-void OutfitProject::AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const MatTransform &xformToParent) {
+void OutfitProject::AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const MatTransform& xformToParent) {
 	AnimBone& customBone = AnimSkeleton::getInstance().AddCustomBone(boneName);
 	customBone.SetTransformBoneToParent(xformToParent);
 	customBone.SetParentBone(AnimSkeleton::getInstance().GetBonePtr(parentBone));
 
-	for (auto &s : workNif.GetShapeNames())
+	for (auto& s : workNif.GetShapeNames())
 		workAnim.AddShapeBone(s, boneName);
 }
 
-void OutfitProject::ModifyCustomBone(AnimBone *bPtr, const std::string& parentBone, const MatTransform &xformToParent) {
+void OutfitProject::ModifyCustomBone(AnimBone* bPtr, const std::string& parentBone, const MatTransform& xformToParent) {
 	bPtr->SetTransformBoneToParent(xformToParent);
 	bPtr->SetParentBone(AnimSkeleton::getInstance().GetBonePtr(parentBone));
 
-	for (auto &s : workNif.GetShapeNames())
+	for (auto& s : workNif.GetShapeNames())
 		workAnim.RecursiveRecalcXFormSkinToBone(s, bPtr);
 }
 
@@ -1821,7 +1823,7 @@ void OutfitProject::ClearReference() {
 }
 
 void OutfitProject::ClearOutfit() {
-	for (auto &s : workNif.GetShapes()) {
+	for (auto& s : workNif.GetShapes()) {
 		if (IsBaseShape(s))
 			continue;
 
@@ -1853,7 +1855,7 @@ void OutfitProject::ClearUnmaskedDiff(NiShape* shape, const std::string& sliderN
 }
 
 void OutfitProject::DeleteSlider(const std::string& sliderName) {
-	for (auto &s : workNif.GetShapes()) {
+	for (auto& s : workNif.GetShapes()) {
 		std::string target = ShapeToTarget(s->name.get());
 		std::string data = activeSet[sliderName].TargetDataName(target);
 
@@ -1900,8 +1902,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	int error = refNif.Load(file);
 	if (error) {
 		if (error == 2) {
-			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				fileName, refNif.GetHeader().GetVersion().GetVersionInfo());
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"), fileName, refNif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
@@ -1933,7 +1934,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 		workAnim.LoadFromNif(&workNif);
 
 		// Delete all except for reference
-		for (auto &s : workNif.GetShapes())
+		for (auto& s : workNif.GetShapes())
 			if (s->name != shapeName)
 				DeleteShape(s);
 	}
@@ -1973,8 +1974,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	int error = refNif.Load(file);
 	if (error) {
 		if (error == 2) {
-			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				refFile, refNif.GetHeader().GetVersion().GetVersionInfo());
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"), refFile, refNif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
@@ -2018,7 +2018,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 
 	// Add cloth data block of NIF to the list
 	std::vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(nullptr, true);
-	for (auto &cloth : clothDataBlocks)
+	for (auto& cloth : clothDataBlocks)
 		clothData[refFile] = cloth->Clone();
 
 	refNif.GetHeader().DeleteBlockByType("BSClothExtraData");
@@ -2034,7 +2034,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		workAnim.LoadFromNif(&workNif);
 
 		// Delete all except for reference
-		for (auto &s : workNif.GetShapes())
+		for (auto& s : workNif.GetShapes())
 			if (s->name != shape)
 				DeleteShape(s);
 	}
@@ -2047,7 +2047,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		activeSet.LoadSetDiffData(baseDiffData);
 
 	activeSet.SetReferencedData(shape);
-	for (auto &dn : dataNames)
+	for (auto& dn : dataNames)
 		activeSet.SetReferencedDataByName(shape, dn, true);
 
 	// Keep default data folder from current project if existing
@@ -2089,7 +2089,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	// First external target with skin shader becomes reference
 	std::vector<std::string> refTargets;
 	activeSet.GetReferencedTargets(refTargets);
-	for (auto &target : refTargets) {
+	for (auto& target : refTargets) {
 		std::string shapeName = activeSet.TargetToShape(target);
 		auto shape = workNif.FindBlockByName<NiShape>(shapeName);
 		if (shape) {
@@ -2172,7 +2172,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 		// First external target with skin shader becomes reference
 		std::vector<std::string> refTargets;
 		addSet.GetReferencedTargets(refTargets);
-		for (auto &target : refTargets) {
+		for (auto& target : refTargets) {
 			std::string shapeName = addSet.TargetToShape(target);
 			auto shape = workNif.FindBlockByName<NiShape>(shapeName);
 			if (shape) {
@@ -2204,11 +2204,16 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 	if (!renamedShapes.empty()) {
 		std::vector<std::string> renamedShapesOrig;
 		renamedShapesOrig.reserve(renamedShapes.size());
-		for (auto &rs : renamedShapes)
+		for (auto& rs : renamedShapes)
 			renamedShapesOrig.push_back(rs.first);
 
 		std::string shapesJoin = JoinStrings(renamedShapesOrig, "; ");
-		wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."), shapesJoin), _("Renamed Shapes"), wxOK | wxICON_WARNING, owner);
+		wxMessageBox(wxString::Format("%s\n \n%s",
+									  _("The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."),
+									  shapesJoin),
+					 _("Renamed Shapes"),
+					 wxOK | wxICON_WARNING,
+					 owner);
 	}
 
 	owner->UpdateProgress(70, _("Updating slider data..."));
@@ -2235,7 +2240,7 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 	owner->glView->GetShapeMask(mask, baseShape->name.get());
 
 	std::set<uint16_t> maskIndices;
-	for (auto &m : mask)
+	for (auto& m : mask)
 		maskIndices.insert(m.first);
 
 	morpher.BuildProximityCache(shape->name.get(), options.proximityRadius, &maskIndices);
@@ -2243,24 +2248,32 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 	std::string refTarget = ShapeToTarget(baseShape->name.get());
 	for (size_t i = 0; i < activeSet.size(); i++)
 		if (SliderShow(i) && !SliderZap(i) && !SliderUV(i))
-			morpher.GenerateResultDiff(shape->name.get(), activeSet[i].name, activeSet[i].TargetDataName(refTarget), options.maxResults, options.noSqueeze, options.solidMode, options.axisX, options.axisY, options.axisZ);
+			morpher.GenerateResultDiff(shape->name.get(),
+									   activeSet[i].name,
+									   activeSet[i].TargetDataName(refTarget),
+									   options.maxResults,
+									   options.noSqueeze,
+									   options.solidMode,
+									   options.axisX,
+									   options.axisY,
+									   options.axisZ);
 }
 
-void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const std::vector<uint16_t> &indices) {
+void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices) {
 	uss.delVerts.resize(indices.size());
 
-	const std::vector<Vector3> *verts = workNif.GetVertsForShape(shape);
-	const std::vector<Vector2> *uvs = workNif.GetUvsForShape(shape);
-	const std::vector<Color4> *colors = workNif.GetColorsForShape(shape->name.get());
-	const std::vector<Vector3> *normals = workNif.GetNormalsForShape(shape);
-	const std::vector<Vector3> *tangents = workNif.GetTangentsForShape(shape);
-	const std::vector<Vector3> *bitangents = workNif.GetBitangentsForShape(shape);
-	const std::vector<float> *eyeData = workNif.GetEyeDataForShape(shape);
-	AnimSkin &skin = workAnim.shapeSkinning[shape->name.get()];
+	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
+	const std::vector<Vector2>* uvs = workNif.GetUvsForShape(shape);
+	const std::vector<Color4>* colors = workNif.GetColorsForShape(shape->name.get());
+	const std::vector<Vector3>* normals = workNif.GetNormalsForShape(shape);
+	const std::vector<Vector3>* tangents = workNif.GetTangentsForShape(shape);
+	const std::vector<Vector3>* bitangents = workNif.GetBitangentsForShape(shape);
+	const std::vector<float>* eyeData = workNif.GetEyeDataForShape(shape);
+	AnimSkin& skin = workAnim.shapeSkinning[shape->name.get()];
 	std::string target = ShapeToTarget(shape->name.get());
 
 	for (uint16_t di = 0; di < static_cast<uint16_t>(indices.size()); ++di) {
-		UndoStateVertex &usv = uss.delVerts[di];
+		UndoStateVertex& usv = uss.delVerts[di];
 		uint16_t vi = indices[di];
 		usv.index = vi;
 
@@ -2280,10 +2293,10 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const
 			usv.eyeData = (*eyeData)[vi];
 
 		for (auto bnp : skin.boneNames) {
-			AnimWeight &aw = skin.boneWeights[bnp.second];
+			AnimWeight& aw = skin.boneWeights[bnp.second];
 			auto wit = aw.weights.find(vi);
 			if (wit != aw.weights.end())
-				usv.weights.emplace_back(UndoStateVertexBoneWeight{ bnp.first, wit->second });
+				usv.weights.emplace_back(UndoStateVertexBoneWeight{bnp.first, wit->second});
 		}
 	}
 
@@ -2302,17 +2315,17 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape &uss, const
 		if (!diffSet)
 			continue;
 
-		for (UndoStateVertex &usv : uss.delVerts) {
+		for (UndoStateVertex& usv : uss.delVerts) {
 			auto dit = diffSet->find(usv.index);
 			if (dit == diffSet->end())
 				continue;
 
-			usv.diffs.push_back(UndoStateVertexSliderDiff{ activeSet[si].name, dit->second });
+			usv.diffs.push_back(UndoStateVertexSliderDiff{activeSet[si].name, dit->second});
 		}
 	}
 }
 
-void OutfitProject::CollectTriangleData(NiShape* shape, UndoStateShape &uss, const std::vector<uint32_t> &indices) {
+void OutfitProject::CollectTriangleData(NiShape* shape, UndoStateShape& uss, const std::vector<uint32_t>& indices) {
 	uss.delTris.resize(indices.size());
 
 	std::vector<Triangle> tris;
@@ -2326,7 +2339,7 @@ void OutfitProject::CollectTriangleData(NiShape* shape, UndoStateShape &uss, con
 	}
 
 	for (uint32_t di = 0; di < static_cast<uint32_t>(indices.size()); ++di) {
-		UndoStateTriangle &ust = uss.delTris[di];
+		UndoStateTriangle& ust = uss.delTris[di];
 		uint32_t ti = indices[di];
 		ust.index = ti;
 		ust.t = tris[ti];
@@ -2337,12 +2350,12 @@ void OutfitProject::CollectTriangleData(NiShape* shape, UndoStateShape &uss, con
 	}
 }
 
-bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<uint16_t, float>& mask, UndoStateShape &uss) {
+bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<uint16_t, float>& mask, UndoStateShape& uss) {
 	uint16_t numVerts = shape->GetNumVertices();
 
 	// Set flag for every vertex index in mask
 	std::vector<bool> delVertFlags(numVerts, false);
-	for (auto &m : mask)
+	for (auto& m : mask)
 		delVertFlags[m.first] = true;
 
 	// Generate list of triangles to delete.  Also count how many
@@ -2354,9 +2367,7 @@ bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<
 	std::vector<uint32_t> vertTriCounts(numVerts, 0);
 
 	for (uint32_t ti = 0; ti < static_cast<uint32_t>(tris.size()); ++ti) {
-		if (delVertFlags[tris[ti].p1] ||
-			delVertFlags[tris[ti].p2] ||
-			delVertFlags[tris[ti].p3])
+		if (delVertFlags[tris[ti].p1] || delVertFlags[tris[ti].p2] || delVertFlags[tris[ti].p3])
 			delTriInds.push_back(ti);
 		else {
 			++vertTriCounts[tris[ti].p1];
@@ -2387,11 +2398,11 @@ bool OutfitProject::PrepareDeleteVerts(NiShape* shape, const std::unordered_map<
 	return false;
 }
 
-void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss, bool bUndo) {
-	const std::vector<UndoStateVertex> &delVerts = bUndo ? uss.addVerts : uss.delVerts;
-	const std::vector<UndoStateVertex> &addVerts = bUndo ? uss.delVerts : uss.addVerts;
-	const std::vector<UndoStateTriangle> &delTris = bUndo ? uss.addTris : uss.delTris;
-	const std::vector<UndoStateTriangle> &addTris = bUndo ? uss.delTris : uss.addTris;
+void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape& uss, bool bUndo) {
+	const std::vector<UndoStateVertex>& delVerts = bUndo ? uss.addVerts : uss.delVerts;
+	const std::vector<UndoStateVertex>& addVerts = bUndo ? uss.delVerts : uss.addVerts;
+	const std::vector<UndoStateTriangle>& delTris = bUndo ? uss.addTris : uss.delTris;
+	const std::vector<UndoStateTriangle>& addTris = bUndo ? uss.delTris : uss.addTris;
 
 	// Gather data
 	std::vector<Triangle> tris;
@@ -2408,12 +2419,12 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 	std::vector<Vector3> verts;
 	workNif.GetVertsForShape(shape, verts);
 
-	const std::vector<Vector2> *uvsp = workNif.GetUvsForShape(shape);
-	const std::vector<Color4> *colorsp = workNif.GetColorsForShape(shape->name.get());
-	const std::vector<Vector3> *normalsp = workNif.GetNormalsForShape(shape);
-	const std::vector<Vector3> *tangentsp = workNif.GetTangentsForShape(shape);
-	const std::vector<Vector3> *bitangentsp = workNif.GetBitangentsForShape(shape);
-	const std::vector<float> *eyeDatap = workNif.GetEyeDataForShape(shape);
+	const std::vector<Vector2>* uvsp = workNif.GetUvsForShape(shape);
+	const std::vector<Color4>* colorsp = workNif.GetColorsForShape(shape->name.get());
+	const std::vector<Vector3>* normalsp = workNif.GetNormalsForShape(shape);
+	const std::vector<Vector3>* tangentsp = workNif.GetTangentsForShape(shape);
+	const std::vector<Vector3>* bitangentsp = workNif.GetBitangentsForShape(shape);
+	const std::vector<float>* eyeDatap = workNif.GetEyeDataForShape(shape);
 
 	std::vector<Vector2> uvs;
 	std::vector<Color4> colors;
@@ -2434,7 +2445,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 	if (eyeDatap)
 		eyeData = *eyeDatap;
 
-	AnimSkin &skin = workAnim.shapeSkinning[shape->name.get()];
+	AnimSkin& skin = workAnim.shapeSkinning[shape->name.get()];
 	std::string target = ShapeToTarget(shape->name.get());
 
 	if (!delTris.empty()) {
@@ -2525,7 +2536,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 			InsertVectorIndices(eyeData, insVertInds);
 
 		// Store vertex data...
-		for (const UndoStateVertex &usv : addVerts) {
+		for (const UndoStateVertex& usv : addVerts) {
 			// ...in nif arrays
 			verts[usv.index] = usv.pos;
 			if (uvsp && uvs.size() > usv.index)
@@ -2542,7 +2553,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 				eyeData[usv.index] = usv.eyeData;
 
 			// ...in workAnim
-			for (const auto &usvbw : usv.weights) {
+			for (const auto& usvbw : usv.weights) {
 				auto bnit = skin.boneNames.find(usvbw.boneName);
 				if (bnit == skin.boneNames.end()) {
 					workAnim.AddShapeBone(shape->name.get(), usvbw.boneName);
@@ -2552,7 +2563,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 			}
 
 			// ...in diff data
-			for (const UndoStateVertexSliderDiff &diff : usv.diffs) {
+			for (const UndoStateVertexSliderDiff& diff : usv.diffs) {
 				std::string targetDataName = activeSet[diff.sliderName].TargetDataName(target);
 				if (targetDataName.empty()) {
 					targetDataName = target + diff.sliderName;
@@ -2569,7 +2580,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 				else
 					diffSet = morpher.GetDiffSet(targetDataName);
 
-				if (!diffSet)	// should be impossible
+				if (!diffSet) // should be impossible
 					continue;
 
 				(*diffSet)[usv.index] = diff.diff;
@@ -2600,7 +2611,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 			InsertVectorIndices(triParts, insTriInds);
 
 		// Store triangle data
-		for (const UndoStateTriangle &ust : addTris) {
+		for (const UndoStateTriangle& ust : addTris) {
 			tris[ust.index] = ust.t;
 			if (gotsegs || gotparts)
 				triParts[ust.index] = ust.partID;
@@ -2636,7 +2647,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, const UndoStateShape &uss
 	// That should happen when the file is saved.
 }
 
-bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, const std::vector<uint16_t> &indices) {
+bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices) {
 	// Get triangle data
 	uint16_t numVerts = shape->GetNumVertices();
 
@@ -2670,7 +2681,7 @@ bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, c
 
 		// Collect lists of neighboring triangles and vertices.
 		for (uint32_t ti = 0; ti < static_cast<uint32_t>(tris.size()); ++ti) {
-			const Triangle &t = tris[ti];
+			const Triangle& t = tris[ti];
 			if (t.p1 != vi && t.p2 != vi && t.p3 != vi)
 				continue;
 
@@ -2707,7 +2718,7 @@ bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, c
 		// Put triangles to delete in uss.delTris.
 		for (uint32_t vti = 0; vti < static_cast<uint32_t>(ntris.size()); ++vti) {
 			uint32_t ti = ntris[vti];
-			uss.delTris.push_back(UndoStateTriangle{ ti, tris[ti], ti < triParts.size() ? triParts[ti] : -1 });
+			uss.delTris.push_back(UndoStateTriangle{ti, tris[ti], ti < triParts.size() ? triParts[ti] : -1});
 		}
 
 		uint32_t pti = NIF_NPOS;
@@ -2715,15 +2726,13 @@ bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, c
 			// Determine preferred triangle to replace.
 			pti = 0;
 
-			if (!triParts.empty() && ntris.size() == 3 &&
-				triParts[ntris[0]] != triParts[ntris[1]] &&
-				triParts[ntris[1]] == triParts[ntris[2]]) {
+			if (!triParts.empty() && ntris.size() == 3 && triParts[ntris[0]] != triParts[ntris[1]] && triParts[ntris[1]] == triParts[ntris[2]]) {
 				pti = 1;
 			}
 
 			// Put new triangle in uss.
 			uint32_t ti = ntris[pti];
-			uss.addTris.push_back(UndoStateTriangle{ ti, Triangle(nverts[0], nverts[1], nverts[2]), ti < triParts.size() ? triParts[ti] : -1 });
+			uss.addTris.push_back(UndoStateTriangle{ti, Triangle(nverts[0], nverts[1], nverts[2]), ti < triParts.size() ? triParts[ti] : -1});
 		}
 
 		// Collect list of non-replaced triangles for triangle renumbering.
@@ -2741,7 +2750,7 @@ bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, c
 	std::sort(nrtris.begin(), nrtris.end());
 	std::vector<int> tCollapse = GenerateIndexCollapseMap(nrtris, tris.size());
 
-	for (UndoStateTriangle &ust : uss.addTris) {
+	for (UndoStateTriangle& ust : uss.addTris) {
 		ust.t.p1 = vCollapse[ust.t.p1];
 		ust.t.p2 = vCollapse[ust.t.p2];
 		ust.t.p3 = vCollapse[ust.t.p3];
@@ -2756,7 +2765,7 @@ bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape &uss, c
 	return true;
 }
 
-static uint16_t TriangleOppositeVertex(const Triangle &t, const uint16_t p1) {
+static uint16_t TriangleOppositeVertex(const Triangle& t, const uint16_t p1) {
 	if (t.p1 == p1)
 		return t.p3;
 	else if (t.p2 == p1)
@@ -2765,7 +2774,7 @@ static uint16_t TriangleOppositeVertex(const Triangle &t, const uint16_t p1) {
 		return t.p2;
 }
 
-bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const Edge &edge) {
+bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape& uss, const Edge& edge) {
 	// Get triangle data
 	std::vector<Triangle> tris;
 	shape->GetTriangles(tris);
@@ -2812,10 +2821,10 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 	// Put data into uss.
 	int tp1 = t1 < triParts.size() ? triParts[t1] : -1;
 	int tp2 = t2 < triParts.size() ? triParts[t2] : -1;
-	uss.delTris.push_back(UndoStateTriangle{ t1, tris[t1], tp1 });
-	uss.delTris.push_back(UndoStateTriangle{ t2, tris[t2], tp2 });
-	uss.addTris.push_back(UndoStateTriangle{ t1, Triangle(edge.p1, nev2, nev1), tp1 });
-	uss.addTris.push_back(UndoStateTriangle{ t2, Triangle(edge.p2, nev1, nev2), tp2 });
+	uss.delTris.push_back(UndoStateTriangle{t1, tris[t1], tp1});
+	uss.delTris.push_back(UndoStateTriangle{t2, tris[t2], tp2});
+	uss.addTris.push_back(UndoStateTriangle{t1, Triangle(edge.p1, nev2, nev1), tp1});
+	uss.addTris.push_back(UndoStateTriangle{t2, Triangle(edge.p2, nev1, nev2), tp2});
 
 	// Sort delTris and addTris by index.
 	if (t2 < t1) {
@@ -2826,7 +2835,7 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape &uss, const E
 	return true;
 }
 
-bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const std::vector<uint16_t> &p1s, const std::vector<uint16_t> &p2s) {
+bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& p1s, const std::vector<uint16_t>& p2s) {
 	// Get vertex and triangle data
 	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
 	if (!verts)
@@ -2898,9 +2907,9 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 			++newt1;
 
 		int tp = t1 < triParts.size() ? triParts[t1] : -1;
-		uss.delTris.push_back(UndoStateTriangle{ t1, tris[t1], tp });
-		uss.addTris.push_back(UndoStateTriangle{ newt1, Triangle(edge.p1, newvi, nev1), tp });
-		uss.addTris.push_back(UndoStateTriangle{ newt1 + 1, Triangle(nev1, newvi, edge.p2), tp });
+		uss.delTris.push_back(UndoStateTriangle{t1, tris[t1], tp});
+		uss.addTris.push_back(UndoStateTriangle{newt1, Triangle(edge.p1, newvi, nev1), tp});
+		uss.addTris.push_back(UndoStateTriangle{newt1 + 1, Triangle(nev1, newvi, edge.p2), tp});
 	}
 
 	if (t2found) {
@@ -2909,9 +2918,9 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 			++newt2;
 
 		int tp = t2 < triParts.size() ? triParts[t2] : -1;
-		uss.delTris.push_back(UndoStateTriangle{ t2, tris[t2], tp });
-		uss.addTris.push_back(UndoStateTriangle{ newt2, Triangle(redge.p1, newrvi, nev2), tp });
-		uss.addTris.push_back(UndoStateTriangle{ newt2 + 1, Triangle(nev2, newrvi, redge.p2), tp });
+		uss.delTris.push_back(UndoStateTriangle{t2, tris[t2], tp});
+		uss.addTris.push_back(UndoStateTriangle{newt2, Triangle(redge.p1, newrvi, nev2), tp});
+		uss.addTris.push_back(UndoStateTriangle{newt2 + 1, Triangle(nev2, newrvi, redge.p2), tp});
 	}
 
 	// Sort delTris and addTris by index.
@@ -2921,7 +2930,7 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	// Get data for the two edge vertices (in a secondary data-collection
 	// UndoStateShape).
 	UndoStateShape duss;
-	std::vector<uint16_t> edgeInds{ edge.p1, edge.p2 };
+	std::vector<uint16_t> edgeInds{edge.p1, edge.p2};
 	if (welded) {
 		edgeInds.push_back(redge.p1);
 		edgeInds.push_back(redge.p2);
@@ -2929,16 +2938,16 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 
 	CollectVertexData(shape, duss, edgeInds);
 
-	const UndoStateVertex &p1d = duss.delVerts[0];
-	const UndoStateVertex &p2d = duss.delVerts[1];
-	const UndoStateVertex &rp1d = duss.delVerts[welded ? 2 : 1];
-	const UndoStateVertex &rp2d = duss.delVerts[welded ? 3 : 0];
-	const Vector3 &p1 = p1d.pos;
-	const Vector3 &p2 = p2d.pos;
+	const UndoStateVertex& p1d = duss.delVerts[0];
+	const UndoStateVertex& p2d = duss.delVerts[1];
+	const UndoStateVertex& rp1d = duss.delVerts[welded ? 2 : 1];
+	const UndoStateVertex& rp2d = duss.delVerts[welded ? 3 : 0];
+	const Vector3& p1 = p1d.pos;
+	const Vector3& p2 = p2d.pos;
 
 	// Create entry for new vertex
 	uss.addVerts.emplace_back();
-	UndoStateVertex &usv = uss.addVerts.back();
+	UndoStateVertex& usv = uss.addVerts.back();
 	usv.index = newvi;
 
 	/* Now comes the hard part: determining a good location for the
@@ -2955,17 +2964,15 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 
 	// Calculate normals at p1 and p2 by averaging their triangle normals.
 	Vector3 np1, np2;
-	for (const Triangle &t : tris) {
-		if (t.p1 == edge.p1 || t.p2 == edge.p1 || t.p3 == edge.p1 ||
-			t.p1 == redge.p2 || t.p2 == redge.p2 || t.p3 == redge.p2) {
+	for (const Triangle& t : tris) {
+		if (t.p1 == edge.p1 || t.p2 == edge.p1 || t.p3 == edge.p1 || t.p1 == redge.p2 || t.p2 == redge.p2 || t.p3 == redge.p2) {
 			Vector3 tn;
 			t.trinormal(*verts, &tn);
 			tn.Normalize();
 			np1 += tn;
 		}
 
-		if (t.p1 == edge.p2 || t.p2 == edge.p2 || t.p3 == edge.p2 ||
-			t.p1 == redge.p1 || t.p2 == redge.p1 || t.p3 == redge.p1) {
+		if (t.p1 == edge.p2 || t.p2 == edge.p2 || t.p3 == edge.p2 || t.p1 == redge.p1 || t.p2 == redge.p1 || t.p3 == redge.p1) {
 			Vector3 tn;
 			t.trinormal(*verts, &tn);
 			tn.Normalize();
@@ -2979,8 +2986,8 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	// Starting position of new point: midpoint between p1 and p2
 	usv.pos = (p1 + p2) * 0.5f;
 
-	Vector3 u12 = p2 - p1;	// unit vector from p1 to p2 (along the edge)
-	float elen = u12.length();	// edge length
+	Vector3 u12 = p2 - p1;	   // unit vector from p1 to p2 (along the edge)
+	float elen = u12.length(); // edge length
 	u12.Normalize();
 
 	// Working normal for new point: average of np1 and np2, made
@@ -3025,8 +3032,8 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	// Calculate weights by averaging.  Note that the resulting weights
 	// will add up to 1 if each source's weights do.
 	for (int si = 0; si < 2; ++si) {
-		const std::vector<UndoStateVertexBoneWeight> &swts = si ? p2d.weights : p1d.weights;
-		for (const UndoStateVertexBoneWeight &sw : swts) {
+		const std::vector<UndoStateVertexBoneWeight>& swts = si ? p2d.weights : p1d.weights;
+		for (const UndoStateVertexBoneWeight& sw : swts) {
 			bool found = false;
 			for (size_t dwi = 0; dwi < usv.weights.size() && !found; ++dwi) {
 				if (usv.weights[dwi].boneName == sw.boneName) {
@@ -3040,7 +3047,7 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 		}
 	}
 
-	for (auto &dw : usv.weights)
+	for (auto& dw : usv.weights)
 		dw.w *= 0.5;
 
 	UndoStateVertex rusv;
@@ -3057,15 +3064,15 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 
 	// diffpairs: key is sliderName.
 	std::unordered_map<std::string, std::pair<Vector3, Vector3>> diffpairs;
-	for (auto &sd : p1d.diffs)
+	for (auto& sd : p1d.diffs)
 		diffpairs[sd.sliderName].first = sd.diff;
-	for (auto &sd : p2d.diffs)
+	for (auto& sd : p2d.diffs)
 		diffpairs[sd.sliderName].second = sd.diff;
 
-	for (auto &dp : diffpairs) {
+	for (auto& dp : diffpairs) {
 		// First, just average the diffs.
 		Vector3 diff = (dp.second.first + dp.second.second) * 0.5f;
-		const SliderData &sd = activeSet[dp.first];
+		const SliderData& sd = activeSet[dp.first];
 		if (!sd.bUV && !sd.bClamp && !sd.bZap) {
 			// Calculate the distance between the moved p1 and p2.
 			float delen = (dp.second.second + p2 - dp.second.first - p1).length();
@@ -3074,26 +3081,26 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 			diff += usv.normal * (curveOffsetFactor * (delen - elen) * 0.5f);
 		}
 
-		usv.diffs.push_back(UndoStateVertexSliderDiff{ dp.first, diff });
+		usv.diffs.push_back(UndoStateVertexSliderDiff{dp.first, diff});
 		if (welded && !sd.bUV)
-			rusv.diffs.push_back(UndoStateVertexSliderDiff{ dp.first, diff });
+			rusv.diffs.push_back(UndoStateVertexSliderDiff{dp.first, diff});
 	}
 
 	if (welded) {
 		// Repeat the diff calculation, but only for UV diffs.
 		std::unordered_map<std::string, std::pair<Vector3, Vector3>> rdiffpairs;
-		for (auto &sd : rp1d.diffs)
+		for (auto& sd : rp1d.diffs)
 			rdiffpairs[sd.sliderName].first = sd.diff;
-		for (auto &sd : rp2d.diffs)
+		for (auto& sd : rp2d.diffs)
 			rdiffpairs[sd.sliderName].second = sd.diff;
 
-		for (auto &dp : rdiffpairs) {
-			const SliderData &sd = activeSet[dp.first];
+		for (auto& dp : rdiffpairs) {
+			const SliderData& sd = activeSet[dp.first];
 			if (!sd.bUV)
 				continue;
 
 			Vector3 diff = (dp.second.first + dp.second.second) * 0.5f;
-			rusv.diffs.push_back(UndoStateVertexSliderDiff{ dp.first, diff });
+			rusv.diffs.push_back(UndoStateVertexSliderDiff{dp.first, diff});
 		}
 
 		uss.addVerts.push_back(std::move(rusv));
@@ -3102,20 +3109,20 @@ bool OutfitProject::PrepareSplitEdge(NiShape* shape, UndoStateShape &uss, const 
 	return true;
 }
 
-void OutfitProject::CheckMerge(const std::string &sourceName, const std::string &targetName, MergeCheckErrors &e) {
+void OutfitProject::CheckMerge(const std::string& sourceName, const std::string& targetName, MergeCheckErrors& e) {
 	if (sourceName == targetName) {
 		e.shapesSame = true;
 		return;
 	}
 
-	NiShape *source = workNif.FindBlockByName<NiShape>(sourceName);
+	NiShape* source = workNif.FindBlockByName<NiShape>(sourceName);
 	if (!source)
 		return;
-	NiShape *target = workNif.FindBlockByName<NiShape>(targetName);
+	NiShape* target = workNif.FindBlockByName<NiShape>(targetName);
 	if (!target)
 		return;
 
-	size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
+	constexpr size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
 	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
 	if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76())
 		maxTriIndex = std::numeric_limits<uint32_t>().max();
@@ -3157,11 +3164,9 @@ void OutfitProject::CheckMerge(const std::string &sourceName, const std::string 
 			}
 
 			for (size_t ssi = 0; !e.segmentsMismatch && ssi < sinf.segs[si].subs.size(); ++ssi) {
-				const NifSubSegmentInfo &sssinf = sinf.segs[si].subs[ssi];
-				const NifSubSegmentInfo &tssinf = tinf.segs[si].subs[ssi];
-				if (sssinf.userSlotID != tssinf.userSlotID ||
-					sssinf.material != tssinf.material ||
-					sssinf.extraData != tssinf.extraData) {
+				const NifSubSegmentInfo& sssinf = sinf.segs[si].subs[ssi];
+				const NifSubSegmentInfo& tssinf = tinf.segs[si].subs[ssi];
+				if (sssinf.userSlotID != tssinf.userSlotID || sssinf.material != tssinf.material || sssinf.extraData != tssinf.extraData) {
 					// Sub segment information differs
 					e.segmentsMismatch = true;
 				}
@@ -3204,8 +3209,8 @@ void OutfitProject::CheckMerge(const std::string &sourceName, const std::string 
 			e.shaderMismatch = true;
 		}
 		else if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76()) {
-			if (!StringsEqualInsens(sShader->name.get().c_str(), tShader->name.get().c_str()) ||
-				!StringsEqualInsens(sShader->GetWetMaterialName().c_str(), tShader->GetWetMaterialName().c_str())) {
+			if (!StringsEqualInsens(sShader->name.get().c_str(), tShader->name.get().c_str())
+				|| !StringsEqualInsens(sShader->GetWetMaterialName().c_str(), tShader->GetWetMaterialName().c_str())) {
 				// Material file paths differ
 				e.shaderMismatch = true;
 			}
@@ -3229,20 +3234,16 @@ void OutfitProject::CheckMerge(const std::string &sourceName, const std::string 
 	}
 	else if (sAlphaProp) {
 		// Both shapes have an alpha property
-		if (sAlphaProp->flags != tAlphaProp->flags ||
-			sAlphaProp->threshold != tAlphaProp->threshold) {
+		if (sAlphaProp->flags != tAlphaProp->flags || sAlphaProp->threshold != tAlphaProp->threshold) {
 			// Flags or threshold differs
 			e.alphaPropMismatch = true;
 		}
 	}
 
-	e.canMerge =
-		!e.partitionsMismatch && !e.segmentsMismatch &&
-		!e.tooManyVertices && !e.tooManyTriangles &&
-		!e.shaderMismatch && !e.textureMismatch && !e.alphaPropMismatch;
+	e.canMerge = !e.partitionsMismatch && !e.segmentsMismatch && !e.tooManyVertices && !e.tooManyTriangles && !e.shaderMismatch && !e.textureMismatch && !e.alphaPropMismatch;
 }
 
-void OutfitProject::PrepareCopyGeo(NiShape *source, NiShape *target, UndoStateShape &uss) {
+void OutfitProject::PrepareCopyGeo(NiShape* source, NiShape* target, UndoStateShape& uss) {
 	if (!source || !target)
 		return;
 
@@ -3354,7 +3355,7 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 
 void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& shapeMeshes) {
 	std::vector<Vector3> liveNorms;
-	for (auto &m : shapeMeshes) {
+	for (auto& m : shapeMeshes) {
 		auto shape = nif->FindBlockByName<NiShape>(m->shapeName);
 		if (shape) {
 			if (nif->GetHeader().GetVersion().IsSK() || nif->GetHeader().GetVersion().IsSSE()) {
@@ -3365,7 +3366,7 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& sha
 
 			liveNorms.clear();
 			for (int i = 0; i < m->nVerts; i++)
-				liveNorms.emplace_back(std::move(Vector3(m->norms[i].x* -1, m->norms[i].z, m->norms[i].y)));
+				liveNorms.emplace_back(std::move(Vector3(m->norms[i].x * -1, m->norms[i].z, m->norms[i].y)));
 
 			nif->SetNormalsForShape(shape, liveNorms);
 			nif->CalcTangentsForShape(shape);
@@ -3414,8 +3415,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	int error = nif.Load(file);
 	if (error) {
 		if (error == 2) {
-			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				fileName, nif.GetHeader().GetVersion().GetVersionInfo());
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"), fileName, nif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("NIF Error"), wxICON_ERROR, owner);
@@ -3444,7 +3444,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	std::vector<std::string> shapes = workNif.GetShapeNames();
 	auto nifShapes = nif.GetShapes();
 
-	for (auto &s : nifShapes) {
+	for (auto& s : nifShapes) {
 		std::vector<std::string> uniqueShapes = nif.GetShapeNames();
 		uniqueShapes.insert(uniqueShapes.end(), shapes.begin(), shapes.end());
 
@@ -3473,13 +3473,13 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 
 	// Add cloth data block of NIF to the list
 	std::vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nullptr, true);
-	for (auto &cloth : clothDataBlocks)
+	for (auto& cloth : clothDataBlocks)
 		clothData[fileName] = cloth->Clone();
 
 	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
 	if (workNif.IsValid()) {
-		for (auto &s : nif.GetShapes()) {
+		for (auto& s : nif.GetShapes()) {
 			std::string shapeName = s->name.get();
 			auto clonedShape = workNif.CloneShape(s, shapeName, &nif);
 			workAnim.LoadFromNif(&workNif, clonedShape);
@@ -3502,7 +3502,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 
 	std::vector<Vector3> liveVerts;
 	std::vector<Vector3> liveNorms;
-	for (auto &m : modMeshes) {
+	for (auto& m : modMeshes) {
 		auto shape = clone.FindBlockByName<NiShape>(m->shapeName);
 		if (shape) {
 			liveVerts.clear();
@@ -3535,7 +3535,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 	else
 		workAnim.WriteToNif(&clone);
 
-	for (auto &s : clone.GetShapes())
+	for (auto& s : clone.GetShapes())
 		clone.UpdateSkinPartitions(s);
 
 	clone.SetShapeOrder(owner->GetShapeList());
@@ -3551,10 +3551,13 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 void OutfitProject::ChooseClothData(NifFile& nif) {
 	if (!clothData.empty()) {
 		wxArrayString clothFileNames;
-		for (auto &cloth : clothData)
+		for (auto& cloth : clothData)
 			clothFileNames.Add(wxString::FromUTF8(cloth.first));
 
-		wxMultiChoiceDialog clothDataChoice(owner, _("There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."), _("Choose cloth data"), clothFileNames);
+		wxMultiChoiceDialog clothDataChoice(owner,
+											_("There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."),
+											_("Choose cloth data"),
+											clothFileNames);
 		if (clothDataChoice.ShowModal() == wxID_CANCEL)
 			return;
 
@@ -3586,13 +3589,13 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 	NifFile clone(workNif);
 	ChooseClothData(clone);
 
-	for (auto &s : clone.GetShapes())
+	for (auto& s : clone.GetShapes())
 		if (find(exportShapes.begin(), exportShapes.end(), s->name.get()) == exportShapes.end())
 			clone.DeleteShape(s);
 
 	workAnim.WriteToNif(&clone);
 
-	for (auto &s : clone.GetShapes())
+	for (auto& s : clone.GetShapes())
 		clone.UpdateSkinPartitions(s);
 
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
@@ -3605,14 +3608,19 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 
 int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
 	if (!baseShape) {
-		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.  Import anyway?"), _("Import without reference"), wxYES_NO);
+		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.  Import anyway?"),
+							   _("Import without reference"),
+							   wxYES_NO);
 		if (res == wxNO)
 			return 1;
 	}
 
 	bool copyBaseSkinTrans = false;
 	if (baseShape && !workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform())) {
-		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's global-to-skin transform to the imported shapes?"), _("Copy skin coordinates"), wxYES_NO | wxCANCEL);
+		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
+								 "global-to-skin transform to the imported shapes?"),
+							   _("Copy skin coordinates"),
+							   wxYES_NO | wxCANCEL);
 		if (res == wxCANCEL)
 			return 1;
 		if (res == wxYES)
@@ -3648,7 +3656,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 		size_t vertCount = v.size();
 		size_t triCount = t.size();
 
-		// Skip zero size groups.  
+		// Skip zero size groups.
 		if (vertCount == 0)
 			continue;
 
@@ -3658,7 +3666,11 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 			std::vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == vertCount) {
-				int ret = wxMessageBox(_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
+				int ret = wxMessageBox(_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
+										 "(click No to create a new shape)"),
+									   _("Merge or New"),
+									   wxYES_NO | wxICON_QUESTION,
+									   owner);
 				if (ret == wxYES) {
 					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
@@ -3684,9 +3696,16 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 			size_t triLimit = workNif.GetTriangleLimit();
 
 			if (vertCountNew < vertCount || triCountNew < triCount) {
-				wxMessageBox(wxString::Format(_(
-					"The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles (current/max): %zu/%zu"),
-					useShapeName, vertCount, vertexLimit, triCount, triLimit), _("OBJ Error"), wxICON_WARNING, owner);
+				wxMessageBox(wxString::Format(_("The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles "
+												"(current/max): %zu/%zu"),
+											  useShapeName,
+											  vertCount,
+											  vertexLimit,
+											  triCount,
+											  triLimit),
+							 _("OBJ Error"),
+							 wxICON_WARNING,
+							 owner);
 			}
 
 			if (copyBaseSkinTrans)
@@ -3702,7 +3721,7 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 	obj.SetScale(scale);
 	obj.SetOffset(offset);
 
-	for (auto &shape : shapes) {
+	for (auto& shape : shapes) {
 		if (!shape)
 			return 1;
 
@@ -3747,14 +3766,19 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 
 int OutfitProject::ImportFBX(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
 	if (!baseShape) {
-		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.  Import anyway?"), _("Import without reference"), wxYES_NO);
+		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.  Import anyway?"),
+							   _("Import without reference"),
+							   wxYES_NO);
 		if (res == wxNO)
 			return 1;
 	}
 
 	bool copyBaseSkinTrans = false;
 	if (baseShape && !workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform())) {
-		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's global-to-skin transform to the imported shapes?"), _("Copy skin coordinates"), wxYES_NO | wxCANCEL);
+		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
+								 "global-to-skin transform to the imported shapes?"),
+							   _("Copy skin coordinates"),
+							   wxYES_NO | wxCANCEL);
 		if (res == wxCANCEL)
 			return 1;
 		if (res == wxYES)
@@ -3777,9 +3801,9 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 	else if (outfitName.empty())
 		outfitName = "New Outfit";
 
-	std::vector<std::string>shapes;
+	std::vector<std::string> shapes;
 	fbxw.GetShapeNames(shapes);
-	for (auto &s : shapes) {
+	for (auto& s : shapes) {
 		FBXShape* fbxShape = fbxw.GetShape(s);
 		std::string useShapeName = s;
 
@@ -3788,7 +3812,11 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 		if (mergeShape) {
 			if (mergeShape->GetNumVertices() == vertCount) {
-				int ret = wxMessageBox(_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
+				int ret = wxMessageBox(_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  "
+										 "(click No to create a new shape)"),
+									   _("Merge or New"),
+									   wxYES_NO | wxICON_QUESTION,
+									   owner);
 				if (ret == wxYES) {
 					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
@@ -3800,7 +3828,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 					ret = wxMessageBox(_("Update Animation Weighting?"), _("Animation Weight Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
-						for (auto &bn : fbxShape->boneNames)
+						for (auto& bn : fbxShape->boneNames)
 							workAnim.SetWeights(mergeShape->name.get(), bn, fbxShape->boneSkin[bn].GetWeights());
 
 					return 101;
@@ -3824,15 +3852,22 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		size_t triLimit = workNif.GetTriangleLimit();
 
 		if (vertCountNew < vertCount || triCountNew < triCount) {
-			wxMessageBox(wxString::Format(_(
-				"The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles (current/max): %zu/%zu"),
-				useShapeName, vertCount, vertexLimit, triCount, triLimit), _("OBJ Error"), wxICON_WARNING, owner);
+			wxMessageBox(wxString::Format(_("The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles "
+											"(current/max): %zu/%zu"),
+										  useShapeName,
+										  vertCount,
+										  vertexLimit,
+										  triCount,
+										  triLimit),
+						 _("OBJ Error"),
+						 wxICON_WARNING,
+						 owner);
 		}
 
 		if (copyBaseSkinTrans)
 			workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin;
 
-		for (auto &bn : fbxShape->boneNames) {
+		for (auto& bn : fbxShape->boneNames) {
 			if (!AnimSkeleton::getInstance().GetBonePtr(bn)) {
 				// Not found in reference skeleton, use default values
 				AnimSkeleton::getInstance().AddCustomBone(bn);
@@ -3861,7 +3896,7 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiSh
 	FBXWrangler fbxw;
 	fbxw.AddSkeleton(&AnimSkeleton::getInstance().refSkeletonNif);
 
-	for (auto &s : shapes) {
+	for (auto& s : shapes) {
 		fbxw.AddNif(&workNif, &workAnim, transToGlobal, s);
 		fbxw.AddSkinning(&workAnim, s);
 	}
@@ -3875,27 +3910,15 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 	bool match = false;
 
 	switch (targetGame) {
-	case OB:
-		match = nif.GetHeader().GetVersion().IsOB();
-		break;
-	case FO3:
-	case FONV:
-		match = nif.GetHeader().GetVersion().IsFO3();
-		break;
-	case SKYRIM:
-		match = nif.GetHeader().GetVersion().IsSK();
-		break;
-	case FO4:
-	case FO4VR:
-		match = nif.GetHeader().GetVersion().IsFO4();
-		break;
-	case SKYRIMSE:
-	case SKYRIMVR:
-		match = nif.GetHeader().GetVersion().IsSSE();
-		break;
-	case FO76:
-		match = nif.GetHeader().GetVersion().IsFO76();
-		break;
+		case OB: match = nif.GetHeader().GetVersion().IsOB(); break;
+		case FO3:
+		case FONV: match = nif.GetHeader().GetVersion().IsFO3(); break;
+		case SKYRIM: match = nif.GetHeader().GetVersion().IsSK(); break;
+		case FO4:
+		case FO4VR: match = nif.GetHeader().GetVersion().IsFO4(); break;
+		case SKYRIMSE:
+		case SKYRIMVR: match = nif.GetHeader().GetVersion().IsSSE(); break;
+		case FO76: match = nif.GetHeader().GetVersion().IsFO76(); break;
 	}
 
 	if (nif.GetHeader().GetVersion().IsFO76()) {
@@ -3923,11 +3946,15 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 		}
 		else {
 			wxLogWarning("Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.");
-			wxMessageBox(wxString::Format(_("Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.")), _("Version"), wxICON_WARNING, owner);
+			wxMessageBox(wxString::Format(
+							 _("Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.")),
+						 _("Version"),
+						 wxICON_WARNING,
+						 owner);
 		}
 	}
 
-	for (auto &s : nif.GetShapes())
+	for (auto& s : nif.GetShapes())
 		nif.TriangulateShape(s);
 }
 
@@ -3935,7 +3962,7 @@ void OutfitProject::ResetTransforms() {
 	bool clearRoot = false;
 	bool unskinnedFound = false;
 
-	for (auto &s : workNif.GetShapes()) {
+	for (auto& s : workNif.GetShapes()) {
 		if (s->IsSkinned()) {
 			/*
 			 * Root node, shape and global-to-skin transform aren't rendered directly for skinned meshes.
@@ -3981,7 +4008,7 @@ void OutfitProject::ResetTransforms() {
 }
 
 void OutfitProject::RemoveSkinning() {
-	for (auto &s : workNif.GetShapes()) {
+	for (auto& s : workNif.GetShapes()) {
 		workNif.DeleteSkinning(s);
 		workAnim.ClearShape(s->name.get());
 	}

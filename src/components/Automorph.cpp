@@ -8,15 +8,14 @@ See the included LICENSE file
 
 using namespace nifly;
 
-Automorph::Automorph() {
-}
+Automorph::Automorph() {}
 
 Automorph::~Automorph() {
 	ClearSourceShapes();
 }
 
 void Automorph::ClearSourceShapes() {
-	for (auto &shapes : sourceShapes)
+	for (auto& shapes : sourceShapes)
 		delete shapes.second;
 
 	sourceShapes.clear();
@@ -39,7 +38,7 @@ void Automorph::RenameShape(const std::string& oldShapeName, const std::string& 
 	resultDiffData.DeepRename(oldTarget, newShapeName);
 
 	std::vector<std::string> oldKeys;
-	for (auto &tsdn : targetSliderDataNames) {
+	for (auto& tsdn : targetSliderDataNames) {
 		bool found = false;
 		size_t p = tsdn.second.find(oldShapeName);
 		if (p == 0)
@@ -64,7 +63,7 @@ void Automorph::CopyShape(const std::string& srcShapeName, const std::string& sr
 	std::vector<std::string> oldKeys;
 	std::vector<std::string> newKeys;
 
-	for (auto &tsdn : targetSliderDataNames) {
+	for (auto& tsdn : targetSliderDataNames) {
 		std::string newDN = tsdn.second;
 		std::string newKey = tsdn.first;
 
@@ -94,7 +93,7 @@ void Automorph::CopyShape(const std::string& srcShapeName, const std::string& sr
 		targetSliderDataNames[newKeys[i]] = newVals[i];
 }
 
-void Automorph::SetRef(NifFile& ref, NiShape* refShape, const AnimInfo *workAnim) {
+void Automorph::SetRef(NifFile& ref, NiShape* refShape, const AnimInfo* workAnim) {
 	morphRef = std::make_unique<mesh>();
 	MeshFromNifShape(morphRef.get(), ref, refShape, workAnim);
 
@@ -125,18 +124,18 @@ bool Automorph::ApplyResultToUVs(const std::string& sliderName, const std::strin
 	return resultDiffData.ApplyUVDiff(setname, shapeTargetName, strength, inOutResult);
 }
 
-void Automorph::SourceShapesFromNif(NifFile &baseNif, const AnimInfo *workAnim) {
+void Automorph::SourceShapesFromNif(NifFile& baseNif, const AnimInfo* workAnim) {
 	ClearSourceShapes();
 
 	auto shapes = baseNif.GetShapes();
-	for (auto &s : shapes) {
+	for (auto& s : shapes) {
 		mesh* m = new mesh();
 		MeshFromNifShape(m, baseNif, s, workAnim);
 		sourceShapes[s->name.get()] = m;
 	}
 }
 
-void Automorph::UpdateMeshFromNif(NifFile &baseNif, const std::string& shapeName) {
+void Automorph::UpdateMeshFromNif(NifFile& baseNif, const std::string& shapeName) {
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
@@ -169,7 +168,7 @@ void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 		dm->mask[i] = m->mask[i];
 }
 
-void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const AnimInfo *workAnim) {
+void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const AnimInfo* workAnim) {
 	std::vector<Vector3> nifVerts;
 	ref.GetVertsForShape(shape, nifVerts);
 
@@ -191,7 +190,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 		// For skinned meshes with appropriate global-to-skin transform
 		const auto skinning = workAnim->shapeSkinning.find(m->shapeName);
 		if (skinning != workAnim->shapeSkinning.end()) {
-			const MatTransform &gts = skinning->second.xformGlobalToSkin;
+			const MatTransform& gts = skinning->second.xformGlobalToSkin;
 			m->matModel = glm::inverse(mesh::TransformToMatrix4(gts));
 		}
 		else
@@ -235,7 +234,7 @@ void Automorph::BuildProximityCache(const std::string& shapeName, float proximit
 
 		std::vector<kd_query_result> indexResults;
 		for (uint16_t id = 0; id < resultCount; id++) {
-			const auto& result = refTree->queryResult[id];
+			auto& result = refTree->queryResult[id];
 
 			if (maskIndices) {
 				if (maskIndices->find(result.vertex_index) != maskIndices->end())
@@ -278,7 +277,7 @@ void Automorph::LoadResultDiffs(SliderSet& fromSet) {
 	fromSet.LoadSetDiffData(resultDiffData);
 	targetSliderDataNames.clear();
 	for (size_t i = 0; i < fromSet.size(); i++)
-		for (auto &df : fromSet[i].dataFiles)
+		for (auto& df : fromSet[i].dataFiles)
 			if (df.dataName != (df.targetName + fromSet[i].name))
 				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);
 }
@@ -286,7 +285,7 @@ void Automorph::LoadResultDiffs(SliderSet& fromSet) {
 void Automorph::MergeResultDiffs(SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal) {
 	fromSet.Merge(mergeSet, resultDiffData, baseDiffData, baseShape, newDataLocal);
 	for (size_t i = 0; i < fromSet.size(); i++)
-		for (auto &df : fromSet[i].dataFiles)
+		for (auto& df : fromSet[i].dataFiles)
 			if (df.dataName != (df.targetName + fromSet[i].name))
 				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);
 }
@@ -313,7 +312,7 @@ void Automorph::SetResultDiff(const std::string& shapeName, const std::string& s
 	if (!resultDiffData.TargetMatch(setName, shapeName))
 		resultDiffData.AddEmptySet(setName, shapeName);
 
-	for (auto &i : diff)
+	for (auto& i : diff)
 		resultDiffData.UpdateDiff(setName, shapeName, i.first, i.second);
 }
 
@@ -323,7 +322,7 @@ void Automorph::UpdateResultDiff(const std::string& shapeName, const std::string
 	if (!resultDiffData.TargetMatch(setName, shapeName))
 		resultDiffData.AddEmptySet(setName, shapeName);
 
-	for (auto &i: diff) {
+	for (auto& i : diff) {
 		Vector3 diffscale = Vector3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
 		resultDiffData.SumDiff(setName, shapeName, i.first, diffscale);
 	}
@@ -335,7 +334,7 @@ void Automorph::UpdateRefDiff(const std::string& shapeName, const std::string& s
 	if (!srcDiffData->TargetMatch(setName, shapeName))
 		srcDiffData->AddEmptySet(setName, shapeName);
 
-	for (auto &i : diff) {
+	for (auto& i : diff) {
 		Vector3 diffscale = Vector3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
 		srcDiffData->SumDiff(setName, shapeName, i.first, diffscale);
 	}
@@ -364,7 +363,8 @@ std::string Automorph::ResultDataName(const std::string& shapeName, const std::s
 	return f->second;
 }
 
-void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, int maxResults, bool noSqueeze, bool solidMode, bool axisX, bool axisY, bool axisZ) {
+void Automorph::GenerateResultDiff(
+	const std::string& shapeName, const std::string& sliderName, const std::string& refDataName, int maxResults, bool noSqueeze, bool solidMode, bool axisX, bool axisY, bool axisZ) {
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
@@ -409,9 +409,9 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 			const Vector3* v = (*vertProx)[j].v;
 			auto diffItem = diffData->find(vi);
 			if (diffItem != diffData->end()) {
-				weight = (*vertProx)[j].distance;	// "weight" is just a placeholder here...
+				weight = (*vertProx)[j].distance; // "weight" is just a placeholder here...
 				if (weight == 0.0f)
-					invDist[nearMoves] = 1000.0f;	// Exact match, choose big nearness weight.
+					invDist[nearMoves] = 1000.0f; // Exact match, choose big nearness weight.
 				else
 					invDist[nearMoves] = 1.0f / weight;
 
@@ -419,8 +419,7 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 
 				auto& effect = effectVector[nearMoves];
 				if (axisX) {
-					if (!noSqueeze ||
-						(noSqueeze && ((diffItem->second.x > 0.0f && v->x > 0.0f) || (diffItem->second.x < 0.0f && v->x < 0.0f))))
+					if (!noSqueeze || (noSqueeze && ((diffItem->second.x > 0.0f && v->x > 0.0f) || (diffItem->second.x < 0.0f && v->x < 0.0f))))
 						effect.x = diffItem->second.x;
 				}
 				if (axisY)
@@ -465,7 +464,7 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 		Vector3 totalSolidMove;
 		Vector3 totalSolidMoveNeg;
 
-		for (const auto &mv : totalMoveList) {
+		for (const auto& mv : totalMoveList) {
 			if (mv.x >= 0.0f) {
 				if (mv.x > totalSolidMove.x)
 					totalSolidMove.x = mv.x;

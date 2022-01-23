@@ -153,7 +153,7 @@ void wxBrushSettingsPopupBase::SetBrushSpacing(float value) {
 
 
 wxBrushSettingsPopupTransient::wxBrushSettingsPopupTransient(OutfitStudioFrame* parent, bool stayOpen)
-	: wxPopupTransientWindow(parent, wxBORDER_SIMPLE | wxPU_CONTAINS_CONTROLS),
-	wxBrushSettingsPopupBase(parent, this) {
+	: wxPopupTransientWindow(parent, wxBORDER_SIMPLE | wxPU_CONTAINS_CONTROLS)
+	, wxBrushSettingsPopupBase(parent, this) {
 	this->stayOpen = stayOpen;
 }

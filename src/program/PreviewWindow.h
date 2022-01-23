@@ -5,11 +5,11 @@ See the included LICENSE file
 
 #pragma once
 
-#include <wx/wx.h>
-#include "../render/GLSurface.h"
 #include "../render/GLOffscreenBuffer.h"
-#include "NormalsGenDialog.h"
+#include "../render/GLSurface.h"
 #include "../utils/ConfigurationManager.h"
+#include "NormalsGenDialog.h"
+#include <wx/wx.h>
 
 class BodySlideApp;
 class PreviewCanvas;
@@ -19,12 +19,12 @@ extern ConfigurationManager Config;
 
 class PreviewWindow : public wxFrame {
 	BodySlideApp* app = nullptr;
-	PreviewCanvas* canvas = nullptr; 
-	std::unique_ptr<wxGLContext> context; 
+	PreviewCanvas* canvas = nullptr;
+	std::unique_ptr<wxGLContext> context;
 	wxButton* optButton = nullptr;
 
 	NormalsGenDialog* normalsGenDlg = nullptr;
-	// empty normal gen layers vectory to temporarily occupy the reference until assigned by bodyslide. 
+	// empty normal gen layers vectory to temporarily occupy the reference until assigned by bodyslide.
 	std::vector<NormalGenLayer> emptyLayers;
 	// Foreign normals layer generation reference, stored in SliderSet, but configured and used within the preview window.
 	std::vector<NormalGenLayer>& refNormalGenLayers;
@@ -51,10 +51,8 @@ public:
 
 	void Cleanup();
 
-	int GetWeight() {
-		return weight;
-	}
-	
+	int GetWeight() { return weight; }
+
 	void ShowWeight(bool show = true) {
 		weight = 100;
 		wxSlider* weightSlider = (wxSlider*)FindWindowByName("weightSlider", this);
@@ -65,9 +63,7 @@ public:
 		}
 	}
 
-	void SetBaseDataPath(const std::string& path) {
-		baseDataPath = path;
-	}
+	void SetBaseDataPath(const std::string& path) { baseDataPath = path; }
 
 	void SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers);
 
@@ -86,7 +82,12 @@ public:
 		m->SmoothNormals(changed);
 	}
 
-	void SetShapeTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const std::string& vShader, const std::string& fShader, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile()) {
+	void SetShapeTextures(const std::string& shapeName,
+						  const std::vector<std::string>& textureFiles,
+						  const std::string& vShader,
+						  const std::string& fShader,
+						  const bool hasMatFile = false,
+						  const MaterialFile& matFile = MaterialFile()) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -103,7 +104,7 @@ public:
 		}
 	}
 
-	void SetShapeVertexColors(nifly::NifFile* nif, const std::string& shapeName,  mesh* mesh) {
+	void SetShapeVertexColors(nifly::NifFile* nif, const std::string& shapeName, mesh* mesh) {
 		const std::vector<nifly::Color4>* vcolors = nif->GetColorsForShape(shapeName);
 		if (vcolors) {
 			for (size_t v = 0; v < vcolors->size(); v++) {
@@ -115,13 +116,9 @@ public:
 		}
 	}
 
-	void Render() {
-		gls.RenderOneFrame();
-	}
+	void Render() { gls.RenderOneFrame(); }
 
-	void Resized(uint32_t w, uint32_t h) {
-		gls.SetSize(w, h);
-	}
+	void Resized(uint32_t w, uint32_t h) { gls.SetSize(w, h); }
 
 	void ToggleTextures() {
 		gls.ToggleTextures();
@@ -133,18 +130,17 @@ public:
 		gls.RenderOneFrame();
 	}
 
-	void ToggleLighting(){
+	void ToggleLighting() {
 		gls.ToggleLighting();
 		gls.RenderOneFrame();
 	}
 
 	void RenderNormalMap(const std::string& outfilename = "") {
-
 		wxBusyCursor busycursor;
 
 		std::string dest_tex = gls.GetMesh("CBBE")->material->GetTexName(1);
 		GLuint w, h;
-		gls.GetSize(w, h);	
+		gls.GetSize(w, h);
 		std::vector<GLuint> texIds;
 		std::vector<std::string> normTextures;
 		normTextures.resize(20);
@@ -158,10 +154,10 @@ public:
 		ppTex.push_back("pproc");
 		GLMaterial* ppMat = gls.AddMaterial(ppTex, Config["AppDir"] + "/res/shaders/fullscreentri.vert", Config["AppDir"] + "/res/shaders/fullscreentri.frag");
 
-		
+
 		//texIds.push_back(normMat->GetTexID(0));
 		GLOffScreenBuffer offscreen(&gls, 4096, 4096, 2, texIds);
-	
+
 
 		gls.SetPerspective(false);
 		offscreen.Start();
@@ -175,15 +171,14 @@ public:
 		gls.RenderFullScreenQuad(ppMat, 4096, 4096);
 		gls.GetResourceLoader()->RenameTexture(offscreen.texName(1), dest_tex, true);
 		if (!outfilename.empty()) {
-			offscreen.SaveTexture(outfilename);	
+			offscreen.SaveTexture(outfilename);
 		}
 		offscreen.End();
-	
+
 		gls.SetPerspective(true);
 		// rebuild viewport from original dimensions
 		gls.SetSize(w, h);
 		Render();
-		
 	}
 
 	void RightDrag(int dX, int dY);

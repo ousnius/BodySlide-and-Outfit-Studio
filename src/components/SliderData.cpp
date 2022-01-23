@@ -10,11 +10,9 @@ See the included LICENSE file
 #include <wx/tokenzr.h>
 
 SliderData::SliderData(std::string inName)
-	: name(std::move(inName)) {
-}
+	: name(std::move(inName)) {}
 
-SliderData::~SliderData() {
-}
+SliderData::~SliderData() {}
 
 int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 	//Outfit Studio state values, not saved in XML.
@@ -22,7 +20,7 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 	bShow = false;
 	int numData = 0;
 
-	XMLElement *root = element->Parent()->Parent()->ToElement();
+	XMLElement* root = element->Parent()->Parent()->ToElement();
 	int version = root->IntAttribute("version");
 
 	std::string dataFileStr = version >= 1 ? "Data" : "datafile";

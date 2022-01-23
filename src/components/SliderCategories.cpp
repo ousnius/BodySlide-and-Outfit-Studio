@@ -12,11 +12,11 @@ int SliderCategoryCollection::LoadCategories(const std::string& basePath) {
 	wxArrayString files;
 	wxDir::GetAllFiles(basePath, &files, "*.xml");
 
-	for (auto &file : files) {
+	for (auto& file : files) {
 		SliderCategoryFile catFile(file.ToUTF8().data());
 		std::vector<std::string> cats;
 		catFile.GetCategoryNames(cats);
-		for (auto &cat : cats) {
+		for (auto& cat : cats) {
 			SliderCategory sliderCat;
 			catFile.GetCategory(cat, sliderCat);
 			if (categories.find(cat) != categories.end())
@@ -31,7 +31,7 @@ int SliderCategoryCollection::LoadCategories(const std::string& basePath) {
 
 int SliderCategoryCollection::GetAllCategories(std::vector<std::string>& outCategories) {
 	outCategories.clear();
-	for (auto &c : categories)
+	for (auto& c : categories)
 		outCategories.push_back(c.first);
 
 	return outCategories.size();
@@ -46,7 +46,7 @@ std::string SliderCategoryCollection::GetSliderDisplayName(const std::string& ca
 }
 
 int SliderCategoryCollection::GetSliderCategory(const std::string& sliderName, std::string& outCategory) {
-	for (auto &c : categories)
+	for (auto& c : categories)
 		if (c.second.HasSlider(sliderName)) {
 			outCategory = c.first;
 			break;
@@ -126,7 +126,7 @@ int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
 }
 
 bool SliderCategory::HasSlider(const std::string& search) {
-	for (auto &m : sliders)
+	for (auto& m : sliders)
 		if (m.compare(search) == 0)
 			return true;
 
@@ -136,7 +136,7 @@ bool SliderCategory::HasSlider(const std::string& search) {
 std::string SliderCategory::GetSliderDisplayName(const std::string& sliderName) {
 	if (!HasSlider(sliderName))
 		return "";
-	
+
 	return displayNames[sliderName];
 }
 
@@ -167,7 +167,7 @@ void SliderCategory::WriteCategory(XMLElement* categoryElement, bool append) {
 	if (!append)
 		categoryElement->DeleteChildren();
 
-	for (auto &slider : sliders) {
+	for (auto& slider : sliders) {
 		XMLElement* newElement = categoryElement->GetDocument()->NewElement("Slider");
 		XMLElement* element = categoryElement->InsertEndChild(newElement)->ToElement();
 		element->SetAttribute("name", slider.c_str());
@@ -188,11 +188,11 @@ void SliderCategoryFile::Open(const std::string& srcFileName) {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (error)
+	if (error || !fp)
 		return;
 #else
 	fp = fopen(srcFileName.c_str(), "rb");
-	if (!fp){
+	if (!fp) {
 		error = errno;
 		return;
 	}
@@ -236,7 +236,7 @@ int SliderCategoryFile::GetCategoryNames(std::vector<std::string>& outCategoryNa
 	if (unique)
 		existingNames.insert(outCategoryNames.begin(), outCategoryNames.end());
 
-	for (auto &cn : categoriesInFile) {
+	for (auto& cn : categoriesInFile) {
 		if (unique && existingNames.find(cn.first) != existingNames.end())
 			continue;
 		else if (unique)
@@ -257,7 +257,7 @@ bool SliderCategoryFile::HasCategory(const std::string& queryCategoryName) {
 int SliderCategoryFile::GetAllCategories(std::vector<SliderCategory>& outAppendCategories) {
 	int count = 0;
 	bool add = true;
-	for (auto &c : categoriesInFile) {
+	for (auto& c : categoriesInFile) {
 		add = true;
 		for (auto& oc : outAppendCategories) {
 			if (oc.GetName() == c.first) {
@@ -303,11 +303,11 @@ bool SliderCategoryFile::Save() {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (error)
+	if (error || !fp)
 		return false;
 #else
 	fp = fopen(fileName.c_str(), "w");
-	if (!fp){
+	if (!fp) {
 		error = errno;
 		return false;
 	}

@@ -15,13 +15,7 @@ const int EDITUV_DIRECTION_LEFT = 0x2;
 const int EDITUV_DIRECTION_UP = 0x4;
 const int EDITUV_DIRECTION_DOWN = 0x8;
 
-enum EditUVTool {
-	BoxSelection,
-	VertexSelection,
-	Move,
-	Scale,
-	Rotate
-};
+enum class EditUVTool { BoxSelection, VertexSelection, Move, Scale, Rotate };
 
 class EditUVAction {
 	mesh* actionMesh = nullptr;
@@ -29,14 +23,12 @@ class EditUVAction {
 	std::unordered_map<int, nifly::Vector2> endState;
 
 public:
-	void SetActionMesh(mesh* m) {
-		actionMesh = m;
-	}
+	void SetActionMesh(mesh* m) { actionMesh = m; }
 
 	std::unordered_map<int, nifly::Vector2>& GetStartState();
 	std::unordered_map<int, nifly::Vector2>& GetEndState();
-	void SetStartState(const std::unordered_map<int, nifly::Vector2>& state);
-	void SetEndState(const std::unordered_map<int, nifly::Vector2>& state);
+	void SetStartState(std::unordered_map<int, nifly::Vector2>& state);
+	void SetEndState(std::unordered_map<int, nifly::Vector2>& state);
 	void RestoreStartState();
 	void RestoreEndState();
 };
@@ -82,25 +74,19 @@ public:
 	EditUV(wxWindow*, nifly::NifFile*, nifly::NiShape*, mesh*, const std::string&);
 	~EditUV();
 
-	void StartTool() {
-		toolActive = toolSelected;
-	}
+	void StartTool() { toolActive = toolSelected; }
 
-	EditUVTool GetSelectedTool() {
-		return toolSelected;
-	}
+	EditUVTool GetSelectedTool() { return toolSelected; }
 
-	EditUVTool GetActiveTool() {
-		return toolActive;
-	}
+	EditUVTool GetActiveTool() { return toolActive; }
 
 	void SelectTool(EditUVTool tool);
 	void Undo();
 	void Redo();
 
 private:
-	EditUVTool toolSelected = BoxSelection;
-	EditUVTool toolActive = BoxSelection;
+	EditUVTool toolSelected = EditUVTool::BoxSelection;
+	EditUVTool toolActive = EditUVTool::BoxSelection;
 
 	void UpdateShapeMesh(bool apply = true);
 
@@ -136,13 +122,9 @@ public:
 	void SelectLess();
 	void SelectMore();
 
-	void SetCursorType(GLSurface::CursorType cursorType) {
-		uvSurface.SetCursorType(cursorType);
-	}
+	void SetCursorType(GLSurface::CursorType cursorType) { uvSurface.SetCursorType(cursorType); }
 
-	void Render() {
-		uvSurface.RenderOneFrame();
-	}
+	void Render() { uvSurface.RenderOneFrame(); }
 
 private:
 	EditUV* editUV = nullptr;

@@ -5,20 +5,20 @@ See the included LICENSE file
 
 #include "wxStateButton.h"
 
-IMPLEMENT_DYNAMIC_CLASS(wxStateButton, wxButton)
- 
-BEGIN_EVENT_TABLE(wxStateButton, wxButton)
+wxIMPLEMENT_DYNAMIC_CLASS(wxStateButton, wxButton);
+
+wxBEGIN_EVENT_TABLE(wxStateButton, wxButton)
 	EVT_LEFT_DOWN(wxStateButton::mouseDown)
 	EVT_LEFT_UP(wxStateButton::mouseReleased)
-    EVT_PAINT(wxStateButton::paintEvent)
-END_EVENT_TABLE()
+	EVT_PAINT(wxStateButton::paintEvent)
+wxEND_EVENT_TABLE()
 
-wxStateButton::wxStateButton() : wxButton() {
-}
+wxStateButton::wxStateButton()
+	: wxButton() {}
 
-wxStateButton::wxStateButton(wxWindow* parent, wxWindowID id, const wxString& label, const wxPoint& pos,
-	const wxSize& size, long style, const wxValidator& validator, const wxString& name)
-	: wxButton(parent, id, label, pos, size, style, validator, name) { }
+wxStateButton::wxStateButton(
+	wxWindow* parent, wxWindowID id, const wxString& label, const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name)
+	: wxButton(parent, id, label, pos, size, style, validator, name) {}
 
 /*
  * Called by the system of by wxWidgets when the panel needs
@@ -30,7 +30,7 @@ void wxStateButton::paintEvent(wxPaintEvent& WXUNUSED(evt)) {
 	wxPaintDC dc(this);
 	render(dc);
 }
- 
+
 /*
  * Alternatively, you can use a clientDC to paint on the panel
  * at any time. Using this generally does not free you from
@@ -44,7 +44,7 @@ void wxStateButton::paintNow() {
 	wxClientDC dc(this);
 	render(dc);
 }
- 
+
 /*
  * Here we do the actual rendering. I put it in a separate
  * method so that it can work no matter what type of DC
@@ -80,7 +80,7 @@ void wxStateButton::SetPendingChanges(bool newPending) {
 		Refresh();
 	}
 }
- 
+
 void wxStateButton::mouseDown(wxMouseEvent& WXUNUSED(event)) {
 	wxCommandEvent evt(wxEVT_COMMAND_BUTTON_CLICKED, GetId());
 	evt.SetEventObject(this);

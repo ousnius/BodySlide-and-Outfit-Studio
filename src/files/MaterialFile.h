@@ -12,18 +12,9 @@ class MaterialFile {
 	bool failed = false;
 
 public:
-	enum Type {
-		BGSM = 0x4D534742,
-		BGEM = 0x4D454742
-	};
+	enum Type { BGSM = 0x4D534742, BGEM = 0x4D454742 };
 
-	enum AlphaBlendModeType {
-		Unknown,
-		None,
-		Standard,
-		Additive,
-		Multiplicative
-	};
+	enum AlphaBlendModeType { Unknown, None, Standard, Additive, Multiplicative };
 
 	// Base
 	Type signature = Type::BGSM;
@@ -31,7 +22,7 @@ public:
 	bool tileU = true;
 	bool tileV = true;
 	nifly::Vector2 uvOffset;
-	nifly::Vector2 uvScale{ 1.0f, 1.0f };
+	nifly::Vector2 uvScale{1.0f, 1.0f};
 	float alpha = 1.0f;
 	AlphaBlendModeType alphaBlendMode = AlphaBlendModeType::Unknown;
 	char alphaTestRef = -128;
@@ -68,7 +59,7 @@ public:
 	bool subsurfaceLighting = false;
 	float subsurfaceLightingRolloff = 0.3f;
 	bool specularEnabled = false;
-	nifly::Vector3 specularColor = { 1.0f, 1.0f, 1.0f };
+	nifly::Vector3 specularColor = {1.0f, 1.0f, 1.0f};
 	float specularMult = 1.0f;
 	float smoothness = 1.0f;
 	float fresnelPower = 5.0f;
@@ -81,7 +72,7 @@ public:
 	std::string rootMaterialPath;
 	bool anisoLighting = false;
 	bool emitEnabled = false;
-	nifly::Vector3 emittanceColor = { 1.0f, 1.0f, 1.0f };
+	nifly::Vector3 emittanceColor = {1.0f, 1.0f, 1.0f};
 	float emittanceMult = 1.0f;
 	bool modelSpaceNormals = false;
 	bool externalEmittance = false;
@@ -95,7 +86,7 @@ public:
 	bool environmentMappingWindow = false;
 	bool environmentMappingEye = false;
 	bool hair = false;
-	nifly::Vector3 hairTintColor = { 0.5f, 0.5f, 0.5f };
+	nifly::Vector3 hairTintColor = {0.5f, 0.5f, 0.5f};
 	bool tree = false;
 	bool facegen = false;
 	bool skinTint = false;
@@ -120,7 +111,7 @@ public:
 	bool falloffColorEnabled = false;
 	bool grayscaleToPaletteAlpha = false;
 	bool softEnabled = false;
-	nifly::Vector3 baseColor = { 1.0f, 1.0f, 1.0f };
+	nifly::Vector3 baseColor = {1.0f, 1.0f, 1.0f};
 	float baseColorScale = 1.0f;
 	float falloffStartAngle = 1.0f;
 	float falloffStopAngle = 1.0f;
@@ -138,9 +129,7 @@ public:
 	int Read(std::istream&);
 	int Write(std::ostream&);
 
-	bool Failed() {
-		return failed;
-	}
+	bool Failed() { return failed; }
 
 	AlphaBlendModeType ConvertAlphaBlendMode(const uint8_t, const uint32_t, const uint32_t);
 	void ConvertAlphaBlendMode(const AlphaBlendModeType&, uint8_t&, uint32_t&, uint32_t&);

@@ -29,7 +29,7 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 wxEND_EVENT_TABLE()
 
 ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* refShape) {
-	wxXmlResource *xrc = wxXmlResource::Get();
+	wxXmlResource* xrc = wxXmlResource::Get();
 	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/ShapeProperties.xrc");
 	if (!loaded) {
 		wxMessageBox("Failed to load ShapeProperties.xrc file!", "Error", wxICON_ERROR);
@@ -248,15 +248,15 @@ void ShapeProperties::GetShaderType() {
 			shaderType->Enable();
 
 			switch (type) {
-			case BSShaderType::SHADER_TALL_GRASS: shaderType->SetSelection(0); break;
-			case BSShaderType::SHADER_DEFAULT: shaderType->SetSelection(1); break;
-			case BSShaderType::SHADER_SKY: shaderType->SetSelection(2); break;
-			case BSShaderType::SHADER_SKIN: shaderType->SetSelection(3); break;
-			case BSShaderType::SHADER_WATER: shaderType->SetSelection(4); break;
-			case BSShaderType::SHADER_LIGHTING30: shaderType->SetSelection(5); break;
-			case BSShaderType::SHADER_TILE: shaderType->SetSelection(6); break;
-			case BSShaderType::SHADER_NOLIGHTING: shaderType->SetSelection(7); break;
-			default: shaderType->SetSelection(1);
+				case BSShaderType::SHADER_TALL_GRASS: shaderType->SetSelection(0); break;
+				case BSShaderType::SHADER_DEFAULT: shaderType->SetSelection(1); break;
+				case BSShaderType::SHADER_SKY: shaderType->SetSelection(2); break;
+				case BSShaderType::SHADER_SKIN: shaderType->SetSelection(3); break;
+				case BSShaderType::SHADER_WATER: shaderType->SetSelection(4); break;
+				case BSShaderType::SHADER_LIGHTING30: shaderType->SetSelection(5); break;
+				case BSShaderType::SHADER_TILE: shaderType->SetSelection(6); break;
+				case BSShaderType::SHADER_NOLIGHTING: shaderType->SetSelection(7); break;
+				default: shaderType->SetSelection(1);
 			}
 		}
 	}
@@ -306,23 +306,23 @@ void ShapeProperties::AddShader() {
 	std::unique_ptr<NiMaterialProperty> newMaterial = nullptr;
 
 	switch (targetGame) {
-	case OB:
-		newMaterial = std::make_unique<NiMaterialProperty>();
-		shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
-		break;
+		case OB:
+			newMaterial = std::make_unique<NiMaterialProperty>();
+			shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
+			break;
 
-	case FO3:
-	case FONV:
-		newShader = std::make_unique<BSShaderPPLightingProperty>();
-		shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newShader)));
+		case FO3:
+		case FONV:
+			newShader = std::make_unique<BSShaderPPLightingProperty>();
+			shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newShader)));
 
-		newMaterial = std::make_unique<NiMaterialProperty>();
-		shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
-		break;
+			newMaterial = std::make_unique<NiMaterialProperty>();
+			shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(std::move(newMaterial)));
+			break;
 
-	default:
-		newShader = std::make_unique<BSLightingShaderProperty>(nif->GetHeader().GetVersion());
-		shape->ShaderPropertyRef()->index = nif->GetHeader().AddBlock(std::move(newShader));
+		default:
+			newShader = std::make_unique<BSLightingShaderProperty>(nif->GetHeader().GetVersion());
+			shape->ShaderPropertyRef()->index = nif->GetHeader().AddBlock(std::move(newShader));
 	}
 
 	NiShader* shader = nif->GetShader(shape);
@@ -502,7 +502,7 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayString choices;
 
 	auto shapes = nif->GetShapes();
-	for (auto &s : shapes) {
+	for (auto& s : shapes) {
 		if (s != shape) {
 			choices.Add(wxString::FromUTF8(s->name.get()));
 		}
@@ -586,7 +586,7 @@ void ShapeProperties::GetGeometry() {
 		}
 
 		auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-		
+
 		subIndex->Enable(targetGame == FO4 || targetGame == FO4VR || targetGame == FO76);
 		dynamic->Enable(targetGame == SKYRIMSE || targetGame == SKYRIMVR);
 	}
@@ -715,27 +715,27 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 
 	std::unique_ptr<NiExtraData> extraDataResult = nullptr;
 	switch (selection) {
-	case 0: {
-		auto strExtraData = std::make_unique<NiStringExtraData>();
-		strExtraData->name.get() = extraDataName->GetValue().ToStdString();
-		strExtraData->stringData.get() = extraDataValue->GetValue().ToStdString();
-		extraDataResult = std::move(strExtraData);
-		break;
-	}
-	case 1: {
-		auto intExtraData = std::make_unique<NiIntegerExtraData>();
-		intExtraData->name.get() = extraDataName->GetValue().ToStdString();
-		intExtraData->integerData = 0;
-		extraDataResult = std::move(intExtraData);
-		break;
-	}
-	case 2: {
-		auto floatExtraData = std::make_unique<NiFloatExtraData>();
-		floatExtraData->name.get() = extraDataName->GetValue().ToStdString();
-		floatExtraData->floatData = 0.0f;
-		extraDataResult = std::move(floatExtraData);
-		break;
-	}
+		case 0: {
+			auto strExtraData = std::make_unique<NiStringExtraData>();
+			strExtraData->name.get() = extraDataName->GetValue().ToStdString();
+			strExtraData->stringData.get() = extraDataValue->GetValue().ToStdString();
+			extraDataResult = std::move(strExtraData);
+			break;
+		}
+		case 1: {
+			auto intExtraData = std::make_unique<NiIntegerExtraData>();
+			intExtraData->name.get() = extraDataName->GetValue().ToStdString();
+			intExtraData->integerData = 0;
+			extraDataResult = std::move(intExtraData);
+			break;
+		}
+		case 2: {
+			auto floatExtraData = std::make_unique<NiFloatExtraData>();
+			floatExtraData->name.get() = extraDataName->GetValue().ToStdString();
+			floatExtraData->floatData = 0.0f;
+			extraDataResult = std::move(floatExtraData);
+			break;
+		}
 	}
 
 	if (extraDataResult) {
@@ -884,14 +884,14 @@ void ShapeProperties::ApplyChanges() {
 		}
 		else if (shader->HasType<BSShaderPPLightingProperty>()) {
 			switch (type) {
-			case 0: type = BSShaderType::SHADER_TALL_GRASS; break;
-			case 1: type = BSShaderType::SHADER_DEFAULT; break;
-			case 2: type = BSShaderType::SHADER_SKY; break;
-			case 3: type = BSShaderType::SHADER_SKIN; break;
-			case 4: type = BSShaderType::SHADER_WATER; break;
-			case 5: type = BSShaderType::SHADER_LIGHTING30; break;
-			case 6: type = BSShaderType::SHADER_TILE; break;
-			case 7: type = BSShaderType::SHADER_NOLIGHTING; break;
+				case 0: type = BSShaderType::SHADER_TALL_GRASS; break;
+				case 1: type = BSShaderType::SHADER_DEFAULT; break;
+				case 2: type = BSShaderType::SHADER_SKY; break;
+				case 3: type = BSShaderType::SHADER_SKIN; break;
+				case 4: type = BSShaderType::SHADER_WATER; break;
+				case 5: type = BSShaderType::SHADER_LIGHTING30; break;
+				case 6: type = BSShaderType::SHADER_TILE; break;
+				case 7: type = BSShaderType::SHADER_NOLIGHTING; break;
 			}
 
 			shader->SetShaderType(type);

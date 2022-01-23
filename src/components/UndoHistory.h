@@ -5,8 +5,8 @@ See the included LICENSE file
 
 #pragma once
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 struct UndoStateProject;
 
@@ -19,32 +19,28 @@ class UndoHistory {
 
 public:
 	bool PopState();
-	UndoStateProject *PushState(std::unique_ptr<UndoStateProject> uspp = std::make_unique<UndoStateProject>());
+	UndoStateProject* PushState(std::unique_ptr<UndoStateProject> uspp = std::make_unique<UndoStateProject>());
 	bool BackStepHistory();
 	bool ForwardStepHistory();
 	void ClearHistory();
-	
-	bool CanUndo() const {
-		return curIndex != UH_NONE;
-	}
 
-	bool CanRedo() const {
-		return !states.empty() && curIndex + 1 < static_cast<int>(states.size());
-	}
+	bool CanUndo() const { return curIndex != UH_NONE; }
 
-	UndoStateProject *GetCurState() const {
+	bool CanRedo() const { return !states.empty() && curIndex + 1 < static_cast<int>(states.size()); }
+
+	UndoStateProject* GetCurState() const {
 		if (curIndex == UH_NONE)
 			return nullptr;
 		return states[curIndex].get();
 	}
 
-	UndoStateProject *GetBackState() const {
+	UndoStateProject* GetBackState() const {
 		if (states.empty())
 			return nullptr;
 		return states.back().get();
 	}
 
-	UndoStateProject *GetNextState() const {
+	UndoStateProject* GetNextState() const {
 		if (curIndex + 1 >= static_cast<int>(states.size()))
 			return nullptr;
 		return states[curIndex + 1].get();

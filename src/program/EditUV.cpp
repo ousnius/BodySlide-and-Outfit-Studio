@@ -18,16 +18,16 @@ std::unordered_map<int, Vector2>& EditUVAction::GetEndState() {
 	return endState;
 }
 
-void EditUVAction::SetStartState(const std::unordered_map<int, Vector2>& state) {
+void EditUVAction::SetStartState(std::unordered_map<int, Vector2>& state) {
 	startState = std::move(state);
 }
 
-void EditUVAction::SetEndState(const std::unordered_map<int, Vector2>& state) {
+void EditUVAction::SetEndState(std::unordered_map<int, Vector2>& state) {
 	endState = std::move(state);
 }
 
 void EditUVAction::RestoreStartState() {
-	for (auto &stateIt : startState) {
+	for (auto& stateIt : startState) {
 		actionMesh->verts[stateIt.first].x = stateIt.second.u;
 		actionMesh->verts[stateIt.first].y = stateIt.second.v;
 	}
@@ -36,7 +36,7 @@ void EditUVAction::RestoreStartState() {
 }
 
 void EditUVAction::RestoreEndState() {
-	for (auto &stateIt : endState) {
+	for (auto& stateIt : endState) {
 		actionMesh->verts[stateIt.first].x = stateIt.second.u;
 		actionMesh->verts[stateIt.first].y = stateIt.second.v;
 	}
@@ -45,8 +45,7 @@ void EditUVAction::RestoreEndState() {
 }
 
 
-EditUVHistory::EditUVHistory() {
-}
+EditUVHistory::EditUVHistory() {}
 
 EditUVHistory::~EditUVHistory() {
 	Clear();
@@ -118,7 +117,7 @@ wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 wxEND_EVENT_TABLE()
 
 EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, mesh* srcMesh, const std::string& srcSliderName) {
-	wxXmlResource *xrc = wxXmlResource::Get();
+	wxXmlResource* xrc = wxXmlResource::Get();
 	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/EditUV.xrc");
 	if (!loaded) {
 		wxMessageBox("Failed to load EditUV.xrc file!", "Error", wxICON_ERROR);
@@ -201,27 +200,27 @@ void EditUV::SelectTool(EditUVTool tool) {
 	toolSelected = tool;
 
 	switch (toolSelected) {
-	case EditUVTool::BoxSelection:
-		canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
-		uvToolBar->ToggleTool(XRCID("btnBoxSelection"), true);
-		break;
-	case EditUVTool::VertexSelection:
-		canvas->SetCursor(wxStockCursor::wxCURSOR_DEFAULT);
-		canvas->SetCursorType(GLSurface::PointCursor);
-		uvToolBar->ToggleTool(XRCID("btnVertexSelection"), true);
-		break;
-	case EditUVTool::Move:
-		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
-		uvToolBar->ToggleTool(XRCID("btnMove"), true);
-		break;
-	case EditUVTool::Scale:
-		canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
-		uvToolBar->ToggleTool(XRCID("btnScale"), true);
-		break;
-	case EditUVTool::Rotate:
-		canvas->SetCursor(wxStockCursor::wxCURSOR_HAND);
-		uvToolBar->ToggleTool(XRCID("btnRotate"), true);
-		break;
+		case EditUVTool::BoxSelection:
+			canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
+			uvToolBar->ToggleTool(XRCID("btnBoxSelection"), true);
+			break;
+		case EditUVTool::VertexSelection:
+			canvas->SetCursor(wxStockCursor::wxCURSOR_DEFAULT);
+			canvas->SetCursorType(GLSurface::PointCursor);
+			uvToolBar->ToggleTool(XRCID("btnVertexSelection"), true);
+			break;
+		case EditUVTool::Move:
+			canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
+			uvToolBar->ToggleTool(XRCID("btnMove"), true);
+			break;
+		case EditUVTool::Scale:
+			canvas->SetCursor(wxStockCursor::wxCURSOR_SIZING);
+			uvToolBar->ToggleTool(XRCID("btnScale"), true);
+			break;
+		case EditUVTool::Rotate:
+			canvas->SetCursor(wxStockCursor::wxCURSOR_HAND);
+			uvToolBar->ToggleTool(XRCID("btnRotate"), true);
+			break;
 	}
 }
 
@@ -311,7 +310,6 @@ wxEND_EVENT_TABLE()
 
 EditUVCanvas::EditUVCanvas(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs)
 	: wxGLCanvas(parent, attribs, wxID_ANY, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE) {
-
 	context = std::make_unique<wxGLContext>(this, nullptr, &GLSurface::GetGLContextAttribs());
 }
 
@@ -515,7 +513,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 				auto& startState = curState->GetStartState();
 
 				// Scale around the selection center
-				for (auto &s : startState) {
+				for (auto& s : startState) {
 					if (uvGridMesh->vcolors[s.first] == Vector3(1.0f, 1.0f, 0.0f)) {
 						Vector3 startPos(s.second.u, s.second.v, 0.0f);
 						uvGridMesh->verts[s.first] = (startPos - currentCenter) * scale + currentCenter;
@@ -542,7 +540,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 				auto& startState = curState->GetStartState();
 
 				// Rotate around the selection center
-				for (auto &s : startState) {
+				for (auto& s : startState) {
 					if (uvGridMesh->vcolors[s.first] == Vector3(1.0f, 1.0f, 0.0f)) {
 						auto& vert = uvGridMesh->verts[s.first];
 						Vector3 pos(s.second.u, s.second.v, 0.0f);
@@ -591,47 +589,47 @@ void EditUVCanvas::OnLeftDown(wxMouseEvent& event) {
 	editUV->StartTool();
 
 	switch (editUV->GetActiveTool()) {
-	case EditUVTool::BoxSelection:
-		boxSelectMesh->verts[0] = Vector3(click.x, click.y, 0.0f);
-		boxSelectMesh->verts[1] = Vector3(click.x, click.y, 0.0f);
-		boxSelectMesh->verts[2] = Vector3(click.x, click.y, 0.0f);
-		boxSelectMesh->verts[3] = Vector3(click.x, click.y, 0.0f);
-		boxSelectMesh->color = Vector3(1.0f, 1.0f, 0.0f);
-		boxSelectMesh->QueueUpdate(mesh::UpdateType::Position);
-		boxSelectMesh->bVisible = true;
-		break;
+		case EditUVTool::BoxSelection:
+			boxSelectMesh->verts[0] = Vector3(click.x, click.y, 0.0f);
+			boxSelectMesh->verts[1] = Vector3(click.x, click.y, 0.0f);
+			boxSelectMesh->verts[2] = Vector3(click.x, click.y, 0.0f);
+			boxSelectMesh->verts[3] = Vector3(click.x, click.y, 0.0f);
+			boxSelectMesh->color = Vector3(1.0f, 1.0f, 0.0f);
+			boxSelectMesh->QueueUpdate(mesh::UpdateType::Position);
+			boxSelectMesh->bVisible = true;
+			break;
 
-	case EditUVTool::Move:
-	case EditUVTool::Scale:
-	case EditUVTool::Rotate:
-		// Calculate the selection center
-		int count = 0;
+		case EditUVTool::Move:
+		case EditUVTool::Scale:
+		case EditUVTool::Rotate:
+			// Calculate the selection center
+			int count = 0;
 
-		for (int i = 0; i < uvGridMesh->nVerts; i++) {
-			if (uvGridMesh->vcolors[i] == Vector3(1.0f, 1.0f, 0.0f)) {
-				currentCenter = currentCenter + uvGridMesh->verts[i];
-				count++;
+			for (int i = 0; i < uvGridMesh->nVerts; i++) {
+				if (uvGridMesh->vcolors[i] == Vector3(1.0f, 1.0f, 0.0f)) {
+					currentCenter = currentCenter + uvGridMesh->verts[i];
+					count++;
+				}
 			}
-		}
 
-		if (count > 0)
-			currentCenter = currentCenter / count;
-		else
-			currentCenter.Zero();
+			if (count > 0)
+				currentCenter = currentCenter / count;
+			else
+				currentCenter.Zero();
 
-		lastAngle = std::atan2(currentCenter.y - click.y, currentCenter.x - click.x);
+			lastAngle = std::atan2(currentCenter.y - click.y, currentCenter.x - click.x);
 
-		std::unordered_map<int, Vector2> state;
-		state.reserve(uvGridMesh->nVerts);
+			std::unordered_map<int, Vector2> state;
+			state.reserve(uvGridMesh->nVerts);
 
-		for (int i = 0; i < uvGridMesh->nVerts; i++)
-			state[i] = Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
+			for (int i = 0; i < uvGridMesh->nVerts; i++)
+				state[i] = Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
 
-		auto action = new EditUVAction();
-		action->SetActionMesh(uvGridMesh);
-		action->SetStartState(state);
-		editUV->history.Add(action);
-		break;
+			auto action = new EditUVAction();
+			action->SetActionMesh(uvGridMesh);
+			action->SetStartState(state);
+			editUV->history.Add(action);
+			break;
 	}
 
 	lbuttonDown = true;
@@ -647,62 +645,60 @@ void EditUVCanvas::OnLeftUp(wxMouseEvent& event) {
 	Rect rect;
 
 	switch (editUV->GetActiveTool()) {
-	case EditUVTool::BoxSelection:
-		rect.SetTopLeft(Vector2(boxSelectMesh->verts[0].x, boxSelectMesh->verts[0].y));
-		rect.SetBottomRight(Vector2(boxSelectMesh->verts[2].x, boxSelectMesh->verts[2].y));
+		case EditUVTool::BoxSelection:
+			rect.SetTopLeft(Vector2(boxSelectMesh->verts[0].x, boxSelectMesh->verts[0].y));
+			rect.SetBottomRight(Vector2(boxSelectMesh->verts[2].x, boxSelectMesh->verts[2].y));
 
-		if (!wxGetKeyState(wxKeyCode::WXK_ALT)) {
-			for (int i = 0; i < uvGridMesh->nVerts; i++) {
-				if (rect.Contains(Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y))) {
-					uvGridMesh->vcolors[i].x = 1.0f;
-					uvGridMesh->vcolors[i].y = 1.0f;
-					uvGridMesh->vcolors[i].z = 0.0f;
+			if (!wxGetKeyState(wxKeyCode::WXK_ALT)) {
+				for (int i = 0; i < uvGridMesh->nVerts; i++) {
+					if (rect.Contains(Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y))) {
+						uvGridMesh->vcolors[i].x = 1.0f;
+						uvGridMesh->vcolors[i].y = 1.0f;
+						uvGridMesh->vcolors[i].z = 0.0f;
+					}
+					else {
+						if (!wxGetKeyState(wxKeyCode::WXK_SHIFT)) {
+							uvGridMesh->vcolors[i].x = 0.0f;
+							uvGridMesh->vcolors[i].y = 1.0f;
+							uvGridMesh->vcolors[i].z = 0.0f;
+						}
+					}
 				}
-				else {
-					if (!wxGetKeyState(wxKeyCode::WXK_SHIFT)) {
+			}
+			else {
+				for (int i = 0; i < uvGridMesh->nVerts; i++) {
+					if (rect.Contains(Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y))) {
 						uvGridMesh->vcolors[i].x = 0.0f;
 						uvGridMesh->vcolors[i].y = 1.0f;
 						uvGridMesh->vcolors[i].z = 0.0f;
 					}
 				}
 			}
-		}
-		else {
-			for (int i = 0; i < uvGridMesh->nVerts; i++) {
-				if (rect.Contains(Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y))) {
-					uvGridMesh->vcolors[i].x = 0.0f;
-					uvGridMesh->vcolors[i].y = 1.0f;
-					uvGridMesh->vcolors[i].z = 0.0f;
-				}
-			}
-		}
 
-		uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
-		boxSelectMesh->bVisible = false;
-		break;
+			uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+			boxSelectMesh->bVisible = false;
+			break;
 
-	case EditUVTool::VertexSelection:
-		SelectVertex(p, wxGetKeyState(wxKeyCode::WXK_ALT));
-		break;
+		case EditUVTool::VertexSelection: SelectVertex(p, wxGetKeyState(wxKeyCode::WXK_ALT)); break;
 
-	case EditUVTool::Move:
-	case EditUVTool::Scale:
-	case EditUVTool::Rotate:
-		std::unordered_map<int, Vector2> state;
-		state.reserve(uvGridMesh->nVerts);
+		case EditUVTool::Move:
+		case EditUVTool::Scale:
+		case EditUVTool::Rotate:
+			std::unordered_map<int, Vector2> state;
+			state.reserve(uvGridMesh->nVerts);
 
-		for (int i = 0; i < uvGridMesh->nVerts; i++)
-			state[i] = Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
+			for (int i = 0; i < uvGridMesh->nVerts; i++)
+				state[i] = Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
 
-		auto action = editUV->history.GetCurState();
-		if (action)
-			action->SetEndState(state);
+			auto action = editUV->history.GetCurState();
+			if (action)
+				action->SetEndState(state);
 
-		if (editUV->GetActiveTool() == EditUVTool::Rotate)
-			SetCursor(wxStockCursor::wxCURSOR_HAND);
-		else
-			SetCursor(wxStockCursor::wxCURSOR_SIZING);
-		break;
+			if (editUV->GetActiveTool() == EditUVTool::Rotate)
+				SetCursor(wxStockCursor::wxCURSOR_HAND);
+			else
+				SetCursor(wxStockCursor::wxCURSOR_SIZING);
+			break;
 	}
 
 	isLDragging = false;
@@ -743,21 +739,11 @@ void EditUVCanvas::OnRightUp(wxMouseEvent& WXUNUSED(event)) {
 void EditUVCanvas::OnKeyDown(wxKeyEvent& event) {
 	if (!lbuttonDown && !rbuttonDown && !mbuttonDown) {
 		switch (event.GetKeyCode()) {
-		case '1':
-			editUV->SelectTool(EditUVTool::BoxSelection);
-			break;
-		case '2':
-			editUV->SelectTool(EditUVTool::VertexSelection);
-			break;
-		case '3':
-			editUV->SelectTool(EditUVTool::Move);
-			break;
-		case '4':
-			editUV->SelectTool(EditUVTool::Scale);
-			break;
-		case '5':
-			editUV->SelectTool(EditUVTool::Rotate);
-			break;
+			case '1': editUV->SelectTool(EditUVTool::BoxSelection); break;
+			case '2': editUV->SelectTool(EditUVTool::VertexSelection); break;
+			case '3': editUV->SelectTool(EditUVTool::Move); break;
+			case '4': editUV->SelectTool(EditUVTool::Scale); break;
+			case '5': editUV->SelectTool(EditUVTool::Rotate); break;
 		}
 	}
 }
@@ -836,10 +822,17 @@ void EditUVCanvas::InitMeshes() {
 		std::string texFile;
 		editUV->nif->GetTextureSlot(editUV->shape, texFile, 0);
 
-		texFile = std::regex_replace(texFile, std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
-		texFile = std::regex_replace(texFile, std::regex("^(.*?)/textures/", std::regex_constants::icase), "");				// Remove everything before the first occurence of "/textures/"
-		texFile = std::regex_replace(texFile, std::regex("^/+"), "");														// Remove all slashes from the front
-		texFile = std::regex_replace(texFile, std::regex("^(?!^textures/)", std::regex_constants::icase), "textures/");		// If the path doesn't start with "textures/", add it to the front
+		// Replace all backward slashes with one forward slash
+		texFile = std::regex_replace(texFile, std::regex("\\\\+"), "/");
+
+		// Remove everything before the first occurence of "/textures/"
+		texFile = std::regex_replace(texFile, std::regex("^(.*?)/textures/", std::regex_constants::icase), "");
+
+		// Remove all slashes from the front
+		texFile = std::regex_replace(texFile, std::regex("^/+"), "");
+
+		// If the path doesn't start with "textures/", add it to the front
+		texFile = std::regex_replace(texFile, std::regex("^(?!^textures/)", std::regex_constants::icase), "textures/");
 
 		std::string texturesDir = Config["GameDataPath"];
 		texFile = texturesDir + texFile;
@@ -887,7 +880,7 @@ void EditUVCanvas::InitMeshes() {
 	for (int t = 0; t < uvGridMesh->nTris; t++)
 		uvGridMesh->tris[t] = tris[t];
 
-	uvGridMesh->rendermode = RenderMode::LitWire;
+	uvGridMesh->rendermode = mesh::RenderMode::LitWire;
 	uvGridMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 	uvGridMesh->vertexColors = true;
 

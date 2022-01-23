@@ -5,13 +5,13 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../TinyXML-2/tinyxml2.h"
+#include <tinyxml2.h>
 
-#include <wx/dir.h>
-#include <vector>
-#include <unordered_map>
 #include <set>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
+#include <wx/dir.h>
 
 using namespace tinyxml2;
 
@@ -20,10 +20,8 @@ class BuildSelection {
 	std::vector<std::string> sourceFiles;
 
 public:
-	BuildSelection() { }
-	BuildSelection(XMLElement* srcElement) {
-		LoadBuildSelection(srcElement);
-	}
+	BuildSelection() {}
+	BuildSelection(XMLElement* srcElement) { LoadBuildSelection(srcElement); }
 
 	bool HasOutputPath(const std::string& search);
 
@@ -43,17 +41,15 @@ class BuildSelectionFile {
 
 public:
 	std::string fileName;
-	BuildSelectionFile() :error(0), root(nullptr) { }
+	BuildSelectionFile()
+		: error(0)
+		, root(nullptr) {}
 	BuildSelectionFile(const std::string& srcFileName);
-	~BuildSelectionFile() {};
+	~BuildSelectionFile(){};
 
-	bool fail() {
-		return error != 0;
-	}
+	bool fail() { return error != 0; }
 
-	int GetError() {
-		return error;
-	}
+	int GetError() { return error; }
 
 	// Clears all data of the file
 	void Clear();

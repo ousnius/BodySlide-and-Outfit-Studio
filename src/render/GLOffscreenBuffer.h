@@ -31,8 +31,8 @@ class GLOffScreenBuffer {
 	}
 
 	// Delete textures calls resource loader to remove textures with the appropriate name, and is only
-	// called during destruction. 
-	//  note, you can save textures by renaming them while GLOB exists.  
+	// called during destruction.
+	//  note, you can save textures by renaming them while GLOB exists.
 	void deleteTextures() {
 		for (int i = 0; i < numBuffers; i++) {
 			glsRef->GetResourceLoader()->DeleteTexture(texName(i));
@@ -48,7 +48,7 @@ public:
 	bool NextBuffer(bool cycle = true);
 	void Start();
 
-	// Retrieves the current texture ID.  Useful for externally selecting as a texture source before moving to another 
+	// Retrieves the current texture ID.  Useful for externally selecting as a texture source before moving to another
 	// buffer in a multi rendering chain.
 	GLuint GetTexID();
 
