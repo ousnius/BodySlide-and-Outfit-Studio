@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "GroupManager.h"
 #include "PresetSaveDialog.h"
 #include "ShapeProperties.h"
+#include "SliderDataImportDialog.h"
 
 #include <sstream>
 #include <wx/debugrpt.h>
@@ -7085,11 +7086,6 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
-	dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
-	if (dlg.ShowModal() != wxID_OK)
-		return;
-
 	wxLogMessage("Importing morphs from OSD file '%s'...", fn);
 
 	OSDataFile osd;
@@ -7099,52 +7095,60 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	// Deleting sliders
-	sliderScroll->Freeze();
-	std::vector<std::string> erase;
-	for (auto& sliderPanel : sliderPanels) {
-		sliderPanel.second->slider->SetValue(0);
-		SetSliderValue(sliderPanel.first, 0);
-		ShowSliderEffect(sliderPanel.first, true);
-		sliderPanel.second->slider->SetFocus();
-		HideSliderPanel(sliderPanel.second);
-
-		erase.push_back(sliderPanel.first);
-		project->DeleteSlider(sliderPanel.first);
-	}
-
-	for (auto& e : erase)
-		sliderPanels.erase(e);
-
-	MenuExitSliderEdit();
-	sliderScroll->FitInside();
-	activeSlider.clear();
-	lastActiveSlider.clear();
-
-	wxString addedDiffs;
 	auto diffs = osd.GetDataDiffs();
+	std::vector<std::string> sliderNames(diffs.size());
+	std::transform(diffs.begin(), diffs.end(), sliderNames.begin(), [](auto pair) { return pair.first; });
+	SliderDataImportDialog import(this, project, OutfitStudioConfig);
+	if (import.ShowModal(sliderNames) != wxID_OK)
+		return;
 
-	for (auto& shape : project->GetWorkNif()->GetShapes()) {
-		std::string s = shape->name.get();
-		bool added = false;
-		for (auto& diff : diffs) {
-			// Diff name is supposed to begin with matching shape name
-			if (diff.first.substr(0, s.size()) != s)
-				continue;
+	const auto& options = import.GetOptions();
 
-			std::string diffName = diff.first.substr(s.length(), diff.first.length() - s.length() + 1);
-			if (!project->ValidSlider(diffName)) {
-				createSliderGUI(diffName, sliderScroll, sliderScroll->GetSizer());
-				project->AddEmptySlider(diffName);
-				ShowSliderEffect(diffName);
-			}
+	sliderScroll->Freeze();
+	if (!options.mergeSliders) {
+		// Deleting sliders
+		std::vector<std::string> erase;
+		for (auto& sliderPanel : sliderPanels) {
+			sliderPanel.second->slider->SetValue(0);
+			SetSliderValue(sliderPanel.first, 0);
+			ShowSliderEffect(sliderPanel.first, true);
+			sliderPanel.second->slider->SetFocus();
+			HideSliderPanel(sliderPanel.second);
 
-			project->SetSliderFromDiff(diffName, shape, diff.second);
-			added = true;
+			erase.push_back(sliderPanel.first);
+			project->DeleteSlider(sliderPanel.first);
 		}
 
-		if (added)
-			addedDiffs += s + "\n";
+		for (auto& e : erase)
+			sliderPanels.erase(e);
+
+		MenuExitSliderEdit();
+		sliderScroll->FitInside();
+		activeSlider.clear();
+		lastActiveSlider.clear();
+	}
+
+	wxString addedDiffs;
+	std::unordered_set<NiShape*> addedShapes;
+
+	for (auto& sliderName : options.selectedSliderNames) {
+		auto& originalSliderName = std::get<0>(sliderName.second);
+		auto& diff = diffs[originalSliderName];
+		auto& diffName = sliderName.first;
+
+		if (!project->ValidSlider(diffName)) {
+			createSliderGUI(diffName, sliderScroll, sliderScroll->GetSizer());
+			project->AddEmptySlider(diffName);
+			ShowSliderEffect(diffName);
+		}
+
+		auto& shape = std::get<1>(sliderName.second);
+		project->SetSliderFromDiff(diffName, shape, diff);
+		addedShapes.emplace(shape);
+	}
+
+	for (auto& addedShape : addedShapes) {
+		addedDiffs += addedShape->name.get() + "\n";
 	}
 
 	sliderScroll->FitInside();

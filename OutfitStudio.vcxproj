@@ -758,6 +758,7 @@
     <ClInclude Include="src\program\OutfitStudio.h" />
     <ClInclude Include="src\program\PresetSaveDialog.h" />
     <ClInclude Include="src\program\ShapeProperties.h" />
+    <ClInclude Include="src\program\SliderDataImportDialog.h" />
     <ClInclude Include="src\render\GLExtensions.h" />
     <ClInclude Include="src\render\GLMaterial.h" />
     <ClInclude Include="src\render\GLOffscreenBuffer.h" />
@@ -830,6 +831,7 @@
     <ClCompile Include="src\program\OutfitStudio.cpp" />
     <ClCompile Include="src\program\PresetSaveDialog.cpp" />
     <ClCompile Include="src\program\ShapeProperties.cpp" />
+    <ClCompile Include="src\program\SliderDataImportDialog.cpp" />
     <ClCompile Include="src\render\GLExtensions.cpp" />
     <ClCompile Include="src\render\GLMaterial.cpp" />
     <ClCompile Include="src\render\GLOffscreenBuffer.cpp" />
@@ -846,6 +848,7 @@
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml" />
+    <Xml Include="res\xrc\SliderDataImport.xrc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
