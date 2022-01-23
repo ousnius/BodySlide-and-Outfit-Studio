@@ -7204,16 +7204,16 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::vector<std::string> sliderNames;
+	std::unordered_set<std::string> uniqueSliderNames;
 	auto morphs = tri.GetMorphs();
 	for(auto& morph : morphs) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
 		if (!shape)
 			continue;
 		for (auto& morphData : morph.second)
-			sliderNames.push_back(morphData->name);
+			uniqueSliderNames.emplace(morphData->name);
 	}
-
+	std::vector<std::string> sliderNames(uniqueSliderNames.begin(), uniqueSliderNames.end());
 	SliderDataImportDialog import(this, project, OutfitStudioConfig);
 	if (import.ShowModal(sliderNames) != wxID_OK)
 		return;
