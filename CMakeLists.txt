@@ -108,11 +108,13 @@ target_include_directories(OutfitStudio PUBLIC
 	lib/gli
 	lib/nifly/include
 	lib/nifly/external
+	lib/TinyXML-2
 	)
 target_include_directories(BodySlide PUBLIC
 	lib/gli
 	lib/nifly/include
 	lib/nifly/external
+	lib/TinyXML-2
 	)
 
 target_link_libraries(OutfitStudio
