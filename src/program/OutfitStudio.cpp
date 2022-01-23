@@ -7095,7 +7095,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::unordered_map<std::string, std::tuple<std::string, nifly::NiShape*>> newNameToDiffNameAndShape;
+	std::unordered_map<std::string, std::vector<std::tuple<std::string, nifly::NiShape*>>> newNameToDiffNameAndShape;
 	auto diffs = osd.GetDataDiffs();
 	auto& shapes = project->GetWorkNif()->GetShapes();
 	for (auto& diff : diffs) {
@@ -7114,7 +7114,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		if (!bestShape)
 			continue;
 		auto newName = diff.first.substr(bestShapeName.length(), diff.first.length() - bestShapeName.length() + 1);
-		newNameToDiffNameAndShape[newName] = std::make_tuple(diff.first, bestShape);
+		newNameToDiffNameAndShape[newName].push_back(std::make_tuple(diff.first, bestShape));
 	}
 
 	std::vector<std::string> sliderNames(newNameToDiffNameAndShape.size());
@@ -7153,19 +7153,21 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	std::unordered_set<NiShape*> addedShapes;
 
 	for (auto& sliderName : options.selectedSliderNames) {
-		auto& nameAndShape = newNameToDiffNameAndShape[sliderName];
-		auto& originalSliderName = std::get<0>(nameAndShape);
-		auto& diff = diffs[originalSliderName];
-		auto& shape = std::get<1>(nameAndShape);
+		auto& nameAndShapes = newNameToDiffNameAndShape[sliderName];
+		for (auto& nameAndShape : nameAndShapes) {
+			auto& originalSliderName = std::get<0>(nameAndShape);
+			auto& diff = diffs[originalSliderName];
+			auto& shape = std::get<1>(nameAndShape);
 
-		if (!project->ValidSlider(sliderName)) {
-			createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
-			project->AddEmptySlider(sliderName);
-			ShowSliderEffect(sliderName);
+			if (!project->ValidSlider(sliderName)) {
+				createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
+				project->AddEmptySlider(sliderName);
+				ShowSliderEffect(sliderName);
+			}
+
+			project->SetSliderFromDiff(sliderName, shape, diff);
+			addedShapes.emplace(shape);
 		}
-
-		project->SetSliderFromDiff(sliderName, shape, diff);
-		addedShapes.emplace(shape);
 	}
 
 	for (auto& addedShape : addedShapes) {
