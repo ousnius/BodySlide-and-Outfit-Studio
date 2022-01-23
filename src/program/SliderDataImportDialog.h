@@ -35,6 +35,10 @@ public:
 	wxDECLARE_EVENT_TABLE();
 
 private:
+	void OnSliderListContext(wxMouseEvent& WXUNUSED(event));
+	void OnSliderListContextSelect(wxCommandEvent& event);
+
+	wxCheckListBox* checkListBox;
 	OutfitProject* project;
 	ConfigurationManager& outfitStudioConfig;
 	SliderDataImportOptions options;

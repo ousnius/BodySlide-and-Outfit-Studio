@@ -23,6 +23,9 @@ SliderDataImportDialog::SliderDataImportDialog(wxWindow* parent, OutfitProject* 
 	xrc->LoadDialog(this, parent, "dlgSliderDataImport");
 	ConfigDialogUtil::LoadDialogCheckBox(outfitStudioConfig, *this, "chkImportMergeSliders");
 
+	checkListBox = XRCCTRL(*this, "sliderImportList", wxCheckListBox);
+	checkListBox->Bind(wxEVT_RIGHT_UP, &SliderDataImportDialog::OnSliderListContext, this);
+
 	SetDoubleBuffered(true);
 	CenterOnParent();
 }
@@ -32,8 +35,6 @@ SliderDataImportDialog::~SliderDataImportDialog() {
 }
 
 int SliderDataImportDialog::ShowModal(const std::vector<std::string>& sliderNames) {
-
-	const auto checkListBox = XRCCTRL(*this, "sliderImportList", wxCheckListBox);
 	for (auto& sliderName : sliderNames)
 		checkListBox->Append(sliderName);
 
@@ -48,7 +49,6 @@ void SliderDataImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 	options.mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(outfitStudioConfig, *this, "chkImportMergeSliders");
 
 	wxArrayInt checked;
-	const auto checkListBox = XRCCTRL(*this, "sliderImportList", wxCheckListBox);
 	checkListBox->GetCheckedItems(checked);
 	for (const auto& i : checked) {
 		auto key = checkListBox->GetString(i).ToStdString();
@@ -56,4 +56,28 @@ void SliderDataImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	EndModal(wxID_OK);
+}
+
+void SliderDataImportDialog::OnSliderListContext(wxMouseEvent& WXUNUSED(event)) {
+	wxMenu* menu = wxXmlResource::Get()->LoadMenu("sliderDataContext");
+	if (menu) {
+		menu->Bind(wxEVT_MENU, &SliderDataImportDialog::OnSliderListContextSelect, this);
+		PopupMenu(menu);
+		delete menu;
+	}
+}
+
+void SliderDataImportDialog::OnSliderListContextSelect(wxCommandEvent& event) {
+	if (event.GetId() == XRCID("sliderDataContextNone")) {
+		for (uint32_t i = 0; i < checkListBox->GetCount(); i++)
+			checkListBox->Check(i, false);
+	}
+	else if (event.GetId() == XRCID("sliderDataContextAll")) {
+		for (uint32_t i = 0; i < checkListBox->GetCount(); i++)
+			checkListBox->Check(i);
+	}
+	else if (event.GetId() == XRCID("sliderDataContextInvert")) {
+		for (uint32_t i = 0; i < checkListBox->GetCount(); i++)
+			checkListBox->Check(i, !checkListBox->IsChecked(i));
+	}
 }

@@ -70,4 +70,15 @@
 			</object>
 		</object>
 	</object>
+	<object class="wxMenu" name="sliderDataContext">
+		<object class="wxMenuItem" name="sliderDataContextNone">
+			<label>Select None</label>
+		</object>
+		<object class="wxMenuItem" name="sliderDataContextAll">
+			<label>Select All</label>
+		</object>
+		<object class="wxMenuItem" name="sliderDataContextInvert">
+			<label>Invert Selection</label>
+		</object>
+	</object>
 </resource>
