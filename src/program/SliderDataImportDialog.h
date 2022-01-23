@@ -19,7 +19,7 @@ public:
 	SliderDataImportOptions()
 		: mergeSliders(false) {}
 
-	std::vector<std::string> selectedSliderNames;
+	std::unordered_set<std::string> selectedSliderNames;
 	bool mergeSliders;
 };
 

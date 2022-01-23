@@ -52,7 +52,7 @@ void SliderDataImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 	checkListBox->GetCheckedItems(checked);
 	for (const auto& i : checked) {
 		auto key = checkListBox->GetString(i).ToStdString();
-		options.selectedSliderNames.push_back(key);
+		options.selectedSliderNames.emplace(key);
 	}
 
 	EndModal(wxID_OK);

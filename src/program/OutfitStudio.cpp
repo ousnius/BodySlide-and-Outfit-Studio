@@ -7193,11 +7193,6 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
-	dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
-	if (dlg.ShowModal() != wxID_OK)
-		return;
-
 	wxLogMessage("Importing morphs from TRI file '%s'...", fn);
 
 	TriFile tri;
@@ -7207,30 +7202,49 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	// Deleting sliders
-	sliderScroll->Freeze();
-	std::vector<std::string> erase;
-	for (auto& sliderPanel : sliderPanels) {
-		sliderPanel.second->slider->SetValue(0);
-		SetSliderValue(sliderPanel.first, 0);
-		ShowSliderEffect(sliderPanel.first, true);
-		sliderPanel.second->slider->SetFocus();
-		HideSliderPanel(sliderPanel.second);
-
-		erase.push_back(sliderPanel.first);
-		project->DeleteSlider(sliderPanel.first);
+	std::vector<std::string> sliderNames;
+	auto morphs = tri.GetMorphs();
+	for(auto& morph : morphs) {
+		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
+		if (!shape)
+			continue;
+		for (auto& morphData : morph.second)
+			sliderNames.push_back(morphData->name);
 	}
 
-	for (auto& e : erase)
-		sliderPanels.erase(e);
+	SliderDataImportDialog import(this, project, OutfitStudioConfig);
+	if (import.ShowModal(sliderNames) != wxID_OK)
+		return;
 
-	MenuExitSliderEdit();
-	sliderScroll->FitInside();
-	activeSlider.clear();
-	lastActiveSlider.clear();
+	const auto& options = import.GetOptions();
+
+	sliderScroll->Freeze();
+	if (!options.mergeSliders) {
+		// Deleting sliders
+		std::vector<std::string> erase;
+		for (auto& sliderPanel : sliderPanels) {
+			sliderPanel.second->slider->SetValue(0);
+			SetSliderValue(sliderPanel.first, 0);
+			ShowSliderEffect(sliderPanel.first, true);
+			sliderPanel.second->slider->SetFocus();
+			HideSliderPanel(sliderPanel.second);
+
+			erase.push_back(sliderPanel.first);
+			project->DeleteSlider(sliderPanel.first);
+		}
+
+		for (auto& e : erase)
+			sliderPanels.erase(e);
+
+		MenuExitSliderEdit();
+		sliderScroll->FitInside();
+		activeSlider.clear();
+		lastActiveSlider.clear();
+	}
 
 	wxString addedMorphs;
-	auto morphs = tri.GetMorphs();
+	std::unordered_set<NiShape*> addedShapes;
+
 	for (auto& morph : morphs) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
 		if (!shape)
@@ -7238,6 +7252,9 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 		addedMorphs += morph.first + "\n";
 		for (auto& morphData : morph.second) {
+			if (options.selectedSliderNames.find(morphData->name) == options.selectedSliderNames.end())
+				continue;
+
 			if (!project->ValidSlider(morphData->name)) {
 				createSliderGUI(morphData->name, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(morphData->name);
