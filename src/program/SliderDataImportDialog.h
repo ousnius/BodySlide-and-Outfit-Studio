@@ -19,7 +19,7 @@ public:
 	SliderDataImportOptions()
 		: mergeSliders(false) {}
 
-	std::unordered_map<std::string, std::tuple<std::string, nifly::NiShape*>> selectedSliderNames;
+	std::vector<std::string> selectedSliderNames;
 	bool mergeSliders;
 };
 

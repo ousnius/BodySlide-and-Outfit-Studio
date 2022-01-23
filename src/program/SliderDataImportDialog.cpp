@@ -33,33 +33,12 @@ SliderDataImportDialog::~SliderDataImportDialog() {
 
 int SliderDataImportDialog::ShowModal(const std::vector<std::string>& sliderNames) {
 
-	wxArrayString filteredSliderNames;
-	for (auto& sliderName : sliderNames) {
-		std::string bestShapeName;
-		nifly::NiShape* bestShape;
-		for (auto& shape : project->GetWorkNif()->GetShapes()) {
-			std::string shapeName = shape->name.get();
-			// Diff name is supposed to begin with matching shape name
-			if (sliderName.substr(0, shapeName.size()) != shapeName)
-				continue;
-			if (shapeName.length() > bestShapeName.length()) {
-				bestShapeName = shapeName;
-				bestShape = shape;
-			}
-		}
-		if (bestShapeName.length() == 0)
-			continue;
-		auto newName = sliderName.substr(bestShapeName.length(), sliderName.length() - bestShapeName.length() + 1);
-		options.selectedSliderNames[newName] = std::make_tuple(sliderName, bestShape);
-		filteredSliderNames.push_back(newName);
-	}
-
 	const auto checkListBox = XRCCTRL(*this, "sliderImportList", wxCheckListBox);
-	checkListBox->Append(filteredSliderNames);
+	for (auto& sliderName : sliderNames)
+		checkListBox->Append(sliderName);
 
-	for (uint32_t i = 0; i < filteredSliderNames.size(); i++) {
+	for (uint32_t i = 0; i < sliderNames.size(); i++)
 		checkListBox->Check(i);
-	}
 
 	return wxDialog::ShowModal();
 }
@@ -68,15 +47,12 @@ void SliderDataImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 
 	options.mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(outfitStudioConfig, *this, "chkImportMergeSliders");
 
-	std::unordered_map<std::string, std::tuple<std::string, nifly::NiShape*>> copySelectedSliderNames = options.selectedSliderNames;
-	options.selectedSliderNames.clear();
-
 	wxArrayInt checked;
 	const auto checkListBox = XRCCTRL(*this, "sliderImportList", wxCheckListBox);
 	checkListBox->GetCheckedItems(checked);
-	for (auto& i : checked) {
+	for (const auto& i : checked) {
 		auto key = checkListBox->GetString(i).ToStdString();
-		options.selectedSliderNames.emplace(key, std::move(copySelectedSliderNames[key]));
+		options.selectedSliderNames.push_back(key);
 	}
 
 	EndModal(wxID_OK);

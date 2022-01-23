@@ -7095,9 +7095,30 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	std::unordered_map<std::string, std::tuple<std::string, nifly::NiShape*>> newNameToDiffNameAndShape;
 	auto diffs = osd.GetDataDiffs();
-	std::vector<std::string> sliderNames(diffs.size());
-	std::transform(diffs.begin(), diffs.end(), sliderNames.begin(), [](auto pair) { return pair.first; });
+	auto& shapes = project->GetWorkNif()->GetShapes();
+	for (auto& diff : diffs) {
+		std::string bestShapeName;
+		nifly::NiShape* bestShape = nullptr;
+		for (auto& shape : shapes) {
+			std::string shapeName = shape->name.get();
+			// Diff name is supposed to begin with matching shape name
+			if (diff.first.substr(0, shapeName.size()) != shapeName)
+				continue;
+			if (shapeName.length() > bestShapeName.length()) {
+				bestShapeName = shapeName;
+				bestShape = shape;
+			}
+		}
+		if (!bestShape)
+			continue;
+		auto newName = diff.first.substr(bestShapeName.length(), diff.first.length() - bestShapeName.length() + 1);
+		newNameToDiffNameAndShape[newName] = std::make_tuple(diff.first, bestShape);
+	}
+
+	std::vector<std::string> sliderNames(newNameToDiffNameAndShape.size());
+	std::transform(newNameToDiffNameAndShape.begin(), newNameToDiffNameAndShape.end(), sliderNames.begin(), [](auto pair) { return pair.first; });
 	SliderDataImportDialog import(this, project, OutfitStudioConfig);
 	if (import.ShowModal(sliderNames) != wxID_OK)
 		return;
@@ -7132,18 +7153,18 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	std::unordered_set<NiShape*> addedShapes;
 
 	for (auto& sliderName : options.selectedSliderNames) {
-		auto& originalSliderName = std::get<0>(sliderName.second);
+		auto& nameAndShape = newNameToDiffNameAndShape[sliderName];
+		auto& originalSliderName = std::get<0>(nameAndShape);
 		auto& diff = diffs[originalSliderName];
-		auto& diffName = sliderName.first;
+		auto& shape = std::get<1>(nameAndShape);
 
-		if (!project->ValidSlider(diffName)) {
-			createSliderGUI(diffName, sliderScroll, sliderScroll->GetSizer());
-			project->AddEmptySlider(diffName);
-			ShowSliderEffect(diffName);
+		if (!project->ValidSlider(sliderName)) {
+			createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
+			project->AddEmptySlider(sliderName);
+			ShowSliderEffect(sliderName);
 		}
 
-		auto& shape = std::get<1>(sliderName.second);
-		project->SetSliderFromDiff(diffName, shape, diff);
+		project->SetSliderFromDiff(sliderName, shape, diff);
 		addedShapes.emplace(shape);
 	}
 
