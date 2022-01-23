@@ -6,8 +6,8 @@ See the included LICENSE file
 #pragma once
 
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 
 class SliderPreset {
 public:

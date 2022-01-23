@@ -5,17 +5,17 @@ See the included LICENSE file
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <map>
 
 #include "../utils/StringStuff.h"
 
-#pragma warning (push, 0)
-#include "gli.hpp"
+#pragma warning(push, 0)
 #include "../SOIL2/SOIL2.h"
-#pragma warning (pop)
+#include "gli.hpp"
+#pragma warning(pop)
 
 typedef unsigned int GLuint;
 class GLMaterial;
@@ -28,9 +28,9 @@ public:
 	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
 
 
-	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and 
+	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and
 	// tracks the resulting GL texture identifier so subsequent access to the same texture does not result
-	// in a new load. 
+	// in a new load.
 	GLuint LoadTexture(const std::string& fileName, bool isCubeMap = false, bool reloadTextures = false);
 
 	// The following functions manage non-file-sourced texture ids.  This facilitates named textures generated
@@ -49,15 +49,15 @@ public:
 	void Cleanup();
 	// Deletes a specfic texture and removes it from video memory.
 	void DeleteTexture(const std::string& texName);
-	// rename texture moves the internal texture id to a new name. this allows a function to safely 'steal' a 
+	// rename texture moves the internal texture id to a new name. this allows a function to safely 'steal' a
 	//  texture generated elsewhere.  EG: in GLOffscreenBuffer, while the buffer is active, one of the textures
-	//  generated can be renamed to prevent the texture from being deleted when the object is deleted, so it can 
-	//  be used elsewhere. 
+	//  generated can be renamed to prevent the texture from being deleted when the object is deleted, so it can
+	//  be used elsewhere.
 	//  Fails if texture already exist and overwrite is not set to true.
 	bool RenameTexture(const std::string& texNameSrc, const std::string& texNameDest, bool overwrite = false);
 
 
-	// compares the incoming cacheTime with the internal cacheTime, and returns true if they match.  
+	// compares the incoming cacheTime with the internal cacheTime, and returns true if they match.
 	//  if they do not match, the incoming cacheTime is updated to match and the function returns false.
 	bool CacheStamp(int64_t& inCacheTime) {
 		if (cacheTime == inCacheTime)

@@ -10,8 +10,7 @@ SliderManager::SliderManager() {
 	bNeedReload = true;
 }
 
-SliderManager::~SliderManager() {
-}
+SliderManager::~SliderManager() {}
 
 void SliderManager::AddSlidersInSet(SliderSet& inSet) {
 	int sz = static_cast<int>(inSet.size());
@@ -238,7 +237,7 @@ float SliderManager::GetBigPresetValue(const std::string& presetName, const std:
 	return ps;
 }
 
-float SliderManager::GetSmallPresetValue(const std::string& presetName, const std::string& sliderName, float defVal){
+float SliderManager::GetSmallPresetValue(const std::string& presetName, const std::string& sliderName, float defVal) {
 	float ps;
 	if (!presetCollection.GetSmallPreset(presetName, sliderName, ps))
 		ps = defVal;

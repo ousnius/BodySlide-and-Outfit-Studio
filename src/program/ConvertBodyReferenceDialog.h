@@ -21,6 +21,7 @@ public:
 
 	bool Load();
 	void ConvertBodyReference() const;
+
 private:
 	OutfitStudioFrame* outfitStudio;
 	OutfitProject* project;

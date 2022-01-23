@@ -10,7 +10,7 @@ See the included LICENSE file
 
 extern ConfigurationManager Config;
 
-wxBEGIN_EVENT_TABLE(PresetSaveDialog, wxDialog) 
+wxBEGIN_EVENT_TABLE(PresetSaveDialog, wxDialog)
 	EVT_TEXT_ENTER(XRCID("spFilter"), PresetSaveDialog::FilterChanged)
 	EVT_TEXT(XRCID("spFilter"), PresetSaveDialog::FilterChanged)
 	EVT_CHECKLISTBOX(XRCID("spGroupDisplay"), PresetSaveDialog::CheckGroup)
@@ -36,7 +36,7 @@ PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 	wxCheckListBox* chkbox = XRCCTRL((*this), "spGroupDisplay", wxCheckListBox);
 	chkbox->SetDoubleBuffered(true);
 }
-	
+
 PresetSaveDialog::~PresetSaveDialog() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/SavePreset.xrc");
 }
@@ -58,14 +58,14 @@ void PresetSaveDialog::FilterGroups(const std::string& filter) {
 		wxString filterStr = wxString::FromUTF8(filter);
 		filterStr.MakeLower();
 
-		for (auto &group : allGroupNames) {
+		for (auto& group : allGroupNames) {
 			wxString groupStr = wxString::FromUTF8(group);
 			if (groupStr.Lower().Contains(filterStr))
 				filteredGroups.push_back(groupStr.ToUTF8().data());
 		}
 	}
 
-	for (auto &g : filteredGroups) {
+	for (auto& g : filteredGroups) {
 		int i = chkbox->Append(g);
 		if (selectedGroups.find(g) != selectedGroups.end())
 			chkbox->Check(i);
@@ -95,7 +95,12 @@ void PresetSaveDialog::OnSave(wxCommandEvent& WXUNUSED(event)) {
 	outPresetName = XRCCTRL((*this), "spPresetName", wxTextCtrl)->GetValue().ToUTF8();
 	std::string presetFile = outPresetName + ".xml";
 
-	wxFileDialog savePresetDialog(this, "Choose a preset file", wxString::FromUTF8(GetProjectPath()) + "/SliderPresets", wxString::FromUTF8(presetFile), "Preset Files (*.xml)|*.xml", wxFD_SAVE);
+	wxFileDialog savePresetDialog(this,
+								  "Choose a preset file",
+								  wxString::FromUTF8(GetProjectPath()) + "/SliderPresets",
+								  wxString::FromUTF8(presetFile),
+								  "Preset Files (*.xml)|*.xml",
+								  wxFD_SAVE);
 	if (savePresetDialog.ShowModal() == wxID_OK) {
 		outFileName = savePresetDialog.GetPath().ToUTF8();
 		outGroups.assign(selectedGroups.begin(), selectedGroups.end());

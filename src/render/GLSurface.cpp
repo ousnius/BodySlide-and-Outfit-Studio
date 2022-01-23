@@ -6,19 +6,19 @@ See the included LICENSE file
 #include "GLSurface.h"
 #include "../utils/ConfigurationManager.h"
 
-#include <wx/msgdlg.h>
 #include <wx/log.h>
+#include <wx/msgdlg.h>
 
 #include <algorithm>
-#include <set>
 #include <limits>
+#include <set>
 
 using namespace nifly;
 
 extern ConfigurationManager Config;
 
 const wxGLAttributes& GLSurface::GetGLAttribs() {
-	static bool attribsInitialized { false };
+	static bool attribsInitialized{false};
 	static wxGLAttributes attribs;
 
 	if (!attribsInitialized) {
@@ -65,7 +65,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 }
 
 const wxGLContextAttrs& GLSurface::GetGLContextAttribs() {
-	static bool ctxAttribsInitialized{ false };
+	static bool ctxAttribsInitialized{false};
 	static wxGLContextAttrs ctxAttribs;
 
 	if (!ctxAttribsInitialized) {
@@ -99,7 +99,7 @@ int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
 	context = ctx;
 
 	canvas->SetCurrent(*context);
-	
+
 	wxLogMessage("OpenGL Context Info:");
 	wxLogMessage(wxString::Format("-> Vendor:   '%s'", wxString(glGetString(GL_VENDOR))));
 	wxLogMessage(wxString::Format("-> Renderer: '%s'", wxString(glGetString(GL_RENDERER))));
@@ -157,10 +157,10 @@ void GLSurface::Cleanup() {
 	// Set current context for resource deletion
 	SetContext();
 
-	for (auto &m : meshes)
+	for (auto& m : meshes)
 		delete m;
-	
-	for (auto &o : overlays)
+
+	for (auto& o : overlays)
 		delete o;
 
 	meshes.clear();
@@ -218,15 +218,9 @@ void GLSurface::DollyCamera(int dAmt) {
 
 void GLSurface::ClampCameraPosition(char axis, float lower, float upper) {
 	switch (axis) {
-	case 'X':
-		camPos.x = std::max(lower, std::min(camPos.x, upper));
-		break;
-	case 'Y':
-		camPos.y = std::max(lower, std::min(camPos.y, upper));
-		break;
-	case 'Z':
-		camPos.z = std::max(lower, std::min(camPos.z, upper));
-		break;
+		case 'X': camPos.x = std::max(lower, std::min(camPos.x, upper)); break;
+		case 'Y': camPos.y = std::max(lower, std::min(camPos.y, upper)); break;
+		case 'Z': camPos.z = std::max(lower, std::min(camPos.z, upper)); break;
 	}
 }
 
@@ -269,9 +263,14 @@ void GLSurface::SetFieldOfView(const int fieldOfView) {
 	mFov = fieldOfView;
 }
 
-void GLSurface::UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
-	const Vector3& directional0Dir, const Vector3& directional1Dir, const Vector3& directional2Dir)
-{
+void GLSurface::UpdateLights(const int ambient,
+							 const int frontal,
+							 const int directional0,
+							 const int directional1,
+							 const int directional2,
+							 const Vector3& directional0Dir,
+							 const Vector3& directional1Dir,
+							 const Vector3& directional2Dir) {
 	ambientLight = 0.01f * ambient;
 	frontalLight.diffuse = Vector3(0.01f * frontal, 0.01f * frontal, 0.01f * frontal);
 	directionalLight0.diffuse = Vector3(0.01f * directional0, 0.01f * directional0, 0.01f * directional0);
@@ -325,7 +324,7 @@ mesh* GLSurface::PickMesh(int ScreenX, int ScreenY) {
 
 	std::vector<IntersectResult> results;
 
-	for (auto &m : meshes) {
+	for (auto& m : meshes) {
 		results.clear();
 		if (!m->bVisible || !m->bvh)
 			continue;
@@ -349,7 +348,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 
 	bool collided = false;
 	std::unordered_map<mesh*, float> allHitDistances;
-	for (auto &m : activeMeshes) {
+	for (auto& m : activeMeshes) {
 		if (!m->bvh)
 			continue;
 
@@ -387,7 +386,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 				bool closest = true;
 				float viewDistance = origin.DistanceTo(o);
 
-				for (auto &p : allHitDistances)
+				for (auto& p : allHitDistances)
 					if (viewDistance > p.second)
 						closest = false;
 
@@ -417,7 +416,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh, int* outFacet) {
 	bool collided = false;
 	std::unordered_map<mesh*, float> allHitDistances;
-	for (auto &ov : overlays) {
+	for (auto& ov : overlays) {
 		std::vector<IntersectResult> results;
 		if (!ov->bvh)
 			continue;
@@ -447,7 +446,7 @@ bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vec
 				bool closest = true;
 				float viewDistance = origin.DistanceTo(o);
 
-				for (auto &p : allHitDistances)
+				for (auto& p : allHitDistances)
 					if (viewDistance > p.second)
 						closest = false;
 
@@ -481,7 +480,7 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 		return false;
 
 	float t = -(inPlaneNormal.dot(o) - inPlaneDist) / den;
-	outOrigin = o + d*t;
+	outOrigin = o + d * t;
 
 	return true;
 }
@@ -492,7 +491,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 		return collided;
 
 	std::unordered_map<mesh*, Vector3> allHitDistances;
-	for (auto &m : activeMeshes) {
+	for (auto& m : activeMeshes) {
 		if (!allMeshes && m != selectedMesh)
 			continue;
 
@@ -540,7 +539,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 				bool closest = true;
 				float viewDistance = hilitepoint.DistanceTo(o);
 
-				for (auto &p : allHitDistances) {
+				for (auto& p : allHitDistances) {
 					if (viewDistance > p.second.DistanceTo(o))
 						closest = false;
 				}
@@ -600,7 +599,7 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, mesh* h
 	else
 		hitMeshes = activeMeshes;
 
-	for (auto &m : hitMeshes) {
+	for (auto& m : hitMeshes) {
 		Vector3 o;
 		Vector3 d;
 		GetPickRay(ScreenX, ScreenY, m, d, o);
@@ -670,7 +669,7 @@ void GLSurface::SetSize(uint32_t w, uint32_t h) {
 	vpH = h;
 }
 
-void GLSurface::GetSize(uint32_t & w, uint32_t & h) {
+void GLSurface::GetSize(uint32_t& w, uint32_t& h) {
 	w = vpW;
 	h = vpH;
 }
@@ -680,7 +679,12 @@ void GLSurface::UpdateProjection() {
 	if (perspective)
 		matProjection = glm::perspective(glm::radians(mFov), aspect, 0.1f, 1000.0f);
 	else
-		matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 1000.0f);
+		matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect,
+								   (-camPos.z + camOffset.z) / 2.0f * aspect,
+								   (camPos.z + camOffset.z) / 2.0f,
+								   (-camPos.z + camOffset.z) / 2.0f,
+								   0.1f,
+								   1000.0f);
 
 	auto mat = glm::identity<glm::mat4x4>();
 	matView = glm::translate(mat, glm::vec3(camPos.x, camPos.y, camPos.z));
@@ -691,7 +695,7 @@ void GLSurface::UpdateProjection() {
 	matView = glm::translate(matView, glm::vec3(camOffset.x, camOffset.y, camOffset.z));
 }
 
-void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, unsigned int h) {	
+void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, unsigned int h) {
 	if (!canvas)
 		return;
 	canvas->SetCurrent(*context);
@@ -700,19 +704,19 @@ void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, u
 	// No array buffer is used, so this shouldn't be too slow to create here, but could be moved if necessary.
 	GLuint m_vertexArrayObject = 0;
 	glGenVertexArrays(1, &m_vertexArrayObject);
-	
+
 	glViewport(0, 0, w, h);
-	glClear(GL_DEPTH_BUFFER_BIT);	
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// This relies on shader manipulation of vertex positions to render a single triangle clipped to the surface
-	// 
+	//
 	GLShader shader = renderShader->GetShader();
 	shader.Begin();
-		renderShader->BindTextures(0, false, false, false, false);
-		// bind the dummy array and send three fake positions to the shader.
-		glBindVertexArray(m_vertexArrayObject);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glFlush();
+	renderShader->BindTextures(0, false, false, false, false);
+	// bind the dummy array and send three fake positions to the shader.
+	glBindVertexArray(m_vertexArrayObject);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glFlush();
 
 	shader.End();
 
@@ -731,7 +735,7 @@ void GLSurface::RenderToTexture(GLMaterial* renderShader) {
 	//glClearColor(colorBackground.x, colorBackground.y, colorBackground.z, 0.0f);
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Set up orthographic projection and identity view 
+	// Set up orthographic projection and identity view
 
 	matProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -100.0f, 100.0f);
 	//matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 100.0f);
@@ -759,7 +763,6 @@ void GLSurface::RenderToTexture(GLMaterial* renderShader) {
 	}
 
 	// note no buffer swap
-
 }
 
 bool GLSurface::SetContext() {
@@ -783,13 +786,13 @@ void GLSurface::RenderOneFrame() {
 	UpdateProjection();
 
 	// Render regular meshes
-	for (auto &m : meshes) {
+	for (auto& m : meshes) {
 		if (!m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0))
 			RenderMesh(m);
 	}
 
 	// Render meshes with alpha blending only
-	for (auto &m : meshes) {
+	for (auto& m : meshes) {
 		if (m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0)) {
 			glCullFace(GL_FRONT);
 			RenderMesh(m);
@@ -803,7 +806,7 @@ void GLSurface::RenderOneFrame() {
 	std::sort(renderOverlays.begin(), renderOverlays.end(), SortOverlaysLayer());
 
 	uint32_t lastOverlayLayer = static_cast<uint32_t>(-1);
-	for (auto &o : renderOverlays) {
+	for (auto& o : renderOverlays) {
 		if (o->bVisible) {
 			if (o->overlayLayer != lastOverlayLayer)
 				glClear(GL_DEPTH_BUFFER_BIT);
@@ -884,42 +887,42 @@ void GLSurface::RenderMesh(mesh* m) {
 
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);			// Positions
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Positions
 
 		if (m->norms) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[1]);
 			glEnableVertexAttribArray(1);
-			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Normals
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Normals
 		}
 
 		if (m->tangents) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[2]);
 			glEnableVertexAttribArray(2);
-			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Tangents
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Tangents
 		}
 
 		if (m->bitangents) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[3]);
 			glEnableVertexAttribArray(3);
-			glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Bitangents
+			glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Bitangents
 		}
 
 		if (m->vcolors) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[4]);
 			glEnableVertexAttribArray(4);
-			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Colors
+			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Colors
 		}
 
 		if (m->valpha) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
 			glEnableVertexAttribArray(5);
-			glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Alpha
+			glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Alpha
 		}
 
 		if (bTextured && m->textured && m->texcoord) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
 			glEnableVertexAttribArray(6);
-			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
+			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
 
 			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
 		}
@@ -927,13 +930,13 @@ void GLSurface::RenderMesh(mesh* m) {
 		if (m->mask) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[7]);
 			glEnableVertexAttribArray(7);
-			glVertexAttribPointer(7, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Mask
+			glVertexAttribPointer(7, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Mask
 		}
 
 		if (m->weight) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[8]);
 			glEnableVertexAttribArray(8);
-			glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Weight
+			glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Weight
 		}
 
 		// Offset triangles so that points can be visible
@@ -1113,7 +1116,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 
 		if (nif->GetHeader().GetVersion().Stream() < 130) {
 			m->backlight = shader->HasBacklight();
-			m->backlightMap = m->backlight;			// Dedicated map pre-130
+			m->backlightMap = m->backlight; // Dedicated map pre-130
 			m->rimlight = shader->HasRimlight();
 			m->softlight = shader->HasSoftlight();
 			m->prop.rimlightPower = shader->GetRimlightPower();
@@ -1161,19 +1164,19 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		int drawMode = (stencil->flags & DRAW_MASK) >> DRAW_POS;
 
 		switch (drawMode) {
-		case DRAW_CW:
-			m->doublesided = false;
-			m->cullMode = GL_FRONT;
-			break;
-		case DRAW_BOTH:
-			m->doublesided = true;
-			m->cullMode = GL_BACK;
-			break;
-		case DRAW_CCW:
-		default:
-			m->doublesided = false;
-			m->cullMode = GL_BACK;
-			break;
+			case DRAW_CW:
+				m->doublesided = false;
+				m->cullMode = GL_FRONT;
+				break;
+			case DRAW_BOTH:
+				m->doublesided = true;
+				m->cullMode = GL_BACK;
+				break;
+			case DRAW_CCW:
+			default:
+				m->doublesided = false;
+				m->cullMode = GL_BACK;
+				break;
 		}
 	}
 
@@ -1203,7 +1206,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 
 	m->shapeName = shapeName;
 
-	// Load verts. NIF verts are scaled up by approx. 10 and rotated on the x axis (Z up, Y forward).  
+	// Load verts. NIF verts are scaled up by approx. 10 and rotated on the x axis (Z up, Y forward).
 	// Scale down by 10 and rotate on x axis by flipping y and z components. To face the camera, this also mirrors
 	// on X and Y (180 degree y axis rotation.)
 	for (int i = 0; i < m->nVerts; i++) {
@@ -1242,7 +1245,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 			m->norms[i].y = (*nifNorms)[i].z;
 		}
 
-		for (auto &extraDataRef : shape->extraDataRefs) {
+		for (auto& extraDataRef : shape->extraDataRefs) {
 			auto integersExtraData = nif->GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef);
 			if (integersExtraData && integersExtraData->name == "LOCKEDNORM")
 				for (auto& i : integersExtraData->integersData)
@@ -1274,7 +1277,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	if (!color) {
 		int i = 0;
 		auto meshesFiltered = GetMeshesFiltered();
-		for (auto &nm : meshesFiltered) {
+		for (auto& nm : meshesFiltered) {
 			float c = 0.25f + (0.25f / meshesFiltered.size() * i);
 			nm->color = Vector3(c, c, c);
 			i++;
@@ -1403,12 +1406,12 @@ mesh* GLSurface::AddVis3dSphere(const nifly::Vector3& center, float radius, cons
 		m->norms = std::make_unique<Vector3[]>(m->nVerts);
 		m->tangents = std::make_unique<Vector3[]>(m->nVerts);
 		m->bitangents = std::make_unique<Vector3[]>(m->nVerts);
-		
+
 		std::vector<Triangle> tris;
 
 		for (int i = 0; i < nStacks; ++i) {
-			int k1 = i * (nSectors + 1);     // beginning of current stack
-			int k2 = k1 + nSectors + 1;      // beginning of next stack
+			int k1 = i * (nSectors + 1); // beginning of current stack
+			int k2 = k1 + nSectors + 1;	 // beginning of next stack
 
 			for (int j = 0; j < nSectors; ++j, ++k1, ++k2) {
 				// 2 triangles per sector excluding first and last stacks
@@ -1855,7 +1858,7 @@ mesh* GLSurface::AddVisSeamEdges(const mesh* refMesh, bool asMesh) {
 	}
 
 	// Erase edges that aren't outer seam edges
-	for (auto it = edges.begin(); it != edges.end(); ) {
+	for (auto it = edges.begin(); it != edges.end();) {
 		size_t p1Count = 0;
 		size_t p2Count = 0;
 		auto& edge = *it;
@@ -1971,7 +1974,7 @@ void GLSurface::SetOverlayVisibility(const std::string& name, bool visible) {
 void GLSurface::SetActiveMeshes(const std::vector<std::string>& shapeNames) {
 	activeMeshes.clear();
 
-	for (auto &s : shapeNames) {
+	for (auto& s : shapeNames) {
 		mesh* m = GetMesh(s);
 		if (m)
 			activeMeshes.push_back(m);

@@ -62,7 +62,8 @@ struct FBXWrangler::Priv {
 	bool LoadMeshes(const FBXImportOptions& options);
 };
 
-FBXWrangler::FBXWrangler(): priv(new Priv) {
+FBXWrangler::FBXWrangler()
+	: priv(new Priv) {
 	priv->sdkManager = FbxManager::Create();
 
 	FbxIOSettings* ios = FbxIOSettings::Create(priv->sdkManager, IOSROOT);
@@ -89,13 +90,13 @@ void FBXWrangler::NewScene() {
 void FBXWrangler::CloseScene() {
 	if (priv->scene)
 		priv->scene->Destroy();
-	
+
 	priv->scene = nullptr;
 	comName.clear();
 }
 
 void FBXWrangler::GetShapeNames(std::vector<std::string>& outNames) {
-	for (auto &s : priv->shapes)
+	for (auto& s : priv->shapes)
 		outNames.push_back(s.first);
 }
 
@@ -103,19 +104,20 @@ FBXShape* FBXWrangler::GetShape(const std::string& shapeName) {
 	return &(priv->shapes[shapeName]);
 }
 
-void FBXWrangler::Priv::AddGeometry(NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs) {
+void FBXWrangler::Priv::AddGeometry(
+	NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs) {
 	if (!verts || verts->empty())
 		return;
 
 	FbxMesh* m = FbxMesh::Create(sdkManager, shape->name.get().c_str());
-	
+
 	FbxGeometryElementNormal* normElement = nullptr;
 	if (norms && !norms->empty()) {
 		normElement = m->CreateElementNormal();
 		normElement->SetMappingMode(FbxLayerElement::eByControlPoint);
 		normElement->SetReferenceMode(FbxLayerElement::eDirect);
 	}
-	
+
 	FbxGeometryElementUV* uvElement = nullptr;
 	if (uvs && !uvs->empty()) {
 		std::string uvName = shape->name.get() + "UV";
@@ -136,7 +138,7 @@ void FBXWrangler::Priv::AddGeometry(NiShape* shape, const std::vector<Vector3>* 
 	}
 
 	if (tris) {
-		for (auto &t : (*tris)) {
+		for (auto& t : (*tris)) {
 			m->BeginPolygon();
 			m->AddPolygon(t.p1);
 			m->AddPolygon(t.p2);
@@ -182,7 +184,7 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 		FbxNode* comNode = skelNode->FindChild(comName.c_str());
 		if (comNode) {
 			std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
-			for (auto &b : boneNodes)
+			for (auto& b : boneNodes)
 				priv->AddLimb(comNode, nif, b);
 		}
 	}
@@ -205,7 +207,7 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 			FbxNode* rootNode = FbxNode::Create(priv->scene, root->name.get().c_str());
 			rootNode->SetNodeAttribute(rootBone);
 
-			const MatTransform &ttp = root->GetTransformToParent();
+			const MatTransform& ttp = root->GetTransformToParent();
 			rootNode->LclTranslation.Set(FbxDouble3(ttp.translation.y, ttp.translation.z, ttp.translation.x));
 
 			float rx, ry, rz;
@@ -229,7 +231,7 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 			FbxNode* comNode = FbxNode::Create(priv->scene, com->name.get().c_str());
 			comNode->SetNodeAttribute(comBone);
 
-			const MatTransform &ttp = com->GetTransformToParent();
+			const MatTransform& ttp = com->GetTransformToParent();
 			comNode->LclTranslation.Set(FbxDouble3(ttp.translation.y, ttp.translation.z, ttp.translation.x));
 
 			float rx, ry, rz;
@@ -298,14 +300,14 @@ FbxNode* FBXWrangler::Priv::AddLimb(FbxNode* parent, NifFile* nif, NiNode* nifBo
 
 void FBXWrangler::Priv::AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone) {
 	std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(nifBone);
-	for (auto &b : boneNodes)
+	for (auto& b : boneNodes)
 		AddLimb(node, nif, b);
 }
 
 void FBXWrangler::AddNif(NifFile* nif, AnimInfo* anim, bool transToGlobal, NiShape* shape) {
 	AddSkeleton(nif, true);
 
-	for (auto &s : nif->GetShapes()) {
+	for (auto& s : nif->GetShapes()) {
 		if (!shape || s == shape) {
 			std::vector<Triangle> tris;
 			if (s && s->GetTriangles(tris)) {
@@ -345,7 +347,7 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, NiShape* shape) {
 	if (!skelNode || !shape)
 		return;
 
-	for (auto &animSkin : anim->shapeSkinning) {
+	for (auto& animSkin : anim->shapeSkinning) {
 		if (shape->name != animSkin.first && !shape->name.get().empty())
 			continue;
 
@@ -357,7 +359,7 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, NiShape* shape) {
 		std::string shapeSkin = shapeName + "_sk";
 		FbxSkin* skin = FbxSkin::Create(priv->scene, shapeSkin.c_str());
 
-		for (auto &bone : anim->shapeBones[shapeName]) {
+		for (auto& bone : anim->shapeBones[shapeName]) {
 			FbxNode* jointNode = skelNode->FindChild(bone.c_str());
 			if (jointNode) {
 				std::string boneSkin = bone + "_sk";
@@ -367,7 +369,7 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, NiShape* shape) {
 
 				auto weights = anim->GetWeightsPtr(shapeName, bone);
 				if (weights) {
-					for (auto &vw : *weights)
+					for (auto& vw : *weights)
 						aCluster->AddControlPointIndex(vw.first, vw.second);
 				}
 
@@ -476,14 +478,13 @@ bool FBXWrangler::Priv::LoadMeshes(const FBXImportOptions& options) {
 						if (uv->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
 							uIndex = uv->GetIndexArray().GetAt(v);
 
-						shape.uvs.emplace_back((float)uv->GetDirectArray().GetAt(uIndex).mData[0],
-							(float)uv->GetDirectArray().GetAt(uIndex).mData[1]);
+						shape.uvs.emplace_back((float)uv->GetDirectArray().GetAt(uIndex).mData[0], (float)uv->GetDirectArray().GetAt(uIndex).mData[1]);
 					}
 
 					if (normal && normal->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
 						shape.normals.emplace_back((float)normal->GetDirectArray().GetAt(v).mData[0],
-							(float)normal->GetDirectArray().GetAt(v).mData[1],
-							(float)normal->GetDirectArray().GetAt(v).mData[2]);
+												   (float)normal->GetDirectArray().GetAt(v).mData[1],
+												   (float)normal->GetDirectArray().GetAt(v).mData[2]);
 					}
 				}
 
@@ -536,11 +537,11 @@ bool FBXWrangler::Priv::LoadMeshes(const FBXImportOptions& options) {
 				}
 
 				if (options.InvertU)
-					for (auto &u : shape.uvs)
+					for (auto& u : shape.uvs)
 						u.u = 1.0f - u.u;
 
 				if (options.InvertV)
-					for (auto &v : shape.uvs)
+					for (auto& v : shape.uvs)
 						v.v = 1.0f - v.v;
 
 				shapes[shape.name] = shape;

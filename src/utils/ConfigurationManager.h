@@ -8,9 +8,9 @@ See the included LICENSE file
 #include "../TinyXML-2/tinyxml2.h"
 #include "../utils/StringStuff.h"
 
-#include <vector>
 #include <map>
 #include <unordered_map>
+#include <vector>
 #include <wx/string.h>
 
 using namespace tinyxml2;
@@ -20,7 +20,12 @@ class ConfigurationItem {
 	std::vector<ConfigurationItem*> properties;
 
 public:
-	ConfigurationItem() : parent(nullptr), level(0), isProp(false), isComment(false), isDefault(false) { }
+	ConfigurationItem()
+		: parent(nullptr)
+		, level(0)
+		, isProp(false)
+		, isComment(false)
+		, isDefault(false) {}
 	ConfigurationItem(XMLElement* srcElement, ConfigurationItem* inParent = nullptr, int inLevel = 0) {
 		parent = inParent;
 		level = inLevel;
@@ -43,10 +48,10 @@ public:
 	int level;
 	bool isProp;
 	bool isComment;
-	bool isDefault;								// Default values are not saved with config.
+	bool isDefault; // Default values are not saved with config.
 
-	std::string name;								// Name associated with this node.
-	std::string value;								// Value associated with this node.
+	std::string name;  // Name associated with this node.
+	std::string value; // Value associated with this node.
 	std::string path;
 
 	int SettingFromXML(XMLElement* xml);
@@ -65,9 +70,7 @@ public:
 
 	void ClearArrayChildren(const std::string& arrayName);
 
-	bool Match(const std::string& otherName) {
-		return StringsEqualInsens(name.c_str(), otherName.c_str());
-	}
+	bool Match(const std::string& otherName) { return StringsEqualInsens(name.c_str(), otherName.c_str()); }
 };
 
 class ConfigurationManager {
@@ -116,16 +119,10 @@ public:
 
 	void AppendValueArray(const std::string& containerName, const std::string& arrayName, const std::vector<std::map<std::string, std::string>> arrayEntries);
 
-	std::string operator [] (const char* inName) {
-		return GetString(std::string(inName));
-	}
+	std::string operator[](const char* inName) { return GetString(std::string(inName)); }
 
-	std::string operator [] (const std::string& inName) {
-		return GetString(inName);
-	}
-	wxString operator [] (const wxString& inName) {
-		return GetString(inName.ToStdString());
-	}
+	std::string operator[](const std::string& inName) { return GetString(inName); }
+	wxString operator[](const wxString& inName) { return GetString(inName.ToStdString()); }
 
 	/* Utility function to replace variables within a string with matching configuration data.  Variables
 		are surrounded by %.  EG  :  "%GameDataPath%rest of path"  might become "D:\\Skyrim\\Data\\rest of path.

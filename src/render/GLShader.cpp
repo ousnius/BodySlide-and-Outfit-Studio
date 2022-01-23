@@ -4,15 +4,16 @@ See the included LICENSE file
 */
 
 #include "GLShader.h"
-#include "Object3d.hpp"
 #include "../utils/PlatformUtil.h"
+#include "Object3d.hpp"
 
 #include <fstream>
 #include <sstream>
 
 using namespace nifly;
 
-GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentSource) : GLShader() {
+GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentSource)
+	: GLShader() {
 	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource)) {
 		ShowLighting();
 		ShowTexture();
@@ -153,12 +154,22 @@ void GLShader::SetMatrixModelView(const glm::mat4x4& matView, const glm::mat4x4&
 }
 
 void GLShader::SetAlphaProperties(const uint16_t flags, const float threshold, const float value) {
-	static const GLenum blendMap[16] = {
-		GL_ONE, GL_ZERO, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR,
-		GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
-		GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA_SATURATE, GL_ONE,
-		GL_ONE, GL_ONE, GL_ONE, GL_ONE
-	};
+	static const GLenum blendMap[16] = {GL_ONE,
+										GL_ZERO,
+										GL_SRC_COLOR,
+										GL_ONE_MINUS_SRC_COLOR,
+										GL_DST_COLOR,
+										GL_ONE_MINUS_DST_COLOR,
+										GL_SRC_ALPHA,
+										GL_ONE_MINUS_SRC_ALPHA,
+										GL_DST_ALPHA,
+										GL_ONE_MINUS_DST_ALPHA,
+										GL_SRC_ALPHA_SATURATE,
+										GL_ONE,
+										GL_ONE,
+										GL_ONE,
+										GL_ONE,
+										GL_ONE};
 
 	//static const GLenum testMap[8] = {
 	//	GL_ALWAYS, GL_LESS, GL_EQUAL, GL_LEQUAL, GL_GREATER, GL_NOTEQUAL, GL_GEQUAL, GL_NEVER
@@ -432,7 +443,7 @@ void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const char
 	if (texLoc >= 0) {
 		glUniform1i(texLoc, index);
 		glActiveTexture(GL_TEXTURE0 + index);
-		
+
 		glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 	}
 }

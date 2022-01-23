@@ -261,7 +261,11 @@ bool TriFile::Write(const std::string& fileName) {
 void TriFile::AddMorph(const std::string& shapeName, MorphDataPtr data) {
 	auto shape = shapeMorphs.find(shapeName);
 	if (shape != shapeMorphs.end()) {
-		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == data->name) return true; return false; });
+		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData) {
+			if (searchData->name == data->name)
+				return true;
+			return false;
+		});
 		if (morph == shape->second.end())
 			shape->second.push_back(data);
 	}
@@ -274,7 +278,11 @@ void TriFile::AddMorph(const std::string& shapeName, MorphDataPtr data) {
 void TriFile::DeleteMorph(const std::string& shapeName, const std::string& morphName) {
 	for (auto shape = shapeMorphs.begin(); shape != shapeMorphs.end();) {
 		if (shape->first == shapeName) {
-			auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == morphName) return true; return false; });
+			auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData) {
+				if (searchData->name == morphName)
+					return true;
+				return false;
+			});
 			if (morph != shape->second.end()) {
 				shapeMorphs.erase(shape);
 				return;
@@ -287,12 +295,16 @@ void TriFile::DeleteMorph(const std::string& shapeName, const std::string& morph
 void TriFile::DeleteMorphs(const std::string& shapeName) {
 	auto shape = shapeMorphs.find(shapeName);
 	if (shape != shapeMorphs.end())
-			shape->second.clear();
+		shape->second.clear();
 }
 
 void TriFile::DeleteMorphFromAll(const std::string& morphName) {
 	for (auto shape = shapeMorphs.begin(); shape != shapeMorphs.end();) {
-		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == morphName) return true; return false; });
+		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData) {
+			if (searchData->name == morphName)
+				return true;
+			return false;
+		});
 		if (morph != shape->second.end())
 			shapeMorphs.erase(shape);
 		++shape;
@@ -302,7 +314,11 @@ void TriFile::DeleteMorphFromAll(const std::string& morphName) {
 MorphDataPtr TriFile::GetMorph(const std::string& shapeName, const std::string& morphName) {
 	auto shape = shapeMorphs.find(shapeName);
 	if (shape != shapeMorphs.end()) {
-		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == morphName) return true; return false; });
+		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData) {
+			if (searchData->name == morphName)
+				return true;
+			return false;
+		});
 		if (morph != shape->second.end())
 			return *morph;
 	}
@@ -317,7 +333,7 @@ std::map<std::string, std::vector<MorphDataPtr>> TriFile::GetMorphs() {
 uint16_t TriFile::GetShapeCount(MorphType morphType) {
 	uint16_t shapeCount = 0;
 
-	for (auto &shape : shapeMorphs) {
+	for (auto& shape : shapeMorphs) {
 		for (auto& morph : shape.second) {
 			if (morph->type == morphType) {
 				shapeCount++;
@@ -595,14 +611,13 @@ void TriHeadFile::AddMorph(const TriHeadMorph& morph) {
 }
 
 void TriHeadFile::DeleteMorph(const std::string& morphName) {
-	morphs.erase(std::remove_if(morphs.begin(), morphs.end(),
-		[&morphName](const TriHeadMorph& morph) { return morph.morphName == morphName; }), morphs.end());
+	morphs.erase(std::remove_if(morphs.begin(), morphs.end(), [&morphName](const TriHeadMorph& morph) { return morph.morphName == morphName; }), morphs.end());
 
 	numMorphs = static_cast<uint32_t>(morphs.size());
 }
 
 TriHeadMorph* TriHeadFile::GetMorph(const std::string& morphName) {
-	for (auto &m : morphs) {
+	for (auto& m : morphs) {
 		if (m.morphName == morphName) {
 			return &m;
 		}

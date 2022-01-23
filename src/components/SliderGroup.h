@@ -7,11 +7,11 @@ See the included LICENSE file
 
 #include "../TinyXML-2/tinyxml2.h"
 
-#include <wx/dir.h>
-#include <vector>
 #include <map>
 #include <set>
 #include <unordered_set>
+#include <vector>
+#include <wx/dir.h>
 
 using namespace tinyxml2;
 
@@ -21,17 +21,11 @@ class SliderSetGroup {
 	std::vector<std::string> sourceFiles;
 
 public:
-	SliderSetGroup() { }
-	SliderSetGroup(XMLElement * srcGroupElement) {
-		LoadGroup(srcGroupElement);
-	}
+	SliderSetGroup() {}
+	SliderSetGroup(XMLElement* srcGroupElement) { LoadGroup(srcGroupElement); }
 
-	std::string GetName() {
-		return name;
-	}
-	void SetName(const std::string& inName) {
-		name = inName;
-	}
+	std::string GetName() { return name; }
+	void SetName(const std::string& inName) { name = inName; }
 
 	bool HasMember(const std::string& search);
 	int GetMembers(std::vector<std::string>& outMembers);
@@ -69,16 +63,14 @@ class SliderSetGroupFile {
 
 public:
 	std::string fileName;
-	SliderSetGroupFile() :error(0), root(nullptr) { }
+	SliderSetGroupFile()
+		: error(0)
+		, root(nullptr) {}
 	SliderSetGroupFile(const std::string& srcFileName);
-	~SliderSetGroupFile() { }
+	~SliderSetGroupFile() {}
 
-	bool fail() {
-		return error != 0;
-	}
-	int GetError() {
-		return error;
-	}
+	bool fail() { return error != 0; }
+	int GetError() { return error; }
 
 	// Loads the XML document and identifies included group names. On a failure, sets the internal error value.
 	void Open(const std::string& srcFileName);

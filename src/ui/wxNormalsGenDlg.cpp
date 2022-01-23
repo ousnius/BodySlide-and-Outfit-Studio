@@ -23,7 +23,7 @@ wxBEGIN_EVENT_TABLE(wxNormalsGenDlg, wxDialog)
 wxEND_EVENT_TABLE()
 
 wxNormalsGenDlg::wxNormalsGenDlg(wxWindow* parent) {
-	wxXmlResource *xrc = wxXmlResource::Get();
+	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/NormalsGenDlg.xrc");
 	xrc->LoadDialog(this, parent, "wxNormalsGenDlg");
 

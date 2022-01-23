@@ -30,7 +30,7 @@ wxEND_EVENT_TABLE()
 
 GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 	: allOutfits(std::move(outfits)) {
-	wxXmlResource *xrc = wxXmlResource::Get();
+	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/GroupManager.xrc");
 	xrc->LoadDialog(this, parent, "dlgGroupManager");
 
@@ -78,7 +78,7 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 	if (clearGroups) {
 		// Add groups to list
 		listGroups->Clear();
-		for (auto &group : groupMembers)
+		for (auto& group : groupMembers)
 			listGroups->Append(wxString::FromUTF8(group.first));
 	}
 	else {
@@ -89,11 +89,11 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 	// Add members of selected group to list
 	bool groupSelected = !selectedGroup.empty();
 	if (groupSelected)
-		for (auto &member : groupMembers[selectedGroup])
+		for (auto& member : groupMembers[selectedGroup])
 			listMembers->Append(wxString::FromUTF8(member));
 
 	auto outfitFilter = XRCCTRL(*this, "outfitFilter", wxSearchCtrl);
-	std::string filter{ outfitFilter->GetValue().ToUTF8() };
+	std::string filter{outfitFilter->GetValue().ToUTF8()};
 	DoFilterOutfits(filter);
 
 	listMembers->Enable(groupSelected);
@@ -105,7 +105,12 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 }
 
 bool GroupManager::ChooseFile() {
-	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(GetProjectPath()) + "/SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	wxFileDialog file(this,
+					  "Saving group XML file...",
+					  wxString::FromUTF8(GetProjectPath()) + "/SliderGroups",
+					  fileName,
+					  "Group Files (*.xml)|*.xml",
+					  wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 	if (file.ShowModal() != wxID_OK)
 		return false;
 
@@ -116,7 +121,7 @@ bool GroupManager::ChooseFile() {
 void GroupManager::SaveGroup() {
 	SliderSetGroupFile groupFile;
 	groupFile.New(fileName.ToUTF8().data());
-	for (auto &grp : groupMembers) {
+	for (auto& grp : groupMembers) {
 		SliderSetGroup group;
 		group.SetName(grp.first);
 		group.AddMembers(grp.second);
@@ -130,12 +135,12 @@ void GroupManager::SaveGroup() {
 
 void GroupManager::DoRenameGroup() {
 	// Rename the selected group
-	std::string selectedGroup{ listGroups->GetStringSelection().ToUTF8() };
+	std::string selectedGroup{listGroups->GetStringSelection().ToUTF8()};
 	if (!selectedGroup.empty()) {
 		std::string newGroupName;
 
 		do {
-			std::string result{ wxGetTextFromUser(_("Please enter a new unique name for the group."), _("Rename Group")).ToUTF8() };
+			std::string result{wxGetTextFromUser(_("Please enter a new unique name for the group."), _("Rename Group")).ToUTF8()};
 			if (result.empty())
 				return;
 
@@ -162,7 +167,7 @@ void GroupManager::DoRemoveMembers() {
 	// Find and remove member from selected group
 	std::string selectedGroup{listGroups->GetStringSelection().ToUTF8()};
 	if (!selectedGroup.empty()) {
-		for (auto &sel : selections) {
+		for (auto& sel : selections) {
 			std::string member{listMembers->GetString(sel).ToUTF8()};
 			auto it = find(groupMembers[selectedGroup].begin(), groupMembers[selectedGroup].end(), member);
 			if (it != groupMembers[selectedGroup].end())
@@ -182,7 +187,7 @@ void GroupManager::DoAddMembers() {
 	// Add member to selected group
 	std::string selectedGroup{listGroups->GetStringSelection().ToUTF8()};
 	if (!selectedGroup.empty()) {
-		for (auto &sel : selections) {
+		for (auto& sel : selections) {
 			std::string member{listOutfits->GetString(sel).ToUTF8()};
 			groupMembers[selectedGroup].push_back(member);
 		}
@@ -200,7 +205,7 @@ void GroupManager::DoFilterOutfits(const std::string& filter) {
 	listOutfits->Clear();
 
 	// Add outfits that are no members to list
-	for (auto &outfit : allOutfits) {
+	for (auto& outfit : allOutfits) {
 		if (listMembers->FindString(outfit) == wxNOT_FOUND) {
 			wxString outfitName = wxString::FromUTF8(outfit);
 
@@ -223,7 +228,7 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	// Fill group member map
 	std::vector<std::string> groupNames;
 	groupFile.GetGroupNames(groupNames, true, true);
-	for (auto &grp : groupNames) {
+	for (auto& grp : groupNames) {
 		SliderSetGroup group;
 		if (groupFile.GetGroup(grp, group))
 			return;
@@ -305,7 +310,7 @@ void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void GroupManager::OnFilterChanged(wxCommandEvent& event) {
-	std::string filter{ event.GetString().ToUTF8() };
+	std::string filter{event.GetString().ToUTF8()};
 	DoFilterOutfits(filter);
 }
 

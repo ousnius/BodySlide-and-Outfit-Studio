@@ -10,8 +10,8 @@ class GLMaterial {
 private:
 	// texture names linked with this material.  Used to lookup OGL texture ids in Resource Loader.
 	std::vector<std::string> texNames;
-	// Cache of texture IDs. These are direct OGL texture ids used to bind textures and avoid lookups to 
-	//  the resource loader's texture database each frame.  
+	// Cache of texture IDs. These are direct OGL texture ids used to bind textures and avoid lookups to
+	//  the resource loader's texture database each frame.
 	std::vector<GLuint> texCache;
 	// A value indicating the last time the cache was updated from the resource loader. This isn't a time,
 	//  but instead a numeric indicator of change state. This is checked prior to binding textures, and if

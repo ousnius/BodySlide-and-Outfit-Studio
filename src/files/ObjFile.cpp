@@ -8,15 +8,15 @@ See the included LICENSE file
 
 using namespace nifly;
 
-ObjFile::ObjFile() {
-}
+ObjFile::ObjFile() {}
 
 ObjFile::~ObjFile() {
-	for (auto &d : data)
+	for (auto& d : data)
 		delete d.second;
 }
 
-int ObjFile::AddGroup(const std::string& name, const std::vector<Vector3>& verts, const std::vector<Triangle>& tris, const std::vector<Vector2>& uvs, const std::vector<Vector3>& norms) {
+int ObjFile::AddGroup(
+	const std::string& name, const std::vector<Vector3>& verts, const std::vector<Triangle>& tris, const std::vector<Vector2>& uvs, const std::vector<Vector3>& norms) {
 	if (name.empty() || verts.empty())
 		return 1;
 
@@ -220,9 +220,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			if (skipFace)
 				continue;
 
-			if (v_idx[0] >= maxVertexCount ||
-				v_idx[1] >= maxVertexCount ||
-				v_idx[2] >= maxVertexCount)
+			if (v_idx[0] >= maxVertexCount || v_idx[1] >= maxVertexCount || v_idx[2] >= maxVertexCount)
 				continue;
 
 			t.p1 = static_cast<uint16_t>(v_idx[0]);
@@ -257,7 +255,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 }
 
 
-int ObjFile::Save(const std::string &fileName) {
+int ObjFile::Save(const std::string& fileName) {
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
 	if (file.fail())
@@ -277,25 +275,18 @@ int ObjFile::Save(const std::string &fileName) {
 		file << "# " << d.second->tris.size() << " triangles" << std::endl;
 
 		for (size_t i = 0; i < d.second->verts.size(); i++) {
-			file << "v " << (d.second->verts[i].x + offset.x) * scale.x
-				<< " " << (d.second->verts[i].y + offset.y) * scale.y
-				<< " " << (d.second->verts[i].z + offset.z) * scale.z
-				<< std::endl;
+			file << "v " << (d.second->verts[i].x + offset.x) * scale.x << " " << (d.second->verts[i].y + offset.y) * scale.y << " " << (d.second->verts[i].z + offset.z) * scale.z
+				 << std::endl;
 		}
 		file << std::endl;
 
 		for (size_t i = 0; i < d.second->uvs.size(); i++) {
-			file << "vt " << d.second->uvs[i].u << " "
-				<< (1.0f - d.second->uvs[i].v)
-				<< std::endl;
+			file << "vt " << d.second->uvs[i].u << " " << (1.0f - d.second->uvs[i].v) << std::endl;
 		}
 		file << std::endl;
 
 		for (size_t i = 0; i < d.second->norms.size(); i++) {
-			file << "vn " << d.second->norms[i].x << " "
-				<< d.second->norms[i].y << " "
-				<< d.second->norms[i].z
-				<< std::endl;
+			file << "vn " << d.second->norms[i].x << " " << d.second->norms[i].y << " " << d.second->norms[i].z << std::endl;
 		}
 		file << std::endl;
 
@@ -353,7 +344,7 @@ int ObjFile::Save(const std::string &fileName) {
 	return 0;
 }
 
-bool ObjFile::CopyDataForGroup(const std::string &name, std::vector<Vector3> *v, std::vector<Triangle> *t, std::vector<Vector2> *uv, std::vector<Vector3>* norms) {
+bool ObjFile::CopyDataForGroup(const std::string& name, std::vector<Vector3>* v, std::vector<Triangle>* t, std::vector<Vector2>* uv, std::vector<Vector3>* norms) {
 	if (data.find(name) == data.end())
 		return false;
 

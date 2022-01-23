@@ -130,33 +130,51 @@ void AABB::Merge(const Vector3* points, const uint16_t* indices, const uint16_t 
 	uint16_t idx;
 	for (uint16_t i = 0; i < nPoints; i++) {
 		idx = indices[i];
-		if (points[idx].x < min.x) min.x = points[idx].x;
-		if (points[idx].y < min.y) min.y = points[idx].y;
-		if (points[idx].z < min.z) min.z = points[idx].z;
+		if (points[idx].x < min.x)
+			min.x = points[idx].x;
+		if (points[idx].y < min.y)
+			min.y = points[idx].y;
+		if (points[idx].z < min.z)
+			min.z = points[idx].z;
 
-		if (points[idx].x > max.x) max.x = points[idx].x;
-		if (points[idx].y > max.y) max.y = points[idx].y;
-		if (points[idx].z > max.z) max.z = points[idx].z;
+		if (points[idx].x > max.x)
+			max.x = points[idx].x;
+		if (points[idx].y > max.y)
+			max.y = points[idx].y;
+		if (points[idx].z > max.z)
+			max.z = points[idx].z;
 	}
 }
 
 void AABB::Merge(const AABB& other) {
-	if (other.min.x < min.x) min.x = other.min.x;
-	if (other.min.y < min.y) min.y = other.min.y;
-	if (other.min.z < min.z) min.z = other.min.z;
+	if (other.min.x < min.x)
+		min.x = other.min.x;
+	if (other.min.y < min.y)
+		min.y = other.min.y;
+	if (other.min.z < min.z)
+		min.z = other.min.z;
 
-	if (other.max.x > max.x) max.x = other.max.x;
-	if (other.max.y > max.y) max.y = other.max.y;
-	if (other.max.z > max.z) max.z = other.max.z;
+	if (other.max.x > max.x)
+		max.x = other.max.x;
+	if (other.max.y > max.y)
+		max.y = other.max.y;
+	if (other.max.z > max.z)
+		max.z = other.max.z;
 }
 
 bool AABB::IntersectAABB(const AABB& other) {
-	if (min.x > other.max.x) return false;
-	if (min.y > other.max.y) return false;
-	if (min.z > other.max.z) return false;
-	if (max.x < other.min.x) return false;
-	if (max.y < other.min.y) return false;
-	if (max.z < other.min.z) return false;
+	if (min.x > other.max.x)
+		return false;
+	if (min.y > other.max.y)
+		return false;
+	if (min.z > other.max.z)
+		return false;
+	if (max.x < other.min.x)
+		return false;
+	if (max.y < other.min.y)
+		return false;
+	if (max.z < other.min.z)
+		return false;
 	return true;
 }
 
@@ -225,10 +243,12 @@ bool AABB::IntersectRay(const Vector3& Origin, const Vector3& Direction, Vector3
 	}
 
 	if (inside) {
-		if (outCoord) (*outCoord) = Origin;
+		if (outCoord)
+			(*outCoord) = Origin;
 		return true;
 	}
-	if (planeval < 0) return false;
+	if (planeval < 0)
+		return false;
 
 	if (axis == 0) {
 		collisionCoord.x = planeval;
@@ -255,7 +275,8 @@ bool AABB::IntersectRay(const Vector3& Origin, const Vector3& Direction, Vector3
 			return false;
 	}
 
-	if (outCoord) (*outCoord) = collisionCoord;
+	if (outCoord)
+		(*outCoord) = collisionCoord;
 	return true;
 }
 
@@ -264,33 +285,34 @@ bool AABB::IntersectSphere(const Vector3& Origin, const float radius) {
 
 	if (Origin.x < min.x) {
 		s = Origin.x - min.x;
-		d += s*s;
+		d += s * s;
 	}
 	else if (Origin.x > max.x) {
 		s = Origin.x - max.x;
-		d += s*s;
+		d += s * s;
 	}
 	if (Origin.y < min.y) {
 		s = Origin.y - min.y;
-		d += s*s;
+		d += s * s;
 	}
 	else if (Origin.y > max.y) {
 		s = Origin.y - max.y;
-		d += s*s;
+		d += s * s;
 	}
 	if (Origin.z < min.z) {
 		s = Origin.z - min.z;
-		d += s*s;
+		d += s * s;
 	}
 	else if (Origin.z > max.z) {
 		s = Origin.z - max.z;
-		d += s*s;
+		d += s * s;
 	}
 
 	return d <= radius * radius;
 }
 
-AABBTree::AABBTreeNode::AABBTreeNode(std::vector<uint32_t>& facetIndices, const uint32_t start, const uint32_t end, AABBTree* treeRef, AABBTreeNode* parentRef, const uint32_t depth) {
+AABBTree::AABBTreeNode::AABBTreeNode(
+	std::vector<uint32_t>& facetIndices, const uint32_t start, const uint32_t end, AABBTree* treeRef, AABBTreeNode* parentRef, const uint32_t depth) {
 	int axis;
 	Vector3 axis_avg;
 	tree = treeRef;
@@ -333,65 +355,65 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<uint32_t>& facetIndices, const 
 	float rval;
 
 	switch (axis) {
-	case 0:
-		lval = treeRef->triRef[facetIndices[l]].AxisMidPointX(treeRef->vertexRef);
-		rval = treeRef->triRef[facetIndices[r]].AxisMidPointX(treeRef->vertexRef);
-		while (l < r) {
-			while (lval < axis_avg.x && l != r) {
+		case 0:
+			lval = treeRef->triRef[facetIndices[l]].AxisMidPointX(treeRef->vertexRef);
+			rval = treeRef->triRef[facetIndices[r]].AxisMidPointX(treeRef->vertexRef);
+			while (l < r) {
+				while (lval < axis_avg.x && l != r) {
+					lval = treeRef->triRef[facetIndices[++l]].AxisMidPointX(treeRef->vertexRef);
+				}
+				while (rval >= axis_avg.x && r != l) {
+					rval = treeRef->triRef[facetIndices[--r]].AxisMidPointX(treeRef->vertexRef);
+				}
+				moreStart = r;
+				if (r == l) {
+					break;
+				}
+				std::swap(facetIndices[l], facetIndices[r]);
 				lval = treeRef->triRef[facetIndices[++l]].AxisMidPointX(treeRef->vertexRef);
-			}
-			while (rval >= axis_avg.x && r != l) {
 				rval = treeRef->triRef[facetIndices[--r]].AxisMidPointX(treeRef->vertexRef);
 			}
-			moreStart = r;
-			if (r == l) {
-				break;
-			}
-			std::swap(facetIndices[l], facetIndices[r]);
-			lval = treeRef->triRef[facetIndices[++l]].AxisMidPointX(treeRef->vertexRef);
-			rval = treeRef->triRef[facetIndices[--r]].AxisMidPointX(treeRef->vertexRef);
-		}
-		break;
+			break;
 
-	case 1:
-		lval = treeRef->triRef[facetIndices[l]].AxisMidPointY(treeRef->vertexRef);
-		rval = treeRef->triRef[facetIndices[r]].AxisMidPointY(treeRef->vertexRef);
-		while (l < r) {
-			while (lval < axis_avg.y && l != r) {
+		case 1:
+			lval = treeRef->triRef[facetIndices[l]].AxisMidPointY(treeRef->vertexRef);
+			rval = treeRef->triRef[facetIndices[r]].AxisMidPointY(treeRef->vertexRef);
+			while (l < r) {
+				while (lval < axis_avg.y && l != r) {
+					lval = treeRef->triRef[facetIndices[++l]].AxisMidPointY(treeRef->vertexRef);
+				}
+				while (rval >= axis_avg.y && r != l) {
+					rval = treeRef->triRef[facetIndices[--r]].AxisMidPointY(treeRef->vertexRef);
+				}
+				moreStart = r;
+				if (r == l) {
+					break;
+				}
+				std::swap(facetIndices[l], facetIndices[r]);
 				lval = treeRef->triRef[facetIndices[++l]].AxisMidPointY(treeRef->vertexRef);
-			}
-			while (rval >= axis_avg.y && r != l) {
 				rval = treeRef->triRef[facetIndices[--r]].AxisMidPointY(treeRef->vertexRef);
 			}
-			moreStart = r;
-			if (r == l) {
-				break;
-			}
-			std::swap(facetIndices[l], facetIndices[r]);
-			lval = treeRef->triRef[facetIndices[++l]].AxisMidPointY(treeRef->vertexRef);
-			rval = treeRef->triRef[facetIndices[--r]].AxisMidPointY(treeRef->vertexRef);
-		}
-		break;
+			break;
 
-	case 2:
-		lval = treeRef->triRef[facetIndices[l]].AxisMidPointZ(treeRef->vertexRef);
-		rval = treeRef->triRef[facetIndices[r]].AxisMidPointZ(treeRef->vertexRef);
-		while (l < r) {
-			while (lval < axis_avg.z && l != r) {
+		case 2:
+			lval = treeRef->triRef[facetIndices[l]].AxisMidPointZ(treeRef->vertexRef);
+			rval = treeRef->triRef[facetIndices[r]].AxisMidPointZ(treeRef->vertexRef);
+			while (l < r) {
+				while (lval < axis_avg.z && l != r) {
+					lval = treeRef->triRef[facetIndices[++l]].AxisMidPointZ(treeRef->vertexRef);
+				}
+				while (rval >= axis_avg.z && r != l) {
+					rval = treeRef->triRef[facetIndices[--r]].AxisMidPointZ(treeRef->vertexRef);
+				}
+				moreStart = r;
+				if (r == l)
+					break;
+
+				std::swap(facetIndices[l], facetIndices[r]);
 				lval = treeRef->triRef[facetIndices[++l]].AxisMidPointZ(treeRef->vertexRef);
-			}
-			while (rval >= axis_avg.z && r != l) {
 				rval = treeRef->triRef[facetIndices[--r]].AxisMidPointZ(treeRef->vertexRef);
 			}
-			moreStart = r;
-			if (r == l)
-				break;
-
-			std::swap(facetIndices[l], facetIndices[r]);
-			lval = treeRef->triRef[facetIndices[++l]].AxisMidPointZ(treeRef->vertexRef);
-			rval = treeRef->triRef[facetIndices[--r]].AxisMidPointZ(treeRef->vertexRef);
-		}
-		break;
+			break;
 	}
 
 	if (moreStart == start)
@@ -438,39 +460,39 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<uint32_t>& facetIndices, AABBTr
 
 	int facetnum;
 	switch (axis) {
-	case 0:
-		for (uint32_t i = 0; i < static_cast<uint32_t>(facetIndices.size()); i++) {
-			facetnum = facetIndices[i];
-			if (treeRef->triRef[facetnum].AxisMidPointX(treeRef->vertexRef) < axis_avg.x) {
-				less.push_back(facetnum);
+		case 0:
+			for (uint32_t i = 0; i < static_cast<uint32_t>(facetIndices.size()); i++) {
+				facetnum = facetIndices[i];
+				if (treeRef->triRef[facetnum].AxisMidPointX(treeRef->vertexRef) < axis_avg.x) {
+					less.push_back(facetnum);
+				}
+				else
+					more.push_back(facetnum);
 			}
-			else
-				more.push_back(facetnum);
-		}
 
-		break;
+			break;
 
-	case 1:
-		for (uint32_t i = 0; i < static_cast<uint32_t>(facetIndices.size()); i++) {
-			facetnum = facetIndices[i];
-			if (treeRef->triRef[facetnum].AxisMidPointY(treeRef->vertexRef) < axis_avg.y) {
-				less.push_back(facetnum);
+		case 1:
+			for (uint32_t i = 0; i < static_cast<uint32_t>(facetIndices.size()); i++) {
+				facetnum = facetIndices[i];
+				if (treeRef->triRef[facetnum].AxisMidPointY(treeRef->vertexRef) < axis_avg.y) {
+					less.push_back(facetnum);
+				}
+				else
+					more.push_back(facetnum);
 			}
-			else
-				more.push_back(facetnum);
-		}
-		break;
+			break;
 
-	case 2:
-		for (uint32_t i = 0; i < static_cast<uint32_t>(facetIndices.size()); i++) {
-			facetnum = facetIndices[i];
-			if (treeRef->triRef[facetnum].AxisMidPointZ(treeRef->vertexRef) < axis_avg.z) {
-				less.push_back(facetnum);
+		case 2:
+			for (uint32_t i = 0; i < static_cast<uint32_t>(facetIndices.size()); i++) {
+				facetnum = facetIndices[i];
+				if (treeRef->triRef[facetnum].AxisMidPointZ(treeRef->vertexRef) < axis_avg.z) {
+					less.push_back(facetnum);
+				}
+				else
+					more.push_back(facetnum);
 			}
-			else
-				more.push_back(facetnum);
-		}
-		break;
+			break;
 	}
 
 	//  Split lists when all midpoints fall on one side of axis or the other
@@ -502,8 +524,10 @@ void AABBTree::AABBTreeNode::AddDebugFrames(std::vector<Vector3>& verts, std::ve
 		mBB.AddBoxToMesh(verts, edges);
 	} // else return;
 
-	if (P) P->AddDebugFrames(verts, edges, maxdepth, curdepth + 1);
-	if (N) N->AddDebugFrames(verts, edges, maxdepth, curdepth + 1);
+	if (P)
+		P->AddDebugFrames(verts, edges, maxdepth, curdepth + 1);
+	if (N)
+		N->AddDebugFrames(verts, edges, maxdepth, curdepth + 1);
 }
 
 void AABBTree::AABBTreeNode::AddRayIntersectFrames(Vector3& origin, Vector3& direction, std::vector<Vector3>& verts, std::vector<Edge>& edges) {
@@ -513,14 +537,17 @@ void AABBTree::AABBTreeNode::AddRayIntersectFrames(Vector3& origin, Vector3& dir
 	else
 		return;
 
-	if (P) P->AddRayIntersectFrames(origin, direction, verts, edges);
-	if (N) N->AddRayIntersectFrames(origin, direction, verts, edges);
+	if (P)
+		P->AddRayIntersectFrames(origin, direction, verts, edges);
+	if (N)
+		N->AddRayIntersectFrames(origin, direction, verts, edges);
 }
 
 bool AABBTree::AABBTreeNode::IntersectRay(Vector3& origin, Vector3& direction, std::vector<IntersectResult>* results) {
 	IntersectResult r;
 	bool collision = mBB.IntersectRay(origin, direction, nullptr);
-	if (!collision) return false;
+	if (!collision)
+		return false;
 
 	if (!P && !N) {
 		for (uint32_t i = 0; i < nFacets; i++) {
@@ -548,7 +575,7 @@ bool AABBTree::AABBTreeNode::IntersectRay(Vector3& origin, Vector3& direction, s
 	return Pcollide || Ncollide;
 }
 
-bool AABBTree::AABBTreeNode::IntersectSphere(Vector3 &origin, const float radius, std::vector<IntersectResult> *results) {
+bool AABBTree::AABBTreeNode::IntersectSphere(Vector3& origin, const float radius, std::vector<IntersectResult>* results) {
 	IntersectResult r;
 	bool collision = mBB.IntersectSphere(origin, radius);
 	if (!collision)
@@ -612,8 +639,12 @@ AABBTree::AABBTree(Vector3* vertices, Triangle* facets, const uint32_t nFacets, 
 	root = std::make_unique<AABBTreeNode>(facetIndices, start, nFacets - 1, this, nullptr, depth);
 }
 
-uint32_t AABBTree::MinFacets() { return min_facets; }
-uint32_t AABBTree::MaxDepth() { return max_depth; }
+uint32_t AABBTree::MinFacets() {
+	return min_facets;
+}
+uint32_t AABBTree::MaxDepth() {
+	return max_depth;
+}
 
 Vector3 AABBTree::Center() {
 	return root->Center();

@@ -5,9 +5,9 @@ See the included LICENSE file
 
 #pragma once
 
+#include "../components/Anim.h"
 #include "../components/Automorph.h"
 #include "../components/Mesh.h"
-#include "../components/Anim.h"
 #include "OutfitStudio.h"
 
 #include <wx/arrstr.h>
@@ -79,13 +79,13 @@ public:
 
 	// Returns a string error message or empty string on success.
 	std::string Save(const wxFileName& sliderSetFile,
-		const wxString& strOutfitName,
-		const wxString& strDataDir,
-		const wxString& strBaseFile,
-		const wxString& strGamePath,
-		const wxString& strGameFile,
-		bool genWeights,
-		bool copyRef);
+					 const wxString& strOutfitName,
+					 const wxString& strDataDir,
+					 const wxString& strBaseFile,
+					 const wxString& strGamePath,
+					 const wxString& strGameFile,
+					 bool genWeights,
+					 bool copyRef);
 
 	bool SaveSliderData(const std::string& fileName, bool copyRef = true);
 
@@ -96,9 +96,7 @@ public:
 	nifly::NiShape* GetBaseShape() { return baseShape; }
 	void SetBaseShape(nifly::NiShape* shape, const bool moveData = true);
 
-	bool IsBaseShape(nifly::NiShape* shape) {
-		return (shape && shape == baseShape);
-	}
+	bool IsBaseShape(nifly::NiShape* shape) { return (shape && shape == baseShape); }
 
 	std::string SliderSetName();
 	std::string SliderSetFileName();
@@ -195,7 +193,15 @@ public:
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
 	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
 	// The resulting data is then written back to the outfit shape as the green color channel.
-	void CopyBoneWeights(nifly::NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<uint16_t, float>& mask, const std::vector<std::string>& boneList, int nCopyBones, const std::vector<std::string> &lockedBones, UndoStateShape &uss, bool bSpreadWeight);
+	void CopyBoneWeights(nifly::NiShape* shape,
+						 const float proximityRadius,
+						 const int maxResults,
+						 std::unordered_map<uint16_t, float>& mask,
+						 const std::vector<std::string>& boneList,
+						 int nCopyBones,
+						 const std::vector<std::string>& lockedBones,
+						 UndoStateShape& uss,
+						 bool bSpreadWeight);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
 	void TransferSelectedWeights(nifly::NiShape* shape, std::unordered_map<uint16_t, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
@@ -205,8 +211,8 @@ public:
 	void ClearBoneScale(bool clear = true);
 
 	void AddBoneRef(const std::string& boneName);
-	void AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const nifly::MatTransform &xformToParent);
-	void ModifyCustomBone(AnimBone *bPtr, const std::string& parentBone, const nifly::MatTransform &xformToParent);
+	void AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const nifly::MatTransform& xformToParent);
+	void ModifyCustomBone(AnimBone* bPtr, const std::string& parentBone, const nifly::MatTransform& xformToParent);
 
 	void ClearWorkSliders();
 	void ClearReference();
@@ -216,31 +222,32 @@ public:
 	void DeleteSlider(const std::string& sliderName);
 
 	int LoadSkeletonReference(const std::string& skeletonFileName);
-	int LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll = false, bool mergeSliders = false, bool mergeZaps = false);
+	int LoadReferenceTemplate(
+		const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll = false, bool mergeSliders = false, bool mergeZaps = false);
 	int LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders = false, bool mergeZaps = false);
 	int LoadReference(const std::string& fileName, const std::string& setName, const std::string& shapeName = "", bool mergeSliders = false, bool mergeZaps = false);
 
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
 	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true);
 
-	void CollectVertexData(nifly::NiShape *shape, UndoStateShape &uss, const std::vector<uint16_t> &indices);
-	void CollectTriangleData(nifly::NiShape *shape, UndoStateShape &uss, const std::vector<uint32_t> &indices);
-	bool PrepareDeleteVerts(nifly::NiShape* shape, const std::unordered_map<uint16_t, float>& mask, UndoStateShape &uss);
-	void ApplyShapeMeshUndo(nifly::NiShape* shape, const UndoStateShape &uss, bool bUndo);
+	void CollectVertexData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
+	void CollectTriangleData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint32_t>& indices);
+	bool PrepareDeleteVerts(nifly::NiShape* shape, const std::unordered_map<uint16_t, float>& mask, UndoStateShape& uss);
+	void ApplyShapeMeshUndo(nifly::NiShape* shape, const UndoStateShape& uss, bool bUndo);
 
-	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape &uss, const std::vector<uint16_t> &indices);
-	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape &uss, const nifly::Edge &edge);
-	bool PrepareSplitEdge(nifly::NiShape* shape, UndoStateShape &uss, const std::vector<uint16_t> &p1s, const std::vector<uint16_t> &p2s);
+	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
+	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape& uss, const nifly::Edge& edge);
+	bool PrepareSplitEdge(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& p1s, const std::vector<uint16_t>& p2s);
 
-	void CheckMerge(const std::string &sourceName, const std::string &targetName, MergeCheckErrors &e);
-	void PrepareCopyGeo(nifly::NiShape *source, nifly::NiShape *target, UndoStateShape &uss);
+	void CheckMerge(const std::string& sourceName, const std::string& targetName, MergeCheckErrors& e);
+	void PrepareCopyGeo(nifly::NiShape* source, nifly::NiShape* target, UndoStateShape& uss);
 
 	nifly::NiShape* DuplicateShape(nifly::NiShape* sourceShape, const std::string& destShapeName);
 	void DeleteShape(nifly::NiShape* shape);
 
 	void DeleteBone(const std::string& boneName) {
 		if (workNif.IsValid()) {
-			for (auto &s : workNif.GetShapeNames())
+			for (auto& s : workNif.GetShapeNames())
 				workAnim.RemoveShapeBone(s, boneName);
 
 			int blockID = workNif.GetBlockID(workNif.FindBlockByName<nifly::NiNode>(boneName));
@@ -261,7 +268,11 @@ public:
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
-	int ExportOBJ(const std::string& fileName, const std::vector<nifly::NiShape*>& shapes, bool transToGlobal, const nifly::Vector3& scale = nifly::Vector3(1.0f, 1.0f, 1.0f), const nifly::Vector3& offset = nifly::Vector3());
+	int ExportOBJ(const std::string& fileName,
+				  const std::vector<nifly::NiShape*>& shapes,
+				  bool transToGlobal,
+				  const nifly::Vector3& scale = nifly::Vector3(1.0f, 1.0f, 1.0f),
+				  const nifly::Vector3& offset = nifly::Vector3());
 
 	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
 	int ExportFBX(const std::string& fileName, const std::vector<nifly::NiShape*>& shapes, bool transToGlobal);

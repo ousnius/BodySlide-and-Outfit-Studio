@@ -6,7 +6,13 @@ See the included LICENSE file
 #include "WeightNorm.h"
 #include "Anim.h"
 
-void BoneWeightAutoNormalizer::SetUp(UndoStateShape *ussi, AnimInfo *animInfo, const std::string &shapeName, const std::vector<std::string> &boneNames, const std::vector<std::string> &lockedBoneNames, uint32_t nMBonesi, bool bSprWt) {
+void BoneWeightAutoNormalizer::SetUp(UndoStateShape* ussi,
+									 AnimInfo* animInfo,
+									 const std::string& shapeName,
+									 const std::vector<std::string>& boneNames,
+									 const std::vector<std::string>& lockedBoneNames,
+									 uint32_t nMBonesi,
+									 bool bSprWt) {
 	uss = ussi;
 	wPtrs.clear();
 	lWPtrs.clear();
@@ -39,7 +45,7 @@ void BoneWeightAutoNormalizer::GrabOneVertexStartingWeights(int i) {
 
 	// Fill in uss start and end values if the vertex doesn't have them yet.
 	for (size_t bi = 0; bi < nBones; ++bi) {
-		auto &bw = uss->boneWeights[bi].weights;
+		auto& bw = uss->boneWeights[bi].weights;
 		if (bw.find(i) == bw.end()) {
 			float val = 0.0;
 			if (wPtrs[bi] && wPtrs[bi]->find(i) != wPtrs[bi]->end())
@@ -50,12 +56,12 @@ void BoneWeightAutoNormalizer::GrabOneVertexStartingWeights(int i) {
 	}
 }
 
-void BoneWeightAutoNormalizer::GrabStartingWeights(const int *points, int nPoints) {
+void BoneWeightAutoNormalizer::GrabStartingWeights(const int* points, int nPoints) {
 	for (int pi = 0; pi < nPoints; pi++)
 		GrabOneVertexStartingWeights(points[pi]);
 }
 
-void BoneWeightAutoNormalizer::AdjustWeights(int vInd, bool *adjFlag) {
+void BoneWeightAutoNormalizer::AdjustWeights(int vInd, bool* adjFlag) {
 	// We have three sets of bones: modified, normalizable, and locked:
 	// modified bones are those with bi < nMBones.
 	// normalizable bones are those with bi >= nMBones.
@@ -66,8 +72,9 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd, bool *adjFlag) {
 	// Calculate total locked and normalizable weight
 	float totNW = 0.0;
 	for (size_t bi = 0; bi < nBones; ++bi) {
-		if (bi < nMBones && (!adjFlag || adjFlag[bi])) continue;
-		auto &bw = uss->boneWeights[bi].weights;
+		if (bi < nMBones && (!adjFlag || adjFlag[bi]))
+			continue;
+		auto& bw = uss->boneWeights[bi].weights;
 		if (bw.find(vInd) != bw.end())
 			totNW += bw[vInd].endVal;
 	}
@@ -100,7 +107,7 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd, bool *adjFlag) {
 		if (wi == uss->boneWeights[bi].weights.end())
 			continue;
 
-		float &w = wi->second.endVal;
+		float& w = wi->second.endVal;
 		if (w < WEIGHT_EPSILON)
 			w = 0.0;
 
@@ -143,7 +150,7 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd, bool *adjFlag) {
 		if (owi == uss->boneWeights[bi].weights.end())
 			continue;
 
-		float &ow = owi->second.endVal;
+		float& ow = owi->second.endVal;
 		ow *= nrmFac;
 
 		if (ow < WEIGHT_EPSILON)
@@ -163,7 +170,7 @@ void BoneWeightAutoNormalizer::AdjustWeights(int vInd, bool *adjFlag) {
 			if (bi < nMBones && (!adjFlag || adjFlag[bi]))
 				continue;
 
-			auto &bw = uss->boneWeights[bi].weights;
+			auto& bw = uss->boneWeights[bi].weights;
 			auto owi = bw.find(vInd);
 			if (owi == bw.end())
 				bw[vInd].startVal = bw[vInd].endVal = 0.0;

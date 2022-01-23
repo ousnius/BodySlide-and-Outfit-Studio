@@ -5,13 +5,13 @@ See the included LICENSE file
 
 #include "wxDDSImage.h"
 
-#pragma warning (push, 0)
+#pragma warning(push, 0)
 #include "gli.hpp"
-#pragma warning (pop)
+#pragma warning(pop)
 
 wxIMPLEMENT_DYNAMIC_CLASS(wxDDSHandler, wxImageHandler);
 
-bool wxDDSHandler::LoadFile(wxImage *image, wxInputStream& stream, bool WXUNUSED(verbose), int WXUNUSED(index)) {
+bool wxDDSHandler::LoadFile(wxImage* image, wxInputStream& stream, bool WXUNUSED(verbose), int WXUNUSED(index)) {
 	size_t datasize = stream.GetSize();
 	if (datasize <= 0)
 		return false;
@@ -39,9 +39,9 @@ bool wxDDSHandler::LoadFile(wxImage *image, wxInputStream& stream, bool WXUNUSED
 	if (!gli::is_compressed(intex.format())) {
 		for (uint32_t i = 0; i < pxcount; i += 3) {
 			destPtr[i] = *srcptr++;
-			destPtr[i+1] = *srcptr++;
-			destPtr[i+2] = *srcptr++;
-		
+			destPtr[i + 1] = *srcptr++;
+			destPtr[i + 2] = *srcptr++;
+
 			// skipping alpha
 			srcptr++;
 		}
@@ -87,26 +87,22 @@ bool wxDDSHandler::LoadFile(wxImage *image, wxInputStream& stream, bool WXUNUSED
 	return true;
 }
 
-bool wxDDSHandler::SaveFile(wxImage *WXUNUSED(image), wxOutputStream& WXUNUSED(stream), bool WXUNUSED(verbose)) {
-
+bool wxDDSHandler::SaveFile(wxImage* WXUNUSED(image), wxOutputStream& WXUNUSED(stream), bool WXUNUSED(verbose)) {
 	return false;
 }
 
 
 bool wxDDSHandler::DoCanRead(wxInputStream& stream) {
-
 	unsigned char hdr[4];
 
-	if (!stream.Read(hdr, WXSIZEOF(hdr)))     // it's ok to modify the stream position here
+	if (!stream.Read(hdr, WXSIZEOF(hdr))) // it's ok to modify the stream position here
 		return false;
 
 	return memcmp(hdr, "DDS ", WXSIZEOF(hdr)) == 0;
-
 }
 
 /* Decompression functions cribbed from libsquish */
-void wxDDSHandler::DecompressColor(unsigned char * outPixels, unsigned char * block, bool dxt1)
-{
+void wxDDSHandler::DecompressColor(unsigned char* outPixels, unsigned char* block, bool dxt1) {
 	unsigned char codes[16];
 	int a = Unpack565(block, codes);
 	int b = Unpack565(block + 2, codes + 4);
@@ -120,9 +116,8 @@ void wxDDSHandler::DecompressColor(unsigned char * outPixels, unsigned char * bl
 			codes[12 + i] = 0;
 		}
 		else {
-			codes[8 + i] = (2*c + d) / 3;
-			codes[12 + i] =(c+2*d) /3;
-
+			codes[8 + i] = (2 * c + d) / 3;
+			codes[12 + i] = (c + 2 * d) / 3;
 		}
 	}
 
@@ -137,11 +132,9 @@ void wxDDSHandler::DecompressColor(unsigned char * outPixels, unsigned char * bl
 		ind[1] = (packed >> 2) & 0x3;
 		ind[2] = (packed >> 4) & 0x3;
 		ind[3] = (packed >> 6) & 0x3;
+	}
 
-	}	
-	
-	for (int i = 0; i < 16; ++i)
-	{
+	for (int i = 0; i < 16; ++i) {
 		unsigned char offset = 4 * indices[i];
 		for (int j = 0; j < 4; ++j)
 			outPixels[4 * i + j] = codes[offset + j];
@@ -149,8 +142,7 @@ void wxDDSHandler::DecompressColor(unsigned char * outPixels, unsigned char * bl
 }
 
 /* Decompression functions cribbed from libsquish */
-int wxDDSHandler::Unpack565(unsigned char * bytes, unsigned char * color)
-{
+int wxDDSHandler::Unpack565(unsigned char* bytes, unsigned char* color) {
 	int value = (int)bytes[0] | ((int)bytes[1] << 8);
 
 	// get the components in the stored range

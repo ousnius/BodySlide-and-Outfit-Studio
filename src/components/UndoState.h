@@ -6,20 +6,13 @@ See the included LICENSE file
 #pragma once
 
 #include "../utils/AABBTree.h"
+#include <memory>
 #include <string>
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <memory>
+#include <vector>
 
-enum UndoType {
-	UT_VERTPOS,
-	UT_MASK,
-	UT_WEIGHT,
-	UT_COLOR,
-	UT_ALPHA,
-	UT_MESH
-};
+enum UndoType { UT_VERTPOS, UT_MASK, UT_WEIGHT, UT_COLOR, UT_ALPHA, UT_MESH };
 
 struct UndoStateVertexWeight {
 	float startVal, endVal;
@@ -36,13 +29,13 @@ struct UndoStateVertexBoneWeight {
 };
 
 struct UndoStateVertexSliderDiff {
-	std::string sliderName;	// NOT the set name
+	std::string sliderName; // NOT the set name
 	nifly::Vector3 diff;
 };
 
 struct UndoStateVertex {
 	uint16_t index;		// index into array of vertices
-	nifly::Vector3 pos;	// position in skin coordinates
+	nifly::Vector3 pos; // position in skin coordinates
 	nifly::Vector2 uv;
 	nifly::Color4 color;
 	// normal, tangent, and bitangent are in skin CS tangent space (so
@@ -54,12 +47,12 @@ struct UndoStateVertex {
 };
 
 struct UndoStateTriangle {
-	uint32_t index;		// index into array of triangles
+	uint32_t index; // index into array of triangles
 	nifly::Triangle t;
-	int partID = -1;	// partition ID if there are partitions or segments
+	int partID = -1; // partition ID if there are partitions or segments
 };
 
-inline bool operator<(const UndoStateTriangle &t1, const UndoStateTriangle &t2) {
+inline bool operator<(const UndoStateTriangle& t1, const UndoStateTriangle& t2) {
 	return t1.index < t2.index;
 }
 

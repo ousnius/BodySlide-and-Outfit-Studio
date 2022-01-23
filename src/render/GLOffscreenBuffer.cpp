@@ -5,10 +5,10 @@ See the included LICENSE file
 
 #include "GLOffscreenBuffer.h"
 
-#include <texture2d.hpp>
 #include <convert.hpp>
-#include <save.hpp>
 #include <make_texture.hpp>
+#include <save.hpp>
+#include <texture2d.hpp>
 
 #include <glm/gtx/gradient_paint.hpp>
 
@@ -76,7 +76,7 @@ bool GLOffScreenBuffer::SetCurrentBuffer(int bufferIndex) {
 
 bool GLOffScreenBuffer::NextBuffer(bool cycle) {
 	if (current < -1)
-		current = -1;		// setting to -1 because we want the increment to put it at 0.
+		current = -1; // setting to -1 because we want the increment to put it at 0.
 
 	current++;
 
@@ -111,7 +111,7 @@ void GLOffScreenBuffer::Start() {
 	glLoadIdentity();
 }
 
-// Retrieves the current texture ID.  Useful for externally selecting as a texture source before moving to another 
+// Retrieves the current texture ID.  Useful for externally selecting as a texture source before moving to another
 // buffer in a multi rendering chain.
 GLuint GLOffScreenBuffer::GetTexID() {
 	if (current > -1)
@@ -122,9 +122,9 @@ GLuint GLOffScreenBuffer::GetTexID() {
 
 void GLOffScreenBuffer::SaveTexture(const std::string& filename) {
 	if (!isBound)
-		Start();		//not bound, bind the current framebuffer to read it's pixels.
+		Start(); //not bound, bind the current framebuffer to read it's pixels.
 
-	GLubyte*  pixels = new GLubyte[w * h * 4];
+	GLubyte* pixels = new GLubyte[w * h * 4];
 	glReadPixels(0, 0, w, h, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
 	//gli::texture TexA = gli::make_texture2d(gli::FORMAT_RGB8_UNORM_PACK8, gli::extent2d(4), 2);
@@ -153,7 +153,7 @@ void GLOffScreenBuffer::SaveTexture(const std::string& filename) {
 			*(DstData + Index) = glm::u8vec3(glm::u8(glm::clamp(Value * 255.f, 0.f, 255.f)));
 		}
 	*/
-	
+
 	//char cleary[16];
 	//memset(cleary, 255, 16);
 	//cleary.push_back(gli::u8vec4(255, 127, 0, 255));
@@ -162,7 +162,7 @@ void GLOffScreenBuffer::SaveTexture(const std::string& filename) {
 	//cleary.push_back(gli::u8vec4(255, 127, 0, 255));
 	//TexB.clear(cleary);
 	//TexB.clear(gli::u8vec4(255, 127, 0, 255));
-		
+
 	//gli::load((const char*)pixels, w*h * 4));
 	//gli::texture2d outTex = gli::convert(TexB, gli::FORMAT_RGBA_DXT5_UNORM_BLOCK16);
 

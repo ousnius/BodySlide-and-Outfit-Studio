@@ -27,9 +27,7 @@ public:
 	wxSliderPanel(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
 
 	bool Create(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
-	bool IsCreated() {
-		return isCreated;
-	}
+	bool IsCreated() { return isCreated; }
 
 	DECLARE_DYNAMIC_CLASS(wxSliderPanel)
 	DECLARE_EVENT_TABLE()

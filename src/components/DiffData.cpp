@@ -12,8 +12,8 @@ See the included LICENSE file
 #include <fstream>
 
 #ifdef WIN64
-#include <ppl.h>
 #include <concurrent_unordered_map.h>
+#include <ppl.h>
 #else
 #undef _PPL_H
 #endif
@@ -26,8 +26,7 @@ OSDataFile::OSDataFile() {
 	dataCount = 0;
 }
 
-OSDataFile::~OSDataFile() {
-}
+OSDataFile::~OSDataFile() {}
 
 #pragma pack(push, 1)
 struct DiffStruct {
@@ -91,7 +90,7 @@ bool OSDataFile::Write(const std::string& fileName) {
 
 	uint8_t nameLength;
 	uint16_t diffSize;
-	for (auto &diffs : dataDiffs) {
+	for (auto& diffs : dataDiffs) {
 		nameLength = static_cast<uint8_t>(diffs.first.length());
 		file.write((char*)&nameLength, 1);
 		file.write(diffs.first.c_str(), nameLength);
@@ -174,11 +173,10 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, co
 }
 
 bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
-
 #ifdef _PPL_H
 	Concurrency::concurrent_unordered_map<std::string, OSDataFile> loaded;
 	Concurrency::parallel_for_each(osdNames.begin(), osdNames.end(), [&](auto& osd) {
-	OSDataFile osdFile;
+		OSDataFile osdFile;
 		if (!osdFile.Read(osd.first))
 			return;
 		loaded[osd.first] = std::move(osdFile);
@@ -228,9 +226,9 @@ int DiffDataSets::SaveSet(const std::string& name, const std::string& target, co
 }
 
 bool DiffDataSets::SaveData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
-	for (auto &osd : osdNames) {
+	for (auto& osd : osdNames) {
 		OSDataFile osdFile;
-		for (auto &dataNames : osd.second) {
+		for (auto& dataNames : osd.second) {
 			auto& data = namedSet[dataNames.first];
 			if (!TargetMatch(dataNames.first, dataNames.second))
 				continue;
@@ -313,7 +311,7 @@ void DiffDataSets::AddEmptySet(const std::string& name, const std::string& targe
 	}
 }
 
-void DiffDataSets::UpdateDiff(const std::string& name, const std::string& target, uint16_t index, Vector3 &newdiff) {
+void DiffDataSets::UpdateDiff(const std::string& name, const std::string& target, uint16_t index, Vector3& newdiff) {
 	std::unordered_map<uint16_t, Vector3>* data = &namedSet[name];
 	if (!TargetMatch(name, target))
 		return;
@@ -321,7 +319,7 @@ void DiffDataSets::UpdateDiff(const std::string& name, const std::string& target
 	(*data)[index] = newdiff;
 }
 
-void DiffDataSets::SumDiff(const std::string& name, const std::string& target, uint16_t index, Vector3 &newdiff) {
+void DiffDataSets::SumDiff(const std::string& name, const std::string& target, uint16_t index, Vector3& newdiff) {
 	std::unordered_map<uint16_t, Vector3>* data = &namedSet[name];
 	if (!TargetMatch(name, target))
 		return;
@@ -341,7 +339,7 @@ void DiffDataSets::ScaleDiff(const std::string& name, const std::string& target,
 		resultIt->second *= scalevalue;
 }
 
-void DiffDataSets::OffsetDiff(const std::string& name, const std::string& target, Vector3 &offset) {
+void DiffDataSets::OffsetDiff(const std::string& name, const std::string& target, Vector3& offset) {
 	std::unordered_map<uint16_t, Vector3>* data = &namedSet[name];
 	if (!TargetMatch(name, target))
 		return;
@@ -425,9 +423,7 @@ void DiffDataSets::GetDiffIndices(const std::string& set, const std::string& tar
 
 	std::unordered_map<uint16_t, Vector3>* data = &namedSet[set];
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
-		if (fabs(resultIt->second.x) > threshold ||
-			fabs(resultIt->second.y) > threshold ||
-			fabs(resultIt->second.z) > threshold) {
+		if (fabs(resultIt->second.x) > threshold || fabs(resultIt->second.y) > threshold || fabs(resultIt->second.z) > threshold) {
 			outIndices.push_back(resultIt->first);
 		}
 	}
@@ -443,7 +439,7 @@ void DiffDataSets::DeleteVerts(const std::string& target, const std::vector<uint
 	uint16_t highestRemoved = indices.back();
 	std::vector<int> indexCollapse = GenerateIndexCollapseMap(indices, highestRemoved + 1);
 
-	for (auto &data : namedSet) {
+	for (auto& data : namedSet) {
 		if (TargetMatch(data.first, target))
 			ApplyIndexMapToMapKeys(data.second, indexCollapse, -static_cast<int>(indices.size()));
 	}
@@ -456,7 +452,7 @@ void DiffDataSets::InsertVertexIndices(const std::string& target, const std::vec
 	int highestAdded = indices.back();
 	std::vector<int> indexExpand = GenerateIndexExpandMap(indices, highestAdded + 1);
 
-	for (auto &data : namedSet) {
+	for (auto& data : namedSet) {
 		if (!TargetMatch(data.first, target))
 			continue;
 

@@ -5,8 +5,8 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../components/Mesh.h"	
 #include "../components/Anim.h"
+#include "../components/Mesh.h"
 #include "../program/FBXImportOptions.h"
 #include "NifFile.hpp"
 #include <memory>
@@ -19,9 +19,7 @@ public:
 		std::unordered_map<uint16_t, float> vertWeights;
 
 	public:
-		void SetWeight(uint16_t vert, float wt) {
-			vertWeights[vert] = wt;
-		}
+		void SetWeight(uint16_t vert, float wt) { vertWeights[vert] = wt; }
 
 		float GetWeight(uint16_t vert) {
 			auto it = vertWeights.find(vert);
@@ -31,9 +29,7 @@ public:
 			return vertWeights[vert];
 		}
 
-		std::unordered_map<uint16_t, float>& GetWeights() {
-			return vertWeights;
-		}
+		std::unordered_map<uint16_t, float>& GetWeights() { return vertWeights; }
 	};
 
 	std::string name;

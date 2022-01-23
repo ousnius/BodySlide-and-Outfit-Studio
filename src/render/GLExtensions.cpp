@@ -89,15 +89,15 @@ void InitExtensions() {
 		glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)wglGetProcAddress("glGenVertexArrays");
 		glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
 		glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
-		glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC) wglGetProcAddress("glGenFramebuffers");
-		glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC) wglGetProcAddress("glDeleteFramebuffers");
-		glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC) wglGetProcAddress("glBindFramebuffer");
+		glGenFramebuffers = (PFNGLGENFRAMEBUFFERSPROC)wglGetProcAddress("glGenFramebuffers");
+		glDeleteFramebuffers = (PFNGLDELETEFRAMEBUFFERSPROC)wglGetProcAddress("glDeleteFramebuffers");
+		glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC)wglGetProcAddress("glBindFramebuffer");
 		glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)wglGetProcAddress("glFramebufferTexture2D");
-		glGenRenderbuffers =(PFNGLGENRENDERBUFFERSPROC) wglGetProcAddress("glGenRenderbuffers");
-		glBindRenderbuffer =(PFNGLBINDRENDERBUFFERPROC) wglGetProcAddress("glBindRenderbuffer");
-		glRenderbufferStorage =(PFNGLRENDERBUFFERSTORAGEPROC) wglGetProcAddress("glRenderbufferStorage");
-		glFramebufferRenderbuffer =(PFNGLFRAMEBUFFERRENDERBUFFERPROC) wglGetProcAddress("glFramebufferRenderbuffer");
-		glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC) wglGetProcAddress("glDeleteRenderbuffers");
+		glGenRenderbuffers = (PFNGLGENRENDERBUFFERSPROC)wglGetProcAddress("glGenRenderbuffers");
+		glBindRenderbuffer = (PFNGLBINDRENDERBUFFERPROC)wglGetProcAddress("glBindRenderbuffer");
+		glRenderbufferStorage = (PFNGLRENDERBUFFERSTORAGEPROC)wglGetProcAddress("glRenderbufferStorage");
+		glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)wglGetProcAddress("glFramebufferRenderbuffer");
+		glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC)wglGetProcAddress("glDeleteRenderbuffers");
 
 		glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
 		glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
@@ -134,22 +134,14 @@ void InitExtensions() {
 
 		glActiveTexture = (PFNGLACTIVETEXTUREPROC)wglGetProcAddress("glActiveTexture");
 
-		if (!glTexStorage1D || !glTexStorage2D || !glTexStorage3D || !glTexSubImage3D ||
-			!glCompressedTexSubImage1D || !glCompressedTexSubImage2D || !glCompressedTexSubImage3D)
-		{
+		if (!glTexStorage1D || !glTexStorage2D || !glTexStorage3D || !glTexSubImage3D || !glCompressedTexSubImage1D || !glCompressedTexSubImage2D || !glCompressedTexSubImage3D) {
 			extGLISupported = false;
 		}
 
-		if (!glGetStringi || !glGenVertexArrays || !glBindVertexArray || !glDeleteVertexArrays ||
-			!glCreateShader || !glShaderSource || !glCompileShader ||
-			!glCreateProgram || !glAttachShader || !glLinkProgram || !glUseProgram ||
-			!glGetShaderiv || !glGetShaderInfoLog || !glGetProgramiv || !glGetProgramInfoLog ||
-			!glDisableVertexAttribArray || !glEnableVertexAttribArray || !glVertexAttribPointer ||
-			!glGenBuffers || !glDeleteBuffers || !glBindBuffer || !glBufferData || !glBufferSubData ||
-			!glGetAttribLocation || !glGetUniformLocation ||
-			!glUniform1f || !glUniform1i || !glUniform2f || !glUniform3f || !glUniformMatrix4fv ||
-			!glActiveTexture)
-		{
+		if (!glGetStringi || !glGenVertexArrays || !glBindVertexArray || !glDeleteVertexArrays || !glCreateShader || !glShaderSource || !glCompileShader || !glCreateProgram
+			|| !glAttachShader || !glLinkProgram || !glUseProgram || !glGetShaderiv || !glGetShaderInfoLog || !glGetProgramiv || !glGetProgramInfoLog || !glDisableVertexAttribArray
+			|| !glEnableVertexAttribArray || !glVertexAttribPointer || !glGenBuffers || !glDeleteBuffers || !glBindBuffer || !glBufferData || !glBufferSubData
+			|| !glGetAttribLocation || !glGetUniformLocation || !glUniform1f || !glUniform1i || !glUniform2f || !glUniform3f || !glUniformMatrix4fv || !glActiveTexture) {
 			extSupported = false;
 		}
 
@@ -178,56 +170,22 @@ bool IsExtensionSupported(const char* ext) {
 #else // __linux__
 
 void InitExtensions() {
-	if (extInitialized) return;
+	if (extInitialized)
+		return;
 	GLenum err = glewInit();
 	if (err != GLEW_OK) {
 		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
 		abort();
 	}
-	extGLISupported =
-		glTexStorage1D &&
-		glTexStorage2D &&
-		glTexStorage3D &&
-		glTexSubImage3D &&
-		glCompressedTexSubImage1D &&
-		glCompressedTexSubImage2D &&
-		glCompressedTexSubImage3D;
-	extSupported =
-		glGetStringi &&
-		glGenVertexArrays &&
-		glBindVertexArray &&
-		glDeleteVertexArrays &&
-		glCreateShader &&
-		glShaderSource &&
-		glCompileShader &&
-		glCreateProgram &&
-		glAttachShader &&
-		glLinkProgram &&
-		glUseProgram &&
-		glGetShaderiv &&
-		glGetShaderInfoLog &&
-		glGetProgramiv &&
-		glGetProgramInfoLog &&
-		glDisableVertexAttribArray &&
-		glEnableVertexAttribArray &&
-		glVertexAttribPointer &&
-		glGenBuffers &&
-		glDeleteBuffers &&
-		glBindBuffer &&
-		glBufferData &&
-		glBufferSubData &&
-		glGetAttribLocation &&
-		glGetUniformLocation &&
-		glUniform1f &&
-		glUniform1i &&
-		glUniform2f &&
-		glUniform3f &&
-		glUniformMatrix4fv &&
-		glActiveTexture;
+	extGLISupported = glTexStorage1D && glTexStorage2D && glTexStorage3D && glTexSubImage3D && glCompressedTexSubImage1D && glCompressedTexSubImage2D && glCompressedTexSubImage3D;
+	extSupported = glGetStringi && glGenVertexArrays && glBindVertexArray && glDeleteVertexArrays && glCreateShader && glShaderSource && glCompileShader && glCreateProgram
+				   && glAttachShader && glLinkProgram && glUseProgram && glGetShaderiv && glGetShaderInfoLog && glGetProgramiv && glGetProgramInfoLog && glDisableVertexAttribArray
+				   && glEnableVertexAttribArray && glVertexAttribPointer && glGenBuffers && glDeleteBuffers && glBindBuffer && glBufferData && glBufferSubData
+				   && glGetAttribLocation && glGetUniformLocation && glUniform1f && glUniform1i && glUniform2f && glUniform3f && glUniformMatrix4fv && glActiveTexture;
 	extInitialized = true;
 }
 
-bool IsExtensionSupported(const char *ext) {
+bool IsExtensionSupported(const char* ext) {
 	return glewIsSupported(ext);
 }
 

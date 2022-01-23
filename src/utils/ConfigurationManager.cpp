@@ -8,10 +8,10 @@ See the included LICENSE file
 #include "../utils/StringStuff.h"
 
 ConfigurationItem::~ConfigurationItem() {
-	for (auto &it : properties)
+	for (auto& it : properties)
 		delete it;
 
-	for (auto &it : children)
+	for (auto& it : children)
 		delete it;
 
 	properties.clear();
@@ -62,12 +62,12 @@ void ConfigurationItem::ToXML(XMLElement* elem) {
 	XMLElement* newElement = elem->GetDocument()->NewElement(name.c_str());
 	XMLElement* element = elem->InsertEndChild(newElement)->ToElement();
 
-	for (auto &prop : properties) {
+	for (auto& prop : properties) {
 		if (prop->isDefault)
 			continue;
 		element->SetAttribute(prop->name.c_str(), prop->value.c_str());
 	}
-	for (auto &child : children) {
+	for (auto& child : children) {
 		if (child->isDefault)
 			continue;
 		if (child->isComment) {
@@ -84,7 +84,7 @@ void ConfigurationItem::ToXML(XMLElement* elem) {
 
 int ConfigurationItem::EnumerateProperties(std::vector<ConfigurationItem*>& outList) {
 	int count = 0;
-	for (auto &prop : properties) {
+	for (auto& prop : properties) {
 		count++;
 		outList.push_back(prop);
 	}
@@ -95,7 +95,7 @@ int ConfigurationItem::EnumerateProperties(std::string& outList) {
 	int count = 0;
 	outList.clear();
 
-	for (auto &prop : properties) {
+	for (auto& prop : properties) {
 		count++;
 		outList += prop->name + "=\"" + prop->value + "\" ";
 	}
@@ -105,7 +105,7 @@ int ConfigurationItem::EnumerateProperties(std::string& outList) {
 
 int ConfigurationItem::EnumerateChildren(std::vector<ConfigurationItem*>& outList, bool withProperties, bool traverse) {
 	int count = 0;
-	for (auto &child : children) {
+	for (auto& child : children) {
 		if (child->isComment)
 			continue;
 
@@ -121,7 +121,7 @@ int ConfigurationItem::EnumerateChildren(std::vector<ConfigurationItem*>& outLis
 }
 
 int ConfigurationItem::EnumerateChildren(const std::string& inName, std::vector<std::string>& outList) {
-	for (auto &child : children) {
+	for (auto& child : children) {
 		if (child->isComment)
 			continue;
 		if (child->Match(inName))
@@ -131,7 +131,7 @@ int ConfigurationItem::EnumerateChildren(const std::string& inName, std::vector<
 }
 
 int ConfigurationItem::EnumerateChildrenProperty(const std::string& inName, const std::string& propertyName, std::vector<std::string>& outList) {
-	for (auto &child : children) {
+	for (auto& child : children) {
 		if (child->isComment)
 			continue;
 
@@ -150,7 +150,7 @@ ConfigurationItem* ConfigurationItem::FindChild(const std::string& inName, bool 
 
 	if (pos != std::string::npos) {
 		std::string tmpName = inName.substr(0, pos);
-		for (auto &child : children) {
+		for (auto& child : children) {
 			if (child->isComment)
 				continue;
 			if (child->Match(tmpName))
@@ -171,7 +171,7 @@ ConfigurationItem* ConfigurationItem::FindChild(const std::string& inName, bool 
 			return nullptr;
 	}
 	else {
-		for (auto &child : children) {
+		for (auto& child : children) {
 			if (child->isComment)
 				continue;
 			if (child->Match(inName))
@@ -189,7 +189,7 @@ ConfigurationItem* ConfigurationItem::AddChild(const std::string& inName, const 
 	std::string tmpName = inName.substr(0, pos);
 
 	if (!forceAdd) {
-		for (auto &child : children) {
+		for (auto& child : children) {
 			if (child->isComment)
 				continue;
 			if (child->Match(tmpName))
@@ -222,7 +222,6 @@ ConfigurationItem* ConfigurationItem::AddChild(const std::string& inName, const 
 			children.push_back(newCI);
 		else
 			properties.push_back(newCI);
-
 	}
 	else {
 		if (pos == -1)
@@ -240,12 +239,12 @@ void ConfigurationItem::DeleteChild(ConfigurationItem* child) {
 	if (!child)
 		return;
 
-	for (auto &p : child->properties)
+	for (auto& p : child->properties)
 		DeleteChild(p);
 
 	child->properties.clear();
 
-	for (auto &c : child->children)
+	for (auto& c : child->children)
 		DeleteChild(c);
 
 	child->children.clear();
@@ -253,7 +252,7 @@ void ConfigurationItem::DeleteChild(ConfigurationItem* child) {
 }
 
 ConfigurationItem* ConfigurationItem::FindProperty(const std::string& inName) {
-	for (auto &prop : properties)
+	for (auto& prop : properties)
 		if (prop->Match(inName))
 			return prop;
 
@@ -261,11 +260,7 @@ ConfigurationItem* ConfigurationItem::FindProperty(const std::string& inName) {
 }
 
 void ConfigurationItem::ClearArrayChildren(const std::string& arrayName) {
-	auto removeIt = std::remove_if(
-		children.begin(),
-		children.end(),
-		[&](ConfigurationItem* child) { return child->Match(arrayName); }
-	);
+	auto removeIt = std::remove_if(children.begin(), children.end(), [&](ConfigurationItem* child) { return child->Match(arrayName); });
 
 	for (auto it = removeIt; it != children.end(); it++)
 		DeleteChild((*it));
@@ -273,15 +268,14 @@ void ConfigurationItem::ClearArrayChildren(const std::string& arrayName) {
 	children.erase(removeIt, children.end());
 }
 
-ConfigurationManager::ConfigurationManager() {
-}
+ConfigurationManager::ConfigurationManager() {}
 
 ConfigurationManager::~ConfigurationManager() {
 	Clear();
 }
 
 void ConfigurationManager::Clear() {
-	for (auto &ci : ciList)
+	for (auto& ci : ciList)
 		delete ci;
 
 	ciList.clear();
@@ -335,7 +329,7 @@ int ConfigurationManager::EnumerateCIs(std::vector<ConfigurationItem*>& outList,
 		return 0;
 
 	int count = 0;
-	for (auto &ci : ciList) {
+	for (auto& ci : ciList) {
 		outList.push_back(ci);
 		count++;
 		if (traverse) {
@@ -369,7 +363,7 @@ ConfigurationItem* ConfigurationManager::FindCI(const std::string& inName) {
 
 	if (pos != -1) {
 		std::string tmpName = inName.substr(0, pos);
-		for (auto &ci : ciList)
+		for (auto& ci : ciList)
 			if (ci->Match(tmpName))
 				found = ci;
 
@@ -385,7 +379,7 @@ ConfigurationItem* ConfigurationManager::FindCI(const std::string& inName) {
 			return nullptr;
 	}
 	else
-		for (auto &ci : ciList)
+		for (auto& ci : ciList)
 			if (ci->Match(inName))
 				found = ci;
 
@@ -475,7 +469,7 @@ void ConfigurationManager::SetValue(const std::string& inName, const std::string
 	else {
 		int pos = search.find_first_of("/.");
 		std::string tmpName = search.substr(0, pos);
-		for (auto &ci : ciList) {
+		for (auto& ci : ciList) {
 			if (ci->Match(tmpName))
 				itemFound = ci;
 		}
@@ -566,7 +560,10 @@ int ConfigurationManager::GetValueArray(const std::string& containerName, const 
 	return count;
 }
 
-int ConfigurationManager::GetValueAttributeArray(const std::string& containerName, const std::string& arrayName, const std::string& attributeName, std::vector<std::string>& outValues) {
+int ConfigurationManager::GetValueAttributeArray(const std::string& containerName,
+												 const std::string& arrayName,
+												 const std::string& attributeName,
+												 std::vector<std::string>& outValues) {
 	int count = 0;
 
 	ConfigurationItem* container = FindCI(containerName);
@@ -585,14 +582,14 @@ void ConfigurationManager::AppendValueArray(const std::string& containerName, co
 		ciList.push_back(container);
 	}
 
-	for (auto &entry : arrayEntries) {
+	for (auto& entry : arrayEntries) {
 		ConfigurationItem* arrayItem = container->AddChild(arrayName, "", true, true);
-		for (auto &kv : entry)
+		for (auto& kv : entry)
 			arrayItem->AddChild(kv.first, kv.second, false);
 	}
 }
 
-void ConfigurationManager::ReplaceVars(std::string & inoutStr) {
+void ConfigurationManager::ReplaceVars(std::string& inoutStr) {
 	size_t first = inoutStr.find('%');
 	size_t second;
 	while (first != std::string::npos) {
@@ -600,12 +597,12 @@ void ConfigurationManager::ReplaceVars(std::string & inoutStr) {
 		size_t len = second - first;
 		if (len > 1) {
 			std::string varname = inoutStr.substr(first + 1, len - 1);
-			inoutStr.replace(first, len+1, GetString(varname));
+			inoutStr.replace(first, len + 1, GetString(varname));
 			first = inoutStr.find('%', first);
 		}
 		else if (len == 1) {
 			inoutStr.replace(first, len + 1, "%");
-			first = inoutStr.find('%', first+2);
+			first = inoutStr.find('%', first + 2);
 		}
 		else {
 			break;
@@ -623,7 +620,7 @@ int ConfigurationManager::SaveConfig(const std::string& pathToFile, const std::s
 	XMLElement* newElement = doc.NewElement(rootElement.c_str());
 	XMLElement* root = doc.InsertEndChild(newElement)->ToElement();
 
-	for (auto &ci : ciList) {
+	for (auto& ci : ciList) {
 		if (ci->isDefault)
 			continue;
 		if (ci->isComment) {

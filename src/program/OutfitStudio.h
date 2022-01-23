@@ -17,59 +17,51 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "OutfitProject.h"
-#include "../ui/wxStateButton.h"
-#include "../ui/wxSliderPanel.h"
-#include "../render/GLSurface.h"
+#include "../components/Automorph.h"
+#include "../components/PoseData.h"
+#include "../components/RefTemplates.h"
 #include "../components/TweakBrush.h"
 #include "../components/UndoHistory.h"
-#include "../components/Automorph.h"
-#include "../components/RefTemplates.h"
-#include "../components/PoseData.h"
-#include "../utils/Log.h"
+#include "../render/GLSurface.h"
+#include "../ui/wxSliderPanel.h"
+#include "../ui/wxStateButton.h"
 #include "../utils/ConfigurationManager.h"
+#include "../utils/Log.h"
+#include "OutfitProject.h"
 
-#include "../FSEngine/FSManager.h"
 #include "../FSEngine/FSEngine.h"
+#include "../FSEngine/FSManager.h"
 
-#include <wx/xrc/xmlres.h>
-#include <wx/treectrl.h>
-#include <wx/wizard.h>
+#include <wx/clrpicker.h>
+#include <wx/cmdline.h>
+#include <wx/collpane.h>
+#include <wx/dataview.h>
 #include <wx/filepicker.h>
 #include <wx/grid.h>
 #include <wx/spinctrl.h>
-#include <wx/dataview.h>
 #include <wx/splitter.h>
-#include <wx/collpane.h>
-#include <wx/clrpicker.h>
 #include <wx/srchctrl.h>
-#include <wx/tokenzr.h>
-#include <wx/cmdline.h>
 #include <wx/stdpaths.h>
+#include <wx/tokenzr.h>
+#include <wx/treectrl.h>
+#include <wx/wizard.h>
+#include <wx/xrc/xmlres.h>
 #ifdef _WINDOWS
 #include <wx/msw/registry.h>
 #endif
 
-enum TargetGame {
-	FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB
-};
+enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB };
 
 
-class ShapeItemData : public wxTreeItemData  {
+class ShapeItemData : public wxTreeItemData {
 	nifly::NiShape* shape = nullptr;
 
 public:
-	ShapeItemData(nifly::NiShape* inShape) {
-		shape = inShape;
-	}
+	ShapeItemData(nifly::NiShape* inShape) { shape = inShape; }
 
-	nifly::NiShape* GetShape() {
-		return shape;
-	}
+	nifly::NiShape* GetShape() { return shape; }
 
-	void SetShape(nifly::NiShape* newShape) {
-		shape = newShape;
-	}
+	void SetShape(nifly::NiShape* newShape) { shape = newShape; }
 };
 
 struct ShapeItemState {
@@ -78,19 +70,17 @@ struct ShapeItemState {
 	bool selected = false;
 };
 
-class SegmentItemData : public wxTreeItemData  {
+class SegmentItemData : public wxTreeItemData {
 public:
 	// partID: a small nonnegative integer uniquely identifying this
 	// segment among all the segments and subsegments.  Used as a value
 	// in triSParts.  Not in the file.
 	int partID;
 
-	SegmentItemData(const int inPartitionID) {
-		partID = inPartitionID;
-	}
+	SegmentItemData(const int inPartitionID) { partID = inPartitionID; }
 };
 
-class SubSegmentItemData : public wxTreeItemData  {
+class SubSegmentItemData : public wxTreeItemData {
 public:
 	// partID: a small nonnegative integer uniquely identifying this
 	// subsegment among all the segments and subsegments.  Used as a value
@@ -108,7 +98,7 @@ public:
 	}
 };
 
-class PartitionItemData : public wxTreeItemData  {
+class PartitionItemData : public wxTreeItemData {
 public:
 	int index;
 	uint16_t type;
@@ -157,11 +147,7 @@ enum OverlayLayer : uint32_t {
 	NodeSelection = 10,
 };
 
-enum RotationCenterMode {
-	Zero,
-	MeshCenter,
-	Picked
-};
+enum RotationCenterMode { Zero, MeshCenter, Picked };
 
 class wxGLPanel : public wxGLCanvas {
 public:
@@ -175,40 +161,37 @@ public:
 
 	void AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName);
 
-	void RenameShape(const std::string& shapeName, const std::string& newShapeName) {
-		gls.RenameMesh(shapeName, newShapeName);
-	}
+	void RenameShape(const std::string& shapeName, const std::string& newShapeName) { gls.RenameMesh(shapeName, newShapeName); }
 
-	void SetMeshTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile(), const bool reloadTextures = false);
+	void SetMeshTextures(const std::string& shapeName,
+						 const std::vector<std::string>& textureFiles,
+						 const bool hasMatFile = false,
+						 const MaterialFile& matFile = MaterialFile(),
+						 const bool reloadTextures = false);
 
-	mesh* GetMesh(const std::string& shapeName) {
-		return gls.GetMesh(shapeName);
-	}
+	mesh* GetMesh(const std::string& shapeName) { return gls.GetMesh(shapeName); }
 
-	void UpdateMeshVertices(const std::string& shapeName, std::vector<nifly::Vector3>* verts, bool updateBVH = true, bool recalcNormals = true, bool render = true, std::vector<nifly::Vector2>* uvs = nullptr);
+	void UpdateMeshVertices(const std::string& shapeName,
+							std::vector<nifly::Vector3>* verts,
+							bool updateBVH = true,
+							bool recalcNormals = true,
+							bool render = true,
+							std::vector<nifly::Vector2>* uvs = nullptr);
 	void RecalculateMeshBVH(const std::string& shapeName);
 
 	void ShowShape(const std::string& shapeName, bool show = true);
 	void SetActiveShapes(const std::vector<std::string>& shapeNames);
 	void SetSelectedShape(const std::string& shapeName);
 
-	UndoHistory* GetUndoHistory() {
-		return &undoHistory;
-	}
+	UndoHistory* GetUndoHistory() { return &undoHistory; }
 
 	void SetActiveTool(ToolID brushID);
-	ToolID GetActiveTool() {
-		return activeTool;
-	}
+	ToolID GetActiveTool() { return activeTool; }
 
 	void SetLastTool(ToolID tool);
-	ToolID GetLastTool() {
-		return lastTool;
-	}
+	ToolID GetLastTool() { return lastTool; }
 
-	TweakBrush* GetActiveBrush() {
-		return activeBrush;
-	}
+	TweakBrush* GetActiveBrush() { return activeBrush; }
 
 	void SyncBrushStates(TweakBrush* brush) {
 		if (!brush)
@@ -242,9 +225,7 @@ public:
 		}
 	}
 
-	void SetColorBrush(const nifly::Vector3& color) {
-		colorBrush.color = color;
-	}
+	void SetColorBrush(const nifly::Vector3& color) { colorBrush.color = color; }
 
 	bool StartBrushStroke(const wxPoint& screenPos);
 	void UpdateBrushStroke(const wxPoint& screenPos);
@@ -271,8 +252,8 @@ public:
 	void ClickFlipEdge();
 	void ClickSplitEdge();
 
-	bool RestoreMode(UndoStateProject *usp);
-	void ApplyUndoState(UndoStateProject *usp, bool bUndo, bool bRender = true);
+	bool RestoreMode(UndoStateProject* usp);
+	void ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender = true);
 	bool UndoStroke();
 	bool RedoStroke();
 
@@ -295,41 +276,27 @@ public:
 	void UpdateFloor();
 
 	void ShowVertexEdit(bool show = true);
-	
-	bool GetEditMode() {
-		return editMode;
-	}
-	void SetEditMode(bool on = true) {
-		editMode = on;
-	}
 
-	bool GetBrushMode() {
-		return brushMode;
-	}
-	void SetBrushMode(bool on = true) {
-		brushMode = on;
-	}
+	bool GetEditMode() { return editMode; }
+	void SetEditMode(bool on = true) { editMode = on; }
 
-	bool GetVertexEdit() {
-		return vertexEdit;
-	}
+	bool GetBrushMode() { return brushMode; }
+	void SetBrushMode(bool on = true) { brushMode = on; }
+
+	bool GetVertexEdit() { return vertexEdit; }
 	void SetVertexEdit(bool on = true) {
 		vertexEdit = on;
 		ShowVertexEdit(on);
 		Render();
 	}
 
-	bool GetTransformMode() {
-		return transformMode;
-	}
+	bool GetTransformMode() { return transformMode; }
 	void SetTransformMode(bool on = true) {
 		transformMode = on;
 		ShowTransformTool(on);
 	}
 
-	bool GetPivotMode() {
-		return pivotMode;
-	}
+	bool GetPivotMode() { return pivotMode; }
 	void SetPivotMode(bool on = true) {
 		pivotMode = on;
 		ShowPivot(on);
@@ -338,19 +305,11 @@ public:
 			ShowTransformTool();
 	}
 
-	bool GetSegmentMode() {
-		return segmentMode;
-	}
-	void SetSegmentMode(bool on = true) {
-		segmentMode = on;
-	}
+	bool GetSegmentMode() { return segmentMode; }
+	void SetSegmentMode(bool on = true) { segmentMode = on; }
 
-	bool GetGlobalBrushCollision() {
-		return bGlobalBrushCollision;
-	}
-	void SetGlobalBrushCollision(bool on = true) {
-		bGlobalBrushCollision = on;
-	}
+	bool GetGlobalBrushCollision() { return bGlobalBrushCollision; }
+	void SetGlobalBrushCollision(bool on = true) { bGlobalBrushCollision = on; }
 
 	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
 		mesh* m = gls.GetMesh(shapeName);
@@ -364,14 +323,14 @@ public:
 	}
 
 	void SetNormalSeamSmoothMode(bool enable) {
-		for (auto &m : gls.GetActiveMeshes()) {
+		for (auto& m : gls.GetActiveMeshes()) {
 			m->smoothSeamNormals = enable;
 			m->SmoothNormals();
 		}
 	}
 
 	void SetLockNormalsMode(bool enable) {
-		for (auto &m : gls.GetActiveMeshes())
+		for (auto& m : gls.GetActiveMeshes())
 			m->lockNormals = enable;
 	}
 
@@ -383,9 +342,7 @@ public:
 		m->SmoothNormals();
 	}
 
-	float GetBrushSize() {
-		return brushSize / 3.0f;
-	}
+	float GetBrushSize() { return brushSize / 3.0f; }
 	void SetBrushSize(float val) {
 		val *= 3.0f;
 		brushSize = val;
@@ -435,51 +392,37 @@ public:
 		return str;
 	}
 
-	void SetCursorType(GLSurface::CursorType cursorType) {
-		gls.SetCursorType(cursorType);
-	}
+	void SetCursorType(GLSurface::CursorType cursorType) { gls.SetCursorType(cursorType); }
 
-	void ShowWireframe() {
-		gls.ToggleWireframe();
-	}
+	void ShowWireframe() { gls.ToggleWireframe(); }
 
-	void ToggleLighting() {
-		gls.ToggleLighting();
-	}
+	void ToggleLighting() { gls.ToggleLighting(); }
 
-	void ToggleTextures() {
-		gls.ToggleTextures();
-	}
+	void ToggleTextures() { gls.ToggleTextures(); }
 
-	void SetMaskVisible(bool bVisible = true) {
-		gls.SetMaskVisible(bVisible);
-	}
+	void SetMaskVisible(bool bVisible = true) { gls.SetMaskVisible(bVisible); }
 
-	void SetWeightVisible(bool bVisible = true) {
-		gls.SetWeightColors(bVisible);
-	}
+	void SetWeightVisible(bool bVisible = true) { gls.SetWeightColors(bVisible); }
 
-	void SetColorsVisible(bool bVisible = true) {
-		gls.SetVertexColors(bVisible);
-	}
+	void SetColorsVisible(bool bVisible = true) { gls.SetVertexColors(bVisible); }
 
 	void ClearMasks() {
-		for (auto &m : gls.GetMeshes())
+		for (auto& m : gls.GetMeshes())
 			m->MaskFill(0.0f);
 	}
 
 	void ClearActiveMask() {
-		for (auto &m : gls.GetActiveMeshes())
+		for (auto& m : gls.GetActiveMeshes())
 			m->MaskFill(0.0f);
 	}
 
 	void ClearColors() {
-		for (auto &m : gls.GetMeshes())
+		for (auto& m : gls.GetMeshes())
 			m->ColorFill(nifly::Vector3());
 	}
-	
+
 	void ClearActiveColors() {
-		for (auto &m : gls.GetActiveMeshes())
+		for (auto& m : gls.GetActiveMeshes())
 			m->ColorFill(nifly::Vector3());
 	}
 
@@ -543,7 +486,7 @@ public:
 	}
 
 	void MaskLess() {
-		for (auto &m : gls.GetActiveMeshes()) {
+		for (auto& m : gls.GetActiveMeshes()) {
 			std::set<int> unmaskPoints;
 			for (int i = 0; i < m->nVerts; i++) {
 				if (m->mask[i] > 0.0f) {
@@ -567,7 +510,7 @@ public:
 	}
 
 	void MaskMore() {
-		for (auto &m : gls.GetActiveMeshes()) {
+		for (auto& m : gls.GetActiveMeshes()) {
 			std::set<int> adjacentPoints;
 			for (int i = 0; i < m->nVerts; i++)
 				if (m->mask[i] > 0.0f)
@@ -588,9 +531,7 @@ public:
 		std::unordered_map<uint16_t, float> triMask;
 		for (int t = 0; t < m->nTris; t++) {
 			auto& tri = m->tris[t];
-			if (mask.find(tri.p1) != mask.end() ||
-				mask.find(tri.p2) != mask.end() ||
-				mask.find(tri.p3) != mask.end()) {
+			if (mask.find(tri.p1) != mask.end() || mask.find(tri.p2) != mask.end() || mask.find(tri.p3) != mask.end()) {
 				triMask.emplace(tri.p1, 1.0f);
 				triMask.emplace(tri.p2, 1.0f);
 				triMask.emplace(tri.p3, 1.0f);
@@ -612,7 +553,7 @@ public:
 	}
 
 	void InvertMask() {
-		for (auto &m : gls.GetActiveMeshes()) {
+		for (auto& m : gls.GetActiveMeshes()) {
 			for (int i = 0; i < m->nVerts; i++)
 				m->mask[i] = 1.0f - m->mask[i];
 
@@ -660,9 +601,7 @@ public:
 		}
 	}
 
-	void ClearOverlays() {
-		gls.ClearOverlays();
-	}
+	void ClearOverlays() { gls.ClearOverlays(); }
 
 	void Cleanup() {
 		XMoveMesh = nullptr;
@@ -716,16 +655,19 @@ public:
 		gls.RenderOneFrame();
 	}
 
-	void UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
-		const nifly::Vector3& directional0Dir = nifly::Vector3(), const nifly::Vector3& directional1Dir = nifly::Vector3(), const nifly::Vector3& directonal2Dir = nifly::Vector3())
-	{
+	void UpdateLights(const int ambient,
+					  const int frontal,
+					  const int directional0,
+					  const int directional1,
+					  const int directional2,
+					  const nifly::Vector3& directional0Dir = nifly::Vector3(),
+					  const nifly::Vector3& directional1Dir = nifly::Vector3(),
+					  const nifly::Vector3& directonal2Dir = nifly::Vector3()) {
 		gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directonal2Dir);
 		gls.RenderOneFrame();
 	}
 
-	void Render() {
-		gls.RenderOneFrame();
-	}
+	void Render() { gls.RenderOneFrame(); }
 
 
 private:
@@ -829,7 +771,7 @@ private:
 	mesh* YScaleMesh = nullptr;
 	mesh* ZScaleMesh = nullptr;
 	mesh* ScaleUniformMesh = nullptr;
-	nifly::Vector3 xformCenter;		// Transform center for transform brushes (rotate, specifically cares about this)
+	nifly::Vector3 xformCenter; // Transform center for transform brushes (rotate, specifically cares about this)
 	float lastCenterDistance = 0.0f;
 
 	mesh* XPivotMesh = nullptr;
@@ -849,11 +791,9 @@ private:
 };
 
 
-static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
-	{ wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
-	{ wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE },
-	{ wxCMD_LINE_NONE }
-};
+static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
+												   {wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE},
+												   {wxCMD_LINE_NONE}};
 
 std::string GetProjectPath();
 
@@ -915,8 +855,8 @@ public:
 	std::string lastActiveSlider;
 	bool bEditSlider;
 	std::string contextBone;
-	std::vector<int> triParts;  // the partition index for each triangle, or -1 for none
-	std::vector<int> triSParts;  // the segment partition index for each triangle, or -1 for none
+	std::vector<int> triParts;	// the partition index for each triangle, or -1 for none
+	std::vector<int> triSParts; // the segment partition index for each triangle, or -1 for none
 
 	std::deque<ProjectHistoryEntry> projectHistory;
 
@@ -935,19 +875,19 @@ public:
 	wxSlider* boneScale = nullptr;
 	wxChoice* cXMirrorBone = nullptr;
 	wxChoice* cPoseBone = nullptr;
-	wxSlider *rxPoseSlider = nullptr;
-	wxSlider *ryPoseSlider = nullptr;
-	wxSlider *rzPoseSlider = nullptr;
-	wxSlider *txPoseSlider = nullptr;
-	wxSlider *tyPoseSlider = nullptr;
-	wxSlider *tzPoseSlider = nullptr;
-	wxTextCtrl *rxPoseText = nullptr;
-	wxTextCtrl *ryPoseText = nullptr;
-	wxTextCtrl *rzPoseText = nullptr;
-	wxTextCtrl *txPoseText = nullptr;
-	wxTextCtrl *tyPoseText = nullptr;
-	wxTextCtrl *tzPoseText = nullptr;
-	wxCheckBox *cbPose = nullptr;
+	wxSlider* rxPoseSlider = nullptr;
+	wxSlider* ryPoseSlider = nullptr;
+	wxSlider* rzPoseSlider = nullptr;
+	wxSlider* txPoseSlider = nullptr;
+	wxSlider* tyPoseSlider = nullptr;
+	wxSlider* tzPoseSlider = nullptr;
+	wxTextCtrl* rxPoseText = nullptr;
+	wxTextCtrl* ryPoseText = nullptr;
+	wxTextCtrl* rzPoseText = nullptr;
+	wxTextCtrl* txPoseText = nullptr;
+	wxTextCtrl* tyPoseText = nullptr;
+	wxTextCtrl* tzPoseText = nullptr;
+	wxCheckBox* cbPose = nullptr;
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxMenuBar* menuBar = nullptr;
 	wxToolBar* toolBarH = nullptr;
@@ -1004,12 +944,12 @@ public:
 	void UpdateShapeSource(nifly::NiShape* shape);
 	void UpdateVertexColors();
 
-	void ActiveShapesUpdated(UndoStateProject *usp, bool bIsUndo = false);
+	void ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo = false);
 	void UpdateActiveShape();
 	void UpdateBoneCounts();
 	void HighlightBoneNamesWithWeights();
 	void RefreshGUIWeightColors();
-	void GetNormalizeBones(std::vector<std::string> *normBones, std::vector<std::string> *notNormBones);
+	void GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones);
 	std::vector<std::string> GetSelectedBones();
 	void CalcAutoXMirrorBone();
 	std::string GetXMirrorBone();
@@ -1020,8 +960,8 @@ public:
 	void ShowPartition(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
 	void UpdatePartitionNames();
 
-	void SetSubMeshesForPartitions(mesh *m, const std::vector<int> &tp);
-	void SetNoSubMeshes(mesh *m);
+	void SetSubMeshesForPartitions(mesh* m, const std::vector<int>& tp);
+	void SetNoSubMeshes(mesh* m);
 	void SetNoSubMeshes();
 
 	void LockShapeSelect();
@@ -1123,7 +1063,7 @@ public:
 		if (progressStack.empty())
 			return;
 
-		if(forceEmpty) {
+		if (forceEmpty) {
 			progressBar->SetValue(progressStack.front().second);
 			progressStack.clear();
 		}
@@ -1131,7 +1071,7 @@ public:
 			progressBar->SetValue(progressStack.back().second);
 			progressStack.pop_back();
 		}
-		
+
 		if (progressStack.empty()) {
 			if (msg.IsEmpty())
 				statusBar->SetStatusText(_("Ready!"));
@@ -1190,7 +1130,7 @@ private:
 	void FillVertexColors();
 
 	bool HasUnweightedCheck();
-	void CalcCopySkinTransOption(WeightCopyOptions &options);
+	void CalcCopySkinTransOption(WeightCopyOptions& options);
 	bool ShowWeightCopy(WeightCopyOptions& options, bool silent = false);
 	void ReselectBone();
 
@@ -1199,8 +1139,8 @@ private:
 
 	bool CopyStreamData(wxInputStream& inputStream, wxOutputStream& outputStream, wxFileOffset size);
 
-	void OnMenuItem(wxCommandEvent &event);
-	void OnPackProjects(wxCommandEvent &event);
+	void OnMenuItem(wxCommandEvent& event);
+	void OnPackProjects(wxCommandEvent& event);
 	void OnChooseTargetGame(wxCommandEvent& event);
 	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
 	void OnSettings(wxCommandEvent& event);
@@ -1214,22 +1154,22 @@ private:
 	void UpdateProjectHistory();
 
 	void OnNewProject(wxCommandEvent& event);
-	void OnLoadProject(wxCommandEvent &event);
-	void OnAddProject(wxCommandEvent &event);
-	void OnLoadReference(wxCommandEvent &event);
-	void OnConvertBodyReference(wxCommandEvent &event);
+	void OnLoadProject(wxCommandEvent& event);
+	void OnAddProject(wxCommandEvent& event);
+	void OnLoadReference(wxCommandEvent& event);
+	void OnConvertBodyReference(wxCommandEvent& event);
 	void OnLoadOutfit(wxCommandEvent& event);
-	void OnUnloadProject(wxCommandEvent &event);
+	void OnUnloadProject(wxCommandEvent& event);
 
 	void OnLoadOutfitFP_File(wxFileDirPickerEvent& event);
 	void OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event);
 
-	void OnSetBaseShape(wxCommandEvent &event);
+	void OnSetBaseShape(wxCommandEvent& event);
 	void OnMakeConvRef(wxCommandEvent& event);
 
-	void OnImportNIF(wxCommandEvent &event);
-	void OnExportNIF(wxCommandEvent &event);
-	void OnExportNIFWithRef(wxCommandEvent &event);
+	void OnImportNIF(wxCommandEvent& event);
+	void OnExportNIF(wxCommandEvent& event);
+	void OnExportNIFWithRef(wxCommandEvent& event);
 	void OnExportShapeNIF(wxCommandEvent& event);
 
 	void OnImportOBJ(wxCommandEvent& event);
@@ -1244,17 +1184,17 @@ private:
 	void OnExportTRIHead(wxCommandEvent& event);
 	void OnExportShapeTRIHead(wxCommandEvent& event);
 
-	void OnImportPhysicsData(wxCommandEvent &event);
-	void OnExportPhysicsData(wxCommandEvent &event);
+	void OnImportPhysicsData(wxCommandEvent& event);
+	void OnExportPhysicsData(wxCommandEvent& event);
 
 	void OnSSSNameCopy(wxCommandEvent& event);
 	void OnSSSGenWeightsTrue(wxCommandEvent& event);
 	void OnSSSGenWeightsFalse(wxCommandEvent& event);
-	void OnSaveSliderSet(wxCommandEvent &event);
-	void OnSaveSliderSetAs(wxCommandEvent &event);
+	void OnSaveSliderSet(wxCommandEvent& event);
+	void OnSaveSliderSetAs(wxCommandEvent& event);
 
 	void OnSlider(wxCommandEvent& event);
-	void OnClickSliderButton(wxCommandEvent &event);
+	void OnClickSliderButton(wxCommandEvent& event);
 	void OnReadoutChange(wxCommandEvent& event);
 	void OnSliderCheckBox(wxCommandEvent& event);
 
@@ -1375,7 +1315,7 @@ private:
 	void OnSetReference(wxCommandEvent& event);
 	void OnDeleteVerts(wxCommandEvent& event);
 	void OnSeparateVerts(wxCommandEvent& event);
-	void CheckCopyGeo(wxDialog &dlg);
+	void CheckCopyGeo(wxDialog& dlg);
 	void OnCopyGeo(wxCommandEvent& event);
 	void OnDupeShape(wxCommandEvent& event);
 	void OnDeleteShape(wxCommandEvent& event);
@@ -1383,8 +1323,8 @@ private:
 	void OnAddCustomBone(wxCommandEvent& event);
 	void OnDeleteBone(wxCommandEvent& event);
 	void OnDeleteBoneFromSelected(wxCommandEvent& event);
-	void FillParentBoneChoice(wxDialog &dlg, const std::string &selBone = "");
-	void GetBoneDlgData(wxDialog &dlg, nifly::MatTransform &xform, std::string &parentBone);
+	void FillParentBoneChoice(wxDialog& dlg, const std::string& selBone = "");
+	void GetBoneDlgData(wxDialog& dlg, nifly::MatTransform& xform, std::string& parentBone);
 	void OnEditBone(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
 	void OnCopySelectedWeight(wxCommandEvent& event);
@@ -1455,9 +1395,7 @@ private:
 
 	void OnEditUV(wxCommandEvent& event);
 
-	void OnToggleVisibility(wxCommandEvent& WXUNUSED(event)) {
-		ToggleVisibility();
-	}
+	void OnToggleVisibility(wxCommandEvent& WXUNUSED(event)) { ToggleVisibility(); }
 
 	void OnShowWireframe(wxCommandEvent& WXUNUSED(event)) {
 		glView->ShowWireframe();
@@ -1573,18 +1511,18 @@ private:
 	void OnDeleteMask(wxCommandEvent& event);
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
 	void ApplyPose();
-	AnimBone *GetPoseBonePtr();
+	AnimBone* GetPoseBonePtr();
 	void PoseToGUI();
 	void OnPoseBoneChanged(wxCommandEvent& event);
 	void OnPoseValChanged(int cind, float val);
-	void OnAnyPoseSlider(wxScrollEvent &e, wxTextCtrl *t, int cind);
+	void OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind);
 	void OnRXPoseSlider(wxScrollEvent& event);
 	void OnRYPoseSlider(wxScrollEvent& event);
 	void OnRZPoseSlider(wxScrollEvent& event);
 	void OnTXPoseSlider(wxScrollEvent& event);
 	void OnTYPoseSlider(wxScrollEvent& event);
 	void OnTZPoseSlider(wxScrollEvent& event);
-	void OnAnyPoseTextChanged(wxTextCtrl *t, wxSlider *s, int cind);
+	void OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind);
 	void OnRXPoseTextChanged(wxCommandEvent& event);
 	void OnRYPoseTextChanged(wxCommandEvent& event);
 	void OnRZPoseTextChanged(wxCommandEvent& event);
@@ -1605,23 +1543,23 @@ private:
 
 class DnDFile : public wxFileDropTarget {
 public:
-	DnDFile(OutfitStudioFrame *pOwner = nullptr) { owner = pOwner; }
+	DnDFile(OutfitStudioFrame* pOwner = nullptr) { owner = pOwner; }
 
 	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
 
 private:
-	OutfitStudioFrame *owner = nullptr;
+	OutfitStudioFrame* owner = nullptr;
 };
 
 class DnDSliderFile : public wxFileDropTarget {
 public:
-	DnDSliderFile(OutfitStudioFrame *pOwner = nullptr) { owner = pOwner; }
+	DnDSliderFile(OutfitStudioFrame* pOwner = nullptr) { owner = pOwner; }
 
 	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
 	virtual wxDragResult OnDragOver(wxCoord x, wxCoord y, wxDragResult defResult);
 
 private:
-	OutfitStudioFrame *owner = nullptr;
+	OutfitStudioFrame* owner = nullptr;
 	wxDragResult lastResult = wxDragNone;
 	std::string targetSlider;
 };

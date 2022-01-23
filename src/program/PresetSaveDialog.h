@@ -5,10 +5,10 @@ See the included LICENSE file
 
 #pragma once
 
+#include <set>
+#include <wx/srchctrl.h>
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
-#include <wx/srchctrl.h>
-#include <set>
 
 class PresetSaveDialog : public wxDialog {
 public:
@@ -26,7 +26,7 @@ public:
 
 	void FilterGroups(const std::string& filter = "");
 
-	void OnEraseBackground(wxEraseEvent &event);
+	void OnEraseBackground(wxEraseEvent& event);
 	void FilterChanged(wxCommandEvent& event);
 	void CheckGroup(wxCommandEvent& event);
 	void OnSave(wxCommandEvent& event);

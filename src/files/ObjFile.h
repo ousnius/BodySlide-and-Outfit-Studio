@@ -7,8 +7,8 @@ See the included LICENSE file
 
 #include "Object3d.hpp"
 
-#include <map>
 #include <fstream>
+#include <map>
 #include <string>
 
 struct ObjOptionsImport {
@@ -26,9 +26,7 @@ struct ObjPoint {
 		vn = inVN;
 	}
 
-	bool operator==(const ObjPoint& other) const {
-		return v == other.v && vt == other.vt && vn == other.vn;
-	}
+	bool operator==(const ObjPoint& other) const { return v == other.v && vt == other.vt && vn == other.vn; }
 };
 
 struct ObjData {
@@ -49,7 +47,11 @@ public:
 	ObjFile();
 	~ObjFile();
 
-	int AddGroup(const std::string& name, const std::vector<nifly::Vector3>& verts, const std::vector<nifly::Triangle>& tris, const std::vector<nifly::Vector2>& uvs, const std::vector<nifly::Vector3>& norms);
+	int AddGroup(const std::string& name,
+				 const std::vector<nifly::Vector3>& verts,
+				 const std::vector<nifly::Triangle>& tris,
+				 const std::vector<nifly::Vector2>& uvs,
+				 const std::vector<nifly::Vector3>& norms);
 
 	void SetScale(const nifly::Vector3& inScale) { scale = inScale; }
 	void SetOffset(const nifly::Vector3& inOffset) { offset = inOffset; }
@@ -59,6 +61,7 @@ public:
 
 	int Save(const std::string& fileName);
 
-	bool CopyDataForGroup(const std::string& name, std::vector<nifly::Vector3>* v, std::vector<nifly::Triangle>* t, std::vector<nifly::Vector2>* uv, std::vector<nifly::Vector3>* norms);
+	bool CopyDataForGroup(
+		const std::string& name, std::vector<nifly::Vector3>* v, std::vector<nifly::Triangle>* t, std::vector<nifly::Vector2>* uv, std::vector<nifly::Vector3>* norms);
 	std::vector<std::string> GetGroupList();
 };

@@ -7,16 +7,15 @@ See the included LICENSE file
 
 #include "../TinyXML-2/tinyxml2.h"
 
-#include <wx/dir.h>
-#include <vector>
-#include <unordered_map>
 #include <set>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
+#include <wx/dir.h>
 
 using namespace tinyxml2;
 
-class NamedValue
-{
+class NamedValue {
 public:
 	virtual std::string GetName() const = 0;
 };
@@ -30,46 +29,23 @@ class RefTemplate : NamedValue {
 	std::vector<std::string> sourceFiles;
 
 public:
-	RefTemplate() { }
-	RefTemplate(XMLElement* srcElement) {
-		Load(srcElement);
-	}
+	RefTemplate() {}
+	RefTemplate(XMLElement* srcElement) { Load(srcElement); }
 
-	std::string GetName() const override
-	{
-		return name;
-	}
-	void SetName(const std::string& inName) {
-		name = inName;
-	}
+	std::string GetName() const override { return name; }
+	void SetName(const std::string& inName) { name = inName; }
 
-	std::string GetSource() const {
-		return source;
-	}
-	void SetSource(const std::string& inSource) {
-		source = inSource;
-	}
+	std::string GetSource() const { return source; }
+	void SetSource(const std::string& inSource) { source = inSource; }
 
-	std::string GetSetName() const {
-		return set;
-	}
-	void SetSetName(const std::string& inSetName) {
-		set = inSetName;
-	}
+	std::string GetSetName() const { return set; }
+	void SetSetName(const std::string& inSetName) { set = inSetName; }
 
-	std::string GetShape() const {
-		return shape;
-	}
-	void SetShape(const std::string& inShape) {
-		shape = inShape;
-	}
+	std::string GetShape() const { return shape; }
+	void SetShape(const std::string& inShape) { shape = inShape; }
 
-	bool GetLoadAll() const {
-		return loadAll;
-	}
-	void SetLoadAll(const bool inLoadAll) {
-		loadAll = inLoadAll;
-	}
+	bool GetLoadAll() const { return loadAll; }
+	void SetLoadAll(const bool inLoadAll) { loadAll = inLoadAll; }
 
 	int Load(XMLElement* srcElement);
 };
@@ -93,17 +69,15 @@ class RefTemplateFile {
 
 public:
 	std::string fileName;
-	RefTemplateFile() :error(0), root(nullptr) { }
+	RefTemplateFile()
+		: error(0)
+		, root(nullptr) {}
 	RefTemplateFile(const std::string& srcFileName);
-	~RefTemplateFile() {};
+	~RefTemplateFile(){};
 
-	bool fail() {
-		return error != 0;
-	}
-	int GetError() {
-		return error;
-	}
-	
+	bool fail() { return error != 0; }
+	int GetError() { return error; }
+
 	void Open(const std::string& srcFileName);
 	void Rename(const std::string& newFileName);
 	int GetNames(std::vector<std::string>& outNames, bool append = true, bool unique = false);

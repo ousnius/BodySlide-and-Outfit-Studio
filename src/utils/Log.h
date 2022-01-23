@@ -5,9 +5,9 @@ See the included LICENSE file
 
 #pragma once
 
+#include <fstream>
 #include <wx/datetime.h>
 #include <wx/log.h>
-#include <fstream>
 
 //Example
 //[19:30:25][3] Log.h(10): Message here
@@ -20,8 +20,7 @@ class LogFormatter : public wxLogFormatter {
 		int iminute = logTime.GetMinute();
 		int isecond = logTime.GetSecond();
 		int ilevel = level;
-		return wxString::Format("[%02d:%02d:%02d][%d]\t%s(%d): %s",
-			ihour, iminute, isecond, ilevel, fileName, info.line, msg);
+		return wxString::Format("[%02d:%02d:%02d][%d]\t%s(%d): %s", ihour, iminute, isecond, ilevel, fileName, info.line, msg);
 	}
 };
 
@@ -34,8 +33,7 @@ class LogFormatterNoFile : public wxLogFormatter {
 		int iminute = logTime.GetMinute();
 		int isecond = logTime.GetSecond();
 		int ilevel = level;
-		return wxString::Format("[%02d:%02d:%02d][%d]\t%s",
-			ihour, iminute, isecond, ilevel, msg);
+		return wxString::Format("[%02d:%02d:%02d][%d]\t%s", ihour, iminute, isecond, ilevel, msg);
 	}
 };
 

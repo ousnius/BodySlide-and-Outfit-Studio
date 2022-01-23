@@ -7,11 +7,11 @@ See the included LICENSE file
 
 #include "../TinyXML-2/tinyxml2.h"
 
-#include <wx/dir.h>
-#include <vector>
-#include <unordered_map>
 #include <set>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
+#include <wx/dir.h>
 
 using namespace tinyxml2;
 
@@ -23,17 +23,11 @@ class SliderCategory {
 	bool isHidden = false;
 
 public:
-	SliderCategory() { }
-	SliderCategory(XMLElement* srcCategoryElement) {
-		LoadCategory(srcCategoryElement);
-	}
+	SliderCategory() {}
+	SliderCategory(XMLElement* srcCategoryElement) { LoadCategory(srcCategoryElement); }
 
-	std::string GetName() {
-		return name;
-	}
-	void SetName(const std::string& inName) {
-		name = inName;
-	}
+	std::string GetName() { return name; }
+	void SetName(const std::string& inName) { name = inName; }
 
 	int AddSliders(const std::vector<std::string>& inSliders);
 	bool HasSlider(const std::string& search);
@@ -80,16 +74,14 @@ class SliderCategoryFile {
 
 public:
 	std::string fileName;
-	SliderCategoryFile() :error(0), root(nullptr) { }
+	SliderCategoryFile()
+		: error(0)
+		, root(nullptr) {}
 	SliderCategoryFile(const std::string& srcFileName);
-	~SliderCategoryFile() {};
+	~SliderCategoryFile(){};
 
-	bool fail() {
-		return error != 0;
-	}
-	int GetError() {
-		return error;
-	}
+	bool fail() { return error != 0; }
+	int GetError() { return error; }
 
 	// Loads the XML document and identifies included category names. On a failure, sets the internal error value.
 	void Open(const std::string& srcFileName);

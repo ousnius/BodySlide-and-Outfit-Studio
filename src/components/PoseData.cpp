@@ -34,7 +34,7 @@ void PoseData::WriteElement(XMLElement* element, bool append) const {
 	if (!append)
 		element->DeleteChildren();
 
-	for (auto &bone : boneData) {
+	for (auto& bone : boneData) {
 		XMLElement* newElement = element->GetDocument()->NewElement("Bone");
 		newElement = element->InsertEndChild(newElement)->ToElement();
 		newElement->SetAttribute("name", bone.name.c_str());
@@ -53,13 +53,13 @@ int PoseDataCollection::LoadData(const std::string& basePath) {
 	wxArrayString files;
 	wxDir::GetAllFiles(basePath, &files, "*.xml");
 
-	for (auto &file : files) {
+	for (auto& file : files) {
 		PoseDataFile poseDataFile(file.ToUTF8().data());
 
 		std::vector<PoseData> poseDataEntries;
 		poseDataFile.GetData(poseDataEntries);
 
-		for (auto &pd : poseDataEntries)
+		for (auto& pd : poseDataEntries)
 			poseData.push_back(pd);
 	}
 
@@ -135,7 +135,7 @@ void PoseDataFile::Rename(const std::string& newFileName) {
 int PoseDataFile::SetData(const std::vector<PoseData>& data) {
 	root->DeleteChildren();
 
-	for (auto &pd : data) {
+	for (auto& pd : data) {
 		XMLElement* newElement = doc.NewElement("Pose");
 		XMLElement* element = root->InsertEndChild(newElement)->ToElement();
 		element->SetAttribute("name", pd.name.c_str());

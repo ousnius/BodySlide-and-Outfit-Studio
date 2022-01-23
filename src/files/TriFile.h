@@ -7,15 +7,12 @@ See the included LICENSE file
 
 #include "Object3d.hpp"
 
-#include <map>
-#include <fstream>
-#include <memory>
 #include <algorithm>
+#include <fstream>
+#include <map>
+#include <memory>
 
-enum MorphType : uint8_t {
-	MORPHTYPE_POSITION,
-	MORPHTYPE_UV
-};
+enum MorphType : uint8_t { MORPHTYPE_POSITION, MORPHTYPE_UV };
 
 struct MorphData {
 	std::string name;
@@ -31,7 +28,7 @@ class TriFile {
 public:
 	bool Read(const std::string& fileName);
 	bool Write(const std::string& fileName);
-	
+
 	void AddMorph(const std::string& shapeName, MorphDataPtr data);
 	void DeleteMorph(const std::string& shapeName, const std::string& morphName);
 	void DeleteMorphs(const std::string& shapeName);

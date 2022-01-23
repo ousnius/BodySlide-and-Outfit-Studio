@@ -5,18 +5,14 @@ See the included LICENSE file
 
 #pragma once
 
-#include <wx/wx.h>
-#include <wx/propgrid/propgrid.h>
-#include <wx/propgrid/advprops.h>
 #include <wx/filepicker.h>
+#include <wx/propgrid/advprops.h>
+#include <wx/propgrid/propgrid.h>
+#include <wx/wx.h>
 
-class wxNormalsGenDlg : public wxDialog
-{
+class wxNormalsGenDlg : public wxDialog {
 protected:
-	void ShowPresetContextMenu(wxMouseEvent &event)
-	{
-		PopupMenu(presetContext, event.GetPosition());
-	}
+	void ShowPresetContextMenu(wxMouseEvent& event) { PopupMenu(presetContext, event.GetPosition()); }
 
 	wxBitmapButton* bpPreset = nullptr;
 	wxPropertyGrid* pgLayers = nullptr;

@@ -5,11 +5,10 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../ui/wxNormalsGenDlg.h"
 #include "../components/NormalGenLayers.h"
+#include "../ui/wxNormalsGenDlg.h"
 
-class NormalsGenDialog : public wxNormalsGenDlg
-{
+class NormalsGenDialog : public wxNormalsGenDlg {
 protected:
 	void doShowPresetContext(wxCommandEvent& event);
 	void doPropertyChanged(wxPropertyGridEvent& event);

@@ -22,6 +22,7 @@ public:
 		VertexCursor = CenterCursor | PointCursor,
 		EdgeCursor = CenterCursor | SegCursor
 	};
+
 private:
 	wxGLCanvas* canvas = nullptr;
 	wxGLContext* context = nullptr;
@@ -78,29 +79,21 @@ public:
 	float mFov = 90.0f;
 	nifly::Vector3 camPos;
 	nifly::Vector3 camOffset;
-	nifly::Vector3 camRot;		// Turntable camera emulation.
+	nifly::Vector3 camRot; // Turntable camera emulation.
 	nifly::Vector3 camRotOffset;
 
-	nifly::Vector3 GetBackgroundColor() {
-		return colorBackground;
-	}
+	nifly::Vector3 GetBackgroundColor() { return colorBackground; }
 
-	void SetBackgroundColor(const nifly::Vector3& color) {
-		colorBackground = color;
-	}
+	void SetBackgroundColor(const nifly::Vector3& color) { colorBackground = color; }
 
-	nifly::Vector3 GetWireColor() {
-		return colorWire;
-	}
+	nifly::Vector3 GetWireColor() { return colorWire; }
 
-	void SetWireColor(const nifly::Vector3& color) {
-		colorWire = color;
-	}
+	void SetWireColor(const nifly::Vector3& color) { colorWire = color; }
 
 	void ClearMeshes() {
 		SetContext();
 
-		for (auto &m : meshes)
+		for (auto& m : meshes)
 			delete m;
 
 		meshes.clear();
@@ -121,14 +114,12 @@ public:
 		}
 	}
 
-	void DeleteMesh(const std::string& shapeName) {
-		DeleteMesh(GetMesh(shapeName));
-	}
+	void DeleteMesh(const std::string& shapeName) { DeleteMesh(GetMesh(shapeName)); }
 
 	void ClearOverlays() {
 		SetContext();
 
-		for (auto &m : overlays)
+		for (auto& m : overlays)
 			delete m;
 
 		overlays.clear();
@@ -147,9 +138,7 @@ public:
 		}
 	}
 
-	void DeleteOverlay(const std::string& shapeName) {
-		DeleteOverlay(GetOverlay(shapeName));
-	}
+	void DeleteOverlay(const std::string& shapeName) { DeleteOverlay(GetOverlay(shapeName)); }
 
 	void RenameMesh(const std::string& shapeName, const std::string& newShapeName) {
 		mesh* m = GetMesh(shapeName);
@@ -157,9 +146,7 @@ public:
 			m->shapeName = newShapeName;
 	}
 
-	std::vector<mesh*> GetActiveMeshes() {
-		return activeMeshes;
-	}
+	std::vector<mesh*> GetActiveMeshes() { return activeMeshes; }
 
 	nifly::Vector3 GetActiveCenter(bool useMask = true) {
 		if (activeMeshes.empty())
@@ -168,7 +155,7 @@ public:
 		int count = 0;
 		nifly::Vector3 total;
 
-		for (auto &m : activeMeshes) {
+		for (auto& m : activeMeshes) {
 			for (int i = 0; i < m->nVerts; i++) {
 				if (!useMask || m->mask[i] == 0.0f) {
 					total += mesh::ApplyMatrix4(m->matModel, m->verts[i]);
@@ -206,14 +193,12 @@ public:
 		return nullptr;
 	}
 
-	const std::vector<mesh*>& GetMeshes() {
-		return meshes;
-	}
+	const std::vector<mesh*>& GetMeshes() { return meshes; }
 
 	const std::vector<mesh*> GetMeshesFiltered() {
 		std::vector<mesh*> filteredMeshes;
 
-		for (auto &m : meshes)
+		for (auto& m : meshes)
 			if (m->rendermode == RenderMode::Normal)
 				filteredMeshes.push_back(m);
 
@@ -228,30 +213,22 @@ public:
 		return nullptr;
 	}
 
-	float GetCursorSize() {
-		return cursorSize;
-	}
+	float GetCursorSize() { return cursorSize; }
 
-	void SetCursorSize(float newsize) {
-		cursorSize = newsize;
-	}
+	void SetCursorSize(float newsize) { cursorSize = newsize; }
 
-	CursorType GetCursorType() const {
-		return cursorType;
-	}
-	void SetCursorType(CursorType newType) {
-		cursorType = newType;
-	}
+	CursorType GetCursorType() const { return cursorType; }
+	void SetCursorType(CursorType newType) { cursorType = newType; }
 
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Cleanup();
 
 	void SetStartingView(const nifly::Vector3& camPos, const nifly::Vector3& camRot, const uint32_t& vpWidth, const uint32_t& vpHeight, const float& fov = 65.0f);
 	void SetSize(uint32_t w, uint32_t h);
-	void GetSize(uint32_t &w, uint32_t &h);
+	void GetSize(uint32_t& w, uint32_t& h);
 	void UpdateProjection();
 
-	void RenderFullScreenQuad(GLMaterial * renderShader, unsigned int w, unsigned int h);
+	void RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, unsigned int h);
 
 	void TurnTableCamera(int dScreenX);
 	void PitchCamera(int dScreenY);
@@ -263,8 +240,14 @@ public:
 	void SetView(const char type);
 	void SetPerspective(const bool enabled);
 	void SetFieldOfView(const int fieldOfView);
-	void UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
-		const nifly::Vector3& directional0Dir, const nifly::Vector3& directional1Dir, const nifly::Vector3& directional2Dir);
+	void UpdateLights(const int ambient,
+					  const int frontal,
+					  const int directional0,
+					  const int directional1,
+					  const int directional2,
+					  const nifly::Vector3& directional0Dir,
+					  const nifly::Vector3& directional1Dir,
+					  const nifly::Vector3& directional2Dir);
 
 	void GetPickRay(int ScreenX, int ScreenY, mesh* m, nifly::Vector3& dirVect, nifly::Vector3& outNearPos);
 	mesh* PickMesh(int ScreenX, int ScreenY);
@@ -289,17 +272,31 @@ public:
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
 	// Screen x/y are ignored if the ray is provided.
-	bool CollideMeshes(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, nifly::Vector3& outNormal, bool mirrored = false, mesh** hitMesh = nullptr, bool allMeshes = true, int* outFacet = nullptr);
+	bool CollideMeshes(int ScreenX,
+					   int ScreenY,
+					   nifly::Vector3& outOrigin,
+					   nifly::Vector3& outNormal,
+					   bool mirrored = false,
+					   mesh** hitMesh = nullptr,
+					   bool allMeshes = true,
+					   int* outFacet = nullptr);
 	bool CollidePlane(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, const nifly::Vector3& inPlaneNormal, float inPlaneDist);
 	bool CollideOverlay(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, nifly::Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr);
 
 	mesh* AddVisCircle(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const std::string& name = "RingMesh");
 	mesh* AddVis3dSphere(const nifly::Vector3& center, float radius, const nifly::Vector3& color, const std::string& name, bool asMesh = false);
 	mesh* AddVis3dRing(const nifly::Vector3& center, const nifly::Vector3& normal, float holeRadius, float ringRadius, const nifly::Vector3& color, const std::string& name);
-	mesh* AddVis3dArrow(const nifly::Vector3& origin, const nifly::Vector3& direction, float stemRadius, float pointRadius, float length, const nifly::Vector3& color, const std::string& name);
+	mesh* AddVis3dArrow(
+		const nifly::Vector3& origin, const nifly::Vector3& direction, float stemRadius, float pointRadius, float length, const nifly::Vector3& color, const std::string& name);
 	mesh* AddVis3dCube(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const nifly::Vector3& color, const std::string& name);
 	mesh* AddVisPoint(const nifly::Vector3& p, const std::string& name = "PointMesh", const nifly::Vector3* color = nullptr);
-	mesh* AddVisPlane(const nifly::Matrix4& mat, const nifly::Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const nifly::Vector3* color = nullptr, const bool asMesh = false);
+	mesh* AddVisPlane(const nifly::Matrix4& mat,
+					  const nifly::Vector2& size,
+					  float uvScale = 1.0f,
+					  float uvOffset = 0.0f,
+					  const std::string& name = "PlaneMesh",
+					  const nifly::Vector3* color = nullptr,
+					  const bool asMesh = false);
 	mesh* AddVisSeg(const nifly::Vector3& p1, const nifly::Vector3& p2, const std::string& name = "", const bool asMesh = false);
 	mesh* AddVisSeamEdges(const mesh* refMesh, bool asMesh = false);
 
@@ -318,12 +315,10 @@ public:
 
 	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
 	GLMaterial* GetPrimitiveMaterial();
-	ResourceLoader* GetResourceLoader() {
-		return &resLoader;
-	}
+	ResourceLoader* GetResourceLoader() { return &resLoader; }
 
 	bool SetContext();
-	
+
 	// Sort function for overlay layer
 	struct SortOverlaysLayer {
 		bool operator()(const mesh* lhs, const mesh* rhs) { return rhs->overlayLayer > lhs->overlayLayer; }
@@ -341,10 +336,10 @@ public:
 		else
 			bTextured = true;
 
-		for (auto &m : meshes)
+		for (auto& m : meshes)
 			UpdateShaders(m);
 
-		for (auto &o : overlays)
+		for (auto& o : overlays)
 			UpdateShaders(o);
 	}
 
@@ -361,40 +356,40 @@ public:
 		else
 			bLighting = true;
 
-		for (auto &m : meshes)
+		for (auto& m : meshes)
 			UpdateShaders(m);
 
-		for (auto &o : overlays)
+		for (auto& o : overlays)
 			UpdateShaders(o);
 	}
 
 	void SetMaskVisible(bool bVisible = true) {
 		bMaskVisible = bVisible;
 
-		for (auto &m : meshes)
+		for (auto& m : meshes)
 			UpdateShaders(m);
 
-		for (auto &o : overlays)
+		for (auto& o : overlays)
 			UpdateShaders(o);
 	}
 
 	void SetWeightColors(bool bVisible = true) {
 		bWeightColors = bVisible;
 
-		for (auto &m : meshes)
+		for (auto& m : meshes)
 			UpdateShaders(m);
 
-		for (auto &o : overlays)
+		for (auto& o : overlays)
 			UpdateShaders(o);
 	}
 
 	void SetVertexColors(bool bVisible = true) {
 		bVertexColors = bVisible;
 
-		for (auto &m : meshes)
+		for (auto& m : meshes)
 			UpdateShaders(m);
 
-		for (auto &o : overlays)
+		for (auto& o : overlays)
 			UpdateShaders(o);
 	}
 };

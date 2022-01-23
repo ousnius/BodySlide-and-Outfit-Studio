@@ -17,42 +17,40 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "PreviewWindow.h"
-#include "PresetSaveDialog.h"
-#include "GroupManager.h"
-#include "../components/SliderData.h"
-#include "../components/SliderManager.h"
-#include "../components/SliderGroup.h"
-#include "../components/SliderCategories.h"
 #include "../components/BuildSelection.h"
+#include "../components/SliderCategories.h"
+#include "../components/SliderData.h"
+#include "../components/SliderGroup.h"
+#include "../components/SliderManager.h"
 #include "../files/TriFile.h"
-#include "../utils/Log.h"
 #include "../utils/ConfigurationManager.h"
+#include "../utils/Log.h"
+#include "GroupManager.h"
+#include "PresetSaveDialog.h"
+#include "PreviewWindow.h"
 
-#include "../FSEngine/FSManager.h"
 #include "../FSEngine/FSEngine.h"
+#include "../FSEngine/FSManager.h"
 
-#include <wx/wxprec.h>
-#include <wx/srchctrl.h>
-#include <wx/xrc/xmlres.h>
-#include <wx/imagpng.h>
-#include <wx/dcbuffer.h>
-#include <wx/statline.h>
-#include <wx/tokenzr.h>
-#include <wx/cmdline.h>
-#include <wx/html/htmlwin.h>
-#include <wx/listctrl.h>
-#include <wx/dir.h>
-#include <wx/progdlg.h>
-#include <wx/intl.h>
 #include <wx/clrpicker.h>
+#include <wx/cmdline.h>
 #include <wx/collpane.h>
+#include <wx/dcbuffer.h>
+#include <wx/dir.h>
+#include <wx/html/htmlwin.h>
+#include <wx/imagpng.h>
+#include <wx/intl.h>
+#include <wx/listctrl.h>
+#include <wx/progdlg.h>
+#include <wx/srchctrl.h>
+#include <wx/statline.h>
 #include <wx/stdpaths.h>
+#include <wx/tokenzr.h>
+#include <wx/wxprec.h>
+#include <wx/xrc/xmlres.h>
 
 
-enum TargetGame {
-	FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB
-};
+enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB };
 
 class BodySlideFrame;
 
@@ -78,18 +76,18 @@ class BodySlideApp : public wxApp {
 	Log logger;
 
 	/* Data Items */
-	std::map<std::string, std::string, case_insensitive_compare> outfitNameSource;	// All currently defined outfits.
-	std::vector<std::string> outfitNameOrder;										// All currently defined outfits, in their order of appearance.
-	std::map<std::string, std::vector<std::string>> groupMembers;					// All currently defined groups.
-	std::map<std::string, std::string> groupAlias;									// Group name aliases.
-	std::vector<std::string> ungroupedOutfits;										// Outfits without a group.
-	std::vector<std::string> filteredOutfits;										// Filtered outfit names.
+	std::map<std::string, std::string, case_insensitive_compare> outfitNameSource; // All currently defined outfits.
+	std::vector<std::string> outfitNameOrder;									   // All currently defined outfits, in their order of appearance.
+	std::map<std::string, std::vector<std::string>> groupMembers;				   // All currently defined groups.
+	std::map<std::string, std::string> groupAlias;								   // Group name aliases.
+	std::vector<std::string> ungroupedOutfits;									   // Outfits without a group.
+	std::vector<std::string> filteredOutfits;									   // Filtered outfit names.
 	std::vector<std::string> presetGroups;
 	std::vector<std::string> allGroups;
 	SliderSetGroupCollection gCollection;
 
 	/* Cache */
-	std::map<std::string, nifly::NifFile, case_insensitive_compare> refNormalsCache;	// Cache for reference normals files
+	std::map<std::string, nifly::NifFile, case_insensitive_compare> refNormalsCache; // Cache for reference normals files
 
 	std::string previewBaseName;
 	std::string previewSetName;
@@ -107,10 +105,10 @@ public:
 	virtual bool OnExceptionInMainLoop();
 	virtual void OnUnhandledException();
 	virtual void OnFatalException();
-	
+
 	SliderCategoryCollection cCollection;
 	TargetGame targetGame;
-	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount;	// Counts how many sets write to the same output file
+	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount; // Counts how many sets write to the same output file
 
 	bool SetDefaultConfig();
 	bool ShowSetup();
@@ -153,9 +151,7 @@ public:
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
 
-	std::vector<std::string> GetConflictingOutfits() {
-		return outFileCount.find(activeSet.GetOutputFilePath())->second;
-	}
+	std::vector<std::string> GetConflictingOutfits() { return outFileCount.find(activeSet.GetOutputFilePath())->second; }
 
 	void DeleteOutfit(const std::string& outfitName);
 	void DeletePreset(const std::string& presetName);
@@ -163,7 +159,11 @@ public:
 	void EditProject(const std::string& projectName);
 	void LaunchOutfitStudio(const wxString& args = "");
 
-	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<nifly::Vector3>& verts, std::vector<uint16_t>& zapidx, std::vector<nifly::Vector2>* uvs = nullptr);
+	void ApplySliders(const std::string& targetShape,
+					  std::vector<Slider>& sliderSet,
+					  std::vector<nifly::Vector3>& verts,
+					  std::vector<uint16_t>& zapidx,
+					  std::vector<nifly::Vector2>* uvs = nullptr);
 	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, nifly::NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices);
 
 	void CopySliderValues(bool toHigh);
@@ -176,9 +176,7 @@ public:
 		if (preview)
 			preview->Close();
 	}
-	void PreviewClosed() {
-		preview = nullptr;
-	}
+	void PreviewClosed() { preview = nullptr; }
 
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
@@ -186,7 +184,12 @@ public:
 	void ApplyReferenceNormals(nifly::NifFile& nif);
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false, bool forceNormals = false);
-	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, bool forceNormals = false, const std::string& custPath = "");
+	int BuildListBodies(std::vector<std::string>& outfitList,
+						std::map<std::string, std::string>& failedOutfits,
+						bool remove = false,
+						bool tri = false,
+						bool forceNormals = false,
+						const std::string& custPath = "");
 	void GroupBuild(const std::vector<std::string>& groupNames);
 
 	void AddTriData(nifly::NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
@@ -201,13 +204,11 @@ public:
 	int SaveSliderPositions(const std::string& outputFile, const std::string& presetName, std::vector<std::string>& groups);
 };
 
-static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
-	{ wxCMD_LINE_OPTION, "gbuild", "groupbuild", "builds the specified group on launch", wxCMD_LINE_VAL_STRING },
-	{ wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING },
-	{ wxCMD_LINE_OPTION, "p", "preset", "preset used for the build, defaults to last used preset", wxCMD_LINE_VAL_STRING },
-	{ wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build" },
-	{ wxCMD_LINE_NONE }
-};
+static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild", "groupbuild", "builds the specified group on launch", wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_OPTION, "p", "preset", "preset used for the build, defaults to last used preset", wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build"},
+												   {wxCMD_LINE_NONE}};
 
 #define DELAYLOAD_TIMER 299
 #define SLIDER_LO 1
@@ -232,11 +233,10 @@ public:
 
 	SliderDisplay();
 
-	bool IsCreated() {
-		return isCreated;
-	}
+	bool IsCreated() { return isCreated; }
 
-	bool Create(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, int minValue, int maxValue, bool pIsZap, bool pOneSize = false);
+	bool Create(
+		wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, int minValue, int maxValue, bool pIsZap, bool pOneSize = false);
 	void Show(bool show = true);
 };
 
@@ -270,7 +270,7 @@ public:
 	wxMenu* fileCollisionMenu = nullptr;
 
 	BodySlideFrame(BodySlideApp* app, const wxSize& size);
-	~BodySlideFrame() { }
+	~BodySlideFrame() {}
 
 	void HideSlider(SliderDisplay* slider);
 	void ShowLowColumn(bool show);
