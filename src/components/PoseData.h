@@ -5,7 +5,8 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../TinyXML-2/tinyxml2.h"
+#include <tinyxml2.h>
+
 #include "Object3d.hpp"
 
 #include <map>
