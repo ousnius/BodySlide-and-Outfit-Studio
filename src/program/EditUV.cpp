@@ -18,11 +18,11 @@ std::unordered_map<int, Vector2>& EditUVAction::GetEndState() {
 	return endState;
 }
 
-void EditUVAction::SetStartState(const std::unordered_map<int, Vector2>& state) {
+void EditUVAction::SetStartState(std::unordered_map<int, Vector2>& state) {
 	startState = std::move(state);
 }
 
-void EditUVAction::SetEndState(const std::unordered_map<int, Vector2>& state) {
+void EditUVAction::SetEndState(std::unordered_map<int, Vector2>& state) {
 	endState = std::move(state);
 }
 
@@ -880,7 +880,7 @@ void EditUVCanvas::InitMeshes() {
 	for (int t = 0; t < uvGridMesh->nTris; t++)
 		uvGridMesh->tris[t] = tris[t];
 
-	uvGridMesh->rendermode = RenderMode::LitWire;
+	uvGridMesh->rendermode = mesh::RenderMode::LitWire;
 	uvGridMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 	uvGridMesh->vertexColors = true;
 

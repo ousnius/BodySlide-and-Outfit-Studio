@@ -62,8 +62,6 @@ See the included LICENSE file
 
 #include <future>
 
-enum TweakBrushType { TBT_STANDARD = 1, TBT_MOVE, TBT_MASK, TBT_WEIGHT, TBT_COLOR, TBT_ALPHA, TBT_XFORM, TBT_UNDIFF };
-
 // Collecton of information that identifies the position and attributes where a brush stroke is taking place.
 class TweakPickInfo {
 public:
@@ -88,8 +86,11 @@ public:
 
 
 class TweakBrush {
+public:
+	enum class BrushType { Standard = 1, Move, Mask, Weight, Color, Alpha, Transform, Undiff };
+
 protected:
-	TweakBrushType brushType;
+	BrushType brushType;
 	std::string brushName;
 	float radius;
 	float focus; // Focus between 1 and 5.
@@ -107,10 +108,10 @@ public:
 	TweakBrush();
 	virtual ~TweakBrush();
 
-	int Type() { return brushType; }
+	BrushType Type() { return brushType; }
 	std::string Name() { return brushName; }
 
-	virtual UndoType GetUndoType() { return UT_VERTPOS; }
+	virtual UndoType GetUndoType() { return UndoType::VertexPosition; }
 
 	TweakBrushMeshCache* getCache(mesh* m) { return &cache[m]; }
 
@@ -137,7 +138,7 @@ public:
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&) {}
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<nifly::Vector3>>&) {}
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&) {}
 
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
 	virtual bool checkSpacing(nifly::Vector3& start, nifly::Vector3& end);
@@ -169,7 +170,7 @@ class TB_Mask : public TweakBrush {
 public:
 	TB_Mask();
 	virtual ~TB_Mask();
-	virtual UndoType GetUndoType() { return UT_MASK; }
+	virtual UndoType GetUndoType() { return UndoType::Mask; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
@@ -179,7 +180,7 @@ class TB_Unmask : public TweakBrush {
 public:
 	TB_Unmask();
 	virtual ~TB_Unmask();
-	virtual UndoType GetUndoType() { return UT_MASK; }
+	virtual UndoType GetUndoType() { return UndoType::Mask; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
@@ -196,7 +197,7 @@ public:
 
 	TB_SmoothMask();
 	virtual ~TB_SmoothMask();
-	virtual UndoType GetUndoType() { return UT_MASK; }
+	virtual UndoType GetUndoType() { return UndoType::Mask; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
@@ -240,7 +241,7 @@ public:
 	TB_Undiff();
 	virtual ~TB_Undiff();
 
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<nifly::Vector3>>&);
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
 };
@@ -311,7 +312,7 @@ public:
 
 	TB_Weight();
 	virtual ~TB_Weight();
-	virtual UndoType GetUndoType() { return UT_WEIGHT; }
+	virtual UndoType GetUndoType() { return UndoType::Weight; }
 	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
@@ -331,7 +332,7 @@ public:
 
 	TB_Unweight();
 	virtual ~TB_Unweight();
-	virtual UndoType GetUndoType() { return UT_WEIGHT; }
+	virtual UndoType GetUndoType() { return UndoType::Weight; }
 	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
@@ -358,7 +359,7 @@ public:
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
-	virtual UndoType GetUndoType() { return UT_WEIGHT; }
+	virtual UndoType GetUndoType() { return UndoType::Weight; }
 	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
@@ -370,7 +371,7 @@ public:
 
 	TB_Color();
 	virtual ~TB_Color();
-	virtual UndoType GetUndoType() { return UT_COLOR; }
+	virtual UndoType GetUndoType() { return UndoType::Color; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
@@ -379,7 +380,7 @@ class TB_Uncolor : public TweakBrush {
 public:
 	TB_Uncolor();
 	virtual ~TB_Uncolor();
-	virtual UndoType GetUndoType() { return UT_COLOR; }
+	virtual UndoType GetUndoType() { return UndoType::Color; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
@@ -388,7 +389,7 @@ class TB_Alpha : public TweakBrush, public ClampBrush {
 public:
 	TB_Alpha();
 	virtual ~TB_Alpha();
-	virtual UndoType GetUndoType() { return UT_ALPHA; }
+	virtual UndoType GetUndoType() { return UndoType::Alpha; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
@@ -398,7 +399,7 @@ class TB_Unalpha : public TweakBrush {
 public:
 	TB_Unalpha();
 	virtual ~TB_Unalpha();
-	virtual UndoType GetUndoType() { return UT_ALPHA; }
+	virtual UndoType GetUndoType() { return UndoType::Alpha; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
@@ -427,11 +428,11 @@ public:
 	}
 
 	void beginStroke(TweakPickInfo& pickInfo);
-	void beginStroke(TweakPickInfo& pickInfo, const std::vector<std::vector<nifly::Vector3>>& positionData);
+	void beginStroke(TweakPickInfo& pickInfo, std::vector<std::vector<nifly::Vector3>>& positionData);
 	void updateStroke(TweakPickInfo& pickInfo);
 	void endStroke();
 
-	int BrushType() { return refBrush->Type(); }
+	TweakBrush::BrushType BrushType() { return refBrush->Type(); }
 	std::string BrushName() { return refBrush->Name(); }
 	TweakBrush* GetRefBrush() { return refBrush; }
 	std::vector<mesh*> GetRefMeshes() { return refMeshes; }

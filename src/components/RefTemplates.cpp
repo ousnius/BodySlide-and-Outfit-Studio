@@ -76,7 +76,7 @@ void RefTemplateFile::Open(const std::string& srcFileName) {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (error)
+	if (error || !fp)
 		return;
 #else
 	fp = fopen(srcFileName.c_str(), "rb");

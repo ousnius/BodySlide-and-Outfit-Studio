@@ -14,20 +14,20 @@ See the included LICENSE file
 #include "../gli/glm/gtx/euler_angles.hpp"
 #pragma warning(pop)
 
+#include <array>
 #include <memory>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
 
-enum RenderMode { Normal, UnlitSolid, UnlitWire, UnlitWireDepth, UnlitPoints, UnlitPointsDepth, LitWire };
-
 class GLMaterial;
 
 class mesh {
 private:
-	bool queueUpdate[10] = {false};
+	std::array<bool, 10> queueUpdate = {false};
 
 public:
+	enum class RenderMode { Normal, UnlitSolid, UnlitWire, UnlitWireDepth, UnlitPoints, UnlitPointsDepth, LitWire };
 	enum UpdateType { Position, Normals, Tangents, Bitangents, VertexColors, VertexAlpha, TextureCoordinates, Mask, Weight, Indices };
 
 	struct ShaderProperties {

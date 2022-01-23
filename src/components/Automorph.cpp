@@ -234,7 +234,7 @@ void Automorph::BuildProximityCache(const std::string& shapeName, float proximit
 
 		std::vector<kd_query_result> indexResults;
 		for (uint16_t id = 0; id < resultCount; id++) {
-			const auto& result = refTree->queryResult[id];
+			auto& result = refTree->queryResult[id];
 
 			if (maskIndices) {
 				if (maskIndices->find(result.vertex_index) != maskIndices->end())

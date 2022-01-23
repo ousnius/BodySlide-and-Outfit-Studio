@@ -37,14 +37,15 @@ using namespace nifly;
 ConfigurationManager Config;
 ConfigurationManager BodySlideConfig;
 
-const wxString TargetGames[] = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout 76", "Oblivion"};
-const wxLanguage SupportedLangs[] = {wxLANGUAGE_ENGLISH,	wxLANGUAGE_AFRIKAANS,  wxLANGUAGE_ARABIC,	  wxLANGUAGE_CATALAN,		   wxLANGUAGE_CZECH,	 wxLANGUAGE_DANISH,
-									 wxLANGUAGE_GERMAN,		wxLANGUAGE_GREEK,	   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,		   wxLANGUAGE_FINNISH,	 wxLANGUAGE_FRENCH,
-									 wxLANGUAGE_HINDI,		wxLANGUAGE_HUNGARIAN,  wxLANGUAGE_INDONESIAN, wxLANGUAGE_ITALIAN,		   wxLANGUAGE_JAPANESE,	 wxLANGUAGE_KOREAN,
-									 wxLANGUAGE_LITHUANIAN, wxLANGUAGE_LATVIAN,	   wxLANGUAGE_MALAY,	  wxLANGUAGE_NORWEGIAN_BOKMAL, wxLANGUAGE_NEPALI,	 wxLANGUAGE_DUTCH,
-									 wxLANGUAGE_POLISH,		wxLANGUAGE_PORTUGUESE, wxLANGUAGE_ROMANIAN,	  wxLANGUAGE_RUSSIAN,		   wxLANGUAGE_SLOVAK,	 wxLANGUAGE_SLOVENIAN,
-									 wxLANGUAGE_ALBANIAN,	wxLANGUAGE_SWEDISH,	   wxLANGUAGE_TAMIL,	  wxLANGUAGE_TURKISH,		   wxLANGUAGE_UKRAINIAN, wxLANGUAGE_VIETNAMESE,
-									 wxLANGUAGE_CHINESE};
+const std::array<wxString, 9> TargetGames = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout 76", "Oblivion"};
+const std::array<wxLanguage, 37> SupportedLangs = {wxLANGUAGE_ENGLISH,	  wxLANGUAGE_AFRIKAANS,		   wxLANGUAGE_ARABIC,  wxLANGUAGE_CATALAN,	  wxLANGUAGE_CZECH,
+												   wxLANGUAGE_DANISH,	  wxLANGUAGE_GERMAN,		   wxLANGUAGE_GREEK,   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,
+												   wxLANGUAGE_FINNISH,	  wxLANGUAGE_FRENCH,		   wxLANGUAGE_HINDI,   wxLANGUAGE_HUNGARIAN,  wxLANGUAGE_INDONESIAN,
+												   wxLANGUAGE_ITALIAN,	  wxLANGUAGE_JAPANESE,		   wxLANGUAGE_KOREAN,  wxLANGUAGE_LITHUANIAN, wxLANGUAGE_LATVIAN,
+												   wxLANGUAGE_MALAY,	  wxLANGUAGE_NORWEGIAN_BOKMAL, wxLANGUAGE_NEPALI,  wxLANGUAGE_DUTCH,	  wxLANGUAGE_POLISH,
+												   wxLANGUAGE_PORTUGUESE, wxLANGUAGE_ROMANIAN,		   wxLANGUAGE_RUSSIAN, wxLANGUAGE_SLOVAK,	  wxLANGUAGE_SLOVENIAN,
+												   wxLANGUAGE_ALBANIAN,	  wxLANGUAGE_SWEDISH,		   wxLANGUAGE_TAMIL,   wxLANGUAGE_TURKISH,	  wxLANGUAGE_UKRAINIAN,
+												   wxLANGUAGE_VIETNAMESE, wxLANGUAGE_CHINESE};
 
 wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_MENU(wxID_EXIT, BodySlideFrame::OnExit)
@@ -2808,7 +2809,6 @@ int BodySlideApp::SaveSliderPositions(const std::string& outputFile, const std::
 BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	: delayLoad(this, DELAYLOAD_TIMER) {
 	app = a;
-	rowCount = 0;
 
 	wxXmlResource* xrc = wxXmlResource::Get();
 	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/BodySlide.xrc");
@@ -3076,7 +3076,6 @@ void BodySlideFrame::AddSliderGUI(wxScrolledWindow* scrollWindow, wxSizer* slide
 		sd->Show();
 
 	sliderDisplays[sd->sliderName] = sd;
-	rowCount++;
 }
 
 void BodySlideFrame::ClearPresetList() {
@@ -3102,7 +3101,6 @@ void BodySlideFrame::ClearSliderGUI() {
 
 	sliderDisplays.clear();
 	categoryWidgets.clear();
-	rowCount = 0;
 }
 
 void BodySlideFrame::SetPresetChanged(bool changed) {

@@ -143,7 +143,7 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 #ifdef _WINDOWS
 		std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(file.ToUTF8().data());
 		int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-		if (ret)
+		if (ret || !fp)
 			continue;
 #else
 		fp = fopen(file.ToUTF8().data(), "rb");
@@ -233,7 +233,7 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
 	int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (ret == 0)
+	if (ret == 0 && fp)
 		loaded = true;
 #else
 	fp = fopen(filePath.c_str(), "rb");
@@ -301,7 +301,7 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 #ifdef _WINDOWS
 	winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
 	ret = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (ret)
+	if (ret || !fp)
 		return 1;
 #else
 	fp = fopen(filePath.c_str(), "w");
@@ -329,7 +329,7 @@ int PresetCollection::DeletePreset(const std::string& filePath, const std::strin
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
 	int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (ret)
+	if (ret || !fp)
 		return -1;
 #else
 	fp = fopen(filePath.c_str(), "rb");
@@ -361,7 +361,7 @@ int PresetCollection::DeletePreset(const std::string& filePath, const std::strin
 #ifdef _WINDOWS
 	winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
 	ret = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (ret)
+	if (ret || !fp)
 		return -1;
 #else
 	fp = fopen(filePath.c_str(), "w");

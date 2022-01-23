@@ -15,7 +15,7 @@ const int EDITUV_DIRECTION_LEFT = 0x2;
 const int EDITUV_DIRECTION_UP = 0x4;
 const int EDITUV_DIRECTION_DOWN = 0x8;
 
-enum EditUVTool { BoxSelection, VertexSelection, Move, Scale, Rotate };
+enum class EditUVTool { BoxSelection, VertexSelection, Move, Scale, Rotate };
 
 class EditUVAction {
 	mesh* actionMesh = nullptr;
@@ -27,8 +27,8 @@ public:
 
 	std::unordered_map<int, nifly::Vector2>& GetStartState();
 	std::unordered_map<int, nifly::Vector2>& GetEndState();
-	void SetStartState(const std::unordered_map<int, nifly::Vector2>& state);
-	void SetEndState(const std::unordered_map<int, nifly::Vector2>& state);
+	void SetStartState(std::unordered_map<int, nifly::Vector2>& state);
+	void SetEndState(std::unordered_map<int, nifly::Vector2>& state);
 	void RestoreStartState();
 	void RestoreEndState();
 };
@@ -85,8 +85,8 @@ public:
 	void Redo();
 
 private:
-	EditUVTool toolSelected = BoxSelection;
-	EditUVTool toolActive = BoxSelection;
+	EditUVTool toolSelected = EditUVTool::BoxSelection;
+	EditUVTool toolActive = EditUVTool::BoxSelection;
 
 	void UpdateShapeMesh(bool apply = true);
 

@@ -868,19 +868,19 @@ void GLSurface::RenderMesh(mesh* m) {
 
 	glBindVertexArray(m->vao);
 
-	if (m->rendermode == RenderMode::Normal || m->rendermode == RenderMode::LitWire || m->rendermode == RenderMode::UnlitSolid) {
+	if (m->rendermode == mesh::RenderMode::Normal || m->rendermode == mesh::RenderMode::LitWire || m->rendermode == mesh::RenderMode::UnlitSolid) {
 		shader.SetFrontalLight(frontalLight);
 		shader.SetDirectionalLight(directionalLight0, 0);
 		shader.SetDirectionalLight(directionalLight1, 1);
 		shader.SetDirectionalLight(directionalLight2, 2);
 		shader.SetAmbientLight(ambientLight);
 
-		if (m->rendermode == RenderMode::LitWire) {
+		if (m->rendermode == mesh::RenderMode::LitWire) {
 			glDisable(GL_CULL_FACE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
 
-		if (m->rendermode == RenderMode::UnlitSolid)
+		if (m->rendermode == mesh::RenderMode::UnlitSolid)
 			shader.SetLightingEnabled(false);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
@@ -971,7 +971,7 @@ void GLSurface::RenderMesh(mesh* m) {
 		glDisable(GL_POLYGON_OFFSET_FILL);
 
 		// Render wireframe (full mesh or remainder of it)
-		if (bWireframe && m->rendermode == RenderMode::Normal) {
+		if (bWireframe && m->rendermode == mesh::RenderMode::Normal) {
 			shader.SetWireframeEnabled(true);
 			shader.SetColor(colorWire);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -1004,10 +1004,10 @@ void GLSurface::RenderMesh(mesh* m) {
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(0);
 	}
-	else if (m->rendermode == RenderMode::UnlitWire || m->rendermode == RenderMode::UnlitWireDepth) {
+	else if (m->rendermode == mesh::RenderMode::UnlitWire || m->rendermode == mesh::RenderMode::UnlitWireDepth) {
 		glDisable(GL_CULL_FACE);
 
-		if (m->rendermode != RenderMode::UnlitWireDepth)
+		if (m->rendermode != mesh::RenderMode::UnlitWireDepth)
 			glDisable(GL_DEPTH_TEST);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
@@ -1020,10 +1020,10 @@ void GLSurface::RenderMesh(mesh* m) {
 
 		glDisableVertexAttribArray(0);
 	}
-	else if (m->rendermode == RenderMode::UnlitPoints || m->rendermode == RenderMode::UnlitPointsDepth) {
+	else if (m->rendermode == mesh::RenderMode::UnlitPoints || m->rendermode == mesh::RenderMode::UnlitPointsDepth) {
 		glDisable(GL_CULL_FACE);
 
-		if (m->rendermode != RenderMode::UnlitPointsDepth)
+		if (m->rendermode != mesh::RenderMode::UnlitPointsDepth)
 			glDisable(GL_DEPTH_TEST);
 
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
@@ -1312,7 +1312,7 @@ mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Ve
 	m->nEdges = 0;
 	m->nTris = 0;
 
-	m->rendermode = RenderMode::UnlitPoints;
+	m->rendermode = mesh::RenderMode::UnlitPoints;
 	m->shapeName = name;
 	m->color = Vector3(0.0f, 1.0f, 1.0f);
 	m->material = GetPrimitiveMaterial();
@@ -1357,7 +1357,7 @@ mesh* GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, floa
 
 	m->shapeName = name;
 	m->color = Vector3(1.0f, 0.0f, 0.0f);
-	m->rendermode = RenderMode::UnlitWire;
+	m->rendermode = mesh::RenderMode::UnlitWire;
 	m->material = GetPrimitiveMaterial();
 
 	float i = 0.0f;
@@ -1431,7 +1431,7 @@ mesh* GLSurface::AddVis3dSphere(const nifly::Vector3& center, float radius, cons
 			m->tris[i] = tris[i];
 
 		m->shapeName = name;
-		m->rendermode = RenderMode::UnlitSolid;
+		m->rendermode = mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 
 		if (asMesh)
@@ -1498,7 +1498,7 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 		m->tris = std::make_unique<Triangle[]>(m->nTris);
 
 		m->shapeName = name;
-		m->rendermode = RenderMode::UnlitSolid;
+		m->rendermode = mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 
 		AddOverlay(m);
@@ -1590,7 +1590,7 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 		m->tris = std::make_unique<Triangle[]>(m->nTris);
 
 		m->shapeName = name;
-		m->rendermode = RenderMode::UnlitSolid;
+		m->rendermode = mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 
 		AddOverlay(m);
@@ -1698,7 +1698,7 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 		m->tris[11] = Triangle(6, 7, 3);
 
 		m->shapeName = name;
-		m->rendermode = RenderMode::UnlitSolid;
+		m->rendermode = mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 
 		AddOverlay(m);
@@ -1750,7 +1750,7 @@ mesh* GLSurface::AddVisPlane(const Matrix4& mat, const Vector2& size, float uvSc
 		m->tris[1] = Triangle(2, 3, 0);
 
 		m->shapeName = name;
-		m->rendermode = RenderMode::UnlitSolid;
+		m->rendermode = mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
 		m->doublesided = true;
 
@@ -1817,11 +1817,11 @@ mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::stri
 	m->CreateBuffers();
 
 	if (asMesh) {
-		m->rendermode = RenderMode::UnlitWireDepth;
+		m->rendermode = mesh::RenderMode::UnlitWireDepth;
 		AddMesh(m);
 	}
 	else {
-		m->rendermode = RenderMode::UnlitWire;
+		m->rendermode = mesh::RenderMode::UnlitWire;
 		AddOverlay(m);
 	}
 
@@ -1895,11 +1895,11 @@ mesh* GLSurface::AddVisSeamEdges(const mesh* refMesh, bool asMesh) {
 	m->CreateBuffers();
 
 	if (asMesh) {
-		m->rendermode = RenderMode::UnlitWireDepth;
+		m->rendermode = mesh::RenderMode::UnlitWireDepth;
 		AddMesh(m);
 	}
 	else {
-		m->rendermode = RenderMode::UnlitWire;
+		m->rendermode = mesh::RenderMode::UnlitWire;
 		AddOverlay(m);
 	}
 
@@ -1985,12 +1985,12 @@ void GLSurface::SetSelectedMesh(const std::string& shapeName) {
 	selectedMesh = GetMesh(shapeName);
 }
 
-RenderMode GLSurface::SetMeshRenderMode(const std::string& name, RenderMode mode) {
+mesh::RenderMode GLSurface::SetMeshRenderMode(const std::string& name, mesh::RenderMode mode) {
 	mesh* m = GetMesh(name);
 	if (!m)
-		return RenderMode::Normal;
+		return mesh::RenderMode::Normal;
 
-	RenderMode r = m->rendermode;
+	mesh::RenderMode r = m->rendermode;
 	m->rendermode = mode;
 	return r;
 }

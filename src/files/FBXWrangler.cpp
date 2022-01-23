@@ -317,7 +317,7 @@ void FBXWrangler::AddNif(NifFile* nif, AnimInfo* anim, bool transToGlobal, NiSha
 
 				std::vector<Vector3> gVerts, gNorms;
 				if (verts && transToGlobal) {
-					MatTransform toGlobal = anim->shapeSkinning[shape->name.get()].xformGlobalToSkin.InverseTransform();
+					MatTransform toGlobal = anim->shapeSkinning[s->name.get()].xformGlobalToSkin.InverseTransform();
 
 					gVerts.resize(verts->size());
 					for (size_t i = 0; i < gVerts.size(); ++i)

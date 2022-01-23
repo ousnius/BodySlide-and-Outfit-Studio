@@ -12,7 +12,7 @@ See the included LICENSE file
 #include <unordered_set>
 #include <vector>
 
-enum UndoType { UT_VERTPOS, UT_MASK, UT_WEIGHT, UT_COLOR, UT_ALPHA, UT_MESH };
+enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh };
 
 struct UndoStateVertexWeight {
 	float startVal, endVal;
@@ -34,7 +34,7 @@ struct UndoStateVertexSliderDiff {
 };
 
 struct UndoStateVertex {
-	uint16_t index;		// index into array of vertices
+	uint16_t index = 0; // index into array of vertices
 	nifly::Vector3 pos; // position in skin coordinates
 	nifly::Vector2 uv;
 	nifly::Color4 color;
@@ -47,7 +47,7 @@ struct UndoStateVertex {
 };
 
 struct UndoStateTriangle {
-	uint32_t index; // index into array of triangles
+	uint32_t index = 0; // index into array of triangles
 	nifly::Triangle t;
 	int partID = -1; // partition ID if there are partitions or segments
 };
@@ -72,7 +72,7 @@ struct UndoStateShape {
 };
 
 struct UndoStateProject {
-	UndoType undoType;
+	UndoType undoType = UndoType::VertexPosition;
 	std::vector<UndoStateShape> usss;
 	// if undoType is UT_VERTPOS and sliderName is not empty, this is
 	// a slider shape edit rather than a base shape edit.

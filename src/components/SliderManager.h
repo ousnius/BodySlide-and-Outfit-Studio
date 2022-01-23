@@ -11,13 +11,13 @@ See the included LICENSE file
 class Slider {
 public:
 	std::string name;
-	bool invert;
-	bool zap;
-	bool clamp;
-	bool uv;
-	bool changed;
-	float defValue;
-	float value;
+	bool invert = false;
+	bool zap = false;
+	bool clamp = false;
+	bool uv = false;
+	bool changed = false;
+	float defValue = 0.0f;
+	float value = 0.0f;
 	std::vector<std::string> zapToggles;
 	std::vector<std::string> linkedDataSets;
 };
