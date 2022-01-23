@@ -413,7 +413,7 @@ void SliderSetFile::Open(const std::string& srcFileName) {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (error)
+	if (error || !fp)
 		return;
 #else
 	fp = fopen(srcFileName.c_str(), "rb");
@@ -576,7 +576,7 @@ bool SliderSetFile::Save() {
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
 	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (error)
+	if (error || !fp)
 		return false;
 #else
 	fp = fopen(fileName.c_str(), "w");

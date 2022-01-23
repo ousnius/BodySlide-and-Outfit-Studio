@@ -304,14 +304,15 @@ wxIMPLEMENT_APP(OutfitStudio);
 ConfigurationManager Config;
 ConfigurationManager OutfitStudioConfig;
 
-const wxString TargetGames[] = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout 76", "Oblivion"};
-const wxLanguage SupportedLangs[] = {wxLANGUAGE_ENGLISH,	wxLANGUAGE_AFRIKAANS,  wxLANGUAGE_ARABIC,	  wxLANGUAGE_CATALAN,		   wxLANGUAGE_CZECH,	 wxLANGUAGE_DANISH,
-									 wxLANGUAGE_GERMAN,		wxLANGUAGE_GREEK,	   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,		   wxLANGUAGE_FINNISH,	 wxLANGUAGE_FRENCH,
-									 wxLANGUAGE_HINDI,		wxLANGUAGE_HUNGARIAN,  wxLANGUAGE_INDONESIAN, wxLANGUAGE_ITALIAN,		   wxLANGUAGE_JAPANESE,	 wxLANGUAGE_KOREAN,
-									 wxLANGUAGE_LITHUANIAN, wxLANGUAGE_LATVIAN,	   wxLANGUAGE_MALAY,	  wxLANGUAGE_NORWEGIAN_BOKMAL, wxLANGUAGE_NEPALI,	 wxLANGUAGE_DUTCH,
-									 wxLANGUAGE_POLISH,		wxLANGUAGE_PORTUGUESE, wxLANGUAGE_ROMANIAN,	  wxLANGUAGE_RUSSIAN,		   wxLANGUAGE_SLOVAK,	 wxLANGUAGE_SLOVENIAN,
-									 wxLANGUAGE_ALBANIAN,	wxLANGUAGE_SWEDISH,	   wxLANGUAGE_TAMIL,	  wxLANGUAGE_TURKISH,		   wxLANGUAGE_UKRAINIAN, wxLANGUAGE_VIETNAMESE,
-									 wxLANGUAGE_CHINESE};
+const std::array<wxString, 9> TargetGames = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout 76", "Oblivion"};
+const std::array<wxLanguage, 37> SupportedLangs = {wxLANGUAGE_ENGLISH,	  wxLANGUAGE_AFRIKAANS,		   wxLANGUAGE_ARABIC,  wxLANGUAGE_CATALAN,	  wxLANGUAGE_CZECH,
+												   wxLANGUAGE_DANISH,	  wxLANGUAGE_GERMAN,		   wxLANGUAGE_GREEK,   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,
+												   wxLANGUAGE_FINNISH,	  wxLANGUAGE_FRENCH,		   wxLANGUAGE_HINDI,   wxLANGUAGE_HUNGARIAN,  wxLANGUAGE_INDONESIAN,
+												   wxLANGUAGE_ITALIAN,	  wxLANGUAGE_JAPANESE,		   wxLANGUAGE_KOREAN,  wxLANGUAGE_LITHUANIAN, wxLANGUAGE_LATVIAN,
+												   wxLANGUAGE_MALAY,	  wxLANGUAGE_NORWEGIAN_BOKMAL, wxLANGUAGE_NEPALI,  wxLANGUAGE_DUTCH,	  wxLANGUAGE_POLISH,
+												   wxLANGUAGE_PORTUGUESE, wxLANGUAGE_ROMANIAN,		   wxLANGUAGE_RUSSIAN, wxLANGUAGE_SLOVAK,	  wxLANGUAGE_SLOVENIAN,
+												   wxLANGUAGE_ALBANIAN,	  wxLANGUAGE_SWEDISH,		   wxLANGUAGE_TAMIL,   wxLANGUAGE_TURKISH,	  wxLANGUAGE_UKRAINIAN,
+												   wxLANGUAGE_VIETNAMESE, wxLANGUAGE_CHINESE};
 
 std::string GetProjectPath() {
 	std::string res = Config["ProjectPath"];
@@ -947,11 +948,11 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Skeleton.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Settings.xrc");
 
-	int statusWidths[] = {-1, 400, 100};
+	const std::array<int, 3> statusWidths = {-1, 400, 100};
 	statusBar = (wxStatusBar*)FindWindowByName("statusBar");
 	if (statusBar) {
 		statusBar->SetFieldsCount(3);
-		statusBar->SetStatusWidths(3, statusWidths);
+		statusBar->SetStatusWidths(3, statusWidths.data());
 		statusBar->SetStatusText(_("Ready!"));
 	}
 
@@ -1125,8 +1126,6 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	project = new OutfitProject(this); // Create empty project
 	CreateSetSliders();
 
-	bEditSlider = false;
-	activeItem = nullptr;
 	selectedItems.clear();
 
 	SetSize(size);
@@ -1203,7 +1202,7 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 }
 
 bool OutfitStudioFrame::CopyStreamData(wxInputStream& inputStream, wxOutputStream& outputStream, wxFileOffset size) {
-	wxChar buf[128 * 1024];
+	auto buf = std::make_unique<wxChar[]>(128 * 1024);
 	int readSize = 128 * 1024;
 	wxFileOffset copiedData = 0;
 
@@ -1211,10 +1210,10 @@ bool OutfitStudioFrame::CopyStreamData(wxInputStream& inputStream, wxOutputStrea
 		if (size != -1 && copiedData + readSize > size)
 			readSize = size - copiedData;
 
-		inputStream.Read(buf, readSize);
+		inputStream.Read(buf.get(), readSize);
 
 		size_t actuallyRead = inputStream.LastRead();
-		outputStream.Write(buf, actuallyRead);
+		outputStream.Write(buf.get(), actuallyRead);
 		if (outputStream.LastWrite() != actuallyRead) {
 			wxLogError("Failed to output data when copying stream.");
 			return false;
@@ -2696,7 +2695,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo)
 		}
 	}
 	else {
-		if (usp->undoType == UT_WEIGHT) {
+		if (usp->undoType == UndoType::Weight) {
 			for (auto& uss : usp->usss) {
 				mesh* m = glView->GetMesh(uss.shapeName);
 				if (!m)
@@ -2725,7 +2724,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo)
 				}
 			}
 		}
-		else if (usp->undoType == UT_COLOR) {
+		else if (usp->undoType == UndoType::Color) {
 			for (auto& uss : usp->usss) {
 				mesh* m = glView->GetMesh(uss.shapeName);
 				if (!m)
@@ -2755,7 +2754,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo)
 				project->GetWorkNif()->SetColorsForShape(m->shapeName, vcolors);
 			}
 		}
-		else if (usp->undoType == UT_ALPHA) {
+		else if (usp->undoType == UndoType::Alpha) {
 			for (auto& uss : usp->usss) {
 				mesh* m = glView->GetMesh(uss.shapeName);
 				if (!m)
@@ -6049,8 +6048,8 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 	if (meshTabButton->GetCheck() || lightsTabButton->GetCheck()) {
 		auto activeBrush = glView->GetActiveBrush();
 		if (activeBrush) {
-			int brushType = activeBrush->Type();
-			if (brushType == TBT_STANDARD || brushType == TBT_MASK || brushType == TBT_MOVE) {
+			TweakBrush::BrushType brushType = activeBrush->Type();
+			if (brushType == TweakBrush::BrushType::Standard || brushType == TweakBrush::BrushType::Mask || brushType == TweakBrush::BrushType::Move) {
 				glView->SetLastTool(glView->GetActiveTool());
 			}
 		}
@@ -8077,7 +8076,7 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 			bool mirrorAxisZ = XRCCTRL(dlg, "mirrorAxisZ", wxCheckBox)->IsChecked();
 
 			UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-			usp->undoType = UT_VERTPOS;
+			usp->undoType = UndoType::VertexPosition;
 
 			for (auto& sel : selectedItems) {
 				mask.clear();
@@ -8233,7 +8232,7 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			}
 
 			UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-			usp->undoType = UT_VERTPOS;
+			usp->undoType = UndoType::VertexPosition;
 
 			for (auto& sel : selectedItems) {
 				mask.clear();
@@ -8422,7 +8421,7 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 			}
 
 			UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-			usp->undoType = UT_VERTPOS;
+			usp->undoType = UndoType::VertexPosition;
 
 			for (auto& sel : selectedItems) {
 				mask.clear();
@@ -8545,7 +8544,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	// Prepare the undo data and determine if any shapes are being deleted.
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-	usp->undoType = UT_MESH;
+	usp->undoType = UndoType::Mesh;
 	std::vector<NiShape*> delShapes;
 	for (auto& i : selectedItems) {
 		if (editUV && editUV->shape == i->GetShape())
@@ -8617,7 +8616,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	auto newShape = project->DuplicateShape(activeItem->GetShape(), newShapeName);
 
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-	usp->undoType = UT_MESH;
+	usp->undoType = UndoType::Mesh;
 	usp->usss.resize(2);
 	usp->usss[0].shapeName = activeItem->GetShape()->name.get();
 	usp->usss[1].shapeName = newShapeName;
@@ -8737,7 +8736,7 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-	usp->undoType = UT_MESH;
+	usp->undoType = UndoType::Mesh;
 	usp->usss.resize(1);
 	usp->usss[0].shapeName = targetShapeName;
 
@@ -9289,7 +9288,7 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 		StartProgress(_("Copying bone weights..."));
 
 		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-		usp->undoType = UT_WEIGHT;
+		usp->undoType = UndoType::Weight;
 
 		std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
 		std::sort(baseBones.begin(), baseBones.end());
@@ -9397,7 +9396,7 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		StartProgress(_("Copying selected bone weights..."));
 
 		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-		usp->undoType = UT_WEIGHT;
+		usp->undoType = UndoType::Weight;
 		std::unordered_map<uint16_t, float> mask;
 		for (size_t i = 0; i < selectedItems.size(); i++) {
 			NiShape* shape = selectedItems[i]->GetShape();
@@ -10415,7 +10414,7 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 
 					// Push changes onto undo stack and execute
 					UndoStateProject* usp = GetUndoHistory()->PushState();
-					usp->undoType = UT_VERTPOS;
+					usp->undoType = UndoType::VertexPosition;
 					usp->usss.push_back(std::move(uss));
 
 					if (os->bEditSlider) {
@@ -10638,7 +10637,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 
 	activeBrush->setRadius(brushSize);
 
-	if (activeBrush->Type() == TBT_WEIGHT) {
+	if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
 		for (auto& sel : os->GetSelectedItems()) {
 			os->project->GetWorkNif()->CreateSkinning(sel->GetShape());
 
@@ -10659,7 +10658,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		activeStroke->usp.sliderscale = sliderscale;
 	}
 
-	if (activeBrush->Type() == TBT_UNDIFF) {
+	if (activeBrush->Type() == TweakBrush::BrushType::Undiff) {
 		std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
 
 		std::vector<std::vector<Vector3>> positionData;
@@ -10686,7 +10685,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	else
 		activeStroke->beginStroke(tpi);
 
-	if (activeBrush->Type() != TBT_MOVE)
+	if (activeBrush->Type() != TweakBrush::BrushType::Move)
 		activeStroke->updateStroke(tpi);
 
 	return true;
@@ -10703,7 +10702,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 	if (activeStroke) {
 		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
 
-		if (activeBrush->Type() == TBT_MOVE) {
+		if (activeBrush->Type() == TweakBrush::BrushType::Move) {
 			Vector3 pn;
 			float pd;
 			((TB_Move*)activeBrush)->GetWorkingPlane(pn, pd);
@@ -10729,7 +10728,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		tpi.view = v;
 		activeStroke->updateStroke(tpi);
 
-		if (activeBrush->Type() == TBT_WEIGHT) {
+		if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
 			std::string selectedBone = os->GetActiveBone();
 			if (!selectedBone.empty()) {
 				os->ActiveShapesUpdated(undoHistory.GetCurState(), false);
@@ -10754,11 +10753,11 @@ void wxGLPanel::EndBrushStroke() {
 	if (activeStroke) {
 		activeStroke->endStroke();
 
-		int brushType = activeStroke->BrushType();
-		if (brushType != TBT_MASK) {
+		TweakBrush::BrushType brushType = activeStroke->BrushType();
+		if (brushType != TweakBrush::BrushType::Mask) {
 			os->ActiveShapesUpdated(undoHistory.GetCurState());
 
-			if (brushType == TBT_WEIGHT) {
+			if (brushType == TweakBrush::BrushType::Weight) {
 				std::string selectedBone = os->GetActiveBone();
 				if (!selectedBone.empty()) {
 					int boneScalePos = os->boneScale->GetValue();
@@ -10770,7 +10769,7 @@ void wxGLPanel::EndBrushStroke() {
 				}
 			}
 
-			if (!os->bEditSlider && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
+			if (!os->bEditSlider && brushType != TweakBrush::BrushType::Weight && brushType != TweakBrush::BrushType::Color && brushType != TweakBrush::BrushType::Alpha) {
 				for (auto& s : os->project->GetWorkNif()->GetShapes()) {
 					os->UpdateShapeSource(s);
 					os->project->RefreshMorphShape(s);
@@ -11089,7 +11088,7 @@ void wxGLPanel::ClickCollapseVertex() {
 
 	// Push changes onto undo stack and execute.
 	UndoStateProject* usp = GetUndoHistory()->PushState();
-	usp->undoType = UT_MESH;
+	usp->undoType = UndoType::Mesh;
 	usp->usss.push_back(std::move(uss));
 	ApplyUndoState(usp, false);
 
@@ -11147,7 +11146,7 @@ void wxGLPanel::ClickFlipEdge() {
 
 	// Push changes onto undo stack and execute.
 	UndoStateProject* usp = GetUndoHistory()->PushState();
-	usp->undoType = UT_MESH;
+	usp->undoType = UndoType::Mesh;
 	usp->usss.push_back(std::move(uss));
 	ApplyUndoState(usp, false);
 
@@ -11170,7 +11169,7 @@ void wxGLPanel::ClickSplitEdge() {
 	if (!shape)
 		return;
 
-	uint16_t maxVertIndex = std::numeric_limits<uint16_t>().max();
+	constexpr uint16_t maxVertIndex = std::numeric_limits<uint16_t>().max();
 	uint32_t maxTriIndex = std::numeric_limits<uint16_t>().max();
 
 	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
@@ -11210,7 +11209,7 @@ void wxGLPanel::ClickSplitEdge() {
 
 	// Push changes onto undo stack and execute.
 	UndoStateProject* usp = GetUndoHistory()->PushState();
-	usp->undoType = UT_MESH;
+	usp->undoType = UndoType::Mesh;
 	usp->usss.push_back(std::move(uss));
 	ApplyUndoState(usp, false);
 
@@ -11219,21 +11218,21 @@ void wxGLPanel::ClickSplitEdge() {
 
 bool wxGLPanel::RestoreMode(UndoStateProject* usp) {
 	bool modeChanged = false;
-	int undoType = usp->undoType;
-	if (undoType == UT_VERTPOS && os->activeSlider != usp->sliderName) {
+	UndoType undoType = usp->undoType;
+	if (undoType == UndoType::VertexPosition && os->activeSlider != usp->sliderName) {
 		os->EnterSliderEdit(usp->sliderName);
 		modeChanged = true;
 	}
-	if ((undoType != UT_VERTPOS || usp->sliderName.empty()) && os->bEditSlider) {
+	if ((undoType != UndoType::VertexPosition || usp->sliderName.empty()) && os->bEditSlider) {
 		os->ExitSliderEdit();
 		modeChanged = true;
 	}
-	if (undoType == UT_VERTPOS && !usp->sliderName.empty() && usp->sliderscale != os->project->SliderValue(usp->sliderName)) {
+	if (undoType == UndoType::VertexPosition && !usp->sliderName.empty() && usp->sliderscale != os->project->SliderValue(usp->sliderName)) {
 		os->SetSliderValue(usp->sliderName, usp->sliderscale * 100);
 		os->ApplySliders();
 		modeChanged = true;
 	}
-	if (undoType == UT_VERTPOS && usp->sliderName.empty() && !os->project->AllSlidersZero()) {
+	if (undoType == UndoType::VertexPosition && usp->sliderName.empty() && !os->project->AllSlidersZero()) {
 		os->ZeroSliders();
 		modeChanged = true;
 	}
@@ -11241,8 +11240,8 @@ bool wxGLPanel::RestoreMode(UndoStateProject* usp) {
 }
 
 void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) {
-	int undoType = usp->undoType;
-	if (undoType == UT_WEIGHT) {
+	UndoType undoType = usp->undoType;
+	if (undoType == UndoType::Weight) {
 		for (auto& uss : usp->usss) {
 			mesh* m = GetMesh(uss.shapeName);
 			if (!m)
@@ -11268,7 +11267,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 				os->project->ApplyBoneScale(activeBone, boneScalePos, true);
 		}
 	}
-	else if (undoType == UT_MASK) {
+	else if (undoType == UndoType::Mask) {
 		for (auto& uss : usp->usss) {
 			mesh* m = GetMesh(uss.shapeName);
 			if (!m)
@@ -11280,10 +11279,10 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 			m->QueueUpdate(mesh::UpdateType::Mask);
 		}
 
-		if (undoType != UT_MASK)
+		if (undoType != UndoType::Mask)
 			os->ActiveShapesUpdated(usp, bUndo);
 	}
-	else if (undoType == UT_COLOR) {
+	else if (undoType == UndoType::Color) {
 		for (auto& uss : usp->usss) {
 			mesh* m = GetMesh(uss.shapeName);
 			if (!m)
@@ -11295,10 +11294,10 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
 
-		if (undoType != UT_COLOR)
+		if (undoType != UndoType::Color)
 			os->ActiveShapesUpdated(usp, bUndo);
 	}
-	else if (undoType == UT_ALPHA) {
+	else if (undoType == UndoType::Alpha) {
 		for (auto& uss : usp->usss) {
 			mesh* m = GetMesh(uss.shapeName);
 			if (!m)
@@ -11312,7 +11311,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 
 		os->ActiveShapesUpdated(usp, bUndo);
 	}
-	else if (undoType == UT_VERTPOS) {
+	else if (undoType == UndoType::VertexPosition) {
 		for (auto& uss : usp->usss) {
 			mesh* m = GetMesh(uss.shapeName);
 			if (!m)
@@ -11341,7 +11340,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 			}
 		}
 	}
-	else if (undoType == UT_MESH) {
+	else if (undoType == UndoType::Mesh) {
 		for (auto& uss : usp->usss) {
 			NiShape* shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
 			if (!shape)

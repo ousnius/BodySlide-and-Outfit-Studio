@@ -147,7 +147,7 @@ enum OverlayLayer : uint32_t {
 	NodeSelection = 10,
 };
 
-enum RotationCenterMode { Zero, MeshCenter, Picked };
+enum class RotationCenterMode { Zero, MeshCenter, Picked };
 
 class wxGLPanel : public wxGLCanvas {
 public:
@@ -197,8 +197,8 @@ public:
 		if (!brush)
 			return;
 
-		int brushType = brush->Type();
-		if (brushType == TBT_STANDARD || brushType == TBT_MOVE || brushType == TBT_MASK) {
+		TweakBrush::BrushType brushType = brush->Type();
+		if (brushType == TweakBrush::BrushType::Standard || brushType == TweakBrush::BrushType::Move || brushType == TweakBrush::BrushType::Mask) {
 			bool isMirrored = brush->isMirrored();
 			bool isConnected = brush->isConnected();
 
@@ -317,9 +317,9 @@ public:
 			return;
 
 		if (on)
-			m->rendermode = RenderMode::LitWire;
+			m->rendermode = mesh::RenderMode::LitWire;
 		else
-			m->rendermode = RenderMode::Normal;
+			m->rendermode = mesh::RenderMode::Normal;
 	}
 
 	void SetNormalSeamSmoothMode(bool enable) {
@@ -793,7 +793,7 @@ private:
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE},
-												   {wxCMD_LINE_NONE}};
+												   wxCMD_LINE_DESC_END};
 
 std::string GetProjectPath();
 
@@ -821,7 +821,7 @@ public:
 	void InitArchives();
 	void GetArchiveFiles(std::vector<std::string>& outList);
 
-	TargetGame targetGame;
+	TargetGame targetGame = TargetGame::FO3;
 
 private:
 	OutfitStudioFrame* frame = nullptr;
@@ -853,7 +853,7 @@ public:
 	ShapeItemData* activeItem = nullptr;
 	std::string activeSlider;
 	std::string lastActiveSlider;
-	bool bEditSlider;
+	bool bEditSlider = false;
 	std::string contextBone;
 	std::vector<int> triParts;	// the partition index for each triangle, or -1 for none
 	std::vector<int> triSParts; // the segment partition index for each triangle, or -1 for none

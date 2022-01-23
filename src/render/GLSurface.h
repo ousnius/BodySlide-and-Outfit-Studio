@@ -199,7 +199,7 @@ public:
 		std::vector<mesh*> filteredMeshes;
 
 		for (auto& m : meshes)
-			if (m->rendermode == RenderMode::Normal)
+			if (m->rendermode == mesh::RenderMode::Normal)
 				filteredMeshes.push_back(m);
 
 		return filteredMeshes;
@@ -311,7 +311,7 @@ public:
 	void SetActiveMeshes(const std::vector<std::string>& shapeNames);
 	void SetSelectedMesh(const std::string& shapeName);
 
-	RenderMode SetMeshRenderMode(const std::string& name, RenderMode mode);
+	mesh::RenderMode SetMeshRenderMode(const std::string& name, mesh::RenderMode mode);
 
 	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
 	GLMaterial* GetPrimitiveMaterial();

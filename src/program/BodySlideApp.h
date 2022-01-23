@@ -107,7 +107,7 @@ public:
 	virtual void OnFatalException();
 
 	SliderCategoryCollection cCollection;
-	TargetGame targetGame;
+	TargetGame targetGame = TargetGame::FO3;
 	std::map<std::string, std::vector<std::string>, case_insensitive_compare> outFileCount; // Counts how many sets write to the same output file
 
 	bool SetDefaultConfig();
@@ -208,7 +208,7 @@ static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild",
 												   {wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_OPTION, "p", "preset", "preset used for the build, defaults to last used preset", wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build"},
-												   {wxCMD_LINE_NONE}};
+												   wxCMD_LINE_DESC_END};
 
 #define DELAYLOAD_TIMER 299
 #define SLIDER_LO 1
@@ -294,8 +294,7 @@ public:
 
 	void SetSliderPosition(const wxString& name, float newValue, short HiLo);
 
-	int lastScroll;
-	int rowCount;
+	int lastScroll = 0;
 
 private:
 	void OnExit(wxCommandEvent& event);

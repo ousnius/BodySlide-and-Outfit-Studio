@@ -30,7 +30,7 @@ OSDataFile::~OSDataFile() {}
 
 #pragma pack(push, 1)
 struct DiffStruct {
-	uint16_t index;
+	uint16_t index = 0;
 	Vector3 diff;
 };
 #pragma pack(pop)

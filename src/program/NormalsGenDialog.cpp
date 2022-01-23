@@ -127,7 +127,7 @@ void NormalsGenDialog::doMoveUpLayer(wxCommandEvent& WXUNUSED(event)) {
 		if (p == s) {
 			me = p;
 		}
-		else if (!me && p->GetName() != "Background") {
+		else if (!me && p && p->GetName() != "Background") {
 			prev = p;
 		}
 	}

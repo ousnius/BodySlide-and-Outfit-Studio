@@ -3122,7 +3122,7 @@ void OutfitProject::CheckMerge(const std::string& sourceName, const std::string&
 	if (!target)
 		return;
 
-	size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
+	constexpr size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
 	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
 	if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76())
 		maxTriIndex = std::numeric_limits<uint32_t>().max();

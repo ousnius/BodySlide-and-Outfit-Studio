@@ -26,13 +26,13 @@ void TweakStroke::beginStroke(TweakPickInfo& pickInfo) {
 	refBrush->strokeInit(refMeshes, pickInfo, usp);
 }
 
-void TweakStroke::beginStroke(TweakPickInfo& pickInfo, const std::vector<std::vector<Vector3>>& positionData) {
+void TweakStroke::beginStroke(TweakPickInfo& pickInfo, std::vector<std::vector<Vector3>>& positionData) {
 	beginStroke(pickInfo);
 	refBrush->strokeInit(refMeshes, pickInfo, usp, positionData);
 }
 
 void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
-	int brushType = refBrush->Type();
+	TweakBrush::BrushType brushType = refBrush->Type();
 
 	TweakPickInfo mirrorPick = pickInfo;
 	mirrorPick.origin.x *= -1.0f;
@@ -57,7 +57,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	const int nMesh = refMeshes.size();
 	// Move/transform handles most operations differently than other brushes.
 	// Mirroring is done internally, most of the pick info values are ignored.
-	if (brushType == TBT_MOVE || brushType == TBT_XFORM) {
+	if (brushType == TweakBrush::BrushType::Move || brushType == TweakBrush::BrushType::Transform) {
 		Vector3 originSave = pickInfo.origin;
 		Vector3 centerSave = pickInfo.center;
 		for (int mi = 0; mi < nMesh; ++mi) {
@@ -66,7 +66,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			int nPts1 = 0;
 
 			// Get rid of model space from collision again
-			if (brushType == TBT_MOVE)
+			if (brushType == TweakBrush::BrushType::Move)
 				pickInfo.origin = mesh::ApplyMatrix4(glm::inverse(m->matModel), originSave);
 
 			if (!refBrush->queryPoints(m, pickInfo, mirrorPick, nullptr, nPts1, affectedNodes[m]))
@@ -125,7 +125,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 void TweakStroke::endStroke() {
 	const int nMesh = refMeshes.size();
-	if (refBrush->Type() == TBT_MOVE) {
+	if (refBrush->Type() == TweakBrush::BrushType::Move) {
 		for (int mi = 0; mi < nMesh; ++mi) {
 			mesh* m = refMeshes[mi];
 			TweakBrushMeshCache* meshCache = refBrush->getCache(m);
@@ -135,11 +135,11 @@ void TweakStroke::endStroke() {
 			meshCache->cachedNodesM.clear();
 		}
 	}
-	else if (refBrush->Type() == TBT_XFORM)
+	else if (refBrush->Type() == TweakBrush::BrushType::Transform)
 		for (int mi = 0; mi < nMesh; ++mi)
 			refMeshes[mi]->CreateBVH();
 
-	if (!refBrush->LiveBVH() && refBrush->Type() != TBT_WEIGHT)
+	if (!refBrush->LiveBVH() && refBrush->Type() != TweakBrush::BrushType::Weight)
 		for (int mi = 0; mi < nMesh; ++mi) {
 			mesh* m = refMeshes[mi];
 			for (auto& bvhNode : affectedNodes[m])
@@ -171,7 +171,7 @@ TweakBrush::TweakBrush()
 	, inset(0.00f)
 	, strength(0.0015f)
 	, spacing(0.015f) {
-	brushType = TBT_STANDARD;
+	brushType = TweakBrush::BrushType::Standard;
 	brushName = "Standard Brush";
 	bMirror = true;
 	bLiveBVH = true;
@@ -325,7 +325,7 @@ void TweakBrush::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* 
 
 TB_Mask::TB_Mask()
 	: TweakBrush() {
-	brushType = TBT_MASK;
+	brushType = TweakBrush::BrushType::Mask;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Mask Brush";
@@ -374,7 +374,7 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* poi
 
 TB_Unmask::TB_Unmask()
 	: TweakBrush() {
-	brushType = TBT_MASK;
+	brushType = TweakBrush::BrushType::Mask;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Unmask Brush";
@@ -423,7 +423,7 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 
 TB_SmoothMask::TB_SmoothMask()
 	: TweakBrush() {
-	brushType = TBT_MASK;
+	brushType = TweakBrush::BrushType::Mask;
 	strength = 0.015f;
 	method = 1;
 	hcAlpha = 0.2f;
@@ -684,12 +684,12 @@ TB_Undiff::TB_Undiff()
 	: TweakBrush() {
 	strength = 0.01f;
 	brushName = "Undiff Brush";
-	brushType = TBT_UNDIFF;
+	brushType = TweakBrush::BrushType::Undiff;
 }
 
 TB_Undiff::~TB_Undiff() {}
 
-void TB_Undiff::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo&, UndoStateProject&, const std::vector<std::vector<Vector3>>& positionData) {
+void TB_Undiff::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<Vector3>>& positionData) {
 	cache.clear();
 
 	const int nMesh = refMeshes.size();
@@ -741,7 +741,7 @@ void TB_Undiff::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points,
 
 TB_Move::TB_Move()
 	: TweakBrush() {
-	brushType = TBT_MOVE;
+	brushType = TweakBrush::BrushType::Move;
 	brushName = "Move Brush";
 	bLiveBVH = false;
 	focus = 2.0f;
@@ -877,7 +877,7 @@ void TB_Move::GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist) {
 }
 
 TB_XForm::TB_XForm() {
-	brushType = TBT_XFORM;
+	brushType = TweakBrush::BrushType::Transform;
 	brushName = "Transform Brush";
 	bLiveBVH = false;
 	focus = 1.0f;
@@ -1012,7 +1012,7 @@ static inline void ClampWeight(float& w) {
 
 TB_Weight::TB_Weight()
 	: TweakBrush() {
-	brushType = TBT_WEIGHT;
+	brushType = TweakBrush::BrushType::Weight;
 	strength = 0.0015f;
 	bMirror = false;
 	bLiveBVH = false;
@@ -1079,7 +1079,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 
 TB_Unweight::TB_Unweight()
 	: TweakBrush() {
-	brushType = TBT_WEIGHT;
+	brushType = TweakBrush::BrushType::Weight;
 	strength = -0.0015f;
 	bMirror = false;
 	bLiveBVH = false;
@@ -1141,7 +1141,7 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 
 TB_SmoothWeight::TB_SmoothWeight()
 	: TweakBrush() {
-	brushType = TBT_WEIGHT;
+	brushType = TweakBrush::BrushType::Weight;
 	strength = 0.015f;
 	method = 1;
 	hcAlpha = 0.2f;
@@ -1320,7 +1320,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 
 TB_Color::TB_Color()
 	: TweakBrush() {
-	brushType = TBT_COLOR;
+	brushType = TweakBrush::BrushType::Color;
 	strength = 0.003f;
 	bMirror = false;
 	bLiveBVH = false;
@@ -1375,7 +1375,7 @@ void TB_Color::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 
 TB_Uncolor::TB_Uncolor()
 	: TweakBrush() {
-	brushType = TBT_COLOR;
+	brushType = TweakBrush::BrushType::Color;
 	strength = -0.003f;
 	bMirror = false;
 	bLiveBVH = false;
@@ -1430,7 +1430,7 @@ void TB_Uncolor::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* 
 
 TB_Alpha::TB_Alpha()
 	: TweakBrush() {
-	brushType = TBT_ALPHA;
+	brushType = TweakBrush::BrushType::Alpha;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
@@ -1480,7 +1480,7 @@ void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 
 TB_Unalpha::TB_Unalpha()
 	: TweakBrush() {
-	brushType = TBT_ALPHA;
+	brushType = TweakBrush::BrushType::Alpha;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
