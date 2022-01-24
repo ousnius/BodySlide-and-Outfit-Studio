@@ -11182,6 +11182,7 @@ void wxGLPanel::ClickCollapseVertex() {
 	ApplyUndoState(usp, false);
 
 	os->UpdateUndoTools();
+	os->SetPendingChanges();
 }
 
 bool wxGLPanel::StartPickEdge() {
@@ -11240,6 +11241,7 @@ void wxGLPanel::ClickFlipEdge() {
 	ApplyUndoState(usp, false);
 
 	os->UpdateUndoTools();
+	os->SetPendingChanges();
 }
 
 void wxGLPanel::ClickSplitEdge() {
@@ -11293,6 +11295,7 @@ void wxGLPanel::ClickSplitEdge() {
 	ApplyUndoState(usp, false);
 
 	os->UpdateUndoTools();
+	os->SetPendingChanges();
 }
 
 bool wxGLPanel::RestoreMode(UndoStateProject* usp) {

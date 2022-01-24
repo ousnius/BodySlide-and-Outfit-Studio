@@ -2896,7 +2896,7 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 		auto wvit = weldVerts.find(vi);
 		if (wvit != weldVerts.end())
 			for (int wvi : wvit->second)
-				normal += nsums[vi];
+				normal += nsums[wvi];
 		normal.Normalize();
 		normals[vi] = normal;
 	}
