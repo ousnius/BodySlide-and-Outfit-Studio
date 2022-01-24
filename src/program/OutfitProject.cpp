@@ -2988,13 +2988,13 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 
 		// Create entry for new vertex and (if welded) new welded vertex
 		uss.addVerts.emplace_back();
-		UndoStateVertex& usv = uss.addVerts.back();
-		usv.index = newvi++;
+		uss.addVerts.back().index = newvi++;
 		if (welded) {
 			uss.addVerts.emplace_back();
 			uss.addVerts.back().index = newvi++;
 		}
-		UndoStateVertex &rusv = uss.addVerts.back();
+		UndoStateVertex& usv = uss.addVerts[uss.addVerts.size() - (welded ? 2 : 1)];
+		UndoStateVertex& rusv = uss.addVerts.back();
 
 		/* Now comes the hard part: determining a good location for the
 		new vertex.  Clearly it should lie somewhere on the plane bisecting
