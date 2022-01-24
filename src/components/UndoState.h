@@ -59,14 +59,16 @@ inline bool operator<(const UndoStateTriangle& t1, const UndoStateTriangle& t2) 
 struct UndoStateShape {
 	std::string shapeName;
 	// pointStartState and pointEndState are only meaningful for
-	// UT_VERTPOS, UT_MASK, UT_COLOR, and UT_ALPHA.
-	// For UT_MASK and UT_ALPHA, only the x coordinate is meaningful.
+	// UndoType::VertexPosition, UndoType::Mask, UndoType::Color,
+	// and UndoType::Alpha.
+	// For UndoType::Mask and UndoType::Alpha, only the x coordinate
+	// is meaningful.
 	std::unordered_map<int, nifly::Vector3> pointStartState;
 	std::unordered_map<int, nifly::Vector3> pointEndState;
-	// boneWeights is only meaningful for UT_WEIGHT.
+	// boneWeights is only meaningful for UndoType::Weight.
 	std::vector<UndoStateBoneWeights> boneWeights;
 	// delVerts, addVerts, delTris, and addTris are only meaningful for
-	// UT_MESH.  They are stored in sorted order by index.
+	// UndoType::Mesh.  They are stored in sorted order by index.
 	std::vector<UndoStateVertex> delVerts, addVerts;
 	std::vector<UndoStateTriangle> delTris, addTris;
 };
@@ -74,8 +76,8 @@ struct UndoStateShape {
 struct UndoStateProject {
 	UndoType undoType = UndoType::VertexPosition;
 	std::vector<UndoStateShape> usss;
-	// if undoType is UT_VERTPOS and sliderName is not empty, this is
-	// a slider shape edit rather than a base shape edit.
+	// if undoType is UndoType::VertexPosition and sliderName is not empty,
+	// this is a slider shape edit rather than a base shape edit.
 	std::string sliderName;
 	// sliderscale is only set if this is a slider shape edit.  Non-zero.
 	float sliderscale;
