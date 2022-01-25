@@ -1828,6 +1828,10 @@
 				<label>Duplicate...</label>
 				<help>Duplicate the current shape.</help>
 			</object>
+			<object class="wxMenuItem" name="refineMesh">
+				<label>Refine Mesh</label>
+				<help>Splits all edges between unmasked vertices</help>
+			</object>
 			<object class="wxMenuItem" name="renameShape">
 				<label>Rename...\tF2</label>
 				<help>Change the name of the current shape.</help>
@@ -2266,6 +2270,10 @@
 		<object class="wxMenuItem" name="copyShape">
 			<label>Duplicate...</label>
 			<help>Duplicate the current shape.</help>
+		</object>
+		<object class="wxMenuItem" name="refineMesh">
+			<label>Refine Mesh</label>
+			<help>Splits all edges between unmasked vertices</help>
 		</object>
 		<object class="wxMenuItem" name="renameShape">
 			<label>Rename...\tF2</label>

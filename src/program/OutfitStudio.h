@@ -1319,6 +1319,7 @@ private:
 	void OnCopyGeo(wxCommandEvent& event);
 	void OnDupeShape(wxCommandEvent& event);
 	void OnDeleteShape(wxCommandEvent& event);
+	void OnRefineMesh(wxCommandEvent& event);
 	void OnAddBone(wxCommandEvent& event);
 	void OnAddCustomBone(wxCommandEvent& event);
 	void OnDeleteBone(wxCommandEvent& event);
