@@ -7260,6 +7260,9 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		if (!shape)
 			continue;
 
+		if (options.selectedShapeNames.find(shape->name.get()) == options.selectedShapeNames.end())
+			continue;
+
 		addedMorphs += morph.first + "\n";
 		for (auto& morphData : morph.second) {
 			if (options.selectedSliderNames.find(morphData->name) == options.selectedSliderNames.end())
