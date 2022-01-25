@@ -32,10 +32,6 @@ void SliderSet::DeleteSlider(const std::string& setName) {
 	}
 }
 
-void SliderSet::DeleteShapeAttribute(const std::string& shapeName) {
-	shapeAttributes.erase(shapeName);
-}
-
 size_t SliderSet::CreateSlider(const std::string& setName) {
 	sliders.emplace_back(setName);
 	return sliders.size() - 1;
