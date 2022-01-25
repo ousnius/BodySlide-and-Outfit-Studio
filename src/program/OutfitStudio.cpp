@@ -7134,6 +7134,13 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 
 	sliderScroll->Freeze();
 	if (!options.mergeSliders) {
+		wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
+		if (dlg.ShowModal() != wxID_OK) {
+			sliderScroll->Thaw();
+			return;
+		}
+
 		// Deleting sliders
 		std::vector<std::string> erase;
 		for (auto& sliderPanel : sliderPanels) {
@@ -7230,6 +7237,13 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 	sliderScroll->Freeze();
 	if (!options.mergeSliders) {
+		wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
+		if (dlg.ShowModal() != wxID_OK) {
+			sliderScroll->Thaw();
+			return;
+		}
+
 		// Deleting sliders
 		std::vector<std::string> erase;
 		for (auto& sliderPanel : sliderPanels) {
