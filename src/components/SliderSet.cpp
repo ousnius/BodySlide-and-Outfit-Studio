@@ -263,12 +263,10 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 
 	for (auto& s : mergeSet.shapeAttributes) {
 		// Copy new shapes to the set
-		if (shapeAttributes.find(s.first) == shapeAttributes.end()) {
-			if (newDataLocal)
-				s.second.dataFolder.clear();
+		if (newDataLocal)
+			s.second.dataFolder.clear();
 
-			shapeAttributes[s.first] = s.second;
-		}
+		shapeAttributes[s.first] = s.second;
 	}
 
 	// Load from cached data locations at once
