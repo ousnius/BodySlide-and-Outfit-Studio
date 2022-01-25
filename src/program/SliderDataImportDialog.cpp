@@ -23,8 +23,10 @@ SliderDataImportDialog::SliderDataImportDialog(wxWindow* parent, OutfitProject* 
 	xrc->LoadDialog(this, parent, "dlgSliderDataImport");
 	ConfigDialogUtil::LoadDialogCheckBox(outfitStudioConfig, *this, "chkImportMergeSliders");
 
-	checkListBox = XRCCTRL(*this, "sliderImportList", wxCheckListBox);
-	checkListBox->Bind(wxEVT_RIGHT_UP, &SliderDataImportDialog::OnSliderListContext, this);
+	shapesCheckListBox = XRCCTRL(*this, "sliderShapesImportList", wxCheckListBox);
+
+	slidersCheckListBox = XRCCTRL(*this, "sliderImportList", wxCheckListBox);
+	slidersCheckListBox->Bind(wxEVT_RIGHT_UP, &SliderDataImportDialog::OnSliderListContext, this);
 
 	SetDoubleBuffered(true);
 	CenterOnParent();
@@ -34,12 +36,27 @@ SliderDataImportDialog::~SliderDataImportDialog() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/SliderDataImport.xrc");
 }
 
-int SliderDataImportDialog::ShowModal(const std::vector<std::string>& sliderNames) {
-	for (auto& sliderName : sliderNames)
-		checkListBox->Append(sliderName);
+int SliderDataImportDialog::ShowModal(const std::unordered_map<std::string, std::vector<std::string>>& sliderData) {
 
-	for (uint32_t i = 0; i < sliderNames.size(); i++)
-		checkListBox->Check(i);
+	std::unordered_set<std::string> addedSliders;
+	for (auto& shapeSliders : sliderData) {
+		shapesCheckListBox->Append(shapeSliders.first);
+
+		for (auto& sliderName : shapeSliders.second) {
+			if (addedSliders.find(sliderName) != addedSliders.end())
+				continue;
+
+			slidersCheckListBox->Append(sliderName);
+			addedSliders.emplace(sliderName);
+		}
+			
+	}
+
+	for (uint32_t i = 0; i < shapesCheckListBox->GetCount(); i++)
+		shapesCheckListBox->Check(i);
+
+	for (uint32_t i = 0; i < slidersCheckListBox->GetCount(); i++)
+		slidersCheckListBox->Check(i);
 
 	return wxDialog::ShowModal();
 }
@@ -49,9 +66,15 @@ void SliderDataImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 	options.mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(outfitStudioConfig, *this, "chkImportMergeSliders");
 
 	wxArrayInt checked;
-	checkListBox->GetCheckedItems(checked);
+	shapesCheckListBox->GetCheckedItems(checked);
 	for (const auto& i : checked) {
-		auto key = checkListBox->GetString(i).ToStdString();
+		auto key = shapesCheckListBox->GetString(i).ToStdString();
+		options.selectedShapeNames.emplace(key);
+	}
+
+	slidersCheckListBox->GetCheckedItems(checked);
+	for (const auto& i : checked) {
+		auto key = slidersCheckListBox->GetString(i).ToStdString();
 		options.selectedSliderNames.emplace(key);
 	}
 
@@ -69,15 +92,15 @@ void SliderDataImportDialog::OnSliderListContext(wxMouseEvent& WXUNUSED(event)) 
 
 void SliderDataImportDialog::OnSliderListContextSelect(wxCommandEvent& event) {
 	if (event.GetId() == XRCID("sliderDataContextNone")) {
-		for (uint32_t i = 0; i < checkListBox->GetCount(); i++)
-			checkListBox->Check(i, false);
+		for (uint32_t i = 0; i < slidersCheckListBox->GetCount(); i++)
+			slidersCheckListBox->Check(i, false);
 	}
 	else if (event.GetId() == XRCID("sliderDataContextAll")) {
-		for (uint32_t i = 0; i < checkListBox->GetCount(); i++)
-			checkListBox->Check(i);
+		for (uint32_t i = 0; i < slidersCheckListBox->GetCount(); i++)
+			slidersCheckListBox->Check(i);
 	}
 	else if (event.GetId() == XRCID("sliderDataContextInvert")) {
-		for (uint32_t i = 0; i < checkListBox->GetCount(); i++)
-			checkListBox->Check(i, !checkListBox->IsChecked(i));
+		for (uint32_t i = 0; i < slidersCheckListBox->GetCount(); i++)
+			slidersCheckListBox->Check(i, !slidersCheckListBox->IsChecked(i));
 	}
 }

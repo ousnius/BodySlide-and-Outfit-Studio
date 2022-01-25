@@ -7095,6 +7095,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	std::unordered_map<std::string, std::vector<std::tuple<std::string, nifly::NiShape*>>> newNameToDiffNameAndShape;
+	std::unordered_map<std::string, std::vector<std::string>> shapeToSliders;
 	auto diffs = osd.GetDataDiffs();
 	auto shapes = project->GetWorkNif()->GetShapes();
 	for (auto& diff : diffs) {
@@ -7113,13 +7114,12 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		if (!bestShape)
 			continue;
 		auto newName = diff.first.substr(bestShapeName.length(), diff.first.length() - bestShapeName.length() + 1);
+		shapeToSliders[bestShapeName].push_back(newName);
 		newNameToDiffNameAndShape[newName].push_back(std::make_tuple(diff.first, bestShape));
 	}
 
-	std::vector<std::string> sliderNames(newNameToDiffNameAndShape.size());
-	std::transform(newNameToDiffNameAndShape.begin(), newNameToDiffNameAndShape.end(), sliderNames.begin(), [](auto pair) { return pair.first; });
 	SliderDataImportDialog import(this, project, OutfitStudioConfig);
-	if (import.ShowModal(sliderNames) != wxID_OK)
+	if (import.ShowModal(shapeToSliders) != wxID_OK)
 		return;
 
 	const auto& options = import.GetOptions();
@@ -7157,6 +7157,8 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 			auto& originalSliderName = std::get<0>(nameAndShape);
 			auto& diff = diffs[originalSliderName];
 			auto& shape = std::get<1>(nameAndShape);
+			if (options.selectedShapeNames.find(shape->name.get()) == options.selectedShapeNames.end())
+				continue;
 
 			if (!project->ValidSlider(sliderName)) {
 				createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
@@ -7203,18 +7205,17 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::unordered_set<std::string> uniqueSliderNames;
+	std::unordered_map<std::string, std::vector<std::string>> shapeToSliders;
 	auto morphs = tri.GetMorphs();
 	for(auto& morph : morphs) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
 		if (!shape)
 			continue;
 		for (auto& morphData : morph.second)
-			uniqueSliderNames.emplace(morphData->name);
+			shapeToSliders[shape->name.get()].push_back(morphData->name);
 	}
-	std::vector<std::string> sliderNames(uniqueSliderNames.begin(), uniqueSliderNames.end());
 	SliderDataImportDialog import(this, project, OutfitStudioConfig);
-	if (import.ShowModal(sliderNames) != wxID_OK)
+	if (import.ShowModal(shapeToSliders) != wxID_OK)
 		return;
 
 	const auto& options = import.GetOptions();

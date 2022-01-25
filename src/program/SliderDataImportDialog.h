@@ -19,6 +19,7 @@ public:
 	SliderDataImportOptions()
 		: mergeSliders(false) {}
 
+	std::unordered_set<std::string> selectedShapeNames;
 	std::unordered_set<std::string> selectedSliderNames;
 	bool mergeSliders;
 };
@@ -28,7 +29,7 @@ public:
 	SliderDataImportDialog(wxWindow* parent, OutfitProject* project, ConfigurationManager& outfitStudioConfig);
 	~SliderDataImportDialog();
 
-	int ShowModal(const std::vector<std::string>& sliderNames);
+	int ShowModal(const std::unordered_map<std::string, std::vector<std::string>>& sliderData);
 	void OnImport(wxCommandEvent& event);
 
 	SliderDataImportOptions GetOptions() { return options; }
@@ -38,7 +39,8 @@ private:
 	void OnSliderListContext(wxMouseEvent& WXUNUSED(event));
 	void OnSliderListContextSelect(wxCommandEvent& event);
 
-	wxCheckListBox* checkListBox;
+	wxCheckListBox* shapesCheckListBox;
+	wxCheckListBox* slidersCheckListBox;
 	OutfitProject* project;
 	ConfigurationManager& outfitStudioConfig;
 	SliderDataImportOptions options;

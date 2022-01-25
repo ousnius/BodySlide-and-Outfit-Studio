@@ -17,7 +17,38 @@
 						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="lbDescription">
+						<object class="wxStaticText">
+							<label>Select the shapes that slider data will be imported for:</label>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</flag>
+				<border>5</border>
+				<minsize>300,80</minsize>
+				<object class="wxCheckListBox" name="sliderShapesImportList">
+					<style>wxLB_HSCROLL|wxLB_NEEDED_SB|wxLB_EXTENDED|wxLB_SORT</style>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText">
 							<label>Select the sliders to be imported</label>
 						</object>
 					</object>
@@ -30,10 +61,10 @@
 				</object>
 			</object>
 			<object class="sizeritem">
-				<option>1</option>
+				<option>0</option>
 				<flag>wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</flag>
 				<border>5</border>
-				<minsize>300,300</minsize>
+				<minsize>300,200</minsize>
 				<object class="wxCheckListBox" name="sliderImportList">
 					<style>wxLB_HSCROLL|wxLB_NEEDED_SB|wxLB_EXTENDED|wxLB_SORT</style>
 				</object>
