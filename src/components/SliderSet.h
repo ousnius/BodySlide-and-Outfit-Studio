@@ -69,7 +69,6 @@ public:
 	void WriteSliderSet(XMLElement* sliderSetElement);
 
 	void DeleteSlider(const std::string& setName);
-	void DeleteShapeAttribute(const std::string& shapeName);
 
 	std::string GetName() { return name; }
 

@@ -237,7 +237,7 @@ public:
 
 	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape& uss, const nifly::Edge& edge);
-	bool PrepareSplitEdge(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& p1s, const std::vector<uint16_t>& p2s);
+	bool PrepareRefineMesh(nifly::NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const std::unordered_map<int, std::vector<int>>& weldVerts);
 
 	void CheckMerge(const std::string& sourceName, const std::string& targetName, MergeCheckErrors& e);
 	void PrepareCopyGeo(nifly::NiShape* source, nifly::NiShape* target, UndoStateShape& uss);

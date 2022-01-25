@@ -210,6 +210,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("separateVerts"), OutfitStudioFrame::OnSeparateVerts)
 	EVT_MENU(XRCID("copyGeo"), OutfitStudioFrame::OnCopyGeo)
 	EVT_MENU(XRCID("copyShape"), OutfitStudioFrame::OnDupeShape)
+	EVT_MENU(XRCID("refineMesh"), OutfitStudioFrame::OnRefineMesh)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudioFrame::OnDeleteShape)
 	EVT_MENU(XRCID("addBone"), OutfitStudioFrame::OnAddBone)
 	EVT_MENU(XRCID("addCustomBone"), OutfitStudioFrame::OnAddCustomBone)
@@ -6320,6 +6321,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnClearMask"), true);
 		menuBar->Enable(XRCID("btnInvertMask"), true);
 		menuBar->Enable(XRCID("deleteVerts"), true);
+		menuBar->Enable(XRCID("refineMesh"), true);
 
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
 		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
@@ -6350,6 +6352,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnClearMask"), true);
 		menuBar->Enable(XRCID("btnInvertMask"), true);
 		menuBar->Enable(XRCID("deleteVerts"), true);
+		menuBar->Enable(XRCID("refineMesh"), true);
 
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
 		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
@@ -6409,6 +6412,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), true);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), true);
 		menuBar->Enable(XRCID("deleteVerts"), true);
+		menuBar->Enable(XRCID("refineMesh"), true);
 
 		toolBarH->ToggleTool(XRCID("btnInflateBrush"), true);
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), false);
@@ -6509,6 +6513,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
 		menuBar->Enable(XRCID("deleteVerts"), false);
+		menuBar->Enable(XRCID("refineMesh"), false);
 
 		toolBarH->ToggleTool(XRCID("btnWeightBrush"), true);
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), true);
@@ -6572,6 +6577,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
 		menuBar->Enable(XRCID("deleteVerts"), false);
+		menuBar->Enable(XRCID("refineMesh"), false);
 
 		toolBarH->ToggleTool(XRCID("btnColorBrush"), true);
 		toolBarH->EnableTool(XRCID("btnColorBrush"), true);
@@ -6651,6 +6657,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
 		menuBar->Enable(XRCID("deleteVerts"), false);
+		menuBar->Enable(XRCID("refineMesh"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
@@ -6720,6 +6727,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
 		menuBar->Enable(XRCID("deleteVerts"), false);
+		menuBar->Enable(XRCID("refineMesh"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
 		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
@@ -8838,6 +8846,87 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 			SetPendingChanges();
 		}
 	}
+}
+
+void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	if (bEditSlider) {
+		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
+		return;
+	}
+
+	if (selectedItems.size() != 1) {
+		wxMessageBox(_("There is more than one shape selected."), _("Error"));
+		return;
+	}
+
+	// Determine unmasked vertices
+	NiShape* shape = selectedItems[0]->GetShape();
+	size_t nverts = shape->GetNumVertices();
+	std::unordered_map<uint16_t, float> mask;
+	glView->GetShapeUnmasked(mask, shape->name.get());
+	std::vector<bool> pincs(nverts, false);
+	for (auto& m : mask)
+		pincs[m.first] = true;
+
+	// Count unmasked edges
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	size_t nedges = 0;
+	for (Triangle& tri : tris) {
+		int ntripts = pincs[tri.p1] + pincs[tri.p2] + pincs[tri.p3];
+		if (ntripts == 3)
+			nedges += 3;
+		else if (ntripts == 2)
+			nedges += 1;
+	}
+
+	// Determine maximum possible vertices and triangles for this Nif type
+	auto workNif = project->GetWorkNif();
+	if (!workNif)
+		return;
+
+	constexpr size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
+	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
+
+	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
+		maxTriIndex = std::numeric_limits<uint32_t>().max();
+
+	// Check if we'll overflow the vertex or triangle arrays.
+	// Note that the actual number of vertices added could be as low as
+	// nedges/2; nedges is the upper bound (if every edge is welded or
+	// boundary).
+	if (nverts + nedges > maxVertIndex) {
+		wxMessageBox(_("The shape has reached the vertex count limit."), _("Error"), wxICON_ERROR);
+		return;
+	}
+
+	if (shape->GetNumTriangles() + nedges > maxTriIndex) {
+		wxMessageBox(_("The shape has reached the triangle count limit."), _("Error"), wxICON_ERROR);
+		return;
+	}
+
+	// Prepare list of changes
+	UndoStateShape uss;
+	uss.shapeName = shape->name.get();
+	mesh* m = glView->GetMesh(shape->name.get());
+	if (!project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts)) {
+		wxMessageBox(_("An edge has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"), wxICON_ERROR);
+		return;
+	}
+
+	// Push changes onto undo stack and execute.
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mesh;
+	usp->usss.push_back(std::move(uss));
+	glView->ApplyUndoState(usp, false);
+
+	UpdateUndoTools();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
@@ -11138,6 +11227,7 @@ void wxGLPanel::ClickCollapseVertex() {
 	ApplyUndoState(usp, false);
 
 	os->UpdateUndoTools();
+	os->SetPendingChanges();
 }
 
 bool wxGLPanel::StartPickEdge() {
@@ -11196,6 +11286,7 @@ void wxGLPanel::ClickFlipEdge() {
 	ApplyUndoState(usp, false);
 
 	os->UpdateUndoTools();
+	os->SetPendingChanges();
 }
 
 void wxGLPanel::ClickSplitEdge() {
@@ -11230,24 +11321,14 @@ void wxGLPanel::ClickSplitEdge() {
 		return;
 	}
 
-	// Collect welded vertices
-	uint16_t p1 = mouseDownEdge.p1;
-	uint16_t p2 = mouseDownEdge.p2;
-	std::vector<uint16_t> p1s(1, p1);
-	std::vector<uint16_t> p2s(1, p2);
-
-	auto wvit = m->weldVerts.find(p1);
-	if (wvit != m->weldVerts.end())
-		std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(p1s));
-
-	wvit = m->weldVerts.find(p2);
-	if (wvit != m->weldVerts.end())
-		std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(p2s));
+	std::vector<bool> pincs(shape->GetNumVertices(), false);
+	pincs[mouseDownEdge.p1] = true;
+	pincs[mouseDownEdge.p2] = true;
 
 	// Prepare list of changes
 	UndoStateShape uss;
 	uss.shapeName = mouseDownMeshName;
-	if (!os->project->PrepareSplitEdge(shape, uss, p1s, p2s)) {
+	if (!os->project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts)) {
 		wxMessageBox(_("The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"), wxICON_ERROR, os);
 		return;
 	}
@@ -11259,6 +11340,7 @@ void wxGLPanel::ClickSplitEdge() {
 	ApplyUndoState(usp, false);
 
 	os->UpdateUndoTools();
+	os->SetPendingChanges();
 }
 
 bool wxGLPanel::RestoreMode(UndoStateProject* usp) {
