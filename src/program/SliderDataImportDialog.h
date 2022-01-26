@@ -10,7 +10,6 @@ See the included LICENSE file
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
 
-
 class OutfitProject;
 class ConfigurationManager;
 
@@ -21,14 +20,6 @@ public:
 	std::string shapeName;
 	std::string targetShape;
 	std::unordered_map<std::string, std::string> sliderNames;
-};
-
-class SliderNameData : public wxClientData {
-public:
-	SliderNameData(const std::string& displayName, const std::string& originalName)
-		: displayName(displayName), originalName(originalName){}
-	std::string displayName;
-	std::string originalName;
 };
 
 class SliderDataImportOptions {
@@ -53,6 +44,7 @@ public:
 	wxDECLARE_EVENT_TABLE();
 
 private:
+	void OnShapeSelectionChanged(wxCommandEvent& WXUNUSED(event));
 	void OnSliderListContext(wxMouseEvent& WXUNUSED(event));
 	void OnSliderListContextSelect(wxCommandEvent& event);
 

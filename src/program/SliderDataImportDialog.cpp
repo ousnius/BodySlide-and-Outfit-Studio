@@ -24,6 +24,8 @@ SliderDataImportDialog::SliderDataImportDialog(wxWindow* parent, OutfitProject* 
 	ConfigDialogUtil::LoadDialogCheckBox(outfitStudioConfig, *this, "chkImportMergeSliders");
 
 	shapesCheckListBox = XRCCTRL(*this, "sliderShapesImportList", wxCheckListBox);
+	shapesCheckListBox->Bind(wxEVT_CHECKLISTBOX, &SliderDataImportDialog::OnShapeSelectionChanged, this);
+
 	slidersCheckListBox = XRCCTRL(*this, "sliderImportList", wxCheckListBox);
 	slidersCheckListBox->Bind(wxEVT_RIGHT_UP, &SliderDataImportDialog::OnSliderListContext, this);
 
@@ -46,7 +48,7 @@ int SliderDataImportDialog::ShowModal(const std::unordered_map<std::string, std:
 			if (addedSliders.find(sliderName.first) != addedSliders.end())
 				continue;
 
-			slidersCheckListBox->Append(sliderName.first, new SliderNameData(sliderName.first, sliderName.second));
+			slidersCheckListBox->Append(sliderName.first);
 			addedSliders.emplace(sliderName.first);
 		}
 	}
@@ -60,6 +62,27 @@ int SliderDataImportDialog::ShowModal(const std::unordered_map<std::string, std:
 	return wxDialog::ShowModal();
 }
 
+void SliderDataImportDialog::OnShapeSelectionChanged(wxCommandEvent& WXUNUSED(event)) {
+	slidersCheckListBox->Clear();
+	std::unordered_set<std::string> addedSliders;
+
+	wxArrayInt checked;
+	shapesCheckListBox->GetCheckedItems(checked);
+	for (const auto& i : checked) {
+		const auto data = dynamic_cast<ShapeSliderData*>(shapesCheckListBox->GetClientObject(i));
+		for (auto& sliderName : data->sliderNames) {
+			if (addedSliders.find(sliderName.first) != addedSliders.end())
+				continue;
+
+			slidersCheckListBox->Append(sliderName.first);
+			addedSliders.emplace(sliderName.first);
+		}
+	}
+
+	for (uint32_t i = 0; i < slidersCheckListBox->GetCount(); i++)
+		slidersCheckListBox->Check(i);
+}
+
 void SliderDataImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 
 	options.mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(outfitStudioConfig, *this, "chkImportMergeSliders");
@@ -68,8 +91,8 @@ void SliderDataImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 	slidersCheckListBox->GetCheckedItems(checked);
 	std::unordered_set<std::string> selectedSliders;
 	for (const auto& i : checked) {
-		const auto data = dynamic_cast<SliderNameData*>(slidersCheckListBox->GetClientObject(i));
-		selectedSliders.emplace(data->displayName);
+		const auto sliderDisplayName = slidersCheckListBox->GetString(i);
+		selectedSliders.emplace(sliderDisplayName);
 	}
 
 	shapesCheckListBox->GetCheckedItems(checked);
