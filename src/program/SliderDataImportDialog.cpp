@@ -24,7 +24,6 @@ SliderDataImportDialog::SliderDataImportDialog(wxWindow* parent, OutfitProject* 
 	ConfigDialogUtil::LoadDialogCheckBox(outfitStudioConfig, *this, "chkImportMergeSliders");
 
 	shapesCheckListBox = XRCCTRL(*this, "sliderShapesImportList", wxCheckListBox);
-
 	slidersCheckListBox = XRCCTRL(*this, "sliderImportList", wxCheckListBox);
 	slidersCheckListBox->Bind(wxEVT_RIGHT_UP, &SliderDataImportDialog::OnSliderListContext, this);
 
@@ -36,20 +35,20 @@ SliderDataImportDialog::~SliderDataImportDialog() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/SliderDataImport.xrc");
 }
 
-int SliderDataImportDialog::ShowModal(const std::unordered_map<std::string, std::vector<std::string>>& sliderData) {
+int SliderDataImportDialog::ShowModal(const std::unordered_map<std::string, std::unordered_map<std::string, std::string>>& sliderData) {
 
 	std::unordered_set<std::string> addedSliders;
 	for (auto& shapeSliders : sliderData) {
-		shapesCheckListBox->Append(shapeSliders.first);
+		auto shapeName = project->TargetToShape(shapeSliders.first);
+		shapesCheckListBox->Append(shapeName, new ShapeSliderData(shapeName, shapeSliders.first, shapeSliders.second));
 
 		for (auto& sliderName : shapeSliders.second) {
-			if (addedSliders.find(sliderName) != addedSliders.end())
+			if (addedSliders.find(sliderName.first) != addedSliders.end())
 				continue;
 
-			slidersCheckListBox->Append(sliderName);
-			addedSliders.emplace(sliderName);
+			slidersCheckListBox->Append(sliderName.first, new SliderNameData(sliderName.first, sliderName.second));
+			addedSliders.emplace(sliderName.first);
 		}
-			
 	}
 
 	for (uint32_t i = 0; i < shapesCheckListBox->GetCount(); i++)
@@ -66,16 +65,22 @@ void SliderDataImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 	options.mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(outfitStudioConfig, *this, "chkImportMergeSliders");
 
 	wxArrayInt checked;
-	shapesCheckListBox->GetCheckedItems(checked);
+	slidersCheckListBox->GetCheckedItems(checked);
+	std::unordered_set<std::string> selectedSliders;
 	for (const auto& i : checked) {
-		auto key = shapesCheckListBox->GetString(i).ToStdString();
-		options.selectedShapeNames.emplace(key);
+		const auto data = dynamic_cast<SliderNameData*>(slidersCheckListBox->GetClientObject(i));
+		selectedSliders.emplace(data->displayName);
 	}
 
-	slidersCheckListBox->GetCheckedItems(checked);
+	shapesCheckListBox->GetCheckedItems(checked);
 	for (const auto& i : checked) {
-		auto key = slidersCheckListBox->GetString(i).ToStdString();
-		options.selectedSliderNames.emplace(key);
+		const auto data = dynamic_cast<ShapeSliderData*>(shapesCheckListBox->GetClientObject(i));
+		for (auto sliderNames : data->sliderNames) {
+			if (selectedSliders.find(sliderNames.first) == selectedSliders.end())
+				continue;
+
+			options.selectedShapesToSliders[data->targetShape].emplace(sliderNames.second, sliderNames.first);
+		}
 	}
 
 	EndModal(wxID_OK);

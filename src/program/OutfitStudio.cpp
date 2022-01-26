@@ -7102,28 +7102,27 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::unordered_map<std::string, std::vector<std::tuple<std::string, nifly::NiShape*>>> newNameToDiffNameAndShape;
-	std::unordered_map<std::string, std::vector<std::string>> shapeToSliders;
+	std::unordered_map<std::string, std::unordered_map<std::string, std::string>> shapeToSliders;
 	auto diffs = osd.GetDataDiffs();
-	auto shapes = project->GetWorkNif()->GetShapes();
+	const auto& shapes = project->GetWorkNif()->GetShapes();
 	for (auto& diff : diffs) {
 		std::string bestShapeName;
-		nifly::NiShape* bestShape = nullptr;
 		for (auto& shape : shapes) {
 			std::string shapeName = shape->name.get();
+			std::string targetName = project->ShapeToTarget(shapeName);
+
 			// Diff name is supposed to begin with matching shape name
-			if (diff.first.substr(0, shapeName.size()) != shapeName)
+			if (diff.first.substr(0, targetName.size()) != targetName)
 				continue;
 			if (shapeName.length() > bestShapeName.length()) {
-				bestShapeName = shapeName;
-				bestShape = shape;
+				bestShapeName = targetName;
 			}
 		}
-		if (!bestShape)
+		if (bestShapeName.length() == 0)
 			continue;
+
 		auto newName = diff.first.substr(bestShapeName.length(), diff.first.length() - bestShapeName.length() + 1);
-		shapeToSliders[bestShapeName].push_back(newName);
-		newNameToDiffNameAndShape[newName].push_back(std::make_tuple(diff.first, bestShape));
+		shapeToSliders[bestShapeName].emplace(newName, diff.first);
 	}
 
 	SliderDataImportDialog import(this, project, OutfitStudioConfig);
@@ -7163,29 +7162,36 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		lastActiveSlider.clear();
 	}
 
-	wxString addedDiffs;
 	std::unordered_set<NiShape*> addedShapes;
 
-	for (auto& sliderName : options.selectedSliderNames) {
-		auto& nameAndShapes = newNameToDiffNameAndShape[sliderName];
-		for (auto& nameAndShape : nameAndShapes) {
-			auto& originalSliderName = std::get<0>(nameAndShape);
-			auto& diff = diffs[originalSliderName];
-			auto& shape = std::get<1>(nameAndShape);
-			if (options.selectedShapeNames.find(shape->name.get()) == options.selectedShapeNames.end())
+	for (auto& shape : shapes) {
+
+		// check if the shape is selected
+		auto selectedSliders = options.selectedShapesToSliders.find(shape->name.get());
+		if (selectedSliders == options.selectedShapesToSliders.end())
+			continue;
+
+		addedShapes.emplace(shape);
+
+        for (auto& diff : diffs) {
+			auto& sliderNameToDisplayName = selectedSliders->second;
+
+			// check the diff is selected for the specific shape
+			auto sliderName = selectedSliders->second.find(diff.first);
+			if (sliderName == sliderNameToDisplayName.end())
 				continue;
 
-			if (!project->ValidSlider(sliderName)) {
-				createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
-				project->AddEmptySlider(sliderName);
-				ShowSliderEffect(sliderName);
+			if (!project->ValidSlider(sliderName->second)) {
+				createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
+				project->AddEmptySlider(sliderName->second);
+				ShowSliderEffect(sliderName->second);
 			}
 
-			project->SetSliderFromDiff(sliderName, shape, diff);
-			addedShapes.emplace(shape);
+			project->SetSliderFromDiff(sliderName->second, shape, diff.second);
 		}
 	}
 
+	wxString addedDiffs;
 	for (auto& addedShape : addedShapes) {
 		addedDiffs += addedShape->name.get() + "\n";
 	}
@@ -7220,14 +7226,14 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::unordered_map<std::string, std::vector<std::string>> shapeToSliders;
+	std::unordered_map<std::string, std::unordered_map<std::string, std::string>> shapeToSliders;
 	auto morphs = tri.GetMorphs();
 	for(auto& morph : morphs) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
 		if (!shape)
 			continue;
 		for (auto& morphData : morph.second)
-			shapeToSliders[shape->name.get()].push_back(morphData->name);
+			shapeToSliders[shape->name.get()].emplace(morphData->name, morphData->name);
 	}
 	SliderDataImportDialog import(this, project, OutfitStudioConfig);
 	if (import.ShowModal(shapeToSliders) != wxID_OK)
@@ -7274,12 +7280,15 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		if (!shape)
 			continue;
 
-		if (options.selectedShapeNames.find(shape->name.get()) == options.selectedShapeNames.end())
+		// check if the shape is selected
+		auto selectedSliders = options.selectedShapesToSliders.find(shape->name.get());
+		if (selectedSliders == options.selectedShapesToSliders.end())
 			continue;
 
 		addedMorphs += morph.first + "\n";
 		for (auto& morphData : morph.second) {
-			if (options.selectedSliderNames.find(morphData->name) == options.selectedSliderNames.end())
+			// check the morph is selected for the specific shape
+			if (selectedSliders->second.find(morphData->name) == selectedSliders->second.end())
 				continue;
 
 			if (!project->ValidSlider(morphData->name)) {
