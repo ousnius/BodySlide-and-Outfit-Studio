@@ -877,494 +877,502 @@ _("Duplicate...");
 #line 1829 "res/xrc/OutfitStudio.xrc"
 _("Duplicate the current shape.");
 #line 1832 "res/xrc/OutfitStudio.xrc"
-_("Rename...\tF2");
+_("Refine Mesh");
 #line 1833 "res/xrc/OutfitStudio.xrc"
-_("Change the name of the current shape.");
+_("Splits all edges between unmasked vertices");
 #line 1836 "res/xrc/OutfitStudio.xrc"
-_("Set Reference");
-#line 1837 "res/xrc/OutfitStudio.xrc"
-_("Turn the shape into the reference shape of the project.");
-#line 1841 "res/xrc/OutfitStudio.xrc"
-_("Move...");
-#line 1842 "res/xrc/OutfitStudio.xrc"
-_("Apply an offset adjustment to the mesh vertices. This permanently moves vertices.");
-#line 1845 "res/xrc/OutfitStudio.xrc"
-_("Scale...");
-#line 1846 "res/xrc/OutfitStudio.xrc"
-_("Apply a scale adjustment to the shape. This permanently moves vertices.");
-#line 1849 "res/xrc/OutfitStudio.xrc"
-_("Rotate...");
-#line 1850 "res/xrc/OutfitStudio.xrc"
-_("Apply a rotation to the mesh vertices. This permanently moves vertices.");
-#line 1853 "res/xrc/OutfitStudio.xrc"
-_("Smooth Seam Normals");
-#line 1854 "res/xrc/OutfitStudio.xrc"
-_("Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape.");
-#line 1859 "res/xrc/OutfitStudio.xrc"
-_("Lock Normals");
-#line 1860 "res/xrc/OutfitStudio.xrc"
-_("Locks the mesh normals. Enable if you want to keep custom normals intact.");
-#line 1866 "res/xrc/OutfitStudio.xrc"
-_("Copy Bone Weights");
-#line 1867 "res/xrc/OutfitStudio.xrc"
-_("Copies all bone weights from the reference shape to the current shape.");
-#line 1870 "res/xrc/OutfitStudio.xrc"
-_("Copy Selected Weights");
-#line 1871 "res/xrc/OutfitStudio.xrc"
-_("Copies selected bone weights from the reference shape to the current shape.");
-#line 1874 "res/xrc/OutfitStudio.xrc"
-_("Transfer Selected Weights");
-#line 1875 "res/xrc/OutfitStudio.xrc"
-_("Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order.");
-#line 1878 "res/xrc/OutfitStudio.xrc"
-_("Mask Weighted Vertices");
-#line 1879 "res/xrc/OutfitStudio.xrc"
-_("Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.");
-#line 1883 "res/xrc/OutfitStudio.xrc"
-_("Delete\tDel");
-#line 1884 "res/xrc/OutfitStudio.xrc"
-_("Removes the currently selected shape from the outfit.");
-#line 1887 "res/xrc/OutfitStudio.xrc"
-_("Properties...");
-#line 1888 "res/xrc/OutfitStudio.xrc"
-_("Opens the properties dialog for shader, texture and more settings of the selected shape.");
-#line 1892 "res/xrc/OutfitStudio.xrc"
-_("Slider");
-#line 1894 "res/xrc/OutfitStudio.xrc"
-_("Conform Selected\tCtrl+C");
-#line 1895 "res/xrc/OutfitStudio.xrc"
-_("Conform selected outfit shape to all checked sliders.");
-#line 1898 "res/xrc/OutfitStudio.xrc"
-_("Conform All\tCtrl+Shift+C");
-#line 1899 "res/xrc/OutfitStudio.xrc"
-_("Conform all outfit shapes to all checked sliders.");
-#line 1903 "res/xrc/OutfitStudio.xrc"
-_("Set Base Shape");
-#line 1904 "res/xrc/OutfitStudio.xrc"
-_("Set the current outfit shape as the base shape and clear slider data.");
-#line 1908 "res/xrc/OutfitStudio.xrc"
-_("Load Preset...");
-#line 1909 "res/xrc/OutfitStudio.xrc"
-_("Load and preview a slider preset. Inverted sliders will have inverted values.");
-#line 1912 "res/xrc/OutfitStudio.xrc"
-_("Save Preset...");
-#line 1913 "res/xrc/OutfitStudio.xrc"
-_("Save a slider preset with the current values. Inverted sliders will have inverted values.");
-#line 1917 "res/xrc/OutfitStudio.xrc"
-_("New Slider");
-#line 1918 "res/xrc/OutfitStudio.xrc"
-_("Create a new shape transformation slider.");
-#line 1921 "res/xrc/OutfitStudio.xrc"
-_("Coalesce sliders");
-#line 1922 "res/xrc/OutfitStudio.xrc"
-_("Create a new shape transformation slider based on the current slider values");
-#line 1925 "res/xrc/OutfitStudio.xrc"
-_("New Zap Slider");
-#line 1926 "res/xrc/OutfitStudio.xrc"
-_("Create a new Zap slider based on unmasked vertices");
-#line 1930 "res/xrc/OutfitStudio.xrc"
-_("Import OSD...");
-#line 1931 "res/xrc/OutfitStudio.xrc"
-_("Imports OSD file and creates sliders for shapes with a matching name.");
-#line 1934 "res/xrc/OutfitStudio.xrc"
-_("Export OSD...");
-#line 1935 "res/xrc/OutfitStudio.xrc"
-_("Exports all currently loaded slider data to an OSD file.");
-#line 1938 "res/xrc/OutfitStudio.xrc"
-_("Import TRI Morphs...");
-#line 1939 "res/xrc/OutfitStudio.xrc"
-_("Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name.");
-#line 1942 "res/xrc/OutfitStudio.xrc"
-_("Export TRI Morphs...");
-#line 1943 "res/xrc/OutfitStudio.xrc"
-_("Exports TRI morphs to a TRI file.");
-#line 1946 "res/xrc/OutfitStudio.xrc"
-_("Export to OBJs...");
-#line 1947 "res/xrc/OutfitStudio.xrc"
-_("Export all sliders to an OBJ file per slider.");
-#line 1951 "res/xrc/OutfitStudio.xrc"
-_("Import Slider Data");
-#line 1953 "res/xrc/OutfitStudio.xrc"
-_("Import NIF...");
-#line 1954 "res/xrc/OutfitStudio.xrc"
-_("Import a NIF file and overwrites the current shape's slider data.");
-#line 1957 "res/xrc/OutfitStudio.xrc"
-_("Import BSD...");
-#line 1958 "res/xrc/OutfitStudio.xrc"
-_("Import a BodySlide BSD file and overwrites the current shape's slider data.");
-#line 1961 "res/xrc/OutfitStudio.xrc"
-_("Import OBJ...");
-#line 1962 "res/xrc/OutfitStudio.xrc"
-_("Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference.");
-#line 1965 "res/xrc/OutfitStudio.xrc"
-_("Import FBX...");
-#line 1966 "res/xrc/OutfitStudio.xrc"
-_("Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference.");
-#line 1971 "res/xrc/OutfitStudio.xrc"
-_("Export Slider Data");
-#line 1973 "res/xrc/OutfitStudio.xrc"
-_("Export NIF...");
-#line 1974 "res/xrc/OutfitStudio.xrc"
-_("Exports the current slider's data as a NIF file.");
-#line 1977 "res/xrc/OutfitStudio.xrc"
-_("Export BSD...");
-#line 1978 "res/xrc/OutfitStudio.xrc"
-_("Exports the current slider's data as a BodySlide BSD file.");
-#line 1981 "res/xrc/OutfitStudio.xrc"
-_("Export OBJ...");
-#line 1982 "res/xrc/OutfitStudio.xrc"
-_("Exports the current slider's data as an OBJ file.");
-#line 1988 "res/xrc/OutfitStudio.xrc"
-_("Negate Slider");
-#line 1989 "res/xrc/OutfitStudio.xrc"
-_("Negates the current slider, reversing it's effect");
-#line 1993 "res/xrc/OutfitStudio.xrc"
-_("Mask Affected Vertices");
-#line 1994 "res/xrc/OutfitStudio.xrc"
-_("Masks the vertices the slider is affecting for all selected shapes.");
-#line 1998 "res/xrc/OutfitStudio.xrc"
-_("Clear Slider Data");
-#line 1999 "res/xrc/OutfitStudio.xrc"
-_("Erases the slider data without removing the slider itself. (Cannot be undone)");
-#line 2002 "res/xrc/OutfitStudio.xrc"
-_("Delete Slider");
-#line 2003 "res/xrc/OutfitStudio.xrc"
-_("Delete the active slider from the project. (Cannot be undone)");
-#line 2007 "res/xrc/OutfitStudio.xrc"
-_("Properties...\tTab");
-#line 2008 "res/xrc/OutfitStudio.xrc"
-_("Display and edit the active slider's properties.");
-#line 2013 "res/xrc/OutfitStudio.xrc"
-_("Tool");
-#line 2015 "res/xrc/OutfitStudio.xrc"
-_("Current Tool");
-#line 2017 "res/xrc/OutfitStudio.xrc"
-_("Select");
-#line 2018 "res/xrc/OutfitStudio.xrc"
-_("Navigate and select meshes (or vertices in vertex mode).");
-#line 2022 "res/xrc/OutfitStudio.xrc"
-_("Mask");
-#line 2023 "res/xrc/OutfitStudio.xrc"
-_("Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.");
-#line 2027 "res/xrc/OutfitStudio.xrc"
-_("Inflate");
-#line 2028 "res/xrc/OutfitStudio.xrc"
-_("Increase mesh volume in an area.");
-#line 2033 "res/xrc/OutfitStudio.xrc"
-_("Deflate");
-#line 2034 "res/xrc/OutfitStudio.xrc"
-_("Decrease mesh volume in an area.");
-#line 2038 "res/xrc/OutfitStudio.xrc"
-_("Move");
-#line 2039 "res/xrc/OutfitStudio.xrc"
-_("Move vertices over a plane parallel to the view.");
-#line 2043 "res/xrc/OutfitStudio.xrc"
-_("Smooth");
-#line 2044 "res/xrc/OutfitStudio.xrc"
-_("Smooth an area of a mesh.");
-#line 2048 "res/xrc/OutfitStudio.xrc"
-_("Undiff");
-#line 2049 "res/xrc/OutfitStudio.xrc"
-_("Undiff an area of a slider.");
-#line 2053 "res/xrc/OutfitStudio.xrc"
-_("Weight Paint");
-#line 2054 "res/xrc/OutfitStudio.xrc"
-_("Apply animation weight values for the currently selected bone.\nHold down the ALT key to weaken the weighting.");
-#line 2059 "res/xrc/OutfitStudio.xrc"
-_("Color Paint");
-#line 2060 "res/xrc/OutfitStudio.xrc"
-_("Apply vertex colors.\nHold down the ALT key to remove colors.");
-#line 2065 "res/xrc/OutfitStudio.xrc"
-_("Alpha Paint");
-#line 2066 "res/xrc/OutfitStudio.xrc"
-_("Apply vertex alpha.\nHold down the ALT key to remove alpha.");
-#line 2071 "res/xrc/OutfitStudio.xrc"
-_("Collapse Vertex");
-#line 2072 "res/xrc/OutfitStudio.xrc"
-_("Deletes vertices with no more than three connections, without creating a hole.");
-#line 2076 "res/xrc/OutfitStudio.xrc"
-_("Flip Edge");
-#line 2077 "res/xrc/OutfitStudio.xrc"
-_("Flips mesh edges so that the opposite pair of vertices is connected.");
-#line 2081 "res/xrc/OutfitStudio.xrc"
-_("Split Edge");
-#line 2082 "res/xrc/OutfitStudio.xrc"
-_("Splits a mesh edge in two with a new vertex.");
-#line 2087 "res/xrc/OutfitStudio.xrc"
-_("Transform\tF");
-#line 2088 "res/xrc/OutfitStudio.xrc"
-_("Shows a transform tool to manipulate shapes and vertices with.");
-#line 2092 "res/xrc/OutfitStudio.xrc"
-_("Pivot\tP");
-#line 2093 "res/xrc/OutfitStudio.xrc"
-_("Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.");
-#line 2097 "res/xrc/OutfitStudio.xrc"
-_("Vertex Edit\tQ");
-#line 2098 "res/xrc/OutfitStudio.xrc"
-_("Shows vertex points and lets you mask/unmask them.\nWithout any brush active, click on a vertex to unmask it.\nHold down CTRL to mask it.");
-#line 2103 "res/xrc/OutfitStudio.xrc"
-_("Increase Brush Size\tShift++");
-#line 2104 "res/xrc/OutfitStudio.xrc"
-_("Increase brush diameter");
-#line 2107 "res/xrc/OutfitStudio.xrc"
-_("Decrease Brush Size\tShift+-");
-#line 2108 "res/xrc/OutfitStudio.xrc"
-_("Decrease brush diameter");
-#line 2111 "res/xrc/OutfitStudio.xrc"
-_("Increase Brush Strength\tCtrl++");
-#line 2112 "res/xrc/OutfitStudio.xrc"
-_("Increase brush strength");
-#line 2115 "res/xrc/OutfitStudio.xrc"
-_("Decrease Brush Strength\tCtrl+-");
-#line 2116 "res/xrc/OutfitStudio.xrc"
-_("Decrease brush strength");
-#line 2120 "res/xrc/OutfitStudio.xrc"
-_("Mask Less\tA");
-#line 2121 "res/xrc/OutfitStudio.xrc"
-_("Mask Less");
-#line 2124 "res/xrc/OutfitStudio.xrc"
-_("Mask More\tD");
-#line 2125 "res/xrc/OutfitStudio.xrc"
-_("Mask More");
-#line 2129 "res/xrc/OutfitStudio.xrc"
-_("Invert Mask\tCtrl+I");
-#line 2130 "res/xrc/OutfitStudio.xrc"
-_("Invert Mask");
-#line 2133 "res/xrc/OutfitStudio.xrc"
-_("Clear Mask\tCtrl+A");
-#line 2134 "res/xrc/OutfitStudio.xrc"
-_("Clear Mask");
-#line 2138 "res/xrc/OutfitStudio.xrc"
-_("View");
-#line 2140 "res/xrc/OutfitStudio.xrc"
-_("Front\tShift+1");
-#line 2143 "res/xrc/OutfitStudio.xrc"
-_("Back\tShift+2");
-#line 2146 "res/xrc/OutfitStudio.xrc"
-_("Left\tShift+3");
-#line 2149 "res/xrc/OutfitStudio.xrc"
-_("Right\tShift+4");
-#line 2152 "res/xrc/OutfitStudio.xrc"
-_("Perspective\tShift+5");
-#line 2157 "res/xrc/OutfitStudio.xrc"
-_("Toggle Rotation Center\tShift+R");
-#line 2158 "res/xrc/OutfitStudio.xrc"
-_("Switch between the different rotation center modes.");
-#line 2161 "res/xrc/OutfitStudio.xrc"
-_("Show Nodes\tShift+N");
-#line 2165 "res/xrc/OutfitStudio.xrc"
-_("Show Bones\tShift+B");
-#line 2169 "res/xrc/OutfitStudio.xrc"
-_("Show Floor\tG");
-#line 2174 "res/xrc/OutfitStudio.xrc"
-_("Toggle Visibility\tE");
-#line 2175 "res/xrc/OutfitStudio.xrc"
-_("Switch between the different visibility modes for the selected shapes.");
-#line 2178 "res/xrc/OutfitStudio.xrc"
-_("Show Wireframe\tW");
-#line 2179 "res/xrc/OutfitStudio.xrc"
-_("Show wireframe on all models.");
-#line 2183 "res/xrc/OutfitStudio.xrc"
-_("Enable Lighting\tL");
-#line 2184 "res/xrc/OutfitStudio.xrc"
-_("Turn on or off lighting.");
-#line 2189 "res/xrc/OutfitStudio.xrc"
-_("Enable Textures\tT");
-#line 2190 "res/xrc/OutfitStudio.xrc"
-_("Display texture maps on models.");
-#line 2195 "res/xrc/OutfitStudio.xrc"
-_("Enable Vertex Colors");
-#line 2196 "res/xrc/OutfitStudio.xrc"
-_("Display vertex colors on models.");
-#line 2204 "res/xrc/OutfitStudio.xrc"
-_("Shape");
-#line 2206 "res/xrc/OutfitStudio.xrc"
-_("Export");
-#line 2208 "res/xrc/OutfitStudio.xrc"
-_("To NIF...");
-#line 2209 "res/xrc/OutfitStudio.xrc"
-_("Export only the selected shapes to a NIF file.");
-#line 2212 "res/xrc/OutfitStudio.xrc"
-_("To OBJ...");
-#line 2213 "res/xrc/OutfitStudio.xrc"
-_("Export only the selected shapes to an OBJ file.");
-#line 2216 "res/xrc/OutfitStudio.xrc"
-_("To FBX...");
-#line 2217 "res/xrc/OutfitStudio.xrc"
-_("Export only the selected shapes to an FBX file.");
-#line 2220 "res/xrc/OutfitStudio.xrc"
-_("To TRI (Head)...");
-#line 2221 "res/xrc/OutfitStudio.xrc"
-_("Export head morphs to a TRI file.");
-#line 2225 "res/xrc/OutfitStudio.xrc"
-_("UV");
-#line 2227 "res/xrc/OutfitStudio.xrc"
-_("Edit...");
-#line 2228 "res/xrc/OutfitStudio.xrc"
-_("Edit the texture coordinates.");
-#line 2231 "res/xrc/OutfitStudio.xrc"
-_("Invert X");
-#line 2232 "res/xrc/OutfitStudio.xrc"
-_("Inverts the X-axis of the texture coordinates.");
-#line 2235 "res/xrc/OutfitStudio.xrc"
-_("Invert Y");
-#line 2236 "res/xrc/OutfitStudio.xrc"
-_("Inverts the Y-axis of the texture coordinates.");
-#line 2240 "res/xrc/OutfitStudio.xrc"
-_("Mirror");
-#line 2243 "res/xrc/OutfitStudio.xrc"
-_("Mirror the selected shapes on the X-axis.");
-#line 2247 "res/xrc/OutfitStudio.xrc"
-_("Mirror the selected shapes on the Y-axis.");
-#line 2251 "res/xrc/OutfitStudio.xrc"
-_("Mirror the selected shapes on the Z-axis.");
-#line 2255 "res/xrc/OutfitStudio.xrc"
-_("Delete Vertices...\tShift+Del");
-#line 2256 "res/xrc/OutfitStudio.xrc"
-_("Deletes all unmasked vertices of the currently selected shapes.");
-#line 2259 "res/xrc/OutfitStudio.xrc"
-_("Separate Vertices...\tShift+S");
-#line 2260 "res/xrc/OutfitStudio.xrc"
-_("Separate the current shape into two by using the mask.");
-#line 2263 "res/xrc/OutfitStudio.xrc"
-_("Merge Geometry...");
-#line 2264 "res/xrc/OutfitStudio.xrc"
-_("Copies vertices and triangles from one shape to another.");
-#line 2267 "res/xrc/OutfitStudio.xrc"
-_("Duplicate...");
-#line 2268 "res/xrc/OutfitStudio.xrc"
-_("Duplicate the current shape.");
-#line 2271 "res/xrc/OutfitStudio.xrc"
 _("Rename...\tF2");
-#line 2272 "res/xrc/OutfitStudio.xrc"
+#line 1837 "res/xrc/OutfitStudio.xrc"
 _("Change the name of the current shape.");
-#line 2275 "res/xrc/OutfitStudio.xrc"
+#line 1840 "res/xrc/OutfitStudio.xrc"
 _("Set Reference");
-#line 2276 "res/xrc/OutfitStudio.xrc"
+#line 1841 "res/xrc/OutfitStudio.xrc"
 _("Turn the shape into the reference shape of the project.");
-#line 2280 "res/xrc/OutfitStudio.xrc"
+#line 1845 "res/xrc/OutfitStudio.xrc"
 _("Move...");
-#line 2281 "res/xrc/OutfitStudio.xrc"
+#line 1846 "res/xrc/OutfitStudio.xrc"
 _("Apply an offset adjustment to the mesh vertices. This permanently moves vertices.");
-#line 2284 "res/xrc/OutfitStudio.xrc"
+#line 1849 "res/xrc/OutfitStudio.xrc"
 _("Scale...");
-#line 2285 "res/xrc/OutfitStudio.xrc"
+#line 1850 "res/xrc/OutfitStudio.xrc"
 _("Apply a scale adjustment to the shape. This permanently moves vertices.");
-#line 2288 "res/xrc/OutfitStudio.xrc"
+#line 1853 "res/xrc/OutfitStudio.xrc"
 _("Rotate...");
-#line 2289 "res/xrc/OutfitStudio.xrc"
+#line 1854 "res/xrc/OutfitStudio.xrc"
 _("Apply a rotation to the mesh vertices. This permanently moves vertices.");
-#line 2293 "res/xrc/OutfitStudio.xrc"
+#line 1857 "res/xrc/OutfitStudio.xrc"
+_("Smooth Seam Normals");
+#line 1858 "res/xrc/OutfitStudio.xrc"
+_("Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape.");
+#line 1863 "res/xrc/OutfitStudio.xrc"
+_("Lock Normals");
+#line 1864 "res/xrc/OutfitStudio.xrc"
+_("Locks the mesh normals. Enable if you want to keep custom normals intact.");
+#line 1870 "res/xrc/OutfitStudio.xrc"
 _("Copy Bone Weights");
-#line 2294 "res/xrc/OutfitStudio.xrc"
+#line 1871 "res/xrc/OutfitStudio.xrc"
 _("Copies all bone weights from the reference shape to the current shape.");
-#line 2297 "res/xrc/OutfitStudio.xrc"
+#line 1874 "res/xrc/OutfitStudio.xrc"
 _("Copy Selected Weights");
-#line 2298 "res/xrc/OutfitStudio.xrc"
+#line 1875 "res/xrc/OutfitStudio.xrc"
 _("Copies selected bone weights from the reference shape to the current shape.");
-#line 2301 "res/xrc/OutfitStudio.xrc"
+#line 1878 "res/xrc/OutfitStudio.xrc"
 _("Transfer Selected Weights");
-#line 2302 "res/xrc/OutfitStudio.xrc"
+#line 1879 "res/xrc/OutfitStudio.xrc"
 _("Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order.");
-#line 2305 "res/xrc/OutfitStudio.xrc"
+#line 1882 "res/xrc/OutfitStudio.xrc"
 _("Mask Weighted Vertices");
-#line 2306 "res/xrc/OutfitStudio.xrc"
+#line 1883 "res/xrc/OutfitStudio.xrc"
 _("Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.");
-#line 2310 "res/xrc/OutfitStudio.xrc"
+#line 1887 "res/xrc/OutfitStudio.xrc"
 _("Delete\tDel");
-#line 2311 "res/xrc/OutfitStudio.xrc"
+#line 1888 "res/xrc/OutfitStudio.xrc"
 _("Removes the currently selected shape from the outfit.");
-#line 2314 "res/xrc/OutfitStudio.xrc"
+#line 1891 "res/xrc/OutfitStudio.xrc"
 _("Properties...");
-#line 2315 "res/xrc/OutfitStudio.xrc"
+#line 1892 "res/xrc/OutfitStudio.xrc"
 _("Opens the properties dialog for shader, texture and more settings of the selected shape.");
-#line 2319 "res/xrc/OutfitStudio.xrc"
-_("Bones");
-#line 2321 "res/xrc/OutfitStudio.xrc"
-_("Add");
-#line 2323 "res/xrc/OutfitStudio.xrc"
-_("From Skeleton...");
-#line 2324 "res/xrc/OutfitStudio.xrc"
-_("Choose a bone from the reference skeleton to add to the project.");
-#line 2327 "res/xrc/OutfitStudio.xrc"
-_("Custom Bone...");
-#line 2328 "res/xrc/OutfitStudio.xrc"
-_("Add a custom bone to the project.");
-#line 2332 "res/xrc/OutfitStudio.xrc"
-_("Delete");
-#line 2334 "res/xrc/OutfitStudio.xrc"
-_("From Project");
-#line 2335 "res/xrc/OutfitStudio.xrc"
-_("Delete bone(s) from all shapes of the project.");
-#line 2338 "res/xrc/OutfitStudio.xrc"
-_("From Selected Shapes");
-#line 2339 "res/xrc/OutfitStudio.xrc"
-_("Delete bone(s) from only the selected shapes.");
-#line 2343 "res/xrc/OutfitStudio.xrc"
-_("Edit Bone...");
-#line 2344 "res/xrc/OutfitStudio.xrc"
-_("Edit a custom bone or view a standard bone.");
-#line 2347 "res/xrc/OutfitStudio.xrc"
+#line 1896 "res/xrc/OutfitStudio.xrc"
+_("Slider");
+#line 1898 "res/xrc/OutfitStudio.xrc"
+_("Conform Selected\tCtrl+C");
+#line 1899 "res/xrc/OutfitStudio.xrc"
+_("Conform selected outfit shape to all checked sliders.");
+#line 1902 "res/xrc/OutfitStudio.xrc"
+_("Conform All\tCtrl+Shift+C");
+#line 1903 "res/xrc/OutfitStudio.xrc"
+_("Conform all outfit shapes to all checked sliders.");
+#line 1907 "res/xrc/OutfitStudio.xrc"
+_("Set Base Shape");
+#line 1908 "res/xrc/OutfitStudio.xrc"
+_("Set the current outfit shape as the base shape and clear slider data.");
+#line 1912 "res/xrc/OutfitStudio.xrc"
+_("Load Preset...");
+#line 1913 "res/xrc/OutfitStudio.xrc"
+_("Load and preview a slider preset. Inverted sliders will have inverted values.");
+#line 1916 "res/xrc/OutfitStudio.xrc"
+_("Save Preset...");
+#line 1917 "res/xrc/OutfitStudio.xrc"
+_("Save a slider preset with the current values. Inverted sliders will have inverted values.");
+#line 1921 "res/xrc/OutfitStudio.xrc"
+_("New Slider");
+#line 1922 "res/xrc/OutfitStudio.xrc"
+_("Create a new shape transformation slider.");
+#line 1925 "res/xrc/OutfitStudio.xrc"
+_("Coalesce sliders");
+#line 1926 "res/xrc/OutfitStudio.xrc"
+_("Create a new shape transformation slider based on the current slider values");
+#line 1929 "res/xrc/OutfitStudio.xrc"
+_("New Zap Slider");
+#line 1930 "res/xrc/OutfitStudio.xrc"
+_("Create a new Zap slider based on unmasked vertices");
+#line 1934 "res/xrc/OutfitStudio.xrc"
+_("Import OSD...");
+#line 1935 "res/xrc/OutfitStudio.xrc"
+_("Imports OSD file and creates sliders for shapes with a matching name.");
+#line 1938 "res/xrc/OutfitStudio.xrc"
+_("Export OSD...");
+#line 1939 "res/xrc/OutfitStudio.xrc"
+_("Exports all currently loaded slider data to an OSD file.");
+#line 1942 "res/xrc/OutfitStudio.xrc"
+_("Import TRI Morphs...");
+#line 1943 "res/xrc/OutfitStudio.xrc"
+_("Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name.");
+#line 1946 "res/xrc/OutfitStudio.xrc"
+_("Export TRI Morphs...");
+#line 1947 "res/xrc/OutfitStudio.xrc"
+_("Exports TRI morphs to a TRI file.");
+#line 1950 "res/xrc/OutfitStudio.xrc"
+_("Export to OBJs...");
+#line 1951 "res/xrc/OutfitStudio.xrc"
+_("Export all sliders to an OBJ file per slider.");
+#line 1955 "res/xrc/OutfitStudio.xrc"
+_("Import Slider Data");
+#line 1957 "res/xrc/OutfitStudio.xrc"
+_("Import NIF...");
+#line 1958 "res/xrc/OutfitStudio.xrc"
+_("Import a NIF file and overwrites the current shape's slider data.");
+#line 1961 "res/xrc/OutfitStudio.xrc"
+_("Import BSD...");
+#line 1962 "res/xrc/OutfitStudio.xrc"
+_("Import a BodySlide BSD file and overwrites the current shape's slider data.");
+#line 1965 "res/xrc/OutfitStudio.xrc"
+_("Import OBJ...");
+#line 1966 "res/xrc/OutfitStudio.xrc"
+_("Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference.");
+#line 1969 "res/xrc/OutfitStudio.xrc"
+_("Import FBX...");
+#line 1970 "res/xrc/OutfitStudio.xrc"
+_("Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference.");
+#line 1975 "res/xrc/OutfitStudio.xrc"
+_("Export Slider Data");
+#line 1977 "res/xrc/OutfitStudio.xrc"
+_("Export NIF...");
+#line 1978 "res/xrc/OutfitStudio.xrc"
+_("Exports the current slider's data as a NIF file.");
+#line 1981 "res/xrc/OutfitStudio.xrc"
+_("Export BSD...");
+#line 1982 "res/xrc/OutfitStudio.xrc"
+_("Exports the current slider's data as a BodySlide BSD file.");
+#line 1985 "res/xrc/OutfitStudio.xrc"
+_("Export OBJ...");
+#line 1986 "res/xrc/OutfitStudio.xrc"
+_("Exports the current slider's data as an OBJ file.");
+#line 1992 "res/xrc/OutfitStudio.xrc"
+_("Negate Slider");
+#line 1993 "res/xrc/OutfitStudio.xrc"
+_("Negates the current slider, reversing it's effect");
+#line 1997 "res/xrc/OutfitStudio.xrc"
+_("Mask Affected Vertices");
+#line 1998 "res/xrc/OutfitStudio.xrc"
+_("Masks the vertices the slider is affecting for all selected shapes.");
+#line 2002 "res/xrc/OutfitStudio.xrc"
+_("Clear Slider Data");
+#line 2003 "res/xrc/OutfitStudio.xrc"
+_("Erases the slider data without removing the slider itself. (Cannot be undone)");
+#line 2006 "res/xrc/OutfitStudio.xrc"
+_("Delete Slider");
+#line 2007 "res/xrc/OutfitStudio.xrc"
+_("Delete the active slider from the project. (Cannot be undone)");
+#line 2011 "res/xrc/OutfitStudio.xrc"
+_("Properties...\tTab");
+#line 2012 "res/xrc/OutfitStudio.xrc"
+_("Display and edit the active slider's properties.");
+#line 2017 "res/xrc/OutfitStudio.xrc"
+_("Tool");
+#line 2019 "res/xrc/OutfitStudio.xrc"
+_("Current Tool");
+#line 2021 "res/xrc/OutfitStudio.xrc"
+_("Select");
+#line 2022 "res/xrc/OutfitStudio.xrc"
+_("Navigate and select meshes (or vertices in vertex mode).");
+#line 2026 "res/xrc/OutfitStudio.xrc"
+_("Mask");
+#line 2027 "res/xrc/OutfitStudio.xrc"
+_("Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.");
+#line 2031 "res/xrc/OutfitStudio.xrc"
+_("Inflate");
+#line 2032 "res/xrc/OutfitStudio.xrc"
+_("Increase mesh volume in an area.");
+#line 2037 "res/xrc/OutfitStudio.xrc"
+_("Deflate");
+#line 2038 "res/xrc/OutfitStudio.xrc"
+_("Decrease mesh volume in an area.");
+#line 2042 "res/xrc/OutfitStudio.xrc"
+_("Move");
+#line 2043 "res/xrc/OutfitStudio.xrc"
+_("Move vertices over a plane parallel to the view.");
+#line 2047 "res/xrc/OutfitStudio.xrc"
+_("Smooth");
+#line 2048 "res/xrc/OutfitStudio.xrc"
+_("Smooth an area of a mesh.");
+#line 2052 "res/xrc/OutfitStudio.xrc"
+_("Undiff");
+#line 2053 "res/xrc/OutfitStudio.xrc"
+_("Undiff an area of a slider.");
+#line 2057 "res/xrc/OutfitStudio.xrc"
+_("Weight Paint");
+#line 2058 "res/xrc/OutfitStudio.xrc"
+_("Apply animation weight values for the currently selected bone.\nHold down the ALT key to weaken the weighting.");
+#line 2063 "res/xrc/OutfitStudio.xrc"
+_("Color Paint");
+#line 2064 "res/xrc/OutfitStudio.xrc"
+_("Apply vertex colors.\nHold down the ALT key to remove colors.");
+#line 2069 "res/xrc/OutfitStudio.xrc"
+_("Alpha Paint");
+#line 2070 "res/xrc/OutfitStudio.xrc"
+_("Apply vertex alpha.\nHold down the ALT key to remove alpha.");
+#line 2075 "res/xrc/OutfitStudio.xrc"
+_("Collapse Vertex");
+#line 2076 "res/xrc/OutfitStudio.xrc"
+_("Deletes vertices with no more than three connections, without creating a hole.");
+#line 2080 "res/xrc/OutfitStudio.xrc"
+_("Flip Edge");
+#line 2081 "res/xrc/OutfitStudio.xrc"
+_("Flips mesh edges so that the opposite pair of vertices is connected.");
+#line 2085 "res/xrc/OutfitStudio.xrc"
+_("Split Edge");
+#line 2086 "res/xrc/OutfitStudio.xrc"
+_("Splits a mesh edge in two with a new vertex.");
+#line 2091 "res/xrc/OutfitStudio.xrc"
+_("Transform\tF");
+#line 2092 "res/xrc/OutfitStudio.xrc"
+_("Shows a transform tool to manipulate shapes and vertices with.");
+#line 2096 "res/xrc/OutfitStudio.xrc"
+_("Pivot\tP");
+#line 2097 "res/xrc/OutfitStudio.xrc"
+_("Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.");
+#line 2101 "res/xrc/OutfitStudio.xrc"
+_("Vertex Edit\tQ");
+#line 2102 "res/xrc/OutfitStudio.xrc"
+_("Shows vertex points and lets you mask/unmask them.\nWithout any brush active, click on a vertex to unmask it.\nHold down CTRL to mask it.");
+#line 2107 "res/xrc/OutfitStudio.xrc"
+_("Increase Brush Size\tShift++");
+#line 2108 "res/xrc/OutfitStudio.xrc"
+_("Increase brush diameter");
+#line 2111 "res/xrc/OutfitStudio.xrc"
+_("Decrease Brush Size\tShift+-");
+#line 2112 "res/xrc/OutfitStudio.xrc"
+_("Decrease brush diameter");
+#line 2115 "res/xrc/OutfitStudio.xrc"
+_("Increase Brush Strength\tCtrl++");
+#line 2116 "res/xrc/OutfitStudio.xrc"
+_("Increase brush strength");
+#line 2119 "res/xrc/OutfitStudio.xrc"
+_("Decrease Brush Strength\tCtrl+-");
+#line 2120 "res/xrc/OutfitStudio.xrc"
+_("Decrease brush strength");
+#line 2124 "res/xrc/OutfitStudio.xrc"
+_("Mask Less\tA");
+#line 2125 "res/xrc/OutfitStudio.xrc"
+_("Mask Less");
+#line 2128 "res/xrc/OutfitStudio.xrc"
+_("Mask More\tD");
+#line 2129 "res/xrc/OutfitStudio.xrc"
+_("Mask More");
+#line 2133 "res/xrc/OutfitStudio.xrc"
+_("Invert Mask\tCtrl+I");
+#line 2134 "res/xrc/OutfitStudio.xrc"
+_("Invert Mask");
+#line 2137 "res/xrc/OutfitStudio.xrc"
+_("Clear Mask\tCtrl+A");
+#line 2138 "res/xrc/OutfitStudio.xrc"
+_("Clear Mask");
+#line 2142 "res/xrc/OutfitStudio.xrc"
+_("View");
+#line 2144 "res/xrc/OutfitStudio.xrc"
+_("Front\tShift+1");
+#line 2147 "res/xrc/OutfitStudio.xrc"
+_("Back\tShift+2");
+#line 2150 "res/xrc/OutfitStudio.xrc"
+_("Left\tShift+3");
+#line 2153 "res/xrc/OutfitStudio.xrc"
+_("Right\tShift+4");
+#line 2156 "res/xrc/OutfitStudio.xrc"
+_("Perspective\tShift+5");
+#line 2161 "res/xrc/OutfitStudio.xrc"
+_("Toggle Rotation Center\tShift+R");
+#line 2162 "res/xrc/OutfitStudio.xrc"
+_("Switch between the different rotation center modes.");
+#line 2165 "res/xrc/OutfitStudio.xrc"
+_("Show Nodes\tShift+N");
+#line 2169 "res/xrc/OutfitStudio.xrc"
+_("Show Bones\tShift+B");
+#line 2173 "res/xrc/OutfitStudio.xrc"
+_("Show Floor\tG");
+#line 2178 "res/xrc/OutfitStudio.xrc"
+_("Toggle Visibility\tE");
+#line 2179 "res/xrc/OutfitStudio.xrc"
+_("Switch between the different visibility modes for the selected shapes.");
+#line 2182 "res/xrc/OutfitStudio.xrc"
+_("Show Wireframe\tW");
+#line 2183 "res/xrc/OutfitStudio.xrc"
+_("Show wireframe on all models.");
+#line 2187 "res/xrc/OutfitStudio.xrc"
+_("Enable Lighting\tL");
+#line 2188 "res/xrc/OutfitStudio.xrc"
+_("Turn on or off lighting.");
+#line 2193 "res/xrc/OutfitStudio.xrc"
+_("Enable Textures\tT");
+#line 2194 "res/xrc/OutfitStudio.xrc"
+_("Display texture maps on models.");
+#line 2199 "res/xrc/OutfitStudio.xrc"
+_("Enable Vertex Colors");
+#line 2200 "res/xrc/OutfitStudio.xrc"
+_("Display vertex colors on models.");
+#line 2208 "res/xrc/OutfitStudio.xrc"
+_("Shape");
+#line 2210 "res/xrc/OutfitStudio.xrc"
+_("Export");
+#line 2212 "res/xrc/OutfitStudio.xrc"
+_("To NIF...");
+#line 2213 "res/xrc/OutfitStudio.xrc"
+_("Export only the selected shapes to a NIF file.");
+#line 2216 "res/xrc/OutfitStudio.xrc"
+_("To OBJ...");
+#line 2217 "res/xrc/OutfitStudio.xrc"
+_("Export only the selected shapes to an OBJ file.");
+#line 2220 "res/xrc/OutfitStudio.xrc"
+_("To FBX...");
+#line 2221 "res/xrc/OutfitStudio.xrc"
+_("Export only the selected shapes to an FBX file.");
+#line 2224 "res/xrc/OutfitStudio.xrc"
+_("To TRI (Head)...");
+#line 2225 "res/xrc/OutfitStudio.xrc"
+_("Export head morphs to a TRI file.");
+#line 2229 "res/xrc/OutfitStudio.xrc"
+_("UV");
+#line 2231 "res/xrc/OutfitStudio.xrc"
+_("Edit...");
+#line 2232 "res/xrc/OutfitStudio.xrc"
+_("Edit the texture coordinates.");
+#line 2235 "res/xrc/OutfitStudio.xrc"
+_("Invert X");
+#line 2236 "res/xrc/OutfitStudio.xrc"
+_("Inverts the X-axis of the texture coordinates.");
+#line 2239 "res/xrc/OutfitStudio.xrc"
+_("Invert Y");
+#line 2240 "res/xrc/OutfitStudio.xrc"
+_("Inverts the Y-axis of the texture coordinates.");
+#line 2244 "res/xrc/OutfitStudio.xrc"
+_("Mirror");
+#line 2247 "res/xrc/OutfitStudio.xrc"
+_("Mirror the selected shapes on the X-axis.");
+#line 2251 "res/xrc/OutfitStudio.xrc"
+_("Mirror the selected shapes on the Y-axis.");
+#line 2255 "res/xrc/OutfitStudio.xrc"
+_("Mirror the selected shapes on the Z-axis.");
+#line 2259 "res/xrc/OutfitStudio.xrc"
+_("Delete Vertices...\tShift+Del");
+#line 2260 "res/xrc/OutfitStudio.xrc"
+_("Deletes all unmasked vertices of the currently selected shapes.");
+#line 2263 "res/xrc/OutfitStudio.xrc"
+_("Separate Vertices...\tShift+S");
+#line 2264 "res/xrc/OutfitStudio.xrc"
+_("Separate the current shape into two by using the mask.");
+#line 2267 "res/xrc/OutfitStudio.xrc"
+_("Merge Geometry...");
+#line 2268 "res/xrc/OutfitStudio.xrc"
+_("Copies vertices and triangles from one shape to another.");
+#line 2271 "res/xrc/OutfitStudio.xrc"
+_("Duplicate...");
+#line 2272 "res/xrc/OutfitStudio.xrc"
+_("Duplicate the current shape.");
+#line 2275 "res/xrc/OutfitStudio.xrc"
+_("Refine Mesh");
+#line 2276 "res/xrc/OutfitStudio.xrc"
+_("Splits all edges between unmasked vertices");
+#line 2279 "res/xrc/OutfitStudio.xrc"
+_("Rename...\tF2");
+#line 2280 "res/xrc/OutfitStudio.xrc"
+_("Change the name of the current shape.");
+#line 2283 "res/xrc/OutfitStudio.xrc"
+_("Set Reference");
+#line 2284 "res/xrc/OutfitStudio.xrc"
+_("Turn the shape into the reference shape of the project.");
+#line 2288 "res/xrc/OutfitStudio.xrc"
+_("Move...");
+#line 2289 "res/xrc/OutfitStudio.xrc"
+_("Apply an offset adjustment to the mesh vertices. This permanently moves vertices.");
+#line 2292 "res/xrc/OutfitStudio.xrc"
+_("Scale...");
+#line 2293 "res/xrc/OutfitStudio.xrc"
+_("Apply a scale adjustment to the shape. This permanently moves vertices.");
+#line 2296 "res/xrc/OutfitStudio.xrc"
+_("Rotate...");
+#line 2297 "res/xrc/OutfitStudio.xrc"
+_("Apply a rotation to the mesh vertices. This permanently moves vertices.");
+#line 2301 "res/xrc/OutfitStudio.xrc"
+_("Copy Bone Weights");
+#line 2302 "res/xrc/OutfitStudio.xrc"
+_("Copies all bone weights from the reference shape to the current shape.");
+#line 2305 "res/xrc/OutfitStudio.xrc"
+_("Copy Selected Weights");
+#line 2306 "res/xrc/OutfitStudio.xrc"
+_("Copies selected bone weights from the reference shape to the current shape.");
+#line 2309 "res/xrc/OutfitStudio.xrc"
+_("Transfer Selected Weights");
+#line 2310 "res/xrc/OutfitStudio.xrc"
+_("Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order.");
+#line 2313 "res/xrc/OutfitStudio.xrc"
 _("Mask Weighted Vertices");
-#line 2348 "res/xrc/OutfitStudio.xrc"
-_("Masks vertices with weights for the selected bones.");
-#line 2352 "res/xrc/OutfitStudio.xrc"
+#line 2314 "res/xrc/OutfitStudio.xrc"
+_("Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.");
+#line 2318 "res/xrc/OutfitStudio.xrc"
+_("Delete\tDel");
+#line 2319 "res/xrc/OutfitStudio.xrc"
+_("Removes the currently selected shape from the outfit.");
+#line 2322 "res/xrc/OutfitStudio.xrc"
+_("Properties...");
+#line 2323 "res/xrc/OutfitStudio.xrc"
+_("Opens the properties dialog for shader, texture and more settings of the selected shape.");
+#line 2327 "res/xrc/OutfitStudio.xrc"
 _("Bones");
-#line 2354 "res/xrc/OutfitStudio.xrc"
+#line 2329 "res/xrc/OutfitStudio.xrc"
 _("Add");
-#line 2356 "res/xrc/OutfitStudio.xrc"
+#line 2331 "res/xrc/OutfitStudio.xrc"
 _("From Skeleton...");
-#line 2357 "res/xrc/OutfitStudio.xrc"
+#line 2332 "res/xrc/OutfitStudio.xrc"
 _("Choose a bone from the reference skeleton to add to the project.");
-#line 2360 "res/xrc/OutfitStudio.xrc"
+#line 2335 "res/xrc/OutfitStudio.xrc"
 _("Custom Bone...");
-#line 2361 "res/xrc/OutfitStudio.xrc"
+#line 2336 "res/xrc/OutfitStudio.xrc"
 _("Add a custom bone to the project.");
-#line 2366 "res/xrc/OutfitStudio.xrc"
-_("Segments");
+#line 2340 "res/xrc/OutfitStudio.xrc"
+_("Delete");
+#line 2342 "res/xrc/OutfitStudio.xrc"
+_("From Project");
+#line 2343 "res/xrc/OutfitStudio.xrc"
+_("Delete bone(s) from all shapes of the project.");
+#line 2346 "res/xrc/OutfitStudio.xrc"
+_("From Selected Shapes");
+#line 2347 "res/xrc/OutfitStudio.xrc"
+_("Delete bone(s) from only the selected shapes.");
+#line 2351 "res/xrc/OutfitStudio.xrc"
+_("Edit Bone...");
+#line 2352 "res/xrc/OutfitStudio.xrc"
+_("Edit a custom bone or view a standard bone.");
+#line 2355 "res/xrc/OutfitStudio.xrc"
+_("Mask Weighted Vertices");
+#line 2356 "res/xrc/OutfitStudio.xrc"
+_("Masks vertices with weights for the selected bones.");
+#line 2360 "res/xrc/OutfitStudio.xrc"
+_("Bones");
+#line 2362 "res/xrc/OutfitStudio.xrc"
+_("Add");
+#line 2364 "res/xrc/OutfitStudio.xrc"
+_("From Skeleton...");
+#line 2365 "res/xrc/OutfitStudio.xrc"
+_("Choose a bone from the reference skeleton to add to the project.");
 #line 2368 "res/xrc/OutfitStudio.xrc"
-_("Add Segment...");
+_("Custom Bone...");
 #line 2369 "res/xrc/OutfitStudio.xrc"
-_("Choose a segment to add to the shape.");
-#line 2372 "res/xrc/OutfitStudio.xrc"
-_("Add Sub Segment...");
-#line 2373 "res/xrc/OutfitStudio.xrc"
-_("Add a new sub segment to the currently selected segment.");
-#line 2376 "res/xrc/OutfitStudio.xrc"
-_("Delete Segment...");
-#line 2377 "res/xrc/OutfitStudio.xrc"
-_("Delete segment and all of its sub segments from the shape.");
-#line 2381 "res/xrc/OutfitStudio.xrc"
-_("Sub Segments");
-#line 2383 "res/xrc/OutfitStudio.xrc"
-_("Add Sub Segment...");
-#line 2384 "res/xrc/OutfitStudio.xrc"
-_("Add a new sub segment to the currently selected segment.");
-#line 2387 "res/xrc/OutfitStudio.xrc"
-_("Delete Sub Segment...");
-#line 2388 "res/xrc/OutfitStudio.xrc"
-_("Delete the selected sub segment.");
-#line 2392 "res/xrc/OutfitStudio.xrc"
+_("Add a custom bone to the project.");
+#line 2374 "res/xrc/OutfitStudio.xrc"
 _("Segments");
-#line 2394 "res/xrc/OutfitStudio.xrc"
+#line 2376 "res/xrc/OutfitStudio.xrc"
 _("Add Segment...");
-#line 2395 "res/xrc/OutfitStudio.xrc"
+#line 2377 "res/xrc/OutfitStudio.xrc"
 _("Choose a segment to add to the shape.");
-#line 2399 "res/xrc/OutfitStudio.xrc"
-_("Partitions");
-#line 2401 "res/xrc/OutfitStudio.xrc"
-_("Add Partition...");
+#line 2380 "res/xrc/OutfitStudio.xrc"
+_("Add Sub Segment...");
+#line 2381 "res/xrc/OutfitStudio.xrc"
+_("Add a new sub segment to the currently selected segment.");
+#line 2384 "res/xrc/OutfitStudio.xrc"
+_("Delete Segment...");
+#line 2385 "res/xrc/OutfitStudio.xrc"
+_("Delete segment and all of its sub segments from the shape.");
+#line 2389 "res/xrc/OutfitStudio.xrc"
+_("Sub Segments");
+#line 2391 "res/xrc/OutfitStudio.xrc"
+_("Add Sub Segment...");
+#line 2392 "res/xrc/OutfitStudio.xrc"
+_("Add a new sub segment to the currently selected segment.");
+#line 2395 "res/xrc/OutfitStudio.xrc"
+_("Delete Sub Segment...");
+#line 2396 "res/xrc/OutfitStudio.xrc"
+_("Delete the selected sub segment.");
+#line 2400 "res/xrc/OutfitStudio.xrc"
+_("Segments");
 #line 2402 "res/xrc/OutfitStudio.xrc"
-_("Adds a new partition to the shape.");
-#line 2405 "res/xrc/OutfitStudio.xrc"
-_("Delete Partition...");
-#line 2406 "res/xrc/OutfitStudio.xrc"
-_("Deletes the partition from the shape.");
-#line 2410 "res/xrc/OutfitStudio.xrc"
+_("Add Segment...");
+#line 2403 "res/xrc/OutfitStudio.xrc"
+_("Choose a segment to add to the shape.");
+#line 2407 "res/xrc/OutfitStudio.xrc"
 _("Partitions");
-#line 2412 "res/xrc/OutfitStudio.xrc"
+#line 2409 "res/xrc/OutfitStudio.xrc"
 _("Add Partition...");
+#line 2410 "res/xrc/OutfitStudio.xrc"
+_("Adds a new partition to the shape.");
 #line 2413 "res/xrc/OutfitStudio.xrc"
+_("Delete Partition...");
+#line 2414 "res/xrc/OutfitStudio.xrc"
+_("Deletes the partition from the shape.");
+#line 2418 "res/xrc/OutfitStudio.xrc"
+_("Partitions");
+#line 2420 "res/xrc/OutfitStudio.xrc"
+_("Add Partition...");
+#line 2421 "res/xrc/OutfitStudio.xrc"
 _("Adds a new partition to the shape.");
 #line 5 "res/xrc/Project.xrc"
 _("New Project");
@@ -1834,3 +1842,21 @@ _("Toggle Zaps:");
 _("&OK");
 #line 246 "res/xrc/Slider.xrc"
 _("&Cancel");
+#line 6 "res/xrc/SliderDataImport.xrc"
+_("Slider Data Import Options...");
+#line 21 "res/xrc/SliderDataImport.xrc"
+_("Select the shapes that slider data will be imported for:");
+#line 52 "res/xrc/SliderDataImport.xrc"
+_("Select the sliders to be imported");
+#line 77 "res/xrc/SliderDataImport.xrc"
+_("Merge Sliders");
+#line 90 "res/xrc/SliderDataImport.xrc"
+_("&OK");
+#line 97 "res/xrc/SliderDataImport.xrc"
+_("&Cancel");
+#line 106 "res/xrc/SliderDataImport.xrc"
+_("Select None");
+#line 109 "res/xrc/SliderDataImport.xrc"
+_("Select All");
+#line 112 "res/xrc/SliderDataImport.xrc"
+_("Invert Selection");
