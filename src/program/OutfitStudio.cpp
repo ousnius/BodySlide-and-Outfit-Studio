@@ -7106,7 +7106,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	auto diffs = osd.GetDataDiffs();
 	const auto& shapes = project->GetWorkNif()->GetShapes();
 	for (auto& diff : diffs) {
-		std::string bestShapeName;
+		std::string bestTargetName;
 		for (auto& shape : shapes) {
 			std::string shapeName = shape->name.get();
 			std::string targetName = project->ShapeToTarget(shapeName);
@@ -7114,15 +7114,20 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 			// Diff name is supposed to begin with matching shape name
 			if (diff.first.substr(0, targetName.size()) != targetName)
 				continue;
-			if (shapeName.length() > bestShapeName.length()) {
-				bestShapeName = targetName;
-			}
+
+			if (shapeName.length() > bestTargetName.length())
+				bestTargetName = targetName;
 		}
-		if (bestShapeName.length() == 0)
+
+		if (bestTargetName.length() == 0)
 			continue;
 
-		auto newName = diff.first.substr(bestShapeName.length(), diff.first.length() - bestShapeName.length() + 1);
-		shapeToSliders[bestShapeName].emplace(newName, diff.first);
+		// Find slider name from data name
+		auto sliderName = project->activeSet.SliderFromDataName(bestTargetName, diff.first);
+		if (sliderName.empty())
+			sliderName = diff.first.substr(bestTargetName.length(), diff.first.length() - bestTargetName.length() + 1);
+
+		shapeToSliders[bestTargetName].emplace(sliderName, diff.first);
 	}
 
 	SliderDataImportDialog import(this, project, OutfitStudioConfig);
@@ -7232,9 +7237,11 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
 		if (!shape)
 			continue;
+
 		for (auto& morphData : morph.second)
 			shapeToSliders[shape->name.get()].emplace(morphData->name, morphData->name);
 	}
+
 	SliderDataImportDialog import(this, project, OutfitStudioConfig);
 	if (import.ShowModal(shapeToSliders) != wxID_OK)
 		return;
