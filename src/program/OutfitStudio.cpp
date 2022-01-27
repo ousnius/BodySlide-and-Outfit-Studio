@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "GroupManager.h"
 #include "PresetSaveDialog.h"
 #include "ShapeProperties.h"
+#include "SliderDataImportDialog.h"
 
 #include <sstream>
 #include <wx/debugrpt.h>
@@ -7092,11 +7093,6 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
-	dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
-	if (dlg.ShowModal() != wxID_OK)
-		return;
-
 	wxLogMessage("Importing morphs from OSD file '%s'...", fn);
 
 	OSDataFile osd;
@@ -7106,52 +7102,103 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	// Deleting sliders
-	sliderScroll->Freeze();
-	std::vector<std::string> erase;
-	for (auto& sliderPanel : sliderPanels) {
-		sliderPanel.second->slider->SetValue(0);
-		SetSliderValue(sliderPanel.first, 0);
-		ShowSliderEffect(sliderPanel.first, true);
-		sliderPanel.second->slider->SetFocus();
-		HideSliderPanel(sliderPanel.second);
-
-		erase.push_back(sliderPanel.first);
-		project->DeleteSlider(sliderPanel.first);
-	}
-
-	for (auto& e : erase)
-		sliderPanels.erase(e);
-
-	MenuExitSliderEdit();
-	sliderScroll->FitInside();
-	activeSlider.clear();
-	lastActiveSlider.clear();
-
-	wxString addedDiffs;
+	std::unordered_map<std::string, std::unordered_map<std::string, std::string>> shapeToSliders;
 	auto diffs = osd.GetDataDiffs();
+	const auto& shapes = project->GetWorkNif()->GetShapes();
+	for (auto& diff : diffs) {
+		std::string bestTargetName;
+		for (auto& shape : shapes) {
+			std::string shapeName = shape->name.get();
+			std::string targetName = project->ShapeToTarget(shapeName);
 
-	for (auto& shape : project->GetWorkNif()->GetShapes()) {
-		std::string s = shape->name.get();
-		bool added = false;
-		for (auto& diff : diffs) {
 			// Diff name is supposed to begin with matching shape name
-			if (diff.first.substr(0, s.size()) != s)
+			if (diff.first.substr(0, targetName.size()) != targetName)
 				continue;
 
-			std::string diffName = diff.first.substr(s.length(), diff.first.length() - s.length() + 1);
-			if (!project->ValidSlider(diffName)) {
-				createSliderGUI(diffName, sliderScroll, sliderScroll->GetSizer());
-				project->AddEmptySlider(diffName);
-				ShowSliderEffect(diffName);
-			}
-
-			project->SetSliderFromDiff(diffName, shape, diff.second);
-			added = true;
+			if (shapeName.length() > bestTargetName.length())
+				bestTargetName = targetName;
 		}
 
-		if (added)
-			addedDiffs += s + "\n";
+		if (bestTargetName.length() == 0)
+			continue;
+
+		// Find slider name from data name
+		auto sliderName = project->activeSet.SliderFromDataName(bestTargetName, diff.first);
+		if (sliderName.empty())
+			sliderName = diff.first.substr(bestTargetName.length(), diff.first.length() - bestTargetName.length() + 1);
+
+		shapeToSliders[bestTargetName].emplace(sliderName, diff.first);
+	}
+
+	SliderDataImportDialog import(this, project, OutfitStudioConfig);
+	if (import.ShowModal(shapeToSliders) != wxID_OK)
+		return;
+
+	const auto& options = import.GetOptions();
+
+	sliderScroll->Freeze();
+	if (!options.mergeSliders) {
+		wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
+		if (dlg.ShowModal() != wxID_OK) {
+			sliderScroll->Thaw();
+			return;
+		}
+
+		// Deleting sliders
+		std::vector<std::string> erase;
+		for (auto& sliderPanel : sliderPanels) {
+			sliderPanel.second->slider->SetValue(0);
+			SetSliderValue(sliderPanel.first, 0);
+			ShowSliderEffect(sliderPanel.first, true);
+			sliderPanel.second->slider->SetFocus();
+			HideSliderPanel(sliderPanel.second);
+
+			erase.push_back(sliderPanel.first);
+			project->DeleteSlider(sliderPanel.first);
+		}
+
+		for (auto& e : erase)
+			sliderPanels.erase(e);
+
+		MenuExitSliderEdit();
+		sliderScroll->FitInside();
+		activeSlider.clear();
+		lastActiveSlider.clear();
+	}
+
+	std::unordered_set<NiShape*> addedShapes;
+
+	for (auto& shape : shapes) {
+
+		// check if the shape is selected
+		auto selectedSliders = options.selectedShapesToSliders.find(shape->name.get());
+		if (selectedSliders == options.selectedShapesToSliders.end())
+			continue;
+
+		addedShapes.emplace(shape);
+
+        for (auto& diff : diffs) {
+			auto& sliderNameToDisplayName = selectedSliders->second;
+
+			// check the diff is selected for the specific shape
+			auto sliderName = selectedSliders->second.find(diff.first);
+			if (sliderName == sliderNameToDisplayName.end())
+				continue;
+
+			if (!project->ValidSlider(sliderName->second)) {
+				createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
+				project->AddEmptySlider(sliderName->second);
+				ShowSliderEffect(sliderName->second);
+			}
+
+			project->SetSliderFromDiff(sliderName->second, shape, diff.second);
+		}
+	}
+
+	wxString addedDiffs;
+	for (auto& addedShape : addedShapes) {
+		addedDiffs += addedShape->name.get() + "\n";
 	}
 
 	sliderScroll->FitInside();
@@ -7175,11 +7222,6 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
-	wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
-	dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
-	if (dlg.ShowModal() != wxID_OK)
-		return;
-
 	wxLogMessage("Importing morphs from TRI file '%s'...", fn);
 
 	TriFile tri;
@@ -7189,37 +7231,73 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	// Deleting sliders
-	sliderScroll->Freeze();
-	std::vector<std::string> erase;
-	for (auto& sliderPanel : sliderPanels) {
-		sliderPanel.second->slider->SetValue(0);
-		SetSliderValue(sliderPanel.first, 0);
-		ShowSliderEffect(sliderPanel.first, true);
-		sliderPanel.second->slider->SetFocus();
-		HideSliderPanel(sliderPanel.second);
+	std::unordered_map<std::string, std::unordered_map<std::string, std::string>> shapeToSliders;
+	auto morphs = tri.GetMorphs();
+	for(auto& morph : morphs) {
+		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
+		if (!shape)
+			continue;
 
-		erase.push_back(sliderPanel.first);
-		project->DeleteSlider(sliderPanel.first);
+		for (auto& morphData : morph.second)
+			shapeToSliders[shape->name.get()].emplace(morphData->name, morphData->name);
 	}
 
-	for (auto& e : erase)
-		sliderPanels.erase(e);
+	SliderDataImportDialog import(this, project, OutfitStudioConfig);
+	if (import.ShowModal(shapeToSliders) != wxID_OK)
+		return;
 
-	MenuExitSliderEdit();
-	sliderScroll->FitInside();
-	activeSlider.clear();
-	lastActiveSlider.clear();
+	const auto& options = import.GetOptions();
+
+	sliderScroll->Freeze();
+	if (!options.mergeSliders) {
+		wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
+		if (dlg.ShowModal() != wxID_OK) {
+			sliderScroll->Thaw();
+			return;
+		}
+
+		// Deleting sliders
+		std::vector<std::string> erase;
+		for (auto& sliderPanel : sliderPanels) {
+			sliderPanel.second->slider->SetValue(0);
+			SetSliderValue(sliderPanel.first, 0);
+			ShowSliderEffect(sliderPanel.first, true);
+			sliderPanel.second->slider->SetFocus();
+			HideSliderPanel(sliderPanel.second);
+
+			erase.push_back(sliderPanel.first);
+			project->DeleteSlider(sliderPanel.first);
+		}
+
+		for (auto& e : erase)
+			sliderPanels.erase(e);
+
+		MenuExitSliderEdit();
+		sliderScroll->FitInside();
+		activeSlider.clear();
+		lastActiveSlider.clear();
+	}
 
 	wxString addedMorphs;
-	auto morphs = tri.GetMorphs();
+	std::unordered_set<NiShape*> addedShapes;
+
 	for (auto& morph : morphs) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
 		if (!shape)
 			continue;
 
+		// check if the shape is selected
+		auto selectedSliders = options.selectedShapesToSliders.find(shape->name.get());
+		if (selectedSliders == options.selectedShapesToSliders.end())
+			continue;
+
 		addedMorphs += morph.first + "\n";
 		for (auto& morphData : morph.second) {
+			// check the morph is selected for the specific shape
+			if (selectedSliders->second.find(morphData->name) == selectedSliders->second.end())
+				continue;
+
 			if (!project->ValidSlider(morphData->name)) {
 				createSliderGUI(morphData->name, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(morphData->name);

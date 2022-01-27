@@ -145,6 +145,16 @@ public:
 		return outDataNames;
 	}
 
+	std::string SliderFromDataName(const std::string& targetName, const std::string& dataName) {
+		for (auto& s : sliders) {
+			for (auto& df : s.dataFiles) {
+				if (df.targetName == targetName && df.dataName == dataName)
+					return s.name;
+			}
+		}
+		return "";
+	}
+
 	std::string TargetToShape(const std::string& targetName) {
 		for (auto& s : shapeAttributes)
 			if (s.second.targetShape == targetName)

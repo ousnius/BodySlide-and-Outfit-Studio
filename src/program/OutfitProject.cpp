@@ -1235,6 +1235,14 @@ const std::string& OutfitProject::ShapeToTarget(const std::string& shapeName) {
 	return shapeName;
 }
 
+const std::string& OutfitProject::TargetToShape(const std::string& targetName) {
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it)
+		if (it->second.targetShape == targetName)
+			return it->first;
+
+	return targetName;
+}
+
 size_t OutfitProject::GetActiveBoneCount() {
 	return AnimSkeleton::getInstance().GetActiveBoneCount();
 }

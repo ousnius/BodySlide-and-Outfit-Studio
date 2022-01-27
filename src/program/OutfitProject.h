@@ -160,6 +160,7 @@ public:
 	void ConformShape(nifly::NiShape* shape, const ConformOptions& options = ConformOptions());
 
 	const std::string& ShapeToTarget(const std::string& shapeName);
+	const std::string& TargetToShape(const std::string& targetName);
 	int GetVertexCount(nifly::NiShape* shape);
 	void GetLiveVerts(nifly::NiShape* shape, std::vector<nifly::Vector3>& outVerts, std::vector<nifly::Vector2>* outUVs = nullptr);
 	void GetSliderDiff(nifly::NiShape* shape, const std::string& sliderName, std::vector<nifly::Vector3>& outVerts);
