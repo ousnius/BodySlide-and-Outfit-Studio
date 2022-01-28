@@ -1822,7 +1822,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
 
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
-		for (int i = 0; i < std::extent<decltype(SupportedLangs)>::value; i++)
+		for (int i = 0; i < SupportedLangs.size(); i++)
 			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
 
 		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
