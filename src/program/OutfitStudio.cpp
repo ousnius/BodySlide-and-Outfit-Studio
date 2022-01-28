@@ -864,6 +864,8 @@ void OutfitStudio::InitLanguage() {
 		delete locale;
 
 	int lang = Config.GetIntValue("Language");
+	if (lang < 0)
+		lang = wxLANGUAGE_ENGLISH;
 
 	// Load language if possible, fall back to English otherwise
 	if (wxLocale::IsAvailable(lang)) {
