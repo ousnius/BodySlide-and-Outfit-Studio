@@ -296,7 +296,7 @@
 							</object>
 							<object class="sizeritem">
 								<option>1</option>
-								<flag>wxLEFT|wxALIGN_LEFT</flag>
+								<flag>wxLEFT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="conflictLabel">
 									<fg>#c8c8d8</fg>
@@ -308,7 +308,7 @@
 							</object>
 							<object class="sizeritem">
 								<option>0</option>
-								<flag>wxLEFT|wxALIGN_LEFT</flag>
+								<flag>wxLEFT</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="conflictInfo">
 									<fg>#c8c8d8</fg>
@@ -344,7 +344,7 @@
 									<orient>wxVERTICAL</orient>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+										<flag>wxALL</flag>
 										<border>0</border>
 										<object class="wxCheckBox" name="cbMorphs">
 											<fg>#c8c8c8</fg>
@@ -355,7 +355,7 @@
 									</object>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+										<flag>wxALL</flag>
 										<border>0</border>
 										<object class="wxCheckBox" name="cbForceBodyNormals">
 											<fg>#c8c8c8</fg>
