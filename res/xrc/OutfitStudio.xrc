@@ -227,10 +227,11 @@
 								<bitmap>$(AppDir)\res\images\EditConnected.png</bitmap>
 								<toggle>1</toggle>
 								<checked>0</checked>
+								<disabled>1</disabled>
 							</object>
 							<object class="tool" name="btnBrushCollision">
 								<label>Global Brush Collision\tB</label>
-								<tooltip>Allows for the brushes to collide with all currently selected meshes at the same time.</tooltip>
+								<tooltip>Tools act on all selected meshes.</tooltip>
 								<bitmap>$(AppDir)\res\images\BrushCollision.png</bitmap>
 								<toggle>1</toggle>
 								<checked>1</checked>
@@ -1736,10 +1737,11 @@
 				<help>Edit only vertices that are connected to the ones under the brush within the brush radius</help>
 				<checkable>1</checkable>
 				<checked>0</checked>
+				<enabled>0</enabled>
 			</object>
 			<object class="wxMenuItem" name="btnBrushCollision">
 				<label>Global Brush Collision\tB</label>
-				<help>Allows for the brushes to collide with all currently selected meshes at the same time</help>
+				<help>Tools act on all selected meshes.</help>
 				<checkable>1</checkable>
 				<checked>1</checked>
 			</object>

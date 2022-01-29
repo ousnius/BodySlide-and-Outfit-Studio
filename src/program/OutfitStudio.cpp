@@ -2935,10 +2935,8 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		menuBar->Check(XRCID("btnSelect"), true);
 		toolBarH->ToggleTool(XRCID("btnSelect"), true);
 
-		menuBar->Check(XRCID("btnXMirror"), false);
-		menuBar->Enable(XRCID("btnXMirror"), false);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
-		toolBarV->EnableTool(XRCID("btnXMirror"), false);
+		ReEnableToolOptionsUI();
+		ReToggleToolOptionsUI();
 		return;
 	}
 
@@ -2972,17 +2970,8 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	glView->SetActiveTool(tool);
 	glView->SetCursorType(GLSurface::BrushCursor);
 
-	auto activeBrush = glView->GetActiveBrush();
-	if (activeBrush) {
-		menuBar->Enable(XRCID("btnXMirror"), true);
-		menuBar->Check(XRCID("btnXMirror"), activeBrush->isMirrored());
-		toolBarV->EnableTool(XRCID("btnXMirror"), true);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), activeBrush->isMirrored());
-	}
-	else {
-		menuBar->Enable(XRCID("btnXMirror"), false);
-		toolBarV->EnableTool(XRCID("btnXMirror"), false);
-	}
+	ReEnableToolOptionsUI();
+	ReToggleToolOptionsUI();
 
 	if (tool == ToolID::MaskBrush) {
 		menuBar->Check(XRCID("btnMaskBrush"), true);
@@ -3070,6 +3059,35 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 
 	CheckBrushBounds();
 	UpdateBrushSettings();
+}
+
+void OutfitStudioFrame::ReEnableToolOptionsUI() {
+	bool isBrush = glView->GetActiveBrush() != nullptr;
+	bool isSegMode = glView->GetSegmentMode();
+
+	menuBar->Enable(XRCID("btnXMirror"), isBrush);
+	toolBarV->EnableTool(XRCID("btnXMirror"), isBrush);
+	menuBar->Enable(XRCID("btnConnected"), isBrush);
+	toolBarV->EnableTool(XRCID("btnConnected"), isBrush);
+	menuBar->Enable(XRCID("btnBrushCollision"), !isSegMode);
+	toolBarV->EnableTool(XRCID("btnBrushCollision"), !isSegMode);
+}
+
+void OutfitStudioFrame::ReToggleToolOptionsUI() {
+	bool isBrush = glView->GetActiveBrush() != nullptr;
+	bool isSegMode = glView->GetSegmentMode();
+	bool xMirror = glView->GetToolOptionXMirror();
+	bool connOnly = glView->GetToolOptionConnectedOnly();
+	bool allMesh = glView->GetToolOptionAllSelMesh();
+
+	glView->SetGlobalBrushCollision(!isSegMode && allMesh);
+
+	menuBar->Check(XRCID("btnXMirror"), isBrush && xMirror);
+	toolBarV->ToggleTool(XRCID("btnXMirror"), isBrush && xMirror);
+	menuBar->Check(XRCID("btnConnected"), isBrush && connOnly);
+	toolBarV->ToggleTool(XRCID("btnConnected"), isBrush && connOnly);
+	menuBar->Check(XRCID("btnBrushCollision"), !isSegMode && allMesh);
+	toolBarV->ToggleTool(XRCID("btnBrushCollision"), !isSegMode && allMesh);
 }
 
 void OutfitStudioFrame::CloseBrushSettings() {
@@ -6315,18 +6333,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		glView->SetSegmentMode(false);
 		glView->SetMaskVisible();
-		glView->SetGlobalBrushCollision();
 
-		menuBar->Check(XRCID("btnBrushCollision"), true);
-		menuBar->Enable(XRCID("btnBrushCollision"), true);
 		menuBar->Enable(XRCID("btnSelect"), true);
 		menuBar->Enable(XRCID("btnClearMask"), true);
 		menuBar->Enable(XRCID("btnInvertMask"), true);
 		menuBar->Enable(XRCID("deleteVerts"), true);
 		menuBar->Enable(XRCID("refineMesh"), true);
 
-		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
-		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
 		toolBarH->EnableTool(XRCID("btnSelect"), true);
 	}
 
@@ -6346,18 +6359,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		glView->SetSegmentMode(false);
 		glView->SetMaskVisible();
-		glView->SetGlobalBrushCollision();
 
-		menuBar->Check(XRCID("btnBrushCollision"), true);
-		menuBar->Enable(XRCID("btnBrushCollision"), true);
 		menuBar->Enable(XRCID("btnSelect"), true);
 		menuBar->Enable(XRCID("btnClearMask"), true);
 		menuBar->Enable(XRCID("btnInvertMask"), true);
 		menuBar->Enable(XRCID("deleteVerts"), true);
 		menuBar->Enable(XRCID("refineMesh"), true);
 
-		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
-		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
 		toolBarH->EnableTool(XRCID("btnSelect"), true);
 	}
 
@@ -6635,14 +6643,12 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		segmentApply->Show();
 		segmentReset->Show();
 
-		SelectTool(ToolID::MaskBrush);
 		glView->SetSegmentMode();
+		SelectTool(ToolID::MaskBrush);
 		glView->SetMaskVisible(false);
-		glView->SetGlobalBrushCollision(false);
 		glView->ClearMasks();
 
 		menuBar->Check(XRCID("btnMaskBrush"), true);
-		menuBar->Check(XRCID("btnBrushCollision"), false);
 		menuBar->Enable(XRCID("btnSelect"), false);
 		menuBar->Enable(XRCID("btnTransform"), false);
 		menuBar->Enable(XRCID("btnPivot"), false);
@@ -6652,7 +6658,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnMoveBrush"), false);
 		menuBar->Enable(XRCID("btnSmoothBrush"), false);
 		menuBar->Enable(XRCID("btnUndiffBrush"), false);
-		menuBar->Enable(XRCID("btnBrushCollision"), false);
 		menuBar->Enable(XRCID("btnClearMask"), false);
 		menuBar->Enable(XRCID("btnInvertMask"), false);
 		menuBar->Enable(XRCID("btnCollapseVertex"), false);
@@ -6662,7 +6667,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("refineMesh"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
-		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
 		toolBarH->EnableTool(XRCID("btnSelect"), false);
 		toolBarV->EnableTool(XRCID("btnTransform"), false);
 		toolBarV->EnableTool(XRCID("btnPivot"), false);
@@ -6675,7 +6679,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
-		toolBarV->EnableTool(XRCID("btnBrushCollision"), false);
 
 		ShowSegment(segmentTree->GetSelection());
 	}
@@ -6705,14 +6708,12 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionApply->Show();
 		partitionReset->Show();
 
-		SelectTool(ToolID::MaskBrush);
 		glView->SetSegmentMode();
+		SelectTool(ToolID::MaskBrush);
 		glView->SetMaskVisible(false);
-		glView->SetGlobalBrushCollision(false);
 		glView->ClearMasks();
 
 		menuBar->Check(XRCID("btnMaskBrush"), true);
-		menuBar->Check(XRCID("btnBrushCollision"), false);
 		menuBar->Enable(XRCID("btnSelect"), false);
 		menuBar->Enable(XRCID("btnTransform"), false);
 		menuBar->Enable(XRCID("btnPivot"), false);
@@ -6722,7 +6723,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnMoveBrush"), false);
 		menuBar->Enable(XRCID("btnSmoothBrush"), false);
 		menuBar->Enable(XRCID("btnUndiffBrush"), false);
-		menuBar->Enable(XRCID("btnBrushCollision"), false);
 		menuBar->Enable(XRCID("btnClearMask"), false);
 		menuBar->Enable(XRCID("btnInvertMask"), false);
 		menuBar->Enable(XRCID("btnCollapseVertex"), false);
@@ -6732,7 +6732,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("refineMesh"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
-		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
 		toolBarH->EnableTool(XRCID("btnSelect"), false);
 		toolBarV->EnableTool(XRCID("btnTransform"), false);
 		toolBarV->EnableTool(XRCID("btnPivot"), false);
@@ -6745,7 +6744,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
-		toolBarV->EnableTool(XRCID("btnBrushCollision"), false);
 
 		ShowPartition(partitionTree->GetSelection());
 	}
@@ -10675,7 +10673,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	if (!os->CheckEditableState())
 		return false;
 
-	if (activeBrush->isMirrored()) {
+	if (toolOptionXMirror) {
 		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
 			tpi.facetM = -1;
 	}
@@ -10738,8 +10736,6 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			unweightBrush.bXMirrorBone = !xMirrorBone.empty();
 			unweightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			unweightBrush.setStrength(-weightBrush.getStrength());
-			unweightBrush.setMirror(weightBrush.isMirrored());
-			unweightBrush.setConnected(weightBrush.isConnected());
 			activeBrush = &unweightBrush;
 		}
 		else if (wxGetKeyState(WXK_SHIFT)) {
@@ -10750,8 +10746,6 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			smoothWeightBrush.bXMirrorBone = !xMirrorBone.empty();
 			smoothWeightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
-			smoothWeightBrush.setMirror(weightBrush.isMirrored());
-			smoothWeightBrush.setConnected(weightBrush.isConnected());
 			activeBrush = &smoothWeightBrush;
 		}
 		else {
@@ -10764,47 +10758,35 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	}
 	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {
 		if (activeBrush == &standardBrush) {
-			deflateBrush.setMirror(activeBrush->isMirrored());
-			deflateBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &deflateBrush;
 		}
 		else if (activeBrush == &deflateBrush) {
-			standardBrush.setMirror(activeBrush->isMirrored());
-			standardBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &standardBrush;
 		}
 		else if (activeBrush == &maskBrush) {
 			UnMaskBrush.setStrength(-activeBrush->getStrength());
-			UnMaskBrush.setMirror(activeBrush->isMirrored());
-			UnMaskBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &UnMaskBrush;
 		}
 		else if (activeBrush == &colorBrush) {
 			uncolorBrush.setStrength(-activeBrush->getStrength());
-			uncolorBrush.setMirror(activeBrush->isMirrored());
-			uncolorBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &uncolorBrush;
 		}
 		else if (activeBrush == &alphaBrush) {
 			unalphaBrush.setStrength(-activeBrush->getStrength());
-			unalphaBrush.setMirror(activeBrush->isMirrored());
-			unalphaBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &unalphaBrush;
 		}
 	}
 	else if (activeBrush == &maskBrush && wxGetKeyState(WXK_SHIFT)) {
 		smoothMaskBrush.setStrength(activeBrush->getStrength() * 15.0f);
-		smoothMaskBrush.setMirror(activeBrush->isMirrored());
-		smoothMaskBrush.setConnected(activeBrush->isConnected());
 		activeBrush = &smoothMaskBrush;
 	}
 	else if (activeBrush != &weightBrush && activeBrush != &maskBrush && wxGetKeyState(WXK_SHIFT)) {
-		smoothBrush.setMirror(activeBrush->isMirrored());
-		smoothBrush.setConnected(activeBrush->isConnected());
 		activeBrush = &smoothBrush;
 	}
 
 	activeBrush->setRadius(brushSize);
+	activeBrush->setMirror(toolOptionXMirror);
+	activeBrush->setConnected(toolOptionConnectedOnly);
 
 	if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
 		for (auto& sel : os->GetSelectedItems()) {
@@ -10882,7 +10864,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 				return;
 
 			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, bGlobalBrushCollision, &tpi.facet);
-			if (activeBrush->isMirrored()) {
+			if (toolOptionXMirror) {
 				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
 					tpi.facetM = -1;
 			}

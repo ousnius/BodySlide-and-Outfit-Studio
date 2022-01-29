@@ -193,38 +193,6 @@ public:
 
 	TweakBrush* GetActiveBrush() { return activeBrush; }
 
-	void SyncBrushStates(TweakBrush* brush) {
-		if (!brush)
-			return;
-
-		TweakBrush::BrushType brushType = brush->Type();
-		if (brushType == TweakBrush::BrushType::Standard || brushType == TweakBrush::BrushType::Move || brushType == TweakBrush::BrushType::Mask) {
-			bool isMirrored = brush->isMirrored();
-			bool isConnected = brush->isConnected();
-
-			standardBrush.setMirror(isMirrored);
-			standardBrush.setConnected(isConnected);
-
-			deflateBrush.setMirror(isMirrored);
-			deflateBrush.setConnected(isConnected);
-
-			moveBrush.setMirror(isMirrored);
-			moveBrush.setConnected(isConnected);
-
-			smoothBrush.setMirror(isMirrored);
-			smoothBrush.setConnected(isConnected);
-
-			maskBrush.setMirror(isMirrored);
-			maskBrush.setConnected(isConnected);
-
-			UnMaskBrush.setMirror(isMirrored);
-			UnMaskBrush.setConnected(isConnected);
-
-			smoothMaskBrush.setMirror(isMirrored);
-			smoothMaskBrush.setConnected(isConnected);
-		}
-	}
-
 	void SetColorBrush(const nifly::Vector3& color) { colorBrush.color = color; }
 
 	bool StartBrushStroke(const wxPoint& screenPos);
@@ -310,6 +278,15 @@ public:
 
 	bool GetGlobalBrushCollision() { return bGlobalBrushCollision; }
 	void SetGlobalBrushCollision(bool on = true) { bGlobalBrushCollision = on; }
+
+	bool GetToolOptionXMirror() { return toolOptionXMirror; }
+	void SetToolOptionXMirror(bool on = true) { toolOptionXMirror = on; }
+
+	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
+	void SetToolOptionConnectedOnly(bool on = true) { toolOptionConnectedOnly = on; }
+
+	bool GetToolOptionAllSelMesh() { return toolOptionAllSelMesh; }
+	void SetToolOptionAllSelMesh(bool on = true) { toolOptionAllSelMesh = on; }
 
 	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
 		mesh* m = gls.GetMesh(shapeName);
@@ -733,6 +710,9 @@ private:
 	bool isPickingVertex = false;
 	bool isPickingEdge = false;
 	bool bGlobalBrushCollision = true;
+	bool toolOptionXMirror = true;
+	bool toolOptionConnectedOnly = false;
+	bool toolOptionAllSelMesh = true;
 
 	TweakBrush* activeBrush = nullptr;
 	TweakBrush* savedBrush;
@@ -987,6 +967,8 @@ public:
 	void ScrollToActiveSlider();
 
 	void SelectTool(ToolID tool);
+	void ReEnableToolOptionsUI();
+	void ReToggleToolOptionsUI();
 
 	void CloseBrushSettings();
 	void PopupBrushSettings(wxWindow* popupAt = nullptr);
@@ -1344,34 +1326,18 @@ private:
 	void OnNPWizChangeSetNameChoice(wxCommandEvent& event);
 
 	void OnXMirror(wxCommandEvent& event) {
-		bool enabled = event.IsChecked();
-		menuBar->Check(event.GetId(), enabled);
-		toolBarV->ToggleTool(event.GetId(), enabled);
-
-		auto activeBrush = glView->GetActiveBrush();
-		if (activeBrush) {
-			activeBrush->setMirror(enabled);
-			glView->SyncBrushStates(activeBrush);
-		}
+		glView->SetToolOptionXMirror(event.IsChecked());
+		ReToggleToolOptionsUI();
 	}
 
 	void OnConnectedOnly(wxCommandEvent& event) {
-		bool enabled = event.IsChecked();
-		menuBar->Check(event.GetId(), enabled);
-		toolBarV->ToggleTool(event.GetId(), enabled);
-
-		auto activeBrush = glView->GetActiveBrush();
-		if (activeBrush) {
-			activeBrush->setConnected(enabled);
-			glView->SyncBrushStates(activeBrush);
-		}
+		glView->SetToolOptionConnectedOnly(event.IsChecked());
+		ReToggleToolOptionsUI();
 	}
 
 	void OnGlobalBrushCollision(wxCommandEvent& event) {
-		bool enabled = event.IsChecked();
-		menuBar->Check(event.GetId(), enabled);
-		toolBarV->ToggleTool(event.GetId(), enabled);
-		glView->SetGlobalBrushCollision(enabled);
+		glView->SetToolOptionAllSelMesh(event.IsChecked());
+		ReToggleToolOptionsUI();
 	}
 
 	void OnUndo(wxCommandEvent& WXUNUSED(event)) {
