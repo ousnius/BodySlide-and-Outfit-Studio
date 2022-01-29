@@ -5,16 +5,16 @@ See the included LICENSE file
 
 #include "wxSliderPanel.h"
 
-IMPLEMENT_DYNAMIC_CLASS(wxSliderPanel, wxPanel)
+IMPLEMENT_DYNAMIC_CLASS(wxSliderPanel, wxWindow)
 
-BEGIN_EVENT_TABLE(wxSliderPanel, wxPanel)
+BEGIN_EVENT_TABLE(wxSliderPanel, wxWindow)
 END_EVENT_TABLE()
 
 wxSliderPanel::wxSliderPanel()
-	: wxPanel() {}
+	: wxWindow() {}
 
 wxSliderPanel::wxSliderPanel(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings)
-	: wxPanel() {
+	: wxWindow() {
 	Create(parent, name, bmpEdit, bmpSettings);
 }
 
@@ -47,7 +47,7 @@ bool wxSliderPanel::Create(wxWindow* parent, const wxString& name, const wxBitma
 		return true;
 	}
 
-	if (!wxPanelBase::Create(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER | wxTAB_TRAVERSAL))
+	if (!wxWindow::Create(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER | wxTAB_TRAVERSAL))
 		return false;
 
 	Hide();

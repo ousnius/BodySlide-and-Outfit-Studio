@@ -7,7 +7,7 @@ See the included LICENSE file
 
 #include <wx/wx.h>
 
-class wxSliderPanel : public wxPanel {
+class wxSliderPanel : public wxWindow {
 	bool isCreated = false;
 	wxBoxSizer* sizer = nullptr;
 
