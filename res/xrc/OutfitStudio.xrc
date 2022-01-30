@@ -229,13 +229,6 @@
 								<checked>0</checked>
 								<disabled>1</disabled>
 							</object>
-							<object class="tool" name="btnBrushCollision">
-								<label>Global Brush Collision\tB</label>
-								<tooltip>Tools act on all selected meshes.</tooltip>
-								<bitmap>$(AppDir)\res\images\BrushCollision.png</bitmap>
-								<toggle>1</toggle>
-								<checked>1</checked>
-							</object>
 							<object class="separator" />
 							<object class="tool" name="btnViewFront">
 								<label>View Front</label>
@@ -1738,12 +1731,6 @@
 				<checkable>1</checkable>
 				<checked>0</checked>
 				<enabled>0</enabled>
-			</object>
-			<object class="wxMenuItem" name="btnBrushCollision">
-				<label>Global Brush Collision\tB</label>
-				<help>Tools act on all selected meshes.</help>
-				<checkable>1</checkable>
-				<checked>1</checked>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="btnRecalcNormals">

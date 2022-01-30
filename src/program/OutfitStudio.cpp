@@ -144,7 +144,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 
 	EVT_MENU(XRCID("btnXMirror"), OutfitStudioFrame::OnXMirror)
 	EVT_MENU(XRCID("btnConnected"), OutfitStudioFrame::OnConnectedOnly)
-	EVT_MENU(XRCID("btnBrushCollision"), OutfitStudioFrame::OnGlobalBrushCollision)
 
 	EVT_MENU(XRCID("btnSelect"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnTransform"), OutfitStudioFrame::OnSelectTool)
@@ -3063,31 +3062,22 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 
 void OutfitStudioFrame::ReEnableToolOptionsUI() {
 	bool isBrush = glView->GetActiveBrush() != nullptr;
-	bool isSegMode = glView->GetSegmentMode();
 
 	menuBar->Enable(XRCID("btnXMirror"), isBrush);
 	toolBarV->EnableTool(XRCID("btnXMirror"), isBrush);
 	menuBar->Enable(XRCID("btnConnected"), isBrush);
 	toolBarV->EnableTool(XRCID("btnConnected"), isBrush);
-	menuBar->Enable(XRCID("btnBrushCollision"), !isSegMode);
-	toolBarV->EnableTool(XRCID("btnBrushCollision"), !isSegMode);
 }
 
 void OutfitStudioFrame::ReToggleToolOptionsUI() {
 	bool isBrush = glView->GetActiveBrush() != nullptr;
-	bool isSegMode = glView->GetSegmentMode();
 	bool xMirror = glView->GetToolOptionXMirror();
 	bool connOnly = glView->GetToolOptionConnectedOnly();
-	bool allMesh = glView->GetToolOptionAllSelMesh();
-
-	glView->SetGlobalBrushCollision(!isSegMode && allMesh);
 
 	menuBar->Check(XRCID("btnXMirror"), isBrush && xMirror);
 	toolBarV->ToggleTool(XRCID("btnXMirror"), isBrush && xMirror);
 	menuBar->Check(XRCID("btnConnected"), isBrush && connOnly);
 	toolBarV->ToggleTool(XRCID("btnConnected"), isBrush && connOnly);
-	menuBar->Check(XRCID("btnBrushCollision"), !isSegMode && allMesh);
-	toolBarV->ToggleTool(XRCID("btnBrushCollision"), !isSegMode && allMesh);
 }
 
 void OutfitStudioFrame::CloseBrushSettings() {
@@ -6302,6 +6292,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 			event.Skip();
 			return;
 		}
+	}
+
+	if ((id == segmentTabButton->GetId() || id == partitionTabButton->GetId())
+		&& selectedItems.size() != 1) {
+		wxMessageBox(_("You must have exactly one mesh selected in order to edit partitions or segments."), _("Info"), wxICON_INFORMATION, this);
+		event.Skip();
+		return;
 	}
 
 	if (id != meshTabButton->GetId())
@@ -10666,7 +10663,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	Vector3 s;
 
 	TweakPickInfo tpi;
-	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, bGlobalBrushCollision, &tpi.facet);
+	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, true, &tpi.facet);
 	if (!hit)
 		return false;
 
@@ -10674,7 +10671,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		return false;
 
 	if (toolOptionXMirror) {
-		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
+		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, true, &tpi.facetM))
 			tpi.facetM = -1;
 	}
 
@@ -10851,7 +10848,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 
 	if (activeStroke) {
-		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
+		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, true);
 
 		if (activeBrush->Type() == TweakBrush::BrushType::Move) {
 			Vector3 pn;
@@ -10863,9 +10860,9 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			if (!hit)
 				return;
 
-			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, bGlobalBrushCollision, &tpi.facet);
+			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, true, &tpi.facet);
 			if (toolOptionXMirror) {
-				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
+				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, true, &tpi.facetM))
 					tpi.facetM = -1;
 			}
 			tpi.normal.Normalize();
@@ -11188,7 +11185,7 @@ bool wxGLPanel::StartPickVertex() {
 void wxGLPanel::UpdatePickVertex(const wxPoint& screenPos) {
 	GLSurface::CursorHitResult hitResult{};
 
-	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hitResult);
+	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, true, &hitResult);
 	if (!hit || hitResult.hitMeshName != mouseDownMeshName || hitResult.hoverPoint != mouseDownPoint)
 		gls.HidePointCursor();
 
@@ -11259,7 +11256,7 @@ bool wxGLPanel::StartPickEdge() {
 void wxGLPanel::UpdatePickEdge(const wxPoint& screenPos) {
 	GLSurface::CursorHitResult hitResult{};
 
-	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hitResult);
+	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, true, &hitResult);
 	if (!hit || hitResult.hitMeshName != mouseDownMeshName || !hitResult.hoverEdge.CompareIndices(mouseDownEdge))
 		gls.HideSegCursor();
 
@@ -12139,7 +12136,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 
 			os->CheckBrushBounds();
 			os->UpdateBrushSettings();
-			gls.UpdateCursor(p.x, p.y, bGlobalBrushCollision);
+			gls.UpdateCursor(p.x, p.y, true);
 			gls.RenderOneFrame();
 		}
 	}
@@ -12233,7 +12230,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		GLSurface::CursorHitResult hitResult{};
 
 		if (editMode) {
-			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitResult);
+			cursorExists = gls.UpdateCursor(x, y, true, &hitResult);
 		}
 		else {
 			cursorExists = false;

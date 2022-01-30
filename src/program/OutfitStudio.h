@@ -276,17 +276,11 @@ public:
 	bool GetSegmentMode() { return segmentMode; }
 	void SetSegmentMode(bool on = true) { segmentMode = on; }
 
-	bool GetGlobalBrushCollision() { return bGlobalBrushCollision; }
-	void SetGlobalBrushCollision(bool on = true) { bGlobalBrushCollision = on; }
-
 	bool GetToolOptionXMirror() { return toolOptionXMirror; }
 	void SetToolOptionXMirror(bool on = true) { toolOptionXMirror = on; }
 
 	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
 	void SetToolOptionConnectedOnly(bool on = true) { toolOptionConnectedOnly = on; }
-
-	bool GetToolOptionAllSelMesh() { return toolOptionAllSelMesh; }
-	void SetToolOptionAllSelMesh(bool on = true) { toolOptionAllSelMesh = on; }
 
 	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
 		mesh* m = gls.GetMesh(shapeName);
@@ -709,10 +703,8 @@ private:
 	bool isSelecting = false;
 	bool isPickingVertex = false;
 	bool isPickingEdge = false;
-	bool bGlobalBrushCollision = true;
 	bool toolOptionXMirror = true;
 	bool toolOptionConnectedOnly = false;
-	bool toolOptionAllSelMesh = true;
 
 	TweakBrush* activeBrush = nullptr;
 	TweakBrush* savedBrush;
@@ -1332,11 +1324,6 @@ private:
 
 	void OnConnectedOnly(wxCommandEvent& event) {
 		glView->SetToolOptionConnectedOnly(event.IsChecked());
-		ReToggleToolOptionsUI();
-	}
-
-	void OnGlobalBrushCollision(wxCommandEvent& event) {
-		glView->SetToolOptionAllSelMesh(event.IsChecked());
 		ReToggleToolOptionsUI();
 	}
 
