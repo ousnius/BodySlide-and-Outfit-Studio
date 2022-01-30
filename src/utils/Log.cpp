@@ -29,7 +29,7 @@ void Log::Initialize(int level, const wxString& fileName) {
 		std::ifstream truncStream(fileName.ToStdString(), std::ios_base::ate);
 		if (truncStream) {
 			//Store size and seek back to beginning
-			int streamSize = truncStream.tellg();
+			std::streampos streamSize = truncStream.tellg();
 			truncStream.seekg(0, std::ios::beg);
 
 			//Count all occurences of the signature
@@ -49,7 +49,7 @@ void Log::Initialize(int level, const wxString& fileName) {
 
 					if (sigCount >= 2) {
 						//Read text from 2nd signature to EOF
-						int posCopy = truncStream.tellg();
+						std::streampos posCopy = truncStream.tellg();
 						textCopy.resize(streamSize - posCopy);
 						truncStream.read((char*)&textCopy.front(), textCopy.size());
 						textCopy.insert(0, *pos);
