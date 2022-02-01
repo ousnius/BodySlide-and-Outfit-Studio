@@ -12296,9 +12296,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		if (os->statusBar) {
 			if (cursorExists) {
 				if (activeTool == ToolID::MaskBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hitResult.hoverPoint, hitResult.hoverColor.x), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hitResult.hoverPoint, hitResult.hoverMask), 1);
 				else if (activeTool == ToolID::WeightBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", hitResult.hoverPoint, hitResult.hoverColor.y), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", hitResult.hoverPoint, hitResult.hoverWeight), 1);
 				else if (activeTool == ToolID::ColorBrush || activeTool == ToolID::AlphaBrush)
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g, Alpha: %g",
 																  hitResult.hoverPoint,
