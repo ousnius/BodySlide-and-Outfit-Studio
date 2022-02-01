@@ -344,7 +344,7 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 		texRefs[0] = LoadTexture(defaultTex, false);
 
 		if (!texFiles.empty())
-			RenameTexture(defaultTex, texFiles[0]);
+			texFiles[0] = defaultTex;
 		else
 			texFiles.resize(1, defaultTex);
 	}
