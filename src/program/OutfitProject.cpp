@@ -3378,8 +3378,6 @@ void OutfitProject::PrepareMergeVertex(NiShape* shape, UndoStateShape& uss, int 
 
 void OutfitProject::PrepareWeldVertex(NiShape* shape, UndoStateShape& uss, int selVert, int targVert, NiShape* targShape) {
 	// Get triangle data
-	uint16_t numVerts = shape->GetNumVertices();
-
 	std::vector<Triangle> tris;
 	shape->GetTriangles(tris);
 
