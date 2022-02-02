@@ -237,7 +237,7 @@
 							</object>
 							<object class="tool" name="btnMerge">
 								<label>Merge Vertex</label>
-								<tooltip>Merges the selected vertex into the target vertex, deleting it and attaching its triangles to the target vertex.</tooltip>
+								<tooltip>Merges two vertices and fills any gaps.</tooltip>
 								<bitmap>$(AppDir)\res\images\Merge.png</bitmap>
 								<toggle>1</toggle>
 								<checked>0</checked>
@@ -245,7 +245,7 @@
 							</object>
 							<object class="tool" name="btnWeld">
 								<label>Weld Vertex</label>
-								<tooltip>Welds the selected vertex to the target vertex, giving it the target's coordinates, coordinate slider diffs, and bone weights, but not UV.</tooltip>
+								<tooltip>Welds two vertices while keeping the texture coordinates (UV) distinct.</tooltip>
 								<bitmap>$(AppDir)\res\images\Weld.png</bitmap>
 								<toggle>1</toggle>
 								<checked>0</checked>
@@ -1780,14 +1780,14 @@
 			</object>
 			<object class="wxMenuItem" name="btnMerge">
 				<label>Merge Vertex</label>
-				<help>Merges the selected vertex into the target vertex, deleting it and attaching its triangles to the target vertex.</help>
+				<help>Merges two vertices and fills any gaps.</help>
 				<checkable>1</checkable>
 				<checked>0</checked>
 				<enabled>0</enabled>
 			</object>
 			<object class="wxMenuItem" name="btnWeld">
 				<label>Weld Vertex</label>
-				<help>Welds the selected vertex to the target vertex, giving it the target's coordinates, coordinate slider diffs, and bone weights, but not UV.</help>
+				<help>Welds two vertices while keeping the texture coordinates (UV) distinct.</help>
 				<checkable>1</checkable>
 				<checked>0</checked>
 				<enabled>0</enabled>
