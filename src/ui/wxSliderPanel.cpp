@@ -13,36 +13,16 @@ END_EVENT_TABLE()
 wxSliderPanel::wxSliderPanel()
 	: wxWindow() {}
 
-wxSliderPanel::wxSliderPanel(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings)
+wxSliderPanel::wxSliderPanel(wxWindow* parent, const wxString& name)
 	: wxWindow() {
-	Create(parent, name, bmpEdit, bmpSettings);
+	Create(parent, name);
 }
 
-bool wxSliderPanel::Create(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings) {
+bool wxSliderPanel::Create(wxWindow* parent, const wxString& name) {
+	SetLabel(name);
+
 	if (isCreated) {
-		btnSliderEdit->SetName(name + "|btn");
-		btnSliderProp->SetName(name + "|btnSliderProp");
-		btnMinus->SetName(name + "|btnMinus");
-		btnPlus->SetName(name + "|btnPlus");
-		sliderCheck->SetName(name + "|check");
-		sliderName->SetName(name + "|lbl");
-		slider->SetName(name + "|slider");
-		sliderReadout->SetName(name + "|readout");
-
-		sliderName->SetLabel(name);
-
-		sliderCheck->Enable(true);
-		slider->SetValue(0);
-		sliderReadout->ChangeValue("0%");
-		sliderCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-
-		btnSliderProp->Hide();
-		btnMinus->Hide();
-		btnPlus->Hide();
-
-		editing = false;
 		SetBackgroundColour(wxColour(64, 64, 64));
-
 		Show();
 		return true;
 	}
@@ -51,70 +31,52 @@ bool wxSliderPanel::Create(wxWindow* parent, const wxString& name, const wxBitma
 		return false;
 
 	Hide();
-
 	SetBackgroundColour(wxColour(64, 64, 64));
-	SetMinSize(wxSize(-1, 25));
-	SetMaxSize(wxSize(-1, 25));
 
+	//TODO: SliderPanel needs to match the side it would be if a subSliderPanelIsAttached
+	SetMinSize(wxSize(-1, 40));
+	SetMaxSize(wxSize(-1, 40));
 	sizer = new wxBoxSizer(wxHORIZONTAL);
 
-	btnSliderEdit = new wxBitmapButton();
-	btnSliderEdit->Create(this, wxID_ANY, bmpEdit, wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btn");
-	btnSliderEdit->SetToolTip(_("Turn on edit mode for this slider."));
-	sizer->Add(btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL);
-
-	btnSliderProp = new wxBitmapButton();
-	btnSliderProp->Hide();
-	btnSliderProp->Create(this, wxID_ANY, bmpSettings, wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btnSliderProp");
-	btnSliderProp->SetToolTip(_("Display and edit the active slider's properties."));
-	sizer->Add(btnSliderProp, 0, wxALIGN_CENTER_VERTICAL | wxALL);
-
-	btnMinus = new wxButton();
-	btnMinus->Hide();
-	btnMinus->Create(this, wxID_ANY, "-", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, name + "|btnMinus");
-	btnMinus->SetToolTip(_("Weaken slider data by 1%."));
-	btnMinus->SetForegroundColour(wxTransparentColour);
-	sizer->Add(btnMinus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
-
-	btnPlus = new wxButton();
-	btnPlus->Hide();
-	btnPlus->Create(this, wxID_ANY, "+", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, name + "|btnPlus");
-	btnPlus->SetToolTip(_("Strengthen slider data by 1%."));
-	btnPlus->SetForegroundColour(wxTransparentColour);
-	sizer->Add(btnPlus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
-
-	sliderCheck = new wxCheckBox();
-	sliderCheck->Create(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, name + "|check");
-	sliderCheck->SetForegroundColour(wxColour(255, 255, 255));
-	sizer->Add(sliderCheck, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
-
-	sliderName = new wxStaticText();
-	sliderName->Create(this, wxID_ANY, name, wxDefaultPosition, wxDefaultSize, 0, name + "|lbl");
-	sliderName->SetForegroundColour(wxColour(255, 255, 255));
-	sizer->Add(sliderName, 0, wxALIGN_CENTER_VERTICAL | wxALL);
-
-	slider = new wxSlider();
-	slider->Create(this, wxID_ANY, 0, 0, 100, wxDefaultPosition, wxSize(-1, -1), wxSL_HORIZONTAL, wxDefaultValidator, name + "|slider");
-	slider->SetMinSize(wxSize(-1, 20));
-	slider->SetMaxSize(wxSize(-1, 20));
-
-	sizer->Add(slider, 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
-
-	sliderReadout = new wxTextCtrl();
-	sliderReadout->Create(this, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, -1), wxTE_RIGHT | wxTE_PROCESS_ENTER | wxSIMPLE_BORDER, wxDefaultValidator, name + "|readout");
-	sliderReadout->SetMaxLength(0);
-	sliderReadout->SetForegroundColour(wxColour(255, 255, 255));
-	sliderReadout->SetBackgroundColour(wxColour(48, 48, 48));
-	sliderReadout->SetMinSize(wxSize(40, 20));
-	sliderReadout->SetMaxSize(wxSize(40, 20));
-
-	sizer->Add(sliderReadout, 0, wxALIGN_CENTER_VERTICAL | wxALL, 2);
-
 	SetSizer(sizer);
-	sizer->Fit(this);
 
 	isCreated = true;
 	return true;
+}
+
+bool wxSliderPanel::AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel) {
+	if (this->subSliderPanel != nullptr)
+		return false;
+
+	this->subSliderPanel = subSliderPanel;
+
+	//TODO: attach sub slider (update names from GeLabel())
+
+	return true;
+}
+
+wxSubSliderPanel* wxSliderPanel::DetachSubSliderPanel() {
+	if (this->subSliderPanel == nullptr)
+		return nullptr;
+
+	auto subSliderPanel = this->subSliderPanel;
+
+	//TODO: detach sub slider
+
+	return subSliderPanel;
+}
+
+void wxSliderPanel::SetValue(float value) {
+	sliderReadoutValue = wxString::Format("%d%%", value);
+	sliderValue = value;
+}
+
+void wxSliderPanel::SetChecked(bool checked) {
+	isChecked = checked;
+}
+
+void wxSliderPanel::SetEditing(bool editing) {
+	isEditing = editing;
 }
 
 
@@ -128,7 +90,7 @@ wxSliderPanel* wxSliderPanelPool::Push() {
 	return nullptr;
 }
 
-void wxSliderPanelPool::CreatePool(size_t poolSize, wxWindow* parent, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings) {
+void wxSliderPanelPool::CreatePool(size_t poolSize, wxWindow* parent) {
 	if (poolSize > MaxPoolSize)
 		poolSize = MaxPoolSize;
 
@@ -139,7 +101,7 @@ void wxSliderPanelPool::CreatePool(size_t poolSize, wxWindow* parent, const wxBi
 			p = new wxSliderPanel();
 
 		if (!p->IsCreated())
-			p->Create(parent, "sliderPoolDummy", bmpEdit, bmpSettings);
+			p->Create(parent, "sliderPoolDummy");
 	}
 }
 

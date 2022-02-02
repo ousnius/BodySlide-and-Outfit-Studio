@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/UndoHistory.h"
 #include "../render/GLSurface.h"
 #include "../ui/wxSliderPanel.h"
+#include "../ui/wxSubSliderPanel.h"
 #include "../ui/wxStateButton.h"
 #include "../utils/ConfigurationManager.h"
 #include "../utils/Log.h"
@@ -865,6 +866,7 @@ public:
 
 	PoseDataCollection poseDataCollection;
 	wxSliderPanelPool sliderPool;
+	wxSubSliderPanelPool subSliderPool;
 
 	wxTreeCtrl* outfitShapes = nullptr;
 	wxTreeCtrl* outfitBones = nullptr;
@@ -1193,6 +1195,7 @@ private:
 	void OnSaveSliderSet(wxCommandEvent& event);
 	void OnSaveSliderSetAs(wxCommandEvent& event);
 
+	void OnSliderScroll(wxScrollWinEvent& event);
 	void OnSlider(wxCommandEvent& event);
 	void OnClickSliderButton(wxCommandEvent& event);
 	void OnReadoutChange(wxCommandEvent& event);

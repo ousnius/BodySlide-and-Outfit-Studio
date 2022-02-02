@@ -987,6 +987,9 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	}
 
 	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
+	sliderScroll->Bind(wxEVT_SCROLLWIN_LINEUP, &OutfitStudioFrame::OnSliderScroll, this);
+	sliderScroll->Bind(wxEVT_SCROLLWIN_LINEDOWN, &OutfitStudioFrame::OnSliderScroll, this);
+
 	bmpEditSlider = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall.png", wxBITMAP_TYPE_ANY);
 	bmpSliderSettings = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/Settings.png", wxBITMAP_TYPE_ANY);
 
@@ -1154,7 +1157,10 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	// Create initial slider pool
 	const size_t minSliderPoolSize = 100;
-	sliderPool.CreatePool(minSliderPoolSize, sliderScroll, *bmpEditSlider, *bmpSliderSettings);
+	sliderPool.CreatePool(minSliderPoolSize, sliderScroll);
+
+	const size_t minSubSliderPoolSize = 20;
+	subSliderPool.CreatePool(minSubSliderPoolSize, sliderScroll, *bmpEditSlider, *bmpSliderSettings);
 
 	wxLogMessage("Outfit Studio frame loaded.");
 }
@@ -2343,14 +2349,14 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, wxScrolledWindo
 
 	wxSliderPanel* sliderPanel = sliderPool.GetNext();
 	if (sliderPanel) {
-		if (sliderPanel->Create(wnd, sliderName, *bmpEditSlider, *bmpSliderSettings)) {
-			sliderPanel->btnSliderEdit->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-			sliderPanel->btnSliderProp->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-			sliderPanel->btnMinus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-			sliderPanel->btnPlus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-			sliderPanel->sliderCheck->Bind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnSliderCheckBox, this);
-			sliderPanel->slider->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
-			sliderPanel->sliderReadout->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
+		if (sliderPanel->Create(wnd, sliderName)) {
+			//sliderPanel->btnSliderEdit->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+			//sliderPanel->btnSliderProp->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+			//sliderPanel->btnMinus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+			//sliderPanel->btnPlus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+			//sliderPanel->sliderCheck->Bind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnSliderCheckBox, this);
+			//sliderPanel->slider->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
+			//sliderPanel->sliderReadout->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
 
 			if (sliderPanel->GetContainingSizer())
 				rootSz->Detach(sliderPanel);
@@ -2403,14 +2409,12 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 void OutfitStudioFrame::SetSliderValue(const size_t index, int val) {
 	std::string name = project->GetSliderName(index);
 	project->SliderValue(index) = val / 100.0f;
-	sliderPanels[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
-	sliderPanels[name]->slider->SetValue(val);
+	sliderPanels[name]->SetValue(val);
 }
 
 void OutfitStudioFrame::SetSliderValue(const std::string& name, int val) {
 	project->SliderValue(name) = val / 100.0f;
-	sliderPanels[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
-	sliderPanels[name]->slider->SetValue(val);
+	sliderPanels[name]->SetValue(val);
 }
 
 void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
@@ -2437,10 +2441,7 @@ void OutfitStudioFrame::ShowSliderEffect(const std::string& sliderName, bool sho
 
 		wxSliderPanel* sliderPanel = sliderPanels[sliderName];
 		if (sliderPanel) {
-			if (show)
-				sliderPanel->sliderCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-			else
-				sliderPanel->sliderCheck->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
+			sliderPanel->SetChecked(show);
 		}
 	}
 }
@@ -2814,13 +2815,13 @@ void OutfitStudioFrame::HideSliderPanel(wxSliderPanel* sliderPanel) {
 	if (!sliderPanel)
 		return;
 
-	sliderPanel->btnSliderEdit->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-	sliderPanel->btnSliderProp->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-	sliderPanel->btnMinus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-	sliderPanel->btnPlus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-	sliderPanel->sliderCheck->Unbind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnSliderCheckBox, this);
-	sliderPanel->slider->Unbind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
-	sliderPanel->sliderReadout->Unbind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
+	//sliderPanel->btnSliderEdit->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+	//sliderPanel->btnSliderProp->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+	//sliderPanel->btnMinus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+	//sliderPanel->btnPlus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+	//sliderPanel->sliderCheck->Unbind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnSliderCheckBox, this);
+	//sliderPanel->slider->Unbind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
+	//sliderPanel->sliderReadout->Unbind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
 
 	sliderPanel->Hide();
 }
@@ -2841,10 +2842,7 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 	if (bEditSlider) {
 		wxSliderPanel* sliderPanel = sliderPanels[activeSlider];
 		if (sliderPanel) {
-			sliderPanel->sliderCheck->Enable(true);
-			sliderPanel->btnSliderProp->Hide();
-			sliderPanel->btnMinus->Hide();
-			sliderPanel->btnPlus->Hide();
+			sliderPanel->SetEditing(false);
 			sliderPanel->Layout();
 		}
 	}
@@ -2857,18 +2855,15 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 	lastActiveSlider = activeSlider;
 	bEditSlider = true;
 
-	sliderPanel->slider->SetValue(100);
+	sliderPanel->SetValue(100);
 	SetSliderValue(activeSlider, 100);
 
-	if (sliderPanel->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_UNCHECKED) {
-		sliderPanel->sliderCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+	if (sliderPanel->IsChecked() == false) {
+		sliderPanel->SetChecked(true);
 		ShowSliderEffect(activeSlider, true);
 	}
 
-	sliderPanel->sliderCheck->Enable(false);
-	sliderPanel->btnSliderProp->Show();
-	sliderPanel->btnMinus->Show();
-	sliderPanel->btnPlus->Show();
+	sliderPanel->SetEditing(true);
 	sliderPanel->Layout();
 	MenuEnterSliderEdit();
 
@@ -2880,13 +2875,11 @@ void OutfitStudioFrame::ExitSliderEdit() {
 	if (!activeSlider.empty()) {
 		wxSliderPanel* sliderPanel = sliderPanels[activeSlider];
 		if (sliderPanel) {
-			sliderPanel->sliderCheck->Enable(true);
-			sliderPanel->slider->SetValue(0);
+			sliderPanel->SetChecked(true);
+			sliderPanel->SetValue(0);
 			SetSliderValue(activeSlider, 0);
 			ShowSliderEffect(activeSlider, true);
-			sliderPanel->btnSliderProp->Hide();
-			sliderPanel->btnMinus->Hide();
-			sliderPanel->btnPlus->Hide();
+			sliderPanel->SetEditing(false);
 			sliderPanel->Layout();
 		}
 
@@ -4082,7 +4075,7 @@ void OutfitStudioFrame::SetBaseShape() {
 	if (!activeSlider.empty()) {
 		bEditSlider = false;
 		wxSliderPanel* sliderPanel = sliderPanels[activeSlider];
-		sliderPanel->slider->SetFocus();
+		sliderPanel->SetFocus();
 		HighlightSlider("");
 		activeSlider.clear();
 	}
@@ -6182,6 +6175,35 @@ void OutfitStudioFrame::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
 	Config.SetValue("Lights/Directional2", directional2);
 }
 
+void OutfitStudioFrame::OnSliderScroll(wxScrollWinEvent& event) {
+	wxSize size = sliderScroll->GetSizer()->GetSize();
+	int sliderHeight = (size.GetHeight() / sliderPanels.size());
+
+	int lineWidth, lineHeight;
+	sliderScroll->GetScrollPixelsPerUnit(&lineWidth, &lineHeight);
+	int linesPerPage = sliderScroll->GetScrollPageSize(wxVERTICAL);
+	int scrollPos = sliderScroll->GetScrollPos(wxVERTICAL);
+	int numberOfVisibleSliders = ceil(((float)linesPerPage * (float)lineHeight) / (float)sliderHeight);
+	int startIndex = floor(linesPerPage * scrollPos / sliderHeight);
+	int endIndex = startIndex + numberOfVisibleSliders;
+
+	const auto& list = sliderScroll->GetChildren();
+	int index = 0;
+	for (wxWindowList::compatibility_iterator node = list.GetFirst(); node; node = node->GetNext()) {
+		auto sliderPanel = reinterpret_cast<wxSliderPanel*>(node->GetData());
+		if (index >= startIndex && index <= endIndex) {
+			sliderPanel->AttachSubSliderPanel(subSliderPool.GetNext());
+		}
+		else {
+			auto subSliderPanel = sliderPanel->DetachSubSliderPanel();
+			//if(subSliderPanel != nullptr)
+				//subSliderPool.Push(subSliderPanel);
+		}
+
+		index++;
+	}
+}
+
 void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 	wxWindow* btn = (wxWindow*)event.GetEventObject();
 	if (!btn)
@@ -6243,7 +6265,7 @@ void OutfitStudioFrame::OnReadoutChange(wxCommandEvent& event) {
 		return;
 
 	wxSliderPanel* sliderPanel = sliderPanels[sliderName];
-	sliderPanel->slider->SetValue(v);
+	sliderPanel->SetValue(v);
 
 	project->SliderValue(sliderName) = v / 100.0f;
 
@@ -6834,11 +6856,11 @@ void OutfitStudioFrame::ScrollWindowIntoView(wxScrolledWindow* scrolled, wxWindo
 void OutfitStudioFrame::HighlightSlider(const std::string& name) {
 	for (auto& d : sliderPanels) {
 		if (d.first == name) {
-			d.second->editing = true;
+			d.second->SetEditing(true);
 			d.second->SetBackgroundColour(wxColour(125, 77, 138));
 		}
 		else {
-			d.second->editing = false;
+			d.second->SetEditing(false);
 			d.second->SetBackgroundColour(wxColour(64, 64, 64));
 		}
 	}
@@ -6852,7 +6874,7 @@ void OutfitStudioFrame::ZeroSliders() {
 				continue;
 
 			SetSliderValue(s, 0);
-			sliderPanels[project->GetSliderName(s)]->slider->SetValue(0);
+			sliderPanels[project->GetSliderName(s)]->SetValue(0);
 		}
 		ApplySliders();
 	}
@@ -7150,10 +7172,10 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		// Deleting sliders
 		std::vector<std::string> erase;
 		for (auto& sliderPanel : sliderPanels) {
-			sliderPanel.second->slider->SetValue(0);
+			sliderPanel.second->SetValue(0);
 			SetSliderValue(sliderPanel.first, 0);
 			ShowSliderEffect(sliderPanel.first, true);
-			sliderPanel.second->slider->SetFocus();
+			sliderPanel.second->FocusSlider();
 			HideSliderPanel(sliderPanel.second);
 
 			erase.push_back(sliderPanel.first);
@@ -7262,10 +7284,10 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		// Deleting sliders
 		std::vector<std::string> erase;
 		for (auto& sliderPanel : sliderPanels) {
-			sliderPanel.second->slider->SetValue(0);
+			sliderPanel.second->SetValue(0);
 			SetSliderValue(sliderPanel.first, 0);
 			ShowSliderEffect(sliderPanel.first, true);
-			sliderPanel.second->slider->SetFocus();
+			sliderPanel.second->SetFocus();
 			HideSliderPanel(sliderPanel.second);
 
 			erase.push_back(sliderPanel.first);
@@ -7555,7 +7577,7 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 	if (!bEditSlider) {
 		wxLogMessage("Clearing slider data of the checked sliders for the selected shapes.");
 		for (auto& sliderPanel : sliderPanels)
-			if (sliderPanel.second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED)
+			if (sliderPanel.second->IsChecked() == true)
 				clearSlider(sliderPanel.first);
 	}
 	else {
@@ -7682,10 +7704,10 @@ void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
 		wxLogMessage("Deleting slider '%s'.", sliderName);
 
 		wxSliderPanel* sliderPanel = sliderPanels[sliderName];
-		sliderPanel->slider->SetValue(0);
+		sliderPanel->SetValue(0);
 		SetSliderValue(sliderName, 0);
 		ShowSliderEffect(sliderName, true);
-		sliderPanel->slider->SetFocus();
+		sliderPanel->SetFocus();
 		HideSliderPanel(sliderPanel);
 
 		sliderScroll->FitInside();
@@ -7694,7 +7716,7 @@ void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
 
 	if (!bEditSlider) {
 		for (auto it = sliderPanels.begin(); it != sliderPanels.end();) {
-			if (it->second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED) {
+			if (it->second->IsChecked()) {
 				if ((keepZaps && project->activeSet[it->first].bZap) || (keepSliders && !project->activeSet[it->first].bZap)) {
 					++it;
 					continue;
@@ -7846,15 +7868,7 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 				sliderPanels.erase(sliderName);
 
 				wxString sn = wxString::FromUTF8(newSliderName);
-				d->slider->SetName(sn + "|slider");
-				d->sliderName->SetName(sn + "|lbl");
-				d->btnSliderEdit->SetName(sn + "|btn");
-				d->btnSliderProp->SetName(sn + "|btnSliderProp");
-				d->btnMinus->SetName(sn + "|btnMinus");
-				d->btnPlus->SetName(sn + "|btnPlus");
-				d->sliderCheck->SetName(sn + "|check");
-				d->sliderReadout->SetName(sn + "|readout");
-				d->sliderName->SetLabel(sn);
+				d->SetName(sn);
 
 				if (sliderName == activeSlider)
 					activeSlider = std::move(newSliderName);

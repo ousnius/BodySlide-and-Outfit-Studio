@@ -1765,6 +1765,7 @@
     <ClInclude Include="src\program\SliderDataImportDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\wxSubSliderPanel.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1977,6 +1978,7 @@
     <ClCompile Include="src\program\SliderDataImportDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui\wxSubSliderPanel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml">

@@ -767,6 +767,7 @@
     <ClInclude Include="src\ui\wxBrushSettingsPopup.h" />
     <ClInclude Include="src\ui\wxSliderPanel.h" />
     <ClInclude Include="src\ui\wxStateButton.h" />
+    <ClInclude Include="src\ui\wxSubSliderPanel.h" />
     <ClInclude Include="src\utils\AABBTree.h" />
     <ClInclude Include="src\utils\ConfigurationManager.h" />
     <ClInclude Include="src\utils\ConfigDialogUtil.h" />
@@ -840,6 +841,7 @@
     <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp" />
     <ClCompile Include="src\ui\wxSliderPanel.cpp" />
     <ClCompile Include="src\ui\wxStateButton.cpp" />
+    <ClCompile Include="src\ui\wxSubSliderPanel.cpp" />
     <ClCompile Include="src\utils\AABBTree.cpp" />
     <ClCompile Include="src\utils\ConfigurationManager.cpp" />
     <ClCompile Include="src\utils\Log.cpp" />
