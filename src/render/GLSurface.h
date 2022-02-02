@@ -249,6 +249,8 @@ public:
 					  const nifly::Vector3& directional1Dir,
 					  const nifly::Vector3& directional2Dir);
 
+	void ProjectPointToScreen(const nifly::Vector3& p, int& x, int& y);
+
 	void GetPickRay(int ScreenX, int ScreenY, mesh* m, nifly::Vector3& dirVect, nifly::Vector3& outNearPos);
 	mesh* PickMesh(int ScreenX, int ScreenY);
 
@@ -261,6 +263,7 @@ public:
 		nifly::Edge hoverEdge;
 		nifly::Vector3 hoverMeshCoord;
 		nifly::Vector3 hoverRealCoord;
+		int hoverTri = -1;
 	};
 
 	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, CursorHitResult* hitResult = nullptr);
@@ -268,6 +271,9 @@ public:
 	void ShowCursor(bool show = true);
 	void HidePointCursor();
 	void HideSegCursor();
+	void SetPointCursor(const nifly::Vector3 &p, mesh*m = nullptr);
+	void SetCenterCursor(const nifly::Vector3 &p, mesh*m = nullptr);
+	void ShowMirrorPointCursor(const nifly::Vector3 &p, mesh*m = nullptr);
 
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.

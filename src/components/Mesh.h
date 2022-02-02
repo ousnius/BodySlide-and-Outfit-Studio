@@ -164,6 +164,8 @@ public:
 		m->SmoothNormals(verts);
 	}
 
+	nifly::Vector3 GetOneVertexNormal(int vertind);
+
 	void CalcTangentSpace();
 
 	// Retrieve connected points in a sphere's radius (squared, requires tri adjacency to be set up).
@@ -226,6 +228,11 @@ public:
 
 	static nifly::Vector3 ApplyMatrix4(const glm::mat4x4& mat, const nifly::Vector3& p) {
 		glm::vec3 gp(mat * glm::vec4(p.x, p.y, p.z, 1.0f));
+		return nifly::Vector3(gp.x, gp.y, gp.z);
+	}
+
+	static nifly::Vector3 ApplyMatrix4ToDir(const glm::mat4x4& mat, const nifly::Vector3& p) {
+		glm::vec3 gp(mat * glm::vec4(p.x, p.y, p.z, 0.0f));
 		return nifly::Vector3(gp.x, gp.y, gp.z);
 	}
 };

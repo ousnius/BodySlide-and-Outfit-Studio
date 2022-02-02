@@ -132,6 +132,7 @@ enum class ToolID {
 	CollapseVertex,
 	FlipEdge,
 	SplitEdge,
+	MoveVertex,
 	Transform,
 	Pivot,
 	VertexEdit
@@ -148,6 +149,8 @@ enum OverlayLayer : uint32_t {
 };
 
 enum class RotationCenterMode { Zero, MeshCenter, Picked };
+
+enum class MoveVertexOperation { None, Move, Weld, Merge };
 
 class wxGLPanel : public wxGLCanvas {
 public:
@@ -220,6 +223,11 @@ public:
 	void ClickFlipEdge();
 	void ClickSplitEdge();
 
+	bool StartMoveVertex(const wxPoint& screenPos);
+	void UpdateMoveVertex(const wxPoint& screenPos);
+	void EndMoveVertex();
+	void CancelMoveVertex();
+
 	bool RestoreMode(UndoStateProject* usp);
 	void ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender = true);
 	bool UndoStroke();
@@ -281,6 +289,21 @@ public:
 
 	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
 	void SetToolOptionConnectedOnly(bool on = true) { toolOptionConnectedOnly = on; }
+
+	bool GetToolOptionMerge() { return toolOptionMerge; }
+	void SetToolOptionMerge(bool on = true) { toolOptionMerge = on; }
+
+	bool GetToolOptionWeld() { return toolOptionWeld; }
+	void SetToolOptionWeld(bool on = true) { toolOptionWeld = on; }
+
+	bool GetToolOptionRestrictSurface() { return toolOptionRestrictSurface; }
+	void SetToolOptionRestrictSurface(bool on = true) { toolOptionRestrictSurface = on; }
+
+	bool GetToolOptionRestrictPlane() { return toolOptionRestrictPlane; }
+	void SetToolOptionRestrictPlane(bool on = true) { toolOptionRestrictPlane = on; }
+
+	bool GetToolOptionRestrictNormal() { return toolOptionRestrictNormal; }
+	void SetToolOptionRestrictNormal(bool on = true) { toolOptionRestrictNormal = on; }
 
 	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
 		mesh* m = gls.GetMesh(shapeName);
@@ -677,7 +700,16 @@ private:
 	GLSurface::CursorHitResult lastHitResult{};
 	std::string mouseDownMeshName;
 	int mouseDownPoint;
+	int mouseDownMirrorPoint;
 	nifly::Edge mouseDownEdge;
+	nifly::Vector3 mouseDownViewDir;
+	bool mouseHasMovedSinceStart = false;
+	wxPoint mouseDownOffset;
+	nifly::Vector3 mouseDownPointNormal;
+	float snapDistance = 0.0f;
+	MoveVertexOperation moveVertexOperation = MoveVertexOperation::None;
+	int moveVertexTarget;
+	std::string moveVertexWeldTargetMeshName;
 
 	std::set<mesh*> BVHUpdateQueue;
 
@@ -703,8 +735,14 @@ private:
 	bool isSelecting = false;
 	bool isPickingVertex = false;
 	bool isPickingEdge = false;
+	bool isMovingVertex = false;
 	bool toolOptionXMirror = true;
 	bool toolOptionConnectedOnly = false;
+	bool toolOptionMerge = false;
+	bool toolOptionWeld = false;
+	bool toolOptionRestrictSurface = false;
+	bool toolOptionRestrictPlane = false;
+	bool toolOptionRestrictNormal = false;
 
 	TweakBrush* activeBrush = nullptr;
 	TweakBrush* savedBrush;
@@ -1319,11 +1357,58 @@ private:
 
 	void OnXMirror(wxCommandEvent& event) {
 		glView->SetToolOptionXMirror(event.IsChecked());
+		if (event.IsChecked() && glView->GetActiveTool() == ToolID::MoveVertex) {
+			glView->SetToolOptionWeld(false);
+			glView->SetToolOptionMerge(false);
+		}
 		ReToggleToolOptionsUI();
 	}
 
 	void OnConnectedOnly(wxCommandEvent& event) {
 		glView->SetToolOptionConnectedOnly(event.IsChecked());
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionMerge(wxCommandEvent& event) {
+		glView->SetToolOptionMerge(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictSurface(true);
+			glView->SetToolOptionXMirror(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionWeld(wxCommandEvent& event) {
+		glView->SetToolOptionWeld(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictSurface(true);
+			glView->SetToolOptionXMirror(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionRestrictSurface(wxCommandEvent& event) {
+		glView->SetToolOptionRestrictSurface(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictPlane(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionRestrictPlane(wxCommandEvent& event) {
+		glView->SetToolOptionRestrictPlane(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictSurface(false);
+			glView->SetToolOptionRestrictNormal(false);
+		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionRestrictNormal(wxCommandEvent& event) {
+		glView->SetToolOptionRestrictNormal(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictPlane(false);
+		}
 		ReToggleToolOptionsUI();
 	}
 

@@ -2690,7 +2690,7 @@ bool OutfitProject::PrepareCollapseVertex(NiShape* shape, UndoStateShape& uss, c
 		// Collect lists of neighboring triangles and vertices.
 		for (uint32_t ti = 0; ti < static_cast<uint32_t>(tris.size()); ++ti) {
 			const Triangle& t = tris[ti];
-			if (t.p1 != vi && t.p2 != vi && t.p3 != vi)
+			if (!t.HasVertex(vi))
 				continue;
 
 			if (ntris.size() >= 3)
@@ -2889,7 +2889,7 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 	for (uint16_t vi : vertexInds) {
 		Vector3 nsum;
 		for (const Triangle& t : tris)
-			if (t.p1 == vi || t.p2 == vi || t.p3 == vi) {
+			if (t.HasVertex(vi)) {
 				Vector3 tn;
 				t.trinormal(*verts, &tn);
 				tn.Normalize();
@@ -3213,6 +3213,243 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 	}
 
 	return true;
+}
+
+bool OutfitProject::IsVertexOnBoundary(NiShape* shape, int vi) {
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+
+	// Count how many times each neighboring vertex is in a triangle with
+	// this vertex
+	std::unordered_map<uint16_t, int> vcounts;
+	for (const Triangle &t : tris) {
+		if (!t.HasVertex(vi))
+			continue;
+
+		if (t.p1 != vi) vcounts[t.p1]++;
+		if (t.p2 != vi) vcounts[t.p2]++;
+		if (t.p3 != vi) vcounts[t.p3]++;
+	}
+
+	// If any vertex count is not even, the corresponding edge is on the
+	// boundary.  (Note that if any vc is greater than 2, the surface is
+	// messed up.)
+	for (auto& vc : vcounts)
+		if (vc.second % 2 != 0)
+			return true;
+
+	return false;
+}
+
+bool OutfitProject::PointsHaveDifferingWeightsOrDiffs(NiShape* shape1, int p1, NiShape* shape2, int p2) {
+	// Check for position differences
+	AnimSkin& skin1 = workAnim.shapeSkinning[shape1->name.get()];
+	AnimSkin& skin2 = workAnim.shapeSkinning[shape2->name.get()];
+	MatTransform skin1ToGlobal = skin1.xformGlobalToSkin.InverseTransform();
+	MatTransform skin2ToGlobal = skin2.xformGlobalToSkin.InverseTransform();
+	const std::vector<Vector3>* verts1 = workNif.GetVertsForShape(shape1);
+	const std::vector<Vector3>* verts2 = workNif.GetVertsForShape(shape2);
+	if (verts1 && verts2 && (*verts1)[p1] != (*verts2)[p2])
+		return true;
+
+	// Check for bone weight differences
+	for (auto bnp : skin1.boneNames) {
+		AnimWeight& aw1 = skin1.boneWeights[bnp.second];
+		auto wit1 = aw1.weights.find(p1);
+		if (wit1 == aw1.weights.end() || wit1->second == 0.0f)
+			continue;
+		auto bnit = skin2.boneNames.find(bnp.first);
+		if (bnit == skin2.boneNames.end())
+			return true;
+		AnimWeight& aw2 = skin2.boneWeights[bnit->second];
+		auto wit2 = aw2.weights.find(p2);
+		if (wit2 == aw2.weights.end() || wit2->second != wit1->second)
+			return true;
+	}
+	for (auto bnp : skin2.boneNames) {
+		AnimWeight& aw2 = skin2.boneWeights[bnp.second];
+		auto wit2 = aw2.weights.find(p2);
+		if (wit2 == aw2.weights.end() || wit2->second == 0.0f)
+			continue;
+		auto bnit = skin1.boneNames.find(bnp.first);
+		if (bnit == skin1.boneNames.end())
+			return true;
+		AnimWeight& aw1 = skin1.boneWeights[bnit->second];
+		auto wit1 = aw1.weights.find(p1);
+		if (wit1 == aw1.weights.end() || wit1->second != wit2->second)
+			return true;
+	}
+
+	// Check for position slider differences.  We skip uv, clamp, and zap.
+	std::string target1 = ShapeToTarget(shape1->name.get());
+	std::string target2 = ShapeToTarget(shape2->name.get());
+	for (size_t si = 0; si < activeSet.size(); ++si) {
+		if (activeSet[si].bUV || activeSet[si].bClamp || activeSet[si].bZap)
+			continue;
+
+		std::string targetDataName1 = activeSet[si].TargetDataName(target1);
+		if (targetDataName1.empty())
+			targetDataName1 = target1 + activeSet[si].name;
+		std::string targetDataName2 = activeSet[si].TargetDataName(target2);
+		if (targetDataName2.empty())
+			targetDataName2 = target2 + activeSet[si].name;
+
+		std::unordered_map<uint16_t, Vector3>* diffSet1;
+		if (IsBaseShape(shape1))
+			diffSet1 = baseDiffData.GetDiffSet(targetDataName1);
+		else
+			diffSet1 = morpher.GetDiffSet(targetDataName1);
+		std::unordered_map<uint16_t, Vector3>* diffSet2;
+		if (IsBaseShape(shape2))
+			diffSet2 = baseDiffData.GetDiffSet(targetDataName2);
+		else
+			diffSet2 = morpher.GetDiffSet(targetDataName2);
+
+		if (!diffSet1 && !diffSet2)
+			continue;
+
+		Vector3 diff1, diff2;
+		if (diffSet1) {
+			auto dit1 = diffSet1->find(p1);
+			if (dit1 != diffSet1->end())
+				diff1 = skin1ToGlobal.rotation * (dit1->second * skin1ToGlobal.scale);
+		}
+		if (diffSet2) {
+			auto dit2 = diffSet2->find(p2);
+			if (dit2 != diffSet2->end())
+				diff2 = skin2ToGlobal.rotation * (dit2->second * skin2ToGlobal.scale);
+		}
+		if (diff1 != diff2)
+			return true;
+	}
+
+	return false;
+}
+
+void OutfitProject::PrepareMergeVertex(NiShape* shape, UndoStateShape& uss, int selVert, int targVert) {
+	// Get triangle data
+	uint16_t numVerts = shape->GetNumVertices();
+
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+
+	std::vector<int> triParts;
+	NifSegmentationInfo inf;
+
+	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
+		NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+		workNif.GetShapePartitions(shape, partitionInfo, triParts);
+	}
+
+	// Delete vertex
+	std::vector<uint16_t> indices(1, selVert);
+	CollectVertexData(shape, uss, indices);
+	std::vector<int> vCollapse = GenerateIndexCollapseMap(indices, numVerts);
+
+	// Replace triangles
+	for (uint32_t ti = 0; ti < tris.size(); ++ti) {
+		const Triangle& t = tris[ti];
+		if (!t.HasVertex(selVert))
+			continue;
+
+		// Replace selVert with targVert
+		Triangle newt = t;
+		if (newt.p1 == selVert)
+			newt.p1 = targVert;
+		if (newt.p2 == selVert)
+			newt.p2 = targVert;
+		if (newt.p3 == selVert)
+			newt.p3 = targVert;
+
+		// Get partition number
+		int part = -1;
+		if (ti < triParts.size())
+			part = triParts[ti];
+
+		// Collapse vertex indices
+		newt.p1 = vCollapse[newt.p1];
+		newt.p2 = vCollapse[newt.p2];
+		newt.p3 = vCollapse[newt.p3];
+
+		uss.delTris.push_back(UndoStateTriangle{ti, t, part});
+		uss.addTris.push_back(UndoStateTriangle{ti, newt, part});
+	}
+}
+
+void OutfitProject::PrepareWeldVertex(NiShape* shape, UndoStateShape& uss, int selVert, int targVert, NiShape* targShape) {
+	// Get triangle data
+	uint16_t numVerts = shape->GetNumVertices();
+
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+
+	std::vector<int> triParts;
+	NifSegmentationInfo inf;
+
+	if (!workNif.GetShapeSegments(shape, inf, triParts)) {
+		NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+		workNif.GetShapePartitions(shape, partitionInfo, triParts);
+	}
+
+	// Delete and restore all triangles that use selVert
+	for (uint32_t ti = 0; ti < tris.size(); ++ti) {
+		const Triangle& t = tris[ti];
+		if (!t.HasVertex(selVert))
+			continue;
+
+		// Get partition number
+		int part = -1;
+		if (ti < triParts.size())
+			part = triParts[ti];
+
+		uss.delTris.push_back(UndoStateTriangle{ti, t, part});
+		uss.addTris.push_back(UndoStateTriangle{ti, t, part});
+	}
+
+	// Get data for the target vertex (in a secondary data-collection
+	// UndoStateShape).
+	UndoStateShape duss;
+	std::vector<uint16_t> targInds(1, targVert);
+	CollectVertexData(targShape, duss, targInds);
+	UndoStateVertex &tusv = duss.delVerts[0];
+
+	// Calculate transform from target's skin coordinates to selected's.
+	AnimSkin& skin1 = workAnim.shapeSkinning[shape->name.get()];
+	AnimSkin& skin2 = workAnim.shapeSkinning[targShape->name.get()];
+	MatTransform skx = skin1.xformGlobalToSkin.ComposeTransforms(skin2.xformGlobalToSkin.InverseTransform());
+
+	// Delete vertex
+	std::vector<uint16_t> selInds(1, selVert);
+	CollectVertexData(shape, uss, selInds);
+	UndoStateVertex &susv = uss.delVerts.back();
+
+	// Build replacement vertex from a mix of selected and target vertex data
+	uss.addVerts.emplace_back();
+	UndoStateVertex& usv = uss.addVerts.back();
+	usv.index = selVert;
+	usv.pos = skx.ApplyTransform(tusv.pos);
+	usv.uv = susv.uv;
+	usv.color = tusv.color;
+	usv.normal = skx.rotation * tusv.normal;
+	usv.tangent = skx.rotation * tusv.tangent;
+	usv.bitangent = skx.rotation * tusv.bitangent;
+	usv.eyeData = tusv.eyeData;
+	usv.weights = std::move(tusv.weights);
+
+	// UV, clamp, and zap diffs come from selected vertex; position diffs
+	// come from target
+	for (const auto& diff : susv.diffs) {
+		const SliderData& sd = activeSet[diff.sliderName];
+		if (sd.bUV || sd.bClamp || sd.bZap)
+			usv.diffs.push_back(diff);
+	}
+	for (const auto& diff : tusv.diffs) {
+		const SliderData& sd = activeSet[diff.sliderName];
+		if (!sd.bUV && !sd.bClamp && !sd.bZap) {
+			Vector3 d = skx.rotation * (skx.scale * diff.diff);
+			usv.diffs.push_back(UndoStateVertexSliderDiff{diff.sliderName, d});
+		}
+	}
 }
 
 void OutfitProject::CheckMerge(const std::string& sourceName, const std::string& targetName, MergeCheckErrors& e) {
