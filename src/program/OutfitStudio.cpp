@@ -11509,6 +11509,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 }
 
 void wxGLPanel::EndMoveVertex() {
+	isMovingVertex = false;
 	UndoStateProject* usp = undoHistory.GetCurState();
 	if (!usp)
 		return;
@@ -11523,7 +11524,7 @@ void wxGLPanel::EndMoveVertex() {
 
 	if (isWeld || isMerge) {
 		NiShape* s1 = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
-		NiShape* s2 = nullptr;
+		NiShape* s2 = s1;
 		if (isWeld)
 			s2 = os->project->GetWorkNif()->FindBlockByName<NiShape>(moveVertexWeldTargetMeshName);
 
