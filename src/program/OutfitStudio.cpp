@@ -933,6 +933,34 @@ void OutfitStudio::GetArchiveFiles(std::vector<std::string>& outList) {
 }
 
 
+void ToolBarButtonHider::Init(wxToolBar *tbi) {
+	tb = tbi;
+	size_t tc = tb->GetToolsCount();
+	butdats.resize(tc);
+	for (size_t pos = 0; pos < tc; ++pos)
+		butdats[pos].id = tb->GetToolByPos(pos)->GetId();
+}
+
+void ToolBarButtonHider::Show(int toolId, bool show) {
+	size_t hidcount = 0;
+	for (size_t pos = 0; pos < butdats.size(); ++pos) {
+		ButDat &bd = butdats[pos];
+		if (bd.id != toolId) {
+			if (bd.but)
+				++hidcount;
+			continue;
+		}
+		if (!show && !bd.but)
+			bd.but.reset(tb->RemoveTool(toolId));
+		if (show && bd.but) {
+			tb->InsertTool(pos - hidcount, bd.but.release());
+			bd.but = nullptr;
+		}
+		break;
+	}
+}
+
+
 OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	wxLogMessage("Loading Outfit Studio frame at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
@@ -980,6 +1008,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	toolBarH = (wxToolBar*)FindWindowByName("toolBarH");
 	toolBarV = (wxToolBar*)FindWindowByName("toolBarV");
+	tbvHider.Init(toolBarV);
 
 	if (toolBarH) {
 		brushSettings = reinterpret_cast<wxButton*>(toolBarH->FindWindowByName("brushSettings"));
@@ -1154,6 +1183,8 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	if (leftPanel)
 		leftPanel->Layout();
+
+	ReEnableToolOptionsUI();
 
 	SetDropTarget(new DnDFile(this));
 
@@ -3079,19 +3110,19 @@ void OutfitStudioFrame::ReEnableToolOptionsUI() {
 	bool isMV = glView->GetActiveTool() == ToolID::MoveVertex;
 
 	menuBar->Enable(XRCID("btnXMirror"), isBrush || isMV);
-	toolBarV->EnableTool(XRCID("btnXMirror"), isBrush || isMV);
+	tbvHider.Show(XRCID("btnXMirror"), isBrush || isMV);
 	menuBar->Enable(XRCID("btnConnected"), isBrush);
-	toolBarV->EnableTool(XRCID("btnConnected"), isBrush);
+	tbvHider.Show(XRCID("btnConnected"), isBrush);
 	menuBar->Enable(XRCID("btnMerge"), isMV);
-	toolBarV->EnableTool(XRCID("btnMerge"), isMV);
+	tbvHider.Show(XRCID("btnMerge"), isMV);
 	menuBar->Enable(XRCID("btnWeld"), isMV);
-	toolBarV->EnableTool(XRCID("btnWeld"), isMV);
+	tbvHider.Show(XRCID("btnWeld"), isMV);
 	menuBar->Enable(XRCID("btnRestrictSurface"), isMV);
-	toolBarV->EnableTool(XRCID("btnRestrictSurface"), isMV);
+	tbvHider.Show(XRCID("btnRestrictSurface"), isMV);
 	menuBar->Enable(XRCID("btnRestrictPlane"), isMV);
-	toolBarV->EnableTool(XRCID("btnRestrictPlane"), isMV);
+	tbvHider.Show(XRCID("btnRestrictPlane"), isMV);
 	menuBar->Enable(XRCID("btnRestrictNormal"), isMV);
-	toolBarV->EnableTool(XRCID("btnRestrictNormal"), isMV);
+	tbvHider.Show(XRCID("btnRestrictNormal"), isMV);
 }
 
 void OutfitStudioFrame::ReToggleToolOptionsUI() {

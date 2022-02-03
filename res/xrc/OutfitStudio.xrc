@@ -218,6 +218,52 @@
 								<toggle>1</toggle>
 							</object>
 							<object class="separator" />
+							<object class="tool" name="btnViewFront">
+								<label>View Front</label>
+								<tooltip>Change camera view to the front.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewFront.png</bitmap>
+							</object>
+							<object class="tool" name="btnViewBack">
+								<label>View Back</label>
+								<tooltip>Change camera view to the back.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewBack.png</bitmap>
+							</object>
+							<object class="tool" name="btnViewLeft">
+								<label>View Left</label>
+								<tooltip>Change camera view to the left.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewLeft.png</bitmap>
+							</object>
+							<object class="tool" name="btnViewRight">
+								<label>View Right</label>
+								<tooltip>Change camera view to the right.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewRight.png</bitmap>
+							</object>
+							<object class="tool" name="btnViewPerspective">
+								<label>Perspective View</label>
+								<tooltip>Toggle perspective view.</tooltip>
+								<bitmap>$(AppDir)\res\images\ViewPerspective.png</bitmap>
+								<toggle>1</toggle>
+								<checked>1</checked>
+							</object>
+							<object class="tool" name="btnShowNodes">
+								<label>Show Nodes</label>
+								<tooltip>Toggle rendering of nodes.</tooltip>
+								<bitmap>$(AppDir)\res\images\Nodes.png</bitmap>
+								<toggle>1</toggle>
+							</object>
+							<object class="tool" name="btnShowBones">
+								<label>Show Bones</label>
+								<tooltip>Toggle rendering of bones.</tooltip>
+								<bitmap>$(AppDir)\res\images\Bones.png</bitmap>
+								<toggle>1</toggle>
+							</object>
+							<object class="tool" name="btnShowFloor">
+								<label>Show Floor</label>
+								<tooltip>Toggle rendering of the floor grid.</tooltip>
+								<bitmap>$(AppDir)\res\images\Floor.png</bitmap>
+								<toggle>1</toggle>
+							</object>
+							<object class="separator" />
 							<object class="tool" name="btnXMirror">
 								<label>X Mirror</label>
 								<tooltip>Mirror edits across the X axis.</tooltip>
@@ -274,52 +320,6 @@
 								<toggle>1</toggle>
 								<checked>0</checked>
 								<disabled>1</disabled>
-							</object>
-							<object class="separator" />
-							<object class="tool" name="btnViewFront">
-								<label>View Front</label>
-								<tooltip>Change camera view to the front.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewFront.png</bitmap>
-							</object>
-							<object class="tool" name="btnViewBack">
-								<label>View Back</label>
-								<tooltip>Change camera view to the back.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewBack.png</bitmap>
-							</object>
-							<object class="tool" name="btnViewLeft">
-								<label>View Left</label>
-								<tooltip>Change camera view to the left.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewLeft.png</bitmap>
-							</object>
-							<object class="tool" name="btnViewRight">
-								<label>View Right</label>
-								<tooltip>Change camera view to the right.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewRight.png</bitmap>
-							</object>
-							<object class="tool" name="btnViewPerspective">
-								<label>Perspective View</label>
-								<tooltip>Toggle perspective view.</tooltip>
-								<bitmap>$(AppDir)\res\images\ViewPerspective.png</bitmap>
-								<toggle>1</toggle>
-								<checked>1</checked>
-							</object>
-							<object class="tool" name="btnShowNodes">
-								<label>Show Nodes</label>
-								<tooltip>Toggle rendering of nodes.</tooltip>
-								<bitmap>$(AppDir)\res\images\Nodes.png</bitmap>
-								<toggle>1</toggle>
-							</object>
-							<object class="tool" name="btnShowBones">
-								<label>Show Bones</label>
-								<tooltip>Toggle rendering of bones.</tooltip>
-								<bitmap>$(AppDir)\res\images\Bones.png</bitmap>
-								<toggle>1</toggle>
-							</object>
-							<object class="tool" name="btnShowFloor">
-								<label>Show Floor</label>
-								<tooltip>Toggle rendering of the floor grid.</tooltip>
-								<bitmap>$(AppDir)\res\images\Floor.png</bitmap>
-								<toggle>1</toggle>
 							</object>
 						</object>
 					</object>

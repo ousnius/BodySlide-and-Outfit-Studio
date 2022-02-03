@@ -852,6 +852,19 @@ struct ProjectHistoryEntry {
 class OutfitProject;
 class wxBrushSettingsPopupTransient;
 
+class ToolBarButtonHider {
+public:
+	struct ButDat {
+		int id = 0;
+		std::unique_ptr<wxToolBarToolBase> but;
+	};
+	std::vector<ButDat> butdats;
+	wxToolBar *tb = nullptr;
+
+	void Init(wxToolBar *tbi);
+	void Show(int toolId, bool show);
+};
+
 class OutfitStudioFrame : public wxFrame {
 public:
 	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
@@ -902,6 +915,7 @@ public:
 	wxMenuBar* menuBar = nullptr;
 	wxToolBar* toolBarH = nullptr;
 	wxToolBar* toolBarV = nullptr;
+	ToolBarButtonHider tbvHider;
 	wxStatusBar* statusBar = nullptr;
 
 	wxSearchCtrl* sliderFilter = nullptr;
