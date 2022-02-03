@@ -1195,6 +1195,7 @@ private:
 	void OnSaveSliderSet(wxCommandEvent& event);
 	void OnSaveSliderSetAs(wxCommandEvent& event);
 
+	void UpdateVisibleSliders();
 	void OnSliderScroll(wxScrollWinEvent& event);
 	void OnSlider(wxCommandEvent& event);
 	void OnClickSliderButton(wxCommandEvent& event);

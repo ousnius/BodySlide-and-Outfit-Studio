@@ -987,8 +987,14 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	}
 
 	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
+	sliderScroll->Bind(wxEVT_SCROLLWIN_TOP, &OutfitStudioFrame::OnSliderScroll, this);
+	sliderScroll->Bind(wxEVT_SCROLLWIN_BOTTOM, &OutfitStudioFrame::OnSliderScroll, this);
 	sliderScroll->Bind(wxEVT_SCROLLWIN_LINEUP, &OutfitStudioFrame::OnSliderScroll, this);
 	sliderScroll->Bind(wxEVT_SCROLLWIN_LINEDOWN, &OutfitStudioFrame::OnSliderScroll, this);
+	sliderScroll->Bind(wxEVT_SCROLLWIN_PAGEUP, &OutfitStudioFrame::OnSliderScroll, this);
+	sliderScroll->Bind(wxEVT_SCROLLWIN_PAGEDOWN, &OutfitStudioFrame::OnSliderScroll, this);
+	sliderScroll->Bind(wxEVT_SCROLLWIN_THUMBTRACK, &OutfitStudioFrame::OnSliderScroll, this);
+	sliderScroll->Bind(wxEVT_SCROLLWIN_THUMBRELEASE, &OutfitStudioFrame::OnSliderScroll, this);
 
 	bmpEditSlider = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall.png", wxBITMAP_TYPE_ANY);
 	bmpSliderSettings = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/Settings.png", wxBITMAP_TYPE_ANY);
@@ -1959,6 +1965,8 @@ void OutfitStudioFrame::OnSetSize(wxSizeEvent& event) {
 
 	OutfitStudioConfig.SetBoolValue("OutfitStudioFrame.maximized", maximized);
 	event.Skip();
+
+	UpdateVisibleSliders();
 }
 
 bool OutfitStudioFrame::SaveProject() {
@@ -4694,6 +4702,7 @@ void OutfitStudioFrame::DoFilterSliders() {
 	}
 
 	sliderScroll->FitInside();
+	UpdateVisibleSliders();
 }
 
 void OutfitStudioFrame::OnBonesFilterChanged(wxCommandEvent& WXUNUSED(event)) {
@@ -6177,6 +6186,12 @@ void OutfitStudioFrame::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnSliderScroll(wxScrollWinEvent& event) {
 	sliderScroll->HandleOnScroll(event);
+	UpdateVisibleSliders();
+}
+
+void OutfitStudioFrame::UpdateVisibleSliders() {
+	if (sliderPanels.size() == 0)
+		return;
 
 	int lineWidth, lineHeight;
 	sliderScroll->GetScrollPixelsPerUnit(&lineWidth, &lineHeight);
@@ -6193,18 +6208,17 @@ void OutfitStudioFrame::OnSliderScroll(wxScrollWinEvent& event) {
 	int index = 0;
 	const auto& list = sliderScroll->GetChildren();
 	for (wxWindowList::compatibility_iterator node = list.GetFirst(); node; node = node->GetNext()) {
-
 		auto sliderPanel = dynamic_cast<wxSliderPanel*>(node->GetData());
 		if (sliderPanel) {
 			bool showRealSlider = index >= startIndex && index <= endIndex;
 			if (showRealSlider) {
 				sliderPanel->AttachSubSliderPanel(subSliderPool.GetNext(), index, *bmpEditSlider, *bmpSliderSettings);
-			} else {
+			}
+			else {
 				sliderPanel->DetachSubSliderPanel(index);
 			}
 			index++;
 		}
-
 	}
 	sliderScroll->FitInside();
 	sliderScroll->Thaw();
