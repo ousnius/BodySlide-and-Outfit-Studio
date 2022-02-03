@@ -11,10 +11,10 @@ BEGIN_EVENT_TABLE(wxSliderPanel, wxWindow)
 END_EVENT_TABLE()
 
 wxSliderPanel::wxSliderPanel()
-	: wxWindow() {}
+	: wxWindow(), m_subSliderPanel(nullptr) {}
 
 wxSliderPanel::wxSliderPanel(wxWindow* parent, const wxString& name)
-	: wxWindow() {
+	: wxWindow(), m_subSliderPanel(nullptr) {
 	Create(parent, name);
 }
 
@@ -32,38 +32,41 @@ bool wxSliderPanel::Create(wxWindow* parent, const wxString& name) {
 
 	Hide();
 	SetBackgroundColour(wxColour(64, 64, 64));
+	SetMinSize(wxSize(-1, 25));
+	SetMaxSize(wxSize(-1, 25));
 
-	//TODO: SliderPanel needs to match the side it would be if a subSliderPanelIsAttached
-	SetMinSize(wxSize(-1, 40));
-	SetMaxSize(wxSize(-1, 40));
 	sizer = new wxBoxSizer(wxHORIZONTAL);
-
 	SetSizer(sizer);
 
 	isCreated = true;
 	return true;
 }
 
-bool wxSliderPanel::AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel) {
-	if (this->subSliderPanel != nullptr)
-		return false;
+void wxSliderPanel::AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel, size_t index, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings) {
+	if (m_subSliderPanel != nullptr)
+		return;
 
-	this->subSliderPanel = subSliderPanel;
+	m_subSliderPanel = subSliderPanel;
+	m_subSliderPanel->Create(this, GetLabel(), bmpEdit, bmpSettings);
 
-	//TODO: attach sub slider (update names from GeLabel())
+	auto sliderScrollSizer = GetParent()->GetSizer();
+	if (subSliderPanel->GetContainingSizer())
+		sliderScrollSizer->Detach(subSliderPanel);
+	sliderScrollSizer->Insert(index, subSliderPanel, 0, wxALL | wxEXPAND | wxFIXED_MINSIZE, 1);
 
-	return true;
+	if (!subSliderPanel->IsShown())
+		subSliderPanel->Show();
+
+	Hide();
 }
 
-wxSubSliderPanel* wxSliderPanel::DetachSubSliderPanel() {
-	if (this->subSliderPanel == nullptr)
-		return nullptr;
+void wxSliderPanel::DetachSubSliderPanel() {
+	if (this->m_subSliderPanel == nullptr)
+		return;
 
-	auto subSliderPanel = this->subSliderPanel;
-
-	//TODO: detach sub slider
-
-	return subSliderPanel;
+	m_subSliderPanel->Hide();
+	m_subSliderPanel = nullptr;
+	Show();
 }
 
 void wxSliderPanel::SetValue(float value) {

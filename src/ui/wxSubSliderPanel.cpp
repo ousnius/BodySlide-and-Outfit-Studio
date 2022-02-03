@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #include "wxSubSliderPanel.h"
 
+#include "wxSliderPanel.h"
+
 IMPLEMENT_DYNAMIC_CLASS(wxSubSliderPanel, wxWindow)
 
 BEGIN_EVENT_TABLE(wxSubSliderPanel, wxWindow)
@@ -134,12 +136,15 @@ void wxSubSliderPanelPool::CreatePool(size_t poolSize, wxWindow* parent, const w
 
 	pool.resize(poolSize, nullptr);
 
+	int index = 0;
 	for (auto& p : pool) {
 		if (!p)
 			p = new wxSubSliderPanel();
 
-		if (!p->IsCreated())
+		if (!p->IsCreated()) {
 			p->Create(parent, "sliderPoolDummy", bmpEdit, bmpSettings);
+		}
+		index++;
 	}
 }
 

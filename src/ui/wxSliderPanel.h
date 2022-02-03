@@ -11,7 +11,7 @@ See the included LICENSE file
 
 class wxSliderPanel : public wxWindow {
 	bool isCreated = false;
-	wxSubSliderPanel* subSliderPanel;
+	wxSubSliderPanel* m_subSliderPanel;
 
 	wxBoxSizer* sizer = nullptr;
 	wxString sliderReadoutValue;
@@ -29,8 +29,8 @@ public:
 	bool IsCreated() { return isCreated; }
 	bool IsChecked() { return isChecked; }
 
-	bool AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel);
-	wxSubSliderPanel* DetachSubSliderPanel();
+	void AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel, size_t index, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
+	void DetachSubSliderPanel();
 
 	void SetValue(float value);
 	void SetChecked(bool checked);

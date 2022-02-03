@@ -6176,32 +6176,40 @@ void OutfitStudioFrame::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderScroll(wxScrollWinEvent& event) {
-	wxSize size = sliderScroll->GetSizer()->GetSize();
-	int sliderHeight = (size.GetHeight() / sliderPanels.size());
 
 	int lineWidth, lineHeight;
 	sliderScroll->GetScrollPixelsPerUnit(&lineWidth, &lineHeight);
+
+	wxSize size = sliderScroll->GetSizer()->GetSize();
+	int sliderHeight = (size.GetHeight() / sliderPanels.size());
 	int linesPerPage = sliderScroll->GetScrollPageSize(wxVERTICAL);
 	int scrollPos = sliderScroll->GetScrollPos(wxVERTICAL);
 	int numberOfVisibleSliders = ceil(((float)linesPerPage * (float)lineHeight) / (float)sliderHeight);
 	int startIndex = floor(linesPerPage * scrollPos / sliderHeight);
 	int endIndex = startIndex + numberOfVisibleSliders;
 
-	const auto& list = sliderScroll->GetChildren();
+	sliderScroll->Freeze();
 	int index = 0;
+	const auto& list = sliderScroll->GetChildren();
 	for (wxWindowList::compatibility_iterator node = list.GetFirst(); node; node = node->GetNext()) {
-		auto sliderPanel = reinterpret_cast<wxSliderPanel*>(node->GetData());
-		if (index >= startIndex && index <= endIndex) {
-			sliderPanel->AttachSubSliderPanel(subSliderPool.GetNext());
-		}
-		else {
-			auto subSliderPanel = sliderPanel->DetachSubSliderPanel();
-			//if(subSliderPanel != nullptr)
-				//subSliderPool.Push(subSliderPanel);
+
+		auto sliderPanel = dynamic_cast<wxSliderPanel*>(node->GetData());
+		if (sliderPanel) {
+			bool showSlider = index >= startIndex && index <= endIndex;
+			if (showSlider) {
+
+				wxSubSliderPanel* subSliderPanel = subSliderPool.GetNext();
+				sliderPanel->AttachSubSliderPanel(subSliderPanel, index, *bmpEditSlider, *bmpSliderSettings);
+			} else {
+				sliderPanel->DetachSubSliderPanel();
+			}
 		}
 
 		index++;
 	}
+
+	sliderScroll->Thaw();
+	sliderScroll->FitInside();
 }
 
 void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
