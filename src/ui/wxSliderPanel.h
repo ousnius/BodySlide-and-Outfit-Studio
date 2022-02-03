@@ -15,7 +15,7 @@ class wxSliderPanel : public wxWindow {
 
 	wxBoxSizer* sizer = nullptr;
 	wxString sliderReadoutValue;
-	float sliderValue;
+	int sliderValue;
 	bool isChecked;
 	bool isEditing;
 	bool isFocused;
@@ -32,13 +32,11 @@ public:
 	void AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel, size_t index, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
 	void DetachSubSliderPanel(size_t index);
 
-	void SetValue(float value);
+	void SetValue(int value);
 	void SetChecked(bool checked);
 	void SetEditing(bool editing);
-	void SetName(const wxString& name) { SetLabel(name);}
-	void FocusSlider() {
-		//slider->SetFocus();
-	}
+	void SetName(const wxString& name);
+	void FocusSlider();
 
 	DECLARE_DYNAMIC_CLASS(wxSliderPanel)
 	DECLARE_EVENT_TABLE()

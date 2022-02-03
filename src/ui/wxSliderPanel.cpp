@@ -24,6 +24,10 @@ bool wxSliderPanel::Create(wxWindow* parent, const wxString& name) {
 	if (isCreated) {
 		SetBackgroundColour(wxColour(64, 64, 64));
 		Show();
+		isChecked = true;;
+		sliderValue = 0;
+		sliderReadoutValue = "0%";
+		isEditing = false;
 		return true;
 	}
 
@@ -58,6 +62,15 @@ void wxSliderPanel::AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel, size_
 	if (!subSliderPanel->IsShown())
 		subSliderPanel->Show();
 
+	// set the state of the visible slider to what it should be
+	subSliderPanel->sliderCheck->Set3StateValue(isChecked ? wxCheckBoxState::wxCHK_CHECKED : wxCheckBoxState::wxCHK_UNCHECKED);
+	subSliderPanel->sliderReadout->ChangeValue(sliderReadoutValue);
+	subSliderPanel->slider->SetValue(sliderValue);
+	subSliderPanel->sliderCheck->Enable(!isEditing && isChecked);
+	subSliderPanel->btnSliderProp->Show(isEditing);
+	subSliderPanel->btnMinus->Show(isEditing);
+	subSliderPanel->btnPlus->Show(isEditing);
+
 	Hide();
 }
 
@@ -75,7 +88,7 @@ void wxSliderPanel::DetachSubSliderPanel(size_t index) {
 	Show();
 }
 
-void wxSliderPanel::SetValue(float value) {
+void wxSliderPanel::SetValue(int value) {
 	sliderReadoutValue = wxString::Format("%d%%", value);
 	sliderValue = value;
 }
@@ -87,7 +100,14 @@ void wxSliderPanel::SetChecked(bool checked) {
 void wxSliderPanel::SetEditing(bool editing) {
 	isEditing = editing;
 }
+void wxSliderPanel::SetName(const wxString& name) {
+	SetLabel(name);
+}
 
+void wxSliderPanel::FocusSlider() {
+	if (m_subSliderPanel)
+		m_subSliderPanel->SetFocus();
+}
 
 wxSliderPanel* wxSliderPanelPool::Push() {
 	if (pool.size() < MaxPoolSize) {
