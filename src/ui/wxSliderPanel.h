@@ -30,7 +30,7 @@ public:
 	bool IsChecked() { return isChecked; }
 
 	void AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel, size_t index, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
-	void DetachSubSliderPanel();
+	void DetachSubSliderPanel(size_t index);
 
 	void SetValue(float value);
 	void SetChecked(bool checked);

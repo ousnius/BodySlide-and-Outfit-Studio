@@ -6176,6 +6176,7 @@ void OutfitStudioFrame::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderScroll(wxScrollWinEvent& event) {
+	sliderScroll->HandleOnScroll(event);
 
 	int lineWidth, lineHeight;
 	sliderScroll->GetScrollPixelsPerUnit(&lineWidth, &lineHeight);
@@ -6195,21 +6196,18 @@ void OutfitStudioFrame::OnSliderScroll(wxScrollWinEvent& event) {
 
 		auto sliderPanel = dynamic_cast<wxSliderPanel*>(node->GetData());
 		if (sliderPanel) {
-			bool showSlider = index >= startIndex && index <= endIndex;
-			if (showSlider) {
-
-				wxSubSliderPanel* subSliderPanel = subSliderPool.GetNext();
-				sliderPanel->AttachSubSliderPanel(subSliderPanel, index, *bmpEditSlider, *bmpSliderSettings);
+			bool showRealSlider = index >= startIndex && index <= endIndex;
+			if (showRealSlider) {
+				sliderPanel->AttachSubSliderPanel(subSliderPool.GetNext(), index, *bmpEditSlider, *bmpSliderSettings);
 			} else {
-				sliderPanel->DetachSubSliderPanel();
+				sliderPanel->DetachSubSliderPanel(index);
 			}
+			index++;
 		}
 
-		index++;
 	}
-
-	sliderScroll->Thaw();
 	sliderScroll->FitInside();
+	sliderScroll->Thaw();
 }
 
 void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {

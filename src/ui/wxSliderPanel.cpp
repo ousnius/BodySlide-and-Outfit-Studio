@@ -43,13 +43,14 @@ bool wxSliderPanel::Create(wxWindow* parent, const wxString& name) {
 }
 
 void wxSliderPanel::AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel, size_t index, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings) {
-	if (m_subSliderPanel != nullptr)
-		return;
-
-	m_subSliderPanel = subSliderPanel;
-	m_subSliderPanel->Create(this, GetLabel(), bmpEdit, bmpSettings);
-
 	auto sliderScrollSizer = GetParent()->GetSizer();
+	if (m_subSliderPanel != nullptr) {
+		sliderScrollSizer->Detach(subSliderPanel);
+		m_subSliderPanel->Hide();
+	}
+	m_subSliderPanel = subSliderPanel;
+	m_subSliderPanel->Create(GetParent(), GetLabel(), bmpEdit, bmpSettings);
+
 	if (subSliderPanel->GetContainingSizer())
 		sliderScrollSizer->Detach(subSliderPanel);
 	sliderScrollSizer->Insert(index, subSliderPanel, 0, wxALL | wxEXPAND | wxFIXED_MINSIZE, 1);
@@ -60,12 +61,17 @@ void wxSliderPanel::AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel, size_
 	Hide();
 }
 
-void wxSliderPanel::DetachSubSliderPanel() {
-	if (this->m_subSliderPanel == nullptr)
-		return;
+void wxSliderPanel::DetachSubSliderPanel(size_t index) {
+	auto sliderScrollSizer = GetParent()->GetSizer();
+	if (m_subSliderPanel != nullptr) {
+		sliderScrollSizer->Detach(m_subSliderPanel);
+		m_subSliderPanel->Hide();
+		m_subSliderPanel = nullptr;
+	}
 
-	m_subSliderPanel->Hide();
-	m_subSliderPanel = nullptr;
+	sliderScrollSizer->Detach(this);
+	sliderScrollSizer->Insert(index, this, 0, wxALL | wxEXPAND | wxFIXED_MINSIZE, 1);
+
 	Show();
 }
 
