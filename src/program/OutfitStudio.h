@@ -859,9 +859,9 @@ public:
 		std::unique_ptr<wxToolBarToolBase> but;
 	};
 	std::vector<ButDat> butdats;
-	wxToolBar *tb = nullptr;
+	wxToolBar* tb = nullptr;
 
-	void Init(wxToolBar *tbi);
+	void Init(wxToolBar* tbi);
 	void Show(int toolId, bool show);
 };
 

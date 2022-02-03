@@ -933,7 +933,7 @@ void OutfitStudio::GetArchiveFiles(std::vector<std::string>& outList) {
 }
 
 
-void ToolBarButtonHider::Init(wxToolBar *tbi) {
+void ToolBarButtonHider::Init(wxToolBar* tbi) {
 	tb = tbi;
 	size_t tc = tb->GetToolsCount();
 	butdats.resize(tc);
@@ -944,7 +944,7 @@ void ToolBarButtonHider::Init(wxToolBar *tbi) {
 void ToolBarButtonHider::Show(int toolId, bool show) {
 	size_t hidcount = 0;
 	for (size_t pos = 0; pos < butdats.size(); ++pos) {
-		ButDat &bd = butdats[pos];
+		ButDat& bd = butdats[pos];
 		if (bd.id != toolId) {
 			if (bd.but)
 				++hidcount;
@@ -6370,8 +6370,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		}
 	}
 
-	if ((id == segmentTabButton->GetId() || id == partitionTabButton->GetId())
-		&& selectedItems.size() != 1) {
+	if ((id == segmentTabButton->GetId() || id == partitionTabButton->GetId()) && selectedItems.size() != 1) {
 		wxMessageBox(_("You must have exactly one mesh selected in order to edit partitions or segments."), _("Info"), wxICON_INFORMATION, this);
 		event.Skip();
 		return;
@@ -7253,7 +7252,6 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	std::unordered_set<NiShape*> addedShapes;
 
 	for (auto& shape : shapes) {
-
 		// check if the shape is selected
 		auto selectedSliders = options.selectedShapesToSliders.find(shape->name.get());
 		if (selectedSliders == options.selectedShapesToSliders.end())
@@ -7261,7 +7259,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 
 		addedShapes.emplace(shape);
 
-        for (auto& diff : diffs) {
+		for (auto& diff : diffs) {
 			auto& sliderNameToDisplayName = selectedSliders->second;
 
 			// check the diff is selected for the specific shape
@@ -7316,7 +7314,7 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 	std::unordered_map<std::string, std::unordered_map<std::string, std::string>> shapeToSliders;
 	auto morphs = tri.GetMorphs();
-	for(auto& morph : morphs) {
+	for (auto& morph : morphs) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
 		if (!shape)
 			continue;
@@ -11358,7 +11356,7 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	mouseDownViewDir *= -1.0f;
 
 	// snapDistance: shortest edge length of triangle under pointer
-	const Triangle &tri = m->tris[lastHitResult.hoverTri];
+	const Triangle& tri = m->tris[lastHitResult.hoverTri];
 	Vector3 gtp1 = mesh::ApplyMatrix4(m->matModel, m->verts[tri.p1]);
 	Vector3 gtp2 = mesh::ApplyMatrix4(m->matModel, m->verts[tri.p2]);
 	Vector3 gtp3 = mesh::ApplyMatrix4(m->matModel, m->verts[tri.p3]);
@@ -11373,15 +11371,12 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	UndoStateProject* usp = undoHistory.PushState();
 	usp->usss.emplace_back();
 	usp->usss[0].shapeName = mouseDownMeshName;
-	usp->usss[0].pointEndState[mouseDownPoint] =
-		usp->usss[0].pointStartState[mouseDownPoint] =
-		lastHitResult.hoverMeshCoord;
+	usp->usss[0].pointEndState[mouseDownPoint] = usp->usss[0].pointStartState[mouseDownPoint] = lastHitResult.hoverMeshCoord;
 
 	if (mouseDownMirrorPoint != -1) {
 		Vector3 mp = lastHitResult.hoverMeshCoord;
 		mp.x = -mp.x;
-		usp->usss[0].pointEndState[mouseDownMirrorPoint] =
-			usp->usss[0].pointStartState[mouseDownMirrorPoint] = mp;
+		usp->usss[0].pointEndState[mouseDownMirrorPoint] = usp->usss[0].pointStartState[mouseDownMirrorPoint] = mp;
 	}
 
 	if (os->bEditSlider) {
@@ -11427,8 +11422,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 	// screenPos ray with the plane perpendicular to mouseDownViewDir at oldpos.
 	// This will also be our default for newpos if all tool options are off.
 	Vector3 pointerPoint;
-	gls.CollidePlane(screenPos.x, screenPos.y, pointerPoint, mouseDownViewDir,
-		mouseDownViewDir.dot(oldpos));
+	gls.CollidePlane(screenPos.x, screenPos.y, pointerPoint, mouseDownViewDir, mouseDownViewDir.dot(oldpos));
 
 	// Determining newpos: 1. intersect screenPos-ray with plane or surface.
 	Vector3 newpos = pointerPoint;
@@ -11436,8 +11430,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 	if (toolOptionRestrictSurface) {
 		Vector3 hitpt, hitnormal;
 		mesh* hitmesh = nullptr;
-		bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, hitpt,
-			hitnormal, false, &hitmesh);
+		bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, hitpt, hitnormal, false, &hitmesh);
 		if (!hit) {
 			newpos = oldpos;
 			moveVertexOperation = MoveVertexOperation::None;
@@ -11446,14 +11439,12 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 			newpos = mesh::ApplyMatrix4(hitmesh->matModel, hitpt);
 	}
 	else if (toolOptionRestrictPlane) {
-		gls.CollidePlane(screenPos.x, screenPos.y, newpos, mouseDownPointNormal,
-			mouseDownPointNormal.dot(oldpos));
+		gls.CollidePlane(screenPos.x, screenPos.y, newpos, mouseDownPointNormal, mouseDownPointNormal.dot(oldpos));
 	}
 
 	// 2. Project onto normal
 	if (toolOptionRestrictNormal && moveVertexOperation != MoveVertexOperation::None) {
-		newpos = oldpos + mouseDownPointNormal *
-			mouseDownPointNormal.dot(newpos - oldpos);
+		newpos = oldpos + mouseDownPointNormal * mouseDownPointNormal.dot(newpos - oldpos);
 	}
 
 	// 3. Snap to nearest valid point
@@ -11565,12 +11556,13 @@ void wxGLPanel::EndMoveVertex() {
 		bool p2b = os->project->IsVertexOnBoundary(s2, moveVertexTarget);
 
 		if (!p1b || !p2b) {
-			int response = wxMessageBox(!p1b ? !p2b ?
-				_("Neither the selected nor target vertices are on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?") :
-				_("The selected vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?") :
-				_("The target vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"),
+			int response = wxMessageBox(
+				!p1b ? !p2b ? _("Neither the selected nor target vertices are on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?")
+							: _("The selected vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?")
+					 : _("The target vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"),
 				_("Weld/Merge Non-Boundary Vertices"),
-				wxOK | wxCANCEL | wxCANCEL_DEFAULT, os);
+				wxOK | wxCANCEL | wxCANCEL_DEFAULT,
+				os);
 
 			if (response == wxCANCEL) {
 				CancelMoveVertex();
@@ -12610,7 +12602,6 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 				mesh* mmesh = nullptr;
 				int triInd = 0;
 				if (gls.CollideMeshes(x, y, hitPt, hitNrm, true, &mmesh, true, &triInd) && mmesh == hitResult.hitMesh) {
-
 					int hitPti = mmesh->tris[triInd].ClosestVertex(mmesh->verts.get(), hitPt);
 					if (hitPti != hitResult.hoverPoint) {
 						// Should we also check if the mirror point's location
