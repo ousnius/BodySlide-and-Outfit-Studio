@@ -57,5 +57,10 @@ public:
 		if (!stayOpen || !GetParent()->IsMouseInWindow())
 			Hide();
 	}
+
+	void MSWDismissUnfocusedPopup() override {
+		if (stayOpen)
+			Dismiss();
+	}
 #endif
 };

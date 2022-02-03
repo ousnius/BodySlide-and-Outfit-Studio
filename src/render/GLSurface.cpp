@@ -575,6 +575,8 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 						hitResult->hoverPoint = pointid;
 						hitResult->hoverMeshCoord = hilitepoint;
 						hitResult->hoverRealCoord = mhilitepoint;
+						hitResult->hoverMask = std::floor(m->mask[pointid] * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
+						hitResult->hoverWeight = std::floor(m->weight[pointid] * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
 						hitResult->hoverColor.x = std::floor(m->vcolors[pointid].x * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
 						hitResult->hoverColor.y = std::floor(m->vcolors[pointid].y * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
 						hitResult->hoverColor.z = std::floor(m->vcolors[pointid].z * std::pow(10, dec) + 0.5f) / std::pow(10, dec);

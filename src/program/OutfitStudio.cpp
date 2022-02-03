@@ -5841,7 +5841,7 @@ void OutfitStudioFrame::ApplyPartitions() {
 		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
 		if (partitionData) {
 			const int index = partitionData->index;
-			if (index >= partitionInfo.size()) {
+			if (index >= static_cast<int64_t>(partitionInfo.size())) {
 				partitionInfo.resize(index + 1);
 				delPartFlags.resize(index + 1, true);
 			}
@@ -5887,8 +5887,8 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 
 	NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {
-		for (int i = 0; i < partitionInfo.size(); i++) {
-			partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(i, partitionInfo[i].partID));
+		for (uint32_t i = 0; i < partitionInfo.size(); i++) {
+			partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(static_cast<int>(i), partitionInfo[i].partID));
 		}
 	}
 
@@ -12658,9 +12658,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		if (os->statusBar) {
 			if (cursorExists) {
 				if (activeTool == ToolID::MaskBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hitResult.hoverPoint, hitResult.hoverColor.x), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hitResult.hoverPoint, hitResult.hoverMask), 1);
 				else if (activeTool == ToolID::WeightBrush)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", hitResult.hoverPoint, hitResult.hoverColor.y), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", hitResult.hoverPoint, hitResult.hoverWeight), 1);
 				else if (activeTool == ToolID::ColorBrush || activeTool == ToolID::AlphaBrush)
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g, Alpha: %g",
 																  hitResult.hoverPoint,

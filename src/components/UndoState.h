@@ -41,7 +41,7 @@ struct UndoStateVertex {
 	// normal, tangent, and bitangent are in skin CS tangent space (so
 	// only the rotation part of transforms affects them).
 	nifly::Vector3 normal, tangent, bitangent;
-	float eyeData;
+	float eyeData = 0.0f;
 	std::vector<UndoStateVertexBoneWeight> weights;
 	std::vector<UndoStateVertexSliderDiff> diffs;
 };
@@ -80,5 +80,5 @@ struct UndoStateProject {
 	// this is a slider shape edit rather than a base shape edit.
 	std::string sliderName;
 	// sliderscale is only set if this is a slider shape edit.  Non-zero.
-	float sliderscale;
+	float sliderscale = 1.0f;
 };

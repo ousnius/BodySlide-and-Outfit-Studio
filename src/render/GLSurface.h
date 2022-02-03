@@ -258,6 +258,8 @@ public:
 		mesh* hitMesh = nullptr;
 		std::string hitMeshName;
 		int hoverPoint = -1;
+		float hoverMask = 0.0f;
+		float hoverWeight = 0.0f;
 		nifly::Vector3 hoverColor = nifly::Vector3(1.0f, 1.0f, 1.0f);
 		float hoverAlpha = 1.0f;
 		nifly::Edge hoverEdge;
