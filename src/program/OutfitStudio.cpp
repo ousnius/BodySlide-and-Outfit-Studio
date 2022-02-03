@@ -10759,7 +10759,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	if (!os->CheckEditableState())
 		return false;
 
-	if (toolOptionXMirror) {
+	if (GetToolOptionXMirror()) {
 		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, true, &tpi.facetM))
 			tpi.facetM = -1;
 	}
@@ -10871,7 +10871,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	}
 
 	activeBrush->setRadius(brushSize);
-	activeBrush->setMirror(toolOptionXMirror);
+	activeBrush->setMirror(GetToolOptionXMirror());
 	activeBrush->setConnected(toolOptionConnectedOnly);
 
 	if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
@@ -10950,7 +10950,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 				return;
 
 			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, true, &tpi.facet);
-			if (toolOptionXMirror) {
+			if (GetToolOptionXMirror()) {
 				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, true, &tpi.facetM))
 					tpi.facetM = -1;
 			}
@@ -12597,7 +12597,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 		if (activeTool == ToolID::MoveVertex) {
 			mouseDownMirrorPoint = -1;
-			if (toolOptionXMirror) {
+			if (GetToolOptionXMirror()) {
 				Vector3 hitPt, hitNrm;
 				mesh* mmesh = nullptr;
 				int triInd = 0;

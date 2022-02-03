@@ -284,8 +284,17 @@ public:
 	bool GetSegmentMode() { return segmentMode; }
 	void SetSegmentMode(bool on = true) { segmentMode = on; }
 
-	bool GetToolOptionXMirror() { return toolOptionXMirror; }
-	void SetToolOptionXMirror(bool on = true) { toolOptionXMirror = on; }
+	bool GetToolOptionXMirror() {
+		if (activeTool == ToolID::WeightBrush)
+			return toolOptionXMirrorWeight;
+		return toolOptionXMirror;
+	}
+	void SetToolOptionXMirror(bool on = true) {
+		if (activeTool == ToolID::WeightBrush)
+			toolOptionXMirrorWeight = on;
+		else
+			toolOptionXMirror = on;
+	}
 
 	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
 	void SetToolOptionConnectedOnly(bool on = true) { toolOptionConnectedOnly = on; }
@@ -737,6 +746,7 @@ private:
 	bool isPickingEdge = false;
 	bool isMovingVertex = false;
 	bool toolOptionXMirror = true;
+	bool toolOptionXMirrorWeight = false;
 	bool toolOptionConnectedOnly = false;
 	bool toolOptionMerge = false;
 	bool toolOptionWeld = false;
