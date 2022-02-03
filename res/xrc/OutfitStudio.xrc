@@ -271,7 +271,6 @@
 								<bitmap2>$(AppDir)\res\images\XMirror_d.png</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
-								<disabled>1</disabled>
 							</object>
 							<object class="tool" name="btnConnected">
 								<label>Edit Connected Only\tC</label>
@@ -279,7 +278,6 @@
 								<bitmap>$(AppDir)\res\images\EditConnected.png</bitmap>
 								<toggle>1</toggle>
 								<checked>0</checked>
-								<disabled>1</disabled>
 							</object>
 							<object class="tool" name="btnMerge">
 								<label>Merge Vertex</label>
@@ -287,7 +285,6 @@
 								<bitmap>$(AppDir)\res\images\Merge.png</bitmap>
 								<toggle>1</toggle>
 								<checked>0</checked>
-								<disabled>1</disabled>
 							</object>
 							<object class="tool" name="btnWeld">
 								<label>Weld Vertex</label>
@@ -295,7 +292,6 @@
 								<bitmap>$(AppDir)\res\images\Weld.png</bitmap>
 								<toggle>1</toggle>
 								<checked>0</checked>
-								<disabled>1</disabled>
 							</object>
 							<object class="tool" name="btnRestrictSurface">
 								<label>Restrict To Surface</label>
@@ -303,7 +299,6 @@
 								<bitmap>$(AppDir)\res\images\RestrictSurface.png</bitmap>
 								<toggle>1</toggle>
 								<checked>0</checked>
-								<disabled>1</disabled>
 							</object>
 							<object class="tool" name="btnRestrictPlane">
 								<label>Restrict To Plane</label>
@@ -311,7 +306,6 @@
 								<bitmap>$(AppDir)\res\images\RestrictPlane.png</bitmap>
 								<toggle>1</toggle>
 								<checked>0</checked>
-								<disabled>1</disabled>
 							</object>
 							<object class="tool" name="btnRestrictNormal">
 								<label>Restrict To Normal</label>
@@ -319,7 +313,6 @@
 								<bitmap>$(AppDir)\res\images\RestrictNormal.png</bitmap>
 								<toggle>1</toggle>
 								<checked>0</checked>
-								<disabled>1</disabled>
 							</object>
 						</object>
 					</object>
