@@ -6186,7 +6186,7 @@ void OutfitStudioFrame::OnSliderScroll(wxScrollWinEvent& event) {
 	int linesPerPage = sliderScroll->GetScrollPageSize(wxVERTICAL);
 	int scrollPos = sliderScroll->GetScrollPos(wxVERTICAL);
 	int numberOfVisibleSliders = ceil(((float)linesPerPage * (float)lineHeight) / (float)sliderHeight);
-	int startIndex = floor(linesPerPage * scrollPos / sliderHeight);
+	int startIndex = floor((lineHeight * scrollPos) / sliderHeight);
 	int endIndex = startIndex + numberOfVisibleSliders;
 
 	sliderScroll->Freeze();

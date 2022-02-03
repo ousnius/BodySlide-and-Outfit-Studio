@@ -27,7 +27,7 @@ bool wxSliderPanel::Create(wxWindow* parent, const wxString& name) {
 		return true;
 	}
 
-	if (!wxWindow::Create(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER | wxTAB_TRAVERSAL))
+	if (!wxWindow::Create(parent, wxID_ANY, wxDefaultPosition, wxSize(-1, 25), wxSIMPLE_BORDER | wxTAB_TRAVERSAL))
 		return false;
 
 	Hide();
