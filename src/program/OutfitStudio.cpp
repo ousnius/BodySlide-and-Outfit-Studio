@@ -958,6 +958,8 @@ void ToolBarButtonHider::Show(int toolId, bool show) {
 		}
 		break;
 	}
+
+	tb->Realize();
 }
 
 
