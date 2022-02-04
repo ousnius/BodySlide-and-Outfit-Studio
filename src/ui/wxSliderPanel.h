@@ -5,40 +5,33 @@ See the included LICENSE file
 
 #pragma once
 
-#include "wxSubSliderPanel.h"
-
 #include <wx/wx.h>
+
+class wxDummySliderPanelPool;
 
 class wxSliderPanel : public wxWindow {
 	bool isCreated = false;
-	wxSubSliderPanel* m_subSliderPanel;
-
 	wxBoxSizer* sizer = nullptr;
-	wxString sliderReadoutValue;
-	int sliderValue;
-	bool isChecked;
-	bool isEditing;
-	bool isFocused;
 
 public:
+	wxBitmapButton* btnSliderEdit = nullptr;
+	wxBitmapButton* btnSliderProp = nullptr;
+	wxButton* btnMinus = nullptr;
+	wxButton* btnPlus = nullptr;
+	wxCheckBox* sliderCheck = nullptr;
+	wxStaticText* sliderName = nullptr;
+	wxSlider* slider = nullptr;
+	wxTextCtrl* sliderReadout = nullptr;
+
+	bool editing = false;
+
 	wxSliderPanel();
-	wxSliderPanel(wxWindow* parent, const wxString& name);
+	wxSliderPanel(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
 
-	bool Create(wxWindow* parent, const wxString& name);
-
+	bool Create(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
 	bool IsCreated() { return isCreated; }
-	bool IsChecked() { return isChecked; }
 
-	void AttachSubSliderPanel(wxSubSliderPanel* subSliderPanel, size_t index, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
-	void DetachSubSliderPanel(size_t index);
-
-	void SetValue(int value);
-	void SetChecked(bool checked);
-	void SetEditing(bool editing);
-	void SetName(const wxString& name);
-	void FocusSlider();
-
-	DECLARE_DYNAMIC_CLASS(wxSliderPanel)
+	DECLARE_DYNAMIC_CLASS(wxSubSliderPanel)
 	DECLARE_EVENT_TABLE()
 };
 
@@ -49,7 +42,7 @@ class wxSliderPanelPool {
 
 public:
 	wxSliderPanel* Push();
-	void CreatePool(size_t poolSize, wxWindow* parent);
+	void CreatePool(size_t poolSize, wxWindow* parent, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
 	wxSliderPanel* Get(size_t index);
 	wxSliderPanel* GetNext();
 	void Clear();

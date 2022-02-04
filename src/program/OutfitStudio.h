@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/TweakBrush.h"
 #include "../components/UndoHistory.h"
 #include "../render/GLSurface.h"
+#include "../ui/wxDummySliderPanel.h"
 #include "../ui/wxSliderPanel.h"
-#include "../ui/wxSubSliderPanel.h"
 #include "../ui/wxStateButton.h"
 #include "../utils/ConfigurationManager.h"
 #include "../utils/Log.h"
@@ -865,8 +865,8 @@ public:
 	std::unordered_set<std::string> lastNormalizeBones;
 
 	PoseDataCollection poseDataCollection;
+	wxDummySliderPanelPool dummySliderPool;
 	wxSliderPanelPool sliderPool;
-	wxSubSliderPanelPool subSliderPool;
 
 	wxTreeCtrl* outfitShapes = nullptr;
 	wxTreeCtrl* outfitBones = nullptr;
@@ -918,7 +918,7 @@ public:
 	wxTreeItemId segmentRoot;
 	wxTreeItemId partitionRoot;
 
-	std::map<std::string, wxSliderPanel*> sliderPanels;
+	std::map<std::string, wxDummySliderPanel*> sliderPanels;
 
 	void SetPendingChanges(bool pending = true);
 	bool CheckPendingChanges();
@@ -981,7 +981,7 @@ public:
 
 	bool CheckEditableState();
 
-	void HideSliderPanel(wxSliderPanel* sliderPanel);
+	void HideSliderPanel(wxDummySliderPanel* sliderPanel);
 	void EnterSliderEdit(const std::string& sliderName = "");
 	void ExitSliderEdit();
 	void MenuEnterSliderEdit();
