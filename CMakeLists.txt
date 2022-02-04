@@ -61,6 +61,7 @@ set(commonsources
 	src/render/GLSurface.cpp
 	src/ui/wxStateButton.cpp
 	src/ui/wxSliderPanel.cpp
+	src/ui/wxDummySliderPanel.cpp
 	src/utils/AABBTree.cpp
 	src/utils/ConfigurationManager.cpp
 	src/utils/Log.cpp
