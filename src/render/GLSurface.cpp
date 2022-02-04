@@ -289,6 +289,14 @@ void GLSurface::UpdateLights(const int ambient,
 	directionalLight2.direction.Normalize();
 }
 
+void GLSurface::ProjectPointToScreen(const Vector3& p, int& x, int& y) {
+	glm::vec4 vp(0.0f, 0.0f, (float)vpW, (float)vpH);
+	glm::vec3 sp(p.x, p.y, p.z);
+	glm::vec3 res = glm::project(sp, matView, matProjection, vp);
+	x = std::round(res.x);
+	y = std::round(vpH - res.y);
+}
+
 void GLSurface::GetPickRay(int ScreenX, int ScreenY, mesh* m, Vector3& dirVect, Vector3& outNearPos) {
 	glm::vec4 vp(0.0f, 0.0f, (float)vpW, (float)vpH);
 	glm::vec3 winS(ScreenX, vp[3] - ScreenY, 0.0f);
@@ -576,6 +584,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 						hitResult->hitMesh = m;
 						hitResult->hitMeshName = m->shapeName;
 						hitResult->hoverEdge = closestEdge;
+						hitResult->hoverTri = results[min_i].HitFacet;
 					}
 				}
 
@@ -652,6 +661,7 @@ void GLSurface::ShowCursor(bool show) {
 	SetOverlayVisibility("pointhilite", show && (cursorType & PointCursor));
 	SetOverlayVisibility("cursorcenter", show && (cursorType & CenterCursor));
 	SetOverlayVisibility("seghilite", show && (cursorType & SegCursor));
+	SetOverlayVisibility("mirrorpoint", false);
 }
 
 void GLSurface::HidePointCursor() {
@@ -660,6 +670,22 @@ void GLSurface::HidePointCursor() {
 
 void GLSurface::HideSegCursor() {
 	SetOverlayVisibility("seghilite", false);
+}
+
+void GLSurface::SetPointCursor(const Vector3 &p, mesh* m) {
+	Vector3 gp = m ? mesh::ApplyMatrix4(m->matModel, p) : p;
+	AddVisPoint(gp, "pointhilite");
+}
+
+void GLSurface::SetCenterCursor(const Vector3 &p, mesh* m) {
+	Vector3 gp = m ? mesh::ApplyMatrix4(m->matModel, p) : p;
+	AddVisPoint(gp, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
+}
+
+void GLSurface::ShowMirrorPointCursor(const Vector3 &p, mesh* m) {
+	Vector3 gp = m ? mesh::ApplyMatrix4(m->matModel, p) : p;
+	AddVisPoint(gp, "mirrorpoint")->color = Vector3(0.3f, 0.7f, 0.7f);;
+	SetOverlayVisibility("mirrorpoint", true);
 }
 
 void GLSurface::SetSize(uint32_t w, uint32_t h) {

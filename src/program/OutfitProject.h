@@ -240,6 +240,11 @@ public:
 	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape& uss, const nifly::Edge& edge);
 	bool PrepareRefineMesh(nifly::NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const std::unordered_map<int, std::vector<int>>& weldVerts);
 
+	bool IsVertexOnBoundary(nifly::NiShape* shape, int vi);
+	bool PointsHaveDifferingWeightsOrDiffs(nifly::NiShape* shape1, int p1, nifly::NiShape* shape2, int p2);
+	void PrepareMergeVertex(nifly::NiShape* shape, UndoStateShape& uss, int selVert, int targVert);
+	void PrepareWeldVertex(nifly::NiShape* shape, UndoStateShape& uss, int selVert, int targVert, nifly::NiShape* targShape);
+
 	void CheckMerge(const std::string& sourceName, const std::string& targetName, MergeCheckErrors& e);
 	void PrepareCopyGeo(nifly::NiShape* source, nifly::NiShape* target, UndoStateShape& uss);
 

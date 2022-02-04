@@ -144,7 +144,11 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 
 	EVT_MENU(XRCID("btnXMirror"), OutfitStudioFrame::OnXMirror)
 	EVT_MENU(XRCID("btnConnected"), OutfitStudioFrame::OnConnectedOnly)
-	EVT_MENU(XRCID("btnBrushCollision"), OutfitStudioFrame::OnGlobalBrushCollision)
+	EVT_MENU(XRCID("btnMerge"), OutfitStudioFrame::OnToolOptionMerge)
+	EVT_MENU(XRCID("btnWeld"), OutfitStudioFrame::OnToolOptionWeld)
+	EVT_MENU(XRCID("btnRestrictSurface"), OutfitStudioFrame::OnToolOptionRestrictSurface)
+	EVT_MENU(XRCID("btnRestrictPlane"), OutfitStudioFrame::OnToolOptionRestrictPlane)
+	EVT_MENU(XRCID("btnRestrictNormal"), OutfitStudioFrame::OnToolOptionRestrictNormal)
 
 	EVT_MENU(XRCID("btnSelect"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnTransform"), OutfitStudioFrame::OnSelectTool)
@@ -163,6 +167,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnCollapseVertex"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnFlipEdgeTool"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnSplitEdgeTool"), OutfitStudioFrame::OnSelectTool)
+	EVT_MENU(XRCID("btnMoveVertexTool"), OutfitStudioFrame::OnSelectTool)
 
 	EVT_MENU(XRCID("btnViewFront"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewBack"), OutfitStudioFrame::OnSetView)
@@ -928,6 +933,36 @@ void OutfitStudio::GetArchiveFiles(std::vector<std::string>& outList) {
 }
 
 
+void ToolBarButtonHider::Init(wxToolBar* tbi) {
+	tb = tbi;
+	size_t tc = tb->GetToolsCount();
+	butdats.resize(tc);
+	for (size_t pos = 0; pos < tc; ++pos)
+		butdats[pos].id = tb->GetToolByPos(pos)->GetId();
+}
+
+void ToolBarButtonHider::Show(int toolId, bool show) {
+	size_t hidcount = 0;
+	for (size_t pos = 0; pos < butdats.size(); ++pos) {
+		ButDat& bd = butdats[pos];
+		if (bd.id != toolId) {
+			if (bd.but)
+				++hidcount;
+			continue;
+		}
+		if (!show && !bd.but)
+			bd.but.reset(tb->RemoveTool(toolId));
+		if (show && bd.but) {
+			tb->InsertTool(pos - hidcount, bd.but.release());
+			bd.but = nullptr;
+		}
+		break;
+	}
+
+	tb->Realize();
+}
+
+
 OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	wxLogMessage("Loading Outfit Studio frame at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
@@ -975,6 +1010,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	toolBarH = (wxToolBar*)FindWindowByName("toolBarH");
 	toolBarV = (wxToolBar*)FindWindowByName("toolBarV");
+	tbvHider.Init(toolBarV);
 
 	if (toolBarH) {
 		brushSettings = reinterpret_cast<wxButton*>(toolBarH->FindWindowByName("brushSettings"));
@@ -1149,6 +1185,8 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	if (leftPanel)
 		leftPanel->Layout();
+
+	ReEnableToolOptionsUI();
 
 	SetDropTarget(new DnDFile(this));
 
@@ -2935,10 +2973,8 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		menuBar->Check(XRCID("btnSelect"), true);
 		toolBarH->ToggleTool(XRCID("btnSelect"), true);
 
-		menuBar->Check(XRCID("btnXMirror"), false);
-		menuBar->Enable(XRCID("btnXMirror"), false);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), false);
-		toolBarV->EnableTool(XRCID("btnXMirror"), false);
+		ReEnableToolOptionsUI();
+		ReToggleToolOptionsUI();
 		return;
 	}
 
@@ -2972,17 +3008,8 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	glView->SetActiveTool(tool);
 	glView->SetCursorType(GLSurface::BrushCursor);
 
-	auto activeBrush = glView->GetActiveBrush();
-	if (activeBrush) {
-		menuBar->Enable(XRCID("btnXMirror"), true);
-		menuBar->Check(XRCID("btnXMirror"), activeBrush->isMirrored());
-		toolBarV->EnableTool(XRCID("btnXMirror"), true);
-		toolBarV->ToggleTool(XRCID("btnXMirror"), activeBrush->isMirrored());
-	}
-	else {
-		menuBar->Enable(XRCID("btnXMirror"), false);
-		toolBarV->EnableTool(XRCID("btnXMirror"), false);
-	}
+	ReEnableToolOptionsUI();
+	ReToggleToolOptionsUI();
 
 	if (tool == ToolID::MaskBrush) {
 		menuBar->Check(XRCID("btnMaskBrush"), true);
@@ -3056,6 +3083,14 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		glView->SetCursorType(GLSurface::EdgeCursor);
 		return;
 	}
+	else if (tool == ToolID::MoveVertex) {
+		menuBar->Check(XRCID("btnMoveVertexTool"), true);
+		toolBarH->ToggleTool(XRCID("btnMoveVertexTool"), true);
+		glView->SetEditMode();
+		glView->SetBrushMode(false);
+		glView->SetCursorType(GLSurface::VertexCursor);
+		return;
+	}
 	else {
 		glView->SetEditMode(false);
 		glView->SetBrushMode(false);
@@ -3070,6 +3105,53 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 
 	CheckBrushBounds();
 	UpdateBrushSettings();
+}
+
+void OutfitStudioFrame::ReEnableToolOptionsUI() {
+	bool isBrush = glView->GetActiveBrush() != nullptr;
+	bool isMV = glView->GetActiveTool() == ToolID::MoveVertex;
+
+	menuBar->Enable(XRCID("btnXMirror"), isBrush || isMV);
+	tbvHider.Show(XRCID("btnXMirror"), isBrush || isMV);
+	menuBar->Enable(XRCID("btnConnected"), isBrush);
+	tbvHider.Show(XRCID("btnConnected"), isBrush);
+	menuBar->Enable(XRCID("btnMerge"), isMV);
+	tbvHider.Show(XRCID("btnMerge"), isMV);
+	menuBar->Enable(XRCID("btnWeld"), isMV);
+	tbvHider.Show(XRCID("btnWeld"), isMV);
+	menuBar->Enable(XRCID("btnRestrictSurface"), isMV);
+	tbvHider.Show(XRCID("btnRestrictSurface"), isMV);
+	menuBar->Enable(XRCID("btnRestrictPlane"), isMV);
+	tbvHider.Show(XRCID("btnRestrictPlane"), isMV);
+	menuBar->Enable(XRCID("btnRestrictNormal"), isMV);
+	tbvHider.Show(XRCID("btnRestrictNormal"), isMV);
+}
+
+void OutfitStudioFrame::ReToggleToolOptionsUI() {
+	bool isBrush = glView->GetActiveBrush() != nullptr;
+	bool isMV = glView->GetActiveTool() == ToolID::MoveVertex;
+	bool xMirror = glView->GetToolOptionXMirror();
+	bool connOnly = glView->GetToolOptionConnectedOnly();
+	bool merge = glView->GetToolOptionMerge();
+	bool weld = glView->GetToolOptionWeld();
+	bool rsurf = glView->GetToolOptionRestrictSurface();
+	bool rplane = glView->GetToolOptionRestrictPlane();
+	bool rnormal = glView->GetToolOptionRestrictNormal();
+
+	menuBar->Check(XRCID("btnXMirror"), (isBrush || isMV) && xMirror);
+	toolBarV->ToggleTool(XRCID("btnXMirror"), (isBrush || isMV) && xMirror);
+	menuBar->Check(XRCID("btnConnected"), isBrush && connOnly);
+	toolBarV->ToggleTool(XRCID("btnConnected"), isBrush && connOnly);
+	menuBar->Check(XRCID("btnMerge"), isMV && merge);
+	toolBarV->ToggleTool(XRCID("btnMerge"), isMV && merge);
+	menuBar->Check(XRCID("btnWeld"), isMV && weld);
+	toolBarV->ToggleTool(XRCID("btnWeld"), isMV && weld);
+	menuBar->Check(XRCID("btnRestrictSurface"), isMV && rsurf);
+	toolBarV->ToggleTool(XRCID("btnRestrictSurface"), isMV && rsurf);
+	menuBar->Check(XRCID("btnRestrictPlane"), isMV && rplane);
+	toolBarV->ToggleTool(XRCID("btnRestrictPlane"), isMV && rplane);
+	menuBar->Check(XRCID("btnRestrictNormal"), isMV && rnormal);
+	toolBarV->ToggleTool(XRCID("btnRestrictNormal"), isMV && rnormal);
 }
 
 void OutfitStudioFrame::CloseBrushSettings() {
@@ -6045,6 +6127,8 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		SelectTool(ToolID::FlipEdge);
 	else if (id == XRCID("btnSplitEdgeTool"))
 		SelectTool(ToolID::SplitEdge);
+	else if (id == XRCID("btnMoveVertexTool"))
+		SelectTool(ToolID::MoveVertex);
 	else
 		SelectTool(ToolID::Any);
 
@@ -6286,6 +6370,12 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		}
 	}
 
+	if ((id == segmentTabButton->GetId() || id == partitionTabButton->GetId()) && selectedItems.size() != 1) {
+		wxMessageBox(_("You must have exactly one mesh selected in order to edit partitions or segments."), _("Info"), wxICON_INFORMATION, this);
+		event.Skip();
+		return;
+	}
+
 	if (id != meshTabButton->GetId())
 		masksPane->Hide();
 
@@ -6315,18 +6405,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		glView->SetSegmentMode(false);
 		glView->SetMaskVisible();
-		glView->SetGlobalBrushCollision();
 
-		menuBar->Check(XRCID("btnBrushCollision"), true);
-		menuBar->Enable(XRCID("btnBrushCollision"), true);
 		menuBar->Enable(XRCID("btnSelect"), true);
 		menuBar->Enable(XRCID("btnClearMask"), true);
 		menuBar->Enable(XRCID("btnInvertMask"), true);
 		menuBar->Enable(XRCID("deleteVerts"), true);
 		menuBar->Enable(XRCID("refineMesh"), true);
 
-		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
-		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
 		toolBarH->EnableTool(XRCID("btnSelect"), true);
 	}
 
@@ -6346,18 +6431,13 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		glView->SetSegmentMode(false);
 		glView->SetMaskVisible();
-		glView->SetGlobalBrushCollision();
 
-		menuBar->Check(XRCID("btnBrushCollision"), true);
-		menuBar->Enable(XRCID("btnBrushCollision"), true);
 		menuBar->Enable(XRCID("btnSelect"), true);
 		menuBar->Enable(XRCID("btnClearMask"), true);
 		menuBar->Enable(XRCID("btnInvertMask"), true);
 		menuBar->Enable(XRCID("deleteVerts"), true);
 		menuBar->Enable(XRCID("refineMesh"), true);
 
-		toolBarV->ToggleTool(XRCID("btnBrushCollision"), true);
-		toolBarV->EnableTool(XRCID("btnBrushCollision"), true);
 		toolBarH->EnableTool(XRCID("btnSelect"), true);
 	}
 
@@ -6413,6 +6493,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnCollapseVertex"), true);
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), true);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), true);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), true);
 		menuBar->Enable(XRCID("deleteVerts"), true);
 		menuBar->Enable(XRCID("refineMesh"), true);
 
@@ -6431,6 +6512,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), true);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), true);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), true);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), true);
 	}
 
 	if (id == meshTabButton->GetId()) {
@@ -6514,6 +6596,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnCollapseVertex"), false);
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
 		menuBar->Enable(XRCID("deleteVerts"), false);
 		menuBar->Enable(XRCID("refineMesh"), false);
 
@@ -6532,6 +6615,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
 
 		SetNoSubMeshes();
 
@@ -6578,6 +6662,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnCollapseVertex"), false);
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
 		menuBar->Enable(XRCID("deleteVerts"), false);
 		menuBar->Enable(XRCID("refineMesh"), false);
 
@@ -6596,6 +6681,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
 
 		SetNoSubMeshes();
 	}
@@ -6635,14 +6721,12 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		segmentApply->Show();
 		segmentReset->Show();
 
-		SelectTool(ToolID::MaskBrush);
 		glView->SetSegmentMode();
+		SelectTool(ToolID::MaskBrush);
 		glView->SetMaskVisible(false);
-		glView->SetGlobalBrushCollision(false);
 		glView->ClearMasks();
 
 		menuBar->Check(XRCID("btnMaskBrush"), true);
-		menuBar->Check(XRCID("btnBrushCollision"), false);
 		menuBar->Enable(XRCID("btnSelect"), false);
 		menuBar->Enable(XRCID("btnTransform"), false);
 		menuBar->Enable(XRCID("btnPivot"), false);
@@ -6652,17 +6736,16 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnMoveBrush"), false);
 		menuBar->Enable(XRCID("btnSmoothBrush"), false);
 		menuBar->Enable(XRCID("btnUndiffBrush"), false);
-		menuBar->Enable(XRCID("btnBrushCollision"), false);
 		menuBar->Enable(XRCID("btnClearMask"), false);
 		menuBar->Enable(XRCID("btnInvertMask"), false);
 		menuBar->Enable(XRCID("btnCollapseVertex"), false);
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
 		menuBar->Enable(XRCID("deleteVerts"), false);
 		menuBar->Enable(XRCID("refineMesh"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
-		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
 		toolBarH->EnableTool(XRCID("btnSelect"), false);
 		toolBarV->EnableTool(XRCID("btnTransform"), false);
 		toolBarV->EnableTool(XRCID("btnPivot"), false);
@@ -6675,7 +6758,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
-		toolBarV->EnableTool(XRCID("btnBrushCollision"), false);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
 
 		ShowSegment(segmentTree->GetSelection());
 	}
@@ -6705,14 +6788,12 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionApply->Show();
 		partitionReset->Show();
 
-		SelectTool(ToolID::MaskBrush);
 		glView->SetSegmentMode();
+		SelectTool(ToolID::MaskBrush);
 		glView->SetMaskVisible(false);
-		glView->SetGlobalBrushCollision(false);
 		glView->ClearMasks();
 
 		menuBar->Check(XRCID("btnMaskBrush"), true);
-		menuBar->Check(XRCID("btnBrushCollision"), false);
 		menuBar->Enable(XRCID("btnSelect"), false);
 		menuBar->Enable(XRCID("btnTransform"), false);
 		menuBar->Enable(XRCID("btnPivot"), false);
@@ -6722,17 +6803,16 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnMoveBrush"), false);
 		menuBar->Enable(XRCID("btnSmoothBrush"), false);
 		menuBar->Enable(XRCID("btnUndiffBrush"), false);
-		menuBar->Enable(XRCID("btnBrushCollision"), false);
 		menuBar->Enable(XRCID("btnClearMask"), false);
 		menuBar->Enable(XRCID("btnInvertMask"), false);
 		menuBar->Enable(XRCID("btnCollapseVertex"), false);
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
 		menuBar->Enable(XRCID("deleteVerts"), false);
 		menuBar->Enable(XRCID("refineMesh"), false);
 
 		toolBarH->ToggleTool(XRCID("btnMaskBrush"), true);
-		toolBarV->ToggleTool(XRCID("btnBrushCollision"), false);
 		toolBarH->EnableTool(XRCID("btnSelect"), false);
 		toolBarV->EnableTool(XRCID("btnTransform"), false);
 		toolBarV->EnableTool(XRCID("btnPivot"), false);
@@ -6745,7 +6825,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
-		toolBarV->EnableTool(XRCID("btnBrushCollision"), false);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
 
 		ShowPartition(partitionTree->GetSelection());
 	}
@@ -7172,7 +7252,6 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	std::unordered_set<NiShape*> addedShapes;
 
 	for (auto& shape : shapes) {
-
 		// check if the shape is selected
 		auto selectedSliders = options.selectedShapesToSliders.find(shape->name.get());
 		if (selectedSliders == options.selectedShapesToSliders.end())
@@ -7180,7 +7259,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 
 		addedShapes.emplace(shape);
 
-        for (auto& diff : diffs) {
+		for (auto& diff : diffs) {
 			auto& sliderNameToDisplayName = selectedSliders->second;
 
 			// check the diff is selected for the specific shape
@@ -7235,7 +7314,7 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 	std::unordered_map<std::string, std::unordered_map<std::string, std::string>> shapeToSliders;
 	auto morphs = tri.GetMorphs();
-	for(auto& morph : morphs) {
+	for (auto& morph : morphs) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(morph.first);
 		if (!shape)
 			continue;
@@ -10647,8 +10726,13 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				}
 			}
 		}
-		else if (event.GetKeyCode() == WXK_ESCAPE)
+		else if (event.GetKeyCode() == WXK_ESCAPE) {
+			if (isMovingVertex) {
+				CancelMoveVertex();
+				isMovingVertex = false;
+			}
 			os->CloseBrushSettings();
+		}
 	}
 
 	event.Skip();
@@ -10668,15 +10752,15 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	Vector3 s;
 
 	TweakPickInfo tpi;
-	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, bGlobalBrushCollision, &tpi.facet);
+	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, true, &tpi.facet);
 	if (!hit)
 		return false;
 
 	if (!os->CheckEditableState())
 		return false;
 
-	if (activeBrush->isMirrored()) {
-		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
+	if (GetToolOptionXMirror()) {
+		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, true, &tpi.facetM))
 			tpi.facetM = -1;
 	}
 
@@ -10738,8 +10822,6 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			unweightBrush.bXMirrorBone = !xMirrorBone.empty();
 			unweightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			unweightBrush.setStrength(-weightBrush.getStrength());
-			unweightBrush.setMirror(weightBrush.isMirrored());
-			unweightBrush.setConnected(weightBrush.isConnected());
 			activeBrush = &unweightBrush;
 		}
 		else if (wxGetKeyState(WXK_SHIFT)) {
@@ -10750,8 +10832,6 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			smoothWeightBrush.bXMirrorBone = !xMirrorBone.empty();
 			smoothWeightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
-			smoothWeightBrush.setMirror(weightBrush.isMirrored());
-			smoothWeightBrush.setConnected(weightBrush.isConnected());
 			activeBrush = &smoothWeightBrush;
 		}
 		else {
@@ -10764,47 +10844,35 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	}
 	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {
 		if (activeBrush == &standardBrush) {
-			deflateBrush.setMirror(activeBrush->isMirrored());
-			deflateBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &deflateBrush;
 		}
 		else if (activeBrush == &deflateBrush) {
-			standardBrush.setMirror(activeBrush->isMirrored());
-			standardBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &standardBrush;
 		}
 		else if (activeBrush == &maskBrush) {
 			UnMaskBrush.setStrength(-activeBrush->getStrength());
-			UnMaskBrush.setMirror(activeBrush->isMirrored());
-			UnMaskBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &UnMaskBrush;
 		}
 		else if (activeBrush == &colorBrush) {
 			uncolorBrush.setStrength(-activeBrush->getStrength());
-			uncolorBrush.setMirror(activeBrush->isMirrored());
-			uncolorBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &uncolorBrush;
 		}
 		else if (activeBrush == &alphaBrush) {
 			unalphaBrush.setStrength(-activeBrush->getStrength());
-			unalphaBrush.setMirror(activeBrush->isMirrored());
-			unalphaBrush.setConnected(activeBrush->isConnected());
 			activeBrush = &unalphaBrush;
 		}
 	}
 	else if (activeBrush == &maskBrush && wxGetKeyState(WXK_SHIFT)) {
 		smoothMaskBrush.setStrength(activeBrush->getStrength() * 15.0f);
-		smoothMaskBrush.setMirror(activeBrush->isMirrored());
-		smoothMaskBrush.setConnected(activeBrush->isConnected());
 		activeBrush = &smoothMaskBrush;
 	}
 	else if (activeBrush != &weightBrush && activeBrush != &maskBrush && wxGetKeyState(WXK_SHIFT)) {
-		smoothBrush.setMirror(activeBrush->isMirrored());
-		smoothBrush.setConnected(activeBrush->isConnected());
 		activeBrush = &smoothBrush;
 	}
 
 	activeBrush->setRadius(brushSize);
+	activeBrush->setMirror(GetToolOptionXMirror());
+	activeBrush->setConnected(toolOptionConnectedOnly);
 
 	if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
 		for (auto& sel : os->GetSelectedItems()) {
@@ -10869,7 +10937,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 
 	if (activeStroke) {
-		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
+		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, true);
 
 		if (activeBrush->Type() == TweakBrush::BrushType::Move) {
 			Vector3 pn;
@@ -10881,9 +10949,9 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			if (!hit)
 				return;
 
-			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, bGlobalBrushCollision, &tpi.facet);
-			if (activeBrush->isMirrored()) {
-				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
+			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, true, &tpi.facet);
+			if (GetToolOptionXMirror()) {
+				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, true, &tpi.facetM))
 					tpi.facetM = -1;
 			}
 			tpi.normal.Normalize();
@@ -11206,7 +11274,7 @@ bool wxGLPanel::StartPickVertex() {
 void wxGLPanel::UpdatePickVertex(const wxPoint& screenPos) {
 	GLSurface::CursorHitResult hitResult{};
 
-	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hitResult);
+	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, true, &hitResult);
 	if (!hit || hitResult.hitMeshName != mouseDownMeshName || hitResult.hoverPoint != mouseDownPoint)
 		gls.HidePointCursor();
 
@@ -11265,6 +11333,270 @@ void wxGLPanel::ClickCollapseVertex() {
 	os->SetPendingChanges();
 }
 
+bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
+	if (lastHitResult.hitMeshName.empty() || lastHitResult.hoverPoint < 0)
+		return false;
+
+	mesh* m = GetMesh(lastHitResult.hitMeshName);
+	if (!m)
+		return false;
+
+	if (!os->CheckEditableState())
+		return false;
+
+	mouseDownMeshName = lastHitResult.hitMeshName;
+	mouseDownPoint = lastHitResult.hoverPoint;
+	mouseHasMovedSinceStart = false;
+	mouseDownPointNormal = mesh::ApplyMatrix4ToDir(m->matModel, m->GetOneVertexNormal(mouseDownPoint));
+	mouseDownPointNormal.Normalize();
+	moveVertexOperation = MoveVertexOperation::None;
+
+	Vector3 viewOrigin;
+	gls.GetPickRay(screenPos.x, screenPos.y, nullptr, mouseDownViewDir, viewOrigin);
+	mouseDownViewDir *= -1.0f;
+
+	// snapDistance: shortest edge length of triangle under pointer
+	const Triangle& tri = m->tris[lastHitResult.hoverTri];
+	Vector3 gtp1 = mesh::ApplyMatrix4(m->matModel, m->verts[tri.p1]);
+	Vector3 gtp2 = mesh::ApplyMatrix4(m->matModel, m->verts[tri.p2]);
+	Vector3 gtp3 = mesh::ApplyMatrix4(m->matModel, m->verts[tri.p3]);
+	snapDistance = gtp1.DistanceTo(gtp2);
+	float elen = gtp2.DistanceTo(gtp3);
+	if (snapDistance > elen)
+		snapDistance = elen;
+	elen = gtp3.DistanceTo(gtp1);
+	if (snapDistance > elen)
+		snapDistance = elen;
+
+	UndoStateProject* usp = undoHistory.PushState();
+	usp->usss.emplace_back();
+	usp->usss[0].shapeName = mouseDownMeshName;
+	usp->usss[0].pointEndState[mouseDownPoint] = usp->usss[0].pointStartState[mouseDownPoint] = lastHitResult.hoverMeshCoord;
+
+	if (mouseDownMirrorPoint != -1) {
+		Vector3 mp = lastHitResult.hoverMeshCoord;
+		mp.x = -mp.x;
+		usp->usss[0].pointEndState[mouseDownMirrorPoint] = usp->usss[0].pointStartState[mouseDownMirrorPoint] = mp;
+	}
+
+	if (os->bEditSlider) {
+		usp->sliderName = os->activeSlider;
+		float sliderscale = os->project->SliderValue(os->activeSlider);
+		if (sliderscale == 0.0)
+			sliderscale = 1.0;
+
+		usp->sliderscale = sliderscale;
+	}
+
+	wxPoint p;
+	gls.ProjectPointToScreen(lastHitResult.hoverRealCoord, p.x, p.y);
+	mouseDownOffset = screenPos - p;
+
+	gls.SetPointCursor(lastHitResult.hoverRealCoord);
+	gls.SetCenterCursor(lastHitResult.hoverRealCoord);
+	gls.ShowCursor(true);
+
+	return true;
+}
+
+void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
+	mesh* m = GetMesh(mouseDownMeshName);
+	if (!m || mouseDownPoint < 0)
+		return;
+
+	UndoStateProject* usp = undoHistory.GetCurState();
+	if (!usp)
+		return;
+	UndoStateShape& uss = usp->usss[0];
+
+	// Restore original position in m so CollideMeshes and IntersectSphere
+	// will work.
+	Vector3 mesholdpos = uss.pointStartState[mouseDownPoint];
+	m->verts[mouseDownPoint] = mesholdpos;
+	if (mouseDownMirrorPoint != -1)
+		m->verts[mouseDownMirrorPoint] = uss.pointStartState[mouseDownMirrorPoint];
+	Vector3 oldpos = mesh::ApplyMatrix4(m->matModel, mesholdpos);
+
+	// Since the pointer can be offset from screenPos, calculate a point
+	// to display at screenPos.  We do this by intersecting the
+	// screenPos ray with the plane perpendicular to mouseDownViewDir at oldpos.
+	// This will also be our default for newpos if all tool options are off.
+	Vector3 pointerPoint;
+	gls.CollidePlane(screenPos.x, screenPos.y, pointerPoint, mouseDownViewDir, mouseDownViewDir.dot(oldpos));
+
+	// Determining newpos: 1. intersect screenPos-ray with plane or surface.
+	Vector3 newpos = pointerPoint;
+	moveVertexOperation = MoveVertexOperation::Move;
+	if (toolOptionRestrictSurface) {
+		Vector3 hitpt, hitnormal;
+		mesh* hitmesh = nullptr;
+		bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, hitpt, hitnormal, false, &hitmesh);
+		if (!hit) {
+			newpos = oldpos;
+			moveVertexOperation = MoveVertexOperation::None;
+		}
+		else
+			newpos = mesh::ApplyMatrix4(hitmesh->matModel, hitpt);
+	}
+	else if (toolOptionRestrictPlane) {
+		gls.CollidePlane(screenPos.x, screenPos.y, newpos, mouseDownPointNormal, mouseDownPointNormal.dot(oldpos));
+	}
+
+	// 2. Project onto normal
+	if (toolOptionRestrictNormal && moveVertexOperation != MoveVertexOperation::None) {
+		newpos = oldpos + mouseDownPointNormal * mouseDownPointNormal.dot(newpos - oldpos);
+	}
+
+	// 3. Snap to nearest valid point
+	if ((toolOptionMerge || toolOptionWeld) && moveVertexOperation != MoveVertexOperation::None) {
+		// Get adjacent points (not including welded points)
+		std::unordered_set<int> adjPts;
+		if (m->vertEdges && m->edges) {
+			for (int ei : m->vertEdges[mouseDownPoint]) {
+				const Edge& edge = m->edges[ei];
+				if (edge.p1 != mouseDownPoint)
+					adjPts.insert(edge.p1);
+				if (edge.p2 != mouseDownPoint)
+					adjPts.insert(edge.p2);
+			}
+		}
+
+		int closestPoint = -1;
+		mesh* closestMesh = nullptr;
+		float closestDist = snapDistance;
+
+		for (mesh* tm : gls.GetActiveMeshes()) {
+			Vector3 viewDir, viewOrigin;
+			gls.GetPickRay(screenPos.x, screenPos.y, tm, viewDir, viewOrigin);
+
+			Vector3 tmnewpos = mesh::ApplyMatrix4(glm::inverse(tm->matModel), newpos);
+
+			// TODO: snapDistance and closestDist may not match tm's scale.
+			std::vector<IntersectResult> iresults;
+			if (tm->bvh && tm->bvh->IntersectSphere(tmnewpos, snapDistance, &iresults)) {
+				for (const IntersectResult& ir : iresults) {
+					const Triangle& t = tm->tris[ir.HitFacet];
+					for (int tvi = 0; tvi < 3; ++tvi) {
+						int tp = t[tvi];
+						if (tm == m && tp == mouseDownPoint)
+							continue;
+						if (tm == m && adjPts.count(tp) != 0)
+							continue;
+
+						// Calculate distance in plane perpendicular to view
+						Vector3 diff = tm->verts[tp] - tmnewpos;
+						diff -= viewDir * viewDir.dot(diff);
+						float d = diff.length();
+						if (d >= closestDist)
+							continue;
+
+						closestPoint = tp;
+						closestMesh = tm;
+						closestDist = d;
+					}
+				}
+			}
+		}
+
+		if (closestPoint != -1) {
+			NiShape* s1 = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
+			NiShape* s2 = os->project->GetWorkNif()->FindBlockByName<NiShape>(closestMesh->shapeName);
+			bool canWeld = toolOptionWeld && s1 && s2 && os->project->PointsHaveDifferingWeightsOrDiffs(s1, mouseDownPoint, s2, closestPoint);
+			bool canMerge = toolOptionMerge && m == closestMesh;
+			if (canWeld || canMerge) {
+				newpos = mesh::ApplyMatrix4(closestMesh->matModel, closestMesh->verts[closestPoint]);
+				if (canWeld)
+					moveVertexOperation = MoveVertexOperation::Weld;
+				else if (canMerge)
+					moveVertexOperation = MoveVertexOperation::Merge;
+				moveVertexTarget = closestPoint;
+				moveVertexWeldTargetMeshName = closestMesh->shapeName;
+			}
+		}
+	}
+
+	Vector3 meshnewpos = mesh::ApplyMatrix4(glm::inverse(m->matModel), newpos);
+	uss.pointEndState[mouseDownPoint] = meshnewpos;
+	m->verts[mouseDownPoint] = meshnewpos;
+	gls.SetPointCursor(newpos);
+	gls.SetCenterCursor(pointerPoint);
+	m->QueueUpdate(mesh::UpdateType::Position);
+	gls.ShowCursor(true);
+
+	if (mouseDownMirrorPoint != -1) {
+		Vector3 mp = meshnewpos;
+		mp.x = -mp.x;
+		uss.pointEndState[mouseDownMirrorPoint] = mp;
+		m->verts[mouseDownMirrorPoint] = mp;
+		gls.ShowMirrorPointCursor(mp, m);
+	}
+}
+
+void wxGLPanel::EndMoveVertex() {
+	isMovingVertex = false;
+	UndoStateProject* usp = undoHistory.GetCurState();
+	if (!usp)
+		return;
+
+	if (moveVertexOperation == MoveVertexOperation::None) {
+		CancelMoveVertex();
+		return;
+	}
+
+	bool isWeld = moveVertexOperation == MoveVertexOperation::Weld;
+	bool isMerge = moveVertexOperation == MoveVertexOperation::Merge;
+
+	if (isWeld || isMerge) {
+		NiShape* s1 = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
+		NiShape* s2 = s1;
+		if (isWeld)
+			s2 = os->project->GetWorkNif()->FindBlockByName<NiShape>(moveVertexWeldTargetMeshName);
+
+		bool p1b = os->project->IsVertexOnBoundary(s1, mouseDownPoint);
+		bool p2b = os->project->IsVertexOnBoundary(s2, moveVertexTarget);
+
+		if (!p1b || !p2b) {
+			int response = wxMessageBox(
+				!p1b ? !p2b ? _("Neither the selected nor target vertices are on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?")
+							: _("The selected vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?")
+					 : _("The target vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"),
+				_("Weld/Merge Non-Boundary Vertices"),
+				wxOK | wxCANCEL | wxCANCEL_DEFAULT,
+				os);
+
+			if (response == wxCANCEL) {
+				CancelMoveVertex();
+				return;
+			}
+		}
+
+		usp->undoType = UndoType::Mesh;
+		usp->sliderName.clear();
+		usp->usss[0].pointStartState.clear();
+		usp->usss[0].pointEndState.clear();
+
+		if (isWeld)
+			os->project->PrepareWeldVertex(s1, usp->usss[0], mouseDownPoint, moveVertexTarget, s2);
+
+		if (isMerge)
+			os->project->PrepareMergeVertex(s1, usp->usss[0], mouseDownPoint, moveVertexTarget);
+	}
+
+	ApplyUndoState(usp, false);
+
+	os->UpdateUndoTools();
+	os->SetPendingChanges();
+}
+
+void wxGLPanel::CancelMoveVertex() {
+	UndoStateProject* usp = undoHistory.GetCurState();
+	if (!usp)
+		return;
+
+	ApplyUndoState(usp, true);
+	undoHistory.PopState();
+}
+
 bool wxGLPanel::StartPickEdge() {
 	if (lastHitResult.hitMeshName.empty() || (lastHitResult.hoverEdge.p1 == 0 && lastHitResult.hoverEdge.p2 == 0))
 		return false;
@@ -11277,7 +11609,7 @@ bool wxGLPanel::StartPickEdge() {
 void wxGLPanel::UpdatePickEdge(const wxPoint& screenPos) {
 	GLSurface::CursorHitResult hitResult{};
 
-	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision, &hitResult);
+	bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, true, &hitResult);
 	if (!hit || hitResult.hitMeshName != mouseDownMeshName || !hitResult.hoverEdge.CompareIndices(mouseDownEdge))
 		gls.HideSegCursor();
 
@@ -12157,7 +12489,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 
 			os->CheckBrushBounds();
 			os->UpdateBrushSettings();
-			gls.UpdateCursor(p.x, p.y, bGlobalBrushCollision);
+			gls.UpdateCursor(p.x, p.y, true);
 			gls.RenderOneFrame();
 		}
 	}
@@ -12177,6 +12509,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	int x;
 	int y;
 	event.GetPosition(&x, &y);
+
+	mouseHasMovedSinceStart = true;
 
 	ShowRotationCenter(false);
 
@@ -12216,7 +12550,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		gls.RenderOneFrame();
 	}
 
-	if (lbuttonDown) {
+	if (lbuttonDown || isMovingVertex) {
 		isLDragging = true;
 		if (isTransforming) {
 			UpdateTransform(event.GetPosition());
@@ -12236,6 +12570,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else if (isPickingEdge) {
 			UpdatePickEdge(event.GetPosition());
 		}
+		else if (isMovingVertex) {
+			UpdateMoveVertex(event.GetPosition() - mouseDownOffset);
+		}
 		else {
 			if (Config.MatchValue("Input/LeftMousePan", "true")) {
 				gls.PanCamera(x - lastX, y - lastY);
@@ -12247,15 +12584,33 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		gls.RenderOneFrame();
 	}
 
-	if (!rbuttonDown && !lbuttonDown) {
+	if (!rbuttonDown && !lbuttonDown && !isMovingVertex) {
 		GLSurface::CursorHitResult hitResult{};
 
 		if (editMode) {
-			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitResult);
+			cursorExists = gls.UpdateCursor(x, y, true, &hitResult);
 		}
 		else {
 			cursorExists = false;
 			gls.ShowCursor(false);
+		}
+
+		if (activeTool == ToolID::MoveVertex) {
+			mouseDownMirrorPoint = -1;
+			if (GetToolOptionXMirror()) {
+				Vector3 hitPt, hitNrm;
+				mesh* mmesh = nullptr;
+				int triInd = 0;
+				if (gls.CollideMeshes(x, y, hitPt, hitNrm, true, &mmesh, true, &triInd) && mmesh == hitResult.hitMesh) {
+					int hitPti = mmesh->tris[triInd].ClosestVertex(mmesh->verts.get(), hitPt);
+					if (hitPti != hitResult.hoverPoint) {
+						// Should we also check if the mirror point's location
+						// is close to the mirror of the hover point's location?
+						mouseDownMirrorPoint = hitPti;
+						gls.ShowMirrorPointCursor(mmesh->verts[mouseDownMirrorPoint], mmesh);
+					}
+				}
+			}
 		}
 
 		lastHitResult = hitResult;
@@ -12360,6 +12715,17 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 		if (meshHit)
 			isPickingEdge = true;
 	}
+	else if (activeTool == ToolID::MoveVertex) {
+		if (isMovingVertex) {
+			EndMoveVertex();
+			isMovingVertex = false;
+		}
+		else {
+			bool meshHit = StartMoveVertex(event.GetPosition());
+			if (meshHit)
+				isMovingVertex = true;
+		}
+	}
 	else if (vertexEdit) {
 		bool meshHit = SelectVertex(event.GetPosition());
 		if (meshHit)
@@ -12411,6 +12777,15 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		isPickingEdge = false;
 	}
 
+	if (isMovingVertex) {
+		if (mouseHasMovedSinceStart) {
+			EndMoveVertex();
+			isMovingVertex = false;
+		}
+		else
+			mouseHasMovedSinceStart = true;
+	}
+
 	if (isTransforming) {
 		EndTransform();
 		isTransforming = false;
@@ -12444,6 +12819,11 @@ void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 	if (isPickingEdge) {
 		EndPickEdge();
 		isPickingEdge = false;
+	}
+
+	if (isMovingVertex) {
+		CancelMoveVertex();
+		isMovingVertex = false;
 	}
 
 	if (isTransforming) {

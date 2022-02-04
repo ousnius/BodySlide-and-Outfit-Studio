@@ -531,6 +531,46 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 	CalcTangentSpace();
 }
 
+Vector3 mesh::GetOneVertexNormal(int vi) {
+	if (vi < 0 || vi >= nVerts)
+		return Vector3(1,0,0);
+	if (norms)
+		return norms[vi];
+
+	// Without norms, we have to calculate it from scratch
+	if (!bGotWeldVerts)
+		CalcWeldVerts();
+
+	// Sum the normals of every triangle containing vi
+	Vector3 sum;
+	for (int ti = 0; ti < nTris; ++ti) {
+		const Triangle& t = tris[ti];
+		if (t.p1 != vi && t.p2 != vi && t.p3 != vi)
+			continue;
+		Vector3 tn;
+		t.trinormal(verts.get(), &tn);
+		tn.Normalize();
+		sum += tn;
+	}
+
+	// Also sum the normals of every triangle containing a vertex welded to vi
+	auto wvit = weldVerts.find(vi);
+	if (wvit != weldVerts.end())
+		for (int wvi : wvit->second)
+			for (int ti = 0; ti < nTris; ++ti) {
+				const Triangle& t = tris[ti];
+				if (t.p1 != wvi && t.p2 != wvi && t.p3 != wvi)
+					continue;
+				Vector3 tn;
+				t.trinormal(verts.get(), &tn);
+				tn.Normalize();
+				sum += tn;
+			}
+
+	sum.Normalize();
+	return sum;
+}
+
 void mesh::FacetNormals() {
 	if (lockNormals)
 		return;

@@ -140,6 +140,12 @@
 						<bitmap2>$(AppDir)\res\images\SplitEdge_d.png</bitmap2>
 						<radio>1</radio>
 					</object>
+					<object class="tool" name="btnMoveVertexTool">
+						<label>Move Vertex</label>
+						<tooltip>Moves a vertex.</tooltip>
+						<bitmap>$(AppDir)\res\images\MoveVertex.png</bitmap>
+						<radio>1</radio>
+					</object>
 					<object class="separator" />
 					<object class="wxSlider" name="fovSlider">
 						<size>100,25</size>
@@ -212,30 +218,6 @@
 								<toggle>1</toggle>
 							</object>
 							<object class="separator" />
-							<object class="tool" name="btnXMirror">
-								<label>X Mirror</label>
-								<tooltip>Mirror edits across the X axis.</tooltip>
-								<bitmap>$(AppDir)\res\images\XMirror.png</bitmap>
-								<bitmap2>$(AppDir)\res\images\XMirror_d.png</bitmap2>
-								<toggle>1</toggle>
-								<checked>0</checked>
-								<disabled>1</disabled>
-							</object>
-							<object class="tool" name="btnConnected">
-								<label>Edit Connected Only\tC</label>
-								<tooltip>Edit only vertices that are connected to the ones under the brush within the brush radius.</tooltip>
-								<bitmap>$(AppDir)\res\images\EditConnected.png</bitmap>
-								<toggle>1</toggle>
-								<checked>0</checked>
-							</object>
-							<object class="tool" name="btnBrushCollision">
-								<label>Global Brush Collision\tB</label>
-								<tooltip>Allows for the brushes to collide with all currently selected meshes at the same time.</tooltip>
-								<bitmap>$(AppDir)\res\images\BrushCollision.png</bitmap>
-								<toggle>1</toggle>
-								<checked>1</checked>
-							</object>
-							<object class="separator" />
 							<object class="tool" name="btnViewFront">
 								<label>View Front</label>
 								<tooltip>Change camera view to the front.</tooltip>
@@ -280,6 +262,57 @@
 								<tooltip>Toggle rendering of the floor grid.</tooltip>
 								<bitmap>$(AppDir)\res\images\Floor.png</bitmap>
 								<toggle>1</toggle>
+							</object>
+							<object class="separator" />
+							<object class="tool" name="btnXMirror">
+								<label>X Mirror</label>
+								<tooltip>Mirror edits across the X axis.</tooltip>
+								<bitmap>$(AppDir)\res\images\XMirror.png</bitmap>
+								<bitmap2>$(AppDir)\res\images\XMirror_d.png</bitmap2>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnConnected">
+								<label>Edit Connected Only\tC</label>
+								<tooltip>Edit only vertices that are connected to the ones under the brush within the brush radius.</tooltip>
+								<bitmap>$(AppDir)\res\images\EditConnected.png</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnMerge">
+								<label>Merge Vertex</label>
+								<tooltip>Merges two vertices and fills any gaps.</tooltip>
+								<bitmap>$(AppDir)\res\images\Merge.png</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnWeld">
+								<label>Weld Vertex</label>
+								<tooltip>Welds two vertices while keeping the texture coordinates (UV) distinct.</tooltip>
+								<bitmap>$(AppDir)\res\images\Weld.png</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnRestrictSurface">
+								<label>Restrict To Surface</label>
+								<tooltip>Restricts motion to a mesh surface.</tooltip>
+								<bitmap>$(AppDir)\res\images\RestrictSurface.png</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnRestrictPlane">
+								<label>Restrict To Plane</label>
+								<tooltip>Restricts motion to parallel to the surface.</tooltip>
+								<bitmap>$(AppDir)\res\images\RestrictPlane.png</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnRestrictNormal">
+								<label>Restrict To Normal</label>
+								<tooltip>Restricts motion to perpendicular to the surface.</tooltip>
+								<bitmap>$(AppDir)\res\images\RestrictNormal.png</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
 							</object>
 						</object>
 					</object>
@@ -1736,12 +1769,42 @@
 				<help>Edit only vertices that are connected to the ones under the brush within the brush radius</help>
 				<checkable>1</checkable>
 				<checked>0</checked>
+				<enabled>0</enabled>
 			</object>
-			<object class="wxMenuItem" name="btnBrushCollision">
-				<label>Global Brush Collision\tB</label>
-				<help>Allows for the brushes to collide with all currently selected meshes at the same time</help>
+			<object class="wxMenuItem" name="btnMerge">
+				<label>Merge Vertex</label>
+				<help>Merges two vertices and fills any gaps.</help>
 				<checkable>1</checkable>
-				<checked>1</checked>
+				<checked>0</checked>
+				<enabled>0</enabled>
+			</object>
+			<object class="wxMenuItem" name="btnWeld">
+				<label>Weld Vertex</label>
+				<help>Welds two vertices while keeping the texture coordinates (UV) distinct.</help>
+				<checkable>1</checkable>
+				<checked>0</checked>
+				<enabled>0</enabled>
+			</object>
+			<object class="wxMenuItem" name="btnRestrictSurface">
+				<label>Restrict To Surface</label>
+				<help>Restricts motion to a mesh surface.</help>
+				<checkable>1</checkable>
+				<checked>0</checked>
+				<enabled>0</enabled>
+			</object>
+			<object class="wxMenuItem" name="btnRestrictPlane">
+				<label>Restrict To Plane</label>
+				<help>Restricts motion to parallel to the surface.</help>
+				<checkable>1</checkable>
+				<checked>0</checked>
+				<enabled>0</enabled>
+			</object>
+			<object class="wxMenuItem" name="btnRestrictNormal">
+				<label>Restrict To Normal</label>
+				<help>Restricts motion to perpendicular to the surface.</help>
+				<checkable>1</checkable>
+				<checked>0</checked>
+				<enabled>0</enabled>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="btnRecalcNormals">
@@ -2084,6 +2147,11 @@
 				<object class="wxMenuItem" name="btnSplitEdgeTool">
 					<label>Split Edge</label>
 					<help>Splits a mesh edge in two with a new vertex.</help>
+					<radio>1</radio>
+				</object>
+				<object class="wxMenuItem" name="btnMoveVertexTool">
+					<label>Move Vertex</label>
+					<help>Moves a vertex.</help>
 					<radio>1</radio>
 				</object>
 				<object class="separator" />
