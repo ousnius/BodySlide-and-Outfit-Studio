@@ -2359,13 +2359,6 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, wxScrolledWindo
 	wxDummySliderPanel* sliderPanel = dummySliderPool.GetNext();
 	if (sliderPanel) {
 		if (sliderPanel->Create(wnd, sliderName)) {
-			//sliderPanel->btnSliderEdit->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-			//sliderPanel->btnSliderProp->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-			//sliderPanel->btnMinus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-			//sliderPanel->btnPlus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-			//sliderPanel->sliderCheck->Bind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnSliderCheckBox, this);
-			//sliderPanel->slider->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
-			//sliderPanel->sliderReadout->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
 
 			if (sliderPanel->GetContainingSizer())
 				rootSz->Detach(sliderPanel);
@@ -2823,14 +2816,6 @@ std::string OutfitStudioFrame::GetActiveBone() {
 void OutfitStudioFrame::HideSliderPanel(wxDummySliderPanel* sliderPanel) {
 	if (!sliderPanel)
 		return;
-
-	//sliderPanel->btnSliderEdit->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-	//sliderPanel->btnSliderProp->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-	//sliderPanel->btnMinus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-	//sliderPanel->btnPlus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
-	//sliderPanel->sliderCheck->Unbind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnSliderCheckBox, this);
-	//sliderPanel->slider->Unbind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
-	//sliderPanel->sliderReadout->Unbind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
 
 	sliderPanel->Hide();
 }
