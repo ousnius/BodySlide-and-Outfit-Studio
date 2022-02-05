@@ -152,7 +152,7 @@ enum class RotationCenterMode { Zero, MeshCenter, Picked };
 
 enum class MoveVertexOperation { None, Move, Weld, Merge };
 
-constexpr float BrushSizeScale = 10.0f;
+constexpr float BrushSizeScale = 3.0f;
 
 class wxGLPanel : public wxGLCanvas {
 public:
