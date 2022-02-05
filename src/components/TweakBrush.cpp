@@ -167,7 +167,7 @@ void TweakStroke::endStroke() {
 
 TweakBrush::TweakBrush()
 	: radius(0.45f)
-	, focus(1.00f)
+	, focus(0.50f)
 	, inset(0.00f)
 	, strength(0.0015f)
 	, spacing(0.015f) {
@@ -189,11 +189,6 @@ bool TweakBrush::checkSpacing(Vector3& start, Vector3& end) {
 		return false;
 }
 
-// Standard falloff function
-// y = ((cos((pi/2)*x) * sqrt(cos((pi/2)*x))) ^ focus) - inset
-// Cancel that -- going for a simpler function (1-x^2)*(1-x^4)
-// With focus: (1-(((f-1)-f*x)^2))*(1-(((f-1)-f*x)^4))  f is greater than 1.
-// Values between 0 and 1 give a spherical curve, values over 1 give a peaked curve
 float TweakBrush::getFalloff(float dist) {
 	// Beyond the radius, no strength
 	if (dist > radius)
@@ -203,29 +198,9 @@ float TweakBrush::getFalloff(float dist) {
 	if (dist == 0.0f)
 		return 1.0;
 
-	float x = dist / radius;
-	if (x > (focus - 1.0f) / focus) {
-		float p1 = 0.0f;
-		float p2 = 0.0f;
-
-		if (focus >= 1.0f) {
-			float fx = (focus - 1.0f) - focus * x;
-			p1 = 1.0f - fx * fx;
-			p2 = 1.0f - std::pow(fx, 4);
-		}
-		else if (focus > 0.0f) {
-			float fx = x / focus;
-			p1 = 1.0f - x * x;
-			p2 = 1.0f - std::pow(fx, 4);
-		}
-
-		float p = p1 * p2;
-		if (p < 0.0f)
-			p = 0.0f;
-
-		return p;
-	}
-	return 1.0;
+	float p = std::pow(6.0f, focus * 2.0f - 1.0f);
+	float x = std::pow(dist / radius, p);
+	return (2 * x - 3) * x * x + 1;
 }
 
 void TweakBrush::applyFalloff(Vector3& deltaVec, float dist) {
@@ -358,7 +333,7 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* poi
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
 			ve.Zero();
-		else if (strength < 0.1f && focus < 5.0f)
+		else if (strength < 0.1f)
 			applyFalloff(ve, originToV);
 
 		vf = vc + ve;
@@ -407,7 +382,7 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
 			ve.Zero();
-		else if (strength > -0.1f && focus < 5.0f)
+		else if (strength > -0.1f)
 			applyFalloff(ve, originToV);
 
 		vf = vc + ve;
@@ -744,7 +719,7 @@ TB_Move::TB_Move()
 	brushType = TweakBrush::BrushType::Move;
 	brushName = "Move Brush";
 	bLiveBVH = false;
-	focus = 2.0f;
+	focus = 0.5f;
 	strength = 0.1f;
 }
 
@@ -880,7 +855,7 @@ TB_XForm::TB_XForm() {
 	brushType = TweakBrush::BrushType::Transform;
 	brushName = "Transform Brush";
 	bLiveBVH = false;
-	focus = 1.0f;
+	focus = 0.5f;
 	strength = 1.0f;
 }
 
@@ -1465,7 +1440,7 @@ void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
 			vev.Zero();
-		else if (strength < 0.1f && focus < 5.0f)
+		else if (strength < 0.1f)
 			applyFalloff(vev, originToV);
 
 		vf = vc + vev.x;
@@ -1515,7 +1490,7 @@ void TB_Unalpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* 
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
 			vev.Zero();
-		else if (strength > -0.1f && focus < 5.0f)
+		else if (strength > -0.1f)
 			applyFalloff(vev, originToV);
 
 		vf = vc + vev.x;
