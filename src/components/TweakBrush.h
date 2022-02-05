@@ -93,7 +93,7 @@ protected:
 	BrushType brushType;
 	std::string brushName;
 	float radius;
-	float focus; // Focus between 1 and 5.
+	float focus; // Focus between 0 and 1.
 	float strength;
 	float inset;	   // Normally 0. Values between 0 and 1 increase displacement, values below 0 reduce displacement.
 	float spacing;	   // Distance between points; movements less than this distance don't update the stroke.
@@ -117,10 +117,10 @@ public:
 
 	virtual float getRadius() { return radius; }
 	virtual float getStrength() { return strength * 10.0f; }
-	virtual float getFocus() { return focus / 5.0f; }
+	virtual float getFocus() { return focus; }
 	virtual float getSpacing() { return spacing; }
 	virtual void setRadius(float newRadius) { radius = newRadius; }
-	virtual void setFocus(float newFocus) { focus = newFocus * 5.0f; }
+	virtual void setFocus(float newFocus) { focus = newFocus; }
 	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
 	virtual void setSpacing(float newSpacing) { spacing = newSpacing; }
 
@@ -143,9 +143,6 @@ public:
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
 	virtual bool checkSpacing(nifly::Vector3& start, nifly::Vector3& end);
 
-	// Standard falloff function, used by most brushes
-	// y = (cos((pi/2)*x) * sqrt(cos((pi/2)*x))) ^ focus
-	// Focus values between 0 and 1 give a spherical curve, values over 1 give a peaked curve.
 	virtual float getFalloff(float dist);
 	virtual void applyFalloff(nifly::Vector3& deltaVec, float dist);
 

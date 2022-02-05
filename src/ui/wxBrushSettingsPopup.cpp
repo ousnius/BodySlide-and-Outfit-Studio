@@ -19,10 +19,10 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 		float slideFocus = brushFocus->GetValue() / 1000.0f;
 		float slideSpacing = brushSpacing->GetValue() / 1000.0f;
 
-		wxString valSizeStr = wxString::Format("%0.3f", slideSize);
-		wxString valStrengthStr = wxString::Format("%0.3f", slideStrength);
-		wxString valFocusStr = wxString::Format("%0.3f", slideFocus);
-		wxString valSpacingStr = wxString::Format("%0.3f", slideSpacing);
+		wxString valSizeStr = wxString::Format("%0.4f", slideSize);
+		wxString valStrengthStr = wxString::Format("%0.4f", slideStrength);
+		wxString valFocusStr = wxString::Format("%0.4f", slideFocus);
+		wxString valSpacingStr = wxString::Format("%0.4f", slideSpacing);
 
 		brushSizeVal->ChangeValue(valSizeStr);
 		brushStrengthVal->ChangeValue(valStrengthStr);
@@ -63,8 +63,8 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	const int sliderWidth = 250;
 	const int textCtrlWidth = 50;
 
-	wxFloatingPointValidator<float> floatValidator(3);
-	floatValidator.SetRange(0.0, 1.0);
+	wxFloatingPointValidator<float> floatValidator(4);
+	floatValidator.SetRange(0.0, 10.0);
 
 	panel = new wxPanel(popupWin);
 	topSizer = new wxBoxSizer(wxVERTICAL);
@@ -79,7 +79,7 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	brushSize->Bind(wxEVT_SLIDER, onBrushSettingsSlider);
 	flexGridSizer->Add(brushSize, 1, wxALL, 5);
 
-	brushSizeVal = new wxTextCtrl(panel, wxID_ANY, "0.000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
+	brushSizeVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
 	brushSizeVal->SetValidator(floatValidator);
 	brushSizeVal->Bind(wxEVT_TEXT, onBrushSettingsTextChanged);
 	flexGridSizer->Add(brushSizeVal, 0, wxALL, 5);
@@ -91,7 +91,7 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	brushStrength->Bind(wxEVT_SLIDER, onBrushSettingsSlider);
 	flexGridSizer->Add(brushStrength, 1, wxALL, 5);
 
-	brushStrengthVal = new wxTextCtrl(panel, wxID_ANY, "0.000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
+	brushStrengthVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
 	brushStrengthVal->SetValidator(floatValidator);
 	brushStrengthVal->Bind(wxEVT_TEXT, onBrushSettingsTextChanged);
 	flexGridSizer->Add(brushStrengthVal, 0, wxALL, 5);
@@ -103,7 +103,7 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	brushFocus->Bind(wxEVT_SLIDER, onBrushSettingsSlider);
 	flexGridSizer->Add(brushFocus, 1, wxALL, 5);
 
-	brushFocusVal = new wxTextCtrl(panel, wxID_ANY, "0.000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
+	brushFocusVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
 	brushFocusVal->SetValidator(floatValidator);
 	brushFocusVal->Bind(wxEVT_TEXT, onBrushSettingsTextChanged);
 	flexGridSizer->Add(brushFocusVal, 0, wxALL, 5);
@@ -115,7 +115,7 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	brushSpacing->Bind(wxEVT_SLIDER, onBrushSettingsSlider);
 	flexGridSizer->Add(brushSpacing, 1, wxALL, 5);
 
-	brushSpacingVal = new wxTextCtrl(panel, wxID_ANY, "0.000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
+	brushSpacingVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
 	brushSpacingVal->SetValidator(floatValidator);
 	brushSpacingVal->Bind(wxEVT_TEXT, onBrushSettingsTextChanged);
 	flexGridSizer->Add(brushSpacingVal, 0, wxALL, 5);
@@ -129,25 +129,25 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 
 void wxBrushSettingsPopupBase::SetBrushSize(float value) {
 	brushSize->SetValue(value * 1000.0f);
-	wxString valStr = wxString::Format("%0.3f", value);
+	wxString valStr = wxString::Format("%0.4f", value);
 	brushSizeVal->ChangeValue(valStr);
 }
 
 void wxBrushSettingsPopupBase::SetBrushStrength(float value) {
 	brushStrength->SetValue(value * 1000.0f);
-	wxString valStr = wxString::Format("%0.3f", value);
+	wxString valStr = wxString::Format("%0.4f", value);
 	brushStrengthVal->ChangeValue(valStr);
 }
 
 void wxBrushSettingsPopupBase::SetBrushFocus(float value) {
 	brushFocus->SetValue(value * 1000.0f);
-	wxString valStr = wxString::Format("%0.3f", value);
+	wxString valStr = wxString::Format("%0.4f", value);
 	brushFocusVal->ChangeValue(valStr);
 }
 
 void wxBrushSettingsPopupBase::SetBrushSpacing(float value) {
 	brushSpacing->SetValue(value * 1000.0f);
-	wxString valStr = wxString::Format("%0.3f", value);
+	wxString valStr = wxString::Format("%0.4f", value);
 	brushSpacingVal->ChangeValue(valStr);
 }
 

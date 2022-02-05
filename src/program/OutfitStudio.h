@@ -152,6 +152,8 @@ enum class RotationCenterMode { Zero, MeshCenter, Picked };
 
 enum class MoveVertexOperation { None, Move, Weld, Merge };
 
+constexpr float BrushSizeScale = 3.0f;
+
 class wxGLPanel : public wxGLCanvas {
 public:
 	GLSurface gls;
@@ -345,9 +347,9 @@ public:
 		m->SmoothNormals();
 	}
 
-	float GetBrushSize() { return brushSize / 3.0f; }
+	float GetBrushSize() { return brushSize / BrushSizeScale; }
 	void SetBrushSize(float val) {
-		val *= 3.0f;
+		val *= BrushSizeScale;
 		brushSize = val;
 		gls.SetCursorSize(val);
 	}
@@ -370,9 +372,9 @@ public:
 			gls.SetCursorSize(0.000f);
 			brushSize = 0.000f;
 		}
-		else if (brushSize > 3.000f) {
-			gls.SetCursorSize(3.000f);
-			brushSize = 3.000f;
+		else if (brushSize > BrushSizeScale) {
+			gls.SetCursorSize(BrushSizeScale);
+			brushSize = BrushSizeScale;
 		}
 	}
 
@@ -1490,7 +1492,7 @@ private:
 
 	void OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetBrushSize() < 1.0f) {
-			float v = glView->IncBrush() / 3.0f;
+			float v = glView->IncBrush() / BrushSizeScale;
 			if (statusBar)
 				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
 
@@ -1500,7 +1502,7 @@ private:
 	}
 	void OnDecBrush(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetBrushSize() > 0.0f) {
-			float v = glView->DecBrush() / 3.0f;
+			float v = glView->DecBrush() / BrushSizeScale;
 			if (statusBar)
 				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
 
