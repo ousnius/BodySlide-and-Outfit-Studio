@@ -119,12 +119,12 @@ public:
 	TweakBrushMeshCache* getCache(mesh* m) { return &cache[m]; }
 
 	virtual float getRadius() { return radius; }
-	virtual float getStrength() { return strength * 10.0f; }
+	virtual float getStrength() { return strength; }
 	virtual float getFocus() { return focus; }
 	virtual float getSpacing() { return spacing; }
 	virtual void setRadius(float newRadius) { radius = newRadius; }
 	virtual void setFocus(float newFocus) { focus = newFocus; }
-	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
+	virtual void setStrength(float newStr) { strength = newStr; }
 	virtual void setSpacing(float newSpacing) { spacing = newSpacing; }
 
 	virtual int CachedPointIndex(mesh*, int) { return 0; }
@@ -172,6 +172,9 @@ class TB_Inflate : public TweakBrush {
 public:
 	TB_Inflate();
 	virtual ~TB_Inflate();
+
+	virtual float getStrength() { return strength * 10.0f; }
+	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
