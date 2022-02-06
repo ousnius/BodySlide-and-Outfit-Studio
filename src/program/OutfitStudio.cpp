@@ -6190,16 +6190,21 @@ void OutfitStudioFrame::UpdateVisibleSliders() {
 	if (sliderCount == 0)
 		return;
 
-	int lineWidth, lineHeight;
-	sliderScroll->GetScrollPixelsPerUnit(&lineWidth, &lineHeight);
+	int startIndex = 0;
+	int endIndex = sliderCount - 1;
 
-	wxSize size = sliderScroll->GetSizer()->GetSize();
-	int sliderHeight = (size.GetHeight() / sliderCount);
-	int linesPerPage = sliderScroll->GetScrollPageSize(wxVERTICAL);
-	int scrollPos = sliderScroll->GetScrollPos(wxVERTICAL);
-	int numberOfVisibleSliders = ceil(((float)linesPerPage * (float)lineHeight) / (float)sliderHeight);
-	int startIndex = floor((lineHeight * scrollPos) / sliderHeight);
-	int endIndex = std::min(startIndex + numberOfVisibleSliders, sliderCount);
+	if (sliderScroll->HasScrollbar(wxVERTICAL)) {
+		int lineWidth, lineHeight;
+		sliderScroll->GetScrollPixelsPerUnit(&lineWidth, &lineHeight);
+
+		int linesPerPage = sliderScroll->GetScrollPageSize(wxVERTICAL);
+		wxSize size = sliderScroll->GetSizer()->GetSize();
+		int sliderHeight = (size.GetHeight() / sliderCount);
+		int scrollPos = sliderScroll->GetScrollPos(wxVERTICAL);
+		int numberOfVisibleSliders = ceil(((float)linesPerPage * (float)lineHeight) / (float)sliderHeight);
+		startIndex = floor((lineHeight * scrollPos) / sliderHeight);
+		endIndex = std::min(startIndex + numberOfVisibleSliders, sliderCount);
+	}
 
 	sliderScroll->Freeze();
 	int index = 0;
