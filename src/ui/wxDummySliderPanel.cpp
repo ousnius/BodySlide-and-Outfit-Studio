@@ -19,15 +19,16 @@ wxDummySliderPanel::wxDummySliderPanel(wxWindow* parent, const wxString& name)
 }
 
 bool wxDummySliderPanel::Create(wxWindow* parent, const wxString& name) {
-	SetLabel(name);
-
 	if (isCreated) {
-		SetBackgroundColour(wxColour(64, 64, 64));
-		Show();
-		m_isChecked = true;;
+		SetLabel(name);
+		m_isChecked = true;
 		m_sliderValue = 0;
 		m_sliderReadoutValue = "0%";
 		m_isEditing = false;
+
+		SetBackgroundColour(wxColour(64, 64, 64));
+		Show();
+
 		return true;
 	}
 
@@ -43,6 +44,12 @@ bool wxDummySliderPanel::Create(wxWindow* parent, const wxString& name) {
 	SetSizer(sizer);
 
 	isCreated = true;
+	SetLabel(name);
+	m_isChecked = true;
+	m_sliderValue = 0;
+	m_sliderReadoutValue = "0%";
+	m_isEditing = false;
+
 	return true;
 }
 
@@ -79,7 +86,8 @@ wxSliderPanel* wxDummySliderPanel::DetachSubSliderPanel(wxSizer* sliderScrollSiz
 	}
 
 	if (index >= 0) {
-		Show();
+		if (!IsShown())
+			Show();
 	} else {
 		if (IsShown())
 			Hide();

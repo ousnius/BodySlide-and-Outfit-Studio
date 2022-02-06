@@ -26,7 +26,7 @@ public:
 
 	bool IsCreated() { return isCreated; }
 	bool IsChecked() { return m_isChecked; }
-	bool IsInUse() { return IsShown() || (m_sliderPanel != nullptr && m_sliderPanel->IsShown()); }
+	bool IsInUse() { return IsShown() || m_sliderPanel; }
 	bool IsVisible() { return m_sliderPanel != nullptr; }
 
 	void AttachSubSliderPanel(wxSliderPanel* sliderPanel, wxSizer* sliderScrollSizer, int index);
