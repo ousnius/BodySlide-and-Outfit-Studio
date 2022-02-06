@@ -2403,6 +2403,7 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 	project->AddEmptySlider(sliderName);
 	ShowSliderEffect(sliderName);
 	sliderScroll->FitInside();
+	UpdateVisibleSliders();
 	SetPendingChanges();
 
 	return sliderName;
@@ -7781,6 +7782,7 @@ void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
 		lastActiveSlider.clear();
 		bEditSlider = false;
 	}
+	UpdateVisibleSliders();
 
 	SetPendingChanges();
 	ApplySliders();
