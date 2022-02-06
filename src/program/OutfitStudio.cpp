@@ -2813,11 +2813,20 @@ std::string OutfitStudioFrame::GetActiveBone() {
 	return activeBone;
 }
 
-void OutfitStudioFrame::HideSliderPanel(wxDummySliderPanel* sliderPanel) {
-	if (!sliderPanel)
+void OutfitStudioFrame::HideSliderPanel(wxDummySliderPanel* dummySliderPanel) {
+	if (!dummySliderPanel)
 		return;
 
-	sliderPanel->Hide();
+	auto detachedSubSliderPanel = dummySliderPanel->DetachSubSliderPanel(sliderScroll->GetSizer(), -1);
+	if (detachedSubSliderPanel) {
+		detachedSubSliderPanel->btnSliderEdit->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+		detachedSubSliderPanel->btnSliderProp->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+		detachedSubSliderPanel->btnMinus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+		detachedSubSliderPanel->btnPlus->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
+		detachedSubSliderPanel->sliderCheck->Unbind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnSliderCheckBox, this);
+		detachedSubSliderPanel->slider->Unbind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
+		detachedSubSliderPanel->sliderReadout->Unbind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
+	}
 }
 
 void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
@@ -6176,19 +6185,21 @@ void OutfitStudioFrame::OnSliderScroll(wxScrollWinEvent& event) {
 }
 
 void OutfitStudioFrame::UpdateVisibleSliders() {
-	if (sliderPanels.size() == 0)
+
+	int sliderCount = static_cast<int>(sliderPanels.size());
+	if (sliderCount == 0)
 		return;
 
 	int lineWidth, lineHeight;
 	sliderScroll->GetScrollPixelsPerUnit(&lineWidth, &lineHeight);
 
 	wxSize size = sliderScroll->GetSizer()->GetSize();
-	int sliderHeight = (size.GetHeight() / sliderPanels.size());
+	int sliderHeight = (size.GetHeight() / sliderCount);
 	int linesPerPage = sliderScroll->GetScrollPageSize(wxVERTICAL);
 	int scrollPos = sliderScroll->GetScrollPos(wxVERTICAL);
 	int numberOfVisibleSliders = ceil(((float)linesPerPage * (float)lineHeight) / (float)sliderHeight);
 	int startIndex = floor((lineHeight * scrollPos) / sliderHeight);
-	int endIndex = startIndex + numberOfVisibleSliders;
+	int endIndex = std::min(startIndex + numberOfVisibleSliders, sliderCount);
 
 	sliderScroll->Freeze();
 	int index = 0;
@@ -6196,9 +6207,9 @@ void OutfitStudioFrame::UpdateVisibleSliders() {
 	const auto& list = sliderScroll->GetChildren();
 	for (wxWindowList::compatibility_iterator node = list.GetFirst(); node; node = node->GetNext()) {
 		auto dummySliderPanel = dynamic_cast<wxDummySliderPanel*>(node->GetData());
-		if (dummySliderPanel) {
+		if (dummySliderPanel && dummySliderPanel->IsInUse()) {
 			bool showRealSlider = index >= startIndex && index <= endIndex;
-			if (showRealSlider) {
+			if (showRealSlider && !dummySliderPanel->IsVisible()) {
 				auto sliderPanel = sliderPool.GetNext();
 				if (sliderPanel->Create(sliderScroll, dummySliderPanel->GetLabel(), *bmpEditSlider, *bmpSliderSettings)) {
 					sliderPanel->btnSliderEdit->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
@@ -6209,10 +6220,12 @@ void OutfitStudioFrame::UpdateVisibleSliders() {
 					sliderPanel->slider->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnSlider, this);
 					sliderPanel->sliderReadout->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
 				}
-				dummySliderPanel->AttachSubSliderPanel(sliderPanel, sliderScrollSizer, index);
+				int i = sliderScrollSizer->GetChildren().IndexOf(sliderScrollSizer->GetItem(dummySliderPanel));
+				dummySliderPanel->AttachSubSliderPanel(sliderPanel, sliderScrollSizer, i);
 			}
-			else {
-				auto detachedSubSliderPanel = dummySliderPanel->DetachSubSliderPanel(sliderScrollSizer, index);
+			else if (!showRealSlider && dummySliderPanel->IsVisible()) {
+				int i = sliderScrollSizer->GetChildren().IndexOf(sliderScrollSizer->GetItem(dummySliderPanel));
+				auto detachedSubSliderPanel = dummySliderPanel->DetachSubSliderPanel(sliderScrollSizer, i);
 				if (detachedSubSliderPanel) {
 					detachedSubSliderPanel->btnSliderEdit->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
 					detachedSubSliderPanel->btnSliderProp->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);

@@ -11,8 +11,7 @@ See the included LICENSE file
 
 class wxDummySliderPanel : public wxWindow {
 	bool isCreated = false;
-	wxSliderPanel* m_sliderPanel;
-
+	wxSliderPanel* m_sliderPanel = nullptr;
 	wxBoxSizer* sizer = nullptr;
 	wxString m_sliderReadoutValue;
 	int m_sliderValue;
@@ -27,9 +26,11 @@ public:
 
 	bool IsCreated() { return isCreated; }
 	bool IsChecked() { return m_isChecked; }
+	bool IsInUse() { return IsShown() || (m_sliderPanel != nullptr && m_sliderPanel->IsShown()); }
+	bool IsVisible() { return m_sliderPanel != nullptr; }
 
-	void AttachSubSliderPanel(wxSliderPanel* sliderPanel, wxSizer* sliderScrollSizer, size_t index);
-	wxSliderPanel* DetachSubSliderPanel(wxSizer* sliderScrollSizer, size_t index);
+	void AttachSubSliderPanel(wxSliderPanel* sliderPanel, wxSizer* sliderScrollSizer, int index);
+	wxSliderPanel* DetachSubSliderPanel(wxSizer* sliderScrollSizer, int index);
 
 	void SetValue(int value);
 	void SetChecked(bool checked);

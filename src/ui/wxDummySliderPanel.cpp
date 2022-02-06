@@ -11,10 +11,10 @@ BEGIN_EVENT_TABLE(wxDummySliderPanel, wxWindow)
 END_EVENT_TABLE()
 
 wxDummySliderPanel::wxDummySliderPanel()
-	: wxWindow(), m_sliderPanel(nullptr) {}
+	: wxWindow() {}
 
 wxDummySliderPanel::wxDummySliderPanel(wxWindow* parent, const wxString& name)
-	: wxWindow(), m_sliderPanel(nullptr) {
+	: wxWindow() {
 	Create(parent, name);
 }
 
@@ -46,45 +46,44 @@ bool wxDummySliderPanel::Create(wxWindow* parent, const wxString& name) {
 	return true;
 }
 
-void wxDummySliderPanel::AttachSubSliderPanel(wxSliderPanel* sliderPanel, wxSizer* sliderScrollSizer, size_t index) {
-	if (m_sliderPanel != nullptr) {
-		sliderScrollSizer->Detach(sliderPanel);
-		m_sliderPanel->Hide();
+void wxDummySliderPanel::AttachSubSliderPanel(wxSliderPanel* sliderPanel, wxSizer* sliderScrollSizer, int index) {
+	if (!m_sliderPanel){
+		m_sliderPanel = sliderPanel;
+		if (m_sliderPanel->GetContainingSizer())
+			sliderScrollSizer->Detach(m_sliderPanel);
+		sliderScrollSizer->Insert(static_cast<size_t>(index), m_sliderPanel, 0, wxALL | wxEXPAND | wxFIXED_MINSIZE, 1);
 	}
-	m_sliderPanel = sliderPanel;
 
-	if (sliderPanel->GetContainingSizer())
-		sliderScrollSizer->Detach(sliderPanel);
-	sliderScrollSizer->Insert(index, sliderPanel, 0, wxALL | wxEXPAND | wxFIXED_MINSIZE, 1);
-
-	if (!sliderPanel->IsShown())
-		sliderPanel->Show();
+	if (!m_sliderPanel->IsShown())
+		m_sliderPanel->Show();
 
 	// set the state of the visible slider to what it should be
-	sliderPanel->sliderCheck->Set3StateValue(m_isChecked ? wxCheckBoxState::wxCHK_CHECKED : wxCheckBoxState::wxCHK_UNCHECKED);
-	sliderPanel->sliderReadout->ChangeValue(m_sliderReadoutValue);
-	sliderPanel->slider->SetValue(m_sliderValue);
-	sliderPanel->sliderCheck->Enable(!m_isEditing && m_isChecked);
-	sliderPanel->btnSliderProp->Show(m_isEditing);
-	sliderPanel->btnMinus->Show(m_isEditing);
-	sliderPanel->btnPlus->Show(m_isEditing);
+	m_sliderPanel->sliderCheck->Set3StateValue(m_isChecked ? wxCheckBoxState::wxCHK_CHECKED : wxCheckBoxState::wxCHK_UNCHECKED);
+	m_sliderPanel->sliderReadout->ChangeValue(m_sliderReadoutValue);
+	m_sliderPanel->slider->SetValue(m_sliderValue);
+	m_sliderPanel->sliderCheck->Enable(!m_isEditing && m_isChecked);
+	m_sliderPanel->btnSliderProp->Show(m_isEditing);
+	m_sliderPanel->btnMinus->Show(m_isEditing);
+	m_sliderPanel->btnPlus->Show(m_isEditing);
 
 	Hide();
 }
 
-wxSliderPanel* wxDummySliderPanel::DetachSubSliderPanel(wxSizer* sliderScrollSizer, size_t index) {
+wxSliderPanel* wxDummySliderPanel::DetachSubSliderPanel(wxSizer* sliderScrollSizer, int index) {
 	wxSliderPanel* sliderPanel = m_sliderPanel;
 
-	if (m_sliderPanel != nullptr) {
-		sliderScrollSizer->Detach(m_sliderPanel);
-		m_sliderPanel->Hide();
+	if (sliderPanel) {
+		sliderPanel->Hide();
+		sliderScrollSizer->Detach(sliderPanel);
 		m_sliderPanel = nullptr;
 	}
 
-	sliderScrollSizer->Detach(this);
-	sliderScrollSizer->Insert(index, this, 0, wxALL | wxEXPAND | wxFIXED_MINSIZE, 1);
-
-	Show();
+	if (index >= 0) {
+		Show();
+	} else {
+		if (IsShown())
+			Hide();
+	}
 
 	return sliderPanel;
 }
@@ -124,6 +123,19 @@ void wxDummySliderPanel::SetEditing(bool editing) {
 }
 void wxDummySliderPanel::SetName(const wxString& name) {
 	SetLabel(name);
+
+	if (!m_sliderPanel)
+		return;
+
+	m_sliderPanel->slider->SetName(name + "|slider");
+	m_sliderPanel->sliderName->SetName(name + "|lbl");
+	m_sliderPanel->btnSliderEdit->SetName(name + "|btn");
+	m_sliderPanel->btnSliderProp->SetName(name + "|btnSliderProp");
+	m_sliderPanel->btnMinus->SetName(name + "|btnMinus");
+	m_sliderPanel->btnPlus->SetName(name + "|btnPlus");
+	m_sliderPanel->sliderCheck->SetName(name + "|check");
+	m_sliderPanel->sliderReadout->SetName(name + "|readout");
+	m_sliderPanel->sliderName->SetLabel(name);
 }
 
 void wxDummySliderPanel::FocusSlider() {
@@ -168,7 +180,7 @@ wxDummySliderPanel* wxDummySliderPanelPool::GetNext() {
 		wxDummySliderPanel* sliderPanel = pool[i];
 
 		// Index of a slider panel that is invisible can be reused
-		if (sliderPanel && !sliderPanel->IsShown())
+		if (sliderPanel && !sliderPanel->IsInUse())
 			return sliderPanel;
 	}
 

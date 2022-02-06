@@ -981,7 +981,7 @@ public:
 
 	bool CheckEditableState();
 
-	void HideSliderPanel(wxDummySliderPanel* sliderPanel);
+	void HideSliderPanel(wxDummySliderPanel* dummySliderPanel);
 	void EnterSliderEdit(const std::string& sliderName = "");
 	void ExitSliderEdit();
 	void MenuEnterSliderEdit();
