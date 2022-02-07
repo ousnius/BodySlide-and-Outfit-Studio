@@ -327,7 +327,7 @@ TB_Mask::TB_Mask() {
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Mask Brush";
-	strength = 0.1f;
+	strength = 1.0f;
 }
 
 TB_Mask::~TB_Mask() {}
@@ -347,7 +347,7 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* poi
 			startState[points[i]] = vc;
 
 		ve = vc;
-		if (strength < 0.1f)
+		if (strength < 1.0f)
 			ve.x += strength;
 		else
 			ve.x += 1.0f;
@@ -356,7 +356,7 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* poi
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
 			ve.Zero();
-		else if (strength < 0.1f)
+		else if (strength < 1.0f)
 			applyFalloff(ve, originToV);
 
 		vf = vc + ve;
@@ -375,7 +375,7 @@ TB_Unmask::TB_Unmask() {
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Unmask Brush";
-	strength = -0.1f;
+	strength = -1.0f;
 }
 
 TB_Unmask::~TB_Unmask() {}
@@ -395,7 +395,7 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 			startState[points[i]] = vc;
 
 		ve = vc;
-		if (strength > -0.1f)
+		if (strength > -1.0f)
 			ve.x += strength;
 		else
 			ve.x -= 1.0f;
@@ -404,7 +404,7 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
 			ve.Zero();
-		else if (strength > -0.1f)
+		else if (strength > -1.0f)
 			applyFalloff(ve, originToV);
 
 		vf = vc + ve;
@@ -522,27 +522,25 @@ void TB_SmoothMask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const in
 		hclapFilter(refmesh, points, nPoints, wv, uss);
 
 	Vector3 delta;
-	if (strength != 1.0f) {
-		for (int p = 0; p < nPoints; p++) {
-			int i = points[p];
-			vs = refmesh->verts[i];
-			vm = refmesh->mask[i];
-			delta.x = wv[i].x - vm;
-			delta.x *= strength;
+	for (int p = 0; p < nPoints; p++) {
+		int i = points[p];
+		vs = refmesh->verts[i];
+		vm = refmesh->mask[i];
+		delta.x = wv[i].x - vm;
+		delta.x *= strength;
 
-			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
+		applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
 
-			vm += delta.x;
+		vm += delta.x;
 
-			if (vm < EPSILON)
-				vm = 0.0f;
-			if (vm > 1.0f)
-				vm = 1.0f;
-			endState[i].x = refmesh->mask[i] = vm;
-		}
-
-		refmesh->QueueUpdate(mesh::UpdateType::Mask);
+		if (vm < EPSILON)
+			vm = 0.0f;
+		if (vm > 1.0f)
+			vm = 1.0f;
+		endState[i].x = refmesh->mask[i] = vm;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::Mask);
 }
 
 TB_Deflate::TB_Deflate() {
@@ -562,7 +560,7 @@ float TB_Deflate::getStrength() {
 
 TB_Smooth::TB_Smooth() {
 	method = 1;
-	strength = 0.01f;
+	strength = 0.1f;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
 	brushName = "Smooth Brush";
@@ -657,35 +655,33 @@ void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		hclapFilter(refmesh, points, nPoints, wv, uss);
 
 	Vector3 delta;
-	if (strength != 1.0f) {
-		for (int p = 0; p < nPoints; p++) {
-			int i = points[p];
-			vs = refmesh->verts[i];
-			delta = wv[i] - refmesh->verts[i];
-			delta *= strength;
-			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
+	for (int p = 0; p < nPoints; p++) {
+		int i = points[p];
+		vs = refmesh->verts[i];
+		delta = wv[i] - refmesh->verts[i];
+		delta *= strength;
+		applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
 
-			delta = delta * (1.0f - refmesh->mask[i]);
-			Vector3 ve = refmesh->verts[i] + delta;
+		delta = delta * (1.0f - refmesh->mask[i]);
+		Vector3 ve = refmesh->verts[i] + delta;
 
-			if (restrictNormal) {
-				const Vector3& n = cache[refmesh].startNorms[i];
-				ve = startState[i] + n * (ve - startState[i]).dot(n);
-			}
-
-			if (restrictPlane) {
-				const Vector3& n = cache[refmesh].startNorms[i];
-				ve -= startState[i];
-				ve -= n * ve.dot(n);
-				ve += startState[i];
-			}
-
-			refmesh->verts[i] = ve;
-			endState[i] = ve;
+		if (restrictNormal) {
+			const Vector3& n = cache[refmesh].startNorms[i];
+			ve = startState[i] + n * (ve - startState[i]).dot(n);
 		}
 
-		refmesh->QueueUpdate(mesh::UpdateType::Position);
+		if (restrictPlane) {
+			const Vector3& n = cache[refmesh].startNorms[i];
+			ve -= startState[i];
+			ve -= n * ve.dot(n);
+			ve += startState[i];
+		}
+
+		refmesh->verts[i] = ve;
+		endState[i] = ve;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::Position);
 }
 
 TB_Undiff::TB_Undiff() {
@@ -751,7 +747,7 @@ TB_Move::TB_Move() {
 	brushName = "Move Brush";
 	bLiveBVH = false;
 	focus = 0.5f;
-	strength = 0.1f;
+	strength = 1.0f;
 }
 
 TB_Move::~TB_Move() {}
@@ -1038,7 +1034,7 @@ static inline void ClampWeight(float& w) {
 
 TB_Weight::TB_Weight() {
 	brushType = TweakBrush::BrushType::Weight;
-	strength = 0.0015f;
+	strength = 0.015f;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
@@ -1071,7 +1067,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		adjFlag[0] = b0falloff > 0.0;
 
 		float sw = uss.boneWeights[0].weights[i].endVal;
-		float str = bFixedWeight ? strength * 10.0f - sw : strength;
+		float str = bFixedWeight ? strength - sw : strength;
 		float maskF = 1.0f - refmesh->mask[i];
 
 		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
@@ -1086,7 +1082,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 
 			adjFlag[1] = b1falloff > 0.0;
 			sw = uss.boneWeights[1].weights[i].endVal;
-			str = bFixedWeight ? strength * 10.0f - sw : strength;
+			str = bFixedWeight ? strength - sw : strength;
 			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
 
 			if (!bNormalizeWeights)
@@ -1104,7 +1100,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 
 TB_Unweight::TB_Unweight() {
 	brushType = TweakBrush::BrushType::Weight;
-	strength = -0.0015f;
+	strength = -0.015f;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
@@ -1165,7 +1161,7 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 
 TB_SmoothWeight::TB_SmoothWeight() {
 	brushType = TweakBrush::BrushType::Weight;
-	strength = 0.015f;
+	strength = 0.15f;
 	method = 1;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
@@ -1343,7 +1339,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 
 TB_Color::TB_Color() {
 	brushType = TweakBrush::BrushType::Color;
-	strength = 0.003f;
+	strength = 0.03f;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
@@ -1366,7 +1362,7 @@ void TB_Color::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV <= radius) {
-			Vector3 falloff(strength * 10.0f, strength * 10.0f, strength * 10.0f);
+			Vector3 falloff(strength, strength, strength);
 			applyFalloff(falloff, originToV);
 
 			vc.x = color.x * falloff.x + vc.x * (1.0f - falloff.x);
@@ -1397,7 +1393,7 @@ void TB_Color::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 
 TB_Uncolor::TB_Uncolor() {
 	brushType = TweakBrush::BrushType::Color;
-	strength = -0.003f;
+	strength = -0.03f;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
@@ -1420,7 +1416,7 @@ void TB_Uncolor::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* 
 
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV <= radius) {
-			Vector3 falloff(-strength * 10.0f, -strength * 10.0f, -strength * 10.0f);
+			Vector3 falloff(-strength, -strength, -strength);
 			applyFalloff(falloff, originToV);
 
 			vc.x = falloff.x + vc.x * (1.0f - falloff.x);
@@ -1455,7 +1451,7 @@ TB_Alpha::TB_Alpha() {
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Alpha Brush";
-	strength = 0.003f;
+	strength = 0.03f;
 }
 
 TB_Alpha::~TB_Alpha() {}
@@ -1475,7 +1471,7 @@ void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 			startState[points[i]].x = vc;
 
 		ve = vc;
-		if (strength < 0.1f)
+		if (strength < 1.0f)
 			ve -= strength;
 		else
 			ve -= 1.0f;
@@ -1485,7 +1481,7 @@ void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
 			vev.Zero();
-		else if (strength < 0.1f)
+		else if (strength < 1.0f)
 			applyFalloff(vev, originToV);
 
 		vf = vc + vev.x;
@@ -1504,7 +1500,7 @@ TB_Unalpha::TB_Unalpha() {
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Unalpha Brush";
-	strength = -0.003f;
+	strength = -0.03f;
 }
 
 TB_Unalpha::~TB_Unalpha() {}
@@ -1524,7 +1520,7 @@ void TB_Unalpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* 
 			startState[points[i]].x = vc;
 
 		ve = vc;
-		if (strength > -0.1f)
+		if (strength > -1.0f)
 			ve -= strength;
 		else
 			ve += 1.0f;
@@ -1534,7 +1530,7 @@ void TB_Unalpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* 
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
 			vev.Zero();
-		else if (strength > -0.1f)
+		else if (strength > -1.0f)
 			applyFalloff(vev, originToV);
 
 		vf = vc + vev.x;

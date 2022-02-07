@@ -178,25 +178,25 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 
 void wxBrushSettingsPopupBase::SetBrushSize(float value) {
 	wxString valStr = wxString::Format("%0.4f", value);
-	brushSize->SetValue(std::atof(valStr) * 1000.0f);
+	brushSize->SetValue(std::atof(valStr.c_str()) * 1000.0f);
 	brushSizeVal->ChangeValue(valStr);
 }
 
 void wxBrushSettingsPopupBase::SetBrushStrength(float value) {
 	wxString valStr = wxString::Format("%0.4f", value);
-	brushStrength->SetValue(std::atof(valStr) * 1000.0f);
+	brushStrength->SetValue(std::atof(valStr.c_str()) * 1000.0f);
 	brushStrengthVal->ChangeValue(valStr);
 }
 
 void wxBrushSettingsPopupBase::SetBrushFocus(float value) {
 	wxString valStr = wxString::Format("%0.4f", value);
-	brushFocus->SetValue(std::atof(valStr) * 1000.0f);
+	brushFocus->SetValue(std::atof(valStr.c_str()) * 1000.0f);
 	brushFocusVal->ChangeValue(valStr);
 }
 
 void wxBrushSettingsPopupBase::SetBrushSpacing(float value) {
 	wxString valStr = wxString::Format("%0.4f", value);
-	brushSpacing->SetValue(std::atof(valStr) * 1000.0f);
+	brushSpacing->SetValue(std::atof(valStr.c_str()) * 1000.0f);
 	brushSpacingVal->ChangeValue(valStr);
 }
 
