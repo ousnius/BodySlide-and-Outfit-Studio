@@ -3109,7 +3109,11 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 
 void OutfitStudioFrame::ReEnableToolOptionsUI() {
 	bool isBrush = glView->GetActiveBrush() != nullptr;
-	bool isMV = glView->GetActiveTool() == ToolID::MoveVertex;
+	ToolID toolid = glView->GetActiveTool();
+	bool isMV = toolid == ToolID::MoveVertex;
+	bool isIB = toolid == ToolID::InflateBrush || toolid == ToolID::DeflateBrush;
+	bool isMB = toolid == ToolID::MoveBrush;
+	bool isSB = toolid == ToolID::SmoothBrush;
 
 	menuBar->Enable(XRCID("btnXMirror"), isBrush || isMV);
 	tbvHider.Show(XRCID("btnXMirror"), isBrush || isMV);
@@ -3121,15 +3125,19 @@ void OutfitStudioFrame::ReEnableToolOptionsUI() {
 	tbvHider.Show(XRCID("btnWeld"), isMV);
 	menuBar->Enable(XRCID("btnRestrictSurface"), isMV);
 	tbvHider.Show(XRCID("btnRestrictSurface"), isMV);
-	menuBar->Enable(XRCID("btnRestrictPlane"), isMV);
-	tbvHider.Show(XRCID("btnRestrictPlane"), isMV);
-	menuBar->Enable(XRCID("btnRestrictNormal"), isMV);
-	tbvHider.Show(XRCID("btnRestrictNormal"), isMV);
+	menuBar->Enable(XRCID("btnRestrictPlane"), isMV || isMB || isSB);
+	tbvHider.Show(XRCID("btnRestrictPlane"), isMV || isMB || isSB);
+	menuBar->Enable(XRCID("btnRestrictNormal"), isMV || isIB || isMB || isSB);
+	tbvHider.Show(XRCID("btnRestrictNormal"), isMV || isIB || isMB || isSB);
 }
 
 void OutfitStudioFrame::ReToggleToolOptionsUI() {
 	bool isBrush = glView->GetActiveBrush() != nullptr;
-	bool isMV = glView->GetActiveTool() == ToolID::MoveVertex;
+	ToolID toolid = glView->GetActiveTool();
+	bool isMV = toolid == ToolID::MoveVertex;
+	bool isIB = toolid == ToolID::InflateBrush || toolid == ToolID::DeflateBrush;
+	bool isMB = toolid == ToolID::MoveBrush;
+	bool isSB = toolid == ToolID::SmoothBrush;
 	bool xMirror = glView->GetToolOptionXMirror();
 	bool connOnly = glView->GetToolOptionConnectedOnly();
 	bool merge = glView->GetToolOptionMerge();
@@ -3148,10 +3156,10 @@ void OutfitStudioFrame::ReToggleToolOptionsUI() {
 	toolBarV->ToggleTool(XRCID("btnWeld"), isMV && weld);
 	menuBar->Check(XRCID("btnRestrictSurface"), isMV && rsurf);
 	toolBarV->ToggleTool(XRCID("btnRestrictSurface"), isMV && rsurf);
-	menuBar->Check(XRCID("btnRestrictPlane"), isMV && rplane);
-	toolBarV->ToggleTool(XRCID("btnRestrictPlane"), isMV && rplane);
-	menuBar->Check(XRCID("btnRestrictNormal"), isMV && rnormal);
-	toolBarV->ToggleTool(XRCID("btnRestrictNormal"), isMV && rnormal);
+	menuBar->Check(XRCID("btnRestrictPlane"), (isMV || isMB || isSB) && rplane);
+	toolBarV->ToggleTool(XRCID("btnRestrictPlane"), (isMV || isMB || isSB) && rplane);
+	menuBar->Check(XRCID("btnRestrictNormal"), (isMV || isIB || isMB || isSB) && rnormal);
+	toolBarV->ToggleTool(XRCID("btnRestrictNormal"), (isMV || isIB || isMB || isSB) && rnormal);
 }
 
 void OutfitStudioFrame::CloseBrushSettings() {
@@ -6137,7 +6145,7 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		auto activeBrush = glView->GetActiveBrush();
 		if (activeBrush) {
 			TweakBrush::BrushType brushType = activeBrush->Type();
-			if (brushType == TweakBrush::BrushType::Standard || brushType == TweakBrush::BrushType::Mask || brushType == TweakBrush::BrushType::Move) {
+			if (brushType == TweakBrush::BrushType::Inflate || brushType == TweakBrush::BrushType::Mask || brushType == TweakBrush::BrushType::Move) {
 				glView->SetLastTool(glView->GetActiveTool());
 			}
 		}
@@ -10873,6 +10881,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	activeBrush->setRadius(brushSize);
 	activeBrush->setMirror(GetToolOptionXMirror());
 	activeBrush->setConnected(toolOptionConnectedOnly);
+	activeBrush->setRestrictPlane(toolOptionRestrictPlane);
+	activeBrush->setRestrictNormal(toolOptionRestrictNormal);
 
 	if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
 		for (auto& sel : os->GetSelectedItems()) {
