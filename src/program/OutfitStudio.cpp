@@ -10518,8 +10518,7 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 			const auto skinning = os->project->GetWorkAnim()->shapeSkinning.find(shapeList[i]);
 			if (skinning != os->project->GetWorkAnim()->shapeSkinning.end()) {
 				MatTransform gts = skinning->second.xformGlobalToSkin;
-				gts.translation = mesh::VecToMeshCoords(gts.translation);
-				m->matModel = glm::inverse(mesh::TransformToMatrix4(gts));
+				m->SetXformModelToMesh(mesh::xformNifToMesh.ComposeTransforms(gts.ComposeTransforms(mesh::xformMeshToNif)));
 			}
 		}
 
@@ -11347,8 +11346,7 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	mouseDownMeshName = lastHitResult.hitMeshName;
 	mouseDownPoint = lastHitResult.hoverPoint;
 	mouseHasMovedSinceStart = false;
-	mouseDownPointNormal = mesh::ApplyMatrix4ToDir(m->matModel, m->GetOneVertexNormal(mouseDownPoint));
-	mouseDownPointNormal.Normalize();
+	mouseDownPointNormal = m->DirMeshToModel(m->GetOneVertexNormal(mouseDownPoint));
 	moveVertexOperation = MoveVertexOperation::None;
 
 	Vector3 viewOrigin;
@@ -11357,9 +11355,9 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 
 	// snapDistance: shortest edge length of triangle under pointer
 	const Triangle& tri = m->tris[lastHitResult.hoverTri];
-	Vector3 gtp1 = mesh::ApplyMatrix4(m->matModel, m->verts[tri.p1]);
-	Vector3 gtp2 = mesh::ApplyMatrix4(m->matModel, m->verts[tri.p2]);
-	Vector3 gtp3 = mesh::ApplyMatrix4(m->matModel, m->verts[tri.p3]);
+	Vector3 gtp1 = m->PosMeshToModel( m->verts[tri.p1]);
+	Vector3 gtp2 = m->PosMeshToModel( m->verts[tri.p2]);
+	Vector3 gtp3 = m->PosMeshToModel( m->verts[tri.p3]);
 	snapDistance = gtp1.DistanceTo(gtp2);
 	float elen = gtp2.DistanceTo(gtp3);
 	if (snapDistance > elen)
@@ -11415,7 +11413,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 	m->verts[mouseDownPoint] = mesholdpos;
 	if (mouseDownMirrorPoint != -1)
 		m->verts[mouseDownMirrorPoint] = uss.pointStartState[mouseDownMirrorPoint];
-	Vector3 oldpos = mesh::ApplyMatrix4(m->matModel, mesholdpos);
+	Vector3 oldpos = m->PosMeshToModel( mesholdpos);
 
 	// Since the pointer can be offset from screenPos, calculate a point
 	// to display at screenPos.  We do this by intersecting the
@@ -11436,7 +11434,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 			moveVertexOperation = MoveVertexOperation::None;
 		}
 		else
-			newpos = mesh::ApplyMatrix4(hitmesh->matModel, hitpt);
+			newpos = hitmesh->PosMeshToModel( hitpt);
 	}
 	else if (toolOptionRestrictPlane) {
 		gls.CollidePlane(screenPos.x, screenPos.y, newpos, mouseDownPointNormal, mouseDownPointNormal.dot(oldpos));
@@ -11469,11 +11467,11 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 			Vector3 viewDir, viewOrigin;
 			gls.GetPickRay(screenPos.x, screenPos.y, tm, viewDir, viewOrigin);
 
-			Vector3 tmnewpos = mesh::ApplyMatrix4(glm::inverse(tm->matModel), newpos);
+			Vector3 tmnewpos = tm->PosModelToMesh(newpos);
+			float tmSnapDistance = tm->DistModelToMesh(snapDistance);
 
-			// TODO: snapDistance and closestDist may not match tm's scale.
 			std::vector<IntersectResult> iresults;
-			if (tm->bvh && tm->bvh->IntersectSphere(tmnewpos, snapDistance, &iresults)) {
+			if (tm->bvh && tm->bvh->IntersectSphere(tmnewpos, tmSnapDistance, &iresults)) {
 				for (const IntersectResult& ir : iresults) {
 					const Triangle& t = tm->tris[ir.HitFacet];
 					for (int tvi = 0; tvi < 3; ++tvi) {
@@ -11486,7 +11484,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 						// Calculate distance in plane perpendicular to view
 						Vector3 diff = tm->verts[tp] - tmnewpos;
 						diff -= viewDir * viewDir.dot(diff);
-						float d = diff.length();
+						float d = tm->DistMeshToModel(diff.length());
 						if (d >= closestDist)
 							continue;
 
@@ -11504,7 +11502,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 			bool canWeld = toolOptionWeld && s1 && s2 && os->project->PointsHaveDifferingWeightsOrDiffs(s1, mouseDownPoint, s2, closestPoint);
 			bool canMerge = toolOptionMerge && m == closestMesh;
 			if (canWeld || canMerge) {
-				newpos = mesh::ApplyMatrix4(closestMesh->matModel, closestMesh->verts[closestPoint]);
+				newpos = closestMesh->PosMeshToModel(closestMesh->verts[closestPoint]);
 				if (canWeld)
 					moveVertexOperation = MoveVertexOperation::Weld;
 				else if (canMerge)
@@ -11515,7 +11513,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 		}
 	}
 
-	Vector3 meshnewpos = mesh::ApplyMatrix4(glm::inverse(m->matModel), newpos);
+	Vector3 meshnewpos = m->PosModelToMesh(newpos);
 	uss.pointEndState[mouseDownPoint] = meshnewpos;
 	m->verts[mouseDownPoint] = meshnewpos;
 	gls.SetPointCursor(newpos);

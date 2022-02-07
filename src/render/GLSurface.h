@@ -158,7 +158,7 @@ public:
 		for (auto& m : activeMeshes) {
 			for (int i = 0; i < m->nVerts; i++) {
 				if (!useMask || m->mask[i] == 0.0f) {
-					total += mesh::ApplyMatrix4(m->matModel, m->verts[i]);
+					total += m->PosMeshToModel(m->verts[i]);
 					count++;
 				}
 			}

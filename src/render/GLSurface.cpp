@@ -556,19 +556,19 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 					const int dec = 5;
 					Edge closestEdge = t.ClosestEdge(m->verts.get(), origin);
 
-					Vector3 morigin = mesh::ApplyMatrix4(m->matModel, origin);
+					Vector3 morigin = m->PosMeshToModel(origin);
 
 					Vector3 norm;
 					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
 
 					AddVisCircle(morigin, norm, cursorSize, "cursormesh");
 
-					Vector3 mhilitepoint = mesh::ApplyMatrix4(m->matModel, hilitepoint);
+					Vector3 mhilitepoint = m->PosMeshToModel(hilitepoint);
 					AddVisPoint(mhilitepoint, "pointhilite");
 					AddVisPoint(morigin, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
 
-					Vector3 mep1 = mesh::ApplyMatrix4(m->matModel, m->verts[closestEdge.p1]);
-					Vector3 mep2 = mesh::ApplyMatrix4(m->matModel, m->verts[closestEdge.p2]);
+					Vector3 mep1 = m->PosMeshToModel(m->verts[closestEdge.p1]);
+					Vector3 mep2 = m->PosMeshToModel(m->verts[closestEdge.p2]);
 					AddVisSeg(mep1, mep2, "seghilite");
 
 					if (hitResult) {
@@ -673,17 +673,17 @@ void GLSurface::HideSegCursor() {
 }
 
 void GLSurface::SetPointCursor(const Vector3 &p, mesh* m) {
-	Vector3 gp = m ? mesh::ApplyMatrix4(m->matModel, p) : p;
+	Vector3 gp = m ? m->PosMeshToModel(p) : p;
 	AddVisPoint(gp, "pointhilite");
 }
 
 void GLSurface::SetCenterCursor(const Vector3 &p, mesh* m) {
-	Vector3 gp = m ? mesh::ApplyMatrix4(m->matModel, p) : p;
+	Vector3 gp = m ? m->PosMeshToModel(p) : p;
 	AddVisPoint(gp, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
 }
 
 void GLSurface::ShowMirrorPointCursor(const Vector3 &p, mesh* m) {
-	Vector3 gp = m ? mesh::ApplyMatrix4(m->matModel, p) : p;
+	Vector3 gp = m ? m->PosMeshToModel(p) : p;
 	AddVisPoint(gp, "mirrorpoint")->color = Vector3(0.3f, 0.7f, 0.7f);;
 	SetOverlayVisibility("mirrorpoint", true);
 }
@@ -1114,19 +1114,13 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 			parent = nif->GetParentNode(parent);
 		}
 
-		ttg.translation = mesh::VecToMeshCoords(ttg.translation);
-
-		// Convert ttg to a glm::mat4x4
-		m->matModel = mesh::TransformToMatrix4(ttg);
+		m->SetXformMeshToModel(mesh::xformNifToMesh.ComposeTransforms(ttg.ComposeTransforms(mesh::xformMeshToNif)));
 	}
 	else {
 		// Skinned meshes
-		m->matModel = glm::identity<glm::mat4x4>();
-
 		MatTransform xformGlobalToSkin;
 		if (nif->CalcShapeTransformGlobalToSkin(shape, xformGlobalToSkin)) {
-			xformGlobalToSkin.translation = mesh::VecToMeshCoords(xformGlobalToSkin.translation);
-			m->matModel = glm::inverse(mesh::TransformToMatrix4(xformGlobalToSkin));
+			m->SetXformModelToMesh(mesh::xformNifToMesh.ComposeTransforms(xformGlobalToSkin.ComposeTransforms(mesh::xformMeshToNif)));
 		}
 	}
 
@@ -1237,11 +1231,8 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	// Load verts. NIF verts are scaled up by approx. 10 and rotated on the x axis (Z up, Y forward).
 	// Scale down by 10 and rotate on x axis by flipping y and z components. To face the camera, this also mirrors
 	// on X and Y (180 degree y axis rotation.)
-	for (int i = 0; i < m->nVerts; i++) {
-		m->verts[i].x = (nifVerts)[i].x / -10.0f;
-		m->verts[i].z = (nifVerts)[i].y / 10.0f;
-		m->verts[i].y = (nifVerts)[i].z / 10.0f;
-	}
+	for (int i = 0; i < m->nVerts; i++)
+		m->verts[i] = mesh::VecToMeshCoords(nifVerts[i]);
 
 	if (nifUvs && !nifUvs->empty()) {
 		for (int i = 0; i < m->nVerts; i++) {
@@ -1251,27 +1242,19 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		m->textured = true;
 	}
 
-	if (!nifNorms || nifNorms->empty()) {
-		// Copy triangles
-		for (int t = 0; t < m->nTris; t++)
-			m->tris[t] = nifTris[t];
+	// Copy triangles
+	for (int t = 0; t < m->nTris; t++)
+		m->tris[t] = nifTris[t];
 
+	if (!nifNorms || nifNorms->empty()) {
 		// Calc weldVerts and normals
 		m->SmoothNormals();
 	}
 	else {
 		// Already have normals, just copy the data over.
-		for (int j = 0; j < m->nTris; j++) {
-			m->tris[j].p1 = nifTris[j].p1;
-			m->tris[j].p2 = nifTris[j].p2;
-			m->tris[j].p3 = nifTris[j].p3;
-		}
 		// Copy normals. Note, normals are transformed the same way the vertices are.
-		for (int i = 0; i < m->nVerts; i++) {
-			m->norms[i].x = -(*nifNorms)[i].x;
-			m->norms[i].z = (*nifNorms)[i].y;
-			m->norms[i].y = (*nifNorms)[i].z;
-		}
+		for (int i = 0; i < m->nVerts; i++)
+			m->norms[i] = mesh::DirNifToMesh((*nifNorms)[i]);
 
 		for (auto& extraDataRef : shape->extraDataRefs) {
 			auto integersExtraData = nif->GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef);
@@ -1955,9 +1938,7 @@ void GLSurface::Update(mesh* m, std::vector<Vector3>* vertices, std::vector<Vect
 		if (changed)
 			old = m->verts[i];
 
-		m->verts[i].x = (*vertices)[i].x / -10.0f;
-		m->verts[i].z = (*vertices)[i].y / 10.0f;
-		m->verts[i].y = (*vertices)[i].z / 10.0f;
+		m->verts[i] = mesh::VecToMeshCoords((*vertices)[i]);
 
 		if (uvSize > i)
 			m->texcoord[i] = (*uvs)[i];

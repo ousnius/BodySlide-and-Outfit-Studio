@@ -67,7 +67,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 			// Get rid of model space from collision again
 			if (brushType == TweakBrush::BrushType::Move)
-				pickInfo.origin = mesh::ApplyMatrix4(glm::inverse(m->matModel), originSave);
+				pickInfo.origin = m->PosModelToMesh(originSave);
 
 			if (!refBrush->queryPoints(m, pickInfo, mirrorPick, nullptr, nPts1, affectedNodes[m]))
 				continue;
@@ -908,7 +908,7 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Un
 	dv.y *= pick.view.y;
 	dv.z *= pick.view.z;
 
-	Vector3 center = mesh::ApplyMatrix4(glm::inverse(m->matModel), pick.center);
+	Vector3 center = m->PosModelToMesh(pick.center);
 
 	Matrix4 xform;
 	if (xformType == 0) {
@@ -945,8 +945,8 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Un
 	else if (xformType == 3) {
 		xform.PushTranslate(center);
 
-		Vector3 a = mesh::ApplyMatrix4(glm::inverse(m->matModel), pick.origin) - center;
-		Vector3 b = mesh::ApplyMatrix4(glm::inverse(m->matModel), pickInfo.origin) - center;
+		Vector3 a = m->PosModelToMesh(pick.origin) - center;
+		Vector3 b = m->PosModelToMesh(pickInfo.origin) - center;
 		Vector3 dist = a + b;
 
 		float scale = (dist.x + dist.y) / 2.0f;

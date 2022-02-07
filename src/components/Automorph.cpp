@@ -183,18 +183,17 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 			parent = ref.GetParentNode(parent);
 		}
 
-		// Convert ttg to a glm::mat4x4
-		m->matModel = mesh::TransformToMatrix4(ttg);
+		m->SetXformMeshToModel(ttg);
 	}
 	else {
 		// For skinned meshes with appropriate global-to-skin transform
 		const auto skinning = workAnim->shapeSkinning.find(m->shapeName);
 		if (skinning != workAnim->shapeSkinning.end()) {
 			const MatTransform& gts = skinning->second.xformGlobalToSkin;
-			m->matModel = glm::inverse(mesh::TransformToMatrix4(gts));
+			m->SetXformModelToMesh(gts);
 		}
 		else
-			m->matModel = glm::identity<glm::mat4x4>();
+			m->SetXformModelToMesh(MatTransform());
 	}
 
 	m->nVerts = nifVerts.size();
@@ -202,7 +201,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 
 	// Load verts. No CS transformation is done (in contrast to the very similar code in GLSurface).
 	for (int i = 0; i < m->nVerts; i++)
-		m->verts[i] = mesh::ApplyMatrix4(m->matModel, nifVerts[i]);
+		m->verts[i] = m->PosMeshToModel(nifVerts[i]);
 }
 
 void Automorph::DeleteVerts(const std::string& shapeName, const std::vector<uint16_t>& indices) {
@@ -323,7 +322,7 @@ void Automorph::UpdateResultDiff(const std::string& shapeName, const std::string
 		resultDiffData.AddEmptySet(setName, shapeName);
 
 	for (auto& i : diff) {
-		Vector3 diffscale = Vector3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
+		Vector3 diffscale = mesh::DiffMeshToNif(i.second);
 		resultDiffData.SumDiff(setName, shapeName, i.first, diffscale);
 	}
 }
@@ -335,7 +334,7 @@ void Automorph::UpdateRefDiff(const std::string& shapeName, const std::string& s
 		srcDiffData->AddEmptySet(setName, shapeName);
 
 	for (auto& i : diff) {
-		Vector3 diffscale = Vector3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
+		Vector3 diffscale = mesh::DiffMeshToNif(i.second);
 		srcDiffData->SumDiff(setName, shapeName, i.first, diffscale);
 	}
 }

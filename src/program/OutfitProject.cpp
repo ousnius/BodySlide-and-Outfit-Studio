@@ -1416,10 +1416,8 @@ void OutfitProject::RefreshMorphShape(NiShape* shape) {
 void OutfitProject::UpdateShapeFromMesh(NiShape* shape, const mesh* m) {
 	std::vector<Vector3> liveVerts(m->nVerts);
 
-	for (int i = 0; i < m->nVerts; i++) {
-		auto& vertex = m->verts[i];
-		liveVerts[i] = std::move(Vector3(vertex.x * -10.0f, vertex.z * 10.0f, vertex.y * 10.0f));
-	}
+	for (int i = 0; i < m->nVerts; i++)
+		liveVerts[i] = mesh::VecToNifCoords(m->verts[i]);
 
 	workNif.SetVertsForShape(shape, liveVerts);
 }
@@ -1439,7 +1437,7 @@ void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderN
 
 	if (IsBaseShape(shape)) {
 		for (auto& i : vertUpdates) {
-			Vector3 diffscale = Vector3(i.second.x * -10.0f, i.second.z * 10.0f, i.second.y * 10.0f);
+			Vector3 diffscale = mesh::DiffMeshToNif(i.second);
 			baseDiffData.SumDiff(dataName, target, i.first, diffscale);
 		}
 	}
@@ -1499,7 +1497,7 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 
 	std::vector<Vector3> norms(nVerts);
 	for (size_t i = 0; i < nVerts; ++i)
-		norms[i] = t.rotation * (*oldNorms)[i];
+		norms[i] = t.ApplyTransformToDir((*oldNorms)[i]);
 
 	workNif.SetNormalsForShape(shape, norms);
 }
@@ -1734,10 +1732,8 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 			if (m) {
 				boneScaleVerts.emplace(s, std::vector<Vector3>(m->nVerts));
 				it = boneScaleVerts.find(s);
-				for (int i = 0; i < m->nVerts; i++) {
-					auto& vertex = m->verts[i];
-					it->second[i] = std::move(Vector3(vertex.x * -10.0f, vertex.z * 10.0f, vertex.y * 10.0f));
-				}
+				for (int i = 0; i < m->nVerts; i++)
+					it->second[i] = mesh::VecToNifCoords(m->verts[i]);
 			}
 		}
 
@@ -3312,12 +3308,12 @@ bool OutfitProject::PointsHaveDifferingWeightsOrDiffs(NiShape* shape1, int p1, N
 		if (diffSet1) {
 			auto dit1 = diffSet1->find(p1);
 			if (dit1 != diffSet1->end())
-				diff1 = skin1ToGlobal.rotation * (dit1->second * skin1ToGlobal.scale);
+				diff1 = skin1ToGlobal.ApplyTransformToDiff(dit1->second);
 		}
 		if (diffSet2) {
 			auto dit2 = diffSet2->find(p2);
 			if (dit2 != diffSet2->end())
-				diff2 = skin2ToGlobal.rotation * (dit2->second * skin2ToGlobal.scale);
+				diff2 = skin2ToGlobal.ApplyTransformToDiff(dit2->second);
 		}
 		if (diff1 != diff2)
 			return true;
@@ -3428,9 +3424,9 @@ void OutfitProject::PrepareWeldVertex(NiShape* shape, UndoStateShape& uss, int s
 	usv.pos = skx.ApplyTransform(tusv.pos);
 	usv.uv = susv.uv;
 	usv.color = tusv.color;
-	usv.normal = skx.rotation * tusv.normal;
-	usv.tangent = skx.rotation * tusv.tangent;
-	usv.bitangent = skx.rotation * tusv.bitangent;
+	usv.normal = skx.ApplyTransformToDir(tusv.normal);
+	usv.tangent = skx.ApplyTransformToDir(tusv.tangent);
+	usv.bitangent = skx.ApplyTransformToDir(tusv.bitangent);
 	usv.eyeData = tusv.eyeData;
 	usv.weights = std::move(tusv.weights);
 
@@ -3444,7 +3440,7 @@ void OutfitProject::PrepareWeldVertex(NiShape* shape, UndoStateShape& uss, int s
 	for (const auto& diff : tusv.diffs) {
 		const SliderData& sd = activeSet[diff.sliderName];
 		if (!sd.bUV && !sd.bClamp && !sd.bZap) {
-			Vector3 d = skx.rotation * (skx.scale * diff.diff);
+			Vector3 d = skx.ApplyTransformToDiff(diff.diff);
 			usv.diffs.push_back(UndoStateVertexSliderDiff{diff.sliderName, d});
 		}
 	}
@@ -3849,8 +3845,8 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 			liveNorms.clear();
 
 			for (int i = 0; i < m->nVerts; i++) {
-				liveVerts.emplace_back(std::move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
-				liveNorms.emplace_back(std::move(Vector3(m->norms[i].x * -1, m->norms[i].z, m->norms[i].y)));
+				liveVerts.emplace_back(mesh::VecToNifCoords(m->verts[i]));
+				liveNorms.emplace_back(mesh::DirMeshToNif(m->norms[i]));
 			}
 
 			clone.SetVertsForShape(shape, liveVerts);
@@ -4089,7 +4085,7 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 				gNorms.resize(norms->size());
 
 				for (size_t i = 0; i < gNorms.size(); ++i)
-					gNorms[i] = toGlobal.rotation * (*norms)[i];
+					gNorms[i] = toGlobal.ApplyTransformToDir((*norms)[i]);
 
 				norms = &gNorms;
 			}
