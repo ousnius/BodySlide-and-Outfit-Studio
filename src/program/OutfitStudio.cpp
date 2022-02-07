@@ -11355,9 +11355,9 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 
 	// snapDistance: shortest edge length of triangle under pointer
 	const Triangle& tri = m->tris[lastHitResult.hoverTri];
-	Vector3 gtp1 = m->PosMeshToModel( m->verts[tri.p1]);
-	Vector3 gtp2 = m->PosMeshToModel( m->verts[tri.p2]);
-	Vector3 gtp3 = m->PosMeshToModel( m->verts[tri.p3]);
+	Vector3 gtp1 = m->PosMeshToModel(m->verts[tri.p1]);
+	Vector3 gtp2 = m->PosMeshToModel(m->verts[tri.p2]);
+	Vector3 gtp3 = m->PosMeshToModel(m->verts[tri.p3]);
 	snapDistance = gtp1.DistanceTo(gtp2);
 	float elen = gtp2.DistanceTo(gtp3);
 	if (snapDistance > elen)
@@ -11413,7 +11413,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 	m->verts[mouseDownPoint] = mesholdpos;
 	if (mouseDownMirrorPoint != -1)
 		m->verts[mouseDownMirrorPoint] = uss.pointStartState[mouseDownMirrorPoint];
-	Vector3 oldpos = m->PosMeshToModel( mesholdpos);
+	Vector3 oldpos = m->PosMeshToModel(mesholdpos);
 
 	// Since the pointer can be offset from screenPos, calculate a point
 	// to display at screenPos.  We do this by intersecting the
@@ -11434,7 +11434,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 			moveVertexOperation = MoveVertexOperation::None;
 		}
 		else
-			newpos = hitmesh->PosMeshToModel( hitpt);
+			newpos = hitmesh->PosMeshToModel(hitpt);
 	}
 	else if (toolOptionRestrictPlane) {
 		gls.CollidePlane(screenPos.x, screenPos.y, newpos, mouseDownPointNormal, mouseDownPointNormal.dot(oldpos));
