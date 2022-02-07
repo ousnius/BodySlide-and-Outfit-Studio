@@ -685,7 +685,7 @@ void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 }
 
 TB_Undiff::TB_Undiff() {
-	strength = 0.1f;
+	strength = 0.01f;
 	brushName = "Undiff Brush";
 	brushType = TweakBrush::BrushType::Undiff;
 }

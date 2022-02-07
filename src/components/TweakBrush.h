@@ -257,6 +257,9 @@ public:
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
+
+	virtual float getStrength() { return strength * 10.0f; }
+	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
 };
 
 // Move brush behavior is significantly different from other brush types.
