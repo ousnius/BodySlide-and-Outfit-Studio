@@ -1033,7 +1033,7 @@ void ShapeProperties::ApplyChanges() {
 			if (shape->IsSkinned())
 				os->project->ApplyTransformToShapeGeometry(shape, newTransform.ComposeTransforms(oldTransform.InverseTransform()));
 			else
-				os->project->ApplyTransformToShapeGeometry(shape, newTransform.ComposeTransforms(oldTransform));
+				os->project->ApplyTransformToShapeGeometry(shape, newTransform.InverseTransform().ComposeTransforms(oldTransform));
 		}
 
 		if (shape->IsSkinned()) {
