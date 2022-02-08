@@ -8277,8 +8277,8 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 						diff.z = -diff.z;
 
 					Vector3 newPos = vertPos + diff;
-					uss.pointStartState[i] = mesh::VecToMeshCoords(vertPos);
-					uss.pointEndState[i] = mesh::VecToMeshCoords(newPos);
+					uss.pointStartState[i] = mesh::TransformPosNifToMesh(vertPos);
+					uss.pointEndState[i] = mesh::TransformPosNifToMesh(newPos);
 				}
 
 				usp->usss.push_back(std::move(uss));
@@ -8395,7 +8395,7 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			if (originSelection == 1) {
 				// Center of selected shape(s), respecting mask
 				origin = glView->gls.GetActiveCenter();
-				origin = mesh::VecToNifCoords(origin);
+				origin = mesh::TransformPosMeshToNif(origin);
 			}
 
 			UndoStateProject* usp = glView->GetUndoHistory()->PushState();
@@ -8431,8 +8431,8 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 						continue;
 
 					Vector3 newPos = vertPos + diff;
-					uss.pointStartState[i] = mesh::VecToMeshCoords(vertPos);
-					uss.pointEndState[i] = mesh::VecToMeshCoords(newPos);
+					uss.pointStartState[i] = mesh::TransformPosNifToMesh(vertPos);
+					uss.pointEndState[i] = mesh::TransformPosNifToMesh(newPos);
 				}
 
 				usp->usss.push_back(std::move(uss));
@@ -8584,7 +8584,7 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 			if (originSelection == 1) {
 				// Center of selected shape(s), respecting mask
 				origin = glView->gls.GetActiveCenter();
-				origin = mesh::VecToNifCoords(origin);
+				origin = mesh::TransformPosMeshToNif(origin);
 			}
 
 			UndoStateProject* usp = glView->GetUndoHistory()->PushState();
@@ -8622,8 +8622,8 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 						continue;
 
 					Vector3 newPos = vertPos + diff;
-					uss.pointStartState[i] = mesh::VecToMeshCoords(vertPos);
-					uss.pointEndState[i] = mesh::VecToMeshCoords(newPos);
+					uss.pointStartState[i] = mesh::TransformPosNifToMesh(vertPos);
+					uss.pointEndState[i] = mesh::TransformPosNifToMesh(newPos);
 				}
 
 				usp->usss.push_back(std::move(uss));
@@ -10651,8 +10651,8 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 						os->project->MoveVertex(shape, newPos, vertIndex);
 
 					// To mesh coordinates
-					oldPos = mesh::VecToMeshCoords(oldPos);
-					newPos = mesh::VecToMeshCoords(newPos);
+					oldPos = mesh::TransformPosNifToMesh(oldPos);
+					newPos = mesh::TransformPosNifToMesh(newPos);
 
 					UndoStateShape uss;
 					uss.shapeName = shape->name.get();
@@ -10911,7 +10911,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 				workNif->GetVertsForShape(shape, basePosition);
 
 			for (auto& p : basePosition)
-				p = mesh::VecToMeshCoords(p);
+				p = mesh::TransformPosNifToMesh(p);
 
 			positionData[i] = std::move(basePosition);
 		}
@@ -11346,7 +11346,7 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	mouseDownMeshName = lastHitResult.hitMeshName;
 	mouseDownPoint = lastHitResult.hoverPoint;
 	mouseHasMovedSinceStart = false;
-	mouseDownPointNormal = m->DirMeshToModel(m->GetOneVertexNormal(mouseDownPoint));
+	mouseDownPointNormal = m->TransformDirMeshToModel(m->GetOneVertexNormal(mouseDownPoint));
 	moveVertexOperation = MoveVertexOperation::None;
 
 	Vector3 viewOrigin;
@@ -11355,9 +11355,9 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 
 	// snapDistance: shortest edge length of triangle under pointer
 	const Triangle& tri = m->tris[lastHitResult.hoverTri];
-	Vector3 gtp1 = m->PosMeshToModel(m->verts[tri.p1]);
-	Vector3 gtp2 = m->PosMeshToModel(m->verts[tri.p2]);
-	Vector3 gtp3 = m->PosMeshToModel(m->verts[tri.p3]);
+	Vector3 gtp1 = m->TransformPosMeshToModel(m->verts[tri.p1]);
+	Vector3 gtp2 = m->TransformPosMeshToModel(m->verts[tri.p2]);
+	Vector3 gtp3 = m->TransformPosMeshToModel(m->verts[tri.p3]);
 	snapDistance = gtp1.DistanceTo(gtp2);
 	float elen = gtp2.DistanceTo(gtp3);
 	if (snapDistance > elen)
@@ -11413,7 +11413,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 	m->verts[mouseDownPoint] = mesholdpos;
 	if (mouseDownMirrorPoint != -1)
 		m->verts[mouseDownMirrorPoint] = uss.pointStartState[mouseDownMirrorPoint];
-	Vector3 oldpos = m->PosMeshToModel(mesholdpos);
+	Vector3 oldpos = m->TransformPosMeshToModel(mesholdpos);
 
 	// Since the pointer can be offset from screenPos, calculate a point
 	// to display at screenPos.  We do this by intersecting the
@@ -11434,7 +11434,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 			moveVertexOperation = MoveVertexOperation::None;
 		}
 		else
-			newpos = hitmesh->PosMeshToModel(hitpt);
+			newpos = hitmesh->TransformPosMeshToModel(hitpt);
 	}
 	else if (toolOptionRestrictPlane) {
 		gls.CollidePlane(screenPos.x, screenPos.y, newpos, mouseDownPointNormal, mouseDownPointNormal.dot(oldpos));
@@ -11467,8 +11467,8 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 			Vector3 viewDir, viewOrigin;
 			gls.GetPickRay(screenPos.x, screenPos.y, tm, viewDir, viewOrigin);
 
-			Vector3 tmnewpos = tm->PosModelToMesh(newpos);
-			float tmSnapDistance = tm->DistModelToMesh(snapDistance);
+			Vector3 tmnewpos = tm->TransformPosModelToMesh(newpos);
+			float tmSnapDistance = tm->TransformDistModelToMesh(snapDistance);
 
 			std::vector<IntersectResult> iresults;
 			if (tm->bvh && tm->bvh->IntersectSphere(tmnewpos, tmSnapDistance, &iresults)) {
@@ -11484,7 +11484,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 						// Calculate distance in plane perpendicular to view
 						Vector3 diff = tm->verts[tp] - tmnewpos;
 						diff -= viewDir * viewDir.dot(diff);
-						float d = tm->DistMeshToModel(diff.length());
+						float d = tm->TransformDistMeshToModel(diff.length());
 						if (d >= closestDist)
 							continue;
 
@@ -11502,7 +11502,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 			bool canWeld = toolOptionWeld && s1 && s2 && os->project->PointsHaveDifferingWeightsOrDiffs(s1, mouseDownPoint, s2, closestPoint);
 			bool canMerge = toolOptionMerge && m == closestMesh;
 			if (canWeld || canMerge) {
-				newpos = closestMesh->PosMeshToModel(closestMesh->verts[closestPoint]);
+				newpos = closestMesh->TransformPosMeshToModel(closestMesh->verts[closestPoint]);
 				if (canWeld)
 					moveVertexOperation = MoveVertexOperation::Weld;
 				else if (canMerge)
@@ -11513,7 +11513,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 		}
 	}
 
-	Vector3 meshnewpos = m->PosModelToMesh(newpos);
+	Vector3 meshnewpos = m->TransformPosModelToMesh(newpos);
 	uss.pointEndState[mouseDownPoint] = meshnewpos;
 	m->verts[mouseDownPoint] = meshnewpos;
 	gls.SetPointCursor(newpos);
@@ -12114,7 +12114,7 @@ void wxGLPanel::UpdateNodes() {
 
 			std::string nodeName = node->name.get();
 			if (!nodeName.empty()) {
-				Vector3 renderPosition = mesh::VecToMeshCoords(position);
+				Vector3 renderPosition = mesh::TransformPosNifToMesh(position);
 
 				auto pointMesh = gls.AddVisPoint(renderPosition, "P_" + nodeName);
 				if (pointMesh) {
@@ -12123,7 +12123,7 @@ void wxGLPanel::UpdateNodes() {
 				}
 
 				if (parent) {
-					Vector3 renderParentPosition = mesh::VecToMeshCoords(parentPosition);
+					Vector3 renderParentPosition = mesh::TransformPosNifToMesh(parentPosition);
 
 					auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "L_" + nodeName);
 					if (lineMesh) {
@@ -12191,7 +12191,7 @@ void wxGLPanel::UpdateBones() {
 					Vector3 parentPosition = parent->xformToGlobal.ApplyTransform(rootPosition);
 					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
 
-					Vector3 renderPosition = mesh::VecToMeshCoords(position);
+					Vector3 renderPosition = mesh::TransformPosNifToMesh(position);
 
 					auto pointMesh = gls.AddVisPoint(renderPosition, "BP_" + cb->boneName);
 					if (pointMesh) {
@@ -12199,7 +12199,7 @@ void wxGLPanel::UpdateBones() {
 						bonesPoints.push_back(pointMesh);
 					}
 
-					Vector3 renderParentPosition = mesh::VecToMeshCoords(parentPosition);
+					Vector3 renderParentPosition = mesh::TransformPosNifToMesh(parentPosition);
 
 					if (!matchesParent) {
 						auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "BL_" + cb->boneName);
@@ -12661,7 +12661,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 																  hitResult.hoverAlpha),
 												 1);
 				else {
-					Vector3 hoverCoordNif = mesh::VecToNifCoords(hitResult.hoverMeshCoord);
+					Vector3 hoverCoordNif = mesh::TransformPosMeshToNif(hitResult.hoverMeshCoord);
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hitResult.hoverPoint, hoverCoordNif.x, hoverCoordNif.y, hoverCoordNif.z),
 												 1);
 				}

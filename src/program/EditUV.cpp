@@ -969,7 +969,7 @@ void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& mes
 
 			hoverPoint = pointid;
 
-			Vector3 visPoint = m->PosMeshToModel(hilitepoint);
+			Vector3 visPoint = m->TransformPosMeshToModel(hilitepoint);
 			auto visPointMesh = uvSurface.AddVisPoint(visPoint, "pointhilite");
 			if (visPointMesh)
 				visPointMesh->color = Vector3(1.0f, 0.0f, 0.0f);

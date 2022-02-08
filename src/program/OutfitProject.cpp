@@ -1417,7 +1417,7 @@ void OutfitProject::UpdateShapeFromMesh(NiShape* shape, const mesh* m) {
 	std::vector<Vector3> liveVerts(m->nVerts);
 
 	for (int i = 0; i < m->nVerts; i++)
-		liveVerts[i] = mesh::VecToNifCoords(m->verts[i]);
+		liveVerts[i] = mesh::TransformPosMeshToNif(m->verts[i]);
 
 	workNif.SetVertsForShape(shape, liveVerts);
 }
@@ -1437,7 +1437,7 @@ void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderN
 
 	if (IsBaseShape(shape)) {
 		for (auto& i : vertUpdates) {
-			Vector3 diffscale = mesh::DiffMeshToNif(i.second);
+			Vector3 diffscale = mesh::TransformDiffMeshToNif(i.second);
 			baseDiffData.SumDiff(dataName, target, i.first, diffscale);
 		}
 	}
@@ -1733,7 +1733,7 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 				boneScaleVerts.emplace(s, std::vector<Vector3>(m->nVerts));
 				it = boneScaleVerts.find(s);
 				for (int i = 0; i < m->nVerts; i++)
-					it->second[i] = mesh::VecToNifCoords(m->verts[i]);
+					it->second[i] = mesh::TransformPosMeshToNif(m->verts[i]);
 			}
 		}
 
@@ -3845,8 +3845,8 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 			liveNorms.clear();
 
 			for (int i = 0; i < m->nVerts; i++) {
-				liveVerts.emplace_back(mesh::VecToNifCoords(m->verts[i]));
-				liveNorms.emplace_back(mesh::DirMeshToNif(m->norms[i]));
+				liveVerts.emplace_back(mesh::TransformPosMeshToNif(m->verts[i]));
+				liveNorms.emplace_back(mesh::TransformDirMeshToNif(m->norms[i]));
 			}
 
 			clone.SetVertsForShape(shape, liveVerts);

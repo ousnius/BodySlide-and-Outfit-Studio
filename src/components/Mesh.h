@@ -202,7 +202,7 @@ public:
 	static constexpr nifly::MatTransform xformNifToMesh{nifly::Vector3(),nifly::Matrix3(-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f),0.1f};
 	static constexpr nifly::MatTransform xformMeshToNif{nifly::Vector3(),nifly::Matrix3(-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f),10.0f};
 
-	static constexpr nifly::Vector3 VecToMeshCoords(const nifly::Vector3& vec) {
+	static constexpr nifly::Vector3 TransformPosNifToMesh(const nifly::Vector3& vec) {
 		// This function efficiently calculates xformNifToMesh.ApplyTransform(vec)
 		return nifly::Vector3(
 			vec.x / -10.0f,
@@ -210,7 +210,7 @@ public:
 			vec.y / 10.0f);
 	}
 
-	static constexpr nifly::Vector3 VecToNifCoords(const nifly::Vector3& vec) {
+	static constexpr nifly::Vector3 TransformPosMeshToNif(const nifly::Vector3& vec) {
 		// This function efficiently calculates xformMeshToNif.ApplyTransform(vec)
 		return nifly::Vector3(
 			vec.x * -10.0f,
@@ -218,7 +218,7 @@ public:
 			vec.y * 10.0f);
 	}
 
-	static constexpr nifly::Vector3 DiffNifToMesh(const nifly::Vector3& diff) {
+	static constexpr nifly::Vector3 TransformDiffNifToMesh(const nifly::Vector3& diff) {
 		// This function efficiently calculates xformNifToMesh::ApplyTransformToDiff(diff)
 		return nifly::Vector3(
 			diff.x / -10.0f,
@@ -226,7 +226,7 @@ public:
 			diff.y / 10.0f);
 	}
 
-	static constexpr nifly::Vector3 DiffMeshToNif(const nifly::Vector3& diff) {
+	static constexpr nifly::Vector3 TransformDiffMeshToNif(const nifly::Vector3& diff) {
 		// This function efficiently calculates xformMeshToNif::ApplyTransformToDiff(diff)
 		return nifly::Vector3(
 			diff.x * -10.0f,
@@ -234,7 +234,7 @@ public:
 			diff.y * 10.0f);
 	}
 
-	static constexpr nifly::Vector3 DirNifToMesh(const nifly::Vector3& dir) {
+	static constexpr nifly::Vector3 TransformDirNifToMesh(const nifly::Vector3& dir) {
 		// This function efficiently calculates xformNifToMesh::ApplyTransformToDir(dir)
 		return nifly::Vector3(
 			-dir.x,
@@ -242,7 +242,7 @@ public:
 			dir.y);
 	}
 
-	static constexpr nifly::Vector3 DirMeshToNif(const nifly::Vector3& dir) {
+	static constexpr nifly::Vector3 TransformDirMeshToNif(const nifly::Vector3& dir) {
 		// This function efficiently calculates xformMeshToNif::ApplyTransformToDir(dir)
 		return nifly::Vector3(
 			-dir.x,
@@ -250,12 +250,12 @@ public:
 			dir.y);
 	}
 
-	static constexpr float DistNifToMesh(float d) {
+	static constexpr float TransformDistNifToMesh(float d) {
 		// This function calculates xformMeshToNif::ApplyTransformToDist(d)
 		return d / 10.0f;
 	}
 
-	static constexpr float DistMeshToNif(float d) {
+	static constexpr float TransformDistMeshToNif(float d) {
 		// This function calculates xformMeshToNif::ApplyTransformToDist(d)
 		return d * 10.0f;
 	}
@@ -272,35 +272,35 @@ public:
 		matModel = xformMeshToModel.ToGLMMatrix<glm::mat4x4>();
 	}
 
-	nifly::Vector3 PosMeshToModel(const nifly::Vector3 &pos) {
+	nifly::Vector3 TransformPosMeshToModel(const nifly::Vector3 &pos) {
 		return xformMeshToModel.ApplyTransform(pos);
 	}
 
-	nifly::Vector3 PosModelToMesh(const nifly::Vector3 &pos) {
+	nifly::Vector3 TransformPosModelToMesh(const nifly::Vector3 &pos) {
 		return xformModelToMesh.ApplyTransform(pos);
 	}
 
-	nifly::Vector3 DirMeshToModel(const nifly::Vector3 &dir) {
+	nifly::Vector3 TransformDirMeshToModel(const nifly::Vector3 &dir) {
 		return xformMeshToModel.ApplyTransformToDir(dir);
 	}
 
-	nifly::Vector3 DirModelToMesh(const nifly::Vector3 &dir) {
+	nifly::Vector3 TransformDirModelToMesh(const nifly::Vector3 &dir) {
 		return xformModelToMesh.ApplyTransformToDir(dir);
 	}
 
-	nifly::Vector3 DiffMeshToModel(const nifly::Vector3 &diff) {
+	nifly::Vector3 TransformDiffMeshToModel(const nifly::Vector3 &diff) {
 		return xformMeshToModel.ApplyTransformToDiff(diff);
 	}
 
-	nifly::Vector3 DiffModelToMesh(const nifly::Vector3 &diff) {
+	nifly::Vector3 TransformDiffModelToMesh(const nifly::Vector3 &diff) {
 		return xformModelToMesh.ApplyTransformToDiff(diff);
 	}
 
-	float DistMeshToModel(float dist) {
+	float TransformDistMeshToModel(float dist) {
 		return xformMeshToModel.ApplyTransformToDist(dist);
 	}
 
-	float DistModelToMesh(float dist) {
+	float TransformDistModelToMesh(float dist) {
 		return xformModelToMesh.ApplyTransformToDist(dist);
 	}
 

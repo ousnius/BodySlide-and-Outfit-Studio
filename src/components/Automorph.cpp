@@ -201,7 +201,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const An
 
 	// Load verts. No CS transformation is done (in contrast to the very similar code in GLSurface).
 	for (int i = 0; i < m->nVerts; i++)
-		m->verts[i] = m->PosMeshToModel(nifVerts[i]);
+		m->verts[i] = m->TransformPosMeshToModel(nifVerts[i]);
 }
 
 void Automorph::DeleteVerts(const std::string& shapeName, const std::vector<uint16_t>& indices) {
@@ -322,7 +322,7 @@ void Automorph::UpdateResultDiff(const std::string& shapeName, const std::string
 		resultDiffData.AddEmptySet(setName, shapeName);
 
 	for (auto& i : diff) {
-		Vector3 diffscale = mesh::DiffMeshToNif(i.second);
+		Vector3 diffscale = mesh::TransformDiffMeshToNif(i.second);
 		resultDiffData.SumDiff(setName, shapeName, i.first, diffscale);
 	}
 }
@@ -334,7 +334,7 @@ void Automorph::UpdateRefDiff(const std::string& shapeName, const std::string& s
 		srcDiffData->AddEmptySet(setName, shapeName);
 
 	for (auto& i : diff) {
-		Vector3 diffscale = mesh::DiffMeshToNif(i.second);
+		Vector3 diffscale = mesh::TransformDiffMeshToNif(i.second);
 		srcDiffData->SumDiff(setName, shapeName, i.first, diffscale);
 	}
 }
@@ -451,7 +451,7 @@ void Automorph::GenerateResultDiff(
 			continue;
 
 		if (!solidMode) {
-			(*resultDiffSet)[i] = m->DiffModelToMesh(morphRef->DiffMeshToModel(totalMove));
+			(*resultDiffSet)[i] = m->TransformDiffModelToMesh(morphRef->TransformDiffMeshToModel(totalMove));
 		}
 		else {
 			totalMoveList.reserve(m->nVerts);
@@ -503,7 +503,7 @@ void Automorph::GenerateResultDiff(
 			if (totalMove.IsZero(true))
 				continue;
 
-			(*resultDiffSet)[i] = m->DiffModelToMesh(morphRef->DiffMeshToModel(totalMove));
+			(*resultDiffSet)[i] = m->TransformDiffModelToMesh(morphRef->TransformDiffMeshToModel(totalMove));
 		}
 	}
 }

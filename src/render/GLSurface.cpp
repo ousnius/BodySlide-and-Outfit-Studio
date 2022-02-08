@@ -556,19 +556,19 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 					const int dec = 5;
 					Edge closestEdge = t.ClosestEdge(m->verts.get(), origin);
 
-					Vector3 morigin = m->PosMeshToModel(origin);
+					Vector3 morigin = m->TransformPosMeshToModel(origin);
 
 					Vector3 norm;
 					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
 
 					AddVisCircle(morigin, norm, cursorSize, "cursormesh");
 
-					Vector3 mhilitepoint = m->PosMeshToModel(hilitepoint);
+					Vector3 mhilitepoint = m->TransformPosMeshToModel(hilitepoint);
 					AddVisPoint(mhilitepoint, "pointhilite");
 					AddVisPoint(morigin, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
 
-					Vector3 mep1 = m->PosMeshToModel(m->verts[closestEdge.p1]);
-					Vector3 mep2 = m->PosMeshToModel(m->verts[closestEdge.p2]);
+					Vector3 mep1 = m->TransformPosMeshToModel(m->verts[closestEdge.p1]);
+					Vector3 mep2 = m->TransformPosMeshToModel(m->verts[closestEdge.p2]);
 					AddVisSeg(mep1, mep2, "seghilite");
 
 					if (hitResult) {
@@ -673,17 +673,17 @@ void GLSurface::HideSegCursor() {
 }
 
 void GLSurface::SetPointCursor(const Vector3 &p, mesh* m) {
-	Vector3 gp = m ? m->PosMeshToModel(p) : p;
+	Vector3 gp = m ? m->TransformPosMeshToModel(p) : p;
 	AddVisPoint(gp, "pointhilite");
 }
 
 void GLSurface::SetCenterCursor(const Vector3 &p, mesh* m) {
-	Vector3 gp = m ? m->PosMeshToModel(p) : p;
+	Vector3 gp = m ? m->TransformPosMeshToModel(p) : p;
 	AddVisPoint(gp, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
 }
 
 void GLSurface::ShowMirrorPointCursor(const Vector3 &p, mesh* m) {
-	Vector3 gp = m ? m->PosMeshToModel(p) : p;
+	Vector3 gp = m ? m->TransformPosMeshToModel(p) : p;
 	AddVisPoint(gp, "mirrorpoint")->color = Vector3(0.3f, 0.7f, 0.7f);;
 	SetOverlayVisibility("mirrorpoint", true);
 }
@@ -1232,7 +1232,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	// Scale down by 10 and rotate on x axis by flipping y and z components. To face the camera, this also mirrors
 	// on X and Y (180 degree y axis rotation.)
 	for (int i = 0; i < m->nVerts; i++)
-		m->verts[i] = mesh::VecToMeshCoords(nifVerts[i]);
+		m->verts[i] = mesh::TransformPosNifToMesh(nifVerts[i]);
 
 	if (nifUvs && !nifUvs->empty()) {
 		for (int i = 0; i < m->nVerts; i++) {
@@ -1254,7 +1254,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		// Already have normals, just copy the data over.
 		// Copy normals. Note, normals are transformed the same way the vertices are.
 		for (int i = 0; i < m->nVerts; i++)
-			m->norms[i] = mesh::DirNifToMesh((*nifNorms)[i]);
+			m->norms[i] = mesh::TransformDirNifToMesh((*nifNorms)[i]);
 
 		for (auto& extraDataRef : shape->extraDataRefs) {
 			auto integersExtraData = nif->GetHeader().GetBlock<NiIntegersExtraData>(extraDataRef);
@@ -1938,7 +1938,7 @@ void GLSurface::Update(mesh* m, std::vector<Vector3>* vertices, std::vector<Vect
 		if (changed)
 			old = m->verts[i];
 
-		m->verts[i] = mesh::VecToMeshCoords((*vertices)[i]);
+		m->verts[i] = mesh::TransformPosNifToMesh((*vertices)[i]);
 
 		if (uvSize > i)
 			m->texcoord[i] = (*uvs)[i];
