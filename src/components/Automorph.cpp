@@ -451,7 +451,7 @@ void Automorph::GenerateResultDiff(
 			continue;
 
 		if (!solidMode) {
-			(*resultDiffSet)[i] = totalMove;
+			(*resultDiffSet)[i] = m->DiffModelToMesh(morphRef->DiffMeshToModel(totalMove));
 		}
 		else {
 			totalMoveList.reserve(m->nVerts);
@@ -503,7 +503,7 @@ void Automorph::GenerateResultDiff(
 			if (totalMove.IsZero(true))
 				continue;
 
-			(*resultDiffSet)[i] = totalMove;
+			(*resultDiffSet)[i] = m->DiffModelToMesh(morphRef->DiffMeshToModel(totalMove));
 		}
 	}
 }
