@@ -758,7 +758,7 @@ private:
 
 	TweakBrush* activeBrush = nullptr;
 	TweakBrush* savedBrush;
-	TweakBrush standardBrush;
+	TB_Inflate standardBrush;
 	TB_Deflate deflateBrush;
 	TB_Move moveBrush;
 	TB_Smooth smoothBrush;

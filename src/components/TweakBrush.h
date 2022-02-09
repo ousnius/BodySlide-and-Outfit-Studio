@@ -82,12 +82,13 @@ public:
 	std::unordered_set<AABBTree::AABBTreeNode*> cachedNodes;
 	std::unordered_set<AABBTree::AABBTreeNode*> cachedNodesM;
 	std::vector<nifly::Vector3> positionData;
+	std::unique_ptr<nifly::Vector3[]> startNorms;
 };
 
 
 class TweakBrush {
 public:
-	enum class BrushType { Standard = 1, Move, Mask, Weight, Color, Alpha, Transform, Undiff };
+	enum class BrushType { Inflate = 1, Move, Mask, Weight, Color, Alpha, Transform, Undiff };
 
 protected:
 	BrushType brushType;
@@ -101,6 +102,8 @@ protected:
 	bool bLiveBVH;	   // Update BVH at each update instead of at stroke completion.
 	bool bLiveNormals; // Update mesh normals at each update instead of at stroke completion.
 	bool bConnected;   // Operate on connected vertices only.
+	bool restrictPlane = false;
+	bool restrictNormal = false;
 
 	std::unordered_map<mesh*, TweakBrushMeshCache> cache;
 
@@ -116,12 +119,12 @@ public:
 	TweakBrushMeshCache* getCache(mesh* m) { return &cache[m]; }
 
 	virtual float getRadius() { return radius; }
-	virtual float getStrength() { return strength * 10.0f; }
+	virtual float getStrength() { return strength; }
 	virtual float getFocus() { return focus; }
 	virtual float getSpacing() { return spacing; }
 	virtual void setRadius(float newRadius) { radius = newRadius; }
 	virtual void setFocus(float newFocus) { focus = newFocus; }
-	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
+	virtual void setStrength(float newStr) { strength = newStr; }
 	virtual void setSpacing(float newSpacing) { spacing = newSpacing; }
 
 	virtual int CachedPointIndex(mesh*, int) { return 0; }
@@ -131,13 +134,15 @@ public:
 
 	virtual bool isConnected() { return bConnected; }
 	virtual void setConnected(bool wantConnected = true) { bConnected = wantConnected; }
+	virtual void setRestrictPlane(bool on) { restrictPlane = on; }
+	virtual void setRestrictNormal(bool on) { restrictNormal = on; }
 	virtual bool LiveBVH() { return bLiveBVH; }
 	virtual bool LiveNormals() { return bLiveNormals; }
 
 	virtual bool NeedMirrorMergedQuery() { return false; }
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&) {}
+	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&);
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&) {}
 
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
@@ -155,12 +160,23 @@ public:
 		mesh* refmesh, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 
 	// Apply the brush effect to the mesh
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) = 0;
 };
 
 class ClampBrush {
 public:
 	float clampMaxValue = 0.0f;
+};
+
+class TB_Inflate : public TweakBrush {
+public:
+	TB_Inflate();
+	virtual ~TB_Inflate();
+
+	virtual float getStrength() { return strength * 10.0f; }
+	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
+
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
 class TB_Mask : public TweakBrush {
@@ -199,7 +215,7 @@ public:
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
-class TB_Deflate : public TweakBrush {
+class TB_Deflate : public TB_Inflate {
 public:
 	TB_Deflate();
 	virtual ~TB_Deflate();
@@ -241,6 +257,9 @@ public:
 	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
+
+	virtual float getStrength() { return strength * 10.0f; }
+	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
 };
 
 // Move brush behavior is significantly different from other brush types.
