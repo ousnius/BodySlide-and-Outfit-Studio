@@ -70,6 +70,7 @@ public:
 	void GenerateResultDiff(const std::string& shapeName,
 							const std::string& sliderName,
 							const std::string& refDataName,
+							bool transformResults,
 							int maxResults = 10,
 							bool noSqueeze = false,
 							bool solidMode = false,

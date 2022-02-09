@@ -1589,7 +1589,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 
 		// Calculate new values for bone's weights
 		std::string wtSet = boneName + "_WT_";
-		morpher.GenerateResultDiff(shapeName, wtSet, wtSet, maxResults);
+		morpher.GenerateResultDiff(shapeName, wtSet, wtSet, false, maxResults);
 
 		std::unordered_map<uint16_t, Vector3> diffResult;
 		morpher.GetRawResultDiff(shapeName, wtSet, diffResult);
@@ -2269,6 +2269,7 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 			morpher.GenerateResultDiff(shape->name.get(),
 									   activeSet[i].name,
 									   activeSet[i].TargetDataName(refTarget),
+									   true,
 									   options.maxResults,
 									   options.noSqueeze,
 									   options.solidMode,
