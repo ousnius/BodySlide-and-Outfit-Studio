@@ -1487,6 +1487,20 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 
 	workNif.SetVertsForShape(shape, verts);
 
+	// Position diffs
+	for (size_t si = 0; si < activeSet.size(); ++si) {
+		SliderData& sd = activeSet[si];
+		if (sd.bUV || sd.bClamp || sd.bZap)
+			continue;
+
+		std::unordered_map<uint16_t, Vector3>* diffSet = GetDiffSet(sd,  shape);
+		if (!diffSet)
+			continue;
+
+		for (auto& diffp : *diffSet)
+			diffp.second = t.ApplyTransformToDiff(diffp.second);
+	}
+
 	// Normals
 	if (t.rotation.IsNearlyEqualTo(Matrix3()))
 		return;
@@ -2263,6 +2277,18 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 									   options.axisZ);
 }
 
+std::unordered_map<uint16_t, Vector3>* OutfitProject::GetDiffSet(SliderData& sliderData, NiShape* shape) {
+	std::string target = ShapeToTarget(shape->name.get());
+	std::string targetDataName = sliderData.TargetDataName(target);
+	if (targetDataName.empty())
+		targetDataName = target + sliderData.name;
+
+	if (IsBaseShape(shape))
+		return baseDiffData.GetDiffSet(targetDataName);
+	else
+		return morpher.GetDiffSet(targetDataName);
+}
+
 void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices) {
 	uss.delVerts.resize(indices.size());
 
@@ -2274,7 +2300,6 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const
 	const std::vector<Vector3>* bitangents = workNif.GetBitangentsForShape(shape);
 	const std::vector<float>* eyeData = workNif.GetEyeDataForShape(shape);
 	AnimSkin& skin = workAnim.shapeSkinning[shape->name.get()];
-	std::string target = ShapeToTarget(shape->name.get());
 
 	for (uint16_t di = 0; di < static_cast<uint16_t>(indices.size()); ++di) {
 		UndoStateVertex& usv = uss.delVerts[di];
@@ -2306,15 +2331,7 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const
 
 	// For diffs, it's more efficient to reverse the loop nesting.
 	for (size_t si = 0; si < activeSet.size(); ++si) {
-		std::string targetDataName = activeSet[si].TargetDataName(target);
-		if (targetDataName.empty())
-			targetDataName = target + activeSet[si].name;
-
-		std::unordered_map<uint16_t, Vector3>* diffSet;
-		if (IsBaseShape(shape))
-			diffSet = baseDiffData.GetDiffSet(targetDataName);
-		else
-			diffSet = morpher.GetDiffSet(targetDataName);
+		std::unordered_map<uint16_t, Vector3>* diffSet = GetDiffSet(activeSet[si], shape);
 
 		if (!diffSet)
 			continue;
@@ -3277,29 +3294,12 @@ bool OutfitProject::PointsHaveDifferingWeightsOrDiffs(NiShape* shape1, int p1, N
 	}
 
 	// Check for position slider differences.  We skip uv, clamp, and zap.
-	std::string target1 = ShapeToTarget(shape1->name.get());
-	std::string target2 = ShapeToTarget(shape2->name.get());
 	for (size_t si = 0; si < activeSet.size(); ++si) {
 		if (activeSet[si].bUV || activeSet[si].bClamp || activeSet[si].bZap)
 			continue;
 
-		std::string targetDataName1 = activeSet[si].TargetDataName(target1);
-		if (targetDataName1.empty())
-			targetDataName1 = target1 + activeSet[si].name;
-		std::string targetDataName2 = activeSet[si].TargetDataName(target2);
-		if (targetDataName2.empty())
-			targetDataName2 = target2 + activeSet[si].name;
-
-		std::unordered_map<uint16_t, Vector3>* diffSet1;
-		if (IsBaseShape(shape1))
-			diffSet1 = baseDiffData.GetDiffSet(targetDataName1);
-		else
-			diffSet1 = morpher.GetDiffSet(targetDataName1);
-		std::unordered_map<uint16_t, Vector3>* diffSet2;
-		if (IsBaseShape(shape2))
-			diffSet2 = baseDiffData.GetDiffSet(targetDataName2);
-		else
-			diffSet2 = morpher.GetDiffSet(targetDataName2);
+		std::unordered_map<uint16_t, Vector3>* diffSet1 = GetDiffSet(activeSet[si], shape1);
+		std::unordered_map<uint16_t, Vector3>* diffSet2 = GetDiffSet(activeSet[si], shape2);
 
 		if (!diffSet1 && !diffSet2)
 			continue;

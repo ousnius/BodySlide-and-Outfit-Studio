@@ -231,6 +231,8 @@ public:
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
 	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true);
 
+	std::unordered_map<uint16_t, nifly::Vector3>* GetDiffSet(SliderData& silderData, nifly::NiShape* shape);
+
 	void CollectVertexData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	void CollectTriangleData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint32_t>& indices);
 	bool PrepareDeleteVerts(nifly::NiShape* shape, const std::unordered_map<uint16_t, float>& mask, UndoStateShape& uss);
