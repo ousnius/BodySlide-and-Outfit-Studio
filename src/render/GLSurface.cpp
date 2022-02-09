@@ -366,11 +366,13 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 		Vector3 d;
 		Vector3 o;
 
-		GetPickRay(ScreenX, ScreenY, m, d, o);
+		GetPickRay(ScreenX, ScreenY, nullptr, d, o);
 		if (mirrored) {
 			d.x *= -1.0f;
 			o.x *= -1.0f;
 		}
+		o = m->TransformPosModelToMesh(o);
+		d = m->TransformDirModelToMesh(d);
 
 		std::vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
@@ -560,6 +562,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 
 					Vector3 norm;
 					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
+					norm = m->TransformDirMeshToModel(norm);
 
 					AddVisCircle(morigin, norm, cursorSize, "cursormesh");
 

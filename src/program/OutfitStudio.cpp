@@ -10753,25 +10753,18 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			return false;
 	}
 
-	Vector3 o;
-	Vector3 n;
-	Vector3 d;
-	Vector3 s;
-
 	TweakPickInfo tpi;
-	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, true, &tpi.facet);
+	mesh* hitMesh = nullptr;
+	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh);
 	if (!hit)
 		return false;
 
 	if (!os->CheckEditableState())
 		return false;
 
-	if (GetToolOptionXMirror()) {
-		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, true, &tpi.facetM))
-			tpi.facetM = -1;
-	}
-
+	tpi.origin = hitMesh->TransformPosMeshToModel(tpi.origin);
 	tpi.normal.Normalize();
+	tpi.normal = hitMesh->TransformDirMeshToModel(tpi.normal);
 
 	Vector3 v;
 	Vector3 vo;
@@ -10938,11 +10931,6 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 }
 
 void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
-	Vector3 o;
-	Vector3 n;
-	Vector3 d; // Mirror pick ray direction.
-	Vector3 s; // Mirror pick ray origin.
-
 	TweakPickInfo tpi;
 
 	if (activeStroke) {
@@ -10958,12 +10946,11 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			if (!hit)
 				return;
 
-			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, true, &tpi.facet);
-			if (GetToolOptionXMirror()) {
-				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, true, &tpi.facetM))
-					tpi.facetM = -1;
-			}
+			mesh* hitMesh = nullptr;
+			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh);
+			tpi.origin = hitMesh->TransformPosMeshToModel(tpi.origin);
 			tpi.normal.Normalize();
+			tpi.normal = hitMesh->TransformDirMeshToModel(tpi.normal);
 		}
 
 		Vector3 v;
@@ -11044,7 +11031,7 @@ void wxGLPanel::EndBrushStroke() {
 bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 	mesh* hitMesh;
-	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh, &tpi.facet);
+	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh);
 	if (!hit)
 		return false;
 
@@ -11180,7 +11167,7 @@ void wxGLPanel::EndTransform() {
 bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 	mesh* hitMesh;
-	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh, &tpi.facet);
+	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh);
 	if (!hit)
 		return false;
 
@@ -11381,11 +11368,8 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	usp->usss[0].shapeName = mouseDownMeshName;
 	usp->usss[0].pointEndState[mouseDownPoint] = usp->usss[0].pointStartState[mouseDownPoint] = lastHitResult.hoverMeshCoord;
 
-	if (mouseDownMirrorPoint != -1) {
-		Vector3 mp = lastHitResult.hoverMeshCoord;
-		mp.x = -mp.x;
-		usp->usss[0].pointEndState[mouseDownMirrorPoint] = usp->usss[0].pointStartState[mouseDownMirrorPoint] = mp;
-	}
+	if (mouseDownMirrorPoint != -1)
+		usp->usss[0].pointEndState[mouseDownMirrorPoint] = usp->usss[0].pointStartState[mouseDownMirrorPoint] = m->verts[mouseDownMirrorPoint];
 
 	if (os->bEditSlider) {
 		usp->sliderName = os->activeSlider;
@@ -11532,8 +11516,9 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 	gls.ShowCursor(true);
 
 	if (mouseDownMirrorPoint != -1) {
-		Vector3 mp = meshnewpos;
+		Vector3 mp = newpos;
 		mp.x = -mp.x;
+		mp = m->TransformPosModelToMesh(mp);
 		uss.pointEndState[mouseDownMirrorPoint] = mp;
 		m->verts[mouseDownMirrorPoint] = mp;
 		gls.ShowMirrorPointCursor(mp, m);
