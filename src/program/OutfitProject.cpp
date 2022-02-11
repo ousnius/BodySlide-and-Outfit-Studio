@@ -1853,7 +1853,7 @@ int OutfitProject::CopySegPart(NiShape* shape) {
 
 	// Build proximity cache for triangle centers of baseShape.
 	// Note that kd_tree keeps pointers into tricenters.
-	kd_tree refTree(&tricenters[0], tricenters.size());
+	kd_tree<uint32_t> refTree(&tricenters[0], tricenters.size());
 
 	// Get baseShape's segment/partition data
 	std::vector<int> bstriParts;
