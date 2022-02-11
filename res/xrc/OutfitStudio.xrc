@@ -1946,6 +1946,11 @@
 				<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="copySegPart">
+				<label>Copy Segments or Partitions...</label>
+				<help>Copies segments or partitions and all triangle segment/partition memberships from the reference shape to the current shape.</help>
+			</object>
+			<object class="separator" />
 			<object class="wxMenuItem" name="deleteShape">
 				<label>Delete\tDel</label>
 				<help>Removes the currently selected shape from the outfit.</help>
@@ -2380,6 +2385,11 @@
 		<object class="wxMenuItem" name="maskWeightedVerts">
 			<label>Mask Weighted Vertices</label>
 			<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
+		</object>
+		<object class="separator" />
+		<object class="wxMenuItem" name="copySegPart">
+			<label>Copy Segments or Partitions...</label>
+			<help>Copies segments or partitions and all triangle segment/partition memberships from the reference shape to the current shape.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="deleteShape">
