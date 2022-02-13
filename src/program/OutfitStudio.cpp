@@ -227,6 +227,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
 	EVT_MENU(XRCID("maskBoneWeightedVerts"), OutfitStudioFrame::OnMaskBoneWeighted)
+	EVT_MENU(XRCID("copySegPart"), OutfitStudioFrame::OnCopySegPart)
 	EVT_MENU(XRCID("resetTransforms"), OutfitStudioFrame::OnResetTransforms)
 	EVT_MENU(XRCID("deleteUnreferencedNodes"), OutfitStudioFrame::OnDeleteUnreferencedNodes)
 	EVT_MENU(XRCID("removeSkinning"), OutfitStudioFrame::OnRemoveSkinning)
@@ -9799,6 +9800,72 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->Refresh();
+}
+
+void OutfitStudioFrame::OnCopySegPart(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	if (!project->GetBaseShape()) {
+		wxMessageBox(_("There is no reference shape!"), _("Error"));
+		return;
+	}
+
+	std::vector<NiShape*> selectedShapes;
+	for (auto& s : selectedItems) {
+		if (auto shape = s->GetShape(); !project->IsBaseShape(shape))
+			selectedShapes.push_back(s->GetShape());
+		else
+			wxMessageBox(_("Sorry, you can't copy partitions/segments from the reference shape to itself. Skipping this shape."), _("Can't copy segments/partitions"), wxICON_WARNING);
+	}
+	if (selectedShapes.empty())
+		return;
+
+	if (wxMessageBox(_("Triangles will be assigned to the partition/segment of the nearest triangle in the reference.  Existing partitions/segments are cleared.  This action can't be undone."), _("Copy Partitions/Segments"), wxOK | wxCANCEL | wxICON_INFORMATION | wxOK_DEFAULT) != wxOK)
+		return;
+
+	CopySegPartForShapes(selectedShapes);
+}
+
+int OutfitStudioFrame::CopySegPartForShapes(std::vector<NiShape*> shapes, bool silent) {
+	int failshapes = 0;
+
+	StartProgress(_("Copying segments/partitions..."));
+
+	const int inc = 100 / shapes.size() - 1;
+
+	for (size_t i = 0; i < shapes.size(); i++) {
+		NiShape* shape = shapes[i];
+		wxLogMessage("Copying segments/partitions to '%s'...", shape->name.get());
+		StartSubProgress(i * inc, i * inc + inc);
+
+		int failcount = project->CopySegPart(shape);
+		if (failcount && !silent)
+			wxMessageBox(wxString::Format(_("The partitions/segments could not be copied for '%s' because %d triangles could not be matched."), shape->name.get(), failcount), _("Error"));
+		if (failcount)
+			++failshapes;
+
+		if (!failcount) {
+			MeshFromProj(shape);
+
+			if (shape == activeItem->GetShape()) {
+				CreateSegmentTree(shape);
+				CreatePartitionTree(shape);
+			}
+		}
+
+		EndProgress();
+	}
+
+	SetPendingChanges();
+	UpdateUndoTools();
+
+	UpdateProgress(100, _("Finished"));
+	EndProgress();
+
+	return failshapes;
 }
 
 void OutfitStudioFrame::OnResetTransforms(wxCommandEvent& WXUNUSED(event)) {

@@ -1819,6 +1819,98 @@ void OutfitProject::ModifyCustomBone(AnimBone* bPtr, const std::string& parentBo
 		workAnim.RecursiveRecalcXFormSkinToBone(s, bPtr);
 }
 
+MatTransform OutfitProject::GetTransformShapeToGlobal(NiShape* shape) {
+	if (shape->IsSkinned()) {
+		return workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin.InverseTransform();
+	}
+	else {	// Unskinned mesh
+		MatTransform ttg = shape->GetTransformToParent();
+		NiNode* parent = workNif.GetParentNode(shape);
+		while (parent) {
+			ttg = parent->GetTransformToParent().ComposeTransforms(ttg);
+			parent = workNif.GetParentNode(parent);
+		}
+		return ttg;
+	}
+}
+
+int OutfitProject::CopySegPart(NiShape* shape) {
+	// Gather baseShape's triangles and vertices
+	std::vector<Triangle> tris;
+	baseShape->GetTriangles(tris);
+	std::vector<Vector3> verts;
+	workNif.GetVertsForShape(baseShape, verts);
+
+	// Transform baseShape vertices to nif global coordinates
+	MatTransform xformToGlobal = GetTransformShapeToGlobal(baseShape);
+	for (Vector3& v : verts)
+		v = xformToGlobal.ApplyTransform(v);
+
+	// Calculate center of each triangle (times 3)
+	std::vector<Vector3> tricenters(tris.size());
+	for (size_t ti = 0; ti < tris.size(); ++ti)
+		tricenters[ti] = verts[tris[ti].p1] + verts[tris[ti].p2] + verts[tris[ti].p3];
+
+	// Build proximity cache for triangle centers of baseShape.
+	// Note that kd_tree keeps pointers into tricenters.
+	kd_tree<uint32_t> refTree(&tricenters[0], tricenters.size());
+
+	// Get baseShape's segment/partition data
+	std::vector<int> bstriParts;
+	NifSegmentationInfo inf;
+	bool gotsegs = workNif.GetShapeSegments(baseShape, inf, bstriParts);
+	NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+	bool gotparts = false;
+	if (!gotsegs)
+		gotparts = workNif.GetShapePartitions(baseShape, partitionInfo, bstriParts);
+
+	// Gather shape's triangles and vertices
+	shape->GetTriangles(tris);
+	workNif.GetVertsForShape(shape, verts);
+
+	// Transform shape's vertices to nif global coordinates
+	xformToGlobal = GetTransformShapeToGlobal(shape);
+	for (Vector3& v : verts)
+		v = xformToGlobal.ApplyTransform(v);
+
+	// Calculate new partition/segment for each triangle
+	std::vector<int> triParts(tris.size());
+	int failcount = 0;
+	for (size_t ti = 0; ti < tris.size(); ++ti) {
+		// Calculate center of triangle (times 3)
+		Vector3 tricenter = verts[tris[ti].p1] + verts[tris[ti].p2] + verts[tris[ti].p3];
+
+		// Find closest triangle center in proximity cache.
+		uint32_t resultcount = refTree.kd_nn(&tricenter, 0);
+		if (resultcount < 1) {
+			++failcount;
+			triParts[ti] = -1;
+			continue;
+		}
+
+		// Look up closest triangle and copy its partition/segment ID.
+		size_t bti = refTree.queryResult[0].vertex_index;
+		triParts[ti] = bstriParts[bti];
+		if (triParts[ti] == -1)
+			++failcount;
+	}
+
+	// Refuse to continue if we have any triangles without segments/partitions.
+	if (failcount)
+		return failcount;
+
+	// Store new information in NIF.
+	if (gotsegs)
+		workNif.SetShapeSegments(shape, inf, triParts);
+
+	if (gotparts) {
+		workNif.SetShapePartitions(shape, partitionInfo, triParts);
+		workNif.RemoveEmptyPartitions(shape);
+	}
+
+	return 0;
+}
+
 void OutfitProject::ClearWorkSliders() {
 	morpher.ClearResultDiff();
 }
