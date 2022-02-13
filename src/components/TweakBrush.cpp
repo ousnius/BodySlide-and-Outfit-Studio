@@ -284,7 +284,7 @@ TB_Inflate::~TB_Inflate() {}
 void TB_Inflate::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	Matrix4 xform;
 	float meshstrength = m->TransformDistModelToMesh(strength);
-	xform.Translate(pickInfo.normal * meshstrength);
+	xform.Translate(m->TransformDirModelToMesh(pickInfo.normal) * meshstrength);
 	Vector3 vs;
 	Vector3 ve;
 	Vector3 vf;
