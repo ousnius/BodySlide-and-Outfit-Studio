@@ -35,6 +35,7 @@ uniform bool bSoftlight;
 uniform bool bGlowmap;
 
 uniform mat4 matModel;
+uniform mat4 matView;
 uniform mat4 matModelViewInverse;
 uniform mat3 mv_normalMatrix;
 
@@ -216,7 +217,7 @@ void main(void)
 						// Model Space Normal Map
 						normal = normalize(normalMap.rgb * 2.0 - 1.0);
 						normal.r = -normal.r;
-						normal = mv_normalMatrix * normal;
+						normal = mat3(matView) * normal;
 						normal = normalize(normal);
 
 						if (bSpecular)
