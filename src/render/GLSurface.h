@@ -158,7 +158,7 @@ public:
 		for (auto& m : activeMeshes) {
 			for (int i = 0; i < m->nVerts; i++) {
 				if (!useMask || m->mask[i] == 0.0f) {
-					total += mesh::ApplyMatrix4(m->matModel, m->verts[i]);
+					total += m->TransformPosMeshToModel(m->verts[i]);
 					count++;
 				}
 			}
@@ -278,8 +278,7 @@ public:
 	void ShowMirrorPointCursor(const nifly::Vector3 &p, mesh*m = nullptr);
 
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
-	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
-	// Screen x/y are ignored if the ray is provided.
+	// the active mesh.  The outOrigin and outNormal results are in mesh coordinates.
 	bool CollideMeshes(int ScreenX,
 					   int ScreenY,
 					   nifly::Vector3& outOrigin,

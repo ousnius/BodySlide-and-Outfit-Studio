@@ -48,7 +48,10 @@ public:
 		float paletteScale = 0.0f;
 	};
 
+	// Use SetXformMeshToModel or SetXformModelToMesh to set matModel,
+	// xformMeshToModel, and xformModelToMesh.
 	glm::mat4x4 matModel = glm::identity<glm::mat4x4>();
+	nifly::MatTransform xformMeshToModel, xformModelToMesh;
 
 	int nVerts = 0;
 	std::unique_ptr<nifly::Vector3[]> verts;
@@ -196,43 +199,113 @@ public:
 
 	void ColorChannelFill(int channel, float value);
 
-	static nifly::Vector3 VecToMeshCoords(const nifly::Vector3& vec) {
-		nifly::Vector3 vecNew = vec;
-		vecNew.x /= -10.0f;
-		vecNew.y /= 10.0f;
-		vecNew.z /= 10.0f;
-		std::swap(vecNew.y, vecNew.z);
-		return vecNew;
+	static constexpr nifly::MatTransform xformNifToMesh{nifly::Vector3(),nifly::Matrix3(-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f),0.1f};
+	static constexpr nifly::MatTransform xformMeshToNif{nifly::Vector3(),nifly::Matrix3(-1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f),10.0f};
+
+	static constexpr nifly::Vector3 TransformPosNifToMesh(const nifly::Vector3& vec) {
+		// This function efficiently calculates xformNifToMesh.ApplyTransform(vec)
+		return nifly::Vector3(
+			vec.x / -10.0f,
+			vec.z / 10.0f,
+			vec.y / 10.0f);
 	}
 
-	static nifly::Vector3 VecToNifCoords(const nifly::Vector3& vec) {
-		nifly::Vector3 vecNew = vec;
-		vecNew.x *= -10.0f;
-		vecNew.y *= 10.0f;
-		vecNew.z *= 10.0f;
-		std::swap(vecNew.y, vecNew.z);
-		return vecNew;
+	static constexpr nifly::Vector3 TransformPosMeshToNif(const nifly::Vector3& vec) {
+		// This function efficiently calculates xformMeshToNif.ApplyTransform(vec)
+		return nifly::Vector3(
+			vec.x * -10.0f,
+			vec.z * 10.0f,
+			vec.y * 10.0f);
 	}
 
-	static glm::mat4x4 TransformToMatrix4(const nifly::MatTransform& xform) {
-		auto mat44 = glm::identity<glm::mat4x4>();
+	static constexpr nifly::Vector3 TransformDiffNifToMesh(const nifly::Vector3& diff) {
+		// This function efficiently calculates xformNifToMesh::ApplyTransformToDiff(diff)
+		return nifly::Vector3(
+			diff.x / -10.0f,
+			diff.z / 10.0f,
+			diff.y / 10.0f);
+	}
 
-		float y, p, r;
-		xform.rotation.ToEulerAngles(y, p, r);
+	static constexpr nifly::Vector3 TransformDiffMeshToNif(const nifly::Vector3& diff) {
+		// This function efficiently calculates xformMeshToNif::ApplyTransformToDiff(diff)
+		return nifly::Vector3(
+			diff.x * -10.0f,
+			diff.z * 10.0f,
+			diff.y * 10.0f);
+	}
 
-		mat44 = glm::translate(mat44, glm::vec3(xform.translation.x, xform.translation.y, xform.translation.z));
-		mat44 *= glm::eulerAngleXZY(y, p, r);
-		mat44 = glm::scale(mat44, glm::vec3(xform.scale, xform.scale, xform.scale));
-		return mat44;
+	static constexpr nifly::Vector3 TransformDirNifToMesh(const nifly::Vector3& dir) {
+		// This function efficiently calculates xformNifToMesh::ApplyTransformToDir(dir)
+		return nifly::Vector3(
+			-dir.x,
+			dir.z,
+			dir.y);
+	}
+
+	static constexpr nifly::Vector3 TransformDirMeshToNif(const nifly::Vector3& dir) {
+		// This function efficiently calculates xformMeshToNif::ApplyTransformToDir(dir)
+		return nifly::Vector3(
+			-dir.x,
+			dir.z,
+			dir.y);
+	}
+
+	static constexpr float TransformDistNifToMesh(float d) {
+		// This function calculates xformMeshToNif::ApplyTransformToDist(d)
+		return d / 10.0f;
+	}
+
+	static constexpr float TransformDistMeshToNif(float d) {
+		// This function calculates xformMeshToNif::ApplyTransformToDist(d)
+		return d * 10.0f;
+	}
+
+	void SetXformMeshToModel(const nifly::MatTransform& tMeshToModel) {
+		xformMeshToModel = tMeshToModel;
+		xformModelToMesh = tMeshToModel.InverseTransform();
+		matModel = xformMeshToModel.ToGLMMatrix<glm::mat4x4>();
+	}
+
+	void SetXformModelToMesh(const nifly::MatTransform& tModelToMesh) {
+		xformModelToMesh = tModelToMesh;
+		xformMeshToModel = tModelToMesh.InverseTransform();
+		matModel = xformMeshToModel.ToGLMMatrix<glm::mat4x4>();
+	}
+
+	nifly::Vector3 TransformPosMeshToModel(const nifly::Vector3 &pos) {
+		return xformMeshToModel.ApplyTransform(pos);
+	}
+
+	nifly::Vector3 TransformPosModelToMesh(const nifly::Vector3 &pos) {
+		return xformModelToMesh.ApplyTransform(pos);
+	}
+
+	nifly::Vector3 TransformDirMeshToModel(const nifly::Vector3 &dir) {
+		return xformMeshToModel.ApplyTransformToDir(dir);
+	}
+
+	nifly::Vector3 TransformDirModelToMesh(const nifly::Vector3 &dir) {
+		return xformModelToMesh.ApplyTransformToDir(dir);
+	}
+
+	nifly::Vector3 TransformDiffMeshToModel(const nifly::Vector3 &diff) {
+		return xformMeshToModel.ApplyTransformToDiff(diff);
+	}
+
+	nifly::Vector3 TransformDiffModelToMesh(const nifly::Vector3 &diff) {
+		return xformModelToMesh.ApplyTransformToDiff(diff);
+	}
+
+	float TransformDistMeshToModel(float dist) {
+		return xformMeshToModel.ApplyTransformToDist(dist);
+	}
+
+	float TransformDistModelToMesh(float dist) {
+		return xformModelToMesh.ApplyTransformToDist(dist);
 	}
 
 	static nifly::Vector3 ApplyMatrix4(const glm::mat4x4& mat, const nifly::Vector3& p) {
 		glm::vec3 gp(mat * glm::vec4(p.x, p.y, p.z, 1.0f));
-		return nifly::Vector3(gp.x, gp.y, gp.z);
-	}
-
-	static nifly::Vector3 ApplyMatrix4ToDir(const glm::mat4x4& mat, const nifly::Vector3& p) {
-		glm::vec3 gp(mat * glm::vec4(p.x, p.y, p.z, 0.0f));
 		return nifly::Vector3(gp.x, gp.y, gp.z);
 	}
 };

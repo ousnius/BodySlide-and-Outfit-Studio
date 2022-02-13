@@ -38,8 +38,8 @@ struct UndoStateVertex {
 	nifly::Vector3 pos; // position in skin coordinates
 	nifly::Vector2 uv;
 	nifly::Color4 color;
-	// normal, tangent, and bitangent are in skin CS tangent space (so
-	// only the rotation part of transforms affects them).
+	// normal, tangent, and bitangent are directions in skin coordinates
+	// (so use ApplyTransformToDir instead of ApplyTransform).
 	nifly::Vector3 normal, tangent, bitangent;
 	float eyeData = 0.0f;
 	std::vector<UndoStateVertexBoneWeight> weights;

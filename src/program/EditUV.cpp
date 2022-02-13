@@ -516,7 +516,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 				for (auto& s : startState) {
 					if (uvGridMesh->vcolors[s.first] == Vector3(1.0f, 1.0f, 0.0f)) {
 						Vector3 startPos(s.second.u, s.second.v, 0.0f);
-						uvGridMesh->verts[s.first] = (startPos - currentCenter) * scale + currentCenter;
+						uvGridMesh->verts[s.first] = (startPos - currentCenter).ComponentMultiply(scale) + currentCenter;
 
 						m->texcoord[s.first].u = uvGridMesh->verts[s.first].x;
 						m->texcoord[s.first].v = uvGridMesh->verts[s.first].y * -1.0f;
@@ -969,7 +969,7 @@ void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& mes
 
 			hoverPoint = pointid;
 
-			Vector3 visPoint = mesh::ApplyMatrix4(m->matModel, hilitepoint);
+			Vector3 visPoint = m->TransformPosMeshToModel(hilitepoint);
 			auto visPointMesh = uvSurface.AddVisPoint(visPoint, "pointhilite");
 			if (visPointMesh)
 				visPointMesh->color = Vector3(1.0f, 0.0f, 0.0f);

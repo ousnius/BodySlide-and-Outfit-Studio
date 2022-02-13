@@ -37,7 +37,6 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	TweakPickInfo mirrorPick = pickInfo;
 	mirrorPick.origin.x *= -1.0f;
 	mirrorPick.normal.x *= -1.0f;
-	mirrorPick.facet = pickInfo.facetM;
 
 	if (!newStroke) {
 		if (!refBrush->checkSpacing(lastPoint, pickInfo.origin))
@@ -58,16 +57,10 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	// Move/transform handles most operations differently than other brushes.
 	// Mirroring is done internally, most of the pick info values are ignored.
 	if (brushType == TweakBrush::BrushType::Move || brushType == TweakBrush::BrushType::Transform) {
-		Vector3 originSave = pickInfo.origin;
-		Vector3 centerSave = pickInfo.center;
 		for (int mi = 0; mi < nMesh; ++mi) {
 			mesh* m = refMeshes[mi];
 			UndoStateShape& uss = usp.usss[mi];
 			int nPts1 = 0;
-
-			// Get rid of model space from collision again
-			if (brushType == TweakBrush::BrushType::Move)
-				pickInfo.origin = mesh::ApplyMatrix4(glm::inverse(m->matModel), originSave);
 
 			if (!refBrush->queryPoints(m, pickInfo, mirrorPick, nullptr, nPts1, affectedNodes[m]))
 				continue;
@@ -79,8 +72,6 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 				normalUpdates.push_back(std::move(pending));
 			}
 		}
-		pickInfo.origin = originSave;
-		pickInfo.center = centerSave;
 	}
 	else {
 		for (int mi = 0; mi < nMesh; ++mi) {
@@ -168,7 +159,6 @@ void TweakStroke::endStroke() {
 TweakBrush::TweakBrush()
 	: radius(0.45f)
 	, focus(0.50f)
-	, inset(0.00f)
 	, strength(0.0015f)
 	, spacing(0.015f) {
 	bMirror = true;
@@ -199,9 +189,9 @@ bool TweakBrush::checkSpacing(Vector3& start, Vector3& end) {
 		return false;
 }
 
-float TweakBrush::getFalloff(float dist) {
+float TweakBrush::getFalloff(float dist, float meshradius) {
 	// Beyond the radius, no strength
-	if (dist > radius)
+	if (dist > meshradius)
 		return 0.0;
 
 	// No distance, keep strength
@@ -209,26 +199,29 @@ float TweakBrush::getFalloff(float dist) {
 		return 1.0;
 
 	float p = std::pow(6.0f, focus * 2.0f - 1.0f);
-	float x = std::pow(dist / radius, p);
+	float x = std::pow(dist / meshradius, p);
 	return (2 * x - 3) * x * x + 1;
 }
 
-void TweakBrush::applyFalloff(Vector3& deltaVec, float dist) {
-	deltaVec *= getFalloff(dist);
+void TweakBrush::applyFalloff(Vector3& deltaVec, float dist, float meshradius) {
+	deltaVec *= getFalloff(dist, meshradius);
 }
 
 bool TweakBrush::queryPoints(
-	mesh* refmesh, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
+	mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
 	std::vector<IntersectResult> IResults;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
+	Vector3 meshmirrororigin = m->TransformPosModelToMesh(mirrorPick.origin);
 
-	if (!refmesh->bvh || !refmesh->bvh->IntersectSphere(pickInfo.origin, radius, &IResults))
+	if (!m->bvh || !m->bvh->IntersectSphere(meshorigin, meshradius, &IResults))
 		return false;
 	unsigned int mirrorStartInd = IResults.size();
 	bool mergeMirror = NeedMirrorMergedQuery();
 	if (mergeMirror)
-		refmesh->bvh->IntersectSphere(mirrorPick.origin, radius, &IResults);
+		m->bvh->IntersectSphere(meshmirrororigin, meshradius, &IResults);
 
-	std::unique_ptr<bool[]> pointVisit = std::make_unique<bool[]>(refmesh->nVerts);
+	std::unique_ptr<bool[]> pointVisit = std::make_unique<bool[]>(m->nVerts);
 
 	if (bConnected && !IResults.empty()) {
 		int pickFacet = IResults[0].HitFacet;
@@ -242,7 +235,7 @@ bool TweakBrush::queryPoints(
 		}
 
 		std::vector<int> resultFacets;
-		refmesh->ConnectedPointsInSphere(pickInfo.origin, radius * radius, pickFacet, nullptr, pointVisit.get(), resultPoints, outResultCount, resultFacets);
+		m->ConnectedPointsInSphere(meshorigin, meshradius * meshradius, pickFacet, nullptr, pointVisit.get(), resultPoints, outResultCount, resultFacets);
 		if (mergeMirror && mirrorStartInd < IResults.size()) {
 			pickFacet = IResults[mirrorStartInd].HitFacet;
 			minDist = IResults[mirrorStartInd].HitDistance;
@@ -253,7 +246,7 @@ bool TweakBrush::queryPoints(
 					pickFacet = r.HitFacet;
 				}
 			}
-			refmesh->ConnectedPointsInSphere(mirrorPick.origin, radius * radius, pickFacet, nullptr, pointVisit.get(), resultPoints, outResultCount, resultFacets);
+			m->ConnectedPointsInSphere(meshmirrororigin, meshradius * meshradius, pickFacet, nullptr, pointVisit.get(), resultPoints, outResultCount, resultFacets);
 		}
 	}
 	else
@@ -261,7 +254,7 @@ bool TweakBrush::queryPoints(
 
 	for (unsigned int i = 0; i < IResults.size(); i++) {
 		if (!bConnected) {
-			const Triangle& t = refmesh->tris[IResults[i].HitFacet];
+			const Triangle& t = m->tris[IResults[i].HitFacet];
 			if (!pointVisit[t.p1]) {
 				resultPoints[outResultCount++] = t.p1;
 				pointVisit[t.p1] = true;
@@ -288,38 +281,41 @@ TB_Inflate::TB_Inflate() {
 
 TB_Inflate::~TB_Inflate() {}
 
-void TB_Inflate::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Inflate::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	Matrix4 xform;
-	xform.Translate(pickInfo.normal * strength);
+	float meshstrength = m->TransformDistModelToMesh(strength);
+	xform.Translate(m->TransformDirModelToMesh(pickInfo.normal) * meshstrength);
 	Vector3 vs;
 	Vector3 ve;
 	Vector3 vf;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
-		vs = refmesh->verts[points[i]];
+		vs = m->verts[points[i]];
 		if (startState.find(points[i]) == startState.end())
 			startState[points[i]] = vs;
 		if (restrictNormal) {
-			const Vector3& n = cache[refmesh].startNorms[points[i]];
-			ve = n * strength;
+			const Vector3& n = cache[m].startNorms[points[i]];
+			ve = n * meshstrength;
 		}
 		else {
 			ve = xform * vs;
 			ve -= vs;
 		}
 
-		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+		applyFalloff(ve, meshorigin.DistanceTo(vs), meshradius);
 
-		ve = ve * (1.0f - refmesh->mask[points[i]]);
+		ve = ve * (1.0f - m->mask[points[i]]);
 
 		vf = vs + ve;
 
-		endState[points[i]] = refmesh->verts[points[i]] = (vf);
+		endState[points[i]] = m->verts[points[i]] = (vf);
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::Position);
+	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
 TB_Mask::TB_Mask() {
@@ -332,17 +328,19 @@ TB_Mask::TB_Mask() {
 
 TB_Mask::~TB_Mask() {}
 
-void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Mask::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	Vector3 vs;
 	Vector3 vc;
 	Vector3 ve;
 	Vector3 vf;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
-		vs = refmesh->verts[points[i]];
-		vc = Vector3(refmesh->mask[points[i]], 0.0f, 0.0f);
+		vs = m->verts[points[i]];
+		vc = Vector3(m->mask[points[i]], 0.0f, 0.0f);
 		if (startState.find(points[i]) == startState.end())
 			startState[points[i]] = vc;
 
@@ -353,21 +351,21 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* poi
 			ve.x += 1.0f;
 		ve -= vc;
 
-		float originToV = pickInfo.origin.DistanceTo(vs);
-		if (originToV > radius)
+		float originToV = meshorigin.DistanceTo(vs);
+		if (originToV > meshradius)
 			ve.Zero();
 		else if (strength < 1.0f)
-			applyFalloff(ve, originToV);
+			applyFalloff(ve, originToV, meshradius);
 
 		vf = vc + ve;
 		if (vf.x > 1.0f)
 			vf.x = 1.0f;
 
-		refmesh->mask[points[i]] = vf.x;
+		m->mask[points[i]] = vf.x;
 		endState[points[i]] = vf;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::Mask);
+	m->QueueUpdate(mesh::UpdateType::Mask);
 }
 
 TB_Unmask::TB_Unmask() {
@@ -380,17 +378,19 @@ TB_Unmask::TB_Unmask() {
 
 TB_Unmask::~TB_Unmask() {}
 
-void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Unmask::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	Vector3 vs;
 	Vector3 vc;
 	Vector3 ve;
 	Vector3 vf;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
-		vs = refmesh->verts[points[i]];
-		vc = Vector3(refmesh->mask[points[i]], 0.0f, 0.0f);
+		vs = m->verts[points[i]];
+		vc = Vector3(m->mask[points[i]], 0.0f, 0.0f);
 		if (startState.find(points[i]) == startState.end())
 			startState[points[i]] = vc;
 
@@ -401,21 +401,21 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 			ve.x -= 1.0f;
 		ve -= vc;
 
-		float originToV = pickInfo.origin.DistanceTo(vs);
-		if (originToV > radius)
+		float originToV = meshorigin.DistanceTo(vs);
+		if (originToV > meshradius)
 			ve.Zero();
 		else if (strength > -1.0f)
-			applyFalloff(ve, originToV);
+			applyFalloff(ve, originToV, meshradius);
 
 		vf = vc + ve;
 		if (vf.x < 0.0f)
 			vf.x = 0.0f;
 
-		refmesh->mask[points[i]] = vf.x;
+		m->mask[points[i]] = vf.x;
 		endState[points[i]] = vf;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::Mask);
+	m->QueueUpdate(mesh::UpdateType::Mask);
 }
 
 TB_SmoothMask::TB_SmoothMask() {
@@ -431,58 +431,58 @@ TB_SmoothMask::TB_SmoothMask() {
 
 TB_SmoothMask::~TB_SmoothMask() {}
 
-void TB_SmoothMask::lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
+void TB_SmoothMask::lapFilter(mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
 	int adjPoints[1000];
 
 	for (int i = 0; i < nPoints; i++) {
-		int c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
+		int c = m->GetAdjacentPoints(points[i], adjPoints, 1000);
 		if (c == 0)
 			continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
 		for (int n = 0; n < c; n++)
-			d += Vector3(refmesh->mask[adjPoints[n]], 0.0f, 0.0f);
+			d += Vector3(m->mask[adjPoints[n]], 0.0f, 0.0f);
 		wv[points[i]] = d / (float)c;
 
-		if (refmesh->weldVerts.find(points[i]) != refmesh->weldVerts.end()) {
-			for (unsigned int v = 0; v < refmesh->weldVerts[points[i]].size(); v++) {
-				wv[refmesh->weldVerts[points[i]][v]] = wv[points[i]];
+		if (m->weldVerts.find(points[i]) != m->weldVerts.end()) {
+			for (unsigned int v = 0; v < m->weldVerts[points[i]].size(); v++) {
+				wv[m->weldVerts[points[i]][v]] = wv[points[i]];
 			}
 		}
 	}
 }
 
-void TB_SmoothMask::hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, UndoStateShape& uss) {
-	std::vector<Vector3> b(refmesh->nVerts);
+void TB_SmoothMask::hclapFilter(mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, UndoStateShape& uss) {
+	std::vector<Vector3> b(m->nVerts);
 
 	int adjPoints[1000];
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
-		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0)
 			continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
 		for (int n = 0; n < c; n++)
-			d += Vector3(refmesh->mask[adjPoints[n]], 0.0f, 0.0f);
+			d += Vector3(m->mask[adjPoints[n]], 0.0f, 0.0f);
 		wv[i] = d / (float)c;
 		// Calculate the difference between the new position and a blend of the original and previous positions
-		b[i] = wv[i] - ((uss.pointStartState[i] * hcAlpha) + (Vector3(refmesh->mask[i], 0.0f, 0.0f) * (1.0f - hcAlpha)));
+		b[i] = wv[i] - ((uss.pointStartState[i] * hcAlpha) + (Vector3(m->mask[i], 0.0f, 0.0f) * (1.0f - hcAlpha)));
 	}
 
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
 		// Check if it's a welded vertex; only do welded vertices once.
 		bool skip = false;
-		if (refmesh->weldVerts.find(i) != refmesh->weldVerts.end())
-			for (unsigned int v = 0; v < refmesh->weldVerts[i].size(); v++)
-				if (refmesh->weldVerts[i][v] < i)
+		if (m->weldVerts.find(i) != m->weldVerts.end())
+			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++)
+				if (m->weldVerts[i][v] < i)
 					skip = true;
 		if (skip)
 			continue;
 		// Average 'b' for adjacent points
-		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0)
 			continue;
 		Vector3 d;
@@ -493,43 +493,45 @@ void TB_SmoothMask::hclapFilter(mesh* refmesh, const int* points, int nPoints, s
 		float avgB = (1 - hcBeta) / (float)c;
 		wv[i] -= ((b[i] * hcBeta) + (d * avgB));
 
-		if (refmesh->weldVerts.find(i) != refmesh->weldVerts.end()) {
-			for (unsigned int v = 0; v < refmesh->weldVerts[i].size(); v++) {
-				wv[refmesh->weldVerts[i][v]] = wv[i];
+		if (m->weldVerts.find(i) != m->weldVerts.end()) {
+			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++) {
+				wv[m->weldVerts[i][v]] = wv[i];
 			}
 		}
 	}
 }
 
-void TB_SmoothMask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_SmoothMask::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	std::unordered_map<int, Vector3> wv;
 	Vector3 vs;
 	Vector3 vc;
 	float vm;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
-		vc = Vector3(refmesh->mask[points[i]], 0.0f, 0.0f);
+		vc = Vector3(m->mask[points[i]], 0.0f, 0.0f);
 		if (startState.find(points[i]) == startState.end())
 			startState[points[i]] = vc;
 		wv[points[i]] = vc;
 	}
 
 	if (method == 0) // laplacian smooth
-		lapFilter(refmesh, points, nPoints, wv);
+		lapFilter(m, points, nPoints, wv);
 	else // HC-laplacian smooth
-		hclapFilter(refmesh, points, nPoints, wv, uss);
+		hclapFilter(m, points, nPoints, wv, uss);
 
 	Vector3 delta;
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
-		vs = refmesh->verts[i];
-		vm = refmesh->mask[i];
+		vs = m->verts[i];
+		vm = m->mask[i];
 		delta.x = wv[i].x - vm;
 		delta.x *= strength;
 
-		applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
+		applyFalloff(delta, meshorigin.DistanceTo(vs), meshradius);
 
 		vm += delta.x;
 
@@ -537,10 +539,10 @@ void TB_SmoothMask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const in
 			vm = 0.0f;
 		if (vm > 1.0f)
 			vm = 1.0f;
-		endState[i].x = refmesh->mask[i] = vm;
+		endState[i].x = m->mask[i] = vm;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::Mask);
+	m->QueueUpdate(mesh::UpdateType::Mask);
 }
 
 TB_Deflate::TB_Deflate() {
@@ -568,58 +570,58 @@ TB_Smooth::TB_Smooth() {
 
 TB_Smooth::~TB_Smooth() {}
 
-void TB_Smooth::lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
+void TB_Smooth::lapFilter(mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
 	int adjPoints[1000];
 
 	for (int i = 0; i < nPoints; i++) {
-		int c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
+		int c = m->GetAdjacentPoints(points[i], adjPoints, 1000);
 		if (c == 0)
 			continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
 		for (int n = 0; n < c; n++)
-			d += refmesh->verts[adjPoints[n]];
+			d += m->verts[adjPoints[n]];
 		wv[points[i]] = d / (float)c;
 
-		if (refmesh->weldVerts.find(points[i]) != refmesh->weldVerts.end()) {
-			for (unsigned int v = 0; v < refmesh->weldVerts[points[i]].size(); v++) {
-				wv[refmesh->weldVerts[points[i]][v]] = wv[points[i]];
+		if (m->weldVerts.find(points[i]) != m->weldVerts.end()) {
+			for (unsigned int v = 0; v < m->weldVerts[points[i]].size(); v++) {
+				wv[m->weldVerts[points[i]][v]] = wv[points[i]];
 			}
 		}
 	}
 }
 
-void TB_Smooth::hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, UndoStateShape& uss) {
-	std::vector<Vector3> b(refmesh->nVerts);
+void TB_Smooth::hclapFilter(mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, UndoStateShape& uss) {
+	std::vector<Vector3> b(m->nVerts);
 
 	int adjPoints[1000];
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
-		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0)
 			continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
 		for (int n = 0; n < c; n++)
-			d += refmesh->verts[adjPoints[n]];
+			d += m->verts[adjPoints[n]];
 		wv[i] = d / (float)c;
 		// Calculate the difference between the new position and a blend of the original and previous positions
-		b[i] = wv[i] - ((uss.pointStartState[i] * hcAlpha) + (refmesh->verts[i] * (1.0f - hcAlpha)));
+		b[i] = wv[i] - ((uss.pointStartState[i] * hcAlpha) + (m->verts[i] * (1.0f - hcAlpha)));
 	}
 
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
 		// Check if it's a welded vertex; only do welded vertices once.
 		bool skip = false;
-		if (refmesh->weldVerts.find(i) != refmesh->weldVerts.end())
-			for (unsigned int v = 0; v < refmesh->weldVerts[i].size(); v++)
-				if (refmesh->weldVerts[i][v] < i)
+		if (m->weldVerts.find(i) != m->weldVerts.end())
+			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++)
+				if (m->weldVerts[i][v] < i)
 					skip = true;
 		if (skip)
 			continue;
 		// Average 'b' for adjacent points
-		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0)
 			continue;
 		Vector3 d;
@@ -630,58 +632,60 @@ void TB_Smooth::hclapFilter(mesh* refmesh, const int* points, int nPoints, std::
 		float avgB = (1 - hcBeta) / (float)c;
 		wv[i] -= ((b[i] * hcBeta) + (d * avgB));
 
-		if (refmesh->weldVerts.find(i) != refmesh->weldVerts.end())
-			for (unsigned int v = 0; v < refmesh->weldVerts[i].size(); v++)
-				wv[refmesh->weldVerts[i][v]] = wv[i];
+		if (m->weldVerts.find(i) != m->weldVerts.end())
+			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++)
+				wv[m->weldVerts[i][v]] = wv[i];
 	}
 }
 
-void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Smooth::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	std::unordered_map<int, Vector3> wv;
 	Vector3 vs;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
-		vs = refmesh->verts[points[i]];
+		vs = m->verts[points[i]];
 		if (startState.find(points[i]) == startState.end())
 			startState[points[i]] = vs;
 		wv[points[i]] = vs;
 	}
 
 	if (method == 0) // laplacian smooth
-		lapFilter(refmesh, points, nPoints, wv);
+		lapFilter(m, points, nPoints, wv);
 	else // HC-laplacian smooth
-		hclapFilter(refmesh, points, nPoints, wv, uss);
+		hclapFilter(m, points, nPoints, wv, uss);
 
 	Vector3 delta;
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
-		vs = refmesh->verts[i];
-		delta = wv[i] - refmesh->verts[i];
+		vs = m->verts[i];
+		delta = wv[i] - m->verts[i];
 		delta *= strength;
-		applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
+		applyFalloff(delta, meshorigin.DistanceTo(vs), meshradius);
 
-		delta = delta * (1.0f - refmesh->mask[i]);
-		Vector3 ve = refmesh->verts[i] + delta;
+		delta = delta * (1.0f - m->mask[i]);
+		Vector3 ve = m->verts[i] + delta;
 
 		if (restrictNormal) {
-			const Vector3& n = cache[refmesh].startNorms[i];
+			const Vector3& n = cache[m].startNorms[i];
 			ve = startState[i] + n * (ve - startState[i]).dot(n);
 		}
 
 		if (restrictPlane) {
-			const Vector3& n = cache[refmesh].startNorms[i];
+			const Vector3& n = cache[m].startNorms[i];
 			ve -= startState[i];
 			ve -= n * ve.dot(n);
 			ve += startState[i];
 		}
 
-		refmesh->verts[i] = ve;
+		m->verts[i] = ve;
 		endState[i] = ve;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::Position);
+	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
 TB_Undiff::TB_Undiff() {
@@ -706,6 +710,8 @@ void TB_Undiff::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& p
 void TB_Undiff::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	TweakBrushMeshCache* meshCache = &cache[m];
 	std::vector<Vector3>& basePosition = meshCache->positionData;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	int p;
 	Vector3 vs;
@@ -730,7 +736,7 @@ void TB_Undiff::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points,
 			dv = bp - vs;
 			ve = dv * strength;
 
-			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+			applyFalloff(ve, meshorigin.DistanceTo(vs), meshradius);
 
 			ve = ve * (1.0f - m->mask[p]);
 			vf = vs + ve;
@@ -757,7 +763,6 @@ void TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pic
 	mpick = pickInfo;
 	mpick.origin.x = -mpick.origin.x;
 	mpick.view.x = -mpick.view.x;
-	mpick.facet = pickInfo.facetM;
 	d = pick.origin.dot(pick.view);
 	md = mpick.origin.dot(mpick.view);
 
@@ -811,17 +816,11 @@ bool TB_Move::queryPoints(mesh* m, TweakPickInfo&, TweakPickInfo&, int* resultPo
 }
 
 void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, UndoStateShape& uss) {
-	float dist = pickInfo.origin.dot(pick.view) - d;
-	Vector3 v = pickInfo.origin - pick.view * dist;
-	Vector3 dv = v - pick.origin;
-
-	Matrix4 xform;
-	xform.Translate(dv * strength);
-	Vector3 vs;
-	Vector3 ve;
-	Vector3 vf;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 start = m->TransformPosModelToMesh(pick.origin);
+	Vector3 mirrorstart = m->TransformPosModelToMesh(mpick.origin);
 
 	TweakBrushMeshCache* meshCache = &cache[m];
 	if (bMirror) {
@@ -829,20 +828,18 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Und
 		lmo.x = -pickInfo.origin.x;
 		lmo.y = pickInfo.origin.y;
 		lmo.z = pickInfo.origin.z;
-		dist = lmo.dot(mpick.view) - md;
-		v = lmo - mpick.view * dist;
-		dv = v - mpick.origin;
-		Matrix4 xformMirror;
-		xformMirror.Translate(dv * strength);
+		float dist = lmo.dot(mpick.view) - md;
+		Vector3 v = lmo - mpick.view * dist;
+		Vector3 dv = (v - mpick.origin) * strength;
+		Vector3 meshdv = m->TransformDiffModelToMesh(dv);
 
 		for (int p = 0; p < meshCache->nCachedPointsM; p++) {
 			int i = meshCache->cachedPointsM[p];
-			vs = startState[i];
-			if (mpick.origin.DistanceTo(vs) > pick.origin.DistanceTo(vs))
+			Vector3 vs = startState[i];
+			if (mirrorstart.DistanceTo(vs) > start.DistanceTo(vs))
 				continue;
-			ve = xformMirror * vs;
-			ve -= vs;
-			applyFalloff(ve, mpick.origin.DistanceTo(vs));
+			Vector3 ve = meshdv;
+			applyFalloff(ve, mirrorstart.DistanceTo(vs), meshradius);
 
 			if (m->mask)
 				ve = ve * (1.0f - m->mask[i]);
@@ -857,20 +854,24 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Und
 				ve -= n * ve.dot(n);
 			}
 
-			vf = vs + ve;
+			Vector3 vf = vs + ve;
 
 			endState[i] = m->verts[i] = (vf);
 		}
 	}
 
+	float dist = pickInfo.origin.dot(pick.view) - d;
+	Vector3 v = pickInfo.origin - pick.view * dist;
+	Vector3 dv = (v - pick.origin) * strength;
+	Vector3 meshdv = m->TransformDiffModelToMesh(dv);
+
 	for (int p = 0; p < meshCache->nCachedPoints; p++) {
 		int i = meshCache->cachedPoints[p];
-		vs = startState[i];
-		if (bMirror && pick.origin.DistanceTo(vs) > mpick.origin.DistanceTo(vs))
+		Vector3 vs = startState[i];
+		if (bMirror && start.DistanceTo(vs) > mirrorstart.DistanceTo(vs))
 			continue;
-		ve = xform * vs;
-		ve -= vs;
-		applyFalloff(ve, pick.origin.DistanceTo(vs));
+		Vector3 ve = meshdv;
+		applyFalloff(ve, start.DistanceTo(vs), meshradius);
 
 		if (m->mask)
 			ve = ve * (1.0f - m->mask[i]);
@@ -885,7 +886,7 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Und
 			ve -= n * ve.dot(n);
 		}
 
-		vf = vs + ve;
+		Vector3 vf = vs + ve;
 
 		endState[i] = m->verts[i] = (vf);
 	}
@@ -951,15 +952,16 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Un
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
 
+	// Project dv onto movement axis (which is stored in pick.view)
 	dv.x *= pick.view.x;
 	dv.y *= pick.view.y;
 	dv.z *= pick.view.z;
 
-	Vector3 center = mesh::ApplyMatrix4(glm::inverse(m->matModel), pick.center);
+	Vector3 center = m->TransformPosModelToMesh(pick.center);
 
 	Matrix4 xform;
 	if (xformType == 0) {
-		xform.Translate(dv * strength);
+		xform.Translate(m->TransformDiffModelToMesh(dv) * strength);
 	}
 	else if (xformType == 1) {
 		xform.PushTranslate(center);
@@ -992,8 +994,8 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, const int*, int, Un
 	else if (xformType == 3) {
 		xform.PushTranslate(center);
 
-		Vector3 a = mesh::ApplyMatrix4(glm::inverse(m->matModel), pick.origin) - center;
-		Vector3 b = mesh::ApplyMatrix4(glm::inverse(m->matModel), pickInfo.origin) - center;
+		Vector3 a = m->TransformPosModelToMesh(pick.origin) - center;
+		Vector3 b = m->TransformPosModelToMesh(pickInfo.origin) - center;
 		Vector3 dist = a + b;
 
 		float scale = (dist.x + dist.y) / 2.0f;
@@ -1044,21 +1046,25 @@ TB_Weight::TB_Weight() {
 
 TB_Weight::~TB_Weight() {}
 
-void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Weight::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
+	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
+
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	Vector3 mOrigin = pickInfo.origin;
 	mOrigin.x = -mOrigin.x;
+	mOrigin = m->TransformPosModelToMesh(mOrigin);
 
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
 		bool adjFlag[2] = {true, false};
-		float orDist = pickInfo.origin.DistanceTo(refmesh->verts[i]);
-		float morDist = mOrigin.DistanceTo(refmesh->verts[i]);
-		float falloff = getFalloff(orDist);
-		float mFalloff = getFalloff(morDist);
+		float orDist = meshorigin.DistanceTo(m->verts[i]);
+		float morDist = mOrigin.DistanceTo(m->verts[i]);
+		float falloff = getFalloff(orDist, meshradius);
+		float mFalloff = getFalloff(morDist, meshradius);
 		float b0falloff = falloff;
 
 		if (bMirror && morDist < orDist)
@@ -1068,7 +1074,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 
 		float sw = uss.boneWeights[0].weights[i].endVal;
 		float str = bFixedWeight ? strength - sw : strength;
-		float maskF = 1.0f - refmesh->mask[i];
+		float maskF = 1.0f - m->mask[i];
 
 		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
 
@@ -1092,10 +1098,10 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* p
 		if (bNormalizeWeights)
 			nzer.AdjustWeights(i, adjFlag);
 
-		refmesh->weight[i] = uss.boneWeights[0].weights[i].endVal;
+		m->weight[i] = uss.boneWeights[0].weights[i].endVal;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::Weight);
+	m->QueueUpdate(mesh::UpdateType::Weight);
 }
 
 TB_Unweight::TB_Unweight() {
@@ -1109,21 +1115,25 @@ TB_Unweight::TB_Unweight() {
 
 TB_Unweight::~TB_Unweight() {}
 
-void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Unweight::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
+	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
+
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	Vector3 mOrigin = pickInfo.origin;
 	mOrigin.x = -mOrigin.x;
+	mOrigin = m->TransformPosModelToMesh(mOrigin);
 
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
 		bool adjFlag[2] = {true, false};
-		float orDist = pickInfo.origin.DistanceTo(refmesh->verts[i]);
-		float morDist = mOrigin.DistanceTo(refmesh->verts[i]);
-		float falloff = getFalloff(orDist);
-		float mFalloff = getFalloff(morDist);
+		float orDist = meshorigin.DistanceTo(m->verts[i]);
+		float morDist = mOrigin.DistanceTo(m->verts[i]);
+		float falloff = getFalloff(orDist, meshradius);
+		float mFalloff = getFalloff(morDist, meshradius);
 		float b0falloff = falloff;
 
 		if (bMirror && morDist < orDist)
@@ -1131,7 +1141,7 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 
 		adjFlag[0] = b0falloff > 0.0;
 
-		float maskF = 1.0f - refmesh->mask[i];
+		float maskF = 1.0f - m->mask[i];
 
 		uss.boneWeights[0].weights[i].endVal += strength * maskF * b0falloff;
 
@@ -1153,10 +1163,10 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int*
 		if (bNormalizeWeights)
 			nzer.AdjustWeights(i, adjFlag);
 
-		refmesh->weight[i] = uss.boneWeights[0].weights[i].endVal;
+		m->weight[i] = uss.boneWeights[0].weights[i].endVal;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::Weight);
+	m->QueueUpdate(mesh::UpdateType::Weight);
 }
 
 TB_SmoothWeight::TB_SmoothWeight() {
@@ -1173,40 +1183,40 @@ TB_SmoothWeight::TB_SmoothWeight() {
 
 TB_SmoothWeight::~TB_SmoothWeight() {}
 
-void TB_SmoothWeight::lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv) {
+void TB_SmoothWeight::lapFilter(mesh* m, const int* points, int nPoints, std::unordered_map<int, float>& wv) {
 	int adjPoints[1000];
 
 	for (int i = 0; i < nPoints; i++) {
-		int c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
+		int c = m->GetAdjacentPoints(points[i], adjPoints, 1000);
 		if (c == 0)
 			continue;
 
 		// average adjacent points values, using values from last iteration.
 		float d = 0.0;
 		for (int n = 0; n < c; n++)
-			d += refmesh->weight[adjPoints[n]];
+			d += m->weight[adjPoints[n]];
 
 		wv[points[i]] = d / (float)c;
 
-		if (refmesh->weldVerts.find(points[i]) != refmesh->weldVerts.end()) {
-			for (unsigned int v = 0; v < refmesh->weldVerts[points[i]].size(); v++) {
-				wv[refmesh->weldVerts[points[i]][v]] = wv[points[i]];
+		if (m->weldVerts.find(points[i]) != m->weldVerts.end()) {
+			for (unsigned int v = 0; v < m->weldVerts[points[i]].size(); v++) {
+				wv[m->weldVerts[points[i]][v]] = wv[points[i]];
 			}
 		}
 	}
 }
 
 void TB_SmoothWeight::hclapFilter(
-	mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape& uss, const int boneInd, const std::unordered_map<uint16_t, float>* wPtr) {
+	mesh* m, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape& uss, const int boneInd, const std::unordered_map<uint16_t, float>* wPtr) {
 	auto& ubw = uss.boneWeights[boneInd].weights;
-	std::vector<float> b(refmesh->nVerts);
+	std::vector<float> b(m->nVerts);
 
 	int adjPoints[1000];
 
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
-		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0)
 			continue;
 
@@ -1232,16 +1242,16 @@ void TB_SmoothWeight::hclapFilter(
 
 		// Check if it's a welded vertex; only do welded vertices once.
 		bool skip = false;
-		if (refmesh->weldVerts.find(i) != refmesh->weldVerts.end())
-			for (unsigned int v = 0; v < refmesh->weldVerts[i].size(); v++)
-				if (refmesh->weldVerts[i][v] < i)
+		if (m->weldVerts.find(i) != m->weldVerts.end())
+			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++)
+				if (m->weldVerts[i][v] < i)
 					skip = true;
 
 		if (skip)
 			continue;
 
 		// Average 'b' for adjacent points
-		int c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
 		if (c == 0)
 			continue;
 
@@ -1254,21 +1264,25 @@ void TB_SmoothWeight::hclapFilter(
 		float avgB = (1 - hcBeta) / (float)c;
 		wv[i] -= ((b[i] * hcBeta) + (d * avgB));
 
-		if (refmesh->weldVerts.find(i) != refmesh->weldVerts.end()) {
-			for (unsigned int v = 0; v < refmesh->weldVerts[i].size(); v++) {
-				wv[refmesh->weldVerts[i][v]] = wv[i];
+		if (m->weldVerts.find(i) != m->weldVerts.end()) {
+			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++) {
+				wv[m->weldVerts[i][v]] = wv[i];
 			}
 		}
 	}
 }
 
-void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_SmoothWeight::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, animInfo, refmesh->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
+	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
 	nzer.GrabStartingWeights(points, nPoints);
+
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	Vector3 mOrigin = pickInfo.origin;
 	mOrigin.x = -mOrigin.x;
+	mOrigin = m->TransformPosModelToMesh(mOrigin);
 
 	// Copy previous iteration's results into wv
 	std::unordered_map<int, float> wv, mwv;
@@ -1281,24 +1295,24 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 	}
 
 	if (method == 0) // laplacian smooth
-		lapFilter(refmesh, points, nPoints, wv);
+		lapFilter(m, points, nPoints, wv);
 	else // HC-laplacian smooth
-		hclapFilter(refmesh, points, nPoints, wv, uss, 0, animInfo->GetWeightsPtr(refmesh->shapeName, boneNames[0]));
+		hclapFilter(m, points, nPoints, wv, uss, 0, animInfo->GetWeightsPtr(m->shapeName, boneNames[0]));
 
 	if (bXMirrorBone) {
 		if (method == 0) // laplacian smooth
-			lapFilter(refmesh, points, nPoints, mwv);
+			lapFilter(m, points, nPoints, mwv);
 		else // HC-laplacian smooth
-			hclapFilter(refmesh, points, nPoints, mwv, uss, 1, animInfo->GetWeightsPtr(refmesh->shapeName, boneNames[1]));
+			hclapFilter(m, points, nPoints, mwv, uss, 1, animInfo->GetWeightsPtr(m->shapeName, boneNames[1]));
 	}
 
 	for (int pi = 0; pi < nPoints; pi++) {
 		int i = points[pi];
 		bool adjFlag[2] = {true, false};
-		float orDist = pickInfo.origin.DistanceTo(refmesh->verts[i]);
-		float morDist = mOrigin.DistanceTo(refmesh->verts[i]);
-		float falloff = getFalloff(orDist);
-		float mFalloff = getFalloff(morDist);
+		float orDist = meshorigin.DistanceTo(m->verts[i]);
+		float morDist = mOrigin.DistanceTo(m->verts[i]);
+		float falloff = getFalloff(orDist, meshradius);
+		float mFalloff = getFalloff(morDist, meshradius);
 		float b0falloff = falloff;
 
 		if (bMirror && morDist < orDist)
@@ -1307,7 +1321,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 		adjFlag[0] = b0falloff > 0.0;
 
 		float str = wv[i] - uss.boneWeights[0].weights[i].endVal;
-		float maskF = 1.0f - refmesh->mask[i];
+		float maskF = 1.0f - m->mask[i];
 
 		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
 
@@ -1331,10 +1345,10 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const 
 		if (bNormalizeWeights)
 			nzer.AdjustWeights(i, adjFlag);
 
-		refmesh->weight[i] = uss.boneWeights[0].weights[i].endVal;
+		m->weight[i] = uss.boneWeights[0].weights[i].endVal;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::Weight);
+	m->QueueUpdate(mesh::UpdateType::Weight);
 }
 
 TB_Color::TB_Color() {
@@ -1348,22 +1362,24 @@ TB_Color::TB_Color() {
 
 TB_Color::~TB_Color() {}
 
-void TB_Color::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Color::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	Vector3 vs;
 	Vector3 vc;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
-		vs = refmesh->verts[points[i]];
-		vc = refmesh->vcolors[points[i]];
+		vs = m->verts[points[i]];
+		vc = m->vcolors[points[i]];
 		if (startState.find(points[i]) == startState.end())
 			startState[points[i]] = vc;
 
-		float originToV = pickInfo.origin.DistanceTo(vs);
-		if (originToV <= radius) {
+		float originToV = meshorigin.DistanceTo(vs);
+		if (originToV <= meshradius) {
 			Vector3 falloff(strength, strength, strength);
-			applyFalloff(falloff, originToV);
+			applyFalloff(falloff, originToV, meshradius);
 
 			vc.x = color.x * falloff.x + vc.x * (1.0f - falloff.x);
 			vc.y = color.y * falloff.y + vc.y * (1.0f - falloff.y);
@@ -1385,10 +1401,10 @@ void TB_Color::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 		else if (vc.z < 0.0f)
 			vc.z = 0.0f;
 
-		endState[points[i]] = refmesh->vcolors[points[i]] = vc;
+		endState[points[i]] = m->vcolors[points[i]] = vc;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	m->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
 TB_Uncolor::TB_Uncolor() {
@@ -1402,22 +1418,24 @@ TB_Uncolor::TB_Uncolor() {
 
 TB_Uncolor::~TB_Uncolor() {}
 
-void TB_Uncolor::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Uncolor::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	Vector3 vs;
 	Vector3 vc;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
-		vs = refmesh->verts[points[i]];
-		vc = refmesh->vcolors[points[i]];
+		vs = m->verts[points[i]];
+		vc = m->vcolors[points[i]];
 		if (startState.find(points[i]) == startState.end())
 			startState[points[i]] = vc;
 
-		float originToV = pickInfo.origin.DistanceTo(vs);
-		if (originToV <= radius) {
+		float originToV = meshorigin.DistanceTo(vs);
+		if (originToV <= meshradius) {
 			Vector3 falloff(-strength, -strength, -strength);
-			applyFalloff(falloff, originToV);
+			applyFalloff(falloff, originToV, meshradius);
 
 			vc.x = falloff.x + vc.x * (1.0f - falloff.x);
 			vc.y = falloff.y + vc.y * (1.0f - falloff.y);
@@ -1439,10 +1457,10 @@ void TB_Uncolor::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* 
 		else if (vc.z < 0.0f)
 			vc.z = 0.0f;
 
-		endState[points[i]] = refmesh->vcolors[points[i]] = vc;
+		endState[points[i]] = m->vcolors[points[i]] = vc;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	m->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
 TB_Alpha::TB_Alpha() {
@@ -1456,17 +1474,19 @@ TB_Alpha::TB_Alpha() {
 
 TB_Alpha::~TB_Alpha() {}
 
-void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Alpha::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	Vector3 vs;
 	float vc;
 	float ve;
 	float vf;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
-		vs = refmesh->verts[points[i]];
-		vc = refmesh->valpha[points[i]];
+		vs = m->verts[points[i]];
+		vc = m->valpha[points[i]];
 		if (startState.find(points[i]) == startState.end())
 			startState[points[i]].x = vc;
 
@@ -1478,20 +1498,20 @@ void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* po
 		ve -= vc;
 
 		Vector3 vev(ve, ve, ve);
-		float originToV = pickInfo.origin.DistanceTo(vs);
-		if (originToV > radius)
+		float originToV = meshorigin.DistanceTo(vs);
+		if (originToV > meshradius)
 			vev.Zero();
 		else if (strength < 1.0f)
-			applyFalloff(vev, originToV);
+			applyFalloff(vev, originToV, meshradius);
 
 		vf = vc + vev.x;
 		if (vf < clampMaxValue)
 			vf = clampMaxValue;
 
-		endState[points[i]].x = refmesh->valpha[points[i]] = vf;
+		endState[points[i]].x = m->valpha[points[i]] = vf;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::VertexAlpha);
+	m->QueueUpdate(mesh::UpdateType::VertexAlpha);
 }
 
 TB_Unalpha::TB_Unalpha() {
@@ -1505,17 +1525,19 @@ TB_Unalpha::TB_Unalpha() {
 
 TB_Unalpha::~TB_Unalpha() {}
 
-void TB_Unalpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
+void TB_Unalpha::brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	Vector3 vs;
 	float vc;
 	float ve;
 	float vf;
 	auto& startState = uss.pointStartState;
 	auto& endState = uss.pointEndState;
+	float meshradius = m->TransformDistModelToMesh(radius);
+	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
-		vs = refmesh->verts[points[i]];
-		vc = refmesh->valpha[points[i]];
+		vs = m->verts[points[i]];
+		vc = m->valpha[points[i]];
 		if (startState.find(points[i]) == startState.end())
 			startState[points[i]].x = vc;
 
@@ -1527,18 +1549,18 @@ void TB_Unalpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* 
 		ve -= vc;
 
 		Vector3 vev(ve, ve, ve);
-		float originToV = pickInfo.origin.DistanceTo(vs);
-		if (originToV > radius)
+		float originToV = meshorigin.DistanceTo(vs);
+		if (originToV > meshradius)
 			vev.Zero();
 		else if (strength > -1.0f)
-			applyFalloff(vev, originToV);
+			applyFalloff(vev, originToV, meshradius);
 
 		vf = vc + vev.x;
 		if (vf > 1.0f)
 			vf = 1.0f;
 
-		endState[points[i]].x = refmesh->valpha[points[i]] = vf;
+		endState[points[i]].x = m->valpha[points[i]] = vf;
 	}
 
-	refmesh->QueueUpdate(mesh::UpdateType::VertexAlpha);
+	m->QueueUpdate(mesh::UpdateType::VertexAlpha);
 }

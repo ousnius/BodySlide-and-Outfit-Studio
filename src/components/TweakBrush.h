@@ -65,12 +65,11 @@ See the included LICENSE file
 // Collecton of information that identifies the position and attributes where a brush stroke is taking place.
 class TweakPickInfo {
 public:
+	// All vectors are in model space, not mesh
 	nifly::Vector3 origin; // Point on the surface of the mesh that was touched.
 	nifly::Vector3 normal; // Surface normal at the point of impact.
 	nifly::Vector3 view;   // View vector.
 	nifly::Vector3 center; // Center point for a transform.
-	int facet = 0;		   // Facet index touched.
-	int facetM = 0;		   // Mirrored facet index touched (X-axis mirror).
 };
 
 class TweakBrushMeshCache {
@@ -96,7 +95,6 @@ protected:
 	float radius;
 	float focus; // Focus between 0 and 1.
 	float strength;
-	float inset;	   // Normally 0. Values between 0 and 1 increase displacement, values below 0 reduce displacement.
 	float spacing;	   // Distance between points; movements less than this distance don't update the stroke.
 	bool bMirror;	   // X-axis mirror enabled
 	bool bLiveBVH;	   // Update BVH at each update instead of at stroke completion.
@@ -148,8 +146,8 @@ public:
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
 	virtual bool checkSpacing(nifly::Vector3& start, nifly::Vector3& end);
 
-	virtual float getFalloff(float dist);
-	virtual void applyFalloff(nifly::Vector3& deltaVec, float dist);
+	virtual float getFalloff(float dist, float meshradius);
+	virtual void applyFalloff(nifly::Vector3& deltaVec, float dist, float meshradius);
 
 	// Get the list of points, facets and BVH nodes within the brush sphere of influence.
 	// Normally, the origin point is used for sphere center and assumed to be an arbitrary point on the surface.

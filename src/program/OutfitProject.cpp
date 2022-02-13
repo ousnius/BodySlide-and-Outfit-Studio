@@ -1416,10 +1416,8 @@ void OutfitProject::RefreshMorphShape(NiShape* shape) {
 void OutfitProject::UpdateShapeFromMesh(NiShape* shape, const mesh* m) {
 	std::vector<Vector3> liveVerts(m->nVerts);
 
-	for (int i = 0; i < m->nVerts; i++) {
-		auto& vertex = m->verts[i];
-		liveVerts[i] = std::move(Vector3(vertex.x * -10.0f, vertex.z * 10.0f, vertex.y * 10.0f));
-	}
+	for (int i = 0; i < m->nVerts; i++)
+		liveVerts[i] = mesh::TransformPosMeshToNif(m->verts[i]);
 
 	workNif.SetVertsForShape(shape, liveVerts);
 }
@@ -1439,7 +1437,7 @@ void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderN
 
 	if (IsBaseShape(shape)) {
 		for (auto& i : vertUpdates) {
-			Vector3 diffscale = Vector3(i.second.x * -10.0f, i.second.z * 10.0f, i.second.y * 10.0f);
+			Vector3 diffscale = mesh::TransformDiffMeshToNif(i.second);
 			baseDiffData.SumDiff(dataName, target, i.first, diffscale);
 		}
 	}
@@ -1489,6 +1487,20 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 
 	workNif.SetVertsForShape(shape, verts);
 
+	// Position diffs
+	for (size_t si = 0; si < activeSet.size(); ++si) {
+		SliderData& sd = activeSet[si];
+		if (sd.bUV || sd.bClamp || sd.bZap)
+			continue;
+
+		std::unordered_map<uint16_t, Vector3>* diffSet = GetDiffSet(sd,  shape);
+		if (!diffSet)
+			continue;
+
+		for (auto& diffp : *diffSet)
+			diffp.second = t.ApplyTransformToDiff(diffp.second);
+	}
+
 	// Normals
 	if (t.rotation.IsNearlyEqualTo(Matrix3()))
 		return;
@@ -1499,7 +1511,7 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 
 	std::vector<Vector3> norms(nVerts);
 	for (size_t i = 0; i < nVerts; ++i)
-		norms[i] = t.rotation * (*oldNorms)[i];
+		norms[i] = t.ApplyTransformToDir((*oldNorms)[i]);
 
 	workNif.SetNormalsForShape(shape, norms);
 }
@@ -1577,7 +1589,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 
 		// Calculate new values for bone's weights
 		std::string wtSet = boneName + "_WT_";
-		morpher.GenerateResultDiff(shapeName, wtSet, wtSet, maxResults);
+		morpher.GenerateResultDiff(shapeName, wtSet, wtSet, false, maxResults);
 
 		std::unordered_map<uint16_t, Vector3> diffResult;
 		morpher.GetRawResultDiff(shapeName, wtSet, diffResult);
@@ -1734,10 +1746,8 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 			if (m) {
 				boneScaleVerts.emplace(s, std::vector<Vector3>(m->nVerts));
 				it = boneScaleVerts.find(s);
-				for (int i = 0; i < m->nVerts; i++) {
-					auto& vertex = m->verts[i];
-					it->second[i] = std::move(Vector3(vertex.x * -10.0f, vertex.z * 10.0f, vertex.y * 10.0f));
-				}
+				for (int i = 0; i < m->nVerts; i++)
+					it->second[i] = mesh::TransformPosMeshToNif(m->verts[i]);
 			}
 		}
 
@@ -2351,12 +2361,25 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 			morpher.GenerateResultDiff(shape->name.get(),
 									   activeSet[i].name,
 									   activeSet[i].TargetDataName(refTarget),
+									   true,
 									   options.maxResults,
 									   options.noSqueeze,
 									   options.solidMode,
 									   options.axisX,
 									   options.axisY,
 									   options.axisZ);
+}
+
+std::unordered_map<uint16_t, Vector3>* OutfitProject::GetDiffSet(SliderData& sliderData, NiShape* shape) {
+	std::string target = ShapeToTarget(shape->name.get());
+	std::string targetDataName = sliderData.TargetDataName(target);
+	if (targetDataName.empty())
+		targetDataName = target + sliderData.name;
+
+	if (IsBaseShape(shape))
+		return baseDiffData.GetDiffSet(targetDataName);
+	else
+		return morpher.GetDiffSet(targetDataName);
 }
 
 void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices) {
@@ -2370,7 +2393,6 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const
 	const std::vector<Vector3>* bitangents = workNif.GetBitangentsForShape(shape);
 	const std::vector<float>* eyeData = workNif.GetEyeDataForShape(shape);
 	AnimSkin& skin = workAnim.shapeSkinning[shape->name.get()];
-	std::string target = ShapeToTarget(shape->name.get());
 
 	for (uint16_t di = 0; di < static_cast<uint16_t>(indices.size()); ++di) {
 		UndoStateVertex& usv = uss.delVerts[di];
@@ -2402,15 +2424,7 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const
 
 	// For diffs, it's more efficient to reverse the loop nesting.
 	for (size_t si = 0; si < activeSet.size(); ++si) {
-		std::string targetDataName = activeSet[si].TargetDataName(target);
-		if (targetDataName.empty())
-			targetDataName = target + activeSet[si].name;
-
-		std::unordered_map<uint16_t, Vector3>* diffSet;
-		if (IsBaseShape(shape))
-			diffSet = baseDiffData.GetDiffSet(targetDataName);
-		else
-			diffSet = morpher.GetDiffSet(targetDataName);
+		std::unordered_map<uint16_t, Vector3>* diffSet = GetDiffSet(activeSet[si], shape);
 
 		if (!diffSet)
 			continue;
@@ -3373,29 +3387,12 @@ bool OutfitProject::PointsHaveDifferingWeightsOrDiffs(NiShape* shape1, int p1, N
 	}
 
 	// Check for position slider differences.  We skip uv, clamp, and zap.
-	std::string target1 = ShapeToTarget(shape1->name.get());
-	std::string target2 = ShapeToTarget(shape2->name.get());
 	for (size_t si = 0; si < activeSet.size(); ++si) {
 		if (activeSet[si].bUV || activeSet[si].bClamp || activeSet[si].bZap)
 			continue;
 
-		std::string targetDataName1 = activeSet[si].TargetDataName(target1);
-		if (targetDataName1.empty())
-			targetDataName1 = target1 + activeSet[si].name;
-		std::string targetDataName2 = activeSet[si].TargetDataName(target2);
-		if (targetDataName2.empty())
-			targetDataName2 = target2 + activeSet[si].name;
-
-		std::unordered_map<uint16_t, Vector3>* diffSet1;
-		if (IsBaseShape(shape1))
-			diffSet1 = baseDiffData.GetDiffSet(targetDataName1);
-		else
-			diffSet1 = morpher.GetDiffSet(targetDataName1);
-		std::unordered_map<uint16_t, Vector3>* diffSet2;
-		if (IsBaseShape(shape2))
-			diffSet2 = baseDiffData.GetDiffSet(targetDataName2);
-		else
-			diffSet2 = morpher.GetDiffSet(targetDataName2);
+		std::unordered_map<uint16_t, Vector3>* diffSet1 = GetDiffSet(activeSet[si], shape1);
+		std::unordered_map<uint16_t, Vector3>* diffSet2 = GetDiffSet(activeSet[si], shape2);
 
 		if (!diffSet1 && !diffSet2)
 			continue;
@@ -3404,12 +3401,12 @@ bool OutfitProject::PointsHaveDifferingWeightsOrDiffs(NiShape* shape1, int p1, N
 		if (diffSet1) {
 			auto dit1 = diffSet1->find(p1);
 			if (dit1 != diffSet1->end())
-				diff1 = skin1ToGlobal.rotation * (dit1->second * skin1ToGlobal.scale);
+				diff1 = skin1ToGlobal.ApplyTransformToDiff(dit1->second);
 		}
 		if (diffSet2) {
 			auto dit2 = diffSet2->find(p2);
 			if (dit2 != diffSet2->end())
-				diff2 = skin2ToGlobal.rotation * (dit2->second * skin2ToGlobal.scale);
+				diff2 = skin2ToGlobal.ApplyTransformToDiff(dit2->second);
 		}
 		if (diff1 != diff2)
 			return true;
@@ -3520,9 +3517,9 @@ void OutfitProject::PrepareWeldVertex(NiShape* shape, UndoStateShape& uss, int s
 	usv.pos = skx.ApplyTransform(tusv.pos);
 	usv.uv = susv.uv;
 	usv.color = tusv.color;
-	usv.normal = skx.rotation * tusv.normal;
-	usv.tangent = skx.rotation * tusv.tangent;
-	usv.bitangent = skx.rotation * tusv.bitangent;
+	usv.normal = skx.ApplyTransformToDir(tusv.normal);
+	usv.tangent = skx.ApplyTransformToDir(tusv.tangent);
+	usv.bitangent = skx.ApplyTransformToDir(tusv.bitangent);
 	usv.eyeData = tusv.eyeData;
 	usv.weights = std::move(tusv.weights);
 
@@ -3536,7 +3533,7 @@ void OutfitProject::PrepareWeldVertex(NiShape* shape, UndoStateShape& uss, int s
 	for (const auto& diff : tusv.diffs) {
 		const SliderData& sd = activeSet[diff.sliderName];
 		if (!sd.bUV && !sd.bClamp && !sd.bZap) {
-			Vector3 d = skx.rotation * (skx.scale * diff.diff);
+			Vector3 d = skx.ApplyTransformToDiff(diff.diff);
 			usv.diffs.push_back(UndoStateVertexSliderDiff{diff.sliderName, d});
 		}
 	}
@@ -3941,8 +3938,8 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 			liveNorms.clear();
 
 			for (int i = 0; i < m->nVerts; i++) {
-				liveVerts.emplace_back(std::move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
-				liveNorms.emplace_back(std::move(Vector3(m->norms[i].x * -1, m->norms[i].z, m->norms[i].y)));
+				liveVerts.emplace_back(mesh::TransformPosMeshToNif(m->verts[i]));
+				liveNorms.emplace_back(mesh::TransformDirMeshToNif(m->norms[i]));
 			}
 
 			clone.SetVertsForShape(shape, liveVerts);
@@ -4181,7 +4178,7 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 				gNorms.resize(norms->size());
 
 				for (size_t i = 0; i < gNorms.size(); ++i)
-					gNorms[i] = toGlobal.rotation * (*norms)[i];
+					gNorms[i] = toGlobal.ApplyTransformToDir((*norms)[i]);
 
 				norms = &gNorms;
 			}

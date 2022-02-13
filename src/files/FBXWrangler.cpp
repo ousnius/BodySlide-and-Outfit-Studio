@@ -328,7 +328,7 @@ void FBXWrangler::AddNif(NifFile* nif, AnimInfo* anim, bool transToGlobal, NiSha
 					if (norms) {
 						gNorms.resize(norms->size());
 						for (size_t i = 0; i < gNorms.size(); ++i)
-							gNorms[i] = toGlobal.rotation * (*norms)[i];
+							gNorms[i] = toGlobal.ApplyTransformToDir((*norms)[i]);
 
 						norms = &gNorms;
 					}

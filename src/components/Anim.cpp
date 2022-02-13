@@ -330,7 +330,7 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 	const MatTransform& xformSkinToBone = shapeSkinning[shapeName].boneWeights[boneIndex].xformSkinToBone;
 
 	bounds.center = xformSkinToBone.ApplyTransform(bounds.center);
-	bounds.radius *= xformSkinToBone.scale;
+	bounds.radius = xformSkinToBone.ApplyTransformToDist(bounds.radius);
 	shapeSkinning[shapeName].boneWeights[boneIndex].bounds = bounds;
 	return true;
 }
