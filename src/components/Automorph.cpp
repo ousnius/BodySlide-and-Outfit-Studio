@@ -97,7 +97,7 @@ void Automorph::SetRef(NifFile& ref, NiShape* refShape, const AnimInfo* workAnim
 	morphRef = std::make_unique<mesh>();
 	MeshFromNifShape(morphRef.get(), ref, refShape, workAnim);
 
-	refTree = std::make_unique<kd_tree>(morphRef->verts.get(), static_cast<uint16_t>(morphRef->nVerts));
+	refTree = std::make_unique<kd_tree<uint16_t>>(morphRef->verts.get(), static_cast<uint16_t>(morphRef->nVerts));
 }
 
 void Automorph::LinkRefDiffData(DiffDataSets* diffData) {
@@ -231,7 +231,7 @@ void Automorph::BuildProximityCache(const std::string& shapeName, float proximit
 		if (resultCount > maxCount)
 			maxCount = resultCount;
 
-		std::vector<kd_query_result> indexResults;
+		std::vector<kd_query_result<uint16_t>> indexResults;
 		for (uint16_t id = 0; id < resultCount; id++) {
 			auto& result = refTree->queryResult[id];
 
@@ -395,7 +395,7 @@ void Automorph::GenerateResultDiff(
 	std::vector<Vector3> effectVector;
 
 	for (int i = 0; i < m->nVerts; i++) {
-		std::vector<kd_query_result>* vertProx = &prox_cache[i];
+		std::vector<kd_query_result<uint16_t>>* vertProx = &prox_cache[i];
 		int nValues = vertProx->size();
 		if (nValues > maxResults)
 			nValues = maxResults;

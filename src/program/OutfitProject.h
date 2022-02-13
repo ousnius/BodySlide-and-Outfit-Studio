@@ -215,6 +215,10 @@ public:
 	void AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const nifly::MatTransform& xformToParent);
 	void ModifyCustomBone(AnimBone* bPtr, const std::string& parentBone, const nifly::MatTransform& xformToParent);
 
+	nifly::MatTransform GetTransformShapeToGlobal(nifly::NiShape* shape);
+	// CopySegPart returns the number of failed triangles, or 0 for success.
+	int CopySegPart(nifly::NiShape* shape);
+
 	void ClearWorkSliders();
 	void ClearReference();
 	void ClearOutfit();

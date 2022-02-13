@@ -13,10 +13,10 @@ See the included LICENSE file
 class AnimInfo;
 
 class Automorph {
-	std::unique_ptr<nifly::kd_tree> refTree;
+	std::unique_ptr<nifly::kd_tree<uint16_t>> refTree;
 	std::map<std::string, mesh*> sourceShapes;
 	// Class - to prevent AutoMorph from deleting it. Golly, smart pointers would be nice.
-	std::map<int, std::vector<nifly::kd_query_result>> prox_cache;
+	std::map<int, std::vector<nifly::kd_query_result<uint16_t>>> prox_cache;
 	DiffDataSets __srcDiffData;			 // Unternally loaded and stored diff data.diffs loaded from existing reference .bsd files.
 	DiffDataSets* srcDiffData = nullptr; // Either __srcDiffData or an external linked data set.
 	DiffDataSets resultDiffData;		 // Diffs calculated by AutoMorph.
