@@ -1947,8 +1947,8 @@
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="copySegPart">
-				<label>Copy Segments or Partitions...</label>
-				<help>Copies segments or partitions and all triangle segment/partition memberships from the reference shape to the current shape.</help>
+				<label>Copy Partitions/Segments...</label>
+				<help>Copies partitions/segments and all triangle assignments from the reference shape to the current shape.</help>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="deleteShape">
@@ -2388,8 +2388,8 @@
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="copySegPart">
-			<label>Copy Segments or Partitions...</label>
-			<help>Copies segments or partitions and all triangle segment/partition memberships from the reference shape to the current shape.</help>
+			<label>Copy Partitions/Segments...</label>
+			<help>Copies partitions/segments and all triangle assignments from the reference shape to the current shape.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="deleteShape">
