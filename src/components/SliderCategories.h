@@ -68,15 +68,13 @@ public:
 
 class SliderCategoryFile {
 	XMLDocument doc;
-	XMLElement* root;
+	XMLElement* root = nullptr;
 	std::unordered_map<std::string, XMLElement*> categoriesInFile;
-	int error;
+	int error = 0;
 
 public:
 	std::string fileName;
-	SliderCategoryFile()
-		: error(0)
-		, root(nullptr) {}
+	SliderCategoryFile() {}
 	SliderCategoryFile(const std::string& srcFileName);
 	~SliderCategoryFile(){};
 
