@@ -11,10 +11,11 @@ See the included LICENSE file
 struct UndoStateProject;
 
 class UndoHistory {
-	static constexpr uint32_t UH_NONE = 0xFFFFFFFF;
-	static constexpr uint32_t UH_MAX_UNDO = 40;
+	static constexpr int UH_MAX_UNDO = 40;
 
-	uint32_t curIndex = UH_NONE;
+	// Note that -1 on the next line is NOT a magic number.  It's the actual
+	// index.  The same is true everywhere in UndoHistory.
+	int curIndex = -1;
 	std::vector<std::unique_ptr<UndoStateProject>> states;
 
 public:
@@ -24,12 +25,12 @@ public:
 	bool ForwardStepHistory();
 	void ClearHistory();
 
-	bool CanUndo() const { return curIndex != UH_NONE; }
+	bool CanUndo() const { return curIndex != -1; }
 
 	bool CanRedo() const { return !states.empty() && curIndex + 1 < static_cast<int>(states.size()); }
 
 	UndoStateProject* GetCurState() const {
-		if (curIndex == UH_NONE)
+		if (curIndex == -1)
 			return nullptr;
 		return states[curIndex].get();
 	}

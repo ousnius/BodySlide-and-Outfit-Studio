@@ -3995,7 +3995,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 			std::string selString{clothFileNames[sel[i]].ToUTF8()};
 			if (!selString.empty()) {
 				auto clothBlock = clothData[selString]->Clone();
-				int id = nif.GetHeader().AddBlock(std::move(clothBlock));
+				uint32_t id = nif.GetHeader().AddBlock(std::move(clothBlock));
 				if (id != 0xFFFFFFFF) {
 					auto root = nif.GetRootNode();
 					if (root)

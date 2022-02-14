@@ -252,7 +252,7 @@ void NormalsGenDialog::addBGLayer(NormalGenLayer& newLayer) {
 	resolutions.Add("4096");
 
 	int selectedRes = 0;
-	for (int i = 0; i < resolutions.size(); i++) {
+	for (int i = 0; i < static_cast<int>(resolutions.size()); i++) {
 		if (resolutions[i] == std::to_string(newLayer.resolution)) {
 			selectedRes = i;
 			break;

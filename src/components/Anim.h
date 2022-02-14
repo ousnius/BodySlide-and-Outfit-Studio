@@ -48,7 +48,7 @@ public:
 
 	int refCount = 0; // reference count of this bone
 
-	AnimBone& LoadFromNif(nifly::NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
+	AnimBone& LoadFromNif(nifly::NifFile* skeletonNif, uint32_t srcBlock, AnimBone* parent = nullptr);
 	// AddToNif adds this bone to the given nif, as well as its parent
 	// if missing, recursively.  The new bone's NiNode is returned.
 	nifly::NiNode* AddToNif(nifly::NifFile* nif) const;

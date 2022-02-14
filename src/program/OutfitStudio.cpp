@@ -1280,7 +1280,7 @@ void OutfitStudioFrame::OnMenuItem(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id >= 1000 && id < 2000) {
 		// Load project history entry
-		if (projectHistory.size() > id - 1000) {
+		if (static_cast<int>(projectHistory.size()) > id - 1000) {
 			if (!CheckPendingChanges())
 				return;
 
@@ -1863,7 +1863,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
 
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
-		for (int i = 0; i < SupportedLangs.size(); i++)
+		for (size_t i = 0; i < SupportedLangs.size(); i++)
 			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
 
 		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))

@@ -798,7 +798,7 @@ void BodySlideApp::DisplayActiveSet() {
 	}
 
 	// Create category UI
-	int iter = 0;
+	size_t iter = 0;
 	if (catSliders.size() > 0) {
 		for (auto& cat : sliderCategories) {
 			std::string name = std::get<0>(cat);
@@ -982,7 +982,7 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 		if (shapeZapIndices.size() > 0 && shapeZapIndices.back() >= shapeVertCount)
 			continue;
 
-		for (int s = 0; s < sliderSet.size(); s++) {
+		for (size_t s = 0; s < sliderSet.size(); s++) {
 			std::string dn = sliderSet[s].TargetDataName(targetShape->second.targetShape);
 			std::string target = targetShape->second.targetShape;
 			if (dn.empty())
@@ -2473,7 +2473,7 @@ int BodySlideApp::BuildListBodies(
 			std::vector<int> clamps;
 			zapIdxAll.emplace(it->first, std::vector<uint16_t>());
 
-			for (int s = 0; s < currentSet.size(); s++) {
+			for (size_t s = 0; s < currentSet.size(); s++) {
 				std::string target = it->second.targetShape;
 				std::string dn = currentSet[s].TargetDataName(target);
 				if (dn.empty())
@@ -3606,7 +3606,7 @@ void BodySlideFrame::OnConflictPopup(wxMouseEvent& WXUNUSED(event)) {
 	int id = fileCollisionMenu->GetMenuItemCount();
 	while (id--)
 		fileCollisionMenu->Delete(id);
-	for (id = 0; id < conflictingOutfits.size(); id++)
+	for (id = 0; id < static_cast<int>(conflictingOutfits.size()); id++)
 		fileCollisionMenu->Append(id, conflictingOutfits[id], "", wxITEM_NORMAL);
 	id = GetPopupMenuSelectionFromUser(*fileCollisionMenu, wxDefaultPosition);
 	if (0 > id)
@@ -3934,7 +3934,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
 
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
-		for (int i = 0; i < SupportedLangs.size(); i++)
+		for (size_t i = 0; i < SupportedLangs.size(); i++)
 			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
 
 		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
