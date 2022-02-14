@@ -20,7 +20,7 @@ Make sure GLEW is installed.
 Then go to your BodySlide-and-Outfit-Studio directory and do:
 mkdir Release
 cd Release
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-Wall" ..
 make
 
 The possible values for CMAKE_BUILD_TYPE:
