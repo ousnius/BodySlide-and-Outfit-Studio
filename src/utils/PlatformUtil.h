@@ -28,3 +28,14 @@ void OpenFileStream(std::fstream& file, const std::string& fileName, std::ios_ba
 void OpenFileStream(std::fstream& file, const std::wstring& fileName, unsigned int mode);
 #endif
 } // namespace PlatformUtil
+
+// This user-defined literal allows you to specify an int with a
+// multi-character string: "OSD\0"_mci
+inline constexpr uint32_t operator"" _mci(const char* p, size_t n) {
+	uint32_t v = 0;
+	for (size_t i = 0; i < n; ++i) {
+		v <<= 8;
+		v += static_cast<unsigned char>(p[i]);
+	}
+	return v;
+}
