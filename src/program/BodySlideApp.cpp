@@ -906,10 +906,6 @@ void BodySlideApp::EditProject(const std::string& projectName) {
 	if (project == outfitNameSource.end())
 		return;
 
-	int select = wxNOT_FOUND;
-	if (sliderView->outfitChoice)
-		select = sliderView->outfitChoice->GetSelection();
-
 	wxLogMessage("Launching Outfit Studio with project file '%s' and project '%s'...", project->second, project->first);
 	LaunchOutfitStudio(wxString::Format("-proj \"%s\" \"%s\"", wxString::FromUTF8(project->first), wxString::FromUTF8(project->second)));
 }

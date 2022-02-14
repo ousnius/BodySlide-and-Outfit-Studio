@@ -3349,7 +3349,6 @@ void OutfitStudioFrame::UpdateUndoTools() {
 void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	wxWizard wiz;
 	wxWizardPage* pg1;
-	wxWizardPage* pg2;
 	bool result = false;
 
 	if (!CheckPendingChanges())
@@ -3363,7 +3362,6 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnNPWizChangeSliderSetFile, this);
 		XRCCTRL(wiz, "npSliderSetName", wxChoice)->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnNPWizChangeSetNameChoice, this);
 
-		pg2 = (wxWizardPage*)XRCCTRL(wiz, "wizpgNewProj2", wxWizardPageSimple);
 		XRCCTRL(wiz, "npWorkFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_File, this);
 		XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_Texture, this);
 
@@ -12815,7 +12813,6 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 	if (!isLDragging && !isPainting && activeTool == ToolID::Select) {
 		int x, y;
 		event.GetPosition(&x, &y);
-		wxPoint p = event.GetPosition();
 
 		mesh* m = gls.PickMesh(x, y);
 		if (m)
