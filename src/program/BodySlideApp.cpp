@@ -2903,6 +2903,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 			case FO4VR:
 			case SKYRIMSE:
 			case SKYRIMVR: cbMorphs->Show(); break;
+			default: break;
 		}
 	}
 
@@ -2915,6 +2916,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 			switch (app->targetGame) {
 				case SKYRIMSE:
 				case SKYRIMVR: cbForceBodyNormals->Show(); break;
+				default: break;
 			}
 		}
 	}
@@ -4033,6 +4035,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 					switch (app->targetGame) {
 						case SKYRIMSE:
 						case SKYRIMVR: cbForceBodyNormals->Show(); break;
+						default: break;
 					}
 				}
 				else
