@@ -5,9 +5,13 @@ See the included LICENSE file
 
 #include "wxDDSImage.h"
 
+#ifdef _MSC_VER
 #pragma warning(push, 0)
+#endif
 #include "gli.hpp"
+#ifdef _MSC_VER
 #pragma warning(pop)
+#endif
 
 wxIMPLEMENT_DYNAMIC_CLASS(wxDDSHandler, wxImageHandler);
 
