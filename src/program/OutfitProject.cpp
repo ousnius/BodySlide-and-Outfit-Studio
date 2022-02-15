@@ -3795,7 +3795,7 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& sha
 
 			liveNorms.clear();
 			for (int i = 0; i < m->nVerts; i++)
-				liveNorms.emplace_back(std::move(Vector3(m->norms[i].x * -1, m->norms[i].z, m->norms[i].y)));
+				liveNorms.push_back(m->TransformDirMeshToNif(m->norms[i]));
 
 			nif->SetNormalsForShape(shape, liveNorms);
 			nif->CalcTangentsForShape(shape);
@@ -3938,8 +3938,8 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 			liveNorms.clear();
 
 			for (int i = 0; i < m->nVerts; i++) {
-				liveVerts.emplace_back(mesh::TransformPosMeshToNif(m->verts[i]));
-				liveNorms.emplace_back(mesh::TransformDirMeshToNif(m->norms[i]));
+				liveVerts.push_back(mesh::TransformPosMeshToNif(m->verts[i]));
+				liveNorms.push_back(mesh::TransformDirMeshToNif(m->norms[i]));
 			}
 
 			clone.SetVertsForShape(shape, liveVerts);
