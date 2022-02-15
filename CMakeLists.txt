@@ -32,7 +32,7 @@ set(commonsources
 	lib/nifly/src/Particles.cpp
 	lib/nifly/src/Shaders.cpp
 	lib/nifly/src/Skin.cpp
-	lib/SOIL2/etc1_utils.c
+	lib/SOIL2/wfETC.c
 	lib/SOIL2/image_DXT.c
 	lib/SOIL2/image_helper.c
 	lib/SOIL2/SOIL2.c
