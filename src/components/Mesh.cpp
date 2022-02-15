@@ -8,9 +8,9 @@ See the included LICENSE file
 
 using namespace nifly;
 
-mesh::mesh() {}
+Mesh::Mesh() {}
 
-mesh::~mesh() {
+Mesh::~Mesh() {
 	if (genBuffers) {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -22,7 +22,7 @@ mesh::~mesh() {
 	}
 }
 
-std::shared_ptr<AABBTree> mesh::CreateBVH() {
+std::shared_ptr<AABBTree> Mesh::CreateBVH() {
 	if (verts && tris && nTris > 0)
 		bvh = std::make_shared<AABBTree>(verts.get(), tris.get(), nTris, 100, 2);
 	else
@@ -31,7 +31,7 @@ std::shared_ptr<AABBTree> mesh::CreateBVH() {
 	return bvh;
 }
 
-void mesh::BuildTriAdjacency() {
+void Mesh::BuildTriAdjacency() {
 	if (!tris)
 		return;
 
@@ -50,7 +50,7 @@ void mesh::BuildTriAdjacency() {
 	}
 }
 
-void mesh::MakeEdges() {
+void Mesh::MakeEdges() {
 	if (!tris)
 		return;
 	if (edges)
@@ -72,7 +72,7 @@ void mesh::MakeEdges() {
 	}
 }
 
-void mesh::BuildEdgeList() {
+void Mesh::BuildEdgeList() {
 	if (!edges)
 		MakeEdges();
 
@@ -89,7 +89,7 @@ void mesh::BuildEdgeList() {
 	}
 }
 
-void mesh::CreateBuffers() {
+void Mesh::CreateBuffers() {
 	if (!genBuffers) {
 		glGenVertexArrays(1, &vao);
 		glGenBuffers(static_cast<GLsizei>(vbo.size()), vbo.data());
@@ -166,7 +166,7 @@ void mesh::CreateBuffers() {
 	genBuffers = true;
 }
 
-void mesh::UpdateBuffers() {
+void Mesh::UpdateBuffers() {
 	if (genBuffers) {
 		glBindVertexArray(vao);
 
@@ -244,11 +244,11 @@ void mesh::UpdateBuffers() {
 	}
 }
 
-void mesh::QueueUpdate(const UpdateType& type) {
+void Mesh::QueueUpdate(const UpdateType& type) {
 	queueUpdate[type] = true;
 }
 
-void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
+void Mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	doublesided = matFile.twoSided;
 	modelSpace = matFile.modelSpaceNormals;
 	emissive = matFile.emitEnabled;
@@ -276,7 +276,7 @@ void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	prop.paletteScale = matFile.grayscaleToPaletteScale;
 }
 
-bool mesh::HasAlphaBlend() {
+bool Mesh::HasAlphaBlend() {
 	bool alphaBlend = alphaFlags & 1;
 	if (prop.alpha < 1.0f)
 		alphaBlend = true;
@@ -284,7 +284,7 @@ bool mesh::HasAlphaBlend() {
 	return alphaBlend;
 }
 
-void mesh::ScaleVertices(const Vector3& center, const float& factor) {
+void Mesh::ScaleVertices(const Vector3& center, const float& factor) {
 	for (int i = 0; i < nVerts; i++)
 		verts[i] = center + (verts[i] - center) * factor;
 
@@ -292,7 +292,7 @@ void mesh::ScaleVertices(const Vector3& center, const float& factor) {
 	queueUpdate[UpdateType::Position] = true;
 }
 
-void mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
+void Mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
 	int tp1 = 0;
 	int tp2 = 0;
 	int tp3 = 0;
@@ -335,7 +335,7 @@ void mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
 	}
 }
 
-int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
+int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 	int ep1;
 	int ep2;
 	int wq;
@@ -374,7 +374,7 @@ int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 	/* TODO: sort by distance */
 }
 
-int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint) {
+int Mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint) {
 	if (!vertEdges)
 		return 0;
 
@@ -420,7 +420,7 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 	/* TODO: sort by distance */
 }
 
-void mesh::CalcWeldVerts() {
+void Mesh::CalcWeldVerts() {
 	SortingMatcher matcher(verts.get(), static_cast<uint16_t>(nVerts));
 	for (const auto& matchset : matcher.matches) {
 		for (size_t j = 0; j < matchset.size(); ++j) {
@@ -434,15 +434,15 @@ void mesh::CalcWeldVerts() {
 	bGotWeldVerts = true;
 }
 
-float mesh::GetSmoothThreshold() {
+float Mesh::GetSmoothThreshold() {
 	return (smoothThresh * 180) / PI;
 }
 
-void mesh::SetSmoothThreshold(float degrees) {
+void Mesh::SetSmoothThreshold(float degrees) {
 	smoothThresh = degrees * DEG2RAD;
 }
 
-void mesh::SmoothNormals(const std::set<int>& vertices) {
+void Mesh::SmoothNormals(const std::set<int>& vertices) {
 	if (lockNormals || !norms)
 		return;
 
@@ -531,7 +531,7 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 	CalcTangentSpace();
 }
 
-Vector3 mesh::GetOneVertexNormal(int vi) {
+Vector3 Mesh::GetOneVertexNormal(int vi) {
 	if (vi < 0 || vi >= nVerts)
 		return Vector3(1,0,0);
 	if (norms)
@@ -571,7 +571,7 @@ Vector3 mesh::GetOneVertexNormal(int vi) {
 	return sum;
 }
 
-void mesh::FacetNormals() {
+void Mesh::FacetNormals() {
 	if (lockNormals)
 		return;
 
@@ -620,7 +620,7 @@ void mesh::FacetNormals() {
 	CalcTangentSpace();
 }
 
-void mesh::ColorFill(const Vector3& vcolor) {
+void Mesh::ColorFill(const Vector3& vcolor) {
 	if (!vcolors)
 		return;
 
@@ -630,7 +630,7 @@ void mesh::ColorFill(const Vector3& vcolor) {
 	queueUpdate[UpdateType::VertexColors] = true;
 }
 
-void mesh::AlphaFill(float alpha) {
+void Mesh::AlphaFill(float alpha) {
 	if (!valpha)
 		return;
 
@@ -640,7 +640,7 @@ void mesh::AlphaFill(float alpha) {
 	queueUpdate[UpdateType::VertexAlpha] = true;
 }
 
-void mesh::MaskFill(float maskValue) {
+void Mesh::MaskFill(float maskValue) {
 	if (!mask)
 		return;
 
@@ -650,7 +650,7 @@ void mesh::MaskFill(float maskValue) {
 	queueUpdate[UpdateType::Mask] = true;
 }
 
-void mesh::WeightFill(float weightValue) {
+void Mesh::WeightFill(float weightValue) {
 	if (!weight)
 		return;
 
@@ -660,7 +660,7 @@ void mesh::WeightFill(float weightValue) {
 	queueUpdate[UpdateType::Weight] = true;
 }
 
-void mesh::ColorChannelFill(int channel, float value) {
+void Mesh::ColorChannelFill(int channel, float value) {
 	if (!vcolors)
 		return;
 
@@ -676,7 +676,7 @@ void mesh::ColorChannelFill(int channel, float value) {
 	queueUpdate[UpdateType::VertexColors] = true;
 }
 
-void mesh::CalcTangentSpace() {
+void Mesh::CalcTangentSpace() {
 	if (!norms || !texcoord)
 		return;
 
@@ -748,7 +748,7 @@ void mesh::CalcTangentSpace() {
 	queueUpdate[UpdateType::Bitangents] = true;
 }
 
-bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets) {
+bool Mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets) {
 	if (!vertTris)
 		return false;
 	if (!vertEdges)
@@ -818,7 +818,7 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 	return true;
 }
 
-bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets) {
+bool Mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets) {
 	if (!vertTris)
 		return false;
 	if (startTri < 0)

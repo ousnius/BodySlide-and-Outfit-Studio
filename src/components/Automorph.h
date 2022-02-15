@@ -14,7 +14,7 @@ class AnimInfo;
 
 class Automorph {
 	std::unique_ptr<nifly::kd_tree<uint16_t>> refTree;
-	std::map<std::string, mesh*> sourceShapes;
+	std::map<std::string, Mesh*> sourceShapes;
 	// Class - to prevent AutoMorph from deleting it. Golly, smart pointers would be nice.
 	std::map<int, std::vector<nifly::kd_query_result<uint16_t>>> prox_cache;
 	DiffDataSets __srcDiffData;			 // Unternally loaded and stored diff data.diffs loaded from existing reference .bsd files.
@@ -29,7 +29,7 @@ class Automorph {
 	std::unordered_map<std::string, std::string> targetSliderDataNames;
 
 public:
-	std::unique_ptr<mesh> morphRef;
+	std::unique_ptr<Mesh> morphRef;
 
 	Automorph();
 	~Automorph();
@@ -54,9 +54,9 @@ public:
 
 	void SourceShapesFromNif(nifly::NifFile& baseNif, const AnimInfo* workAnim);
 	void UpdateMeshFromNif(nifly::NifFile& baseNif, const std::string& shapeName);
-	void CopyMeshMask(mesh* m, const std::string& shapeName);
+	void CopyMeshMask(Mesh* m, const std::string& shapeName);
 
-	void MeshFromNifShape(mesh* m, nifly::NifFile& ref, nifly::NiShape* shape, const AnimInfo* workAnim);
+	void MeshFromNifShape(Mesh* m, nifly::NifFile& ref, nifly::NiShape* shape, const AnimInfo* workAnim);
 	// indices must be in ascending order.
 	void DeleteVerts(const std::string& shapeName, const std::vector<uint16_t>& indices);
 	// indices must be in ascending order.

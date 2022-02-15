@@ -60,11 +60,11 @@ private:
 	ResourceLoader resLoader;
 	GLMaterial* primitiveMat = nullptr;
 
-	std::vector<mesh*> meshes;
-	std::vector<mesh*> overlays;
+	std::vector<Mesh*> meshes;
+	std::vector<Mesh*> overlays;
 
-	std::vector<mesh*> activeMeshes;
-	mesh* selectedMesh = nullptr;
+	std::vector<Mesh*> activeMeshes;
+	Mesh* selectedMesh = nullptr;
 
 	void InitLighting();
 	void InitGLExtensions();
@@ -100,7 +100,7 @@ public:
 		activeMeshes.clear();
 	}
 
-	void DeleteMesh(mesh* m) {
+	void DeleteMesh(Mesh* m) {
 		if (!m)
 			return;
 
@@ -125,7 +125,7 @@ public:
 		overlays.clear();
 	}
 
-	void DeleteOverlay(mesh* m) {
+	void DeleteOverlay(Mesh* m) {
 		if (!m)
 			return;
 
@@ -141,12 +141,12 @@ public:
 	void DeleteOverlay(const std::string& shapeName) { DeleteOverlay(GetOverlay(shapeName)); }
 
 	void RenameMesh(const std::string& shapeName, const std::string& newShapeName) {
-		mesh* m = GetMesh(shapeName);
+		Mesh* m = GetMesh(shapeName);
 		if (m)
 			m->shapeName = newShapeName;
 	}
 
-	std::vector<mesh*> GetActiveMeshes() { return activeMeshes; }
+	std::vector<Mesh*> GetActiveMeshes() { return activeMeshes; }
 
 	nifly::Vector3 GetActiveCenter(bool useMask = true) {
 		if (activeMeshes.empty())
@@ -171,42 +171,42 @@ public:
 		return total;
 	}
 
-	void AddMesh(mesh* m) {
+	void AddMesh(Mesh* m) {
 		if (!m->shapeName.empty())
 			DeleteMesh(m->shapeName);
 
 		meshes.push_back(m);
 	}
 
-	void AddOverlay(mesh* m) {
+	void AddOverlay(Mesh* m) {
 		if (!m->shapeName.empty())
 			DeleteOverlay(m->shapeName);
 
 		overlays.push_back(m);
 	}
 
-	mesh* GetMesh(const std::string& shapeName) {
-		auto it = std::find_if(meshes.begin(), meshes.end(), [&shapeName](mesh* m) { return m->shapeName == shapeName; });
+	Mesh* GetMesh(const std::string& shapeName) {
+		auto it = std::find_if(meshes.begin(), meshes.end(), [&shapeName](Mesh* m) { return m->shapeName == shapeName; });
 		if (it != meshes.end())
 			return (*it);
 
 		return nullptr;
 	}
 
-	const std::vector<mesh*>& GetMeshes() { return meshes; }
+	const std::vector<Mesh*>& GetMeshes() { return meshes; }
 
-	const std::vector<mesh*> GetMeshesFiltered() {
-		std::vector<mesh*> filteredMeshes;
+	const std::vector<Mesh*> GetMeshesFiltered() {
+		std::vector<Mesh*> filteredMeshes;
 
 		for (auto& m : meshes)
-			if (m->rendermode == mesh::RenderMode::Normal)
+			if (m->rendermode == Mesh::RenderMode::Normal)
 				filteredMeshes.push_back(m);
 
 		return filteredMeshes;
 	}
 
-	mesh* GetOverlay(const std::string& shapeName) {
-		auto it = std::find_if(overlays.begin(), overlays.end(), [&shapeName](mesh* m) { return m->shapeName == shapeName; });
+	Mesh* GetOverlay(const std::string& shapeName) {
+		auto it = std::find_if(overlays.begin(), overlays.end(), [&shapeName](Mesh* m) { return m->shapeName == shapeName; });
 		if (it != overlays.end())
 			return (*it);
 
@@ -251,11 +251,11 @@ public:
 
 	void ProjectPointToScreen(const nifly::Vector3& p, int& x, int& y);
 
-	void GetPickRay(int ScreenX, int ScreenY, mesh* m, nifly::Vector3& dirVect, nifly::Vector3& outNearPos);
-	mesh* PickMesh(int ScreenX, int ScreenY);
+	void GetPickRay(int ScreenX, int ScreenY, Mesh* m, nifly::Vector3& dirVect, nifly::Vector3& outNearPos);
+	Mesh* PickMesh(int ScreenX, int ScreenY);
 
 	struct CursorHitResult {
-		mesh* hitMesh = nullptr;
+		Mesh* hitMesh = nullptr;
 		std::string hitMeshName;
 		int hoverPoint = -1;
 		float hoverMask = 0.0f;
@@ -269,13 +269,13 @@ public:
 	};
 
 	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, CursorHitResult* hitResult = nullptr);
-	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, mesh* hitMesh = nullptr);
+	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, Mesh* hitMesh = nullptr);
 	void ShowCursor(bool show = true);
 	void HidePointCursor();
 	void HideSegCursor();
-	void SetPointCursor(const nifly::Vector3 &p, mesh*m = nullptr);
-	void SetCenterCursor(const nifly::Vector3 &p, mesh*m = nullptr);
-	void ShowMirrorPointCursor(const nifly::Vector3 &p, mesh*m = nullptr);
+	void SetPointCursor(const nifly::Vector3 &p, Mesh*m = nullptr);
+	void SetCenterCursor(const nifly::Vector3 &p, Mesh*m = nullptr);
+	void ShowMirrorPointCursor(const nifly::Vector3 &p, Mesh*m = nullptr);
 
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh.  The outOrigin and outNormal results are in mesh coordinates.
@@ -284,33 +284,33 @@ public:
 					   nifly::Vector3& outOrigin,
 					   nifly::Vector3& outNormal,
 					   bool mirrored = false,
-					   mesh** hitMesh = nullptr,
+					   Mesh** hitMesh = nullptr,
 					   bool allMeshes = true,
 					   int* outFacet = nullptr);
 	bool CollidePlane(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, const nifly::Vector3& inPlaneNormal, float inPlaneDist);
-	bool CollideOverlay(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, nifly::Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr);
+	bool CollideOverlay(int ScreenX, int ScreenY, nifly::Vector3& outOrigin, nifly::Vector3& outNormal, Mesh** hitMesh = nullptr, int* outFacet = nullptr);
 
-	mesh* AddVisCircle(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const std::string& name = "RingMesh");
-	mesh* AddVis3dSphere(const nifly::Vector3& center, float radius, const nifly::Vector3& color, const std::string& name, bool asMesh = false);
-	mesh* AddVis3dRing(const nifly::Vector3& center, const nifly::Vector3& normal, float holeRadius, float ringRadius, const nifly::Vector3& color, const std::string& name);
-	mesh* AddVis3dArrow(
+	Mesh* AddVisCircle(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const std::string& name = "RingMesh");
+	Mesh* AddVis3dSphere(const nifly::Vector3& center, float radius, const nifly::Vector3& color, const std::string& name, bool asMesh = false);
+	Mesh* AddVis3dRing(const nifly::Vector3& center, const nifly::Vector3& normal, float holeRadius, float ringRadius, const nifly::Vector3& color, const std::string& name);
+	Mesh* AddVis3dArrow(
 		const nifly::Vector3& origin, const nifly::Vector3& direction, float stemRadius, float pointRadius, float length, const nifly::Vector3& color, const std::string& name);
-	mesh* AddVis3dCube(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const nifly::Vector3& color, const std::string& name);
-	mesh* AddVisPoint(const nifly::Vector3& p, const std::string& name = "PointMesh", const nifly::Vector3* color = nullptr);
-	mesh* AddVisPlane(const nifly::Matrix4& mat,
+	Mesh* AddVis3dCube(const nifly::Vector3& center, const nifly::Vector3& normal, float radius, const nifly::Vector3& color, const std::string& name);
+	Mesh* AddVisPoint(const nifly::Vector3& p, const std::string& name = "PointMesh", const nifly::Vector3* color = nullptr);
+	Mesh* AddVisPlane(const nifly::Matrix4& mat,
 					  const nifly::Vector2& size,
 					  float uvScale = 1.0f,
 					  float uvOffset = 0.0f,
 					  const std::string& name = "PlaneMesh",
 					  const nifly::Vector3* color = nullptr,
 					  const bool asMesh = false);
-	mesh* AddVisSeg(const nifly::Vector3& p1, const nifly::Vector3& p2, const std::string& name = "", const bool asMesh = false);
-	mesh* AddVisSeamEdges(const mesh* refMesh, bool asMesh = false);
+	Mesh* AddVisSeg(const nifly::Vector3& p1, const nifly::Vector3& p2, const std::string& name = "", const bool asMesh = false);
+	Mesh* AddVisSeamEdges(const Mesh* refMesh, bool asMesh = false);
 
-	mesh* AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName, nifly::Vector3* color = nullptr);
+	Mesh* AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName, nifly::Vector3* color = nullptr);
 	void Update(const std::string& shapeName, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
-	void Update(mesh* m, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
-	mesh* ReloadMeshFromNif(nifly::NifFile* nif, std::string shapeName);
+	void Update(Mesh* m, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
+	Mesh* ReloadMeshFromNif(nifly::NifFile* nif, std::string shapeName);
 	void RecalculateMeshBVH(const std::string& shapeName);
 
 	bool SetMeshVisibility(const std::string& name, bool visible = true);
@@ -318,7 +318,7 @@ public:
 	void SetActiveMeshes(const std::vector<std::string>& shapeNames);
 	void SetSelectedMesh(const std::string& shapeName);
 
-	mesh::RenderMode SetMeshRenderMode(const std::string& name, mesh::RenderMode mode);
+	Mesh::RenderMode SetMeshRenderMode(const std::string& name, Mesh::RenderMode mode);
 
 	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
 	GLMaterial* GetPrimitiveMaterial();
@@ -328,14 +328,14 @@ public:
 
 	// Sort function for overlay layer
 	struct SortOverlaysLayer {
-		bool operator()(const mesh* lhs, const mesh* rhs) { return rhs->overlayLayer > lhs->overlayLayer; }
+		bool operator()(const Mesh* lhs, const Mesh* rhs) { return rhs->overlayLayer > lhs->overlayLayer; }
 	};
 
 	void RenderOneFrame();
 	void RenderToTexture(GLMaterial* renderShader);
-	void RenderMesh(mesh* m);
+	void RenderMesh(Mesh* m);
 
-	void UpdateShaders(mesh* m);
+	void UpdateShaders(Mesh* m);
 
 	void ToggleTextures() {
 		if (bTextured)

@@ -70,7 +70,7 @@ public:
 	void SetFrontalLight(const DirectionalLight& light);
 	void SetDirectionalLight(const DirectionalLight& light, const int index);
 	void SetAmbientLight(const float light);
-	void SetProperties(const mesh::ShaderProperties& prop);
+	void SetProperties(const Mesh::ShaderProperties& prop);
 
 	void ShowLighting(bool bShow = true);
 	void ShowMask(bool bShow = true);

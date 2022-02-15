@@ -247,7 +247,7 @@ void GLShader::SetAmbientLight(const float light) {
 		glUniform1f(loc, light);
 }
 
-void GLShader::SetProperties(const mesh::ShaderProperties& prop) {
+void GLShader::SetProperties(const Mesh::ShaderProperties& prop) {
 	GLint loc = glGetUniformLocation(progID, "prop.uvOffset");
 	if (loc >= 0)
 		glUniform2f(loc, prop.uvOffset.u, prop.uvOffset.v);

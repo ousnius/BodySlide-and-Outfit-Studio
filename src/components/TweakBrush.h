@@ -103,7 +103,7 @@ protected:
 	bool restrictPlane = false;
 	bool restrictNormal = false;
 
-	std::unordered_map<mesh*, TweakBrushMeshCache> cache;
+	std::unordered_map<Mesh*, TweakBrushMeshCache> cache;
 
 public:
 	TweakBrush();
@@ -114,7 +114,7 @@ public:
 
 	virtual UndoType GetUndoType() { return UndoType::VertexPosition; }
 
-	TweakBrushMeshCache* getCache(mesh* m) { return &cache[m]; }
+	TweakBrushMeshCache* getCache(Mesh* m) { return &cache[m]; }
 
 	virtual float getRadius() { return radius; }
 	virtual float getStrength() { return strength; }
@@ -125,7 +125,7 @@ public:
 	virtual void setStrength(float newStr) { strength = newStr; }
 	virtual void setSpacing(float newSpacing) { spacing = newSpacing; }
 
-	virtual int CachedPointIndex(mesh*, int) { return 0; }
+	virtual int CachedPointIndex(Mesh*, int) { return 0; }
 
 	virtual bool isMirrored() { return bMirror; }
 	virtual void setMirror(bool wantMirror = true) { bMirror = wantMirror; }
@@ -140,8 +140,8 @@ public:
 	virtual bool NeedMirrorMergedQuery() { return false; }
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&);
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&) {}
+	virtual void strokeInit(const std::vector<Mesh*>&, TweakPickInfo&, UndoStateProject&);
+	virtual void strokeInit(const std::vector<Mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&) {}
 
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
 	virtual bool checkSpacing(nifly::Vector3& start, nifly::Vector3& end);
@@ -155,10 +155,10 @@ public:
 	// Also optionally, the query can return only connected points within the sphere.
 
 	virtual bool queryPoints(
-		mesh* refmesh, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
+		Mesh* refmesh, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 
 	// Apply the brush effect to the mesh
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) = 0;
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) = 0;
 };
 
 class ClampBrush {
@@ -174,7 +174,7 @@ public:
 	virtual float getStrength() { return strength * 10.0f; }
 	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
 class TB_Mask : public TweakBrush {
@@ -183,7 +183,7 @@ public:
 	virtual ~TB_Mask();
 	virtual UndoType GetUndoType() { return UndoType::Mask; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
 };
 
@@ -193,7 +193,7 @@ public:
 	virtual ~TB_Unmask();
 	virtual UndoType GetUndoType() { return UndoType::Mask; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
 };
 
@@ -203,14 +203,14 @@ public:
 	float hcAlpha;	// Blending constants.
 	float hcBeta;
 
-	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv);
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv, UndoStateShape& uss);
+	void lapFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv);
+	void hclapFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv, UndoStateShape& uss);
 
 	TB_SmoothMask();
 	virtual ~TB_SmoothMask();
 	virtual UndoType GetUndoType() { return UndoType::Mask; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
 class TB_Deflate : public TB_Inflate {
@@ -230,18 +230,18 @@ class TB_Smooth : public TweakBrush {
 
 	// Laplacian smoothing filter. Points are the set of point indices into refmesh to smooth.
 	// wv is the current position of those points. This function can be called iteratively, reusing wv.
-	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv);
+	void lapFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv);
 
 	// Improved laplacian smoothing filter (HC-Smooth) points are the set of point indices into refmesh to smooth.
 	// wv is the current position of those points. This function can be called iteratively, reusing wv.
 	// This algo is much slower than lap, but tries to maintain mesh volume.
-	void hclapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv, UndoStateShape& uss);
+	void hclapFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv, UndoStateShape& uss);
 
 public:
 	TB_Smooth();
 	virtual ~TB_Smooth();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
 };
 
@@ -252,8 +252,8 @@ public:
 	TB_Undiff();
 	virtual ~TB_Undiff();
 
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&);
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void strokeInit(const std::vector<Mesh*>&, TweakPickInfo&, UndoStateProject&, std::vector<std::vector<nifly::Vector3>>&);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
 
 	virtual float getStrength() { return strength * 10.0f; }
@@ -273,15 +273,15 @@ public:
 	TB_Move();
 	virtual ~TB_Move();
 
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&);
+	virtual void strokeInit(const std::vector<Mesh*>&, TweakPickInfo&, UndoStateProject&);
 
 	virtual bool queryPoints(
-		mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
-	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+		Mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
+	virtual void brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
 
 	void GetWorkingPlane(nifly::Vector3& outPlaneNormal, float& outPlaneDist);
-	int CachedPointIndex(mesh* m, int query) {
+	int CachedPointIndex(Mesh* m, int query) {
 		TweakBrushMeshCache* meshCache = &cache[m];
 		if (query >= meshCache->nCachedPoints)
 			return meshCache->cachedPointsM[query - meshCache->nCachedPoints];
@@ -299,13 +299,13 @@ public:
 	virtual ~TB_XForm();
 
 	void GetWorkingPlane(nifly::Vector3& outPlaneNormal, float& outPlaneDist);
-	int CachedPointIndex(mesh*, int query) { return query; }
+	int CachedPointIndex(Mesh*, int query) { return query; }
 	void SetXFormType(int type) { xformType = type; }
 
-	virtual void strokeInit(const std::vector<mesh*>&, TweakPickInfo&, UndoStateProject&);
+	virtual void strokeInit(const std::vector<Mesh*>&, TweakPickInfo&, UndoStateProject&);
 	virtual bool queryPoints(
-		mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
-	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+		Mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
+	virtual void brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
 };
 
@@ -329,7 +329,7 @@ public:
 	virtual UndoType GetUndoType() { return UndoType::Weight; }
 	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
 class TB_Unweight : public TweakBrush {
@@ -349,7 +349,7 @@ public:
 	virtual UndoType GetUndoType() { return UndoType::Weight; }
 	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
 class TB_SmoothWeight : public TweakBrush {
@@ -367,16 +367,16 @@ public:
 	float hcAlpha;	// Blending constants.
 	float hcBeta;
 
-	void lapFilter(mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv);
+	void lapFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv);
 	void hclapFilter(
-		mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape& uss, const int boneInd, const std::unordered_map<uint16_t, float>* wPtr);
+		Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape& uss, const int boneInd, const std::unordered_map<uint16_t, float>* wPtr);
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
 	virtual UndoType GetUndoType() { return UndoType::Weight; }
 	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
 class TB_Color : public TweakBrush {
@@ -387,7 +387,7 @@ public:
 	virtual ~TB_Color();
 	virtual UndoType GetUndoType() { return UndoType::Color; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
 class TB_Uncolor : public TweakBrush {
@@ -396,7 +396,7 @@ public:
 	virtual ~TB_Uncolor();
 	virtual UndoType GetUndoType() { return UndoType::Color; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
 class TB_Alpha : public TweakBrush, public ClampBrush {
@@ -405,7 +405,7 @@ public:
 	virtual ~TB_Alpha();
 	virtual UndoType GetUndoType() { return UndoType::Alpha; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
 };
 
@@ -415,26 +415,26 @@ public:
 	virtual ~TB_Unalpha();
 	virtual UndoType GetUndoType() { return UndoType::Alpha; }
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
+	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
 };
 
 class TweakStroke {
-	std::vector<mesh*> refMeshes;
+	std::vector<Mesh*> refMeshes;
 	TweakBrush* refBrush;
 	bool newStroke = true;
 	nifly::Vector3 lastPoint;
 
 	static std::vector<std::future<void>> normalUpdates;
-	std::unordered_map<mesh*, std::unique_ptr<int[]>> pts1;
-	std::unordered_map<mesh*, std::unique_ptr<int[]>> pts2;
+	std::unordered_map<Mesh*, std::unique_ptr<int[]>> pts1;
+	std::unordered_map<Mesh*, std::unique_ptr<int[]>> pts2;
 
-	std::unordered_map<mesh*, std::unordered_set<AABBTree::AABBTreeNode*>> affectedNodes;
+	std::unordered_map<Mesh*, std::unordered_set<AABBTree::AABBTreeNode*>> affectedNodes;
 
 public:
 	UndoStateProject& usp;
 
-	TweakStroke(const std::vector<mesh*>& meshes, TweakBrush* theBrush, UndoStateProject& uspi)
+	TweakStroke(const std::vector<Mesh*>& meshes, TweakBrush* theBrush, UndoStateProject& uspi)
 		: usp(uspi) {
 		refMeshes = meshes;
 		refBrush = theBrush;
@@ -449,5 +449,5 @@ public:
 	TweakBrush::BrushType BrushType() { return refBrush->Type(); }
 	std::string BrushName() { return refBrush->Name(); }
 	TweakBrush* GetRefBrush() { return refBrush; }
-	std::vector<mesh*> GetRefMeshes() { return refMeshes; }
+	std::vector<Mesh*> GetRefMeshes() { return refMeshes; }
 };

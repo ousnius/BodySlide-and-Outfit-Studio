@@ -32,7 +32,7 @@ void EditUVAction::RestoreStartState() {
 		actionMesh->verts[stateIt.first].y = stateIt.second.v;
 	}
 
-	actionMesh->QueueUpdate(mesh::UpdateType::Position);
+	actionMesh->QueueUpdate(Mesh::UpdateType::Position);
 }
 
 void EditUVAction::RestoreEndState() {
@@ -41,7 +41,7 @@ void EditUVAction::RestoreEndState() {
 		actionMesh->verts[stateIt.first].y = stateIt.second.v;
 	}
 
-	actionMesh->QueueUpdate(mesh::UpdateType::Position);
+	actionMesh->QueueUpdate(Mesh::UpdateType::Position);
 }
 
 
@@ -116,7 +116,7 @@ wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_CLOSE(EditUV::OnClose)
 wxEND_EVENT_TABLE()
 
-EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, mesh* srcMesh, const std::string& srcSliderName) {
+EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, Mesh* srcMesh, const std::string& srcSliderName) {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/EditUV.xrc");
 	if (!loaded) {
@@ -270,7 +270,7 @@ void EditUV::UpdateShapeMesh(bool apply) {
 			nif->SetUvsForShape(shape, uvs);
 	}
 
-	shapeMesh->QueueUpdate(mesh::UpdateType::TextureCoordinates);
+	shapeMesh->QueueUpdate(Mesh::UpdateType::TextureCoordinates);
 	os->glView->Render();
 }
 
@@ -407,7 +407,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 		uvSurface.GetPickRay(lastX, lastY, nullptr, d, last);
 
 		Rect rect;
-		mesh* m = editUV->shapeMesh;
+		Mesh* m = editUV->shapeMesh;
 
 		if (activeTool == EditUVTool::BoxSelection) {
 			// Draw normalized rectangle from start to current
@@ -438,7 +438,7 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 				boxSelectMesh->color.z = 0.0f;
 			}
 
-			boxSelectMesh->QueueUpdate(mesh::UpdateType::Position);
+			boxSelectMesh->QueueUpdate(Mesh::UpdateType::Position);
 		}
 		else if (activeTool == EditUVTool::VertexSelection) {
 			SelectVertex(p, wxGetKeyState(wxKeyCode::WXK_ALT));
@@ -455,9 +455,9 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 				}
 			}
 
-			uvGridMesh->QueueUpdate(mesh::UpdateType::Position);
+			uvGridMesh->QueueUpdate(Mesh::UpdateType::Position);
 
-			m->QueueUpdate(mesh::UpdateType::TextureCoordinates);
+			m->QueueUpdate(Mesh::UpdateType::TextureCoordinates);
 			editUV->os->glView->Render();
 		}
 		else if (activeTool == EditUVTool::Scale) {
@@ -523,9 +523,9 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 					}
 				}
 
-				uvGridMesh->QueueUpdate(mesh::UpdateType::Position);
+				uvGridMesh->QueueUpdate(Mesh::UpdateType::Position);
 
-				m->QueueUpdate(mesh::UpdateType::TextureCoordinates);
+				m->QueueUpdate(Mesh::UpdateType::TextureCoordinates);
 				editUV->os->glView->Render();
 			}
 		}
@@ -554,9 +554,9 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 					}
 				}
 
-				uvGridMesh->QueueUpdate(mesh::UpdateType::Position);
+				uvGridMesh->QueueUpdate(Mesh::UpdateType::Position);
 
-				m->QueueUpdate(mesh::UpdateType::TextureCoordinates);
+				m->QueueUpdate(Mesh::UpdateType::TextureCoordinates);
 				editUV->os->glView->Render();
 			}
 		}
@@ -598,7 +598,7 @@ void EditUVCanvas::OnLeftDown(wxMouseEvent& event) {
 			boxSelectMesh->verts[2] = Vector3(click.x, click.y, 0.0f);
 			boxSelectMesh->verts[3] = Vector3(click.x, click.y, 0.0f);
 			boxSelectMesh->color = Vector3(1.0f, 1.0f, 0.0f);
-			boxSelectMesh->QueueUpdate(mesh::UpdateType::Position);
+			boxSelectMesh->QueueUpdate(Mesh::UpdateType::Position);
 			boxSelectMesh->bVisible = true;
 			break;
 
@@ -678,7 +678,7 @@ void EditUVCanvas::OnLeftUp(wxMouseEvent& event) {
 				}
 			}
 
-			uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+			uvGridMesh->QueueUpdate(Mesh::UpdateType::VertexColors);
 			boxSelectMesh->bVisible = false;
 			break;
 
@@ -762,7 +762,7 @@ void EditUVCanvas::SelectAll() {
 		uvGridMesh->vcolors[i].z = 0.0f;
 	}
 
-	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	uvGridMesh->QueueUpdate(Mesh::UpdateType::VertexColors);
 	uvSurface.RenderOneFrame();
 }
 
@@ -770,7 +770,7 @@ void EditUVCanvas::SelectInvert() {
 	for (int i = 0; i < uvGridMesh->nVerts; i++)
 		uvGridMesh->vcolors[i].x = uvGridMesh->vcolors[i].x == 1.0f ? 0.0f : 1.0f;
 
-	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	uvGridMesh->QueueUpdate(Mesh::UpdateType::VertexColors);
 	uvSurface.RenderOneFrame();
 }
 
@@ -793,7 +793,7 @@ void EditUVCanvas::SelectLess() {
 	for (auto& up : unselectPoints)
 		uvGridMesh->vcolors[up].x = 0.0f;
 
-	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	uvGridMesh->QueueUpdate(Mesh::UpdateType::VertexColors);
 	uvSurface.RenderOneFrame();
 }
 
@@ -806,7 +806,7 @@ void EditUVCanvas::SelectMore() {
 	for (auto& adj : adjacentPoints)
 		uvGridMesh->vcolors[adj].x = 1.0f;
 
-	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	uvGridMesh->QueueUpdate(Mesh::UpdateType::VertexColors);
 	uvSurface.RenderOneFrame();
 }
 
@@ -862,7 +862,7 @@ void EditUVCanvas::InitMeshes() {
 	std::vector<Triangle> tris;
 	editUV->shape->GetTriangles(tris);
 
-	uvGridMesh = new mesh();
+	uvGridMesh = new Mesh();
 	uvGridMesh->nVerts = verts.size();
 	uvGridMesh->nTris = tris.size();
 
@@ -883,7 +883,7 @@ void EditUVCanvas::InitMeshes() {
 	for (int t = 0; t < uvGridMesh->nTris; t++)
 		uvGridMesh->tris[t] = tris[t];
 
-	uvGridMesh->rendermode = mesh::RenderMode::LitWire;
+	uvGridMesh->rendermode = Mesh::RenderMode::LitWire;
 	uvGridMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 	uvGridMesh->vertexColors = true;
 
@@ -898,7 +898,7 @@ void EditUVCanvas::InitMeshes() {
 	uvSurface.AddOverlay(uvGridMesh);
 	uvSurface.UpdateShaders(uvGridMesh);
 
-	boxSelectMesh = new mesh();
+	boxSelectMesh = new Mesh();
 	boxSelectMesh->nVerts = 4;
 	boxSelectMesh->nTris = 2;
 
@@ -992,6 +992,6 @@ bool EditUVCanvas::SelectVertex(const wxPoint& screenPos, bool unselect) {
 	else
 		uvGridMesh->vcolors[vertIndex].x = 1.0f;
 
-	uvGridMesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	uvGridMesh->QueueUpdate(Mesh::UpdateType::VertexColors);
 	return true;
 }

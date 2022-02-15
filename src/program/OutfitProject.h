@@ -181,7 +181,7 @@ public:
 	bool& SliderShow(const std::string& sliderName);
 
 	void RefreshMorphShape(nifly::NiShape* shape);
-	void UpdateShapeFromMesh(nifly::NiShape* shape, const mesh* m);
+	void UpdateShapeFromMesh(nifly::NiShape* shape, const Mesh* m);
 	void UpdateMorphResult(nifly::NiShape* shape, const std::string& sliderName, std::unordered_map<uint16_t, nifly::Vector3>& vertUpdates);
 	void ScaleMorphResult(nifly::NiShape* shape, const std::string& sliderName, float scaleValue);
 	void MoveVertex(nifly::NiShape* shape, const nifly::Vector3& pos, const int& id);
@@ -269,14 +269,14 @@ public:
 	}
 
 	void RenameShape(nifly::NiShape* shape, const std::string& newShapeName);
-	void UpdateNifNormals(nifly::NifFile* nif, const std::vector<mesh*>& shapemeshes);
+	void UpdateNifNormals(nifly::NifFile* nif, const std::vector<Mesh*>& shapemeshes);
 
 	void ChooseClothData(nifly::NifFile& nif);
 	void ResetTransforms();
 	void RemoveSkinning();
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
-	int ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef = false);
+	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false);
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
