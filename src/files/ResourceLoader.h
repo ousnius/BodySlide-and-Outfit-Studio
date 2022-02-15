@@ -12,19 +12,8 @@ See the included LICENSE file
 
 #include "../utils/StringStuff.h"
 
-#ifdef _MSC_VER
-#pragma warning(push, 0)
-#else
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
-#endif
 #include "../SOIL2/SOIL2.h"
 #include "gli.hpp"
-#ifdef _MSC_VER
-#pragma warning(pop)
-#else
-#pragma GCC diagnostic pop
-#endif
 
 typedef unsigned int GLuint;
 class GLMaterial;

@@ -9,14 +9,8 @@ See the included LICENSE file
 #include "../render/GLExtensions.h"
 #include "../utils/AABBTree.h"
 
-#ifdef _MSC_VER
-#pragma warning(push, 0)
-#endif
 #include "../gli/glm/gtc/matrix_transform.hpp"
 #include "../gli/glm/gtx/euler_angles.hpp"
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 #include <array>
 #include <memory>
