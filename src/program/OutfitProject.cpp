@@ -3795,7 +3795,7 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& sha
 
 			liveNorms.clear();
 			for (int i = 0; i < m->nVerts; i++)
-				liveNorms.push_back(m->TransformDirMeshToNif(m->norms[i]));
+				liveNorms.push_back(mesh::TransformDirMeshToNif(m->norms[i]));
 
 			nif->SetNormalsForShape(shape, liveNorms);
 			nif->CalcTangentsForShape(shape);
