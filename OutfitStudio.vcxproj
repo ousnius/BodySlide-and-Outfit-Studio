@@ -708,7 +708,6 @@
     <ClInclude Include="lib\LZ4F\lz4frame_static.h" />
     <ClInclude Include="lib\LZ4F\lz4hc.h" />
     <ClInclude Include="lib\LZ4F\xxhash.h" />
-    <ClInclude Include="lib\SOIL2\etc1_utils.h" />
     <ClInclude Include="lib\SOIL2\image_DXT.h" />
     <ClInclude Include="lib\SOIL2\image_helper.h" />
     <ClInclude Include="lib\SOIL2\jo_jpeg.h" />
@@ -725,6 +724,7 @@
     <ClInclude Include="lib\SOIL2\stbi_pvr_c.h" />
     <ClInclude Include="lib\SOIL2\stb_image.h" />
     <ClInclude Include="lib\SOIL2\stb_image_write.h" />
+    <ClInclude Include="lib\SOIL2\wfETC.h" />
     <ClInclude Include="lib\TinyXML-2\tinyxml2.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\components\Anim.h" />
@@ -797,10 +797,10 @@
     <ClCompile Include="lib\nifly\src\Particles.cpp" />
     <ClCompile Include="lib\nifly\src\Shaders.cpp" />
     <ClCompile Include="lib\nifly\src\Skin.cpp" />
-    <ClCompile Include="lib\SOIL2\etc1_utils.c" />
     <ClCompile Include="lib\SOIL2\image_DXT.c" />
     <ClCompile Include="lib\SOIL2\image_helper.c" />
     <ClCompile Include="lib\SOIL2\SOIL2.c" />
+    <ClCompile Include="lib\SOIL2\wfETC.c" />
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp" />
     <ClCompile Include="src\components\Anim.cpp" />
     <ClCompile Include="src\components\Automorph.cpp" />
