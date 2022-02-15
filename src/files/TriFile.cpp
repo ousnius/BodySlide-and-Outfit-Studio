@@ -16,7 +16,7 @@ bool TriFile::Read(const std::string& fileName) {
 		char hdr[4];
 		triFile.read(hdr, 4);
 
-		uint32_t magic = 'TRIP';
+		uint32_t magic = "TRIP"_mci;
 		if (memcmp(hdr, &magic, 4) != 0)
 			return false;
 
@@ -139,7 +139,7 @@ bool TriFile::Write(const std::string& fileName) {
 	PlatformUtil::OpenFileStream(triFile, fileName, std::ios::out | std::ios::binary);
 
 	if (triFile.is_open()) {
-		uint32_t hdr = 'TRIP';
+		uint32_t hdr = "TRIP"_mci;
 		triFile.write((char*)&hdr, 4);
 
 		uint16_t shapeCount = GetShapeCount(MORPHTYPE_POSITION);

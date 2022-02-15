@@ -57,15 +57,13 @@ public:
 
 class SliderSetGroupFile {
 	XMLDocument doc;
-	XMLElement* root;
+	XMLElement* root = nullptr;
 	std::map<std::string, XMLElement*> groupsInFile;
-	int error;
+	int error = 0;
 
 public:
 	std::string fileName;
-	SliderSetGroupFile()
-		: error(0)
-		, root(nullptr) {}
+	SliderSetGroupFile() {}
 	SliderSetGroupFile(const std::string& srcFileName);
 	~SliderSetGroupFile() {}
 

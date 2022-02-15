@@ -242,7 +242,6 @@ wxString NormalsGenDialog::nextLayerName() {
 }
 
 void NormalsGenDialog::addBGLayer(NormalGenLayer& newLayer) {
-	wxPGProperty* newCat;
 	wxPGProperty* newProp;
 	wxArrayString resolutions;
 	resolutions.Add("256");
@@ -252,14 +251,14 @@ void NormalsGenDialog::addBGLayer(NormalGenLayer& newLayer) {
 	resolutions.Add("4096");
 
 	int selectedRes = 0;
-	for (int i = 0; i < resolutions.size(); i++) {
+	for (int i = 0; i < static_cast<int>(resolutions.size()); i++) {
 		if (resolutions[i] == std::to_string(newLayer.resolution)) {
 			selectedRes = i;
 			break;
 		}
 	}
 
-	newCat = pgLayers->Append(new wxPropertyCategory(newLayer.layerName, "Background"));
+	pgLayers->Append(new wxPropertyCategory(newLayer.layerName, "Background"));
 
 	newProp = pgLayers->Append(new wxImageFileProperty(_("Background File"), _("Background File"), newLayer.sourceFileName));
 	pgLayers->SetPropertyHelpString(newProp, _("File source for this layer."));

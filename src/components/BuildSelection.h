@@ -36,14 +36,12 @@ public:
 
 class BuildSelectionFile {
 	XMLDocument doc;
-	XMLElement* root;
-	int error;
+	XMLElement* root = nullptr;
+	int error = 0;
 
 public:
 	std::string fileName;
-	BuildSelectionFile()
-		: error(0)
-		, root(nullptr) {}
+	BuildSelectionFile() {}
 	BuildSelectionFile(const std::string& srcFileName);
 	~BuildSelectionFile(){};
 

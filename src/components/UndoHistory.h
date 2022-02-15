@@ -26,7 +26,7 @@ public:
 
 	bool CanUndo() const { return curIndex != UH_NONE; }
 
-	bool CanRedo() const { return !states.empty() && curIndex + 1 < static_cast<int>(states.size()); }
+	bool CanRedo() const { return !states.empty() && curIndex + 1 < states.size(); }
 
 	UndoStateProject* GetCurState() const {
 		if (curIndex == UH_NONE)
@@ -41,7 +41,7 @@ public:
 	}
 
 	UndoStateProject* GetNextState() const {
-		if (curIndex + 1 >= static_cast<int>(states.size()))
+		if (curIndex + 1 >= states.size())
 			return nullptr;
 		return states[curIndex + 1].get();
 	}

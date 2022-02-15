@@ -589,6 +589,9 @@ void EditUVCanvas::OnLeftDown(wxMouseEvent& event) {
 	editUV->StartTool();
 
 	switch (editUV->GetActiveTool()) {
+		case EditUVTool::VertexSelection:
+			break;
+
 		case EditUVTool::BoxSelection:
 			boxSelectMesh->verts[0] = Vector3(click.x, click.y, 0.0f);
 			boxSelectMesh->verts[1] = Vector3(click.x, click.y, 0.0f);

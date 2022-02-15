@@ -21,7 +21,7 @@ See the included LICENSE file
 using namespace nifly;
 
 OSDataFile::OSDataFile() {
-	header = 'OSD\0';
+	header = "OSD\0"_mci;
 	version = 1;
 	dataCount = 0;
 }
@@ -43,7 +43,7 @@ bool OSDataFile::Read(const std::string& fileName) {
 		return false;
 
 	file.read((char*)&header, 4);
-	if (header != 'OSD\0')
+	if (header != "OSD\0"_mci)
 		return false;
 
 	file.read((char*)&version, 4);

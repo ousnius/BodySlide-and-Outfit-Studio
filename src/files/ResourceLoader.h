@@ -12,10 +12,8 @@ See the included LICENSE file
 
 #include "../utils/StringStuff.h"
 
-#pragma warning(push, 0)
 #include "../SOIL2/SOIL2.h"
 #include "gli.hpp"
-#pragma warning(pop)
 
 typedef unsigned int GLuint;
 class GLMaterial;

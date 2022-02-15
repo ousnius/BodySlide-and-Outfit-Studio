@@ -63,15 +63,13 @@ public:
 
 class RefTemplateFile {
 	XMLDocument doc;
-	XMLElement* root;
+	XMLElement* root = nullptr;
 	std::vector<std::pair<std::string, XMLElement*>> refTemplatesInFile;
-	int error;
+	int error = 0;
 
 public:
 	std::string fileName;
-	RefTemplateFile()
-		: error(0)
-		, root(nullptr) {}
+	RefTemplateFile() {}
 	RefTemplateFile(const std::string& srcFileName);
 	~RefTemplateFile(){};
 

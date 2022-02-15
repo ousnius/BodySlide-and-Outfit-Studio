@@ -1280,7 +1280,7 @@ void OutfitStudioFrame::OnMenuItem(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id >= 1000 && id < 2000) {
 		// Load project history entry
-		if (projectHistory.size() > id - 1000) {
+		if (static_cast<int>(projectHistory.size()) > id - 1000) {
 			if (!CheckPendingChanges())
 				return;
 
@@ -1863,7 +1863,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
 
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
-		for (int i = 0; i < SupportedLangs.size(); i++)
+		for (size_t i = 0; i < SupportedLangs.size(); i++)
 			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
 
 		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
@@ -3349,7 +3349,6 @@ void OutfitStudioFrame::UpdateUndoTools() {
 void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	wxWizard wiz;
 	wxWizardPage* pg1;
-	wxWizardPage* pg2;
 	bool result = false;
 
 	if (!CheckPendingChanges())
@@ -3363,7 +3362,6 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnNPWizChangeSliderSetFile, this);
 		XRCCTRL(wiz, "npSliderSetName", wxChoice)->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnNPWizChangeSetNameChoice, this);
 
-		pg2 = (wxWizardPage*)XRCCTRL(wiz, "wizpgNewProj2", wxWizardPageSimple);
 		XRCCTRL(wiz, "npWorkFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_File, this);
 		XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudioFrame::OnLoadOutfitFP_Texture, this);
 
@@ -12815,7 +12813,6 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 	if (!isLDragging && !isPainting && activeTool == ToolID::Select) {
 		int x, y;
 		event.GetPosition(&x, &y);
-		wxPoint p = event.GetPosition();
 
 		mesh* m = gls.PickMesh(x, y);
 		if (m)

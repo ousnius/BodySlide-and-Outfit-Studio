@@ -337,7 +337,7 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 
 void AnimInfo::SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<uint16_t, float>& inVertWeights) {
 	int bid = GetShapeBoneIndex(shape, boneName);
-	if (bid == 0xFFFFFFFF)
+	if (bid == -1)
 		return;
 
 	shapeSkinning[shape].boneWeights[bid].weights = inVertWeights;
@@ -524,7 +524,7 @@ void AnimInfo::RenameShape(const std::string& shapeName, const std::string& newS
 	}
 }
 
-AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* inParent) {
+AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, uint32_t srcBlock, AnimBone* inParent) {
 	parent = inParent;
 	isStandardBone = false;
 	auto node = skeletonNif->GetHeader().GetBlock<NiNode>(srcBlock);
@@ -580,7 +580,7 @@ int AnimSkeleton::LoadFromNif(const std::string& fileName) {
 	}
 
 	rootBone = Config["Anim/SkeletonRootName"];
-	int nodeID = refSkeletonNif.GetBlockID(refSkeletonNif.FindBlockByName<NiNode>(rootBone));
+	uint32_t nodeID = refSkeletonNif.GetBlockID(refSkeletonNif.FindBlockByName<NiNode>(rootBone));
 	if (nodeID == 0xFFFFFFFF) {
 		wxLogError("Root '%s' not found in skeleton '%s'!", rootBone, fileName);
 		wxMessageBox(wxString::Format(_("Root '%s' not found in skeleton '%s'!"), rootBone, fileName));

@@ -180,7 +180,6 @@ bool AABB::IntersectAABB(const AABB& other) {
 
 bool AABB::IntersectRay(const Vector3& Origin, const Vector3& Direction, Vector3* outCoord) {
 	//char side[3];  // side of potential collision plane: 0=left 1=right 2 = middle
-	float candidatePlane[3]; // x,y,z values for potential candidate plane intersection.
 	Vector3 maxT(-1, -1, -1);
 	Vector3 collisionCoord;
 	bool inside = true;
@@ -190,14 +189,12 @@ bool AABB::IntersectRay(const Vector3& Origin, const Vector3& Direction, Vector3
 	// X Axis candidacy
 	if (Origin.x < min.x) {
 		inside = false;
-		candidatePlane[0] = min.x;
 		if (Direction.x != 0.0f) {
 			maxT.x = (min.x - Origin.x) / Direction.x;
 		}
 	}
 	else if (Origin.x > max.x) {
 		inside = false;
-		candidatePlane[0] = max.x;
 		if (Direction.x != 0.0f) {
 			maxT.x = (max.x - Origin.x) / Direction.x;
 		}
@@ -206,14 +203,12 @@ bool AABB::IntersectRay(const Vector3& Origin, const Vector3& Direction, Vector3
 	// Y Axis candidacy
 	if (Origin.y < min.y) {
 		inside = false;
-		candidatePlane[1] = min.y;
 		if (Direction.y != 0.0f) {
 			maxT.y = (min.y - Origin.y) / Direction.y;
 		}
 	}
 	else if (Origin.y > max.y) {
 		inside = false;
-		candidatePlane[1] = max.y;
 		if (Direction.y != 0.0f) {
 			maxT.y = (max.y - Origin.y) / Direction.y;
 		}
@@ -225,14 +220,12 @@ bool AABB::IntersectRay(const Vector3& Origin, const Vector3& Direction, Vector3
 	// Z Axis candidacy
 	if (Origin.z < min.z) {
 		inside = false;
-		candidatePlane[2] = min.z;
 		if (Direction.z != 0.0f) {
 			maxT.z = (min.z - Origin.z) / Direction.z;
 		}
 	}
 	else if (Origin.z > max.z) {
 		inside = false;
-		candidatePlane[2] = max.z;
 		if (Direction.z != 0.0f) {
 			maxT.z = (max.z - Origin.z) / Direction.z;
 		}

@@ -57,7 +57,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 	std::string facept2;
 	std::string facept3;
 	std::string facept4;
-	uint32_t f[4];
+	int f[4];
 	uint32_t ft[4];
 	uint32_t fn[4];
 	uint32_t nPoints = 0;
@@ -201,7 +201,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 					curPoints.push_back(pt);
 
 				if (v_idx[i] == current->verts.size()) {
-					if (verts.size() > f[i]) {
+					if (static_cast<int>(verts.size()) > f[i]) {
 						current->verts.push_back(verts[f[i]]);
 
 						if (uvs.size() > ft[i])
