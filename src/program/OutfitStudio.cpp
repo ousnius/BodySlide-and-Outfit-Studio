@@ -1527,8 +1527,8 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 			// Save new merged project file
 			if (!projectFile.Save()) {
-				wxLogError("Failed to save merged project file '%s'!", mergedFileName);
-				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFileName), _("Error"), wxICON_ERROR);
+				wxLogError("Failed to save merged project file '%s'!", mergedFilePath);
+				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFilePath), _("Error"), wxICON_ERROR);
 				EndProgress();
 				return;
 			}
@@ -1685,8 +1685,8 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 			// Save new merged project file
 			if (!projectFile.Save()) {
-				wxLogError("Failed to save merged project file '%s'!", mergedFileName);
-				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFileName), _("Error"), wxICON_ERROR);
+				wxLogError("Failed to save merged project file '%s'!", mergedFilePath);
+				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFilePath), _("Error"), wxICON_ERROR);
 				EndProgress();
 				return;
 			}
