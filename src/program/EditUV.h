@@ -18,12 +18,12 @@ const int EDITUV_DIRECTION_DOWN = 0x8;
 enum class EditUVTool { BoxSelection, VertexSelection, Move, Scale, Rotate };
 
 class EditUVAction {
-	mesh* actionMesh = nullptr;
+	Mesh* actionMesh = nullptr;
 	std::unordered_map<int, nifly::Vector2> startState;
 	std::unordered_map<int, nifly::Vector2> endState;
 
 public:
-	void SetActionMesh(mesh* m) { actionMesh = m; }
+	void SetActionMesh(Mesh* m) { actionMesh = m; }
 
 	std::unordered_map<int, nifly::Vector2>& GetStartState();
 	std::unordered_map<int, nifly::Vector2>& GetEndState();
@@ -62,7 +62,7 @@ public:
 	EditUVCanvas* canvas = nullptr;
 	nifly::NifFile* nif = nullptr;
 	nifly::NiShape* shape = nullptr;
-	mesh* shapeMesh = nullptr;
+	Mesh* shapeMesh = nullptr;
 	std::string sliderName;
 
 	EditUVAction currentAction;
@@ -71,7 +71,7 @@ public:
 	wxToolBar* uvToolBar = nullptr;
 	wxMenuBar* uvMenuBar = nullptr;
 
-	EditUV(wxWindow*, nifly::NifFile*, nifly::NiShape*, mesh*, const std::string&);
+	EditUV(wxWindow*, nifly::NifFile*, nifly::NiShape*, Mesh*, const std::string&);
 	~EditUV();
 
 	void StartTool() { toolActive = toolSelected; }
@@ -107,10 +107,10 @@ private:
 
 class EditUVCanvas : public wxGLCanvas {
 public:
-	mesh* seamEdgesMesh = nullptr;
-	mesh* planeMesh = nullptr;
-	mesh* uvGridMesh = nullptr;
-	mesh* boxSelectMesh = nullptr;
+	Mesh* seamEdgesMesh = nullptr;
+	Mesh* planeMesh = nullptr;
+	Mesh* uvGridMesh = nullptr;
+	Mesh* boxSelectMesh = nullptr;
 
 	EditUVCanvas(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs);
 	~EditUVCanvas();

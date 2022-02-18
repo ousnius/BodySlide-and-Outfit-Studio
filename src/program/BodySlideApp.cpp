@@ -1300,7 +1300,7 @@ void BodySlideApp::RebuildPreviewMeshes() {
 
 void BodySlideApp::UpdateMeshesFromSet() {
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
-		mesh* m = preview->GetMesh(it->first);
+		Mesh* m = preview->GetMesh(it->first);
 		if (m) {
 			m->smoothSeamNormals = it->second.smoothSeamNormals;
 			m->lockNormals = it->second.lockNormals;

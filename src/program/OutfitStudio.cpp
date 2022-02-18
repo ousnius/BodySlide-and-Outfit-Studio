@@ -1530,8 +1530,8 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 			// Save new merged project file
 			if (!projectFile.Save()) {
-				wxLogError("Failed to save merged project file '%s'!", mergedFileName);
-				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFileName), _("Error"), wxICON_ERROR);
+				wxLogError("Failed to save merged project file '%s'!", mergedFilePath);
+				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFilePath), _("Error"), wxICON_ERROR);
 				EndProgress();
 				return;
 			}
@@ -1688,8 +1688,8 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 
 			// Save new merged project file
 			if (!projectFile.Save()) {
-				wxLogError("Failed to save merged project file '%s'!", mergedFileName);
-				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFileName), _("Error"), wxICON_ERROR);
+				wxLogError("Failed to save merged project file '%s'!", mergedFilePath);
+				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFilePath), _("Error"), wxICON_ERROR);
 				EndProgress();
 				return;
 			}
@@ -2013,10 +2013,10 @@ bool OutfitStudioFrame::SaveProject() {
 	StartProgress(wxString::Format(_("Saving project '%s'..."), wxString::FromUTF8(project->OutfitName())));
 	project->ClearBoneScale();
 
-	std::vector<mesh*> shapeMeshes;
+	std::vector<Mesh*> shapeMeshes;
 	for (auto& s : project->GetWorkNif()->GetShapes()) {
 		if (!project->IsBaseShape(s)) {
-			mesh* m = glView->GetMesh(s->name.get());
+			Mesh* m = glView->GetMesh(s->name.get());
 			if (m)
 				shapeMeshes.push_back(m);
 		}
@@ -2192,10 +2192,10 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	StartProgress(wxString::Format(_("Saving project '%s'..."), strOutfitName));
 	project->ClearBoneScale();
 
-	std::vector<mesh*> shapeMeshes;
+	std::vector<Mesh*> shapeMeshes;
 	for (auto& s : project->GetWorkNif()->GetShapes()) {
 		if (!project->IsBaseShape(s)) {
-			mesh* m = glView->GetMesh(s->name.get());
+			Mesh* m = glView->GetMesh(s->name.get());
 			if (m)
 				shapeMeshes.push_back(m);
 		}
@@ -2506,7 +2506,7 @@ void OutfitStudioFrame::UpdateActiveShape() {
 		menuBar->Enable(XRCID("btnLockNormals"), false);
 	}
 	else {
-		mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
+		Mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 		if (m) {
 			smoothSeamNormals = m->smoothSeamNormals;
 			lockNormals = m->lockNormals;
@@ -2713,7 +2713,7 @@ std::vector<std::string> OutfitStudioFrame::GetShapeList() {
 }
 
 void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
-	mesh* m = glView->GetMesh(shape->name.get());
+	Mesh* m = glView->GetMesh(shape->name.get());
 	if (m)
 		project->UpdateShapeFromMesh(shape, m);
 }
@@ -2722,7 +2722,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo)
 	if (!usp->sliderName.empty()) {
 		float sliderscale = 1 / usp->sliderscale;
 		for (auto& uss : usp->usss) {
-			mesh* m = glView->GetMesh(uss.shapeName);
+			Mesh* m = glView->GetMesh(uss.shapeName);
 			if (!m)
 				continue;
 
@@ -2745,7 +2745,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo)
 	else {
 		if (usp->undoType == UndoType::Weight) {
 			for (auto& uss : usp->usss) {
-				mesh* m = glView->GetMesh(uss.shapeName);
+				Mesh* m = glView->GetMesh(uss.shapeName);
 				if (!m)
 					continue;
 
@@ -2774,7 +2774,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo)
 		}
 		else if (usp->undoType == UndoType::Color) {
 			for (auto& uss : usp->usss) {
-				mesh* m = glView->GetMesh(uss.shapeName);
+				Mesh* m = glView->GetMesh(uss.shapeName);
 				if (!m)
 					continue;
 
@@ -2804,7 +2804,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo)
 		}
 		else if (usp->undoType == UndoType::Alpha) {
 			for (auto& uss : usp->usss) {
-				mesh* m = glView->GetMesh(uss.shapeName);
+				Mesh* m = glView->GetMesh(uss.shapeName);
 				if (!m)
 					continue;
 
@@ -4092,7 +4092,7 @@ void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) 
 
 void OutfitStudioFrame::UpdateMeshFromSet(NiShape* shape) {
 	std::string shapeName = shape->name.get();
-	mesh* m = glView->GetMesh(shapeName);
+	Mesh* m = glView->GetMesh(shapeName);
 	if (m) {
 		m->smoothSeamNormals = project->activeSet.GetSmoothSeamNormals(shapeName);
 		m->lockNormals = project->activeSet.GetLockNormals(shapeName);
@@ -4103,7 +4103,7 @@ void OutfitStudioFrame::FillVertexColors() {
 	std::vector<std::string> shapeNames = project->GetWorkNif()->GetShapeNames();
 
 	for (auto& s : shapeNames) {
-		mesh* m = glView->GetMesh(s);
+		Mesh* m = glView->GetMesh(s);
 		if (!m)
 			continue;
 
@@ -4220,10 +4220,10 @@ void OutfitStudioFrame::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Exporting project to NIF file '%s'...", fileName);
 	project->ClearBoneScale();
 
-	std::vector<mesh*> shapeMeshes;
+	std::vector<Mesh*> shapeMeshes;
 	for (auto& s : project->GetWorkNif()->GetShapes()) {
 		if (!project->IsBaseShape(s)) {
-			mesh* m = glView->GetMesh(s->name.get());
+			Mesh* m = glView->GetMesh(s->name.get());
 			if (m)
 				shapeMeshes.push_back(m);
 		}
@@ -4255,9 +4255,9 @@ void OutfitStudioFrame::OnExportNIFWithRef(wxCommandEvent& event) {
 	wxLogMessage("Exporting project with reference to NIF file '%s'...", fileName);
 	project->ClearBoneScale();
 
-	std::vector<mesh*> shapeMeshes;
+	std::vector<Mesh*> shapeMeshes;
 	for (auto& s : project->GetWorkNif()->GetShapeNames()) {
-		mesh* m = glView->GetMesh(s);
+		Mesh* m = glView->GetMesh(s);
 		if (m)
 			shapeMeshes.push_back(m);
 	}
@@ -4737,7 +4737,7 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 
 	auto baseShape = project->GetBaseShape();
 	if (baseShape) {
-		mesh* m = glView->GetMesh(baseShape->name.get());
+		Mesh* m = glView->GetMesh(baseShape->name.get());
 		if (m)
 			project->UpdateShapeFromMesh(baseShape, m);
 
@@ -4980,7 +4980,7 @@ void OutfitStudioFrame::OnBoneStateToggle(wxTreeEvent& event) {
 void OutfitStudioFrame::RefreshGUIWeightColors() {
 	// Clear weight color of all shapes
 	for (auto& s : project->GetWorkNif()->GetShapeNames()) {
-		mesh* m = glView->GetMesh(s);
+		Mesh* m = glView->GetMesh(s);
 		if (m)
 			m->WeightFill(0.0f);
 	}
@@ -4991,7 +4991,7 @@ void OutfitStudioFrame::RefreshGUIWeightColors() {
 			if (!project->IsBaseShape(s->GetShape())) {
 				auto weights = project->GetWorkAnim()->GetWeightsPtr(s->GetShape()->name.get(), activeBone);
 
-				mesh* m = glView->GetMesh(s->GetShape()->name.get());
+				Mesh* m = glView->GetMesh(s->GetShape()->name.get());
 				if (m) {
 					m->WeightFill(0.0f);
 					if (weights) {
@@ -5007,7 +5007,7 @@ void OutfitStudioFrame::RefreshGUIWeightColors() {
 		if (baseShape) {
 			auto weights = project->GetWorkAnim()->GetWeightsPtr(baseShape->name.get(), activeBone);
 
-			mesh* m = glView->GetMesh(baseShape->name.get());
+			Mesh* m = glView->GetMesh(baseShape->name.get());
 			if (m) {
 				m->WeightFill(0.0f);
 				if (weights) {
@@ -5620,7 +5620,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 	}
 
 	// Display segmentation colors depending on what is selected
-	mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
+	Mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triSParts);
 
@@ -5968,7 +5968,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 	}
 
 	// Display partition colors depending on what is selected
-	mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
+	Mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triParts);
 
@@ -6036,7 +6036,7 @@ void OutfitStudioFrame::UpdatePartitionNames() {
 	}
 }
 
-void OutfitStudioFrame::SetSubMeshesForPartitions(mesh* m, const std::vector<int>& tp) {
+void OutfitStudioFrame::SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp) {
 	uint32_t nTris = static_cast<uint32_t>(tp.size());
 
 	// Sort triangles (via triInds) by partition number, negative partition
@@ -6071,10 +6071,10 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(mesh* m, const std::vector<int
 		m->subMeshes[si].second = m->subMeshes[si + 1].first - m->subMeshes[si].first;
 
 	m->subMeshes.pop_back();
-	m->QueueUpdate(mesh::UpdateType::Indices);
+	m->QueueUpdate(Mesh::UpdateType::Indices);
 }
 
-void OutfitStudioFrame::SetNoSubMeshes(mesh* m) {
+void OutfitStudioFrame::SetNoSubMeshes(Mesh* m) {
 	if (!m)
 		return;
 
@@ -6084,7 +6084,7 @@ void OutfitStudioFrame::SetNoSubMeshes(mesh* m) {
 	for (int ti = 0; ti < m->nTris; ++ti)
 		m->renderTris[ti] = m->tris[ti];
 
-	m->QueueUpdate(mesh::UpdateType::Indices);
+	m->QueueUpdate(Mesh::UpdateType::Indices);
 }
 
 void OutfitStudioFrame::SetNoSubMeshes() {
@@ -7973,7 +7973,7 @@ void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& opt
 	wxLogMessage("Conforming '%s'...", shapeName);
 	UpdateProgress(50, _("Conforming: ") + shapeName);
 
-	mesh* m = glView->GetMesh(shapeName);
+	Mesh* m = glView->GetMesh(shapeName);
 	if (m) {
 		project->morpher.CopyMeshMask(m, shapeName);
 		project->ConformShape(shape, options);
@@ -8289,8 +8289,8 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 						diff.z = -diff.z;
 
 					Vector3 newPos = vertPos + diff;
-					uss.pointStartState[i] = mesh::TransformPosNifToMesh(vertPos);
-					uss.pointEndState[i] = mesh::TransformPosNifToMesh(newPos);
+					uss.pointStartState[i] = Mesh::TransformPosNifToMesh(vertPos);
+					uss.pointEndState[i] = Mesh::TransformPosNifToMesh(newPos);
 				}
 
 				usp->usss.push_back(std::move(uss));
@@ -8407,7 +8407,7 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			if (originSelection == 1) {
 				// Center of selected shape(s), respecting mask
 				origin = glView->gls.GetActiveCenter();
-				origin = mesh::TransformPosMeshToNif(origin);
+				origin = Mesh::TransformPosMeshToNif(origin);
 			}
 
 			UndoStateProject* usp = glView->GetUndoHistory()->PushState();
@@ -8443,8 +8443,8 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 						continue;
 
 					Vector3 newPos = vertPos + diff;
-					uss.pointStartState[i] = mesh::TransformPosNifToMesh(vertPos);
-					uss.pointEndState[i] = mesh::TransformPosNifToMesh(newPos);
+					uss.pointStartState[i] = Mesh::TransformPosNifToMesh(vertPos);
+					uss.pointEndState[i] = Mesh::TransformPosNifToMesh(newPos);
 				}
 
 				usp->usss.push_back(std::move(uss));
@@ -8596,7 +8596,7 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 			if (originSelection == 1) {
 				// Center of selected shape(s), respecting mask
 				origin = glView->gls.GetActiveCenter();
-				origin = mesh::TransformPosMeshToNif(origin);
+				origin = Mesh::TransformPosMeshToNif(origin);
 			}
 
 			UndoStateProject* usp = glView->GetUndoHistory()->PushState();
@@ -8634,8 +8634,8 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 						continue;
 
 					Vector3 newPos = vertPos + diff;
-					uss.pointStartState[i] = mesh::TransformPosNifToMesh(vertPos);
-					uss.pointEndState[i] = mesh::TransformPosNifToMesh(newPos);
+					uss.pointStartState[i] = Mesh::TransformPosNifToMesh(vertPos);
+					uss.pointEndState[i] = Mesh::TransformPosNifToMesh(newPos);
 				}
 
 				usp->usss.push_back(std::move(uss));
@@ -9045,7 +9045,7 @@ void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
 	// Prepare list of changes
 	UndoStateShape uss;
 	uss.shapeName = shape->name.get();
-	mesh* m = glView->GetMesh(shape->name.get());
+	Mesh* m = glView->GetMesh(shape->name.get());
 	if (!project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts)) {
 		wxMessageBox(_("An edge has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"), wxICON_ERROR);
 		return;
@@ -9762,7 +9762,7 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 
 	for (auto& i : selectedItems) {
 		std::string shapeName = i->GetShape()->name.get();
-		mesh* m = glView->GetMesh(shapeName);
+		Mesh* m = glView->GetMesh(shapeName);
 		if (!m)
 			continue;
 
@@ -9792,7 +9792,7 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 
 	for (auto& i : selectedItems) {
 		std::string shapeName = i->GetShape()->name.get();
-		mesh* m = glView->GetMesh(shapeName);
+		Mesh* m = glView->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
@@ -10382,7 +10382,7 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	auto shape = activeItem->GetShape();
-	mesh* m = glView->GetMesh(shape->name.get());
+	Mesh* m = glView->GetMesh(shape->name.get());
 	if (shape && m) {
 		editUV = new EditUV(this, project->GetWorkNif(), shape, m, activeSlider);
 
@@ -10920,7 +10920,7 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 		if (!shapeName.empty() && shapeList[i] != shapeName)
 			continue;
 
-		mesh* m = gls.AddMeshFromNif(nif, shapeList[i]);
+		Mesh* m = gls.AddMeshFromNif(nif, shapeList[i]);
 		if (!m)
 			continue;
 
@@ -10930,7 +10930,7 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 			const auto skinning = os->project->GetWorkAnim()->shapeSkinning.find(shapeList[i]);
 			if (skinning != os->project->GetWorkAnim()->shapeSkinning.end()) {
 				MatTransform gts = skinning->second.xformGlobalToSkin;
-				m->SetXformModelToMesh(mesh::xformNifToMesh.ComposeTransforms(gts.ComposeTransforms(mesh::xformMeshToNif)));
+				m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(gts.ComposeTransforms(Mesh::xformMeshToNif)));
 			}
 		}
 
@@ -10948,7 +10948,7 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 
 void wxGLPanel::SetMeshTextures(
 	const std::string& shapeName, const std::vector<std::string>& textureFiles, const bool hasMatFile, const MaterialFile& matFile, const bool reloadTextures) {
-	mesh* m = gls.GetMesh(shapeName);
+	Mesh* m = gls.GetMesh(shapeName);
 	if (!m)
 		return;
 
@@ -10977,7 +10977,7 @@ void wxGLPanel::SetMeshTextures(
 }
 
 void wxGLPanel::UpdateMeshVertices(const std::string& shapeName, std::vector<Vector3>* verts, bool updateBVH, bool recalcNormals, bool render, std::vector<Vector2>* uvs) {
-	mesh* m = gls.GetMesh(shapeName);
+	Mesh* m = gls.GetMesh(shapeName);
 	if (m) {
 		gls.Update(m, verts, uvs);
 
@@ -11063,8 +11063,8 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 						os->project->MoveVertex(shape, newPos, vertIndex);
 
 					// To mesh coordinates
-					oldPos = mesh::TransformPosNifToMesh(oldPos);
-					newPos = mesh::TransformPosNifToMesh(newPos);
+					oldPos = Mesh::TransformPosNifToMesh(oldPos);
+					newPos = Mesh::TransformPosNifToMesh(newPos);
 
 					UndoStateShape uss;
 					uss.shapeName = shape->name.get();
@@ -11158,7 +11158,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	}
 
 	TweakPickInfo tpi;
-	mesh* hitMesh = nullptr;
+	Mesh* hitMesh = nullptr;
 	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh);
 	if (!hit)
 		return false;
@@ -11302,14 +11302,14 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	}
 
 	if (activeBrush->Type() == TweakBrush::BrushType::Undiff) {
-		std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
+		std::vector<Mesh*> refMeshes = activeStroke->GetRefMeshes();
 
 		std::vector<std::vector<Vector3>> positionData;
 		positionData.resize(refMeshes.size());
 
 		for (size_t i = 0; i < refMeshes.size(); i++) {
 			// Get base vertex positions, not current mesh position
-			mesh* m = refMeshes[i];
+			Mesh* m = refMeshes[i];
 			std::vector<Vector3> basePosition;
 
 			auto workNif = os->project->GetWorkNif();
@@ -11318,7 +11318,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 				workNif->GetVertsForShape(shape, basePosition);
 
 			for (auto& p : basePosition)
-				p = mesh::TransformPosNifToMesh(p);
+				p = Mesh::TransformPosNifToMesh(p);
 
 			positionData[i] = std::move(basePosition);
 		}
@@ -11350,7 +11350,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			if (!hit)
 				return;
 
-			mesh* hitMesh = nullptr;
+			Mesh* hitMesh = nullptr;
 			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh);
 			tpi.origin = hitMesh->TransformPosMeshToModel(tpi.origin);
 			tpi.normal.Normalize();
@@ -11434,7 +11434,7 @@ void wxGLPanel::EndBrushStroke() {
 
 bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
-	mesh* hitMesh;
+	Mesh* hitMesh;
 	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh);
 	if (!hit)
 		return false;
@@ -11570,7 +11570,7 @@ void wxGLPanel::EndTransform() {
 
 bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
-	mesh* hitMesh;
+	Mesh* hitMesh;
 	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh);
 	if (!hit)
 		return false;
@@ -11598,7 +11598,7 @@ bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
 	else
 		return false;
 
-	std::vector<mesh*> strokeMeshes{hitMesh};
+	std::vector<Mesh*> strokeMeshes{hitMesh};
 	activeStroke = std::make_unique<TweakStroke>(strokeMeshes, &translateBrush, *undoHistory.PushState());
 	activeStroke->beginStroke(tpi);
 
@@ -11624,7 +11624,7 @@ void wxGLPanel::UpdatePivotPosition(const wxPoint& screenPos) {
 void wxGLPanel::EndPivotPosition() {
 	activeStroke->endStroke();
 
-	std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
+	std::vector<Mesh*> refMeshes = activeStroke->GetRefMeshes();
 	if (refMeshes.size() > 0) {
 		UndoStateShape& uss = activeStroke->usp.usss[0];
 		if (uss.pointStartState.size() > 0 && uss.pointEndState.size() > 0) {
@@ -11645,14 +11645,14 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 		return false;
 
 	if (os->activeItem) {
-		mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
+		Mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
 		if (m) {
 			if (wxGetKeyState(WXK_CONTROL))
 				m->mask[vertIndex] = 1.0f;
 			else if (!segmentMode)
 				m->mask[vertIndex] = 0.0f;
 
-			m->QueueUpdate(mesh::UpdateType::Mask);
+			m->QueueUpdate(Mesh::UpdateType::Mask);
 		}
 	}
 
@@ -11694,7 +11694,7 @@ void wxGLPanel::EndPickVertex() {
 }
 
 void wxGLPanel::ClickCollapseVertex() {
-	mesh* m = GetMesh(mouseDownMeshName);
+	Mesh* m = GetMesh(mouseDownMeshName);
 	if (!m || mouseDownPoint < 0)
 		return;
 
@@ -11737,7 +11737,7 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	if (lastHitResult.hitMeshName.empty() || lastHitResult.hoverPoint < 0)
 		return false;
 
-	mesh* m = GetMesh(lastHitResult.hitMeshName);
+	Mesh* m = GetMesh(lastHitResult.hitMeshName);
 	if (!m)
 		return false;
 
@@ -11796,7 +11796,7 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 }
 
 void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
-	mesh* m = GetMesh(mouseDownMeshName);
+	Mesh* m = GetMesh(mouseDownMeshName);
 	if (!m || mouseDownPoint < 0)
 		return;
 
@@ -11825,7 +11825,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 	moveVertexOperation = MoveVertexOperation::Move;
 	if (toolOptionRestrictSurface) {
 		Vector3 hitpt, hitnormal;
-		mesh* hitmesh = nullptr;
+		Mesh* hitmesh = nullptr;
 		bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, hitpt, hitnormal, false, &hitmesh);
 		if (!hit) {
 			newpos = oldpos;
@@ -11858,10 +11858,10 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 		}
 
 		int closestPoint = -1;
-		mesh* closestMesh = nullptr;
+		Mesh* closestMesh = nullptr;
 		float closestDist = snapDistance;
 
-		for (mesh* tm : gls.GetActiveMeshes()) {
+		for (Mesh* tm : gls.GetActiveMeshes()) {
 			Vector3 viewDir, viewOrigin;
 			gls.GetPickRay(screenPos.x, screenPos.y, tm, viewDir, viewOrigin);
 
@@ -11916,7 +11916,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 	m->verts[mouseDownPoint] = meshnewpos;
 	gls.SetPointCursor(newpos);
 	gls.SetCenterCursor(pointerPoint);
-	m->QueueUpdate(mesh::UpdateType::Position);
+	m->QueueUpdate(Mesh::UpdateType::Position);
 	gls.ShowCursor(true);
 
 	if (mouseDownMirrorPoint != -1) {
@@ -12057,7 +12057,7 @@ void wxGLPanel::ClickSplitEdge() {
 	if (mouseDownMeshName.empty() || mouseDownEdge.p1 < 0 || mouseDownEdge.p1 == mouseDownEdge.p2)
 		return;
 
-	mesh* m = GetMesh(mouseDownMeshName);
+	Mesh* m = GetMesh(mouseDownMeshName);
 	if (!m)
 		return;
 
@@ -12163,7 +12163,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 	std::unordered_map<std::string, std::vector<float>> maskStash;
 	if (undoType == UndoType::Weight) {
 		for (auto& uss : usp->usss) {
-			mesh* m = GetMesh(uss.shapeName);
+			Mesh* m = GetMesh(uss.shapeName);
 			if (!m)
 				continue;
 
@@ -12175,7 +12175,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 					m->weight[wIt.first] = bUndo ? wIt.second.startVal : wIt.second.endVal;
 			}
 
-			m->QueueUpdate(mesh::UpdateType::Weight);
+			m->QueueUpdate(Mesh::UpdateType::Weight);
 		}
 
 		os->ActiveShapesUpdated(usp, bUndo);
@@ -12189,14 +12189,14 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 	}
 	else if (undoType == UndoType::Mask) {
 		for (auto& uss : usp->usss) {
-			mesh* m = GetMesh(uss.shapeName);
+			Mesh* m = GetMesh(uss.shapeName);
 			if (!m)
 				continue;
 
 			for (auto& pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->mask[pit.first] = pit.second.x;
 
-			m->QueueUpdate(mesh::UpdateType::Mask);
+			m->QueueUpdate(Mesh::UpdateType::Mask);
 		}
 
 		if (undoType != UndoType::Mask)
@@ -12204,14 +12204,14 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 	}
 	else if (undoType == UndoType::Color) {
 		for (auto& uss : usp->usss) {
-			mesh* m = GetMesh(uss.shapeName);
+			Mesh* m = GetMesh(uss.shapeName);
 			if (!m)
 				continue;
 
 			for (auto& pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->vcolors[pit.first] = pit.second;
 
-			m->QueueUpdate(mesh::UpdateType::VertexColors);
+			m->QueueUpdate(Mesh::UpdateType::VertexColors);
 		}
 
 		if (undoType != UndoType::Color)
@@ -12219,21 +12219,21 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 	}
 	else if (undoType == UndoType::Alpha) {
 		for (auto& uss : usp->usss) {
-			mesh* m = GetMesh(uss.shapeName);
+			Mesh* m = GetMesh(uss.shapeName);
 			if (!m)
 				continue;
 
 			for (auto& pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->valpha[pit.first] = pit.second.x;
 
-			m->QueueUpdate(mesh::UpdateType::VertexAlpha);
+			m->QueueUpdate(Mesh::UpdateType::VertexAlpha);
 		}
 
 		os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UndoType::VertexPosition) {
 		for (auto& uss : usp->usss) {
-			mesh* m = GetMesh(uss.shapeName);
+			Mesh* m = GetMesh(uss.shapeName);
 			if (!m)
 				continue;
 
@@ -12244,14 +12244,14 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 			m->SmoothNormals();
 			BVHUpdateQueue.insert(m);
 
-			m->QueueUpdate(mesh::UpdateType::Position);
+			m->QueueUpdate(Mesh::UpdateType::Position);
 		}
 
 		os->ActiveShapesUpdated(usp, bUndo);
 
 		if (usp->sliderName.empty()) {
 			for (auto& uss : usp->usss) {
-				mesh* m = GetMesh(uss.shapeName);
+				Mesh* m = GetMesh(uss.shapeName);
 				if (!m)
 					continue;
 
@@ -12544,7 +12544,7 @@ void wxGLPanel::UpdateNodes() {
 
 			std::string nodeName = node->name.get();
 			if (!nodeName.empty()) {
-				Vector3 renderPosition = mesh::TransformPosNifToMesh(position);
+				Vector3 renderPosition = Mesh::TransformPosNifToMesh(position);
 
 				auto pointMesh = gls.AddVisPoint(renderPosition, "P_" + nodeName);
 				if (pointMesh) {
@@ -12553,7 +12553,7 @@ void wxGLPanel::UpdateNodes() {
 				}
 
 				if (parent) {
-					Vector3 renderParentPosition = mesh::TransformPosNifToMesh(parentPosition);
+					Vector3 renderParentPosition = Mesh::TransformPosNifToMesh(parentPosition);
 
 					auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "L_" + nodeName);
 					if (lineMesh) {
@@ -12621,7 +12621,7 @@ void wxGLPanel::UpdateBones() {
 					Vector3 parentPosition = parent->xformToGlobal.ApplyTransform(rootPosition);
 					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
 
-					Vector3 renderPosition = mesh::TransformPosNifToMesh(position);
+					Vector3 renderPosition = Mesh::TransformPosNifToMesh(position);
 
 					auto pointMesh = gls.AddVisPoint(renderPosition, "BP_" + cb->boneName);
 					if (pointMesh) {
@@ -12629,7 +12629,7 @@ void wxGLPanel::UpdateBones() {
 						bonesPoints.push_back(pointMesh);
 					}
 
-					Vector3 renderParentPosition = mesh::TransformPosNifToMesh(parentPosition);
+					Vector3 renderParentPosition = Mesh::TransformPosNifToMesh(parentPosition);
 
 					if (!matchesParent) {
 						auto lineMesh = gls.AddVisSeg(renderParentPosition, renderPosition, "BL_" + cb->boneName);
@@ -12827,10 +12827,10 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 
 	if (show) {
 		if (os->activeItem) {
-			mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
+			Mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
 			if (m) {
 				m->bShowPoints = true;
-				m->QueueUpdate(mesh::UpdateType::Mask);
+				m->QueueUpdate(Mesh::UpdateType::Mask);
 			}
 		}
 	}
@@ -13027,7 +13027,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			mouseDownMirrorPoint = -1;
 			if (GetToolOptionXMirror()) {
 				Vector3 hitPt, hitNrm;
-				mesh* mmesh = nullptr;
+				Mesh* mmesh = nullptr;
 				int triInd = 0;
 				if (gls.CollideMeshes(x, y, hitPt, hitNrm, true, &mmesh, true, &triInd) && mmesh == hitResult.hitMesh) {
 					int hitPti = mmesh->tris[triInd].ClosestVertex(mmesh->verts.get(), hitPt);
@@ -13065,7 +13065,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			}
 
 			Vector3 outOrigin, outNormal;
-			mesh* hitMesh = nullptr;
+			Mesh* hitMesh = nullptr;
 			if (gls.CollideOverlay(x, y, outOrigin, outNormal, &hitMesh)) {
 				if (hitMesh && hitMesh != PivotCenterMesh) {
 					hitMesh->color = Vector3(1.0f, 1.0f, 0.0f);
@@ -13091,7 +13091,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 																  hitResult.hoverAlpha),
 												 1);
 				else {
-					Vector3 hoverCoordNif = mesh::TransformPosMeshToNif(hitResult.hoverMeshCoord);
+					Vector3 hoverCoordNif = Mesh::TransformPosMeshToNif(hitResult.hoverMeshCoord);
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hitResult.hoverPoint, hoverCoordNif.x, hoverCoordNif.y, hoverCoordNif.z),
 												 1);
 				}
@@ -13184,7 +13184,7 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		int x, y;
 		event.GetPosition(&x, &y);
 
-		mesh* m = gls.PickMesh(x, y);
+		Mesh* m = gls.PickMesh(x, y);
 		if (m)
 			os->SelectShape(m->shapeName);
 	}

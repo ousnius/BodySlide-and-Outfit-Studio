@@ -177,7 +177,7 @@ public:
 						 const MaterialFile& matFile = MaterialFile(),
 						 const bool reloadTextures = false);
 
-	mesh* GetMesh(const std::string& shapeName) { return gls.GetMesh(shapeName); }
+	Mesh* GetMesh(const std::string& shapeName) { return gls.GetMesh(shapeName); }
 
 	void UpdateMeshVertices(const std::string& shapeName,
 							std::vector<nifly::Vector3>* verts,
@@ -320,14 +320,14 @@ public:
 	void SetToolOptionRestrictNormal(bool on = true) { toolOptionRestrictNormal = on; }
 
 	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
-		mesh* m = gls.GetMesh(shapeName);
+		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
 		if (on)
-			m->rendermode = mesh::RenderMode::LitWire;
+			m->rendermode = Mesh::RenderMode::LitWire;
 		else
-			m->rendermode = mesh::RenderMode::Normal;
+			m->rendermode = Mesh::RenderMode::Normal;
 	}
 
 	void SetNormalSeamSmoothMode(bool enable) {
@@ -343,7 +343,7 @@ public:
 	}
 
 	void RecalcNormals(const std::string& shapeName) {
-		mesh* m = gls.GetMesh(shapeName);
+		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
@@ -438,7 +438,7 @@ public:
 		if (gls.GetActiveMeshes().empty())
 			return;
 
-		mesh* m = gls.GetActiveMeshes().back();
+		Mesh* m = gls.GetActiveMeshes().back();
 
 		for (int i = 0; i < m->nVerts; i++) {
 			if (m->mask[i] != 0.0f)
@@ -450,7 +450,7 @@ public:
 		if (gls.GetActiveMeshes().empty())
 			return;
 
-		mesh* m = gls.GetActiveMeshes().back();
+		Mesh* m = gls.GetActiveMeshes().back();
 
 		for (int i = 0; i < m->nVerts; i++)
 			if (m->mask[i] == 0.0f)
@@ -458,7 +458,7 @@ public:
 	}
 
 	void GetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
-		mesh* m = gls.GetMesh(shapeName);
+		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
@@ -469,7 +469,7 @@ public:
 	}
 
 	void GetShapeUnmasked(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
-		mesh* m = gls.GetMesh(shapeName);
+		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
@@ -479,7 +479,7 @@ public:
 	}
 
 	void SetShapeMask(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
-		mesh* m = gls.GetMesh(shapeName);
+		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
@@ -490,7 +490,7 @@ public:
 				m->mask[i] = 0.0f;
 		}
 
-		m->QueueUpdate(mesh::UpdateType::Mask);
+		m->QueueUpdate(Mesh::UpdateType::Mask);
 	}
 
 	std::unordered_map<std::string, std::vector<float>> StashMasks();
@@ -516,7 +516,7 @@ public:
 			for (auto& up : unmaskPoints)
 				m->mask[up] = 0.0f;
 
-			m->QueueUpdate(mesh::UpdateType::Mask);
+			m->QueueUpdate(Mesh::UpdateType::Mask);
 		}
 	}
 
@@ -530,12 +530,12 @@ public:
 			for (auto& adj : adjacentPoints)
 				m->mask[adj] = 1.0f;
 
-			m->QueueUpdate(mesh::UpdateType::Mask);
+			m->QueueUpdate(Mesh::UpdateType::Mask);
 		}
 	}
 
 	void InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
-		mesh* m = gls.GetMesh(shapeName);
+		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
@@ -568,7 +568,7 @@ public:
 			for (int i = 0; i < m->nVerts; i++)
 				m->mask[i] = 1.0f - m->mask[i];
 
-			m->QueueUpdate(mesh::UpdateType::Mask);
+			m->QueueUpdate(Mesh::UpdateType::Mask);
 		}
 	}
 
@@ -605,7 +605,7 @@ public:
 	}
 
 	void DeleteMesh(const std::string& shape) {
-		mesh* m = gls.GetMesh(shape);
+		Mesh* m = gls.GetMesh(shape);
 		if (m) {
 			BVHUpdateQueue.erase(m);
 			gls.DeleteMesh(m);
@@ -728,7 +728,7 @@ private:
 	int moveVertexTarget;
 	std::string moveVertexWeldTargetMeshName;
 
-	std::set<mesh*> BVHUpdateQueue;
+	std::set<Mesh*> BVHUpdateQueue;
 
 	OutfitStudioFrame* os = nullptr;
 
@@ -784,36 +784,36 @@ private:
 	std::unique_ptr<TweakStroke> activeStroke;
 	UndoHistory undoHistory;
 
-	mesh* RotationCenterMesh = nullptr;
-	mesh* RotationCenterMeshRingX = nullptr;
-	mesh* RotationCenterMeshRingY = nullptr;
-	mesh* RotationCenterMeshRingZ = nullptr;
+	Mesh* RotationCenterMesh = nullptr;
+	Mesh* RotationCenterMeshRingX = nullptr;
+	Mesh* RotationCenterMeshRingY = nullptr;
+	Mesh* RotationCenterMeshRingZ = nullptr;
 
-	mesh* XMoveMesh = nullptr;
-	mesh* YMoveMesh = nullptr;
-	mesh* ZMoveMesh = nullptr;
-	mesh* XRotateMesh = nullptr;
-	mesh* YRotateMesh = nullptr;
-	mesh* ZRotateMesh = nullptr;
-	mesh* XScaleMesh = nullptr;
-	mesh* YScaleMesh = nullptr;
-	mesh* ZScaleMesh = nullptr;
-	mesh* ScaleUniformMesh = nullptr;
+	Mesh* XMoveMesh = nullptr;
+	Mesh* YMoveMesh = nullptr;
+	Mesh* ZMoveMesh = nullptr;
+	Mesh* XRotateMesh = nullptr;
+	Mesh* YRotateMesh = nullptr;
+	Mesh* ZRotateMesh = nullptr;
+	Mesh* XScaleMesh = nullptr;
+	Mesh* YScaleMesh = nullptr;
+	Mesh* ZScaleMesh = nullptr;
+	Mesh* ScaleUniformMesh = nullptr;
 	nifly::Vector3 xformCenter; // Transform center for transform brushes (rotate, specifically cares about this)
 	float lastCenterDistance = 0.0f;
 
-	mesh* XPivotMesh = nullptr;
-	mesh* YPivotMesh = nullptr;
-	mesh* ZPivotMesh = nullptr;
-	mesh* PivotCenterMesh = nullptr;
+	Mesh* XPivotMesh = nullptr;
+	Mesh* YPivotMesh = nullptr;
+	Mesh* ZPivotMesh = nullptr;
+	Mesh* PivotCenterMesh = nullptr;
 	nifly::Vector3 pivotPosition;
 	float lastCenterPivotDistance = 0.0f;
 
-	std::vector<mesh*> nodesPoints;
-	std::vector<mesh*> nodesLines;
-	std::vector<mesh*> bonesPoints;
-	std::vector<mesh*> bonesLines;
-	std::vector<mesh*> floorMeshes;
+	std::vector<Mesh*> nodesPoints;
+	std::vector<Mesh*> nodesLines;
+	std::vector<Mesh*> bonesPoints;
+	std::vector<Mesh*> bonesLines;
+	std::vector<Mesh*> floorMeshes;
 
 	wxDECLARE_EVENT_TABLE();
 };
@@ -1002,8 +1002,8 @@ public:
 	void ShowPartition(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
 	void UpdatePartitionNames();
 
-	void SetSubMeshesForPartitions(mesh* m, const std::vector<int>& tp);
-	void SetNoSubMeshes(mesh* m);
+	void SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp);
+	void SetNoSubMeshes(Mesh* m);
 	void SetNoSubMeshes();
 
 	void LockShapeSelect();

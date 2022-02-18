@@ -128,7 +128,7 @@ void PreviewWindow::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& norm
 	Layout();
 }
 
-mesh* PreviewWindow::GetMesh(const std::string& shapeName) {
+Mesh* PreviewWindow::GetMesh(const std::string& shapeName) {
 	return gls.GetMesh(shapeName);
 }
 
@@ -137,7 +137,7 @@ void PreviewWindow::AddMeshFromNif(NifFile* nif, char* shapeName) {
 	for (size_t i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];
 		if (!shapeName || (shapeName && shapeListName == shapeName)) {
-			mesh* m = gls.AddMeshFromNif(nif, shapeListName);
+			Mesh* m = gls.AddMeshFromNif(nif, shapeListName);
 			if (!m)
 				continue;
 
@@ -156,7 +156,7 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 	for (size_t i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];
 		if (!shapeName || (shapeName && shapeListName == shapeName)) {
-			mesh* m = gls.ReloadMeshFromNif(nif, shapeListName);
+			Mesh* m = gls.ReloadMeshFromNif(nif, shapeListName);
 			if (!m)
 				continue;
 

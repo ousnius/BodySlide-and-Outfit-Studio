@@ -94,7 +94,7 @@ void Automorph::CopyShape(const std::string& srcShapeName, const std::string& sr
 }
 
 void Automorph::SetRef(NifFile& ref, NiShape* refShape, const AnimInfo* workAnim) {
-	morphRef = std::make_unique<mesh>();
+	morphRef = std::make_unique<Mesh>();
 	MeshFromNifShape(morphRef.get(), ref, refShape, workAnim);
 
 	refTree = std::make_unique<kd_tree<uint16_t>>(morphRef->verts.get(), static_cast<uint16_t>(morphRef->nVerts));
@@ -129,7 +129,7 @@ void Automorph::SourceShapesFromNif(NifFile& baseNif, const AnimInfo* workAnim) 
 
 	auto shapes = baseNif.GetShapes();
 	for (auto& s : shapes) {
-		mesh* m = new mesh();
+		Mesh* m = new Mesh();
 		MeshFromNifShape(m, baseNif, s, workAnim);
 		sourceShapes[s->name.get()] = m;
 	}
@@ -139,7 +139,7 @@ void Automorph::UpdateMeshFromNif(NifFile& baseNif, const std::string& shapeName
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
-	mesh* m = sourceShapes[shapeName];
+	Mesh* m = sourceShapes[shapeName];
 	auto shape = baseNif.FindBlockByName<NiShape>(shapeName);
 
 	std::vector<Vector3> upVerts;
@@ -153,8 +153,8 @@ void Automorph::UpdateMeshFromNif(NifFile& baseNif, const std::string& shapeName
 		m->verts[i] = upVerts[i];
 }
 
-void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
-	mesh* dm = sourceShapes[shapeName];
+void Automorph::CopyMeshMask(Mesh* m, const std::string& shapeName) {
+	Mesh* dm = sourceShapes[shapeName];
 	if (dm->nVerts != m->nVerts)
 		return;
 
@@ -168,7 +168,7 @@ void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 		dm->mask[i] = m->mask[i];
 }
 
-void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape, const AnimInfo* workAnim) {
+void Automorph::MeshFromNifShape(Mesh* m, NifFile& ref, NiShape* shape, const AnimInfo* workAnim) {
 	std::vector<Vector3> nifVerts;
 	ref.GetVertsForShape(shape, nifVerts);
 
@@ -220,7 +220,7 @@ void Automorph::BuildProximityCache(const std::string& shapeName, float proximit
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
-	mesh* m = sourceShapes[shapeName];
+	Mesh* m = sourceShapes[shapeName];
 	uint16_t maxCount = 0;
 	uint16_t minCount = std::numeric_limits<uint16_t>::max();
 
@@ -322,7 +322,7 @@ void Automorph::UpdateResultDiff(const std::string& shapeName, const std::string
 		resultDiffData.AddEmptySet(setName, shapeName);
 
 	for (auto& i : diff) {
-		Vector3 diffscale = mesh::TransformDiffMeshToNif(i.second);
+		Vector3 diffscale = Mesh::TransformDiffMeshToNif(i.second);
 		resultDiffData.SumDiff(setName, shapeName, i.first, diffscale);
 	}
 }
@@ -334,7 +334,7 @@ void Automorph::UpdateRefDiff(const std::string& shapeName, const std::string& s
 		srcDiffData->AddEmptySet(setName, shapeName);
 
 	for (auto& i : diff) {
-		Vector3 diffscale = mesh::TransformDiffMeshToNif(i.second);
+		Vector3 diffscale = Mesh::TransformDiffMeshToNif(i.second);
 		srcDiffData->SumDiff(setName, shapeName, i.first, diffscale);
 	}
 }
@@ -371,7 +371,7 @@ void Automorph::GenerateResultDiff(
 	if (!diffData)
 		return;
 
-	mesh* m = sourceShapes[shapeName];
+	Mesh* m = sourceShapes[shapeName];
 	std::string dataName = shapeName + sliderName;
 
 	MatTransform transform;

@@ -20,7 +20,7 @@ See the included LICENSE file
 
 class GLMaterial;
 
-class mesh {
+class Mesh {
 private:
 	std::array<bool, 10> queueUpdate = {false};
 
@@ -123,8 +123,8 @@ public:
 	std::string shapeName;
 	nifly::Vector3 color;
 
-	mesh();
-	~mesh();
+	Mesh();
+	~Mesh();
 
 	// Creates a new bvh tree for the mesh.
 	std::shared_ptr<AABBTree> CreateBVH();
@@ -149,15 +149,15 @@ public:
 
 	void FacetNormals();
 	void SmoothNormals(const std::set<int>& vertices = std::set<int>());
-	static void SmoothNormalsStatic(mesh* m) { m->SmoothNormals(); }
-	static void SmoothNormalsStaticArray(mesh* m, int* vertices, int nVertices) {
+	static void SmoothNormalsStatic(Mesh* m) { m->SmoothNormals(); }
+	static void SmoothNormalsStaticArray(Mesh* m, int* vertices, int nVertices) {
 		std::set<int> verts;
 		for (int i = 0; i < nVertices; i++)
 			verts.insert(vertices[i]);
 
 		m->SmoothNormals(verts);
 	}
-	static void SmoothNormalsStaticMap(mesh* m, const std::unordered_map<int, nifly::Vector3>& vertices) {
+	static void SmoothNormalsStaticMap(Mesh* m, const std::unordered_map<int, nifly::Vector3>& vertices) {
 		std::set<int> verts;
 		for (auto& v : vertices)
 			verts.insert(v.first);

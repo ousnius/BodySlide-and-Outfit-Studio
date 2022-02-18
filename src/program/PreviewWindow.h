@@ -67,14 +67,14 @@ public:
 
 	void SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers);
 
-	mesh* GetMesh(const std::string& shapeName);
+	Mesh* GetMesh(const std::string& shapeName);
 	void AddMeshFromNif(nifly::NifFile* nif, char* shapeName = nullptr);
 	void RefreshMeshFromNif(nifly::NifFile* nif, char* shapeName = nullptr);
 	void AddNifShapeTextures(nifly::NifFile* fromNif, const std::string& shapeName);
 
 	void UpdateMeshes(const std::string& shapeName, std::vector<nifly::Vector3>* verts, std::vector<nifly::Vector2>* uvs = nullptr) {
 		std::set<int> changed;
-		mesh* m = gls.GetMesh(shapeName);
+		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
@@ -88,7 +88,7 @@ public:
 						  const std::string& fShader,
 						  const bool hasMatFile = false,
 						  const MaterialFile& matFile = MaterialFile()) {
-		mesh* m = gls.GetMesh(shapeName);
+		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
@@ -104,7 +104,7 @@ public:
 		}
 	}
 
-	void SetShapeVertexColors(nifly::NifFile* nif, const std::string& shapeName, mesh* mesh) {
+	void SetShapeVertexColors(nifly::NifFile* nif, const std::string& shapeName, Mesh* mesh) {
 		const std::vector<nifly::Color4>* vcolors = nif->GetColorsForShape(shapeName);
 		if (vcolors) {
 			for (size_t v = 0; v < vcolors->size(); v++) {

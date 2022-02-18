@@ -674,7 +674,7 @@ void OutfitProject::NegateSlider(const std::string& sliderName, NiShape* shape) 
 }
 
 void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) {
-	mesh* m = owner->glView->GetMesh(shape->name.get());
+	Mesh* m = owner->glView->GetMesh(shape->name.get());
 	if (!m)
 		return;
 
@@ -702,7 +702,7 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 		}
 	}
 
-	m->QueueUpdate(mesh::UpdateType::Mask);
+	m->QueueUpdate(Mesh::UpdateType::Mask);
 }
 
 bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
@@ -1413,11 +1413,11 @@ void OutfitProject::RefreshMorphShape(NiShape* shape) {
 	morpher.UpdateMeshFromNif(workNif, shape->name.get());
 }
 
-void OutfitProject::UpdateShapeFromMesh(NiShape* shape, const mesh* m) {
+void OutfitProject::UpdateShapeFromMesh(NiShape* shape, const Mesh* m) {
 	std::vector<Vector3> liveVerts(m->nVerts);
 
 	for (int i = 0; i < m->nVerts; i++)
-		liveVerts[i] = mesh::TransformPosMeshToNif(m->verts[i]);
+		liveVerts[i] = Mesh::TransformPosMeshToNif(m->verts[i]);
 
 	workNif.SetVertsForShape(shape, liveVerts);
 }
@@ -1437,7 +1437,7 @@ void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderN
 
 	if (IsBaseShape(shape)) {
 		for (auto& i : vertUpdates) {
-			Vector3 diffscale = mesh::TransformDiffMeshToNif(i.second);
+			Vector3 diffscale = Mesh::TransformDiffMeshToNif(i.second);
 			baseDiffData.SumDiff(dataName, target, i.first, diffscale);
 		}
 	}
@@ -1699,7 +1699,7 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 		}
 
 		bool shapeUnweighted = false;
-		mesh* m = owner->glView->GetMesh(shapeName);
+		Mesh* m = owner->glView->GetMesh(shapeName);
 		if (m) {
 			for (auto& i : influences) {
 				if (i.second == 0) {
@@ -1718,7 +1718,7 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 					shapeNames->push_back(shapeName);
 			}
 
-			m->QueueUpdate(mesh::UpdateType::Mask);
+			m->QueueUpdate(Mesh::UpdateType::Mask);
 		}
 	}
 
@@ -1742,12 +1742,12 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 	for (auto& s : workNif.GetShapeNames()) {
 		auto it = boneScaleVerts.find(s);
 		if (it == boneScaleVerts.end()) {
-			mesh* m = owner->glView->GetMesh(s);
+			Mesh* m = owner->glView->GetMesh(s);
 			if (m) {
 				boneScaleVerts.emplace(s, std::vector<Vector3>(m->nVerts));
 				it = boneScaleVerts.find(s);
 				for (int i = 0; i < m->nVerts; i++)
-					it->second[i] = mesh::TransformPosMeshToNif(m->verts[i]);
+					it->second[i] = Mesh::TransformPosMeshToNif(m->verts[i]);
 			}
 		}
 
@@ -3800,7 +3800,7 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 	wxLogMessage("Renamed shape '%s' to '%s'.", shapeName, newShapeName);
 }
 
-void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& shapeMeshes) {
+void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<Mesh*>& shapeMeshes) {
 	std::vector<Vector3> liveNorms;
 	for (auto& m : shapeMeshes) {
 		auto shape = nif->FindBlockByName<NiShape>(m->shapeName);
@@ -3813,7 +3813,7 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& sha
 
 			liveNorms.clear();
 			for (int i = 0; i < m->nVerts; i++)
-				liveNorms.push_back(mesh::TransformDirMeshToNif(m->norms[i]));
+				liveNorms.push_back(Mesh::TransformDirMeshToNif(m->norms[i]));
 
 			nif->SetNormalsForShape(shape, liveNorms);
 			nif->CalcTangentsForShape(shape);
@@ -4689,7 +4689,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	return 0;
 }
 
-int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef) {
+int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef) {
 	workAnim.CleanupBones();
 	owner->UpdateAnimationGUI();
 
@@ -4705,8 +4705,8 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 			liveNorms.clear();
 
 			for (int i = 0; i < m->nVerts; i++) {
-				liveVerts.push_back(mesh::TransformPosMeshToNif(m->verts[i]));
-				liveNorms.push_back(mesh::TransformDirMeshToNif(m->norms[i]));
+				liveVerts.push_back(Mesh::TransformPosMeshToNif(m->verts[i]));
+				liveNorms.push_back(Mesh::TransformDirMeshToNif(m->norms[i]));
 			}
 
 			clone.SetVertsForShape(shape, liveVerts);
