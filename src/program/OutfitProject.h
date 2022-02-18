@@ -38,6 +38,64 @@ struct MergeCheckErrors {
 	bool alphaPropMismatch = false;
 };
 
+// SymmetricVertices: result from the function MatchSymmetricVertices
+struct SymmetricVertices {
+	// matches has all matched pairs of vertices, starting with the two-pairs,
+	// then the one-pairs, and finally the self matches.  Two-pair matches
+	// have the lower index first.  One-pair matches have the unmasked vertex
+	// first, the masked vertex second.
+	std::vector<std::pair<int, int>> matches;
+	std::vector<int> unmatched;
+	// weldSkip lists all vertices that were skipped (and are therefore not
+	// in matches or unmatched) because they're welded to a vertex with a
+	// lower index.
+	std::vector<int> weldSkip;
+	// Two-pair matches: matches where both vertices were not masked.
+	int two_pair_count = 0;
+	// One-pair matches: matches where one vertex was not masked and the
+	// other vertex was masked.
+	int one_pair_count = 0;
+	// Self matches: matches where the vertex's mirror was itself.
+	int self_count = 0;
+};
+
+// VertexAsymmetries: result from the function FindVertexAsymmetries
+struct VertexAsymmetries {
+	// Indexing of each vector<bool> is the same as SymmetricVertices::matches.
+	std::vector<bool> positions;
+	int posCount = 0;
+	float posAvg = 0.0f;
+	struct Slider {
+		std::string sliderName;
+		std::vector<bool> aflags;
+		int count = 0;
+		float avg = 0.0f;
+	};
+	std::vector<Slider> sliders;
+	std::vector<bool> anyslider;
+	int anyslidercount = 0;
+	struct Bone {
+		std::string boneName;
+		std::vector<bool> aflags;
+		int two_pair_count = 0, one_pair_count = 0, self_count = 0;
+		int mirroroffset = 0;	// -1, 0, or 1
+		float dual_avg = 0.0f, one_pair_avg = 0.0f, all_avg = 0.0f;
+	};
+	std::vector<Bone> bones;
+	std::vector<bool> anybone;
+	int anybonecount = 0;
+};
+
+struct VertexAsymmetryTasks {
+	bool doUnmatched = true;
+	bool doPos = true;
+	std::vector<bool> doSliders;	// Same size as VertexAsymmetries::sliders
+	// doDualBones: do two_pair and sel; doSingleBones: do one_pair
+	std::vector<bool> doDualBones, doSingleBones;	// Same size as VertexAsymmetries::bones
+};
+
+std::vector<bool> CalcCombinedVertexAsymmetryTasks(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks);
+
 class OutfitProject {
 	OutfitStudioFrame* owner = nullptr;
 
@@ -240,7 +298,7 @@ public:
 	void CollectVertexData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	void CollectTriangleData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint32_t>& indices);
 	bool PrepareDeleteVerts(nifly::NiShape* shape, const std::unordered_map<uint16_t, float>& mask, UndoStateShape& uss);
-	void ApplyShapeMeshUndo(nifly::NiShape* shape, const UndoStateShape& uss, bool bUndo);
+	void ApplyShapeMeshUndo(nifly::NiShape* shape, std::vector<float>& mask, const UndoStateShape& uss, bool bUndo);
 
 	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape& uss, const nifly::Edge& edge);
@@ -270,6 +328,12 @@ public:
 
 	void RenameShape(nifly::NiShape* shape, const std::string& newShapeName);
 	void UpdateNifNormals(nifly::NifFile* nif, const std::vector<mesh*>& shapemeshes);
+
+	void MatchSymmetricVertices(nifly::NiShape* shape, const float* mask, const std::unordered_map<int, std::vector<int>>& weldVerts, SymmetricVertices& r);
+	void MatchSymmetricBoneNames(std::vector<std::pair<std::string, std::string>>& pairs, std::vector<std::string>& singles);
+	void FindVertexAsymmetries(nifly::NiShape* shape, const SymmetricVertices& symverts, const std::unordered_map<int, std::vector<int>>& weldVerts, VertexAsymmetries& r);
+	void PrepareSymmetrizeVertices(nifly::NiShape* shape, UndoStateShape& uss, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, const std::unordered_map<int, std::vector<int>>& weldVerts, const std::vector<std::string>& userNormBones, const std::vector<std::string>& userNotNormBones);
+	std::vector<bool> CalculateAsymmetricTriangleVertexMask(nifly::NiShape* shape, const std::unordered_map<int, std::vector<int>>& weldVerts);
 
 	void ChooseClothData(nifly::NifFile& nif);
 	void ResetTransforms();

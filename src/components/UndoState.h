@@ -42,6 +42,7 @@ struct UndoStateVertex {
 	// (so use ApplyTransformToDir instead of ApplyTransform).
 	nifly::Vector3 normal, tangent, bitangent;
 	float eyeData = 0.0f;
+	float mask = 0.0f;
 	std::vector<UndoStateVertexBoneWeight> weights;
 	std::vector<UndoStateVertexSliderDiff> diffs;
 };

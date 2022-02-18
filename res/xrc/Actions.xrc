@@ -1282,4 +1282,334 @@
 			</object>
 		</object>
 	</object>
+	<object class="wxDialog" name="dlgVertexAsym">
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
+		<size>423,155</size>
+		<title>Mask symmetric vertices</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="maskSymmetricVerticesDescription">
+					<label>Masks all vertices that do not have any of the selected asymmetries.</label>
+					<wrap>600</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxFlexGridSizer">
+					<rows>0</rows>
+					<cols>3</cols>
+					<vgap>0</vgap>
+					<hgap>0</hgap>
+					<growablecols>1</growablecols>
+					<growablerows></growablerows>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="currentUnmaskedLabel">
+							<label>Vertices currently unmasked:</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="currentUnmaskedText">
+							<label>0</label>
+							<wrap>-1</wrap>
+							<style>wxALIGN_RIGHT</style>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="checkUnmatched">
+							<label></label>
+							<checked>1</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="unmatchedVerticesLabel">
+							<label>Unmatched Vertices:</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="unmatchedVerticesText">
+							<label>0</label>
+							<wrap>-1</wrap>
+							<style>wxALIGN_RIGHT</style>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Vertex Data Asymmetries</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxALL</flag>
+						<border>5</border>
+						<minsize>600,400</minsize>
+						<object class="wxScrolledWindow" name="asymScroll">
+							<style>wxVSCROLL</style>
+							<scrollrate>5,5</scrollrate>
+							<object class="wxBoxSizer">
+								<orient>wxVERTICAL</orient>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxFlexGridSizer">
+										<rows>0</rows>
+										<cols>4</cols>
+										<vgap>0</vgap>
+										<hgap>0</hgap>
+										<growablecols>1</growablecols>
+										<growablerows></growablerows>
+										<object class="spacer">
+											<option>0</option>
+											<flag>wxRIGHT</flag>
+											<border>0</border>
+											<size>0,0</size>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="typeHeading">
+												<label>Type</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxRIGHT</flag>
+											<border>20</border>
+											<object class="wxStaticText" name="avgHeading">
+												<label>Average</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="countHeading">
+												<label>Count</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxCheckBox" name="checkPosition">
+												<label></label>
+												<checked>1</checked>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="positionLabel">
+												<label>Position</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxRIGHT|wxALIGN_RIGHT</flag>
+											<border>20</border>
+											<object class="wxStaticText" name="posAvgText">
+												<label>0</label>
+												<wrap>-1</wrap>
+												<style>wxALIGN_RIGHT</style>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="positionText">
+												<label>0</label>
+												<wrap>-1</wrap>
+												<style>wxALIGN_RIGHT</style>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxCheckBox" name="checkAnySlider">
+												<label></label>
+												<style>wxCHK_3STATE</style>
+												<checked>1</checked>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="anySliderLabel">
+												<label>x Sliders</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="spacer">
+											<option>0</option>
+											<flag>wxRIGHT</flag>
+											<border>0</border>
+											<size>0,0</size>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="anySliderText">
+												<label>0</label>
+												<wrap>-1</wrap>
+												<style>wxALIGN_RIGHT</style>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxCollapsiblePane" name="slidersCollapse">
+										<style>wxCP_DEFAULT_STYLE</style>
+										<collapsed>1</collapsed>
+										<label>Sliders</label>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxBoxSizer">
+										<orient>wxHORIZONTAL</orient>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxCheckBox" name="checkAnyBone">
+												<label></label>
+												<style>wxCHK_3STATE</style>
+												<checked>1</checked>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="anyBoneLabel">
+												<label>x Bones</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="anyBoneText">
+												<label>0</label>
+												<wrap>-1</wrap>
+												<style>wxALIGN_RIGHT</style>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxCollapsiblePane" name="bonesCollapse">
+										<style>wxCP_DEFAULT_STYLE</style>
+										<collapsed>1</collapsed>
+										<label>Bones</label>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="stillUnmaskedLabel">
+							<label>Vertices that will still be unmasked:</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="stillUnmaskedText">
+							<label>0</label>
+							<wrap>-1</wrap>
+							<style>wxALIGN_RIGHT</style>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;Mask</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
 </resource>
