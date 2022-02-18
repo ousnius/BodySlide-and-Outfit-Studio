@@ -10089,7 +10089,7 @@ void OutfitStudioFrame::OnMaskSymVert(wxCommandEvent& WXUNUSED(event)) {
 
 	NiShape* s = activeItem->GetShape();
 	std::string shapeName = s->name.get();
-	mesh* m = glView->gls.GetMesh(shapeName);
+	Mesh* m = glView->gls.GetMesh(shapeName);
 	if (!m)
 		return;
 
@@ -10142,7 +10142,7 @@ void OutfitStudioFrame::OnSymVert(wxCommandEvent& WXUNUSED(event)) {
 
 	NiShape* s = activeItem->GetShape();
 	std::string shapeName = s->name.get();
-	mesh* m = glView->gls.GetMesh(shapeName);
+	Mesh* m = glView->gls.GetMesh(shapeName);
 	if (!m)
 		return;
 
@@ -10184,7 +10184,7 @@ void OutfitStudioFrame::OnMaskSymTri(wxCommandEvent& WXUNUSED(event)) {
 			continue;
 		std::string shapeName = shape->name.get();
 
-		mesh* m = glView->gls.GetMesh(shapeName);
+		Mesh* m = glView->gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
@@ -12109,8 +12109,8 @@ void wxGLPanel::ClickSplitEdge() {
 
 std::unordered_map<std::string, std::vector<float>> wxGLPanel::StashMasks() {
 	std::unordered_map<std::string, std::vector<float>> stash;
-	std::vector<mesh*> meshes = gls.GetMeshes();
-	for (mesh* m : meshes) {
+	std::vector<Mesh*> meshes = gls.GetMeshes();
+	for (Mesh* m : meshes) {
 		if (!m->mask)
 			continue;
 		std::vector<float>& mask = stash[m->shapeName];
@@ -12121,8 +12121,8 @@ std::unordered_map<std::string, std::vector<float>> wxGLPanel::StashMasks() {
 }
 
 void wxGLPanel::UnstashMasks(const std::unordered_map<std::string, std::vector<float>>& stash) {
-	std::vector<mesh*> meshes = gls.GetMeshes();
-	for (mesh* m : meshes) {
+	std::vector<Mesh*> meshes = gls.GetMeshes();
+	for (Mesh* m : meshes) {
 		auto stit = stash.find(m->shapeName);
 		if (stit == stash.end())
 			continue;
@@ -12131,7 +12131,7 @@ void wxGLPanel::UnstashMasks(const std::unordered_map<std::string, std::vector<f
 		if (static_cast<int>(mask.size()) != m->nVerts)
 			continue;
 		std::copy(mask.begin(), mask.end(), m->mask.get());
-		m->QueueUpdate(mesh::UpdateType::Mask);
+		m->QueueUpdate(Mesh::UpdateType::Mask);
 	}
 }
 

@@ -2393,7 +2393,7 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const
 	const std::vector<Vector3>* bitangents = workNif.GetBitangentsForShape(shape);
 	const std::vector<float>* eyeData = workNif.GetEyeDataForShape(shape);
 	AnimSkin& skin = workAnim.shapeSkinning[shape->name.get()];
-	mesh* m = owner->glView->GetMesh(shape->name.get());
+	Mesh* m = owner->glView->GetMesh(shape->name.get());
 	const float* mask = m ? m->mask.get() : nullptr;
 
 	for (uint16_t di = 0; di < static_cast<uint16_t>(indices.size()); ++di) {
