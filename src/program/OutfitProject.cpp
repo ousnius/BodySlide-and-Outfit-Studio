@@ -4404,7 +4404,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 				Vector3 sum2;
 				for (int p : p1s)
 					sum2 += uss.addVerts[vToRed[p]].pos;
-				sum = (sum + sum2 / p2s.size()) / 2;
+				sum = (sum + sum2 / p1s.size()) / 2;
 			}
 			for (int p : p1s)
 				uss.addVerts[vToRed[p]].pos = sum;
@@ -4434,7 +4434,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 				Vector3 sum2;
 				for (int p : p1s)
 					sum2 += GetUSliderDiff(uss.addVerts[vToRed[p]], sd.sliderName);
-				sum = (sum + sum2 / p2s.size()) / 2;
+				sum = (sum + sum2 / p1s.size()) / 2;
 			}
 			for (int p : p1s)
 				SetUSliderDiff(uss.addVerts[vToRed[p]], sd.sliderName, sum);
@@ -4462,7 +4462,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 				float sum2 = 0.0f;
 				for (int p : p1s)
 					sum2 += GetUWeight(uss.addVerts[vToRed[p]], bn1);
-				sum = (sum + sum2 / p2s.size()) / 2;
+				sum = (sum + sum2 / p1s.size()) / 2;
 			}
 			if (!weightAdjustPoint[p1s[0]]) {
 				weightAdjustPoint[p1s[0]] = true;
