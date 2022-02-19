@@ -9878,6 +9878,9 @@ int OutfitStudioFrame::CopySegPartForShapes(std::vector<NiShape*> shapes, bool s
 }
 
 bool OutfitStudioFrame::ShowVertexAsym(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, bool trize) {
+	// This dialog has two versions, one for OnMaskSymVert and one for
+	// OnSymVert.  trize tells us which version to do.
+
 	CloseBrushSettings();
 
 	int nSliders = static_cast<int>(asyms.sliders.size());
@@ -9885,6 +9888,8 @@ bool OutfitStudioFrame::ShowVertexAsym(const SymmetricVertices& symverts, const 
 	int nMatches = static_cast<int>(symverts.matches.size());
 	int nUnmatched = static_cast<int>(symverts.unmatched.size());
 
+	// Initialize the portion of tasks that doesn't get initialized by
+	// member initialization.
 	tasks.doSliders.resize(nSliders, true);
 	tasks.doDualBones.resize(nBones, true);
 	tasks.doSingleBones.resize(nBones, true);
@@ -9913,7 +9918,8 @@ bool OutfitStudioFrame::ShowVertexAsym(const SymmetricVertices& symverts, const 
 	wxScrolledWindow* asymScroll = XRCCTRL(dlg, "asymScroll", wxScrolledWindow);
 	wxStaticText* stillUnmaskedText = XRCCTRL(dlg, "stillUnmaskedText", wxStaticText);
 
-	// Checkbox event handling
+	// UpdateStillUnmasked: calculates value for the "still unmasked"
+	// wxStaticText.
 	auto UpdateStillUnmasked = [&]() {
 		int stillUnmasked = 0;
 		if (tasks.doUnmatched)
@@ -9928,6 +9934,9 @@ bool OutfitStudioFrame::ShowVertexAsym(const SymmetricVertices& symverts, const 
 			}
 		stillUnmaskedText->SetLabel(wxString() << stillUnmasked);
 	};
+
+	// UpdateChecks: update the individual slider check boxes, the any-slider
+	// check box, and the any-bone check box.  Also calls UpdateStillUnmasked.
 	auto UpdateChecks = [&]() {
 		int sliderCount = 0;
 		for (int sai = 0; sai < nSliders; ++sai) {
@@ -9944,6 +9953,9 @@ bool OutfitStudioFrame::ShowVertexAsym(const SymmetricVertices& symverts, const 
 
 		UpdateStillUnmasked();
 	};
+
+	// Checkbox event handling for the checkboxes that are not in either
+	// of the collapsible panes.
 	cbUnmatched->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& e) {
 		tasks.doUnmatched = e.IsChecked();
 		UpdateStillUnmasked();
@@ -9964,6 +9976,9 @@ bool OutfitStudioFrame::ShowVertexAsym(const SymmetricVertices& symverts, const 
 			tasks.doDualBones[bai] = newval;
 			tasks.doSingleBones[bai] = newval;
 		}
+		// We update the individual bones checkboxes here rather than in
+		// UpdateChecks because it's messy to calculate what each checkbox
+		// should be set to directly from tasks.
 		for (size_t bci = 0; bci < cbBones.size(); ++bci)
 			cbBones[bci]->SetValue(newval);
 		UpdateChecks();
@@ -10012,6 +10027,8 @@ bool OutfitStudioFrame::ShowVertexAsym(const SymmetricVertices& symverts, const 
 			});
 		}
 		else {	// has a mirror bone
+			// Check if we need to display a double-bone entry in the list:
+			// if there are any self or two-pair matches with asymmetries.
 			int dual_count = ba.self_count + ba.two_pair_count + asyms.bones[bai + ba.mirroroffset].two_pair_count;
 			if (ba.mirroroffset == 1 && dual_count) {
 				std::string label;
@@ -10028,6 +10045,8 @@ bool OutfitStudioFrame::ShowVertexAsym(const SymmetricVertices& symverts, const 
 					UpdateChecks();
 				});
 			}
+			// Display the single-bone entry if there are any one-pair matches
+			// with asymmetries.
 			if (ba.one_pair_count) {
 				wxCheckBox* cb = new wxCheckBox(bonesPane, wxID_ANY, ba.boneName);
 				bonesSz->Add(cb, 0, wxLEFT|wxRIGHT, 5);
@@ -10059,6 +10078,7 @@ bool OutfitStudioFrame::ShowVertexAsym(const SymmetricVertices& symverts, const 
 	if (!asyms.anybonecount)
 		DisableCheck(cbAnyBone);
 
+	// Customize the dialog for OnSymVert
 	if (trize) {
 		dlg.SetTitle(_("Symmetrize Vertices"));
 		cbUnmatched->Hide();
@@ -10109,6 +10129,7 @@ void OutfitStudioFrame::OnMaskSymVert(wxCommandEvent& WXUNUSED(event)) {
 	UndoStateShape& uss = usp->usss[0];
 	uss.shapeName = shapeName;
 
+	// Mask vertices based on selected tasks.
 	std::vector<bool> doMatch = CalcCombinedVertexAsymmetryTasks(r, a, tasks);
 	auto maskWelded = [&m, &uss](int i) {
 		if (m->mask[i] != 1.0f) {
@@ -10194,6 +10215,7 @@ void OutfitStudioFrame::OnMaskSymTri(wxCommandEvent& WXUNUSED(event)) {
 
 		std::vector<bool> amask = project->CalculateAsymmetricTriangleVertexMask(shape, m->weldVerts);
 
+		// Mask vertices that are _not_ in amask.
 		for (int vi = 0; vi < m->nVerts; ++vi)
 			if (m->mask[vi] != 1.0f && !amask[vi]) {
 				uss.pointStartState[vi].x = m->mask[vi];

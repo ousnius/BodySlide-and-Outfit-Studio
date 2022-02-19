@@ -4041,29 +4041,38 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 		if (sd.bUV || sd.bClamp || sd.bZap)
 			continue;
 
+		// Get the diffs for this slider
 		const std::unordered_map<uint16_t, Vector3>* diffSet = GetDiffSet(sd, shape);
-
 		if (!diffSet)
 			continue;
 
+		// Initialize all the data we'll be collecting for this slider
 		std::vector<bool> aflags(numsymv, false);
 		int count = 0;
 		float diffLenSum = 0.0f;
 		int diffLenCount = 0;
 
+		// Main loop through matches (for sliders).
 		for (int mpi = 0; mpi < numsymv; ++mpi) {
 			bool asym = false;
+			// Loop through weld set of match's first point
 			for (int p1 : weldSets[symverts.matches[mpi].first]) {
+				// Get p1's diff
 				Vector3 p1diff;
 				auto dit1 = diffSet->find(p1);
 				if (dit1 != diffSet->end())
 					p1diff = dit1->second;
 				p1diff.x = -p1diff.x;
+
+				// Loop through weld set of match's second point
 				for (int p2 : weldSets[symverts.matches[mpi].second]) {
+					// Get p2's diff
 					Vector3 p2diff;
 					auto dit2 = diffSet->find(p2);
 					if (dit2 != diffSet->end())
 						p2diff = dit2->second;
+
+					// Check for asymmetry
 					if (p1diff != p2diff) {
 						asym = true;
 						diffLenSum += (p1diff - p2diff).length();
@@ -4071,6 +4080,8 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 					}
 				}
 			}
+
+			// If this match had an asymmetry, record it
 			if (asym) {
 				aflags[mpi] = true;
 				++count;
@@ -4081,6 +4092,7 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 			}
 		}
 
+		// If this slider had an asymmetry, store the results
 		if (count) {
 			r.sliders.emplace_back();
 			r.sliders.back().sliderName = sd.name;
@@ -4101,6 +4113,7 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 	// Find bone weight asymmetries
 	std::unordered_map<uint16_t, float> dummyWeights;
 	for (int bpi = 0; bpi < nbPairs + nbSingles; ++bpi) {
+		// Get the names of our one or two bones
 		std::string b1name, b2name;
 		bool isBonePair = bpi < nbPairs;
 		if (isBonePair) {
@@ -4112,11 +4125,13 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 			b2name = b1name;
 		}
 
+		// Look up the weights for both bones
 		auto bnit = skin.boneNames.find(b1name);
 		const std::unordered_map<uint16_t, float>& b1w = bnit != skin.boneNames.end() ? skin.boneWeights[bnit->second].weights : dummyWeights;
 		bnit = skin.boneNames.find(b2name);
 		const std::unordered_map<uint16_t, float>& b2w = bnit != skin.boneNames.end() ? skin.boneWeights[bnit->second].weights : dummyWeights;
 
+		// Initialize all the data we'll be calculating for this bone/bones.
 		std::vector<bool> aflags1(numsymv, false);
 		std::vector<bool> aflags2(numsymv, false);
 		int two_pair_count1 = 0, one_pair_count1 = 0;
@@ -4125,12 +4140,17 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 		float dualSum = 0.0f, singleSum1 = 0.0f, singleSum2 = 0.0f;
 		int dualSumCount = 0, singleSum1Count = 0, singleSum2Count = 0;
 
+		// Main loop through matches for a bone or bone pair.
 		for (int mpi = 0; mpi < numsymv; ++mpi) {
+			// Calculate whether this is a two-pair, one-pair, or self match.
 			bool two_pair = mpi < symverts.two_pair_count;
 			bool one_pair = !two_pair && mpi < symverts.two_pair_count + symverts.one_pair_count;
 			bool self = !two_pair && !one_pair;
 			bool asym1 = false, asym2 = false;
+
+			// Loop through weld set for match's first point
 			for (int p1 : weldSets[symverts.matches[mpi].first]) {
+				// Find weights of p1 for bone 1 and bone 2
 				float p1b1w = 0.0f, p1b2w = 0.0f;
 				auto wit = b1w.find(p1);
 				if (wit != b1w.end())
@@ -4138,7 +4158,10 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 				wit = b2w.find(p1);
 				if (wit != b2w.end())
 					p1b2w = wit->second;
+
+				// Loop through weld set for match's second point
 				for (int p2 : weldSets[symverts.matches[mpi].second]) {
+					// Find weights of p2 for bone 1 and bone 2
 					float p2b1w = 0.0f, p2b2w = 0.0f;
 					wit = b1w.find(p2);
 					if (wit != b1w.end())
@@ -4146,6 +4169,9 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 					wit = b2w.find(p2);
 					if (wit != b2w.end())
 						p2b2w = wit->second;
+
+					// Check for asymmetry between p1's bone 1 weight and
+					// p2's bone 2 weight.
 					if (p1b1w != p2b2w) {
 						asym1 = true;
 						if (one_pair) {
@@ -4157,6 +4183,9 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 							++dualSumCount;
 						}
 					}
+
+					// Check for asymmetry between p1's bone 2 weight and
+					// p2's bone 1 weight.
 					if (p1b2w != p2b1w && !self) {
 						asym2 = true;
 						if (one_pair) {
@@ -4170,6 +4199,9 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 					}
 				}
 			}
+			// end loops through weld sets of the match's two points
+
+			// Record results for this match for this bone or bone pair
 			if (asym1) {
 				aflags1[mpi] = true;
 				if (two_pair)
@@ -4191,7 +4223,10 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 				++r.anybonecount;
 			}
 		}
+		// end main loop through matches for a bone or bone pair
 
+		// If we have any weight asymmetries for this bone or bone pair,
+		// store the results.
 		int count = two_pair_count1 + one_pair_count1 + self_count + two_pair_count2 + one_pair_count2;
 		if (count) {
 			r.bones.emplace_back();
@@ -4284,6 +4319,9 @@ static float GetUWeight(const UndoStateVertex& usv, const std::string& name) {
 	return 0.0f;
 }
 
+// The two versions of SetUWeight are for storing it in uss.boneWeights
+// (first version) or usv.weights (second version).  The first is needed
+// by the normalizer; the second is the final location.
 static void SetUWeight(UndoStateShape& uss, int p, const std::string& bn, float w) {
 	for (auto& bw : uss.boneWeights)
 		if (bw.boneName == bn) {
@@ -4346,7 +4384,8 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 	CollectTriangleData(shape, uss, VectorStaticCast<uint32_t>(triInds));
 	uss.addTris = uss.delTris;
 
-	// Prepare bone weight normalizer
+	// Prepare bone list for bone weight normalizer.  First, we add the
+	// bones that are being symmetrized to normBones.
 	std::vector<std::string> normBones;	// order is important: sel before unsel
 	std::unordered_set<std::string> normBonesSet;
 	for (int bai = 0; bai < nBones; ++bai)
@@ -4355,6 +4394,9 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 			normBonesSet.insert(asyms.bones[bai].boneName);
 		}
 	int nMBones = static_cast<int>(normBones.size());
+
+	// Next, we add the norm-bones from the user to normBones, if they
+	// aren't already there.
 	bool hasNormBones = false;
 	for (const std::string& bone : userNormBones)
 		if (!normBonesSet.count(bone)) {
@@ -4362,6 +4404,10 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 			normBonesSet.insert(bone);
 			hasNormBones = true;
 		}
+
+	// Finally, we add the not-norm-bones from the user.  If the user has
+	// picked some norm bones that aren't being symmetrized, then we can
+	// lock all the not-norm-bones.  Otherwise, they become norm bones.
 	std::vector<std::string> lockedBones;
 	for (const std::string& bone : userNotNormBones)
 		if (!normBonesSet.count(bone)) {
@@ -4370,8 +4416,11 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 			else
 				normBones.push_back(bone);
 		}
+
+	// Initialize the bone weight normalizer
 	BoneWeightAutoNormalizer nzer;
 	nzer.SetUp(&uss, &workAnim, shape->name.get(), normBones, lockedBones, nMBones, hasNormBones);
+
 	// Because we might be adjusting the weights for several different bones
 	// for a given point, we have to delay normalization until after the
 	// main loop.  Only the first point in each weld set is normalized;
@@ -4391,7 +4440,9 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 		GetWeldSet(weldVerts, p1, p1s);
 		GetWeldSet(weldVerts, p2, p2s);
 
+		// Symmetrize position
 		if (tasks.doPos && asyms.positions[mi]) {
+			// Calculate average
 			Vector3 sum;
 			for (int p : p2s)
 				sum += uss.addVerts[vToRed[p]].pos;
@@ -4406,6 +4457,8 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 					sum2 += uss.addVerts[vToRed[p]].pos;
 				sum = (sum + sum2 / p1s.size()) / 2;
 			}
+
+			// Store average
 			for (int p : p1s)
 				uss.addVerts[vToRed[p]].pos = sum;
 			if (two_pair) {
@@ -4415,6 +4468,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 			}
 		}
 
+		// Symmetrize position slider diffs
 		for (int si = 0; si < nSliders; ++si) {
 			if (!tasks.doSliders[si])
 				continue;
@@ -4422,6 +4476,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 			if (!sd.aflags[mi])
 				continue;
 
+			// Calculate average
 			Vector3 sum;
 			for (int p : p2s)
 				sum += GetUSliderDiff(uss.addVerts[vToRed[p]], sd.sliderName);
@@ -4436,6 +4491,8 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 					sum2 += GetUSliderDiff(uss.addVerts[vToRed[p]], sd.sliderName);
 				sum = (sum + sum2 / p1s.size()) / 2;
 			}
+
+			// Store average
 			for (int p : p1s)
 				SetUSliderDiff(uss.addVerts[vToRed[p]], sd.sliderName, sum);
 			if (two_pair) {
@@ -4445,6 +4502,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 			}
 		}
 
+		// Symmetrize bone weights
 		for (int bi = 0; bi < nBones; ++bi) {
 			if (!(tasks.doDualBones[bi] && (two_pair || self)) && !(tasks.doSingleBones[bi] && one_pair))
 				continue;
@@ -4454,6 +4512,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 			std::string bn1 = bd.boneName;
 			std::string bn2 = asyms.bones[bi + bd.mirroroffset].boneName;
 
+			// Calculate average
 			float sum = 0.0f;
 			for (int p : p2s)
 				sum += GetUWeight(uss.addVerts[vToRed[p]], bn2);
@@ -4464,6 +4523,8 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 					sum2 += GetUWeight(uss.addVerts[vToRed[p]], bn1);
 				sum = (sum + sum2 / p1s.size()) / 2;
 			}
+
+			// Store average
 			if (!weightAdjustPoint[p1s[0]]) {
 				weightAdjustPoint[p1s[0]] = true;
 				nzer.GrabOneVertexStartingWeights(p1s[0]);
@@ -4484,7 +4545,11 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 	for (int p : vInds) {
 		if (!weightAdjustPoint[p])
 			continue;
+
+		// Normalize weights
 		nzer.AdjustWeights(p);
+
+		// Transfer results
 		for (const auto& bw : uss.boneWeights) {
 			auto wit = bw.weights.find(p);
 			if (wit == bw.weights.end())
@@ -4540,13 +4605,19 @@ std::vector<bool> OutfitProject::CalculateAsymmetricTriangleVertexMask(NiShape* 
 	// Main loop through triangles
 	std::vector<bool> mask(verts.size(), false);
 	for (const Triangle& t : tris) {
+		// m1, m2, m3: mirror of each of the triangle's points.  Note that
+		// p2 and p3 are swapped, as we flip orientation when mirroring.
 		int m1 = mVerts[t.p1];
 		int m2 = mVerts[t.p3];
 		int m3 = mVerts[t.p2];
 		bool bad = false;
+		// If any of m1, m2, or m3 is negative, that means the point does
+		// not have a mirror match.
 		if (m1 < 0 || m2 < 0 || m3 < 0)
-			bad = true;	// A point was not mirror-matched
+			bad = true;
 		if (!bad) {
+			// Search through the weld sets for our three mirror points,
+			// looking for a mirror triangle.
 			bool gotmatch = false;
 			for (int wm1 : weldSets[m1])
 			for (int wm2 : weldSets[m2])
@@ -4559,6 +4630,7 @@ std::vector<bool> OutfitProject::CalculateAsymmetricTriangleVertexMask(NiShape* 
 			bad = !gotmatch;
 		}
 		if (bad) {
+			// We've found a triangle that does not have a mirror.
 			for (int i : weldSets[t.p1])
 				mask[i] = true;
 			for (int i : weldSets[t.p2])
