@@ -1340,7 +1340,7 @@
 						<border>5</border>
 						<object class="wxCheckBox" name="checkUnmatched">
 							<label></label>
-							<checked>1</checked>
+							<checked>0</checked>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -1431,7 +1431,7 @@
 											<border>5</border>
 											<object class="wxCheckBox" name="checkPosition">
 												<label></label>
-												<checked>1</checked>
+												<checked>0</checked>
 											</object>
 										</object>
 										<object class="sizeritem">
@@ -1470,7 +1470,7 @@
 											<object class="wxCheckBox" name="checkAnySlider">
 												<label></label>
 												<style>wxCHK_3STATE</style>
-												<checked>1</checked>
+												<checked>0</checked>
 											</object>
 										</object>
 										<object class="sizeritem">
@@ -1523,7 +1523,7 @@
 											<object class="wxCheckBox" name="checkAnyBone">
 												<label></label>
 												<style>wxCHK_3STATE</style>
-												<checked>1</checked>
+												<checked>0</checked>
 											</object>
 										</object>
 										<object class="sizeritem">
@@ -1581,6 +1581,7 @@
 						<option>0</option>
 						<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
 						<border>5</border>
+						<minsize>100,20</minsize>
 						<object class="wxStaticText" name="stillUnmaskedText">
 							<label>0</label>
 							<wrap>-1</wrap>

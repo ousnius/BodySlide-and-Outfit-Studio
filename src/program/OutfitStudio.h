@@ -1180,7 +1180,7 @@ private:
 
 	int CopySegPartForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
 
-	bool ShowVertexAsym(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, bool trize);
+	bool ShowVertexAsym(Mesh* m, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, bool trize);
 
 	void OnExit(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& event);

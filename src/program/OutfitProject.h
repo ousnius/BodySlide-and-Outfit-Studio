@@ -40,9 +40,9 @@ struct MergeCheckErrors {
 
 // SymmetricVertices: result from the function MatchSymmetricVertices
 struct SymmetricVertices {
-	// matches has all matched pairs of vertices, starting with the two-pairs,
-	// then the one-pairs, and finally the self matches.  Two-pair matches
-	// have the lower index first.  One-pair matches have the unmasked vertex
+	// matches has all matched pairs of vertices, starting with the duals,
+	// then the one-sided, and finally the self matches.  Dual matches
+	// have the lower index first.  One-sided matches have the unmasked vertex
 	// first, the masked vertex second.
 	std::vector<std::pair<int, int>> matches;
 	std::vector<int> unmatched;
@@ -50,11 +50,11 @@ struct SymmetricVertices {
 	// in matches or unmatched) because they're welded to a vertex with a
 	// lower index.
 	std::vector<int> weldSkip;
-	// Two-pair matches: matches where both vertices were not masked.
-	int two_pair_count = 0;
-	// One-pair matches: matches where one vertex was not masked and the
+	// Dual matches: matches where both vertices were not masked.
+	int dual_count = 0;
+	// One-sided matches: matches where one vertex was not masked and the
 	// other vertex was masked.
-	int one_pair_count = 0;
+	int one_sided_count = 0;
 	// Self matches: matches where the vertex's mirror was itself.
 	int self_count = 0;
 };
@@ -76,10 +76,21 @@ struct VertexAsymmetries {
 	int anyslidercount = 0;
 	struct Bone {
 		std::string boneName;
-		std::vector<bool> aflags;
-		int two_pair_count = 0, one_pair_count = 0, self_count = 0;
+		// We call this bone "bone 1" and its mirror "bone 2".
+		// mirroroffset gives the offset in bones of bone 2.
 		int mirroroffset = 0;	// -1, 0, or 1
-		float dual_avg = 0.0f, one_pair_avg = 0.0f, all_avg = 0.0f;
+		// aflags[i] will be true if p1's bone 1 weight doesn't match p2's
+		// bone 2 weight.  That means not all asymmetries for bone 1 will
+		// be listed here: if bone 1 != bone 2 and (p1,p2) is a dual
+		// match, bone 2's aflags will indicate whether p2's bone 1 weight
+		// doesn't match p1's bone 2 weight, which is also an asymmetry for
+		// bone 1.
+		std::vector<bool> aflags;
+		// count and avg include all asymmetries for bone 1, not just the
+		// ones marked in bone 1's aflags.  Note that a bone can be listed
+		// in bones even if its count is zero.
+		int count = 0;
+		float avg = 0.0f;
 	};
 	std::vector<Bone> bones;
 	std::vector<bool> anybone;
@@ -87,14 +98,13 @@ struct VertexAsymmetries {
 };
 
 struct VertexAsymmetryTasks {
-	bool doUnmatched = true;
-	bool doPos = true;
+	bool doUnmatched = false;
+	bool doPos = false;
 	std::vector<bool> doSliders;	// Same size as VertexAsymmetries::sliders
-	// doDualBones: do two_pair and sel; doSingleBones: do one_pair
-	std::vector<bool> doDualBones, doSingleBones;	// Same size as VertexAsymmetries::bones
+	std::vector<bool> doBones;	// Same size as VertexAsymmetries::bones
 };
 
-std::vector<bool> CalcCombinedVertexAsymmetryTasks(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks);
+std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, int nVerts, const std::unordered_map<int, std::vector<int>>& weldVerts);
 
 class OutfitProject {
 	OutfitStudioFrame* owner = nullptr;
