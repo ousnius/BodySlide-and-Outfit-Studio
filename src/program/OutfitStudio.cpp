@@ -9877,7 +9877,7 @@ int OutfitStudioFrame::CopySegPartForShapes(std::vector<NiShape*> shapes, bool s
 	return failshapes;
 }
 
-bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, bool trize) {
+bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, const std::vector<bool>& selVerts, bool trize) {
 	// This dialog has two versions, one for OnMaskSymVert and one for
 	// OnSymVert.  trize tells us which version to do.
 
@@ -9886,6 +9886,9 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 	int nSliders = static_cast<int>(asyms.sliders.size());
 	int nBones = static_cast<int>(asyms.bones.size());
 	int nUnmatched = static_cast<int>(symverts.unmatched.size());
+
+	VertexAsymmetryStats stats;
+	CalcVertexAsymmetryStats(symverts, asyms, selVerts, stats);
 
 	// Initialize the portion of tasks that doesn't get initialized by
 	// member initialization.
@@ -9897,14 +9900,14 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 		return false;
 
 	// Fill in static labels
-	XRCCTRL(dlg, "currentUnmaskedText", wxStaticText)->SetLabel(wxString() << (2*symverts.dual_count + symverts.one_sided_count + symverts.self_count));
+	XRCCTRL(dlg, "currentUnmaskedText", wxStaticText)->SetLabel(wxString() << stats.unmaskedCount);
 	XRCCTRL(dlg, "unmatchedVerticesText", wxStaticText)->SetLabel(wxString() << nUnmatched);
-	XRCCTRL(dlg, "posAvgText", wxStaticText)->SetLabel(wxString() << asyms.posAvg);
-	XRCCTRL(dlg, "positionText", wxStaticText)->SetLabel(wxString() << asyms.posCount);
+	XRCCTRL(dlg, "posAvgText", wxStaticText)->SetLabel(wxString() << stats.posAvg);
+	XRCCTRL(dlg, "positionText", wxStaticText)->SetLabel(wxString() << stats.posCount);
 	XRCCTRL(dlg, "anySliderLabel", wxStaticText)->SetLabel(wxString() << nSliders << _(" sliders"));
-	XRCCTRL(dlg, "anySliderText", wxStaticText)->SetLabel(wxString() << asyms.anyslidercount);
+	XRCCTRL(dlg, "anySliderText", wxStaticText)->SetLabel(wxString() << stats.anySliderCount);
 	XRCCTRL(dlg, "anyBoneLabel", wxStaticText)->SetLabel(wxString() << nBones << _(" bones"));
-	XRCCTRL(dlg, "anyBoneText", wxStaticText)->SetLabel(wxString() << asyms.anybonecount);
+	XRCCTRL(dlg, "anyBoneText", wxStaticText)->SetLabel(wxString() << stats.anyBoneCount);
 
 	// The controls we need later
 	wxCheckBox* cbUnmatched = XRCCTRL(dlg, "checkUnmatched", wxCheckBox);
@@ -9922,9 +9925,9 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 		int stillUnmasked = 0;
 		if (tasks.doUnmatched)
 			stillUnmasked += nUnmatched;
-		std::vector<bool> doVert = CalcVertexListForAsymmetryTasks(symverts, asyms, tasks, m->nVerts, std::unordered_map<int, std::vector<int>>());
+		std::vector<bool> doVert = CalcVertexListForAsymmetryTasks(symverts, asyms, tasks, m->nVerts);
 		for (int vi = 0; vi < m->nVerts; ++vi)
-			if (doVert[vi])
+			if (selVerts[vi] && doVert[vi])
 				++stillUnmasked;
 		stillUnmaskedText->SetLabel(wxString() << stillUnmasked);
 	};
@@ -9941,7 +9944,7 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 
 		int boneCount = 0, totalBones = 0;
 		for (int bai = 0; bai < nBones; ++bai) {
-			if (!asyms.bones[bai].count)
+			if (!stats.boneCounts[bai])
 				continue;
 			++totalBones;
 			boneCount += tasks.doBones[bai];
@@ -9970,7 +9973,7 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 	cbAnyBone->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& e) {
 		bool newval = e.IsChecked();
 		for (int bai = 0; bai < nBones; ++bai)
-			if (asyms.bones[bai].count)
+			if (stats.boneCounts[bai])
 				tasks.doBones[bai] = newval;
 		for (size_t bci = 0; bci < cbBones.size(); ++bci)
 			cbBones[bci]->SetValue(newval);
@@ -9987,8 +9990,8 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 		wxCheckBox* cb = new wxCheckBox(slidersPane, wxID_ANY, sa.sliderName);
 		slidersSz->Add(cb, 0, wxLEFT|wxRIGHT, 5);
 		cbSliders[sai] = cb;
-		slidersSz->Add(new wxStaticText(slidersPane, wxID_ANY, wxString() << sa.avg), 0, wxRIGHT|wxALIGN_RIGHT, 20);
-		slidersSz->Add(new wxStaticText(slidersPane, wxID_ANY, wxString() << sa.count), 0, wxLEFT|wxRIGHT|wxALIGN_RIGHT, 5);
+		slidersSz->Add(new wxStaticText(slidersPane, wxID_ANY, wxString() << stats.sliderAvgs[sai]), 0, wxRIGHT|wxALIGN_RIGHT, 20);
+		slidersSz->Add(new wxStaticText(slidersPane, wxID_ANY, wxString() << stats.sliderCounts[sai]), 0, wxLEFT|wxRIGHT|wxALIGN_RIGHT, 5);
 		cb->Bind(wxEVT_CHECKBOX, [&, sai](wxCommandEvent& e) {
 			tasks.doSliders[sai] = e.IsChecked();
 			UpdateChecks();
@@ -10004,18 +10007,17 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 	bonesSz->AddGrowableCol(0, 1);
 	for (int bai = 0; bai < nBones; ++bai) {
 		const auto& ba = asyms.bones[bai];
-
 		// If a bone has no asymmetries but its mirror bone does, it's still
 		// listed in asyms.bones.  But that doesn't mean we need to show it
 		// to the user.
-		if (!ba.count)
+		if (!stats.boneCounts[bai])
 			continue;
 
 		wxCheckBox* cb = new wxCheckBox(bonesPane, wxID_ANY, ba.boneName);
 		bonesSz->Add(cb, 0, wxLEFT|wxRIGHT, 5);
 		cbBones.push_back(cb);
-		bonesSz->Add(new wxStaticText(bonesPane, wxID_ANY, wxString() << ba.avg), 0, wxRIGHT|wxALIGN_RIGHT, 20);
-		bonesSz->Add(new wxStaticText(bonesPane, wxID_ANY, wxString() << ba.count), 0, wxLEFT|wxRIGHT|wxALIGN_RIGHT, 5);
+		bonesSz->Add(new wxStaticText(bonesPane, wxID_ANY, wxString() << stats.boneAvgs[bai]), 0, wxRIGHT|wxALIGN_RIGHT, 20);
+		bonesSz->Add(new wxStaticText(bonesPane, wxID_ANY, wxString() << stats.boneCounts[bai]), 0, wxLEFT|wxRIGHT|wxALIGN_RIGHT, 5);
 		cb->Bind(wxEVT_CHECKBOX, [&, bai](wxCommandEvent& e) {
 			tasks.doBones[bai] = e.IsChecked();
 			UpdateChecks();
@@ -10031,11 +10033,11 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 	};
 	if (!nUnmatched)
 		DisableCheck(cbUnmatched);
-	if (!asyms.posCount)
+	if (!stats.posCount)
 		DisableCheck(cbPosition);
-	if (!asyms.anyslidercount)
+	if (!stats.anySliderCount)
 		DisableCheck(cbAnySlider);
-	if (!asyms.anybonecount)
+	if (!stats.anyBoneCount)
 		DisableCheck(cbAnyBone);
 
 	// Customize the dialog for OnSymVert
@@ -10073,14 +10075,18 @@ void OutfitStudioFrame::OnMaskSymVert(wxCommandEvent& WXUNUSED(event)) {
 	if (!m)
 		return;
 
+	std::vector<bool> selVerts(m->nVerts);
+	for (int i = 0; i < m->nVerts; ++i)
+		selVerts[i] = m->mask[i] == 0.0f;
+
 	SymmetricVertices r;
-	project->MatchSymmetricVertices(s, m->mask.get(), m->weldVerts, r);
+	project->MatchSymmetricVertices(s, m->weldVerts, r);
 
 	VertexAsymmetries a;
 	project->FindVertexAsymmetries(s, r, m->weldVerts, a);
 
 	VertexAsymmetryTasks tasks;
-	if (!ShowVertexAsym(m, r, a, tasks, false))
+	if (!ShowVertexAsym(m, r, a, tasks, selVerts, false))
 		return;
 
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
@@ -10090,14 +10096,13 @@ void OutfitStudioFrame::OnMaskSymVert(wxCommandEvent& WXUNUSED(event)) {
 	uss.shapeName = shapeName;
 
 	// Mask vertices based on selected tasks.
-	std::vector<bool> doVert = CalcVertexListForAsymmetryTasks(r, a, tasks, m->nVerts, m->weldVerts);
+	std::vector<bool> doVert = CalcVertexListForAsymmetryTasks(r, a, tasks, m->nVerts);
+	AddWeldedToVertexList(m->weldVerts, doVert);
 	for (int i = 0; i < m->nVerts; ++i) {
-		if (doVert[i])
+		if (selVerts[i] && doVert[i])
 			continue;
-		if (m->mask[i] != 1.0f) {
-			uss.pointStartState[i].x = m->mask[i];
-			uss.pointEndState[i].x = 1.0f;
-		}
+		uss.pointStartState[i].x = m->mask[i];
+		uss.pointEndState[i].x = 1.0f;
 	};
 
 	glView->ApplyUndoState(usp, false);
@@ -10116,14 +10121,18 @@ void OutfitStudioFrame::OnSymVert(wxCommandEvent& WXUNUSED(event)) {
 	if (!m)
 		return;
 
+	std::vector<bool> selVerts(m->nVerts);
+	for (int i = 0; i < m->nVerts; ++i)
+		selVerts[i] = m->mask[i] == 0.0f;
+
 	SymmetricVertices r;
-	project->MatchSymmetricVertices(s, m->mask.get(), m->weldVerts, r);
+	project->MatchSymmetricVertices(s, m->weldVerts, r);
 
 	VertexAsymmetries a;
 	project->FindVertexAsymmetries(s, r, m->weldVerts, a);
 
 	VertexAsymmetryTasks tasks;
-	if (!ShowVertexAsym(m, r, a, tasks, true))
+	if (!ShowVertexAsym(m, r, a, tasks, selVerts, true))
 		return;
 
 	std::vector<std::string> normBones, notNormBones;
@@ -10135,7 +10144,7 @@ void OutfitStudioFrame::OnSymVert(wxCommandEvent& WXUNUSED(event)) {
 	UndoStateShape& uss = usp->usss[0];
 	uss.shapeName = shapeName;
 
-	project->PrepareSymmetrizeVertices(s, uss, r, a, tasks, m->weldVerts, normBones, notNormBones);
+	project->PrepareSymmetrizeVertices(s, uss, r, a, tasks, m->weldVerts, selVerts, normBones, notNormBones);
 
 	glView->ApplyUndoState(usp, false);
 	UpdateUndoTools();

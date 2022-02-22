@@ -3821,7 +3821,7 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<Mesh*>& sha
 	}
 }
 
-void OutfitProject::MatchSymmetricVertices(NiShape* shape, const float* mask, const std::unordered_map<int, std::vector<int>>& weldVerts, SymmetricVertices& r) {
+void OutfitProject::MatchSymmetricVertices(NiShape* shape, const std::unordered_map<int, std::vector<int>>& weldVerts, SymmetricVertices& r) {
 	// Gather shape's vertices
 	std::vector<Vector3> verts;
 	workNif.GetVertsForShape(shape, verts);
@@ -3842,9 +3842,7 @@ void OutfitProject::MatchSymmetricVertices(NiShape* shape, const float* mask, co
 					killit = true;
 					break;
 				}
-		if (killit)
-			r.weldSkip.push_back(vi);
-		else
+		if (!killit)
 			indRedToOrig[redNVerts++] = vi;
 	}
 
@@ -3857,8 +3855,6 @@ void OutfitProject::MatchSymmetricVertices(NiShape* shape, const float* mask, co
 	kd_tree<uint16_t> vertTree(&verts[0], redNVerts);
 
 	struct VertData {
-		bool queued = false;
-		bool masked = false;
 		// bad: no match or a bad match
 		bool bad = false;
 		// mi: matched vertex's index.  The value of -1 is not meaningful,
@@ -3868,81 +3864,37 @@ void OutfitProject::MatchSymmetricVertices(NiShape* shape, const float* mask, co
 	};
 	std::vector<VertData> vdata(redNVerts);
 
-	// Make list of work to do: the unmasked vertices.  Later,
-	// when a masked vertex is found to match an unmasked vertex,
-	// it will be added to workq.
-	std::vector<int> workq;
+	// Main loop through the reduced vertex set.
 	for (int vi = 0; vi < redNVerts; ++vi) {
-		vdata[vi].masked = mask[indRedToOrig[vi]] != 0.0f;
-		if (!vdata[vi].masked) {
-			workq.push_back(vi);
-			vdata[vi].queued = true;
-		}
-	}
-
-	// Loop through vertices to match
-	while (!workq.empty()) {
-		int vi = workq.back();
-		workq.pop_back();
-
 		// Construct mirror coordinates
 		Vector3 mc = verts[vi];
 		mc.x = -mc.x;
 
 		// Match
-		uint32_t resultcount = vertTree.kd_nn(&mc, 0);
-		if (resultcount < 1) {
-			vdata[vi].bad = true;
-			continue;
-		}
+		vertTree.kd_nn(&mc, 0);
 
 		// mi: matched vertex's index
 		int mi = vertTree.queryResult[0].vertex_index;
 		vdata[vi].mi = mi;
 		++vdata[mi].matchcount;
-
-		// Add matched vertex to workq if it hasn't been added already. 
-		if (!vdata[mi].queued) {
-			workq.push_back(mi);
-			vdata[mi].queued = true;
-		}
 	}
 
-	// Mark a vertex bad if two vertices matched to it or if its matched
-	// vertex didn't match to it.
+	// Mark a vertex bad if two vertices matched to it, if its matched
+	// vertex didn't match to it, or if its match is bad.
 	for (int vi = 0; vi < redNVerts; ++vi)
-		if (vdata[vi].queued && !vdata[vi].bad && (vdata[vi].matchcount != 1 || vdata[vdata[vi].mi].mi != vi))
+		if (vdata[vi].matchcount != 1 || vdata[vdata[vi].mi].mi != vi) {
 			vdata[vi].bad = true;
+			vdata[vdata[vi].mi].bad = true;
+		}
 
-	// Mark a vertex bad if its match is marked bad
-	for (int vi = 0; vi < redNVerts; ++vi)
-		if (vdata[vi].queued && !vdata[vi].bad && vdata[vdata[vi].mi].bad)
-			vdata[vi].bad = true;
-
-	// Sort our matches into the four categories
-	std::vector<std::pair<int, int>> duals, one_sideds, selfs;
+	// Put results in r.
 	for (int vi = 0; vi < redNVerts; ++vi) {
 		const VertData& vd = vdata[vi];
-		if (vd.masked)
-			continue;
-
 		if (vd.bad)
 			r.unmatched.push_back(indRedToOrig[vi]);
-		else if (vd.mi == vi)
-			selfs.emplace_back(indRedToOrig[vi], indRedToOrig[vi]);
-		else if (vdata[vd.mi].masked)
-			one_sideds.emplace_back(indRedToOrig[vi], indRedToOrig[vd.mi]);
-		else if (vi < vd.mi)
-			duals.emplace_back(indRedToOrig[vi], indRedToOrig[vd.mi]);
+		else if (vi <= vd.mi)
+			r.matches.emplace_back(indRedToOrig[vi], indRedToOrig[vd.mi]);
 	}
-
-	// Transfer data to r that isn't already there.
-	r.dual_count = static_cast<int>(duals.size());
-	r.one_sided_count = static_cast<int>(one_sideds.size());
-	r.self_count = static_cast<int>(selfs.size());
-	std::copy(duals.begin(), duals.end(), std::back_inserter(r.matches));
-	std::copy(one_sideds.begin(), one_sideds.end(), std::back_inserter(r.matches));
-	std::copy(selfs.begin(), selfs.end(), std::back_inserter(r.matches));
 }
 
 void OutfitProject::MatchSymmetricBoneNames(std::vector<std::pair<std::string, std::string>>& pairs, std::vector<std::string>& singles) {
@@ -4000,40 +3952,40 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 	// Get shape's vertices
 	std::vector<Vector3> verts;
 	workNif.GetVertsForShape(shape, verts);
+	int nVerts = static_cast<int>(shape->GetNumVertices());
 
-	// Create welded-vertex set for each vertex in symverts
-	std::vector<std::vector<int>> weldSets(verts.size());
-	for (const auto& mp : symverts.matches) {
-		GetWeldSet(weldVerts, mp.first, weldSets[mp.first]);
-		GetWeldSet(weldVerts, mp.second, weldSets[mp.second]);
-	}
-	int numsymv = static_cast<size_t>(symverts.matches.size());
+	// Create welded-vertex set for every vertex
+	std::vector<std::vector<int>> weldSets(nVerts);
+	for (int vi = 0; vi < nVerts; ++vi)
+		GetWeldSet(weldVerts, vi, weldSets[vi]);
+
+	// Initialize global result arrays
+	int nMatches = static_cast<int>(symverts.matches.size());
+	r.positions.resize(nMatches, false);
+	r.anyslider.resize(nMatches, false);
+	r.anybone.resize(nMatches, false);
+	r.poserr.resize(nMatches, 0.0f);
 
 	// Find position asymmetries
-	r.positions.resize(numsymv, false);
-	r.anyslider.resize(numsymv, false);
-	r.anybone.resize(numsymv, false);
-	float posLenSum = 0.0f;
-	int posLenCount = 0;
-	for (int mpi = 0; mpi < numsymv; ++mpi) {
+	for (int mpi = 0; mpi < nMatches; ++mpi) {
 		bool asym = false;
+		float err = 0.0f;
+		int errCount = 0;
 		for (int p1 : weldSets[symverts.matches[mpi].first]) {
 			Vector3 v1 = verts[p1];
 			v1.x = -v1.x;
 			for (int p2 : weldSets[symverts.matches[mpi].second])
 				if (v1 != verts[p2]) {
 					asym = true;
-					posLenSum += (v1 - verts[p2]).length();
-					++posLenCount;
+					err += (v1 - verts[p2]).length();
+					++errCount;
 				}
 		}
 		if (asym) {
 			r.positions[mpi] = true;
-			++r.posCount;
+			r.poserr[mpi] = err / errCount;
 		}
 	}
-	if (posLenCount)
-		r.posAvg = posLenSum / posLenCount;
 
 	// Find position slider asymmetries
 	for (size_t si = 0; si < activeSet.size(); ++si) {
@@ -4047,14 +3999,16 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 			continue;
 
 		// Initialize all the data we'll be collecting for this slider
-		std::vector<bool> aflags(numsymv, false);
-		int count = 0;
-		float diffLenSum = 0.0f;
-		int diffLenCount = 0;
+		std::vector<bool> aflags(nMatches, false);
+		std::vector<float> differr(nMatches, 0.0f);
+		bool sliderasym = false;
 
 		// Main loop through matches (for sliders).
-		for (int mpi = 0; mpi < numsymv; ++mpi) {
+		for (int mpi = 0; mpi < nMatches; ++mpi) {
 			bool asym = false;
+			float err = 0.0f;
+			int errCount = 0;
+
 			// Loop through weld set of match's first point
 			for (int p1 : weldSets[symverts.matches[mpi].first]) {
 				// Get p1's diff
@@ -4075,8 +4029,8 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 					// Check for asymmetry
 					if (p1diff != p2diff) {
 						asym = true;
-						diffLenSum += (p1diff - p2diff).length();
-						++diffLenCount;
+						err += (p1diff - p2diff).length();
+						++errCount;
 					}
 				}
 			}
@@ -4084,21 +4038,18 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 			// If this match had an asymmetry, record it
 			if (asym) {
 				aflags[mpi] = true;
-				++count;
-				if (!r.anyslider[mpi]) {
-					r.anyslider[mpi] = true;
-					++r.anyslidercount;
-				}
+				differr[mpi] = err / errCount;
+				sliderasym = true;
+				r.anyslider[mpi] = true;
 			}
 		}
 
 		// If this slider had an asymmetry, store the results
-		if (count) {
+		if (sliderasym) {
 			r.sliders.emplace_back();
 			r.sliders.back().sliderName = sd.name;
 			r.sliders.back().aflags = std::move(aflags);
-			r.sliders.back().count = count;
-			r.sliders.back().avg = diffLenSum / diffLenCount;
+			r.sliders.back().differr = std::move(differr);
 		}
 	}
 
@@ -4132,17 +4083,17 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 		const std::unordered_map<uint16_t, float>& b2w = bnit != skin.boneNames.end() ? skin.boneWeights[bnit->second].weights : dummyWeights;
 
 		// Initialize all the data we'll be calculating for this bone/bones.
-		std::vector<bool> aflags1(numsymv, false);
-		std::vector<bool> aflags2(numsymv, false);
-		int count1 = 0, count2 = 0;
-		float sum1 = 0.0f, sum2 = 0.0f;
-		float sum1count = 0.0f, sum2count = 0.0f;
+		std::vector<bool> aflags1(nMatches, false);
+		std::vector<bool> aflags2(nMatches, false);
+		std::vector<float> weighterr1(nMatches, 0.0f);
+		std::vector<float> weighterr2(nMatches, 0.0f);
+		bool boneasym = false;
 
 		// Main loop through matches for a bone or bone pair.
-		for (int mpi = 0; mpi < numsymv; ++mpi) {
-			// Calculate whether this is a two-pair, one-pair, or self match.
-			bool dual = mpi < symverts.dual_count;
+		for (int mpi = 0; mpi < nMatches; ++mpi) {
 			bool asym1 = false, asym2 = false;
+			float werr1 = 0.0f, werr2 = 0.0f;
+			int werr1count = 0, werr2count = 0;
 
 			// Loop through weld set for match's first point
 			for (int p1 : weldSets[symverts.matches[mpi].first]) {
@@ -4169,27 +4120,17 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 					// Check for asymmetry between p1's bone 1 weight and
 					// p2's bone 2 weight.
 					if (p1b1w != p2b2w) {
-						float werr = std::fabs(p1b1w - p2b2w);
 						asym1 = true;
-						sum1 += werr;
-						++sum1count;
-						if (dual) {
-							sum2 += werr;
-							++sum2count;
-						}
+						werr1 += std::fabs(p1b1w - p2b2w);
+						++werr1count;
 					}
 
 					// Check for asymmetry between p1's bone 2 weight and
 					// p2's bone 1 weight.
 					if (p1b2w != p2b1w) {
-						float werr = std::fabs(p1b2w - p2b1w);
 						asym2 = true;
-						sum2 += werr;
-						++sum2count;
-						if (dual) {
-							sum1 += werr;
-							++sum1count;
-						}
+						werr2 += std::fabs(p1b2w - p2b1w);
+						++werr2count;
 					}
 				}
 			}
@@ -4198,48 +4139,39 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 			// Record results for this match for this bone or bone pair
 			if (asym1) {
 				aflags1[mpi] = true;
-				++count1;
-				if (dual)
-					++count2;
+				weighterr1[mpi] = werr1 / werr1count;
 			}
 			if (asym2) {
 				aflags2[mpi] = true;
-				++count2;
-				if (dual)
-					++count1;
+				weighterr2[mpi] = werr2 / werr2count;
 			}
-			if ((asym1 || asym2) && !r.anybone[mpi]) {
+			if (asym1 || asym2) {
 				r.anybone[mpi] = true;
-				++r.anybonecount;
+				boneasym = true;
 			}
 		}
 		// end main loop through matches for a bone or bone pair
 
 		// If we have any weight asymmetries for this bone or bone pair,
-		// store the results.  If either bone in a pair has any asymmetries,
-		// we add records for both, even if one of them has none (which can
-		// only happen if all the points with asymmetric weights for that
-		// bone are masked).
-		if (count1 + count2) {
+		// store the results.
+		if (boneasym) {
 			r.bones.emplace_back();
 			r.bones.back().boneName = b1name;
-			r.bones.back().aflags = std::move(aflags1);
-			r.bones.back().count = count1;
 			r.bones.back().mirroroffset = isBonePair ? 1 : 0;
-			r.bones.back().avg = sum1count > 0 ? sum1 / sum1count : 0;
+			r.bones.back().aflags = std::move(aflags1);
+			r.bones.back().weighterr = std::move(weighterr1);
 			if (isBonePair) {
 				r.bones.emplace_back();
 				r.bones.back().boneName = b2name;
-				r.bones.back().aflags = std::move(aflags2);
-				r.bones.back().count = count2;
 				r.bones.back().mirroroffset = -1;
-				r.bones.back().avg = sum2count > 0 ? sum2 / sum2count : 0;
+				r.bones.back().aflags = std::move(aflags2);
+				r.bones.back().weighterr = std::move(weighterr2);
 			}
 		}
 	}
 }
 
-std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, int nVerts, const std::unordered_map<int, std::vector<int>>& weldVerts) {
+std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, int nVerts) {
 	int nSliders = static_cast<int>(asyms.sliders.size());
 	int nBones = static_cast<int>(asyms.bones.size());
 	int nMatches = static_cast<int>(asyms.positions.size());
@@ -4248,60 +4180,122 @@ std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symve
 	for (int mi = 0; mi < nMatches; ++mi) {
 		int p1 = symverts.matches[mi].first;
 		int p2 = symverts.matches[mi].second;
-		bool dual = mi < symverts.dual_count;
-		bool one_sided = !dual && mi < symverts.dual_count + symverts.one_sided_count;
 
-		// Bones have different rules from position and sliders.  First
-		// do position and sliders.
-		bool doPosOrSlider = tasks.doPos && asyms.positions[mi];
+		// Positions
+		if (tasks.doPos && asyms.positions[mi])
+			doVert[p1] = doVert[p2] = true;
+
+		// Sliders
 		for (int sai = 0; sai < nSliders; ++sai)
 			if (tasks.doSliders[sai] && asyms.sliders[sai].aflags[mi])
-				doPosOrSlider = true;
-		if (doPosOrSlider) {
-			doVert[p1] = true;
-			if (dual)
-				doVert[p2] = true;
-		}
+				doVert[p1] = doVert[p2] = true;
 
-		// Do bones
+		// Bones
 		for (int bi = 0; bi < nBones; ++bi) {
-			// This code is copied directly from the corresponding spot
-			// in PrepareSymmetrizeVertices.
-			const auto& bd1 = asyms.bones[bi];
-			if (!bd1.aflags[mi])
+			if (!asyms.bones[bi].aflags[mi])
 				continue;
-			bool doThisBone = tasks.doBones[bi];
-			bool doMirrorBone = tasks.doBones[bi + bd1.mirroroffset];
-			if (one_sided)
-				doMirrorBone = false;
-
-			if (doThisBone)
+			if (tasks.doBones[bi])
 				doVert[p1] = true;
-			if (doMirrorBone)
+			if (tasks.doBones[bi + asyms.bones[bi].mirroroffset])
 				doVert[p2] = true;
 		}
-	}
-
-	// Mark welded vertices as well.
-	for (int i = 0; i < nVerts; ++i) {
-		if (!doVert[i])
-			continue;
-		auto wvit = weldVerts.find(i);
-		if (wvit == weldVerts.end())
-			continue;
-		for (int wvi : wvit->second)
-			doVert[wvi] = true;
 	}
 
 	return doVert;
 }
 
-template<typename T, typename T2>
-std::vector<T> VectorStaticCast(const std::vector<T2>& v) {
-	std::vector<T> r(v.size());
-	for (size_t i = 0; i < v.size(); ++i)
-		r[i] = static_cast<T>(v[i]);
-	return r;
+void AddWeldedToVertexList(const std::unordered_map<int, std::vector<int>>& weldVerts, std::vector<bool>& verts) {
+	for (size_t i = 0; i < verts.size(); ++i) {
+		if (!verts[i])
+			continue;
+		auto wvit = weldVerts.find(i);
+		if (wvit == weldVerts.end())
+			continue;
+		for (int wvi : wvit->second)
+			verts[wvi] = true;
+	}
+}
+
+static int SelCount(const std::vector<bool>& sel) {
+	int c = 0;
+	for (size_t i = 0; i < sel.size(); ++i)
+		c += sel[i];
+	return c;
+}
+
+static int SelCount(const std::vector<bool>& sel, const std::vector<bool>& osel) {
+	int c = 0;
+	for (size_t i = 0; i < sel.size(); ++i)
+		if (sel[i] && osel[i])
+			++c;
+	return c;
+}
+
+static float SelAvg(const std::vector<bool>& sel, const std::vector<float>& vals) {
+	float sum = 0.0f;
+	int c = 0;
+	for (size_t i = 0; i < sel.size(); ++i)
+		if (sel[i]) {
+			sum += vals[i];
+			++c;
+		}
+	return c ? sum / c : 0.0f;
+}
+
+void CalcVertexAsymmetryStats(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const std::vector<bool>& selVerts, VertexAsymmetryStats& stats) {
+	int nSliders = static_cast<int>(asyms.sliders.size());
+	int nBones = static_cast<int>(asyms.bones.size());
+	int nMatches = static_cast<int>(asyms.positions.size());
+
+	// Calculate which matches are not masked
+	std::vector<bool> selMatches(nMatches);
+	for (int mi = 0; mi < nMatches; ++mi)
+		selMatches[mi] = selVerts[symverts.matches[mi].first] || selVerts[symverts.matches[mi].second];
+
+	stats.boneCounts.resize(nBones, 0);
+	stats.boneAvgs.resize(nBones, 0.0f);
+	stats.sliderCounts.resize(nSliders, 0);
+	stats.sliderAvgs.resize(nSliders, 0.0f);
+	stats.unmaskedCount = SelCount(selVerts);
+	stats.posCount = SelCount(selMatches, asyms.positions);
+	stats.posAvg = SelAvg(selMatches, asyms.poserr);
+	stats.anySliderCount = SelCount(selMatches, asyms.anyslider);
+	stats.anyBoneCount = SelCount(selMatches, asyms.anybone);
+
+	for (int si = 0; si < nSliders; ++si) {
+		stats.sliderCounts[si] = SelCount(selMatches, asyms.sliders[si].aflags);
+		stats.sliderAvgs[si] = SelAvg(selMatches, asyms.sliders[si].differr);
+	}
+
+	for (int bi = 0; bi < nBones; ++bi) {
+		int bi2 = bi + asyms.bones[bi].mirroroffset;
+		float sum = 0.0f;
+		int count = 0;
+
+		for (int mi = 0; mi < nMatches; ++mi) {
+			int p1 = symverts.matches[mi].first;
+			int p2 = symverts.matches[mi].second;
+			if (!selVerts[p1] && !selVerts[p2])
+				continue;
+
+			// b1 aflags says: p1 b1 mismatches p2 b2
+			// b2 aflags says: p1 b2 mismatches p2 b1
+			// We need to sum the data for b1; that is, the first and fourth
+			// cases.
+			if (selVerts[p1] && asyms.bones[bi].aflags[mi]) {
+				sum += asyms.bones[bi].weighterr[mi];
+				++count;
+			}
+			if (p1 != p2 && selVerts[p2] && asyms.bones[bi2].aflags[mi]) {
+				sum += asyms.bones[bi2].weighterr[mi];
+				++count;
+			}
+		}
+
+		stats.boneCounts[bi] = count;
+		if (count)
+			stats.boneAvgs[bi] = sum / count;
+	}
 }
 
 static Vector3 GetUSliderDiff(const UndoStateVertex& usv, const std::string& name) {
@@ -4347,59 +4341,24 @@ static void SetUWeight(UndoStateVertex& usv, const std::string& bn, float w) {
 	usv.weights.push_back(UndoStateVertexBoneWeight{bn, w});
 }
 
-void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& uss, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, const std::unordered_map<int, std::vector<int>>& weldVerts, const std::vector<std::string>& userNormBones, const std::vector<std::string>& userNotNormBones) {
+void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& uss, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, const std::unordered_map<int, std::vector<int>>& weldVerts, const std::vector<bool>& selVerts, const std::vector<std::string>& userNormBones, const std::vector<std::string>& userNotNormBones) {
 	int nMatches = static_cast<int>(symverts.matches.size());
 	int nVerts = static_cast<int>(shape->GetNumVertices());
 	int nSliders = static_cast<int>(asyms.sliders.size());
 	int nBones = static_cast<int>(asyms.bones.size());
 
-	// Generate list of vertices in selected matches and their welds
-	std::vector<int> vInds;
-	for (int mi = 0; mi < nMatches; ++mi) {
-		// Calculate whether this match is selected.
-		bool doMatch = tasks.doPos && asyms.positions[mi];
-		for (int si = 0; si < nSliders; ++si)
-			if (tasks.doSliders[si] && asyms.sliders[si].aflags[mi])
-				doMatch = true;
-		for (int bi = 0; bi < nBones; ++bi)
-			if ((tasks.doBones[bi] || tasks.doBones[bi + asyms.bones[bi].mirroroffset]) && asyms.bones[bi].aflags[mi])
-				doMatch = true;
-		if (!doMatch)
-			continue;
-
-		// Add p1 and p2 (if not equal to p1) to the vertex list.
-		int p1 = symverts.matches[mi].first;
-		int p2 = symverts.matches[mi].second;
-		vInds.push_back(p1);
-		AppendWeldVerts(weldVerts, p1, vInds);
-		if (mi < symverts.dual_count + symverts.one_sided_count) {
-			vInds.push_back(p2);
-			AppendWeldVerts(weldVerts, p2, vInds);
-		}
-	}
-	std::sort(vInds.begin(), vInds.end());
-	int nRVerts = static_cast<int>(vInds.size());
-
-	// Get old vertex data; new vertex data is initially a copy of the old.
-	CollectVertexData(shape, uss, VectorStaticCast<uint16_t>(vInds));
-	uss.addVerts = uss.delVerts;
-
-	// Make map of vertex indices into the indices of vInds and uss.addVerts.
-	std::vector<int> vToRed(nVerts, -1);
-	for (int rvi = 0; rvi < nRVerts; ++rvi)
-		vToRed[vInds[rvi]] = rvi;
-
-	// Collect triangle data.  Every triangle that uses any vertex in vInds
-	// must be deleted and restored.
-	std::vector<Triangle> tris;
-	shape->GetTriangles(tris);
-	int nTris = static_cast<int>(tris.size());
-	std::vector<int> triInds;
-	for (int ti = 0; ti < nTris; ++ti)
-		if (vToRed[tris[ti].p1] != -1 || vToRed[tris[ti].p2] != -1 || vToRed[tris[ti].p3] != -1)
-			triInds.push_back(ti);
-	CollectTriangleData(shape, uss, VectorStaticCast<uint32_t>(triInds));
-	uss.addTris = uss.delTris;
+	// To simplify the handling of vertex data, we collect the data for
+	// all vertices.  We will keep track of which vertices we actually
+	// modify and put just the modified data in uss at the end.  The new
+	// vertex data (tuss.addVerts) is initially a copy of the old vertex
+	// data (tuss.delVerts).
+	std::vector<uint16_t> allvinds(nVerts);
+	for (uint16_t i = 0; i < nVerts; ++i)
+		allvinds[i] = i;
+	UndoStateShape tuss;
+	CollectVertexData(shape, tuss, allvinds);
+	tuss.addVerts = tuss.delVerts;
+	std::vector<bool> vChanged(nVerts, false);
 
 	// Prepare bone list for bone weight normalizer.  First, we add the
 	// bones that are being symmetrized to normBones.
@@ -4436,7 +4395,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 
 	// Initialize the bone weight normalizer
 	BoneWeightAutoNormalizer nzer;
-	nzer.SetUp(&uss, &workAnim, shape->name.get(), normBones, lockedBones, nMBones, hasNormBones);
+	nzer.SetUp(&tuss, &workAnim, shape->name.get(), normBones, lockedBones, nMBones, hasNormBones);
 
 	// Because we might be adjusting the weights for several different bones
 	// for a given point, we have to delay normalization until after the
@@ -4445,41 +4404,55 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 	std::vector<bool> weightAdjustPoint(nVerts, false);
 
 	// Main loop through matches
+	std::vector<int> p1s, p2s;
 	for (int mi = 0; mi < nMatches; ++mi) {
 		int p1 = symverts.matches[mi].first;
 		int p2 = symverts.matches[mi].second;
-		bool dual = mi < symverts.dual_count;
-		bool one_sided = !dual && mi < symverts.dual_count + symverts.one_sided_count;
-		bool self = !dual && !one_sided;
-		std::vector<int> p1s, p2s;
+		if (!selVerts[p1] && !selVerts[p2])
+			continue;
+
 		GetWeldSet(weldVerts, p1, p1s);
 		GetWeldSet(weldVerts, p2, p2s);
 
 		// Symmetrize position
 		if (tasks.doPos && asyms.positions[mi]) {
 			// Calculate average
-			Vector3 sum;
-			for (int p : p2s)
-				sum += uss.addVerts[vToRed[p]].pos;
-			sum /= p2s.size();
-			if (self)
-				sum.x = 0;
-			else
-				sum.x = -sum.x;
-			if (dual) {
-				Vector3 sum2;
-				for (int p : p1s)
-					sum2 += uss.addVerts[vToRed[p]].pos;
-				sum = (sum + sum2 / p1s.size()) / 2;
+			Vector3 avg;
+			int avgcount = 0;
+			if (selVerts[p1]) {
+				Vector3 sum;
+				for (int p : p2s)
+					sum += tuss.addVerts[p].pos;
+				avg += sum / p2s.size();
+				++avgcount;
+			}
+			if (p1 == p2)
+				avg.x = 0;
+			else {
+				avg.x = -avg.x;
+				if (selVerts[p2]) {
+					Vector3 sum;
+					for (int p : p1s)
+						sum += tuss.addVerts[p].pos;
+					avg += sum / p1s.size();
+					++avgcount;
+				}
+				avg /= avgcount;
 			}
 
 			// Store average
-			for (int p : p1s)
-				uss.addVerts[vToRed[p]].pos = sum;
-			if (dual) {
-				sum.x = -sum.x;
-				for (int p : p2s)
-					uss.addVerts[vToRed[p]].pos = sum;
+			if (selVerts[p1]) {
+				for (int p : p1s) {
+					tuss.addVerts[p].pos = avg;
+					vChanged[p] = true;
+				}
+			}
+			if (selVerts[p2]) {
+				avg.x = -avg.x;
+				for (int p : p2s) {
+					tuss.addVerts[p].pos = avg;
+					vChanged[p] = true;
+				}
 			}
 		}
 
@@ -4492,28 +4465,42 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 				continue;
 
 			// Calculate average
-			Vector3 sum;
-			for (int p : p2s)
-				sum += GetUSliderDiff(uss.addVerts[vToRed[p]], sd.sliderName);
-			sum /= p2s.size();
-			if (self)
-				sum.x = 0;
-			else
-				sum.x = -sum.x;
-			if (dual) {
-				Vector3 sum2;
-				for (int p : p1s)
-					sum2 += GetUSliderDiff(uss.addVerts[vToRed[p]], sd.sliderName);
-				sum = (sum + sum2 / p1s.size()) / 2;
+			Vector3 avg;
+			int avgcount = 0;
+			if (selVerts[p1]) {
+				Vector3 sum;
+				for (int p : p2s)
+					sum += GetUSliderDiff(tuss.addVerts[p], sd.sliderName);
+				avg = sum / p2s.size();
+				++avgcount;
+			}
+			if (p1 == p2)
+				avg.x = 0;
+			else {
+				avg.x = -avg.x;
+				if (selVerts[p2]) {
+					Vector3 sum;
+					for (int p : p1s)
+						sum += GetUSliderDiff(tuss.addVerts[p], sd.sliderName);
+					avg += sum / p1s.size();
+					++avgcount;
+				}
+				avg /= avgcount;
 			}
 
 			// Store average
-			for (int p : p1s)
-				SetUSliderDiff(uss.addVerts[vToRed[p]], sd.sliderName, sum);
-			if (dual) {
-				sum.x = -sum.x;
-				for (int p : p2s)
-					SetUSliderDiff(uss.addVerts[vToRed[p]], sd.sliderName, sum);
+			if (selVerts[p1]) {
+				for (int p : p1s) {
+					SetUSliderDiff(tuss.addVerts[p], sd.sliderName, avg);
+					vChanged[p] = true;
+				}
+			}
+			if (selVerts[p2]) {
+				avg.x = -avg.x;
+				for (int p : p2s) {
+					SetUSliderDiff(tuss.addVerts[p], sd.sliderName, avg);
+					vChanged[p] = true;
+				}
 			}
 		}
 
@@ -4524,18 +4511,14 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 			// self-matches) where we update a weight twice or sum some
 			// values twice, but the result is always the same.  Trying to
 			// make this code update things just once or sum things just
-			// once would make it much more complex.  If you update this
-			// code, also update the corresponding code in
-			// CalcVertexListForAsymmetryTasks.
+			// once would make it much more complex.
 			const auto& bd1 = asyms.bones[bi];
 			const auto& bd2 = asyms.bones[bi + bd1.mirroroffset];
 			if (!bd1.aflags[mi])
 				continue;
-			bool doThisBone = tasks.doBones[bi];
-			bool doMirrorBone = tasks.doBones[bi + bd1.mirroroffset];
-			if (one_sided)
-				doMirrorBone = false;
-			if (!(doThisBone || doMirrorBone))
+			bool doThisBone = selVerts[p1] && tasks.doBones[bi];
+			bool doMirrorBone = selVerts[p2] && tasks.doBones[bi + bd1.mirroroffset];
+			if (!doThisBone && !doMirrorBone)
 				continue;
 
 			// Calculate average
@@ -4544,14 +4527,14 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 			if (doThisBone) {
 				float sum = 0.0f;
 				for (int p : p2s)
-					sum += GetUWeight(uss.addVerts[vToRed[p]], bd2.boneName);
+					sum += GetUWeight(tuss.addVerts[p], bd2.boneName);
 				avg += sum / p2s.size();
 				++avgcount;
 			}
 			if (doMirrorBone) {
 				float sum = 0.0f;
 				for (int p : p1s)
-					sum += GetUWeight(uss.addVerts[vToRed[p]], bd1.boneName);
+					sum += GetUWeight(tuss.addVerts[p], bd1.boneName);
 				avg += sum / p1s.size();
 				++avgcount;
 			}
@@ -4563,41 +4546,61 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 					weightAdjustPoint[p1s[0]] = true;
 					nzer.GrabOneVertexStartingWeights(p1s[0]);
 				}
-				SetUWeight(uss, p1s[0], bd1.boneName, avg);
+				SetUWeight(tuss, p1s[0], bd1.boneName, avg);
 			}
 			if (doMirrorBone) {
 				if (!weightAdjustPoint[p2s[0]]) {
 					weightAdjustPoint[p2s[0]] = true;
 					nzer.GrabOneVertexStartingWeights(p2s[0]);
 				}
-				SetUWeight(uss, p2s[0], bd2.boneName, avg);
+				SetUWeight(tuss, p2s[0], bd2.boneName, avg);
 			}
 		}
 	}
 
-	// Normalize weights, transfer them from uss.boneWeights to uss.addVerts,
-	// and delete uss.boneWeights.
-	for (int p : vInds) {
+	// Normalize weights and transfer them from tuss.boneWeights to
+	// tuss.addVerts.
+	for (int p = 0; p < nVerts; ++p) {
 		if (!weightAdjustPoint[p])
 			continue;
+
+		GetWeldSet(weldVerts, p, p1s);
+		for (int p1 : p1s)
+			vChanged[p1] = true;
 
 		// Normalize weights
 		nzer.AdjustWeights(p);
 
 		// Transfer results
-		for (const auto& bw : uss.boneWeights) {
+		for (const auto& bw : tuss.boneWeights) {
 			auto wit = bw.weights.find(p);
 			if (wit == bw.weights.end())
 				continue;
 			float w = wit->second.endVal;
-			SetUWeight(uss.addVerts[vToRed[p]], bw.boneName, w);
-			auto wvit = weldVerts.find(p);
-			if (wvit != weldVerts.end())
-				for (int wp : wvit->second)
-					SetUWeight(uss.addVerts[vToRed[wp]], bw.boneName, w);
+			for (int p1 : p1s)
+				SetUWeight(tuss.addVerts[p1], bw.boneName, w);
 		}
 	}
-	uss.boneWeights.clear();
+
+	// Transfer the data for just the changed vertices from tuss to uss.
+	for (int vi = 0; vi < nVerts; ++vi) {
+		if (!vChanged[vi])
+			continue;
+		uss.delVerts.push_back(std::move(tuss.delVerts[vi]));
+		uss.addVerts.push_back(std::move(tuss.addVerts[vi]));
+	}
+
+	// Collect triangle data.  Every triangle that uses any changed vertex
+	// must be deleted and restored.
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	int nTris = static_cast<int>(tris.size());
+	std::vector<uint32_t> triInds;
+	for (int ti = 0; ti < nTris; ++ti)
+		if (vChanged[tris[ti].p1] || vChanged[tris[ti].p2] || vChanged[tris[ti].p3])
+			triInds.push_back(ti);
+	CollectTriangleData(shape, uss, triInds);
+	uss.addTris = uss.delTris;
 }
 
 std::vector<bool> OutfitProject::CalculateAsymmetricTriangleVertexMask(NiShape* shape, const std::unordered_map<int, std::vector<int>>& weldVerts) {
@@ -4613,8 +4616,7 @@ std::vector<bool> OutfitProject::CalculateAsymmetricTriangleVertexMask(NiShape* 
 
 	// Find vertex symmetries
 	SymmetricVertices symverts;
-	std::vector<float> dummyMask(verts.size(), 0.0f);
-	MatchSymmetricVertices(shape, &dummyMask[0], weldVerts, symverts);
+	MatchSymmetricVertices(shape, weldVerts, symverts);
 
 	// Create welded-vertex set for every vertex
 	std::vector<std::vector<int>> weldSets(verts.size());

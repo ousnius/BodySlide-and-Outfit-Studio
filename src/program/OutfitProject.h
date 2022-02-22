@@ -40,40 +40,27 @@ struct MergeCheckErrors {
 
 // SymmetricVertices: result from the function MatchSymmetricVertices
 struct SymmetricVertices {
-	// matches has all matched pairs of vertices, starting with the duals,
-	// then the one-sided, and finally the self matches.  Dual matches
-	// have the lower index first.  One-sided matches have the unmasked vertex
-	// first, the masked vertex second.
+	// matches has all matched pairs of vertices, including self-matches,
+	// in no particular order.  The first vertex index is always less than
+	// or equal to the second.  Only one vertex in each weld set is listed:
+	// the one with the lowest index.
 	std::vector<std::pair<int, int>> matches;
 	std::vector<int> unmatched;
-	// weldSkip lists all vertices that were skipped (and are therefore not
-	// in matches or unmatched) because they're welded to a vertex with a
-	// lower index.
-	std::vector<int> weldSkip;
-	// Dual matches: matches where both vertices were not masked.
-	int dual_count = 0;
-	// One-sided matches: matches where one vertex was not masked and the
-	// other vertex was masked.
-	int one_sided_count = 0;
-	// Self matches: matches where the vertex's mirror was itself.
-	int self_count = 0;
 };
 
 // VertexAsymmetries: result from the function FindVertexAsymmetries
 struct VertexAsymmetries {
-	// Indexing of each vector<bool> is the same as SymmetricVertices::matches.
+	// Indexing of each vector<bool> and vector<float> is the same as
+	// SymmetricVertices::matches.
 	std::vector<bool> positions;
-	int posCount = 0;
-	float posAvg = 0.0f;
+	std::vector<float> poserr;
 	struct Slider {
 		std::string sliderName;
 		std::vector<bool> aflags;
-		int count = 0;
-		float avg = 0.0f;
+		std::vector<float> differr;
 	};
 	std::vector<Slider> sliders;
 	std::vector<bool> anyslider;
-	int anyslidercount = 0;
 	struct Bone {
 		std::string boneName;
 		// We call this bone "bone 1" and its mirror "bone 2".
@@ -86,15 +73,22 @@ struct VertexAsymmetries {
 		// doesn't match p1's bone 2 weight, which is also an asymmetry for
 		// bone 1.
 		std::vector<bool> aflags;
-		// count and avg include all asymmetries for bone 1, not just the
-		// ones marked in bone 1's aflags.  Note that a bone can be listed
-		// in bones even if its count is zero.
-		int count = 0;
-		float avg = 0.0f;
+		std::vector<float> weighterr;
 	};
 	std::vector<Bone> bones;
 	std::vector<bool> anybone;
-	int anybonecount = 0;
+};
+
+struct VertexAsymmetryStats {
+	int unmaskedCount = 0;
+	int posCount = 0;
+	float posAvg = 0.0f;
+	int anySliderCount = 0;
+	int anyBoneCount = 0;
+	std::vector<int> sliderCounts;
+	std::vector<float> sliderAvgs;
+	std::vector<int> boneCounts;
+	std::vector<float> boneAvgs;
 };
 
 struct VertexAsymmetryTasks {
@@ -104,7 +98,9 @@ struct VertexAsymmetryTasks {
 	std::vector<bool> doBones;	// Same size as VertexAsymmetries::bones
 };
 
-std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, int nVerts, const std::unordered_map<int, std::vector<int>>& weldVerts);
+void CalcVertexAsymmetryStats(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const std::vector<bool>& selVerts, VertexAsymmetryStats& stats);
+std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, int nVerts);
+void AddWeldedToVertexList(const std::unordered_map<int, std::vector<int>>& welcVerts, std::vector<bool>& selVerts);
 
 class OutfitProject {
 	OutfitStudioFrame* owner = nullptr;
@@ -339,10 +335,10 @@ public:
 	void RenameShape(nifly::NiShape* shape, const std::string& newShapeName);
 	void UpdateNifNormals(nifly::NifFile* nif, const std::vector<Mesh*>& shapemeshes);
 
-	void MatchSymmetricVertices(nifly::NiShape* shape, const float* mask, const std::unordered_map<int, std::vector<int>>& weldVerts, SymmetricVertices& r);
+	void MatchSymmetricVertices(nifly::NiShape* shape, const std::unordered_map<int, std::vector<int>>& weldVerts, SymmetricVertices& r);
 	void MatchSymmetricBoneNames(std::vector<std::pair<std::string, std::string>>& pairs, std::vector<std::string>& singles);
 	void FindVertexAsymmetries(nifly::NiShape* shape, const SymmetricVertices& symverts, const std::unordered_map<int, std::vector<int>>& weldVerts, VertexAsymmetries& r);
-	void PrepareSymmetrizeVertices(nifly::NiShape* shape, UndoStateShape& uss, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, const std::unordered_map<int, std::vector<int>>& weldVerts, const std::vector<std::string>& userNormBones, const std::vector<std::string>& userNotNormBones);
+	void PrepareSymmetrizeVertices(nifly::NiShape* shape, UndoStateShape& uss, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, const std::unordered_map<int, std::vector<int>>& weldVerts, const std::vector<bool>& selVerts, const std::vector<std::string>& userNormBones, const std::vector<std::string>& userNotNormBones);
 	std::vector<bool> CalculateAsymmetricTriangleVertexMask(nifly::NiShape* shape, const std::unordered_map<int, std::vector<int>>& weldVerts);
 
 	void ChooseClothData(nifly::NifFile& nif);
