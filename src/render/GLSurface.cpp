@@ -408,7 +408,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 					if (outFacet)
 						(*outFacet) = results[min_i].HitFacet;
 
-					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &outNormal);
+					outNormal = m->tris[results[min_i].HitFacet].trinormal(m->verts.get());
 
 					if (hitMesh)
 						(*hitMesh) = m;
@@ -471,7 +471,7 @@ bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vec
 					if (outFacet)
 						(*outFacet) = results[min_i].HitFacet;
 
-					ov->tris[results[min_i].HitFacet].trinormal(ov->verts.get(), &outNormal);
+					outNormal = ov->tris[results[min_i].HitFacet].trinormal(ov->verts.get());
 				}
 			}
 		}
@@ -560,8 +560,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 
 					Vector3 morigin = m->TransformPosMeshToModel(origin);
 
-					Vector3 norm;
-					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
+					Vector3 norm = m->tris[results[min_i].HitFacet].trinormal(m->verts.get());
 					norm = m->TransformDirMeshToModel(norm);
 
 					AddVisCircle(morigin, norm, cursorSize, "cursormesh");

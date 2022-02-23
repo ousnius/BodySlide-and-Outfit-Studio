@@ -221,33 +221,33 @@ bool TweakBrush::queryPoints(
 	if (mergeMirror)
 		m->bvh->IntersectSphere(meshmirrororigin, meshradius, &IResults);
 
-	std::unique_ptr<bool[]> pointVisit = std::make_unique<bool[]>(m->nVerts);
+	std::vector<bool> pointVisit(m->nVerts, false);
 
 	if (bConnected && !IResults.empty()) {
-		int pickFacet = IResults[0].HitFacet;
+		int pickFacet1 = IResults[0].HitFacet;
 		float minDist = IResults[0].HitDistance;
 		for (unsigned int i = 0; i < mirrorStartInd; ++i) {
 			auto& r = IResults[i];
 			if (r.HitDistance < minDist) {
 				minDist = r.HitDistance;
-				pickFacet = r.HitFacet;
+				pickFacet1 = r.HitFacet;
 			}
 		}
 
-		std::vector<int> resultFacets;
-		m->ConnectedPointsInSphere(meshorigin, meshradius * meshradius, pickFacet, nullptr, pointVisit.get(), resultPoints, outResultCount, resultFacets);
 		if (mergeMirror && mirrorStartInd < IResults.size()) {
-			pickFacet = IResults[mirrorStartInd].HitFacet;
+			int pickFacet2 = IResults[mirrorStartInd].HitFacet;
 			minDist = IResults[mirrorStartInd].HitDistance;
 			for (unsigned int i = mirrorStartInd; i < IResults.size(); ++i) {
 				auto& r = IResults[i];
 				if (r.HitDistance < minDist) {
 					minDist = r.HitDistance;
-					pickFacet = r.HitFacet;
+					pickFacet2 = r.HitFacet;
 				}
 			}
-			m->ConnectedPointsInSphere(meshmirrororigin, meshradius * meshradius, pickFacet, nullptr, pointVisit.get(), resultPoints, outResultCount, resultFacets);
+			m->ConnectedPointsInTwoSpheres(meshorigin, meshmirrororigin, meshradius * meshradius, pickFacet1, pickFacet2, pointVisit, resultPoints, outResultCount);
 		}
+		else
+			m->ConnectedPointsInSphere(meshorigin, meshradius * meshradius, pickFacet1, pointVisit, resultPoints, outResultCount);
 	}
 	else
 		outResultCount = 0;

@@ -152,15 +152,19 @@ public:
 	static void SmoothNormalsStatic(Mesh* m) { m->SmoothNormals(); }
 	static void SmoothNormalsStaticArray(Mesh* m, int* vertices, int nVertices) {
 		std::set<int> verts;
-		for (int i = 0; i < nVertices; i++)
+		for (int i = 0; i < nVertices; i++) {
 			verts.insert(vertices[i]);
+			m->GetAdjacentPoints(vertices[i], verts);
+		}
 
 		m->SmoothNormals(verts);
 	}
 	static void SmoothNormalsStaticMap(Mesh* m, const std::unordered_map<int, nifly::Vector3>& vertices) {
 		std::set<int> verts;
-		for (auto& v : vertices)
+		for (auto& v : vertices) {
 			verts.insert(v.first);
+			m->GetAdjacentPoints(v.first, verts);
+		}
 
 		m->SmoothNormals(verts);
 	}
@@ -169,16 +173,17 @@ public:
 
 	void CalcTangentSpace();
 
-	// Retrieve connected points in a sphere's radius (squared, requires tri adjacency to be set up).
-	// Also requires pointvisit to be allocated by the caller.
-	// Recursive - large query will overflow the stack!
-	bool ConnectedPointsInSphere(
-		nifly::Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
+	// List connected points within the squared radius of the center.
+	// Requires vertEdges and edges.  pointvisit.size() must be nVerts,
+	// and it must be initialized to false.  nOutPoints must be initialized
+	// to zero.
+	void ConnectedPointsInSphere(const nifly::Vector3& center, float sqradius, int startTri, std::vector<bool>& pointvisit, int outPoints[], int& nOutPoints);
 
-	// Similar to above, but uses an edge list to determine adjacency, with less risk of stack problems.
-	// Also requires trivisit and pointvisit to be allocated by the caller.
-	bool ConnectedPointsInSphere2(
-		nifly::Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
+	// List connected points within the squared radius of either center.
+	// Requires vertEdges and edges.  pointvisit.size() must be nVerts,
+	// and it must be initialized to false.  nOutPoints must be initialized
+	// to zero.
+	void ConnectedPointsInTwoSpheres(const nifly::Vector3& center1, const nifly::Vector3& center2, float sqradius, int startTri1, int startTri2, std::vector<bool>& pointvisit, int outPoints[], int& nOutPoints);
 
 	// Convenience function to gather connected points, taking into account "welded" vertices. Does not clear the output set.
 	void GetAdjacentPoints(int querypoint, std::set<int>& outPoints);
