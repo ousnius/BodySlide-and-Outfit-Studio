@@ -190,9 +190,20 @@ public:
 
 	// More optimized adjacency fetch, using edge adjacency and storing the output in a static array.
 	// Requires that BuildEdgeList() be called prior to use.
-	int GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints);
+	int GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) const;
 	// As above, but also checks if each point has already been looked at (according to vispoint).
 	int GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint);
+
+	// FindAdjacentBalancedPairs: like GetAdjacentPoints, but the points
+	// are organized in pairs, with the points of each pair on opposite sides
+	// of pt.  The return result will always be even.  outPoints should have
+	// size at least MaxAdjacentPoints.
+	static constexpr int MaxAdjacentPoints = 1000;
+	int FindAdjacentBalancedPairs(int pt, int outPoints[]) const;
+
+	// FindOpposingPoint: tries to find the vertex on the opposite side of p1
+	// from p2.  Returns -1 on failure.
+	int FindOpposingPoint(int p1, int p2, float maxdot = 1.0f) const;
 
 	// Creates the vertex color array (if necessary) and sets all the colors to the provided value.
 	void ColorFill(const nifly::Vector3& color);

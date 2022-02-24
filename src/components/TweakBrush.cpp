@@ -172,7 +172,7 @@ TweakBrush::~TweakBrush() {}
 void TweakBrush::strokeInit(const std::vector<Mesh*>& refMeshes, TweakPickInfo&, UndoStateProject&) {
 	cache.clear();
 
-	if (restrictPlane || restrictNormal) {
+	if (NeedStartNorms()) {
 		for (Mesh* m : refMeshes) {
 			TweakBrushMeshCache& meshCache = cache[m];
 			meshCache.startNorms = std::make_unique<Vector3[]>(m->nVerts);
@@ -272,6 +272,56 @@ bool TweakBrush::queryPoints(
 	}
 
 	return true;
+}
+
+/* ParabolaFit: this function fits a parabola through the values for five
+points: pti, p1, p2, op1, and op2.  This parabola fit gives a new value for
+pti, which is returned.  */
+template<typename ValueFuncType>
+float ParabolaFit(Mesh* m, int pti, int p1, int p2, const ValueFuncType& ValueFunc) {
+	constexpr float maxDotForDeriv = -0.5f;
+
+	const Vector3& tv = m->verts[pti];
+	const Vector3& v1 = m->verts[p1];
+	const Vector3& v2 = m->verts[p2];
+	float tvw = ValueFunc(pti);
+	float v1w = ValueFunc(p1);
+	float v2w = ValueFunc(p2);
+
+	// Find derivative of weight at p1 in roughly the direction
+	// from p1 to pti.
+	int op1 = m->FindOpposingPoint(p1, pti, maxDotForDeriv);
+	float deriv1 = 0.0f;
+	if (op1 == -1)
+		deriv1 = (tvw - v1w) / (tv - v1).length();
+	else {
+		const Vector3& ov1 = m->verts[op1];
+		float ov1w = ValueFunc(op1);
+		deriv1 = (tvw - ov1w) / (tv - ov1).length();
+	}
+
+	// Find derivative of weight at p2 in roughly the direction
+	// from p2 to pti.
+	int op2 = m->FindOpposingPoint(p2, pti, maxDotForDeriv);
+	float deriv2 = 0.0f;
+	if (op2 == -1)
+		deriv2 = (tvw - v2w) / (tv - v2).length();
+	else {
+		const Vector3& ov2 = m->verts[op2];
+		float ov2w = ValueFunc(op2);
+		deriv2 = (tvw - ov2w) / (tv - ov2).length();
+	}
+
+	// Second derivative of weight at pti in roughly the direction
+	// from p1 to p2, wrt t, with t=0 at p1 and t=1 at p2.
+	float secderiv = -(deriv1 + deriv2) * (v2 - v1).length();
+
+	// Calculate t, which is where pti is along the segment from
+	// p1 to p2.
+	float t = (tv - v1).dot(v2 - v1) / (v2 - v1).length2();
+
+	// Parabola fit of weight at pti.
+	return v1w + (v2w - v1w) * t - 0.5f * secderiv * t * (1 - t);
 }
 
 TB_Inflate::TB_Inflate() {
@@ -421,7 +471,7 @@ void TB_Unmask::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points,
 TB_SmoothMask::TB_SmoothMask() {
 	brushType = TweakBrush::BrushType::Mask;
 	strength = 0.015f;
-	method = 1;
+	method = 2;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
 	bLiveBVH = false;
@@ -501,6 +551,50 @@ void TB_SmoothMask::hclapFilter(Mesh* m, const int* points, int nPoints, std::un
 	}
 }
 
+void TB_SmoothMask::bppfFilter(Mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, UndoStateShape& uss) {
+	int balPts[Mesh::MaxAdjacentPoints];
+
+	for (int i = 0; i < nPoints; i++) {
+		int pti = points[i];
+
+		// Check if it's a welded vertex; only do welded vertices once.
+		bool skip = false;
+		auto wvit = m->weldVerts.find(pti);
+		if (wvit != m->weldVerts.end())
+			for (unsigned int v = 0; v < wvit->second.size(); v++)
+				if (wvit->second[v] < pti)
+					skip = true;
+		if (skip)
+			continue;
+
+		int balCount = m->FindAdjacentBalancedPairs(pti, balPts);
+		if (balCount == 0)
+			continue;
+
+		float d = 0.0;
+		for (int n = 0; n < balCount; n += 2) {
+			int p1 = balPts[n];
+			int p2 = balPts[n + 1];
+			float fitm = ParabolaFit(m, pti, p1, p2, [&uss, &m](int p) {
+				auto pssit = uss.pointStartState.find(p);
+				if (pssit != uss.pointStartState.end())
+					return pssit->second.x;
+				return m->mask[p];
+			});
+
+			d += fitm;
+		}
+
+		wv[pti] = Vector3(d / (balCount / 2), 0.0f, 0.0f);
+
+		if (wvit != m->weldVerts.end()) {
+			for (unsigned int v = 0; v < wvit->second.size(); v++) {
+				wv[wvit->second[v]] = wv[pti];
+			}
+		}
+	}
+}
+
 void TB_SmoothMask::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	std::unordered_map<int, Vector3> wv;
 	Vector3 vs;
@@ -520,8 +614,10 @@ void TB_SmoothMask::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* poi
 
 	if (method == 0) // laplacian smooth
 		lapFilter(m, points, nPoints, wv);
-	else // HC-laplacian smooth
+	else if (method == 1) // HC-laplacian smooth
 		hclapFilter(m, points, nPoints, wv, uss);
+	else	// balanced-pair parabola-fit smooth
+		bppfFilter(m, points, nPoints, wv, uss);
 
 	Vector3 delta;
 	for (int p = 0; p < nPoints; p++) {
@@ -561,7 +657,7 @@ float TB_Deflate::getStrength() {
 }
 
 TB_Smooth::TB_Smooth() {
-	method = 1;
+	method = 2;
 	strength = 0.1f;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
@@ -638,6 +734,129 @@ void TB_Smooth::hclapFilter(Mesh* m, const int* points, int nPoints, std::unorde
 	}
 }
 
+static Vector3 CircleFitMidpoint(const Vector3& p1, const Vector3& p2, const Vector3& n1, const Vector3& n2) {
+	// This code is copied from PrepareRefineMesh.
+	/* We wish to calculate the midpoint of a circular arc between
+	p1 and p2.  We want the normals at p1 and p2 to be perpendicular
+	to this arc.  But there's no guarantee that that's possible: the
+	normals could have different angles to the arc; and they could
+	even be non-coplanar.  So we need to average the angles of the
+	normals somehow.  */
+
+	// First, get the unit vector along the segment between p1 and p2
+	Vector3 u12 = p2 - p1;	// unit vector from p1 to p2
+	float halfseglen = u12.length() * 0.5f;	// half segment length
+	u12.Normalize();
+
+	// Calculate the desired normal at the arc midpoint.  We average the
+	// two point normals and make the result perpendicular to u12.
+	Vector3 n = n1 + n2;
+	n -= u12 * u12.dot(n);
+	n.Normalize();
+
+	// If we wanted to calculate the angle between one of the two normals and
+	// n, in the plane of that normal and the segment (since n isn't
+	// necessarily in that plane), we would do asin(u12.dot(ni)).  We want to
+	// average this for the two normals and carefully preserve the sign.
+	float sina = u12.dot(n2 - n1) * 0.5f;
+	float alpha = asin(sina);
+
+	// Alpha is the desired circle angle between the arc midpoint and either
+	// of our input points.  It's positive for convex, negative for concave.
+	// To figure out how far off of the segment we need to go, we need to take
+	// the trigonometric tangent of the correct angle.  It turns out that the
+	// correct angle is alpha divided by 2.
+	float curveOffsetFactor = tan(alpha * 0.5f);
+
+	// Now calculate the point.  (curveOffsetFactor is between -1 and 1.)
+	Vector3 mp = (p1 + p2) * 0.5f;
+	mp += n * (curveOffsetFactor * halfseglen);
+	return mp;
+}
+
+static Vector3 CircleFitNearestPoint(const Vector3& p1, const Vector3& p2, const Vector3& n1, const Vector3& n2, const Vector3& p) {
+	// Much of this code is the same as CircleFitMidpoint.  See the comments
+	// in that function.
+	Vector3 u12 = p2 - p1;	// unit vector from p1 to p2
+	float halfseglen = u12.length() * 0.5f;	// half segment length
+	u12.Normalize();
+	Vector3 n = n1 + n2;
+	n -= u12 * u12.dot(n);
+	n.Normalize();
+	float sina = u12.dot(n2 - n1) * 0.5f;
+	float alpha = asin(sina);
+	float curveOffsetFactor = tan(alpha * 0.5f);
+	Vector3 mp = (p1 + p2) * 0.5f;
+	Vector3 amp = mp + n * (curveOffsetFactor * halfseglen);
+
+	// Now we have some relatively simple new stuff.
+	float cosa = cos(alpha);
+	Vector3 poff = p - mp;
+	Vector3 perp = u12.cross(n);
+	poff -= perp * perp.dot(poff); // project poff to circle's plane
+
+	// Now things get weird.  These formulas make no sense.  I derived them
+	// from straightforward geometric concepts, but the simple geometric
+	// formulas had division-by-zero and large-cancellation numerical problems.
+	// The formulas used here have those numerical problems removed, at the
+	// expense of making them completely obscure and opaque.  Alpha is the
+	// (signed) circle angle between p1/p2 and mp.  Beta is the (signed)
+	// circle angle between (projected) p and mp.  Note that there could
+	// easily be a gross mistake here, and probably no one would ever
+	// realize it because the adjustment to amp is tiny.
+	Vector3 denvec = sina * poff + (halfseglen * cosa) * n;
+	float den = denvec.length();
+	float sinboversina = poff.dot(u12) / den;
+	float eoff = halfseglen * sinboversina;
+	float sinb = sina * sinboversina;
+	float beta = asin(sinb);
+	float noff = eoff * tan(beta * 0.5f);
+	return amp + eoff * u12 - noff * n;
+}
+
+void TB_Smooth::bpcfFilter(Mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
+	int balPts[Mesh::MaxAdjacentPoints];
+
+	for (int i = 0; i < nPoints; i++) {
+		int pti = points[i];
+
+		// Check if it's a welded vertex; only do welded vertices once.
+		bool skip = false;
+		auto wvit = m->weldVerts.find(pti);
+		if (wvit != m->weldVerts.end())
+			for (unsigned int v = 0; v < wvit->second.size(); v++)
+				if (wvit->second[v] < pti)
+					skip = true;
+		if (skip)
+			continue;
+
+		int balCount = m->FindAdjacentBalancedPairs(pti, balPts);
+		if (balCount == 0)
+			continue;
+
+		// Average the circle-fit results for each balanced pair
+		Vector3 d;
+		for (int n = 0; n < balCount; n += 2) {
+			const Vector3& p1 = m->verts[balPts[n]];
+			const Vector3& p2 = m->verts[balPts[n + 1]];
+			const Vector3& n1 = cache[m].startNorms[balPts[n]];
+			const Vector3& n2 = cache[m].startNorms[balPts[n + 1]];
+			if (restrictNormal)
+				d += CircleFitNearestPoint(p1, p2, n1, n2, m->verts[pti]);
+			else
+				d += CircleFitMidpoint(p1, p2, n1, n2);
+		}
+		wv[pti] = d / (balCount / 2);
+
+		// Update welded points
+		if (wvit != m->weldVerts.end()) {
+			for (unsigned int v = 0; v < wvit->second.size(); v++) {
+				wv[wvit->second[v]] = wv[pti];
+			}
+		}
+	}
+}
+
 void TB_Smooth::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	std::unordered_map<int, Vector3> wv;
 	Vector3 vs;
@@ -655,8 +874,10 @@ void TB_Smooth::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points,
 
 	if (method == 0) // laplacian smooth
 		lapFilter(m, points, nPoints, wv);
-	else // HC-laplacian smooth
+	else if (method == 1) // HC-laplacian smooth
 		hclapFilter(m, points, nPoints, wv, uss);
+	else	// balanced-pair circle-fit smooth
+		bpcfFilter(m, points, nPoints, wv);
 
 	Vector3 delta;
 	for (int p = 0; p < nPoints; p++) {
@@ -1172,7 +1393,7 @@ void TB_Unweight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* point
 TB_SmoothWeight::TB_SmoothWeight() {
 	brushType = TweakBrush::BrushType::Weight;
 	strength = 0.15f;
-	method = 1;
+	method = 2;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
 	bMirror = false;
@@ -1272,6 +1493,57 @@ void TB_SmoothWeight::hclapFilter(
 	}
 }
 
+void TB_SmoothWeight::bppfFilter(Mesh* m, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape& uss, const int boneInd, const std::unordered_map<uint16_t, float>* wPtr) {
+	auto& weights = uss.boneWeights[boneInd].weights;
+
+	int balPts[Mesh::MaxAdjacentPoints];
+
+	for (int i = 0; i < nPoints; i++) {
+		int pti = points[i];
+
+		// Check if it's a welded vertex; only do welded vertices once.
+		bool skip = false;
+		auto wvit = m->weldVerts.find(pti);
+		if (wvit != m->weldVerts.end())
+			for (unsigned int v = 0; v < wvit->second.size(); v++)
+				if (wvit->second[v] < pti)
+					skip = true;
+		if (skip)
+			continue;
+
+		int balCount = m->FindAdjacentBalancedPairs(pti, balPts);
+		if (balCount == 0)
+			continue;
+
+		float d = 0.0;
+		for (int n = 0; n < balCount; n += 2) {
+			int p1 = balPts[n];
+			int p2 = balPts[n + 1];
+			float fitw = ParabolaFit(m, pti, p1, p2, [&weights, &wPtr](int p) {
+				auto wit = weights.find(p);
+				if (wit != weights.end())
+					return wit->second.startVal;
+				if (wPtr) {
+					auto wpit = wPtr->find(p);
+					if (wpit != wPtr->end())
+						return wpit->second;
+				}
+				return 0.0f;
+			});
+
+			d += fitw;
+		}
+
+		wv[pti] = d / (balCount / 2);
+
+		if (wvit != m->weldVerts.end()) {
+			for (unsigned int v = 0; v < wvit->second.size(); v++) {
+				wv[wvit->second[v]] = wv[pti];
+			}
+		}
+	}
+}
+
 void TB_SmoothWeight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss) {
 	BoneWeightAutoNormalizer nzer;
 	nzer.SetUp(&uss, animInfo, m->shapeName, boneNames, lockedBoneNames, bXMirrorBone ? 2 : 1, bSpreadWeight);
@@ -1296,14 +1568,18 @@ void TB_SmoothWeight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* p
 
 	if (method == 0) // laplacian smooth
 		lapFilter(m, points, nPoints, wv);
-	else // HC-laplacian smooth
+	else if (method == 1) // HC-laplacian smooth
 		hclapFilter(m, points, nPoints, wv, uss, 0, animInfo->GetWeightsPtr(m->shapeName, boneNames[0]));
+	else // balanced-pair parabola-fit smooth
+		bppfFilter(m, points, nPoints, wv, uss, 0, animInfo->GetWeightsPtr(m->shapeName, boneNames[0]));
 
 	if (bXMirrorBone) {
 		if (method == 0) // laplacian smooth
 			lapFilter(m, points, nPoints, mwv);
-		else // HC-laplacian smooth
+		else if (method == 1) // HC-laplacian smooth
 			hclapFilter(m, points, nPoints, mwv, uss, 1, animInfo->GetWeightsPtr(m->shapeName, boneNames[1]));
+		else // balanced-pair parabola-fit smooth
+			bppfFilter(m, points, nPoints, mwv, uss, 1, animInfo->GetWeightsPtr(m->shapeName, boneNames[1]));
 	}
 
 	for (int pi = 0; pi < nPoints; pi++) {

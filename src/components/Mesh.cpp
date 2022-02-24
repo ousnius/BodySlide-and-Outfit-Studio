@@ -335,7 +335,7 @@ void Mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
 	}
 }
 
-int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
+int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) const {
 	int ep1;
 	int ep2;
 	int wq;
@@ -355,9 +355,10 @@ int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 				outPoints[n++] = ep2;
 		}
 	}
-	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
-			wq = weldVerts[querypoint][v];
+	auto wvit = weldVerts.find(querypoint);
+	if (wvit != weldVerts.end()) {
+		for (uint32_t v = 0; v < wvit->second.size(); v++) {
+			wq = wvit->second[v];
 			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
 				ep1 = edges[vedges[wq][e]].p1;
 				ep2 = edges[vedges[wq][e]].p2;
@@ -418,6 +419,97 @@ int Mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 	}
 	return n;
 	/* TODO: sort by distance */
+}
+
+int Mesh::FindAdjacentBalancedPairs(int pt, int pairs[]) const {
+	// Ideally, we wouldn't have any welded points in adjPts.  This algorithm
+	// will usually pick out just one balanced pair among the welds, but it
+	// might not sometimes.  Hopefully having multiple balanced pairs for a
+	// weld won't hurt the smoother too much (giving increased weight for
+	// smoothing along the weld instead of across it).
+
+	int adjPts[MaxAdjacentPoints];
+	int c = GetAdjacentPoints(pt, adjPts, MaxAdjacentPoints);
+	if (c == 0)
+		return 0;
+
+	// Calculate direction from pt to each adjPts
+	Vector3 pDirs[MaxAdjacentPoints];
+	for (int i = 0; i < c; ++i) {
+		Vector3 pDir = verts[adjPts[i]] - verts[pt];
+		pDir.Normalize();
+		pDirs[i] = pDir;
+	}
+
+	// For each point in adjPts, find which of the other neighboring points
+	// has the lowest direction dot product with it.  Ideally, we want -1
+	// for each matching pair.
+	int matchInd[MaxAdjacentPoints];
+	float matchDot[MaxAdjacentPoints];
+	for (int i = 0; i < c; ++i) {
+		int bestInd = i;
+		float bestDot = 1;
+		for (int j = 0; j < c; ++j) {
+			float dot = pDirs[j].dot(pDirs[i]);
+			if (dot < bestDot) {
+				bestDot = dot;
+				bestInd = j;
+			}
+		}
+		matchInd[i] = bestInd;
+		matchDot[i] = bestDot;
+	}
+
+	// Repeatedly pick out the best pairs.  If a point's best match is to
+	// a point that's already been paired, we won't match it to anything.
+	bool donePt[MaxAdjacentPoints];
+	for (int i = 0; i < c; ++i)
+		donePt[i] = false;
+	int pairInd = 0;
+	bool gotOne = false;
+	do {
+		gotOne = false;
+		float bestDot = 1;
+		int bestInd = 0;
+		for (int i = 0; i < c; ++i)
+			if (!donePt[i] && !donePt[matchInd[i]] && matchDot[i] < bestDot) {
+				bestDot = matchDot[i];
+				bestInd = i;
+				gotOne = true;
+			}
+		if (gotOne) {
+			pairs[pairInd++] = adjPts[bestInd];
+			pairs[pairInd++] = adjPts[matchInd[bestInd]];
+			donePt[bestInd] = true;
+			donePt[matchInd[bestInd]] = true;
+		}
+	} while (gotOne);
+
+	return pairInd;
+}
+
+int Mesh::FindOpposingPoint(int p1, int p2, float maxdot) const {
+    int adjPoints[MaxAdjacentPoints];
+    int c = GetAdjacentPoints(p1, adjPoints, MaxAdjacentPoints);
+    if (c == 0)
+        return -1;
+
+    Vector3 p2dir = verts[p2] - verts[p1];
+    p2dir.Normalize();
+
+    float bestdot = maxdot;
+    int bestpt = -1;
+    for (int i = 0; i < c; ++i) {
+        Vector3 dir = verts[adjPoints[i]] - verts[p1];
+        dir.Normalize();
+        float dot = dir.dot(p2dir);
+        if (dot < bestdot) {
+            bestdot = dot;
+            bestpt = adjPoints[i];
+        }
+    }
+
+    return bestpt;
 }
 
 void Mesh::CalcWeldVerts() {
