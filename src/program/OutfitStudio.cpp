@@ -10684,6 +10684,8 @@ void wxGLPanel::SetActiveTool(ToolID brushID) {
 		case ToolID::AlphaBrush: activeBrush = &alphaBrush; break;
 		default: activeBrush = nullptr; break;
 	}
+
+	gls.SetXMirrorCursor(GetToolOptionXMirror());
 }
 
 void wxGLPanel::SetLastTool(ToolID tool) {

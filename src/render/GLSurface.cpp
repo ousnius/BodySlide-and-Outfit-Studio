@@ -566,6 +566,12 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 
 					AddVisCircle(morigin, norm, cursorSize, "cursormesh");
 
+					Vector3 modelMirrorNorm = norm;
+					modelMirrorNorm.x = -modelMirrorNorm.x;
+					Vector3 modelMirrorOrigin = morigin;
+					modelMirrorOrigin.x = -modelMirrorOrigin.x;
+					AddVisCircle(modelMirrorOrigin, modelMirrorNorm, cursorSize, "mirrorcircle")->color = Vector3(0.7f, 0.3f, 0.3f);
+
 					Vector3 mhilitepoint = m->TransformPosMeshToModel(hilitepoint);
 					AddVisPoint(mhilitepoint, "pointhilite");
 					AddVisPoint(morigin, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
@@ -665,6 +671,7 @@ void GLSurface::ShowCursor(bool show) {
 	SetOverlayVisibility("cursorcenter", show && (cursorType & CenterCursor));
 	SetOverlayVisibility("seghilite", show && (cursorType & SegCursor));
 	SetOverlayVisibility("mirrorpoint", false);
+	SetOverlayVisibility("mirrorcircle", show && xmirrorCursor && (cursorType & CircleCursor));
 }
 
 void GLSurface::HidePointCursor() {

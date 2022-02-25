@@ -45,6 +45,7 @@ private:
 	float defPointSize = 5.0f;
 	float cursorSize = 0.5f;
 	CursorType cursorType = CursorType::None;
+	bool xmirrorCursor = false;
 
 	GLShader::DirectionalLight frontalLight;
 	GLShader::DirectionalLight directionalLight0;
@@ -219,6 +220,7 @@ public:
 
 	CursorType GetCursorType() const { return cursorType; }
 	void SetCursorType(CursorType newType) { cursorType = newType; }
+	void SetXMirrorCursor(bool newval) { xmirrorCursor = newval; }
 
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Cleanup();
