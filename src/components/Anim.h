@@ -136,9 +136,6 @@ public:
 	std::unordered_map<std::string, AnimSkin> shapeSkinning; // Shape to skin association.
 
 	AnimInfo(nifly::NifFile* initRefNif): refNif(initRefNif) {}
-	nifly::NifFile* GetRefNif() { return refNif; };
-	const nifly::NifFile* GetRefNif() const { return refNif; };
-	void SetRefNif(nifly::NifFile* nif) { refNif = nif; };
 
 	// Returns true if a new bone is added, false if the bone already exists.
 	bool AddShapeBone(const std::string& shape, const std::string& boneName);
@@ -151,7 +148,7 @@ public:
 	// Loads the skinning information contained in the nif for all shapes.
 	// Returns false if there is no skinning information.
 	bool LoadFromNif(nifly::NifFile* nif);
-	bool LoadFromNif(nifly::NifFile* nif, nifly::NiShape* shape, bool newRefNif = true);
+	bool LoadFromNif(nifly::NifFile* nif, nifly::NiShape* shape);
 	bool CloneShape(nifly::NifFile* nif, nifly::NiShape* shape, const std::string& newShape);
 
 	int GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName) const;
