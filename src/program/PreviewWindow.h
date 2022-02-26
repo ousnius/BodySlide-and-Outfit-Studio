@@ -73,7 +73,7 @@ public:
 	void AddNifShapeTextures(nifly::NifFile* fromNif, const std::string& shapeName);
 
 	void UpdateMeshes(const std::string& shapeName, std::vector<nifly::Vector3>* verts, std::vector<nifly::Vector2>* uvs = nullptr) {
-		std::set<int> changed;
+		std::unordered_set<int> changed;
 		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;

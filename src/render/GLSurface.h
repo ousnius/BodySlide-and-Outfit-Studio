@@ -308,8 +308,8 @@ public:
 	Mesh* AddVisSeamEdges(const Mesh* refMesh, bool asMesh = false);
 
 	Mesh* AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName, nifly::Vector3* color = nullptr);
-	void Update(const std::string& shapeName, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
-	void Update(Mesh* m, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
+	void Update(const std::string& shapeName, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::unordered_set<int>* changed = nullptr);
+	void Update(Mesh* m, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::unordered_set<int>* changed = nullptr);
 	Mesh* ReloadMeshFromNif(nifly::NifFile* nif, std::string shapeName);
 	void RecalculateMeshBVH(const std::string& shapeName);
 
