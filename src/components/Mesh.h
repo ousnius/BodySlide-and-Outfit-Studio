@@ -148,10 +148,12 @@ public:
 	float GetSmoothThreshold();
 
 	void FacetNormals();
-	void SmoothNormals(const std::set<int>& vertices = std::set<int>());
+	void SmoothNormals(const std::unordered_set<int>& vertices = std::unordered_set<int>());
 	static void SmoothNormalsStatic(Mesh* m) { m->SmoothNormals(); }
 	static void SmoothNormalsStaticArray(Mesh* m, int* vertices, int nVertices) {
-		std::set<int> verts;
+		std::unordered_set<int> verts;
+		verts.reserve(nVertices);
+
 		for (int i = 0; i < nVertices; i++) {
 			verts.insert(vertices[i]);
 			m->GetAdjacentPoints(vertices[i], verts);
@@ -160,7 +162,9 @@ public:
 		m->SmoothNormals(verts);
 	}
 	static void SmoothNormalsStaticMap(Mesh* m, const std::unordered_map<int, nifly::Vector3>& vertices) {
-		std::set<int> verts;
+		std::unordered_set<int> verts;
+		verts.reserve(vertices.size());
+
 		for (auto& v : vertices) {
 			verts.insert(v.first);
 			m->GetAdjacentPoints(v.first, verts);
@@ -186,7 +190,7 @@ public:
 	void ConnectedPointsInTwoSpheres(const nifly::Vector3& center1, const nifly::Vector3& center2, float sqradius, int startTri1, int startTri2, std::vector<bool>& pointvisit, int outPoints[], int& nOutPoints);
 
 	// Convenience function to gather connected points, taking into account "welded" vertices. Does not clear the output set.
-	void GetAdjacentPoints(int querypoint, std::set<int>& outPoints);
+	void GetAdjacentPoints(int querypoint, std::unordered_set<int>& outPoints);
 
 	// More optimized adjacency fetch, using edge adjacency and storing the output in a static array.
 	// Requires that BuildEdgeList() be called prior to use.
