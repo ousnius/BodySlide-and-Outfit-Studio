@@ -3020,8 +3020,7 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 		Vector3 nsum;
 		for (const Triangle& t : tris)
 			if (t.HasVertex(vi)) {
-				Vector3 tn;
-				t.trinormal(*verts, &tn);
+				Vector3 tn = t.trinormal(*verts);
 				tn.Normalize();
 				nsum += tn;
 			}
