@@ -142,6 +142,9 @@ enum class ToolID {
 struct ConformOptions;
 class OutfitStudioFrame;
 class EditUV;
+struct SymmetricVertices;
+struct VertexAsymmetries;
+struct VertexAsymmetryTasks;
 
 enum OverlayLayer : uint32_t {
 	Default = 0,
@@ -489,6 +492,9 @@ public:
 
 		m->QueueUpdate(Mesh::UpdateType::Mask);
 	}
+
+	std::unordered_map<std::string, std::vector<float>> StashMasks();
+	void UnstashMasks(const std::unordered_map<std::string, std::vector<float>>& stash);
 
 	void MaskLess() {
 		for (auto& m : gls.GetActiveMeshes()) {
@@ -1174,6 +1180,8 @@ private:
 
 	int CopySegPartForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
 
+	bool ShowVertexAsym(Mesh* m, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, const std::vector<bool>& selVerts, bool trize);
+
 	void OnExit(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& event);
 
@@ -1373,6 +1381,9 @@ private:
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnMaskBoneWeighted(wxCommandEvent& event);
 	void OnCopySegPart(wxCommandEvent& event);
+	void OnMaskSymVert(wxCommandEvent& event);
+	void OnSymVert(wxCommandEvent& event);
+	void OnMaskSymTri(wxCommandEvent& event);
 	void OnResetTransforms(wxCommandEvent& event);
 	void OnDeleteUnreferencedNodes(wxCommandEvent& event);
 	void OnRemoveSkinning(wxCommandEvent& event);
