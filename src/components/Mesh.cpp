@@ -292,45 +292,39 @@ void Mesh::ScaleVertices(const Vector3& center, const float& factor) {
 	queueUpdate[UpdateType::Position] = true;
 }
 
-void Mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
-	int tp1 = 0;
-	int tp2 = 0;
-	int tp3 = 0;
-	int wq = 0;
-
+void Mesh::GetAdjacentPoints(int querypoint, std::unordered_set<int>& outPoints) {
 	if (!vertTris)
 		return;
 
 	auto vtris = vertTris.get();
 	auto addWeldVerts = [&](int qp) {
-		if (weldVerts.find(qp) != weldVerts.end()) {
-			for (size_t v = 0; v < weldVerts[qp].size(); v++) {
-				wq = weldVerts[qp][v];
-				outPoints.insert(wq);
-			}
+		auto wv = weldVerts.find(qp);
+		if (wv != weldVerts.end()) {
+			outPoints.insert(wv->second.begin(), wv->second.end());
 		}
 	};
 
 	addWeldVerts(querypoint);
 
-	for (size_t t = 0; t < vtris[querypoint].size(); t++) {
-		tp1 = tris[vtris[querypoint][t]].p1;
-		tp2 = tris[vtris[querypoint][t]].p2;
-		tp3 = tris[vtris[querypoint][t]].p3;
+	auto& pointTris = vtris[querypoint];
 
-		if (tp1 != querypoint) {
-			outPoints.insert(tp1);
-			addWeldVerts(tp1);
+	for (size_t i = 0; i < pointTris.size(); i++) {
+		int t = pointTris[i];
+		auto& tri = tris[t];
+
+		if (tri.p1 != querypoint) {
+			outPoints.insert(tri.p1);
+			addWeldVerts(tri.p1);
 		}
 
-		if (tp2 != querypoint) {
-			outPoints.insert(tp2);
-			addWeldVerts(tp2);
+		if (tri.p2 != querypoint) {
+			outPoints.insert(tri.p2);
+			addWeldVerts(tri.p2);
 		}
 
-		if (tp3 != querypoint) {
-			outPoints.insert(tp3);
-			addWeldVerts(tp3);
+		if (tri.p3 != querypoint) {
+			outPoints.insert(tri.p3);
+			addWeldVerts(tri.p3);
 		}
 	}
 }
@@ -442,7 +436,7 @@ void Mesh::SetSmoothThreshold(float degrees) {
 	smoothThresh = degrees * DEG2RAD;
 }
 
-void Mesh::SmoothNormals(const std::set<int>& vertices) {
+void Mesh::SmoothNormals(const std::unordered_set<int>& vertices) {
 	if (lockNormals || !norms)
 		return;
 

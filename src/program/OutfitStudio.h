@@ -495,7 +495,7 @@ public:
 			std::set<int> unmaskPoints;
 			for (int i = 0; i < m->nVerts; i++) {
 				if (m->mask[i] > 0.0f) {
-					std::set<int> adjacentPoints;
+					std::unordered_set<int> adjacentPoints;
 					m->GetAdjacentPoints(i, adjacentPoints);
 
 					for (auto& adj : adjacentPoints) {
@@ -516,7 +516,7 @@ public:
 
 	void MaskMore() {
 		for (auto& m : gls.GetActiveMeshes()) {
-			std::set<int> adjacentPoints;
+			std::unordered_set<int> adjacentPoints;
 			for (int i = 0; i < m->nVerts; i++)
 				if (m->mask[i] > 0.0f)
 					m->GetAdjacentPoints(i, adjacentPoints);
