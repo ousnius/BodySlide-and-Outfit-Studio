@@ -61,8 +61,6 @@ void AnimInfo::Clear() {
 		shapeSkinning.clear();
 		for (auto& s : refNif->GetShapeNames())
 			shapeBones[s].clear();
-
-		refNif = nullptr;
 	}
 	else {
 		for (auto& shapeBoneList : shapeBones)
@@ -91,16 +89,6 @@ void AnimInfo::ClearShape(const std::string& shape) {
 
 	shapeBones.erase(shape);
 	shapeSkinning.erase(shape);
-}
-
-bool AnimInfo::HasSkinnedShape(NiShape* shape) const {
-	if (!shape)
-		return false;
-
-	if (shapeSkinning.find(shape->name.get()) != shapeSkinning.end())
-		return true;
-	else
-		return false;
 }
 
 void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<uint16_t>& indices) {
@@ -522,6 +510,54 @@ void AnimInfo::RenameShape(const std::string& shapeName, const std::string& newS
 		shapeBones[newShapeName] = move(shapeBones[shapeName]);
 		shapeBones.erase(shapeName);
 	}
+}
+
+MatTransform AnimInfo::GetTransformShapeToGlobal(NiShape* shape) const {
+    if (shape->IsSkinned())
+        return GetTransformGlobalToShape(shape).InverseTransform();
+    else {
+        MatTransform ttg = shape->GetTransformToParent();
+        NiNode* parent = refNif->GetParentNode(shape);
+        while (parent) {
+            ttg = parent->GetTransformToParent().ComposeTransforms(ttg);
+            parent = refNif->GetParentNode(parent);
+        }
+        return ttg;
+    }
+}
+
+MatTransform AnimInfo::GetTransformGlobalToShape(NiShape* shape) const {
+    if (shape->IsSkinned())
+        return shapeSkinning.at(shape->name.get()).xformGlobalToSkin;
+    else
+        return GetTransformShapeToGlobal(shape).InverseTransform();
+}
+
+void AnimInfo::SetTransformShapeToGlobal(NiShape* shape, const MatTransform& newShapeToGlobal) {
+    if (shape->IsSkinned())
+        SetTransformGlobalToShape(shape, newShapeToGlobal.InverseTransform());
+    else {
+        // Derive the node-to-parent transform from the new node-to-global and
+        // old parent-to-global transforms.
+        NiNode* parent = refNif->GetParentNode(shape);
+        MatTransform parentToGlobal;
+        while (parent) {
+            parentToGlobal = parent->GetTransformToParent().ComposeTransforms(parentToGlobal);
+            parent = refNif->GetParentNode(parent);
+        }
+        shape->SetTransformToParent(parentToGlobal.InverseTransform().ComposeTransforms(newShapeToGlobal));
+    }
+}
+
+void AnimInfo::SetTransformGlobalToShape(NiShape* shape, const MatTransform& newGlobalToShape) {
+    if (shape->IsSkinned()) {
+        ChangeGlobalToSkinTransform(shape->name.get(), newGlobalToShape);
+        // Note that not all nifs have this transform, so setting it in
+        // AnimInfo is the important one, not setting it in refNif.
+        refNif->SetShapeTransformGlobalToSkin(shape, newGlobalToShape);
+    }
+    else
+        SetTransformShapeToGlobal(shape, newGlobalToShape.InverseTransform());
 }
 
 AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, uint32_t srcBlock, AnimBone* inParent) {

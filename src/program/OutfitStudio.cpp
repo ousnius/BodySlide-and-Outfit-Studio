@@ -4324,12 +4324,12 @@ void OutfitStudioFrame::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 
 	bool hasSkinTrans = false;
 	for (NiShape* shape : project->GetWorkNif()->GetShapes()) {
-		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->GetTransformGlobalToShape(shape).IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
 	if (hasSkinTrans) {
-		int res = wxMessageBox(_("Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to "
+		int res = wxMessageBox(_("Some of the shapes have coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to "
 								 "global coordinates in the OBJ?  (This is not recommended.)"),
 							   _("Transform to global"),
 							   wxYES_NO | wxCANCEL);
@@ -4360,7 +4360,7 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 	bool hasSkinTrans = false;
 	for (auto& i : selectedItems) {
 		NiShape* shape = i->GetShape();
-		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->GetTransformGlobalToShape(shape).IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
@@ -4452,7 +4452,7 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 	bool hasSkinTrans = false;
 	for (NiShape* shape : project->GetWorkNif()->GetShapes()) {
-		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->GetTransformGlobalToShape(shape).IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
@@ -4488,7 +4488,7 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 	bool hasSkinTrans = false;
 	for (auto& i : selectedItems) {
 		NiShape* shape = i->GetShape();
-		if (!project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform()))
+		if (!project->GetWorkAnim()->GetTransformGlobalToShape(shape).IsNearlyEqualTo(MatTransform()))
 			hasSkinTrans = true;
 	}
 	bool transToGlobal = false;
@@ -9440,21 +9440,16 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions& options) {
 
 	AnimInfo& workAnim = *project->GetWorkAnim();
 
-	if (!workAnim.HasSkinnedShape(baseShape))
-		return;
+	MatTransform globalToBaseShape = workAnim.GetTransformGlobalToShape(baseShape);
 
-	const MatTransform& baseXformGlobalToSkin = workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin;
-
-	// Check if any shape's skin CS is different from the base shape's
+	// Check if any shape's CS is different from the base shape's
 	for (size_t i = 0; i < selectedItems.size(); i++) {
 		NiShape* shape = selectedItems[i]->GetShape();
 		if (shape == baseShape)
 			continue;
 
-		if (!workAnim.HasSkinnedShape(shape))
-			continue;
-
-		if (!workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin)) {
+		MatTransform globalToShape = workAnim.GetTransformGlobalToShape(shape);
+		if (!globalToShape.IsNearlyEqualTo(globalToBaseShape)) {
 			options.showSkinTransOption = true;
 			break;
 		}
@@ -9483,8 +9478,8 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions& options) {
 		if (shape == baseShape)
 			continue;
 
-		const MatTransform& globalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
-		if (globalToSkin.IsNearlyEqualTo(baseXformGlobalToSkin))
+		MatTransform globalToShape = workAnim.GetTransformGlobalToShape(shape);
+		if (globalToShape.IsNearlyEqualTo(globalToBaseShape))
 			continue;
 
 		const std::vector<Vector3>& verts = *nif->GetVertsForShape(shape);
@@ -9492,12 +9487,12 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions& options) {
 			continue;
 
 		// Calculate old average and new average.
-		MatTransform skinToGlobal = globalToSkin.InverseTransform();
-		MatTransform skinToBaseSkin = baseXformGlobalToSkin.ComposeTransforms(skinToGlobal);
+		MatTransform shapeToGlobal = globalToShape.InverseTransform();
+		MatTransform shapeToBaseShape = globalToBaseShape.ComposeTransforms(shapeToGlobal);
 
 		Vector3 oldAvg, newAvg;
 		for (size_t j = 0; j < verts.size(); ++j) {
-			oldAvg += skinToBaseSkin.ApplyTransform(verts[j]);
+			oldAvg += shapeToBaseShape.ApplyTransform(verts[j]);
 			newAvg += verts[j];
 		}
 
@@ -9557,14 +9552,15 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 			StartSubProgress(i * inc, i * inc + inc);
 
 			if (options.doSkinTransCopy) {
-				const MatTransform& baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->name.get()].xformGlobalToSkin;
-				const MatTransform& oldXformGlobalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
+				MatTransform globalToBaseShape = workAnim.GetTransformGlobalToShape(project->GetBaseShape());
+				MatTransform globalToShape = workAnim.GetTransformGlobalToShape(shape);
 
-				if (options.doTransformGeo && !baseXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin))
-					project->ApplyTransformToShapeGeometry(shape, baseXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
+				if (options.doTransformGeo && !globalToBaseShape.IsNearlyEqualTo(globalToShape)) {
+					MatTransform shapeToBaseShape = globalToBaseShape.ComposeTransforms(globalToShape.InverseTransform());
+					project->ApplyTransformToShapeGeometry(shape, shapeToBaseShape);
+				}
 
-				workAnim.ChangeGlobalToSkinTransform(shape->name.get(), baseXformGlobalToSkin);
-				project->GetWorkNif()->SetShapeTransformGlobalToSkin(shape, baseXformGlobalToSkin);
+				workAnim.SetTransformGlobalToShape(shape, globalToBaseShape);
 			}
 
 			usp->usss.resize(usp->usss.size() + 1);
@@ -9658,14 +9654,15 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 			if (!project->IsBaseShape(shape)) {
 				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->name.get(), bonesString);
 				if (options.doSkinTransCopy) {
-					const MatTransform& baseXformGlobalToSkin = workAnim.shapeSkinning[project->GetBaseShape()->name.get()].xformGlobalToSkin;
-					const MatTransform& oldXformGlobalToSkin = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin;
+					MatTransform globalToBaseShape = workAnim.GetTransformGlobalToShape(project->GetBaseShape());
+					MatTransform globalToShape = workAnim.GetTransformGlobalToShape(shape);
 
-					if (options.doTransformGeo && !baseXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin))
-						project->ApplyTransformToShapeGeometry(shape, baseXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
+					if (options.doTransformGeo && !globalToBaseShape.IsNearlyEqualTo(globalToShape)) {
+						MatTransform shapeToBaseShape = globalToBaseShape.ComposeTransforms(globalToShape.InverseTransform());
+						project->ApplyTransformToShapeGeometry(shape, shapeToBaseShape);
+					}
 
-					workAnim.ChangeGlobalToSkinTransform(shape->name.get(), baseXformGlobalToSkin);
-					project->GetWorkNif()->SetShapeTransformGlobalToSkin(shape, baseXformGlobalToSkin);
+					workAnim.SetTransformGlobalToShape(shape, globalToBaseShape);
 				}
 
 				usp->usss.resize(usp->usss.size() + 1);
@@ -10588,11 +10585,8 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 		NiShape* shape = nif->FindBlockByName<NiShape>(shapeList[i]);
 		if (shape && shape->IsSkinned()) {
 			// Overwrite skin matrix with the one from AnimInfo
-			const auto skinning = os->project->GetWorkAnim()->shapeSkinning.find(shapeList[i]);
-			if (skinning != os->project->GetWorkAnim()->shapeSkinning.end()) {
-				MatTransform gts = skinning->second.xformGlobalToSkin;
-				m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(gts.ComposeTransforms(Mesh::xformMeshToNif)));
-			}
+			MatTransform globalToShape = os->project->GetWorkAnim()->GetTransformGlobalToShape(shape);
+			m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(globalToShape.ComposeTransforms(Mesh::xformMeshToNif)));
 		}
 
 		m->BuildTriAdjacency();
@@ -10943,7 +10937,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 
 	if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
 		for (auto& sel : os->GetSelectedItems()) {
-			os->project->GetWorkNif()->CreateSkinning(sel->GetShape());
+			os->project->CreateSkinning(sel->GetShape());
 
 			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(sel->GetShape()->name.get(), os->GetActiveBone());
 			if (boneIndex < 0)
