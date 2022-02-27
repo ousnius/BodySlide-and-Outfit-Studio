@@ -290,5 +290,4 @@ public:
 
 	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
 	int ExportFBX(const std::string& fileName, const std::vector<nifly::NiShape*>& shapes, bool transToGlobal);
-	void CheckShapeForDistantOrigin(nifly::NiShape* s);
 };

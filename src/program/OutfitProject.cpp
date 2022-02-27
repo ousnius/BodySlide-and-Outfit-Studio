@@ -3896,14 +3896,11 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 			std::string shapeName = s->name.get();
 			auto clonedShape = workNif.CloneShape(s, shapeName, &nif);
 			workAnim.LoadFromNif(&workNif, clonedShape);
-			CheckShapeForDistantOrigin(clonedShape);
 		}
 	}
 	else {
 		workNif.CopyFrom(nif);
 		workAnim.LoadFromNif(&workNif);
-		for (NiShape* s : workNif.GetShapes())
-			CheckShapeForDistantOrigin(s);
 	}
 
 	return 0;
@@ -4126,8 +4123,6 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 
 			if (copyBaseSkinTrans)
 				workAnim.SetTransformGlobalToShape(newShape, workAnim.GetTransformGlobalToShape(baseShape));
-
-			CheckShapeForDistantOrigin(newShape);
 		}
 	}
 
@@ -4301,8 +4296,6 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 		if (!nonRefBones.empty())
 			wxLogMessage("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, nonRefBones);
-
-		CheckShapeForDistantOrigin(newShape);
 	}
 
 	return 0;
@@ -4423,62 +4416,4 @@ void OutfitProject::RemoveSkinning() {
 	}
 
 	workNif.DeleteUnreferencedNodes();
-}
-
-void OutfitProject::CheckShapeForDistantOrigin(NiShape* s) {
-	bool nifUsesHalfPrecision = false;
-	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	switch (targetGame) {
-		case OB:
-		case FO3:
-		case FONV:
-		case SKYRIM:
-		case SKYRIMSE:
-		case SKYRIMVR:
-			nifUsesHalfPrecision = false; break;
-		case FO4:
-		case FO4VR:
-		case FO76:
-			nifUsesHalfPrecision = true; break;
-	}
-	if (!nifUsesHalfPrecision)
-		return;
-
-	// Find shape's minimum, maximum, and average vertex coordinates
-	const std::vector<Vector3>* verts = workNif.GetVertsForShape(s);
-	if (!verts || verts->empty())
-		return;
-	Vector3 minv, maxv, avgv;
-	minv = maxv = avgv = (*verts)[0];
-	for (size_t i = 1; i < verts->size(); ++i) {
-		const Vector3& v = (*verts)[i];
-		minv.x = std::min(minv.x, v.x);
-		minv.y = std::min(minv.y, v.y);
-		minv.z = std::min(minv.z, v.z);
-		maxv.x = std::max(maxv.x, v.x);
-		maxv.y = std::max(maxv.y, v.y);
-		maxv.z = std::max(maxv.z, v.z);
-		avgv += v;
-	}
-	avgv /= verts->size();
-
-	// Determine maximum extent
-	Vector3 extvec = maxv - minv;
-	float extent = std::max(extvec.x, std::max(extvec.y, extvec.z));
-
-	// Check for distant origin
-	MatTransform shapeToGlobal = workAnim.GetTransformShapeToGlobal(s);
-	float distAvgToOrigin = shapeToGlobal.translation.DistanceTo(avgv);
-	bool distantOrigin = distAvgToOrigin > 0.3f * extent;
-	if (!distantOrigin)
-		return;
-
-	if (wxMessageBox(wxString() << _("The shape '") << s->name.get() << _("' has an origin that is ") << distAvgToOrigin << _(" units from its center.  (The shape's extent is ") << extent << _(".)  Moving the origin to the center could reduce the precision loss when saving the NIF.  Move the origin to the center?"), _("Adjust shape origin"), wxYES_NO|wxYES_DEFAULT|wxICON_WARNING) == wxNO)
-		return;
-
-	MatTransform newShapeToGlobal;
-	newShapeToGlobal.translation = shapeToGlobal.ApplyTransform(avgv);
-	MatTransform oldToNew = newShapeToGlobal.InverseTransform().ComposeTransforms(shapeToGlobal);
-	ApplyTransformToShapeGeometry(s, oldToNew);
-	workAnim.SetTransformShapeToGlobal(s, newShapeToGlobal);
 }
