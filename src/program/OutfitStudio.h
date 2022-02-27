@@ -299,6 +299,7 @@ public:
 			toolOptionXMirrorWeight = on;
 		else
 			toolOptionXMirror = on;
+		gls.SetXMirrorCursor(on);
 	}
 
 	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
