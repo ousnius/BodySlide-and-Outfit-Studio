@@ -90,7 +90,7 @@ public:
 	std::unique_ptr<std::vector<int>[]> vertEdges;		 // Map of edges for which each vert is a member.
 	std::unordered_map<int, std::vector<int>> weldVerts; // Verts that are duplicated for UVs but are in the same position.
 	bool bGotWeldVerts = false;							 // Whether weldVerts has been calculated yet.
-	std::unique_ptr<std::set<int>[]> adjVerts;			 // Vertices that are adjacent to each vertex.
+	std::unique_ptr<std::vector<int>[]> adjVerts;		 // Vertices that are adjacent to each vertex.
 
 	std::unordered_set<uint32_t> lockedNormalIndices;
 
