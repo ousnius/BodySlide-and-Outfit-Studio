@@ -570,7 +570,9 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 					modelMirrorNorm.x = -modelMirrorNorm.x;
 					Vector3 modelMirrorOrigin = morigin;
 					modelMirrorOrigin.x = -modelMirrorOrigin.x;
-					AddVisCircle(modelMirrorOrigin, modelMirrorNorm, cursorSize, "mirrorcircle")->color = Vector3(0.7f, 0.3f, 0.3f);
+
+					Mesh* mirrorCircle = AddVisCircle(modelMirrorOrigin, modelMirrorNorm, cursorSize, "mirrorcircle");
+					mirrorCircle->prop.alpha = 0.25f;
 
 					Vector3 mhilitepoint = m->TransformPosMeshToModel(hilitepoint);
 					AddVisPoint(mhilitepoint, "pointhilite");
