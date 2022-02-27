@@ -892,6 +892,7 @@ void EditUVCanvas::InitMeshes() {
 	uvGridMesh->shapeName = "UVGrid";
 
 	uvGridMesh->BuildTriAdjacency();
+	uvGridMesh->BuildVertexAdjacency();
 	uvGridMesh->BuildEdgeList();
 	uvGridMesh->CreateBVH();
 	uvGridMesh->CreateBuffers();

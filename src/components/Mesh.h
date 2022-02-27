@@ -90,6 +90,7 @@ public:
 	std::unique_ptr<std::vector<int>[]> vertEdges;		 // Map of edges for which each vert is a member.
 	std::unordered_map<int, std::vector<int>> weldVerts; // Verts that are duplicated for UVs but are in the same position.
 	bool bGotWeldVerts = false;							 // Whether weldVerts has been calculated yet.
+	std::unique_ptr<std::set<int>[]> adjVerts;			 // Vertices that are adjacent to each vertex.
 
 	std::unordered_set<uint32_t> lockedNormalIndices;
 
@@ -131,8 +132,9 @@ public:
 
 	void MakeEdges(); // Creates the list of edges from the list of triangles.
 
-	void BuildTriAdjacency(); // Triangle adjacency optional to reduce overhead when it's not needed.
-	void BuildEdgeList();	  // Edge list optional to reduce overhead when it's not needed.
+	void BuildTriAdjacency();	 // Triangle adjacency optional to reduce overhead when it's not needed.
+	void BuildVertexAdjacency(); // Vertex adjacency optional to reduce overhead when it's not needed.
+	void BuildEdgeList();		 // Edge list optional to reduce overhead when it's not needed.
 
 	void CalcWeldVerts();
 
@@ -152,12 +154,11 @@ public:
 	static void SmoothNormalsStatic(Mesh* m) { m->SmoothNormals(); }
 	static void SmoothNormalsStaticArray(Mesh* m, int* vertices, int nVertices) {
 		std::unordered_set<int> verts;
-		verts.reserve(nVertices);
+		verts.reserve(nVertices * 2);
+		verts.insert(vertices, vertices + nVertices);
 
-		for (int i = 0; i < nVertices; i++) {
-			verts.insert(vertices[i]);
+		for (int i = 0; i < nVertices; i++)
 			m->GetAdjacentPoints(vertices[i], verts);
-		}
 
 		m->SmoothNormals(verts);
 	}

@@ -10915,6 +10915,7 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 		}
 
 		m->BuildTriAdjacency();
+		m->BuildVertexAdjacency();
 		m->BuildEdgeList();
 		m->MaskFill(0.0f);
 		m->WeightFill(0.0f);

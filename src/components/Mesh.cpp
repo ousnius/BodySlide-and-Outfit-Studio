@@ -50,6 +50,51 @@ void Mesh::BuildTriAdjacency() {
 	}
 }
 
+void Mesh::BuildVertexAdjacency() {
+	if (!vertTris)
+		BuildTriAdjacency();
+
+	if (!vertTris)
+		return;
+
+	adjVerts = std::make_unique<std::set<int>[]>(nVerts);
+	auto av = adjVerts.get();
+
+	auto addWeldVerts = [&](int qp) {
+		auto wv = weldVerts.find(qp);
+		if (wv != weldVerts.end()) {
+			av[qp].insert(wv->second.begin(), wv->second.end());
+		}
+	};
+	
+	auto vtris = vertTris.get();
+	for (int v = 0; v < nVerts; v++) {
+		addWeldVerts(v);
+
+		auto& pointTris = vtris[v];
+
+		for (size_t i = 0; i < pointTris.size(); i++) {
+			int t = pointTris[i];
+			auto& tri = tris[t];
+
+			if (tri.p1 != v) {
+				av[v].insert(tri.p1);
+				addWeldVerts(tri.p1);
+			}
+
+			if (tri.p2 != v) {
+				av[v].insert(tri.p2);
+				addWeldVerts(tri.p2);
+			}
+
+			if (tri.p3 != v) {
+				av[v].insert(tri.p3);
+				addWeldVerts(tri.p3);
+			}
+		}
+	}
+}
+
 void Mesh::MakeEdges() {
 	if (!tris)
 		return;
@@ -293,55 +338,40 @@ void Mesh::ScaleVertices(const Vector3& center, const float& factor) {
 }
 
 void Mesh::GetAdjacentPoints(int querypoint, std::unordered_set<int>& outPoints) {
-	if (!vertTris)
+	if (querypoint >= nVerts)
 		return;
 
-	auto vtris = vertTris.get();
-	auto addWeldVerts = [&](int qp) {
-		auto wv = weldVerts.find(qp);
-		if (wv != weldVerts.end()) {
-			outPoints.insert(wv->second.begin(), wv->second.end());
-		}
-	};
+	if (!adjVerts)
+		BuildVertexAdjacency();
 
-	addWeldVerts(querypoint);
+	if (!adjVerts)
+		return;
 
-	auto& pointTris = vtris[querypoint];
+	auto av = adjVerts.get();
+	const auto& avPoint = av[querypoint];
 
-	for (size_t i = 0; i < pointTris.size(); i++) {
-		int t = pointTris[i];
-		auto& tri = tris[t];
-
-		if (tri.p1 != querypoint) {
-			outPoints.insert(tri.p1);
-			addWeldVerts(tri.p1);
-		}
-
-		if (tri.p2 != querypoint) {
-			outPoints.insert(tri.p2);
-			addWeldVerts(tri.p2);
-		}
-
-		if (tri.p3 != querypoint) {
-			outPoints.insert(tri.p3);
-			addWeldVerts(tri.p3);
-		}
-	}
+	outPoints.insert(avPoint.begin(), avPoint.end());
 }
 
 int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
-	int ep1;
-	int ep2;
-	int wq;
-	int n = 0;
+	if (!adjVerts)
+		BuildVertexAdjacency();
+
+	if (!adjVerts)
+		return 0;
+
+	if (!vertEdges)
+		BuildEdgeList();
 
 	if (!vertEdges)
 		return 0;
 
+	int n = 0;
+
 	auto vedges = vertEdges.get();
 	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
-		ep1 = edges[vedges[querypoint][e]].p1;
-		ep2 = edges[vedges[querypoint][e]].p2;
+		int ep1 = edges[vedges[querypoint][e]].p1;
+		int ep2 = edges[vedges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
 			if (ep1 != querypoint)
 				outPoints[n++] = ep1;
@@ -349,12 +379,13 @@ int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 				outPoints[n++] = ep2;
 		}
 	}
+
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
 		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
-			wq = weldVerts[querypoint][v];
+			int wq = weldVerts[querypoint][v];
 			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
-				ep1 = edges[vedges[wq][e]].p1;
-				ep2 = edges[vedges[wq][e]].p2;
+				int ep1 = edges[vedges[wq][e]].p1;
+				int ep2 = edges[vedges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
 					if (ep1 != wq)
 						outPoints[n++] = ep1;
@@ -364,22 +395,24 @@ int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 			}
 		}
 	}
+
 	return n;
 	/* TODO: sort by distance */
 }
 
 int Mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint) {
 	if (!vertEdges)
+		BuildEdgeList();
+
+	if (!vertEdges)
 		return 0;
 
-	int ep1;
-	int ep2;
 	int n = 0;
 
 	auto vedges = vertEdges.get();
 	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
-		ep1 = edges[vedges[querypoint][e]].p1;
-		ep2 = edges[vedges[querypoint][e]].p2;
+		int ep1 = edges[vedges[querypoint][e]].p1;
+		int ep2 = edges[vedges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
 			if (ep1 != querypoint && !visPoint[ep1]) {
 				outPoints[n++] = ep1;
@@ -391,12 +424,13 @@ int Mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 			}
 		}
 	}
+
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
 		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
 			int wq = weldVerts[querypoint][v];
 			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
-				ep1 = edges[vedges[wq][e]].p1;
-				ep2 = edges[vedges[wq][e]].p2;
+				int ep1 = edges[vedges[wq][e]].p1;
+				int ep2 = edges[vedges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
 					if (ep1 != wq && !visPoint[ep1]) {
 						outPoints[n++] = ep1;
@@ -410,6 +444,7 @@ int Mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 			}
 		}
 	}
+
 	return n;
 	/* TODO: sort by distance */
 }

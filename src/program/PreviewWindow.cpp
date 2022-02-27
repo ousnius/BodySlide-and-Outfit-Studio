@@ -143,6 +143,7 @@ void PreviewWindow::AddMeshFromNif(NifFile* nif, char* shapeName) {
 
 			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildTriAdjacency();
+			m->BuildVertexAdjacency();
 			m->CreateBuffers();
 		}
 	}
@@ -162,6 +163,7 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 
 			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildTriAdjacency();
+			m->BuildVertexAdjacency();
 			m->SmoothNormals();
 			m->CreateBuffers();
 
