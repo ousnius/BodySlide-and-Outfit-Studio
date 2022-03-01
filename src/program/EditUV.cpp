@@ -778,7 +778,7 @@ void EditUVCanvas::SelectLess() {
 	std::set<int> unselectPoints;
 	for (int i = 0; i < uvGridMesh->nVerts; i++) {
 		if (uvGridMesh->vcolors[i].x > 0.0f) {
-			std::set<int> adjacentPoints;
+			std::unordered_set<int> adjacentPoints;
 			uvGridMesh->GetAdjacentPoints(i, adjacentPoints);
 
 			for (auto& adj : adjacentPoints) {
@@ -798,7 +798,7 @@ void EditUVCanvas::SelectLess() {
 }
 
 void EditUVCanvas::SelectMore() {
-	std::set<int> adjacentPoints;
+	std::unordered_set<int> adjacentPoints;
 	for (int i = 0; i < uvGridMesh->nVerts; i++)
 		if (uvGridMesh->vcolors[i].x > 0.0f)
 			uvGridMesh->GetAdjacentPoints(i, adjacentPoints);
@@ -892,6 +892,7 @@ void EditUVCanvas::InitMeshes() {
 	uvGridMesh->shapeName = "UVGrid";
 
 	uvGridMesh->BuildTriAdjacency();
+	uvGridMesh->BuildVertexAdjacency();
 	uvGridMesh->BuildEdgeList();
 	uvGridMesh->CreateBVH();
 	uvGridMesh->CreateBuffers();

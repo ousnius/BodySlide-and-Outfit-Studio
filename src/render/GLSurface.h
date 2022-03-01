@@ -45,6 +45,7 @@ private:
 	float defPointSize = 5.0f;
 	float cursorSize = 0.5f;
 	CursorType cursorType = CursorType::None;
+	bool xmirrorCursor = false;
 
 	GLShader::DirectionalLight frontalLight;
 	GLShader::DirectionalLight directionalLight0;
@@ -219,6 +220,7 @@ public:
 
 	CursorType GetCursorType() const { return cursorType; }
 	void SetCursorType(CursorType newType) { cursorType = newType; }
+	void SetXMirrorCursor(bool newval) { xmirrorCursor = newval; }
 
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Cleanup();
@@ -308,8 +310,8 @@ public:
 	Mesh* AddVisSeamEdges(const Mesh* refMesh, bool asMesh = false);
 
 	Mesh* AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName, nifly::Vector3* color = nullptr);
-	void Update(const std::string& shapeName, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
-	void Update(Mesh* m, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
+	void Update(const std::string& shapeName, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::unordered_set<int>* changed = nullptr);
+	void Update(Mesh* m, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::unordered_set<int>* changed = nullptr);
 	Mesh* ReloadMeshFromNif(nifly::NifFile* nif, std::string shapeName);
 	void RecalculateMeshBVH(const std::string& shapeName);
 
