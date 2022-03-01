@@ -482,16 +482,15 @@ TB_SmoothMask::TB_SmoothMask() {
 TB_SmoothMask::~TB_SmoothMask() {}
 
 void TB_SmoothMask::lapFilter(Mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
-	int adjPoints[1000];
-
 	for (int i = 0; i < nPoints; i++) {
-		int c = m->GetAdjacentPoints(points[i], adjPoints, 1000);
+		const std::vector<int>& adjPoints = m->adjVerts[points[i]];
+		int c = static_cast<int>(adjPoints.size());
 		if (c == 0)
 			continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
-		for (int n = 0; n < c; n++)
-			d += Vector3(m->mask[adjPoints[n]], 0.0f, 0.0f);
+		for (int apt : adjPoints)
+			d += Vector3(m->mask[apt], 0.0f, 0.0f);
 		wv[points[i]] = d / (float)c;
 
 		if (m->weldVerts.find(points[i]) != m->weldVerts.end()) {
@@ -505,17 +504,17 @@ void TB_SmoothMask::lapFilter(Mesh* m, const int* points, int nPoints, std::unor
 void TB_SmoothMask::hclapFilter(Mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, UndoStateShape& uss) {
 	std::vector<Vector3> b(m->nVerts);
 
-	int adjPoints[1000];
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
-		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
+		const std::vector<int>& adjPoints = m->adjVerts[i];
+		int c = static_cast<int>(adjPoints.size());
 		if (c == 0)
 			continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
-		for (int n = 0; n < c; n++)
-			d += Vector3(m->mask[adjPoints[n]], 0.0f, 0.0f);
+		for (int apt : adjPoints)
+			d += Vector3(m->mask[apt], 0.0f, 0.0f);
 		wv[i] = d / (float)c;
 		// Calculate the difference between the new position and a blend of the original and previous positions
 		b[i] = wv[i] - ((uss.pointStartState[i] * hcAlpha) + (Vector3(m->mask[i], 0.0f, 0.0f) * (1.0f - hcAlpha)));
@@ -532,12 +531,13 @@ void TB_SmoothMask::hclapFilter(Mesh* m, const int* points, int nPoints, std::un
 		if (skip)
 			continue;
 		// Average 'b' for adjacent points
-		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
+		const std::vector<int>& adjPoints = m->adjVerts[i];
+		int c = static_cast<int>(adjPoints.size());
 		if (c == 0)
 			continue;
 		Vector3 d;
-		for (int n = 0; n < c; n++)
-			d += b[adjPoints[n]];
+		for (int apt : adjPoints)
+			d += b[apt];
 
 		// blend the new position and the average of the distance moved
 		float avgB = (1 - hcBeta) / (float)c;
@@ -667,16 +667,15 @@ TB_Smooth::TB_Smooth() {
 TB_Smooth::~TB_Smooth() {}
 
 void TB_Smooth::lapFilter(Mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
-	int adjPoints[1000];
-
 	for (int i = 0; i < nPoints; i++) {
-		int c = m->GetAdjacentPoints(points[i], adjPoints, 1000);
+		const std::vector<int>& adjPoints = m->adjVerts[points[i]];
+		int c = static_cast<int>(adjPoints.size());
 		if (c == 0)
 			continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
-		for (int n = 0; n < c; n++)
-			d += m->verts[adjPoints[n]];
+		for (int apt : adjPoints)
+			d += m->verts[apt];
 		wv[points[i]] = d / (float)c;
 
 		if (m->weldVerts.find(points[i]) != m->weldVerts.end()) {
@@ -690,17 +689,17 @@ void TB_Smooth::lapFilter(Mesh* m, const int* points, int nPoints, std::unordere
 void TB_Smooth::hclapFilter(Mesh* m, const int* points, int nPoints, std::unordered_map<int, Vector3>& wv, UndoStateShape& uss) {
 	std::vector<Vector3> b(m->nVerts);
 
-	int adjPoints[1000];
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
-		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
+		const std::vector<int>& adjPoints = m->adjVerts[i];
+		int c = static_cast<int>(adjPoints.size());
 		if (c == 0)
 			continue;
 		// average adjacent points positions, using values from last iteration.
 		Vector3 d;
-		for (int n = 0; n < c; n++)
-			d += m->verts[adjPoints[n]];
+		for (int apt : adjPoints)
+			d += m->verts[apt];
 		wv[i] = d / (float)c;
 		// Calculate the difference between the new position and a blend of the original and previous positions
 		b[i] = wv[i] - ((uss.pointStartState[i] * hcAlpha) + (m->verts[i] * (1.0f - hcAlpha)));
@@ -717,12 +716,13 @@ void TB_Smooth::hclapFilter(Mesh* m, const int* points, int nPoints, std::unorde
 		if (skip)
 			continue;
 		// Average 'b' for adjacent points
-		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
+		const std::vector<int>& adjPoints = m->adjVerts[i];
+		int c = static_cast<int>(adjPoints.size());
 		if (c == 0)
 			continue;
 		Vector3 d;
-		for (int n = 0; n < c; n++)
-			d += b[adjPoints[n]];
+		for (int apt : adjPoints)
+			d += b[apt];
 
 		// blend the new position and the average of the distance moved
 		float avgB = (1 - hcBeta) / (float)c;
@@ -1405,17 +1405,16 @@ TB_SmoothWeight::TB_SmoothWeight() {
 TB_SmoothWeight::~TB_SmoothWeight() {}
 
 void TB_SmoothWeight::lapFilter(Mesh* m, const int* points, int nPoints, std::unordered_map<int, float>& wv) {
-	int adjPoints[1000];
-
 	for (int i = 0; i < nPoints; i++) {
-		int c = m->GetAdjacentPoints(points[i], adjPoints, 1000);
+		const std::vector<int>& adjPoints = m->adjVerts[points[i]];
+		int c = static_cast<int>(adjPoints.size());
 		if (c == 0)
 			continue;
 
 		// average adjacent points values, using values from last iteration.
 		float d = 0.0;
-		for (int n = 0; n < c; n++)
-			d += m->weight[adjPoints[n]];
+		for (int apt : adjPoints)
+			d += m->weight[apt];
 
 		wv[points[i]] = d / (float)c;
 
@@ -1432,23 +1431,21 @@ void TB_SmoothWeight::hclapFilter(
 	auto& ubw = uss.boneWeights[boneInd].weights;
 	std::vector<float> b(m->nVerts);
 
-	int adjPoints[1000];
-
 	// First step is to calculate the laplacian
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
-		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
+		const std::vector<int>& adjPoints = m->adjVerts[i];
+		int c = static_cast<int>(adjPoints.size());
 		if (c == 0)
 			continue;
 
 		// average adjacent points positions, using values from last iteration.
 		float d = 0.0;
-		for (int n = 0; n < c; n++) {
-			int ai = adjPoints[n];
-			if (ubw.find(ai) != ubw.end())
-				d += ubw[ai].endVal;
-			else if (wPtr && wPtr->find(ai) != wPtr->end())
-				d += wPtr->at(ai);
+		for (int apt : adjPoints) {
+			if (ubw.find(apt) != ubw.end())
+				d += ubw[apt].endVal;
+			else if (wPtr && wPtr->find(apt) != wPtr->end())
+				d += wPtr->at(apt);
 			// otherwise the previous weight is zero
 		}
 
@@ -1472,14 +1469,15 @@ void TB_SmoothWeight::hclapFilter(
 			continue;
 
 		// Average 'b' for adjacent points
-		int c = m->GetAdjacentPoints(i, adjPoints, 1000);
+		const std::vector<int>& adjPoints = m->adjVerts[i];
+		int c = static_cast<int>(adjPoints.size());
 		if (c == 0)
 			continue;
 
 		float d = 0.0;
 
-		for (int n = 0; n < c; n++)
-			d += b[adjPoints[n]];
+		for (int apt : adjPoints)
+			d += b[apt];
 
 		// blend the new position and the average of the distance moved
 		float avgB = (1 - hcBeta) / (float)c;

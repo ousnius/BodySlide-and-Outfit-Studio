@@ -193,11 +193,9 @@ public:
 	// Convenience function to gather connected points, taking into account "welded" vertices. Does not clear the output set.
 	void GetAdjacentPoints(int querypoint, std::unordered_set<int>& outPoints);
 
-	// More optimized adjacency fetch, using edge adjacency and storing the output in a static array.
-	// Requires that BuildEdgeList() be called prior to use.
-	int GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) const;
+	int GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints);
 	// As above, but also checks if each point has already been looked at (according to vispoint).
-	int GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint);
+	int GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint) const;
 
 	// FindAdjacentBalancedPairs: like GetAdjacentPoints, but the points
 	// are organized in pairs, with the points of each pair on opposite sides

@@ -71,19 +71,16 @@ void Mesh::BuildVertexAdjacency() {
 
 		adjArray[tri.p1].insert(tri.p2);
 		adjArray[tri.p1].insert(tri.p3);
-		addWeldVerts(tri.p1, tri.p1);
 		addWeldVerts(tri.p1, tri.p2);
 		addWeldVerts(tri.p1, tri.p3);
 
 		adjArray[tri.p2].insert(tri.p1);
 		adjArray[tri.p2].insert(tri.p3);
-		addWeldVerts(tri.p2, tri.p2);
 		addWeldVerts(tri.p2, tri.p1);
 		addWeldVerts(tri.p2, tri.p3);
 
 		adjArray[tri.p3].insert(tri.p1);
 		adjArray[tri.p3].insert(tri.p2);
-		addWeldVerts(tri.p3, tri.p3);
 		addWeldVerts(tri.p3, tri.p1);
 		addWeldVerts(tri.p3, tri.p2);
 	}
@@ -377,64 +374,23 @@ int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 	/* TODO: sort by distance */
 }
 
-int Mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint) {
-	if (!vertEdges)
-		BuildEdgeList();
-
-	if (!vertEdges)
-		return 0;
-
+int Mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint) const {
 	int n = 0;
-
-	auto vedges = vertEdges.get();
-	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
-		int ep1 = edges[vedges[querypoint][e]].p1;
-		int ep2 = edges[vedges[querypoint][e]].p2;
-		if (n + 1 < maxPoints) {
-			if (ep1 != querypoint && !visPoint[ep1]) {
-				outPoints[n++] = ep1;
-				visPoint[ep1] = true;
-			}
-			else if (!visPoint[ep2]) {
-				outPoints[n++] = ep2;
-				visPoint[ep2] = true;
-			}
+	for (int p : adjVerts[querypoint])
+		if (n + 1 < maxPoints && !visPoint[p]) {
+			outPoints[n++] = p;
+			visPoint[p] = true;
 		}
-	}
-
-	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
-			int wq = weldVerts[querypoint][v];
-			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
-				int ep1 = edges[vedges[wq][e]].p1;
-				int ep2 = edges[vedges[wq][e]].p2;
-				if (n + 1 < maxPoints) {
-					if (ep1 != wq && !visPoint[ep1]) {
-						outPoints[n++] = ep1;
-						visPoint[ep1] = true;
-					}
-					else if (!visPoint[ep2]) {
-						outPoints[n++] = ep2;
-						visPoint[ep2] = true;
-					}
-				}
-			}
-		}
-	}
-
 	return n;
 	/* TODO: sort by distance */
 }
 
 int Mesh::FindAdjacentBalancedPairs(int pt, int pairs[]) const {
-	// Ideally, we wouldn't have any welded points in adjPts.  This algorithm
-	// will usually pick out just one balanced pair among the welds, but it
-	// might not sometimes.  Hopefully having multiple balanced pairs for a
-	// weld won't hurt the smoother too much (giving increased weight for
-	// smoothing along the weld instead of across it).
+	// If adjPts contains any welded points, this algorithm should pick
+	// out just one balanced pair from among the welds.
 
-	int adjPts[MaxAdjacentPoints];
-	int c = GetAdjacentPoints(pt, adjPts, MaxAdjacentPoints);
+	const std::vector<int>& adjPts = adjVerts[pt];
+	int c = std::min(static_cast<int>(adjPts.size()), MaxAdjacentPoints);
 	if (c == 0)
 		return 0;
 
@@ -494,8 +450,8 @@ int Mesh::FindAdjacentBalancedPairs(int pt, int pairs[]) const {
 }
 
 int Mesh::FindOpposingPoint(int p1, int p2, float maxdot) const {
-    int adjPoints[MaxAdjacentPoints];
-    int c = GetAdjacentPoints(p1, adjPoints, MaxAdjacentPoints);
+	const std::vector<int>& adjPts = adjVerts[p1];
+	int c = static_cast<int>(adjPts.size());
     if (c == 0)
         return -1;
 
@@ -505,12 +461,12 @@ int Mesh::FindOpposingPoint(int p1, int p2, float maxdot) const {
     float bestdot = maxdot;
     int bestpt = -1;
     for (int i = 0; i < c; ++i) {
-        Vector3 dir = verts[adjPoints[i]] - verts[p1];
+        Vector3 dir = verts[adjPts[i]] - verts[p1];
         dir.Normalize();
         float dot = dir.dot(p2dir);
         if (dot < bestdot) {
             bestdot = dot;
-            bestpt = adjPoints[i];
+            bestpt = adjPts[i];
         }
     }
 
