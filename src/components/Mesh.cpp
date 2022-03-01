@@ -51,47 +51,46 @@ void Mesh::BuildTriAdjacency() {
 }
 
 void Mesh::BuildVertexAdjacency() {
-	if (!vertTris)
-		BuildTriAdjacency();
-
-	if (!vertTris)
+	if (!tris)
 		return;
 
-	adjVerts = std::make_unique<std::set<int>[]>(nVerts);
+	adjVerts = std::make_unique<std::vector<int>[]>(nVerts);
 	auto av = adjVerts.get();
 
-	auto addWeldVerts = [&](int qp) {
+	std::vector<std::set<int>> adjArray(nVerts);
+
+	auto addWeldVerts = [&](int adj, int qp) {
 		auto wv = weldVerts.find(qp);
 		if (wv != weldVerts.end()) {
-			av[qp].insert(wv->second.begin(), wv->second.end());
+			adjArray[adj].insert(wv->second.begin(), wv->second.end());
 		}
 	};
 	
-	auto vtris = vertTris.get();
+	for (int t = 0; t < nTris; t++) {
+		auto& tri = tris[t];
+
+		adjArray[tri.p1].insert(tri.p2);
+		adjArray[tri.p1].insert(tri.p3);
+		addWeldVerts(tri.p1, tri.p1);
+		addWeldVerts(tri.p1, tri.p2);
+		addWeldVerts(tri.p1, tri.p3);
+
+		adjArray[tri.p2].insert(tri.p1);
+		adjArray[tri.p2].insert(tri.p3);
+		addWeldVerts(tri.p2, tri.p2);
+		addWeldVerts(tri.p2, tri.p1);
+		addWeldVerts(tri.p2, tri.p3);
+
+		adjArray[tri.p3].insert(tri.p1);
+		adjArray[tri.p3].insert(tri.p2);
+		addWeldVerts(tri.p3, tri.p3);
+		addWeldVerts(tri.p3, tri.p1);
+		addWeldVerts(tri.p3, tri.p2);
+	}
+
 	for (int v = 0; v < nVerts; v++) {
-		addWeldVerts(v);
-
-		auto& pointTris = vtris[v];
-
-		for (size_t i = 0; i < pointTris.size(); i++) {
-			int t = pointTris[i];
-			auto& tri = tris[t];
-
-			if (tri.p1 != v) {
-				av[v].insert(tri.p1);
-				addWeldVerts(tri.p1);
-			}
-
-			if (tri.p2 != v) {
-				av[v].insert(tri.p2);
-				addWeldVerts(tri.p2);
-			}
-
-			if (tri.p3 != v) {
-				av[v].insert(tri.p3);
-				addWeldVerts(tri.p3);
-			}
-		}
+		av[v].resize(adjArray[v].size());
+		std::copy(adjArray[v].begin(), adjArray[v].end(), av[v].begin());
 	}
 }
 
@@ -354,46 +353,24 @@ void Mesh::GetAdjacentPoints(int querypoint, std::unordered_set<int>& outPoints)
 }
 
 int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
+	if (querypoint >= nVerts)
+		return 0;
+
 	if (!adjVerts)
 		BuildVertexAdjacency();
 
 	if (!adjVerts)
 		return 0;
 
-	if (!vertEdges)
-		BuildEdgeList();
-
-	if (!vertEdges)
-		return 0;
+	auto av = adjVerts.get();
+	const auto& avPoint = av[querypoint];
 
 	int n = 0;
+	for (auto& p : avPoint) {
+		if (n == maxPoints)
+			break;
 
-	auto vedges = vertEdges.get();
-	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
-		int ep1 = edges[vedges[querypoint][e]].p1;
-		int ep2 = edges[vedges[querypoint][e]].p2;
-		if (n + 1 < maxPoints) {
-			if (ep1 != querypoint)
-				outPoints[n++] = ep1;
-			else
-				outPoints[n++] = ep2;
-		}
-	}
-
-	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
-			int wq = weldVerts[querypoint][v];
-			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
-				int ep1 = edges[vedges[wq][e]].p1;
-				int ep2 = edges[vedges[wq][e]].p2;
-				if (n + 1 < maxPoints) {
-					if (ep1 != wq)
-						outPoints[n++] = ep1;
-					else
-						outPoints[n++] = ep2;
-				}
-			}
-		}
+		outPoints[n++] = p;
 	}
 
 	return n;
