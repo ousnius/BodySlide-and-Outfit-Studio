@@ -488,16 +488,13 @@ void TB_SmoothMask::lapFilter(Mesh* m, const int* points, int nPoints, std::unor
 		if (c == 0)
 			continue;
 		// average adjacent points positions, using values from last iteration.
-		Vector3 d;
+		float d = 0.0f;
 		for (int apt : adjPoints)
-			d += Vector3(m->mask[apt], 0.0f, 0.0f);
-		wv[points[i]] = d / (float)c;
+			d += m->mask[apt];
+		Vector3 result(d / c, 0.0f, 0.0f);
+		wv[points[i]] = result;
 
-		if (m->weldVerts.find(points[i]) != m->weldVerts.end()) {
-			for (unsigned int v = 0; v < m->weldVerts[points[i]].size(); v++) {
-				wv[m->weldVerts[points[i]][v]] = wv[points[i]];
-			}
-		}
+		m->DoForEachWeldedVertex(points[i], [&](int p) {wv[p] = result;});
 	}
 }
 
@@ -523,12 +520,7 @@ void TB_SmoothMask::hclapFilter(Mesh* m, const int* points, int nPoints, std::un
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
 		// Check if it's a welded vertex; only do welded vertices once.
-		bool skip = false;
-		if (m->weldVerts.find(i) != m->weldVerts.end())
-			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++)
-				if (m->weldVerts[i][v] < i)
-					skip = true;
-		if (skip)
+		if (m->LeastWeldedVertexIndex(i) != i)
 			continue;
 		// Average 'b' for adjacent points
 		const std::vector<int>& adjPoints = m->adjVerts[i];
@@ -543,11 +535,7 @@ void TB_SmoothMask::hclapFilter(Mesh* m, const int* points, int nPoints, std::un
 		float avgB = (1 - hcBeta) / (float)c;
 		wv[i] -= ((b[i] * hcBeta) + (d * avgB));
 
-		if (m->weldVerts.find(i) != m->weldVerts.end()) {
-			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++) {
-				wv[m->weldVerts[i][v]] = wv[i];
-			}
-		}
+		m->DoForEachWeldedVertex(i, [&](int pt) {wv[pt] = wv[i];});
 	}
 }
 
@@ -558,13 +546,7 @@ void TB_SmoothMask::bppfFilter(Mesh* m, const int* points, int nPoints, std::uno
 		int pti = points[i];
 
 		// Check if it's a welded vertex; only do welded vertices once.
-		bool skip = false;
-		auto wvit = m->weldVerts.find(pti);
-		if (wvit != m->weldVerts.end())
-			for (unsigned int v = 0; v < wvit->second.size(); v++)
-				if (wvit->second[v] < pti)
-					skip = true;
-		if (skip)
+		if (m->LeastWeldedVertexIndex(pti) != pti)
 			continue;
 
 		int balCount = m->FindAdjacentBalancedPairs(pti, balPts);
@@ -587,11 +569,7 @@ void TB_SmoothMask::bppfFilter(Mesh* m, const int* points, int nPoints, std::uno
 
 		wv[pti] = Vector3(d / (balCount / 2), 0.0f, 0.0f);
 
-		if (wvit != m->weldVerts.end()) {
-			for (unsigned int v = 0; v < wvit->second.size(); v++) {
-				wv[wvit->second[v]] = wv[pti];
-			}
-		}
+		m->DoForEachWeldedVertex(pti, [&](int p) {wv[p] = wv[pti];});
 	}
 }
 
@@ -676,13 +654,10 @@ void TB_Smooth::lapFilter(Mesh* m, const int* points, int nPoints, std::unordere
 		Vector3 d;
 		for (int apt : adjPoints)
 			d += m->verts[apt];
-		wv[points[i]] = d / (float)c;
+		Vector3 result = d / c;
+		wv[points[i]] = result;
 
-		if (m->weldVerts.find(points[i]) != m->weldVerts.end()) {
-			for (unsigned int v = 0; v < m->weldVerts[points[i]].size(); v++) {
-				wv[m->weldVerts[points[i]][v]] = wv[points[i]];
-			}
-		}
+		m->DoForEachWeldedVertex(points[i], [&](int p) {wv[p] = result;});
 	}
 }
 
@@ -708,13 +683,9 @@ void TB_Smooth::hclapFilter(Mesh* m, const int* points, int nPoints, std::unorde
 	for (int p = 0; p < nPoints; p++) {
 		int i = points[p];
 		// Check if it's a welded vertex; only do welded vertices once.
-		bool skip = false;
-		if (m->weldVerts.find(i) != m->weldVerts.end())
-			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++)
-				if (m->weldVerts[i][v] < i)
-					skip = true;
-		if (skip)
+		if (m->LeastWeldedVertexIndex(i) != i)
 			continue;
+
 		// Average 'b' for adjacent points
 		const std::vector<int>& adjPoints = m->adjVerts[i];
 		int c = static_cast<int>(adjPoints.size());
@@ -728,9 +699,7 @@ void TB_Smooth::hclapFilter(Mesh* m, const int* points, int nPoints, std::unorde
 		float avgB = (1 - hcBeta) / (float)c;
 		wv[i] -= ((b[i] * hcBeta) + (d * avgB));
 
-		if (m->weldVerts.find(i) != m->weldVerts.end())
-			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++)
-				wv[m->weldVerts[i][v]] = wv[i];
+		m->DoForEachWeldedVertex(i, [&](int pt) {wv[pt] = wv[i];});
 	}
 }
 
@@ -821,13 +790,7 @@ void TB_Smooth::bpcfFilter(Mesh* m, const int* points, int nPoints, std::unorder
 		int pti = points[i];
 
 		// Check if it's a welded vertex; only do welded vertices once.
-		bool skip = false;
-		auto wvit = m->weldVerts.find(pti);
-		if (wvit != m->weldVerts.end())
-			for (unsigned int v = 0; v < wvit->second.size(); v++)
-				if (wvit->second[v] < pti)
-					skip = true;
-		if (skip)
+		if (m->LeastWeldedVertexIndex(pti) != pti)
 			continue;
 
 		int balCount = m->FindAdjacentBalancedPairs(pti, balPts);
@@ -849,11 +812,7 @@ void TB_Smooth::bpcfFilter(Mesh* m, const int* points, int nPoints, std::unorder
 		wv[pti] = d / (balCount / 2);
 
 		// Update welded points
-		if (wvit != m->weldVerts.end()) {
-			for (unsigned int v = 0; v < wvit->second.size(); v++) {
-				wv[wvit->second[v]] = wv[pti];
-			}
-		}
+		m->DoForEachWeldedVertex(pti, [&](int p) {wv[p] = wv[pti];});
 	}
 }
 
@@ -1416,13 +1375,10 @@ void TB_SmoothWeight::lapFilter(Mesh* m, const int* points, int nPoints, std::un
 		for (int apt : adjPoints)
 			d += m->weight[apt];
 
-		wv[points[i]] = d / (float)c;
+		float result = d / c;
+		wv[points[i]] = result;
 
-		if (m->weldVerts.find(points[i]) != m->weldVerts.end()) {
-			for (unsigned int v = 0; v < m->weldVerts[points[i]].size(); v++) {
-				wv[m->weldVerts[points[i]][v]] = wv[points[i]];
-			}
-		}
+		m->DoForEachWeldedVertex(points[i], [&](int p) {wv[p] = result;});
 	}
 }
 
@@ -1459,13 +1415,7 @@ void TB_SmoothWeight::hclapFilter(
 		int i = points[p];
 
 		// Check if it's a welded vertex; only do welded vertices once.
-		bool skip = false;
-		if (m->weldVerts.find(i) != m->weldVerts.end())
-			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++)
-				if (m->weldVerts[i][v] < i)
-					skip = true;
-
-		if (skip)
+		if (m->LeastWeldedVertexIndex(i) != i)
 			continue;
 
 		// Average 'b' for adjacent points
@@ -1483,11 +1433,7 @@ void TB_SmoothWeight::hclapFilter(
 		float avgB = (1 - hcBeta) / (float)c;
 		wv[i] -= ((b[i] * hcBeta) + (d * avgB));
 
-		if (m->weldVerts.find(i) != m->weldVerts.end()) {
-			for (unsigned int v = 0; v < m->weldVerts[i].size(); v++) {
-				wv[m->weldVerts[i][v]] = wv[i];
-			}
-		}
+		m->DoForEachWeldedVertex(i, [&](int p) {wv[p] = wv[i];});
 	}
 }
 
@@ -1500,13 +1446,7 @@ void TB_SmoothWeight::bppfFilter(Mesh* m, const int* points, int nPoints, std::u
 		int pti = points[i];
 
 		// Check if it's a welded vertex; only do welded vertices once.
-		bool skip = false;
-		auto wvit = m->weldVerts.find(pti);
-		if (wvit != m->weldVerts.end())
-			for (unsigned int v = 0; v < wvit->second.size(); v++)
-				if (wvit->second[v] < pti)
-					skip = true;
-		if (skip)
+		if (m->LeastWeldedVertexIndex(pti) != pti)
 			continue;
 
 		int balCount = m->FindAdjacentBalancedPairs(pti, balPts);
@@ -1534,11 +1474,7 @@ void TB_SmoothWeight::bppfFilter(Mesh* m, const int* points, int nPoints, std::u
 
 		wv[pti] = d / (balCount / 2);
 
-		if (wvit != m->weldVerts.end()) {
-			for (unsigned int v = 0; v < wvit->second.size(); v++) {
-				wv[wvit->second[v]] = wv[pti];
-			}
-		}
+		m->DoForEachWeldedVertex(pti, [&](int p) {wv[p] = wv[pti];});
 	}
 }
 

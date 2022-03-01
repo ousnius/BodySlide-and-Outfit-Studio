@@ -2958,24 +2958,9 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape& uss, const E
 	return true;
 }
 
-template<typename VT>
-static void AppendWeldVerts(const std::unordered_map<int, std::vector<int>>& weldVerts, int p, VT& s) {
-	const auto& wvit = weldVerts.find(p);
-	if (wvit == weldVerts.end())
-		return;
-	std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(s));
-}
-
-template<typename VT>
-static void GetWeldSet(const std::unordered_map<int, std::vector<int>>& weldVerts, int p, VT& s) {
-	s.resize(1);
-	s[0] = p;
-	AppendWeldVerts(weldVerts, p, s);
-}
-
 /* Ideally, PrepareRefineMesh would take a list of edges, not a list of
 vertices.  But OutfitStudio doesn't yet have an edge-mask tool. */
-bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const std::unordered_map<int, std::vector<int>>& weldVerts) {
+bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts) {
 	// Get vertex coordinates and triangle data
 	size_t nverts = pincs.size();
 	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
@@ -2996,10 +2981,7 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 	for (size_t vi = 0; vi < nverts; ++vi) {
 		if (!pincs[vi])
 			continue;
-		auto wvit = weldVerts.find(vi);
-		if (wvit != weldVerts.end())
-			for (int wvi : wvit->second)
-				pincs[wvi] = true;
+		Mesh::DoForEachWeldedVertex(weldVerts, vi, [&](int p){pincs[p] = true;});
 	}
 
 	// Get data for all the vertices (in a secondary data-collection
@@ -3030,10 +3012,7 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 	std::vector<Vector3> normals(nverts);
 	for (uint16_t vi : vertexInds) {
 		Vector3 normal(nsums[vi]);
-		auto wvit = weldVerts.find(vi);
-		if (wvit != weldVerts.end())
-			for (int wvi : wvit->second)
-				normal += nsums[wvi];
+		Mesh::DoForEachWeldedVertex(weldVerts, vi, [&](int p){normal += nsums[p];});
 		normal.Normalize();
 		normals[vi] = normal;
 	}
@@ -3081,8 +3060,8 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 		bool hasre = false;
 
 		// Collect lists of welded vertices for the edge's two points.
-		GetWeldSet(weldVerts, edge.p1, p1s);
-		GetWeldSet(weldVerts, edge.p2, p2s);
+		Mesh::GetWeldSet(weldVerts, edge.p1, p1s);
+		Mesh::GetWeldSet(weldVerts, edge.p2, p2s);
 
 		// Search for edge and reverse-edge matches in singleEdges
 		for (const auto p1 : p1s) {
@@ -3820,7 +3799,7 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<Mesh*>& sha
 	}
 }
 
-void OutfitProject::MatchSymmetricVertices(NiShape* shape, const std::unordered_map<int, std::vector<int>>& weldVerts, SymmetricVertices& r) {
+void OutfitProject::MatchSymmetricVertices(NiShape* shape, const Mesh::WeldVertsType& weldVerts, SymmetricVertices& r) {
 	// Gather shape's vertices
 	std::vector<Vector3> verts;
 	workNif.GetVertsForShape(shape, verts);
@@ -3833,15 +3812,7 @@ void OutfitProject::MatchSymmetricVertices(NiShape* shape, const std::unordered_
 	std::vector<int> indRedToOrig(origNVerts);
 	int redNVerts = 0;
 	for (int vi = 0; vi < origNVerts; ++vi) {
-		bool killit = false;
-		const auto& wvit = weldVerts.find(vi);
-		if (wvit != weldVerts.end())
-			for (int wvi : wvit->second)
-				if (wvi < vi) {
-					killit = true;
-					break;
-				}
-		if (!killit)
+		if (Mesh::LeastWeldedVertexIndex(weldVerts, vi) == vi)
 			indRedToOrig[redNVerts++] = vi;
 	}
 
@@ -3947,7 +3918,7 @@ void OutfitProject::MatchSymmetricBoneNames(std::vector<std::pair<std::string, s
 	}
 }
 
-void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertices& symverts, const std::unordered_map<int, std::vector<int>>& weldVerts, VertexAsymmetries& r) {
+void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertices& symverts, const Mesh::WeldVertsType& weldVerts, VertexAsymmetries& r) {
 	// Get shape's vertices
 	std::vector<Vector3> verts;
 	workNif.GetVertsForShape(shape, verts);
@@ -3956,7 +3927,7 @@ void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertice
 	// Create welded-vertex set for every vertex
 	std::vector<std::vector<int>> weldSets(nVerts);
 	for (int vi = 0; vi < nVerts; ++vi)
-		GetWeldSet(weldVerts, vi, weldSets[vi]);
+		Mesh::GetWeldSet(weldVerts, vi, weldSets[vi]);
 
 	// Initialize global result arrays
 	int nMatches = static_cast<int>(symverts.matches.size());
@@ -4203,15 +4174,11 @@ std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symve
 	return doVert;
 }
 
-void AddWeldedToVertexList(const std::unordered_map<int, std::vector<int>>& weldVerts, std::vector<bool>& verts) {
+void AddWeldedToVertexList(const Mesh::WeldVertsType& weldVerts, std::vector<bool>& verts) {
 	for (size_t i = 0; i < verts.size(); ++i) {
 		if (!verts[i])
 			continue;
-		auto wvit = weldVerts.find(i);
-		if (wvit == weldVerts.end())
-			continue;
-		for (int wvi : wvit->second)
-			verts[wvi] = true;
+		Mesh::DoForEachWeldedVertex(weldVerts, i, [&](int p){verts[p] = true;});
 	}
 }
 
@@ -4340,7 +4307,7 @@ static void SetUWeight(UndoStateVertex& usv, const std::string& bn, float w) {
 	usv.weights.push_back(UndoStateVertexBoneWeight{bn, w});
 }
 
-void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& uss, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, const std::unordered_map<int, std::vector<int>>& weldVerts, const std::vector<bool>& selVerts, const std::vector<std::string>& userNormBones, const std::vector<std::string>& userNotNormBones) {
+void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& uss, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, const Mesh::WeldVertsType& weldVerts, const std::vector<bool>& selVerts, const std::vector<std::string>& userNormBones, const std::vector<std::string>& userNotNormBones) {
 	int nMatches = static_cast<int>(symverts.matches.size());
 	int nVerts = static_cast<int>(shape->GetNumVertices());
 	int nSliders = static_cast<int>(asyms.sliders.size());
@@ -4410,8 +4377,8 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 		if (!selVerts[p1] && !selVerts[p2])
 			continue;
 
-		GetWeldSet(weldVerts, p1, p1s);
-		GetWeldSet(weldVerts, p2, p2s);
+		Mesh::GetWeldSet(weldVerts, p1, p1s);
+		Mesh::GetWeldSet(weldVerts, p2, p2s);
 
 		// Symmetrize position
 		if (tasks.doPos && asyms.positions[mi]) {
@@ -4563,7 +4530,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 		if (!weightAdjustPoint[p])
 			continue;
 
-		GetWeldSet(weldVerts, p, p1s);
+		Mesh::GetWeldSet(weldVerts, p, p1s);
 		for (int p1 : p1s)
 			vChanged[p1] = true;
 
@@ -4602,7 +4569,7 @@ void OutfitProject::PrepareSymmetrizeVertices(NiShape* shape, UndoStateShape& us
 	uss.addTris = uss.delTris;
 }
 
-std::vector<bool> OutfitProject::CalculateAsymmetricTriangleVertexMask(NiShape* shape, const std::unordered_map<int, std::vector<int>>& weldVerts) {
+std::vector<bool> OutfitProject::CalculateAsymmetricTriangleVertexMask(NiShape* shape, const Mesh::WeldVertsType& weldVerts) {
 	// Ideally, this function would return a triangle mask.  But triangle
 	// masks aren't implemented in Outfit Studio yet.  So we have to
 	// convert the information to a vertex mask.
@@ -4620,7 +4587,7 @@ std::vector<bool> OutfitProject::CalculateAsymmetricTriangleVertexMask(NiShape* 
 	// Create welded-vertex set for every vertex
 	std::vector<std::vector<int>> weldSets(verts.size());
 	for (int i = 0; i < static_cast<int>(verts.size()); ++i)
-		GetWeldSet(weldVerts, i, weldSets[i]);
+		Mesh::GetWeldSet(weldVerts, i, weldSets[i]);
 
 	// Create mirror vertex map
 	std::vector<int> mVerts(verts.size(), -1);

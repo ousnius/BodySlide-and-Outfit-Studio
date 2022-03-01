@@ -11691,10 +11691,7 @@ void wxGLPanel::ClickCollapseVertex() {
 
 	// Make list of this vertex and its welded vertices.
 	std::vector<uint16_t> verts;
-	verts.push_back(mouseDownPoint);
-	if (m->weldVerts.find(mouseDownPoint) != m->weldVerts.end())
-		for (int wv : m->weldVerts[mouseDownPoint])
-			verts.push_back(wv);
+	m->GetWeldSet(mouseDownPoint, verts);
 
 	std::sort(verts.begin(), verts.end());
 

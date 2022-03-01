@@ -46,6 +46,8 @@ public:
 		float paletteScale = 0.0f;
 	};
 
+	typedef std::unordered_map<int, std::vector<int>> WeldVertsType;
+
 	// Use SetXformMeshToModel or SetXformModelToMesh to set matModel,
 	// xformMeshToModel, and xformModelToMesh.
 	glm::mat4x4 matModel = glm::identity<glm::mat4x4>();
@@ -88,7 +90,7 @@ public:
 
 	std::unique_ptr<std::vector<int>[]> vertTris;		 // Map of triangles for which each vert is a member.
 	std::unique_ptr<std::vector<int>[]> vertEdges;		 // Map of edges for which each vert is a member.
-	std::unordered_map<int, std::vector<int>> weldVerts; // Verts that are duplicated for UVs but are in the same position.
+	WeldVertsType weldVerts; // Verts that are duplicated for UVs but are in the same position.
 	bool bGotWeldVerts = false;							 // Whether weldVerts has been calculated yet.
 	std::unique_ptr<std::vector<int>[]> adjVerts;		 // Vertices that are adjacent to each vertex.
 
@@ -179,6 +181,48 @@ public:
 	nifly::Vector3 GetOneVertexNormal(int vertind);
 
 	void CalcTangentSpace();
+
+	// Convenience functions for using weldVerts
+	static int LeastWeldedVertexIndex(const WeldVertsType& weldVerts, int p) {
+		int li = p;
+		auto wvit = weldVerts.find(p);
+		if (wvit == weldVerts.end())
+			return li;
+		for (int wvi : wvit->second)
+			if (wvi < li)
+				li = wvi;
+		return li;
+	}
+	int LeastWeldedVertexIndex(int p) const {
+		return LeastWeldedVertexIndex(weldVerts, p);
+	}
+	template<typename Func>
+	static void DoForEachWeldedVertex(const WeldVertsType& weldVerts, int p, const Func& f) {
+		auto wvit = weldVerts.find(p);
+		if (wvit == weldVerts.end())
+			return;
+		for (int wvi : wvit->second)
+			f(wvi);
+	}
+	template<typename Func>
+	void DoForEachWeldedVertex(int p, const Func& f) const {
+		DoForEachWeldedVertex(weldVerts, p, f);
+	}
+	template<typename VT>
+	static void GetWeldSet(const WeldVertsType& weldVerts, int p, VT& s) {
+		s.resize(1);
+		s[0] = p;
+		auto wvit = weldVerts.find(p);
+		if (wvit == weldVerts.end())
+			return;
+		std::copy(wvit->second.begin(), wvit->second.end(), std::back_inserter(s));
+	}
+	template<typename VT>
+	void GetWeldSet(int p, VT& s) const {
+		GetWeldSet(weldVerts, p, s);
+	}
+
+
 
 	// List connected points within the squared radius of the center.
 	// Requires vertEdges and edges.  pointvisit.size() must be nVerts,
