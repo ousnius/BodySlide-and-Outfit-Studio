@@ -54,36 +54,29 @@ void Mesh::BuildVertexAdjacency() {
 	if (!tris)
 		return;
 
-	adjVerts = std::make_unique<std::vector<int>[]>(nVerts);
-	auto av = adjVerts.get();
-
 	std::vector<std::set<int>> adjArray(nVerts);
+	std::vector<int> p1ws, p2ws;
 
-	auto addWeldVerts = [&](int adj, int qp) {
-		auto wv = weldVerts.find(qp);
-		if (wv != weldVerts.end()) {
-			adjArray[adj].insert(wv->second.begin(), wv->second.end());
+	auto AddWeldSetToAdjacenciesOfWeldSet = [&](int p1, int p2) {
+		GetWeldSet(p1, p1ws);
+		GetWeldSet(p2, p2ws);
+		for (int p1w : p1ws)
+		for (int p2w : p2ws) {
+			adjArray[p1w].insert(p2w);
+			adjArray[p2w].insert(p1w);
 		}
 	};
 	
 	for (int t = 0; t < nTris; t++) {
 		auto& tri = tris[t];
 
-		adjArray[tri.p1].insert(tri.p2);
-		adjArray[tri.p1].insert(tri.p3);
-		addWeldVerts(tri.p1, tri.p2);
-		addWeldVerts(tri.p1, tri.p3);
-
-		adjArray[tri.p2].insert(tri.p1);
-		adjArray[tri.p2].insert(tri.p3);
-		addWeldVerts(tri.p2, tri.p1);
-		addWeldVerts(tri.p2, tri.p3);
-
-		adjArray[tri.p3].insert(tri.p1);
-		adjArray[tri.p3].insert(tri.p2);
-		addWeldVerts(tri.p3, tri.p1);
-		addWeldVerts(tri.p3, tri.p2);
+		AddWeldSetToAdjacenciesOfWeldSet(tri.p1, tri.p2);
+		AddWeldSetToAdjacenciesOfWeldSet(tri.p2, tri.p3);
+		AddWeldSetToAdjacenciesOfWeldSet(tri.p3, tri.p1);
 	}
+
+	adjVerts = std::make_unique<std::vector<int>[]>(nVerts);
+	auto av = adjVerts.get();
 
 	for (int v = 0; v < nVerts; v++) {
 		av[v].resize(adjArray[v].size());
@@ -583,44 +576,6 @@ void Mesh::SmoothNormals(const std::unordered_set<int>& vertices) {
 	CalcTangentSpace();
 }
 
-Vector3 Mesh::GetOneVertexNormal(int vi) {
-	if (vi < 0 || vi >= nVerts)
-		return Vector3(1,0,0);
-	if (norms)
-		return norms[vi];
-
-	// Without norms, we have to calculate it from scratch
-	if (!bGotWeldVerts)
-		CalcWeldVerts();
-
-	// Sum the normals of every triangle containing vi
-	Vector3 sum;
-	for (int ti = 0; ti < nTris; ++ti) {
-		const Triangle& t = tris[ti];
-		if (t.p1 != vi && t.p2 != vi && t.p3 != vi)
-			continue;
-		Vector3 tn = t.trinormal(verts.get());
-		tn.Normalize();
-		sum += tn;
-	}
-
-	// Also sum the normals of every triangle containing a vertex welded to vi
-	auto wvit = weldVerts.find(vi);
-	if (wvit != weldVerts.end())
-		for (int wvi : wvit->second)
-			for (int ti = 0; ti < nTris; ++ti) {
-				const Triangle& t = tris[ti];
-				if (t.p1 != wvi && t.p2 != wvi && t.p3 != wvi)
-					continue;
-				Vector3 tn = t.trinormal(verts.get());
-				tn.Normalize();
-				sum += tn;
-			}
-
-	sum.Normalize();
-	return sum;
-}
-
 void Mesh::FacetNormals() {
 	if (lockNormals)
 		return;
@@ -813,13 +768,12 @@ void Mesh::ConnectedPointsInSphere(const Vector3& center, float sqradius, int st
 		int p = outPoints[adjCursor];
 
 		// Add welds of p to the queue
-		auto wvit = weldVerts.find(p);
-		if (wvit != weldVerts.end())
-			for (int wvi : wvit->second)
-				if (!pointvisit[wvi]) {
-					pointvisit[wvi] = true;
-					outPoints[nOutPoints++] = wvi;
-				}
+		DoForEachWeldedVertex(p, [&](int wvi){
+			if (!pointvisit[wvi]) {
+				pointvisit[wvi] = true;
+				outPoints[nOutPoints++] = wvi;
+			}
+		});
 
 		// Add adjacent points of p to the queue, if they're within the radius
 		for (int ei : vertEdges[p]) {
@@ -853,13 +807,12 @@ void Mesh::ConnectedPointsInTwoSpheres(const Vector3& center1, const Vector3& ce
 		int p = outPoints[adjCursor];
 
 		// Add welds of p to the queue
-		auto wvit = weldVerts.find(p);
-		if (wvit != weldVerts.end())
-			for (int wvi : wvit->second)
-				if (!pointvisit[wvi]) {
-					pointvisit[wvi] = true;
-					outPoints[nOutPoints++] = wvi;
-				}
+		DoForEachWeldedVertex(p, [&](int wvi){
+			if (!pointvisit[wvi]) {
+				pointvisit[wvi] = true;
+				outPoints[nOutPoints++] = wvi;
+			}
+		});
 
 		// Add adjacent points of p to the queue, if they're within the radius
 		for (int ei : vertEdges[p]) {

@@ -92,7 +92,12 @@ public:
 	std::unique_ptr<std::vector<int>[]> vertEdges;		 // Map of edges for which each vert is a member.
 	WeldVertsType weldVerts; // Verts that are duplicated for UVs but are in the same position.
 	bool bGotWeldVerts = false;							 // Whether weldVerts has been calculated yet.
-	std::unique_ptr<std::vector<int>[]> adjVerts;		 // Vertices that are adjacent to each vertex.
+	// adjVerts: for each vertex p, adjVerts[p] is a list of all vertices that
+	// (1) share a triangle with p; (2) share a triangle with a point welded to
+	// p; (3) are welded to a point that shares a triangle with p; or (4)
+	// are welded to a point that shares a triangle with a point welded to p.
+	// Points welded to p are _not_ in adjVerts[p].
+	std::unique_ptr<std::vector<int>[]> adjVerts;
 
 	std::unordered_set<uint32_t> lockedNormalIndices;
 
@@ -178,8 +183,6 @@ public:
 		m->SmoothNormals(verts);
 	}
 
-	nifly::Vector3 GetOneVertexNormal(int vertind);
-
 	void CalcTangentSpace();
 
 	// Convenience functions for using weldVerts
@@ -196,6 +199,7 @@ public:
 	int LeastWeldedVertexIndex(int p) const {
 		return LeastWeldedVertexIndex(weldVerts, p);
 	}
+
 	template<typename Func>
 	static void DoForEachWeldedVertex(const WeldVertsType& weldVerts, int p, const Func& f) {
 		auto wvit = weldVerts.find(p);
@@ -208,6 +212,10 @@ public:
 	void DoForEachWeldedVertex(int p, const Func& f) const {
 		DoForEachWeldedVertex(weldVerts, p, f);
 	}
+
+	// GetWeldSet: gets the weld set of p, which consists of p and all points
+	// welded to p.  The weld set of p always contains at least one point: p.
+	// VT is typically std::vector<int>.
 	template<typename VT>
 	static void GetWeldSet(const WeldVertsType& weldVerts, int p, VT& s) {
 		s.resize(1);
@@ -222,8 +230,6 @@ public:
 		GetWeldSet(weldVerts, p, s);
 	}
 
-
-
 	// List connected points within the squared radius of the center.
 	// Requires vertEdges and edges.  pointvisit.size() must be nVerts,
 	// and it must be initialized to false.  nOutPoints must be initialized
@@ -236,10 +242,17 @@ public:
 	// to zero.
 	void ConnectedPointsInTwoSpheres(const nifly::Vector3& center1, const nifly::Vector3& center2, float sqradius, int startTri1, int startTri2, std::vector<bool>& pointvisit, int outPoints[], int& nOutPoints);
 
-	// Convenience function to gather connected points, taking into account "welded" vertices. Does not clear the output set.
+	// Convenience function to gather connected points using adjVerts.
+	// That is, it adds all points adjacent to querypoint to outPoints,
+	// taking into consideration welds.
 	void GetAdjacentPoints(int querypoint, std::unordered_set<int>& outPoints);
 
+	// Convenience function that copies adjVerts[querypoint] into outPoints,
+	// with a maximum of maxPoints copies, and returns how many were copied.
+	// That is, it puts all points adjacent to querypoint in outPoints,
+	// taking into consideration welds.
 	int GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints);
+
 	// As above, but also checks if each point has already been looked at (according to vispoint).
 	int GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint) const;
 

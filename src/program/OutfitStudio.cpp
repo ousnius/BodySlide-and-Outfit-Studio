@@ -11630,12 +11630,23 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 	if (os->activeItem) {
 		Mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
 		if (m) {
+			double newval = m->mask[vertIndex];
 			if (wxGetKeyState(WXK_CONTROL))
-				m->mask[vertIndex] = 1.0f;
+				newval = 1.0f;
 			else if (!segmentMode)
-				m->mask[vertIndex] = 0.0f;
+				newval = 0.0f;
 
-			m->QueueUpdate(Mesh::UpdateType::Mask);
+			if (m->mask[vertIndex] != newval) {
+				UndoStateProject* usp = GetUndoHistory()->PushState();
+				usp->undoType = UndoType::Mask;
+				usp->usss.emplace_back();
+				UndoStateShape& uss = usp->usss.back();
+				uss.shapeName = m->shapeName;
+				uss.pointStartState[vertIndex].x = m->mask[vertIndex];
+				uss.pointEndState[vertIndex].x = newval;
+				ApplyUndoState(usp, false);
+				os->UpdateUndoTools();
+			}
 		}
 	}
 
@@ -11727,7 +11738,7 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	mouseDownMeshName = lastHitResult.hitMeshName;
 	mouseDownPoint = lastHitResult.hoverPoint;
 	mouseHasMovedSinceStart = false;
-	mouseDownPointNormal = m->TransformDirMeshToModel(m->GetOneVertexNormal(mouseDownPoint));
+	mouseDownPointNormal = m->TransformDirMeshToModel(m->norms[mouseDownPoint]);
 	moveVertexOperation = MoveVertexOperation::None;
 
 	Vector3 viewOrigin;
@@ -12113,6 +12124,96 @@ void wxGLPanel::UnstashMasks(const std::unordered_map<std::string, std::vector<f
 		std::copy(mask.begin(), mask.end(), m->mask.get());
 		m->QueueUpdate(Mesh::UpdateType::Mask);
 	}
+}
+
+void wxGLPanel::MaskLess() {
+	UndoStateProject* usp = GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+	for (auto& m : gls.GetActiveMeshes()) {
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		// First, try to remove welds of unmasked points from the mask.
+		bool unmaskedAWeld = false;
+		for (int i = 0; i < m->nVerts; ++i) {
+			if (m->mask[i] > 0.0f)
+				continue;
+			m->DoForEachWeldedVertex(i, [&](int wvi){
+				if (m->mask[wvi] != 0.0f) {
+					uss.pointStartState[wvi].x = m->mask[wvi];
+					uss.pointEndState[wvi].x = 0.0f;
+					unmaskedAWeld = true;
+				}
+			});
+		}
+
+		// If we unmasked a weld, we've done something useful, so stop.
+		if (unmaskedAWeld)
+			continue;
+
+		// Get points adjacent to unmasked points, taking welds into account.
+		std::unordered_set<int> adjacentPoints;
+		for (int i = 0; i < m->nVerts; i++)
+			if (m->mask[i] == 0.0f)
+				m->GetAdjacentPoints(i, adjacentPoints);
+
+		// Unmask the adjacent points
+		for (auto& adj : adjacentPoints)
+			if (m->mask[adj] != 0.0f) {
+				uss.pointStartState[adj].x = m->mask[adj];
+				uss.pointEndState[adj].x = 0.0f;
+			}
+	}
+
+	ApplyUndoState(usp, false);
+	os->UpdateUndoTools();
+}
+
+
+void wxGLPanel::MaskMore() {
+	UndoStateProject* usp = GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+	for (auto& m : gls.GetActiveMeshes()) {
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		// First, try to add welds of masked points to the mask.
+		bool maskedAWeld = false;
+		for (int i = 0; i < m->nVerts; ++i) {
+			if (m->mask[i] == 0.0f)
+				continue;
+			m->DoForEachWeldedVertex(i, [&](int wvi){
+				if (m->mask[wvi] != 1.0f) {
+					uss.pointStartState[wvi].x = m->mask[wvi];
+					uss.pointEndState[wvi].x = 1.0f;
+					maskedAWeld = true;
+				}
+			});
+		}
+
+		// If we masked a weld, we've done something useful, so stop.
+		if (maskedAWeld)
+			continue;
+
+		// Get points adjacent to masked points, taking welds into account.
+		std::unordered_set<int> adjacentPoints;
+		for (int i = 0; i < m->nVerts; i++)
+			if (m->mask[i] > 0.0f)
+				m->GetAdjacentPoints(i, adjacentPoints);
+
+		// Mask the adjacent points
+		for (auto& adj : adjacentPoints) {
+			if (m->mask[adj] != 1.0f) {
+				uss.pointStartState[adj].x = m->mask[adj];
+				uss.pointEndState[adj].x = 1.0f;
+			}
+		}
+	}
+
+	ApplyUndoState(usp, false);
+	os->UpdateUndoTools();
 }
 
 bool wxGLPanel::RestoreMode(UndoStateProject* usp) {

@@ -497,43 +497,8 @@ public:
 	std::unordered_map<std::string, std::vector<float>> StashMasks();
 	void UnstashMasks(const std::unordered_map<std::string, std::vector<float>>& stash);
 
-	void MaskLess() {
-		for (auto& m : gls.GetActiveMeshes()) {
-			std::set<int> unmaskPoints;
-			for (int i = 0; i < m->nVerts; i++) {
-				if (m->mask[i] > 0.0f) {
-					std::unordered_set<int> adjacentPoints;
-					m->GetAdjacentPoints(i, adjacentPoints);
-
-					for (auto& adj : adjacentPoints) {
-						if (m->mask[adj] == 0.0f) {
-							unmaskPoints.insert(i);
-							break;
-						}
-					}
-				}
-			}
-
-			for (auto& up : unmaskPoints)
-				m->mask[up] = 0.0f;
-
-			m->QueueUpdate(Mesh::UpdateType::Mask);
-		}
-	}
-
-	void MaskMore() {
-		for (auto& m : gls.GetActiveMeshes()) {
-			std::unordered_set<int> adjacentPoints;
-			for (int i = 0; i < m->nVerts; i++)
-				if (m->mask[i] > 0.0f)
-					m->GetAdjacentPoints(i, adjacentPoints);
-
-			for (auto& adj : adjacentPoints)
-				m->mask[adj] = 1.0f;
-
-			m->QueueUpdate(Mesh::UpdateType::Mask);
-		}
-	}
+	void MaskLess();
+	void MaskMore();
 
 	void InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
 		Mesh* m = gls.GetMesh(shapeName);
