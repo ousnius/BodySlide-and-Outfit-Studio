@@ -4377,29 +4377,52 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 }
 
 void OutfitProject::ResetTransforms() {
-	// Transform each shape's geometry to global coordinates
-	for (NiShape* s : workNif.GetShapes()) {
-		MatTransform shapeToGlobal = workAnim.GetTransformShapeToGlobal(s);
-		if (shapeToGlobal.IsNearlyEqualTo(MatTransform()))
-			continue;
-		ApplyTransformToShapeGeometry(s, shapeToGlobal);
-	}
+	bool clearRoot = false;
+	bool unskinnedFound = false;
 
-	// Zero out all the node transforms, including each shape's, its parent's,
-	// and so on up to and including the root node.
-	for (NiShape* s : workNif.GetShapes()) {
-		NiAVObject* n = s;
-		while (n) {
-			n->SetTransformToParent(MatTransform());
-			n = workNif.GetParentNode(n);
+	for (auto& s : workNif.GetShapes()) {
+		if (s->IsSkinned()) {
+			/*
+			 * Root node, shape and global-to-skin transform aren't rendered directly for skinned meshes.
+			 * They only affect different things, e.g. bounds and the global-to-parent transforms.
+			 *
+			 * By clearing these and recalculating bounds on export we make sure that
+			 * nothing but the individual bone transforms affect visuals.
+			 */
+
+			if (!unskinnedFound)
+				clearRoot = true;
+
+			MatTransform oldXformGlobalToSkin = workAnim.shapeSkinning[s->name.get()].xformGlobalToSkin;
+			MatTransform newXformGlobalToSkin;
+
+			// Apply global-to-skin transform to vertices
+			if (!newXformGlobalToSkin.IsNearlyEqualTo(oldXformGlobalToSkin)) {
+				ApplyTransformToShapeGeometry(s, newXformGlobalToSkin.ComposeTransforms(oldXformGlobalToSkin.InverseTransform()));
+
+				workAnim.ChangeGlobalToSkinTransform(s->name.get(), newXformGlobalToSkin);
+				workNif.SetShapeTransformGlobalToSkin(s, newXformGlobalToSkin);
+			}
+
+			// Clear shape transform
+			s->SetTransformToParent(MatTransform());
+
+			// Clear global-to-skin transform
+			workAnim.shapeSkinning[s->name.get()].xformGlobalToSkin.Clear();
+			workNif.SetShapeTransformGlobalToSkin(s, MatTransform());
+		}
+		else {
+			clearRoot = false;
+			unskinnedFound = true;
 		}
 	}
-
-	// Zero out the shape transforms.  Note that this has to be done after
-	// zeroing out the node transforms, because the node transforms influence
-	// what SetTransformShapeToGlobal does.
-	for (NiShape* s : workNif.GetShapes())
-		workAnim.SetTransformShapeToGlobal(s, MatTransform());
+ 
+	if (clearRoot) {
+		// Clear root node transform
+		auto rootNode = workNif.GetRootNode();
+		if (rootNode)
+			rootNode->SetTransformToParent(MatTransform());
+	}
 }
 
 void OutfitProject::CreateSkinning(NiShape* s) {
