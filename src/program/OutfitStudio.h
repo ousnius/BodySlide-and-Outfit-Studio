@@ -499,6 +499,7 @@ public:
 
 	void MaskLess();
 	void MaskMore();
+	void InvertMask();
 
 	void InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
 		Mesh* m = gls.GetMesh(shapeName);
@@ -527,15 +528,6 @@ public:
 		}
 
 		mask = std::move(invertMask);
-	}
-
-	void InvertMask() {
-		for (auto& m : gls.GetActiveMeshes()) {
-			for (int i = 0; i < m->nVerts; i++)
-				m->mask[i] = 1.0f - m->mask[i];
-
-			m->QueueUpdate(Mesh::UpdateType::Mask);
-		}
 	}
 
 	nifly::Vector3 CreateColorRamp(const float value) {

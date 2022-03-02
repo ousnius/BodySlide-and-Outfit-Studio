@@ -9760,13 +9760,23 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	for (auto& i : selectedItems) {
-		std::string shapeName = i->GetShape()->name.get();
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (auto& selItem : selectedItems) {
+		std::string shapeName = selItem->GetShape()->name.get();
 		Mesh* m = glView->GetMesh(shapeName);
 		if (!m)
 			continue;
 
-		m->MaskFill(0.0f);
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			uss.pointStartState[i].x = m->mask[i];
+			uss.pointEndState[i].x = 0.0f;
+		}
 
 		auto& bones = project->GetWorkAnim()->shapeBones;
 		if (bones.find(shapeName) != bones.end()) {
@@ -9775,13 +9785,14 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 				if (weights) {
 					for (auto& bw : *weights)
 						if (bw.second > 0.0f)
-							m->mask[bw.first] = 1.0f;
+							uss.pointEndState[bw.first].x = 1.0f;
 				}
 			}
 		}
 	}
 
-	glView->Refresh();
+	glView->ApplyUndoState(usp, false);
+	UpdateUndoTools();
 }
 
 void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
@@ -9790,25 +9801,36 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	for (auto& i : selectedItems) {
-		std::string shapeName = i->GetShape()->name.get();
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (auto& selItem : selectedItems) {
+		std::string shapeName = selItem->GetShape()->name.get();
 		Mesh* m = glView->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
-		m->MaskFill(0.0f);
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			uss.pointStartState[i].x = m->mask[i];
+			uss.pointEndState[i].x = 0.0f;
+		}
 
 		for (auto& b : GetSelectedBones()) {
 			auto weights = project->GetWorkAnim()->GetWeightsPtr(shapeName, b);
 			if (weights) {
 				for (auto& bw : *weights)
 					if (bw.second > 0.0f)
-						m->mask[bw.first] = 1.0f;
+						uss.pointEndState[bw.first].x = 1.0f;
 			}
 		}
 	}
 
-	glView->Refresh();
+	glView->ApplyUndoState(usp, false);
+	UpdateUndoTools();
 }
 
 void OutfitStudioFrame::OnCopySegPart(wxCommandEvent& WXUNUSED(event)) {
@@ -12209,6 +12231,25 @@ void wxGLPanel::MaskMore() {
 				uss.pointStartState[adj].x = m->mask[adj];
 				uss.pointEndState[adj].x = 1.0f;
 			}
+		}
+	}
+
+	ApplyUndoState(usp, false);
+	os->UpdateUndoTools();
+}
+
+void wxGLPanel::InvertMask() {
+	UndoStateProject* usp = GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (auto& m : gls.GetActiveMeshes()) {
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			uss.pointStartState[i].x = m->mask[i];
+			uss.pointEndState[i].x = 1.0f - m->mask[i];
 		}
 	}
 
