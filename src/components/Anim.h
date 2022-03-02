@@ -135,7 +135,6 @@ public:
 	std::map<std::string, std::vector<std::string>> shapeBones;
 	std::unordered_map<std::string, AnimSkin> shapeSkinning; // Shape to skin association.
 
-	AnimInfo(nifly::NifFile* initRefNif): refNif(initRefNif) {}
 	nifly::NifFile* GetRefNif() { return refNif; };
 	const nifly::NifFile* GetRefNif() const { return refNif; };
 	void SetRefNif(nifly::NifFile* nif) { refNif = nif; };

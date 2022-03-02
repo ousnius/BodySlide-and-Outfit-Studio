@@ -61,6 +61,8 @@ void AnimInfo::Clear() {
 		shapeSkinning.clear();
 		for (auto& s : refNif->GetShapeNames())
 			shapeBones[s].clear();
+
+		refNif = nullptr;
 	}
 	else {
 		for (auto& shapeBoneList : shapeBones)

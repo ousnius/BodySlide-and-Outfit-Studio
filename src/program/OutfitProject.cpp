@@ -22,8 +22,9 @@ extern ConfigurationManager Config;
 
 using namespace nifly;
 
-OutfitProject::OutfitProject(OutfitStudioFrame* inOwner): workAnim(&workNif) {
+OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 	owner = inOwner;
+	workAnim.SetRefNif(&workNif);
 
 	std::string defSkelFile = Config["Anim/DefaultSkeletonReference"];
 	if (wxFileName(wxString::FromUTF8(defSkelFile)).IsRelative())
