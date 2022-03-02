@@ -4020,6 +4020,10 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 }
 
 int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+	// Set reference NIF in case nothing was loaded yet
+	if (!workAnim.GetRefNif())
+		workAnim.SetRefNif(&workNif);
+
 	if (!baseShape) {
 		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.  Import anyway?"),
 							   _("Import without reference"),
@@ -4178,6 +4182,10 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 }
 
 int OutfitProject::ImportFBX(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+	// Set reference NIF in case nothing was loaded yet
+	if (!workAnim.GetRefNif())
+		workAnim.SetRefNif(&workNif);
+
 	if (!baseShape) {
 		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.  Import anyway?"),
 							   _("Import without reference"),

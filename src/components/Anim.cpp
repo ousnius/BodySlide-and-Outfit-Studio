@@ -35,7 +35,7 @@ bool AnimInfo::RemoveShapeBone(const std::string& shape, const std::string& bone
 
 	AnimSkeleton::getInstance().ReleaseBone(boneName);
 
-	if (refNif->IsValid()) {
+	if (refNif && refNif->IsValid()) {
 		if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
 			if (refNif->CanDeleteNode(boneName))
 				refNif->DeleteNode(boneName);
@@ -46,7 +46,7 @@ bool AnimInfo::RemoveShapeBone(const std::string& shape, const std::string& bone
 }
 
 void AnimInfo::Clear() {
-	if (refNif->IsValid()) {
+	if (refNif && refNif->IsValid()) {
 		for (auto& shapeBoneList : shapeBones) {
 			for (auto& boneName : shapeBoneList.second) {
 				AnimSkeleton::getInstance().ReleaseBone(boneName);
@@ -79,7 +79,7 @@ void AnimInfo::ClearShape(const std::string& shape) {
 	for (auto& boneName : shapeBones[shape]) {
 		AnimSkeleton::getInstance().ReleaseBone(boneName);
 
-		if (refNif->IsValid()) {
+		if (refNif && refNif->IsValid()) {
 			if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
 				if (refNif->CanDeleteNode(boneName))
 					refNif->DeleteNode(boneName);
@@ -158,12 +158,16 @@ bool AnimInfo::LoadFromNif(NifFile* nif) {
 	for (auto& s : nif->GetShapes())
 		LoadFromNif(nif, s);
 
+	refNif = nif;
 	return true;
 }
 
-bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape) {
+bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 	std::vector<std::string> boneNames;
 	std::string nonRefBones;
+
+	if (newRefNif)
+		refNif = nif;
 
 	if (!shape)
 		return false;
@@ -288,7 +292,7 @@ void AnimInfo::ChangeGlobalToSkinTransform(const std::string& shape, const MatTr
 }
 
 bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex) {
-	if (!refNif->IsValid()) // Check for existence of reference nif
+	if (!refNif || !refNif->IsValid()) // Check for existence of reference nif
 		return false;
 
 	if (shapeSkinning.find(shapeName) == shapeSkinning.end()) // Check for shape in skinning data
