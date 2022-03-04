@@ -1945,6 +1945,10 @@
 				<label>Mask Weighted Vertices</label>
 				<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
 			</object>
+			<object class="wxMenuItem" name="checkBadBones">
+				<label>Check For Bad Bones</label>
+				<help>Looks for bones with inconsistencies in their transforms.  If any are found, a dialog is opened to give options for fixing them.</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="copySegPart">
 				<label>Copy Partitions/Segments...</label>
@@ -2385,6 +2389,10 @@
 		<object class="wxMenuItem" name="maskWeightedVerts">
 			<label>Mask Weighted Vertices</label>
 			<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="checkBadBones">
+			<label>Check For Bad Bones</label>
+			<help>Looks for bones with inconsistencies in their transforms.  If any are found, a dialog is opened to give options for fixing them.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="copySegPart">

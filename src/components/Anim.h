@@ -169,6 +169,8 @@ public:
 	// ChangeGlobalToSkinTransform sets the global-to-skin transform for a
 	// shape and updates all skin-to-bone transforms.
 	void ChangeGlobalToSkinTransform(const std::string& shape, const nifly::MatTransform& newTrans);
+	void FindBonesWithInconsistentTransforms(const std::string& shape, std::unordered_map<std::string, nifly::MatTransform>& badStandard, std::unordered_map<std::string, nifly::MatTransform>& badCustom);
+	void RecalcCustomBoneXFormsFromSkin(const std::string& shape, const std::string& boneName);
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
 	void WriteToNif(nifly::NifFile* nif, const std::string& shapeException = "");

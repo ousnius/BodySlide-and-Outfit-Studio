@@ -293,6 +293,53 @@ void AnimInfo::ChangeGlobalToSkinTransform(const std::string& shape, const MatTr
 		RecalcXFormSkinToBone(shape, bone);
 }
 
+void AnimInfo::FindBonesWithInconsistentTransforms(const std::string& shape, std::unordered_map<std::string, MatTransform>& badStandard, std::unordered_map<std::string, MatTransform>& badCustom) {
+	AnimSkin& skin = shapeSkinning[shape];
+	for (auto& boneName : skin.boneNames) {
+		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneName.first);
+		if (!animB)
+			continue;
+		AnimWeight& aw = skin.boneWeights[boneName.second];
+
+		// We calculate the loop residual transform by composing:
+		// global <- bone <- skin <- global
+		// If the three transforms are consistent, then this residual
+		// will be the identity transform.
+		MatTransform residual = animB->xformToGlobal.ComposeTransforms(aw.xformSkinToBone.ComposeTransforms(skin.xformGlobalToSkin));
+		if (residual.IsNearlyEqualTo(MatTransform()))
+			continue;
+
+		if (animB->isStandardBone)
+			badStandard[boneName.first] = residual;
+		else
+			badCustom[boneName.first] = residual;
+	}
+}
+
+void AnimInfo::RecalcCustomBoneXFormsFromSkin(const std::string& shape, const std::string& boneName) {
+	AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
+	if (!bptr)
+		return;	// Shouldn't be possible
+	// Calculate boneToGlobal by composing:
+	// global -> skin -> bone
+	// and inverting.
+	MatTransform globalToSkin = shapeSkinning[shape].xformGlobalToSkin;
+	MatTransform skinToBone;
+	GetXFormSkinToBone(shape, boneName, skinToBone);
+	MatTransform globalToBone = skinToBone.ComposeTransforms(globalToSkin);
+	MatTransform boneToGlobal = globalToBone.InverseTransform();
+	// Calculate globalToParent by inverting parentToGlobal:
+	MatTransform parentToGlobal;
+	if (bptr->parent)
+		parentToGlobal = bptr->parent->xformToGlobal;
+	MatTransform globalToParent = parentToGlobal.InverseTransform();
+	// Calculate boneToParent by composing:
+	// bone -> global -> parent
+	MatTransform boneToParent = globalToParent.ComposeTransforms(boneToGlobal);
+	// Update the bone
+	bptr->SetTransformBoneToParent(boneToParent);
+}
+
 bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex) {
 	if (!refNif || !refNif->IsValid()) // Check for existence of reference nif
 		return false;

@@ -277,6 +277,9 @@ public:
 	void RemoveSkinning(nifly::NiShape* s);
 	void RemoveSkinning();
 
+	bool CheckForBadBones();
+	bool ShapeHasBadBones(nifly::NiShape* s);
+
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
 	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false);
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);

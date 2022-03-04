@@ -1371,6 +1371,7 @@ private:
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
+	void OnCheckBadBones(wxCommandEvent& event);
 	void OnMaskBoneWeighted(wxCommandEvent& event);
 	void OnCopySegPart(wxCommandEvent& event);
 	void OnResetTransforms(wxCommandEvent& event);

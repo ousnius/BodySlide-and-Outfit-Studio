@@ -226,6 +226,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudioFrame::OnCopySelectedWeight)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
+	EVT_MENU(XRCID("checkBadBones"), OutfitStudioFrame::OnCheckBadBones)
 	EVT_MENU(XRCID("maskBoneWeightedVerts"), OutfitStudioFrame::OnMaskBoneWeighted)
 	EVT_MENU(XRCID("copySegPart"), OutfitStudioFrame::OnCopySegPart)
 	EVT_MENU(XRCID("resetTransforms"), OutfitStudioFrame::OnResetTransforms)
@@ -9519,6 +9520,15 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	while (project->ShapeHasBadBones(project->GetBaseShape())) {
+		int res = wxMessageBox(_("The reference shape has bad bones.  It is strongly recommended that these be fixed before copying bone weights.  Open a dialog to fix the bad bones?"), _("Bad Bones in Reference"), wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxICON_WARNING);
+		if (res == wxCANCEL)
+			return;
+		if (res == wxNO)
+			break;
+		project->CheckForBadBones();
+	}
+
 	std::vector<NiShape*> selectedShapes;
 	for (auto& s : selectedItems) {
 		if (auto shape = s->GetShape(); !project->IsBaseShape(shape))
@@ -9608,6 +9618,15 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetBaseShape()) {
 		wxMessageBox(_("There is no reference shape!"), _("Error"));
 		return;
+	}
+
+	while (project->ShapeHasBadBones(project->GetBaseShape())) {
+		int res = wxMessageBox(_("The reference shape has bad bones.  It is strongly recommended that these be fixed before copying bone weights.  Open a dialog to fix the bad bones?"), _("Bad Bones in Reference"), wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxICON_WARNING);
+		if (res == wxCANCEL)
+			return;
+		if (res == wxNO)
+			break;
+		project->CheckForBadBones();
 	}
 
 	std::vector<std::string> boneList = GetSelectedBones();
@@ -9717,6 +9736,15 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 		return;
 	}
 
+	while (project->ShapeHasBadBones(project->GetBaseShape())) {
+		int res = wxMessageBox(_("The reference shape has bad bones.  It is strongly recommended that these be fixed before transferring bone weights.  Open a dialog to fix the bad bones?"), _("Bad Bones in Reference"), wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxICON_WARNING);
+		if (res == wxCANCEL)
+			return;
+		if (res == wxNO)
+			break;
+		project->CheckForBadBones();
+	}
+
 	std::vector<std::string> selectedBones = GetSelectedBones();
 	if (selectedBones.size() < 1)
 		return;
@@ -9795,6 +9823,10 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->Refresh();
+}
+
+void OutfitStudioFrame::OnCheckBadBones(wxCommandEvent& WXUNUSED(event)) {
+	project->CheckForBadBones();
 }
 
 void OutfitStudioFrame::OnCopySegPart(wxCommandEvent& WXUNUSED(event)) {
