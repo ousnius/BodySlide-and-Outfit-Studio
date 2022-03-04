@@ -408,7 +408,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 					if (outFacet)
 						(*outFacet) = results[min_i].HitFacet;
 
-					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &outNormal);
+					outNormal = m->tris[results[min_i].HitFacet].trinormal(m->verts.get());
 
 					if (hitMesh)
 						(*hitMesh) = m;
@@ -471,7 +471,7 @@ bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vec
 					if (outFacet)
 						(*outFacet) = results[min_i].HitFacet;
 
-					ov->tris[results[min_i].HitFacet].trinormal(ov->verts.get(), &outNormal);
+					outNormal = ov->tris[results[min_i].HitFacet].trinormal(ov->verts.get());
 				}
 			}
 		}
@@ -560,11 +560,18 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 
 					Vector3 morigin = m->TransformPosMeshToModel(origin);
 
-					Vector3 norm;
-					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
+					Vector3 norm = m->tris[results[min_i].HitFacet].trinormal(m->verts.get());
 					norm = m->TransformDirMeshToModel(norm);
 
 					AddVisCircle(morigin, norm, cursorSize, "cursormesh");
+
+					Vector3 modelMirrorNorm = norm;
+					modelMirrorNorm.x = -modelMirrorNorm.x;
+					Vector3 modelMirrorOrigin = morigin;
+					modelMirrorOrigin.x = -modelMirrorOrigin.x;
+
+					Mesh* mirrorCircle = AddVisCircle(modelMirrorOrigin, modelMirrorNorm, cursorSize, "mirrorcircle");
+					mirrorCircle->prop.alpha = 0.25f;
 
 					Vector3 mhilitepoint = m->TransformPosMeshToModel(hilitepoint);
 					AddVisPoint(mhilitepoint, "pointhilite");
@@ -665,6 +672,7 @@ void GLSurface::ShowCursor(bool show) {
 	SetOverlayVisibility("cursorcenter", show && (cursorType & CenterCursor));
 	SetOverlayVisibility("seghilite", show && (cursorType & SegCursor));
 	SetOverlayVisibility("mirrorpoint", false);
+	SetOverlayVisibility("mirrorcircle", show && xmirrorCursor && (cursorType & CircleCursor));
 }
 
 void GLSurface::HidePointCursor() {
@@ -1920,7 +1928,7 @@ Mesh* GLSurface::AddVisSeamEdges(const Mesh* refMesh, bool asMesh) {
 	return m;
 }
 
-void GLSurface::Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs, std::set<int>* changed) {
+void GLSurface::Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs, std::unordered_set<int>* changed) {
 	Mesh* m = GetMesh(shapeName);
 	if (!m)
 		return;
@@ -1928,7 +1936,7 @@ void GLSurface::Update(const std::string& shapeName, std::vector<Vector3>* verti
 	Update(m, vertices, uvs, changed);
 }
 
-void GLSurface::Update(Mesh* m, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs, std::set<int>* changed) {
+void GLSurface::Update(Mesh* m, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs, std::unordered_set<int>* changed) {
 	if (m->nVerts != static_cast<int>(vertices->size()))
 		return;
 

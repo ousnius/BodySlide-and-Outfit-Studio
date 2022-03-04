@@ -229,6 +229,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("checkBadBones"), OutfitStudioFrame::OnCheckBadBones)
 	EVT_MENU(XRCID("maskBoneWeightedVerts"), OutfitStudioFrame::OnMaskBoneWeighted)
 	EVT_MENU(XRCID("copySegPart"), OutfitStudioFrame::OnCopySegPart)
+	EVT_MENU(XRCID("maskSymVert"), OutfitStudioFrame::OnMaskSymVert)
+	EVT_MENU(XRCID("symVert"), OutfitStudioFrame::OnSymVert)
+	EVT_MENU(XRCID("maskSymTri"), OutfitStudioFrame::OnMaskSymTri)
 	EVT_MENU(XRCID("resetTransforms"), OutfitStudioFrame::OnResetTransforms)
 	EVT_MENU(XRCID("deleteUnreferencedNodes"), OutfitStudioFrame::OnDeleteUnreferencedNodes)
 	EVT_MENU(XRCID("removeSkinning"), OutfitStudioFrame::OnRemoveSkinning)
@@ -2613,6 +2616,8 @@ std::vector<std::string> OutfitStudioFrame::GetSelectedBones() {
 }
 
 void OutfitStudioFrame::CalcAutoXMirrorBone() {
+	// Note that there is very similar code to this in OutfitProject::MatchSymmetricBoneNames.
+
 	autoXMirrorBone.clear();
 
 	const size_t abLen = activeBone.length();
@@ -8744,11 +8749,12 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	// Now do the vertex deletion
+	std::unordered_map<std::string, std::vector<float>> maskStash = glView->StashMasks();
 	for (auto& uss : usp->usss) {
 		NiShape* shape = project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
 		if (!shape)
 			continue;
-		project->ApplyShapeMeshUndo(shape, uss, false);
+		project->ApplyShapeMeshUndo(shape, maskStash[uss.shapeName], uss, false);
 	}
 
 	project->GetWorkAnim()->CleanupBones();
@@ -8756,7 +8762,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	RefreshGUIFromProj(false);
 	SetPendingChanges();
 
-	glView->ClearActiveMask();
+	glView->UnstashMasks(maskStash);
 	ApplySliders();
 }
 
@@ -8802,14 +8808,16 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	project->PrepareDeleteVerts(activeItem->GetShape(), masked, usp->usss[0]);
 	project->PrepareDeleteVerts(newShape, unmasked, usp->usss[1]);
 
-	project->ApplyShapeMeshUndo(activeItem->GetShape(), usp->usss[0], false);
-	project->ApplyShapeMeshUndo(newShape, usp->usss[1], false);
+	std::unordered_map<std::string, std::vector<float>> maskStash = glView->StashMasks();
+
+	project->ApplyShapeMeshUndo(activeItem->GetShape(), maskStash[usp->usss[0].shapeName], usp->usss[0], false);
+	project->ApplyShapeMeshUndo(newShape, maskStash[usp->usss[1].shapeName], usp->usss[1], false);
 
 	project->SetTextures();
 	RefreshGUIFromProj(false);
 	SetPendingChanges();
 
-	glView->ClearActiveMask();
+	glView->UnstashMasks(maskStash);
 	ApplySliders();
 }
 
@@ -8917,13 +8925,16 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 
 	project->PrepareCopyGeo(sourceShape, targetShape, usp->usss[0]);
 
-	project->ApplyShapeMeshUndo(targetShape, usp->usss[0], false);
+	std::unordered_map<std::string, std::vector<float>> maskStash = glView->StashMasks();
+
+	project->ApplyShapeMeshUndo(targetShape, maskStash[usp->usss[0].shapeName], usp->usss[0], false);
 
 	if (XRCCTRL(dlg, "checkDeleteSource", wxCheckBox)->IsChecked())
 		project->DeleteShape(sourceShape);
 
 	RefreshGUIFromProj(false);
 	SetPendingChanges();
+	glView->UnstashMasks(maskStash);
 	ApplySliders();
 }
 
@@ -9774,13 +9785,23 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	for (auto& i : selectedItems) {
-		std::string shapeName = i->GetShape()->name.get();
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (auto& selItem : selectedItems) {
+		std::string shapeName = selItem->GetShape()->name.get();
 		Mesh* m = glView->GetMesh(shapeName);
 		if (!m)
 			continue;
 
-		m->MaskFill(0.0f);
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			uss.pointStartState[i].x = m->mask[i];
+			uss.pointEndState[i].x = 0.0f;
+		}
 
 		auto& bones = project->GetWorkAnim()->shapeBones;
 		if (bones.find(shapeName) != bones.end()) {
@@ -9789,13 +9810,14 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 				if (weights) {
 					for (auto& bw : *weights)
 						if (bw.second > 0.0f)
-							m->mask[bw.first] = 1.0f;
+							uss.pointEndState[bw.first].x = 1.0f;
 				}
 			}
 		}
 	}
 
-	glView->Refresh();
+	glView->ApplyUndoState(usp, false);
+	UpdateUndoTools();
 }
 
 void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
@@ -9804,25 +9826,36 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	for (auto& i : selectedItems) {
-		std::string shapeName = i->GetShape()->name.get();
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (auto& selItem : selectedItems) {
+		std::string shapeName = selItem->GetShape()->name.get();
 		Mesh* m = glView->GetMesh(shapeName);
 		if (!m || !m->mask)
 			continue;
 
-		m->MaskFill(0.0f);
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			uss.pointStartState[i].x = m->mask[i];
+			uss.pointEndState[i].x = 0.0f;
+		}
 
 		for (auto& b : GetSelectedBones()) {
 			auto weights = project->GetWorkAnim()->GetWeightsPtr(shapeName, b);
 			if (weights) {
 				for (auto& bw : *weights)
 					if (bw.second > 0.0f)
-						m->mask[bw.first] = 1.0f;
+						uss.pointEndState[bw.first].x = 1.0f;
 			}
 		}
 	}
 
-	glView->Refresh();
+	glView->ApplyUndoState(usp, false);
+	UpdateUndoTools();
 }
 
 void OutfitStudioFrame::OnCheckBadBones(wxCommandEvent& WXUNUSED(event)) {
@@ -9893,6 +9926,314 @@ int OutfitStudioFrame::CopySegPartForShapes(std::vector<NiShape*> shapes, bool s
 	EndProgress();
 
 	return failshapes;
+}
+
+bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, const std::vector<bool>& selVerts, bool trize) {
+	// This dialog has two versions, one for OnMaskSymVert and one for
+	// OnSymVert.  trize tells us which version to do.
+
+	CloseBrushSettings();
+
+	int nSliders = static_cast<int>(asyms.sliders.size());
+	int nBones = static_cast<int>(asyms.bones.size());
+	int nUnmatched = static_cast<int>(symverts.unmatched.size());
+
+	VertexAsymmetryStats stats;
+	CalcVertexAsymmetryStats(symverts, asyms, selVerts, stats);
+
+	// Initialize the portion of tasks that doesn't get initialized by
+	// member initialization.
+	tasks.doSliders.resize(nSliders, false);
+	tasks.doBones.resize(nBones, false);
+
+	wxDialog dlg;
+	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgVertexAsym"))
+		return false;
+
+	// Fill in static labels
+	XRCCTRL(dlg, "currentUnmaskedText", wxStaticText)->SetLabel(wxString() << stats.unmaskedCount);
+	XRCCTRL(dlg, "unmatchedVerticesText", wxStaticText)->SetLabel(wxString() << nUnmatched);
+	XRCCTRL(dlg, "posAvgText", wxStaticText)->SetLabel(wxString() << stats.posAvg);
+	XRCCTRL(dlg, "positionText", wxStaticText)->SetLabel(wxString() << stats.posCount);
+	XRCCTRL(dlg, "anySliderLabel", wxStaticText)->SetLabel(wxString() << nSliders << _(" sliders"));
+	XRCCTRL(dlg, "anySliderText", wxStaticText)->SetLabel(wxString() << stats.anySliderCount);
+	XRCCTRL(dlg, "anyBoneLabel", wxStaticText)->SetLabel(wxString() << nBones << _(" bones"));
+	XRCCTRL(dlg, "anyBoneText", wxStaticText)->SetLabel(wxString() << stats.anyBoneCount);
+
+	// The controls we need later
+	wxCheckBox* cbUnmatched = XRCCTRL(dlg, "checkUnmatched", wxCheckBox);
+	wxCheckBox* cbPosition = XRCCTRL(dlg, "checkPosition", wxCheckBox);
+	wxCheckBox* cbAnySlider = XRCCTRL(dlg, "checkAnySlider", wxCheckBox);
+	wxCheckBox* cbAnyBone = XRCCTRL(dlg, "checkAnyBone", wxCheckBox);
+	std::vector<wxCheckBox*> cbSliders(nSliders, nullptr);
+	std::vector<wxCheckBox*> cbBones;
+	wxScrolledWindow* asymScroll = XRCCTRL(dlg, "asymScroll", wxScrolledWindow);
+	wxStaticText* stillUnmaskedText = XRCCTRL(dlg, "stillUnmaskedText", wxStaticText);
+
+	// UpdateStillUnmasked: calculates value for the "still unmasked"
+	// wxStaticText.
+	auto UpdateStillUnmasked = [&]() {
+		int stillUnmasked = 0;
+		if (tasks.doUnmatched)
+			stillUnmasked += nUnmatched;
+		std::vector<bool> doVert = CalcVertexListForAsymmetryTasks(symverts, asyms, tasks, m->nVerts);
+		for (int vi = 0; vi < m->nVerts; ++vi)
+			if (selVerts[vi] && doVert[vi])
+				++stillUnmasked;
+		stillUnmaskedText->SetLabel(wxString() << stillUnmasked);
+	};
+
+	// UpdateChecks: update the individual slider check boxes, the any-slider
+	// check box, and the any-bone check box.  Also calls UpdateStillUnmasked.
+	auto UpdateChecks = [&]() {
+		int sliderCount = 0;
+		for (int sai = 0; sai < nSliders; ++sai) {
+			cbSliders[sai]->SetValue(tasks.doSliders[sai]);
+			sliderCount += tasks.doSliders[sai];
+		}
+		cbAnySlider->Set3StateValue(sliderCount == nSliders ? wxCHK_CHECKED : sliderCount == 0 ? wxCHK_UNCHECKED : wxCHK_UNDETERMINED);
+
+		int boneCount = 0, totalBones = 0;
+		for (int bai = 0; bai < nBones; ++bai) {
+			if (!stats.boneCounts[bai])
+				continue;
+			++totalBones;
+			boneCount += tasks.doBones[bai];
+		}
+		cbAnyBone->Set3StateValue(boneCount == totalBones ? wxCHK_CHECKED : boneCount == 0 ? wxCHK_UNCHECKED : wxCHK_UNDETERMINED);
+
+		UpdateStillUnmasked();
+	};
+
+	// Checkbox event handling for the checkboxes that are not in either
+	// of the collapsible panes.
+	cbUnmatched->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& e) {
+		tasks.doUnmatched = e.IsChecked();
+		UpdateStillUnmasked();
+	});
+	cbPosition->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& e) {
+		tasks.doPos = e.IsChecked();
+		UpdateStillUnmasked();
+	});
+	cbAnySlider->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& e) {
+		bool newval = e.IsChecked();
+		for (int sai = 0; sai < nSliders; ++sai)
+			tasks.doSliders[sai] = newval;
+		UpdateChecks();
+	});
+	cbAnyBone->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& e) {
+		bool newval = e.IsChecked();
+		for (int bai = 0; bai < nBones; ++bai)
+			if (stats.boneCounts[bai])
+				tasks.doBones[bai] = newval;
+		for (size_t bci = 0; bci < cbBones.size(); ++bci)
+			cbBones[bci]->SetValue(newval);
+		UpdateChecks();
+	});
+
+	// Fill in Sliders collapsible pane
+	wxCollapsiblePane* slidersCollapse = XRCCTRL(dlg, "slidersCollapse", wxCollapsiblePane);
+	wxWindow* slidersPane = slidersCollapse->GetPane();
+	wxFlexGridSizer* slidersSz = new wxFlexGridSizer(3);
+	slidersSz->AddGrowableCol(0, 1);
+	for (int sai = 0; sai < nSliders; ++sai) {
+		const auto& sa = asyms.sliders[sai];
+		wxCheckBox* cb = new wxCheckBox(slidersPane, wxID_ANY, sa.sliderName);
+		slidersSz->Add(cb, 0, wxLEFT|wxRIGHT, 5);
+		cbSliders[sai] = cb;
+		slidersSz->Add(new wxStaticText(slidersPane, wxID_ANY, wxString() << stats.sliderAvgs[sai]), 0, wxRIGHT|wxALIGN_RIGHT, 20);
+		slidersSz->Add(new wxStaticText(slidersPane, wxID_ANY, wxString() << stats.sliderCounts[sai]), 0, wxLEFT|wxRIGHT|wxALIGN_RIGHT, 5);
+		cb->Bind(wxEVT_CHECKBOX, [&, sai](wxCommandEvent& e) {
+			tasks.doSliders[sai] = e.IsChecked();
+			UpdateChecks();
+		});
+	}
+	slidersPane->SetSizerAndFit(slidersSz);
+	slidersCollapse->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [&asymScroll](wxCollapsiblePaneEvent&) { asymScroll->FitInside(); });
+
+	// Fill in Bones collapsible pane
+	wxCollapsiblePane* bonesCollapse = XRCCTRL(dlg, "bonesCollapse", wxCollapsiblePane);
+	wxWindow* bonesPane = bonesCollapse->GetPane();
+	wxFlexGridSizer* bonesSz = new wxFlexGridSizer(3);
+	bonesSz->AddGrowableCol(0, 1);
+	for (int bai = 0; bai < nBones; ++bai) {
+		const auto& ba = asyms.bones[bai];
+		// If a bone has no asymmetries but its mirror bone does, it's still
+		// listed in asyms.bones.  But that doesn't mean we need to show it
+		// to the user.
+		if (!stats.boneCounts[bai])
+			continue;
+
+		wxCheckBox* cb = new wxCheckBox(bonesPane, wxID_ANY, ba.boneName);
+		bonesSz->Add(cb, 0, wxLEFT|wxRIGHT, 5);
+		cbBones.push_back(cb);
+		bonesSz->Add(new wxStaticText(bonesPane, wxID_ANY, wxString() << stats.boneAvgs[bai]), 0, wxRIGHT|wxALIGN_RIGHT, 20);
+		bonesSz->Add(new wxStaticText(bonesPane, wxID_ANY, wxString() << stats.boneCounts[bai]), 0, wxLEFT|wxRIGHT|wxALIGN_RIGHT, 5);
+		cb->Bind(wxEVT_CHECKBOX, [&, bai](wxCommandEvent& e) {
+			tasks.doBones[bai] = e.IsChecked();
+			UpdateChecks();
+		});
+	}
+	bonesPane->SetSizerAndFit(bonesSz);
+	bonesCollapse->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [&asymScroll](wxCollapsiblePaneEvent&) { asymScroll->FitInside(); });
+
+	// Disable irrelevant checkboxes
+	auto DisableCheck = [](wxCheckBox* cb) {
+		cb->SetValue(false);
+		cb->Disable();
+	};
+	if (!nUnmatched)
+		DisableCheck(cbUnmatched);
+	if (!stats.posCount)
+		DisableCheck(cbPosition);
+	if (!stats.anySliderCount)
+		DisableCheck(cbAnySlider);
+	if (!stats.anyBoneCount)
+		DisableCheck(cbAnyBone);
+
+	// Customize the dialog for OnSymVert
+	if (trize) {
+		dlg.SetTitle(_("Symmetrize Vertices"));
+		cbUnmatched->Hide();
+		auto desc = _("Eliminates the selected asymmetries from unmasked vertices by adjusting vertex data to be consistent with mirror vertices.");
+		if (nBones)
+			desc += _("  (Hint: To choose which non-selected bones are adjusted during weight normalization, unlock them in the bones list in the Bones tab.)");
+		wxStaticText* descST = XRCCTRL(dlg, "maskSymmetricVerticesDescription", wxStaticText);
+		descST->SetLabel(desc);
+		descST->Wrap(600);
+		XRCCTRL(dlg, "stillUnmaskedLabel", wxStaticText)->SetLabel(_("Vertices that will be symmetrized:"));
+		XRCCTRL(dlg, "wxID_OK", wxButton)->SetLabel(_("&Symmetrize"));
+	}
+
+	UpdateStillUnmasked();
+	dlg.SetSize(dlg.GetBestSize());
+
+	if (dlg.ShowModal() != wxID_OK)
+		return false;
+
+	return true;
+}
+
+void OutfitStudioFrame::OnMaskSymVert(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	NiShape* s = activeItem->GetShape();
+	std::string shapeName = s->name.get();
+	Mesh* m = glView->gls.GetMesh(shapeName);
+	if (!m)
+		return;
+
+	std::vector<bool> selVerts(m->nVerts);
+	for (int i = 0; i < m->nVerts; ++i)
+		selVerts[i] = m->mask[i] == 0.0f;
+
+	SymmetricVertices r;
+	project->MatchSymmetricVertices(s, m->weldVerts, r);
+
+	VertexAsymmetries a;
+	project->FindVertexAsymmetries(s, r, m->weldVerts, a);
+
+	VertexAsymmetryTasks tasks;
+	if (!ShowVertexAsym(m, r, a, tasks, selVerts, false))
+		return;
+
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+	usp->usss.resize(1);
+	UndoStateShape& uss = usp->usss[0];
+	uss.shapeName = shapeName;
+
+	// Mask vertices based on selected tasks.
+	std::vector<bool> doVert = CalcVertexListForAsymmetryTasks(r, a, tasks, m->nVerts);
+	AddWeldedToVertexList(m->weldVerts, doVert);
+	for (int i = 0; i < m->nVerts; ++i) {
+		if (selVerts[i] && doVert[i])
+			continue;
+		uss.pointStartState[i].x = m->mask[i];
+		uss.pointEndState[i].x = 1.0f;
+	};
+
+	glView->ApplyUndoState(usp, false);
+	UpdateUndoTools();
+}
+
+void OutfitStudioFrame::OnSymVert(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	NiShape* s = activeItem->GetShape();
+	std::string shapeName = s->name.get();
+	Mesh* m = glView->gls.GetMesh(shapeName);
+	if (!m)
+		return;
+
+	std::vector<bool> selVerts(m->nVerts);
+	for (int i = 0; i < m->nVerts; ++i)
+		selVerts[i] = m->mask[i] == 0.0f;
+
+	SymmetricVertices r;
+	project->MatchSymmetricVertices(s, m->weldVerts, r);
+
+	VertexAsymmetries a;
+	project->FindVertexAsymmetries(s, r, m->weldVerts, a);
+
+	VertexAsymmetryTasks tasks;
+	if (!ShowVertexAsym(m, r, a, tasks, selVerts, true))
+		return;
+
+	std::vector<std::string> normBones, notNormBones;
+	GetNormalizeBones(&normBones, &notNormBones);
+
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mesh;
+	usp->usss.resize(1);
+	UndoStateShape& uss = usp->usss[0];
+	uss.shapeName = shapeName;
+
+	project->PrepareSymmetrizeVertices(s, uss, r, a, tasks, m->weldVerts, selVerts, normBones, notNormBones);
+
+	glView->ApplyUndoState(usp, false);
+	UpdateUndoTools();
+}
+
+void OutfitStudioFrame::OnMaskSymTri(wxCommandEvent& WXUNUSED(event)) {
+	if (selectedItems.empty())
+		return;
+
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (auto& selItem : selectedItems) {
+		NiShape* shape = selItem->GetShape();
+		if (!shape)
+			continue;
+		std::string shapeName = shape->name.get();
+
+		Mesh* m = glView->gls.GetMesh(shapeName);
+		if (!m)
+			return;
+
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = shapeName;
+
+		std::vector<bool> amask = project->CalculateAsymmetricTriangleVertexMask(shape, m->weldVerts);
+
+		// Mask vertices that are _not_ in amask.
+		for (int vi = 0; vi < m->nVerts; ++vi)
+			if (m->mask[vi] != 1.0f && !amask[vi]) {
+				uss.pointStartState[vi].x = m->mask[vi];
+				uss.pointEndState[vi].x = 1.0f;
+			}
+	}
+
+	glView->ApplyUndoState(usp, false);
+	UpdateUndoTools();
 }
 
 void OutfitStudioFrame::OnResetTransforms(wxCommandEvent& WXUNUSED(event)) {
@@ -10622,6 +10963,7 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 		}
 
 		m->BuildTriAdjacency();
+		m->BuildVertexAdjacency();
 		m->BuildEdgeList();
 		m->MaskFill(0.0f);
 		m->WeightFill(0.0f);
@@ -10710,6 +11052,8 @@ void wxGLPanel::SetActiveTool(ToolID brushID) {
 		case ToolID::AlphaBrush: activeBrush = &alphaBrush; break;
 		default: activeBrush = nullptr; break;
 	}
+
+	gls.SetXMirrorCursor(GetToolOptionXMirror());
 }
 
 void wxGLPanel::SetLastTool(ToolID tool) {
@@ -11334,12 +11678,23 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 	if (os->activeItem) {
 		Mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
 		if (m) {
+			double newval = m->mask[vertIndex];
 			if (wxGetKeyState(WXK_CONTROL))
-				m->mask[vertIndex] = 1.0f;
+				newval = 1.0f;
 			else if (!segmentMode)
-				m->mask[vertIndex] = 0.0f;
+				newval = 0.0f;
 
-			m->QueueUpdate(Mesh::UpdateType::Mask);
+			if (m->mask[vertIndex] != newval) {
+				UndoStateProject* usp = GetUndoHistory()->PushState();
+				usp->undoType = UndoType::Mask;
+				usp->usss.emplace_back();
+				UndoStateShape& uss = usp->usss.back();
+				uss.shapeName = m->shapeName;
+				uss.pointStartState[vertIndex].x = m->mask[vertIndex];
+				uss.pointEndState[vertIndex].x = newval;
+				ApplyUndoState(usp, false);
+				os->UpdateUndoTools();
+			}
 		}
 	}
 
@@ -11395,10 +11750,7 @@ void wxGLPanel::ClickCollapseVertex() {
 
 	// Make list of this vertex and its welded vertices.
 	std::vector<uint16_t> verts;
-	verts.push_back(mouseDownPoint);
-	if (m->weldVerts.find(mouseDownPoint) != m->weldVerts.end())
-		for (int wv : m->weldVerts[mouseDownPoint])
-			verts.push_back(wv);
+	m->GetWeldSet(mouseDownPoint, verts);
 
 	std::sort(verts.begin(), verts.end());
 
@@ -11434,7 +11786,7 @@ bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	mouseDownMeshName = lastHitResult.hitMeshName;
 	mouseDownPoint = lastHitResult.hoverPoint;
 	mouseHasMovedSinceStart = false;
-	mouseDownPointNormal = m->TransformDirMeshToModel(m->GetOneVertexNormal(mouseDownPoint));
+	mouseDownPointNormal = m->TransformDirMeshToModel(m->norms[mouseDownPoint]);
 	moveVertexOperation = MoveVertexOperation::None;
 
 	Vector3 viewOrigin;
@@ -11794,6 +12146,162 @@ void wxGLPanel::ClickSplitEdge() {
 	os->SetPendingChanges();
 }
 
+std::unordered_map<std::string, std::vector<float>> wxGLPanel::StashMasks() {
+	std::unordered_map<std::string, std::vector<float>> stash;
+	std::vector<Mesh*> meshes = gls.GetMeshes();
+	for (Mesh* m : meshes) {
+		if (!m->mask)
+			continue;
+		std::vector<float>& mask = stash[m->shapeName];
+		mask.resize(m->nVerts);
+		std::copy(m->mask.get(), m->mask.get() + m->nVerts, mask.begin());
+	}
+	return stash;
+}
+
+void wxGLPanel::UnstashMasks(const std::unordered_map<std::string, std::vector<float>>& stash) {
+	std::vector<Mesh*> meshes = gls.GetMeshes();
+	for (Mesh* m : meshes) {
+		auto stit = stash.find(m->shapeName);
+		if (stit == stash.end())
+			continue;
+		const std::vector<float>& mask = stit->second;
+		// assert(mask.size() == m->nVerts);
+		if (static_cast<int>(mask.size()) != m->nVerts)
+			continue;
+		std::copy(mask.begin(), mask.end(), m->mask.get());
+		m->QueueUpdate(Mesh::UpdateType::Mask);
+	}
+}
+
+void wxGLPanel::MaskLess() {
+	UndoStateProject* usp = GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+	for (auto& m : gls.GetActiveMeshes()) {
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		// First, try to remove welds of unmasked points from the mask.
+		bool unmaskedAWeld = false;
+		for (int i = 0; i < m->nVerts; ++i) {
+			if (m->mask[i] > 0.0f)
+				continue;
+			m->DoForEachWeldedVertex(i, [&](int wvi){
+				if (m->mask[wvi] != 0.0f) {
+					uss.pointStartState[wvi].x = m->mask[wvi];
+					uss.pointEndState[wvi].x = 0.0f;
+					unmaskedAWeld = true;
+				}
+			});
+		}
+
+		// If we unmasked a weld, we've done something useful, so stop.
+		if (unmaskedAWeld)
+			continue;
+
+		// Get points adjacent to unmasked points, taking welds into account.
+		std::unordered_set<int> adjacentPoints;
+		for (int i = 0; i < m->nVerts; i++)
+			if (m->mask[i] == 0.0f)
+				m->GetAdjacentPoints(i, adjacentPoints);
+
+		// Unmask the adjacent points
+		for (auto& adj : adjacentPoints)
+			if (m->mask[adj] != 0.0f) {
+				uss.pointStartState[adj].x = m->mask[adj];
+				uss.pointEndState[adj].x = 0.0f;
+			}
+	}
+
+	ApplyUndoState(usp, false);
+	os->UpdateUndoTools();
+}
+
+
+void wxGLPanel::MaskMore() {
+	UndoStateProject* usp = GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+	for (auto& m : gls.GetActiveMeshes()) {
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		// First, try to add welds of masked points to the mask.
+		bool maskedAWeld = false;
+		for (int i = 0; i < m->nVerts; ++i) {
+			if (m->mask[i] == 0.0f)
+				continue;
+			m->DoForEachWeldedVertex(i, [&](int wvi){
+				if (m->mask[wvi] != 1.0f) {
+					uss.pointStartState[wvi].x = m->mask[wvi];
+					uss.pointEndState[wvi].x = 1.0f;
+					maskedAWeld = true;
+				}
+			});
+		}
+
+		// If we masked a weld, we've done something useful, so stop.
+		if (maskedAWeld)
+			continue;
+
+		// Get points adjacent to masked points, taking welds into account.
+		std::unordered_set<int> adjacentPoints;
+		for (int i = 0; i < m->nVerts; i++)
+			if (m->mask[i] > 0.0f)
+				m->GetAdjacentPoints(i, adjacentPoints);
+
+		// Mask the adjacent points
+		for (auto& adj : adjacentPoints) {
+			if (m->mask[adj] != 1.0f) {
+				uss.pointStartState[adj].x = m->mask[adj];
+				uss.pointEndState[adj].x = 1.0f;
+			}
+		}
+	}
+
+	ApplyUndoState(usp, false);
+	os->UpdateUndoTools();
+}
+
+void wxGLPanel::InvertMask() {
+	UndoStateProject* usp = GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (auto& m : gls.GetActiveMeshes()) {
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			uss.pointStartState[i].x = m->mask[i];
+			uss.pointEndState[i].x = 1.0f - m->mask[i];
+		}
+	}
+
+	ApplyUndoState(usp, false);
+	os->UpdateUndoTools();
+}
+
+void wxGLPanel::ClearMask() {
+	UndoStateProject* usp = GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (auto& m : gls.GetActiveMeshes()) {
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			uss.pointStartState[i].x = m->mask[i];
+			uss.pointEndState[i].x = 0.0f;
+		}
+	}
+
+	ApplyUndoState(usp, false);
+	os->UpdateUndoTools();
+}
+
 bool wxGLPanel::RestoreMode(UndoStateProject* usp) {
 	bool modeChanged = false;
 	UndoType undoType = usp->undoType;
@@ -11819,6 +12327,7 @@ bool wxGLPanel::RestoreMode(UndoStateProject* usp) {
 
 void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) {
 	UndoType undoType = usp->undoType;
+	std::unordered_map<std::string, std::vector<float>> maskStash;
 	if (undoType == UndoType::Weight) {
 		for (auto& uss : usp->usss) {
 			Mesh* m = GetMesh(uss.shapeName);
@@ -11898,6 +12407,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 			for (auto& pit : (bUndo ? uss.pointStartState : uss.pointEndState))
 				m->verts[pit.first] = pit.second;
 
+			m->CalcWeldVerts();
 			m->SmoothNormals();
 			BVHUpdateQueue.insert(m);
 
@@ -11919,16 +12429,17 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 		}
 	}
 	else if (undoType == UndoType::Mesh) {
+		maskStash = StashMasks();
 		for (auto& uss : usp->usss) {
 			NiShape* shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
 			if (!shape)
 				continue;
 
-			os->project->ApplyShapeMeshUndo(shape, uss, bUndo);
+			os->project->ApplyShapeMeshUndo(shape, maskStash[uss.shapeName], uss, bUndo);
 		}
 
 		os->RefreshGUIFromProj(false);
-		ClearActiveMask();
+		UnstashMasks(maskStash);
 		os->ApplySliders();
 	}
 

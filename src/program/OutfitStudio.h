@@ -142,6 +142,9 @@ enum class ToolID {
 struct ConformOptions;
 class OutfitStudioFrame;
 class EditUV;
+struct SymmetricVertices;
+struct VertexAsymmetries;
+struct VertexAsymmetryTasks;
 
 enum OverlayLayer : uint32_t {
 	Default = 0,
@@ -296,6 +299,7 @@ public:
 			toolOptionXMirrorWeight = on;
 		else
 			toolOptionXMirror = on;
+		gls.SetXMirrorCursor(on);
 	}
 
 	bool GetToolOptionConnectedOnly() { return toolOptionConnectedOnly; }
@@ -490,43 +494,13 @@ public:
 		m->QueueUpdate(Mesh::UpdateType::Mask);
 	}
 
-	void MaskLess() {
-		for (auto& m : gls.GetActiveMeshes()) {
-			std::set<int> unmaskPoints;
-			for (int i = 0; i < m->nVerts; i++) {
-				if (m->mask[i] > 0.0f) {
-					std::set<int> adjacentPoints;
-					m->GetAdjacentPoints(i, adjacentPoints);
+	std::unordered_map<std::string, std::vector<float>> StashMasks();
+	void UnstashMasks(const std::unordered_map<std::string, std::vector<float>>& stash);
 
-					for (auto& adj : adjacentPoints) {
-						if (m->mask[adj] == 0.0f) {
-							unmaskPoints.insert(i);
-							break;
-						}
-					}
-				}
-			}
-
-			for (auto& up : unmaskPoints)
-				m->mask[up] = 0.0f;
-
-			m->QueueUpdate(Mesh::UpdateType::Mask);
-		}
-	}
-
-	void MaskMore() {
-		for (auto& m : gls.GetActiveMeshes()) {
-			std::set<int> adjacentPoints;
-			for (int i = 0; i < m->nVerts; i++)
-				if (m->mask[i] > 0.0f)
-					m->GetAdjacentPoints(i, adjacentPoints);
-
-			for (auto& adj : adjacentPoints)
-				m->mask[adj] = 1.0f;
-
-			m->QueueUpdate(Mesh::UpdateType::Mask);
-		}
-	}
+	void MaskLess();
+	void MaskMore();
+	void InvertMask();
+	void ClearMask();
 
 	void InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
 		Mesh* m = gls.GetMesh(shapeName);
@@ -555,15 +529,6 @@ public:
 		}
 
 		mask = std::move(invertMask);
-	}
-
-	void InvertMask() {
-		for (auto& m : gls.GetActiveMeshes()) {
-			for (int i = 0; i < m->nVerts; i++)
-				m->mask[i] = 1.0f - m->mask[i];
-
-			m->QueueUpdate(Mesh::UpdateType::Mask);
-		}
 	}
 
 	nifly::Vector3 CreateColorRamp(const float value) {
@@ -1174,6 +1139,8 @@ private:
 
 	int CopySegPartForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
 
+	bool ShowVertexAsym(Mesh* m, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, VertexAsymmetryTasks& tasks, const std::vector<bool>& selVerts, bool trize);
+
 	void OnExit(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& event);
 
@@ -1374,6 +1341,9 @@ private:
 	void OnCheckBadBones(wxCommandEvent& event);
 	void OnMaskBoneWeighted(wxCommandEvent& event);
 	void OnCopySegPart(wxCommandEvent& event);
+	void OnMaskSymVert(wxCommandEvent& event);
+	void OnSymVert(wxCommandEvent& event);
+	void OnMaskSymTri(wxCommandEvent& event);
 	void OnResetTransforms(wxCommandEvent& event);
 	void OnDeleteUnreferencedNodes(wxCommandEvent& event);
 	void OnRemoveSkinning(wxCommandEvent& event);
@@ -1539,7 +1509,7 @@ private:
 		if (!activeItem)
 			return;
 
-		glView->ClearActiveMask();
+		glView->ClearMask();
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool();

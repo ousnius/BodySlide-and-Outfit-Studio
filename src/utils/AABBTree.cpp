@@ -578,8 +578,10 @@ bool AABBTree::AABBTreeNode::IntersectSphere(Vector3& origin, const float radius
 		bool found = false;
 		for (uint32_t i = 0; i < nFacets; i++) {
 			uint32_t f = mIFacets[i];
-			if (tree->triRef[f].IntersectSphere(tree->vertexRef, origin, radius, &r.HitDistance)) {
+			float dist = tree->triRef[f].DistanceToPoint(tree->vertexRef, origin);
+			if (dist <= radius) {
 				if (results) {
+					r.HitDistance = dist;
 					r.HitFacet = mIFacets[i];
 					r.bvhNode = this;
 					results->push_back(r);

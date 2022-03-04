@@ -50,6 +50,40 @@ void Mesh::BuildTriAdjacency() {
 	}
 }
 
+void Mesh::BuildVertexAdjacency() {
+	if (!tris)
+		return;
+
+	std::vector<std::set<int>> adjArray(nVerts);
+	std::vector<int> p1ws, p2ws;
+
+	auto AddWeldSetToAdjacenciesOfWeldSet = [&](int p1, int p2) {
+		GetWeldSet(p1, p1ws);
+		GetWeldSet(p2, p2ws);
+		for (int p1w : p1ws)
+		for (int p2w : p2ws) {
+			adjArray[p1w].insert(p2w);
+			adjArray[p2w].insert(p1w);
+		}
+	};
+	
+	for (int t = 0; t < nTris; t++) {
+		auto& tri = tris[t];
+
+		AddWeldSetToAdjacenciesOfWeldSet(tri.p1, tri.p2);
+		AddWeldSetToAdjacenciesOfWeldSet(tri.p2, tri.p3);
+		AddWeldSetToAdjacenciesOfWeldSet(tri.p3, tri.p1);
+	}
+
+	adjVerts = std::make_unique<std::vector<int>[]>(nVerts);
+	auto av = adjVerts.get();
+
+	for (int v = 0; v < nVerts; v++) {
+		av[v].resize(adjArray[v].size());
+		std::copy(adjArray[v].begin(), adjArray[v].end(), av[v].begin());
+	}
+}
+
 void Mesh::MakeEdges() {
 	if (!tris)
 		return;
@@ -292,135 +326,149 @@ void Mesh::ScaleVertices(const Vector3& center, const float& factor) {
 	queueUpdate[UpdateType::Position] = true;
 }
 
-void Mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
-	int tp1 = 0;
-	int tp2 = 0;
-	int tp3 = 0;
-	int wq = 0;
-
-	if (!vertTris)
+void Mesh::GetAdjacentPoints(int querypoint, std::unordered_set<int>& outPoints) {
+	if (querypoint >= nVerts)
 		return;
 
-	auto vtris = vertTris.get();
-	auto addWeldVerts = [&](int qp) {
-		if (weldVerts.find(qp) != weldVerts.end()) {
-			for (size_t v = 0; v < weldVerts[qp].size(); v++) {
-				wq = weldVerts[qp][v];
-				outPoints.insert(wq);
-			}
-		}
-	};
+	if (!adjVerts)
+		BuildVertexAdjacency();
 
-	addWeldVerts(querypoint);
+	if (!adjVerts)
+		return;
 
-	for (size_t t = 0; t < vtris[querypoint].size(); t++) {
-		tp1 = tris[vtris[querypoint][t]].p1;
-		tp2 = tris[vtris[querypoint][t]].p2;
-		tp3 = tris[vtris[querypoint][t]].p3;
+	auto av = adjVerts.get();
+	const auto& avPoint = av[querypoint];
 
-		if (tp1 != querypoint) {
-			outPoints.insert(tp1);
-			addWeldVerts(tp1);
-		}
-
-		if (tp2 != querypoint) {
-			outPoints.insert(tp2);
-			addWeldVerts(tp2);
-		}
-
-		if (tp3 != querypoint) {
-			outPoints.insert(tp3);
-			addWeldVerts(tp3);
-		}
-	}
+	outPoints.insert(avPoint.begin(), avPoint.end());
 }
 
 int Mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
-	int ep1;
-	int ep2;
-	int wq;
-	int n = 0;
-
-	if (!vertEdges)
+	if (querypoint >= nVerts)
 		return 0;
 
-	auto vedges = vertEdges.get();
-	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
-		ep1 = edges[vedges[querypoint][e]].p1;
-		ep2 = edges[vedges[querypoint][e]].p2;
-		if (n + 1 < maxPoints) {
-			if (ep1 != querypoint)
-				outPoints[n++] = ep1;
-			else
-				outPoints[n++] = ep2;
-		}
+	if (!adjVerts)
+		BuildVertexAdjacency();
+
+	if (!adjVerts)
+		return 0;
+
+	auto av = adjVerts.get();
+	const auto& avPoint = av[querypoint];
+
+	int n = 0;
+	for (auto& p : avPoint) {
+		if (n == maxPoints)
+			break;
+
+		outPoints[n++] = p;
 	}
-	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
-			wq = weldVerts[querypoint][v];
-			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
-				ep1 = edges[vedges[wq][e]].p1;
-				ep2 = edges[vedges[wq][e]].p2;
-				if (n + 1 < maxPoints) {
-					if (ep1 != wq)
-						outPoints[n++] = ep1;
-					else
-						outPoints[n++] = ep2;
-				}
-			}
-		}
-	}
+
 	return n;
 	/* TODO: sort by distance */
 }
 
-int Mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint) {
-	if (!vertEdges)
-		return 0;
-
-	int ep1;
-	int ep2;
+int Mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint) const {
 	int n = 0;
-
-	auto vedges = vertEdges.get();
-	for (uint32_t e = 0; e < vedges[querypoint].size(); e++) {
-		ep1 = edges[vedges[querypoint][e]].p1;
-		ep2 = edges[vedges[querypoint][e]].p2;
-		if (n + 1 < maxPoints) {
-			if (ep1 != querypoint && !visPoint[ep1]) {
-				outPoints[n++] = ep1;
-				visPoint[ep1] = true;
-			}
-			else if (!visPoint[ep2]) {
-				outPoints[n++] = ep2;
-				visPoint[ep2] = true;
-			}
+	for (int p : adjVerts[querypoint])
+		if (n + 1 < maxPoints && !visPoint[p]) {
+			outPoints[n++] = p;
+			visPoint[p] = true;
 		}
-	}
-	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint32_t v = 0; v < weldVerts[querypoint].size(); v++) {
-			int wq = weldVerts[querypoint][v];
-			for (uint32_t e = 0; e < vedges[wq].size(); e++) {
-				ep1 = edges[vedges[wq][e]].p1;
-				ep2 = edges[vedges[wq][e]].p2;
-				if (n + 1 < maxPoints) {
-					if (ep1 != wq && !visPoint[ep1]) {
-						outPoints[n++] = ep1;
-						visPoint[ep1] = true;
-					}
-					else if (!visPoint[ep2]) {
-						outPoints[n++] = ep2;
-						visPoint[ep2] = true;
-					}
-				}
-			}
-		}
-	}
 	return n;
 	/* TODO: sort by distance */
+}
+
+int Mesh::FindAdjacentBalancedPairs(int pt, int pairs[]) const {
+	// If adjPts contains any welded points, this algorithm should pick
+	// out just one balanced pair from among the welds.
+
+	const std::vector<int>& adjPts = adjVerts[pt];
+	int c = std::min(static_cast<int>(adjPts.size()), MaxAdjacentPoints);
+	if (c == 0)
+		return 0;
+
+	// Calculate direction from pt to each adjPts
+	Vector3 pDirs[MaxAdjacentPoints];
+	for (int i = 0; i < c; ++i) {
+		Vector3 pDir = verts[adjPts[i]] - verts[pt];
+		pDir.Normalize();
+		pDirs[i] = pDir;
+	}
+
+	// For each point in adjPts, find which of the other neighboring points
+	// has the lowest direction dot product with it.  Ideally, we want -1
+	// for each matching pair.
+	int matchInd[MaxAdjacentPoints];
+	float matchDot[MaxAdjacentPoints];
+	for (int i = 0; i < c; ++i) {
+		int bestInd = i;
+		float bestDot = 1;
+		for (int j = 0; j < c; ++j) {
+			float dot = pDirs[j].dot(pDirs[i]);
+			if (dot < bestDot) {
+				bestDot = dot;
+				bestInd = j;
+			}
+		}
+		matchInd[i] = bestInd;
+		matchDot[i] = bestDot;
+	}
+
+	// Repeatedly pick out the best pairs.  If a point's best match is to
+	// a point that's already been paired, we won't match it to anything.
+	bool donePt[MaxAdjacentPoints];
+	for (int i = 0; i < c; ++i)
+		donePt[i] = false;
+	int pairInd = 0;
+	bool gotOne = false;
+	do {
+		gotOne = false;
+		float bestDot = 1;
+		int bestInd = 0;
+		for (int i = 0; i < c; ++i)
+			if (!donePt[i] && !donePt[matchInd[i]] && matchDot[i] < bestDot) {
+				bestDot = matchDot[i];
+				bestInd = i;
+				gotOne = true;
+			}
+		if (gotOne) {
+			pairs[pairInd++] = adjPts[bestInd];
+			pairs[pairInd++] = adjPts[matchInd[bestInd]];
+			donePt[bestInd] = true;
+			donePt[matchInd[bestInd]] = true;
+		}
+	} while (gotOne);
+
+	return pairInd;
+}
+
+int Mesh::FindOpposingPoint(int p1, int p2, float maxdot) const {
+	const std::vector<int>& adjPts = adjVerts[p1];
+	int c = static_cast<int>(adjPts.size());
+    if (c == 0)
+        return -1;
+
+    Vector3 p2dir = verts[p2] - verts[p1];
+    p2dir.Normalize();
+
+    float bestdot = maxdot;
+    int bestpt = -1;
+    for (int i = 0; i < c; ++i) {
+        Vector3 dir = verts[adjPts[i]] - verts[p1];
+        dir.Normalize();
+        float dot = dir.dot(p2dir);
+        if (dot < bestdot) {
+            bestdot = dot;
+            bestpt = adjPts[i];
+        }
+    }
+
+    return bestpt;
 }
 
 void Mesh::CalcWeldVerts() {
+	weldVerts.clear();
+
 	SortingMatcher matcher(verts.get(), static_cast<uint16_t>(nVerts));
 	for (const auto& matchset : matcher.matches) {
 		for (size_t j = 0; j < matchset.size(); ++j) {
@@ -442,9 +490,12 @@ void Mesh::SetSmoothThreshold(float degrees) {
 	smoothThresh = degrees * DEG2RAD;
 }
 
-void Mesh::SmoothNormals(const std::set<int>& vertices) {
+void Mesh::SmoothNormals(const std::unordered_set<int>& vertices) {
 	if (lockNormals || !norms)
 		return;
+
+	// Copy old normals into a working temporary
+	std::vector<Vector3> tnorms(norms.get(), norms.get() + nVerts);
 
 	// Zero old normals
 	bool noVertices = vertices.empty();
@@ -455,12 +506,10 @@ void Mesh::SmoothNormals(const std::set<int>& vertices) {
 		if (lockedNormalIndices.count(i) != 0)
 			continue;
 
-		Vector3& pn = norms[i];
-		pn.Zero();
+		tnorms[i].Zero();
 	}
 
 	// Face normals
-	Vector3 tn;
 	for (int t = 0; t < nTris; t++) {
 		Triangle& tri = tris[t];
 		bool bn1 = (noVertices || vertices.count(tri.p1) != 0);
@@ -471,30 +520,23 @@ void Mesh::SmoothNormals(const std::set<int>& vertices) {
 		if (!bn1 && !bn2 && !bn3)
 			continue;
 
-		tri.trinormal(verts.get(), &tn);
+		Vector3 tn = tri.trinormal(verts.get());
 
-		if (bn1 && lockedNormalIndices.count(tri.p1) == 0) {
-			Vector3& pn1 = norms[tri.p1];
-			pn1 += tn;
-		}
+		if (bn1 && lockedNormalIndices.count(tri.p1) == 0)
+			tnorms[tri.p1] += tn;
 
-		if (bn2 && lockedNormalIndices.count(tri.p2) == 0) {
-			Vector3& pn2 = norms[tri.p2];
-			pn2 += tn;
-		}
+		if (bn2 && lockedNormalIndices.count(tri.p2) == 0)
+			tnorms[tri.p2] += tn;
 
-		if (bn3 && lockedNormalIndices.count(tri.p3) == 0) {
-			Vector3& pn3 = norms[tri.p3];
-			pn3 += tn;
-		}
+		if (bn3 && lockedNormalIndices.count(tri.p3) == 0)
+			tnorms[tri.p3] += tn;
 	}
 
 	for (int i = 0; i < nVerts; i++) {
 		if (lockedNormalIndices.count(i) != 0)
 			continue;
 
-		Vector3& pn = norms[i];
-		pn.Normalize();
+		tnorms[i].Normalize();
 	}
 
 	// Smooth welded vertex normals
@@ -506,69 +548,32 @@ void Mesh::SmoothNormals(const std::set<int>& vertices) {
 
 		for (auto& wvp : weldVerts) {
 			auto& key = wvp.first;
-			if (!noVertices && vertices.count(key) != 0)
+			if (!noVertices && vertices.count(key) == 0)
 				continue;
 
 			if (lockedNormalIndices.count(key) != 0)
 				continue;
 
-			const Vector3& n = norms[key];
+			const Vector3& n = tnorms[key];
 			Vector3 sn = n;
 			auto& value = wvp.second;
 			for (int wvi : value)
-				if (n.angle(norms[wvi]) < smoothThresh)
-					sn += norms[wvi];
+				if (n.angle(tnorms[wvi]) < smoothThresh)
+					sn += tnorms[wvi];
 
 			sn.Normalize();
 			seamNorms.emplace_back(key, sn);
 		}
 
 		for (auto& snp : seamNorms)
-			norms[snp.first] = snp.second;
+			tnorms[snp.first] = snp.second;
 	}
+
+	// Copy temporary back into the main.
+	std::copy(tnorms.begin(), tnorms.end(), norms.get());
 
 	queueUpdate[UpdateType::Normals] = true;
 	CalcTangentSpace();
-}
-
-Vector3 Mesh::GetOneVertexNormal(int vi) {
-	if (vi < 0 || vi >= nVerts)
-		return Vector3(1,0,0);
-	if (norms)
-		return norms[vi];
-
-	// Without norms, we have to calculate it from scratch
-	if (!bGotWeldVerts)
-		CalcWeldVerts();
-
-	// Sum the normals of every triangle containing vi
-	Vector3 sum;
-	for (int ti = 0; ti < nTris; ++ti) {
-		const Triangle& t = tris[ti];
-		if (t.p1 != vi && t.p2 != vi && t.p3 != vi)
-			continue;
-		Vector3 tn;
-		t.trinormal(verts.get(), &tn);
-		tn.Normalize();
-		sum += tn;
-	}
-
-	// Also sum the normals of every triangle containing a vertex welded to vi
-	auto wvit = weldVerts.find(vi);
-	if (wvit != weldVerts.end())
-		for (int wvi : wvit->second)
-			for (int ti = 0; ti < nTris; ++ti) {
-				const Triangle& t = tris[ti];
-				if (t.p1 != wvi && t.p2 != wvi && t.p3 != wvi)
-					continue;
-				Vector3 tn;
-				t.trinormal(verts.get(), &tn);
-				tn.Normalize();
-				sum += tn;
-			}
-
-	sum.Normalize();
-	return sum;
 }
 
 void Mesh::FacetNormals() {
@@ -584,13 +589,12 @@ void Mesh::FacetNormals() {
 		pn.Zero();
 	}
 
-	Vector3 tn;
 	for (int t = 0; t < nTris; t++) {
 		auto& tri = tris[t];
 		if (tri.p1 >= nVerts || tri.p2 >= nVerts || tri.p3 >= nVerts)
 			continue;
 
-		tri.trinormal(verts.get(), &tn);
+		Vector3 tn = tri.trinormal(verts.get());
 
 		if (lockedNormalIndices.find(tri.p1) == lockedNormalIndices.end()) {
 			Vector3& pn1 = norms[tri.p1];
@@ -748,149 +752,77 @@ void Mesh::CalcTangentSpace() {
 	queueUpdate[UpdateType::Bitangents] = true;
 }
 
-bool Mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets) {
-	if (!vertTris)
-		return false;
-	if (!vertEdges)
-		return false;
-	if (startTri < 0)
-		return false;
-
-	outFacets.push_back(startTri);
-
-	if (trivisit)
-		trivisit[startTri] = true;
-
-	if (verts[tris[startTri].p1].DistanceSquaredTo(center) <= sqradius) {
-		outPoints[nOutPoints++] = tris[startTri].p1;
-		pointvisit[tris[startTri].p1] = true;
-		auto wv = weldVerts.find(tris[startTri].p1);
-		if (wv != weldVerts.end()) {
-			for (auto& w : wv->second) {
-				if (pointvisit[w])
-					continue;
-				outPoints[nOutPoints++] = w;
-				pointvisit[w] = true;
-			}
+void Mesh::ConnectedPointsInSphere(const Vector3& center, float sqradius, int startTri, std::vector<bool>& pointvisit, int outPoints[], int& nOutPoints) {
+	// Add the triangle's three vertices to the queue, if they're within the
+	// radius.
+	for (int tvi = 0; tvi < 3; ++tvi) {
+		auto p = tris[startTri][tvi];
+		if (!pointvisit[p] && verts[p].DistanceSquaredTo(center) <= sqradius) {
+			outPoints[nOutPoints++] = p;
+			pointvisit[p] = true;
 		}
 	}
 
-	if (verts[tris[startTri].p2].DistanceSquaredTo(center) <= sqradius) {
-		outPoints[nOutPoints++] = tris[startTri].p2;
-		pointvisit[tris[startTri].p2] = true;
-		auto wv = weldVerts.find(tris[startTri].p2);
-		if (wv != weldVerts.end()) {
-			for (auto& w : wv->second) {
-				if (pointvisit[w])
-					continue;
-				outPoints[nOutPoints++] = w;
-				pointvisit[w] = true;
-			}
-		}
-	}
+	// Loop through points in the queue
+	for (int adjCursor = 0; adjCursor < nOutPoints; ++adjCursor) {
+		int p = outPoints[adjCursor];
 
-	if (verts[tris[startTri].p3].DistanceSquaredTo(center) <= sqradius) {
-		outPoints[nOutPoints++] = tris[startTri].p3;
-		pointvisit[tris[startTri].p3] = true;
-		auto wv = weldVerts.find(tris[startTri].p3);
-		if (wv != weldVerts.end()) {
-			for (auto& w : wv->second) {
-				if (pointvisit[w])
-					continue;
-				outPoints[nOutPoints++] = w;
-				pointvisit[w] = true;
+		// Add welds of p to the queue
+		DoForEachWeldedVertex(p, [&](int wvi){
+			if (!pointvisit[wvi]) {
+				pointvisit[wvi] = true;
+				outPoints[nOutPoints++] = wvi;
 			}
-		}
-	}
+		});
 
-	int adjCursor = 0;
-	while (adjCursor < nOutPoints) {
-		int pointBuf[100];
-		int tp = outPoints[adjCursor++];
-		int n = GetAdjacentPoints(tp, pointBuf, 100);
-		for (int i = 0; i < n; i++) {
-			if (!pointvisit[pointBuf[i]] && verts[pointBuf[i]].DistanceSquaredTo(center) <= sqradius) {
-				pointvisit[pointBuf[i]] = true;
-				outPoints[nOutPoints++] = pointBuf[i];
+		// Add adjacent points of p to the queue, if they're within the radius
+		for (int ei : vertEdges[p]) {
+			int op = edges[ei].p1 == p ? edges[ei].p2 : edges[ei].p1;
+			if (!pointvisit[op] && verts[op].DistanceSquaredTo(center) <= sqradius) {
+				pointvisit[op] = true;
+				outPoints[nOutPoints++] = op;
 			}
 		}
 	}
-	return true;
 }
 
-bool Mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets) {
-	if (!vertTris)
-		return false;
-	if (startTri < 0)
-		return false;
-
-	outFacets.push_back(startTri);
-	trivisit[startTri] = true;
-
-	auto vtris = vertTris.get();
-	if (verts[tris[startTri].p1].DistanceSquaredTo(center) <= sqradius) {
-		if (!pointvisit[tris[startTri].p1]) {
-			pointvisit[tris[startTri].p1] = true;
-			outPoints[nOutPoints++] = tris[startTri].p1;
-		}
-		for (auto& t : vtris[tris[startTri].p1]) {
-			if (trivisit[t])
-				continue;
-			ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
-		}
-		auto wv = weldVerts.find(tris[startTri].p1);
-		if (wv != weldVerts.end()) {
-			for (auto& w : wv->second) {
-				for (auto& t : vtris[w]) {
-					if (trivisit[t])
-						continue;
-					ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
-				}
+void Mesh::ConnectedPointsInTwoSpheres(const Vector3& center1, const Vector3& center2, float sqradius, int startTri1, int startTri2, std::vector<bool>& pointvisit, int outPoints[], int& nOutPoints) {
+	// Add each triangle's three vertices to the queue, if they're within the
+	// radius.
+	for (int triInd = 0; triInd < 2; ++triInd) {
+		int startTri = triInd ? startTri2 : startTri1;
+		for (int tvi = 0; tvi < 3; ++tvi) {
+			auto p = tris[startTri][tvi];
+			if (!pointvisit[p] &&
+				(verts[p].DistanceSquaredTo(center1) <= sqradius ||
+				verts[p].DistanceSquaredTo(center2) <= sqradius)) {
+				outPoints[nOutPoints++] = p;
+				pointvisit[p] = true;
 			}
 		}
 	}
 
-	if (verts[tris[startTri].p2].DistanceSquaredTo(center) <= sqradius) {
-		if (!pointvisit[tris[startTri].p2]) {
-			pointvisit[tris[startTri].p2] = true;
-			outPoints[nOutPoints++] = tris[startTri].p2;
-		}
-		for (auto& t : vtris[tris[startTri].p2]) {
-			if (trivisit[t])
-				continue;
-			ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
-		}
-		auto wv = weldVerts.find(tris[startTri].p2);
-		if (wv != weldVerts.end()) {
-			for (auto& w : wv->second) {
-				for (auto& t : vtris[w]) {
-					if (trivisit[t])
-						continue;
-					ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
-				}
+	// Loop through points in the queue
+	for (int adjCursor = 0; adjCursor < nOutPoints; ++adjCursor) {
+		int p = outPoints[adjCursor];
+
+		// Add welds of p to the queue
+		DoForEachWeldedVertex(p, [&](int wvi){
+			if (!pointvisit[wvi]) {
+				pointvisit[wvi] = true;
+				outPoints[nOutPoints++] = wvi;
+			}
+		});
+
+		// Add adjacent points of p to the queue, if they're within the radius
+		for (int ei : vertEdges[p]) {
+			int op = edges[ei].p1 == p ? edges[ei].p2 : edges[ei].p1;
+			if (!pointvisit[op] &&
+				(verts[op].DistanceSquaredTo(center1) <= sqradius ||
+				verts[op].DistanceSquaredTo(center2) <= sqradius)) {
+				pointvisit[op] = true;
+				outPoints[nOutPoints++] = op;
 			}
 		}
 	}
-	if (verts[tris[startTri].p3].DistanceSquaredTo(center) <= sqradius) {
-		if (!pointvisit[tris[startTri].p3]) {
-			pointvisit[tris[startTri].p3] = true;
-			outPoints[nOutPoints++] = tris[startTri].p3;
-		}
-		for (auto& t : vtris[tris[startTri].p3]) {
-			if (trivisit[t])
-				continue;
-			ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
-		}
-		auto wv = weldVerts.find(tris[startTri].p3);
-		if (wv != weldVerts.end()) {
-			for (auto& w : wv->second) {
-				for (auto& t : vtris[w]) {
-					if (trivisit[t])
-						continue;
-					ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
-				}
-			}
-		}
-	}
-	return true;
 }

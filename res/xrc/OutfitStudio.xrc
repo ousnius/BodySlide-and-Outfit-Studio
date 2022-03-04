@@ -1955,6 +1955,19 @@
 				<help>Copies partitions/segments and all triangle assignments from the reference shape to the current shape.</help>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="maskSymVert">
+				<label>Mask Symmetric Vertices...</label>
+				<help>Masks unmasked vertices that have a mirrored vertex with identical data.</help>
+			</object>
+			<object class="wxMenuItem" name="symVert">
+				<label>Symmetrize Vertices...</label>
+				<help>Changes vertex data to be identical to mirrored vertices.</help>
+			</object>
+			<object class="wxMenuItem" name="maskSymTri">
+				<label>Mask Symmetric Triangles</label>
+				<help>Masks triangles that can be matched to a mirrored triangle.</help>
+			</object>
+			<object class="separator" />
 			<object class="wxMenuItem" name="deleteShape">
 				<label>Delete\tDel</label>
 				<help>Removes the currently selected shape from the outfit.</help>
@@ -2398,6 +2411,19 @@
 		<object class="wxMenuItem" name="copySegPart">
 			<label>Copy Partitions/Segments...</label>
 			<help>Copies partitions/segments and all triangle assignments from the reference shape to the current shape.</help>
+		</object>
+		<object class="separator" />
+		<object class="wxMenuItem" name="maskSymVert">
+			<label>Mask Symmetric Vertices...</label>
+			<help>Masks unmasked vertices that have a mirrored vertex with identical data.</help>
+		</object>
+		<object class="wxMenuItem" name="symVert">
+			<label>Symmetrize Vertices...</label>
+			<help>Changes vertex data to be identical to mirrored vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="maskSymTri">
+			<label>Mask Symmetric Triangles</label>
+			<help>Masks triangles that can be matched to a mirrored triangle.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="deleteShape">
