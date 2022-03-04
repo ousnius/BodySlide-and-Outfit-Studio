@@ -4745,7 +4745,6 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 		workNif.CopyFrom(nif);
 		workAnim.LoadFromNif(&workNif);
 	}
-	CheckForBadBones();
 
 	return 0;
 }
@@ -5149,8 +5148,6 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		if (!nonRefBones.empty())
 			wxLogMessage("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, nonRefBones);
 	}
-
-	CheckForBadBones();
 
 	return 0;
 }

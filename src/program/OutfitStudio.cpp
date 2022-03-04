@@ -9531,15 +9531,6 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	while (project->ShapeHasBadBones(project->GetBaseShape())) {
-		int res = wxMessageBox(_("The reference shape has bad bones.  It is strongly recommended that these be fixed before copying bone weights.  Open a dialog to fix the bad bones?"), _("Bad Bones in Reference"), wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxICON_WARNING);
-		if (res == wxCANCEL)
-			return;
-		if (res == wxNO)
-			break;
-		project->CheckForBadBones();
-	}
-
 	std::vector<NiShape*> selectedShapes;
 	for (auto& s : selectedItems) {
 		if (auto shape = s->GetShape(); !project->IsBaseShape(shape))
@@ -9629,15 +9620,6 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetBaseShape()) {
 		wxMessageBox(_("There is no reference shape!"), _("Error"));
 		return;
-	}
-
-	while (project->ShapeHasBadBones(project->GetBaseShape())) {
-		int res = wxMessageBox(_("The reference shape has bad bones.  It is strongly recommended that these be fixed before copying bone weights.  Open a dialog to fix the bad bones?"), _("Bad Bones in Reference"), wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxICON_WARNING);
-		if (res == wxCANCEL)
-			return;
-		if (res == wxNO)
-			break;
-		project->CheckForBadBones();
 	}
 
 	std::vector<std::string> boneList = GetSelectedBones();
@@ -9745,15 +9727,6 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 	if (baseVertCount != workVertCount) {
 		wxMessageBox(_("The vertex count of the reference and chosen shape is not the same!"), _("Error"));
 		return;
-	}
-
-	while (project->ShapeHasBadBones(project->GetBaseShape())) {
-		int res = wxMessageBox(_("The reference shape has bad bones.  It is strongly recommended that these be fixed before transferring bone weights.  Open a dialog to fix the bad bones?"), _("Bad Bones in Reference"), wxYES_NO | wxCANCEL | wxYES_DEFAULT | wxICON_WARNING);
-		if (res == wxCANCEL)
-			return;
-		if (res == wxNO)
-			break;
-		project->CheckForBadBones();
 	}
 
 	std::vector<std::string> selectedBones = GetSelectedBones();
