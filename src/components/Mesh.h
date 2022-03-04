@@ -164,10 +164,8 @@ public:
 		verts.reserve(nVertices * 2);
 		verts.insert(vertices, vertices + nVertices);
 
-		for (int i = 0; i < nVertices; i++) {
-			verts.insert(vertices[i]);
+		for (int i = 0; i < nVertices; i++)
 			m->GetAdjacentPoints(vertices[i], verts);
-		}
 
 		m->SmoothNormals(verts);
 	}
