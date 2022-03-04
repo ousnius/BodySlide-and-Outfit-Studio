@@ -100,7 +100,7 @@ struct VertexAsymmetryTasks {
 
 void CalcVertexAsymmetryStats(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const std::vector<bool>& selVerts, VertexAsymmetryStats& stats);
 std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, int nVerts);
-void AddWeldedToVertexList(const std::unordered_map<int, std::vector<int>>& welcVerts, std::vector<bool>& selVerts);
+void AddWeldedToVertexList(const Mesh::WeldVertsType& welcVerts, std::vector<bool>& selVerts);
 
 class OutfitProject {
 	OutfitStudioFrame* owner = nullptr;
@@ -308,7 +308,7 @@ public:
 
 	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape& uss, const nifly::Edge& edge);
-	bool PrepareRefineMesh(nifly::NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const std::unordered_map<int, std::vector<int>>& weldVerts);
+	bool PrepareRefineMesh(nifly::NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts);
 
 	bool IsVertexOnBoundary(nifly::NiShape* shape, int vi);
 	bool PointsHaveDifferingWeightsOrDiffs(nifly::NiShape* shape1, int p1, nifly::NiShape* shape2, int p2);
@@ -335,11 +335,11 @@ public:
 	void RenameShape(nifly::NiShape* shape, const std::string& newShapeName);
 	void UpdateNifNormals(nifly::NifFile* nif, const std::vector<Mesh*>& shapemeshes);
 
-	void MatchSymmetricVertices(nifly::NiShape* shape, const std::unordered_map<int, std::vector<int>>& weldVerts, SymmetricVertices& r);
+	void MatchSymmetricVertices(nifly::NiShape* shape, const Mesh::WeldVertsType& weldVerts, SymmetricVertices& r);
 	void MatchSymmetricBoneNames(std::vector<std::pair<std::string, std::string>>& pairs, std::vector<std::string>& singles);
-	void FindVertexAsymmetries(nifly::NiShape* shape, const SymmetricVertices& symverts, const std::unordered_map<int, std::vector<int>>& weldVerts, VertexAsymmetries& r);
-	void PrepareSymmetrizeVertices(nifly::NiShape* shape, UndoStateShape& uss, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, const std::unordered_map<int, std::vector<int>>& weldVerts, const std::vector<bool>& selVerts, const std::vector<std::string>& userNormBones, const std::vector<std::string>& userNotNormBones);
-	std::vector<bool> CalculateAsymmetricTriangleVertexMask(nifly::NiShape* shape, const std::unordered_map<int, std::vector<int>>& weldVerts);
+	void FindVertexAsymmetries(nifly::NiShape* shape, const SymmetricVertices& symverts, const Mesh::WeldVertsType& weldVerts, VertexAsymmetries& r);
+	void PrepareSymmetrizeVertices(nifly::NiShape* shape, UndoStateShape& uss, const SymmetricVertices& symverts, const VertexAsymmetries& asyms, const VertexAsymmetryTasks& tasks, const Mesh::WeldVertsType& weldVerts, const std::vector<bool>& selVerts, const std::vector<std::string>& userNormBones, const std::vector<std::string>& userNotNormBones);
+	std::vector<bool> CalculateAsymmetricTriangleVertexMask(nifly::NiShape* shape, const Mesh::WeldVertsType& weldVerts);
 
 	void ChooseClothData(nifly::NifFile& nif);
 	void ResetTransforms();

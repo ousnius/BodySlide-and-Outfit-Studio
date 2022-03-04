@@ -138,6 +138,7 @@ public:
 	virtual bool LiveNormals() { return bLiveNormals; }
 
 	virtual bool NeedMirrorMergedQuery() { return false; }
+	virtual bool NeedStartNorms() { return restrictPlane || restrictNormal; }
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
 	virtual void strokeInit(const std::vector<Mesh*>&, TweakPickInfo&, UndoStateProject&);
@@ -205,6 +206,10 @@ public:
 
 	void lapFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv);
 	void hclapFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv, UndoStateShape& uss);
+	// Balanced-pair parabola-fit smoothing filter.  This smoothing filter
+	// uses only balanced pairs of neighboring vertices.  It fits a parabola
+	// through each balanced pair to determine the destination.
+	void bppfFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv, UndoStateShape& uss);
 
 	TB_SmoothMask();
 	virtual ~TB_SmoothMask();
@@ -237,9 +242,16 @@ class TB_Smooth : public TweakBrush {
 	// This algo is much slower than lap, but tries to maintain mesh volume.
 	void hclapFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv, UndoStateShape& uss);
 
+	// Balanced-pair circle-fit smoothing filter.  This smoothing filter
+	// uses only balanced pairs of neighboring vertices and tries
+	// to fit a circle through each pair to determine the destination of the
+	// point (using normals).
+	void bpcfFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, nifly::Vector3>& wv);
+
 public:
 	TB_Smooth();
 	virtual ~TB_Smooth();
+	virtual bool NeedStartNorms() { return true; }
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
@@ -370,6 +382,10 @@ public:
 	void lapFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv);
 	void hclapFilter(
 		Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape& uss, const int boneInd, const std::unordered_map<uint16_t, float>* wPtr);
+	// Balanced-pair parabola-fit smoothing filter.  This smoothing filter
+	// uses only balanced pairs of neighboring vertices.  It fits a parabola
+	// through those balanced pairs to determine the destination.
+	void bppfFilter(Mesh* refmesh, const int* points, int nPoints, std::unordered_map<int, float>& wv, UndoStateShape& uss, const int boneInd, const std::unordered_map<uint16_t, float>* wPtr);
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
