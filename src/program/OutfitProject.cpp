@@ -24,6 +24,7 @@ using namespace nifly;
 
 OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 	owner = inOwner;
+	workAnim.SetRefNif(&workNif);
 
 	std::string defSkelFile = Config["Anim/DefaultSkeletonReference"];
 	if (wxFileName(wxString::FromUTF8(defSkelFile)).IsRelative())
@@ -1155,13 +1156,14 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 		std::vector<Vector3> pv(nv);
 		std::vector<float> wv(nv, 0.0f);
 		AnimSkin& animSkin = workAnim.shapeSkinning[shape->name.get()];
+		MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(shape);
 
 		for (auto& boneNamesIt : animSkin.boneNames) {
 			AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
 			if (animB) {
 				AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
 				// Compose transform: skin -> (posed) bone -> global -> skin
-				MatTransform t = animSkin.xformGlobalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+				MatTransform t = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
 				// Add weighted contributions to vertex for this bone
 				for (auto& wIt : animW.weights) {
 					int ind = wIt.first;
@@ -1564,7 +1566,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
 	morpher.BuildProximityCache(shapeName, proximityRadius);
-	workNif.CreateSkinning(shape);
+	CreateSkinning(shape);
 
 	int step = 40 / nCopyBones;
 	int prog = 40;
@@ -1829,21 +1831,6 @@ void OutfitProject::ModifyCustomBone(AnimBone* bPtr, const std::string& parentBo
 		workAnim.RecursiveRecalcXFormSkinToBone(s, bPtr);
 }
 
-MatTransform OutfitProject::GetTransformShapeToGlobal(NiShape* shape) {
-	if (shape->IsSkinned()) {
-		return workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin.InverseTransform();
-	}
-	else {	// Unskinned mesh
-		MatTransform ttg = shape->GetTransformToParent();
-		NiNode* parent = workNif.GetParentNode(shape);
-		while (parent) {
-			ttg = parent->GetTransformToParent().ComposeTransforms(ttg);
-			parent = workNif.GetParentNode(parent);
-		}
-		return ttg;
-	}
-}
-
 int OutfitProject::CopySegPart(NiShape* shape) {
 	// Gather baseShape's triangles and vertices
 	std::vector<Triangle> tris;
@@ -1852,7 +1839,7 @@ int OutfitProject::CopySegPart(NiShape* shape) {
 	workNif.GetVertsForShape(baseShape, verts);
 
 	// Transform baseShape vertices to nif global coordinates
-	MatTransform xformToGlobal = GetTransformShapeToGlobal(baseShape);
+	MatTransform xformToGlobal = workAnim.GetTransformShapeToGlobal(baseShape);
 	for (Vector3& v : verts)
 		v = xformToGlobal.ApplyTransform(v);
 
@@ -1879,7 +1866,7 @@ int OutfitProject::CopySegPart(NiShape* shape) {
 	workNif.GetVertsForShape(shape, verts);
 
 	// Transform shape's vertices to nif global coordinates
-	xformToGlobal = GetTransformShapeToGlobal(shape);
+	xformToGlobal = workAnim.GetTransformShapeToGlobal(shape);
 	for (Vector3& v : verts)
 		v = xformToGlobal.ApplyTransform(v);
 
@@ -3344,10 +3331,10 @@ bool OutfitProject::IsVertexOnBoundary(NiShape* shape, int vi) {
 
 bool OutfitProject::PointsHaveDifferingWeightsOrDiffs(NiShape* shape1, int p1, NiShape* shape2, int p2) {
 	// Check for position differences
-	AnimSkin& skin1 = workAnim.shapeSkinning[shape1->name.get()];
-	AnimSkin& skin2 = workAnim.shapeSkinning[shape2->name.get()];
-	MatTransform skin1ToGlobal = skin1.xformGlobalToSkin.InverseTransform();
-	MatTransform skin2ToGlobal = skin2.xformGlobalToSkin.InverseTransform();
+	const AnimSkin& skin1 = shape1->IsSkinned() ? workAnim.shapeSkinning[shape1->name.get()] : AnimSkin();
+	const AnimSkin& skin2 = shape2->IsSkinned() ? workAnim.shapeSkinning[shape2->name.get()] : AnimSkin();
+	MatTransform skin1ToGlobal = workAnim.GetTransformShapeToGlobal(shape1);
+	MatTransform skin2ToGlobal = workAnim.GetTransformShapeToGlobal(shape2);
 	const std::vector<Vector3>* verts1 = workNif.GetVertsForShape(shape1);
 	const std::vector<Vector3>* verts2 = workNif.GetVertsForShape(shape2);
 	if (verts1 && verts2 && (*verts1)[p1] != (*verts2)[p2])
@@ -3355,27 +3342,27 @@ bool OutfitProject::PointsHaveDifferingWeightsOrDiffs(NiShape* shape1, int p1, N
 
 	// Check for bone weight differences
 	for (auto bnp : skin1.boneNames) {
-		AnimWeight& aw1 = skin1.boneWeights[bnp.second];
+		const AnimWeight& aw1 = skin1.boneWeights.at(bnp.second);
 		auto wit1 = aw1.weights.find(p1);
 		if (wit1 == aw1.weights.end() || wit1->second == 0.0f)
 			continue;
 		auto bnit = skin2.boneNames.find(bnp.first);
 		if (bnit == skin2.boneNames.end())
 			return true;
-		AnimWeight& aw2 = skin2.boneWeights[bnit->second];
+		const AnimWeight& aw2 = skin2.boneWeights.at(bnit->second);
 		auto wit2 = aw2.weights.find(p2);
 		if (wit2 == aw2.weights.end() || wit2->second != wit1->second)
 			return true;
 	}
 	for (auto bnp : skin2.boneNames) {
-		AnimWeight& aw2 = skin2.boneWeights[bnp.second];
+		const AnimWeight& aw2 = skin2.boneWeights.at(bnp.second);
 		auto wit2 = aw2.weights.find(p2);
 		if (wit2 == aw2.weights.end() || wit2->second == 0.0f)
 			continue;
 		auto bnit = skin1.boneNames.find(bnp.first);
 		if (bnit == skin1.boneNames.end())
 			return true;
-		AnimWeight& aw1 = skin1.boneWeights[bnit->second];
+		const AnimWeight& aw1 = skin1.boneWeights.at(bnit->second);
 		auto wit1 = aw1.weights.find(p1);
 		if (wit1 == aw1.weights.end() || wit1->second != wit2->second)
 			return true;
@@ -3496,9 +3483,7 @@ void OutfitProject::PrepareWeldVertex(NiShape* shape, UndoStateShape& uss, int s
 	UndoStateVertex &tusv = duss.delVerts[0];
 
 	// Calculate transform from target's skin coordinates to selected's.
-	AnimSkin& skin1 = workAnim.shapeSkinning[shape->name.get()];
-	AnimSkin& skin2 = workAnim.shapeSkinning[targShape->name.get()];
-	MatTransform skx = skin1.xformGlobalToSkin.ComposeTransforms(skin2.xformGlobalToSkin.InverseTransform());
+	MatTransform skx = workAnim.GetTransformGlobalToShape(shape).ComposeTransforms(workAnim.GetTransformShapeToGlobal(targShape));
 
 	// Delete vertex
 	std::vector<uint16_t> selInds(1, selVert);
@@ -4878,6 +4863,10 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 }
 
 int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+	// Set reference NIF in case nothing was loaded yet
+	if (!workAnim.GetRefNif())
+		workAnim.SetRefNif(&workNif);
+
 	if (!baseShape) {
 		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.  Import anyway?"),
 							   _("Import without reference"),
@@ -4887,7 +4876,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 	}
 
 	bool copyBaseSkinTrans = false;
-	if (baseShape && !workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform())) {
+	if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
 		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
 								 "global-to-skin transform to the imported shapes?"),
 							   _("Copy skin coordinates"),
@@ -4980,7 +4969,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 			}
 
 			if (copyBaseSkinTrans)
-				workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin;
+				workAnim.SetTransformGlobalToShape(newShape, workAnim.GetTransformGlobalToShape(baseShape));
 		}
 	}
 
@@ -5009,7 +4998,7 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 
 		std::vector<Vector3> gVerts, gNorms;
 		if (transToGlobal) {
-			MatTransform toGlobal = workAnim.shapeSkinning[shape->name.get()].xformGlobalToSkin.InverseTransform();
+			MatTransform toGlobal = workAnim.GetTransformShapeToGlobal(shape);
 			gVerts.resize(verts->size());
 
 			for (size_t i = 0; i < gVerts.size(); ++i)
@@ -5036,6 +5025,10 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 }
 
 int OutfitProject::ImportFBX(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
+	// Set reference NIF in case nothing was loaded yet
+	if (!workAnim.GetRefNif())
+		workAnim.SetRefNif(&workNif);
+
 	if (!baseShape) {
 		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.  Import anyway?"),
 							   _("Import without reference"),
@@ -5045,7 +5038,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 	}
 
 	bool copyBaseSkinTrans = false;
-	if (baseShape && !workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin.IsNearlyEqualTo(MatTransform())) {
+	if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
 		int res = wxMessageBox(_("The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's "
 								 "global-to-skin transform to the imported shapes?"),
 							   _("Copy skin coordinates"),
@@ -5115,7 +5108,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		if (!newShape)
 			continue;
 
-		workNif.CreateSkinning(newShape);
+		CreateSkinning(newShape);
 
 		uint16_t vertCountNew = newShape->GetNumVertices();
 		uint32_t triCountNew = newShape->GetNumTriangles();
@@ -5136,7 +5129,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		}
 
 		if (copyBaseSkinTrans)
-			workAnim.shapeSkinning[useShapeName].xformGlobalToSkin = workAnim.shapeSkinning[baseShape->name.get()].xformGlobalToSkin;
+			workAnim.SetTransformGlobalToShape(newShape, workAnim.GetTransformGlobalToShape(baseShape));
 
 		for (auto& bn : fbxShape->boneNames) {
 			if (!AnimSkeleton::getInstance().GetBonePtr(bn)) {
@@ -5155,10 +5148,6 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		if (!nonRefBones.empty())
 			wxLogMessage("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, nonRefBones);
 	}
-
-	// Set reference NIF in case nothing was loaded yet
-	if (!workAnim.GetRefNif())
-		workAnim.SetRefNif(&workNif);
 
 	return 0;
 }
@@ -5269,7 +5258,7 @@ void OutfitProject::ResetTransforms() {
 			unskinnedFound = true;
 		}
 	}
-
+ 
 	if (clearRoot) {
 		// Clear root node transform
 		auto rootNode = workNif.GetRootNode();
@@ -5278,10 +5267,26 @@ void OutfitProject::ResetTransforms() {
 	}
 }
 
+void OutfitProject::CreateSkinning(NiShape* s) {
+	if (s->IsSkinned())
+		return;
+	MatTransform globalToShape = workAnim.GetTransformGlobalToShape(s);
+	workNif.CreateSkinning(s);
+	workAnim.SetTransformGlobalToShape(s, globalToShape);
+}
+
+void OutfitProject::RemoveSkinning(NiShape* s) {
+	if (!s->IsSkinned())
+		return;
+	MatTransform shapeToGlobal = workAnim.GetTransformShapeToGlobal(s);
+	workNif.DeleteSkinning(s);
+	workAnim.ClearShape(s->name.get());
+	workAnim.SetTransformShapeToGlobal(s, shapeToGlobal);
+}
+
 void OutfitProject::RemoveSkinning() {
 	for (auto& s : workNif.GetShapes()) {
-		workNif.DeleteSkinning(s);
-		workAnim.ClearShape(s->name.get());
+		RemoveSkinning(s);
 	}
 
 	workNif.DeleteUnreferencedNodes();

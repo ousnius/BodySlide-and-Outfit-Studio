@@ -776,16 +776,9 @@ void ShapeProperties::RemoveExtraData(int id) {
 void ShapeProperties::GetCoordTrans() {
 	Vector3 rotationVec;
 
-	if (shape->IsSkinned()) {
-		oldTransform = os->project->GetWorkAnim()->shapeSkinning[shape->name.get()].xformGlobalToSkin;
-		newTransform = oldTransform;
-		rotationVec = RotMatToVec(newTransform.rotation);
-	}
-	else {
-		oldTransform = shape->GetTransformToParent();
-		newTransform = oldTransform;
-		rotationVec = RotMatToVec(newTransform.rotation);
-	}
+	oldTransform = os->project->GetWorkAnim()->GetTransformShapeToGlobal(shape);
+	newTransform = oldTransform;
+	rotationVec = RotMatToVec(newTransform.rotation);
 
 	textScale->ChangeValue(wxString::Format("%.10f", newTransform.scale));
 	textX->ChangeValue(wxString::Format("%.10f", newTransform.translation.x));
@@ -991,11 +984,10 @@ void ShapeProperties::ApplyChanges() {
 	}
 
 	if (skinned->IsChecked()) {
-		nif->CreateSkinning(shape);
+		os->project->CreateSkinning(shape);
 	}
 	else {
-		nif->DeleteSkinning(shape);
-		os->project->GetWorkAnim()->ClearShape(shape->name.get());
+		os->project->RemoveSkinning(shape);
 		os->UpdateAnimationGUI();
 	}
 
@@ -1029,19 +1021,10 @@ void ShapeProperties::ApplyChanges() {
 	}
 
 	if (!newTransform.IsNearlyEqualTo(oldTransform)) {
-		if (cbTransformGeo->IsChecked()) {
-			if (shape->IsSkinned())
-				os->project->ApplyTransformToShapeGeometry(shape, newTransform.ComposeTransforms(oldTransform.InverseTransform()));
-			else
-				os->project->ApplyTransformToShapeGeometry(shape, newTransform.InverseTransform().ComposeTransforms(oldTransform));
-		}
+		if (cbTransformGeo->IsChecked())
+			os->project->ApplyTransformToShapeGeometry(shape, newTransform.InverseTransform().ComposeTransforms(oldTransform));
 
-		if (shape->IsSkinned()) {
-			os->project->GetWorkAnim()->ChangeGlobalToSkinTransform(shape->name.get(), newTransform);
-			nif->SetShapeTransformGlobalToSkin(shape, newTransform);
-		}
-		else
-			shape->SetTransformToParent(newTransform);
+		os->project->GetWorkAnim()->SetTransformShapeToGlobal(shape, newTransform);
 	}
 
 	os->SetPendingChanges();

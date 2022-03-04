@@ -174,27 +174,7 @@ void Automorph::MeshFromNifShape(Mesh* m, NifFile& ref, NiShape* shape, const An
 
 	m->shapeName = shape->name.get();
 
-	if (!shape->IsSkinned()) {
-		// Calculate transform from shape's CS to global CS
-		MatTransform ttg = shape->GetTransformToParent();
-		NiNode* parent = ref.GetParentNode(shape);
-		while (parent) {
-			ttg = parent->GetTransformToParent().ComposeTransforms(ttg);
-			parent = ref.GetParentNode(parent);
-		}
-
-		m->SetXformMeshToModel(ttg);
-	}
-	else {
-		// For skinned meshes with appropriate global-to-skin transform
-		const auto skinning = workAnim->shapeSkinning.find(m->shapeName);
-		if (skinning != workAnim->shapeSkinning.end()) {
-			const MatTransform& gts = skinning->second.xformGlobalToSkin;
-			m->SetXformModelToMesh(gts);
-		}
-		else
-			m->SetXformModelToMesh(MatTransform());
-	}
+	m->SetXformMeshToModel(workAnim->GetTransformShapeToGlobal(shape));
 
 	m->nVerts = nifVerts.size();
 	m->verts = std::make_unique<Vector3[]>(m->nVerts);

@@ -279,7 +279,6 @@ public:
 	void AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const nifly::MatTransform& xformToParent);
 	void ModifyCustomBone(AnimBone* bPtr, const std::string& parentBone, const nifly::MatTransform& xformToParent);
 
-	nifly::MatTransform GetTransformShapeToGlobal(nifly::NiShape* shape);
 	// CopySegPart returns the number of failed triangles, or 0 for success.
 	int CopySegPart(nifly::NiShape* shape);
 
@@ -343,6 +342,9 @@ public:
 
 	void ChooseClothData(nifly::NifFile& nif);
 	void ResetTransforms();
+
+	void CreateSkinning(nifly::NiShape* s);
+	void RemoveSkinning(nifly::NiShape* s);
 	void RemoveSkinning();
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);

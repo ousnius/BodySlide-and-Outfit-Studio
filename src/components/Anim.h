@@ -145,7 +145,6 @@ public:
 
 	void Clear();
 	void ClearShape(const std::string& shape);
-	bool HasSkinnedShape(nifly::NiShape* shape) const;
 	void DeleteVertsForShape(const std::string& shape, const std::vector<uint16_t>& indices);
 
 	// Loads the skinning information contained in the nif for all shapes.
@@ -175,6 +174,11 @@ public:
 	void WriteToNif(nifly::NifFile* nif, const std::string& shapeException = "");
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName);
+
+	nifly::MatTransform GetTransformShapeToGlobal(nifly::NiShape* shape) const;
+	nifly::MatTransform GetTransformGlobalToShape(nifly::NiShape* shape) const;
+	void SetTransformShapeToGlobal(nifly::NiShape* shape, const nifly::MatTransform& newShapeToGlobal);
+	void SetTransformGlobalToShape(nifly::NiShape* shape, const nifly::MatTransform& newGlobalToShape);
 };
 
 class AnimSkeleton {
