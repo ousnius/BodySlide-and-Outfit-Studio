@@ -12257,6 +12257,25 @@ void wxGLPanel::InvertMask() {
 	os->UpdateUndoTools();
 }
 
+void wxGLPanel::ClearMask() {
+	UndoStateProject* usp = GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	for (auto& m : gls.GetActiveMeshes()) {
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			uss.pointStartState[i].x = m->mask[i];
+			uss.pointEndState[i].x = 0.0f;
+		}
+	}
+
+	ApplyUndoState(usp, false);
+	os->UpdateUndoTools();
+}
+
 bool wxGLPanel::RestoreMode(UndoStateProject* usp) {
 	bool modeChanged = false;
 	UndoType undoType = usp->undoType;

@@ -500,6 +500,7 @@ public:
 	void MaskLess();
 	void MaskMore();
 	void InvertMask();
+	void ClearMask();
 
 	void InvertMaskTris(std::unordered_map<uint16_t, float>& mask, const std::string& shapeName) {
 		Mesh* m = gls.GetMesh(shapeName);
@@ -1507,7 +1508,7 @@ private:
 		if (!activeItem)
 			return;
 
-		glView->ClearActiveMask();
+		glView->ClearMask();
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool();
