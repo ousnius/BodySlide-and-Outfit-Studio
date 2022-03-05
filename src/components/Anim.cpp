@@ -293,6 +293,29 @@ void AnimInfo::ChangeGlobalToSkinTransform(const std::string& shape, const MatTr
 		RecalcXFormSkinToBone(shape, bone);
 }
 
+bool AnimInfo::BoneHasInconsistentTransforms(const std::string& shape, const std::string& bone) const {
+	auto asit = shapeSkinning.find(shape);
+	if (asit == shapeSkinning.end())
+		return false;
+	const AnimSkin& skin = asit->second;
+
+	auto bnit = skin.boneNames.find(bone);
+	if (bnit == skin.boneNames.end())
+		return false;
+	const AnimWeight& aw = skin.boneWeights.at(bnit->second);
+
+	const AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(bone);
+	if (!animB)
+		return false;
+
+	// We calculate the loop residual transform by composing:
+	// global <- bone <- skin <- global
+	// If the three transforms are consistent, then this residual
+	// will be the identity transform.
+	MatTransform residual = animB->xformToGlobal.ComposeTransforms(aw.xformSkinToBone.ComposeTransforms(skin.xformGlobalToSkin));
+	return !residual.IsNearlyEqualTo(MatTransform());
+}
+
 void AnimInfo::FindBonesWithInconsistentTransforms(const std::string& shape, std::unordered_map<std::string, MatTransform>& badStandard, std::unordered_map<std::string, MatTransform>& badCustom) {
 	AnimSkin& skin = shapeSkinning[shape];
 	for (auto& boneName : skin.boneNames) {

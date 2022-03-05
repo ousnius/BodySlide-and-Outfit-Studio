@@ -2437,6 +2437,17 @@
 	</object>
 	<object class="wxMenu" name="menuBoneContext">
 		<label>Bones</label>
+		<object class="wxMenu" name="menuBadBone">
+			<label>Bad Bone</label>
+			<object class="wxMenuItem" name="setBoneSkin">
+				<label>Set Skin Transform From Node</label>
+				<help>Fixes the bad bone by calculating a new skin-to-bone transform.</help>
+			</object>
+			<object class="wxMenuItem" name="setBoneNode">
+				<label>Set Node Transform From Skin</label>
+				<help>Fixes the bad custom bone by calculating a new bone-to-global transform.</help>
+			</object>
+		</object>
 		<object class="wxMenu" name="menuAddBone">
 			<label>Add</label>
 			<object class="wxMenuItem" name="addBone">

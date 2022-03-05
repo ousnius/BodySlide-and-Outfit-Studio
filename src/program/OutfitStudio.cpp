@@ -217,6 +217,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("copyShape"), OutfitStudioFrame::OnDupeShape)
 	EVT_MENU(XRCID("refineMesh"), OutfitStudioFrame::OnRefineMesh)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudioFrame::OnDeleteShape)
+	EVT_MENU(XRCID("setBoneSkin"), OutfitStudioFrame::OnSetBoneSkin)
+	EVT_MENU(XRCID("setBoneNode"), OutfitStudioFrame::OnSetBoneNode)
 	EVT_MENU(XRCID("addBone"), OutfitStudioFrame::OnAddBone)
 	EVT_MENU(XRCID("addCustomBone"), OutfitStudioFrame::OnAddCustomBone)
 	EVT_MENU(XRCID("deleteBone"), OutfitStudioFrame::OnDeleteBone)
@@ -5152,6 +5154,12 @@ void OutfitStudioFrame::OnBoneContext(wxTreeEvent& event) {
 		contextBone = outfitBones->GetItemText(itemId);
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuBoneContext");
 	if (menu) {
+		if (!contextBone.empty() && activeItem && project->GetWorkAnim()->BoneHasInconsistentTransforms(activeItem->GetShape()->name.get(), contextBone)) {
+			if (AnimSkeleton::getInstance().GetBonePtr(contextBone)->isStandardBone)
+				menu->Enable(XRCID("setBoneNode"), false);
+		}
+		else
+			menu->Destroy(XRCID("menuBadBone"));
 		PopupMenu(menu);
 		delete menu;
 	}
@@ -9099,6 +9107,24 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 	SetPendingChanges();
 	UpdateAnimationGUI();
 	glView->Render();
+}
+
+void OutfitStudioFrame::OnSetBoneSkin(wxCommandEvent& WXUNUSED(event)) {
+	std::string shape = activeItem->GetShape()->name.get();
+	project->GetWorkAnim()->RecalcXFormSkinToBone(shape, contextBone);
+
+	glView->UpdateBones();
+	ApplyPose();
+	SetPendingChanges();
+}
+
+void OutfitStudioFrame::OnSetBoneNode(wxCommandEvent& WXUNUSED(event)) {
+	std::string shape = activeItem->GetShape()->name.get();
+	project->GetWorkAnim()->RecalcCustomBoneXFormsFromSkin(shape, contextBone);
+
+	glView->UpdateBones();
+	ApplyPose();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
