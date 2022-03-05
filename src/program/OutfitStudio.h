@@ -968,6 +968,7 @@ public:
 	void LockShapeSelect();
 	void UnlockShapeSelect();
 	void UpdateAnimationGUI();
+	void UpdateBoneItemState(const wxTreeItemId& item, const std::string& boneName);
 	void UpdateBoneTree();
 	void RefreshGUIFromProj(bool render = true);
 	void MeshesFromProj(const bool reloadTextures = false);

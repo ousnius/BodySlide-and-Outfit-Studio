@@ -1078,11 +1078,17 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (outfitBones) {
 		wxBitmap noneImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoNone.png", wxBITMAP_TYPE_PNG);
 		wxBitmap changeImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoChange.png", wxBITMAP_TYPE_PNG);
+		wxBitmap brokenBoneImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoBrokenBone.png", wxBITMAP_TYPE_PNG);
+		wxBitmap brokenBoneChangeImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoBrokenBoneChange.png", wxBITMAP_TYPE_PNG);
 		wxImageList* boneStateImages = new wxImageList(16, 16, false, 2);
 		if (noneImg.IsOk())
 			boneStateImages->Add(noneImg);
 		if (changeImg.IsOk())
 			boneStateImages->Add(changeImg);
+		if (brokenBoneImg.IsOk())
+			boneStateImages->Add(brokenBoneImg);
+		if (brokenBoneChangeImg.IsOk())
+			boneStateImages->Add(brokenBoneChangeImg);
 		outfitBones->AssignStateImageList(boneStateImages);
 		bonesRoot = outfitBones->AddRoot("Bones");
 	}
@@ -2582,6 +2588,8 @@ void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
 			}
 		}
 
+		UpdateBoneItemState(item, boneName);
+
 		item = outfitBones->GetNextChild(bonesRoot, cookie);
 	}
 }
@@ -4017,6 +4025,11 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 	glView->UpdateBones();
 }
 
+void OutfitStudioFrame::UpdateBoneItemState(const wxTreeItemId& item, const std::string& boneName) {
+	bool badBone = activeItem && project->GetWorkAnim()->BoneHasInconsistentTransforms(activeItem->GetShape()->name.get(), boneName);
+	outfitBones->SetItemState(item, (lastNormalizeBones.count(boneName) != 0 ? 1 : 0) + (badBone ? 2 : 0));
+}
+
 void OutfitStudioFrame::UpdateBoneTree() {
 	bool saveRUI = recursingUI;
 	recursingUI = true;
@@ -4041,7 +4054,7 @@ void OutfitStudioFrame::UpdateBoneTree() {
 			continue;
 
 		wxTreeItemId item = outfitBones->AppendItem(bonesRoot, boneStr);
-		outfitBones->SetItemState(item, lastNormalizeBones.count(bone) != 0 ? 1 : 0);
+		UpdateBoneItemState(item, bone);
 
 		if (lastSelectedBones.count(bone) != 0) {
 			outfitBones->SelectItem(item);
@@ -4960,19 +4973,12 @@ void OutfitStudioFrame::ToggleBoneState(wxTreeItemId item) {
 	if (!item.IsOk())
 		return;
 
-	std::string text = outfitBones->GetItemText(item).ToStdString();
-	int state = outfitBones->GetItemState(item);
-
-	switch (state) {
-		case 0:
-			outfitBones->SetItemState(item, 1);
-			lastNormalizeBones.insert(text);
-			break;
-		default:
-			outfitBones->SetItemState(item, 0);
-			lastNormalizeBones.erase(text);
-			break;
-	}
+	std::string boneName = outfitBones->GetItemText(item).ToStdString();
+	if ((outfitBones->GetItemState(item) & 1) != 0)
+		lastNormalizeBones.erase(boneName);
+	else
+		lastNormalizeBones.insert(boneName);
+	UpdateBoneItemState(item, boneName);
 }
 
 void OutfitStudioFrame::OnBoneStateToggle(wxTreeEvent& event) {
@@ -9114,6 +9120,7 @@ void OutfitStudioFrame::OnSetBoneSkin(wxCommandEvent& WXUNUSED(event)) {
 	project->GetWorkAnim()->RecalcXFormSkinToBone(shape, contextBone);
 
 	glView->UpdateBones();
+	HighlightBoneNamesWithWeights();
 	ApplyPose();
 	SetPendingChanges();
 }
@@ -9123,6 +9130,7 @@ void OutfitStudioFrame::OnSetBoneNode(wxCommandEvent& WXUNUSED(event)) {
 	project->GetWorkAnim()->RecalcCustomBoneXFormsFromSkin(shape, contextBone);
 
 	glView->UpdateBones();
+	HighlightBoneNamesWithWeights();
 	ApplyPose();
 	SetPendingChanges();
 }
@@ -9165,7 +9173,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 
 			project->AddBoneRef(bone);
 			wxTreeItemId item = outfitBones->AppendItem(bonesRoot, bone);
-			outfitBones->SetItemState(item, 0);
+			UpdateBoneItemState(item, bone);
 			cXMirrorBone->AppendString(bone);
 			cPoseBone->AppendString(bone);
 		}
@@ -9261,7 +9269,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Adding custom bone '%s' to project.", bone);
 	project->AddCustomBoneRef(bone.ToStdString(), parentBone, xform);
 	wxTreeItemId newItem = outfitBones->AppendItem(bonesRoot, bone);
-	outfitBones->SetItemState(newItem, 0);
+	UpdateBoneItemState(newItem, bone);
 	cXMirrorBone->AppendString(bone);
 	cPoseBone->AppendString(bone);
 
@@ -9861,6 +9869,7 @@ void OutfitStudioFrame::OnCheckBadBones(wxCommandEvent& WXUNUSED(event)) {
 	project->CheckForBadBones();
 
 	glView->UpdateBones();
+	HighlightBoneNamesWithWeights();
 	ApplyPose();
 	SetPendingChanges();
 }
