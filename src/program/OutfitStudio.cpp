@@ -9859,6 +9859,10 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnCheckBadBones(wxCommandEvent& WXUNUSED(event)) {
 	project->CheckForBadBones();
+
+	glView->UpdateBones();
+	ApplyPose();
+	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnCopySegPart(wxCommandEvent& WXUNUSED(event)) {

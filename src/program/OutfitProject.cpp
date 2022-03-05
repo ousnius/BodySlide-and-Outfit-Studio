@@ -5313,8 +5313,10 @@ bool OutfitProject::CheckForBadBones() {
 		if (!sbb.badStandard.empty())
 			sbb.fixStanSkin = true;
 	}
-	if (!gotAnyBad)
+	if (!gotAnyBad) {
+		wxMessageBox(_("No Bad Bones Found."), _("No Bad Bones"), wxOK, owner);
 		return true;
+	}
 
 	// For bad custom bones, we need to rearrange the data so it's keyed
 	// on bone name rather than shape name.
