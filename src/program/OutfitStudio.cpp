@@ -1080,7 +1080,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		wxBitmap changeImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoChange.png", wxBITMAP_TYPE_PNG);
 		wxBitmap brokenBoneImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoBrokenBone.png", wxBITMAP_TYPE_PNG);
 		wxBitmap brokenBoneChangeImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoBrokenBoneChange.png", wxBITMAP_TYPE_PNG);
-		wxImageList* boneStateImages = new wxImageList(16, 16, false, 2);
+		wxImageList* boneStateImages = new wxImageList(16, 16, false, 4);
 		if (noneImg.IsOk())
 			boneStateImages->Add(noneImg);
 		if (changeImg.IsOk())
