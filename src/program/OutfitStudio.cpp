@@ -12780,11 +12780,11 @@ void wxGLPanel::UpdateBones() {
 
 	auto workAnim = os->project->GetWorkAnim();
 
-	std::function<bool(AnimBone*, const Vector3&)> addChildBones = [&](AnimBone* parent, const Vector3& rootPosition) {
+	std::function<bool(AnimBone*)> addChildBones = [&](AnimBone* parent) {
 		bool anyBoneInSelection = false;
 
 		for (auto& cb : parent->children) {
-			bool childBonesInSelection = addChildBones(cb, rootPosition);
+			bool childBonesInSelection = addChildBones(cb);
 
 			if (!cb->boneName.empty()) {
 				bool boneInSelection = false;
@@ -12796,8 +12796,8 @@ void wxGLPanel::UpdateBones() {
 				}
 
 				if (boneInSelection || childBonesInSelection) {
-					Vector3 position = cb->xformToGlobal.ApplyTransform(rootPosition);
-					Vector3 parentPosition = parent->xformToGlobal.ApplyTransform(rootPosition);
+					Vector3 position = cb->xformToGlobal.ApplyTransform(Vector3());
+					Vector3 parentPosition = parent->xformToGlobal.ApplyTransform(Vector3());
 					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
 
 					Vector3 renderPosition = Mesh::TransformPosNifToMesh(position);
@@ -12828,7 +12828,7 @@ void wxGLPanel::UpdateBones() {
 
 	AnimBone* rb = AnimSkeleton::getInstance().GetRootBonePtr();
 	if (rb)
-		addChildBones(rb, rb->xformToParent.translation);
+		addChildBones(rb);
 
 	UpdateNodeColors();
 }

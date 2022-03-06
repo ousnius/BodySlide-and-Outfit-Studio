@@ -728,6 +728,8 @@ AnimBone* AnimSkeleton::LoadCustomBoneFromNif(NifFile* nif, const std::string& b
 		if (!parentBone)
 			parentBone = LoadCustomBoneFromNif(nif, parentNode->name.get());
 	}
+	if (!parentBone)
+		parentBone = GetRootBonePtr();
 	AnimBone& cstm = AnimSkeleton::getInstance().AddCustomBone(boneName);
 	cstm.SetTransformBoneToParent(node->GetTransformToParent());
 	cstm.SetParentBone(parentBone);
