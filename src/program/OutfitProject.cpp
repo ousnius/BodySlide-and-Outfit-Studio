@@ -2733,7 +2733,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask,
 	if (uvsp)
 		workNif.SetUvsForShape(shape, uvs);
 	if (colorsp)
-		workNif.SetColorsForShape(shape->name.get(), colors);
+		workNif.SetColorsForShape(shape, colors);
 	if (normalsp)
 		workNif.SetNormalsForShape(shape, normals);
 	if (tangentsp)
