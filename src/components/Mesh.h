@@ -9,8 +9,8 @@ See the included LICENSE file
 #include "../render/GLExtensions.h"
 #include "../utils/AABBTree.h"
 
-#include "../gli/glm/gtc/matrix_transform.hpp"
-#include "../gli/glm/gtx/euler_angles.hpp"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/euler_angles.hpp>
 
 #include <array>
 #include <memory>
