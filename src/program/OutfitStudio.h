@@ -872,7 +872,6 @@ public:
 	wxTreeCtrl* segmentTree = nullptr;
 	wxTreeCtrl* partitionTree = nullptr;
 	wxPanel* lightSettings = nullptr;
-	wxSlider* boneScale = nullptr;
 	wxChoice* cXMirrorBone = nullptr;
 	wxChoice* cPoseBone = nullptr;
 	wxSlider* rxPoseSlider = nullptr;
@@ -1207,8 +1206,6 @@ private:
 	void OnClickSliderButton(wxCommandEvent& event);
 	void OnReadoutChange(wxCommandEvent& event);
 	void OnSliderCheckBox(wxCommandEvent& event);
-
-	void OnBoneScaleSlider(wxCommandEvent& event);
 
 	void OnTabButtonClick(wxCommandEvent& event);
 	void OnBrushColorChanged(wxColourPickerEvent& event);

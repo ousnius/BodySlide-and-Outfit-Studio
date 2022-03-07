@@ -121,9 +121,6 @@ public:
 	Automorph morpher;
 	bool morpherInitialized = false;
 
-	std::map<std::string, std::vector<nifly::Vector3>> boneScaleOffsets;
-	std::map<std::string, std::vector<nifly::Vector3>> boneScaleVerts;
-
 	std::unordered_map<std::string, std::vector<std::string>> shapeTextures;
 	std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
 
@@ -270,10 +267,6 @@ public:
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
 	void TransferSelectedWeights(nifly::NiShape* shape, std::unordered_map<uint16_t, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
-
-	void InvalidateBoneScaleCache();
-	void ApplyBoneScale(const std::string& bone, int sliderPos, bool clear = false);
-	void ClearBoneScale(bool clear = true);
 
 	void AddBoneRef(const std::string& boneName);
 	void AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const nifly::MatTransform& xformToParent);

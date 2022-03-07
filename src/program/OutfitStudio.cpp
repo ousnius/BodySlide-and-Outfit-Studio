@@ -281,8 +281,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("partitionApply"), OutfitStudioFrame::OnPartitionApply)
 	EVT_BUTTON(XRCID("partitionReset"), OutfitStudioFrame::OnPartitionReset)
 
-	EVT_SLIDER(XRCID("boneScale"), OutfitStudioFrame::OnBoneScaleSlider)
-
 	EVT_BUTTON(XRCID("meshTabButton"), OutfitStudioFrame::OnTabButtonClick)
 	EVT_BUTTON(XRCID("boneTabButton"), OutfitStudioFrame::OnTabButtonClick)
 	EVT_BUTTON(XRCID("segmentTabButton"), OutfitStudioFrame::OnTabButtonClick)
@@ -1133,7 +1131,6 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (editPanel)
 		editPanel->SetBackgroundColour(wxColour(112, 112, 112));
 
-	boneScale = (wxSlider*)FindWindowByName("boneScale");
 	cXMirrorBone = (wxChoice*)FindWindowByName("cXMirrorBone");
 	cPoseBone = (wxChoice*)FindWindowByName("cPoseBone");
 	rxPoseSlider = (wxSlider*)FindWindowByName("rxPoseSlider");
@@ -2024,7 +2021,6 @@ bool OutfitStudioFrame::SaveProject() {
 
 	wxLogMessage("Saving project '%s'...", wxString::FromUTF8(project->OutfitName()));
 	StartProgress(wxString::Format(_("Saving project '%s'..."), wxString::FromUTF8(project->OutfitName())));
-	project->ClearBoneScale();
 
 	std::vector<Mesh*> shapeMeshes;
 	for (auto& s : project->GetWorkNif()->GetShapes()) {
@@ -2203,7 +2199,6 @@ bool OutfitStudioFrame::SaveProjectAs() {
 
 	wxLogMessage("Saving project '%s'...", strOutfitName);
 	StartProgress(wxString::Format(_("Saving project '%s'..."), strOutfitName));
-	project->ClearBoneScale();
 
 	std::vector<Mesh*> shapeMeshes;
 	for (auto& s : project->GetWorkNif()->GetShapes()) {
@@ -4187,8 +4182,6 @@ void OutfitStudioFrame::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::SetBaseShape() {
-	project->ClearBoneScale();
-
 	for (auto& s : project->GetWorkNif()->GetShapes())
 		UpdateShapeSource(s);
 
@@ -4238,7 +4231,6 @@ void OutfitStudioFrame::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	wxLogMessage("Exporting project to NIF file '%s'...", fileName);
-	project->ClearBoneScale();
 
 	std::vector<Mesh*> shapeMeshes;
 	for (auto& s : project->GetWorkNif()->GetShapes()) {
@@ -4273,7 +4265,6 @@ void OutfitStudioFrame::OnExportNIFWithRef(wxCommandEvent& event) {
 		return;
 
 	wxLogMessage("Exporting project with reference to NIF file '%s'...", fileName);
-	project->ClearBoneScale();
 
 	std::vector<Mesh*> shapeMeshes;
 	for (auto& s : project->GetWorkNif()->GetShapeNames()) {
@@ -4307,7 +4298,6 @@ void OutfitStudioFrame::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
 		shapes.push_back(i->GetShape()->name.get());
 
 	wxLogMessage("Exporting selected shapes to NIF file '%s'.", fileName);
-	project->ClearBoneScale();
 
 	if (project->ExportShapeNIF(fileName.ToUTF8().data(), shapes)) {
 		wxLogError("Failed to export selected shapes to NIF file '%s'!", fileName);
@@ -4368,7 +4358,6 @@ void OutfitStudioFrame::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	wxLogMessage("Exporting project to OBJ file '%s'...", fileName);
-	project->ClearBoneScale();
 
 	if (project->ExportOBJ(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapes(), transToGlobal, Vector3(0.1f, 0.1f, 0.1f))) {
 		wxLogError("Failed to export OBJ file '%s'!", fileName);
@@ -4406,7 +4395,6 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		wxLogMessage("Exporting selected shapes as OBJ file to '%s'.", fileName);
-		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes;
 		shapes.reserve(selectedItems.size());
@@ -4430,7 +4418,6 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->GetShape()->name.get(), fileName);
-		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes = {activeItem->GetShape()};
 		if (project->ExportOBJ(fileName.ToUTF8().data(), shapes, transToGlobal, Vector3(0.1f, 0.1f, 0.1f))) {
@@ -4496,7 +4483,6 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	wxLogMessage("Exporting project to OBJ file '%s'...", fileName);
-	project->ClearBoneScale();
 
 	if (!project->ExportFBX(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapes(), transToGlobal)) {
 		wxLogError("Failed to export FBX file '%s'!", fileName);
@@ -4534,7 +4520,6 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		wxLogMessage("Exporting selected shapes as FBX file to '%s'.", fileName);
-		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes;
 		shapes.reserve(selectedItems.size());
@@ -4558,7 +4543,6 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		wxLogMessage("Exporting shape '%s' as FBX file to '%s'.", activeItem->GetShape()->name.get(), fileName);
-		project->ClearBoneScale();
 
 		std::vector<NiShape*> shapes = {activeItem->GetShape()};
 		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes, transToGlobal)) {
@@ -4752,7 +4736,6 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Creating new conversion slider '%s'...", finalName);
 
-	project->ClearBoneScale();
 	project->AddCombinedSlider(finalName);
 
 	auto baseShape = project->GetBaseShape();
@@ -5037,9 +5020,6 @@ void OutfitStudioFrame::RefreshGUIWeightColors() {
 void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	if (recursingUI)
 		return;
-
-	project->ClearBoneScale();
-	boneScale->SetValue(0);
 
 	wxTreeItemId item = event.GetItem();
 	if (!activeItem || !item.IsOk())
@@ -6365,13 +6345,6 @@ void OutfitStudioFrame::OnReadoutChange(wxCommandEvent& event) {
 	ApplySliders();
 }
 
-void OutfitStudioFrame::OnBoneScaleSlider(wxCommandEvent& event) {
-	if (!activeBone.empty())
-		project->ApplyBoneScale(activeBone, event.GetInt(), true);
-
-	glView->Render();
-}
-
 void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 
@@ -6473,26 +6446,21 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	}
 
 	if (id != boneTabButton->GetId()) {
-		boneScale->Show(false);
 		cXMirrorBone->Show(false);
 
 		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
 		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
-		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
 
 		totalBoneCountLabel->Show(false);
 		selectedBoneCountLabel->Show(false);
-		boneScaleLabel->Show(false);
 		cbFixedWeight->Show(false);
 		cbNormalizeWeights->Show(false);
 		xMirrorBoneLabel->Show(false);
 		posePane->Show(false);
 		bonesFilter->GetParent()->Show(false);
-
-		project->ClearBoneScale();
 
 		if (project->bPose) {
 			project->bPose = false;
@@ -6583,20 +6551,16 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionTabButton->SetCheck(false);
 		lightsTabButton->SetCheck(false);
 
-		boneScale->SetValue(0);
-		boneScale->Show();
 		cXMirrorBone->Show();
 
 		wxStaticText* totalBoneCountLabel = (wxStaticText*)FindWindowByName("totalBoneCountLabel");
 		wxStaticText* selectedBoneCountLabel = (wxStaticText*)FindWindowByName("selectedBoneCountLabel");
-		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		wxCheckBox* cbNormalizeWeights = (wxCheckBox*)FindWindowByName("cbNormalizeWeights");
 		wxStaticText* xMirrorBoneLabel = (wxStaticText*)FindWindowByName("xMirrorBoneLabel");
 
 		totalBoneCountLabel->Show();
 		selectedBoneCountLabel->Show();
-		boneScaleLabel->Show();
 		cbFixedWeight->Show();
 		cbNormalizeWeights->Show();
 		xMirrorBoneLabel->Show();
@@ -6973,9 +6937,6 @@ void OutfitStudioFrame::OnSlider(wxCommandEvent& event) {
 	wxSlider* s = ((wxSlider*)event.GetEventObject());
 	if (!s)
 		return;
-
-	project->ClearBoneScale(false);
-	boneScale->SetValue(0);
 
 	wxString sliderName = s->GetName();
 	std::string sn{sliderName.BeforeLast('|').ToUTF8()};
@@ -8976,7 +8937,6 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 		} while (project->IsValidShape(newName));
 
 		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->GetShape()->name.get(), newName);
-		project->ClearBoneScale();
 
 		auto shape = project->DuplicateShape(activeItem->GetShape(), newName);
 		if (shape) {
@@ -10520,11 +10480,6 @@ void OutfitStudioFrame::ApplyPose() {
 		project->GetLiveVerts(shape, verts);
 		glView->UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
 	}
-	if (!activeBone.empty()) {
-		int boneScalePos = boneScale->GetValue();
-		if (boneScalePos != 0)
-			project->ApplyBoneScale(activeBone, boneScalePos);
-	}
 	glView->UpdateBones();
 	glView->Render();
 }
@@ -10709,9 +10664,6 @@ void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 			UpdateShapeSource(s);
 			project->RefreshMorphShape(s);
 		}
-
-		project->InvalidateBoneScaleCache();
-		boneScale->SetValue(0);
 
 		std::vector<std::string> bones;
 		project->GetActiveBones(bones);
@@ -11441,10 +11393,6 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			std::string selectedBone = os->GetActiveBone();
 			if (!selectedBone.empty()) {
 				os->ActiveShapesUpdated(undoHistory.GetCurState(), false);
-
-				int boneScalePos = os->boneScale->GetValue();
-				if (boneScalePos != 0)
-					os->project->ApplyBoneScale(selectedBone, boneScalePos);
 			}
 		}
 
@@ -11469,10 +11417,6 @@ void wxGLPanel::EndBrushStroke() {
 			if (brushType == TweakBrush::BrushType::Weight) {
 				std::string selectedBone = os->GetActiveBone();
 				if (!selectedBone.empty()) {
-					int boneScalePos = os->boneScale->GetValue();
-					if (boneScalePos != 0)
-						os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
-
 					os->HighlightBoneNamesWithWeights();
 					os->UpdateBoneCounts();
 				}
@@ -12387,13 +12331,6 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 		}
 
 		os->ActiveShapesUpdated(usp, bUndo);
-
-		std::string activeBone = os->GetActiveBone();
-		if (!activeBone.empty()) {
-			int boneScalePos = os->boneScale->GetValue();
-			if (boneScalePos != 0)
-				os->project->ApplyBoneScale(activeBone, boneScalePos, true);
-		}
 	}
 	else if (undoType == UndoType::Mask) {
 		for (auto& uss : usp->usss) {

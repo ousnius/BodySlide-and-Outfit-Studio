@@ -1205,33 +1205,6 @@
 																		</object>
 																	</object>
 																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>5</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>0</option>
-																			<object class="wxStaticText" name="boneScaleLabel">
-																				<fg>#ffffff</fg>
-																				<label>Preview Scaling</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<object class="wxSlider" name="boneScale">
-																				<size>-1,25</size>
-																				<value translate="0">0</value>
-																				<min>-100</min>
-																				<max>100</max>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																	</object>
-																</object>
 															</object>
 														</object>
 													</object>

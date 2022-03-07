@@ -1185,8 +1185,6 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 
 		outVerts.swap(pv);
 	}
-
-	InvalidateBoneScaleCache();
 }
 
 void OutfitProject::GetSliderDiff(NiShape* shape, const std::string& sliderName, std::vector<Vector3>& outVerts) {
@@ -1725,88 +1723,6 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 	}
 
 	return hasUnweighted;
-}
-
-void OutfitProject::InvalidateBoneScaleCache() {
-	boneScaleVerts.clear();
-	boneScaleOffsets.clear();
-}
-
-void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool clear) {
-	ClearBoneScale(false);
-
-	AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
-	if (!bptr)
-		return;
-
-	MatTransform xform = bPose ? bptr->xformPoseToGlobal : bptr->xformToGlobal;
-
-	for (auto& s : workNif.GetShapeNames()) {
-		auto it = boneScaleVerts.find(s);
-		if (it == boneScaleVerts.end()) {
-			Mesh* m = owner->glView->GetMesh(s);
-			if (m) {
-				boneScaleVerts.emplace(s, std::vector<Vector3>(m->nVerts));
-				it = boneScaleVerts.find(s);
-				for (int i = 0; i < m->nVerts; i++)
-					it->second[i] = Mesh::TransformPosMeshToNif(m->verts[i]);
-			}
-		}
-
-		std::vector<Vector3>* verts = &it->second;
-
-		it = boneScaleOffsets.find(s);
-		if (it == boneScaleOffsets.end())
-			boneScaleOffsets.emplace(s, std::vector<Vector3>(verts->size()));
-		it = boneScaleOffsets.find(s);
-
-		for (auto& b : workAnim.shapeBones[s]) {
-			if (b == bone) {
-				auto weights = workAnim.GetWeightsPtr(s, b);
-				if (weights) {
-					for (auto& w : *weights) {
-						Vector3 dir = (*verts)[w.first] - xform.translation;
-						dir.Normalize();
-						Vector3 offset = dir * w.second * sliderPos / 5.0f;
-						(*verts)[w.first] += offset;
-						it->second[w.first] += offset;
-					}
-				}
-				break;
-			}
-		}
-
-		if (clear)
-			owner->glView->UpdateMeshVertices(s, verts, true, true, false);
-		else
-			owner->glView->UpdateMeshVertices(s, verts, true, false, false);
-	}
-}
-
-void OutfitProject::ClearBoneScale(bool clear) {
-	if (boneScaleOffsets.empty())
-		return;
-
-	for (auto& s : workNif.GetShapeNames()) {
-		auto it = boneScaleVerts.find(s);
-		std::vector<Vector3>* verts = &it->second;
-
-		it = boneScaleOffsets.find(s);
-		if (it != boneScaleOffsets.end()) {
-			if (verts->size() == it->second.size()) {
-				for (size_t i = 0; i < verts->size(); i++)
-					(*verts)[i] -= it->second[i];
-
-				if (clear)
-					owner->glView->UpdateMeshVertices(s, verts, true, true, false);
-				else
-					owner->glView->UpdateMeshVertices(s, verts, false, false, false);
-			}
-		}
-	}
-
-	boneScaleVerts.clear();
-	boneScaleOffsets.clear();
 }
 
 void OutfitProject::AddBoneRef(const std::string& boneName) {
