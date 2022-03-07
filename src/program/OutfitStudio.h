@@ -881,12 +881,14 @@ public:
 	wxSlider* txPoseSlider = nullptr;
 	wxSlider* tyPoseSlider = nullptr;
 	wxSlider* tzPoseSlider = nullptr;
+	wxSlider* scPoseSlider = nullptr;
 	wxTextCtrl* rxPoseText = nullptr;
 	wxTextCtrl* ryPoseText = nullptr;
 	wxTextCtrl* rzPoseText = nullptr;
 	wxTextCtrl* txPoseText = nullptr;
 	wxTextCtrl* tyPoseText = nullptr;
 	wxTextCtrl* tzPoseText = nullptr;
+	wxTextCtrl* scPoseText = nullptr;
 	wxCheckBox* cbPose = nullptr;
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxMenuBar* menuBar = nullptr;
@@ -1564,6 +1566,7 @@ private:
 	void OnTXPoseSlider(wxScrollEvent& event);
 	void OnTYPoseSlider(wxScrollEvent& event);
 	void OnTZPoseSlider(wxScrollEvent& event);
+	void OnScPoseSlider(wxScrollEvent& event);
 	void OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind);
 	void OnRXPoseTextChanged(wxCommandEvent& event);
 	void OnRYPoseTextChanged(wxCommandEvent& event);
@@ -1571,6 +1574,7 @@ private:
 	void OnTXPoseTextChanged(wxCommandEvent& event);
 	void OnTYPoseTextChanged(wxCommandEvent& event);
 	void OnTZPoseTextChanged(wxCommandEvent& event);
+	void OnScPoseTextChanged(wxCommandEvent& event);
 	void OnResetBonePose(wxCommandEvent& event);
 	void OnResetAllPose(wxCommandEvent& event);
 	void OnPoseToMesh(wxCommandEvent& event);

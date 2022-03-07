@@ -72,12 +72,14 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMMAND_SCROLL(XRCID("txPoseSlider"), OutfitStudioFrame::OnTXPoseSlider)
 	EVT_COMMAND_SCROLL(XRCID("tyPoseSlider"), OutfitStudioFrame::OnTYPoseSlider)
 	EVT_COMMAND_SCROLL(XRCID("tzPoseSlider"), OutfitStudioFrame::OnTZPoseSlider)
+	EVT_COMMAND_SCROLL(XRCID("scPoseSlider"), OutfitStudioFrame::OnScPoseSlider)
 	EVT_TEXT(XRCID("rxPoseText"), OutfitStudioFrame::OnRXPoseTextChanged)
 	EVT_TEXT(XRCID("ryPoseText"), OutfitStudioFrame::OnRYPoseTextChanged)
 	EVT_TEXT(XRCID("rzPoseText"), OutfitStudioFrame::OnRZPoseTextChanged)
 	EVT_TEXT(XRCID("txPoseText"), OutfitStudioFrame::OnTXPoseTextChanged)
 	EVT_TEXT(XRCID("tyPoseText"), OutfitStudioFrame::OnTYPoseTextChanged)
 	EVT_TEXT(XRCID("tzPoseText"), OutfitStudioFrame::OnTZPoseTextChanged)
+	EVT_TEXT(XRCID("scPoseText"), OutfitStudioFrame::OnScPoseTextChanged)
 	EVT_BUTTON(XRCID("resetBonePose"), OutfitStudioFrame::OnResetBonePose)
 	EVT_BUTTON(XRCID("resetAllPose"), OutfitStudioFrame::OnResetAllPose)
 	EVT_BUTTON(XRCID("poseToMesh"), OutfitStudioFrame::OnPoseToMesh)
@@ -1140,12 +1142,14 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	txPoseSlider = (wxSlider*)FindWindowByName("txPoseSlider");
 	tyPoseSlider = (wxSlider*)FindWindowByName("tyPoseSlider");
 	tzPoseSlider = (wxSlider*)FindWindowByName("tzPoseSlider");
+	scPoseSlider = (wxSlider*)FindWindowByName("scPoseSlider");
 	rxPoseText = (wxTextCtrl*)FindWindowByName("rxPoseText");
 	ryPoseText = (wxTextCtrl*)FindWindowByName("ryPoseText");
 	rzPoseText = (wxTextCtrl*)FindWindowByName("rzPoseText");
 	txPoseText = (wxTextCtrl*)FindWindowByName("txPoseText");
 	tyPoseText = (wxTextCtrl*)FindWindowByName("tyPoseText");
 	tzPoseText = (wxTextCtrl*)FindWindowByName("tzPoseText");
+	scPoseText = (wxTextCtrl*)FindWindowByName("scPoseText");
 	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
@@ -10542,12 +10546,14 @@ void OutfitStudioFrame::PoseToGUI() {
 		txPoseSlider->SetValue(bone->poseTranVec.x * 100);
 		tyPoseSlider->SetValue(bone->poseTranVec.y * 100);
 		tzPoseSlider->SetValue(bone->poseTranVec.z * 100);
+		scPoseSlider->SetValue(std::log(bone->poseScale) / std::log(2) * 500);
 		rxPoseText->ChangeValue(wxString() << bone->poseRotVec.x);
 		ryPoseText->ChangeValue(wxString() << bone->poseRotVec.y);
 		rzPoseText->ChangeValue(wxString() << bone->poseRotVec.z);
 		txPoseText->ChangeValue(wxString() << bone->poseTranVec.x);
 		tyPoseText->ChangeValue(wxString() << bone->poseTranVec.y);
 		tzPoseText->ChangeValue(wxString() << bone->poseTranVec.z);
+		scPoseText->ChangeValue(wxString() << bone->poseScale);
 	}
 	else {
 		rxPoseSlider->SetValue(0);
@@ -10556,12 +10562,14 @@ void OutfitStudioFrame::PoseToGUI() {
 		txPoseSlider->SetValue(0);
 		tyPoseSlider->SetValue(0);
 		tzPoseSlider->SetValue(0);
+		scPoseSlider->SetValue(0);
 		rxPoseText->ChangeValue("0");
 		ryPoseText->ChangeValue("0");
 		rzPoseText->ChangeValue("0");
 		txPoseText->ChangeValue("0");
 		tyPoseText->ChangeValue("0");
 		tzPoseText->ChangeValue("0");
+		scPoseText->ChangeValue("1");
 	}
 	if (project->bPose != cbPose->GetValue())
 		cbPose->SetValue(project->bPose);
@@ -10578,14 +10586,18 @@ void OutfitStudioFrame::OnPoseValChanged(int cind, float val) {
 		return;
 	if (cind < 3)
 		bone->poseRotVec[cind] = val;
-	else
+	else if (cind < 6)
 		bone->poseTranVec[cind - 3] = val;
+	else
+		bone->poseScale = val > 0 ? val : .0001f;
 	bone->UpdatePoseTransform();
 	ApplyPose();
 }
 
 void OutfitStudioFrame::OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind) {
-	float val = e.GetPosition() * 0.01f;
+	float val = (cind == 6) ?
+		std::exp(e.GetPosition() * 0.002f * std::log(2)) :
+		e.GetPosition() * 0.01f;
 	t->ChangeValue(wxString() << val);
 	OnPoseValChanged(cind, val);
 }
@@ -10608,6 +10620,9 @@ void OutfitStudioFrame::OnTYPoseSlider(wxScrollEvent& e) {
 void OutfitStudioFrame::OnTZPoseSlider(wxScrollEvent& e) {
 	OnAnyPoseSlider(e, tzPoseText, 5);
 }
+void OutfitStudioFrame::OnScPoseSlider(wxScrollEvent& e) {
+	OnAnyPoseSlider(e, scPoseText, 6);
+}
 
 void OutfitStudioFrame::OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind) {
 	if (!t || !s)
@@ -10615,7 +10630,10 @@ void OutfitStudioFrame::OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cin
 	double val;
 	if (!t->GetValue().ToDouble(&val))
 		return;
-	s->SetValue(val * 100);
+	if (cind == 6)
+		s->SetValue(std::log(val) / std::log(2) * 500);
+	else
+		s->SetValue(val * 100);
 	OnPoseValChanged(cind, val);
 }
 
@@ -10637,6 +10655,9 @@ void OutfitStudioFrame::OnTYPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnTZPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
 	OnAnyPoseTextChanged(tzPoseText, tzPoseSlider, 5);
 }
+void OutfitStudioFrame::OnScPoseTextChanged(wxCommandEvent& WXUNUSED(event)) {
+	OnAnyPoseTextChanged(scPoseText, scPoseSlider, 6);
+}
 
 void OutfitStudioFrame::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {
 	AnimBone* bone = GetPoseBonePtr();
@@ -10644,6 +10665,7 @@ void OutfitStudioFrame::OnResetBonePose(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	bone->poseRotVec = Vector3(0, 0, 0);
 	bone->poseTranVec = Vector3(0, 0, 0);
+	bone->poseScale = 1.0f;
 	bone->UpdatePoseTransform();
 	PoseToGUI();
 	ApplyPose();
@@ -10663,11 +10685,12 @@ void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
 		if (!bone)
 			continue;
 
-		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero() && bone->poseScale == 1.0f)
 			continue;
 
 		bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
 		bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
+		bone->poseScale = 1.0f;
 		bone->UpdatePoseTransform();
 	}
 
@@ -10698,11 +10721,12 @@ void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 			if (!bone)
 				continue;
 
-			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero() && bone->poseScale == 1.0f)
 				continue;
 
 			bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
 			bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
+			bone->poseScale = 1.0f;
 			bone->UpdatePoseTransform();
 		}
 
@@ -10739,10 +10763,12 @@ void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 			if (poseBoneData != poseData->boneData.end()) {
 				bone->poseRotVec = poseBoneData->rotation;
 				bone->poseTranVec = poseBoneData->translation;
+				bone->poseScale = poseBoneData->scale;
 			}
 			else {
 				bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
 				bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
+				bone->poseScale = 1.0f;
 			}
 
 			bone->UpdatePoseTransform();
@@ -10768,13 +10794,14 @@ void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
 			if (!bone)
 				continue;
 
-			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero() && bone->poseScale == 1.0f)
 				continue;
 
 			PoseBoneData poseBoneData{};
 			poseBoneData.name = bone->boneName;
 			poseBoneData.rotation = bone->poseRotVec;
 			poseBoneData.translation = bone->poseTranVec;
+			poseBoneData.scale = bone->poseScale;
 			poseData->boneData.push_back(poseBoneData);
 		}
 
@@ -10821,13 +10848,14 @@ void OutfitStudioFrame::OnSaveAsPose(wxCommandEvent& WXUNUSED(event)) {
 		if (!bone)
 			continue;
 
-		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero())
+		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero() && bone->poseScale == 1.0f)
 			continue;
 
 		PoseBoneData poseBoneData{};
 		poseBoneData.name = bone->boneName;
 		poseBoneData.rotation = bone->poseRotVec;
 		poseBoneData.translation = bone->poseTranVec;
+		poseBoneData.scale = bone->poseScale;
 		poseData->boneData.push_back(poseBoneData);
 	}
 

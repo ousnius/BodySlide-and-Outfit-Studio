@@ -44,6 +44,7 @@ public:
 	nifly::MatTransform xformToParent;
 	// pose rotation and translation vectors
 	nifly::Vector3 poseRotVec, poseTranVec;
+	float poseScale = 1.0f;
 	nifly::MatTransform xformPoseToGlobal;
 
 	int refCount = 0; // reference count of this bone

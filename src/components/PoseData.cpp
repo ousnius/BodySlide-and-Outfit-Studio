@@ -22,6 +22,7 @@ bool PoseData::LoadElement(XMLElement* srcElement) {
 		poseBoneData.translation.x = boneElement->FloatAttribute("transX");
 		poseBoneData.translation.y = boneElement->FloatAttribute("transY");
 		poseBoneData.translation.z = boneElement->FloatAttribute("transZ");
+		poseBoneData.scale = boneElement->FloatAttribute("scale", 1.0f);
 		boneData.push_back(poseBoneData);
 
 		boneElement = boneElement->NextSiblingElement("Bone");
@@ -44,6 +45,8 @@ void PoseData::WriteElement(XMLElement* element, bool append) const {
 		newElement->SetAttribute("transX", bone.translation.x);
 		newElement->SetAttribute("transY", bone.translation.y);
 		newElement->SetAttribute("transZ", bone.translation.z);
+		if (bone.scale != 1.0f)
+			newElement->SetAttribute("scale", bone.scale);
 	}
 }
 

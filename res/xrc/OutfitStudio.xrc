@@ -1569,6 +1569,37 @@
 																					<maxlength>0</maxlength>
 																				</object>
 																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<border>5</border>
+																				<flag>wxBOTTOM|wxALIGN_LEFT</flag>
+																				<object class="wxStaticText" name="scLabel">
+																					<label>Scale</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<border>5</border>
+																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<object class="wxSlider" name="scPoseSlider">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value translate="0">0</value>
+																					<min>-1000</min>
+																					<max>1000</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<border>5</border>
+																				<flag>wxBOTTOM|wxALIGN_CENTER_VERTICAL</flag>
+																				<object class="wxTextCtrl" name="scPoseText">
+																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<value translate="0">1</value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
 																		</object>
 																	</object>
 																	<object class="sizeritem">

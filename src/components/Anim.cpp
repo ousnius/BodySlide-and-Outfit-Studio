@@ -848,6 +848,7 @@ void AnimBone::UpdatePoseTransform() {
 	MatTransform xformPoseToBone;
 	xformPoseToBone.translation = poseTranVec;
 	xformPoseToBone.rotation = RotVecToMat(poseRotVec);
+	xformPoseToBone.scale = poseScale;
 	MatTransform xformPoseToParent = xformToParent.ComposeTransforms(xformPoseToBone);
 	if (parent)
 		xformPoseToGlobal = parent->xformPoseToGlobal.ComposeTransforms(xformPoseToParent);
