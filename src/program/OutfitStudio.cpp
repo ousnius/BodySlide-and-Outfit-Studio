@@ -10521,6 +10521,7 @@ void OutfitStudioFrame::ApplyPose() {
 		if (boneScalePos != 0)
 			project->ApplyBoneScale(activeBone, boneScalePos);
 	}
+	glView->UpdateBones();
 	glView->Render();
 }
 
@@ -12796,8 +12797,10 @@ void wxGLPanel::UpdateBones() {
 				}
 
 				if (boneInSelection || childBonesInSelection) {
-					Vector3 position = cb->xformToGlobal.ApplyTransform(Vector3());
-					Vector3 parentPosition = parent->xformToGlobal.ApplyTransform(Vector3());
+					const MatTransform& toGlobal = os->project->bPose ? cb->xformPoseToGlobal : cb->xformToGlobal;
+					Vector3 position = toGlobal.ApplyTransform(Vector3());
+					const MatTransform& parentToGlobal = os->project->bPose ? parent->xformPoseToGlobal : parent->xformToGlobal;
+					Vector3 parentPosition = parentToGlobal.ApplyTransform(Vector3());
 					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
 
 					Vector3 renderPosition = Mesh::TransformPosNifToMesh(position);
