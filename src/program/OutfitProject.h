@@ -343,6 +343,11 @@ public:
 	bool CheckForBadBones();
 	bool ShapeHasBadBones(nifly::NiShape* s);
 
+	void GetAllPoseTransforms(nifly::NiShape* s, std::vector<nifly::MatTransform>& ts);
+	void ApplyTransformToOneVertexGeometry(UndoStateVertex& usv, const nifly::MatTransform& t);
+	void ApplyPoseTransformsToShapeGeometry(nifly::NiShape* s, UndoStateShape& uss);
+	void ApplyPoseTransformsToAllShapeGeometry(UndoStateProject& usp);
+
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
 	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false);
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);

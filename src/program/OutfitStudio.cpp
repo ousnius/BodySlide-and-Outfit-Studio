@@ -10655,15 +10655,8 @@ void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 	if (project->bPose) {
-		wxMessageDialog dlg(this, _("Permanently apply the pose to the mesh?"), _("Apply Pose to Mesh"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
-		dlg.SetOKCancelLabels(_("Apply"), _("Cancel"));
-		if (dlg.ShowModal() != wxID_OK)
-			return;
-
-		for (auto& s : project->GetWorkNif()->GetShapes()) {
-			UpdateShapeSource(s);
-			project->RefreshMorphShape(s);
-		}
+		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+		project->ApplyPoseTransformsToAllShapeGeometry(*usp);
 
 		std::vector<std::string> bones;
 		project->GetActiveBones(bones);
@@ -10683,7 +10676,8 @@ void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		PoseToGUI();
-		ApplyPose();
+		glView->UpdateBones();
+		glView->ApplyUndoState(usp, false);
 		SetPendingChanges();
 	}
 }

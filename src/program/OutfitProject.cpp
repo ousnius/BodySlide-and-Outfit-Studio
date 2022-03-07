@@ -5574,3 +5574,110 @@ bool OutfitProject::ShapeHasBadBones(NiShape* s) {
 		return true;
 	return false;
 }
+
+// GetAllPoseTransforms: this function calculates the pose transform (in
+// shape coordinates) for every vertex.  Note that the resulting transforms
+// do not follow the rules: the "rotation" is not necessarily a rotation;
+// it might contain a scale, and it'll almost certainly contain rule violations
+// because of linear interpolation.
+void OutfitProject::GetAllPoseTransforms(NiShape* s, std::vector<MatTransform>& ts) {
+	int nVerts = static_cast<int>(s->GetNumVertices());
+	ts.resize(nVerts);
+
+	// We're going to _sum_ rotations, so we have to start with zero matrices.
+	for (int i = 0; i < nVerts; ++i)
+		ts[i].rotation[0][0] = ts[i].rotation[1][1] = ts[i].rotation[2][2] = 0.0f;
+	std::vector<float> tws(nVerts, 0.0f); // Total weight for each vertex
+
+	AnimSkin& animSkin = workAnim.shapeSkinning[s->name.get()];
+	MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(s);
+
+	for (auto& boneNamesIt : animSkin.boneNames) {
+		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
+		if (!animB)
+			continue;
+		AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
+		// Compose transform: skin -> (posed) bone -> global -> skin
+		MatTransform t = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+		// Add weighted contributions to vertex transforms for this bone
+		for (auto& wIt : animW.weights) {
+			int vi = wIt.first;
+			float w = wIt.second;
+			ts[vi].rotation += t.rotation * (w * t.scale);
+			ts[vi].translation += t.translation * w;
+			tws[vi] += w;
+		}
+	}
+
+	// Check if total weight for each vertex was 1
+	for (int vi = 0; vi < nVerts; ++vi) {
+		if (tws[vi] < EPSILON) { // If weights are missing for this vertex
+			ts[vi] = MatTransform();
+		}
+		else if (std::fabs(tws[vi] - 1.0f) >= EPSILON) { // If weights are not normalized for this vertex
+			float normAdjust = 1.0f / tws[vi];
+			ts[vi].rotation *= normAdjust;
+			ts[vi].translation *= normAdjust;
+		}
+		// else do nothing because weights totaled 1.
+	}
+
+	// Note that the rotations still contain scale and interpolation
+	// artifacts that make them not rotations!
+}
+
+// Note that ApplyTransformToOneVertexGeometry does not assume that t.rotation
+// is a proper rotation, so it can be used with GetAllPoseTransforms.
+void OutfitProject::ApplyTransformToOneVertexGeometry(UndoStateVertex& usv, const MatTransform& t) {
+	usv.pos = t.ApplyTransform(usv.pos);
+	usv.normal = t.ApplyTransformToDir(usv.normal);
+	usv.normal.Normalize();
+	usv.tangent = t.ApplyTransformToDir(usv.tangent);
+	usv.tangent.Normalize();
+	usv.bitangent = t.ApplyTransformToDir(usv.bitangent);
+	usv.bitangent.Normalize();
+	for (auto& usvsd : usv.diffs) {
+		SliderData& sd = activeSet[usvsd.sliderName];
+		if (sd.bUV || sd.bClamp || sd.bZap)
+			continue;
+		usvsd.diff = t.ApplyTransformToDiff(usvsd.diff);
+	}
+}
+
+void OutfitProject::ApplyPoseTransformsToShapeGeometry(NiShape* s, UndoStateShape& uss) {
+	int nVerts = static_cast<int>(s->GetNumVertices());
+	int nTris = static_cast<int>(s->GetNumTriangles());
+
+	// Get all the shape's vertices
+	std::vector<uint16_t> vinds(nVerts);
+	for (int i = 0; i < nVerts; ++i)
+		vinds[i] = i;
+	CollectVertexData(s, uss, vinds);
+	uss.addVerts = uss.delVerts;
+
+	// Get all the shape's triangles
+	std::vector<uint32_t> tinds(nTris);
+	for (int i = 0; i < nTris; ++i)
+		tinds[i] = i;
+	CollectTriangleData(s, uss, tinds);
+	uss.addTris = uss.delTris;
+
+	// Get all the pose transforms
+	std::vector<MatTransform> ts;
+	GetAllPoseTransforms(s, ts);
+
+	// Apply all the pose transforms
+	for (int i = 0; i < nVerts; ++i)
+		ApplyTransformToOneVertexGeometry(uss.addVerts[i], ts[i]);
+}
+
+void OutfitProject::ApplyPoseTransformsToAllShapeGeometry(UndoStateProject& usp) {
+	usp.undoType = UndoType::Mesh;
+	std::vector<NiShape*> shapes = workNif.GetShapes();
+	usp.usss.resize(shapes.size());
+	for (size_t si = 0; si < shapes.size(); ++si) {
+		UndoStateShape& uss = usp.usss[si];
+		uss.shapeName = shapes[si]->name.get();
+		ApplyPoseTransformsToShapeGeometry(shapes[si], uss);
+	}
+}
