@@ -4940,6 +4940,10 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 					if (ret == wxYES)
 						workNif.SetUvsForShape(mergeShape, uv);
 
+					ret = wxMessageBox(_("Update Normals?"), _("Normals Update"), wxYES_NO | wxICON_QUESTION, owner);
+					if (ret == wxYES)
+						workNif.SetNormalsForShape(mergeShape, n);
+
 					return 101;
 				}
 			}

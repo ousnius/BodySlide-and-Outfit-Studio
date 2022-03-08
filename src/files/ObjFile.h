@@ -15,20 +15,6 @@ struct ObjOptionsImport {
 	bool noFaces = false;
 };
 
-struct ObjPoint {
-	int v = 0;
-	int vt = 0;
-	int vn = 0;
-
-	ObjPoint(const int inV, const int inVT, const int inVN) {
-		v = inV;
-		vt = inVT;
-		vn = inVN;
-	}
-
-	bool operator==(const ObjPoint& other) const { return v == other.v && vt == other.vt && vn == other.vn; }
-};
-
 struct ObjData {
 	std::string name;
 	std::vector<nifly::Vector3> verts;
@@ -38,14 +24,11 @@ struct ObjData {
 };
 
 class ObjFile {
-	std::map<std::string, ObjData*> data;
+	std::map<std::string, ObjData> data;
 
 public:
 	nifly::Vector3 scale = nifly::Vector3(1.0f, 1.0f, 1.0f);
 	nifly::Vector3 offset;
-
-	ObjFile();
-	~ObjFile();
 
 	int AddGroup(const std::string& name,
 				 const std::vector<nifly::Vector3>& verts,
@@ -57,7 +40,8 @@ public:
 	void SetOffset(const nifly::Vector3& inOffset) { offset = inOffset; }
 
 	int LoadForNif(const std::string& fileName, const ObjOptionsImport& options = ObjOptionsImport());
-	int LoadForNif(std::fstream& base, const ObjOptionsImport& options = ObjOptionsImport());
+	void LoadNoFaces(std::istream& base);
+	void LoadForNif(std::istream& base);
 
 	int Save(const std::string& fileName);
 
