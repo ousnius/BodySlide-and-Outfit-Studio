@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "wxDDSImage.h"
 
-#include "gli.hpp"
+#include <gli.hpp>
 
 wxIMPLEMENT_DYNAMIC_CLASS(wxDDSHandler, wxImageHandler);
 

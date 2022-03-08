@@ -12,8 +12,8 @@ See the included LICENSE file
 
 #include "../utils/StringStuff.h"
 
-#include "../SOIL2/SOIL2.h"
-#include "gli.hpp"
+#include <../SOIL2/SOIL2.h>
+#include <gli.hpp>
 
 typedef unsigned int GLuint;
 class GLMaterial;

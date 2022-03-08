@@ -38,7 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <algorithm>
 
-#include "../LZ4F/lz4frame_static.h"
+#include <../LZ4F/lz4frame_static.h>
 
 
 wxUint32 BSA::BSAFile::size() const {
