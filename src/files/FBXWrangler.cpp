@@ -495,26 +495,21 @@ bool FBXWrangler::Priv::LoadMeshes(const FBXImportOptions& options) {
 				}
 
 				for (int t = 0; t < numTris; t++) {
-					if (m->GetPolygonSize(t) != 3)
-						continue;
+					int nverts = m->GetPolygonSize(t);
+					std::vector<int> pverts(nverts);
+					for (int tvi = 0; tvi < nverts; ++tvi)
+						pverts[tvi] = m->GetPolygonVertex(t, tvi);
 
-					int p1 = m->GetPolygonVertex(t, 0);
-					int p2 = m->GetPolygonVertex(t, 1);
-					int p3 = m->GetPolygonVertex(t, 2);
-					shape.tris.emplace_back(p1, p2, p3);
+					for (int tvi = 2; tvi < nverts; ++tvi)
+						shape.tris.emplace_back(pverts[0], pverts[tvi - 1], pverts[tvi]);
 
 					if (uv && uv->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
 						FbxVector2 v_uv;
 						bool isUnmapped;
 
-						if (m->GetPolygonVertexUV(t, 0, uvName, v_uv, isUnmapped))
-							shape.uvs[p1] = Vector2(v_uv.mData[0], v_uv.mData[1]);
-
-						if (m->GetPolygonVertexUV(t, 1, uvName, v_uv, isUnmapped))
-							shape.uvs[p2] = Vector2(v_uv.mData[0], v_uv.mData[1]);
-
-						if (m->GetPolygonVertexUV(t, 2, uvName, v_uv, isUnmapped))
-							shape.uvs[p3] = Vector2(v_uv.mData[0], v_uv.mData[1]);
+						for (int tvi = 0; tvi < nverts; ++tvi)
+							if (m->GetPolygonVertexUV(t, tvi, uvName, v_uv, isUnmapped))
+								shape.uvs[pverts[tvi]] = Vector2(v_uv.mData[0], v_uv.mData[1]);
 					}
 				}
 

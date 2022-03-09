@@ -5094,6 +5094,10 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 					if (ret == wxYES)
 						workNif.SetUvsForShape(mergeShape, fbxShape->uvs);
 
+					ret = wxMessageBox(_("Update Normals?"), _("Normals Update"), wxYES_NO | wxICON_QUESTION, owner);
+					if (ret == wxYES)
+						workNif.SetNormalsForShape(mergeShape, fbxShape->normals);
+
 					ret = wxMessageBox(_("Update Animation Weighting?"), _("Animation Weight Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						for (auto& bn : fbxShape->boneNames)
