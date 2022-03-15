@@ -60,6 +60,7 @@ struct FBXWrangler::Priv {
 	void AddGeometry(NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs);
 
 	bool LoadMeshes(const FBXImportOptions& options);
+	void LoadMesh(const FBXImportOptions& options, FbxNode* node);
 };
 
 FBXWrangler::FBXWrangler()
@@ -132,7 +133,7 @@ void FBXWrangler::Priv::AddGeometry(
 	for (int i = 0; i < m->GetControlPointsCount(); i++) {
 		points[i] = FbxVector4((*verts)[i].y, (*verts)[i].z, (*verts)[i].x);
 		if (normElement)
-			normElement->GetDirectArray().Add(FbxVector4((*norms)[i].x, (*norms)[i].y, (*norms)[i].z));
+			normElement->GetDirectArray().Add(FbxVector4((*norms)[i].y, (*norms)[i].z, (*norms)[i].x));
 		if (uvElement)
 			uvElement->GetDirectArray().Add(FbxVector2((*uvs)[i].u, (*uvs)[i].v));
 	}
@@ -454,98 +455,8 @@ bool FBXWrangler::Priv::LoadMeshes(const FBXImportOptions& options) {
 		for (int i = 0; i < root->GetChildCount(); i++) {
 			FbxNode* child = root->GetChild(i);
 
-			if (child->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) {
-				FBXShape shape;
-				FbxMesh* m = (FbxMesh*)child->GetNodeAttribute();
-
-				if (!m->IsTriangleMesh()) {
-					FbxGeometryConverter converter(sdkManager);
-					m = (FbxMesh*)converter.Triangulate((FbxNodeAttribute*)m, true);
-				}
-
-				FbxGeometryElementUV* uv = m->GetElementUV(0);
-				FbxGeometryElementNormal* normal = m->GetElementNormal(0);
-
-				shape.name = child->GetName();
-				int numVerts = m->GetControlPointsCount();
-				int numTris = m->GetPolygonCount();
-
-				for (int v = 0; v < numVerts; v++) {
-					FbxVector4 vert = m->GetControlPointAt(v);
-					shape.verts.emplace_back((float)vert.mData[2], (float)vert.mData[0], (float)vert.mData[1]);
-					if (uv && uv->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
-						int uIndex = v;
-						if (uv->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
-							uIndex = uv->GetIndexArray().GetAt(v);
-
-						shape.uvs.emplace_back((float)uv->GetDirectArray().GetAt(uIndex).mData[0], (float)uv->GetDirectArray().GetAt(uIndex).mData[1]);
-					}
-
-					if (normal && normal->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
-						shape.normals.emplace_back((float)normal->GetDirectArray().GetAt(v).mData[0],
-												   (float)normal->GetDirectArray().GetAt(v).mData[1],
-												   (float)normal->GetDirectArray().GetAt(v).mData[2]);
-					}
-				}
-
-				const char* uvName = nullptr;
-				if (uv) {
-					uvName = uv->GetName();
-					shape.uvs.resize(numVerts);
-				}
-
-				for (int t = 0; t < numTris; t++) {
-					if (m->GetPolygonSize(t) != 3)
-						continue;
-
-					int p1 = m->GetPolygonVertex(t, 0);
-					int p2 = m->GetPolygonVertex(t, 1);
-					int p3 = m->GetPolygonVertex(t, 2);
-					shape.tris.emplace_back(p1, p2, p3);
-
-					if (uv && uv->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
-						FbxVector2 v_uv;
-						bool isUnmapped;
-
-						if (m->GetPolygonVertexUV(t, 0, uvName, v_uv, isUnmapped))
-							shape.uvs[p1] = Vector2(v_uv.mData[0], v_uv.mData[1]);
-
-						if (m->GetPolygonVertexUV(t, 1, uvName, v_uv, isUnmapped))
-							shape.uvs[p2] = Vector2(v_uv.mData[0], v_uv.mData[1]);
-
-						if (m->GetPolygonVertexUV(t, 2, uvName, v_uv, isUnmapped))
-							shape.uvs[p3] = Vector2(v_uv.mData[0], v_uv.mData[1]);
-					}
-				}
-
-				for (int iSkin = 0; iSkin < m->GetDeformerCount(FbxDeformer::eSkin); iSkin++) {
-					FbxSkin* skin = (FbxSkin*)m->GetDeformer(iSkin, FbxDeformer::eSkin);
-
-					for (int iCluster = 0; iCluster < skin->GetClusterCount(); iCluster++) {
-						FbxCluster* cluster = skin->GetCluster(iCluster);
-						if (!cluster->GetLink())
-							continue;
-
-						std::string bone = cluster->GetLink()->GetName();
-						shape.boneNames.insert(bone);
-						for (int iPoint = 0; iPoint < cluster->GetControlPointIndicesCount(); iPoint++) {
-							int v = cluster->GetControlPointIndices()[iPoint];
-							float w = cluster->GetControlPointWeights()[iPoint];
-							shape.boneSkin[bone].SetWeight(v, w);
-						}
-					}
-				}
-
-				if (options.InvertU)
-					for (auto& u : shape.uvs)
-						u.u = 1.0f - u.u;
-
-				if (options.InvertV)
-					for (auto& v : shape.uvs)
-						v.v = 1.0f - v.v;
-
-				shapes[shape.name] = shape;
-			}
+			if (child->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh)
+				LoadMesh(options, child);
 
 			loadNodeChildren(child);
 		}
@@ -555,4 +466,188 @@ bool FBXWrangler::Priv::LoadMeshes(const FBXImportOptions& options) {
 	loadNodeChildren(root);
 
 	return true;
+}
+
+void FBXWrangler::Priv::LoadMesh(const FBXImportOptions& options, FbxNode* node)
+{
+	FBXShape shape;
+	FbxMesh* m = (FbxMesh*)node->GetNodeAttribute();
+
+	if (!m->IsTriangleMesh()) {
+		FbxGeometryConverter converter(sdkManager);
+		m = (FbxMesh*)converter.Triangulate((FbxNodeAttribute*)m, true);
+	}
+
+	FbxGeometryElementUV* geuv = m->GetElementUV(0);
+	bool haveUVs = geuv && (
+		geuv->GetMappingMode() == FbxGeometryElement::eByControlPoint ||
+		geuv->GetMappingMode() == FbxGeometryElement::eByPolygonVertex);
+	const char* uvName = nullptr;
+	if (geuv)
+		uvName = geuv->GetName();
+
+	FbxGeometryElementNormal* genrm = m->GetElementNormal(0);
+	bool haveNorms = genrm && (
+		genrm->GetMappingMode() == FbxGeometryElement::eByControlPoint ||
+		genrm->GetMappingMode() == FbxGeometryElement::eByPolygonVertex);
+
+	shape.name = node->GetName();
+	int nVerts = m->GetControlPointsCount();
+
+	// Each vertex in the file may need to be duplicated if it's used with
+	// different texture coordinates or normals.  vdata keeps track of all
+	// the duplicates of a vertex.
+	struct VertData {
+		int tmpvi, finvi;
+		Vector2 uv;
+		Vector3 nrm;
+	};
+	std::vector<std::vector<VertData>> vdata(nVerts);
+
+	// As we find distinct vertices, we assign each a unique temporary vertex
+	// index, tmpvi.  Later, we'll renumber the vertices to preserve the file's
+	// vertex ordering as well as possible; that final vertex ordering will
+	// be called finvi.
+	int tmpvi = 0;
+
+	int numTris = m->GetPolygonCount();
+	shape.tris.resize(numTris);
+	for (int ti = 0; ti < numTris; ti++) {
+		if (m->GetPolygonSize(ti) != 3)
+			continue;	// Shouldn't be possible since we called Triangulate
+
+		// For now, each of the triangle's vertex indices will be filled in
+		// with the tmpvi for the vertex.  We'll update them to finvi later.
+		Triangle& t = shape.tris[ti];
+
+		for (int tvi = 0; tvi < 3; ++tvi) {
+			int vi = m->GetPolygonVertex(ti, tvi);
+
+			// Find UV
+			Vector2 uv;
+			if (geuv && geuv->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
+				int index = vi;
+				if (geuv->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
+					index = geuv->GetIndexArray().GetAt(vi);
+
+				uv.u = geuv->GetDirectArray().GetAt(index).mData[0];
+				uv.v = geuv->GetDirectArray().GetAt(index).mData[1];
+			}
+			if (geuv && geuv->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
+				FbxVector2 v_uv;
+				bool isUnmapped;
+
+				if (m->GetPolygonVertexUV(ti, tvi, uvName, v_uv, isUnmapped)) {
+					uv.u = v_uv.mData[0];
+					uv.v = v_uv.mData[1];
+				}
+			}
+
+			// Find normal
+			Vector3 nrm;
+			if (genrm && genrm->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
+				int index = vi;
+				if (genrm->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
+					index = genrm->GetIndexArray().GetAt(vi);
+
+				nrm.x = genrm->GetDirectArray().GetAt(index).mData[2];
+				nrm.y = genrm->GetDirectArray().GetAt(index).mData[0];
+				nrm.z = genrm->GetDirectArray().GetAt(index).mData[1];
+			}
+			if (genrm && genrm->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
+				FbxVector4 v_nrm;
+				if (m->GetPolygonVertexNormal(ti, tvi, v_nrm)) {
+					nrm.x = v_nrm.mData[2];
+					nrm.y = v_nrm.mData[0];
+					nrm.z = v_nrm.mData[1];
+				}
+			}
+
+			// Try to find tmpvi by searching VertData
+			bool found = false;
+			for (VertData& vd : vdata[vi]) {
+				if (haveUVs && uv != vd.uv)
+					continue;
+				if (haveNorms && nrm != vd.nrm)
+					continue;
+				found = true;
+				// Found existing tmpvi
+				t[tvi] = vd.tmpvi;
+			}
+			if (!found) {
+				// New vertex: add to vdata and use new tmpvi
+				vdata[vi].push_back(VertData{tmpvi, 0, uv, nrm});
+				t[tvi] = tmpvi++;
+			}
+		}	// end tvi loop
+	}	// end ti loop
+
+	// vdata now has a complete list of vertices used by this shape.  The
+	// number of vertices used is tmpvi.  We create the "final" vertex ordering
+	// by going through vdata in order, assigning a finvi to each used vertex.
+	// We also prepare a map from tmpvi to finvi.  We store the data
+	// in shape.verts, shape.uvs, and shape.normals.
+	int finvi = 0;
+	std::vector<int> tmpviToFinvi(tmpvi);
+	shape.verts.resize(tmpvi);
+	if (haveUVs)
+		shape.uvs.resize(tmpvi);
+	if (haveNorms)
+		shape.normals.resize(tmpvi);
+	for (int filevi = 0; filevi < nVerts; ++filevi) {
+		FbxVector4 fvert = m->GetControlPointAt(filevi);
+		Vector3 vert;
+		vert.x = fvert.mData[2];
+		vert.y = fvert.mData[0];
+		vert.z = fvert.mData[1];
+		for (VertData& vd : vdata[filevi]) {
+			tmpviToFinvi[vd.tmpvi] = finvi;
+			shape.verts[finvi] = vert;
+			if (haveUVs)
+				shape.uvs[finvi] = vd.uv;
+			if (haveNorms)
+				shape.normals[finvi] = vd.nrm;
+			vd.finvi = finvi;
+			++finvi;
+		}
+	}
+	// assert(finvi == tmpvi)
+
+	// Map the triangle vertex indices from tmpvi to finvi
+	for (Triangle& t : shape.tris)
+		for (int tvi = 0; tvi < 3; ++tvi)
+			t[tvi] = tmpviToFinvi[t[tvi]];
+
+	// Get bone weights
+	for (int iSkin = 0; iSkin < m->GetDeformerCount(FbxDeformer::eSkin); iSkin++) {
+		FbxSkin* skin = (FbxSkin*)m->GetDeformer(iSkin, FbxDeformer::eSkin);
+
+		for (int iCluster = 0; iCluster < skin->GetClusterCount(); iCluster++) {
+			FbxCluster* cluster = skin->GetCluster(iCluster);
+			if (!cluster->GetLink())
+				continue;
+
+			std::string bone = cluster->GetLink()->GetName();
+			shape.boneNames.insert(bone);
+			for (int iPoint = 0; iPoint < cluster->GetControlPointIndicesCount(); iPoint++) {
+				int filevi = cluster->GetControlPointIndices()[iPoint];
+				float w = cluster->GetControlPointWeights()[iPoint];
+				// The single vertex in the file may have been expanded to
+				// multiple vertices because of differing UV or normals.
+				// Set the weight for all of these vertices.
+				for (VertData& vd : vdata[filevi])
+					shape.boneSkin[bone].SetWeight(vd.finvi, w);
+			}
+		}
+	}
+
+	if (options.InvertU)
+		for (auto& uv : shape.uvs)
+			uv.u = 1.0f - uv.u;
+
+	if (options.InvertV)
+		for (auto& uv : shape.uvs)
+			uv.v = 1.0f - uv.v;
+
+	shapes[shape.name] = std::move(shape);
 }
