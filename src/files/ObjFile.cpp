@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "ObjFile.h"
 #include "../utils/PlatformUtil.h"
 #include <sstream>
+#include <unordered_map>
 
 using namespace nifly;
 
@@ -280,7 +281,7 @@ void ObjFile::LoadForNif(std::istream& ins) {
 		// Map the triangle vertex indices from grpvi to finvi
 		for (Triangle& t : d.tris)
 			for (int tvi = 0; tvi < 3; ++tvi)
-				t[tvi] = grpviToFinvi[t[tvi]];
+				t[tvi] = static_cast<uint16_t>(grpviToFinvi[t[tvi]]);
 	}
 }
 
