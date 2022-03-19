@@ -49,7 +49,6 @@ set(commonsources
 	src/components/SliderPresets.cpp
 	src/components/SliderSet.cpp
 	src/files/MaterialFile.cpp
-	src/files/ObjFile.cpp
 	src/files/ResourceLoader.cpp
 	src/files/TriFile.cpp
 	src/program/GroupManager.cpp
@@ -75,6 +74,7 @@ set(OSsources
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
+	src/files/ObjFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
 	src/program/EditUV.cpp
 	src/program/FBXImportDialog.cpp

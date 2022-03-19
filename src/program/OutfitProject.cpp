@@ -4852,9 +4852,19 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 					if (ret == wxYES)
 						workNif.SetVertsForShape(mergeShape, v);
 
-					ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
-					if (ret == wxYES)
-						workNif.SetUvsForShape(mergeShape, uv);
+					if (uv.size() == vertCount) {
+						ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
+						if (ret == wxYES)
+							workNif.SetUvsForShape(mergeShape, uv);
+					}
+
+					if (n.size() == vertCount) {
+						ret = wxMessageBox(_("Update Normals?"), _("Normals Update"), wxYES_NO | wxICON_QUESTION, owner);
+						if (ret == wxYES) {
+							workNif.SetNormalsForShape(mergeShape, n);
+							workNif.CalcTangentsForShape(mergeShape);
+						}
+					}
 
 					return 101;
 				}
@@ -5002,9 +5012,19 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 					if (ret == wxYES)
 						workNif.SetVertsForShape(mergeShape, fbxShape->verts);
 
-					ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
-					if (ret == wxYES)
-						workNif.SetUvsForShape(mergeShape, fbxShape->uvs);
+					if (fbxShape->uvs.size() == vertCount) {
+						ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
+						if (ret == wxYES)
+							workNif.SetUvsForShape(mergeShape, fbxShape->uvs);
+					}
+
+					if (fbxShape->normals.size() == vertCount) {
+						ret = wxMessageBox(_("Update Normals?"), _("Normals Update"), wxYES_NO | wxICON_QUESTION, owner);
+						if (ret == wxYES) {
+							workNif.SetNormalsForShape(mergeShape, fbxShape->normals);
+							workNif.CalcTangentsForShape(mergeShape);
+						}
+					}
 
 					ret = wxMessageBox(_("Update Animation Weighting?"), _("Animation Weight Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
