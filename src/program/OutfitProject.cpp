@@ -5414,17 +5414,20 @@ bool OutfitProject::CheckForBadBones() {
 		if (bb.empty())
 			continue;
 
-		wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString() << _("Bad Standard Bones for Shape \"") << shapeName << _("\""));
+		wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString::Format(_("Bad standard bones for shape \"%s\""), shapeName));
 		scrollBox->Add(boxSizer, sizerFlags);
 
-		wxString label;
+		wxString label = wxString::Format(_("%zu bones in shape \"%s\" had inconsistencies between their NIF skin transforms and the standard skeleton:\n"), bb.size(), shapeName);
+
 		auto brit = bb.begin();
-		label << bb.size() << _(" bones in shape \"") << shapeName << _("\" had inconsistencies between their Nif Skin transforms and the standard skeleton:\n") << brit->first;
+		label << brit->first;
 		++brit;
+
 		while (brit != bb.end()) {
-			label << _(", ") << brit->first;
+			label << ", " << brit->first;
 			++brit;
 		}
+
 		wxStaticText* ctrl = new wxStaticText(wnd, -1, label);
 		ctrl->Wrap(wrapPixels);
 		boxSizer->Add(ctrl, sizerFlags);
@@ -5454,18 +5457,21 @@ bool OutfitProject::CheckForBadBones() {
 		const std::string& bone = bcbp.first;
 		BadCustomBone& bcb = bcbp.second;
 
-		wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString() << _("Bad Custom Bone \"") << bone << _("\""));
+		wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString::Format(_("Bad Custom Bone \"%s\""), bone));
 		scrollBox->Add(boxSizer, sizerFlags);
 
-		wxString label;
+		wxString label = wxString::Format(_("Custom bone \"%s\" had inconsistent NIF node and skin transforms for the following shapes:\n\""), bone);
+
 		auto bsit = bcb.badShapes.begin();
-		label << _("Custom bone \"") << bone << _("\" had inconsistent Nif Node and Nif Skin transforms for the following shapes:\n\"") << *bsit;
+		label << *bsit;
 		++bsit;
+
 		while (bsit != bcb.badShapes.end()) {
-			label << _("\", \"") << *bsit;
+			label << "\", \"" << *bsit;
 			++bsit;
 		}
-		label << _("\"");
+		label << "\"";
+
 		wxStaticText* ctrl = new wxStaticText(wnd, -1, label);
 		ctrl->Wrap(wrapPixels);
 		boxSizer->Add(ctrl, sizerFlags);
@@ -5481,7 +5487,7 @@ bool OutfitProject::CheckForBadBones() {
 			tnLabel << *gsit;
 			++gsit;
 			while (gsit != bcb.goodShapes.end()) {
-				tnLabel << _("\", \"") << *gsit;
+				tnLabel << "\", \"" << *gsit;
 				++gsit;
 			}
 			tnLabel << _("\", and update other skins (recommended)");

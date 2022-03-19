@@ -1329,7 +1329,7 @@
 						<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="currentUnmaskedText">
-							<label>0</label>
+							<label translate="0">0</label>
 							<wrap>-1</wrap>
 							<style>wxALIGN_RIGHT</style>
 						</object>
@@ -1357,7 +1357,7 @@
 						<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="unmatchedVerticesText">
-							<label>0</label>
+							<label translate="0">0</label>
 							<wrap>-1</wrap>
 							<style>wxALIGN_RIGHT</style>
 						</object>
@@ -1448,7 +1448,7 @@
 											<flag>wxRIGHT|wxALIGN_RIGHT</flag>
 											<border>20</border>
 											<object class="wxStaticText" name="posAvgText">
-												<label>0</label>
+												<label translate="0">0</label>
 												<wrap>-1</wrap>
 												<style>wxALIGN_RIGHT</style>
 											</object>
@@ -1458,7 +1458,7 @@
 											<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="positionText">
-												<label>0</label>
+												<label translate="0">0</label>
 												<wrap>-1</wrap>
 												<style>wxALIGN_RIGHT</style>
 											</object>
@@ -1478,7 +1478,7 @@
 											<flag>wxLEFT|wxRIGHT</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="anySliderLabel">
-												<label>x Sliders</label>
+												<label translate="0">x Sliders</label>
 												<wrap>-1</wrap>
 											</object>
 										</object>
@@ -1493,7 +1493,7 @@
 											<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="anySliderText">
-												<label>0</label>
+												<label translate="0">0</label>
 												<wrap>-1</wrap>
 												<style>wxALIGN_RIGHT</style>
 											</object>
@@ -1531,7 +1531,7 @@
 											<flag>wxLEFT|wxRIGHT</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="anyBoneLabel">
-												<label>x Bones</label>
+												<label translate="0">x Bones</label>
 												<wrap>-1</wrap>
 											</object>
 										</object>
@@ -1540,7 +1540,7 @@
 											<flag>wxLEFT|wxRIGHT|wxALIGN_RIGHT</flag>
 											<border>5</border>
 											<object class="wxStaticText" name="anyBoneText">
-												<label>0</label>
+												<label translate="0">0</label>
 												<wrap>-1</wrap>
 												<style>wxALIGN_RIGHT</style>
 											</object>
@@ -1583,7 +1583,7 @@
 						<border>5</border>
 						<minsize>100,20</minsize>
 						<object class="wxStaticText" name="stillUnmaskedText">
-							<label>0</label>
+							<label translate="0">0</label>
 							<wrap>-1</wrap>
 							<style>wxALIGN_RIGHT</style>
 						</object>
