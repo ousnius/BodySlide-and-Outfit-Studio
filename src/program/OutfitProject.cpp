@@ -5141,9 +5141,8 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 			}
 		}
 		else {
-			wxLogWarning("Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.");
-			wxMessageBox(wxString::Format(
-							 _("Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.")),
+			wxLogWarning("Version of NIF file doesn't match current target game.");
+			wxMessageBox(wxString::Format(_("File format doesn't match the current game. Use FBX export, then start a new project and import the FBX file there.")),
 						 _("Version"),
 						 wxICON_WARNING,
 						 owner);
