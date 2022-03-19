@@ -1513,16 +1513,14 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<border>5</border>
-																				<flag>wxBOTTOM|wxALIGN_LEFT</flag>
+																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
 																				<object class="wxStaticText" name="tzLabel">
 																					<label>Offset Z</label>
 																				</object>
 																			</object>
 																			<object class="sizeritem">
 																				<option>1</option>
-																				<border>5</border>
-																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<flag>wxALL|wxEXPAND</flag>
 																				<object class="wxSlider" name="tzPoseSlider">
 																					<style>wxSL_HORIZONTAL</style>
 																					<size>-1,10</size>
@@ -1533,8 +1531,7 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<border>5</border>
-																				<flag>wxBOTTOM|wxALIGN_CENTER_VERTICAL</flag>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 																				<object class="wxTextCtrl" name="tzPoseText">
 																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
 																					<size>40,-1</size>
