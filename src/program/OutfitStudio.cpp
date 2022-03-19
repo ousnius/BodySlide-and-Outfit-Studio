@@ -9233,7 +9233,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Adding custom bone '%s' to project.", bone);
 	project->AddCustomBoneRef(bone.ToStdString(), parentBone, xform);
 	wxTreeItemId newItem = outfitBones->AppendItem(bonesRoot, bone);
-	UpdateBoneItemState(newItem, bone);
+	UpdateBoneItemState(newItem, bone.ToStdString());
 	cXMirrorBone->AppendString(bone);
 	cPoseBone->AppendString(bone);
 
