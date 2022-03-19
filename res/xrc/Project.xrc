@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
 	<object class="wxWizard" name="wizNewProject">
-		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
 		<title>New Project</title>
 		<pos>0,0</pos>
 		<centered>1</centered>
@@ -292,7 +292,7 @@
 		</object>
 	</object>
 	<object class="wxDialog" name="dlgSaveProject">
-		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
 		<size>486,345</size>
 		<title>Save Project As...</title>
 		<centered>1</centered>
@@ -527,6 +527,10 @@
 					</object>
 				</object>
 			</object>
+			<object class="spacer">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+			</object>
 			<object class="sizeritem">
 				<option>0</option>
 				<flag>wxEXPAND|wxALL</flag>
@@ -551,7 +555,7 @@
 		</object>
 	</object>
 	<object class="wxDialog" name="dlgLoadRef">
-		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
 		<title>Load Reference</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -681,7 +685,7 @@
 						</object>
 					</object>
 					<object class="sizeritem">
-						<option>1</option>
+						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxRadioButton" name="npRefIsBlank">
@@ -733,6 +737,10 @@
 					</object>
 				</object>
 			</object>
+			<object class="spacer">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+			</object>
 			<object class="sizeritem">
 				<option>0</option>
 				<flag>wxEXPAND|wxALL</flag>
@@ -757,7 +765,7 @@
 		</object>
 	</object>
 	<object class="wxDialog" name="dlgLoadOutfit">
-		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
 		<title>Load Outfit</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -907,10 +915,8 @@
 				</object>
 			</object>
 			<object class="spacer">
-				<option>0</option>
+				<option>1</option>
 				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<size>0,10</size>
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
