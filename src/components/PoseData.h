@@ -21,6 +21,7 @@ struct PoseBoneData {
 	std::string name;
 	nifly::Vector3 rotation;
 	nifly::Vector3 translation;
+	float scale;
 };
 
 class PoseData {

@@ -872,7 +872,6 @@ public:
 	wxTreeCtrl* segmentTree = nullptr;
 	wxTreeCtrl* partitionTree = nullptr;
 	wxPanel* lightSettings = nullptr;
-	wxSlider* boneScale = nullptr;
 	wxChoice* cXMirrorBone = nullptr;
 	wxChoice* cPoseBone = nullptr;
 	wxSlider* rxPoseSlider = nullptr;
@@ -881,12 +880,14 @@ public:
 	wxSlider* txPoseSlider = nullptr;
 	wxSlider* tyPoseSlider = nullptr;
 	wxSlider* tzPoseSlider = nullptr;
+	wxSlider* scPoseSlider = nullptr;
 	wxTextCtrl* rxPoseText = nullptr;
 	wxTextCtrl* ryPoseText = nullptr;
 	wxTextCtrl* rzPoseText = nullptr;
 	wxTextCtrl* txPoseText = nullptr;
 	wxTextCtrl* tyPoseText = nullptr;
 	wxTextCtrl* tzPoseText = nullptr;
+	wxTextCtrl* scPoseText = nullptr;
 	wxCheckBox* cbPose = nullptr;
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxMenuBar* menuBar = nullptr;
@@ -968,6 +969,7 @@ public:
 	void LockShapeSelect();
 	void UnlockShapeSelect();
 	void UpdateAnimationGUI();
+	void UpdateBoneItemState(const wxTreeItemId& item, const std::string& boneName);
 	void UpdateBoneTree();
 	void RefreshGUIFromProj(bool render = true);
 	void MeshesFromProj(const bool reloadTextures = false);
@@ -1205,8 +1207,6 @@ private:
 	void OnReadoutChange(wxCommandEvent& event);
 	void OnSliderCheckBox(wxCommandEvent& event);
 
-	void OnBoneScaleSlider(wxCommandEvent& event);
-
 	void OnTabButtonClick(wxCommandEvent& event);
 	void OnBrushColorChanged(wxColourPickerEvent& event);
 	void OnColorClampMaxValueSlider(wxCommandEvent& event);
@@ -1327,6 +1327,8 @@ private:
 	void OnDupeShape(wxCommandEvent& event);
 	void OnDeleteShape(wxCommandEvent& event);
 	void OnRefineMesh(wxCommandEvent& event);
+	void OnSetBoneSkin(wxCommandEvent& event);
+	void OnSetBoneNode(wxCommandEvent& event);
 	void OnAddBone(wxCommandEvent& event);
 	void OnAddCustomBone(wxCommandEvent& event);
 	void OnDeleteBone(wxCommandEvent& event);
@@ -1338,6 +1340,7 @@ private:
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
+	void OnCheckBadBones(wxCommandEvent& event);
 	void OnMaskBoneWeighted(wxCommandEvent& event);
 	void OnCopySegPart(wxCommandEvent& event);
 	void OnMaskSymVert(wxCommandEvent& event);
@@ -1560,6 +1563,7 @@ private:
 	void OnTXPoseSlider(wxScrollEvent& event);
 	void OnTYPoseSlider(wxScrollEvent& event);
 	void OnTZPoseSlider(wxScrollEvent& event);
+	void OnScPoseSlider(wxScrollEvent& event);
 	void OnAnyPoseTextChanged(wxTextCtrl* t, wxSlider* s, int cind);
 	void OnRXPoseTextChanged(wxCommandEvent& event);
 	void OnRYPoseTextChanged(wxCommandEvent& event);
@@ -1567,6 +1571,7 @@ private:
 	void OnTXPoseTextChanged(wxCommandEvent& event);
 	void OnTYPoseTextChanged(wxCommandEvent& event);
 	void OnTZPoseTextChanged(wxCommandEvent& event);
+	void OnScPoseTextChanged(wxCommandEvent& event);
 	void OnResetBonePose(wxCommandEvent& event);
 	void OnResetAllPose(wxCommandEvent& event);
 	void OnPoseToMesh(wxCommandEvent& event);

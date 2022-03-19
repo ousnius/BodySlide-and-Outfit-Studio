@@ -121,9 +121,6 @@ public:
 	Automorph morpher;
 	bool morpherInitialized = false;
 
-	std::map<std::string, std::vector<nifly::Vector3>> boneScaleOffsets;
-	std::map<std::string, std::vector<nifly::Vector3>> boneScaleVerts;
-
 	std::unordered_map<std::string, std::vector<std::string>> shapeTextures;
 	std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
 
@@ -271,10 +268,6 @@ public:
 	void TransferSelectedWeights(nifly::NiShape* shape, std::unordered_map<uint16_t, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
 
-	void InvalidateBoneScaleCache();
-	void ApplyBoneScale(const std::string& bone, int sliderPos, bool clear = false);
-	void ClearBoneScale(bool clear = true);
-
 	void AddBoneRef(const std::string& boneName);
 	void AddCustomBoneRef(const std::string& boneName, const std::string& parentBone, const nifly::MatTransform& xformToParent);
 	void ModifyCustomBone(AnimBone* bPtr, const std::string& parentBone, const nifly::MatTransform& xformToParent);
@@ -346,6 +339,14 @@ public:
 	void CreateSkinning(nifly::NiShape* s);
 	void RemoveSkinning(nifly::NiShape* s);
 	void RemoveSkinning();
+
+	bool CheckForBadBones();
+	bool ShapeHasBadBones(nifly::NiShape* s);
+
+	void GetAllPoseTransforms(nifly::NiShape* s, std::vector<nifly::MatTransform>& ts);
+	void ApplyTransformToOneVertexGeometry(UndoStateVertex& usv, const nifly::MatTransform& t);
+	void ApplyPoseTransformsToShapeGeometry(nifly::NiShape* s, UndoStateShape& uss);
+	void ApplyPoseTransformsToAllShapeGeometry(UndoStateProject& usp);
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
 	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false);

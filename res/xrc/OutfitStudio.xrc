@@ -1205,33 +1205,6 @@
 																		</object>
 																	</object>
 																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>5</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>0</option>
-																			<object class="wxStaticText" name="boneScaleLabel">
-																				<fg>#ffffff</fg>
-																				<label>Preview Scaling</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<object class="wxSlider" name="boneScale">
-																				<size>-1,25</size>
-																				<value translate="0">0</value>
-																				<min>-100</min>
-																				<max>100</max>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																	</object>
-																</object>
 															</object>
 														</object>
 													</object>
@@ -1540,17 +1513,45 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<border>5</border>
-																				<flag>wxBOTTOM|wxALIGN_LEFT</flag>
+																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
 																				<object class="wxStaticText" name="tzLabel">
 																					<label>Offset Z</label>
 																				</object>
 																			</object>
 																			<object class="sizeritem">
 																				<option>1</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<object class="wxSlider" name="tzPoseSlider">
+																					<style>wxSL_HORIZONTAL</style>
+																					<size>-1,10</size>
+																					<value translate="0">0</value>
+																					<min>-1000</min>
+																					<max>1000</max>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																				<object class="wxTextCtrl" name="tzPoseText">
+																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																					<size>40,-1</size>
+																					<value translate="0">0</value>
+																					<maxlength>0</maxlength>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<border>5</border>
+																				<flag>wxBOTTOM|wxALIGN_LEFT</flag>
+																				<object class="wxStaticText" name="scLabel">
+																					<label>Scale</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
 																				<border>5</border>
 																				<flag>wxBOTTOM|wxEXPAND</flag>
-																				<object class="wxSlider" name="tzPoseSlider">
+																				<object class="wxSlider" name="scPoseSlider">
 																					<style>wxSL_HORIZONTAL</style>
 																					<size>-1,10</size>
 																					<value translate="0">0</value>
@@ -1562,10 +1563,10 @@
 																				<option>0</option>
 																				<border>5</border>
 																				<flag>wxBOTTOM|wxALIGN_CENTER_VERTICAL</flag>
-																				<object class="wxTextCtrl" name="tzPoseText">
+																				<object class="wxTextCtrl" name="scPoseText">
 																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
 																					<size>40,-1</size>
-																					<value translate="0">0</value>
+																					<value translate="0">1</value>
 																					<maxlength>0</maxlength>
 																				</object>
 																			</object>
@@ -1944,6 +1945,10 @@
 			<object class="wxMenuItem" name="maskWeightedVerts">
 				<label>Mask Weighted Vertices</label>
 				<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
+			</object>
+			<object class="wxMenuItem" name="checkBadBones">
+				<label>Check For Bad Bones...</label>
+				<help>Looks for bones with inconsistencies in their transforms.  If any are found, a dialog is opened to give options for fixing them.</help>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="copySegPart">
@@ -2399,6 +2404,10 @@
 			<label>Mask Weighted Vertices</label>
 			<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
 		</object>
+		<object class="wxMenuItem" name="checkBadBones">
+			<label>Check For Bad Bones</label>
+			<help>Looks for bones with inconsistencies in their transforms.  If any are found, a dialog is opened to give options for fixing them.</help>
+		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="copySegPart">
 			<label>Copy Partitions/Segments...</label>
@@ -2429,6 +2438,17 @@
 	</object>
 	<object class="wxMenu" name="menuBoneContext">
 		<label>Bones</label>
+		<object class="wxMenu" name="menuBadBone">
+			<label>Bad Bone</label>
+			<object class="wxMenuItem" name="setBoneSkin">
+				<label>Set Skin Transform From Node</label>
+				<help>Fixes the bad bone by calculating a new skin-to-bone transform.</help>
+			</object>
+			<object class="wxMenuItem" name="setBoneNode">
+				<label>Set Node Transform From Skin</label>
+				<help>Fixes the bad custom bone by calculating a new bone-to-global transform.</help>
+			</object>
+		</object>
 		<object class="wxMenu" name="menuAddBone">
 			<label>Add</label>
 			<object class="wxMenuItem" name="addBone">

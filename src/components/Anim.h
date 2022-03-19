@@ -44,6 +44,7 @@ public:
 	nifly::MatTransform xformToParent;
 	// pose rotation and translation vectors
 	nifly::Vector3 poseRotVec, poseTranVec;
+	float poseScale = 1.0f;
 	nifly::MatTransform xformPoseToGlobal;
 
 	int refCount = 0; // reference count of this bone
@@ -169,6 +170,9 @@ public:
 	// ChangeGlobalToSkinTransform sets the global-to-skin transform for a
 	// shape and updates all skin-to-bone transforms.
 	void ChangeGlobalToSkinTransform(const std::string& shape, const nifly::MatTransform& newTrans);
+	bool BoneHasInconsistentTransforms(const std::string& shape, const std::string& bone) const;
+	void FindBonesWithInconsistentTransforms(const std::string& shape, std::unordered_map<std::string, nifly::MatTransform>& badStandard, std::unordered_map<std::string, nifly::MatTransform>& badCustom);
+	void RecalcCustomBoneXFormsFromSkin(const std::string& shape, const std::string& boneName);
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
 	void WriteToNif(nifly::NifFile* nif, const std::string& shapeException = "");

@@ -1185,8 +1185,6 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 
 		outVerts.swap(pv);
 	}
-
-	InvalidateBoneScaleCache();
 }
 
 void OutfitProject::GetSliderDiff(NiShape* shape, const std::string& sliderName, std::vector<Vector3>& outVerts) {
@@ -1725,88 +1723,6 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 	}
 
 	return hasUnweighted;
-}
-
-void OutfitProject::InvalidateBoneScaleCache() {
-	boneScaleVerts.clear();
-	boneScaleOffsets.clear();
-}
-
-void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool clear) {
-	ClearBoneScale(false);
-
-	AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
-	if (!bptr)
-		return;
-
-	MatTransform xform = bPose ? bptr->xformPoseToGlobal : bptr->xformToGlobal;
-
-	for (auto& s : workNif.GetShapeNames()) {
-		auto it = boneScaleVerts.find(s);
-		if (it == boneScaleVerts.end()) {
-			Mesh* m = owner->glView->GetMesh(s);
-			if (m) {
-				boneScaleVerts.emplace(s, std::vector<Vector3>(m->nVerts));
-				it = boneScaleVerts.find(s);
-				for (int i = 0; i < m->nVerts; i++)
-					it->second[i] = Mesh::TransformPosMeshToNif(m->verts[i]);
-			}
-		}
-
-		std::vector<Vector3>* verts = &it->second;
-
-		it = boneScaleOffsets.find(s);
-		if (it == boneScaleOffsets.end())
-			boneScaleOffsets.emplace(s, std::vector<Vector3>(verts->size()));
-		it = boneScaleOffsets.find(s);
-
-		for (auto& b : workAnim.shapeBones[s]) {
-			if (b == bone) {
-				auto weights = workAnim.GetWeightsPtr(s, b);
-				if (weights) {
-					for (auto& w : *weights) {
-						Vector3 dir = (*verts)[w.first] - xform.translation;
-						dir.Normalize();
-						Vector3 offset = dir * w.second * sliderPos / 5.0f;
-						(*verts)[w.first] += offset;
-						it->second[w.first] += offset;
-					}
-				}
-				break;
-			}
-		}
-
-		if (clear)
-			owner->glView->UpdateMeshVertices(s, verts, true, true, false);
-		else
-			owner->glView->UpdateMeshVertices(s, verts, true, false, false);
-	}
-}
-
-void OutfitProject::ClearBoneScale(bool clear) {
-	if (boneScaleOffsets.empty())
-		return;
-
-	for (auto& s : workNif.GetShapeNames()) {
-		auto it = boneScaleVerts.find(s);
-		std::vector<Vector3>* verts = &it->second;
-
-		it = boneScaleOffsets.find(s);
-		if (it != boneScaleOffsets.end()) {
-			if (verts->size() == it->second.size()) {
-				for (size_t i = 0; i < verts->size(); i++)
-					(*verts)[i] -= it->second[i];
-
-				if (clear)
-					owner->glView->UpdateMeshVertices(s, verts, true, true, false);
-				else
-					owner->glView->UpdateMeshVertices(s, verts, false, false, false);
-			}
-		}
-	}
-
-	boneScaleVerts.clear();
-	boneScaleOffsets.clear();
 }
 
 void OutfitProject::AddBoneRef(const std::string& boneName) {
@@ -5290,4 +5206,478 @@ void OutfitProject::RemoveSkinning() {
 	}
 
 	workNif.DeleteUnreferencedNodes();
+}
+
+bool OutfitProject::CheckForBadBones() {
+	struct ShapeBadBones {
+		std::unordered_map<std::string, MatTransform> badStandard, badCustom;
+		bool fixStanSkin = false;
+	};
+	std::unordered_map<std::string, ShapeBadBones> shapeBBs;
+	bool gotAnyBad = false;
+
+	// Find bad bones for every skinned shape, initializing shapeBBs.
+	for (NiShape* s : workNif.GetShapes()) {
+		if (!s->IsSkinned())
+			continue;
+
+		std::string shapeName = s->name.get();
+		ShapeBadBones& sbb = shapeBBs[shapeName];
+		workAnim.FindBonesWithInconsistentTransforms(shapeName, sbb.badStandard, sbb.badCustom);
+		if (!sbb.badStandard.empty() || !sbb.badCustom.empty())
+			gotAnyBad = true;
+		if (!sbb.badStandard.empty())
+			sbb.fixStanSkin = true;
+	}
+	if (!gotAnyBad) {
+		wxMessageBox(_("No Bad Bones Found."), _("No Bad Bones"), wxOK, owner);
+		return true;
+	}
+
+	// For bad custom bones, we need to rearrange the data so it's keyed
+	// on bone name rather than shape name.
+	struct BadCustomBone {
+		std::unordered_set<std::string> badShapes, goodShapes;
+		enum FixType {DoNothing, TrustNode, TrustSkin};
+		int fixtype = DoNothing;
+		std::string trustShape;
+	};
+	std::unordered_map<std::string, BadCustomBone> badCBs;
+	for (auto& sbbp : shapeBBs) {
+		const std::string& shapeName = sbbp.first;
+		ShapeBadBones& sbb = sbbp.second;
+		for (auto& brp : sbb.badCustom)
+			badCBs[brp.first].badShapes.insert(shapeName);
+	}
+
+	// For each bad custom bone...
+	for (auto& bcbp : badCBs) {
+		const std::string& bone = bcbp.first;
+		BadCustomBone& bcb = bcbp.second;
+
+		// ...fill in goodShapes
+		for (auto& sbbp : shapeBBs) {
+			const std::string& shapeName = sbbp.first;
+			if (bcb.badShapes.count(shapeName) == 0 && workAnim.GetShapeBoneIndex(shapeName, bone) >= 0)
+				bcb.goodShapes.insert(shapeName);
+		}
+
+		// ...and calculate a recommendation:
+		// If a skin matches the node, trust them.
+		if (!bcb.goodShapes.empty())
+			bcb.fixtype = BadCustomBone::TrustNode;
+		// Otherwise, if there's only one skin, trust it.
+		if (bcb.fixtype == BadCustomBone::DoNothing && bcb.badShapes.size() == 1) {
+			bcb.fixtype = BadCustomBone::TrustSkin;
+			bcb.trustShape = *bcb.badShapes.begin();
+		}
+		// Otherwise, if one of the skins is the reference, trust it.
+		if (bcb.fixtype == BadCustomBone::DoNothing && baseShape) {
+			std::string baseShapeName = baseShape->name.get();
+			for (const std::string& shapeName : bcb.badShapes)
+				if (shapeName == baseShapeName) {
+					bcb.fixtype = BadCustomBone::TrustSkin;
+					bcb.trustShape = baseShapeName;
+				}
+		}
+		// Otherwise, pick the skin with the lowest residual error.
+		// This is pretty arbitrary.  It's only marginally better than
+		// picking randomly.
+		if (bcb.fixtype == BadCustomBone::DoNothing) {
+			// Calculate smallest rotation residual error
+			float minRotErr = 10.0f;
+			for (const std::string& shapeName : bcb.badShapes) {
+				float rotErr = RotMatToVec(shapeBBs[shapeName].badCustom[bone].rotation).length();
+				if (rotErr < minRotErr)
+					minRotErr = rotErr;
+			}
+
+			// Winnow shapes that have a significantly larger rotation error
+			// than the smallest.
+			std::unordered_set<std::string> shapesLeft;
+			for (const std::string& shapeName : bcb.badShapes) {
+				float rotErr = RotMatToVec(shapeBBs[shapeName].badCustom[bone].rotation).length();
+				if (FloatsAreNearlyEqual(rotErr, minRotErr))
+					shapesLeft.insert(shapeName);
+			}
+
+			// Calculate smallest translation residual error
+			float minTrErr = FLT_MAX;
+			for (const std::string& shapeName : shapesLeft) {
+				float trErr = shapeBBs[shapeName].badCustom[bone].translation.length();
+				if (trErr < minTrErr)
+					minTrErr = trErr;
+			}
+
+			// Winnow shapes that have a significantly larger translation error
+			// than the smallest.
+			std::unordered_set<std::string> shapesLeft2;
+			for (const std::string& shapeName : shapesLeft) {
+				float trErr = shapeBBs[shapeName].badCustom[bone].translation.length();
+				if (FloatsAreNearlyEqual(trErr, minTrErr))
+					shapesLeft2.insert(shapeName);
+			}
+			shapesLeft = std::move(shapesLeft2);
+			shapesLeft2.clear();
+
+			// Calculate smallest scale residual error
+			float minScErr = FLT_MAX;
+			for (const std::string& shapeName : shapesLeft) {
+				float scErr = std::fabs(shapeBBs[shapeName].badCustom[bone].scale - 1.0f);
+				if (scErr < minScErr)
+					minScErr = scErr;
+			}
+
+			// Winnow shapes that have a significantly larger scale error
+			// than the smallest.
+			for (const std::string& shapeName : shapesLeft) {
+				float scErr = std::fabs(shapeBBs[shapeName].badCustom[bone].scale - 1.0f);
+				if (FloatsAreNearlyEqual(scErr, minScErr))
+					shapesLeft2.insert(shapeName);
+			}
+			shapesLeft = std::move(shapesLeft2);
+
+			// We might have more than one shape left, but it's highly unlikely.
+			// Pick the first of the remaining shapes.
+			bcb.fixtype = BadCustomBone::TrustSkin;
+			bcb.trustShape = *shapesLeft.begin();
+		}
+	}
+
+	// Create dialog window
+	wxDialog dlg(owner, -1, _("Bad Bones"), wxDefaultPosition, wxSize(800,600), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+	wxBoxSizer* topBox = new wxBoxSizer(wxVERTICAL);
+	wxSizerFlags sizerFlags = wxSizerFlags().Expand().Border(wxALL, 5);
+	constexpr int wrapPixels = 800;
+	wxScrolledWindow* wnd = new wxScrolledWindow(&dlg);
+	topBox->Add(wnd, wxSizerFlags().Expand().Proportion(1));
+	wxBoxSizer* scrollBox = new wxBoxSizer(wxVERTICAL);
+	wnd->SetScrollRate(30, 50);
+
+	// A helper class for creating the collapsible panes
+	struct CollapsePane {
+		wxScrolledWindow* wnd;
+		wxCollapsiblePane* collapse;
+		wxFlexGridSizer* collPaneBox;
+		CollapsePane(wxScrolledWindow* wi, wxSizer* boxSizer, const wxString& label, const wxString& col1Label):
+			wnd(wi) {
+			wxSizerFlags sizerFlags = wxSizerFlags().Expand().Border(wxALL, 5);
+			collapse = new wxCollapsiblePane(wnd, wxID_ANY, label, wxDefaultPosition, wxDefaultSize, wxCP_DEFAULT_STYLE | wxCP_NO_TLW_RESIZE);
+			boxSizer->Add(collapse, sizerFlags);
+			collPaneBox = new wxFlexGridSizer(4);
+			collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, col1Label), sizerFlags);
+			collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, _("Error in rotation")), sizerFlags);
+			collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, _("Error in translation")), sizerFlags);
+			collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, _("Error in scale")), sizerFlags);
+		}
+		void AddRow(const wxString& label, const MatTransform& t) {
+			wxSizerFlags sizerFlags = wxSizerFlags().Expand().Border(wxALL, 5);
+			float rotErr = RotMatToVec(t.rotation).length();
+			float trErr = t.translation.length();
+			float scErr = std::fabs(t.scale - 1.0f);
+			collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, label), sizerFlags);
+			collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, wxString() << rotErr), sizerFlags);
+			collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, wxString() << trErr), sizerFlags);
+			collPaneBox->Add(new wxStaticText(collapse->GetPane(), wxID_ANY, wxString() << scErr), sizerFlags);
+		}
+		void Finish() {
+			collapse->GetPane()->SetSizerAndFit(collPaneBox);
+			wxScrolledWindow* wndl = wnd;
+			collapse->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [wndl](wxCollapsiblePaneEvent&) { wndl->FitInside(); });
+		}
+	};
+
+	// Add a frame for each shape with bad standard bones
+	for (auto& sbbp : shapeBBs) {
+		const std::string &shapeName = sbbp.first;
+		ShapeBadBones& sbb = sbbp.second;
+		auto& bb = sbb.badStandard;
+		if (bb.empty())
+			continue;
+
+		wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString() << _("Bad Standard Bones for Shape \"") << shapeName << _("\""));
+		scrollBox->Add(boxSizer, sizerFlags);
+
+		wxString label;
+		auto brit = bb.begin();
+		label << bb.size() << _(" bones in shape \"") << shapeName << _("\" had inconsistencies between their Nif Skin transforms and the standard skeleton:\n") << brit->first;
+		++brit;
+		while (brit != bb.end()) {
+			label << _(", ") << brit->first;
+			++brit;
+		}
+		wxStaticText* ctrl = new wxStaticText(wnd, -1, label);
+		ctrl->Wrap(wrapPixels);
+		boxSizer->Add(ctrl, sizerFlags);
+
+		wxRadioButton* rb = new wxRadioButton(wnd, wxID_ANY, _("Update skin (recommended)"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+		rb->SetValue(1);
+		rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
+			sbb.fixStanSkin = true;
+		});
+		boxSizer->Add(rb, sizerFlags);
+		sbb.fixStanSkin = true;
+
+		CollapsePane bcp(wnd, boxSizer, _("Details"), _("Bone"));
+		for (auto& brp : bb)
+			bcp.AddRow(brp.first, brp.second);
+		bcp.Finish();
+
+		rb = new wxRadioButton(wnd, wxID_ANY, _("Do nothing"));
+		rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
+			sbb.fixStanSkin = false;
+		});
+		boxSizer->Add(rb, sizerFlags);
+	}
+
+	// Add a frame for each bad custom bone
+	for (auto& bcbp : badCBs) {
+		const std::string& bone = bcbp.first;
+		BadCustomBone& bcb = bcbp.second;
+
+		wxStaticBoxSizer* boxSizer = new wxStaticBoxSizer(wxVERTICAL, wnd, wxString() << _("Bad Custom Bone \"") << bone << _("\""));
+		scrollBox->Add(boxSizer, sizerFlags);
+
+		wxString label;
+		auto bsit = bcb.badShapes.begin();
+		label << _("Custom bone \"") << bone << _("\" had inconsistent Nif Node and Nif Skin transforms for the following shapes:\n\"") << *bsit;
+		++bsit;
+		while (bsit != bcb.badShapes.end()) {
+			label << _("\", \"") << *bsit;
+			++bsit;
+		}
+		label << _("\"");
+		wxStaticText* ctrl = new wxStaticText(wnd, -1, label);
+		ctrl->Wrap(wrapPixels);
+		boxSizer->Add(ctrl, sizerFlags);
+
+		wxString tnLabel;
+		if (bcb.fixtype == BadCustomBone::TrustNode) {
+			tnLabel = "";
+			if (bcb.goodShapes.size() > 1)
+				tnLabel << _("Trust node and skins \"");
+			else
+				tnLabel << _("Trust node and skin \"");
+			auto gsit = bcb.goodShapes.begin();
+			tnLabel << *gsit;
+			++gsit;
+			while (gsit != bcb.goodShapes.end()) {
+				tnLabel << _("\", \"") << *gsit;
+				++gsit;
+			}
+			tnLabel << _("\", and update other skins (recommended)");
+		}
+		else if (bcb.badShapes.size() > 1)
+			tnLabel = _("Trust node, and update skins");
+		else
+			tnLabel = _("Trust node, and update skin");
+		wxRadioButton* rb = new wxRadioButton(wnd, wxID_ANY, tnLabel, wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+		if (bcb.fixtype == BadCustomBone::TrustNode)
+			rb->SetValue(1);
+		rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
+			bcb.fixtype = BadCustomBone::TrustNode;
+		});
+		boxSizer->Add(rb, sizerFlags);
+
+		CollapsePane ncp(wnd, boxSizer, _("Details"), _("Skin"));
+		for (const std::string& shapeName : bcb.badShapes) {
+			MatTransform t = shapeBBs[shapeName].badCustom[bone];
+			ncp.AddRow(shapeName, t);
+		}
+		ncp.Finish();
+
+		for (const std::string& shapeName : bcb.badShapes) {
+			wxString sLabel;
+			sLabel << _("Trust skin \"") << shapeName;
+			if (bcb.badShapes.size() == 1 && bcb.goodShapes.empty())
+				sLabel << _("\", and update node");
+			else
+				sLabel << _("\", and update node and other skins");
+			rb = new wxRadioButton(wnd, wxID_ANY, sLabel);
+			rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
+				bcb.fixtype = BadCustomBone::TrustSkin;
+				bcb.trustShape = shapeName;
+			});
+			if (bcb.fixtype == BadCustomBone::TrustSkin && bcb.trustShape == shapeName)
+				rb->SetValue(1);
+			boxSizer->Add(rb, sizerFlags);
+
+			CollapsePane scp(wnd, boxSizer, _("Details"), _("With"));
+			scp.AddRow(_("Node"), shapeBBs[shapeName].badCustom[bone]);
+			for (const std::string& shapeName2 : bcb.badShapes) {
+				if (shapeName == shapeName2)
+					continue;
+				MatTransform skinToBone1, skinToBone2;
+				workAnim.GetXFormSkinToBone(shapeName, bone, skinToBone1);
+				workAnim.GetXFormSkinToBone(shapeName, bone, skinToBone2);
+				MatTransform residual = skinToBone1.ComposeTransforms(skinToBone2.InverseTransform());
+				scp.AddRow(shapeName2, residual);
+			}
+			scp.Finish();
+		}
+
+		rb = new wxRadioButton(wnd, wxID_ANY, _("Do nothing"));
+		rb->Bind(wxEVT_RADIOBUTTON, [&](wxCommandEvent&) {
+			bcb.fixtype = BadCustomBone::DoNothing;
+		});
+		if (bcb.fixtype == BadCustomBone::DoNothing)
+			rb->SetValue(1);
+		boxSizer->Add(rb, sizerFlags);
+	}
+
+	// Finish building the dialog window
+	wnd->SetSizer(scrollBox);
+	wxStdDialogButtonSizer* buttonSizer = new wxStdDialogButtonSizer;
+	buttonSizer->AddButton(new wxButton(&dlg, wxID_OK));
+	buttonSizer->AddButton(new wxButton(&dlg, wxID_CANCEL, _("Fix nothing")));
+	buttonSizer->Realize();
+	topBox->Add(buttonSizer, sizerFlags);
+	dlg.SetSizer(topBox);
+
+	if (dlg.ShowModal() == wxID_CANCEL)
+		return false;
+
+	// Execute the user's choices
+	for (auto& sbbp : shapeBBs) {
+		const std::string &shapeName = sbbp.first;
+		ShapeBadBones& sbb = sbbp.second;
+
+		if (sbb.fixStanSkin)
+			for (auto& brp : sbb.badStandard)
+				workAnim.RecalcXFormSkinToBone(shapeName, brp.first);
+	}
+	for (auto& bcbp : badCBs) {
+		const std::string& bone = bcbp.first;
+		BadCustomBone& bcb = bcbp.second;
+		if (bcb.fixtype == BadCustomBone::TrustSkin) {
+			workAnim.RecalcCustomBoneXFormsFromSkin(bcb.trustShape, bone);
+			// After updating the node's bone-to-global transform, any shapes
+			// that had good skin-to-bone transforms now have bad ones and
+			// have to be updated.
+			for (const std::string& shapeName : bcb.goodShapes)
+				workAnim.RecalcXFormSkinToBone(shapeName, bone);
+		}
+		if (bcb.fixtype != BadCustomBone::DoNothing)
+			for (const std::string& shapeName : bcb.badShapes)
+				workAnim.RecalcXFormSkinToBone(shapeName, bone);
+	}
+	return true;
+}
+
+bool OutfitProject::ShapeHasBadBones(NiShape* s) {
+	if (!s->IsSkinned())
+		return false;
+	std::unordered_map<std::string, MatTransform> badStandard, badCustom;
+	std::string shapeName = s->name.get();
+	workAnim.FindBonesWithInconsistentTransforms(shapeName, badStandard, badCustom);
+	if (!badStandard.empty() || !badCustom.empty())
+		return true;
+	return false;
+}
+
+// GetAllPoseTransforms: this function calculates the pose transform (in
+// shape coordinates) for every vertex.  Note that the resulting transforms
+// do not follow the rules: the "rotation" is not necessarily a rotation;
+// it might contain a scale, and it'll almost certainly contain rule violations
+// because of linear interpolation.
+void OutfitProject::GetAllPoseTransforms(NiShape* s, std::vector<MatTransform>& ts) {
+	int nVerts = static_cast<int>(s->GetNumVertices());
+	ts.resize(nVerts);
+
+	// We're going to _sum_ rotations, so we have to start with zero matrices.
+	for (int i = 0; i < nVerts; ++i)
+		ts[i].rotation[0][0] = ts[i].rotation[1][1] = ts[i].rotation[2][2] = 0.0f;
+	std::vector<float> tws(nVerts, 0.0f); // Total weight for each vertex
+
+	AnimSkin& animSkin = workAnim.shapeSkinning[s->name.get()];
+	MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(s);
+
+	for (auto& boneNamesIt : animSkin.boneNames) {
+		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
+		if (!animB)
+			continue;
+		AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
+		// Compose transform: skin -> (posed) bone -> global -> skin
+		MatTransform t = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+		// Add weighted contributions to vertex transforms for this bone
+		for (auto& wIt : animW.weights) {
+			int vi = wIt.first;
+			float w = wIt.second;
+			ts[vi].rotation += t.rotation * (w * t.scale);
+			ts[vi].translation += t.translation * w;
+			tws[vi] += w;
+		}
+	}
+
+	// Check if total weight for each vertex was 1
+	for (int vi = 0; vi < nVerts; ++vi) {
+		if (tws[vi] < EPSILON) { // If weights are missing for this vertex
+			ts[vi] = MatTransform();
+		}
+		else if (std::fabs(tws[vi] - 1.0f) >= EPSILON) { // If weights are not normalized for this vertex
+			float normAdjust = 1.0f / tws[vi];
+			ts[vi].rotation *= normAdjust;
+			ts[vi].translation *= normAdjust;
+		}
+		// else do nothing because weights totaled 1.
+	}
+
+	// Note that the rotations still contain scale and interpolation
+	// artifacts that make them not rotations!
+}
+
+// Note that ApplyTransformToOneVertexGeometry does not assume that t.rotation
+// is a proper rotation, so it can be used with GetAllPoseTransforms.
+void OutfitProject::ApplyTransformToOneVertexGeometry(UndoStateVertex& usv, const MatTransform& t) {
+	usv.pos = t.ApplyTransform(usv.pos);
+	usv.normal = t.ApplyTransformToDir(usv.normal);
+	usv.normal.Normalize();
+	usv.tangent = t.ApplyTransformToDir(usv.tangent);
+	usv.tangent.Normalize();
+	usv.bitangent = t.ApplyTransformToDir(usv.bitangent);
+	usv.bitangent.Normalize();
+	for (auto& usvsd : usv.diffs) {
+		SliderData& sd = activeSet[usvsd.sliderName];
+		if (sd.bUV || sd.bClamp || sd.bZap)
+			continue;
+		usvsd.diff = t.ApplyTransformToDiff(usvsd.diff);
+	}
+}
+
+void OutfitProject::ApplyPoseTransformsToShapeGeometry(NiShape* s, UndoStateShape& uss) {
+	int nVerts = static_cast<int>(s->GetNumVertices());
+	int nTris = static_cast<int>(s->GetNumTriangles());
+
+	// Get all the shape's vertices
+	std::vector<uint16_t> vinds(nVerts);
+	for (int i = 0; i < nVerts; ++i)
+		vinds[i] = i;
+	CollectVertexData(s, uss, vinds);
+	uss.addVerts = uss.delVerts;
+
+	// Get all the shape's triangles
+	std::vector<uint32_t> tinds(nTris);
+	for (int i = 0; i < nTris; ++i)
+		tinds[i] = i;
+	CollectTriangleData(s, uss, tinds);
+	uss.addTris = uss.delTris;
+
+	// Get all the pose transforms
+	std::vector<MatTransform> ts;
+	GetAllPoseTransforms(s, ts);
+
+	// Apply all the pose transforms
+	for (int i = 0; i < nVerts; ++i)
+		ApplyTransformToOneVertexGeometry(uss.addVerts[i], ts[i]);
+}
+
+void OutfitProject::ApplyPoseTransformsToAllShapeGeometry(UndoStateProject& usp) {
+	usp.undoType = UndoType::Mesh;
+	std::vector<NiShape*> shapes = workNif.GetShapes();
+	usp.usss.resize(shapes.size());
+	for (size_t si = 0; si < shapes.size(); ++si) {
+		UndoStateShape& uss = usp.usss[si];
+		uss.shapeName = shapes[si]->name.get();
+		ApplyPoseTransformsToShapeGeometry(shapes[si], uss);
+	}
 }
