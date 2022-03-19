@@ -4944,8 +4944,10 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 
 					if (n.size() == vertCount) {
 						ret = wxMessageBox(_("Update Normals?"), _("Normals Update"), wxYES_NO | wxICON_QUESTION, owner);
-						if (ret == wxYES)
+						if (ret == wxYES) {
 							workNif.SetNormalsForShape(mergeShape, n);
+							workNif.CalcTangentsForShape(mergeShape);
+						}
 					}
 
 					return 101;
@@ -5102,8 +5104,10 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 					if (fbxShape->normals.size() == vertCount) {
 						ret = wxMessageBox(_("Update Normals?"), _("Normals Update"), wxYES_NO | wxICON_QUESTION, owner);
-						if (ret == wxYES)
+						if (ret == wxYES) {
 							workNif.SetNormalsForShape(mergeShape, fbxShape->normals);
+							workNif.CalcTangentsForShape(mergeShape);
+						}
 					}
 
 					ret = wxMessageBox(_("Update Animation Weighting?"), _("Animation Weight Update"), wxYES_NO | wxICON_QUESTION, owner);
