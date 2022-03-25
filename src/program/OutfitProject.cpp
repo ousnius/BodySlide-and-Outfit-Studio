@@ -4072,6 +4072,10 @@ std::vector<bool> CalcVertexListForAsymmetryTasks(const SymmetricVertices& symve
 		}
 	}
 
+	if (tasks.doUnmatched)
+		for (int vi : symverts.unmatched)
+			doVert[vi] = true;
+
 	return doVert;
 }
 
