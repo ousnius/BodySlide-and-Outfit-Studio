@@ -326,7 +326,7 @@ void ShapeProperties::AddShader() {
 	}
 
 	NiShader* shader = nif->GetShader(shape);
-	if (shader && shader->HasTextureSet()) {
+	if (shader) {
 		auto nifTexSet = std::make_unique<BSShaderTextureSet>(nif->GetHeader().GetVersion());
 		shader->TextureSetRef()->index = nif->GetHeader().AddBlock(std::move(nifTexSet));
 	}
