@@ -308,6 +308,7 @@ public:
 					  const bool asMesh = false);
 	Mesh* AddVisSeg(const nifly::Vector3& p1, const nifly::Vector3& p2, const std::string& name = "", const bool asMesh = false);
 	Mesh* AddVisSeamEdges(const Mesh* refMesh, bool asMesh = false);
+	std::vector<Mesh*> AddFloor(float width = 100.0f, float stepSmall = 1.0f, float stepBig = 5.0f);
 
 	Mesh* AddMeshFromNif(nifly::NifFile* nif, const std::string& shapeName, nifly::Vector3* color = nullptr);
 	void Update(const std::string& shapeName, std::vector<nifly::Vector3>* vertices, std::vector<nifly::Vector2>* uvs = nullptr, std::unordered_set<int>* changed = nullptr);

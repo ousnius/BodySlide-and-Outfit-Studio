@@ -1928,6 +1928,86 @@ Mesh* GLSurface::AddVisSeamEdges(const Mesh* refMesh, bool asMesh) {
 	return m;
 }
 
+std::vector<Mesh*> GLSurface::AddFloor(float width, float stepSmall, float stepBig) {
+	std::vector<Mesh*> floorMeshes;
+
+	float widthHalf = width / 2.0f;
+	int numLinesSmall = (int)(width / stepSmall) + 1;
+	int numLinesBig = (int)(width / stepBig) + 1;
+
+	Matrix4 floorMat;
+	floorMat.Rotate(90.0f * DEG2RAD, 1.0f, 0.0f, 0.0f);
+
+	Vector3 floorColor(0.0f, 0.0f, 1.0f);
+	auto floorMesh = AddVisPlane(floorMat, Vector2(width, width), 1.0f, 0.0f, "", &floorColor, true);
+	if (floorMesh) {
+		floorMesh->prop.alpha = 0.05f;
+		floorMeshes.push_back(floorMesh);
+	}
+
+	float nextLinePos = width - widthHalf;
+
+	// Floor with width on X and Y axis (big grid)
+	for (int i = 0; i < numLinesBig; i++) {
+		Vector3 startPos(widthHalf, 0.0f, nextLinePos);
+		Vector3 endPos(-widthHalf, 0.0f, nextLinePos);
+
+		auto lineMesh = AddVisSeg(startPos, endPos, "", true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		startPos = Vector3(nextLinePos, 0.0f, widthHalf);
+		endPos = Vector3(nextLinePos, 0.0f, -widthHalf);
+
+		lineMesh = AddVisSeg(startPos, endPos, "", true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		nextLinePos -= stepBig;
+	}
+
+	nextLinePos = width - widthHalf;
+
+	// Floor with width on X and Y axis (small grid)
+	for (int i = 0; i < numLinesSmall; i++) {
+		Vector3 startPos(widthHalf, 0.0f, nextLinePos);
+		Vector3 endPos(-widthHalf, 0.0f, nextLinePos);
+
+		auto lineMesh = AddVisSeg(startPos, endPos, "", true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->prop.alpha = 0.7f;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		startPos = Vector3(nextLinePos, 0.0f, widthHalf);
+		endPos = Vector3(nextLinePos, 0.0f, -widthHalf);
+
+		lineMesh = AddVisSeg(startPos, endPos, "", true);
+		if (lineMesh) {
+			lineMesh->color.x = 0.0f;
+			lineMesh->color.y = 1.0f;
+			lineMesh->color.z = 0.0f;
+			lineMesh->prop.alpha = 0.7f;
+			floorMeshes.push_back(lineMesh);
+		}
+
+		nextLinePos -= stepSmall;
+	}
+
+	return floorMeshes;
+}
+
 void GLSurface::Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs, std::unordered_set<int>* changed) {
 	Mesh* m = GetMesh(shapeName);
 	if (!m)
