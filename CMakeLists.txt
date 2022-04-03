@@ -58,6 +58,8 @@ set(commonsources
 	src/render/GLOffscreenBuffer.cpp
 	src/render/GLShader.cpp
 	src/render/GLSurface.cpp
+	src/render/GLCanvas.cpp
+	src/render/GLDialog.cpp
 	src/ui/wxStateButton.cpp
 	src/ui/wxSliderPanel.cpp
 	src/utils/AABBTree.cpp
