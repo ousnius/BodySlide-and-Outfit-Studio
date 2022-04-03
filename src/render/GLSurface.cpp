@@ -1085,7 +1085,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 void GLSurface::UpdateShaders(Mesh* m) {
 	if (m->material) {
 		GLShader& shader = m->material->GetShader();
-		shader.ShowTexture(bTextured);
+		shader.ShowTexture(bTextured && m->textured);
 		shader.ShowLighting(bLighting);
 		shader.ShowMask(bMaskVisible && m->mask);
 		shader.ShowWeight(bWeightColors && m->weight);
