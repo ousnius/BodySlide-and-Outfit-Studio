@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
 	<object class="wxDialog" name="dlgFBXImport">
-		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-		<size>300,125</size>
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
+		<size>600,700</size>
 		<title>FBX Import Options...</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -15,7 +15,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL</flag>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
 						<object class="wxCheckBox" name="cbInvertU">
 							<label>Invert U</label>
@@ -24,17 +24,142 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL</flag>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
 						<object class="wxCheckBox" name="cbInvertV">
 							<label>Invert V</label>
 							<checked>0</checked>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="scaleLabel">
+							<label>Scale</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="scale">
+							<size>60,-1</size>
+							<value translate="0">1.00000</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="rotateXLabel">
+							<label>Rotate (X)</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxChoice" name="rotateX">
+							<tooltip>Choose X rotation.</tooltip>
+							<selection>0</selection>
+							<content>
+								<item translate="0">0&#176;</item>
+								<item translate="0">90&#176;</item>
+								<item translate="0">180&#176;</item>
+								<item translate="0">270&#176;</item>
+							</content>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="rotateYLabel">
+							<label>Rotate (Y)</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxChoice" name="rotateY">
+							<tooltip>Choose Y rotation.</tooltip>
+							<selection>0</selection>
+							<content>
+								<item translate="0">0&#176;</item>
+								<item translate="0">90&#176;</item>
+								<item translate="0">180&#176;</item>
+								<item translate="0">270&#176;</item>
+							</content>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="rotateZLabel">
+							<label>Rotate (Z)</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxChoice" name="rotateZ">
+							<tooltip>Choose Z rotation.</tooltip>
+							<selection>0</selection>
+							<content>
+								<item translate="0">0&#176;</item>
+								<item translate="0">90&#176;</item>
+								<item translate="0">180&#176;</item>
+								<item translate="0">270&#176;</item>
+							</content>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="sizeritem">
 				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>0</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxListCtrl" name="meshesList">
+							<style>wxLC_REPORT</style>
+							<object class="listcol">
+								<text>Name</text>
+								<width>100</width>
+							</object>
+							<object class="listcol">
+								<text>Vertices #</text>
+								<width>75</width>
+							</object>
+							<object class="listcol">
+								<text>Triangles #</text>
+								<width>75</width>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>0</border>
+						<minsize>500,600</minsize>
+						<object class="unknown" name="glView" />
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
 				<flag>wxEXPAND|wxALL</flag>
 				<border>5</border>
 				<object class="wxStdDialogButtonSizer">

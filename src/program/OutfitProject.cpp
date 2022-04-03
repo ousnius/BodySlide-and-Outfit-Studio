@@ -4981,8 +4981,10 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 	FBXWrangler fbxw;
 	std::string nonRefBones;
+	size_t vertexLimit = workNif.GetVertexLimit();
+	size_t triLimit = workNif.GetTriangleLimit();
 
-	FBXImportDialog import(owner);
+	FBXImportDialog import(owner, fileName, vertexLimit, triLimit);
 	if (import.ShowModal() != wxID_OK)
 		return 1;
 
@@ -5052,8 +5054,6 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 
 		uint16_t vertCountNew = newShape->GetNumVertices();
 		uint32_t triCountNew = newShape->GetNumTriangles();
-		size_t vertexLimit = workNif.GetVertexLimit();
-		size_t triLimit = workNif.GetTriangleLimit();
 
 		if (vertCountNew < vertCount || triCountNew < triCount) {
 			wxMessageBox(wxString::Format(_("The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles "

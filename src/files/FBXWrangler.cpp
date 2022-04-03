@@ -468,9 +468,15 @@ bool FBXWrangler::Priv::LoadMeshes(const FBXImportOptions& options) {
 	return true;
 }
 
-void FBXWrangler::Priv::LoadMesh(const FBXImportOptions& options, FbxNode* node)
-{
+void FBXWrangler::Priv::LoadMesh(const FBXImportOptions& options, FbxNode* node) {
 	FBXShape shape;
+	shape.name = node->GetName();
+
+	if (!options.ImportAll) {
+		if (options.ImportShapes.count(shape.name) == 0)
+			return;
+	}
+
 	FbxMesh* m = (FbxMesh*)node->GetNodeAttribute();
 
 	if (!m->IsTriangleMesh()) {
@@ -491,7 +497,6 @@ void FBXWrangler::Priv::LoadMesh(const FBXImportOptions& options, FbxNode* node)
 		genrm->GetMappingMode() == FbxGeometryElement::eByControlPoint ||
 		genrm->GetMappingMode() == FbxGeometryElement::eByPolygonVertex);
 
-	shape.name = node->GetName();
 	int nVerts = m->GetControlPointsCount();
 
 	// Each vertex in the file may need to be duplicated if it's used with
@@ -648,6 +653,15 @@ void FBXWrangler::Priv::LoadMesh(const FBXImportOptions& options, FbxNode* node)
 	if (options.InvertV)
 		for (auto& uv : shape.uvs)
 			uv.v = 1.0f - uv.v;
+
+	Matrix4 mat;
+	mat.PushScale(options.Scale, options.Scale, options.Scale);
+	mat.PushRotate(options.RotateX * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
+	mat.PushRotate(options.RotateY * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
+	mat.PushRotate(options.RotateZ * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
+
+	for (auto& v : shape.verts)
+		v = mat * v;
 
 	shapes[shape.name] = std::move(shape);
 }
