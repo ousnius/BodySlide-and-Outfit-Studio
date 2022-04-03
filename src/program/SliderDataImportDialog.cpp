@@ -21,7 +21,7 @@ SliderDataImportDialog::SliderDataImportDialog(wxWindow* parent, OutfitProject* 
 	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/SliderDataImport.xrc");
 	xrc->LoadDialog(this, parent, "dlgSliderDataImport");
-	ConfigDialogUtil::LoadDialogCheckBox(outfitStudioConfig, *this, "chkImportMergeSliders");
+	ConfigDialogUtil::LoadDialogCheckBox(outfitStudioConfig, *this, "SliderDataImport", "chkImportMergeSliders");
 
 	shapesCheckListBox = XRCCTRL(*this, "sliderShapesImportList", wxCheckListBox);
 	shapesCheckListBox->Bind(wxEVT_CHECKLISTBOX, &SliderDataImportDialog::OnShapeSelectionChanged, this);
@@ -85,7 +85,7 @@ void SliderDataImportDialog::OnShapeSelectionChanged(wxCommandEvent& WXUNUSED(ev
 
 void SliderDataImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 
-	options.mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(outfitStudioConfig, *this, "chkImportMergeSliders");
+	options.mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(outfitStudioConfig, *this, "SliderDataImport", "chkImportMergeSliders");
 
 	wxArrayInt checked;
 	slidersCheckListBox->GetCheckedItems(checked);

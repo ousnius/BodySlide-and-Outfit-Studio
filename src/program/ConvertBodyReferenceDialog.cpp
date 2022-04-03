@@ -68,17 +68,17 @@ ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfit
 		return sortTemplates(first, second, {CONVERT_SLIDER_PREFIX, SLIDER_SET_PREFIX}, false);
 	});
 
-	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npConvRefChoice", converters);
-	ConfigDialogUtil::LoadDialogChoices(config, (*this), "npNewRefChoice", bodies);
-	ConfigDialogUtil::LoadDialogText(config, (*this), "npRemoveText");
-	ConfigDialogUtil::LoadDialogText(config, (*this), "npAppendText");
-	ConfigDialogUtil::LoadDialogText(config, (*this), "npDeleteShapesText");
-	ConfigDialogUtil::LoadDialogText(config, (*this), "npAddBonesText");
-	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkConvertMergeSliders");
-	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkConvertMergeZaps");
-	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkSkipConformPopup");
-	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkSkipCopyBonesPopup");
-	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "chkDeleteReferenceOnComplete");
+	ConfigDialogUtil::LoadDialogChoices(config, (*this), "ConvertBodyReference", "npConvRefChoice", converters);
+	ConfigDialogUtil::LoadDialogChoices(config, (*this), "ConvertBodyReference", "npNewRefChoice", bodies);
+	ConfigDialogUtil::LoadDialogText(config, (*this), "ConvertBodyReference", "npRemoveText");
+	ConfigDialogUtil::LoadDialogText(config, (*this), "ConvertBodyReference", "npAppendText");
+	ConfigDialogUtil::LoadDialogText(config, (*this), "ConvertBodyReference", "npDeleteShapesText");
+	ConfigDialogUtil::LoadDialogText(config, (*this), "ConvertBodyReference", "npAddBonesText");
+	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkConvertMergeSliders");
+	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkConvertMergeZaps");
+	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkSkipConformPopup");
+	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkSkipCopyBonesPopup");
+	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkDeleteReferenceOnComplete");
 
 	SetDoubleBuffered(true);
 	CenterOnParent();
@@ -96,17 +96,17 @@ bool ConvertBodyReferenceDialog::Load() {
 void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 	outfitStudio->StartProgress(_("Start Conversion.."));
 
-	bool mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkConvertMergeSliders");
-	bool mergeZaps = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkConvertMergeZaps");
-	bool skipConformPopup = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkSkipConformPopup");
-	bool skipCopyBonesPopup = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkSkipCopyBonesPopup");
-	bool deleteReferenceOnCompleted = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "chkDeleteReferenceOnComplete");
-	auto conversionRefTemplate = ConfigDialogUtil::SetStringFromDialogChoice(config, (*this), "npConvRefChoice");
-	auto newRefTemplate = ConfigDialogUtil::SetStringFromDialogChoice(config, (*this), "npNewRefChoice");
-	auto removeFromProjectText = ConfigDialogUtil::SetStringFromDialogTextControl(config, (*this), "npRemoveText");
-	auto appendToProjectText = ConfigDialogUtil::SetStringFromDialogTextControl(config, (*this), "npAppendText");
-	auto deleteShapesText = ConfigDialogUtil::SetStringFromDialogTextControl(config, (*this), "npDeleteShapesText");
-	auto addBonesText = ConfigDialogUtil::SetStringFromDialogTextControl(config, (*this), "npAddBonesText");
+	bool mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkConvertMergeSliders");
+	bool mergeZaps = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkConvertMergeZaps");
+	bool skipConformPopup = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkSkipConformPopup");
+	bool skipCopyBonesPopup = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkSkipCopyBonesPopup");
+	bool deleteReferenceOnCompleted = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkDeleteReferenceOnComplete");
+	auto conversionRefTemplate = ConfigDialogUtil::SetStringFromDialogChoice(config, (*this), "ConvertBodyReference", "npConvRefChoice");
+	auto newRefTemplate = ConfigDialogUtil::SetStringFromDialogChoice(config, (*this), "ConvertBodyReference", "npNewRefChoice");
+	auto removeFromProjectText = ConfigDialogUtil::SetStringFromDialogTextControl(config, (*this), "ConvertBodyReference", "npRemoveText");
+	auto appendToProjectText = ConfigDialogUtil::SetStringFromDialogTextControl(config, (*this), "ConvertBodyReference", "npAppendText");
+	auto deleteShapesText = ConfigDialogUtil::SetStringFromDialogTextControl(config, (*this), "ConvertBodyReference", "npDeleteShapesText");
+	auto addBonesText = ConfigDialogUtil::SetStringFromDialogTextControl(config, (*this), "ConvertBodyReference", "npAddBonesText");
 
 	Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 
