@@ -515,24 +515,28 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 
 		auto shapeChoice = nif->FindBlockByName<NiShape>(shapeName);
 		if (shapeChoice) {
-			auto shapeShader = nif->GetShader(shape);
+			// Delete old shader and children
+			nif->DeleteShader(shape);
+
 			auto shapeChoiceShader = nif->GetShader(shapeChoice);
+			if (shapeChoiceShader) {
+				// Clone shader
+				auto destShaderS = shapeChoiceShader->Clone();
+				auto destShader = destShaderS.get();
 
-			if (!shapeShader && shapeChoiceShader) {
-				AddShader();
-				shapeShader = nif->GetShader(shape);
+				int destShaderId = nif->GetHeader().AddBlock(std::move(destShaderS));
 
-				auto shapeAlphaProp = nif->GetAlphaProperty(shape);
-				auto shapeChoiceAlphaProp = nif->GetAlphaProperty(shapeChoice);
-				if (!shapeAlphaProp && shapeChoiceAlphaProp)
-					AddTransparency();
+				// Clone shader children
+				nif->CloneChildren(destShader);
+
+				// Assign cloned shader to shape
+				shape->ShaderPropertyRef()->index = destShaderId;
 			}
-			else if (shapeShader && !shapeChoiceShader)
-				RemoveShader();
 
 			auto oldShape = shape;
 			shape = shapeChoice;
 
+			// Update UI
 			GetShader();
 			GetTransparency();
 
@@ -540,13 +544,7 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 			os->SetPendingChanges();
 
 			if (shapeChoiceShader) {
-				// Copy texture paths
-				for (int i = 0; i < 10; i++) {
-					std::string texPath;
-					nif->GetTextureSlot(shapeChoice, texPath, i);
-					nif->SetTextureSlot(shape, texPath, i);
-				}
-
+				// Load same textures
 				auto texturePaths = os->project->GetShapeTextures(shapeChoice);
 				os->project->SetTextures(shape, texturePaths);
 				os->glView->Render();
