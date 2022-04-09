@@ -80,6 +80,7 @@ set(OSsources
 	src/ui/wxBrushSettingsPopup.cpp
 	src/program/EditUV.cpp
 	src/program/FBXImportDialog.cpp
+	src/program/ObjImportDialog.cpp
 	src/program/OutfitProject.cpp
 	src/program/OutfitStudio.cpp
 	src/program/ShapeProperties.cpp

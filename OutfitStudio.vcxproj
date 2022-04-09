@@ -403,6 +403,8 @@
     <None Include="res\xrc\About.xrc" />
     <None Include="res\xrc\Actions.xrc" />
     <None Include="res\xrc\ConvertBodyReference.xrc" />
+    <None Include="res\xrc\EditUV.xrc" />
+    <None Include="res\xrc\ImportDialog.xrc" />
     <None Include="res\xrc\OutfitStudio.xrc" />
     <None Include="res\xrc\Project.xrc" />
     <None Include="res\xrc\SavePreset.xrc" />
@@ -801,8 +803,8 @@
     <ClInclude Include="src\program\ConvertBodyReferenceDialog.h" />
     <ClInclude Include="src\program\EditUV.h" />
     <ClInclude Include="src\program\FBXImportDialog.h" />
-    <ClInclude Include="src\program\FBXImportOptions.h" />
     <ClInclude Include="src\program\GroupManager.h" />
+    <ClInclude Include="src\program\ObjImportDialog.h" />
     <ClInclude Include="src\program\OutfitProject.h" />
     <ClInclude Include="src\program\OutfitStudio.h" />
     <ClInclude Include="src\program\PresetSaveDialog.h" />
@@ -878,6 +880,7 @@
     <ClCompile Include="src\program\EditUV.cpp" />
     <ClCompile Include="src\program\FBXImportDialog.cpp" />
     <ClCompile Include="src\program\GroupManager.cpp" />
+    <ClCompile Include="src\program\ObjImportDialog.cpp" />
     <ClCompile Include="src\program\OutfitProject.cpp" />
     <ClCompile Include="src\program\OutfitStudio.cpp" />
     <ClCompile Include="src\program\PresetSaveDialog.cpp" />

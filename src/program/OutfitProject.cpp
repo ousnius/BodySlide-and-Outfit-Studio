@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
 #include "../program/FBXImportDialog.h"
+#include "../program/ObjImportDialog.h"
 #include "../utils/PlatformUtil.h"
 #include "NifUtil.hpp"
 
@@ -1016,8 +1017,8 @@ void OutfitProject::SetSliderFromBSD(const std::string& sliderName, NiShape* sha
 bool OutfitProject::SetSliderFromOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
 	std::string target = ShapeToTarget(shape->name.get());
 
-	ObjOptionsImport options;
-	options.noFaces = true;
+	ObjImportOptions options;
+	options.NoFaces = true;
 
 	ObjFile obj;
 	obj.LoadForNif(fileName, options);
@@ -4787,12 +4788,29 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 	if (!workAnim.GetRefNif())
 		workAnim.SetRefNif(&workNif);
 
-	if (!baseShape) {
-		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.  Import anyway?"),
-							   _("Import without reference"),
-							   wxYES_NO);
-		if (res == wxNO)
-			return 1;
+	ObjFile obj;
+	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
+
+	if (!shapeName.empty())
+		outfitName = shapeName;
+	else if (outfitName.empty())
+		outfitName = "New Outfit";
+
+	size_t vertexLimit = workNif.GetVertexLimit();
+	size_t triLimit = workNif.GetTriangleLimit();
+
+	wxString warningLabel;
+	if (!baseShape)
+		warningLabel = _("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files.");
+
+	ObjImportDialog import(owner, fileName, vertexLimit, triLimit, warningLabel);
+	if (import.ShowModal() != wxID_OK)
+		return 1;
+
+	if (obj.LoadForNif(fileName, import.GetOptions())) {
+		wxLogError("Could not load OBJ file '%s'!", fileName);
+		wxMessageBox(wxString::Format(_("Could not load OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
+		return 1;
 	}
 
 	bool copyBaseSkinTrans = false;
@@ -4805,20 +4823,6 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 			return 1;
 		if (res == wxYES)
 			copyBaseSkinTrans = true;
-	}
-
-	ObjFile obj;
-	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
-
-	if (!shapeName.empty())
-		outfitName = shapeName;
-	else if (outfitName.empty())
-		outfitName = "New Outfit";
-
-	if (obj.LoadForNif(fileName)) {
-		wxLogError("Could not load OBJ file '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Could not load OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
-		return 1;
 	}
 
 	std::vector<std::string> groupNames = obj.GetGroupList();
@@ -4882,8 +4886,6 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 		if (newShape) {
 			uint16_t vertCountNew = newShape->GetNumVertices();
 			uint32_t triCountNew = newShape->GetNumTriangles();
-			size_t vertexLimit = workNif.GetVertexLimit();
-			size_t triLimit = workNif.GetTriangleLimit();
 
 			if (vertCountNew < vertCount || triCountNew < triCount) {
 				wxMessageBox(wxString::Format(_("The vertex or triangle limit for '%s' was exceeded.\nRemaining data was dropped.\n\nVertices (current/max): %zu/%zu\nTriangles "
@@ -4959,13 +4961,22 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 	if (!workAnim.GetRefNif())
 		workAnim.SetRefNif(&workNif);
 
-	if (!baseShape) {
-		int res = wxMessageBox(_("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.  Import anyway?"),
-							   _("Import without reference"),
-							   wxYES_NO);
-		if (res == wxNO)
-			return 1;
-	}
+	FBXWrangler fbxw;
+	std::string nonRefBones;
+	size_t vertexLimit = workNif.GetVertexLimit();
+	size_t triLimit = workNif.GetTriangleLimit();
+
+	wxString warningLabel;
+	if (!baseShape)
+		warningLabel = _("No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files.");
+
+	FBXImportDialog import(owner, fileName, vertexLimit, triLimit, warningLabel);
+	if (import.ShowModal() != wxID_OK)
+		return 1;
+
+	bool result = fbxw.ImportScene(fileName, import.GetOptions());
+	if (!result)
+		return 2;
 
 	bool copyBaseSkinTrans = false;
 	if (baseShape && !workAnim.GetTransformGlobalToShape(baseShape).IsNearlyEqualTo(MatTransform())) {
@@ -4978,19 +4989,6 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		if (res == wxYES)
 			copyBaseSkinTrans = true;
 	}
-
-	FBXWrangler fbxw;
-	std::string nonRefBones;
-	size_t vertexLimit = workNif.GetVertexLimit();
-	size_t triLimit = workNif.GetTriangleLimit();
-
-	FBXImportDialog import(owner, fileName, vertexLimit, triLimit);
-	if (import.ShowModal() != wxID_OK)
-		return 1;
-
-	bool result = fbxw.ImportScene(fileName, import.GetOptions());
-	if (!result)
-		return 2;
 
 	if (!shapeName.empty())
 		outfitName = shapeName;

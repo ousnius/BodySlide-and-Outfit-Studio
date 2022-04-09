@@ -1,12 +1,44 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
-	<object class="wxDialog" name="dlgFBXImport">
+	<object class="wxDialog" name="importDialog">
 		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
-		<size>600,700</size>
-		<title>FBX Import Options...</title>
+		<title>Import Options...</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticText" name="lbWarning">
+					<bg>#ffff00</bg>
+					<hidden>1</hidden>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxListCtrl" name="meshesList">
+					<style>wxLC_REPORT</style>
+					<object class="listcol">
+						<text>Name</text>
+						<width>100</width>
+					</object>
+					<object class="listcol">
+						<text>Vertices #</text>
+						<width>75</width>
+					</object>
+					<object class="listcol">
+						<text>Triangles #</text>
+						<width>75</width>
+					</object>
+					<object class="listcol">
+						<text>Info</text>
+						<width>425</width>
+					</object>
+				</object>
+			</object>
 			<object class="sizeritem">
 				<option>0</option>
 				<flag>wxEXPAND|wxALL</flag>
@@ -127,36 +159,8 @@
 				<option>1</option>
 				<flag>wxEXPAND</flag>
 				<border>0</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
-						<border>5</border>
-						<object class="wxListCtrl" name="meshesList">
-							<style>wxLC_REPORT</style>
-							<object class="listcol">
-								<text>Name</text>
-								<width>100</width>
-							</object>
-							<object class="listcol">
-								<text>Vertices #</text>
-								<width>75</width>
-							</object>
-							<object class="listcol">
-								<text>Triangles #</text>
-								<width>75</width>
-							</object>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
-						<border>0</border>
-						<minsize>500,600</minsize>
-						<object class="unknown" name="glView" />
-					</object>
-				</object>
+				<minsize>700,600</minsize>
+				<object class="unknown" name="glView" />
 			</object>
 			<object class="sizeritem">
 				<option>0</option>

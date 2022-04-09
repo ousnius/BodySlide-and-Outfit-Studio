@@ -3,7 +3,7 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
-#include "FBXImportDialog.h"
+#include "ObjImportDialog.h"
 #include "../utils/ConfigDialogUtil.h"
 #include "../utils/ConfigurationManager.h"
 
@@ -15,20 +15,20 @@ extern ConfigurationManager Config;
 extern ConfigurationManager OutfitStudioConfig;
 
 
-wxBEGIN_EVENT_TABLE(FBXImportDialog, GLDialog)
-	EVT_CHECKBOX(XRCID("cbInvertU"), FBXImportDialog::OnInvertU)
-	EVT_CHECKBOX(XRCID("cbInvertV"), FBXImportDialog::OnInvertV)
-	EVT_TEXT(XRCID("scale"), FBXImportDialog::OnScale)
-	EVT_CHOICE(XRCID("rotateX"), FBXImportDialog::OnRotateX)
-	EVT_CHOICE(XRCID("rotateY"), FBXImportDialog::OnRotateY)
-	EVT_CHOICE(XRCID("rotateZ"), FBXImportDialog::OnRotateZ)
-	EVT_LIST_ITEM_SELECTED(XRCID("meshesList"), FBXImportDialog::OnItemSelected)
-	EVT_LIST_ITEM_DESELECTED(XRCID("meshesList"), FBXImportDialog::OnItemDeselected)
-	EVT_LIST_KEY_DOWN(XRCID("meshesList"), FBXImportDialog::OnListKeyDown)
-	EVT_BUTTON(wxID_OK, FBXImportDialog::OnImport)
+wxBEGIN_EVENT_TABLE(ObjImportDialog, GLDialog)
+	EVT_CHECKBOX(XRCID("cbInvertU"), ObjImportDialog::OnInvertU)
+	EVT_CHECKBOX(XRCID("cbInvertV"), ObjImportDialog::OnInvertV)
+	EVT_TEXT(XRCID("scale"), ObjImportDialog::OnScale)
+	EVT_CHOICE(XRCID("rotateX"), ObjImportDialog::OnRotateX)
+	EVT_CHOICE(XRCID("rotateY"), ObjImportDialog::OnRotateY)
+	EVT_CHOICE(XRCID("rotateZ"), ObjImportDialog::OnRotateZ)
+	EVT_LIST_ITEM_SELECTED(XRCID("meshesList"), ObjImportDialog::OnItemSelected)
+	EVT_LIST_ITEM_DESELECTED(XRCID("meshesList"), ObjImportDialog::OnItemDeselected)
+	EVT_LIST_KEY_DOWN(XRCID("meshesList"), ObjImportDialog::OnListKeyDown)
+	EVT_BUTTON(wxID_OK, ObjImportDialog::OnImport)
 wxEND_EVENT_TABLE()
 
-FBXImportDialog::FBXImportDialog(wxWindow* parent, const std::string& fileName, size_t vertexLimit, size_t triangleLimit, const wxString& warningLabel)
+ObjImportDialog::ObjImportDialog(wxWindow* parent, const std::string& fileName, size_t vertexLimit, size_t triangleLimit, const wxString& warningLabel)
 	: GLDialog()
 	, fileName(fileName)
 	, vertexLimit(vertexLimit)
@@ -60,33 +60,40 @@ FBXImportDialog::FBXImportDialog(wxWindow* parent, const std::string& fileName, 
 
 	meshesList = XRCCTRL((*this), "meshesList", wxListCtrl);
 
-	ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, (*this), "FBXImport", "cbInvertU");
-	ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, (*this), "FBXImport", "cbInvertV");
-	ConfigDialogUtil::LoadDialogTextFloat(OutfitStudioConfig, (*this), "FBXImport", "scale");
-	ConfigDialogUtil::LoadDialogChoiceIndex(OutfitStudioConfig, (*this), "FBXImport", "rotateX");
-	ConfigDialogUtil::LoadDialogChoiceIndex(OutfitStudioConfig, (*this), "FBXImport", "rotateY");
-	ConfigDialogUtil::LoadDialogChoiceIndex(OutfitStudioConfig, (*this), "FBXImport", "rotateZ");
+	ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, (*this), "OBJImport", "cbInvertU");
+	ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, (*this), "OBJImport", "cbInvertV");
+	ConfigDialogUtil::LoadDialogTextFloat(OutfitStudioConfig, (*this), "OBJImport", "scale");
+	ConfigDialogUtil::LoadDialogChoiceIndex(OutfitStudioConfig, (*this), "OBJImport", "rotateX");
+	ConfigDialogUtil::LoadDialogChoiceIndex(OutfitStudioConfig, (*this), "OBJImport", "rotateY");
+	ConfigDialogUtil::LoadDialogChoiceIndex(OutfitStudioConfig, (*this), "OBJImport", "rotateZ");
 
 	xrc->AttachUnknownControl("glView", CreateCanvas(), this);
 }
 
-FBXImportDialog::~FBXImportDialog() {
+ObjImportDialog::~ObjImportDialog() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/ImportDialog.xrc");
 }
 
-void FBXImportDialog::OnShown() {
+void ObjImportDialog::OnShown() {
 	GLDialog::OnShown();
 
-	bool result = fbxw.ImportScene(fileName);
-	if (result) {
-		std::vector<std::string> shapes;
-		fbxw.GetShapeNames(shapes);
+	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
+
+	int result = obj.LoadForNif(fileName);
+	if (result == 0) {
+		auto shapes = obj.GetGroupList();
 
 		for (auto& s : shapes) {
-			FBXShape* fbxShape = fbxw.GetShape(s);
+			std::vector<Vector3> verts;
+			std::vector<Triangle> tris;
+			std::vector<Vector2> uvs;
+			std::vector<Vector3> norms;
 
-			size_t vertCount = fbxShape->verts.size();
-			size_t triCount = fbxShape->tris.size();
+			if (!obj.CopyDataForGroup(s, &verts, &tris, &uvs, &norms))
+				continue;
+
+			size_t vertCount = verts.size();
+			size_t triCount = tris.size();
 
 			auto m = new Mesh();
 			m->nVerts = static_cast<int>(vertCount);
@@ -100,23 +107,23 @@ void FBXImportDialog::OnShown() {
 			m->tris = std::make_unique<Triangle[]>(m->nTris);
 
 			for (int v = 0; v < m->nVerts; v++)
-				m->verts[v] = Mesh::TransformPosNifToMesh(fbxShape->verts[v]);
+				m->verts[v] = Mesh::TransformPosNifToMesh(verts[v]);
 
 			for (int t = 0; t < m->nTris; t++)
-				m->tris[t] = fbxShape->tris[t];
+				m->tris[t] = tris[t];
 
-			if (vertCount == fbxShape->uvs.size())
+			if (vertCount == uvs.size())
 				for (int v = 0; v < m->nVerts; v++)
-					m->texcoord[v] = fbxShape->uvs[v];
+					m->texcoord[v] = uvs[v];
 
-			if (vertCount == fbxShape->normals.size()) {
+			if (vertCount == norms.size()) {
 				for (int v = 0; v < m->nVerts; v++)
-					m->norms[v] = Mesh::TransformDirNifToMesh(fbxShape->normals[v]);
+					m->norms[v] = Mesh::TransformDirNifToMesh(norms[v]);
 			}
 			else
 				m->SmoothNormals();
 
-			m->shapeName = fbxShape->name;
+			m->shapeName = s;
 			m->rendermode = Mesh::RenderMode::Normal;
 			m->doublesided = true;
 			m->color = Vector3(0.25f, 0.25f, 0.25f);
@@ -162,6 +169,8 @@ void FBXImportDialog::OnShown() {
 				colInfo.SetText(_("The shape has reached the triangle count limit."));
 				meshesList->SetItemTextColour(itemId, wxColour("red"));
 			}
+
+			meshesList->SetItem(colInfo);
 		}
 
 		UpdateVertexPositions();
@@ -169,7 +178,7 @@ void FBXImportDialog::OnShown() {
 	}
 }
 
-void FBXImportDialog::UpdateVertexPositions() {
+void ObjImportDialog::UpdateVertexPositions() {
 	Matrix4 mat;
 
 	float scaleValue = std::atof(scale->GetValue().c_str());
@@ -210,29 +219,32 @@ void FBXImportDialog::UpdateVertexPositions() {
 	matRot.PushRotate(rotateYDeg * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
 	matRot.PushRotate(rotateZDeg * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
 
-	std::vector<std::string> shapes;
-	fbxw.GetShapeNames(shapes);
+	auto shapes = obj.GetGroupList();
 
 	for (auto& s : shapes) {
-		FBXShape* fbxShape = fbxw.GetShape(s);
-
-		auto m = GetSurface().GetMesh(fbxShape->name);
+		auto m = GetSurface().GetMesh(s);
 		if (!m)
 			continue;
 
-		int vertCount = static_cast<int>(fbxShape->verts.size());
-		if (vertCount != m->nVerts)
+		std::vector<Vector3> verts;
+		std::vector<Vector3> norms;
+
+		if (!obj.CopyDataForGroup(s, &verts, nullptr, nullptr, &norms))
 			continue;
 
+		int vertCount = static_cast<int>(verts.size());
+		if (vertCount != m->nVerts)
+			continue;
+		
 		for (int v = 0; v < m->nVerts; v++)
-			m->verts[v] = Mesh::TransformPosNifToMesh(mat * fbxShape->verts[v]);
+			m->verts[v] = Mesh::TransformPosNifToMesh(mat * verts[v]);
 
 		m->QueueUpdate(Mesh::UpdateType::Position);
 
-		int normCount = static_cast<int>(fbxShape->normals.size());
+		int normCount = static_cast<int>(norms.size());
 		if (normCount == m->nVerts) {
 			for (int v = 0; v < m->nVerts; v++)
-				m->norms[v] = Mesh::TransformDirNifToMesh(matRot * fbxShape->normals[v]);
+				m->norms[v] = Mesh::TransformDirNifToMesh(matRot * norms[v]);
 
 			m->QueueUpdate(Mesh::UpdateType::Normals);
 			m->CalcTangentSpace();
@@ -242,23 +254,25 @@ void FBXImportDialog::UpdateVertexPositions() {
 	Render();
 }
 
-void FBXImportDialog::UpdateTextureCoords() {
-	std::vector<std::string> shapes;
-	fbxw.GetShapeNames(shapes);
+void ObjImportDialog::UpdateTextureCoords() {
+	auto shapes = obj.GetGroupList();
 
 	for (auto& s : shapes) {
-		FBXShape* fbxShape = fbxw.GetShape(s);
-
-		auto m = GetSurface().GetMesh(fbxShape->name);
+		auto m = GetSurface().GetMesh(s);
 		if (!m)
 			continue;
 
-		int uvCount = static_cast<int>(fbxShape->uvs.size());
+		std::vector<Vector2> uvs;
+
+		if (!obj.CopyDataForGroup(s, nullptr, nullptr, &uvs, nullptr))
+			continue;
+
+		int uvCount = static_cast<int>(uvs.size());
 		if (uvCount != m->nVerts)
 			continue;
 
 		for (int v = 0; v < m->nVerts; v++)
-			m->texcoord[v] = fbxShape->uvs[v];
+			m->texcoord[v] = uvs[v];
 
 		if (cbInvertU->IsChecked())
 			for (int v = 0; v < m->nVerts; v++)
@@ -274,7 +288,7 @@ void FBXImportDialog::UpdateTextureCoords() {
 	Render();
 }
 
-void FBXImportDialog::UpdateItemSelection() {
+void ObjImportDialog::UpdateItemSelection() {
 	for (int item = 0; item < meshesList->GetItemCount(); item++) {
 		std::string name = meshesList->GetItemText(item).ToUTF8();
 
@@ -290,7 +304,7 @@ void FBXImportDialog::UpdateItemSelection() {
 	Render();
 }
 
-void FBXImportDialog::DeleteItemSelection() {
+void ObjImportDialog::DeleteItemSelection() {
 	for (int item = meshesList->GetItemCount() - 1; item >= 0; item--) {
 		if (meshesList->GetItemState(item, wxLIST_STATE_SELECTED) == wxLIST_STATE_SELECTED) {
 			std::string name = meshesList->GetItemText(item).ToUTF8();
@@ -302,51 +316,51 @@ void FBXImportDialog::DeleteItemSelection() {
 	Render();
 }
 
-void FBXImportDialog::OnInvertU(wxCommandEvent& WXUNUSED(event)) {
+void ObjImportDialog::OnInvertU(wxCommandEvent& WXUNUSED(event)) {
 	UpdateTextureCoords();
 }
 
-void FBXImportDialog::OnInvertV(wxCommandEvent& WXUNUSED(event)) {
+void ObjImportDialog::OnInvertV(wxCommandEvent& WXUNUSED(event)) {
 	UpdateTextureCoords();
 }
 
-void FBXImportDialog::OnScale(wxCommandEvent& WXUNUSED(event)) {
+void ObjImportDialog::OnScale(wxCommandEvent& WXUNUSED(event)) {
 	UpdateVertexPositions();
 }
 
-void FBXImportDialog::OnRotateX(wxCommandEvent& WXUNUSED(event)) {
+void ObjImportDialog::OnRotateX(wxCommandEvent& WXUNUSED(event)) {
 	UpdateVertexPositions();
 }
 
-void FBXImportDialog::OnRotateY(wxCommandEvent& WXUNUSED(event)) {
+void ObjImportDialog::OnRotateY(wxCommandEvent& WXUNUSED(event)) {
 	UpdateVertexPositions();
 }
 
-void FBXImportDialog::OnRotateZ(wxCommandEvent& WXUNUSED(event)) {
+void ObjImportDialog::OnRotateZ(wxCommandEvent& WXUNUSED(event)) {
 	UpdateVertexPositions();
 }
 
-void FBXImportDialog::OnItemSelected(wxListEvent& WXUNUSED(event)) {
+void ObjImportDialog::OnItemSelected(wxListEvent& WXUNUSED(event)) {
 	UpdateItemSelection();
 }
 
-void FBXImportDialog::OnItemDeselected(wxListEvent& WXUNUSED(event)) {
+void ObjImportDialog::OnItemDeselected(wxListEvent& WXUNUSED(event)) {
 	UpdateItemSelection();
 }
 
-void FBXImportDialog::OnListKeyDown(wxListEvent& event) {
+void ObjImportDialog::OnListKeyDown(wxListEvent& event) {
 	if (event.GetKeyCode() == wxKeyCode::WXK_DELETE)
 		DeleteItemSelection();
 }
 
-void FBXImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
-	options.InvertU = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, (*this), "FBXImport", "cbInvertU");
-	options.InvertV = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, (*this), "FBXImport", "cbInvertV");
-	options.Scale = ConfigDialogUtil::SetFloatFromDialogTextControl(OutfitStudioConfig, (*this), "FBXImport", "scale");
+void ObjImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
+	options.InvertU = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, (*this), "OBJImport", "cbInvertU");
+	options.InvertV = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, (*this), "OBJImport", "cbInvertV");
+	options.Scale = ConfigDialogUtil::SetFloatFromDialogTextControl(OutfitStudioConfig, (*this), "OBJImport", "scale");
 
-	int rotateXSel = ConfigDialogUtil::SetIntegerFromDialogChoice(OutfitStudioConfig, (*this), "FBXImport", "rotateX");
-	int rotateYSel = ConfigDialogUtil::SetIntegerFromDialogChoice(OutfitStudioConfig, (*this), "FBXImport", "rotateY");
-	int rotateZSel = ConfigDialogUtil::SetIntegerFromDialogChoice(OutfitStudioConfig, (*this), "FBXImport", "rotateZ");
+	int rotateXSel = ConfigDialogUtil::SetIntegerFromDialogChoice(OutfitStudioConfig, (*this), "OBJImport", "rotateX");
+	int rotateYSel = ConfigDialogUtil::SetIntegerFromDialogChoice(OutfitStudioConfig, (*this), "OBJImport", "rotateY");
+	int rotateZSel = ConfigDialogUtil::SetIntegerFromDialogChoice(OutfitStudioConfig, (*this), "OBJImport", "rotateZ");
 
 	float rotateXDeg = 0.0f;
 	float rotateYDeg = 0.0f;

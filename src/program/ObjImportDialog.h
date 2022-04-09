@@ -11,17 +11,17 @@ See the included LICENSE file
 
 #include "../render/GLDialog.h"
 #include "../render/GLSurface.h"
-#include "../files/FBXWrangler.h"
+#include "../files/ObjFile.h"
 
-class FBXImportDialog : public GLDialog {
+class ObjImportDialog : public GLDialog {
 public:
-	FBXImportDialog(wxWindow* parent, const std::string& fileName, size_t vertexLimit = 0, size_t triangleLimit = 0, const wxString& warningLabel = wxString());
-	~FBXImportDialog();
+	ObjImportDialog(wxWindow* parent, const std::string& fileName, size_t vertexLimit = 0, size_t triangleLimit = 0, const wxString& warningLabel = wxString());
+	~ObjImportDialog();
 
 	virtual void OnShown() override;
 	void OnImport(wxCommandEvent& event);
 
-	FBXImportOptions GetOptions() { return options; }
+	ObjImportOptions GetOptions() { return options; }
 
 	wxDECLARE_EVENT_TABLE();
 
@@ -30,9 +30,9 @@ private:
 	size_t vertexLimit = 0;
 	size_t triangleLimit = 0;
 
-	FBXWrangler fbxw;
+	ObjFile obj;
 
-	FBXImportOptions options;
+	ObjImportOptions options;
 	wxStaticText* lbWarning;
 	wxCheckBox* cbInvertU;
 	wxCheckBox* cbInvertV;

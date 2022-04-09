@@ -25,20 +25,27 @@ int ObjFile::AddGroup(
 	return 0;
 }
 
-int ObjFile::LoadForNif(const std::string& fileName, const ObjOptionsImport& options) {
+int ObjFile::LoadForNif(const std::string& fileName, const ObjImportOptions& options) {
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
 	if (file.fail())
 		return 1;
 
-	if (options.noFaces)
-		LoadNoFaces(file);
+	if (options.NoFaces)
+		LoadNoFaces(file, options);
 	else
-		LoadForNif(file);
+		LoadForNif(file, options);
+
 	return 0;
 }
 
-void ObjFile::LoadNoFaces(std::istream& ins) {
+void ObjFile::LoadNoFaces(std::istream& ins, const ObjImportOptions& options) {
+	Matrix4 mat;
+	mat.PushScale(options.Scale, options.Scale, options.Scale);
+	mat.PushRotate(options.RotateX * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
+	mat.PushRotate(options.RotateY * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
+	mat.PushRotate(options.RotateZ * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
+
 	ObjData d;
 
 	while (!ins.eof()) {
@@ -54,6 +61,7 @@ void ObjFile::LoadNoFaces(std::istream& ins) {
 		if (cmd == "v") {
 			Vector3 v;
 			lineiss >> v.x >> v.y >> v.z;
+			v = mat * v;
 			d.verts.push_back(v);
 		}
 		else if (cmd == "o" || cmd == "g") {
@@ -61,7 +69,9 @@ void ObjFile::LoadNoFaces(std::istream& ins) {
 			lineiss >> curgrp;
 
 			if (!d.name.empty()) {
-				data[d.name] = std::move(d);
+				if (options.ImportAll || options.ImportShapes.count(d.name) > 0)
+					data[d.name] = std::move(d);
+
 				d = ObjData();
 			}
 
@@ -71,6 +81,12 @@ void ObjFile::LoadNoFaces(std::istream& ins) {
 			Vector2 uv;
 			lineiss >> uv.u >> uv.v;
 			uv.v = 1.0f - uv.v;
+
+			if (options.InvertU)
+				uv.u = 1.0f - uv.u;
+			if (options.InvertV)
+				uv.v = 1.0f - uv.v;
+
 			d.uvs.push_back(uv);
 		}
 	}
@@ -79,12 +95,24 @@ void ObjFile::LoadNoFaces(std::istream& ins) {
 		d.name = "object";
 
 	if (!d.verts.empty())
-		data[d.name] = std::move(d);
+		if (options.ImportAll || options.ImportShapes.count(d.name) > 0)
+			data[d.name] = std::move(d);
 	else
 		data.erase(d.name);
 }
 
-void ObjFile::LoadForNif(std::istream& ins) {
+void ObjFile::LoadForNif(std::istream& ins, const ObjImportOptions& options) {
+	Matrix4 mat;
+	mat.PushScale(options.Scale, options.Scale, options.Scale);
+	mat.PushRotate(options.RotateX * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
+	mat.PushRotate(options.RotateY * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
+	mat.PushRotate(options.RotateZ * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
+
+	Matrix4 matRot;
+	matRot.PushRotate(options.RotateX * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
+	matRot.PushRotate(options.RotateY * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
+	matRot.PushRotate(options.RotateZ * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
+
 	// First, parse the file into verts, uvs, norms, and faces.  Faces
 	// are grouped by group/object name; the rest are not.
 	std::vector<Vector3> verts;
@@ -105,6 +133,7 @@ void ObjFile::LoadForNif(std::istream& ins) {
 			ni = atoi(s.substr(pos + 1).c_str());
 		}
 	};
+
 	// groups[group/object name][face index][face-vertex index]
 	std::unordered_map<std::string, std::vector<std::vector<FaceVertex>>> groups;
 	std::vector<std::vector<FaceVertex>>* currentgroup = &groups["object"];
@@ -122,6 +151,7 @@ void ObjFile::LoadForNif(std::istream& ins) {
 		if (cmd == "v") {
 			Vector3 v;
 			lineiss >> v.x >> v.y >> v.z;
+			v = mat * v;
 			verts.push_back(v);
 		}
 		else if (cmd == "o" || cmd == "g") {
@@ -133,11 +163,18 @@ void ObjFile::LoadForNif(std::istream& ins) {
 			Vector2 uv;
 			lineiss >> uv.u >> uv.v;
 			uv.v = 1.0f - uv.v;
+
+			if (options.InvertU)
+				uv.u = 1.0f - uv.u;
+			if (options.InvertV)
+				uv.v = 1.0f - uv.v;
+
 			uvs.push_back(uv);
 		}
 		else if (cmd == "vn") {
 			Vector3 vn;
 			lineiss >> vn.x >> vn.y >> vn.z;
+			vn = matRot * vn;
 			norms.push_back(vn);
 		}
 		else if (cmd == "f") {
@@ -189,6 +226,9 @@ void ObjFile::LoadForNif(std::istream& ins) {
 	// get it into the right form.  We work on one group/object at a time.
 	for (auto& gfp : groups) {
 		std::string groupName = gfp.first;
+		if (!options.ImportAll && options.ImportShapes.count(groupName) == 0)
+			continue;
+
 		const std::vector<std::vector<FaceVertex>>& faces = gfp.second;
 		if (faces.empty())
 			continue;

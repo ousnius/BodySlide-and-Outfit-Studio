@@ -472,10 +472,8 @@ void FBXWrangler::Priv::LoadMesh(const FBXImportOptions& options, FbxNode* node)
 	FBXShape shape;
 	shape.name = node->GetName();
 
-	if (!options.ImportAll) {
-		if (options.ImportShapes.count(shape.name) == 0)
-			return;
-	}
+	if (!options.ImportAll && options.ImportShapes.count(shape.name) == 0)
+		return;
 
 	FbxMesh* m = (FbxMesh*)node->GetNodeAttribute();
 
@@ -660,8 +658,16 @@ void FBXWrangler::Priv::LoadMesh(const FBXImportOptions& options, FbxNode* node)
 	mat.PushRotate(options.RotateY * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
 	mat.PushRotate(options.RotateZ * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
 
+	Matrix4 matRot;
+	matRot.PushRotate(options.RotateX * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
+	matRot.PushRotate(options.RotateY * DEG2RAD, Vector3(0.0f, 1.0f, 0.0f));
+	matRot.PushRotate(options.RotateZ * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
+
 	for (auto& v : shape.verts)
 		v = mat * v;
+
+	for (auto& n : shape.normals)
+		n = matRot * n;
 
 	shapes[shape.name] = std::move(shape);
 }

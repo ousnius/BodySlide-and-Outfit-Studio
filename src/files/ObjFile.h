@@ -10,9 +10,20 @@ See the included LICENSE file
 #include <fstream>
 #include <map>
 #include <string>
+#include <set>
 
-struct ObjOptionsImport {
-	bool noFaces = false;
+struct ObjImportOptions {
+	bool InvertU = false;
+	bool InvertV = false;
+	float Scale = 1.0f;
+	float RotateX = 0.0f;
+	float RotateY = 0.0f;
+	float RotateZ = 0.0f;
+
+	bool ImportAll = true;
+	std::set<std::string> ImportShapes;
+
+	bool NoFaces = false;
 };
 
 struct ObjData {
@@ -39,9 +50,9 @@ public:
 	void SetScale(const nifly::Vector3& inScale) { scale = inScale; }
 	void SetOffset(const nifly::Vector3& inOffset) { offset = inOffset; }
 
-	int LoadForNif(const std::string& fileName, const ObjOptionsImport& options = ObjOptionsImport());
-	void LoadNoFaces(std::istream& base);
-	void LoadForNif(std::istream& base);
+	int LoadForNif(const std::string& fileName, const ObjImportOptions& options = ObjImportOptions());
+	void LoadNoFaces(std::istream& base, const ObjImportOptions& options);
+	void LoadForNif(std::istream& base, const ObjImportOptions& options);
 
 	int Save(const std::string& fileName);
 

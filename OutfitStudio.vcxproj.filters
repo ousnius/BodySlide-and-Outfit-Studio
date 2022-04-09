@@ -659,6 +659,12 @@
     <None Include="lib\gli\glm\ext\vector_ulp.inl">
       <Filter>Libraries\gli\glm\ext</Filter>
     </None>
+    <None Include="res\xrc\EditUV.xrc">
+      <Filter>Resources</Filter>
+    </None>
+    <None Include="res\xrc\ImportDialog.xrc">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -767,9 +773,6 @@
       <Filter>Components</Filter>
     </ClInclude>
     <ClInclude Include="src\program\FBXImportDialog.h">
-      <Filter>Program</Filter>
-    </ClInclude>
-    <ClInclude Include="src\program\FBXImportOptions.h">
       <Filter>Program</Filter>
     </ClInclude>
     <ClInclude Include="src\render\GLExtensions.h">
@@ -1894,6 +1897,9 @@
     <ClInclude Include="src\render\GLDialog.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\ObjImportDialog.h">
+      <Filter>Program</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -2111,6 +2117,9 @@
     </ClCompile>
     <ClCompile Include="src\render\GLCanvas.cpp">
       <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\ObjImportDialog.cpp">
+      <Filter>Program</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
