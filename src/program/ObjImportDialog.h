@@ -34,13 +34,13 @@ private:
 
 	ObjImportOptions options;
 	wxStaticText* lbWarning;
-	wxCheckBox* cbInvertU;
-	wxCheckBox* cbInvertV;
-	wxTextCtrl* scale;
-	wxChoice* rotateX;
-	wxChoice* rotateY;
-	wxChoice* rotateZ;
-	wxListCtrl* meshesList;
+	wxCheckBox* cbInvertU = nullptr;
+	wxCheckBox* cbInvertV = nullptr;
+	wxTextCtrl* scale = nullptr;
+	wxChoice* rotateX = nullptr;
+	wxChoice* rotateY = nullptr;
+	wxChoice* rotateZ = nullptr;
+	wxListCtrl* meshesList = nullptr;
 
 	void UpdateVertexPositions();
 	void UpdateTextureCoords();

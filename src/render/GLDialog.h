@@ -5,10 +5,10 @@ See the included LICENSE file
 
 #pragma once
 
-#include <wx/wx.h>
-
-#include "GLCanvas.h"
 #include "GLSurface.h"
+#include "GLCanvas.h"
+
+#include <wx/wx.h>
 
 class GLDialog : public wxDialog {
 public:

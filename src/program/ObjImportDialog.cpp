@@ -179,6 +179,9 @@ void ObjImportDialog::OnShown() {
 }
 
 void ObjImportDialog::UpdateVertexPositions() {
+	if (!scale || !rotateX || !rotateY || !rotateZ)
+		return;
+
 	Matrix4 mat;
 
 	float scaleValue = std::atof(scale->GetValue().c_str());
@@ -255,6 +258,9 @@ void ObjImportDialog::UpdateVertexPositions() {
 }
 
 void ObjImportDialog::UpdateTextureCoords() {
+	if (!cbInvertU || !cbInvertV)
+		return;
+
 	auto shapes = obj.GetGroupList();
 
 	for (auto& s : shapes) {
@@ -289,8 +295,11 @@ void ObjImportDialog::UpdateTextureCoords() {
 }
 
 void ObjImportDialog::UpdateItemSelection() {
+	if (!meshesList)
+		return;
+
 	for (int item = 0; item < meshesList->GetItemCount(); item++) {
-		std::string name = meshesList->GetItemText(item).ToUTF8();
+		std::string name{meshesList->GetItemText(item).ToUTF8()};
 
 		auto m = GetSurface().GetMesh(name);
 		if (m) {
@@ -305,9 +314,12 @@ void ObjImportDialog::UpdateItemSelection() {
 }
 
 void ObjImportDialog::DeleteItemSelection() {
+	if (!meshesList)
+		return;
+
 	for (int item = meshesList->GetItemCount() - 1; item >= 0; item--) {
 		if (meshesList->GetItemState(item, wxLIST_STATE_SELECTED) == wxLIST_STATE_SELECTED) {
-			std::string name = meshesList->GetItemText(item).ToUTF8();
+			std::string name{meshesList->GetItemText(item).ToUTF8()};
 			GetSurface().DeleteMesh(name);
 			meshesList->DeleteItem(item);
 		}
@@ -390,7 +402,7 @@ void ObjImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 	options.ImportAll = false;
 
 	for (int item = 0; item < meshesList->GetItemCount(); item++) {
-		std::string name = meshesList->GetItemText(item).ToUTF8();
+		std::string name{meshesList->GetItemText(item).ToUTF8()};
 		options.ImportShapes.insert(name);
 	}
 

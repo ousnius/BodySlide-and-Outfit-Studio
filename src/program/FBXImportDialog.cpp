@@ -170,6 +170,9 @@ void FBXImportDialog::OnShown() {
 }
 
 void FBXImportDialog::UpdateVertexPositions() {
+	if (!scale || !rotateX || !rotateY || !rotateZ)
+		return;
+
 	Matrix4 mat;
 
 	float scaleValue = std::atof(scale->GetValue().c_str());
@@ -243,6 +246,9 @@ void FBXImportDialog::UpdateVertexPositions() {
 }
 
 void FBXImportDialog::UpdateTextureCoords() {
+	if (!cbInvertU || !cbInvertV)
+		return;
+
 	std::vector<std::string> shapes;
 	fbxw.GetShapeNames(shapes);
 
@@ -275,8 +281,11 @@ void FBXImportDialog::UpdateTextureCoords() {
 }
 
 void FBXImportDialog::UpdateItemSelection() {
+	if (!meshesList)
+		return;
+
 	for (int item = 0; item < meshesList->GetItemCount(); item++) {
-		std::string name = meshesList->GetItemText(item).ToUTF8();
+		std::string name{meshesList->GetItemText(item).ToUTF8()};
 
 		auto m = GetSurface().GetMesh(name);
 		if (m) {
@@ -291,9 +300,12 @@ void FBXImportDialog::UpdateItemSelection() {
 }
 
 void FBXImportDialog::DeleteItemSelection() {
+	if (!meshesList)
+		return;
+
 	for (int item = meshesList->GetItemCount() - 1; item >= 0; item--) {
 		if (meshesList->GetItemState(item, wxLIST_STATE_SELECTED) == wxLIST_STATE_SELECTED) {
-			std::string name = meshesList->GetItemText(item).ToUTF8();
+			std::string name{meshesList->GetItemText(item).ToUTF8()};
 			GetSurface().DeleteMesh(name);
 			meshesList->DeleteItem(item);
 		}
@@ -376,7 +388,7 @@ void FBXImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 	options.ImportAll = false;
 
 	for (int item = 0; item < meshesList->GetItemCount(); item++) {
-		std::string name = meshesList->GetItemText(item).ToUTF8();
+		std::string name{meshesList->GetItemText(item).ToUTF8()};
 		options.ImportShapes.insert(name);
 	}
 
