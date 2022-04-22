@@ -1301,7 +1301,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 		NiShader* shader = workNif.GetShader(shape);
 		if (shader) {
 			// Find material file
-			if (workNif.GetHeader().GetVersion().User() == 12 && workNif.GetHeader().GetVersion().Stream() >= 130) {
+			if (workNif.GetHeader().GetVersion().IsFO4() || workNif.GetHeader().GetVersion().IsFO76()) {
 				matFile = shader->name.get();
 				if (!matFile.empty())
 					hasMat = true;

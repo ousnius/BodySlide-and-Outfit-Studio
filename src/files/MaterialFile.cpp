@@ -75,66 +75,61 @@ int MaterialFile::Read(std::istream& input) {
 	input.read((char*)&refractionFalloff, 1);
 	input.read((char*)&refractionPower, 4);
 
-	input.read((char*)&environmentMapping, 1);
-	input.read((char*)&environmentMappingMaskScale, 4);
+	if (version < 10) {
+		input.read((char*)&environmentMapping, 1);
+		input.read((char*)&environmentMappingMaskScale, 4);
+	}
+	else
+		input.read((char*)&depthBias, 1);
 
 	input.read((char*)&grayscaleToPaletteColor, 1);
 
+	if (version >= 6)
+		input.read((char*)&maskWrites, 1);
+
 	uint32_t length = 0;
 	if (signature == BGSM) {
-		std::string tmp;
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		diffuseTexture = ToOSSlashes(tmp);
+		diffuseTexture = ReadString(input);
+		normalTexture = ReadString(input);
+		smoothSpecTexture = ReadString(input);
+		greyscaleTexture = ReadString(input);
 
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		normalTexture = ToOSSlashes(tmp);
+		if (version > 2) {
+			glowTexture = ReadString(input);
+			wrinklesTexture = ReadString(input);
+			specularTexture = ReadString(input);
+			lightingTexture = ReadString(input);
+			flowTexture = ReadString(input);
 
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		smoothSpecTexture = ToOSSlashes(tmp);
-
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		greyscaleTexture = ToOSSlashes(tmp);
-
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		envmapTexture = ToOSSlashes(tmp);
-
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		glowTexture = ToOSSlashes(tmp);
-
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		innerLayerTexture = ToOSSlashes(tmp);
-
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		wrinklesTexture = ToOSSlashes(tmp);
-
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		displacementTexture = ToOSSlashes(tmp);
+			if (version >= 17)
+				distanceFieldAlphaTexture = ReadString(input);
+		}
+		else {
+			envmapTexture = ReadString(input);
+			glowTexture = ReadString(input);
+			innerLayerTexture = ReadString(input);
+			wrinklesTexture = ReadString(input);
+			displacementTexture = ReadString(input);
+		}
 
 		input.read((char*)&enableEditorAlphaRef, 1);
-		input.read((char*)&rimLighting, 1);
-		input.read((char*)&rimPower, 4);
-		input.read((char*)&backLightPower, 4);
 
-		input.read((char*)&subsurfaceLighting, 1);
-		input.read((char*)&subsurfaceLightingRolloff, 4);
+		if (version >= 8) {
+			input.read((char*)&translucency, 1);
+			input.read((char*)&translucencyThickObject, 1);
+			input.read((char*)&translucencyMixAlbedoWithSubsurfaceColor, 1);
+			input.read((char*)&translucencySubsurfaceColor, 12);
+			input.read((char*)&translucencyTransmissiveScale, 4);
+			input.read((char*)&translucencyTurbulence, 4);
+		}
+		else {
+			input.read((char*)&rimLighting, 1);
+			input.read((char*)&rimPower, 4);
+			input.read((char*)&backLightPower, 4);
+
+			input.read((char*)&subsurfaceLighting, 1);
+			input.read((char*)&subsurfaceLightingRolloff, 4);
+		}
 
 		input.read((char*)&specularEnabled, 1);
 		input.read((char*)&specularColor, 12);
@@ -144,9 +139,21 @@ int MaterialFile::Read(std::istream& input) {
 		input.read((char*)&wetnessControlSpecScale, 4);
 		input.read((char*)&wetnessControlSpecPowerScale, 4);
 		input.read((char*)&wetnessControlSpecMinvar, 4);
-		input.read((char*)&wetnessControlEnvMapScale, 4);
+
+		if (version < 10)
+			input.read((char*)&wetnessControlEnvMapScale, 4);
+
 		input.read((char*)&wetnessControlFresnelPower, 4);
 		input.read((char*)&wetnessControlMetalness, 4);
+
+		if (version > 2) {
+			input.read((char*)&pbr, 1);
+
+			if (version >= 9) {
+				input.read((char*)&customPorosity, 1);
+				input.read((char*)&porosityValue, 4);
+			}
+		}
 
 		input.read((char*)&length, 4);
 		rootMaterialPath.resize(length);
@@ -160,7 +167,19 @@ int MaterialFile::Read(std::istream& input) {
 		input.read((char*)&emittanceMult, 4);
 		input.read((char*)&modelSpaceNormals, 1);
 		input.read((char*)&externalEmittance, 1);
-		input.read((char*)&backLighting, 1);
+
+		if (version >= 12)
+			input.read((char*)&lumEmittance, 4);
+
+		if (version >= 13) {
+			input.read((char*)&useAdaptativeEmissive, 1);
+			input.read((char*)&adaptativeEmissive_ExposureOffset, 4);
+			input.read((char*)&adaptativeEmissive_FinalExposureMin, 4);
+			input.read((char*)&adaptativeEmissive_FinalExposureMax, 4);
+		}
+
+		if (version < 8)
+			input.read((char*)&backLighting, 1);
 
 		input.read((char*)&receiveShadows, 1);
 		input.read((char*)&hideSecret, 1);
@@ -169,8 +188,12 @@ int MaterialFile::Read(std::istream& input) {
 		input.read((char*)&assumeShadowmask, 1);
 
 		input.read((char*)&glowMap, 1);
-		input.read((char*)&environmentMappingWindow, 1);
-		input.read((char*)&environmentMappingEye, 1);
+
+		if (version < 7) {
+			input.read((char*)&environmentMappingWindow, 1);
+			input.read((char*)&environmentMappingEye, 1);
+		}
+
 		input.read((char*)&hair, 1);
 		input.read((char*)&hairTintColor, 12);
 		input.read((char*)&tree, 1);
@@ -178,42 +201,49 @@ int MaterialFile::Read(std::istream& input) {
 		input.read((char*)&skinTint, 1);
 
 		input.read((char*)&tessellate, 1);
-		input.read((char*)&displacementTextureBias, 4);
-		input.read((char*)&displacementTextureScale, 4);
-		input.read((char*)&tessellationPNScale, 4);
-		input.read((char*)&tessellationBaseFactor, 4);
-		input.read((char*)&tessellationFadeDistance, 4);
+
+		if (version < 3) {
+			input.read((char*)&displacementTextureBias, 4);
+			input.read((char*)&displacementTextureScale, 4);
+			input.read((char*)&tessellationPNScale, 4);
+			input.read((char*)&tessellationBaseFactor, 4);
+			input.read((char*)&tessellationFadeDistance, 4);
+		}
 
 		input.read((char*)&grayscaleToPaletteScale, 4);
 		if (version >= 1)
 			input.read((char*)&skewSpecularAlpha, 1);
+
+		if (version >= 3) {
+			input.read((char*)&terrain, 1);
+
+			if (terrain) {
+				if (version == 3)
+					input.read((char*)&unkInt1, 4);
+
+				input.read((char*)&terrainThresholdFalloff, 4);
+				input.read((char*)&terrainTilingDistance, 4);
+				input.read((char*)&terrainRotationAngle, 4);
+			}
+		}
 	}
 	else if (signature == BGEM) {
-		std::string tmp;
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		baseTexture = ToOSSlashes(tmp);
+		baseTexture = ReadString(input);
+		grayscaleTexture = ReadString(input);
+		fxEnvmapTexture = ReadString(input);
+		fxNormalTexture = ReadString(input);
+		envmapMaskTexture = ReadString(input);
 
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		grayscaleTexture = ToOSSlashes(tmp);
+		if (version >= 11) {
+			specularTexture = ReadString(input);
+			lightingTexture = ReadString(input);
+			glowTexture = ReadString(input);
+		}
 
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		fxEnvmapTexture = ToOSSlashes(tmp);
-
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		fxNormalTexture = ToOSSlashes(tmp);
-
-		input.read((char*)&length, 4);
-		tmp.resize(length);
-		input.read((char*)&tmp.front(), length);
-		envmapMaskTexture = ToOSSlashes(tmp);
+		if (version >= 10) {
+			input.read((char*)&environmentMapping, 1);
+			input.read((char*)&environmentMappingMaskScale, 4);
+		}
 
 		input.read((char*)&bloodEnabled, 1);
 		input.read((char*)&effectLightingEnabled, 1);
@@ -230,6 +260,21 @@ int MaterialFile::Read(std::istream& input) {
 		input.read((char*)&lightingInfluence, 4);
 		input.read((char*)&envmapMinLOD, 1);
 		input.read((char*)&softDepth, 4);
+
+		if (version >= 11)
+			input.read((char*)&emittanceColor, 12);
+
+		if (version >= 15) {
+			input.read((char*)&adaptativeEmissive_ExposureOffset, 4);
+			input.read((char*)&adaptativeEmissive_FinalExposureMin, 4);
+			input.read((char*)&adaptativeEmissive_FinalExposureMax, 4);
+		}
+
+		if (version >= 16)
+			input.read((char*)&glowMap, 1);
+
+		if (version >= 20)
+			input.read((char*)&effectPbrSpecular, 1);
 	}
 
 	return 0;
@@ -274,66 +319,61 @@ int MaterialFile::Write(std::ostream& output) {
 	output.write((char*)&refractionFalloff, 1);
 	output.write((char*)&refractionPower, 4);
 
-	output.write((char*)&environmentMapping, 1);
-	output.write((char*)&environmentMappingMaskScale, 4);
+	if (version < 10) {
+		output.write((char*)&environmentMapping, 1);
+		output.write((char*)&environmentMappingMaskScale, 4);
+	}
+	else
+		output.write((char*)&depthBias, 1);
 
 	output.write((char*)&grayscaleToPaletteColor, 1);
 
+	if (version >= 6)
+		output.write((char*)&maskWrites, 1);
+
 	uint32_t length = 0;
 	if (signature == BGSM) {
-		std::string tmp;
-		tmp = ToBackslashes(diffuseTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
+		WriteString(output, diffuseTexture);
+		WriteString(output, normalTexture);
+		WriteString(output, smoothSpecTexture);
+		WriteString(output, greyscaleTexture);
 
-		tmp = ToBackslashes(normalTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
+		if (version > 2) {
+			WriteString(output, glowTexture);
+			WriteString(output, wrinklesTexture);
+			WriteString(output, specularTexture);
+			WriteString(output, lightingTexture);
+			WriteString(output, flowTexture);
 
-		tmp = ToBackslashes(smoothSpecTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
-
-		tmp = ToBackslashes(greyscaleTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
-
-		tmp = ToBackslashes(envmapTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
-
-		tmp = ToBackslashes(glowTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
-
-		tmp = ToBackslashes(innerLayerTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
-
-		tmp = ToBackslashes(wrinklesTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
-
-		tmp = ToBackslashes(displacementTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
+			if (version >= 17)
+				WriteString(output, distanceFieldAlphaTexture);
+		}
+		else {
+			WriteString(output, envmapTexture);
+			WriteString(output, glowTexture);
+			WriteString(output, innerLayerTexture);
+			WriteString(output, wrinklesTexture);
+			WriteString(output, displacementTexture);
+		}
 
 		output.write((char*)&enableEditorAlphaRef, 1);
-		output.write((char*)&rimLighting, 1);
-		output.write((char*)&rimPower, 4);
-		output.write((char*)&backLightPower, 4);
 
-		output.write((char*)&subsurfaceLighting, 1);
-		output.write((char*)&subsurfaceLightingRolloff, 4);
+		if (version >= 8) {
+			output.write((char*)&translucency, 1);
+			output.write((char*)&translucencyThickObject, 1);
+			output.write((char*)&translucencyMixAlbedoWithSubsurfaceColor, 1);
+			output.write((char*)&translucencySubsurfaceColor, 12);
+			output.write((char*)&translucencyTransmissiveScale, 4);
+			output.write((char*)&translucencyTurbulence, 4);
+		}
+		else {
+			output.write((char*)&rimLighting, 1);
+			output.write((char*)&rimPower, 4);
+			output.write((char*)&backLightPower, 4);
+
+			output.write((char*)&subsurfaceLighting, 1);
+			output.write((char*)&subsurfaceLightingRolloff, 4);
+		}
 
 		output.write((char*)&specularEnabled, 1);
 		output.write((char*)&specularColor, 12);
@@ -343,9 +383,21 @@ int MaterialFile::Write(std::ostream& output) {
 		output.write((char*)&wetnessControlSpecScale, 4);
 		output.write((char*)&wetnessControlSpecPowerScale, 4);
 		output.write((char*)&wetnessControlSpecMinvar, 4);
-		output.write((char*)&wetnessControlEnvMapScale, 4);
+
+		if (version < 10)
+			output.write((char*)&wetnessControlEnvMapScale, 4);
+
 		output.write((char*)&wetnessControlFresnelPower, 4);
 		output.write((char*)&wetnessControlMetalness, 4);
+
+		if (version > 2) {
+			output.write((char*)&pbr, 1);
+
+			if (version >= 9) {
+				output.write((char*)&customPorosity, 1);
+				output.write((char*)&porosityValue, 4);
+			}
+		}
 
 		length = static_cast<uint32_t>(rootMaterialPath.length());
 		output.write((char*)&length, 4);
@@ -359,7 +411,19 @@ int MaterialFile::Write(std::ostream& output) {
 		output.write((char*)&emittanceMult, 4);
 		output.write((char*)&modelSpaceNormals, 1);
 		output.write((char*)&externalEmittance, 1);
-		output.write((char*)&backLighting, 1);
+
+		if (version >= 12)
+			output.write((char*)&lumEmittance, 4);
+
+		if (version >= 13) {
+			output.write((char*)&useAdaptativeEmissive, 1);
+			output.write((char*)&adaptativeEmissive_ExposureOffset, 4);
+			output.write((char*)&adaptativeEmissive_FinalExposureMin, 4);
+			output.write((char*)&adaptativeEmissive_FinalExposureMax, 4);
+		}
+
+		if (version < 8)
+			output.write((char*)&backLighting, 1);
 
 		output.write((char*)&receiveShadows, 1);
 		output.write((char*)&hideSecret, 1);
@@ -368,8 +432,12 @@ int MaterialFile::Write(std::ostream& output) {
 		output.write((char*)&assumeShadowmask, 1);
 
 		output.write((char*)&glowMap, 1);
-		output.write((char*)&environmentMappingWindow, 1);
-		output.write((char*)&environmentMappingEye, 1);
+
+		if (version < 7) {
+			output.write((char*)&environmentMappingWindow, 1);
+			output.write((char*)&environmentMappingEye, 1);
+		}
+
 		output.write((char*)&hair, 1);
 		output.write((char*)&hairTintColor, 12);
 		output.write((char*)&tree, 1);
@@ -377,42 +445,49 @@ int MaterialFile::Write(std::ostream& output) {
 		output.write((char*)&skinTint, 1);
 
 		output.write((char*)&tessellate, 1);
-		output.write((char*)&displacementTextureBias, 4);
-		output.write((char*)&displacementTextureScale, 4);
-		output.write((char*)&tessellationPNScale, 4);
-		output.write((char*)&tessellationBaseFactor, 4);
-		output.write((char*)&tessellationFadeDistance, 4);
+
+		if (version < 3) {
+			output.write((char*)&displacementTextureBias, 4);
+			output.write((char*)&displacementTextureScale, 4);
+			output.write((char*)&tessellationPNScale, 4);
+			output.write((char*)&tessellationBaseFactor, 4);
+			output.write((char*)&tessellationFadeDistance, 4);
+		}
 
 		output.write((char*)&grayscaleToPaletteScale, 4);
 		if (version >= 1)
 			output.write((char*)&skewSpecularAlpha, 1);
+
+		if (version >= 3) {
+			output.write((char*)&terrain, 1);
+
+			if (terrain) {
+				if (version == 3)
+					output.write((char*)&unkInt1, 4);
+
+				output.write((char*)&terrainThresholdFalloff, 4);
+				output.write((char*)&terrainTilingDistance, 4);
+				output.write((char*)&terrainRotationAngle, 4);
+			}
+		}
 	}
 	else if (signature == BGEM) {
-		std::string tmp;
-		tmp = ToBackslashes(baseTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
+		WriteString(output, baseTexture);
+		WriteString(output, grayscaleTexture);
+		WriteString(output, fxEnvmapTexture);
+		WriteString(output, fxNormalTexture);
+		WriteString(output, envmapMaskTexture);
 
-		tmp = ToBackslashes(grayscaleTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
+		if (version >= 11) {
+			WriteString(output, specularTexture);
+			WriteString(output, lightingTexture);
+			WriteString(output, glowTexture);
+		}
 
-		tmp = ToBackslashes(fxEnvmapTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
-
-		tmp = ToBackslashes(fxNormalTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
-
-		tmp = ToBackslashes(envmapMaskTexture);
-		length = static_cast<uint32_t>(tmp.length());
-		output.write((char*)&length, 4);
-		output.write(tmp.c_str(), length);
+		if (version >= 10) {
+			output.write((char*)&environmentMapping, 1);
+			output.write((char*)&environmentMappingMaskScale, 4);
+		}
 
 		output.write((char*)&bloodEnabled, 1);
 		output.write((char*)&effectLightingEnabled, 1);
@@ -429,9 +504,43 @@ int MaterialFile::Write(std::ostream& output) {
 		output.write((char*)&lightingInfluence, 4);
 		output.write((char*)&envmapMinLOD, 1);
 		output.write((char*)&softDepth, 4);
+
+		if (version >= 11)
+			output.write((char*)&emittanceColor, 12);
+
+		if (version >= 15) {
+			output.write((char*)&adaptativeEmissive_ExposureOffset, 4);
+			output.write((char*)&adaptativeEmissive_FinalExposureMin, 4);
+			output.write((char*)&adaptativeEmissive_FinalExposureMax, 4);
+		}
+
+		if (version >= 16)
+			output.write((char*)&glowMap, 1);
+
+		if (version >= 20)
+			output.write((char*)&effectPbrSpecular, 1);
 	}
 
 	return 0;
+}
+
+std::string MaterialFile::ReadString(std::istream& input) {
+	uint32_t length = 0;
+	input.read((char*)&length, 4);
+
+	std::string tmp;
+	tmp.resize(length);
+	input.read((char*)&tmp.front(), length);
+
+	return ToOSSlashes(tmp);
+}
+
+void MaterialFile::WriteString(std::ostream& output, const std::string& str) {
+	std::string tmp = ToBackslashes(str);
+	uint32_t length = static_cast<uint32_t>(tmp.length());
+
+	output.write((char*)&length, 4);
+	output.write(tmp.c_str(), length);
 }
 
 MaterialFile::AlphaBlendModeType MaterialFile::ConvertAlphaBlendMode(const uint8_t a, const uint32_t b, const uint32_t c) {

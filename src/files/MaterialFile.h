@@ -16,6 +16,8 @@ public:
 
 	enum AlphaBlendModeType { Unknown, None, Standard, Additive, Multiplicative };
 
+	enum MaskWriteFlags : uint8_t { Albedo = 1 << 0, Normal = 1 << 1, Specular = 1 << 2, AmbientOcclusion = 1 << 3, Emissive = 1 << 4, Gloss = 1 << 5 };
+
 	// Base
 	Type signature = Type::BGSM;
 	uint32_t version = 1;
@@ -40,19 +42,32 @@ public:
 	float refractionPower = 0.0f;
 	bool environmentMapping = false;
 	float environmentMappingMaskScale = 1.0f;
+	bool depthBias = false;
 	bool grayscaleToPaletteColor = false;
+	MaskWriteFlags maskWrites = (MaskWriteFlags)(MaskWriteFlags::Albedo | MaskWriteFlags::Normal | MaskWriteFlags::Specular | MaskWriteFlags::AmbientOcclusion
+												 | MaskWriteFlags::Emissive | MaskWriteFlags::Gloss);
 
 	// BGSM 0x4D534742
 	std::string diffuseTexture;
 	std::string normalTexture;
 	std::string smoothSpecTexture;
 	std::string greyscaleTexture;
+	std::string specularTexture;
+	std::string lightingTexture;
+	std::string flowTexture;
+	std::string distanceFieldAlphaTexture;
 	std::string envmapTexture;
 	std::string glowTexture;
 	std::string innerLayerTexture;
 	std::string wrinklesTexture;
 	std::string displacementTexture;
 	bool enableEditorAlphaRef = false;
+	bool translucency = false;
+	bool translucencyThickObject = false;
+	bool translucencyMixAlbedoWithSubsurfaceColor = false;
+	nifly::Vector3 translucencySubsurfaceColor = nifly::Vector3(1.0f, 1.0f, 1.0f);
+	float translucencyTransmissiveScale = 1.0f;
+	float translucencyTurbulence = 0.5f;
 	bool rimLighting = false;
 	float rimPower = 2.0f;
 	float backLightPower = 0.0f;
@@ -69,6 +84,9 @@ public:
 	float wetnessControlEnvMapScale = -1.0f;
 	float wetnessControlFresnelPower = -1.0f;
 	float wetnessControlMetalness = -1.0f;
+	bool pbr = false;
+	float customPorosity = 0.0f;
+	float porosityValue = 0.0f;
 	std::string rootMaterialPath;
 	bool anisoLighting = false;
 	bool emitEnabled = false;
@@ -76,6 +94,11 @@ public:
 	float emittanceMult = 1.0f;
 	bool modelSpaceNormals = false;
 	bool externalEmittance = false;
+	float lumEmittance = 100.0f;
+	bool useAdaptativeEmissive = false;
+	float adaptativeEmissive_ExposureOffset = 13.5f;
+	float adaptativeEmissive_FinalExposureMin = 2.0f;
+	float adaptativeEmissive_FinalExposureMax = 3.0f;
 	bool backLighting = false;
 	bool receiveShadows = false;
 	bool hideSecret = false;
@@ -98,6 +121,11 @@ public:
 	float tessellationFadeDistance = 0.0f;
 	float grayscaleToPaletteScale = 1.0f;
 	bool skewSpecularAlpha = false;
+	bool terrain = false;
+	uint32_t unkInt1 = 0;
+	float terrainThresholdFalloff = 0.0f;
+	float terrainTilingDistance = 0.0f;
+	float terrainRotationAngle = 0.0f;
 
 	// BGEM 0x4D454742
 	std::string baseTexture;
@@ -120,6 +148,7 @@ public:
 	float lightingInfluence = 1.0f;
 	uint8_t envmapMinLOD = 0;
 	float softDepth = 100.0f;
+	bool effectPbrSpecular = false;
 
 	MaterialFile() {}
 	MaterialFile(const Type&);
@@ -128,6 +157,9 @@ public:
 
 	int Read(std::istream&);
 	int Write(std::ostream&);
+
+	std::string ReadString(std::istream&);
+	void WriteString(std::ostream&, const std::string&);
 
 	bool Failed() { return failed; }
 
