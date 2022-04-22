@@ -98,6 +98,9 @@ private:
 	void OnSelectInvert(wxCommandEvent& event);
 	void OnSelectLess(wxCommandEvent& event);
 	void OnSelectMore(wxCommandEvent& event);
+	void OnTranslate(wxCommandEvent& event);
+	void OnRotate(wxCommandEvent& event);
+	void OnScale(wxCommandEvent& event);
 	void OnApply(wxCommandEvent& event);
 	void OnCancel(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& event);
@@ -121,6 +124,11 @@ public:
 	void SelectInvert();
 	void SelectLess();
 	void SelectMore();
+
+	nifly::Vector3 CalcSelectionCenter();
+	void StartMeshAction();
+	void EndMeshAction();
+	void ApplyMeshTransform(const nifly::Matrix4&);
 
 	void SetCursorType(GLSurface::CursorType cursorType) { uvSurface.SetCursorType(cursorType); }
 

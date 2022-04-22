@@ -111,6 +111,9 @@ wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_MENU(XRCID("editSelectInvert"), EditUV::OnSelectInvert)
 	EVT_MENU(XRCID("editSelectLess"), EditUV::OnSelectLess)
 	EVT_MENU(XRCID("editSelectMore"), EditUV::OnSelectMore)
+	EVT_MENU(XRCID("editTranslate"), EditUV::OnTranslate)
+	EVT_MENU(XRCID("editRotate"), EditUV::OnRotate)
+	EVT_MENU(XRCID("editScale"), EditUV::OnScale)
 	EVT_BUTTON(wxID_OK, EditUV::OnApply)
 	EVT_BUTTON(wxID_CANCEL, EditUV::OnCancel)
 	EVT_CLOSE(EditUV::OnClose)
@@ -193,6 +196,173 @@ void EditUV::OnSelectLess(wxCommandEvent& WXUNUSED(event)) {
 
 void EditUV::OnSelectMore(wxCommandEvent& WXUNUSED(event)) {
 	canvas->SelectMore();
+}
+
+void EditUV::OnTranslate(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog dlg;
+	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgTranslate")) {
+		wxSlider* sliderU = XRCCTRL(dlg, "sliderU", wxSlider);
+		wxSlider* sliderV = XRCCTRL(dlg, "sliderV", wxSlider);
+		wxTextCtrl* textU = XRCCTRL(dlg, "textU", wxTextCtrl);
+		wxTextCtrl* textV = XRCCTRL(dlg, "textV", wxTextCtrl);
+
+		auto sliderMoved = [&](wxCommandEvent&) {
+			float u = sliderU->GetValue() / 1000.0f;
+			float v = sliderV->GetValue() / 1000.0f;
+
+			textU->ChangeValue(wxString::Format("%0.5f", u));
+			textV->ChangeValue(wxString::Format("%0.5f", v));
+		};
+
+		auto textChanged = [&](wxCommandEvent&) {
+			float u = atof(textU->GetValue().c_str());
+			float v = atof(textV->GetValue().c_str());
+
+			sliderU->SetValue(u * 1000);
+			sliderV->SetValue(v * 1000);
+		};
+
+		sliderU->Bind(wxEVT_SLIDER, sliderMoved);
+		sliderV->Bind(wxEVT_SLIDER, sliderMoved);
+
+		textU->Bind(wxEVT_TEXT, textChanged);
+		textV->Bind(wxEVT_TEXT, textChanged);
+
+		if (dlg.ShowModal() != wxID_OK)
+			return;
+
+		canvas->StartMeshAction();
+
+		Vector3 translation;
+		translation.x = atof(textU->GetValue().c_str());
+		translation.y = atof(textV->GetValue().c_str());
+
+		Matrix4 mat;
+		mat.PushTranslate(translation);
+
+		canvas->ApplyMeshTransform(mat);
+		canvas->EndMeshAction();
+	}
+}
+
+void EditUV::OnRotate(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog dlg;
+	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgRotate")) {
+		wxSlider* slider = XRCCTRL(dlg, "slider", wxSlider);
+		wxTextCtrl* text = XRCCTRL(dlg, "text", wxTextCtrl);
+
+		auto sliderMoved = [&](wxCommandEvent&) {
+			float sliderValue = slider->GetValue() / 100.0f;
+			text->ChangeValue(wxString::Format("%0.4f", sliderValue));
+		};
+
+		auto textChanged = [&](wxCommandEvent&) {
+			float changedValue = atof(text->GetValue().c_str());
+			slider->SetValue(changedValue * 100);
+		};
+
+		slider->Bind(wxEVT_SLIDER, sliderMoved);
+		text->Bind(wxEVT_TEXT, textChanged);
+
+		if (dlg.ShowModal() != wxID_OK)
+			return;
+
+		Vector3 currentCenter = canvas->CalcSelectionCenter();
+		canvas->StartMeshAction();
+
+		float rotation = atof(text->GetValue().c_str());
+
+		Matrix4 mat;
+		mat.PushTranslate(currentCenter);
+		mat.PushRotate(rotation * DEG2RAD, Vector3(0.0f, 0.0f, 1.0f));
+		mat.PushTranslate(currentCenter * -1.0f);
+
+		canvas->ApplyMeshTransform(mat);
+		canvas->EndMeshAction();
+	}
+}
+
+void EditUV::OnScale(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog dlg;
+	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgScale")) {
+		wxSlider* sliderU = XRCCTRL(dlg, "sliderU", wxSlider);
+		wxSlider* sliderV = XRCCTRL(dlg, "sliderV", wxSlider);
+		wxTextCtrl* textU = XRCCTRL(dlg, "textU", wxTextCtrl);
+		wxTextCtrl* textV = XRCCTRL(dlg, "textV", wxTextCtrl);
+
+		auto sliderMoved = [&](wxCommandEvent& event) {
+			Vector3 scale(1.0f, 1.0f, 1.0f);
+
+			bool uniform = XRCCTRL(dlg, "cbUniform", wxCheckBox)->IsChecked();
+			if (uniform) {
+				float uniformValue = ((wxSlider*)event.GetEventObject())->GetValue() / 1000.0f;
+				scale = Vector3(uniformValue, uniformValue, uniformValue);
+
+				XRCCTRL(dlg, "sliderU", wxSlider)->SetValue(scale.x * 1000);
+				XRCCTRL(dlg, "sliderV", wxSlider)->SetValue(scale.y * 1000);
+			}
+			else {
+				scale.x = XRCCTRL(dlg, "sliderU", wxSlider)->GetValue() / 1000.0f;
+				scale.y = XRCCTRL(dlg, "sliderV", wxSlider)->GetValue() / 1000.0f;
+			}
+
+			XRCCTRL(dlg, "textU", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+			XRCCTRL(dlg, "textV", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+		};
+
+		auto textChanged = [&](wxCommandEvent& event) {
+			Vector3 scale(1.0f, 1.0f, 1.0f);
+
+			bool uniform = XRCCTRL(dlg, "cbUniform", wxCheckBox)->IsChecked();
+			if (uniform) {
+				float uniformValue = atof(((wxTextCtrl*)event.GetEventObject())->GetValue().c_str());
+				scale = Vector3(uniformValue, uniformValue, uniformValue);
+
+				XRCCTRL(dlg, "textU", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+				XRCCTRL(dlg, "textV", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+			}
+			else {
+				scale.x = atof(XRCCTRL(dlg, "textU", wxTextCtrl)->GetValue().c_str());
+				scale.y = atof(XRCCTRL(dlg, "textV", wxTextCtrl)->GetValue().c_str());
+			}
+
+			if (scale.x < 0.01f) {
+				scale.x = 0.01f;
+				XRCCTRL(dlg, "textU", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+			}
+
+			if (scale.y < 0.01f) {
+				scale.y = 0.01f;
+				XRCCTRL(dlg, "textV", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+			}
+
+			XRCCTRL(dlg, "sliderU", wxSlider)->SetValue(scale.x * 1000);
+			XRCCTRL(dlg, "sliderV", wxSlider)->SetValue(scale.y * 1000);
+		};
+
+		sliderU->Bind(wxEVT_SLIDER, sliderMoved);
+		sliderV->Bind(wxEVT_SLIDER, sliderMoved);
+
+		textU->Bind(wxEVT_TEXT, textChanged);
+		textV->Bind(wxEVT_TEXT, textChanged);
+
+		if (dlg.ShowModal() != wxID_OK)
+			return;
+
+		Vector3 currentCenter = canvas->CalcSelectionCenter();
+		canvas->StartMeshAction();
+
+		float scaleU = atof(textU->GetValue().c_str());
+		float scaleV = atof(textV->GetValue().c_str());
+
+		Matrix4 mat;
+		mat.PushTranslate(currentCenter);
+		mat.PushScale(scaleU, scaleV, 1.0f);
+		mat.PushTranslate(currentCenter * -1.0f);
+
+		canvas->ApplyMeshTransform(mat);
+		canvas->EndMeshAction();
+	}
 }
 
 void EditUV::SelectTool(EditUVTool tool) {
@@ -589,8 +759,7 @@ void EditUVCanvas::OnLeftDown(wxMouseEvent& event) {
 	editUV->StartTool();
 
 	switch (editUV->GetActiveTool()) {
-		case EditUVTool::VertexSelection:
-			break;
+		case EditUVTool::VertexSelection: break;
 
 		case EditUVTool::BoxSelection:
 			boxSelectMesh->verts[0] = Vector3(click.x, click.y, 0.0f);
@@ -605,33 +774,9 @@ void EditUVCanvas::OnLeftDown(wxMouseEvent& event) {
 		case EditUVTool::Move:
 		case EditUVTool::Scale:
 		case EditUVTool::Rotate:
-			// Calculate the selection center
-			int count = 0;
-
-			for (int i = 0; i < uvGridMesh->nVerts; i++) {
-				if (uvGridMesh->vcolors[i] == Vector3(1.0f, 1.0f, 0.0f)) {
-					currentCenter = currentCenter + uvGridMesh->verts[i];
-					count++;
-				}
-			}
-
-			if (count > 0)
-				currentCenter = currentCenter / count;
-			else
-				currentCenter.Zero();
-
+			StartMeshAction();
+			CalcSelectionCenter();
 			lastAngle = std::atan2(currentCenter.y - click.y, currentCenter.x - click.x);
-
-			std::unordered_map<int, Vector2> state;
-			state.reserve(uvGridMesh->nVerts);
-
-			for (int i = 0; i < uvGridMesh->nVerts; i++)
-				state[i] = Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
-
-			auto action = new EditUVAction();
-			action->SetActionMesh(uvGridMesh);
-			action->SetStartState(state);
-			editUV->history.Add(action);
 			break;
 	}
 
@@ -686,22 +831,7 @@ void EditUVCanvas::OnLeftUp(wxMouseEvent& event) {
 
 		case EditUVTool::Move:
 		case EditUVTool::Scale:
-		case EditUVTool::Rotate:
-			std::unordered_map<int, Vector2> state;
-			state.reserve(uvGridMesh->nVerts);
-
-			for (int i = 0; i < uvGridMesh->nVerts; i++)
-				state[i] = Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
-
-			auto action = editUV->history.GetCurState();
-			if (action)
-				action->SetEndState(state);
-
-			if (editUV->GetActiveTool() == EditUVTool::Rotate)
-				SetCursor(wxStockCursor::wxCURSOR_HAND);
-			else
-				SetCursor(wxStockCursor::wxCURSOR_SIZING);
-			break;
+		case EditUVTool::Rotate: EndMeshAction(); break;
 	}
 
 	isLDragging = false;
@@ -808,6 +938,72 @@ void EditUVCanvas::SelectMore() {
 
 	uvGridMesh->QueueUpdate(Mesh::UpdateType::VertexColors);
 	uvSurface.RenderOneFrame();
+}
+
+Vector3 EditUVCanvas::CalcSelectionCenter() {
+	int count = 0;
+
+	for (int i = 0; i < uvGridMesh->nVerts; i++) {
+		if (uvGridMesh->vcolors[i] == Vector3(1.0f, 1.0f, 0.0f)) {
+			currentCenter = currentCenter + uvGridMesh->verts[i];
+			count++;
+		}
+	}
+
+	if (count > 0)
+		currentCenter = currentCenter / count;
+	else
+		currentCenter.Zero();
+
+	return currentCenter;
+}
+
+void EditUVCanvas::StartMeshAction() {
+	std::unordered_map<int, Vector2> state;
+	state.reserve(uvGridMesh->nVerts);
+
+	for (int i = 0; i < uvGridMesh->nVerts; i++)
+		state[i] = Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
+
+	auto action = new EditUVAction();
+	action->SetActionMesh(uvGridMesh);
+	action->SetStartState(state);
+	editUV->history.Add(action);
+}
+
+void EditUVCanvas::EndMeshAction() {
+	std::unordered_map<int, Vector2> state;
+	state.reserve(uvGridMesh->nVerts);
+
+	for (int i = 0; i < uvGridMesh->nVerts; i++)
+		state[i] = Vector2(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
+
+	auto action = editUV->history.GetCurState();
+	if (action)
+		action->SetEndState(state);
+
+	if (editUV->GetActiveTool() == EditUVTool::Rotate)
+		SetCursor(wxStockCursor::wxCURSOR_HAND);
+	else
+		SetCursor(wxStockCursor::wxCURSOR_SIZING);
+}
+
+void EditUVCanvas::ApplyMeshTransform(const Matrix4& mat) {
+	Mesh* m = editUV->shapeMesh;
+
+	for (int i = 0; i < uvGridMesh->nVerts; i++) {
+		if (uvGridMesh->vcolors[i] == Vector3(1.0f, 1.0f, 0.0f)) {
+			uvGridMesh->verts[i] = mat * uvGridMesh->verts[i];
+
+			m->texcoord[i].u = uvGridMesh->verts[i].x;
+			m->texcoord[i].v = uvGridMesh->verts[i].y * -1.0f;
+		}
+	}
+
+	uvGridMesh->QueueUpdate(Mesh::UpdateType::Position);
+
+	m->QueueUpdate(Mesh::UpdateType::TextureCoordinates);
+	editUV->os->glView->Render();
 }
 
 void EditUVCanvas::InitMeshes() {
