@@ -917,7 +917,7 @@ void OutfitStudio::InitArchives() {
 
 void OutfitStudio::GetArchiveFiles(std::vector<std::string>& outList) {
 	TargetGame targ = (TargetGame)Config.GetIntValue("TargetGame");
-	std::string cp = "GameDataFiles/" + TargetGames[targ];
+	std::string cp = "GameDataFiles/" + TargetGames[targ].ToStdString();
 	wxString activatedFiles = Config[cp];
 
 	wxStringTokenizer tokenizer(activatedFiles, ";");
@@ -3671,7 +3671,7 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	if (result == wxID_CANCEL)
 		return;
 
-	std::string outfitName = XRCCTRL(dlg, "npOutfitName", wxTextCtrl)->GetValue();
+	std::string outfitName = XRCCTRL(dlg, "npOutfitName", wxTextCtrl)->GetValue().ToStdString();
 
 	menuBar->Enable(XRCID("fileSave"), false);
 
@@ -4637,7 +4637,7 @@ void OutfitStudioFrame::OnExportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	for (auto& shape : project->GetWorkNif()->GetShapes()) {
-		std::string fn = dir + PathSepStr + shape->name.get() + ".tri";
+		std::string fn = dir.ToStdString() + PathSepStr + shape->name.get() + ".tri";
 
 		wxLogMessage("Exporting TRI (head) morphs of '%s' to '%s'...", shape->name.get(), fn);
 		if (!project->WriteHeadTRI(shape, fn)) {
@@ -5029,11 +5029,11 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	outfitBones->GetSelections(selected);
 
 	activeBone.clear();
-	std::string selBone = outfitBones->GetItemText(item);
+	std::string selBone = outfitBones->GetItemText(item).ToStdString();
 
 	if (!outfitBones->IsSelected(item)) {
 		if (!selected.IsEmpty()) {
-			std::string frontBone = outfitBones->GetItemText(selected.front());
+			std::string frontBone = outfitBones->GetItemText(selected.front()).ToStdString();
 			activeBone = frontBone;
 		}
 	}
@@ -6098,7 +6098,7 @@ void OutfitStudioFrame::OnSliderCheckBox(wxCommandEvent& event) {
 	if (!box)
 		return;
 
-	std::string name = box->GetName().BeforeLast('|');
+	std::string name = box->GetName().BeforeLast('|').ToStdString();
 	ShowSliderEffect(name, event.IsChecked());
 	ApplySliders();
 }
@@ -9132,7 +9132,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 		wxArrayTreeItemIds sel;
 		boneTree->GetSelections(sel);
 		for (size_t i = 0; i < sel.size(); i++) {
-			std::string bone = boneTree->GetItemText(sel[i]);
+			std::string bone = boneTree->GetItemText(sel[i]).ToStdString();
 			wxLogMessage("Adding bone '%s' to project.", bone);
 
 			project->AddBoneRef(bone);
@@ -9305,7 +9305,7 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
 	for (size_t i = 0; i < selItems.size(); i++) {
-		std::string bone = outfitBones->GetItemText(selItems[i]);
+		std::string bone = outfitBones->GetItemText(selItems[i]).ToStdString();
 		wxLogMessage("Deleting bone '%s' from project.", bone);
 
 		project->DeleteBone(bone);
@@ -9328,7 +9328,7 @@ void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
 	for (size_t i = 0; i < selItems.size(); i++) {
-		std::string bone = outfitBones->GetItemText(selItems[i]);
+		std::string bone = outfitBones->GetItemText(selItems[i]).ToStdString();
 		wxLogMessage("Deleting weights of bone '%s' from selected shapes.", bone);
 
 		for (auto& s : selectedItems)
@@ -10277,7 +10277,7 @@ void OutfitStudioFrame::OnMaskMore(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event) {
-	std::string fn = event.GetPath();
+	std::string fn = event.GetPath().ToStdString();
 	std::vector<std::string> shapes;
 	wxWindow* npWiz = ((wxFilePickerCtrl*)event.GetEventObject())->GetParent();
 	wxChoice* setNameChoice = (wxChoice*)XRCCTRL((*npWiz), "npSliderSetName", wxChoice);
@@ -10327,7 +10327,7 @@ void OutfitStudioFrame::OnNPWizChangeSetNameChoice(wxCommandEvent& event) {
 	if (!file)
 		return;
 
-	std::string fn = file->GetPath();
+	std::string fn = file->GetPath().ToStdString();
 	SliderSetFile ssf(fn);
 	if (ssf.fail())
 		return;

@@ -318,7 +318,7 @@ void BodySlideApp::InitArchives() {
 
 void BodySlideApp::GetArchiveFiles(std::vector<std::string>& outList) {
 	TargetGame targ = (TargetGame)Config.GetIntValue("TargetGame");
-	std::string cp = "GameDataFiles/" + TargetGames[targ];
+	std::string cp = "GameDataFiles/" + TargetGames[targ].ToStdString();
 	wxString activatedFiles = Config[cp];
 
 	wxStringTokenizer tokenizer(activatedFiles, ";");
@@ -1810,7 +1810,7 @@ void BodySlideApp::ApplyOutfitFilter() {
 				wxString token = tokenizer.GetNextToken();
 				token.Trim();
 				token.Trim(false);
-				std::string group = token;
+				std::string group = token.ToStdString();
 				grouplist.insert(group);
 			}
 		}
@@ -3763,7 +3763,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	std::map<std::string, std::string> failedOutfits;
 	int ret;
 	if (custpath) {
-		std::string path = wxDirSelector(_("Choose a folder to contain the saved files"));
+		std::string path = wxDirSelector(_("Choose a folder to contain the saved files")).ToStdString();
 		if (path.empty())
 			return;
 

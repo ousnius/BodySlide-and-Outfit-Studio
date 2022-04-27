@@ -2,15 +2,16 @@ Building BodySlide and Outfit Studio on Linux
 
 There's just one file that specifies the build process: CMakeLists.txt.
 
-Install wxWidgets 3.1.3 or newer.  Use the "--enable-stl" option to
-configure.  If you get errors about an ABI mismatch, that means you
-compiled wxWidgets with a different compiler version than BS&OS (and
-wxWidgets is strangely picky about that).  Either gtk2 or gtk3 works.
-With gtk2, you have more background color problems; with gtk3, many
-widgets are distorted because they don't have enough space.  Note that
-many of wxWidget's configure options (such as --enable-universal)
-result in a broken wxWidgets library, so prefer to use as few options
-as possible.
+Install wxWidgets 3.1.3 or newer.  If you get errors about an ABI
+mismatch, that means you compiled wxWidgets with a different compiler
+version than BS&OS.  Either gtk2 or gtk3 works.  With gtk2, you have
+more background color problems; with gtk3, many widgets are distorted
+because they don't have enough space.  Note that many of wxWidget's
+configure options (such as --enable-universal) result in a broken
+wxWidgets library, so prefer to use as few options as possible.
+Also note that some distribution-provided wxWidgets packages are
+broken, so it's likely that you'll have to build wxWidgets yourself
+(which is really easy).
 
 Install FBX SDK.  Put the path to your FBX SDK installation in the
 fbxsdk_dir variable in CMakeLists.txt.
@@ -30,9 +31,14 @@ The possible values for CMAKE_BUILD_TYPE:
 	MinSizeRel
 	(nothing)
 
-To specify the compiler, set CC and CXX before running cmake.  The build
-directory must be completely empty, or cmake will ignore CC and CXX and
-use the same compilers as it did last time.
+The -Wall option is optional.  If you don't care about compiler
+warnings, you should probably skip this option.
+
+To specify the compiler, set CC and CXX before running cmake.
+The build directory must be completely empty, or cmake will ignore CC
+and CXX and use the same compilers as it did last time.  Don't forget
+to build wxWidgets with the same compiler; the wxWidgets configure script
+also uses the CC and CXX environment variables.
 
 Some useful make options:
 make VERBOSE=1
