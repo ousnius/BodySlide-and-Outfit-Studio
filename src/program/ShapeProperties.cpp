@@ -431,7 +431,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			auto dataPath = Config["GameDataPath"];
 			std::vector<std::string> texFiles(10);
 			for (int i = 0; i < 10; i++) {
-				std::string texPath = stTexGrid->GetCellValue(i, 0);
+				std::string texPath = stTexGrid->GetCellValue(i, 0).ToStdString();
 				std::string texPath_bs = ToBackslashes(texPath);
 				nif->SetTextureSlot(shape, texPath_bs, i);
 
@@ -848,7 +848,7 @@ void ShapeProperties::ApplyChanges() {
 
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
-		std::string name = shaderName->GetValue();
+		std::string name = shaderName->GetValue().ToStdString();
 		uint32_t type = shaderType->GetSelection();
 
 		shader->name.get() = name;

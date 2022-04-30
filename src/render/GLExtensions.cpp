@@ -173,8 +173,11 @@ void InitExtensions() {
 	if (extInitialized)
 		return;
 	GLenum err = glewInit();
-	if (err != GLEW_OK) {
-		fprintf(stderr, "Error: %s\n", glewGetErrorString(err));
+	// TODO: figure out why we're getting GLEW_ERROR_NO_GLX_DISPLAY (error
+	// code 4) with gtk3 builds of wxWidgets and fix it.  Everything still
+	// seems to work if we ignore the error, though.
+	if (err != GLEW_OK && err != GLEW_ERROR_NO_GLX_DISPLAY) {
+		fprintf(stderr, "Error (%d): %s\n", (int)err, glewGetErrorString(err));
 		abort();
 	}
 	extGLISupported = glTexStorage1D && glTexStorage2D && glTexStorage3D && glTexSubImage3D && glCompressedTexSubImage1D && glCompressedTexSubImage2D && glCompressedTexSubImage3D;
