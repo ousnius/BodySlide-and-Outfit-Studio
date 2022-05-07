@@ -47,7 +47,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 	// Remove finished tasks
 	for (size_t i = 0; i < normalUpdates.size(); i++) {
-		if (normalUpdates[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+		if (normalUpdates[i].wait_for(std::chrono::milliseconds(1)) == std::future_status::ready) {
 			normalUpdates.erase(normalUpdates.begin() + i);
 			i--;
 		}
@@ -146,7 +146,7 @@ void TweakStroke::endStroke() {
 	while (notReady) {
 		notReady = false;
 		for (size_t i = 0; i < normalUpdates.size(); i++) {
-			if (normalUpdates[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+			if (normalUpdates[i].wait_for(std::chrono::milliseconds(1)) == std::future_status::ready) {
 				normalUpdates.erase(normalUpdates.begin() + i);
 				i--;
 			}
