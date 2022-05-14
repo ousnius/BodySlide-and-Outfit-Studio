@@ -1244,7 +1244,10 @@ private:
 	void OnAddSubSegment(wxCommandEvent& event);
 	void OnDeleteSegment(wxCommandEvent& event);
 	void OnDeleteSubSegment(wxCommandEvent& event);
+
+	void UpdateActiveSlotID();
 	void OnSegmentSlotChanged(wxCommandEvent& event);
+
 	void OnSegmentTypeChanged(wxCommandEvent& event);
 	void OnSegmentApply(wxCommandEvent& event);
 	void ApplySegments();

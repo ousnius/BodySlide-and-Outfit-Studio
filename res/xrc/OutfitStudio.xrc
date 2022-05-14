@@ -957,6 +957,18 @@
 																					<item translate="0">59 - Shield</item>
 																					<item translate="0">60 - Pipboy</item>
 																					<item translate="0">61 - FX</item>
+																					<item translate="0">65 - Robot</item>
+																					<item translate="0">70 - Robot</item>
+																					<item translate="0">75 - Robot</item>
+																					<item translate="0">80 - Robot</item>
+																					<item translate="0">85 - Robot</item>
+																					<item translate="0">90 - Robot</item>
+																					<item translate="0">95 - Robot</item>
+																					<item translate="0">100 - Gore</item>
+																					<item translate="0">101 - Gore</item>
+																					<item translate="0">102 - Gore</item>
+																					<item translate="0">103 - Gore</item>
+																					<item translate="0">160 - Pipboy Cap</item>
 																				</content>
 																				<hidden>1</hidden>
 																				<enabled>0</enabled>

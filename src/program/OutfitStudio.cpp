@@ -5358,8 +5358,8 @@ void OutfitStudioFrame::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
 	segmentTabButton->SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnSegmentSlotChanged(wxCommandEvent& event) {
-	wxChoice* segmentSlot = (wxChoice*)event.GetEventObject();
+void OutfitStudioFrame::UpdateActiveSlotID() {
+	wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
 
 	if (activeSegment.IsOk() && segmentTree->GetItemParent(activeSegment).IsOk()) {
 		SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
@@ -5367,10 +5367,10 @@ void OutfitStudioFrame::OnSegmentSlotChanged(wxCommandEvent& event) {
 			subSegmentData->userSlotID = 0;
 
 			if (segmentSlot->GetSelection() > 0) {
-				wxString slotSel = segmentSlot->GetStringSelection();
-				if (slotSel.length() >= 2) {
+				wxString slotSel = segmentSlot->GetStringSelection().BeforeFirst(' ');
+				if (slotSel.length() >= 1) {
 					unsigned long slot = 0;
-					slotSel.Mid(0, 2).ToULong(&slot);
+					slotSel.ToULong(&slot);
 
 					if (slot > 0)
 						subSegmentData->userSlotID = slot;
@@ -5381,6 +5381,10 @@ void OutfitStudioFrame::OnSegmentSlotChanged(wxCommandEvent& event) {
 			segmentTabButton->SetPendingChanges();
 		}
 	}
+}
+
+void OutfitStudioFrame::OnSegmentSlotChanged(wxCommandEvent& WXUNUSED(event)) {
+	UpdateActiveSlotID();
 }
 
 void OutfitStudioFrame::OnSegmentTypeChanged(wxCommandEvent& event) {
@@ -5517,6 +5521,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 	std::unordered_map<uint16_t, float> mask;
 	wxChoice* segmentType = nullptr;
 	wxChoice* segmentSlot = nullptr;
+
 	if (!updateFromMask) {
 		segmentType = (wxChoice*)FindWindowByName("segmentType");
 		segmentType->Disable();
@@ -5577,7 +5582,10 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 			segmentType->Enable();
 
 			for (uint32_t i = 0; i < segmentSlot->GetCount(); i++) {
-				wxString slotPrefix = wxString::Format("%d - ", subSegmentData->userSlotID);
+				uint32_t userSlotID = subSegmentData->userSlotID;
+
+				// Find matching slot in choice
+				wxString slotPrefix = wxString::Format("%d - ", userSlotID);
 				auto slotString = segmentSlot->GetString(i);
 				if (slotString.StartsWith(slotPrefix)) {
 					segmentSlot->SetSelection((int)i);
@@ -5655,8 +5663,8 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 }
 
 void OutfitStudioFrame::UpdateSegmentNames() {
-	auto segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
 	auto segmentType = (wxChoice*)FindWindowByName("segmentType");
+	auto segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
 
 	int segmentIndex = 0;
 	wxTreeItemIdValue cookie;
@@ -5691,9 +5699,11 @@ void OutfitStudioFrame::UpdateSegmentNames() {
 						subSegmentName = typeHash;
 				}
 
-				if (subSegmentData->userSlotID >= 30) {
-					wxString slotPrefix = wxString::Format("%d - ", subSegmentData->userSlotID);
+				uint32_t userSlotID = subSegmentData->userSlotID;
+				if (userSlotID >= 30) {
+					wxString slotPrefix = wxString::Format("%d - ", userSlotID);
 
+					// Find matching slot in choice
 					for (uint32_t i = 0; i < segmentSlot->GetCount(); i++) {
 						auto slotString = segmentSlot->GetString(i);
 						if (slotString.StartsWith(slotPrefix)) {
