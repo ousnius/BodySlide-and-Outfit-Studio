@@ -599,8 +599,11 @@ MatTransform AnimInfo::GetTransformShapeToGlobal(NiShape* shape) const {
 }
 
 MatTransform AnimInfo::GetTransformGlobalToShape(NiShape* shape) const {
-    if (shape->IsSkinned())
-        return shapeSkinning.at(shape->name.get()).xformGlobalToSkin;
+	if (shape->IsSkinned())
+		if (shapeSkinning.find(shape->name.get()) != shapeSkinning.end())
+			return shapeSkinning.at(shape->name.get()).xformGlobalToSkin;
+		else
+			return MatTransform();
     else
         return GetTransformShapeToGlobal(shape).InverseTransform();
 }

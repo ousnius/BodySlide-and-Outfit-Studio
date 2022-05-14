@@ -7982,12 +7982,13 @@ void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& WXUNUSED(event)) {
 }
 
 int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent) {
+	StartProgress(_("Conforming shapes..."));
+
 	ConformOptions options;
 	if (ShowConform(options, silent)) {
 		wxLogMessage("Conforming shapes...");
 		ZeroSliders();
 
-		StartProgress(_("Conforming shapes..."));
 		project->InitConform();
 
 		int inc = 100 / shapes.size() - 1;
@@ -8011,11 +8012,10 @@ int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent) 
 
 		wxLogMessage("All shapes conformed.");
 		UpdateProgress(100, _("Finished"));
-		EndProgress();
-
-		return 0;
 	}
-	return 1;
+
+	EndProgress();
+	return 0;
 }
 
 bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
@@ -9544,8 +9544,9 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 	CalcCopySkinTransOption(options);
 	AnimInfo& workAnim = *project->GetWorkAnim();
 
+	StartProgress(_("Copying bone weights..."));
+
 	if (ShowWeightCopy(options, silent)) {
-		StartProgress(_("Copying bone weights..."));
 
 		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 		usp->undoType = UndoType::Weight;
@@ -9600,12 +9601,13 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 
 		UpdateUndoTools();
 
+		workAnim.CleanupBones();
+		UpdateAnimationGUI();
+
 		UpdateProgress(100, _("Finished"));
-		EndProgress();
 	}
 
-	workAnim.CleanupBones();
-	UpdateAnimationGUI();
+	EndProgress();
 	return 0;
 }
 
