@@ -31,7 +31,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***** END LICENCE BLOCK *****/
 
 #include "FSBSA.h"
-#include "../DDS.h"
 
 #include <wx/mstream.h>
 #include <wx/zstream.h>
@@ -39,6 +38,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 
 #include <../LZ4F/lz4frame_static.h>
+#include "../DDS.h"
 
 
 wxUint32 BSA::BSAFile::size() const {
