@@ -2150,7 +2150,6 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	mCopyRef = true;
 	mGenWeights = activeSet.GenWeights();
 
-	owner->UpdateProgress(100, _("Finished"));
 	owner->EndProgress();
 	return 0;
 }
@@ -2233,7 +2232,6 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 	owner->UpdateProgress(70, _("Updating slider data..."));
 	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->name.get() : "", newDataLocal);
 
-	owner->UpdateProgress(100, _("Finished"));
 	owner->EndProgress();
 	return 0;
 }

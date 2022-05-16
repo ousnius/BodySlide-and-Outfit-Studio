@@ -94,7 +94,7 @@ bool ConvertBodyReferenceDialog::Load() {
 }
 
 void ConvertBodyReferenceDialog::ConvertBodyReference() const {
-	outfitStudio->StartProgress(_("Start Conversion.."));
+	outfitStudio->StartProgress(_("Starting conversion..."));
 
 	bool mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkConvertMergeSliders");
 	bool mergeZaps = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkConvertMergeZaps");
@@ -255,9 +255,8 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 	outfitStudio->RefreshGUIFromProj();
 	outfitStudio->ApplySliders();
 
-	wxLogMessage("Finished conversion.");
-	outfitStudio->UpdateProgress(100, _("Finished"));
-	outfitStudio->EndProgress();
+	wxLogMessage("Conversion finished.");
+	outfitStudio->EndProgress(_("Conversion finished."));
 }
 
 int ConvertBodyReferenceDialog::LoadReferenceTemplate(const wxString& refTemplate, bool mergeSliders, bool mergeZaps) const {

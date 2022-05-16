@@ -448,7 +448,6 @@ bool OutfitStudio::OnInit() {
 				frame->UpdateProgress(60, _("Refreshing GUI..."));
 				frame->RefreshGUIFromProj();
 
-				frame->UpdateProgress(100, _("Finished"));
 				frame->EndProgress();
 			}
 			else if (fileExt == "obj") {
@@ -460,7 +459,6 @@ bool OutfitStudio::OnInit() {
 				frame->UpdateProgress(60, _("Refreshing GUI..."));
 				frame->RefreshGUIFromProj();
 
-				frame->UpdateProgress(100, _("Finished"));
 				frame->EndProgress();
 			}
 			else if (fileExt == "fbx") {
@@ -472,7 +470,6 @@ bool OutfitStudio::OnInit() {
 				frame->UpdateProgress(60, _("Refreshing GUI..."));
 				frame->RefreshGUIFromProj();
 
-				frame->UpdateProgress(100, _("Finished"));
 				frame->EndProgress();
 			}
 		}
@@ -1590,7 +1587,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 
-			EndProgress();
+			EndProgress(_("Packing finished."));
 		});
 
 		packArchive->Bind(wxEVT_BUTTON, [&](wxCommandEvent& WXUNUSED(event)) {
@@ -1756,7 +1753,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				}
 			}
 
-			EndProgress();
+			EndProgress(_("Packing finished."));
 		});
 
 		packProjects->ShowModal();
@@ -2045,12 +2042,12 @@ bool OutfitStudioFrame::SaveProject() {
 	if (!error.empty()) {
 		wxLogError(error.c_str());
 		wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
-		EndProgress();
+		EndProgress(_("Saving failed."));
 		return false;
 	}
 
 	SetPendingChanges(false);
-	EndProgress();
+	EndProgress(_("Saved."));
 	return true;
 }
 
@@ -2218,12 +2215,12 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		menuBar->Enable(XRCID("fileSave"), true);
 
 		RenameProject(strOutfitName.ToUTF8().data());
-		EndProgress();
+		EndProgress(_("Saved."));
 	}
 	else {
 		wxLogError(error.c_str());
 		wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
-		EndProgress();
+		EndProgress(_("Saving failed."));
 		return false;
 	}
 
@@ -2344,7 +2341,6 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	AddProjectHistory(fileName, outfit);
 
 	wxLogMessage("Project loaded.");
-	UpdateProgress(100, _("Finished"));
 	menuBar->Enable(XRCID("fileSave"), true);
 	EndProgress();
 	return true;
@@ -3623,7 +3619,6 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	CreateSetSliders();
 
 	wxLogMessage("Reference loaded.");
-	UpdateProgress(100, _("Finished"));
 	EndProgress();
 }
 
@@ -3725,7 +3720,6 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	UpdateTitle();
 
 	wxLogMessage("Outfit loaded.");
-	UpdateProgress(100, _("Finished"));
 	EndProgress();
 }
 
@@ -3756,6 +3750,8 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 	CreateSetSliders();
 	RefreshGUIFromProj(false);
 	glView->Render();
+
+	statusBar->SetStatusText(_("Ready!"));
 }
 
 void OutfitStudioFrame::UpdateReferenceTemplates() {
@@ -4216,7 +4212,6 @@ void OutfitStudioFrame::OnImportNIF(wxCommandEvent& WXUNUSED(event)) {
 	SetPendingChanges();
 	RefreshGUIFromProj();
 
-	UpdateProgress(100, _("Finished."));
 	EndProgress();
 }
 
@@ -8022,7 +8017,6 @@ int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent) 
 		SetPendingChanges();
 
 		wxLogMessage("All shapes conformed.");
-		UpdateProgress(100, _("Finished"));
 	}
 
 	EndProgress();
@@ -9614,8 +9608,6 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 
 		workAnim.CleanupBones();
 		UpdateAnimationGUI();
-
-		UpdateProgress(100, _("Finished"));
 	}
 
 	EndProgress();
@@ -9708,7 +9700,6 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 
 		UpdateUndoTools();
 
-		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}
 
@@ -9757,9 +9748,7 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 
 	UpdateAnimationGUI();
 
-	UpdateProgress(100, _("Finished"));
 	EndProgress();
-
 	SetPendingChanges();
 }
 
@@ -9911,7 +9900,6 @@ int OutfitStudioFrame::CopySegPartForShapes(std::vector<NiShape*> shapes, bool s
 	SetPendingChanges();
 	UpdateUndoTools();
 
-	UpdateProgress(100, _("Finished"));
 	EndProgress();
 
 	return failshapes;
@@ -13388,7 +13376,6 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
 				owner->RefreshGUIFromProj();
 
-				owner->UpdateProgress(100, _("Finished"));
 				owner->EndProgress();
 			}
 			else if (inputFile.Lower().EndsWith(".obj")) {
@@ -13400,7 +13387,6 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
 				owner->RefreshGUIFromProj();
 
-				owner->UpdateProgress(100, _("Finished"));
 				owner->EndProgress();
 			}
 			else if (inputFile.Lower().EndsWith(".fbx")) {
@@ -13412,7 +13398,6 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
 				owner->RefreshGUIFromProj();
 
-				owner->UpdateProgress(100, _("Finished"));
 				owner->EndProgress();
 			}
 		}
@@ -13462,7 +13447,6 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 					return false;
 
 
-				owner->UpdateProgress(100, _("Finished"));
 				owner->EndProgress();
 			}
 		}
