@@ -44,8 +44,14 @@ Some useful make options:
 make VERBOSE=1
 make -j 4
 
+The BodySlide and OutfitStudio executables need to be able to find
+the res directory, which contains important program data such as xrc
+files and icons.  By default, the executables search for the res
+directory in the same directory as the executables.  So, when you
+copy the executables into the BodySlide directory within your game,
+you need to copy the entire res directory too.
+
 If you don't want to copy the executables to the BodySlide
 directory within your game, set WX_BODYSLIDE_DATA_DIR and
-WX_OUTFITSTUDIO_DATA_DIR to the BodySlide directory.  Unfortunately,
-program data such as xrc files and icons also come from the data dir;
-if you make changes to the data files, you'll have to copy them over.
+WX_OUTFITSTUDIO_DATA_DIR to the BodySlide directory.  The res directory
+must still be copied into the BodySlide directory.
