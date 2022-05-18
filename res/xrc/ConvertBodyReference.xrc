@@ -148,20 +148,51 @@
 						</object>
 						<object class="sizeritem">
 							<option>0</option>
-							<flag>wxALL</flag>
-							<border>5</border>
-							<object class="wxCheckBox" name="chkSkipConformPopup">
-								<label>Skip conform popup (use default settings)</label>
-								<checked>1</checked>
-							</object>
-						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALL</flag>
-							<border>5</border>
-							<object class="wxCheckBox" name="chkSkipCopyBonesPopup">
-								<label>Skip bone weights popup (use default settings)</label>
-								<checked>1</checked>
+							<flag>wxALL|wxEXPAND</flag>
+							<border>0</border>
+							<object class="wxFlexGridSizer">
+								<rows>2</rows>
+								<cols>2</cols>
+								<vgap>0</vgap>
+								<hgap>0</hgap>
+								<growablecols></growablecols>
+								<growablerows></growablerows>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL</flag>
+									<border>5</border>
+									<object class="wxCheckBox" name="chkConformSliders">
+										<label>Conform Sliders</label>
+										<checked>1</checked>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL</flag>
+									<border>5</border>
+									<object class="wxCheckBox" name="chkSkipConformPopup">
+										<label>Skip conform popup (use default settings)</label>
+										<checked>1</checked>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL</flag>
+									<border>5</border>
+									<object class="wxCheckBox" name="chkCopyBoneWeights">
+										<label>Copy Bone Weights</label>
+										<checked>1</checked>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL</flag>
+									<border>5</border>
+									<object class="wxCheckBox" name="chkSkipCopyBonesPopup">
+										<label>Skip bone weights popup (use default settings)</label>
+										<checked>1</checked>
+									</object>
+								</object>
 							</object>
 						</object>
 						<object class="sizeritem">

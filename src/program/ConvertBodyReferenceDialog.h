@@ -23,12 +23,18 @@ public:
 	void ConvertBodyReference() const;
 
 private:
-	OutfitStudioFrame* outfitStudio;
-	OutfitProject* project;
+	OutfitStudioFrame* outfitStudio = nullptr;
+	OutfitProject* project = nullptr;
 	ConfigurationManager& config;
 	const std::vector<RefTemplate>& refTemplates;
-	wxWizardPage* pg1;
-	wxWizardPage* pg2;
+	wxWizardPage* pg1 = nullptr;
+	wxWizardPage* pg2 = nullptr;
+
+	wxChoice* npConvRefChoice = nullptr;
+	wxCheckBox* chkConformSliders = nullptr;
+	wxCheckBox* chkSkipConformPopup = nullptr;
+	wxCheckBox* chkCopyBoneWeights = nullptr;
+	wxCheckBox* chkSkipCopyBonesPopup = nullptr;
 
 	int LoadReferenceTemplate(const wxString& refTemplate, bool mergeSliders, bool mergeZaps) const;
 	bool AlertProgressError(int error, const wxString& title, const wxString& message) const;

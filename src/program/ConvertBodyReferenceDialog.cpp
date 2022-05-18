@@ -42,8 +42,14 @@ ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfit
 
 	pg1 = (wxWizardPage*)XRCCTRL(*this, "wizpgConvertBodyRef1", wxWizardPageSimple);
 	pg2 = (wxWizardPage*)XRCCTRL(*this, "wizpgConvertBodyRef2", wxWizardPageSimple);
-	wxChoice* choice = XRCCTRL((*this), "npConvRefChoice", wxChoice);
-	choice->Append("None");
+
+	npConvRefChoice = XRCCTRL((*this), "npConvRefChoice", wxChoice);
+	npConvRefChoice->Append("None");
+
+	chkConformSliders = XRCCTRL((*this), "chkConformSliders", wxCheckBox);
+	chkSkipConformPopup = XRCCTRL((*this), "chkSkipConformPopup", wxCheckBox);
+	chkCopyBoneWeights = XRCCTRL((*this), "chkCopyBoneWeights", wxCheckBox);
+	chkSkipCopyBonesPopup = XRCCTRL((*this), "chkSkipCopyBonesPopup", wxCheckBox);
 
 	std::vector<RefTemplate> converters = refTemplates;
 	std::vector<RefTemplate> bodies = refTemplates;
@@ -76,9 +82,27 @@ ConvertBodyReferenceDialog::ConvertBodyReferenceDialog(OutfitStudioFrame* outfit
 	ConfigDialogUtil::LoadDialogText(config, (*this), "ConvertBodyReference", "npAddBonesText");
 	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkConvertMergeSliders");
 	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkConvertMergeZaps");
+	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkConformSliders");
 	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkSkipConformPopup");
+	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkCopyBoneWeights");
 	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkSkipCopyBonesPopup");
 	ConfigDialogUtil::LoadDialogCheckBox(config, (*this), "ConvertBodyReference", "chkDeleteReferenceOnComplete");
+
+	if (!chkConformSliders->IsChecked())
+		chkSkipConformPopup->Disable();
+
+	if (!chkCopyBoneWeights->IsChecked())
+		chkSkipCopyBonesPopup->Disable();
+
+	chkConformSliders->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& event) {
+		bool checked = event.IsChecked();
+		chkSkipConformPopup->Enable(checked);
+	});
+
+	chkCopyBoneWeights->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& event) {
+		bool checked = event.IsChecked();
+		chkSkipCopyBonesPopup->Enable(checked);
+	});
 
 	SetDoubleBuffered(true);
 	CenterOnParent();
@@ -98,7 +122,9 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 
 	bool mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkConvertMergeSliders");
 	bool mergeZaps = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkConvertMergeZaps");
+	bool conformSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkConformSliders");
 	bool skipConformPopup = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkSkipConformPopup");
+	bool copyBoneWeights = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkCopyBoneWeights");
 	bool skipCopyBonesPopup = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkSkipCopyBonesPopup");
 	bool deleteReferenceOnCompleted = ConfigDialogUtil::SetBoolFromDialogCheckbox(config, (*this), "ConvertBodyReference", "chkDeleteReferenceOnComplete");
 	auto conversionRefTemplate = ConfigDialogUtil::SetStringFromDialogChoice(config, (*this), "ConvertBodyReference", "npConvRefChoice");
@@ -216,15 +242,19 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 	if (AlertProgressError(project->GetBaseShape() == nullptr, "Missing Base Shape", "The loaded reference does not contain a base shape"))
 		return;
 
-	outfitStudio->UpdateProgress(65, _("Copying bones..."));
-	outfitStudio->StartSubProgress(65, 85);
-	if (AlertProgressError(outfitStudio->CopyBoneWeightForShapes(remainingOutfitShapes, skipCopyBonesPopup), "Copy Bone Weights Error", "Failed to copy bone weights"))
-		return;
+	if (copyBoneWeights) {
+		outfitStudio->UpdateProgress(65, _("Copying bones..."));
+		outfitStudio->StartSubProgress(65, 85);
+		if (AlertProgressError(outfitStudio->CopyBoneWeightForShapes(remainingOutfitShapes, skipCopyBonesPopup), "Copy Bone Weights Error", "Failed to copy bone weights"))
+			return;
+	}
 
-	outfitStudio->UpdateProgress(85, _("Conforming outfit parts..."));
-	outfitStudio->StartSubProgress(85, 100);
-	if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, skipConformPopup), "Conform Error", "Failed to conform shapes"))
-		return;
+	if (conformSliders) {
+		outfitStudio->UpdateProgress(85, _("Conforming outfit parts..."));
+		outfitStudio->StartSubProgress(85, 100);
+		if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, skipConformPopup), "Conform Error", "Failed to conform shapes"))
+			return;
+	}
 
 	if (!addBonesText.IsEmpty()) {
 		outfitStudio->UpdateProgress(100, _("Adding Bones..."));
