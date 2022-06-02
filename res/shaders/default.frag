@@ -320,7 +320,7 @@ void main(void)
 
 	if (!bPoints && !bWireframe)
 	{
-		if (fragColor.a < alphaThreshold)
+		if (fragColor.a <= alphaThreshold) // GL_GREATER
 			discard;
 
 		fragColor.a *= prop.alpha;
