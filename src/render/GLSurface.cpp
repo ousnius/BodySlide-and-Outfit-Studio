@@ -833,9 +833,17 @@ void GLSurface::RenderOneFrame() {
 	// Render meshes with alpha blending only
 	for (auto& m : meshes) {
 		if (m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0)) {
+			glEnable(GL_CULL_FACE);
 			glCullFace(GL_FRONT);
+
+			glDepthFunc(GL_LESS);
+			glDepthMask(GL_FALSE);
+
 			RenderMesh(m);
+
 			glCullFace(GL_BACK);
+			glDepthMask(GL_TRUE);
+
 			RenderMesh(m);
 		}
 	}
@@ -870,6 +878,9 @@ void GLSurface::RenderMesh(Mesh* m) {
 		return;
 
 	if (!m->HasAlphaBlend()) {
+		glDepthFunc(GL_LEQUAL);
+		glDepthMask(GL_TRUE);
+
 		if (!m->doublesided)
 			glEnable(GL_CULL_FACE);
 		else
@@ -877,8 +888,6 @@ void GLSurface::RenderMesh(Mesh* m) {
 
 		glCullFace(m->cullMode);
 	}
-	else
-		glEnable(GL_CULL_FACE);
 
 	shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f, m->prop.alpha);
 	shader.SetMatrixProjection(matProjection);
