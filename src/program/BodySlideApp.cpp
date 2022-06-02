@@ -835,7 +835,7 @@ void BodySlideApp::UpdateConflictManager() {
 	auto& col = outFileCount[outputFilePath];
 
 	bool isOutputChoice = true;
-	std::string textColourName = "WHITE";
+	std::string textColourName = "#C8C8C8";
 
 	if (1 < col.size()) {
 		std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
@@ -849,7 +849,7 @@ void BodySlideApp::UpdateConflictManager() {
 
 		std::string outputChoice = buildSelection.GetOutputChoice(outputFilePath);
 		isOutputChoice = outputChoice == activeSet.GetName();
-		textColourName = isOutputChoice ? "CYAN" : "RED";
+		textColourName = isOutputChoice ? "#00FFFF" : "#FFD769";
 	}
 
 	conflictCheckBox->SetValue(isOutputChoice);
@@ -863,14 +863,13 @@ void BodySlideApp::UpdateConflictManager() {
 	else
 		conflictLabel->SetLabel(outputFilePath + ".nif");
 
-	conflictLabel->SetForegroundColour(wxTheColourDatabase->Find(textColourName));
+	conflictLabel->SetForegroundColour(wxColour(textColourName));
 	conflictLabel->Show();
-	if (1 < col.size()) {
+
+	if (1 < col.size())
 		conflictInfo->Show();
-	}
-	else {
+	else
 		conflictInfo->Hide();
-	}
 }
 
 void BodySlideApp::SetDefaultBuildSelection() {
@@ -3601,15 +3600,24 @@ void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
 void BodySlideFrame::OnConflictPopup(wxMouseEvent& WXUNUSED(event)) {
 	std::vector<std::string> conflictingOutfits = app->GetConflictingOutfits();
 	std::string currentOutfitName = BodySlideConfig["SelectedOutfit"];
+
 	int id = fileCollisionMenu->GetMenuItemCount();
 	while (id--)
 		fileCollisionMenu->Delete(id);
-	for (id = 0; id < static_cast<int>(conflictingOutfits.size()); id++)
-		fileCollisionMenu->Append(id, conflictingOutfits[id], "", wxITEM_NORMAL);
+
+	for (id = 0; id < static_cast<int>(conflictingOutfits.size()); id++) {
+		std::string& outfitName = conflictingOutfits[id];
+		wxMenuItem* outfitItem = fileCollisionMenu->AppendRadioItem(id, wxString::FromUTF8(outfitName));
+
+		if (outfitName == currentOutfitName)
+			outfitItem->Check();
+	}
+
 	id = GetPopupMenuSelectionFromUser(*fileCollisionMenu, wxDefaultPosition);
-	if (0 > id)
+	if (id < 0)
 		return;
-	std::string selectedOutfitName = conflictingOutfits[id];
+
+	std::string& selectedOutfitName = conflictingOutfits[id];
 	if (selectedOutfitName != currentOutfitName)
 		app->ActivateOutfit(selectedOutfitName);
 }

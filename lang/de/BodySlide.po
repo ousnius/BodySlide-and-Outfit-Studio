@@ -98,8 +98,8 @@ msgstr "Modell rotieren"
 msgid "Set Shape Textures"
 msgstr "Modelltexturen setzen"
 
-#: res/xrc/Actions.xrc:758 res/xrc/OutfitStudio.xrc:1946
-#: res/xrc/OutfitStudio.xrc:2404
+#: res/xrc/Actions.xrc:758 res/xrc/ConvertBodyReference.xrc:183
+#: res/xrc/OutfitStudio.xrc:1946 res/xrc/OutfitStudio.xrc:2404
 msgid "Copy Bone Weights"
 msgstr "Bone Weighting kopieren"
 
@@ -288,7 +288,7 @@ msgstr ""
 msgid "&Build"
 msgstr "&Erstellen"
 
-#: res/xrc/BatchBuild.xrc:67 src/program/BodySlideApp.cpp:2293
+#: res/xrc/BatchBuild.xrc:67 src/program/BodySlideApp.cpp:2292
 msgid "Choose output set"
 msgstr "Ausgabe-Set auswählen"
 
@@ -385,8 +385,8 @@ msgid "Output Path (which the game would use for this outfit)"
 msgstr "Ausgabepfad (den das Spiel für dieses Outfit verwendet)"
 
 #: res/xrc/BodySlide.xrc:315
-msgid "(right-click to view conflicts)"
-msgstr "(Rechtsklick zur Anzeige von Konflikten)"
+msgid "(right-click to view alternatives)"
+msgstr "(Rechtsklick zur Anzeige von Alternativen)"
 
 #: res/xrc/BodySlide.xrc:335
 msgid ""
@@ -538,7 +538,7 @@ msgstr "Auswahl umkehren"
 msgid "Convert / Replace Body Reference"
 msgstr "Körperreferenz konvertieren/ersetzen"
 
-#: res/xrc/ConvertBodyReference.xrc:16 res/xrc/ConvertBodyReference.xrc:188
+#: res/xrc/ConvertBodyReference.xrc:16 res/xrc/ConvertBodyReference.xrc:219
 msgid "This wizard aids in the conversion to another body/reference.."
 msgstr ""
 "Dieser Assistent hilft bei der Konvertierung zu einem anderen Körper/"
@@ -579,62 +579,66 @@ msgstr "Slider zusammenführen"
 msgid "Merge Zaps"
 msgstr "Zaps zusammenführen"
 
-#: res/xrc/ConvertBodyReference.xrc:154
+#: res/xrc/ConvertBodyReference.xrc:165
+msgid "Conform Sliders"
+msgstr "Slider übertragen"
+
+#: res/xrc/ConvertBodyReference.xrc:174
 msgid "Skip conform popup (use default settings)"
 msgstr "Conform-Popup überspringen (Standardwerte verwenden)"
 
-#: res/xrc/ConvertBodyReference.xrc:163
+#: res/xrc/ConvertBodyReference.xrc:192
 msgid "Skip bone weights popup (use default settings)"
 msgstr "Bone Weights-Popup überspringen (Standardwerte verwenden)"
 
-#: res/xrc/ConvertBodyReference.xrc:172
+#: res/xrc/ConvertBodyReference.xrc:203
 msgid "Delete reference after completion"
 msgstr "Referenz nach Abschluss entfernen"
 
-#: res/xrc/ConvertBodyReference.xrc:197
+#: res/xrc/ConvertBodyReference.xrc:228
 msgid "Rename Project (optional)"
 msgstr "Projekt umbenennen (optional)"
 
-#: res/xrc/ConvertBodyReference.xrc:208
+#: res/xrc/ConvertBodyReference.xrc:239
 msgid "Specify text to be removed from the project name (comma-delimited):"
 msgstr ""
 "Geben Sie einen Text an, der vom Projektnamen entfernt werden soll "
 "(kommagetrennt):"
 
-#: res/xrc/ConvertBodyReference.xrc:229
+#: res/xrc/ConvertBodyReference.xrc:260
 msgid "Remove from project name"
 msgstr "Vom Projektnamen entfernen"
 
-#: res/xrc/ConvertBodyReference.xrc:246
+#: res/xrc/ConvertBodyReference.xrc:277
 msgid "Specify any text to be prepended to project name:"
 msgstr ""
 "Geben Sie einen Text an, der dem Projektnamen vorangestellt werden soll:"
 
-#: res/xrc/ConvertBodyReference.xrc:267
+#: res/xrc/ConvertBodyReference.xrc:298
 msgid "Prepend to project name"
 msgstr "Vor den Projektnamen anfügen"
 
-#: res/xrc/ConvertBodyReference.xrc:284
+#: res/xrc/ConvertBodyReference.xrc:315
 msgid "NOTE: Game file output path is unaffected by this"
 msgstr "HINWEIS: Ausgabepfad für Spiel wird hiervon nicht beeinflusst"
 
-#: res/xrc/ConvertBodyReference.xrc:295
+#: res/xrc/ConvertBodyReference.xrc:326
 msgid "Extras (optional)"
 msgstr "Extras (optional)"
 
-#: res/xrc/ConvertBodyReference.xrc:306
+#: res/xrc/ConvertBodyReference.xrc:337
 msgid "Remove the following shapes before conversion (comma-delimited):"
 msgstr "Folgende Modelle vor der Konvertierung entfernen (kommagetrennt):"
 
-#: res/xrc/ConvertBodyReference.xrc:328
+#: res/xrc/ConvertBodyReference.xrc:359
 msgid "Shapes to delete"
 msgstr "Modelle entfernen"
 
-#: res/xrc/ConvertBodyReference.xrc:344
+#: res/xrc/ConvertBodyReference.xrc:375
 msgid "Add the following bones after conversion (comma-delimited):"
 msgstr "Folgende Bones nach der Konvertierung hinzufügen (kommagetrennt):"
 
-#: res/xrc/ConvertBodyReference.xrc:365
+#: res/xrc/ConvertBodyReference.xrc:396
 msgid "Bones to add"
 msgstr "Bones hinzufügen"
 
@@ -3314,7 +3318,7 @@ msgstr ""
 "dass der Spieldaten-Pfad in den Einstellungen korrekt ist."
 
 #: src/program/BodySlideApp.cpp:185 src/program/BodySlideApp.cpp:195
-#: src/program/BodySlideApp.cpp:1437 src/program/OutfitStudio.cpp:418
+#: src/program/BodySlideApp.cpp:1436 src/program/OutfitStudio.cpp:418
 #: src/program/OutfitStudio.cpp:428 src/program/OutfitStudio.cpp:652
 #: src/program/OutfitStudio.cpp:659
 msgid "Warning"
@@ -3360,13 +3364,13 @@ msgstr "Ein fataler Fehler trat auf, das Programm wird sich jetzt beenden."
 msgid "Fatal exception"
 msgstr "Fataler Fehler"
 
-#: src/program/BodySlideApp.cpp:924
+#: src/program/BodySlideApp.cpp:923
 msgid "Failed to launch Outfit Studio executable!"
 msgstr "Fehler beim Starten von Outfit Studio!"
 
-#: src/program/BodySlideApp.cpp:924 src/program/BodySlideApp.cpp:1458
-#: src/program/BodySlideApp.cpp:1752 src/program/BodySlideApp.cpp:2814
-#: src/program/BodySlideApp.cpp:2821 src/program/BodySlideApp.cpp:3555
+#: src/program/BodySlideApp.cpp:923 src/program/BodySlideApp.cpp:1457
+#: src/program/BodySlideApp.cpp:1751 src/program/BodySlideApp.cpp:2813
+#: src/program/BodySlideApp.cpp:2820 src/program/BodySlideApp.cpp:3554
 #: src/program/OutfitStudio.cpp:975 src/program/OutfitStudio.cpp:981
 #: src/program/OutfitStudio.cpp:1473 src/program/OutfitStudio.cpp:1484
 #: src/program/OutfitStudio.cpp:1520 src/program/OutfitStudio.cpp:1531
@@ -3434,19 +3438,19 @@ msgstr "Fehler beim Starten von Outfit Studio!"
 msgid "Error"
 msgstr "Fehler"
 
-#: src/program/BodySlideApp.cpp:1437 src/program/OutfitStudio.cpp:659
+#: src/program/BodySlideApp.cpp:1436 src/program/OutfitStudio.cpp:659
 msgid ""
 "Failed to find game install path registry key or GameDataPath in the config."
 msgstr ""
 "Konnte den Registry-Key des Spielpfades oder den GameDataPath in der "
 "Konfiguration nicht finden."
 
-#: src/program/BodySlideApp.cpp:1665 src/program/OutfitStudio.cpp:887
+#: src/program/BodySlideApp.cpp:1664 src/program/OutfitStudio.cpp:887
 #, c-format
 msgid "System language '%d' is wrong."
 msgstr "Systemsprache '%d' ist ungültig."
 
-#: src/program/BodySlideApp.cpp:1674 src/program/OutfitStudio.cpp:896
+#: src/program/BodySlideApp.cpp:1673 src/program/OutfitStudio.cpp:896
 #, c-format
 msgid ""
 "The system language '%d' is not supported by your system. Try installing "
@@ -3455,11 +3459,11 @@ msgstr ""
 "Die Systemsprache '%d' wird nicht von Ihrem System unterstützt. Sie können "
 "versuchen, die Unterstützung der Sprache zu installieren."
 
-#: src/program/BodySlideApp.cpp:1752
+#: src/program/BodySlideApp.cpp:1751
 msgid "Failed to create group file."
 msgstr "Konnte Gruppen-Datei nicht erstellen."
 
-#: src/program/BodySlideApp.cpp:1766
+#: src/program/BodySlideApp.cpp:1765
 msgid ""
 "That group already exists in the specified file, do you wish to overwrite "
 "the group?"
@@ -3467,11 +3471,11 @@ msgstr ""
 "Diese Gruppe existiert bereits in der angegebenen Datei, willst du sie "
 "überschreiben?"
 
-#: src/program/BodySlideApp.cpp:1766
+#: src/program/BodySlideApp.cpp:1765
 msgid "Group already exists"
 msgstr "Gruppe existiert bereits"
 
-#: src/program/BodySlideApp.cpp:1923
+#: src/program/BodySlideApp.cpp:1922
 msgid ""
 "WARNING: Game data path not configured. Would you like to show BodySlide "
 "where it is?"
@@ -3479,16 +3483,16 @@ msgstr ""
 "WARNUNG: Spieldaten-Pfad nicht konfiguriert. Möchtest du BodySlide zeigen, "
 "wo dieser ist?"
 
-#: src/program/BodySlideApp.cpp:1924 src/program/BodySlideApp.cpp:2225
-#: src/program/BodySlideApp.cpp:2230
+#: src/program/BodySlideApp.cpp:1923 src/program/BodySlideApp.cpp:2224
+#: src/program/BodySlideApp.cpp:2229
 msgid "Game not found"
 msgstr "Spiel nicht gefunden"
 
-#: src/program/BodySlideApp.cpp:1932
+#: src/program/BodySlideApp.cpp:1931
 msgid "Please choose a directory to set as your Data path"
 msgstr "Bitte wählen Sie ein Verzeichnis für den Spieldaten-Pfad"
 
-#: src/program/BodySlideApp.cpp:1950
+#: src/program/BodySlideApp.cpp:1949
 msgid ""
 "WARNING: This will delete the output files from the output folder, "
 "potentially causing crashes.\n"
@@ -3500,24 +3504,24 @@ msgstr ""
 "\n"
 "Willst du fortsetzen?"
 
-#: src/program/BodySlideApp.cpp:1951
+#: src/program/BodySlideApp.cpp:1950
 msgid "Clean Build"
 msgstr "Säuberungs-Erstellung"
 
-#: src/program/BodySlideApp.cpp:1959
+#: src/program/BodySlideApp.cpp:1958
 msgid "Removed the following files:\n"
 msgstr "Folgende Dateien wurden entfernt:\n"
 
-#: src/program/BodySlideApp.cpp:1971 src/program/BodySlideApp.cpp:1984
+#: src/program/BodySlideApp.cpp:1970 src/program/BodySlideApp.cpp:1983
 msgid " (no action)\n"
 msgstr " (keine Aktion)\n"
 
-#: src/program/BodySlideApp.cpp:1975 src/program/BodySlideApp.cpp:1987
-#: src/program/BodySlideApp.cpp:2196
+#: src/program/BodySlideApp.cpp:1974 src/program/BodySlideApp.cpp:1986
+#: src/program/BodySlideApp.cpp:2195
 msgid "Process Successful"
 msgstr "Prozess erfolgreich"
 
-#: src/program/BodySlideApp.cpp:2083
+#: src/program/BodySlideApp.cpp:2082
 #, c-format
 msgid ""
 "Failed to write TRI file to the following location\n"
@@ -3528,12 +3532,12 @@ msgstr ""
 "\n"
 "%s"
 
-#: src/program/BodySlideApp.cpp:2083 src/program/BodySlideApp.cpp:2139
-#: src/program/BodySlideApp.cpp:2174
+#: src/program/BodySlideApp.cpp:2082 src/program/BodySlideApp.cpp:2138
+#: src/program/BodySlideApp.cpp:2173
 msgid "Unable to process"
 msgstr "Konnte nicht verarbeitet werden"
 
-#: src/program/BodySlideApp.cpp:2139 src/program/BodySlideApp.cpp:2174
+#: src/program/BodySlideApp.cpp:2138 src/program/BodySlideApp.cpp:2173
 #, c-format
 msgid ""
 "Failed to build set to the following location\n"
@@ -3544,15 +3548,15 @@ msgstr ""
 "\n"
 "%s"
 
-#: src/program/BodySlideApp.cpp:2141 src/program/BodySlideApp.cpp:2176
+#: src/program/BodySlideApp.cpp:2140 src/program/BodySlideApp.cpp:2175
 msgid "Choose alternate file name"
 msgstr "Wählen Sie einen alternativen Dateinamen"
 
-#: src/program/BodySlideApp.cpp:2188
+#: src/program/BodySlideApp.cpp:2187
 msgid "Successfully processed the following files:\n"
 msgstr "Erfolgreich die folgenden Dateien verarbeitet:\n"
 
-#: src/program/BodySlideApp.cpp:2210
+#: src/program/BodySlideApp.cpp:2209
 msgid ""
 "WARNING: This will delete the output files from the output folders, "
 "potentially causing crashes.\n"
@@ -3564,18 +3568,18 @@ msgstr ""
 "\n"
 "Willst du fortsetzen?"
 
-#: src/program/BodySlideApp.cpp:2211
+#: src/program/BodySlideApp.cpp:2210
 msgid "Clean Batch Build"
 msgstr "Säuberungs-Batch-Erstellung"
 
-#: src/program/BodySlideApp.cpp:2225
+#: src/program/BodySlideApp.cpp:2224
 msgid ""
 "WARNING: Game data path not configured. Files can't be removed that way."
 msgstr ""
 "WARNUNG: Spieldaten-Pfad ist nicht konfiguriert. Dateien können so nicht "
 "entfernt werden."
 
-#: src/program/BodySlideApp.cpp:2229
+#: src/program/BodySlideApp.cpp:2228
 msgid ""
 "WARNING: Game data path not configured. Continue saving files to the working "
 "directory?"
@@ -3583,181 +3587,181 @@ msgstr ""
 "WARNUNG: Spieldaten-Pfad nicht konfiguriert. Dateien stattdessen in das "
 "Arbeitsverzeichnis speichern?"
 
-#: src/program/BodySlideApp.cpp:2364
+#: src/program/BodySlideApp.cpp:2363
 msgid "Processing Outfits"
 msgstr "Verarbeite Outfits"
 
-#: src/program/BodySlideApp.cpp:2364 src/program/OutfitStudio.h:1052
+#: src/program/BodySlideApp.cpp:2363 src/program/OutfitStudio.h:1052
 msgid "Starting..."
 msgstr "Starten..."
 
-#: src/program/BodySlideApp.cpp:2376
+#: src/program/BodySlideApp.cpp:2375
 #, c-format
 msgid "Processing '%s' (%d of %d)..."
 msgstr "Verarbeite '%s' (%d von %d)..."
 
-#: src/program/BodySlideApp.cpp:2384
+#: src/program/BodySlideApp.cpp:2383
 msgid "No recorded outfit name source"
 msgstr "Keine aufgenommene Outfitnamen-Quelle"
 
-#: src/program/BodySlideApp.cpp:2395
+#: src/program/BodySlideApp.cpp:2394
 msgid "Unable to get slider set from file: "
 msgstr "Konnte Slider Set nicht aus Datei bekommen: "
 
-#: src/program/BodySlideApp.cpp:2400
+#: src/program/BodySlideApp.cpp:2399
 msgid "Unable to open slider set file: "
 msgstr "Konnte Slider Set Datei nicht öffnen: "
 
-#: src/program/BodySlideApp.cpp:2435
+#: src/program/BodySlideApp.cpp:2434
 msgid "Unable to load input nif: "
 msgstr "Konnte Eingabe NIF nicht lesen: "
 
-#: src/program/BodySlideApp.cpp:2582
+#: src/program/BodySlideApp.cpp:2581
 msgid "Unable to create destination directory: "
 msgstr "Konnte Ziel-Verzeichnis nicht erstellen: "
 
-#: src/program/BodySlideApp.cpp:2649 src/program/BodySlideApp.cpp:2657
-#: src/program/BodySlideApp.cpp:2668
+#: src/program/BodySlideApp.cpp:2648 src/program/BodySlideApp.cpp:2656
+#: src/program/BodySlideApp.cpp:2667
 msgid "Unable to save nif file: "
 msgstr "Konnte NIF-Datei nicht speichern: "
 
-#: src/program/BodySlideApp.cpp:2742 src/program/BodySlideApp.cpp:3791
+#: src/program/BodySlideApp.cpp:2741 src/program/BodySlideApp.cpp:3790
 msgid "The following sets failed"
 msgstr "Die folgenden Sets sind fehlgeschlagen"
 
-#: src/program/BodySlideApp.cpp:2742 src/program/BodySlideApp.cpp:3791
+#: src/program/BodySlideApp.cpp:2741 src/program/BodySlideApp.cpp:3790
 msgid "Failed"
 msgstr "Fehlgeschlagen"
 
-#: src/program/BodySlideApp.cpp:2814
+#: src/program/BodySlideApp.cpp:2813
 msgid "Failed to load BodySlide.xrc file!"
 msgstr "Konnte die BodySlide.xrc Datei nicht laden!"
 
-#: src/program/BodySlideApp.cpp:2821
+#: src/program/BodySlideApp.cpp:2820
 msgid "Failed to load BodySlide frame!"
 msgstr "Konnte das BodySlide-Fenster nicht laden!"
 
-#: src/program/BodySlideApp.cpp:2854
+#: src/program/BodySlideApp.cpp:2853
 msgid "Group Filter"
 msgstr "Gruppenfilter"
 
-#: src/program/BodySlideApp.cpp:2855
+#: src/program/BodySlideApp.cpp:2854
 msgid "Filter by group"
 msgstr "Nach Gruppe filtern"
 
-#: src/program/BodySlideApp.cpp:2861
+#: src/program/BodySlideApp.cpp:2860
 msgid "Outfit Filter"
 msgstr "Outfitfilter"
 
-#: src/program/BodySlideApp.cpp:2862
+#: src/program/BodySlideApp.cpp:2861
 msgid "Filter by outfit"
 msgstr "Nach Outfit filtern"
 
-#: src/program/BodySlideApp.cpp:3451
+#: src/program/BodySlideApp.cpp:3450
 msgid "Choose groups to filter outfit list"
 msgstr "Wählen Sie Gruppen zum Filtern der Outfitliste"
 
-#: src/program/BodySlideApp.cpp:3451
+#: src/program/BodySlideApp.cpp:3450
 msgid "Choose Groups"
 msgstr "Gruppen auswählen"
 
-#: src/program/BodySlideApp.cpp:3470
+#: src/program/BodySlideApp.cpp:3469
 msgid "Choose or create group file"
 msgstr "Wählen Sie oder erstelle eine Gruppen-Datei"
 
-#: src/program/BodySlideApp.cpp:3483
+#: src/program/BodySlideApp.cpp:3482
 msgid "What would you like the new group to be called?"
 msgstr "Wie möchten Sie die neue Gruppe nennen?"
 
-#: src/program/BodySlideApp.cpp:3483
+#: src/program/BodySlideApp.cpp:3482
 msgid "New Group Name"
 msgstr "Neuer Gruppenname"
 
-#: src/program/BodySlideApp.cpp:3524
+#: src/program/BodySlideApp.cpp:3523
 msgid "Do you really wish to delete the selected project?"
 msgstr ""
 "Sind Sie sich sicher, dass Sie das ausgewählte Projekt löschen möchten?"
 
-#: src/program/BodySlideApp.cpp:3524
+#: src/program/BodySlideApp.cpp:3523
 msgid "Delete Project"
 msgstr "Projekt löschen"
 
-#: src/program/BodySlideApp.cpp:3533
+#: src/program/BodySlideApp.cpp:3532
 msgid "Do you really wish to delete the selected preset?"
 msgstr "Sind Sie sich sicher, dass Sie das ausgwählte Preset löschen möchten?"
 
-#: src/program/BodySlideApp.cpp:3533
+#: src/program/BodySlideApp.cpp:3532
 msgid "Delete Preset"
 msgstr "Preset löschen"
 
-#: src/program/BodySlideApp.cpp:3555 src/program/OutfitStudio.cpp:7091
+#: src/program/BodySlideApp.cpp:3554 src/program/OutfitStudio.cpp:7091
 #, c-format
 msgid "Failed to save preset (%d)!"
 msgstr "Konnte Preset nicht speichern (%d)!"
 
-#: src/program/BodySlideApp.cpp:3583
+#: src/program/BodySlideApp.cpp:3582
 #, c-format
 msgid "Failed to save preset as '%s' (%d)!"
 msgstr "Konnte Preset nicht als '%s' speichern (%d)!"
 
-#: src/program/BodySlideApp.cpp:3766
+#: src/program/BodySlideApp.cpp:3765
 msgid "Choose a folder to contain the saved files"
 msgstr "Wählen Sie einen Ordner, der die gespeicherten Dateien beinhalten soll"
 
-#: src/program/BodySlideApp.cpp:3781
+#: src/program/BodySlideApp.cpp:3780
 msgid "All sets processed successfully!"
 msgstr "Alle Sets erfolgreich vearbeitet!"
 
-#: src/program/BodySlideApp.cpp:3781
+#: src/program/BodySlideApp.cpp:3780
 msgid "Complete"
 msgstr "Abgeschlossen"
 
-#: src/program/ConvertBodyReferenceDialog.cpp:97
+#: src/program/ConvertBodyReferenceDialog.cpp:121
 msgid "Starting conversion..."
 msgstr "Starte Konvertierung..."
 
-#: src/program/ConvertBodyReferenceDialog.cpp:113
+#: src/program/ConvertBodyReferenceDialog.cpp:139
 msgid "Updating Project Output Settings"
 msgstr "Aktualisiere Projektausgabe-Einstellungen"
 
-#: src/program/ConvertBodyReferenceDialog.cpp:152
+#: src/program/ConvertBodyReferenceDialog.cpp:178
 msgid "Deleting Shapes..."
 msgstr "Lösche Modelle..."
 
-#: src/program/ConvertBodyReferenceDialog.cpp:173
+#: src/program/ConvertBodyReferenceDialog.cpp:199
 msgid "Loading conversion reference..."
 msgstr "Lade Konvertierungsreferenz..."
 
-#: src/program/ConvertBodyReferenceDialog.cpp:183
-#: src/program/ConvertBodyReferenceDialog.cpp:224
+#: src/program/ConvertBodyReferenceDialog.cpp:209
+#: src/program/ConvertBodyReferenceDialog.cpp:253
 msgid "Conforming outfit parts..."
 msgstr "Übertrage Slider..."
 
-#: src/program/ConvertBodyReferenceDialog.cpp:190
+#: src/program/ConvertBodyReferenceDialog.cpp:216
 msgid "Updating conversion Slider..."
 msgstr "Aktualisiere Konvertierungs-Slider..."
 
-#: src/program/ConvertBodyReferenceDialog.cpp:194
+#: src/program/ConvertBodyReferenceDialog.cpp:220
 msgid "Setting the base shape and removing the conversion reference"
 msgstr "Basismodell setzen und Konvertierungsreferenz entfernen"
 
-#: src/program/ConvertBodyReferenceDialog.cpp:201
+#: src/program/ConvertBodyReferenceDialog.cpp:227
 msgid "Skipping conversion reference..."
 msgstr "Überspringe Konvertierungsreferenz..."
 
-#: src/program/ConvertBodyReferenceDialog.cpp:206
+#: src/program/ConvertBodyReferenceDialog.cpp:232
 msgid "Loading new reference..."
 msgstr "Lade neue Referenz..."
 
-#: src/program/ConvertBodyReferenceDialog.cpp:219
+#: src/program/ConvertBodyReferenceDialog.cpp:246
 msgid "Copying bones..."
 msgstr "Kopiere Bones..."
 
-#: src/program/ConvertBodyReferenceDialog.cpp:230
+#: src/program/ConvertBodyReferenceDialog.cpp:260
 msgid "Adding Bones..."
 msgstr "Füge Bones hinzu..."
 
-#: src/program/ConvertBodyReferenceDialog.cpp:259
+#: src/program/ConvertBodyReferenceDialog.cpp:289
 msgid "Conversion finished."
 msgstr "Konvertierung abgeschlossen."
 
@@ -3767,7 +3771,7 @@ msgstr "Outfit Studio: OpenGL-Kontext ist nicht OK."
 
 #: src/program/EditUV.cpp:497 src/program/OutfitStudio.cpp:10876
 #: src/program/PreviewWindow.cpp:66 src/render/GLDialog.cpp:34
-#: src/render/GLSurface.cpp:2107 src/render/GLSurface.cpp:2124
+#: src/render/GLSurface.cpp:2116 src/render/GLSurface.cpp:2133
 msgid "OpenGL Error"
 msgstr "OpenGL Fehler"
 

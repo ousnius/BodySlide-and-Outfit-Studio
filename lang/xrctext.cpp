@@ -203,7 +203,7 @@ _("Default outfit choice in Batch Build");
 #line 303 "res/xrc/BodySlide.xrc"
 _("Output Path (which the game would use for this outfit)");
 #line 315 "res/xrc/BodySlide.xrc"
-_("(right-click to view conflicts)");
+_("(right-click to view alternatives)");
 #line 335 "res/xrc/BodySlide.xrc"
 _("Build multiple outfits using the currently active slider values.\n\nHold CTRL = Build to custom directory\nHold ALT = Delete from output directory");
 #line 336 "res/xrc/BodySlide.xrc"
@@ -286,35 +286,39 @@ _("Options");
 _("Merge Sliders");
 #line 145 "res/xrc/ConvertBodyReference.xrc"
 _("Merge Zaps");
-#line 154 "res/xrc/ConvertBodyReference.xrc"
+#line 165 "res/xrc/ConvertBodyReference.xrc"
+_("Conform Sliders");
+#line 174 "res/xrc/ConvertBodyReference.xrc"
 _("Skip conform popup (use default settings)");
-#line 163 "res/xrc/ConvertBodyReference.xrc"
+#line 183 "res/xrc/ConvertBodyReference.xrc"
+_("Copy Bone Weights");
+#line 192 "res/xrc/ConvertBodyReference.xrc"
 _("Skip bone weights popup (use default settings)");
-#line 172 "res/xrc/ConvertBodyReference.xrc"
+#line 203 "res/xrc/ConvertBodyReference.xrc"
 _("Delete reference after completion");
-#line 188 "res/xrc/ConvertBodyReference.xrc"
+#line 219 "res/xrc/ConvertBodyReference.xrc"
 _("This wizard aids in the conversion to another body/reference..");
-#line 197 "res/xrc/ConvertBodyReference.xrc"
+#line 228 "res/xrc/ConvertBodyReference.xrc"
 _("Rename Project (optional)");
-#line 208 "res/xrc/ConvertBodyReference.xrc"
+#line 239 "res/xrc/ConvertBodyReference.xrc"
 _("Specify text to be removed from the project name (comma-delimited):");
-#line 229 "res/xrc/ConvertBodyReference.xrc"
+#line 260 "res/xrc/ConvertBodyReference.xrc"
 _("Remove from project name");
-#line 246 "res/xrc/ConvertBodyReference.xrc"
+#line 277 "res/xrc/ConvertBodyReference.xrc"
 _("Specify any text to be prepended to project name:");
-#line 267 "res/xrc/ConvertBodyReference.xrc"
+#line 298 "res/xrc/ConvertBodyReference.xrc"
 _("Prepend to project name");
-#line 284 "res/xrc/ConvertBodyReference.xrc"
+#line 315 "res/xrc/ConvertBodyReference.xrc"
 _("NOTE: Game file output path is unaffected by this");
-#line 295 "res/xrc/ConvertBodyReference.xrc"
+#line 326 "res/xrc/ConvertBodyReference.xrc"
 _("Extras (optional)");
-#line 306 "res/xrc/ConvertBodyReference.xrc"
+#line 337 "res/xrc/ConvertBodyReference.xrc"
 _("Remove the following shapes before conversion (comma-delimited):");
-#line 328 "res/xrc/ConvertBodyReference.xrc"
+#line 359 "res/xrc/ConvertBodyReference.xrc"
 _("Shapes to delete");
-#line 344 "res/xrc/ConvertBodyReference.xrc"
+#line 375 "res/xrc/ConvertBodyReference.xrc"
 _("Add the following bones after conversion (comma-delimited):");
-#line 365 "res/xrc/ConvertBodyReference.xrc"
+#line 396 "res/xrc/ConvertBodyReference.xrc"
 _("Bones to add");
 #line 5 "res/xrc/EditUV.xrc"
 _("Edit UV");

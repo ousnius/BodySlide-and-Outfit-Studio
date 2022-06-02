@@ -312,7 +312,7 @@
 								<border>5</border>
 								<object class="wxStaticText" name="conflictInfo">
 									<fg>#c8c8d8</fg>
-									<label>(right-click to view conflicts)</label>
+									<label>(right-click to view alternatives)</label>
 									<wrap>-1</wrap>
 									<hidden>1</hidden>
 								</object>
