@@ -2253,6 +2253,10 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 			int h = height >> i;
 			if( w < 1 ) { w = 1; }
 			if( h < 1 ) { h = 1; }
+
+			// Compiler optimization crash workaround (duplicated assignment)
+			uncompressed = 1 - (header.sPixelFormat.dwFlags & DDPF_FOURCC) / DDPF_FOURCC;
+
 			if( uncompressed )
 			{
 				/*	uncompressed DDS, simple MIPmap size calculation	*/
