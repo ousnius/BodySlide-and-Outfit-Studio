@@ -198,7 +198,7 @@ void GLShader::SetAlphaProperties(const uint16_t flags, const float threshold, c
 	if (alphaTest)
 		SetAlphaThreshold(threshold);
 	else
-		SetAlphaThreshold(0.0f);
+		SetAlphaThreshold(-1.0f);
 }
 
 void GLShader::SetAlphaThreshold(const float threshold) {

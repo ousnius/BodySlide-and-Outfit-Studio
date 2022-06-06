@@ -447,7 +447,8 @@ void main(void)
 	{
 		fragColor.a *= prop.alpha;
 
-		if (fragColor.a <= alphaThreshold) // GL_GREATER
-			discard;
+		if (alphaThreshold != -1.0f)
+			if (fragColor.a <= alphaThreshold) // GL_GREATER
+				discard;
 	}
 }
