@@ -7589,6 +7589,10 @@ void OutfitStudioFrame::OnSliderExportToOBJs(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Exporting sliders to OBJ files in '%s'...", dir);
 	for (auto& shape : project->GetWorkNif()->GetShapes()) {
 		for (auto& slider : sliderList) {
+			if (!project->SliderShow(slider))
+			{
+				continue;
+			}
 			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + shape->name.get() + "_" + slider + ".obj";
 			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", slider, shape->name.get(), targetFile);
 			if (project->SaveSliderOBJ(slider, shape, targetFile, true))
