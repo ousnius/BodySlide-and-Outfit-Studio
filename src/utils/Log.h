@@ -13,7 +13,7 @@ See the included LICENSE file
 //[19:30:25][3] Log.h(10): Message here
 class LogFormatter : public wxLogFormatter {
 	virtual wxString Format(wxLogLevel level, const wxString& msg, const wxLogRecordInfo& info) const {
-		wxDateTime logTime(info.timestamp);
+		wxDateTime logTime(wxLongLong(info.timestampMS));
 		wxString fileName = info.filename;
 		fileName = fileName.AfterLast('/').AfterLast('\\');
 		int ihour = logTime.GetHour();
@@ -28,7 +28,7 @@ class LogFormatter : public wxLogFormatter {
 //[19:30:25][3] Message here
 class LogFormatterNoFile : public wxLogFormatter {
 	virtual wxString Format(wxLogLevel level, const wxString& msg, const wxLogRecordInfo& info) const {
-		wxDateTime logTime(info.timestamp);
+		wxDateTime logTime(wxLongLong(info.timestampMS));
 		int ihour = logTime.GetHour();
 		int iminute = logTime.GetMinute();
 		int isecond = logTime.GetSecond();
