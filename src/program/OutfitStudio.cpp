@@ -589,6 +589,7 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("UseSystemLanguage", false);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
 	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", true);
+	Config.SetDefaultBoolValue("Input/MaskHistory", true);
 	Config.SetDefaultValue("Lights/Ambient", 20);
 	Config.SetDefaultValue("Lights/Frontal", 20);
 	Config.SetDefaultValue("Lights/Directional0", 60);
@@ -1872,6 +1873,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbBrushSettingsNearCursor = XRCCTRL(*settings, "cbBrushSettingsNearCursor", wxCheckBox);
 		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
 
+		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
+		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
+
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
 		for (size_t i = 0; i < SupportedLangs.size(); i++)
 			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
@@ -1938,6 +1942,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
 			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
+			Config.SetBoolValue("Input/MaskHistory", cbMaskHistory->IsChecked());
 
 			int oldLang = Config.GetIntValue("Language");
 			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
@@ -9790,6 +9795,10 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
 	UpdateUndoTools();
 }
 
@@ -9828,6 +9837,10 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
 	UpdateUndoTools();
 }
 
@@ -10134,6 +10147,10 @@ void OutfitStudioFrame::OnMaskSymVert(wxCommandEvent& WXUNUSED(event)) {
 	};
 
 	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
 	UpdateUndoTools();
 }
 
@@ -10210,6 +10227,10 @@ void OutfitStudioFrame::OnMaskSymTri(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
 	UpdateUndoTools();
 }
 
@@ -11425,6 +11446,11 @@ void wxGLPanel::EndBrushStroke() {
 			}
 		}
 
+		if (brushType == TweakBrush::BrushType::Mask) {
+			if (!Config.GetBoolValue("Input/MaskHistory"))
+				undoHistory.PopState();
+		}
+
 		activeStroke = nullptr;
 		activeBrush = savedBrush;
 
@@ -11673,6 +11699,10 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 				uss.pointStartState[vertIndex].x = m->mask[vertIndex];
 				uss.pointEndState[vertIndex].x = newval;
 				ApplyUndoState(usp, false);
+
+				if (!Config.GetBoolValue("Input/MaskHistory"))
+					GetUndoHistory()->PopState();
+
 				os->UpdateUndoTools();
 			}
 		}
@@ -12195,6 +12225,10 @@ void wxGLPanel::MaskLess() {
 	}
 
 	ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		GetUndoHistory()->PopState();
+
 	os->UpdateUndoTools();
 }
 
@@ -12241,6 +12275,10 @@ void wxGLPanel::MaskMore() {
 	}
 
 	ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		GetUndoHistory()->PopState();
+
 	os->UpdateUndoTools();
 }
 
@@ -12260,6 +12298,10 @@ void wxGLPanel::InvertMask() {
 	}
 
 	ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		GetUndoHistory()->PopState();
+
 	os->UpdateUndoTools();
 }
 
@@ -12279,6 +12321,10 @@ void wxGLPanel::ClearMask() {
 	}
 
 	ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		GetUndoHistory()->PopState();
+
 	os->UpdateUndoTools();
 }
 
@@ -12338,9 +12384,6 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 
 			m->QueueUpdate(Mesh::UpdateType::Mask);
 		}
-
-		if (undoType != UndoType::Mask)
-			os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UndoType::Color) {
 		for (auto& uss : usp->usss) {
@@ -12353,9 +12396,6 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 
 			m->QueueUpdate(Mesh::UpdateType::VertexColors);
 		}
-
-		if (undoType != UndoType::Color)
-			os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UndoType::Alpha) {
 		for (auto& uss : usp->usss) {
