@@ -19,7 +19,6 @@ class SliderCategory {
 	std::string name;
 	std::vector<std::string> sliders;
 	std::unordered_map<std::string, std::string> displayNames;
-	std::vector<std::string> sourceFiles;
 	bool isHidden = false;
 
 public:
