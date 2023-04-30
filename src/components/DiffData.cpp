@@ -137,7 +137,7 @@ void OSDataFile::SetDataDiff(const std::string& dataName, std::unordered_map<uin
 
 
 void DiffDataSets::MoveToSet(const std::string& name, const std::string& target, std::unordered_map<uint16_t, Vector3>& inDiffData) {
-	namedSet.emplace(name, std::move(inDiffData));
+	namedSet[name] = std::move(inDiffData);
 	dataTargets[name] = target;
 }
 
