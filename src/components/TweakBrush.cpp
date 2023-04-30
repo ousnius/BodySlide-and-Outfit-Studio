@@ -470,7 +470,7 @@ void TB_Unmask::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points,
 
 TB_SmoothMask::TB_SmoothMask() {
 	brushType = TweakBrush::BrushType::Mask;
-	strength = 0.015f;
+	strength = 0.2f;
 	method = 2;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;

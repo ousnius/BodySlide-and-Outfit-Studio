@@ -11286,7 +11286,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		}
 	}
 	else if (activeBrush == &maskBrush && wxGetKeyState(WXK_SHIFT)) {
-		smoothMaskBrush.setStrength(activeBrush->getStrength() * 15.0f);
+		smoothMaskBrush.setStrength(activeBrush->getStrength());
 		activeBrush = &smoothMaskBrush;
 	}
 	else if (activeBrush != &weightBrush && activeBrush != &maskBrush && wxGetKeyState(WXK_SHIFT)) {
