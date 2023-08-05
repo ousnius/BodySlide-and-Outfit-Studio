@@ -761,7 +761,6 @@
     <ClInclude Include="lib\LZ4F\xxhash.h" />
     <ClInclude Include="lib\SOIL2\image_DXT.h" />
     <ClInclude Include="lib\SOIL2\image_helper.h" />
-    <ClInclude Include="lib\SOIL2\jo_jpeg.h" />
     <ClInclude Include="lib\SOIL2\pkm_helper.h" />
     <ClInclude Include="lib\SOIL2\pvr_helper.h" />
     <ClInclude Include="lib\SOIL2\SOIL2.h" />
@@ -773,6 +772,9 @@
     <ClInclude Include="lib\SOIL2\stbi_pkm_c.h" />
     <ClInclude Include="lib\SOIL2\stbi_pvr.h" />
     <ClInclude Include="lib\SOIL2\stbi_pvr_c.h" />
+    <ClInclude Include="lib\SOIL2\stbi_qoi.h" />
+    <ClInclude Include="lib\SOIL2\stbi_qoi_c.h" />
+    <ClInclude Include="lib\SOIL2\stbi_qoi_write.h" />
     <ClInclude Include="lib\SOIL2\stb_image.h" />
     <ClInclude Include="lib\SOIL2\stb_image_write.h" />
     <ClInclude Include="lib\SOIL2\wfETC.h" />

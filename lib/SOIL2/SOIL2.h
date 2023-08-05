@@ -2,7 +2,7 @@
 	@mainpage SOIL2
 
 	Fork by Martin Lucas Golini
-	
+
 	Original author Jonathan Dummer
 	2007-07-26-10.36
 
@@ -25,6 +25,7 @@
 	- DDS		load & save
 	- PNG		load & save
 	- JPG		load & save
+	- QOI		load & save
 	- PSD		load
 	- HDR		load
 	- PIC		load
@@ -48,6 +49,19 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define SOIL_MAJOR_VERSION 1
+#define SOIL_MINOR_VERSION 3
+#define SOIL_PATCH_LEVEL 0
+
+#define SOIL_VERSION_NUM( X, Y, Z ) ( (X)*1000 + (Y)*100 + ( Z ) )
+
+#define SOIL_COMPILED_VERSION \
+	SOIL_VERSION_NUM( SOIL_MAJOR_VERSION, SOIL_MINOR_VERSION, SOIL_PATCH_LEVEL )
+
+#define SOIL_VERSION_ATLEAST( X, Y, Z ) ( SOIL_COMPILED_VERSION >= SOIL_VERSION_NUM( X, Y, Z ) )
+
+	unsigned long SOIL_version();
 
 /**
 	The format of images that may be loaded (force_channels).
@@ -129,7 +143,8 @@ enum
 	SOIL_SAVE_TYPE_BMP = 1,
 	SOIL_SAVE_TYPE_PNG = 2,
 	SOIL_SAVE_TYPE_DDS = 3,
-	SOIL_SAVE_TYPE_JPG = 4
+	SOIL_SAVE_TYPE_JPG = 4,
+	SOIL_SAVE_TYPE_QOI = 5
 };
 
 /**
@@ -426,6 +441,34 @@ int
 		int width, int height, int channels,
 		const unsigned char *const data
 	);
+
+
+/**
+	Saves an image from an array of unsigned chars (RGBA) to a memory buffer in the target format.
+	Free the buffer with SOIL_free_image_data.
+	\param quality parameter only used for SOIL_SAVE_TYPE_JPG files, values accepted between 0 and 100.
+	\param imageSize returns the byte count of the image.
+	\return 0 if failed, otherwise returns 1
+**/
+
+unsigned char*
+SOIL_write_image_to_memory_quality
+(
+	int image_type,
+	int width, int height, int channels,
+	const unsigned char* const data,
+	int quality,
+	int* imageSize
+);
+
+unsigned char*
+SOIL_write_image_to_memory
+(
+	int image_type,
+	int width, int height, int channels,
+	const unsigned char* const data,
+	int* imageSize
+);
 
 /**
 	Frees the image data (note, this is just C's "free()"...this function is

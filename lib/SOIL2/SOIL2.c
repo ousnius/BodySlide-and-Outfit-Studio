@@ -1,6 +1,6 @@
 /*
  	Fork by Martin Lucas Golini
- 	 
+
  	Original author
 	Jonathan Dummer
 	2007-07-26-10.36
@@ -117,10 +117,11 @@
 #include "image_DXT.h"
 #include "pvr_helper.h"
 #include "pkm_helper.h"
-#include "jo_jpeg.h"
 
 #include <stdlib.h>
 #include <string.h>
+
+unsigned long SOIL_version() { return SOIL_COMPILED_VERSION; }
 
 /*	error reporting	*/
 const char *result_string_pointer = "SOIL initialized";
@@ -268,7 +269,7 @@ void * SOIL_GL_GetProcAddress(const char *proc)
 	if ( NULL == openglModule )
 		openglModule = LoadLibraryA("opengl32.dll");
 
-	func =  wglGetProcAddress( proc );
+	func = (void*)wglGetProcAddress(proc);
 
 	if (!soilTestWinProcPointer((const PROC)func)) {
 		func = (void *)GetProcAddress(openglModule, proc);
@@ -1972,12 +1973,12 @@ int
 	if( image_type == SOIL_SAVE_TYPE_BMP )
 	{
 		save_result = stbi_write_bmp( filename,
-				width, height, channels, (void*)data );
+				width, height, channels, (const void*)data );
 	} else
 	if( image_type == SOIL_SAVE_TYPE_TGA )
 	{
 		save_result = stbi_write_tga( filename,
-				width, height, channels, (void*)data );
+				width, height, channels, (const void*)data );
 	} else
 	if( image_type == SOIL_SAVE_TYPE_DDS )
 	{
@@ -1987,11 +1988,15 @@ int
 	if( image_type == SOIL_SAVE_TYPE_PNG )
 	{
 		save_result = stbi_write_png( filename,
-				width, height, channels, (const unsigned char *const)data, 0 );
+				width, height, channels, (const void*)data, 0 );
 	} else
 	if ( image_type == SOIL_SAVE_TYPE_JPG )
 	{
-		save_result = jo_write_jpg( filename, (const void*)data, width, height, channels, quality );
+		save_result = stbi_write_jpg( filename, width, height, channels, (const void*)data, quality );
+	} else
+	if ( image_type == SOIL_SAVE_TYPE_QOI )
+	{
+		save_result = stbi_write_qoi( filename, width, height, channels, (const void*)data );
 	}
 	else
 	{
@@ -2006,6 +2011,159 @@ int
 		result_string_pointer = "Image saved";
 	}
 	return save_result;
+}
+
+
+typedef struct
+{
+	unsigned char* buffer;
+	int allocated; // number of bytes allocated to the buffer
+	int written; // number of bytes written to the buffer
+	int alloc_block_size; // size of blocks to alloc as memory is required
+} stbi_write_context;
+
+void write_to_memory(void* context, void* data, int size)
+{
+	stbi_write_context* ctx = (stbi_write_context*)context;
+
+	if(ctx == 0)
+		return;
+
+	if (ctx->buffer == 0)
+	{
+		// safety
+		ctx->written = 0;
+		ctx->allocated = 0;
+
+		// first alloc
+		while (ctx->allocated < (ctx->written + size))
+		{
+			ctx->allocated += ctx->alloc_block_size;
+		}
+		ctx->buffer = (unsigned char*) malloc(ctx->allocated);
+	}
+	else if((ctx->written + size) > ctx->allocated)
+	{
+		ctx->allocated += ctx->alloc_block_size;
+		while (ctx->allocated < (ctx->written + size))
+		{
+			ctx->allocated += ctx->alloc_block_size;
+		}
+
+		unsigned char* rebuff = (unsigned char*)realloc(ctx->buffer, ctx->allocated);
+		if (rebuff == 0)
+		{
+			// out of memory
+			free(ctx->buffer);
+			ctx->buffer = 0;
+			ctx->allocated = 0;
+			return;
+		}
+		else
+		{
+			ctx->buffer = rebuff;
+		}
+	}
+
+	if(ctx->buffer == 0)
+		return;
+
+	memcpy(ctx->buffer + ctx->written, data, size);
+	ctx->written += size;
+}
+
+
+// release the returned memory with SOIL_free_image_data
+unsigned char*
+SOIL_write_image_to_memory_quality
+(
+	int image_type,
+	int width, int height, int channels,
+	const unsigned char* const data,
+	int quality,
+	int* imageSize
+)
+{
+	int save_result;
+
+	/*	error check	*/
+	if ((width < 1) || (height < 1) ||
+		(channels < 1) || (channels > 4) ||
+		(data == NULL) ||
+		(imageSize == NULL)
+		)
+	{
+		return 0;
+	}
+
+	unsigned char* imageMemory = NULL;
+	*imageSize = 0;
+
+	stbi_write_context context;
+	context.alloc_block_size = 4096; // 4k chunks
+	context.buffer = 0;
+	context.allocated = 0;
+	context.written = 0;
+
+	if (image_type == SOIL_SAVE_TYPE_BMP)
+	{
+		save_result = stbi_write_bmp_to_func(write_to_memory, &context, width, height, channels, (const unsigned char*)data);
+	}
+	else if (image_type == SOIL_SAVE_TYPE_TGA)
+	{
+		save_result = stbi_write_tga_to_func(write_to_memory, &context, width, height, channels, (const unsigned char*)data);
+	}
+	else if (image_type == SOIL_SAVE_TYPE_DDS)
+	{
+		save_result = 0; // not supported thru stbi
+	}
+	else if (image_type == SOIL_SAVE_TYPE_PNG)
+	{
+		save_result = stbi_write_png_to_func(write_to_memory, &context, width, height, channels, (const unsigned char*)data, 0);
+	}
+	else if (image_type == SOIL_SAVE_TYPE_JPG)
+	{
+		save_result = stbi_write_jpg_to_func(write_to_memory, &context, width, height, channels, (const unsigned char*)data, quality);
+	}
+	else
+	{
+		save_result = 0;
+	}
+
+	if (save_result)
+	{
+		imageMemory = context.buffer;
+		*imageSize = context.written;
+	}
+	else
+	{
+		if (context.buffer)
+			free(context.buffer);
+	}
+
+	if (save_result == 0)
+	{
+		result_string_pointer = "writing the image failed";
+	}
+	else
+	{
+		result_string_pointer = "Image written";
+	}
+
+	return imageMemory;
+}
+
+// release the returned memory with SOIL_free_image_data
+unsigned char*
+SOIL_write_image_to_memory
+(
+	int image_type,
+	int width, int height, int channels,
+	const unsigned char* const data,
+	int* imageSize
+)
+{
+	return SOIL_write_image_to_memory_quality(image_type, width, height, channels, data, 80, imageSize);
 }
 
 void
@@ -2027,6 +2185,17 @@ const char*
 	return result_string_pointer;
 }
 
+/* This circumvent a VS2022 compiler bug */
+#ifdef _MSC_VER
+#pragma optimize( "", off )
+#endif
+static inline int calc_total_block_size( int w, int h, int block_size ) {
+	return ( ( w + 3 ) >> 2 ) * ( ( h + 3 ) >> 2 ) * block_size;
+}
+#ifdef _MSC_VER
+#pragma optimize( "", on )
+#endif
+
 unsigned int SOIL_direct_load_DDS_from_memory(
 		const unsigned char *const buffer,
 		int buffer_length,
@@ -2035,7 +2204,6 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 		int loading_as_cubemap)
 {
 
-	DDS_header header;
 	unsigned int buffer_index = 0;
 	unsigned int tex_ID = 0;
 
@@ -2062,9 +2230,11 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 		return 0;
 	}
 
-	/*	try reading in the header	*/
+	// Try reading in the header
+	DDS_header header;
 	memcpy( (void *)( &header ), (const void *)buffer, sizeof( DDS_header ) );
-	buffer_index = sizeof( DDS_header );
+
+	buffer_index += sizeof(DDS_header);
 	/*	guilty until proven innocent	*/
 	result_string_pointer = "Failed to read a known DDS header";
 	/*	validate the header (warning, "goto"'s ahead, shield your eyes!!)	*/
@@ -2091,16 +2261,30 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 		DXT3 = ( 'D' << 0 ) | ( 'X' << 8 ) | ( 'T' << 16 ) | ( '3' << 24 ),
 		DXT5 = ( 'D' << 0 ) | ( 'X' << 8 ) | ( 'T' << 16 ) | ( '5' << 24 ),
 		ATI2 = ( 'A' << 0 ) | ( 'T' << 8 ) | ( 'I' << 16 ) | ( '2' << 24 ),
+		DX10 = ( 'D' << 0 ) | ( 'X' << 8 ) | ( '1' << 16 ) | ( '0' << 24 ),
 	};
 
-	/*	make sure it is a type we can upload	*/
-	if( ( header.sPixelFormat.dwFlags & DDPF_FOURCC ) &&
-	    !( header.sPixelFormat.dwFourCC == DXT1 || header.sPixelFormat.dwFourCC == DXT3 ||
-	       header.sPixelFormat.dwFourCC == DXT5 || header.sPixelFormat.dwFourCC == ATI2 ) )
-	{ goto quick_exit; }
+	// DX10 has an extended header
+	DDS_HEADER_DXT10 dx10_header;
+	if (header.sPixelFormat.dwFourCC == DX10) {
+		memcpy((void*)(&dx10_header), (const void*)&buffer[buffer_index], sizeof(DDS_HEADER_DXT10));
+		buffer_index += sizeof(dx10_header);
+	}
+
+	// make sure it is a type we can upload
+	if ((header.sPixelFormat.dwFlags & DDPF_FOURCC)
+		&& header.sPixelFormat.dwFourCC != DXT1
+		&& header.sPixelFormat.dwFourCC != DXT3
+		&& header.sPixelFormat.dwFourCC != DXT5
+		&& header.sPixelFormat.dwFourCC != ATI2
+		&& header.sPixelFormat.dwFourCC != DX10
+	){
+		goto quick_exit;
+	}
 
 	/*	OK, validated the header, let's load the image data	*/
 	result_string_pointer = "DDS header loaded and validated";
+
 	const int width = header.dwWidth;
 	const int height = header.dwHeight;
 	int uncompressed = 1 - ( header.sPixelFormat.dwFlags & DDPF_FOURCC ) / DDPF_FOURCC;
@@ -2205,6 +2389,14 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 			block_size = 16;
 			internal_format = SOIL_COMPRESSED_RG_RGTC2;
 			break;
+		case DX10:
+			if (dx10_header.dxgiFormat != DXGI_FORMAT_BC5_UNORM) {
+				result_string_pointer = "The DX10 reader only supports BC5 unorm at the moment";
+				return 0;
+			}
+			block_size = 16;
+			internal_format = SOIL_COMPRESSED_RG_RGTC2;
+			break;
 		}
 		DDS_main_size = ( ( width + 3 ) >> 2 ) * ( ( height + 3 ) >> 2 ) * block_size;
 	}
@@ -2242,6 +2434,7 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 		ogl_target_end = GL_TEXTURE_2D;
 		opengl_texture_type = GL_TEXTURE_2D;
 	}
+
 	if( ( header.sCaps.dwCaps1 & DDSCAPS_MIPMAP ) && ( header.dwMipMapCount > 1 ) )
 	{
 		mipmaps = header.dwMipMapCount - 1;
@@ -2253,10 +2446,6 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 			int h = height >> i;
 			if( w < 1 ) { w = 1; }
 			if( h < 1 ) { h = 1; }
-
-			// Compiler optimization crash workaround (duplicated assignment)
-			uncompressed = 1 - (header.sPixelFormat.dwFlags & DDPF_FOURCC) / DDPF_FOURCC;
-
 			if( uncompressed )
 			{
 				/*	uncompressed DDS, simple MIPmap size calculation	*/
@@ -2265,7 +2454,7 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 			else
 			{
 				/*	compressed DDS, MIPmap size calculation is block based	*/
-				DDS_full_size += ( ( w + 3 ) / 4 ) * ( ( h + 3 ) / 4 ) * block_size;
+				DDS_full_size += calc_total_block_size( w, h, block_size );
 			}
 		}
 	}
@@ -2995,13 +3184,13 @@ static P_SOIL_GLCOMPRESSEDTEXIMAGE2DPROC get_glCompressedTexImage2D_addr()
 {
 	/*	and find the address of the extension function	*/
 	P_SOIL_GLCOMPRESSEDTEXIMAGE2DPROC ext_addr = NULL;
-	
+
 #if defined( SOIL_PLATFORM_WIN32 ) || defined( SOIL_PLATFORM_OSX ) || defined( SOIL_X11_PLATFORM )
 	ext_addr = (P_SOIL_GLCOMPRESSEDTEXIMAGE2DPROC)SOIL_GL_GetProcAddress( "glCompressedTexImage2D" );
 #else
 	ext_addr = (P_SOIL_GLCOMPRESSEDTEXIMAGE2DPROC)&glCompressedTexImage2D;
 #endif
-	
+
 	return ext_addr;
 }
 
@@ -3052,7 +3241,7 @@ int query_DXT_capability( void )
 
 int query_3Dc_capability(void) {
 	/*	check for the capability	*/
-	if (has_3Dc_capability == SOIL_CAPABILITY_UNKNOWN) 
+	if (has_3Dc_capability == SOIL_CAPABILITY_UNKNOWN)
 	{
 		/*	we haven't yet checked for the capability, do so	*/
 		if (0 == SOIL_GL_ExtensionSupported(
@@ -3064,12 +3253,12 @@ int query_3Dc_capability(void) {
 			) {
 			/*	not there, flag the failure	*/
 			has_3Dc_capability = SOIL_CAPABILITY_NONE;
-		} else 
+		} else
 		{
 			P_SOIL_GLCOMPRESSEDTEXIMAGE2DPROC ext_addr = get_glCompressedTexImage2D_addr();
 
 			/*	Flag it so no checks needed later	*/
-			if (NULL == ext_addr) 
+			if (NULL == ext_addr)
 			{
 				/*	hmm, not good!!  This should not happen, but does on my
 					laptop's VIA chipset.  The GL_EXT_texture_compression_s3tc
@@ -3078,7 +3267,7 @@ int query_3Dc_capability(void) {
 					conversion, but I can't use my own routines or load DDS files
 					from disk and upload them directly [8^(	*/
 				has_3Dc_capability = SOIL_CAPABILITY_NONE;
-			} else 
+			} else
 			{
 				/*	all's well!	*/
 				soilGlCompressedTexImage2D = ext_addr;
@@ -3106,7 +3295,7 @@ int query_PVR_capability( void )
 			if ( NULL == soilGlCompressedTexImage2D ) {
 				soilGlCompressedTexImage2D = get_glCompressedTexImage2D_addr();
 			}
-			
+
 			/*	it's there!	*/
 			has_PVR_capability = SOIL_CAPABILITY_PRESENT;
 		}

@@ -1675,18 +1675,6 @@
     <ClInclude Include="src\components\UndoState.h">
       <Filter>Components</Filter>
     </ClInclude>
-    <ClInclude Include="lib\SOIL2\image_DXT.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\image_helper.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\jo_jpeg.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\pkm_helper.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
     <ClInclude Include="lib\SOIL2\pvr_helper.h">
       <Filter>Libraries\SOIL2</Filter>
     </ClInclude>
@@ -1723,7 +1711,25 @@
     <ClInclude Include="lib\SOIL2\stbi_pvr_c.h">
       <Filter>Libraries\SOIL2</Filter>
     </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_qoi.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_qoi_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_qoi_write.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
     <ClInclude Include="lib\SOIL2\wfETC.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_DXT.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_helper.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\pkm_helper.h">
       <Filter>Libraries\SOIL2</Filter>
     </ClInclude>
   </ItemGroup>
@@ -1899,16 +1905,16 @@
     <ClCompile Include="lib\nifly\src\Skin.cpp">
       <Filter>Libraries\nifly\src</Filter>
     </ClCompile>
-    <ClCompile Include="lib\SOIL2\image_DXT.c">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\SOIL2\image_helper.c">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClCompile>
     <ClCompile Include="lib\SOIL2\SOIL2.c">
       <Filter>Libraries\SOIL2</Filter>
     </ClCompile>
     <ClCompile Include="lib\SOIL2\wfETC.c">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_DXT.c">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_helper.c">
       <Filter>Libraries\SOIL2</Filter>
     </ClCompile>
   </ItemGroup>
