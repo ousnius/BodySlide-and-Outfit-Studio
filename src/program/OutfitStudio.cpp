@@ -2411,8 +2411,8 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, wxScrolledWindo
 			if (!sliderPanel->IsShown())
 				sliderPanel->Show();
 
-			ShowSliderEffect(name);
 			sliderPanels[name] = sliderPanel;
+			ShowSliderEffect(name);
 		}
 	}
 }
@@ -2441,10 +2441,9 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 
 	wxLogMessage("Creating new slider '%s'.", sliderName);
 
+	project->AddEmptySlider(sliderName);
 	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
 
-	project->AddEmptySlider(sliderName);
-	ShowSliderEffect(sliderName);
 	sliderScroll->FitInside();
 	SetPendingChanges();
 
@@ -4598,9 +4597,8 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		auto morphs = tri.GetMorphs();
 		for (auto& morph : morphs) {
 			if (!project->ValidSlider(morph.morphName)) {
-				createSliderGUI(morph.morphName, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(morph.morphName);
-				ShowSliderEffect(morph.morphName);
+				createSliderGUI(morph.morphName, sliderScroll, sliderScroll->GetSizer());
 			}
 
 			std::unordered_map<uint16_t, Vector3> diff;
@@ -7271,9 +7269,8 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 				continue;
 
 			if (!project->ValidSlider(sliderName->second)) {
-				createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(sliderName->second);
-				ShowSliderEffect(sliderName->second);
+				createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
 			}
 
 			project->SetSliderFromDiff(sliderName->second, shape, diff.second);
@@ -7383,9 +7380,8 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 				continue;
 
 			if (!project->ValidSlider(morphData->name)) {
-				createSliderGUI(morphData->name, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(morphData->name);
-				ShowSliderEffect(morphData->name);
+				createSliderGUI(morphData->name, sliderScroll, sliderScroll->GetSizer());
 			}
 
 			std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
@@ -7676,8 +7672,6 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Creating new zap '%s'.", sliderName);
 
-	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
-
 	std::unordered_map<uint16_t, float> unmasked;
 	for (auto& i : selectedItems) {
 		unmasked.clear();
@@ -7685,7 +7679,8 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 		project->AddZapSlider(sliderName, unmasked, i->GetShape());
 	}
 
-	ShowSliderEffect(sliderName);
+	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
+
 	sliderScroll->FitInside();
 	SetPendingChanges();
 }
