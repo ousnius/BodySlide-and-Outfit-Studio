@@ -146,7 +146,7 @@ public:
 	void UpdateConflictManager();
 	void SetDefaultBuildSelection();
 
-	void UpdateZapChoices();
+	bool UpdateZapChoices();
 	void SetZapChoice(const std::string& zap, bool choice);
 
 	int LoadSliderSets();

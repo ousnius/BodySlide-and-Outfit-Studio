@@ -624,7 +624,9 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 	}
 
 	sliderView->SetPresetChanged(false);
-	UpdateZapChoices();
+
+	if (UpdateZapChoices())
+		zapChanged = true;
 
 	if (preview && updatePreview)
 		zapChanged ? RebuildPreviewMeshes() : UpdatePreview();
@@ -903,10 +905,12 @@ void BodySlideApp::SetDefaultBuildSelection() {
 	sliderView->Refresh();
 }
 
-void BodySlideApp::UpdateZapChoices() {
+bool BodySlideApp::UpdateZapChoices() {
 	BuildSelectionFile buildSelFile;
 	BuildSelection buildSelection;
 	GetBuildSelection(buildSelFile, buildSelection);
+
+	bool zapChanged = false;
 
 	for (size_t s = 0; s < activeSet.size(); s++) {
 		if (!activeSet[s].bZap || activeSet[s].bHidden)
@@ -927,9 +931,13 @@ void BodySlideApp::UpdateZapChoices() {
 				event.SetEventObject(sd->zapCheckHi);
 				event.SetInt(zapChoice ? 1 : 0);
 				handler->ProcessEvent(event);
+
+				zapChanged = true;
 			}
 		}
 	}
+
+	return zapChanged;
 }
 
 void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
@@ -1284,6 +1292,11 @@ void BodySlideApp::CleanupPreview() {
 		return;
 
 	preview->Cleanup();
+
+	if (previewBaseNif) {
+		delete previewBaseNif;
+		previewBaseNif = nullptr;
+	}
 }
 
 void BodySlideApp::RebuildPreviewMeshes() {
