@@ -140,8 +140,14 @@ public:
 	void PopulatePresetList(const std::string& select);
 	void PopulateOutfitList(const std::string& select);
 	void DisplayActiveSet();
+
+	void GetBuildSelection(BuildSelectionFile& file, BuildSelection& buildSel);
+
 	void UpdateConflictManager();
 	void SetDefaultBuildSelection();
+
+	void UpdateZapChoices();
+	void SetZapChoice(const std::string& zap, bool choice);
 
 	int LoadSliderSets();
 	void RefreshOutfitList();

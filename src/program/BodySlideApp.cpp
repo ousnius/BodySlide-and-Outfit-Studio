@@ -624,6 +624,7 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 	}
 
 	sliderView->SetPresetChanged(false);
+	UpdateZapChoices();
 
 	if (preview && updatePreview)
 		zapChanged ? RebuildPreviewMeshes() : UpdatePreview();
@@ -825,6 +826,17 @@ void BodySlideApp::DisplayActiveSet() {
 	UpdateConflictManager();
 }
 
+void BodySlideApp::GetBuildSelection(BuildSelectionFile& file, BuildSelection& buildSel) {
+	const std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
+
+	file.Open(buildSelFileName);
+
+	if (file.GetError())
+		file.New(buildSelFileName);
+
+	file.Get(buildSel);
+}
+
 void BodySlideApp::UpdateConflictManager() {
 	// Populate Conflict UI
 	auto conflictCheckBox = (wxCheckBox*)sliderView->FindWindowByName("cbIsOutfitChoice");
@@ -838,14 +850,9 @@ void BodySlideApp::UpdateConflictManager() {
 	std::string textColourName = "#C8C8C8";
 
 	if (1 < col.size()) {
-		std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
-
-		BuildSelectionFile buildSelFile(buildSelFileName);
-		if (buildSelFile.GetError())
-			buildSelFile.New(buildSelFileName);
-
+		BuildSelectionFile buildSelFile;
 		BuildSelection buildSelection;
-		buildSelFile.Get(buildSelection);
+		GetBuildSelection(buildSelFile, buildSelection);
 
 		std::string outputChoice = buildSelection.GetOutputChoice(outputFilePath);
 		isOutputChoice = outputChoice == activeSet.GetName();
@@ -873,31 +880,70 @@ void BodySlideApp::UpdateConflictManager() {
 }
 
 void BodySlideApp::SetDefaultBuildSelection() {
-	auto outputFilePath = activeSet.GetOutputFilePath();
-	std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
-
-	BuildSelectionFile buildSelFile(buildSelFileName);
-	if (buildSelFile.GetError())
-		buildSelFile.New(buildSelFileName);
-
+	BuildSelectionFile buildSelFile;
 	BuildSelection buildSelection;
-	buildSelFile.Get(buildSelection);
+	GetBuildSelection(buildSelFile, buildSelection);
 
+	auto outputFilePath = activeSet.GetOutputFilePath();
 	std::string choiceName = activeSet.GetName();
+
 	bool willSet = 0 != choiceName.compare(buildSelection.GetOutputChoice(outputFilePath));
 	if (willSet) {
 		buildSelection.SetOutputChoice(outputFilePath, activeSet.GetName());
-		buildSelFile.Update(buildSelection);
+		buildSelFile.UpdateOutputChoices(buildSelection);
 	}
 	else {
 		buildSelection.SetOutputChoice(outputFilePath, "");
-		buildSelFile.Remove(outputFilePath);
+		buildSelFile.RemoveOutputChoice(outputFilePath);
 	}
 
 	buildSelFile.Save();
 
 	UpdateConflictManager();
 	sliderView->Refresh();
+}
+
+void BodySlideApp::UpdateZapChoices() {
+	BuildSelectionFile buildSelFile;
+	BuildSelection buildSelection;
+	GetBuildSelection(buildSelFile, buildSelection);
+
+	for (size_t s = 0; s < activeSet.size(); s++) {
+		if (!activeSet[s].bZap || activeSet[s].bHidden)
+			continue;
+
+		std::string project = activeSet.GetName();
+		std::string zap = activeSet[s].name;
+		if (buildSelection.HasZapChoice(project, zap)) {
+			bool zapChoice = buildSelection.GetZapChoice(project, zap);
+
+			SliderDisplay* sd = sliderView->GetSliderDisplay(zap);
+			if (sd && sd->isZap) {
+				sd->zapCheckHi->SetValue(zapChoice);
+
+				// Trigger checkbox event
+				wxEvtHandler* handler = sd->zapCheckHi->GetEventHandler();
+				wxCommandEvent event(wxEVT_COMMAND_CHECKBOX_CLICKED, sd->zapCheckHi->GetId());
+				event.SetEventObject(sd->zapCheckHi);
+				event.SetInt(zapChoice ? 1 : 0);
+				handler->ProcessEvent(event);
+			}
+		}
+	}
+}
+
+void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
+	BuildSelectionFile buildSelFile;
+	BuildSelection buildSelection;
+	GetBuildSelection(buildSelFile, buildSelection);
+
+	auto outputFilePath = activeSet.GetOutputFilePath();
+	std::string project = activeSet.GetName();
+
+	buildSelection.SetZapChoice(project, zap, choice);
+	buildSelFile.UpdateZapChoices(buildSelection);
+
+	buildSelFile.Save();
 }
 
 void BodySlideApp::EditProject(const std::string& projectName) {
@@ -2264,15 +2310,9 @@ int BodySlideApp::BuildListBodies(
 
 		if (!choicesList.empty()) {
 			// Load BuildSelection file or create new one
-			std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
-
-			BuildSelectionFile buildSelFile(buildSelFileName);
-
-			if (buildSelFile.GetError())
-				buildSelFile.New(buildSelFileName);
-
+			BuildSelectionFile buildSelFile;
 			BuildSelection buildSelection;
-			buildSelFile.Get(buildSelection);
+			GetBuildSelection(buildSelFile, buildSelection);
 
 			wxXmlResource* rsrc = wxXmlResource::Get();
 			wxDialog* dlgBuildOverride = rsrc->LoadDialog(sliderView, "dlgBuildOverride");
@@ -2354,7 +2394,7 @@ int BodySlideApp::BuildListBodies(
 			delete dlgBuildOverride;
 
 			// Save output choices to file
-			buildSelFile.Update(buildSelection);
+			buildSelFile.UpdateOutputChoices(buildSelection);
 			buildSelFile.Save();
 		}
 	}
@@ -2441,6 +2481,11 @@ int BodySlideApp::BuildListBodies(
 
 		currentSet.LoadSetDiffData(currentDiffs);
 
+		// Load BuildSelection file for zap choices
+		BuildSelectionFile buildSelFile;
+		BuildSelection buildSelection;
+		GetBuildSelection(buildSelFile, buildSelection);
+
 		/* Shape the NIF files */
 		std::vector<Vector3> vertsLow;
 		std::vector<Vector3> vertsHigh;
@@ -2470,6 +2515,7 @@ int BodySlideApp::BuildListBodies(
 			zapIdxAll.emplace(it->first, std::vector<uint16_t>());
 
 			for (size_t s = 0; s < currentSet.size(); s++) {
+				std::string name = currentSet[s].name;
 				std::string target = it->second.targetShape;
 				std::string dn = currentSet[s].TargetDataName(target);
 				if (dn.empty())
@@ -2480,18 +2526,18 @@ int BodySlideApp::BuildListBodies(
 					continue;
 				}
 
-				vbig = sliderManager.GetBigPresetValue(activePreset, currentSet[s].name, currentSet[s].defBigValue / 100.0f);
+				vbig = sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f);
 				for (auto& sliderBig : sliderManager.slidersBig) {
-					if (sliderBig.name == currentSet[s].name && sliderBig.changed && !sliderBig.clamp) {
+					if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp) {
 						vbig = sliderBig.value;
 						break;
 					}
 				}
 
 				if (currentSet.GenWeights()) {
-					vsmall = sliderManager.GetSmallPresetValue(activePreset, currentSet[s].name, currentSet[s].defSmallValue / 100.0f);
+					vsmall = sliderManager.GetSmallPresetValue(activePreset, name, currentSet[s].defSmallValue / 100.0f);
 					for (auto& sliderSmall : sliderManager.slidersSmall) {
-						if (sliderSmall.name == currentSet[s].name && sliderSmall.changed && !sliderSmall.clamp) {
+						if (sliderSmall.name == name && sliderSmall.changed && !sliderSmall.clamp) {
 							vsmall = sliderSmall.value;
 							break;
 						}
@@ -2505,6 +2551,14 @@ int BodySlideApp::BuildListBodies(
 				}
 
 				if (currentSet[s].bZap && !currentSet[s].bUV) {
+					if (!currentSet[s].bHidden) {
+						// Apply stored zap choice for zaps visible to the user
+						if (buildSelection.HasZapChoice(currentSet.GetName(), name)) {
+							bool zapChoice = buildSelection.GetZapChoice(currentSet.GetName(), name);
+							vbig = zapChoice ? 1.0f : 0.0f;
+						}
+					}
+
 					if (vbig > 0.0f) {
 						currentDiffs.GetDiffIndices(dn, target, zapIdx);
 						zapIdxAll[it->first] = zapIdx;
@@ -3349,7 +3403,8 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 
 	SliderDisplay* slider = GetSliderDisplay(sliderName);
 	if (slider) {
-		if (event.IsChecked()) {
+		bool checked = event.IsChecked();
+		if (checked) {
 			if (slider->oneSize) {
 				app->SetSliderValue(sn, false, 1.0f);
 			}
@@ -3375,6 +3430,8 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 					slider->zapCheckLo->SetValue(false);
 			}
 		}
+
+		app->SetZapChoice(sliderName, checked);
 	}
 
 	app->SetSliderChanged(sn, isLo);
@@ -3712,15 +3769,9 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	batchBuildChooser->CenterOnParent();
 
 	// Load BuildSelection file
-	std::string buildSelFileName = Config["AppDir"] + PathSepStr + "BuildSelection.xml";
-
-	BuildSelectionFile buildSelFile(buildSelFileName);
-
-	if (buildSelFile.GetError())
-		buildSelFile.New(buildSelFileName);
-
+	BuildSelectionFile buildSelFile;
 	BuildSelection buildSelection;
-	buildSelFile.Get(buildSelection);
+	app->GetBuildSelection(buildSelFile, buildSelection);
 
 	batchBuildList = XRCCTRL((*batchBuildChooser), "batchBuildList", wxCheckListBox);
 	batchBuildList->Bind(wxEVT_RIGHT_UP, &BodySlideFrame::OnBatchBuildContext, this);
