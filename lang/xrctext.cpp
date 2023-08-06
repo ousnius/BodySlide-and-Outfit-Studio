@@ -1782,37 +1782,45 @@ _("Left Mouse Pan");
 _("Enables/disables opening the brush settings near the mouse cursor when hitting the 'space' key.");
 #line 234 "res/xrc/Settings.xrc"
 _("Brush Settings Near Cursor");
-#line 252 "res/xrc/Settings.xrc"
+#line 243 "res/xrc/Settings.xrc"
+_("Enables/disables the undo history for the mask brush and vertex selection.");
+#line 244 "res/xrc/Settings.xrc"
+_("Mask History");
+#line 262 "res/xrc/Settings.xrc"
 _("Language");
-#line 261 "res/xrc/Settings.xrc"
+#line 271 "res/xrc/Settings.xrc"
 _("Use the selected language for the program.");
-#line 276 "res/xrc/Settings.xrc"
+#line 286 "res/xrc/Settings.xrc"
 _("Rendering");
-#line 289 "res/xrc/Settings.xrc"
+#line 292 "res/xrc/Settings.xrc"
+_("Enables/disables the perspective view in the rendering window.");
+#line 293 "res/xrc/Settings.xrc"
+_("Perspective View");
+#line 309 "res/xrc/Settings.xrc"
 _("Background Color");
-#line 298 "res/xrc/Settings.xrc"
+#line 318 "res/xrc/Settings.xrc"
 _("Background color of the renderer.");
-#line 316 "res/xrc/Settings.xrc"
+#line 336 "res/xrc/Settings.xrc"
 _("Wireframe Color");
-#line 325 "res/xrc/Settings.xrc"
+#line 345 "res/xrc/Settings.xrc"
 _("Wireframe color of the renderer.");
-#line 340 "res/xrc/Settings.xrc"
+#line 360 "res/xrc/Settings.xrc"
 _("Data Files");
-#line 358 "res/xrc/Settings.xrc"
+#line 378 "res/xrc/Settings.xrc"
 _("Reference Skeleton");
-#line 371 "res/xrc/Settings.xrc"
+#line 391 "res/xrc/Settings.xrc"
 _("File");
-#line 381 "res/xrc/Settings.xrc"
-_("Select a reference skeleton .nif file...");
-#line 384 "res/xrc/Settings.xrc"
-_("The reference skeleton file for Outfit Studio.");
 #line 401 "res/xrc/Settings.xrc"
+_("Select a reference skeleton .nif file...");
+#line 404 "res/xrc/Settings.xrc"
+_("The reference skeleton file for Outfit Studio.");
+#line 421 "res/xrc/Settings.xrc"
 _("Root Node");
-#line 410 "res/xrc/Settings.xrc"
+#line 430 "res/xrc/Settings.xrc"
 _("The root node name of the reference skeleton. Can differ from game to game.");
-#line 438 "res/xrc/Settings.xrc"
+#line 458 "res/xrc/Settings.xrc"
 _("&OK");
-#line 445 "res/xrc/Settings.xrc"
+#line 465 "res/xrc/Settings.xrc"
 _("&Cancel");
 #line 5 "res/xrc/Setup.xrc"
 _("Setup");

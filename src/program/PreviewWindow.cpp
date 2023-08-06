@@ -112,6 +112,8 @@ void PreviewWindow::OnShown() {
 		gls.SetWireColor(Vector3(colorWireR / 255.0f, colorWireG / 255.0f, colorWireB / 255.0f));
 	}
 
+	gls.SetPerspective(BodySlideConfig.GetBoolValue("Rendering/PerspectiveView", true));
+
 	app->InitPreview();
 }
 

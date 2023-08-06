@@ -286,6 +286,16 @@
 					<label>Rendering</label>
 					<object class="sizeritem">
 						<option>0</option>
+						<flag>wxEXPAND|wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="cbPerspectiveView">
+							<tooltip>Enables/disables the perspective view in the rendering window.</tooltip>
+							<label>Perspective View</label>
+							<checked>1</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
 						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">

@@ -4001,6 +4001,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
 			choiceLanguage->SetStringSelection("English");
 
+		wxCheckBox* cbPerspectiveView = XRCCTRL(*settings, "cbPerspectiveView", wxCheckBox);
+		cbPerspectiveView->SetValue(BodySlideConfig.GetBoolValue("Rendering/PerspectiveView", true));
+
 		wxColourPickerCtrl* cpColorBackground = XRCCTRL(*settings, "cpColorBackground", wxColourPickerCtrl);
 		if (Config.Exists("Rendering/ColorBackground")) {
 			int colorBackgroundR = Config.GetIntValue("Rendering/ColorBackground.r");
@@ -4068,6 +4071,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				Config.SetValue("Language", newLang);
 				app->InitLanguage();
 			}
+
+			BodySlideConfig.SetBoolValue("Rendering/PerspectiveView", cbPerspectiveView->IsChecked());
 
 			wxColour colorBackground = cpColorBackground->GetColour();
 			Config.SetValue("Rendering/ColorBackground.r", colorBackground.Red());

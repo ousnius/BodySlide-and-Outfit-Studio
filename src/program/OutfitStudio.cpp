@@ -1883,6 +1883,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
 			choiceLanguage->SetStringSelection("English");
 
+		wxCheckBox* cbPerspectiveView = XRCCTRL(*settings, "cbPerspectiveView", wxCheckBox);
+		cbPerspectiveView->SetValue(OutfitStudioConfig.GetBoolValue("Rendering/PerspectiveView", true));
+
 		wxColourPickerCtrl* cpColorBackground = XRCCTRL(*settings, "cpColorBackground", wxColourPickerCtrl);
 		if (Config.Exists("Rendering/ColorBackground")) {
 			int colorBackgroundR = Config.GetIntValue("Rendering/ColorBackground.r");
@@ -1950,6 +1953,8 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				Config.SetValue("Language", newLang);
 				wxGetApp().InitLanguage();
 			}
+
+			OutfitStudioConfig.SetBoolValue("Rendering/PerspectiveView", cbPerspectiveView->IsChecked());
 
 			wxColour colorBackground = cpColorBackground->GetColour();
 			Config.SetValue("Rendering/ColorBackground.r", colorBackground.Red());
@@ -6177,7 +6182,9 @@ void OutfitStudioFrame::OnTogglePerspective(wxCommandEvent& event) {
 	bool enabled = event.IsChecked();
 	menuBar->Check(event.GetId(), enabled);
 	toolBarV->ToggleTool(event.GetId(), enabled);
+
 	glView->SetPerspective(enabled);
+	OutfitStudioConfig.SetBoolValue("Rendering/PerspectiveView", enabled);
 }
 
 void OutfitStudioFrame::OnToggleRotationCenter(wxCommandEvent& WXUNUSED(event)) {
@@ -10933,6 +10940,11 @@ void wxGLPanel::OnShown() {
 		int colorWireB = Config.GetIntValue("Rendering/ColorWire.b");
 		gls.SetWireColor(Vector3(colorWireR / 255.0f, colorWireG / 255.0f, colorWireB / 255.0f));
 	}
+
+	bool perspectiveView = OutfitStudioConfig.GetBoolValue("Rendering/PerspectiveView", true);
+	os->menuBar->Check(XRCID("btnViewPerspective"), perspectiveView);
+	os->toolBarV->ToggleTool(XRCID("btnViewPerspective"), perspectiveView);
+	gls.SetPerspective(perspectiveView);
 
 	os->MeshesFromProj();
 
