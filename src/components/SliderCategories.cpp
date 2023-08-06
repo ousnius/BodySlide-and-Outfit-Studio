@@ -90,8 +90,14 @@ int SliderCategoryCollection::SetCategoryHidden(const std::string& categoryName,
 
 void SliderCategory::MergeSliders(const SliderCategory& sourceCategory) {
 	for (size_t i = 0; i < sourceCategory.sliders.size(); i++) {
-		sliders.push_back(sourceCategory.sliders[i]);
-		sourceFiles.push_back(sourceCategory.sourceFiles[i]);
+		auto& sliderName = sourceCategory.sliders[i];
+
+		if (std::count(sliders.cbegin(), sliders.cend(), sliderName) == 0)
+			sliders.push_back(sliderName);
+
+		auto displayName = sourceCategory.displayNames.find(sliderName);
+		if (displayName != sourceCategory.displayNames.end())
+			displayNames[sliderName] = displayName->second;
 	}
 }
 
@@ -116,9 +122,6 @@ int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
 			displayNames[sName] = slider->Attribute("displayname");
 		else
 			displayNames[sName].clear();
-
-		std::string* fileName = static_cast<std::string*>(slider->GetDocument()->GetUserData());
-		sourceFiles.push_back(*fileName);
 
 		slider = slider->NextSiblingElement("Slider");
 	}

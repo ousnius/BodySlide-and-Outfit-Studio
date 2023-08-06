@@ -3492,7 +3492,7 @@ void OutfitProject::CheckMerge(const std::string& sourceName, const std::string&
 			for (size_t ssi = 0; !e.segmentsMismatch && ssi < sinf.segs[si].subs.size(); ++ssi) {
 				const NifSubSegmentInfo& sssinf = sinf.segs[si].subs[ssi];
 				const NifSubSegmentInfo& tssinf = tinf.segs[si].subs[ssi];
-				if (sssinf.userSlotID != tssinf.userSlotID || sssinf.material != tssinf.material || sssinf.extraData != tssinf.extraData) {
+				if (sssinf.userSlotID != tssinf.userSlotID || sssinf.material != tssinf.material) {
 					// Sub segment information differs
 					e.segmentsMismatch = true;
 				}

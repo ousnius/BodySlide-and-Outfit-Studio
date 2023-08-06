@@ -38,6 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <algorithm>
 
 #include <../LZ4F/lz4frame_static.h>
+
+#include <dxgiformat.h>
 #include "../DDS.h"
 
 
@@ -452,8 +454,8 @@ void BSA::fileTree(std::vector<std::string> &tree) const {
 		addFilesOfFolders(folder.first, tree);
 }
 
-bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
-	if (const BSAFile *file = getFile(fn)) {
+bool BSA::fileContents(const std::string& fn, wxMemoryBuffer& content) {
+	if (const BSAFile* file = getFile(fn)) {
 		wxMutexLocker lock(bsaMutex);
 		if (bsa.Seek(file->offset)) {
 			wxInt64 filesz = file->size();
@@ -468,106 +470,98 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 
 			if (file->tex.chunks.size() > 0) {
 				// Fill DDS Header for BA2
-				DDS_HEADER ddsHeader = {};
-				ddsHeader.dwSize = sizeof(ddsHeader);
-				ddsHeader.dwFlags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_LINEARSIZE | DDS_HEADER_FLAGS_MIPMAP;
-				ddsHeader.dwHeight = file->tex.header.height;
-				ddsHeader.dwWidth = file->tex.header.width;
-				ddsHeader.dwMipMapCount = file->tex.header.numMips;
-				ddsHeader.dwCaps = DDS_SURFACE_FLAGS_TEXTURE | DDS_SURFACE_FLAGS_MIPMAP;
-				ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
-				
-				DDS_HEADER_DXT10 ddsHeader10 = {};
-				ddsHeader10.resourceDimension = DDS_DIMENSION_TEXTURE2D;
+				DirectX::DDS_HEADER ddsHeader = {};
+				ddsHeader.size = sizeof(ddsHeader);
+				ddsHeader.flags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_LINEARSIZE | DDS_HEADER_FLAGS_MIPMAP;
+				ddsHeader.height = file->tex.header.height;
+				ddsHeader.width = file->tex.header.width;
+				ddsHeader.mipMapCount = file->tex.header.numMips;
+				ddsHeader.caps = DDS_SURFACE_FLAGS_TEXTURE | DDS_SURFACE_FLAGS_MIPMAP;
+				ddsHeader.pitchOrLinearSize = file->tex.header.width * file->tex.header.height; // 8bpp
+
+				DirectX::DDS_HEADER_DXT10 ddsHeader10 = {};
+				ddsHeader10.resourceDimension = DirectX::DDS_DIMENSION_TEXTURE2D;
 				ddsHeader10.arraySize = 1;
 
 				if (file->tex.header.unk16 == 2049) {
-					ddsHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
-					ddsHeader10.miscFlag = DDS_RESOURCE_MISC_TEXTURECUBE;
+					ddsHeader.caps2 = DDS_CUBEMAP_ALLFACES;
+					ddsHeader10.miscFlag = DirectX::DDS_RESOURCE_MISC_TEXTURECUBE;
 					ddsHeader10.arraySize *= 6;
 				}
 
 				bool ok = true;
 
 				switch (file->tex.header.format) {
-				case DXGI_FORMAT_BC1_TYPELESS:
-				case DXGI_FORMAT_BC1_UNORM:
-				case DXGI_FORMAT_BC1_UNORM_SRGB:
-					ddsHeader.ddspf = DDSPF_DXT1;
-					ddsHeader.dwPitchOrLinearSize /= 2;	// 4bpp
-					break;
+					case DXGI_FORMAT_BC1_TYPELESS:
+					case DXGI_FORMAT_BC1_UNORM:
+					case DXGI_FORMAT_BC1_UNORM_SRGB:
+						ddsHeader.ddspf = DirectX::DDSPF_DXT1;
+						ddsHeader.pitchOrLinearSize /= 2; // 4bpp
+						break;
 
-				case DXGI_FORMAT_BC2_TYPELESS:
-				case DXGI_FORMAT_BC2_UNORM:
-				case DXGI_FORMAT_BC2_UNORM_SRGB:
-					ddsHeader.ddspf = DDSPF_DXT3;
-					break;
+					case DXGI_FORMAT_BC2_TYPELESS:
+					case DXGI_FORMAT_BC2_UNORM:
+					case DXGI_FORMAT_BC2_UNORM_SRGB: ddsHeader.ddspf = DirectX::DDSPF_DXT3; break;
 
-				case DXGI_FORMAT_BC3_TYPELESS:
-				case DXGI_FORMAT_BC3_UNORM:
-				case DXGI_FORMAT_BC3_UNORM_SRGB:
-					ddsHeader.ddspf = DDSPF_DXT5;
-					break;
+					case DXGI_FORMAT_BC3_TYPELESS:
+					case DXGI_FORMAT_BC3_UNORM:
+					case DXGI_FORMAT_BC3_UNORM_SRGB: ddsHeader.ddspf = DirectX::DDSPF_DXT5; break;
 
-				case DXGI_FORMAT_BC4_TYPELESS:
-				case DXGI_FORMAT_BC4_UNORM:
-				case DXGI_FORMAT_BC4_SNORM:
-					ddsHeader.ddspf = DDSPF_DX10;
-					ddsHeader.dwPitchOrLinearSize /= 2;	// 4bpp
-					ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
-					break;
+					case DXGI_FORMAT_BC4_TYPELESS:
+					case DXGI_FORMAT_BC4_UNORM:
+					case DXGI_FORMAT_BC4_SNORM:
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader.pitchOrLinearSize /= 2; // 4bpp
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
 
-				case DXGI_FORMAT_BC5_TYPELESS:
-				case DXGI_FORMAT_BC5_UNORM:
-				case DXGI_FORMAT_BC5_SNORM:
-					ddsHeader.ddspf = DDSPF_DX10;
-					ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
-					break;
+					case DXGI_FORMAT_BC5_TYPELESS:
+					case DXGI_FORMAT_BC5_UNORM:
+					case DXGI_FORMAT_BC5_SNORM:
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
 
-				case DXGI_FORMAT_BC6H_TYPELESS:
-				case DXGI_FORMAT_BC6H_UF16:
-				case DXGI_FORMAT_BC6H_SF16:
-					ddsHeader.ddspf = DDSPF_DX10;
-					ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
-					break;
+					case DXGI_FORMAT_BC6H_TYPELESS:
+					case DXGI_FORMAT_BC6H_UF16:
+					case DXGI_FORMAT_BC6H_SF16:
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
 
-				case DXGI_FORMAT_BC7_TYPELESS:
-				case DXGI_FORMAT_BC7_UNORM:
-				case DXGI_FORMAT_BC7_UNORM_SRGB:
-					ddsHeader.ddspf = DDSPF_DX10;
-					ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
-					break;
+					case DXGI_FORMAT_BC7_TYPELESS:
+					case DXGI_FORMAT_BC7_UNORM:
+					case DXGI_FORMAT_BC7_UNORM_SRGB:
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
 
-				case DXGI_FORMAT_B8G8R8A8_TYPELESS:
-				case DXGI_FORMAT_B8G8R8A8_UNORM:
-				case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
-					ddsHeader.ddspf = DDSPF_A8R8G8B8;
-					ddsHeader.dwPitchOrLinearSize *= 4;	// 32bpp
-					break;
+					case DXGI_FORMAT_B8G8R8A8_TYPELESS:
+					case DXGI_FORMAT_B8G8R8A8_UNORM:
+					case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+						ddsHeader.ddspf = DirectX::DDSPF_A8R8G8B8;
+						ddsHeader.pitchOrLinearSize *= 4; // 32bpp
+						break;
 
-				case DXGI_FORMAT_R8G8B8A8_TYPELESS:
-				case DXGI_FORMAT_R8G8B8A8_UNORM:
-				case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
-					ddsHeader.ddspf = DDSPF_A8R8G8B8;
-					ddsHeader.dwPitchOrLinearSize *= 4;	// 32bpp
-					break;
+					case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+					case DXGI_FORMAT_R8G8B8A8_UNORM:
+					case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+						ddsHeader.ddspf = DirectX::DDSPF_A8R8G8B8;
+						ddsHeader.pitchOrLinearSize *= 4; // 32bpp
+						break;
 
-				case DXGI_FORMAT_R8_TYPELESS:
-				case DXGI_FORMAT_R8_UNORM:
-				case DXGI_FORMAT_R8_SNORM:
-					ddsHeader.ddspf = DDSPF_R8;
-					break;
+					case DXGI_FORMAT_R8_TYPELESS:
+					case DXGI_FORMAT_R8_UNORM:
+					case DXGI_FORMAT_R8_SNORM: ddsHeader.ddspf = DirectX::DDSPF_L8_NVTT1; break;
 
-				default:
-					ok = false;
-					break;
+					default: ok = false; break;
 				}
 
 				if (!ok)
 					return false;
 
 				// Append DDS Header
-				content.AppendData(&DDS_MAGIC, 4);
+				content.AppendData(&DirectX::DDS_MAGIC, 4);
 				content.AppendData(&ddsHeader, sizeof(ddsHeader));
 				if (ddsHeader10.dxgiFormat != DXGI_FORMAT_UNKNOWN)
 					content.AppendData(&ddsHeader10, sizeof(ddsHeader10));
@@ -618,7 +612,6 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 									// Size does not match at chunkInfo.offset
 									return false;
 								}
-
 							}
 							else {
 								currentChunk.SetBufSize(chunkInfo.unpackedSize);

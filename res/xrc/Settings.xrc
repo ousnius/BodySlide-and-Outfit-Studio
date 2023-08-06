@@ -198,7 +198,7 @@
 								</object>
 							</object>
 							<object class="sizeritem">
-								<option>1</option>
+								<option>2</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxCheckBox" name="cbBSATextures">
@@ -232,7 +232,17 @@
 								<object class="wxCheckBox" name="cbBrushSettingsNearCursor">
 									<tooltip>Enables/disables opening the brush settings near the mouse cursor when hitting the 'space' key.</tooltip>
 									<label>Brush Settings Near Cursor</label>
-									<checked>0</checked>
+									<checked>1</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbMaskHistory">
+									<tooltip>Enables/disables the undo history for the mask brush and vertex selection.</tooltip>
+									<label>Mask History</label>
+									<checked>1</checked>
 								</object>
 							</object>
 						</object>

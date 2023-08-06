@@ -1363,7 +1363,8 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
-	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", false);
+	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", true);
+	Config.SetDefaultBoolValue("Input/MaskHistory", true);
 	Config.SetDefaultValue("Lights/Ambient", 20);
 	Config.SetDefaultValue("Lights/Frontal", 20);
 	Config.SetDefaultValue("Lights/Directional0", 60);
@@ -3939,6 +3940,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbBrushSettingsNearCursor = XRCCTRL(*settings, "cbBrushSettingsNearCursor", wxCheckBox);
 		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
 
+		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
+		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
+
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
 		for (size_t i = 0; i < SupportedLangs.size(); i++)
 			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
@@ -4005,6 +4009,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
 			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
+			Config.SetBoolValue("Input/MaskHistory", cbMaskHistory->IsChecked());
 
 			int oldLang = Config.GetIntValue("Language");
 			int newLang = SupportedLangs[choiceLanguage->GetSelection()];

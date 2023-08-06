@@ -470,7 +470,7 @@ void TB_Unmask::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points,
 
 TB_SmoothMask::TB_SmoothMask() {
 	brushType = TweakBrush::BrushType::Mask;
-	strength = 0.015f;
+	strength = 0.2f;
 	method = 2;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
@@ -1588,12 +1588,13 @@ void TB_Color::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, 
 
 		float originToV = meshorigin.DistanceTo(vs);
 		if (originToV <= meshradius) {
+			float maskF = 1.0f - m->mask[points[i]];
 			Vector3 falloff(strength, strength, strength);
 			applyFalloff(falloff, originToV, meshradius);
 
-			vc.x = color.x * falloff.x + vc.x * (1.0f - falloff.x);
-			vc.y = color.y * falloff.y + vc.y * (1.0f - falloff.y);
-			vc.z = color.z * falloff.z + vc.z * (1.0f - falloff.z);
+			vc.x = color.x * falloff.x * maskF + vc.x * (1.0f - falloff.x * maskF);
+			vc.y = color.y * falloff.y * maskF + vc.y * (1.0f - falloff.y * maskF);
+			vc.z = color.z * falloff.z * maskF + vc.z * (1.0f - falloff.z * maskF);
 		}
 
 		if (vc.x > 1.0f)
@@ -1637,6 +1638,7 @@ void TB_Uncolor::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points
 	Vector3 meshorigin = m->TransformPosModelToMesh(pickInfo.origin);
 
 	for (int i = 0; i < nPoints; i++) {
+		float maskF = 1.0f - m->mask[points[i]];
 		vs = m->verts[points[i]];
 		vc = m->vcolors[points[i]];
 		if (startState.find(points[i]) == startState.end())
@@ -1647,9 +1649,9 @@ void TB_Uncolor::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points
 			Vector3 falloff(-strength, -strength, -strength);
 			applyFalloff(falloff, originToV, meshradius);
 
-			vc.x = falloff.x + vc.x * (1.0f - falloff.x);
-			vc.y = falloff.y + vc.y * (1.0f - falloff.y);
-			vc.z = falloff.z + vc.z * (1.0f - falloff.z);
+			vc.x = falloff.x * maskF + vc.x * (1.0f - falloff.x * maskF);
+			vc.y = falloff.y * maskF + vc.y * (1.0f - falloff.y * maskF);
+			vc.z = falloff.z * maskF + vc.z * (1.0f - falloff.z * maskF);
 		}
 
 		if (vc.x > 1.0f)

@@ -589,6 +589,7 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("UseSystemLanguage", false);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
 	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", true);
+	Config.SetDefaultBoolValue("Input/MaskHistory", true);
 	Config.SetDefaultValue("Lights/Ambient", 20);
 	Config.SetDefaultValue("Lights/Frontal", 20);
 	Config.SetDefaultValue("Lights/Directional0", 60);
@@ -1872,6 +1873,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbBrushSettingsNearCursor = XRCCTRL(*settings, "cbBrushSettingsNearCursor", wxCheckBox);
 		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
 
+		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
+		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
+
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
 		for (size_t i = 0; i < SupportedLangs.size(); i++)
 			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
@@ -1938,6 +1942,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
 			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
+			Config.SetBoolValue("Input/MaskHistory", cbMaskHistory->IsChecked());
 
 			int oldLang = Config.GetIntValue("Language");
 			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
@@ -2406,8 +2411,8 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, wxScrolledWindo
 			if (!sliderPanel->IsShown())
 				sliderPanel->Show();
 
-			ShowSliderEffect(name);
 			sliderPanels[name] = sliderPanel;
+			ShowSliderEffect(name);
 		}
 	}
 }
@@ -2436,10 +2441,9 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 
 	wxLogMessage("Creating new slider '%s'.", sliderName);
 
+	project->AddEmptySlider(sliderName);
 	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
 
-	project->AddEmptySlider(sliderName);
-	ShowSliderEffect(sliderName);
 	sliderScroll->FitInside();
 	SetPendingChanges();
 
@@ -4593,9 +4597,8 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		auto morphs = tri.GetMorphs();
 		for (auto& morph : morphs) {
 			if (!project->ValidSlider(morph.morphName)) {
-				createSliderGUI(morph.morphName, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(morph.morphName);
-				ShowSliderEffect(morph.morphName);
+				createSliderGUI(morph.morphName, sliderScroll, sliderScroll->GetSizer());
 			}
 
 			std::unordered_map<uint16_t, Vector3> diff;
@@ -7266,9 +7269,8 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 				continue;
 
 			if (!project->ValidSlider(sliderName->second)) {
-				createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(sliderName->second);
-				ShowSliderEffect(sliderName->second);
+				createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
 			}
 
 			project->SetSliderFromDiff(sliderName->second, shape, diff.second);
@@ -7378,9 +7380,8 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 				continue;
 
 			if (!project->ValidSlider(morphData->name)) {
-				createSliderGUI(morphData->name, sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(morphData->name);
-				ShowSliderEffect(morphData->name);
+				createSliderGUI(morphData->name, sliderScroll, sliderScroll->GetSizer());
 			}
 
 			std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
@@ -7675,8 +7676,6 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Creating new zap '%s'.", sliderName);
 
-	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
-
 	std::unordered_map<uint16_t, float> unmasked;
 	for (auto& i : selectedItems) {
 		unmasked.clear();
@@ -7684,7 +7683,8 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 		project->AddZapSlider(sliderName, unmasked, i->GetShape());
 	}
 
-	ShowSliderEffect(sliderName);
+	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
+
 	sliderScroll->FitInside();
 	SetPendingChanges();
 }
@@ -9794,6 +9794,10 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
 	UpdateUndoTools();
 }
 
@@ -9832,6 +9836,10 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
 	UpdateUndoTools();
 }
 
@@ -10138,6 +10146,10 @@ void OutfitStudioFrame::OnMaskSymVert(wxCommandEvent& WXUNUSED(event)) {
 	};
 
 	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
 	UpdateUndoTools();
 }
 
@@ -10214,6 +10226,10 @@ void OutfitStudioFrame::OnMaskSymTri(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
 	UpdateUndoTools();
 }
 
@@ -11290,7 +11306,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		}
 	}
 	else if (activeBrush == &maskBrush && wxGetKeyState(WXK_SHIFT)) {
-		smoothMaskBrush.setStrength(activeBrush->getStrength() * 15.0f);
+		smoothMaskBrush.setStrength(activeBrush->getStrength());
 		activeBrush = &smoothMaskBrush;
 	}
 	else if (activeBrush != &weightBrush && activeBrush != &maskBrush && wxGetKeyState(WXK_SHIFT)) {
@@ -11427,6 +11443,11 @@ void wxGLPanel::EndBrushStroke() {
 					os->project->RefreshMorphShape(s);
 				}
 			}
+		}
+
+		if (brushType == TweakBrush::BrushType::Mask) {
+			if (!Config.GetBoolValue("Input/MaskHistory"))
+				undoHistory.PopState();
 		}
 
 		activeStroke = nullptr;
@@ -11677,6 +11698,10 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 				uss.pointStartState[vertIndex].x = m->mask[vertIndex];
 				uss.pointEndState[vertIndex].x = newval;
 				ApplyUndoState(usp, false);
+
+				if (!Config.GetBoolValue("Input/MaskHistory"))
+					GetUndoHistory()->PopState();
+
 				os->UpdateUndoTools();
 			}
 		}
@@ -12199,6 +12224,10 @@ void wxGLPanel::MaskLess() {
 	}
 
 	ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		GetUndoHistory()->PopState();
+
 	os->UpdateUndoTools();
 }
 
@@ -12245,6 +12274,10 @@ void wxGLPanel::MaskMore() {
 	}
 
 	ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		GetUndoHistory()->PopState();
+
 	os->UpdateUndoTools();
 }
 
@@ -12264,6 +12297,10 @@ void wxGLPanel::InvertMask() {
 	}
 
 	ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		GetUndoHistory()->PopState();
+
 	os->UpdateUndoTools();
 }
 
@@ -12283,6 +12320,10 @@ void wxGLPanel::ClearMask() {
 	}
 
 	ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		GetUndoHistory()->PopState();
+
 	os->UpdateUndoTools();
 }
 
@@ -12342,9 +12383,6 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 
 			m->QueueUpdate(Mesh::UpdateType::Mask);
 		}
-
-		if (undoType != UndoType::Mask)
-			os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UndoType::Color) {
 		for (auto& uss : usp->usss) {
@@ -12357,9 +12395,6 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 
 			m->QueueUpdate(Mesh::UpdateType::VertexColors);
 		}
-
-		if (undoType != UndoType::Color)
-			os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UndoType::Alpha) {
 		for (auto& uss : usp->usss) {

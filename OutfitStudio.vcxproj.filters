@@ -1417,57 +1417,6 @@
     <ClInclude Include="src\program\SliderDataImportDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
-    <ClInclude Include="lib\SOIL2\image_DXT.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\image_helper.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\jo_jpeg.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\pkm_helper.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\pvr_helper.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\SOIL2.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stb_image.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stb_image_write.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stbi_DDS.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stbi_DDS_c.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stbi_ext.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stbi_ext_c.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stbi_pkm.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stbi_pkm_c.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stbi_pvr.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\stbi_pvr_c.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\wfETC.h">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClInclude>
     <ClInclude Include="lib\gli\glm\ext\matrix_clip_space.hpp">
       <Filter>Libraries\gli\glm\ext</Filter>
     </ClInclude>
@@ -1900,6 +1849,63 @@
     <ClInclude Include="src\program\ObjImportDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="lib\SOIL2\stb_image.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stb_image_write.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_DDS.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_DDS_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_ext.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_ext_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_pkm.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_pkm_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_pvr.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_pvr_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_qoi.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_qoi_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_qoi_write.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\wfETC.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_DXT.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_helper.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\pkm_helper.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\pvr_helper.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\SOIL2.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -2100,18 +2106,6 @@
     <ClCompile Include="src\program\SliderDataImportDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
-    <ClCompile Include="lib\SOIL2\image_DXT.c">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\SOIL2\image_helper.c">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\SOIL2\SOIL2.c">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClCompile>
-    <ClCompile Include="lib\SOIL2\wfETC.c">
-      <Filter>Libraries\SOIL2</Filter>
-    </ClCompile>
     <ClCompile Include="src\render\GLDialog.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
@@ -2120,6 +2114,18 @@
     </ClCompile>
     <ClCompile Include="src\program\ObjImportDialog.cpp">
       <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\wfETC.c">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_DXT.c">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_helper.c">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\SOIL2.c">
+      <Filter>Libraries\SOIL2</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
