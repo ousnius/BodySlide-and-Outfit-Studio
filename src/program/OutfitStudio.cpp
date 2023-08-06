@@ -2913,11 +2913,7 @@ void OutfitStudioFrame::EnterSliderEdit(const std::string& sliderName) {
 
 	sliderPanel->slider->SetValue(100);
 	SetSliderValue(activeSlider, 100);
-
-	if (sliderPanel->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_UNCHECKED) {
-		sliderPanel->sliderCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-		ShowSliderEffect(activeSlider, true);
-	}
+	ShowSliderEffect(activeSlider, true);
 
 	sliderPanel->sliderCheck->Enable(false);
 	sliderPanel->btnSliderProp->Show();
@@ -7591,9 +7587,8 @@ void OutfitStudioFrame::OnSliderExportToOBJs(wxCommandEvent& WXUNUSED(event)) {
 	for (auto& shape : project->GetWorkNif()->GetShapes()) {
 		for (auto& slider : sliderList) {
 			if (!project->SliderShow(slider))
-			{
 				continue;
-			}
+
 			std::string targetFile = std::string(dir.ToUTF8()) + PathSepStr + shape->name.get() + "_" + slider + ".obj";
 			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", slider, shape->name.get(), targetFile);
 			if (project->SaveSliderOBJ(slider, shape, targetFile, true))
