@@ -881,3 +881,18 @@ void AnimBone::SetParentBone(AnimBone* newParent) {
 	UpdateTransformToGlobal();
 	UpdatePoseTransform();
 }
+
+bool AnimBone::IsUnposed() {
+	return poseTranVec.IsZero() && poseRotVec.IsZero() && poseScale == 1.0f;
+}
+
+bool AnimBone::IsFullyUnposed() {
+	auto p = parent;
+	while (p) {
+		if (!p->IsUnposed())
+			return false;
+
+		p = p->parent;
+	}
+	return IsUnposed();
+}

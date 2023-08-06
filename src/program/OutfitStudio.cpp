@@ -10656,7 +10656,7 @@ void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
 		if (!bone)
 			continue;
 
-		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero() && bone->poseScale == 1.0f)
+		if (bone->IsUnposed())
 			continue;
 
 		bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
@@ -10682,7 +10682,7 @@ void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 			if (!bone)
 				continue;
 
-			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero() && bone->poseScale == 1.0f)
+			if (bone->IsUnposed())
 				continue;
 
 			bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
@@ -10756,7 +10756,7 @@ void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
 			if (!bone)
 				continue;
 
-			if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero() && bone->poseScale == 1.0f)
+			if (bone->IsUnposed())
 				continue;
 
 			PoseBoneData poseBoneData{};
@@ -10810,7 +10810,7 @@ void OutfitStudioFrame::OnSaveAsPose(wxCommandEvent& WXUNUSED(event)) {
 		if (!bone)
 			continue;
 
-		if (bone->poseRotVec.IsZero() && bone->poseTranVec.IsZero() && bone->poseScale == 1.0f)
+		if (bone->IsUnposed())
 			continue;
 
 		PoseBoneData poseBoneData{};

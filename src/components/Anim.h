@@ -68,6 +68,10 @@ public:
 	// and new parents.  It also calls UpdateTransformToGlobal and
 	// UpdatePoseTranform.
 	void SetParentBone(AnimBone* newParent);
+	// Returns if the bone is unposed (no trans/rot/scale)
+	bool IsUnposed();
+	// Returns if the bone and all of its parents are unposed (no trans/rot/scale)
+	bool IsFullyUnposed();
 };
 
 // Vertex to weight value association. Also keeps track of skin-to-bone transform and bounding sphere.

@@ -1163,13 +1163,17 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 			AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
 			if (animB) {
 				AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
+
 				// Compose transform: skin -> (posed) bone -> global -> skin
-				MatTransform t = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+				MatTransform transform = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+				if (transform.IsNearlyEqualTo(MatTransform()))
+					transform.Clear();
+
 				// Add weighted contributions to vertex for this bone
 				for (auto& wIt : animW.weights) {
 					int ind = wIt.first;
 					float w = wIt.second;
-					pv[ind] += w * t.ApplyTransform(outVerts[ind]);
+					pv[ind] += w * transform.ApplyTransform(outVerts[ind]);
 					wv[ind] += w;
 				}
 			}
@@ -1182,6 +1186,10 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 			else if (std::fabs(wv[ind] - 1.0f) >= EPSILON) // If weights are bad for this vertex
 				pv[ind] /= wv[ind];
 			// else do nothing because weights totaled 1.
+
+			// New position is nearly equal to old position (reduce noise)
+			if (pv[ind].IsNearlyEqualTo(outVerts[ind]))
+				pv[ind] = outVerts[ind];
 		}
 
 		outVerts.swap(pv);
@@ -5653,19 +5661,27 @@ void OutfitProject::GetAllPoseTransforms(NiShape* s, std::vector<MatTransform>& 
 
 // Note that ApplyTransformToOneVertexGeometry does not assume that t.rotation
 // is a proper rotation, so it can be used with GetAllPoseTransforms.
-void OutfitProject::ApplyTransformToOneVertexGeometry(UndoStateVertex& usv, const MatTransform& t) {
-	usv.pos = t.ApplyTransform(usv.pos);
-	usv.normal = t.ApplyTransformToDir(usv.normal);
+void OutfitProject::ApplyTransformToOneVertexGeometry(UndoStateVertex& usv, const MatTransform& transform) {
+	Vector3 newPos = transform.ApplyTransform(usv.pos);
+	if (newPos.IsNearlyEqualTo(usv.pos)) {
+		// New position is nearly equal to old position (reduce noise)
+		return;
+	}
+
+	usv.pos = newPos;
+	usv.normal = transform.ApplyTransformToDir(usv.normal);
 	usv.normal.Normalize();
-	usv.tangent = t.ApplyTransformToDir(usv.tangent);
+	usv.tangent = transform.ApplyTransformToDir(usv.tangent);
 	usv.tangent.Normalize();
-	usv.bitangent = t.ApplyTransformToDir(usv.bitangent);
+	usv.bitangent = transform.ApplyTransformToDir(usv.bitangent);
 	usv.bitangent.Normalize();
+
 	for (auto& usvsd : usv.diffs) {
 		SliderData& sd = activeSet[usvsd.sliderName];
 		if (sd.bUV || sd.bClamp || sd.bZap)
 			continue;
-		usvsd.diff = t.ApplyTransformToDiff(usvsd.diff);
+
+		usvsd.diff = transform.ApplyTransformToDiff(usvsd.diff);
 	}
 }
 
