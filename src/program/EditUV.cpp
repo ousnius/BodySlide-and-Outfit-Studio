@@ -133,6 +133,8 @@ EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, Mesh* srcMe
 		return;
 	}
 
+	SetDoubleBuffered(true);
+
 	os = (OutfitStudioFrame*)parent;
 	nif = srcNif;
 	shape = srcShape;
@@ -507,6 +509,7 @@ void EditUVCanvas::OnShown() {
 	uvSurface.SetVertexColors();
 
 	InitMeshes();
+	Render();
 }
 
 void EditUVCanvas::OnPaint(wxPaintEvent& event) {
