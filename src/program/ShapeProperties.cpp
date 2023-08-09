@@ -28,7 +28,7 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
 wxEND_EVENT_TABLE()
 
-ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* refShape) {
+ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<NiShape*> refShapes) {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/ShapeProperties.xrc");
 	if (!loaded) {
@@ -47,7 +47,9 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 
 	os = (OutfitStudioFrame*)parent;
 	nif = refNif;
-	shape = refShape;
+	shapes = refShapes;
+
+	nbProperties = XRCCTRL(*this, "nbProperties", wxNotebook);
 
 	pgShader = XRCCTRL(*this, "pgShader", wxPanel);
 	lbShaderName = XRCCTRL(*this, "lbShaderName", wxStaticText);
@@ -74,6 +76,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 
 	btnCopyShaderFromShape = XRCCTRL(*this, "btnCopyShaderFromShape", wxButton);
 
+	pgGeometry = XRCCTRL(*this, "pgGeometry", wxPanel);
 	fullPrecision = XRCCTRL(*this, "fullPrecision", wxCheckBox);
 	subIndex = XRCCTRL(*this, "subIndex", wxCheckBox);
 	skinned = XRCCTRL(*this, "skinned", wxCheckBox);
@@ -82,6 +85,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
 
+	pgCoordinates = XRCCTRL(*this, "pgCoordinates", wxPanel);
 	textScale = XRCCTRL(*this, "textScale", wxTextCtrl);
 	textX = XRCCTRL(*this, "textX", wxTextCtrl);
 	textY = XRCCTRL(*this, "textY", wxTextCtrl);
@@ -103,6 +107,12 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	GetGeometry();
 	GetExtraData();
 	GetCoordTrans();
+
+	size_t shapeCount = shapes.size();
+	if (shapeCount > 1) {
+		SetTitle(wxString::Format("%s - %s", GetTitle(), wxString::Format(_("%zu shapes selected"), shapeCount)));
+		nbProperties->SetSelection(1); // Make "Geometry" active
+	}
 }
 
 ShapeProperties::~ShapeProperties() {
@@ -110,6 +120,12 @@ ShapeProperties::~ShapeProperties() {
 }
 
 void ShapeProperties::GetShader() {
+	pgShader->Enable(shapes.size() == 1);
+
+	if (shapes.empty())
+		return;
+
+	NiShape* shape = shapes[0];
 	NiShader* shader = nif->GetShader(shape);
 
 	if (!shader) {
@@ -148,11 +164,11 @@ void ShapeProperties::GetShader() {
 		alphaTest->Enable();
 		alphaBlend->Enable();
 
-		currentVertexColors = shader->HasVertexColors();
-		currentVertexAlpha = shader->HasVertexAlpha();
+		bool hasVertexColors = shader->HasVertexColors();
+		bool hasVertexAlpha = shader->HasVertexAlpha();
 		shaderName->SetValue(shader->name.get());
-		vertexColors->SetValue(currentVertexColors);
-		vertexAlpha->SetValue(currentVertexAlpha);
+		vertexColors->SetValue(hasVertexColors);
+		vertexAlpha->SetValue(hasVertexAlpha);
 
 		Color4 color;
 		Vector3 colorVec;
@@ -202,6 +218,11 @@ void ShapeProperties::GetShader() {
 void ShapeProperties::GetShaderType() {
 	shaderType->Disable();
 	shaderType->Clear();
+
+	if (shapes.empty())
+		return;
+
+	NiShape* shape = shapes[0];
 
 	uint32_t type;
 	NiShader* shader = nif->GetShader(shape);
@@ -276,7 +297,11 @@ void ShapeProperties::OnChooseMaterial(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
-	AddShader();
+	if (shapes.empty())
+		return;
+
+	NiShape* shape = shapes[0];
+	AddShader(shape);
 
 	btnAddShader->Disable();
 	btnRemoveShader->Enable();
@@ -300,7 +325,7 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void ShapeProperties::AddShader() {
+void ShapeProperties::AddShader(NiShape* shape) {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	std::unique_ptr<NiShader> newShader = nullptr;
 	std::unique_ptr<NiMaterialProperty> newMaterial = nullptr;
@@ -331,26 +356,40 @@ void ShapeProperties::AddShader() {
 		shader->TextureSetRef()->index = nif->GetHeader().AddBlock(std::move(nifTexSet));
 	}
 
-	AssignDefaultTexture();
+	AssignDefaultTexture(shape);
 	GetShader();
 	os->SetPendingChanges();
 }
 
 void ShapeProperties::OnRemoveShader(wxCommandEvent& WXUNUSED(event)) {
-	RemoveShader();
+	if (shapes.empty())
+		return;
+
+	NiShape* shape = shapes[0];
+	RemoveShader(shape);
 }
 
-void ShapeProperties::RemoveShader() {
+void ShapeProperties::RemoveShader(NiShape* shape) {
 	nif->DeleteShader(shape);
-	AssignDefaultTexture();
+	AssignDefaultTexture(shape);
 	GetShader();
 	GetTransparency();
 	os->SetPendingChanges();
 }
 
 void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
-	NiShader* shader = nif->GetShader(shape);
-	if (!shader)
+	if (shapes.empty())
+		return;
+
+	bool shaderFound = false;
+	for (auto& shape : shapes) {
+		NiShader* shader = nif->GetShader(shape);
+		if (shader) {
+			shaderFound = true;
+			break;
+		}
+	}
+	if (!shaderFound)
 		return;
 
 	wxDialog dlg;
@@ -389,10 +428,12 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		// Cell Defaults
 		stTexGrid->SetDefaultCellAlignment(wxALIGN_LEFT, wxALIGN_TOP);
 
+		NiShape* firstShape = shapes[0];
+
 		int blockType = 0;
 		for (int i = 0; i < 10; i++) {
 			std::string texPath;
-			blockType = nif->GetTextureSlot(shape, texPath, i);
+			blockType = nif->GetTextureSlot(firstShape, texPath, i);
 			if (!blockType)
 				continue;
 
@@ -433,30 +474,38 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			for (int i = 0; i < 10; i++) {
 				std::string texPath = stTexGrid->GetCellValue(i, 0).ToStdString();
 				std::string texPath_bs = ToBackslashes(texPath);
-				nif->SetTextureSlot(shape, texPath_bs, i);
+
+				for (auto& shape : shapes)
+					nif->SetTextureSlot(shape, texPath_bs, i);
 
 				if (!texPath.empty())
 					texFiles[i] = dataPath + texPath;
 			}
 
 			nif->TrimTexturePaths();
-
 			os->SetPendingChanges();
 
-			os->project->SetTextures(shape, texFiles);
-			os->glView->SetMeshTextures(shape->name.get(), texFiles, false, MaterialFile(), true);
+			for (auto& shape : shapes) {
+				os->project->SetTextures(shape, texFiles);
+				os->glView->SetMeshTextures(shape->name.get(), texFiles, false, MaterialFile(), true);
+			}
+
 			os->glView->Render();
 		}
 	}
 }
 
-void ShapeProperties::AssignDefaultTexture() {
+void ShapeProperties::AssignDefaultTexture(NiShape* shape) {
 	os->project->SetTextures(shape);
 	os->SetPendingChanges();
 	os->glView->Render();
 }
 
 void ShapeProperties::GetTransparency() {
+	if (shapes.empty())
+		return;
+
+	NiShape* shape = shapes[0];
 	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
 	if (alphaProp) {
 		alphaThreshold->SetValue(wxString::Format("%d", alphaProp->threshold));
@@ -484,10 +533,14 @@ void ShapeProperties::GetTransparency() {
 }
 
 void ShapeProperties::OnAddTransparency(wxCommandEvent& WXUNUSED(event)) {
-	AddTransparency();
+	if (shapes.empty())
+		return;
+
+	NiShape* shape = shapes[0];
+	AddTransparency(shape);
 }
 
-void ShapeProperties::AddTransparency() {
+void ShapeProperties::AddTransparency(NiShape* shape) {
 	auto alphaProp = std::make_unique<NiAlphaProperty>();
 	nif->AssignAlphaProperty(shape, std::move(alphaProp));
 	GetTransparency();
@@ -495,15 +548,25 @@ void ShapeProperties::AddTransparency() {
 }
 
 void ShapeProperties::OnRemoveTransparency(wxCommandEvent& WXUNUSED(event)) {
-	RemoveTransparency();
+	if (shapes.empty())
+		return;
+
+	NiShape* shape = shapes[0];
+	RemoveTransparency(shape);
 }
 
 void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
+	if (shapes.empty())
+		return;
+
+	bool multipleShapes = shapes.size() > 1;
+	NiShape* firstShape = shapes[0];
 	wxArrayString choices;
 
-	auto shapes = nif->GetShapes();
-	for (auto& s : shapes) {
-		if (s != shape) {
+	auto nifShapes = nif->GetShapes();
+	for (auto& s : nifShapes) {
+		// If there's only one selected shape, it can't be the source of the copy
+		if (multipleShapes || s != firstShape) {
 			choices.Add(wxString::FromUTF8(s->name.get()));
 		}
 	}
@@ -515,45 +578,46 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 
 		auto shapeChoice = nif->FindBlockByName<NiShape>(shapeName);
 		if (shapeChoice) {
-			// Delete old shader and children
-			nif->DeleteShader(shape);
-
 			auto shapeChoiceShader = nif->GetShader(shapeChoice);
-			if (shapeChoiceShader) {
-				// Clone shader
-				auto destShaderS = shapeChoiceShader->Clone();
-				auto destShader = destShaderS.get();
+			auto texturePaths = os->project->GetShapeTextures(shapeChoice);
 
-				int destShaderId = nif->GetHeader().AddBlock(std::move(destShaderS));
+			for (auto& shape : shapes) {
+				if (shape != shapeChoice) {
+					// Delete old shader and children from destination shapes
+					nif->DeleteShader(shape);
 
-				// Clone shader children
-				nif->CloneChildren(destShader);
+					if (shapeChoiceShader) {
+						// Clone shader
+						auto destShaderS = shapeChoiceShader->Clone();
+						auto destShader = destShaderS.get();
 
-				// Assign cloned shader to shape
-				shape->ShaderPropertyRef()->index = destShaderId;
+						int destShaderId = nif->GetHeader().AddBlock(std::move(destShaderS));
+
+						// Clone shader children
+						nif->CloneChildren(destShader);
+
+						// Assign cloned shader to shape
+						shape->ShaderPropertyRef()->index = destShaderId;
+					}
+
+					if (shapeChoiceShader) {
+						// Load same textures
+						os->project->SetTextures(shape, texturePaths);
+					}
+				}
 			}
-
-			auto oldShape = shape;
-			shape = shapeChoice;
 
 			// Update UI
 			GetShader();
 			GetTransparency();
 
-			shape = oldShape;
 			os->SetPendingChanges();
-
-			if (shapeChoiceShader) {
-				// Load same textures
-				auto texturePaths = os->project->GetShapeTextures(shapeChoice);
-				os->project->SetTextures(shape, texturePaths);
-				os->glView->Render();
-			}
+			os->glView->Render();
 		}
 	}
 }
 
-void ShapeProperties::RemoveTransparency() {
+void ShapeProperties::RemoveTransparency(NiShape* shape) {
 	nif->RemoveAlphaProperty(shape);
 	GetTransparency();
 	os->SetPendingChanges();
@@ -561,37 +625,129 @@ void ShapeProperties::RemoveTransparency() {
 
 
 void ShapeProperties::GetGeometry() {
-	skinned->SetValue(shape->IsSkinned());
+	if (shapes.empty())
+		return;
 
-	currentSubIndex = shape->HasType<BSSubIndexTriShape>();
-	subIndex->SetValue(currentSubIndex);
+	// Initially set checkbox states for first shape
+	NiShape* firstShape = shapes[0];
+	skinned->SetValue(firstShape->IsSkinned());
 
-	currentDynamic = shape->HasType<BSDynamicTriShape>();
-	dynamic->SetValue(currentDynamic);
+	bool hasSubIndex = firstShape->HasType<BSSubIndexTriShape>();
+	subIndex->SetValue(hasSubIndex);
+
+	bool hasDynamic = firstShape->HasType<BSDynamicTriShape>();
+	dynamic->SetValue(hasDynamic);
+
+	BSTriShape* bsTriShapeFirst = dynamic_cast<BSTriShape*>(firstShape);
+	if (bsTriShapeFirst) {
+		fullPrecision->SetValue(bsTriShapeFirst->IsFullPrecision());
+		fullPrecision->Enable(bsTriShapeFirst->CanChangePrecision());
+	}
+	else
+		fullPrecision->SetValue(true);
 
 	subIndex->Disable();
 	dynamic->Disable();
+	fullPrecision->Disable();
 
-	BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
-	if (bsTriShape) {
-		if (nif->GetHeader().GetVersion().Stream() == 100) {
-			fullPrecision->SetValue(true);
-			fullPrecision->Enable(false);
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+
+	bool subIndexAvail = false;
+	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76)
+		subIndexAvail = true;
+
+	bool dynamicAvail = false;
+	if (targetGame == SKYRIMSE || targetGame == SKYRIMVR)
+		dynamicAvail = true;
+
+	bool fullPrecisionAvail = true;
+
+	for (auto& shape : shapes) {
+		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+		if (!bsTriShape) {
+			// Changing these only possible with BSTriShape and co.
+			subIndexAvail = false;
+			dynamicAvail = false;
+			fullPrecisionAvail = false;
+			continue;
 		}
-		else {
-			fullPrecision->SetValue(bsTriShape->IsFullPrecision());
-			fullPrecision->Enable(bsTriShape->CanChangePrecision());
+
+		if (fullPrecisionAvail) {
+			if (nif->GetHeader().GetVersion().Stream() == 100) {
+				fullPrecisionAvail = false; // Changing precision only possible in FO4
+				continue;
+			}
 		}
 
-		auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+		if (fullPrecisionAvail) {
+			if (!bsTriShape->CanChangePrecision()) {
+				fullPrecisionAvail = false;  // Changing precision only if shape allows it
+				continue;
+			}
+		}
+	}
 
-		subIndex->Enable(targetGame == FO4 || targetGame == FO4VR || targetGame == FO76);
-		dynamic->Enable(targetGame == SKYRIMSE || targetGame == SKYRIMVR);
+	if (fullPrecisionAvail)
+		fullPrecision->Enable();
+	if (subIndexAvail)
+		subIndex->Enable();
+	if (dynamicAvail)
+		dynamic->Enable();
+
+	// Check for undetermined (multiple) skinned states
+	for (auto& shape : shapes) {
+		bool checked = skinned->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED;
+		if (checked != shape->IsSkinned()) {
+			skinned->Set3StateValue(wxCheckBoxState::wxCHK_UNDETERMINED);
+			break;
+		}
+	}
+
+	// Check for undetermined (multiple) subindex states
+	for (auto& shape : shapes) {
+		if (subIndexAvail) {
+			bool checked = subIndex->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED;
+			if (checked != shape->HasType<BSSubIndexTriShape>()) {
+				subIndex->Set3StateValue(wxCheckBoxState::wxCHK_UNDETERMINED);
+				break;
+			}
+		}
+	}
+
+	// Check for undetermined (multiple) dynamic states
+	for (auto& shape : shapes) {
+		if (dynamicAvail) {
+			bool checked = dynamic->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED;
+			if (checked != shape->HasType<BSDynamicTriShape>()) {
+				dynamic->Set3StateValue(wxCheckBoxState::wxCHK_UNDETERMINED);
+				break;
+			}
+		}
+	}
+
+	// Check for undetermined (multiple) full precision states
+	for (auto& shape : shapes) {
+		if (fullPrecisionAvail) {
+			BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+			if (bsTriShape) {
+				bool checked = fullPrecision->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED;
+				if (checked != bsTriShape->IsFullPrecision()) {
+					fullPrecision->Set3StateValue(wxCheckBoxState::wxCHK_UNDETERMINED);
+					break;
+				}
+			}
+		}
 	}
 }
 
 
 void ShapeProperties::GetExtraData() {
+	if (shapes.empty())
+		return;
+
+	pgExtraData->Enable(shapes.size() == 1);
+	NiShape* shape = shapes[0];
+
 	for (size_t i = 0; i < extraDataIndices.size(); i++) {
 		wxButton* extraDataBtn = dynamic_cast<wxButton*>(FindWindowById(1000 + i, this));
 		wxChoice* extraDataType = dynamic_cast<wxChoice*>(FindWindowById(2000 + i, this));
@@ -617,17 +773,22 @@ void ShapeProperties::GetExtraData() {
 		auto extraData = nif->GetHeader().GetBlock(extraDataRef);
 		if (extraData) {
 			extraDataIndices.push_back(extraDataRef.index);
-			AddExtraData(extraData, true);
+			AddExtraData(shape, extraData, true);
 		}
 	}
 }
 
 void ShapeProperties::OnAddExtraData(wxCommandEvent& WXUNUSED(event)) {
+	if (shapes.empty())
+		return;
+
+	NiShape* shape = shapes[0];
+
 	NiStringExtraData extraDataTemp;
-	AddExtraData(&extraDataTemp);
+	AddExtraData(shape, &extraDataTemp);
 }
 
-void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
+void ShapeProperties::AddExtraData(NiShape* shape, NiExtraData* extraData, bool uiOnly) {
 	if (!uiOnly) {
 		auto newExtraData = extraData->Clone();
 		int index = nif->AssignExtraData(shape, std::move(newExtraData));
@@ -692,10 +853,14 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 }
 
 void ShapeProperties::OnChangeExtraDataType(wxCommandEvent& event) {
-	ChangeExtraDataType(event.GetId() - 2000);
+	if (shapes.empty())
+		return;
+
+	NiShape* shape = shapes[0];
+	ChangeExtraDataType(shape, event.GetId() - 2000);
 }
 
-void ShapeProperties::ChangeExtraDataType(int id) {
+void ShapeProperties::ChangeExtraDataType(NiShape* shape, int id) {
 	wxChoice* extraDataType = dynamic_cast<wxChoice*>(FindWindowById(2000 + id, this));
 	int selection = extraDataType->GetSelection();
 
@@ -772,6 +937,12 @@ void ShapeProperties::RemoveExtraData(int id) {
 }
 
 void ShapeProperties::GetCoordTrans() {
+	if (shapes.empty())
+		return;
+
+	pgCoordinates->Enable(shapes.size() == 1);
+
+	NiShape* shape = shapes[0];
 	Vector3 rotationVec;
 
 	oldTransform = os->project->GetWorkAnim()->GetTransformShapeToGlobal(shape);
@@ -820,8 +991,10 @@ void ShapeProperties::OnTransChanged(wxCommandEvent&) {
 }
 
 void ShapeProperties::RefreshMesh() {
-	os->project->SetTextures(shape);
-	os->MeshFromProj(shape, true);
+	for (auto& shape : shapes) {
+		os->project->SetTextures(shape);
+		os->MeshFromProj(shape, true);
+	}
 	os->UpdateActiveShape();
 }
 
@@ -832,6 +1005,10 @@ void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::ApplyChanges() {
+	if (shapes.empty())
+		return;
+
+	bool multipleShapes = shapes.size() > 1;
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 
 	wxColour color = specularColor->GetColour();
@@ -846,183 +1023,209 @@ void ShapeProperties::ApplyChanges() {
 	float emisMultiple = atof(emissiveMultiple->GetValue().c_str());
 	float alphaValue = atof(alpha->GetValue().c_str());
 
-	NiShader* shader = nif->GetShader(shape);
-	if (shader) {
-		std::string name = shaderName->GetValue().ToStdString();
-		uint32_t type = shaderType->GetSelection();
-
-		shader->name.get() = name;
-		shader->SetVertexColors(vertexColors->IsChecked());
-
-		if (vertexColors->IsChecked() && currentVertexColors != vertexColors->IsChecked())
-			shape->SetVertexColors(true);
-
-		if (shader->HasType<BSEffectShaderProperty>()) {
-			shader->SetEmissiveColor(emisColor);
-			shader->SetEmissiveMultiple(emisMultiple);
-		}
-		else if (shader->HasType<BSLightingShaderProperty>()) {
-			shader->SetShaderType(type);
-
-			shader->SetSpecularColor(specColor);
-			shader->SetSpecularStrength(specStrength);
-			shader->SetGlossiness(specPower);
-
-			shader->SetEmissiveColor(emisColor);
-			shader->SetEmissiveMultiple(emisMultiple);
-
-			shader->SetAlpha(alphaValue);
-		}
-		else if (shader->HasType<BSShaderPPLightingProperty>()) {
-			switch (type) {
-				case 0: type = BSShaderType::SHADER_TALL_GRASS; break;
-				case 1: type = BSShaderType::SHADER_DEFAULT; break;
-				case 2: type = BSShaderType::SHADER_SKY; break;
-				case 3: type = BSShaderType::SHADER_SKIN; break;
-				case 4: type = BSShaderType::SHADER_WATER; break;
-				case 5: type = BSShaderType::SHADER_LIGHTING30; break;
-				case 6: type = BSShaderType::SHADER_TILE; break;
-				case 7: type = BSShaderType::SHADER_NOLIGHTING; break;
-			}
-
-			shader->SetShaderType(type);
-		}
-	}
-
-	NiMaterialProperty* material = nif->GetMaterialProperty(shape);
-	if (material) {
-		material->SetSpecularColor(specColor);
-		material->SetGlossiness(specPower);
-
-		material->SetEmissiveColor(emisColor);
-		material->SetEmissiveMultiple(emisMultiple);
-		material->SetAlpha(alphaValue);
-	}
-
-	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
-	if (alphaProp) {
-		alphaProp->threshold = atoi(alphaThreshold->GetValue().c_str());
-
-		if (alphaBlend->IsChecked())
-			alphaProp->flags |= 1;
-		else
-			alphaProp->flags &= ~1;
-
-		if (alphaTest->IsChecked())
-			alphaProp->flags |= 1 << 9;
-		else
-			alphaProp->flags &= ~(1 << 9);
-
+	if (!multipleShapes) {
+		NiShape* shape = shapes[0];
+		NiShader* shader = nif->GetShader(shape);
 		if (shader) {
-			shader->SetVertexAlpha(vertexAlpha->IsChecked());
+			std::string name = shaderName->GetValue().ToStdString();
+			uint32_t type = shaderType->GetSelection();
 
-			if (vertexAlpha->IsChecked() && currentVertexAlpha != vertexAlpha->IsChecked()) {
-				shader->SetVertexColors(true);
+			shader->name.get() = name;
+
+			bool hadVertexColors = shader->HasVertexColors();
+			shader->SetVertexColors(vertexColors->IsChecked());
+
+			if (vertexColors->IsChecked() && !hadVertexColors)
 				shape->SetVertexColors(true);
+
+			if (shader->HasType<BSEffectShaderProperty>()) {
+				shader->SetEmissiveColor(emisColor);
+				shader->SetEmissiveMultiple(emisMultiple);
+			}
+			else if (shader->HasType<BSLightingShaderProperty>()) {
+				shader->SetShaderType(type);
+
+				shader->SetSpecularColor(specColor);
+				shader->SetSpecularStrength(specStrength);
+				shader->SetGlossiness(specPower);
+
+				shader->SetEmissiveColor(emisColor);
+				shader->SetEmissiveMultiple(emisMultiple);
+
+				shader->SetAlpha(alphaValue);
+			}
+			else if (shader->HasType<BSShaderPPLightingProperty>()) {
+				switch (type) {
+					case 0: type = BSShaderType::SHADER_TALL_GRASS; break;
+					case 1: type = BSShaderType::SHADER_DEFAULT; break;
+					case 2: type = BSShaderType::SHADER_SKY; break;
+					case 3: type = BSShaderType::SHADER_SKIN; break;
+					case 4: type = BSShaderType::SHADER_WATER; break;
+					case 5: type = BSShaderType::SHADER_LIGHTING30; break;
+					case 6: type = BSShaderType::SHADER_TILE; break;
+					case 7: type = BSShaderType::SHADER_NOLIGHTING; break;
+				}
+
+				shader->SetShaderType(type);
+			}
+		}
+
+		NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+		if (material) {
+			material->SetSpecularColor(specColor);
+			material->SetGlossiness(specPower);
+
+			material->SetEmissiveColor(emisColor);
+			material->SetEmissiveMultiple(emisMultiple);
+			material->SetAlpha(alphaValue);
+		}
+
+		NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
+		if (alphaProp) {
+			alphaProp->threshold = atoi(alphaThreshold->GetValue().c_str());
+
+			if (alphaBlend->IsChecked())
+				alphaProp->flags |= 1;
+			else
+				alphaProp->flags &= ~1;
+
+			if (alphaTest->IsChecked())
+				alphaProp->flags |= 1 << 9;
+			else
+				alphaProp->flags &= ~(1 << 9);
+
+			if (shader) {
+				bool hadVertexAlpha = shader->HasVertexAlpha();
+				shader->SetVertexAlpha(vertexAlpha->IsChecked());
+
+				if (vertexAlpha->IsChecked() && !hadVertexAlpha) {
+					shader->SetVertexColors(true);
+					shape->SetVertexColors(true);
+				}
+			}
+		}
+
+		for (size_t i = 0; i < extraDataIndices.size(); i++) {
+			wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + i, this));
+			wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
+			if (!extraDataName || !extraDataValue)
+				continue;
+
+			auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataIndices[i]);
+			if (extraData) {
+				extraData->name.get() = extraDataName->GetValue().ToStdString();
+
+				if (extraData->HasType<NiStringExtraData>()) {
+					auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
+					stringExtraData->stringData.get() = extraDataValue->GetValue().ToStdString();
+				}
+				else if (extraData->HasType<NiIntegerExtraData>()) {
+					auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
+					unsigned long val = 0;
+					if (extraDataValue->GetValue().ToULong(&val))
+						intExtraData->integerData = val;
+				}
+				else if (extraData->HasType<NiFloatExtraData>()) {
+					auto floatExtraData = static_cast<NiFloatExtraData*>(extraData);
+					double val = 0.0;
+					if (extraDataValue->GetValue().ToDouble(&val))
+						floatExtraData->floatData = (float)val;
+				}
 			}
 		}
 	}
 
-	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-	if (bsTriShape) {
-		if (nif->GetHeader().GetVersion().Stream() != 100)
-			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
+	for (auto& shape : shapes) {
+		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+		if (bsTriShape) {
+			wxCheckBoxState fullPrecisionState = fullPrecision->Get3StateValue();
+			if (fullPrecision->IsEnabled() && fullPrecisionState != wxCheckBoxState::wxCHK_UNDETERMINED) {
+				if (nif->GetHeader().GetVersion().Stream() != 100)
+					bsTriShape->SetFullPrecision(fullPrecisionState == wxCheckBoxState::wxCHK_CHECKED);
+			}
 
-		if ((targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) && currentSubIndex != subIndex->IsChecked()) {
-			if (subIndex->IsChecked()) {
-				auto bsSITS = std::make_unique<BSSubIndexTriShape>();
-				*static_cast<BSTriShape*>(bsSITS.get()) = *bsTriShape;
-				bsSITS->SetDefaultSegments();
-				bsSITS->name.get() = bsTriShape->name.get();
+			wxCheckBoxState subIndexState = subIndex->Get3StateValue();
+			if (subIndex->IsEnabled() && subIndexState != wxCheckBoxState::wxCHK_UNDETERMINED) {
+				bool hasSubIndex = shape->HasType<BSSubIndexTriShape>();
 
-				shape = bsSITS.get();
-				os->UpdateShapeReference(bsTriShape, shape);
-				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsSITS));
+				if ((targetGame == FO4 || targetGame == FO4VR || targetGame == FO76)) {
+					if (subIndexState == wxCheckBoxState::wxCHK_CHECKED && !hasSubIndex) {
+						auto bsSITS = std::make_unique<BSSubIndexTriShape>();
+						*static_cast<BSTriShape*>(bsSITS.get()) = *bsTriShape;
+						bsSITS->SetDefaultSegments();
+						bsSITS->name.get() = bsTriShape->name.get();
+
+						shape = bsSITS.get();
+						os->UpdateShapeReference(bsTriShape, shape);
+						nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsSITS));
+					}
+					else if (subIndexState == wxCheckBoxState::wxCHK_UNCHECKED && hasSubIndex) {
+						auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
+						bsTS->name.get() = bsTriShape->name.get();
+
+						shape = bsTS.get();
+						os->UpdateShapeReference(bsTriShape, shape);
+						nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
+					}
+				}
+			}
+
+			wxCheckBoxState dynamicState = dynamic->Get3StateValue();
+			if (dynamic->IsEnabled() && dynamicState != wxCheckBoxState::wxCHK_UNDETERMINED) {
+				bool hasDynamic = shape->HasType<BSDynamicTriShape>();
+
+				if (targetGame == SKYRIMSE) {
+					if (dynamicState == wxCheckBoxState::wxCHK_CHECKED && !hasDynamic) {
+						auto bsDTS = std::make_unique<BSDynamicTriShape>();
+						*static_cast<BSTriShape*>(bsDTS.get()) = *bsTriShape;
+						bsDTS->name.get() = bsTriShape->name.get();
+
+						bsDTS->vertexDesc.RemoveFlag(VF_VERTEX);
+						bsDTS->vertexDesc.SetFlag(VF_FULLPREC);
+
+						bsDTS->CalcDynamicData();
+						bsDTS->CalcDataSizes(nif->GetHeader().GetVersion());
+
+						shape = bsDTS.get();
+						os->UpdateShapeReference(bsTriShape, shape);
+						nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsDTS));
+					}
+					else if (dynamicState == wxCheckBoxState::wxCHK_UNCHECKED && hasDynamic) {
+						auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
+						bsTS->name.get() = bsTriShape->name.get();
+
+						bsTS->vertexDesc.SetFlag(VF_VERTEX);
+						bsTS->vertexDesc.RemoveFlag(VF_FULLPREC);
+
+						bsTS->CalcDataSizes(nif->GetHeader().GetVersion());
+
+						shape = bsTS.get();
+						os->UpdateShapeReference(bsTriShape, shape);
+						nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
+					}
+				}
+			}
+		}
+
+		wxCheckBoxState skinnedState = skinned->Get3StateValue();
+		if (skinned->IsEnabled() && skinnedState != wxCheckBoxState::wxCHK_UNDETERMINED) {
+			if (skinnedState == wxCheckBoxState::wxCHK_CHECKED) {
+				os->project->CreateSkinning(shape);
 			}
 			else {
-				auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
-				bsTS->name.get() = bsTriShape->name.get();
-
-				shape = bsTS.get();
-				os->UpdateShapeReference(bsTriShape, shape);
-				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
+				os->project->RemoveSkinning(shape);
+				os->UpdateAnimationGUI();
 			}
 		}
 
-		if (targetGame == SKYRIMSE && currentDynamic != dynamic->IsChecked()) {
-			if (dynamic->IsChecked()) {
-				auto bsDTS = std::make_unique<BSDynamicTriShape>();
-				*static_cast<BSTriShape*>(bsDTS.get()) = *bsTriShape;
-				bsDTS->name.get() = bsTriShape->name.get();
+		if (!multipleShapes) {
+			if (!newTransform.IsNearlyEqualTo(oldTransform)) {
+				if (cbTransformGeo->IsChecked())
+					os->project->ApplyTransformToShapeGeometry(shape, newTransform.InverseTransform().ComposeTransforms(oldTransform));
 
-				bsDTS->vertexDesc.RemoveFlag(VF_VERTEX);
-				bsDTS->vertexDesc.SetFlag(VF_FULLPREC);
-
-				bsDTS->CalcDynamicData();
-				bsDTS->CalcDataSizes(nif->GetHeader().GetVersion());
-
-				shape = bsDTS.get();
-				os->UpdateShapeReference(bsTriShape, shape);
-				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsDTS));
-			}
-			else {
-				auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
-				bsTS->name.get() = bsTriShape->name.get();
-
-				bsTS->vertexDesc.SetFlag(VF_VERTEX);
-				bsTS->vertexDesc.RemoveFlag(VF_FULLPREC);
-
-				bsTS->CalcDataSizes(nif->GetHeader().GetVersion());
-
-				shape = bsTS.get();
-				os->UpdateShapeReference(bsTriShape, shape);
-				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
+				os->project->GetWorkAnim()->SetTransformShapeToGlobal(shape, newTransform);
 			}
 		}
-	}
-
-	if (skinned->IsChecked()) {
-		os->project->CreateSkinning(shape);
-	}
-	else {
-		os->project->RemoveSkinning(shape);
-		os->UpdateAnimationGUI();
-	}
-
-	for (size_t i = 0; i < extraDataIndices.size(); i++) {
-		wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + i, this));
-		wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
-		if (!extraDataName || !extraDataValue)
-			continue;
-
-		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataIndices[i]);
-		if (extraData) {
-			extraData->name.get() = extraDataName->GetValue().ToStdString();
-
-			if (extraData->HasType<NiStringExtraData>()) {
-				auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
-				stringExtraData->stringData.get() = extraDataValue->GetValue().ToStdString();
-			}
-			else if (extraData->HasType<NiIntegerExtraData>()) {
-				auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
-				unsigned long val = 0;
-				if (extraDataValue->GetValue().ToULong(&val))
-					intExtraData->integerData = val;
-			}
-			else if (extraData->HasType<NiFloatExtraData>()) {
-				auto floatExtraData = static_cast<NiFloatExtraData*>(extraData);
-				double val = 0.0;
-				if (extraDataValue->GetValue().ToDouble(&val))
-					floatExtraData->floatData = (float)val;
-			}
-		}
-	}
-
-	if (!newTransform.IsNearlyEqualTo(oldTransform)) {
-		if (cbTransformGeo->IsChecked())
-			os->project->ApplyTransformToShapeGeometry(shape, newTransform.InverseTransform().ComposeTransforms(oldTransform));
-
-		os->project->GetWorkAnim()->SetTransformShapeToGlobal(shape, newTransform);
 	}
 
 	os->SetPendingChanges();

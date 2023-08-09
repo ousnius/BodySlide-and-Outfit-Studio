@@ -10268,9 +10268,13 @@ void OutfitStudioFrame::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	std::vector<NiShape*> selectedShapes;
+	for (auto& s : selectedItems)
+		selectedShapes.push_back(s->GetShape());
+
 	auto shape = activeItem->GetShape();
 	if (shape) {
-		ShapeProperties prop(this, project->GetWorkNif(), shape);
+		ShapeProperties prop(this, project->GetWorkNif(), selectedShapes);
 		prop.ShowModal();
 	}
 }
