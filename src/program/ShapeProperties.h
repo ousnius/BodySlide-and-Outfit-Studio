@@ -68,6 +68,10 @@ private:
 	nifly::NifFile* nif = nullptr;
 	std::vector<nifly::NiShape*> shapes;
 
+	bool confirmationAccepted = false;
+
+	bool ShowConfirmationDialog();
+
 	void GetShader();
 	void GetShaderType();
 	void AddShader(nifly::NiShape* shape);

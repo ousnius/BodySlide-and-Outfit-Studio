@@ -42,6 +42,9 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 		return;
 	}
 
+	if (refShapes.empty())
+		return;
+
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
@@ -119,22 +122,49 @@ ShapeProperties::~ShapeProperties() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/ShapeProperties.xrc");
 }
 
-void ShapeProperties::GetShader() {
-	pgShader->Enable(shapes.size() == 1);
+bool ShapeProperties::ShowConfirmationDialog() {
+	if (confirmationAccepted)
+		return true;
 
-	if (shapes.empty())
-		return;
+	if (shapes.size() > 1) {
+		wxMessageDialog dlg(this,
+							wxString::Format(_("This action will affect all %zu selected shapes. Are you sure?"), shapes.size()),
+							_("Confirmation"),
+							wxYES_NO | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetYesNoCancelLabels(_("Yes"), _("No"), _("Cancel"));
+
+		int res = dlg.ShowModal();
+		if (res != wxID_YES)
+			return false;
+	}
+
+	confirmationAccepted = true;
+	return true;
+}
+
+void ShapeProperties::GetShader() {
+	bool multipleShapes = shapes.size() > 1;
+
+	bool anyWithShader = false;
+	bool anyWithoutShader = false;
+	for (auto& shape : shapes) {
+		NiShader* shader = nif->GetShader(shape);
+		if (shader)
+			anyWithShader = true;
+		else
+			anyWithoutShader = true;
+	}
 
 	NiShape* shape = shapes[0];
 	NiShader* shader = nif->GetShader(shape);
 
-	if (!shader) {
-		btnAddShader->Enable();
-		btnRemoveShader->Disable();
+	if (multipleShapes) {
+		btnAddShader->Enable(anyWithoutShader);
+		btnRemoveShader->Enable(anyWithShader);
+		btnSetTextures->Enable(anyWithShader);
+
 		btnMaterialChooser->Disable();
-		btnSetTextures->Disable();
 		shaderName->Disable();
-		shaderType->Disable();
 		specularColor->Disable();
 		specularStrength->Disable();
 		specularPower->Disable();
@@ -147,23 +177,46 @@ void ShapeProperties::GetShader() {
 		alphaBlend->Disable();
 	}
 	else {
-		btnAddShader->Disable();
-		alpha->Disable();
-		btnRemoveShader->Enable();
-		btnMaterialChooser->Enable();
-		btnSetTextures->Enable();
-		shaderName->Enable();
-		shaderType->Enable();
-		specularColor->Enable();
-		specularStrength->Enable();
-		specularPower->Enable();
-		emissiveColor->Enable();
-		emissiveMultiple->Enable();
-		vertexColors->Enable();
-		vertexAlpha->Enable();
-		alphaTest->Enable();
-		alphaBlend->Enable();
+		if (!shader) {
+			btnAddShader->Enable();
 
+			btnRemoveShader->Disable();
+			btnMaterialChooser->Disable();
+			btnSetTextures->Disable();
+			shaderName->Disable();
+			specularColor->Disable();
+			specularStrength->Disable();
+			specularPower->Disable();
+			emissiveColor->Disable();
+			emissiveMultiple->Disable();
+			alpha->Disable();
+			vertexColors->Disable();
+			vertexAlpha->Disable();
+			alphaTest->Disable();
+			alphaBlend->Disable();
+		}
+		else {
+			btnAddShader->Disable();
+			alpha->Disable();
+
+			btnRemoveShader->Enable();
+			btnMaterialChooser->Enable();
+			btnSetTextures->Enable();
+			shaderName->Enable();
+			specularColor->Enable();
+			specularStrength->Enable();
+			specularPower->Enable();
+			emissiveColor->Enable();
+			emissiveMultiple->Enable();
+			vertexColors->Enable();
+			vertexAlpha->Enable();
+			alphaTest->Enable();
+			alphaBlend->Enable();
+		}
+	}
+
+	// Set values of shader of first shape
+	if (shader) {
 		bool hasVertexColors = shader->HasVertexColors();
 		bool hasVertexAlpha = shader->HasVertexAlpha();
 		shaderName->SetValue(shader->name.get());
@@ -183,7 +236,9 @@ void ShapeProperties::GetShader() {
 			alpha->SetValue(wxString::Format("%.4f", shader->GetAlpha()));
 		}
 		else if (shader->HasType<BSLightingShaderProperty>()) {
-			alpha->Enable();
+			if (!multipleShapes)
+				alpha->Enable();
+
 			colorVec = shader->GetSpecularColor() * 255.0f;
 			specularColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
 			specularStrength->SetValue(wxString::Format("%.4f", shader->GetSpecularStrength()));
@@ -199,7 +254,9 @@ void ShapeProperties::GetShader() {
 
 		NiMaterialProperty* material = nif->GetMaterialProperty(shape);
 		if (material) {
-			alpha->Enable();
+			if (!multipleShapes)
+				alpha->Enable();
+
 			colorVec = material->GetSpecularColor() * 255.0f;
 			specularColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
 			specularPower->SetValue(wxString::Format("%.4f", material->GetGlossiness()));
@@ -219,9 +276,7 @@ void ShapeProperties::GetShaderType() {
 	shaderType->Disable();
 	shaderType->Clear();
 
-	if (shapes.empty())
-		return;
-
+	bool multipleShapes = shapes.size() > 1;
 	NiShape* shape = shapes[0];
 
 	uint32_t type;
@@ -252,7 +307,9 @@ void ShapeProperties::GetShaderType() {
 			shaderType->Append("Unknown 17");
 			shaderType->Append("World Map 4");
 			shaderType->Append("World LOD Multitexture");
-			shaderType->Enable();
+
+			if (!multipleShapes)
+				shaderType->Enable();
 
 			shaderType->SetSelection(type);
 		}
@@ -266,7 +323,9 @@ void ShapeProperties::GetShaderType() {
 			shaderType->Append("Lighting 30");
 			shaderType->Append("Tile");
 			shaderType->Append("No Lighting");
-			shaderType->Enable();
+
+			if (!multipleShapes)
+				shaderType->Enable();
 
 			switch (type) {
 				case BSShaderType::SHADER_TALL_GRASS: shaderType->SetSelection(0); break;
@@ -297,35 +356,21 @@ void ShapeProperties::OnChooseMaterial(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
-	if (shapes.empty())
+	if (!ShowConfirmationDialog())
 		return;
 
-	NiShape* shape = shapes[0];
-	AddShader(shape);
+	for (auto& shape : shapes)
+		AddShader(shape);
 
-	btnAddShader->Disable();
-	btnRemoveShader->Enable();
-	btnMaterialChooser->Enable();
-	btnSetTextures->Enable();
-	shaderName->Enable();
-	shaderType->Enable();
-	specularColor->Enable();
-	specularStrength->Enable();
-	specularPower->Enable();
-	emissiveColor->Enable();
-	emissiveMultiple->Enable();
-	alpha->Enable();
-	vertexColors->Enable();
-
-	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
-	if (alphaProp) {
-		vertexAlpha->Enable();
-		alphaTest->Enable();
-		alphaBlend->Enable();
-	}
+	GetShader();
+	GetTransparency();
 }
 
 void ShapeProperties::AddShader(NiShape* shape) {
+	NiShader* shader = nif->GetShader(shape);
+	if (shader)
+		return;
+
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	std::unique_ptr<NiShader> newShader = nullptr;
 	std::unique_ptr<NiMaterialProperty> newMaterial = nullptr;
@@ -350,7 +395,7 @@ void ShapeProperties::AddShader(NiShape* shape) {
 			shape->ShaderPropertyRef()->index = nif->GetHeader().AddBlock(std::move(newShader));
 	}
 
-	NiShader* shader = nif->GetShader(shape);
+	shader = nif->GetShader(shape);
 	if (shader) {
 		auto nifTexSet = std::make_unique<BSShaderTextureSet>(nif->GetHeader().GetVersion());
 		shader->TextureSetRef()->index = nif->GetHeader().AddBlock(std::move(nifTexSet));
@@ -362,23 +407,28 @@ void ShapeProperties::AddShader(NiShape* shape) {
 }
 
 void ShapeProperties::OnRemoveShader(wxCommandEvent& WXUNUSED(event)) {
-	if (shapes.empty())
+	if (!ShowConfirmationDialog())
 		return;
 
-	NiShape* shape = shapes[0];
-	RemoveShader(shape);
+	for (auto& shape : shapes)
+		RemoveShader(shape);
+
+	GetShader();
+	GetTransparency();
 }
 
 void ShapeProperties::RemoveShader(NiShape* shape) {
+	NiShader* shader = nif->GetShader(shape);
+	if (!shader)
+		return;
+
 	nif->DeleteShader(shape);
 	AssignDefaultTexture(shape);
-	GetShader();
-	GetTransparency();
 	os->SetPendingChanges();
 }
 
 void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
-	if (shapes.empty())
+	if (!ShowConfirmationDialog())
 		return;
 
 	bool shaderFound = false;
@@ -502,61 +552,92 @@ void ShapeProperties::AssignDefaultTexture(NiShape* shape) {
 }
 
 void ShapeProperties::GetTransparency() {
-	if (shapes.empty())
-		return;
+	bool multipleShapes = shapes.size() > 1;
+
+	bool anyWithTrans = false;
+	bool anyWithoutTrans = false;
+	for (auto& shape : shapes) {
+		NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
+		if (alphaProp)
+			anyWithTrans = true;
+		else
+			anyWithoutTrans = true;
+	}
 
 	NiShape* shape = shapes[0];
 	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
-	if (alphaProp) {
-		alphaThreshold->SetValue(wxString::Format("%d", alphaProp->threshold));
-		alphaThreshold->Enable();
-		btnAddTransparency->Disable();
-		btnRemoveTransparency->Enable();
-		alphaTest->Enable();
-		alphaTest->SetValue(alphaProp->flags & (1 << 9));
-		alphaBlend->Enable();
-		alphaBlend->SetValue(alphaProp->flags & 1);
 
-		NiShader* shader = nif->GetShader(shape);
-		if (shader) {
-			vertexAlpha->Enable();
-		}
-	}
-	else {
+	if (multipleShapes) {
+		btnAddTransparency->Enable(anyWithoutTrans);
+		btnRemoveTransparency->Enable(anyWithTrans);
+
 		alphaThreshold->Disable();
 		vertexAlpha->Disable();
 		alphaTest->Disable();
 		alphaBlend->Disable();
-		btnAddTransparency->Enable();
-		btnRemoveTransparency->Disable();
+	}
+	else {
+		if (alphaProp) {
+			alphaThreshold->Enable();
+			btnAddTransparency->Disable();
+			btnRemoveTransparency->Enable();
+			alphaTest->Enable();
+			alphaBlend->Enable();
+
+			NiShader* shader = nif->GetShader(shape);
+			if (shader)
+				vertexAlpha->Enable();
+		}
+		else {
+			alphaThreshold->Disable();
+			vertexAlpha->Disable();
+			alphaTest->Disable();
+			alphaBlend->Disable();
+			btnAddTransparency->Enable();
+			btnRemoveTransparency->Disable();
+		}
+	}
+
+	// Set values of first shape's alpha property
+	if (alphaProp) {
+		alphaThreshold->SetValue(wxString::Format("%d", alphaProp->threshold));
+		alphaTest->SetValue(alphaProp->flags & (1 << 9));
+		alphaBlend->SetValue(alphaProp->flags & 1);
 	}
 }
 
 void ShapeProperties::OnAddTransparency(wxCommandEvent& WXUNUSED(event)) {
-	if (shapes.empty())
+	if (!ShowConfirmationDialog())
 		return;
 
-	NiShape* shape = shapes[0];
-	AddTransparency(shape);
+	for (auto& shape : shapes)
+		AddTransparency(shape);
+
+	GetTransparency();
 }
 
 void ShapeProperties::AddTransparency(NiShape* shape) {
+	NiAlphaProperty* alphaPropExists = nif->GetAlphaProperty(shape);
+	if (alphaPropExists)
+		return;
+
 	auto alphaProp = std::make_unique<NiAlphaProperty>();
 	nif->AssignAlphaProperty(shape, std::move(alphaProp));
-	GetTransparency();
 	os->SetPendingChanges();
 }
 
 void ShapeProperties::OnRemoveTransparency(wxCommandEvent& WXUNUSED(event)) {
-	if (shapes.empty())
+	if (!ShowConfirmationDialog())
 		return;
 
-	NiShape* shape = shapes[0];
-	RemoveTransparency(shape);
+	for (auto& shape : shapes)
+		RemoveTransparency(shape);
+
+	GetTransparency();
 }
 
 void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
-	if (shapes.empty())
+	if (!ShowConfirmationDialog())
 		return;
 
 	bool multipleShapes = shapes.size() > 1;
@@ -618,16 +699,16 @@ void ShapeProperties::OnCopyShaderFromShape(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::RemoveTransparency(NiShape* shape) {
+	NiAlphaProperty* alphaPropExists = nif->GetAlphaProperty(shape);
+	if (!alphaPropExists)
+		return;
+
 	nif->RemoveAlphaProperty(shape);
-	GetTransparency();
 	os->SetPendingChanges();
 }
 
 
 void ShapeProperties::GetGeometry() {
-	if (shapes.empty())
-		return;
-
 	// Initially set checkbox states for first shape
 	NiShape* firstShape = shapes[0];
 	skinned->SetValue(firstShape->IsSkinned());
@@ -742,9 +823,6 @@ void ShapeProperties::GetGeometry() {
 
 
 void ShapeProperties::GetExtraData() {
-	if (shapes.empty())
-		return;
-
 	pgExtraData->Enable(shapes.size() == 1);
 	NiShape* shape = shapes[0];
 
@@ -779,9 +857,6 @@ void ShapeProperties::GetExtraData() {
 }
 
 void ShapeProperties::OnAddExtraData(wxCommandEvent& WXUNUSED(event)) {
-	if (shapes.empty())
-		return;
-
 	NiShape* shape = shapes[0];
 
 	NiStringExtraData extraDataTemp;
@@ -853,9 +928,6 @@ void ShapeProperties::AddExtraData(NiShape* shape, NiExtraData* extraData, bool 
 }
 
 void ShapeProperties::OnChangeExtraDataType(wxCommandEvent& event) {
-	if (shapes.empty())
-		return;
-
 	NiShape* shape = shapes[0];
 	ChangeExtraDataType(shape, event.GetId() - 2000);
 }
@@ -937,9 +1009,6 @@ void ShapeProperties::RemoveExtraData(int id) {
 }
 
 void ShapeProperties::GetCoordTrans() {
-	if (shapes.empty())
-		return;
-
 	pgCoordinates->Enable(shapes.size() == 1);
 
 	NiShape* shape = shapes[0];
@@ -1005,9 +1074,6 @@ void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::ApplyChanges() {
-	if (shapes.empty())
-		return;
-
 	bool multipleShapes = shapes.size() > 1;
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 
