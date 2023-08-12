@@ -3348,7 +3348,8 @@ void BodySlideFrame::DoFilterSliders() {
 			continue;
 
 		// Filter slider by display name or category
-		wxString sliderStr = wxString::FromUTF8(sliderDisplay.second->displayName).MakeLower();
+		wxString sliderStr = wxString::FromUTF8(sliderDisplay.first).MakeLower();
+		wxString displayStr = wxString::FromUTF8(sliderDisplay.second->displayName).MakeLower();
 		wxString categoryStr = wxString::FromUTF8(sliderDisplay.second->categoryName).MakeLower();
 
 		// Check if category is disabled
@@ -3372,7 +3373,7 @@ void BodySlideFrame::DoFilterSliders() {
 					wxString token = andTokenizer.GetNextToken();
 					token.Trim().Trim(false);
 
-					if (sliderStr.Contains(token) || (!categoryStr.empty() && categoryStr.Contains(token)))
+					if (displayStr.Contains(token) || sliderStr.Contains(token) || (!categoryStr.empty() && categoryStr.Contains(token)))
 						matched = true;
 					else {
 						matched = false;
