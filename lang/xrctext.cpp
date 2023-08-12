@@ -190,81 +190,81 @@ _("Save As...");
 _("Opens the group manager where you can edit existing or create new groups");
 #line 166 "res/xrc/BodySlide.xrc"
 _("Group Manager");
-#line 190 "res/xrc/BodySlide.xrc"
+#line 218 "res/xrc/BodySlide.xrc"
 _("Single Weight");
-#line 217 "res/xrc/BodySlide.xrc"
+#line 245 "res/xrc/BodySlide.xrc"
 _("Low Weight");
-#line 234 "res/xrc/BodySlide.xrc"
+#line 262 "res/xrc/BodySlide.xrc"
 _("High Weight");
-#line 275 "res/xrc/BodySlide.xrc"
-_("Copy the low weight slider values to the high weight section.");
-#line 292 "res/xrc/BodySlide.xrc"
-_("Default outfit choice in Batch Build");
 #line 303 "res/xrc/BodySlide.xrc"
+_("Copy the low weight slider values to the high weight section.");
+#line 320 "res/xrc/BodySlide.xrc"
+_("Default outfit choice in Batch Build");
+#line 331 "res/xrc/BodySlide.xrc"
 _("Output Path (which the game would use for this outfit)");
-#line 315 "res/xrc/BodySlide.xrc"
+#line 343 "res/xrc/BodySlide.xrc"
 _("(right-click to view alternatives)");
-#line 335 "res/xrc/BodySlide.xrc"
-_("Build multiple outfits using the currently active slider values.\n\nHold CTRL = Build to custom directory\nHold ALT = Delete from output directory");
-#line 336 "res/xrc/BodySlide.xrc"
-_("Batch Build...");
-#line 351 "res/xrc/BodySlide.xrc"
-_("Build Morphs");
-#line 352 "res/xrc/BodySlide.xrc"
-_("Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires other mods to make use of the morph data.");
-#line 362 "res/xrc/BodySlide.xrc"
-_("Force Body Normals");
 #line 363 "res/xrc/BodySlide.xrc"
-_("Adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.");
+_("Build multiple outfits using the currently active slider values.\n\nHold CTRL = Build to custom directory\nHold ALT = Delete from output directory");
+#line 364 "res/xrc/BodySlide.xrc"
+_("Batch Build...");
 #line 379 "res/xrc/BodySlide.xrc"
-_("Show a preview window for this outfit.");
+_("Build Morphs");
 #line 380 "res/xrc/BodySlide.xrc"
+_("Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires other mods to make use of the morph data.");
+#line 390 "res/xrc/BodySlide.xrc"
+_("Force Body Normals");
+#line 391 "res/xrc/BodySlide.xrc"
+_("Adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.");
+#line 407 "res/xrc/BodySlide.xrc"
+_("Show a preview window for this outfit.");
+#line 408 "res/xrc/BodySlide.xrc"
 _("Preview");
-#line 398 "res/xrc/BodySlide.xrc"
+#line 426 "res/xrc/BodySlide.xrc"
 _("Creates the currently selected outfit/body.\n\nHold CTRL = Build to working directory\nHold ALT = Delete from output directory");
-#line 399 "res/xrc/BodySlide.xrc"
+#line 427 "res/xrc/BodySlide.xrc"
 _("Build");
-#line 411 "res/xrc/BodySlide.xrc"
-_("Copy the high weight slider values to the low weight section.");
-#line 429 "res/xrc/BodySlide.xrc"
-_("About");
-#line 438 "res/xrc/BodySlide.xrc"
-_("Open settings dialog.");
 #line 439 "res/xrc/BodySlide.xrc"
-_("Settings");
-#line 448 "res/xrc/BodySlide.xrc"
-_("Open Outfit Studio, a full-featured tool for creating and converting outfits.");
-#line 449 "res/xrc/BodySlide.xrc"
-_("Outfit Studio");
-#line 459 "res/xrc/BodySlide.xrc"
-_("Filter Options");
-#line 461 "res/xrc/BodySlide.xrc"
-_("Choose groups...");
-#line 462 "res/xrc/BodySlide.xrc"
-_("Choose groups to display in the Outfit menu");
-#line 465 "res/xrc/BodySlide.xrc"
-_("Refresh Groups");
+_("Copy the high weight slider values to the low weight section.");
+#line 457 "res/xrc/BodySlide.xrc"
+_("About");
 #line 466 "res/xrc/BodySlide.xrc"
-_("Refresh group information");
-#line 470 "res/xrc/BodySlide.xrc"
-_("Filter Options");
-#line 472 "res/xrc/BodySlide.xrc"
-_("Save Outfit list as group...");
-#line 473 "res/xrc/BodySlide.xrc"
-_("Save the current filtered outfit list as a group");
+_("Open settings dialog.");
+#line 467 "res/xrc/BodySlide.xrc"
+_("Settings");
 #line 476 "res/xrc/BodySlide.xrc"
-_("Refresh Outfits");
+_("Open Outfit Studio, a full-featured tool for creating and converting outfits.");
 #line 477 "res/xrc/BodySlide.xrc"
-_("Reloads outfit list");
-#line 480 "res/xrc/BodySlide.xrc"
-_("Regular Expressions");
-#line 481 "res/xrc/BodySlide.xrc"
-_("Allow the use of regular expressions (regex) for filtering.");
+_("Outfit Studio");
 #line 487 "res/xrc/BodySlide.xrc"
-_("Select None");
+_("Filter Options");
+#line 489 "res/xrc/BodySlide.xrc"
+_("Choose groups...");
 #line 490 "res/xrc/BodySlide.xrc"
-_("Select All");
+_("Choose groups to display in the Outfit menu");
 #line 493 "res/xrc/BodySlide.xrc"
+_("Refresh Groups");
+#line 494 "res/xrc/BodySlide.xrc"
+_("Refresh group information");
+#line 498 "res/xrc/BodySlide.xrc"
+_("Filter Options");
+#line 500 "res/xrc/BodySlide.xrc"
+_("Save Outfit list as group...");
+#line 501 "res/xrc/BodySlide.xrc"
+_("Save the current filtered outfit list as a group");
+#line 504 "res/xrc/BodySlide.xrc"
+_("Refresh Outfits");
+#line 505 "res/xrc/BodySlide.xrc"
+_("Reloads outfit list");
+#line 508 "res/xrc/BodySlide.xrc"
+_("Regular Expressions");
+#line 509 "res/xrc/BodySlide.xrc"
+_("Allow the use of regular expressions (regex) for filtering.");
+#line 515 "res/xrc/BodySlide.xrc"
+_("Select None");
+#line 518 "res/xrc/BodySlide.xrc"
+_("Select All");
+#line 521 "res/xrc/BodySlide.xrc"
 _("Invert Selection");
 #line 6 "res/xrc/ConvertBodyReference.xrc"
 _("Convert / Replace Body Reference");
@@ -1924,39 +1924,39 @@ _("Copy from shape...");
 _("Geometry");
 #line 471 "res/xrc/ShapeProperties.xrc"
 _("Full Precision");
-#line 489 "res/xrc/ShapeProperties.xrc"
+#line 490 "res/xrc/ShapeProperties.xrc"
 _("Sub Index");
-#line 507 "res/xrc/ShapeProperties.xrc"
+#line 509 "res/xrc/ShapeProperties.xrc"
 _("Skinned");
-#line 524 "res/xrc/ShapeProperties.xrc"
+#line 527 "res/xrc/ShapeProperties.xrc"
 _("Dynamic");
-#line 569 "res/xrc/ShapeProperties.xrc"
+#line 573 "res/xrc/ShapeProperties.xrc"
 _("Extra Data");
-#line 590 "res/xrc/ShapeProperties.xrc"
+#line 594 "res/xrc/ShapeProperties.xrc"
 _("Add");
-#line 599 "res/xrc/ShapeProperties.xrc"
+#line 603 "res/xrc/ShapeProperties.xrc"
 _("Type");
-#line 608 "res/xrc/ShapeProperties.xrc"
+#line 612 "res/xrc/ShapeProperties.xrc"
 _("Name");
-#line 617 "res/xrc/ShapeProperties.xrc"
+#line 621 "res/xrc/ShapeProperties.xrc"
 _("Value");
-#line 627 "res/xrc/ShapeProperties.xrc"
+#line 631 "res/xrc/ShapeProperties.xrc"
 _("Coordinates");
-#line 636 "res/xrc/ShapeProperties.xrc"
+#line 640 "res/xrc/ShapeProperties.xrc"
 _("Transform from shape to global coordinates:");
-#line 651 "res/xrc/ShapeProperties.xrc"
+#line 655 "res/xrc/ShapeProperties.xrc"
 _("Scale");
-#line 690 "res/xrc/ShapeProperties.xrc"
+#line 694 "res/xrc/ShapeProperties.xrc"
 _("Origin");
-#line 699 "res/xrc/ShapeProperties.xrc"
+#line 703 "res/xrc/ShapeProperties.xrc"
 _("Rotation");
-#line 785 "res/xrc/ShapeProperties.xrc"
+#line 789 "res/xrc/ShapeProperties.xrc"
 _("Recalculate geometry's coordinates so it doesn't move");
-#line 786 "res/xrc/ShapeProperties.xrc"
+#line 790 "res/xrc/ShapeProperties.xrc"
 _("Transform geometry so its position in global coordinates does not change.");
-#line 810 "res/xrc/ShapeProperties.xrc"
+#line 814 "res/xrc/ShapeProperties.xrc"
 _("&OK");
-#line 817 "res/xrc/ShapeProperties.xrc"
+#line 821 "res/xrc/ShapeProperties.xrc"
 _("&Cancel");
 #line 6 "res/xrc/Skeleton.xrc"
 _("Select a bone to add");

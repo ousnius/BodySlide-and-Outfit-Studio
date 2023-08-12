@@ -16,7 +16,7 @@ msgstr ""
 "X-Poedit-SearchPath-0: src\n"
 "X-Poedit-SearchPath-1: lang/xrctext.cpp\n"
 
-#: res/xrc/About.xrc:5 res/xrc/BodySlide.xrc:429
+#: res/xrc/About.xrc:5 res/xrc/BodySlide.xrc:457
 msgid "About"
 msgstr ""
 
@@ -38,7 +38,7 @@ msgstr ""
 #: res/xrc/EditUV.xrc:32 res/xrc/EditUV.xrc:244 res/xrc/EditUV.xrc:319
 #: res/xrc/EditUV.xrc:440 res/xrc/ImportDialog.xrc:174 res/xrc/Project.xrc:753
 #: res/xrc/Project.xrc:930 res/xrc/Settings.xrc:458
-#: res/xrc/ShapeProperties.xrc:810 res/xrc/Skeleton.xrc:36
+#: res/xrc/ShapeProperties.xrc:814 res/xrc/Skeleton.xrc:36
 #: res/xrc/Skeleton.xrc:232 res/xrc/Slider.xrc:64 res/xrc/Slider.xrc:238
 #: res/xrc/SliderDataImport.xrc:90
 msgid "&OK"
@@ -51,7 +51,7 @@ msgstr ""
 #: res/xrc/EditUV.xrc:251 res/xrc/EditUV.xrc:326 res/xrc/EditUV.xrc:447
 #: res/xrc/ImportDialog.xrc:181 res/xrc/Project.xrc:550 res/xrc/Project.xrc:760
 #: res/xrc/Project.xrc:937 res/xrc/SavePreset.xrc:85 res/xrc/Settings.xrc:465
-#: res/xrc/Setup.xrc:273 res/xrc/ShapeProperties.xrc:817
+#: res/xrc/Setup.xrc:273 res/xrc/ShapeProperties.xrc:821
 #: res/xrc/Skeleton.xrc:43 res/xrc/Skeleton.xrc:239 res/xrc/Slider.xrc:71
 #: res/xrc/Slider.xrc:246 res/xrc/SliderDataImport.xrc:97
 msgid "&Cancel"
@@ -74,7 +74,7 @@ msgid "Scaling will adjust the size of a mesh. This permanently affects vertices
 msgstr ""
 
 #: res/xrc/Actions.xrc:461 res/xrc/Actions.xrc:667
-#: res/xrc/ShapeProperties.xrc:690 res/xrc/Skeleton.xrc:133
+#: res/xrc/ShapeProperties.xrc:694 res/xrc/Skeleton.xrc:133
 msgid "Origin"
 msgstr ""
 
@@ -127,11 +127,11 @@ msgstr ""
 msgid "Copy skin transform from reference"
 msgstr ""
 
-#: res/xrc/Actions.xrc:876 res/xrc/ShapeProperties.xrc:785
+#: res/xrc/Actions.xrc:876 res/xrc/ShapeProperties.xrc:789
 msgid "Recalculate geometry's coordinates so it doesn't move"
 msgstr ""
 
-#: res/xrc/Actions.xrc:877 res/xrc/ShapeProperties.xrc:786
+#: res/xrc/Actions.xrc:877 res/xrc/ShapeProperties.xrc:790
 msgid "Transform geometry so its position in global coordinates does not change."
 msgstr ""
 
@@ -214,7 +214,7 @@ msgstr ""
 
 #: res/xrc/Actions.xrc:1406 res/xrc/OutfitStudio.xrc:793
 #: res/xrc/OutfitStudio.xrc:1057 res/xrc/ShapeProperties.xrc:84
-#: res/xrc/ShapeProperties.xrc:599
+#: res/xrc/ShapeProperties.xrc:603
 msgid "Type"
 msgstr ""
 
@@ -259,7 +259,7 @@ msgstr ""
 msgid "&Build"
 msgstr ""
 
-#: res/xrc/BatchBuild.xrc:67 src/program/BodySlideApp.cpp:2333
+#: res/xrc/BatchBuild.xrc:67 src/program/BodySlideApp.cpp:2348
 msgid "Choose output set"
 msgstr ""
 
@@ -328,35 +328,35 @@ msgstr ""
 msgid "Group Manager"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:190
+#: res/xrc/BodySlide.xrc:218
 msgid "Single Weight"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:217
+#: res/xrc/BodySlide.xrc:245
 msgid "Low Weight"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:234
+#: res/xrc/BodySlide.xrc:262
 msgid "High Weight"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:275
+#: res/xrc/BodySlide.xrc:303
 msgid "Copy the low weight slider values to the high weight section."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:292
+#: res/xrc/BodySlide.xrc:320
 msgid "Default outfit choice in Batch Build"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:303
+#: res/xrc/BodySlide.xrc:331
 msgid "Output Path (which the game would use for this outfit)"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:315
+#: res/xrc/BodySlide.xrc:343
 msgid "(right-click to view alternatives)"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:335
+#: res/xrc/BodySlide.xrc:363
 msgid ""
 "Build multiple outfits using the currently active slider values.\n"
 "\n"
@@ -364,36 +364,36 @@ msgid ""
 "Hold ALT = Delete from output directory"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:336
+#: res/xrc/BodySlide.xrc:364
 msgid "Batch Build..."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:351
+#: res/xrc/BodySlide.xrc:379
 msgid "Build Morphs"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:352
+#: res/xrc/BodySlide.xrc:380
 msgid "Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires other mods to make use of the morph data."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:362
+#: res/xrc/BodySlide.xrc:390
 msgid "Force Body Normals"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:363
+#: res/xrc/BodySlide.xrc:391
 msgid "Adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:379
+#: res/xrc/BodySlide.xrc:407
 msgid "Show a preview window for this outfit."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:380 res/xrc/NormalsGenDlg.xrc:166
+#: res/xrc/BodySlide.xrc:408 res/xrc/NormalsGenDlg.xrc:166
 #: src/program/PreviewWindow.cpp:27
 msgid "Preview"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:398
+#: res/xrc/BodySlide.xrc:426
 msgid ""
 "Creates the currently selected outfit/body.\n"
 "\n"
@@ -401,86 +401,86 @@ msgid ""
 "Hold ALT = Delete from output directory"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:399
+#: res/xrc/BodySlide.xrc:427
 msgid "Build"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:411
+#: res/xrc/BodySlide.xrc:439
 msgid "Copy the high weight slider values to the low weight section."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:438 res/xrc/OutfitStudio.xrc:1755
+#: res/xrc/BodySlide.xrc:466 res/xrc/OutfitStudio.xrc:1755
 msgid "Open settings dialog."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:439 res/xrc/OutfitStudio.xrc:1754
+#: res/xrc/BodySlide.xrc:467 res/xrc/OutfitStudio.xrc:1754
 #: res/xrc/Settings.xrc:5
 msgid "Settings"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:448
+#: res/xrc/BodySlide.xrc:476
 msgid "Open Outfit Studio, a full-featured tool for creating and converting outfits."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:449 res/xrc/OutfitStudio.xrc:7
+#: res/xrc/BodySlide.xrc:477 res/xrc/OutfitStudio.xrc:7
 msgid "Outfit Studio"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:459 res/xrc/BodySlide.xrc:470
+#: res/xrc/BodySlide.xrc:487 res/xrc/BodySlide.xrc:498
 msgid "Filter Options"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:461
+#: res/xrc/BodySlide.xrc:489
 msgid "Choose groups..."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:462
+#: res/xrc/BodySlide.xrc:490
 msgid "Choose groups to display in the Outfit menu"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:465
+#: res/xrc/BodySlide.xrc:493
 msgid "Refresh Groups"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:466
+#: res/xrc/BodySlide.xrc:494
 msgid "Refresh group information"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:472
+#: res/xrc/BodySlide.xrc:500
 msgid "Save Outfit list as group..."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:473
+#: res/xrc/BodySlide.xrc:501
 msgid "Save the current filtered outfit list as a group"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:476
+#: res/xrc/BodySlide.xrc:504
 msgid "Refresh Outfits"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:477
+#: res/xrc/BodySlide.xrc:505
 msgid "Reloads outfit list"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:480
+#: res/xrc/BodySlide.xrc:508
 msgid "Regular Expressions"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:481
+#: res/xrc/BodySlide.xrc:509
 msgid "Allow the use of regular expressions (regex) for filtering."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:487 res/xrc/Project.xrc:1076
+#: res/xrc/BodySlide.xrc:515 res/xrc/Project.xrc:1076
 #: res/xrc/SliderDataImport.xrc:106
 msgid "Select None"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:490 res/xrc/EditUV.xrc:110 res/xrc/Project.xrc:1079
+#: res/xrc/BodySlide.xrc:518 res/xrc/EditUV.xrc:110 res/xrc/Project.xrc:1079
 #: res/xrc/SliderDataImport.xrc:109
 msgid "Select All"
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:493 res/xrc/EditUV.xrc:114 res/xrc/Project.xrc:1082
+#: res/xrc/BodySlide.xrc:521 res/xrc/EditUV.xrc:114 res/xrc/Project.xrc:1082
 #: res/xrc/SliderDataImport.xrc:112
 msgid "Invert Selection"
 msgstr ""
@@ -622,7 +622,7 @@ msgid ""
 msgstr ""
 
 #: res/xrc/EditUV.xrc:74 res/xrc/EditUV.xrc:336 res/xrc/ImportDialog.xrc:71
-#: res/xrc/OutfitStudio.xrc:1559 res/xrc/ShapeProperties.xrc:651
+#: res/xrc/OutfitStudio.xrc:1559 res/xrc/ShapeProperties.xrc:655
 #: src/program/NormalsGenDialog.cpp:300
 msgid "Scale"
 msgstr ""
@@ -1257,7 +1257,7 @@ msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:635 res/xrc/OutfitStudio.xrc:1039
 #: res/xrc/OutfitStudio.xrc:1140 src/program/OutfitStudio.cpp:6368
-#: src/program/OutfitStudio.cpp:10654
+#: src/program/OutfitStudio.cpp:10658
 msgid "Reset"
 msgstr ""
 
@@ -2279,7 +2279,7 @@ msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:2465 res/xrc/OutfitStudio.xrc:2498
 #: res/xrc/ShapeProperties.xrc:263 res/xrc/ShapeProperties.xrc:421
-#: res/xrc/ShapeProperties.xrc:590
+#: res/xrc/ShapeProperties.xrc:594
 msgid "Add"
 msgstr ""
 
@@ -2609,7 +2609,8 @@ msgstr ""
 
 #: res/xrc/Project.xrc:1067 src/program/OutfitStudio.cpp:3733
 #: src/program/OutfitStudio.cpp:6368 src/program/OutfitStudio.cpp:7228
-#: src/program/OutfitStudio.cpp:7338 src/program/OutfitStudio.cpp:10654
+#: src/program/OutfitStudio.cpp:7338 src/program/OutfitStudio.cpp:10658
+#: src/program/ShapeProperties.cpp:134
 msgid "Cancel"
 msgstr ""
 
@@ -2821,7 +2822,7 @@ msgstr ""
 msgid "Shader"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:31 res/xrc/ShapeProperties.xrc:608
+#: res/xrc/ShapeProperties.xrc:31 res/xrc/ShapeProperties.xrc:612
 #: res/xrc/Skeleton.xrc:68
 msgid "Name"
 msgstr ""
@@ -2894,35 +2895,35 @@ msgstr ""
 msgid "Full Precision"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:489
+#: res/xrc/ShapeProperties.xrc:490
 msgid "Sub Index"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:507
+#: res/xrc/ShapeProperties.xrc:509
 msgid "Skinned"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:524
+#: res/xrc/ShapeProperties.xrc:527
 msgid "Dynamic"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:569
+#: res/xrc/ShapeProperties.xrc:573
 msgid "Extra Data"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:617
+#: res/xrc/ShapeProperties.xrc:621
 msgid "Value"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:627
+#: res/xrc/ShapeProperties.xrc:631
 msgid "Coordinates"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:636
+#: res/xrc/ShapeProperties.xrc:640
 msgid "Transform from shape to global coordinates:"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:699 res/xrc/Skeleton.xrc:142
+#: res/xrc/ShapeProperties.xrc:703 res/xrc/Skeleton.xrc:142
 msgid "Rotation"
 msgstr ""
 
@@ -3028,60 +3029,60 @@ msgstr ""
 msgid "Root '%s' not found in skeleton '%s'!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:184 src/program/OutfitStudio.cpp:417
+#: src/program/BodySlideApp.cpp:186 src/program/OutfitStudio.cpp:417
 msgid ""
 "No read/write permission for game data path!\n"
 "\n"
 "Please launch the program with admin elevation and make sure the game data path in the settings is correct."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:185 src/program/BodySlideApp.cpp:195
-#: src/program/BodySlideApp.cpp:1483 src/program/OutfitStudio.cpp:418
+#: src/program/BodySlideApp.cpp:187 src/program/BodySlideApp.cpp:197
+#: src/program/BodySlideApp.cpp:1498 src/program/OutfitStudio.cpp:418
 #: src/program/OutfitStudio.cpp:428 src/program/OutfitStudio.cpp:653
 #: src/program/OutfitStudio.cpp:660
 msgid "Warning"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:194 src/program/OutfitStudio.cpp:427
+#: src/program/BodySlideApp.cpp:196 src/program/OutfitStudio.cpp:427
 msgid ""
 "No read/write permission for project path!\n"
 "\n"
 "Please launch the program with admin elevation and make sure the project path in the settings is correct."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:267 src/program/OutfitStudio.cpp:514
+#: src/program/BodySlideApp.cpp:269 src/program/OutfitStudio.cpp:514
 #, c-format
 msgid "Unexpected exception has occurred: %s, the program will terminate."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:267 src/program/OutfitStudio.cpp:514
+#: src/program/BodySlideApp.cpp:269 src/program/OutfitStudio.cpp:514
 msgid "Unexpected exception"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:290 src/program/OutfitStudio.cpp:534
+#: src/program/BodySlideApp.cpp:292 src/program/OutfitStudio.cpp:534
 #, c-format
 msgid "Unhandled exception has occurred: %s, the program will terminate."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:290 src/program/OutfitStudio.cpp:534
+#: src/program/BodySlideApp.cpp:292 src/program/OutfitStudio.cpp:534
 msgid "Unhandled exception"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:301 src/program/OutfitStudio.cpp:542
+#: src/program/BodySlideApp.cpp:303 src/program/OutfitStudio.cpp:542
 msgid "Fatal exception has occurred, the program will terminate."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:301 src/program/OutfitStudio.cpp:542
+#: src/program/BodySlideApp.cpp:303 src/program/OutfitStudio.cpp:542
 msgid "Fatal exception"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:969
+#: src/program/BodySlideApp.cpp:979
 msgid "Failed to launch Outfit Studio executable!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:969 src/program/BodySlideApp.cpp:1504
-#: src/program/BodySlideApp.cpp:1798 src/program/BodySlideApp.cpp:2868
-#: src/program/BodySlideApp.cpp:2875 src/program/BodySlideApp.cpp:3612
+#: src/program/BodySlideApp.cpp:979 src/program/BodySlideApp.cpp:1519
+#: src/program/BodySlideApp.cpp:1813 src/program/BodySlideApp.cpp:2883
+#: src/program/BodySlideApp.cpp:2890 src/program/BodySlideApp.cpp:3676
 #: src/program/OutfitStudio.cpp:976 src/program/OutfitStudio.cpp:982
 #: src/program/OutfitStudio.cpp:1474 src/program/OutfitStudio.cpp:1485
 #: src/program/OutfitStudio.cpp:1521 src/program/OutfitStudio.cpp:1532
@@ -3142,77 +3143,77 @@ msgstr ""
 #: src/program/OutfitStudio.cpp:9808 src/program/OutfitStudio.cpp:9859
 #: src/program/OutfitStudio.cpp:9864 src/program/OutfitStudio.cpp:9898
 #: src/program/OutfitStudio.cpp:10110 src/program/OutfitStudio.cpp:10160
-#: src/program/OutfitStudio.cpp:10267 src/program/OutfitStudio.cpp:10410
-#: src/program/OutfitStudio.cpp:11777 src/program/OutfitStudio.cpp:12097
-#: src/program/OutfitStudio.cpp:12134 src/program/OutfitStudio.cpp:12139
-#: src/program/OutfitStudio.cpp:12151 src/program/OutfitStudio.cpp:13472
+#: src/program/OutfitStudio.cpp:10267 src/program/OutfitStudio.cpp:10414
+#: src/program/OutfitStudio.cpp:11781 src/program/OutfitStudio.cpp:12101
+#: src/program/OutfitStudio.cpp:12138 src/program/OutfitStudio.cpp:12143
+#: src/program/OutfitStudio.cpp:12155 src/program/OutfitStudio.cpp:13476
 msgid "Error"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1483 src/program/OutfitStudio.cpp:660
+#: src/program/BodySlideApp.cpp:1498 src/program/OutfitStudio.cpp:660
 msgid "Failed to find game install path registry key or GameDataPath in the config."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1711 src/program/OutfitStudio.cpp:888
+#: src/program/BodySlideApp.cpp:1726 src/program/OutfitStudio.cpp:888
 #, c-format
 msgid "System language '%d' is wrong."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1720 src/program/OutfitStudio.cpp:897
+#: src/program/BodySlideApp.cpp:1735 src/program/OutfitStudio.cpp:897
 #, c-format
 msgid "The system language '%d' is not supported by your system. Try installing support for this language."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1798
+#: src/program/BodySlideApp.cpp:1813
 msgid "Failed to create group file."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1812
+#: src/program/BodySlideApp.cpp:1827
 msgid "That group already exists in the specified file, do you wish to overwrite the group?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1812
+#: src/program/BodySlideApp.cpp:1827
 msgid "Group already exists"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1969
+#: src/program/BodySlideApp.cpp:1984
 msgid "WARNING: Game data path not configured. Would you like to show BodySlide where it is?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1970 src/program/BodySlideApp.cpp:2271
-#: src/program/BodySlideApp.cpp:2276
+#: src/program/BodySlideApp.cpp:1985 src/program/BodySlideApp.cpp:2286
+#: src/program/BodySlideApp.cpp:2291
 msgid "Game not found"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1978
+#: src/program/BodySlideApp.cpp:1993
 msgid "Please choose a directory to set as your Data path"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1996
+#: src/program/BodySlideApp.cpp:2011
 msgid ""
 "WARNING: This will delete the output files from the output folder, potentially causing crashes.\n"
 "\n"
 "Do you want to continue?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1997
+#: src/program/BodySlideApp.cpp:2012
 msgid "Clean Build"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2005
+#: src/program/BodySlideApp.cpp:2020
 msgid "Removed the following files:\n"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2017 src/program/BodySlideApp.cpp:2030
+#: src/program/BodySlideApp.cpp:2032 src/program/BodySlideApp.cpp:2045
 msgid " (no action)\n"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2021 src/program/BodySlideApp.cpp:2033
-#: src/program/BodySlideApp.cpp:2242
+#: src/program/BodySlideApp.cpp:2036 src/program/BodySlideApp.cpp:2048
+#: src/program/BodySlideApp.cpp:2257
 msgid "Process Successful"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2129
+#: src/program/BodySlideApp.cpp:2144
 #, c-format
 msgid ""
 "Failed to write TRI file to the following location\n"
@@ -3220,12 +3221,12 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2129 src/program/BodySlideApp.cpp:2185
-#: src/program/BodySlideApp.cpp:2220
+#: src/program/BodySlideApp.cpp:2144 src/program/BodySlideApp.cpp:2200
+#: src/program/BodySlideApp.cpp:2235
 msgid "Unable to process"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2185 src/program/BodySlideApp.cpp:2220
+#: src/program/BodySlideApp.cpp:2200 src/program/BodySlideApp.cpp:2235
 #, c-format
 msgid ""
 "Failed to build set to the following location\n"
@@ -3233,158 +3234,154 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2187 src/program/BodySlideApp.cpp:2222
+#: src/program/BodySlideApp.cpp:2202 src/program/BodySlideApp.cpp:2237
 msgid "Choose alternate file name"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2234
+#: src/program/BodySlideApp.cpp:2249
 msgid "Successfully processed the following files:\n"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2256
+#: src/program/BodySlideApp.cpp:2271
 msgid ""
 "WARNING: This will delete the output files from the output folders, potentially causing crashes.\n"
 "\n"
 "Do you want to continue?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2257
+#: src/program/BodySlideApp.cpp:2272
 msgid "Clean Batch Build"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2271
+#: src/program/BodySlideApp.cpp:2286
 msgid "WARNING: Game data path not configured. Files can't be removed that way."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2275
+#: src/program/BodySlideApp.cpp:2290
 msgid "WARNING: Game data path not configured. Continue saving files to the working directory?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2404
+#: src/program/BodySlideApp.cpp:2419
 msgid "Processing Outfits"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2404 src/program/OutfitStudio.h:1052
+#: src/program/BodySlideApp.cpp:2419 src/program/OutfitStudio.h:1052
 msgid "Starting..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2416
+#: src/program/BodySlideApp.cpp:2431
 #, c-format
 msgid "Processing '%s' (%d of %d)..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2424
+#: src/program/BodySlideApp.cpp:2439
 msgid "No recorded outfit name source"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2435
+#: src/program/BodySlideApp.cpp:2450
 msgid "Unable to get slider set from file: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2440
+#: src/program/BodySlideApp.cpp:2455
 msgid "Unable to open slider set file: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2475
+#: src/program/BodySlideApp.cpp:2490
 msgid "Unable to load input nif: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2636
+#: src/program/BodySlideApp.cpp:2651
 msgid "Unable to create destination directory: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2703 src/program/BodySlideApp.cpp:2711
-#: src/program/BodySlideApp.cpp:2722
+#: src/program/BodySlideApp.cpp:2718 src/program/BodySlideApp.cpp:2726
+#: src/program/BodySlideApp.cpp:2737
 msgid "Unable to save nif file: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2796 src/program/BodySlideApp.cpp:3851
+#: src/program/BodySlideApp.cpp:2811 src/program/BodySlideApp.cpp:3915
 msgid "The following sets failed"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2796 src/program/BodySlideApp.cpp:3851
+#: src/program/BodySlideApp.cpp:2811 src/program/BodySlideApp.cpp:3915
 msgid "Failed"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2868
+#: src/program/BodySlideApp.cpp:2883
 msgid "Failed to load BodySlide.xrc file!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2875
+#: src/program/BodySlideApp.cpp:2890
 msgid "Failed to load BodySlide frame!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2908
-msgid "Group Filter"
+#: src/program/BodySlideApp.cpp:2923
+msgid "Filter groups..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2909
-msgid "Filter by group"
+#: src/program/BodySlideApp.cpp:2929
+msgid "Filter outfits..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2915
-msgid "Outfit Filter"
+#: src/program/BodySlideApp.cpp:2935
+msgid "Filter sliders..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2916
-msgid "Filter by outfit"
-msgstr ""
-
-#: src/program/BodySlideApp.cpp:3508
+#: src/program/BodySlideApp.cpp:3572
 msgid "Choose groups to filter outfit list"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3508
+#: src/program/BodySlideApp.cpp:3572
 msgid "Choose Groups"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3527
+#: src/program/BodySlideApp.cpp:3591
 msgid "Choose or create group file"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3540
+#: src/program/BodySlideApp.cpp:3604
 msgid "What would you like the new group to be called?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3540
+#: src/program/BodySlideApp.cpp:3604
 msgid "New Group Name"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3581
+#: src/program/BodySlideApp.cpp:3645
 msgid "Do you really wish to delete the selected project?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3581
+#: src/program/BodySlideApp.cpp:3645
 msgid "Delete Project"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3590
+#: src/program/BodySlideApp.cpp:3654
 msgid "Do you really wish to delete the selected preset?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3590
+#: src/program/BodySlideApp.cpp:3654
 msgid "Delete Preset"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3612 src/program/OutfitStudio.cpp:7097
+#: src/program/BodySlideApp.cpp:3676 src/program/OutfitStudio.cpp:7097
 #, c-format
 msgid "Failed to save preset (%d)!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3640
+#: src/program/BodySlideApp.cpp:3704
 #, c-format
 msgid "Failed to save preset as '%s' (%d)!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3826
+#: src/program/BodySlideApp.cpp:3890
 msgid "Choose a folder to contain the saved files"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3841
+#: src/program/BodySlideApp.cpp:3905
 msgid "All sets processed successfully!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3841
+#: src/program/BodySlideApp.cpp:3905
 msgid "Complete"
 msgstr ""
 
@@ -3437,23 +3434,23 @@ msgstr ""
 msgid "Conversion finished."
 msgstr ""
 
-#: src/program/EditUV.cpp:497 src/program/OutfitStudio.cpp:10898
+#: src/program/EditUV.cpp:499 src/program/OutfitStudio.cpp:10902
 msgid "Outfit Studio: OpenGL context is not OK."
 msgstr ""
 
-#: src/program/EditUV.cpp:497 src/program/OutfitStudio.cpp:10898
+#: src/program/EditUV.cpp:499 src/program/OutfitStudio.cpp:10902
 #: src/program/PreviewWindow.cpp:66 src/render/GLDialog.cpp:34
 #: src/render/GLSurface.cpp:2116 src/render/GLSurface.cpp:2133
 msgid "OpenGL Error"
 msgstr ""
 
 #: src/program/FBXImportDialog.cpp:158 src/program/ObjImportDialog.cpp:165
-#: src/program/OutfitStudio.cpp:9026 src/program/OutfitStudio.cpp:12134
+#: src/program/OutfitStudio.cpp:9026 src/program/OutfitStudio.cpp:12138
 msgid "The shape has reached the vertex count limit."
 msgstr ""
 
 #: src/program/FBXImportDialog.cpp:162 src/program/ObjImportDialog.cpp:169
-#: src/program/OutfitStudio.cpp:9031 src/program/OutfitStudio.cpp:12139
+#: src/program/OutfitStudio.cpp:9031 src/program/OutfitStudio.cpp:12143
 msgid "The shape has reached the triangle count limit."
 msgstr ""
 
@@ -3913,23 +3910,23 @@ msgid "Fix nothing"
 msgstr ""
 
 #: src/program/OutfitStudio.cpp:443 src/program/OutfitStudio.cpp:444
-#: src/program/OutfitStudio.cpp:13417 src/program/OutfitStudio.cpp:13418
+#: src/program/OutfitStudio.cpp:13421 src/program/OutfitStudio.cpp:13422
 msgid "Adding NIF file..."
 msgstr ""
 
 #: src/program/OutfitStudio.cpp:448 src/program/OutfitStudio.cpp:459
 #: src/program/OutfitStudio.cpp:470 src/program/OutfitStudio.cpp:4214
-#: src/program/OutfitStudio.cpp:13422 src/program/OutfitStudio.cpp:13433
-#: src/program/OutfitStudio.cpp:13444
+#: src/program/OutfitStudio.cpp:13426 src/program/OutfitStudio.cpp:13437
+#: src/program/OutfitStudio.cpp:13448
 msgid "Refreshing GUI..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:455 src/program/OutfitStudio.cpp:13429
+#: src/program/OutfitStudio.cpp:455 src/program/OutfitStudio.cpp:13433
 msgid "Adding OBJ file..."
 msgstr ""
 
 #: src/program/OutfitStudio.cpp:465 src/program/OutfitStudio.cpp:466
-#: src/program/OutfitStudio.cpp:13439 src/program/OutfitStudio.cpp:13440
+#: src/program/OutfitStudio.cpp:13443 src/program/OutfitStudio.cpp:13444
 msgid "Adding FBX file..."
 msgstr ""
 
@@ -4267,7 +4264,7 @@ msgstr ""
 #: src/program/OutfitStudio.cpp:9763 src/program/OutfitStudio.cpp:9808
 #: src/program/OutfitStudio.cpp:9859 src/program/OutfitStudio.cpp:10110
 #: src/program/OutfitStudio.cpp:10160 src/program/OutfitStudio.cpp:10267
-#: src/program/OutfitStudio.cpp:10410 src/program/OutfitStudio.cpp:13472
+#: src/program/OutfitStudio.cpp:10414 src/program/OutfitStudio.cpp:13476
 msgid "There is no shape selected!"
 msgstr ""
 
@@ -4779,68 +4776,68 @@ msgstr ""
 msgid "%d unreferenced nodes were deleted."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10468
+#: src/program/OutfitStudio.cpp:10472
 msgid "Please enter a new unique name for the mask."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10468
+#: src/program/OutfitStudio.cpp:10472
 msgid "New Mask"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10653
+#: src/program/OutfitStudio.cpp:10657
 msgid "Reset all bone poses?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10653
+#: src/program/OutfitStudio.cpp:10657
 msgid "Reset Pose"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10804
+#: src/program/OutfitStudio.cpp:10808
 msgid "Please enter a new unique name for the pose."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10804
+#: src/program/OutfitStudio.cpp:10808
 msgid "New Pose"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10855
+#: src/program/OutfitStudio.cpp:10859
 #, c-format
 msgid "Are you sure you wish to delete the pose '%s'?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10856
+#: src/program/OutfitStudio.cpp:10860
 msgid "Confirm pose delete"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11777
+#: src/program/OutfitStudio.cpp:11781
 msgid "The vertex picked has more than three connections."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12012
+#: src/program/OutfitStudio.cpp:12016
 msgid "Neither the selected nor target vertices are on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12013
+#: src/program/OutfitStudio.cpp:12017
 msgid "The selected vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12014
+#: src/program/OutfitStudio.cpp:12018
 msgid "The target vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12015
+#: src/program/OutfitStudio.cpp:12019
 msgid "Weld/Merge Non-Boundary Vertices"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12097
+#: src/program/OutfitStudio.cpp:12101
 msgid "The edge picked is on the surface boundary.  Pick an interior edge."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12151
+#: src/program/OutfitStudio.cpp:12155
 msgid "The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:13483 src/program/OutfitStudio.cpp:13484
+#: src/program/OutfitStudio.cpp:13487 src/program/OutfitStudio.cpp:13488
 msgid "Loading slider file..."
 msgstr ""
 
@@ -4852,19 +4849,41 @@ msgstr ""
 msgid "Preview failed: OpenGL context is not OK."
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:96
+#: src/program/ShapeProperties.cpp:103
 msgid "Material"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:266
+#: src/program/ShapeProperties.cpp:116
+#, c-format
+msgid "%zu shapes selected"
+msgstr ""
+
+#: src/program/ShapeProperties.cpp:131
+#, c-format
+msgid "This action will affect all %zu selected shapes. Are you sure?"
+msgstr ""
+
+#: src/program/ShapeProperties.cpp:132
+msgid "Confirmation"
+msgstr ""
+
+#: src/program/ShapeProperties.cpp:134
+msgid "Yes"
+msgstr ""
+
+#: src/program/ShapeProperties.cpp:134
+msgid "No"
+msgstr ""
+
+#: src/program/ShapeProperties.cpp:346
 msgid "Choose material file"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:512
+#: src/program/ShapeProperties.cpp:656
 msgid "Please choose a shape to copy from"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:512
+#: src/program/ShapeProperties.cpp:656
 msgid "Choose shape"
 msgstr ""
 
