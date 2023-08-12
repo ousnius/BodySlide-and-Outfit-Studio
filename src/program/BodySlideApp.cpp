@@ -56,6 +56,8 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_TEXT_ENTER(wxID_ANY, BodySlideFrame::OnSliderReadoutChange)
 	EVT_TEXT(XRCID("searchHolder"), BodySlideFrame::OnSearchChange)
 	EVT_TEXT(XRCID("outfitsearchHolder"), BodySlideFrame::OnOutfitSearchChange)
+	EVT_TEXT_ENTER(XRCID("sliderFilter"), BodySlideFrame::OnSliderFilterChanged)
+	EVT_TEXT(XRCID("sliderFilter"), BodySlideFrame::OnSliderFilterChanged)
 	EVT_TIMER(DELAYLOAD_TIMER, BodySlideFrame::OnDelayLoad)
 	EVT_CHOICE(XRCID("outfitChoice"), BodySlideFrame::OnChooseOutfit)
 	EVT_CHOICE(XRCID("presetChoice"), BodySlideFrame::OnChoosePreset)
@@ -395,68 +397,76 @@ void BodySlideApp::CharHook(wxKeyEvent& event) {
 	}
 
 	wxString nm = w->GetName();
+	int keyCode = event.GetKeyCode();
 
 	if (event.ControlDown()) {
-		switch (event.GetKeyCode()) {
-			case (int)'A':
+		if (event.ShiftDown()) {
+			if (keyCode == (int)'A') {
 				if (sliderView) {
 					if (sliderView->outfitsearch)
 						sliderView->outfitsearch->Clear();
 
 					if (sliderView->search)
 						sliderView->search->Clear();
-				}
-				return;
 
-			case wxKeyCode::WXK_PAGEUP:
-				if (sliderView->outfitChoice) {
-					int curSel = sliderView->outfitChoice->GetSelection();
-					if (curSel > 0) {
-						sliderView->outfitChoice->SetSelection(curSel - 1);
-						ActivateOutfit(sliderView->outfitChoice->GetStringSelection().ToUTF8().data());
-					}
+					if (sliderView->sliderFilter)
+						sliderView->sliderFilter->Clear();
 				}
 				return;
+			}
+		}
 
-			case wxKeyCode::WXK_PAGEDOWN:
-				if (sliderView->outfitChoice) {
-					int curSel = sliderView->outfitChoice->GetSelection();
-					int curCount = sliderView->outfitChoice->GetCount();
-					if (curCount > 0 && curSel < curCount - 1) {
-						sliderView->outfitChoice->Select(curSel + 1);
-						ActivateOutfit(sliderView->outfitChoice->GetStringSelection().ToUTF8().data());
-					}
+		if (keyCode == wxKeyCode::WXK_PAGEUP) {
+			if (sliderView->outfitChoice) {
+				int curSel = sliderView->outfitChoice->GetSelection();
+				if (curSel > 0) {
+					sliderView->outfitChoice->SetSelection(curSel - 1);
+					ActivateOutfit(sliderView->outfitChoice->GetStringSelection().ToUTF8().data());
 				}
-				return;
+			}
+			return;
+		}
+
+		if (keyCode == wxKeyCode::WXK_PAGEDOWN) {
+			if (sliderView->outfitChoice) {
+				int curSel = sliderView->outfitChoice->GetSelection();
+				int curCount = sliderView->outfitChoice->GetCount();
+				if (curCount > 0 && curSel < curCount - 1) {
+					sliderView->outfitChoice->Select(curSel + 1);
+					ActivateOutfit(sliderView->outfitChoice->GetStringSelection().ToUTF8().data());
+				}
+			}
+			return;
 		}
 	}
 	else {
-		switch (event.GetKeyCode()) {
-			case wxKeyCode::WXK_F5:
-				if (nm == "outfitChoice")
-					RefreshOutfitList();
-				return;
+		if (keyCode == wxKeyCode::WXK_F5) {
+			if (nm == "outfitChoice")
+				RefreshOutfitList();
+			return;
+		}
 
-			case wxKeyCode::WXK_PAGEUP:
-				if (sliderView->presetChoice) {
-					int curSel = sliderView->presetChoice->GetSelection();
-					if (curSel > 0) {
-						sliderView->presetChoice->SetSelection(curSel - 1);
-						ActivatePreset(sliderView->presetChoice->GetStringSelection().ToUTF8().data());
-					}
+		if (keyCode == wxKeyCode::WXK_PAGEUP) {
+			if (sliderView->presetChoice) {
+				int curSel = sliderView->presetChoice->GetSelection();
+				if (curSel > 0) {
+					sliderView->presetChoice->SetSelection(curSel - 1);
+					ActivatePreset(sliderView->presetChoice->GetStringSelection().ToUTF8().data());
 				}
-				return;
+			}
+			return;
+		}
 
-			case wxKeyCode::WXK_PAGEDOWN:
-				if (sliderView->presetChoice) {
-					int curSel = sliderView->presetChoice->GetSelection();
-					int curCount = sliderView->presetChoice->GetCount();
-					if (curCount > 0 && curSel < curCount - 1) {
-						sliderView->presetChoice->Select(curSel + 1);
-						ActivatePreset(sliderView->presetChoice->GetStringSelection().ToUTF8().data());
-					}
+		if (keyCode == wxKeyCode::WXK_PAGEDOWN) {
+			if (sliderView->presetChoice) {
+				int curSel = sliderView->presetChoice->GetSelection();
+				int curCount = sliderView->presetChoice->GetCount();
+				if (curCount > 0 && curSel < curCount - 1) {
+					sliderView->presetChoice->Select(curSel + 1);
+					ActivatePreset(sliderView->presetChoice->GetStringSelection().ToUTF8().data());
 				}
-				return;
+			}
+			return;
 		}
 	}
 
@@ -768,14 +778,6 @@ void BodySlideApp::DisplayActiveSet() {
 			continue;
 	}
 
-	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)sliderView->FindWindowByName("SliderScrollWindow", sliderView);
-	if (!scrollWindow)
-		return;
-
-	wxSizer* sliderLayout = scrollWindow->GetSizer();
-	if (!sliderLayout)
-		return;
-
 	// Loop slider set
 	std::vector<std::vector<int>> catSliders;
 	for (size_t i = 0; i < activeSet.size(); i++) {
@@ -797,34 +799,34 @@ void BodySlideApp::DisplayActiveSet() {
 
 		// Not in a category
 		if (regularSlider)
-			sliderView->AddSliderGUI(scrollWindow, sliderLayout, activeSet[i].name, activeSet[i].name, activeSet[i].bZap, !activeSet.GenWeights());
+			sliderView->AddSliderGUI(activeSet[i].name, activeSet[i].name, "", activeSet[i].bZap, !activeSet.GenWeights());
 	}
 
 	// Create category UI
 	size_t iter = 0;
 	if (catSliders.size() > 0) {
 		for (auto& cat : sliderCategories) {
-			std::string name = std::get<0>(cat);
+			std::string categoryName = std::get<0>(cat);
+			std::vector<std::string> sliderNames = std::get<1>(cat);
 			bool show = std::get<2>(cat);
 			std::string displayName;
 
 			if (catSliders.size() > iter && catSliders[iter].size() > 0) {
-				sliderView->AddCategorySliderUI(name, show, !activeSet.GenWeights());
-				if (show) {
-					for (auto& s : catSliders[iter]) {
-						displayName = cCollection.GetSliderDisplayName(name, activeSet[s].name);
-						if (displayName.empty())
-							displayName = activeSet[s].name;
+				sliderView->AddCategorySliderUI(categoryName, sliderNames, show, !activeSet.GenWeights());
 
-						sliderView->AddSliderGUI(scrollWindow, sliderLayout, activeSet[s].name, displayName, activeSet[s].bZap, !activeSet.GenWeights());
-					}
+				for (auto& s : catSliders[iter]) {
+					displayName = cCollection.GetSliderDisplayName(categoryName, activeSet[s].name);
+					if (displayName.empty())
+						displayName = activeSet[s].name;
+
+					sliderView->AddSliderGUI(activeSet[s].name, displayName, categoryName, activeSet[s].bZap, !activeSet.GenWeights());
 				}
 			}
 			iter++;
 		}
 	}
 
-	scrollWindow->FitInside();
+	sliderView->DoFilterSliders();
 	UpdateConflictManager();
 }
 
@@ -2918,16 +2920,19 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
 	search->ShowCancelButton(true);
-	search->SetDescriptiveText(_("Group Filter"));
-	search->SetToolTip(_("Filter by group"));
+	search->SetDescriptiveText(_("Filter groups..."));
 	search->SetMenu(srchMenu);
 
 	outfitsearch = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	outfitsearch->ShowSearchButton(true);
 	outfitsearch->ShowCancelButton(true);
-	outfitsearch->SetDescriptiveText(_("Outfit Filter"));
-	outfitsearch->SetToolTip(_("Filter by outfit"));
+	outfitsearch->SetDescriptiveText(_("Filter outfits..."));
 	outfitsearch->SetMenu(outfitsrchMenu);
+
+	sliderFilter = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	sliderFilter->ShowSearchButton(true);
+	sliderFilter->ShowCancelButton(true);
+	sliderFilter->SetDescriptiveText(_("Filter sliders..."));
 
 	auto conflictLabel = (wxStaticText*)FindWindowByName("conflictLabel", this);
 	if (conflictLabel)
@@ -2939,15 +2944,15 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 
 	xrc->AttachUnknownControl("searchHolder", search, this);
 	xrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
+	xrc->AttachUnknownControl("sliderFilter", sliderFilter, this);
 
-	wxFlexGridSizer* sliderLayout = nullptr;
-	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-	if (scrollWindow) {
-		scrollWindow->SetScrollRate(5, 26);
-		scrollWindow->SetFocusIgnoringChildren();
-		scrollWindow->Bind(wxEVT_ENTER_WINDOW, &BodySlideFrame::OnEnterSliderWindow, this);
+	sliderScroll = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
+	if (sliderScroll) {
+		sliderScroll->SetScrollRate(5, 26);
+		sliderScroll->SetFocusIgnoringChildren();
+		sliderScroll->Bind(wxEVT_ENTER_WINDOW, &BodySlideFrame::OnEnterSliderWindow, this);
 
-		sliderLayout = (wxFlexGridSizer*)scrollWindow->GetSizer();
+		sliderLayout = (wxFlexGridSizer*)sliderScroll->GetSizer();
 	}
 
 	wxString val = BodySlideConfig["LastGroupFilter"];
@@ -2985,9 +2990,9 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	}
 
 	// Create initial slider pool
-	if (scrollWindow && sliderLayout) {
+	if (sliderScroll && sliderLayout) {
 		const size_t minSliderPoolSize = 100;
-		sliderPool.CreatePool(minSliderPoolSize, scrollWindow, sliderLayout);
+		sliderPool.CreatePool(minSliderPoolSize, sliderScroll, sliderLayout);
 	}
 
 	// Set up accelerator entries
@@ -3020,7 +3025,8 @@ void BodySlideFrame::OnEnterClose(wxKeyEvent& event) {
 
 void BodySlideFrame::OnEnterSliderWindow(wxMouseEvent& event) {
 	if (this->IsActive()) {
-		if (!this->FindFocus()->IsKindOf(wxClassInfo::FindClass("wxTextCtrl"))) {
+		if (!this->FindFocus()->IsKindOf(wxClassInfo::FindClass("wxTextCtrl")) &&
+			!this->FindFocus()->IsKindOf(wxClassInfo::FindClass("wxSearchCtrl"))) {
 			wxScrolledWindow* sw = (wxScrolledWindow*)event.GetEventObject();
 			sw->SetFocusIgnoringChildren();
 		}
@@ -3039,27 +3045,10 @@ void BodySlideFrame::HideSlider(SliderDisplay* slider) {
 	slider->sliderHi->Unbind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
 	slider->sliderReadoutHi->Disconnect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), nullptr, this);
 
-	slider->lblSliderLo->Hide();
-	slider->sliderLo->Hide();
-	slider->sliderReadoutLo->Hide();
-	slider->lblSliderHi->Hide();
-	slider->sliderHi->Hide();
-	slider->sliderReadoutHi->Hide();
-	slider->zapCheckHi->Hide();
-	slider->zapCheckLo->Hide();
-
-	slider->isShown = false;
+	slider->Show(false);
 }
 
 void BodySlideFrame::ShowLowColumn(bool show) {
-	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-	if (!scrollWindow)
-		return;
-
-	wxFlexGridSizer* sliderLayout = (wxFlexGridSizer*)scrollWindow->GetSizer();
-	if (!sliderLayout)
-		return;
-
 	if (show) {
 		XRCCTRL(*this, "lblLowWt", wxStaticText)->Show();
 		XRCCTRL(*this, "lblHighWt", wxStaticText)->Show();
@@ -3078,49 +3067,21 @@ void BodySlideFrame::ShowLowColumn(bool show) {
 	}
 }
 
-void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool oneSize) {
-	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-	if (!scrollWindow)
+void BodySlideFrame::AddCategorySliderUI(const std::string& name, const std::vector<std::string>& sliders, bool enabled, bool oneSize) {
+	SliderCategoryUI* cat = new SliderCategoryUI();
+
+	if (!cat->Create(sliderScroll, sliderLayout, name, sliders, enabled, oneSize))
 		return;
 
-	wxSizer* sliderLayout = scrollWindow->GetSizer();
-	if (!sliderLayout)
-		return;
+	cat->check->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnCategoryCheckChanged, this);
 
-	wxWindow* child;
-	if (!oneSize) {
-		sliderLayout->AddSpacer(0);
+	if (!cat->isShown)
+		cat->Show();
 
-		child = new wxPanel(scrollWindow);
-		child->SetBackgroundColour(wxColour(90, 90, 90));
-		sliderLayout->Add(child, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
-		categoryWidgets.push_back(child);
-	}
-
-	wxCheckBox* check = new wxCheckBox(scrollWindow, wxID_ANY, "");
-	check->SetName(name);
-	sliderLayout->Add(check, 0, wxRIGHT | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 5);
-	check->SetValue(show);
-	check->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnCategoryCheckChanged, this);
-	categoryWidgets.push_back(check);
-
-	child = new wxStaticText(scrollWindow, wxID_ANY, name);
-	child->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Andalus"));
-	child->SetForegroundColour(wxColour(200, 200, 200));
-	sliderLayout->Add(child, 0, wxLEFT | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
-	categoryWidgets.push_back(child);
-
-	if (!oneSize) {
-		child = new wxPanel(scrollWindow);
-		child->SetBackgroundColour(wxColour(90, 90, 90));
-		sliderLayout->Add(child, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
-		categoryWidgets.push_back(child);
-	}
-
-	sliderLayout->AddSpacer(0);
+	sliderCategories[cat->categoryName] = cat;
 }
 
-void BodySlideFrame::AddSliderGUI(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, bool isZap, bool oneSize) {
+void BodySlideFrame::AddSliderGUI(const std::string& name, const std::string& display, const std::string& category, bool isZap, bool oneSize) {
 	SliderDisplay* sd = sliderPool.GetNext();
 	if (!sd)
 		return;
@@ -3128,7 +3089,7 @@ void BodySlideFrame::AddSliderGUI(wxScrolledWindow* scrollWindow, wxSizer* slide
 	int minValue = Config.GetIntValue("Input/SliderMinimum");
 	int maxValue = Config.GetIntValue("Input/SliderMaximum");
 
-	if (!sd->Create(scrollWindow, sliderLayout, name, display, minValue, maxValue, isZap, oneSize))
+	if (!sd->Create(sliderScroll, sliderLayout, name, display, category, minValue, maxValue, isZap, oneSize))
 		return;
 
 	sd->zapCheckLo->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
@@ -3159,15 +3120,15 @@ void BodySlideFrame::ClearSliderGUI() {
 	for (auto& sd : sliderDisplays)
 		HideSlider(sd.second);
 
-	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-	if (scrollWindow)
-		scrollWindow->GetSizer()->Clear();
+	sliderScroll->GetSizer()->Clear();
 
-	for (auto& w : categoryWidgets)
-		w->Destroy();
+	for (auto& cat : sliderCategories) {
+		cat.second->Destroy();
+		delete cat.second;
+	}
 
 	sliderDisplays.clear();
-	categoryWidgets.clear();
+	sliderCategories.clear();
 }
 
 void BodySlideFrame::SetPresetChanged(bool changed) {
@@ -3238,6 +3199,13 @@ void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	sliderPool.Clear();
 	sliderDisplays.clear();
 
+	for (auto& cat : sliderCategories) {
+		cat.second->Destroy();
+		delete cat.second;
+	}
+
+	sliderCategories.clear();
+
 	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
 	if (cbMorphs)
 		BodySlideConfig.SetBoolValue("BuildMorphs", cbMorphs->GetValue());
@@ -3263,34 +3231,21 @@ void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnActivateFrame(wxActivateEvent& event) {
 	event.Skip();
-	if (event.GetActive()) {
-		wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-		if (!scrollWindow)
-			return;
-
-		scrollWindow->SetFocusIgnoringChildren();
-	}
+	if (event.GetActive())
+		sliderScroll->SetFocusIgnoringChildren();
 }
 
 void BodySlideFrame::OnIconizeFrame(wxIconizeEvent& event) {
 	event.Skip();
 	if (!event.IsIconized()) {
-		wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-		if (!scrollWindow)
-			return;
-
-		lastScroll = scrollWindow->GetScrollPos(wxVERTICAL);
+		lastScroll = sliderScroll->GetScrollPos(wxVERTICAL);
 		CallAfter(&BodySlideFrame::PostIconizeFrame);
 	}
 }
 
 void BodySlideFrame::PostIconizeFrame() {
-	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-	if (!scrollWindow)
-		return;
-
-	scrollWindow->SetFocusIgnoringChildren();
-	scrollWindow->Scroll(0, lastScroll);
+	sliderScroll->SetFocusIgnoringChildren();
+	sliderScroll->Scroll(0, lastScroll);
 }
 
 void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
@@ -3366,34 +3321,129 @@ void BodySlideFrame::OnOutfitSearchChange(wxCommandEvent& WXUNUSED(event)) {
 	app->PopulateOutfitList("");
 }
 
+void BodySlideFrame::OnSliderFilterChanged(wxCommandEvent& WXUNUSED(event)) {
+	DoFilterSliders();
+}
+
+void BodySlideFrame::DoFilterSliders() {
+	sliderScroll->Freeze();
+
+	wxString filterStr = sliderFilter->GetValue();
+	filterStr.MakeLower();
+
+	wxArrayString filterStrings;
+
+	// Split string for "or" filtering
+	wxStringTokenizer tokenizer(filterStr, ",;");
+	while (tokenizer.HasMoreTokens()) {
+		wxString token = tokenizer.GetNextToken();
+		token.Trim().Trim(false);
+		filterStrings.Add(token);
+	}
+
+	std::set<std::string> matchedSliders;
+
+	for (auto& sliderDisplay : sliderDisplays) {
+		if (!sliderDisplay.second)
+			continue;
+
+		// Filter slider by display name or category
+		wxString sliderStr = wxString::FromUTF8(sliderDisplay.second->displayName).MakeLower();
+		wxString categoryStr = wxString::FromUTF8(sliderDisplay.second->categoryName).MakeLower();
+
+		// Check if category is disabled
+		bool disabledCat = false;
+
+		const std::string& categoryName = sliderDisplay.second->categoryName;
+		if (!categoryName.empty()) {
+			SliderCategoryUI* sc = GetSliderCategory(categoryName);
+			if (sc && !sc->isEnabled)
+				disabledCat = true;
+		}
+
+		bool show = filterStrings.empty();
+		if (!show) {
+			for (auto& fstr : filterStrings) {
+				// Split string by space for "and" filtering
+				bool matched = false;
+
+				wxStringTokenizer andTokenizer(fstr, " ");
+				while (andTokenizer.HasMoreTokens()) {
+					wxString token = andTokenizer.GetNextToken();
+					token.Trim().Trim(false);
+
+					if (sliderStr.Contains(token) || (!categoryStr.empty() && categoryStr.Contains(token)))
+						matched = true;
+					else {
+						matched = false;
+						break;
+					}
+				}
+
+				if (matched) {
+					show = true;
+					matchedSliders.insert(sliderDisplay.first);
+					break;
+				}
+			}
+		}
+
+		if (disabledCat)
+			show = false;
+
+		if (show) {
+			if (!sliderDisplay.second->isShown)
+				sliderDisplay.second->Show();
+		}
+		else {
+			if (sliderDisplay.second->isShown)
+				sliderDisplay.second->Show(false);
+		}
+	}
+
+	for (auto& sliderCategory : sliderCategories) {
+		if (!sliderCategory.second)
+			continue;
+
+		bool showCat = false;
+
+		if (!filterStrings.empty()) {
+			for (auto& sliderName : sliderCategory.second->sliderNames) {
+				if (matchedSliders.find(sliderName) != matchedSliders.end())
+					showCat = true; // Show category if any slider in it was matched
+			}
+		}
+		else
+			showCat = true; // Without a filter, show all categories
+
+		sliderCategory.second->Show(showCat);
+	}
+
+	sliderScroll->Thaw();
+	sliderScroll->Layout();
+	sliderScroll->FitInside();
+}
+
 void BodySlideFrame::OnCategoryCheckChanged(wxCommandEvent& event) {
 	wxWindow* w = (wxWindow*)event.GetEventObject();
 	if (!w)
-		return;
-
-	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-	if (!scrollWindow)
 		return;
 
 	wxCheckBox* cb = (wxCheckBox*)event.GetEventObject();
 	if (!cb)
 		return;
 
-	if (event.IsChecked())
-		app->cCollection.SetCategoryHidden(cb->GetName().ToUTF8().data(), false);
-	else
-		app->cCollection.SetCategoryHidden(cb->GetName().ToUTF8().data(), true);
+	std::string categoryName = cb->GetName().ToUTF8().data();
 
-	Freeze();
+	SliderCategoryUI* sc = GetSliderCategory(categoryName);
+	if (sc) {
+		sc->isEnabled = event.IsChecked();
 
-	ClearSliderGUI();
-	app->DisplayActiveSet();
-	app->RefreshSliders();
+		DoFilterSliders();
 
-	int scrollPos = scrollWindow->GetScrollPos(wxOrientation::wxVERTICAL);
-	scrollWindow->Scroll(0, scrollPos);
-
-	Thaw();
+		int scrollPos = sliderScroll->GetScrollPos(wxOrientation::wxVERTICAL);
+		sliderScroll->Scroll(0, scrollPos);
+	}
 }
 
 void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
@@ -4165,19 +4215,112 @@ void BodySlideFrame::OnEditProject(wxCommandEvent& WXUNUSED(event)) {
 }
 
 
+SliderCategoryUI::SliderCategoryUI() {}
+
+bool SliderCategoryUI::Create(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::vector<std::string>& sliders, bool pEnabled, bool pOneSize) {
+	categoryName = name;
+	sliderNames = sliders;
+
+	isEnabled = pEnabled;
+	oneSize = pOneSize;
+
+	if (isCreated) {
+		check->SetValue(isEnabled);
+		label->SetLabel(name);
+
+		Show();
+		return true;
+	}
+
+	if (!oneSize) {
+		sliderLayout->AddSpacer(0);
+
+		dummyPanel1 = new wxPanel(scrollWindow);
+		dummyPanel1->SetBackgroundColour(wxColour(90, 90, 90));
+		sliderLayout->Add(dummyPanel1, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
+	}
+
+	check = new wxCheckBox(scrollWindow, wxID_ANY, "");
+	check->SetName(name);
+	sliderLayout->Add(check, 0, wxRIGHT | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 5);
+	check->SetValue(isEnabled);
+
+	label = new wxStaticText(scrollWindow, wxID_ANY, name);
+	label->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Andalus"));
+	label->SetForegroundColour(wxColour(200, 200, 200));
+	sliderLayout->Add(label, 0, wxLEFT | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
+
+	if (!oneSize) {
+		dummyPanel2 = new wxPanel(scrollWindow);
+		dummyPanel2->SetBackgroundColour(wxColour(90, 90, 90));
+		sliderLayout->Add(dummyPanel2, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
+	}
+
+	sliderLayout->AddSpacer(0);
+
+	Show(false);
+	isCreated = true;
+	return true;
+}
+
+void SliderCategoryUI::Show(bool show) {
+	if (dummyPanel1)
+		dummyPanel1->Show(show && !oneSize);
+
+	check->Show(show);
+	label->Show(show);
+
+	if (dummyPanel2)
+		dummyPanel2->Show(show && !oneSize);
+
+	isShown = show;
+}
+
+void SliderCategoryUI::Destroy() {
+	if (dummyPanel1) {
+		dummyPanel1->Destroy();
+		dummyPanel1 = nullptr;
+	}
+
+	check->Destroy();
+	check = nullptr;
+
+	label->Destroy();
+	label = nullptr;
+
+	if (dummyPanel2) {
+		dummyPanel2->Destroy();
+		dummyPanel2 = nullptr;
+	}
+
+	isShown = false;
+}
+
+
 SliderDisplay::SliderDisplay() {}
 
-bool SliderDisplay::Create(
-	wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::string& display, int minValue, int maxValue, bool pIsZap, bool pOneSize) {
+bool SliderDisplay::Create(wxScrolledWindow* scrollWindow,
+						   wxSizer* sliderLayout,
+						   const std::string& name,
+						   const std::string& display,
+						   const std::string& category,
+						   int minValue,
+						   int maxValue,
+						   bool pIsZap,
+						   bool pOneSize) {
 	isZap = pIsZap;
 	oneSize = pOneSize;
 
+	sliderName = name;
+	displayName = display;
+	categoryName = category;
+
 	wxString nameStr = wxString::FromUTF8(name);
-	wxString displayName = wxString::FromUTF8(display);
+	wxString displayNameStr = wxString::FromUTF8(display);
 
 	if (isCreated) {
-		if (lblSliderLo->GetLabel() != displayName)
-			lblSliderLo->SetLabel(displayName);
+		if (lblSliderLo->GetLabel() != displayNameStr)
+			lblSliderLo->SetLabel(displayNameStr);
 
 		lblSliderLo->Show(!oneSize);
 
@@ -4206,8 +4349,8 @@ bool SliderDisplay::Create(
 		if (!oneSize && !isZap)
 			sliderLayout->Add(sliderReadoutLo, 0, wxALL | wxALIGN_CENTER, 0);
 
-		if (lblSliderHi->GetLabel() != displayName)
-			lblSliderHi->SetLabel(displayName);
+		if (lblSliderHi->GetLabel() != displayNameStr)
+			lblSliderHi->SetLabel(displayNameStr);
 
 		sliderLayout->Add(lblSliderHi, 0, wxLEFT | wxALIGN_CENTER, 5);
 
@@ -4233,7 +4376,6 @@ bool SliderDisplay::Create(
 		if (!isZap)
 			sliderLayout->Add(sliderReadoutHi, 0, wxRIGHT | wxALIGN_CENTER, 10);
 
-		sliderName = name;
 		Show();
 		return true;
 	}
@@ -4295,8 +4437,6 @@ bool SliderDisplay::Create(
 	if (!isZap)
 		sliderLayout->Add(sliderReadoutHi, 0, wxRIGHT | wxALIGN_CENTER, 10);
 
-	sliderName = name;
-
 	Show(false);
 	isCreated = true;
 	return true;
@@ -4336,7 +4476,7 @@ void SliderDisplayPool::CreatePool(size_t poolSize, wxScrolledWindow* scrollWind
 			p = new SliderDisplay();
 
 		if (!p->IsCreated())
-			p->Create(scrollWindow, sliderLayout, "sliderPoolDummy", "sliderPoolDummy", 0, 100, false);
+			p->Create(scrollWindow, sliderLayout, "sliderPoolDummy", "", "", 0, 100, false);
 	}
 }
 

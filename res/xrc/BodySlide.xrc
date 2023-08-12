@@ -13,7 +13,7 @@
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxFlexGridSizer">
-					<rows>2</rows>
+					<rows>3</rows>
 					<cols>5</cols>
 					<vgap>0</vgap>
 					<hgap>0</hgap>
@@ -75,7 +75,7 @@
 								</object>
 							</object>
 							<object class="sizeritem">
-								<option>1</option>
+								<option>0</option>
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
 								<object class="unknown" name="searchHolder" />
@@ -165,6 +165,34 @@
 							<tooltip>Opens the group manager where you can edit existing or create new groups</tooltip>
 							<label>Group Manager</label>
 						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<size>-1,24</size>
+						<object class="unknown" name="dummy" />
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="unknown" name="sliderFilter" />
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<border>0</border>
+						<object class="unknown" name="dummy" />
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<border>0</border>
+						<object class="unknown" name="dummy" />
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<border>0</border>
+						<object class="unknown" name="dummy" />
 					</object>
 				</object>
 			</object>
