@@ -37,6 +37,8 @@ ObjImportDialog::ObjImportDialog(wxWindow* parent, const std::string& fileName, 
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/ImportDialog.xrc");
 	xrc->LoadDialog(this, parent, "importDialog");
 
+	SetDoubleBuffered(true);
+
 	lbWarning = XRCCTRL((*this), "lbWarning", wxStaticText);
 
 	if (!warningLabel.IsEmpty()) {
