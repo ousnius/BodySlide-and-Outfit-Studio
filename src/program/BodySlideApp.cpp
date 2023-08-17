@@ -925,16 +925,18 @@ bool BodySlideApp::UpdateZapChoices() {
 
 			SliderDisplay* sd = sliderView->GetSliderDisplay(zap);
 			if (sd && sd->isZap) {
-				sd->zapCheckHi->SetValue(zapChoice);
+				if (sd->zapCheckHi->IsChecked() != zapChoice) {
+					sd->zapCheckHi->SetValue(zapChoice);
 
-				// Trigger checkbox event
-				wxEvtHandler* handler = sd->zapCheckHi->GetEventHandler();
-				wxCommandEvent event(wxEVT_COMMAND_CHECKBOX_CLICKED, sd->zapCheckHi->GetId());
-				event.SetEventObject(sd->zapCheckHi);
-				event.SetInt(zapChoice ? 1 : 0);
-				handler->ProcessEvent(event);
+					// Trigger checkbox event
+					wxEvtHandler* handler = sd->zapCheckHi->GetEventHandler();
+					wxCommandEvent event(wxEVT_COMMAND_CHECKBOX_CLICKED, sd->zapCheckHi->GetId());
+					event.SetEventObject(sd->zapCheckHi);
+					event.SetInt(zapChoice ? 1 : 0);
+					handler->ProcessEvent(event);
 
-				zapChanged = true;
+					zapChanged = true;
+				}
 			}
 		}
 	}
@@ -3502,7 +3504,7 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 
 	std::vector<std::string> zapToggles = app->GetSliderZapToggles(sn);
 	for (auto& toggle : zapToggles) {
-		wxLogMessage("Zap '%s' toggled.", sn);
+		wxLogMessage("Zap '%s' toggled.", toggle);
 
 		app->SetSliderValue(toggle, true, 1.0f - app->GetSliderValue(toggle, true));
 		app->SetSliderValue(toggle, false, 1.0f - app->GetSliderValue(toggle, false));
