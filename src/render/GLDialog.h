@@ -39,8 +39,10 @@ public:
 
 	wxDECLARE_EVENT_TABLE();
 
-private:
+protected:
 	GLCanvas* canvas = nullptr;
+
+private:
 	std::unique_ptr<wxGLContext> context;
 	GLSurface gls;
 

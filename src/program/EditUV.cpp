@@ -133,8 +133,6 @@ EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, Mesh* srcMe
 		return;
 	}
 
-	SetDoubleBuffered(true);
-
 	os = (OutfitStudioFrame*)parent;
 	nif = srcNif;
 	shape = srcShape;
@@ -149,6 +147,7 @@ EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, Mesh* srcMe
 	canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
 
 	xrc->AttachUnknownControl("uvGLView", canvas, this);
+	canvas->MSWDisableComposited(); // Fix stuttering from composited flag?
 }
 
 EditUV::~EditUV() {

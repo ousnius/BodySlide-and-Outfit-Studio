@@ -17,7 +17,6 @@ wxEND_EVENT_TABLE()
 
 GLDialog::GLDialog() {
 	CenterOnParent();
-	SetDoubleBuffered(true);
 }
 
 GLCanvas* GLDialog::CreateCanvas() {
