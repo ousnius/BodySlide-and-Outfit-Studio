@@ -29,6 +29,7 @@ private:
 	wxTextCtrl* emissiveMultiple = nullptr;
 	wxTextCtrl* alpha = nullptr;
 	wxCheckBox* vertexColors = nullptr;
+	wxCheckBox* doubleSided = nullptr;
 	wxButton* btnAddShader = nullptr;
 	wxButton* btnRemoveShader = nullptr;
 	wxButton* btnSetTextures = nullptr;

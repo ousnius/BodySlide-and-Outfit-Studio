@@ -66,6 +66,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 	emissiveMultiple = XRCCTRL(*this, "emissiveMultiple", wxTextCtrl);
 	alpha = XRCCTRL(*this, "alpha", wxTextCtrl);
 	vertexColors = XRCCTRL(*this, "vertexColors", wxCheckBox);
+	doubleSided = XRCCTRL(*this, "doubleSided", wxCheckBox);
 	btnAddShader = XRCCTRL(*this, "btnAddShader", wxButton);
 	btnRemoveShader = XRCCTRL(*this, "btnRemoveShader", wxButton);
 	btnSetTextures = XRCCTRL(*this, "btnSetTextures", wxButton);
@@ -172,6 +173,7 @@ void ShapeProperties::GetShader() {
 		emissiveMultiple->Disable();
 		alpha->Disable();
 		vertexColors->Disable();
+		doubleSided->Disable();
 		vertexAlpha->Disable();
 		alphaTest->Disable();
 		alphaBlend->Disable();
@@ -191,6 +193,7 @@ void ShapeProperties::GetShader() {
 			emissiveMultiple->Disable();
 			alpha->Disable();
 			vertexColors->Disable();
+			doubleSided->Disable();
 			vertexAlpha->Disable();
 			alphaTest->Disable();
 			alphaBlend->Disable();
@@ -209,6 +212,7 @@ void ShapeProperties::GetShader() {
 			emissiveColor->Enable();
 			emissiveMultiple->Enable();
 			vertexColors->Enable();
+			doubleSided->Enable();
 			vertexAlpha->Enable();
 			alphaTest->Enable();
 			alphaBlend->Enable();
@@ -218,9 +222,11 @@ void ShapeProperties::GetShader() {
 	// Set values of shader of first shape
 	if (shader) {
 		bool hasVertexColors = shader->HasVertexColors();
+		bool isDoubleSided = shader->IsDoubleSided();
 		bool hasVertexAlpha = shader->HasVertexAlpha();
 		shaderName->SetValue(shader->name.get());
 		vertexColors->SetValue(hasVertexColors);
+		doubleSided->SetValue(isDoubleSided);
 		vertexAlpha->SetValue(hasVertexAlpha);
 
 		Color4 color;
@@ -1103,6 +1109,8 @@ void ShapeProperties::ApplyChanges() {
 
 			if (vertexColors->IsChecked() && !hadVertexColors)
 				shape->SetVertexColors(true);
+
+			shader->SetDoubleSided(doubleSided->IsChecked());
 
 			if (shader->HasType<BSEffectShaderProperty>()) {
 				shader->SetEmissiveColor(emisColor);
