@@ -47,7 +47,7 @@
 			</object>
 		</object>
 	</object>
-	
+
 	<object class="wxDialog" name="dlgCustomBone">
 		<style>wxDEFAULT_DIALOG_STYLE</style>
 		<title>Add Custom Bone</title>
@@ -62,32 +62,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="lbBoneName">
-							<label>Name</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxALL|wxEXPAND</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="boneName">
-							<value></value>
-						</object>
-					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbParentBone">
 							<label>Parent</label>
@@ -101,6 +76,31 @@
 						<object class="wxChoice" name="cParentBone">
 							<selection>0</selection>
 							<content />
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lbBoneName">
+							<label>Name</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="boneName">
+							<value></value>
 						</object>
 					</object>
 				</object>
@@ -145,7 +145,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelX">
 							<label translate="0">X</label>
@@ -170,7 +170,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelY">
 							<label translate="0">Y</label>
@@ -195,7 +195,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelZ">
 							<label translate="0">Z</label>
@@ -216,6 +216,33 @@
 						<border>5</border>
 						<object class="wxTextCtrl" name="textRZ">
 							<value translate="0">0.00000</value>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lbAddCount">
+							<label>Add Count #</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxSpinCtrl" name="numAddCount">
+							<value>1</value>
+							<min>1</min>
+							<max>100</max>
 						</object>
 					</object>
 				</object>

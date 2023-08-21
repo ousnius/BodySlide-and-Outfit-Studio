@@ -854,7 +854,6 @@ public:
 	std::string activeSlider;
 	std::string lastActiveSlider;
 	bool bEditSlider = false;
-	std::string contextBone;
 	std::vector<int> triParts;	// the partition index for each triangle, or -1 for none
 	std::vector<int> triSParts; // the segment partition index for each triangle, or -1 for none
 
@@ -1233,6 +1232,7 @@ private:
 	void ToggleBoneState(wxTreeItemId firstItem = wxTreeItemId());
 	void OnBoneStateToggle(wxTreeEvent& event);
 	void OnBoneSelect(wxTreeEvent& event);
+	void OnBoneActivated(wxTreeEvent& event);
 	void OnBoneContext(wxTreeEvent& event);
 	void OnBoneTreeContext(wxCommandEvent& event);
 
@@ -1337,7 +1337,7 @@ private:
 	void OnDeleteBone(wxCommandEvent& event);
 	void OnDeleteBoneFromSelected(wxCommandEvent& event);
 	void FillParentBoneChoice(wxDialog& dlg, const std::string& selBone = "");
-	void GetBoneDlgData(wxDialog& dlg, nifly::MatTransform& xform, std::string& parentBone);
+	void GetBoneDlgData(wxDialog& dlg, nifly::MatTransform& xform, std::string& parentBone, int& addCount);
 	void OnEditBone(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
 	void OnCopySelectedWeight(wxCommandEvent& event);

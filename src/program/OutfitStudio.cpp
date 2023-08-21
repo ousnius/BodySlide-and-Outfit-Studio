@@ -256,6 +256,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TEXT(XRCID("bonesFilter"), OutfitStudioFrame::OnBonesFilterChanged)
 	EVT_TREE_STATE_IMAGE_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneStateToggle)
 	EVT_TREE_SEL_CHANGED(XRCID("outfitBones"), OutfitStudioFrame::OnBoneSelect)
+	EVT_TREE_ITEM_ACTIVATED(XRCID("outfitBones"), OutfitStudioFrame::OnBoneActivated)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneContext)
 	EVT_COMMAND_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneTreeContext)
 
@@ -5063,6 +5064,17 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	CalcAutoXMirrorBone();
 }
 
+void OutfitStudioFrame::OnBoneActivated(wxTreeEvent& event) {
+	int hitFlags;
+	outfitBones->HitTest(event.GetPoint(), hitFlags);
+
+	if (hitFlags & wxTREE_HITTEST_ONITEMSTATEICON)
+		return;
+
+	wxCommandEvent evt;
+	OnEditBone(evt);
+}
+
 void OutfitStudioFrame::OnCheckTreeSel(wxTreeEvent& event) {
 	int outflags;
 	wxPoint p;
@@ -5140,26 +5152,22 @@ void OutfitStudioFrame::OnShapeDrop(wxTreeEvent& event) {
 	outfitShapes->SelectItem(movedItem);
 }
 
-void OutfitStudioFrame::OnBoneContext(wxTreeEvent& event) {
-	contextBone.clear();
-	wxTreeItemId itemId = event.GetItem();
-	if (itemId.IsOk())
-		contextBone = outfitBones->GetItemText(itemId);
+void OutfitStudioFrame::OnBoneContext(wxTreeEvent& WXUNUSED(event)) {
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuBoneContext");
 	if (menu) {
-		if (!contextBone.empty() && activeItem && project->GetWorkAnim()->BoneHasInconsistentTransforms(activeItem->GetShape()->name.get(), contextBone)) {
-			if (AnimSkeleton::getInstance().GetBonePtr(contextBone)->isStandardBone)
+		if (!activeBone.empty() && activeItem && project->GetWorkAnim()->BoneHasInconsistentTransforms(activeItem->GetShape()->name.get(), activeBone)) {
+			if (AnimSkeleton::getInstance().GetBonePtr(activeBone)->isStandardBone)
 				menu->Enable(XRCID("setBoneNode"), false);
 		}
 		else
 			menu->Destroy(XRCID("menuBadBone"));
+
 		PopupMenu(menu);
 		delete menu;
 	}
 }
 
 void OutfitStudioFrame::OnBoneTreeContext(wxCommandEvent& WXUNUSED(event)) {
-	contextBone.clear();
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuBoneTreeContext");
 	if (menu) {
 		PopupMenu(menu);
@@ -7869,7 +7877,7 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 			if (!project->mGenWeights) {
 				lbValLo->Hide();
 				edValLo->Hide();
-				lbValHi->SetLabel("Default");
+				lbValHi->SetLabel(_("Default"));
 			}
 		}
 
@@ -9095,7 +9103,7 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnSetBoneSkin(wxCommandEvent& WXUNUSED(event)) {
 	std::string shape = activeItem->GetShape()->name.get();
-	project->GetWorkAnim()->RecalcXFormSkinToBone(shape, contextBone);
+	project->GetWorkAnim()->RecalcXFormSkinToBone(shape, activeBone);
 
 	glView->UpdateBones();
 	HighlightBoneNamesWithWeights();
@@ -9105,7 +9113,7 @@ void OutfitStudioFrame::OnSetBoneSkin(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnSetBoneNode(wxCommandEvent& WXUNUSED(event)) {
 	std::string shape = activeItem->GetShape()->name.get();
-	project->GetWorkAnim()->RecalcCustomBoneXFormsFromSkin(shape, contextBone);
+	project->GetWorkAnim()->RecalcCustomBoneXFormsFromSkin(shape, activeBone);
 
 	glView->UpdateBones();
 	HighlightBoneNamesWithWeights();
@@ -9130,7 +9138,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 			if (!cb->boneName.empty()) {
 				auto newItem = boneTree->AppendItem(treeParent, cb->boneName);
 				fAddBoneChildren(newItem, cb);
-				if (cb->boneName == contextBone)
+				if (cb->boneName == activeBone)
 					boneTree->SelectItem(newItem);
 			}
 			else
@@ -9191,7 +9199,7 @@ void OutfitStudioFrame::FillParentBoneChoice(wxDialog& dlg, const std::string& s
 	}
 }
 
-void OutfitStudioFrame::GetBoneDlgData(wxDialog& dlg, MatTransform& xform, std::string& parentBone) {
+void OutfitStudioFrame::GetBoneDlgData(wxDialog& dlg, MatTransform& xform, std::string& parentBone, int& addCount) {
 	xform.translation.x = atof(XRCCTRL(dlg, "textX", wxTextCtrl)->GetValue().c_str());
 	xform.translation.y = atof(XRCCTRL(dlg, "textY", wxTextCtrl)->GetValue().c_str());
 	xform.translation.z = atof(XRCCTRL(dlg, "textZ", wxTextCtrl)->GetValue().c_str());
@@ -9209,6 +9217,10 @@ void OutfitStudioFrame::GetBoneDlgData(wxDialog& dlg, MatTransform& xform, std::
 
 	if (parentBone == "(none)")
 		parentBone = std::string();
+
+	wxSpinCtrl* numAddCount = XRCCTRL(dlg, "numAddCount", wxSpinCtrl);
+	if (numAddCount)
+		addCount = numAddCount->GetValue();
 }
 
 void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
@@ -9219,7 +9231,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
 	dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
-	FillParentBoneChoice(dlg, contextBone);
+	FillParentBoneChoice(dlg, activeBone);
 
 	if (dlg.ShowModal() != wxID_OK)
 		return;
@@ -9242,14 +9254,56 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 
 	MatTransform xform;
 	std::string parentBone;
-	GetBoneDlgData(dlg, xform, parentBone);
+	int addCount = 1;
+	GetBoneDlgData(dlg, xform, parentBone, addCount);
 
-	wxLogMessage("Adding custom bone '%s' to project.", bone);
+	wxLogMessage("Adding custom bone '%s' to project (%d/%d).", bone, 1, addCount);
 	project->AddCustomBoneRef(bone.ToStdString(), parentBone, xform);
+
 	wxTreeItemId newItem = outfitBones->AppendItem(bonesRoot, bone);
 	UpdateBoneItemState(newItem, bone.ToStdString());
+
 	cXMirrorBone->AppendString(bone);
 	cPoseBone->AppendString(bone);
+
+	std::string origBone = bone;
+	int suffixNumber = 0;
+
+	size_t firstDigit = origBone.find_first_of("0123456789");
+	if (firstDigit != std::string::npos) {
+		std::string strNumber = origBone.substr(origBone.find_first_of("0123456789"));
+		suffixNumber = std::atoi(strNumber.c_str());
+	}
+
+	parentBone = bone;
+
+	for (int i = 1; i < addCount; i++) {
+		if (firstDigit != std::string::npos)
+			bone = origBone.substr(0, firstDigit) + std::to_string(++suffixNumber);
+		else
+			bone = origBone + std::to_string(++suffixNumber);
+
+		wxTreeItemIdValue cookie2;
+		item = outfitBones->GetFirstChild(bonesRoot, cookie2);
+		while (item.IsOk()) {
+			if (outfitBones->GetItemText(item) == bone) {
+				wxMessageBox(wxString::Format(_("Bone '%s' already exists in the project!"), bone), _("Error"), wxICON_INFORMATION, this);
+				break;
+			}
+			item = outfitBones->GetNextChild(bonesRoot, cookie2);
+		}
+
+		wxLogMessage("Adding custom bone '%s' to project (%d/%d).", bone, i, addCount);
+		project->AddCustomBoneRef(bone.ToStdString(), parentBone, xform);
+
+		newItem = outfitBones->AppendItem(bonesRoot, bone);
+		UpdateBoneItemState(newItem, bone.ToStdString());
+
+		cXMirrorBone->AppendString(bone);
+		cPoseBone->AppendString(bone);
+
+		parentBone = bone;
+	}
 
 	glView->UpdateBones();
 	UpdateBoneCounts();
@@ -9258,7 +9312,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
-	AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(contextBone);
+	AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
 	if (!bPtr)
 		return;
 
@@ -9287,8 +9341,11 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 	XRCCTRL(dlg, "textRY", wxTextCtrl)->SetValue(wxString() << rotvec.y);
 	XRCCTRL(dlg, "textRZ", wxTextCtrl)->SetValue(wxString() << rotvec.z);
 
+	XRCCTRL(dlg, "lbAddCount", wxStaticText)->Hide();
+	XRCCTRL(dlg, "numAddCount", wxSpinCtrl)->Hide();
+
 	if (bPtr->isStandardBone) {
-		dlg.SetLabel("View Standard Bone");
+		dlg.SetLabel(_("View Standard Bone"));
 		XRCCTRL(dlg, "textX", wxTextCtrl)->Disable();
 		XRCCTRL(dlg, "textY", wxTextCtrl)->Disable();
 		XRCCTRL(dlg, "textZ", wxTextCtrl)->Disable();
@@ -9299,7 +9356,7 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "wxID_OK", wxButton)->Disable();
 	}
 	else {
-		dlg.SetLabel("Edit Custom Bone");
+		dlg.SetLabel(_("Edit Custom Bone"));
 	}
 
 	if (dlg.ShowModal() != wxID_OK)
@@ -9307,7 +9364,8 @@ void OutfitStudioFrame::OnEditBone(wxCommandEvent& WXUNUSED(event)) {
 
 	MatTransform xform;
 	std::string parentBone;
-	GetBoneDlgData(dlg, xform, parentBone);
+	int addCount = 1;
+	GetBoneDlgData(dlg, xform, parentBone, addCount);
 
 	project->ModifyCustomBone(bPtr, parentBone, xform);
 	glView->UpdateBones();
@@ -9319,16 +9377,31 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
 	for (size_t i = 0; i < selItems.size(); i++) {
-		std::string bone = outfitBones->GetItemText(selItems[i]).ToStdString();
-		wxLogMessage("Deleting bone '%s' from project.", bone);
+		wxString boneText = outfitBones->GetItemText(selItems[i]);
+		wxLogMessage("Deleting bone '%s' from project.", boneText);
 
+		std::string bone = boneText.ToStdString();
 		project->DeleteBone(bone);
 		activeBone.clear();
 
 		outfitBones->Delete(selItems[i]);
 		lastSelectedBones.erase(bone);
 		lastNormalizeBones.erase(bone);
+
+		int idxMirrorBone = cXMirrorBone->FindString(boneText);
+		if (idxMirrorBone != wxNOT_FOUND)
+			cXMirrorBone->Delete(idxMirrorBone);
+
+		int idxPoseBone = cPoseBone->FindString(boneText);
+		if (idxPoseBone != wxNOT_FOUND)
+			cPoseBone->Delete(idxPoseBone);
 	}
+
+	if (cXMirrorBone->GetStringSelection().IsEmpty())
+		cXMirrorBone->SetSelection(0);
+
+	if (cPoseBone->GetStringSelection().IsEmpty())
+		cPoseBone->SetSelection(wxNOT_FOUND);
 
 	glView->UpdateBones();
 	ReselectBone();
