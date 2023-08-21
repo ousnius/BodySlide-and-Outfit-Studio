@@ -3155,6 +3155,7 @@ void OutfitStudioFrame::ReToggleToolOptionsUI() {
 	bool isIB = toolid == ToolID::InflateBrush || toolid == ToolID::DeflateBrush;
 	bool isMB = toolid == ToolID::MoveBrush;
 	bool isSB = toolid == ToolID::SmoothBrush;
+	bool transformMode = glView->GetTransformMode();
 	bool xMirror = glView->GetToolOptionXMirror();
 	bool connOnly = glView->GetToolOptionConnectedOnly();
 	bool merge = glView->GetToolOptionMerge();
@@ -3163,6 +3164,8 @@ void OutfitStudioFrame::ReToggleToolOptionsUI() {
 	bool rplane = glView->GetToolOptionRestrictPlane();
 	bool rnormal = glView->GetToolOptionRestrictNormal();
 
+	menuBar->Check(XRCID("btnTransform"), transformMode);
+	toolBarV->ToggleTool(XRCID("btnTransform"), transformMode);
 	menuBar->Check(XRCID("btnXMirror"), (isBrush || isMV) && xMirror);
 	toolBarV->ToggleTool(XRCID("btnXMirror"), (isBrush || isMV) && xMirror);
 	menuBar->Check(XRCID("btnConnected"), isBrush && connOnly);
