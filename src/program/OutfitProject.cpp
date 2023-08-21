@@ -4573,8 +4573,11 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	else if (outfitName.empty())
 		outfitName = "New Outfit";
 
+	wxFileName file(fileName);
+	if (mBaseFile.empty())
+		mBaseFile = file.GetFullName();
+
 	if (clear) {
-		wxFileName file(fileName);
 		mGameFile = file.GetName();
 		mGamePath = file.GetPath();
 
@@ -4591,11 +4594,11 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 		}
 	}
 
-	std::fstream file;
-	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+	std::fstream fileStream;
+	PlatformUtil::OpenFileStream(fileStream, fileName, std::ios::in | std::ios::binary);
 
 	NifFile nif;
-	int error = nif.Load(file);
+	int error = nif.Load(fileStream);
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"), fileName, nif.GetHeader().GetVersion().GetVersionInfo());

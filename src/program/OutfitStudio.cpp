@@ -478,6 +478,7 @@ bool OutfitStudio::OnInit() {
 
 	Bind(wxEVT_CHAR_HOOK, &OutfitStudio::CharHook, this);
 
+	frame->UpdateTitle();
 	wxLogMessage("Outfit Studio initialized.");
 	return true;
 }
@@ -3281,12 +3282,15 @@ bool OutfitStudioFrame::CheckEditableState() {
 }
 
 void OutfitStudioFrame::UpdateTitle() {
-	std::string outfitName = project->OutfitName();
-	if (!outfitName.empty()) {
+	wxString name = wxString::FromUTF8(project->OutfitName());
+	if (name.empty() || name == "New Outfit")
+		name = project->mBaseFile;
+
+	if (!name.empty()) {
 		if (pendingChanges)
-			SetTitle(wxString::FromUTF8(outfitName) + "* - Outfit Studio");
+			SetTitle(name + "* - Outfit Studio");
 		else
-			SetTitle(wxString::FromUTF8(outfitName) + " - Outfit Studio");
+			SetTitle(name + " - Outfit Studio");
 	}
 	else
 		SetTitle("Outfit Studio");
@@ -4221,6 +4225,7 @@ void OutfitStudioFrame::OnImportNIF(wxCommandEvent& WXUNUSED(event)) {
 	SetPendingChanges();
 	RefreshGUIFromProj();
 
+	UpdateTitle();
 	EndProgress();
 }
 
@@ -13527,6 +13532,8 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 				owner->EndProgress();
 			}
 		}
+
+		owner->UpdateTitle();
 	}
 	else
 		return false;
