@@ -38,8 +38,8 @@ msgstr ""
 #: res/xrc/EditUV.xrc:32 res/xrc/EditUV.xrc:244 res/xrc/EditUV.xrc:319
 #: res/xrc/EditUV.xrc:440 res/xrc/ImportDialog.xrc:174 res/xrc/Project.xrc:753
 #: res/xrc/Project.xrc:930 res/xrc/Settings.xrc:458
-#: res/xrc/ShapeProperties.xrc:814 res/xrc/Skeleton.xrc:36
-#: res/xrc/Skeleton.xrc:232 res/xrc/Slider.xrc:64 res/xrc/Slider.xrc:238
+#: res/xrc/ShapeProperties.xrc:831 res/xrc/Skeleton.xrc:36
+#: res/xrc/Skeleton.xrc:259 res/xrc/Slider.xrc:64 res/xrc/Slider.xrc:238
 #: res/xrc/SliderDataImport.xrc:90
 msgid "&OK"
 msgstr ""
@@ -51,8 +51,8 @@ msgstr ""
 #: res/xrc/EditUV.xrc:251 res/xrc/EditUV.xrc:326 res/xrc/EditUV.xrc:447
 #: res/xrc/ImportDialog.xrc:181 res/xrc/Project.xrc:550 res/xrc/Project.xrc:760
 #: res/xrc/Project.xrc:937 res/xrc/SavePreset.xrc:85 res/xrc/Settings.xrc:465
-#: res/xrc/Setup.xrc:273 res/xrc/ShapeProperties.xrc:821
-#: res/xrc/Skeleton.xrc:43 res/xrc/Skeleton.xrc:239 res/xrc/Slider.xrc:71
+#: res/xrc/Setup.xrc:273 res/xrc/ShapeProperties.xrc:838
+#: res/xrc/Skeleton.xrc:43 res/xrc/Skeleton.xrc:266 res/xrc/Slider.xrc:71
 #: res/xrc/Slider.xrc:246 res/xrc/SliderDataImport.xrc:97
 msgid "&Cancel"
 msgstr ""
@@ -74,7 +74,7 @@ msgid "Scaling will adjust the size of a mesh. This permanently affects vertices
 msgstr ""
 
 #: res/xrc/Actions.xrc:461 res/xrc/Actions.xrc:667
-#: res/xrc/ShapeProperties.xrc:694 res/xrc/Skeleton.xrc:133
+#: res/xrc/ShapeProperties.xrc:711 res/xrc/Skeleton.xrc:133
 msgid "Origin"
 msgstr ""
 
@@ -127,11 +127,11 @@ msgstr ""
 msgid "Copy skin transform from reference"
 msgstr ""
 
-#: res/xrc/Actions.xrc:876 res/xrc/ShapeProperties.xrc:789
+#: res/xrc/Actions.xrc:876 res/xrc/ShapeProperties.xrc:806
 msgid "Recalculate geometry's coordinates so it doesn't move"
 msgstr ""
 
-#: res/xrc/Actions.xrc:877 res/xrc/ShapeProperties.xrc:790
+#: res/xrc/Actions.xrc:877 res/xrc/ShapeProperties.xrc:807
 msgid "Transform geometry so its position in global coordinates does not change."
 msgstr ""
 
@@ -160,7 +160,7 @@ msgstr ""
 msgid "Preset"
 msgstr ""
 
-#: res/xrc/Actions.xrc:1130
+#: res/xrc/Actions.xrc:1130 src/program/OutfitStudio.cpp:7885
 msgid "Default"
 msgstr ""
 
@@ -214,7 +214,7 @@ msgstr ""
 
 #: res/xrc/Actions.xrc:1406 res/xrc/OutfitStudio.xrc:793
 #: res/xrc/OutfitStudio.xrc:1057 res/xrc/ShapeProperties.xrc:84
-#: res/xrc/ShapeProperties.xrc:603
+#: res/xrc/ShapeProperties.xrc:620
 msgid "Type"
 msgstr ""
 
@@ -259,7 +259,7 @@ msgstr ""
 msgid "&Build"
 msgstr ""
 
-#: res/xrc/BatchBuild.xrc:67 src/program/BodySlideApp.cpp:2348
+#: res/xrc/BatchBuild.xrc:67 src/program/BodySlideApp.cpp:2350
 msgid "Choose output set"
 msgstr ""
 
@@ -622,7 +622,7 @@ msgid ""
 msgstr ""
 
 #: res/xrc/EditUV.xrc:74 res/xrc/EditUV.xrc:336 res/xrc/ImportDialog.xrc:71
-#: res/xrc/OutfitStudio.xrc:1559 res/xrc/ShapeProperties.xrc:655
+#: res/xrc/OutfitStudio.xrc:1559 res/xrc/ShapeProperties.xrc:672
 #: src/program/NormalsGenDialog.cpp:300
 msgid "Scale"
 msgstr ""
@@ -1250,14 +1250,14 @@ msgstr ""
 msgid "Clamp Max Value"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:589 src/program/OutfitStudio.cpp:3067
-#: src/program/OutfitStudio.cpp:6653
+#: res/xrc/OutfitStudio.xrc:589 src/program/OutfitStudio.cpp:3069
+#: src/program/OutfitStudio.cpp:6669
 msgid "Edit Alpha"
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:635 res/xrc/OutfitStudio.xrc:1039
-#: res/xrc/OutfitStudio.xrc:1140 src/program/OutfitStudio.cpp:6368
-#: src/program/OutfitStudio.cpp:10658
+#: res/xrc/OutfitStudio.xrc:1140 src/program/OutfitStudio.cpp:6384
+#: src/program/OutfitStudio.cpp:10739
 msgid "Reset"
 msgstr ""
 
@@ -1285,7 +1285,7 @@ msgstr ""
 msgid "Slot"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:991 src/program/OutfitStudio.cpp:5476
+#: res/xrc/OutfitStudio.xrc:991 src/program/OutfitStudio.cpp:5492
 msgid "SSF File"
 msgstr ""
 
@@ -1294,7 +1294,7 @@ msgid "Set"
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1029 res/xrc/OutfitStudio.xrc:1130
-#: src/program/OutfitStudio.cpp:6368
+#: src/program/OutfitStudio.cpp:6384
 msgid "Apply"
 msgstr ""
 
@@ -1448,8 +1448,8 @@ msgstr ""
 msgid "Save the project under a new name."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1689 src/program/OutfitStudio.cpp:7228
-#: src/program/OutfitStudio.cpp:7338
+#: res/xrc/OutfitStudio.xrc:1689 src/program/OutfitStudio.cpp:7244
+#: src/program/OutfitStudio.cpp:7354
 msgid "Import"
 msgstr ""
 
@@ -1606,7 +1606,7 @@ msgstr ""
 msgid "Resets the shape and skin transforms."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1832 src/program/OutfitStudio.cpp:10254
+#: res/xrc/OutfitStudio.xrc:1832 src/program/OutfitStudio.cpp:10335
 msgid "Delete Unreferenced Nodes"
 msgstr ""
 
@@ -2278,8 +2278,8 @@ msgid "Fixes the bad custom bone by calculating a new bone-to-global transform."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:2465 res/xrc/OutfitStudio.xrc:2498
-#: res/xrc/ShapeProperties.xrc:263 res/xrc/ShapeProperties.xrc:421
-#: res/xrc/ShapeProperties.xrc:594
+#: res/xrc/ShapeProperties.xrc:280 res/xrc/ShapeProperties.xrc:438
+#: res/xrc/ShapeProperties.xrc:611
 msgid "Add"
 msgstr ""
 
@@ -2607,10 +2607,10 @@ msgstr ""
 msgid "Pack Archive..."
 msgstr ""
 
-#: res/xrc/Project.xrc:1067 src/program/OutfitStudio.cpp:3733
-#: src/program/OutfitStudio.cpp:6368 src/program/OutfitStudio.cpp:7228
-#: src/program/OutfitStudio.cpp:7338 src/program/OutfitStudio.cpp:10658
-#: src/program/ShapeProperties.cpp:134
+#: res/xrc/Project.xrc:1067 src/program/OutfitStudio.cpp:3741
+#: src/program/OutfitStudio.cpp:6384 src/program/OutfitStudio.cpp:7244
+#: src/program/OutfitStudio.cpp:7354 src/program/OutfitStudio.cpp:10739
+#: src/program/ShapeProperties.cpp:135
 msgid "Cancel"
 msgstr ""
 
@@ -2630,7 +2630,7 @@ msgstr ""
 msgid "Game"
 msgstr ""
 
-#: res/xrc/Settings.xrc:28 src/program/OutfitProject.cpp:5136
+#: res/xrc/Settings.xrc:28 src/program/OutfitProject.cpp:5139
 msgid "Target Game"
 msgstr ""
 
@@ -2822,8 +2822,8 @@ msgstr ""
 msgid "Shader"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:31 res/xrc/ShapeProperties.xrc:612
-#: res/xrc/Skeleton.xrc:68
+#: res/xrc/ShapeProperties.xrc:31 res/xrc/ShapeProperties.xrc:629
+#: res/xrc/Skeleton.xrc:94
 msgid "Name"
 msgstr ""
 
@@ -2855,75 +2855,79 @@ msgstr ""
 msgid "Vertex Colors"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:272 res/xrc/ShapeProperties.xrc:430
+#: res/xrc/ShapeProperties.xrc:252
+msgid "Double Sided"
+msgstr ""
+
+#: res/xrc/ShapeProperties.xrc:289 res/xrc/ShapeProperties.xrc:447
 msgid "Remove"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:281
+#: res/xrc/ShapeProperties.xrc:298
 msgid "Textures..."
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:293
+#: res/xrc/ShapeProperties.xrc:310
 msgid "Transparency"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:316
+#: res/xrc/ShapeProperties.xrc:333
 msgid "Threshold"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:356
+#: res/xrc/ShapeProperties.xrc:373
 msgid "Vertex Alpha"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:374
+#: res/xrc/ShapeProperties.xrc:391
 msgid "Alpha Test"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:392
+#: res/xrc/ShapeProperties.xrc:409
 msgid "Alpha Blend"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:443
+#: res/xrc/ShapeProperties.xrc:460
 msgid "Copy from shape..."
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:451
+#: res/xrc/ShapeProperties.xrc:468
 msgid "Geometry"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:471
+#: res/xrc/ShapeProperties.xrc:488
 msgid "Full Precision"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:490
+#: res/xrc/ShapeProperties.xrc:507
 msgid "Sub Index"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:509
+#: res/xrc/ShapeProperties.xrc:526
 msgid "Skinned"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:527
+#: res/xrc/ShapeProperties.xrc:544
 msgid "Dynamic"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:573
+#: res/xrc/ShapeProperties.xrc:590
 msgid "Extra Data"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:621
+#: res/xrc/ShapeProperties.xrc:638
 msgid "Value"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:631
+#: res/xrc/ShapeProperties.xrc:648
 msgid "Coordinates"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:640
+#: res/xrc/ShapeProperties.xrc:657
 msgid "Transform from shape to global coordinates:"
 msgstr ""
 
-#: res/xrc/ShapeProperties.xrc:703 res/xrc/Skeleton.xrc:142
+#: res/xrc/ShapeProperties.xrc:720 res/xrc/Skeleton.xrc:142
 msgid "Rotation"
 msgstr ""
 
@@ -2939,8 +2943,12 @@ msgstr ""
 msgid "Add Custom Bone"
 msgstr ""
 
-#: res/xrc/Skeleton.xrc:93
+#: res/xrc/Skeleton.xrc:68
 msgid "Parent"
+msgstr ""
+
+#: res/xrc/Skeleton.xrc:234
+msgid "Add Count #"
 msgstr ""
 
 #: res/xrc/Slider.xrc:6
@@ -3029,7 +3037,7 @@ msgstr ""
 msgid "Root '%s' not found in skeleton '%s'!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:186 src/program/OutfitStudio.cpp:417
+#: src/program/BodySlideApp.cpp:186 src/program/OutfitStudio.cpp:418
 msgid ""
 "No read/write permission for game data path!\n"
 "\n"
@@ -3037,183 +3045,184 @@ msgid ""
 msgstr ""
 
 #: src/program/BodySlideApp.cpp:187 src/program/BodySlideApp.cpp:197
-#: src/program/BodySlideApp.cpp:1498 src/program/OutfitStudio.cpp:418
-#: src/program/OutfitStudio.cpp:428 src/program/OutfitStudio.cpp:653
-#: src/program/OutfitStudio.cpp:660
+#: src/program/BodySlideApp.cpp:1500 src/program/OutfitStudio.cpp:419
+#: src/program/OutfitStudio.cpp:429 src/program/OutfitStudio.cpp:655
+#: src/program/OutfitStudio.cpp:662
 msgid "Warning"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:196 src/program/OutfitStudio.cpp:427
+#: src/program/BodySlideApp.cpp:196 src/program/OutfitStudio.cpp:428
 msgid ""
 "No read/write permission for project path!\n"
 "\n"
 "Please launch the program with admin elevation and make sure the project path in the settings is correct."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:269 src/program/OutfitStudio.cpp:514
+#: src/program/BodySlideApp.cpp:269 src/program/OutfitStudio.cpp:516
 #, c-format
 msgid "Unexpected exception has occurred: %s, the program will terminate."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:269 src/program/OutfitStudio.cpp:514
+#: src/program/BodySlideApp.cpp:269 src/program/OutfitStudio.cpp:516
 msgid "Unexpected exception"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:292 src/program/OutfitStudio.cpp:534
+#: src/program/BodySlideApp.cpp:292 src/program/OutfitStudio.cpp:536
 #, c-format
 msgid "Unhandled exception has occurred: %s, the program will terminate."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:292 src/program/OutfitStudio.cpp:534
+#: src/program/BodySlideApp.cpp:292 src/program/OutfitStudio.cpp:536
 msgid "Unhandled exception"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:303 src/program/OutfitStudio.cpp:542
+#: src/program/BodySlideApp.cpp:303 src/program/OutfitStudio.cpp:544
 msgid "Fatal exception has occurred, the program will terminate."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:303 src/program/OutfitStudio.cpp:542
+#: src/program/BodySlideApp.cpp:303 src/program/OutfitStudio.cpp:544
 msgid "Fatal exception"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:979
+#: src/program/BodySlideApp.cpp:981
 msgid "Failed to launch Outfit Studio executable!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:979 src/program/BodySlideApp.cpp:1519
-#: src/program/BodySlideApp.cpp:1813 src/program/BodySlideApp.cpp:2883
-#: src/program/BodySlideApp.cpp:2890 src/program/BodySlideApp.cpp:3676
-#: src/program/OutfitStudio.cpp:976 src/program/OutfitStudio.cpp:982
-#: src/program/OutfitStudio.cpp:1474 src/program/OutfitStudio.cpp:1485
-#: src/program/OutfitStudio.cpp:1521 src/program/OutfitStudio.cpp:1532
-#: src/program/OutfitStudio.cpp:1542 src/program/OutfitStudio.cpp:1551
-#: src/program/OutfitStudio.cpp:1562 src/program/OutfitStudio.cpp:1573
-#: src/program/OutfitStudio.cpp:1585 src/program/OutfitStudio.cpp:1624
-#: src/program/OutfitStudio.cpp:1632 src/program/OutfitStudio.cpp:1639
-#: src/program/OutfitStudio.cpp:1675 src/program/OutfitStudio.cpp:1683
-#: src/program/OutfitStudio.cpp:1690 src/program/OutfitStudio.cpp:1700
-#: src/program/OutfitStudio.cpp:1709 src/program/OutfitStudio.cpp:1717
-#: src/program/OutfitStudio.cpp:1724 src/program/OutfitStudio.cpp:1735
-#: src/program/OutfitStudio.cpp:1744 src/program/OutfitStudio.cpp:1751
-#: src/program/OutfitStudio.cpp:2022 src/program/OutfitStudio.cpp:2054
-#: src/program/OutfitStudio.cpp:2069 src/program/OutfitStudio.cpp:2154
-#: src/program/OutfitStudio.cpp:2163 src/program/OutfitStudio.cpp:2171
-#: src/program/OutfitStudio.cpp:2185 src/program/OutfitStudio.cpp:2194
-#: src/program/OutfitStudio.cpp:2200 src/program/OutfitStudio.cpp:2232
-#: src/program/OutfitStudio.cpp:3632 src/program/OutfitStudio.cpp:3639
-#: src/program/OutfitStudio.cpp:4286 src/program/OutfitStudio.cpp:4305
-#: src/program/OutfitStudio.cpp:4371 src/program/OutfitStudio.cpp:4407
-#: src/program/OutfitStudio.cpp:4426 src/program/OutfitStudio.cpp:4496
-#: src/program/OutfitStudio.cpp:4532 src/program/OutfitStudio.cpp:4551
-#: src/program/OutfitStudio.cpp:4576 src/program/OutfitStudio.cpp:4626
-#: src/program/OutfitStudio.cpp:4631 src/program/OutfitStudio.cpp:4645
-#: src/program/OutfitStudio.cpp:4652 src/program/OutfitStudio.cpp:4657
-#: src/program/OutfitStudio.cpp:4668 src/program/OutfitStudio.cpp:7039
-#: src/program/OutfitStudio.cpp:7097 src/program/OutfitStudio.cpp:7103
-#: src/program/OutfitStudio.cpp:7107 src/program/OutfitStudio.cpp:7118
-#: src/program/OutfitStudio.cpp:7128 src/program/OutfitStudio.cpp:7132
-#: src/program/OutfitStudio.cpp:7149 src/program/OutfitStudio.cpp:7153
-#: src/program/OutfitStudio.cpp:7164 src/program/OutfitStudio.cpp:7174
-#: src/program/OutfitStudio.cpp:7187 src/program/OutfitStudio.cpp:7301
-#: src/program/OutfitStudio.cpp:7314 src/program/OutfitStudio.cpp:7416
-#: src/program/OutfitStudio.cpp:7420 src/program/OutfitStudio.cpp:7431
-#: src/program/OutfitStudio.cpp:7441 src/program/OutfitStudio.cpp:7445
-#: src/program/OutfitStudio.cpp:7468 src/program/OutfitStudio.cpp:7477
-#: src/program/OutfitStudio.cpp:7481 src/program/OutfitStudio.cpp:7510
-#: src/program/OutfitStudio.cpp:7514 src/program/OutfitStudio.cpp:7537
-#: src/program/OutfitStudio.cpp:7546 src/program/OutfitStudio.cpp:7557
-#: src/program/OutfitStudio.cpp:7564 src/program/OutfitStudio.cpp:7575
-#: src/program/OutfitStudio.cpp:7582 src/program/OutfitStudio.cpp:7609
-#: src/program/OutfitStudio.cpp:7660 src/program/OutfitStudio.cpp:7721
-#: src/program/OutfitStudio.cpp:7725 src/program/OutfitStudio.cpp:7738
-#: src/program/OutfitStudio.cpp:7742 src/program/OutfitStudio.cpp:7953
-#: src/program/OutfitStudio.cpp:8120 src/program/OutfitStudio.cpp:8137
-#: src/program/OutfitStudio.cpp:8157 src/program/OutfitStudio.cpp:8181
-#: src/program/OutfitStudio.cpp:8215 src/program/OutfitStudio.cpp:8367
-#: src/program/OutfitStudio.cpp:8556 src/program/OutfitStudio.cpp:8706
-#: src/program/OutfitStudio.cpp:8761 src/program/OutfitStudio.cpp:8975
-#: src/program/OutfitStudio.cpp:8985 src/program/OutfitStudio.cpp:9026
-#: src/program/OutfitStudio.cpp:9031 src/program/OutfitStudio.cpp:9040
-#: src/program/OutfitStudio.cpp:9062 src/program/OutfitStudio.cpp:9226
-#: src/program/OutfitStudio.cpp:9234 src/program/OutfitStudio.cpp:9534
-#: src/program/OutfitStudio.cpp:9539 src/program/OutfitStudio.cpp:9625
-#: src/program/OutfitStudio.cpp:9630 src/program/OutfitStudio.cpp:9718
-#: src/program/OutfitStudio.cpp:9724 src/program/OutfitStudio.cpp:9729
-#: src/program/OutfitStudio.cpp:9736 src/program/OutfitStudio.cpp:9763
-#: src/program/OutfitStudio.cpp:9808 src/program/OutfitStudio.cpp:9859
-#: src/program/OutfitStudio.cpp:9864 src/program/OutfitStudio.cpp:9898
-#: src/program/OutfitStudio.cpp:10110 src/program/OutfitStudio.cpp:10160
-#: src/program/OutfitStudio.cpp:10267 src/program/OutfitStudio.cpp:10414
-#: src/program/OutfitStudio.cpp:11781 src/program/OutfitStudio.cpp:12101
-#: src/program/OutfitStudio.cpp:12138 src/program/OutfitStudio.cpp:12143
-#: src/program/OutfitStudio.cpp:12155 src/program/OutfitStudio.cpp:13476
+#: src/program/BodySlideApp.cpp:981 src/program/BodySlideApp.cpp:1521
+#: src/program/BodySlideApp.cpp:1815 src/program/BodySlideApp.cpp:2885
+#: src/program/BodySlideApp.cpp:2892 src/program/BodySlideApp.cpp:3678
+#: src/program/OutfitStudio.cpp:978 src/program/OutfitStudio.cpp:984
+#: src/program/OutfitStudio.cpp:1476 src/program/OutfitStudio.cpp:1487
+#: src/program/OutfitStudio.cpp:1523 src/program/OutfitStudio.cpp:1534
+#: src/program/OutfitStudio.cpp:1544 src/program/OutfitStudio.cpp:1553
+#: src/program/OutfitStudio.cpp:1564 src/program/OutfitStudio.cpp:1575
+#: src/program/OutfitStudio.cpp:1587 src/program/OutfitStudio.cpp:1626
+#: src/program/OutfitStudio.cpp:1634 src/program/OutfitStudio.cpp:1641
+#: src/program/OutfitStudio.cpp:1677 src/program/OutfitStudio.cpp:1685
+#: src/program/OutfitStudio.cpp:1692 src/program/OutfitStudio.cpp:1702
+#: src/program/OutfitStudio.cpp:1711 src/program/OutfitStudio.cpp:1719
+#: src/program/OutfitStudio.cpp:1726 src/program/OutfitStudio.cpp:1737
+#: src/program/OutfitStudio.cpp:1746 src/program/OutfitStudio.cpp:1753
+#: src/program/OutfitStudio.cpp:2024 src/program/OutfitStudio.cpp:2056
+#: src/program/OutfitStudio.cpp:2071 src/program/OutfitStudio.cpp:2156
+#: src/program/OutfitStudio.cpp:2165 src/program/OutfitStudio.cpp:2173
+#: src/program/OutfitStudio.cpp:2187 src/program/OutfitStudio.cpp:2196
+#: src/program/OutfitStudio.cpp:2202 src/program/OutfitStudio.cpp:2234
+#: src/program/OutfitStudio.cpp:3640 src/program/OutfitStudio.cpp:3647
+#: src/program/OutfitStudio.cpp:4295 src/program/OutfitStudio.cpp:4314
+#: src/program/OutfitStudio.cpp:4380 src/program/OutfitStudio.cpp:4416
+#: src/program/OutfitStudio.cpp:4435 src/program/OutfitStudio.cpp:4505
+#: src/program/OutfitStudio.cpp:4541 src/program/OutfitStudio.cpp:4560
+#: src/program/OutfitStudio.cpp:4585 src/program/OutfitStudio.cpp:4635
+#: src/program/OutfitStudio.cpp:4640 src/program/OutfitStudio.cpp:4654
+#: src/program/OutfitStudio.cpp:4661 src/program/OutfitStudio.cpp:4666
+#: src/program/OutfitStudio.cpp:4677 src/program/OutfitStudio.cpp:7055
+#: src/program/OutfitStudio.cpp:7113 src/program/OutfitStudio.cpp:7119
+#: src/program/OutfitStudio.cpp:7123 src/program/OutfitStudio.cpp:7134
+#: src/program/OutfitStudio.cpp:7144 src/program/OutfitStudio.cpp:7148
+#: src/program/OutfitStudio.cpp:7165 src/program/OutfitStudio.cpp:7169
+#: src/program/OutfitStudio.cpp:7180 src/program/OutfitStudio.cpp:7190
+#: src/program/OutfitStudio.cpp:7203 src/program/OutfitStudio.cpp:7317
+#: src/program/OutfitStudio.cpp:7330 src/program/OutfitStudio.cpp:7432
+#: src/program/OutfitStudio.cpp:7436 src/program/OutfitStudio.cpp:7447
+#: src/program/OutfitStudio.cpp:7457 src/program/OutfitStudio.cpp:7461
+#: src/program/OutfitStudio.cpp:7484 src/program/OutfitStudio.cpp:7493
+#: src/program/OutfitStudio.cpp:7497 src/program/OutfitStudio.cpp:7526
+#: src/program/OutfitStudio.cpp:7530 src/program/OutfitStudio.cpp:7553
+#: src/program/OutfitStudio.cpp:7562 src/program/OutfitStudio.cpp:7573
+#: src/program/OutfitStudio.cpp:7580 src/program/OutfitStudio.cpp:7591
+#: src/program/OutfitStudio.cpp:7598 src/program/OutfitStudio.cpp:7625
+#: src/program/OutfitStudio.cpp:7676 src/program/OutfitStudio.cpp:7737
+#: src/program/OutfitStudio.cpp:7741 src/program/OutfitStudio.cpp:7754
+#: src/program/OutfitStudio.cpp:7758 src/program/OutfitStudio.cpp:7969
+#: src/program/OutfitStudio.cpp:8136 src/program/OutfitStudio.cpp:8153
+#: src/program/OutfitStudio.cpp:8173 src/program/OutfitStudio.cpp:8197
+#: src/program/OutfitStudio.cpp:8231 src/program/OutfitStudio.cpp:8383
+#: src/program/OutfitStudio.cpp:8572 src/program/OutfitStudio.cpp:8722
+#: src/program/OutfitStudio.cpp:8777 src/program/OutfitStudio.cpp:8991
+#: src/program/OutfitStudio.cpp:9001 src/program/OutfitStudio.cpp:9042
+#: src/program/OutfitStudio.cpp:9047 src/program/OutfitStudio.cpp:9056
+#: src/program/OutfitStudio.cpp:9078 src/program/OutfitStudio.cpp:9246
+#: src/program/OutfitStudio.cpp:9254 src/program/OutfitStudio.cpp:9295
+#: src/program/OutfitStudio.cpp:9615 src/program/OutfitStudio.cpp:9620
+#: src/program/OutfitStudio.cpp:9706 src/program/OutfitStudio.cpp:9711
+#: src/program/OutfitStudio.cpp:9799 src/program/OutfitStudio.cpp:9805
+#: src/program/OutfitStudio.cpp:9810 src/program/OutfitStudio.cpp:9817
+#: src/program/OutfitStudio.cpp:9844 src/program/OutfitStudio.cpp:9889
+#: src/program/OutfitStudio.cpp:9940 src/program/OutfitStudio.cpp:9945
+#: src/program/OutfitStudio.cpp:9979 src/program/OutfitStudio.cpp:10191
+#: src/program/OutfitStudio.cpp:10241 src/program/OutfitStudio.cpp:10348
+#: src/program/OutfitStudio.cpp:10495 src/program/OutfitStudio.cpp:11862
+#: src/program/OutfitStudio.cpp:12182 src/program/OutfitStudio.cpp:12219
+#: src/program/OutfitStudio.cpp:12224 src/program/OutfitStudio.cpp:12236
+#: src/program/OutfitStudio.cpp:13559
 msgid "Error"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1498 src/program/OutfitStudio.cpp:660
+#: src/program/BodySlideApp.cpp:1500 src/program/OutfitStudio.cpp:662
 msgid "Failed to find game install path registry key or GameDataPath in the config."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1726 src/program/OutfitStudio.cpp:888
+#: src/program/BodySlideApp.cpp:1728 src/program/OutfitStudio.cpp:890
 #, c-format
 msgid "System language '%d' is wrong."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1735 src/program/OutfitStudio.cpp:897
+#: src/program/BodySlideApp.cpp:1737 src/program/OutfitStudio.cpp:899
 #, c-format
 msgid "The system language '%d' is not supported by your system. Try installing support for this language."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1813
+#: src/program/BodySlideApp.cpp:1815
 msgid "Failed to create group file."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1827
+#: src/program/BodySlideApp.cpp:1829
 msgid "That group already exists in the specified file, do you wish to overwrite the group?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1827
+#: src/program/BodySlideApp.cpp:1829
 msgid "Group already exists"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1984
+#: src/program/BodySlideApp.cpp:1986
 msgid "WARNING: Game data path not configured. Would you like to show BodySlide where it is?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1985 src/program/BodySlideApp.cpp:2286
-#: src/program/BodySlideApp.cpp:2291
+#: src/program/BodySlideApp.cpp:1987 src/program/BodySlideApp.cpp:2288
+#: src/program/BodySlideApp.cpp:2293
 msgid "Game not found"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:1993
+#: src/program/BodySlideApp.cpp:1995
 msgid "Please choose a directory to set as your Data path"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2011
+#: src/program/BodySlideApp.cpp:2013
 msgid ""
 "WARNING: This will delete the output files from the output folder, potentially causing crashes.\n"
 "\n"
 "Do you want to continue?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2012
+#: src/program/BodySlideApp.cpp:2014
 msgid "Clean Build"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2020
+#: src/program/BodySlideApp.cpp:2022
 msgid "Removed the following files:\n"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2032 src/program/BodySlideApp.cpp:2045
+#: src/program/BodySlideApp.cpp:2034 src/program/BodySlideApp.cpp:2047
 msgid " (no action)\n"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2036 src/program/BodySlideApp.cpp:2048
-#: src/program/BodySlideApp.cpp:2257
+#: src/program/BodySlideApp.cpp:2038 src/program/BodySlideApp.cpp:2050
+#: src/program/BodySlideApp.cpp:2259
 msgid "Process Successful"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2144
+#: src/program/BodySlideApp.cpp:2146
 #, c-format
 msgid ""
 "Failed to write TRI file to the following location\n"
@@ -3221,12 +3230,12 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2144 src/program/BodySlideApp.cpp:2200
-#: src/program/BodySlideApp.cpp:2235
+#: src/program/BodySlideApp.cpp:2146 src/program/BodySlideApp.cpp:2202
+#: src/program/BodySlideApp.cpp:2237
 msgid "Unable to process"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2200 src/program/BodySlideApp.cpp:2235
+#: src/program/BodySlideApp.cpp:2202 src/program/BodySlideApp.cpp:2237
 #, c-format
 msgid ""
 "Failed to build set to the following location\n"
@@ -3234,154 +3243,154 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2202 src/program/BodySlideApp.cpp:2237
+#: src/program/BodySlideApp.cpp:2204 src/program/BodySlideApp.cpp:2239
 msgid "Choose alternate file name"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2249
+#: src/program/BodySlideApp.cpp:2251
 msgid "Successfully processed the following files:\n"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2271
+#: src/program/BodySlideApp.cpp:2273
 msgid ""
 "WARNING: This will delete the output files from the output folders, potentially causing crashes.\n"
 "\n"
 "Do you want to continue?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2272
+#: src/program/BodySlideApp.cpp:2274
 msgid "Clean Batch Build"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2286
+#: src/program/BodySlideApp.cpp:2288
 msgid "WARNING: Game data path not configured. Files can't be removed that way."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2290
+#: src/program/BodySlideApp.cpp:2292
 msgid "WARNING: Game data path not configured. Continue saving files to the working directory?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2419
+#: src/program/BodySlideApp.cpp:2421
 msgid "Processing Outfits"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2419 src/program/OutfitStudio.h:1052
+#: src/program/BodySlideApp.cpp:2421 src/program/OutfitStudio.h:1051
 msgid "Starting..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2431
+#: src/program/BodySlideApp.cpp:2433
 #, c-format
 msgid "Processing '%s' (%d of %d)..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2439
+#: src/program/BodySlideApp.cpp:2441
 msgid "No recorded outfit name source"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2450
+#: src/program/BodySlideApp.cpp:2452
 msgid "Unable to get slider set from file: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2455
+#: src/program/BodySlideApp.cpp:2457
 msgid "Unable to open slider set file: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2490
+#: src/program/BodySlideApp.cpp:2492
 msgid "Unable to load input nif: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2651
+#: src/program/BodySlideApp.cpp:2653
 msgid "Unable to create destination directory: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2718 src/program/BodySlideApp.cpp:2726
-#: src/program/BodySlideApp.cpp:2737
+#: src/program/BodySlideApp.cpp:2720 src/program/BodySlideApp.cpp:2728
+#: src/program/BodySlideApp.cpp:2739
 msgid "Unable to save nif file: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2811 src/program/BodySlideApp.cpp:3915
+#: src/program/BodySlideApp.cpp:2813 src/program/BodySlideApp.cpp:3917
 msgid "The following sets failed"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2811 src/program/BodySlideApp.cpp:3915
+#: src/program/BodySlideApp.cpp:2813 src/program/BodySlideApp.cpp:3917
 msgid "Failed"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2883
+#: src/program/BodySlideApp.cpp:2885
 msgid "Failed to load BodySlide.xrc file!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2890
+#: src/program/BodySlideApp.cpp:2892
 msgid "Failed to load BodySlide frame!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2923
+#: src/program/BodySlideApp.cpp:2925
 msgid "Filter groups..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2929
+#: src/program/BodySlideApp.cpp:2931
 msgid "Filter outfits..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2935
+#: src/program/BodySlideApp.cpp:2937
 msgid "Filter sliders..."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3572
+#: src/program/BodySlideApp.cpp:3574
 msgid "Choose groups to filter outfit list"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3572
+#: src/program/BodySlideApp.cpp:3574
 msgid "Choose Groups"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3591
+#: src/program/BodySlideApp.cpp:3593
 msgid "Choose or create group file"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3604
+#: src/program/BodySlideApp.cpp:3606
 msgid "What would you like the new group to be called?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3604
+#: src/program/BodySlideApp.cpp:3606
 msgid "New Group Name"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3645
+#: src/program/BodySlideApp.cpp:3647
 msgid "Do you really wish to delete the selected project?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3645
+#: src/program/BodySlideApp.cpp:3647
 msgid "Delete Project"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3654
+#: src/program/BodySlideApp.cpp:3656
 msgid "Do you really wish to delete the selected preset?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3654
+#: src/program/BodySlideApp.cpp:3656
 msgid "Delete Preset"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3676 src/program/OutfitStudio.cpp:7097
+#: src/program/BodySlideApp.cpp:3678 src/program/OutfitStudio.cpp:7113
 #, c-format
 msgid "Failed to save preset (%d)!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3704
+#: src/program/BodySlideApp.cpp:3706
 #, c-format
 msgid "Failed to save preset as '%s' (%d)!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3890
+#: src/program/BodySlideApp.cpp:3892
 msgid "Choose a folder to contain the saved files"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3905
+#: src/program/BodySlideApp.cpp:3907
 msgid "All sets processed successfully!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:3905
+#: src/program/BodySlideApp.cpp:3907
 msgid "Complete"
 msgstr ""
 
@@ -3434,23 +3443,23 @@ msgstr ""
 msgid "Conversion finished."
 msgstr ""
 
-#: src/program/EditUV.cpp:499 src/program/OutfitStudio.cpp:10902
+#: src/program/EditUV.cpp:498 src/program/OutfitStudio.cpp:10983
 msgid "Outfit Studio: OpenGL context is not OK."
 msgstr ""
 
-#: src/program/EditUV.cpp:499 src/program/OutfitStudio.cpp:10902
-#: src/program/PreviewWindow.cpp:66 src/render/GLDialog.cpp:34
+#: src/program/EditUV.cpp:498 src/program/OutfitStudio.cpp:10983
+#: src/program/PreviewWindow.cpp:66 src/render/GLDialog.cpp:33
 #: src/render/GLSurface.cpp:2116 src/render/GLSurface.cpp:2133
 msgid "OpenGL Error"
 msgstr ""
 
-#: src/program/FBXImportDialog.cpp:158 src/program/ObjImportDialog.cpp:165
-#: src/program/OutfitStudio.cpp:9026 src/program/OutfitStudio.cpp:12138
+#: src/program/FBXImportDialog.cpp:159 src/program/ObjImportDialog.cpp:166
+#: src/program/OutfitStudio.cpp:9042 src/program/OutfitStudio.cpp:12219
 msgid "The shape has reached the vertex count limit."
 msgstr ""
 
-#: src/program/FBXImportDialog.cpp:162 src/program/ObjImportDialog.cpp:169
-#: src/program/OutfitStudio.cpp:9031 src/program/OutfitStudio.cpp:12143
+#: src/program/FBXImportDialog.cpp:163 src/program/ObjImportDialog.cpp:170
+#: src/program/OutfitStudio.cpp:9047 src/program/OutfitStudio.cpp:12224
 msgid "The shape has reached the triangle count limit."
 msgstr ""
 
@@ -3587,7 +3596,7 @@ msgid "Failed to write base .nif file: "
 msgstr ""
 
 #: src/program/OutfitProject.cpp:246 src/program/OutfitProject.cpp:1649
-#: src/program/OutfitProject.cpp:1679 src/program/OutfitStudio.cpp:3495
+#: src/program/OutfitProject.cpp:1679 src/program/OutfitStudio.cpp:3503
 msgid "Finished"
 msgstr ""
 
@@ -3599,11 +3608,11 @@ msgstr ""
 msgid "Initializing proximity data..."
 msgstr ""
 
-#: src/program/OutfitProject.cpp:1617 src/program/OutfitStudio.cpp:9558
+#: src/program/OutfitProject.cpp:1617 src/program/OutfitStudio.cpp:9639
 msgid "Copying bone weights..."
 msgstr ""
 
-#: src/program/OutfitProject.cpp:1655 src/program/OutfitStudio.cpp:9749
+#: src/program/OutfitProject.cpp:1655 src/program/OutfitStudio.cpp:9830
 msgid "Transferring bone weights..."
 msgstr ""
 
@@ -3619,7 +3628,7 @@ msgid "Reference Error"
 msgstr ""
 
 #: src/program/OutfitProject.cpp:1927 src/program/OutfitProject.cpp:1999
-#: src/program/OutfitProject.cpp:4601
+#: src/program/OutfitProject.cpp:4604
 #, c-format
 msgid ""
 "NIF version not supported!\n"
@@ -3676,91 +3685,91 @@ msgstr ""
 msgid "Renamed Shapes"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4604 src/program/OutfitProject.cpp:4609
+#: src/program/OutfitProject.cpp:4607 src/program/OutfitProject.cpp:4612
 msgid "NIF Error"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4609
+#: src/program/OutfitProject.cpp:4612
 #, c-format
 msgid "Could not load NIF file '%s'!"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4741
+#: src/program/OutfitProject.cpp:4744
 msgid "There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4742
+#: src/program/OutfitProject.cpp:4745
 msgid "Choose cloth data"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4810
+#: src/program/OutfitProject.cpp:4813
 msgid "No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing OBJ files."
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4818
+#: src/program/OutfitProject.cpp:4821
 #, c-format
 msgid "Could not load OBJ file '%s'!"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4818 src/program/OutfitProject.cpp:4842
-#: src/program/OutfitProject.cpp:4904 src/program/OutfitProject.cpp:5070
+#: src/program/OutfitProject.cpp:4821 src/program/OutfitProject.cpp:4845
+#: src/program/OutfitProject.cpp:4907 src/program/OutfitProject.cpp:5073
 msgid "OBJ Error"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4824 src/program/OutfitProject.cpp:4989
+#: src/program/OutfitProject.cpp:4827 src/program/OutfitProject.cpp:4992
 msgid "The reference shape has a skin coordinate system that is different from the global coordinate system.  Would you like to copy the reference's global-to-skin transform to the imported shapes?"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4826 src/program/OutfitProject.cpp:4991
+#: src/program/OutfitProject.cpp:4829 src/program/OutfitProject.cpp:4994
 msgid "Copy skin coordinates"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4842
+#: src/program/OutfitProject.cpp:4845
 #, c-format
 msgid "Could not copy data from OBJ file '%s'!"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4859
+#: src/program/OutfitProject.cpp:4862
 msgid "The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4861 src/program/OutfitProject.cpp:5017
+#: src/program/OutfitProject.cpp:4864 src/program/OutfitProject.cpp:5020
 msgid "Merge or New"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4865 src/program/OutfitProject.cpp:5021
+#: src/program/OutfitProject.cpp:4868 src/program/OutfitProject.cpp:5024
 msgid "Update Vertex Positions?"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4865 src/program/OutfitProject.cpp:5021
+#: src/program/OutfitProject.cpp:4868 src/program/OutfitProject.cpp:5024
 msgid "Vertex Position Update"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4870 src/program/OutfitProject.cpp:5026
+#: src/program/OutfitProject.cpp:4873 src/program/OutfitProject.cpp:5029
 msgid "Update Texture Coordinates?"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4870 src/program/OutfitProject.cpp:5026
+#: src/program/OutfitProject.cpp:4873 src/program/OutfitProject.cpp:5029
 msgid "UV Update"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4876 src/program/OutfitProject.cpp:5032
+#: src/program/OutfitProject.cpp:4879 src/program/OutfitProject.cpp:5035
 msgid "Update Normals?"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4876 src/program/OutfitProject.cpp:5032
+#: src/program/OutfitProject.cpp:4879 src/program/OutfitProject.cpp:5035
 msgid "Normals Update"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4886 src/program/OutfitProject.cpp:5048
+#: src/program/OutfitProject.cpp:4889 src/program/OutfitProject.cpp:5051
 msgid "Please specify a name for the new shape"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4886 src/program/OutfitProject.cpp:5048
+#: src/program/OutfitProject.cpp:4889 src/program/OutfitProject.cpp:5051
 msgid "New Shape Name"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4897 src/program/OutfitProject.cpp:5063
+#: src/program/OutfitProject.cpp:4900 src/program/OutfitProject.cpp:5066
 #, c-format
 msgid ""
 "The vertex or triangle limit for '%s' was exceeded.\n"
@@ -3770,723 +3779,723 @@ msgid ""
 "Triangles (current/max): %zu/%zu"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:4977
+#: src/program/OutfitProject.cpp:4980
 msgid "No reference has been loaded.  For correct bone transforms, you might need to load a reference before importing FBX files."
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5015
+#: src/program/OutfitProject.cpp:5018
 msgid "The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5039
+#: src/program/OutfitProject.cpp:5042
 msgid "Update Animation Weighting?"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5039
+#: src/program/OutfitProject.cpp:5042
 msgid "Animation Weight Update"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5136
+#: src/program/OutfitProject.cpp:5139
 msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5153
+#: src/program/OutfitProject.cpp:5156
 msgid "File format doesn't match the current game. Use FBX export, then start a new project and import the FBX file there."
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5154
+#: src/program/OutfitProject.cpp:5157
 msgid "Version"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5260
+#: src/program/OutfitProject.cpp:5263
 msgid "No Bad Bones Found."
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5260
+#: src/program/OutfitProject.cpp:5263
 msgid "No Bad Bones"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5375
+#: src/program/OutfitProject.cpp:5378
 msgid "Bad Bones"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5396
+#: src/program/OutfitProject.cpp:5399
 msgid "Error in rotation"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5397
+#: src/program/OutfitProject.cpp:5400
 msgid "Error in translation"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5398
+#: src/program/OutfitProject.cpp:5401
 msgid "Error in scale"
-msgstr ""
-
-#: src/program/OutfitProject.cpp:5425
-#, c-format
-msgid "Bad standard bones for shape \"%s\""
 msgstr ""
 
 #: src/program/OutfitProject.cpp:5428
 #, c-format
+msgid "Bad standard bones for shape \"%s\""
+msgstr ""
+
+#: src/program/OutfitProject.cpp:5431
+#, c-format
 msgid "%zu bones in shape \"%s\" had inconsistencies between their NIF skin transforms and the standard skeleton:\n"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5443
+#: src/program/OutfitProject.cpp:5446
 msgid "Update skin (recommended)"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5451 src/program/OutfitProject.cpp:5515
-#: src/program/OutfitProject.cpp:5538
+#: src/program/OutfitProject.cpp:5454 src/program/OutfitProject.cpp:5518
+#: src/program/OutfitProject.cpp:5541
 msgid "Details"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5451
+#: src/program/OutfitProject.cpp:5454
 msgid "Bone"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5456 src/program/OutfitProject.cpp:5552
+#: src/program/OutfitProject.cpp:5459 src/program/OutfitProject.cpp:5555
 msgid "Do nothing"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5468
+#: src/program/OutfitProject.cpp:5471
 #, c-format
 msgid "Bad Custom Bone \"%s\""
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5471
+#: src/program/OutfitProject.cpp:5474
 #, c-format
 msgid ""
 "Custom bone \"%s\" had inconsistent NIF node and skin transforms for the following shapes:\n"
 "\""
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5491
+#: src/program/OutfitProject.cpp:5494
 msgid "Trust node and skins \""
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5493
+#: src/program/OutfitProject.cpp:5496
 msgid "Trust node and skin \""
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5501
+#: src/program/OutfitProject.cpp:5504
 msgid "\", and update other skins (recommended)"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5504
+#: src/program/OutfitProject.cpp:5507
 msgid "Trust node, and update skins"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5506
+#: src/program/OutfitProject.cpp:5509
 msgid "Trust node, and update skin"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5515
+#: src/program/OutfitProject.cpp:5518
 msgid "Skin"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5524
+#: src/program/OutfitProject.cpp:5527
 msgid "Trust skin \""
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5526
+#: src/program/OutfitProject.cpp:5529
 msgid "\", and update node"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5528
+#: src/program/OutfitProject.cpp:5531
 msgid "\", and update node and other skins"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5538
+#: src/program/OutfitProject.cpp:5541
 msgid "With"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5539
+#: src/program/OutfitProject.cpp:5542
 msgid "Node"
 msgstr ""
 
-#: src/program/OutfitProject.cpp:5565
+#: src/program/OutfitProject.cpp:5568
 msgid "Fix nothing"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:443 src/program/OutfitStudio.cpp:444
-#: src/program/OutfitStudio.cpp:13421 src/program/OutfitStudio.cpp:13422
+#: src/program/OutfitStudio.cpp:444 src/program/OutfitStudio.cpp:445
+#: src/program/OutfitStudio.cpp:13502 src/program/OutfitStudio.cpp:13503
 msgid "Adding NIF file..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:448 src/program/OutfitStudio.cpp:459
-#: src/program/OutfitStudio.cpp:470 src/program/OutfitStudio.cpp:4214
-#: src/program/OutfitStudio.cpp:13426 src/program/OutfitStudio.cpp:13437
-#: src/program/OutfitStudio.cpp:13448
+#: src/program/OutfitStudio.cpp:449 src/program/OutfitStudio.cpp:460
+#: src/program/OutfitStudio.cpp:471 src/program/OutfitStudio.cpp:4222
+#: src/program/OutfitStudio.cpp:13507 src/program/OutfitStudio.cpp:13518
+#: src/program/OutfitStudio.cpp:13529
 msgid "Refreshing GUI..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:455 src/program/OutfitStudio.cpp:13433
+#: src/program/OutfitStudio.cpp:456 src/program/OutfitStudio.cpp:13514
 msgid "Adding OBJ file..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:465 src/program/OutfitStudio.cpp:466
-#: src/program/OutfitStudio.cpp:13443 src/program/OutfitStudio.cpp:13444
+#: src/program/OutfitStudio.cpp:466 src/program/OutfitStudio.cpp:467
+#: src/program/OutfitStudio.cpp:13524 src/program/OutfitStudio.cpp:13525
 msgid "Adding FBX file..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:653
+#: src/program/OutfitStudio.cpp:655
 msgid "Failed to find game install path registry value or GameDataPath in the config."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:976
+#: src/program/OutfitStudio.cpp:978
 msgid "Failed to load OutfitStudio.xrc file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:982
+#: src/program/OutfitStudio.cpp:984
 msgid "Failed to load Outfit Studio frame!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1000 src/program/OutfitStudio.cpp:3759
-#: src/program/OutfitStudio.h:1082
+#: src/program/OutfitStudio.cpp:1002 src/program/OutfitStudio.cpp:3767
+#: src/program/OutfitStudio.h:1081
 msgid "Ready!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1448 src/program/OutfitStudio.cpp:1453
+#: src/program/OutfitStudio.cpp:1450 src/program/OutfitStudio.cpp:1455
 msgid "Packing projects to folder..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1474 src/program/OutfitStudio.cpp:1521
-#: src/program/OutfitStudio.cpp:1624
+#: src/program/OutfitStudio.cpp:1476 src/program/OutfitStudio.cpp:1523
+#: src/program/OutfitStudio.cpp:1626
 #, c-format
 msgid "Failed to open input file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1485
+#: src/program/OutfitStudio.cpp:1487
 #, c-format
 msgid "Failed to copy input file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1532
+#: src/program/OutfitStudio.cpp:1534
 #, c-format
 msgid "Failed to copy data file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1542 src/program/OutfitStudio.cpp:1700
+#: src/program/OutfitStudio.cpp:1544 src/program/OutfitStudio.cpp:1702
 #, c-format
 msgid "Failed to save merged project file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1551 src/program/OutfitStudio.cpp:1709
+#: src/program/OutfitStudio.cpp:1553 src/program/OutfitStudio.cpp:1711
 #, c-format
 msgid "Failed to open project file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1562
+#: src/program/OutfitStudio.cpp:1564
 #, c-format
 msgid "Failed to copy merged project file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1573 src/program/OutfitStudio.cpp:1735
+#: src/program/OutfitStudio.cpp:1575 src/program/OutfitStudio.cpp:1737
 #, c-format
 msgid "Failed to open group file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1585
+#: src/program/OutfitStudio.cpp:1587
 #, c-format
 msgid "Failed to copy group file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1591 src/program/OutfitStudio.cpp:1757
+#: src/program/OutfitStudio.cpp:1593 src/program/OutfitStudio.cpp:1759
 msgid "Packing finished."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1595 src/program/OutfitStudio.cpp:1600
+#: src/program/OutfitStudio.cpp:1597 src/program/OutfitStudio.cpp:1602
 msgid "Packing projects to archive..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1632 src/program/OutfitStudio.cpp:1683
-#: src/program/OutfitStudio.cpp:1717 src/program/OutfitStudio.cpp:1744
+#: src/program/OutfitStudio.cpp:1634 src/program/OutfitStudio.cpp:1685
+#: src/program/OutfitStudio.cpp:1719 src/program/OutfitStudio.cpp:1746
 msgid "Failed to put new entry into archive!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1639 src/program/OutfitStudio.cpp:1690
-#: src/program/OutfitStudio.cpp:1724 src/program/OutfitStudio.cpp:1751
+#: src/program/OutfitStudio.cpp:1641 src/program/OutfitStudio.cpp:1692
+#: src/program/OutfitStudio.cpp:1726 src/program/OutfitStudio.cpp:1753
 msgid "Failed to copy file contents to archive!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1675
+#: src/program/OutfitStudio.cpp:1677
 #, c-format
 msgid "Failed to open data file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2022 src/program/OutfitStudio.cpp:2069
-#: src/program/OutfitStudio.cpp:3632 src/program/OutfitStudio.cpp:3639
-#: src/program/OutfitStudio.cpp:4626 src/program/OutfitStudio.cpp:4652
-#: src/program/OutfitStudio.cpp:7174 src/program/OutfitStudio.cpp:7301
-#: src/program/OutfitStudio.cpp:7546 src/program/OutfitStudio.cpp:7564
-#: src/program/OutfitStudio.cpp:7582
+#: src/program/OutfitStudio.cpp:2024 src/program/OutfitStudio.cpp:2071
+#: src/program/OutfitStudio.cpp:3640 src/program/OutfitStudio.cpp:3647
+#: src/program/OutfitStudio.cpp:4635 src/program/OutfitStudio.cpp:4661
+#: src/program/OutfitStudio.cpp:7190 src/program/OutfitStudio.cpp:7317
+#: src/program/OutfitStudio.cpp:7562 src/program/OutfitStudio.cpp:7580
+#: src/program/OutfitStudio.cpp:7598
 msgid "There are no valid shapes loaded!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2030 src/program/OutfitStudio.cpp:2208
+#: src/program/OutfitStudio.cpp:2032 src/program/OutfitStudio.cpp:2210
 #, c-format
 msgid "Saving project '%s'..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2055 src/program/OutfitStudio.cpp:2233
+#: src/program/OutfitStudio.cpp:2057 src/program/OutfitStudio.cpp:2235
 msgid "Saving failed."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2060 src/program/OutfitStudio.cpp:2228
+#: src/program/OutfitStudio.cpp:2062 src/program/OutfitStudio.cpp:2230
 msgid "Saved."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2154
+#: src/program/OutfitStudio.cpp:2156
 msgid "Invalid or no slider set file specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2163
+#: src/program/OutfitStudio.cpp:2165
 msgid "No outfit name specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2171
+#: src/program/OutfitStudio.cpp:2173
 msgid "No data folder specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2185
+#: src/program/OutfitStudio.cpp:2187
 msgid "An invalid or no base outfit .nif file name specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2194
+#: src/program/OutfitStudio.cpp:2196
 msgid "No game file path specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2200
+#: src/program/OutfitStudio.cpp:2202
 msgid "No game file name specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2245
+#: src/program/OutfitStudio.cpp:2247
 #, c-format
 msgid "Failed to open '%s' as a slider set file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2245 src/program/OutfitStudio.cpp:2309
+#: src/program/OutfitStudio.cpp:2247 src/program/OutfitStudio.cpp:2311
 msgid "Slider Set Error"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2264
+#: src/program/OutfitStudio.cpp:2266
 msgid "Please choose an outfit to load"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2264
+#: src/program/OutfitStudio.cpp:2266
 msgid "Load a slider set"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2275
+#: src/program/OutfitStudio.cpp:2277
 msgid "Loading project..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2295
+#: src/program/OutfitStudio.cpp:2297
 msgid "Loading outfit data..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2309
+#: src/program/OutfitStudio.cpp:2311
 #, c-format
 msgid "Failed to create project '%s' from file '%s' (%d)!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2323
+#: src/program/OutfitStudio.cpp:2325
 #, c-format
 msgid "Loading reference shape '%s'..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2337
+#: src/program/OutfitStudio.cpp:2339
 msgid "Loading textures..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2342 src/program/OutfitStudio.cpp:3477
-#: src/program/OutfitStudio.cpp:3722
+#: src/program/OutfitStudio.cpp:2344 src/program/OutfitStudio.cpp:3485
+#: src/program/OutfitStudio.cpp:3730
 msgid "Creating outfit..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2346 src/program/OutfitStudio.cpp:3487
-#: src/program/OutfitStudio.cpp:3622
+#: src/program/OutfitStudio.cpp:2348 src/program/OutfitStudio.cpp:3495
+#: src/program/OutfitStudio.cpp:3630
 #, c-format
 msgid "Creating %zu slider(s)..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2365
+#: src/program/OutfitStudio.cpp:2367
 msgid "Creating sliders..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2368
+#: src/program/OutfitStudio.cpp:2370
 msgid "Clearing old sliders..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2379
+#: src/program/OutfitStudio.cpp:2381
 msgid "Loading slider: "
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2439 src/program/OutfitStudio.cpp:7705
+#: src/program/OutfitStudio.cpp:2441 src/program/OutfitStudio.cpp:7721
 msgid "Enter a name for the new slider:"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2439 src/program/OutfitStudio.cpp:7705
+#: src/program/OutfitStudio.cpp:2441 src/program/OutfitStudio.cpp:7721
 msgid "Create New Slider"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2564
+#: src/program/OutfitStudio.cpp:2566
 #, c-format
 msgid "Total Bones: %zu"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2579
+#: src/program/OutfitStudio.cpp:2581
 #, c-format
 msgid "Shape Selection Bones: %zu"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3077
+#: src/program/OutfitStudio.cpp:3079
 msgid "Edit Color"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3239
+#: src/program/OutfitStudio.cpp:3244
 msgid "You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3256
+#: src/program/OutfitStudio.cpp:3261
 msgid "You can only use the undiff brush while editing a slider. Note, use the pencil button next to a slider to enable editing of that slider's morph."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3267
+#: src/program/OutfitStudio.cpp:3272
 msgid "You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3343
+#: src/program/OutfitStudio.cpp:3351
 #, c-format
 msgid "You have unsaved changes to '%s'. Would you like to save them now?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3344
+#: src/program/OutfitStudio.cpp:3352
 msgid "Unsaved Changes"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3399
+#: src/program/OutfitStudio.cpp:3407
 #, c-format
 msgid "Creating project '%s'..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3416 src/program/OutfitStudio.cpp:3560
+#: src/program/OutfitStudio.cpp:3424 src/program/OutfitStudio.cpp:3568
 msgid "Loading reference..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3456 src/program/OutfitStudio.cpp:3680
-#: src/program/OutfitStudio.cpp:3689
+#: src/program/OutfitStudio.cpp:3464 src/program/OutfitStudio.cpp:3688
+#: src/program/OutfitStudio.cpp:3697
 msgid "Loading outfit..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3502
+#: src/program/OutfitStudio.cpp:3510
 msgid "Select a slider set to load"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3519
+#: src/program/OutfitStudio.cpp:3527
 msgid "Select a slider set to add"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3536 src/program/OutfitStudio.cpp:3644
-#: src/program/OutfitStudio.cpp:8711 src/program/OutfitStudio.cpp:8766
-#: src/program/OutfitStudio.cpp:8857 src/program/OutfitStudio.cpp:8980
+#: src/program/OutfitStudio.cpp:3544 src/program/OutfitStudio.cpp:3652
+#: src/program/OutfitStudio.cpp:8727 src/program/OutfitStudio.cpp:8782
+#: src/program/OutfitStudio.cpp:8873 src/program/OutfitStudio.cpp:8996
 msgid "You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3566
+#: src/program/OutfitStudio.cpp:3574
 msgid "Loading reference set..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3618
+#: src/program/OutfitStudio.cpp:3626
 msgid "Creating reference..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3732
+#: src/program/OutfitStudio.cpp:3740
 msgid "Unload the project? All unsaved changes will be lost"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3732
+#: src/program/OutfitStudio.cpp:3740
 msgid "Unload Project"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3733
+#: src/program/OutfitStudio.cpp:3741
 msgid "Unload"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4201
+#: src/program/OutfitStudio.cpp:4209
 msgid "Import NIF file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4208 src/program/OutfitStudio.cpp:4209
+#: src/program/OutfitStudio.cpp:4216 src/program/OutfitStudio.cpp:4217
 msgid "Importing NIF file..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4230
+#: src/program/OutfitStudio.cpp:4239
 msgid "Export outfit NIF"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4248
+#: src/program/OutfitStudio.cpp:4257
 #, c-format
 msgid "Failed to save NIF file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4248 src/program/OutfitStudio.cpp:4280
-#: src/program/OutfitStudio.cpp:4365 src/program/OutfitStudio.cpp:4490
-#: src/program/OutfitStudio.cpp:4714
+#: src/program/OutfitStudio.cpp:4257 src/program/OutfitStudio.cpp:4289
+#: src/program/OutfitStudio.cpp:4374 src/program/OutfitStudio.cpp:4499
+#: src/program/OutfitStudio.cpp:4723
 msgid "Export Error"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4264
+#: src/program/OutfitStudio.cpp:4273
 msgid "Export project NIF"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4280
+#: src/program/OutfitStudio.cpp:4289
 #, c-format
 msgid "Failed to save NIF file '%s' with reference!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4286 src/program/OutfitStudio.cpp:4371
-#: src/program/OutfitStudio.cpp:4496 src/program/OutfitStudio.cpp:4631
-#: src/program/OutfitStudio.cpp:4657 src/program/OutfitStudio.cpp:7103
-#: src/program/OutfitStudio.cpp:7128 src/program/OutfitStudio.cpp:7149
-#: src/program/OutfitStudio.cpp:7416 src/program/OutfitStudio.cpp:7441
-#: src/program/OutfitStudio.cpp:7477 src/program/OutfitStudio.cpp:7510
-#: src/program/OutfitStudio.cpp:7609 src/program/OutfitStudio.cpp:7660
-#: src/program/OutfitStudio.cpp:7721 src/program/OutfitStudio.cpp:7738
-#: src/program/OutfitStudio.cpp:8120 src/program/OutfitStudio.cpp:8137
-#: src/program/OutfitStudio.cpp:8157 src/program/OutfitStudio.cpp:8181
-#: src/program/OutfitStudio.cpp:8215 src/program/OutfitStudio.cpp:8367
-#: src/program/OutfitStudio.cpp:8556 src/program/OutfitStudio.cpp:8706
-#: src/program/OutfitStudio.cpp:8761 src/program/OutfitStudio.cpp:8975
-#: src/program/OutfitStudio.cpp:9062 src/program/OutfitStudio.cpp:9534
-#: src/program/OutfitStudio.cpp:9625 src/program/OutfitStudio.cpp:9718
-#: src/program/OutfitStudio.cpp:9763 src/program/OutfitStudio.cpp:9808
-#: src/program/OutfitStudio.cpp:9859 src/program/OutfitStudio.cpp:10110
-#: src/program/OutfitStudio.cpp:10160 src/program/OutfitStudio.cpp:10267
-#: src/program/OutfitStudio.cpp:10414 src/program/OutfitStudio.cpp:13476
+#: src/program/OutfitStudio.cpp:4295 src/program/OutfitStudio.cpp:4380
+#: src/program/OutfitStudio.cpp:4505 src/program/OutfitStudio.cpp:4640
+#: src/program/OutfitStudio.cpp:4666 src/program/OutfitStudio.cpp:7119
+#: src/program/OutfitStudio.cpp:7144 src/program/OutfitStudio.cpp:7165
+#: src/program/OutfitStudio.cpp:7432 src/program/OutfitStudio.cpp:7457
+#: src/program/OutfitStudio.cpp:7493 src/program/OutfitStudio.cpp:7526
+#: src/program/OutfitStudio.cpp:7625 src/program/OutfitStudio.cpp:7676
+#: src/program/OutfitStudio.cpp:7737 src/program/OutfitStudio.cpp:7754
+#: src/program/OutfitStudio.cpp:8136 src/program/OutfitStudio.cpp:8153
+#: src/program/OutfitStudio.cpp:8173 src/program/OutfitStudio.cpp:8197
+#: src/program/OutfitStudio.cpp:8231 src/program/OutfitStudio.cpp:8383
+#: src/program/OutfitStudio.cpp:8572 src/program/OutfitStudio.cpp:8722
+#: src/program/OutfitStudio.cpp:8777 src/program/OutfitStudio.cpp:8991
+#: src/program/OutfitStudio.cpp:9078 src/program/OutfitStudio.cpp:9615
+#: src/program/OutfitStudio.cpp:9706 src/program/OutfitStudio.cpp:9799
+#: src/program/OutfitStudio.cpp:9844 src/program/OutfitStudio.cpp:9889
+#: src/program/OutfitStudio.cpp:9940 src/program/OutfitStudio.cpp:10191
+#: src/program/OutfitStudio.cpp:10241 src/program/OutfitStudio.cpp:10348
+#: src/program/OutfitStudio.cpp:10495 src/program/OutfitStudio.cpp:13559
 msgid "There is no shape selected!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4293
+#: src/program/OutfitStudio.cpp:4302
 msgid "Export selected shapes to NIF"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4305
+#: src/program/OutfitStudio.cpp:4314
 msgid "Failed to export selected shapes to NIF file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4310
+#: src/program/OutfitStudio.cpp:4319
 msgid "Import .obj file for new shape"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4348
+#: src/program/OutfitStudio.cpp:4357
 msgid "Some of the shapes have coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?  (This is not recommended.)"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4350 src/program/OutfitStudio.cpp:4385
-#: src/program/OutfitStudio.cpp:4475 src/program/OutfitStudio.cpp:4510
+#: src/program/OutfitStudio.cpp:4359 src/program/OutfitStudio.cpp:4394
+#: src/program/OutfitStudio.cpp:4484 src/program/OutfitStudio.cpp:4519
 msgid "Transform to global"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4357
+#: src/program/OutfitStudio.cpp:4366
 msgid "Export project as an .obj file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4365 src/program/OutfitStudio.cpp:4407
-#: src/program/OutfitStudio.cpp:4426 src/program/OutfitStudio.cpp:7537
+#: src/program/OutfitStudio.cpp:4374 src/program/OutfitStudio.cpp:4416
+#: src/program/OutfitStudio.cpp:4435 src/program/OutfitStudio.cpp:7553
 msgid "Failed to export OBJ file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4383
+#: src/program/OutfitStudio.cpp:4392
 msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4394
+#: src/program/OutfitStudio.cpp:4403
 msgid "Export selected shapes as an .obj file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4411
+#: src/program/OutfitStudio.cpp:4420
 msgid "Export shape as an .obj file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4432
+#: src/program/OutfitStudio.cpp:4441
 msgid "Import .fbx file for new shape"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4473
+#: src/program/OutfitStudio.cpp:4482
 msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?  (This is not recommended.)"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4482
+#: src/program/OutfitStudio.cpp:4491
 msgid "Export project as an .fbx file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4490 src/program/OutfitStudio.cpp:4532
-#: src/program/OutfitStudio.cpp:4551
+#: src/program/OutfitStudio.cpp:4499 src/program/OutfitStudio.cpp:4541
+#: src/program/OutfitStudio.cpp:4560
 msgid "Failed to export FBX file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4508
+#: src/program/OutfitStudio.cpp:4517
 msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4519
+#: src/program/OutfitStudio.cpp:4528
 msgid "Export selected shapes as an .fbx file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4536
+#: src/program/OutfitStudio.cpp:4545
 msgid "Export shape as an .fbx file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4557 src/program/OutfitStudio.cpp:7305
+#: src/program/OutfitStudio.cpp:4566 src/program/OutfitStudio.cpp:7321
 msgid "Import .tri morphs"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4576 src/program/OutfitStudio.cpp:7314
+#: src/program/OutfitStudio.cpp:4585 src/program/OutfitStudio.cpp:7330
 msgid "Failed to load TRI file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4582 src/program/OutfitStudio.cpp:8163
+#: src/program/OutfitStudio.cpp:4591 src/program/OutfitStudio.cpp:8179
 msgid "Please enter a new unique name for the shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4582 src/program/OutfitStudio.cpp:8163
+#: src/program/OutfitStudio.cpp:4591 src/program/OutfitStudio.cpp:8179
 msgid "Rename Shape"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4635 src/program/OutfitStudio.cpp:4661
-#: src/program/OutfitStudio.cpp:7568
+#: src/program/OutfitStudio.cpp:4644 src/program/OutfitStudio.cpp:4670
+#: src/program/OutfitStudio.cpp:7584
 msgid "Export .tri morphs"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4645 src/program/OutfitStudio.cpp:4668
-#: src/program/OutfitStudio.cpp:7575
+#: src/program/OutfitStudio.cpp:4654 src/program/OutfitStudio.cpp:4677
+#: src/program/OutfitStudio.cpp:7591
 msgid "Failed to export TRI file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4673
+#: src/program/OutfitStudio.cpp:4682
 msgid "Import physics data to project"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4680
+#: src/program/OutfitStudio.cpp:4689
 #, c-format
 msgid "Failed to import physics data file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4680
+#: src/program/OutfitStudio.cpp:4689
 msgid "Import Error"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4692
+#: src/program/OutfitStudio.cpp:4701
 msgid "There is no physics data loaded!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4692 src/program/OutfitStudio.cpp:6390
-#: src/program/OutfitStudio.cpp:7090
+#: src/program/OutfitStudio.cpp:4701 src/program/OutfitStudio.cpp:6406
+#: src/program/OutfitStudio.cpp:7106
 msgid "Info"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4700
+#: src/program/OutfitStudio.cpp:4709
 msgid "Please choose the physics data source you want to export."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4700
+#: src/program/OutfitStudio.cpp:4709
 msgid "Choose physics data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4708
+#: src/program/OutfitStudio.cpp:4717
 msgid "Export physics data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4714
+#: src/program/OutfitStudio.cpp:4723
 #, c-format
 msgid "Failed to save physics data file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4721
+#: src/program/OutfitStudio.cpp:4730
 msgid "This function requires at least one slider position to be non-zero."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4733
+#: src/program/OutfitStudio.cpp:4742
 msgid "Create a conversion slider for the current slider settings with the following name: "
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4733
+#: src/program/OutfitStudio.cpp:4742
 msgid "Create New Conversion Slider"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5476
+#: src/program/OutfitStudio.cpp:5492
 msgid "Please enter an SSF file path."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:6235
+#: src/program/OutfitStudio.cpp:6251
 #, c-format
 msgid "Field of View: %d"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:6365
+#: src/program/OutfitStudio.cpp:6381
 msgid "Your changes were not applied yet. Do you want to apply or reset them?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:6366
+#: src/program/OutfitStudio.cpp:6382
 msgid "Pending Changes"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:6390
+#: src/program/OutfitStudio.cpp:6406
 msgid "You must have exactly one mesh selected in order to edit partitions or segments."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7039
+#: src/program/OutfitStudio.cpp:7055
 msgid "There are no sliders loaded!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7090
+#: src/program/OutfitStudio.cpp:7106
 msgid "No changes were made to the sliders, so no preset was saved!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7107 src/program/OutfitStudio.cpp:7132
-#: src/program/OutfitStudio.cpp:7153 src/program/OutfitStudio.cpp:7420
+#: src/program/OutfitStudio.cpp:7123 src/program/OutfitStudio.cpp:7148
+#: src/program/OutfitStudio.cpp:7169 src/program/OutfitStudio.cpp:7436
 msgid "There is no slider in edit mode to import data to!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7111
+#: src/program/OutfitStudio.cpp:7127
 msgid "Import .nif file for slider calculation"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7118
+#: src/program/OutfitStudio.cpp:7134
 msgid "No mesh found in the .nif file that matches currently selected shape!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7136
+#: src/program/OutfitStudio.cpp:7152
 msgid "Import .bsd slider data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7157
+#: src/program/OutfitStudio.cpp:7173
 msgid "Import .obj file for slider calculation"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7164 src/program/OutfitStudio.cpp:7431
+#: src/program/OutfitStudio.cpp:7180 src/program/OutfitStudio.cpp:7447
 msgid "Vertex count of .obj file mesh does not match currently selected shape!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7178
+#: src/program/OutfitStudio.cpp:7194
 msgid "Import .osd file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7187
+#: src/program/OutfitStudio.cpp:7203
 msgid "Failed to import OSD file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7227 src/program/OutfitStudio.cpp:7337
+#: src/program/OutfitStudio.cpp:7243 src/program/OutfitStudio.cpp:7353
 msgid "This will delete all loaded sliders. Are you sure?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7227 src/program/OutfitStudio.cpp:7296
+#: src/program/OutfitStudio.cpp:7243 src/program/OutfitStudio.cpp:7312
 msgid "OSD Import"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7296 src/program/OutfitStudio.cpp:7411
+#: src/program/OutfitStudio.cpp:7312 src/program/OutfitStudio.cpp:7427
 #, c-format
 msgid ""
 "Added morphs for the following shapes:\n"
@@ -4494,350 +4503,358 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7337 src/program/OutfitStudio.cpp:7411
+#: src/program/OutfitStudio.cpp:7353 src/program/OutfitStudio.cpp:7427
 msgid "TRI Import"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7424
+#: src/program/OutfitStudio.cpp:7440
 msgid "Import .fbx file for slider calculation"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7445 src/program/OutfitStudio.cpp:7481
-#: src/program/OutfitStudio.cpp:7514
+#: src/program/OutfitStudio.cpp:7461 src/program/OutfitStudio.cpp:7497
+#: src/program/OutfitStudio.cpp:7530
 msgid "There is no slider in edit mode to export data from!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7450
+#: src/program/OutfitStudio.cpp:7466
 msgid "Export .nif slider data to directory"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7461
+#: src/program/OutfitStudio.cpp:7477
 msgid "Export .nif slider data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7468
+#: src/program/OutfitStudio.cpp:7484
 msgid "Failed to export NIF file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7486
+#: src/program/OutfitStudio.cpp:7502
 msgid "Export .bsd slider data to directory"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7497
+#: src/program/OutfitStudio.cpp:7513
 msgid "Export .bsd slider data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7519 src/program/OutfitStudio.cpp:7586
+#: src/program/OutfitStudio.cpp:7535 src/program/OutfitStudio.cpp:7602
 msgid "Export .obj slider data to directory"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7530
+#: src/program/OutfitStudio.cpp:7546
 msgid "Export .obj slider data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7550
+#: src/program/OutfitStudio.cpp:7566
 msgid "Export .osd file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7557
+#: src/program/OutfitStudio.cpp:7573
 msgid "Failed to export OSD file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7615
+#: src/program/OutfitStudio.cpp:7631
 msgid "Are you sure you wish to clear the unmasked slider data for the selected shapes?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7616 src/program/OutfitStudio.cpp:7621
+#: src/program/OutfitStudio.cpp:7632 src/program/OutfitStudio.cpp:7637
 msgid "Confirm data erase"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7619
+#: src/program/OutfitStudio.cpp:7635
 #, c-format
 msgid "Are you sure you wish to clear the unmasked slider data for the shape '%s'?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7674
+#: src/program/OutfitStudio.cpp:7690
 msgid "Enter a name for the new zap:"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7674
+#: src/program/OutfitStudio.cpp:7690
 msgid "Create New Zap"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7725
+#: src/program/OutfitStudio.cpp:7741
 msgid "There is no slider in edit mode to negate!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7742
+#: src/program/OutfitStudio.cpp:7758
 msgid "There is no slider in edit mode to create a mask from!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7752
+#: src/program/OutfitStudio.cpp:7768
 msgid "Are you sure you wish to delete the selected slider(s)?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7753
+#: src/program/OutfitStudio.cpp:7769
 msgid "Confirm slider delete"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7953
+#: src/program/OutfitStudio.cpp:7969
 msgid "There is no slider in edit mode to show properties for!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7966 src/program/OutfitStudio.cpp:8010
+#: src/program/OutfitStudio.cpp:7982 src/program/OutfitStudio.cpp:8026
 msgid "Conforming: "
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7997
+#: src/program/OutfitStudio.cpp:8013
 msgid "Conforming shapes..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8021
+#: src/program/OutfitStudio.cpp:8037
 msgid "All shapes conformed."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8735
+#: src/program/OutfitStudio.cpp:8751
 msgid "Are you sure you wish to delete parts of the selected shapes?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8735 src/program/OutfitStudio.cpp:9066
+#: src/program/OutfitStudio.cpp:8751 src/program/OutfitStudio.cpp:9082
 msgid "Confirm Delete"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8777
+#: src/program/OutfitStudio.cpp:8793
 msgid "Please enter a unique name for the new separated shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8777
+#: src/program/OutfitStudio.cpp:8793
 msgid "Separate Vertices..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8827
+#: src/program/OutfitStudio.cpp:8843
 msgid "No errors found!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8833
+#: src/program/OutfitStudio.cpp:8849
 msgid "Errors:"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8835
+#: src/program/OutfitStudio.cpp:8851
 msgid "Target must be different from source."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8837
+#: src/program/OutfitStudio.cpp:8853
 msgid "Partitions do not match. Make sure the amount of partitions and their slots match up."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8839
+#: src/program/OutfitStudio.cpp:8855
 msgid "Segments do not match. Make sure the amount of segments, sub segments and their info as well as the segmentation file match."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8841
+#: src/program/OutfitStudio.cpp:8857
 msgid "Resulting shape would have too many vertices."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8843
+#: src/program/OutfitStudio.cpp:8859
 msgid "Resulting shape would have too many triangles."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8845
+#: src/program/OutfitStudio.cpp:8861
 msgid "Shaders do not match. Make sure both shapes either have or don't have a shader and their shader type matches."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8847
+#: src/program/OutfitStudio.cpp:8863
 msgid "Base texture doesn't match. Make sure both shapes have the same base/diffuse texture path."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8849
+#: src/program/OutfitStudio.cpp:8865
 msgid "Alpha property mismatch. Make sure both shapes either have or don't have an alpha property and their flags + threshold match."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8936
+#: src/program/OutfitStudio.cpp:8952
 msgid "You can only copy shapes into an outfit, and there is no outfit in the current project. Load one first!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8943
+#: src/program/OutfitStudio.cpp:8959
 msgid "Please enter a unique name for the duplicated shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8943
+#: src/program/OutfitStudio.cpp:8959
 msgid "Duplicate Shape"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8985
+#: src/program/OutfitStudio.cpp:9001
 msgid "There is more than one shape selected."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9040
+#: src/program/OutfitStudio.cpp:9056
 msgid "An edge has multiple triangles of the same orientation.  Correct the orientations before splitting."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9066
+#: src/program/OutfitStudio.cpp:9082
 msgid "Are you sure you wish to delete the selected shapes?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9226
+#: src/program/OutfitStudio.cpp:9246
 msgid "No bone name was entered!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9234
+#: src/program/OutfitStudio.cpp:9254 src/program/OutfitStudio.cpp:9295
 #, c-format
 msgid "Bone '%s' already exists in the project!"
 msgstr ""
 
+#: src/program/OutfitStudio.cpp:9353
+msgid "View Standard Bone"
+msgstr ""
+
 #: src/program/OutfitStudio.cpp:9364
+msgid "Edit Custom Bone"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9445
 msgid "The following shapes have unweighted vertices, which can cause issues. The affected vertices have been put under a mask. Do you want to save anyway?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9367
+#: src/program/OutfitStudio.cpp:9448
 msgid "Unweighted Vertices"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9539 src/program/OutfitStudio.cpp:9630
-#: src/program/OutfitStudio.cpp:9724 src/program/OutfitStudio.cpp:9864
+#: src/program/OutfitStudio.cpp:9620 src/program/OutfitStudio.cpp:9711
+#: src/program/OutfitStudio.cpp:9805 src/program/OutfitStudio.cpp:9945
 msgid "There is no reference shape!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9548 src/program/OutfitStudio.cpp:9698
+#: src/program/OutfitStudio.cpp:9629 src/program/OutfitStudio.cpp:9779
 msgid "Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9548 src/program/OutfitStudio.cpp:9698
+#: src/program/OutfitStudio.cpp:9629 src/program/OutfitStudio.cpp:9779
 msgid "Can't copy weights"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9668
+#: src/program/OutfitStudio.cpp:9749
 msgid "Copying selected bone weights..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9729
+#: src/program/OutfitStudio.cpp:9810
 msgid "Sorry, you can't copy weights from the reference shape to itself."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9736
+#: src/program/OutfitStudio.cpp:9817
 msgid "The vertex count of the reference and chosen shape is not the same!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9873
+#: src/program/OutfitStudio.cpp:9954
 msgid "Sorry, you can't copy partitions/segments from the reference shape to itself. Skipping this shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9873
+#: src/program/OutfitStudio.cpp:9954
 msgid "Can't copy segments/partitions"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9878
+#: src/program/OutfitStudio.cpp:9959
 msgid "Triangles will be assigned to the partition/segment of the nearest triangle in the reference.  Existing partitions/segments are cleared.  This action can't be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9878
+#: src/program/OutfitStudio.cpp:9959
 msgid "Copy Partitions/Segments"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9887
+#: src/program/OutfitStudio.cpp:9968
 msgid "Copying segments/partitions..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9898
+#: src/program/OutfitStudio.cpp:9979
 #, c-format
 msgid "The partitions/segments could not be copied for '%s' because %d triangles could not be matched."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9949
+#: src/program/OutfitStudio.cpp:10030
 msgid " sliders"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9951
+#: src/program/OutfitStudio.cpp:10032
 msgid " bones"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10087
+#: src/program/OutfitStudio.cpp:10168
 msgid "Symmetrize Vertices"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10089
+#: src/program/OutfitStudio.cpp:10170
 msgid "Eliminates the selected asymmetries from unmasked vertices by adjusting vertex data to be consistent with mirror vertices."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10091
+#: src/program/OutfitStudio.cpp:10172
 msgid "  (Hint: To choose which non-selected bones are adjusted during weight normalization, unlock them in the bones list in the Bones tab.)"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10095
+#: src/program/OutfitStudio.cpp:10176
 msgid "Vertices that will be symmetrized:"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10096
+#: src/program/OutfitStudio.cpp:10177
 msgid "&Symmetrize"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10253
+#: src/program/OutfitStudio.cpp:10334
 #, c-format
 msgid "%d unreferenced nodes were deleted."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10472
+#: src/program/OutfitStudio.cpp:10553
 msgid "Please enter a new unique name for the mask."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10472
+#: src/program/OutfitStudio.cpp:10553
 msgid "New Mask"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10657
+#: src/program/OutfitStudio.cpp:10738
 msgid "Reset all bone poses?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10657
+#: src/program/OutfitStudio.cpp:10738
 msgid "Reset Pose"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10808
+#: src/program/OutfitStudio.cpp:10889
 msgid "Please enter a new unique name for the pose."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10808
+#: src/program/OutfitStudio.cpp:10889
 msgid "New Pose"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10859
+#: src/program/OutfitStudio.cpp:10940
 #, c-format
 msgid "Are you sure you wish to delete the pose '%s'?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10860
+#: src/program/OutfitStudio.cpp:10941
 msgid "Confirm pose delete"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11781
+#: src/program/OutfitStudio.cpp:11862
 msgid "The vertex picked has more than three connections."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12016
+#: src/program/OutfitStudio.cpp:12097
 msgid "Neither the selected nor target vertices are on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12017
+#: src/program/OutfitStudio.cpp:12098
 msgid "The selected vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12018
+#: src/program/OutfitStudio.cpp:12099
 msgid "The target vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12019
+#: src/program/OutfitStudio.cpp:12100
 msgid "Weld/Merge Non-Boundary Vertices"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12101
+#: src/program/OutfitStudio.cpp:12182
 msgid "The edge picked is on the surface boundary.  Pick an interior edge."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12155
+#: src/program/OutfitStudio.cpp:12236
 msgid "The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:13487 src/program/OutfitStudio.cpp:13488
+#: src/program/OutfitStudio.cpp:13570 src/program/OutfitStudio.cpp:13571
 msgid "Loading slider file..."
 msgstr ""
 
@@ -4845,45 +4862,45 @@ msgstr ""
 msgid "Show the Normal Map Generator dialog."
 msgstr ""
 
-#: src/program/PreviewWindow.cpp:66 src/render/GLDialog.cpp:34
+#: src/program/PreviewWindow.cpp:66 src/render/GLDialog.cpp:33
 msgid "Preview failed: OpenGL context is not OK."
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:103
+#: src/program/ShapeProperties.cpp:104
 msgid "Material"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:116
+#: src/program/ShapeProperties.cpp:117
 #, c-format
 msgid "%zu shapes selected"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:131
+#: src/program/ShapeProperties.cpp:132
 #, c-format
 msgid "This action will affect all %zu selected shapes. Are you sure?"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:132
+#: src/program/ShapeProperties.cpp:133
 msgid "Confirmation"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:134
+#: src/program/ShapeProperties.cpp:135
 msgid "Yes"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:134
+#: src/program/ShapeProperties.cpp:135
 msgid "No"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:346
+#: src/program/ShapeProperties.cpp:352
 msgid "Choose material file"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:656
+#: src/program/ShapeProperties.cpp:662
 msgid "Please choose a shape to copy from"
 msgstr ""
 
-#: src/program/ShapeProperties.cpp:656
+#: src/program/ShapeProperties.cpp:662
 msgid "Choose shape"
 msgstr ""
 

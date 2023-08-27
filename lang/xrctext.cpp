@@ -1898,65 +1898,67 @@ _("Emissive Multiple");
 _("Alpha");
 #line 235 "res/xrc/ShapeProperties.xrc"
 _("Vertex Colors");
-#line 263 "res/xrc/ShapeProperties.xrc"
+#line 252 "res/xrc/ShapeProperties.xrc"
+_("Double Sided");
+#line 280 "res/xrc/ShapeProperties.xrc"
 _("Add");
-#line 272 "res/xrc/ShapeProperties.xrc"
+#line 289 "res/xrc/ShapeProperties.xrc"
 _("Remove");
-#line 281 "res/xrc/ShapeProperties.xrc"
+#line 298 "res/xrc/ShapeProperties.xrc"
 _("Textures...");
-#line 293 "res/xrc/ShapeProperties.xrc"
+#line 310 "res/xrc/ShapeProperties.xrc"
 _("Transparency");
-#line 316 "res/xrc/ShapeProperties.xrc"
+#line 333 "res/xrc/ShapeProperties.xrc"
 _("Threshold");
-#line 356 "res/xrc/ShapeProperties.xrc"
+#line 373 "res/xrc/ShapeProperties.xrc"
 _("Vertex Alpha");
-#line 374 "res/xrc/ShapeProperties.xrc"
+#line 391 "res/xrc/ShapeProperties.xrc"
 _("Alpha Test");
-#line 392 "res/xrc/ShapeProperties.xrc"
+#line 409 "res/xrc/ShapeProperties.xrc"
 _("Alpha Blend");
-#line 421 "res/xrc/ShapeProperties.xrc"
+#line 438 "res/xrc/ShapeProperties.xrc"
 _("Add");
-#line 430 "res/xrc/ShapeProperties.xrc"
+#line 447 "res/xrc/ShapeProperties.xrc"
 _("Remove");
-#line 443 "res/xrc/ShapeProperties.xrc"
+#line 460 "res/xrc/ShapeProperties.xrc"
 _("Copy from shape...");
-#line 451 "res/xrc/ShapeProperties.xrc"
+#line 468 "res/xrc/ShapeProperties.xrc"
 _("Geometry");
-#line 471 "res/xrc/ShapeProperties.xrc"
+#line 488 "res/xrc/ShapeProperties.xrc"
 _("Full Precision");
-#line 490 "res/xrc/ShapeProperties.xrc"
+#line 507 "res/xrc/ShapeProperties.xrc"
 _("Sub Index");
-#line 509 "res/xrc/ShapeProperties.xrc"
+#line 526 "res/xrc/ShapeProperties.xrc"
 _("Skinned");
-#line 527 "res/xrc/ShapeProperties.xrc"
+#line 544 "res/xrc/ShapeProperties.xrc"
 _("Dynamic");
-#line 573 "res/xrc/ShapeProperties.xrc"
+#line 590 "res/xrc/ShapeProperties.xrc"
 _("Extra Data");
-#line 594 "res/xrc/ShapeProperties.xrc"
+#line 611 "res/xrc/ShapeProperties.xrc"
 _("Add");
-#line 603 "res/xrc/ShapeProperties.xrc"
+#line 620 "res/xrc/ShapeProperties.xrc"
 _("Type");
-#line 612 "res/xrc/ShapeProperties.xrc"
+#line 629 "res/xrc/ShapeProperties.xrc"
 _("Name");
-#line 621 "res/xrc/ShapeProperties.xrc"
+#line 638 "res/xrc/ShapeProperties.xrc"
 _("Value");
-#line 631 "res/xrc/ShapeProperties.xrc"
+#line 648 "res/xrc/ShapeProperties.xrc"
 _("Coordinates");
-#line 640 "res/xrc/ShapeProperties.xrc"
+#line 657 "res/xrc/ShapeProperties.xrc"
 _("Transform from shape to global coordinates:");
-#line 655 "res/xrc/ShapeProperties.xrc"
+#line 672 "res/xrc/ShapeProperties.xrc"
 _("Scale");
-#line 694 "res/xrc/ShapeProperties.xrc"
+#line 711 "res/xrc/ShapeProperties.xrc"
 _("Origin");
-#line 703 "res/xrc/ShapeProperties.xrc"
+#line 720 "res/xrc/ShapeProperties.xrc"
 _("Rotation");
-#line 789 "res/xrc/ShapeProperties.xrc"
+#line 806 "res/xrc/ShapeProperties.xrc"
 _("Recalculate geometry's coordinates so it doesn't move");
-#line 790 "res/xrc/ShapeProperties.xrc"
+#line 807 "res/xrc/ShapeProperties.xrc"
 _("Transform geometry so its position in global coordinates does not change.");
-#line 814 "res/xrc/ShapeProperties.xrc"
+#line 831 "res/xrc/ShapeProperties.xrc"
 _("&OK");
-#line 821 "res/xrc/ShapeProperties.xrc"
+#line 838 "res/xrc/ShapeProperties.xrc"
 _("&Cancel");
 #line 6 "res/xrc/Skeleton.xrc"
 _("Select a bone to add");
@@ -1969,16 +1971,18 @@ _("&Cancel");
 #line 53 "res/xrc/Skeleton.xrc"
 _("Add Custom Bone");
 #line 68 "res/xrc/Skeleton.xrc"
-_("Name");
-#line 93 "res/xrc/Skeleton.xrc"
 _("Parent");
+#line 94 "res/xrc/Skeleton.xrc"
+_("Name");
 #line 133 "res/xrc/Skeleton.xrc"
 _("Origin");
 #line 142 "res/xrc/Skeleton.xrc"
 _("Rotation");
-#line 232 "res/xrc/Skeleton.xrc"
+#line 234 "res/xrc/Skeleton.xrc"
+_("Add Count #");
+#line 259 "res/xrc/Skeleton.xrc"
 _("&OK");
-#line 239 "res/xrc/Skeleton.xrc"
+#line 266 "res/xrc/Skeleton.xrc"
 _("&Cancel");
 #line 6 "res/xrc/Slider.xrc"
 _("Select a slider preset");
