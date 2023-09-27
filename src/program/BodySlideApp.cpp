@@ -37,7 +37,7 @@ using namespace nifly;
 ConfigurationManager Config;
 ConfigurationManager BodySlideConfig;
 
-const std::array<wxString, 10> TargetGames = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout 76", "Oblivion", "Starfield"};
+const std::array<wxString, 10> TargetGames = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout76", "Oblivion", "Starfield"};
 const std::array<wxLanguage, 37> SupportedLangs = {wxLANGUAGE_ENGLISH,	  wxLANGUAGE_AFRIKAANS,		   wxLANGUAGE_ARABIC,  wxLANGUAGE_CATALAN,	  wxLANGUAGE_CZECH,
 												   wxLANGUAGE_DANISH,	  wxLANGUAGE_GERMAN,		   wxLANGUAGE_GREEK,   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,
 												   wxLANGUAGE_FINNISH,	  wxLANGUAGE_FRENCH,		   wxLANGUAGE_HINDI,   wxLANGUAGE_HUNGARIAN,  wxLANGUAGE_INDONESIAN,
@@ -1685,7 +1685,7 @@ bool BodySlideApp::ShowSetup() {
 				case SF:
 					dataDir = dirStarfield->GetDirName();
 					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sf.nif");
-					Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
+					Config.SetValue("Anim/SkeletonRootName", "Root");
 					break;
 			}
 
@@ -3994,7 +3994,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 			break;
 		case SF:
 			fpSkeletonFile->SetPath("res/skeleton_female_sf.nif");
-			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
+			choiceSkeletonRoot->SetStringSelection("Root");
 			break;
 		case FO4:
 		case FO4VR:

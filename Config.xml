@@ -1,5 +1,5 @@
 <Config>
-    <!-- 0 = FO3, 1 = FONV, 2 = SKYRIM, 3 = FO4, 4 = SKYRIMSE, 5 = FO4VR, 6 = SKYRIMVR -->
+    <!-- 0 = FO3, 1 = FONV, 2 = SKYRIM, 3 = FO4, 4 = SKYRIMSE, 5 = FO4VR, 6 = SKYRIMVR, 7 = FO76, 8 = OB, 9 = SF -->
     <TargetGame>-1</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
     <BSATextureScan>true</BSATextureScan>
@@ -11,7 +11,10 @@
         <Fallout4>Fallout4 - Animations.ba2; Fallout4 - Interface.ba2; Fallout4 - Meshes.ba2; Fallout4 - MeshesExtra.ba2; Fallout4 - Misc.ba2; Fallout4 - Nvflex.ba2; Fallout4 - Shaders.ba2; Fallout4 - Sounds.ba2; Fallout4 - Startup.ba2; Fallout4 - Voices_en.ba2; DLCCoast - Voices_en.ba2; DLCNukaWorld - Voices_en.ba2; DLCRobot - Voices_en.ba2; DLCworkshop03 - Voices_en.ba2; Fallout4 - Voices_de.ba2; DLCCoast - Voices_de.ba2; DLCNukaWorld - Voices_de.ba2; DLCRobot - Voices_de.ba2; DLCworkshop03 - Voices_de.ba2; DLCUltraHighResolution - Textures01.ba2; DLCUltraHighResolution - Textures02.ba2; DLCUltraHighResolution - Textures03.ba2; DLCUltraHighResolution - Textures04.ba2; DLCUltraHighResolution - Textures05.ba2; DLCUltraHighResolution - Textures06.ba2; DLCUltraHighResolution - Textures07.ba2; DLCUltraHighResolution - Textures08.ba2; DLCUltraHighResolution - Textures09.ba2; DLCUltraHighResolution - Textures10.ba2; DLCUltraHighResolution - Textures11.ba2; DLCUltraHighResolution - Textures12.ba2; DLCUltraHighResolution - Textures13.ba2; DLCUltraHighResolution - Textures14.ba2; DLCUltraHighResolution - Textures15.ba2</Fallout4>
         <SkyrimSpecialEdition>Skyrim - Animations.bsa; Skyrim - Interface.bsa; Skyrim - Meshes0.bsa; Skyrim - Meshes1.bsa; Skyrim - Misc.bsa; Skyrim - Shaders.bsa; Skyrim - Sounds.bsa; Skyrim - Voices_en0.bsa; Skyrim - Voices_de0.bsa</SkyrimSpecialEdition>
         <Fallout4VR>Fallout4 - Animations.ba2; Fallout4 - Interface.ba2; Fallout4 - Meshes.ba2; Fallout4 - MeshesExtra.ba2; Fallout4 - Misc.ba2; Fallout4 - Misc - Beta.ba2; Fallout4 - Misc - Debug.ba2; Fallout4 - Shaders.ba2; Fallout4 - Sounds.ba2; Fallout4 - Startup.ba2; Fallout4 - Voices.ba2; Fallout4 - Voices_en.ba2; Fallout4 - Voices_de.ba2; Fallout4_VR - Shaders.ba2</Fallout4VR>
-        <SkyrimVR>Skyrim - Animations.bsa; Skyrim - Interface.bsa; Skyrim - Meshes0.bsa; Skyrim - Meshes1.bsa; Skyrim - Misc.bsa; Skyrim - Shaders.bsa; Skyrim - Sounds.bsa; Skyrim - Voices_en0.bsa; Skyrim - Voices_de0.bsa; Skyrim_VR - Main.bsa</SkyrimVR></GameDataFiles>
+        <SkyrimVR>Skyrim - Animations.bsa; Skyrim - Interface.bsa; Skyrim - Meshes0.bsa; Skyrim - Meshes1.bsa; Skyrim - Misc.bsa; Skyrim - Shaders.bsa; Skyrim - Sounds.bsa; Skyrim - Voices_en0.bsa; Skyrim - Voices_de0.bsa; Skyrim_VR - Main.bsa</SkyrimVR>
+        <Fallout76></Fallout76>
+		<Oblivion>Oblivion - Misc.bsa; Oblivion - Sounds.bsa; Oblivion - Voices1.bsa; Oblivion - Voices2.bsa; DLCShiveringIsles - Sounds.bsa; DLCShiveringIsles - Voices.bsa</Oblivion>
+		<Starfield>Starfield - Animations.ba2; Starfield - DensityMaps.ba2; Starfield - FaceAnimation01.ba2; Starfield - FaceAnimation02.ba2; Starfield - FaceAnimation03.ba2; Starfield - FaceAnimation04.ba2; Starfield - FaceAnimationPatch.ba2; Starfield - Interface.ba2; Starfield - Localization.ba2; Starfield - Misc.ba2; Starfield - Particles.ba2; Starfield - ParticlesTestData.ba2; Starfield - PlanetData.ba2; Starfield - Shaders.ba2; Starfield - ShadersBeta.ba2; Starfield - Terrain01.ba2; Starfield - Terrain02.ba2; Starfield - Terrain03.ba2; Starfield - Terrain04.ba2; Starfield - TerrainPatch.ba2; Starfield - Voices_de_Patch.ba2; Starfield - Voices_de01.ba2; Starfield - Voices_de02.ba2; Starfield - Voices01.ba2; Starfield - Voices02.ba2; Starfield - VoicesPatch.ba2; Starfield - WwiseSounds01.ba2; Starfield - WwiseSounds02.ba2; Starfield - WwiseSounds03.ba2; Starfield - WwiseSounds04.ba2; Starfield - WwiseSounds05.ba2; Starfield - WwiseSoundsPatch.ba2; BlueprintShips-Starfield - Localization.ba2; Constellation - Localization.ba2; OldMars - Localization.ba2</Starfield></GameDataFiles>
     <GameDataPaths>
         <Fallout3></Fallout3>
         <FalloutNewVegas></FalloutNewVegas>
@@ -19,14 +22,17 @@
         <Fallout4></Fallout4>
         <SkyrimSpecialEdition></SkyrimSpecialEdition>
         <Fallout4VR></Fallout4VR>
-        <SkyrimVR></SkyrimVR></GameDataPaths>
+        <SkyrimVR></SkyrimVR>
+        <Fallout76></Fallout76>
+        <Oblivion></Oblivion>
+        <Starfield></Starfield></GameDataPaths>
     <GameDataPath></GameDataPath>
     <OutputDataPath></OutputDataPath>
     <ProjectPath></ProjectPath>
     <GameRegKey></GameRegKey>
     <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>
-    <Language>57</Language>
+    <Language>-1</Language>
     <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
 	This information is used by BodySlide for choosing what presets to display for outfits.
 	If the attribute "includeInBuild" is true, batch building the specified groups will also build unassigned outfits. -->
