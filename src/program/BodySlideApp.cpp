@@ -37,7 +37,7 @@ using namespace nifly;
 ConfigurationManager Config;
 ConfigurationManager BodySlideConfig;
 
-const std::array<wxString, 9> TargetGames = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout 76", "Oblivion"};
+const std::array<wxString, 10> TargetGames = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout 76", "Oblivion", "Starfield"};
 const std::array<wxLanguage, 37> SupportedLangs = {wxLANGUAGE_ENGLISH,	  wxLANGUAGE_AFRIKAANS,		   wxLANGUAGE_ARABIC,  wxLANGUAGE_CATALAN,	  wxLANGUAGE_CZECH,
 												   wxLANGUAGE_DANISH,	  wxLANGUAGE_GERMAN,		   wxLANGUAGE_GREEK,   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,
 												   wxLANGUAGE_FINNISH,	  wxLANGUAGE_FRENCH,		   wxLANGUAGE_HINDI,   wxLANGUAGE_HUNGARIAN,  wxLANGUAGE_INDONESIAN,
@@ -159,6 +159,7 @@ bool BodySlideApp::OnInit() {
 		case SKYRIMVR: gameName.Append("Skyrim VR"); break;
 		case FO76: gameName.Append("Fallout 76"); break;
 		case OB: gameName.Append("Oblivion"); break;
+		case SF: gameName.Append("Starfield"); break;
 		default: gameName.Append("Invalid");
 	}
 	wxLogMessage(gameName);
@@ -1483,7 +1484,7 @@ bool BodySlideApp::SetDefaultConfig() {
 #ifdef _WINDOWS
 	if (Config["GameDataPath"].empty()) {
 		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
-		if (key.Exists()) {
+		if (!gameKey.empty() && key.Exists()) {
 			wxString installPath;
 			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
 				installPath.Append("Data").Append(PathSepChar);
@@ -1551,6 +1552,9 @@ bool BodySlideApp::ShowSetup() {
 		wxButton* btSkyrimVR = XRCCTRL(*setup, "btSkyrimVR", wxButton);
 		btSkyrimVR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SKYRIMVR); });
 
+		wxButton* btStarfield = XRCCTRL(*setup, "btStarfield", wxButton);
+		btStarfield->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal((int)SF); });
+
 		wxDirPickerCtrl* dirOblivion = XRCCTRL(*setup, "dirOblivion", wxDirPickerCtrl);
 		dirOblivion->Bind(wxEVT_DIRPICKER_CHANGED, [&dirOblivion, &btOblivion](wxFileDirPickerEvent&) { btOblivion->Enable(dirOblivion->GetDirName().DirExists()); });
 
@@ -1574,6 +1578,9 @@ bool BodySlideApp::ShowSetup() {
 
 		wxDirPickerCtrl* dirSkyrimVR = XRCCTRL(*setup, "dirSkyrimVR", wxDirPickerCtrl);
 		dirSkyrimVR->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrimVR, &btSkyrimVR](wxFileDirPickerEvent&) { btSkyrimVR->Enable(dirSkyrimVR->GetDirName().DirExists()); });
+
+		wxDirPickerCtrl* dirStarfield = XRCCTRL(*setup, "dirStarfield", wxDirPickerCtrl);
+		dirStarfield->Bind(wxEVT_DIRPICKER_CHANGED, [&dirStarfield, &btStarfield](wxFileDirPickerEvent&) { btStarfield->Enable(dirStarfield->GetDirName().DirExists()); });
 
 		wxFileName dir = GetGameDataPath(OB);
 		if (dir.DirExists()) {
@@ -1623,6 +1630,12 @@ bool BodySlideApp::ShowSetup() {
 			btSkyrimVR->Enable();
 		}
 
+		dir = GetGameDataPath(SF);
+		if (dir.DirExists()) {
+			dirStarfield->SetDirName(dir);
+			btStarfield->Enable();
+		}
+
 		if (setup->ShowModal() != wxID_CANCEL) {
 			int targ = setup->GetReturnCode();
 			Config.SetValue("TargetGame", targ);
@@ -1669,6 +1682,11 @@ bool BodySlideApp::ShowSetup() {
 					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sse.nif");
 					Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
 					break;
+				case SF:
+					dataDir = dirStarfield->GetDirName();
+					Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sf.nif");
+					Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
+					break;
 			}
 
 			Config.SetValue("GameDataPath", dataDir.GetFullPath().ToUTF8().data());
@@ -1698,8 +1716,9 @@ wxString BodySlideApp::GetGameDataPath(TargetGame targ) {
 	}
 #ifdef _WINDOWS
 	else {
-		wxRegKey key(wxRegKey::HKLM, Config[gkey], wxRegKey::WOW64ViewMode_32);
-		if (key.Exists()) {
+		std::string gameKey = Config[gkey];
+		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
+		if (!gameKey.empty() && key.Exists()) {
 			if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
 				dataPath.Append("Data").Append(PathSepChar);
 			}
@@ -3971,6 +3990,10 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 		case SKYRIMSE:
 		case SKYRIMVR:
 			fpSkeletonFile->SetPath("res/skeleton_female_sse.nif");
+			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
+			break;
+		case SF:
+			fpSkeletonFile->SetPath("res/skeleton_female_sf.nif");
 			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
 			break;
 		case FO4:

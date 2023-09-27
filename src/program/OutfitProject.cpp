@@ -496,6 +496,7 @@ NiShape* OutfitProject::CreateNifShapeFromData(
 			case SKYRIMSE:
 			case SKYRIMVR: version = NiVersion::getSSE(); break;
 			case FO76: version = NiVersion::getFO76(); break;
+			case SF: version = NiVersion::getSF(); break;
 		}
 
 		workNif.Create(version);
@@ -5126,11 +5127,7 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 		case SKYRIMSE:
 		case SKYRIMVR: match = nif.GetHeader().GetVersion().IsSSE(); break;
 		case FO76: match = nif.GetHeader().GetVersion().IsFO76(); break;
-	}
-
-	if (nif.GetHeader().GetVersion().IsFO76()) {
-		wxLogWarning("NIFs of this version can not be resaved (will throw errors).");
-		return;
+		case SF: match = nif.GetHeader().GetVersion().IsSF(); break;
 	}
 
 	if (!match) {
