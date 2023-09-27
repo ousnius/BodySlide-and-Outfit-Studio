@@ -755,6 +755,7 @@
     <ClInclude Include="lib\gli\type.hpp" />
     <ClInclude Include="lib\gli\view.hpp" />
     <ClInclude Include="lib\LZ4F\lz4.h" />
+    <ClInclude Include="lib\LZ4F\lz4file.h" />
     <ClInclude Include="lib\LZ4F\lz4frame.h" />
     <ClInclude Include="lib\LZ4F\lz4frame_static.h" />
     <ClInclude Include="lib\LZ4F\lz4hc.h" />
@@ -836,6 +837,7 @@
     <ClCompile Include="lib\gli\core\dummy.cpp" />
     <ClCompile Include="lib\gli\glm\detail\glm.cpp" />
     <ClCompile Include="lib\LZ4F\lz4.c" />
+    <ClCompile Include="lib\LZ4F\lz4file.c" />
     <ClCompile Include="lib\LZ4F\lz4frame.c" />
     <ClCompile Include="lib\LZ4F\lz4hc.c" />
     <ClCompile Include="lib\LZ4F\xxhash.c" />

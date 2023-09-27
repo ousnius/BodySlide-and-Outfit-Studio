@@ -1906,6 +1906,9 @@
     <ClInclude Include="lib\SOIL2\SOIL2.h">
       <Filter>Libraries\SOIL2</Filter>
     </ClInclude>
+    <ClInclude Include="lib\LZ4F\lz4file.h">
+      <Filter>Libraries\LZ4F</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -2126,6 +2129,9 @@
     </ClCompile>
     <ClCompile Include="lib\SOIL2\SOIL2.c">
       <Filter>Libraries\SOIL2</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LZ4F\lz4file.c">
+      <Filter>Libraries\LZ4F</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

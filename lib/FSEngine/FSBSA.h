@@ -49,6 +49,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define F3_BSAHEADER_VERSION 0x68 //!< Version number of a Fallout 3 BSA
 #define SSE_BSAHEADER_VERSION 0x69 //!< Version number of a Skyrim SE BSA
 #define F4_BSAHEADER_VERSION 0x01 //!< Version number of a Fallout 4 BA2
+#define SF_BSAHEADER_VERSION2 0x02 //!< Version number of a Starfield BA2
+#define SF_BSAHEADER_VERSION3 0x03 //!< Version number of a Starfield BA2
 
 /* Archive flags */
 #define OB_BSAARCHIVE_PATHNAMES           0x0001 //!< Whether the BSA has names for paths
@@ -129,14 +131,18 @@ struct MWBSAFileSizeOffset {
 };
 
 #pragma pack(push, 4)
-struct F4BSAHeader {
+struct BA2Header {
 	char type[4]; //!< 08 GNRL=General, DX10=Textures
-	wxUint32 numFiles; //!< 0C
-	wxUint64 nameTableOffset; //!< 10 - relative to start of file
+	wxUint32 numFiles = 0; //!< 0C
+	wxUint64 nameTableOffset = 0; //!< 10 - relative to start of file
+
+	wxUint32 unk1 = 0;
+	wxUint32 unk2 = 0;
+	wxUint32 compressionFlag = 0; // LZ4 if 3, ZIP otherwise
 };
 
 // 24
-struct F4GeneralInfo {
+struct BA2GeneralInfo {
 	wxUint32 unk00; //!< 00 - hash?
 	char ext[4]; //!< 04 - extension
 	wxUint32 unk08; //!< 08 - hash?
@@ -149,7 +155,7 @@ struct F4GeneralInfo {
 #pragma pack(pop)
 
 // 18
-struct F4TexInfo {
+struct BA2TexInfo {
 	wxUint32 nameHash; //!< 00
 	char ext[4]; //!< 04
 	wxUint32 dirHash; //!< 08
@@ -164,7 +170,7 @@ struct F4TexInfo {
 };
 
 // 18
-struct F4TexChunk {
+struct BA2TexChunk {
 	wxUint64 offset; //!< 00
 	wxUint32 packedSize; //!< 08
 	wxUint32 unpackedSize; //!< 0C
@@ -173,9 +179,9 @@ struct F4TexChunk {
 	wxUint32 unk14; //!< 14 - BAADFOOD
 };
 
-struct F4Tex {
-	F4TexInfo header;
-	std::vector<F4TexChunk> chunks;
+struct BA2Tex {
+	BA2TexInfo header;
+	std::vector<BA2TexChunk> chunks;
 };
 
 
@@ -254,7 +260,7 @@ protected:
 		//! Whether the file is compressed inside the BSA
 		bool compressed() const;
 
-		F4Tex tex;
+		BA2Tex tex;
 	};
 
 	//! A folder inside a BSA
@@ -282,8 +288,11 @@ protected:
 	BSAFolder *insertFolder(std::string name);
 	BSAFolder *insertFolder(char* folder, int szFn);
 	//! Inserts a file into the structure of a %BSA
-	BSAFile *insertFile(BSAFolder *folder, std::string name, wxUint32 sizeFlags, wxUint32 offset);
-	BSAFile *insertFile(char* filename, int szFn, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex* dds = nullptr);
+	BSAFile* insertFile(BSAFolder* folder, std::string name, wxUint32 sizeFlags, wxUint32 offset);
+	/* Folders not required in this tool
+	BSAFile *insertFile(BSAFolder *folder, std::string name, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, BA2Tex dds = BA2Tex());
+	*/
+	BSAFile *insertFile(char* filename, int szFn, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, BA2Tex* dds = nullptr);
 
 	//! Gets the specified folder, or the root folder if not found
 	const BSAFolder *getFolder(std::string fn) const;
@@ -315,6 +324,9 @@ protected:
 
 	//! Version number from the header
 	wxUint32 headerVersion;
+
+	//! BA2 header
+	BA2Header ba2Header;
 
 	//! Number of files
 	wxUint64 numFiles;
