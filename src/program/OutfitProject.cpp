@@ -5157,8 +5157,25 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 		}
 	}
 
-	for (auto& s : nif.GetShapes())
+	for (auto& s : nif.GetShapes()) {
+		uint8_t meshIndex = 0;
+		for (auto meshPath : nif.GetExternalGeometryPathRefs(s)) {
+			std::fstream fileStream;
+			auto dataPath = Config["GameDataPath"];
+			std::string fileName = dataPath + "Data\\Testgeometries\\" + meshPath.get();
+			PlatformUtil::OpenFileStream(fileStream, fileName, std::ios::in | std::ios::binary);
+			if (fileStream.fail()) {
+				wxMessageBox(wxString::Format(_("Unable to locate external mesh data for shape. Expected path: %s"),fileName),
+							 _("External Mesh Data Load Failure"),
+							 wxICON_WARNING,
+							 owner);
+				continue;
+			}
+			nif.LoadExternalShapeData(s, fileStream, meshIndex);
+			meshIndex++;
+		}
 		nif.TriangulateShape(s);
+	}
 }
 
 void OutfitProject::ResetTransforms() {
