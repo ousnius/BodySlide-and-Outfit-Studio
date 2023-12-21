@@ -4776,6 +4776,8 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 	NifFile clone(workNif);
 	ChooseClothData(clone);
 
+	clone.SetShapeOrder(owner->GetShapeList());
+
 	for (auto& s : clone.GetShapes())
 		if (find(exportShapes.begin(), exportShapes.end(), s->name.get()) == exportShapes.end())
 			clone.DeleteShape(s);
