@@ -2455,6 +2455,19 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask,
 	const std::vector<Vector3>* bitangentsp = workNif.GetBitangentsForShape(shape);
 	const std::vector<float>* eyeDatap = workNif.GetEyeDataForShape(shape);
 
+	if (uvsp && uvsp->empty())
+		uvsp = nullptr;
+	if (colorsp && colorsp->empty())
+		colorsp = nullptr;
+	if (normalsp && normalsp->empty())
+		normalsp = nullptr;
+	if (tangentsp && tangentsp->empty())
+		tangentsp = nullptr;
+	if (bitangentsp && bitangentsp->empty())
+		bitangentsp = nullptr;
+	if (eyeDatap && eyeDatap->empty())
+		eyeDatap = nullptr;
+
 	std::vector<Vector2> uvs;
 	std::vector<Color4> colors;
 	std::vector<Vector3> normals;
