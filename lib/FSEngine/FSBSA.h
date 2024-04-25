@@ -49,6 +49,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define F3_BSAHEADER_VERSION 0x68 //!< Version number of a Fallout 3 BSA
 #define SSE_BSAHEADER_VERSION 0x69 //!< Version number of a Skyrim SE BSA
 #define F4_BSAHEADER_VERSION 0x01 //!< Version number of a Fallout 4 BA2
+#define F4_BSAHEADER_VERSION2 0x07 //!< Version number of a Fallout 4 BA2
+#define F4_BSAHEADER_VERSION3 0x08 //!< Version number of a Fallout 4 BA2
 #define SF_BSAHEADER_VERSION2 0x02 //!< Version number of a Starfield BA2
 #define SF_BSAHEADER_VERSION3 0x03 //!< Version number of a Starfield BA2
 

@@ -173,7 +173,7 @@ bool BSA::canOpen(const std::string &fn) {
 			if (f.Read((char *)&version, sizeof(version)) != 4)
 				return false;
 
-			return version == F4_BSAHEADER_VERSION || version == SF_BSAHEADER_VERSION2 || version == SF_BSAHEADER_VERSION3;
+			return version == F4_BSAHEADER_VERSION || F4_BSAHEADER_VERSION2 || F4_BSAHEADER_VERSION3 || version == SF_BSAHEADER_VERSION2 || version == SF_BSAHEADER_VERSION3;
 		}
 		else if (magic == OB_BSAHEADER_FILEID) {
 			if (f.Read((char *)& version, sizeof(version)) != 4)
@@ -203,13 +203,14 @@ bool BSA::open() {
 		if (magic == F4_BSAHEADER_FILEID) {
 			bsa.Read((char*)&version, sizeof(version));
 
-			if (version != F4_BSAHEADER_VERSION && version != SF_BSAHEADER_VERSION2 && version != SF_BSAHEADER_VERSION3)
+			if (version != F4_BSAHEADER_VERSION && version != F4_BSAHEADER_VERSION2 && version != F4_BSAHEADER_VERSION3 && version != SF_BSAHEADER_VERSION2
+				&& version != SF_BSAHEADER_VERSION3)
 				throw std::string("file version");
 
 			headerVersion = version;
 
 			ssize_t headerSize = sizeof(ba2Header);
-			if (version == F4_BSAHEADER_VERSION)
+			if (version == F4_BSAHEADER_VERSION || version == F4_BSAHEADER_VERSION2 || version == F4_BSAHEADER_VERSION3)
 				headerSize = 16;
 			else if (version == SF_BSAHEADER_VERSION2)
 				headerSize = 24;
