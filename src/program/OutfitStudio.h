@@ -1320,6 +1320,7 @@ private:
 	void OnMoveShape(wxCommandEvent& event);
 	void OnScaleShape(wxCommandEvent& event);
 	void OnRotateShape(wxCommandEvent& event);
+	void OnInflateShape(wxCommandEvent& event);
 
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetReference(wxCommandEvent& event);

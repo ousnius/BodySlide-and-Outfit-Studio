@@ -705,6 +705,174 @@
 			</object>
 		</object>
 	</object>
+	
+	<object class="wxDialog" name="dlgInflateShape">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
+		<size>423,250</size>
+		<title>Inflate Shape</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="ssDescription">
+					<label>Inflate/deflate a mesh along its normals. This permanently affects vertices.</label>
+					<wrap>400</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>0</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="isLabelX">
+									<label translate="0">X</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="isSliderX">
+									<value translate="0">0</value>
+									<min>-10000</min>
+									<max>10000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="isTextX">
+									<size>60,-1</size>
+									<value translate="0">0.00000</value>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>0</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="isLabelY">
+									<label translate="0">Y</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="isSliderY">
+									<value translate="0">0</value>
+									<min>-10000</min>
+									<max>10000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="isTextY">
+									<size>60,-1</size>
+									<value translate="0">0.00000</value>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>0</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="isLabelZ">
+									<label translate="0">Z</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="isSliderZ">
+									<value translate="0">0</value>
+									<min>-10000</min>
+									<max>10000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="isTextZ">
+									<size>60,-1</size>
+									<value translate="0">0.00000</value>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="isUniform">
+							<label>Uniform (XYZ)</label>
+							<checked>1</checked>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+					<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+					<border>5</border>
+					<object class="wxButton" name="wxID_OK">
+						<label>&amp;OK</label>
+					</object>
+				</object>
+				<object class="button">
+					<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+					<border>5</border>
+					<object class="wxButton" name="wxID_CANCEL">
+						<label>&amp;Cancel</label>
+					</object>
+				</object>
+				</object>
+			</object>
+		</object>
+	</object>
 	<object class="wxDialog" name="dlgShapeTextures">
 		<style>wxDEFAULT_DIALOG_STYLE</style>
 		<size>457,308</size>

@@ -211,6 +211,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("moveShape"), OutfitStudioFrame::OnMoveShape)
 	EVT_MENU(XRCID("scaleShape"), OutfitStudioFrame::OnScaleShape)
 	EVT_MENU(XRCID("rotateShape"), OutfitStudioFrame::OnRotateShape)
+	EVT_MENU(XRCID("inflateShape"), OutfitStudioFrame::OnInflateShape)
 	EVT_MENU(XRCID("renameShape"), OutfitStudioFrame::OnRenameShape)
 	EVT_MENU(XRCID("setReference"), OutfitStudioFrame::OnSetReference)
 	EVT_MENU(XRCID("deleteVerts"), OutfitStudioFrame::OnDeleteVerts)
@@ -8728,6 +8729,170 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 
 		if (dlg.ShowModal() != wxID_OK) {
 			if (!previewRotation.IsZero()) {
+				UndoStateProject* curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
+		}
+
+		UpdateUndoTools();
+	}
+}
+
+void OutfitStudioFrame::OnInflateShape(wxCommandEvent& WXUNUSED(event)) {
+	CloseBrushSettings();
+
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	if (!CheckEditableState())
+		return;
+
+	wxDialog dlg;
+	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgInflateShape")) {
+		Vector3 previewInflate;
+
+		auto updateInflatePreview = [&]() {
+			std::unordered_map<uint16_t, float> mask;
+			std::unordered_map<uint16_t, float>* mptr = nullptr;
+			std::vector<Vector3> verts;
+
+			if (!previewInflate.IsZero()) {
+				UndoStateProject* curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true, false);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
+
+			Vector3 inflate;
+			inflate.x = atof(XRCCTRL(dlg, "isTextX", wxTextCtrl)->GetValue().c_str());
+			inflate.y = atof(XRCCTRL(dlg, "isTextY", wxTextCtrl)->GetValue().c_str());
+			inflate.z = atof(XRCCTRL(dlg, "isTextZ", wxTextCtrl)->GetValue().c_str());
+
+			UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+			usp->undoType = UndoType::VertexPosition;
+
+			for (auto& sel : selectedItems) {
+				mask.clear();
+				mptr = nullptr;
+
+				NiShape* shape = sel->GetShape();
+
+				auto mesh = glView->GetMesh(shape->name.get());
+				if (!mesh || !mesh->norms)
+					continue;
+
+				project->GetLiveVerts(shape, verts);
+				glView->GetShapeMask(mask, shape->name.get());
+
+				if (!mask.empty())
+					mptr = &mask;
+
+				UndoStateShape uss;
+				uss.shapeName = shape->name.get();
+
+				for (size_t i = 0; i < verts.size(); i++) {
+					Vector3& vertPos = verts[i];
+					Vector3 norm = Mesh::TransformDirMeshToNif(mesh->norms[i]);
+					Vector3 diff = norm.ComponentMultiply(inflate);
+
+					if (mptr)
+						diff *= 1.0f - mask[i];
+
+					if (diff.IsZero(true))
+						continue;
+
+					Vector3 newPos = vertPos + diff;
+					uss.pointStartState[i] = Mesh::TransformPosNifToMesh(vertPos);
+					uss.pointEndState[i] = Mesh::TransformPosNifToMesh(newPos);
+				}
+
+				usp->usss.push_back(std::move(uss));
+			}
+
+			if (bEditSlider) {
+				usp->sliderName = activeSlider;
+
+				float sliderscale = project->SliderValue(activeSlider);
+				if (sliderscale == 0.0)
+					sliderscale = 1.0;
+
+				usp->sliderscale = sliderscale;
+			}
+
+			glView->ApplyUndoState(usp, false);
+
+			previewInflate = inflate;
+
+			if (glView->GetTransformMode())
+				glView->ShowTransformTool();
+		};
+
+		auto sliderMoved = [&](wxCommandEvent& event) {
+			Vector3 inflate;
+
+			bool uniform = XRCCTRL(dlg, "isUniform", wxCheckBox)->IsChecked();
+			if (uniform) {
+				float uniformValue = ((wxSlider*)event.GetEventObject())->GetValue() / 1000.0f;
+				inflate = Vector3(uniformValue, uniformValue, uniformValue);
+
+				XRCCTRL(dlg, "isSliderX", wxSlider)->SetValue(inflate.x * 1000);
+				XRCCTRL(dlg, "isSliderY", wxSlider)->SetValue(inflate.y * 1000);
+				XRCCTRL(dlg, "isSliderZ", wxSlider)->SetValue(inflate.z * 1000);
+			}
+			else {
+				inflate.x = XRCCTRL(dlg, "isSliderX", wxSlider)->GetValue() / 1000.0f;
+				inflate.y = XRCCTRL(dlg, "isSliderY", wxSlider)->GetValue() / 1000.0f;
+				inflate.z = XRCCTRL(dlg, "isSliderZ", wxSlider)->GetValue() / 1000.0f;
+			}
+
+			XRCCTRL(dlg, "isTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", inflate.x));
+			XRCCTRL(dlg, "isTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", inflate.y));
+			XRCCTRL(dlg, "isTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", inflate.z));
+
+			updateInflatePreview();
+		};
+
+		auto textChanged = [&](wxCommandEvent& event) {
+			Vector3 inflate;
+
+			bool uniform = XRCCTRL(dlg, "isUniform", wxCheckBox)->IsChecked();
+			if (uniform) {
+				float uniformValue = atof(((wxTextCtrl*)event.GetEventObject())->GetValue().c_str());
+				inflate = Vector3(uniformValue, uniformValue, uniformValue);
+
+				XRCCTRL(dlg, "isTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", inflate.x));
+				XRCCTRL(dlg, "isTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", inflate.y));
+				XRCCTRL(dlg, "isTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", inflate.z));
+			}
+			else {
+				inflate.x = atof(XRCCTRL(dlg, "isTextX", wxTextCtrl)->GetValue().c_str());
+				inflate.y = atof(XRCCTRL(dlg, "isTextY", wxTextCtrl)->GetValue().c_str());
+				inflate.z = atof(XRCCTRL(dlg, "isTextZ", wxTextCtrl)->GetValue().c_str());
+			}
+
+			XRCCTRL(dlg, "isSliderX", wxSlider)->SetValue(inflate.x * 1000);
+			XRCCTRL(dlg, "isSliderY", wxSlider)->SetValue(inflate.y * 1000);
+			XRCCTRL(dlg, "isSliderZ", wxSlider)->SetValue(inflate.z * 1000);
+
+			updateInflatePreview();
+		};
+
+		XRCCTRL(dlg, "isSliderX", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "isSliderY", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "isSliderZ", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "isTextX", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "isTextY", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		XRCCTRL(dlg, "isTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+
+		if (dlg.ShowModal() != wxID_OK) {
+			if (!previewInflate.IsZero()) {
 				UndoStateProject* curState = glView->GetUndoHistory()->GetBackState();
 				if (curState) {
 					glView->ApplyUndoState(curState, true);

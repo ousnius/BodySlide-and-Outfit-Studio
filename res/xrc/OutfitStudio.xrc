@@ -1929,6 +1929,10 @@
 				<label>Rotate...</label>
 				<help>Apply a rotation to the mesh vertices. This permanently moves vertices.</help>
 			</object>
+			<object class="wxMenuItem" name="inflateShape">
+				<label>Inflate...</label>
+				<help>Inflates/deflates a shape along its normals. This permanently moves vertices.</help>
+			</object>
 			<object class="wxMenuItem" name="btnSmoothSeams">
 				<label>Smooth Seam Normals</label>
 				<help>Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape.</help>
@@ -2398,6 +2402,10 @@
 		<object class="wxMenuItem" name="rotateShape">
 			<label>Rotate...</label>
 			<help>Apply a rotation to the mesh vertices. This permanently moves vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="inflateShape">
+			<label>Inflate...</label>
+			<help>Inflates/deflates a shape along its normals. This permanently moves vertices.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="copyBoneWeight">
