@@ -11314,7 +11314,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 	Mesh* hitMesh = nullptr;
 	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh);
-	if (!hit)
+	if (!hit || !hitMesh)
 		return false;
 
 	if (!os->CheckEditableState())
@@ -11505,7 +11505,10 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 				return;
 
 			Mesh* hitMesh = nullptr;
-			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh);
+			hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh);
+			if (!hit || !hitMesh)
+				return;
+
 			tpi.origin = hitMesh->TransformPosMeshToModel(tpi.origin);
 			tpi.normal.Normalize();
 			tpi.normal = hitMesh->TransformDirMeshToModel(tpi.normal);
@@ -11990,7 +11993,7 @@ void wxGLPanel::UpdateMoveVertex(const wxPoint& screenPos) {
 		Vector3 hitpt, hitnormal;
 		Mesh* hitmesh = nullptr;
 		bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, hitpt, hitnormal, false, &hitmesh);
-		if (!hit) {
+		if (!hit || !hitmesh) {
 			newpos = oldpos;
 			moveVertexOperation = MoveVertexOperation::None;
 		}
