@@ -1293,6 +1293,7 @@ private:
 	void OnSliderImportOBJ(wxCommandEvent& event);
 	void OnSliderImportOSD(wxCommandEvent& event);
 	void OnSliderImportTRI(wxCommandEvent& event);
+	void OnSliderImportMorphsSF(wxCommandEvent& event);
 	void OnSliderImportFBX(wxCommandEvent& event);
 	void OnSliderExportNIF(wxCommandEvent& event);
 	void OnSliderExportBSD(wxCommandEvent& event);

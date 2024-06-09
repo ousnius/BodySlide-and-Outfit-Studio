@@ -802,6 +802,7 @@
     <ClInclude Include="src\files\MaterialFile.h" />
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
+    <ClInclude Include="src\files\SFMorphFile.h" />
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\program\ConvertBodyReferenceDialog.h" />
     <ClInclude Include="src\program\EditUV.h" />
@@ -879,6 +880,7 @@
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
+    <ClCompile Include="src\files\SFMorphFile.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp" />
     <ClCompile Include="src\program\EditUV.cpp" />

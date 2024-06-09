@@ -1909,6 +1909,9 @@
     <ClInclude Include="lib\LZ4F\lz4file.h">
       <Filter>Libraries\LZ4F</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\SFMorphFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -2132,6 +2135,9 @@
     </ClCompile>
     <ClCompile Include="lib\LZ4F\lz4file.c">
       <Filter>Libraries\LZ4F</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMorphFile.cpp">
+      <Filter>Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

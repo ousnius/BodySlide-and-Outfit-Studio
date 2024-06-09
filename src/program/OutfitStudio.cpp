@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/SliderGroup.h"
 #include "../components/SliderPresets.h"
 #include "../files/TriFile.h"
+#include "../files/SFMorphFile.h"
 #include "../ui/wxBrushSettingsPopup.h"
 #include "../utils/ConfigDialogUtil.h"
 #include "../utils/PlatformUtil.h"
@@ -129,6 +130,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("sliderImportFBX"), OutfitStudioFrame::OnSliderImportFBX)
 	EVT_MENU(XRCID("sliderImportOSD"), OutfitStudioFrame::OnSliderImportOSD)
 	EVT_MENU(XRCID("sliderImportTRI"), OutfitStudioFrame::OnSliderImportTRI)
+	EVT_MENU(XRCID("sliderImportMorphsSF"), OutfitStudioFrame::OnSliderImportMorphsSF)
 	EVT_MENU(XRCID("sliderExportNIF"), OutfitStudioFrame::OnSliderExportNIF)
 	EVT_MENU(XRCID("sliderExportBSD"), OutfitStudioFrame::OnSliderExportBSD)
 	EVT_MENU(XRCID("sliderExportOBJ"), OutfitStudioFrame::OnSliderExportOBJ)
@@ -7449,6 +7451,118 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Added morphs for the following shapes:\n%s", addedMorphs);
 	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedMorphs), _("TRI Import"));
+}
+
+void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		return;
+	}
+
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	wxString fn = wxFileSelector(_("Import Starfield morph.dat file"), wxEmptyString, wxEmptyString, ".dat", "*.dat", wxFD_FILE_MUST_EXIST, this);
+	if (fn.IsEmpty())
+		return;
+
+	wxLogMessage("Importing morphs from Starfield morph file '%s'...", fn);
+
+	SFMorphFile morphFile;
+	if (!morphFile.Read(fn.ToUTF8().data())) {
+		wxLogError("Failed to import Starfield morph file '%s'!", fn);
+		wxMessageBox(_("Failed to import Starfield morph file!"), _("Error"), wxICON_ERROR);
+		return;
+	}
+	
+	auto shape = activeItem->GetShape();
+	auto morphs = morphFile.GetCachedMorphData();
+
+	std::string shapeName = shape->name.get();
+	std::string targetName = project->ShapeToTarget(shapeName);
+
+	std::unordered_map<std::string, std::unordered_map<std::string, std::string>> shapeToSliders;
+
+	for (auto& morph : *morphs) {
+		// Find slider name from morph name
+		auto sliderName = project->activeSet.SliderFromDataName(shapeName, morph.first);
+		if (sliderName.empty())
+			sliderName = morph.first;
+
+		shapeToSliders[shapeName].emplace(sliderName, morph.first);
+	}
+
+	SliderDataImportDialog import(this, project, OutfitStudioConfig);
+	if (import.ShowModal(shapeToSliders) != wxID_OK)
+		return;
+
+	const auto& options = import.GetOptions();
+
+	sliderScroll->Freeze();
+	if (!options.mergeSliders) {
+		wxMessageDialog dlg(this, _("This will delete all loaded sliders. Are you sure?"), _("Starfield Morph Import"), wxOK | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+		dlg.SetOKCancelLabels(_("Import"), _("Cancel"));
+		if (dlg.ShowModal() != wxID_OK) {
+			sliderScroll->Thaw();
+			return;
+		}
+
+		// Deleting sliders
+		std::vector<std::string> erase;
+		for (auto& sliderPanel : sliderPanels) {
+			sliderPanel.second->slider->SetValue(0);
+			SetSliderValue(sliderPanel.first, 0);
+			ShowSliderEffect(sliderPanel.first, true);
+			sliderPanel.second->slider->SetFocus();
+			HideSliderPanel(sliderPanel.second);
+
+			erase.push_back(sliderPanel.first);
+			project->DeleteSlider(sliderPanel.first);
+		}
+
+		for (auto& e : erase)
+			sliderPanels.erase(e);
+
+		MenuExitSliderEdit();
+		sliderScroll->FitInside();
+		activeSlider.clear();
+		lastActiveSlider.clear();
+	}
+
+	// Check if the shape is selected
+	auto selectedSliders = options.selectedShapesToSliders.find(shapeName);
+	if (selectedSliders == options.selectedShapesToSliders.end())
+		return;
+
+	for (auto& morph : *morphs) {
+		auto& sliderNameToDisplayName = selectedSliders->second;
+
+		// check the diff is selected for the specific shape
+		auto sliderName = selectedSliders->second.find(morph.first);
+		if (sliderName == sliderNameToDisplayName.end())
+			continue;
+
+		if (!project->ValidSlider(sliderName->second)) {
+			project->AddEmptySlider(sliderName->second);
+			createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
+		}
+
+		project->SetSliderFromDiff(sliderName->second, shape, morph.second);
+	}
+
+	wxString addedDiffs = shapeName + "\n";
+
+	sliderScroll->FitInside();
+	sliderScroll->Thaw();
+
+	SetPendingChanges();
+	ApplySliders();
+	DoFilterSliders();
+
+	wxLogMessage("Added morphs for the following shapes:\n%s", addedDiffs);
+	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedDiffs), _("Starfield Morph Import"));
 }
 
 void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
