@@ -5127,6 +5127,62 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiSh
 	return fbxw.ExportScene(fileName);
 }
 
+std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std::string& dir, const std::string& path) const {
+	// Replace all backward slashes with one forward slash
+	std::string meshPath = std::regex_replace(path, std::regex("\\\\+"), "/");
+
+	// Remove everything before the first occurence of "/geometries/"
+	meshPath = std::regex_replace(meshPath, std::regex("^(.*?)/geometries/", std::regex_constants::icase), "");
+
+	// Remove all slashes from the front
+	meshPath = std::regex_replace(meshPath, std::regex("^/+"), "");
+
+	// If the path doesn't start with "geometries/", add it to the front
+	meshPath = std::regex_replace(meshPath, std::regex("^(?!^geometries/)", std::regex_constants::icase), "geometries/");
+
+	const std::string_view suffix = ".mesh";
+	bool endsWithSuffix = meshPath.size() >= suffix.size() && meshPath.compare(meshPath.size() - suffix.size(), suffix.size(), suffix) == 0;
+	if (!endsWithSuffix)
+		meshPath = meshPath + ".mesh";
+
+	// Check if loose file exists
+	std::string fullPath = dir + meshPath;
+	bool looseFileExists = std::filesystem::exists(fullPath);
+	if (looseFileExists) {
+		auto fileStream = std::make_unique<std::fstream>();
+		if (fileStream) {
+			PlatformUtil::OpenFileStream(*fileStream, fullPath, std::ios::in | std::ios::binary);
+			if (!fileStream->fail())
+				return fileStream;
+		}
+	}
+	else {
+		// Search for file in archives
+		wxMemoryBuffer data;
+		for (FSArchiveFile* archive : FSManager::archiveList()) {
+			if (archive) {
+				if (archive->hasFile(meshPath)) {
+					wxMemoryBuffer outData;
+					archive->fileContents(meshPath, outData);
+
+					if (!outData.IsEmpty()) {
+						data = std::move(outData);
+						break;
+					}
+				}
+			}
+		}
+
+		if (!data.IsEmpty()) {
+			std::string content((char*)data.GetData(), data.GetDataLen());
+			auto contentStream = std::make_unique<std::istringstream>(content, std::istringstream::binary);
+			if (contentStream && !contentStream->fail())
+				return contentStream;
+		}
+	}
+
+	return nullptr;
+}
 
 void OutfitProject::ValidateNIF(NifFile& nif) {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
@@ -5172,8 +5228,26 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 		}
 	}
 
-	for (auto& s : nif.GetShapes())
+	for (auto& s : nif.GetShapes()) {
+		uint8_t meshIndex = 0;
+		for (auto meshPath : nif.GetExternalGeometryPathRefs(s)) {
+			auto dataPath = Config["GameDataPath"];
+
+			auto meshStream = GetExternalGeometryStream(dataPath, meshPath.get());
+			if (!meshStream) {
+				wxMessageBox(wxString::Format(_("Unable to locate external mesh data for shape. Expected path: %s"), meshPath.get()),
+							 _("External Mesh Data Load Failure"),
+							 wxICON_WARNING,
+							 owner);
+				continue;
+			}
+
+			nif.LoadExternalShapeData(s, *meshStream, meshIndex);
+			meshIndex++;
+		}
+
 		nif.TriangulateShape(s);
+	}
 }
 
 void OutfitProject::ResetTransforms() {

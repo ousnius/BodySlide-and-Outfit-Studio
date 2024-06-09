@@ -112,6 +112,7 @@ class OutfitProject {
 	// All cloth data blocks that have been loaded during work
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
 
+	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path) const;
 	void ValidateNIF(nifly::NifFile& nif);
 
 public:
