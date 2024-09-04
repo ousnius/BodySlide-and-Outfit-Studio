@@ -9371,8 +9371,7 @@ void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 	if (bEditSlider) {
-		wxCommandEvent evt;
-		OnDeleteSlider(evt);
+		wxMessageBox(_("Can't delete shape while in slider edit mode.  Use CTRL+Delete to delete sliders instead."), _("Error"));
 		return;
 	}
 

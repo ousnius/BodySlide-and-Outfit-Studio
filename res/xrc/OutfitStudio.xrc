@@ -2109,7 +2109,7 @@
 				<help>Erases the slider data without removing the slider itself. (Cannot be undone)</help>
 			</object>
 			<object class="wxMenuItem" name="sliderDelete">
-				<label>Delete Slider</label>
+				<label>Delete Slider\tCtrl+Del</label>
 				<help>Delete the active slider from the project. (Cannot be undone)</help>
 			</object>
 			<object class="separator" />
