@@ -11108,7 +11108,7 @@ void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
 
 		std::vector<std::string> bones;
-		project->GetActiveBones(bones);
+		AnimSkeleton::getInstance().GetBoneNames(bones);
 
 		for (const auto& boneName : bones) {
 			AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);

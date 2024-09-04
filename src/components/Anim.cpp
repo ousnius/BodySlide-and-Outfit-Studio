@@ -833,6 +833,21 @@ size_t AnimSkeleton::GetActiveBoneNames(std::vector<std::string>& outBoneNames) 
 	return c;
 }
 
+size_t AnimSkeleton::GetBoneNames(std::vector<std::string>& outBoneNames) const {
+	size_t c = 0;
+	for (auto& ab : allBones) {
+		outBoneNames.push_back(ab.first);
+		c++;
+	}
+
+	for (auto& cb : customBones) {
+		outBoneNames.push_back(cb.first);
+		c++;
+	}
+
+	return c;
+}
+
 void AnimSkeleton::DisableCustomTransforms() {
 	allowCustomTransforms = false;
 }

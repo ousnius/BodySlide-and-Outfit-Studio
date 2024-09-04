@@ -224,5 +224,6 @@ public:
 
 	size_t GetActiveBoneCount() const;
 	size_t GetActiveBoneNames(std::vector<std::string>& outBoneNames) const;
+	size_t GetBoneNames(std::vector<std::string>& outBoneNames) const;
 	void DisableCustomTransforms();
 };
