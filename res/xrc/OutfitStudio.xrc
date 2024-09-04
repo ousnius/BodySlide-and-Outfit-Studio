@@ -2094,6 +2094,11 @@
 				<enabled>0</enabled>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="sliderClone">
+				<label>Clone Slider</label>
+				<help>Clones the current slider.</help>
+				<enabled>0</enabled>
+			</object>
 			<object class="wxMenuItem" name="sliderNegate">
 				<label>Negate Slider</label>
 				<help>Negates the current slider, reversing it's effect</help>

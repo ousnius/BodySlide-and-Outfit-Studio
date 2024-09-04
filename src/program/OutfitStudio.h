@@ -1305,6 +1305,7 @@ private:
 	void OnNewSlider(wxCommandEvent& event);
 	void OnNewZapSlider(wxCommandEvent& event);
 	void OnNewCombinedSlider(wxCommandEvent& event);
+	void OnSliderClone(wxCommandEvent& event);
 	void OnSliderNegate(wxCommandEvent& event);
 	void OnMaskAffected(wxCommandEvent& event);
 	void OnClearSlider(wxCommandEvent& event);

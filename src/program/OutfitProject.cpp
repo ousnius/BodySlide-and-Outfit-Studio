@@ -665,6 +665,42 @@ bool OutfitProject::SliderIndexFromName(const std::string& sliderName, size_t& i
 	return false;
 }
 
+void OutfitProject::CloneSlider(const std::string& sliderName, const std::string& cloneName) {
+	size_t cloneIndex = activeSet.CloneSlider(sliderName, cloneName);
+	if (cloneIndex == -1)
+		return;
+
+	for (auto& shape : workNif.GetShapes()) {
+		std::string shapeName = shape->name.get();
+		std::string target = ShapeToTarget(shape->name.get());
+		std::string oldDT = target + sliderName;
+		std::string newDT = target + cloneName;
+
+		// Adjust all data names to cloned slider name and make it local
+		activeSet[cloneIndex].RenameData(oldDT, newDT);
+		activeSet[cloneIndex].SetLocalData(newDT);
+
+		std::string data = activeSet[sliderName].TargetDataName(target);
+
+		if (IsBaseShape(shape)) {
+			activeSet[cloneIndex].AddDataFile(target, newDT, newDT);
+			activeSet.AddShapeTarget(shape->name.get(), target);
+			baseDiffData.AddEmptySet(newDT, target);
+
+			auto diffData = baseDiffData.GetDiffSet(oldDT);
+			if (diffData) {
+				for (auto& i : *diffData)
+					baseDiffData.SumDiff(newDT, target, i.first, i.second);
+			}
+		}
+		else {
+			auto diffData = morpher.GetDiffSet(oldDT);
+			if (diffData)
+				morpher.SetResultDiff(shape->name.get(), cloneName, *diffData);
+		}
+	}
+}
+
 void OutfitProject::NegateSlider(const std::string& sliderName, NiShape* shape) {
 	std::string target = ShapeToTarget(shape->name.get());
 

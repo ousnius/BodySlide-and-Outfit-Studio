@@ -140,6 +140,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("sliderNew"), OutfitStudioFrame::OnNewSlider)
 	EVT_MENU(XRCID("sliderNewZap"), OutfitStudioFrame::OnNewZapSlider)
 	EVT_MENU(XRCID("sliderNewCombined"), OutfitStudioFrame::OnNewCombinedSlider)
+	EVT_MENU(XRCID("sliderClone"), OutfitStudioFrame::OnSliderClone)
 	EVT_MENU(XRCID("sliderNegate"), OutfitStudioFrame::OnSliderNegate)
 	EVT_MENU(XRCID("sliderMask"), OutfitStudioFrame::OnMaskAffected)
 	EVT_MENU(XRCID("sliderClear"), OutfitStudioFrame::OnClearSlider)
@@ -2986,6 +2987,7 @@ void OutfitStudioFrame::ExitSliderEdit() {
 void OutfitStudioFrame::MenuEnterSliderEdit() {
 	menuBar->Enable(XRCID("menuImportSlider"), true);
 	menuBar->Enable(XRCID("menuExportSlider"), true);
+	menuBar->Enable(XRCID("sliderClone"), true);
 	menuBar->Enable(XRCID("sliderNegate"), true);
 	menuBar->Enable(XRCID("sliderMask"), true);
 	menuBar->Enable(XRCID("sliderProperties"), true);
@@ -2994,6 +2996,7 @@ void OutfitStudioFrame::MenuEnterSliderEdit() {
 void OutfitStudioFrame::MenuExitSliderEdit() {
 	menuBar->Enable(XRCID("menuImportSlider"), false);
 	menuBar->Enable(XRCID("menuExportSlider"), false);
+	menuBar->Enable(XRCID("sliderClone"), false);
 	menuBar->Enable(XRCID("sliderNegate"), false);
 	menuBar->Enable(XRCID("sliderMask"), false);
 	menuBar->Enable(XRCID("sliderProperties"), false);
@@ -7866,6 +7869,38 @@ void OutfitStudioFrame::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
 
 	project->AddCombinedSlider(sliderName);
+	sliderScroll->FitInside();
+	SetPendingChanges();
+}
+
+void OutfitStudioFrame::OnSliderClone(wxCommandEvent& WXUNUSED(event)) {
+	if (!bEditSlider) {
+		wxMessageBox(_("There is no slider in edit mode to clone!"), _("Error"));
+		return;
+	}
+
+	wxLogMessage("Cloning slider '%s'.", activeSlider);
+
+	std::string baseName = "Cloned Slider";
+
+	int count = 1;
+	std::string fillName = baseName;
+
+	while (project->ValidSlider(fillName))
+		fillName = wxString::Format("%s %d", baseName, ++count).ToUTF8();
+
+	std::string sliderName;
+	do {
+		sliderName = wxGetTextFromUser(_("Enter a name for the cloned slider:"), _("Clone Slider"), fillName, this).ToUTF8();
+		if (sliderName.empty())
+			return;
+	} while (project->ValidSlider(sliderName));
+
+	wxLogMessage("Creating cloned slider '%s'.", sliderName);
+
+	project->CloneSlider(activeSlider, sliderName);
+	createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
+
 	sliderScroll->FitInside();
 	SetPendingChanges();
 }

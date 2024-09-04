@@ -200,6 +200,7 @@ public:
 	void SetSliderDefault(const size_t index, const int val, const bool isHi);
 	void SetSliderName(const size_t index, const std::string& newName);
 
+	void CloneSlider(const std::string& sliderName, const std::string& cloneName);
 	void NegateSlider(const std::string& sliderName, nifly::NiShape* shape);
 	void MaskAffected(const std::string& sliderName, nifly::NiShape* shape);
 

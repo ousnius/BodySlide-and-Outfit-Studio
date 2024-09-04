@@ -17,23 +17,42 @@ SliderSet::SliderSet(XMLElement* element) {
 }
 
 
-void SliderSet::DeleteSlider(const std::string& setName) {
+size_t SliderSet::CloneSlider(const std::string& sliderName, const std::string& cloneName) {
+	// Find slider
+	auto sliderIt = std::find_if(sliders.begin(), sliders.end(), [&sliderName](const SliderData& s) {
+		return s.name == sliderName;
+	});
+
+	if (sliderIt == sliders.end())
+		return 0xFFFFFFFF;
+
+	// Clone slider
+	auto& clonedSlider = sliders.emplace_back(*sliderIt);
+	clonedSlider.name = cloneName;
+	clonedSlider.curValue = 0.0f;
+	clonedSlider.bShow = true;
+	clonedSlider.zapToggles.clear();
+
+	return sliders.size() - 1;
+}
+
+void SliderSet::DeleteSlider(const std::string& sliderName) {
 	// Delete toggles from other sliders
 	for (auto& slider : sliders) {
-		slider.zapToggles.erase(std::remove(slider.zapToggles.begin(), slider.zapToggles.end(), setName), slider.zapToggles.end());
+		slider.zapToggles.erase(std::remove(slider.zapToggles.begin(), slider.zapToggles.end(), sliderName), slider.zapToggles.end());
 	}
 
 	// Find and delete slider
 	for (size_t i = 0; i < sliders.size(); i++) {
-		if (sliders[i].name == setName) {
+		if (sliders[i].name == sliderName) {
 			sliders.erase(sliders.begin() + i);
 			return;
 		}
 	}
 }
 
-size_t SliderSet::CreateSlider(const std::string& setName) {
-	sliders.emplace_back(setName);
+size_t SliderSet::CreateSlider(const std::string& sliderName) {
+	sliders.emplace_back(sliderName);
 	return sliders.size() - 1;
 }
 
