@@ -439,7 +439,7 @@ void Automorph::GenerateResultDiff(
 		if (!solidMode) {
 			if (transformResults)
 				totalMove = transform.ApplyTransformToDiff(totalMove);
-			(*resultDiffSet)[i] = totalMove;
+			(*resultDiffSet)[i] += totalMove;
 		}
 		else {
 			totalMoveList.reserve(m->nVerts);
@@ -493,7 +493,7 @@ void Automorph::GenerateResultDiff(
 
 			if (transformResults)
 				totalMove = transform.ApplyTransformToDiff(totalMove);
-			(*resultDiffSet)[i] = totalMove;
+			(*resultDiffSet)[i] += totalMove;
 		}
 	}
 }
