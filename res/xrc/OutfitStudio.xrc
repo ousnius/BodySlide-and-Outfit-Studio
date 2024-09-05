@@ -1821,8 +1821,14 @@
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="btnRecalcNormals">
-				<label>Recalculate Normals\tR</label>
+				<label>Recalculate Normals</label>
 				<help>Recalculate normals on active mesh</help>
+			</object>
+			<object class="wxMenuItem" name="disableNormalsCalc">
+				<label>Disable Normals Calculation</label>
+				<help>Turn off all automatic recalculation of normals on all meshes. Only applies to Outfit Studio.</help>
+				<checkable>1</checkable>
+				<checked>0</checked>
 			</object>
 			<object class="wxMenuItem" name="resetTransforms">
 				<label>Reset Transforms</label>

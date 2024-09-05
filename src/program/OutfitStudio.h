@@ -343,12 +343,17 @@ public:
 			m->lockNormals = enable;
 	}
 
-	void RecalcNormals(const std::string& shapeName) {
+	void RecalcNormals(const std::string& shapeName, bool force = false) {
 		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
+		bool oldLockNormals = m->lockNormals;
+		if (m->lockNormals && force)
+			m->lockNormals = false;
+
 		m->SmoothNormals();
+		m->lockNormals = oldLockNormals;
 	}
 
 	float GetBrushSize() { return brushSize / BrushSizeScale; }
@@ -1437,6 +1442,7 @@ private:
 	}
 
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event));
+	void OnDisableNormalsCalc(wxCommandEvent& WXUNUSED(event));
 	void OnSmoothNormalSeams(wxCommandEvent& event);
 	void OnLockNormals(wxCommandEvent& event);
 

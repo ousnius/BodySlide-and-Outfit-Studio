@@ -195,6 +195,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnInvertMask"), OutfitStudioFrame::OnInvertMask)
 
 	EVT_MENU(XRCID("btnRecalcNormals"), OutfitStudioFrame::OnRecalcNormals)
+	EVT_MENU(XRCID("disableNormalsCalc"), OutfitStudioFrame::OnDisableNormalsCalc)
 	EVT_MENU(XRCID("btnSmoothSeams"), OutfitStudioFrame::OnSmoothNormalSeams)
 	EVT_MENU(XRCID("btnLockNormals"), OutfitStudioFrame::OnLockNormals)
 
@@ -1037,6 +1038,9 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (projectHistoryFiles.size() == projectHistoryNames.size())
 		for (size_t i = projectHistoryFiles.size(); i > 0; --i)
 			AddProjectHistory(projectHistoryFiles[i - 1], projectHistoryNames[i - 1]);
+
+	bool disableNormalsCalc = OutfitStudioConfig.GetBoolValue("DisableNormalsCalc");
+	menuBar->Check(XRCID("disableNormalsCalc"), disableNormalsCalc);
 
 	toolBarH = (wxToolBar*)FindWindowByName("toolBarH");
 	toolBarV = (wxToolBar*)FindWindowByName("toolBarV");
@@ -4145,11 +4149,13 @@ void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) 
 }
 
 void OutfitStudioFrame::UpdateMeshFromSet(NiShape* shape) {
+	bool disableNormalsCalc = OutfitStudioConfig.GetBoolValue("DisableNormalsCalc");
+
 	std::string shapeName = shape->name.get();
 	Mesh* m = glView->GetMesh(shapeName);
 	if (m) {
 		m->smoothSeamNormals = project->activeSet.GetSmoothSeamNormals(shapeName);
-		m->lockNormals = project->activeSet.GetLockNormals(shapeName);
+		m->lockNormals = disableNormalsCalc || project->activeSet.GetLockNormals(shapeName);
 	}
 }
 
@@ -10800,9 +10806,13 @@ void OutfitStudioFrame::OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event) {
 
 void OutfitStudioFrame::OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
 	for (auto& s : selectedItems)
-		glView->RecalcNormals(s->GetShape()->name.get());
+		glView->RecalcNormals(s->GetShape()->name.get(), true);
 
 	glView->Render();
+}
+
+void OutfitStudioFrame::OnDisableNormalsCalc(wxCommandEvent& event) {
+	OutfitStudioConfig.SetBoolValue("DisableNormalsCalc", event.IsChecked());
 }
 
 void OutfitStudioFrame::OnSmoothNormalSeams(wxCommandEvent& event) {
