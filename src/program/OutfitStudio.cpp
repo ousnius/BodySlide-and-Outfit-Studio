@@ -9613,7 +9613,7 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	cXMirrorBone->AppendString(bone);
 	cPoseBone->AppendString(bone);
 
-	std::string origBone = bone;
+	wxString origBone = bone;
 	int suffixNumber = 0;
 
 	size_t firstDigit = origBone.find_first_of("0123456789");

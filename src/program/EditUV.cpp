@@ -147,7 +147,9 @@ EditUV::EditUV(wxWindow* parent, NifFile* srcNif, NiShape* srcShape, Mesh* srcMe
 	canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
 
 	xrc->AttachUnknownControl("uvGLView", canvas, this);
+#ifdef _WINDOWS
 	canvas->MSWDisableComposited(); // Fix stuttering from composited flag?
+#endif
 }
 
 EditUV::~EditUV() {
