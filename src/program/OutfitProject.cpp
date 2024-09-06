@@ -47,6 +47,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 								const wxString& strGamePath,
 								const wxString& strGameFile,
 								bool genWeights,
+								bool preventMorphFile,
 								bool copyRef) {
 	owner->UpdateProgress(1, _("Checking destination..."));
 	std::string errmsg = "";
@@ -65,6 +66,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	outSet.SetOutputPath(strGamePath.ToUTF8().data());
 	outSet.SetOutputFile(gameFile);
 	outSet.SetGenWeights(genWeights);
+	outSet.SetPreventMorphFile(preventMorphFile);
 
 	const wxString sliderSetsStr = "SliderSets";
 
@@ -86,6 +88,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	mGameFile = wxString::FromUTF8(gameFile);
 	mCopyRef = copyRef;
 	mGenWeights = genWeights;
+	bPreventMorphFile = preventMorphFile;
 
 	auto shapes = workNif.GetShapes();
 
@@ -2208,6 +2211,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	mGameFile = wxString::FromUTF8(activeSet.GetOutputFile());
 	mCopyRef = true;
 	mGenWeights = activeSet.GenWeights();
+	bPreventMorphFile = activeSet.PreventMorphFile();
 
 	owner->EndProgress();
 	return 0;

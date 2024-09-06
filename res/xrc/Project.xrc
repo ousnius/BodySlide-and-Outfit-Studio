@@ -525,6 +525,16 @@
 							<checked>1</checked>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="sssPreventMorphFile">
+							<tooltip>Prevents the building of morph .tri files in BodySlide for this project.</tooltip>
+							<label>Prevent morph file building in BodySlide</label>
+							<checked>0</checked>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="spacer">

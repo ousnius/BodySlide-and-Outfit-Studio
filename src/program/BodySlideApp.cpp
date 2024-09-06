@@ -2150,9 +2150,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 		zapIdx.clear();
 	}
 
-	bool triKeep = false;
+	bool triKeep = activeSet.PreventMorphFile();
 
-	if (tri) {
+	if (tri && !triKeep) {
 		std::string triFilePath = outFileNameBig + ".tri";
 
 		// TRI file already exists but isn't a body TRI file, don't overwrite!
@@ -2686,9 +2686,9 @@ int BodySlideApp::BuildListBodies(
 		std::string outFileNameSmall = datapath + currentSet.GetOutputFilePath();
 		std::string outFileNameBig = outFileNameSmall;
 
-		bool triKeep = false;
+		bool triKeep = currentSet.PreventMorphFile();
 
-		if (tri) {
+		if (tri && !triKeep) {
 			std::string triFilePath = outFileNameBig + ".tri";
 
 			// TRI file already exists but isn't a body TRI file, don't overwrite!
@@ -2697,8 +2697,8 @@ int BodySlideApp::BuildListBodies(
 		}
 
 		/* Add TRI path for in-game morphs */
-		bool triEnd = tri;
-		if (triEnd && !triKeep) {
+		if (tri && !triKeep) {
+			bool triEnd = tri;
 			std::string triPath = currentSet.GetOutputFilePath() + ".tri";
 			std::string triPathTrimmed = triPath;
 			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"),

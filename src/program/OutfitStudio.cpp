@@ -2082,6 +2082,7 @@ bool OutfitStudioFrame::SaveProject() {
 									  project->mGamePath,
 									  project->mGameFile,
 									  project->mGenWeights,
+									  project->bPreventMorphFile,
 									  project->mCopyRef);
 
 	if (!error.empty()) {
@@ -2164,6 +2165,8 @@ bool OutfitStudioFrame::SaveProjectAs() {
 			XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->SetValue(true);
 		}
 
+		XRCCTRL(dlg, "sssPreventMorphFile", wxCheckBox)->SetValue(project->bPreventMorphFile);
+
 		if (!project->GetBaseShape()) {
 			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->Disable();
@@ -2183,6 +2186,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	wxString strGameFile;
 	bool copyRef;
 	bool genWeights;
+	bool preventMorphFile;
 
 	wxFileName sliderSetFile = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName();
 	if (!sliderSetFile.IsOk()) {
@@ -2238,6 +2242,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 
 	copyRef = XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->GetValue();
 	genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
+	preventMorphFile = XRCCTRL(dlg, "sssPreventMorphFile", wxCheckBox)->GetValue();
 
 	wxLogMessage("Saving project '%s'...", strOutfitName);
 	StartProgress(wxString::Format(_("Saving project '%s'..."), strOutfitName));
@@ -2253,7 +2258,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 
 	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
-	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, copyRef);
+	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, preventMorphFile, copyRef);
 
 	if (error.empty()) {
 		SetPendingChanges(false);

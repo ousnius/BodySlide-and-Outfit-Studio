@@ -98,10 +98,13 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 		outputpath = ToOSSlashes(tmpElement->GetText());
 
 	genWeights = true;
+	preventMorphFile = false;
+
 	tmpElement = element->FirstChildElement("OutputFile");
 	if (tmpElement) {
 		outputfile = tmpElement->GetText();
 		genWeights = tmpElement->BoolAttribute("GenWeights", true);
+		preventMorphFile = tmpElement->BoolAttribute("PreventMorphFile");
 	}
 
 	XMLElement* shapeName = element->FirstChildElement(shapeStr.c_str());
@@ -366,6 +369,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	XMLElement* outputFileElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
 
 	outputFileElement->SetAttribute("GenWeights", genWeights);
+	outputFileElement->SetAttribute("PreventMorphFile", preventMorphFile);
 
 	newText = sliderSetElement->GetDocument()->NewText(outputfile.c_str());
 	outputFileElement->InsertEndChild(newText);
@@ -458,6 +462,10 @@ std::string SliderSet::GetInputFileName() {
 
 std::string SliderSet::GetOutputFilePath() {
 	return outputpath + PathSepStr + outputfile;
+}
+
+bool SliderSet::PreventMorphFile() {
+	return preventMorphFile;
 }
 
 bool SliderSet::GenWeights() {

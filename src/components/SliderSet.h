@@ -27,6 +27,7 @@ class SliderSet {
 	std::string outputpath;
 	std::string outputfile;
 	bool genWeights = false; // Generate both low and high weight meshes on output.
+	bool preventMorphFile = false; // Prevents the building of morph .tri files in BodySlide for this project.
 
 	std::map<std::string, SliderSetShape> shapeAttributes;
 
@@ -46,6 +47,7 @@ public:
 	void SetOutputPath(const std::string& newOutputpath) { outputpath = newOutputpath; }
 	void SetOutputFile(const std::string& newOutputFile) { outputfile = newOutputFile; }
 	void SetGenWeights(bool inGenWeights) { genWeights = inGenWeights; }
+	void SetPreventMorphFile(bool inPreventMorphFile) { preventMorphFile = inPreventMorphFile; }
 
 	void Clear() {
 		shapeAttributes.clear();
@@ -79,6 +81,7 @@ public:
 	std::string GetOutputFilePath();
 	std::string GetDefaultDataFolder() { return datafolder; }
 
+	bool PreventMorphFile();
 	bool GenWeights();
 
 	bool GetSmoothSeamNormals(const std::string& shapeName) {

@@ -137,6 +137,7 @@ public:
 	wxString mGameFile;
 	bool mCopyRef = true;
 	bool mGenWeights = false;
+	bool bPreventMorphFile = false;
 	bool bPose = false;
 
 	// Returns a string error message or empty string on success.
@@ -147,6 +148,7 @@ public:
 					 const wxString& strGamePath,
 					 const wxString& strGameFile,
 					 bool genWeights,
+					 bool preventMorphFile,
 					 bool copyRef);
 
 	bool SaveSliderData(const std::string& fileName, bool copyRef = true);
