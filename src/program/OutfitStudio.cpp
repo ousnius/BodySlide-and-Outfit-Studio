@@ -1074,13 +1074,15 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		currentTabButton = meshTabButton;
 	}
 
-	if (wxGetApp().targetGame != FO4 && wxGetApp().targetGame != FO4VR && wxGetApp().targetGame != FO76) {
-		if (segmentTabButton)
-			segmentTabButton->Show(false);
+	if (partitionTabButton) {
+		bool showPartitionTab = wxGetApp().targetGame == FO3 || wxGetApp().targetGame == FONV || wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE
+								|| wxGetApp().targetGame == SKYRIMVR;
+		partitionTabButton->Show(showPartitionTab);
 	}
-	else {
-		if (partitionTabButton)
-			partitionTabButton->Show(false);
+
+	if (segmentTabButton) {
+		bool showSegmentTab = wxGetApp().targetGame == FO4 || wxGetApp().targetGame == FO4VR || wxGetApp().targetGame == FO76;
+		segmentTabButton->Show(showSegmentTab);
 	}
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");

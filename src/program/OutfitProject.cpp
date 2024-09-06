@@ -3572,24 +3572,26 @@ void OutfitProject::CheckMerge(const std::string& sourceName, const std::string&
 		}
 	}
 
-	NiVector<BSDismemberSkinInstance::PartitionInfo> spinf, tpinf;
-	bool gotspar = workNif.GetShapePartitions(source, spinf, triParts);
-	bool gottpar = workNif.GetShapePartitions(target, tpinf, triParts);
-	if (gotspar != gottpar) {
-		// Shape with partitions and the other without
-		e.partitionsMismatch = true;
-	}
-	else if (gotspar) {
-		// Both shapes have partitions
-		if (spinf.size() != tpinf.size()) {
-			// Shapes have different amount of partitions
+	if (workNif.GetHeader().GetVersion().File() == NiFileVersion::V20_2_0_7) {
+		NiVector<BSDismemberSkinInstance::PartitionInfo> spinf, tpinf;
+		bool gotspar = workNif.GetShapePartitions(source, spinf, triParts);
+		bool gottpar = workNif.GetShapePartitions(target, tpinf, triParts);
+		if (gotspar != gottpar) {
+			// Shape with partitions and the other without
 			e.partitionsMismatch = true;
 		}
-
-		for (uint32_t pi = 0; !e.partitionsMismatch && pi < spinf.size(); ++pi) {
-			if (spinf[pi].partID != tpinf[pi].partID) {
-				// Partition slot differs
+		else if (gotspar) {
+			// Both shapes have partitions
+			if (spinf.size() != tpinf.size()) {
+				// Shapes have different amount of partitions
 				e.partitionsMismatch = true;
+			}
+
+			for (uint32_t pi = 0; !e.partitionsMismatch && pi < spinf.size(); ++pi) {
+				if (spinf[pi].partID != tpinf[pi].partID) {
+					// Partition slot differs
+					e.partitionsMismatch = true;
+				}
 			}
 		}
 	}
