@@ -1101,6 +1101,7 @@ void ShapeProperties::ApplyChanges() {
 		if (shader) {
 			std::string name = shaderName->GetValue().ToStdString();
 			uint32_t type = shaderType->GetSelection();
+			uint32_t oldType = shader->GetShaderType();
 
 			shader->name.get() = name;
 
@@ -1117,16 +1118,28 @@ void ShapeProperties::ApplyChanges() {
 				shader->SetEmissiveMultiple(emisMultiple);
 			}
 			else if (shader->HasType<BSLightingShaderProperty>()) {
-				shader->SetShaderType(type);
+				auto bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
+				if (bslsp) {
+					bslsp->SetShaderType(type);
 
-				shader->SetSpecularColor(specColor);
-				shader->SetSpecularStrength(specStrength);
-				shader->SetGlossiness(specPower);
+					if (oldType != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && type == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP) {
+						// Shader type was changed to environment mapping, enable flag as well
+						bslsp->SetEnvironmentMapping(true);
+					}
+					else if (oldType == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && type != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP) {
+						// Shader type was changed away from environment mapping, disable flag as well
+						bslsp->SetEnvironmentMapping(false);
+					}
 
-				shader->SetEmissiveColor(emisColor);
-				shader->SetEmissiveMultiple(emisMultiple);
+					bslsp->SetSpecularColor(specColor);
+					bslsp->SetSpecularStrength(specStrength);
+					bslsp->SetGlossiness(specPower);
 
-				shader->SetAlpha(alphaValue);
+					bslsp->SetEmissiveColor(emisColor);
+					bslsp->SetEmissiveMultiple(emisMultiple);
+
+					bslsp->SetAlpha(alphaValue);
+				}
 			}
 			else if (shader->HasType<BSShaderPPLightingProperty>()) {
 				switch (type) {
