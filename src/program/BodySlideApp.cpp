@@ -2150,8 +2150,18 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 		zapIdx.clear();
 	}
 
-	/* Add TRI path for in-game morphs */
+	bool triKeep = false;
+
 	if (tri) {
+		std::string triFilePath = outFileNameBig + ".tri";
+
+		// TRI file already exists but isn't a body TRI file, don't overwrite!
+		if (wxFileName::FileExists(wxString::FromUTF8(triFilePath)) && !IsBodyTriFile(triFilePath))
+			triKeep = true;
+	}
+
+	/* Add TRI path for in-game morphs */
+	if (tri && !triKeep) {
 		std::string triPath = activeSet.GetOutputFilePath() + ".tri";
 		std::string triPathTrimmed = triPath;
 		// Replace multiple backslashes or forward slashes with one backslash
@@ -2193,9 +2203,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 				nifSmall.SetShapeDynamic(it->first);
 		}
 	}
-	else {
+	else if (!triKeep) {
 		wxString triPath = wxString::FromUTF8(outFileNameBig + ".tri");
-		if (wxFileName::FileExists(triPath))
+		if (IsBodyTriFile(triPath.ToUTF8().data()))
 			wxRemoveFile(triPath);
 	}
 
@@ -2676,9 +2686,19 @@ int BodySlideApp::BuildListBodies(
 		std::string outFileNameSmall = datapath + currentSet.GetOutputFilePath();
 		std::string outFileNameBig = outFileNameSmall;
 
+		bool triKeep = false;
+
+		if (tri) {
+			std::string triFilePath = outFileNameBig + ".tri";
+
+			// TRI file already exists but isn't a body TRI file, don't overwrite!
+			if (wxFileName::FileExists(wxString::FromUTF8(triFilePath)) && !IsBodyTriFile(triFilePath))
+				triKeep = true;
+		}
+
 		/* Add TRI path for in-game morphs */
 		bool triEnd = tri;
-		if (triEnd) {
+		if (triEnd && !triKeep) {
 			std::string triPath = currentSet.GetOutputFilePath() + ".tri";
 			std::string triPathTrimmed = triPath;
 			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"),
@@ -2718,9 +2738,9 @@ int BodySlideApp::BuildListBodies(
 					nifSmall.SetShapeDynamic(it->first);
 			}
 		}
-		else {
+		else if (!triKeep) {
 			std::string triPath = outFileNameBig + ".tri";
-			if (wxFileName::FileExists(triPath))
+			if (IsBodyTriFile(triPath))
 				wxRemoveFile(triPath);
 		}
 

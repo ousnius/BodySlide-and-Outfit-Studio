@@ -22,6 +22,8 @@ struct MorphData {
 
 typedef std::shared_ptr<MorphData> MorphDataPtr;
 
+bool IsBodyTriFile(const std::string& fileName);
+
 class TriFile {
 	std::map<std::string, std::vector<MorphDataPtr>> shapeMorphs;
 

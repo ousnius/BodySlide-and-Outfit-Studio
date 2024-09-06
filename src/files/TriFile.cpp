@@ -8,6 +8,24 @@ See the included LICENSE file
 
 using namespace nifly;
 
+bool IsBodyTriFile(const std::string& fileName) {
+	std::fstream triFile;
+	PlatformUtil::OpenFileStream(triFile, fileName, std::ios::in | std::ios::binary);
+
+	if (triFile.is_open()) {
+		char hdr[4];
+		triFile.read(hdr, 4);
+
+		uint32_t magic = "TRIP"_mci;
+		if (memcmp(hdr, &magic, 4) != 0)
+			return false;
+	}
+	else
+		return false;
+
+	return true;
+}
+
 bool TriFile::Read(const std::string& fileName) {
 	std::fstream triFile;
 	PlatformUtil::OpenFileStream(triFile, fileName, std::ios::in | std::ios::binary);
