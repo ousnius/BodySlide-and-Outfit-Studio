@@ -100,7 +100,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		// Add all the reference shapes to the target list.
 		std::string baseShapeName = baseShape->name.get();
 		outSet.AddShapeTarget(baseShapeName, ShapeToTarget(baseShapeName));
-		outSet.AddTargetDataFolder(ShapeToTarget(baseShapeName), activeSet.ShapeToDataFolder(baseShapeName));
+		outSet.SetTargetDataFolders(ShapeToTarget(baseShapeName), activeSet.GetShapeDataFolders(baseShapeName));
 		outSet.SetSmoothSeamNormals(baseShapeName, activeSet.GetSmoothSeamNormals(baseShapeName));
 		outSet.SetLockNormals(baseShapeName, activeSet.GetLockNormals(baseShapeName));
 		owner->UpdateProgress(prog += step, _("Adding reference shapes..."));
@@ -115,9 +115,11 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		outSet.AddShapeTarget(shapeName, ShapeToTarget(shapeName));
 
 		// Reference only if not local folder
-		std::string shapeDataFolder = activeSet.ShapeToDataFolder(shapeName);
-		if (shapeDataFolder != activeSet.GetDefaultDataFolder())
-			outSet.AddTargetDataFolder(ShapeToTarget(shapeName), activeSet.ShapeToDataFolder(shapeName));
+		std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
+		for (auto& df : shapeDataFolders) {
+			if (df != activeSet.GetDefaultDataFolder())
+				outSet.AddTargetDataFolder(ShapeToTarget(shapeName), df);
+		}
 
 		outSet.SetSmoothSeamNormals(shapeName, activeSet.GetSmoothSeamNormals(shapeName));
 		outSet.SetLockNormals(shapeName, activeSet.GetLockNormals(shapeName));
@@ -167,8 +169,10 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 					targSlider = targ + outSet[i].name;
 
 				if (morpher.GetResultDiffSize(shapeName, activeSet[i].name) > 0) {
-					std::string shapeDataFolder = activeSet.ShapeToDataFolder(shapeName);
-					if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
+					std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
+					bool isDefaultDataFolder = shapeDataFolders.size() == 1 && shapeDataFolders.front() == activeSet.GetDefaultDataFolder();
+
+					if (isDefaultDataFolder || activeSet[i].IsLocalData(targSlider)) {
 						targSliderData = osdFileName + PathSepStr + targSlider;
 						outSet[i].AddDataFile(targ, targSlider, targSliderData);
 					}
@@ -283,8 +287,10 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef) {
 					targSlider = targ + activeSet[i].name;
 
 				if (morpher.GetResultDiffSize(shapeName, activeSet[i].name) > 0) {
-					std::string shapeDataFolder = activeSet.ShapeToDataFolder(shapeName);
-					if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
+					std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
+					bool isDefaultDataFolder = shapeDataFolders.size() == 1 && shapeDataFolders.front() == activeSet.GetDefaultDataFolder();
+
+					if (isDefaultDataFolder || activeSet[i].IsLocalData(targSlider)) {
 						std::unordered_map<uint16_t, Vector3> diff;
 						morpher.GetRawResultDiff(shapeName, activeSet[i].name, diff);
 						osdDiffs.LoadSet(targSlider, targ, diff);
@@ -2105,9 +2111,17 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	else
 		activeSet.LoadSetDiffData(baseDiffData);
 
-	activeSet.SetReferencedData(shape);
+	bool hadLocalData = false;
+	activeSet.SetReferencedData(shape, false, &hadLocalData);
 	for (auto& dn : dataNames)
 		activeSet.SetReferencedDataByName(shape, dn, true);
+
+	std::string refDataFolder = activeSet.GetDefaultDataFolder();
+	if (hadLocalData && !refDataFolder.empty() && refDataFolder != dataFolder) {
+		// Add data folder of reference to list of data folders of new reference target
+		std::string targetName = ShapeToTarget(shapeName);
+		activeSet.AddTargetDataFolder(targetName, refDataFolder);
+	}
 
 	// Keep default data folder from current project if existing
 	if (!dataFolder.empty())

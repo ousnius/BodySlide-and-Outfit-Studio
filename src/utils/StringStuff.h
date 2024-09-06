@@ -6,6 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include <string>
+#include <vector>
 
 /* StringsEqualNInsens: returns true if the first len characters of a
 and b are the same insensitive to case. */
@@ -22,6 +23,12 @@ std::string ToOSSlashes(const std::string& s);
 /* ToBackslashes: converts all forward slashes into backslashes in s
 and returns the result. */
 std::string ToBackslashes(const std::string& s);
+
+/* SplitString: splits a string into a vector of strings using a delimiter */
+std::vector<std::string> SplitString(const std::string& s, const char delim);
+
+/* JoinStrings: joins a vector of strings into one string with separators */
+std::string JoinStrings(const std::vector<std::string>& elements, const char* const separator);
 
 /* case_insensitive_compare: can be used for maps and more */
 struct case_insensitive_compare {

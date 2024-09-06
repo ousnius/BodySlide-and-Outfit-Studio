@@ -7,6 +7,8 @@ See the included LICENSE file
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 
+#include <filesystem>
+
 
 SliderSet::SliderSet() {}
 
@@ -109,10 +111,12 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 		auto shapeText = shapeName->GetText();
 		if (shapeText) {
 			auto& shape = shapeAttributes[shapeText];
-			if (shapeName->Attribute("DataFolder"))
-				shape.dataFolder = ToOSSlashes(shapeName->Attribute("DataFolder"));
-			else
-				shape.dataFolder = datafolder;
+			if (shapeName->Attribute("DataFolder")) {
+				std::string dataFolderAttr = ToOSSlashes(shapeName->Attribute("DataFolder"));
+				shape.dataFolders = SplitString(dataFolderAttr, ';');
+			}
+			else if (shape.dataFolders.empty())
+				shape.dataFolders.push_back(datafolder);
 
 			if (shapeName->Attribute("target"))
 				shape.targetShape = shapeName->Attribute("target");
@@ -173,32 +177,55 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 			if (!forShape.empty() && shapeName != forShape)
 				continue;
 
+			bool isBSDFile = ddf.fileName.compare(ddf.fileName.size() - 4, ddf.fileName.size(), ".bsd") == 0;
 			std::string fullFilePath = baseDataPath + PathSepStr;
-			if (ddf.bLocal)
-				fullFilePath += datafolder + PathSepStr;
-			else
-				fullFilePath += ShapeToDataFolder(shapeName) + PathSepStr;
+			std::string dataName;
 
-			fullFilePath += ddf.fileName;
+			std::vector<std::string> dataFolders;
+			if (!ddf.bLocal)
+				dataFolders = GetShapeDataFolders(shapeName);
+			else
+				dataFolders.push_back(datafolder);
+
+			for (auto& df : dataFolders) {
+				if (isBSDFile) {
+					std::string filePath = df + PathSepStr + ddf.fileName;
+
+					// Use data folder that contains the external file
+					if (std::filesystem::exists(fullFilePath + filePath)) {
+						fullFilePath += filePath;
+						break;
+					}
+				}
+				else {
+					// Split file name to get file and data name in it
+					size_t split = ddf.fileName.find_last_of('/');
+					if (split == std::string::npos)
+						split = ddf.fileName.find_last_of('\\');
+					if (split == std::string::npos)
+						continue;
+
+					std::string fileName = ddf.fileName.substr(0, split);
+					dataName = ddf.fileName.substr(split + 1);
+
+					std::string filePath = df + PathSepStr + fileName;
+
+					// Use data folder that contains the external file
+					if (std::filesystem::exists(fullFilePath + filePath)) {
+						fullFilePath += filePath;
+						break;
+					}
+				}
+			}
 
 			// BSD format
-			if (ddf.fileName.compare(ddf.fileName.size() - 4, ddf.fileName.size(), ".bsd") == 0) {
+			if (isBSDFile) {
 				inDataStorage.LoadSet(ddf.dataName, ddf.targetName, fullFilePath);
 			}
 			// OSD format
 			else {
-				// Split file name to get file and data name in it
-				size_t split = fullFilePath.find_last_of('/');
-				if (split == std::string::npos)
-					split = fullFilePath.find_last_of('\\');
-				if (split == std::string::npos)
-					continue;
-
-				std::string dataName = fullFilePath.substr(split + 1);
-				std::string fileName = fullFilePath.substr(0, split);
-
 				// Cache data locations
-				osdNames[fileName][dataName] = ddf.targetName;
+				osdNames[fullFilePath][dataName] = ddf.targetName;
 			}
 		}
 	}
@@ -216,16 +243,50 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 			return;
 
 		std::string shapeName = mergeSet.TargetToShape(ddf.targetName);
-		std::string fullFilePath = mergeSet.baseDataPath + PathSepStr;
-		if (ddf.bLocal)
-			fullFilePath += mergeSet.datafolder + PathSepStr;
-		else
-			fullFilePath += mergeSet.ShapeToDataFolder(shapeName) + PathSepStr;
+		bool isBSDFile = ddf.fileName.compare(ddf.fileName.size() - 4, ddf.fileName.size(), ".bsd") == 0;
 
-		fullFilePath += ddf.fileName;
+		std::string fullFilePath = mergeSet.baseDataPath + PathSepStr;
+		std::string dataName;
+
+		std::vector<std::string> dataFolders;
+		if (!ddf.bLocal)
+			dataFolders = mergeSet.GetShapeDataFolders(shapeName);
+		else
+			dataFolders.push_back(mergeSet.datafolder);
+
+		for (auto& df : dataFolders) {
+			if (isBSDFile) {
+				std::string filePath = df + PathSepStr + ddf.fileName;
+
+				// Use data folder that contains the external file
+				if (std::filesystem::exists(fullFilePath + filePath)) {
+					fullFilePath += filePath;
+					break;
+				}
+			}
+			else {
+				// Split file name to get file and data name in it
+				size_t split = ddf.fileName.find_last_of('/');
+				if (split == std::string::npos)
+					split = ddf.fileName.find_last_of('\\');
+				if (split == std::string::npos)
+					continue;
+
+				std::string fileName = ddf.fileName.substr(0, split);
+				dataName = ddf.fileName.substr(split + 1);
+
+				std::string filePath = df + PathSepStr + fileName;
+
+				// Use data folder that contains the external file
+				if (std::filesystem::exists(fullFilePath + filePath)) {
+					fullFilePath += filePath;
+					break;
+				}
+			}
+		}
 
 		// BSD format
-		if (ddf.fileName.compare(ddf.fileName.size() - 4, ddf.fileName.size(), ".bsd") == 0) {
+		if (isBSDFile) {
 			if (shapeName != baseShape)
 				inDataStorage.LoadSet(ddf.dataName, ddf.targetName, fullFilePath);
 			else
@@ -233,21 +294,11 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 		}
 		// OSD format
 		else {
-			// Split file name to get file and data name in it
-			size_t split = fullFilePath.find_last_of('/');
-			if (split == std::string::npos)
-				split = fullFilePath.find_last_of('\\');
-			if (split == std::string::npos)
-				return;
-
-			std::string dataName = fullFilePath.substr(split + 1);
-			std::string fileName = fullFilePath.substr(0, split);
-
 			// Cache data locations
 			if (shapeName != baseShape)
-				osdNames[fileName][dataName] = ddf.targetName;
+				osdNames[fullFilePath][dataName] = ddf.targetName;
 			else
-				osdNamesBase[fileName][dataName] = ddf.targetName;
+				osdNamesBase[fullFilePath][dataName] = ddf.targetName;
 		}
 
 		// Make new data local or not
@@ -283,7 +334,7 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 	for (auto& s : mergeSet.shapeAttributes) {
 		// Copy new shapes to the set
 		if (newDataLocal)
-			s.second.dataFolder.clear();
+			s.second.dataFolders.clear();
 
 		shapeAttributes[s.first] = s.second;
 	}
@@ -330,8 +381,8 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		if (!s.second.targetShape.empty())
 			baseShapeElement->SetAttribute("target", s.second.targetShape.c_str());
 
-		if (!s.second.dataFolder.empty()) {
-			std::string dataFolder_bs = ToBackslashes(s.second.dataFolder);
+		if (!s.second.dataFolders.empty()) {
+			std::string dataFolder_bs = ToBackslashes(JoinStrings(s.second.dataFolders, ";"));
 			baseShapeElement->SetAttribute("DataFolder", dataFolder_bs.c_str());
 		}
 

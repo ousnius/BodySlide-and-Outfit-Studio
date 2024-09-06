@@ -14,7 +14,7 @@ using namespace tinyxml2;
 
 struct SliderSetShape {
 	std::string targetShape; // Target names mapped to nif file shape names.
-	std::string dataFolder;
+	std::vector<std::string> dataFolders; // Overwrites default data folder of slider set.
 	bool smoothSeamNormals = true;
 	bool lockNormals = false;
 };
@@ -22,7 +22,7 @@ struct SliderSetShape {
 class SliderSet {
 	std::string name;
 	std::string baseDataPath; // Base data path - from application configuration.
-	std::string datafolder;	  // Default data folder specified for a slider set (overridden by target data folders, usually).
+	std::string datafolder;	  // Default data folder specified for a slider set.
 	std::string inputfile;
 	std::string outputpath;
 	std::string outputfile;
@@ -114,17 +114,33 @@ public:
 	// Gets the target names in the targetdatafolders map - these are the shapes with non-local or referenced data.
 	// Use TargetToShape to get the NIF file shape name.
 	void GetReferencedTargets(std::vector<std::string>& outTargets) {
-		for (auto& s : shapeAttributes)
-			if (s.second.dataFolder != datafolder)
+		for (auto& s : shapeAttributes) {
+			if (s.second.dataFolders.empty()) {
 				outTargets.push_back(s.second.targetShape);
+				continue;
+			}
+
+			for (auto& df : s.second.dataFolders) {
+				if (df != datafolder) {
+					outTargets.push_back(s.second.targetShape);
+					break;
+				}
+			}
+		}
 	}
 
-	void SetReferencedData(const std::string& shapeName, const bool local = false) {
+	void SetReferencedData(const std::string& shapeName, const bool local, bool* hadLocalData = nullptr) {
 		std::string targetName = ShapeToTarget(shapeName);
-		for (auto& s : sliders)
-			for (auto& df : s.dataFiles)
-				if (df.targetName == targetName)
+
+		for (auto& s : sliders) {
+			for (auto& df : s.dataFiles) {
+				if (df.targetName == targetName) {
+					if (hadLocalData && df.bLocal)
+						*hadLocalData = true;
 					df.bLocal = local;
+				}
+			}
+		}
 	}
 
 	void SetReferencedDataByName(const std::string& shapeName, const std::string& dataName, const bool local = false) {
@@ -168,7 +184,7 @@ public:
 		for (auto& s : shapeAttributes) {
 			if (s.second.targetShape == oldTarget) {
 				s.second.targetShape.clear();
-				s.second.dataFolder.clear();
+				s.second.dataFolders.clear();
 			}
 		}
 	}
@@ -205,10 +221,19 @@ public:
 		}
 	}
 
-	void AddTargetDataFolder(const std::string& targetName, const std::string& dataFolder) {
+	void SetTargetDataFolders(const std::string& targetName, const std::vector<std::string>& dataFolders) {
 		for (auto& s : shapeAttributes)
 			if (s.second.targetShape == targetName)
-				s.second.dataFolder = dataFolder;
+				s.second.dataFolders = dataFolders;
+	}
+
+	void AddTargetDataFolder(const std::string& targetName, const std::string& dataFolder) {
+		for (auto& s : shapeAttributes) {
+			if (s.second.targetShape == targetName) {
+				if (std::find(std::cbegin(s.second.dataFolders), std::cend(s.second.dataFolders), dataFolder) == s.second.dataFolders.cend())
+					s.second.dataFolders.push_back(dataFolder);
+			}
+		}
 	}
 
 	std::map<std::string, SliderSetShape>::const_iterator ShapesBegin() { return shapeAttributes.cbegin(); }
@@ -230,16 +255,16 @@ public:
 		return "";
 	}
 
-	std::string ShapeToDataFolder(const std::string& shapeName) {
+	std::vector<std::string> GetShapeDataFolders(const std::string& shapeName) {
 		auto shape = shapeAttributes.find(shapeName);
 		if (shape != shapeAttributes.end()) {
-			if (!shape->second.dataFolder.empty())
-				return shape->second.dataFolder;
-			else
-				return datafolder;
+			if (!shape->second.dataFolders.empty())
+				return shape->second.dataFolders;
 		}
 
-		return datafolder;
+		std::vector<std::string> dataFolders;
+		dataFolders.push_back(datafolder);
+		return dataFolders;
 	}
 
 	size_t size() { return sliders.size(); }

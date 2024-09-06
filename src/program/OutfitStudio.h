@@ -1618,5 +1618,3 @@ private:
 	wxDragResult lastResult = wxDragNone;
 	std::string targetSlider;
 };
-
-std::string JoinStrings(const std::vector<std::string>& elements, const char* const separator);
