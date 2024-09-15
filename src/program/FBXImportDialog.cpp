@@ -157,11 +157,11 @@ void FBXImportDialog::OnShown() {
 			colInfo.SetId(itemId);
 			colInfo.SetColumn(3);
 
-			if (vertexLimit > 0 && m->nVerts > vertexLimit) {
+			if (vertexLimit > 0 && static_cast<size_t>(m->nVerts) > vertexLimit) {
 				colInfo.SetText(_("The shape has reached the vertex count limit."));
 				meshesList->SetItemTextColour(itemId, wxColour("red"));
 			}
-			else if (triangleLimit > 0 && m->nTris > triangleLimit) {
+			else if (triangleLimit > 0 && static_cast<size_t>(m->nTris) > triangleLimit) {
 				colInfo.SetText(_("The shape has reached the triangle count limit."));
 				meshesList->SetItemTextColour(itemId, wxColour("red"));
 			}
