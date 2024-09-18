@@ -330,7 +330,11 @@ void DiffDataSets::SumDiff(const std::string& name, const std::string& target, u
 
 	Vector3 v = (*data)[index];
 	v += newdiff;
-	(*data)[index] = v;
+
+	if (v.IsZero(true))
+		data->erase(index);
+	else
+		(*data)[index] = v;
 }
 
 void DiffDataSets::ScaleDiff(const std::string& name, const std::string& target, float scalevalue) {

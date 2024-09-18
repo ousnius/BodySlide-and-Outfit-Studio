@@ -921,6 +921,9 @@ void TB_Undiff::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points,
 			ve = ve * (1.0f - m->mask[p]);
 			vf = vs + ve;
 
+			if (vf.IsNearlyEqualTo(bp))
+				vf = bp;
+
 			endState[p] = m->verts[p] = (vf);
 		}
 	}
