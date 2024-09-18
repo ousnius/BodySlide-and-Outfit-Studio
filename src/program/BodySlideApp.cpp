@@ -3640,9 +3640,13 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 
 	grpChoices.Add("Unassigned");
 
-	wxString filter;
-	wxMultiChoiceDialog chooser(this, _("Choose groups to filter outfit list"), _("Choose Groups"), grpChoices);
+	// Cast and use wxAnyChoiceDialog "Create" function so we can set the wxLB_EXTENDED flag for the internal wxCheckListBox
+	wxMultiChoiceDialog chooser{};
+	wxAnyChoiceDialog* anyChooser = dynamic_cast<wxAnyChoiceDialog*>(&chooser);
+	anyChooser->Create(this, _("Choose groups to filter outfit list"), _("Choose Groups"), grpChoices, wxCHOICEDLG_STYLE, wxDefaultPosition, wxLB_ALWAYS_SB | wxLB_EXTENDED);
 	chooser.SetSelections(grpSelections);
+
+	wxString filter;
 	if (chooser.ShowModal() == wxID_OK) {
 		wxArrayInt sel = chooser.GetSelections();
 		for (size_t i = 0; i < sel.size(); i++) {
