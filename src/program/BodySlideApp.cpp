@@ -2537,8 +2537,46 @@ int BodySlideApp::BuildListBodies(
 		std::vector<Vector3> vertsHigh;
 		std::vector<Vector2> uvsLow;
 		std::vector<Vector2> uvsHigh;
+		std::vector<int> clamps;
 		std::vector<uint16_t> zapIdx;
 		std::unordered_map<std::string, std::vector<uint16_t>> zapIdxAll;
+
+		for (size_t s = 0; s < currentSet.size(); s++) {
+			std::string name = currentSet[s].name;
+
+			if (currentSet[s].bClamp) {
+				clamps.push_back(s);
+				continue;
+			}
+
+			if (currentSet[s].bZap && !currentSet[s].bUV) {
+				float vbig = sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f);
+				for (auto& sliderBig : sliderManager.slidersBig) {
+					if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp) {
+						vbig = sliderBig.value;
+						break;
+					}
+				}
+
+				if (!currentSet[s].bHidden) {
+					// Apply stored zap choice for zaps visible to the user
+					if (buildSelection.HasZapChoice(currentSet.GetName(), name)) {
+						bool zapChoice = buildSelection.GetZapChoice(currentSet.GetName(), name);
+						vbig = zapChoice ? 1.0f : 0.0f;
+					}
+				}
+
+				// Apply zap toggles if zap is not in default state
+				if (vbig != currentSet[s].defBigValue / 100.0f) {
+					for (auto& zapToggle : currentSet[s].zapToggles) {
+						// Toggled zap default values are read in later code if no preset overwrites it
+						auto& slider = currentSet[zapToggle];
+						slider.defBigValue = 100.0f - slider.defBigValue;
+						slider.defSmallValue = 100.0f - slider.defSmallValue;
+					}
+				}
+			}
+		}
 
 		for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
 			auto shape = nifBig.FindBlockByName<NiShape>(it->first);
@@ -2557,7 +2595,6 @@ int BodySlideApp::BuildListBodies(
 
 			float vbig = 0.0f;
 			float vsmall = 0.0f;
-			std::vector<int> clamps;
 			zapIdxAll.emplace(it->first, std::vector<uint16_t>());
 
 			for (size_t s = 0; s < currentSet.size(); s++) {
@@ -2566,11 +2603,6 @@ int BodySlideApp::BuildListBodies(
 				std::string dn = currentSet[s].TargetDataName(target);
 				if (dn.empty())
 					continue;
-
-				if (currentSet[s].bClamp) {
-					clamps.push_back(s);
-					continue;
-				}
 
 				vbig = sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f);
 				for (auto& sliderBig : sliderManager.slidersBig) {
@@ -3547,7 +3579,6 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 
 		app->SetSliderValue(toggle, true, 1.0f - app->GetSliderValue(toggle, true));
 		app->SetSliderValue(toggle, false, 1.0f - app->GetSliderValue(toggle, false));
-		app->SetSliderChanged(toggle, true);
 		app->SetSliderChanged(toggle, false);
 
 		slider = GetSliderDisplay(toggle);
