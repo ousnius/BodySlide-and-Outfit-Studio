@@ -9028,6 +9028,9 @@ void OutfitStudioFrame::OnInflateShape(wxCommandEvent& WXUNUSED(event)) {
 				project->GetLiveVerts(shape, verts);
 				glView->GetShapeMask(mask, shape->name.get());
 
+				if (!mesh->bGotWeldVerts)
+					mesh->CalcWeldVerts();
+
 				if (!mask.empty())
 					mptr = &mask;
 
@@ -9048,6 +9051,17 @@ void OutfitStudioFrame::OnInflateShape(wxCommandEvent& WXUNUSED(event)) {
 					Vector3 newPos = vertPos + diff;
 					uss.pointStartState[i] = Mesh::TransformPosNifToMesh(vertPos);
 					uss.pointEndState[i] = Mesh::TransformPosNifToMesh(newPos);
+				}
+
+				for (size_t i = 0; i < verts.size(); i++) {
+					auto pointEndStateIt = uss.pointEndState.find(i);
+					if (pointEndStateIt != uss.pointEndState.end()) {
+						mesh->DoForEachWeldedVertex(i, [&](int p) {
+							auto pointEndStateWeldIt = uss.pointEndState.find(p);
+							if (pointEndStateWeldIt != uss.pointEndState.end())
+								pointEndStateWeldIt->second = pointEndStateIt->second;
+						});
+					}
 				}
 
 				usp->usss.push_back(std::move(uss));
