@@ -584,6 +584,81 @@ void AnimInfo::RenameShape(const std::string& shapeName, const std::string& newS
 	}
 }
 
+void AnimInfo::MatchSymmetricBoneNames(std::vector<std::string> boneNames, std::vector<std::pair<std::string, std::string>>& pairs, std::vector<std::string>& singles) {
+	std::vector<bool> done(boneNames.size(), false);
+	for (size_t bi1 = 0; bi1 < boneNames.size(); ++bi1) {
+		if (done[bi1])
+			continue;
+		done[bi1] = true;
+
+		const size_t b1len = boneNames[bi1].length();
+		int bestFlips = 0;
+		size_t bestbi2 = 0;
+		for (size_t bi2 = 0; bi2 < boneNames.size(); ++bi2) {
+			if (done[bi2])
+				continue;
+			if (b1len != boneNames[bi2].length())
+				continue;
+
+			int flips = 0;
+			bool nomatch = false;
+			for (size_t i = 0; i < b1len && !nomatch; ++i) {
+				char b1c = std::tolower(boneNames[bi1][i]);
+				char b2c = std::tolower(boneNames[bi2][i]);
+				if (b1c == 'l' && b2c == 'r')
+					++flips;
+				else if (b1c == 'r' && b2c == 'l')
+					++flips;
+				else if (b1c != b2c)
+					nomatch = true;
+			}
+
+			if (nomatch)
+				continue;
+			if (flips <= bestFlips)
+				continue;
+
+			bestFlips = flips;
+			bestbi2 = bi2;
+		}
+		if (bestFlips > 0) {
+			pairs.emplace_back(boneNames[bi1], boneNames[bestbi2]);
+			done[bestbi2] = true;
+		}
+		else
+			singles.push_back(boneNames[bi1]);
+	}
+}
+
+void AnimInfo::SwapBonesLR(const std::string& shapeName) {
+	auto shapeBonesIt = shapeBones.find(shapeName);
+	auto shapeSkinningIt = shapeSkinning.find(shapeName);
+	if (shapeBonesIt != shapeBones.end() && shapeSkinningIt != shapeSkinning.end()) {
+		std::vector<std::string> shapeBoneList;
+		for (auto& boneName : shapeBonesIt->second)
+			shapeBoneList.push_back(boneName);
+
+		std::vector<std::pair<std::string, std::string>> pairs;
+		std::vector<std::string> singles;
+		MatchSymmetricBoneNames(shapeBoneList, pairs, singles);
+
+		for (auto& pair : pairs) {
+			// Get index of each bone by name
+			auto boneA = shapeSkinningIt->second.boneNames.find(pair.first);
+			auto boneB = shapeSkinningIt->second.boneNames.find(pair.second);
+			if (boneA != shapeSkinningIt->second.boneNames.end() && boneB != shapeSkinningIt->second.boneNames.end()) {
+				// Get weights of each bone by index
+				auto boneWeightsA = shapeSkinningIt->second.boneWeights.find(boneA->second);
+				auto boneWeightsB = shapeSkinningIt->second.boneWeights.find(boneB->second);
+				if (boneWeightsA != shapeSkinningIt->second.boneWeights.end() && boneWeightsB != shapeSkinningIt->second.boneWeights.end()) {
+					// Swap weights between bone A and B
+					std::swap(boneWeightsA->second.weights, boneWeightsB->second.weights);
+				}
+			}
+		}
+	}
+}
+
 MatTransform AnimInfo::GetTransformShapeToGlobal(NiShape* shape) const {
     if (shape->IsSkinned())
         return GetTransformGlobalToShape(shape).InverseTransform();

@@ -1879,21 +1879,6 @@
 					<help>Inverts the Y-axis of the texture coordinates.</help>
 				</object>
 			</object>
-			<object class="wxMenu" name="menuMirror">
-				<label>Mirror</label>
-				<object class="wxMenuItem" name="mirrorX">
-					<label translate="0">X</label>
-					<help>Mirror the selected shapes on the X-axis.</help>
-				</object>
-				<object class="wxMenuItem" name="mirrorY">
-					<label translate="0">Y</label>
-					<help>Mirror the selected shapes on the Y-axis.</help>
-				</object>
-				<object class="wxMenuItem" name="mirrorZ">
-					<label translate="0">Z</label>
-					<help>Mirror the selected shapes on the Z-axis.</help>
-				</object>
-			</object>
 			<object class="wxMenuItem" name="deleteVerts">
 				<label>Delete Vertices...\tShift+Del</label>
 				<help>Deletes all unmasked vertices of the currently selected shapes.</help>
@@ -1901,6 +1886,10 @@
 			<object class="wxMenuItem" name="separateVerts">
 				<label>Separate Vertices...\tShift+S</label>
 				<help>Separate the current shape into two by using the mask.</help>
+			</object>
+			<object class="wxMenuItem" name="mirrorShape">
+				<label>Mirror Shape...</label>
+				<help>Mirror the selected shapes on any axis.</help>
 			</object>
 			<object class="wxMenuItem" name="copyGeo">
 				<label>Merge Geometry...</label>
@@ -2362,21 +2351,6 @@
 				<help>Inverts the Y-axis of the texture coordinates.</help>
 			</object>
 		</object>
-		<object class="wxMenu" name="menuMirror">
-			<label>Mirror</label>
-			<object class="wxMenuItem" name="mirrorX">
-				<label translate="0">X</label>
-				<help>Mirror the selected shapes on the X-axis.</help>
-			</object>
-			<object class="wxMenuItem" name="mirrorY">
-				<label translate="0">Y</label>
-				<help>Mirror the selected shapes on the Y-axis.</help>
-			</object>
-			<object class="wxMenuItem" name="mirrorZ">
-				<label translate="0">Z</label>
-				<help>Mirror the selected shapes on the Z-axis.</help>
-			</object>
-		</object>
 		<object class="wxMenuItem" name="deleteVerts">
 			<label>Delete Vertices...\tShift+Del</label>
 			<help>Deletes all unmasked vertices of the currently selected shapes.</help>
@@ -2384,6 +2358,10 @@
 		<object class="wxMenuItem" name="separateVerts">
 			<label>Separate Vertices...\tShift+S</label>
 			<help>Separate the current shape into two by using the mask.</help>
+		</object>
+		<object class="wxMenuItem" name="mirrorShape">
+			<label>Mirror Shape...</label>
+			<help>Mirror the selected shapes on any axis.</help>
 		</object>
 		<object class="wxMenuItem" name="copyGeo">
 			<label>Merge Geometry...</label>

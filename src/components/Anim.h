@@ -183,6 +183,9 @@ public:
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName);
 
+	static void MatchSymmetricBoneNames(std::vector<std::string> boneNames, std::vector<std::pair<std::string, std::string>>& pairs, std::vector<std::string>& singles);
+	void SwapBonesLR(const std::string& shapeName);
+
 	nifly::MatTransform GetTransformShapeToGlobal(nifly::NiShape* shape) const;
 	nifly::MatTransform GetTransformGlobalToShape(nifly::NiShape* shape) const;
 	void SetTransformShapeToGlobal(nifly::NiShape* shape, const nifly::MatTransform& newShapeToGlobal);

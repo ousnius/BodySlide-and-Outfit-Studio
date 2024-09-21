@@ -12,7 +12,7 @@ See the included LICENSE file
 #include <unordered_set>
 #include <vector>
 
-enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh };
+enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh, Mirror };
 
 struct UndoStateVertexWeight {
 	float startVal, endVal;
@@ -77,9 +77,16 @@ struct UndoStateShape {
 struct UndoStateProject {
 	UndoType undoType = UndoType::VertexPosition;
 	std::vector<UndoStateShape> usss;
+
 	// if undoType is UndoType::VertexPosition and sliderName is not empty,
 	// this is a slider shape edit rather than a base shape edit.
 	std::string sliderName;
+
 	// sliderscale is only set if this is a slider shape edit.  Non-zero.
 	float sliderscale = 1.0f;
+
+	bool mirrorX = false;
+	bool mirrorY = false;
+	bool mirrorZ = false;
+	bool swapBonesX = false;
 };

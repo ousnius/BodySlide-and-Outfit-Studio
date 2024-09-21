@@ -3847,53 +3847,10 @@ void OutfitProject::MatchSymmetricVertices(NiShape* shape, const Mesh::WeldVerts
 
 void OutfitProject::MatchSymmetricBoneNames(std::vector<std::pair<std::string, std::string>>& pairs, std::vector<std::string>& singles) {
 	// Note that there is very similar code to this in OutfitStudioFrame::CalcAutoXMirrorBone.
-
 	std::vector<std::string> bones;
 	GetActiveBones(bones);
 
-	std::vector<bool> done(bones.size(), false);
-	for (size_t bi1 = 0; bi1 < bones.size(); ++bi1) {
-		if (done[bi1])
-			continue;
-		done[bi1] = true;
-
-		const size_t b1len = bones[bi1].length();
-		int bestFlips = 0;
-		size_t bestbi2 = 0;
-		for (size_t bi2 = 0; bi2 < bones.size(); ++bi2) {
-			if (done[bi2])
-				continue;
-			if (b1len != bones[bi2].length())
-				continue;
-
-			int flips = 0;
-			bool nomatch = false;
-			for (size_t i = 0; i < b1len && !nomatch; ++i) {
-				char b1c = std::tolower(bones[bi1][i]);
-				char b2c = std::tolower(bones[bi2][i]);
-				if (b1c == 'l' && b2c == 'r')
-					++flips;
-				else if (b1c == 'r' && b2c == 'l')
-					++flips;
-				else if (b1c != b2c)
-					nomatch = true;
-			}
-
-			if (nomatch)
-				continue;
-			if (flips <= bestFlips)
-				continue;
-
-			bestFlips = flips;
-			bestbi2 = bi2;
-		}
-		if (bestFlips > 0) {
-			pairs.emplace_back(bones[bi1], bones[bestbi2]);
-			done[bestbi2] = true;
-		}
-		else
-			singles.push_back(bones[bi1]);
-	}
+	AnimInfo::MatchSymmetricBoneNames(bones, pairs, singles);
 }
 
 void OutfitProject::FindVertexAsymmetries(NiShape* shape, const SymmetricVertices& symverts, const Mesh::WeldVertsType& weldVerts, VertexAsymmetries& r) {

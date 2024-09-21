@@ -1320,7 +1320,7 @@ private:
 	void OnSliderProperties(wxCommandEvent& event);
 
 	void OnInvertUV(wxCommandEvent& event);
-	void OnMirror(wxCommandEvent& event);
+	void OnMirrorShape(wxCommandEvent& event);
 
 	void OnEnterClose(wxKeyEvent& event);
 
@@ -1431,6 +1431,7 @@ private:
 
 		glView->UndoStroke();
 		UpdateUndoTools();
+		SetPendingChanges();
 	}
 
 	void OnRedo(wxCommandEvent& WXUNUSED(event)) {
@@ -1439,6 +1440,7 @@ private:
 
 		glView->RedoStroke();
 		UpdateUndoTools();
+		SetPendingChanges();
 	}
 
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event));

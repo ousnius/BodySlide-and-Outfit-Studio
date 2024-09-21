@@ -208,9 +208,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("uvEdit"), OutfitStudioFrame::OnEditUV)
 	EVT_MENU(XRCID("uvInvertX"), OutfitStudioFrame::OnInvertUV)
 	EVT_MENU(XRCID("uvInvertY"), OutfitStudioFrame::OnInvertUV)
-	EVT_MENU(XRCID("mirrorX"), OutfitStudioFrame::OnMirror)
-	EVT_MENU(XRCID("mirrorY"), OutfitStudioFrame::OnMirror)
-	EVT_MENU(XRCID("mirrorZ"), OutfitStudioFrame::OnMirror)
+	EVT_MENU(XRCID("mirrorShape"), OutfitStudioFrame::OnMirrorShape)
 
 	EVT_MENU(XRCID("moveShape"), OutfitStudioFrame::OnMoveShape)
 	EVT_MENU(XRCID("scaleShape"), OutfitStudioFrame::OnScaleShape)
@@ -4807,6 +4805,7 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->GetUndoHistory()->ClearHistory();
+	UpdateUndoTools();
 
 	activeSlider.clear();
 	lastActiveSlider.clear();
@@ -4993,7 +4992,6 @@ void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 		glView->SetSelectedShape("");
 
 	UpdateActiveShape();
-	glView->GetUndoHistory()->ClearHistory();
 }
 
 void OutfitStudioFrame::OnShapeActivated(wxTreeEvent& event) {
@@ -6686,6 +6684,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		ReselectBone();
 		glView->GetUndoHistory()->ClearHistory();
+		UpdateUndoTools();
 	}
 	else if (id == colorsTabButton->GetId()) {
 		currentTabButton = colorsTabButton;
@@ -8334,22 +8333,88 @@ void OutfitStudioFrame::OnInvertUV(wxCommandEvent& event) {
 	SetPendingChanges();
 }
 
-void OutfitStudioFrame::OnMirror(wxCommandEvent& event) {
+void OutfitStudioFrame::OnMirrorShape(wxCommandEvent& WXUNUSED(event)) {
+	CloseBrushSettings();
+
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
-	bool mirrorX = (event.GetId() == XRCID("mirrorX"));
-	bool mirrorY = (event.GetId() == XRCID("mirrorY"));
-	bool mirrorZ = (event.GetId() == XRCID("mirrorZ"));
+	if (!CheckEditableState())
+		return;
 
-	for (auto& i : selectedItems) {
-		project->GetWorkNif()->MirrorShape(i->GetShape(), mirrorX, mirrorY, mirrorZ);
+	wxDialog dlg;
+	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgMirrorShape")) {
+		bool previewMirror = false;
+
+		auto updateMirrorPreview = [&]() {
+			if (previewMirror) {
+				UndoStateProject* curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true, false);
+					glView->GetUndoHistory()->PopState();
+					previewMirror = false;
+				}
+			}
+
+			bool mirrorAxisX = XRCCTRL(dlg, "mirrorAxisX", wxCheckBox)->IsChecked();
+			bool mirrorAxisY = XRCCTRL(dlg, "mirrorAxisY", wxCheckBox)->IsChecked();
+			bool mirrorAxisZ = XRCCTRL(dlg, "mirrorAxisZ", wxCheckBox)->IsChecked();
+
+			wxCheckBox* swapBonesX = XRCCTRL(dlg, "swapBonesX", wxCheckBox);
+			if (mirrorAxisX && !swapBonesX->IsEnabled())
+				swapBonesX->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+
+			swapBonesX->Enable(mirrorAxisX);
+
+			if (mirrorAxisX || mirrorAxisY || mirrorAxisZ) {
+				UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+				usp->undoType = UndoType::Mirror;
+				usp->mirrorX = mirrorAxisX;
+				usp->mirrorY = mirrorAxisY;
+				usp->mirrorZ = mirrorAxisZ;
+				usp->swapBonesX = swapBonesX->IsChecked();
+
+				for (auto& sel : selectedItems) {
+					NiShape* shape = sel->GetShape();
+
+					UndoStateShape uss;
+					uss.shapeName = shape->name.get();
+
+					usp->usss.push_back(std::move(uss));
+				}
+
+				glView->ApplyUndoState(usp, false);
+
+				previewMirror = true;
+
+				if (glView->GetTransformMode())
+					glView->ShowTransformTool();
+			}
+		};
+
+		auto mirrorAxisChanged = [&](wxCommandEvent&) { updateMirrorPreview(); };
+
+		XRCCTRL(dlg, "mirrorAxisX", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
+		XRCCTRL(dlg, "mirrorAxisY", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
+		XRCCTRL(dlg, "mirrorAxisZ", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
+		XRCCTRL(dlg, "swapBonesX", wxCheckBox)->Bind(wxEVT_CHECKBOX, mirrorAxisChanged);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+
+		if (dlg.ShowModal() != wxID_OK) {
+			if (previewMirror) {
+				UndoStateProject* curState = glView->GetUndoHistory()->GetBackState();
+				if (curState) {
+					glView->ApplyUndoState(curState, true);
+					glView->GetUndoHistory()->PopState();
+				}
+			}
+		}
+
+		UpdateUndoTools();
+		SetPendingChanges();
 	}
-
-	RefreshGUIFromProj();
-	SetPendingChanges();
 }
 
 void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
@@ -9762,6 +9827,7 @@ void OutfitStudioFrame::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	CalcAutoXMirrorBone();
 	glView->GetUndoHistory()->ClearHistory();
 	UpdateBoneCounts();
+	UpdateUndoTools();
 	SetPendingChanges();
 }
 
@@ -9781,6 +9847,7 @@ void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)
 	glView->GetUndoHistory()->ClearHistory();
 	HighlightBoneNamesWithWeights();
 	UpdateBoneCounts();
+	UpdateUndoTools();
 	SetPendingChanges();
 }
 
@@ -12901,6 +12968,19 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 		os->RefreshGUIFromProj(false);
 		UnstashMasks(maskStash);
 		os->ApplySliders();
+	}
+	else if (undoType == UndoType::Mirror) {
+		for (auto& uss : usp->usss) {
+			NiShape* shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+			if (!shape)
+				continue;
+
+			os->project->GetWorkNif()->MirrorShape(shape, usp->mirrorX, usp->mirrorY, usp->mirrorZ);
+			if (usp->swapBonesX)
+				os->project->GetWorkAnim()->SwapBonesLR(uss.shapeName);
+		}
+
+		os->RefreshGUIFromProj(false);
 	}
 
 	if (bRender) {
