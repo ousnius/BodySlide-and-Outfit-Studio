@@ -513,6 +513,10 @@
 			<checkable>1</checkable>
 		</object>
 		<object class="separator" />
+		<object class="wxMenuItem" name="menuBrowseOutfitFolder">
+			<label>Browse outfit folder...</label>
+			<help>Browses to the shape data folder of the current outfit in the file explorer.</help>
+		</object>
 		<object class="wxMenuItem" name="menuSaveGroups">
 			<label>Save Outfit list as group...</label>
 			<help>Save the current filtered outfit list as a group</help>

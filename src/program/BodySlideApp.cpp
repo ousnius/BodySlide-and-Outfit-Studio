@@ -86,6 +86,7 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_MENU(XRCID("menuRefreshOutfits"), BodySlideFrame::OnRefreshOutfits)
 	EVT_MENU(XRCID("menuRegexOutfits"), BodySlideFrame::OnRegexOutfits)
 	EVT_MENU(XRCID("menuFilterHasZaps"), BodySlideFrame::OnFilterHasZaps)
+	EVT_MENU(XRCID("menuBrowseOutfitFolder"), BodySlideFrame::OnBrowseOutfitFolder)
 	EVT_MENU(XRCID("menuSaveGroups"), BodySlideFrame::OnSaveGroups)
 
 	EVT_MOVE_END(BodySlideFrame::OnMoveWindow)
@@ -3709,6 +3710,17 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 		search->ChangeValue(filter);
 		app->PopulateOutfitList("");
 	}
+}
+
+void BodySlideFrame::OnBrowseOutfitFolder(wxCommandEvent& WXUNUSED(event)) {
+	auto& activeSet = app->GetActiveSet();
+
+	std::string sep{wxString(wxFileName::GetPathSeparator()).ToUTF8()};
+	std::string dataPath = activeSet.GetBaseDataPath() + sep + activeSet.GetDefaultDataFolder();
+	wxFileName fileName{wxString::FromUTF8(dataPath)};
+
+	if (!fileName.FileExists() && fileName.DirExists())
+		wxLaunchDefaultApplication(dataPath);
 }
 
 void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {

@@ -117,6 +117,7 @@ public:
 
 	std::string GetOutputDataPath() const;
 	std::string GetProjectPath() const;
+	SliderSet& GetActiveSet() { return activeSet; }
 
 	void InitLanguage();
 
@@ -378,6 +379,7 @@ private:
 
 	void OnChooseGroups(wxCommandEvent& event);
 	void OnRefreshGroups(wxCommandEvent& event);
+	void OnBrowseOutfitFolder(wxCommandEvent& event);
 	void OnSaveGroups(wxCommandEvent& event);
 	void OnRefreshOutfits(wxCommandEvent& event);
 	void OnRegexOutfits(wxCommandEvent& event);

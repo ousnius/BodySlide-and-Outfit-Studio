@@ -59,6 +59,7 @@ public:
 		sliders.clear();
 	}
 
+	std::string GetBaseDataPath() { return baseDataPath; }
 	void SetBaseDataPath(const std::string& inPath) { baseDataPath = inPath; }
 
 	std::vector<NormalGenLayer>& GetNormalsGenLayers() { return defNormalGen; }
