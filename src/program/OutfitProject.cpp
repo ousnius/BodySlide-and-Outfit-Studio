@@ -105,6 +105,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		outSet.AddShapeTarget(baseShapeName, ShapeToTarget(baseShapeName));
 		outSet.SetTargetDataFolders(ShapeToTarget(baseShapeName), activeSet.GetShapeDataFolders(baseShapeName));
 		outSet.SetSmoothSeamNormals(baseShapeName, activeSet.GetSmoothSeamNormals(baseShapeName));
+		outSet.SetSmoothSeamNormalsAngle(baseShapeName, activeSet.GetSmoothSeamNormalsAngle(baseShapeName));
 		outSet.SetLockNormals(baseShapeName, activeSet.GetLockNormals(baseShapeName));
 		owner->UpdateProgress(prog += step, _("Adding reference shapes..."));
 	}
@@ -125,6 +126,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		}
 
 		outSet.SetSmoothSeamNormals(shapeName, activeSet.GetSmoothSeamNormals(shapeName));
+		outSet.SetSmoothSeamNormalsAngle(shapeName, activeSet.GetSmoothSeamNormalsAngle(shapeName));
 		outSet.SetLockNormals(shapeName, activeSet.GetLockNormals(shapeName));
 		owner->UpdateProgress(prog += step, _("Adding outfit shapes..."));
 	}

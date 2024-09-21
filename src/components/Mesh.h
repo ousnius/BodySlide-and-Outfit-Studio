@@ -86,7 +86,6 @@ public:
 	GLMaterial* material = nullptr;
 
 	uint32_t overlayLayer = 0;					 // Layer for order of rendering overlays
-	float smoothThresh = 60.0f * nifly::DEG2RAD; // Smoothing threshold for generating smooth normals.
 
 	std::unique_ptr<std::vector<int>[]> vertTris;		 // Map of triangles for which each vert is a member.
 	std::unique_ptr<std::vector<int>[]> vertEdges;		 // Map of edges for which each vert is a member.
@@ -122,7 +121,8 @@ public:
 
 	bool bVisible = true;
 	bool bShowPoints = false;
-	bool smoothSeamNormals = true;
+	bool smoothSeamNormals = true; // Smoothing for normals on seams.
+	float smoothSeamNormalsAngle = 60.0f; // Smoothing threshold in degrees for generating smooth normals on seams.
 	bool lockNormals = false;
 
 	uint16_t alphaFlags = 0;
@@ -152,9 +152,6 @@ public:
 	bool HasAlphaBlend();
 
 	void ScaleVertices(const nifly::Vector3& center, const float& factor);
-
-	void SetSmoothThreshold(float degrees);
-	float GetSmoothThreshold();
 
 	void FacetNormals();
 	void SmoothNormals(const std::unordered_set<int>& vertices = std::unordered_set<int>());

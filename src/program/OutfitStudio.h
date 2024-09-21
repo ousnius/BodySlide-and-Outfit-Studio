@@ -1446,6 +1446,7 @@ private:
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event));
 	void OnDisableNormalsCalc(wxCommandEvent& WXUNUSED(event));
 	void OnSmoothNormalSeams(wxCommandEvent& event);
+	void OnSmoothSeamsAngle(wxCommandEvent& event);
 	void OnLockNormals(wxCommandEvent& event);
 
 	void OnEditUV(wxCommandEvent& event);

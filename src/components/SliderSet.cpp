@@ -125,6 +125,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 				shape.targetShape = shapeName->Attribute("target");
 
 			shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals", true);
+			shape.smoothSeamNormalsAngle = shapeName->FloatAttribute("SmoothSeamNormalsAngle", SliderSetShape::SliderSetDefaultSmoothAngle);
 			shape.lockNormals = shapeName->BoolAttribute("LockNormals", false);
 		}
 
@@ -392,6 +393,9 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 
 		if (!s.second.smoothSeamNormals)
 			baseShapeElement->SetAttribute("SmoothSeamNormals", s.second.smoothSeamNormals);
+
+		if (s.second.smoothSeamNormals && s.second.smoothSeamNormalsAngle != SliderSetShape::SliderSetDefaultSmoothAngle)
+			baseShapeElement->SetAttribute("SmoothSeamNormalsAngle", s.second.smoothSeamNormalsAngle);
 
 		if (s.second.lockNormals)
 			baseShapeElement->SetAttribute("LockNormals", s.second.lockNormals);

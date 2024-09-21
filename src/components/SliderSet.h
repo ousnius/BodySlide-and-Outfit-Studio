@@ -12,10 +12,15 @@ See the included LICENSE file
 
 using namespace tinyxml2;
 
+
 struct SliderSetShape {
+public:
+	constexpr static float SliderSetDefaultSmoothAngle = 60.0f;
+
 	std::string targetShape; // Target names mapped to nif file shape names.
 	std::vector<std::string> dataFolders; // Overwrites default data folder of slider set.
 	bool smoothSeamNormals = true;
+	float smoothSeamNormalsAngle = SliderSetDefaultSmoothAngle;
 	bool lockNormals = false;
 };
 
@@ -92,11 +97,26 @@ public:
 		return true;
 	}
 
-	void SetSmoothSeamNormals(const std::string& shapeName, bool smooth) {
+	float GetSmoothSeamNormalsAngle(const std::string& shapeName) {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			return shape->second.smoothSeamNormalsAngle;
+
+		return SliderSetShape::SliderSetDefaultSmoothAngle;
+	}
+
+	void SetSmoothSeamNormals(const std::string& shapeName, const bool smooth) {
 		AddMissingTarget(shapeName);
 
 		auto& shape = shapeAttributes[shapeName];
 		shape.smoothSeamNormals = smooth;
+	}
+
+	void SetSmoothSeamNormalsAngle(const std::string& shapeName, const float angle) {
+		AddMissingTarget(shapeName);
+
+		auto& shape = shapeAttributes[shapeName];
+		shape.smoothSeamNormalsAngle = angle;
 	}
 
 	bool GetLockNormals(const std::string& shapeName) {

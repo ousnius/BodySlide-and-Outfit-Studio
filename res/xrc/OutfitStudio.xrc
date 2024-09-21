@@ -1928,17 +1928,25 @@
 				<label>Inflate...</label>
 				<help>Inflates/deflates a shape along its normals. This permanently moves vertices.</help>
 			</object>
-			<object class="wxMenuItem" name="btnSmoothSeams">
-				<label>Smooth Seam Normals</label>
-				<help>Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape.</help>
-				<checked>1</checked>
-				<checkable>1</checkable>
-			</object>
-			<object class="wxMenuItem" name="btnLockNormals">
-				<label>Lock Normals</label>
-				<help>Locks the mesh normals. Enable if you want to keep custom normals intact.</help>
-				<checked>0</checked>
-				<checkable>1</checkable>
+			<object class="separator" />
+			<object class="wxMenu" name="menuNormals">
+				<label>Normals</label>
+				<object class="wxMenuItem" name="btnSmoothSeams">
+					<label>Smooth Seam Normals</label>
+					<help>Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape.</help>
+					<checked>1</checked>
+					<checkable>1</checkable>
+				</object>
+				<object class="wxMenuItem" name="btnSmoothSeamsAngle">
+					<label>Edit Smoothing Angle...</label>
+					<help>Angle, in degrees, that controls the threshold at which normal seams are smoothed.</help>
+				</object>
+				<object class="wxMenuItem" name="btnLockNormals">
+					<label>Lock Normals</label>
+					<help>Locks the mesh normals. Enable if you want to keep custom normals intact.</help>
+					<checked>0</checked>
+					<checkable>1</checkable>
+				</object>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="copyBoneWeight">

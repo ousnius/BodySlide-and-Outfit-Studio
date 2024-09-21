@@ -950,6 +950,82 @@
 		</object>
 	</object>
 
+	<object class="wxDialog" name="dlgSmoothSeams">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
+		<size>414,169</size>
+		<title>Smooth Seams</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="angleLabel">
+									<label translate="0">Angle Threshold (degrees)</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="angleSlider">
+									<value translate="0">6000</value>
+									<min>10</min>
+									<max>17900</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="angleText">
+									<size>60,-1</size>
+									<value translate="0">60.00</value>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+
 	<object class="wxDialog" name="dlgShapeTextures">
 		<style>wxDEFAULT_DIALOG_STYLE</style>
 		<size>457,308</size>

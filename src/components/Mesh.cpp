@@ -482,14 +482,6 @@ void Mesh::CalcWeldVerts() {
 	bGotWeldVerts = true;
 }
 
-float Mesh::GetSmoothThreshold() {
-	return (smoothThresh * 180) / PI;
-}
-
-void Mesh::SetSmoothThreshold(float degrees) {
-	smoothThresh = degrees * DEG2RAD;
-}
-
 void Mesh::SmoothNormals(const std::unordered_set<int>& vertices) {
 	if (lockNormals || !norms)
 		return;
@@ -544,6 +536,7 @@ void Mesh::SmoothNormals(const std::unordered_set<int>& vertices) {
 		if (!bGotWeldVerts)
 			CalcWeldVerts();
 
+		float smoothThresh = smoothSeamNormalsAngle * DEG2RAD;
 		std::vector<std::pair<int, Vector3>> seamNorms;
 
 		for (auto& wvp : weldVerts) {

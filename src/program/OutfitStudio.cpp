@@ -197,6 +197,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnRecalcNormals"), OutfitStudioFrame::OnRecalcNormals)
 	EVT_MENU(XRCID("disableNormalsCalc"), OutfitStudioFrame::OnDisableNormalsCalc)
 	EVT_MENU(XRCID("btnSmoothSeams"), OutfitStudioFrame::OnSmoothNormalSeams)
+	EVT_MENU(XRCID("btnSmoothSeamsAngle"), OutfitStudioFrame::OnSmoothSeamsAngle)
 	EVT_MENU(XRCID("btnLockNormals"), OutfitStudioFrame::OnLockNormals)
 
 	EVT_MENU(XRCID("btnToggleVisibility"), OutfitStudioFrame::OnToggleVisibility)
@@ -2541,6 +2542,7 @@ void OutfitStudioFrame::ShowSliderEffect(const std::string& sliderName, bool sho
 void OutfitStudioFrame::UpdateActiveShape() {
 	bool smoothSeamNormals = true;
 	bool lockNormals = false;
+	bool enableSmoothSeamsAngle = true;
 
 	if (!activeItem) {
 		if (glView->GetTransformMode())
@@ -2554,6 +2556,7 @@ void OutfitStudioFrame::UpdateActiveShape() {
 		lastSelectedBones.clear();
 
 		menuBar->Enable(XRCID("btnSmoothSeams"), false);
+		enableSmoothSeamsAngle = false;
 		menuBar->Enable(XRCID("btnLockNormals"), false);
 	}
 	else {
@@ -2567,15 +2570,22 @@ void OutfitStudioFrame::UpdateActiveShape() {
 			if (glView->GetVertexEdit())
 				glView->ShowVertexEdit();
 		}
+		else
+			enableSmoothSeamsAngle = false;
 
 		menuBar->Enable(XRCID("btnSmoothSeams"), m != nullptr);
+		menuBar->Enable(XRCID("btnSmoothSeamsAngle"), m != nullptr);
 		menuBar->Enable(XRCID("btnLockNormals"), m != nullptr);
 
 		CreateSegmentTree(activeItem->GetShape());
 		CreatePartitionTree(activeItem->GetShape());
 	}
 
+	if (!smoothSeamNormals)
+		enableSmoothSeamsAngle = false;
+
 	menuBar->Check(XRCID("btnSmoothSeams"), smoothSeamNormals);
+	menuBar->Enable(XRCID("btnSmoothSeamsAngle"), enableSmoothSeamsAngle);
 	menuBar->Check(XRCID("btnLockNormals"), lockNormals);
 
 	if (glView->rotationCenterMode == RotationCenterMode::MeshCenter)
@@ -4160,6 +4170,7 @@ void OutfitStudioFrame::UpdateMeshFromSet(NiShape* shape) {
 	Mesh* m = glView->GetMesh(shapeName);
 	if (m) {
 		m->smoothSeamNormals = project->activeSet.GetSmoothSeamNormals(shapeName);
+		m->smoothSeamNormalsAngle = project->activeSet.GetSmoothSeamNormalsAngle(shapeName);
 		m->lockNormals = disableNormalsCalc || project->activeSet.GetLockNormals(shapeName);
 	}
 }
@@ -10896,7 +10907,82 @@ void OutfitStudioFrame::OnSmoothNormalSeams(wxCommandEvent& event) {
 	for (auto& s : selectedItems)
 		project->activeSet.SetSmoothSeamNormals(s->GetShape()->name.get(), enable);
 
+	menuBar->Enable(XRCID("btnSmoothSeamsAngle"), enable);
+
 	glView->Render();
+}
+
+void OutfitStudioFrame::OnSmoothSeamsAngle(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	std::vector<Mesh*> activeMeshes = glView->gls.GetActiveMeshes();
+	if (activeMeshes.empty())
+		return;
+
+	std::vector<float> oldMeshAngles;
+	oldMeshAngles.resize(activeMeshes.size());
+
+	for (int i = 0; i < activeMeshes.size(); i++)
+		oldMeshAngles[i] = activeMeshes[i]->smoothSeamNormalsAngle;
+
+	wxDialog dlg;
+	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSmoothSeams")) {
+		auto updatePreview = [&]() {
+			float angle = atof(XRCCTRL(dlg, "angleText", wxTextCtrl)->GetValue().c_str());
+
+			for (int i = 0; i < activeMeshes.size(); i++) {
+				Mesh* m = activeMeshes[i];
+				m->smoothSeamNormalsAngle = angle;
+				m->SmoothNormals();
+			}
+
+			glView->Render();
+		};
+
+		auto sliderMoved = [&](wxCommandEvent&) {
+			float angle = XRCCTRL(dlg, "angleSlider", wxSlider)->GetValue() / 100.0f;
+			XRCCTRL(dlg, "angleText", wxTextCtrl)->ChangeValue(wxString::Format("%0.2f", angle));
+
+			updatePreview();
+		};
+
+		auto textChanged = [&](wxCommandEvent&) {
+			float angle = atof(XRCCTRL(dlg, "angleText", wxTextCtrl)->GetValue().c_str());
+			XRCCTRL(dlg, "angleSlider", wxSlider)->SetValue(angle * 100);
+
+			float angleLimited = XRCCTRL(dlg, "angleSlider", wxSlider)->GetValue() / 100.0f;
+			if (angle != angleLimited)
+				XRCCTRL(dlg, "angleText", wxTextCtrl)->ChangeValue(wxString::Format("%0.2f", angleLimited));
+
+			updatePreview();
+		};
+
+		XRCCTRL(dlg, "angleSlider", wxSlider)->Bind(wxEVT_SLIDER, sliderMoved);
+		XRCCTRL(dlg, "angleText", wxTextCtrl)->Bind(wxEVT_TEXT, textChanged);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+
+		// Set old value of first mesh
+		XRCCTRL(dlg, "angleText", wxTextCtrl)->SetValue(wxString::Format("%0.2f", oldMeshAngles.front()));
+
+		if (dlg.ShowModal() != wxID_OK) {
+			for (int i = 0; i < activeMeshes.size(); i++) {
+				Mesh* m = activeMeshes[i];
+				m->smoothSeamNormalsAngle = oldMeshAngles[i];
+				m->SmoothNormals();
+			}
+
+			glView->Render();
+			return;
+		}
+
+		float angle = atof(XRCCTRL(dlg, "angleText", wxTextCtrl)->GetValue().c_str());
+
+		for (auto& s : selectedItems)
+			project->activeSet.SetSmoothSeamNormalsAngle(s->GetShape()->name.get(), angle);
+	}
 }
 
 void OutfitStudioFrame::OnLockNormals(wxCommandEvent& event) {
