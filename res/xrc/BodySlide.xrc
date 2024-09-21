@@ -489,6 +489,7 @@
 			<label>Choose groups...</label>
 			<help>Choose groups to display in the Outfit menu</help>
 		</object>
+		<object class="separator" />
 		<object class="wxMenuItem" name="menuRefreshGroups">
 			<label>Refresh Groups</label>
 			<help>Refresh group information</help>
@@ -496,18 +497,25 @@
 	</object>
 	<object class="wxMenu" name="menuOutfitSrchContext">
 		<label>Filter Options</label>
-		<object class="wxMenuItem" name="menuSaveGroups">
-			<label>Save Outfit list as group...</label>
-			<help>Save the current filtered outfit list as a group</help>
-		</object>
 		<object class="wxMenuItem" name="menuRefreshOutfits">
 			<label>Refresh Outfits</label>
 			<help>Reloads outfit list</help>
 		</object>
+		<object class="separator" />
 		<object class="wxMenuItem" name="menuRegexOutfits">
 			<label>Regular Expressions</label>
 			<help>Allow the use of regular expressions (regex) for filtering.</help>
 			<checkable>1</checkable>
+		</object>
+		<object class="wxMenuItem" name="menuFilterHasZaps">
+			<label>Has Zap Options</label>
+			<help>Show only outfits that have zap options.</help>
+			<checkable>1</checkable>
+		</object>
+		<object class="separator" />
+		<object class="wxMenuItem" name="menuSaveGroups">
+			<label>Save Outfit list as group...</label>
+			<help>Save the current filtered outfit list as a group</help>
 		</object>
 	</object>
 	<object class="wxMenu" name="batchBuildContext">

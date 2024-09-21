@@ -78,6 +78,7 @@ class BodySlideApp : public wxApp {
 	/* Data Items */
 	std::map<std::string, std::string, case_insensitive_compare> outfitNameSource; // All currently defined outfits.
 	std::vector<std::string> outfitNameOrder;									   // All currently defined outfits, in their order of appearance.
+	std::vector<std::string> outfitHasZaps;										   // All currently defined outfits that have visible zaps.
 	std::map<std::string, std::vector<std::string>> groupMembers;				   // All currently defined groups.
 	std::map<std::string, std::string> groupAlias;								   // Group name aliases.
 	std::vector<std::string> ungroupedOutfits;									   // Outfits without a group.
@@ -132,6 +133,7 @@ public:
 	void GetAllGroupNames(std::vector<std::string>& outGroups);
 	int SaveGroupList(const std::string& filename, const std::string& groupname);
 
+	void PopulateFilterData();
 	void ApplyOutfitFilter();
 	int GetOutfits(std::vector<std::string>& outList);
 	int GetFilteredOutfits(std::vector<std::string>& outList);
@@ -379,6 +381,7 @@ private:
 	void OnSaveGroups(wxCommandEvent& event);
 	void OnRefreshOutfits(wxCommandEvent& event);
 	void OnRegexOutfits(wxCommandEvent& event);
+	void OnFilterHasZaps(wxCommandEvent& event);
 
 	void OnChooseOutfit(wxCommandEvent& event);
 	void OnChoosePreset(wxCommandEvent& event);

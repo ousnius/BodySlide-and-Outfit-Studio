@@ -85,6 +85,7 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_MENU(XRCID("menuRefreshGroups"), BodySlideFrame::OnRefreshGroups)
 	EVT_MENU(XRCID("menuRefreshOutfits"), BodySlideFrame::OnRefreshOutfits)
 	EVT_MENU(XRCID("menuRegexOutfits"), BodySlideFrame::OnRegexOutfits)
+	EVT_MENU(XRCID("menuFilterHasZaps"), BodySlideFrame::OnFilterHasZaps)
 	EVT_MENU(XRCID("menuSaveGroups"), BodySlideFrame::OnSaveGroups)
 
 	EVT_MOVE_END(BodySlideFrame::OnMoveWindow)
@@ -534,11 +535,21 @@ int BodySlideApp::LoadSliderSets() {
 	dataSets.Clear();
 	outfitNameSource.clear();
 	outfitNameOrder.clear();
+	outfitHasZaps.clear();
 	outFileCount.clear();
 
 	wxArrayString files;
 	wxDir::GetAllFiles(wxString::FromUTF8(GetProjectPath()) + "/SliderSets", &files, "*.osp");
 	wxDir::GetAllFiles(wxString::FromUTF8(GetProjectPath()) + "/SliderSets", &files, "*.xml");
+
+	bool filterHasZaps = false;
+
+	auto menuOutfitSrchContext = sliderView->outfitsearch->GetMenu();
+	if (menuOutfitSrchContext) {
+		auto menuFilterHasZaps = menuOutfitSrchContext->FindItem(XRCID("menuFilterHasZaps"));
+		if (menuFilterHasZaps)
+			filterHasZaps = menuFilterHasZaps->IsChecked();
+	}
 
 	for (auto& file : files) {
 		std::string fileName{file.ToUTF8()};
@@ -557,6 +568,24 @@ int BodySlideApp::LoadSliderSets() {
 
 			outfitNameSource[o] = fileName;
 			outfitNameOrder.push_back(o);
+
+			if (filterHasZaps) {
+				bool hasZaps = false;
+
+				SliderSet sliderSet;
+				if (sliderDoc.GetSet(o, sliderSet) == 0) {
+					for (size_t s = 0; s < sliderSet.size(); s++) {
+						auto& slider = sliderSet[s];
+						if (slider.bZap && !slider.bHidden) {
+							hasZaps = true;
+							break;
+						}
+					}
+				}
+
+				if (hasZaps)
+					outfitHasZaps.push_back(o);
+			}
 
 			sliderDoc.GetSetOutputFilePath(o, outFilePath);
 			if (!outFilePath.empty())
@@ -1861,20 +1890,32 @@ int BodySlideApp::SaveGroupList(const std::string& fileName, const std::string& 
 	return 0;
 }
 
+void BodySlideApp::PopulateFilterData() {
+	if (outfitHasZaps.empty())
+		LoadSliderSets();
+}
+
 void BodySlideApp::ApplyOutfitFilter() {
-	bool showUngrouped = false;
 	filteredOutfits.clear();
+
 	std::unordered_set<std::string> grpFiltOutfits;
 	std::vector<std::string> workFilterList;
 	static wxString lastGrps = "";
 	static std::set<std::string> grouplist;
 
+	bool showUngrouped = false;
 	bool regexFilterOutfits = false;
+	bool filterHasZaps = false;
+
 	auto menuOutfitSrchContext = sliderView->outfitsearch->GetMenu();
 	if (menuOutfitSrchContext) {
 		auto menuRegexOutfits = menuOutfitSrchContext->FindItem(XRCID("menuRegexOutfits"));
 		if (menuRegexOutfits)
 			regexFilterOutfits = menuRegexOutfits->IsChecked();
+
+		auto menuFilterHasZaps = menuOutfitSrchContext->FindItem(XRCID("menuFilterHasZaps"));
+		if (menuFilterHasZaps)
+			filterHasZaps = menuFilterHasZaps->IsChecked();
 	}
 
 	wxString grpSrch = sliderView->search->GetValue();
@@ -1914,9 +1955,20 @@ void BodySlideApp::ApplyOutfitFilter() {
 		for (auto& ug : ungroupedOutfits)
 			grpFiltOutfits.insert(ug);
 
-	for (auto& no : outfitNameOrder)
-		if (grpFiltOutfits.find(no) != grpFiltOutfits.end())
+	for (auto& no : outfitNameOrder) {
+		bool filteredOut = false;
+
+		if (grpFiltOutfits.find(no) == grpFiltOutfits.end())
+			filteredOut = true;
+
+		if (!filteredOut && filterHasZaps) {
+			if (std::find(outfitHasZaps.cbegin(), outfitHasZaps.cend(), no) == outfitHasZaps.cend())
+				filteredOut = true;
+		}
+
+		if (!filteredOut)
 			workFilterList.push_back(no);
+	}
 
 
 	if (outfitSrch.empty()) {
@@ -3703,8 +3755,13 @@ void BodySlideFrame::OnRefreshOutfits(wxCommandEvent& WXUNUSED(event)) {
 	app->ActivateOutfit(outfitName);
 }
 
-void BodySlideFrame::OnRegexOutfits(wxCommandEvent& event) {
-	OnRefreshOutfits(event);
+void BodySlideFrame::OnRegexOutfits(wxCommandEvent& WXUNUSED(event)) {
+	app->PopulateOutfitList("");
+}
+
+void BodySlideFrame::OnFilterHasZaps(wxCommandEvent& WXUNUSED(event)) {
+	app->PopulateFilterData();
+	app->PopulateOutfitList("");
 }
 
 void BodySlideFrame::OnChooseOutfit(wxCommandEvent& event) {
