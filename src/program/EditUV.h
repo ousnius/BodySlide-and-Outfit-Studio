@@ -98,6 +98,7 @@ private:
 	void OnSelectInvert(wxCommandEvent& event);
 	void OnSelectLess(wxCommandEvent& event);
 	void OnSelectMore(wxCommandEvent& event);
+	void OnMaskSelection(wxCommandEvent& event);
 	void OnTranslate(wxCommandEvent& event);
 	void OnRotate(wxCommandEvent& event);
 	void OnScale(wxCommandEvent& event);

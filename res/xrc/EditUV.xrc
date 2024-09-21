@@ -105,6 +105,7 @@
 				<label>Redo\tCtrl+Y</label>
 				<help>Redo the next undone action.</help>
 			</object>
+			<object class="separator" />
 			<object class="wxMenuItem" name="editSelectAll">
 				<label>Select All\tCtrl+A</label>
 				<help>Select All</help>
@@ -121,6 +122,12 @@
 				<label>Select More\tD</label>
 				<help>Select more adjacent points in the selected islands.</help>
 			</object>
+			<object class="separator" />
+			<object class="wxMenuItem" name="maskSelection">
+				<label>Mask Selection</label>
+				<help>Create a mask from the current UV selection for the mesh in the main viewport.</help>
+			</object>
+			<object class="separator" />
 			<object class="wxMenuItem" name="editTranslate">
 				<label>Translate...\tT</label>
 				<help>Show a dialog to translate the current selection.</help>

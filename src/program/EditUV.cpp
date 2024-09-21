@@ -111,6 +111,7 @@ wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_MENU(XRCID("editSelectInvert"), EditUV::OnSelectInvert)
 	EVT_MENU(XRCID("editSelectLess"), EditUV::OnSelectLess)
 	EVT_MENU(XRCID("editSelectMore"), EditUV::OnSelectMore)
+	EVT_MENU(XRCID("maskSelection"), EditUV::OnMaskSelection)
 	EVT_MENU(XRCID("editTranslate"), EditUV::OnTranslate)
 	EVT_MENU(XRCID("editRotate"), EditUV::OnRotate)
 	EVT_MENU(XRCID("editScale"), EditUV::OnScale)
@@ -199,6 +200,24 @@ void EditUV::OnSelectLess(wxCommandEvent& WXUNUSED(event)) {
 
 void EditUV::OnSelectMore(wxCommandEvent& WXUNUSED(event)) {
 	canvas->SelectMore();
+}
+
+void EditUV::OnMaskSelection(wxCommandEvent& WXUNUSED(event)) {
+	if (!shapeMesh->mask)
+		return;
+
+	if (shapeMesh->nVerts != canvas->uvGridMesh->nVerts)
+		return;
+
+	for (int i = 0; i < canvas->uvGridMesh->nVerts; i++) {
+		if (canvas->uvGridMesh->vcolors[i] == Vector3(1.0f, 1.0f, 0.0f))
+			shapeMesh->mask[i] = 1.0f;
+		else
+			shapeMesh->mask[i] = 0.0f;
+	}
+
+	shapeMesh->QueueUpdate(Mesh::UpdateType::Mask);
+	os->glView->Render();
 }
 
 void EditUV::OnTranslate(wxCommandEvent& WXUNUSED(event)) {
