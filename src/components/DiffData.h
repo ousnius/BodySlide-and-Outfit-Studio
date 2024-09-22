@@ -13,11 +13,12 @@ See the included LICENSE file
 
 struct UndoStateVertexSliderDiff;
 
+typedef std::unordered_map<uint16_t, nifly::Vector3> TargetDataDiffs;
+typedef std::unordered_map<std::string, TargetDataDiffs> TargetData;
+
 class OSDataFile {
-	uint32_t header;
 	uint32_t version;
-	uint32_t dataCount;
-	std::unordered_map<std::string, std::unordered_map<uint16_t, nifly::Vector3>> dataDiffs;
+	TargetData dataDiffs;
 
 public:
 	OSDataFile();
@@ -26,19 +27,19 @@ public:
 	bool Read(const std::string& fileName);
 	bool Write(const std::string& fileName);
 
-	std::unordered_map<std::string, std::unordered_map<uint16_t, nifly::Vector3>> GetDataDiffs();
-	std::unordered_map<uint16_t, nifly::Vector3>* GetDataDiff(const std::string& dataName);
-	void SetDataDiff(const std::string& dataName, std::unordered_map<uint16_t, nifly::Vector3>& inDataDiff);
+	TargetData GetDataDiffs();
+	TargetDataDiffs* GetDataDiff(const std::string& dataName);
+	void SetDataDiff(const std::string& dataName, TargetDataDiffs& inDataDiff);
 };
 
 class DiffDataSets {
-	std::unordered_map<std::string, std::unordered_map<uint16_t, nifly::Vector3>> namedSet;
+	std::unordered_map<std::string, TargetDataDiffs> namedSet;
 	std::map<std::string, std::string> dataTargets;
 
 public:
 	inline bool TargetMatch(const std::string& set, const std::string& target);
-	void MoveToSet(const std::string& name, const std::string& target, std::unordered_map<uint16_t, nifly::Vector3>& inDiffData);
-	void LoadSet(const std::string& name, const std::string& target, const std::unordered_map<uint16_t, nifly::Vector3>& inDiffData);
+	void MoveToSet(const std::string& name, const std::string& target, TargetDataDiffs& inDiffData);
+	void LoadSet(const std::string& name, const std::string& target, const TargetDataDiffs& inDiffData);
 	int LoadSet(const std::string& name, const std::string& target, const std::string& fromFile);
 	int SaveSet(const std::string& name, const std::string& target, const std::string& toFile);
 	bool LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);
@@ -54,7 +55,7 @@ public:
 	bool ApplyDiff(const std::string& set, const std::string& target, float percent, std::vector<nifly::Vector3>* inOutResult);
 	bool ApplyUVDiff(const std::string& set, const std::string& target, float percent, std::vector<nifly::Vector2>* inOutResult);
 	bool ApplyClamp(const std::string& set, const std::string& target, std::vector<nifly::Vector3>* inOutResult);
-	std::unordered_map<uint16_t, nifly::Vector3>* GetDiffSet(const std::string& targetDataName);
+	TargetDataDiffs* GetDiffSet(const std::string& targetDataName);
 	void GetDiffIndices(const std::string& set, const std::string& target, std::vector<uint16_t>& outIndices, float threshold = 0.0f);
 
 	// indices must be in ascending order.
