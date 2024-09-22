@@ -8469,7 +8469,11 @@ void OutfitStudioFrame::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
 	if (shape)
 		project->SetTextures(shape);
 
-	RefreshGUIFromProj();
+	auto maskStash = glView->StashMasks();
+	RefreshGUIFromProj(false);
+	glView->UnstashMasks(maskStash);
+	glView->Render();
+
 	SetPendingChanges();
 }
 
