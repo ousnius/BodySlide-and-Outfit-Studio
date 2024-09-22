@@ -1119,6 +1119,7 @@ private:
 	std::string autoXMirrorBone;
 	wxTreeItemId activeSegment;
 	wxTreeItemId activePartition;
+	std::string lastCheckedSlider;
 
 	std::vector<RefTemplate> refTemplates;
 

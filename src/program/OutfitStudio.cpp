@@ -3854,6 +3854,7 @@ void OutfitStudioFrame::ClearProject() {
 	activePartition.Unset();
 	activeSegment.Unset();
 
+	lastCheckedSlider.clear();
 	lastSelectedBones.clear();
 	lastNormalizeBones.clear();
 
@@ -6175,9 +6176,47 @@ void OutfitStudioFrame::OnSliderCheckBox(wxCommandEvent& event) {
 	if (!box)
 		return;
 
-	std::string name = box->GetName().BeforeLast('|').ToStdString();
-	ShowSliderEffect(name, event.IsChecked());
+	bool checked = event.IsChecked();
+
+	std::string sliderName = box->GetName().BeforeLast('|').ToStdString();
+	ShowSliderEffect(sliderName, checked);
+
+	bool shiftDown = wxGetKeyState(WXK_SHIFT);
+
+	if (!lastCheckedSlider.empty() && shiftDown) {
+		wxSliderPanel* sliderPanel = sliderPanels[sliderName];
+		wxSliderPanel* lastSliderPanel = sliderPanels[lastCheckedSlider];
+
+		if (sliderPanel && lastSliderPanel) {
+			size_t sliderIndex = sliderPool.FindIndex(sliderPanel);
+			size_t lastSliderIndex = sliderPool.FindIndex(lastSliderPanel);
+
+			if (sliderIndex != -1 && lastSliderIndex != -1 && sliderIndex != lastSliderIndex) {
+				size_t startIndex, endIndex;
+				if (sliderIndex > lastSliderIndex) {
+					startIndex = lastSliderIndex;
+					endIndex = sliderIndex;
+				}
+				else {
+					startIndex = sliderIndex;
+					endIndex = lastSliderIndex;
+				}
+
+				for (size_t i = startIndex; i < endIndex; i++) {
+					wxSliderPanel* sliderPanelIndex = sliderPool.Get(i);
+					if (sliderPanelIndex && sliderPanelIndex->IsCreated()) {
+						std::string sliderNameIndex = sliderPanelIndex->sliderCheck->GetName().BeforeLast('|').ToStdString();
+						ShowSliderEffect(sliderNameIndex, checked);
+					}
+				}
+			}
+		}
+	}
+
 	ApplySliders();
+
+	if (!shiftDown)
+		lastCheckedSlider = sliderName;
 }
 
 void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {

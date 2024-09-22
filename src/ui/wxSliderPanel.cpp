@@ -150,6 +150,14 @@ wxSliderPanel* wxSliderPanelPool::Get(size_t index) {
 	return nullptr;
 }
 
+size_t wxSliderPanelPool::FindIndex(wxSliderPanel* sliderPanel) {
+	auto poolIt = std::find(pool.begin(), pool.end(), sliderPanel);
+	if (poolIt == pool.end())
+		return static_cast<size_t>(-1);
+
+	return std::distance(pool.begin(), poolIt);
+}
+
 wxSliderPanel* wxSliderPanelPool::GetNext() {
 	for (size_t i = 0; i < pool.size(); ++i) {
 		wxSliderPanel* sliderPanel = pool[i];

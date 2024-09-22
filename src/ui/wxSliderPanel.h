@@ -42,6 +42,7 @@ public:
 	wxSliderPanel* Push();
 	void CreatePool(size_t poolSize, wxWindow* parent, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
 	wxSliderPanel* Get(size_t index);
+	size_t FindIndex(wxSliderPanel* sliderPanel);
 	wxSliderPanel* GetNext();
 	void Clear();
 };
