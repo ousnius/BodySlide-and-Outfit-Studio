@@ -125,6 +125,13 @@ public:
 	virtual void setStrength(float newStr) { strength = newStr; }
 	virtual void setSpacing(float newSpacing) { spacing = newSpacing; }
 
+	virtual void resetSettings() {
+		radius = 0.45f;
+		focus = 0.5f;
+		strength = 0.0015f;
+		spacing = 0.015f;
+	};
+
 	virtual int CachedPointIndex(Mesh*, int) { return 0; }
 
 	virtual bool isMirrored() { return bMirror; }
@@ -175,6 +182,10 @@ public:
 	virtual float getStrength() { return strength * 10.0f; }
 	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
 
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+	}
+
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
 
@@ -182,7 +193,13 @@ class TB_Mask : public TweakBrush {
 public:
 	TB_Mask();
 	virtual ~TB_Mask();
+
 	virtual UndoType GetUndoType() { return UndoType::Mask; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 1.0f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
@@ -192,7 +209,13 @@ class TB_Unmask : public TweakBrush {
 public:
 	TB_Unmask();
 	virtual ~TB_Unmask();
+
 	virtual UndoType GetUndoType() { return UndoType::Mask; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = -1.0f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
@@ -213,7 +236,13 @@ public:
 
 	TB_SmoothMask();
 	virtual ~TB_SmoothMask();
+
 	virtual UndoType GetUndoType() { return UndoType::Mask; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 0.2f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
@@ -222,8 +251,14 @@ class TB_Deflate : public TB_Inflate {
 public:
 	TB_Deflate();
 	virtual ~TB_Deflate();
+
 	virtual void setStrength(float newStr);
 	virtual float getStrength();
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = -0.0015f;
+	}
 };
 
 
@@ -251,7 +286,13 @@ class TB_Smooth : public TweakBrush {
 public:
 	TB_Smooth();
 	virtual ~TB_Smooth();
+
 	virtual bool NeedStartNorms() { return true; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 0.1f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
@@ -270,6 +311,11 @@ public:
 
 	virtual float getStrength() { return strength * 10.0f; }
 	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 0.01f;
+	}
 };
 
 // Move brush behavior is significantly different from other brush types.
@@ -291,6 +337,11 @@ public:
 		Mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 	virtual void brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 1.0f;
+	}
 
 	void GetWorkingPlane(nifly::Vector3& outPlaneNormal, float& outPlaneDist);
 	int CachedPointIndex(Mesh* m, int query) {
@@ -319,6 +370,11 @@ public:
 		Mesh* m, TweakPickInfo& pickInfo, TweakPickInfo& mirrorPick, int* resultPoints, int& outResultCount, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 	virtual void brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 1.0f;
+	}
 };
 
 class AnimInfo;
@@ -338,8 +394,14 @@ public:
 
 	TB_Weight();
 	virtual ~TB_Weight();
+
 	virtual UndoType GetUndoType() { return UndoType::Weight; }
 	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 0.015f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
@@ -358,8 +420,14 @@ public:
 
 	TB_Unweight();
 	virtual ~TB_Unweight();
+
 	virtual UndoType GetUndoType() { return UndoType::Weight; }
 	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = -0.015f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
@@ -389,8 +457,14 @@ public:
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
+
 	virtual UndoType GetUndoType() { return UndoType::Weight; }
 	virtual bool NeedMirrorMergedQuery() { return bMirror || bXMirrorBone; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 0.15f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
@@ -401,7 +475,13 @@ public:
 
 	TB_Color();
 	virtual ~TB_Color();
+
 	virtual UndoType GetUndoType() { return UndoType::Color; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 0.03f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
@@ -410,7 +490,13 @@ class TB_Uncolor : public TweakBrush {
 public:
 	TB_Uncolor();
 	virtual ~TB_Uncolor();
+
 	virtual UndoType GetUndoType() { return UndoType::Color; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = -0.03f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 };
@@ -419,7 +505,13 @@ class TB_Alpha : public TweakBrush, public ClampBrush {
 public:
 	TB_Alpha();
 	virtual ~TB_Alpha();
+
 	virtual UndoType GetUndoType() { return UndoType::Alpha; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = 0.03f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }
@@ -429,7 +521,13 @@ class TB_Unalpha : public TweakBrush {
 public:
 	TB_Unalpha();
 	virtual ~TB_Unalpha();
+
 	virtual UndoType GetUndoType() { return UndoType::Alpha; }
+
+	virtual void resetSettings() {
+		TweakBrush::resetSettings();
+		strength = -0.03f;
+	}
 
 	virtual void brushAction(Mesh* refmesh, TweakPickInfo& pickInfo, const int* points, int nPoints, UndoStateShape& uss);
 	virtual bool checkSpacing(nifly::Vector3&, nifly::Vector3&) { return true; }

@@ -201,6 +201,20 @@ public:
 
 	TweakBrush* GetActiveBrush() { return activeBrush; }
 
+	std::vector<TweakBrush*> GetBrushList() {
+		std::vector<TweakBrush*> brushList{&inflateBrush,
+										   &deflateBrush,
+										   &moveBrush,
+										   &smoothBrush,
+										   &undiffBrush,
+										   &maskBrush,
+										   &weightBrush,
+										   &colorBrush,
+										   &alphaBrush};
+
+		return brushList;
+	}
+
 	void SetColorBrush(const nifly::Vector3& color) { colorBrush.color = color; }
 
 	bool StartBrushStroke(const wxPoint& screenPos);
@@ -361,6 +375,10 @@ public:
 		val *= BrushSizeScale;
 		brushSize = val;
 		gls.SetCursorSize(val);
+	}
+	void ResetBrushSize() {
+		brushSize = 0.45f;
+		gls.SetCursorSize(brushSize);
 	}
 
 	float IncBrush() {
@@ -728,7 +746,8 @@ private:
 
 	TweakBrush* activeBrush = nullptr;
 	TweakBrush* savedBrush;
-	TB_Inflate standardBrush;
+
+	TB_Inflate inflateBrush;
 	TB_Deflate deflateBrush;
 	TB_Move moveBrush;
 	TB_Smooth smoothBrush;

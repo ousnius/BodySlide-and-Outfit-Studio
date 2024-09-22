@@ -33,11 +33,16 @@ protected:
 	wxSlider* brushSpacing = nullptr;
 	wxTextCtrl* brushSpacingVal = nullptr;
 
+	wxBoxSizer* bottomSizer = nullptr;
+	wxButton* buttonReset = nullptr;
+	wxStaticText* brushNameLabel = nullptr;
+
 	void Setup(wxWindow* popupWin);
 
 public:
 	wxBrushSettingsPopupBase(OutfitStudioFrame* parent, wxWindow* popupWin);
 
+	void SetBrushName(const wxString& brushName);
 	void SetBrushSize(float value);
 	void SetBrushStrength(float value);
 	void SetBrushFocus(float value);

@@ -109,6 +109,16 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 		}
 	};
 
+	auto onButtonReset = [&](wxCommandEvent& WXUNUSED(event)) {
+		TweakBrush* brush = os->glView->GetActiveBrush();
+		if (brush) {
+			brush->resetSettings();
+			os->glView->ResetBrushSize();
+			os->UpdateBrushSettings();
+			os->CheckBrushBounds();
+		}
+	};
+
 	const int sliderWidth = 250;
 	const int textCtrlWidth = 50;
 
@@ -170,10 +180,26 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	flexGridSizer->Add(brushSpacingVal, 0, wxALL, 5);
 
 	topSizer->Add(flexGridSizer, 0, wxALL, 0);
+
+	bottomSizer = new wxBoxSizer(wxHORIZONTAL);
+
+	buttonReset = new wxButton(panel, wxID_ANY, _("Reset"));
+	buttonReset->Bind(wxEVT_BUTTON, onButtonReset);
+	bottomSizer->Add(buttonReset, 0, wxALL, 0);
+
+	brushNameLabel = new wxStaticText(panel, wxID_ANY, "");
+	bottomSizer->Add(brushNameLabel, 0, wxLEFT | wxALIGN_CENTER, 10);
+
+	topSizer->Add(bottomSizer, 0, wxALL, 0);
+
 	panel->SetSizer(topSizer);
 
 	topSizer->Fit(panel);
 	popupWin->SetClientSize(panel->GetSize());
+}
+
+void wxBrushSettingsPopupBase::SetBrushName(const wxString& brushName) {
+	brushNameLabel->SetLabel(brushName);
 }
 
 void wxBrushSettingsPopupBase::SetBrushSize(float value) {

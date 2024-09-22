@@ -156,11 +156,9 @@ void TweakStroke::endStroke() {
 	}
 }
 
-TweakBrush::TweakBrush()
-	: radius(0.45f)
-	, focus(0.50f)
-	, strength(0.0015f)
-	, spacing(0.015f) {
+TweakBrush::TweakBrush() {
+	resetSettings();
+
 	bMirror = true;
 	bLiveBVH = true;
 	bLiveNormals = true;
@@ -325,6 +323,8 @@ float ParabolaFit(Mesh* m, int pti, int p1, int p2, const ValueFuncType& ValueFu
 }
 
 TB_Inflate::TB_Inflate() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Inflate;
 	brushName = "Inflate Brush";
 }
@@ -369,11 +369,12 @@ void TB_Inflate::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points
 }
 
 TB_Mask::TB_Mask() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Mask;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Mask Brush";
-	strength = 1.0f;
 }
 
 TB_Mask::~TB_Mask() {}
@@ -419,11 +420,12 @@ void TB_Mask::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, i
 }
 
 TB_Unmask::TB_Unmask() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Mask;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Unmask Brush";
-	strength = -1.0f;
 }
 
 TB_Unmask::~TB_Unmask() {}
@@ -469,8 +471,9 @@ void TB_Unmask::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points,
 }
 
 TB_SmoothMask::TB_SmoothMask() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Mask;
-	strength = 0.2f;
 	method = 2;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
@@ -620,7 +623,8 @@ void TB_SmoothMask::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* poi
 }
 
 TB_Deflate::TB_Deflate() {
-	strength = -0.0015f;
+	resetSettings();
+
 	brushName = "Deflate Brush";
 }
 
@@ -635,8 +639,9 @@ float TB_Deflate::getStrength() {
 }
 
 TB_Smooth::TB_Smooth() {
+	resetSettings();
+
 	method = 2;
-	strength = 0.1f;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
 	brushName = "Smooth Brush";
@@ -869,7 +874,8 @@ void TB_Smooth::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points,
 }
 
 TB_Undiff::TB_Undiff() {
-	strength = 0.01f;
+	resetSettings();
+
 	brushName = "Undiff Brush";
 	brushType = TweakBrush::BrushType::Undiff;
 }
@@ -932,11 +938,11 @@ void TB_Undiff::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points,
 }
 
 TB_Move::TB_Move() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Move;
 	brushName = "Move Brush";
 	bLiveBVH = false;
-	focus = 0.5f;
-	strength = 1.0f;
 }
 
 TB_Move::~TB_Move() {}
@@ -1083,11 +1089,11 @@ void TB_Move::GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist) {
 }
 
 TB_XForm::TB_XForm() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Transform;
 	brushName = "Transform Brush";
 	bLiveBVH = false;
-	focus = 0.5f;
-	strength = 1.0f;
 }
 
 TB_XForm::~TB_XForm() {}
@@ -1218,8 +1224,9 @@ static inline void ClampWeight(float& w) {
 }
 
 TB_Weight::TB_Weight() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Weight;
-	strength = 0.015f;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
@@ -1288,8 +1295,9 @@ void TB_Weight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points,
 }
 
 TB_Unweight::TB_Unweight() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Weight;
-	strength = -0.015f;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
@@ -1353,8 +1361,9 @@ void TB_Unweight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* point
 }
 
 TB_SmoothWeight::TB_SmoothWeight() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Weight;
-	strength = 0.15f;
 	method = 2;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
@@ -1565,8 +1574,9 @@ void TB_SmoothWeight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* p
 }
 
 TB_Color::TB_Color() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Color;
-	strength = 0.03f;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
@@ -1622,8 +1632,9 @@ void TB_Color::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, 
 }
 
 TB_Uncolor::TB_Uncolor() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Color;
-	strength = -0.03f;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
@@ -1679,12 +1690,13 @@ void TB_Uncolor::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points
 }
 
 TB_Alpha::TB_Alpha() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Alpha;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Alpha Brush";
-	strength = 0.03f;
 }
 
 TB_Alpha::~TB_Alpha() {}
@@ -1730,12 +1742,13 @@ void TB_Alpha::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* points, 
 }
 
 TB_Unalpha::TB_Unalpha() {
+	resetSettings();
+
 	brushType = TweakBrush::BrushType::Alpha;
 	bMirror = false;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Unalpha Brush";
-	strength = -0.03f;
 }
 
 TB_Unalpha::~TB_Unalpha() {}

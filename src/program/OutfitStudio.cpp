@@ -1181,6 +1181,45 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (leftPanel) {
 		glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs());
 		glView->SetNotifyWindow(this);
+
+		float brushSize = OutfitStudioConfig.GetFloatValue("BrushSettings.brushsize");
+		if (brushSize != 0.0f)
+			glView->SetBrushSize(brushSize);
+		else
+			glView->ResetBrushSize();
+
+		std::vector<std::string> brushNames;
+		OutfitStudioConfig.GetValueAttributeArray("BrushSettings", "Brush", "name", brushNames);
+		std::vector<std::string> brushStrengthValues;
+		OutfitStudioConfig.GetValueAttributeArray("BrushSettings", "Brush", "strength", brushStrengthValues);
+		std::vector<std::string> brushFocusValues;
+		OutfitStudioConfig.GetValueAttributeArray("BrushSettings", "Brush", "focus", brushFocusValues);
+		std::vector<std::string> brushSpacingValues;
+		OutfitStudioConfig.GetValueAttributeArray("BrushSettings", "Brush", "spacing", brushSpacingValues);
+
+		auto brushList = glView->GetBrushList();
+
+		for (size_t i = 0; i < brushNames.size(); i++) {
+			std::string brushName = brushNames[i];
+			auto brushIt = std::find_if(brushList.begin(), brushList.end(), [&brushName](TweakBrush* brush) { return brush->Name() == brushName; });
+
+			if (brushIt != brushList.end()) {
+				if (brushStrengthValues.size() > i) {
+					float brushStrength = std::atof(brushStrengthValues[i].data());
+					(*brushIt)->setStrength(brushStrength);
+				}
+
+				if (brushFocusValues.size() > i) {
+					float brushFocus = std::atof(brushFocusValues[i].data());
+					(*brushIt)->setFocus(brushFocus);
+				}
+
+				if (brushSpacingValues.size() > i) {
+					float brushSpacing = std::atof(brushSpacingValues[i].data());
+					(*brushIt)->setSpacing(brushSpacing);
+				}
+			}
+		}
 	}
 
 	wxWindow* rightPanel = FindWindowByName("rightSplitPanel");
@@ -1256,6 +1295,23 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	}
 
 	sliderPool.Clear();
+
+	OutfitStudioConfig.SetValue("BrushSettings.brushsize", glView->GetBrushSize());
+
+	std::vector<std::map<std::string, std::string>> brushSettingsEntries;
+
+	auto brushList = glView->GetBrushList();
+	for (auto& brush : brushList) {
+		std::map<std::string, std::string> attributeValues;
+		attributeValues["name"] = brush->Name();
+		attributeValues["strength"] = std::to_string(brush->getStrength());
+		attributeValues["focus"] = std::to_string(brush->getFocus());
+		attributeValues["spacing"] = std::to_string(brush->getSpacing());
+		brushSettingsEntries.push_back(attributeValues);
+	}
+
+	OutfitStudioConfig.ClearValueArray("BrushSettings", "Brush");
+	OutfitStudioConfig.AppendValueArray("BrushSettings", "Brush", brushSettingsEntries);
 
 	if (glView)
 		delete glView;
@@ -3272,6 +3328,7 @@ void OutfitStudioFrame::UpdateBrushSettings() {
 		return;
 
 	if (brushSettingsPopupTransient) {
+		brushSettingsPopupTransient->SetBrushName(wxString::FromUTF8(brush->Name()));
 		brushSettingsPopupTransient->SetBrushSize(glView->GetBrushSize());
 		brushSettingsPopupTransient->SetBrushStrength(brush->getStrength());
 		brushSettingsPopupTransient->SetBrushFocus(brush->getFocus());
@@ -11705,7 +11762,7 @@ void wxGLPanel::SetActiveTool(ToolID brushID) {
 
 	switch (brushID) {
 		case ToolID::MaskBrush: activeBrush = &maskBrush; break;
-		case ToolID::InflateBrush: activeBrush = &standardBrush; break;
+		case ToolID::InflateBrush: activeBrush = &inflateBrush; break;
 		case ToolID::DeflateBrush: activeBrush = &deflateBrush; break;
 		case ToolID::MoveBrush: activeBrush = &moveBrush; break;
 		case ToolID::SmoothBrush: activeBrush = &smoothBrush; break;
@@ -11876,6 +11933,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	if (wxGetKeyState(WXK_CONTROL)) {
 		if (wxGetKeyState(WXK_ALT) && !segmentMode) {
 			UnMaskBrush.setStrength(-maskBrush.getStrength());
+			UnMaskBrush.setFocus(maskBrush.getFocus());
+			UnMaskBrush.setSpacing(maskBrush.getSpacing());
 			activeBrush = &UnMaskBrush;
 		}
 		else {
@@ -11920,6 +11979,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			unweightBrush.bXMirrorBone = !xMirrorBone.empty();
 			unweightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			unweightBrush.setStrength(-weightBrush.getStrength());
+			unweightBrush.setFocus(weightBrush.getFocus());
+			unweightBrush.setSpacing(weightBrush.getSpacing());
 			activeBrush = &unweightBrush;
 		}
 		else if (wxGetKeyState(WXK_SHIFT)) {
@@ -11930,6 +11991,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			smoothWeightBrush.bXMirrorBone = !xMirrorBone.empty();
 			smoothWeightBrush.bNormalizeWeights = weightBrush.bNormalizeWeights;
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
+			smoothWeightBrush.setFocus(weightBrush.getFocus());
+			smoothWeightBrush.setSpacing(weightBrush.getSpacing());
 			activeBrush = &smoothWeightBrush;
 		}
 		else {
@@ -11941,27 +12004,35 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		}
 	}
 	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {
-		if (activeBrush == &standardBrush) {
+		if (activeBrush == &inflateBrush) {
 			activeBrush = &deflateBrush;
 		}
 		else if (activeBrush == &deflateBrush) {
-			activeBrush = &standardBrush;
+			activeBrush = &inflateBrush;
 		}
 		else if (activeBrush == &maskBrush) {
 			UnMaskBrush.setStrength(-activeBrush->getStrength());
+			UnMaskBrush.setFocus(activeBrush->getFocus());
+			UnMaskBrush.setSpacing(activeBrush->getSpacing());
 			activeBrush = &UnMaskBrush;
 		}
 		else if (activeBrush == &colorBrush) {
 			uncolorBrush.setStrength(-activeBrush->getStrength());
+			uncolorBrush.setFocus(activeBrush->getFocus());
+			uncolorBrush.setSpacing(activeBrush->getSpacing());
 			activeBrush = &uncolorBrush;
 		}
 		else if (activeBrush == &alphaBrush) {
 			unalphaBrush.setStrength(-activeBrush->getStrength());
+			unalphaBrush.setFocus(activeBrush->getFocus());
+			unalphaBrush.setSpacing(activeBrush->getSpacing());
 			activeBrush = &unalphaBrush;
 		}
 	}
 	else if (activeBrush == &maskBrush && wxGetKeyState(WXK_SHIFT)) {
 		smoothMaskBrush.setStrength(activeBrush->getStrength());
+		smoothMaskBrush.setFocus(activeBrush->getFocus());
+		smoothMaskBrush.setSpacing(activeBrush->getSpacing());
 		activeBrush = &smoothMaskBrush;
 	}
 	else if (activeBrush != &weightBrush && activeBrush != &maskBrush && wxGetKeyState(WXK_SHIFT)) {
