@@ -2137,8 +2137,9 @@ bool OutfitStudioFrame::SaveProject() {
 									  project->mGamePath,
 									  project->mGameFile,
 									  project->mGenWeights,
+									  project->mCopyRef,
 									  project->bPreventMorphFile,
-									  project->mCopyRef);
+									  project->bKeepZappedShapes);
 
 	if (!error.empty()) {
 		wxLogError(error.c_str());
@@ -2221,6 +2222,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		}
 
 		XRCCTRL(dlg, "sssPreventMorphFile", wxCheckBox)->SetValue(project->bPreventMorphFile);
+		XRCCTRL(dlg, "sssKeepZappedShapes", wxCheckBox)->SetValue(project->bKeepZappedShapes);
 
 		if (!project->GetBaseShape()) {
 			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(false);
@@ -2239,9 +2241,6 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	wxString strBaseFile;
 	wxString strGamePath;
 	wxString strGameFile;
-	bool copyRef;
-	bool genWeights;
-	bool preventMorphFile;
 
 	wxFileName sliderSetFile = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName();
 	if (!sliderSetFile.IsOk()) {
@@ -2295,9 +2294,10 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		return false;
 	}
 
-	copyRef = XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->GetValue();
-	genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
-	preventMorphFile = XRCCTRL(dlg, "sssPreventMorphFile", wxCheckBox)->GetValue();
+	bool copyRef = XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->GetValue();
+	bool genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
+	bool preventMorphFile = XRCCTRL(dlg, "sssPreventMorphFile", wxCheckBox)->GetValue();
+	bool keepZappedShapes = XRCCTRL(dlg, "sssKeepZappedShapes", wxCheckBox)->GetValue();
 
 	wxLogMessage("Saving project '%s'...", strOutfitName);
 	StartProgress(wxString::Format(_("Saving project '%s'..."), strOutfitName));
@@ -2313,7 +2313,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 
 	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
-	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, preventMorphFile, copyRef);
+	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, copyRef, preventMorphFile, keepZappedShapes);
 
 	if (error.empty()) {
 		SetPendingChanges(false);

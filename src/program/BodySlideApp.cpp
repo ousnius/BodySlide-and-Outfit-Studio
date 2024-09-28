@@ -1213,6 +1213,8 @@ void BodySlideApp::InitPreview() {
 
 	activeSet.LoadSetDiffData(dataSets);
 
+	bool keepZappedShapes = activeSet.KeepZappedShapes();
+
 	std::vector<Vector3> verts;
 	std::vector<Vector2> uvs;
 	std::vector<uint16_t> zapIdx;
@@ -1233,7 +1235,7 @@ void BodySlideApp::InitPreview() {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
 			PreviewMod.SetVertsForShape(shape, verts);
 			PreviewMod.SetUvsForShape(shape, uvs);
-			if (PreviewMod.DeleteVertsForShape(shape, zapIdx))
+			if (PreviewMod.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
 				PreviewMod.DeleteShape(shape);
 		}
 		else if (zapIdx.size() > 0) {
@@ -1344,6 +1346,8 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	int weight = preview->GetWeight();
 	PreviewMod.CopyFrom((*previewBaseNif));
 
+	bool keepZappedShapes = activeSet.KeepZappedShapes();
+
 	std::vector<Vector3> verts, vertsLow, vertsHigh;
 	std::vector<Vector2> uvs, uvsLow, uvsHigh;
 	std::vector<uint16_t> zapIdx;
@@ -1377,7 +1381,7 @@ void BodySlideApp::RebuildPreviewMeshes() {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
 			PreviewMod.SetVertsForShape(shape, verts);
 			PreviewMod.SetUvsForShape(shape, uvs);
-			if (PreviewMod.DeleteVertsForShape(shape, zapIdx))
+			if (PreviewMod.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
 				PreviewMod.DeleteShape(shape);
 		}
 		else {
@@ -2140,6 +2144,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	dataSets.Clear();
 	activeSet.LoadSetDiffData(dataSets);
 
+	bool keepZappedShapes = activeSet.KeepZappedShapes();
+
 	std::vector<Vector3> vertsLow;
 	std::vector<Vector3> vertsHigh;
 	std::vector<Vector2> uvsLow;
@@ -2176,8 +2182,13 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 		}
 
 		nifBig.CalcTangentsForShape(shape);
-		if (nifBig.DeleteVertsForShape(shape, zapIdx))
-			nifBig.DeleteShape(shape);
+
+		if (nifBig.DeleteVertsForShape(shape, zapIdx)) {
+			if (!keepZappedShapes)
+				nifBig.DeleteShape(shape); // Delete fully zapped shape
+			else
+				shape->flags |= 1; // Set hidden flag
+		}
 
 		if (activeSet.GenWeights()) {
 			zapIdx.clear();
@@ -2195,8 +2206,13 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			}
 
 			nifSmall.CalcTangentsForShape(shapeSmall);
-			if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
-				nifSmall.DeleteShape(shapeSmall);
+
+			if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx)) {
+				if (!keepZappedShapes)
+					nifSmall.DeleteShape(shapeSmall); // Delete fully zapped shape
+				else
+					shapeSmall->flags |= 1; // Set hidden flag
+			}
 		}
 
 		zapIdxAll[it->first] = zapIdx;
@@ -2585,6 +2601,8 @@ int BodySlideApp::BuildListBodies(
 		BuildSelection buildSelection;
 		GetBuildSelection(buildSelFile, buildSelection);
 
+		bool keepZappedShapes = currentSet.KeepZappedShapes();
+
 		/* Shape the NIF files */
 		std::vector<Vector3> vertsLow;
 		std::vector<Vector3> vertsHigh;
@@ -2734,8 +2752,13 @@ int BodySlideApp::BuildListBodies(
 			}
 
 			nifBig.CalcTangentsForShape(shape);
-			if (nifBig.DeleteVertsForShape(shape, zapIdx))
-				nifBig.DeleteShape(shape);
+
+			if (nifBig.DeleteVertsForShape(shape, zapIdx)) {
+				if (!keepZappedShapes)
+					nifBig.DeleteShape(shape); // Delete fully zapped shape
+				else
+					shape->flags |= 1; // Set hidden flag
+			}
 
 			if (currentSet.GenWeights()) {
 				auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
@@ -2750,8 +2773,13 @@ int BodySlideApp::BuildListBodies(
 				}
 
 				nifSmall.CalcTangentsForShape(shapeSmall);
-				if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
-					nifSmall.DeleteShape(shapeSmall);
+
+				if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx)) {
+					if (!keepZappedShapes)
+						nifSmall.DeleteShape(shapeSmall); // Delete fully zapped shape
+					else
+						shapeSmall->flags |= 1; // Set hidden flag
+				}
 			}
 
 			zapIdx.clear();

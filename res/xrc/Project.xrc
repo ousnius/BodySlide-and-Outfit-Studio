@@ -535,6 +535,16 @@
 							<checked>0</checked>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="sssKeepZappedShapes">
+							<tooltip>Prevents the removal of fully zapped shapes when building in BodySlide. Useful when the shape order and count matters, like for retextures using texture sets.</tooltip>
+							<label>Prevent removal of fully zapped shapes in BodySlide</label>
+							<checked>0</checked>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="spacer">

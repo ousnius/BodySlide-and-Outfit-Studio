@@ -138,6 +138,7 @@ public:
 	bool mCopyRef = true;
 	bool mGenWeights = false;
 	bool bPreventMorphFile = false;
+	bool bKeepZappedShapes = false;
 	bool bPose = false;
 
 	// Returns a string error message or empty string on success.
@@ -148,8 +149,9 @@ public:
 					 const wxString& strGamePath,
 					 const wxString& strGameFile,
 					 bool genWeights,
+					 bool copyRef,
 					 bool preventMorphFile,
-					 bool copyRef);
+					 bool keepZappedShapes);
 
 	bool SaveSliderData(const std::string& fileName, bool copyRef = true);
 
