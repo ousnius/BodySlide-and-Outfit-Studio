@@ -398,13 +398,17 @@ void ShapeProperties::AddShader(NiShape* shape) {
 
 		default:
 			newShader = std::make_unique<BSLightingShaderProperty>(nif->GetHeader().GetVersion());
-			shape->ShaderPropertyRef()->index = nif->GetHeader().AddBlock(std::move(newShader));
+			auto shaderPropertyRef = shape->ShaderPropertyRef();
+			if (shaderPropertyRef)
+				shaderPropertyRef->index = nif->GetHeader().AddBlock(std::move(newShader));
 	}
 
 	shader = nif->GetShader(shape);
 	if (shader) {
 		auto nifTexSet = std::make_unique<BSShaderTextureSet>(nif->GetHeader().GetVersion());
-		shader->TextureSetRef()->index = nif->GetHeader().AddBlock(std::move(nifTexSet));
+		auto textureSetRef = shader->TextureSetRef();
+		if (textureSetRef)
+			textureSetRef->index = nif->GetHeader().AddBlock(std::move(nifTexSet));
 	}
 
 	AssignDefaultTexture(shape);
