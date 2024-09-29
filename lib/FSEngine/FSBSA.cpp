@@ -76,6 +76,12 @@ static bool BSAReadSizedString(wxFile &bsa, std::string &s) {
 	return false;
 }
 
+template<typename TIter>
+static void SequenceToLowerCase(TIter begin, TIter end) {
+	for (auto it = begin; it != end; ++it)
+		*it |= 0x20;
+}
+
 wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, wxUint32 unpackedSize = 0, int skip = 0) {
 	if (data.GetDataLen() <= 4) {
 		// Input data is truncated
@@ -154,7 +160,6 @@ BSA::BSA(const std::string &filename) : FSArchiveFile(), bsa(filename), bsaInfo(
 	bsaPath = bsaInfo.GetPathWithSep() + bsaInfo.GetFullName();
 	bsaBase = bsaInfo.GetPath();
 	bsaName = bsaInfo.GetFullName();
-	headerVersion = 0;
 }
 
 BSA::~BSA() {
@@ -223,16 +228,17 @@ bool BSA::open() {
 			numFiles = ba2Header.numFiles;
 			namePrefix = false;
 
-			char* superbuffer = new char[numFiles * (MAX_PATH + 2) + 1];
+			fileNameSuperBuffer = std::make_unique<char[]>(numFiles * (MAX_PATH + 2) + 1);
+			char* superBufferPtr = fileNameSuperBuffer.get();
 			std::vector<wxUint32> path_sizes(numFiles * 2);
 
 			if (bsa.Seek(ba2Header.nameTableOffset)) {
-				bsa.Read(superbuffer, numFiles * (MAX_PATH + 2));
+				bsa.Read(superBufferPtr, numFiles * (MAX_PATH + 2));
 				wxUint32 cursor = 0;
 				wxUint32 n = 0;
 				for (wxUint32 i = 0; i < ba2Header.numFiles; i++) {
 					wxUint16 len;
-					len = *(wxUint16*)&superbuffer[cursor];
+					len = *(wxUint16*)(superBufferPtr + cursor);
 					cursor += 2;
 					path_sizes[n++] = cursor;
 					cursor += len;
@@ -240,7 +246,7 @@ bool BSA::open() {
 				}
 			}
 
-			std::replace(superbuffer, superbuffer + numFiles * (MAX_PATH + 2), '\\', '/');
+			std::replace(superBufferPtr, superBufferPtr + numFiles * (MAX_PATH + 2), '\\', '/');
 
 			std::string h(ba2Header.type, 4);
 			if (h == "GNRL") {
@@ -253,10 +259,10 @@ bool BSA::open() {
 
 					wxUint32 n = 0;
 					for (wxUint32 i = 0; i < ba2Header.numFiles; i++) {
-						insertFile(superbuffer + path_sizes[n], path_sizes[n + 1] - path_sizes[n], finfo[i].packedSize, finfo[i].unpackedSize, finfo[i].offset);
+						insertFile(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n], finfo[i].packedSize, finfo[i].unpackedSize, finfo[i].offset);
 
 						/* Folders not required in this tool
-						std::string fullFile = std::string(superbuffer + path_sizes[n], path_sizes[n + 1] - path_sizes[n]);
+						std::string fullFile = std::string(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n]);
 						std::string file;
 						std::string folder;
 
@@ -291,10 +297,10 @@ bool BSA::open() {
 						tex.chunks = std::move(texChunks);
 
 						const BA2TexChunk& chunk = tex.chunks[0];
-						insertFile(superbuffer + path_sizes[n], path_sizes[n + 1] - path_sizes[n], chunk.packedSize, chunk.unpackedSize, chunk.offset, &tex);
+						insertFile(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n], chunk.packedSize, chunk.unpackedSize, chunk.offset, &tex);
 
 						/* Folders not required in this tool
-						std::string fullFile = std::string(superbuffer + path_sizes[n], path_sizes[n + 1] - path_sizes[n]);
+						std::string fullFile = std::string(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n]);
 						std::string file;
 						std::string folder;
 
@@ -313,7 +319,6 @@ bool BSA::open() {
 					}
 				}
 			}
-			delete[] superbuffer;
 		}
 		// From NifSkope
 		else if (magic == OB_BSAHEADER_FILEID) {
@@ -324,7 +329,7 @@ bool BSA::open() {
 
 			headerVersion = version;
 
-			OBBSAHeader header;
+			OBBSAHeader header{};
 
 			if (bsa.Read((char *)& header, sizeof(header)) != sizeof(header))
 				throw std::string("header size");
@@ -379,7 +384,7 @@ bool BSA::open() {
 
 			wxUint32 totalFileCount = 0;
 
-			for (const BSAFolderInfo folderInfo : folderInfos) {
+			for (const BSAFolderInfo& folderInfo : folderInfos) {
 				std::string folderName;
 				if (!BSAReadSizedString(bsa, folderName))
 					throw std::string("folder name read");
@@ -407,7 +412,7 @@ bool BSA::open() {
 				throw std::string("file count");
 		}
 		else if (magic == MW_BSAHEADER_FILEID) {
-			MWBSAHeader header;
+			MWBSAHeader header{};
 
 			if (bsa.Read((char *)& header, sizeof(header)) != sizeof(header))
 				throw std::string("header");
@@ -476,6 +481,8 @@ void BSA::close() {
 	root.children.clear();
 	root.files.clear();
 	folders.clear();
+
+	fileNameSuperBuffer.reset();
 }
 
 wxInt64 BSA::fileSize(const std::string & fn) const {
@@ -737,7 +744,7 @@ BSA::BSAFolder *BSA::insertFolder(std::string name) {
 		return &root;
 
 	std::replace(name.begin(), name.end(), '\\', '/');
-	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+	SequenceToLowerCase(name.begin(), name.end());
 
 	BSAFolder *folder = folders[name];
 	if (!folder) {
@@ -780,7 +787,7 @@ BSA::BSAFolder* BSA::insertFolder(char* folder, int szFn) {
 }
 
 BSA::BSAFile *BSA::insertFile(BSAFolder *folder, std::string name, wxUint32 sizeFlags, wxUint32 offset) {
-	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+	SequenceToLowerCase(name.begin(), name.end());
 
 	BSAFile *file = new BSAFile;
 	file->sizeFlags = sizeFlags;
@@ -792,7 +799,7 @@ BSA::BSAFile *BSA::insertFile(BSAFolder *folder, std::string name, wxUint32 size
 
 /* Folders not required in this tool
 BSA::BSAFile *BSA::insertFile(BSAFolder *folder, std::string name, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, BA2Tex dds) {
-	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+	SequenceToLowerCase(name.begin(), name.end());
 
 	BSAFile *file = new BSAFile;
 	file->tex = dds;
@@ -806,7 +813,7 @@ BSA::BSAFile *BSA::insertFile(BSAFolder *folder, std::string name, wxUint32 pack
 */
 
 BSA::BSAFile* BSA::insertFile(char* filename, int szFn, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, BA2Tex* dds) {
-	std::transform(filename, filename + szFn, filename, ::tolower);
+	SequenceToLowerCase(filename, filename + szFn);
 
 	/* Folders not required in this tool
 	int p;
@@ -835,7 +842,7 @@ BSA::BSAFile* BSA::insertFile(char* filename, int szFn, wxUint32 packed, wxUint3
 }
 
 const BSA::BSAFolder *BSA::getFolder(std::string fn) const {
-	std::transform(fn.begin(), fn.end(), fn.begin(), ::tolower);
+	SequenceToLowerCase(fn.begin(), fn.end());
 
 	if (fn.empty()) {
 		return &root;
@@ -853,7 +860,7 @@ const BSA::BSAFolder *BSA::getFolder(std::string fn) const {
 }
 
 const BSA::BSAFile *BSA::getFile(std::string fn) const {
-	std::transform(fn.begin(), fn.end(), fn.begin(), ::tolower);
+	SequenceToLowerCase(fn.begin(), fn.end());
 
 	auto earlyfile = root.files.find(fn);
 	if (earlyfile != root.files.end()) {

@@ -134,7 +134,7 @@ struct MWBSAFileSizeOffset {
 
 #pragma pack(push, 4)
 struct BA2Header {
-	char type[4]; //!< 08 GNRL=General, DX10=Textures
+	char type[4]{}; //!< 08 GNRL=General, DX10=Textures
 	wxUint32 numFiles = 0; //!< 0C
 	wxUint64 nameTableOffset = 0; //!< 10 - relative to start of file
 
@@ -182,7 +182,7 @@ struct BA2TexChunk {
 };
 
 struct BA2Tex {
-	BA2TexInfo header;
+	BA2TexInfo header{};
 	std::vector<BA2TexChunk> chunks;
 };
 
@@ -254,7 +254,7 @@ protected:
 		wxUint32 packedLength = 0;
 		wxUint32 unpackedLength = 0;
 
-		wxUint64 offset; //!< The offset of the file in the BSA
+		wxUint64 offset = 0; //!< The offset of the file in the BSA
 
 		//! The size of the file inside the BSA
 		wxUint32 size() const;
@@ -325,16 +325,18 @@ protected:
 	std::string status;
 
 	//! Version number from the header
-	wxUint32 headerVersion;
+	wxUint32 headerVersion = 0;
 
 	//! BA2 header
 	BA2Header ba2Header;
 
 	//! Number of files
-	wxUint64 numFiles;
+	wxUint64 numFiles = 0;
 
 	//! Whether the %BSA is compressed
-	bool compressToggle;
+	bool compressToggle = false;
 	//! Whether Fallout 3 names are prefixed with an extra string
-	bool namePrefix;
+	bool namePrefix = false;
+
+	std::unique_ptr<char[]> fileNameSuperBuffer;
 };
