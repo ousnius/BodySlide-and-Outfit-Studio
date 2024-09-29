@@ -2035,66 +2035,77 @@
 				<help>Create a new Zap slider based on unmasked vertices</help>
 			</object>
 			<object class="separator" />
-			<object class="wxMenuItem" name="sliderImportOSD">
-				<label>Import OSD...</label>
-				<help>Imports OSD file and creates sliders for shapes with a matching name.</help>
-			</object>
-			<object class="wxMenuItem" name="sliderExportOSD">
-				<label>Export OSD...</label>
-				<help>Exports all currently loaded slider data to an OSD file.</help>
-			</object>
-			<object class="wxMenuItem" name="sliderImportTRI">
-				<label>Import TRI Morphs...</label>
-				<help>Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name.</help>
-			</object>
-			<object class="wxMenuItem" name="sliderExportTRI">
-				<label>Export TRI Morphs...</label>
-				<help>Exports TRI morphs to a TRI file.</help>
-			</object>
-			<object class="wxMenuItem" name="sliderImportMorphsSF">
-				<label>Import Starfield morphs...</label>
-				<help>Imports Starfield morph.dat file and creates sliders for shapes with a matching name.</help>
-			</object>
-			<object class="wxMenuItem" name="sliderExportToOBJs">
-				<label>Export to OBJs...</label>
-				<help>Export all sliders to an OBJ file per slider.</help>
-			</object>
-			<object class="separator" />
-			<object class="wxMenu" name="menuImportSlider">
-				<label>Import Slider Data</label>
-				<object class="wxMenuItem" name="sliderImportNIF">
-					<label>Import NIF...</label>
-					<help>Import a NIF file and overwrites the current shape's slider data.</help>
+			<object class="wxMenu" name="menuSliderImportGroup">
+				<label>Import</label>
+				<object class="wxMenuItem" name="sliderImportOSD">
+					<label>Import OSD...</label>
+					<help>Imports OSD file and creates sliders for shapes with a matching name.</help>
 				</object>
-				<object class="wxMenuItem" name="sliderImportBSD">
-					<label>Import BSD...</label>
-					<help>Import a BodySlide BSD file and overwrites the current shape's slider data.</help>
+				<object class="wxMenuItem" name="sliderImportTRI">
+					<label>Import TRI Morphs...</label>
+					<help>Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name.</help>
 				</object>
-				<object class="wxMenuItem" name="sliderImportOBJ">
-					<label>Import OBJ...</label>
-					<help>Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference.</help>
+				<object class="wxMenuItem" name="sliderImportMorphsSF">
+					<label>Import Starfield morphs...</label>
+					<help>Imports Starfield morph.dat file and creates sliders for shapes with a matching name.</help>
 				</object>
-				<object class="wxMenuItem" name="sliderImportFBX">
-					<label>Import FBX...</label>
-					<help>Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference.</help>
+				<object class="separator" />
+				<object class="wxMenu" name="menuImportSlider">
+					<label>Import to active slider</label>
+					<object class="wxMenuItem" name="sliderImportNIF">
+						<label>Import NIF...</label>
+						<help>Import a NIF file and overwrites the current shape's slider data.</help>
+					</object>
+					<object class="wxMenuItem" name="sliderImportBSD">
+						<label>Import BSD...</label>
+						<help>Import a BodySlide BSD file and overwrites the current shape's slider data.</help>
+					</object>
+					<object class="wxMenuItem" name="sliderImportOBJ">
+						<label>Import OBJ...</label>
+						<help>Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference.</help>
+					</object>
+					<object class="wxMenuItem" name="sliderImportFBX">
+						<label>Import FBX...</label>
+						<help>Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference.</help>
+					</object>
+					<enabled>0</enabled>
 				</object>
-				<enabled>0</enabled>
 			</object>
-			<object class="wxMenu" name="menuExportSlider">
-				<label>Export Slider Data</label>
-				<object class="wxMenuItem" name="sliderExportNIF">
-					<label>Export NIF...</label>
-					<help>Exports the current slider's data as a NIF file.</help>
+			<object class="wxMenu" name="menuSliderExportGroup">
+				<label>Export</label>
+				<object class="wxMenuItem" name="sliderExportOSD">
+					<label>Export OSD...</label>
+					<help>Exports all currently loaded slider data to an OSD file.</help>
 				</object>
-				<object class="wxMenuItem" name="sliderExportBSD">
-					<label>Export BSD...</label>
-					<help>Exports the current slider's data as a BodySlide BSD file.</help>
+				<object class="wxMenuItem" name="sliderExportTRI">
+					<label>Export TRI Morphs...</label>
+					<help>Exports TRI morphs to a TRI file.</help>
 				</object>
-				<object class="wxMenuItem" name="sliderExportOBJ">
-					<label>Export OBJ...</label>
-					<help>Exports the current slider's data as an OBJ file.</help>
+				<object class="wxMenuItem" name="sliderExportMorphsSF">
+					<label>Export Starfield morphs...</label>
+					<help>Exports Starfield morph.dat file.</help>
 				</object>
-				<enabled>0</enabled>
+				<object class="wxMenuItem" name="sliderExportToOBJs">
+					<label>Export to OBJs...</label>
+					<help>Export all sliders to an OBJ file per slider.</help>
+				</object>
+				<object class="separator" />
+				<object class="wxMenu" name="menuExportSlider">
+					<label>Export active slider</label>
+					<object class="wxMenuItem" name="sliderExportNIF">
+						<label>Export NIF...</label>
+						<help>Exports the current slider's data as a NIF file.</help>
+					</object>
+					<object class="wxMenuItem" name="sliderExportBSD">
+						<label>Export BSD...</label>
+						<help>Exports the current slider's data as a BodySlide BSD file.</help>
+					</object>
+					<object class="wxMenuItem" name="sliderExportOBJ">
+						<label>Export OBJ...</label>
+						<help>Exports the current slider's data as an OBJ file.</help>
+					</object>
+					<enabled>0</enabled>
+				</object>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="sliderClone">

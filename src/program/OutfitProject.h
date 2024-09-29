@@ -218,6 +218,7 @@ public:
 	int SaveSliderOBJ(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName, const bool onlyDiff = false);
 	bool WriteMorphTRI(const std::string& triPath);
 	bool WriteHeadTRI(nifly::NiShape* shape, const std::string& triPath);
+	bool WriteSFMorphs(nifly::NiShape* shape, const std::string& morphPath);
 
 	float& SliderValue(const size_t index);
 	float& SliderValue(const std::string& name);

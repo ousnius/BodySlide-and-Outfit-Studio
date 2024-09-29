@@ -136,6 +136,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("sliderExportOBJ"), OutfitStudioFrame::OnSliderExportOBJ)
 	EVT_MENU(XRCID("sliderExportOSD"), OutfitStudioFrame::OnSliderExportOSD)
 	EVT_MENU(XRCID("sliderExportTRI"), OutfitStudioFrame::OnSliderExportTRI)
+	EVT_MENU(XRCID("sliderExportMorphsSF"), OutfitStudioFrame::OnSliderExportMorphsSF)
 	EVT_MENU(XRCID("sliderExportToOBJs"), OutfitStudioFrame::OnSliderExportToOBJs)
 	EVT_MENU(XRCID("sliderNew"), OutfitStudioFrame::OnNewSlider)
 	EVT_MENU(XRCID("sliderNewZap"), OutfitStudioFrame::OnNewZapSlider)
@@ -7598,22 +7599,29 @@ void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 		wxMessageBox(_("Failed to import Starfield morph file!"), _("Error"), wxICON_ERROR);
 		return;
 	}
+
+	if (!morphFile.FileToCacheData()) {
+		wxLogError("Failed to import Starfield morph file '%s'!", fn);
+		wxMessageBox(_("Failed to import Starfield morph file!"), _("Error"), wxICON_ERROR);
+		return;
+	}
+
+	morphFile.UpdateCachedMorphData();
 	
 	auto shape = activeItem->GetShape();
-	auto morphs = morphFile.GetCachedMorphData();
 
 	std::string shapeName = shape->name.get();
 	std::string targetName = project->ShapeToTarget(shapeName);
 
 	std::unordered_map<std::string, std::unordered_map<std::string, std::string>> shapeToSliders;
 
-	for (auto& morph : *morphs) {
+	for (auto& morphName : morphFile.GetMorphNames()) {
 		// Find slider name from morph name
-		auto sliderName = project->activeSet.SliderFromDataName(shapeName, morph.first);
+		auto sliderName = project->activeSet.SliderFromDataName(shapeName, morphName);
 		if (sliderName.empty())
-			sliderName = morph.first;
+			sliderName = morphName;
 
-		shapeToSliders[shapeName].emplace(sliderName, morph.first);
+		shapeToSliders[shapeName].emplace(sliderName, morphName);
 	}
 
 	SliderDataImportDialog import(this, project, OutfitStudioConfig);
@@ -7658,11 +7666,11 @@ void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 	if (selectedSliders == options.selectedShapesToSliders.end())
 		return;
 
-	for (auto& morph : *morphs) {
+	for (auto& morphName : morphFile.GetMorphNames()) {
 		auto& sliderNameToDisplayName = selectedSliders->second;
 
 		// check the diff is selected for the specific shape
-		auto sliderName = selectedSliders->second.find(morph.first);
+		auto sliderName = selectedSliders->second.find(morphName);
 		if (sliderName == sliderNameToDisplayName.end())
 			continue;
 
@@ -7671,7 +7679,9 @@ void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 			createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
 		}
 
-		project->SetSliderFromDiff(sliderName->second, shape, morph.second);
+		auto& morphIndex = morphFile.morphNamesCacheMap[morphName];
+		auto& morphOffsets = morphFile.morphOffsetsCache[morphIndex];
+		project->SetSliderFromDiff(sliderName->second, shape, morphOffsets);
 	}
 
 	wxString addedDiffs = shapeName + "\n";
@@ -7849,6 +7859,29 @@ void OutfitStudioFrame::OnSliderExportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->WriteMorphTRI(fn.ToUTF8().data())) {
 		wxLogError("Failed to export TRI file to '%s'!", fn);
 		wxMessageBox(_("Failed to export TRI file!"), _("Error"), wxICON_ERROR);
+		return;
+	}
+}
+
+void OutfitStudioFrame::OnSliderExportMorphsSF(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		return;
+	}
+
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	wxString fn = wxFileSelector(_("Export Starfield morph.dat"), wxEmptyString, wxEmptyString, ".dat", "*.dat", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fn.IsEmpty())
+		return;
+
+	wxLogMessage("Exporting Starfield morph.dat to '%s'...", fn);
+	if (!project->WriteSFMorphs(activeItem->GetShape(), fn.ToUTF8().data())) {
+		wxLogError("Failed to export Starfield morph.dat file to '%s'!", fn);
+		wxMessageBox(_("Failed to export Starfield morph.dat file!"), _("Error"), wxICON_ERROR);
 		return;
 	}
 }

@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "../files/FBXWrangler.h"
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
+#include "../files/SFMorphFile.h"
 #include "../program/FBXImportDialog.h"
 #include "../program/ObjImportDialog.h"
 #include "../utils/PlatformUtil.h"
@@ -901,6 +902,116 @@ bool OutfitProject::WriteHeadTRI(NiShape* shape, const std::string& triPath) {
 	}
 
 	if (!tri.Write(triFilePath))
+		return false;
+
+	return true;
+}
+
+bool OutfitProject::WriteSFMorphs(nifly::NiShape* shape, const std::string& morphPath) {
+	DiffDataSets currentDiffs;
+	activeSet.LoadSetDiffData(currentDiffs);
+
+	SFMorphFile morphFile;
+	std::string morphPathFilePath = morphPath;
+
+	int shapeVertCount = GetVertexCount(shape);
+	if (shapeVertCount <= 0)
+		return false;
+
+	std::string shapeName = shape->name.get();
+	bool bIsOutfit = true;
+	if (IsBaseShape(shape))
+		bIsOutfit = false;
+
+	morphFile.SetVertexCount(shapeVertCount);
+
+	for (size_t s = 0; s < activeSet.size(); s++) {
+		if (!activeSet[s].bClamp && !activeSet[s].bZap) {
+			std::string morphName = activeSet[s].name;
+			std::unordered_map<uint16_t, Vector3> morphOffsets;
+
+			std::vector<Vector3> diffs;
+			diffs.resize(shapeVertCount);
+
+			std::string target = ShapeToTarget(shapeName);
+			if (!bIsOutfit) {
+				std::string dn = activeSet[s].TargetDataName(target);
+				if (dn.empty())
+					continue;
+
+				currentDiffs.ApplyDiff(dn, target, 1.0f, &diffs);
+			}
+			else
+				morpher.ApplyResultToVerts(morphName, target, &diffs);
+
+			int i = 0;
+			for (auto& d : diffs) {
+				if (!d.IsZero(true))
+					morphOffsets.emplace(i, d);
+				i++;
+			}
+
+			if (morphOffsets.size() > 0) {
+				std::unordered_map<uint16_t, nifly::Vector3> morphNormals;
+				std::unordered_map<uint16_t, nifly::Vector3> morphTangents;
+
+				std::vector<Vector3> shapeVerts;
+				std::vector<Vector2> shapeUVs;
+				std::vector<Triangle> shapeTris;
+				if (workNif.GetVertsForShape(shape, shapeVerts) && workNif.GetUvsForShape(shape, shapeUVs) && shape->GetTriangles(shapeTris)) {
+					// Apply diff to base positions
+					if (shapeVerts.size() == diffs.size()) {
+						for (int v = 0; v < shapeVertCount; v++)
+							shapeVerts[v] += diffs[v];
+					}
+
+					// Use temporary mesh to calculate normals and tangents for the morph
+					// TODO: Allow storing these normals and importing custom normals for a slider?
+					Mesh tmpMesh{};
+					tmpMesh.nVerts = static_cast<int>(shapeVerts.size());
+					tmpMesh.nTris = static_cast<int>(shapeTris.size());
+
+					if (tmpMesh.nVerts > 0) {
+						tmpMesh.verts = std::make_unique<Vector3[]>(tmpMesh.nVerts);
+						tmpMesh.norms = std::make_unique<Vector3[]>(tmpMesh.nVerts);
+						tmpMesh.tangents = std::make_unique<Vector3[]>(tmpMesh.nVerts);
+						tmpMesh.bitangents = std::make_unique<Vector3[]>(tmpMesh.nVerts);
+						tmpMesh.texcoord = std::make_unique<Vector2[]>(tmpMesh.nVerts);
+					}
+
+					if (tmpMesh.nTris > 0)
+						tmpMesh.tris = std::make_unique<Triangle[]>(tmpMesh.nTris);
+
+					for (int v = 0; v < tmpMesh.nVerts; v++)
+						tmpMesh.verts[v] = Mesh::TransformPosNifToMesh(shapeVerts[v]);
+
+					if (!shapeUVs.empty()) {
+						for (int v = 0; v < tmpMesh.nVerts; v++) {
+							tmpMesh.texcoord[v].u = shapeUVs[v].u;
+							tmpMesh.texcoord[v].v = shapeUVs[v].v;
+						}
+					}
+
+					for (int t = 0; t < tmpMesh.nTris; t++)
+						tmpMesh.tris[t] = shapeTris[t];
+
+					tmpMesh.SmoothNormals();
+
+					for (int v = 0; v < tmpMesh.nVerts; v++) {
+						morphNormals[v] = Mesh::TransformDirMeshToNif(tmpMesh.norms[v]);
+						morphTangents[v] = Mesh::TransformDirMeshToNif(tmpMesh.tangents[v]);
+					}
+				}
+
+				// TODO: Store and pass target vertex colors?
+				morphFile.AddMorph(morphName, morphOffsets, {}, morphNormals, morphTangents);
+			}
+		}
+	}
+
+	morphFile.CacheToFileData();
+
+	if (!morphFile.Write(morphPathFilePath))
 		return false;
 
 	return true;

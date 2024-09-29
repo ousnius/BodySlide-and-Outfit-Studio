@@ -55,11 +55,11 @@ struct SFMorphData {
 	uint32_t x = 0, y = 0;
 };
 
-struct SFMorphDataHalf {
+struct SFMorphDataUnpacked {
 	nifly::Vector3 offset;
-	float targetVertColor = 0.0f;
-	float nx = 0.0f, ny = 0.0f, nz = 0.0f;
-	float tx = 0.0f, ty = 0.0f, tz = 0.0f;
+	nifly::ByteColor3 targetVertColor;
+	nifly::Vector3 normal;
+	nifly::Vector3 tangent;
 };
 
 struct SFMorphOffset {
@@ -68,7 +68,7 @@ struct SFMorphOffset {
 };
 
 class SFMorphFile {
-	uint32_t numAxis = 0;
+	uint32_t numAxis = 3;
 	uint32_t numShapeKeys = 0;
 	uint32_t numVertices = 0;
 
@@ -77,21 +77,40 @@ class SFMorphFile {
 	uint32_t numOffsets = 0;
 
 	std::vector<SFMorphData> morphDataRaw;
-	std::vector<SFMorphDataHalf> morphDataRawHalf;
+	std::vector<SFMorphDataUnpacked> morphDataRawUnpacked;
 	std::vector<SFMorphOffset> offsets;
 
 	std::vector<std::vector<SFMorphData>> vertexMorphData;
-	std::vector<std::vector<SFMorphDataHalf>> vertexMorphDataHalf;
+	std::vector<std::vector<SFMorphDataUnpacked>> vertexMorphDataUnpacked;
 	std::vector<std::vector<uint32_t>> vertexMorphKeyIndices;
-	std::vector<std::vector<uint8_t>> vertexMorphKeySelection;
-
-	std::map<std::string, std::unordered_map<uint16_t, nifly::Vector3>> morphOffsetsCache;
 
 public:
-	bool Read(const std::string& fileName);
+	std::map<std::string, uint32_t> morphNamesCacheMap;
+	std::vector<std::unordered_map<uint16_t, nifly::Vector3>> morphOffsetsCache;
+	std::vector<std::unordered_map<uint16_t, nifly::Color3>> morphColorsCache;
+	std::vector<std::unordered_map<uint16_t, nifly::Vector3>> morphNormalsCache;
+	std::vector<std::unordered_map<uint16_t, nifly::Vector3>> morphTangentsCache;
 
-	std::map<std::string, std::unordered_map<uint16_t, nifly::Vector3>>* GetCachedMorphData();
+	bool Read(const std::string& fileName);
+	bool Write(const std::string& fileName);
+
+	void CacheToFileData();
+	bool FileToCacheData();
+
+	void UpdateCachedMorphData();
 
 	uint32_t GetMorphCount();
+	std::vector<std::string> GetMorphNames();
+
+	void SetVertexCount(uint32_t vertexCount) {
+		numVertices = vertexCount;
+		numOffsets = numVertices;
+	}
+
+	bool AddMorph(const std::string& morphName,
+				  const std::unordered_map<uint16_t, nifly::Vector3>& morphOffsets,
+				  const std::unordered_map<uint16_t, nifly::Color3>& morphColors,
+				  const std::unordered_map<uint16_t, nifly::Vector3>& morphNormals,
+				  const std::unordered_map<uint16_t, nifly::Vector3>& morphTangents);
 };
 
