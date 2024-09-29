@@ -958,7 +958,7 @@ void OutfitStudio::GetArchiveFiles(std::vector<std::string>& outList) {
 	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
 	for (auto& f : files) {
 		f = f.AfterLast('/').AfterLast('\\');
-		if (fsearch.find(f) == fsearch.end())
+		if (fsearch.find(f.Lower()) == fsearch.end())
 			outList.push_back((dataDir + f).ToUTF8().data());
 	}
 }
