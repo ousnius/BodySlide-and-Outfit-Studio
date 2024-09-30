@@ -285,7 +285,7 @@ void Automorph::AddEmptySet(const std::string& shapeName, const std::string& sli
 		resultDiffData.AddEmptySet(setName, shapeName);
 }
 
-void Automorph::SetResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, Vector3>& diff) {
+void Automorph::SetResultDiff(const std::string& shapeName, const std::string& sliderName, const TargetDataDiffs& diff) {
 	std::string setName = ResultDataName(shapeName, sliderName);
 
 	if (!resultDiffData.TargetMatch(setName, shapeName))
@@ -295,7 +295,7 @@ void Automorph::SetResultDiff(const std::string& shapeName, const std::string& s
 		resultDiffData.UpdateDiff(setName, shapeName, i.first, i.second);
 }
 
-void Automorph::UpdateResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, Vector3>& diff) {
+void Automorph::UpdateResultDiff(const std::string& shapeName, const std::string& sliderName, const TargetDataDiffs& diff) {
 	std::string setName = ResultDataName(shapeName, sliderName);
 
 	if (!resultDiffData.TargetMatch(setName, shapeName))
@@ -307,7 +307,7 @@ void Automorph::UpdateResultDiff(const std::string& shapeName, const std::string
 	}
 }
 
-void Automorph::UpdateRefDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<uint16_t, Vector3>& diff) {
+void Automorph::UpdateRefDiff(const std::string& shapeName, const std::string& sliderName, const TargetDataDiffs& diff) {
 	std::string setName = ResultDataName(shapeName, sliderName);
 
 	if (!srcDiffData->TargetMatch(setName, shapeName))

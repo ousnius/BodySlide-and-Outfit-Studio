@@ -69,10 +69,10 @@ bool OSDataFile::Read(const std::string& fileName) {
 		for (int j = 0; j < diffSize; ++j) {
 			auto& diffEntry = diffData[j];
 			diffEntry.diff.clampEpsilon();
-			diffs.emplace(diffEntry.index, std::move(diffEntry.diff));
+			diffs[diffEntry.index] = std::move(diffEntry.diff);
 		}
 
-		dataDiffs.emplace(dataName, std::move(diffs));
+		dataDiffs.emplace(dataName, std::make_unique<TargetDataDiffs>(std::move(diffs)));
 	}
 
 	return true;
@@ -99,14 +99,14 @@ bool OSDataFile::Write(const std::string& fileName) {
 		file.write((char*)&nameLength, 1);
 		file.write(diffs.first.c_str(), nameLength);
 
-		diffSize = static_cast<uint16_t>(diffs.second.size());
+		diffSize = static_cast<uint16_t>(diffs.second->size());
 
 		std::vector<DiffStruct> diffData(diffSize);
 		diffData.resize(diffSize);
 
 		size_t i = 0;
 
-		for (auto& diff : diffs.second) {
+		for (auto& diff : *diffs.second) {
 			if (i >= diffSize)
 				break;
 
@@ -122,11 +122,11 @@ bool OSDataFile::Write(const std::string& fileName) {
 	return true;
 }
 
-TargetData OSDataFile::GetDataDiffs() {
+TargetData& OSDataFile::GetDataDiffs() {
 	return dataDiffs;
 }
 
-TargetDataDiffs* OSDataFile::GetDataDiff(const std::string& dataName) {
+std::unique_ptr<TargetDataDiffs>* OSDataFile::GetDataDiff(const std::string& dataName) {
 	auto it = dataDiffs.find(dataName);
 	if (it != dataDiffs.end())
 		return &it->second;
@@ -134,18 +134,18 @@ TargetDataDiffs* OSDataFile::GetDataDiff(const std::string& dataName) {
 	return nullptr;
 }
 
-void OSDataFile::SetDataDiff(const std::string& dataName, TargetDataDiffs& inDataDiff) {
-	dataDiffs[dataName] = inDataDiff;
+void OSDataFile::SetDataDiff(const std::string& dataName, const TargetDataDiffs& inDataDiff) {
+	dataDiffs[dataName] = std::make_unique<TargetDataDiffs>(inDataDiff);
 }
 
 
-void DiffDataSets::MoveToSet(const std::string& name, const std::string& target, TargetDataDiffs& inDiffData) {
+void DiffDataSets::MoveToSet(const std::string& name, const std::string& target, std::unique_ptr<TargetDataDiffs>& inDiffData) {
 	namedSet[name] = std::move(inDiffData);
 	dataTargets[name] = target;
 }
 
 void DiffDataSets::LoadSet(const std::string& name, const std::string& target, const TargetDataDiffs& inDiffData) {
-	namedSet[name] = inDiffData;
+	namedSet[name] = std::make_unique<TargetDataDiffs>(inDiffData);
 	dataTargets[name] = target;
 }
 
@@ -159,8 +159,8 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, co
 	uint32_t sz;
 	inFile.read((char*)&sz, 4);
 
-	TargetDataDiffs data;
-	data.reserve(sz);
+	auto data = std::make_unique<TargetDataDiffs>();
+	data->reserve(sz);
 
 	uint32_t idx;
 	Vector3 v;
@@ -168,7 +168,7 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, co
 		inFile.read((char*)&idx, sizeof(uint32_t));
 		inFile.read((char*)&v, sizeof(Vector3));
 		v.clampEpsilon();
-		data.emplace(static_cast<uint16_t>(idx), v);
+		data->emplace(static_cast<uint16_t>(idx), v);
 	}
 
 	inFile.close();
@@ -181,11 +181,12 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, co
 
 bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
 #ifdef _PPL_H
-	Concurrency::concurrent_unordered_map<std::string, OSDataFile> loaded;
+	Concurrency::concurrent_unordered_map<std::string, std::unique_ptr<OSDataFile>> loaded;
 	Concurrency::parallel_for_each(osdNames.begin(), osdNames.end(), [&](auto& osd) {
-		OSDataFile osdFile;
-		if (!osdFile.Read(osd.first))
+		auto osdFile = std::make_unique<OSDataFile>();
+		if (!osdFile->Read(osd.first))
 			return;
+
 		loaded[osd.first] = std::move(osdFile);
 	});
 #endif
@@ -194,14 +195,15 @@ bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, st
 		auto kvp = loaded.find(osd.first);
 		if (kvp == loaded.end())
 			continue;
+
 		auto& osdFile = kvp->second;
 #else
-		OSDataFile osdFile;
-		if (!osdFile.Read(osd.first))
+		auto osdFile = std::make_unique<OSDataFile>();
+		if (!osdFile->Read(osd.first))
 			continue;
 #endif
 		for (auto& dataNames : osd.second) {
-			auto diff = osdFile.GetDataDiff(dataNames.first);
+			auto diff = osdFile->GetDataDiff(dataNames.first);
 			if (diff)
 				MoveToSet(dataNames.first, dataNames.second, *diff);
 		}
@@ -210,7 +212,7 @@ bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, st
 }
 
 int DiffDataSets::SaveSet(const std::string& name, const std::string& target, const std::string& toFile) {
-	TargetDataDiffs* data = &namedSet[name];
+	auto& data = namedSet[name];
 	if (!TargetMatch(name, target))
 		return 2;
 
@@ -240,7 +242,7 @@ bool DiffDataSets::SaveData(const std::map<std::string, std::map<std::string, st
 			if (!TargetMatch(dataNames.first, dataNames.second))
 				continue;
 
-			osdFile.SetDataDiff(dataNames.first, data);
+			osdFile.SetDataDiff(dataNames.first, *data);
 		}
 
 		if (!osdFile.Write(osd.first))
@@ -252,7 +254,7 @@ bool DiffDataSets::SaveData(const std::map<std::string, std::map<std::string, st
 
 void DiffDataSets::RenameSet(const std::string& oldName, const std::string& newName) {
 	if (namedSet.find(oldName) != namedSet.end()) {
-		namedSet.emplace(newName, namedSet[oldName]);
+		namedSet.insert(std::make_pair(newName, std::move(namedSet[oldName])));
 		namedSet.erase(oldName);
 		dataTargets[newName] = dataTargets[oldName];
 		dataTargets.erase(oldName);
@@ -306,28 +308,27 @@ void DiffDataSets::DeepCopy(const std::string& srcName, const std::string& destN
 		dataTargets[nt] = destName;
 
 		if (namedSet.find(ot) != namedSet.end())
-			namedSet[nt] = namedSet[ot];
+			namedSet[nt] = std::make_unique<TargetDataDiffs>(*namedSet[ot]);
 	}
 }
 
 void DiffDataSets::AddEmptySet(const std::string& name, const std::string& target) {
 	if (namedSet.find(name) == namedSet.end()) {
-		TargetDataDiffs data;
-		namedSet[name] = data;
+		namedSet[name] = std::make_unique<TargetDataDiffs>();
 		dataTargets[name] = target;
 	}
 }
 
-void DiffDataSets::UpdateDiff(const std::string& name, const std::string& target, uint16_t index, Vector3& newdiff) {
-	TargetDataDiffs* data = &namedSet[name];
+void DiffDataSets::UpdateDiff(const std::string& name, const std::string& target, uint16_t index, const Vector3& newdiff) {
+	auto& data = namedSet[name];
 	if (!TargetMatch(name, target))
 		return;
 
 	(*data)[index] = newdiff;
 }
 
-void DiffDataSets::SumDiff(const std::string& name, const std::string& target, uint16_t index, Vector3& newdiff) {
-	TargetDataDiffs* data = &namedSet[name];
+void DiffDataSets::SumDiff(const std::string& name, const std::string& target, uint16_t index, const Vector3& newdiff) {
+	auto& data = namedSet[name];
 	if (!TargetMatch(name, target))
 		return;
 
@@ -341,7 +342,7 @@ void DiffDataSets::SumDiff(const std::string& name, const std::string& target, u
 }
 
 void DiffDataSets::ScaleDiff(const std::string& name, const std::string& target, float scalevalue) {
-	TargetDataDiffs* data = &namedSet[name];
+	auto& data = namedSet[name];
 
 	if (!TargetMatch(name, target))
 		return;
@@ -350,8 +351,8 @@ void DiffDataSets::ScaleDiff(const std::string& name, const std::string& target,
 		resultIt->second *= scalevalue;
 }
 
-void DiffDataSets::OffsetDiff(const std::string& name, const std::string& target, Vector3& offset) {
-	TargetDataDiffs* data = &namedSet[name];
+void DiffDataSets::OffsetDiff(const std::string& name, const std::string& target, const Vector3& offset) {
+	auto& data = namedSet[name];
 	if (!TargetMatch(name, target))
 		return;
 
@@ -367,7 +368,7 @@ bool DiffDataSets::ApplyUVDiff(const std::string& set, const std::string& target
 		return false;
 
 	uint16_t maxidx = static_cast<uint16_t>(inOutResult->size());
-	TargetDataDiffs* data = &namedSet[set];
+	auto& data = namedSet[set];
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
@@ -388,7 +389,7 @@ bool DiffDataSets::ApplyDiff(const std::string& set, const std::string& target, 
 		return false;
 
 	uint16_t maxidx = static_cast<uint16_t>(inOutResult->size());
-	TargetDataDiffs* data = &namedSet[set];
+	auto& data = namedSet[set];
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
@@ -407,7 +408,7 @@ bool DiffDataSets::ApplyClamp(const std::string& set, const std::string& target,
 		return false;
 
 	uint16_t maxidx = static_cast<uint16_t>(inOutResult->size());
-	TargetDataDiffs* data = &namedSet[set];
+	auto& data = namedSet[set];
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
@@ -425,14 +426,14 @@ TargetDataDiffs* DiffDataSets::GetDiffSet(const std::string& targetDataName) {
 	if (namedSet.find(targetDataName) == namedSet.end())
 		return nullptr;
 
-	return &namedSet[targetDataName];
+	return namedSet[targetDataName].get();
 }
 
 void DiffDataSets::GetDiffIndices(const std::string& set, const std::string& target, std::vector<uint16_t>& outIndices, float threshold) {
 	if (!TargetMatch(set, target))
 		return;
 
-	TargetDataDiffs* data = &namedSet[set];
+	auto& data = namedSet[set];
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (fabs(resultIt->second.x) > threshold || fabs(resultIt->second.y) > threshold || fabs(resultIt->second.z) > threshold) {
 			outIndices.push_back(resultIt->first);
@@ -452,7 +453,7 @@ void DiffDataSets::DeleteVerts(const std::string& target, const std::vector<uint
 
 	for (auto& data : namedSet) {
 		if (TargetMatch(data.first, target))
-			ApplyIndexMapToMapKeys(data.second, indexCollapse, -static_cast<int>(indices.size()));
+			ApplyIndexMapToMapKeys(*data.second, indexCollapse, -static_cast<int>(indices.size()));
 	}
 }
 
@@ -467,7 +468,7 @@ void DiffDataSets::InsertVertexIndices(const std::string& target, const std::vec
 		if (!TargetMatch(data.first, target))
 			continue;
 
-		ApplyIndexMapToMapKeys(data.second, indexExpand, static_cast<int>(indices.size()));
+		ApplyIndexMapToMapKeys(*data.second, indexExpand, static_cast<int>(indices.size()));
 	}
 }
 

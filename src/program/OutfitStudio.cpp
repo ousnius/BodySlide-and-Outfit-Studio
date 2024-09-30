@@ -7354,7 +7354,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	std::unordered_map<std::string, std::unordered_map<std::string, std::string>> shapeToSliders;
-	auto diffs = osd.GetDataDiffs();
+	auto& diffs = osd.GetDataDiffs();
 	const auto& shapes = project->GetWorkNif()->GetShapes();
 	for (auto& diff : diffs) {
 		std::string bestTargetName;
@@ -7441,7 +7441,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 				createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
 			}
 
-			project->SetSliderFromDiff(sliderName->second, shape, diff.second);
+			project->SetSliderFromDiff(sliderName->second, shape, *diff.second);
 		}
 	}
 

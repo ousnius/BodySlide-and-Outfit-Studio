@@ -212,7 +212,7 @@ public:
 	void SetSliderFromBSD(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	bool SetSliderFromOBJ(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	bool SetSliderFromFBX(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
-	void SetSliderFromDiff(const std::string& sliderName, nifly::NiShape* shape, std::unordered_map<uint16_t, nifly::Vector3>& diff);
+	void SetSliderFromDiff(const std::string& sliderName, nifly::NiShape* shape, const TargetDataDiffs& diff);
 	int SaveSliderNIF(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	int SaveSliderBSD(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	int SaveSliderOBJ(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName, const bool onlyDiff = false);
@@ -250,7 +250,7 @@ public:
 
 	void RefreshMorphShape(nifly::NiShape* shape);
 	void UpdateShapeFromMesh(nifly::NiShape* shape, const Mesh* m);
-	void UpdateMorphResult(nifly::NiShape* shape, const std::string& sliderName, std::unordered_map<uint16_t, nifly::Vector3>& vertUpdates);
+	void UpdateMorphResult(nifly::NiShape* shape, const std::string& sliderName, const TargetDataDiffs& vertUpdates);
 	void ScaleMorphResult(nifly::NiShape* shape, const std::string& sliderName, float scaleValue);
 	void MoveVertex(nifly::NiShape* shape, const nifly::Vector3& pos, const int& id);
 	void OffsetShape(nifly::NiShape* shape, const nifly::Vector3& xlate, std::unordered_map<uint16_t, float>* mask = nullptr);
@@ -298,7 +298,7 @@ public:
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
 	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true);
 
-	std::unordered_map<uint16_t, nifly::Vector3>* GetDiffSet(SliderData& silderData, nifly::NiShape* shape);
+	TargetDataDiffs* GetDiffSet(SliderData& silderData, nifly::NiShape* shape);
 
 	void CollectVertexData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	void CollectTriangleData(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint32_t>& indices);

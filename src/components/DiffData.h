@@ -10,11 +10,12 @@ See the included LICENSE file
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <memory>
 
 struct UndoStateVertexSliderDiff;
 
 typedef std::unordered_map<uint16_t, nifly::Vector3> TargetDataDiffs;
-typedef std::unordered_map<std::string, TargetDataDiffs> TargetData;
+typedef std::unordered_map<std::string, std::unique_ptr<TargetDataDiffs>> TargetData;
 
 class OSDataFile {
 	uint32_t version;
@@ -27,18 +28,18 @@ public:
 	bool Read(const std::string& fileName);
 	bool Write(const std::string& fileName);
 
-	TargetData GetDataDiffs();
-	TargetDataDiffs* GetDataDiff(const std::string& dataName);
-	void SetDataDiff(const std::string& dataName, TargetDataDiffs& inDataDiff);
+	TargetData& GetDataDiffs();
+	std::unique_ptr<TargetDataDiffs>* GetDataDiff(const std::string& dataName);
+	void SetDataDiff(const std::string& dataName, const TargetDataDiffs& inDataDiff);
 };
 
 class DiffDataSets {
-	std::unordered_map<std::string, TargetDataDiffs> namedSet;
+	TargetData namedSet;
 	std::map<std::string, std::string> dataTargets;
 
 public:
 	inline bool TargetMatch(const std::string& set, const std::string& target);
-	void MoveToSet(const std::string& name, const std::string& target, TargetDataDiffs& inDiffData);
+	void MoveToSet(const std::string& name, const std::string& target, std::unique_ptr<TargetDataDiffs>& inDiffData);
 	void LoadSet(const std::string& name, const std::string& target, const TargetDataDiffs& inDiffData);
 	int LoadSet(const std::string& name, const std::string& target, const std::string& fromFile);
 	int SaveSet(const std::string& name, const std::string& target, const std::string& toFile);
@@ -48,10 +49,10 @@ public:
 	void DeepRename(const std::string& oldName, const std::string& newName);
 	void DeepCopy(const std::string& srcName, const std::string& destName);
 	void AddEmptySet(const std::string& name, const std::string& target);
-	void UpdateDiff(const std::string& name, const std::string& target, uint16_t index, nifly::Vector3& newdiff);
-	void SumDiff(const std::string& name, const std::string& target, uint16_t index, nifly::Vector3& newdiff);
+	void UpdateDiff(const std::string& name, const std::string& target, uint16_t index, const nifly::Vector3& newdiff);
+	void SumDiff(const std::string& name, const std::string& target, uint16_t index, const nifly::Vector3& newdiff);
 	void ScaleDiff(const std::string& name, const std::string& target, float scalevalue);
-	void OffsetDiff(const std::string& name, const std::string& target, nifly::Vector3& offset);
+	void OffsetDiff(const std::string& name, const std::string& target, const nifly::Vector3& offset);
 	bool ApplyDiff(const std::string& set, const std::string& target, float percent, std::vector<nifly::Vector3>* inOutResult);
 	bool ApplyUVDiff(const std::string& set, const std::string& target, float percent, std::vector<nifly::Vector2>* inOutResult);
 	bool ApplyClamp(const std::string& set, const std::string& target, std::vector<nifly::Vector3>* inOutResult);
@@ -67,12 +68,12 @@ public:
 		if (!TargetMatch(set, target))
 			return;
 
-		namedSet[set].clear();
+		namedSet[set]->clear();
 	}
 
 
 	void ZeroVertDiff(const std::string& set, int vertCount, float* vColorMask) {
-		for (auto& ns : namedSet[set]) {
+		for (auto& ns : *namedSet[set]) {
 			if (ns.first < vertCount) {
 				float f = vColorMask[ns.first];
 				if (f == 1.0f)
@@ -98,13 +99,13 @@ public:
 			v = (*vertSet);
 		}
 		else {
-			for (auto& diff : namedSet[set])
+			for (auto& diff : *namedSet[set])
 				v.push_back(diff.first);
 		}
 
 		for (auto& i : v) {
-			auto d = namedSet[set].find(i);
-			if (d == namedSet[set].end())
+			auto d = namedSet[set]->find(i);
+			if (d == namedSet[set]->end())
 				continue;
 
 			float f = 0.0f;
@@ -118,10 +119,10 @@ public:
 				continue;
 
 			if (f == 0.0f) {
-				namedSet[set].erase(i);
+				namedSet[set]->erase(i);
 				continue;
 			}
-			namedSet[set][i] *= f;
+			(*namedSet[set])[i] *= f;
 		}
 	}
 

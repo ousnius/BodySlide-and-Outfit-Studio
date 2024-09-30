@@ -1258,7 +1258,7 @@ bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, NiShape* sha
 	return true;
 }
 
-void OutfitProject::SetSliderFromDiff(const std::string& sliderName, NiShape* shape, std::unordered_map<uint16_t, Vector3>& diff) {
+void OutfitProject::SetSliderFromDiff(const std::string& sliderName, NiShape* shape, const TargetDataDiffs& diff) {
 	std::string target = ShapeToTarget(shape->name.get());
 	if (IsBaseShape(shape)) {
 		std::string sliderData = activeSet[sliderName].TargetDataName(target);
@@ -1593,7 +1593,7 @@ void OutfitProject::UpdateShapeFromMesh(NiShape* shape, const Mesh* m) {
 	workNif.SetVertsForShape(shape, liveVerts);
 }
 
-void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderName, std::unordered_map<uint16_t, Vector3>& vertUpdates) {
+void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderName, const TargetDataDiffs& vertUpdates) {
 	// Morph results are stored in two different places depending on whether it's an outfit or the base shape.
 	// The outfit morphs are stored in the automorpher, whereas the base shape diff info is stored in directly in basediffdata.
 
@@ -2452,7 +2452,7 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 									   options.axisZ);
 }
 
-std::unordered_map<uint16_t, Vector3>* OutfitProject::GetDiffSet(SliderData& sliderData, NiShape* shape) {
+TargetDataDiffs* OutfitProject::GetDiffSet(SliderData& sliderData, NiShape* shape) {
 	std::string target = ShapeToTarget(shape->name.get());
 	std::string targetDataName = sliderData.TargetDataName(target);
 	if (targetDataName.empty())
