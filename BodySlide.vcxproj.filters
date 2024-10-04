@@ -1923,6 +1923,9 @@
     <ClCompile Include="lib\LZ4F\lz4file.c">
       <Filter>Libraries\LZ4F</Filter>
     </ClCompile>
+    <ClCompile Include="lib\nifly\src\NifUtil.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml">

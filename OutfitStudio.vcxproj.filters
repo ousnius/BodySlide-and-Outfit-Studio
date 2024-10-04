@@ -2139,6 +2139,9 @@
     <ClCompile Include="src\files\SFMorphFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
+    <ClCompile Include="lib\nifly\src\NifUtil.cpp">
+      <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml">
