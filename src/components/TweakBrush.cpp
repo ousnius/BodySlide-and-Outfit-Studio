@@ -1011,6 +1011,8 @@ void TB_Move::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int*, int, Und
 	Vector3 start = m->TransformPosModelToMesh(pick.origin);
 	Vector3 mirrorstart = m->TransformPosModelToMesh(mpick.origin);
 
+	std::set<int> touchedIndices;
+
 	TweakBrushMeshCache* meshCache = &cache[m];
 	if (bMirror) {
 		Vector3 lmo;
@@ -1025,8 +1027,6 @@ void TB_Move::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int*, int, Und
 		for (int p = 0; p < meshCache->nCachedPointsM; p++) {
 			int i = meshCache->cachedPointsM[p];
 			Vector3 vs = startState[i];
-			if (mirrorstart.DistanceTo(vs) > start.DistanceTo(vs))
-				continue;
 			Vector3 ve = meshdv;
 			applyFalloff(ve, mirrorstart.DistanceTo(vs), meshradius);
 
@@ -1043,9 +1043,10 @@ void TB_Move::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int*, int, Und
 				ve -= n * ve.dot(n);
 			}
 
-			Vector3 vf = vs + ve;
-
-			endState[i] = m->verts[i] = (vf);
+			if (!ve.IsZero(true)) {
+				endState[i] = m->verts[i] = vs + ve;
+				touchedIndices.insert(i);
+			}
 		}
 	}
 
@@ -1057,8 +1058,7 @@ void TB_Move::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int*, int, Und
 	for (int p = 0; p < meshCache->nCachedPoints; p++) {
 		int i = meshCache->cachedPoints[p];
 		Vector3 vs = startState[i];
-		if (bMirror && start.DistanceTo(vs) > mirrorstart.DistanceTo(vs))
-			continue;
+
 		Vector3 ve = meshdv;
 		applyFalloff(ve, start.DistanceTo(vs), meshradius);
 
@@ -1075,9 +1075,26 @@ void TB_Move::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int*, int, Und
 			ve -= n * ve.dot(n);
 		}
 
-		Vector3 vf = vs + ve;
+		if (ve.IsZero(true))
+			continue;
 
-		endState[i] = m->verts[i] = (vf);
+		if (bMirror) {
+			if (touchedIndices.find(i) != touchedIndices.end()) {
+				float distStart = std::fabs(vs.x - start.x);
+				float distStartMirror = std::fabs(vs.x - mirrorstart.x);
+				if (std::fabs(distStart - distStartMirror) <= 0.01f) {
+					// Reset X axis to start state
+					endState[i].x = vs.x;
+					m->verts[i].x = vs.x;
+					continue;
+				}
+			}
+
+			if (start.DistanceTo(vs) > mirrorstart.DistanceTo(vs))
+				continue;
+		}
+
+		endState[i] = m->verts[i] = vs + ve;
 	}
 
 	m->QueueUpdate(Mesh::UpdateType::Position);
