@@ -13,12 +13,12 @@ END_EVENT_TABLE()
 wxSliderPanel::wxSliderPanel()
 	: wxWindow() {}
 
-wxSliderPanel::wxSliderPanel(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings)
+wxSliderPanel::wxSliderPanel(wxWindow* parent, const wxString& name, int sliderMin, int sliderMax, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings)
 	: wxWindow() {
-	Create(parent, name, bmpEdit, bmpSettings);
+	Create(parent, name, sliderMin, sliderMax, bmpEdit, bmpSettings);
 }
 
-bool wxSliderPanel::Create(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings) {
+bool wxSliderPanel::Create(wxWindow* parent, const wxString& name, int sliderMin, int sliderMax, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings) {
 	if (isCreated) {
 		btnSliderEdit->SetName(name + "|btn");
 		btnSliderProp->SetName(name + "|btnSliderProp");
@@ -32,6 +32,8 @@ bool wxSliderPanel::Create(wxWindow* parent, const wxString& name, const wxBitma
 		sliderName->SetLabel(name);
 
 		sliderCheck->Enable(true);
+		slider->SetMin(sliderMin);
+		slider->SetMax(sliderMax);
 		slider->SetValue(0);
 		sliderReadout->ChangeValue("0%");
 		sliderCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
@@ -94,7 +96,7 @@ bool wxSliderPanel::Create(wxWindow* parent, const wxString& name, const wxBitma
 	sizer->Add(sliderName, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
 	slider = new wxSlider();
-	slider->Create(this, wxID_ANY, 0, 0, 100, wxDefaultPosition, wxSize(-1, -1), wxSL_HORIZONTAL, wxDefaultValidator, name + "|slider");
+	slider->Create(this, wxID_ANY, 0, sliderMin, sliderMax, wxDefaultPosition, wxSize(-1, -1), wxSL_HORIZONTAL, wxDefaultValidator, name + "|slider");
 	slider->SetMinSize(wxSize(-1, 20));
 	slider->SetMaxSize(wxSize(-1, 20));
 
@@ -139,7 +141,7 @@ void wxSliderPanelPool::CreatePool(size_t poolSize, wxWindow* parent, const wxBi
 			p = new wxSliderPanel();
 
 		if (!p->IsCreated())
-			p->Create(parent, "sliderPoolDummy", bmpEdit, bmpSettings);
+			p->Create(parent, "sliderPoolDummy", 0, 100, bmpEdit, bmpSettings);
 	}
 }
 

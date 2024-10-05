@@ -24,9 +24,9 @@ public:
 	bool editing = false;
 
 	wxSliderPanel();
-	wxSliderPanel(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
+	wxSliderPanel(wxWindow* parent, const wxString& name, int sliderMin, int sliderMax, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
 
-	bool Create(wxWindow* parent, const wxString& name, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
+	bool Create(wxWindow* parent, const wxString& name, int sliderMin, int sliderMax, const wxBitmap& bmpEdit, const wxBitmap& bmpSettings);
 	bool IsCreated() { return isCreated; }
 
 	DECLARE_DYNAMIC_CLASS(wxSliderPanel)

@@ -595,6 +595,8 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("BSATextureScan", true);
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultBoolValue("UseSystemLanguage", false);
+	Config.SetDefaultValue("Input/SliderMinimum", 0);
+	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
 	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", true);
 	Config.SetDefaultBoolValue("Input/MaskHistory", true);
@@ -2496,7 +2498,10 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, wxScrolledWindo
 
 	wxSliderPanel* sliderPanel = sliderPool.GetNext();
 	if (sliderPanel) {
-		if (sliderPanel->Create(wnd, sliderName, *bmpEditSlider, *bmpSliderSettings)) {
+		int minValue = Config.GetIntValue("Input/SliderMinimum");
+		int maxValue = Config.GetIntValue("Input/SliderMaximum");
+
+		if (sliderPanel->Create(wnd, sliderName, minValue, maxValue, *bmpEditSlider, *bmpSliderSettings)) {
 			sliderPanel->btnSliderEdit->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
 			sliderPanel->btnSliderProp->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
 			sliderPanel->btnMinus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);

@@ -40,7 +40,7 @@
     <!-- Group aliases provide a way for presets saved under older group names to still apply when a group has been renamed -->
     <GroupAliases></GroupAliases>
     <Input>
-        <!-- Sets the minimum and maximum slider values for the BodySlide UI. There might be clipping outside of the 0-100 range! -->
+        <!-- Sets the minimum and maximum slider values for the UI. There might be clipping outside of the 0-100 range! -->
         <SliderMinimum>0</SliderMinimum>
         <SliderMaximum>100</SliderMaximum>
         <!-- Set the left mouse button to pan the view when dragged on the canvas in Outfit Studio -->
