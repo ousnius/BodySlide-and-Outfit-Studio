@@ -912,6 +912,7 @@ public:
 	wxTextCtrl* tzPoseText = nullptr;
 	wxTextCtrl* scPoseText = nullptr;
 	wxCheckBox* cbPose = nullptr;
+	wxButton* poseToMesh = nullptr;
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxMenuBar* menuBar = nullptr;
 	wxToolBar* toolBarH = nullptr;
@@ -1611,6 +1612,7 @@ private:
 	void OnResetBonePose(wxCommandEvent& event);
 	void OnResetAllPose(wxCommandEvent& event);
 	void OnPoseToMesh(wxCommandEvent& event);
+	void ActivatePose(bool checked);
 	void OnPoseCheckBox(wxCommandEvent& event);
 	void OnSelectPose(wxCommandEvent& event);
 	void OnSavePose(wxCommandEvent& event);

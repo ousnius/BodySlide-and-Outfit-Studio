@@ -1177,6 +1177,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	tzPoseText = (wxTextCtrl*)FindWindowByName("tzPoseText");
 	scPoseText = (wxTextCtrl*)FindWindowByName("scPoseText");
 	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
+	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
@@ -11306,8 +11307,9 @@ void OutfitStudioFrame::OnPoseValChanged(int cind, float val) {
 		bone->poseTranVec[cind - 3] = val;
 	else
 		bone->poseScale = val > 0 ? val : .0001f;
+
 	bone->UpdatePoseTransform();
-	ApplyPose();
+	ActivatePose(true);
 }
 
 void OutfitStudioFrame::OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind) {
@@ -11443,13 +11445,18 @@ void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {
-	project->bPose = e.IsChecked();
+void OutfitStudioFrame::ActivatePose(bool checked) {
+	if (cbPose->IsChecked() != checked)
+		cbPose->SetValue(checked);
 
-	auto poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
-	poseToMesh->Enable(project->bPose);
+	project->bPose = checked;
+	poseToMesh->Enable(checked);
 
 	ApplyPose();
+}
+
+void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {
+	ActivatePose(e.IsChecked());
 }
 
 void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
@@ -11482,7 +11489,7 @@ void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		PoseToGUI();
-		ApplyPose();
+		ActivatePose(true);
 	}
 }
 
