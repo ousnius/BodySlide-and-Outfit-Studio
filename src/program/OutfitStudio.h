@@ -1229,6 +1229,8 @@ private:
 
 	void OnSlider(wxCommandEvent& event);
 	void OnClickSliderButton(wxCommandEvent& event);
+	void OnEnterHoverSlider(wxMouseEvent& event);
+	void OnLeaveHoverSlider(wxMouseEvent& event);
 	void OnReadoutChange(wxCommandEvent& event);
 	void OnSliderCheckBox(wxCommandEvent& event);
 

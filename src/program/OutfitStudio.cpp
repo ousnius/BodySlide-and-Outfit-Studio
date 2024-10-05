@@ -2502,6 +2502,20 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, wxScrolledWindo
 		int maxValue = Config.GetIntValue("Input/SliderMaximum");
 
 		if (sliderPanel->Create(wnd, sliderName, minValue, maxValue, *bmpEditSlider, *bmpSliderSettings)) {
+			// Hover enter
+			sliderPanel->btnSliderEdit->Bind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+			sliderPanel->sliderCheck->Bind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+			sliderPanel->sliderName->Bind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+			sliderPanel->slider->Bind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+			sliderPanel->sliderReadout->Bind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+
+			// Hover leave
+			sliderPanel->btnSliderEdit->Bind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+			sliderPanel->sliderCheck->Bind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+			sliderPanel->sliderName->Bind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+			sliderPanel->slider->Bind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+			sliderPanel->sliderReadout->Bind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+
 			sliderPanel->btnSliderEdit->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
 			sliderPanel->btnSliderProp->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
 			sliderPanel->btnMinus->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
@@ -2983,6 +2997,20 @@ std::string OutfitStudioFrame::GetActiveBone() {
 void OutfitStudioFrame::HideSliderPanel(wxSliderPanel* sliderPanel) {
 	if (!sliderPanel)
 		return;
+
+	// Hover enter
+	sliderPanel->btnSliderEdit->Unbind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+	sliderPanel->sliderCheck->Unbind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+	sliderPanel->sliderName->Unbind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+	sliderPanel->slider->Unbind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+	sliderPanel->sliderReadout->Unbind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
+
+	// Hover leave
+	sliderPanel->btnSliderEdit->Bind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+	sliderPanel->sliderCheck->Unbind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+	sliderPanel->sliderName->Unbind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+	sliderPanel->slider->Unbind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+	sliderPanel->sliderReadout->Unbind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
 
 	sliderPanel->btnSliderEdit->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
 	sliderPanel->btnSliderProp->Unbind(wxEVT_BUTTON, &OutfitStudioFrame::OnClickSliderButton, this);
@@ -6499,6 +6527,77 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 		EnterSliderEdit(clickedName);
 	else
 		ExitSliderEdit();
+}
+
+void OutfitStudioFrame::OnEnterHoverSlider(wxMouseEvent& event) {
+	event.Skip();
+
+	if (!event.ControlDown())
+		return;
+
+	if (currentTabButton != meshTabButton)
+		return;
+
+	wxWindow* winObj = (wxWindow*)event.GetEventObject();
+	if (!winObj)
+		return;
+
+	wxString objName = winObj->GetName();
+	std::string sliderName{objName.BeforeLast('|').ToUTF8()};
+	if (sliderName.empty())
+		return;
+
+	SliderData& sd = project->activeSet[sliderName];
+
+	for (auto& shape : project->GetWorkNif()->GetShapes()) {
+		Mesh* m = glView->GetMesh(shape->name.get());
+		if (m && m->weight) {
+			// Clear color
+			m->WeightFill(0.0f);
+
+			auto diff = project->GetDiffSet(sd, shape);
+			if (!diff)
+				continue;
+
+			// Get largest diff (length)
+			float maxLength = 0.0f;
+			for (auto& d : *diff) {
+				if (d.second.length() > maxLength)
+					maxLength = d.second.length();
+			}
+
+			// Apply color gradient to all vertices with diffs
+			for (auto& d : *diff) {
+				if (m->nVerts > d.first) {
+					float gradient = d.second.length() / maxLength;
+					m->weight[d.first] = gradient;
+				}
+			}
+
+			m->QueueUpdate(Mesh::UpdateType::Weight);
+		}
+	}
+
+	glView->SetWeightVisible();
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnLeaveHoverSlider(wxMouseEvent& event) {
+	event.Skip();
+
+	if (currentTabButton != meshTabButton)
+		return;
+
+	for (auto& shape : project->GetWorkNif()->GetShapes()) {
+		Mesh* m = glView->GetMesh(shape->name.get());
+		if (m && m->weight) {
+			// Clear color
+			m->WeightFill(0.0f);
+		}
+	}
+
+	glView->SetWeightVisible(false);
+	glView->Render();
 }
 
 void OutfitStudioFrame::OnReadoutChange(wxCommandEvent& event) {
