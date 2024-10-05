@@ -78,8 +78,10 @@ void ConfigurationItem::ToXML(XMLElement* elem) {
 			child->ToXML(element);
 	}
 
-	XMLText* newText = elem->GetDocument()->NewText(value.c_str());
-	element->InsertEndChild(newText);
+	if (children.empty() || !value.empty()) {
+		XMLText* newText = elem->GetDocument()->NewText(value.c_str());
+		element->InsertEndChild(newText);
+	}
 }
 
 int ConfigurationItem::EnumerateProperties(std::vector<ConfigurationItem*>& outList) {
