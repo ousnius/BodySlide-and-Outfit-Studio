@@ -7227,10 +7227,7 @@ void OutfitStudioFrame::OnSlider(wxCommandEvent& event) {
 
 	SetSliderValue(sn, event.GetInt());
 
-	if (!bEditSlider && event.GetEventType() == wxEVT_SCROLL_CHANGED)
-		ApplySliders(true);
-	else
-		ApplySliders(false);
+	ApplySliders();
 }
 
 void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
