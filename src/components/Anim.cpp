@@ -634,25 +634,55 @@ void AnimInfo::SwapBonesLR(const std::string& shapeName) {
 	auto shapeBonesIt = shapeBones.find(shapeName);
 	auto shapeSkinningIt = shapeSkinning.find(shapeName);
 	if (shapeBonesIt != shapeBones.end() && shapeSkinningIt != shapeSkinning.end()) {
-		std::vector<std::string> shapeBoneList;
-		for (auto& boneName : shapeBonesIt->second)
-			shapeBoneList.push_back(boneName);
+		std::vector<std::string> boneNames;
+		AnimSkeleton::getInstance().GetBoneNames(boneNames);
 
 		std::vector<std::pair<std::string, std::string>> pairs;
 		std::vector<std::string> singles;
-		MatchSymmetricBoneNames(shapeBoneList, pairs, singles);
+		MatchSymmetricBoneNames(boneNames, pairs, singles);
 
 		for (auto& pair : pairs) {
 			// Get index of each bone by name
-			auto boneA = shapeSkinningIt->second.boneNames.find(pair.first);
-			auto boneB = shapeSkinningIt->second.boneNames.find(pair.second);
-			if (boneA != shapeSkinningIt->second.boneNames.end() && boneB != shapeSkinningIt->second.boneNames.end()) {
-				// Get weights of each bone by index
-				auto boneWeightsA = shapeSkinningIt->second.boneWeights.find(boneA->second);
-				auto boneWeightsB = shapeSkinningIt->second.boneWeights.find(boneB->second);
+			bool otherSideMissing = false;
+			std::string boneName = pair.first;
+			std::string boneNameOther = pair.second;
+
+			auto boneIt = shapeSkinningIt->second.boneNames.find(boneName);
+			auto boneOtherIt = shapeSkinningIt->second.boneNames.find(boneNameOther);
+
+			if (boneIt != shapeSkinningIt->second.boneNames.end() && boneOtherIt != shapeSkinningIt->second.boneNames.end()) {
+				// Both bones exist on shape, get weights of each bone by index
+				auto boneWeightsA = shapeSkinningIt->second.boneWeights.find(boneIt->second);
+				auto boneWeightsB = shapeSkinningIt->second.boneWeights.find(boneOtherIt->second);
 				if (boneWeightsA != shapeSkinningIt->second.boneWeights.end() && boneWeightsB != shapeSkinningIt->second.boneWeights.end()) {
 					// Swap weights between bone A and B
 					std::swap(boneWeightsA->second.weights, boneWeightsB->second.weights);
+				}
+			}
+			else if (boneIt != shapeSkinningIt->second.boneNames.end()) {
+				// Only bone A exists on shape
+				otherSideMissing = true;
+			}
+			else if (boneOtherIt != shapeSkinningIt->second.boneNames.end()) {
+				// Only bone B exists on shape
+				otherSideMissing = true;
+				std::swap(boneIt, boneOtherIt);
+				std::swap(boneName, boneNameOther);
+			}
+
+			if (otherSideMissing) {
+				auto boneWeights = shapeSkinningIt->second.boneWeights.find(boneIt->second);
+				if (boneWeights != shapeSkinningIt->second.boneWeights.end()) {
+					// Add bone of other side
+					AddShapeBone(shapeName, boneNameOther);
+					auto boneOther = shapeSkinningIt->second.boneNames.find(boneNameOther);
+
+					auto boneWeightsOther = shapeSkinningIt->second.boneWeights.find(boneOther->second);
+					if (boneWeightsOther != shapeSkinningIt->second.boneWeights.end()) {
+						// Move weights to bone
+						boneWeightsOther->second.weights = std::move(boneWeights->second.weights);
+						RemoveShapeBone(shapeName, boneName);
+					}
 				}
 			}
 		}
