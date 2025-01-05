@@ -72,6 +72,7 @@ struct UndoStateShape {
 	// UndoType::Mesh.  They are stored in sorted order by index.
 	std::vector<UndoStateVertex> delVerts, addVerts;
 	std::vector<UndoStateTriangle> delTris, addTris;
+	bool hadVertexColors = false;
 };
 
 struct UndoStateProject {

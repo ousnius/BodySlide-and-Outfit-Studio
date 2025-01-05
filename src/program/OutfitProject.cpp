@@ -2478,6 +2478,8 @@ void OutfitProject::CollectVertexData(NiShape* shape, UndoStateShape& uss, const
 	Mesh* m = owner->glView->GetMesh(shape->name.get());
 	const float* mask = m ? m->mask.get() : nullptr;
 
+	uss.hadVertexColors = colors && !colors->empty();
+
 	for (uint16_t di = 0; di < static_cast<uint16_t>(indices.size()); ++di) {
 		UndoStateVertex& usv = uss.delVerts[di];
 		uint16_t vi = indices[di];
@@ -2757,16 +2759,37 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask,
 			// ...in nif arrays
 			verts[usv.index] = usv.pos;
 			mask[usv.index] = usv.mask;
+
+			// UV
 			if (uvsp && uvs.size() > usv.index)
 				uvs[usv.index] = usv.uv;
-			if (colorsp && colors.size() > usv.index)
-				colors[usv.index] = usv.color;
+
+			// Vertex Color
+			if (colorsp && colors.size() > usv.index) {
+				if (uss.hadVertexColors) {
+					colors[usv.index] = usv.color;
+				}
+				else {
+					colors[usv.index].r = 1.0f;
+					colors[usv.index].g = 1.0f;
+					colors[usv.index].b = 1.0f;
+					colors[usv.index].a = 1.0f;
+				}
+			}
+
+			// Normal
 			if (normalsp && normals.size() > usv.index)
 				normals[usv.index] = usv.normal;
+
+			// Tangent
 			if (tangentsp && tangents.size() > usv.index)
 				tangents[usv.index] = usv.tangent;
+
+			// Bitangent
 			if (bitangentsp && bitangents.size() > usv.index)
 				bitangents[usv.index] = usv.bitangent;
+
+			// Eye Data
 			if (eyeDatap && eyeData.size() > usv.index)
 				eyeData[usv.index] = usv.eyeData;
 
