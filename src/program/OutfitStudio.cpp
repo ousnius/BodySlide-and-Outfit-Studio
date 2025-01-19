@@ -621,6 +621,10 @@ bool OutfitStudio::SetDefaultConfig() {
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashpos", 768);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashrightpos", 200);
 
+	constexpr int DEF_PROJECT_HISTORY = 15;
+	if (!OutfitStudioConfig.Exists("ProjectHistory.maxcount"))
+		OutfitStudioConfig.SetValue("ProjectHistory.maxcount", DEF_PROJECT_HISTORY);
+
 	Config.SetDefaultValue("GameRegKey/Oblivion", "Software\\Bethesda Softworks\\Oblivion");
 	Config.SetDefaultValue("GameRegVal/Oblivion", "Installed Path");
 	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
@@ -3446,8 +3450,16 @@ void OutfitStudioFrame::AddProjectHistory(const std::string& fileName, const std
 	projectHistoryEntry.fileName = fileName;
 	projectHistoryEntry.projectName = projectName;
 
-	constexpr int MAX_PROJECT_HISTORY = 15;
-	if (projectHistory.size() == MAX_PROJECT_HISTORY)
+	constexpr int DEF_PROJECT_HISTORY = 15;
+	constexpr int MAX_PROJECT_HISTORY = 100;
+
+	int maxCount = OutfitStudioConfig.GetIntValue("ProjectHistory.maxcount", DEF_PROJECT_HISTORY);
+	if (maxCount <= 0)
+		maxCount = DEF_PROJECT_HISTORY;
+	else if (maxCount > MAX_PROJECT_HISTORY)
+		maxCount = MAX_PROJECT_HISTORY;
+
+	if (projectHistory.size() == maxCount)
 		projectHistory.pop_back();
 
 	projectHistory.push_front(projectHistoryEntry);
