@@ -2,16 +2,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: BodySlide_zh\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: 2021-07-30 17:39+0200\n"
+"PO-Revision-Date: 2025-01-27 19:43+0100\n"
 "Last-Translator: \n"
 "Language-Team: 小莫\n"
 "Language: zh\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 3.0\n"
-"X-Poedit-Basepath: .\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 3.5\n"
+"X-Poedit-Basepath: .\n"
 "X-Poedit-SearchPath-0: BodySlide.po\n"
 
 msgid "Outfit/Body"
@@ -24,41 +24,41 @@ msgid "Preset"
 msgstr "预设"
 
 msgid "Choose from a list of slider settings presets"
-msgstr "从列表中选择滑块设置的预设配置"
+msgstr "从一列滑块集预设中选择"
 
 msgid "Saves the new slider values to the currently selected preset"
-msgstr "保存新滑块值到当前已选的预设"
+msgstr "保存新滑块值到当前被选预设"
 
 msgid "Save"
 msgstr "保存"
 
 msgid "Save the current slider settings as a new preset"
-msgstr "保存当前的滑块设置为新预设"
+msgstr "将当前的滑块集作为新预设保存"
 
 msgid "Save As..."
 msgstr "另存为..."
 
 msgid ""
 "Opens the group manager where you can edit existing or create new groups"
-msgstr "打开组管理器，你可以在那里编辑现有的或创建新组"
+msgstr "打开组管理器以编辑现有组或创建新组"
 
 msgid "Group Manager"
 msgstr "组管理器"
 
 msgid "Opens the current project in Outfit Studio"
-msgstr "打开模型编辑器中的当前项目"
+msgstr "在Outfit Studio中打开当前项目"
 
 msgid "Single Weight"
 msgstr "单重量"
 
 msgid "Low Weight"
-msgstr "最小值"
+msgstr "最小重量"
 
 msgid "High Weight"
-msgstr "最大值"
+msgstr "最大重量"
 
 msgid "Copy the low weight slider values to the high weight section."
-msgstr "复制最小值的滑块值到最大值的滑块值。"
+msgstr "复制最小重量的滑块值到最大重量那儿去。"
 
 msgid ""
 "Build multiple outfits using the currently active slider values.\n"
@@ -67,8 +67,8 @@ msgid ""
 "Hold ALT = Delete from output directory"
 msgstr ""
 "使用当前预设批量建立装备。\n"
-"按住CTRL = 在自定义目录中建立\n"
-"按住ALT = 从目录中清理所有文件"
+"按住CTRL = 建立到自定义目录中\n"
+"按住ALT = 从输出目录中删除"
 
 msgid "Batch Build..."
 msgstr "批量建立..."
@@ -79,7 +79,8 @@ msgstr "建立变形"
 msgid ""
 "Builds a morphs (.tri) file alongside the meshes for accessing the sliders "
 "in-game. Requires other mods to make use of the morph data."
-msgstr "建立一个变形(.tri)文件来在游戏中访问滑块。需要其他mod来利用变形数据。"
+msgstr ""
+"在网格旁建立一个变形(.tri)文件以在游戏中访问滑块。需要其他mod来利用变形数据。"
 
 msgid "Show a preview window for this outfit."
 msgstr "显示这件装备的预览窗口。"
@@ -93,15 +94,15 @@ msgid ""
 "Hold CTRL = Build to working directory\n"
 "Hold ALT = Delete from output directory"
 msgstr ""
-"创建当前选中的装备/身体。\n"
-"按住CTRL = 在自定义目录中建立\n"
-"按住ALT = 从目录中清理所有文件\""
+"创建当前被选装备/身体。\n"
+"按住CTRL = 建立到工作目录中\n"
+"按住ALT = 从输出目录中删除"
 
 msgid "Build"
 msgstr "建立"
 
 msgid "Copy the high weight slider values to the low weight section."
-msgstr "复制最大重量滑块值到最小重量部分。"
+msgstr "复制最大重量滑块值到最小重量那去。"
 
 msgid "About"
 msgstr "关于"
@@ -114,10 +115,10 @@ msgstr "设置"
 
 msgid ""
 "Open Outfit Studio, a full-featured tool for creating and converting outfits."
-msgstr "打开模型编辑器，一个功能齐全的装备创建和转换工具。"
+msgstr "打开Outfit Studio，一个功能齐全的装备创建和转换工具。"
 
 msgid "Failed to launch Outfit Studio executable!"
-msgstr "无法启动模型编辑器的可执行文件"
+msgstr "无法启动Outfit Studio的可执行文件！"
 
 msgid "Filter Options"
 msgstr "过滤器选项"
@@ -126,7 +127,7 @@ msgid "Choose groups..."
 msgstr "选择组..."
 
 msgid "Choose groups to display in the Outfit menu"
-msgstr "在装备菜单中选择组来显示"
+msgstr "选择要在装备菜单中显示的组"
 
 msgid "Refresh Groups"
 msgstr "刷新组"
@@ -135,16 +136,16 @@ msgid "Refresh group information"
 msgstr "刷新组信息"
 
 msgid "Save Outfit list as group..."
-msgstr "将装备列表存为一组..."
+msgstr "将装备列表作为组保存..."
 
 msgid "Save the current filtered outfit list as a group"
-msgstr "保存当前已过滤的装备列表为一组"
+msgstr "将当前已过滤的装备列表保存为一个组"
 
 msgid "Refresh Outfits"
 msgstr "刷新装备"
 
 msgid "Reloads outfit list"
-msgstr "重新载入装备列表"
+msgstr "重新加载装备列表"
 
 msgid "Select None"
 msgstr "清除选择"
@@ -159,7 +160,7 @@ msgid "Please enter a name for the new preset:"
 msgstr "请为新预设输入一个名字："
 
 msgid "Select groups to assign to the new preset:"
-msgstr "为新预设分配组："
+msgstr "选择要分配新预设的组："
 
 msgid "Deletes a project from its project file"
 msgstr "从项目文件中删除项目"
@@ -168,7 +169,7 @@ msgid "Delete Project"
 msgstr "删除项目"
 
 msgid "Do you really wish to delete the selected project?"
-msgstr "你真的要删除所选的项目吗？"
+msgstr "你真的要删除被选的项目吗？"
 
 msgid "Deletes a preset from its preset file"
 msgstr "从预设文件中删除预设"
@@ -177,7 +178,7 @@ msgid "Delete Preset"
 msgstr "删除预设"
 
 msgid "Do you really wish to delete the selected preset?"
-msgstr "你真的要删除所选的预设吗"
+msgstr "你真的要删除被选的预设吗？"
 
 msgid "&Save"
 msgstr "&保存"
@@ -190,7 +191,7 @@ msgstr "&取消"
 
 msgid ""
 "Choose a group and add or remove members by selecting them in the lists."
-msgstr "选择一个组，从列表中增加或移除选中的成员。"
+msgstr "选择一个组，并通过在列表中选取来增加或移除成员。"
 
 msgid "Select a group XML file"
 msgstr "选择一个组的 XML 文件"
@@ -225,7 +226,7 @@ msgstr "保存更改"
 msgid ""
 "Do you really want to close the group manager? All unsaved changes will be "
 "lost."
-msgstr "你确定关闭管理器身形管理器吗?所有未保存的内容都会丢失"
+msgstr "你确定关闭管理器身形管理器吗?所有未保存的内容都会丢失。"
 
 msgid "Batch Build"
 msgstr "批量建立"
@@ -233,7 +234,7 @@ msgstr "批量建立"
 msgid ""
 "Select the slider sets for the batch build process. Use the group and outfit "
 "filters to show the outfits you want!"
-msgstr "为批量建立选择滑块设置。使用组和装备过滤器来显示你想要的装备！"
+msgstr "为批量建立选择滑块集。使用组和装备过滤器来显示你想要的装备！"
 
 msgid "&Build"
 msgstr "&建立"
@@ -245,7 +246,7 @@ msgid "Target Game"
 msgstr "目标游戏"
 
 msgid "Choose the target game you want to use the program for here."
-msgstr "选择你想使用这个程序的目标游戏。"
+msgstr "选择你想使用此程序的目标游戏。"
 
 msgid "Fallout 3"
 msgstr "辐射3"
@@ -266,10 +267,10 @@ msgid "Game Data Path"
 msgstr "游戏数据路径"
 
 msgid "Select the data path of the game..."
-msgstr "选择这个游戏的数据路径..."
+msgstr "选择此游戏的数据路径..."
 
 msgid "Data path to load textures from."
-msgstr "数据路径用来载入材质和建立文件。"
+msgstr "用来加载材质（和建立文件）的数据路径。"
 
 msgid "Output Path"
 msgstr "输出路径"
@@ -279,7 +280,7 @@ msgstr "选择输出路径......"
 
 msgid ""
 "Data path to build files to. If empty, Game Data Path will be used instead."
-msgstr "构建文件时的数据路径。 如果不填，则默认使用游戏数据路径。"
+msgstr "建立文件所用的数据路径。 留空则使用游戏数据路径。"
 
 msgid "General"
 msgstr "常规"
@@ -287,14 +288,14 @@ msgstr "常规"
 msgid ""
 "Enables/disables the dialog for choosing which set to build during a batch "
 "build if overrides happen."
-msgstr "开启/关闭在批量建立覆盖发生时的选择对话框。"
+msgstr "开启/关闭在批量建立发生覆盖时的设置选择对话框。"
 
 msgid "Override Warning"
 msgstr "覆盖警告"
 
 msgid ""
 "Enables/disables scanning BSAs in the game data folder for textures to load."
-msgstr "开启/关闭在游戏数据目录中扫描BSA来载入材质。"
+msgstr "开启/关闭扫描游戏数据目录中的BSA以获取要加载的材质。"
 
 msgid "BSA Textures"
 msgstr "BSA材质"
@@ -302,7 +303,7 @@ msgstr "BSA材质"
 msgid ""
 "Enables/disables panning the camera with the left mouse button in Outfit "
 "Studio."
-msgstr "开启/关闭模型编辑器中用鼠标左键平移相机。"
+msgstr "开启/关闭用鼠标左键平移Outfit Studio中的相机。"
 
 msgid "Left Mouse Pan"
 msgstr "鼠标左键平移"
@@ -311,29 +312,29 @@ msgid "Data Files"
 msgstr "数据文件"
 
 msgid "Reference Skeleton"
-msgstr "参照骨骼"
+msgstr "参照骨架"
 
 msgid "File"
 msgstr "文件"
 
 msgid "Select a reference skeleton .nif file..."
-msgstr "选择一个参照骨骼.nif文件..."
+msgstr "选择一个参照骨架.nif文件..."
 
 msgid "The reference skeleton file for Outfit Studio."
-msgstr "模型编辑器的参照骨骼文件。"
+msgstr "Outfit Studio的参照骨架文件。"
 
 msgid "Root Node"
 msgstr "根结点"
 
 msgid ""
 "The root node name of the reference skeleton. Can differ from game to game."
-msgstr "参照骨架的根节点名称。 可以从不同的游戏到游戏。"
+msgstr "参照骨架的根节点名称。 不同游戏之间可能不同。"
 
 msgid "Close"
 msgstr "关闭"
 
 msgid "Brush Settings"
-msgstr "笔刷权重"
+msgstr "笔刷设置"
 
 msgid "Size"
 msgstr "尺寸"
@@ -348,7 +349,7 @@ msgid "Spacing"
 msgstr "间距"
 
 msgid "Meshes"
-msgstr "模型"
+msgstr "网格"
 
 msgid "Bones"
 msgstr "骨骼"
@@ -375,13 +376,13 @@ msgid "Directional 3"
 msgstr "方向3"
 
 msgid "De-/Select Sliders"
-msgstr "权限/取消滑块"
+msgstr "取消/选定滑块"
 
 msgid "Fixed Weight Brush"
-msgstr "固定权重笔刷"
+msgstr "固定权重（Fixed Weight）笔刷"
 
 msgid "Preview Scaling"
-msgstr "缩放预览"
+msgstr "预览缩放"
 
 msgid "Menu"
 msgstr "菜单"
@@ -393,47 +394,48 @@ msgid "Create a new outfit project."
 msgstr "创建一个新的装备项目。"
 
 msgid "Load Project..\tCtrl+O"
-msgstr "打开项目..\\tCtrl+O"
+msgstr "加载项目..\\tCtrl+O"
 
 msgid "Load a project."
-msgstr "打开一个项目。"
+msgstr "加载一个项目。"
 
 msgid "Add Project..\tCtrl+Shift+O"
-msgstr "载入参照..."
+msgstr "添加项目... Ctrl+Shift+O"
 
 msgid "Add a project without replacing the current one."
-msgstr "载入一个新的参照滑块集，取代任何现有的参照物体。"
+msgstr "在不替换当前项目的情况下添加项目。"
 
 msgid "Load Reference..."
-msgstr "载入装备..."
+msgstr "加载参照..."
 
 msgid ""
 "Load a new reference slider set, replacing any current reference objects."
-msgstr "载入一个NIF文件来修改，取代任何当前的装备物体。"
+msgstr "加载一个新的参考滑块集，取代任何当前的参考项目。"
 
 msgid "Load Outfit..."
-msgstr "加载预设"
+msgstr "加载服装..."
 
 msgid ""
 "Load a NIF file as the working outfit, replacing any current outfit objects."
-msgstr "加载NIF文件作为本次的预设，替换当前的项目对象。"
+msgstr "加载一个NIF文件作为工作装备，替换任何当前的装备对象。"
 
 msgid ""
 "Disable for a different way of loading NIF files to see if that puts it into "
 "the right (or a better) spot."
-msgstr "禁用选项会采用不同的方式载入NIF文件，来使它放入正确（更好）的场景。"
+msgstr ""
+"禁用以采用不同的方式加载NIF文件，以查看是否能把它放入正确（或更好）的场景。"
 
 msgid "Save Project\tCtrl+S"
-msgstr "保存\tCtrl+S"
+msgstr "保存项目\tCtrl+S"
 
 msgid "Save the project."
-msgstr "保存"
+msgstr "保存项目。"
 
 msgid "Save Project As...\tCtrl+Shift+S"
-msgstr "另存为\tCtrl+Shift+S"
+msgstr "另存项目为\tCtrl+Shift+S"
 
 msgid "Save the project under a new name."
-msgstr "以新的名称保存这个项目。"
+msgstr "以新的名称保存此项目。"
 
 msgid "Import"
 msgstr "导入"
@@ -442,7 +444,7 @@ msgid "From NIF..."
 msgstr "从NIF..."
 
 msgid "Choose a NIF file to import into the project."
-msgstr "选择一个NIF文件导入到项目中。"
+msgstr "选择一个NIF文件来导入到项目中。"
 
 msgid "Import Data"
 msgstr "导入数据"
@@ -458,13 +460,13 @@ msgid "Export"
 msgstr "导出"
 
 msgid "Save the current project as a NIF file (without reference)"
-msgstr "保存当前项目为NIF文件（不带参照）"
+msgstr "将当前项目保存为NIF文件（不带参照）"
 
 msgid "To NIF With Reference..."
 msgstr "到带参照的NIF..."
 
 msgid "Save the current project as a NIF file (including reference)"
-msgstr "保存当前项目为NIF文件（包含参照）"
+msgstr "将当前项目保存为NIF文件（包含参照）"
 
 msgid "Export Data"
 msgstr "导出数据"
@@ -474,7 +476,7 @@ msgstr "导出BSClothExtraData为HKX"
 
 msgid ""
 "Save one of the currently loaded BSClothExtraData blocks to an HKX file."
-msgstr "保存一个当已前载入的BSClothExtraData块为HKX文件。"
+msgstr "保存一个当前已加载的BSClothExtraData块为HKX文件。"
 
 msgid "Make Conversion Reference"
 msgstr "制作转换参照"
@@ -483,14 +485,14 @@ msgid ""
 "Using the current slider settings for the reference shape, create a new "
 "reference that will morph from the current shape back to the base shape."
 msgstr ""
-"在参照模型的基础上使用当前滑块设置，创建一个可以从当前模型变回基础模型的新参"
-"照"
+"在参照模型的基础上使用当前滑块集，创建一个可以从当前模型变回基础模型的新参"
+"照。"
 
 msgid "Exit\tAlt+F4"
 msgstr "退出\tAlt+F4"
 
 msgid "Exit Outfit Studio."
-msgstr "退出模型编辑器。"
+msgstr "退出Outfit Studio。"
 
 msgid "Edit"
 msgstr "编辑"
@@ -502,16 +504,16 @@ msgid "Undo the previous action."
 msgstr "撤消上一个动作。"
 
 msgid "Redo\tCtrl+Y"
-msgstr "恢复\tCtrl+Y"
+msgstr "重做\tCtrl+Y"
 
 msgid "Redo the next undone action."
-msgstr "恢复已撤销的动作。"
+msgstr "重做下一个被撤销的操作。"
 
 msgid "X Mirror\tX"
 msgstr "X镜像\tX"
 
 msgid "Mirror edits across the X axis."
-msgstr "在X轴上镜像编辑"
+msgstr "在X轴上镜像编辑。"
 
 msgid "Edit Connected Only\tC"
 msgstr "仅编辑相连的顶点\tC"
@@ -522,18 +524,18 @@ msgid ""
 msgstr "仅编辑笔刷半径内相连的顶点"
 
 msgid "Global Brush Collision\tB"
-msgstr "全局笔刷笔刷\tB"
+msgstr "全局笔刷处理（Collision）\tB"
 
 msgid ""
 "Allows for the brushes to collide with all currently selected meshes at the "
 "same time"
-msgstr "允许笔刷同时处理所有已选的模型"
+msgstr "允许画笔在同一时间处理所有当前被选网格"
 
 msgid "Recalculate Normals\tR"
 msgstr "重新计算法线\tR"
 
 msgid "Recalculate normals on active mesh"
-msgstr "在选中的网格上重新计算法线"
+msgstr "在激活的网格上重新计算法线"
 
 msgid "View"
 msgstr "视图"
@@ -557,13 +559,13 @@ msgid "Toggle Ghost Mode\tG"
 msgstr "幽灵模式开关\tG"
 
 msgid "Show the active mesh in translucent mode."
-msgstr "以半透明模式显示选中的网格。"
+msgstr "以半透明模式显示被选网格。"
 
 msgid "Show Wireframe\tW"
 msgstr "显示线框\tW"
 
 msgid "Show wireframe on all models."
-msgstr "在所有模型上显示线框。"
+msgstr "显示所有模型上的线框。"
 
 msgid "Enable Lighting\tL"
 msgstr "启用照明\tL"
@@ -575,7 +577,7 @@ msgid "Enable Textures\tT"
 msgstr "启用材质\tT"
 
 msgid "Display texture maps on models."
-msgstr "在模型上显示材质贴图。"
+msgstr "显示模型上的材质贴图。"
 
 msgid "Shape"
 msgstr "模型"
@@ -584,7 +586,7 @@ msgid "From OBJ..."
 msgstr "从OBJ..."
 
 msgid "Import an OBJ file as a new shape in the outfit."
-msgstr "从OBJ文件中导入一个新模型插入装备。"
+msgstr "导入一个OBJ文件作为装备上的新模型。"
 
 msgid "From FBX..."
 msgstr "从FBX..."
@@ -596,25 +598,25 @@ msgid "To NIF..."
 msgstr "到NIF..."
 
 msgid "Export only the selected shapes to a NIF file."
-msgstr "只导出已选模型到一个NIF文件。"
+msgstr "只将被选模型导出到NIF文件。"
 
 msgid "Export selected shapes to NIF"
-msgstr "导出已选模型到NIF"
+msgstr "将被选模型导出到NIF"
 
 msgid "Failed to export selected shapes to NIF file!"
-msgstr "未能导出已选模型到NIF文件！"
+msgstr "未能将被选模型导出到NIF文件！"
 
 msgid "To OBJ..."
 msgstr "到OBJ..."
 
 msgid "Export the current project as an OBJ file."
-msgstr "导出当前项目为一个OBJ文件。"
+msgstr "将当前项目作为OBJ文件导出。"
 
 msgid "To FBX..."
 msgstr "到FBX..."
 
 msgid "Export only the selected shapes to an FBX file."
-msgstr "只导出已选模型为一个FBX文件。"
+msgstr "仅将被选模型导出到FBX文件。"
 
 msgid "UV"
 msgstr "UV"
@@ -635,16 +637,16 @@ msgid "Mirror"
 msgstr "镜像"
 
 msgid "Mirror the selected shapes on the X-axis."
-msgstr "在X轴上镜像选定的形状。"
+msgstr "在X轴上镜像被选形状。"
 
 msgid "Mirror the selected shapes on the Y-axis."
-msgstr "在Y轴上镜像选定的形状。"
+msgstr "在Y轴上镜像被选形状。"
 
 msgid "Mirror the selected shapes on the Z-axis."
-msgstr "在Z轴上镜像选定的形状。"
+msgstr "在Z轴上镜像被选形状。"
 
 msgid "Duplicate..."
-msgstr "复制"
+msgstr "复制..."
 
 msgid "Duplicate the current shape."
 msgstr "复制当前模型。"
@@ -653,13 +655,13 @@ msgid "Rename...\tF2"
 msgstr "重命名... \tF2"
 
 msgid "Change the name of the current shape."
-msgstr "更改当前模型的名称"
+msgstr "更改当前模型的名称。"
 
 msgid "Set Reference"
 msgstr "设置参照"
 
 msgid "Turn the shape into the reference shape of the project."
-msgstr "将这个模型转化为项目的参照模型。"
+msgstr "将此模型转化为项目的参照模型。"
 
 msgid "Move..."
 msgstr "移动..."
@@ -667,19 +669,19 @@ msgstr "移动..."
 msgid ""
 "Apply an offset adjustment to the mesh vertices. This permanently moves "
 "vertices."
-msgstr "应用一个网格顶点的位移调节。这将永久移动顶点。"
+msgstr "对网格顶点调偏（Apply an offset adjustment)。这将永久移动顶点。"
 
 msgid "Scale..."
 msgstr "缩放..."
 
 msgid "Apply a scale adjustment to the shape. This permanently moves vertices."
-msgstr "应用一个模型的缩放。这将永久移动顶点。"
+msgstr "对模型使用缩放调节。这将永久移动顶点。"
 
 msgid "Rotate..."
 msgstr "旋转..."
 
 msgid "Apply a rotation to the mesh vertices. This permanently moves vertices."
-msgstr "应用一个网格顶点的旋转。这将永久移动顶点。"
+msgstr "旋转网格顶点。这将永久移动顶点。"
 
 msgid "Smooth Seam Normals"
 msgstr "平滑接缝法线"
@@ -687,49 +689,49 @@ msgstr "平滑接缝法线"
 msgid ""
 "Smooths edges of seams (usually found at texture borders), disable if this "
 "causes odd normals on the shape."
-msgstr "平滑接缝处的边缘（常见与材质边界），如果法线显示异常的话禁用此选项。"
+msgstr "平滑接缝处的边缘（常见于材质边界），若引起模型法线异常请禁用此选项。"
 
 msgid "Lock Normals"
 msgstr "锁定法线"
 
 msgid ""
 "Locks the mesh normals. Enable if you want to keep custom normals intact."
-msgstr "锁定网格法线。使法线无法被编辑，如需再次编辑可以取消"
+msgstr "锁定网格法线。在希望自定义法线原封不动时启用。"
 
 msgid "Copy Bone Weights"
 msgstr "复制骨骼权重"
 
 msgid "Copies all bone weights from the reference shape to the current shape."
-msgstr "从参照模型复制所有的骨骼权重到当前模型。"
+msgstr "将参照模型中的所有骨骼权重复制到到当前模型。"
 
 msgid "Copy Selected Weights"
-msgstr "复制已选权重"
+msgstr "复制被选权重"
 
 msgid ""
 "Copies selected bone weights from the reference shape to the current shape."
-msgstr "从参照模型复制已选骨骼权重到当前模型。"
+msgstr "从参照模型复制被选骨骼权重到当前模型。"
 
 msgid "Transfer Selected Weights"
-msgstr "转移已选权重"
+msgstr "转移被选权重"
 
 msgid ""
 "Transfers selected weights from the reference shape to the current shape. "
 "Requires same vertex count and order."
-msgstr "从参照模型转移已选权重到当前模型。需要相同的顶点数和顺序。"
+msgstr "将被选权重从参照模型转移到当前模型。需要相同的顶点数和顺序。"
 
 msgid "Mask Weighted Vertices"
-msgstr "遮蔽权重顶点"
+msgstr "遮罩权重顶点"
 
 msgid ""
 "Masks vertices with bone weights, so you can manually assign weights to "
 "unweighted vertices."
-msgstr "遮蔽有骨骼权重的顶点，方便手动处理无权重的顶点"
+msgstr "遮罩有骨骼权重的顶点，方便手动处理无权重的顶点。"
 
 msgid "Delete\tDel"
 msgstr "删除\tDel"
 
 msgid "Removes the currently selected shape from the outfit."
-msgstr "从装备中删除当前已选的模型。"
+msgstr "从装备中删除当前被选模型。"
 
 msgid "Properties..."
 msgstr "属性..."
@@ -737,22 +739,22 @@ msgstr "属性..."
 msgid ""
 "Opens the properties dialog for shader, texture and more settings of the "
 "selected shape."
-msgstr "打开属性对话框来进行所选模型的着色器、材质及更多设置。"
+msgstr "打开被选模型的着色器、材质等设置的属性对话框。"
 
 msgid "Slider"
 msgstr "滑块"
 
 msgid "Conform Selected\tCtrl+C"
-msgstr "应用选择\tCtrl+C"
+msgstr "应用被选\tCtrl+C"
 
 msgid "Conform selected outfit shape to all checked sliders."
-msgstr "将所有已选的滑块应用到选中的装备模型中。"
+msgstr "将被选滑块应用到被选装备模型中。"
 
 msgid "Conform All\tCtrl+Shift+C"
 msgstr "应用所有滑块\tCtrl+Shift+C"
 
 msgid "Conform all outfit shapes to all checked sliders."
-msgstr "将所有已勾选的滑块应用到所有的装备模型中。"
+msgstr "将所有被选滑块应用到所有装备模型中。"
 
 msgid "Set Base Shape"
 msgstr "设置基础模型"
@@ -761,7 +763,7 @@ msgid "Set the current outfit shape as the base shape and clear slider data."
 msgstr "设置当前装备模型为基础模型，并清除滑块数据。"
 
 msgid "Load Preset..."
-msgstr "载入预设..."
+msgstr "加载预设..."
 
 msgid ""
 "Load and preview a slider preset. Inverted sliders will have inverted values."
@@ -792,19 +794,19 @@ msgid "New Zap Slider"
 msgstr "新建修正滑块"
 
 msgid "Create a new Zap slider based on unmasked vertices"
-msgstr "创建一个基于未遮蔽顶点的新修正滑块。"
+msgstr "创建一个基于未遮罩顶点的新修正滑块"
 
 msgid "Import OSD..."
 msgstr "导入OSD..."
 
 msgid "Imports OSD file and creates sliders for shapes with a matching name."
-msgstr "导入OSD文件并创建与模型相匹配的滑块。"
+msgstr "导入OSD文件并为具有匹配名称的模型创建滑块。"
 
 msgid "Export OSD..."
 msgstr "导出OSD..."
 
 msgid "Exports all currently loaded slider data to an OSD file."
-msgstr "导出所有当前已载入的滑块数据为OSD文件。"
+msgstr "将所有当前已加载的滑块数据导出到OSD文件。"
 
 msgid "Import TRI Morphs..."
 msgstr "导入TRI变形..."
@@ -812,7 +814,7 @@ msgstr "导入TRI变形..."
 msgid ""
 "Imports TRI morphs from a TRI file and creates sliders for shapes with a "
 "matching name."
-msgstr "从TRI文件中导入TRI变形并创建对应的滑块。"
+msgstr "从TRI文件中导入TRI变形，并为具有匹配名称的模型创建滑块。"
 
 msgid "Export TRI Morphs..."
 msgstr "导出TRI变形..."
@@ -824,11 +826,11 @@ msgid "Import Slider Data"
 msgstr "导入滑块数据"
 
 msgid "Import BSD..."
-msgstr "导入BSD文件..."
+msgstr "导入BSD..."
 
 msgid ""
 "Import a BodySlide BSD file and overwrites the current shape's slider data."
-msgstr "导入一个BSD文件，并覆盖当前模型的滑块数据。"
+msgstr "导入一个bodyslide BSD文件，并覆盖当前模型的滑块数据。"
 
 msgid "Import OBJ..."
 msgstr "导入OBJ文件..."
@@ -836,7 +838,7 @@ msgstr "导入OBJ文件..."
 msgid ""
 "Import an OBJ file matching the current shape's vertex count, and calculate "
 "slider data from the difference."
-msgstr "导入一个OBJ文件匹配当前模型的顶点数，并从差异中计算滑块数据。"
+msgstr "导入一个与当前模型顶点数匹配的OBJ文件，并根据差值计算滑块数据。"
 
 msgid "Import FBX..."
 msgstr "导入FBX文件..."
@@ -844,7 +846,7 @@ msgstr "导入FBX文件..."
 msgid ""
 "Import an FBX file matching the current shape's vertex count, and calculate "
 "slider data from the difference."
-msgstr "导入一个FBX文件匹配当前模型的顶点数，并从差异中计算滑块数据。"
+msgstr "导入一个与当前模型顶点数匹配的FBX文件，并根据差值计算滑块数据。"
 
 msgid "Export Slider Data"
 msgstr "导出滑块数据"
@@ -853,25 +855,25 @@ msgid "Export BSD..."
 msgstr "导出BSD..."
 
 msgid "Exports the current slider's data as a BodySlide BSD file."
-msgstr "导出当前滑块数据为BSD文件。"
+msgstr "将当前滑块数据作为BSD文件导出。"
 
 msgid "Export OBJ..."
 msgstr "导出OBJ..."
 
 msgid "Export only the selected shapes to an OBJ file."
-msgstr "只导出已选模型为一个OBJ文件。"
+msgstr "只将被选模型导出到OBJ文件。"
 
 msgid "Negate Slider"
-msgstr "否定滑块"
+msgstr "无效化滑块"
 
 msgid "Negates the current slider, reversing it's effect"
-msgstr "否定当前滑块，恢复它产生的影响"
+msgstr "无效化当前滑块，逆转其效果"
 
 msgid "Mask Affected Vertices"
-msgstr "遮蔽受影响顶点"
+msgstr "遮罩受影响顶点"
 
 msgid "Masks the vertices the slider is affecting for all selected shapes."
-msgstr "为所有已选模型遮蔽受滑块影响的顶点"
+msgstr "为所有被选模型遮罩受滑块影响的顶点。"
 
 msgid "Clear Slider Data"
 msgstr "清除滑块数据"
@@ -884,7 +886,7 @@ msgid "Delete Slider"
 msgstr "删除滑块"
 
 msgid "Delete the active slider from the project. (Cannot be undone)"
-msgstr "从项目中删除选中的滑块。（无法撤销）"
+msgstr "从项目中删除被选滑块。（无法撤销）"
 
 msgid "Properties...\tTab"
 msgstr "属性...\tTab"
@@ -902,17 +904,17 @@ msgid "Select\t0"
 msgstr "选择\t0"
 
 msgid "Navigate and select meshes (or vertices in vertex mode)."
-msgstr "浏览并选择网格（或在顶点模式下的顶点"
+msgstr "导航并选择网格（或顶点模式下的顶点）。"
 
 msgid "Mask\t1"
-msgstr "蒙板\t1"
+msgstr "遮罩\t1"
 
 msgid ""
 "Mask vertices to prevent them from being transformed.\n"
 "Hold down the ALT key to remove masking."
 msgstr ""
-"遮蔽顶点以防误操作。\n"
-"按住ALT键移除遮蔽。"
+"遮罩顶点以防误操作。\n"
+"按住ALT键移除遮罩。"
 
 msgid "Inflate\t2"
 msgstr "放大\t2"
@@ -930,7 +932,7 @@ msgid "Move\t4"
 msgstr "移动\t4"
 
 msgid "Move vertices over a plane parallel to the view."
-msgstr "在视图中的一个平面上平移顶点"
+msgstr "在平行于视图的平面上移动顶点。"
 
 msgid "Smooth\t5"
 msgstr "平滑\t5"
@@ -945,22 +947,22 @@ msgid ""
 "Apply animation weight values for the currently selected bone.\n"
 "Hold down the ALT key to weaken the weighting."
 msgstr ""
-"对当前选择的骨骼应用动画权重值。\n"
+"对当前被选骨骼应用动画权重值。\n"
 "按住ALT键减弱权重。"
 
 msgid "Transform\tF"
-msgstr "变形\tF"
+msgstr "变换\tF"
 
 msgid "Shows a transform tool to manipulate shapes and vertices with."
-msgstr "显示变形工具来操作模型和顶点。"
+msgstr "显示变换工具来操作模型和顶点。"
 
 msgid "Pivot\tF"
-msgstr "变形\tF"
+msgstr "枢轴\tF"
 
 msgid ""
 "Shows a pivot that can be moved and makes it the center of mesh operations "
 "like rotation and scale."
-msgstr "显示可以移动的轴，并使其成为网格操作的中心，如旋转和缩放。"
+msgstr "显示可以移动的轴，并使其成为网格操作（如旋转和缩放）的中心。"
 
 msgid "Vertex Edit\tQ"
 msgstr "顶点编辑\tQ"
@@ -970,9 +972,9 @@ msgid ""
 "Click on a vertex to select/unmask it.\n"
 "Hold down CTRL to unselect/mask it."
 msgstr ""
-"允许你从蒙板中选择顶点来添加或删除。\n"
-"点击一个顶点来选择/取消遮蔽它。\n"
-"按住CTRL来取消选择/遮蔽它。"
+"允许你添加或删除遮罩中选择顶点。\n"
+"点击一个顶点来选择/取消遮罩它。\n"
+"按住CTRL来取消选择/遮罩它。"
 
 msgid "Increase Brush Size\tShift++"
 msgstr "增加笔刷尺寸\tShift++"
@@ -999,34 +1001,34 @@ msgid "Decrease brush strength"
 msgstr "减小笔刷强度"
 
 msgid "Mask Less\tA"
-msgstr "减少遮罩\tA"
+msgstr "遮罩减少\tA"
 
 msgid "Mask Less"
-msgstr "减少遮罩"
+msgstr "遮罩减少"
 
 msgid "Mask More\tD"
-msgstr "增加遮罩\tD"
+msgstr "遮罩增加\tD"
 
 msgid "Mask More"
-msgstr "增加遮罩"
+msgstr "遮罩增加"
 
 msgid "Invert Mask\tCtrl+I"
-msgstr "反转蒙板\tCtrl+I"
+msgstr "反转遮罩\tCtrl+I"
 
 msgid "Invert Mask"
-msgstr "反转蒙板"
+msgstr "反转遮罩"
 
 msgid "Clear Mask\tCtrl+A"
-msgstr "清除蒙板\tCtrl+A"
+msgstr "清除遮罩\tCtrl+A"
 
 msgid "Clear Mask"
-msgstr "清除蒙板"
+msgstr "清除遮罩"
 
 msgid "Show Mask\tM"
-msgstr "显示蒙板\tM"
+msgstr "显示遮罩\tM"
 
 msgid "Shade meshes to indicate areas that are currently masked."
-msgstr "遮蔽模型来表明该区域已设置蒙板。"
+msgstr "为网格添加阴影来指示当前已被遮罩的区域。"
 
 msgid "New Project"
 msgstr "新建项目"
@@ -1034,10 +1036,12 @@ msgstr "新建项目"
 msgid ""
 "Create a new project by selecting a reference body slider set, and outfit "
 "model files."
-msgstr "选择一个参照的滑块集来创建新项目和装备模型文件。"
+msgstr ""
+"选择一个参照滑块集和装备模型文件以新建一个项目。（Create a new project by "
+"selecting a reference body slider set, and outfit model files.)"
 
 msgid "Load Project"
-msgstr "打开项目"
+msgstr "加载项目"
 
 msgid "Load a previously created slider set for editing."
 msgstr "打开一个上次创建的滑块集来编辑。"
@@ -1046,7 +1050,7 @@ msgid "Select"
 msgstr "选择"
 
 msgid "Mask"
-msgstr "蒙板"
+msgstr "遮罩"
 
 msgid "Inflate"
 msgstr "放大"
@@ -1067,14 +1071,14 @@ msgid ""
 "Apply animation weight values for currently selected bone.\n"
 "Hold down the ALT key to weaken the weighting."
 msgstr ""
-"对当前选择的骨骼应用动画权重值。\n"
+"对当前被选骨骼应用动画权重值。\n"
 "按住ALT键减弱权重。"
 
 msgid "Transform"
 msgstr "变形"
 
 msgid "Pivot"
-msgstr "枢纽"
+msgstr "枢轴"
 
 msgid "Vertex Edit"
 msgstr "顶点编辑"
@@ -1093,7 +1097,7 @@ msgstr "全局笔刷\tC"
 msgid ""
 "Allows for the brushes to collide with all currently selected meshes at the "
 "same time."
-msgstr "允许笔刷同时处理所有已选的模型。"
+msgstr "允许笔刷同时处理所有被选模型。"
 
 msgid "View Front"
 msgstr "前视图"
@@ -1154,7 +1158,7 @@ msgid "Apply a vertex position"
 msgstr "应用顶点位置"
 
 msgid "This permanently moves a single vertex straight to the given location."
-msgstr "直接移动顶点到给定的位置。"
+msgstr "这会直接将顶点移动到给定的位置。"
 
 msgid ""
 "Welcome to the New Project wizard!\n"
@@ -1165,7 +1169,7 @@ msgstr ""
 "欢迎使用新项目向导！\n"
 "\n"
 "首先，请选择一个参照。一般来说，这是一个身形（比如CBBE）或者一个转换设置（比"
-"如原版到 CBBE）和它们附带的滑块。"
+"如原版到 CBBE），并且附带其滑块。"
 
 msgid "Reference"
 msgstr "参照"
@@ -1189,7 +1193,7 @@ msgid "Clear Reference"
 msgstr "清除参照"
 
 msgid "Next, select an outfit/mesh to work on and enter a display name for it."
-msgstr "然后，选择一个要修改的装备/模型，并为它起一个名称。"
+msgstr "然后，选择一个要处理的装备/网格，并输入它的显示名称。"
 
 msgid "Display Name"
 msgstr "显示名称"
@@ -1198,10 +1202,10 @@ msgid "New Outfit"
 msgstr "新装备"
 
 msgid "Outfit/Mesh"
-msgstr "装备/模型"
+msgstr "装备/网格"
 
 msgid "Select a file to load as an outfit/mesh"
-msgstr "选择一个文件来载入装备/模型。 "
+msgstr "选择一个文件作为装备/网格加载 。"
 
 msgid "Clear Outfit"
 msgstr "清除装备"
@@ -1222,10 +1226,10 @@ msgid "Choose a preset:"
 msgstr "选择一个预设："
 
 msgid "Low weight"
-msgstr "最小体重"
+msgstr "最小重量"
 
 msgid "High weight"
-msgstr "最大体重"
+msgstr "最大重量"
 
 msgid "Set Shape Textures"
 msgstr "设置模型材质"
@@ -1236,30 +1240,30 @@ msgstr "显示材质："
 msgid ""
 "Applies the current diffuse texture path to the Outfit Studio display "
 "texture path."
-msgstr "应用当前漫反射贴图路径到模型编辑器材质路径。"
+msgstr "将当前漫反射材质的路径应用到Outfit Studio显示材质的路径。"
 
 msgid "Apply Diffuse"
-msgstr "应用漫反射："
+msgstr "应用漫反射"
 
 msgid "Load Reference"
-msgstr "载入参照"
+msgstr "加载参照"
 
 msgid ""
 "Please choose a reference. Typically, this is a body (such as CBBE) or a "
 "conversion set (such as Vanilla To CBBE) and comes with its sliders."
 msgstr ""
 "请选择一个参照。一般来说，这是一个身形（比如CBBE）或者一个转换设置（比如原版"
-"到 CBBE）和它们附带的滑块。"
+"到 CBBE），并附带其滑块。"
 
 msgid "Merge new sliders with existing sliders"
-msgstr "合并新滑块集到现有滑块集"
+msgstr "将新滑块集与现有滑块集合并"
 
 msgid "Load Outfit"
-msgstr "载入装备"
+msgstr "加载装备"
 
 msgid ""
 "Please select an outfit/mesh to work on and enter a display name for it."
-msgstr "请选择一个要修改的装备/模型，并为它起一个名称。"
+msgstr "请选择一个要处理的装备/模型，并输入它的显示名称。"
 
 msgid "Keep other shapes"
 msgstr "保留其他模型"
@@ -1274,25 +1278,25 @@ msgid "From Project"
 msgstr "从项目"
 
 msgid "Delete bone(s) from all shapes of the project."
-msgstr "删除项目中所有模型的骨头。"
+msgstr "删除项目中所有模型的骨骼。"
 
 msgid "From Selected Shapes"
-msgstr "从已选模型"
+msgstr "从被选模型"
 
 msgid "Delete bone(s) from only the selected shapes."
-msgstr "删除项目中已选模型的骨头。"
+msgstr "删除项目中被选模型的骨骼。"
 
 msgid "From Skeleton..."
-msgstr "从骨骼..."
+msgstr "从骨架..."
 
 msgid "Choose a bone from the reference skeleton to add to the project."
-msgstr "从参照骨骼中选择一个骨头添加到项目。"
+msgstr "从参照骨架中选择一个骨骼添加到项目。"
 
 msgid "Custom Bone..."
-msgstr "自定义骨头..."
+msgstr "自定义骨骼..."
 
 msgid "Add a custom bone to the project."
-msgstr "添加一个自定义骨头到项目。"
+msgstr "将一个自定义骨骼添加到项目。"
 
 msgid "Select a bone to add"
 msgstr "选择一个骨骼来添加"
@@ -1301,7 +1305,7 @@ msgid "Bones in the current reference skeleton:"
 msgstr "当前参考骨架中的骨骼："
 
 msgid "Add Custom Bone"
-msgstr "添加自定义骨头"
+msgstr "添加自定义骨骼"
 
 msgid "Name"
 msgstr "名字"
@@ -1322,7 +1326,7 @@ msgid "High"
 msgstr "最大"
 
 msgid "Zapped"
-msgstr "旋转一圈"
+msgstr "旋转一圈（Zapped）"
 
 msgid "Options"
 msgstr "选项"
@@ -1337,13 +1341,13 @@ msgid "Zap"
 msgstr "修正"
 
 msgid "Save Project As..."
-msgstr "保存项目为..."
+msgstr "将项目保存为..."
 
 msgid "The name of the outfit and slider set, as it will appear in BodySlide."
-msgstr "装备和滑块集的名称，它会在BodySlide中显示。"
+msgstr "装备和滑块集的名称，它也会在BodySlide中显示。"
 
 msgid "Copies the current display name to the project text fields below."
-msgstr "复制当前显示名称到下面项目文本框。"
+msgstr "将当前显示名称复制到下面的项目文本字段。"
 
 msgid "To Project"
 msgstr "到项目"
@@ -1356,8 +1360,8 @@ msgid ""
 "BodySlide builds it. Should not include _1 or _0 in the name, e.g: "
 "lovelydress"
 msgstr ""
-"Bodyslide建立装备文件时会以这个名称命名。不要在名称里包含_1或_0，例如："
-"lovelydress"
+"Bodyslide建立装备时，装备文件最终会出现在游戏数据路径的名称。不要在名称里包含"
+"_1或_0，例如：lovelydress"
 
 msgid "_0/_1.nif"
 msgstr "_0/_1.nif"
@@ -1369,26 +1373,26 @@ msgid ""
 "The location in the game's data path where BodySlide-built outfit files will "
 "be placed, e.g: meshes\\clothes\\lovelydress"
 msgstr ""
-"BodySlide创建的装备文件在游戏数据中的路径，例如：meshes\\clothes\\lovelydress"
+"BodySlide创建的装备文件将被放置于游戏数据路径中的位置，例如："
+"meshes\\clothes\\lovelydress"
 
 msgid ""
 "If this is enabled, BodySlide creates a low and high weight model when it "
 "generates the final outfit."
 msgstr ""
-"如果启用此项，当Bodyslide最终生成装备时，将会创建最小体重和最大体重的模型文"
-"件。"
+"若启用此项，当Bodyslide生成最终装备时，将会创建最小重量和最大重量的模型文件。"
 
 msgid "Low/High Weight Output"
-msgstr "最小/最大体重输出"
+msgstr "最小/最大重量输出"
 
 msgid ""
 "If this is enabled, only one output file will be created (useful for single-"
 "weighted things like hair)."
 msgstr ""
-"如果启用此项，只会创建一个输出文件（对于像头发这样的单权重的东西很有用）。"
+"若启用此项，只会创建一个输出文件（对于像头发这样的单一权重的东西很有用）。"
 
 msgid "Single Weight Output"
-msgstr "单体重输出"
+msgstr "单重量输出"
 
 msgid "Project"
 msgstr "项目"
@@ -1408,7 +1412,7 @@ msgstr "模型数据文件夹"
 msgid ""
 "The folder where all the slider data will go, as well as the base outfit NIF "
 "file."
-msgstr "所有滑块数据存放的位置，也包含基础装备的NIF文件。"
+msgstr "所有滑块数据和基础装备NIF文件存放的位置。"
 
 msgid "Select slider data folder"
 msgstr "选择滑块数据文件夹"
@@ -1417,30 +1421,30 @@ msgid "Shape Data File"
 msgstr "模型数据文件"
 
 msgid "The name of the output's base NIF file."
-msgstr "输出NIF文件的名称。"
+msgstr "输出端的NIF基础文件的名称。"
 
 msgid "Select output NIF file name"
-msgstr "选择输出NIF文件名称"
+msgstr "选择输出端NIF文件名称"
 
 msgid ""
 "Outfits require the reference body to be a part of the output file. Disable "
 "this if you've already copied the reference over or you don't want it "
 "included."
 msgstr ""
-"装备需要参照身体作为输出文件的一部分。禁用此选项，如果你已经复制了参照或者你"
-"不希望它包含在内。"
+"装备需要参照身体作为输出文件的一部分。若你已复制了参照或者你不希望它包含在"
+"内，请禁用此选项，。"
 
 msgid "Copy reference shape into output"
-msgstr "输出时复制参照模型"
+msgstr "将参照模型复制到输出端"
 
 msgid "Shape Properties"
 msgstr "模型属性"
 
 msgid "Material"
-msgstr "材质"
+msgstr "材料"
 
 msgid "Choose material file"
-msgstr "选择材质文件"
+msgstr "选择材料文件"
 
 msgid "Shader"
 msgstr "着色器"
@@ -1461,7 +1465,7 @@ msgid "Emissive Color"
 msgstr "自发光颜色"
 
 msgid "Emissive Multiple"
-msgstr "自发光系数"
+msgstr "自发光倍数"
 
 msgid "Remove"
 msgstr "移除"
@@ -1506,7 +1510,7 @@ msgid "Add Partition..."
 msgstr "添加分区..."
 
 msgid "Adds a new partition to the shape."
-msgstr "添加新分区到模型。"
+msgstr "将新分区添加到模型。"
 
 msgid "Delete Partition..."
 msgstr "删除分区..."
@@ -1518,10 +1522,10 @@ msgid "FBX Import Options..."
 msgstr "FBX导入选项..."
 
 msgid "Invert U"
-msgstr "反转U轴"
+msgstr "反转U（轴）"
 
 msgid "Invert V"
-msgstr "反转V轴"
+msgstr "反转V（轴）"
 
 msgid "Toggle:"
 msgstr "切换："
@@ -1538,14 +1542,14 @@ msgid ""
 "always require manual tweaking to become weighted and work well. Often, the "
 "default values are sufficient."
 msgstr ""
-"参照中的每个顶点将会复制它的权重到给定范围最近的顶点集合。要牢记一些结构将总"
-"是需要手动调整权重来更好的工作。通常情况下，默认值是足够的。"
+"参照中的每个顶点将会复制它的权重到给定半径内最近的顶点集合。要牢记一些几何结"
+"构将总是需要手动调整来权重化和更好的工作。默认值通常是足够的。"
 
 msgid ""
 "Bone information incomplete. Exported data will not contain correct bone "
 "entries! Be sure to load a reference NIF prior to export."
 msgstr ""
-"骨骼信息不完整。导出数据不包含正确的骨骼条目！请确保在导出之前加载一个参照"
+"骨骼信息不完整。导出数据将不包含正确的骨骼条目！确保在导出之前加载一个参照"
 "NIF。"
 
 msgid "Export Warning"
@@ -1563,9 +1567,9 @@ msgid ""
 "Please launch the program with admin elevation and make sure the game data "
 "path in the settings is correct."
 msgstr ""
-"没有游戏数据路径的读/写权限\n"
+"没有游戏数据路径的读/写权限！\n"
 "\n"
-"请使用管理员权限启动程序，并确保游戏数据路径的设置是正确的"
+"请使用管理员权限启动程序，并确保游戏数据路径的设置是正确的。"
 
 msgid "Warning"
 msgstr "警告"
@@ -1591,11 +1595,11 @@ msgstr "致命异常"
 msgid ""
 "Failed to find game install path registry value or GameDataPath in the "
 "config."
-msgstr "没有找到游戏安装路径的注册表值或配置中的游戏数据路径。"
+msgstr "未能在配置中找到游戏安装路径的注册表值或GameDataPath。"
 
 msgid ""
 "Failed to find game install path registry key or GameDataPath in the config."
-msgstr "没有找到游戏安装路径的注册表键或配置中的游戏数据路径。"
+msgstr "未能在配置中找到游戏安装路径的注册表项或游戏数据路径。"
 
 msgid "System language '%d' is wrong."
 msgstr "系统语言'%d'是错误的。"
@@ -1603,15 +1607,15 @@ msgstr "系统语言'%d'是错误的。"
 msgid ""
 "The system language '%d' is not supported by your system. Try installing "
 "support for this language."
-msgstr "系统语言'%d'不支持你的系统。试着安装这种语言的支持。"
+msgstr "系统语言'%d'不支持你的系统。试着为这种语言安装支持。"
 
 msgid "Failed to create group file."
-msgstr "创建组文件失败。"
+msgstr "未能创建组文件。"
 
 msgid ""
 "That group already exists in the specified file, do you wish to overwrite "
 "the group?"
-msgstr "该组在指定的文件中已经存在，你想覆盖这个组吗？"
+msgstr "该组已经在指定的文件中存在，你想覆盖此组吗？"
 
 msgid "Group already exists"
 msgstr "组已存在"
@@ -1619,13 +1623,13 @@ msgstr "组已存在"
 msgid ""
 "WARNING: Game data path not configured. Would you like to show BodySlide "
 "where it is?"
-msgstr "警告：游戏数据路径未配置。你想告诉BodySlide它在哪儿吗？"
+msgstr "警告：游戏数据路径未配置。你要告诉BodySlide它在哪儿吗？"
 
 msgid "Game not found"
 msgstr "未发现游戏"
 
 msgid "Please choose a directory to set as your Data path"
-msgstr "请选择一个目录来设置你的数据路径"
+msgstr "请选择一个目录来设置为你的数据路径"
 
 msgid ""
 "WARNING: This will delete the output files from the output folder, "
@@ -1633,7 +1637,7 @@ msgid ""
 "\n"
 "Do you want to continue?"
 msgstr ""
-"警告：这将从输出文件夹删除输出文件，可能会导致崩溃。\n"
+"警告：这将从输出文件夹中删除输出文件，可能会导致崩溃。\n"
 "\n"
 "你想要继续吗？"
 
@@ -1641,20 +1645,20 @@ msgid "Clean Build"
 msgstr "清除建立"
 
 msgid "Removed the following files:\n"
-msgstr "删除以下文件：\n"
+msgstr "移除以下文件：\n"
 
 msgid " (no action)\n"
 msgstr "（无操作）\n"
 
 msgid "Process Successful"
-msgstr "处理成功"
+msgstr "步骤成功"
 
 msgid ""
 "Failed to write TRI file to the following location\n"
 "\n"
 "%s"
 msgstr ""
-"未能写入TRI文件到以下位置\n"
+"未能将TRI文件写入以下位置\n"
 "\n"
 "%s"
 
@@ -1666,12 +1670,12 @@ msgid ""
 "\n"
 "%s"
 msgstr ""
-"未能建立设置到以下的位置\n"
+"未能将设置建立到以下的位置\n"
 "\n"
 "%s"
 
 msgid "Choose alternate file name"
-msgstr "选择替换的文件名"
+msgstr "选择可选（alternate)文件名"
 
 msgid "Successfully processed the following files:\n"
 msgstr "成功处理以下文件：\n"
@@ -1682,7 +1686,7 @@ msgid ""
 "\n"
 "Do you want to continue?"
 msgstr ""
-"警告：这将从多个输出文件夹删除输出文件，可能会导致崩溃。\n"
+"警告：这将从输出文件夹删除（各）输出文件，可能会导致崩溃。\n"
 "\n"
 "你想要继续吗？"
 
@@ -1691,7 +1695,7 @@ msgstr "清除批量建立"
 
 msgid ""
 "WARNING: Game data path not configured. Files can't be removed that way."
-msgstr "警告：游戏数据路径未配置。文件不能被删除。"
+msgstr "警告：游戏数据路径未配置。这样文件就不能被删除。"
 
 msgid ""
 "WARNING: Game data path not configured. Continue saving files to the working "
@@ -1712,19 +1716,19 @@ msgid "Processing Outfits"
 msgstr "处理装备"
 
 msgid "Starting..."
-msgstr "开始..."
+msgstr "正在开始..."
 
 msgid "Processing '%s' (%d of %d)..."
-msgstr "正在处理'%s'（%d的%d）..."
+msgstr "处理'%s'（%d的%d）中..."
 
 msgid "No recorded outfit name source"
-msgstr "没有记录装备的名称来源"
+msgstr "没有记录的装备名称来源"
 
 msgid "Unable to get slider set from file: "
-msgstr "无法从文件得到滑块设置："
+msgstr "无法从文件得到滑块集："
 
 msgid "Unable to open slider set file: "
-msgstr "无法打开滑块设置文件："
+msgstr "无法打开滑块集文件："
 
 msgid "Unable to load input nif: "
 msgstr "无法加载输入nif："
@@ -1736,13 +1740,13 @@ msgid "Unable to save nif file: "
 msgstr "无法保存nif文件："
 
 msgid "All group build sets processed successfully!"
-msgstr "所有组建立设置处理成功！"
+msgstr "所有组建立集(group build sets)处理成功！"
 
 msgid "Complete"
 msgstr "完成"
 
 msgid "The following sets failed"
-msgstr "以下设置失败"
+msgstr "以下集（sets）失败"
 
 msgid "Failed"
 msgstr "失败"
@@ -1766,10 +1770,10 @@ msgid "Outfit Filter"
 msgstr "装备过滤器"
 
 msgid "Filter by outfit"
-msgstr "通过组来过滤"
+msgstr "通过装备来过滤"
 
 msgid "Choose groups to filter outfit list"
-msgstr "选择组来过滤装备列表"
+msgstr "选择用于过滤装备列表的组"
 
 msgid "Choose Groups"
 msgstr "选择组"
@@ -1784,52 +1788,52 @@ msgid "New Group Name"
 msgstr "新组名"
 
 msgid "Failed to save preset (%d)!"
-msgstr "保存预置(%d)失败！"
+msgstr "未能保存预置(%d)！"
 
 msgid "Failed to save preset as '%s' (%d)!"
-msgstr "保存预设为'%s' (%d)失败！"
+msgstr "未能保存预设为'%s' (%d)！"
 
 msgid "Choose a folder to contain the saved files"
-msgstr "选择一个目录保存文件"
+msgstr "选择一个目录来容纳保存的文件"
 
 msgid "All sets processed successfully!"
-msgstr "所有设置处理成功！"
+msgstr "所有集（sets）处理成功！"
 
 msgid "OpenGL Error"
 msgstr "OpenGL错误"
 
 msgid "Checking destination..."
-msgstr "检查目标..."
+msgstr "检查目标中..."
 
 msgid "Adding reference shapes..."
-msgstr "添加参照模型..."
+msgstr "添加参照模型.中.."
 
 msgid "Adding outfit shapes..."
-msgstr "添加装备模型..."
+msgstr "添加装备模型中..."
 
 msgid "Calculating slider data..."
-msgstr "计算滑块数据..."
+msgstr "计算滑块数据中..."
 
 msgid "Creating slider set file..."
-msgstr "创建滑块设置文件..."
+msgstr "创建滑块集文件中..."
 
 msgid "Failed to open or create slider set file: "
-msgstr "未能打开或创建滑块设置文件："
+msgstr "未能打开或创建滑块集文件："
 
 msgid "Saving slider set file..."
-msgstr "保存滑块设置文件..."
+msgstr "保存滑块集文件中..."
 
 msgid "Failed to write to slider set file: "
-msgstr "未能写入滑块设置文件："
+msgstr "未能写入滑块集文件："
 
 msgid "Saving NIF file..."
-msgstr "保存NIF文件..."
+msgstr "保存NIF文件中..."
 
 msgid "Failed to write base .nif file: "
-msgstr "写入基础.nif文件失败："
+msgstr "未能写入基础.nif文件："
 
 msgid "Finished"
-msgstr "完成"
+msgstr "已完成"
 
 msgid "Could not load OBJ file '%s'!"
 msgstr "无法加载OBJ文件'%s'！"
@@ -1845,8 +1849,8 @@ msgid ""
 "outfit shape.  Do you wish to update the current shape?  (click No to create "
 "a new shape)"
 msgstr ""
-"所选.obj文件的顶点数与当前所选装模型相匹配。您想更新当前模型吗？（点击否将创"
-"建一个新模型）"
+"被选.obj文件的顶点数与当前被选装备模型相匹配。您想更新当前模型吗？（点击否以"
+"创建一个新模型）"
 
 msgid "Merge or New"
 msgstr "合并或新建"
@@ -1873,16 +1877,16 @@ msgid "Import Data Error"
 msgstr "导入数据错误"
 
 msgid "Gathering bones..."
-msgstr "正在聚集骨骼..."
+msgstr "聚集骨骼中..."
 
 msgid "Initializing proximity data..."
-msgstr "正在初始化邻近数据..."
+msgstr "初始化邻近数据中..."
 
 msgid "Copying bone weights..."
-msgstr "复制骨骼权重..."
+msgstr "复制骨骼权重中..."
 
 msgid "Transferring bone weights..."
-msgstr "转移骨骼权重..."
+msgstr "转移骨骼权重中..."
 
 msgid "Template source entries are invalid."
 msgstr "模板源条目无效。"
@@ -1909,13 +1913,13 @@ msgid "Could not load reference NIF file '%s'!"
 msgstr "无法加载参照NIF文件'%s'！"
 
 msgid "Could not load slider set file '%s'!"
-msgstr "无法加载滑块设置文件'%s'！"
+msgstr "无法加载滑块集文件'%s'！"
 
 msgid "Reference NIF file '%s' does not contain any shapes."
 msgstr "参照NIF文件'%s'没有包含任何模型。"
 
 msgid "Shape '%s' not found in reference NIF file '%s'!"
-msgstr "参照NIF文件'%s'中未找到模型'%s'！"
+msgstr "模型 '%s'未能在参照NIF文件 '%s'中找到！"
 
 msgid "NIF Error"
 msgstr "NIF错误"
@@ -1924,24 +1928,26 @@ msgid "Could not load NIF file '%s'!"
 msgstr "无法加载NIF文件'%s'！"
 
 msgid "Loading slider set..."
-msgstr "载入滑块设置..."
+msgstr "加载滑块集中..."
 
 msgid "Adding slider set..."
-msgstr "添加滑块设置......"
+msgstr "添加滑块集中......"
 
 msgid "Retrieving sliders..."
-msgstr "检索滑块..."
+msgstr "检索（各）滑块中..."
 
 msgid "Loading outfit shapes..."
-msgstr "载入装备模型..."
+msgstr "加载装备模型中..."
 
 msgid "Updating slider data..."
-msgstr "更新滑块数据..."
+msgstr "更新滑块数据中..."
 
 msgid ""
 "There was cloth physics data loaded at some point (BSClothExtraData). Please "
 "choose all the origins to use in the output."
-msgstr "布料物理数据已载入（BSClothExtraData）。 请选择所有输出时要用到的源。"
+msgstr ""
+"有布料物理数据被加载在某些点（BSClothExtraData）。请选择所有输出时要用到的"
+"源。"
 
 msgid "Choose cloth data"
 msgstr "选择布料数据"
@@ -1951,8 +1957,8 @@ msgid ""
 "outfit shape.  Do you wish to update the current shape?  (click No to create "
 "a new shape)"
 msgstr ""
-"所选.fbx文件的顶点数与当前所选装模型相匹配。您想更新当前模型吗？（点击否将创"
-"建一个新模型）"
+"被选.fbx文件的顶点数与当前被选装备模型相匹配。您想更新当前模型吗？（点击否以"
+"创建一个新模型）"
 
 msgid "Update Animation Weighting?"
 msgstr "更新动画权重吗？"
@@ -1961,25 +1967,25 @@ msgid "Animation Weight Update"
 msgstr "动画权重更新"
 
 msgid "Failed to load outfitStudio.xrc file!"
-msgstr "加载outfitStudio.xrc文件失败"
+msgstr "加载outfitStudio.xrc文件失败！"
 
 msgid "Failed to load Outfit Studio frame!"
-msgstr "加载模型编辑器框架失败！"
+msgstr "加载Outfit Studio框架失败！"
 
 msgid "Ready!"
-msgstr "准备！"
+msgstr "已准备！"
 
 msgid "Creating sliders..."
-msgstr "创建滑块..."
+msgstr "创建各滑块中..."
 
 msgid "Clearing old sliders..."
-msgstr "清除旧滑块..."
+msgstr "清除各旧滑块中..."
 
 msgid "Loading slider: "
-msgstr "载入滑块："
+msgstr "正在加载滑块："
 
 msgid "Turn on edit mode for this slider."
-msgstr "打开这个滑块的编辑模式。"
+msgstr "为此滑块打开编辑模式。"
 
 msgid "Weaken slider data by 1%."
 msgstr "减弱滑块数据1%。"
@@ -1998,75 +2004,77 @@ msgid ""
 "set all sliders to zero now?  Note, use the pencil button next to a slider "
 "to enable editing of that slider's morph."
 msgstr ""
-"当所有滑块为零时你只能编辑基础模型。你希望现在设置所有滑块为零吗？注意，使用"
-"滑块旁边的铅笔按钮来开启滑块变形编辑。"
+"当所有滑块为零时你只能编辑基础模型。你现在希望设置所有滑块为零吗？注意，使用"
+"滑块旁边的铅笔按钮来开启对该滑块变形的编辑。"
 
 msgid "Creating project '%s'..."
-msgstr "创建项目'%s'..."
+msgstr "创建项目'%s'中..."
 
 msgid "Loading reference..."
-msgstr "载入参照..."
+msgstr "加载参照中..."
 
 msgid "Loading outfit..."
-msgstr "载入装备..."
+msgstr "加载装备中..."
 
 msgid "Creating outfit..."
-msgstr "创建装备..."
+msgstr "创建装备中..."
 
 msgid "Creating %zu slider(s)..."
-msgstr "创建%zu滑块..."
+msgstr "创建（各）%zu滑块中..."
 
 msgid "Select a slider set to load"
-msgstr "选择加载一个滑块设置"
+msgstr "选择要加载的滑块集"
 
 msgid "Select a slider set to add"
-msgstr "选择添加一个滑块"
+msgstr "选择要添加的滑块"
 
 msgid "Failed to open '%s' as a slider set file!"
-msgstr "打开'%s'作为滑块设置文件失败！"
+msgstr "未能将'%s'作为滑块集文件打开！"
 
 msgid "Slider Set Error"
-msgstr "滑块设置错误"
+msgstr "滑块集错误"
 
 msgid "Please choose an outfit to load"
-msgstr "请选择一个装备来加载"
+msgstr "请选择一个要加载的装备"
 
 msgid "Load a slider set"
-msgstr "加载一个滑块设置"
+msgstr "加载一个滑块集"
 
 msgid "Loading project..."
-msgstr "载入项目..."
+msgstr "加载项目中..."
 
 msgid "Loading outfit data..."
-msgstr "载入装备数据..."
+msgstr "加载装备数据中..."
 
 msgid "Failed to create project '%s' from file '%s' (%d)!"
-msgstr "未能创建项目'%s'为文件'%s' (%d)！"
+msgstr "未能创建项目'%s'（从文件'%s' 中）(%d)！"
 
 msgid "Loading reference shape '%s'..."
-msgstr "载入参照模型'%s'..."
+msgstr "加载参照模型'%s'中..."
 
 msgid "Loading textures..."
-msgstr "载入材质..."
+msgstr "加载材质中..."
 
 msgid ""
 "You're currently editing slider data, please exit the slider's edit mode "
 "(pencil button) and try again."
-msgstr "你当前正在编辑滑块数据，请退出滑块编辑模式（铅笔按钮）后再试。"
+msgstr "你当前正在编辑滑块数据，请退出滑块编辑模式（铅笔按钮）并重试。"
 
 msgid "Loading reference set..."
-msgstr "载入参照设置..."
+msgstr "加载参照集中..."
 
 msgid "Creating reference..."
-msgstr "生成参照..."
+msgstr "生成参照中..."
 
 msgid "There are no valid shapes loaded!"
-msgstr "无有效模型被载入！"
+msgstr "无有效模型被加载！"
 
 msgid ""
 "The following shapes have unweighted vertices, which can cause issues. The "
 "affected vertices have been put under a mask. Do you want to save anyway?"
-msgstr "以下定点没有权重，这可能会导致一些问题，你确定要保存吗"
+msgstr ""
+"以下模型含有未加权重的顶点，可能会导致问题。受影响的顶点已被遮罩。你确定要保"
+"存吗？"
 
 msgid "Unweighted Vertices"
 msgstr "移除顶点权重"
@@ -2074,50 +2082,50 @@ msgstr "移除顶点权重"
 msgid ""
 "The following shapes were renamed and won't have slider data attached. "
 "Rename the duplicates yourself beforehand."
-msgstr "以下形状已重命名，并且不会附加滑块数据。 事先重命名重复项。"
+msgstr "以下模型已重命名，并且不会附加滑块数据。请事先重命名重复项。"
 
 msgid "Renamed Shapes"
-msgstr "重命名形状"
+msgstr "重命名模型"
 
 msgid "Saving project '%s'..."
-msgstr "保存项目'%s'..."
+msgstr "保存项目'%s'中..."
 
 msgid "Invalid or no slider set file specified! Please try again."
-msgstr "无效或没有指定滑块设置文件！请重试。"
+msgstr "无效或没有指定的滑块集文件！请重试。"
 
 msgid "No outfit name specified! Please try again."
-msgstr "没有指定装备名！请重试。"
+msgstr "没有指定的装备名！请重试。"
 
 msgid "No data folder specified! Please try again."
-msgstr "没有指定数据目录！请重试。"
+msgstr "没有指定的数据目录！请重试。"
 
 msgid ""
 "An invalid or no base outfit .nif file name specified! Please try again."
-msgstr "无效的或基础装备.nif文件名没有指定！请重试。"
+msgstr "一个无效或无基础装备.nif文件的名称被指定！请重试。"
 
 msgid "No game file path specified! Please try again."
-msgstr "没有指定游戏文件路径！请重试。"
+msgstr "没有游戏文件路径被指定！请重试。"
 
 msgid "No game file name specified! Please try again."
-msgstr "没有指定游戏文件名！请重试。"
+msgstr "没有游戏文件名被指定！请重试。"
 
 msgid "Import NIF file"
 msgstr "导入NIF文件"
 
 msgid "Importing NIF file..."
-msgstr "导入NIF文件..."
+msgstr "导入NIF文件中..."
 
 msgid "Refreshing GUI..."
-msgstr "刷新界面..."
+msgstr "刷新GUI（图形用户界面）中..."
 
 msgid "Finished."
-msgstr "完成。"
+msgstr "已完成。"
 
 msgid "Export outfit NIF"
 msgstr "导出装备NIF"
 
 msgid "Failed to save NIF file '%s'!"
-msgstr "保存NIF文件'%s'失败！"
+msgstr "未能保存NIF文件'%s！"
 
 msgid "Export Error"
 msgstr "导出错误"
@@ -2126,19 +2134,19 @@ msgid "Export project NIF"
 msgstr "导出项目NIF"
 
 msgid "Failed to save NIF file '%s' with reference!"
-msgstr "保存带参照的NIF文件'%s'失败！"
+msgstr "未能保存带参照的NIF文件'%s'！"
 
 msgid "Import physics data to project"
-msgstr "导入物理数据到项目"
+msgstr "将物理数据导入到项目"
 
 msgid "Failed to import physics data file '%s'!"
-msgstr "导入物理数据文件'%s'失败！"
+msgstr "未能导入物理数据文件'%s'！"
 
 msgid "Import Error"
 msgstr "导入错误"
 
 msgid "There is no physics data loaded!"
-msgstr "没有物理数据被载入！"
+msgstr "没有物理数据被加载！"
 
 msgid "Info"
 msgstr "信息"
@@ -2153,10 +2161,10 @@ msgid "Export physics data"
 msgstr "导出物理数据"
 
 msgid "Failed to save physics data file '%s'!"
-msgstr "保存物理数据'%s'失败！"
+msgstr "未能保存物理数据文件'%s'！"
 
 msgid "This function requires at least one slider position to be non-zero."
-msgstr "这个功能需要至少一个滑块不为零。"
+msgstr "此功能需要至少一个滑块不为零。"
 
 msgid ""
 "Create a conversion slider for the current slider settings with the "
@@ -2170,34 +2178,34 @@ msgid "Field of View: %d"
 msgstr "视野：%d"
 
 msgid "There are no sliders loaded!"
-msgstr "没有滑块被载入！"
+msgstr "没有滑块被加载！"
 
 msgid "No changes were made to the sliders, so no preset was saved!"
-msgstr "滑块没有改变，所以预设没有被保存！"
+msgstr "滑块没有被改变，所以预设没有被保存！"
 
 msgid "There is no shape selected!"
-msgstr "没有模型被选中！"
+msgstr "没有被选模型！"
 
 msgid "There is no reference shape!"
-msgstr "没有参考形状！"
+msgstr "没有参考模型！"
 
 msgid "There is no slider in edit mode to import data to!"
-msgstr "编辑模式中没有滑块可导入数据！"
+msgstr "编辑模式中没有可导入数据的滑块！"
 
 msgid "Import .bsd slider data"
 msgstr "导入.bsd滑块数据"
 
 msgid "Import .obj file for slider calculation"
-msgstr "导入.obj文件进行滑块计算"
+msgstr "为滑块计算导入.obj文件"
 
 msgid "Vertex count of .obj file mesh does not match currently selected shape!"
-msgstr ".obj 文件网格的顶点数量与当前已选的模型不匹配！"
+msgstr ".obj 网格文件的顶点数量与当前被选模型不匹配！"
 
 msgid "Import .tri morphs"
 msgstr "导入.tri变形"
 
 msgid "This will delete all loaded sliders. Are you sure?"
-msgstr "这会删除所有已载入的滑块。你确定吗？"
+msgstr "这会删除所有已加载的滑块。你确定吗？"
 
 msgid "TRI Import"
 msgstr "TRI导入"
@@ -2218,7 +2226,7 @@ msgid "Import .fbx file for slider calculation"
 msgstr "为滑块计算导入.fbx文件"
 
 msgid "There is no slider in edit mode to export data from!"
-msgstr "编辑模式中没有滑块可导出数据！"
+msgstr "编辑模式中没有可导出数据的滑块！"
 
 msgid "Export .bsd slider data to directory"
 msgstr "导出.bsd滑块数据到目录"
@@ -2245,13 +2253,13 @@ msgid "Import .osd file"
 msgstr "导入.osd文件"
 
 msgid "Failed to import OSD file!"
-msgstr "导入OSD文件失败！"
+msgstr "未能导入OSD文件！"
 
 msgid "Export .osd file"
 msgstr "导出.osd文件"
 
 msgid "Failed to export OSD file!"
-msgstr "导出OSD文件失败！"
+msgstr "未能导出OSD文件！"
 
 msgid "Export .tri morphs"
 msgstr "导出.tri变形"
@@ -2260,31 +2268,31 @@ msgid "Failed to export TRI file!"
 msgstr "未能导出TRI文件！"
 
 msgid "Are you sure you wish to clear the unmasked slider data "
-msgstr "你确定要重置已经修改的滑块数据吗"
+msgstr "您确定要清除未被遮罩的滑块数据吗"
 
 msgid "for the selected shapes? This cannot be undone."
-msgstr "对于选定的形状?这不能被撤消"
+msgstr "对被选模型?这不能被撤消。"
 
 msgid "Confirm data erase"
-msgstr "确认数据清除"
+msgstr "确认数据擦除"
 
 msgid "for the shape \""
-msgstr "当前形状"
+msgstr "为模型\""
 
 msgid "Enter a name for the new zap:"
-msgstr "为新修正输入一个名称："
+msgstr "为新修正命名："
 
 msgid "Create New Zap"
 msgstr "创建新修正"
 
 msgid "There is no slider in edit mode to negate!"
-msgstr "编辑模式中没有滑块可取消！"
+msgstr "编辑模式中没有可无效化的滑块！"
 
 msgid "There is no slider in edit mode to create a mask from!"
-msgstr "编辑模式中没有滑块可创建遮罩！"
+msgstr "编辑模式中没有可创建遮罩的滑块！"
 
 msgid "Are you sure you wish to delete the selected slider(s)?"
-msgstr "你确定要删除所选的滑块吗(s)"
+msgstr "你确定要删除被选滑块吗(s)"
 
 msgid "\"? This cannot be undone."
 msgstr "\"吗？这无法撤销。"
@@ -2293,10 +2301,10 @@ msgid "Confirm slider delete"
 msgstr "确认滑块删除"
 
 msgid "There is no slider in edit mode to show properties for!"
-msgstr "编辑模式中没有滑块可显示属性！"
+msgstr "编辑模式中没有可显示属性的滑块！"
 
 msgid "Conforming all shapes..."
-msgstr "正在整合所有模型..."
+msgstr "整合所有模型中..."
 
 msgid "Conforming: "
 msgstr "正在整合："
@@ -2308,7 +2316,7 @@ msgid "Conforming..."
 msgstr "整合中..."
 
 msgid "Initializing data..."
-msgstr "初始化数据..."
+msgstr "初始化数据中..."
 
 msgid "Shape(s) conformed."
 msgstr "模型已整合。"
@@ -2317,35 +2325,35 @@ msgid "Import .obj file for new shape"
 msgstr "为新模型导入.obj文件"
 
 msgid "Export selected shapes as an .obj file"
-msgstr "导出已选模型为一个.obj文件"
+msgstr "将被选模型导出为一个.obj文件"
 
 msgid "Export shape as an .obj file"
-msgstr "导出模型为一个.obj文件"
+msgstr "将模型导出为一个.obj文件"
 
 msgid "Export project as an .obj file"
-msgstr "导出项目为一个.obj文件"
+msgstr "将项目导出为一个.obj文件"
 
 msgid "Export project as an .fbx file"
-msgstr "导出项目为一个.fbx文件"
+msgstr "将项目导出为一个.fbx文件"
 
 msgid "Export shape as an .fbx file"
-msgstr "导出模型为一个.fbx文件"
+msgstr "将模型导出为一个.fbx文件"
 
 msgid "Export selected shapes as an .fbx file"
-msgstr "导出已选模型为一个.fbx文件"
+msgstr "将被选模型导出为一个.fbx文件"
 
 msgid "Import .fbx file for new shape"
 msgstr "为新模型导入.fbx文件"
 
 msgid "Please enter a new unique name for the shape."
-msgstr "请为模型输入一个唯一的新名称："
+msgstr "请为模型输入一个独有的的新名称。"
 
 msgid "Rename Shape"
 msgstr "重命名模型"
 
 msgid ""
 "Rotating slider data is currently not possible using the Rotate Shape dialog."
-msgstr "旋转滑块数据目前无法使用旋转模型对话框。"
+msgstr "目前无法使用旋转模型对话框旋转滑块数据。"
 
 msgid "Rotate"
 msgstr "旋转"
@@ -2353,10 +2361,10 @@ msgstr "旋转"
 msgid ""
 "You can only copy shapes into an outfit, and there is no outfit in the "
 "current project. Load one first!"
-msgstr "你只能将模型复制进装备，当前项目中没有装备。请先打开一个！"
+msgstr "你只能将模型复制进装备，且当前项目中没有装备。请先加载一个！"
 
 msgid "Please enter a unique name for the duplicated shape."
-msgstr "请为复制的模型输入一个唯一的名称。"
+msgstr "请为复制的模型命一个独有的名。"
 
 msgid "Duplicate Shape"
 msgstr "复制模型"
@@ -2364,18 +2372,18 @@ msgstr "复制模型"
 msgid ""
 "Are you sure you wish to delete the unmasked vertices of the selected "
 "shapes?  This action cannot be undone."
-msgstr "你确定要删除未遮蔽的模型吗？这个操作无法撤销。"
+msgstr "确定删除未遮罩的模型吗？此操作无法撤销。"
 
 msgid ""
 "Are you sure you wish to delete the selected shapes?  This action cannot be "
 "undone."
-msgstr "你确定要删除选定的模型吗？这个操作无法撤销。"
+msgstr "确定删除被选模型吗？此操作无法撤销。"
 
 msgid "Confirm Delete"
 msgstr "确认删除"
 
 msgid "No bone name was entered!"
-msgstr "没有输入骨骼名称！"
+msgstr "没有骨骼名称被输入！"
 
 msgid "Bone '%s' already exists in the project!"
 msgstr "骨骼'%s'已经存在于项目中！"
@@ -2383,37 +2391,37 @@ msgstr "骨骼'%s'已经存在于项目中！"
 msgid ""
 "Sorry, you can't copy weights from the reference shape to itself. Skipping "
 "this shape."
-msgstr "很抱歉，你无法从参照模型复制选权重到它本身。跳过这个模型。"
+msgstr "抱歉，你无法将参照模型的权重复制到它本身。跳过此模型。"
 
 msgid "Can't copy weights"
 msgstr "无法复制权重"
 
 msgid "Copying selected bone weights..."
-msgstr "复制已选骨骼权重..."
+msgstr "复制被选骨骼权重中..."
 
 msgid "Sorry, you can't copy weights from the reference shape to itself."
-msgstr "很抱歉，你无法从参照模型复制选权重到它本身。 "
+msgstr "对不起，你无法复制参照模型的权重到它本身。 。"
 
 msgid "The vertex count of the reference and chosen shape is not the same!"
-msgstr "参照的顶点数和选择的模型不同！"
+msgstr "参照和被选模型的顶点数不同！"
 
 msgid "Outfit Studio: OpenGL context is not OK."
-msgstr "模型编辑器：OpenGL环境不正常。"
+msgstr "Outfit Studio：OpenGL环境异常。"
 
 msgid "Adding NIF file..."
-msgstr "添加NIF文件..."
+msgstr "添加NIF文件中..."
 
 msgid "Adding OBJ file..."
-msgstr "添加OBJ文件..."
+msgstr "添加OBJ文件中..."
 
 msgid "Adding FBX file..."
-msgstr "添加FBX文件..."
+msgstr "添加FBX文件中..."
 
 msgid "Loading slider file..."
-msgstr "载入滑块文件..."
+msgstr "加载滑块文件中..."
 
 msgid "Preview failed: OpenGL context is not OK."
-msgstr "模型编辑器：OpenGL环境不正常。"
+msgstr "Outfit Studio：OpenGL环境异常。"
 
 msgid "Version"
 msgstr "版本"
@@ -2422,17 +2430,17 @@ msgid ""
 "Version of NIF file doesn't match current target game. To use the meshes for "
 "the target game, export to OBJ/FBX and reload them again."
 msgstr ""
-"NIF文件的版本不匹配当前目标游戏。若要使用这个模型到目标游戏，导出到OBJ/FBX并"
-"再次重新加载它们。"
+"NIF文件的版本不匹配当前目标游戏。若要为目标游戏使用此网格，请导出到OBJ/FBX并"
+"重新加载。"
 
 msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
-msgstr "你想在本阶段将NIF文件对特别版进行优化吗？"
+msgstr "你想在本阶段将NIF文件为特别版进行优化吗？"
 
 msgid "Language"
 msgstr "语言"
 
 msgid "Use the selected language for the program."
-msgstr "为程序使用已选的语言。"
+msgstr "为程序使用被选语言。"
 
 msgid "Rendering"
 msgstr "渲染中"
@@ -2450,26 +2458,26 @@ msgid "Unload Project...\tCtrl+W"
 msgstr "卸载项目..\tCtrl+W"
 
 msgid "Unloads the project and creates an empty new one."
-msgstr "卸载这个项目并创建一个新的。"
+msgstr "卸载此项目并新建一个空项目。"
 
 msgid ""
 "Do you really want to unload the project? All unsaved changes will be lost."
-msgstr "你真的要卸载项目吗？所有未保存的修改将会丢失。"
+msgstr "你真的要卸载项目吗？所有未保存的修改将丢失。"
 
 msgid "Delete Vertices..."
 msgstr "删除顶点..."
 
 msgid "Deletes all unmasked vertices of the currently selected shapes."
-msgstr "删除当前已选模型所有未遮蔽的顶点。"
+msgstr "删除当前被选模型所有未被遮罩的顶点。"
 
 msgid "Separate Vertices..."
 msgstr "分离顶点..."
 
 msgid "Please enter a unique name for the new separated shape."
-msgstr "请为新分离的模型输入一个唯一的名称。"
+msgstr "请为新分离的模型命一个独有的名。"
 
 msgid "Separate the current shape into two by using the mask."
-msgstr "使用遮蔽分离当前模型为两个。"
+msgstr "用遮罩将当前模型分离为两个。"
 
 msgid "Show the Normal Map Generator dialog."
 msgstr "显示法线贴图生成器对话框。"
@@ -2501,13 +2509,13 @@ msgstr "此图层的文件来源。"
 msgid ""
 "File containing normals data to combine. Note this file should fit the mesh "
 "UVs."
-msgstr "合并包含法线数据的文件。注意这个文件应该适合这个网格UV。"
+msgstr "包含要合并的法线数据的文件。注意这个文件应适应网格uv。"
 
 msgid "Color"
 msgstr "颜色"
 
 msgid "Solid background color (if file is not set)."
-msgstr "背景色（如果文件没有设置）。"
+msgstr "纯背景色（若文件没有设置）。"
 
 msgid "Resolution"
 msgstr "分辨率"
@@ -2515,17 +2523,16 @@ msgstr "分辨率"
 msgid ""
 "Output texture dimensions. By default all images will be scaled to fit this "
 "size."
-msgstr "输出贴图的分辨率。默认所有图像都会缩放到合适的尺寸。"
+msgstr "输出材质的尺寸（dimensions）。默认所有图像都会被缩放以适应此尺寸。"
 
 msgid "Is Tangent Space?"
-msgstr "是否切线空间？"
+msgstr "是切空间吗？"
 
 msgid ""
 "True if the normals data in the layer file is in tangent space, false if "
 "they are in model space (msn)."
 msgstr ""
-"如果图层文件中的法线数据位于切线空间中，为真；如果它们位于模型空间(msn)中，则"
-"为假。"
+"若图层文件中的法线数据位于切空间中则为真；若位于模型空间(msn)中则为假。"
 
 msgid "A greyscale image used to mask updates to destination image."
 msgstr "一个用于屏蔽目标图像更新的灰度图像。"
@@ -2537,44 +2544,44 @@ msgid "Y Offset"
 msgstr "Y偏移量"
 
 msgid "Offset to apply to image position."
-msgstr "适用于图像位置的偏移。"
+msgstr "应用于图像位置的偏移。"
 
 msgid "If true, scale image to match background resolution."
-msgstr "如果为真，缩放图像来匹配背景分辨率。"
+msgstr "若为真，缩放图像来匹配背景分辨率。"
 
 msgid "Add Layer"
 msgstr "添加图层"
 
 msgid "Add a new layer after the current one in the layer list."
-msgstr "在当前图层后添加一个新图层。"
+msgstr "添加一个新图层于图层列表中的当前图层之后。"
 
 msgid "Move Up"
 msgstr "上移"
 
 msgid "Move selected layer up one position."
-msgstr "将选定的图层向上移动一个位置。"
+msgstr "将被选图层向上移动一个位置。"
 
 msgid "Delete Layer"
 msgstr "删除图层"
 
 msgid "Delete the selected layer."
-msgstr "删除所选图层。"
+msgstr "删除被选图层。"
 
 msgid "Backup destination file"
-msgstr "备份目标文件..."
+msgstr "备份目标文件"
 
 msgid ""
 "Save a copy of an existing normal map if one already exists. File is saved "
 "in the original directory."
-msgstr "保存现有法线贴图的副本，如果文件已存在。文件保存在原始目录中。"
+msgstr "若文件已存在，保存现有法线贴图的副本。文件保存在原目录中。"
 
 msgid "Compress output"
-msgstr "压缩输出"
+msgstr "压缩输出内容"
 
 msgid ""
 "Compress output file using BC7 compression. This can make saving the file "
 "take a VERY long time!"
-msgstr "使用BC7压缩输出文件。这会使保存文件花费很长时间！"
+msgstr "使用BC7 compression压缩输出文件。这可能会使保存文件花费很长时间！"
 
 msgid "Save to background layer file"
 msgstr "保存到背景图层文件"
@@ -2593,7 +2600,7 @@ msgid "Display current settings on mesh in preview window."
 msgstr "在预览窗口中显示网格上的当前设置。"
 
 msgid "Generate"
-msgstr "生成器"
+msgstr "生成"
 
 msgid "Generate and save the normal map file."
 msgstr "生成并保存法线贴图文件。"
@@ -2602,10 +2609,10 @@ msgid "Colors"
 msgstr "颜色"
 
 msgid "Brush Color"
-msgstr "粉刷颜色"
+msgstr "笔刷颜色"
 
 msgid "Color of the brush."
-msgstr "画笔颜色"
+msgstr "画笔颜色。"
 
 msgid "Edit Color"
 msgstr "编辑颜色"
@@ -2614,17 +2621,17 @@ msgid "Edit Alpha"
 msgstr "编辑透明度"
 
 msgid "Color Paint"
-msgstr "彩色涂料"
+msgstr "色漆"
 
 msgid "Color Paint\t7"
-msgstr "彩色涂料\t7"
+msgstr "色漆\t7"
 
 msgid ""
 "Apply vertex colors.\n"
 "Hold down the ALT key to remove colors."
 msgstr ""
 "应用顶点颜色\n"
-"按住ALT键可以删除颜色"
+"按住ALT键以删除颜色。"
 
 msgid "Alpha Paint"
 msgstr "绘制透明度"
@@ -2637,7 +2644,7 @@ msgid ""
 "Hold down the ALT key to remove alpha."
 msgstr ""
 "应用顶点透明度\n"
-"按住ALT键删除透明度。"
+"按住ALT键以删除透明度。"
 
 msgid "Vertex Colors"
 msgstr "顶点颜色"
@@ -2646,16 +2653,16 @@ msgid "Vertex Alpha"
 msgstr "顶点透明度"
 
 msgid "Outfit Studio"
-msgstr "模型编辑器"
+msgstr "Outfit Studio"
 
 msgid "Browse"
 msgstr "浏览"
 
 msgid "Skyrim Special Edition"
-msgstr "上古卷轴重置版"
+msgstr "上古卷轴特别版"
 
 msgid "Fallout 4 VR"
 msgstr "辐射4 VR版"
 
 msgid "Skyrim VR"
-msgstr "上古卷轴 VR版"
+msgstr "天际 VR版"
