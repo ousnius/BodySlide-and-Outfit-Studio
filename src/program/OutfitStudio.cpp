@@ -11509,7 +11509,7 @@ void OutfitStudioFrame::OnResetAllPose(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	std::vector<std::string> bones;
-	project->GetActiveBones(bones);
+	AnimSkeleton::getInstance().GetBoneNames(bones);
 
 	for (const std::string& boneName : bones) {
 		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
@@ -11535,7 +11535,7 @@ void OutfitStudioFrame::OnPoseToMesh(wxCommandEvent& WXUNUSED(event)) {
 		project->ApplyPoseTransformsToAllShapeGeometry(*usp);
 
 		std::vector<std::string> bones;
-		project->GetActiveBones(bones);
+		AnimSkeleton::getInstance().GetBoneNames(bones);
 
 		for (const std::string& boneName : bones) {
 			AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
@@ -11614,7 +11614,7 @@ void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
 		poseData->boneData.clear();
 
 		std::vector<std::string> bones;
-		project->GetActiveBones(bones);
+		AnimSkeleton::getInstance().GetBoneNames(bones);
 
 		for (const auto& boneName : bones) {
 			AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
@@ -11668,7 +11668,7 @@ void OutfitStudioFrame::OnSaveAsPose(wxCommandEvent& WXUNUSED(event)) {
 	auto poseData = new PoseData(poseName.ToUTF8().data());
 
 	std::vector<std::string> bones;
-	project->GetActiveBones(bones);
+	AnimSkeleton::getInstance().GetBoneNames(bones);
 
 	for (const auto& boneName : bones) {
 		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
