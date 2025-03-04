@@ -2065,7 +2065,7 @@ int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const st
 
 	if (loadAll) {
 		owner->StartSubProgress(10, 20);
-		return AddFromSliderSet(sourceFile, set);
+		return AddFromSliderSet(sourceFile, set, false);
 	}
 	else
 		return LoadReference(sourceFile, set, shape, mergeSliders, mergeZaps);
