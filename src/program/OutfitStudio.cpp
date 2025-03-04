@@ -8679,16 +8679,16 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	std::string shapeName = activeItem->GetShape()->name.get();
 	std::string newShapeName;
 	do {
-		std::string result{wxGetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape")).ToUTF8()};
+		std::string result{wxGetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape"), wxString::FromUTF8(shapeName), this).ToUTF8()};
 		if (result.empty())
 			return;
 
 		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
 
-	std::string shapeName = activeItem->GetShape()->name.get();
 	wxLogMessage("Renaming shape '%s' to '%s'.", shapeName, newShapeName);
 	project->RenameShape(activeItem->GetShape(), newShapeName);
 	glView->RenameShape(shapeName, newShapeName);
@@ -9475,9 +9475,10 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	if (masked.empty())
 		return;
 
+	std::string shapeName = activeItem->GetShape()->name.get();
 	std::string newShapeName;
 	do {
-		std::string result{wxGetTextFromUser(_("Please enter a unique name for the new separated shape."), _("Separate Vertices...")).ToUTF8()};
+		std::string result{wxGetTextFromUser(_("Please enter a unique name for the new separated shape."), _("Separate Vertices..."), wxString::FromUTF8(shapeName), this).ToUTF8()};
 		if (result.empty())
 			return;
 
@@ -9492,11 +9493,11 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UndoType::Mesh;
 	usp->usss.resize(2);
-	usp->usss[0].shapeName = activeItem->GetShape()->name.get();
+	usp->usss[0].shapeName = shapeName;
 	usp->usss[1].shapeName = newShapeName;
 
 	std::unordered_map<uint16_t, float> unmasked = masked;
-	glView->InvertMaskTris(unmasked, activeItem->GetShape()->name.get());
+	glView->InvertMaskTris(unmasked, shapeName);
 
 	project->PrepareDeleteVerts(activeItem->GetShape(), masked, usp->usss[0]);
 	project->PrepareDeleteVerts(newShape, unmasked, usp->usss[1]);
@@ -9642,15 +9643,16 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 
 		CloseBrushSettings();
 
+		std::string shapeName = activeItem->GetShape()->name.get();
 		do {
-			std::string result{wxGetTextFromUser(_("Please enter a unique name for the duplicated shape."), _("Duplicate Shape")).ToUTF8()};
+			std::string result{wxGetTextFromUser(_("Please enter a unique name for the duplicated shape."), _("Duplicate Shape"), wxString::FromUTF8(shapeName), this).ToUTF8()};
 			if (result.empty())
 				return;
 
 			newName = std::move(result);
 		} while (project->IsValidShape(newName));
 
-		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->GetShape()->name.get(), newName);
+		wxLogMessage("Duplicating shape '%s' as '%s'.", shapeName, newName);
 
 		auto shape = project->DuplicateShape(activeItem->GetShape(), newName);
 		if (shape) {
