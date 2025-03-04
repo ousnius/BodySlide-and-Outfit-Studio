@@ -2183,11 +2183,12 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 		nifBig.CalcTangentsForShape(shape);
 
-		if (nifBig.DeleteVertsForShape(shape, zapIdx)) {
-			if (!keepZappedShapes)
+		if (keepZappedShapes && zapIdx.size() == vertsHigh.size()) {
+			shape->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
+		}
+		else {
+			if (nifBig.DeleteVertsForShape(shape, zapIdx))
 				nifBig.DeleteShape(shape); // Delete fully zapped shape
-			else
-				shape->flags |= 1; // Set hidden flag
 		}
 
 		if (activeSet.GenWeights()) {
@@ -2207,11 +2208,12 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 			nifSmall.CalcTangentsForShape(shapeSmall);
 
-			if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx)) {
-				if (!keepZappedShapes)
+			if (keepZappedShapes && zapIdx.size() == vertsLow.size()) {
+				shapeSmall->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
+			}
+			else {
+				if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
 					nifSmall.DeleteShape(shapeSmall); // Delete fully zapped shape
-				else
-					shapeSmall->flags |= 1; // Set hidden flag
 			}
 		}
 
@@ -2753,11 +2755,12 @@ int BodySlideApp::BuildListBodies(
 
 			nifBig.CalcTangentsForShape(shape);
 
-			if (nifBig.DeleteVertsForShape(shape, zapIdx)) {
-				if (!keepZappedShapes)
+			if (keepZappedShapes && zapIdx.size() == vertsHigh.size()) {
+				shape->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
+			}
+			else {
+				if (nifBig.DeleteVertsForShape(shape, zapIdx))
 					nifBig.DeleteShape(shape); // Delete fully zapped shape
-				else
-					shape->flags |= 1; // Set hidden flag
 			}
 
 			if (currentSet.GenWeights()) {
@@ -2774,11 +2777,12 @@ int BodySlideApp::BuildListBodies(
 
 				nifSmall.CalcTangentsForShape(shapeSmall);
 
-				if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx)) {
-					if (!keepZappedShapes)
+				if (keepZappedShapes && zapIdx.size() == vertsLow.size()) {
+					shapeSmall->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
+				}
+				else {
+					if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
 						nifSmall.DeleteShape(shapeSmall); // Delete fully zapped shape
-					else
-						shapeSmall->flags |= 1; // Set hidden flag
 				}
 			}
 
