@@ -1064,6 +1064,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
 	bmpEditSlider = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall.png", wxBITMAP_TYPE_ANY);
+	bmpEditSliderGreen = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall_green.png", wxBITMAP_TYPE_ANY);
 	bmpSliderSettings = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/Settings.png", wxBITMAP_TYPE_ANY);
 
 	meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
@@ -1326,6 +1327,8 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 
 	if (bmpEditSlider)
 		delete bmpEditSlider;
+	if (bmpEditSliderGreen)
+		delete bmpEditSliderGreen;
 	if (bmpSliderSettings)
 		delete bmpSliderSettings;
 
@@ -2675,6 +2678,7 @@ void OutfitStudioFrame::UpdateActiveShape() {
 	glView->UpdateBones();
 	glView->Render();
 
+	HighlightSliderData();
 	HighlightBoneNamesWithWeights();
 	UpdateBoneCounts();
 }
@@ -2706,6 +2710,22 @@ void OutfitStudioFrame::UpdateBoneCounts() {
 
 	auto selectedBoneCountLabel = reinterpret_cast<wxStaticText*>(FindWindowByName("selectedBoneCountLabel"));
 	selectedBoneCountLabel->SetLabel(wxString::Format(_("Shape Selection Bones: %zu"), selectedBoneCount));
+}
+
+void OutfitStudioFrame::HighlightSliderData() {
+	for (auto& sliderPanel : sliderPanels) {
+		sliderPanel.second->btnSliderEdit->SetBitmap(*bmpEditSlider);
+
+		SliderData& sd = project->activeSet[sliderPanel.first];
+
+		for (auto& i : selectedItems) {
+			auto diff = project->GetDiffSet(sd, i->GetShape());
+			if (diff && !diff->empty()) {
+				sliderPanel.second->btnSliderEdit->SetBitmap(*bmpEditSliderGreen);
+				break;
+			}
+		}
+	}
 }
 
 void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
@@ -2885,6 +2905,8 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo)
 			if (shape)
 				project->UpdateMorphResult(shape, usp->sliderName, strokeDiff);
 		}
+
+		HighlightSliderData();
 	}
 	else {
 		if (usp->undoType == UndoType::Weight) {
@@ -7400,6 +7422,7 @@ void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {
 
 	SetPendingChanges();
 	ApplySliders();
+	HighlightSliderData();
 }
 
 void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
@@ -7421,6 +7444,7 @@ void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 
 	SetPendingChanges();
 	ApplySliders();
+	HighlightSliderData();
 }
 
 void OutfitStudioFrame::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
@@ -7446,6 +7470,7 @@ void OutfitStudioFrame::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 
 	SetPendingChanges();
 	ApplySliders();
+	HighlightSliderData();
 }
 
 void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
@@ -7570,6 +7595,7 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	SetPendingChanges();
 	ApplySliders();
 	DoFilterSliders();
+	HighlightSliderData();
 
 	wxLogMessage("Added morphs for the following shapes:\n%s", addedDiffs);
 	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedDiffs), _("OSD Import"));
@@ -7685,6 +7711,7 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	SetPendingChanges();
 	ApplySliders();
 	DoFilterSliders();
+	HighlightSliderData();
 
 	wxLogMessage("Added morphs for the following shapes:\n%s", addedMorphs);
 	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedMorphs), _("TRI Import"));
@@ -7806,6 +7833,7 @@ void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 	SetPendingChanges();
 	ApplySliders();
 	DoFilterSliders();
+	HighlightSliderData();
 
 	wxLogMessage("Added morphs for the following shapes:\n%s", addedDiffs);
 	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedDiffs), _("Starfield Morph Import"));
@@ -7834,6 +7862,7 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 	SetPendingChanges();
 	ApplySliders();
+	HighlightSliderData();
 }
 
 void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
@@ -8072,6 +8101,7 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 
 	SetPendingChanges();
 	ApplySliders();
+	HighlightSliderData();
 }
 
 void OutfitStudioFrame::OnNewSlider(wxCommandEvent& WXUNUSED(event)) {
@@ -8169,6 +8199,7 @@ void OutfitStudioFrame::OnSliderClone(wxCommandEvent& WXUNUSED(event)) {
 
 	sliderScroll->FitInside();
 	SetPendingChanges();
+	HighlightSliderData();
 }
 
 void OutfitStudioFrame::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
@@ -8481,6 +8512,7 @@ int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent) 
 	}
 
 	EndProgress();
+	HighlightSliderData();
 	return 0;
 }
 

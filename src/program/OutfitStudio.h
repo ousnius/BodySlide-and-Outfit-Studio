@@ -973,6 +973,7 @@ public:
 	void ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo = false);
 	void UpdateActiveShape();
 	void UpdateBoneCounts();
+	void HighlightSliderData();
 	void HighlightBoneNamesWithWeights();
 	void RefreshGUIWeightColors();
 	void GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones);
@@ -1144,6 +1145,7 @@ private:
 	std::vector<RefTemplate> refTemplates;
 
 	wxBitmap* bmpEditSlider = nullptr;
+	wxBitmap* bmpEditSliderGreen = nullptr;
 	wxBitmap* bmpSliderSettings = nullptr;
 
 	void createSliderGUI(const std::string& name, wxScrolledWindow* wnd, wxSizer* rootSz);
