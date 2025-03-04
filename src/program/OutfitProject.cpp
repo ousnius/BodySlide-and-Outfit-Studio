@@ -760,9 +760,6 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 }
 
 bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
-	DiffDataSets currentDiffs;
-	activeSet.LoadSetDiffData(currentDiffs);
-
 	TriFile tri;
 	std::string triFilePath = triPath;
 
@@ -793,7 +790,7 @@ bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 						if (dn.empty())
 							continue;
 
-						currentDiffs.ApplyUVDiff(dn, target, 1.0f, &uvs);
+						baseDiffData.ApplyUVDiff(dn, target, 1.0f, &uvs);
 					}
 					else
 						morpher.ApplyResultToUVs(morph->name, target, &uvs);
@@ -818,7 +815,7 @@ bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 						if (dn.empty())
 							continue;
 
-						currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
+						baseDiffData.ApplyDiff(dn, target, 1.0f, &verts);
 					}
 					else
 						morpher.ApplyResultToVerts(morph->name, target, &verts);
@@ -846,9 +843,6 @@ bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 bool OutfitProject::WriteHeadTRI(NiShape* shape, const std::string& triPath) {
 	if (!shape)
 		return false;
-
-	DiffDataSets currentDiffs;
-	activeSet.LoadSetDiffData(currentDiffs);
 
 	TriHeadFile tri;
 	std::string triFilePath = triPath;
@@ -891,7 +885,7 @@ bool OutfitProject::WriteHeadTRI(NiShape* shape, const std::string& triPath) {
 				if (dn.empty())
 					continue;
 
-				currentDiffs.ApplyDiff(dn, target, 1.0f, &morphVerts);
+				baseDiffData.ApplyDiff(dn, target, 1.0f, &morphVerts);
 			}
 			else
 				morpher.ApplyResultToVerts(morph.morphName, target, &morphVerts);
@@ -908,9 +902,6 @@ bool OutfitProject::WriteHeadTRI(NiShape* shape, const std::string& triPath) {
 }
 
 bool OutfitProject::WriteSFMorphs(nifly::NiShape* shape, const std::string& morphPath) {
-	DiffDataSets currentDiffs;
-	activeSet.LoadSetDiffData(currentDiffs);
-
 	SFMorphFile morphFile;
 	std::string morphPathFilePath = morphPath;
 
@@ -939,7 +930,7 @@ bool OutfitProject::WriteSFMorphs(nifly::NiShape* shape, const std::string& morp
 				if (dn.empty())
 					continue;
 
-				currentDiffs.ApplyDiff(dn, target, 1.0f, &diffs);
+				baseDiffData.ApplyDiff(dn, target, 1.0f, &diffs);
 			}
 			else
 				morpher.ApplyResultToVerts(morphName, target, &diffs);
