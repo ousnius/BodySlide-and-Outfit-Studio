@@ -22,10 +22,12 @@ std::wstring MultiByteToWideUTF8(const std::string& str);
 #endif
 
 void OpenFileStream(std::fstream& file, const std::string& fileName, std::ios_base::openmode mode);
+bool FileExists(const std::string& fileName);
 
 // Provide std::wstring function for Windows
 #ifdef _WINDOWS
 void OpenFileStream(std::fstream& file, const std::wstring& fileName, unsigned int mode);
+bool FileExists(const std::wstring& fileName);
 #endif
 } // namespace PlatformUtil
 

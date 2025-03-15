@@ -897,13 +897,10 @@ void BodySlideApp::UpdateConflictManager() {
 	conflictCheckBox->SetValue(isOutputChoice);
 	conflictCheckBox->Show();
 
-	if (activeSet.GenWeights()) {
-		std::regex prefix(".*[/\\\\]");
-		std::string filePart = std::regex_replace(outputFilePath, prefix, "");
-		conflictLabel->SetLabel(outputFilePath + "_0.nif (and _1.nif)");
-	}
+	if (activeSet.GenWeights())
+		conflictLabel->SetLabel(wxString::FromUTF8(outputFilePath) + "_0.nif (and _1.nif)");
 	else
-		conflictLabel->SetLabel(outputFilePath + ".nif");
+		conflictLabel->SetLabel(wxString::FromUTF8(outputFilePath) + ".nif");
 
 	conflictLabel->SetForegroundColour(wxColour(textColourName));
 	conflictLabel->Show();
@@ -980,7 +977,6 @@ void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
 	BuildSelection buildSelection;
 	GetBuildSelection(buildSelFile, buildSelection);
 
-	auto outputFilePath = activeSet.GetOutputFilePath();
 	std::string project = activeSet.GetName();
 
 	buildSelection.SetZapChoice(project, zap, choice);
@@ -2530,7 +2526,7 @@ int BodySlideApp::BuildListBodies(
 #endif
 
 	auto buildOutfit = [&](const std::string& outfit) {
-		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, ++count, (int)outfitList.size());
+		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), wxString::FromUTF8(outfit), ++count, (int)outfitList.size());
 		progWnd.Update((int)(count * progstep) - 1, progMsg);
 		progWnd.Fit();
 

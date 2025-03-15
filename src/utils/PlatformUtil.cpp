@@ -51,10 +51,30 @@ void OpenFileStream(std::fstream& file, const std::string& fileName, std::ios_ba
 #endif
 }
 
+bool FileExists(const std::string& fileName) {
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+
+	if (!file)
+		return false;
+
+	return true;
+}
+
 // Provide std::wstring function for Windows
 #ifdef _WINDOWS
 void OpenFileStream(std::fstream& file, const std::wstring& fileName, unsigned int mode) {
 	file.open(fileName.c_str(), mode);
+}
+
+bool FileExists(const std::wstring& fileName) {
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+
+	if (!file)
+		return false;
+
+	return true;
 }
 #endif
 } // namespace PlatformUtil

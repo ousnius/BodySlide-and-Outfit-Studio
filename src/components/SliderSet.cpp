@@ -198,7 +198,7 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 					std::string filePath = df + PathSepStr + ddf.fileName;
 
 					// Use data folder that contains the external file
-					if (std::filesystem::exists(fullFilePath + filePath)) {
+					if (PlatformUtil::FileExists(fullFilePath + filePath)) {
 						fullFilePath += filePath;
 						break;
 					}
@@ -217,7 +217,7 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 					std::string filePath = df + PathSepStr + fileName;
 
 					// Use data folder that contains the external file
-					if (std::filesystem::exists(fullFilePath + filePath)) {
+					if (PlatformUtil::FileExists(fullFilePath + filePath)) {
 						fullFilePath += filePath;
 						break;
 					}
@@ -265,7 +265,7 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 				std::string filePath = df + PathSepStr + ddf.fileName;
 
 				// Use data folder that contains the external file
-				if (std::filesystem::exists(fullFilePath + filePath)) {
+				if (PlatformUtil::FileExists(fullFilePath + filePath)) {
 					fullFilePath += filePath;
 					break;
 				}
@@ -284,7 +284,7 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 				std::string filePath = df + PathSepStr + fileName;
 
 				// Use data folder that contains the external file
-				if (std::filesystem::exists(fullFilePath + filePath)) {
+				if (PlatformUtil::FileExists(fullFilePath + filePath)) {
 					fullFilePath += filePath;
 					break;
 				}

@@ -5291,7 +5291,7 @@ std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std
 
 	// Check if loose file exists
 	std::string fullPath = dir + meshPath;
-	bool looseFileExists = std::filesystem::exists(fullPath);
+	bool looseFileExists = PlatformUtil::FileExists(fullPath);
 	if (looseFileExists) {
 		auto fileStream = std::make_unique<std::fstream>();
 		if (fileStream) {
