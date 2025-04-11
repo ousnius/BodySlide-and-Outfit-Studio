@@ -133,12 +133,12 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	lbBrushSize = new wxStaticText(panel, wxID_ANY, _("Size"));
 	flexGridSizer->Add(lbBrushSize, 0, wxALL, 5);
 
-	brushSize = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, wxSize(sliderWidth, -1), wxSL_HORIZONTAL);
+	brushSize = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
 	brushSize->SetToolTip(_("Shortcut: 'S' + mouse wheel"));
 	brushSize->Bind(wxEVT_SLIDER, onSliderSize);
 	flexGridSizer->Add(brushSize, 1, wxALL, 5);
 
-	brushSizeVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
+	brushSizeVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, panel->FromDIP(wxSize(textCtrlWidth, -1)));
 	brushSizeVal->SetValidator(floatValidator);
 	brushSizeVal->Bind(wxEVT_TEXT, onSliderTextChangedSize);
 	flexGridSizer->Add(brushSizeVal, 0, wxALL, 5);
@@ -146,11 +146,11 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	lbBrushStrength = new wxStaticText(panel, wxID_ANY, _("Strength"));
 	flexGridSizer->Add(lbBrushStrength, 0, wxALL, 5);
 
-	brushStrength = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, wxSize(sliderWidth, -1), wxSL_HORIZONTAL);
+	brushStrength = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
 	brushStrength->Bind(wxEVT_SLIDER, onSliderStrength);
 	flexGridSizer->Add(brushStrength, 1, wxALL, 5);
 
-	brushStrengthVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
+	brushStrengthVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, panel->FromDIP(wxSize(textCtrlWidth, -1)));
 	brushStrengthVal->SetValidator(floatValidator);
 	brushStrengthVal->Bind(wxEVT_TEXT, onSliderTextChangedStrength);
 	flexGridSizer->Add(brushStrengthVal, 0, wxALL, 5);
@@ -158,11 +158,11 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	lbBrushFocus = new wxStaticText(panel, wxID_ANY, _("Focus"));
 	flexGridSizer->Add(lbBrushFocus, 0, wxALL, 5);
 
-	brushFocus = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, wxSize(sliderWidth, -1), wxSL_HORIZONTAL);
+	brushFocus = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
 	brushFocus->Bind(wxEVT_SLIDER, onSliderFocus);
 	flexGridSizer->Add(brushFocus, 1, wxALL, 5);
 
-	brushFocusVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
+	brushFocusVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, panel->FromDIP(wxSize(textCtrlWidth, -1)));
 	brushFocusVal->SetValidator(floatValidator);
 	brushFocusVal->Bind(wxEVT_TEXT, onSliderTextChangedFocus);
 	flexGridSizer->Add(brushFocusVal, 0, wxALL, 5);
@@ -170,11 +170,11 @@ void wxBrushSettingsPopupBase::Setup(wxWindow* popupWin) {
 	lbBrushSpacing = new wxStaticText(panel, wxID_ANY, _("Spacing"));
 	flexGridSizer->Add(lbBrushSpacing, 0, wxALL, 5);
 
-	brushSpacing = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, wxSize(sliderWidth, -1), wxSL_HORIZONTAL);
+	brushSpacing = new wxSlider(panel, wxID_ANY, 0, 0, 1000, wxDefaultPosition, panel->FromDIP(wxSize(sliderWidth, -1)), wxSL_HORIZONTAL);
 	brushSpacing->Bind(wxEVT_SLIDER, onSliderSpacing);
 	flexGridSizer->Add(brushSpacing, 1, wxALL, 5);
 
-	brushSpacingVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, wxSize(textCtrlWidth, -1));
+	brushSpacingVal = new wxTextCtrl(panel, wxID_ANY, "0.0000", wxDefaultPosition, panel->FromDIP(wxSize(textCtrlWidth, -1)));
 	brushSpacingVal->SetValidator(floatValidator);
 	brushSpacingVal->Bind(wxEVT_TEXT, onSliderTextChangedSpacing);
 	flexGridSizer->Add(brushSpacingVal, 0, wxALL, 5);

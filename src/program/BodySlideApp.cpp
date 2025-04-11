@@ -1555,7 +1555,7 @@ bool BodySlideApp::ShowSetup() {
 
 	wxDialog* setup = xrc->LoadDialog(nullptr, "dlgSetup");
 	if (setup) {
-		setup->SetSize(wxSize(700, -1));
+		setup->SetSize(setup->FromDIP(wxSize(700, -1)));
 		setup->CenterOnScreen();
 
 		wxButton* btOblivion = XRCCTRL(*setup, "btOblivion", wxButton);
@@ -2429,8 +2429,8 @@ int BodySlideApp::BuildListBodies(
 
 			wxXmlResource* rsrc = wxXmlResource::Get();
 			wxDialog* dlgBuildOverride = rsrc->LoadDialog(sliderView, "dlgBuildOverride");
-			dlgBuildOverride->SetSize(wxSize(650, 400));
-			dlgBuildOverride->SetSizeHints(wxSize(650, 400), wxSize(650, -1));
+			dlgBuildOverride->SetSize(dlgBuildOverride->FromDIP(wxSize(650, 400)));
+			dlgBuildOverride->SetSizeHints(dlgBuildOverride->FromDIP(wxSize(650, 400)), dlgBuildOverride->FromDIP(wxSize(650, -1)));
 			dlgBuildOverride->CenterOnParent();
 
 			wxScrolledWindow* scrollOverrides = XRCCTRL(*dlgBuildOverride, "scrollOverrides", wxScrolledWindow);
@@ -4001,8 +4001,8 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	if (!batchBuildChooser)
 		return;
 
-	batchBuildChooser->SetSize(wxSize(650, 300));
-	batchBuildChooser->SetSizeHints(wxSize(650, 300), wxSize(650, -1));
+	batchBuildChooser->SetSize(batchBuildChooser->FromDIP(wxSize(650, 300)));
+	batchBuildChooser->SetSizeHints(batchBuildChooser->FromDIP(wxSize(650, 300)), batchBuildChooser->FromDIP(wxSize(650, -1)));
 	batchBuildChooser->CenterOnParent();
 
 	// Load BuildSelection file
@@ -4195,8 +4195,8 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
-		settings->SetSize(wxSize(525, -1));
-		settings->SetMinSize(wxSize(525, -1));
+		settings->SetSize(settings->FromDIP(wxSize(525, -1)));
+		settings->SetMinSize(settings->FromDIP(wxSize(525, -1)));
 		settings->CenterOnParent();
 
 		wxCollapsiblePane* advancedPane = XRCCTRL(*settings, "advancedPane", wxCollapsiblePane);
@@ -4358,8 +4358,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 void BodySlideFrame::OnAbout(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog* about = wxXmlResource::Get()->LoadDialog(this, "dlgAbout");
 	if (about) {
-		about->SetSize(wxSize(625, 375));
-		about->SetMinSize(wxSize(625, 375));
+		about->SetSize(about->FromDIP(wxSize(625, 375)));
+		about->SetMinSize(about->FromDIP(wxSize(625, 375)));
 		about->CenterOnParent();
 		about->Bind(wxEVT_CHAR_HOOK, &BodySlideFrame::OnEnterClose, this);
 		about->Bind(wxEVT_HTML_LINK_CLICKED, &BodySlideFrame::OnLinkClicked, this);
@@ -4573,7 +4573,7 @@ bool SliderDisplay::Create(wxScrolledWindow* scrollWindow,
 		sliderLayout->Add(zapCheckLo, 0, wxALIGN_LEFT, 0);
 	}
 
-	sliderLo = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 24), wxSL_AUTOTICKS | wxSL_BOTTOM | wxSL_HORIZONTAL);
+	sliderLo = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, scrollWindow->FromDIP(24)), wxSL_AUTOTICKS | wxSL_BOTTOM | wxSL_HORIZONTAL);
 	sliderLo->SetTickFreq(5);
 	sliderLo->SetName(nameStr + "|LO");
 	sliderLo->Show(!oneSize && !isZap);
@@ -4581,7 +4581,7 @@ bool SliderDisplay::Create(wxScrolledWindow* scrollWindow,
 	if (!oneSize && !isZap)
 		sliderLayout->Add(sliderLo, 1, wxEXPAND, 0);
 
-	sliderReadoutLo = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(50, -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
+	sliderReadoutLo = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(scrollWindow->FromDIP(50), -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
 	sliderReadoutLo->Show(!oneSize && !isZap);
 	sliderReadoutLo->SetName(nameStr + "|RLO");
 
@@ -4600,7 +4600,7 @@ bool SliderDisplay::Create(wxScrolledWindow* scrollWindow,
 		sliderLayout->Add(zapCheckHi, 0, wxALIGN_LEFT, 0);
 	}
 
-	sliderHi = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 24), wxSL_AUTOTICKS | wxSL_HORIZONTAL);
+	sliderHi = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, scrollWindow->FromDIP(24)), wxSL_AUTOTICKS | wxSL_HORIZONTAL);
 	sliderHi->SetTickFreq(5);
 	sliderHi->SetName(nameStr + "|HI");
 	sliderHi->Show(!isZap);
@@ -4608,7 +4608,7 @@ bool SliderDisplay::Create(wxScrolledWindow* scrollWindow,
 	if (!isZap)
 		sliderLayout->Add(sliderHi, 1, wxEXPAND, 0);
 
-	sliderReadoutHi = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(50, -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
+	sliderReadoutHi = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(scrollWindow->FromDIP(50), -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
 	sliderReadoutHi->Show(!isZap);
 	sliderReadoutHi->SetName(nameStr + "|RHI");
 

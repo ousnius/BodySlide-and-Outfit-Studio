@@ -698,7 +698,7 @@ bool OutfitStudio::ShowSetup() {
 
 	wxDialog* setup = xrc->LoadDialog(nullptr, "dlgSetup");
 	if (setup) {
-		setup->SetSize(wxSize(700, -1));
+		setup->SetSize(setup->FromDIP(wxSize(700, -1)));
 		setup->CenterOnScreen();
 
 		wxButton* btOblivion = XRCCTRL(*setup, "btOblivion", wxButton);
@@ -1064,8 +1064,11 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
 	bmpEditSlider = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall.png", wxBITMAP_TYPE_ANY);
+	wxBitmapHelpers::Rescale(*bmpEditSlider, FromDIP(wxSize(16, 16)));
 	bmpEditSliderGreen = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/EditSmall_green.png", wxBITMAP_TYPE_ANY);
+	wxBitmapHelpers::Rescale(*bmpEditSliderGreen, FromDIP(wxSize(16, 16)));
 	bmpSliderSettings = new wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/Settings.png", wxBITMAP_TYPE_ANY);
+	wxBitmapHelpers::Rescale(*bmpSliderSettings, FromDIP(wxSize(16, 16)));
 
 	meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
 	boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
@@ -1406,15 +1409,15 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	wxDialog* packProjects = xrc->LoadDialog(this, "dlgPackProjects");
 	if (packProjects) {
-		auto projectFilter = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, -1), wxTE_PROCESS_ENTER);
+		auto projectFilter = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(200, -1)), wxTE_PROCESS_ENTER);
 		projectFilter->ShowSearchButton(true);
 		projectFilter->SetDescriptiveText("Project Filter");
 		projectFilter->SetToolTip("Filter project list by name");
 
 		xrc->AttachUnknownControl("projectFilter", projectFilter, packProjects);
 
-		packProjects->SetSize(wxSize(550, 300));
-		packProjects->SetMinSize(wxSize(400, 200));
+		packProjects->SetSize(FromDIP(wxSize(550, 300)));
+		packProjects->SetMinSize(FromDIP(wxSize(400, 200)));
 		packProjects->CenterOnParent();
 
 		std::map<std::string, SliderSet> projectSources;
@@ -1937,8 +1940,8 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
-		settings->SetSize(wxSize(525, -1));
-		settings->SetMinSize(wxSize(525, -1));
+		settings->SetSize(settings->FromDIP(wxSize(525, -1)));
+		settings->SetMinSize(settings->FromDIP(wxSize(525, -1)));
 		settings->CenterOnParent();
 
 		wxCollapsiblePane* advancedPane = XRCCTRL(*settings, "advancedPane", wxCollapsiblePane);
@@ -7286,8 +7289,8 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 
 		presetChoice->SetSelection(0);
 
-		dlg.SetSize(wxSize(325, 175));
-		dlg.SetSizeHints(wxSize(325, 175), wxSize(-1, -1));
+		dlg.SetSize(dlg.FromDIP(wxSize(325, 175)));
+		dlg.SetSizeHints(dlg.FromDIP(wxSize(325, 175)), wxSize(-1, -1));
 		dlg.CenterOnParent();
 
 		if (dlg.ShowModal() != wxID_OK)
@@ -8313,7 +8316,7 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 		long loVal = (int)(project->SliderDefault(curSlider, false));
 		long hiVal = (int)(project->SliderDefault(curSlider, true));
 
-		edSliderName->SetLabel(wxString::FromUTF8(activeSlider));
+		edSliderName->SetValue(wxString::FromUTF8(activeSlider));
 		edValLo->SetValue(wxString::Format("%d", loVal));
 		edValHi->SetValue(wxString::Format("%d", hiVal));
 
@@ -11986,9 +11989,9 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				os->project->GetLiveVerts(shape, verts);
 
 				Vector3 oldPos = verts[vertIndex];
-				XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.x));
-				XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.y));
-				XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", oldPos.z));
+				XRCCTRL(dlg, "posX", wxTextCtrl)->SetValue(wxString::Format("%0.5f", oldPos.x));
+				XRCCTRL(dlg, "posY", wxTextCtrl)->SetValue(wxString::Format("%0.5f", oldPos.y));
+				XRCCTRL(dlg, "posZ", wxTextCtrl)->SetValue(wxString::Format("%0.5f", oldPos.z));
 
 				if (dlg.ShowModal() == wxID_OK) {
 					Vector3 newPos;

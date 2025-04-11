@@ -50,7 +50,7 @@ GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 	listMembers = XRCCTRL(*this, "listMembers", wxListBox);
 	listOutfits = XRCCTRL(*this, "listOutfits", wxListBox);
 
-	auto search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, -1), wxTE_PROCESS_ENTER);
+	auto search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(200, -1)), wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
 	search->SetDescriptiveText("Outfit Filter");
 	search->SetToolTip("Filter outfit list by name");

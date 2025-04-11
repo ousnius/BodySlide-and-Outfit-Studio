@@ -35,7 +35,7 @@ PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideAp
 	wxPanel* uiPanel = new wxPanel(this);
 	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
 
-	optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, wxSize(25, 25));
+	optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, FromDIP(wxSize(25, 25)));
 	optButton->SetToolTip(_("Show the Normal Map Generator dialog."));
 	optButton->Bind(wxEVT_BUTTON, &PreviewWindow::ShowNormalGenWindow, this);
 	optButton->Hide();
