@@ -198,7 +198,7 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 	if (conversionRefTemplate != "None") {
 		outfitStudio->UpdateProgress(5, _("Loading conversion reference..."));
 		outfitStudio->StartSubProgress(5, 10);
-		if (AlertProgressError(LoadReferenceTemplate(conversionRefTemplate, mergeSliders, mergeZaps), "Load Error", "Failed to load conversion reference"))
+		if (AlertProgressError(LoadReferenceTemplate(conversionRefTemplate, mergeSliders, mergeZaps), _("Load Error"), "Failed to load conversion reference"))
 			return;
 		outfitStudio->EndProgress();
 
@@ -210,7 +210,7 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 		outfitStudio->StartSubProgress(20, 35);
 
 		// We shouldn't ever need to skip using default for this case as a correct conversion reference should always conform accurately
-		if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, true), "Conform Error", "Failed to conform shapes"))
+		if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, true), _("Conform Error"), "Failed to conform shapes"))
 			return;
 
 		outfitStudio->UpdateProgress(35, _("Updating conversion Slider..."));
@@ -231,7 +231,7 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 
 	outfitStudio->UpdateProgress(50, _("Loading new reference..."));
 	outfitStudio->StartSubProgress(50, 55);
-	if (AlertProgressError(LoadReferenceTemplate(newRefTemplate, mergeSliders, mergeZaps), "Load Error", "Failed to load new reference"))
+	if (AlertProgressError(LoadReferenceTemplate(newRefTemplate, mergeSliders, mergeZaps), _("Load Error"), "Failed to load new reference"))
 		return;
 	outfitStudio->EndProgress();
 
@@ -239,20 +239,20 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 	outfitStudio->CreateSetSliders();
 	outfitStudio->RefreshGUIFromProj();
 
-	if (AlertProgressError(project->GetBaseShape() == nullptr, "Missing Base Shape", "The loaded reference does not contain a base shape"))
+	if (AlertProgressError(project->GetBaseShape() == nullptr, _("Missing Base Shape"), "The loaded reference does not contain a base shape"))
 		return;
 
 	if (copyBoneWeights) {
 		outfitStudio->UpdateProgress(65, _("Copying bones..."));
 		outfitStudio->StartSubProgress(65, 85);
-		if (AlertProgressError(outfitStudio->CopyBoneWeightForShapes(remainingOutfitShapes, skipCopyBonesPopup), "Copy Bone Weights Error", "Failed to copy bone weights"))
+		if (AlertProgressError(outfitStudio->CopyBoneWeightForShapes(remainingOutfitShapes, skipCopyBonesPopup), _("Copy Bone Weights Error"), "Failed to copy bone weights"))
 			return;
 	}
 
 	if (conformSliders) {
 		outfitStudio->UpdateProgress(85, _("Conforming outfit parts..."));
 		outfitStudio->StartSubProgress(85, 100);
-		if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, skipConformPopup), "Conform Error", "Failed to conform shapes"))
+		if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, skipConformPopup), _("Conform Error"), "Failed to conform shapes"))
 			return;
 	}
 
@@ -326,7 +326,7 @@ bool ConvertBodyReferenceDialog::AlertProgressError(int error, const wxString& t
 		return false;
 
 	wxLogError(message);
-	wxMessageBox(message, _(title), wxICON_ERROR);
+	wxMessageBox(message, title, wxICON_ERROR);
 	outfitStudio->EndProgress("", true);
 	outfitStudio->RefreshGUIFromProj();
 	return true;
