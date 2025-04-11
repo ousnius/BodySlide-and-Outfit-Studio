@@ -3744,8 +3744,8 @@ void BodySlideFrame::OnBrowseOutfitFolder(wxCommandEvent& WXUNUSED(event)) {
 	auto& activeSet = app->GetActiveSet();
 
 	std::string sep{wxString(wxFileName::GetPathSeparator()).ToUTF8()};
-	std::string dataPath = activeSet.GetBaseDataPath() + sep + activeSet.GetDefaultDataFolder();
-	wxFileName fileName{wxString::FromUTF8(dataPath)};
+	wxString dataPath{wxString::FromUTF8(activeSet.GetBaseDataPath() + sep + activeSet.GetDefaultDataFolder())};
+	wxFileName fileName{dataPath};
 
 	if (!fileName.FileExists() && fileName.DirExists())
 		wxLaunchDefaultApplication(dataPath);
