@@ -9,7 +9,6 @@ uniform bool bShowMask;
 uniform bool bShowWeight;
 
 uniform bool bWireframe;
-uniform bool bPoints;
 uniform bool bLighting;
 
 layout(location = 0) in vec3 vertexPosition;
