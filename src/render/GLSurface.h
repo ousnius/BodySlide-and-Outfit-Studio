@@ -59,6 +59,7 @@ private:
 	nifly::Vector3 colorGreen = nifly::Vector3(0.25f, 1.0f, 0.25f);
 
 	ResourceLoader resLoader;
+	GLMaterial* pointsMat = nullptr;
 	GLMaterial* primitiveMat = nullptr;
 
 	std::vector<Mesh*> meshes;
@@ -324,6 +325,7 @@ public:
 	Mesh::RenderMode SetMeshRenderMode(const std::string& name, Mesh::RenderMode mode);
 
 	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
+	GLMaterial* GetPointsMaterial();
 	GLMaterial* GetPrimitiveMaterial();
 	ResourceLoader* GetResourceLoader() { return &resLoader; }
 
@@ -337,6 +339,7 @@ public:
 	void RenderOneFrame();
 	void RenderToTexture(GLMaterial* renderShader);
 	void RenderMesh(Mesh* m);
+	void RenderMeshAsPoints(Mesh* m);
 
 	void UpdateShaders(Mesh* m);
 

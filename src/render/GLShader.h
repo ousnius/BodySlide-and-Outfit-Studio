@@ -60,12 +60,12 @@ public:
 	void SetModelSpace(const bool enable);
 	void SetEmissive(const bool enable);
 	void SetWireframeEnabled(const bool enable);
-	void SetPointsEnabled(const bool enable);
 	void SetLightingEnabled(const bool enable);
 	void SetMatrixProjection(const glm::mat4x4& mat);
 	void SetMatrixModelView(const glm::mat4x4& matView, const glm::mat4x4& matModel);
 	void SetAlphaProperties(const uint16_t flags, const float threshold, const float value);
 	void SetAlphaThreshold(const float threshold);
+	void SetAdjustPointSize(const bool enable);
 
 	void SetFrontalLight(const DirectionalLight& light);
 	void SetDirectionalLight(const DirectionalLight& light, const int index);

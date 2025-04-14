@@ -21,7 +21,6 @@ uniform bool bShowTexture;
 uniform bool bShowMask;
 uniform bool bShowWeight;
 uniform bool bWireframe;
-uniform bool bPoints;
 
 uniform bool bNormalMap;
 uniform bool bModelSpace;
@@ -159,166 +158,152 @@ void main(void)
 	vec4 color = vColor;
 	albedo = vColor.rgb;
 
-	if (!bPoints)
+	if (!bWireframe)
 	{
-		if (!bWireframe)
+		if (bShowTexture)
 		{
-			if (bShowTexture)
-			{
-				// Diffuse Texture
-				baseMap = texture(texDiffuse, uv);
-				albedo *= baseMap.rgb;
-				color.a *= baseMap.a;
+			// Diffuse Texture
+			baseMap = texture(texDiffuse, uv);
+			albedo *= baseMap.rgb;
+			color.a *= baseMap.a;
 
-				// Diffuse texture without lighting
-				color.rgb = albedo;
-
-				if (bLightEnabled)
-				{
-					if (bNormalMap)
-					{
-						normalMap = texture(texNormal, uv);
-
-						if (bModelSpace && bSpecular)
-						{
-							// Dedicated Specular Map
-							specMap = texture(texSpecular, uv);
-						}
-					}
-
-					if (bCubemap)
-					{
-						if (bEnvMask)
-						{
-							// Environment Mask
-							envMask = texture(texEnvMask, uv);
-						}
-					}
-
-					if (bBacklight)
-					{
-						backlightMap = texture(texBacklight, uv);
-					}
-				}
-			}
+			// Diffuse texture without lighting
+			color.rgb = albedo;
 
 			if (bLightEnabled)
 			{
-				// Lighting with or without textures
-				vec3 outDiffuse = vec3(0.0);
-				vec3 outSpecular = vec3(0.0);
-
-				specFactor = 0.0;
-
-				if (bShowTexture && bNormalMap)
+				if (bNormalMap)
 				{
-					if (bModelSpace)
-					{
-						// Model Space Normal Map
-						normal = normalize(normalMap.rgb * 2.0 - 1.0);
-						normal.r = -normal.r;
-						normal = mat3(matView) * normal;
-						normal = normalize(normal);
+					normalMap = texture(texNormal, uv);
 
-						if (bSpecular)
-						{
-							specFactor = specMap.r;
-						}
+					if (bModelSpace && bSpecular)
+					{
+						// Dedicated Specular Map
+						specMap = texture(texSpecular, uv);
 					}
-					else
-					{
-						// Tangent Space Normal Map
-						normal = normalize(mv_tbn * (normalMap.rgb * 2.0 - 1.0));
+				}
 
-						if (bSpecular)
-						{
-							specFactor = normalMap.a;
-						}
+				if (bCubemap)
+				{
+					if (bEnvMask)
+					{
+						// Environment Mask
+						envMask = texture(texEnvMask, uv);
+					}
+				}
+
+				if (bBacklight)
+				{
+					backlightMap = texture(texBacklight, uv);
+				}
+			}
+		}
+
+		if (bLightEnabled)
+		{
+			// Lighting with or without textures
+			vec3 outDiffuse = vec3(0.0);
+			vec3 outSpecular = vec3(0.0);
+
+			specFactor = 0.0;
+
+			if (bShowTexture && bNormalMap)
+			{
+				if (bModelSpace)
+				{
+					// Model Space Normal Map
+					normal = normalize(normalMap.rgb * 2.0 - 1.0);
+					normal.r = -normal.r;
+					normal = mat3(matView) * normal;
+					normal = normalize(normal);
+
+					if (bSpecular)
+					{
+						specFactor = specMap.r;
 					}
 				}
 				else
 				{
-					// Vertex normal for shading with disabled maps
-					normal = mv_normalMatrix * n;
-					normal = normalize(normal);
-				}
+					// Tangent Space Normal Map
+					normal = normalize(mv_tbn * (normalMap.rgb * 2.0 - 1.0));
 
-				directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);
-				directionalLight(directional0, lightDirectional0, outDiffuse, outSpecular);
-				directionalLight(directional1, lightDirectional1, outDiffuse, outSpecular);
-				directionalLight(directional2, lightDirectional2, outDiffuse, outSpecular);
-
-				if (bCubemap && bShowTexture)
-				{
-					vec3 reflected = reflect(-viewDir, normal);
-					vec3 reflectedWS = vec3(matModel * (matModelViewInverse * vec4(reflected, 0.0)));
-
-					vec4 cubeMap = texture(texCubemap, reflectedWS);
-					cubeMap.rgb *= prop.envReflection;
-
-					if (bEnvMask)
+					if (bSpecular)
 					{
-						cubeMap.rgb *= envMask.r;
-					}
-					else
-					{
-						// No env mask, use specular factor (0.0 if no normal map either)
-						cubeMap.rgb *= specFactor;
-					}
-
-					albedo += cubeMap.rgb;
-				}
-
-				// Emissive
-				if (bEmissive)
-				{
-					emissive += prop.emissiveColor * prop.emissiveMultiple;
-
-					// Glowmap
-					if (bGlowmap)
-					{
-						vec4 glowMap = texture(texGlowmap, uv);
-						emissive *= glowMap.rgb;
+						specFactor = normalMap.a;
 					}
 				}
-
-				color.rgb = albedo * (outDiffuse + emissive) + outSpecular;
 			}
-
-			if (bShowMask)
+			else
 			{
-				color.rgb *= maskFactor;
+				// Vertex normal for shading with disabled maps
+				normal = mv_normalMatrix * n;
+				normal = normalize(normal);
 			}
 
-			if (bShowWeight)
+			directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);
+			directionalLight(directional0, lightDirectional0, outDiffuse, outSpecular);
+			directionalLight(directional1, lightDirectional1, outDiffuse, outSpecular);
+			directionalLight(directional2, lightDirectional2, outDiffuse, outSpecular);
+
+			if (bCubemap && bShowTexture)
 			{
-				color.rgb *= weightColor;
+				vec3 reflected = reflect(-viewDir, normal);
+				vec3 reflectedWS = vec3(matModel * (matModelViewInverse * vec4(reflected, 0.0)));
+
+				vec4 cubeMap = texture(texCubemap, reflectedWS);
+				cubeMap.rgb *= prop.envReflection;
+
+				if (bEnvMask)
+				{
+					cubeMap.rgb *= envMask.r;
+				}
+				else
+				{
+					// No env mask, use specular factor (0.0 if no normal map either)
+					cubeMap.rgb *= specFactor;
+				}
+
+				albedo += cubeMap.rgb;
 			}
 
-			color.rgb = tonemap(color.rgb) / tonemap(vec3(1.0));
+			// Emissive
+			if (bEmissive)
+			{
+				emissive += prop.emissiveColor * prop.emissiveMultiple;
+
+				// Glowmap
+				if (bGlowmap)
+				{
+					vec4 glowMap = texture(texGlowmap, uv);
+					emissive *= glowMap.rgb;
+				}
+			}
+
+			color.rgb = albedo * (outDiffuse + emissive) + outSpecular;
 		}
-		else
+
+		if (bShowMask)
 		{
-			color = vec4(color.rgb, 0.5);
+			color.rgb *= maskFactor;
 		}
 
-		color = clamp(color, 0.0, 1.0);
+		if (bShowWeight)
+		{
+			color.rgb *= weightColor;
+		}
+
+		color.rgb = tonemap(color.rgb) / tonemap(vec3(1.0));
 	}
 	else
 	{
-		// Calculate normal from point coord
-		vec2 norm = gl_PointCoord * 2.0 - vec2(1.0);
-		float mag = dot(norm, norm);
-		if (mag > 1.0)
-			discard; // Kill pixels outside point
-
-		color.a = 1.0 - mag;
-		color = clamp(color, 0.0, 1.0);
+		color = vec4(color.rgb, 0.5);
 	}
+
+	color = clamp(color, 0.0, 1.0);
 
 	fragColor = color;
 
-	if (!bPoints && !bWireframe)
+	if (!bWireframe)
 	{
 		if (alphaThreshold != -1.0f)
 			if (fragColor.a <= alphaThreshold) // GL_GREATER

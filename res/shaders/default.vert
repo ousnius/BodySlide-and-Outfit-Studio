@@ -21,7 +21,6 @@ uniform bool bShowVertexColor;
 uniform bool bShowVertexAlpha;
 
 uniform bool bWireframe;
-uniform bool bPoints;
 uniform bool bModelSpace;
 
 layout(location = 0) in vec3 vertexPosition;
@@ -138,26 +137,12 @@ void main(void)
 	lightDirectional1 = normalize(mat3(matView) * directional1.direction);
 	lightDirectional2 = normalize(mat3(matView) * directional2.direction);
 
-	if (!bPoints)
+	if (!bShowTexture || bWireframe)
 	{
-		if (!bShowTexture || bWireframe)
-		{
-			vColor *= clamp(vec4(color, 1.0), 0.0, 1.0);
-		}
-	}
-	else
-	{
-		if (vertexMask > 0.0)
-		{
-			vColor = vec4(1.0, 0.0, 0.0, 1.0);
-		}
-		else
-		{
-			vColor = vec4(0.0, 1.0, 0.0, 1.0);
-		}
+		vColor *= clamp(vec4(color, 1.0), 0.0, 1.0);
 	}
 
-	if (!bPoints && !bWireframe)
+	if (!bWireframe)
 	{
 		vColor.rgb *= subColor;
 

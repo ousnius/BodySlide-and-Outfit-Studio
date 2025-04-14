@@ -169,6 +169,11 @@ void GLSurface::Cleanup() {
 
 	selectedMesh = nullptr;
 
+	if (pointsMat) {
+		delete pointsMat;
+		pointsMat = nullptr;
+	}
+
 	if (primitiveMat) {
 		delete primitiveMat;
 		primitiveMat = nullptr;
@@ -904,7 +909,6 @@ void GLSurface::RenderMesh(Mesh* m) {
 	shader.SetGreyscaleColorEnabled(m->greyscaleColor);
 	shader.SetLightingEnabled(bLighting);
 	shader.SetWireframeEnabled(false);
-	shader.SetPointsEnabled(false);
 	shader.SetNormalMapEnabled(false);
 	shader.SetAlphaMaskEnabled(false);
 	shader.SetCubemapEnabled(m->cubemap);
@@ -987,13 +991,6 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Weight
 		}
 
-		// Offset triangles so that points can be visible
-		glEnable(GL_POLYGON_OFFSET_FILL);
-		if (m->bShowPoints)
-			glPolygonOffset(1.0f, 1.0f);
-		else
-			glPolygonOffset(0.03f, 0.03f);
-
 		GLuint subMeshesSize = 0;
 		if (!m->subMeshes.empty()) {
 			auto& lastSubMesh = m->subMeshes.back();
@@ -1016,8 +1013,6 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glDrawElements(GL_TRIANGLES, subSize * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subIndex * 3 * sizeof(GLushort)));
 		}
 
-		glDisable(GL_POLYGON_OFFSET_FILL);
-
 		// Render wireframe (full mesh or remainder of it)
 		if (bWireframe && m->rendermode == Mesh::RenderMode::Normal) {
 			shader.SetWireframeEnabled(true);
@@ -1035,15 +1030,6 @@ void GLSurface::RenderMesh(Mesh* m) {
 
 		if (bTextured && m->textured && m->texcoord)
 			glDisableVertexAttribArray(6);
-
-		// Render points
-		if (m->bShowPoints && m->mask) {
-			glDisable(GL_CULL_FACE);
-			shader.SetLightingEnabled(false);
-
-			shader.SetPointsEnabled(true);
-			glDrawArrays(GL_POINTS, 0, m->nVerts);
-		}
 
 		glDisableVertexAttribArray(5);
 		glDisableVertexAttribArray(4);
@@ -1068,6 +1054,129 @@ void GLSurface::RenderMesh(Mesh* m) {
 
 		glDisableVertexAttribArray(0);
 	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	shader.End();
+
+	if (m->rendermode != Mesh::RenderMode::UnlitWire && m->rendermode != Mesh::RenderMode::UnlitWireDepth) {
+		// Render mesh as points afterwards
+		RenderMeshAsPoints(m);
+	}
+}
+
+void GLSurface::RenderMeshAsPoints(Mesh* m) {
+	m->UpdateBuffers();
+
+	if (!m->genBuffers)
+		return;
+
+	auto material = GetPointsMaterial();
+	if (!material)
+		return;
+
+	GLShader& shader = material->GetShader();
+	if (!shader.Begin())
+		return;
+
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_TRUE);
+
+	glDisable(GL_CULL_FACE);
+
+	shader.SetMatrixProjection(matProjection);
+	shader.SetMatrixModelView(matView, m->matModel);
+	shader.SetColor(m->color);
+	shader.SetSubColor(Vector3(1.0f, 1.0f, 1.0f));
+	shader.SetAdjustPointSize(false);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glEnable(GL_DEPTH_TEST);
+
+	glBindVertexArray(m->vao);
+
+	if (m->rendermode == Mesh::RenderMode::Normal || m->rendermode == Mesh::RenderMode::LitWire || m->rendermode == Mesh::RenderMode::UnlitSolid) {
+		if (m->bShowPoints && m->mask) {
+			glEnable(GL_PROGRAM_POINT_SIZE);
+			shader.SetAdjustPointSize(true);
+			shader.SetColor(Vector3(0.0f, 1.0f, 0.0f));
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Positions
+
+			if (m->norms) {
+				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[1]);
+				glEnableVertexAttribArray(1);
+				glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Normals
+			}
+
+			if (m->tangents) {
+				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[2]);
+				glEnableVertexAttribArray(2);
+				glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Tangents
+			}
+
+			if (m->bitangents) {
+				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[3]);
+				glEnableVertexAttribArray(3);
+				glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Bitangents
+			}
+
+			if (m->vcolors) {
+				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[4]);
+				glEnableVertexAttribArray(4);
+				glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Colors
+			}
+
+			if (m->valpha) {
+				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
+				glEnableVertexAttribArray(5);
+				glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Alpha
+			}
+
+			if (bTextured && m->textured && m->texcoord) {
+				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
+				glEnableVertexAttribArray(6);
+				glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
+
+				material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
+			}
+
+			if (m->mask) {
+				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[7]);
+				glEnableVertexAttribArray(7);
+				glVertexAttribPointer(7, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Mask
+			}
+
+			if (m->weight) {
+				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[8]);
+				glEnableVertexAttribArray(8);
+				glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Weight
+			}
+
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+			glDrawArrays(GL_POINTS, 0, m->nVerts);
+
+			if (bTextured && m->textured && m->texcoord)
+				glDisableVertexAttribArray(6);
+
+			glDisableVertexAttribArray(5);
+			glDisableVertexAttribArray(4);
+			glDisableVertexAttribArray(3);
+			glDisableVertexAttribArray(2);
+			glDisableVertexAttribArray(1);
+			glDisableVertexAttribArray(0);
+
+			glDisable(GL_PROGRAM_POINT_SIZE);
+		}
+	}
 	else if (m->rendermode == Mesh::RenderMode::UnlitPoints || m->rendermode == Mesh::RenderMode::UnlitPointsDepth) {
 		glDisable(GL_CULL_FACE);
 
@@ -1078,7 +1187,6 @@ void GLSurface::RenderMesh(Mesh* m) {
 		glEnableVertexAttribArray(0);
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 
-		shader.SetPointsEnabled(true);
 		glDrawArrays(GL_POINTS, 0, m->nVerts);
 
 		glDisableVertexAttribArray(0);
@@ -2118,6 +2226,23 @@ GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles,
 	}
 
 	return mat;
+}
+
+GLMaterial* GLSurface::GetPointsMaterial() {
+	if (!pointsMat) {
+		if (!SetContext())
+			return nullptr;
+
+		pointsMat = new GLMaterial(Config["AppDir"] + "/res/shaders/points.vert", Config["AppDir"] + "/res/shaders/points.frag");
+
+		std::string shaderError;
+		if (pointsMat->GetShader().GetError(&shaderError)) {
+			wxLogError(wxString(shaderError));
+			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+		}
+	}
+
+	return pointsMat;
 }
 
 GLMaterial* GLSurface::GetPrimitiveMaterial() {

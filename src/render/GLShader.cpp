@@ -26,7 +26,6 @@ GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentS
 		SetModelSpace(false);
 		SetEmissive(false);
 		SetWireframeEnabled(false);
-		SetPointsEnabled(false);
 		SetLightingEnabled(true);
 	}
 }
@@ -105,12 +104,6 @@ void GLShader::SetEmissive(const bool enable) {
 
 void GLShader::SetWireframeEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bWireframe");
-	if (loc >= 0)
-		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
-}
-
-void GLShader::SetPointsEnabled(const bool enable) {
-	GLint loc = glGetUniformLocation(progID, "bPoints");
 	if (loc >= 0)
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
@@ -205,6 +198,12 @@ void GLShader::SetAlphaThreshold(const float threshold) {
 	GLint loc = glGetUniformLocation(progID, "alphaThreshold");
 	if (loc >= 0)
 		glUniform1f(loc, threshold);
+}
+
+void GLShader::SetAdjustPointSize(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bAdjustPointSize");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
 void GLShader::SetFrontalLight(const DirectionalLight& light) {
