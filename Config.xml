@@ -54,7 +54,7 @@
         <Directional2 x="0" y="20" z="-100">85</Directional2></Lights>
     <!--Rendering Settings-->
     <Rendering>
-        <ColorBackground r="210" g="210" b="210"></ColorBackground></Rendering>
+        <ColorBackground r="160" g="160" b="160"></ColorBackground></Rendering>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference></DefaultSkeletonReference>
