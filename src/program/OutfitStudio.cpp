@@ -9776,7 +9776,7 @@ void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
 	UndoStateShape uss;
 	uss.shapeName = shape->name.get();
 	Mesh* m = glView->GetMesh(shape->name.get());
-	if (!project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts)) {
+	if (!project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts, false)) {
 		wxMessageBox(_("An edge has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"), wxICON_ERROR);
 		return;
 	}
@@ -13036,6 +13036,8 @@ void wxGLPanel::ClickSplitEdge() {
 	if (!shape)
 		return;
 
+	bool shiftDown = wxGetKeyState(WXK_SHIFT);
+
 	constexpr uint16_t maxVertIndex = std::numeric_limits<uint16_t>().max();
 	uint32_t maxTriIndex = std::numeric_limits<uint16_t>().max();
 
@@ -13059,7 +13061,8 @@ void wxGLPanel::ClickSplitEdge() {
 	// Prepare list of changes
 	UndoStateShape uss;
 	uss.shapeName = mouseDownMeshName;
-	if (!os->project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts)) {
+	bool noCurveOffset = shiftDown;
+	if (!os->project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts, noCurveOffset)) {
 		wxMessageBox(_("The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"), wxICON_ERROR, os);
 		return;
 	}

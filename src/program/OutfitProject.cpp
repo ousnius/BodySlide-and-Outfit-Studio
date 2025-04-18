@@ -3067,9 +3067,12 @@ bool OutfitProject::PrepareFlipEdge(NiShape* shape, UndoStateShape& uss, const E
 	return true;
 }
 
-/* Ideally, PrepareRefineMesh would take a list of edges, not a list of
-vertices.  But OutfitStudio doesn't yet have an edge-mask tool. */
-bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts) {
+/*
+Ideally, PrepareRefineMesh would take a list of edges, not a list of
+vertices.  But OutfitStudio doesn't yet have an edge-mask tool.
+Parameter "noCurveOffset" disables the smoothing/curving of the new vertex position within split edges.
+*/
+bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset) {
 	// Get vertex coordinates and triangle data
 	size_t nverts = pincs.size();
 	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
@@ -3232,29 +3235,38 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 		float elen = u12.length(); // edge length
 		u12.Normalize();
 
-		// Working normal for new point: average of np1 and np2, made
-		// perpendicular to u12.  (If you want something fancy for usv.normal,
-		// calculate it later.  This calculation needs to be done this
-		// way for the circle fitter.)
 		usv.normal = np1 + np2;
-		usv.normal -= u12 * u12.dot(usv.normal);
+
+		if (!noCurveOffset) {
+			// Working normal for new point: average of np1 and np2, made
+			// perpendicular to u12.  (If you want something fancy for usv.normal,
+			// calculate it later.  This calculation needs to be done this
+			// way for the circle fitter.)
+			usv.normal -= u12 * u12.dot(usv.normal);
+		}
+
 		usv.normal.Normalize();
 
-		// Now, the angle between npi and usv.normal, in the plane of
-		// npi and u12 (since usv.normal isn't necessarily in that plane)
-		// would be asin(u12.dot(npi)).  We want to average this for np1
-		// and np2 and carefully preserve the sign.
-		float angle = asin(u12.dot(np2 - np1) * 0.5);
-		// Now, "angle" is the desired circle angle between the new point and
-		// either p1 or p2.  It's positive for convex, negative for concave.
-		// To figure out how far off of the edge we need to go, we need to
-		// take the trigonometric tangent of the correct angle.  It turns out
-		// the correct angle is the angle we just calculated divided by 2.
-		float curveOffsetFactor = tan(angle * 0.5);
-		// Now apply the offset to the new point.  (curveOffsetFactor is
-		// positive for convex, negative for concave, and will be no larger
-		// than 1.)
-		usv.pos += usv.normal * (curveOffsetFactor * elen * 0.5f);
+		float curveOffsetFactor = 1.0f;
+		if (!noCurveOffset) {
+			// Now, the angle between npi and usv.normal, in the plane of
+			// npi and u12 (since usv.normal isn't necessarily in that plane)
+			// would be asin(u12.dot(npi)).  We want to average this for np1
+			// and np2 and carefully preserve the sign.
+			float angle = asin(u12.dot(np2 - np1) * 0.5);
+
+			// Now, "angle" is the desired circle angle between the new point and
+			// either p1 or p2.  It's positive for convex, negative for concave.
+			// To figure out how far off of the edge we need to go, we need to
+			// take the trigonometric tangent of the correct angle.  It turns out
+			// the correct angle is the angle we just calculated divided by 2.
+			curveOffsetFactor = tan(angle * 0.5);
+
+			// Now apply the offset to the new point.  (curveOffsetFactor is
+			// positive for convex, negative for concave, and will be no larger
+			// than 1.)
+			usv.pos += usv.normal * (curveOffsetFactor * elen * 0.5f);
+		}
 
 		// Calculate uv, color, tangent, bitangent, and eyeData by averaging.
 		// We need to make sure normal, tangent, and bitangent are
@@ -3318,7 +3330,7 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 			// First, just average the diffs.
 			Vector3 diff = (dp.second.first + dp.second.second) * 0.5f;
 			const SliderData& sd = activeSet[dp.first];
-			if (!sd.bUV && !sd.bClamp && !sd.bZap) {
+			if (!noCurveOffset && !sd.bUV && !sd.bClamp && !sd.bZap) {
 				// Calculate the distance between the moved p1 and p2.
 				float delen = (dp.second.second + p2 - dp.second.first - p1).length();
 				// Apply more curve offset (for delen > elen)
