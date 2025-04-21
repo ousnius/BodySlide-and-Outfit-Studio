@@ -38,7 +38,7 @@ void main(void)
 	// Only apply full bias when very close to the camera
 	float depthBiasMax = 1e-3;
 	float fadeStart = 0.1;   // where fading starts (same as znear)
-	float fadeEnd = 15.0;    // where bias fully fades (15 world units away)
+	float fadeEnd = 20.0;    // where bias fully fades (20 world units away)
 
 	float fadeFactor = clamp(1.0 - (vViewDepth - fadeStart) / (fadeEnd - fadeStart), 0.0, 1.0);
 	float scaledBias = depthBiasMax * fadeFactor;

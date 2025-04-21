@@ -11891,20 +11891,17 @@ void wxGLPanel::SetMeshTextures(
 	if (!m)
 		return;
 
-	std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
-	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
+	std::string shaderName = "default";
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
-		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
-		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
-	}
-	else if (targetGame == OB) {
-		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
-		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
-	}
+	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76)
+		shaderName = "fo4_default";
+	else if (targetGame == OB)
+		shaderName = "ob_default";
 
-	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, reloadTextures);
+	gls.SetDefaultShaderName(shaderName);
+
+	GLMaterial* mat = gls.AddMaterial(textureFiles, Config["AppDir"] + "/res/shaders", shaderName, reloadTextures);
 	if (mat) {
 		m->material = mat;
 
@@ -11971,6 +11968,31 @@ void wxGLPanel::SetLastTool(ToolID tool) {
 }
 
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
+	#ifdef _DEBUG
+	if (event.ControlDown()) {
+		if (event.GetUnicodeKey() == '1')
+			gls.SetDebugGBuffer(0);
+		else if (event.GetUnicodeKey() == '2')
+			gls.SetDebugGBuffer(1);
+		else if (event.GetUnicodeKey() == '3')
+			gls.SetDebugGBuffer(2);
+		else if (event.GetUnicodeKey() == '4')
+			gls.SetDebugGBuffer(3);
+		else if (event.GetUnicodeKey() == '5')
+			gls.SetDebugGBuffer(4);
+		else if (event.GetUnicodeKey() == '6')
+			gls.SetDebugGBuffer(5);
+		else if (event.GetUnicodeKey() == '7')
+			gls.SetDebugGBuffer(6);
+		else if (event.GetUnicodeKey() == '8')
+			gls.SetDebugGBuffer(7);
+		else if (event.GetUnicodeKey() == '9')
+			gls.SetDebugGBuffer(8);
+		else if (event.GetUnicodeKey() == '0')
+			gls.SetDebugGBuffer(-1);
+	}
+	#endif
+
 	if (!event.HasAnyModifiers()) {
 		if (event.GetUnicodeKey() == 'V') {
 			wxPoint cursorPos(event.GetPosition());

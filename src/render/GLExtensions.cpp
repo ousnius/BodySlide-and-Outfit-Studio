@@ -16,6 +16,9 @@ PFNGLTEXSTORAGE1DPROC glTexStorage1D = nullptr;
 PFNGLTEXSTORAGE2DPROC glTexStorage2D = nullptr;
 PFNGLTEXSTORAGE3DPROC glTexStorage3D = nullptr;
 
+// OpenGL 3.2
+PFNGLTEXIMAGE2DMULTISAMPLEPROC glTexImage2DMultisample = nullptr;
+
 // OpenGL 3.0
 PFNGLGETSTRINGIPROC glGetStringi = nullptr;
 PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
@@ -29,8 +32,11 @@ PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D = nullptr;
 PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers = nullptr;
 PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer = nullptr;
 PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage = nullptr;
+PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisample = nullptr;
 PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer = nullptr;
 PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers = nullptr;
+PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus = nullptr;
+PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer = nullptr;
 
 // OpenGL 2.0
 PFNGLCREATESHADERPROC glCreateShader = nullptr;
@@ -47,6 +53,7 @@ PFNGLUNIFORM1FPROC glUniform1f = nullptr;
 PFNGLUNIFORM1IPROC glUniform1i = nullptr;
 PFNGLUNIFORM2FPROC glUniform2f = nullptr;
 PFNGLUNIFORM3FPROC glUniform3f = nullptr;
+PFNGLUNIFORM3FVPROC glUniform3fv = nullptr;
 PFNGLUNIFORMMATRIX3FVPROC glUniformMatrix3fv = nullptr;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv = nullptr;
 
@@ -58,6 +65,8 @@ PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog = nullptr;
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
 PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
+
+PFNGLDRAWBUFFERSPROC glDrawBuffers = nullptr;
 
 // OpenGL 1.5
 PFNGLGENBUFFERSPROC glGenBuffers = nullptr;
@@ -77,6 +86,8 @@ PFNGLTEXSUBIMAGE3DPROC glTexSubImage3D = nullptr;
 
 void InitExtensions() {
 	if (!extInitialized) {
+		glTexImage2DMultisample = (PFNGLTEXIMAGE2DMULTISAMPLEPROC)wglGetProcAddress("glTexImage2DMultisample");
+
 		glTexStorage1D = (PFNGLTEXSTORAGE1DPROC)wglGetProcAddress("glTexStorage1D");
 		glTexStorage2D = (PFNGLTEXSTORAGE2DPROC)wglGetProcAddress("glTexStorage2D");
 		glTexStorage3D = (PFNGLTEXSTORAGE3DPROC)wglGetProcAddress("glTexStorage3D");
@@ -96,8 +107,11 @@ void InitExtensions() {
 		glGenRenderbuffers = (PFNGLGENRENDERBUFFERSPROC)wglGetProcAddress("glGenRenderbuffers");
 		glBindRenderbuffer = (PFNGLBINDRENDERBUFFERPROC)wglGetProcAddress("glBindRenderbuffer");
 		glRenderbufferStorage = (PFNGLRENDERBUFFERSTORAGEPROC)wglGetProcAddress("glRenderbufferStorage");
+		glRenderbufferStorageMultisample = (PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC)wglGetProcAddress("glRenderbufferStorageMultisample");
 		glFramebufferRenderbuffer = (PFNGLFRAMEBUFFERRENDERBUFFERPROC)wglGetProcAddress("glFramebufferRenderbuffer");
 		glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC)wglGetProcAddress("glDeleteRenderbuffers");
+		glCheckFramebufferStatus = (PFNGLCHECKFRAMEBUFFERSTATUSPROC)wglGetProcAddress("glCheckFramebufferStatus");
+		glBlitFramebuffer = (PFNGLBLITFRAMEBUFFERPROC)wglGetProcAddress("glBlitFramebuffer");
 
 		glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
 		glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
@@ -117,6 +131,8 @@ void InitExtensions() {
 		glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
 		glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
 
+		glDrawBuffers = (PFNGLDRAWBUFFERSPROC)wglGetProcAddress("glDrawBuffers");
+
 		glGenBuffers = (PFNGLGENBUFFERSPROC)wglGetProcAddress("glGenBuffers");
 		glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)wglGetProcAddress("glDeleteBuffers");
 		glBindBuffer = (PFNGLBINDBUFFERPROC)wglGetProcAddress("glBindBuffer");
@@ -129,6 +145,7 @@ void InitExtensions() {
 		glUniform1i = (PFNGLUNIFORM1IPROC)wglGetProcAddress("glUniform1i");
 		glUniform2f = (PFNGLUNIFORM2FPROC)wglGetProcAddress("glUniform2f");
 		glUniform3f = (PFNGLUNIFORM3FPROC)wglGetProcAddress("glUniform3f");
+		glUniform3fv = (PFNGLUNIFORM3FVPROC)wglGetProcAddress("glUniform3fv");
 		glUniformMatrix3fv = (PFNGLUNIFORMMATRIX3FVPROC)wglGetProcAddress("glUniformMatrix3fv");
 		glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)wglGetProcAddress("glUniformMatrix4fv");
 
@@ -138,10 +155,11 @@ void InitExtensions() {
 			extGLISupported = false;
 		}
 
-		if (!glGetStringi || !glGenVertexArrays || !glBindVertexArray || !glDeleteVertexArrays || !glCreateShader || !glShaderSource || !glCompileShader || !glCreateProgram
-			|| !glAttachShader || !glLinkProgram || !glUseProgram || !glGetShaderiv || !glGetShaderInfoLog || !glGetProgramiv || !glGetProgramInfoLog || !glDisableVertexAttribArray
-			|| !glEnableVertexAttribArray || !glVertexAttribPointer || !glGenBuffers || !glDeleteBuffers || !glBindBuffer || !glBufferData || !glBufferSubData
-			|| !glGetAttribLocation || !glGetUniformLocation || !glUniform1f || !glUniform1i || !glUniform2f || !glUniform3f || !glUniformMatrix4fv || !glActiveTexture) {
+		if (!glTexImage2DMultisample || !glGetStringi || !glGenVertexArrays || !glBindVertexArray || !glDeleteVertexArrays || !glRenderbufferStorage
+			|| !glRenderbufferStorageMultisample || !glCreateShader || !glShaderSource || !glCompileShader || !glCreateProgram || !glAttachShader || !glLinkProgram || !glUseProgram
+			|| !glGetShaderiv || !glGetShaderInfoLog || !glGetProgramiv || !glGetProgramInfoLog || !glDisableVertexAttribArray || !glEnableVertexAttribArray
+			|| !glVertexAttribPointer || !glDrawBuffers || !glGenBuffers || !glDeleteBuffers || !glBindBuffer || !glBufferData || !glBufferSubData || !glGetAttribLocation
+			|| !glGetUniformLocation || !glUniform1f || !glUniform1i || !glUniform2f || !glUniform3f || !glUniform3fv || !glUniformMatrix4fv || !glActiveTexture) {
 			extSupported = false;
 		}
 
@@ -183,8 +201,8 @@ void InitExtensions() {
 	extGLISupported = glTexStorage1D && glTexStorage2D && glTexStorage3D && glTexSubImage3D && glCompressedTexSubImage1D && glCompressedTexSubImage2D && glCompressedTexSubImage3D;
 	extSupported = glGetStringi && glGenVertexArrays && glBindVertexArray && glDeleteVertexArrays && glCreateShader && glShaderSource && glCompileShader && glCreateProgram
 				   && glAttachShader && glLinkProgram && glUseProgram && glGetShaderiv && glGetShaderInfoLog && glGetProgramiv && glGetProgramInfoLog && glDisableVertexAttribArray
-				   && glEnableVertexAttribArray && glVertexAttribPointer && glGenBuffers && glDeleteBuffers && glBindBuffer && glBufferData && glBufferSubData
-				   && glGetAttribLocation && glGetUniformLocation && glUniform1f && glUniform1i && glUniform2f && glUniform3f && glUniformMatrix4fv && glActiveTexture;
+				   && glEnableVertexAttribArray && glVertexAttribPointer && glDrawBuffers && glGenBuffers && glDeleteBuffers && glBindBuffer && glBufferData && glBufferSubData
+				   && glGetAttribLocation && glGetUniformLocation && glUniform1f && glUniform1i && glUniform2f && glUniform3f && glUniform3fv && glUniformMatrix4fv && glActiveTexture;
 	extInitialized = true;
 }
 

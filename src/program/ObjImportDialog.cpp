@@ -133,7 +133,7 @@ void ObjImportDialog::OnShown() {
 			m->textured = true;
 
 			std::vector<std::string> textureFiles{Config["AppDir"] + "/res/images/NoImg.png"};
-			m->material = GetSurface().AddMaterial(textureFiles, Config["AppDir"] + "/res/shaders/default.vert", Config["AppDir"] + "/res/shaders/default.frag");
+			m->material = GetSurface().AddMaterial(textureFiles, Config["AppDir"] + "/res/shaders", "default");
 
 			m->CalcTangentSpace();
 			m->CreateBuffers();

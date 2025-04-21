@@ -1060,9 +1060,7 @@ void EditUVCanvas::InitMeshes() {
 		texFile = texturesDir + texFile;
 
 		std::vector<std::string> textures(1, texFile);
-		std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
-		std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
-		planeMesh->material = uvSurface.GetResourceLoader()->AddMaterial(textures, vShader, fShader);
+		planeMesh->material = uvSurface.GetResourceLoader()->AddMaterial(textures, Config["AppDir"] + "/res/shaders", "default");
 		uvSurface.UpdateShaders(planeMesh);
 	}
 
@@ -1106,7 +1104,7 @@ void EditUVCanvas::InitMeshes() {
 	uvGridMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 	uvGridMesh->vertexColors = true;
 
-	uvGridMaterial = GLMaterial(Config["AppDir"] + "/res/shaders/primitive.vert", Config["AppDir"] + "/res/shaders/primitive.frag");
+	uvGridMaterial = GLMaterial(Config["AppDir"] + "/res/shaders", "primitive");
 	uvGridMesh->material = &uvGridMaterial;
 	uvGridMesh->shapeName = "UVGrid";
 
@@ -1132,7 +1130,7 @@ void EditUVCanvas::InitMeshes() {
 	boxSelectMesh->tris[0] = Triangle(0, 1, 2);
 	boxSelectMesh->tris[1] = Triangle(2, 3, 0);
 
-	boxSelectMaterial = GLMaterial(Config["AppDir"] + "/res/shaders/primitive.vert", Config["AppDir"] + "/res/shaders/primitive.frag");
+	boxSelectMaterial = GLMaterial(Config["AppDir"] + "/res/shaders", "primitive");
 	boxSelectMesh->material = &boxSelectMaterial;
 
 	boxSelectMesh->shapeName = "BoxSelect";

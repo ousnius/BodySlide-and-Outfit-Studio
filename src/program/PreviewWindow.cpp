@@ -294,20 +294,16 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 	//texFiles[1] = "d:\\proj\\FemaleBody_2_msn.dds";
 	//texFiles[1] = "d:\\proj\\TangentNormalsTest.png";
 
-	std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
-	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
+	std::string shaderName = "default";
 
 	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
-		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
-		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
-	}
-	else if (targetGame == OB) {
-		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
-		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
-	}
+	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76)
+		shaderName = "fo4_default";
+	else if (targetGame == OB)
+		shaderName = "ob_default";
 
-	SetShapeTextures(shapeName, texFiles, vShader, fShader, hasMat, mat);
+	gls.SetDefaultShaderName(shaderName);
+	SetShapeTextures(shapeName, texFiles, Config["AppDir"] + "/res/shaders", shaderName, hasMat, mat);
 }
 
 void PreviewWindow::RightDrag(int dX, int dY) {

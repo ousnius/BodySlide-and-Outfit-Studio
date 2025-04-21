@@ -310,10 +310,10 @@ GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t s
 	return GLI_create_texture(texture, textureID);
 }
 
-GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures) {
+GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& shaderDir, const std::string& shaderName, const bool reloadTextures) {
 	auto texFiles = textureFiles;
 
-	MaterialKey key(texFiles, vShaderFile, fShaderFile);
+	MaterialKey key(texFiles, shaderDir, shaderName);
 	if (!reloadTextures) {
 		auto it = materials.find(key);
 		if (it != materials.end())
@@ -351,7 +351,7 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 
 	auto& entry = materials[key];
 	if (!entry || !reloadTextures)
-		entry.reset(new GLMaterial(this, texFiles, vShaderFile, fShaderFile));
+		entry.reset(new GLMaterial(this, texFiles, shaderDir, shaderName));
 
 	return entry.get();
 }

@@ -68,6 +68,33 @@ private:
 	std::vector<Mesh*> activeMeshes;
 	Mesh* selectedMesh = nullptr;
 
+	uint32_t gBuffer = 0;
+
+	uint32_t gPosition = 0;
+	uint32_t gNormalMaskWeightRimSoft = 0;
+	uint32_t gAlbedoAlpha = 0;
+	uint32_t gSpecular = 0;
+	uint32_t gVertexColors = 0;
+	uint32_t gEnvironment = 0;
+	uint32_t gEmissiveRefl = 0;
+	uint32_t gLightMask = 0;
+	uint32_t gDepth = 0;
+
+	uint32_t ssaoFBO = 0;
+	uint32_t ssaoTexture = 0;
+
+	uint32_t quadVAO = 0;
+	uint32_t quadVBO = 0;
+
+	int debugGBuffer = -1;
+	GLShader gBufferShader;
+	GLShader deferredLightingShader;
+	GLShader ssaoShader;
+
+	std::string defaultShaderName = "default";
+
+	std::vector<nifly::Vector3> ssaoKernel;
+
 	void InitLighting();
 	void InitGLExtensions();
 	int InitGLSettings();
@@ -83,6 +110,9 @@ public:
 	nifly::Vector3 camOffset;
 	nifly::Vector3 camRot; // Turntable camera emulation.
 	nifly::Vector3 camRotOffset;
+
+	void SetDebugGBuffer(const int gBufferIndex) { debugGBuffer = gBufferIndex; }
+	void SetDefaultShaderName(const std::string& shaderName) { defaultShaderName = shaderName; }
 
 	nifly::Vector3 GetBackgroundColor() { return colorBackground; }
 
@@ -324,7 +354,7 @@ public:
 
 	Mesh::RenderMode SetMeshRenderMode(const std::string& name, Mesh::RenderMode mode);
 
-	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
+	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& shaderDir, const std::string& shaderName, const bool reloadTextures = false);
 	GLMaterial* GetPointsMaterial();
 	GLMaterial* GetPrimitiveMaterial();
 	ResourceLoader* GetResourceLoader() { return &resLoader; }
@@ -338,10 +368,20 @@ public:
 
 	void RenderOneFrame();
 	void RenderToTexture(GLMaterial* renderShader);
-	void RenderMesh(Mesh* m);
+
+	void RenderMesh(Mesh* m, bool deferred);
+	void RenderSSAO();
+	void RenderLighting();
+
+	void RenderMeshAsWireframe(Mesh* m);
 	void RenderMeshAsPoints(Mesh* m);
 
 	void UpdateShaders(Mesh* m);
+
+	bool SetupGBuffers();
+	void DeleteGBuffers();
+
+	void CreateSSAOKernel();
 
 	void ToggleTextures() {
 		if (bTextured)

@@ -14,7 +14,6 @@ uniform bool bLightEnabled;
 uniform bool bShowTexture;
 uniform bool bShowMask;
 uniform bool bShowWeight;
-uniform bool bWireframe;
 
 uniform bool bGlowmap;
 
@@ -104,74 +103,64 @@ void main(void)
 	vec4 color = vColor;
 	albedo = vColor.rgb;
 
-	if (!bWireframe)
+	if (bShowTexture)
 	{
-		if (bShowTexture)
-		{
-			// Diffuse Texture
-			baseMap = texture(texDiffuse, uv);
-			albedo *= baseMap.rgb;
-			color.a *= baseMap.a;
+		// Diffuse Texture
+		baseMap = texture(texDiffuse, uv);
+		albedo *= baseMap.rgb;
+		color.a *= baseMap.a;
 
-			// Diffuse texture without lighting
-			color.rgb = albedo;
-		}
-
-		if (bLightEnabled)
-		{
-			// Lighting with or without textures
-			vec3 outDiffuse = vec3(0.0);
-			vec3 outSpecular = vec3(0.0);
-
-			// Start off neutral
-			normal = normalize(mv_tbn * vec3(0.0, 0.0, 0.5));
-			specFactor = 0.0;
-
-			directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);
-			directionalLight(directional0, lightDirectional0, outDiffuse, outSpecular);
-			directionalLight(directional1, lightDirectional1, outDiffuse, outSpecular);
-			directionalLight(directional2, lightDirectional2, outDiffuse, outSpecular);
-
-			// Emissive
-			emissive += prop.emissiveColor * prop.emissiveMultiple;
-
-			// Glowmap
-			if (bGlowmap)
-			{
-				vec4 glowMap = texture(texGlowmap, uv);
-				emissive *= glowMap.rgb;
-			}
-
-			color.rgb = albedo * (outDiffuse + emissive) + outSpecular;
-		}
-
-		if (bShowMask)
-		{
-			color.rgb *= maskFactor;
-		}
-
-		if (bShowWeight)
-		{
-			color.rgb *= weightColor;
-		}
-
-		color.rgb = tonemap(color.rgb) / tonemap(vec3(1.0));
+		// Diffuse texture without lighting
+		color.rgb = albedo;
 	}
-	else
+
+	if (bLightEnabled)
 	{
-		color = vec4(color.rgb, 0.5);
+		// Lighting with or without textures
+		vec3 outDiffuse = vec3(0.0);
+		vec3 outSpecular = vec3(0.0);
+
+		// Start off neutral
+		normal = normalize(mv_tbn * vec3(0.0, 0.0, 0.5));
+		specFactor = 0.0;
+
+		directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);
+		directionalLight(directional0, lightDirectional0, outDiffuse, outSpecular);
+		directionalLight(directional1, lightDirectional1, outDiffuse, outSpecular);
+		directionalLight(directional2, lightDirectional2, outDiffuse, outSpecular);
+
+		// Emissive
+		emissive += prop.emissiveColor * prop.emissiveMultiple;
+
+		// Glowmap
+		if (bGlowmap)
+		{
+			vec4 glowMap = texture(texGlowmap, uv);
+			emissive *= glowMap.rgb;
+		}
+
+		color.rgb = albedo * (outDiffuse + emissive) + outSpecular;
 	}
+
+	if (bShowMask)
+	{
+		color.rgb *= maskFactor;
+	}
+
+	if (bShowWeight)
+	{
+		color.rgb *= weightColor;
+	}
+
+	color.rgb = tonemap(color.rgb) / tonemap(vec3(1.0));
 
 	color = clamp(color, 0.0, 1.0);
 
 	fragColor = color;
 
-	if (!bWireframe)
-	{
-		if (alphaThreshold != -1.0f)
-			if (fragColor.a <= alphaThreshold) // GL_GREATER
-				discard;
+	if (alphaThreshold != -1.0f)
+		if (fragColor.a <= alphaThreshold) // GL_GREATER
+			discard;
 
-		fragColor.a *= prop.alpha;
-	}
+	fragColor.a *= prop.alpha;
 }

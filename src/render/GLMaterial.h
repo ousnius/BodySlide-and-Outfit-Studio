@@ -17,7 +17,14 @@ private:
 	//  but instead a numeric indicator of change state. This is checked prior to binding textures, and if
 	//  a change has happened, texids are refreshed from ResourceLoader based on texNames.
 	int64_t cacheTime = 0;
+
+	std::string shaderDir;
+	std::string shaderPath;
+
 	GLShader shader;
+	GLShader deferredGeometryShader;
+	GLShader deferredLightingShader;
+	GLShader wireframeShader;
 	ResourceLoader* resLoaderRef = nullptr;
 
 public:
@@ -25,14 +32,16 @@ public:
 	~GLMaterial();
 
 	// Shader-only material, does not contain texture references, and thus does not use reference to res loader.
-	GLMaterial(const std::string& vertShaderProg, const std::string& fragShaderProg);
-	GLMaterial(ResourceLoader* resLoader, std::string texName, const std::string& vertShaderProg, const std::string& fragShaderProg);
-	GLMaterial(ResourceLoader* resLoader, std::vector<std::string> inTexNames, const std::string& vertShaderProg, const std::string& fragShaderProg);
+	GLMaterial(const std::string& shaderDirectory, const std::string& shaderName);
+	GLMaterial(ResourceLoader* resLoader, std::string texName, const std::string& shaderDirectory, const std::string& shaderName);
+	GLMaterial(ResourceLoader* resLoader, std::vector<std::string> inTexNames, const std::string& shaderDirectory, const std::string& shaderName);
 
 	GLShader& GetShader();
+	GLShader& GetDeferredGeometryShader();
+	GLShader& GetWireframeShader();
 
 	GLuint GetTexID(uint32_t index);
 	std::string GetTexName(uint32_t index);
 
-	void BindTextures(GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklight, const bool hasLightmask);
+	void BindTextures(GLShader& shader, GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklight, const bool hasLightmask);
 };

@@ -9,25 +9,41 @@ See the included LICENSE file
 
 #include <fstream>
 #include <sstream>
+#include <random>
 
 using namespace nifly;
 
-GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentSource)
+GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentSource, const std::string& geometrySource)
 	: GLShader() {
-	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource)) {
-		ShowLighting();
-		ShowTexture();
-		ShowMask();
-		ShowWeight(false);
-		ShowVertexColors(false);
-		ShowVertexAlpha(false);
+	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource, geometrySource)) {
 
-		SetColor(Vector3(1.0f, 1.0f, 1.0f));
-		SetModelSpace(false);
-		SetEmissive(false);
-		SetWireframeEnabled(false);
-		SetLightingEnabled(true);
+		if (Begin()) {
+			ShowLighting();
+			ShowTexture();
+			ShowMask();
+			ShowWeight(false);
+			ShowVertexColors(false);
+			ShowVertexAlpha(false);
+
+			SetColor(Vector3(1.0f, 1.0f, 1.0f));
+			SetModelSpace(false);
+			SetEmissive(false);
+			SetLightingEnabled(true);
+
+			End();
+		}
 	}
+}
+
+GLShader::~GLShader() {
+	if (whiteTexID > 0)
+		glDeleteTextures(1, &whiteTexID);
+
+	if (whiteCubemapTexID > 0)
+		glDeleteTextures(1, &whiteCubemapTexID);
+
+	if (noiseTexID > 0)
+		glDeleteTextures(1, &noiseTexID);
 }
 
 bool GLShader::extChecked = false;
@@ -62,17 +78,29 @@ bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text) {
 	return true;
 }
 
-bool GLShader::LoadShaders(const std::string& vertexSource, const std::string& fragmentSource) {
-	if (!LoadShaderFile(vertexSource, vertSrc)) {
-		errorState = 2;
-		errorString = "OpenGL: Failed to load vertex shader from file: " + vertexSource;
-		return false;
+bool GLShader::LoadShaders(const std::string& vertexSource, const std::string& fragmentSource, const std::string& geometrySource) {
+	if (!vertexSource.empty()) {
+		if (!LoadShaderFile(vertexSource, vertSrc)) {
+			errorState = 10;
+			errorString = "OpenGL: Failed to load vertex shader from file: " + vertexSource;
+			return false;
+		}
 	}
 
-	if (!LoadShaderFile(fragmentSource, fragSrc)) {
-		errorState = 3;
-		errorString = "OpenGL: Failed to load fragment shader from file: " + fragmentSource;
-		return false;
+	if (!fragmentSource.empty()) {
+		if (!LoadShaderFile(fragmentSource, fragSrc)) {
+			errorState = 11;
+			errorString = "OpenGL: Failed to load fragment shader from file: " + fragmentSource;
+			return false;
+		}
+	}
+
+	if (!geometrySource.empty()) {
+		if (!LoadShaderFile(geometrySource, geomSrc)) {
+			errorState = 12;
+			errorString = "OpenGL: Failed to load geometry shader from file: " + geometrySource;
+			return false;
+		}
 	}
 
 	return BuildShaders();
@@ -90,6 +118,12 @@ void GLShader::SetSubColor(const Vector3& color) {
 		glUniform3f(loc, color.x, color.y, color.z);
 }
 
+void GLShader::SetBackgroundColor(const Vector3& color) {
+	GLint loc = glGetUniformLocation(progID, "bgColor");
+	if (loc >= 0)
+		glUniform3f(loc, color.x, color.y, color.z);
+}
+
 void GLShader::SetModelSpace(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bModelSpace");
 	if (loc >= 0)
@@ -98,12 +132,6 @@ void GLShader::SetModelSpace(const bool enable) {
 
 void GLShader::SetEmissive(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bEmissive");
-	if (loc >= 0)
-		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
-}
-
-void GLShader::SetWireframeEnabled(const bool enable) {
-	GLint loc = glGetUniformLocation(progID, "bWireframe");
 	if (loc >= 0)
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
@@ -310,61 +338,38 @@ void GLShader::SetProperties(const Mesh::ShaderProperties& prop) {
 
 void GLShader::ShowLighting(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bLightEnabled");
-
-	if (loc >= 0) {
-		glUseProgram(progID);
+	if (loc >= 0)
 		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
-		glUseProgram(0);
-	}
 }
 
 void GLShader::ShowMask(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowMask");
-
-	if (loc >= 0) {
-		glUseProgram(progID);
+	if (loc >= 0)
 		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
-		glUseProgram(0);
-	}
 }
 
 void GLShader::ShowWeight(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowWeight");
-
-	if (loc >= 0) {
-		glUseProgram(progID);
+	if (loc >= 0)
 		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
-		glUseProgram(0);
-	}
 }
 
 void GLShader::ShowVertexColors(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowVertexColor");
-
-	if (loc >= 0) {
-		glUseProgram(progID);
+	if (loc >= 0)
 		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
-		glUseProgram(0);
-	}
 }
 
 void GLShader::ShowVertexAlpha(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowVertexAlpha");
-
-	if (loc >= 0) {
-		glUseProgram(progID);
+	if (loc >= 0)
 		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
-		glUseProgram(0);
-	}
 }
 
 void GLShader::ShowTexture(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowTexture");
-	if (loc >= 0) {
-		glUseProgram(progID);
+	if (loc >= 0)
 		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
-		glUseProgram(0);
-	}
 }
 
 void GLShader::SetNormalMapEnabled(const bool enable) {
@@ -427,24 +432,151 @@ void GLShader::SetGlowmapEnabled(const bool enable) {
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
-void GLShader::BindTexture(const GLint& index, const GLuint& texture, const char* samplerName) {
-	GLint texLoc = glGetUniformLocation(progID, samplerName);
-	if (texLoc >= 0) {
-		glUniform1i(texLoc, index);
-		glActiveTexture(GL_TEXTURE0 + index);
+GLuint GLShader::CreateWhiteTexture() {
+	unsigned char whitePixel[4] = {255, 255, 255, 255}; // RGBA white
 
-		glBindTexture(GL_TEXTURE_2D, texture);
+	if (whiteTexID == 0) {
+		glGenTextures(1, &whiteTexID);
+		glBindTexture(GL_TEXTURE_2D, whiteTexID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+
+	return whiteTexID;
 }
 
-void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const char* samplerName) {
+GLuint GLShader::CreateWhiteCubemap() {
+	// Create a 1x1 white texture for each face of the cubemap
+	unsigned char whitePixel[3] = {255, 255, 255}; // RGB for white color
+
+	if (whiteCubemapTexID == 0) {
+		glGenTextures(1, &whiteCubemapTexID);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, whiteCubemapTexID);
+
+		for (GLuint face = 0; face < 6; ++face)
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, whitePixel);
+
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+		glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	}
+
+	return whiteCubemapTexID;
+}
+
+GLuint GLShader::CreateNoiseTexture() {
+	if (noiseTexID == 0) {
+		std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+		std::default_random_engine generator;
+
+		std::vector<glm::vec3> ssaoNoise;
+		for (unsigned int i = 0; i < 16; i++) {
+			glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0,
+							0.0f); // rotate around z-axis only
+			ssaoNoise.push_back(noise);
+		}
+
+		glGenTextures(1, &noiseTexID);
+		glBindTexture(GL_TEXTURE_2D, noiseTexID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 4, 4, 0, GL_RGB, GL_UNSIGNED_BYTE, ssaoNoise.data());
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	return noiseTexID;
+}
+
+bool GLShader::BindTexture(const GLint& index, const GLuint& texture, const char* samplerName) {
 	GLint texLoc = glGetUniformLocation(progID, samplerName);
 	if (texLoc >= 0) {
 		glUniform1i(texLoc, index);
 		glActiveTexture(GL_TEXTURE0 + index);
 
-		glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+		if (texture > 0) {
+			glBindTexture(GL_TEXTURE_2D, texture);
+			return true;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, CreateWhiteTexture());
 	}
+
+	return false;
+}
+
+bool GLShader::BindTextureMultisample(const GLint& index, const GLuint& texture, const char* samplerName) {
+	GLint texLoc = glGetUniformLocation(progID, samplerName);
+	if (texLoc >= 0) {
+		glUniform1i(texLoc, index);
+		glActiveTexture(GL_TEXTURE0 + index);
+
+		glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, texture);
+		return true;
+	}
+
+	return false;
+}
+
+bool GLShader::BindCubemap(const GLint& index, const GLuint& texture, const char* samplerName) {
+	GLint texLoc = glGetUniformLocation(progID, samplerName);
+	if (texLoc >= 0) {
+		glUniform1i(texLoc, index);
+		glActiveTexture(GL_TEXTURE0 + index);
+
+		if (texture > 0) {
+			glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+			return true;
+		}
+
+		glBindTexture(GL_TEXTURE_CUBE_MAP, CreateWhiteCubemap());
+	}
+
+	return false;
+}
+
+void GLShader::SetInt(const char* uniformName, const GLint index) {
+	GLint uniformLoc = glGetUniformLocation(progID, uniformName);
+	if (uniformLoc >= 0)
+		glUniform1i(uniformLoc, index);
+}
+
+void GLShader::SetVec2(const char* uniformName, const nifly::Vector2& vec2) {
+	GLint uniformLoc = glGetUniformLocation(progID, uniformName);
+	if (uniformLoc >= 0)
+		glUniform2f(uniformLoc, vec2.u, vec2.v);
+}
+
+void GLShader::SetVec3(const char* uniformName, const nifly::Vector3& vec3) {
+	GLint uniformLoc = glGetUniformLocation(progID, uniformName);
+	if (uniformLoc >= 0)
+		glUniform3f(uniformLoc, vec3.x, vec3.y, vec3.z);
+}
+
+void GLShader::SetVec3Array(const char* uniformName, const std::vector<nifly::Vector3>& vec3Array) {
+	if (vec3Array.empty())
+		return;
+
+	GLint uniformLoc = glGetUniformLocation(progID, uniformName);
+	if (uniformLoc >= 0)
+		glUniform3fv(uniformLoc, (int)vec3Array.size(), &vec3Array[0].x);
+}
+
+int GLShader::GetErrorState() {
+	return errorState;
 }
 
 bool GLShader::GetError(std::string* errorStr) {
@@ -461,44 +593,73 @@ bool GLShader::BuildShaders() {
 	GLint compiled;
 	GLint loglength;
 
-	const GLchar* src = vertSrc.c_str();
-	vertShadID = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertShadID, 1, &src, nullptr);
+	if (!vertSrc.empty()) {
+		const GLchar* src = vertSrc.c_str();
+		vertShadID = glCreateShader(GL_VERTEX_SHADER);
+		glShaderSource(vertShadID, 1, &src, nullptr);
 
-	glCompileShader(vertShadID);
-	glGetShaderiv(vertShadID, GL_COMPILE_STATUS, &compiled);
-	if (!compiled) {
-		glGetShaderiv(vertShadID, GL_INFO_LOG_LENGTH, &loglength);
-		GLchar* logdata = new GLchar[loglength];
-		glGetShaderInfoLog(vertShadID, loglength, nullptr, logdata);
-		errorString = std::string("OpenGL: Vertex shader compile failed: ") + logdata;
-		delete[] logdata;
+		glCompileShader(vertShadID);
+		glGetShaderiv(vertShadID, GL_COMPILE_STATUS, &compiled);
+		if (!compiled) {
+			glGetShaderiv(vertShadID, GL_INFO_LOG_LENGTH, &loglength);
+			GLchar* logdata = new GLchar[loglength];
+			glGetShaderInfoLog(vertShadID, loglength, nullptr, logdata);
+			errorString = std::string("OpenGL: Vertex shader compile failed: ") + logdata;
+			delete[] logdata;
 
-		errorState = 2;
-		return false;
+			errorState = 20;
+			return false;
+		}
 	}
 
-	src = fragSrc.c_str();
-	fragShadID = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragShadID, 1, &src, nullptr);
+	if (!fragSrc.empty()) {
+		const GLchar* src = fragSrc.c_str();
+		fragShadID = glCreateShader(GL_FRAGMENT_SHADER);
+		glShaderSource(fragShadID, 1, &src, nullptr);
 
-	glCompileShader(fragShadID);
-	glGetShaderiv(fragShadID, GL_COMPILE_STATUS, &compiled);
-	if (!compiled) {
-		glGetShaderiv(fragShadID, GL_INFO_LOG_LENGTH, &loglength);
-		GLchar* logdata = new GLchar[loglength];
-		glGetShaderInfoLog(fragShadID, loglength, nullptr, logdata);
-		errorString = std::string("OpenGL: Fragment shader compile failed: ") + logdata;
-		delete[] logdata;
+		glCompileShader(fragShadID);
+		glGetShaderiv(fragShadID, GL_COMPILE_STATUS, &compiled);
+		if (!compiled) {
+			glGetShaderiv(fragShadID, GL_INFO_LOG_LENGTH, &loglength);
+			GLchar* logdata = new GLchar[loglength];
+			glGetShaderInfoLog(fragShadID, loglength, nullptr, logdata);
+			errorString = std::string("OpenGL: Fragment shader compile failed: ") + logdata;
+			delete[] logdata;
 
-		errorState = 3;
-		return false;
+			errorState = 21;
+			return false;
+		}
+	}
+
+	if (!geomSrc.empty()) {
+		const GLchar* src = geomSrc.c_str();
+		geomShadID = glCreateShader(GL_GEOMETRY_SHADER);
+		glShaderSource(geomShadID, 1, &src, nullptr);
+
+		glCompileShader(geomShadID);
+		glGetShaderiv(geomShadID, GL_COMPILE_STATUS, &compiled);
+		if (!compiled) {
+			glGetShaderiv(geomShadID, GL_INFO_LOG_LENGTH, &loglength);
+			GLchar* logdata = new GLchar[loglength];
+			glGetShaderInfoLog(geomShadID, loglength, nullptr, logdata);
+			errorString = std::string("OpenGL: Geometry shader compile failed: ") + logdata;
+			delete[] logdata;
+
+			errorState = 22;
+			return false;
+		}
 	}
 
 	progID = glCreateProgram();
 
-	glAttachShader(progID, vertShadID);
-	glAttachShader(progID, fragShadID);
+	if (vertShadID > 0)
+		glAttachShader(progID, vertShadID);
+
+	if (fragShadID > 0)
+		glAttachShader(progID, fragShadID);
+
+	if (geomShadID > 0)
+		glAttachShader(progID, geomShadID);
 
 	glLinkProgram(progID);
 	glGetProgramiv(progID, GL_LINK_STATUS, &compiled);
@@ -509,7 +670,7 @@ bool GLShader::BuildShaders() {
 		errorString = std::string("OpenGL: Shader program link failed: ") + logdata;
 		delete[] logdata;
 
-		errorState = 4;
+		errorState = 30;
 		return false;
 	}
 
@@ -518,7 +679,7 @@ bool GLShader::BuildShaders() {
 	return true;
 }
 
-int GLShader::Begin() {
+bool GLShader::Begin() {
 	if (errorState == 0)
 		glUseProgram(progID);
 

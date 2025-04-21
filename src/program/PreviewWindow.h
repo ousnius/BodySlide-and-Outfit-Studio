@@ -84,15 +84,15 @@ public:
 
 	void SetShapeTextures(const std::string& shapeName,
 						  const std::vector<std::string>& textureFiles,
-						  const std::string& vShader,
-						  const std::string& fShader,
+						  const std::string& shaderDir,
+						  const std::string& shaderName,
 						  const bool hasMatFile = false,
 						  const MaterialFile& matFile = MaterialFile()) {
 		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
-		GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader);
+		GLMaterial* mat = gls.AddMaterial(textureFiles, shaderDir, shaderName);
 		if (mat) {
 			m->material = mat;
 			shapeMaterials[shapeName] = mat;
@@ -148,11 +148,11 @@ public:
 		//"d:\\proj\\FemaleBodyt_n.dds"
 		//"d:\\proj\\bodyPaintDummy-N_u0_v0.png"
 		//normTextures[20] = "d:\\proj\\masktest.png";
-		GLMaterial* normMat = gls.AddMaterial(normTextures, Config["AppDir"] + "/res/shaders/normalshade.vert", Config["AppDir"] + "/res/shaders/normalshade.frag");
+		GLMaterial* normMat = gls.AddMaterial(normTextures, Config["AppDir"] + "/res/shaders", "normalshade");
 
 		std::vector<std::string> ppTex;
 		ppTex.push_back("pproc");
-		GLMaterial* ppMat = gls.AddMaterial(ppTex, Config["AppDir"] + "/res/shaders/fullscreentri.vert", Config["AppDir"] + "/res/shaders/fullscreentri.frag");
+		GLMaterial* ppMat = gls.AddMaterial(ppTex, Config["AppDir"] + "/res/shaders", "fullscreentri");
 
 
 		//texIds.push_back(normMat->GetTexID(0));

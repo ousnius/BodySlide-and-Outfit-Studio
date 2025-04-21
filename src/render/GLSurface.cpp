@@ -12,10 +12,13 @@ See the included LICENSE file
 #include <algorithm>
 #include <limits>
 #include <set>
+#include <random>
 
 using namespace nifly;
 
 extern ConfigurationManager Config;
+
+static int sampleCount = 0;
 
 const wxGLAttributes& GLSurface::GetGLAttribs() {
 	static bool attribsInitialized{false};
@@ -24,6 +27,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 	if (!attribsInitialized) {
 		// 16x AA
 		attribs.PlatformDefaults().DoubleBuffer().RGBA().Depth(24).SampleBuffers(1).Samplers(16).EndList();
+		sampleCount = 16;
 
 		bool displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		if (!displaySupported) {
@@ -32,6 +36,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 
 			// 8x AA
 			attribs.PlatformDefaults().DoubleBuffer().RGBA().Depth(24).SampleBuffers(1).Samplers(8).EndList();
+			sampleCount = 8;
 			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		}
 
@@ -41,6 +46,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 
 			// 4x AA
 			attribs.PlatformDefaults().DoubleBuffer().RGBA().Depth(24).SampleBuffers(1).Samplers(4).EndList();
+			sampleCount = 4;
 			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		}
 
@@ -50,6 +56,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 
 			// No AA
 			attribs.PlatformDefaults().DoubleBuffer().RGBA().Depth(24).SampleBuffers(0).EndList();
+			sampleCount = 1;
 			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		}
 
@@ -116,8 +123,6 @@ void GLSurface::InitGLExtensions() {
 }
 
 int GLSurface::InitGLSettings() {
-	glShadeModel(GL_SMOOTH);
-
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
@@ -711,6 +716,8 @@ void GLSurface::SetSize(uint32_t w, uint32_t h) {
 	glViewport(0, 0, w, h);
 	vpW = w;
 	vpH = h;
+
+	SetupGBuffers();
 }
 
 void GLSurface::GetSize(uint32_t& w, uint32_t& h) {
@@ -756,7 +763,7 @@ void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, u
 	//
 	GLShader shader = renderShader->GetShader();
 	shader.Begin();
-	renderShader->BindTextures(0, false, false, false, false);
+	renderShader->BindTextures(shader, 0, false, false, false, false);
 	// bind the dummy array and send three fake positions to the shader.
 	glBindVertexArray(m_vertexArrayObject);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -800,7 +807,7 @@ void GLSurface::RenderToTexture(GLMaterial* renderShader) {
 		m->material = renderShader;
 		m->modelSpace = false;
 		m->doublesided = true;
-		RenderMesh(m);
+		RenderMesh(m, false);
 		m->doublesided = oldDS;
 		m->modelSpace = true;
 		m->material = oldmat;
@@ -824,18 +831,98 @@ void GLSurface::RenderOneFrame() {
 
 	canvas->SetCurrent(*context);
 
+	// Clear the screen
 	glClearColor(colorBackground.x, colorBackground.y, colorBackground.z, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	UpdateProjection();
+	bool deferred = false;
 
-	// Render regular meshes
-	for (auto& m : meshes) {
-		if (!m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0))
-			RenderMesh(m);
+	// Bind G-buffer framebuffer
+	if (gBuffer) {
+		deferred = true;
+
+		// Bind and clear the G-buffer
+		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 
-	// Render meshes with alpha blending only
+	UpdateProjection();
+
+	// Render meshes without alpha blending (geometry pass, deferred or forward rendering)
+	for (auto& m : meshes) {
+		if (!m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0))
+			RenderMesh(m, deferred);
+	}
+
+	// Render G-buffer contents
+	if (deferred) {
+		if (debugGBuffer >= 0) {
+			// Bind the default framebuffer (the screen)
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+			// Use the shader that samples from the G-buffer
+			if (gBufferShader.Begin()) {
+				gBufferShader.SetInt("SampleCount", sampleCount);
+				gBufferShader.SetInt("DebugGBuffer", debugGBuffer);
+				gBufferShader.SetBackgroundColor(colorBackground);
+
+				// Unbind G-buffer textures
+				gBufferShader.BindTextureMultisample(0, 0, "gPosition");
+				gBufferShader.BindTextureMultisample(1, 0, "gNormalMaskWeightRimSoft");
+				gBufferShader.BindTextureMultisample(2, 0, "gAlbedoAlpha");
+				gBufferShader.BindTextureMultisample(3, 0, "gSpecular");
+				gBufferShader.BindTextureMultisample(4, 0, "gVertexColors");
+				gBufferShader.BindTextureMultisample(5, 0, "gEnvironment");
+				gBufferShader.BindTextureMultisample(6, 0, "gEmissiveRefl");
+				gBufferShader.BindTextureMultisample(7, 0, "gLightMask");
+				gBufferShader.BindTextureMultisample(8, 0, "gDepth");
+
+				// Bind G-buffer textures
+				gBufferShader.BindTextureMultisample(0, gPosition, "gPosition");
+				gBufferShader.BindTextureMultisample(1, gNormalMaskWeightRimSoft, "gNormalMaskWeightRimSoft");
+				gBufferShader.BindTextureMultisample(2, gAlbedoAlpha, "gAlbedoAlpha");
+				gBufferShader.BindTextureMultisample(3, gSpecular, "gSpecular");
+				gBufferShader.BindTextureMultisample(4, gVertexColors, "gVertexColors");
+				gBufferShader.BindTextureMultisample(5, gEnvironment, "gEnvironment");
+				gBufferShader.BindTextureMultisample(6, gEmissiveRefl, "gEmissiveRefl");
+				gBufferShader.BindTextureMultisample(7, gLightMask, "gLightMask");
+				gBufferShader.BindTextureMultisample(8, gDepth, "gDepth");
+
+				glBindVertexArray(quadVAO);
+
+				glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+				glEnableVertexAttribArray(0);
+				glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); // Quad positions
+
+				glEnableVertexAttribArray(1);
+				glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float))); // Quad tex coords
+
+				// Render the fullscreen quad
+				glDrawArrays(GL_TRIANGLES, 0, 6);
+
+				glDisableVertexAttribArray(1);
+				glDisableVertexAttribArray(0);
+
+				glBindBuffer(GL_ARRAY_BUFFER, 0);
+				glBindVertexArray(0);
+
+				gBufferShader.End();
+			}
+		}
+		else {
+			// Render SSAO
+			//RenderSSAO();
+
+			// Render lighting for meshes without alpha blending (lighting pass, deferred rendering)
+			RenderLighting();
+		}
+	}
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, gBuffer);	// source: G-buffer
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);			// target: screen
+	glBlitFramebuffer(0, 0, vpW, vpH, 0, 0, vpW, vpH, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+	// Render meshes with alpha blending only (forward rendering)
 	for (auto& m : meshes) {
 		if (m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0)) {
 			glEnable(GL_CULL_FACE);
@@ -844,16 +931,30 @@ void GLSurface::RenderOneFrame() {
 			glDepthFunc(GL_LESS);
 			glDepthMask(GL_FALSE);
 
-			RenderMesh(m);
+			RenderMesh(m, false);
 
 			glCullFace(GL_BACK);
 			glDepthMask(GL_TRUE);
 
-			RenderMesh(m);
+			RenderMesh(m, false);
 		}
 	}
 
-	// Render overlays on top
+	// Render meshes as wireframe or points afterwards (forward rendering)
+	for (auto& m : meshes) {
+		if (m->bVisible && (m->nTris != 0 || m->nEdges != 0)) {
+			if (bWireframe && m->rendermode == Mesh::RenderMode::Normal)
+				RenderMeshAsWireframe(m);
+
+			if (m->rendermode != Mesh::RenderMode::UnlitWire && m->rendermode != Mesh::RenderMode::UnlitWireDepth)
+				RenderMeshAsPoints(m);
+		}
+	}
+
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_TRUE);
+
+	// Render overlays on top (forward rendering)
 	std::vector<Mesh*> renderOverlays(overlays);
 	std::sort(renderOverlays.begin(), renderOverlays.end(), SortOverlaysLayer());
 
@@ -864,7 +965,11 @@ void GLSurface::RenderOneFrame() {
 				glClear(GL_DEPTH_BUFFER_BIT);
 
 			lastOverlayLayer = o->overlayLayer;
-			RenderMesh(o);
+
+			if (o->rendermode == Mesh::RenderMode::UnlitPoints || o->rendermode == Mesh::RenderMode::UnlitPointsDepth)
+				RenderMeshAsPoints(o);
+			else
+				RenderMesh(o, false);
 		}
 	}
 
@@ -872,13 +977,13 @@ void GLSurface::RenderOneFrame() {
 	return;
 }
 
-void GLSurface::RenderMesh(Mesh* m) {
+void GLSurface::RenderMesh(Mesh* m, bool deferred) {
 	m->UpdateBuffers();
 
 	if (!m->genBuffers || !m->material)
 		return;
 
-	GLShader& shader = m->material->GetShader();
+	GLShader& shader = deferred ? m->material->GetDeferredGeometryShader() : m->material->GetShader();
 	if (!shader.Begin())
 		return;
 
@@ -899,6 +1004,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 	shader.SetMatrixModelView(matView, m->matModel);
 	shader.SetColor(m->color);
 	shader.SetSubColor(Vector3(1.0f, 1.0f, 1.0f));
+	shader.SetBackgroundColor(colorBackground);
 	shader.SetModelSpace(m->modelSpace);
 	shader.SetSpecularEnabled(m->specular);
 	shader.SetEmissive(m->emissive);
@@ -908,7 +1014,6 @@ void GLSurface::RenderMesh(Mesh* m) {
 	shader.SetGlowmapEnabled(m->glowmap);
 	shader.SetGreyscaleColorEnabled(m->greyscaleColor);
 	shader.SetLightingEnabled(bLighting);
-	shader.SetWireframeEnabled(false);
 	shader.SetNormalMapEnabled(false);
 	shader.SetAlphaMaskEnabled(false);
 	shader.SetCubemapEnabled(m->cubemap);
@@ -918,7 +1023,20 @@ void GLSurface::RenderMesh(Mesh* m) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	glEnable(GL_DEPTH_TEST);
 
-	glBindVertexArray(m->vao);
+	if (deferred) {
+		shader.SetInt("SampleCount", sampleCount);
+
+		// Unbind G-buffer textures
+		shader.BindTextureMultisample(0, 0, "gPosition");
+		shader.BindTextureMultisample(1, 0, "gNormalMaskWeightRimSoft");
+		shader.BindTextureMultisample(2, 0, "gAlbedoAlpha");
+		shader.BindTextureMultisample(3, 0, "gSpecular");
+		shader.BindTextureMultisample(4, 0, "gVertexColors");
+		shader.BindTextureMultisample(5, 0, "gEnvironment");
+		shader.BindTextureMultisample(6, 0, "gEmissiveRefl");
+		shader.BindTextureMultisample(7, 0, "gLightMask");
+		shader.BindTextureMultisample(8, 0, "gDepth");
+	}
 
 	if (m->rendermode == Mesh::RenderMode::Normal || m->rendermode == Mesh::RenderMode::LitWire || m->rendermode == Mesh::RenderMode::UnlitSolid) {
 		shader.SetFrontalLight(frontalLight);
@@ -935,6 +1053,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 		if (m->rendermode == Mesh::RenderMode::UnlitSolid)
 			shader.SetLightingEnabled(false);
 
+		glBindVertexArray(m->vao);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
@@ -971,12 +1090,10 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Alpha
 		}
 
-		if (bTextured && m->textured && m->texcoord) {
+		if (m->texcoord) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
 			glEnableVertexAttribArray(6);
 			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
-
-			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
 		}
 
 		if (m->mask) {
@@ -991,6 +1108,8 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Weight
 		}
 
+		m->material->BindTextures(shader, largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
+
 		GLuint subMeshesSize = 0;
 		if (!m->subMeshes.empty()) {
 			auto& lastSubMesh = m->subMeshes.back();
@@ -1004,45 +1123,38 @@ void GLSurface::RenderMesh(Mesh* m) {
 		for (size_t s = 0; s < m->subMeshes.size(); ++s) {
 			GLuint subIndex = m->subMeshes[s].first;
 			GLuint subSize = m->subMeshes[s].second;
+
 			Vector3 subColor = m->color;
 
 			if (!m->subMeshesColor.empty())
 				subColor = m->subMeshesColor[s];
 
 			shader.SetSubColor(subColor);
+
 			glDrawElements(GL_TRIANGLES, subSize * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subIndex * 3 * sizeof(GLushort)));
 		}
 
-		// Render wireframe (full mesh or remainder of it)
-		if (bWireframe && m->rendermode == Mesh::RenderMode::Normal) {
-			shader.SetWireframeEnabled(true);
-			shader.SetColor(colorWire);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glDrawElements(GL_TRIANGLES, (m->nTris - subMeshesSize) * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subMeshesSize * 3 * sizeof(GLushort)));
-
-			// Render wireframes for sub meshes
-			for (size_t s = 0; s < m->subMeshes.size(); ++s) {
-				GLuint subIndex = m->subMeshes[s].first;
-				GLuint subSize = m->subMeshes[s].second;
-				glDrawElements(GL_TRIANGLES, subSize * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subIndex * 3 * sizeof(GLushort)));
-			}
-		}
-
-		if (bTextured && m->textured && m->texcoord)
-			glDisableVertexAttribArray(6);
-
+		glDisableVertexAttribArray(8);
+		glDisableVertexAttribArray(7);
+		glDisableVertexAttribArray(6);
 		glDisableVertexAttribArray(5);
 		glDisableVertexAttribArray(4);
 		glDisableVertexAttribArray(3);
 		glDisableVertexAttribArray(2);
 		glDisableVertexAttribArray(1);
 		glDisableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
-	else if (m->rendermode == Mesh::RenderMode::UnlitWire || m->rendermode == Mesh::RenderMode::UnlitWireDepth) {
+	else if (!deferred && (m->rendermode == Mesh::RenderMode::UnlitWire || m->rendermode == Mesh::RenderMode::UnlitWireDepth)) {
 		glDisable(GL_CULL_FACE);
 
 		if (m->rendermode != Mesh::RenderMode::UnlitWireDepth)
 			glDisable(GL_DEPTH_TEST);
+
+		glBindVertexArray(m->vao);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
@@ -1053,18 +1165,260 @@ void GLSurface::RenderMesh(Mesh* m) {
 		glDrawElements(GL_LINES, m->nEdges * 2, GL_UNSIGNED_SHORT, (GLvoid*)0);
 
 		glDisableVertexAttribArray(0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
 	}
+
+	shader.End();
+}
+
+void GLSurface::RenderSSAO() {
+	// Bind the default framebuffer (the screen)
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	GLShader& shader = ssaoShader;
+	if (!shader.Begin())
+		return;
+
+	shader.SetMatrixProjection(matProjection);
+	shader.SetMatrixModelView(matView, glm::mat4x4());
+	shader.SetBackgroundColor(colorBackground);
+
+	shader.SetInt("SampleCount", sampleCount);
+
+	// Unbind G-buffer textures
+	shader.BindTextureMultisample(0, 0, "gPosition");
+	shader.BindTextureMultisample(1, 0, "gNormalMaskWeightRimSoft");
+	shader.BindTextureMultisample(2, 0, "gAlbedoAlpha");
+	shader.BindTextureMultisample(3, 0, "gSpecular");
+	shader.BindTextureMultisample(4, 0, "gVertexColors");
+	shader.BindTextureMultisample(5, 0, "gEnvironment");
+	shader.BindTextureMultisample(6, 0, "gEmissiveRefl");
+	shader.BindTextureMultisample(7, 0, "gLightMask");
+	shader.BindTextureMultisample(8, 0, "gDepth");
+
+	// Bind G-buffer textures
+	shader.BindTextureMultisample(0, gPosition, "gPosition");
+	shader.BindTextureMultisample(1, gNormalMaskWeightRimSoft, "gNormalMaskWeightRimSoft");
+	shader.BindTextureMultisample(2, gAlbedoAlpha, "gAlbedoAlpha");
+	shader.BindTextureMultisample(3, gSpecular, "gSpecular");
+	shader.BindTextureMultisample(4, gVertexColors, "gVertexColors");
+	shader.BindTextureMultisample(5, gEnvironment, "gEnvironment");
+	shader.BindTextureMultisample(6, gEmissiveRefl, "gEmissiveRefl");
+	shader.BindTextureMultisample(7, gLightMask, "gLightMask");
+	shader.BindTextureMultisample(8, gDepth, "gDepth");
+
+	shader.BindTexture(9, shader.CreateNoiseTexture(), "texNoise");
+
+	shader.SetVec2("screenSize", Vector2(vpW, vpH));
+	shader.SetVec2("noiseScale", Vector2(vpW / 4, vpH / 4));
+
+	CreateSSAOKernel();
+	shader.SetVec3Array("samples", ssaoKernel);
+
+	glBindVertexArray(quadVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); // Quad positions
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float))); // Quad tex coords
+
+	// Render the fullscreen quad
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	shader.End();
+}
+
+void GLSurface::RenderLighting() {
+	// Bind the default framebuffer (the screen)
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	GLShader& shader = deferredLightingShader;
+	if (!shader.Begin())
+		return;
+
+	shader.SetMatrixProjection(matProjection);
+	shader.SetMatrixModelView(matView, glm::mat4x4());
+	shader.SetBackgroundColor(colorBackground);
+	shader.SetLightingEnabled(bLighting);
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glEnable(GL_DEPTH_TEST);
+
+	shader.SetInt("SampleCount", sampleCount);
+	shader.SetVec2("screenSize", Vector2(vpW, vpH));
+
+	shader.SetFrontalLight(frontalLight);
+	shader.SetDirectionalLight(directionalLight0, 0);
+	shader.SetDirectionalLight(directionalLight1, 1);
+	shader.SetDirectionalLight(directionalLight2, 2);
+	shader.SetAmbientLight(ambientLight);
+
+	// Unbind G-buffer textures
+	shader.BindTextureMultisample(0, 0, "gPosition");
+	shader.BindTextureMultisample(1, 0, "gNormalMaskWeightRimSoft");
+	shader.BindTextureMultisample(2, 0, "gAlbedoAlpha");
+	shader.BindTextureMultisample(3, 0, "gSpecular");
+	shader.BindTextureMultisample(4, 0, "gVertexColors");
+	shader.BindTextureMultisample(5, 0, "gEnvironment");
+	shader.BindTextureMultisample(6, 0, "gEmissiveRefl");
+	shader.BindTextureMultisample(7, 0, "gLightMask");
+	shader.BindTextureMultisample(8, 0, "gDepth");
+
+	// Bind G-buffer textures
+	shader.BindTextureMultisample(0, gPosition, "gPosition");
+	shader.BindTextureMultisample(1, gNormalMaskWeightRimSoft, "gNormalMaskWeightRimSoft");
+	shader.BindTextureMultisample(2, gAlbedoAlpha, "gAlbedoAlpha");
+	shader.BindTextureMultisample(3, gSpecular, "gSpecular");
+	shader.BindTextureMultisample(4, gVertexColors, "gVertexColors");
+	shader.BindTextureMultisample(5, gEnvironment, "gEnvironment");
+	shader.BindTextureMultisample(6, gEmissiveRefl, "gEmissiveRefl");
+	shader.BindTextureMultisample(7, gLightMask, "gLightMask");
+	shader.BindTextureMultisample(8, gDepth, "gDepth");
+
+	shader.BindTextureMultisample(9, 0, "ssaoTexture");
+	shader.BindTextureMultisample(9, ssaoTexture, "ssaoTexture");
+
+	glBindVertexArray(quadVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0); // Quad positions
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float))); // Quad tex coords
+
+	// Render the fullscreen quad
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
+	shader.End();
+}
+
+void GLSurface::RenderMeshAsWireframe(Mesh* m) {
+	m->UpdateBuffers();
+
+	if (!m->genBuffers || !m->material)
+		return;
+
+	GLShader& shader = m->material->GetWireframeShader();
+	if (!shader.Begin())
+		return;
+
+	shader.SetMatrixProjection(matProjection);
+	shader.SetMatrixModelView(matView, m->matModel);
+	shader.SetColor(colorWire);
+	shader.SetBackgroundColor(colorBackground);
+
+	glBindVertexArray(m->vao);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+
+	glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Positions
+
+	if (m->norms) {
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[1]);
+		glEnableVertexAttribArray(1);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Normals
+	}
+
+	if (m->tangents) {
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[2]);
+		glEnableVertexAttribArray(2);
+		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Tangents
+	}
+
+	if (m->bitangents) {
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[3]);
+		glEnableVertexAttribArray(3);
+		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Bitangents
+	}
+
+	if (m->vcolors) {
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[4]);
+		glEnableVertexAttribArray(4);
+		glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Colors
+	}
+
+	if (m->valpha) {
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
+		glEnableVertexAttribArray(5);
+		glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Alpha
+	}
+
+	if (m->texcoord) {
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
+		glEnableVertexAttribArray(6);
+		glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
+	}
+
+	if (m->mask) {
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[7]);
+		glEnableVertexAttribArray(7);
+		glVertexAttribPointer(7, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Mask
+	}
+
+	if (m->weight) {
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[8]);
+		glEnableVertexAttribArray(8);
+		glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Weight
+	}
+
+	GLuint subMeshesSize = 0;
+	if (!m->subMeshes.empty()) {
+		auto& lastSubMesh = m->subMeshes.back();
+		subMeshesSize = lastSubMesh.first + lastSubMesh.second;
+	}
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	glDepthMask(GL_FALSE); // Don't write to depth, just test
+
+	// Render full mesh or remainder of it
+	glDrawElements(GL_TRIANGLES, (m->nTris - subMeshesSize) * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subMeshesSize * 3 * sizeof(GLushort)));
+
+	// Render sub meshes
+	for (size_t s = 0; s < m->subMeshes.size(); ++s) {
+		GLuint subIndex = m->subMeshes[s].first;
+		GLuint subSize = m->subMeshes[s].second;
+
+		glDrawElements(GL_TRIANGLES, subSize * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subIndex * 3 * sizeof(GLushort)));
+	}
+
+	glDisableVertexAttribArray(8);
+	glDisableVertexAttribArray(7);
+	glDisableVertexAttribArray(6);
+	glDisableVertexAttribArray(5);
+	glDisableVertexAttribArray(4);
+	glDisableVertexAttribArray(3);
+	glDisableVertexAttribArray(2);
+	glDisableVertexAttribArray(1);
+	glDisableVertexAttribArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
 	shader.End();
-
-	if (m->rendermode != Mesh::RenderMode::UnlitWire && m->rendermode != Mesh::RenderMode::UnlitWireDepth) {
-		// Render mesh as points afterwards
-		RenderMeshAsPoints(m);
-	}
 }
 
 void GLSurface::RenderMeshAsPoints(Mesh* m) {
@@ -1090,6 +1444,7 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 	shader.SetMatrixModelView(matView, m->matModel);
 	shader.SetColor(m->color);
 	shader.SetSubColor(Vector3(1.0f, 1.0f, 1.0f));
+	shader.SetBackgroundColor(colorBackground);
 	shader.SetAdjustPointSize(false);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1139,12 +1494,10 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 				glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Alpha
 			}
 
-			if (bTextured && m->textured && m->texcoord) {
+			if (m->texcoord) {
 				glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
 				glEnableVertexAttribArray(6);
 				glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
-
-				material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
 			}
 
 			if (m->mask) {
@@ -1159,14 +1512,17 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 				glVertexAttribPointer(8, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Weight
 			}
 
+			if (bTextured && m->textured)
+				material->BindTextures(shader, largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
+
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			glDrawArrays(GL_POINTS, 0, m->nVerts);
 
-			if (bTextured && m->textured && m->texcoord)
-				glDisableVertexAttribArray(6);
-
+			glDisableVertexAttribArray(8);
+			glDisableVertexAttribArray(7);
+			glDisableVertexAttribArray(6);
 			glDisableVertexAttribArray(5);
 			glDisableVertexAttribArray(4);
 			glDisableVertexAttribArray(3);
@@ -1202,13 +1558,38 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 void GLSurface::UpdateShaders(Mesh* m) {
 	if (m->material) {
 		GLShader& shader = m->material->GetShader();
-		shader.ShowTexture(bTextured && m->textured);
-		shader.ShowLighting(bLighting);
-		shader.ShowMask(bMaskVisible && m->mask);
-		shader.ShowWeight(bWeightColors && m->weight);
-		shader.ShowVertexColors(bVertexColors && m->vcolors && m->vertexColors);
-		shader.ShowVertexAlpha(bVertexColors && m->valpha && m->vertexColors && m->vertexAlpha);
-		shader.SetProperties(m->prop);
+		if (shader.Begin()) {
+			shader.ShowTexture(bTextured && m->textured);
+			shader.ShowLighting(bLighting);
+			shader.ShowMask(bMaskVisible && m->mask);
+			shader.ShowWeight(bWeightColors && m->weight);
+			shader.ShowVertexColors(bVertexColors && m->vcolors && m->vertexColors);
+			shader.ShowVertexAlpha(bVertexColors && m->valpha && m->vertexColors && m->vertexAlpha);
+			shader.SetProperties(m->prop);
+			shader.End();
+		}
+
+		GLShader& deferredGeometryShader = m->material->GetDeferredGeometryShader();
+		if (deferredGeometryShader.Begin()) {
+			deferredGeometryShader.ShowTexture(bTextured && m->textured);
+			deferredGeometryShader.ShowLighting(bLighting);
+			deferredGeometryShader.ShowMask(bMaskVisible && m->mask);
+			deferredGeometryShader.ShowWeight(bWeightColors && m->weight);
+			deferredGeometryShader.ShowVertexColors(bVertexColors && m->vcolors && m->vertexColors);
+			deferredGeometryShader.ShowVertexAlpha(bVertexColors && m->valpha && m->vertexColors && m->vertexAlpha);
+			deferredGeometryShader.SetProperties(m->prop);
+			deferredGeometryShader.End();
+		}
+
+		if (deferredLightingShader.Begin()) {
+			deferredLightingShader.ShowTexture(bTextured);
+			deferredLightingShader.ShowLighting(bLighting);
+			deferredLightingShader.ShowMask(bMaskVisible);
+			deferredLightingShader.ShowWeight(bWeightColors);
+			deferredLightingShader.ShowVertexColors(bVertexColors);
+			deferredLightingShader.ShowVertexAlpha(bVertexColors);
+			deferredLightingShader.End();
+		}
 	}
 }
 
@@ -2212,16 +2593,23 @@ Mesh::RenderMode GLSurface::SetMeshRenderMode(const std::string& name, Mesh::Ren
 	return r;
 }
 
-GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures) {
+GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& shaderDir, const std::string& shaderName, const bool reloadTextures) {
 	if (!SetContext())
 		return nullptr;
 
-	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile, reloadTextures);
+	GLMaterial* mat = resLoader.AddMaterial(textureFiles, shaderDir, shaderName, reloadTextures);
 	if (mat) {
 		std::string shaderError;
 		if (mat->GetShader().GetError(&shaderError)) {
 			wxLogError(wxString(shaderError));
 			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+		}
+
+		if (mat->GetDeferredGeometryShader().GetErrorState() >= 10) {
+			if (mat->GetDeferredGeometryShader().GetError(&shaderError)) {
+				wxLogError(wxString(shaderError));
+				wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+			}
 		}
 	}
 
@@ -2233,7 +2621,7 @@ GLMaterial* GLSurface::GetPointsMaterial() {
 		if (!SetContext())
 			return nullptr;
 
-		pointsMat = new GLMaterial(Config["AppDir"] + "/res/shaders/points.vert", Config["AppDir"] + "/res/shaders/points.frag");
+		pointsMat = new GLMaterial(Config["AppDir"] + "/res/shaders", "points");
 
 		std::string shaderError;
 		if (pointsMat->GetShader().GetError(&shaderError)) {
@@ -2250,7 +2638,7 @@ GLMaterial* GLSurface::GetPrimitiveMaterial() {
 		if (!SetContext())
 			return nullptr;
 
-		primitiveMat = new GLMaterial(Config["AppDir"] + "/res/shaders/primitive.vert", Config["AppDir"] + "/res/shaders/primitive.frag");
+		primitiveMat = new GLMaterial(Config["AppDir"] + "/res/shaders", "primitive");
 
 		std::string shaderError;
 		if (primitiveMat->GetShader().GetError(&shaderError)) {
@@ -2260,4 +2648,204 @@ GLMaterial* GLSurface::GetPrimitiveMaterial() {
 	}
 
 	return primitiveMat;
+}
+
+bool GLSurface::SetupGBuffers() {
+	DeleteGBuffers();
+
+	glGenFramebuffers(1, &gBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
+	// Position, RGB
+	glGenTextures(1, &gPosition);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gPosition);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_RGB16F, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, gPosition, 0);
+
+	// Normal XYZ + mask factor + weight factor + rimlight power + softlighting, RGBA
+	glGenTextures(1, &gNormalMaskWeightRimSoft);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gNormalMaskWeightRimSoft);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_RGBA32UI, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D_MULTISAMPLE, gNormalMaskWeightRimSoft, 0);
+
+	// Albedo + alpha, RGBA
+	glGenTextures(1, &gAlbedoAlpha);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gAlbedoAlpha);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_RGBA, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D_MULTISAMPLE, gAlbedoAlpha, 0);
+
+	// Specular color + shininess, RGBA
+	glGenTextures(1, &gSpecular);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gSpecular);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_RGBA16F, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D_MULTISAMPLE, gSpecular, 0);
+
+	// Vertex color, RGB
+	glGenTextures(1, &gVertexColors);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gVertexColors);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_RGB16F, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D_MULTISAMPLE, gVertexColors, 0);
+
+	// Cubemap + env mask, RGBA
+	glGenTextures(1, &gEnvironment);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gEnvironment);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_RGBA16F, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D_MULTISAMPLE, gEnvironment, 0);
+
+	// Emissive color + env reflection, RGBA
+	glGenTextures(1, &gEmissiveRefl);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gEmissiveRefl);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_RGBA16F, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT6, GL_TEXTURE_2D_MULTISAMPLE, gEmissiveRefl, 0);
+
+	// Light mask for rim/softlighting, RGB
+	glGenTextures(1, &gLightMask);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gLightMask);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_RGB16F, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT7, GL_TEXTURE_2D_MULTISAMPLE, gLightMask, 0);
+
+	// Tell OpenGL which color attachments we'll use for rendering
+	unsigned int attachments[8] = {GL_COLOR_ATTACHMENT0,
+								   GL_COLOR_ATTACHMENT1,
+								   GL_COLOR_ATTACHMENT2,
+								   GL_COLOR_ATTACHMENT3,
+								   GL_COLOR_ATTACHMENT4,
+								   GL_COLOR_ATTACHMENT5,
+								   GL_COLOR_ATTACHMENT6,
+								   GL_COLOR_ATTACHMENT7};
+	glDrawBuffers(8, attachments);
+
+	// Depth buffer texture
+	glGenTextures(1, &gDepth);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, gDepth);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_DEPTH_COMPONENT24, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D_MULTISAMPLE, gDepth, 0);
+
+	// Check framebuffer completeness
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		return false;
+
+	glGenFramebuffers(1, &ssaoFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+
+	// SSAO texture
+	glGenTextures(1, &ssaoTexture);
+	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, ssaoTexture);
+	glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, sampleCount, GL_R16F, vpW, vpH, GL_TRUE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, ssaoTexture, 0);
+
+	glDrawBuffers(1, attachments);
+
+	// Check framebuffer completeness
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		return false;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Create fullscreen quad for rendering g-buffer contents
+	// Positions and texture coords
+	float quadVertices[] = {-1.0f, 1.0f, 0.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), quadVertices, GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+	glBindVertexArray(0); // Unbind VAO
+
+	gBufferShader = GLShader(Config["AppDir"] + "/res/shaders/gbuffer.vert", Config["AppDir"] + "/res/shaders/gbuffer.frag", "");
+	deferredLightingShader = GLShader(Config["AppDir"] + "/res/shaders/" + defaultShaderName + "_deferred_light.vert",
+									  Config["AppDir"] + "/res/shaders/" + defaultShaderName + "_deferred_light.frag",
+									  "");
+	ssaoShader = GLShader(Config["AppDir"] + "/res/shaders/gbuffer.vert", Config["AppDir"] + "/res/shaders/ssao.frag", "");
+
+	std::string shaderError;
+	if (gBufferShader.GetError(&shaderError)) {
+		wxLogError(wxString(shaderError));
+		wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+		return false;
+	}
+
+	if (deferredLightingShader.GetError(&shaderError)) {
+		wxLogError(wxString(shaderError));
+		wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+		return false;
+	}
+
+	if (ssaoShader.GetError(&shaderError)) {
+		wxLogError(wxString(shaderError));
+		wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+		return false;
+	}
+
+	return true;
+}
+
+void GLSurface::DeleteGBuffers() {
+	if (gBuffer) {
+		glDeleteFramebuffers(1, &gBuffer);
+		glDeleteTextures(1, &gPosition);
+		glDeleteTextures(1, &gNormalMaskWeightRimSoft);
+		glDeleteTextures(1, &gAlbedoAlpha);
+		glDeleteTextures(1, &gSpecular);
+		glDeleteTextures(1, &gVertexColors);
+		glDeleteTextures(1, &gEnvironment);
+		glDeleteTextures(1, &gEmissiveRefl);
+		glDeleteTextures(1, &gLightMask);
+		glDeleteTextures(1, &gDepth);
+
+		glDeleteFramebuffers(1, &ssaoFBO);
+		glDeleteTextures(1, &ssaoTexture);
+
+		gBuffer = 0;
+		gPosition = 0;
+		gNormalMaskWeightRimSoft = 0;
+		gAlbedoAlpha = 0;
+		gSpecular = 0;
+		gVertexColors = 0;
+		gEnvironment = 0;
+		gEmissiveRefl = 0;
+		gLightMask = 0;
+		gDepth = 0;
+
+		ssaoFBO = 0;
+		ssaoTexture = 0;
+	}
+
+	if (quadVAO) {
+		glDeleteBuffers(1, &quadVBO);
+		glDeleteVertexArrays(1, &quadVAO);
+
+		quadVBO = 0;
+		quadVAO = 0;
+	}
+}
+
+void GLSurface::CreateSSAOKernel() {
+	if (!ssaoKernel.empty())
+		return;
+
+	std::uniform_real_distribution<float> randomFloats(0.0, 1.0);
+	std::default_random_engine generator;
+
+	for (unsigned int i = 0; i < 128; ++i) {
+		nifly::Vector3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
+		sample.Normalize();
+		sample *= randomFloats(generator);
+
+		// Scale samples closer to the origin more densely
+		float scale = float(i) / 128.0f;
+		scale = glm::mix(0.1f, 1.0f, scale * scale);
+		sample *= scale;
+
+		ssaoKernel.push_back(sample);
+	}
 }

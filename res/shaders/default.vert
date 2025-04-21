@@ -20,7 +20,6 @@ uniform bool bShowWeight;
 uniform bool bShowVertexColor;
 uniform bool bShowVertexAlpha;
 
-uniform bool bWireframe;
 uniform bool bModelSpace;
 
 layout(location = 0) in vec3 vertexPosition;
@@ -137,23 +136,20 @@ void main(void)
 	lightDirectional1 = normalize(mat3(matView) * directional1.direction);
 	lightDirectional2 = normalize(mat3(matView) * directional2.direction);
 
-	if (!bShowTexture || bWireframe)
+	if (!bShowTexture)
 	{
 		vColor *= clamp(vec4(color, 1.0), 0.0, 1.0);
 	}
 
-	if (!bWireframe)
+	vColor.rgb *= subColor;
+
+	if (bShowMask)
 	{
-		vColor.rgb *= subColor;
+		maskFactor = 1.0 - vertexMask / 1.5;
+	}
 
-		if (bShowMask)
-		{
-			maskFactor = 1.0 - vertexMask / 1.5;
-		}
-
-		if (bShowWeight)
-		{
-			weightColor = colorRamp(vertexWeight);
-		}
+	if (bShowWeight)
+	{
+		weightColor = colorRamp(vertexWeight);
 	}
 }

@@ -30,6 +30,9 @@ extern PFNGLTEXSTORAGE1DPROC glTexStorage1D;
 extern PFNGLTEXSTORAGE2DPROC glTexStorage2D;
 extern PFNGLTEXSTORAGE3DPROC glTexStorage3D;
 
+// OpenGL 3.2
+extern PFNGLTEXIMAGE2DMULTISAMPLEPROC glTexImage2DMultisample;
+
 // OpenGL 3.0
 extern PFNGLGETSTRINGIPROC glGetStringi;
 extern PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
@@ -43,8 +46,11 @@ extern PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D;
 extern PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers;
 extern PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer;
 extern PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage;
+extern PFNGLRENDERBUFFERSTORAGEMULTISAMPLEPROC glRenderbufferStorageMultisample;
 extern PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer;
 extern PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers;
+extern PFNGLCHECKFRAMEBUFFERSTATUSPROC glCheckFramebufferStatus;
+extern PFNGLBLITFRAMEBUFFERPROC glBlitFramebuffer;
 
 // OpenGL 2.0
 extern PFNGLCREATESHADERPROC glCreateShader;
@@ -61,6 +67,7 @@ extern PFNGLUNIFORM1FPROC glUniform1f;
 extern PFNGLUNIFORM1IPROC glUniform1i;
 extern PFNGLUNIFORM2FPROC glUniform2f;
 extern PFNGLUNIFORM3FPROC glUniform3f;
+extern PFNGLUNIFORM3FVPROC glUniform3fv;
 extern PFNGLUNIFORMMATRIX3FVPROC glUniformMatrix3fv;
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 
@@ -72,6 +79,8 @@ extern PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog;
 extern PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
 extern PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
 extern PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
+
+extern PFNGLDRAWBUFFERSPROC glDrawBuffers;
 
 // OpenGL 1.5
 extern PFNGLGENBUFFERSPROC glGenBuffers;

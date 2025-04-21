@@ -23,7 +23,7 @@ public:
 	ResourceLoader();
 	~ResourceLoader();
 
-	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
+	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& shaderDir, const std::string& shaderName, const bool reloadTextures = false);
 
 
 	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and

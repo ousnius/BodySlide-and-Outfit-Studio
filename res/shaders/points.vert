@@ -51,7 +51,7 @@ void main(void)
 	gl_Position = matProjection * vec4(vPos, 1.0);
 
 	if (bAdjustPointSize)
-		gl_PointSize = clamp(30.0 / vViewDepth, 2.0, 12.0); // Shrinks with distance
+		gl_PointSize = clamp(30.0 / vViewDepth, 5.0, 10.0); // Shrinks with distance
 
 	n = vertexNormal;
 
