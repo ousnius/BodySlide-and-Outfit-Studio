@@ -1115,8 +1115,9 @@ TB_XForm::TB_XForm() {
 
 TB_XForm::~TB_XForm() {}
 
-void TB_XForm::GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist) {
+void TB_XForm::GetWorkingPlane(Vector3& outPlaneNormal, Vector3& outViewDir, float& outPlaneDist) {
 	outPlaneNormal = pick.normal;
+	outViewDir = pick.view;
 	outPlaneDist = pick.origin.dot(pick.normal);
 }
 

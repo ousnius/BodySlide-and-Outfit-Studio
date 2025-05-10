@@ -5248,6 +5248,9 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	glView->UpdateNodeColors();
 	RefreshGUIWeightColors();
 	CalcAutoXMirrorBone();
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool();
 }
 
 void OutfitStudioFrame::OnBoneActivated(wxTreeEvent& event) {
@@ -6793,8 +6796,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	}
 
 	if (id != boneTabButton->GetId() || id != colorsTabButton->GetId()) {
-		glView->SetTransformMode(false);
-
 		menuBar->Check(XRCID("btnInflateBrush"), true);
 		menuBar->Enable(XRCID("btnTransform"), true);
 		menuBar->Enable(XRCID("btnPivot"), true);
@@ -6885,7 +6886,12 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		posePane->Show();
 		bonesFilter->GetParent()->Show();
 
-		glView->SetTransformMode(false);
+		if (!glView->GetNodesMode() && !glView->GetBonesMode()) {
+			glView->SetTransformMode(false);
+			menuBar->Enable(XRCID("btnTransform"), false);
+			toolBarV->EnableTool(XRCID("btnTransform"), false);
+		}
+
 		SelectTool(ToolID::WeightBrush);
 		glView->SetWeightVisible();
 
@@ -6898,7 +6904,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnWeightBrush"), true);
 		menuBar->Enable(XRCID("btnColorBrush"), false);
 		menuBar->Enable(XRCID("btnAlphaBrush"), false);
-		menuBar->Enable(XRCID("btnTransform"), false);
 		menuBar->Enable(XRCID("btnPivot"), false);
 		menuBar->Enable(XRCID("btnVertexEdit"), false);
 		menuBar->Enable(XRCID("btnInflateBrush"), false);
@@ -6917,7 +6922,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), true);
 		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
 		toolBarH->EnableTool(XRCID("btnAlphaBrush"), false);
-		toolBarV->EnableTool(XRCID("btnTransform"), false);
 		toolBarV->EnableTool(XRCID("btnPivot"), false);
 		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
 		toolBarH->EnableTool(XRCID("btnInflateBrush"), false);
@@ -12398,6 +12402,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		return false;
 
 	tpi.center = xformCenter;
+	xformCenterInitial = xformCenter;
 
 	std::string mname = hitMesh->shapeName;
 	if (mname.find("Move") != std::string::npos) {
@@ -12466,16 +12471,32 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	else
 		return false;
 
-	activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), &translateBrush, *undoHistory.PushState());
+	if (!nodesMode && !bonesMode) {
+		activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), &translateBrush, *undoHistory.PushState());
 
-	if (os->bEditSlider) {
-		activeStroke->usp.sliderName = os->activeSlider;
+		if (os->bEditSlider) {
+			activeStroke->usp.sliderName = os->activeSlider;
 
-		float sliderscale = os->project->SliderValue(os->activeSlider);
-		if (sliderscale == 0.0)
-			sliderscale = 1.0;
+			float sliderscale = os->project->SliderValue(os->activeSlider);
+			if (sliderscale == 0.0)
+				sliderscale = 1.0;
 
-		activeStroke->usp.sliderscale = sliderscale;
+			activeStroke->usp.sliderscale = sliderscale;
+		}
+	}
+	else {
+		std::vector<Mesh*> xformMeshes(10);
+		xformMeshes[0] = XMoveMesh;
+		xformMeshes[1] = YMoveMesh;
+		xformMeshes[2] = ZMoveMesh;
+		xformMeshes[3] = XRotateMesh;
+		xformMeshes[4] = YRotateMesh;
+		xformMeshes[5] = ZRotateMesh;
+		xformMeshes[6] = XScaleMesh;
+		xformMeshes[7] = YScaleMesh;
+		xformMeshes[8] = ZScaleMesh;
+		xformMeshes[9] = ScaleUniformMesh;
+		activeStroke = std::make_unique<TweakStroke>(xformMeshes, &translateBrush, *undoHistory.PushState());
 	}
 
 	activeStroke->beginStroke(tpi);
@@ -12497,12 +12518,105 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 	Vector3 pn;
+	Vector3 vd;
 	float pd;
 
-	translateBrush.GetWorkingPlane(pn, pd);
+	translateBrush.GetWorkingPlane(pn, vd, pd);
 	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
 
 	activeStroke->updateStroke(tpi);
+
+	if (nodesMode || bonesMode) {
+		// Move node
+		std::string activeBone = os->GetActiveBone();
+		if (!activeBone.empty()) {
+			Vector3 center = gls.GetCenter(ScaleUniformMesh, false);
+			MatTransform xform;
+
+			AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+			if (bPtr) {
+				float dist = xformCenter.DistanceTo(center);
+				Vector3 diff = vd * -dist;
+				if (xformCenter.x < center.x)
+					diff.x *= -1.0f;
+				if (xformCenter.y < center.y)
+					diff.y *= -1.0f;
+				if (xformCenter.z < center.z)
+					diff.z *= -1.0f;
+
+				// DEBUG
+				Vector3 debugStart1;
+				Vector3 debugEnd1 = Mesh::TransformPosNifToMesh(bPtr->xformToGlobal.ApplyTransform(debugStart1));
+				auto* debugLine1 = gls.AddVisSeg(debugStart1, debugEnd1, "DEBUG_LINE1");
+				debugLine1->color = Vector3(1.0f, 0.0f, 0.0f);
+
+				Vector3 debugStart2 = debugEnd1;
+				Vector3 debugEnd2 = debugStart2 + diff;
+				auto* debugLine2 = gls.AddVisSeg(debugStart2, debugEnd2, "DEBUG_LINE2");
+				debugLine2->color = Vector3(1.0f, 1.0f, 0.0f);
+
+				Vector3 debugStart3;
+				Vector3 debugEnd3 = Mesh::TransformPosNifToMesh(bPtr->xformToParent.ApplyTransform(debugStart3));
+				auto* debugLine3 = gls.AddVisSeg(debugStart3, debugEnd3, "DEBUG_LINE3");
+				debugLine3->color = Vector3(1.0f, 1.0f, 0.0f);
+				
+
+				MatTransform xformDiff;
+				xformDiff.translation = Mesh::TransformPosMeshToNif(diff);
+				MatTransform xformNew = bPtr->xformToParent.ComposeTransforms(xformDiff);
+				//bPtr->SetTransformBoneToParent(xformNew);
+
+
+				MatTransform xformToParent = bPtr->xformToParent;
+				MatTransform xformParentToBone = xformToParent.InverseTransform();
+				Vector3 diffTransformed = bPtr->xformToGlobal.ApplyTransform(diff);
+				//MatTransform xformNew = xformParentToBone.ComposeTransforms(xformDiff).InverseTransform();
+				//bPtr->SetTransformBoneToParent(xformNew);
+
+
+				// FIXME: Movement jumps??
+				/*
+				Vector3 diff = Mesh::TransformPosMeshToNif(xformCenter - center);
+				xform.translation = diff;
+				xformToParent = xformToParent.ComposeTransforms(xform);
+				*/
+
+				/* TEST
+				xform = bPtr->xformToParent.InverseTransform();
+				MatTransform xformMove;
+				xformMove.translation = diff * -1.0f;
+				xform = xform.ComposeTransforms(xformMove);
+				xform = xform.InverseTransform();
+				bPtr->SetTransformBoneToParent(xform);
+				*/
+
+
+				// FIXME
+				//xformToParent.translation = xformToParent.ApplyTransform();
+
+				//xformToParent = xformToParent.ComposeTransforms(xform);
+				//xformToParent.translation = xformToParent.ApplyTransform(offset);
+
+				//bPtr->SetTransformBoneToParent(xformToParent);
+
+				for (auto& s : os->project->GetWorkNif()->GetShapeNames())
+					os->project->GetWorkAnim()->RecursiveRecalcXFormSkinToBone(s, bPtr);
+
+				UpdateBones();
+
+				os->project->GetWorkAnim()->WriteNodesToNif(os->project->GetWorkNif());
+			}
+			else {
+				if (os->project->GetWorkNif()->GetNodeTransformToParent(activeBone, xform)) {
+					Vector3 offset = center - xformCenterInitial;
+					xform.translation = Mesh::TransformPosMeshToNif(xformCenterInitial + offset);
+					os->project->GetWorkNif()->SetNodeTransformToParent(activeBone, xform);
+				}
+			}
+
+			UpdateNodes();
+		}
+	}
 
 	ShowTransformTool();
 }
@@ -12511,11 +12625,14 @@ void wxGLPanel::EndTransform() {
 	activeStroke->endStroke();
 	activeStroke = nullptr;
 
-	os->ActiveShapesUpdated(undoHistory.GetCurState());
-	if (!os->bEditSlider) {
-		for (auto& s : os->project->GetWorkNif()->GetShapes()) {
-			os->UpdateShapeSource(s);
-			os->project->RefreshMorphShape(s);
+	if (!nodesMode && !bonesMode) {
+		os->ActiveShapesUpdated(undoHistory.GetCurState());
+
+		if (!os->bEditSlider) {
+			for (auto& s : os->project->GetWorkNif()->GetShapes()) {
+				os->UpdateShapeSource(s);
+				os->project->RefreshMorphShape(s);
+			}
 		}
 	}
 
@@ -12568,9 +12685,10 @@ bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
 void wxGLPanel::UpdatePivotPosition(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 	Vector3 pn;
+	Vector3 vd;
 	float pd;
 
-	translateBrush.GetWorkingPlane(pn, pd);
+	translateBrush.GetWorkingPlane(pn, vd, pd);
 	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
 
 	activeStroke->updateStroke(tpi);
@@ -13455,10 +13573,7 @@ void wxGLPanel::ShowRotationCenter(bool show) {
 }
 
 void wxGLPanel::ShowTransformTool(bool show) {
-	if (pivotMode)
-		xformCenter = pivotPosition;
-	else
-		xformCenter = gls.GetActiveCenter();
+	UpdateTransformCenter();
 
 	if (show) {
 		XMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
@@ -13499,6 +13614,16 @@ void wxGLPanel::ShowTransformTool(bool show) {
 			ZPivotMesh->bVisible = false;
 			PivotCenterMesh->bVisible = false;
 		}
+
+		if (nodesMode || bonesMode) {
+			XRotateMesh->bVisible = false;
+			YRotateMesh->bVisible = false;
+			ZRotateMesh->bVisible = false;
+			XScaleMesh->bVisible = false;
+			YScaleMesh->bVisible = false;
+			ZScaleMesh->bVisible = false;
+			ScaleUniformMesh->bVisible = false;
+		}
 	}
 	else {
 		if (XMoveMesh) {
@@ -13524,6 +13649,35 @@ void wxGLPanel::ShowTransformTool(bool show) {
 
 	UpdateTransformTool();
 	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateTransformCenter() {
+	bool centerSet = false;
+
+	if (pivotMode) {
+		xformCenter = pivotPosition;
+		centerSet = true;
+	}
+	else if (nodesMode || bonesMode) {
+		std::string activeBone = os->GetActiveBone();
+		if (!activeBone.empty()) {
+			auto boneMesh = gls.GetOverlay("BP_" + activeBone);
+			if (boneMesh) {
+				xformCenter = boneMesh->verts[0];
+				centerSet = true;
+			}
+			else {
+				auto nodeMesh = gls.GetOverlay("P_" + activeBone);
+				if (nodeMesh) {
+					xformCenter = nodeMesh->verts[0];
+					centerSet = true;
+				}
+			}
+		}
+	}
+
+	if (!centerSet)
+		xformCenter = gls.GetActiveCenter();
 }
 
 void wxGLPanel::UpdateTransformTool() {
@@ -13630,6 +13784,9 @@ void wxGLPanel::ShowNodes(bool show) {
 	for (auto& m : nodesLines)
 		m->bVisible = show;
 
+	if (transformMode)
+		ShowTransformTool();
+
 	gls.RenderOneFrame();
 }
 
@@ -13699,6 +13856,9 @@ void wxGLPanel::ShowBones(bool show) {
 
 	for (auto& m : bonesLines)
 		m->bVisible = show;
+
+	if (transformMode)
+		ShowTransformTool();
 
 	gls.RenderOneFrame();
 }

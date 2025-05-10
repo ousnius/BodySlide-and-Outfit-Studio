@@ -255,15 +255,18 @@ public:
 	void ShowRotationCenter(bool show = true);
 
 	void ShowTransformTool(bool show = true);
+	void UpdateTransformCenter();
 	void UpdateTransformTool();
 
 	void ShowPivot(bool show = true);
 	void UpdatePivot();
 
+	bool GetNodesMode() { return nodesMode; }
 	void ShowNodes(bool show = true);
 	void UpdateNodes();
 	void UpdateNodeColors();
 
+	bool GetBonesMode() { return bonesMode; }
 	void ShowBones(bool show = true);
 	void UpdateBones();
 
@@ -783,6 +786,7 @@ private:
 	Mesh* ZScaleMesh = nullptr;
 	Mesh* ScaleUniformMesh = nullptr;
 	nifly::Vector3 xformCenter; // Transform center for transform brushes (rotate, specifically cares about this)
+	nifly::Vector3 xformCenterInitial;
 	float lastCenterDistance = 0.0f;
 
 	Mesh* XPivotMesh = nullptr;

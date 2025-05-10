@@ -425,7 +425,7 @@ void AnimInfo::CleanupBones() {
 	}
 }
 
-void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
+void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) {
 	// Collect list of needed bones.  Also delete bones used by shapeException
 	// and no other shape if they have no children and have root parent.
 	std::unordered_set<const AnimBone*> neededBones;
@@ -508,6 +508,34 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 			// if nparent is nullptr, give up: the node has an unknown
 			// parent, so we can't sensibly set its node-to-parent transform.
 		}
+	}
+}
+
+void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
+	// Add/remove nodes and set transforms
+	WriteNodesToNif(nif, shapeException);
+
+	// Collect list of needed bones
+	std::unordered_set<const AnimBone*> neededBones;
+	for (auto& bones : shapeBones) {
+		for (auto& bone : bones.second) {
+			const AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
+			if (!bptr)
+				continue;
+
+			if (bones.first == shapeException)
+				continue;
+
+			neededBones.insert(bptr);
+		}
+	}
+
+	// Generate map of bone names to node IDs.
+	std::unordered_map<std::string, int> boneIDMap;
+	for (const AnimBone* bptr : neededBones) {
+		NiNode* node = nif->FindBlockByName<NiNode>(bptr->boneName);
+		if (node)
+			boneIDMap[bptr->boneName] = nif->GetBlockID(node);
 	}
 
 	// Generate bone node ID list for each shape and set it.

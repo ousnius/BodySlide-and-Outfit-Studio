@@ -173,6 +173,24 @@ public:
 		return total;
 	}
 
+	nifly::Vector3 GetCenter(Mesh* m, bool useMask = true) {
+		int count = 0;
+		nifly::Vector3 total;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			if (!useMask || m->mask[i] == 0.0f) {
+				total += m->TransformPosMeshToModel(m->verts[i]);
+				count++;
+			}
+		}
+
+		if (count <= 0)
+			return nifly::Vector3();
+
+		total /= count;
+		return total;
+	}
+
 	void AddMesh(Mesh* m) {
 		if (!m->shapeName.empty())
 			DeleteMesh(m->shapeName);
