@@ -1039,6 +1039,35 @@ void BodySlideApp::ApplySliders(
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
 }
 
+struct ContinuousRange {
+	uint16_t index = 0;
+	size_t length = 0;
+};
+
+static std::vector<ContinuousRange> FindContinuousRanges(const std::vector<uint16_t>& source) {
+	std::vector<ContinuousRange> ranges;
+	if (source.size() == 0) {
+		return ranges;
+	}
+
+	size_t startIndex = 0;
+	size_t endIndex = 1;
+	int lastValue = (int)source[0]; // Cast to int to avoid potential uint16_t overflow in comparison below
+
+	for (; endIndex < source.size(); ++endIndex) {
+		int value = (int)source[endIndex];
+		if (value != lastValue + 1) {
+			ranges.emplace_back(ContinuousRange{ source[startIndex], endIndex - startIndex });
+			startIndex = endIndex;
+		}
+		lastValue = value;
+	}
+
+	ranges.emplace_back(ContinuousRange{ source[startIndex], endIndex - startIndex });
+
+	return ranges;
+}
+
 bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices) {
 	DiffDataSets currentDiffs;
 	sliderSet.LoadSetDiffData(currentDiffs);
@@ -1099,8 +1128,11 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 
 					currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
 
-					for (int i = shapeZapIndices.size() - 1; i >= 0; i--)
-						verts.erase(verts.begin() + shapeZapIndices[i]);
+					auto ranges = FindContinuousRanges(shapeZapIndices);
+					for (auto range = ranges.rbegin(); range != ranges.rend(); ++range) {
+						const auto start = verts.cbegin() + range->index;
+						verts.erase(start, start + range->length);
+					}
 
 					int i = 0;
 					for (auto& v : verts) {
