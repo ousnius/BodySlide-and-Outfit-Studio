@@ -100,6 +100,8 @@ set(BSsources
 add_executable(OutfitStudio ${OSsources})
 add_executable(BodySlide ${BSsources})
 
+target_compile_definitions(OutfitStudio PRIVATE USE_FBXSDK)
+
 include(${wxWidgets_USE_FILE})
 target_include_directories(OutfitStudio SYSTEM PRIVATE
 	${fbxsdk_dir}/include

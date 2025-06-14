@@ -211,7 +211,9 @@ public:
 	bool SetSliderFromNIF(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	void SetSliderFromBSD(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	bool SetSliderFromOBJ(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
+#ifdef USE_FBXSDK
 	bool SetSliderFromFBX(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
+#endif
 	void SetSliderFromDiff(const std::string& sliderName, nifly::NiShape* shape, const TargetDataDiffs& diff);
 	int SaveSliderNIF(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	int SaveSliderBSD(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
@@ -366,6 +368,8 @@ public:
 				  const nifly::Vector3& scale = nifly::Vector3(1.0f, 1.0f, 1.0f),
 				  const nifly::Vector3& offset = nifly::Vector3());
 
+#ifdef USE_FBXSDK
 	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
 	int ExportFBX(const std::string& fileName, const std::vector<nifly::NiShape*>& shapes, bool transToGlobal);
+#endif
 };

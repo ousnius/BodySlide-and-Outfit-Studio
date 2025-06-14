@@ -469,6 +469,7 @@ bool OutfitStudio::OnInit() {
 				frame->EndProgress();
 			}
 			else if (fileExt == "fbx") {
+#ifdef USE_FBXSDK
 				frame->StartProgress(_("Adding FBX file..."));
 				frame->UpdateProgress(1, _("Adding FBX file..."));
 				frame->project->ImportFBX(fileName);
@@ -478,6 +479,7 @@ bool OutfitStudio::OnInit() {
 				frame->RefreshGUIFromProj();
 
 				frame->EndProgress();
+#endif
 			}
 		}
 	}
@@ -3648,8 +3650,10 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 			error = project->ImportNIF(fileName.ToUTF8().data(), true, outfitName);
 		else if (fileName.Lower().EndsWith(".obj"))
 			error = project->ImportOBJ(fileName.ToUTF8().data(), outfitName);
+#ifdef USE_FBXSDK
 		else if (fileName.Lower().EndsWith(".fbx"))
 			error = project->ImportFBX(fileName.ToUTF8().data(), outfitName);
+#endif
 	}
 
 	if (error) {
@@ -3884,8 +3888,10 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		}
 		else if (fileName.Lower().EndsWith(".obj"))
 			ret = project->ImportOBJ(fileName.ToUTF8().data(), outfitName);
+#ifdef USE_FBXSDK
 		else if (fileName.Lower().EndsWith(".fbx"))
 			ret = project->ImportFBX(fileName.ToUTF8().data(), outfitName);
+#endif
 	}
 	else
 		project->ClearOutfit();
@@ -4619,6 +4625,7 @@ void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
+#ifdef USE_FBXSDK
 	wxFileDialog importDialog(this, _("Import .fbx file for new shape"), wxEmptyString, wxEmptyString, "FBX Files (*.fbx)|*.fbx", wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
 	if (importDialog.ShowModal() == wxID_CANCEL)
 		return;
@@ -4644,9 +4651,13 @@ void OutfitStudioFrame::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Imported shape(s) from FBX.");
 	glView->Render();
+#else
+	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start \"OutfitStudio x64\" instead."), _("Info"), wxICON_INFORMATION);
+#endif
 }
 
 void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
+#ifdef USE_FBXSDK
 	if (!project->GetWorkNif()->IsValid())
 		return;
 
@@ -4679,9 +4690,13 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 		wxLogError("Failed to export FBX file '%s'!", fileName);
 		wxMessageBox(_("Failed to export FBX file!"), _("Export Error"), wxICON_ERROR);
 	}
+#else
+	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start \"OutfitStudio x64\" instead."), _("Info"), wxICON_INFORMATION);
+#endif
 }
 
 void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
+#ifdef USE_FBXSDK
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
@@ -4741,6 +4756,9 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
 		}
 	}
+#else
+	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start \"OutfitStudio x64\" instead."), _("Info"), wxICON_INFORMATION);
+#endif
 }
 
 void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
@@ -7843,6 +7861,7 @@ void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 }
 
 void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
+#ifdef USE_FBXSDK
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
@@ -7866,6 +7885,9 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	SetPendingChanges();
 	ApplySliders();
 	HighlightSliderData();
+#else
+	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start \"OutfitStudio x64\" instead."), _("Info"), wxICON_INFORMATION);
+#endif
 }
 
 void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
@@ -14363,6 +14385,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 
 				owner->EndProgress();
 			}
+#ifdef USE_FBXSDK
 			else if (inputFile.Lower().EndsWith(".fbx")) {
 				owner->StartProgress(_("Adding FBX file..."));
 				owner->UpdateProgress(1, _("Adding FBX file..."));
@@ -14374,6 +14397,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 
 				owner->EndProgress();
 			}
+#endif
 		}
 
 		owner->UpdateTitle();
@@ -14396,8 +14420,12 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 
 			bool isBSD = inputFile.MakeLower().EndsWith(".bsd");
 			bool isOBJ = inputFile.MakeLower().EndsWith(".obj");
+#ifdef USE_FBXSDK
 			bool isFBX = inputFile.MakeLower().EndsWith(".fbx");
+			if (isBSD || isOBJ || isFBX) {
+#else
 			if (isBSD || isOBJ) {
+#endif
 				if (!owner->activeItem) {
 					wxMessageBox(_("There is no shape selected!"), _("Error"));
 					return false;
@@ -14417,8 +14445,10 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 					owner->project->SetSliderFromBSD(targetSlider, owner->activeItem->GetShape(), inputFile.ToUTF8().data());
 				else if (isOBJ)
 					owner->project->SetSliderFromOBJ(targetSlider, owner->activeItem->GetShape(), inputFile.ToUTF8().data());
+#ifdef USE_FBXSDK
 				else if (isFBX)
 					owner->project->SetSliderFromFBX(targetSlider, owner->activeItem->GetShape(), inputFile.ToUTF8().data());
+#endif
 				else
 					return false;
 

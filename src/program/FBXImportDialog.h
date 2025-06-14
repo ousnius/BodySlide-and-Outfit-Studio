@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #pragma once
 
+#ifdef USE_FBXSDK
+
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
 #include <wx/listctrl.h>
@@ -56,3 +58,5 @@ private:
 	void OnItemDeselected(wxListEvent& event);
 	void OnListKeyDown(wxListEvent& event);
 };
+
+#endif

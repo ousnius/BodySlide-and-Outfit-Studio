@@ -1211,6 +1211,7 @@ bool OutfitProject::SetSliderFromOBJ(const std::string& sliderName, NiShape* sha
 	return true;
 }
 
+#ifdef USE_FBXSDK
 bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
 	std::string target = ShapeToTarget(shape->name.get());
 
@@ -1248,6 +1249,7 @@ bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, NiShape* sha
 
 	return true;
 }
+#endif
 
 void OutfitProject::SetSliderFromDiff(const std::string& sliderName, NiShape* shape, const TargetDataDiffs& diff) {
 	std::string target = ShapeToTarget(shape->name.get());
@@ -5137,6 +5139,7 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<NiSh
 	return 0;
 }
 
+#ifdef USE_FBXSDK
 int OutfitProject::ImportFBX(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
 	// Set reference NIF in case nothing was loaded yet
 	if (!workAnim.GetRefNif())
@@ -5282,6 +5285,7 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiSh
 
 	return fbxw.ExportScene(fileName);
 }
+#endif
 
 std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std::string& dir, const std::string& path) const {
 	// Replace all backward slashes with one forward slash
