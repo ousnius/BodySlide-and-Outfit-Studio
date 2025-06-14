@@ -39,6 +39,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wx/filename.h>
 #include <wx/thread.h>
 #include <unordered_map>
+#include <memory>
 
 
 /* Default header data */
