@@ -1091,6 +1091,8 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 		if (shapeZapIndices.size() > 0 && shapeZapIndices.back() >= shapeVertCount)
 			continue;
 
+		auto zapRanges = FindContinuousRanges(shapeZapIndices);
+
 		for (size_t s = 0; s < sliderSet.size(); s++) {
 			std::string dn = sliderSet[s].TargetDataName(targetShape->second.targetShape);
 			std::string target = targetShape->second.targetShape;
@@ -1109,8 +1111,10 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 
 					currentDiffs.ApplyUVDiff(dn, target, 1.0f, &uvs);
 
-					for (int i = shapeZapIndices.size() - 1; i >= 0; i--)
-						uvs.erase(uvs.begin() + shapeZapIndices[i]);
+					for (auto range = zapRanges.rbegin(); range != zapRanges.rend(); ++range) {
+						const auto start = uvs.cbegin() + range->index;
+						uvs.erase(start, start + range->length);
+					}
 
 					int i = 0;
 					for (auto& uv : uvs) {
@@ -1128,8 +1132,7 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 
 					currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
 
-					auto ranges = FindContinuousRanges(shapeZapIndices);
-					for (auto range = ranges.rbegin(); range != ranges.rend(); ++range) {
+					for (auto range = zapRanges.rbegin(); range != zapRanges.rend(); ++range) {
 						const auto start = verts.cbegin() + range->index;
 						verts.erase(start, start + range->length);
 					}
