@@ -58,6 +58,8 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_TEXT(XRCID("outfitsearchHolder"), BodySlideFrame::OnOutfitSearchChange)
 	EVT_TEXT_ENTER(XRCID("sliderFilter"), BodySlideFrame::OnSliderFilterChanged)
 	EVT_TEXT(XRCID("sliderFilter"), BodySlideFrame::OnSliderFilterChanged)
+	EVT_TEXT_ENTER(XRCID("presetFilter"), BodySlideFrame::OnPresetFilterChanged)
+	EVT_TEXT(XRCID("presetFilter"), BodySlideFrame::OnPresetFilterChanged)
 	EVT_TIMER(DELAYLOAD_TIMER, BodySlideFrame::OnDelayLoad)
 	EVT_CHOICE(XRCID("outfitChoice"), BodySlideFrame::OnChooseOutfit)
 	EVT_CHOICE(XRCID("presetChoice"), BodySlideFrame::OnChoosePreset)
@@ -414,6 +416,9 @@ void BodySlideApp::CharHook(wxKeyEvent& event) {
 
 					if (sliderView->sliderFilter)
 						sliderView->sliderFilter->Clear();
+
+					if (sliderView->presetFilter)
+						sliderView->presetFilter->Clear();
 				}
 				return;
 			}
@@ -756,14 +761,21 @@ void BodySlideApp::RefreshSliders() {
 }
 
 void BodySlideApp::PopulatePresetList(const std::string& select) {
+	std::string myselect = BodySlideConfig["SelectedPreset"];
+	if (!select.empty())
+		myselect = select;
+
 	std::vector<std::string> presets;
+
 	wxArrayString items;
 	sliderManager.GetPresetNames(presets);
-	items.reserve(presets.size());
-	for (size_t i = 0; i < presets.size(); i++)
-		items.Add(wxString::FromUTF8(presets[i]));
 
-	sliderView->PopulatePresetList(items, wxString::FromUTF8(select));
+	std::vector<std::string> filteredPresets = ApplyPresetFilter(presets);
+	items.reserve(filteredPresets.size());
+	for (size_t i = 0; i < filteredPresets.size(); i++)
+		items.Add(wxString::FromUTF8(filteredPresets[i]));
+
+	sliderView->PopulatePresetList(items, wxString::FromUTF8(myselect));
 }
 
 void BodySlideApp::PopulateOutfitList(const std::string& select) {
@@ -779,6 +791,7 @@ void BodySlideApp::PopulateOutfitList(const std::string& select) {
 
 	ApplyOutfitFilter();
 
+	items.reserve(filteredOutfits.size());
 	for (auto& fo : filteredOutfits)
 		items.Add(wxString::FromUTF8(fo));
 
@@ -2041,6 +2054,29 @@ void BodySlideApp::ApplyOutfitFilter() {
 	BodySlideConfig.SetValue("LastOutfitFilter", outfitSrch);
 }
 
+std::vector<std::string> BodySlideApp::ApplyPresetFilter(const std::vector<std::string>& presetNames) {
+	wxString presetSearchStr = sliderView->presetFilter->GetValue();
+
+	std::vector<std::string> filteredPresets;
+
+	if (presetSearchStr.empty()) {
+		for (auto& w : presetNames)
+			filteredPresets.push_back(w);
+	}
+	else {
+		presetSearchStr.MakeLower();
+
+		for (auto& filterEntry : presetNames) {
+			wxString entryStr = wxString::FromUTF8(filterEntry);
+			if (entryStr.Lower().Contains(presetSearchStr))
+				filteredPresets.push_back(entryStr.ToUTF8().data());
+		}
+	}
+
+	BodySlideConfig.SetValue("LastPresetFilter", presetSearchStr.ToUTF8().data());
+	return filteredPresets;
+}
+
 int BodySlideApp::GetOutfits(std::vector<std::string>& outList) {
 	outList.assign(outfitNameOrder.begin(), outfitNameOrder.end());
 	return outList.size();
@@ -3123,6 +3159,11 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	sliderFilter->ShowCancelButton(true);
 	sliderFilter->SetDescriptiveText(_("Filter sliders..."));
 
+	presetFilter = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	presetFilter->ShowSearchButton(true);
+	presetFilter->ShowCancelButton(true);
+	presetFilter->SetDescriptiveText(_("Filter presets..."));
+
 	auto conflictLabel = (wxStaticText*)FindWindowByName("conflictLabel", this);
 	if (conflictLabel)
 		conflictLabel->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
@@ -3134,6 +3175,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	xrc->AttachUnknownControl("searchHolder", search, this);
 	xrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
 	xrc->AttachUnknownControl("sliderFilter", sliderFilter, this);
+	xrc->AttachUnknownControl("presetFilter", presetFilter, this);
 
 	sliderScroll = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	if (sliderScroll) {
@@ -3148,6 +3190,8 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	search->ChangeValue(val);
 	val = BodySlideConfig["LastOutfitFilter"];
 	outfitsearch->ChangeValue(val);
+	val = BodySlideConfig["LastPresetFilter"];
+	presetFilter->ChangeValue(val);
 
 	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
 	if (cbMorphs) {
@@ -3350,7 +3394,17 @@ void BodySlideFrame::PopulatePresetList(const wxArrayString& items, const wxStri
 
 	presetChoice->Clear();
 	presetChoice->Append(items);
-	presetChoice->Select(presetChoice->FindString(selectItem));
+	if (!presetChoice->SetStringSelection(selectItem)) {
+		int i = wxNOT_FOUND;
+		if (selectItem.empty())
+			i = presetChoice->Append("");
+		else if (selectItem.First('['))
+			i = presetChoice->Append("[" + selectItem + "]");
+		else
+			i = presetChoice->Append(selectItem);
+
+		presetChoice->SetSelection(i);
+	}
 }
 
 void BodySlideFrame::SetSliderPosition(const wxString& name, float newValue, short HiLo) {
@@ -3512,6 +3566,10 @@ void BodySlideFrame::OnOutfitSearchChange(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnSliderFilterChanged(wxCommandEvent& WXUNUSED(event)) {
 	DoFilterSliders();
+}
+
+void BodySlideFrame::OnPresetFilterChanged(wxCommandEvent& WXUNUSED(event)) {
+	app->PopulatePresetList("");
 }
 
 void BodySlideFrame::DoFilterSliders() {

@@ -136,6 +136,7 @@ public:
 
 	void PopulateFilterData();
 	void ApplyOutfitFilter();
+	std::vector<std::string> ApplyPresetFilter(const std::vector<std::string>& presetNames);
 	int GetOutfits(std::vector<std::string>& outList);
 	int GetFilteredOutfits(std::vector<std::string>& outList);
 
@@ -310,6 +311,7 @@ public:
 	wxSearchCtrl* search = nullptr;
 	wxSearchCtrl* outfitsearch = nullptr;
 	wxSearchCtrl* sliderFilter = nullptr;
+	wxSearchCtrl* presetFilter = nullptr;
 
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxFlexGridSizer* sliderLayout = nullptr;
@@ -369,6 +371,7 @@ private:
 	void OnOutfitSearchChange(wxCommandEvent& event);
 
 	void OnSliderFilterChanged(wxCommandEvent&);
+	void OnPresetFilterChanged(wxCommandEvent&);
 
 	void OnZapCheckChanged(wxCommandEvent& event);
 	void OnCategoryCheckChanged(wxCommandEvent& event);
