@@ -1110,7 +1110,6 @@ void EditUVCanvas::InitMeshes() {
 	uvGridMesh->material = &uvGridMaterial;
 	uvGridMesh->shapeName = "UVGrid";
 
-	uvGridMesh->BuildTriAdjacency();
 	uvGridMesh->BuildVertexAdjacency();
 	uvGridMesh->BuildEdgeList();
 	uvGridMesh->CreateBVH();
