@@ -11894,7 +11894,6 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 			m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(globalToShape.ComposeTransforms(Mesh::xformMeshToNif)));
 		}
 
-		m->BuildTriAdjacency();
 		m->BuildVertexAdjacency();
 		m->BuildEdgeList();
 		m->MaskFill(0.0f);
