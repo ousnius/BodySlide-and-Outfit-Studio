@@ -33,7 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FSBSA.h"
 #ifdef __linux__
 #include <directx/dxgiformat.h>
-#elif
+#else
 #include <dxgiformat.h>
 #endif
 #include "../DDS.h"
