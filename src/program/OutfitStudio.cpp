@@ -10021,8 +10021,8 @@ void OutfitStudioFrame::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 
 	size_t firstDigit = origBone.find_first_of("0123456789");
 	if (firstDigit != std::string::npos) {
-		std::string strNumber = origBone.substr(origBone.find_first_of("0123456789"));
-		suffixNumber = std::atoi(strNumber.c_str());
+		wxString strNumber = origBone.substr(origBone.find_first_of("0123456789"));
+		suffixNumber = wxAtoi(strNumber);
 	}
 
 	parentBone = bone;

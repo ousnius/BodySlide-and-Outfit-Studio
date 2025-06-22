@@ -31,7 +31,11 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***** END LICENCE BLOCK *****/
 
 #include "FSBSA.h"
+#ifdef __linux__
+#include <directx/dxgiformat.h>
+#elif
 #include <dxgiformat.h>
+#endif
 #include "../DDS.h"
 
 #include <wx/mstream.h>
@@ -42,6 +46,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "../LZ4F/lz4.h"
 #include "../LZ4F/lz4frame.h"
 
+#ifndef MAX_PATH
+#define MAX_PATH 4096
+#endif
 
 wxUint32 BSA::BSAFile::size() const {
 	if (sizeFlags > 0) {
