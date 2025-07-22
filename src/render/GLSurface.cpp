@@ -708,7 +708,7 @@ void GLSurface::SetSize(uint32_t w, uint32_t h) {
 	if (!SetContext())
 		return;
 
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, w*this->canvas->GetContentScaleFactor(), h*this->canvas->GetContentScaleFactor());
 	vpW = w;
 	vpH = h;
 }
@@ -749,7 +749,7 @@ void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, u
 	GLuint m_vertexArrayObject = 0;
 	glGenVertexArrays(1, &m_vertexArrayObject);
 
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, w*this->canvas->GetContentScaleFactor(), h*this->canvas->GetContentScaleFactor());
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// This relies on shader manipulation of vertex positions to render a single triangle clipped to the surface

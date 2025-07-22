@@ -26,6 +26,7 @@ set(commonsources
 	lib/nifly/src/Factory.cpp
 	lib/nifly/src/Geometry.cpp
 	lib/nifly/src/NifFile.cpp
+	lib/nifly/src/NifUtil.cpp
 	lib/nifly/src/Nodes.cpp
 	lib/nifly/src/Object3d.cpp
 	lib/nifly/src/Objects.cpp
@@ -77,6 +78,7 @@ set(OSsources
 	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
 	src/files/ObjFile.cpp
+	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
 	src/program/EditUV.cpp
 	src/program/FBXImportDialog.cpp
