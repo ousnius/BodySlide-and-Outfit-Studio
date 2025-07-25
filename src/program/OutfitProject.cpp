@@ -2093,11 +2093,14 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 
 	ValidateNIF(refNif);
 
+	std::vector<std::string> deletedShapes;
+
 	auto refShapeDup = workNif.FindBlockByName<NiShape>(shapeName);
 	auto refShape = refNif.FindBlockByName<NiShape>(shapeName);
 	if (refShapeDup && refShape) {
-		std::string newName = shapeName + "_ref";
-		refNif.RenameShape(refShape, newName);
+		// Delete shape with identical name
+		DeleteShape(refShapeDup);
+		deletedShapes.push_back(shapeName);
 	}
 
 	if (workNif.IsValid()) {
@@ -2118,6 +2121,15 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 
 	baseShape = workNif.FindBlockByName<NiShape>(shapeName);
 	activeSet.LoadSetDiffData(baseDiffData);
+
+	if (!deletedShapes.empty()) {
+		std::string shapesJoin = JoinStrings(deletedShapes, "; ");
+		wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were deleted. Rename the duplicates yourself beforehand if you wish to keep them."), shapesJoin),
+					 _("Deleted Shapes"),
+					 wxOK | wxICON_WARNING,
+					 owner);
+	}
+
 	return 0;
 }
 
@@ -2187,10 +2199,13 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		return 4;
 	}
 
+	std::vector<std::string> deletedShapes;
+
 	auto refShapeDup = workNif.FindBlockByName<NiShape>(shape);
 	if (refShapeDup) {
-		std::string newName = shape + "_ref";
-		refNif.RenameShape(refShape, newName);
+		// Delete shape with identical name
+		DeleteShape(refShapeDup);
+		deletedShapes.push_back(shape);
 	}
 
 	// Add cloth data block of NIF to the list
@@ -2238,6 +2253,16 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	// Keep default data folder from current project if existing
 	if (!dataFolder.empty())
 		activeSet.SetDataFolder(dataFolder);
+
+	if (!deletedShapes.empty()) {
+		std::string shapesJoin = JoinStrings(deletedShapes, "; ");
+		wxMessageBox(wxString::Format("%s\n \n%s",
+									  _("The following shapes were deleted. Rename the duplicates yourself beforehand if you wish to keep them."),
+									  shapesJoin),
+					 _("Deleted Shapes"),
+					 wxOK | wxICON_WARNING,
+					 owner);
+	}
 
 	return 0;
 }
