@@ -17,6 +17,12 @@ bool StringsEqualNInsens(const char* a, const char* b, int len);
 insensitive to case. */
 bool StringsEqualInsens(const char* a, const char* b);
 
+/* StringStartsWith: returns true if the string s starts with prefix.*/
+bool StringStartsWith(std::string_view s, std::string_view prefix);
+
+/* StringEndsWith: returns true if the string s ends with suffix.*/
+bool StringEndsWith(std::string_view s, std::string_view suffix);
+
 /* ToOSSlash: converts all forward and back slashes in s to the path
 separator character for the operating system and returns the result. */
 std::string ToOSSlashes(const std::string& s);

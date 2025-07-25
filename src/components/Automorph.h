@@ -38,8 +38,12 @@ public:
 	void ClearSourceShapes();
 
 	void RenameResultDiffData(const std::string& shape, const std::string& oldName, const std::string& newName);
-	void RenameShape(const std::string& oldShapeName, const std::string& oldTarget, const std::string& newShapeName);
-	void CopyShape(const std::string& srcShapeName, const std::string& srcTarget, const std::string& destShapeName);
+	void RenameShape(const std::string& oldShapeName, const std::string& newShapeName);
+	void RenameSet(const std::string& oldName, const std::string& newName);
+	void RenameDataTarget(const std::string& oldTarget, const std::string& newTarget);
+	void CopySet(const std::string& oldName, const std::string& newName, const std::string& newTargetName);
+	void CopyShape(const std::string& srcShapeName, const std::string& destShapeName);
+	std::string GetDataTargetName(const std::string& targetName, const std::string& dataNameSuffix);
 
 	void EnableMasking(bool enable = true) { bEnableMask = enable; }
 

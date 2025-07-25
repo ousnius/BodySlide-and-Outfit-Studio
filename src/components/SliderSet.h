@@ -240,7 +240,7 @@ public:
 		auto shape = shapeAttributes.find(shapeName);
 		if (shape != shapeAttributes.end()) {
 			for (auto& slider : sliders)
-				slider.RenameTarget(shape->second.targetShape, newShapeName);
+				slider.RenameTarget(shape->second.targetShape, newShapeName, slider.name);
 
 			shape->second.targetShape = newShapeName;
 			shapeAttributes[newShapeName] = shape->second;

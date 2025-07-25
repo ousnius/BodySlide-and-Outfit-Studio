@@ -325,13 +325,14 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 				std::string srcTarget = ShapeToTarget(shapeName);
 
 				for (size_t i = 0; i < activeSet.size(); i++) {
-					std::string srcTargetData = activeSet[i].TargetDataName(srcTarget);
+					auto& sd = activeSet[i];
+					std::string srcTargetData = sd.TargetDataName(srcTarget);
 
 					auto diff = baseDiffData.GetDiffSet(srcTargetData);
 					if (diff)
-						morpher.SetResultDiff(shapeName, activeSet[i].name, *diff);
+						morpher.SetResultDiff(shapeName, sd.name, *diff);
 
-					activeSet[i].RenameTarget(srcTarget, shapeName);
+					activeSet[i].RenameTarget(srcTarget, shapeName, sd.name);
 					baseDiffData.ClearSet(srcTargetData);
 				}
 
@@ -3863,15 +3864,40 @@ NiShape* OutfitProject::DuplicateShape(NiShape* sourceShape, const std::string& 
 
 	if (IsBaseShape(sourceShape)) {
 		for (size_t i = 0; i < activeSet.size(); i++) {
-			std::string srcTargetData = activeSet[i].TargetDataName(srcTarget);
+			auto& sd = activeSet[i];
+			std::string srcTargetData = sd.TargetDataName(srcTarget);
+			if (srcTargetData.empty())
+				srcTargetData = baseDiffData.GetDataTargetName(srcTarget, sd.name);
 
 			auto diff = baseDiffData.GetDiffSet(srcTargetData);
 			if (diff)
-				morpher.SetResultDiff(destShapeName, activeSet[i].name, *diff);
+				morpher.SetResultDiff(destShapeName, sd.name, *diff);
 		}
 	}
-	else
-		morpher.CopyShape(shapeName, srcTarget, destShapeName);
+	else {
+		morpher.CopyShape(shapeName, destShapeName);
+
+		for (size_t i = 0; i < activeSet.size(); i++) {
+			auto& sd = activeSet[i];
+			std::string oldDataName = sd.TargetDataName(srcTarget);
+			if (oldDataName.empty())
+				oldDataName = morpher.GetDataTargetName(srcTarget, sd.name);
+
+			if (!oldDataName.empty()) {
+				std::string newDataName = "";
+
+				if (oldDataName == srcTarget + sd.name)
+					newDataName = destShapeName + sd.name;
+				else if (StringStartsWith(oldDataName, srcTarget))
+					newDataName = destShapeName + oldDataName.substr(srcTarget.length());
+				else if (StringEndsWith(oldDataName, sd.name))
+					newDataName = destShapeName + sd.name;
+
+				if (!newDataName.empty())
+					morpher.CopySet(oldDataName, newDataName, destShapeName);
+			}
+		}
+	}
 
 	return newShape;
 }
@@ -3898,8 +3924,40 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName) {
 	std::string shapeName = shape->name.get();
 	std::string oldTarget = ShapeToTarget(shapeName);
+
 	workNif.RenameShape(shape, newShapeName);
 	workAnim.RenameShape(shapeName, newShapeName);
+
+	bool isBaseShape = IsBaseShape(shape);
+	for (size_t si = 0; si < activeSet.size(); ++si) {
+		SliderData& sd = activeSet[si];
+		std::string oldDataName = sd.TargetDataName(oldTarget);
+		if (oldDataName.empty()) {
+			if (isBaseShape)
+				oldDataName = baseDiffData.GetDataTargetName(oldTarget, sd.name);
+			else
+				oldDataName = morpher.GetDataTargetName(oldTarget, sd.name);
+		}
+
+		if (!oldDataName.empty()) {
+			std::string newDataName = "";
+
+			if (oldDataName == oldTarget + sd.name)
+				newDataName = newShapeName + sd.name;
+			else if (StringStartsWith(oldDataName, oldTarget))
+				newDataName = newShapeName + oldDataName.substr(oldTarget.length());
+			else if (StringEndsWith(oldDataName, sd.name))
+				newDataName = newShapeName + sd.name;
+
+			if (!newDataName.empty()) {
+				if (isBaseShape)
+					baseDiffData.RenameSet(oldDataName, newDataName);
+				else
+					morpher.RenameSet(oldDataName, newDataName);
+			}
+		}
+	}
+
 	activeSet.RenameShape(shapeName, newShapeName);
 
 	auto tex = shapeTextures.find(shapeName);
@@ -3916,12 +3974,14 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 		shapeMaterialFiles[newShapeName] = value;
 	}
 
-	if (IsBaseShape(shape)) {
+	if (isBaseShape) {
+		baseDiffData.RenameDataTarget(oldTarget, newShapeName);
 		activeSet.SetReferencedData(newShapeName, true);
-		baseDiffData.DeepRename(oldTarget, newShapeName);
 	}
-	else
-		morpher.RenameShape(shapeName, oldTarget, newShapeName);
+	else {
+		morpher.RenameDataTarget(oldTarget, newShapeName);
+		morpher.RenameShape(shapeName, newShapeName);
+	}
 
 	wxLogMessage("Renamed shape '%s' to '%s'.", shapeName, newShapeName);
 }
