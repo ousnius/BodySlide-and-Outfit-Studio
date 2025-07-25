@@ -2501,6 +2501,7 @@ void OutfitStudioFrame::CreateSetSliders() {
 	sliderScroll->Thaw();
 
 	DoFilterSliders();
+	HighlightSliderData();
 
 	EndProgress();
 }
@@ -4827,6 +4828,7 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 
 	ApplySliders();
 	DoFilterSliders();
+	HighlightSliderData();
 }
 
 void OutfitStudioFrame::OnExportTRIHead(wxCommandEvent& WXUNUSED(event)) {
