@@ -1871,12 +1871,12 @@
 					<help>Edit the texture coordinates.</help>
 				</object>
 				<object class="wxMenuItem" name="uvInvertX">
-					<label>Invert X</label>
-					<help>Inverts the X-axis of the texture coordinates.</help>
+					<label>Invert X (Mirror)</label>
+					<help>Inverts the X-axis to mirror the texture coordinates.</help>
 				</object>
 				<object class="wxMenuItem" name="uvInvertY">
-					<label>Invert Y</label>
-					<help>Inverts the Y-axis of the texture coordinates.</help>
+					<label>Invert Y (Flip)</label>
+					<help>Inverts the Y-axis to flip the texture coordinates.</help>
 				</object>
 			</object>
 			<object class="wxMenuItem" name="deleteVerts">

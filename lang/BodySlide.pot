@@ -1710,19 +1710,19 @@ msgid "Edit the texture coordinates."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1874 res/xrc/OutfitStudio.xrc:2354
-msgid "Invert X"
+msgid "Invert X (Mirror)"
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1875 res/xrc/OutfitStudio.xrc:2355
-msgid "Inverts the X-axis of the texture coordinates."
+msgid "Inverts the X-axis to mirror the texture coordinates."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1878 res/xrc/OutfitStudio.xrc:2358
-msgid "Invert Y"
+msgid "Invert Y (Flip)"
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1879 res/xrc/OutfitStudio.xrc:2359
-msgid "Inverts the Y-axis of the texture coordinates."
+msgid "Inverts the Y-axis to flip the texture coordinates."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1883 res/xrc/OutfitStudio.xrc:2363
