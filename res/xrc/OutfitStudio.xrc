@@ -1991,6 +1991,9 @@
 			<object class="wxMenuItem" name="deleteShape">
 				<label>Delete\tDel</label>
 				<help>Removes the currently selected shape from the outfit.</help>
+				<extra-accels>
+					<accel>Ctrl+Shift+Del</accel>
+				</extra-accels>
 			</object>
 			<object class="wxMenuItem" name="shapeProperties">
 				<label>Properties...</label>

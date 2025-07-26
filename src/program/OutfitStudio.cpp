@@ -9783,41 +9783,78 @@ void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
-	if (bEditSlider) {
-		wxMessageBox(_("Can't delete shape while in slider edit mode.  Use CTRL+Delete to delete sliders instead."), _("Error"));
-		return;
+	if (currentTabButton == meshTabButton) {
+		if (bEditSlider) {
+			wxMessageBox(_("Can't delete shape while in slider edit mode.  Use CTRL+Delete to delete sliders instead."), _("Error"));
+			return;
+		}
+
+		if (!ShapeSelectionCheck())
+			return;
+
+		// Delete shape(s) when in meshes tab
+		if (wxMessageBox(_("Are you sure you wish to delete the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO | wxICON_WARNING) == wxNO)
+			return;
+
+		std::vector<ShapeItemData> selected;
+		for (auto& i : selectedItems)
+			selected.push_back(*i);
+
+		activeItem = nullptr;
+		selectedItems.clear();
+
+		for (auto& i : selected) {
+			if (editUV && editUV->shape == i.GetShape())
+				editUV->Close();
+
+			std::string shapeName = i.GetShape()->name.get();
+			wxLogMessage("Deleting shape '%s'.", shapeName);
+			project->DeleteShape(i.GetShape());
+			glView->DeleteMesh(shapeName);
+			wxTreeItemId item = i.GetId();
+			outfitShapes->Delete(item);
+		}
+
+		SetPendingChanges();
+		UpdateAnimationGUI();
+		glView->Render();
 	}
+	else if (currentTabButton == boneTabButton) {
+		// Delete bone(s) when in bones tab
+		bool shiftDown = wxGetKeyState(WXK_SHIFT);
+		bool ctrlDown = wxGetKeyState(WXK_CONTROL);
+		if (shiftDown && ctrlDown) {
+			if (wxMessageBox(_("Delete selected bones?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO | wxICON_WARNING) == wxNO)
+				return;
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
-		return;
+			wxCommandEvent evt;
+			OnDeleteBone(evt);
+		}
+		else {
+			if (!ShapeSelectionCheck())
+				return;
+
+			if (wxMessageBox(_("Delete bones from selected shape(s)?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO | wxICON_WARNING) == wxNO)
+				return;
+
+			wxCommandEvent evt;
+			OnDeleteBoneFromSelected(evt);
+		}
 	}
+	else if (currentTabButton == partitionTabButton) {
+		if (wxMessageBox(_("Delete partition?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO | wxICON_WARNING) == wxNO)
+			return;
 
-	if (wxMessageBox(_("Are you sure you wish to delete the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO) == wxNO)
-		return;
-
-	std::vector<ShapeItemData> selected;
-	for (auto& i : selectedItems)
-		selected.push_back(*i);
-
-	activeItem = nullptr;
-	selectedItems.clear();
-
-	for (auto& i : selected) {
-		if (editUV && editUV->shape == i.GetShape())
-			editUV->Close();
-
-		std::string shapeName = i.GetShape()->name.get();
-		wxLogMessage("Deleting shape '%s'.", shapeName);
-		project->DeleteShape(i.GetShape());
-		glView->DeleteMesh(shapeName);
-		wxTreeItemId item = i.GetId();
-		outfitShapes->Delete(item);
+		wxCommandEvent evt;
+		OnDeletePartition(evt);
 	}
+	else if (currentTabButton == segmentTabButton) {
+		if (wxMessageBox(_("Delete segment?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO | wxICON_WARNING) == wxNO)
+			return;
 
-	SetPendingChanges();
-	UpdateAnimationGUI();
-	glView->Render();
+		wxCommandEvent evt;
+		OnDeleteSegment(evt);
+	}
 }
 
 void OutfitStudioFrame::OnSetBoneSkin(wxCommandEvent& WXUNUSED(event)) {
