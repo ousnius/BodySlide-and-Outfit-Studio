@@ -1161,6 +1161,8 @@ private:
 	void UpdateMeshFromSet(nifly::NiShape* shape);
 	void FillVertexColors();
 
+	bool ShapeSelectionCheck();
+
 	bool HasUnweightedCheck();
 	void CalcCopySkinTransOption(WeightCopyOptions& options);
 	bool ShowWeightCopy(WeightCopyOptions& options, bool silent = false);

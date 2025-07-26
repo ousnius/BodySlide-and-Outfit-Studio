@@ -4335,6 +4335,14 @@ void OutfitStudioFrame::FillVertexColors() {
 	}
 }
 
+bool OutfitStudioFrame::ShapeSelectionCheck() {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return false;
+	}
+	return true;
+}
+
 void OutfitStudioFrame::OnSSSNameCopy(wxCommandEvent& event) {
 	wxWindow* win = ((wxButton*)event.GetEventObject())->GetParent();
 	std::string copyStr{XRCCTRL(*win, "sssName", wxTextCtrl)->GetValue().ToUTF8()};
@@ -4479,10 +4487,8 @@ void OutfitStudioFrame::OnExportNIFWithRef(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (HasUnweightedCheck())
 		return;
@@ -4564,10 +4570,8 @@ void OutfitStudioFrame::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	bool hasSkinTrans = false;
 	for (auto& i : selectedItems) {
@@ -4698,10 +4702,8 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 #ifdef USE_FBXSDK
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	bool hasSkinTrans = false;
 	for (auto& i : selectedItems) {
@@ -4837,10 +4839,8 @@ void OutfitStudioFrame::OnExportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	wxString dir = wxDirSelector(_("Export .tri morphs"), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
 	if (dir.IsEmpty())
@@ -4863,10 +4863,8 @@ void OutfitStudioFrame::OnExportShapeTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	wxString fn = wxFileSelector(_("Export .tri morphs"), wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fn.IsEmpty())
@@ -7423,10 +7421,9 @@ void OutfitStudioFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
+
 	if (!bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
@@ -7449,10 +7446,9 @@ void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
+
 	if (!bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
@@ -7471,10 +7467,9 @@ void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
+
 	if (!bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
@@ -7746,10 +7741,8 @@ void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 		return;
 	}
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	wxString fn = wxFileSelector(_("Import Starfield morph.dat file"), wxEmptyString, wxEmptyString, ".dat", "*.dat", wxFD_FILE_MUST_EXIST, this);
 	if (fn.IsEmpty())
@@ -7864,10 +7857,9 @@ void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 
 void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 #ifdef USE_FBXSDK
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
+
 	if (!bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
@@ -7893,10 +7885,9 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
+
 	if (!bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
 		return;
@@ -7929,10 +7920,9 @@ void OutfitStudioFrame::OnSliderExportNIF(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
+
 	if (!bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
 		return;
@@ -7962,10 +7952,9 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
+
 	if (!bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
 		return;
@@ -8039,10 +8028,8 @@ void OutfitStudioFrame::OnSliderExportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 		return;
 	}
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	wxString fn = wxFileSelector(_("Export Starfield morph.dat"), wxEmptyString, wxEmptyString, ".dat", "*.dat", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fn.IsEmpty())
@@ -8084,10 +8071,8 @@ void OutfitStudioFrame::OnSliderExportToOBJs(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	int result;
 	if (selectedItems.size() > 1) {
@@ -8136,10 +8121,8 @@ void OutfitStudioFrame::OnNewSlider(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	std::string baseName = "New Zap";
 
@@ -8230,10 +8213,9 @@ void OutfitStudioFrame::OnSliderClone(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
+
 	if (!bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to negate!"), _("Error"));
 		return;
@@ -8247,10 +8229,9 @@ void OutfitStudioFrame::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
+
 	if (!bEditSlider) {
 		wxMessageBox(_("There is no slider in edit mode to create a mask from!"), _("Error"));
 		return;
@@ -8630,10 +8611,8 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
 }
 
 void OutfitStudioFrame::OnInvertUV(wxCommandEvent& event) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	bool invertX = (event.GetId() == XRCID("uvInvertX"));
 	bool invertY = (event.GetId() == XRCID("uvInvertY"));
@@ -8649,10 +8628,8 @@ void OutfitStudioFrame::OnInvertUV(wxCommandEvent& event) {
 void OutfitStudioFrame::OnMirrorShape(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (!CheckEditableState())
 		return;
@@ -8733,10 +8710,8 @@ void OutfitStudioFrame::OnMirrorShape(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	std::string shapeName = activeItem->GetShape()->name.get();
 	std::string newShapeName;
@@ -8757,10 +8732,8 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	auto shape = activeItem->GetShape();
 	if (!project->IsBaseShape(shape))
@@ -8795,10 +8768,8 @@ void OutfitStudioFrame::OnEnterClose(wxKeyEvent& event) {
 void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (!CheckEditableState())
 		return;
@@ -8947,10 +8918,8 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (!CheckEditableState())
 		return;
@@ -9136,10 +9105,8 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (!CheckEditableState())
 		return;
@@ -9288,10 +9255,8 @@ void OutfitStudioFrame::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnInflateShape(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (!CheckEditableState())
 		return;
@@ -9472,10 +9437,8 @@ void OutfitStudioFrame::OnInflateShape(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
@@ -9527,10 +9490,8 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
@@ -9743,10 +9704,8 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
@@ -10368,10 +10327,8 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions& options) {
 }
 
 void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (!project->GetBaseShape()) {
 		wxMessageBox(_("There is no reference shape!"), _("Error"));
@@ -10459,10 +10416,8 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 }
 
 void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (!project->GetBaseShape()) {
 		wxMessageBox(_("There is no reference shape!"), _("Error"));
@@ -10552,10 +10507,8 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	auto baseShape = project->GetBaseShape();
 	if (!baseShape) {
@@ -10597,10 +10550,8 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 }
 
 void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UndoType::Mask;
@@ -10642,10 +10593,8 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UndoType::Mask;
@@ -10693,10 +10642,8 @@ void OutfitStudioFrame::OnCheckBadBones(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnCopySegPart(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	if (!project->GetBaseShape()) {
 		wxMessageBox(_("There is no reference shape!"), _("Error"));
@@ -10944,10 +10891,8 @@ bool OutfitStudioFrame::ShowVertexAsym(Mesh* m, const SymmetricVertices& symvert
 }
 
 void OutfitStudioFrame::OnMaskSymVert(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	NiShape* s = activeItem->GetShape();
 	std::string shapeName = s->name.get();
@@ -10994,10 +10939,8 @@ void OutfitStudioFrame::OnMaskSymVert(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSymVert(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	NiShape* s = activeItem->GetShape();
 	std::string shapeName = s->name.get();
@@ -11101,10 +11044,8 @@ void OutfitStudioFrame::OnRemoveSkinning(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
 	CloseBrushSettings();
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	std::vector<NiShape*> selectedShapes;
 	for (auto& s : selectedItems)
@@ -11243,10 +11184,8 @@ void OutfitStudioFrame::OnSmoothNormalSeams(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::OnSmoothSeamsAngle(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	std::vector<Mesh*> activeMeshes = glView->gls.GetActiveMeshes();
 	if (activeMeshes.empty())
@@ -11327,10 +11266,8 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 	if (editUV)
 		return;
 
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
+	if (!ShapeSelectionCheck())
 		return;
-	}
 
 	auto shape = activeItem->GetShape();
 	Mesh* m = glView->GetMesh(shape->name.get());
