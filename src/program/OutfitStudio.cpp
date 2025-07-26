@@ -8977,6 +8977,13 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			scale.y = atof(XRCCTRL(dlg, "ssTextY", wxTextCtrl)->GetValue().c_str());
 			scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
 
+			if (scale.x < 0.01f)
+				scale.x = 0.01f;
+			if (scale.y < 0.01f)
+				scale.y = 0.01f;
+			if (scale.z < 0.01f)
+				scale.z = 0.01f;
+
 			Vector3 origin;
 			int originSelection = XRCCTRL(dlg, "origin", wxChoice)->GetCurrentSelection();
 			if (originSelection == 1) {
@@ -9074,31 +9081,24 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			bool uniform = XRCCTRL(dlg, "ssUniform", wxCheckBox)->IsChecked();
 			if (uniform) {
 				float uniformValue = atof(((wxTextCtrl*)event.GetEventObject())->GetValue().c_str());
-				scale = Vector3(uniformValue, uniformValue, uniformValue);
+				scale.x = atof(XRCCTRL(dlg, "ssTextX", wxTextCtrl)->GetValue().c_str());
+				if (scale.x != uniformValue)
+					XRCCTRL(dlg, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", uniformValue));
 
-				XRCCTRL(dlg, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
-				XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
-				XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
+				scale.y = atof(XRCCTRL(dlg, "ssTextY", wxTextCtrl)->GetValue().c_str());
+				if (scale.y != uniformValue)
+					XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", uniformValue));
+
+				scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
+				if (scale.z != uniformValue)
+					XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", uniformValue));
+
+				scale = Vector3(uniformValue, uniformValue, uniformValue);
 			}
 			else {
 				scale.x = atof(XRCCTRL(dlg, "ssTextX", wxTextCtrl)->GetValue().c_str());
 				scale.y = atof(XRCCTRL(dlg, "ssTextY", wxTextCtrl)->GetValue().c_str());
 				scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
-			}
-
-			if (scale.x < 0.01f) {
-				scale.x = 0.01f;
-				XRCCTRL(dlg, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
-			}
-
-			if (scale.y < 0.01f) {
-				scale.y = 0.01f;
-				XRCCTRL(dlg, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
-			}
-
-			if (scale.z < 0.01f) {
-				scale.z = 0.01f;
-				XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
 			}
 
 			XRCCTRL(dlg, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
@@ -9422,11 +9422,19 @@ void OutfitStudioFrame::OnInflateShape(wxCommandEvent& WXUNUSED(event)) {
 			bool uniform = XRCCTRL(dlg, "isUniform", wxCheckBox)->IsChecked();
 			if (uniform) {
 				float uniformValue = atof(((wxTextCtrl*)event.GetEventObject())->GetValue().c_str());
-				inflate = Vector3(uniformValue, uniformValue, uniformValue);
+				inflate.x = atof(XRCCTRL(dlg, "isTextX", wxTextCtrl)->GetValue().c_str());
+				if (inflate.x != uniformValue)
+					XRCCTRL(dlg, "isTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", uniformValue));
 
-				XRCCTRL(dlg, "isTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", inflate.x));
-				XRCCTRL(dlg, "isTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", inflate.y));
-				XRCCTRL(dlg, "isTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", inflate.z));
+				inflate.y = atof(XRCCTRL(dlg, "isTextY", wxTextCtrl)->GetValue().c_str());
+				if (inflate.y != uniformValue)
+					XRCCTRL(dlg, "isTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", uniformValue));
+
+				inflate.z = atof(XRCCTRL(dlg, "isTextZ", wxTextCtrl)->GetValue().c_str());
+				if (inflate.z != uniformValue)
+					XRCCTRL(dlg, "isTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", uniformValue));
+
+				inflate = Vector3(uniformValue, uniformValue, uniformValue);
 			}
 			else {
 				inflate.x = atof(XRCCTRL(dlg, "isTextX", wxTextCtrl)->GetValue().c_str());
