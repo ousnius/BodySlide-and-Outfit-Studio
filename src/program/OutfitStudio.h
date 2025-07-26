@@ -1243,6 +1243,7 @@ private:
 	void OnColorClampMaxValueSlider(wxCommandEvent& event);
 	void OnColorClampMaxValueChanged(wxCommandEvent& event);
 	void OnSwapBrush(wxCommandEvent& event);
+	void OnMaskVertexColor(wxCommandEvent& event);
 	void OnFixedWeight(wxCommandEvent& event);
 	void OnCBNormalizeWeights(wxCommandEvent& event);
 	void OnSelectSliders(wxCommandEvent& event);

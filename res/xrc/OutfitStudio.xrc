@@ -589,6 +589,15 @@
 																		<label>Edit Alpha</label>
 																	</object>
 																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxEXPAND|wxTOP</flag>
+																	<border>5</border>
+																	<object class="wxButton" name="btnMaskVertexColor">
+																		<size>-1,25</size>
+																		<label>Mask matching color</label>
+																	</object>
+																</object>
 															</object>
 														</object>
 													</object>

@@ -612,12 +612,15 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 	return collided;
 }
 
-bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, Mesh* hitMesh) {
+bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, Mesh* hitMesh, Mesh** outHitMesh) {
 	if (!hitMesh && activeMeshes.empty())
 		return false;
 
 	if (outIndex)
 		(*outIndex) = -1;
+
+	if (outHitMesh)
+		(*outHitMesh) = nullptr;
 
 	std::vector<Mesh*> hitMeshes;
 	if (hitMesh)
@@ -662,6 +665,8 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, Mesh* h
 
 				if (outIndex)
 					(*outIndex) = pointid;
+				if (outHitMesh)
+					(*outHitMesh) = m;
 
 				return true;
 			}

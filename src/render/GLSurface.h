@@ -272,7 +272,7 @@ public:
 	};
 
 	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, CursorHitResult* hitResult = nullptr);
-	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, Mesh* hitMesh = nullptr);
+	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, Mesh* hitMesh = nullptr, Mesh** outHitMesh = nullptr);
 	void ShowCursor(bool show = true);
 	void HidePointCursor();
 	void HideSegCursor();

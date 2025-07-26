@@ -299,6 +299,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TEXT_ENTER(XRCID("cpClampMaxValueTxt"), OutfitStudioFrame::OnColorClampMaxValueChanged)
 	EVT_TEXT(XRCID("cpClampMaxValueTxt"), OutfitStudioFrame::OnColorClampMaxValueChanged)
 	EVT_BUTTON(XRCID("btnSwapBrush"), OutfitStudioFrame::OnSwapBrush)
+	EVT_BUTTON(XRCID("btnMaskVertexColor"), OutfitStudioFrame::OnMaskVertexColor)
 
 	EVT_SLIDER(XRCID("lightAmbientSlider"), OutfitStudioFrame::OnUpdateLights)
 	EVT_SLIDER(XRCID("lightFrontalSlider"), OutfitStudioFrame::OnUpdateLights)
@@ -3234,6 +3235,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		toolBarH->ToggleTool(XRCID("btnColorBrush"), true);
 
 		FindWindowById(XRCID("colorPalette"), colorSettings)->Show();
+		FindWindowById(XRCID("btnMaskVertexColor"), colorSettings)->Show();
 		FindWindowById(XRCID("clampMaxValue"), colorSettings)->Hide();
 		colorSettings->Layout();
 		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
@@ -3244,6 +3246,7 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 		toolBarH->ToggleTool(XRCID("btnAlphaBrush"), true);
 
 		FindWindowById(XRCID("colorPalette"), colorSettings)->Hide();
+		FindWindowById(XRCID("btnMaskVertexColor"), colorSettings)->Hide();
 		FindWindowById(XRCID("clampMaxValue"), colorSettings)->Show();
 		colorSettings->Layout();
 		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
@@ -7232,6 +7235,81 @@ void OutfitStudioFrame::OnSwapBrush(wxCommandEvent& WXUNUSED(event)) {
 		SelectTool(ToolID::AlphaBrush);
 	else if (activeTool == ToolID::AlphaBrush)
 		SelectTool(ToolID::ColorBrush);
+}
+
+void OutfitStudioFrame::OnMaskVertexColor(wxCommandEvent& WXUNUSED(event)) {
+	auto cpBrushColor = (wxColourPickerCtrl*)FindWindowById(XRCID("cpBrushColor"));
+	if (!cpBrushColor)
+		return;
+
+	if (!ShapeSelectionCheck())
+		return;
+
+	wxColour color = cpBrushColor->GetColour();
+	Vector3 brushColor;
+	brushColor.x = color.Red() / 255.0f;
+	brushColor.y = color.Green() / 255.0f;
+	brushColor.z = color.Blue() / 255.0f;
+
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mask;
+
+	auto isSimilarColor = [](const Vector3& a,
+							 const Vector3& b,
+							 float angleEps = 1e-3f,	   // ~cos angle tolerance
+							 float chromaThresh = 1e-4f) { // how much colorfulness we require
+		if (a == b)
+			return true;
+
+		auto getChromaDir = [&](const Vector3& c, Vector3& outDir) {
+			float minc = std::min({c.x, c.y, c.z});
+			Vector3 chroma{c.x - minc, c.y - minc, c.z - minc}; // strip added white
+			float l = chroma.length();
+			if (l < chromaThresh)
+				return false; // basically gray/white -> no reliable hue
+
+			outDir = {chroma.x / l, chroma.y / l, chroma.z / l};
+			return true;
+		};
+
+		Vector3 da, db;
+		bool okA = getChromaDir(a, da);
+		bool okB = getChromaDir(b, db);
+
+		if (!okA && !okB) // both are essentially gray/white
+			return false; // treat all near-white/gray as mismatch
+		if (okA != okB)
+			return false; // one has hue, the other doesn't
+
+		return da.dot(db) > 1.0f - angleEps;
+	};
+
+	for (auto& selItem : selectedItems) {
+		std::string shapeName = selItem->GetShape()->name.get();
+		Mesh* m = glView->GetMesh(shapeName);
+		if (!m)
+			continue;
+
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = m->shapeName;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			uss.pointStartState[i].x = m->mask[i];
+
+			if (m->vcolors && isSimilarColor(m->vcolors[i], brushColor))
+				uss.pointEndState[i].x = 1.0f;
+			else
+				uss.pointEndState[i].x = 0.0f;
+		}
+	}
+
+	glView->ApplyUndoState(usp, false);
+
+	if (!Config.GetBoolValue("Input/MaskHistory"))
+		glView->GetUndoHistory()->PopState();
+
+	UpdateUndoTools();
 }
 
 void OutfitStudioFrame::ScrollWindowIntoView(wxScrolledWindow* scrolled, wxWindow* window) {
@@ -11981,63 +12059,84 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 			wxPoint cursorPos(event.GetPosition());
 
 			int vertIndex;
-			if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &vertIndex))
+			Mesh* outHitMesh;
+			if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &vertIndex, nullptr, &outHitMesh))
 				return;
 
-			os->CloseBrushSettings();
+			if (os->currentTabButton == os->colorsTabButton) {
+				auto cpBrushColor = (wxColourPickerCtrl*)os->FindWindowById(XRCID("cpBrushColor"));
+				if (!cpBrushColor)
+					return;
 
-			wxDialog dlg;
-			if (wxXmlResource::Get()->LoadDialog(&dlg, os, "dlgMoveVertex")) {
-				NiShape* shape = os->activeItem->GetShape();
+				if (outHitMesh->vcolors) {
+					// Set color for brush to vertex color
+					Vector3 vcolor = outHitMesh->vcolors[vertIndex];
+					SetColorBrush(vcolor);
 
-				std::vector<Vector3> verts;
-				os->project->GetLiveVerts(shape, verts);
+					// Set color for picker to vertex color
+					wxColour color(vcolor.x * 255.0f, vcolor.y * 255.0f, vcolor.z * 255.0f);
+					cpBrushColor->SetColour(color);
+				}
+			}
+			else {
+				// Find shape for hit mesh name
+				NiShape* shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(outHitMesh->shapeName);
+				if (!shape)
+					return;
 
-				Vector3 oldPos = verts[vertIndex];
-				XRCCTRL(dlg, "posX", wxTextCtrl)->SetValue(wxString::Format("%0.5f", oldPos.x));
-				XRCCTRL(dlg, "posY", wxTextCtrl)->SetValue(wxString::Format("%0.5f", oldPos.y));
-				XRCCTRL(dlg, "posZ", wxTextCtrl)->SetValue(wxString::Format("%0.5f", oldPos.z));
+				os->CloseBrushSettings();
 
-				if (dlg.ShowModal() == wxID_OK) {
-					Vector3 newPos;
-					newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().c_str());
-					newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().c_str());
-					newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
+				wxDialog dlg;
+				if (wxXmlResource::Get()->LoadDialog(&dlg, os, "dlgMoveVertex")) {
+					std::vector<Vector3> verts;
+					os->project->GetLiveVerts(shape, verts);
 
-					// Move vertex in shape directly
-					if (!os->bEditSlider)
-						os->project->MoveVertex(shape, newPos, vertIndex);
+					Vector3 oldPos = verts[vertIndex];
+					XRCCTRL(dlg, "posX", wxTextCtrl)->SetValue(wxString::Format("%0.5f", oldPos.x));
+					XRCCTRL(dlg, "posY", wxTextCtrl)->SetValue(wxString::Format("%0.5f", oldPos.y));
+					XRCCTRL(dlg, "posZ", wxTextCtrl)->SetValue(wxString::Format("%0.5f", oldPos.z));
 
-					// To mesh coordinates
-					oldPos = Mesh::TransformPosNifToMesh(oldPos);
-					newPos = Mesh::TransformPosNifToMesh(newPos);
+					if (dlg.ShowModal() == wxID_OK) {
+						Vector3 newPos;
+						newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().c_str());
+						newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().c_str());
+						newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
 
-					UndoStateShape uss;
-					uss.shapeName = shape->name.get();
-					uss.pointStartState[vertIndex] = oldPos;
-					uss.pointEndState[vertIndex] = newPos;
+						// Move vertex in shape directly
+						if (!os->bEditSlider)
+							os->project->MoveVertex(shape, newPos, vertIndex);
 
-					// Push changes onto undo stack and execute
-					UndoStateProject* usp = GetUndoHistory()->PushState();
-					usp->undoType = UndoType::VertexPosition;
-					usp->usss.push_back(std::move(uss));
+						// To mesh coordinates
+						oldPos = Mesh::TransformPosNifToMesh(oldPos);
+						newPos = Mesh::TransformPosNifToMesh(newPos);
 
-					if (os->bEditSlider) {
-						usp->sliderName = os->activeSlider;
+						UndoStateShape uss;
+						uss.shapeName = shape->name.get();
+						uss.pointStartState[vertIndex] = oldPos;
+						uss.pointEndState[vertIndex] = newPos;
 
-						float sliderscale = os->project->SliderValue(os->activeSlider);
-						if (sliderscale == 0.0)
-							sliderscale = 1.0;
+						// Push changes onto undo stack and execute
+						UndoStateProject* usp = GetUndoHistory()->PushState();
+						usp->undoType = UndoType::VertexPosition;
+						usp->usss.push_back(std::move(uss));
 
-						usp->sliderscale = sliderscale;
+						if (os->bEditSlider) {
+							usp->sliderName = os->activeSlider;
+
+							float sliderscale = os->project->SliderValue(os->activeSlider);
+							if (sliderscale == 0.0)
+								sliderscale = 1.0;
+
+							usp->sliderscale = sliderscale;
+						}
+
+						ApplyUndoState(usp, false);
+						os->UpdateUndoTools();
 					}
 
-					ApplyUndoState(usp, false);
-					os->UpdateUndoTools();
+					if (transformMode)
+						ShowTransformTool();
 				}
-
-				if (transformMode)
-					ShowTransformTool();
 			}
 		}
 		else if (event.GetUnicodeKey() == '0')
