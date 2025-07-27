@@ -63,7 +63,7 @@
 	</object>
 	<object class="wxDialog" name="dlgBuildOverride">
 		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxCLIP_CHILDREN</style>
-		<size>650,400</size>
+		<size>800,400</size>
 		<title>Choose output set</title>
 		<centered>1</centered>
 		<bg>wxSYS_COLOUR_WINDOW</bg>

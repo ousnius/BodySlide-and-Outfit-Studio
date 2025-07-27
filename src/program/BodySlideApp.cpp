@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <atomic>
 #include <regex>
 #include <wx/wrapsizer.h>
+#include <wx/treelist.h>
 #include <wx/debugrpt.h>
 
 #ifdef WIN64
@@ -2503,57 +2504,146 @@ int BodySlideApp::BuildListBodies(
 
 			wxXmlResource* rsrc = wxXmlResource::Get();
 			wxDialog* dlgBuildOverride = rsrc->LoadDialog(sliderView, "dlgBuildOverride");
-			dlgBuildOverride->SetSize(dlgBuildOverride->FromDIP(wxSize(650, 400)));
-			dlgBuildOverride->SetSizeHints(dlgBuildOverride->FromDIP(wxSize(650, 400)), dlgBuildOverride->FromDIP(wxSize(650, -1)));
+			dlgBuildOverride->SetSize(dlgBuildOverride->FromDIP(wxSize(800, 400)));
+			dlgBuildOverride->SetSizeHints(dlgBuildOverride->FromDIP(wxSize(400, 400)), dlgBuildOverride->FromDIP(wxSize(-1, -1)));
 			dlgBuildOverride->CenterOnParent();
 
 			wxScrolledWindow* scrollOverrides = XRCCTRL(*dlgBuildOverride, "scrollOverrides", wxScrolledWindow);
 			wxBoxSizer* choicesSizer = (wxBoxSizer*)scrollOverrides->GetSizer();
 
-			int nChoice = 1;
-			std::vector<wxRadioBox*> choiceBoxes;
+			// Create the treelist with checkbox support
+			auto treeListCtrl = new wxTreeListCtrl(scrollOverrides, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTL_SINGLE | wxTL_CHECKBOX | wxTL_3STATE);
+			treeListCtrl->AppendColumn(_("Choice"), wxCOL_WIDTH_AUTOSIZE, wxALIGN_LEFT);
+			treeListCtrl->AppendColumn(_("Source File"), wxCOL_WIDTH_AUTOSIZE, wxALIGN_LEFT);
+
+			// Add root items directly under the (hidden) root
 			for (size_t i = 0; i < choicesList.size(); i++) {
 				auto& outFile = outFileList[i];
 				auto& choices = choicesList[i];
-				wxRadioBox* choiceBox = new wxRadioBox(scrollOverrides,
-													   wxID_ANY,
-													   _("Choose output set") + wxString::Format(" #%d", nChoice),
-													   wxDefaultPosition,
-													   wxDefaultSize,
-													   choices,
-													   1,
-													   wxRA_SPECIFY_COLS);
-				choicesSizer->Add(choiceBox, 0, wxALL | wxEXPAND, 5);
 
-				choiceBoxes.push_back(choiceBox);
-				nChoice++;
+				wxTreeListItem rootItem = treeListCtrl->AppendItem(treeListCtrl->GetRootItem(), wxString::FromUTF8(outFile));
+				treeListCtrl->CheckItem(rootItem, wxCheckBoxState::wxCHK_UNDETERMINED);
 
-				// Check previous choices to see if radio button should be checked by default
-				std::string outputChoice = buildSelection.GetOutputChoice(outFile);
-				if (!outputChoice.empty()) {
-					wxString c = wxString::FromUTF8(outputChoice);
-					if (choices.Index(c) != wxNOT_FOUND)
-						choiceBox->SetStringSelection(c);
+				// Add children with checkboxes
+				for (size_t j = 0; j < choices.size(); j++) {
+					wxString choice = choices[j];
+					wxString defaultSet;
+
+					// Check previous choices to see if radio button should be checked by default
+					std::string outputChoice = buildSelection.GetOutputChoice(outFile);
+					if (!outputChoice.empty()) {
+						wxString c = wxString::FromUTF8(outputChoice);
+						if (choices.Index(c) != wxNOT_FOUND)
+							defaultSet = c;
+					}
+
+					wxTreeListItem child = treeListCtrl->AppendItem(rootItem, choice);
+
+					auto outfitSrc = outfitNameSource.find(choice.ToUTF8().data());
+					if (outfitSrc != outfitNameSource.end()) {
+						wxFileName outfitFileName(wxString::FromUTF8(outfitSrc->second));
+						treeListCtrl->SetItemText(child, 1, outfitFileName.GetFullName());
+					}
+					else
+						treeListCtrl->SetItemText(child, 1, _("<no source>"));
+
+					if (!defaultSet.IsEmpty() && choice == defaultSet)
+						treeListCtrl->CheckItem(child, wxCheckBoxState::wxCHK_CHECKED);
+					else
+						treeListCtrl->CheckItem(child, wxCheckBoxState::wxCHK_UNCHECKED);
 				}
+
+				treeListCtrl->Expand(rootItem);
 			}
+			
+			bool checkBoxReverting = false;
+			auto handler = [&](wxTreeListEvent& e) {
+				if (checkBoxReverting) {
+					e.Skip();
+					return;
+				}
+
+				const wxTreeListItem item = e.GetItem();
+				const wxTreeListItem parent = treeListCtrl->GetItemParent(item);
+
+				// Level 1 items are direct children of the (hidden) root: make them non-checkable.
+				if (parent == treeListCtrl->GetRootItem()) {
+					checkBoxReverting = true;
+					treeListCtrl->CheckItem(item, wxCheckBoxState::wxCHK_UNDETERMINED);
+					checkBoxReverting = false;
+					return;
+				}
+
+				// Only enforce the “radio per level” rule for level-2 items:
+				checkBoxReverting = true;
+
+				auto checkedState = treeListCtrl->GetCheckedState(item);
+				if (checkedState == wxCheckBoxState::wxCHK_CHECKED) {
+					// Uncheck all siblings
+					for (wxTreeListItem sib = treeListCtrl->GetFirstChild(parent); sib.IsOk(); sib = treeListCtrl->GetNextSibling(sib)) {
+						if (sib != item && treeListCtrl->GetCheckedState(sib) == wxCheckBoxState::wxCHK_CHECKED)
+							treeListCtrl->CheckItem(sib, wxCheckBoxState::wxCHK_UNCHECKED);
+					}
+				}
+				else if (checkedState == wxCheckBoxState::wxCHK_UNCHECKED) {
+					// Ensure at least one remains checked in this level
+					bool anyChecked = false;
+					for (wxTreeListItem sib = treeListCtrl->GetFirstChild(parent); sib.IsOk(); sib = treeListCtrl->GetNextSibling(sib)) {
+						if (treeListCtrl->GetCheckedState(sib) == wxCheckBoxState::wxCHK_CHECKED) {
+							anyChecked = true;
+							break;
+						}
+					}
+
+					if (!anyChecked) {
+						// Re-check the one user tried to uncheck
+						treeListCtrl->CheckItem(item, wxCheckBoxState::wxCHK_CHECKED);
+					}
+				}
+
+				checkBoxReverting = false;
+				e.Skip();
+			};
+
+			treeListCtrl->Bind(wxEVT_TREELIST_ITEM_CHECKED, handler);
 
 			wxTextCtrl* chooseText = XRCCTRL(*dlgBuildOverride, "chooseText", wxTextCtrl);
 			if (chooseText) {
 				chooseText->Bind(wxEVT_TEXT_ENTER, [&](wxCommandEvent& WXUNUSED(event)) {
-					wxString text = chooseText->GetValue();
+					wxString text = chooseText->GetValue().MakeLower();
 					if (!text.IsEmpty()) {
-						for (size_t i = 0; i < choicesList.size(); i++) {
-							for (auto& outfit : choicesList[i]) {
-								if (outfit.Contains(text)) {
-									choiceBoxes[i]->SetStringSelection(outfit);
+						wxTreeListItem root = treeListCtrl->GetRootItem();
+
+						for (wxTreeListItem level1 = treeListCtrl->GetFirstChild(root); level1.IsOk(); level1 = treeListCtrl->GetNextSibling(level1)) {
+							wxTreeListItem firstMatch;
+
+							// Find first matching item
+							for (wxTreeListItem level2 = treeListCtrl->GetFirstChild(level1); level2.IsOk(); level2 = treeListCtrl->GetNextSibling(level2)) {
+								wxString label = treeListCtrl->GetItemText(level2).Lower();
+
+								if (label.Contains(text)) {
+									firstMatch = level2;
 									break;
 								}
 							}
+
+							if (firstMatch.IsOk()) {
+								// Check the matched item
+								treeListCtrl->CheckItem(firstMatch, wxCheckBoxState::wxCHK_CHECKED);
+
+								// Uncheck all siblings except the matched one
+								for (wxTreeListItem level2 = treeListCtrl->GetFirstChild(level1); level2.IsOk(); level2 = treeListCtrl->GetNextSibling(level2)) {
+									if (level2 != firstMatch)
+										treeListCtrl->CheckItem(level2, wxCheckBoxState::wxCHK_UNCHECKED);
+								}
+							}
+							// else: no match found, do nothing — keep existing checks
 						}
 					}
 				});
 			}
 
+			choicesSizer->Add(treeListCtrl, 1, wxEXPAND, 0);
 			scrollOverrides->FitInside();
 
 			if (dlgBuildOverride->ShowModal() == wxID_CANCEL) {
@@ -2562,21 +2652,39 @@ int BodySlideApp::BuildListBodies(
 				return 1;
 			}
 
-			for (size_t i = 0; i < choicesList.size(); i++) {
-				wxString choiceSel = choiceBoxes[i]->GetStringSelection();
+			wxTreeListItem root = treeListCtrl->GetRootItem();
 
-				// Add output choice to file
-				buildSelection.SetOutputChoice(outFileList[i], choiceSel.ToUTF8().data());
+			// Iterate level 1 roots (should correspond to choicesList size)
+			size_t index = 0;
+			for (wxTreeListItem level1 = treeListCtrl->GetFirstChild(root); level1.IsOk() && index < choicesList.size(); level1 = treeListCtrl->GetNextSibling(level1), ++index) {
+				wxString checkedItemText;
 
-				// Remove others from the list of outfits to build
-				choicesList[i].Remove(choiceSel);
+				// Find the checked child (level 2)
+				for (wxTreeListItem level2 = treeListCtrl->GetFirstChild(level1); level2.IsOk(); level2 = treeListCtrl->GetNextSibling(level2)) {
+					if (treeListCtrl->GetCheckedState(level2) == wxCheckBoxState::wxCHK_CHECKED) {
+						checkedItemText = treeListCtrl->GetItemText(level2);
+						break; // assuming only one checked per level 1
+					}
+				}
 
-				for (auto& outfit : choicesList[i]) {
-					auto result = std::find(outfitList.begin(), outfitList.end(), outfit.ToUTF8());
-					if (result != outfitList.end())
-						outfitList.erase(result);
+				if (!checkedItemText.IsEmpty()) {
+					wxString choiceSel = checkedItemText;
+
+					// Add output choice to file
+					buildSelection.SetOutputChoice(outFileList[index], choiceSel.ToUTF8().data());
+
+					// Remove the selected choice from choicesList[i]
+					choicesList[index].Remove(choiceSel);
+
+					// Remove from outfitList all outfits in choicesList[index]
+					for (auto& outfit : choicesList[index]) {
+						auto result = std::find(outfitList.begin(), outfitList.end(), outfit.ToUTF8());
+						if (result != outfitList.end())
+							outfitList.erase(result);
+					}
 				}
 			}
+
 
 			delete dlgBuildOverride;
 
