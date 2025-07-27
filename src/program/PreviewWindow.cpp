@@ -99,17 +99,31 @@ void PreviewWindow::OnShown() {
 	gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directional2Dir);
 
 	if (Config.Exists("Rendering/ColorBackground")) {
-		int colorBackgroundR = Config.GetIntValue("Rendering/ColorBackground.r");
-		int colorBackgroundG = Config.GetIntValue("Rendering/ColorBackground.g");
-		int colorBackgroundB = Config.GetIntValue("Rendering/ColorBackground.b");
-		gls.SetBackgroundColor(Vector3(colorBackgroundR / 255.0f, colorBackgroundG / 255.0f, colorBackgroundB / 255.0f));
+		int colorR = Config.GetIntValue("Rendering/ColorBackground.r");
+		int colorG = Config.GetIntValue("Rendering/ColorBackground.g");
+		int colorB = Config.GetIntValue("Rendering/ColorBackground.b");
+		gls.SetBackgroundColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
 	}
 
 	if (Config.Exists("Rendering/ColorWire")) {
-		int colorWireR = Config.GetIntValue("Rendering/ColorWire.r");
-		int colorWireG = Config.GetIntValue("Rendering/ColorWire.g");
-		int colorWireB = Config.GetIntValue("Rendering/ColorWire.b");
-		gls.SetWireColor(Vector3(colorWireR / 255.0f, colorWireG / 255.0f, colorWireB / 255.0f));
+		int colorR = Config.GetIntValue("Rendering/ColorWire.r");
+		int colorG = Config.GetIntValue("Rendering/ColorWire.g");
+		int colorB = Config.GetIntValue("Rendering/ColorWire.b");
+		gls.SetWireColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
+	}
+
+	if (Config.Exists("Rendering/ColorPoints")) {
+		int colorR = Config.GetIntValue("Rendering/ColorPoints.r");
+		int colorG = Config.GetIntValue("Rendering/ColorPoints.g");
+		int colorB = Config.GetIntValue("Rendering/ColorPoints.b");
+		gls.SetPointColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
+	}
+
+	if (Config.Exists("Rendering/ColorPointsMasked")) {
+		int colorR = Config.GetIntValue("Rendering/ColorPointsMasked.r");
+		int colorG = Config.GetIntValue("Rendering/ColorPointsMasked.g");
+		int colorB = Config.GetIntValue("Rendering/ColorPointsMasked.b");
+		gls.SetMaskedPointColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
 	}
 
 	gls.SetPerspective(BodySlideConfig.GetBoolValue("Rendering/PerspectiveView", true));

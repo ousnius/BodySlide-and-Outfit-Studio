@@ -4342,18 +4342,34 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 		wxColourPickerCtrl* cpColorBackground = XRCCTRL(*settings, "cpColorBackground", wxColourPickerCtrl);
 		if (Config.Exists("Rendering/ColorBackground")) {
-			int colorBackgroundR = Config.GetIntValue("Rendering/ColorBackground.r");
-			int colorBackgroundG = Config.GetIntValue("Rendering/ColorBackground.g");
-			int colorBackgroundB = Config.GetIntValue("Rendering/ColorBackground.b");
-			cpColorBackground->SetColour(wxColour(colorBackgroundR, colorBackgroundG, colorBackgroundB));
+			int colorR = Config.GetIntValue("Rendering/ColorBackground.r");
+			int colorG = Config.GetIntValue("Rendering/ColorBackground.g");
+			int colorB = Config.GetIntValue("Rendering/ColorBackground.b");
+			cpColorBackground->SetColour(wxColour(colorR, colorG, colorB));
 		}
 
 		wxColourPickerCtrl* cpColorWire = XRCCTRL(*settings, "cpColorWire", wxColourPickerCtrl);
 		if (Config.Exists("Rendering/ColorWire")) {
-			int colorWireR = Config.GetIntValue("Rendering/ColorWire.r");
-			int colorWireG = Config.GetIntValue("Rendering/ColorWire.g");
-			int colorWireB = Config.GetIntValue("Rendering/ColorWire.b");
-			cpColorWire->SetColour(wxColour(colorWireR, colorWireG, colorWireB));
+			int colorR = Config.GetIntValue("Rendering/ColorWire.r");
+			int colorG = Config.GetIntValue("Rendering/ColorWire.g");
+			int colorB = Config.GetIntValue("Rendering/ColorWire.b");
+			cpColorWire->SetColour(wxColour(colorR, colorG, colorB));
+		}
+
+		wxColourPickerCtrl* cpColorPoints = XRCCTRL(*settings, "cpColorPoints", wxColourPickerCtrl);
+		if (Config.Exists("Rendering/ColorPoints")) {
+			int colorR = Config.GetIntValue("Rendering/ColorPoints.r");
+			int colorG = Config.GetIntValue("Rendering/ColorPoints.g");
+			int colorB = Config.GetIntValue("Rendering/ColorPoints.b");
+			cpColorPoints->SetColour(wxColour(colorR, colorG, colorB));
+		}
+
+		wxColourPickerCtrl* cpColorPointsMasked = XRCCTRL(*settings, "cpColorPointsMasked", wxColourPickerCtrl);
+		if (Config.Exists("Rendering/ColorPointsMasked")) {
+			int colorR = Config.GetIntValue("Rendering/ColorPointsMasked.r");
+			int colorG = Config.GetIntValue("Rendering/ColorPointsMasked.g");
+			int colorB = Config.GetIntValue("Rendering/ColorPointsMasked.b");
+			cpColorPointsMasked->SetColour(wxColour(colorR, colorG, colorB));
 		}
 
 		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
@@ -4419,6 +4435,16 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Rendering/ColorWire.r", colorWire.Red());
 			Config.SetValue("Rendering/ColorWire.g", colorWire.Green());
 			Config.SetValue("Rendering/ColorWire.b", colorWire.Blue());
+
+			wxColour colorPoints = cpColorPoints->GetColour();
+			Config.SetValue("Rendering/ColorPoints.r", colorPoints.Red());
+			Config.SetValue("Rendering/ColorPoints.g", colorPoints.Green());
+			Config.SetValue("Rendering/ColorPoints.b", colorPoints.Blue());
+
+			wxColour colorPointsMasked = cpColorPointsMasked->GetColour();
+			Config.SetValue("Rendering/ColorPointsMasked.r", colorPointsMasked.Red());
+			Config.SetValue("Rendering/ColorPointsMasked.g", colorPointsMasked.Green());
+			Config.SetValue("Rendering/ColorPointsMasked.b", colorPointsMasked.Blue());
 
 			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToUTF8().data());

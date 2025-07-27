@@ -1995,18 +1995,34 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 		wxColourPickerCtrl* cpColorBackground = XRCCTRL(*settings, "cpColorBackground", wxColourPickerCtrl);
 		if (Config.Exists("Rendering/ColorBackground")) {
-			int colorBackgroundR = Config.GetIntValue("Rendering/ColorBackground.r");
-			int colorBackgroundG = Config.GetIntValue("Rendering/ColorBackground.g");
-			int colorBackgroundB = Config.GetIntValue("Rendering/ColorBackground.b");
-			cpColorBackground->SetColour(wxColour(colorBackgroundR, colorBackgroundG, colorBackgroundB));
+			int colorR = Config.GetIntValue("Rendering/ColorBackground.r");
+			int colorG = Config.GetIntValue("Rendering/ColorBackground.g");
+			int colorB = Config.GetIntValue("Rendering/ColorBackground.b");
+			cpColorBackground->SetColour(wxColour(colorR, colorG, colorB));
 		}
 
 		wxColourPickerCtrl* cpColorWire = XRCCTRL(*settings, "cpColorWire", wxColourPickerCtrl);
 		if (Config.Exists("Rendering/ColorWire")) {
-			int colorWireR = Config.GetIntValue("Rendering/ColorWire.r");
-			int colorWireG = Config.GetIntValue("Rendering/ColorWire.g");
-			int colorWireB = Config.GetIntValue("Rendering/ColorWire.b");
-			cpColorWire->SetColour(wxColour(colorWireR, colorWireG, colorWireB));
+			int colorR = Config.GetIntValue("Rendering/ColorWire.r");
+			int colorG = Config.GetIntValue("Rendering/ColorWire.g");
+			int colorB = Config.GetIntValue("Rendering/ColorWire.b");
+			cpColorWire->SetColour(wxColour(colorR, colorG, colorB));
+		}
+
+		wxColourPickerCtrl* cpColorPoints = XRCCTRL(*settings, "cpColorPoints", wxColourPickerCtrl);
+		if (Config.Exists("Rendering/ColorPoints")) {
+			int colorR = Config.GetIntValue("Rendering/ColorPoints.r");
+			int colorG = Config.GetIntValue("Rendering/ColorPoints.g");
+			int colorB = Config.GetIntValue("Rendering/ColorPoints.b");
+			cpColorPoints->SetColour(wxColour(colorR, colorG, colorB));
+		}
+
+		wxColourPickerCtrl* cpColorPointsMasked = XRCCTRL(*settings, "cpColorPointsMasked", wxColourPickerCtrl);
+		if (Config.Exists("Rendering/ColorPointsMasked")) {
+			int colorR = Config.GetIntValue("Rendering/ColorPointsMasked.r");
+			int colorG = Config.GetIntValue("Rendering/ColorPointsMasked.g");
+			int colorB = Config.GetIntValue("Rendering/ColorPointsMasked.b");
+			cpColorPointsMasked->SetColour(wxColour(colorR, colorG, colorB));
 		}
 
 		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
@@ -2067,11 +2083,29 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Rendering/ColorBackground.r", colorBackground.Red());
 			Config.SetValue("Rendering/ColorBackground.g", colorBackground.Green());
 			Config.SetValue("Rendering/ColorBackground.b", colorBackground.Blue());
+			if (glView)
+				glView->gls.SetBackgroundColor(Vector3(colorBackground.Red() / 255.0f, colorBackground.Green() / 255.0f, colorBackground.Blue() / 255.0f));
 
 			wxColour colorWire = cpColorWire->GetColour();
 			Config.SetValue("Rendering/ColorWire.r", colorWire.Red());
 			Config.SetValue("Rendering/ColorWire.g", colorWire.Green());
 			Config.SetValue("Rendering/ColorWire.b", colorWire.Blue());
+			if (glView)
+				glView->gls.SetWireColor(Vector3(colorWire.Red() / 255.0f, colorWire.Green() / 255.0f, colorWire.Blue() / 255.0f));
+
+			wxColour colorPoints = cpColorPoints->GetColour();
+			Config.SetValue("Rendering/ColorPoints.r", colorPoints.Red());
+			Config.SetValue("Rendering/ColorPoints.g", colorPoints.Green());
+			Config.SetValue("Rendering/ColorPoints.b", colorPoints.Blue());
+			if (glView)
+				glView->gls.SetPointColor(Vector3(colorPoints.Red() / 255.0f, colorPoints.Green() / 255.0f, colorPoints.Blue() / 255.0f));
+
+			wxColour colorPointsMasked = cpColorPointsMasked->GetColour();
+			Config.SetValue("Rendering/ColorPointsMasked.r", colorPointsMasked.Red());
+			Config.SetValue("Rendering/ColorPointsMasked.g", colorPointsMasked.Green());
+			Config.SetValue("Rendering/ColorPointsMasked.b", colorPointsMasked.Blue());
+			if (glView)
+				glView->gls.SetMaskedPointColor(Vector3(colorPointsMasked.Red() / 255.0f, colorPointsMasked.Green() / 255.0f, colorPointsMasked.Blue() / 255.0f));
 
 			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToUTF8().data());
@@ -11907,17 +11941,31 @@ void wxGLPanel::OnShown() {
 	UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directional2Dir);
 
 	if (Config.Exists("Rendering/ColorBackground")) {
-		int colorBackgroundR = Config.GetIntValue("Rendering/ColorBackground.r");
-		int colorBackgroundG = Config.GetIntValue("Rendering/ColorBackground.g");
-		int colorBackgroundB = Config.GetIntValue("Rendering/ColorBackground.b");
-		gls.SetBackgroundColor(Vector3(colorBackgroundR / 255.0f, colorBackgroundG / 255.0f, colorBackgroundB / 255.0f));
+		int colorR = Config.GetIntValue("Rendering/ColorBackground.r");
+		int colorG = Config.GetIntValue("Rendering/ColorBackground.g");
+		int colorB = Config.GetIntValue("Rendering/ColorBackground.b");
+		gls.SetBackgroundColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
 	}
 
 	if (Config.Exists("Rendering/ColorWire")) {
-		int colorWireR = Config.GetIntValue("Rendering/ColorWire.r");
-		int colorWireG = Config.GetIntValue("Rendering/ColorWire.g");
-		int colorWireB = Config.GetIntValue("Rendering/ColorWire.b");
-		gls.SetWireColor(Vector3(colorWireR / 255.0f, colorWireG / 255.0f, colorWireB / 255.0f));
+		int colorR = Config.GetIntValue("Rendering/ColorWire.r");
+		int colorG = Config.GetIntValue("Rendering/ColorWire.g");
+		int colorB = Config.GetIntValue("Rendering/ColorWire.b");
+		gls.SetWireColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
+	}
+
+	if (Config.Exists("Rendering/ColorPoints")) {
+		int colorR = Config.GetIntValue("Rendering/ColorPoints.r");
+		int colorG = Config.GetIntValue("Rendering/ColorPoints.g");
+		int colorB = Config.GetIntValue("Rendering/ColorPoints.b");
+		gls.SetPointColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
+	}
+
+	if (Config.Exists("Rendering/ColorPointsMasked")) {
+		int colorR = Config.GetIntValue("Rendering/ColorPointsMasked.r");
+		int colorG = Config.GetIntValue("Rendering/ColorPointsMasked.g");
+		int colorB = Config.GetIntValue("Rendering/ColorPointsMasked.b");
+		gls.SetMaskedPointColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
 	}
 
 	bool perspectiveView = OutfitStudioConfig.GetBoolValue("Rendering/PerspectiveView", true);

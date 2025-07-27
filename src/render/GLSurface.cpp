@@ -1106,7 +1106,8 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 		if (m->bShowPoints && m->mask) {
 			glEnable(GL_PROGRAM_POINT_SIZE);
 			shader.SetAdjustPointSize(true);
-			shader.SetColor(Vector3(0.0f, 1.0f, 0.0f));
+			shader.SetColor(colorPoints);
+			shader.SetSubColor(colorPointsMasked);
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 

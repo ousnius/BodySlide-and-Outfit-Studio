@@ -55,6 +55,8 @@ private:
 
 	nifly::Vector3 colorBackground = nifly::Vector3(0.82f, 0.82f, 0.82f);
 	nifly::Vector3 colorWire = nifly::Vector3(0.3137f, 0.3137f, 0.3137f);
+	nifly::Vector3 colorPoints = nifly::Vector3(0.0f, 1.0f, 0.0f);
+	nifly::Vector3 colorPointsMasked = nifly::Vector3(1.0f, 0.0f, 0.0f);
 	nifly::Vector3 colorRed = nifly::Vector3(1.0f, 0.25f, 0.25f);
 	nifly::Vector3 colorGreen = nifly::Vector3(0.25f, 1.0f, 0.25f);
 
@@ -84,13 +86,17 @@ public:
 	nifly::Vector3 camRot; // Turntable camera emulation.
 	nifly::Vector3 camRotOffset;
 
-	nifly::Vector3 GetBackgroundColor() { return colorBackground; }
-
+	nifly::Vector3 GetBackgroundColor() const { return colorBackground; }
 	void SetBackgroundColor(const nifly::Vector3& color) { colorBackground = color; }
 
-	nifly::Vector3 GetWireColor() { return colorWire; }
-
+	nifly::Vector3 GetWireColor() const { return colorWire; }
 	void SetWireColor(const nifly::Vector3& color) { colorWire = color; }
+
+	nifly::Vector3 GetPointColor() const { return colorPoints; }
+	void SetPointColor(const nifly::Vector3& color) { colorPoints = color; }
+
+	nifly::Vector3 GetMaskedPointColor() const { return colorPointsMasked; }
+	void SetMaskedPointColor(const nifly::Vector3& color) { colorPointsMasked = color; }
 
 	void ClearMeshes() {
 		SetContext();

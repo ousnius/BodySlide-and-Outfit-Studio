@@ -306,7 +306,6 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="lbColorBackground">
-									<size>100,-1</size>
 									<label>Background Color</label>
 									<wrap>-1</wrap>
 								</object>
@@ -333,7 +332,6 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="lbColorWire">
-									<size>100,-1</size>
 									<label>Wireframe Color</label>
 									<wrap>-1</wrap>
 								</object>
@@ -345,6 +343,41 @@
 								<object class="wxColourPickerCtrl" name="cpColorWire">
 									<tooltip>Wireframe color of the renderer.</tooltip>
 									<value translate="0">rgb(80,80,80)</value>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lbColorPoints">
+									<label>Point Color (normal/masked)</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxColourPickerCtrl" name="cpColorPoints">
+									<tooltip>Color of points in the renderer.</tooltip>
+									<value translate="0">rgb(0,255,0)</value>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxColourPickerCtrl" name="cpColorPointsMasked">
+									<tooltip>Color of masked points in the renderer.</tooltip>
+									<value translate="0">rgb(255,0,0)</value>
 								</object>
 							</object>
 						</object>
