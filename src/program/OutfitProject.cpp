@@ -2050,7 +2050,8 @@ int OutfitProject::LoadSkeletonReference(const std::string& skeletonFileName) {
 	return AnimSkeleton::getInstance().LoadFromNif(skeletonFileName);
 }
 
-int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool mergeZaps) {
+int OutfitProject::LoadReferenceTemplate(
+	const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll, bool mergeSliders, bool mergeZaps, bool appendNewSliders) {
 	if (sourceFile.empty() || set.empty()) {
 		wxLogError("Template source entries are invalid.");
 		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR, owner);
@@ -2059,10 +2060,10 @@ int OutfitProject::LoadReferenceTemplate(const std::string& sourceFile, const st
 
 	if (loadAll) {
 		owner->StartSubProgress(10, 20);
-		return AddFromSliderSet(sourceFile, set, false);
+		return AddFromSliderSet(sourceFile, set, false, appendNewSliders);
 	}
 	else
-		return LoadReference(sourceFile, set, shape, mergeSliders, mergeZaps);
+		return LoadReference(sourceFile, set, shape, mergeSliders, mergeZaps, appendNewSliders);
 }
 
 int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders, bool mergeZaps) {
@@ -2134,7 +2135,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	return 0;
 }
 
-int OutfitProject::LoadReference(const std::string& fileName, const std::string& setName, const std::string& shapeName, bool mergeSliders, bool mergeZaps) {
+int OutfitProject::LoadReference(const std::string& fileName, const std::string& setName, const std::string& shapeName, bool mergeSliders, bool mergeZaps, bool appendNewSliders) {
 	if (mergeZaps || mergeSliders) {
 		owner->DeleteSliders(mergeSliders, mergeZaps);
 		DeleteShape(baseShape);
@@ -2152,7 +2153,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	std::string dataFolder = activeSet.GetDefaultDataFolder();
 	std::vector<std::string> dataNames = activeSet.GetLocalData(shapeName);
 
-	sset.GetSet(setName, activeSet);
+	sset.GetSet(setName, activeSet, appendNewSliders);
 
 	activeSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
 	std::string refFile = activeSet.GetInputFileName();
@@ -2353,7 +2354,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	return 0;
 }
 
-int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName, const bool newDataLocal) {
+int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName, const bool newDataLocal, const bool appendNewSliders) {
 	owner->StartProgress(_("Adding slider set..."));
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
@@ -2429,7 +2430,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 	}
 
 	owner->UpdateProgress(70, _("Updating slider data..."));
-	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->name.get() : "", newDataLocal);
+	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->name.get() : "", newDataLocal, appendNewSliders);
 
 	owner->EndProgress();
 	return 0;

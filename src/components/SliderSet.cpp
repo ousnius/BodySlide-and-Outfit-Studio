@@ -74,7 +74,7 @@ size_t SliderSet::CopySlider(SliderData* other) {
 	return sliders.size() - 1;
 }
 
-int SliderSet::LoadSliderSet(XMLElement* element) {
+int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
 	XMLElement* root = element->Parent()->ToElement();
 	int version = root->IntAttribute("version");
 
@@ -149,7 +149,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 				}
 			}
 
-			if (!SliderExists(tmpSlider.name))
+			if (appendNewSliders && !SliderExists(tmpSlider.name))
 				sliders.push_back(std::move(tmpSlider));
 		}
 
@@ -240,7 +240,8 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 	inDataStorage.LoadData(osdNames);
 }
 
-void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal) {
+void SliderSet::Merge(
+	SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal, const bool appendNewSliders) {
 	std::map<std::string, std::map<std::string, std::string>> osdNames;
 	std::map<std::string, std::map<std::string, std::string>> osdNamesBase;
 
@@ -329,7 +330,7 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 				}
 			}
 		}
-		else {
+		else if (appendNewSliders) {
 			// Copy new slider to the set
 			sliders.push_back(s);
 			for (auto& ddf : sliders.back().dataFiles)
@@ -582,7 +583,7 @@ void SliderSetFile::SetShapes(const std::string& set, std::vector<std::string>& 
 	}
 }
 
-int SliderSetFile::GetSet(const std::string& setName, SliderSet& outSliderSet) {
+int SliderSetFile::GetSet(const std::string& setName, SliderSet& outSliderSet, bool appendNewSliders) {
 	XMLElement* setPtr;
 	if (!HasSet(setName))
 		return 1;
@@ -590,7 +591,7 @@ int SliderSetFile::GetSet(const std::string& setName, SliderSet& outSliderSet) {
 	setPtr = setsInFile[setName];
 
 	int ret;
-	ret = outSliderSet.LoadSliderSet(setPtr);
+	ret = outSliderSet.LoadSliderSet(setPtr, appendNewSliders);
 
 	return ret;
 }

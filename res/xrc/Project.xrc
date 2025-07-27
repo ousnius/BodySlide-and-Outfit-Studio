@@ -726,13 +726,8 @@
 						<option>0</option>
 						<flag>wxEXPAND</flag>
 						<border>5</border>
-						<object class="wxFlexGridSizer">
-							<rows>0</rows>
-							<cols>2</cols>
-							<vgap>0</vgap>
-							<hgap>0</hgap>
-							<growablecols>1</growablecols>
-							<growablerows></growablerows>
+						<object class="wxWrapSizer">
+							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
 								<option>0</option>
 								<flag>wxALL</flag>
@@ -751,6 +746,16 @@
 									<label>Sliders</label>
 									<tooltip>Merge new sliders with existing sliders</tooltip>
 									<checked>0</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="chkAppendNewSliders">
+									<label>Append new sliders</label>
+									<tooltip>Append new sliders that aren't in the project at the end of the list (or don't)</tooltip>
+									<checked>1</checked>
 								</object>
 							</object>
 						</object>

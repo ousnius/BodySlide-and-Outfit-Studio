@@ -3777,6 +3777,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 
 		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "LoadReference", "chkMergeSliders");
 		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "LoadReference", "chkMergeZaps");
+		ConfigDialogUtil::LoadDialogCheckBox(OutfitStudioConfig, dlg, "LoadReference", "chkAppendNewSliders");
 
 		dlg.Fit();
 		result = dlg.ShowModal();
@@ -3793,6 +3794,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(10, _("Loading reference set..."));
 	bool mergeSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "LoadReference", "chkMergeSliders");
 	bool mergeZaps = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "LoadReference", "chkMergeZaps");
+	bool appendNewSliders = ConfigDialogUtil::SetBoolFromDialogCheckbox(OutfitStudioConfig, dlg, "LoadReference", "chkAppendNewSliders");
 
 	int error = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
@@ -3808,9 +3810,10 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 													   tmpl->GetShape(),
 													   tmpl->GetLoadAll(),
 													   mergeSliders,
-													   mergeZaps);
+													   mergeZaps,
+													   appendNewSliders);
 			else
-				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps);
+				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), tmpl->GetLoadAll(), mergeSliders, mergeZaps, appendNewSliders);
 		}
 		else
 			error = 1;
@@ -3823,7 +3826,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 			wxString sliderSetName = XRCCTRL(dlg, "npSliderSetName", wxChoice)->GetStringSelection();
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...", refShape, sliderSetName, fileName);
 
-			error = project->LoadReference(fileName.ToUTF8().data(), sliderSetName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders, mergeZaps);
+			error = project->LoadReference(fileName.ToUTF8().data(), sliderSetName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders, mergeZaps, appendNewSliders);
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);

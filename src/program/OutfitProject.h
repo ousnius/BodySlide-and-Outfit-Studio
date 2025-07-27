@@ -292,13 +292,19 @@ public:
 	void DeleteSlider(const std::string& sliderName);
 
 	int LoadSkeletonReference(const std::string& skeletonFileName);
-	int LoadReferenceTemplate(
-		const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll = false, bool mergeSliders = false, bool mergeZaps = false);
+	int LoadReferenceTemplate(const std::string& sourceFile,
+							  const std::string& set,
+							  const std::string& shape,
+							  bool loadAll = false,
+							  bool mergeSliders = false,
+							  bool mergeZaps = false,
+							  bool appendNewSliders = true);
 	int LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders = false, bool mergeZaps = false);
-	int LoadReference(const std::string& fileName, const std::string& setName, const std::string& shapeName = "", bool mergeSliders = false, bool mergeZaps = false);
+	int LoadReference(
+		const std::string& fileName, const std::string& setName, const std::string& shapeName = "", bool mergeSliders = false, bool mergeZaps = false, bool appendNewSliders = true);
 
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
-	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true);
+	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true, const bool appendNewSliders = true);
 
 	TargetDataDiffs* GetDiffSet(SliderData& silderData, nifly::NiShape* shape);
 
