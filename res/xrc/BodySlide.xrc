@@ -17,7 +17,7 @@
 					<cols>5</cols>
 					<vgap>0</vgap>
 					<hgap>0</hgap>
-					<growablecols>1</growablecols>
+					<growablecols>1,3,4</growablecols>
 					<growablerows></growablerows>
 					<object class="sizeritem">
 						<option>0</option>
@@ -75,7 +75,7 @@
 								</object>
 							</object>
 							<object class="sizeritem">
-								<option>0</option>
+								<option>1</option>
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
 								<object class="unknown" name="searchHolder" />
