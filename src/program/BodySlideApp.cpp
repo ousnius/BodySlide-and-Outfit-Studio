@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <atomic>
 #include <regex>
+#include <wx/wrapsizer.h>
 #include <wx/debugrpt.h>
 
 #ifdef WIN64
@@ -3166,6 +3167,11 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	presetFilter->ShowCancelButton(true);
 	presetFilter->SetDescriptiveText(_("Filter presets..."));
 
+	int categoryTabSizerID = XRCID("categoryTabSizer");
+	wxSizerItem* si = GetSizer()->GetItemById(categoryTabSizerID, true);
+
+	categoryTabSizer = si ? si->GetSizer() : nullptr;
+
 	auto conflictLabel = (wxStaticText*)FindWindowByName("conflictLabel", this);
 	if (conflictLabel)
 		conflictLabel->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnConflictPopup, this);
@@ -3305,10 +3311,13 @@ void BodySlideFrame::ShowLowColumn(bool show) {
 void BodySlideFrame::AddCategorySliderUI(const std::string& name, const std::vector<std::string>& sliders, bool enabled, bool oneSize) {
 	SliderCategoryUI* cat = new SliderCategoryUI();
 
-	if (!cat->Create(sliderScroll, sliderLayout, name, sliders, enabled, oneSize))
+	if (!cat->Create(sliderScroll, sliderLayout, categoryTabSizer, name, sliders, enabled, oneSize))
 		return;
 
 	cat->check->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnCategoryCheckChanged, this);
+
+	if (cat->tabButton)
+		cat->tabButton->Bind(wxEVT_BUTTON, &BodySlideFrame::OnCategoryTabButton, this);
 
 	if (!cat->isShown)
 		cat->Show();
@@ -3693,6 +3702,33 @@ void BodySlideFrame::OnCategoryCheckChanged(wxCommandEvent& event) {
 
 		int scrollPos = sliderScroll->GetScrollPos(wxOrientation::wxVERTICAL);
 		sliderScroll->Scroll(0, scrollPos);
+	}
+}
+
+void BodySlideFrame::OnCategoryTabButton(wxCommandEvent& event) {
+	wxWindow* w = (wxWindow*)event.GetEventObject();
+	if (!w)
+		return;
+
+	wxStateButton* tabButton = (wxStateButton*)event.GetEventObject();
+	if (!tabButton)
+		return;
+
+	std::string categoryName = tabButton->GetName().ToUTF8().data();
+
+	SliderCategoryUI* sc = GetSliderCategory(categoryName);
+	if (sc) {
+		if (!sc->isEnabled) {
+			sc->check->SetValue(true);
+			sc->isEnabled = true;
+			DoFilterSliders();
+		}
+
+		int scroll_rate_y = 0;
+		sliderScroll->GetScrollPixelsPerUnit(nullptr, &scroll_rate_y);
+
+		wxPoint window_pos = sliderScroll->CalcUnscrolledPosition(sc->check->GetPosition());
+		sliderScroll->Scroll(0, window_pos.y / scroll_rate_y);
 	}
 }
 
@@ -4516,7 +4552,7 @@ void BodySlideFrame::OnEditProject(wxCommandEvent& WXUNUSED(event)) {
 
 SliderCategoryUI::SliderCategoryUI() {}
 
-bool SliderCategoryUI::Create(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, const std::string& name, const std::vector<std::string>& sliders, bool pEnabled, bool pOneSize) {
+bool SliderCategoryUI::Create(wxScrolledWindow* scrollWindow, wxSizer* sliderLayout, wxSizer* categoryTabSizer, const std::string& name, const std::vector<std::string>& sliders, bool pEnabled, bool pOneSize) {
 	categoryName = name;
 	sliderNames = sliders;
 
@@ -4557,6 +4593,11 @@ bool SliderCategoryUI::Create(wxScrolledWindow* scrollWindow, wxSizer* sliderLay
 
 	sliderLayout->AddSpacer(0);
 
+	if (categoryTabSizer) {
+		tabButton = new wxStateButton(categoryTabSizer->GetContainingWindow(), wxID_ANY, name, wxDefaultPosition, wxDefaultSize, 0L, wxDefaultValidator, name, true);
+		categoryTabSizer->Add(tabButton, 0, 0, 0);
+	}
+
 	Show(false);
 	isCreated = true;
 	return true;
@@ -4571,6 +4612,14 @@ void SliderCategoryUI::Show(bool show) {
 
 	if (dummyPanel2)
 		dummyPanel2->Show(show && !oneSize);
+
+	if (tabButton) {
+		auto wrapSizer = (wxWrapSizer*)tabButton->GetContainingSizer();
+		wrapSizer->Show(tabButton, show);
+
+		wxSize minSize = wrapSizer->CalcMin();
+		wrapSizer->RepositionChildren(minSize);
+	}
 
 	isShown = show;
 }
@@ -4590,6 +4639,11 @@ void SliderCategoryUI::Destroy() {
 	if (dummyPanel2) {
 		dummyPanel2->Destroy();
 		dummyPanel2 = nullptr;
+	}
+
+	if (tabButton) {
+		tabButton->Destroy();
+		tabButton = nullptr;
 	}
 
 	isShown = false;

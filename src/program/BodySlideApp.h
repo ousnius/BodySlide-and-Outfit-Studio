@@ -28,6 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "GroupManager.h"
 #include "PresetSaveDialog.h"
 #include "PreviewWindow.h"
+#include "../ui/wxStateButton.h"
 
 #include "../FSEngine/FSEngine.h"
 #include "../FSEngine/FSManager.h"
@@ -239,6 +240,7 @@ public:
 	wxCheckBox* check = nullptr;
 	wxStaticText* label = nullptr;
 	wxPanel* dummyPanel2 = nullptr;
+	wxStateButton* tabButton = nullptr;
 
 	SliderCategoryUI();
 
@@ -246,6 +248,7 @@ public:
 
 	bool Create(wxScrolledWindow* scrollWindow,
 				wxSizer* sliderLayout,
+				wxSizer* categoryTabSizer,
 				const std::string& name,
 				const std::vector<std::string>& sliders,
 				bool pEnabled = true,
@@ -312,6 +315,7 @@ public:
 	wxSearchCtrl* outfitsearch = nullptr;
 	wxSearchCtrl* sliderFilter = nullptr;
 	wxSearchCtrl* presetFilter = nullptr;
+	wxSizer* categoryTabSizer = nullptr;
 
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxFlexGridSizer* sliderLayout = nullptr;
@@ -375,6 +379,7 @@ private:
 
 	void OnZapCheckChanged(wxCommandEvent& event);
 	void OnCategoryCheckChanged(wxCommandEvent& event);
+	void OnCategoryTabButton(wxCommandEvent& event);
 
 	void OnEraseBackground(wxEraseEvent& event);
 

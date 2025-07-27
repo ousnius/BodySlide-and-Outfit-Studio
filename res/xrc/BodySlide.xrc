@@ -210,6 +210,14 @@
 					</object>
 				</object>
 			</object>
+			<object class="sizeritem" name="categoryTabSizer">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>0</border>
+				<object class="wxWrapSizer">
+					<orient>wxHORIZONTAL</orient>
+				</object>
+			</object>
 			<object class="sizeritem">
 				<option>1</option>
 				<flag>wxEXPAND</flag>
