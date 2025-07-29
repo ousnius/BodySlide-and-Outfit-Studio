@@ -268,6 +268,11 @@ void GLSurface::SetFieldOfView(const int fieldOfView) {
 	mFov = fieldOfView;
 }
 
+void GLSurface::SetDepthClip(const float pzNear, const float pzFar) {
+	zNear = pzNear;
+	zFar = pzFar;
+}
+
 void GLSurface::UpdateLights(const int ambient,
 							 const int frontal,
 							 const int directional0,
@@ -726,14 +731,14 @@ void GLSurface::GetSize(uint32_t& w, uint32_t& h) {
 void GLSurface::UpdateProjection() {
 	float aspect = (float)vpW / (float)vpH;
 	if (perspective)
-		matProjection = glm::perspective(glm::radians(mFov), aspect, 0.1f, 1000.0f);
+		matProjection = glm::perspective(glm::radians(mFov), aspect, zNear, zFar);
 	else
 		matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect,
 								   (-camPos.z + camOffset.z) / 2.0f * aspect,
 								   (camPos.z + camOffset.z) / 2.0f,
 								   (-camPos.z + camOffset.z) / 2.0f,
-								   0.1f,
-								   1000.0f);
+								   zNear,
+								   zFar);
 
 	auto mat = glm::identity<glm::mat4x4>();
 	matView = glm::translate(mat, glm::vec3(camPos.x, camPos.y, camPos.z));

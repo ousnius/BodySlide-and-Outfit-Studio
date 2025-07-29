@@ -1063,6 +1063,10 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		fovSlider = reinterpret_cast<wxSlider*>(toolBarH->FindWindowByName("fovSlider"));
 		if (fovSlider)
 			fovSlider->Bind(wxEVT_SLIDER, &OutfitStudioFrame::OnFieldOfViewSlider, this);
+
+		cbDepthClip = reinterpret_cast<wxCheckBox*>(toolBarH->FindWindowByName("cbDepthClip"));
+		if (cbDepthClip)
+			cbDepthClip->Bind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnDepthClip, this);
 	}
 
 	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
@@ -6528,6 +6532,14 @@ void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& WXUNUSED(event)) {
 	fovLabel->SetLabel(wxString::Format(_("Field of View: %d"), fieldOfView));
 
 	glView->SetFieldOfView(fieldOfView);
+}
+
+void OutfitStudioFrame::OnDepthClip(wxCommandEvent& WXUNUSED(event)) {
+	//float zNear = cbDepthClip->IsChecked() ? 0.001f : 0.1f;
+	//glView->SetDepthClip(zNear, glView->gls.zFar);
+
+	float zFar = cbDepthClip->IsChecked() ? 100000.0f : 1000.0f;
+	glView->SetDepthClip(glView->gls.zNear, zFar);
 }
 
 void OutfitStudioFrame::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {

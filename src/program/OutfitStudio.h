@@ -648,6 +648,11 @@ public:
 		gls.RenderOneFrame();
 	}
 
+	void SetDepthClip(const float zNear, const float zFar) {
+		gls.SetDepthClip(zNear, zFar);
+		gls.RenderOneFrame();
+	}
+
 	void UpdateLights(const int ambient,
 					  const int frontal,
 					  const int directional0,
@@ -932,6 +937,7 @@ public:
 	wxStateButton* lightsTabButton = nullptr;
 	wxButton* brushSettings = nullptr;
 	wxSlider* fovSlider = nullptr;
+	wxCheckBox* cbDepthClip = nullptr;
 	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
 	wxCollapsiblePane* masksPane = nullptr;
 	wxCollapsiblePane* posePane = nullptr;
@@ -1312,6 +1318,7 @@ private:
 	void OnShowFloor(wxCommandEvent& event);
 	void OnBrushSettings(wxCommandEvent& event);
 	void OnFieldOfViewSlider(wxCommandEvent& event);
+	void OnDepthClip(wxCommandEvent& event);
 	void OnUpdateLights(wxCommandEvent& event);
 	void OnResetLights(wxCommandEvent& event);
 

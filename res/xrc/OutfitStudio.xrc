@@ -147,6 +147,12 @@
 						<radio>1</radio>
 					</object>
 					<object class="separator" />
+					<object class="wxCheckBox" name="cbDepthClip">
+						<fg>#ffffff</fg>
+						<label>Depth Clip</label>
+						<checked>0</checked>
+						<tooltip>Simulates lower depth buffer precision to help with depth-related clipping</tooltip>
+					</object>
 					<object class="wxSlider" name="fovSlider">
 						<size>100,25</size>
 						<value translate="0">65</value>

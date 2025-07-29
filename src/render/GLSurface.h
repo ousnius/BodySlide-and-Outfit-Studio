@@ -81,6 +81,8 @@ public:
 
 	bool perspective = true;
 	float mFov = 90.0f;
+	float zNear = 0.1f;
+	float zFar = 1000.0f;
 	nifly::Vector3 camPos;
 	nifly::Vector3 camOffset;
 	nifly::Vector3 camRot; // Turntable camera emulation.
@@ -249,6 +251,7 @@ public:
 	void SetView(const char type);
 	void SetPerspective(const bool enabled);
 	void SetFieldOfView(const int fieldOfView);
+	void SetDepthClip(const float zNear, const float zFar);
 	void UpdateLights(const int ambient,
 					  const int frontal,
 					  const int directional0,
