@@ -3312,15 +3312,20 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
 	if (cbMorphs) {
 		bool buildMorphsDef = BodySlideConfig.GetBoolValue("BuildMorphs");
-		cbMorphs->SetValue(buildMorphsDef);
 
 		switch (app->targetGame) {
 			case SKYRIM:
 			case FO4:
 			case FO4VR:
 			case SKYRIMSE:
-			case SKYRIMVR: cbMorphs->Show(); break;
-			default: break;
+			case SKYRIMVR:
+				cbMorphs->SetValue(buildMorphsDef);
+				cbMorphs->Show();
+				break;
+			default:
+				cbMorphs->SetValue(false);
+				cbMorphs->Hide();
+				break;
 		}
 	}
 
@@ -3569,7 +3574,7 @@ void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	sliderCategories.clear();
 
 	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
-	if (cbMorphs)
+	if (cbMorphs && cbMorphs->IsShown())
 		BodySlideConfig.SetBoolValue("BuildMorphs", cbMorphs->GetValue());
 
 	auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
