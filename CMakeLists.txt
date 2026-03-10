@@ -19,6 +19,7 @@ set(commonsources
 	lib/LZ4F/lz4frame.c
 	lib/LZ4F/lz4hc.c
 	lib/LZ4F/xxhash.c
+	lib/meshoptimizer/src/vcacheoptimizer.cpp
 	lib/nifly/src/Animation.cpp
 	lib/nifly/src/BasicTypes.cpp
 	lib/nifly/src/bhk.cpp
@@ -114,12 +115,14 @@ target_include_directories(BodySlide SYSTEM PRIVATE
 	)
 target_include_directories(OutfitStudio PUBLIC
 	lib/gli
+	lib/meshoptimizer/src
 	lib/nifly/include
 	lib/nifly/external
 	lib/TinyXML-2
 	)
 target_include_directories(BodySlide PUBLIC
 	lib/gli
+	lib/meshoptimizer/src
 	lib/nifly/include
 	lib/nifly/external
 	lib/TinyXML-2

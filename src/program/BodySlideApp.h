@@ -193,6 +193,9 @@ public:
 	void RebuildPreviewMeshes();
 	void UpdateMeshesFromSet();
 	void ApplyReferenceNormals(nifly::NifFile& nif);
+	void ApplyReferenceNormals(nifly::NifFile& nif, const std::string& shapeName);
+
+	void PrefetchOutfitTextures();
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false, bool forceNormals = false);
 	int BuildListBodies(std::vector<std::string>& outfitList,

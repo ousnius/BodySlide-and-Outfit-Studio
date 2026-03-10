@@ -16,12 +16,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "BodySlideApp.h"
+#include "../files/ResourceLoader.h"
 #include "../files/wxDDSImage.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 
 #include <atomic>
+#include <future>
+#include <mutex>
 #include <regex>
+#include <thread>
+
 #include <wx/wrapsizer.h>
 #include <wx/treelist.h>
 #include <wx/debugrpt.h>
@@ -217,6 +222,8 @@ bool BodySlideApp::OnInit() {
 		wxLogMessage("BodySlide initialized.");
 		GroupBuild(cmdGroupBuild);
 	}
+
+	PrefetchOutfitTextures();
 
 	return true;
 }
@@ -634,6 +641,8 @@ void BodySlideApp::ActivateOutfit(const std::string& outfitName) {
 	if (error)
 		wxLogError("Failed to load set '%s' from slider set list (%d).", outfitName, error);
 
+	PrefetchOutfitTextures();
+
 	PopulateOutfitList(outfitName);
 
 	ActivatePreset(activePreset, false);
@@ -1029,6 +1038,9 @@ void BodySlideApp::LaunchOutfitStudio(const wxString& args) {
 void BodySlideApp::ApplySliders(
 	const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<uint16_t>& ZapIdx, std::vector<Vector2>* uvs) {
 	for (auto& slider : sliderSet) {
+		if (slider.linkedDataSets.empty())
+			continue;
+
 		float val = slider.value;
 		if (slider.zap && !slider.uv) {
 			if (val > 0)
@@ -1038,6 +1050,8 @@ void BodySlideApp::ApplySliders(
 		else {
 			if (slider.invert)
 				val = 1.0f - val;
+			else if (val == 0.0f)
+				continue;
 
 			for (size_t j = 0; j < slider.linkedDataSets.size(); j++) {
 				if (slider.uv) {
@@ -1051,7 +1065,7 @@ void BodySlideApp::ApplySliders(
 	}
 
 	for (auto& slider : sliderSet)
-		if (slider.clamp && slider.value > 0)
+		if (slider.clamp && slider.value > 0 && !slider.linkedDataSets.empty())
 			for (size_t j = 0; j < slider.linkedDataSets.size(); j++)
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
 }
@@ -1208,6 +1222,48 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 
 	if (preview)
 		UpdatePreview();
+}
+
+void BodySlideApp::PrefetchOutfitTextures() {
+	std::string nifPath = activeSet.GetInputFileName();
+	if (nifPath.empty())
+		return;
+
+	std::string baseGamePath = Config["GameDataPath"];
+
+	// Parse NIF and collect texture paths on the main thread (fast, ~1ms).
+	nifly::NifFile nif;
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, nifPath, std::ios::in | std::ios::binary);
+	if (nif.Load(file))
+		return;
+
+	std::vector<std::string> texPaths;
+	for (auto& shapeName : nif.GetShapeNames()) {
+		auto shape = nif.FindBlockByName<nifly::NiShape>(shapeName);
+		if (!shape) continue;
+		auto* shader = nif.GetShader(shape);
+		if (!shader) continue;
+
+		for (int i = 0; i < 10; i++) {
+			std::string texPath;
+			nif.GetTextureSlot(shape, texPath, i);
+			if (!texPath.empty()) {
+				texPath = std::regex_replace(texPath, std::regex("\\\\+"), "/");
+				texPath = std::regex_replace(texPath, std::regex("^(.*?)/textures/", std::regex_constants::icase), "");
+				texPath = std::regex_replace(texPath, std::regex("^/+"), "");
+				texPath = std::regex_replace(texPath, std::regex("^(?!^textures/)", std::regex_constants::icase), "textures/");
+				texPaths.push_back(baseGamePath + texPath);
+			}
+		}
+	}
+
+	// Read texture file data in the background (file I/O only, no GL).
+	if (!texPaths.empty()) {
+		std::thread([texPaths = std::move(texPaths)]() {
+			ResourceLoader::PrefetchTexturesParallel(texPaths);
+		}).detach();
+	}
 }
 
 void BodySlideApp::ShowPreview() {
@@ -1456,31 +1512,32 @@ void BodySlideApp::UpdateMeshesFromSet() {
 }
 
 void BodySlideApp::ApplyReferenceNormals(NifFile& nif) {
-	for (auto& s : nif.GetShapes()) {
-		std::string shapeName = s->name.get();
+	for (auto& s : nif.GetShapes())
+		ApplyReferenceNormals(nif, s->name.get());
+}
 
-		if (refNormalsCache.find(shapeName) != refNormalsCache.end()) {
-			// Apply normals from file cache
-			NifFile& srcNif = refNormalsCache[shapeName];
+void BodySlideApp::ApplyReferenceNormals(NifFile& nif, const std::string& shapeName) {
+	if (refNormalsCache.find(shapeName) != refNormalsCache.end()) {
+		// Apply normals from file cache
+		NifFile& srcNif = refNormalsCache[shapeName];
+		nif.ApplyNormalsFromFile(srcNif, shapeName);
+	}
+	else {
+		// Check if reference normals file exists
+		wxString fileName = wxString::Format("%s/RefNormals/%s.nif", wxString::FromUTF8(Config["AppDir"]), wxString::FromUTF8(shapeName));
+		if (wxFile::Exists(fileName)) {
+			std::fstream file;
+			PlatformUtil::OpenFileStream(file, fileName.ToUTF8().data(), std::ios::in | std::ios::binary);
+
+			NifFile srcNif;
+			if (srcNif.Load(file) != 0)
+				return;
+
+			// Apply normals from file
 			nif.ApplyNormalsFromFile(srcNif, shapeName);
-		}
-		else {
-			// Check if reference normals file exists
-			wxString fileName = wxString::Format("%s/RefNormals/%s.nif", wxString::FromUTF8(Config["AppDir"]), wxString::FromUTF8(shapeName));
-			if (wxFile::Exists(fileName)) {
-				std::fstream file;
-				PlatformUtil::OpenFileStream(file, fileName.ToUTF8().data(), std::ios::in | std::ios::binary);
 
-				NifFile srcNif;
-				if (srcNif.Load(file) != 0)
-					continue;
-
-				// Apply normals from file
-				nif.ApplyNormalsFromFile(srcNif, shapeName);
-
-				// Move file to cache
-				refNormalsCache[shapeName] = std::move(srcNif);
-			}
+			// Move file to cache
+			refNormalsCache[shapeName] = std::move(srcNif);
 		}
 	}
 }
@@ -2249,7 +2306,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
 
 			if (forceNormals)
-				ApplyReferenceNormals(nifBig);
+				ApplyReferenceNormals(nifBig, it->first);
 		}
 
 		nifBig.CalcTangentsForShape(shape);
@@ -2274,7 +2331,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 				nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
 
 				if (forceNormals)
-					ApplyReferenceNormals(nifSmall);
+					ApplyReferenceNormals(nifSmall, it->first);
 			}
 
 			nifSmall.CalcTangentsForShape(shapeSmall);
@@ -2574,7 +2631,7 @@ int BodySlideApp::BuildListBodies(
 					return;
 				}
 
-				// Only enforce the “radio per level” rule for level-2 items:
+				// Only enforce the ï¿½radio per levelï¿½ rule for level-2 items:
 				checkBoxReverting = true;
 
 				auto checkedState = treeListCtrl->GetCheckedState(item);
@@ -2637,7 +2694,7 @@ int BodySlideApp::BuildListBodies(
 										treeListCtrl->CheckItem(level2, wxCheckBoxState::wxCHK_UNCHECKED);
 								}
 							}
-							// else: no match found, do nothing — keep existing checks
+							// else: no match found, do nothing ï¿½ keep existing checks
 						}
 					}
 				});
@@ -2928,7 +2985,7 @@ int BodySlideApp::BuildListBodies(
 				nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
 
 				if (forceNormals)
-					ApplyReferenceNormals(nifBig);
+					ApplyReferenceNormals(nifBig, it->first);
 			}
 
 			nifBig.CalcTangentsForShape(shape);
@@ -2950,7 +3007,7 @@ int BodySlideApp::BuildListBodies(
 					nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
 
 					if (forceNormals)
-						ApplyReferenceNormals(nifSmall);
+						ApplyReferenceNormals(nifSmall, it->first);
 				}
 
 				nifSmall.CalcTangentsForShape(shapeSmall);

@@ -35,8 +35,63 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/zipstrm.h>
 
 #include "ConvertBodyReferenceDialog.h"
+#include "../files/ResourceLoader.h"
+
+#include <fstream>
+#include <regex>
+#include <thread>
 
 using namespace nifly;
+
+extern ConfigurationManager Config;
+
+namespace {
+std::vector<std::string> CollectTexturePathsFromNifForPrefetch(const std::string& nifPath) {
+	std::vector<std::string> texPaths;
+	if (nifPath.empty())
+		return texPaths;
+
+	std::string baseGamePath = Config["GameDataPath"];
+	nifly::NifFile nif;
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, nifPath, std::ios::in | std::ios::binary);
+	if (nif.Load(file))
+		return texPaths;
+
+	for (auto& shapeName : nif.GetShapeNames()) {
+		auto shape = nif.FindBlockByName<nifly::NiShape>(shapeName);
+		if (!shape)
+			continue;
+		auto* shader = nif.GetShader(shape);
+		if (!shader)
+			continue;
+
+		for (int i = 0; i < 10; i++) {
+			std::string texPath;
+			nif.GetTextureSlot(shape, texPath, i);
+			if (texPath.empty())
+				continue;
+
+			texPath = std::regex_replace(texPath, std::regex("\\\\+"), "/");
+			texPath = std::regex_replace(texPath, std::regex("^(.*?)/textures/", std::regex_constants::icase), "");
+			texPath = std::regex_replace(texPath, std::regex("^/+"), "");
+			texPath = std::regex_replace(texPath, std::regex("^(?!^textures/)", std::regex_constants::icase), "textures/");
+			texPaths.push_back(baseGamePath + texPath);
+		}
+	}
+
+	return texPaths;
+}
+
+void PrefetchTexturesAsync(std::vector<std::string> texPaths) {
+	if (texPaths.empty())
+		return;
+
+	std::thread([paths = std::move(texPaths)]() mutable {
+		ResourceLoader::PrefetchTexturesParallel(paths);
+	}).detach();
+}
+}
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
@@ -2461,6 +2516,9 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 		return false;
 	}
 
+	// Start background texture prefetch early so first material/texture setup is less I/O-bound.
+	PrefetchTexturesAsync(CollectTexturePathsFromNifForPrefetch(project->activeSet.GetInputFileName()));
+
 	if (clearProject) {
 		NiShape* shape = project->GetBaseShape();
 		if (shape) {
@@ -3926,6 +3984,8 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	if (XRCCTRL(dlg, "npWorkFile", wxRadioButton)->GetValue() == true) {
 		wxString fileName = XRCCTRL(dlg, "npWorkFilename", wxFilePickerCtrl)->GetPath();
 		if (fileName.Lower().EndsWith(".nif")) {
+			PrefetchTexturesAsync(CollectTexturePathsFromNifForPrefetch(fileName.ToUTF8().data()));
+
 			if (!keepShapes)
 				ret = project->ImportNIF(fileName.ToUTF8().data(), true, outfitName);
 			else
@@ -6339,6 +6399,7 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(Mesh* m, const std::vector<int
 		m->subMeshes[si].second = m->subMeshes[si + 1].first - m->subMeshes[si].first;
 
 	m->subMeshes.pop_back();
+	m->OptimizeRenderIndicesForVertexCache();
 	m->QueueUpdate(Mesh::UpdateType::Indices);
 }
 
@@ -6352,6 +6413,7 @@ void OutfitStudioFrame::SetNoSubMeshes(Mesh* m) {
 	for (int ti = 0; ti < m->nTris; ++ti)
 		m->renderTris[ti] = m->tris[ti];
 
+	m->OptimizeRenderIndicesForVertexCache();
 	m->QueueUpdate(Mesh::UpdateType::Indices);
 }
 
@@ -11317,6 +11379,10 @@ void OutfitStudioFrame::OnNPWizChangeSetNameChoice(wxCommandEvent& event) {
 void OutfitStudioFrame::OnLoadOutfitFP_File(wxFileDirPickerEvent& event) {
 	wxWindow* win = ((wxDialog*)event.GetEventObject())->GetParent();
 	XRCCTRL((*win), "npWorkFile", wxRadioButton)->SetValue(true);
+
+	wxString fileName = event.GetPath();
+	if (fileName.Lower().EndsWith(".nif"))
+		PrefetchTexturesAsync(CollectTexturePathsFromNifForPrefetch(fileName.ToUTF8().data()));
 }
 
 void OutfitStudioFrame::OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event) {

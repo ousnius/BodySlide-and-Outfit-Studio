@@ -854,6 +854,7 @@
     <ClCompile Include="lib\LZ4F\lz4frame.c" />
     <ClCompile Include="lib\LZ4F\lz4hc.c" />
     <ClCompile Include="lib\LZ4F\xxhash.c" />
+    <ClCompile Include="lib\meshoptimizer\src\vcacheoptimizer.cpp" />
     <ClCompile Include="lib\nifly\src\Animation.cpp" />
     <ClCompile Include="lib\nifly\src\BasicTypes.cpp" />
     <ClCompile Include="lib\nifly\src\bhk.cpp" />

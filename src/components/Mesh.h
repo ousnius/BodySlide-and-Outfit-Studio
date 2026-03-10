@@ -142,6 +142,7 @@ public:
 	void BuildEdgeList();		 // Edge list optional to reduce overhead when it's not needed.
 
 	void CalcWeldVerts();
+	void OptimizeRenderIndicesForVertexCache();
 
 	void CreateBuffers();
 	void UpdateBuffers();
