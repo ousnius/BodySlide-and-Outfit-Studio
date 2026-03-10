@@ -357,6 +357,11 @@ void BodySlideApp::LoadData() {
 	InitArchives();
 
 	std::string activeOutfit = BodySlideConfig["SelectedOutfit"];
+	if (!activeOutfit.empty() && !OutfitExists(activeOutfit)) {
+		wxLogMessage("Previously selected outfit '%s' no longer exists, clearing.", activeOutfit);
+		activeOutfit.clear();
+		BodySlideConfig.SetValue("SelectedOutfit", activeOutfit);
+	}
 	if (activeOutfit.empty() && !outfitNameOrder.empty()) {
 		activeOutfit = outfitNameOrder.front();
 		BodySlideConfig.SetValue("SelectedOutfit", activeOutfit);
@@ -1846,6 +1851,7 @@ void BodySlideApp::InitLanguage() {
 
 void BodySlideApp::LoadAllCategories() {
 	wxLogMessage("Loading all slider categories...");
+	cCollection.Clear();
 	cCollection.LoadCategories(GetProjectPath() + "/SliderCategories");
 }
 
@@ -4600,7 +4606,12 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToUTF8().data());
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
+			app->targetGame = targ;
 			app->InitArchives();
+			app->LoadAllCategories();
+			app->LoadAllGroups();
+			app->LoadSliderSets();
+			app->LoadData();
 
 			auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
 			if (cbForceBodyNormals) {
