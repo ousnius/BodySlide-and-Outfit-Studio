@@ -3315,39 +3315,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	val = BodySlideConfig["LastPresetFilter"];
 	presetFilter->ChangeValue(val);
 
-	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
-	if (cbMorphs) {
-		bool buildMorphsDef = BodySlideConfig.GetBoolValue("BuildMorphs");
-
-		switch (app->targetGame) {
-			case SKYRIM:
-			case FO4:
-			case FO4VR:
-			case SKYRIMSE:
-			case SKYRIMVR:
-				cbMorphs->SetValue(buildMorphsDef);
-				cbMorphs->Show();
-				break;
-			default:
-				cbMorphs->SetValue(false);
-				cbMorphs->Hide();
-				break;
-		}
-	}
-
-	if (Config.GetBoolValue("ShowForceBodyNormals")) {
-		auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
-		if (cbForceBodyNormals) {
-			bool forceBodyNormalsDef = BodySlideConfig.GetBoolValue("ForceBodyNormals");
-			cbForceBodyNormals->SetValue(forceBodyNormalsDef);
-
-			switch (app->targetGame) {
-				case SKYRIMSE:
-				case SKYRIMVR: cbForceBodyNormals->Show(); break;
-				default: break;
-			}
-		}
-	}
+	RefreshTargetGameState();
 
 	// Create initial slider pool
 	if (sliderScroll && sliderLayout) {
@@ -4613,22 +4581,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			app->LoadSliderSets();
 			app->LoadData();
 
-			auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
-			if (cbForceBodyNormals) {
-				if (Config.GetBoolValue("ShowForceBodyNormals")) {
-					bool forceBodyNormalsDef = BodySlideConfig.GetBoolValue("ForceBodyNormals");
-					cbForceBodyNormals->SetValue(forceBodyNormalsDef);
-
-					switch (app->targetGame) {
-						case SKYRIMSE:
-						case SKYRIMVR: cbForceBodyNormals->Show(); break;
-						default: break;
-					}
-				}
-				else
-					cbForceBodyNormals->Hide();
-			}
-
+			RefreshTargetGameState();
 			Layout();
 		}
 
@@ -4671,6 +4624,44 @@ void BodySlideFrame::OnSetSize(wxSizeEvent& event) {
 void BodySlideFrame::OnEditProject(wxCommandEvent& WXUNUSED(event)) {
 	std::string projectName = BodySlideConfig["SelectedOutfit"];
 	app->EditProject(projectName);
+}
+
+void BodySlideFrame::RefreshTargetGameState() {
+	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
+	if (cbMorphs) {
+		bool buildMorphsDef = BodySlideConfig.GetBoolValue("BuildMorphs");
+
+		switch (app->targetGame) {
+			case SKYRIM:
+			case FO4:
+			case FO4VR:
+			case SKYRIMSE:
+			case SKYRIMVR:
+				cbMorphs->SetValue(buildMorphsDef);
+				cbMorphs->Show();
+				break;
+			default:
+				cbMorphs->SetValue(false);
+				cbMorphs->Hide();
+				break;
+		}
+	}
+
+	auto cbForceBodyNormals = XRCCTRL(*this, "cbForceBodyNormals", wxCheckBox);
+	if (cbForceBodyNormals) {
+		if (Config.GetBoolValue("ShowForceBodyNormals")) {
+			bool forceBodyNormalsDef = BodySlideConfig.GetBoolValue("ForceBodyNormals");
+			cbForceBodyNormals->SetValue(forceBodyNormalsDef);
+
+			switch (app->targetGame) {
+				case SKYRIMSE:
+				case SKYRIMVR: cbForceBodyNormals->Show(); break;
+				default: break;
+			}
+		}
+		else
+			cbForceBodyNormals->Hide();
+	}
 }
 
 

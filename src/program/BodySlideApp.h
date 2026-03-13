@@ -431,6 +431,8 @@ private:
 		return true;
 	}
 
+	void RefreshTargetGameState();
+
 	BodySlideApp* app;
 
 	wxDECLARE_EVENT_TABLE();
