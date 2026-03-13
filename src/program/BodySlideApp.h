@@ -128,6 +128,8 @@ public:
 	void LoadData();
 	void CharHook(wxKeyEvent& event);
 
+	bool OutfitExists(const std::string& name) const { return outfitNameSource.find(name) != outfitNameSource.end(); }
+
 	void LoadAllCategories();
 
 	void SetPresetGroups(const std::string& setName);
@@ -428,6 +430,8 @@ private:
 
 		return true;
 	}
+
+	void RefreshTargetGameState();
 
 	BodySlideApp* app;
 

@@ -7,8 +7,6 @@ See the included LICENSE file
 #include "../utils/PlatformUtil.h"
 
 int SliderCategoryCollection::LoadCategories(const std::string& basePath) {
-	categories.clear();
-
 	wxArrayString files;
 	wxDir::GetAllFiles(basePath, &files, "*.xml");
 
