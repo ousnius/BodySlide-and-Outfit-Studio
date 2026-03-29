@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "../FSEngine/FSEngine.h"
 #include "../FSEngine/FSManager.h"
 
+#include <fstream>
 #include <wx/filename.h>
 #include <wx/log.h>
 
@@ -21,6 +22,86 @@ ResourceLoader::~ResourceLoader() {
 }
 
 bool ResourceLoader::extChecked = false;
+std::mutex ResourceLoader::s_prefetchMutex;
+std::unordered_map<std::string, ResourceLoader::RawTextureData> ResourceLoader::s_prefetchCache;
+
+// Read raw texture file data, resolving through direct path and BSA.
+// Does NO GL calls — thread-safe for background use.
+ResourceLoader::RawTextureData ResourceLoader::ReadTextureFileData(const std::string& inFileName) {
+	RawTextureData result;
+
+	// Extract file extension without wx
+	auto dotPos = inFileName.rfind('.');
+	if (dotPos != std::string::npos) {
+		result.ext = inFileName.substr(dotPos + 1);
+		for (auto& c : result.ext)
+			c = std::tolower(c);
+	}
+
+	// Read a file into a byte vector
+	auto readFile = [](const std::string& path) -> std::vector<uint8_t> {
+		std::ifstream f(path, std::ios::binary | std::ios::ate);
+		if (!f.is_open())
+			return {};
+		auto size = f.tellg();
+		if (size <= 0)
+			return {};
+		std::vector<uint8_t> data(size);
+		f.seekg(0);
+		f.read(reinterpret_cast<char*>(data.data()), size);
+		return data;
+	};
+
+	// Try direct file read
+	result.data = readFile(inFileName);
+	if (!result.data.empty())
+		return result;
+
+	// Try BSA archive scan
+	if (Config.MatchValue("BSATextureScan", "true") && !Config["GameDataPath"].empty()) {
+		std::string texFile = inFileName;
+		std::string gdp = Config["GameDataPath"];
+		if (!gdp.empty()) {
+			auto pos = texFile.find(gdp);
+			if (pos == 0)
+				texFile = texFile.substr(gdp.size());
+		}
+		// Normalize backslashes to forward slashes
+		for (auto& c : texFile)
+			if (c == '\\') c = '/';
+
+		for (FSArchiveFile* archive : FSManager::archiveList()) {
+			if (archive && archive->hasFile(texFile)) {
+				wxMemoryBuffer outData;
+				archive->fileContents(texFile, outData);
+				if (!outData.IsEmpty()) {
+					result.data.resize(outData.GetDataLen());
+					memcpy(result.data.data(), outData.GetData(), outData.GetDataLen());
+					return result;
+				}
+			}
+		}
+	}
+
+	return result;
+}
+
+void ResourceLoader::PrefetchTexturesParallel(const std::vector<std::string>& fileNames) {
+	for (auto& name : fileNames) {
+		// Skip if already prefetched
+		{
+			std::lock_guard<std::mutex> lock(s_prefetchMutex);
+			if (s_prefetchCache.find(name) != s_prefetchCache.end())
+				continue;
+		}
+
+		RawTextureData data = ReadTextureFileData(name);
+		if (!data.data.empty()) {
+			std::lock_guard<std::mutex> lock(s_prefetchMutex);
+			s_prefetchCache[name] = std::move(data);
+		}
+	}
+}
 
 GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap, bool reloadTextures) {
 	auto ti = textures.find(inFileName);
@@ -39,6 +120,36 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 	// Get existing index to overwrite texture data for, otherwise generate new index later
 	if (reloadTextures && ti != textures.end())
 		textureID = ti->second;
+
+	// Check prefetch cache first (populated by background threads)
+	RawTextureData prefetched;
+	{
+		std::lock_guard<std::mutex> lock(s_prefetchMutex);
+		auto pi = s_prefetchCache.find(inFileName);
+		if (pi != s_prefetchCache.end()) {
+			prefetched = std::move(pi->second);
+			s_prefetchCache.erase(pi);
+		}
+	}
+
+	if (!prefetched.data.empty()) {
+		// Data already in memory — just do the fast GL upload
+		if (prefetched.ext == "dds" || prefetched.ext == "ktx")
+			textureID = GLI_load_texture_from_memory((char*)prefetched.data.data(), prefetched.data.size(), textureID);
+
+		if (!textureID && isCubeMap)
+			textureID = SOIL_load_OGL_single_cubemap_from_memory(prefetched.data.data(), prefetched.data.size(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, textureID, SOIL_FLAG_GL_MIPMAPS);
+
+		if (!textureID)
+			textureID = SOIL_load_OGL_texture_from_memory(prefetched.data.data(), prefetched.data.size(), SOIL_LOAD_AUTO, textureID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+
+		if (textureID) {
+			textures[inFileName] = textureID;
+			return textureID;
+		}
+	}
+
+	// No prefetched data — fall back to synchronous load
 
 	// All textures (GLI)
 	if (fileExtStr == "dds" || fileExtStr == "ktx")

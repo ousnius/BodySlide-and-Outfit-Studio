@@ -7,8 +7,10 @@ See the included LICENSE file
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "../utils/StringStuff.h"
 
@@ -30,6 +32,11 @@ public:
 	// tracks the resulting GL texture identifier so subsequent access to the same texture does not result
 	// in a new load.
 	GLuint LoadTexture(const std::string& fileName, bool isCubeMap = false, bool reloadTextures = false);
+
+	// Pre-read multiple texture files in parallel using std::async.
+	// Thread-safe, no GL context needed. Can be called before any ResourceLoader instance exists.
+	// LoadTexture will consume pre-read data when available, skipping file I/O.
+	static void PrefetchTexturesParallel(const std::vector<std::string>& fileNames);
 
 	// The following functions manage non-file-sourced texture ids.  This facilitates named textures generated
 	//  within the program either for temporary use (generate/delete) or persistent use
@@ -72,6 +79,14 @@ private:
 	GLuint GLI_load_texture(const std::string& fileName, GLuint textureID = 0);
 	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID = 0);
 
+	// Read raw file data for a texture, resolving through direct path and BSA as needed.
+	// Uses only globals (Config, FSManager) — no instance state. Thread-safe.
+	struct RawTextureData {
+		std::vector<uint8_t> data;
+		std::string ext;
+	};
+	static RawTextureData ReadTextureFileData(const std::string& fileName);
+
 	// If N3983 gets accepted into a future C++ standard then
 	// we wouldn't have to explicitly define our own hash here.
 	typedef std::tuple<std::vector<std::string>, std::string, std::string> MaterialKey;
@@ -85,6 +100,11 @@ private:
 
 	TextureCache textures;
 	MaterialCache materials;
+
+	// Static pre-fetch cache shared across all instances.
+	// Populated by background threads (PrefetchTexturesParallel), consumed by LoadTexture.
+	static std::mutex s_prefetchMutex;
+	static std::unordered_map<std::string, RawTextureData> s_prefetchCache;
 
 	int64_t cacheTime = 1;
 };

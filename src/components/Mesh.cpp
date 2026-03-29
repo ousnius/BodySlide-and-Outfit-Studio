@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "Mesh.h"
 #include "KDMatcher.hpp"
+#include "../../lib/meshoptimizer/src/meshoptimizer.h"
 
 using namespace nifly;
 
@@ -166,6 +167,7 @@ void Mesh::CreateBuffers() {
 		renderTris = std::make_unique<Triangle[]>(nTris);
 		for (int i = 0; i < nTris; ++i)
 			renderTris[i] = tris[i];
+		OptimizeRenderIndicesForVertexCache();
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nTris * sizeof(Triangle), renderTris.get(), GL_DYNAMIC_DRAW);
@@ -179,6 +181,54 @@ void Mesh::CreateBuffers() {
 
 	glBindVertexArray(0);
 	genBuffers = true;
+}
+
+void Mesh::OptimizeRenderIndicesForVertexCache() {
+	if (!renderTris || nTris <= 1 || nVerts <= 0)
+		return;
+
+	auto OptimizeRange = [&](uint32_t startTri, uint32_t triCount) {
+		if (triCount <= 1 || startTri >= static_cast<uint32_t>(nTris))
+			return;
+		if (startTri + triCount > static_cast<uint32_t>(nTris))
+			triCount = static_cast<uint32_t>(nTris) - startTri;
+		if (triCount <= 1)
+			return;
+
+		const size_t indexCount = static_cast<size_t>(triCount) * 3;
+		std::vector<unsigned int> source(indexCount);
+		std::vector<unsigned int> optimized(indexCount);
+
+		for (uint32_t i = 0; i < triCount; ++i) {
+			const auto& tri = renderTris[startTri + i];
+			source[i * 3 + 0] = tri.p1;
+			source[i * 3 + 1] = tri.p2;
+			source[i * 3 + 2] = tri.p3;
+		}
+
+		meshopt_optimizeVertexCache(optimized.data(), source.data(), indexCount, static_cast<size_t>(nVerts));
+
+		for (uint32_t i = 0; i < triCount; ++i) {
+			auto& tri = renderTris[startTri + i];
+			tri.p1 = static_cast<uint16_t>(optimized[i * 3 + 0]);
+			tri.p2 = static_cast<uint16_t>(optimized[i * 3 + 1]);
+			tri.p3 = static_cast<uint16_t>(optimized[i * 3 + 2]);
+		}
+	};
+
+	// Preserve draw-range boundaries: optimize each submesh independently.
+	if (!subMeshes.empty()) {
+		for (auto& subMesh : subMeshes)
+			OptimizeRange(subMesh.first, subMesh.second);
+
+		const auto& lastSubMesh = subMeshes.back();
+		const uint32_t usedTriCount = lastSubMesh.first + lastSubMesh.second;
+		if (usedTriCount < static_cast<uint32_t>(nTris))
+			OptimizeRange(usedTriCount, static_cast<uint32_t>(nTris) - usedTriCount);
+	}
+	else {
+		OptimizeRange(0, static_cast<uint32_t>(nTris));
+	}
 }
 
 void Mesh::UpdateBuffers() {
