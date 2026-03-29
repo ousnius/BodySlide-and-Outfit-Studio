@@ -407,7 +407,8 @@ int Mesh::FindAdjacentBalancedPairs(int pt, int pairs[]) const {
 		float bestDot = 1;
 		int bestInd = 0;
 		for (int i = 0; i < c; ++i)
-			if (!donePt[i] && !donePt[matchInd[i]] && matchDot[i] < bestDot) {
+			// Avoid pairing a point with itself: require matchInd[i] != i
+			if (!donePt[i] && matchInd[i] != i && !donePt[matchInd[i]] && matchDot[i] < bestDot) {
 				bestDot = matchDot[i];
 				bestInd = i;
 				gotOne = true;
