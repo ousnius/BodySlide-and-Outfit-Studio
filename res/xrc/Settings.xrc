@@ -258,6 +258,38 @@
 								<option>1</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
+								<object class="wxStaticText" name="lbSingleInstanceBehavior">
+									<size>100,-1</size>
+									<label>Single Instance</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>2</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxChoice" name="choiceSingleInstanceBehavior">
+									<tooltip>Controls behavior when opening files and another instance is already running.</tooltip>
+									<selection>0</selection>
+									<content>
+										<item translate="1">Ask (Message Box)</item>
+										<item translate="1">Open in Existing</item>
+										<item translate="1">Open in New</item>
+									</content>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
 								<object class="wxStaticText" name="lbLanguage">
 									<size>100,-1</size>
 									<label>Language</label>

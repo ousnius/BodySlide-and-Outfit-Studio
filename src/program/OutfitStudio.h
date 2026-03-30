@@ -46,6 +46,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/treectrl.h>
 #include <wx/wizard.h>
 #include <wx/xrc/xmlres.h>
+#include <wx/snglinst.h>
+#include <wx/ipc.h>
 #ifdef _WINDOWS
 #include <wx/msw/registry.h>
 #endif
@@ -808,6 +810,7 @@ private:
 
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
+												   {wxCMD_LINE_OPTION, "single", "single-instance", "Force single instance behavior (yes/no)", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE},
 												   wxCMD_LINE_DESC_END};
 
@@ -848,6 +851,18 @@ private:
 
 	wxArrayString cmdFiles;
 	wxString cmdProject;
+	int cmdForceSingleInstanceBehavior = -1;  // -1 = not set, 0 = no (force new), 1 = yes (force existing)
+
+	// DDE uses a service name, TCP uses a port number
+#if defined(__WINDOWS__) && wxUSE_DDE_FOR_IPC
+	const wxString OS_IPC_SERVICE = "OutfitStudioIPC";
+#else
+	const wxString OS_IPC_SERVICE = "54318";
+#endif
+
+	// Single instance checker and IPC server
+	wxSingleInstanceChecker* singleChecker = nullptr;
+	wxServer* ipcServer = nullptr;
 };
 
 struct ProjectHistoryEntry {
@@ -875,6 +890,8 @@ class OutfitStudioFrame : public wxFrame {
 public:
 	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
 	~OutfitStudioFrame() {}
+
+	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
 
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;

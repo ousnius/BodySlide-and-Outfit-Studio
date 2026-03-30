@@ -38,6 +38,45 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace nifly;
 
+// IPC connection handler for Outfit Studio single-instance checking
+class OutfitStudioIPCConnection : public wxConnection {
+public:
+	OutfitStudioIPCConnection() {}
+
+	virtual bool OnExec(const wxString& WXUNUSED(topic), const wxString& data) override {
+		// data is expected to be newline-separated file paths
+		wxArrayString files;
+		wxStringTokenizer tokenizer(data, "\n");
+		while (tokenizer.HasMoreTokens()) {
+			wxString token = tokenizer.GetNextToken().Trim();
+			if (!token.IsEmpty())
+				files.Add(token);
+		}
+
+		OutfitStudio* app = dynamic_cast<OutfitStudio*>(wxTheApp);
+		if (!files.IsEmpty() && app && app->GetTopWindow()) {
+			OutfitStudioFrame* frame = dynamic_cast<OutfitStudioFrame*>(app->GetTopWindow());
+			if (frame) {
+				// Use wxCallAfter to call OpenFiles on the main GUI thread
+				wxTheApp->CallAfter([frame, files]() {
+					frame->LoadFiles(files);
+				});
+				return true;
+			}
+		}
+
+		return false;
+	}
+};
+
+class OutfitStudioIPCServer : public wxServer {
+public:
+	virtual wxConnectionBase* OnAcceptConnection(const wxString& WXUNUSED(topic)) override {
+		return new OutfitStudioIPCConnection();
+	}
+};
+
+
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
@@ -340,10 +379,73 @@ std::string GetProjectPath() {
 	return res.empty() ? Config["AppDir"] : res;
 }
 
+// Load files into the current project
+void OutfitStudioFrame::LoadFiles(const wxArrayString& files, const wxString& projectName) {
+	for (auto& f : files) {
+		wxFileName loadFile(f);
+		if (loadFile.FileExists()) {
+			std::string fileName{loadFile.GetFullPath().ToUTF8()};
+			wxString fileExt = loadFile.GetExt().MakeLower();
+			if (fileExt == "osp") {
+				std::string loadProjectName{projectName.ToUTF8()};
+				LoadProject(fileName, loadProjectName);
+				// only open first project file
+				break;
+			}
+			else if (fileExt == "nif") {
+				StartProgress(_("Adding NIF file..."));
+				UpdateProgress(1, _("Adding NIF file..."));
+				project->ImportNIF(fileName, false);
+				project->SetTextures();
+
+				UpdateProgress(60, _("Refreshing GUI..."));
+				RefreshGUIFromProj();
+
+				EndProgress();
+			}
+			else if (fileExt == "obj") {
+				StartProgress("Adding OBJ file...");
+				UpdateProgress(1, _("Adding OBJ file..."));
+				project->ImportOBJ(fileName);
+				project->SetTextures();
+
+				UpdateProgress(60, _("Refreshing GUI..."));
+				RefreshGUIFromProj();
+
+				EndProgress();
+			}
+			else if (fileExt == "fbx") {
+#ifdef USE_FBXSDK
+				StartProgress(_("Adding FBX file..."));
+				UpdateProgress(1, _("Adding FBX file..."));
+				project->ImportFBX(fileName);
+				project->SetTextures();
+
+				UpdateProgress(60, _("Refreshing GUI..."));
+				RefreshGUIFromProj();
+
+				EndProgress();
+#endif
+			}
+		}
+	}
+}
 
 OutfitStudio::~OutfitStudio() {
-	delete locale;
-	locale = nullptr;
+	if (ipcServer) {
+		delete ipcServer;
+		ipcServer = nullptr;
+	}
+
+	if (singleChecker) {
+		delete singleChecker;
+		singleChecker = nullptr;
+	}
+
+	if (locale) {
+		delete locale;
+		locale = nullptr;
+	}
 
 	FSManager::del();
 }
@@ -408,12 +510,112 @@ bool OutfitStudio::OnInit() {
 	int h = OutfitStudioConfig.GetIntValue("OutfitStudioFrame.height");
 	std::string maximized = OutfitStudioConfig["OutfitStudioFrame.maximized"];
 
+	// create single instance checker
+	singleChecker = new wxSingleInstanceChecker(wxString("OutfitStudioInstance"));
+
+	// If files were passed on the command line, try single-instance IPC via wxWidgets
+	if (!cmdFiles.IsEmpty()) {
+		if (singleChecker->IsAnotherRunning()) {
+			int behavior = OutfitStudioConfig.GetIntValue("SingleInstanceBehavior", 0);
+
+			// Override behavior with command line argument if provided
+			if (cmdForceSingleInstanceBehavior >= 0) {
+				// cmdForceSingleInstanceBehavior: 0 = force new, 1 = force existing
+				behavior = cmdForceSingleInstanceBehavior == 1 ? 1 : 2;  // 1 = Open in Existing, 2 = Open in New
+			}
+
+			// 0 = Ask (Message Box), 1 = Open in Existing, 2 = Open in New
+			int answer = wxYES;
+			if (behavior == 0) {
+				wxDialog dlg(nullptr, wxID_ANY, _("Open in existing instance?"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE);
+				wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
+
+				wxBoxSizer* msgSizer = new wxBoxSizer(wxHORIZONTAL);
+				msgSizer->Add(new wxStaticBitmap(&dlg, wxID_ANY, wxArtProvider::GetBitmap(wxART_QUESTION, wxART_MESSAGE_BOX)), 0, wxALL | wxALIGN_CENTER_VERTICAL, 10);
+				msgSizer->Add(new wxStaticText(&dlg, wxID_ANY, _("An instance of Outfit Studio is already running. Open file(s) in the existing instance?")), 1, wxALL | wxALIGN_CENTER_VERTICAL, 10);
+				mainSizer->Add(msgSizer, 1, wxEXPAND);
+
+				wxBoxSizer* btnSizer = new wxBoxSizer(wxHORIZONTAL);
+				wxButton* btnYes = new wxButton(&dlg, wxID_YES, _("Yes"));
+				wxButton* btnYesAlways = new wxButton(&dlg, wxID_YES + 100, _("Yes (always)"));
+				wxButton* btnNo = new wxButton(&dlg, wxID_NO, _("No"));
+				wxButton* btnNoNever = new wxButton(&dlg, wxID_NO + 100, _("No (never)"));
+				btnSizer->Add(btnYes, 0, wxALL, 5);
+				btnSizer->Add(btnYesAlways, 0, wxALL, 5);
+				btnSizer->Add(btnNo, 0, wxALL, 5);
+				btnSizer->Add(btnNoNever, 0, wxALL, 5);
+				mainSizer->Add(btnSizer, 0, wxALIGN_CENTER | wxBOTTOM, 5);
+
+				btnYes->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) { dlg.EndModal(wxID_YES); });
+				btnYesAlways->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) { dlg.EndModal(wxID_YES + 100); });
+				btnNo->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) { dlg.EndModal(wxID_NO); });
+				btnNoNever->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) { dlg.EndModal(wxID_NO + 100); });
+
+				dlg.SetSizerAndFit(mainSizer);
+				dlg.CenterOnScreen();
+
+				int result = dlg.ShowModal();
+				if (result == wxID_YES || result == wxID_YES + 100) {
+					answer = wxYES;
+					if (result == wxID_YES + 100) {
+						OutfitStudioConfig.SetValue("SingleInstanceBehavior", 1);
+						OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
+					}
+				}
+				else {
+					answer = wxNO;
+					if (result == wxID_NO + 100) {
+						OutfitStudioConfig.SetValue("SingleInstanceBehavior", 2);
+						OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
+					}
+				}
+			}
+			else if (behavior == 1) {
+				answer = wxYES;  // Open in existing
+			}
+			else if (behavior == 2) {
+				answer = wxNO;   // Open in new
+			}
+
+			if (answer == wxYES) {
+				// Build newline-separated list
+				wxString concat;
+				for (size_t i = 0; i < cmdFiles.GetCount(); ++i) {
+					if (i)
+						concat.Append("\n");
+					concat.Append(cmdFiles[i]);
+				}
+
+				wxClient client;
+				// Try to connect to the server
+				wxConnectionBase* conn = client.MakeConnection("localhost", OS_IPC_SERVICE, OS_IPC_SERVICE);
+				if (conn) {
+					conn->Execute(concat);
+					conn->Disconnect();
+				}
+
+				// exit this new instance
+				return false;
+			}
+		}
+		else {
+			// we'll be the server; create it after frame is created
+		}
+	}
+
 	frame = new OutfitStudioFrame(wxPoint(x, y), wxSize(w, h));
 	if (maximized == "true")
 		frame->Maximize();
 
 	frame->Show();
 	SetTopWindow(frame);
+
+	// If we are the primary instance create IPC server so subsequent launches can connect
+	ipcServer = new OutfitStudioIPCServer();
+	if (!ipcServer->Create(OS_IPC_SERVICE)) {
+		delete ipcServer;
+		ipcServer = nullptr;
+	}
 
 	InitArchives();
 
@@ -437,52 +639,8 @@ bool OutfitStudio::OnInit() {
 				wxICON_WARNING);
 	}
 
-	for (auto& file : cmdFiles) {
-		wxFileName loadFile(file);
-		if (loadFile.FileExists()) {
-			std::string fileName{loadFile.GetFullPath().ToUTF8()};
-			wxString fileExt = loadFile.GetExt().MakeLower();
-			if (fileExt == "osp") {
-				std::string projectName{cmdProject.ToUTF8()};
-				frame->LoadProject(fileName, projectName);
-				break;
-			}
-			else if (fileExt == "nif") {
-				frame->StartProgress(_("Adding NIF file..."));
-				frame->UpdateProgress(1, _("Adding NIF file..."));
-				frame->project->ImportNIF(fileName, false);
-				frame->project->SetTextures();
-
-				frame->UpdateProgress(60, _("Refreshing GUI..."));
-				frame->RefreshGUIFromProj();
-
-				frame->EndProgress();
-			}
-			else if (fileExt == "obj") {
-				frame->StartProgress("Adding OBJ file...");
-				frame->UpdateProgress(1, _("Adding OBJ file..."));
-				frame->project->ImportOBJ(fileName);
-				frame->project->SetTextures();
-
-				frame->UpdateProgress(60, _("Refreshing GUI..."));
-				frame->RefreshGUIFromProj();
-
-				frame->EndProgress();
-			}
-			else if (fileExt == "fbx") {
-#ifdef USE_FBXSDK
-				frame->StartProgress(_("Adding FBX file..."));
-				frame->UpdateProgress(1, _("Adding FBX file..."));
-				frame->project->ImportFBX(fileName);
-				frame->project->SetTextures();
-
-				frame->UpdateProgress(60, _("Refreshing GUI..."));
-				frame->RefreshGUIFromProj();
-
-				frame->EndProgress();
-#endif
-			}
-		}
+	if (!cmdFiles.IsEmpty()) {
+		frame->LoadFiles(cmdFiles, cmdProject);
 	}
 
 	Bind(wxEVT_CHAR_HOOK, &OutfitStudio::CharHook, this);
@@ -499,6 +657,18 @@ void OutfitStudio::OnInitCmdLine(wxCmdLineParser& parser) {
 
 bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& parser) {
 	parser.Found("proj", &cmdProject);
+
+	wxString singleInstanceArg;
+	if (parser.Found("single", &singleInstanceArg)) {
+		wxString lowerArg = singleInstanceArg.Lower();
+		if (lowerArg == "yes") {
+			cmdForceSingleInstanceBehavior = 1;  // Force open in existing
+		}
+		else if (lowerArg == "no") {
+			cmdForceSingleInstanceBehavior = 0;  // Force open in new
+		}
+		// Otherwise leave it as -1 (not set)
+	}
 
 	for (size_t i = 0; i < parser.GetParamCount(); i++)
 		cmdFiles.Add(parser.GetParam(i));
@@ -1354,6 +1524,16 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 
 	OutfitStudioConfig.AppendValueArray("ProjectHistory", "Project", phArrayEntries);
 
+	// Reload SingleInstanceBehavior from disk before saving, as it may have been
+	// changed by another process via the "Yes (always)" / "No (never)" dialog.
+	{
+		ConfigurationManager diskConfig;
+		std::string configPath = Config["AppDir"] + "/OutfitStudio.xml";
+		diskConfig.LoadConfig(configPath, "OutfitStudioConfig");
+		if (diskConfig.Exists("SingleInstanceBehavior"))
+			OutfitStudioConfig.SetValue("SingleInstanceBehavior", diskConfig.GetIntValue("SingleInstanceBehavior"));
+	}
+
 	int ret = OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
 	if (ret)
 		wxLogWarning("Failed to save configuration (%d)!", ret);
@@ -1987,6 +2167,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
 		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
 
+		wxChoice* choiceSingleInstanceBehavior = XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice);
+		choiceSingleInstanceBehavior->SetSelection(OutfitStudioConfig.GetIntValue("SingleInstanceBehavior", 0));
+
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
 		for (size_t i = 0; i < SupportedLangs.size(); i++)
 			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
@@ -2073,6 +2256,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
 			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
 			Config.SetBoolValue("Input/MaskHistory", cbMaskHistory->IsChecked());
+
+			OutfitStudioConfig.SetValue("SingleInstanceBehavior", choiceSingleInstanceBehavior->GetSelection());
+			OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
 
 			int oldLang = Config.GetIntValue("Language");
 			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
