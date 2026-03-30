@@ -16,12 +16,21 @@ class PreviewCanvas;
 
 extern ConfigurationManager Config;
 
+struct PreviewProjectEntry {
+	std::string projectFile;
+	std::string setName;
+};
+
 
 class PreviewWindow : public wxFrame {
 	BodySlideApp* app = nullptr;
 	PreviewCanvas* canvas = nullptr;
 	std::unique_ptr<wxGLContext> context;
 	wxButton* optButton = nullptr;
+	wxStaticText* projectLabel = nullptr;
+	wxChoice* projectChoice = nullptr;
+	wxStaticText* presetLabel = nullptr;
+	wxChoice* presetChoice = nullptr;
 
 	NormalsGenDialog* normalsGenDlg = nullptr;
 	// empty normal gen layers vectory to temporarily occupy the reference until assigned by bodyslide.
@@ -33,6 +42,10 @@ class PreviewWindow : public wxFrame {
 	GLSurface gls;
 	std::unordered_map<std::string, GLMaterial*> shapeMaterials;
 	std::string baseDataPath;
+	std::vector<std::string> extraNifPaths;
+	std::vector<PreviewProjectEntry> projectEntries;
+	bool loadAllProjects = false;
+	bool multiProjectMode = false;
 	int weight = 100;
 
 	wxDECLARE_EVENT_TABLE();
@@ -46,6 +59,8 @@ public:
 	void OnWeightSlider(wxScrollEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
+	void OnProjectChoice(wxCommandEvent& event);
+	void OnPresetChoice(wxCommandEvent& event);
 
 	void ShowNormalGenWindow(wxCommandEvent& event);
 
@@ -65,11 +80,16 @@ public:
 
 	void SetBaseDataPath(const std::string& path) { baseDataPath = path; }
 
+	void SetExtraNifPaths(const std::vector<std::string>& paths) { extraNifPaths = paths; }
+	const std::vector<std::string>& GetExtraNifPaths() const { return extraNifPaths; }
+	void SetProjectData(const std::vector<PreviewProjectEntry>& entries, bool loadAll = false);
 	void SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers);
+	void LoadNifFiles(const std::vector<std::string>& nifFilePaths);
+	void LoadProjects(const std::vector<PreviewProjectEntry>& entries);
 
 	Mesh* GetMesh(const std::string& shapeName);
 	void AddMeshFromNif(nifly::NifFile* nif, char* shapeName = nullptr);
-	void RefreshMeshFromNif(nifly::NifFile* nif, char* shapeName = nullptr);
+	void RefreshMeshFromNif(const std::vector<nifly::NifFile*>& nifs);
 	void AddNifShapeTextures(nifly::NifFile* fromNif, const std::string& shapeName);
 
 	void UpdateMeshes(const std::string& shapeName, std::vector<nifly::Vector3>* verts, std::vector<nifly::Vector2>* uvs = nullptr) {

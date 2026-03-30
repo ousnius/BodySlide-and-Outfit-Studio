@@ -100,9 +100,6 @@ wxEND_EVENT_TABLE()
 wxIMPLEMENT_APP(BodySlideApp);
 
 BodySlideApp::~BodySlideApp() {
-	delete previewBaseNif;
-	previewBaseNif = nullptr;
-
 	delete locale;
 	locale = nullptr;
 
@@ -143,7 +140,6 @@ bool BodySlideApp::OnInit() {
 
 	preview = nullptr;
 	sliderView = nullptr;
-	previewBaseNif = nullptr;
 
 	Bind(wxEVT_CHAR_HOOK, &BodySlideApp::CharHook, this);
 
@@ -169,6 +165,15 @@ bool BodySlideApp::OnInit() {
 		default: gameName.Append("Invalid");
 	}
 	wxLogMessage(gameName);
+
+	// Handle preview mode - open nif files directly without main frame
+	if (cmdPreviewMode && !cmdPreviewNifs.empty()) {
+		wxLogMessage("BodySlide preview mode initialized.");
+		ShowPreview();
+		if (preview)
+			LoadPreviewNifs(cmdPreviewNifs);
+		return true;
+	}
 
 	int x = BodySlideConfig.GetIntValue("BodySlideFrame.x");
 	int y = BodySlideConfig.GetIntValue("BodySlideFrame.y");
@@ -251,6 +256,20 @@ bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
 	cmdPreset = preset.ToUTF8().data();
 
 	cmdTri = parser.Found("tri");
+
+	wxString previewFiles;
+	if (parser.Found("preview", &previewFiles)) {
+		cmdPreviewMode = true;
+		wxStringTokenizer previewTokenizer(previewFiles, ",;|");
+		while (previewTokenizer.HasMoreTokens()) {
+			wxString token = previewTokenizer.GetNextToken().Trim();
+			if (!token.IsEmpty()) {
+				std::string filePath = token.ToUTF8().data();
+				cmdPreviewNifs.push_back(filePath);
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -505,13 +524,15 @@ void BodySlideApp::CharHook(wxKeyEvent& event) {
 
 int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 	wxLogMessage("Creating sliders...");
-	dataSets.Clear();
 	if (outfitNameSource.find(outfit) == outfitNameSource.end())
 		return 1;
 
 	SliderSetFile sliderDoc;
 	sliderDoc.Open(outfitNameSource[outfit]);
 	if (!sliderDoc.fail()) {
+		projects.clear();
+		projects.push_back(std::make_unique<ProjectData>());
+		auto& activeSet = GetActiveSet();
 		activeSet.Clear();
 		sliderManager.ClearSliders();
 		if (!sliderDoc.GetSet(outfit, activeSet)) {
@@ -525,6 +546,36 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 	else
 		return 2;
 
+	return 0;
+}
+
+int BodySlideApp::AddProjectSliders(const std::string& projectFile, const std::string& setName) {
+	wxLogMessage("Adding project sliders from '%s' set '%s'...", projectFile, setName);
+
+	if (projects.empty()) {
+		// First project: clear shared data managers
+		sliderManager.ClearSliders();
+		sliderManager.ClearPresets();
+		multiProjectMode = true;
+	}
+
+	auto pp = std::make_unique<ProjectData>();
+
+	SliderSetFile sliderDoc;
+	sliderDoc.Open(projectFile);
+	if (sliderDoc.fail())
+		return 2;
+
+	if (sliderDoc.GetSet(setName, pp->sliderSet))
+		return 3;
+
+	pp->sliderSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
+	pp->setName = setName;
+
+	// Add sliders from this set (additive)
+	sliderManager.AddSlidersInSet(pp->sliderSet);
+
+	projects.push_back(std::move(pp));
 	return 0;
 }
 
@@ -545,7 +596,6 @@ void BodySlideApp::RefreshOutfitList() {
 
 int BodySlideApp::LoadSliderSets() {
 	wxLogMessage("Loading all slider sets...");
-	dataSets.Clear();
 	outfitNameSource.clear();
 	outfitNameOrder.clear();
 	outfitHasZaps.clear();
@@ -806,6 +856,10 @@ void BodySlideApp::PopulateOutfitList(const std::string& select) {
 }
 
 void BodySlideApp::DisplayActiveSet() {
+	if (projects.empty())
+		return;
+
+	auto& activeSet = GetActiveSet();
 	if (activeSet.GenWeights())
 		sliderView->ShowLowColumn(true);
 	else
@@ -893,7 +947,11 @@ void BodySlideApp::GetBuildSelection(BuildSelectionFile& file, BuildSelection& b
 }
 
 void BodySlideApp::UpdateConflictManager() {
+	if (projects.empty())
+		return;
+
 	// Populate Conflict UI
+	auto& activeSet = GetActiveSet();
 	auto conflictCheckBox = (wxCheckBox*)sliderView->FindWindowByName("cbIsOutfitChoice");
 	auto conflictLabel = (wxStaticText*)sliderView->FindWindowByName("conflictLabel");
 	auto conflictInfo = (wxStaticText*)sliderView->FindWindowByName("conflictInfo");
@@ -932,6 +990,10 @@ void BodySlideApp::UpdateConflictManager() {
 }
 
 void BodySlideApp::SetDefaultBuildSelection() {
+	if (projects.empty())
+		return;
+
+	auto& activeSet = GetActiveSet();
 	BuildSelectionFile buildSelFile;
 	BuildSelection buildSelection;
 	GetBuildSelection(buildSelFile, buildSelection);
@@ -956,6 +1018,10 @@ void BodySlideApp::SetDefaultBuildSelection() {
 }
 
 bool BodySlideApp::UpdateZapChoices() {
+	if (projects.empty())
+		return false;
+
+	auto& activeSet = GetActiveSet();
 	BuildSelectionFile buildSelFile;
 	BuildSelection buildSelection;
 	GetBuildSelection(buildSelFile, buildSelection);
@@ -993,11 +1059,14 @@ bool BodySlideApp::UpdateZapChoices() {
 }
 
 void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
+	if (projects.empty())
+		return;
+
 	BuildSelectionFile buildSelFile;
 	BuildSelection buildSelection;
 	GetBuildSelection(buildSelFile, buildSelection);
 
-	std::string project = activeSet.GetName();
+	std::string project = GetActiveSet().GetName();
 
 	buildSelection.SetZapChoice(project, zap, choice);
 	buildSelFile.UpdateZapChoices(buildSelection);
@@ -1032,7 +1101,7 @@ void BodySlideApp::LaunchOutfitStudio(const wxString& args) {
 }
 
 void BodySlideApp::ApplySliders(
-	const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<uint16_t>& ZapIdx, std::vector<Vector2>* uvs) {
+	const std::string& targetShape, std::vector<Slider>& sliderSet, DiffDataSets& dataSets, std::vector<Vector3>& verts, std::vector<uint16_t>& ZapIdx, std::vector<Vector2>* uvs) {
 	for (auto& slider : sliderSet) {
 		float val = slider.value;
 		if (slider.zap && !slider.uv) {
@@ -1228,68 +1297,167 @@ void BodySlideApp::ShowPreview() {
 	preview = new PreviewWindow(wxPoint(x, y), wxSize(w, h), this);
 	if (maximized == "true")
 		preview->Maximize();
+
+	// Set base data path for texture loading
+	std::string baseGamePath = Config["GameDataPath"];
+	preview->SetBaseDataPath(baseGamePath);
 }
 
-void BodySlideApp::InitPreview() {
+void BodySlideApp::LoadPreviewNifs(const std::vector<std::string>& filePaths) {
 	if (!preview)
 		return;
 
-	wxLogMessage("Loading preview meshes...");
-	std::string inputFileName = activeSet.GetInputFileName();
-	std::string inputSetName = activeSet.GetName();
-	bool freshLoad = false;
+	// Parse entries: split each by '?' to get file path and optional set names
+	struct ParsedEntry {
+		std::string filePath;
+		std::vector<std::string> setNames;
+		bool isOsp = false;
+	};
 
-	if (previewBaseNif && (previewBaseName != inputFileName || previewSetName != inputSetName || sliderManager.NeedReload())) {
-		delete previewBaseNif;
-		previewBaseNif = nullptr;
+	std::vector<ParsedEntry> entries;
+	bool hasExplicitSets = false;
+
+	for (auto& rawPath : filePaths) {
+		ParsedEntry entry;
+
+		// Split by '?'
+		size_t qPos = rawPath.find('?');
+		if (qPos != std::string::npos) {
+			entry.filePath = rawPath.substr(0, qPos);
+			std::string remainder = rawPath.substr(qPos + 1);
+			// Split set names by '?'
+			size_t pos = 0;
+			while (pos < remainder.size()) {
+				size_t nextQ = remainder.find('?', pos);
+				std::string setName;
+				if (nextQ != std::string::npos) {
+					setName = remainder.substr(pos, nextQ - pos);
+					pos = nextQ + 1;
+				}
+				else {
+					setName = remainder.substr(pos);
+					pos = remainder.size();
+				}
+				if (!setName.empty())
+					entry.setNames.push_back(setName);
+			}
+			hasExplicitSets = true;
+		}
+		else {
+			entry.filePath = rawPath;
+		}
+
+		// Detect OSP extension
+		size_t dotPos = entry.filePath.find_last_of('.');
+		if (dotPos != std::string::npos) {
+			std::string ext = entry.filePath.substr(dotPos + 1);
+			std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+			entry.isOsp = (ext == "osp");
+		}
+
+		entries.push_back(entry);
 	}
 
-	if (!previewBaseNif) {
-		previewBaseNif = new NifFile();
-		PreviewMod.Clear();
+	// Collect non-OSP file paths for extra NIF loading alongside projects
+	std::vector<std::string> nifPaths;
+	for (auto& e : entries) {
+		if (!e.isOsp)
+			nifPaths.push_back(e.filePath);
+	}
 
-		std::fstream file;
-		PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
-		if (previewBaseNif->Load(file))
+	// Multi-project mode: explicit set names specified with '?'
+	if (hasExplicitSets) {
+		std::vector<PreviewProjectEntry> projEntries;
+
+		for (auto& e : entries) {
+			if (e.isOsp) {
+				if (!e.setNames.empty()) {
+					for (auto& setName : e.setNames)
+						projEntries.push_back({e.filePath, setName});
+				}
+				else {
+					// OSP without specific sets: ignore when other files have explicit sets
+					wxLogWarning("Ignoring OSP file without specified set names: %s", e.filePath);
+				}
+			}
+		}
+
+		if (!projEntries.empty()) {
+			wxLogMessage("Loading %zu combined project(s) in preview mode...", projEntries.size());
+			if (!nifPaths.empty())
+				preview->SetExtraNifPaths(nifPaths);
+			preview->SetProjectData(projEntries, true);
 			return;
-
-		PreviewMod.CopyFrom(*previewBaseNif);
-
-		freshLoad = true;
-		sliderManager.FlagReload(false);
+		}
 	}
 
-	previewBaseName = std::move(inputFileName);
-	previewSetName = std::move(inputSetName);
+	// OSP files without explicit sets: show dropdown with all sets from all OSP files
+	{
+		std::vector<PreviewProjectEntry> projEntries;
+		bool anyOsp = false;
 
-	preview->ShowWeight(activeSet.GenWeights());
+		for (auto& e : entries) {
+			if (!e.isOsp)
+				continue;
 
-	activeSet.LoadSetDiffData(dataSets);
+			anyOsp = true;
+			SliderSetFile sliderDoc;
+			sliderDoc.Open(e.filePath);
+			if (sliderDoc.fail()) {
+				wxLogError("Failed to load BodySlide project file: %s", e.filePath);
+				continue;
+			}
 
-	bool keepZappedShapes = activeSet.KeepZappedShapes();
+			std::vector<std::string> setNames;
+			sliderDoc.GetSetNamesUnsorted(setNames, false);
+			for (auto& setName : setNames)
+				projEntries.push_back({e.filePath, setName});
+		}
+
+		if (!projEntries.empty()) {
+			wxLogMessage("Loading %zu slider set(s) from %zu OSP file(s)", projEntries.size(), entries.size());
+			if (!nifPaths.empty())
+				preview->SetExtraNifPaths(nifPaths);
+			preview->SetProjectData(projEntries);
+			return;
+		}
+
+		if (anyOsp)
+			return;
+	}
+
+	// Load as regular NIF files
+	std::vector<std::string> paths;
+	for (auto& e : entries)
+		paths.push_back(e.filePath);
+	preview->SetExtraNifPaths(paths);
+}
+
+void BodySlideApp::BuildPreviewMesh(ProjectData* pp, bool freshLoad) {
+	bool keepZappedShapes = pp->sliderSet.KeepZappedShapes();
 
 	std::vector<Vector3> verts;
 	std::vector<Vector2> uvs;
 	std::vector<uint16_t> zapIdx;
-	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+	for (auto it = pp->sliderSet.ShapesBegin(); it != pp->sliderSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
 
-		auto shape = previewBaseNif->FindBlockByName<NiShape>(it->first);
-		if (!previewBaseNif->GetVertsForShape(shape, verts))
+		auto shape = pp->baseNif->FindBlockByName<NiShape>(it->first);
+		if (!pp->baseNif->GetVertsForShape(shape, verts))
 			continue;
 
-		previewBaseNif->GetUvsForShape(shape, uvs);
+		pp->baseNif->GetUvsForShape(shape, uvs);
 
-		ApplySliders(it->second.targetShape, sliderManager.slidersBig, verts, zapIdx, &uvs);
+		ApplySliders(it->second.targetShape, sliderManager.slidersBig, pp->dataSets, verts, zapIdx, &uvs);
 
 		// Zap deleted verts before preview
-		shape = PreviewMod.FindBlockByName<NiShape>(it->first);
+		shape = pp->modNif.FindBlockByName<NiShape>(it->first);
 		if (freshLoad && zapIdx.size() > 0) {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
-			PreviewMod.SetVertsForShape(shape, verts);
-			PreviewMod.SetUvsForShape(shape, uvs);
-			if (PreviewMod.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
-				PreviewMod.DeleteShape(shape);
+			pp->modNif.SetVertsForShape(shape, verts);
+			pp->modNif.SetUvsForShape(shape, uvs);
+			if (pp->modNif.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
+				pp->modNif.DeleteShape(shape);
 		}
 		else if (zapIdx.size() > 0) {
 			// Preview Window has been opened for this shape before, zap the diff verts before applying them to the shape
@@ -1299,26 +1467,116 @@ void BodySlideApp::InitPreview() {
 				verts.erase(verts.begin() + zapIdx[z]);
 				uvs.erase(uvs.begin() + zapIdx[z]);
 			}
-			PreviewMod.SetVertsForShape(shape, verts);
-			PreviewMod.SetUvsForShape(shape, uvs);
+			pp->modNif.SetVertsForShape(shape, verts);
+			pp->modNif.SetUvsForShape(shape, uvs);
 		}
 		else {
 			// No zapping needed - just show all the verts.
-			PreviewMod.SetVertsForShape(shape, verts);
-			PreviewMod.SetUvsForShape(shape, uvs);
+			pp->modNif.SetVertsForShape(shape, verts);
+			pp->modNif.SetUvsForShape(shape, uvs);
 		}
 	}
+}
+
+void BodySlideApp::InitPreview() {
+	if (!preview)
+		return;
+
+	// Multi-project mode
+	if (multiProjectMode) {
+		wxLogMessage("Loading multi-project preview meshes...");
+
+		bool anyGenWeights = false;
+
+		for (auto& pp : projects) {
+			std::string inputFileName = pp->sliderSet.GetInputFileName();
+
+			// Load NIF
+			pp->baseNif = new NifFile();
+			std::fstream file;
+			PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
+			if (pp->baseNif->Load(file)) {
+				wxLogError("Failed to load NIF: %s", inputFileName);
+				delete pp->baseNif;
+				pp->baseNif = nullptr;
+				continue;
+			}
+
+			pp->modNif.CopyFrom(*pp->baseNif);
+
+			if (pp->sliderSet.GenWeights())
+				anyGenWeights = true;
+
+			// Load diff data for this project's set
+			pp->sliderSet.LoadSetDiffData(pp->dataSets);
+
+			BuildPreviewMesh(pp.get(), true);
+
+			// Add meshes from this project
+			preview->AddMeshFromNif(&pp->modNif);
+
+			for (auto& s : pp->modNif.GetShapeNames())
+				preview->AddNifShapeTextures(&pp->modNif, s);
+		}
+
+		preview->ShowWeight(anyGenWeights);
+
+		// Load any extra NIF files on top of project meshes
+		preview->LoadNifFiles(preview->GetExtraNifPaths());
+
+		// Update mesh settings from all sets
+		for (auto& pp : projects)
+			UpdateMeshesFromSet(pp->sliderSet);
+
+		preview->Refresh();
+		return;
+	}
+
+	// Single-project mode
+	if (projects.empty())
+		return;
+
+	wxLogMessage("Loading preview meshes...");
+	auto& activeSet = GetActiveSet();
+	std::string inputFileName = activeSet.GetInputFileName();
+	std::string inputSetName = activeSet.GetName();
+	bool freshLoad = false;
+
+	ProjectData* pp = projects[0].get();
+
+	if (!pp->baseNif || pp->inputFileName != inputFileName || pp->setName != inputSetName || sliderManager.NeedReload()) {
+		delete pp->baseNif;
+		pp->baseNif = new NifFile();
+
+		std::fstream file;
+		PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
+		if (pp->baseNif->Load(file))
+			return;
+
+		pp->modNif.CopyFrom(*pp->baseNif);
+		pp->inputFileName = inputFileName;
+		pp->setName = inputSetName;
+
+		freshLoad = true;
+		sliderManager.FlagReload(false);
+	}
+
+	preview->ShowWeight(pp->sliderSet.GenWeights());
+
+	pp->sliderSet.LoadSetDiffData(pp->dataSets);
+
+	BuildPreviewMesh(pp, freshLoad);
 
 	std::string baseGamePath = Config["GameDataPath"];
-	preview->AddMeshFromNif(&PreviewMod);
+	preview->AddMeshFromNif(&pp->modNif);
 	preview->SetBaseDataPath(baseGamePath);
 
-	UpdateMeshesFromSet();
+	UpdateMeshesFromSet(pp->sliderSet);
 
-	for (auto& s : PreviewMod.GetShapeNames())
-		preview->AddNifShapeTextures(&PreviewMod, s);
+	for (auto& s : pp->modNif.GetShapeNames())
+		preview->AddNifShapeTextures(&pp->modNif, s);
 
-	preview->SetNormalsGenerationLayers(activeSet.GetNormalsGenLayers());
+	preview->SetNormalsGenerationLayers(pp->sliderSet.GetNormalsGenLayers());
 
 	preview->Refresh();
 }
@@ -1327,52 +1585,56 @@ void BodySlideApp::UpdatePreview() {
 	if (!preview)
 		return;
 
-	if (!previewBaseNif)
+	if (projects.empty())
 		return;
 
 	int weight = preview->GetWeight();
 	std::vector<Vector3> verts, vertsLow, vertsHigh;
 	std::vector<Vector2> uvs, uvsLow, uvsHigh;
 	std::vector<uint16_t> zapIdx;
-	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
-		zapIdx.clear();
 
-		auto shape = previewBaseNif->FindBlockByName<NiShape>(it->first);
-		if (!previewBaseNif->GetVertsForShape(shape, verts))
+	for (auto& pp : projects) {
+		if (!pp->baseNif)
 			continue;
 
-		previewBaseNif->GetUvsForShape(shape, uvs);
-		vertsHigh = verts;
-		vertsLow = verts;
-		uvsHigh = uvs;
-		uvsLow = uvs;
+		for (auto it = pp->sliderSet.ShapesBegin(); it != pp->sliderSet.ShapesEnd(); ++it) {
+			zapIdx.clear();
 
-		ApplySliders(it->second.targetShape, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
-		if (activeSet.GenWeights())
-			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
+			auto shape = pp->baseNif->FindBlockByName<NiShape>(it->first);
+			if (!pp->baseNif->GetVertsForShape(shape, verts))
+				continue;
 
-		// Calculate result of weight
-		auto uvsz = uvs.size();
-		for (size_t i = 0; i < verts.size(); i++) {
-			verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
-			if (uvsz > i)
-				uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
-		}
+			pp->baseNif->GetUvsForShape(shape, uvs);
+			vertsHigh = verts;
+			vertsLow = verts;
+			uvsHigh = uvs;
+			uvsLow = uvs;
 
-		// Zap deleted verts before applying to the shape
-		if (zapIdx.size() > 0) {
-			for (int z = zapIdx.size() - 1; z >= 0; z--) {
-				if (zapIdx[z] >= verts.size())
-					continue;
+			ApplySliders(it->second.targetShape, sliderManager.slidersBig, pp->dataSets, vertsHigh, zapIdx, &uvsHigh);
+			if (pp->sliderSet.GenWeights())
+				ApplySliders(it->second.targetShape, sliderManager.slidersSmall, pp->dataSets, vertsLow, zapIdx, &uvsLow);
 
-				verts.erase(verts.begin() + zapIdx[z]);
-				uvs.erase(uvs.begin() + zapIdx[z]);
+			// Calculate result of weight
+			auto uvsz = uvs.size();
+			for (size_t i = 0; i < verts.size(); i++) {
+				verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
+				if (uvsz > i)
+					uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
 			}
-		}
-		preview->UpdateMeshes(it->first, &verts, &uvs);
-	}
 
-	preview->SetNormalsGenerationLayers(activeSet.GetNormalsGenLayers());
+			// Zap deleted verts before applying to the shape
+			if (zapIdx.size() > 0) {
+				for (int z = zapIdx.size() - 1; z >= 0; z--) {
+					if (zapIdx[z] >= verts.size())
+						continue;
+
+					verts.erase(verts.begin() + zapIdx[z]);
+					uvs.erase(uvs.begin() + zapIdx[z]);
+				}
+			}
+			preview->UpdateMeshes(it->first, &verts, &uvs);
+		}
+	}
 
 	preview->Render();
 }
@@ -1383,9 +1645,15 @@ void BodySlideApp::CleanupPreview() {
 
 	preview->Cleanup();
 
-	if (previewBaseNif) {
-		delete previewBaseNif;
-		previewBaseNif = nullptr;
+	if (multiProjectMode) {
+		projects.clear();
+		multiProjectMode = false;
+	}
+	else if (!projects.empty()) {
+		auto* pp = projects[0].get();
+		delete pp->baseNif;
+		pp->baseNif = nullptr;
+		pp->inputFileName.clear();
 	}
 }
 
@@ -1393,34 +1661,109 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	if (!preview)
 		return;
 
-	if (!previewBaseNif)
+	// Multi-project mode
+	if (multiProjectMode) {
+		int weight = preview->GetWeight();
+
+		for (auto& pp : projects) {
+			if (!pp->baseNif)
+				continue;
+
+			pp->modNif.CopyFrom(*pp->baseNif);
+
+			bool keepZappedShapes = pp->sliderSet.KeepZappedShapes();
+
+			std::vector<Vector3> verts, vertsLow, vertsHigh;
+			std::vector<Vector2> uvs, uvsLow, uvsHigh;
+			std::vector<uint16_t> zapIdx;
+			for (auto it = pp->sliderSet.ShapesBegin(); it != pp->sliderSet.ShapesEnd(); ++it) {
+				zapIdx.clear();
+
+				auto shape = pp->baseNif->FindBlockByName<NiShape>(it->first);
+				if (!pp->baseNif->GetVertsForShape(shape, verts))
+					continue;
+
+				pp->baseNif->GetUvsForShape(shape, uvs);
+				vertsHigh = verts;
+				vertsLow = verts;
+				uvsHigh = uvs;
+				uvsLow = uvs;
+
+				ApplySliders(it->second.targetShape, sliderManager.slidersBig, pp->dataSets, vertsHigh, zapIdx, &uvsHigh);
+				if (pp->sliderSet.GenWeights())
+					ApplySliders(it->second.targetShape, sliderManager.slidersSmall, pp->dataSets, vertsLow, zapIdx, &uvsLow);
+
+				// Calculate result of weight
+				for (size_t i = 0; i < verts.size(); i++) {
+					verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
+					uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
+				}
+
+				// Zap deleted verts before preview
+				shape = pp->modNif.FindBlockByName<NiShape>(it->first);
+				if (zapIdx.size() > 0) {
+					pp->modNif.SetVertsForShape(shape, verts);
+					pp->modNif.SetUvsForShape(shape, uvs);
+					if (pp->modNif.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
+						pp->modNif.DeleteShape(shape);
+				}
+				else {
+					pp->modNif.SetVertsForShape(shape, verts);
+					pp->modNif.SetUvsForShape(shape, uvs);
+				}
+			}
+		}
+
+		// Refresh all meshes from all projects
+		std::vector<NifFile*> modNifs;
+		for (auto& pp : projects)
+			modNifs.push_back(&pp->modNif);
+		preview->RefreshMeshFromNif(modNifs);
+
+		// Update mesh settings from all sets
+		for (auto& pp : projects) {
+			for (auto it = pp->sliderSet.ShapesBegin(); it != pp->sliderSet.ShapesEnd(); ++it) {
+				Mesh* m = preview->GetMesh(it->first);
+				if (m) {
+					m->smoothSeamNormals = it->second.smoothSeamNormals;
+					m->lockNormals = it->second.lockNormals;
+					m->SmoothNormals();
+				}
+			}
+		}
+		return;
+	}
+
+	// Single-project mode
+	if (projects.empty() || !projects[0]->baseNif)
 		return;
 
-	int weight = preview->GetWeight();
-	PreviewMod.CopyFrom((*previewBaseNif));
+	auto* pp = projects[0].get();
 
-	bool keepZappedShapes = activeSet.KeepZappedShapes();
+	int weight = preview->GetWeight();
+	pp->modNif.CopyFrom(*pp->baseNif);
+
+	bool keepZappedShapes = pp->sliderSet.KeepZappedShapes();
 
 	std::vector<Vector3> verts, vertsLow, vertsHigh;
 	std::vector<Vector2> uvs, uvsLow, uvsHigh;
 	std::vector<uint16_t> zapIdx;
-	Vector3 v;
-	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+	for (auto it = pp->sliderSet.ShapesBegin(); it != pp->sliderSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
 
-		auto shape = previewBaseNif->FindBlockByName<NiShape>(it->first);
-		if (!previewBaseNif->GetVertsForShape(shape, verts))
+		auto shape = pp->baseNif->FindBlockByName<NiShape>(it->first);
+		if (!pp->baseNif->GetVertsForShape(shape, verts))
 			continue;
 
-		previewBaseNif->GetUvsForShape(shape, uvs);
+		pp->baseNif->GetUvsForShape(shape, uvs);
 		vertsHigh = verts;
 		vertsLow = verts;
 		uvsHigh = uvs;
 		uvsLow = uvs;
 
-		ApplySliders(it->second.targetShape, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
-		if (activeSet.GenWeights())
-			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
+		ApplySliders(it->second.targetShape, sliderManager.slidersBig, pp->dataSets, vertsHigh, zapIdx, &uvsHigh);
+		if (pp->sliderSet.GenWeights())
+			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, pp->dataSets, vertsLow, zapIdx, &uvsLow);
 
 		// Calculate result of weight
 		for (size_t i = 0; i < verts.size(); i++) {
@@ -1429,27 +1772,25 @@ void BodySlideApp::RebuildPreviewMeshes() {
 		}
 
 		// Zap deleted verts before preview
-		shape = PreviewMod.FindBlockByName<NiShape>(it->first);
+		shape = pp->modNif.FindBlockByName<NiShape>(it->first);
 		if (zapIdx.size() > 0) {
-			// Freshly loaded, need to actually delete verts and tris in the modified .nif
-			PreviewMod.SetVertsForShape(shape, verts);
-			PreviewMod.SetUvsForShape(shape, uvs);
-			if (PreviewMod.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
-				PreviewMod.DeleteShape(shape);
+			pp->modNif.SetVertsForShape(shape, verts);
+			pp->modNif.SetUvsForShape(shape, uvs);
+			if (pp->modNif.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
+				pp->modNif.DeleteShape(shape);
 		}
 		else {
-			// No zapping needed - just show all the verts.
-			PreviewMod.SetVertsForShape(shape, verts);
-			PreviewMod.SetUvsForShape(shape, uvs);
+			pp->modNif.SetVertsForShape(shape, verts);
+			pp->modNif.SetUvsForShape(shape, uvs);
 		}
 	}
 
-	preview->RefreshMeshFromNif(&PreviewMod);
-	UpdateMeshesFromSet();
+	preview->RefreshMeshFromNif({&pp->modNif});
+	UpdateMeshesFromSet(pp->sliderSet);
 }
 
-void BodySlideApp::UpdateMeshesFromSet() {
-	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+void BodySlideApp::UpdateMeshesFromSet(SliderSet& set) {
+	for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
 		Mesh* m = preview->GetMesh(it->first);
 		if (m) {
 			m->smoothSeamNormals = it->second.smoothSeamNormals;
@@ -2115,7 +2456,19 @@ void BodySlideApp::LoadPresets(const std::string& sliderSet) {
 	sliderManager.LoadPresets(GetProjectPath() + "/SliderPresets", outfit, groups_and_aliases, groups_and_aliases.empty());
 }
 
+void BodySlideApp::GetPresetNames(std::vector<std::string>& outNames) {
+	sliderManager.GetPresetNames(outNames);
+}
+
+void BodySlideApp::InitializeSliders(const std::string& presetName) {
+	sliderManager.InitializeSliders(presetName);
+}
+
 int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNormals) {
+	if (projects.empty())
+		return 1;
+
+	auto& activeSet = GetActiveSet();
 	std::string inputFileName = activeSet.GetInputFileName();
 	NifFile nifSmall;
 	NifFile nifBig;
@@ -2218,6 +2571,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	if (activeSet.GenWeights())
 		nifSmall.CopyFrom(nifBig);
 
+	auto& dataSets = GetActiveDataSets();
 	dataSets.Clear();
 	activeSet.LoadSetDiffData(dataSets);
 
@@ -2247,7 +2601,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 		zapIdxAll.emplace(it->first, std::vector<uint16_t>());
 
-		ApplySliders(it->second.targetShape, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
+		ApplySliders(it->second.targetShape, sliderManager.slidersBig, dataSets, vertsHigh, zapIdx, &uvsHigh);
 		nifBig.SetVertsForShape(shape, vertsHigh);
 		nifBig.SetUvsForShape(shape, uvsHigh);
 
@@ -2270,7 +2624,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 		if (activeSet.GenWeights()) {
 			zapIdx.clear();
-			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
+			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, dataSets, vertsLow, zapIdx, &uvsLow);
 
 			auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
 			nifSmall.SetVertsForShape(shapeSmall, vertsLow);
@@ -3179,8 +3533,11 @@ float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
 }
 
 bool BodySlideApp::IsUVSlider(const wxString& sliderName) {
+	if (projects.empty())
+		return false;
+
 	std::string sstr{sliderName.ToUTF8()};
-	return activeSet[sstr].bUV;
+	return GetActiveSet()[sstr].bUV;
 }
 
 std::vector<std::string> BodySlideApp::GetSliderZapToggles(const wxString& sliderName) {
@@ -3959,6 +4316,9 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnBrowseOutfitFolder(wxCommandEvent& WXUNUSED(event)) {
+	if (!app->HasActiveProject())
+		return;
+
 	auto& activeSet = app->GetActiveSet();
 
 	std::string sep{wxString(wxFileName::GetPathSeparator()).ToUTF8()};
@@ -4452,6 +4812,10 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
 		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
+
+		// Hide the single instance setting (only relevant for Outfit Studio)
+		XRCCTRL(*settings, "lbSingleInstanceBehavior", wxStaticText)->Hide();
+		XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice)->Hide();
 
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
 		for (size_t i = 0; i < SupportedLangs.size(); i++)

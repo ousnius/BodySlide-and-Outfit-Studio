@@ -65,6 +65,8 @@ class BodySlideApp : public wxApp {
 	std::string cmdTargetDir;
 	std::string cmdPreset;
 	bool cmdTri = false;
+	std::vector<std::string> cmdPreviewNifs;
+	bool cmdPreviewMode = false;
 
 	/* Localization */
 	wxLocale* locale = nullptr;
@@ -72,8 +74,6 @@ class BodySlideApp : public wxApp {
 
 	/* Data Managers */
 	SliderManager sliderManager;
-	DiffDataSets dataSets;
-	SliderSet activeSet;
 	Log logger;
 
 	/* Data Items */
@@ -91,10 +91,21 @@ class BodySlideApp : public wxApp {
 	/* Cache */
 	std::map<std::string, nifly::NifFile, case_insensitive_compare> refNormalsCache; // Cache for reference normals files
 
-	std::string previewBaseName;
-	std::string previewSetName;
-	nifly::NifFile* previewBaseNif = nullptr;
-	nifly::NifFile PreviewMod;
+	struct ProjectData {
+		SliderSet sliderSet;
+		DiffDataSets dataSets;
+		nifly::NifFile* baseNif = nullptr;
+		nifly::NifFile modNif;
+		std::string setName;
+		std::string inputFileName;
+
+		~ProjectData() { delete baseNif; }
+		ProjectData() = default;
+		ProjectData(const ProjectData&) = delete;
+		ProjectData& operator=(const ProjectData&) = delete;
+	};
+	std::vector<std::unique_ptr<ProjectData>> projects;
+	bool multiProjectMode = false;
 
 	int CreateSetSliders(const std::string& outfit);
 
@@ -118,7 +129,11 @@ public:
 
 	std::string GetOutputDataPath() const;
 	std::string GetProjectPath() const;
-	SliderSet& GetActiveSet() { return activeSet; }
+	SliderSet& GetActiveSet() { return projects[0]->sliderSet; }
+	DiffDataSets& GetActiveDataSets() { return projects[0]->dataSets; }
+	bool HasActiveProject() const { return !projects.empty(); }
+
+	int AddProjectSliders(const std::string& projectFile, const std::string& setName);
 
 	void InitLanguage();
 
@@ -144,6 +159,8 @@ public:
 	int GetFilteredOutfits(std::vector<std::string>& outList);
 
 	void LoadPresets(const std::string& sliderSet);
+	void GetPresetNames(std::vector<std::string>& outNames);
+	void InitializeSliders(const std::string& presetName = "");
 	void PopulatePresetList(const std::string& select);
 	void PopulateOutfitList(const std::string& select);
 	void DisplayActiveSet();
@@ -164,7 +181,11 @@ public:
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
 
-	std::vector<std::string> GetConflictingOutfits() { return outFileCount.find(activeSet.GetOutputFilePath())->second; }
+	std::vector<std::string> GetConflictingOutfits() {
+		if (projects.empty())
+			return {};
+		return outFileCount.find(GetActiveSet().GetOutputFilePath())->second;
+	}
 
 	void DeleteOutfit(const std::string& outfitName);
 	void DeletePreset(const std::string& presetName);
@@ -174,6 +195,7 @@ public:
 
 	void ApplySliders(const std::string& targetShape,
 					  std::vector<Slider>& sliderSet,
+					  DiffDataSets& dataSets,
 					  std::vector<nifly::Vector3>& verts,
 					  std::vector<uint16_t>& zapidx,
 					  std::vector<nifly::Vector2>* uvs = nullptr);
@@ -181,8 +203,10 @@ public:
 
 	void CopySliderValues(bool toHigh);
 	void ShowPreview();
+	void BuildPreviewMesh(ProjectData* pp, bool freshLoad);
 	void InitPreview();
 	void CleanupPreview();
+	void LoadPreviewNifs(const std::vector<std::string>& nifFilePaths);
 	void ClosePreview() {
 		// Calling Close() will cause PreviewClosed() to be called,
 		// where we reset the preview window pointer to null
@@ -193,7 +217,7 @@ public:
 
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
-	void UpdateMeshesFromSet();
+	void UpdateMeshesFromSet(SliderSet& set);
 	void ApplyReferenceNormals(nifly::NifFile& nif);
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false, bool forceNormals = false);
@@ -221,6 +245,7 @@ static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild",
 												   {wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_OPTION, "p", "preset", "preset used for the build, defaults to last used preset", wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build"},
+												   {wxCMD_LINE_OPTION, "preview", "preview", "open the specified nif files in preview mode", wxCMD_LINE_VAL_STRING},
 												   wxCMD_LINE_DESC_END};
 
 #define DELAYLOAD_TIMER 299

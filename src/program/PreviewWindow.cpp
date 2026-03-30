@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "PreviewWindow.h"
 #include "BodySlideApp.h"
+#include "../utils/PlatformUtil.h"
 
 #include <regex>
 #include <sstream>
@@ -31,6 +32,25 @@ PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideAp
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizerProjectSelect = new wxBoxSizer(wxHORIZONTAL);
+
+	wxPanel* projectSelectPanel = new wxPanel(this);
+	projectLabel = new wxStaticText(projectSelectPanel, wxID_ANY, _("Outfit/Body"));
+	projectChoice = new wxChoice(projectSelectPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxArrayString(), 0, wxDefaultValidator, "projectChoice");
+	projectChoice->Hide();
+	projectLabel->Hide();
+
+	presetLabel = new wxStaticText(projectSelectPanel, wxID_ANY, _("Preset"));
+	presetChoice = new wxChoice(projectSelectPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxArrayString(), 0, wxDefaultValidator, "presetChoice");
+	presetChoice->Hide();
+	presetLabel->Hide();
+
+	sizerProjectSelect->Add(projectLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	sizerProjectSelect->Add(projectChoice, 1, wxALL | wxEXPAND, 5);
+	sizerProjectSelect->Add(presetLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	sizerProjectSelect->Add(presetChoice, 1, wxALL | wxEXPAND, 5);
+	projectSelectPanel->SetSizer(sizerProjectSelect);
+	projectSelectPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
 	wxPanel* uiPanel = new wxPanel(this);
 	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
@@ -49,11 +69,15 @@ PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideAp
 	sizerPanel->Add(optButton, 0, wxTOP | wxLEFT | wxRIGHT, 10);
 	uiPanel->SetSizer(sizerPanel);
 
+	sizer->Add(projectSelectPanel, 0, wxEXPAND);
 	sizer->Add(uiPanel, 0, wxEXPAND);
 	sizer->Add(canvas, 1, wxEXPAND);
 
 	SetSizer(sizer);
 	Show();
+
+	projectChoice->Bind(wxEVT_CHOICE, &PreviewWindow::OnProjectChoice, this);
+	presetChoice->Bind(wxEVT_CHOICE, &PreviewWindow::OnPresetChoice, this);
 }
 
 void PreviewWindow::OnShown() {
@@ -128,7 +152,154 @@ void PreviewWindow::OnShown() {
 
 	gls.SetPerspective(BodySlideConfig.GetBoolValue("Rendering/PerspectiveView", true));
 
+	// Load deferred project entries
+	if (!projectEntries.empty()) {
+		if (loadAllProjects) {
+			LoadProjects(projectEntries);
+			loadAllProjects = false;
+		}
+		else {
+			LoadProjects({projectEntries[0]});
+		}
+		return;
+	}
+
+	// Load deferred nifs if in NIF-only preview mode
+	if (!extraNifPaths.empty()) {
+		wxLogMessage("Loading %zu nif file(s) in preview mode...", extraNifPaths.size());
+		ShowWeight(false);
+		LoadNifFiles(extraNifPaths);
+		gls.RenderOneFrame();
+		return;
+	}
+
 	app->InitPreview();
+}
+
+void PreviewWindow::LoadNifFiles(const std::vector<std::string>& nifFilePaths) {
+	for (const auto& nifPath : nifFilePaths) {
+		std::fstream file;
+		PlatformUtil::OpenFileStream(file, nifPath, std::ios::in | std::ios::binary);
+
+		NifFile* nifFile = new NifFile();
+		if (nifFile->Load(file)) {
+			wxLogWarning("Failed to load nif file: %s", nifPath);
+			delete nifFile;
+			continue;
+		}
+
+		wxLogMessage("Loading nif: %s", nifPath);
+		AddMeshFromNif(nifFile);
+
+		for (auto& s : nifFile->GetShapeNames())
+			AddNifShapeTextures(nifFile, s);
+
+		delete nifFile;
+	}
+}
+
+void PreviewWindow::SetProjectData(const std::vector<PreviewProjectEntry>& entries, bool loadAll) {
+	projectEntries = entries;
+	loadAllProjects = loadAll;
+
+	if (!loadAll && projectChoice) {
+		projectChoice->Clear();
+		for (auto& entry : projectEntries)
+			projectChoice->Append(wxString::FromUTF8(entry.setName));
+
+		if (!projectEntries.empty())
+			projectChoice->SetSelection(0);
+
+		projectChoice->Show(projectEntries.size() > 1);
+		projectLabel->Show(projectEntries.size() > 1);
+
+		projectChoice->GetParent()->Show();
+		Layout();
+	}
+}
+
+void PreviewWindow::LoadProjects(const std::vector<PreviewProjectEntry>& entries) {
+	wxLogMessage("Loading %zu project(s) in preview mode...", entries.size());
+
+	app->CleanupPreview();
+
+	// Load all projects additively
+	for (auto& entry : entries) {
+		if (app->AddProjectSliders(entry.projectFile, entry.setName)) {
+			wxLogError("Failed to load slider set '%s' from file: %s", entry.setName, entry.projectFile);
+			continue;
+		}
+	}
+
+	if (entries.empty())
+		return;
+
+	app->LoadPresets(entries[0].setName);
+
+	// Populate preset dropdown
+	if (presetChoice) {
+		wxString previousPreset = presetChoice->GetStringSelection();
+		presetChoice->Clear();
+
+		std::vector<std::string> presetNames;
+		app->GetPresetNames(presetNames);
+
+		if (!presetNames.empty()) {
+			for (auto& name : presetNames)
+				presetChoice->Append(wxString::FromUTF8(name));
+
+			// Keep the previous preset selected if it still exists
+			int idx = presetChoice->FindString(previousPreset);
+			if (idx == wxNOT_FOUND)
+				idx = 0;
+
+			presetChoice->SetSelection(idx);
+			presetChoice->Show();
+			presetLabel->Show();
+
+			app->InitializeSliders(presetNames[idx]);
+		}
+		else {
+			presetChoice->Hide();
+			presetLabel->Hide();
+
+			app->InitializeSliders();
+		}
+
+		presetChoice->GetParent()->Show();
+		Layout();
+	}
+
+	multiProjectMode = true;
+
+	// Initialize the preview (loads NIFs, applies sliders, creates meshes, loads extra NIFs)
+	app->InitPreview();
+}
+
+void PreviewWindow::OnProjectChoice(wxCommandEvent& WXUNUSED(event)) {
+	if (!projectChoice)
+		return;
+
+	int selection = projectChoice->GetSelection();
+	if (selection < 0 || selection >= (int)projectEntries.size())
+		return;
+
+	LoadProjects({projectEntries[selection]});
+}
+
+void PreviewWindow::OnPresetChoice(wxCommandEvent& WXUNUSED(event)) {
+	if (!presetChoice)
+		return;
+
+	int selection = presetChoice->GetSelection();
+	if (selection < 0)
+		return;
+
+	std::string presetName = presetChoice->GetStringSelection().ToUTF8().data();
+	wxLogMessage("Applying preset '%s' to preview...", presetName);
+
+	app->InitializeSliders(presetName);
+	app->RebuildPreviewMeshes();
 }
 
 void PreviewWindow::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers) {
@@ -164,15 +335,12 @@ void PreviewWindow::AddMeshFromNif(NifFile* nif, char* shapeName) {
 	}
 }
 
-void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
-	std::vector<std::string> shapeList = nif->GetShapeNames();
-	if (shapeName == nullptr)
-		gls.ClearMeshes();
+void PreviewWindow::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
+	gls.ClearMeshes();
 
-	for (size_t i = 0; i < shapeList.size(); i++) {
-		std::string& shapeListName = shapeList[i];
-		if (!shapeName || (shapeName && shapeListName == shapeName)) {
-			Mesh* m = gls.ReloadMeshFromNif(nif, shapeListName);
+	for (auto* nif : nifs) {
+		for (auto& shapeListName : nif->GetShapeNames()) {
+			Mesh* m = gls.AddMeshFromNif(nif, shapeListName);
 			if (!m)
 				continue;
 
@@ -185,9 +353,11 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			if (iter != shapeMaterials.end())
 				m->material = iter->second;
 			else
-				AddNifShapeTextures(nif, std::string(shapeListName));
+				AddNifShapeTextures(nif, shapeListName);
 		}
 	}
+
+	LoadNifFiles(extraNifPaths);
 
 	gls.RenderOneFrame();
 }
