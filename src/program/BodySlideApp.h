@@ -326,7 +326,7 @@ public:
 	wxMenu* fileCollisionMenu = nullptr;
 
 	BodySlideFrame(BodySlideApp* app, const wxSize& size);
-	~BodySlideFrame() {}
+	~BodySlideFrame() { delete fileCollisionMenu; }
 
 	void HideSlider(SliderDisplay* slider);
 	void ShowLowColumn(bool show);
