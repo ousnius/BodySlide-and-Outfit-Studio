@@ -1284,6 +1284,38 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 		UpdatePreview();
 }
 
+void BodySlideApp::CopyPreviewWeightToSliders() {
+	if (!preview || !sliderView)
+		return;
+
+	int weight = preview->GetWeight();
+	wxLogMessage("Copying preview shape at weight %d to both high and low sliders.", weight);
+
+	for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
+		Slider* sliderBig = &sliderManager.slidersBig[i];
+		Slider* sliderSmall = &sliderManager.slidersSmall[i];
+
+		if (sliderBig->zap || sliderBig->clamp)
+			continue;
+
+		// Calculate the interpolated slider value at the current weight
+		float effectiveValue = (sliderBig->value * weight + sliderSmall->value * (100.0f - weight)) / 100.0f;
+
+		if (sliderView->GetSliderDisplay(sliderBig->name)) {
+			sliderView->SetSliderPosition(sliderBig->name.c_str(), effectiveValue, SLIDER_HI);
+			SetSliderValue(sliderBig->name, false, effectiveValue);
+			SetSliderChanged(sliderBig->name, false);
+
+			sliderView->SetSliderPosition(sliderSmall->name.c_str(), effectiveValue, SLIDER_LO);
+			SetSliderValue(sliderSmall->name, true, effectiveValue);
+			SetSliderChanged(sliderSmall->name, true);
+		}
+	}
+
+	sliderView->SetPresetChanged();
+	UpdatePreview();
+}
+
 void BodySlideApp::ShowPreview() {
 	if (preview)
 		return;
@@ -1520,6 +1552,8 @@ void BodySlideApp::InitPreview() {
 		}
 
 		preview->ShowWeight(anyGenWeights);
+		if (sliderView)
+			preview->ShowLockShapeButton(anyGenWeights);
 
 		// Load any extra NIF files on top of project meshes
 		preview->LoadNifFiles(preview->GetExtraNifPaths());
@@ -1562,6 +1596,8 @@ void BodySlideApp::InitPreview() {
 	}
 
 	preview->ShowWeight(pp->sliderSet.GenWeights());
+	if (sliderView)
+		preview->ShowLockShapeButton(pp->sliderSet.GenWeights());
 
 	pp->sliderSet.LoadSetDiffData(pp->dataSets);
 

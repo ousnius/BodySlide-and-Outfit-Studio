@@ -27,6 +27,7 @@ class PreviewWindow : public wxFrame {
 	PreviewCanvas* canvas = nullptr;
 	std::unique_ptr<wxGLContext> context;
 	wxButton* optButton = nullptr;
+	wxButton* lockShapeButton = nullptr;
 	wxStaticText* projectLabel = nullptr;
 	wxChoice* projectChoice = nullptr;
 	wxStaticText* presetLabel = nullptr;
@@ -63,6 +64,7 @@ public:
 	void OnPresetChoice(wxCommandEvent& event);
 
 	void ShowNormalGenWindow(wxCommandEvent& event);
+	void OnLockShape(wxCommandEvent& event);
 
 	void Cleanup();
 
@@ -76,6 +78,11 @@ public:
 			weightSlider->GetParent()->Show(show);
 			Layout();
 		}
+	}
+
+	void ShowLockShapeButton(bool show = true) {
+		if (lockShapeButton)
+			lockShapeButton->Show(show);
 	}
 
 	void SetBaseDataPath(const std::string& path) { baseDataPath = path; }

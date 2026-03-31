@@ -202,6 +202,7 @@ public:
 	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, nifly::NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices);
 
 	void CopySliderValues(bool toHigh);
+	void CopyPreviewWeightToSliders();
 	void ShowPreview();
 	void BuildPreviewMesh(ProjectData* pp, bool freshLoad);
 	void InitPreview();

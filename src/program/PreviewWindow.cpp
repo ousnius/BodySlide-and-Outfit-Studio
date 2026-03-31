@@ -60,13 +60,19 @@ PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideAp
 	optButton->Bind(wxEVT_BUTTON, &PreviewWindow::ShowNormalGenWindow, this);
 	optButton->Hide();
 
+	lockShapeButton = new wxButton(uiPanel, wxID_ANY, _("Lock Shape"), wxDefaultPosition, wxDefaultSize);
+	lockShapeButton->SetToolTip(_("Set the current preview shape to both low and high weight sliders."));
+	lockShapeButton->Bind(wxEVT_BUTTON, &PreviewWindow::OnLockShape, this);
+	lockShapeButton->Hide();
+
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs());
 	context = std::make_unique<wxGLContext>(canvas, nullptr, &GLSurface::GetGLContextAttribs());
 
 	sizerPanel->Add(weightSlider, 1, wxTOP | wxLEFT | wxRIGHT, 10);
-	sizerPanel->Add(optButton, 0, wxTOP | wxLEFT | wxRIGHT, 10);
+	sizerPanel->Add(lockShapeButton, 0, wxALL | wxALIGN_BOTTOM, 10);
+	sizerPanel->Add(optButton, 0, wxALL | wxALIGN_BOTTOM, 10);
 	uiPanel->SetSizer(sizerPanel);
 
 	sizer->Add(projectSelectPanel, 0, wxEXPAND);
@@ -516,6 +522,10 @@ void PreviewWindow::MouseWheel(int dW) {
 void PreviewWindow::OnWeightSlider(wxScrollEvent& event) {
 	weight = event.GetPosition();
 	app->UpdatePreview();
+}
+
+void PreviewWindow::OnLockShape(wxCommandEvent& WXUNUSED(event)) {
+	app->CopyPreviewWeightToSliders();
 }
 
 void PreviewWindow::OnMoveWindow(wxMoveEvent& event) {
