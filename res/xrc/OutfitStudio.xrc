@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
 	<object class="wxFrame" name="outfitStudio">
 		<style>wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER|wxSYSTEM_MENU|wxTAB_TRAVERSAL</style>
@@ -169,7 +169,7 @@
 						<size>-1,25</size>
 						<label>Brush Settings</label>
 					</object>
-					<object class="space"/>
+					<object class="space" />
 					<object class="tool" name="btnDiscord">
 						<label translate="0">Discord</label>
 						<tooltip>Open Discord invite link.</tooltip>
@@ -508,7 +508,7 @@
 																	<option>0</option>
 																	<flag>wxEXPAND|wxTOP</flag>
 																	<border>5</border>
-																	<object class="wxPanel" name ="colorPalette">
+																	<object class="wxPanel" name="colorPalette">
 																		<object class="wxBoxSizer">
 																			<orient>wxHORIZONTAL</orient>
 																			<object class="sizeritem">
@@ -1630,6 +1630,31 @@
 															<scrollrate>18,18</scrollrate>
 															<object class="wxBoxSizer">
 																<orient>wxVERTICAL</orient>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND|wxLEFT</flag>
+														<border>2</border>
+														<object class="wxCollapsiblePane" name="notesPane">
+															<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+															<collapsed>1</collapsed>
+															<label>Notes</label>
+															<bg>wxSYS_COLOUR_MENU</bg>
+															<object class="panewindow">
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxALL|wxEXPAND</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="projectNotes">
+																			<style>wxTE_MULTILINE</style>
+																			<size>-1,120</size>
+																		</object>
+																	</object>
+																</object>
 															</object>
 														</object>
 													</object>

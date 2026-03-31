@@ -958,6 +958,8 @@ public:
 	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
 	wxCollapsiblePane* masksPane = nullptr;
 	wxCollapsiblePane* posePane = nullptr;
+	wxCollapsiblePane* notesPane = nullptr;
+	wxTextCtrl* projectNotes = nullptr;
 
 	wxTreeItemId shapesRoot;
 	wxTreeItemId outfitRoot;

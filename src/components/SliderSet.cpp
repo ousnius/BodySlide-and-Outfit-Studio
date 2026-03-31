@@ -168,6 +168,12 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
 	else
 		defNormalGen.clear();
 
+	tmpElement = element->FirstChildElement("Notes");
+	if (tmpElement && tmpElement->GetText())
+		notes = tmpElement->GetText();
+	else
+		notes.clear();
+
 	return 0;
 }
 
@@ -457,6 +463,13 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			newText = sliderSetElement->GetDocument()->NewText(fileName_bs.c_str());
 			dataFileElement->InsertEndChild(newText);
 		}
+	}
+
+	if (!notes.empty()) {
+		newElement = sliderSetElement->GetDocument()->NewElement("Notes");
+		newText = sliderSetElement->GetDocument()->NewText(notes.c_str());
+		newText->SetCData(true);
+		sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
 	}
 }
 

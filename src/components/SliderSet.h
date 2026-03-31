@@ -40,6 +40,8 @@ class SliderSet {
 	std::vector<SliderData> sliders;
 	std::vector<NormalGenLayer> defNormalGen;
 
+	std::string notes;
+
 	SliderData Empty;
 
 public:
@@ -55,6 +57,9 @@ public:
 	void SetGenWeights(bool inGenWeights) { genWeights = inGenWeights; }
 	void SetPreventMorphFile(bool inPreventMorphFile) { preventMorphFile = inPreventMorphFile; }
 	void SetKeepZappedShapes(bool inKeepZappedShapes) { keepZappedShapes = inKeepZappedShapes; }
+
+	std::string GetNotes() { return notes; }
+	void SetNotes(const std::string& inNotes) { notes = inNotes; }
 
 	void Clear() {
 		shapeAttributes.clear();

@@ -105,6 +105,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("deleteMask"), OutfitStudioFrame::OnDeleteMask)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("posePane"), OutfitStudioFrame::OnPaneCollapse)
+	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("notesPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_CHOICE(XRCID("cPoseBone"), OutfitStudioFrame::OnPoseBoneChanged)
 	EVT_COMMAND_SCROLL(XRCID("rxPoseSlider"), OutfitStudioFrame::OnRXPoseSlider)
 	EVT_COMMAND_SCROLL(XRCID("ryPoseSlider"), OutfitStudioFrame::OnRYPoseSlider)
@@ -1255,6 +1256,8 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 	masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
 	posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
+	notesPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("notesPane"));
+	projectNotes = (wxTextCtrl*)FindWindowByName("projectNotes");
 
 	if (meshTabButton) {
 		meshTabButton->SetCheck();
@@ -2371,6 +2374,9 @@ bool OutfitStudioFrame::SaveProject() {
 
 	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
+	if (projectNotes)
+		project->activeSet.SetNotes(projectNotes->GetValue().ToUTF8().data());
+
 	std::string error = project->Save(project->mFileName,
 									  project->mOutfitName,
 									  project->mDataDir,
@@ -2554,6 +2560,9 @@ bool OutfitStudioFrame::SaveProjectAs() {
 
 	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
+	if (projectNotes)
+		project->activeSet.SetNotes(projectNotes->GetValue().ToUTF8().data());
+
 	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, copyRef, preventMorphFile, keepZappedShapes);
 
 	if (error.empty()) {
@@ -2682,6 +2691,16 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	UpdateProgress(90, wxString::Format(_("Creating %zu slider(s)..."), project->SliderCount()));
 	StartSubProgress(90, 99);
 	CreateSetSliders();
+
+	if (projectNotes && notesPane) {
+		wxString notesText = wxString::FromUTF8(project->activeSet.GetNotes());
+		projectNotes->SetValue(notesText);
+		notesPane->Collapse(notesText.empty());
+
+		wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
+		if (parentPanel)
+			parentPanel->Layout();
+	}
 
 	UpdateTitle();
 	AddProjectHistory(fileName, outfit);
@@ -4232,6 +4251,15 @@ void OutfitStudioFrame::ClearProject() {
 
 	auto cPoseName = (wxChoice*)FindWindowByName("cPoseName");
 	cPoseName->Clear();
+
+	if (projectNotes && notesPane) {
+		projectNotes->Clear();
+		notesPane->Collapse();
+
+		wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
+		if (parentPanel)
+			parentPanel->Layout();
+	}
 
 	project->outfitName.clear();
 	pendingChanges = false;

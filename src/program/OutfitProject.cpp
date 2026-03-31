@@ -70,6 +70,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	outSet.SetGenWeights(genWeights);
 	outSet.SetPreventMorphFile(preventMorphFile);
 	outSet.SetKeepZappedShapes(keepZappedShapes);
+	outSet.SetNotes(activeSet.GetNotes());
 
 	const wxString sliderSetsStr = "SliderSets";
 
