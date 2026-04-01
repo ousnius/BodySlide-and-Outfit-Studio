@@ -435,5 +435,12 @@ void main(void)
 		if (alphaThreshold != -1.0f)
 			if (fragColor.a <= alphaThreshold) // GL_GREATER
 				discard;
+
+		gl_FragDepth = gl_FragCoord.z;
+	}
+	else
+	{
+		// Minimal depth offset for wireframe to prevent z-fighting with its own mesh
+		gl_FragDepth = gl_FragCoord.z - 0.00001f;
 	}
 }
