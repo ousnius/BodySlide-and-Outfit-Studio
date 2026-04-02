@@ -33,7 +33,7 @@
 					<object class="tool" name="editUndo">
 						<label>Undo</label>
 						<tooltip>Undo a previous action.</tooltip>
-						<bitmap>$(AppDir)\res\images\Undo.png</bitmap>
+						<bitmap>$(AppDir)\res\images\Undo.png;$(AppDir)\res\images\Undo@2x.png</bitmap>
 						<bitmap2>$(AppDir)\res\images\Undo_d.png</bitmap2>
 						<disabled>1</disabled>
 					</object>
@@ -122,21 +122,21 @@
 					<object class="tool" name="btnCollapseVertex">
 						<label>Collapse Vertex</label>
 						<tooltip>Deletes vertices with no more than three connections, without creating a hole.</tooltip>
-						<bitmap>$(AppDir)\res\images\CollapseVertex.png</bitmap>
+						<bitmap>$(AppDir)\res\images\CollapseVertex.png;$(AppDir)\res\images\CollapseVertex@2x.png</bitmap>
 						<bitmap2>$(AppDir)\res\images\CollapseVertex_d.png</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnFlipEdgeTool">
 						<label>Flip Edge</label>
 						<tooltip>Flips mesh edges so that the opposite pair of vertices is connected.</tooltip>
-						<bitmap>$(AppDir)\res\images\FlipEdge.png</bitmap>
+						<bitmap>$(AppDir)\res\images\FlipEdge.png;$(AppDir)\res\images\FlipEdge@2x.png</bitmap>
 						<bitmap2>$(AppDir)\res\images\FlipEdge_d.png</bitmap2>
 						<radio>1</radio>
 					</object>
 					<object class="tool" name="btnSplitEdgeTool">
 						<label>Split Edge</label>
 						<tooltip>Splits a mesh edge in two with a new vertex.</tooltip>
-						<bitmap>$(AppDir)\res\images\SplitEdge.png</bitmap>
+						<bitmap>$(AppDir)\res\images\SplitEdge.png;$(AppDir)\res\images\SplitEdge@2x.png</bitmap>
 						<bitmap2>$(AppDir)\res\images\SplitEdge_d.png</bitmap2>
 						<radio>1</radio>
 					</object>
@@ -173,17 +173,17 @@
 					<object class="tool" name="btnDiscord">
 						<label translate="0">Discord</label>
 						<tooltip>Open Discord invite link.</tooltip>
-						<bitmap>$(AppDir)\res\images\Discord.png</bitmap>
+						<bitmap>$(AppDir)\res\images\Discord.png;$(AppDir)\res\images\Discord@2x.png</bitmap>
 					</object>
 					<object class="tool" name="btnGitHub">
 						<label translate="0">GitHub</label>
 						<tooltip>Open GitHub link.</tooltip>
-						<bitmap>$(AppDir)\res\images\GitHub.png</bitmap>
+						<bitmap>$(AppDir)\res\images\GitHub.png;$(AppDir)\res\images\GitHub@2x.png</bitmap>
 					</object>
 					<object class="tool" name="btnPayPal">
 						<label translate="0">PayPal</label>
 						<tooltip>Open PayPal link.</tooltip>
-						<bitmap>$(AppDir)\res\images\PayPal.png</bitmap>
+						<bitmap>$(AppDir)\res\images\PayPal.png;$(AppDir)\res\images\PayPal@2x.png</bitmap>
 					</object>
 				</object>
 			</object>
@@ -205,7 +205,7 @@
 							<object class="tool" name="btnTransform">
 								<label>Transform</label>
 								<tooltip>Shows a transform tool to manipulate shapes and vertices with.</tooltip>
-								<bitmap>$(AppDir)\res\images\TransformTool.png</bitmap>
+								<bitmap>$(AppDir)\res\images\TransformTool.png;$(AppDir)\res\images\TransformTool@2x.png</bitmap>
 								<bitmap2>$(AppDir)\res\images\TransformTool_d.png</bitmap2>
 								<toggle>1</toggle>
 							</object>
