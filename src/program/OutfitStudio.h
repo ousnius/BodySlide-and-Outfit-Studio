@@ -1006,10 +1006,11 @@ public:
 	void CalcAutoXMirrorBone();
 	std::string GetXMirrorBone();
 
-	void ShowSegment(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
+	void ShowSegment(const wxTreeItemId& item = nullptr);
 	void UpdateSegmentNames();
+	bool PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const nifly::Vector3& hitPointModel, float radiusModel);
 
-	void ShowPartition(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
+	void ShowPartition(const wxTreeItemId& item = nullptr);
 	void UpdatePartitionNames();
 
 	void SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp);

@@ -5987,25 +5987,102 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 		segmentTree->SelectItem(child);
 }
 
-void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMask) {
+bool OutfitStudioFrame::PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const Vector3& hitPointModel, float radiusModel) {
+	if (!hitMesh || !activeItem || !glView->GetSegmentMode())
+		return false;
+
+	auto shape = activeItem->GetShape();
+	if (!shape || shape->name.get() != hitMesh->shapeName)
+		return false;
+
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	if (tris.empty() || hitTri < 0 || static_cast<size_t>(hitTri) >= tris.size())
+		return false;
+
+	std::vector<bool> paintTris(tris.size(), false);
+	paintTris[hitTri] = true;
+
+	float radiusMesh = hitMesh->TransformDistModelToMesh(radiusModel);
+	if (radiusMesh > 0.0f) {
+		Vector3 hitPointMesh = hitMesh->TransformPosModelToMesh(hitPointModel);
+		for (size_t ti = 0; ti < tris.size(); ++ti) {
+			const Triangle& t = tris[ti];
+			Vector3 centroid = (hitMesh->verts[t.p1] + hitMesh->verts[t.p2] + hitMesh->verts[t.p3]) / 3.0f;
+			if (centroid.DistanceTo(hitPointMesh) <= radiusMesh)
+				paintTris[ti] = true;
+		}
+	}
+
+	bool changed = false;
+
+	if (triSParts.size() == tris.size() && activeSegment.IsOk() && segmentTree->GetItemParent(activeSegment).IsOk()) {
+		std::vector<bool> selPartIDs(CalcMaxSegPartID() + 1, false);
+		SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
+		if (subSegmentData) {
+			for (size_t ti = 0; ti < tris.size(); ++ti) {
+				if (paintTris[ti] && triSParts[ti] != subSegmentData->partID) {
+					triSParts[ti] = subSegmentData->partID;
+					changed = true;
+				}
+			}
+		}
+		else {
+			SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
+			if (segmentData) {
+				selPartIDs[segmentData->partID] = true;
+				int destPartID = segmentData->partID;
+				wxTreeItemIdValue subCookie;
+				wxTreeItemId child = segmentTree->GetFirstChild(activeSegment, subCookie);
+				while (child.IsOk()) {
+					SubSegmentItemData* childData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(child));
+					if (childData) {
+						selPartIDs[childData->partID] = true;
+						destPartID = childData->partID;
+					}
+					child = segmentTree->GetNextChild(activeSegment, subCookie);
+				}
+
+				for (size_t ti = 0; ti < tris.size(); ++ti) {
+					if (!paintTris[ti])
+						continue;
+					if (triSParts[ti] >= 0 && triSParts[ti] < static_cast<int>(selPartIDs.size()) && selPartIDs[triSParts[ti]])
+						continue;
+					if (triSParts[ti] != destPartID) {
+						triSParts[ti] = destPartID;
+						changed = true;
+					}
+				}
+			}
+		}
+	}
+
+	if (triParts.size() == tris.size() && activePartition.IsOk() && partitionTree->GetItemParent(activePartition).IsOk()) {
+		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(activePartition));
+		if (partitionData) {
+			for (size_t ti = 0; ti < tris.size(); ++ti) {
+				if (paintTris[ti] && triParts[ti] != partitionData->index) {
+					triParts[ti] = partitionData->index;
+					changed = true;
+				}
+			}
+		}
+	}
+
+	return changed;
+}
+
+void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
 	if (!activeItem || !glView->GetSegmentMode())
 		return;
 
-	std::unordered_map<uint16_t, float> mask;
-	wxChoice* segmentType = nullptr;
-	wxChoice* segmentSlot = nullptr;
+	wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
+	segmentType->Disable();
+	segmentType->SetSelection(0);
 
-	if (!updateFromMask) {
-		segmentType = (wxChoice*)FindWindowByName("segmentType");
-		segmentType->Disable();
-		segmentType->SetSelection(0);
-
-		segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
-		segmentSlot->Disable();
-		segmentSlot->SetSelection(0);
-	}
-	else
-		glView->GetActiveMask(mask);
+	wxChoice* segmentSlot = (wxChoice*)FindWindowByName("segmentSlot");
+	segmentSlot->Disable();
+	segmentSlot->SetSelection(0);
 
 	if (item.IsOk())
 		activeSegment = item;
@@ -6028,46 +6105,37 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 		// Active segment is a subsegment
 		selPartIDs[subSegmentData->partID] = true;
 
-		if (updateFromMask) {
-			// Add triangles from mask
-			for (size_t t = 0; t < tris.size(); t++) {
-				if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end())
-					triSParts[t] = subSegmentData->partID;
-			}
-		}
-		else {
-			if (subSegmentData->material != 0xFFFFFFFF) {
-				bool typeFound = false;
-				auto typeHash = wxString::Format("0x%08x", subSegmentData->material);
-				for (uint32_t i = 0; i < segmentType->GetCount(); i++) {
-					auto typeString = segmentType->GetString(i);
-					if (typeString.Contains(typeHash)) {
-						segmentType->SetSelection((int)i);
-						typeFound = true;
-						break;
-					}
-				}
-
-				if (!typeFound)
-					segmentType->SetSelection(segmentType->Append(typeHash));
-			}
-
-			segmentType->Enable();
-
-			for (uint32_t i = 0; i < segmentSlot->GetCount(); i++) {
-				uint32_t userSlotID = subSegmentData->userSlotID;
-
-				// Find matching slot in choice
-				wxString slotPrefix = wxString::Format("%d - ", userSlotID);
-				auto slotString = segmentSlot->GetString(i);
-				if (slotString.StartsWith(slotPrefix)) {
-					segmentSlot->SetSelection((int)i);
+		if (subSegmentData->material != 0xFFFFFFFF) {
+			bool typeFound = false;
+			auto typeHash = wxString::Format("0x%08x", subSegmentData->material);
+			for (uint32_t i = 0; i < segmentType->GetCount(); i++) {
+				auto typeString = segmentType->GetString(i);
+				if (typeString.Contains(typeHash)) {
+					segmentType->SetSelection((int)i);
+					typeFound = true;
 					break;
 				}
 			}
 
-			segmentSlot->Enable();
+			if (!typeFound)
+				segmentType->SetSelection(segmentType->Append(typeHash));
 		}
+
+		segmentType->Enable();
+
+		for (uint32_t i = 0; i < segmentSlot->GetCount(); i++) {
+			uint32_t userSlotID = subSegmentData->userSlotID;
+
+			// Find matching slot in choice
+			wxString slotPrefix = wxString::Format("%d - ", userSlotID);
+			auto slotString = segmentSlot->GetString(i);
+			if (slotString.StartsWith(slotPrefix)) {
+				segmentSlot->SetSelection((int)i);
+				break;
+			}
+		}
+
+		segmentSlot->Enable();
 	}
 	else {
 		SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
@@ -6086,15 +6154,6 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMas
 					destPartID = childData->partID;
 				}
 				child = segmentTree->GetNextChild(activeSegment, subCookie);
-			}
-
-			if (updateFromMask) {
-				// Add triangles from mask
-				for (size_t t = 0; t < tris.size(); t++) {
-					if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end()
-						&& (triSParts[t] < 0 || !selPartIDs[triSParts[t]]))
-						triSParts[t] = destPartID;
-				}
 			}
 		}
 	}
@@ -6397,24 +6456,18 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 		partitionTree->SelectItem(child);
 }
 
-void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromMask) {
+void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item) {
 	if (!activeItem || !glView->GetSegmentMode())
 		return;
+
 	auto shape = activeItem->GetShape();
 	if (!shape)
 		return;
 
-	std::unordered_map<uint16_t, float> mask;
-	wxChoice* partitionType = nullptr;
-	wxArrayString partitionStrings;
-	if (!updateFromMask) {
-		partitionType = (wxChoice*)FindWindowByName("partitionType");
-		partitionType->Disable();
-		partitionType->SetSelection(0);
-		partitionStrings = partitionType->GetStrings();
-	}
-	else
-		glView->GetActiveMask(mask);
+	wxChoice* partitionType = (wxChoice*)FindWindowByName("partitionType");
+	partitionType->Disable();
+	partitionType->SetSelection(0);
+	wxArrayString partitionStrings = partitionType->GetStrings();
 
 	if (item.IsOk())
 		activePartition = item;
@@ -6430,21 +6483,11 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item, bool updateFromM
 
 	PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(activePartition));
 	if (partitionData) {
-		if (!updateFromMask) {
-			for (auto& s : partitionStrings) {
-				if (s.StartsWith(wxString::Format("%d", partitionData->type))) {
-					// Show correct data in UI
-					partitionType->Enable();
-					partitionType->SetStringSelection(s);
-				}
-			}
-		}
-		else {
-			// Add triangles from mask
-			for (size_t triInd = 0; triInd < allTris.size(); ++triInd) {
-				const Triangle& tri = allTris[triInd];
-				if (mask.find(tri.p1) != mask.end() && mask.find(tri.p2) != mask.end() && mask.find(tri.p3) != mask.end())
-					triParts[triInd] = partitionData->index;
+		for (auto& s : partitionStrings) {
+			if (s.StartsWith(wxString::Format("%d", partitionData->type))) {
+				// Show correct data in UI
+				partitionType->Enable();
+				partitionType->SetStringSelection(s);
 			}
 		}
 	}
@@ -7320,7 +7363,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		segmentReset->Show();
 
 		glView->SetSegmentMode();
-		SelectTool(ToolID::MaskBrush);
+		SelectTool(ToolID::MaskBrush); // Use mask brush for segment editing (but with custom painting function 'PaintSegmentPartitionTriangles')
 		glView->SetMaskVisible(false);
 		glView->ClearMasks();
 
@@ -7387,7 +7430,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionReset->Show();
 
 		glView->SetSegmentMode();
-		SelectTool(ToolID::MaskBrush);
+		SelectTool(ToolID::MaskBrush); // Use mask brush for partition editing (but with custom painting function 'PaintSegmentPartitionTriangles')
 		glView->SetMaskVisible(false);
 		glView->ClearMasks();
 
@@ -12481,7 +12524,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 
 	TweakPickInfo tpi;
 	Mesh* hitMesh = nullptr;
-	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh);
+	int hitTri = -1;
+	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh, true, &hitTri);
 	if (!hit || !hitMesh)
 		return false;
 
@@ -12665,7 +12709,15 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		activeStroke->beginStroke(tpi);
 
 	if (activeBrush->Type() != TweakBrush::BrushType::Move)
-		activeStroke->updateStroke(tpi);
+		if (segmentMode) {
+			if (os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius())) {
+				os->ShowSegment();
+				os->ShowPartition();
+			}
+		}
+		else {
+			activeStroke->updateStroke(tpi);
+		}
 
 	return true;
 }
@@ -12675,6 +12727,8 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 
 	if (activeStroke) {
 		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, true);
+		Mesh* hitMesh = nullptr;
+		int hitTri = -1;
 
 		if (activeBrush->Type() == TweakBrush::BrushType::Move) {
 			Vector3 pn;
@@ -12686,8 +12740,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			if (!hit)
 				return;
 
-			Mesh* hitMesh = nullptr;
-			hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh);
+			hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, &hitMesh, true, &hitTri);
 			if (!hit || !hitMesh)
 				return;
 
@@ -12702,7 +12755,15 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 
 		v = v * -1.0f;
 		tpi.view = v;
-		activeStroke->updateStroke(tpi);
+		if (segmentMode) {
+			if (os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius())) {
+				os->ShowSegment();
+				os->ShowPartition();
+			}
+		}
+		else {
+			activeStroke->updateStroke(tpi);
+		}
 
 		if (activeBrush->Type() == TweakBrush::BrushType::Weight) {
 			std::string selectedBone = os->GetActiveBone();
@@ -12715,8 +12776,8 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			ShowTransformTool();
 
 		if (segmentMode) {
-			os->ShowSegment(nullptr, true);
-			os->ShowPartition(nullptr, true);
+			os->ShowSegment();
+			os->ShowPartition();
 		}
 	}
 }
@@ -12757,8 +12818,8 @@ void wxGLPanel::EndBrushStroke() {
 			ShowTransformTool();
 
 		if (segmentMode) {
-			os->ShowSegment(nullptr, true);
-			os->ShowPartition(nullptr, true);
+			os->ShowSegment();
+			os->ShowPartition();
 
 			if (os->currentTabButton)
 				os->currentTabButton->SetPendingChanges();
