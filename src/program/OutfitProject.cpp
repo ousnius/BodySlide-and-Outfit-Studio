@@ -1579,13 +1579,107 @@ void OutfitProject::RefreshMorphShape(NiShape* shape) {
 	morpher.UpdateMeshFromNif(workNif, shape->name.get());
 }
 
+Vector3 OutfitProject::InversePoseDiff(int vertIndex, const Vector3& diffNif, AnimSkin& animSkin, const MatTransform& globalToSkin) {
+	Matrix3 blendedMat(0, 0, 0, 0, 0, 0, 0, 0, 0);
+	float totalWeight = 0;
+
+	for (auto& boneNameIt : animSkin.boneNames) {
+		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNameIt.first);
+		if (!animB)
+			continue;
+
+		AnimWeight& animW = animSkin.boneWeights[boneNameIt.second];
+		auto wIt = animW.weights.find(vertIndex);
+		if (wIt == animW.weights.end())
+			continue;
+
+		float w = wIt->second;
+		MatTransform xform = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+
+		for (int r = 0; r < 3; r++)
+			for (int c = 0; c < 3; c++)
+				blendedMat[r][c] += w * xform.rotation[r][c] * xform.scale;
+
+		totalWeight += w;
+	}
+
+	if (totalWeight >= EPSILON) {
+		Matrix3 invMat;
+		if (blendedMat.Invert(&invMat))
+			return invMat * diffNif;
+	}
+
+	return diffNif;
+}
+
 void OutfitProject::UpdateShapeFromMesh(NiShape* shape, const Mesh* m) {
-	std::vector<Vector3> liveVerts(m->nVerts);
+	if (bPose) {
+		// When posed, m->verts are in posed mesh space. We need to compute
+		// the delta between current posed verts and original posed positions,
+		// then un-pose those deltas and apply them to the NIF rest positions.
+		std::vector<Vector3> restVerts;
+		workNif.GetVertsForShape(shape, restVerts);
 
-	for (int i = 0; i < m->nVerts; i++)
-		liveVerts[i] = Mesh::TransformPosMeshToNif(m->verts[i]);
+		std::vector<Vector3> posedVerts;
+		GetLiveVerts(shape, posedVerts);
 
-	workNif.SetVertsForShape(shape, liveVerts);
+		AnimSkin& animSkin = workAnim.shapeSkinning[shape->name.get()];
+		MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(shape);
+
+		for (int i = 0; i < m->nVerts; i++) {
+			Vector3 meshVertNif = Mesh::TransformPosMeshToNif(m->verts[i]);
+			Vector3 deltaPosed = meshVertNif - posedVerts[i];
+
+			if (deltaPosed.IsZero())
+				continue;
+
+			restVerts[i] += InversePoseDiff(i, deltaPosed, animSkin, globalToSkin);
+		}
+
+		workNif.SetVertsForShape(shape, restVerts);
+	}
+	else {
+		std::vector<Vector3> liveVerts(m->nVerts);
+
+		for (int i = 0; i < m->nVerts; i++)
+			liveVerts[i] = Mesh::TransformPosMeshToNif(m->verts[i]);
+
+		workNif.SetVertsForShape(shape, liveVerts);
+	}
+}
+
+void OutfitProject::UndoPoseDiffs(NiShape* shape, std::unordered_map<uint16_t, Vector3>& diffs) {
+	if (!bPose)
+		return;
+
+	AnimSkin& animSkin = workAnim.shapeSkinning[shape->name.get()];
+	MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(shape);
+
+	for (auto& d : diffs) {
+		Vector3 diffNif = Mesh::TransformDiffMeshToNif(d.second);
+		diffNif = InversePoseDiff(d.first, diffNif, animSkin, globalToSkin);
+		d.second = Mesh::TransformDiffNifToMesh(diffNif);
+	}
+}
+
+void OutfitProject::ComputeUndoRestDiffs(NiShape* shape, UndoStateShape& uss) {
+	if (!uss.restDiffs.empty())
+		return;
+
+	AnimSkin& animSkin = workAnim.shapeSkinning[shape->name.get()];
+	MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(shape);
+
+	for (auto& ps : uss.pointStartState) {
+		auto pe = uss.pointEndState.find(ps.first);
+		if (pe == uss.pointEndState.end())
+			continue;
+
+		Vector3 diffMesh = pe->second - ps.second;
+		Vector3 diffNif = Mesh::TransformDiffMeshToNif(diffMesh);
+		if (bPose)
+			diffNif = InversePoseDiff(ps.first, diffNif, animSkin, globalToSkin);
+		uss.restDiffs[ps.first] = diffNif;
+	}
 }
 
 void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderName, const TargetDataDiffs& vertUpdates) {

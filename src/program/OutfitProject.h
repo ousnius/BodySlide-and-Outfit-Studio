@@ -115,6 +115,10 @@ class OutfitProject {
 	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path) const;
 	void ValidateNIF(nifly::NifFile& nif);
 
+	// Applies the inverse of the blended pose transform to a NIF-space diff
+	// vector for a single vertex, converting it from posed space to rest space.
+	nifly::Vector3 InversePoseDiff(int vertIndex, const nifly::Vector3& diffNif, AnimSkin& animSkin, const nifly::MatTransform& globalToSkin);
+
 public:
 	std::string outfitName = "New Outfit";
 	DiffDataSets baseDiffData;
@@ -253,6 +257,14 @@ public:
 	void RefreshMorphShape(nifly::NiShape* shape);
 	void UpdateShapeFromMesh(nifly::NiShape* shape, const Mesh* m);
 	void UpdateMorphResult(nifly::NiShape* shape, const std::string& sliderName, const TargetDataDiffs& vertUpdates);
+
+	// Converts per-vertex diffs from posed mesh space to rest mesh space.
+	// Only has effect when bPose is true; otherwise diffs are unchanged.
+	void UndoPoseDiffs(nifly::NiShape* shape, std::unordered_map<uint16_t, nifly::Vector3>& diffs);
+
+	// Computes and stores rest-space NIF diffs in the undo state for
+	// pose-independent undo/redo. Only has effect when bPose is true.
+	void ComputeUndoRestDiffs(nifly::NiShape* shape, UndoStateShape& uss);
 	void ScaleMorphResult(nifly::NiShape* shape, const std::string& sliderName, float scaleValue);
 	void MoveVertex(nifly::NiShape* shape, const nifly::Vector3& pos, const int& id);
 	void OffsetShape(nifly::NiShape* shape, const nifly::Vector3& xlate, std::unordered_map<uint16_t, float>* mask = nullptr);

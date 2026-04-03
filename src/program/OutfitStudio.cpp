@@ -3140,20 +3140,43 @@ void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo)
 			if (!m)
 				continue;
 
-			std::unordered_map<uint16_t, Vector3> strokeDiff;
-
-			for (auto& ps : uss.pointStartState) {
-				auto pe = uss.pointEndState.find(ps.first);
-				if (pe == uss.pointEndState.end())
-					continue;
-				if (bIsUndo)
-					strokeDiff[ps.first] = (ps.second - pe->second) * sliderscale;
-				else
-					strokeDiff[ps.first] = (pe->second - ps.second) * sliderscale;
-			}
 			auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(m->shapeName);
-			if (shape)
+			if (!shape)
+				continue;
+
+			if (!uss.restDiffs.empty()) {
+				// Pose-independent undo/redo: use stored rest-space NIF diffs
+				std::unordered_map<uint16_t, Vector3> morphDiff;
+				for (auto& rd : uss.restDiffs) {
+					Vector3 nifDiff = rd.second;
+					if (bIsUndo)
+						nifDiff *= -1.0f;
+					morphDiff[static_cast<uint16_t>(rd.first)] = Mesh::TransformDiffNifToMesh(nifDiff);
+				}
+				project->UpdateMorphResult(shape, usp->sliderName, morphDiff);
+			}
+			else {
+				std::unordered_map<uint16_t, Vector3> strokeDiff;
+
+				for (auto& ps : uss.pointStartState) {
+					auto pe = uss.pointEndState.find(ps.first);
+					if (pe == uss.pointEndState.end())
+						continue;
+					if (bIsUndo)
+						strokeDiff[ps.first] = (ps.second - pe->second) * sliderscale;
+					else
+						strokeDiff[ps.first] = (pe->second - ps.second) * sliderscale;
+				}
+
+				if (project->bPose)
+					project->UndoPoseDiffs(shape, strokeDiff);
+
+				// Store rest-space NIF diffs for future undo/redo
+				for (auto& sd : strokeDiff)
+					uss.restDiffs[sd.first] = Mesh::TransformDiffMeshToNif(sd.second);
+
 				project->UpdateMorphResult(shape, usp->sliderName, strokeDiff);
+			}
 		}
 
 		HighlightSliderData();
@@ -7228,15 +7251,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnTransform"), false);
 		menuBar->Enable(XRCID("btnPivot"), false);
 		menuBar->Enable(XRCID("btnVertexEdit"), false);
-		menuBar->Enable(XRCID("btnInflateBrush"), false);
-		menuBar->Enable(XRCID("btnDeflateBrush"), false);
-		menuBar->Enable(XRCID("btnMoveBrush"), false);
-		menuBar->Enable(XRCID("btnSmoothBrush"), false);
-		menuBar->Enable(XRCID("btnUndiffBrush"), false);
+		menuBar->Enable(XRCID("btnInflateBrush"), true);
+		menuBar->Enable(XRCID("btnDeflateBrush"), true);
+		menuBar->Enable(XRCID("btnMoveBrush"), true);
+		menuBar->Enable(XRCID("btnSmoothBrush"), true);
+		menuBar->Enable(XRCID("btnUndiffBrush"), true);
 		menuBar->Enable(XRCID("btnCollapseVertex"), false);
 		menuBar->Enable(XRCID("btnFlipEdgeTool"), false);
 		menuBar->Enable(XRCID("btnSplitEdgeTool"), false);
-		menuBar->Enable(XRCID("btnMoveVertexTool"), false);
+		menuBar->Enable(XRCID("btnMoveVertexTool"), true);
 		menuBar->Enable(XRCID("deleteVerts"), false);
 		menuBar->Enable(XRCID("refineMesh"), false);
 
@@ -7247,15 +7270,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarV->EnableTool(XRCID("btnTransform"), false);
 		toolBarV->EnableTool(XRCID("btnPivot"), false);
 		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
-		toolBarH->EnableTool(XRCID("btnInflateBrush"), false);
-		toolBarH->EnableTool(XRCID("btnDeflateBrush"), false);
-		toolBarH->EnableTool(XRCID("btnMoveBrush"), false);
-		toolBarH->EnableTool(XRCID("btnSmoothBrush"), false);
-		toolBarH->EnableTool(XRCID("btnUndiffBrush"), false);
+		toolBarH->EnableTool(XRCID("btnInflateBrush"), true);
+		toolBarH->EnableTool(XRCID("btnDeflateBrush"), true);
+		toolBarH->EnableTool(XRCID("btnMoveBrush"), true);
+		toolBarH->EnableTool(XRCID("btnSmoothBrush"), true);
+		toolBarH->EnableTool(XRCID("btnUndiffBrush"), true);
 		toolBarH->EnableTool(XRCID("btnCollapseVertex"), false);
 		toolBarH->EnableTool(XRCID("btnFlipEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
-		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
+		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), true);
 
 		SetNoSubMeshes();
 
@@ -12459,25 +12482,25 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				}
 			}
 		}
-		else if (event.GetUnicodeKey() == '0')
+		else if (event.GetUnicodeKey() == '0' && os->menuBar->IsEnabled(XRCID("btnSelect")))
 			os->SelectTool(ToolID::Select);
-		else if (event.GetUnicodeKey() == '1')
+		else if (event.GetUnicodeKey() == '1' && os->menuBar->IsEnabled(XRCID("btnMaskBrush")))
 			os->SelectTool(ToolID::MaskBrush);
-		else if (event.GetUnicodeKey() == '2')
+		else if (event.GetUnicodeKey() == '2' && os->menuBar->IsEnabled(XRCID("btnInflateBrush")))
 			os->SelectTool(ToolID::InflateBrush);
-		else if (event.GetUnicodeKey() == '3')
+		else if (event.GetUnicodeKey() == '3' && os->menuBar->IsEnabled(XRCID("btnDeflateBrush")))
 			os->SelectTool(ToolID::DeflateBrush);
-		else if (event.GetUnicodeKey() == '4')
+		else if (event.GetUnicodeKey() == '4' && os->menuBar->IsEnabled(XRCID("btnMoveBrush")))
 			os->SelectTool(ToolID::MoveBrush);
-		else if (event.GetUnicodeKey() == '5')
+		else if (event.GetUnicodeKey() == '5' && os->menuBar->IsEnabled(XRCID("btnSmoothBrush")))
 			os->SelectTool(ToolID::SmoothBrush);
-		else if (event.GetUnicodeKey() == '6')
+		else if (event.GetUnicodeKey() == '6' && os->menuBar->IsEnabled(XRCID("btnUndiffBrush")))
 			os->SelectTool(ToolID::UndiffBrush);
-		else if (event.GetUnicodeKey() == '7')
+		else if (event.GetUnicodeKey() == '7' && os->menuBar->IsEnabled(XRCID("btnWeightBrush")))
 			os->SelectTool(ToolID::WeightBrush);
-		else if (event.GetUnicodeKey() == '8')
+		else if (event.GetUnicodeKey() == '8' && os->menuBar->IsEnabled(XRCID("btnColorBrush")))
 			os->SelectTool(ToolID::ColorBrush);
-		else if (event.GetUnicodeKey() == '9')
+		else if (event.GetUnicodeKey() == '9' && os->menuBar->IsEnabled(XRCID("btnAlphaBrush")))
 			os->SelectTool(ToolID::AlphaBrush);
 		else if (event.GetKeyCode() == WXK_SPACE) {
 			if (event.ControlDown()) {
@@ -12799,9 +12822,33 @@ void wxGLPanel::EndBrushStroke() {
 			}
 
 			if (!os->bEditSlider && brushType != TweakBrush::BrushType::Weight && brushType != TweakBrush::BrushType::Color && brushType != TweakBrush::BrushType::Alpha) {
+				{
+					UndoStateProject* usp = undoHistory.GetCurState();
+					for (auto& uss : usp->usss) {
+						auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+						if (shape)
+							os->project->ComputeUndoRestDiffs(shape, uss);
+					}
+				}
+
 				for (auto& s : os->project->GetWorkNif()->GetShapes()) {
 					os->UpdateShapeSource(s);
 					os->project->RefreshMorphShape(s);
+				}
+
+				if (os->project->bPose) {
+					for (auto& s : os->project->GetWorkNif()->GetShapes()) {
+						std::vector<Vector3> verts;
+						os->project->GetLiveVerts(s, verts);
+						UpdateMeshVertices(s->name.get(), &verts, true, true, false);
+					}
+				}
+			}
+			else if (os->bEditSlider && os->project->bPose && brushType != TweakBrush::BrushType::Weight && brushType != TweakBrush::BrushType::Color && brushType != TweakBrush::BrushType::Alpha) {
+				for (auto& s : os->project->GetWorkNif()->GetShapes()) {
+					std::vector<Vector3> verts;
+					os->project->GetLiveVerts(s, verts);
+					UpdateMeshVertices(s->name.get(), &verts, true, true, false);
 				}
 			}
 		}
@@ -12955,9 +13002,33 @@ void wxGLPanel::EndTransform() {
 
 	os->ActiveShapesUpdated(undoHistory.GetCurState());
 	if (!os->bEditSlider) {
+		{
+			UndoStateProject* usp = undoHistory.GetCurState();
+			for (auto& uss : usp->usss) {
+				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+				if (shape)
+					os->project->ComputeUndoRestDiffs(shape, uss);
+			}
+		}
+
 		for (auto& s : os->project->GetWorkNif()->GetShapes()) {
 			os->UpdateShapeSource(s);
 			os->project->RefreshMorphShape(s);
+		}
+
+		if (os->project->bPose) {
+			for (auto& s : os->project->GetWorkNif()->GetShapes()) {
+				std::vector<Vector3> verts;
+				os->project->GetLiveVerts(s, verts);
+				UpdateMeshVertices(s->name.get(), &verts, true, true, false);
+			}
+		}
+	}
+	else if (os->project->bPose) {
+		for (auto& s : os->project->GetWorkNif()->GetShapes()) {
+			std::vector<Vector3> verts;
+			os->project->GetLiveVerts(s, verts);
+			UpdateMeshVertices(s->name.get(), &verts, true, true, false);
 		}
 	}
 
@@ -13775,32 +13846,101 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 		os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UndoType::VertexPosition) {
+		bool hasRestDiffs = false;
 		for (auto& uss : usp->usss) {
-			Mesh* m = GetMesh(uss.shapeName);
-			if (!m)
-				continue;
-
-			for (auto& pit : (bUndo ? uss.pointStartState : uss.pointEndState))
-				m->verts[pit.first] = pit.second;
-
-			m->CalcWeldVerts();
-			m->SmoothNormals();
-			BVHUpdateQueue.insert(m);
-
-			m->QueueUpdate(Mesh::UpdateType::Position);
+			if (!uss.restDiffs.empty()) {
+				hasRestDiffs = true;
+				break;
+			}
 		}
 
-		os->ActiveShapesUpdated(usp, bUndo);
+		if (hasRestDiffs) {
+			// Pose-independent undo/redo: use stored rest-space NIF diffs
+			if (usp->sliderName.empty()) {
+				for (auto& uss : usp->usss) {
+					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+					if (!shape)
+						continue;
 
-		if (usp->sliderName.empty()) {
+					std::vector<Vector3> restVerts;
+					os->project->GetWorkNif()->GetVertsForShape(shape, restVerts);
+
+					for (auto& rd : uss.restDiffs) {
+						if (bUndo)
+							restVerts[rd.first] -= rd.second;
+						else
+							restVerts[rd.first] += rd.second;
+					}
+
+					os->project->GetWorkNif()->SetVertsForShape(shape, restVerts);
+				}
+			}
+
+			os->ActiveShapesUpdated(usp, bUndo);
+
+			for (auto& uss : usp->usss) {
+				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+				if (!shape)
+					continue;
+
+				std::vector<Vector3> verts;
+				os->project->GetLiveVerts(shape, verts);
+				UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
+
+				Mesh* m = GetMesh(uss.shapeName);
+				if (m)
+					m->CalcWeldVerts();
+			}
+		}
+		else {
 			for (auto& uss : usp->usss) {
 				Mesh* m = GetMesh(uss.shapeName);
 				if (!m)
 					continue;
 
-				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
-				if (shape)
-					os->project->UpdateShapeFromMesh(shape, m);
+				for (auto& pit : (bUndo ? uss.pointStartState : uss.pointEndState))
+					m->verts[pit.first] = pit.second;
+
+				m->CalcWeldVerts();
+				m->SmoothNormals();
+				BVHUpdateQueue.insert(m);
+
+				m->QueueUpdate(Mesh::UpdateType::Position);
+			}
+
+			os->ActiveShapesUpdated(usp, bUndo);
+
+			if (usp->sliderName.empty()) {
+				for (auto& uss : usp->usss) {
+					Mesh* m = GetMesh(uss.shapeName);
+					if (!m)
+						continue;
+
+					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+					if (shape)
+						os->project->UpdateShapeFromMesh(shape, m);
+				}
+
+				if (os->project->bPose) {
+					for (auto& uss : usp->usss) {
+						auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+						if (shape) {
+							std::vector<Vector3> verts;
+							os->project->GetLiveVerts(shape, verts);
+							UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
+						}
+					}
+				}
+			}
+			else if (os->project->bPose) {
+				for (auto& uss : usp->usss) {
+					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+					if (shape) {
+						std::vector<Vector3> verts;
+						os->project->GetLiveVerts(shape, verts);
+						UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
+					}
+				}
 			}
 		}
 	}

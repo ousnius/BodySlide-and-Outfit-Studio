@@ -66,6 +66,11 @@ struct UndoStateShape {
 	// is meaningful.
 	std::unordered_map<int, nifly::Vector3> pointStartState;
 	std::unordered_map<int, nifly::Vector3> pointEndState;
+	// restDiffs is only meaningful for UndoType::VertexPosition when the
+	// edit occurred while posed. Contains rest-space NIF diffs per vertex,
+	// used for pose-independent undo/redo (so changing the pose between
+	// the edit and the undo doesn't break the mesh).
+	std::unordered_map<int, nifly::Vector3> restDiffs;
 	// boneWeights is only meaningful for UndoType::Weight.
 	std::vector<UndoStateBoneWeights> boneWeights;
 	// delVerts, addVerts, delTris, and addTris are only meaningful for
