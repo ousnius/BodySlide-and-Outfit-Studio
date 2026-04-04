@@ -74,6 +74,7 @@ set(OSsources
 	${commonsources}
 	src/components/PoseData.cpp
 	src/components/RefTemplates.cpp
+	src/components/Automation.cpp
 	src/components/TweakBrush.cpp
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
@@ -88,6 +89,7 @@ set(OSsources
 	src/program/OutfitStudio.cpp
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp
+	src/program/AutomationDialog.cpp
 	src/program/SliderDataImportDialog.cpp
 	)
 set(BSsources

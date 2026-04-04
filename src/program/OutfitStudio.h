@@ -1225,6 +1225,7 @@ private:
 	void OnAddProject(wxCommandEvent& event);
 	void OnLoadReference(wxCommandEvent& event);
 	void OnConvertBodyReference(wxCommandEvent& event);
+	void OnRunAutomation(wxCommandEvent& event);
 	void OnLoadOutfit(wxCommandEvent& event);
 	void OnUnloadProject(wxCommandEvent& event);
 

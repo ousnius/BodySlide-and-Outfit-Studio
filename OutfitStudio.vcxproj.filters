@@ -590,6 +590,9 @@
     <None Include="res\xrc\ConvertBodyReference.xrc">
       <Filter>Resources</Filter>
     </None>
+    <None Include="res\xrc\Automation.xrc">
+      <Filter>Resources</Filter>
+    </None>
     <None Include="lib\gli\glm\ext\matrix_clip_space.inl">
       <Filter>Libraries\gli\glm\ext</Filter>
     </None>
@@ -1414,6 +1417,12 @@
     <ClInclude Include="src\program\ConvertBodyReferenceDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\AutomationDialog.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\Automation.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\utils\ConfigDialogUtil.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -2114,6 +2123,12 @@
     </ClCompile>
     <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp">
       <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\AutomationDialog.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\Automation.cpp">
+      <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\program\SliderDataImportDialog.cpp">
       <Filter>Program</Filter>

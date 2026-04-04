@@ -1730,6 +1730,10 @@
 				<label>Convert / Replace Reference...\tCtrl+Shift+R</label>
 				<help>Convert to or replace an outfit's body/reference</help>
 			</object>
+			<object class="wxMenuItem" name="menuRunAutomation">
+				<label>Open Automation...\tCtrl+Shift+A</label>
+				<help>Open the automation dialog to create, load and execute automation scripts.</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="fileSave">
 				<label>Save Project\tCtrl+S</label>

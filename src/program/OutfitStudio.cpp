@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PresetSaveDialog.h"
 #include "ShapeProperties.h"
 #include "SliderDataImportDialog.h"
+#include "AutomationDialog.h"
 
 #include <sstream>
 #include <wx/debugrpt.h>
@@ -94,6 +95,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnAddProject"), OutfitStudioFrame::OnAddProject)
 	EVT_MENU(XRCID("fileLoadRef"), OutfitStudioFrame::OnLoadReference)
 	EVT_MENU(XRCID("fileConvBodyRef"), OutfitStudioFrame::OnConvertBodyReference)
+	EVT_MENU(XRCID("menuRunAutomation"), OutfitStudioFrame::OnRunAutomation)
 	EVT_MENU(XRCID("fileLoadOutfit"), OutfitStudioFrame::OnLoadOutfit)
 	EVT_MENU(XRCID("fileSave"), OutfitStudioFrame::OnSaveSliderSet)
 	EVT_MENU(XRCID("fileSaveAs"), OutfitStudioFrame::OnSaveSliderSetAs)
@@ -4136,6 +4138,16 @@ void OutfitStudioFrame::OnConvertBodyReference(wxCommandEvent& WXUNUSED(event)) 
 		return;
 
 	dlg.ConvertBodyReference();
+}
+
+void OutfitStudioFrame::OnRunAutomation(wxCommandEvent& WXUNUSED(event)) {
+	if (bEditSlider) {
+		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
+		return;
+	}
+
+	AutomationDialog dlg(this, project);
+	dlg.ShowModal();
 }
 
 

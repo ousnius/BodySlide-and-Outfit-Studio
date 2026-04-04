@@ -419,6 +419,7 @@
     <None Include="res\xrc\About.xrc" />
     <None Include="res\xrc\Actions.xrc" />
     <None Include="res\xrc\ConvertBodyReference.xrc" />
+    <None Include="res\xrc\Automation.xrc" />
     <None Include="res\xrc\EditUV.xrc" />
     <None Include="res\xrc\ImportDialog.xrc" />
     <None Include="res\xrc\OutfitStudio.xrc" />
@@ -822,6 +823,8 @@
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\files\MaskFile.h" />
     <ClInclude Include="src\program\ConvertBodyReferenceDialog.h" />
+    <ClInclude Include="src\program\AutomationDialog.h" />
+    <ClInclude Include="src\components\Automation.h" />
     <ClInclude Include="src\program\EditUV.h" />
     <ClInclude Include="src\program\FBXImportDialog.h" />
     <ClInclude Include="src\program\GroupManager.h" />
@@ -902,6 +905,8 @@
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\files\MaskFile.cpp" />
     <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp" />
+    <ClCompile Include="src\program\AutomationDialog.cpp" />
+    <ClCompile Include="src\components\Automation.cpp" />
     <ClCompile Include="src\program\EditUV.cpp" />
     <ClCompile Include="src\program\FBXImportDialog.cpp" />
     <ClCompile Include="src\program\GroupManager.cpp" />
