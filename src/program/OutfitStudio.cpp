@@ -754,6 +754,13 @@ void OutfitStudio::CharHook(wxKeyEvent& event) {
 			::SendMessage(hwndEdit, WM_CHAR, keyCode, event.GetRawKeyFlags());
 			return;
 		}
+
+		auto comboCtrl = dynamic_cast<wxComboBox*>(w);
+		if (comboCtrl) {
+			HWND hwndCombo = comboCtrl->GetHandle();
+			::SendMessage(hwndCombo, WM_CHAR, keyCode, event.GetRawKeyFlags());
+			return;
+		}
 	}
 #endif
 
