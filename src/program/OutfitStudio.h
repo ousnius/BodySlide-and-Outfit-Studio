@@ -893,6 +893,8 @@ public:
 
 	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
 
+	const std::vector<RefTemplate>& GetRefTemplates() const { return refTemplates; }
+
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;
 	OutfitProject* project = nullptr;
@@ -978,6 +980,9 @@ public:
 	bool SaveProjectAs();
 	bool LoadProject(const std::string& fileName, const std::string& projectName = "", bool clearProject = true);
 	void CreateSetSliders();
+
+	void UpdateReferenceTemplates();
+	void ResetProject();
 
 	std::string NewSlider(const std::string& suggestedName = "", bool skipPrompt = false);
 
@@ -1178,8 +1183,6 @@ private:
 
 	void ScrollWindowIntoView(wxScrolledWindow* scrolled, wxWindow* window);
 	void HighlightSlider(const std::string& name);
-
-	void UpdateReferenceTemplates();
 
 	void ClearProject();
 	void RenameProject(const std::string& projectName);

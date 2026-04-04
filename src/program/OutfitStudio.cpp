@@ -4214,6 +4214,19 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Unloading project...");
 	menuBar->Enable(XRCID("fileSave"), false);
 
+	ResetProject();
+
+	delete project;
+	project = new OutfitProject(this);
+
+	CreateSetSliders();
+	RefreshGUIFromProj(false);
+	glView->Render();
+
+	statusBar->SetStatusText(_("Ready!"));
+}
+
+void OutfitStudioFrame::ResetProject() {
 	ClearProject();
 	project->ClearReference();
 	project->ClearOutfit();
@@ -4226,14 +4239,8 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
-	delete project;
-	project = new OutfitProject(this);
-
 	CreateSetSliders();
 	RefreshGUIFromProj(false);
-	glView->Render();
-
-	statusBar->SetStatusText(_("Ready!"));
 }
 
 void OutfitStudioFrame::UpdateReferenceTemplates() {
