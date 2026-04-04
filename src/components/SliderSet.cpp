@@ -32,7 +32,6 @@ size_t SliderSet::CloneSlider(const std::string& sliderName, const std::string& 
 	auto& clonedSlider = sliders.emplace_back(*sliderIt);
 	clonedSlider.name = cloneName;
 	clonedSlider.curValue = 0.0f;
-	clonedSlider.bShow = true;
 	clonedSlider.zapToggles.clear();
 
 	return sliders.size() - 1;

@@ -17,7 +17,6 @@ SliderData::~SliderData() {}
 int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 	//Outfit Studio state values, not saved in XML.
 	curValue = 0;
-	bShow = false;
 	int numData = 0;
 
 	XMLElement* root = element->Parent()->Parent()->ToElement();

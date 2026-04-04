@@ -37,7 +37,7 @@ public:
 	std::vector<std::string> zapToggles;
 
 	float curValue = 0.0f;
-	bool bShow = false;
+	bool bShow = true;
 
 	std::vector<DiffInfo> dataFiles;
 
