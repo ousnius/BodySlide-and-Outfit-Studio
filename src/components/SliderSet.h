@@ -93,6 +93,7 @@ public:
 
 	std::string GetName() { return name; }
 
+	std::string GetInputFile() { return inputfile; }
 	std::string GetInputFileName();
 	std::string GetOutputPath() { return outputpath; }
 	std::string GetOutputFile() { return outputfile; }
