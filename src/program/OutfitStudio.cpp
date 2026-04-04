@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "OutfitStudio.h"
 #include "../components/SliderGroup.h"
 #include "../components/SliderPresets.h"
+#include "../files/MaskFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
 #include "../ui/wxBrushSettingsPopup.h"
@@ -99,10 +100,11 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("fileUnload"), OutfitStudioFrame::OnUnloadProject)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("masksPane"), OutfitStudioFrame::OnPaneCollapse)
-	EVT_CHOICE(XRCID("cMaskName"), OutfitStudioFrame::OnSelectMask)
+	EVT_COMBOBOX(XRCID("cMaskName"), OutfitStudioFrame::OnSelectMask)
 	EVT_BUTTON(XRCID("saveMask"), OutfitStudioFrame::OnSaveMask)
-	EVT_BUTTON(XRCID("saveAsMask"), OutfitStudioFrame::OnSaveAsMask)
 	EVT_BUTTON(XRCID("deleteMask"), OutfitStudioFrame::OnDeleteMask)
+	EVT_BUTTON(XRCID("exportMask"), OutfitStudioFrame::OnExportMask)
+	EVT_BUTTON(XRCID("importMask"), OutfitStudioFrame::OnImportMask)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("posePane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("notesPane"), OutfitStudioFrame::OnPaneCollapse)
@@ -4296,7 +4298,7 @@ void OutfitStudioFrame::ClearProject() {
 	if (currentTabButton)
 		currentTabButton->SetPendingChanges(false);
 
-	auto cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+	auto cMaskName = (wxComboBox*)FindWindowByName("cMaskName");
 	cMaskName->Clear();
 
 	auto cPoseName = (wxChoice*)FindWindowByName("cPoseName");
@@ -11770,7 +11772,7 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSelectMask(wxCommandEvent& WXUNUSED(event)) {
-	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+	auto cMaskName = (wxComboBox*)FindWindowByName("cMaskName");
 	int maskSel = cMaskName->GetSelection();
 	if (maskSel != wxNOT_FOUND) {
 		auto maskData = (std::map<std::string, std::unordered_map<uint16_t, float>>*)cMaskName->GetClientData(maskSel);
@@ -11783,36 +11785,11 @@ void OutfitStudioFrame::OnSelectMask(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnSaveMask(wxCommandEvent& WXUNUSED(event)) {
-	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
-	int maskSel = cMaskName->GetSelection();
-	if (maskSel != wxNOT_FOUND) {
-		auto maskData = new std::map<std::string, std::unordered_map<uint16_t, float>>();
+	auto cMaskName = (wxComboBox*)FindWindowByName("cMaskName");
 
-		std::vector<std::string> shapes = GetShapeList();
-		for (auto& s : shapes) {
-			std::unordered_map<uint16_t, float> mask;
-			glView->GetShapeMask(mask, s);
-			(*maskData)[s] = std::move(mask);
-		}
-
-		cMaskName->SetClientData(maskSel, maskData);
-	}
-	else {
-		wxCommandEvent evt;
-		OnSaveAsMask(evt);
-	}
-}
-
-void OutfitStudioFrame::OnSaveAsMask(wxCommandEvent& WXUNUSED(event)) {
-	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
-
-	wxString maskName;
-	do {
-		maskName = wxGetTextFromUser(_("Please enter a new unique name for the mask."), _("New Mask"));
-		if (maskName.empty())
-			return;
-
-	} while (cMaskName->FindString(maskName) != wxNOT_FOUND);
+	wxString maskName = cMaskName->GetValue();
+	if (maskName.empty())
+		return;
 
 	auto maskData = new std::map<std::string, std::unordered_map<uint16_t, float>>();
 
@@ -11823,16 +11800,112 @@ void OutfitStudioFrame::OnSaveAsMask(wxCommandEvent& WXUNUSED(event)) {
 		(*maskData)[s] = std::move(mask);
 	}
 
-	int maskSel = cMaskName->Append(maskName, maskData);
-	cMaskName->SetSelection(maskSel);
+	int existingSel = cMaskName->FindString(maskName);
+	if (existingSel != wxNOT_FOUND) {
+		cMaskName->SetClientData(existingSel, maskData);
+		cMaskName->SetSelection(existingSel);
+	}
+	else {
+		int maskSel = cMaskName->Append(maskName, maskData);
+		cMaskName->SetSelection(maskSel);
+	}
 }
 
 void OutfitStudioFrame::OnDeleteMask(wxCommandEvent& WXUNUSED(event)) {
-	wxChoice* cMaskName = (wxChoice*)FindWindowByName("cMaskName");
+	auto cMaskName = (wxComboBox*)FindWindowByName("cMaskName");
 	int maskSel = cMaskName->GetSelection();
 	if (maskSel != wxNOT_FOUND) {
 		cMaskName->Delete(maskSel);
+		cMaskName->SetValue("");
 	}
+}
+
+void OutfitStudioFrame::OnExportMask(wxCommandEvent& WXUNUSED(event)) {
+	auto cMaskName = (wxComboBox*)FindWindowByName("cMaskName");
+	if (cMaskName->GetCount() == 0) {
+		wxMessageBox(_("No masks to export."), _("Export Masks"), wxICON_INFORMATION);
+		return;
+	}
+
+	wxFileDialog saveDialog(this, _("Export Masks"), wxEmptyString, "masks.xml",
+		"XML Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+	if (saveDialog.ShowModal() == wxID_CANCEL)
+		return;
+
+	std::string filePath = saveDialog.GetPath().ToUTF8().data();
+
+	MaskFile maskFile;
+	for (unsigned int i = 0; i < cMaskName->GetCount(); i++) {
+		auto maskData = (std::map<std::string, std::unordered_map<uint16_t, float>>*)cMaskName->GetClientData(i);
+		if (!maskData)
+			continue;
+
+		MaskEntry entry;
+		entry.name = cMaskName->GetString(i).ToUTF8().data();
+
+		std::map<std::string, int> vertexCounts;
+		for (auto& [shapeName, mask] : *maskData) {
+			Mesh* m = glView->GetMesh(shapeName);
+			if (m)
+				vertexCounts[shapeName] = m->nVerts;
+		}
+
+		entry.SetFromMaskData(*maskData, vertexCounts);
+		maskFile.GetEntries().push_back(std::move(entry));
+	}
+
+	int err = maskFile.Save(filePath);
+	if (err)
+		wxMessageBox(_("Failed to save mask file."), _("Export Masks"), wxICON_ERROR);
+}
+
+void OutfitStudioFrame::OnImportMask(wxCommandEvent& WXUNUSED(event)) {
+	wxFileDialog openDialog(this, _("Import Masks"), wxEmptyString, wxEmptyString,
+		"XML Files (*.xml)|*.xml", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+	if (openDialog.ShowModal() == wxID_CANCEL)
+		return;
+
+	std::string filePath = openDialog.GetPath().ToUTF8().data();
+
+	MaskFile maskFile;
+	int err = maskFile.Load(filePath);
+	if (err) {
+		wxMessageBox(_("Failed to load mask file."), _("Import Masks"), wxICON_ERROR);
+		return;
+	}
+
+	auto cMaskName = (wxComboBox*)FindWindowByName("cMaskName");
+
+	for (const auto& entry : maskFile.GetEntries()) {
+		wxString maskName = entry.name.empty() ? _("Imported Mask") : wxString::FromUTF8(entry.name);
+		auto maskData = new std::map<std::string, std::unordered_map<uint16_t, float>>(entry.ToMaskData());
+
+		int existing = cMaskName->FindString(maskName);
+		if (existing != wxNOT_FOUND) {
+			cMaskName->SetClientData(existing, maskData);
+		}
+		else {
+			cMaskName->Append(maskName, maskData);
+		}
+	}
+
+	// Select and apply the first imported entry
+	if (!maskFile.GetEntries().empty()) {
+		wxString firstName = wxString::FromUTF8(maskFile.GetEntries().front().name);
+		int sel = cMaskName->FindString(firstName);
+		if (sel != wxNOT_FOUND) {
+			cMaskName->SetSelection(sel);
+			auto maskData = (std::map<std::string, std::unordered_map<uint16_t, float>>*)cMaskName->GetClientData(sel);
+			if (maskData) {
+				for (auto& [shapeName, mask] : *maskData)
+					glView->SetShapeMask(mask, shapeName);
+			}
+		}
+	}
+
+	glView->Render();
 }
 
 void OutfitStudioFrame::OnPaneCollapse(wxCollapsiblePaneEvent& WXUNUSED(event)) {

@@ -730,6 +730,9 @@
     <ClInclude Include="src\files\TriFile.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\MaskFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\FBXWrangler.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -1969,6 +1972,9 @@
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\TriFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\MaskFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\FBXWrangler.cpp">

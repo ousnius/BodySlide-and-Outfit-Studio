@@ -1622,8 +1622,9 @@ private:
 
 	void OnSelectMask(wxCommandEvent& event);
 	void OnSaveMask(wxCommandEvent& event);
-	void OnSaveAsMask(wxCommandEvent& event);
 	void OnDeleteMask(wxCommandEvent& event);
+	void OnExportMask(wxCommandEvent& event);
+	void OnImportMask(wxCommandEvent& event);
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
 	void ApplyPose();
 	AnimBone* GetPoseBonePtr();

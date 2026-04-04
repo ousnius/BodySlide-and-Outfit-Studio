@@ -49,6 +49,7 @@ set(commonsources
 	src/components/SliderManager.cpp
 	src/components/SliderPresets.cpp
 	src/components/SliderSet.cpp
+	src/files/MaskFile.cpp
 	src/files/MaterialFile.cpp
 	src/files/ResourceLoader.cpp
 	src/files/TriFile.cpp
