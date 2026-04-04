@@ -8918,6 +8918,12 @@ int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent) 
 	ConformOptions options;
 	if (ShowConform(options, silent)) {
 		wxLogMessage("Conforming shapes...");
+
+		// Collect shown slider names before zeroing
+		for (size_t i = 0; i < project->SliderCount(); i++)
+			if (project->SliderShow(i))
+				options.sliderNames.push_back(project->GetSliderName(i));
+
 		ZeroSliders();
 
 		project->InitConform();

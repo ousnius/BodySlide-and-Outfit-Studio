@@ -2557,9 +2557,21 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 	morpher.BuildProximityCache(shape->name.get(), options.proximityRadius, &maskIndices);
 
 	std::string refTarget = ShapeToTarget(baseShape->name.get());
-	for (size_t i = 0; i < activeSet.size(); i++)
-		if (SliderShow(i) && !SliderZap(i) && !SliderUV(i))
-			morpher.GenerateResultDiff(shape->name.get(),
+	for (size_t i = 0; i < activeSet.size(); i++) {
+		if (SliderZap(i) || SliderUV(i))
+			continue;
+		if (!options.sliderNames.empty()) {
+			bool found = false;
+			for (const auto& sn : options.sliderNames) {
+				if (sn == activeSet[i].name) {
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+				continue;
+		}
+		morpher.GenerateResultDiff(shape->name.get(),
 									   activeSet[i].name,
 									   activeSet[i].TargetDataName(refTarget),
 									   true,
@@ -2569,8 +2581,8 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 									   options.axisX,
 									   options.axisY,
 									   options.axisZ);
+	}
 }
-
 TargetDataDiffs* OutfitProject::GetDiffSet(SliderData& sliderData, NiShape* shape) {
 	std::string target = ShapeToTarget(shape->name.get());
 	std::string targetDataName = sliderData.TargetDataName(target);

@@ -21,6 +21,7 @@ struct ConformOptions {
 	bool axisX = true;
 	bool axisY = true;
 	bool axisZ = true;
+	std::vector<std::string> sliderNames; // If empty, conform all non-zap/non-UV sliders
 };
 
 class OutfitStudioFrame;
