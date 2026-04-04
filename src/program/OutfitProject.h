@@ -105,6 +105,8 @@ void AddWeldedToVertexList(const Mesh::WeldVertsType& welcVerts, std::vector<boo
 class OutfitProject {
 	OutfitStudioFrame* owner = nullptr;
 
+	void UpdateProgress(int val, const wxString& msg = "");
+
 	nifly::NifFile workNif;
 	AnimInfo workAnim;
 	nifly::NiShape* baseShape = nullptr;

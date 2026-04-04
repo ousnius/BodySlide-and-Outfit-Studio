@@ -39,6 +39,11 @@ OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 		mGenWeights = true;
 }
 
+void OutfitProject::UpdateProgress(int val, const wxString& msg) {
+	if (owner)
+		owner->UpdateProgress(val, msg);
+}
+
 OutfitProject::~OutfitProject() {}
 
 std::string OutfitProject::Save(const wxFileName& sliderSetFile,
@@ -51,7 +56,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 								bool copyRef,
 								bool preventMorphFile,
 								bool keepZappedShapes) {
-	owner->UpdateProgress(1, _("Checking destination..."));
+	UpdateProgress(1, _("Checking destination..."));
 	std::string errmsg = "";
 	std::string outfit{strOutfitName.ToUTF8()};
 	std::string baseFile{strBaseFile.ToUTF8()};
@@ -102,7 +107,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 
 	int prog = 5;
 	int step = 10 / shapes.size();
-	owner->UpdateProgress(prog);
+	UpdateProgress(prog);
 
 	if (copyRef && baseShape) {
 		// Add all the reference shapes to the target list.
@@ -112,7 +117,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		outSet.SetSmoothSeamNormals(baseShapeName, activeSet.GetSmoothSeamNormals(baseShapeName));
 		outSet.SetSmoothSeamNormalsAngle(baseShapeName, activeSet.GetSmoothSeamNormalsAngle(baseShapeName));
 		outSet.SetLockNormals(baseShapeName, activeSet.GetLockNormals(baseShapeName));
-		owner->UpdateProgress(prog += step, _("Adding reference shapes..."));
+		UpdateProgress(prog += step, _("Adding reference shapes..."));
 	}
 
 	// Add all the outfit shapes to the target list.
@@ -133,7 +138,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		outSet.SetSmoothSeamNormals(shapeName, activeSet.GetSmoothSeamNormals(shapeName));
 		outSet.SetSmoothSeamNormalsAngle(shapeName, activeSet.GetSmoothSeamNormalsAngle(shapeName));
 		outSet.SetLockNormals(shapeName, activeSet.GetLockNormals(shapeName));
-		owner->UpdateProgress(prog += step, _("Adding outfit shapes..."));
+		UpdateProgress(prog += step, _("Adding outfit shapes..."));
 	}
 
 	std::string osdFileName = baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
@@ -146,7 +151,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 
 		prog = 10;
 		step = 20 / activeSet.size();
-		owner->UpdateProgress(prog);
+		UpdateProgress(prog);
 
 		for (size_t i = 0; i < activeSet.size(); i++) {
 			size_t id = outSet.CopySlider(&activeSet[i]);
@@ -192,7 +197,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 					}
 				}
 			}
-			owner->UpdateProgress(prog += step, _("Calculating slider data..."));
+			UpdateProgress(prog += step, _("Calculating slider data..."));
 		}
 	}
 
@@ -200,7 +205,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	SaveSliderData(saveDataPath + PathSepStr + osdFileName, copyRef);
 
 	prog = 60;
-	owner->UpdateProgress(prog, _("Creating slider set file..."));
+	UpdateProgress(prog, _("Creating slider set file..."));
 
 	std::string ssUFileName{mFileName.ToUTF8()};
 	SliderSetFile ssf(ssUFileName);
@@ -214,14 +219,14 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 
 	ssFileName.Mkdir(wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
-	owner->UpdateProgress(61, _("Saving slider set file..."));
+	UpdateProgress(61, _("Saving slider set file..."));
 	ssf.UpdateSet(outSet);
 	if (!ssf.Save()) {
 		errmsg = _("Failed to write to slider set file: ") + ssUFileName;
 		return errmsg;
 	}
 
-	owner->UpdateProgress(70, _("Saving NIF file..."));
+	UpdateProgress(70, _("Saving NIF file..."));
 
 	std::string saveFileName = saveDataPath + PathSepStr + baseFile;
 
@@ -257,7 +262,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	}
 
 	owner->ShowPartition();
-	owner->UpdateProgress(100, _("Finished"));
+	UpdateProgress(100, _("Finished"));
 	return errmsg;
 }
 
@@ -426,7 +431,6 @@ std::string OutfitProject::GetSliderName(const size_t index) {
 
 void OutfitProject::AddEmptySlider(const std::string& newName) {
 	size_t sliderID = activeSet.CreateSlider(newName);
-	activeSet[sliderID].bShow = true;
 
 	if (baseShape) {
 		std::string baseShapeName = baseShape->name.get();
@@ -1791,11 +1795,11 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 	std::string shapeName = shape->name.get();
 	std::string baseShapeName = baseShape->name.get();
 
-	owner->UpdateProgress(1, _("Gathering bones..."));
+	UpdateProgress(1, _("Gathering bones..."));
 
 	int nBones = boneList.size();
 	if (nBones <= 0 || nCopyBones <= 0) {
-		owner->UpdateProgress(90);
+		UpdateProgress(90);
 		return;
 	}
 
@@ -1819,7 +1823,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 	nzer.SetUp(&uss, &workAnim, shapeName, boneList, lockedBones, nCopyBones, bSpreadWeight);
 	std::unordered_set<int> vertList;
 
-	owner->UpdateProgress(10, _("Initializing proximity data..."));
+	UpdateProgress(10, _("Initializing proximity data..."));
 
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
@@ -1828,7 +1832,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 
 	int step = 40 / nCopyBones;
 	int prog = 40;
-	owner->UpdateProgress(prog);
+	UpdateProgress(prog);
 
 	for (int bi = 0; bi < nCopyBones; ++bi) {
 		const std::string& boneName = boneList[bi];
@@ -1865,7 +1869,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 			ubw[dr.first].endVal = dr.second.y;
 		}
 
-		owner->UpdateProgress(prog += step, _("Copying bone weights..."));
+		UpdateProgress(prog += step, _("Copying bone weights..."));
 	}
 	morpher.UnlinkRefDiffData();
 
@@ -1873,7 +1877,7 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 	for (auto vInd : vertList)
 		nzer.AdjustWeights(vInd);
 
-	owner->UpdateProgress(90);
+	UpdateProgress(90);
 }
 
 void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<uint16_t, float>* mask, std::vector<std::string>* inBoneList) {
@@ -1883,7 +1887,7 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 	std::string shapeName = shape->name.get();
 	std::string baseShapeName = baseShape->name.get();
 
-	owner->UpdateProgress(10, _("Gathering bones..."));
+	UpdateProgress(10, _("Gathering bones..."));
 
 	std::vector<std::string>* boneList;
 	std::vector<std::string> allBoneList;
@@ -1897,13 +1901,13 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 		boneList = inBoneList;
 
 	if (boneList->size() <= 0) {
-		owner->UpdateProgress(100, _("Finished"));
+		UpdateProgress(100, _("Finished"));
 		return;
 	}
 
 	int step = 50 / boneList->size();
 	int prog = 40;
-	owner->UpdateProgress(prog, _("Transferring bone weights..."));
+	UpdateProgress(prog, _("Transferring bone weights..."));
 
 	for (auto& boneName : *boneList) {
 		std::unordered_map<uint16_t, float> weights;
@@ -1924,10 +1928,10 @@ void OutfitProject::TransferSelectedWeights(NiShape* shape, std::unordered_map<u
 
 		workAnim.AddShapeBone(shapeName, boneName);
 		workAnim.SetWeights(shapeName, boneName, weights);
-		owner->UpdateProgress(prog += step, "");
+		UpdateProgress(prog += step, "");
 	}
 
-	owner->UpdateProgress(100, _("Finished"));
+	UpdateProgress(100, _("Finished"));
 }
 
 bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
@@ -2372,7 +2376,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 		return 1;
 	}
 
-	owner->UpdateProgress(20, _("Retrieving sliders..."));
+	UpdateProgress(20, _("Retrieving sliders..."));
 	if (InSS.GetSet(sliderSetName, activeSet)) {
 		owner->EndProgress();
 		return 3;
@@ -2382,7 +2386,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 
 	std::string inputNif = activeSet.GetInputFileName();
 
-	owner->UpdateProgress(30, _("Loading outfit shapes..."));
+	UpdateProgress(30, _("Loading outfit shapes..."));
 	if (ImportNIF(inputNif, true, sliderSetName)) {
 		owner->EndProgress();
 		return 4;
@@ -2425,7 +2429,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	// Store base shape for later deletion
 	baseShape = newBaseShape;
 
-	owner->UpdateProgress(90, _("Updating slider data..."));
+	UpdateProgress(90, _("Updating slider data..."));
 	morpher.LoadResultDiffs(activeSet);
 
 	wxString rest;
@@ -2458,7 +2462,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 	}
 
 	SliderSet addSet;
-	owner->UpdateProgress(20, _("Retrieving sliders..."));
+	UpdateProgress(20, _("Retrieving sliders..."));
 	if (InSS.GetSet(sliderSetName, addSet)) {
 		owner->EndProgress();
 		return 2;
@@ -2468,7 +2472,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 	std::string inputNif = addSet.GetInputFileName();
 
 	std::map<std::string, std::string> renamedShapes;
-	owner->UpdateProgress(30, _("Adding outfit shapes..."));
+	UpdateProgress(30, _("Adding outfit shapes..."));
 	if (ImportNIF(inputNif, false, "", &renamedShapes)) {
 		owner->EndProgress();
 		return 3;
@@ -2524,7 +2528,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 					 owner);
 	}
 
-	owner->UpdateProgress(70, _("Updating slider data..."));
+	UpdateProgress(70, _("Updating slider data..."));
 	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->name.get() : "", newDataLocal, appendNewSliders);
 
 	owner->EndProgress();
