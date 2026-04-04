@@ -1027,7 +1027,7 @@ public:
 	void UpdateAnimationGUI();
 	void UpdateBoneItemState(const wxTreeItemId& item, const std::string& boneName);
 	void UpdateBoneTree();
-	void RefreshGUIFromProj(bool render = true);
+	void RefreshGUIFromProj(bool render = true, bool stashMasks = true);
 	void MeshesFromProj(const bool reloadTextures = false);
 	void MeshFromProj(nifly::NiShape* shape, const bool reloadTextures = false);
 

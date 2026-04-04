@@ -4334,7 +4334,7 @@ void OutfitStudioFrame::UnlockShapeSelect() {
 	outfitShapes->Enable();
 }
 
-void OutfitStudioFrame::RefreshGUIFromProj(bool render) {
+void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 	LockShapeSelect();
 
 	selectedItems.clear();
@@ -4415,7 +4415,14 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render) {
 		activeItem = nullptr;
 
 	outfitShapes->ExpandAll();
-	MeshesFromProj();
+
+	if (stashMasks) {
+		auto maskStash = glView->StashMasks();
+		MeshesFromProj();
+		glView->UnstashMasks(maskStash);
+	}
+	else
+		MeshesFromProj();
 
 	UpdateAnimationGUI();
 
@@ -9189,11 +9196,7 @@ void OutfitStudioFrame::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
 	if (shape)
 		project->SetTextures(shape);
 
-	auto maskStash = glView->StashMasks();
-	RefreshGUIFromProj(false);
-	glView->UnstashMasks(maskStash);
-	glView->Render();
-
+	RefreshGUIFromProj();
 	SetPendingChanges();
 }
 
@@ -9927,7 +9930,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	project->GetWorkAnim()->CleanupBones();
 
-	RefreshGUIFromProj(false);
+	RefreshGUIFromProj(false, false);
 	SetPendingChanges();
 
 	glView->UnstashMasks(maskStash);
@@ -9981,7 +9984,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	project->ApplyShapeMeshUndo(newShape, maskStash[usp->usss[1].shapeName], usp->usss[1], false);
 
 	project->SetTextures();
-	RefreshGUIFromProj(false);
+	RefreshGUIFromProj(false, false);
 	SetPendingChanges();
 
 	glView->UnstashMasks(maskStash);
@@ -10099,7 +10102,7 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 	if (XRCCTRL(dlg, "checkDeleteSource", wxCheckBox)->IsChecked())
 		project->DeleteShape(sourceShape);
 
-	RefreshGUIFromProj(false);
+	RefreshGUIFromProj(false, false);
 	SetPendingChanges();
 	glView->UnstashMasks(maskStash);
 	ApplySliders();
@@ -13992,7 +13995,7 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 			os->project->ApplyShapeMeshUndo(shape, maskStash[uss.shapeName], uss, bUndo);
 		}
 
-		os->RefreshGUIFromProj(false);
+		os->RefreshGUIFromProj(false, false);
 		UnstashMasks(maskStash);
 		os->ApplySliders();
 	}
