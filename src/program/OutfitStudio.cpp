@@ -2831,14 +2831,20 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 void OutfitStudioFrame::SetSliderValue(const size_t index, int val) {
 	std::string name = project->GetSliderName(index);
 	project->SliderValue(index) = val / 100.0f;
-	sliderPanels[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
-	sliderPanels[name]->slider->SetValue(val);
+	auto it = sliderPanels.find(name);
+	if (it != sliderPanels.end() && it->second) {
+		it->second->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
+		it->second->slider->SetValue(val);
+	}
 }
 
 void OutfitStudioFrame::SetSliderValue(const std::string& name, int val) {
 	project->SliderValue(name) = val / 100.0f;
-	sliderPanels[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
-	sliderPanels[name]->slider->SetValue(val);
+	auto it = sliderPanels.find(name);
+	if (it != sliderPanels.end() && it->second) {
+		it->second->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
+		it->second->slider->SetValue(val);
+	}
 }
 
 void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
@@ -3114,6 +3120,10 @@ void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
 
 std::vector<std::string> OutfitStudioFrame::GetShapeList() {
 	std::vector<std::string> shapes;
+
+	if (!outfitRoot.IsOk())
+		return shapes;
+
 	wxTreeItemIdValue cookie;
 
 	wxTreeItemId curItem = outfitShapes->GetFirstChild(outfitRoot, cookie);
@@ -3286,6 +3296,9 @@ std::vector<ShapeItemData*>& OutfitStudioFrame::GetSelectedItems() {
 }
 
 void OutfitStudioFrame::ClearSelected(NiShape* shape) {
+	if (activeItem && activeItem->GetShape() == shape)
+		activeItem = nullptr;
+
 	selectedItems.erase(std::remove_if(selectedItems.begin(), selectedItems.end(), [&](ShapeItemData* i) { return i->GetShape() == shape; }), selectedItems.end());
 }
 
@@ -4501,7 +4514,12 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 }
 
 void OutfitStudioFrame::UpdateBoneItemState(const wxTreeItemId& item, const std::string& boneName) {
-	bool badBone = activeItem && project->GetWorkAnim()->BoneHasInconsistentTransforms(activeItem->GetShape()->name.get(), boneName);
+	bool badBone = false;
+	if (activeItem) {
+		auto* shape = activeItem->GetShape();
+		if (shape && project->GetWorkNif()->IsValid() && project->GetWorkNif()->GetBlockID(shape) != nifly::NIF_NPOS)
+			badBone = project->GetWorkAnim()->BoneHasInconsistentTransforms(shape->name.get(), boneName);
+	}
 	outfitBones->SetItemState(item, (lastNormalizeBones.count(boneName) != 0 ? 1 : 0) + (badBone ? 2 : 0));
 }
 
@@ -4675,8 +4693,9 @@ void OutfitStudioFrame::SetBaseShape() {
 	ZeroSliders();
 	if (!activeSlider.empty()) {
 		bEditSlider = false;
-		wxSliderPanel* sliderPanel = sliderPanels[activeSlider];
-		sliderPanel->slider->SetFocus();
+		auto it = sliderPanels.find(activeSlider);
+		if (it != sliderPanels.end() && it->second)
+			it->second->slider->SetFocus();
 		HighlightSlider("");
 		activeSlider.clear();
 	}
@@ -7671,7 +7690,6 @@ void OutfitStudioFrame::ZeroSliders() {
 				continue;
 
 			SetSliderValue(s, 0);
-			sliderPanels[project->GetSliderName(s)]->slider->SetValue(0);
 		}
 		ApplySliders();
 	}
