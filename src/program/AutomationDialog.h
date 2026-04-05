@@ -12,6 +12,7 @@ See the included LICENSE file
 #include <wx/filepicker.h>
 #include <wx/gauge.h>
 #include <wx/listctrl.h>
+#include <wx/log.h>
 #include <wx/radiobox.h>
 #include <wx/simplebook.h>
 #include <wx/wx.h>
@@ -50,6 +51,9 @@ private:
 	wxButton* btnExecuteAll = nullptr;
 	wxStatusBar* statusBar = nullptr;
 	wxGauge* progressBar = nullptr;
+	wxCollapsiblePane* paneOutput = nullptr;
+	wxTextCtrl* txtOutput = nullptr;
+	wxLog* oldLogTarget = nullptr;
 
 	// UI helper methods
 	void SetCheckboxValue(const char* name, bool value);
@@ -84,6 +88,11 @@ private:
 	void PopulateSetsFromFile(const wxString& filePath, const char* choiceName, const char* shapesChoiceName = nullptr);
 	void PopulateRefShapesForSet(const wxString& filePath, const wxString& setName);
 	std::string MakeRelativeToProject(const std::string& absolutePath);
+	AutomationBatchMode GetSelectedBatchMode() const;
+	bool IsBatchMode(AutomationBatchMode mode) const;
+	void ApplyBatchModeDefaults(AutomationStep& step) const;
+	void UpdateSaveProjectBatchModeUI(const AutomationStep& step);
+	void UpdateExportFileBatchModeUI(const AutomationStep& step);
 	void UpdateImportFolderVisibility(bool fromFolder);
 	void UpdateSliderDataFolderVisibility(bool fromFolder);
 	void UpdateSaveFieldsEnabled(bool useOriginal);

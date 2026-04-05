@@ -2056,7 +2056,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 			<!-- Bottom buttons -->
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxCollapsiblePane" name="paneBatch">
 					<label>Batch Operation</label>
@@ -2225,6 +2225,17 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 							</object>
 						</object>
 					</object>
+				</object>
+			</object>
+
+			<!-- Output log -->
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxCollapsiblePane" name="paneOutput">
+					<label>Output Log</label>
+					<collapsed>1</collapsed>
 				</object>
 			</object>
 

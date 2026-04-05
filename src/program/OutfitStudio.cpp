@@ -8716,8 +8716,6 @@ void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
 		return;
 
 	auto deleteSlider = [&](const std::string& sliderName) {
-		wxLogMessage("Deleting slider '%s'.", sliderName);
-
 		wxSliderPanel* sliderPanel = sliderPanels[sliderName];
 		sliderPanel->slider->SetValue(0);
 		SetSliderValue(sliderName, 0);
@@ -8744,6 +8742,8 @@ void OutfitStudioFrame::DeleteSliders(bool keepSliders, bool keepZaps) {
 		}
 	}
 	else {
+		wxLogMessage("Deleting slider '%s'.", activeSlider);
+
 		deleteSlider(activeSlider);
 		sliderPanels.erase(activeSlider);
 

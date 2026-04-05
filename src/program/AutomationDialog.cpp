@@ -99,6 +99,18 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	if (paneBatch)
 		paneBatch->Collapse(true);
 
+	// Output log pane (collapsed by default, shown during execution)
+	paneOutput = XRCCTRL(*this, "paneOutput", wxCollapsiblePane);
+	if (paneOutput) {
+		paneOutput->Collapse(true);
+		auto* paneWin = paneOutput->GetPane();
+		auto* paneSizer = new wxBoxSizer(wxVERTICAL);
+		txtOutput = new wxTextCtrl(paneWin, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(-1, 200), wxTE_MULTILINE | wxTE_READONLY | wxTE_RICH | wxHSCROLL);
+		txtOutput->SetFont(wxFont(9, wxFONTFAMILY_TELETYPE, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+		paneSizer->Add(txtOutput, 1, wxEXPAND);
+		paneWin->SetSizer(paneSizer);
+	}
+
 	outfitStudio->UpdateReferenceTemplates();
 	PopulateRefTemplates();
 	UpdateBatchPanelVisibility();
@@ -161,6 +173,68 @@ std::string AutomationDialog::GetTextValue(const char* name) const {
 	return txt ? std::string(txt->GetValue().ToUTF8().data()) : "";
 }
 
+AutomationBatchMode AutomationDialog::GetSelectedBatchMode() const {
+	if (!radioBatchMode)
+		return AutomationBatchMode::None;
+
+	return static_cast<AutomationBatchMode>(radioBatchMode->GetSelection());
+}
+
+bool AutomationDialog::IsBatchMode(AutomationBatchMode mode) const {
+	return GetSelectedBatchMode() == mode;
+}
+
+void AutomationDialog::ApplyBatchModeDefaults(AutomationStep& step) const {
+	if (step.type == AutomationStepType::SaveProject) {
+		if (IsBatchMode(AutomationBatchMode::SliderSets)) {
+			step.saveUseOriginal = true;
+			step.saveCopyRefFromProject = true;
+		}
+		else if (IsBatchMode(AutomationBatchMode::FolderScan)) {
+			step.saveUseOriginal = false;
+		}
+	}
+	else if (step.type == AutomationStepType::ExportFile && IsBatchMode(AutomationBatchMode::FolderScan)) {
+		step.exportUseOriginalPath = true;
+	}
+}
+
+void AutomationDialog::UpdateSaveProjectBatchModeUI(const AutomationStep& step) {
+	auto* chkUseOrig = XRCCTRL(*this, "chkSaveUseOriginal", wxCheckBox);
+	if (chkUseOrig) {
+		if (IsBatchMode(AutomationBatchMode::SliderSets)) {
+			chkUseOrig->SetValue(true);
+			chkUseOrig->Enable(false);
+		}
+		else if (IsBatchMode(AutomationBatchMode::FolderScan)) {
+			chkUseOrig->SetValue(false);
+			chkUseOrig->Enable(false);
+		}
+		else {
+			chkUseOrig->Enable(true);
+		}
+	}
+
+	bool fieldsEnabled = IsBatchMode(AutomationBatchMode::SliderSets) ? false :
+		(IsBatchMode(AutomationBatchMode::FolderScan) ? true : !step.saveUseOriginal);
+	UpdateSaveFieldsEnabled(fieldsEnabled);
+}
+
+void AutomationDialog::UpdateExportFileBatchModeUI(const AutomationStep& step) {
+	auto* chkUseOrig = XRCCTRL(*this, "chkExportUseOriginalPath", wxCheckBox);
+	if (chkUseOrig) {
+		if (IsBatchMode(AutomationBatchMode::FolderScan)) {
+			chkUseOrig->SetValue(true);
+			chkUseOrig->Enable(false);
+		}
+		else {
+			chkUseOrig->Enable(true);
+		}
+	}
+
+	UpdateExportFieldsEnabled(!step.exportUseOriginalPath);
+}
+
 void AutomationDialog::SetFloatValue(const char* name, float value) {
 	auto* txt = XRCCTRL(*this, name, wxTextCtrl);
 	if (txt)
@@ -199,6 +273,14 @@ void AutomationDialog::StartProgress(const wxString& msg) {
 	progressBar = new wxGauge(statusBar, wxID_ANY, 10000, rect.GetPosition(), rect.GetSize());
 
 	statusBar->SetStatusText(msg.IsEmpty() ? _("Starting...") : msg);
+
+	// Redirect log output to the output pane
+	if (paneOutput && txtOutput) {
+		txtOutput->Clear();
+		paneOutput->Collapse(false);
+		GetSizer()->Layout();
+		oldLogTarget = wxLog::SetActiveTarget(new wxLogTextCtrl(txtOutput));
+	}
 }
 
 void AutomationDialog::UpdateProgress(int val, const wxString& msg) {
@@ -221,6 +303,12 @@ void AutomationDialog::EndProgress(const wxString& msg) {
 	delete progressBar;
 	progressBar = nullptr;
 	statusBar->SetStatusText(msg.IsEmpty() ? _("Ready.") : msg);
+
+	// Restore previous log target
+	if (oldLogTarget) {
+		delete wxLog::SetActiveTarget(oldLogTarget);
+		oldLogTarget = nullptr;
+	}
 }
 
 void AutomationDialog::PopulateStepList() {
@@ -584,31 +672,11 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			SetTextValue("txtSaveReplaceFrom", step.saveReplaceFrom);
 			SetTextValue("txtSaveReplaceTo", step.saveReplaceTo);
 			SetTextValue("txtSaveSuffix", step.saveSuffix);
-
-			{
-				bool isSliderSets = radioBatchMode && radioBatchMode->GetSelection() == static_cast<int>(AutomationBatchMode::SliderSets);
-				bool isFolderScan = radioBatchMode && radioBatchMode->GetSelection() == static_cast<int>(AutomationBatchMode::FolderScan);
-				auto* chkUseOrig = XRCCTRL(*this, "chkSaveUseOriginal", wxCheckBox);
-				if (chkUseOrig) {
-					if (isSliderSets) {
-						chkUseOrig->SetValue(true);
-						chkUseOrig->Enable(false);
-					}
-					else if (isFolderScan) {
-						chkUseOrig->SetValue(false);
-						chkUseOrig->Enable(false);
-					}
-					else {
-						chkUseOrig->Enable(true);
-					}
-				}
-				bool fieldsEnabled = isSliderSets ? false : (isFolderScan ? true : !step.saveUseOriginal);
-				UpdateSaveFieldsEnabled(fieldsEnabled);
-			}
+			UpdateSaveProjectBatchModeUI(step);
 			break;
 		}
 		case AutomationStepType::ExportFile: {
-			bool isBatch = radioBatchMode && radioBatchMode->GetSelection() != 0;
+			bool isBatch = GetSelectedBatchMode() != AutomationBatchMode::None;
 			if (isBatch) {
 				auto* dp = XRCCTRL(*this, "dpExportFolder", wxDirPickerCtrl);
 				if (dp)
@@ -623,19 +691,8 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			SetCheckboxValue("chkExportUseOriginalPath", step.exportUseOriginalPath);
 			SetTextValue("txtExportPrefix", step.exportPrefix);
 			SetTextValue("txtExportSuffix", step.exportSuffix);
-			{
-				bool isFolderScan = radioBatchMode && radioBatchMode->GetSelection() == static_cast<int>(AutomationBatchMode::FolderScan);
-				auto* chkUseOrig = XRCCTRL(*this, "chkExportUseOriginalPath", wxCheckBox);
-				if (chkUseOrig && isFolderScan) {
-					chkUseOrig->SetValue(true);
-					chkUseOrig->Enable(false);
-				}
-				else if (chkUseOrig) {
-					chkUseOrig->Enable(true);
-				}
-			}
 			UpdateExportForBatchMode();
-			UpdateExportFieldsEnabled(!step.exportUseOriginalPath);
+			UpdateExportFileBatchModeUI(step);
 			break;
 		}
 
@@ -1002,6 +1059,7 @@ void AutomationDialog::PopulateAutomationList() {
 
 	wxString currentText = cmbAutomation->GetValue();
 	cmbAutomation->Clear();
+	cmbAutomation->Append(_("<New>"));
 
 	wxString folder = wxString::FromUTF8(GetAutomationsFolder());
 	if (wxDir::Exists(folder)) {
@@ -1076,6 +1134,26 @@ void AutomationDialog::UpdateButtonState() {
 
 void AutomationDialog::OnAutomationSelected(wxCommandEvent& WXUNUSED(event)) {
 	wxString name = cmbAutomation->GetValue();
+	if (name == _("<New>")) {
+		script = AutomationScript();
+		selectedStep = -1;
+		ShowStepSettings(false);
+		PopulateStepList();
+		PopulateVariablesUI();
+		SyncBatchUIFromScript();
+
+		auto* paneVariables = XRCCTRL(*this, "paneVariables", wxCollapsiblePane);
+		auto* paneBatch = XRCCTRL(*this, "paneBatch", wxCollapsiblePane);
+		if (paneVariables)
+			paneVariables->Collapse(true);
+		if (paneBatch)
+			paneBatch->Collapse(true);
+
+		cmbAutomation->SetValue(wxEmptyString);
+		UpdateButtonState();
+		GetSizer()->Layout();
+		return;
+	}
 	LoadAutomation(name);
 }
 
@@ -1161,6 +1239,7 @@ void AutomationDialog::OnAddStep(wxCommandEvent& WXUNUSED(event)) {
 	step.saveSliderSetFile = project->mFileName;
 	step.saveShapeDataFolder = project->mDataDir;
 	step.saveShapeDataFile = project->mBaseFile;
+	ApplyBatchModeDefaults(step);
 
 	int newIndex;
 	if (selectedStep >= 0) {
@@ -1247,8 +1326,24 @@ void AutomationDialog::OnStepSelected(wxListEvent& event) {
 
 void AutomationDialog::OnStepTypeChanged(wxCommandEvent& WXUNUSED(event)) {
 	int sel = choiceStepType->GetSelection();
-	if (sel >= 0)
+	if (sel < 0)
+		return;
+
+	if (selectedStep < 0 || selectedStep >= static_cast<int>(script.GetSteps().size())) {
 		bookStepPages->SetSelection(sel);
+		return;
+	}
+
+	auto& step = script.GetSteps()[selectedStep];
+	step.active = chkActive->GetValue();
+	step.note = txtNote->GetValue().ToUTF8().data();
+	step.targetMeshes = SplitCommaSeparated(std::string(txtTargetMeshes->GetValue().ToUTF8().data()));
+	step.targetRegex = chkTargetRegex ? chkTargetRegex->GetValue() : false;
+	step.type = static_cast<AutomationStepType>(sel);
+	ApplyBatchModeDefaults(step);
+
+	RefreshStepRow(selectedStep);
+	UpdateUIFromStep(step);
 }
 
 bool AutomationDialog::ShowCheckableListDialog(const wxString& title, const wxString& labelText, const wxArrayString& items, std::vector<size_t>& checkedIndices) {
@@ -3205,23 +3300,9 @@ void AutomationDialog::UpdateBatchPanelVisibility() {
 void AutomationDialog::OnBatchModeChanged(wxCommandEvent& WXUNUSED(event)) {
 	UpdateBatchPanelVisibility();
 
-	bool isSliderSets = radioBatchMode && radioBatchMode->GetSelection() == static_cast<int>(AutomationBatchMode::SliderSets);
-	bool isFolderScan = radioBatchMode && radioBatchMode->GetSelection() == static_cast<int>(AutomationBatchMode::FolderScan);
-
 	// Set batch-specific options on all steps
-	for (auto& step : script.GetSteps()) {
-		if (step.type == AutomationStepType::SaveProject) {
-			if (isSliderSets) {
-				step.saveUseOriginal = true;
-				step.saveCopyRefFromProject = true;
-			}
-			else if (isFolderScan) {
-				step.saveUseOriginal = false;
-			}
-		}
-		if (step.type == AutomationStepType::ExportFile && isFolderScan)
-			step.exportUseOriginalPath = true;
-	}
+	for (auto& step : script.GetSteps())
+		ApplyBatchModeDefaults(step);
 
 	// Update currently displayed step
 	if (selectedStep >= 0 && selectedStep < static_cast<int>(script.GetSteps().size())) {
@@ -3236,22 +3317,13 @@ void AutomationDialog::OnBatchModeChanged(wxCommandEvent& WXUNUSED(event)) {
 				dp->SetPath(wxEmptyString);
 
 			SetCheckboxValue("chkExportUseOriginalPath", step.exportUseOriginalPath);
-			auto* chkUseOrig = XRCCTRL(*this, "chkExportUseOriginalPath", wxCheckBox);
-			if (chkUseOrig) {
-				chkUseOrig->Enable(!isFolderScan);
-			}
 			UpdateExportForBatchMode();
-			UpdateExportFieldsEnabled(!step.exportUseOriginalPath);
+			UpdateExportFileBatchModeUI(step);
 		}
 		else if (step.type == AutomationStepType::SaveProject) {
 			SetCheckboxValue("chkSaveUseOriginal", step.saveUseOriginal);
 			SetCheckboxValue("chkSaveCopyRefFromProject", step.saveCopyRefFromProject);
-			auto* chkUseOrig = XRCCTRL(*this, "chkSaveUseOriginal", wxCheckBox);
-			if (chkUseOrig) {
-				chkUseOrig->Enable(!isSliderSets && !isFolderScan);
-			}
-			bool fieldsEnabled = isSliderSets ? false : (isFolderScan ? true : !step.saveUseOriginal);
-			UpdateSaveFieldsEnabled(fieldsEnabled);
+			UpdateSaveProjectBatchModeUI(step);
 		}
 	}
 }
