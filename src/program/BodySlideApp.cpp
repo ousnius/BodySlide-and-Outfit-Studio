@@ -3521,6 +3521,52 @@ void BodySlideApp::GroupBuild(const std::vector<std::string>& groupNames) {
 	std::vector<std::string> groups;
 	sliderManager.LoadPresets(GetProjectPath() + "/SliderPresets", "", groups, true);
 
+	// Apply saved build selections for CLI group builds before entering batch build conflict handling.
+	BuildSelectionFile buildSelFile;
+	BuildSelection buildSelection;
+	GetBuildSelection(buildSelFile, buildSelection);
+
+	for (auto& outFile : outFileCount) {
+		if (outFile.second.size() <= 1)
+			continue;
+
+		std::vector<std::string> outfitsInBuild;
+		for (auto& outfit : outFile.second) {
+			if (std::find(outfits.begin(), outfits.end(), outfit) != outfits.end())
+				outfitsInBuild.push_back(outfit);
+		}
+
+		if (outfitsInBuild.size() <= 1)
+			continue;
+
+		std::string outputChoice = buildSelection.GetOutputChoice(outFile.first);
+		if (outputChoice.empty())
+			continue;
+
+		if (std::find(outfitsInBuild.begin(), outfitsInBuild.end(), outputChoice) == outfitsInBuild.end())
+			continue;
+
+		int removedChoices = 0;
+
+		for (auto& outfit : outfitsInBuild) {
+			if (outfit == outputChoice)
+				continue;
+
+			auto result = std::find(outfits.begin(), outfits.end(), outfit);
+			if (result != outfits.end()) {
+				outfits.erase(result);
+				removedChoices++;
+			}
+		}
+
+		if (removedChoices > 0) {
+			wxLogMessage("Group build applied saved BuildSelection for output '%s': selected '%s', skipped %d conflicting choice(s).",
+						 outFile.first,
+						 outputChoice,
+						 removedChoices);
+		}
+	}
+
 	std::map<std::string, std::string> failedOutfits;
 	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, false, cmdTargetDir);
 
