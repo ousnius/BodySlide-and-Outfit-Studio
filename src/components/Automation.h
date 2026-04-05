@@ -286,6 +286,13 @@ public:
 
 	void AddStep(const AutomationStep& step) { steps.push_back(step); }
 
+	void InsertStep(size_t index, const AutomationStep& step) {
+		if (index <= steps.size())
+			steps.insert(steps.begin() + index, step);
+		else
+			steps.push_back(step);
+	}
+
 	void RemoveStep(size_t index) {
 		if (index < steps.size())
 			steps.erase(steps.begin() + index);

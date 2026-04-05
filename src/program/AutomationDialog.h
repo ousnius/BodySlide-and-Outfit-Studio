@@ -145,6 +145,7 @@ private:
 	void OnMoveUp(wxCommandEvent& event);
 	void OnMoveDown(wxCommandEvent& event);
 	void OnStepSelected(wxListEvent& event);
+	void OnStepListKeyDown(wxKeyEvent& event);
 	void OnStepListContextMenu(wxContextMenuEvent& event);
 	void OnStepTypeChanged(wxCommandEvent& event);
 	void OnExecuteAll(wxCommandEvent& event);

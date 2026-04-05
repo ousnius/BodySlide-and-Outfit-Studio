@@ -85,6 +85,7 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	listSteps->InsertColumn(3, _("Note"), wxLIST_FORMAT_LEFT, 250);
 
 	listSteps->Bind(wxEVT_CONTEXT_MENU, &AutomationDialog::OnStepListContextMenu, this);
+	listSteps->Bind(wxEVT_KEY_DOWN, &AutomationDialog::OnStepListKeyDown, this);
 
 	// Hide step settings until a step is selected
 	if (panelStepSettings)
@@ -1161,11 +1162,18 @@ void AutomationDialog::OnAddStep(wxCommandEvent& WXUNUSED(event)) {
 	step.saveShapeDataFolder = project->mDataDir;
 	step.saveShapeDataFile = project->mBaseFile;
 
-	script.AddStep(step);
+	int newIndex;
+	if (selectedStep >= 0) {
+		newIndex = selectedStep + 1;
+		script.InsertStep(newIndex, step);
+	}
+	else {
+		script.AddStep(step);
+		newIndex = static_cast<int>(script.GetSteps().size()) - 1;
+	}
 
 	PopulateStepList();
 
-	int newIndex = static_cast<int>(script.GetSteps().size()) - 1;
 	listSteps->SetItemState(newIndex, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 	listSteps->EnsureVisible(newIndex);
 	SelectStep(newIndex);
@@ -1216,6 +1224,21 @@ void AutomationDialog::OnMoveDown(wxCommandEvent& WXUNUSED(event)) {
 	PopulateStepList();
 	listSteps->SetItemState(newSel, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
 	SelectStep(newSel);
+}
+
+void AutomationDialog::OnStepListKeyDown(wxKeyEvent& event) {
+	if (event.ControlDown()) {
+		wxCommandEvent evt;
+		if (event.GetKeyCode() == WXK_UP) {
+			OnMoveUp(evt);
+			return;
+		}
+		else if (event.GetKeyCode() == WXK_DOWN) {
+			OnMoveDown(evt);
+			return;
+		}
+	}
+	event.Skip();
 }
 
 void AutomationDialog::OnStepSelected(wxListEvent& event) {
