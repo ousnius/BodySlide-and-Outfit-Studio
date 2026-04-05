@@ -97,7 +97,7 @@ private:
 	void UpdateBatchPanelVisibility();
 
 	void ExecuteSteps(const std::vector<size_t>& stepIndices);
-	void ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::pair<std::string, std::string>>& selectedSets = {});
+	void ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::string>& selectedFiles = {}, const std::vector<std::pair<std::string, std::string>>& selectedSets = {});
 	int ExecuteStep(const AutomationStep& step);
 
 	int ExecuteStepClearProject(const AutomationStep& step);
@@ -131,6 +131,8 @@ private:
 
 	std::vector<std::string> GatherBatchFiles();
 	std::vector<std::pair<std::string, std::string>> GatherBatchSliderSets();
+
+	bool ShowCheckableListDialog(const wxString& title, const wxString& labelText, const wxArrayString& items, std::vector<size_t>& checkedIndices);
 
 	nifly::NiShape* FindShapeByName(const std::string& name);
 	std::vector<nifly::NiShape*> ResolveTargetShapes(const AutomationStep& step);

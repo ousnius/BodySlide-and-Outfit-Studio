@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "OutfitStudio.h"
 
 #include "../files/MaskFile.h"
+#include "../files/TriFile.h"
 #include "../utils/PlatformUtil.h"
 
 #include <NifFile.hpp>
@@ -585,17 +586,23 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 
 			{
 				bool isSliderSets = radioBatchMode && radioBatchMode->GetSelection() == static_cast<int>(AutomationBatchMode::SliderSets);
+				bool isFolderScan = radioBatchMode && radioBatchMode->GetSelection() == static_cast<int>(AutomationBatchMode::FolderScan);
 				auto* chkUseOrig = XRCCTRL(*this, "chkSaveUseOriginal", wxCheckBox);
 				if (chkUseOrig) {
 					if (isSliderSets) {
 						chkUseOrig->SetValue(true);
 						chkUseOrig->Enable(false);
 					}
+					else if (isFolderScan) {
+						chkUseOrig->SetValue(false);
+						chkUseOrig->Enable(false);
+					}
 					else {
 						chkUseOrig->Enable(true);
 					}
 				}
-				UpdateSaveFieldsEnabled(isSliderSets ? false : !step.saveUseOriginal);
+				bool fieldsEnabled = isSliderSets ? false : (isFolderScan ? true : !step.saveUseOriginal);
+				UpdateSaveFieldsEnabled(fieldsEnabled);
 			}
 			break;
 		}
@@ -1221,6 +1228,61 @@ void AutomationDialog::OnStepTypeChanged(wxCommandEvent& WXUNUSED(event)) {
 		bookStepPages->SetSelection(sel);
 }
 
+bool AutomationDialog::ShowCheckableListDialog(const wxString& title, const wxString& labelText, const wxArrayString& items, std::vector<size_t>& checkedIndices) {
+	wxDialog dlg(this, wxID_ANY, title, wxDefaultPosition, wxSize(800, 500), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+	auto* sizer = new wxBoxSizer(wxVERTICAL);
+
+	auto* label = new wxStaticText(&dlg, wxID_ANY, labelText);
+	sizer->Add(label, 0, wxALL, 10);
+
+	auto* checkList = new wxCheckListBox(&dlg, wxID_ANY, wxDefaultPosition, wxDefaultSize, items, wxLB_HSCROLL | wxLB_NEEDED_SB);
+	for (unsigned int i = 0; i < checkList->GetCount(); i++)
+		checkList->Check(i);
+
+	sizer->Add(checkList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+
+	auto* btnSizer = new wxBoxSizer(wxHORIZONTAL);
+	auto* btnAll = new wxButton(&dlg, wxID_ANY, _("Select All"));
+	auto* btnNone = new wxButton(&dlg, wxID_ANY, _("Select None"));
+	auto* btnInvert = new wxButton(&dlg, wxID_ANY, _("Invert Selection"));
+	btnSizer->Add(btnAll, 0, wxRIGHT, 5);
+	btnSizer->Add(btnNone, 0, wxRIGHT, 5);
+	btnSizer->Add(btnInvert, 0, wxRIGHT, 5);
+	btnSizer->AddStretchSpacer();
+	auto* btnOK = new wxButton(&dlg, wxID_OK, _("Execute"));
+	auto* btnCancel = new wxButton(&dlg, wxID_CANCEL, _("Cancel"));
+	btnSizer->Add(btnOK, 0, wxRIGHT, 5);
+	btnSizer->Add(btnCancel, 0);
+	sizer->Add(btnSizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
+
+	btnAll->Bind(wxEVT_BUTTON, [checkList](wxCommandEvent&) {
+		for (unsigned int i = 0; i < checkList->GetCount(); i++)
+			checkList->Check(i);
+	});
+	btnNone->Bind(wxEVT_BUTTON, [checkList](wxCommandEvent&) {
+		for (unsigned int i = 0; i < checkList->GetCount(); i++)
+			checkList->Check(i, false);
+	});
+	btnInvert->Bind(wxEVT_BUTTON, [checkList](wxCommandEvent&) {
+		for (unsigned int i = 0; i < checkList->GetCount(); i++)
+			checkList->Check(i, !checkList->IsChecked(i));
+	});
+
+	dlg.SetSizer(sizer);
+	dlg.CenterOnParent();
+
+	if (dlg.ShowModal() != wxID_OK)
+		return false;
+
+	checkedIndices.clear();
+	for (unsigned int i = 0; i < checkList->GetCount(); i++) {
+		if (checkList->IsChecked(i))
+			checkedIndices.push_back(i);
+	}
+
+	return true;
+}
+
 void AutomationDialog::OnExecuteAll(wxCommandEvent& WXUNUSED(event)) {
 	if (selectedStep >= 0)
 		UpdateStepFromUI();
@@ -1247,6 +1309,34 @@ void AutomationDialog::OnExecuteAll(wxCommandEvent& WXUNUSED(event)) {
 			auto files = GatherBatchFiles();
 			itemCount = static_cast<int>(files.size());
 
+			if (itemCount == 0) {
+				wxMessageBox(_("No files found matching the batch folder scan criteria."), _("Automation"), wxICON_INFORMATION);
+				return;
+			}
+
+			if (itemCount <= 1000) {
+				wxArrayString displayItems;
+				for (const auto& filePath : files)
+					displayItems.Add(wxString::FromUTF8(filePath));
+
+				std::vector<size_t> checkedIndices;
+				if (!ShowCheckableListDialog(_("Batch Files"), wxString::Format(_("Select files to process (%d found):"), itemCount), displayItems, checkedIndices))
+					return;
+
+				if (checkedIndices.empty()) {
+					wxMessageBox(_("No files selected."), _("Automation"), wxICON_INFORMATION);
+					return;
+				}
+
+				std::vector<std::string> selectedFiles;
+				for (size_t idx : checkedIndices)
+					selectedFiles.push_back(files[idx]);
+
+				ExecuteBatch(indices, selectedFiles);
+				return;
+			}
+
+			// More than 1000 files: skip list, show confirmation
 			batchDetails = wxString::Format(_("Folder: %s\nExtension: %s"), wxString::FromUTF8(script.GetBatchFolder()), wxString::FromUTF8(script.GetBatchExtension()));
 
 			std::string filter = script.GetBatchFileFilter();
@@ -1262,62 +1352,24 @@ void AutomationDialog::OnExecuteAll(wxCommandEvent& WXUNUSED(event)) {
 				return;
 			}
 
-			// Show checkable list dialog for slider set selection
-			wxDialog dlg(this, wxID_ANY, _("Batch Slider Sets"), wxDefaultPosition, wxSize(600, 500), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
-			auto* sizer = new wxBoxSizer(wxVERTICAL);
-
-			auto* label = new wxStaticText(&dlg, wxID_ANY, wxString::Format(_("Select slider sets to process (%d found):"), itemCount));
-			sizer->Add(label, 0, wxALL, 10);
-
-			auto* checkList = new wxCheckListBox(&dlg, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxArrayString(), wxLB_HSCROLL | wxLB_NEEDED_SB);
+			wxArrayString displayItems;
 			for (const auto& [filePath, setName] : sets)
-				checkList->Append(wxString::FromUTF8(setName));
+				displayItems.Add(wxString::FromUTF8(setName));
 
-			for (unsigned int i = 0; i < checkList->GetCount(); i++)
-				checkList->Check(i);
-
-			sizer->Add(checkList, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
-
-			auto* btnSizer = new wxBoxSizer(wxHORIZONTAL);
-			auto* btnAll = new wxButton(&dlg, wxID_ANY, _("Select All"));
-			auto* btnNone = new wxButton(&dlg, wxID_ANY, _("Select None"));
-			btnSizer->Add(btnAll, 0, wxRIGHT, 5);
-			btnSizer->Add(btnNone, 0, wxRIGHT, 5);
-			btnSizer->AddStretchSpacer();
-			auto* btnOK = new wxButton(&dlg, wxID_OK, _("Execute"));
-			auto* btnCancel = new wxButton(&dlg, wxID_CANCEL, _("Cancel"));
-			btnSizer->Add(btnOK, 0, wxRIGHT, 5);
-			btnSizer->Add(btnCancel, 0);
-			sizer->Add(btnSizer, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 10);
-
-			btnAll->Bind(wxEVT_BUTTON, [checkList](wxCommandEvent&) {
-				for (unsigned int i = 0; i < checkList->GetCount(); i++)
-					checkList->Check(i);
-			});
-			btnNone->Bind(wxEVT_BUTTON, [checkList](wxCommandEvent&) {
-				for (unsigned int i = 0; i < checkList->GetCount(); i++)
-					checkList->Check(i, false);
-			});
-
-			dlg.SetSizer(sizer);
-			dlg.CenterOnParent();
-
-			if (dlg.ShowModal() != wxID_OK)
+			std::vector<size_t> checkedIndices;
+			if (!ShowCheckableListDialog(_("Batch Slider Sets"), wxString::Format(_("Select slider sets to process (%d found):"), itemCount), displayItems, checkedIndices))
 				return;
 
-			// Collect checked items
-			std::vector<std::pair<std::string, std::string>> selectedSets;
-			for (unsigned int i = 0; i < checkList->GetCount(); i++) {
-				if (checkList->IsChecked(i))
-					selectedSets.push_back(sets[i]);
-			}
-
-			if (selectedSets.empty()) {
+			if (checkedIndices.empty()) {
 				wxMessageBox(_("No slider sets selected."), _("Automation"), wxICON_INFORMATION);
 				return;
 			}
 
-			ExecuteBatch(indices, selectedSets);
+			std::vector<std::pair<std::string, std::string>> selectedSets;
+			for (size_t idx : checkedIndices)
+				selectedSets.push_back(sets[idx]);
+
+			ExecuteBatch(indices, {}, selectedSets);
 			return;
 		}
 
@@ -1814,7 +1866,6 @@ int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 	}
 
 	if (step.sliderDataFromFolder) {
-		// Folder mode: scan for files named "ShapeName#SliderName.ext"
 		wxLogMessage("Automation: Importing slider data from folder '%s'...", step.sliderDataFile);
 		wxDir dir(wxString::FromUTF8(step.sliderDataFile));
 		if (!dir.IsOpened()) {
@@ -1823,109 +1874,319 @@ int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 		}
 
 		int importCount = 0;
+		const auto& shapes = project->GetWorkNif()->GetShapes();
 		wxString filename;
 		bool cont = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES);
 		while (cont) {
 			std::string fname = filename.ToUTF8().data();
-			// Parse "ShapeName#SliderName.ext"
-			auto hashPos = fname.find('#');
-			if (hashPos != std::string::npos) {
-				std::string shapeName = fname.substr(0, hashPos);
-				std::string rest = fname.substr(hashPos + 1);
-				auto dotPos = rest.rfind('.');
-				std::string sliderName = (dotPos != std::string::npos) ? rest.substr(0, dotPos) : rest;
-				std::string ext = (dotPos != std::string::npos) ? rest.substr(dotPos + 1) : "";
+			wxFileName wxFn(filename);
+			std::string extLower = wxFn.GetExt().Lower().ToUTF8().data();
+			std::string fullPath = step.sliderDataFile + "/" + fname;
 
-				// Only handle OSD/BSD extension files
-				std::string extLower = ext;
-				std::transform(extLower.begin(), extLower.end(), extLower.begin(), ::tolower);
-				if (extLower == "osd" || extLower == "bsd" || extLower == "nif" || extLower == "obj") {
-					std::string fullPath = step.sliderDataFile + "/" + fname;
-					NiShape* shape = FindShapeByName(shapeName);
-					if (shape) {
-						if (extLower == "osd" || extLower == "bsd") {
-							OSDataFile osd;
-							if (osd.Read(fullPath)) {
-								if (!project->ValidSlider(sliderName))
-									project->AddEmptySlider(sliderName);
-								auto& diffs = osd.GetDataDiffs();
-								for (auto& [diffName, diffData] : diffs) {
-									if (diffData)
-										project->SetSliderFromDiff(sliderName, shape, *diffData);
+			if (extLower == "osd") {
+				// OSD: import all sliders, auto-mapping shapes by target name
+				OSDataFile osd;
+				if (osd.Read(fullPath)) {
+					auto& diffs = osd.GetDataDiffs();
+					for (auto& [diffName, diffData] : diffs) {
+						std::string bestTargetName;
+						NiShape* bestShape = nullptr;
+
+						for (auto* shape : shapes) {
+							std::string targetName = project->ShapeToTarget(shape->name.get());
+							if (diffName.substr(0, targetName.size()) == targetName) {
+								if (targetName.length() > bestTargetName.length()) {
+									bestTargetName = targetName;
+									bestShape = shape;
 								}
-								importCount++;
 							}
 						}
-						wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, shapeName);
+
+						if (!bestShape || bestTargetName.empty())
+							continue;
+
+						auto sliderName = project->activeSet.SliderFromDataName(bestTargetName, diffName);
+						if (sliderName.empty())
+							sliderName = diffName.substr(bestTargetName.length());
+
+						if (!step.sliderNames.empty()) {
+							bool found = false;
+							for (const auto& name : step.sliderNames) {
+								if (name == sliderName) {
+									found = true;
+									break;
+								}
+							}
+							if (!found)
+								continue;
+						}
+
+						if (!project->ValidSlider(sliderName)) {
+							if (step.sliderMerge)
+								continue;
+							project->AddEmptySlider(sliderName);
+						}
+
+						if (diffData)
+							project->SetSliderFromDiff(sliderName, bestShape, *diffData);
+
+						importCount++;
+						wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, bestShape->name.get());
+					}
+				}
+				else {
+					wxLogWarning("Automation: Failed to read OSD file '%s'.", fname);
+				}
+			}
+			else if (extLower == "tri") {
+				// TRI: import all morphs, auto-mapping shapes by name
+				TriFile tri;
+				if (tri.Read(fullPath)) {
+					auto morphs = tri.GetMorphs();
+					for (auto& [shapeName, morphList] : morphs) {
+						auto* shape = project->GetWorkNif()->FindBlockByName<NiShape>(shapeName);
+						if (!shape)
+							continue;
+
+						for (auto& morphData : morphList) {
+							if (!step.sliderNames.empty()) {
+								bool found = false;
+								for (const auto& name : step.sliderNames) {
+									if (name == morphData->name) {
+										found = true;
+										break;
+									}
+								}
+								if (!found)
+									continue;
+							}
+
+							if (!project->ValidSlider(morphData->name)) {
+								if (step.sliderMerge)
+									continue;
+								project->AddEmptySlider(morphData->name);
+							}
+
+							std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
+							project->SetSliderFromDiff(morphData->name, shape, diff);
+
+							if (morphData->type == MORPHTYPE_UV) {
+								size_t sliderIndex = 0;
+								if (project->SliderIndexFromName(morphData->name, sliderIndex))
+									project->SetSliderUV(sliderIndex, true);
+							}
+
+							importCount++;
+							wxLogMessage("Automation: Imported morph '%s' for shape '%s'.", morphData->name, shapeName);
+						}
+					}
+				}
+				else {
+					wxLogWarning("Automation: Failed to read TRI file '%s'.", fname);
+				}
+			}
+			else if (extLower == "bsd" || extLower == "nif" || extLower == "obj" || extLower == "fbx") {
+				// NIF/OBJ/FBX/BSD: use "ShapeName#SliderName.ext" naming pattern
+				auto hashPos = fname.find('#');
+				if (hashPos != std::string::npos) {
+					std::string shapeName = fname.substr(0, hashPos);
+					std::string rest = fname.substr(hashPos + 1);
+					auto dotPos = rest.rfind('.');
+					std::string sliderName = (dotPos != std::string::npos) ? rest.substr(0, dotPos) : rest;
+
+					NiShape* shape = FindShapeByName(shapeName);
+					if (shape) {
+						if (step.sliderMerge && !project->ValidSlider(sliderName)) {
+							cont = dir.GetNext(&filename);
+							continue;
+						}
+
+						if (!project->ValidSlider(sliderName))
+							project->AddEmptySlider(sliderName);
+
+						bool ok = false;
+						if (extLower == "bsd") {
+							project->SetSliderFromBSD(sliderName, shape, fullPath);
+							ok = true;
+						}
+						else if (extLower == "nif") {
+							ok = project->SetSliderFromNIF(sliderName, shape, fullPath);
+						}
+						else if (extLower == "obj") {
+							ok = project->SetSliderFromOBJ(sliderName, shape, fullPath);
+						}
+#ifdef USE_FBXSDK
+						else if (extLower == "fbx") {
+							ok = project->SetSliderFromFBX(sliderName, shape, fullPath);
+						}
+#endif
+
+						if (ok) {
+							importCount++;
+							wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, shapeName);
+						}
+						else {
+							wxLogWarning("Automation: Failed to import slider '%s' for shape '%s' from '%s'.", sliderName, shapeName, fname);
+						}
 					}
 					else {
 						wxLogWarning("Automation: Shape '%s' not found for file '%s'.", shapeName, fname);
 					}
 				}
 			}
+
 			cont = dir.GetNext(&filename);
 		}
 
 		wxLogMessage("Automation: Imported %d slider data file(s) from folder.", importCount);
 	}
 	else {
-		// Single file mode: import OSD/BSD file
+		// Single file mode
 		wxLogMessage("Automation: Importing slider data from '%s'...", step.sliderDataFile);
-		OSDataFile osd;
-		if (!osd.Read(step.sliderDataFile)) {
-			wxLogError("Automation: Failed to read slider data file '%s'.", step.sliderDataFile);
-			return 1;
-		}
+		wxFileName fn(wxString::FromUTF8(step.sliderDataFile));
+		wxString ext = fn.GetExt().Lower();
 
-		auto& diffs = osd.GetDataDiffs();
-		const auto& shapes = project->GetWorkNif()->GetShapes();
-
-		// Build shape-to-slider mappings (same logic as OnSliderImportOSD)
-		for (auto& [diffName, diffData] : diffs) {
-			std::string bestTargetName;
-			NiShape* bestShape = nullptr;
-
-			for (auto* shape : shapes) {
-				std::string shapeName = shape->name.get();
-				std::string targetName = project->ShapeToTarget(shapeName);
-				if (diffName.substr(0, targetName.size()) == targetName) {
-					if (targetName.length() > bestTargetName.length()) {
-						bestTargetName = targetName;
-						bestShape = shape;
-					}
-				}
+		if (ext == "osd") {
+			// OSD multi-diff import
+			OSDataFile osd;
+			if (!osd.Read(step.sliderDataFile)) {
+				wxLogError("Automation: Failed to read OSD file '%s'.", step.sliderDataFile);
+				return 1;
 			}
 
-			if (!bestShape || bestTargetName.empty())
-				continue;
+			auto& diffs = osd.GetDataDiffs();
+			const auto& shapes = project->GetWorkNif()->GetShapes();
 
-			// Determine slider name
-			auto sliderName = project->activeSet.SliderFromDataName(bestTargetName, diffName);
-			if (sliderName.empty())
-				sliderName = diffName.substr(bestTargetName.length());
+			for (auto& [diffName, diffData] : diffs) {
+				std::string bestTargetName;
+				NiShape* bestShape = nullptr;
 
-			// Filter by specified slider names if any
-			if (!step.sliderNames.empty()) {
-				bool found = false;
-				for (const auto& name : step.sliderNames) {
-					if (name == sliderName) {
-						found = true;
-						break;
+				for (auto* shape : shapes) {
+					std::string shapeName = shape->name.get();
+					std::string targetName = project->ShapeToTarget(shapeName);
+					if (diffName.substr(0, targetName.size()) == targetName) {
+						if (targetName.length() > bestTargetName.length()) {
+							bestTargetName = targetName;
+							bestShape = shape;
+						}
 					}
 				}
-				if (!found)
+
+				if (!bestShape || bestTargetName.empty())
 					continue;
+
+				auto sliderName = project->activeSet.SliderFromDataName(bestTargetName, diffName);
+				if (sliderName.empty())
+					sliderName = diffName.substr(bestTargetName.length());
+
+				if (!step.sliderNames.empty()) {
+					bool found = false;
+					for (const auto& name : step.sliderNames) {
+						if (name == sliderName) {
+							found = true;
+							break;
+						}
+					}
+					if (!found)
+						continue;
+				}
+
+				if (!project->ValidSlider(sliderName)) {
+					if (step.sliderMerge)
+						continue;
+					project->AddEmptySlider(sliderName);
+				}
+
+				if (diffData)
+					project->SetSliderFromDiff(sliderName, bestShape, *diffData);
+				wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, bestShape->name.get());
 			}
+		}
+		else if (ext == "tri") {
+			// TRI multi-morph import
+			TriFile tri;
+			if (!tri.Read(step.sliderDataFile)) {
+				wxLogError("Automation: Failed to read TRI file '%s'.", step.sliderDataFile);
+				return 1;
+			}
+
+			auto morphs = tri.GetMorphs();
+			for (auto& [shapeName, morphList] : morphs) {
+				auto* shape = project->GetWorkNif()->FindBlockByName<NiShape>(shapeName);
+				if (!shape)
+					continue;
+
+				for (auto& morphData : morphList) {
+					if (!step.sliderNames.empty()) {
+						bool found = false;
+						for (const auto& name : step.sliderNames) {
+							if (name == morphData->name) {
+								found = true;
+								break;
+							}
+						}
+						if (!found)
+							continue;
+					}
+
+					if (!project->ValidSlider(morphData->name)) {
+						if (step.sliderMerge)
+							continue;
+						project->AddEmptySlider(morphData->name);
+					}
+
+					std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
+					project->SetSliderFromDiff(morphData->name, shape, diff);
+
+					if (morphData->type == MORPHTYPE_UV) {
+						size_t sliderIndex = 0;
+						if (project->SliderIndexFromName(morphData->name, sliderIndex))
+							project->SetSliderUV(sliderIndex, true);
+					}
+
+					wxLogMessage("Automation: Imported morph '%s' for shape '%s'.", morphData->name, shapeName);
+				}
+			}
+		}
+		else if (ext == "nif" || ext == "obj" || ext == "bsd" || ext == "fbx") {
+			// Per-shape slider import: compute diff from file mesh vs current shape
+			std::string sliderName;
+			if (!step.sliderNames.empty())
+				sliderName = step.sliderNames[0];
+			else
+				sliderName = fn.GetName().ToUTF8().data();
 
 			if (!project->ValidSlider(sliderName)) {
-				if (step.sliderMerge)
-					continue; // Only merge into existing sliders
+				if (step.sliderMerge) {
+					wxLogWarning("Automation: Slider '%s' does not exist and merge-only is enabled.", sliderName);
+					return 0;
+				}
 				project->AddEmptySlider(sliderName);
 			}
 
-			if (diffData)
-				project->SetSliderFromDiff(sliderName, bestShape, *diffData);
-			wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, bestShape->name.get());
+			const auto& shapes = project->GetWorkNif()->GetShapes();
+			for (auto* shape : shapes) {
+				bool ok = false;
+				if (ext == "nif")
+					ok = project->SetSliderFromNIF(sliderName, shape, step.sliderDataFile);
+				else if (ext == "obj")
+					ok = project->SetSliderFromOBJ(sliderName, shape, step.sliderDataFile);
+				else if (ext == "bsd") {
+					project->SetSliderFromBSD(sliderName, shape, step.sliderDataFile);
+					ok = true;
+				}
+#ifdef USE_FBXSDK
+				else if (ext == "fbx")
+					ok = project->SetSliderFromFBX(sliderName, shape, step.sliderDataFile);
+#endif
+
+				if (ok)
+					wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, shape->name.get());
+			}
+		}
+		else {
+			wxLogError("Automation: ImportSliderData - unsupported file format '.%s'.", ext);
+			return 1;
 		}
 	}
 	return 0;
@@ -2160,11 +2421,24 @@ int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep&) {
 
 	for (auto* shape : workNif->GetShapes()) {
 		size_t nverts = shape->GetNumVertices();
-		std::vector<bool> pincs(nverts, true);
+
+		// Determine unmasked vertices
+		std::unordered_map<uint16_t, float> mask;
+		outfitStudio->glView->GetShapeUnmasked(mask, shape->name.get());
+		std::vector<bool> pincs(nverts, false);
+		for (auto& m : mask)
+			pincs[m.first] = true;
 
 		std::vector<Triangle> tris;
 		shape->GetTriangles(tris);
-		size_t nedges = tris.size() * 3; // All vertices selected, so all edges count
+		size_t nedges = 0;
+		for (Triangle& tri : tris) {
+			int ntripts = pincs[tri.p1] + pincs[tri.p2] + pincs[tri.p3];
+			if (ntripts == 3)
+				nedges += 3;
+			else if (ntripts == 2)
+				nedges += 1;
+		}
 
 		if (nverts + nedges > maxVertIndex || shape->GetNumTriangles() + nedges > maxTriIndex) {
 			wxLogWarning("Automation: RefineMesh - shape '%s' would exceed vertex/triangle limits, skipping.", shape->name.get());
@@ -2913,9 +3187,14 @@ void AutomationDialog::OnBatchModeChanged(wxCommandEvent& WXUNUSED(event)) {
 
 	// Set batch-specific options on all steps
 	for (auto& step : script.GetSteps()) {
-		if (step.type == AutomationStepType::SaveProject && isSliderSets) {
-			step.saveUseOriginal = true;
-			step.saveCopyRefFromProject = true;
+		if (step.type == AutomationStepType::SaveProject) {
+			if (isSliderSets) {
+				step.saveUseOriginal = true;
+				step.saveCopyRefFromProject = true;
+			}
+			else if (isFolderScan) {
+				step.saveUseOriginal = false;
+			}
 		}
 		if (step.type == AutomationStepType::ExportFile && isFolderScan)
 			step.exportUseOriginalPath = true;
@@ -2946,9 +3225,10 @@ void AutomationDialog::OnBatchModeChanged(wxCommandEvent& WXUNUSED(event)) {
 			SetCheckboxValue("chkSaveCopyRefFromProject", step.saveCopyRefFromProject);
 			auto* chkUseOrig = XRCCTRL(*this, "chkSaveUseOriginal", wxCheckBox);
 			if (chkUseOrig) {
-				chkUseOrig->Enable(!isSliderSets);
+				chkUseOrig->Enable(!isSliderSets && !isFolderScan);
 			}
-			UpdateSaveFieldsEnabled(isSliderSets ? false : !step.saveUseOriginal);
+			bool fieldsEnabled = isSliderSets ? false : (isFolderScan ? true : !step.saveUseOriginal);
+			UpdateSaveFieldsEnabled(fieldsEnabled);
 		}
 	}
 }
@@ -3049,7 +3329,7 @@ std::vector<std::pair<std::string, std::string>> AutomationDialog::GatherBatchSl
 	return result;
 }
 
-void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::pair<std::string, std::string>>& selectedSets) {
+void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::string>& selectedFiles, const std::vector<std::pair<std::string, std::string>>& selectedSets) {
 	auto batchMode = script.GetBatchMode();
 
 	// Pre-set OptimizeForSSE if not already configured.
@@ -3063,7 +3343,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 	StartProgress(_("Preparing..."));
 
 	if (batchMode == AutomationBatchMode::FolderScan) {
-		auto batchFiles = GatherBatchFiles();
+		auto batchFiles = selectedFiles.empty() ? GatherBatchFiles() : selectedFiles;
 		if (batchFiles.empty()) {
 			wxMessageBox(_("No files found matching the batch folder scan criteria."), _("Automation"), wxICON_INFORMATION);
 			return;

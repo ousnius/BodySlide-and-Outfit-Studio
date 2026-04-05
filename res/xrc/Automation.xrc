@@ -111,7 +111,7 @@
 															<item>Bones: Add Custom Bone</item>
 															<item>Bones: Copy Bone Weights</item>
 															<item>Bones: Delete Bones</item>
-															<item>Bones: Edit Bone</item>
+															<item>Bones: Edit Custom Bone</item>
 															<item>Bones: Remove Skinning</item>
 															<item>Export: File</item>
 															<item>Export: Save Project</item>
@@ -1277,8 +1277,8 @@
 														<border>5</border>
 														<object class="wxStaticText">
 															<label>Bakes the current slider values into the base geometry of all shapes and zeros all sliders.
-																Equivalent to "Slider -> Set Base Shape" in the menu.
-																No additional parameters needed.</label>
+
+Equivalent to "Slider -> Set Base Shape" in the menu.</label>
 															<wrap>400</wrap>
 														</object>
 													</object>
@@ -1366,7 +1366,8 @@
 														<border>5</border>
 														<object class="wxStaticText">
 															<label>Deletes the shapes specified in the Target Meshes field above.
-																If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching.</label>
+
+If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching.</label>
 															<wrap>400</wrap>
 														</object>
 													</object>

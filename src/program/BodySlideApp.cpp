@@ -2970,7 +2970,7 @@ int BodySlideApp::BuildListBodies(
 					return;
 				}
 
-				// Only enforce the “radio per level” rule for level-2 items:
+				// Only enforce the 'radio per level' rule for level-2 items:
 				checkBoxReverting = true;
 
 				auto checkedState = treeListCtrl->GetCheckedState(item);
@@ -3033,7 +3033,7 @@ int BodySlideApp::BuildListBodies(
 										treeListCtrl->CheckItem(level2, wxCheckBoxState::wxCHK_UNCHECKED);
 								}
 							}
-							// else: no match found, do nothing — keep existing checks
+							// else: no match found, do nothing / keep existing checks
 						}
 					}
 				});
