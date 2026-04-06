@@ -1964,8 +1964,8 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															</object>
 															<object class="sizeritem">
 																<flag>wxEXPAND</flag>
-																<object class="wxTextCtrl" name="txtLoadMaskName">
-																	<tooltip>Name of the mask to load from the file. Must match the name attribute in the mask file.</tooltip>
+																<object class="wxChoice" name="choiceLoadMaskName">
+																	<tooltip>Select a mask entry from the loaded mask file.</tooltip>
 																</object>
 															</object>
 														</object>

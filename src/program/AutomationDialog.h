@@ -175,6 +175,7 @@ private:
 	void OnSaveUseOriginalChanged(wxCommandEvent& event);
 	void OnExportUseOriginalChanged(wxCommandEvent& event);
 	void OnLoadMaskFileChanged(wxFileDirPickerEvent& event);
+	void PopulateMaskNamesFromFile(const wxString& filePath);
 	void OnBatchModeChanged(wxCommandEvent& event);
 
 	wxDECLARE_EVENT_TABLE();

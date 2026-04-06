@@ -730,8 +730,22 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 				else {
 					fp->SetPath(wxEmptyString);
 				}
+
+				// Populate dropdown from the mask file
+				PopulateMaskNamesFromFile(fp->GetPath());
 			}
-			SetTextValue("txtLoadMaskName", step.loadMaskName);
+
+			auto* choice = XRCCTRL(*this, "choiceLoadMaskName", wxChoice);
+			if (choice) {
+				wxString maskName = wxString::FromUTF8(step.loadMaskName);
+				int idx = choice->FindString(maskName);
+				if (idx != wxNOT_FOUND)
+					choice->SetSelection(idx);
+				else if (!maskName.IsEmpty()) {
+					choice->Append(maskName);
+					choice->SetSelection(choice->GetCount() - 1);
+				}
+			}
 			break;
 		}
 	}
@@ -967,7 +981,9 @@ void AutomationDialog::UpdateStepFromUI() {
 			auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
 			if (fp)
 				step.loadMaskFile = MakeRelativeToProject(fp->GetPath().ToUTF8().data());
-			step.loadMaskName = GetTextValue("txtLoadMaskName");
+			auto* choice = XRCCTRL(*this, "choiceLoadMaskName", wxChoice);
+			if (choice && choice->GetSelection() != wxNOT_FOUND)
+				step.loadMaskName = choice->GetStringSelection().ToUTF8().data();
 			break;
 		}
 	}
@@ -3078,14 +3094,26 @@ void AutomationDialog::OnExportUseOriginalChanged(wxCommandEvent& WXUNUSED(event
 
 void AutomationDialog::OnLoadMaskFileChanged(wxFileDirPickerEvent& event) {
 	wxString filePath = event.GetPath();
+	PopulateMaskNamesFromFile(filePath);
+}
+
+void AutomationDialog::PopulateMaskNamesFromFile(const wxString& filePath) {
+	auto* choice = XRCCTRL(*this, "choiceLoadMaskName", wxChoice);
+	if (!choice)
+		return;
+
+	choice->Clear();
+
 	if (filePath.IsEmpty())
 		return;
 
 	MaskFile maskFile;
 	if (maskFile.Load(filePath.ToUTF8().data()) == 0) {
-		std::string firstName = maskFile.GetFirstName();
-		if (!firstName.empty())
-			SetTextValue("txtLoadMaskName", firstName);
+		for (const auto& entry : maskFile.GetEntries())
+			choice->Append(wxString::FromUTF8(entry.name));
+
+		if (choice->GetCount() > 0)
+			choice->SetSelection(0);
 	}
 }
 
