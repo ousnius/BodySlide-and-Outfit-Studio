@@ -1331,6 +1331,10 @@ void AutomationDialog::OnStepListKeyDown(wxKeyEvent& event) {
 
 void AutomationDialog::OnStepSelected(wxListEvent& event) {
 	SelectStep(event.GetIndex());
+
+	// Restore focus to the list so arrow keys continue to work
+	if (listSteps)
+		listSteps->SetFocus();
 }
 
 void AutomationDialog::OnStepTypeChanged(wxCommandEvent& WXUNUSED(event)) {
