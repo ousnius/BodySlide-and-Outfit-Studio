@@ -142,6 +142,7 @@ enum class ToolID {
 
 
 struct ConformOptions;
+struct ClippingFixOptions;
 class OutfitStudioFrame;
 class EditUV;
 struct SymmetricVertices;
@@ -1378,6 +1379,15 @@ private:
 
 	void ShowSliderProperties(const std::string& sliderName);
 	void OnSliderProperties(wxCommandEvent& event);
+	void OnSliderFixClipping(wxCommandEvent& event);
+
+	bool ShowClippingFixStrength(float& outStrength);
+	void FixClippingForShape(const std::vector<nifly::Vector3>& bodyVerts,
+							const std::vector<nifly::Triangle>& bodyTris,
+							nifly::NiShape* shape,
+							const std::vector<nifly::Vector3>& outfitVerts,
+							const ClippingFixOptions& options,
+							UndoStateProject* usp);
 
 	void OnInvertUV(wxCommandEvent& event);
 	void OnMirrorShape(wxCommandEvent& event);
@@ -1388,6 +1398,7 @@ private:
 	void OnScaleShape(wxCommandEvent& event);
 	void OnRotateShape(wxCommandEvent& event);
 	void OnInflateShape(wxCommandEvent& event);
+	void OnFixClippingShape(wxCommandEvent& event);
 
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetReference(wxCommandEvent& event);

@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ShapeProperties.h"
 #include "SliderDataImportDialog.h"
 #include "AutomationDialog.h"
+#include "../components/ClippingFixer.h"
 
 #include <sstream>
 #include <wx/debugrpt.h>
@@ -168,6 +169,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("sliderSavePreset"), OutfitStudioFrame::OnSavePreset)
 	EVT_MENU(XRCID("sliderConform"), OutfitStudioFrame::OnSliderConform)
 	EVT_MENU(XRCID("sliderConformAll"), OutfitStudioFrame::OnSliderConformAll)
+	EVT_MENU(XRCID("sliderFixClipping"), OutfitStudioFrame::OnSliderFixClipping)
 	EVT_MENU(XRCID("sliderImportNIF"), OutfitStudioFrame::OnSliderImportNIF)
 	EVT_MENU(XRCID("sliderImportBSD"), OutfitStudioFrame::OnSliderImportBSD)
 	EVT_MENU(XRCID("sliderImportOBJ"), OutfitStudioFrame::OnSliderImportOBJ)
@@ -260,6 +262,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("scaleShape"), OutfitStudioFrame::OnScaleShape)
 	EVT_MENU(XRCID("rotateShape"), OutfitStudioFrame::OnRotateShape)
 	EVT_MENU(XRCID("inflateShape"), OutfitStudioFrame::OnInflateShape)
+	EVT_MENU(XRCID("fixClippingShape"), OutfitStudioFrame::OnFixClippingShape)
 	EVT_MENU(XRCID("renameShape"), OutfitStudioFrame::OnRenameShape)
 	EVT_MENU(XRCID("setReference"), OutfitStudioFrame::OnSetReference)
 	EVT_MENU(XRCID("deleteVerts"), OutfitStudioFrame::OnDeleteVerts)
@@ -8911,6 +8914,131 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 	ShowSliderProperties(activeSlider);
 }
 
+bool OutfitStudioFrame::ShowClippingFixStrength(float& outStrength) {
+	int strengthPct = 50;
+
+	wxDialog dlg(this, wxID_ANY, _("Fix Clipping"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE);
+	auto* sizer = new wxBoxSizer(wxVERTICAL);
+
+	auto* label = new wxStaticText(&dlg, wxID_ANY, wxString::Format(_("Strength: %d"), strengthPct));
+	auto* slider = new wxSlider(&dlg, wxID_ANY, strengthPct, 1, 100);
+
+	slider->Bind(wxEVT_SLIDER, [&](wxCommandEvent&) {
+		strengthPct = slider->GetValue();
+		label->SetLabel(wxString::Format(_("Strength: %d"), strengthPct));
+	});
+
+	sizer->Add(label, 0, wxALL, 10);
+	sizer->Add(slider, 0, wxEXPAND | wxLEFT | wxRIGHT, 10);
+	sizer->Add(dlg.CreateStdDialogButtonSizer(wxOK | wxCANCEL), 0, wxALL | wxEXPAND, 10);
+	dlg.SetSizerAndFit(sizer);
+	dlg.CenterOnParent();
+
+	if (dlg.ShowModal() != wxID_OK)
+		return false;
+
+	outStrength = strengthPct / 100.0f;
+	return true;
+}
+
+void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVerts,
+											const std::vector<Triangle>& bodyTris,
+											NiShape* shape,
+											const std::vector<Vector3>& outfitVerts,
+											const ClippingFixOptions& options,
+											UndoStateProject* usp) {
+	std::vector<Triangle> outfitTris;
+	shape->GetTriangles(outfitTris);
+
+	std::vector<Vector3> fixedVerts = outfitVerts;
+	ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
+
+	UndoStateShape uss;
+	uss.shapeName = shape->name.get();
+
+	for (size_t i = 0; i < outfitVerts.size(); i++) {
+		Vector3 diff = fixedVerts[i] - outfitVerts[i];
+		if (diff.IsZero(true))
+			continue;
+
+		uss.pointStartState[i] = Mesh::TransformPosNifToMesh(outfitVerts[i]);
+		uss.pointEndState[i] = Mesh::TransformPosNifToMesh(fixedVerts[i]);
+	}
+
+	if (!uss.pointStartState.empty())
+		usp->usss.push_back(std::move(uss));
+}
+
+void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
+	if (!bEditSlider) {
+		wxMessageBox(_("You must be in slider edit mode to fix clipping for a slider."), _("Fix Clipping"), wxICON_WARNING);
+		return;
+	}
+
+	NiShape* refShape = project->GetBaseShape();
+	if (!refShape) {
+		wxMessageBox(_("No reference shape set."), _("Fix Clipping"), wxICON_WARNING);
+		return;
+	}
+
+	float strength = 0.0f;
+	if (!ShowClippingFixStrength(strength))
+		return;
+
+	ClippingFixOptions options;
+	options.strength = strength;
+
+	// Get reference shape live verts (base + slider applied)
+	std::vector<Vector3> bodyVerts;
+	std::vector<Triangle> bodyTris;
+	project->GetLiveVerts(refShape, bodyVerts);
+	refShape->GetTriangles(bodyTris);
+
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::VertexPosition;
+
+	auto shapes = project->GetWorkNif()->GetShapes();
+	for (auto& shape : shapes) {
+		if (project->IsBaseShape(shape))
+			continue;
+
+		// Only process shapes that have a diff for the active slider
+		size_t sliderIndex = 0;
+		if (!project->SliderIndexFromName(activeSlider, sliderIndex))
+			continue;
+
+		TargetDataDiffs* diffSet = project->GetDiffSet(project->activeSet[sliderIndex], shape);
+		if (!diffSet || diffSet->empty())
+			continue;
+
+		std::vector<Vector3> outfitVerts;
+		project->GetLiveVerts(shape, outfitVerts);
+
+		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp);
+	}
+
+	if (usp->usss.empty()) {
+		glView->GetUndoHistory()->PopState();
+		return;
+	}
+
+	usp->sliderName = activeSlider;
+
+	float sliderscale = project->SliderValue(activeSlider);
+	if (sliderscale == 0.0)
+		sliderscale = 1.0;
+
+	usp->sliderscale = sliderscale;
+
+	glView->ApplyUndoState(usp, false);
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool();
+
+	UpdateUndoTools();
+	HighlightSliderData();
+}
+
 void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions& options) {
 	if (project->IsBaseShape(shape))
 		return;
@@ -9896,6 +10024,66 @@ void OutfitStudioFrame::OnInflateShape(wxCommandEvent& WXUNUSED(event)) {
 
 		UpdateUndoTools();
 	}
+}
+
+void OutfitStudioFrame::OnFixClippingShape(wxCommandEvent& event) {
+	if (bEditSlider) {
+		OnSliderFixClipping(event);
+		return;
+	}
+
+	CloseBrushSettings();
+
+	if (!ShapeSelectionCheck())
+		return;
+
+	if (!CheckEditableState())
+		return;
+
+	NiShape* refShape = project->GetBaseShape();
+	if (!refShape) {
+		wxMessageBox(_("No reference shape set."), _("Fix Clipping"), wxICON_WARNING);
+		return;
+	}
+
+	float strength = 0.0f;
+	if (!ShowClippingFixStrength(strength))
+		return;
+
+	ClippingFixOptions options;
+	options.strength = strength;
+
+	// Get reference shape geometry (unmorphed)
+	std::vector<Vector3> bodyVerts;
+	std::vector<Triangle> bodyTris;
+	project->GetWorkNif()->GetVertsForShape(refShape, bodyVerts);
+	refShape->GetTriangles(bodyTris);
+
+	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::VertexPosition;
+
+	for (auto& sel : selectedItems) {
+		NiShape* shape = sel->GetShape();
+		if (project->IsBaseShape(shape))
+			continue;
+
+		std::vector<Vector3> outfitVerts;
+		project->GetWorkNif()->GetVertsForShape(shape, outfitVerts);
+
+		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp);
+	}
+
+	if (usp->usss.empty()) {
+		glView->GetUndoHistory()->PopState();
+		return;
+	}
+
+	glView->ApplyUndoState(usp, false);
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool();
+
+	UpdateUndoTools();
 }
 
 void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {

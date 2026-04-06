@@ -1988,6 +1988,10 @@
 				<label>Inflate...</label>
 				<help>Inflates/deflates a shape along its normals. This permanently moves vertices.</help>
 			</object>
+			<object class="wxMenuItem" name="fixClippingShape">
+				<label>Fix Clipping...</label>
+				<help>Fixes clipping of outfit vertices that penetrate the reference shape.</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenu" name="menuNormals">
 				<label>Normals</label>
@@ -2069,6 +2073,10 @@
 			<object class="wxMenuItem" name="sliderConformAll">
 				<label>Conform All\tCtrl+Shift+C</label>
 				<help>Conform all outfit shapes to all checked sliders.</help>
+			</object>
+			<object class="wxMenuItem" name="sliderFixClipping">
+				<label>Fix Clipping...</label>
+				<help>Fixes clipping of outfit vertices that penetrate the reference shape for the active slider.</help>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="saveBaseShape">
@@ -2481,6 +2489,10 @@
 		<object class="wxMenuItem" name="inflateShape">
 			<label>Inflate...</label>
 			<help>Inflates/deflates a shape along its normals. This permanently moves vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="fixClippingShape">
+			<label>Fix Clipping...</label>
+			<help>Fixes clipping of outfit vertices that penetrate the reference shape.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="copyBoneWeight">
