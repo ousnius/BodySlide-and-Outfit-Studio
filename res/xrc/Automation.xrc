@@ -48,6 +48,15 @@
 							<tooltip>Delete the current automation script</tooltip>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnOpenFolder">
+							<label>Open Folder</label>
+							<tooltip>Open the Automations folder in file explorer</tooltip>
+						</object>
+					</object>
 				</object>
 			</object>
 

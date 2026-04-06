@@ -32,6 +32,7 @@ wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 	EVT_COMBOBOX(XRCID("cmbAutomation"), AutomationDialog::OnAutomationSelected)
 	EVT_BUTTON(XRCID("btnSaveScript"), AutomationDialog::OnSaveScript)
 	EVT_BUTTON(XRCID("btnDeleteScript"), AutomationDialog::OnDeleteScript)
+	EVT_BUTTON(XRCID("btnOpenFolder"), AutomationDialog::OnOpenFolder)
 	EVT_LIST_ITEM_SELECTED(XRCID("listSteps"), AutomationDialog::OnStepSelected)
 	EVT_CHOICE(XRCID("choiceStepType"), AutomationDialog::OnStepTypeChanged)
 	EVT_BUTTON(XRCID("btnExecuteAll"), AutomationDialog::OnExecuteAll)
@@ -1223,6 +1224,14 @@ void AutomationDialog::OnDeleteScript(wxCommandEvent& WXUNUSED(event)) {
 	cmbAutomation->SetValue(wxEmptyString);
 	UpdateButtonState();
 	GetSizer()->Layout();
+}
+
+void AutomationDialog::OnOpenFolder(wxCommandEvent& WXUNUSED(event)) {
+	wxString folder = wxString::FromUTF8(GetAutomationsFolder());
+	if (!wxDir::Exists(folder))
+		wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+	wxLaunchDefaultApplication(folder);
 }
 
 void AutomationDialog::OnAddStep(wxCommandEvent& WXUNUSED(event)) {

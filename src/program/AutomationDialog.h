@@ -148,6 +148,7 @@ private:
 
 	void OnSaveScript(wxCommandEvent& event);
 	void OnDeleteScript(wxCommandEvent& event);
+	void OnOpenFolder(wxCommandEvent& event);
 	void OnAutomationSelected(wxCommandEvent& event);
 	void OnAddStep(wxCommandEvent& event);
 	void OnRemoveStep(wxCommandEvent& event);
