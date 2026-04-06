@@ -1606,9 +1606,15 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 				 _("Automation"), wxICON_INFORMATION);
 }
 
+void AutomationDialog::ResetAndClearProject() {
+	project->GetWorkAnim()->Clear();
+	project->GetWorkNif()->Clear();
+	outfitStudio->ResetProject();
+}
+
 int AutomationDialog::ExecuteStepClearProject(const AutomationStep&) {
 	wxLogMessage("Automation: Clearing project...");
-	outfitStudio->ResetProject();
+	ResetAndClearProject();
 	return 0;
 }
 
@@ -3442,7 +3448,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 	Config.SetDefaultBoolValue("OptimizeForSSE", true);
 
 	// Clear project before starting batch to prevent current content from leaking into first iteration
-	outfitStudio->ResetProject();
+	ResetAndClearProject();
 
 	StartProgress(_("Preparing..."));
 
@@ -3474,7 +3480,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			vars["BATCH_FULLNAME"] = fn.GetFullName().ToUTF8().data();
 
 			// Clear project for fresh start
-			outfitStudio->ResetProject();
+			ResetAndClearProject();
 
 			// Import the batch file
 			wxString ext = fn.GetExt().Lower();
@@ -3539,7 +3545,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			processedCount++;
 
 			// Clear project after processing each entry
-			outfitStudio->ResetProject();
+			ResetAndClearProject();
 		}
 
 		EndProgress(_("Batch complete."));
@@ -3579,7 +3585,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			vars["BATCH_DIR"] = fn.GetPath().ToUTF8().data();
 
 			// Clear and load the project
-			outfitStudio->ResetProject();
+			ResetAndClearProject();
 			bool loaded = outfitStudio->LoadProject(filePath, setName, true);
 
 			// LoadProject with clearProject=true recreates the project object
@@ -3706,7 +3712,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			processedCount++;
 
 			// Clear project after processing each entry
-			outfitStudio->ResetProject();
+			ResetAndClearProject();
 		}
 
 		EndProgress(_("Batch complete."));

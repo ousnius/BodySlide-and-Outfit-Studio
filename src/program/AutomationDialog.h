@@ -105,6 +105,8 @@ private:
 	void SyncBatchScriptFromUI();
 	void UpdateBatchPanelVisibility();
 
+	void ResetAndClearProject();
+
 	void ExecuteSteps(const std::vector<size_t>& stepIndices);
 	void ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::string>& selectedFiles = {}, const std::vector<std::pair<std::string, std::string>>& selectedSets = {});
 	int ExecuteStep(const AutomationStep& step);
