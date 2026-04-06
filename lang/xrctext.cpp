@@ -286,30 +286,14 @@ _("Name of the parent bone (leave empty for no parent)");
 _("Parent bone name");
 #line 272 "res/xrc/Automation.xrc"
 _("Translation:");
-#line 286 "res/xrc/Automation.xrc"
-_("X");
-#line 296 "res/xrc/Automation.xrc"
-_("Y");
-#line 304 "res/xrc/Automation.xrc"
-_("Z");
 #line 313 "res/xrc/Automation.xrc"
 _("Rotation:");
-#line 327 "res/xrc/Automation.xrc"
-_("X");
-#line 337 "res/xrc/Automation.xrc"
-_("Y");
-#line 345 "res/xrc/Automation.xrc"
-_("Z");
 #line 361 "res/xrc/Automation.xrc"
 _("Copy Bone Weights");
 #line 375 "res/xrc/Automation.xrc"
 _("Proximity Radius:");
-#line 382 "res/xrc/Automation.xrc"
-_("10.0");
 #line 389 "res/xrc/Automation.xrc"
 _("Max Results:");
-#line 396 "res/xrc/Automation.xrc"
-_("10");
 #line 403 "res/xrc/Automation.xrc"
 _("Bone List:");
 #line 409 "res/xrc/Automation.xrc"
@@ -346,20 +330,8 @@ _("Name of the parent bone (leave empty for no parent)");
 _("Parent bone name");
 #line 516 "res/xrc/Automation.xrc"
 _("Translation:");
-#line 530 "res/xrc/Automation.xrc"
-_("X");
-#line 540 "res/xrc/Automation.xrc"
-_("Y");
-#line 548 "res/xrc/Automation.xrc"
-_("Z");
 #line 557 "res/xrc/Automation.xrc"
 _("Rotation:");
-#line 571 "res/xrc/Automation.xrc"
-_("X");
-#line 581 "res/xrc/Automation.xrc"
-_("Y");
-#line 589 "res/xrc/Automation.xrc"
-_("Z");
 #line 605 "res/xrc/Automation.xrc"
 _("Remove Skinning");
 #line 611 "res/xrc/Automation.xrc"
@@ -410,26 +382,18 @@ _("Output filename");
 _("Output Data Path:");
 #line 783 "res/xrc/Automation.xrc"
 _("Game data path for output (supports {{PLACEHOLDER}} variables)");
-#line 784 "res/xrc/Automation.xrc"
-_("meshes\\...");
 #line 791 "res/xrc/Automation.xrc"
 _("Slider Set File:");
 #line 797 "res/xrc/Automation.xrc"
 _("Slider set project file (.osp) (supports {{PLACEHOLDER}} variables)");
-#line 798 "res/xrc/Automation.xrc"
-_("SliderSets\\file.osp");
 #line 805 "res/xrc/Automation.xrc"
 _("Shape Data Folder:");
 #line 811 "res/xrc/Automation.xrc"
 _("Folder for slider data files (supports {{PLACEHOLDER}} variables)");
-#line 812 "res/xrc/Automation.xrc"
-_("ShapeData\\folder");
 #line 819 "res/xrc/Automation.xrc"
 _("Shape Data File:");
 #line 825 "res/xrc/Automation.xrc"
 _("Base NIF filename (supports {{PLACEHOLDER}} variables)");
-#line 826 "res/xrc/Automation.xrc"
-_("filename.nif");
 #line 833 "res/xrc/Automation.xrc"
 _("Options:");
 #line 842 "res/xrc/Automation.xrc"
@@ -626,68 +590,40 @@ _("Transform Shape");
 _("Move:");
 #line 1651 "res/xrc/Automation.xrc"
 _("Move X");
-#line 1652 "res/xrc/Automation.xrc"
-_("X");
 #line 1659 "res/xrc/Automation.xrc"
 _("Move Y");
-#line 1660 "res/xrc/Automation.xrc"
-_("Y");
 #line 1667 "res/xrc/Automation.xrc"
 _("Move Z");
-#line 1668 "res/xrc/Automation.xrc"
-_("Z");
 #line 1675 "res/xrc/Automation.xrc"
 _("Rotate (Ã‚Â°):");
 #line 1682 "res/xrc/Automation.xrc"
 _("Rotate X (degrees)");
-#line 1683 "res/xrc/Automation.xrc"
-_("X");
 #line 1690 "res/xrc/Automation.xrc"
 _("Rotate Y (degrees)");
-#line 1691 "res/xrc/Automation.xrc"
-_("Y");
 #line 1698 "res/xrc/Automation.xrc"
 _("Rotate Z (degrees)");
-#line 1699 "res/xrc/Automation.xrc"
-_("Z");
 #line 1706 "res/xrc/Automation.xrc"
 _("Scale:");
 #line 1713 "res/xrc/Automation.xrc"
 _("Scale X");
-#line 1714 "res/xrc/Automation.xrc"
-_("X");
 #line 1721 "res/xrc/Automation.xrc"
 _("Scale Y");
-#line 1722 "res/xrc/Automation.xrc"
-_("Y");
 #line 1729 "res/xrc/Automation.xrc"
 _("Scale Z");
-#line 1730 "res/xrc/Automation.xrc"
-_("Z");
 #line 1737 "res/xrc/Automation.xrc"
 _("Inflate:");
 #line 1744 "res/xrc/Automation.xrc"
 _("Inflate X (along normals)");
-#line 1745 "res/xrc/Automation.xrc"
-_("X");
 #line 1752 "res/xrc/Automation.xrc"
 _("Inflate Y (along normals)");
-#line 1753 "res/xrc/Automation.xrc"
-_("Y");
 #line 1760 "res/xrc/Automation.xrc"
 _("Inflate Z (along normals)");
-#line 1761 "res/xrc/Automation.xrc"
-_("Z");
 #line 1775 "res/xrc/Automation.xrc"
 _("Conform Sliders");
 #line 1789 "res/xrc/Automation.xrc"
 _("Proximity Radius:");
-#line 1796 "res/xrc/Automation.xrc"
-_("10.0");
 #line 1803 "res/xrc/Automation.xrc"
 _("Max Results:");
-#line 1810 "res/xrc/Automation.xrc"
-_("10");
 #line 1817 "res/xrc/Automation.xrc"
 _("Options:");
 #line 1826 "res/xrc/Automation.xrc"
@@ -732,8 +668,6 @@ _("Comma-separated slider list");
 _("Value (0 - 100):");
 #line 1979 "res/xrc/Automation.xrc"
 _("Slider value between 0 and 100 (percentage)");
-#line 1980 "res/xrc/Automation.xrc"
-_("0-100");
 #line 1994 "res/xrc/Automation.xrc"
 _("Set Slider Properties");
 #line 2008 "res/xrc/Automation.xrc"
@@ -776,14 +710,10 @@ _("Whether matching zap sliders are zapped by default.");
 _("Default (Small):");
 #line 2081 "res/xrc/Automation.xrc"
 _("Default small value (0-100). Leave empty for no change.");
-#line 2082 "res/xrc/Automation.xrc"
-_("0-100");
 #line 2089 "res/xrc/Automation.xrc"
 _("Default (Big):");
 #line 2095 "res/xrc/Automation.xrc"
 _("Default big value (0-100). Leave empty for no change.");
-#line 2096 "res/xrc/Automation.xrc"
-_("0-100");
 #line 2110 "res/xrc/Automation.xrc"
 _("Load Mask");
 #line 2124 "res/xrc/Automation.xrc"
@@ -834,8 +764,6 @@ _("Select folder to scan");
 _("Extension:");
 #line 2331 "res/xrc/Automation.xrc"
 _("File extension to scan for (e.g. .nif, .obj)");
-#line 2332 "res/xrc/Automation.xrc"
-_(".nif");
 #line 2339 "res/xrc/Automation.xrc"
 _("Options:");
 #line 2345 "res/xrc/Automation.xrc"
