@@ -144,6 +144,7 @@
 															<item>Sliders: Conform Sliders</item>
 															<item>Sliders: Delete Slider</item>
 															<item>Sliders: Set Slider Values</item>
+															<item>Sliders: Set Slider Properties</item>
 															<item>Masks: Load Mask</item>
 															<item>Nodes: Remove Unused Nodes</item>
 														</content>
@@ -1918,6 +1919,119 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtSetSliderValue">
 																	<value translate="0">100</value>
 																	<tooltip>Slider value between 0 and 100 (percentage)</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetSliderProperties -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetSliderProperties">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Slider Properties</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSliderPropNames">
+																	<tooltip>Comma-separated list of slider names. Leave empty to apply to all sliders.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Zap:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceSliderPropZap">
+																	<content>
+																		<item>No change</item>
+																		<item>No</item>
+																		<item>Yes</item>
+																	</content>
+																	<tooltip>Set the zap flag on matching sliders.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Hidden:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceSliderPropHidden">
+																	<content>
+																		<item>No change</item>
+																		<item>No</item>
+																		<item>Yes</item>
+																	</content>
+																	<tooltip>Set the hidden flag on matching sliders.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblSliderPropZapped">
+																	<label>Default Zapped:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceSliderPropZapped">
+																	<content>
+																		<item>No change</item>
+																		<item>Not zapped</item>
+																		<item>Zapped</item>
+																	</content>
+																	<tooltip>Whether matching zap sliders are zapped by default.</tooltip>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblSliderPropDefaultLo">
+																	<label>Default (Small):</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSliderPropDefaultLo">
+																	<tooltip>Default small value (0-100). Leave empty for no change.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblSliderPropDefaultHi">
+																	<label>Default (Big):</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSliderPropDefaultHi">
+																	<tooltip>Default big value (0-100). Leave empty for no change.</tooltip>
 																</object>
 															</object>
 														</object>

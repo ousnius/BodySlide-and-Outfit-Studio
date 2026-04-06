@@ -139,6 +139,7 @@ private:
 	int ExecuteStepDuplicateShape(const AutomationStep& step);
 	int ExecuteStepMirrorShape(const AutomationStep& step);
 	int ExecuteStepLoadMask(const AutomationStep& step);
+	int ExecuteStepSetSliderProperties(const AutomationStep& step);
 	int ExecuteStepRemoveUnusedNodes(const AutomationStep& step);
 
 	std::vector<std::string> GatherBatchFiles();
@@ -177,6 +178,8 @@ private:
 	void OnExportUseOriginalChanged(wxCommandEvent& event);
 	void OnLoadMaskFileChanged(wxFileDirPickerEvent& event);
 	void PopulateMaskNamesFromFile(const wxString& filePath);
+	void OnSliderPropZapChanged(wxCommandEvent& event);
+	void UpdateSliderPropDefaultVisibility();
 	void OnBatchModeChanged(wxCommandEvent& event);
 
 	wxDECLARE_EVENT_TABLE();

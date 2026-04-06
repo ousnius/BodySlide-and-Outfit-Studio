@@ -41,11 +41,12 @@ enum class AutomationStepType {
 	ConformSliders,
 	DeleteSlider,
 	SetSliderValues,
+	SetSliderProperties,
 	LoadMask,
 	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 29;
+constexpr int AutomationStepTypeCount = 30;
 static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -227,6 +228,13 @@ struct AutomationStep {
 	bool exportUseOriginalPath = false; // Use original file path from batch mode
 	std::string exportPrefix;
 	std::string exportSuffix;
+
+	// SetSliderProperties params
+	std::vector<std::string> sliderPropNames;
+	int sliderPropZap = -1;       // -1 = no change, 0 = false, 1 = true
+	int sliderPropHidden = -1;    // -1 = no change, 0 = false, 1 = true
+	int sliderPropDefaultLo = -1; // -1 = no change, 0-100 = set value
+	int sliderPropDefaultHi = -1; // -1 = no change, 0-100 = set value
 
 	// LoadMask params
 	std::string loadMaskFile;

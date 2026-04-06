@@ -40,6 +40,7 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::ConformSliders: return "ConformSliders";
 		case AutomationStepType::DeleteSlider: return "DeleteSlider";
 		case AutomationStepType::SetSliderValues: return "SetSliderValues";
+		case AutomationStepType::SetSliderProperties: return "SetSliderProperties";
 		case AutomationStepType::LoadMask: return "LoadMask";
 		case AutomationStepType::RemoveUnusedNodes: return "RemoveUnusedNodes";
 		default: return "LoadReference";
@@ -74,6 +75,7 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "ConformSliders") return AutomationStepType::ConformSliders;
 	if (str == "DeleteSlider") return AutomationStepType::DeleteSlider;
 	if (str == "SetSliderValues") return AutomationStepType::SetSliderValues;
+	if (str == "SetSliderProperties") return AutomationStepType::SetSliderProperties;
 	if (str == "LoadMask") return AutomationStepType::LoadMask;
 	if (str == "RemoveUnusedNodes") return AutomationStepType::RemoveUnusedNodes;
 	return AutomationStepType::LoadReference;
@@ -495,6 +497,16 @@ int AutomationScript::Load(const std::string& fileName) {
 					step.loadMaskName = mn;
 				break;
 			}
+			case AutomationStepType::SetSliderProperties: {
+				const char* sn = GetChildText(stepElem, "SliderNames");
+				if (sn)
+					step.sliderPropNames = SplitCommaSeparated(sn);
+				step.sliderPropZap = GetChildInt(stepElem, "Zap", -1);
+				step.sliderPropHidden = GetChildInt(stepElem, "Hidden", -1);
+				step.sliderPropDefaultLo = GetChildInt(stepElem, "DefaultLo", -1);
+				step.sliderPropDefaultHi = GetChildInt(stepElem, "DefaultHi", -1);
+				break;
+			}
 			case AutomationStepType::RemoveUnusedNodes:
 				// No additional params
 				break;
@@ -730,6 +742,15 @@ int AutomationScript::Save(const std::string& fileName) {
 			case AutomationStepType::LoadMask:
 				SetChildText(doc, stepElem, "MaskFile", step.loadMaskFile);
 				SetChildText(doc, stepElem, "MaskName", step.loadMaskName);
+				break;
+
+			case AutomationStepType::SetSliderProperties:
+				if (!step.sliderPropNames.empty())
+					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.sliderPropNames, ", "));
+				SetChildInt(doc, stepElem, "Zap", step.sliderPropZap, -1);
+				SetChildInt(doc, stepElem, "Hidden", step.sliderPropHidden, -1);
+				SetChildInt(doc, stepElem, "DefaultLo", step.sliderPropDefaultLo, -1);
+				SetChildInt(doc, stepElem, "DefaultHi", step.sliderPropDefaultHi, -1);
 				break;
 
 			case AutomationStepType::RemoveUnusedNodes:

@@ -49,6 +49,7 @@ wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 	EVT_CHECKBOX(XRCID("chkSaveUseOriginal"), AutomationDialog::OnSaveUseOriginalChanged)
 	EVT_CHECKBOX(XRCID("chkExportUseOriginalPath"), AutomationDialog::OnExportUseOriginalChanged)
 	EVT_FILEPICKER_CHANGED(XRCID("fpLoadMaskFile"), AutomationDialog::OnLoadMaskFileChanged)
+	EVT_CHOICE(XRCID("choiceSliderPropZap"), AutomationDialog::OnSliderPropZapChanged)
 	EVT_RADIOBOX(XRCID("radioBatchMode"), AutomationDialog::OnBatchModeChanged)
 wxEND_EVENT_TABLE()
 
@@ -571,6 +572,42 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 				txt->SetValue(wxString::Format("%d", static_cast<int>(step.setSliderValue * 100)));
 			break;
 		}
+		case AutomationStepType::SetSliderProperties: {
+			SetVectorValue("txtSliderPropNames", step.sliderPropNames);
+			auto* choiceZap = XRCCTRL(*this, "choiceSliderPropZap", wxChoice);
+			if (choiceZap)
+				choiceZap->SetSelection(step.sliderPropZap < 0 ? 0 : step.sliderPropZap + 1);
+			auto* choiceHidden = XRCCTRL(*this, "choiceSliderPropHidden", wxChoice);
+			if (choiceHidden)
+				choiceHidden->SetSelection(step.sliderPropHidden < 0 ? 0 : step.sliderPropHidden + 1);
+
+			bool isZap = step.sliderPropZap == 1;
+			auto* choiceZapped = XRCCTRL(*this, "choiceSliderPropZapped", wxChoice);
+			if (choiceZapped) {
+				if (isZap) {
+					// Map lo/hi to zapped state: -1 = no change, both 0 = not zapped, any > 0 = zapped
+					if (step.sliderPropDefaultLo < 0 && step.sliderPropDefaultHi < 0)
+						choiceZapped->SetSelection(0);
+					else if (step.sliderPropDefaultLo > 0 || step.sliderPropDefaultHi > 0)
+						choiceZapped->SetSelection(2);
+					else
+						choiceZapped->SetSelection(1);
+				}
+				else {
+					choiceZapped->SetSelection(0);
+				}
+			}
+
+			auto* txtLo = XRCCTRL(*this, "txtSliderPropDefaultLo", wxTextCtrl);
+			if (txtLo)
+				txtLo->SetValue(step.sliderPropDefaultLo >= 0 ? wxString::Format("%d", step.sliderPropDefaultLo) : "");
+			auto* txtHi = XRCCTRL(*this, "txtSliderPropDefaultHi", wxTextCtrl);
+			if (txtHi)
+				txtHi->SetValue(step.sliderPropDefaultHi >= 0 ? wxString::Format("%d", step.sliderPropDefaultHi) : "");
+
+			UpdateSliderPropDefaultVisibility();
+			break;
+		}
 		case AutomationStepType::ImportFile: {
 			auto* fp = XRCCTRL(*this, "fpImportFile", wxFilePickerCtrl);
 			if (fp)
@@ -850,6 +887,53 @@ void AutomationDialog::UpdateStepFromUI() {
 		case AutomationStepType::SetSliderValues: {
 			step.setSliderNames = GetVectorValue("txtSetSliderNames");
 			step.setSliderValue = GetFloatValue("txtSetSliderValue") / 100.0f;
+			break;
+		}
+		case AutomationStepType::SetSliderProperties: {
+			step.sliderPropNames = GetVectorValue("txtSliderPropNames");
+			auto* choiceZap = XRCCTRL(*this, "choiceSliderPropZap", wxChoice);
+			if (choiceZap) {
+				int sel = choiceZap->GetSelection();
+				step.sliderPropZap = sel <= 0 ? -1 : sel - 1;
+			}
+			auto* choiceHidden = XRCCTRL(*this, "choiceSliderPropHidden", wxChoice);
+			if (choiceHidden) {
+				int sel = choiceHidden->GetSelection();
+				step.sliderPropHidden = sel <= 0 ? -1 : sel - 1;
+			}
+
+			bool isZap = step.sliderPropZap == 1;
+			if (isZap) {
+				// Read from zapped choice instead of lo/hi text fields
+				auto* choiceZapped = XRCCTRL(*this, "choiceSliderPropZapped", wxChoice);
+				if (choiceZapped) {
+					int sel = choiceZapped->GetSelection();
+					if (sel == 2) {
+						step.sliderPropDefaultLo = 100;
+						step.sliderPropDefaultHi = 100;
+					}
+					else if (sel == 1) {
+						step.sliderPropDefaultLo = 0;
+						step.sliderPropDefaultHi = 0;
+					}
+					else {
+						step.sliderPropDefaultLo = -1;
+						step.sliderPropDefaultHi = -1;
+					}
+				}
+			}
+			else {
+				auto* txtLo = XRCCTRL(*this, "txtSliderPropDefaultLo", wxTextCtrl);
+				if (txtLo) {
+					wxString val = txtLo->GetValue().Trim();
+					step.sliderPropDefaultLo = val.IsEmpty() ? -1 : wxAtoi(val);
+				}
+				auto* txtHi = XRCCTRL(*this, "txtSliderPropDefaultHi", wxTextCtrl);
+				if (txtHi) {
+					wxString val = txtHi->GetValue().Trim();
+					step.sliderPropDefaultHi = val.IsEmpty() ? -1 : wxAtoi(val);
+				}
+			}
 			break;
 		}
 		case AutomationStepType::DeleteShape:
@@ -2786,6 +2870,46 @@ int AutomationDialog::ExecuteStepLoadMask(const AutomationStep& step) {
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepSetSliderProperties(const AutomationStep& step) {
+	wxLogMessage("Automation: Setting slider properties...");
+
+	for (size_t i = 0; i < project->SliderCount(); i++) {
+		std::string name = project->GetSliderName(i);
+
+		// If specific slider names given, check if this one matches
+		if (!step.sliderPropNames.empty()) {
+			bool found = false;
+			for (const auto& n : step.sliderPropNames) {
+				if (n == name) {
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+				continue;
+		}
+
+		if (step.sliderPropZap >= 0) {
+			project->SetSliderZap(i, step.sliderPropZap != 0);
+			wxLogMessage("Automation: Slider '%s' zap = %s.", name, step.sliderPropZap ? "true" : "false");
+		}
+		if (step.sliderPropHidden >= 0) {
+			project->SetSliderHidden(i, step.sliderPropHidden != 0);
+			wxLogMessage("Automation: Slider '%s' hidden = %s.", name, step.sliderPropHidden ? "true" : "false");
+		}
+		if (step.sliderPropDefaultLo >= 0) {
+			project->SetSliderDefault(i, step.sliderPropDefaultLo, false);
+			wxLogMessage("Automation: Slider '%s' default (small) = %d.", name, step.sliderPropDefaultLo);
+		}
+		if (step.sliderPropDefaultHi >= 0) {
+			project->SetSliderDefault(i, step.sliderPropDefaultHi, true);
+			wxLogMessage("Automation: Slider '%s' default (big) = %d.", name, step.sliderPropDefaultHi);
+		}
+	}
+
+	return 0;
+}
+
 int AutomationDialog::ExecuteStepRemoveUnusedNodes(const AutomationStep&) {
 	wxLogMessage("Automation: Removing unused nodes...");
 	int deletionCount = 0;
@@ -2826,6 +2950,7 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::DuplicateShape: return ExecuteStepDuplicateShape(step);
 		case AutomationStepType::MirrorShape: return ExecuteStepMirrorShape(step);
 		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
+		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
 		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
 	}
 
@@ -3109,6 +3234,32 @@ void AutomationDialog::OnExportUseOriginalChanged(wxCommandEvent& WXUNUSED(event
 	auto* chk = XRCCTRL(*this, "chkExportUseOriginalPath", wxCheckBox);
 	if (chk)
 		UpdateExportFieldsEnabled(!chk->GetValue());
+}
+
+void AutomationDialog::OnSliderPropZapChanged(wxCommandEvent& WXUNUSED(event)) {
+	UpdateSliderPropDefaultVisibility();
+}
+
+void AutomationDialog::UpdateSliderPropDefaultVisibility() {
+	auto* choiceZap = XRCCTRL(*this, "choiceSliderPropZap", wxChoice);
+	bool isZap = choiceZap && choiceZap->GetSelection() == 2; // "Yes"
+
+	auto showCtrl = [this](const char* name, bool show) {
+		auto* win = FindWindow(name);
+		if (win)
+			win->Show(show);
+	};
+
+	showCtrl("lblSliderPropZapped", isZap);
+	showCtrl("choiceSliderPropZapped", isZap);
+	showCtrl("lblSliderPropDefaultLo", !isZap);
+	showCtrl("txtSliderPropDefaultLo", !isZap);
+	showCtrl("lblSliderPropDefaultHi", !isZap);
+	showCtrl("txtSliderPropDefaultHi", !isZap);
+
+	auto* panel = XRCCTRL(*this, "pageSetSliderProperties", wxPanel);
+	if (panel)
+		panel->Layout();
 }
 
 void AutomationDialog::OnLoadMaskFileChanged(wxFileDirPickerEvent& event) {
