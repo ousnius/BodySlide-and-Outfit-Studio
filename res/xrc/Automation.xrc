@@ -1909,14 +1909,14 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															<object class="sizeritem">
 																<flag>wxALIGN_CENTER_VERTICAL</flag>
 																<object class="wxStaticText">
-																	<label>Value (0.0 - 1.0):</label>
+																	<label>Value (0 - 100):</label>
 																</object>
 															</object>
 															<object class="sizeritem">
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtSetSliderValue">
-																	<value translate="0">1.0</value>
-																	<tooltip>Slider value between 0.0 and 1.0 (1.0 = 100%)</tooltip>
+																	<value translate="0">100</value>
+																	<tooltip>Slider value between 0 and 100 (percentage)</tooltip>
 																</object>
 															</object>
 														</object>

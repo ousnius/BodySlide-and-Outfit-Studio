@@ -568,7 +568,7 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			SetVectorValue("txtSetSliderNames", step.setSliderNames);
 			auto* txt = XRCCTRL(*this, "txtSetSliderValue", wxTextCtrl);
 			if (txt)
-				txt->SetValue(wxString::Format("%.1f", step.setSliderValue));
+				txt->SetValue(wxString::Format("%d", static_cast<int>(step.setSliderValue * 100)));
 			break;
 		}
 		case AutomationStepType::ImportFile: {
@@ -831,7 +831,7 @@ void AutomationDialog::UpdateStepFromUI() {
 		}
 		case AutomationStepType::SetSliderValues: {
 			step.setSliderNames = GetVectorValue("txtSetSliderNames");
-			step.setSliderValue = GetFloatValue("txtSetSliderValue");
+			step.setSliderValue = GetFloatValue("txtSetSliderValue") / 100.0f;
 			break;
 		}
 		case AutomationStepType::DeleteShape:
