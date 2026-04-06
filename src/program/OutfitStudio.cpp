@@ -748,24 +748,15 @@ void OutfitStudio::CharHook(wxKeyEvent& event) {
 	}
 
 #ifdef _WINDOWS
-	int keyCode = event.GetKeyCode();
-	bool letterHack = (keyCode > 0x40 && keyCode < 0x5B) || (keyCode > 0x60 && keyCode < 0x7B);
-	if (letterHack && !event.HasModifiers()) {
-		if ((!event.ShiftDown() && !wxGetKeyState(wxKeyCode::WXK_CAPITAL)) || (event.ShiftDown() && wxGetKeyState(wxKeyCode::WXK_CAPITAL))) {
-			keyCode += 32;
-		}
-
-		auto searchCtrl = dynamic_cast<wxTextCtrl*>(w);
-		if (searchCtrl) {
-			HWND hwndEdit = searchCtrl->GetHandle();
-			::SendMessage(hwndEdit, WM_CHAR, keyCode, event.GetRawKeyFlags());
-			return;
-		}
-
-		auto comboCtrl = dynamic_cast<wxComboBox*>(w);
-		if (comboCtrl) {
-			HWND hwndCombo = comboCtrl->GetHandle();
-			::SendMessage(hwndCombo, WM_CHAR, keyCode, event.GetRawKeyFlags());
+	bool isTextCtrl = dynamic_cast<wxTextCtrl*>(w) != nullptr || dynamic_cast<wxComboBox*>(w) != nullptr;
+	if (isTextCtrl) {
+		BYTE keyState[256];
+		GetKeyboardState(keyState);
+		WCHAR result[4] = {};
+		int len = ToUnicode(event.GetRawKeyCode(), MapVirtualKey(event.GetRawKeyCode(), MAPVK_VK_TO_VSC), keyState, result, 4, 0);
+		if (len == 1 && result[0] >= 0x20) {
+			HWND hwnd = static_cast<HWND>(w->GetHandle());
+			::SendMessage(hwnd, WM_CHAR, result[0], event.GetRawKeyFlags());
 			return;
 		}
 	}
