@@ -173,6 +173,21 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
 	else
 		notes.clear();
 
+	tmpElement = element->FirstChildElement("ReferenceInfo");
+	if (tmpElement) {
+		if (tmpElement->Attribute("ProjectFile"))
+			refProjectFile = ToOSSlashes(tmpElement->Attribute("ProjectFile"));
+		if (tmpElement->Attribute("ProjectName"))
+			refProjectName = tmpElement->Attribute("ProjectName");
+		if (tmpElement->Attribute("ShapeName"))
+			refShapeName = tmpElement->Attribute("ShapeName");
+	}
+	else {
+		refProjectFile.clear();
+		refProjectName.clear();
+		refShapeName.clear();
+	}
+
 	return 0;
 }
 
@@ -360,6 +375,15 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	sliderSetElement->DeleteChildren();
 	sliderSetElement->SetAttribute("name", name.c_str());
 
+	if (HasReferenceInfo()) {
+		XMLElement* newElement = sliderSetElement->GetDocument()->NewElement("ReferenceInfo");
+		XMLElement* refElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
+		std::string projectFile_bs = ToBackslashes(refProjectFile);
+		refElement->SetAttribute("ProjectFile", projectFile_bs.c_str());
+		refElement->SetAttribute("ProjectName", refProjectName.c_str());
+		refElement->SetAttribute("ShapeName", refShapeName.c_str());
+	}
+
 	XMLElement* newElement = sliderSetElement->GetDocument()->NewElement("DataFolder");
 	std::string datafolder_bs = ToBackslashes(datafolder);
 	XMLText* newText = sliderSetElement->GetDocument()->NewText(datafolder_bs.c_str());
@@ -470,6 +494,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		newText->SetCData(true);
 		sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
 	}
+
 }
 
 std::string SliderSet::GetInputFileName() {

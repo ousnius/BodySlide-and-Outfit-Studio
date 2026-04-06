@@ -120,6 +120,10 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		UpdateProgress(prog += step, _("Adding reference shapes..."));
 	}
 
+	if (!mRefProjectFile.empty() && !mRefProjectName.empty() && !mRefShapeName.empty()) {
+		outSet.SetReferenceInfo(mRefProjectFile, mRefProjectName, mRefShapeName);
+	}
+
 	// Add all the outfit shapes to the target list.
 	for (auto& s : shapes) {
 		if (IsBaseShape(s))
@@ -2223,6 +2227,11 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	baseShape = workNif.FindBlockByName<NiShape>(shapeName);
 	activeSet.LoadSetDiffData(baseDiffData);
 
+	// Clear reference source info (NIF-only reference, no OSP available)
+	mRefProjectFile.clear();
+	mRefProjectName.clear();
+	mRefShapeName.clear();
+
 	if (!deletedShapes.empty()) {
 		std::string shapesJoin = JoinStrings(deletedShapes, "; ");
 		wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were deleted. Rename the duplicates yourself beforehand if you wish to keep them."), shapesJoin),
@@ -2355,6 +2364,21 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	if (!dataFolder.empty())
 		activeSet.SetDataFolder(dataFolder);
 
+	// Remember reference source info for saved projects
+	{
+		wxFileName refFileName(wxString::FromUTF8(fileName));
+		if (refFileName.IsRelative())
+			refFileName.MakeAbsolute(wxString::FromUTF8(GetProjectPath()));
+
+		if (refFileName.MakeRelativeTo(wxString::FromUTF8(GetProjectPath())))
+			mRefProjectFile = refFileName.GetFullPath().ToUTF8().data();
+		else
+			mRefProjectFile = fileName;
+
+		mRefProjectName = setName;
+		mRefShapeName = shape;
+	}
+
 	if (!deletedShapes.empty()) {
 		std::string shapesJoin = JoinStrings(deletedShapes, "; ");
 		wxMessageBox(wxString::Format("%s\n \n%s",
@@ -2448,6 +2472,13 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	mGenWeights = activeSet.GenWeights();
 	bPreventMorphFile = activeSet.PreventMorphFile();
 	bKeepZappedShapes = activeSet.KeepZappedShapes();
+
+	// Preserve reference info from the loaded project so it gets saved again
+	if (activeSet.HasReferenceInfo()) {
+		mRefProjectFile = activeSet.GetReferenceProjectFile();
+		mRefProjectName = activeSet.GetReferenceProjectName();
+		mRefShapeName = activeSet.GetReferenceShapeName();
+	}
 
 	owner->EndProgress();
 	return 0;

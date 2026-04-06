@@ -148,6 +148,11 @@ public:
 	bool bKeepZappedShapes = false;
 	bool bPose = false;
 
+	// Reference source info (remembered when reference is loaded from an OSP)
+	std::string mRefProjectFile;    // OSP file path relative to project dir
+	std::string mRefProjectName;    // Slider set name in the OSP file
+	std::string mRefShapeName;      // Shape name in the project
+
 	// Returns a string error message or empty string on success.
 	std::string Save(const wxFileName& sliderSetFile,
 					 const wxString& strOutfitName,

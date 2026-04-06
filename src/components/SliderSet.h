@@ -42,6 +42,11 @@ class SliderSet {
 
 	std::string notes;
 
+	// Reference project info
+	std::string refProjectFile;     // OSP file path relative to project dir
+	std::string refProjectName;     // Slider set name in the OSP file
+	std::string refShapeName;       // Shape name in the project
+
 	SliderData Empty;
 
 public:
@@ -60,6 +65,21 @@ public:
 
 	std::string GetNotes() { return notes; }
 	void SetNotes(const std::string& inNotes) { notes = inNotes; }
+
+	bool HasReferenceInfo() const { return !refProjectFile.empty() && !refProjectName.empty() && !refShapeName.empty(); }
+	void SetReferenceInfo(const std::string& projectFile, const std::string& projectName, const std::string& shapeName) {
+		refProjectFile = projectFile;
+		refProjectName = projectName;
+		refShapeName = shapeName;
+	}
+	void ClearReferenceInfo() {
+		refProjectFile.clear();
+		refProjectName.clear();
+		refShapeName.clear();
+	}
+	const std::string& GetReferenceProjectFile() const { return refProjectFile; }
+	const std::string& GetReferenceProjectName() const { return refProjectName; }
+	const std::string& GetReferenceShapeName() const { return refShapeName; }
 
 	void Clear() {
 		shapeAttributes.clear();
