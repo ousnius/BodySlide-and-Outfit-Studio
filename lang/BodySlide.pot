@@ -20,7 +20,7 @@ msgstr ""
 msgid "About"
 msgstr ""
 
-#: res/xrc/About.xrc:145 res/xrc/Automation.xrc:2265
+#: res/xrc/About.xrc:145 res/xrc/Automation.xrc:2407
 #: res/xrc/GroupManager.xrc:189
 msgid "Close"
 msgstr ""
@@ -105,7 +105,7 @@ msgstr ""
 msgid "Inflate/deflate a mesh along its normals. This permanently affects vertices."
 msgstr ""
 
-#: res/xrc/Actions.xrc:880 res/xrc/Automation.xrc:1447
+#: res/xrc/Actions.xrc:880 res/xrc/Automation.xrc:1458
 msgid "Mirror Shape"
 msgstr ""
 
@@ -121,9 +121,9 @@ msgstr ""
 msgid "Set Shape Textures"
 msgstr ""
 
-#: res/xrc/Actions.xrc:1079 res/xrc/Automation.xrc:339
-#: res/xrc/ConvertBodyReference.xrc:183 res/xrc/OutfitStudio.xrc:2013
-#: res/xrc/OutfitStudio.xrc:2487
+#: res/xrc/Actions.xrc:1079 res/xrc/Automation.xrc:350
+#: res/xrc/ConvertBodyReference.xrc:183 res/xrc/OutfitStudio.xrc:2017
+#: res/xrc/OutfitStudio.xrc:2499
 msgid "Copy Bone Weights"
 msgstr ""
 
@@ -184,7 +184,7 @@ msgstr ""
 msgid "Preset"
 msgstr ""
 
-#: res/xrc/Actions.xrc:1451 src/program/OutfitStudio.cpp:8823
+#: res/xrc/Actions.xrc:1451 src/program/OutfitStudio.cpp:8817
 msgid "Default"
 msgstr ""
 
@@ -208,7 +208,7 @@ msgstr ""
 msgid "Source"
 msgstr ""
 
-#: res/xrc/Actions.xrc:1550 src/program/AutomationDialog.cpp:84
+#: res/xrc/Actions.xrc:1550 src/program/AutomationDialog.cpp:86
 msgid "Target"
 msgstr ""
 
@@ -238,7 +238,7 @@ msgstr ""
 
 #: res/xrc/Actions.xrc:1727 res/xrc/OutfitStudio.xrc:808
 #: res/xrc/OutfitStudio.xrc:1072 res/xrc/ShapeProperties.xrc:84
-#: res/xrc/ShapeProperties.xrc:620 src/program/AutomationDialog.cpp:83
+#: res/xrc/ShapeProperties.xrc:620 src/program/AutomationDialog.cpp:85
 msgid "Type"
 msgstr ""
 
@@ -259,7 +259,7 @@ msgid "Sliders"
 msgstr ""
 
 #: res/xrc/Actions.xrc:1878 res/xrc/OutfitStudio.xrc:393
-#: res/xrc/OutfitStudio.xrc:2535 res/xrc/OutfitStudio.xrc:2579
+#: res/xrc/OutfitStudio.xrc:2547 res/xrc/OutfitStudio.xrc:2591
 msgid "Bones"
 msgstr ""
 
@@ -294,7 +294,7 @@ msgid "Save the automation script"
 msgstr ""
 
 #: res/xrc/Automation.xrc:47 res/xrc/OutfitStudio.xrc:1281
-#: res/xrc/OutfitStudio.xrc:1367 res/xrc/OutfitStudio.xrc:2559
+#: res/xrc/OutfitStudio.xrc:1367 res/xrc/OutfitStudio.xrc:2571
 msgid "Delete"
 msgstr ""
 
@@ -302,916 +302,1011 @@ msgstr ""
 msgid "Delete the current automation script"
 msgstr ""
 
-#: res/xrc/Automation.xrc:89
+#: res/xrc/Automation.xrc:56
+msgid "Open Folder"
+msgstr ""
+
+#: res/xrc/Automation.xrc:57
+msgid "Open the Automations folder in file explorer"
+msgstr ""
+
+#: res/xrc/Automation.xrc:98
 msgid "Step Settings"
 msgstr ""
 
-#: res/xrc/Automation.xrc:104
+#: res/xrc/Automation.xrc:113
 msgid "Type:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:111
+#: res/xrc/Automation.xrc:120
 msgid "Bones: Add Custom Bone"
 msgstr ""
 
-#: res/xrc/Automation.xrc:112
+#: res/xrc/Automation.xrc:121
 msgid "Bones: Copy Bone Weights"
 msgstr ""
 
-#: res/xrc/Automation.xrc:113
+#: res/xrc/Automation.xrc:122
 msgid "Bones: Delete Bones"
 msgstr ""
 
-#: res/xrc/Automation.xrc:114
+#: res/xrc/Automation.xrc:123
 msgid "Bones: Edit Custom Bone"
 msgstr ""
 
-#: res/xrc/Automation.xrc:115
+#: res/xrc/Automation.xrc:124
 msgid "Bones: Remove Skinning"
 msgstr ""
 
-#: res/xrc/Automation.xrc:116
+#: res/xrc/Automation.xrc:125
 msgid "Export: File"
 msgstr ""
 
-#: res/xrc/Automation.xrc:117
+#: res/xrc/Automation.xrc:126
 msgid "Export: Save Project"
 msgstr ""
 
-#: res/xrc/Automation.xrc:118
+#: res/xrc/Automation.xrc:127
 msgid "Import: File"
 msgstr ""
 
-#: res/xrc/Automation.xrc:119
+#: res/xrc/Automation.xrc:128
 msgid "Import: Slider Data"
 msgstr ""
 
-#: res/xrc/Automation.xrc:120
+#: res/xrc/Automation.xrc:129
 msgid "Project: Add Project"
 msgstr ""
 
-#: res/xrc/Automation.xrc:121
+#: res/xrc/Automation.xrc:130
 msgid "Project: Clear Project"
 msgstr ""
 
-#: res/xrc/Automation.xrc:122
+#: res/xrc/Automation.xrc:131
 msgid "Project: Clear Reference"
 msgstr ""
 
-#: res/xrc/Automation.xrc:123
+#: res/xrc/Automation.xrc:132
 msgid "Project: Load Reference"
 msgstr ""
 
-#: res/xrc/Automation.xrc:124
+#: res/xrc/Automation.xrc:133
 msgid "Project: Set Base Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:125
+#: res/xrc/Automation.xrc:134
 msgid "Project: Set Reference Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:126
+#: res/xrc/Automation.xrc:135
 msgid "Shapes: Apply Pose"
 msgstr ""
 
-#: res/xrc/Automation.xrc:127
+#: res/xrc/Automation.xrc:136
 msgid "Shapes: Delete Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:128
+#: res/xrc/Automation.xrc:137
 msgid "Shapes: Duplicate Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:129
+#: res/xrc/Automation.xrc:138
 msgid "Shapes: Invert UVs"
 msgstr ""
 
-#: res/xrc/Automation.xrc:130
+#: res/xrc/Automation.xrc:139
 msgid "Shapes: Mirror Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:131
+#: res/xrc/Automation.xrc:140
 msgid "Shapes: Refine Mesh"
 msgstr ""
 
-#: res/xrc/Automation.xrc:132
+#: res/xrc/Automation.xrc:141
 msgid "Shapes: Rename Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:133
+#: res/xrc/Automation.xrc:142
 msgid "Shapes: Reset Transforms"
 msgstr ""
 
-#: res/xrc/Automation.xrc:134
+#: res/xrc/Automation.xrc:143
 msgid "Shapes: Transform Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:135
+#: res/xrc/Automation.xrc:144
 msgid "Sliders: Conform Sliders"
 msgstr ""
 
-#: res/xrc/Automation.xrc:136
+#: res/xrc/Automation.xrc:145
 msgid "Sliders: Delete Slider"
 msgstr ""
 
-#: res/xrc/Automation.xrc:137
+#: res/xrc/Automation.xrc:146
 msgid "Sliders: Set Slider Values"
 msgstr ""
 
-#: res/xrc/Automation.xrc:138
+#: res/xrc/Automation.xrc:147
+msgid "Sliders: Set Slider Properties"
+msgstr ""
+
+#: res/xrc/Automation.xrc:148
 msgid "Masks: Load Mask"
 msgstr ""
 
-#: res/xrc/Automation.xrc:146
+#: res/xrc/Automation.xrc:149
+msgid "Nodes: Remove Unused Nodes"
+msgstr ""
+
+#: res/xrc/Automation.xrc:157
 msgid "Active:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:152
+#: res/xrc/Automation.xrc:163
 msgid "Execute this step"
 msgstr ""
 
-#: res/xrc/Automation.xrc:160
+#: res/xrc/Automation.xrc:171
 msgid "Target Meshes:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:172
+#: res/xrc/Automation.xrc:183
 msgid "Comma-separated list of mesh names. Leave empty to target all meshes."
 msgstr ""
 
-#: res/xrc/Automation.xrc:178 res/xrc/Automation.xrc:2163
-#: res/xrc/Automation.xrc:2213
+#: res/xrc/Automation.xrc:189 res/xrc/Automation.xrc:2305
+#: res/xrc/Automation.xrc:2355
 msgid "Regex"
 msgstr ""
 
-#: res/xrc/Automation.xrc:179
+#: res/xrc/Automation.xrc:190
 msgid "Use regex matching for target mesh names"
 msgstr ""
 
-#: res/xrc/Automation.xrc:188
+#: res/xrc/Automation.xrc:199
 msgid "Note:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:196
+#: res/xrc/Automation.xrc:207
 msgid "A note to describe what this step does and how to configure it."
 msgstr ""
 
-#: res/xrc/Automation.xrc:217 res/xrc/Skeleton.xrc:53
+#: res/xrc/Automation.xrc:228 res/xrc/Skeleton.xrc:53
 msgid "Add Custom Bone"
 msgstr ""
 
-#: res/xrc/Automation.xrc:231 res/xrc/Automation.xrc:462
+#: res/xrc/Automation.xrc:242 res/xrc/Automation.xrc:473
 msgid "Bone Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:243 res/xrc/Automation.xrc:475
+#: res/xrc/Automation.xrc:254 res/xrc/Automation.xrc:486
 msgid "Parent Bone:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:249 res/xrc/Automation.xrc:481
+#: res/xrc/Automation.xrc:260 res/xrc/Automation.xrc:492
 msgid "Name of the parent bone (leave empty for no parent)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:256 res/xrc/Automation.xrc:488
+#: res/xrc/Automation.xrc:267 res/xrc/Automation.xrc:499
 msgid "Translation:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:294 res/xrc/Automation.xrc:526
+#: res/xrc/Automation.xrc:305 res/xrc/Automation.xrc:537
 msgid "Rotation:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:353 res/xrc/Automation.xrc:1725
+#: res/xrc/Automation.xrc:364 res/xrc/Automation.xrc:1736
 msgid "Proximity Radius:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:366 res/xrc/Automation.xrc:1738
+#: res/xrc/Automation.xrc:377 res/xrc/Automation.xrc:1749
 msgid "Max Results:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:379
+#: res/xrc/Automation.xrc:390
 msgid "Bone List:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:385
+#: res/xrc/Automation.xrc:396
 msgid "Comma-separated list of bone names. Leave empty to copy all bones."
 msgstr ""
 
-#: res/xrc/Automation.xrc:399
+#: res/xrc/Automation.xrc:410
 msgid "Delete Bones"
 msgstr ""
 
-#: res/xrc/Automation.xrc:413
+#: res/xrc/Automation.xrc:424
 msgid "Bone Names:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:419
+#: res/xrc/Automation.xrc:430
 msgid "Comma-separated list of bone names to delete"
 msgstr ""
 
-#: res/xrc/Automation.xrc:426 res/xrc/Automation.xrc:915
-#: res/xrc/Automation.xrc:978
+#: res/xrc/Automation.xrc:437 res/xrc/Automation.xrc:926
+#: res/xrc/Automation.xrc:989
 msgid "Mode:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:432
+#: res/xrc/Automation.xrc:443
 msgid "Delete bone entirely from project"
 msgstr ""
 
-#: res/xrc/Automation.xrc:434
+#: res/xrc/Automation.xrc:445
 msgid "If checked, deletes the bone from all shapes and the NIF. If unchecked, only removes bone weights from target shapes."
 msgstr ""
 
-#: res/xrc/Automation.xrc:448
+#: res/xrc/Automation.xrc:459
 msgid "Edit Bone"
 msgstr ""
 
-#: res/xrc/Automation.xrc:468
+#: res/xrc/Automation.xrc:479
 msgid "Name of the custom bone to edit"
 msgstr ""
 
-#: res/xrc/Automation.xrc:571 res/xrc/OutfitStudio.xrc:1902
+#: res/xrc/Automation.xrc:582 res/xrc/OutfitStudio.xrc:1902
 msgid "Remove Skinning"
 msgstr ""
 
-#: res/xrc/Automation.xrc:577
+#: res/xrc/Automation.xrc:588
 msgid ""
 "Removes skinning from target shapes (or all shapes if Target Meshes is empty).\n"
 "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tThis deletes all bone weights and skinning data from the shapes."
 msgstr ""
 
-#: res/xrc/Automation.xrc:591
+#: res/xrc/Automation.xrc:602
 msgid "Export File"
 msgstr ""
 
-#: res/xrc/Automation.xrc:605 src/program/AutomationDialog.cpp:3126
+#: res/xrc/Automation.xrc:616 src/program/AutomationDialog.cpp:3343
 msgid "Export File Path:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:615
+#: res/xrc/Automation.xrc:626
 msgid "Select export file path"
 msgstr ""
 
-#: res/xrc/Automation.xrc:623
+#: res/xrc/Automation.xrc:634
 msgid "Select export folder"
 msgstr ""
 
-#: res/xrc/Automation.xrc:633 res/xrc/Automation.xrc:791
-#: res/xrc/Automation.xrc:1020 res/xrc/Automation.xrc:1095
-#: res/xrc/Automation.xrc:1229 res/xrc/Automation.xrc:1751
-#: res/xrc/Automation.xrc:2132
+#: res/xrc/Automation.xrc:644 res/xrc/Automation.xrc:802
+#: res/xrc/Automation.xrc:1031 res/xrc/Automation.xrc:1106
+#: res/xrc/Automation.xrc:1240 res/xrc/Automation.xrc:1762
+#: res/xrc/Automation.xrc:2274
 msgid "Options:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:642
+#: res/xrc/Automation.xrc:653
 msgid "Use original file path from batch operation"
 msgstr ""
 
-#: res/xrc/Automation.xrc:647
+#: res/xrc/Automation.xrc:658
 msgid "Export with reference shape (.nif only)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:657
+#: res/xrc/Automation.xrc:668
 msgid "Filename Prefix:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:663
+#: res/xrc/Automation.xrc:674
 #, c++-format
 msgid "Prefix to add before the filename. Supports {{PLACEHOLDER}} variables."
 msgstr ""
 
-#: res/xrc/Automation.xrc:670
+#: res/xrc/Automation.xrc:681
 msgid "Filename Suffix:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:676
+#: res/xrc/Automation.xrc:687
 #, c++-format
 msgid "Suffix to add after the filename before the extension. Supports {{PLACEHOLDER}} variables."
 msgstr ""
 
-#: res/xrc/Automation.xrc:690
+#: res/xrc/Automation.xrc:701
 msgid "Save Project"
 msgstr ""
 
-#: res/xrc/Automation.xrc:696
+#: res/xrc/Automation.xrc:707
 msgid "Use original project from batch"
 msgstr ""
 
-#: res/xrc/Automation.xrc:713
+#: res/xrc/Automation.xrc:724
 msgid "Display Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:719
+#: res/xrc/Automation.xrc:730
 #, c++-format
 msgid "Name shown in BodySlide (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:726
+#: res/xrc/Automation.xrc:737
 msgid "Output File Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:732
+#: res/xrc/Automation.xrc:743
 #, c++-format
 msgid "Base filename for the output NIF (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:739
+#: res/xrc/Automation.xrc:750
 msgid "Output Data Path:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:745
+#: res/xrc/Automation.xrc:756
 #, c++-format
 msgid "Game data path for output (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:752
+#: res/xrc/Automation.xrc:763
 msgid "Slider Set File:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:758
+#: res/xrc/Automation.xrc:769
 #, c++-format
 msgid "Slider set project file (.osp) (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:765
+#: res/xrc/Automation.xrc:776
 msgid "Shape Data Folder:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:771
+#: res/xrc/Automation.xrc:782
 #, c++-format
 msgid "Folder for slider data files (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:778
+#: res/xrc/Automation.xrc:789
 msgid "Shape Data File:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:784
+#: res/xrc/Automation.xrc:795
 #, c++-format
 msgid "Base NIF filename (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:800
+#: res/xrc/Automation.xrc:811
 msgid "Generate low/high weight outputs"
 msgstr ""
 
-#: res/xrc/Automation.xrc:806
+#: res/xrc/Automation.xrc:817
 msgid "Copy reference to output"
 msgstr ""
 
-#: res/xrc/Automation.xrc:830
+#: res/xrc/Automation.xrc:841
 msgid "Replace (from):"
 msgstr ""
 
-#: res/xrc/Automation.xrc:836
+#: res/xrc/Automation.xrc:847
 msgid "Text to find and replace in original project fields (batch only)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:843
+#: res/xrc/Automation.xrc:854
 msgid "Replace (to):"
 msgstr ""
 
-#: res/xrc/Automation.xrc:849
+#: res/xrc/Automation.xrc:860
 msgid "Replacement text for matching text in original project fields (batch only)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:856
+#: res/xrc/Automation.xrc:867
 msgid "Suffix:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:862
+#: res/xrc/Automation.xrc:873
 msgid "Suffix to append to Display Name, Shape Data Folder, and Shape Data File name (batch only)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:878
+#: res/xrc/Automation.xrc:889
 msgid "Copy reference based on loaded project"
 msgstr ""
 
-#: res/xrc/Automation.xrc:879
+#: res/xrc/Automation.xrc:890
 msgid "If the loaded project had a reference shape, include it in the output. Otherwise, exclude it. Overrides the option above. (batch only)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:887
+#: res/xrc/Automation.xrc:898
 msgid "Only treat these shape names as the reference (comma-separated). Leave empty to use any reference shape."
 msgstr ""
 
-#: res/xrc/Automation.xrc:901
+#: res/xrc/Automation.xrc:912
 msgid "Import File"
 msgstr ""
 
-#: res/xrc/Automation.xrc:921
+#: res/xrc/Automation.xrc:932
 msgid "Import all files from folder"
 msgstr ""
 
-#: res/xrc/Automation.xrc:928
+#: res/xrc/Automation.xrc:939
 msgid "File:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:934
+#: res/xrc/Automation.xrc:945
 msgid "Select file to import"
 msgstr ""
 
-#: res/xrc/Automation.xrc:943 res/xrc/Automation.xrc:1006
-#: res/xrc/Automation.xrc:2104
+#: res/xrc/Automation.xrc:954 res/xrc/Automation.xrc:1017
+#: res/xrc/Automation.xrc:2246
 msgid "Folder:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:949
+#: res/xrc/Automation.xrc:960
 msgid "Select folder to import from"
 msgstr ""
 
-#: res/xrc/Automation.xrc:964
+#: res/xrc/Automation.xrc:975
 msgid "Import Slider Data"
 msgstr ""
 
-#: res/xrc/Automation.xrc:984
+#: res/xrc/Automation.xrc:995
 msgid "Import all files from folder (ShapeName#SliderName.ext)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:991
+#: res/xrc/Automation.xrc:1002
 msgid "Slider Data File:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:997
+#: res/xrc/Automation.xrc:1008
 msgid "Select slider data file"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1012
+#: res/xrc/Automation.xrc:1023
 msgid "Select folder with slider data files"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1026
+#: res/xrc/Automation.xrc:1037
 msgid "Merge into existing sliders"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1033 res/xrc/Automation.xrc:1809
-#: res/xrc/Automation.xrc:1890
+#: res/xrc/Automation.xrc:1044 res/xrc/Automation.xrc:1820
+#: res/xrc/Automation.xrc:1901 res/xrc/Automation.xrc:1949
 msgid "Slider Names:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1039
+#: res/xrc/Automation.xrc:1050
 msgid "Comma-separated list of slider names. Leave empty to import all sliders."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1053
+#: res/xrc/Automation.xrc:1064
 msgid "Add Project"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1067 res/xrc/Automation.xrc:1188
+#: res/xrc/Automation.xrc:1078 res/xrc/Automation.xrc:1199
 msgid "Source File:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1073
+#: res/xrc/Automation.xrc:1084
 msgid "Select project file"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1082 res/xrc/Automation.xrc:1203
+#: res/xrc/Automation.xrc:1093 res/xrc/Automation.xrc:1214
 #: res/xrc/Project.xrc:106 res/xrc/Project.xrc:672
 msgid "Slider Set:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1088
+#: res/xrc/Automation.xrc:1099
 msgid "Name of the slider set to add"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1104 res/xrc/Automation.xrc:1256
+#: res/xrc/Automation.xrc:1115 res/xrc/Automation.xrc:1267
 #: res/xrc/Project.xrc:756
 msgid "Append new sliders"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1121
+#: res/xrc/Automation.xrc:1132
 msgid "Clear Project"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1127
+#: res/xrc/Automation.xrc:1138
 msgid ""
 "Clears the current project (removes all shapes, sliders, and references).\n"
 "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1141 res/xrc/Project.xrc:146 res/xrc/Project.xrc:712
+#: res/xrc/Automation.xrc:1152 res/xrc/Project.xrc:146 res/xrc/Project.xrc:712
 msgid "Clear Reference"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1147
+#: res/xrc/Automation.xrc:1158
 msgid ""
 "Removes the current reference/base shape from the project. Slider data for the reference is moved to the morpher.\n"
 "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1161 res/xrc/Project.xrc:579
+#: res/xrc/Automation.xrc:1172 res/xrc/Project.xrc:579
 msgid "Load Reference"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1175
+#: res/xrc/Automation.xrc:1186
 msgid "Template:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1181
+#: res/xrc/Automation.xrc:1192
 msgid "Select a reference template to auto-fill the fields below"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1194
+#: res/xrc/Automation.xrc:1205
 msgid "Select reference file"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1209
+#: res/xrc/Automation.xrc:1220
 msgid "Name of the slider set within the source file"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1216 res/xrc/Project.xrc:124 res/xrc/Project.xrc:690
+#: res/xrc/Automation.xrc:1227 res/xrc/Project.xrc:124 res/xrc/Project.xrc:690
 msgid "Shape:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1222
+#: res/xrc/Automation.xrc:1233
 msgid "Name of the reference shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1238
+#: res/xrc/Automation.xrc:1249
 msgid "Load all shapes"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1244
+#: res/xrc/Automation.xrc:1255
 msgid "Merge sliders"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1250
+#: res/xrc/Automation.xrc:1261
 msgid "Merge zaps"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1273 res/xrc/OutfitStudio.xrc:2075
+#: res/xrc/Automation.xrc:1284 res/xrc/OutfitStudio.xrc:2083
 msgid "Set Base Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1279
+#: res/xrc/Automation.xrc:1290
 msgid ""
 "Bakes the current slider values into the base geometry of all shapes and zeros all sliders.\n"
 "\n"
 "Equivalent to \"Slider -> Set Base Shape\" in the menu."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1294
+#: res/xrc/Automation.xrc:1305
 msgid "Set Reference Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1308
+#: res/xrc/Automation.xrc:1319
 msgid "Shape Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1314
+#: res/xrc/Automation.xrc:1325
 msgid "Name of the shape to set as reference (highlighted green)."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1328
+#: res/xrc/Automation.xrc:1339
 msgid "Apply Pose"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1342
+#: res/xrc/Automation.xrc:1353
 msgid "Pose Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1348
+#: res/xrc/Automation.xrc:1359
 msgid "Name of the pose from PoseData to apply to meshes"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1362
+#: res/xrc/Automation.xrc:1373
 msgid "Delete Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1368
+#: res/xrc/Automation.xrc:1379
 msgid ""
 "Deletes the shapes specified in the Target Meshes field above.\n"
 "\n"
 "If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1383 src/program/OutfitStudio.cpp:10138
+#: res/xrc/Automation.xrc:1394 src/program/OutfitStudio.cpp:10317
 msgid "Duplicate Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1397 res/xrc/Automation.xrc:1539
+#: res/xrc/Automation.xrc:1408 res/xrc/Automation.xrc:1550
 msgid "New Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1403
+#: res/xrc/Automation.xrc:1414
 #, c++-format
 msgid "Name for the duplicated shape. Supports {{PLACEHOLDER}} variables."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1417
+#: res/xrc/Automation.xrc:1428
 msgid "Invert UVs"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1426 res/xrc/ImportDialog.xrc:53
+#: res/xrc/Automation.xrc:1437 res/xrc/ImportDialog.xrc:53
 msgid "Invert U"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1433 res/xrc/ImportDialog.xrc:62
+#: res/xrc/Automation.xrc:1444 res/xrc/ImportDialog.xrc:62
 msgid "Invert V"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1456
+#: res/xrc/Automation.xrc:1467
 msgid "Mirror X"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1464
+#: res/xrc/Automation.xrc:1475
 msgid "Mirror Y"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1471
+#: res/xrc/Automation.xrc:1482
 msgid "Mirror Z"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1478
+#: res/xrc/Automation.xrc:1489
 msgid "Swap bones left/right (X axis)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1492 res/xrc/OutfitStudio.xrc:1963
-#: res/xrc/OutfitStudio.xrc:2457
+#: res/xrc/Automation.xrc:1503 res/xrc/OutfitStudio.xrc:1963
+#: res/xrc/OutfitStudio.xrc:2465
 msgid "Refine Mesh"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1498
+#: res/xrc/Automation.xrc:1509
 msgid ""
 "Subdivides/refines meshes by splitting edges.\n"
 "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tAll unmasked vertices are refined. Use the Target Meshes field above to select which shapes to refine."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1512 src/program/OutfitStudio.cpp:5128
-#: src/program/OutfitStudio.cpp:9185
+#: res/xrc/Automation.xrc:1523 src/program/OutfitStudio.cpp:5122
+#: src/program/OutfitStudio.cpp:9304
 msgid "Rename Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1526
+#: res/xrc/Automation.xrc:1537
 msgid "Old Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1532
+#: res/xrc/Automation.xrc:1543
 #, c++-format
 msgid "Current name of the shape (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1545
+#: res/xrc/Automation.xrc:1556
 #, c++-format
 msgid "New name for the shape (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1559 res/xrc/OutfitStudio.xrc:1894
+#: res/xrc/Automation.xrc:1570 res/xrc/OutfitStudio.xrc:1894
 msgid "Reset Transforms"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1565
+#: res/xrc/Automation.xrc:1576
 msgid "Resets global-to-skin transforms for all skinned meshes. No additional parameters needed."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1578
+#: res/xrc/Automation.xrc:1589
 msgid "Transform Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1592
+#: res/xrc/Automation.xrc:1603
 msgid "Move:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1599
+#: res/xrc/Automation.xrc:1610
 msgid "Move X"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1606
+#: res/xrc/Automation.xrc:1617
 msgid "Move Y"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1613
+#: res/xrc/Automation.xrc:1624
 msgid "Move Z"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1620
+#: res/xrc/Automation.xrc:1631
 msgid "Rotate (Ã‚Â°):"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1627
+#: res/xrc/Automation.xrc:1638
 msgid "Rotate X (degrees)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1634
+#: res/xrc/Automation.xrc:1645
 msgid "Rotate Y (degrees)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1641
+#: res/xrc/Automation.xrc:1652
 msgid "Rotate Z (degrees)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1648
+#: res/xrc/Automation.xrc:1659
 msgid "Scale:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1655
+#: res/xrc/Automation.xrc:1666
 msgid "Scale X"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1662
+#: res/xrc/Automation.xrc:1673
 msgid "Scale Y"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1669
+#: res/xrc/Automation.xrc:1680
 msgid "Scale Z"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1676
+#: res/xrc/Automation.xrc:1687
 msgid "Inflate:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1683
+#: res/xrc/Automation.xrc:1694
 msgid "Inflate X (along normals)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1690
+#: res/xrc/Automation.xrc:1701
 msgid "Inflate Y (along normals)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1697
+#: res/xrc/Automation.xrc:1708
 msgid "Inflate Z (along normals)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1711 res/xrc/ConvertBodyReference.xrc:165
+#: res/xrc/Automation.xrc:1722 res/xrc/ConvertBodyReference.xrc:165
 msgid "Conform Sliders"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1760
+#: res/xrc/Automation.xrc:1771
 msgid "No squeeze"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1765
+#: res/xrc/Automation.xrc:1776
 msgid "Solid mode"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1774
+#: res/xrc/Automation.xrc:1785
 msgid "Axes:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1785
+#: res/xrc/Automation.xrc:1796
 msgid "X"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1793
+#: res/xrc/Automation.xrc:1804
 msgid "Y"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1799
+#: res/xrc/Automation.xrc:1810
 msgid "Z"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1815
+#: res/xrc/Automation.xrc:1826
 msgid "Comma-separated list of slider names to conform. Leave empty to conform all visible sliders."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1829
+#: res/xrc/Automation.xrc:1840
 msgid "Delete Slider"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1843
+#: res/xrc/Automation.xrc:1854
 msgid "Slider Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1849
+#: res/xrc/Automation.xrc:1860
 msgid "Name of the slider to delete. If regex is checked, matches slider names by pattern."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1856
+#: res/xrc/Automation.xrc:1867
 msgid "Regex:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1862
+#: res/xrc/Automation.xrc:1873
 msgid "Match slider names by regex pattern"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1876
+#: res/xrc/Automation.xrc:1887
 msgid "Set Slider Values"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1896
+#: res/xrc/Automation.xrc:1907
 msgid "Comma-separated list of slider names. Leave empty to set all visible sliders."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1903
-msgid "Value (0.0 - 1.0):"
+#: res/xrc/Automation.xrc:1914
+msgid "Value (0 - 100):"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1910
-msgid "Slider value between 0.0 and 1.0 (1.0 = 100%)"
+#: res/xrc/Automation.xrc:1921
+msgid "Slider value between 0 and 100 (percentage)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1924
+#: res/xrc/Automation.xrc:1935
+msgid "Set Slider Properties"
+msgstr ""
+
+#: res/xrc/Automation.xrc:1955
+msgid "Comma-separated list of slider names. Leave empty to apply to all sliders."
+msgstr ""
+
+#: res/xrc/Automation.xrc:1962
+msgid "Zap:"
+msgstr ""
+
+#: res/xrc/Automation.xrc:1969 res/xrc/Automation.xrc:1987
+#: res/xrc/Automation.xrc:2005
+msgid "No change"
+msgstr ""
+
+#: res/xrc/Automation.xrc:1970 res/xrc/Automation.xrc:1988
+#: src/program/OutfitStudio.cpp:549 src/program/ShapeProperties.cpp:135
+msgid "No"
+msgstr ""
+
+#: res/xrc/Automation.xrc:1971 res/xrc/Automation.xrc:1989
+#: src/program/OutfitStudio.cpp:547 src/program/ShapeProperties.cpp:135
+msgid "Yes"
+msgstr ""
+
+#: res/xrc/Automation.xrc:1973
+msgid "Set the zap flag on matching sliders."
+msgstr ""
+
+#: res/xrc/Automation.xrc:1980
+msgid "Hidden:"
+msgstr ""
+
+#: res/xrc/Automation.xrc:1991
+msgid "Set the hidden flag on matching sliders."
+msgstr ""
+
+#: res/xrc/Automation.xrc:1998
+msgid "Default Zapped:"
+msgstr ""
+
+#: res/xrc/Automation.xrc:2006
+msgid "Not zapped"
+msgstr ""
+
+#: res/xrc/Automation.xrc:2007 res/xrc/Slider.xrc:148
+msgid "Zapped"
+msgstr ""
+
+#: res/xrc/Automation.xrc:2009
+msgid "Whether matching zap sliders are zapped by default."
+msgstr ""
+
+#: res/xrc/Automation.xrc:2015
+msgid "Default (Small):"
+msgstr ""
+
+#: res/xrc/Automation.xrc:2021
+msgid "Default small value (0-100). Leave empty for no change."
+msgstr ""
+
+#: res/xrc/Automation.xrc:2028
+msgid "Default (Big):"
+msgstr ""
+
+#: res/xrc/Automation.xrc:2034
+msgid "Default big value (0-100). Leave empty for no change."
+msgstr ""
+
+#: res/xrc/Automation.xrc:2048
 msgid "Load Mask"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1938
+#: res/xrc/Automation.xrc:2062
 msgid "Mask File:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1944
+#: res/xrc/Automation.xrc:2068
 msgid "Select a mask XML file"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1953
+#: res/xrc/Automation.xrc:2077
 msgid "Mask Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1959
-msgid "Name of the mask to load from the file. Must match the name attribute in the mask file."
+#: res/xrc/Automation.xrc:2083
+msgid "Select a mask entry from the loaded mask file."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1981
+#: res/xrc/Automation.xrc:2097
+msgid "Remove Unused Nodes"
+msgstr ""
+
+#: res/xrc/Automation.xrc:2103
+msgid "Removes all unreferenced nodes from the NIF."
+msgstr ""
+
+#: res/xrc/Automation.xrc:2123
 msgid "Placeholder Variables"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1990
+#: res/xrc/Automation.xrc:2132
 #, c++-format
 msgid "Define {{KEY}} = Value pairs. These are substituted in all text fields before execution."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2007
+#: res/xrc/Automation.xrc:2149
 msgid "Key:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2013
+#: res/xrc/Automation.xrc:2155
 msgid "Value:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2037
+#: res/xrc/Automation.xrc:2179
 msgid "+ Add"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2045
+#: res/xrc/Automation.xrc:2187
 msgid "- Remove"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2062
+#: res/xrc/Automation.xrc:2204
 msgid "Batch Operation"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2072
+#: res/xrc/Automation.xrc:2214
 msgid "Mode"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2075
+#: res/xrc/Automation.xrc:2217
 msgid "None (run on current project)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2076
+#: res/xrc/Automation.xrc:2218
 msgid "Folder scan (repeat on files in folder)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2077
+#: res/xrc/Automation.xrc:2219
 msgid "Slider sets (repeat on installed slider sets)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2091
+#: res/xrc/Automation.xrc:2233
 msgid "Folder Scan Settings"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2110
+#: res/xrc/Automation.xrc:2252
 msgid "Select folder to scan"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2118
+#: res/xrc/Automation.xrc:2260
 msgid "Extension:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2125
+#: res/xrc/Automation.xrc:2267
 msgid "File extension to scan for (e.g. .nif, .obj)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2138
+#: res/xrc/Automation.xrc:2280
 msgid "Include subdirectories"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2145
+#: res/xrc/Automation.xrc:2287
 msgid "File Filter:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2157
+#: res/xrc/Automation.xrc:2299
 msgid "Filter file/folder names (substring or regex)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2182
+#: res/xrc/Automation.xrc:2324
 msgid "Slider Set Settings"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2195
+#: res/xrc/Automation.xrc:2337
 msgid "Filter:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2207
+#: res/xrc/Automation.xrc:2349
 msgid "Filter slider set names (substring or regex). Leave empty for all."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2237
+#: res/xrc/Automation.xrc:2379
 msgid "Output Log"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2254 src/program/AutomationDialog.cpp:1370
+#: res/xrc/Automation.xrc:2396 src/program/AutomationDialog.cpp:1491
 msgid "Execute"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2255
+#: res/xrc/Automation.xrc:2397
 msgid "Execute all active steps in order"
 msgstr ""
 
@@ -1347,7 +1442,9 @@ msgstr ""
 msgid "Adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod."
 msgstr ""
 
-#: res/xrc/BodySlide.xrc:432
+#: res/xrc/BodySlide.xrc:432 src/program/OutfitStudio.cpp:8911
+#: src/program/OutfitStudio.cpp:8965 src/program/OutfitStudio.cpp:8971
+#: src/program/OutfitStudio.cpp:10036
 msgid "Fix Clipping"
 msgstr ""
 
@@ -1458,17 +1555,17 @@ msgid "Save the current filtered outfit list as a group"
 msgstr ""
 
 #: res/xrc/BodySlide.xrc:580 res/xrc/Project.xrc:1101
-#: res/xrc/SliderDataImport.xrc:106 src/program/AutomationDialog.cpp:1364
+#: res/xrc/SliderDataImport.xrc:106 src/program/AutomationDialog.cpp:1485
 msgid "Select None"
 msgstr ""
 
 #: res/xrc/BodySlide.xrc:583 res/xrc/EditUV.xrc:111 res/xrc/Project.xrc:1104
-#: res/xrc/SliderDataImport.xrc:109 src/program/AutomationDialog.cpp:1363
+#: res/xrc/SliderDataImport.xrc:109 src/program/AutomationDialog.cpp:1484
 msgid "Select All"
 msgstr ""
 
 #: res/xrc/BodySlide.xrc:586 res/xrc/EditUV.xrc:115 res/xrc/Project.xrc:1107
-#: res/xrc/SliderDataImport.xrc:112 src/program/AutomationDialog.cpp:1365
+#: res/xrc/SliderDataImport.xrc:112 src/program/AutomationDialog.cpp:1486
 msgid "Invert Selection"
 msgstr ""
 
@@ -1594,7 +1691,7 @@ msgid ""
 msgstr ""
 
 #: res/xrc/EditUV.xrc:67 res/xrc/OutfitStudio.xrc:78
-#: res/xrc/OutfitStudio.xrc:2230
+#: res/xrc/OutfitStudio.xrc:2238
 msgid "Move"
 msgstr ""
 
@@ -1811,7 +1908,7 @@ msgstr ""
 msgid "Move selected layer up one position."
 msgstr ""
 
-#: res/xrc/NormalsGenDlg.xrc:72 src/program/AutomationDialog.cpp:384
+#: res/xrc/NormalsGenDlg.xrc:72 src/program/AutomationDialog.cpp:386
 msgid "Move Up"
 msgstr ""
 
@@ -1867,11 +1964,11 @@ msgstr ""
 msgid "Generate"
 msgstr ""
 
-#: res/xrc/NormalsGenDlg.xrc:193 res/xrc/OutfitStudio.xrc:2080
+#: res/xrc/NormalsGenDlg.xrc:193 res/xrc/OutfitStudio.xrc:2088
 msgid "Load Preset..."
 msgstr ""
 
-#: res/xrc/NormalsGenDlg.xrc:197 res/xrc/OutfitStudio.xrc:2084
+#: res/xrc/NormalsGenDlg.xrc:197 res/xrc/OutfitStudio.xrc:2092
 msgid "Save Preset..."
 msgstr ""
 
@@ -1903,62 +2000,62 @@ msgstr ""
 msgid "Redo"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:49 res/xrc/OutfitStudio.xrc:2209
+#: res/xrc/OutfitStudio.xrc:49 res/xrc/OutfitStudio.xrc:2217
 msgid "Select"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:50 res/xrc/OutfitStudio.xrc:2210
+#: res/xrc/OutfitStudio.xrc:50 res/xrc/OutfitStudio.xrc:2218
 msgid "Navigate and select meshes (or vertices in vertex mode)."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:57 res/xrc/OutfitStudio.xrc:2214
+#: res/xrc/OutfitStudio.xrc:57 res/xrc/OutfitStudio.xrc:2222
 #: src/program/NormalsGenDialog.cpp:291
 msgid "Mask"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:58 res/xrc/OutfitStudio.xrc:2215
+#: res/xrc/OutfitStudio.xrc:58 res/xrc/OutfitStudio.xrc:2223
 msgid ""
 "Mask vertices to prevent them from being transformed.\n"
 "Hold down the ALT key to remove masking."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:64 res/xrc/OutfitStudio.xrc:2219
+#: res/xrc/OutfitStudio.xrc:64 res/xrc/OutfitStudio.xrc:2227
 msgid "Inflate"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:65 res/xrc/OutfitStudio.xrc:2220
+#: res/xrc/OutfitStudio.xrc:65 res/xrc/OutfitStudio.xrc:2228
 msgid "Increase mesh volume in an area."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:71 res/xrc/OutfitStudio.xrc:2225
+#: res/xrc/OutfitStudio.xrc:71 res/xrc/OutfitStudio.xrc:2233
 msgid "Deflate"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:72 res/xrc/OutfitStudio.xrc:2226
+#: res/xrc/OutfitStudio.xrc:72 res/xrc/OutfitStudio.xrc:2234
 msgid "Decrease mesh volume in an area."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:79 res/xrc/OutfitStudio.xrc:2231
+#: res/xrc/OutfitStudio.xrc:79 res/xrc/OutfitStudio.xrc:2239
 msgid "Move vertices over a plane parallel to the view."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:85 res/xrc/OutfitStudio.xrc:2235
+#: res/xrc/OutfitStudio.xrc:85 res/xrc/OutfitStudio.xrc:2243
 msgid "Smooth"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:86 res/xrc/OutfitStudio.xrc:2236
+#: res/xrc/OutfitStudio.xrc:86 res/xrc/OutfitStudio.xrc:2244
 msgid "Smooth an area of a mesh."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:92 res/xrc/OutfitStudio.xrc:2240
+#: res/xrc/OutfitStudio.xrc:92 res/xrc/OutfitStudio.xrc:2248
 msgid "Undiff"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:93 res/xrc/OutfitStudio.xrc:2241
+#: res/xrc/OutfitStudio.xrc:93 res/xrc/OutfitStudio.xrc:2249
 msgid "Undiff an area of a slider."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:99 res/xrc/OutfitStudio.xrc:2245
+#: res/xrc/OutfitStudio.xrc:99 res/xrc/OutfitStudio.xrc:2253
 msgid "Weight Paint"
 msgstr ""
 
@@ -1968,55 +2065,55 @@ msgid ""
 "Hold down the ALT key to weaken the weighting."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:107 res/xrc/OutfitStudio.xrc:2251
+#: res/xrc/OutfitStudio.xrc:107 res/xrc/OutfitStudio.xrc:2259
 msgid "Color Paint"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:108 res/xrc/OutfitStudio.xrc:2252
+#: res/xrc/OutfitStudio.xrc:108 res/xrc/OutfitStudio.xrc:2260
 msgid ""
 "Apply vertex colors.\n"
 "Hold down the ALT key to remove colors."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:115 res/xrc/OutfitStudio.xrc:2257
+#: res/xrc/OutfitStudio.xrc:115 res/xrc/OutfitStudio.xrc:2265
 msgid "Alpha Paint"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:116 res/xrc/OutfitStudio.xrc:2258
+#: res/xrc/OutfitStudio.xrc:116 res/xrc/OutfitStudio.xrc:2266
 msgid ""
 "Apply vertex alpha.\n"
 "Hold down the ALT key to remove alpha."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:123 res/xrc/OutfitStudio.xrc:2263
+#: res/xrc/OutfitStudio.xrc:123 res/xrc/OutfitStudio.xrc:2271
 msgid "Collapse Vertex"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:124 res/xrc/OutfitStudio.xrc:2264
+#: res/xrc/OutfitStudio.xrc:124 res/xrc/OutfitStudio.xrc:2272
 msgid "Deletes vertices with no more than three connections, without creating a hole."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:130 res/xrc/OutfitStudio.xrc:2268
+#: res/xrc/OutfitStudio.xrc:130 res/xrc/OutfitStudio.xrc:2276
 msgid "Flip Edge"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:131 res/xrc/OutfitStudio.xrc:2269
+#: res/xrc/OutfitStudio.xrc:131 res/xrc/OutfitStudio.xrc:2277
 msgid "Flips mesh edges so that the opposite pair of vertices is connected."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:137 res/xrc/OutfitStudio.xrc:2273
+#: res/xrc/OutfitStudio.xrc:137 res/xrc/OutfitStudio.xrc:2281
 msgid "Split Edge"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:138 res/xrc/OutfitStudio.xrc:2274
+#: res/xrc/OutfitStudio.xrc:138 res/xrc/OutfitStudio.xrc:2282
 msgid "Splits a mesh edge in two with a new vertex."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:144 res/xrc/OutfitStudio.xrc:2278
+#: res/xrc/OutfitStudio.xrc:144 res/xrc/OutfitStudio.xrc:2286
 msgid "Move Vertex"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:145 res/xrc/OutfitStudio.xrc:2279
+#: res/xrc/OutfitStudio.xrc:145 res/xrc/OutfitStudio.xrc:2287
 msgid "Moves a vertex."
 msgstr ""
 
@@ -2056,7 +2153,7 @@ msgstr ""
 msgid "Transform"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:207 res/xrc/OutfitStudio.xrc:2285
+#: res/xrc/OutfitStudio.xrc:207 res/xrc/OutfitStudio.xrc:2293
 msgid "Shows a transform tool to manipulate shapes and vertices with."
 msgstr ""
 
@@ -2064,7 +2161,7 @@ msgstr ""
 msgid "Pivot"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:214 res/xrc/OutfitStudio.xrc:2290
+#: res/xrc/OutfitStudio.xrc:214 res/xrc/OutfitStudio.xrc:2298
 msgid "Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale."
 msgstr ""
 
@@ -2203,13 +2300,13 @@ msgstr ""
 msgid "Meshes"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:405 res/xrc/OutfitStudio.xrc:2593
-#: res/xrc/OutfitStudio.xrc:2619
+#: res/xrc/OutfitStudio.xrc:405 res/xrc/OutfitStudio.xrc:2605
+#: res/xrc/OutfitStudio.xrc:2631
 msgid "Segments"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:417 res/xrc/OutfitStudio.xrc:2626
-#: res/xrc/OutfitStudio.xrc:2637
+#: res/xrc/OutfitStudio.xrc:417 res/xrc/OutfitStudio.xrc:2638
+#: res/xrc/OutfitStudio.xrc:2649
 msgid "Partitions"
 msgstr ""
 
@@ -2241,8 +2338,8 @@ msgstr ""
 msgid "Clamp Max Value"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:595 src/program/OutfitStudio.cpp:3532
-#: src/program/OutfitStudio.cpp:7364
+#: res/xrc/OutfitStudio.xrc:595 src/program/OutfitStudio.cpp:3526
+#: src/program/OutfitStudio.cpp:7358
 msgid "Edit Alpha"
 msgstr ""
 
@@ -2251,8 +2348,8 @@ msgid "Mask matching color"
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:650 res/xrc/OutfitStudio.xrc:1054
-#: res/xrc/OutfitStudio.xrc:1155 src/program/OutfitStudio.cpp:7078
-#: src/program/OutfitStudio.cpp:12083 src/ui/wxBrushSettingsPopup.cpp:186
+#: res/xrc/OutfitStudio.xrc:1155 src/program/OutfitStudio.cpp:7072
+#: src/program/OutfitStudio.cpp:12262 src/ui/wxBrushSettingsPopup.cpp:186
 msgid "Reset"
 msgstr ""
 
@@ -2280,7 +2377,7 @@ msgstr ""
 msgid "Slot"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1006 src/program/OutfitStudio.cpp:6026
+#: res/xrc/OutfitStudio.xrc:1006 src/program/OutfitStudio.cpp:6020
 msgid "SSF File"
 msgstr ""
 
@@ -2289,7 +2386,7 @@ msgid "Set"
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1044 res/xrc/OutfitStudio.xrc:1145
-#: src/program/OutfitStudio.cpp:7078
+#: src/program/OutfitStudio.cpp:7072
 msgid "Apply"
 msgstr ""
 
@@ -2458,9 +2555,9 @@ msgstr ""
 msgid "Save the project under a new name."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1749 res/xrc/OutfitStudio.xrc:2102
-#: src/program/OutfitStudio.cpp:8010 src/program/OutfitStudio.cpp:8121
-#: src/program/OutfitStudio.cpp:8253
+#: res/xrc/OutfitStudio.xrc:1749 res/xrc/OutfitStudio.xrc:2110
+#: src/program/OutfitStudio.cpp:8004 src/program/OutfitStudio.cpp:8115
+#: src/program/OutfitStudio.cpp:8247
 msgid "Import"
 msgstr ""
 
@@ -2509,7 +2606,7 @@ msgid "Choose an HKX file to import as a BSClothExtraData block into the project
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1775 res/xrc/OutfitStudio.xrc:1909
-#: res/xrc/OutfitStudio.xrc:2138 res/xrc/OutfitStudio.xrc:2403
+#: res/xrc/OutfitStudio.xrc:2146 res/xrc/OutfitStudio.xrc:2411
 msgid "Export"
 msgstr ""
 
@@ -2530,7 +2627,7 @@ msgid "Save the current project as a NIF file (including reference)"
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1785 res/xrc/OutfitStudio.xrc:1915
-#: res/xrc/OutfitStudio.xrc:2409
+#: res/xrc/OutfitStudio.xrc:2417
 msgid "To OBJ..."
 msgstr ""
 
@@ -2539,7 +2636,7 @@ msgid "Export the current project as an OBJ file."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1789 res/xrc/OutfitStudio.xrc:1919
-#: res/xrc/OutfitStudio.xrc:2413
+#: res/xrc/OutfitStudio.xrc:2421
 msgid "To FBX..."
 msgstr ""
 
@@ -2548,12 +2645,12 @@ msgid "Export the current project as an FBX file."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1793 res/xrc/OutfitStudio.xrc:1923
-#: res/xrc/OutfitStudio.xrc:2417
+#: res/xrc/OutfitStudio.xrc:2425
 msgid "To TRI (Head)..."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:1794 res/xrc/OutfitStudio.xrc:1924
-#: res/xrc/OutfitStudio.xrc:2418
+#: res/xrc/OutfitStudio.xrc:2426
 msgid "Export head morphs to a TRI file."
 msgstr ""
 
@@ -2621,7 +2718,7 @@ msgstr ""
 msgid "Resets the shape and skin transforms."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1898 src/program/OutfitStudio.cpp:11534
+#: res/xrc/OutfitStudio.xrc:1898 src/program/OutfitStudio.cpp:11713
 msgid "Delete Unreferenced Nodes"
 msgstr ""
 
@@ -2633,36 +2730,36 @@ msgstr ""
 msgid "Removes skinning of all shapes and all unused nodes."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1907 res/xrc/OutfitStudio.xrc:2401
+#: res/xrc/OutfitStudio.xrc:1907 res/xrc/OutfitStudio.xrc:2409
 msgid "Shape"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1911 res/xrc/OutfitStudio.xrc:2405
+#: res/xrc/OutfitStudio.xrc:1911 res/xrc/OutfitStudio.xrc:2413
 msgid "To NIF..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1912 res/xrc/OutfitStudio.xrc:2406
+#: res/xrc/OutfitStudio.xrc:1912 res/xrc/OutfitStudio.xrc:2414
 msgid "Export only the selected shapes to a NIF file."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1916 res/xrc/OutfitStudio.xrc:2410
+#: res/xrc/OutfitStudio.xrc:1916 res/xrc/OutfitStudio.xrc:2418
 msgid "Export only the selected shapes to an OBJ file."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1920 res/xrc/OutfitStudio.xrc:2414
+#: res/xrc/OutfitStudio.xrc:1920 res/xrc/OutfitStudio.xrc:2422
 msgid "Export only the selected shapes to an FBX file."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1928 res/xrc/OutfitStudio.xrc:2422
+#: res/xrc/OutfitStudio.xrc:1928 res/xrc/OutfitStudio.xrc:2430
 #: res/xrc/Slider.xrc:200
 msgid "UV"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1930 res/xrc/OutfitStudio.xrc:2424
+#: res/xrc/OutfitStudio.xrc:1930 res/xrc/OutfitStudio.xrc:2432
 msgid "Edit..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1931 res/xrc/OutfitStudio.xrc:2425
+#: res/xrc/OutfitStudio.xrc:1931 res/xrc/OutfitStudio.xrc:2433
 msgid "Edit the texture coordinates."
 msgstr ""
 
@@ -2682,755 +2779,768 @@ msgstr ""
 msgid "Inverts the Y-axis to flip the texture coordinates."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1943 res/xrc/OutfitStudio.xrc:2437
+#: res/xrc/OutfitStudio.xrc:1943 res/xrc/OutfitStudio.xrc:2445
 msgid "Delete Vertices...\tShift+Del"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1944 res/xrc/OutfitStudio.xrc:2438
+#: res/xrc/OutfitStudio.xrc:1944 res/xrc/OutfitStudio.xrc:2446
 msgid "Deletes all unmasked vertices of the currently selected shapes."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1947 res/xrc/OutfitStudio.xrc:2441
+#: res/xrc/OutfitStudio.xrc:1947 res/xrc/OutfitStudio.xrc:2449
 msgid "Separate Vertices...\tShift+S"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1948 res/xrc/OutfitStudio.xrc:2442
+#: res/xrc/OutfitStudio.xrc:1948 res/xrc/OutfitStudio.xrc:2450
 msgid "Separate the current shape into two by using the mask."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1951 res/xrc/OutfitStudio.xrc:2445
+#: res/xrc/OutfitStudio.xrc:1951 res/xrc/OutfitStudio.xrc:2453
 msgid "Mirror Shape..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1952 res/xrc/OutfitStudio.xrc:2446
+#: res/xrc/OutfitStudio.xrc:1952 res/xrc/OutfitStudio.xrc:2454
 msgid "Mirror the selected shapes on any axis."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1955 res/xrc/OutfitStudio.xrc:2449
+#: res/xrc/OutfitStudio.xrc:1955 res/xrc/OutfitStudio.xrc:2457
 msgid "Merge Geometry..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1956 res/xrc/OutfitStudio.xrc:2450
+#: res/xrc/OutfitStudio.xrc:1956 res/xrc/OutfitStudio.xrc:2458
 msgid "Copies vertices and triangles from one shape to another."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1959 res/xrc/OutfitStudio.xrc:2453
+#: res/xrc/OutfitStudio.xrc:1959 res/xrc/OutfitStudio.xrc:2461
 msgid "Duplicate..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1960 res/xrc/OutfitStudio.xrc:2454
+#: res/xrc/OutfitStudio.xrc:1960 res/xrc/OutfitStudio.xrc:2462
 msgid "Duplicate the current shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1964 res/xrc/OutfitStudio.xrc:2458
+#: res/xrc/OutfitStudio.xrc:1964 res/xrc/OutfitStudio.xrc:2466
 msgid "Splits all edges between unmasked vertices"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1967 res/xrc/OutfitStudio.xrc:2461
+#: res/xrc/OutfitStudio.xrc:1967 res/xrc/OutfitStudio.xrc:2469
 msgid "Rename...\tF2"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1968 res/xrc/OutfitStudio.xrc:2462
+#: res/xrc/OutfitStudio.xrc:1968 res/xrc/OutfitStudio.xrc:2470
 msgid "Change the name of the current shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1971 res/xrc/OutfitStudio.xrc:2465
+#: res/xrc/OutfitStudio.xrc:1971 res/xrc/OutfitStudio.xrc:2473
 msgid "Set Reference"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1972 res/xrc/OutfitStudio.xrc:2466
+#: res/xrc/OutfitStudio.xrc:1972 res/xrc/OutfitStudio.xrc:2474
 msgid "Turn the shape into the reference shape of the project."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1976 res/xrc/OutfitStudio.xrc:2470
+#: res/xrc/OutfitStudio.xrc:1976 res/xrc/OutfitStudio.xrc:2478
 msgid "Move..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1977 res/xrc/OutfitStudio.xrc:2471
+#: res/xrc/OutfitStudio.xrc:1977 res/xrc/OutfitStudio.xrc:2479
 msgid "Apply an offset adjustment to the mesh vertices. This permanently moves vertices."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1980 res/xrc/OutfitStudio.xrc:2474
+#: res/xrc/OutfitStudio.xrc:1980 res/xrc/OutfitStudio.xrc:2482
 msgid "Scale..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1981 res/xrc/OutfitStudio.xrc:2475
+#: res/xrc/OutfitStudio.xrc:1981 res/xrc/OutfitStudio.xrc:2483
 msgid "Apply a scale adjustment to the shape. This permanently moves vertices."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1984 res/xrc/OutfitStudio.xrc:2478
+#: res/xrc/OutfitStudio.xrc:1984 res/xrc/OutfitStudio.xrc:2486
 msgid "Rotate..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1985 res/xrc/OutfitStudio.xrc:2479
+#: res/xrc/OutfitStudio.xrc:1985 res/xrc/OutfitStudio.xrc:2487
 msgid "Apply a rotation to the mesh vertices. This permanently moves vertices."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1988 res/xrc/OutfitStudio.xrc:2482
+#: res/xrc/OutfitStudio.xrc:1988 res/xrc/OutfitStudio.xrc:2490
 msgid "Inflate..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1989 res/xrc/OutfitStudio.xrc:2483
+#: res/xrc/OutfitStudio.xrc:1989 res/xrc/OutfitStudio.xrc:2491
 msgid "Inflates/deflates a shape along its normals. This permanently moves vertices."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1993
+#: res/xrc/OutfitStudio.xrc:1992 res/xrc/OutfitStudio.xrc:2078
+#: res/xrc/OutfitStudio.xrc:2494
+msgid "Fix Clipping..."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1993 res/xrc/OutfitStudio.xrc:2495
+msgid "Fixes clipping of outfit vertices that penetrate the reference shape."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:1997
 msgid "Normals"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1995
+#: res/xrc/OutfitStudio.xrc:1999
 msgid "Smooth Seam Normals"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:1996
+#: res/xrc/OutfitStudio.xrc:2000
 msgid "Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2001
+#: res/xrc/OutfitStudio.xrc:2005
 msgid "Edit Smoothing Angle..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2002
+#: res/xrc/OutfitStudio.xrc:2006
 msgid "Angle, in degrees, that controls the threshold at which normal seams are smoothed."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2005
+#: res/xrc/OutfitStudio.xrc:2009
 msgid "Lock Normals"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2006
+#: res/xrc/OutfitStudio.xrc:2010
 msgid "Locks the mesh normals. Enable if you want to keep custom normals intact."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2014 res/xrc/OutfitStudio.xrc:2488
+#: res/xrc/OutfitStudio.xrc:2018 res/xrc/OutfitStudio.xrc:2500
 msgid "Copies all bone weights from the reference shape to the current shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2017 res/xrc/OutfitStudio.xrc:2491
+#: res/xrc/OutfitStudio.xrc:2021 res/xrc/OutfitStudio.xrc:2503
 msgid "Copy Selected Weights"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2018 res/xrc/OutfitStudio.xrc:2492
+#: res/xrc/OutfitStudio.xrc:2022 res/xrc/OutfitStudio.xrc:2504
 msgid "Copies selected bone weights from the reference shape to the current shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2021 res/xrc/OutfitStudio.xrc:2495
+#: res/xrc/OutfitStudio.xrc:2025 res/xrc/OutfitStudio.xrc:2507
 msgid "Transfer Selected Weights"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2022 res/xrc/OutfitStudio.xrc:2496
+#: res/xrc/OutfitStudio.xrc:2026 res/xrc/OutfitStudio.xrc:2508
 msgid "Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2025 res/xrc/OutfitStudio.xrc:2499
-#: res/xrc/OutfitStudio.xrc:2574
+#: res/xrc/OutfitStudio.xrc:2029 res/xrc/OutfitStudio.xrc:2511
+#: res/xrc/OutfitStudio.xrc:2586
 msgid "Mask Weighted Vertices"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2026 res/xrc/OutfitStudio.xrc:2500
+#: res/xrc/OutfitStudio.xrc:2030 res/xrc/OutfitStudio.xrc:2512
 msgid "Masks vertices with bone weights, so you can manually assign weights to unweighted vertices."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2029
+#: res/xrc/OutfitStudio.xrc:2033
 msgid "Check For Bad Bones..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2030 res/xrc/OutfitStudio.xrc:2504
+#: res/xrc/OutfitStudio.xrc:2034 res/xrc/OutfitStudio.xrc:2516
 msgid "Looks for bones with inconsistencies in their transforms.  If any are found, a dialog is opened to give options for fixing them."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2034 res/xrc/OutfitStudio.xrc:2508
+#: res/xrc/OutfitStudio.xrc:2038 res/xrc/OutfitStudio.xrc:2520
 msgid "Copy Partitions/Segments..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2035 res/xrc/OutfitStudio.xrc:2509
+#: res/xrc/OutfitStudio.xrc:2039 res/xrc/OutfitStudio.xrc:2521
 msgid "Copies partitions/segments and all triangle assignments from the reference shape to the current shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2039 res/xrc/OutfitStudio.xrc:2513
+#: res/xrc/OutfitStudio.xrc:2043 res/xrc/OutfitStudio.xrc:2525
 msgid "Mask Symmetric Vertices..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2040 res/xrc/OutfitStudio.xrc:2514
+#: res/xrc/OutfitStudio.xrc:2044 res/xrc/OutfitStudio.xrc:2526
 msgid "Masks unmasked vertices that have a mirrored vertex with identical data."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2043 res/xrc/OutfitStudio.xrc:2517
+#: res/xrc/OutfitStudio.xrc:2047 res/xrc/OutfitStudio.xrc:2529
 msgid "Symmetrize Vertices..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2044 res/xrc/OutfitStudio.xrc:2518
+#: res/xrc/OutfitStudio.xrc:2048 res/xrc/OutfitStudio.xrc:2530
 msgid "Changes vertex data to be identical to mirrored vertices."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2047 res/xrc/OutfitStudio.xrc:2521
+#: res/xrc/OutfitStudio.xrc:2051 res/xrc/OutfitStudio.xrc:2533
 msgid "Mask Symmetric Triangles"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2048 res/xrc/OutfitStudio.xrc:2522
+#: res/xrc/OutfitStudio.xrc:2052 res/xrc/OutfitStudio.xrc:2534
 msgid "Masks triangles that can be matched to a mirrored triangle."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2052 res/xrc/OutfitStudio.xrc:2526
+#: res/xrc/OutfitStudio.xrc:2056 res/xrc/OutfitStudio.xrc:2538
 msgid "Delete\tDel"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2053 res/xrc/OutfitStudio.xrc:2527
+#: res/xrc/OutfitStudio.xrc:2057 res/xrc/OutfitStudio.xrc:2539
 msgid "Removes the currently selected shape from the outfit."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2059 res/xrc/OutfitStudio.xrc:2530
+#: res/xrc/OutfitStudio.xrc:2063 res/xrc/OutfitStudio.xrc:2542
 msgid "Properties..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2060 res/xrc/OutfitStudio.xrc:2531
+#: res/xrc/OutfitStudio.xrc:2064 res/xrc/OutfitStudio.xrc:2543
 msgid "Opens the properties dialog for shader, texture and more settings of the selected shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2064
+#: res/xrc/OutfitStudio.xrc:2068
 msgid "Slider"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2066
+#: res/xrc/OutfitStudio.xrc:2070
 msgid "Conform Selected\tCtrl+C"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2067
+#: res/xrc/OutfitStudio.xrc:2071
 msgid "Conform selected outfit shape to all checked sliders."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2070
+#: res/xrc/OutfitStudio.xrc:2074
 msgid "Conform All\tCtrl+Shift+C"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2071
+#: res/xrc/OutfitStudio.xrc:2075
 msgid "Conform all outfit shapes to all checked sliders."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2076
+#: res/xrc/OutfitStudio.xrc:2079
+msgid "Fixes clipping of outfit vertices that penetrate the reference shape for the active slider."
+msgstr ""
+
+#: res/xrc/OutfitStudio.xrc:2084
 msgid "Set the current outfit shape as the base shape and clear slider data."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2081
+#: res/xrc/OutfitStudio.xrc:2089
 msgid "Load and preview a slider preset. Inverted sliders will have inverted values."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2085
+#: res/xrc/OutfitStudio.xrc:2093
 msgid "Save a slider preset with the current values. Inverted sliders will have inverted values."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2089
+#: res/xrc/OutfitStudio.xrc:2097
 msgid "New Slider"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2090
+#: res/xrc/OutfitStudio.xrc:2098
 msgid "Create a new shape transformation slider."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2093
+#: res/xrc/OutfitStudio.xrc:2101
 msgid "Coalesce sliders"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2094
+#: res/xrc/OutfitStudio.xrc:2102
 msgid "Create a new shape transformation slider based on the current slider values"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2097
+#: res/xrc/OutfitStudio.xrc:2105
 msgid "New Zap Slider"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2098
+#: res/xrc/OutfitStudio.xrc:2106
 msgid "Create a new Zap slider based on unmasked vertices"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2104
+#: res/xrc/OutfitStudio.xrc:2112
 msgid "Import OSD..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2105
+#: res/xrc/OutfitStudio.xrc:2113
 msgid "Imports OSD file and creates sliders for shapes with a matching name."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2108
+#: res/xrc/OutfitStudio.xrc:2116
 msgid "Import TRI Morphs..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2109
+#: res/xrc/OutfitStudio.xrc:2117
 msgid "Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2112
+#: res/xrc/OutfitStudio.xrc:2120
 msgid "Import Starfield morphs..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2113
+#: res/xrc/OutfitStudio.xrc:2121
 msgid "Imports Starfield morph.dat file and creates sliders for shapes with a matching name."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2117
+#: res/xrc/OutfitStudio.xrc:2125
 msgid "Import to active slider"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2119
+#: res/xrc/OutfitStudio.xrc:2127
 msgid "Import NIF..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2120
+#: res/xrc/OutfitStudio.xrc:2128
 msgid "Import a NIF file and overwrites the current shape's slider data."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2123
+#: res/xrc/OutfitStudio.xrc:2131
 msgid "Import BSD..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2124
+#: res/xrc/OutfitStudio.xrc:2132
 msgid "Import a BodySlide BSD file and overwrites the current shape's slider data."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2127
+#: res/xrc/OutfitStudio.xrc:2135
 msgid "Import OBJ..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2128
+#: res/xrc/OutfitStudio.xrc:2136
 msgid "Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2131
+#: res/xrc/OutfitStudio.xrc:2139
 msgid "Import FBX..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2132
+#: res/xrc/OutfitStudio.xrc:2140
 msgid "Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2140
+#: res/xrc/OutfitStudio.xrc:2148
 msgid "Export OSD..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2141
+#: res/xrc/OutfitStudio.xrc:2149
 msgid "Exports all currently loaded slider data to an OSD file."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2144
+#: res/xrc/OutfitStudio.xrc:2152
 msgid "Export TRI Morphs..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2145
+#: res/xrc/OutfitStudio.xrc:2153
 msgid "Exports TRI morphs to a TRI file."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2148
+#: res/xrc/OutfitStudio.xrc:2156
 msgid "Export Starfield morphs..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2149
+#: res/xrc/OutfitStudio.xrc:2157
 msgid "Exports Starfield morph.dat file."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2152
+#: res/xrc/OutfitStudio.xrc:2160
 msgid "Export to OBJs..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2153
+#: res/xrc/OutfitStudio.xrc:2161
 msgid "Export all sliders to an OBJ file per slider."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2157
+#: res/xrc/OutfitStudio.xrc:2165
 msgid "Export active slider"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2159
+#: res/xrc/OutfitStudio.xrc:2167
 msgid "Export NIF..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2160
+#: res/xrc/OutfitStudio.xrc:2168
 msgid "Exports the current slider's data as a NIF file."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2163
+#: res/xrc/OutfitStudio.xrc:2171
 msgid "Export BSD..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2164
+#: res/xrc/OutfitStudio.xrc:2172
 msgid "Exports the current slider's data as a BodySlide BSD file."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2167
+#: res/xrc/OutfitStudio.xrc:2175
 msgid "Export OBJ..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2168
+#: res/xrc/OutfitStudio.xrc:2176
 msgid "Exports the current slider's data as an OBJ file."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2175 src/program/OutfitStudio.cpp:8660
+#: res/xrc/OutfitStudio.xrc:2183 src/program/OutfitStudio.cpp:8654
 msgid "Clone Slider"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2176
+#: res/xrc/OutfitStudio.xrc:2184
 msgid "Clones the current slider."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2180
+#: res/xrc/OutfitStudio.xrc:2188
 msgid "Negate Slider"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2181
+#: res/xrc/OutfitStudio.xrc:2189
 msgid "Negates the current slider, reversing it's effect"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2185
+#: res/xrc/OutfitStudio.xrc:2193
 msgid "Mask Affected Vertices"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2186
+#: res/xrc/OutfitStudio.xrc:2194
 msgid "Masks the vertices the slider is affecting for all selected shapes."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2190
+#: res/xrc/OutfitStudio.xrc:2198
 msgid "Clear Slider Data"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2191
+#: res/xrc/OutfitStudio.xrc:2199
 msgid "Erases the slider data without removing the slider itself. (Cannot be undone)"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2194
+#: res/xrc/OutfitStudio.xrc:2202
 msgid "Delete Slider\tCtrl+Del"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2195
+#: res/xrc/OutfitStudio.xrc:2203
 msgid "Delete the active slider from the project. (Cannot be undone)"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2199
+#: res/xrc/OutfitStudio.xrc:2207
 msgid "Properties...\tTab"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2200 src/ui/wxSliderPanel.cpp:71
+#: res/xrc/OutfitStudio.xrc:2208 src/ui/wxSliderPanel.cpp:71
 msgid "Display and edit the active slider's properties."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2205
+#: res/xrc/OutfitStudio.xrc:2213
 msgid "Tool"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2207
+#: res/xrc/OutfitStudio.xrc:2215
 msgid "Current Tool"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2246
+#: res/xrc/OutfitStudio.xrc:2254
 msgid ""
 "Apply animation weight values for the currently selected bone.\n"
 "Hold down the ALT key to weaken the weighting."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2284
+#: res/xrc/OutfitStudio.xrc:2292
 msgid "Transform\tF"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2289
+#: res/xrc/OutfitStudio.xrc:2297
 msgid "Pivot\tP"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2294
+#: res/xrc/OutfitStudio.xrc:2302
 msgid "Vertex Edit\tQ"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2295
+#: res/xrc/OutfitStudio.xrc:2303
 msgid ""
 "Shows vertex points and lets you mask/unmask them.\n"
 "Without any brush active, click on a vertex to unmask it.\n"
 "Hold down CTRL to mask it."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2300
+#: res/xrc/OutfitStudio.xrc:2308
 msgid "Increase Brush Size\tShift++"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2301
+#: res/xrc/OutfitStudio.xrc:2309
 msgid "Increase brush diameter"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2304
+#: res/xrc/OutfitStudio.xrc:2312
 msgid "Decrease Brush Size\tShift+-"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2305
+#: res/xrc/OutfitStudio.xrc:2313
 msgid "Decrease brush diameter"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2308
+#: res/xrc/OutfitStudio.xrc:2316
 msgid "Increase Brush Strength\tCtrl++"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2309
+#: res/xrc/OutfitStudio.xrc:2317
 msgid "Increase brush strength"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2312
+#: res/xrc/OutfitStudio.xrc:2320
 msgid "Decrease Brush Strength\tCtrl+-"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2313
+#: res/xrc/OutfitStudio.xrc:2321
 msgid "Decrease brush strength"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2317
+#: res/xrc/OutfitStudio.xrc:2325
 msgid "Mask Less\tA"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2318
+#: res/xrc/OutfitStudio.xrc:2326
 msgid "Mask Less"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2321
+#: res/xrc/OutfitStudio.xrc:2329
 msgid "Mask More\tD"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2322
+#: res/xrc/OutfitStudio.xrc:2330
 msgid "Mask More"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2326
+#: res/xrc/OutfitStudio.xrc:2334
 msgid "Invert Mask\tCtrl+I"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2327
+#: res/xrc/OutfitStudio.xrc:2335
 msgid "Invert Mask"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2330
+#: res/xrc/OutfitStudio.xrc:2338
 msgid "Clear Mask\tCtrl+A"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2331
+#: res/xrc/OutfitStudio.xrc:2339
 msgid "Clear Mask"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2335
+#: res/xrc/OutfitStudio.xrc:2343
 msgid "View"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2337
+#: res/xrc/OutfitStudio.xrc:2345
 msgid "Front\tShift+1"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2340
+#: res/xrc/OutfitStudio.xrc:2348
 msgid "Back\tShift+2"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2343
+#: res/xrc/OutfitStudio.xrc:2351
 msgid "Left\tShift+3"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2346
+#: res/xrc/OutfitStudio.xrc:2354
 msgid "Right\tShift+4"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2349
+#: res/xrc/OutfitStudio.xrc:2357
 msgid "Perspective\tShift+5"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2354
+#: res/xrc/OutfitStudio.xrc:2362
 msgid "Toggle Rotation Center\tShift+R"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2355
+#: res/xrc/OutfitStudio.xrc:2363
 msgid "Switch between the different rotation center modes."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2358
+#: res/xrc/OutfitStudio.xrc:2366
 msgid "Show Nodes\tShift+N"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2362
+#: res/xrc/OutfitStudio.xrc:2370
 msgid "Show Bones\tShift+B"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2366
+#: res/xrc/OutfitStudio.xrc:2374
 msgid "Show Floor\tG"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2371
+#: res/xrc/OutfitStudio.xrc:2379
 msgid "Toggle Visibility\tE"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2372
+#: res/xrc/OutfitStudio.xrc:2380
 msgid "Switch between the different visibility modes for the selected shapes."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2375
+#: res/xrc/OutfitStudio.xrc:2383
 msgid "Show Wireframe\tW"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2376
+#: res/xrc/OutfitStudio.xrc:2384
 msgid "Show wireframe on all models."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2380
+#: res/xrc/OutfitStudio.xrc:2388
 msgid "Enable Lighting\tL"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2381
+#: res/xrc/OutfitStudio.xrc:2389
 msgid "Turn on or off lighting."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2386
+#: res/xrc/OutfitStudio.xrc:2394
 msgid "Enable Textures\tT"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2387
+#: res/xrc/OutfitStudio.xrc:2395
 msgid "Display texture maps on models."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2392
+#: res/xrc/OutfitStudio.xrc:2400
 msgid "Enable Vertex Colors"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2393
+#: res/xrc/OutfitStudio.xrc:2401
 msgid "Display vertex colors on models."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2428
+#: res/xrc/OutfitStudio.xrc:2436
 msgid "Invert X"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2429
+#: res/xrc/OutfitStudio.xrc:2437
 msgid "Inverts the X-axis of the texture coordinates."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2432
+#: res/xrc/OutfitStudio.xrc:2440
 msgid "Invert Y"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2433
+#: res/xrc/OutfitStudio.xrc:2441
 msgid "Inverts the Y-axis of the texture coordinates."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2503
+#: res/xrc/OutfitStudio.xrc:2515
 msgid "Check For Bad Bones"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2537
+#: res/xrc/OutfitStudio.xrc:2549
 msgid "Bad Bone"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2539
+#: res/xrc/OutfitStudio.xrc:2551
 msgid "Set Skin Transform From Node"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2540
+#: res/xrc/OutfitStudio.xrc:2552
 msgid "Fixes the bad bone by calculating a new skin-to-bone transform."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2543
+#: res/xrc/OutfitStudio.xrc:2555
 msgid "Set Node Transform From Skin"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2544
+#: res/xrc/OutfitStudio.xrc:2556
 msgid "Fixes the bad custom bone by calculating a new bone-to-global transform."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2548 res/xrc/OutfitStudio.xrc:2581
+#: res/xrc/OutfitStudio.xrc:2560 res/xrc/OutfitStudio.xrc:2593
 #: res/xrc/ShapeProperties.xrc:280 res/xrc/ShapeProperties.xrc:438
 #: res/xrc/ShapeProperties.xrc:611
 msgid "Add"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2550 res/xrc/OutfitStudio.xrc:2583
+#: res/xrc/OutfitStudio.xrc:2562 res/xrc/OutfitStudio.xrc:2595
 msgid "From Skeleton..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2551 res/xrc/OutfitStudio.xrc:2584
+#: res/xrc/OutfitStudio.xrc:2563 res/xrc/OutfitStudio.xrc:2596
 msgid "Choose a bone from the reference skeleton to add to the project."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2554 res/xrc/OutfitStudio.xrc:2587
+#: res/xrc/OutfitStudio.xrc:2566 res/xrc/OutfitStudio.xrc:2599
 msgid "Custom Bone..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2555 res/xrc/OutfitStudio.xrc:2588
+#: res/xrc/OutfitStudio.xrc:2567 res/xrc/OutfitStudio.xrc:2600
 msgid "Add a custom bone to the project."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2561
+#: res/xrc/OutfitStudio.xrc:2573
 msgid "From Project"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2562
+#: res/xrc/OutfitStudio.xrc:2574
 msgid "Delete bone(s) from all shapes of the project."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2565
+#: res/xrc/OutfitStudio.xrc:2577
 msgid "From Selected Shapes"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2566
+#: res/xrc/OutfitStudio.xrc:2578
 msgid "Delete bone(s) from only the selected shapes."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2570
+#: res/xrc/OutfitStudio.xrc:2582
 msgid "Edit Bone..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2571
+#: res/xrc/OutfitStudio.xrc:2583
 msgid "Edit a custom bone or view a standard bone."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2575
+#: res/xrc/OutfitStudio.xrc:2587
 msgid "Masks vertices with weights for the selected bones."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2595 res/xrc/OutfitStudio.xrc:2621
+#: res/xrc/OutfitStudio.xrc:2607 res/xrc/OutfitStudio.xrc:2633
 msgid "Add Segment..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2596 res/xrc/OutfitStudio.xrc:2622
+#: res/xrc/OutfitStudio.xrc:2608 res/xrc/OutfitStudio.xrc:2634
 msgid "Choose a segment to add to the shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2599 res/xrc/OutfitStudio.xrc:2610
+#: res/xrc/OutfitStudio.xrc:2611 res/xrc/OutfitStudio.xrc:2622
 msgid "Add Sub Segment..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2600 res/xrc/OutfitStudio.xrc:2611
+#: res/xrc/OutfitStudio.xrc:2612 res/xrc/OutfitStudio.xrc:2623
 msgid "Add a new sub segment to the currently selected segment."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2603
+#: res/xrc/OutfitStudio.xrc:2615
 msgid "Delete Segment..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2604
+#: res/xrc/OutfitStudio.xrc:2616
 msgid "Delete segment and all of its sub segments from the shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2608
+#: res/xrc/OutfitStudio.xrc:2620
 msgid "Sub Segments"
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2614
+#: res/xrc/OutfitStudio.xrc:2626
 msgid "Delete Sub Segment..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2615
+#: res/xrc/OutfitStudio.xrc:2627
 msgid "Delete the selected sub segment."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2628 res/xrc/OutfitStudio.xrc:2639
+#: res/xrc/OutfitStudio.xrc:2640 res/xrc/OutfitStudio.xrc:2651
 msgid "Add Partition..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2629 res/xrc/OutfitStudio.xrc:2640
+#: res/xrc/OutfitStudio.xrc:2641 res/xrc/OutfitStudio.xrc:2652
 msgid "Adds a new partition to the shape."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2632
+#: res/xrc/OutfitStudio.xrc:2644
 msgid "Delete Partition..."
 msgstr ""
 
-#: res/xrc/OutfitStudio.xrc:2633
+#: res/xrc/OutfitStudio.xrc:2645
 msgid "Deletes the partition from the shape."
 msgstr ""
 
@@ -3666,10 +3776,10 @@ msgstr ""
 msgid "Pack Archive..."
 msgstr ""
 
-#: res/xrc/Project.xrc:1092 src/program/AutomationDialog.cpp:1371
-#: src/program/OutfitStudio.cpp:4231 src/program/OutfitStudio.cpp:7078
-#: src/program/OutfitStudio.cpp:8010 src/program/OutfitStudio.cpp:8121
-#: src/program/OutfitStudio.cpp:8253 src/program/OutfitStudio.cpp:12083
+#: res/xrc/Project.xrc:1092 src/program/AutomationDialog.cpp:1492
+#: src/program/OutfitStudio.cpp:4225 src/program/OutfitStudio.cpp:7072
+#: src/program/OutfitStudio.cpp:8004 src/program/OutfitStudio.cpp:8115
+#: src/program/OutfitStudio.cpp:8247 src/program/OutfitStudio.cpp:12262
 #: src/program/ShapeProperties.cpp:135
 msgid "Cancel"
 msgstr ""
@@ -4075,10 +4185,6 @@ msgstr ""
 msgid "High"
 msgstr ""
 
-#: res/xrc/Slider.xrc:148
-msgid "Zapped"
-msgstr ""
-
 #: res/xrc/Slider.xrc:173
 msgid "Invert"
 msgstr ""
@@ -4125,204 +4231,204 @@ msgstr ""
 msgid "Root '%s' not found in skeleton '%s'!"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:82
+#: src/program/AutomationDialog.cpp:84
 msgid "Active"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:85
+#: src/program/AutomationDialog.cpp:87
 msgid "Note"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:134 src/program/AutomationDialog.cpp:305
+#: src/program/AutomationDialog.cpp:136 src/program/AutomationDialog.cpp:307
 msgid "Ready."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:275 src/program/BodySlideApp.cpp:3263
-#: src/program/OutfitStudio.h:1108
+#: src/program/AutomationDialog.cpp:277 src/program/BodySlideApp.cpp:3263
+#: src/program/OutfitStudio.h:1109
 msgid "Starting..."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:379
+#: src/program/AutomationDialog.cpp:381
 msgid "Add Step"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:382
+#: src/program/AutomationDialog.cpp:384
 msgid "Remove Step"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:385
+#: src/program/AutomationDialog.cpp:387
 msgid "Move Down"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:387
+#: src/program/AutomationDialog.cpp:389
 msgid "Execute Selected"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1062 src/program/AutomationDialog.cpp:1137
+#: src/program/AutomationDialog.cpp:1171 src/program/AutomationDialog.cpp:1246
 msgid "<New>"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1105
+#: src/program/AutomationDialog.cpp:1214
 #, c-format
 msgid "Failed to load automation script (error %d)."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1105 src/program/AutomationDialog.cpp:1184
+#: src/program/AutomationDialog.cpp:1214 src/program/AutomationDialog.cpp:1293
 #: src/program/BodySlideApp.cpp:1102 src/program/BodySlideApp.cpp:2072
 #: src/program/BodySlideApp.cpp:2385 src/program/BodySlideApp.cpp:3913
 #: src/program/BodySlideApp.cpp:3920 src/program/BodySlideApp.cpp:4758
-#: src/program/OutfitStudio.cpp:1193 src/program/OutfitStudio.cpp:1199
-#: src/program/OutfitStudio.cpp:1775 src/program/OutfitStudio.cpp:1786
-#: src/program/OutfitStudio.cpp:1822 src/program/OutfitStudio.cpp:1833
-#: src/program/OutfitStudio.cpp:1843 src/program/OutfitStudio.cpp:1852
-#: src/program/OutfitStudio.cpp:1863 src/program/OutfitStudio.cpp:1874
-#: src/program/OutfitStudio.cpp:1886 src/program/OutfitStudio.cpp:1925
-#: src/program/OutfitStudio.cpp:1933 src/program/OutfitStudio.cpp:1940
-#: src/program/OutfitStudio.cpp:1976 src/program/OutfitStudio.cpp:1984
-#: src/program/OutfitStudio.cpp:1991 src/program/OutfitStudio.cpp:2001
-#: src/program/OutfitStudio.cpp:2010 src/program/OutfitStudio.cpp:2018
-#: src/program/OutfitStudio.cpp:2025 src/program/OutfitStudio.cpp:2036
-#: src/program/OutfitStudio.cpp:2045 src/program/OutfitStudio.cpp:2052
-#: src/program/OutfitStudio.cpp:2367 src/program/OutfitStudio.cpp:2404
-#: src/program/OutfitStudio.cpp:2419 src/program/OutfitStudio.cpp:2505
-#: src/program/OutfitStudio.cpp:2514 src/program/OutfitStudio.cpp:2522
-#: src/program/OutfitStudio.cpp:2536 src/program/OutfitStudio.cpp:2545
-#: src/program/OutfitStudio.cpp:2551 src/program/OutfitStudio.cpp:2588
-#: src/program/OutfitStudio.cpp:4118 src/program/OutfitStudio.cpp:4125
-#: src/program/OutfitStudio.cpp:4674 src/program/OutfitStudio.cpp:4843
-#: src/program/OutfitStudio.cpp:4943 src/program/OutfitStudio.cpp:4962
-#: src/program/OutfitStudio.cpp:5075 src/program/OutfitStudio.cpp:5094
-#: src/program/OutfitStudio.cpp:5122 src/program/OutfitStudio.cpp:5173
-#: src/program/OutfitStudio.cpp:5190 src/program/OutfitStudio.cpp:5197
-#: src/program/OutfitStudio.cpp:5211 src/program/OutfitStudio.cpp:7821
-#: src/program/OutfitStudio.cpp:7879 src/program/OutfitStudio.cpp:7888
-#: src/program/OutfitStudio.cpp:7899 src/program/OutfitStudio.cpp:7913
-#: src/program/OutfitStudio.cpp:7934 src/program/OutfitStudio.cpp:7945
-#: src/program/OutfitStudio.cpp:7956 src/program/OutfitStudio.cpp:7969
-#: src/program/OutfitStudio.cpp:8084 src/program/OutfitStudio.cpp:8097
-#: src/program/OutfitStudio.cpp:8200 src/program/OutfitStudio.cpp:8216
-#: src/program/OutfitStudio.cpp:8222 src/program/OutfitStudio.cpp:8324
-#: src/program/OutfitStudio.cpp:8335 src/program/OutfitStudio.cpp:8352
-#: src/program/OutfitStudio.cpp:8375 src/program/OutfitStudio.cpp:8387
-#: src/program/OutfitStudio.cpp:8419 src/program/OutfitStudio.cpp:8442
-#: src/program/OutfitStudio.cpp:8451 src/program/OutfitStudio.cpp:8462
-#: src/program/OutfitStudio.cpp:8469 src/program/OutfitStudio.cpp:8480
-#: src/program/OutfitStudio.cpp:8487 src/program/OutfitStudio.cpp:8501
-#: src/program/OutfitStudio.cpp:8508 src/program/OutfitStudio.cpp:8644
-#: src/program/OutfitStudio.cpp:8680 src/program/OutfitStudio.cpp:8696
-#: src/program/OutfitStudio.cpp:8907 src/program/OutfitStudio.cpp:10178
-#: src/program/OutfitStudio.cpp:10219 src/program/OutfitStudio.cpp:10224
-#: src/program/OutfitStudio.cpp:10233 src/program/OutfitStudio.cpp:10250
-#: src/program/OutfitStudio.cpp:10459 src/program/OutfitStudio.cpp:10467
-#: src/program/OutfitStudio.cpp:10508 src/program/OutfitStudio.cpp:10833
-#: src/program/OutfitStudio.cpp:10922 src/program/OutfitStudio.cpp:11014
-#: src/program/OutfitStudio.cpp:11019 src/program/OutfitStudio.cpp:11026
-#: src/program/OutfitStudio.cpp:11148 src/program/OutfitStudio.cpp:11182
-#: src/program/OutfitStudio.cpp:13328 src/program/OutfitStudio.cpp:13648
-#: src/program/OutfitStudio.cpp:13687 src/program/OutfitStudio.cpp:13692
-#: src/program/OutfitStudio.cpp:13705 src/program/OutfitStudio.cpp:15116
+#: src/program/OutfitStudio.cpp:1187 src/program/OutfitStudio.cpp:1193
+#: src/program/OutfitStudio.cpp:1769 src/program/OutfitStudio.cpp:1780
+#: src/program/OutfitStudio.cpp:1816 src/program/OutfitStudio.cpp:1827
+#: src/program/OutfitStudio.cpp:1837 src/program/OutfitStudio.cpp:1846
+#: src/program/OutfitStudio.cpp:1857 src/program/OutfitStudio.cpp:1868
+#: src/program/OutfitStudio.cpp:1880 src/program/OutfitStudio.cpp:1919
+#: src/program/OutfitStudio.cpp:1927 src/program/OutfitStudio.cpp:1934
+#: src/program/OutfitStudio.cpp:1970 src/program/OutfitStudio.cpp:1978
+#: src/program/OutfitStudio.cpp:1985 src/program/OutfitStudio.cpp:1995
+#: src/program/OutfitStudio.cpp:2004 src/program/OutfitStudio.cpp:2012
+#: src/program/OutfitStudio.cpp:2019 src/program/OutfitStudio.cpp:2030
+#: src/program/OutfitStudio.cpp:2039 src/program/OutfitStudio.cpp:2046
+#: src/program/OutfitStudio.cpp:2361 src/program/OutfitStudio.cpp:2398
+#: src/program/OutfitStudio.cpp:2413 src/program/OutfitStudio.cpp:2499
+#: src/program/OutfitStudio.cpp:2508 src/program/OutfitStudio.cpp:2516
+#: src/program/OutfitStudio.cpp:2530 src/program/OutfitStudio.cpp:2539
+#: src/program/OutfitStudio.cpp:2545 src/program/OutfitStudio.cpp:2582
+#: src/program/OutfitStudio.cpp:4112 src/program/OutfitStudio.cpp:4119
+#: src/program/OutfitStudio.cpp:4668 src/program/OutfitStudio.cpp:4837
+#: src/program/OutfitStudio.cpp:4937 src/program/OutfitStudio.cpp:4956
+#: src/program/OutfitStudio.cpp:5069 src/program/OutfitStudio.cpp:5088
+#: src/program/OutfitStudio.cpp:5116 src/program/OutfitStudio.cpp:5167
+#: src/program/OutfitStudio.cpp:5184 src/program/OutfitStudio.cpp:5191
+#: src/program/OutfitStudio.cpp:5205 src/program/OutfitStudio.cpp:7815
+#: src/program/OutfitStudio.cpp:7873 src/program/OutfitStudio.cpp:7882
+#: src/program/OutfitStudio.cpp:7893 src/program/OutfitStudio.cpp:7907
+#: src/program/OutfitStudio.cpp:7928 src/program/OutfitStudio.cpp:7939
+#: src/program/OutfitStudio.cpp:7950 src/program/OutfitStudio.cpp:7963
+#: src/program/OutfitStudio.cpp:8078 src/program/OutfitStudio.cpp:8091
+#: src/program/OutfitStudio.cpp:8194 src/program/OutfitStudio.cpp:8210
+#: src/program/OutfitStudio.cpp:8216 src/program/OutfitStudio.cpp:8318
+#: src/program/OutfitStudio.cpp:8329 src/program/OutfitStudio.cpp:8346
+#: src/program/OutfitStudio.cpp:8369 src/program/OutfitStudio.cpp:8381
+#: src/program/OutfitStudio.cpp:8413 src/program/OutfitStudio.cpp:8436
+#: src/program/OutfitStudio.cpp:8445 src/program/OutfitStudio.cpp:8456
+#: src/program/OutfitStudio.cpp:8463 src/program/OutfitStudio.cpp:8474
+#: src/program/OutfitStudio.cpp:8481 src/program/OutfitStudio.cpp:8495
+#: src/program/OutfitStudio.cpp:8502 src/program/OutfitStudio.cpp:8638
+#: src/program/OutfitStudio.cpp:8674 src/program/OutfitStudio.cpp:8690
+#: src/program/OutfitStudio.cpp:8901 src/program/OutfitStudio.cpp:10357
+#: src/program/OutfitStudio.cpp:10398 src/program/OutfitStudio.cpp:10403
+#: src/program/OutfitStudio.cpp:10412 src/program/OutfitStudio.cpp:10429
+#: src/program/OutfitStudio.cpp:10638 src/program/OutfitStudio.cpp:10646
+#: src/program/OutfitStudio.cpp:10687 src/program/OutfitStudio.cpp:11012
+#: src/program/OutfitStudio.cpp:11101 src/program/OutfitStudio.cpp:11193
+#: src/program/OutfitStudio.cpp:11198 src/program/OutfitStudio.cpp:11205
+#: src/program/OutfitStudio.cpp:11327 src/program/OutfitStudio.cpp:11361
+#: src/program/OutfitStudio.cpp:13507 src/program/OutfitStudio.cpp:13827
+#: src/program/OutfitStudio.cpp:13866 src/program/OutfitStudio.cpp:13871
+#: src/program/OutfitStudio.cpp:13884 src/program/OutfitStudio.cpp:15295
 msgid "Error"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1170
+#: src/program/AutomationDialog.cpp:1279
 msgid "Please enter an automation name."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1170 src/program/AutomationDialog.cpp:1195
-#: src/program/AutomationDialog.cpp:1203 src/program/AutomationDialog.cpp:1417
-#: src/program/AutomationDialog.cpp:1431 src/program/AutomationDialog.cpp:1445
-#: src/program/AutomationDialog.cpp:1469 src/program/AutomationDialog.cpp:1482
-#: src/program/AutomationDialog.cpp:1495 src/program/AutomationDialog.cpp:1518
-#: src/program/AutomationDialog.cpp:1597 src/program/AutomationDialog.cpp:3443
-#: src/program/AutomationDialog.cpp:3544 src/program/AutomationDialog.cpp:3549
-#: src/program/AutomationDialog.cpp:3711
+#: src/program/AutomationDialog.cpp:1279 src/program/AutomationDialog.cpp:1304
+#: src/program/AutomationDialog.cpp:1312 src/program/AutomationDialog.cpp:1538
+#: src/program/AutomationDialog.cpp:1552 src/program/AutomationDialog.cpp:1566
+#: src/program/AutomationDialog.cpp:1590 src/program/AutomationDialog.cpp:1603
+#: src/program/AutomationDialog.cpp:1616 src/program/AutomationDialog.cpp:1639
+#: src/program/AutomationDialog.cpp:1718 src/program/AutomationDialog.cpp:3660
+#: src/program/AutomationDialog.cpp:3761 src/program/AutomationDialog.cpp:3766
+#: src/program/AutomationDialog.cpp:3928
 msgid "Automation"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1184
+#: src/program/AutomationDialog.cpp:1293
 #, c-format
 msgid "Failed to save automation script (error %d)."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1195
+#: src/program/AutomationDialog.cpp:1304
 msgid "No automation selected to delete."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1203
+#: src/program/AutomationDialog.cpp:1312
 msgid "Automation file not found."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1208
+#: src/program/AutomationDialog.cpp:1317
 #, c-format
 msgid ""
 "Delete automation '%s'?\n"
 "This cannot be undone."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1209 src/program/OutfitStudio.cpp:9930
-#: src/program/OutfitStudio.cpp:10258 src/program/OutfitStudio.cpp:10289
-#: src/program/OutfitStudio.cpp:10299 src/program/OutfitStudio.cpp:10307
-#: src/program/OutfitStudio.cpp:10314
+#: src/program/AutomationDialog.cpp:1318 src/program/OutfitStudio.cpp:10109
+#: src/program/OutfitStudio.cpp:10437 src/program/OutfitStudio.cpp:10468
+#: src/program/OutfitStudio.cpp:10478 src/program/OutfitStudio.cpp:10486
+#: src/program/OutfitStudio.cpp:10493
 msgid "Confirm Delete"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1417
+#: src/program/AutomationDialog.cpp:1538
 msgid "No active steps to execute."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1431 src/program/AutomationDialog.cpp:3443
+#: src/program/AutomationDialog.cpp:1552 src/program/AutomationDialog.cpp:3660
 msgid "No files found matching the batch folder scan criteria."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1441
+#: src/program/AutomationDialog.cpp:1562
 msgid "Batch Files"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1441
+#: src/program/AutomationDialog.cpp:1562
 #, c-format
 msgid "Select files to process (%d found):"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1445
+#: src/program/AutomationDialog.cpp:1566
 msgid "No files selected."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1458
+#: src/program/AutomationDialog.cpp:1579
 #, c-format
 msgid ""
 "Folder: %s\n"
 "Extension: %s"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1462
+#: src/program/AutomationDialog.cpp:1583
 #, c-format
 msgid ""
 "\n"
 "File filter: %s%s"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1469 src/program/AutomationDialog.cpp:3549
+#: src/program/AutomationDialog.cpp:1590 src/program/AutomationDialog.cpp:3766
 msgid "No slider sets found matching the filter criteria."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1478
+#: src/program/AutomationDialog.cpp:1599
 msgid "Batch Slider Sets"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1478
+#: src/program/AutomationDialog.cpp:1599
 #, c-format
 msgid "Select slider sets to process (%d found):"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1482
+#: src/program/AutomationDialog.cpp:1603
 msgid "No slider sets selected."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1495
+#: src/program/AutomationDialog.cpp:1616
 msgid "No items found matching the batch criteria."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1499
+#: src/program/AutomationDialog.cpp:1620
 #, c-format
 msgid ""
 "Execute %zu active step(s) on %d item(s)?\n"
@@ -4332,33 +4438,33 @@ msgid ""
 "This may take a while."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1501
+#: src/program/AutomationDialog.cpp:1622
 msgid "Batch Confirmation"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1508
+#: src/program/AutomationDialog.cpp:1629
 #, c-format
 msgid "Execute %zu active step(s) on the current project?"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1508
+#: src/program/AutomationDialog.cpp:1629
 msgid "Confirm Execution"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1518
+#: src/program/AutomationDialog.cpp:1639
 msgid "No step selected."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1558
+#: src/program/AutomationDialog.cpp:1679
 msgid "Running automation script..."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1563
+#: src/program/AutomationDialog.cpp:1684
 #, c-format
 msgid "Step %d/%d: %s"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1573
+#: src/program/AutomationDialog.cpp:1694
 #, c-format
 msgid ""
 "Step %d (%s) failed with error %d.\n"
@@ -4368,51 +4474,51 @@ msgid ""
 "Continue with remaining steps?"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1579
+#: src/program/AutomationDialog.cpp:1700
 msgid "Automation Error"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1581
+#: src/program/AutomationDialog.cpp:1702
 msgid "Automation aborted."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1594
+#: src/program/AutomationDialog.cpp:1715
 msgid "Automation complete."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1596
+#: src/program/AutomationDialog.cpp:1717
 #, c-format
 msgid "Automation completed: %d step(s) executed."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3126
+#: src/program/AutomationDialog.cpp:3343
 msgid "Export Folder:"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3438
+#: src/program/AutomationDialog.cpp:3655
 msgid "Preparing..."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3457 src/program/AutomationDialog.cpp:3562
+#: src/program/AutomationDialog.cpp:3674 src/program/AutomationDialog.cpp:3779
 #, c-format
 msgid "Processing %d/%d: %s"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3536 src/program/AutomationDialog.cpp:3703
+#: src/program/AutomationDialog.cpp:3753 src/program/AutomationDialog.cpp:3920
 msgid "Batch complete."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3542
+#: src/program/AutomationDialog.cpp:3759
 #, c-format
 msgid "Batch completed: %d/%d items processed successfully."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3709
+#: src/program/AutomationDialog.cpp:3926
 #, c-format
 msgid "Batch completed: %d/%d slider sets processed successfully."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:201 src/program/OutfitStudio.cpp:632
+#: src/program/BodySlideApp.cpp:201 src/program/OutfitStudio.cpp:635
 msgid ""
 "No read/write permission for game data path!\n"
 "\n"
@@ -4421,41 +4527,41 @@ msgstr ""
 
 #: src/program/BodySlideApp.cpp:202 src/program/BodySlideApp.cpp:212
 #: src/program/BodySlideApp.cpp:2051 src/program/BodySlideApp.cpp:4881
-#: src/program/OutfitStudio.cpp:633 src/program/OutfitStudio.cpp:643
-#: src/program/OutfitStudio.cpp:852 src/program/OutfitStudio.cpp:859
+#: src/program/OutfitStudio.cpp:636 src/program/OutfitStudio.cpp:646
+#: src/program/OutfitStudio.cpp:846 src/program/OutfitStudio.cpp:853
 msgid "Warning"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:211 src/program/OutfitStudio.cpp:642
+#: src/program/BodySlideApp.cpp:211 src/program/OutfitStudio.cpp:645
 msgid ""
 "No read/write permission for project path!\n"
 "\n"
 "Please launch the program with admin elevation and make sure the project path in the settings is correct."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:298 src/program/OutfitStudio.cpp:700
+#: src/program/BodySlideApp.cpp:298 src/program/OutfitStudio.cpp:703
 #, c-format
 msgid "Unexpected exception has occurred: %s, the program will terminate."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:298 src/program/OutfitStudio.cpp:700
+#: src/program/BodySlideApp.cpp:298 src/program/OutfitStudio.cpp:703
 msgid "Unexpected exception"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:321 src/program/OutfitStudio.cpp:720
+#: src/program/BodySlideApp.cpp:321 src/program/OutfitStudio.cpp:723
 #, c-format
 msgid "Unhandled exception has occurred: %s, the program will terminate."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:321 src/program/OutfitStudio.cpp:720
+#: src/program/BodySlideApp.cpp:321 src/program/OutfitStudio.cpp:723
 msgid "Unhandled exception"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:332 src/program/OutfitStudio.cpp:728
+#: src/program/BodySlideApp.cpp:332 src/program/OutfitStudio.cpp:731
 msgid "Fatal exception has occurred, the program will terminate."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:332 src/program/OutfitStudio.cpp:728
+#: src/program/BodySlideApp.cpp:332 src/program/OutfitStudio.cpp:731
 msgid "Fatal exception"
 msgstr ""
 
@@ -4463,16 +4569,16 @@ msgstr ""
 msgid "Failed to launch Outfit Studio executable!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2051 src/program/OutfitStudio.cpp:859
+#: src/program/BodySlideApp.cpp:2051 src/program/OutfitStudio.cpp:853
 msgid "Failed to find game install path registry key or GameDataPath in the config."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2297 src/program/OutfitStudio.cpp:1105
+#: src/program/BodySlideApp.cpp:2297 src/program/OutfitStudio.cpp:1099
 #, c-format
 msgid "System language '%d' is wrong."
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:2306 src/program/OutfitStudio.cpp:1114
+#: src/program/BodySlideApp.cpp:2306 src/program/OutfitStudio.cpp:1108
 #, c-format
 msgid "The system language '%d' is not supported by your system. Try installing support for this language."
 msgstr ""
@@ -4688,7 +4794,7 @@ msgstr ""
 msgid "Delete Preset"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4758 src/program/OutfitStudio.cpp:7879
+#: src/program/BodySlideApp.cpp:4758 src/program/OutfitStudio.cpp:7873
 #, c-format
 msgid "Failed to save preset (%d)!"
 msgstr ""
@@ -4788,11 +4894,11 @@ msgstr ""
 msgid "Conversion finished."
 msgstr ""
 
-#: src/program/EditUV.cpp:519 src/program/OutfitStudio.cpp:12332
+#: src/program/EditUV.cpp:519 src/program/OutfitStudio.cpp:12511
 msgid "Outfit Studio: OpenGL context is not OK."
 msgstr ""
 
-#: src/program/EditUV.cpp:519 src/program/OutfitStudio.cpp:12332
+#: src/program/EditUV.cpp:519 src/program/OutfitStudio.cpp:12511
 #: src/program/PreviewWindow.cpp:96 src/render/GLDialog.cpp:33
 #: src/render/GLSurface.cpp:2235 src/render/GLSurface.cpp:2252
 #: src/render/GLSurface.cpp:2269
@@ -4800,12 +4906,12 @@ msgid "OpenGL Error"
 msgstr ""
 
 #: src/program/FBXImportDialog.cpp:163 src/program/ObjImportDialog.cpp:168
-#: src/program/OutfitStudio.cpp:10219 src/program/OutfitStudio.cpp:13687
+#: src/program/OutfitStudio.cpp:10398 src/program/OutfitStudio.cpp:13866
 msgid "The shape has reached the vertex count limit."
 msgstr ""
 
 #: src/program/FBXImportDialog.cpp:167 src/program/ObjImportDialog.cpp:172
-#: src/program/OutfitStudio.cpp:10224 src/program/OutfitStudio.cpp:13692
+#: src/program/OutfitStudio.cpp:10403 src/program/OutfitStudio.cpp:13871
 msgid "The shape has reached the triangle count limit."
 msgstr ""
 
@@ -4942,7 +5048,7 @@ msgid "Failed to write base .nif file: "
 msgstr ""
 
 #: src/program/OutfitProject.cpp:265 src/program/OutfitProject.cpp:1904
-#: src/program/OutfitProject.cpp:1934 src/program/OutfitStudio.cpp:3978
+#: src/program/OutfitProject.cpp:1934 src/program/OutfitStudio.cpp:3972
 msgid "Finished"
 msgstr ""
 
@@ -4954,11 +5060,11 @@ msgstr ""
 msgid "Initializing proximity data..."
 msgstr ""
 
-#: src/program/OutfitProject.cpp:1872 src/program/OutfitStudio.cpp:10852
+#: src/program/OutfitProject.cpp:1872 src/program/OutfitStudio.cpp:11031
 msgid "Copying bone weights..."
 msgstr ""
 
-#: src/program/OutfitProject.cpp:1910 src/program/OutfitStudio.cpp:11039
+#: src/program/OutfitProject.cpp:1910 src/program/OutfitStudio.cpp:11218
 msgid "Transferring bone weights..."
 msgstr ""
 
@@ -5281,597 +5387,589 @@ msgstr ""
 msgid "Fix nothing"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:401 src/program/OutfitStudio.cpp:402
-#: src/program/OutfitStudio.cpp:15053 src/program/OutfitStudio.cpp:15054
+#: src/program/OutfitStudio.cpp:404 src/program/OutfitStudio.cpp:405
+#: src/program/OutfitStudio.cpp:15232 src/program/OutfitStudio.cpp:15233
 msgid "Adding NIF file..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:406 src/program/OutfitStudio.cpp:417
-#: src/program/OutfitStudio.cpp:429 src/program/OutfitStudio.cpp:4753
-#: src/program/OutfitStudio.cpp:15058 src/program/OutfitStudio.cpp:15069
-#: src/program/OutfitStudio.cpp:15081
+#: src/program/OutfitStudio.cpp:409 src/program/OutfitStudio.cpp:420
+#: src/program/OutfitStudio.cpp:432 src/program/OutfitStudio.cpp:4747
+#: src/program/OutfitStudio.cpp:15237 src/program/OutfitStudio.cpp:15248
+#: src/program/OutfitStudio.cpp:15260
 msgid "Refreshing GUI..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:413 src/program/OutfitStudio.cpp:15065
+#: src/program/OutfitStudio.cpp:416 src/program/OutfitStudio.cpp:15244
 msgid "Adding OBJ file..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:424 src/program/OutfitStudio.cpp:425
-#: src/program/OutfitStudio.cpp:15076 src/program/OutfitStudio.cpp:15077
+#: src/program/OutfitStudio.cpp:427 src/program/OutfitStudio.cpp:428
+#: src/program/OutfitStudio.cpp:15255 src/program/OutfitStudio.cpp:15256
 msgid "Adding FBX file..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:535
+#: src/program/OutfitStudio.cpp:538
 msgid "Open in existing instance?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:540
+#: src/program/OutfitStudio.cpp:543
 msgid "An instance of Outfit Studio is already running. Open file(s) in the existing instance?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:544 src/program/ShapeProperties.cpp:135
-msgid "Yes"
-msgstr ""
-
-#: src/program/OutfitStudio.cpp:545
+#: src/program/OutfitStudio.cpp:548
 msgid "Yes (always)"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:546 src/program/ShapeProperties.cpp:135
-msgid "No"
-msgstr ""
-
-#: src/program/OutfitStudio.cpp:547
+#: src/program/OutfitStudio.cpp:550
 msgid "No (never)"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:852
+#: src/program/OutfitStudio.cpp:846
 msgid "Failed to find game install path registry value or GameDataPath in the config."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1193
+#: src/program/OutfitStudio.cpp:1187
 msgid "Failed to load OutfitStudio.xrc file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1199
+#: src/program/OutfitStudio.cpp:1193
 msgid "Failed to load Outfit Studio frame!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1217 src/program/OutfitStudio.cpp:4247
-#: src/program/OutfitStudio.h:1138
+#: src/program/OutfitStudio.cpp:1211 src/program/OutfitStudio.cpp:4241
+#: src/program/OutfitStudio.h:1139
 msgid "Ready!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1749 src/program/OutfitStudio.cpp:1754
+#: src/program/OutfitStudio.cpp:1743 src/program/OutfitStudio.cpp:1748
 msgid "Packing projects to folder..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1775 src/program/OutfitStudio.cpp:1822
-#: src/program/OutfitStudio.cpp:1925
+#: src/program/OutfitStudio.cpp:1769 src/program/OutfitStudio.cpp:1816
+#: src/program/OutfitStudio.cpp:1919
 #, c-format
 msgid "Failed to open input file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1786
+#: src/program/OutfitStudio.cpp:1780
 #, c-format
 msgid "Failed to copy input file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1833
+#: src/program/OutfitStudio.cpp:1827
 #, c-format
 msgid "Failed to copy data file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1843 src/program/OutfitStudio.cpp:2001
+#: src/program/OutfitStudio.cpp:1837 src/program/OutfitStudio.cpp:1995
 #, c-format
 msgid "Failed to save merged project file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1852 src/program/OutfitStudio.cpp:2010
+#: src/program/OutfitStudio.cpp:1846 src/program/OutfitStudio.cpp:2004
 #, c-format
 msgid "Failed to open project file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1863
+#: src/program/OutfitStudio.cpp:1857
 #, c-format
 msgid "Failed to copy merged project file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1874 src/program/OutfitStudio.cpp:2036
+#: src/program/OutfitStudio.cpp:1868 src/program/OutfitStudio.cpp:2030
 #, c-format
 msgid "Failed to open group file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1886
+#: src/program/OutfitStudio.cpp:1880
 #, c-format
 msgid "Failed to copy group file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1892 src/program/OutfitStudio.cpp:2058
+#: src/program/OutfitStudio.cpp:1886 src/program/OutfitStudio.cpp:2052
 msgid "Packing finished."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1896 src/program/OutfitStudio.cpp:1901
+#: src/program/OutfitStudio.cpp:1890 src/program/OutfitStudio.cpp:1895
 msgid "Packing projects to archive..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1933 src/program/OutfitStudio.cpp:1984
-#: src/program/OutfitStudio.cpp:2018 src/program/OutfitStudio.cpp:2045
+#: src/program/OutfitStudio.cpp:1927 src/program/OutfitStudio.cpp:1978
+#: src/program/OutfitStudio.cpp:2012 src/program/OutfitStudio.cpp:2039
 msgid "Failed to put new entry into archive!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1940 src/program/OutfitStudio.cpp:1991
-#: src/program/OutfitStudio.cpp:2025 src/program/OutfitStudio.cpp:2052
+#: src/program/OutfitStudio.cpp:1934 src/program/OutfitStudio.cpp:1985
+#: src/program/OutfitStudio.cpp:2019 src/program/OutfitStudio.cpp:2046
 msgid "Failed to copy file contents to archive!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:1976
+#: src/program/OutfitStudio.cpp:1970
 #, c-format
 msgid "Failed to open data file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2367 src/program/OutfitStudio.cpp:2419
-#: src/program/OutfitStudio.cpp:4118 src/program/OutfitStudio.cpp:4125
-#: src/program/OutfitStudio.cpp:5173 src/program/OutfitStudio.cpp:5197
-#: src/program/OutfitStudio.cpp:7956 src/program/OutfitStudio.cpp:8084
-#: src/program/OutfitStudio.cpp:8200 src/program/OutfitStudio.cpp:8451
-#: src/program/OutfitStudio.cpp:8469 src/program/OutfitStudio.cpp:8487
-#: src/program/OutfitStudio.cpp:8508
+#: src/program/OutfitStudio.cpp:2361 src/program/OutfitStudio.cpp:2413
+#: src/program/OutfitStudio.cpp:4112 src/program/OutfitStudio.cpp:4119
+#: src/program/OutfitStudio.cpp:5167 src/program/OutfitStudio.cpp:5191
+#: src/program/OutfitStudio.cpp:7950 src/program/OutfitStudio.cpp:8078
+#: src/program/OutfitStudio.cpp:8194 src/program/OutfitStudio.cpp:8445
+#: src/program/OutfitStudio.cpp:8463 src/program/OutfitStudio.cpp:8481
+#: src/program/OutfitStudio.cpp:8502
 msgid "There are no valid shapes loaded!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2375 src/program/OutfitStudio.cpp:2561
+#: src/program/OutfitStudio.cpp:2369 src/program/OutfitStudio.cpp:2555
 #, c-format
 msgid "Saving project '%s'..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2405 src/program/OutfitStudio.cpp:2589
+#: src/program/OutfitStudio.cpp:2399 src/program/OutfitStudio.cpp:2583
 msgid "Saving failed."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2410 src/program/OutfitStudio.cpp:2584
+#: src/program/OutfitStudio.cpp:2404 src/program/OutfitStudio.cpp:2578
 msgid "Saved."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2505
+#: src/program/OutfitStudio.cpp:2499
 msgid "Invalid or no slider set file specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2514
+#: src/program/OutfitStudio.cpp:2508
 msgid "No outfit name specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2522
+#: src/program/OutfitStudio.cpp:2516
 msgid "No data folder specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2536
+#: src/program/OutfitStudio.cpp:2530
 msgid "An invalid or no base outfit .nif file name specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2545
+#: src/program/OutfitStudio.cpp:2539
 msgid "No game file path specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2551
+#: src/program/OutfitStudio.cpp:2545
 msgid "No game file name specified! Please try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2601
+#: src/program/OutfitStudio.cpp:2595
 #, c-format
 msgid "Failed to open '%s' as a slider set file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2601 src/program/OutfitStudio.cpp:2665
+#: src/program/OutfitStudio.cpp:2595 src/program/OutfitStudio.cpp:2659
 msgid "Slider Set Error"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2620
+#: src/program/OutfitStudio.cpp:2614
 msgid "Please choose an outfit to load"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2620
+#: src/program/OutfitStudio.cpp:2614
 msgid "Load a slider set"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2631
+#: src/program/OutfitStudio.cpp:2625
 msgid "Loading project..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2651
+#: src/program/OutfitStudio.cpp:2645
 msgid "Loading outfit data..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2665
+#: src/program/OutfitStudio.cpp:2659
 #, c-format
 msgid "Failed to create project '%s' from file '%s' (%d)!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2679
+#: src/program/OutfitStudio.cpp:2673
 #, c-format
 msgid "Loading reference shape '%s'..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2693
+#: src/program/OutfitStudio.cpp:2687
 msgid "Loading textures..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2698 src/program/OutfitStudio.cpp:3960
-#: src/program/OutfitStudio.cpp:4220
+#: src/program/OutfitStudio.cpp:2692 src/program/OutfitStudio.cpp:3954
+#: src/program/OutfitStudio.cpp:4214
 msgid "Creating outfit..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2702 src/program/OutfitStudio.cpp:3970
-#: src/program/OutfitStudio.cpp:4108
+#: src/program/OutfitStudio.cpp:2696 src/program/OutfitStudio.cpp:3964
+#: src/program/OutfitStudio.cpp:4102
 #, c-format
 msgid "Creating %zu slider(s)..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2731
+#: src/program/OutfitStudio.cpp:2725
 msgid "Creating sliders..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2734
+#: src/program/OutfitStudio.cpp:2728
 msgid "Clearing old sliders..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2745
+#: src/program/OutfitStudio.cpp:2739
 msgid "Loading slider: "
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2823 src/program/OutfitStudio.cpp:8628
+#: src/program/OutfitStudio.cpp:2817 src/program/OutfitStudio.cpp:8622
 msgid "Enter a name for the new slider:"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2823 src/program/OutfitStudio.cpp:8628
+#: src/program/OutfitStudio.cpp:2817 src/program/OutfitStudio.cpp:8622
 msgid "Create New Slider"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2964
+#: src/program/OutfitStudio.cpp:2958
 #, c-format
 msgid "Total Bones: %zu"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:2979
+#: src/program/OutfitStudio.cpp:2973
 #, c-format
 msgid "Shape Selection Bones: %zu"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3543
+#: src/program/OutfitStudio.cpp:3537
 msgid "Edit Color"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3709
+#: src/program/OutfitStudio.cpp:3703
 msgid "You are trying to edit a slider's morph with that slider set to zero.  Do you wish to set the slider to one now?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3726
+#: src/program/OutfitStudio.cpp:3720
 msgid "You can only use the undiff brush while editing a slider. Note, use the pencil button next to a slider to enable editing of that slider's morph."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3737
+#: src/program/OutfitStudio.cpp:3731
 msgid "You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3824
+#: src/program/OutfitStudio.cpp:3818
 #, c-format
 msgid "You have unsaved changes to '%s'. Would you like to save them now?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3825
+#: src/program/OutfitStudio.cpp:3819
 msgid "Unsaved Changes"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3880
+#: src/program/OutfitStudio.cpp:3874
 #, c-format
 msgid "Creating project '%s'..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3897 src/program/OutfitStudio.cpp:4044
+#: src/program/OutfitStudio.cpp:3891 src/program/OutfitStudio.cpp:4038
 msgid "Loading reference..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3937 src/program/OutfitStudio.cpp:4176
-#: src/program/OutfitStudio.cpp:4185
+#: src/program/OutfitStudio.cpp:3931 src/program/OutfitStudio.cpp:4170
+#: src/program/OutfitStudio.cpp:4179
 msgid "Loading outfit..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:3985
+#: src/program/OutfitStudio.cpp:3979
 msgid "Select a slider set to load"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4002
+#: src/program/OutfitStudio.cpp:3996
 msgid "Select a slider set to add"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4019 src/program/OutfitStudio.cpp:4130
-#: src/program/OutfitStudio.cpp:4145 src/program/OutfitStudio.cpp:9906
-#: src/program/OutfitStudio.cpp:9959 src/program/OutfitStudio.cpp:10051
-#: src/program/OutfitStudio.cpp:10173
+#: src/program/OutfitStudio.cpp:4013 src/program/OutfitStudio.cpp:4124
+#: src/program/OutfitStudio.cpp:4139 src/program/OutfitStudio.cpp:10085
+#: src/program/OutfitStudio.cpp:10138 src/program/OutfitStudio.cpp:10230
+#: src/program/OutfitStudio.cpp:10352
 msgid "You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4050
+#: src/program/OutfitStudio.cpp:4044
 msgid "Loading reference set..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4104
+#: src/program/OutfitStudio.cpp:4098
 msgid "Creating reference..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4230
+#: src/program/OutfitStudio.cpp:4224
 msgid "Unload the project? All unsaved changes will be lost"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4230
+#: src/program/OutfitStudio.cpp:4224
 msgid "Unload Project"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4231
+#: src/program/OutfitStudio.cpp:4225
 msgid "Unload"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4674 src/program/OutfitStudio.cpp:15116
+#: src/program/OutfitStudio.cpp:4668 src/program/OutfitStudio.cpp:15295
 msgid "There is no shape selected!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4740
+#: src/program/OutfitStudio.cpp:4734
 msgid "Import NIF file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4747 src/program/OutfitStudio.cpp:4748
+#: src/program/OutfitStudio.cpp:4741 src/program/OutfitStudio.cpp:4742
 msgid "Importing NIF file..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4770
+#: src/program/OutfitStudio.cpp:4764
 msgid "Export outfit NIF"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4788
+#: src/program/OutfitStudio.cpp:4782
 #, c-format
 msgid "Failed to save NIF file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4788 src/program/OutfitStudio.cpp:4820
-#: src/program/OutfitStudio.cpp:4903 src/program/OutfitStudio.cpp:5031
-#: src/program/OutfitStudio.cpp:5257
+#: src/program/OutfitStudio.cpp:4782 src/program/OutfitStudio.cpp:4814
+#: src/program/OutfitStudio.cpp:4897 src/program/OutfitStudio.cpp:5025
+#: src/program/OutfitStudio.cpp:5251
 msgid "Export Error"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4804
+#: src/program/OutfitStudio.cpp:4798
 msgid "Export project NIF"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4820
+#: src/program/OutfitStudio.cpp:4814
 #, c-format
 msgid "Failed to save NIF file '%s' with reference!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4831
+#: src/program/OutfitStudio.cpp:4825
 msgid "Export selected shapes to NIF"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4843
+#: src/program/OutfitStudio.cpp:4837
 msgid "Failed to export selected shapes to NIF file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4848
+#: src/program/OutfitStudio.cpp:4842
 msgid "Import .obj file for new shape"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4886
+#: src/program/OutfitStudio.cpp:4880
 msgid "Some of the shapes have coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?  (This is not recommended.)"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4888 src/program/OutfitStudio.cpp:4921
-#: src/program/OutfitStudio.cpp:5016 src/program/OutfitStudio.cpp:5053
+#: src/program/OutfitStudio.cpp:4882 src/program/OutfitStudio.cpp:4915
+#: src/program/OutfitStudio.cpp:5010 src/program/OutfitStudio.cpp:5047
 msgid "Transform to global"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4895
+#: src/program/OutfitStudio.cpp:4889
 msgid "Export project as an .obj file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4903 src/program/OutfitStudio.cpp:4943
-#: src/program/OutfitStudio.cpp:4962 src/program/OutfitStudio.cpp:8442
+#: src/program/OutfitStudio.cpp:4897 src/program/OutfitStudio.cpp:4937
+#: src/program/OutfitStudio.cpp:4956 src/program/OutfitStudio.cpp:8436
 msgid "Failed to export OBJ file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4919
+#: src/program/OutfitStudio.cpp:4913
 msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the OBJ?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4930
+#: src/program/OutfitStudio.cpp:4924
 msgid "Export selected shapes as an .obj file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4947
+#: src/program/OutfitStudio.cpp:4941
 msgid "Export shape as an .obj file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4969
+#: src/program/OutfitStudio.cpp:4963
 msgid "Import .fbx file for new shape"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4995 src/program/OutfitStudio.cpp:5034
-#: src/program/OutfitStudio.cpp:5098 src/program/OutfitStudio.cpp:8343
+#: src/program/OutfitStudio.cpp:4989 src/program/OutfitStudio.cpp:5028
+#: src/program/OutfitStudio.cpp:5092 src/program/OutfitStudio.cpp:8337
 msgid "FBX is only supported in 64-bit builds of Outfit Studio. Start \"OutfitStudio x64\" instead."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:4995 src/program/OutfitStudio.cpp:5034
-#: src/program/OutfitStudio.cpp:5098 src/program/OutfitStudio.cpp:5235
-#: src/program/OutfitStudio.cpp:7100 src/program/OutfitStudio.cpp:7872
-#: src/program/OutfitStudio.cpp:8343
+#: src/program/OutfitStudio.cpp:4989 src/program/OutfitStudio.cpp:5028
+#: src/program/OutfitStudio.cpp:5092 src/program/OutfitStudio.cpp:5229
+#: src/program/OutfitStudio.cpp:7094 src/program/OutfitStudio.cpp:7866
+#: src/program/OutfitStudio.cpp:8337
 msgid "Info"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5014
+#: src/program/OutfitStudio.cpp:5008
 msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?  (This is not recommended.)"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5023
+#: src/program/OutfitStudio.cpp:5017
 msgid "Export project as an .fbx file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5031 src/program/OutfitStudio.cpp:5075
-#: src/program/OutfitStudio.cpp:5094
+#: src/program/OutfitStudio.cpp:5025 src/program/OutfitStudio.cpp:5069
+#: src/program/OutfitStudio.cpp:5088
 msgid "Failed to export FBX file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5051
+#: src/program/OutfitStudio.cpp:5045
 msgid "Some of the shapes have skin coordinate systems that are not the same as the global coordinate system.  Should the geometry be transformed to global coordinates in the FBX?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5062
+#: src/program/OutfitStudio.cpp:5056
 msgid "Export selected shapes as an .fbx file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5079
+#: src/program/OutfitStudio.cpp:5073
 msgid "Export shape as an .fbx file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5103 src/program/OutfitStudio.cpp:8088
+#: src/program/OutfitStudio.cpp:5097 src/program/OutfitStudio.cpp:8082
 msgid "Import .tri morphs"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5122 src/program/OutfitStudio.cpp:8097
+#: src/program/OutfitStudio.cpp:5116 src/program/OutfitStudio.cpp:8091
 msgid "Failed to load TRI file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5128 src/program/OutfitStudio.cpp:9185
+#: src/program/OutfitStudio.cpp:5122 src/program/OutfitStudio.cpp:9304
 msgid "Please enter a new unique name for the shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5180 src/program/OutfitStudio.cpp:5204
-#: src/program/OutfitStudio.cpp:8473
+#: src/program/OutfitStudio.cpp:5174 src/program/OutfitStudio.cpp:5198
+#: src/program/OutfitStudio.cpp:8467
 msgid "Export .tri morphs"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5190 src/program/OutfitStudio.cpp:5211
-#: src/program/OutfitStudio.cpp:8480
+#: src/program/OutfitStudio.cpp:5184 src/program/OutfitStudio.cpp:5205
+#: src/program/OutfitStudio.cpp:8474
 msgid "Failed to export TRI file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5216
+#: src/program/OutfitStudio.cpp:5210
 msgid "Import physics data to project"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5223
+#: src/program/OutfitStudio.cpp:5217
 #, c-format
 msgid "Failed to import physics data file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5223
+#: src/program/OutfitStudio.cpp:5217
 msgid "Import Error"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5235
+#: src/program/OutfitStudio.cpp:5229
 msgid "There is no physics data loaded!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5243
+#: src/program/OutfitStudio.cpp:5237
 msgid "Please choose the physics data source you want to export."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5243
+#: src/program/OutfitStudio.cpp:5237
 msgid "Choose physics data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5251
+#: src/program/OutfitStudio.cpp:5245
 msgid "Export physics data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5257
+#: src/program/OutfitStudio.cpp:5251
 #, c-format
 msgid "Failed to save physics data file '%s'!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5264
+#: src/program/OutfitStudio.cpp:5258
 msgid "This function requires at least one slider position to be non-zero."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5276
+#: src/program/OutfitStudio.cpp:5270
 msgid "Create a conversion slider for the current slider settings with the following name: "
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:5276
+#: src/program/OutfitStudio.cpp:5270
 msgid "Create New Conversion Slider"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:6026
+#: src/program/OutfitStudio.cpp:6020
 msgid "Please enter an SSF file path."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:6866
+#: src/program/OutfitStudio.cpp:6860
 #, c-format
 msgid "Field of View: %d"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7075
+#: src/program/OutfitStudio.cpp:7069
 msgid "Your changes were not applied yet. Do you want to apply or reset them?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7076
+#: src/program/OutfitStudio.cpp:7070
 msgid "Pending Changes"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7100
+#: src/program/OutfitStudio.cpp:7094
 msgid "You must have exactly one mesh selected in order to edit partitions or segments."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7821
+#: src/program/OutfitStudio.cpp:7815
 msgid "There are no sliders loaded!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7872
+#: src/program/OutfitStudio.cpp:7866
 msgid "No changes were made to the sliders, so no preset was saved!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7888 src/program/OutfitStudio.cpp:7913
-#: src/program/OutfitStudio.cpp:7934 src/program/OutfitStudio.cpp:8324
+#: src/program/OutfitStudio.cpp:7882 src/program/OutfitStudio.cpp:7907
+#: src/program/OutfitStudio.cpp:7928 src/program/OutfitStudio.cpp:8318
 msgid "There is no slider in edit mode to import data to!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7892
+#: src/program/OutfitStudio.cpp:7886
 msgid "Import .nif file for slider calculation"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7899
+#: src/program/OutfitStudio.cpp:7893
 msgid "No mesh found in the .nif file that matches currently selected shape!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7917
+#: src/program/OutfitStudio.cpp:7911
 msgid "Import .bsd slider data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7938
+#: src/program/OutfitStudio.cpp:7932
 msgid "Import .obj file for slider calculation"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7945 src/program/OutfitStudio.cpp:8335
+#: src/program/OutfitStudio.cpp:7939 src/program/OutfitStudio.cpp:8329
 msgid "Vertex count of .obj file mesh does not match currently selected shape!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7960
+#: src/program/OutfitStudio.cpp:7954
 msgid "Import .osd file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:7969
+#: src/program/OutfitStudio.cpp:7963
 msgid "Failed to import OSD file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8009 src/program/OutfitStudio.cpp:8120
-#: src/program/OutfitStudio.cpp:8252
+#: src/program/OutfitStudio.cpp:8003 src/program/OutfitStudio.cpp:8114
+#: src/program/OutfitStudio.cpp:8246
 msgid "This will delete all loaded sliders. Are you sure?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8009 src/program/OutfitStudio.cpp:8079
+#: src/program/OutfitStudio.cpp:8003 src/program/OutfitStudio.cpp:8073
 msgid "OSD Import"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8079 src/program/OutfitStudio.cpp:8195
-#: src/program/OutfitStudio.cpp:8315
+#: src/program/OutfitStudio.cpp:8073 src/program/OutfitStudio.cpp:8189
+#: src/program/OutfitStudio.cpp:8309
 #, c-format
 msgid ""
 "Added morphs for the following shapes:\n"
@@ -5879,415 +5977,428 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8120 src/program/OutfitStudio.cpp:8195
+#: src/program/OutfitStudio.cpp:8114 src/program/OutfitStudio.cpp:8189
 msgid "TRI Import"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8207
+#: src/program/OutfitStudio.cpp:8201
 msgid "Import Starfield morph.dat file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8216 src/program/OutfitStudio.cpp:8222
+#: src/program/OutfitStudio.cpp:8210 src/program/OutfitStudio.cpp:8216
 msgid "Failed to import Starfield morph file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8252 src/program/OutfitStudio.cpp:8315
+#: src/program/OutfitStudio.cpp:8246 src/program/OutfitStudio.cpp:8309
 msgid "Starfield Morph Import"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8328
+#: src/program/OutfitStudio.cpp:8322
 msgid "Import .fbx file for slider calculation"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8352 src/program/OutfitStudio.cpp:8387
-#: src/program/OutfitStudio.cpp:8419
+#: src/program/OutfitStudio.cpp:8346 src/program/OutfitStudio.cpp:8381
+#: src/program/OutfitStudio.cpp:8413
 msgid "There is no slider in edit mode to export data from!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8357
+#: src/program/OutfitStudio.cpp:8351
 msgid "Export .nif slider data to directory"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8368
+#: src/program/OutfitStudio.cpp:8362
 msgid "Export .nif slider data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8375
+#: src/program/OutfitStudio.cpp:8369
 msgid "Failed to export NIF file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8392
+#: src/program/OutfitStudio.cpp:8386
 msgid "Export .bsd slider data to directory"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8403
+#: src/program/OutfitStudio.cpp:8397
 msgid "Export .bsd slider data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8424 src/program/OutfitStudio.cpp:8512
+#: src/program/OutfitStudio.cpp:8418 src/program/OutfitStudio.cpp:8506
 msgid "Export .obj slider data to directory"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8435
+#: src/program/OutfitStudio.cpp:8429
 msgid "Export .obj slider data"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8455
+#: src/program/OutfitStudio.cpp:8449
 msgid "Export .osd file"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8462
+#: src/program/OutfitStudio.cpp:8456
 msgid "Failed to export OSD file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8494
+#: src/program/OutfitStudio.cpp:8488
 msgid "Export Starfield morph.dat"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8501
+#: src/program/OutfitStudio.cpp:8495
 msgid "Failed to export Starfield morph.dat file!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8539
+#: src/program/OutfitStudio.cpp:8533
 msgid "Are you sure you wish to clear the unmasked slider data for the selected shapes?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8540 src/program/OutfitStudio.cpp:8545
+#: src/program/OutfitStudio.cpp:8534 src/program/OutfitStudio.cpp:8539
 msgid "Confirm data erase"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8543
+#: src/program/OutfitStudio.cpp:8537
 #, c-format
 msgid "Are you sure you wish to clear the unmasked slider data for the shape '%s'?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8597
+#: src/program/OutfitStudio.cpp:8591
 msgid "Enter a name for the new zap:"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8597
+#: src/program/OutfitStudio.cpp:8591
 msgid "Create New Zap"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8644
+#: src/program/OutfitStudio.cpp:8638
 msgid "There is no slider in edit mode to clone!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8660
+#: src/program/OutfitStudio.cpp:8654
 msgid "Enter a name for the cloned slider:"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8680
+#: src/program/OutfitStudio.cpp:8674
 msgid "There is no slider in edit mode to negate!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8696
+#: src/program/OutfitStudio.cpp:8690
 msgid "There is no slider in edit mode to create a mask from!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8706
+#: src/program/OutfitStudio.cpp:8700
 msgid "Are you sure you wish to delete the selected slider(s)?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8707
+#: src/program/OutfitStudio.cpp:8701
 msgid "Confirm slider delete"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8907
+#: src/program/OutfitStudio.cpp:8901
 msgid "There is no slider in edit mode to show properties for!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8920 src/program/OutfitStudio.cpp:8970
+#: src/program/OutfitStudio.cpp:8914 src/program/OutfitStudio.cpp:8919
+#, c-format
+msgid "Strength: %d"
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:8965
+msgid "You must be in slider edit mode to fix clipping for a slider."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:8971 src/program/OutfitStudio.cpp:10036
+msgid "No reference shape set."
+msgstr ""
+
+#: src/program/OutfitStudio.cpp:9039 src/program/OutfitStudio.cpp:9089
 msgid "Conforming: "
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8951
+#: src/program/OutfitStudio.cpp:9070
 msgid "Conforming shapes..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:8981
+#: src/program/OutfitStudio.cpp:9100
 msgid "All shapes conformed."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9930
+#: src/program/OutfitStudio.cpp:10109
 msgid "Are you sure you wish to delete parts of the selected shapes?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9971
+#: src/program/OutfitStudio.cpp:10150
 msgid "Please enter a unique name for the new separated shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:9971
+#: src/program/OutfitStudio.cpp:10150
 msgid "Separate Vertices..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10021
+#: src/program/OutfitStudio.cpp:10200
 msgid "No errors found!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10027
+#: src/program/OutfitStudio.cpp:10206
 msgid "Errors:"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10029
+#: src/program/OutfitStudio.cpp:10208
 msgid "Target must be different from source."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10031
+#: src/program/OutfitStudio.cpp:10210
 msgid "Partitions do not match. Make sure the amount of partitions and their slots match up."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10033
+#: src/program/OutfitStudio.cpp:10212
 msgid "Segments do not match. Make sure the amount of segments, sub segments and their info as well as the segmentation file match."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10035
+#: src/program/OutfitStudio.cpp:10214
 msgid "Resulting shape would have too many vertices."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10037
+#: src/program/OutfitStudio.cpp:10216
 msgid "Resulting shape would have too many triangles."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10039
+#: src/program/OutfitStudio.cpp:10218
 msgid "Shaders do not match. Make sure both shapes either have or don't have a shader and their shader type matches."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10041
+#: src/program/OutfitStudio.cpp:10220
 msgid "Base texture doesn't match. Make sure both shapes have the same base/diffuse texture path."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10043
+#: src/program/OutfitStudio.cpp:10222
 msgid "Alpha property mismatch. Make sure both shapes either have or don't have an alpha property and their flags + threshold match."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10130
+#: src/program/OutfitStudio.cpp:10309
 msgid "You can only copy shapes into an outfit, and there is no outfit in the current project. Load one first!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10138
+#: src/program/OutfitStudio.cpp:10317
 msgid "Please enter a unique name for the duplicated shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10178
+#: src/program/OutfitStudio.cpp:10357
 msgid "There is more than one shape selected."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10233
+#: src/program/OutfitStudio.cpp:10412
 msgid "An edge has multiple triangles of the same orientation.  Correct the orientations before splitting."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10250
+#: src/program/OutfitStudio.cpp:10429
 msgid "Can't delete shape while in slider edit mode.  Use CTRL+Delete to delete sliders instead."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10258
+#: src/program/OutfitStudio.cpp:10437
 msgid "Are you sure you wish to delete the selected shapes?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10289
+#: src/program/OutfitStudio.cpp:10468
 msgid "Delete selected bones?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10299
+#: src/program/OutfitStudio.cpp:10478
 msgid "Delete bones from selected shape(s)?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10307
+#: src/program/OutfitStudio.cpp:10486
 msgid "Delete partition?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10314
+#: src/program/OutfitStudio.cpp:10493
 msgid "Delete segment?  This action cannot be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10459
+#: src/program/OutfitStudio.cpp:10638
 msgid "No bone name was entered!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10467 src/program/OutfitStudio.cpp:10508
+#: src/program/OutfitStudio.cpp:10646 src/program/OutfitStudio.cpp:10687
 #, c-format
 msgid "Bone '%s' already exists in the project!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10566
+#: src/program/OutfitStudio.cpp:10745
 msgid "View Standard Bone"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10577
+#: src/program/OutfitStudio.cpp:10756
 msgid "Edit Custom Bone"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10660
+#: src/program/OutfitStudio.cpp:10839
 msgid "The following shapes have unweighted vertices, which can cause issues. The affected vertices have been put under a mask. Do you want to save anyway?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10663
+#: src/program/OutfitStudio.cpp:10842
 msgid "Unweighted Vertices"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10833 src/program/OutfitStudio.cpp:10922
-#: src/program/OutfitStudio.cpp:11014 src/program/OutfitStudio.cpp:11148
+#: src/program/OutfitStudio.cpp:11012 src/program/OutfitStudio.cpp:11101
+#: src/program/OutfitStudio.cpp:11193 src/program/OutfitStudio.cpp:11327
 msgid "There is no reference shape!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10842 src/program/OutfitStudio.cpp:10990
+#: src/program/OutfitStudio.cpp:11021 src/program/OutfitStudio.cpp:11169
 msgid "Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10842 src/program/OutfitStudio.cpp:10990
+#: src/program/OutfitStudio.cpp:11021 src/program/OutfitStudio.cpp:11169
 msgid "Can't copy weights"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:10960
+#: src/program/OutfitStudio.cpp:11139
 msgid "Copying selected bone weights..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11019
+#: src/program/OutfitStudio.cpp:11198
 msgid "Sorry, you can't copy weights from the reference shape to itself."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11026
+#: src/program/OutfitStudio.cpp:11205
 msgid "The vertex count of the reference and chosen shape is not the same!"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11157
+#: src/program/OutfitStudio.cpp:11336
 msgid "Sorry, you can't copy partitions/segments from the reference shape to itself. Skipping this shape."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11157
+#: src/program/OutfitStudio.cpp:11336
 msgid "Can't copy segments/partitions"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11162
+#: src/program/OutfitStudio.cpp:11341
 msgid "Triangles will be assigned to the partition/segment of the nearest triangle in the reference.  Existing partitions/segments are cleared.  This action can't be undone."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11162
+#: src/program/OutfitStudio.cpp:11341
 msgid "Copy Partitions/Segments"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11171
+#: src/program/OutfitStudio.cpp:11350
 msgid "Copying segments/partitions..."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11182
+#: src/program/OutfitStudio.cpp:11361
 #, c-format
 msgid "The partitions/segments could not be copied for '%s' because %d triangles could not be matched."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11233
+#: src/program/OutfitStudio.cpp:11412
 msgid " sliders"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11235
+#: src/program/OutfitStudio.cpp:11414
 msgid " bones"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11371
+#: src/program/OutfitStudio.cpp:11550
 msgid "Symmetrize Vertices"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11373
+#: src/program/OutfitStudio.cpp:11552
 msgid "Eliminates the selected asymmetries from unmasked vertices by adjusting vertex data to be consistent with mirror vertices."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11375
+#: src/program/OutfitStudio.cpp:11554
 msgid "  (Hint: To choose which non-selected bones are adjusted during weight normalization, unlock them in the bones list in the Bones tab.)"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11379
+#: src/program/OutfitStudio.cpp:11558
 msgid "Vertices that will be symmetrized:"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11380
+#: src/program/OutfitStudio.cpp:11559
 msgid "&Symmetrize"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11533
+#: src/program/OutfitStudio.cpp:11712
 #, c-format
 msgid "%d unreferenced nodes were deleted."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11838
+#: src/program/OutfitStudio.cpp:12017
 msgid "No masks to export."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11838 src/program/OutfitStudio.cpp:11842
-#: src/program/OutfitStudio.cpp:11872
+#: src/program/OutfitStudio.cpp:12017 src/program/OutfitStudio.cpp:12021
+#: src/program/OutfitStudio.cpp:12051
 msgid "Export Masks"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11872
+#: src/program/OutfitStudio.cpp:12051
 msgid "Failed to save mask file."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11876 src/program/OutfitStudio.cpp:11887
+#: src/program/OutfitStudio.cpp:12055 src/program/OutfitStudio.cpp:12066
 msgid "Import Masks"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11887
+#: src/program/OutfitStudio.cpp:12066
 msgid "Failed to load mask file."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:11894
+#: src/program/OutfitStudio.cpp:12073
 msgid "Imported Mask"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12082
+#: src/program/OutfitStudio.cpp:12261
 msgid "Reset all bone poses?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12082
+#: src/program/OutfitStudio.cpp:12261
 msgid "Reset Pose"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12238
+#: src/program/OutfitStudio.cpp:12417
 msgid "Please enter a new unique name for the pose."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12238
+#: src/program/OutfitStudio.cpp:12417
 msgid "New Pose"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12289
+#: src/program/OutfitStudio.cpp:12468
 #, c-format
 msgid "Are you sure you wish to delete the pose '%s'?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:12290
+#: src/program/OutfitStudio.cpp:12469
 msgid "Confirm pose delete"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:13328
+#: src/program/OutfitStudio.cpp:13507
 msgid "The vertex picked has more than three connections."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:13563
+#: src/program/OutfitStudio.cpp:13742
 msgid "Neither the selected nor target vertices are on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:13564
+#: src/program/OutfitStudio.cpp:13743
 msgid "The selected vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:13565
+#: src/program/OutfitStudio.cpp:13744
 msgid "The target vertex is not on the mesh boundary.  It is recommended that you only weld or merge boundary vertices.  Continue?"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:13566
+#: src/program/OutfitStudio.cpp:13745
 msgid "Weld/Merge Non-Boundary Vertices"
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:13648
+#: src/program/OutfitStudio.cpp:13827
 msgid "The edge picked is on the surface boundary.  Pick an interior edge."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:13705
+#: src/program/OutfitStudio.cpp:13884
 msgid "The edge picked has multiple triangles of the same orientation.  Correct the orientations before splitting."
 msgstr ""
 
-#: src/program/OutfitStudio.cpp:15127 src/program/OutfitStudio.cpp:15128
+#: src/program/OutfitStudio.cpp:15306 src/program/OutfitStudio.cpp:15307
 msgid "Loading slider file..."
 msgstr ""
 
