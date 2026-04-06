@@ -54,6 +54,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };
 
+struct ShapePreviewData {
+	std::string name;
+	std::vector<nifly::Vector3> verts;
+	std::vector<nifly::Vector2> uvs;
+	std::vector<uint16_t> zapIdx;
+	int projectIdx = 0;
+};
+
 class BodySlideFrame;
 
 class BodySlideApp : public wxApp {
@@ -73,6 +81,12 @@ public:
 	/* Clipping Fix */
 	float clippingFixStrength = 0.0f; // 0-100 scale, 0 disables clipping fix
 private:
+
+	/* Reference shape loaded from external project for clipping fix */
+	std::unique_ptr<nifly::NifFile> referenceNif;
+	SliderSet referenceSliderSet;
+	DiffDataSets referenceDiffData;
+	std::string referenceShapeName;
 
 	/* Localization */
 	wxLocale* locale = nullptr;
@@ -226,8 +240,13 @@ public:
 						const std::vector<nifly::Vector3>& bodyVerts,
 						const std::vector<nifly::Triangle>& bodyTris,
 						std::unordered_map<std::string, std::vector<nifly::Vector3>*>& shapeVerts);
+	bool LoadExternalReference(const SliderSet& sliderSet);
+	void UpdateReferenceCheckboxState();
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
+	std::vector<ShapePreviewData> ComputeMorphedShapeData(int weight);
+	void PostProcessPreview(std::vector<ShapePreviewData>& shapeData, int weight);
+	void UpdateExternalReferenceMesh(int weight, std::vector<nifly::Vector3>* outVerts = nullptr);
 	void UpdateMeshesFromSet(SliderSet& set);
 	void ApplyReferenceNormals(nifly::NifFile& nif);
 

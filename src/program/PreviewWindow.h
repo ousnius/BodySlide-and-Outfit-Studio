@@ -28,6 +28,7 @@ class PreviewWindow : public wxFrame {
 	std::unique_ptr<wxGLContext> context;
 	wxButton* optButton = nullptr;
 	wxButton* lockShapeButton = nullptr;
+	wxCheckBox* showReferenceCheckbox = nullptr;
 	wxStaticText* projectLabel = nullptr;
 	wxChoice* projectChoice = nullptr;
 	wxStaticText* presetLabel = nullptr;
@@ -65,6 +66,7 @@ public:
 
 	void ShowNormalGenWindow(wxCommandEvent& event);
 	void OnLockShape(wxCommandEvent& event);
+	void OnShowReference(wxCommandEvent& event);
 
 	void Cleanup();
 
@@ -83,6 +85,28 @@ public:
 	void ShowLockShapeButton(bool show = true) {
 		if (lockShapeButton)
 			lockShapeButton->Show(show);
+	}
+
+	void ShowReferenceCheckbox(bool show = true) {
+		if (showReferenceCheckbox) {
+			showReferenceCheckbox->Show(show);
+			Layout();
+		}
+	}
+
+	void SetReferenceCheckboxState(bool checked, bool enabled) {
+		if (showReferenceCheckbox) {
+			showReferenceCheckbox->SetValue(checked);
+			showReferenceCheckbox->Enable(enabled);
+		}
+	}
+
+	bool IsShowReferenceChecked() const {
+		return showReferenceCheckbox && showReferenceCheckbox->IsShown() && showReferenceCheckbox->GetValue();
+	}
+
+	void SetMeshVisibility(const std::string& shapeName, bool visible) {
+		gls.SetMeshVisibility(shapeName, visible);
 	}
 
 	void SetBaseDataPath(const std::string& path) { baseDataPath = path; }

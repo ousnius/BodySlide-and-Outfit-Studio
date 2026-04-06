@@ -1617,6 +1617,56 @@ void BodySlideApp::InitPreview() {
 
 	preview->SetNormalsGenerationLayers(pp->sliderSet.GetNormalsGenLayers());
 
+	// Configure reference checkbox for single-project mode.
+	// Only show the checkbox when the NIF does not already contain a built-in reference
+	// shape (skin-shaded body) and we need to load one externally from the referenced project.
+	if (!multiProjectMode && pp->sliderSet.HasReferenceInfo()) {
+		bool hasBuiltInRef = false;
+
+		// Check if the NIF already has the shape named in the reference info
+		std::string refInfoShape = pp->sliderSet.GetReferenceShapeName();
+		if (!refInfoShape.empty() && pp->baseNif->FindBlockByName<NiShape>(refInfoShape))
+			hasBuiltInRef = true;
+
+		// Also check for any skin-shaded reference shape (e.g. copied reference)
+		if (!hasBuiltInRef && ClippingFixer::FindReferenceShape(*pp->baseNif))
+			hasBuiltInRef = true;
+
+		if (hasBuiltInRef) {
+			// NIF already includes the reference — no external load or checkbox needed
+			preview->ShowReferenceCheckbox(false);
+			referenceNif.reset();
+		}
+		else {
+			// No built-in reference; load externally and offer the checkbox
+			if (!referenceNif)
+				LoadExternalReference(pp->sliderSet);
+
+			if (referenceNif) {
+				bool hasClippingFix = clippingFixStrength > 0.0f;
+				preview->ShowReferenceCheckbox(true);
+
+				if (hasClippingFix) {
+					preview->SetReferenceCheckboxState(true, false);
+				}
+				else {
+					preview->SetReferenceCheckboxState(false, true);
+				}
+
+				preview->AddMeshFromNif(referenceNif.get(), const_cast<char*>(referenceShapeName.c_str()));
+				preview->AddNifShapeTextures(referenceNif.get(), referenceShapeName);
+				preview->SetMeshVisibility(referenceShapeName, preview->IsShowReferenceChecked());
+			}
+			else {
+				preview->ShowReferenceCheckbox(false);
+			}
+		}
+	}
+	else {
+		preview->ShowReferenceCheckbox(false);
+		referenceNif.reset();
+	}
+
 	UpdatePreview();
 }
 
@@ -1644,6 +1694,76 @@ void BodySlideApp::ApplyClippingFix(NifFile& nif,
 	}
 }
 
+bool BodySlideApp::LoadExternalReference(const SliderSet& sliderSet) {
+	if (!sliderSet.HasReferenceInfo())
+		return false;
+
+	std::string projectFile = sliderSet.GetReferenceProjectFile();
+	std::string projectName = sliderSet.GetReferenceProjectName();
+	referenceShapeName = sliderSet.GetReferenceShapeName();
+
+	// Resolve project file path relative to project directory
+	wxFileName refProjectFileName(wxString::FromUTF8(projectFile));
+	if (refProjectFileName.IsRelative())
+		refProjectFileName.MakeAbsolute(wxString::FromUTF8(GetProjectPath()));
+
+	std::string projectFilePath = refProjectFileName.GetFullPath().ToUTF8().data();
+
+	// Load the slider set from the referenced project file
+	SliderSetFile refSSF(projectFilePath);
+	if (refSSF.fail()) {
+		wxLogWarning("Could not load reference project file: %s", projectFilePath);
+		return false;
+	}
+
+	referenceSliderSet.Clear();
+	if (refSSF.GetSet(projectName, referenceSliderSet)) {
+		wxLogWarning("Could not find reference project '%s' in file: %s", projectName, projectFilePath);
+		return false;
+	}
+
+	referenceSliderSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
+
+	// Load diff data for the reference shape
+	referenceDiffData.Clear();
+	referenceSliderSet.LoadSetDiffData(referenceDiffData, referenceShapeName);
+
+	// Load the NIF file from the referenced project
+	std::string refInputFile = referenceSliderSet.GetInputFileName();
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, refInputFile, std::ios::in | std::ios::binary);
+
+	referenceNif = std::make_unique<NifFile>();
+	if (referenceNif->Load(file)) {
+		wxLogWarning("Could not load reference NIF file: %s", refInputFile);
+		referenceNif.reset();
+		return false;
+	}
+
+	// Verify the shape exists
+	auto refShape = referenceNif->FindBlockByName<NiShape>(referenceShapeName);
+	if (!refShape) {
+		wxLogWarning("Reference shape '%s' not found in NIF: %s", referenceShapeName, refInputFile);
+		referenceNif.reset();
+		return false;
+	}
+
+	return true;
+}
+
+void BodySlideApp::UpdateReferenceCheckboxState() {
+	if (!preview || !referenceNif || multiProjectMode)
+		return;
+
+	bool hasClippingFix = clippingFixStrength > 0.0f;
+	if (hasClippingFix) {
+		preview->SetReferenceCheckboxState(true, false);
+	}
+	else {
+		preview->SetReferenceCheckboxState(false, true);
+	}
+}
+
 void BodySlideApp::UpdatePreview() {
 	if (!preview)
 		return;
@@ -1652,19 +1772,15 @@ void BodySlideApp::UpdatePreview() {
 		return;
 
 	int weight = preview->GetWeight();
+	auto shapeData = ComputeMorphedShapeData(weight);
+	PostProcessPreview(shapeData, weight);
+}
+
+std::vector<ShapePreviewData> BodySlideApp::ComputeMorphedShapeData(int weight) {
+	std::vector<ShapePreviewData> shapeData;
 	std::vector<Vector3> verts, vertsLow, vertsHigh;
 	std::vector<Vector2> uvs, uvsLow, uvsHigh;
 	std::vector<uint16_t> zapIdx;
-
-	// Phase 1: Apply sliders and blend weights for all shapes
-	struct ShapePreviewData {
-		std::string name;
-		std::vector<Vector3> verts;
-		std::vector<Vector2> uvs;
-		std::vector<uint16_t> zapIdx;
-		int projectIdx;
-	};
-	std::vector<ShapePreviewData> shapeData;
 
 	for (int pi = 0; pi < static_cast<int>(projects.size()); pi++) {
 		auto& pp = projects[pi];
@@ -1706,41 +1822,70 @@ void BodySlideApp::UpdatePreview() {
 		}
 	}
 
-	// Phase 2: Apply clipping fix when strength is above zero
+	return shapeData;
+}
+
+void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, int weight) {
+	// Apply clipping fix and handle external reference
+	bool useExternalReference = !multiProjectMode && referenceNif && preview &&
+							  (clippingFixStrength > 0.0f || preview->IsShowReferenceChecked());
+
+	std::vector<Vector3> extRefVerts;
+	if (useExternalReference)
+		UpdateExternalReferenceMesh(weight, &extRefVerts);
+
+	// Hide external reference mesh when not in use
+	if (!useExternalReference && referenceNif && preview) {
+		preview->SetMeshVisibility(referenceShapeName, false);
+	}
+
 	if (clippingFixStrength > 0.0f) {
 		for (int pi = 0; pi < static_cast<int>(projects.size()); pi++) {
 			auto& pp = projects[pi];
 			if (!pp->baseNif)
 				continue;
 
+			// Try built-in reference shape first
 			auto refShape = ClippingFixer::FindReferenceShape(*pp->baseNif);
-			if (!refShape)
-				continue;
+			const std::vector<Vector3>* bodyVerts = nullptr;
+			std::vector<Triangle> bodyTris;
 
-			ShapePreviewData* refData = nullptr;
-			for (auto& sd : shapeData) {
-				if (sd.projectIdx == pi && sd.name == refShape->name.get()) {
-					refData = &sd;
-					break;
+			if (refShape) {
+				// Use built-in reference shape
+				ShapePreviewData* refData = nullptr;
+				for (auto& sd : shapeData) {
+					if (sd.projectIdx == pi && sd.name == refShape->name.get()) {
+						refData = &sd;
+						break;
+					}
+				}
+				if (refData && !refData->verts.empty()) {
+					refShape->GetTriangles(bodyTris);
+					bodyVerts = &refData->verts;
 				}
 			}
-			if (!refData || refData->verts.empty())
+
+			// Fall back to external reference if no built-in reference
+			if (!bodyVerts && useExternalReference && pi == 0 && !extRefVerts.empty()) {
+				auto extRefShape = referenceNif->FindBlockByName<NiShape>(referenceShapeName);
+				if (extRefShape) {
+					extRefShape->GetTriangles(bodyTris);
+					bodyVerts = &extRefVerts;
+					refShape = extRefShape;
+				}
+			}
+
+			if (!bodyVerts || bodyTris.empty())
 				continue;
 
-			std::vector<Triangle> bodyTris;
-			refShape->GetTriangles(bodyTris);
-			if (bodyTris.empty())
-				continue;
-
-			const std::vector<Vector3>& bodyVerts = refData->verts;
-
+			std::string refShapeName = refShape->name.get();
 			std::unordered_map<std::string, std::vector<Vector3>*> shapeVerts;
 			for (auto& sd : shapeData) {
-				if (sd.projectIdx == pi && sd.name != refShape->name.get())
+				if (sd.projectIdx == pi && sd.name != refShapeName)
 					shapeVerts[sd.name] = &sd.verts;
 			}
 
-			ApplyClippingFix(*pp->baseNif, bodyVerts, bodyTris, shapeVerts);
+			ApplyClippingFix(*pp->baseNif, *bodyVerts, bodyTris, shapeVerts);
 		}
 	}
 
@@ -1766,6 +1911,7 @@ void BodySlideApp::CleanupPreview() {
 		return;
 
 	preview->Cleanup();
+	referenceNif.reset();
 
 	if (multiProjectMode) {
 		projects.clear();
@@ -1783,10 +1929,14 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	if (!preview)
 		return;
 
+	if (projects.empty())
+		return;
+
+	int weight = preview->GetWeight();
+	auto shapeData = ComputeMorphedShapeData(weight);
+
 	// Multi-project mode
 	if (multiProjectMode) {
-		int weight = preview->GetWeight();
-
 		for (auto& pp : projects) {
 			if (!pp->baseNif)
 				continue;
@@ -1795,43 +1945,29 @@ void BodySlideApp::RebuildPreviewMeshes() {
 
 			bool keepZappedShapes = pp->sliderSet.KeepZappedShapes();
 
-			std::vector<Vector3> verts, vertsLow, vertsHigh;
-			std::vector<Vector2> uvs, uvsLow, uvsHigh;
-			std::vector<uint16_t> zapIdx;
 			for (auto it = pp->sliderSet.ShapesBegin(); it != pp->sliderSet.ShapesEnd(); ++it) {
-				zapIdx.clear();
-
-				auto shape = pp->baseNif->FindBlockByName<NiShape>(it->first);
-				if (!pp->baseNif->GetVertsForShape(shape, verts))
+				// Find the matching shape data
+				ShapePreviewData* spd = nullptr;
+				for (auto& sd : shapeData) {
+					if (sd.name == it->first) {
+						spd = &sd;
+						break;
+					}
+				}
+				if (!spd)
 					continue;
 
-				pp->baseNif->GetUvsForShape(shape, uvs);
-				vertsHigh = verts;
-				vertsLow = verts;
-				uvsHigh = uvs;
-				uvsLow = uvs;
-
-				ApplySliders(it->second.targetShape, sliderManager.slidersBig, pp->dataSets, vertsHigh, zapIdx, &uvsHigh);
-				if (pp->sliderSet.GenWeights())
-					ApplySliders(it->second.targetShape, sliderManager.slidersSmall, pp->dataSets, vertsLow, zapIdx, &uvsLow);
-
-				// Calculate result of weight
-				for (size_t i = 0; i < verts.size(); i++) {
-					verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
-					uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
-				}
-
 				// Zap deleted verts before preview
-				shape = pp->modNif.FindBlockByName<NiShape>(it->first);
-				if (zapIdx.size() > 0) {
-					pp->modNif.SetVertsForShape(shape, verts);
-					pp->modNif.SetUvsForShape(shape, uvs);
-					if (pp->modNif.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
+				auto shape = pp->modNif.FindBlockByName<NiShape>(it->first);
+				if (spd->zapIdx.size() > 0) {
+					pp->modNif.SetVertsForShape(shape, spd->verts);
+					pp->modNif.SetUvsForShape(shape, spd->uvs);
+					if (pp->modNif.DeleteVertsForShape(shape, spd->zapIdx) && !keepZappedShapes)
 						pp->modNif.DeleteShape(shape);
 				}
 				else {
-					pp->modNif.SetVertsForShape(shape, verts);
-					pp->modNif.SetUvsForShape(shape, uvs);
+					pp->modNif.SetVertsForShape(shape, spd->verts);
+					pp->modNif.SetUvsForShape(shape, spd->uvs);
 				}
 			}
 		}
@@ -1853,62 +1989,112 @@ void BodySlideApp::RebuildPreviewMeshes() {
 				}
 			}
 		}
+
+		PostProcessPreview(shapeData, weight);
 		return;
 	}
 
 	// Single-project mode
-	if (projects.empty() || !projects[0]->baseNif)
+	auto* pp = projects[0].get();
+	if (!pp->baseNif)
 		return;
 
-	auto* pp = projects[0].get();
-
-	int weight = preview->GetWeight();
 	pp->modNif.CopyFrom(*pp->baseNif);
 
 	bool keepZappedShapes = pp->sliderSet.KeepZappedShapes();
 
-	std::vector<Vector3> verts, vertsLow, vertsHigh;
-	std::vector<Vector2> uvs, uvsLow, uvsHigh;
-	std::vector<uint16_t> zapIdx;
-	for (auto it = pp->sliderSet.ShapesBegin(); it != pp->sliderSet.ShapesEnd(); ++it) {
-		zapIdx.clear();
-
-		auto shape = pp->baseNif->FindBlockByName<NiShape>(it->first);
-		if (!pp->baseNif->GetVertsForShape(shape, verts))
+	for (auto& sd : shapeData) {
+		auto shape = pp->modNif.FindBlockByName<NiShape>(sd.name);
+		if (!shape)
 			continue;
 
-		pp->baseNif->GetUvsForShape(shape, uvs);
-		vertsHigh = verts;
-		vertsLow = verts;
-		uvsHigh = uvs;
-		uvsLow = uvs;
-
-		ApplySliders(it->second.targetShape, sliderManager.slidersBig, pp->dataSets, vertsHigh, zapIdx, &uvsHigh);
-		if (pp->sliderSet.GenWeights())
-			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, pp->dataSets, vertsLow, zapIdx, &uvsLow);
-
-		// Calculate result of weight
-		for (size_t i = 0; i < verts.size(); i++) {
-			verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
-			uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
-		}
-
-		// Zap deleted verts before preview
-		shape = pp->modNif.FindBlockByName<NiShape>(it->first);
-		if (zapIdx.size() > 0) {
-			pp->modNif.SetVertsForShape(shape, verts);
-			pp->modNif.SetUvsForShape(shape, uvs);
-			if (pp->modNif.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
+		if (sd.zapIdx.size() > 0) {
+			pp->modNif.SetVertsForShape(shape, sd.verts);
+			pp->modNif.SetUvsForShape(shape, sd.uvs);
+			if (pp->modNif.DeleteVertsForShape(shape, sd.zapIdx) && !keepZappedShapes)
 				pp->modNif.DeleteShape(shape);
 		}
 		else {
-			pp->modNif.SetVertsForShape(shape, verts);
-			pp->modNif.SetUvsForShape(shape, uvs);
+			pp->modNif.SetVertsForShape(shape, sd.verts);
+			pp->modNif.SetUvsForShape(shape, sd.uvs);
 		}
 	}
 
 	preview->RefreshMeshFromNif({&pp->modNif});
 	UpdateMeshesFromSet(pp->sliderSet);
+
+	// Re-add external reference mesh after refresh (which clears all meshes)
+	if (referenceNif && !multiProjectMode) {
+		preview->AddMeshFromNif(referenceNif.get(), const_cast<char*>(referenceShapeName.c_str()));
+		preview->AddNifShapeTextures(referenceNif.get(), referenceShapeName);
+		preview->SetMeshVisibility(referenceShapeName, false);
+	}
+
+	PostProcessPreview(shapeData, weight);
+}
+
+void BodySlideApp::UpdateExternalReferenceMesh(int weight, std::vector<Vector3>* outVerts) {
+	if (!preview || !referenceNif)
+		return;
+
+	std::vector<Vector3> extRefVerts;
+	std::vector<Vector2> extRefUvs;
+	auto refShape = referenceNif->FindBlockByName<NiShape>(referenceShapeName);
+	if (!refShape || !referenceNif->GetVertsForShape(refShape, extRefVerts))
+		return;
+
+	referenceNif->GetUvsForShape(refShape, extRefUvs);
+
+	std::string targetName = referenceSliderSet.ShapeToTarget(referenceShapeName);
+	if (!targetName.empty()) {
+		// Build slider vectors from the reference project's slider set.
+		// We can't use sliderManager.slidersBig/slidersSmall directly because
+		// their linkedDataSets contain data names from the outfit project,
+		// which don't match the data names in referenceDiffData.
+		std::vector<Slider> refSlidersBig;
+		std::vector<Slider> refSlidersSmall;
+		for (size_t si = 0; si < referenceSliderSet.size(); si++) {
+			auto& sd = referenceSliderSet[si];
+			Slider s;
+			s.name = sd.name;
+			s.invert = sd.bInvert;
+			s.zap = sd.bZap;
+			s.clamp = sd.bClamp;
+			s.uv = sd.bUV;
+			for (auto& df : sd.dataFiles)
+				if (df.targetName == targetName)
+					s.linkedDataSets.push_back(df.dataName);
+
+			s.value = sliderManager.GetSlider(sd.name, false);
+			refSlidersBig.push_back(s);
+
+			s.value = sliderManager.GetSlider(sd.name, true);
+			refSlidersSmall.push_back(std::move(s));
+		}
+
+		std::vector<Vector3> refVertsHigh = extRefVerts;
+		std::vector<Vector3> refVertsLow = extRefVerts;
+		std::vector<Vector2> refUvsHigh = extRefUvs;
+		std::vector<Vector2> refUvsLow = extRefUvs;
+		std::vector<uint16_t> extZapIdx;
+
+		ApplySliders(targetName, refSlidersBig, referenceDiffData, refVertsHigh, extZapIdx, &refUvsHigh);
+		if (referenceSliderSet.GenWeights())
+			ApplySliders(targetName, refSlidersSmall, referenceDiffData, refVertsLow, extZapIdx, &refUvsLow);
+
+		auto uvsz = extRefUvs.size();
+		for (size_t i = 0; i < extRefVerts.size(); i++) {
+			extRefVerts[i] = (refVertsHigh[i] / 100.0f * weight) + (refVertsLow[i] / 100.0f * (100.0f - weight));
+			if (uvsz > i)
+				extRefUvs[i] = (refUvsHigh[i] / 100.0f * weight) + (refUvsLow[i] / 100.0f * (100.0f - weight));
+		}
+	}
+
+	preview->UpdateMeshes(referenceShapeName, &extRefVerts, &extRefUvs);
+	preview->SetMeshVisibility(referenceShapeName, true);
+
+	if (outVerts)
+		*outVerts = std::move(extRefVerts);
 }
 
 void BodySlideApp::UpdateMeshesFromSet(SliderSet& set) {
@@ -5341,6 +5527,7 @@ void BodySlideFrame::OnClippingStrengthChanged(wxCommandEvent& WXUNUSED(event)) 
 		return;
 
 	app->clippingFixStrength = static_cast<float>(sliderClippingStrength->GetValue());
+	app->UpdateReferenceCheckboxState();
 	app->UpdatePreview();
 }
 

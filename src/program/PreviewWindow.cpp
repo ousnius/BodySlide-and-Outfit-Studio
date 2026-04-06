@@ -65,13 +65,23 @@ PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideAp
 	lockShapeButton->Bind(wxEVT_BUTTON, &PreviewWindow::OnLockShape, this);
 	lockShapeButton->Hide();
 
+	showReferenceCheckbox = new wxCheckBox(uiPanel, wxID_ANY, _("Show Reference"), wxDefaultPosition, wxDefaultSize);
+	showReferenceCheckbox->SetToolTip(_("Show the reference shape from the source project for clipping preview."));
+	showReferenceCheckbox->Bind(wxEVT_CHECKBOX, &PreviewWindow::OnShowReference, this);
+	showReferenceCheckbox->Hide();
+
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs());
 	context = std::make_unique<wxGLContext>(canvas, nullptr, &GLSurface::GetGLContextAttribs());
 
 	sizerPanel->Add(weightSlider, 1, wxTOP | wxLEFT | wxRIGHT, 10);
-	sizerPanel->Add(lockShapeButton, 0, wxALL | wxALIGN_BOTTOM, 10);
+
+	wxBoxSizer* sizerRight = new wxBoxSizer(wxVERTICAL);
+	sizerRight->Add(showReferenceCheckbox, 0, wxALIGN_CENTER_HORIZONTAL);
+	sizerRight->Add(lockShapeButton, 0, wxTOP | wxALIGN_CENTER_HORIZONTAL, 2);
+	sizerPanel->Add(sizerRight, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+
 	sizerPanel->Add(optButton, 0, wxALL | wxALIGN_BOTTOM, 10);
 	uiPanel->SetSizer(sizerPanel);
 
@@ -526,6 +536,10 @@ void PreviewWindow::OnWeightSlider(wxScrollEvent& event) {
 
 void PreviewWindow::OnLockShape(wxCommandEvent& WXUNUSED(event)) {
 	app->CopyPreviewWeightToSliders();
+}
+
+void PreviewWindow::OnShowReference(wxCommandEvent& WXUNUSED(event)) {
+	app->UpdatePreview();
 }
 
 void PreviewWindow::OnMoveWindow(wxMoveEvent& event) {
