@@ -28,6 +28,7 @@
 						<border>5</border>
 						<object class="wxComboBox" name="cmbAutomation">
 							<tooltip>Select an automation to load, or type a name for a new one</tooltip>
+							<hint>Automation name...</hint>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -168,7 +169,7 @@
 												<object class="sizeritem">
 													<flag>wxALIGN_CENTER_VERTICAL</flag>
 													<object class="wxStaticText">
-														<label>Target Meshes:</label>
+														<label>Target Shapes:</label>
 													</object>
 												</object>
 												<object class="sizeritem">
@@ -180,14 +181,15 @@
 															<flag>wxEXPAND|wxRIGHT</flag>
 															<border>5</border>
 															<object class="wxTextCtrl" name="txtTargetMeshes">
-																<tooltip>Comma-separated list of mesh names. Leave empty to target all meshes.</tooltip>
+																<tooltip>Comma-separated list of shape names. Leave empty to target all shapes.</tooltip>
+																<hint>Comma-separated shape list</hint>
 															</object>
 														</object>
 														<object class="sizeritem">
 															<flag>wxALIGN_CENTER_VERTICAL</flag>
 															<object class="wxCheckBox" name="chkTargetRegex">
 																<label>Regex</label>
-																<tooltip>Use regex matching for target mesh names</tooltip>
+																<tooltip>Use regex matching for target shape names</tooltip>
 															</object>
 														</object>
 													</object>
@@ -205,6 +207,7 @@
 														<style>wxTE_MULTILINE</style>
 														<size>-1,50</size>
 														<tooltip>A note to describe what this step does and how to configure it.</tooltip>
+														<hint>Description of this step...</hint>
 													</object>
 												</object>
 											</object>
@@ -245,6 +248,7 @@
 															<object class="sizeritem">
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtAddBoneName">
+																	<hint>Bone name</hint>
 																</object>
 															</object>
 
@@ -258,6 +262,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtAddBoneParent">
 																	<tooltip>Name of the parent bone (leave empty for no parent)</tooltip>
+																	<hint>Parent bone name</hint>
 																</object>
 															</object>
 
@@ -278,6 +283,7 @@
 																		<object class="wxTextCtrl" name="txtAddBoneTransX">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">X</tooltip>
+																			<hint>X</hint>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
@@ -287,6 +293,7 @@
 																		<object class="wxTextCtrl" name="txtAddBoneTransY">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">Y</tooltip>
+																			<hint>Y</hint>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
@@ -294,6 +301,7 @@
 																		<object class="wxTextCtrl" name="txtAddBoneTransZ">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">Z</tooltip>
+																			<hint>Z</hint>
 																		</object>
 																	</object>
 																</object>
@@ -316,6 +324,7 @@
 																		<object class="wxTextCtrl" name="txtAddBoneRotX">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">X</tooltip>
+																			<hint>X</hint>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
@@ -325,6 +334,7 @@
 																		<object class="wxTextCtrl" name="txtAddBoneRotY">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">Y</tooltip>
+																			<hint>Y</hint>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
@@ -332,6 +342,7 @@
 																		<object class="wxTextCtrl" name="txtAddBoneRotZ">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">Z</tooltip>
+																			<hint>Z</hint>
 																		</object>
 																	</object>
 																</object>
@@ -368,6 +379,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtWeightRadius">
 																	<value translate="0">10.0</value>
+																	<hint>10.0</hint>
 																</object>
 															</object>
 
@@ -381,6 +393,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtWeightMaxResults">
 																	<value translate="0">10</value>
+																	<hint>10</hint>
 																</object>
 															</object>
 
@@ -394,6 +407,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtWeightBoneList">
 																	<tooltip>Comma-separated list of bone names. Leave empty to copy all bones.</tooltip>
+																	<hint>Comma-separated bone list</hint>
 																</object>
 															</object>
 														</object>
@@ -428,6 +442,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtDeleteBoneNames">
 																	<tooltip>Comma-separated list of bone names to delete</tooltip>
+																	<hint>Comma-separated bone list</hint>
 																</object>
 															</object>
 
@@ -477,6 +492,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtEditBoneName">
 																	<tooltip>Name of the custom bone to edit</tooltip>
+																	<hint>Bone name</hint>
 																</object>
 															</object>
 
@@ -490,6 +506,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtEditBoneParent">
 																	<tooltip>Name of the parent bone (leave empty for no parent)</tooltip>
+																	<hint>Parent bone name</hint>
 																</object>
 															</object>
 
@@ -510,6 +527,7 @@
 																		<object class="wxTextCtrl" name="txtEditBoneTransX">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">X</tooltip>
+																			<hint>X</hint>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
@@ -519,6 +537,7 @@
 																		<object class="wxTextCtrl" name="txtEditBoneTransY">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">Y</tooltip>
+																			<hint>Y</hint>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
@@ -526,6 +545,7 @@
 																		<object class="wxTextCtrl" name="txtEditBoneTransZ">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">Z</tooltip>
+																			<hint>Z</hint>
 																		</object>
 																	</object>
 																</object>
@@ -548,6 +568,7 @@
 																		<object class="wxTextCtrl" name="txtEditBoneRotX">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">X</tooltip>
+																			<hint>X</hint>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
@@ -557,6 +578,7 @@
 																		<object class="wxTextCtrl" name="txtEditBoneRotY">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">Y</tooltip>
+																			<hint>Y</hint>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
@@ -564,6 +586,7 @@
 																		<object class="wxTextCtrl" name="txtEditBoneRotZ">
 																			<value translate="0">0.0</value>
 																			<tooltip translate="0">Z</tooltip>
+																			<hint>Z</hint>
 																		</object>
 																	</object>
 																</object>
@@ -672,6 +695,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtExportPrefix">
 																	<tooltip>Prefix to add before the filename. Supports {{PLACEHOLDER}} variables.</tooltip>
+																	<hint>e.g. prefix_</hint>
 																</object>
 															</object>
 
@@ -685,6 +709,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtExportSuffix">
 																	<tooltip>Suffix to add after the filename before the extension. Supports {{PLACEHOLDER}} variables.</tooltip>
+																	<hint>e.g. _suffix</hint>
 																</object>
 															</object>
 														</object>
@@ -728,6 +753,7 @@
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveDisplayName">
 																		<tooltip>Name shown in BodySlide (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint>Display name</hint>
 																	</object>
 																</object>
 
@@ -741,6 +767,7 @@
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveOutputFileName">
 																		<tooltip>Base filename for the output NIF (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint>Output filename</hint>
 																	</object>
 																</object>
 
@@ -754,6 +781,7 @@
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveOutputDataPath">
 																		<tooltip>Game data path for output (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint>meshes\...</hint>
 																	</object>
 																</object>
 
@@ -767,6 +795,7 @@
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveSliderSetFile">
 																		<tooltip>Slider set project file (.osp) (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint>SliderSets\file.osp</hint>
 																	</object>
 																</object>
 
@@ -780,6 +809,7 @@
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveShapeDataFolder">
 																		<tooltip>Folder for slider data files (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint>ShapeData\folder</hint>
 																	</object>
 																</object>
 
@@ -793,6 +823,7 @@
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveShapeDataFile">
 																		<tooltip>Base NIF filename (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint>filename.nif</hint>
 																	</object>
 																</object>
 
@@ -845,6 +876,7 @@
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveReplaceFrom">
 																		<tooltip>Text to find and replace in original project fields (batch only)</tooltip>
+																		<hint>Find text</hint>
 																	</object>
 																</object>
 
@@ -858,6 +890,7 @@
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveReplaceTo">
 																		<tooltip>Replacement text for matching text in original project fields (batch only)</tooltip>
+																		<hint>Replace with</hint>
 																	</object>
 																</object>
 
@@ -871,6 +904,7 @@
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveSuffix">
 																		<tooltip>Suffix to append to Display Name, Shape Data Folder, and Shape Data File name (batch only)</tooltip>
+																		<hint>e.g. _modified</hint>
 																	</object>
 																</object>
 															</object>
@@ -896,6 +930,7 @@
 																<option>1</option>
 																<object class="wxTextCtrl" name="txtSaveCopyRefShapeName">
 																	<tooltip>Only treat these shape names as the reference (comma-separated). Leave empty to use any reference shape.</tooltip>
+																	<hint>Comma-separated shape list</hint>
 																</object>
 															</object>
 														</object>
@@ -1048,6 +1083,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtSliderNames">
 																	<tooltip>Comma-separated list of slider names. Leave empty to import all sliders.</tooltip>
+																	<hint>Comma-separated slider list</hint>
 																</object>
 															</object>
 														</object>
@@ -1323,6 +1359,7 @@ Equivalent to "Slider -> Set Base Shape" in the menu.</label>
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtSetRefShapeName">
 																	<tooltip>Name of the shape to set as reference (highlighted green).</tooltip>
+																	<hint>Shape name</hint>
 																</object>
 															</object>
 														</object>
@@ -1357,6 +1394,7 @@ Equivalent to "Slider -> Set Base Shape" in the menu.</label>
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtPoseName">
 																	<tooltip>Name of the pose from PoseData to apply to meshes</tooltip>
+																	<hint>Pose name</hint>
 																</object>
 															</object>
 														</object>
@@ -1412,6 +1450,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtDupNewName">
 																	<tooltip>Name for the duplicated shape. Supports {{PLACEHOLDER}} variables.</tooltip>
+																	<hint>New shape name</hint>
 																</object>
 															</object>
 														</object>
@@ -1541,6 +1580,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtRenameOldName">
 																	<tooltip>Current name of the shape (supports {{PLACEHOLDER}} variables)</tooltip>
+																	<hint>Current shape name</hint>
 																</object>
 															</object>
 
@@ -1554,6 +1594,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtRenameNewName">
 																	<tooltip>New name for the shape (supports {{PLACEHOLDER}} variables)</tooltip>
+																	<hint>New shape name</hint>
 																</object>
 															</object>
 														</object>
@@ -1608,6 +1649,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtMoveX">
 																	<value translate="0">0.0</value>
 																	<tooltip>Move X</tooltip>
+																	<hint>X</hint>
 																</object>
 															</object>
 															<object class="sizeritem">
@@ -1615,6 +1657,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtMoveY">
 																	<value translate="0">0.0</value>
 																	<tooltip>Move Y</tooltip>
+																	<hint>Y</hint>
 																</object>
 															</object>
 															<object class="sizeritem">
@@ -1622,6 +1665,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtMoveZ">
 																	<value translate="0">0.0</value>
 																	<tooltip>Move Z</tooltip>
+																	<hint>Z</hint>
 																</object>
 															</object>
 
@@ -1636,6 +1680,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtRotateX">
 																	<value translate="0">0.0</value>
 																	<tooltip>Rotate X (degrees)</tooltip>
+																	<hint>X</hint>
 																</object>
 															</object>
 															<object class="sizeritem">
@@ -1643,6 +1688,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtRotateY">
 																	<value translate="0">0.0</value>
 																	<tooltip>Rotate Y (degrees)</tooltip>
+																	<hint>Y</hint>
 																</object>
 															</object>
 															<object class="sizeritem">
@@ -1650,6 +1696,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtRotateZ">
 																	<value translate="0">0.0</value>
 																	<tooltip>Rotate Z (degrees)</tooltip>
+																	<hint>Z</hint>
 																</object>
 															</object>
 
@@ -1664,6 +1711,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtScaleX">
 																	<value translate="0">1.0</value>
 																	<tooltip>Scale X</tooltip>
+																	<hint>X</hint>
 																</object>
 															</object>
 															<object class="sizeritem">
@@ -1671,6 +1719,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtScaleY">
 																	<value translate="0">1.0</value>
 																	<tooltip>Scale Y</tooltip>
+																	<hint>Y</hint>
 																</object>
 															</object>
 															<object class="sizeritem">
@@ -1678,6 +1727,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtScaleZ">
 																	<value translate="0">1.0</value>
 																	<tooltip>Scale Z</tooltip>
+																	<hint>Z</hint>
 																</object>
 															</object>
 
@@ -1692,6 +1742,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtInflateX">
 																	<value translate="0">0.0</value>
 																	<tooltip>Inflate X (along normals)</tooltip>
+																	<hint>X</hint>
 																</object>
 															</object>
 															<object class="sizeritem">
@@ -1699,6 +1750,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtInflateY">
 																	<value translate="0">0.0</value>
 																	<tooltip>Inflate Y (along normals)</tooltip>
+																	<hint>Y</hint>
 																</object>
 															</object>
 															<object class="sizeritem">
@@ -1706,6 +1758,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtInflateZ">
 																	<value translate="0">0.0</value>
 																	<tooltip>Inflate Z (along normals)</tooltip>
+																	<hint>Z</hint>
 																</object>
 															</object>
 														</object>
@@ -1740,6 +1793,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtConformRadius">
 																	<value translate="0">10.0</value>
+																	<hint>10.0</hint>
 																</object>
 															</object>
 
@@ -1753,6 +1807,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtConformMaxResults">
 																	<value translate="0">10</value>
+																	<hint>10</hint>
 																</object>
 															</object>
 
@@ -1824,6 +1879,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtConformSliderNames">
 																	<tooltip>Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.</tooltip>
+																	<hint>Comma-separated slider list</hint>
 																</object>
 															</object>
 														</object>
@@ -1858,6 +1914,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtDeleteSliderName">
 																	<tooltip>Name of the slider to delete. If regex is checked, matches slider names by pattern.</tooltip>
+																	<hint>Slider name or pattern</hint>
 																</object>
 															</object>
 
@@ -1905,6 +1962,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtSetSliderNames">
 																	<tooltip>Comma-separated list of slider names. Leave empty to set all visible sliders.</tooltip>
+																	<hint>Comma-separated slider list</hint>
 																</object>
 															</object>
 
@@ -1919,6 +1977,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtSetSliderValue">
 																	<value translate="0">100</value>
 																	<tooltip>Slider value between 0 and 100 (percentage)</tooltip>
+																	<hint>0-100</hint>
 																</object>
 															</object>
 														</object>
@@ -1953,6 +2012,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtSliderPropNames">
 																	<tooltip>Comma-separated list of slider names. Leave empty to apply to all sliders.</tooltip>
+																	<hint>Comma-separated slider list</hint>
 																</object>
 															</object>
 
@@ -2019,6 +2079,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtSliderPropDefaultLo">
 																	<tooltip>Default small value (0-100). Leave empty for no change.</tooltip>
+																	<hint>0-100</hint>
 																</object>
 															</object>
 
@@ -2032,6 +2093,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<flag>wxEXPAND</flag>
 																<object class="wxTextCtrl" name="txtSliderPropDefaultHi">
 																	<tooltip>Default big value (0-100). Leave empty for no change.</tooltip>
+																	<hint>0-100</hint>
 																</object>
 															</object>
 														</object>
@@ -2159,11 +2221,13 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 									<object class="sizeritem">
 										<flag>wxEXPAND</flag>
 										<object class="wxTextCtrl" name="txtVarKey1">
+											<hint>KEY</hint>
 										</object>
 									</object>
 									<object class="sizeritem">
 										<flag>wxEXPAND</flag>
 										<object class="wxTextCtrl" name="txtVarVal1">
+											<hint>Value</hint>
 										</object>
 									</object>
 								</object>
@@ -2265,6 +2329,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 													<object class="wxTextCtrl" name="txtBatchExtension">
 														<value translate="0">.nif</value>
 														<tooltip>File extension to scan for (e.g. .nif, .obj)</tooltip>
+														<hint>.nif</hint>
 													</object>
 												</object>
 
@@ -2297,6 +2362,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															<border>5</border>
 															<object class="wxTextCtrl" name="txtBatchFileFilter">
 																<tooltip>Filter file/folder names (substring or regex)</tooltip>
+																<hint>Filter pattern...</hint>
 															</object>
 														</object>
 														<object class="sizeritem">
@@ -2347,6 +2413,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															<border>5</border>
 															<object class="wxTextCtrl" name="txtBatchSliderSetFilter">
 																<tooltip>Filter slider set names (substring or regex). Leave empty for all.</tooltip>
+																<hint>Filter pattern...</hint>
 															</object>
 														</object>
 														<object class="sizeritem">

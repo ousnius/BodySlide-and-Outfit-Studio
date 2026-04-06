@@ -174,563 +174,697 @@ _("Automation Script");
 _("Automation:");
 #line 30 "res/xrc/Automation.xrc"
 _("Select an automation to load, or type a name for a new one");
-#line 38 "res/xrc/Automation.xrc"
-_("Save");
+#line 31 "res/xrc/Automation.xrc"
+_("Automation name...");
 #line 39 "res/xrc/Automation.xrc"
+_("Save");
+#line 40 "res/xrc/Automation.xrc"
 _("Save the automation script");
-#line 47 "res/xrc/Automation.xrc"
-_("Delete");
 #line 48 "res/xrc/Automation.xrc"
+_("Delete");
+#line 49 "res/xrc/Automation.xrc"
 _("Delete the current automation script");
-#line 56 "res/xrc/Automation.xrc"
-_("Open Folder");
 #line 57 "res/xrc/Automation.xrc"
+_("Open Folder");
+#line 58 "res/xrc/Automation.xrc"
 _("Open the Automations folder in file explorer");
-#line 98 "res/xrc/Automation.xrc"
+#line 99 "res/xrc/Automation.xrc"
 _("Step Settings");
-#line 113 "res/xrc/Automation.xrc"
+#line 114 "res/xrc/Automation.xrc"
 _("Type:");
-#line 120 "res/xrc/Automation.xrc"
-_("Bones: Add Custom Bone");
 #line 121 "res/xrc/Automation.xrc"
-_("Bones: Copy Bone Weights");
+_("Bones: Add Custom Bone");
 #line 122 "res/xrc/Automation.xrc"
-_("Bones: Delete Bones");
+_("Bones: Copy Bone Weights");
 #line 123 "res/xrc/Automation.xrc"
-_("Bones: Edit Custom Bone");
+_("Bones: Delete Bones");
 #line 124 "res/xrc/Automation.xrc"
-_("Bones: Remove Skinning");
+_("Bones: Edit Custom Bone");
 #line 125 "res/xrc/Automation.xrc"
-_("Export: File");
+_("Bones: Remove Skinning");
 #line 126 "res/xrc/Automation.xrc"
-_("Export: Save Project");
+_("Export: File");
 #line 127 "res/xrc/Automation.xrc"
-_("Import: File");
+_("Export: Save Project");
 #line 128 "res/xrc/Automation.xrc"
-_("Import: Slider Data");
+_("Import: File");
 #line 129 "res/xrc/Automation.xrc"
-_("Project: Add Project");
+_("Import: Slider Data");
 #line 130 "res/xrc/Automation.xrc"
-_("Project: Clear Project");
+_("Project: Add Project");
 #line 131 "res/xrc/Automation.xrc"
-_("Project: Clear Reference");
+_("Project: Clear Project");
 #line 132 "res/xrc/Automation.xrc"
-_("Project: Load Reference");
+_("Project: Clear Reference");
 #line 133 "res/xrc/Automation.xrc"
-_("Project: Set Base Shape");
+_("Project: Load Reference");
 #line 134 "res/xrc/Automation.xrc"
-_("Project: Set Reference Shape");
+_("Project: Set Base Shape");
 #line 135 "res/xrc/Automation.xrc"
-_("Shapes: Apply Pose");
+_("Project: Set Reference Shape");
 #line 136 "res/xrc/Automation.xrc"
-_("Shapes: Delete Shape");
+_("Shapes: Apply Pose");
 #line 137 "res/xrc/Automation.xrc"
-_("Shapes: Duplicate Shape");
+_("Shapes: Delete Shape");
 #line 138 "res/xrc/Automation.xrc"
-_("Shapes: Invert UVs");
+_("Shapes: Duplicate Shape");
 #line 139 "res/xrc/Automation.xrc"
-_("Shapes: Mirror Shape");
+_("Shapes: Invert UVs");
 #line 140 "res/xrc/Automation.xrc"
-_("Shapes: Refine Mesh");
+_("Shapes: Mirror Shape");
 #line 141 "res/xrc/Automation.xrc"
-_("Shapes: Rename Shape");
+_("Shapes: Refine Mesh");
 #line 142 "res/xrc/Automation.xrc"
-_("Shapes: Reset Transforms");
+_("Shapes: Rename Shape");
 #line 143 "res/xrc/Automation.xrc"
-_("Shapes: Transform Shape");
+_("Shapes: Reset Transforms");
 #line 144 "res/xrc/Automation.xrc"
-_("Sliders: Conform Sliders");
+_("Shapes: Transform Shape");
 #line 145 "res/xrc/Automation.xrc"
-_("Sliders: Delete Slider");
+_("Sliders: Conform Sliders");
 #line 146 "res/xrc/Automation.xrc"
-_("Sliders: Set Slider Values");
+_("Sliders: Delete Slider");
 #line 147 "res/xrc/Automation.xrc"
-_("Sliders: Set Slider Properties");
+_("Sliders: Set Slider Values");
 #line 148 "res/xrc/Automation.xrc"
-_("Masks: Load Mask");
+_("Sliders: Set Slider Properties");
 #line 149 "res/xrc/Automation.xrc"
+_("Masks: Load Mask");
+#line 150 "res/xrc/Automation.xrc"
 _("Nodes: Remove Unused Nodes");
-#line 157 "res/xrc/Automation.xrc"
+#line 158 "res/xrc/Automation.xrc"
 _("Active:");
-#line 163 "res/xrc/Automation.xrc"
+#line 164 "res/xrc/Automation.xrc"
 _("Execute this step");
-#line 171 "res/xrc/Automation.xrc"
-_("Target Meshes:");
-#line 183 "res/xrc/Automation.xrc"
-_("Comma-separated list of mesh names. Leave empty to target all meshes.");
-#line 189 "res/xrc/Automation.xrc"
+#line 172 "res/xrc/Automation.xrc"
+_("Target Shapes:");
+#line 184 "res/xrc/Automation.xrc"
+_("Comma-separated list of shape names. Leave empty to target all shapes.");
+#line 185 "res/xrc/Automation.xrc"
+_("Comma-separated shape list");
+#line 191 "res/xrc/Automation.xrc"
 _("Regex");
-#line 190 "res/xrc/Automation.xrc"
-_("Use regex matching for target mesh names");
-#line 199 "res/xrc/Automation.xrc"
+#line 192 "res/xrc/Automation.xrc"
+_("Use regex matching for target shape names");
+#line 201 "res/xrc/Automation.xrc"
 _("Note:");
-#line 207 "res/xrc/Automation.xrc"
+#line 209 "res/xrc/Automation.xrc"
 _("A note to describe what this step does and how to configure it.");
-#line 228 "res/xrc/Automation.xrc"
+#line 210 "res/xrc/Automation.xrc"
+_("Description of this step...");
+#line 231 "res/xrc/Automation.xrc"
 _("Add Custom Bone");
-#line 242 "res/xrc/Automation.xrc"
+#line 245 "res/xrc/Automation.xrc"
 _("Bone Name:");
-#line 254 "res/xrc/Automation.xrc"
+#line 251 "res/xrc/Automation.xrc"
+_("Bone name");
+#line 258 "res/xrc/Automation.xrc"
 _("Parent Bone:");
-#line 260 "res/xrc/Automation.xrc"
+#line 264 "res/xrc/Automation.xrc"
 _("Name of the parent bone (leave empty for no parent)");
-#line 267 "res/xrc/Automation.xrc"
+#line 265 "res/xrc/Automation.xrc"
+_("Parent bone name");
+#line 272 "res/xrc/Automation.xrc"
 _("Translation:");
-#line 305 "res/xrc/Automation.xrc"
+#line 286 "res/xrc/Automation.xrc"
+_("X");
+#line 296 "res/xrc/Automation.xrc"
+_("Y");
+#line 304 "res/xrc/Automation.xrc"
+_("Z");
+#line 313 "res/xrc/Automation.xrc"
 _("Rotation:");
-#line 350 "res/xrc/Automation.xrc"
+#line 327 "res/xrc/Automation.xrc"
+_("X");
+#line 337 "res/xrc/Automation.xrc"
+_("Y");
+#line 345 "res/xrc/Automation.xrc"
+_("Z");
+#line 361 "res/xrc/Automation.xrc"
 _("Copy Bone Weights");
-#line 364 "res/xrc/Automation.xrc"
+#line 375 "res/xrc/Automation.xrc"
 _("Proximity Radius:");
-#line 377 "res/xrc/Automation.xrc"
+#line 382 "res/xrc/Automation.xrc"
+_("10.0");
+#line 389 "res/xrc/Automation.xrc"
 _("Max Results:");
-#line 390 "res/xrc/Automation.xrc"
-_("Bone List:");
 #line 396 "res/xrc/Automation.xrc"
+_("10");
+#line 403 "res/xrc/Automation.xrc"
+_("Bone List:");
+#line 409 "res/xrc/Automation.xrc"
 _("Comma-separated list of bone names. Leave empty to copy all bones.");
 #line 410 "res/xrc/Automation.xrc"
-_("Delete Bones");
+_("Comma-separated bone list");
 #line 424 "res/xrc/Automation.xrc"
+_("Delete Bones");
+#line 438 "res/xrc/Automation.xrc"
 _("Bone Names:");
-#line 430 "res/xrc/Automation.xrc"
+#line 444 "res/xrc/Automation.xrc"
 _("Comma-separated list of bone names to delete");
-#line 437 "res/xrc/Automation.xrc"
-_("Mode:");
-#line 443 "res/xrc/Automation.xrc"
-_("Delete bone entirely from project");
 #line 445 "res/xrc/Automation.xrc"
+_("Comma-separated bone list");
+#line 452 "res/xrc/Automation.xrc"
+_("Mode:");
+#line 458 "res/xrc/Automation.xrc"
+_("Delete bone entirely from project");
+#line 460 "res/xrc/Automation.xrc"
 _("If checked, deletes the bone from all shapes and the NIF. If unchecked, only removes bone weights from target shapes.");
-#line 459 "res/xrc/Automation.xrc"
+#line 474 "res/xrc/Automation.xrc"
 _("Edit Bone");
-#line 473 "res/xrc/Automation.xrc"
+#line 488 "res/xrc/Automation.xrc"
 _("Bone Name:");
-#line 479 "res/xrc/Automation.xrc"
+#line 494 "res/xrc/Automation.xrc"
 _("Name of the custom bone to edit");
-#line 486 "res/xrc/Automation.xrc"
+#line 495 "res/xrc/Automation.xrc"
+_("Bone name");
+#line 502 "res/xrc/Automation.xrc"
 _("Parent Bone:");
-#line 492 "res/xrc/Automation.xrc"
+#line 508 "res/xrc/Automation.xrc"
 _("Name of the parent bone (leave empty for no parent)");
-#line 499 "res/xrc/Automation.xrc"
+#line 509 "res/xrc/Automation.xrc"
+_("Parent bone name");
+#line 516 "res/xrc/Automation.xrc"
 _("Translation:");
-#line 537 "res/xrc/Automation.xrc"
-_("Rotation:");
-#line 582 "res/xrc/Automation.xrc"
-_("Remove Skinning");
-#line 588 "res/xrc/Automation.xrc"
-_("Removes skinning from target shapes (or all shapes if Target Meshes is empty).\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tThis deletes all bone weights and skinning data from the shapes.");
-#line 602 "res/xrc/Automation.xrc"
-_("Export File");
-#line 616 "res/xrc/Automation.xrc"
-_("Export File Path:");
-#line 626 "res/xrc/Automation.xrc"
-_("Select export file path");
-#line 634 "res/xrc/Automation.xrc"
-_("Select export folder");
-#line 644 "res/xrc/Automation.xrc"
-_("Options:");
-#line 653 "res/xrc/Automation.xrc"
-_("Use original file path from batch operation");
-#line 658 "res/xrc/Automation.xrc"
-_("Export with reference shape (.nif only)");
-#line 668 "res/xrc/Automation.xrc"
-_("Filename Prefix:");
-#line 674 "res/xrc/Automation.xrc"
-_("Prefix to add before the filename. Supports {{PLACEHOLDER}} variables.");
-#line 681 "res/xrc/Automation.xrc"
-_("Filename Suffix:");
-#line 687 "res/xrc/Automation.xrc"
-_("Suffix to add after the filename before the extension. Supports {{PLACEHOLDER}} variables.");
-#line 701 "res/xrc/Automation.xrc"
-_("Save Project");
-#line 707 "res/xrc/Automation.xrc"
-_("Use original project from batch");
-#line 724 "res/xrc/Automation.xrc"
-_("Display Name:");
-#line 730 "res/xrc/Automation.xrc"
-_("Name shown in BodySlide (supports {{PLACEHOLDER}} variables)");
-#line 737 "res/xrc/Automation.xrc"
-_("Output File Name:");
-#line 743 "res/xrc/Automation.xrc"
-_("Base filename for the output NIF (supports {{PLACEHOLDER}} variables)");
-#line 750 "res/xrc/Automation.xrc"
-_("Output Data Path:");
-#line 756 "res/xrc/Automation.xrc"
-_("Game data path for output (supports {{PLACEHOLDER}} variables)");
-#line 763 "res/xrc/Automation.xrc"
-_("Slider Set File:");
-#line 769 "res/xrc/Automation.xrc"
-_("Slider set project file (.osp) (supports {{PLACEHOLDER}} variables)");
-#line 776 "res/xrc/Automation.xrc"
-_("Shape Data Folder:");
-#line 782 "res/xrc/Automation.xrc"
-_("Folder for slider data files (supports {{PLACEHOLDER}} variables)");
-#line 789 "res/xrc/Automation.xrc"
-_("Shape Data File:");
-#line 795 "res/xrc/Automation.xrc"
-_("Base NIF filename (supports {{PLACEHOLDER}} variables)");
-#line 802 "res/xrc/Automation.xrc"
-_("Options:");
-#line 811 "res/xrc/Automation.xrc"
-_("Generate low/high weight outputs");
-#line 817 "res/xrc/Automation.xrc"
-_("Copy reference to output");
-#line 841 "res/xrc/Automation.xrc"
-_("Replace (from):");
-#line 847 "res/xrc/Automation.xrc"
-_("Text to find and replace in original project fields (batch only)");
-#line 854 "res/xrc/Automation.xrc"
-_("Replace (to):");
-#line 860 "res/xrc/Automation.xrc"
-_("Replacement text for matching text in original project fields (batch only)");
-#line 867 "res/xrc/Automation.xrc"
-_("Suffix:");
-#line 873 "res/xrc/Automation.xrc"
-_("Suffix to append to Display Name, Shape Data Folder, and Shape Data File name (batch only)");
-#line 889 "res/xrc/Automation.xrc"
-_("Copy reference based on loaded project");
-#line 890 "res/xrc/Automation.xrc"
-_("If the loaded project had a reference shape, include it in the output. Otherwise, exclude it. Overrides the option above. (batch only)");
-#line 898 "res/xrc/Automation.xrc"
-_("Only treat these shape names as the reference (comma-separated). Leave empty to use any reference shape.");
-#line 912 "res/xrc/Automation.xrc"
-_("Import File");
-#line 926 "res/xrc/Automation.xrc"
-_("Mode:");
-#line 932 "res/xrc/Automation.xrc"
-_("Import all files from folder");
-#line 939 "res/xrc/Automation.xrc"
-_("File:");
-#line 945 "res/xrc/Automation.xrc"
-_("Select file to import");
-#line 954 "res/xrc/Automation.xrc"
-_("Folder:");
-#line 960 "res/xrc/Automation.xrc"
-_("Select folder to import from");
-#line 975 "res/xrc/Automation.xrc"
-_("Import Slider Data");
-#line 989 "res/xrc/Automation.xrc"
-_("Mode:");
-#line 995 "res/xrc/Automation.xrc"
-_("Import all files from folder (ShapeName#SliderName.ext)");
-#line 1002 "res/xrc/Automation.xrc"
-_("Slider Data File:");
-#line 1008 "res/xrc/Automation.xrc"
-_("Select slider data file");
-#line 1017 "res/xrc/Automation.xrc"
-_("Folder:");
-#line 1023 "res/xrc/Automation.xrc"
-_("Select folder with slider data files");
-#line 1031 "res/xrc/Automation.xrc"
-_("Options:");
-#line 1037 "res/xrc/Automation.xrc"
-_("Merge into existing sliders");
-#line 1044 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 1050 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names. Leave empty to import all sliders.");
-#line 1064 "res/xrc/Automation.xrc"
-_("Add Project");
-#line 1078 "res/xrc/Automation.xrc"
-_("Source File:");
-#line 1084 "res/xrc/Automation.xrc"
-_("Select project file");
-#line 1093 "res/xrc/Automation.xrc"
-_("Slider Set:");
-#line 1099 "res/xrc/Automation.xrc"
-_("Name of the slider set to add");
-#line 1106 "res/xrc/Automation.xrc"
-_("Options:");
-#line 1115 "res/xrc/Automation.xrc"
-_("Append new sliders");
-#line 1132 "res/xrc/Automation.xrc"
-_("Clear Project");
-#line 1138 "res/xrc/Automation.xrc"
-_("Clears the current project (removes all shapes, sliders, and references).\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
-#line 1152 "res/xrc/Automation.xrc"
-_("Clear Reference");
-#line 1158 "res/xrc/Automation.xrc"
-_("Removes the current reference/base shape from the project. Slider data for the reference is moved to the morpher.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
-#line 1172 "res/xrc/Automation.xrc"
-_("Load Reference");
-#line 1186 "res/xrc/Automation.xrc"
-_("Template:");
-#line 1192 "res/xrc/Automation.xrc"
-_("Select a reference template to auto-fill the fields below");
-#line 1199 "res/xrc/Automation.xrc"
-_("Source File:");
-#line 1205 "res/xrc/Automation.xrc"
-_("Select reference file");
-#line 1214 "res/xrc/Automation.xrc"
-_("Slider Set:");
-#line 1220 "res/xrc/Automation.xrc"
-_("Name of the slider set within the source file");
-#line 1227 "res/xrc/Automation.xrc"
-_("Shape:");
-#line 1233 "res/xrc/Automation.xrc"
-_("Name of the reference shape");
-#line 1240 "res/xrc/Automation.xrc"
-_("Options:");
-#line 1249 "res/xrc/Automation.xrc"
-_("Load all shapes");
-#line 1255 "res/xrc/Automation.xrc"
-_("Merge sliders");
-#line 1261 "res/xrc/Automation.xrc"
-_("Merge zaps");
-#line 1267 "res/xrc/Automation.xrc"
-_("Append new sliders");
-#line 1284 "res/xrc/Automation.xrc"
-_("Set Base Shape");
-#line 1290 "res/xrc/Automation.xrc"
-_("Bakes the current slider values into the base geometry of all shapes and zeros all sliders.\n\nEquivalent to \"Slider -> Set Base Shape\" in the menu.");
-#line 1305 "res/xrc/Automation.xrc"
-_("Set Reference Shape");
-#line 1319 "res/xrc/Automation.xrc"
-_("Shape Name:");
-#line 1325 "res/xrc/Automation.xrc"
-_("Name of the shape to set as reference (highlighted green).");
-#line 1339 "res/xrc/Automation.xrc"
-_("Apply Pose");
-#line 1353 "res/xrc/Automation.xrc"
-_("Pose Name:");
-#line 1359 "res/xrc/Automation.xrc"
-_("Name of the pose from PoseData to apply to meshes");
-#line 1373 "res/xrc/Automation.xrc"
-_("Delete Shape");
-#line 1379 "res/xrc/Automation.xrc"
-_("Deletes the shapes specified in the Target Meshes field above.\n\nIf Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching.");
-#line 1394 "res/xrc/Automation.xrc"
-_("Duplicate Shape");
-#line 1408 "res/xrc/Automation.xrc"
-_("New Name:");
-#line 1414 "res/xrc/Automation.xrc"
-_("Name for the duplicated shape. Supports {{PLACEHOLDER}} variables.");
-#line 1428 "res/xrc/Automation.xrc"
-_("Invert UVs");
-#line 1437 "res/xrc/Automation.xrc"
-_("Invert U");
-#line 1444 "res/xrc/Automation.xrc"
-_("Invert V");
-#line 1458 "res/xrc/Automation.xrc"
-_("Mirror Shape");
-#line 1467 "res/xrc/Automation.xrc"
-_("Mirror X");
-#line 1475 "res/xrc/Automation.xrc"
-_("Mirror Y");
-#line 1482 "res/xrc/Automation.xrc"
-_("Mirror Z");
-#line 1489 "res/xrc/Automation.xrc"
-_("Swap bones left/right (X axis)");
-#line 1503 "res/xrc/Automation.xrc"
-_("Refine Mesh");
-#line 1509 "res/xrc/Automation.xrc"
-_("Subdivides/refines meshes by splitting edges.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tAll unmasked vertices are refined. Use the Target Meshes field above to select which shapes to refine.");
-#line 1523 "res/xrc/Automation.xrc"
-_("Rename Shape");
-#line 1537 "res/xrc/Automation.xrc"
-_("Old Name:");
-#line 1543 "res/xrc/Automation.xrc"
-_("Current name of the shape (supports {{PLACEHOLDER}} variables)");
-#line 1550 "res/xrc/Automation.xrc"
-_("New Name:");
-#line 1556 "res/xrc/Automation.xrc"
-_("New name for the shape (supports {{PLACEHOLDER}} variables)");
-#line 1570 "res/xrc/Automation.xrc"
-_("Reset Transforms");
-#line 1576 "res/xrc/Automation.xrc"
-_("Resets global-to-skin transforms for all skinned meshes. No additional parameters needed.");
-#line 1589 "res/xrc/Automation.xrc"
-_("Transform Shape");
-#line 1603 "res/xrc/Automation.xrc"
-_("Move:");
-#line 1610 "res/xrc/Automation.xrc"
-_("Move X");
-#line 1617 "res/xrc/Automation.xrc"
-_("Move Y");
-#line 1624 "res/xrc/Automation.xrc"
-_("Move Z");
-#line 1631 "res/xrc/Automation.xrc"
-_("Rotate (Ã‚Â°):");
-#line 1638 "res/xrc/Automation.xrc"
-_("Rotate X (degrees)");
-#line 1645 "res/xrc/Automation.xrc"
-_("Rotate Y (degrees)");
-#line 1652 "res/xrc/Automation.xrc"
-_("Rotate Z (degrees)");
-#line 1659 "res/xrc/Automation.xrc"
-_("Scale:");
-#line 1666 "res/xrc/Automation.xrc"
-_("Scale X");
-#line 1673 "res/xrc/Automation.xrc"
-_("Scale Y");
-#line 1680 "res/xrc/Automation.xrc"
-_("Scale Z");
-#line 1687 "res/xrc/Automation.xrc"
-_("Inflate:");
-#line 1694 "res/xrc/Automation.xrc"
-_("Inflate X (along normals)");
-#line 1701 "res/xrc/Automation.xrc"
-_("Inflate Y (along normals)");
-#line 1708 "res/xrc/Automation.xrc"
-_("Inflate Z (along normals)");
-#line 1722 "res/xrc/Automation.xrc"
-_("Conform Sliders");
-#line 1736 "res/xrc/Automation.xrc"
-_("Proximity Radius:");
-#line 1749 "res/xrc/Automation.xrc"
-_("Max Results:");
-#line 1762 "res/xrc/Automation.xrc"
-_("Options:");
-#line 1771 "res/xrc/Automation.xrc"
-_("No squeeze");
-#line 1776 "res/xrc/Automation.xrc"
-_("Solid mode");
-#line 1785 "res/xrc/Automation.xrc"
-_("Axes:");
-#line 1796 "res/xrc/Automation.xrc"
+#line 530 "res/xrc/Automation.xrc"
 _("X");
-#line 1804 "res/xrc/Automation.xrc"
+#line 540 "res/xrc/Automation.xrc"
 _("Y");
-#line 1810 "res/xrc/Automation.xrc"
+#line 548 "res/xrc/Automation.xrc"
 _("Z");
-#line 1820 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 1826 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.");
-#line 1840 "res/xrc/Automation.xrc"
-_("Delete Slider");
-#line 1854 "res/xrc/Automation.xrc"
-_("Slider Name:");
-#line 1860 "res/xrc/Automation.xrc"
-_("Name of the slider to delete. If regex is checked, matches slider names by pattern.");
-#line 1867 "res/xrc/Automation.xrc"
-_("Regex:");
-#line 1873 "res/xrc/Automation.xrc"
-_("Match slider names by regex pattern");
-#line 1887 "res/xrc/Automation.xrc"
-_("Set Slider Values");
-#line 1901 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 1907 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names. Leave empty to set all visible sliders.");
-#line 1914 "res/xrc/Automation.xrc"
-_("Value (0 - 100):");
-#line 1921 "res/xrc/Automation.xrc"
-_("Slider value between 0 and 100 (percentage)");
-#line 1935 "res/xrc/Automation.xrc"
-_("Set Slider Properties");
-#line 1949 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 1955 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names. Leave empty to apply to all sliders.");
-#line 1962 "res/xrc/Automation.xrc"
-_("Zap:");
-#line 1969 "res/xrc/Automation.xrc"
-_("No change");
-#line 1970 "res/xrc/Automation.xrc"
-_("No");
-#line 1971 "res/xrc/Automation.xrc"
-_("Yes");
-#line 1973 "res/xrc/Automation.xrc"
-_("Set the zap flag on matching sliders.");
-#line 1980 "res/xrc/Automation.xrc"
-_("Hidden:");
-#line 1987 "res/xrc/Automation.xrc"
-_("No change");
-#line 1988 "res/xrc/Automation.xrc"
-_("No");
-#line 1989 "res/xrc/Automation.xrc"
-_("Yes");
-#line 1991 "res/xrc/Automation.xrc"
-_("Set the hidden flag on matching sliders.");
-#line 1998 "res/xrc/Automation.xrc"
-_("Default Zapped:");
-#line 2005 "res/xrc/Automation.xrc"
-_("No change");
-#line 2006 "res/xrc/Automation.xrc"
-_("Not zapped");
-#line 2007 "res/xrc/Automation.xrc"
-_("Zapped");
-#line 2009 "res/xrc/Automation.xrc"
-_("Whether matching zap sliders are zapped by default.");
-#line 2015 "res/xrc/Automation.xrc"
-_("Default (Small):");
-#line 2021 "res/xrc/Automation.xrc"
-_("Default small value (0-100). Leave empty for no change.");
-#line 2028 "res/xrc/Automation.xrc"
-_("Default (Big):");
-#line 2034 "res/xrc/Automation.xrc"
-_("Default big value (0-100). Leave empty for no change.");
-#line 2048 "res/xrc/Automation.xrc"
-_("Load Mask");
-#line 2062 "res/xrc/Automation.xrc"
-_("Mask File:");
-#line 2068 "res/xrc/Automation.xrc"
-_("Select a mask XML file");
-#line 2077 "res/xrc/Automation.xrc"
-_("Mask Name:");
-#line 2083 "res/xrc/Automation.xrc"
-_("Select a mask entry from the loaded mask file.");
-#line 2097 "res/xrc/Automation.xrc"
-_("Remove Unused Nodes");
-#line 2103 "res/xrc/Automation.xrc"
-_("Removes all unreferenced nodes from the NIF.");
-#line 2123 "res/xrc/Automation.xrc"
-_("Placeholder Variables");
-#line 2132 "res/xrc/Automation.xrc"
-_("Define {{KEY}} = Value pairs. These are substituted in all text fields before execution.");
-#line 2149 "res/xrc/Automation.xrc"
-_("Key:");
-#line 2155 "res/xrc/Automation.xrc"
-_("Value:");
-#line 2179 "res/xrc/Automation.xrc"
-_("+ Add");
-#line 2187 "res/xrc/Automation.xrc"
-_("- Remove");
-#line 2204 "res/xrc/Automation.xrc"
-_("Batch Operation");
-#line 2214 "res/xrc/Automation.xrc"
-_("Mode");
-#line 2217 "res/xrc/Automation.xrc"
-_("None (run on current project)");
-#line 2218 "res/xrc/Automation.xrc"
-_("Folder scan (repeat on files in folder)");
-#line 2219 "res/xrc/Automation.xrc"
-_("Slider sets (repeat on installed slider sets)");
-#line 2233 "res/xrc/Automation.xrc"
-_("Folder Scan Settings");
-#line 2246 "res/xrc/Automation.xrc"
-_("Folder:");
-#line 2252 "res/xrc/Automation.xrc"
-_("Select folder to scan");
-#line 2260 "res/xrc/Automation.xrc"
-_("Extension:");
-#line 2267 "res/xrc/Automation.xrc"
-_("File extension to scan for (e.g. .nif, .obj)");
-#line 2274 "res/xrc/Automation.xrc"
+#line 557 "res/xrc/Automation.xrc"
+_("Rotation:");
+#line 571 "res/xrc/Automation.xrc"
+_("X");
+#line 581 "res/xrc/Automation.xrc"
+_("Y");
+#line 589 "res/xrc/Automation.xrc"
+_("Z");
+#line 605 "res/xrc/Automation.xrc"
+_("Remove Skinning");
+#line 611 "res/xrc/Automation.xrc"
+_("Removes skinning from target shapes (or all shapes if Target Meshes is empty).\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tThis deletes all bone weights and skinning data from the shapes.");
+#line 625 "res/xrc/Automation.xrc"
+_("Export File");
+#line 639 "res/xrc/Automation.xrc"
+_("Export File Path:");
+#line 649 "res/xrc/Automation.xrc"
+_("Select export file path");
+#line 657 "res/xrc/Automation.xrc"
+_("Select export folder");
+#line 667 "res/xrc/Automation.xrc"
 _("Options:");
-#line 2280 "res/xrc/Automation.xrc"
-_("Include subdirectories");
-#line 2287 "res/xrc/Automation.xrc"
-_("File Filter:");
-#line 2299 "res/xrc/Automation.xrc"
-_("Filter file/folder names (substring or regex)");
-#line 2305 "res/xrc/Automation.xrc"
-_("Regex");
+#line 676 "res/xrc/Automation.xrc"
+_("Use original file path from batch operation");
+#line 681 "res/xrc/Automation.xrc"
+_("Export with reference shape (.nif only)");
+#line 691 "res/xrc/Automation.xrc"
+_("Filename Prefix:");
+#line 697 "res/xrc/Automation.xrc"
+_("Prefix to add before the filename. Supports {{PLACEHOLDER}} variables.");
+#line 698 "res/xrc/Automation.xrc"
+_("e.g. prefix_");
+#line 705 "res/xrc/Automation.xrc"
+_("Filename Suffix:");
+#line 711 "res/xrc/Automation.xrc"
+_("Suffix to add after the filename before the extension. Supports {{PLACEHOLDER}} variables.");
+#line 712 "res/xrc/Automation.xrc"
+_("e.g. &suffix");
+#line 726 "res/xrc/Automation.xrc"
+_("Save Project");
+#line 732 "res/xrc/Automation.xrc"
+_("Use original project from batch");
+#line 749 "res/xrc/Automation.xrc"
+_("Display Name:");
+#line 755 "res/xrc/Automation.xrc"
+_("Name shown in BodySlide (supports {{PLACEHOLDER}} variables)");
+#line 756 "res/xrc/Automation.xrc"
+_("Display name");
+#line 763 "res/xrc/Automation.xrc"
+_("Output File Name:");
+#line 769 "res/xrc/Automation.xrc"
+_("Base filename for the output NIF (supports {{PLACEHOLDER}} variables)");
+#line 770 "res/xrc/Automation.xrc"
+_("Output filename");
+#line 777 "res/xrc/Automation.xrc"
+_("Output Data Path:");
+#line 783 "res/xrc/Automation.xrc"
+_("Game data path for output (supports {{PLACEHOLDER}} variables)");
+#line 784 "res/xrc/Automation.xrc"
+_("meshes\\...");
+#line 791 "res/xrc/Automation.xrc"
+_("Slider Set File:");
+#line 797 "res/xrc/Automation.xrc"
+_("Slider set project file (.osp) (supports {{PLACEHOLDER}} variables)");
+#line 798 "res/xrc/Automation.xrc"
+_("SliderSets\\file.osp");
+#line 805 "res/xrc/Automation.xrc"
+_("Shape Data Folder:");
+#line 811 "res/xrc/Automation.xrc"
+_("Folder for slider data files (supports {{PLACEHOLDER}} variables)");
+#line 812 "res/xrc/Automation.xrc"
+_("ShapeData\\folder");
+#line 819 "res/xrc/Automation.xrc"
+_("Shape Data File:");
+#line 825 "res/xrc/Automation.xrc"
+_("Base NIF filename (supports {{PLACEHOLDER}} variables)");
+#line 826 "res/xrc/Automation.xrc"
+_("filename.nif");
+#line 833 "res/xrc/Automation.xrc"
+_("Options:");
+#line 842 "res/xrc/Automation.xrc"
+_("Generate low/high weight outputs");
+#line 848 "res/xrc/Automation.xrc"
+_("Copy reference to output");
+#line 872 "res/xrc/Automation.xrc"
+_("Replace (from):");
+#line 878 "res/xrc/Automation.xrc"
+_("Text to find and replace in original project fields (batch only)");
+#line 879 "res/xrc/Automation.xrc"
+_("Find text");
+#line 886 "res/xrc/Automation.xrc"
+_("Replace (to):");
+#line 892 "res/xrc/Automation.xrc"
+_("Replacement text for matching text in original project fields (batch only)");
+#line 893 "res/xrc/Automation.xrc"
+_("Replace with");
+#line 900 "res/xrc/Automation.xrc"
+_("Suffix:");
+#line 906 "res/xrc/Automation.xrc"
+_("Suffix to append to Display Name, Shape Data Folder, and Shape Data File name (batch only)");
+#line 907 "res/xrc/Automation.xrc"
+_("e.g. &modified");
+#line 923 "res/xrc/Automation.xrc"
+_("Copy reference based on loaded project");
+#line 924 "res/xrc/Automation.xrc"
+_("If the loaded project had a reference shape, include it in the output. Otherwise, exclude it. Overrides the option above. (batch only)");
+#line 932 "res/xrc/Automation.xrc"
+_("Only treat these shape names as the reference (comma-separated). Leave empty to use any reference shape.");
+#line 933 "res/xrc/Automation.xrc"
+_("Comma-separated shape list");
+#line 947 "res/xrc/Automation.xrc"
+_("Import File");
+#line 961 "res/xrc/Automation.xrc"
+_("Mode:");
+#line 967 "res/xrc/Automation.xrc"
+_("Import all files from folder");
+#line 974 "res/xrc/Automation.xrc"
+_("File:");
+#line 980 "res/xrc/Automation.xrc"
+_("Select file to import");
+#line 989 "res/xrc/Automation.xrc"
+_("Folder:");
+#line 995 "res/xrc/Automation.xrc"
+_("Select folder to import from");
+#line 1010 "res/xrc/Automation.xrc"
+_("Import Slider Data");
+#line 1024 "res/xrc/Automation.xrc"
+_("Mode:");
+#line 1030 "res/xrc/Automation.xrc"
+_("Import all files from folder (ShapeName#SliderName.ext)");
+#line 1037 "res/xrc/Automation.xrc"
+_("Slider Data File:");
+#line 1043 "res/xrc/Automation.xrc"
+_("Select slider data file");
+#line 1052 "res/xrc/Automation.xrc"
+_("Folder:");
+#line 1058 "res/xrc/Automation.xrc"
+_("Select folder with slider data files");
+#line 1066 "res/xrc/Automation.xrc"
+_("Options:");
+#line 1072 "res/xrc/Automation.xrc"
+_("Merge into existing sliders");
+#line 1079 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 1085 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names. Leave empty to import all sliders.");
+#line 1086 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 1100 "res/xrc/Automation.xrc"
+_("Add Project");
+#line 1114 "res/xrc/Automation.xrc"
+_("Source File:");
+#line 1120 "res/xrc/Automation.xrc"
+_("Select project file");
+#line 1129 "res/xrc/Automation.xrc"
+_("Slider Set:");
+#line 1135 "res/xrc/Automation.xrc"
+_("Name of the slider set to add");
+#line 1142 "res/xrc/Automation.xrc"
+_("Options:");
+#line 1151 "res/xrc/Automation.xrc"
+_("Append new sliders");
+#line 1168 "res/xrc/Automation.xrc"
+_("Clear Project");
+#line 1174 "res/xrc/Automation.xrc"
+_("Clears the current project (removes all shapes, sliders, and references).\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
+#line 1188 "res/xrc/Automation.xrc"
+_("Clear Reference");
+#line 1194 "res/xrc/Automation.xrc"
+_("Removes the current reference/base shape from the project. Slider data for the reference is moved to the morpher.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
+#line 1208 "res/xrc/Automation.xrc"
+_("Load Reference");
+#line 1222 "res/xrc/Automation.xrc"
+_("Template:");
+#line 1228 "res/xrc/Automation.xrc"
+_("Select a reference template to auto-fill the fields below");
+#line 1235 "res/xrc/Automation.xrc"
+_("Source File:");
+#line 1241 "res/xrc/Automation.xrc"
+_("Select reference file");
+#line 1250 "res/xrc/Automation.xrc"
+_("Slider Set:");
+#line 1256 "res/xrc/Automation.xrc"
+_("Name of the slider set within the source file");
+#line 1263 "res/xrc/Automation.xrc"
+_("Shape:");
+#line 1269 "res/xrc/Automation.xrc"
+_("Name of the reference shape");
+#line 1276 "res/xrc/Automation.xrc"
+_("Options:");
+#line 1285 "res/xrc/Automation.xrc"
+_("Load all shapes");
+#line 1291 "res/xrc/Automation.xrc"
+_("Merge sliders");
+#line 1297 "res/xrc/Automation.xrc"
+_("Merge zaps");
+#line 1303 "res/xrc/Automation.xrc"
+_("Append new sliders");
+#line 1320 "res/xrc/Automation.xrc"
+_("Set Base Shape");
+#line 1326 "res/xrc/Automation.xrc"
+_("Bakes the current slider values into the base geometry of all shapes and zeros all sliders.\n\nEquivalent to \"Slider -> Set Base Shape\" in the menu.");
+#line 1341 "res/xrc/Automation.xrc"
+_("Set Reference Shape");
+#line 1355 "res/xrc/Automation.xrc"
+_("Shape Name:");
+#line 1361 "res/xrc/Automation.xrc"
+_("Name of the shape to set as reference (highlighted green).");
+#line 1362 "res/xrc/Automation.xrc"
+_("Shape name");
+#line 1376 "res/xrc/Automation.xrc"
+_("Apply Pose");
+#line 1390 "res/xrc/Automation.xrc"
+_("Pose Name:");
+#line 1396 "res/xrc/Automation.xrc"
+_("Name of the pose from PoseData to apply to meshes");
+#line 1397 "res/xrc/Automation.xrc"
+_("Pose name");
+#line 1411 "res/xrc/Automation.xrc"
+_("Delete Shape");
+#line 1417 "res/xrc/Automation.xrc"
+_("Deletes the shapes specified in the Target Meshes field above.\n\nIf Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching.");
+#line 1432 "res/xrc/Automation.xrc"
+_("Duplicate Shape");
+#line 1446 "res/xrc/Automation.xrc"
+_("New Name:");
+#line 1452 "res/xrc/Automation.xrc"
+_("Name for the duplicated shape. Supports {{PLACEHOLDER}} variables.");
+#line 1453 "res/xrc/Automation.xrc"
+_("New shape name");
+#line 1467 "res/xrc/Automation.xrc"
+_("Invert UVs");
+#line 1476 "res/xrc/Automation.xrc"
+_("Invert U");
+#line 1483 "res/xrc/Automation.xrc"
+_("Invert V");
+#line 1497 "res/xrc/Automation.xrc"
+_("Mirror Shape");
+#line 1506 "res/xrc/Automation.xrc"
+_("Mirror X");
+#line 1514 "res/xrc/Automation.xrc"
+_("Mirror Y");
+#line 1521 "res/xrc/Automation.xrc"
+_("Mirror Z");
+#line 1528 "res/xrc/Automation.xrc"
+_("Swap bones left/right (X axis)");
+#line 1542 "res/xrc/Automation.xrc"
+_("Refine Mesh");
+#line 1548 "res/xrc/Automation.xrc"
+_("Subdivides/refines meshes by splitting edges.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tAll unmasked vertices are refined. Use the Target Meshes field above to select which shapes to refine.");
+#line 1562 "res/xrc/Automation.xrc"
+_("Rename Shape");
+#line 1576 "res/xrc/Automation.xrc"
+_("Old Name:");
+#line 1582 "res/xrc/Automation.xrc"
+_("Current name of the shape (supports {{PLACEHOLDER}} variables)");
+#line 1583 "res/xrc/Automation.xrc"
+_("Current shape name");
+#line 1590 "res/xrc/Automation.xrc"
+_("New Name:");
+#line 1596 "res/xrc/Automation.xrc"
+_("New name for the shape (supports {{PLACEHOLDER}} variables)");
+#line 1597 "res/xrc/Automation.xrc"
+_("New shape name");
+#line 1611 "res/xrc/Automation.xrc"
+_("Reset Transforms");
+#line 1617 "res/xrc/Automation.xrc"
+_("Resets global-to-skin transforms for all skinned meshes. No additional parameters needed.");
+#line 1630 "res/xrc/Automation.xrc"
+_("Transform Shape");
+#line 1644 "res/xrc/Automation.xrc"
+_("Move:");
+#line 1651 "res/xrc/Automation.xrc"
+_("Move X");
+#line 1652 "res/xrc/Automation.xrc"
+_("X");
+#line 1659 "res/xrc/Automation.xrc"
+_("Move Y");
+#line 1660 "res/xrc/Automation.xrc"
+_("Y");
+#line 1667 "res/xrc/Automation.xrc"
+_("Move Z");
+#line 1668 "res/xrc/Automation.xrc"
+_("Z");
+#line 1675 "res/xrc/Automation.xrc"
+_("Rotate (Ã‚Â°):");
+#line 1682 "res/xrc/Automation.xrc"
+_("Rotate X (degrees)");
+#line 1683 "res/xrc/Automation.xrc"
+_("X");
+#line 1690 "res/xrc/Automation.xrc"
+_("Rotate Y (degrees)");
+#line 1691 "res/xrc/Automation.xrc"
+_("Y");
+#line 1698 "res/xrc/Automation.xrc"
+_("Rotate Z (degrees)");
+#line 1699 "res/xrc/Automation.xrc"
+_("Z");
+#line 1706 "res/xrc/Automation.xrc"
+_("Scale:");
+#line 1713 "res/xrc/Automation.xrc"
+_("Scale X");
+#line 1714 "res/xrc/Automation.xrc"
+_("X");
+#line 1721 "res/xrc/Automation.xrc"
+_("Scale Y");
+#line 1722 "res/xrc/Automation.xrc"
+_("Y");
+#line 1729 "res/xrc/Automation.xrc"
+_("Scale Z");
+#line 1730 "res/xrc/Automation.xrc"
+_("Z");
+#line 1737 "res/xrc/Automation.xrc"
+_("Inflate:");
+#line 1744 "res/xrc/Automation.xrc"
+_("Inflate X (along normals)");
+#line 1745 "res/xrc/Automation.xrc"
+_("X");
+#line 1752 "res/xrc/Automation.xrc"
+_("Inflate Y (along normals)");
+#line 1753 "res/xrc/Automation.xrc"
+_("Y");
+#line 1760 "res/xrc/Automation.xrc"
+_("Inflate Z (along normals)");
+#line 1761 "res/xrc/Automation.xrc"
+_("Z");
+#line 1775 "res/xrc/Automation.xrc"
+_("Conform Sliders");
+#line 1789 "res/xrc/Automation.xrc"
+_("Proximity Radius:");
+#line 1796 "res/xrc/Automation.xrc"
+_("10.0");
+#line 1803 "res/xrc/Automation.xrc"
+_("Max Results:");
+#line 1810 "res/xrc/Automation.xrc"
+_("10");
+#line 1817 "res/xrc/Automation.xrc"
+_("Options:");
+#line 1826 "res/xrc/Automation.xrc"
+_("No squeeze");
+#line 1831 "res/xrc/Automation.xrc"
+_("Solid mode");
+#line 1840 "res/xrc/Automation.xrc"
+_("Axes:");
+#line 1851 "res/xrc/Automation.xrc"
+_("X");
+#line 1859 "res/xrc/Automation.xrc"
+_("Y");
+#line 1865 "res/xrc/Automation.xrc"
+_("Z");
+#line 1875 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 1881 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.");
+#line 1882 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 1896 "res/xrc/Automation.xrc"
+_("Delete Slider");
+#line 1910 "res/xrc/Automation.xrc"
+_("Slider Name:");
+#line 1916 "res/xrc/Automation.xrc"
+_("Name of the slider to delete. If regex is checked, matches slider names by pattern.");
+#line 1917 "res/xrc/Automation.xrc"
+_("Slider name or pattern");
+#line 1924 "res/xrc/Automation.xrc"
+_("Regex:");
+#line 1930 "res/xrc/Automation.xrc"
+_("Match slider names by regex pattern");
+#line 1944 "res/xrc/Automation.xrc"
+_("Set Slider Values");
+#line 1958 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 1964 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names. Leave empty to set all visible sliders.");
+#line 1965 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 1972 "res/xrc/Automation.xrc"
+_("Value (0 - 100):");
+#line 1979 "res/xrc/Automation.xrc"
+_("Slider value between 0 and 100 (percentage)");
+#line 1980 "res/xrc/Automation.xrc"
+_("0-100");
+#line 1994 "res/xrc/Automation.xrc"
+_("Set Slider Properties");
+#line 2008 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 2014 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names. Leave empty to apply to all sliders.");
+#line 2015 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 2022 "res/xrc/Automation.xrc"
+_("Zap:");
+#line 2029 "res/xrc/Automation.xrc"
+_("No change");
+#line 2030 "res/xrc/Automation.xrc"
+_("No");
+#line 2031 "res/xrc/Automation.xrc"
+_("Yes");
+#line 2033 "res/xrc/Automation.xrc"
+_("Set the zap flag on matching sliders.");
+#line 2040 "res/xrc/Automation.xrc"
+_("Hidden:");
+#line 2047 "res/xrc/Automation.xrc"
+_("No change");
+#line 2048 "res/xrc/Automation.xrc"
+_("No");
+#line 2049 "res/xrc/Automation.xrc"
+_("Yes");
+#line 2051 "res/xrc/Automation.xrc"
+_("Set the hidden flag on matching sliders.");
+#line 2058 "res/xrc/Automation.xrc"
+_("Default Zapped:");
+#line 2065 "res/xrc/Automation.xrc"
+_("No change");
+#line 2066 "res/xrc/Automation.xrc"
+_("Not zapped");
+#line 2067 "res/xrc/Automation.xrc"
+_("Zapped");
+#line 2069 "res/xrc/Automation.xrc"
+_("Whether matching zap sliders are zapped by default.");
+#line 2075 "res/xrc/Automation.xrc"
+_("Default (Small):");
+#line 2081 "res/xrc/Automation.xrc"
+_("Default small value (0-100). Leave empty for no change.");
+#line 2082 "res/xrc/Automation.xrc"
+_("0-100");
+#line 2089 "res/xrc/Automation.xrc"
+_("Default (Big):");
+#line 2095 "res/xrc/Automation.xrc"
+_("Default big value (0-100). Leave empty for no change.");
+#line 2096 "res/xrc/Automation.xrc"
+_("0-100");
+#line 2110 "res/xrc/Automation.xrc"
+_("Load Mask");
+#line 2124 "res/xrc/Automation.xrc"
+_("Mask File:");
+#line 2130 "res/xrc/Automation.xrc"
+_("Select a mask XML file");
+#line 2139 "res/xrc/Automation.xrc"
+_("Mask Name:");
+#line 2145 "res/xrc/Automation.xrc"
+_("Select a mask entry from the loaded mask file.");
+#line 2159 "res/xrc/Automation.xrc"
+_("Remove Unused Nodes");
+#line 2165 "res/xrc/Automation.xrc"
+_("Removes all unreferenced nodes from the NIF.");
+#line 2185 "res/xrc/Automation.xrc"
+_("Placeholder Variables");
+#line 2194 "res/xrc/Automation.xrc"
+_("Define {{KEY}} = Value pairs. These are substituted in all text fields before execution.");
+#line 2211 "res/xrc/Automation.xrc"
+_("Key:");
+#line 2217 "res/xrc/Automation.xrc"
+_("Value:");
+#line 2224 "res/xrc/Automation.xrc"
+_("KEY");
+#line 2230 "res/xrc/Automation.xrc"
+_("Value");
+#line 2243 "res/xrc/Automation.xrc"
+_("+ Add");
+#line 2251 "res/xrc/Automation.xrc"
+_("- Remove");
+#line 2268 "res/xrc/Automation.xrc"
+_("Batch Operation");
+#line 2278 "res/xrc/Automation.xrc"
+_("Mode");
+#line 2281 "res/xrc/Automation.xrc"
+_("None (run on current project)");
+#line 2282 "res/xrc/Automation.xrc"
+_("Folder scan (repeat on files in folder)");
+#line 2283 "res/xrc/Automation.xrc"
+_("Slider sets (repeat on installed slider sets)");
+#line 2297 "res/xrc/Automation.xrc"
+_("Folder Scan Settings");
+#line 2310 "res/xrc/Automation.xrc"
+_("Folder:");
+#line 2316 "res/xrc/Automation.xrc"
+_("Select folder to scan");
 #line 2324 "res/xrc/Automation.xrc"
-_("Slider Set Settings");
-#line 2337 "res/xrc/Automation.xrc"
-_("Filter:");
-#line 2349 "res/xrc/Automation.xrc"
-_("Filter slider set names (substring or regex). Leave empty for all.");
-#line 2355 "res/xrc/Automation.xrc"
+_("Extension:");
+#line 2331 "res/xrc/Automation.xrc"
+_("File extension to scan for (e.g. .nif, .obj)");
+#line 2332 "res/xrc/Automation.xrc"
+_(".nif");
+#line 2339 "res/xrc/Automation.xrc"
+_("Options:");
+#line 2345 "res/xrc/Automation.xrc"
+_("Include subdirectories");
+#line 2352 "res/xrc/Automation.xrc"
+_("File Filter:");
+#line 2364 "res/xrc/Automation.xrc"
+_("Filter file/folder names (substring or regex)");
+#line 2365 "res/xrc/Automation.xrc"
+_("Filter pattern...");
+#line 2371 "res/xrc/Automation.xrc"
 _("Regex");
-#line 2379 "res/xrc/Automation.xrc"
+#line 2390 "res/xrc/Automation.xrc"
+_("Slider Set Settings");
+#line 2403 "res/xrc/Automation.xrc"
+_("Filter:");
+#line 2415 "res/xrc/Automation.xrc"
+_("Filter slider set names (substring or regex). Leave empty for all.");
+#line 2416 "res/xrc/Automation.xrc"
+_("Filter pattern...");
+#line 2422 "res/xrc/Automation.xrc"
+_("Regex");
+#line 2446 "res/xrc/Automation.xrc"
 _("Output Log");
-#line 2396 "res/xrc/Automation.xrc"
+#line 2463 "res/xrc/Automation.xrc"
 _("Execute");
-#line 2397 "res/xrc/Automation.xrc"
+#line 2464 "res/xrc/Automation.xrc"
 _("Execute all active steps in order");
-#line 2407 "res/xrc/Automation.xrc"
+#line 2474 "res/xrc/Automation.xrc"
 _("Close");
 #line 6 "res/xrc/BatchBuild.xrc"
 _("Batch Build");
