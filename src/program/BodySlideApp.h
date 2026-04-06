@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "../components/BuildSelection.h"
+#include "../components/ClippingFixer.h"
 #include "../components/SliderCategories.h"
 #include "../components/SliderData.h"
 #include "../components/SliderGroup.h"
@@ -67,6 +68,11 @@ class BodySlideApp : public wxApp {
 	bool cmdTri = false;
 	std::vector<std::string> cmdPreviewNifs;
 	bool cmdPreviewMode = false;
+
+public:
+	/* Clipping Fix */
+	float clippingFixStrength = 0.0f; // 0-100 scale, 0 disables clipping fix
+private:
 
 	/* Localization */
 	wxLocale* locale = nullptr;
@@ -216,6 +222,10 @@ public:
 	}
 	void PreviewClosed() { preview = nullptr; }
 
+	void ApplyClippingFix(nifly::NifFile& nif,
+						const std::vector<nifly::Vector3>& bodyVerts,
+						const std::vector<nifly::Triangle>& bodyTris,
+						std::unordered_map<std::string, std::vector<nifly::Vector3>*>& shapeVerts);
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
 	void UpdateMeshesFromSet(SliderSet& set);
@@ -449,6 +459,8 @@ private:
 	void OnSetSize(wxSizeEvent& event);
 
 	void OnEditProject(wxCommandEvent& event);
+
+	void OnClippingStrengthChanged(wxCommandEvent& event);
 
 	bool OutfitIsEmpty() {
 		if (outfitChoice && !outfitChoice->GetStringSelection().empty())

@@ -414,6 +414,37 @@
 											<hidden>1</hidden>
 										</object>
 									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxPanel" name="panelClippingSliders">
+											<object class="wxFlexGridSizer">
+												<cols>2</cols>
+												<rows>1</rows>
+												<vgap>2</vgap>
+												<hgap>4</hgap>
+												<growablecols>1</growablecols>
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<fg>#a0a0a0</fg>
+														<label>Fix Clipping</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxSlider" name="sliderClippingStrength">
+														<size>100,-1</size>
+														<value>0</value>
+														<min>0</min>
+														<max>100</max>
+														<tooltip>Controls how far outfit vertices are pushed away from the body surface.</tooltip>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
 								</object>
 							</object>
 						</object>

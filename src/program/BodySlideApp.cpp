@@ -16,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "BodySlideApp.h"
+#include "../components/ClippingFixer.h"
 #include "../files/wxDDSImage.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
@@ -84,6 +85,8 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_BUTTON(XRCID("btnChooseGroups"), BodySlideFrame::OnChooseGroups)
 	EVT_BUTTON(XRCID("btnRefreshOutfits"), BodySlideFrame::OnRefreshOutfits)
 	EVT_BUTTON(XRCID("btnEditProject"), BodySlideFrame::OnEditProject)
+
+	EVT_SLIDER(XRCID("sliderClippingStrength"), BodySlideFrame::OnClippingStrengthChanged)
 
 	EVT_MENU(XRCID("menuChooseGroups"), BodySlideFrame::OnChooseGroups)
 	EVT_MENU(XRCID("menuRefreshGroups"), BodySlideFrame::OnRefreshGroups)
@@ -1562,7 +1565,7 @@ void BodySlideApp::InitPreview() {
 		for (auto& pp : projects)
 			UpdateMeshesFromSet(pp->sliderSet);
 
-		preview->Refresh();
+		UpdatePreview();
 		return;
 	}
 
@@ -1614,7 +1617,31 @@ void BodySlideApp::InitPreview() {
 
 	preview->SetNormalsGenerationLayers(pp->sliderSet.GetNormalsGenLayers());
 
-	preview->Refresh();
+	UpdatePreview();
+}
+
+void BodySlideApp::ApplyClippingFix(NifFile& nif,
+									const std::vector<Vector3>& bodyVerts,
+									const std::vector<Triangle>& bodyTris,
+									std::unordered_map<std::string, std::vector<Vector3>*>& shapeVerts) {
+	ClippingFixOptions fixOpts;
+	fixOpts.strength = clippingFixStrength / 100.0f;
+
+	for (auto& [shapeName, vertsPtr] : shapeVerts) {
+		if (!vertsPtr || vertsPtr->empty())
+			continue;
+
+		auto shape = nif.FindBlockByName<NiShape>(shapeName);
+		if (!shape)
+			continue;
+
+		std::vector<Triangle> outfitTris;
+		shape->GetTriangles(outfitTris);
+		if (outfitTris.empty())
+			continue;
+
+		ClippingFixer::FixClipping(bodyVerts, bodyTris, *vertsPtr, outfitTris, fixOpts);
+	}
 }
 
 void BodySlideApp::UpdatePreview() {
@@ -1629,7 +1656,18 @@ void BodySlideApp::UpdatePreview() {
 	std::vector<Vector2> uvs, uvsLow, uvsHigh;
 	std::vector<uint16_t> zapIdx;
 
-	for (auto& pp : projects) {
+	// Phase 1: Apply sliders and blend weights for all shapes
+	struct ShapePreviewData {
+		std::string name;
+		std::vector<Vector3> verts;
+		std::vector<Vector2> uvs;
+		std::vector<uint16_t> zapIdx;
+		int projectIdx;
+	};
+	std::vector<ShapePreviewData> shapeData;
+
+	for (int pi = 0; pi < static_cast<int>(projects.size()); pi++) {
+		auto& pp = projects[pi];
 		if (!pp->baseNif)
 			continue;
 
@@ -1658,18 +1696,66 @@ void BodySlideApp::UpdatePreview() {
 					uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
 			}
 
-			// Zap deleted verts before applying to the shape
-			if (zapIdx.size() > 0) {
-				for (int z = zapIdx.size() - 1; z >= 0; z--) {
-					if (zapIdx[z] >= verts.size())
-						continue;
+			ShapePreviewData spd;
+			spd.name = it->first;
+			spd.verts = std::move(verts);
+			spd.uvs = std::move(uvs);
+			spd.zapIdx = zapIdx;
+			spd.projectIdx = pi;
+			shapeData.push_back(std::move(spd));
+		}
+	}
 
-					verts.erase(verts.begin() + zapIdx[z]);
-					uvs.erase(uvs.begin() + zapIdx[z]);
+	// Phase 2: Apply clipping fix when strength is above zero
+	if (clippingFixStrength > 0.0f) {
+		for (int pi = 0; pi < static_cast<int>(projects.size()); pi++) {
+			auto& pp = projects[pi];
+			if (!pp->baseNif)
+				continue;
+
+			auto refShape = ClippingFixer::FindReferenceShape(*pp->baseNif);
+			if (!refShape)
+				continue;
+
+			ShapePreviewData* refData = nullptr;
+			for (auto& sd : shapeData) {
+				if (sd.projectIdx == pi && sd.name == refShape->name.get()) {
+					refData = &sd;
+					break;
 				}
 			}
-			preview->UpdateMeshes(it->first, &verts, &uvs);
+			if (!refData || refData->verts.empty())
+				continue;
+
+			std::vector<Triangle> bodyTris;
+			refShape->GetTriangles(bodyTris);
+			if (bodyTris.empty())
+				continue;
+
+			const std::vector<Vector3>& bodyVerts = refData->verts;
+
+			std::unordered_map<std::string, std::vector<Vector3>*> shapeVerts;
+			for (auto& sd : shapeData) {
+				if (sd.projectIdx == pi && sd.name != refShape->name.get())
+					shapeVerts[sd.name] = &sd.verts;
+			}
+
+			ApplyClippingFix(*pp->baseNif, bodyVerts, bodyTris, shapeVerts);
 		}
+	}
+
+	// Phase 3: Zap and update meshes
+	for (auto& sd : shapeData) {
+		if (sd.zapIdx.size() > 0) {
+			for (int z = sd.zapIdx.size() - 1; z >= 0; z--) {
+				if (sd.zapIdx[z] >= sd.verts.size())
+					continue;
+
+				sd.verts.erase(sd.verts.begin() + sd.zapIdx[z]);
+				sd.uvs.erase(sd.uvs.begin() + sd.zapIdx[z]);
+			}
+		}
+		preview->UpdateMeshes(sd.name, &sd.verts, &sd.uvs);
 	}
 
 	preview->Render();
@@ -2620,6 +2706,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	std::vector<uint16_t> zapIdx;
 	std::unordered_map<std::string, std::vector<uint16_t>> zapIdxAll;
 
+	// Phase 1: Apply sliders and set vertices for all shapes
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		auto shape = nifBig.FindBlockByName<NiShape>(it->first);
 		if (!nifBig.GetVertsForShape(shape, vertsHigh))
@@ -2641,6 +2728,87 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 		nifBig.SetVertsForShape(shape, vertsHigh);
 		nifBig.SetUvsForShape(shape, uvsHigh);
 
+		if (activeSet.GenWeights()) {
+			zapIdx.clear();
+			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, dataSets, vertsLow, zapIdx, &uvsLow);
+
+			auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
+			nifSmall.SetVertsForShape(shapeSmall, vertsLow);
+			nifSmall.SetUvsForShape(shapeSmall, uvsLow);
+		}
+
+		zapIdxAll[it->first] = zapIdx;
+		zapIdx.clear();
+	}
+
+	// Phase 2: Apply clipping fix when strength is above zero
+	if (clippingFixStrength > 0.0f) {
+		auto refShape = ClippingFixer::FindReferenceShape(nifBig);
+		if (refShape) {
+			std::vector<Vector3> bodyVerts;
+			std::vector<Triangle> bodyTris;
+			nifBig.GetVertsForShape(refShape, bodyVerts);
+			refShape->GetTriangles(bodyTris);
+
+			if (!bodyVerts.empty() && !bodyTris.empty()) {
+				ClippingFixOptions fixOpts;
+				fixOpts.strength = clippingFixStrength / 100.0f;
+
+				for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+					auto shape = nifBig.FindBlockByName<NiShape>(it->first);
+					if (!shape || shape == refShape)
+						continue;
+
+					std::vector<Vector3> outfitVerts;
+					std::vector<Triangle> outfitTris;
+					if (!nifBig.GetVertsForShape(shape, outfitVerts))
+						continue;
+					shape->GetTriangles(outfitTris);
+
+					ClippingFixer::FixClipping(bodyVerts, bodyTris, outfitVerts, outfitTris, fixOpts);
+					nifBig.SetVertsForShape(shape, outfitVerts);
+				}
+
+				// Also fix the small/low weight NIF
+				if (activeSet.GenWeights()) {
+					auto refShapeSmall = nifSmall.FindBlockByName<NiShape>(refShape->name.get());
+					if (refShapeSmall) {
+						std::vector<Vector3> bodyVertsSmall;
+						std::vector<Triangle> bodyTrisSmall;
+						nifSmall.GetVertsForShape(refShapeSmall, bodyVertsSmall);
+						refShapeSmall->GetTriangles(bodyTrisSmall);
+
+						if (!bodyVertsSmall.empty() && !bodyTrisSmall.empty()) {
+							for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+								auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
+								if (!shapeSmall || shapeSmall == refShapeSmall)
+									continue;
+
+								std::vector<Vector3> outfitVerts;
+								std::vector<Triangle> outfitTris;
+								if (!nifSmall.GetVertsForShape(shapeSmall, outfitVerts))
+									continue;
+								shapeSmall->GetTriangles(outfitTris);
+
+								ClippingFixer::FixClipping(bodyVertsSmall, bodyTrisSmall, outfitVerts, outfitTris, fixOpts);
+								nifSmall.SetVertsForShape(shapeSmall, outfitVerts);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Phase 3: Recalculate normals, tangents, and handle zapping
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+		auto shape = nifBig.FindBlockByName<NiShape>(it->first);
+		if (!shape)
+			continue;
+
+		if (!nifBig.GetVertsForShape(shape, vertsHigh))
+			continue;
+
 		if (!it->second.lockNormals) {
 			nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
 
@@ -2650,21 +2818,24 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 		nifBig.CalcTangentsForShape(shape);
 
-		if (keepZappedShapes && zapIdx.size() == vertsHigh.size()) {
+		auto zapIt = zapIdxAll.find(it->first);
+		auto& shapeZapIdx = zapIt != zapIdxAll.end() ? zapIt->second : zapIdx;
+
+		if (keepZappedShapes && shapeZapIdx.size() == vertsHigh.size()) {
 			shape->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
 		}
 		else {
-			if (nifBig.DeleteVertsForShape(shape, zapIdx))
+			if (nifBig.DeleteVertsForShape(shape, shapeZapIdx))
 				nifBig.DeleteShape(shape); // Delete fully zapped shape
 		}
 
 		if (activeSet.GenWeights()) {
-			zapIdx.clear();
-			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, dataSets, vertsLow, zapIdx, &uvsLow);
-
 			auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
-			nifSmall.SetVertsForShape(shapeSmall, vertsLow);
-			nifSmall.SetUvsForShape(shapeSmall, uvsLow);
+			if (!shapeSmall)
+				continue;
+
+			if (!nifSmall.GetVertsForShape(shapeSmall, vertsLow))
+				continue;
 
 			if (!it->second.lockNormals) {
 				nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
@@ -2675,17 +2846,14 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 			nifSmall.CalcTangentsForShape(shapeSmall);
 
-			if (keepZappedShapes && zapIdx.size() == vertsLow.size()) {
+			if (keepZappedShapes && shapeZapIdx.size() == vertsLow.size()) {
 				shapeSmall->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
 			}
 			else {
-				if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
+				if (nifSmall.DeleteVertsForShape(shapeSmall, shapeZapIdx))
 					nifSmall.DeleteShape(shapeSmall); // Delete fully zapped shape
 			}
 		}
-
-		zapIdxAll[it->first] = zapIdx;
-		zapIdx.clear();
 	}
 
 	bool triKeep = activeSet.PreventMorphFile();
@@ -3225,6 +3393,7 @@ int BodySlideApp::BuildListBodies(
 			}
 		}
 
+		// Phase 1: Apply sliders and set vertices for all shapes
 		for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
 			auto shape = nifBig.FindBlockByName<NiShape>(it->first);
 			if (!nifBig.GetVertsForShape(shape, vertsHigh))
@@ -3320,6 +3489,82 @@ int BodySlideApp::BuildListBodies(
 			nifBig.SetVertsForShape(shape, vertsHigh);
 			nifBig.SetUvsForShape(shape, uvsHigh);
 
+			if (currentSet.GenWeights()) {
+				auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
+				nifSmall.SetVertsForShape(shapeSmall, vertsLow);
+				nifSmall.SetUvsForShape(shapeSmall, uvsLow);
+			}
+
+			zapIdx.clear();
+		}
+
+		// Phase 2: Apply clipping fix when strength is above zero
+		if (clippingFixStrength > 0.0f) {
+			auto refShape = ClippingFixer::FindReferenceShape(nifBig);
+			if (refShape) {
+				std::vector<Vector3> bodyVerts;
+				std::vector<Triangle> bodyTris;
+				nifBig.GetVertsForShape(refShape, bodyVerts);
+				refShape->GetTriangles(bodyTris);
+
+				if (!bodyVerts.empty() && !bodyTris.empty()) {
+					ClippingFixOptions fixOpts;
+					fixOpts.strength = clippingFixStrength / 100.0f;
+
+					for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
+						auto shape = nifBig.FindBlockByName<NiShape>(it->first);
+						if (!shape || shape == refShape)
+							continue;
+
+						std::vector<Vector3> outfitVerts;
+						std::vector<Triangle> outfitTris;
+						if (!nifBig.GetVertsForShape(shape, outfitVerts))
+							continue;
+						shape->GetTriangles(outfitTris);
+
+						ClippingFixer::FixClipping(bodyVerts, bodyTris, outfitVerts, outfitTris, fixOpts);
+						nifBig.SetVertsForShape(shape, outfitVerts);
+					}
+
+					if (currentSet.GenWeights()) {
+						auto refShapeSmall = nifSmall.FindBlockByName<NiShape>(refShape->name.get());
+						if (refShapeSmall) {
+							std::vector<Vector3> bodyVertsSmall;
+							std::vector<Triangle> bodyTrisSmall;
+							nifSmall.GetVertsForShape(refShapeSmall, bodyVertsSmall);
+							refShapeSmall->GetTriangles(bodyTrisSmall);
+
+							if (!bodyVertsSmall.empty() && !bodyTrisSmall.empty()) {
+								for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
+									auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
+									if (!shapeSmall || shapeSmall == refShapeSmall)
+										continue;
+
+									std::vector<Vector3> outfitVerts;
+									std::vector<Triangle> outfitTris;
+									if (!nifSmall.GetVertsForShape(shapeSmall, outfitVerts))
+										continue;
+									shapeSmall->GetTriangles(outfitTris);
+
+									ClippingFixer::FixClipping(bodyVertsSmall, bodyTrisSmall, outfitVerts, outfitTris, fixOpts);
+									nifSmall.SetVertsForShape(shapeSmall, outfitVerts);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		// Phase 3: Recalculate normals, tangents, and handle zapping
+		for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
+			auto shape = nifBig.FindBlockByName<NiShape>(it->first);
+			if (!shape)
+				continue;
+
+			if (!nifBig.GetVertsForShape(shape, vertsHigh))
+				continue;
+
 			if (!it->second.lockNormals) {
 				nifBig.CalcNormalsForShape(shape, forceNormals, it->second.smoothSeamNormals);
 
@@ -3329,18 +3574,24 @@ int BodySlideApp::BuildListBodies(
 
 			nifBig.CalcTangentsForShape(shape);
 
-			if (keepZappedShapes && zapIdx.size() == vertsHigh.size()) {
+			auto zapIt = zapIdxAll.find(it->first);
+			auto& shapeZapIdx = zapIt != zapIdxAll.end() ? zapIt->second : zapIdx;
+
+			if (keepZappedShapes && shapeZapIdx.size() == vertsHigh.size()) {
 				shape->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
 			}
 			else {
-				if (nifBig.DeleteVertsForShape(shape, zapIdx))
+				if (nifBig.DeleteVertsForShape(shape, shapeZapIdx))
 					nifBig.DeleteShape(shape); // Delete fully zapped shape
 			}
 
 			if (currentSet.GenWeights()) {
 				auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
-				nifSmall.SetVertsForShape(shapeSmall, vertsLow);
-				nifSmall.SetUvsForShape(shapeSmall, uvsLow);
+				if (!shapeSmall)
+					continue;
+
+				if (!nifSmall.GetVertsForShape(shapeSmall, vertsLow))
+					continue;
 
 				if (!it->second.lockNormals) {
 					nifSmall.CalcNormalsForShape(shapeSmall, forceNormals, it->second.smoothSeamNormals);
@@ -3351,16 +3602,14 @@ int BodySlideApp::BuildListBodies(
 
 				nifSmall.CalcTangentsForShape(shapeSmall);
 
-				if (keepZappedShapes && zapIdx.size() == vertsLow.size()) {
+				if (keepZappedShapes && shapeZapIdx.size() == vertsLow.size()) {
 					shapeSmall->flags |= 1; // Set hidden flag when shape would otherwise be fully zapped
 				}
 				else {
-					if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
+					if (nifSmall.DeleteVertsForShape(shapeSmall, shapeZapIdx))
 						nifSmall.DeleteShape(shapeSmall); // Delete fully zapped shape
 				}
 			}
-
-			zapIdx.clear();
 		}
 
 		currentDiffs.Clear();
@@ -4623,6 +4872,20 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
+	if (app->clippingFixStrength > 0.0f) {
+		int answer = wxMessageBox(
+			_("Fix Clipping is enabled for this batch build.\n\n"
+			  "Use this carefully: applying clipping fixes to many outfits at once can create unwelcome side effects on some meshes.\n\n"
+			  "Consider building outfits one-by-one and checking each result in Preview.\n\n"
+			  "Do you want to continue with batch build?"),
+			_("Warning"),
+			wxYES_NO | wxNO_DEFAULT | wxICON_WARNING,
+			this);
+
+		if (answer != wxYES)
+			return;
+	}
+
 	wxArrayString oChoices;
 	std::vector<std::string> outfitChoices;
 	std::vector<std::string> toBuild;
@@ -5072,6 +5335,15 @@ void BodySlideFrame::OnEditProject(wxCommandEvent& WXUNUSED(event)) {
 	app->EditProject(projectName);
 }
 
+void BodySlideFrame::OnClippingStrengthChanged(wxCommandEvent& WXUNUSED(event)) {
+	auto sliderClippingStrength = XRCCTRL(*this, "sliderClippingStrength", wxSlider);
+	if (!sliderClippingStrength)
+		return;
+
+	app->clippingFixStrength = static_cast<float>(sliderClippingStrength->GetValue());
+	app->UpdatePreview();
+}
+
 void BodySlideFrame::RefreshTargetGameState() {
 	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
 	if (cbMorphs) {
@@ -5109,7 +5381,6 @@ void BodySlideFrame::RefreshTargetGameState() {
 			cbForceBodyNormals->Hide();
 	}
 }
-
 
 SliderCategoryUI::SliderCategoryUI() {}
 

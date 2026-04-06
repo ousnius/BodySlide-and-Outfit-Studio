@@ -1672,6 +1672,9 @@
     <ClInclude Include="src\components\BuildSelection.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\ClippingFixer.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\UndoState.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -1867,6 +1870,9 @@
       <Filter>Libraries\LZ4F</Filter>
     </ClCompile>
     <ClCompile Include="src\components\BuildSelection.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\ClippingFixer.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="lib\nifly\src\Animation.cpp">

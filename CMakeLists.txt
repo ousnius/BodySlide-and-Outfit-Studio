@@ -40,6 +40,7 @@ set(commonsources
 	lib/TinyXML-2/tinyxml2.cpp
 	src/components/Anim.cpp
 	src/components/Automorph.cpp
+	src/components/ClippingFixer.cpp
 	src/components/DiffData.cpp
 	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp

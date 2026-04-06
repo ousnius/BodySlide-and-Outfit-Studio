@@ -193,7 +193,7 @@ _("Bones: Copy Bone Weights");
 #line 113 "res/xrc/Automation.xrc"
 _("Bones: Delete Bones");
 #line 114 "res/xrc/Automation.xrc"
-_("Bones: Edit Bone");
+_("Bones: Edit Custom Bone");
 #line 115 "res/xrc/Automation.xrc"
 _("Bones: Remove Skinning");
 #line 116 "res/xrc/Automation.xrc"
@@ -309,7 +309,7 @@ _("Rotation:");
 #line 571 "res/xrc/Automation.xrc"
 _("Remove Skinning");
 #line 577 "res/xrc/Automation.xrc"
-_("Removes skinning from target shapes (or all shapes if Target Meshes is empty).\nThis deletes all bone weights and skinning data from the shapes.");
+_("Removes skinning from target shapes (or all shapes if Target Meshes is empty).\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tThis deletes all bone weights and skinning data from the shapes.");
 #line 591 "res/xrc/Automation.xrc"
 _("Export File");
 #line 605 "res/xrc/Automation.xrc"
@@ -437,11 +437,11 @@ _("Append new sliders");
 #line 1121 "res/xrc/Automation.xrc"
 _("Clear Project");
 #line 1127 "res/xrc/Automation.xrc"
-_("Clears the current project (removes all shapes, sliders, and references).\nNo additional parameters needed.");
+_("Clears the current project (removes all shapes, sliders, and references).\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
 #line 1141 "res/xrc/Automation.xrc"
 _("Clear Reference");
 #line 1147 "res/xrc/Automation.xrc"
-_("Removes the current reference/base shape from the project. Slider data for the reference is moved to the morpher.\nNo additional parameters needed.");
+_("Removes the current reference/base shape from the project. Slider data for the reference is moved to the morpher.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
 #line 1161 "res/xrc/Automation.xrc"
 _("Load Reference");
 #line 1175 "res/xrc/Automation.xrc"
@@ -473,7 +473,7 @@ _("Append new sliders");
 #line 1273 "res/xrc/Automation.xrc"
 _("Set Base Shape");
 #line 1279 "res/xrc/Automation.xrc"
-_("Bakes the current slider values into the base geometry of all shapes and zeros all sliders.\nEquivalent to \"Slider -> Set Base Shape\" in the menu.\nNo additional parameters needed.");
+_("Bakes the current slider values into the base geometry of all shapes and zeros all sliders.\n\nEquivalent to \"Slider -> Set Base Shape\" in the menu.");
 #line 1294 "res/xrc/Automation.xrc"
 _("Set Reference Shape");
 #line 1308 "res/xrc/Automation.xrc"
@@ -489,190 +489,192 @@ _("Name of the pose from PoseData to apply to meshes");
 #line 1362 "res/xrc/Automation.xrc"
 _("Delete Shape");
 #line 1368 "res/xrc/Automation.xrc"
-_("Deletes the shapes specified in the Target Meshes field above.\nIf Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching.");
-#line 1382 "res/xrc/Automation.xrc"
+_("Deletes the shapes specified in the Target Meshes field above.\n\nIf Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching.");
+#line 1383 "res/xrc/Automation.xrc"
 _("Duplicate Shape");
-#line 1396 "res/xrc/Automation.xrc"
+#line 1397 "res/xrc/Automation.xrc"
 _("New Name:");
-#line 1402 "res/xrc/Automation.xrc"
+#line 1403 "res/xrc/Automation.xrc"
 _("Name for the duplicated shape. Supports {{PLACEHOLDER}} variables.");
-#line 1416 "res/xrc/Automation.xrc"
+#line 1417 "res/xrc/Automation.xrc"
 _("Invert UVs");
-#line 1425 "res/xrc/Automation.xrc"
+#line 1426 "res/xrc/Automation.xrc"
 _("Invert U");
-#line 1432 "res/xrc/Automation.xrc"
+#line 1433 "res/xrc/Automation.xrc"
 _("Invert V");
-#line 1446 "res/xrc/Automation.xrc"
+#line 1447 "res/xrc/Automation.xrc"
 _("Mirror Shape");
-#line 1455 "res/xrc/Automation.xrc"
+#line 1456 "res/xrc/Automation.xrc"
 _("Mirror X");
-#line 1463 "res/xrc/Automation.xrc"
+#line 1464 "res/xrc/Automation.xrc"
 _("Mirror Y");
-#line 1470 "res/xrc/Automation.xrc"
+#line 1471 "res/xrc/Automation.xrc"
 _("Mirror Z");
-#line 1477 "res/xrc/Automation.xrc"
+#line 1478 "res/xrc/Automation.xrc"
 _("Swap bones left/right (X axis)");
-#line 1491 "res/xrc/Automation.xrc"
+#line 1492 "res/xrc/Automation.xrc"
 _("Refine Mesh");
-#line 1497 "res/xrc/Automation.xrc"
-_("Subdivides/refines meshes by splitting edges.\nAll unmasked vertices are refined. Use the Target Meshes field above to select which shapes to refine.");
-#line 1511 "res/xrc/Automation.xrc"
+#line 1498 "res/xrc/Automation.xrc"
+_("Subdivides/refines meshes by splitting edges.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tAll unmasked vertices are refined. Use the Target Meshes field above to select which shapes to refine.");
+#line 1512 "res/xrc/Automation.xrc"
 _("Rename Shape");
-#line 1525 "res/xrc/Automation.xrc"
+#line 1526 "res/xrc/Automation.xrc"
 _("Old Name:");
-#line 1531 "res/xrc/Automation.xrc"
+#line 1532 "res/xrc/Automation.xrc"
 _("Current name of the shape (supports {{PLACEHOLDER}} variables)");
-#line 1538 "res/xrc/Automation.xrc"
+#line 1539 "res/xrc/Automation.xrc"
 _("New Name:");
-#line 1544 "res/xrc/Automation.xrc"
+#line 1545 "res/xrc/Automation.xrc"
 _("New name for the shape (supports {{PLACEHOLDER}} variables)");
-#line 1558 "res/xrc/Automation.xrc"
+#line 1559 "res/xrc/Automation.xrc"
 _("Reset Transforms");
-#line 1564 "res/xrc/Automation.xrc"
+#line 1565 "res/xrc/Automation.xrc"
 _("Resets global-to-skin transforms for all skinned meshes. No additional parameters needed.");
-#line 1577 "res/xrc/Automation.xrc"
+#line 1578 "res/xrc/Automation.xrc"
 _("Transform Shape");
-#line 1591 "res/xrc/Automation.xrc"
+#line 1592 "res/xrc/Automation.xrc"
 _("Move:");
-#line 1598 "res/xrc/Automation.xrc"
+#line 1599 "res/xrc/Automation.xrc"
 _("Move X");
-#line 1605 "res/xrc/Automation.xrc"
+#line 1606 "res/xrc/Automation.xrc"
 _("Move Y");
-#line 1612 "res/xrc/Automation.xrc"
+#line 1613 "res/xrc/Automation.xrc"
 _("Move Z");
-#line 1619 "res/xrc/Automation.xrc"
+#line 1620 "res/xrc/Automation.xrc"
 _("Rotate (Ã‚Â°):");
-#line 1626 "res/xrc/Automation.xrc"
+#line 1627 "res/xrc/Automation.xrc"
 _("Rotate X (degrees)");
-#line 1633 "res/xrc/Automation.xrc"
+#line 1634 "res/xrc/Automation.xrc"
 _("Rotate Y (degrees)");
-#line 1640 "res/xrc/Automation.xrc"
+#line 1641 "res/xrc/Automation.xrc"
 _("Rotate Z (degrees)");
-#line 1647 "res/xrc/Automation.xrc"
+#line 1648 "res/xrc/Automation.xrc"
 _("Scale:");
-#line 1654 "res/xrc/Automation.xrc"
+#line 1655 "res/xrc/Automation.xrc"
 _("Scale X");
-#line 1661 "res/xrc/Automation.xrc"
+#line 1662 "res/xrc/Automation.xrc"
 _("Scale Y");
-#line 1668 "res/xrc/Automation.xrc"
+#line 1669 "res/xrc/Automation.xrc"
 _("Scale Z");
-#line 1675 "res/xrc/Automation.xrc"
+#line 1676 "res/xrc/Automation.xrc"
 _("Inflate:");
-#line 1682 "res/xrc/Automation.xrc"
+#line 1683 "res/xrc/Automation.xrc"
 _("Inflate X (along normals)");
-#line 1689 "res/xrc/Automation.xrc"
+#line 1690 "res/xrc/Automation.xrc"
 _("Inflate Y (along normals)");
-#line 1696 "res/xrc/Automation.xrc"
+#line 1697 "res/xrc/Automation.xrc"
 _("Inflate Z (along normals)");
-#line 1710 "res/xrc/Automation.xrc"
+#line 1711 "res/xrc/Automation.xrc"
 _("Conform Sliders");
-#line 1724 "res/xrc/Automation.xrc"
+#line 1725 "res/xrc/Automation.xrc"
 _("Proximity Radius:");
-#line 1737 "res/xrc/Automation.xrc"
+#line 1738 "res/xrc/Automation.xrc"
 _("Max Results:");
-#line 1750 "res/xrc/Automation.xrc"
+#line 1751 "res/xrc/Automation.xrc"
 _("Options:");
-#line 1759 "res/xrc/Automation.xrc"
+#line 1760 "res/xrc/Automation.xrc"
 _("No squeeze");
-#line 1764 "res/xrc/Automation.xrc"
+#line 1765 "res/xrc/Automation.xrc"
 _("Solid mode");
-#line 1773 "res/xrc/Automation.xrc"
+#line 1774 "res/xrc/Automation.xrc"
 _("Axes:");
-#line 1784 "res/xrc/Automation.xrc"
+#line 1785 "res/xrc/Automation.xrc"
 _("X");
-#line 1792 "res/xrc/Automation.xrc"
+#line 1793 "res/xrc/Automation.xrc"
 _("Y");
-#line 1798 "res/xrc/Automation.xrc"
+#line 1799 "res/xrc/Automation.xrc"
 _("Z");
-#line 1808 "res/xrc/Automation.xrc"
+#line 1809 "res/xrc/Automation.xrc"
 _("Slider Names:");
-#line 1814 "res/xrc/Automation.xrc"
+#line 1815 "res/xrc/Automation.xrc"
 _("Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.");
-#line 1828 "res/xrc/Automation.xrc"
+#line 1829 "res/xrc/Automation.xrc"
 _("Delete Slider");
-#line 1842 "res/xrc/Automation.xrc"
+#line 1843 "res/xrc/Automation.xrc"
 _("Slider Name:");
-#line 1848 "res/xrc/Automation.xrc"
+#line 1849 "res/xrc/Automation.xrc"
 _("Name of the slider to delete. If regex is checked, matches slider names by pattern.");
-#line 1855 "res/xrc/Automation.xrc"
+#line 1856 "res/xrc/Automation.xrc"
 _("Regex:");
-#line 1861 "res/xrc/Automation.xrc"
+#line 1862 "res/xrc/Automation.xrc"
 _("Match slider names by regex pattern");
-#line 1875 "res/xrc/Automation.xrc"
+#line 1876 "res/xrc/Automation.xrc"
 _("Set Slider Values");
-#line 1889 "res/xrc/Automation.xrc"
+#line 1890 "res/xrc/Automation.xrc"
 _("Slider Names:");
-#line 1895 "res/xrc/Automation.xrc"
+#line 1896 "res/xrc/Automation.xrc"
 _("Comma-separated list of slider names. Leave empty to set all visible sliders.");
-#line 1902 "res/xrc/Automation.xrc"
+#line 1903 "res/xrc/Automation.xrc"
 _("Value (0.0 - 1.0):");
-#line 1909 "res/xrc/Automation.xrc"
+#line 1910 "res/xrc/Automation.xrc"
 _("Slider value between 0.0 and 1.0 (1.0 = 100%)");
-#line 1923 "res/xrc/Automation.xrc"
+#line 1924 "res/xrc/Automation.xrc"
 _("Load Mask");
-#line 1937 "res/xrc/Automation.xrc"
+#line 1938 "res/xrc/Automation.xrc"
 _("Mask File:");
-#line 1943 "res/xrc/Automation.xrc"
+#line 1944 "res/xrc/Automation.xrc"
 _("Select a mask XML file");
-#line 1952 "res/xrc/Automation.xrc"
+#line 1953 "res/xrc/Automation.xrc"
 _("Mask Name:");
-#line 1958 "res/xrc/Automation.xrc"
+#line 1959 "res/xrc/Automation.xrc"
 _("Name of the mask to load from the file. Must match the name attribute in the mask file.");
-#line 1980 "res/xrc/Automation.xrc"
+#line 1981 "res/xrc/Automation.xrc"
 _("Placeholder Variables");
-#line 1989 "res/xrc/Automation.xrc"
+#line 1990 "res/xrc/Automation.xrc"
 _("Define {{KEY}} = Value pairs. These are substituted in all text fields before execution.");
-#line 2006 "res/xrc/Automation.xrc"
+#line 2007 "res/xrc/Automation.xrc"
 _("Key:");
-#line 2012 "res/xrc/Automation.xrc"
+#line 2013 "res/xrc/Automation.xrc"
 _("Value:");
-#line 2036 "res/xrc/Automation.xrc"
+#line 2037 "res/xrc/Automation.xrc"
 _("+ Add");
-#line 2044 "res/xrc/Automation.xrc"
+#line 2045 "res/xrc/Automation.xrc"
 _("- Remove");
-#line 2061 "res/xrc/Automation.xrc"
+#line 2062 "res/xrc/Automation.xrc"
 _("Batch Operation");
-#line 2071 "res/xrc/Automation.xrc"
+#line 2072 "res/xrc/Automation.xrc"
 _("Mode");
-#line 2074 "res/xrc/Automation.xrc"
-_("None (run on current project)");
 #line 2075 "res/xrc/Automation.xrc"
-_("Folder scan (repeat on files in folder)");
+_("None (run on current project)");
 #line 2076 "res/xrc/Automation.xrc"
+_("Folder scan (repeat on files in folder)");
+#line 2077 "res/xrc/Automation.xrc"
 _("Slider sets (repeat on installed slider sets)");
-#line 2090 "res/xrc/Automation.xrc"
+#line 2091 "res/xrc/Automation.xrc"
 _("Folder Scan Settings");
-#line 2103 "res/xrc/Automation.xrc"
+#line 2104 "res/xrc/Automation.xrc"
 _("Folder:");
-#line 2109 "res/xrc/Automation.xrc"
+#line 2110 "res/xrc/Automation.xrc"
 _("Select folder to scan");
-#line 2117 "res/xrc/Automation.xrc"
+#line 2118 "res/xrc/Automation.xrc"
 _("Extension:");
-#line 2124 "res/xrc/Automation.xrc"
+#line 2125 "res/xrc/Automation.xrc"
 _("File extension to scan for (e.g. .nif, .obj)");
-#line 2131 "res/xrc/Automation.xrc"
+#line 2132 "res/xrc/Automation.xrc"
 _("Options:");
-#line 2137 "res/xrc/Automation.xrc"
+#line 2138 "res/xrc/Automation.xrc"
 _("Include subdirectories");
-#line 2144 "res/xrc/Automation.xrc"
+#line 2145 "res/xrc/Automation.xrc"
 _("File Filter:");
-#line 2156 "res/xrc/Automation.xrc"
+#line 2157 "res/xrc/Automation.xrc"
 _("Filter file/folder names (substring or regex)");
-#line 2162 "res/xrc/Automation.xrc"
+#line 2163 "res/xrc/Automation.xrc"
 _("Regex");
-#line 2181 "res/xrc/Automation.xrc"
+#line 2182 "res/xrc/Automation.xrc"
 _("Slider Set Settings");
-#line 2194 "res/xrc/Automation.xrc"
+#line 2195 "res/xrc/Automation.xrc"
 _("Filter:");
-#line 2206 "res/xrc/Automation.xrc"
+#line 2207 "res/xrc/Automation.xrc"
 _("Filter slider set names (substring or regex). Leave empty for all.");
-#line 2212 "res/xrc/Automation.xrc"
+#line 2213 "res/xrc/Automation.xrc"
 _("Regex");
-#line 2242 "res/xrc/Automation.xrc"
+#line 2237 "res/xrc/Automation.xrc"
+_("Output Log");
+#line 2254 "res/xrc/Automation.xrc"
 _("Execute");
-#line 2243 "res/xrc/Automation.xrc"
+#line 2255 "res/xrc/Automation.xrc"
 _("Execute all active steps in order");
-#line 2253 "res/xrc/Automation.xrc"
+#line 2265 "res/xrc/Automation.xrc"
 _("Close");
 #line 6 "res/xrc/BatchBuild.xrc"
 _("Batch Build");
@@ -746,63 +748,67 @@ _("Builds a morphs (.tri) file alongside the meshes for accessing the sliders in
 _("Force Body Normals");
 #line 413 "res/xrc/BodySlide.xrc"
 _("Adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.");
-#line 429 "res/xrc/BodySlide.xrc"
+#line 432 "res/xrc/BodySlide.xrc"
+_("Fix Clipping");
+#line 442 "res/xrc/BodySlide.xrc"
+_("Controls how far outfit vertices are pushed away from the body surface.");
+#line 460 "res/xrc/BodySlide.xrc"
 _("Show a preview window for this outfit.");
-#line 430 "res/xrc/BodySlide.xrc"
-_("Preview");
-#line 448 "res/xrc/BodySlide.xrc"
-_("Creates the currently selected outfit/body.\n\nHold CTRL = Build to working directory\nHold ALT = Delete from output directory");
-#line 449 "res/xrc/BodySlide.xrc"
-_("Build");
 #line 461 "res/xrc/BodySlide.xrc"
-_("Copy the high weight slider values to the low weight section.");
+_("Preview");
 #line 479 "res/xrc/BodySlide.xrc"
+_("Creates the currently selected outfit/body.\n\nHold CTRL = Build to working directory\nHold ALT = Delete from output directory");
+#line 480 "res/xrc/BodySlide.xrc"
+_("Build");
+#line 492 "res/xrc/BodySlide.xrc"
+_("Copy the high weight slider values to the low weight section.");
+#line 510 "res/xrc/BodySlide.xrc"
 _("About");
-#line 488 "res/xrc/BodySlide.xrc"
+#line 519 "res/xrc/BodySlide.xrc"
 _("Open settings dialog.");
-#line 489 "res/xrc/BodySlide.xrc"
+#line 520 "res/xrc/BodySlide.xrc"
 _("Settings");
-#line 498 "res/xrc/BodySlide.xrc"
-_("Open Outfit Studio, a full-featured tool for creating and converting outfits.");
-#line 499 "res/xrc/BodySlide.xrc"
-_("Outfit Studio");
-#line 509 "res/xrc/BodySlide.xrc"
-_("Filter Options");
-#line 511 "res/xrc/BodySlide.xrc"
-_("Choose groups...");
-#line 512 "res/xrc/BodySlide.xrc"
-_("Choose groups to display in the Outfit menu");
-#line 516 "res/xrc/BodySlide.xrc"
-_("Refresh Groups");
-#line 517 "res/xrc/BodySlide.xrc"
-_("Refresh group information");
-#line 521 "res/xrc/BodySlide.xrc"
-_("Filter Options");
-#line 523 "res/xrc/BodySlide.xrc"
-_("Refresh Outfits");
-#line 524 "res/xrc/BodySlide.xrc"
-_("Reloads outfit list");
-#line 528 "res/xrc/BodySlide.xrc"
-_("Regular Expressions");
 #line 529 "res/xrc/BodySlide.xrc"
-_("Allow the use of regular expressions (regex) for filtering.");
-#line 533 "res/xrc/BodySlide.xrc"
-_("Has Zap Options");
-#line 534 "res/xrc/BodySlide.xrc"
-_("Show only outfits that have zap options.");
-#line 539 "res/xrc/BodySlide.xrc"
-_("Browse outfit folder...");
+_("Open Outfit Studio, a full-featured tool for creating and converting outfits.");
+#line 530 "res/xrc/BodySlide.xrc"
+_("Outfit Studio");
 #line 540 "res/xrc/BodySlide.xrc"
-_("Browses to the shape data folder of the current outfit in the file explorer.");
+_("Filter Options");
+#line 542 "res/xrc/BodySlide.xrc"
+_("Choose groups...");
 #line 543 "res/xrc/BodySlide.xrc"
-_("Save Outfit list as group...");
-#line 544 "res/xrc/BodySlide.xrc"
-_("Save the current filtered outfit list as a group");
-#line 549 "res/xrc/BodySlide.xrc"
-_("Select None");
+_("Choose groups to display in the Outfit menu");
+#line 547 "res/xrc/BodySlide.xrc"
+_("Refresh Groups");
+#line 548 "res/xrc/BodySlide.xrc"
+_("Refresh group information");
 #line 552 "res/xrc/BodySlide.xrc"
-_("Select All");
+_("Filter Options");
+#line 554 "res/xrc/BodySlide.xrc"
+_("Refresh Outfits");
 #line 555 "res/xrc/BodySlide.xrc"
+_("Reloads outfit list");
+#line 559 "res/xrc/BodySlide.xrc"
+_("Regular Expressions");
+#line 560 "res/xrc/BodySlide.xrc"
+_("Allow the use of regular expressions (regex) for filtering.");
+#line 564 "res/xrc/BodySlide.xrc"
+_("Has Zap Options");
+#line 565 "res/xrc/BodySlide.xrc"
+_("Show only outfits that have zap options.");
+#line 570 "res/xrc/BodySlide.xrc"
+_("Browse outfit folder...");
+#line 571 "res/xrc/BodySlide.xrc"
+_("Browses to the shape data folder of the current outfit in the file explorer.");
+#line 574 "res/xrc/BodySlide.xrc"
+_("Save Outfit list as group...");
+#line 575 "res/xrc/BodySlide.xrc"
+_("Save the current filtered outfit list as a group");
+#line 580 "res/xrc/BodySlide.xrc"
+_("Select None");
+#line 583 "res/xrc/BodySlide.xrc"
+_("Select All");
+#line 586 "res/xrc/BodySlide.xrc"
 _("Invert Selection");
 #line 6 "res/xrc/ConvertBodyReference.xrc"
 _("Convert / Replace Body Reference");
