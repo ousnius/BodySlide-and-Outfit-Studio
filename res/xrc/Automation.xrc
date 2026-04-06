@@ -145,6 +145,7 @@
 															<item>Sliders: Delete Slider</item>
 															<item>Sliders: Set Slider Values</item>
 															<item>Masks: Load Mask</item>
+															<item>Nodes: Remove Unused Nodes</item>
 														</content>
 													</object>
 												</object>
@@ -1968,6 +1969,24 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																	<tooltip>Select a mask entry from the loaded mask file.</tooltip>
 																</object>
 															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- RemoveUnusedNodes -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageRemoveUnusedNodes">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Remove Unused Nodes</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Removes all unreferenced nodes from the NIF.</label>
 														</object>
 													</object>
 												</object>

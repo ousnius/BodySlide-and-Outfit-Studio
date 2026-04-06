@@ -139,6 +139,7 @@ private:
 	int ExecuteStepDuplicateShape(const AutomationStep& step);
 	int ExecuteStepMirrorShape(const AutomationStep& step);
 	int ExecuteStepLoadMask(const AutomationStep& step);
+	int ExecuteStepRemoveUnusedNodes(const AutomationStep& step);
 
 	std::vector<std::string> GatherBatchFiles();
 	std::vector<std::pair<std::string, std::string>> GatherBatchSliderSets();

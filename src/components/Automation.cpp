@@ -41,6 +41,7 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::DeleteSlider: return "DeleteSlider";
 		case AutomationStepType::SetSliderValues: return "SetSliderValues";
 		case AutomationStepType::LoadMask: return "LoadMask";
+		case AutomationStepType::RemoveUnusedNodes: return "RemoveUnusedNodes";
 		default: return "LoadReference";
 	}
 }
@@ -74,6 +75,7 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "DeleteSlider") return AutomationStepType::DeleteSlider;
 	if (str == "SetSliderValues") return AutomationStepType::SetSliderValues;
 	if (str == "LoadMask") return AutomationStepType::LoadMask;
+	if (str == "RemoveUnusedNodes") return AutomationStepType::RemoveUnusedNodes;
 	return AutomationStepType::LoadReference;
 }
 
@@ -493,6 +495,9 @@ int AutomationScript::Load(const std::string& fileName) {
 					step.loadMaskName = mn;
 				break;
 			}
+			case AutomationStepType::RemoveUnusedNodes:
+				// No additional params
+				break;
 		}
 
 		steps.push_back(std::move(step));
@@ -725,6 +730,10 @@ int AutomationScript::Save(const std::string& fileName) {
 			case AutomationStepType::LoadMask:
 				SetChildText(doc, stepElem, "MaskFile", step.loadMaskFile);
 				SetChildText(doc, stepElem, "MaskName", step.loadMaskName);
+				break;
+
+			case AutomationStepType::RemoveUnusedNodes:
+				// No additional params
 				break;
 		}
 	}

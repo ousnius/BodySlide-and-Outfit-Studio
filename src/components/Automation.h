@@ -41,11 +41,12 @@ enum class AutomationStepType {
 	ConformSliders,
 	DeleteSlider,
 	SetSliderValues,
-	LoadMask
+	LoadMask,
+	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 28;
-static_assert(static_cast<int>(AutomationStepType::LoadMask) + 1 == AutomationStepTypeCount,
+constexpr int AutomationStepTypeCount = 29;
+static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
 std::string AutomationStepTypeToString(AutomationStepType type);

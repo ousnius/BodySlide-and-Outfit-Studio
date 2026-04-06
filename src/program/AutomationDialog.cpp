@@ -748,6 +748,10 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			}
 			break;
 		}
+
+		case AutomationStepType::RemoveUnusedNodes:
+			// No parameters to set
+			break;
 	}
 }
 
@@ -986,6 +990,10 @@ void AutomationDialog::UpdateStepFromUI() {
 				step.loadMaskName = choice->GetStringSelection().ToUTF8().data();
 			break;
 		}
+
+		case AutomationStepType::RemoveUnusedNodes:
+			// No parameters to read
+			break;
 	}
 
 	RefreshStepRow(selectedStep);
@@ -2778,6 +2786,16 @@ int AutomationDialog::ExecuteStepLoadMask(const AutomationStep& step) {
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepRemoveUnusedNodes(const AutomationStep&) {
+	wxLogMessage("Automation: Removing unused nodes...");
+	int deletionCount = 0;
+	auto workNif = project->GetWorkNif();
+	if (workNif)
+		workNif->DeleteUnreferencedNodes(&deletionCount);
+	wxLogMessage("Automation: %d unreferenced nodes removed.", deletionCount);
+	return 0;
+}
+
 int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 	switch (step.type) {
 		case AutomationStepType::ClearProject: return ExecuteStepClearProject(step);
@@ -2808,6 +2826,7 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::DuplicateShape: return ExecuteStepDuplicateShape(step);
 		case AutomationStepType::MirrorShape: return ExecuteStepMirrorShape(step);
 		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
+		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
 	}
 
 	return 0;
