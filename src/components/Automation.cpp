@@ -352,6 +352,9 @@ int AutomationScript::Load(const std::string& fileName) {
 				const char* sn = GetChildText(stepElem, "ShapeName");
 				if (sn)
 					step.setRefShapeName = sn;
+				const char* ur = GetChildText(stepElem, "UnsetReference");
+				if (ur)
+					step.setRefUnset = (std::string(ur) == "true");
 				break;
 			}
 			case AutomationStepType::RefineMesh:
@@ -638,6 +641,8 @@ int AutomationScript::Save(const std::string& fileName) {
 
 			case AutomationStepType::SetReferenceShape:
 				SetChildText(doc, stepElem, "ShapeName", step.setRefShapeName);
+				if (step.setRefUnset)
+					SetChildText(doc, stepElem, "UnsetReference", "true");
 				break;
 
 			case AutomationStepType::RefineMesh:

@@ -196,6 +196,7 @@ struct AutomationStep {
 
 	// SetReferenceShape params
 	std::string setRefShapeName;
+	bool setRefUnset = false;
 
 	// SaveProject params
 	std::string saveName;

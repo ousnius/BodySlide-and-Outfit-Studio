@@ -98,6 +98,7 @@ private:
 	void UpdateSliderDataFolderVisibility(bool fromFolder);
 	void UpdateSaveFieldsEnabled(bool useOriginal);
 	void UpdateExportFieldsEnabled(bool useOriginal);
+	void UpdateSetRefFieldsEnabled(bool enabled);
 	void UpdateExportForBatchMode();
 
 	std::map<std::string, std::string> CollectVariables();
@@ -177,6 +178,7 @@ private:
 	void OnSliderDataFolderChanged(wxCommandEvent& event);
 	void OnSaveUseOriginalChanged(wxCommandEvent& event);
 	void OnExportUseOriginalChanged(wxCommandEvent& event);
+	void OnSetRefUnsetChanged(wxCommandEvent& event);
 	void OnLoadMaskFileChanged(wxFileDirPickerEvent& event);
 	void PopulateMaskNamesFromFile(const wxString& filePath);
 	void OnSliderPropZapChanged(wxCommandEvent& event);

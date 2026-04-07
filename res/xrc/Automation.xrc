@@ -1362,6 +1362,17 @@ Equivalent to "Slider -> Set Base Shape" in the menu.</label>
 																	<hint>Shape name</hint>
 																</object>
 															</object>
+
+															<object class="spacer">
+																<size>0,0</size>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkSetRefUnset">
+																	<label>Unset Reference</label>
+																	<tooltip>Unset the reference shape instead of setting one. Morph data will be moved.</tooltip>
+																</object>
+															</object>
 														</object>
 													</object>
 												</object>

@@ -48,6 +48,7 @@ wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 	EVT_CHECKBOX(XRCID("chkSliderDataFromFolder"), AutomationDialog::OnSliderDataFolderChanged)
 	EVT_CHECKBOX(XRCID("chkSaveUseOriginal"), AutomationDialog::OnSaveUseOriginalChanged)
 	EVT_CHECKBOX(XRCID("chkExportUseOriginalPath"), AutomationDialog::OnExportUseOriginalChanged)
+	EVT_CHECKBOX(XRCID("chkSetRefUnset"), AutomationDialog::OnSetRefUnsetChanged)
 	EVT_FILEPICKER_CHANGED(XRCID("fpLoadMaskFile"), AutomationDialog::OnLoadMaskFileChanged)
 	EVT_CHOICE(XRCID("choiceSliderPropZap"), AutomationDialog::OnSliderPropZapChanged)
 	EVT_RADIOBOX(XRCID("radioBatchMode"), AutomationDialog::OnBatchModeChanged)
@@ -634,6 +635,8 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 		}
 		case AutomationStepType::SetReferenceShape: {
 			SetTextValue("txtSetRefShapeName", step.setRefShapeName);
+			SetCheckboxValue("chkSetRefUnset", step.setRefUnset);
+			UpdateSetRefFieldsEnabled(!step.setRefUnset);
 			break;
 		}
 		case AutomationStepType::RefineMesh:
@@ -951,6 +954,7 @@ void AutomationDialog::UpdateStepFromUI() {
 		}
 		case AutomationStepType::SetReferenceShape: {
 			step.setRefShapeName = GetTextValue("txtSetRefShapeName");
+			step.setRefUnset = GetCheckboxValue("chkSetRefUnset");
 			break;
 		}
 		case AutomationStepType::RefineMesh:
@@ -2754,6 +2758,12 @@ int AutomationDialog::ExecuteStepDeleteSlider(const AutomationStep& step) {
 }
 
 int AutomationDialog::ExecuteStepSetReferenceShape(const AutomationStep& step) {
+	if (step.setRefUnset) {
+		wxLogMessage("Automation: Unsetting reference shape...");
+		project->SetBaseShape(nullptr);
+		return 0;
+	}
+
 	if (step.setRefShapeName.empty()) {
 		wxLogError("Automation: SetReferenceShape - no shape name specified.");
 		return 1;
@@ -3247,6 +3257,18 @@ void AutomationDialog::OnExportUseOriginalChanged(wxCommandEvent& WXUNUSED(event
 	auto* chk = XRCCTRL(*this, "chkExportUseOriginalPath", wxCheckBox);
 	if (chk)
 		UpdateExportFieldsEnabled(!chk->GetValue());
+}
+
+void AutomationDialog::OnSetRefUnsetChanged(wxCommandEvent& WXUNUSED(event)) {
+	auto* chk = XRCCTRL(*this, "chkSetRefUnset", wxCheckBox);
+	if (chk)
+		UpdateSetRefFieldsEnabled(!chk->GetValue());
+}
+
+void AutomationDialog::UpdateSetRefFieldsEnabled(bool enabled) {
+	auto* txt = XRCCTRL(*this, "txtSetRefShapeName", wxTextCtrl);
+	if (txt)
+		txt->Enable(enabled);
 }
 
 void AutomationDialog::OnSliderPropZapChanged(wxCommandEvent& WXUNUSED(event)) {
