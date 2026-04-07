@@ -90,6 +90,18 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	listSteps->Bind(wxEVT_CONTEXT_MENU, &AutomationDialog::OnStepListContextMenu, this);
 	listSteps->Bind(wxEVT_KEY_DOWN, &AutomationDialog::OnStepListKeyDown, this);
 
+	// Placeholder label shown when step list is empty
+	lblStepsPlaceholder = new wxStaticText(listSteps, wxID_ANY, _("Right-click to add steps..."), wxPoint(0, 40), wxDefaultSize, wxALIGN_CENTER_HORIZONTAL | wxST_NO_AUTORESIZE);
+	lblStepsPlaceholder->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_GRAYTEXT));
+	lblStepsPlaceholder->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+	lblStepsPlaceholder->Bind(wxEVT_CONTEXT_MENU, &AutomationDialog::OnStepListContextMenu, this);
+	// Keep placeholder centered when list is resized
+	listSteps->Bind(wxEVT_SIZE, [this](wxSizeEvent& evt) {
+		if (lblStepsPlaceholder)
+			lblStepsPlaceholder->SetSize(evt.GetSize().GetWidth(), lblStepsPlaceholder->GetSize().GetHeight());
+		evt.Skip();
+	});
+
 	// Hide step settings until a step is selected
 	if (panelStepSettings)
 		panelStepSettings->Hide();
@@ -317,6 +329,9 @@ void AutomationDialog::EndProgress(const wxString& msg) {
 void AutomationDialog::PopulateStepList() {
 	listSteps->DeleteAllItems();
 	auto& steps = script.GetSteps();
+
+	if (lblStepsPlaceholder)
+		lblStepsPlaceholder->Show(steps.empty());
 
 	for (size_t i = 0; i < steps.size(); i++) {
 		long idx = listSteps->InsertItem(i, steps[i].active ? wxString(L"\u2713") : wxString(""));

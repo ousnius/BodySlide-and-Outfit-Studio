@@ -38,6 +38,7 @@ private:
 	int varRowCount = 1;
 
 	wxListCtrl* listSteps = nullptr;
+	wxStaticText* lblStepsPlaceholder = nullptr;
 	wxSimplebook* bookStepPages = nullptr;
 	wxChoice* choiceStepType = nullptr;
 	wxCheckBox* chkActive = nullptr;
