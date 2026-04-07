@@ -1763,6 +1763,8 @@ int AutomationDialog::ExecuteStepLoadReference(const AutomationStep& step) {
 		wxLogError("Automation: LoadReference failed with error %d.", err);
 		return err;
 	}
+
+	project->SetTextures();
 	return 0;
 }
 
