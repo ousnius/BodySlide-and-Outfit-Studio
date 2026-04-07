@@ -20,7 +20,7 @@ msgstr ""
 msgid "About"
 msgstr ""
 
-#: res/xrc/About.xrc:145 res/xrc/Automation.xrc:2474
+#: res/xrc/About.xrc:145 res/xrc/Automation.xrc:2485
 #: res/xrc/GroupManager.xrc:189
 msgid "Close"
 msgstr ""
@@ -105,7 +105,7 @@ msgstr ""
 msgid "Inflate/deflate a mesh along its normals. This permanently affects vertices."
 msgstr ""
 
-#: res/xrc/Actions.xrc:880 res/xrc/Automation.xrc:1497
+#: res/xrc/Actions.xrc:880 res/xrc/Automation.xrc:1508
 msgid "Mirror Shape"
 msgstr ""
 
@@ -208,7 +208,7 @@ msgstr ""
 msgid "Source"
 msgstr ""
 
-#: res/xrc/Actions.xrc:1550 src/program/AutomationDialog.cpp:86
+#: res/xrc/Actions.xrc:1550 src/program/AutomationDialog.cpp:87
 msgid "Target"
 msgstr ""
 
@@ -238,7 +238,7 @@ msgstr ""
 
 #: res/xrc/Actions.xrc:1727 res/xrc/OutfitStudio.xrc:808
 #: res/xrc/OutfitStudio.xrc:1072 res/xrc/ShapeProperties.xrc:84
-#: res/xrc/ShapeProperties.xrc:620 src/program/AutomationDialog.cpp:85
+#: res/xrc/ShapeProperties.xrc:620 src/program/AutomationDialog.cpp:86
 msgid "Type"
 msgstr ""
 
@@ -462,8 +462,8 @@ msgstr ""
 msgid "Comma-separated shape list"
 msgstr ""
 
-#: res/xrc/Automation.xrc:191 res/xrc/Automation.xrc:2371
-#: res/xrc/Automation.xrc:2422
+#: res/xrc/Automation.xrc:191 res/xrc/Automation.xrc:2382
+#: res/xrc/Automation.xrc:2433
 msgid "Regex"
 msgstr ""
 
@@ -515,11 +515,11 @@ msgstr ""
 msgid "Rotation:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:375 res/xrc/Automation.xrc:1789
+#: res/xrc/Automation.xrc:375 res/xrc/Automation.xrc:1800
 msgid "Proximity Radius:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:389 res/xrc/Automation.xrc:1803
+#: res/xrc/Automation.xrc:389 res/xrc/Automation.xrc:1814
 msgid "Max Results:"
 msgstr ""
 
@@ -582,7 +582,7 @@ msgstr ""
 msgid "Export File"
 msgstr ""
 
-#: res/xrc/Automation.xrc:639 src/program/AutomationDialog.cpp:3343
+#: res/xrc/Automation.xrc:639 src/program/AutomationDialog.cpp:3395
 msgid "Export File Path:"
 msgstr ""
 
@@ -596,8 +596,8 @@ msgstr ""
 
 #: res/xrc/Automation.xrc:667 res/xrc/Automation.xrc:833
 #: res/xrc/Automation.xrc:1066 res/xrc/Automation.xrc:1142
-#: res/xrc/Automation.xrc:1276 res/xrc/Automation.xrc:1817
-#: res/xrc/Automation.xrc:2339
+#: res/xrc/Automation.xrc:1276 res/xrc/Automation.xrc:1828
+#: res/xrc/Automation.xrc:2350
 msgid "Options:"
 msgstr ""
 
@@ -778,7 +778,7 @@ msgid "Select file to import"
 msgstr ""
 
 #: res/xrc/Automation.xrc:989 res/xrc/Automation.xrc:1052
-#: res/xrc/Automation.xrc:2310
+#: res/xrc/Automation.xrc:2321
 msgid "Folder:"
 msgstr ""
 
@@ -810,8 +810,8 @@ msgstr ""
 msgid "Merge into existing sliders"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1079 res/xrc/Automation.xrc:1875
-#: res/xrc/Automation.xrc:1958 res/xrc/Automation.xrc:2008
+#: res/xrc/Automation.xrc:1079 res/xrc/Automation.xrc:1886
+#: res/xrc/Automation.xrc:1969 res/xrc/Automation.xrc:2019
 msgid "Slider Names:"
 msgstr ""
 
@@ -819,8 +819,8 @@ msgstr ""
 msgid "Comma-separated list of slider names. Leave empty to import all sliders."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1086 res/xrc/Automation.xrc:1882
-#: res/xrc/Automation.xrc:1965 res/xrc/Automation.xrc:2015
+#: res/xrc/Automation.xrc:1086 res/xrc/Automation.xrc:1893
+#: res/xrc/Automation.xrc:1976 res/xrc/Automation.xrc:2026
 msgid "Comma-separated slider list"
 msgstr ""
 
@@ -937,465 +937,473 @@ msgstr ""
 msgid "Shape name"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1376
+#: res/xrc/Automation.xrc:1372
+msgid "Unset Reference"
+msgstr ""
+
+#: res/xrc/Automation.xrc:1373
+msgid "Unset the reference shape instead of setting one. Morph data will be moved."
+msgstr ""
+
+#: res/xrc/Automation.xrc:1387
 msgid "Apply Pose"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1390
+#: res/xrc/Automation.xrc:1401
 msgid "Pose Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1396
+#: res/xrc/Automation.xrc:1407
 msgid "Name of the pose from PoseData to apply to meshes"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1397
+#: res/xrc/Automation.xrc:1408
 msgid "Pose name"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1411
+#: res/xrc/Automation.xrc:1422
 msgid "Delete Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1417
+#: res/xrc/Automation.xrc:1428
 msgid ""
 "Deletes the shapes specified in the Target Meshes field above.\n"
 "\n"
 "If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1432 src/program/OutfitStudio.cpp:10317
+#: res/xrc/Automation.xrc:1443 src/program/OutfitStudio.cpp:10317
 msgid "Duplicate Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1446 res/xrc/Automation.xrc:1590
+#: res/xrc/Automation.xrc:1457 res/xrc/Automation.xrc:1601
 msgid "New Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1452
+#: res/xrc/Automation.xrc:1463
 #, c++-format
 msgid "Name for the duplicated shape. Supports {{PLACEHOLDER}} variables."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1453 res/xrc/Automation.xrc:1597
+#: res/xrc/Automation.xrc:1464 res/xrc/Automation.xrc:1608
 msgid "New shape name"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1467
+#: res/xrc/Automation.xrc:1478
 msgid "Invert UVs"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1476 res/xrc/ImportDialog.xrc:53
+#: res/xrc/Automation.xrc:1487 res/xrc/ImportDialog.xrc:53
 msgid "Invert U"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1483 res/xrc/ImportDialog.xrc:62
+#: res/xrc/Automation.xrc:1494 res/xrc/ImportDialog.xrc:62
 msgid "Invert V"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1506
+#: res/xrc/Automation.xrc:1517
 msgid "Mirror X"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1514
+#: res/xrc/Automation.xrc:1525
 msgid "Mirror Y"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1521
+#: res/xrc/Automation.xrc:1532
 msgid "Mirror Z"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1528
+#: res/xrc/Automation.xrc:1539
 msgid "Swap bones left/right (X axis)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1542 res/xrc/OutfitStudio.xrc:1963
+#: res/xrc/Automation.xrc:1553 res/xrc/OutfitStudio.xrc:1963
 #: res/xrc/OutfitStudio.xrc:2465
 msgid "Refine Mesh"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1548
+#: res/xrc/Automation.xrc:1559
 msgid ""
 "Subdivides/refines meshes by splitting edges.\n"
 "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tAll unmasked vertices are refined. Use the Target Meshes field above to select which shapes to refine."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1562 src/program/OutfitStudio.cpp:5122
+#: res/xrc/Automation.xrc:1573 src/program/OutfitStudio.cpp:5122
 #: src/program/OutfitStudio.cpp:9304
 msgid "Rename Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1576
+#: res/xrc/Automation.xrc:1587
 msgid "Old Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1582
+#: res/xrc/Automation.xrc:1593
 #, c++-format
 msgid "Current name of the shape (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1583
+#: res/xrc/Automation.xrc:1594
 msgid "Current shape name"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1596
+#: res/xrc/Automation.xrc:1607
 #, c++-format
 msgid "New name for the shape (supports {{PLACEHOLDER}} variables)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1611 res/xrc/OutfitStudio.xrc:1894
+#: res/xrc/Automation.xrc:1622 res/xrc/OutfitStudio.xrc:1894
 msgid "Reset Transforms"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1617
+#: res/xrc/Automation.xrc:1628
 msgid "Resets global-to-skin transforms for all skinned meshes. No additional parameters needed."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1630
+#: res/xrc/Automation.xrc:1641
 msgid "Transform Shape"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1644
+#: res/xrc/Automation.xrc:1655
 msgid "Move:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1651
+#: res/xrc/Automation.xrc:1662
 msgid "Move X"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1659
+#: res/xrc/Automation.xrc:1670
 msgid "Move Y"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1667
+#: res/xrc/Automation.xrc:1678
 msgid "Move Z"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1675
+#: res/xrc/Automation.xrc:1686
 msgid "Rotate (Ã‚Â°):"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1682
+#: res/xrc/Automation.xrc:1693
 msgid "Rotate X (degrees)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1690
+#: res/xrc/Automation.xrc:1701
 msgid "Rotate Y (degrees)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1698
+#: res/xrc/Automation.xrc:1709
 msgid "Rotate Z (degrees)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1706
+#: res/xrc/Automation.xrc:1717
 msgid "Scale:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1713
+#: res/xrc/Automation.xrc:1724
 msgid "Scale X"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1721
+#: res/xrc/Automation.xrc:1732
 msgid "Scale Y"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1729
+#: res/xrc/Automation.xrc:1740
 msgid "Scale Z"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1737
+#: res/xrc/Automation.xrc:1748
 msgid "Inflate:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1744
+#: res/xrc/Automation.xrc:1755
 msgid "Inflate X (along normals)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1752
+#: res/xrc/Automation.xrc:1763
 msgid "Inflate Y (along normals)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1760
+#: res/xrc/Automation.xrc:1771
 msgid "Inflate Z (along normals)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1775 res/xrc/ConvertBodyReference.xrc:165
+#: res/xrc/Automation.xrc:1786 res/xrc/ConvertBodyReference.xrc:165
 msgid "Conform Sliders"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1826
+#: res/xrc/Automation.xrc:1837
 msgid "No squeeze"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1831
+#: res/xrc/Automation.xrc:1842
 msgid "Solid mode"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1840
+#: res/xrc/Automation.xrc:1851
 msgid "Axes:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1851
+#: res/xrc/Automation.xrc:1862
 msgid "X"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1859
+#: res/xrc/Automation.xrc:1870
 msgid "Y"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1865
+#: res/xrc/Automation.xrc:1876
 msgid "Z"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1881
+#: res/xrc/Automation.xrc:1892
 msgid "Comma-separated list of slider names to conform. Leave empty to conform all visible sliders."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1896
+#: res/xrc/Automation.xrc:1907
 msgid "Delete Slider"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1910
+#: res/xrc/Automation.xrc:1921
 msgid "Slider Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1916
+#: res/xrc/Automation.xrc:1927
 msgid "Name of the slider to delete. If regex is checked, matches slider names by pattern."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1917
+#: res/xrc/Automation.xrc:1928
 msgid "Slider name or pattern"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1924
+#: res/xrc/Automation.xrc:1935
 msgid "Regex:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1930
+#: res/xrc/Automation.xrc:1941
 msgid "Match slider names by regex pattern"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1944
+#: res/xrc/Automation.xrc:1955
 msgid "Set Slider Values"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1964
+#: res/xrc/Automation.xrc:1975
 msgid "Comma-separated list of slider names. Leave empty to set all visible sliders."
 msgstr ""
 
-#: res/xrc/Automation.xrc:1972
+#: res/xrc/Automation.xrc:1983
 msgid "Value (0 - 100):"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1979
+#: res/xrc/Automation.xrc:1990
 msgid "Slider value between 0 and 100 (percentage)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:1994
+#: res/xrc/Automation.xrc:2005
 msgid "Set Slider Properties"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2014
+#: res/xrc/Automation.xrc:2025
 msgid "Comma-separated list of slider names. Leave empty to apply to all sliders."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2022
+#: res/xrc/Automation.xrc:2033
 msgid "Zap:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2029 res/xrc/Automation.xrc:2047
-#: res/xrc/Automation.xrc:2065
+#: res/xrc/Automation.xrc:2040 res/xrc/Automation.xrc:2058
+#: res/xrc/Automation.xrc:2076
 msgid "No change"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2030 res/xrc/Automation.xrc:2048
+#: res/xrc/Automation.xrc:2041 res/xrc/Automation.xrc:2059
 #: src/program/OutfitStudio.cpp:549 src/program/ShapeProperties.cpp:135
 msgid "No"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2031 res/xrc/Automation.xrc:2049
+#: res/xrc/Automation.xrc:2042 res/xrc/Automation.xrc:2060
 #: src/program/OutfitStudio.cpp:547 src/program/ShapeProperties.cpp:135
 msgid "Yes"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2033
+#: res/xrc/Automation.xrc:2044
 msgid "Set the zap flag on matching sliders."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2040
+#: res/xrc/Automation.xrc:2051
 msgid "Hidden:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2051
+#: res/xrc/Automation.xrc:2062
 msgid "Set the hidden flag on matching sliders."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2058
+#: res/xrc/Automation.xrc:2069
 msgid "Default Zapped:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2066
+#: res/xrc/Automation.xrc:2077
 msgid "Not zapped"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2067 res/xrc/Slider.xrc:148
+#: res/xrc/Automation.xrc:2078 res/xrc/Slider.xrc:148
 msgid "Zapped"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2069
+#: res/xrc/Automation.xrc:2080
 msgid "Whether matching zap sliders are zapped by default."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2075
+#: res/xrc/Automation.xrc:2086
 msgid "Default (Small):"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2081
+#: res/xrc/Automation.xrc:2092
 msgid "Default small value (0-100). Leave empty for no change."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2089
+#: res/xrc/Automation.xrc:2100
 msgid "Default (Big):"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2095
+#: res/xrc/Automation.xrc:2106
 msgid "Default big value (0-100). Leave empty for no change."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2110
+#: res/xrc/Automation.xrc:2121
 msgid "Load Mask"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2124
+#: res/xrc/Automation.xrc:2135
 msgid "Mask File:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2130
+#: res/xrc/Automation.xrc:2141
 msgid "Select a mask XML file"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2139
+#: res/xrc/Automation.xrc:2150
 msgid "Mask Name:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2145
+#: res/xrc/Automation.xrc:2156
 msgid "Select a mask entry from the loaded mask file."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2159
+#: res/xrc/Automation.xrc:2170
 msgid "Remove Unused Nodes"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2165
+#: res/xrc/Automation.xrc:2176
 msgid "Removes all unreferenced nodes from the NIF."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2185
+#: res/xrc/Automation.xrc:2196
 msgid "Placeholder Variables"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2194
+#: res/xrc/Automation.xrc:2205
 #, c++-format
 msgid "Define {{KEY}} = Value pairs. These are substituted in all text fields before execution."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2211
+#: res/xrc/Automation.xrc:2222
 msgid "Key:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2217
+#: res/xrc/Automation.xrc:2228
 msgid "Value:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2224
+#: res/xrc/Automation.xrc:2235
 msgid "KEY"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2230 res/xrc/ShapeProperties.xrc:638
+#: res/xrc/Automation.xrc:2241 res/xrc/ShapeProperties.xrc:638
 msgid "Value"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2243
+#: res/xrc/Automation.xrc:2254
 msgid "+ Add"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2251
+#: res/xrc/Automation.xrc:2262
 msgid "- Remove"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2268
+#: res/xrc/Automation.xrc:2279
 msgid "Batch Operation"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2278
+#: res/xrc/Automation.xrc:2289
 msgid "Mode"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2281
+#: res/xrc/Automation.xrc:2292
 msgid "None (run on current project)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2282
+#: res/xrc/Automation.xrc:2293
 msgid "Folder scan (repeat on files in folder)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2283
+#: res/xrc/Automation.xrc:2294
 msgid "Slider sets (repeat on installed slider sets)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2297
+#: res/xrc/Automation.xrc:2308
 msgid "Folder Scan Settings"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2316
+#: res/xrc/Automation.xrc:2327
 msgid "Select folder to scan"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2324
+#: res/xrc/Automation.xrc:2335
 msgid "Extension:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2331
+#: res/xrc/Automation.xrc:2342
 msgid "File extension to scan for (e.g. .nif, .obj)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2345
+#: res/xrc/Automation.xrc:2356
 msgid "Include subdirectories"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2352
+#: res/xrc/Automation.xrc:2363
 msgid "File Filter:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2364
+#: res/xrc/Automation.xrc:2375
 msgid "Filter file/folder names (substring or regex)"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2365 res/xrc/Automation.xrc:2416
+#: res/xrc/Automation.xrc:2376 res/xrc/Automation.xrc:2427
 msgid "Filter pattern..."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2390
+#: res/xrc/Automation.xrc:2401
 msgid "Slider Set Settings"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2403
+#: res/xrc/Automation.xrc:2414
 msgid "Filter:"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2415
+#: res/xrc/Automation.xrc:2426
 msgid "Filter slider set names (substring or regex). Leave empty for all."
 msgstr ""
 
-#: res/xrc/Automation.xrc:2446
+#: res/xrc/Automation.xrc:2457
 msgid "Output Log"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2463 src/program/AutomationDialog.cpp:1491
+#: res/xrc/Automation.xrc:2474 src/program/AutomationDialog.cpp:1510
 msgid "Execute"
 msgstr ""
 
-#: res/xrc/Automation.xrc:2464
+#: res/xrc/Automation.xrc:2475
 msgid "Execute all active steps in order"
 msgstr ""
 
@@ -1644,17 +1652,17 @@ msgid "Save the current filtered outfit list as a group"
 msgstr ""
 
 #: res/xrc/BodySlide.xrc:580 res/xrc/Project.xrc:1101
-#: res/xrc/SliderDataImport.xrc:106 src/program/AutomationDialog.cpp:1485
+#: res/xrc/SliderDataImport.xrc:106 src/program/AutomationDialog.cpp:1504
 msgid "Select None"
 msgstr ""
 
 #: res/xrc/BodySlide.xrc:583 res/xrc/EditUV.xrc:111 res/xrc/Project.xrc:1104
-#: res/xrc/SliderDataImport.xrc:109 src/program/AutomationDialog.cpp:1484
+#: res/xrc/SliderDataImport.xrc:109 src/program/AutomationDialog.cpp:1503
 msgid "Select All"
 msgstr ""
 
 #: res/xrc/BodySlide.xrc:586 res/xrc/EditUV.xrc:115 res/xrc/Project.xrc:1107
-#: res/xrc/SliderDataImport.xrc:112 src/program/AutomationDialog.cpp:1486
+#: res/xrc/SliderDataImport.xrc:112 src/program/AutomationDialog.cpp:1505
 msgid "Invert Selection"
 msgstr ""
 
@@ -1997,7 +2005,7 @@ msgstr ""
 msgid "Move selected layer up one position."
 msgstr ""
 
-#: res/xrc/NormalsGenDlg.xrc:72 src/program/AutomationDialog.cpp:386
+#: res/xrc/NormalsGenDlg.xrc:72 src/program/AutomationDialog.cpp:402
 msgid "Move Up"
 msgstr ""
 
@@ -3865,7 +3873,7 @@ msgstr ""
 msgid "Pack Archive..."
 msgstr ""
 
-#: res/xrc/Project.xrc:1092 src/program/AutomationDialog.cpp:1492
+#: res/xrc/Project.xrc:1092 src/program/AutomationDialog.cpp:1511
 #: src/program/OutfitStudio.cpp:4225 src/program/OutfitStudio.cpp:7072
 #: src/program/OutfitStudio.cpp:8004 src/program/OutfitStudio.cpp:8115
 #: src/program/OutfitStudio.cpp:8247 src/program/OutfitStudio.cpp:12262
@@ -4316,52 +4324,56 @@ msgstr ""
 msgid "Root '%s' not found in skeleton '%s'!"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:84
+#: src/program/AutomationDialog.cpp:85
 msgid "Active"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:87
+#: src/program/AutomationDialog.cpp:88
 msgid "Note"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:136 src/program/AutomationDialog.cpp:307
+#: src/program/AutomationDialog.cpp:94
+msgid "Right-click to add steps..."
+msgstr ""
+
+#: src/program/AutomationDialog.cpp:149 src/program/AutomationDialog.cpp:320
 msgid "Ready."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:277 src/program/BodySlideApp.cpp:3449
+#: src/program/AutomationDialog.cpp:290 src/program/BodySlideApp.cpp:3449
 #: src/program/OutfitStudio.h:1109
 msgid "Starting..."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:381
+#: src/program/AutomationDialog.cpp:397
 msgid "Add Step"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:384
+#: src/program/AutomationDialog.cpp:400
 msgid "Remove Step"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:387
+#: src/program/AutomationDialog.cpp:403
 msgid "Move Down"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:389
+#: src/program/AutomationDialog.cpp:405
 msgid "Execute Selected"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1171 src/program/AutomationDialog.cpp:1246
+#: src/program/AutomationDialog.cpp:1190 src/program/AutomationDialog.cpp:1265
 msgid "<New>"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1214
+#: src/program/AutomationDialog.cpp:1233
 #, c-format
 msgid "Failed to load automation script (error %d)."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1214 src/program/AutomationDialog.cpp:1293
+#: src/program/AutomationDialog.cpp:1233 src/program/AutomationDialog.cpp:1312
 #: src/program/BodySlideApp.cpp:1102 src/program/BodySlideApp.cpp:2258
 #: src/program/BodySlideApp.cpp:2571 src/program/BodySlideApp.cpp:4099
-#: src/program/BodySlideApp.cpp:4106 src/program/BodySlideApp.cpp:4944
+#: src/program/BodySlideApp.cpp:4106 src/program/BodySlideApp.cpp:4945
 #: src/program/OutfitStudio.cpp:1187 src/program/OutfitStudio.cpp:1193
 #: src/program/OutfitStudio.cpp:1769 src/program/OutfitStudio.cpp:1780
 #: src/program/OutfitStudio.cpp:1816 src/program/OutfitStudio.cpp:1827
@@ -4415,105 +4427,105 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1279
+#: src/program/AutomationDialog.cpp:1298
 msgid "Please enter an automation name."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1279 src/program/AutomationDialog.cpp:1304
-#: src/program/AutomationDialog.cpp:1312 src/program/AutomationDialog.cpp:1538
-#: src/program/AutomationDialog.cpp:1552 src/program/AutomationDialog.cpp:1566
-#: src/program/AutomationDialog.cpp:1590 src/program/AutomationDialog.cpp:1603
-#: src/program/AutomationDialog.cpp:1616 src/program/AutomationDialog.cpp:1639
-#: src/program/AutomationDialog.cpp:1718 src/program/AutomationDialog.cpp:3660
-#: src/program/AutomationDialog.cpp:3761 src/program/AutomationDialog.cpp:3766
-#: src/program/AutomationDialog.cpp:3928
+#: src/program/AutomationDialog.cpp:1298 src/program/AutomationDialog.cpp:1323
+#: src/program/AutomationDialog.cpp:1331 src/program/AutomationDialog.cpp:1557
+#: src/program/AutomationDialog.cpp:1571 src/program/AutomationDialog.cpp:1585
+#: src/program/AutomationDialog.cpp:1609 src/program/AutomationDialog.cpp:1622
+#: src/program/AutomationDialog.cpp:1635 src/program/AutomationDialog.cpp:1658
+#: src/program/AutomationDialog.cpp:1737 src/program/AutomationDialog.cpp:3723
+#: src/program/AutomationDialog.cpp:3824 src/program/AutomationDialog.cpp:3829
+#: src/program/AutomationDialog.cpp:3991
 msgid "Automation"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1293
+#: src/program/AutomationDialog.cpp:1312
 #, c-format
 msgid "Failed to save automation script (error %d)."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1304
+#: src/program/AutomationDialog.cpp:1323
 msgid "No automation selected to delete."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1312
+#: src/program/AutomationDialog.cpp:1331
 msgid "Automation file not found."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1317
+#: src/program/AutomationDialog.cpp:1336
 #, c-format
 msgid ""
 "Delete automation '%s'?\n"
 "This cannot be undone."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1318 src/program/OutfitStudio.cpp:10109
+#: src/program/AutomationDialog.cpp:1337 src/program/OutfitStudio.cpp:10109
 #: src/program/OutfitStudio.cpp:10437 src/program/OutfitStudio.cpp:10468
 #: src/program/OutfitStudio.cpp:10478 src/program/OutfitStudio.cpp:10486
 #: src/program/OutfitStudio.cpp:10493
 msgid "Confirm Delete"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1538
+#: src/program/AutomationDialog.cpp:1557
 msgid "No active steps to execute."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1552 src/program/AutomationDialog.cpp:3660
+#: src/program/AutomationDialog.cpp:1571 src/program/AutomationDialog.cpp:3723
 msgid "No files found matching the batch folder scan criteria."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1562
+#: src/program/AutomationDialog.cpp:1581
 msgid "Batch Files"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1562
+#: src/program/AutomationDialog.cpp:1581
 #, c-format
 msgid "Select files to process (%d found):"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1566
+#: src/program/AutomationDialog.cpp:1585
 msgid "No files selected."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1579
+#: src/program/AutomationDialog.cpp:1598
 #, c-format
 msgid ""
 "Folder: %s\n"
 "Extension: %s"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1583
+#: src/program/AutomationDialog.cpp:1602
 #, c-format
 msgid ""
 "\n"
 "File filter: %s%s"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1590 src/program/AutomationDialog.cpp:3766
+#: src/program/AutomationDialog.cpp:1609 src/program/AutomationDialog.cpp:3829
 msgid "No slider sets found matching the filter criteria."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1599
+#: src/program/AutomationDialog.cpp:1618
 msgid "Batch Slider Sets"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1599
+#: src/program/AutomationDialog.cpp:1618
 #, c-format
 msgid "Select slider sets to process (%d found):"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1603
+#: src/program/AutomationDialog.cpp:1622
 msgid "No slider sets selected."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1616
+#: src/program/AutomationDialog.cpp:1635
 msgid "No items found matching the batch criteria."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1620
+#: src/program/AutomationDialog.cpp:1639
 #, c-format
 msgid ""
 "Execute %zu active step(s) on %d item(s)?\n"
@@ -4523,33 +4535,33 @@ msgid ""
 "This may take a while."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1622
+#: src/program/AutomationDialog.cpp:1641
 msgid "Batch Confirmation"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1629
+#: src/program/AutomationDialog.cpp:1648
 #, c-format
 msgid "Execute %zu active step(s) on the current project?"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1629
+#: src/program/AutomationDialog.cpp:1648
 msgid "Confirm Execution"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1639
+#: src/program/AutomationDialog.cpp:1658
 msgid "No step selected."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1679
+#: src/program/AutomationDialog.cpp:1698
 msgid "Running automation script..."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1684
+#: src/program/AutomationDialog.cpp:1703
 #, c-format
 msgid "Step %d/%d: %s"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1694
+#: src/program/AutomationDialog.cpp:1713
 #, c-format
 msgid ""
 "Step %d (%s) failed with error %d.\n"
@@ -4559,46 +4571,46 @@ msgid ""
 "Continue with remaining steps?"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1700
+#: src/program/AutomationDialog.cpp:1719
 msgid "Automation Error"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1702
+#: src/program/AutomationDialog.cpp:1721
 msgid "Automation aborted."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1715
+#: src/program/AutomationDialog.cpp:1734
 msgid "Automation complete."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:1717
+#: src/program/AutomationDialog.cpp:1736
 #, c-format
 msgid "Automation completed: %d step(s) executed."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3343
+#: src/program/AutomationDialog.cpp:3395
 msgid "Export Folder:"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3655
+#: src/program/AutomationDialog.cpp:3718
 msgid "Preparing..."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3674 src/program/AutomationDialog.cpp:3779
+#: src/program/AutomationDialog.cpp:3737 src/program/AutomationDialog.cpp:3842
 #, c-format
 msgid "Processing %d/%d: %s"
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3753 src/program/AutomationDialog.cpp:3920
+#: src/program/AutomationDialog.cpp:3816 src/program/AutomationDialog.cpp:3983
 msgid "Batch complete."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3759
+#: src/program/AutomationDialog.cpp:3822
 #, c-format
 msgid "Batch completed: %d/%d items processed successfully."
 msgstr ""
 
-#: src/program/AutomationDialog.cpp:3926
+#: src/program/AutomationDialog.cpp:3989
 #, c-format
 msgid "Batch completed: %d/%d slider sets processed successfully."
 msgstr ""
@@ -4611,7 +4623,7 @@ msgid ""
 msgstr ""
 
 #: src/program/BodySlideApp.cpp:202 src/program/BodySlideApp.cpp:212
-#: src/program/BodySlideApp.cpp:2237 src/program/BodySlideApp.cpp:5067
+#: src/program/BodySlideApp.cpp:2237 src/program/BodySlideApp.cpp:5068
 #: src/program/OutfitStudio.cpp:636 src/program/OutfitStudio.cpp:646
 #: src/program/OutfitStudio.cpp:846 src/program/OutfitStudio.cpp:853
 msgid "Warning"
@@ -4811,11 +4823,11 @@ msgstr ""
 msgid "Unable to save nif file: "
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4024 src/program/BodySlideApp.cpp:5197
+#: src/program/BodySlideApp.cpp:4024 src/program/BodySlideApp.cpp:5198
 msgid "The following sets failed"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4024 src/program/BodySlideApp.cpp:5197
+#: src/program/BodySlideApp.cpp:4024 src/program/BodySlideApp.cpp:5198
 msgid "Failed"
 msgstr ""
 
@@ -4851,45 +4863,45 @@ msgstr ""
 msgid "Choose Groups"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4854
+#: src/program/BodySlideApp.cpp:4855
 msgid "Choose or create group file"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4867
+#: src/program/BodySlideApp.cpp:4868
 msgid "What would you like the new group to be called?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4867
+#: src/program/BodySlideApp.cpp:4868
 msgid "New Group Name"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4913
+#: src/program/BodySlideApp.cpp:4914
 msgid "Do you really wish to delete the selected project?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4913
+#: src/program/BodySlideApp.cpp:4914
 msgid "Delete Project"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4922
+#: src/program/BodySlideApp.cpp:4923
 msgid "Do you really wish to delete the selected preset?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4922
+#: src/program/BodySlideApp.cpp:4923
 msgid "Delete Preset"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4944 src/program/OutfitStudio.cpp:7873
+#: src/program/BodySlideApp.cpp:4945 src/program/OutfitStudio.cpp:7873
 #, c-format
 msgid "Failed to save preset (%d)!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:4972
+#: src/program/BodySlideApp.cpp:4973
 #, c-format
 msgid "Failed to save preset as '%s' (%d)!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:5063
+#: src/program/BodySlideApp.cpp:5064
 msgid ""
 "Fix Clipping is enabled for this batch build.\n"
 "\n"
@@ -4900,15 +4912,15 @@ msgid ""
 "Do you want to continue with batch build?"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:5172
+#: src/program/BodySlideApp.cpp:5173
 msgid "Choose a folder to contain the saved files"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:5187
+#: src/program/BodySlideApp.cpp:5188
 msgid "All sets processed successfully!"
 msgstr ""
 
-#: src/program/BodySlideApp.cpp:5187
+#: src/program/BodySlideApp.cpp:5188
 msgid "Complete"
 msgstr ""
 
