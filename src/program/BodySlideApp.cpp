@@ -4838,12 +4838,13 @@ void BodySlideFrame::OnBrowseOutfitFolder(wxCommandEvent& WXUNUSED(event)) {
 
 	auto& activeSet = app->GetActiveSet();
 
-	std::string sep{wxString(wxFileName::GetPathSeparator()).ToUTF8()};
-	wxString dataPath{wxString::FromUTF8(activeSet.GetBaseDataPath() + sep + activeSet.GetDefaultDataFolder())};
-	wxFileName fileName{dataPath};
+	wxFileName folderPath(wxString::FromUTF8(activeSet.GetBaseDataPath()), wxEmptyString);
+	folderPath.AppendDir(wxString::FromUTF8(activeSet.GetDefaultDataFolder()));
+	if (folderPath.IsRelative())
+		folderPath.MakeAbsolute(wxString::FromUTF8(app->GetProjectPath()));
 
-	if (!fileName.FileExists() && fileName.DirExists())
-		wxLaunchDefaultApplication(dataPath);
+	if (!folderPath.FileExists() && folderPath.DirExists())
+		wxLaunchDefaultApplication(folderPath.GetPath());
 }
 
 void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {

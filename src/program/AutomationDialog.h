@@ -87,7 +87,8 @@ private:
 	void PopulateRefTemplates();
 	void PopulateSetsFromFile(const wxString& filePath, const char* choiceName, const char* shapesChoiceName = nullptr);
 	void PopulateRefShapesForSet(const wxString& filePath, const wxString& setName);
-	std::string MakeRelativeToProject(const std::string& absolutePath);
+	wxString MakeRelativeToProject(const wxString& absolutePath) const;
+	wxString MakeAbsoluteToProject(const wxString& path) const;
 	AutomationBatchMode GetSelectedBatchMode() const;
 	bool IsBatchMode(AutomationBatchMode mode) const;
 	void ApplyBatchModeDefaults(AutomationStep& step) const;

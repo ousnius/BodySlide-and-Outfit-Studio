@@ -811,7 +811,7 @@ void AutomationDialog::UpdateStepFromUI() {
 		case AutomationStepType::LoadReference: {
 			auto* fp = XRCCTRL(*this, "fpRefSourceFile", wxFilePickerCtrl);
 			if (fp)
-				step.refSourceFile = MakeRelativeToProject(fp->GetPath().ToUTF8().data());
+				step.refSourceFile = MakeRelativeToProject(fp->GetPath()).ToUTF8().data();
 			auto* choiceSet = XRCCTRL(*this, "choiceRefSet", wxChoice);
 			if (choiceSet && choiceSet->GetSelection() != wxNOT_FOUND)
 				step.refSet = choiceSet->GetStringSelection().ToUTF8().data();
@@ -828,7 +828,7 @@ void AutomationDialog::UpdateStepFromUI() {
 		case AutomationStepType::AddProject: {
 			auto* fp = XRCCTRL(*this, "fpAddProjSourceFile", wxFilePickerCtrl);
 			if (fp)
-				step.refSourceFile = MakeRelativeToProject(fp->GetPath().ToUTF8().data());
+				step.refSourceFile = MakeRelativeToProject(fp->GetPath()).ToUTF8().data();
 			auto* choiceSet = XRCCTRL(*this, "choiceAddProjSet", wxChoice);
 			if (choiceSet && choiceSet->GetSelection() != wxNOT_FOUND)
 				step.refSet = choiceSet->GetStringSelection().ToUTF8().data();
@@ -1068,7 +1068,7 @@ void AutomationDialog::UpdateStepFromUI() {
 		case AutomationStepType::LoadMask: {
 			auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
 			if (fp)
-				step.loadMaskFile = MakeRelativeToProject(fp->GetPath().ToUTF8().data());
+				step.loadMaskFile = MakeRelativeToProject(fp->GetPath()).ToUTF8().data();
 			auto* choice = XRCCTRL(*this, "choiceLoadMaskName", wxChoice);
 			if (choice && choice->GetSelection() != wxNOT_FOUND)
 				step.loadMaskName = choice->GetStringSelection().ToUTF8().data();
@@ -1335,7 +1335,7 @@ void AutomationDialog::OnDeleteScript(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void AutomationDialog::OnOpenFolder(wxCommandEvent& WXUNUSED(event)) {
-	wxString folder = wxString::FromUTF8(GetAutomationsFolder());
+	wxString folder = MakeAbsoluteToProject(wxString::FromUTF8(GetAutomationsFolder()));
 	if (!wxDir::Exists(folder))
 		wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
@@ -1736,19 +1736,21 @@ int AutomationDialog::ExecuteStepLoadReference(const AutomationStep& step) {
 		return 1;
 	}
 
-	wxFileName fn(wxString::FromUTF8(step.refSourceFile));
+	wxString refSourceFile = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile));
+	wxFileName fn(refSourceFile);
 	wxString ext = fn.GetExt().Lower();
+	std::string refSourceFileStd = refSourceFile.ToUTF8().data();
 
 	int err = 0;
 	if (ext == "nif") {
-		err = project->LoadReferenceNif(step.refSourceFile, step.refShape, step.refMergeSliders, step.refMergeZaps);
+		err = project->LoadReferenceNif(refSourceFileStd, step.refShape, step.refMergeSliders, step.refMergeZaps);
 	}
 	else {
 		if (!step.refSet.empty()) {
-			err = project->LoadReference(step.refSourceFile, step.refSet, step.refShape, step.refMergeSliders, step.refMergeZaps, step.refAppendNewSliders);
+			err = project->LoadReference(refSourceFileStd, step.refSet, step.refShape, step.refMergeSliders, step.refMergeZaps, step.refAppendNewSliders);
 		}
 		else {
-			err = project->LoadReferenceTemplate(step.refSourceFile, step.refSet, step.refShape, step.refLoadAll, step.refMergeSliders, step.refMergeZaps, step.refAppendNewSliders);
+			err = project->LoadReferenceTemplate(refSourceFileStd, step.refSet, step.refShape, step.refLoadAll, step.refMergeSliders, step.refMergeZaps, step.refAppendNewSliders);
 		}
 	}
 
@@ -1765,8 +1767,10 @@ int AutomationDialog::ExecuteStepAddProject(const AutomationStep& step) {
 		return 1;
 	}
 
-	wxLogMessage("Automation: Adding project from '%s' (set: '%s')...", step.refSourceFile, step.refSet);
-	int err = project->AddFromSliderSet(step.refSourceFile, step.refSet, true, step.refAppendNewSliders);
+	wxString refSourceFile = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile));
+	std::string refSourceFileStd = refSourceFile.ToUTF8().data();
+	wxLogMessage("Automation: Adding project from '%s' (set: '%s')...", refSourceFile, step.refSet);
+	int err = project->AddFromSliderSet(refSourceFileStd, step.refSet, true, step.refAppendNewSliders);
 	if (err) {
 		wxLogError("Automation: AddProject failed with error %d.", err);
 		return err;
@@ -2110,11 +2114,14 @@ int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 		return 1;
 	}
 
+	wxString sliderDataPath = MakeAbsoluteToProject(wxString::FromUTF8(step.sliderDataFile));
+	std::string sliderDataPathStd = sliderDataPath.ToUTF8().data();
+
 	if (step.sliderDataFromFolder) {
-		wxLogMessage("Automation: Importing slider data from folder '%s'...", step.sliderDataFile);
-		wxDir dir(wxString::FromUTF8(step.sliderDataFile));
+		wxLogMessage("Automation: Importing slider data from folder '%s'...", sliderDataPath);
+		wxDir dir(sliderDataPath);
 		if (!dir.IsOpened()) {
-			wxLogError("Automation: ImportSliderData - cannot open folder '%s'.", step.sliderDataFile);
+			wxLogError("Automation: ImportSliderData - cannot open folder '%s'.", sliderDataPath);
 			return 1;
 		}
 
@@ -2126,7 +2133,7 @@ int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 			std::string fname = filename.ToUTF8().data();
 			wxFileName wxFn(filename);
 			std::string extLower = wxFn.GetExt().Lower().ToUTF8().data();
-			std::string fullPath = step.sliderDataFile + "/" + fname;
+			std::string fullPath = sliderDataPathStd + "/" + fname;
 
 			if (extLower == "osd") {
 				// OSD: import all sliders, auto-mapping shapes by target name
@@ -2287,15 +2294,15 @@ int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 	}
 	else {
 		// Single file mode
-		wxLogMessage("Automation: Importing slider data from '%s'...", step.sliderDataFile);
-		wxFileName fn(wxString::FromUTF8(step.sliderDataFile));
+		wxLogMessage("Automation: Importing slider data from '%s'...", sliderDataPath);
+		wxFileName fn(sliderDataPath);
 		wxString ext = fn.GetExt().Lower();
 
 		if (ext == "osd") {
 			// OSD multi-diff import
 			OSDataFile osd;
-			if (!osd.Read(step.sliderDataFile)) {
-				wxLogError("Automation: Failed to read OSD file '%s'.", step.sliderDataFile);
+			if (!osd.Read(sliderDataPathStd)) {
+				wxLogError("Automation: Failed to read OSD file '%s'.", sliderDataPath);
 				return 1;
 			}
 
@@ -2350,8 +2357,8 @@ int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 		else if (ext == "tri") {
 			// TRI multi-morph import
 			TriFile tri;
-			if (!tri.Read(step.sliderDataFile)) {
-				wxLogError("Automation: Failed to read TRI file '%s'.", step.sliderDataFile);
+			if (!tri.Read(sliderDataPathStd)) {
+				wxLogError("Automation: Failed to read TRI file '%s'.", sliderDataPath);
 				return 1;
 			}
 
@@ -2413,16 +2420,16 @@ int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 			for (auto* shape : shapes) {
 				bool ok = false;
 				if (ext == "nif")
-					ok = project->SetSliderFromNIF(sliderName, shape, step.sliderDataFile);
+					ok = project->SetSliderFromNIF(sliderName, shape, sliderDataPathStd);
 				else if (ext == "obj")
-					ok = project->SetSliderFromOBJ(sliderName, shape, step.sliderDataFile);
+					ok = project->SetSliderFromOBJ(sliderName, shape, sliderDataPathStd);
 				else if (ext == "bsd") {
-					project->SetSliderFromBSD(sliderName, shape, step.sliderDataFile);
+					project->SetSliderFromBSD(sliderName, shape, sliderDataPathStd);
 					ok = true;
 				}
 #ifdef USE_FBXSDK
 				else if (ext == "fbx")
-					ok = project->SetSliderFromFBX(sliderName, shape, step.sliderDataFile);
+					ok = project->SetSliderFromFBX(sliderName, shape, sliderDataPathStd);
 #endif
 
 				if (ok)
@@ -2443,12 +2450,15 @@ int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
 		return 1;
 	}
 
+	wxString importFilePath = MakeAbsoluteToProject(wxString::FromUTF8(step.importFilePath));
+	std::string importFilePathStd = importFilePath.ToUTF8().data();
+
 	if (step.importFromFolder) {
 		// Folder mode: import all NIF/OBJ/FBX files from the folder
-		wxLogMessage("Automation: Importing all files from folder '%s'...", step.importFilePath);
-		wxDir dir(wxString::FromUTF8(step.importFilePath));
+		wxLogMessage("Automation: Importing all files from folder '%s'...", importFilePath);
+		wxDir dir(importFilePath);
 		if (!dir.IsOpened()) {
-			wxLogError("Automation: ImportFile - cannot open folder '%s'.", step.importFilePath);
+			wxLogError("Automation: ImportFile - cannot open folder '%s'.", importFilePath);
 			return 1;
 		}
 
@@ -2459,7 +2469,7 @@ int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
 			wxFileName fn(filename);
 			wxString ext = fn.GetExt().Lower();
 			if (ext == "nif" || ext == "obj" || ext == "fbx") {
-				std::string fullPath = step.importFilePath + "/" + filename.ToUTF8().data();
+				std::string fullPath = importFilePathStd + "/" + filename.ToUTF8().data();
 				int err = 0;
 				if (ext == "nif")
 					err = project->ImportNIF(fullPath, false);
@@ -2484,17 +2494,17 @@ int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
 	}
 	else {
 		// Single file mode
-		wxFileName fn(wxString::FromUTF8(step.importFilePath));
+		wxFileName fn(importFilePath);
 		wxString ext = fn.GetExt().Lower();
 		int err = 0;
 
 		if (ext == "nif")
-			err = project->ImportNIF(step.importFilePath, false);
+			err = project->ImportNIF(importFilePathStd, false);
 		else if (ext == "obj")
-			err = project->ImportOBJ(step.importFilePath);
+			err = project->ImportOBJ(importFilePathStd);
 		else if (ext == "fbx")
 #ifdef USE_FBXSDK
-			err = project->ImportFBX(step.importFilePath);
+			err = project->ImportFBX(importFilePathStd);
 #else
 			wxLogError("Automation: FBX import is not available (FBX SDK not compiled in).");
 #endif
@@ -2504,7 +2514,7 @@ int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
 		}
 
 		if (err) {
-			wxLogError("Automation: ImportFile '%s' failed with error %d.", step.importFilePath, err);
+			wxLogError("Automation: ImportFile '%s' failed with error %d.", importFilePath, err);
 			return err;
 		}
 	}
@@ -2827,17 +2837,19 @@ int AutomationDialog::ExecuteStepLoadMask(const AutomationStep& step) {
 		return 1;
 	}
 
+	wxString loadMaskFile = MakeAbsoluteToProject(wxString::FromUTF8(step.loadMaskFile));
+	std::string loadMaskFileStd = loadMaskFile.ToUTF8().data();
 	MaskFile maskFile;
-	int maskErr = maskFile.Load(step.loadMaskFile);
+	int maskErr = maskFile.Load(loadMaskFileStd);
 	if (maskErr) {
-		wxLogError("Automation: LoadMask - failed to load file '%s' (error %d).", step.loadMaskFile, maskErr);
+		wxLogError("Automation: LoadMask - failed to load file '%s' (error %d).", loadMaskFile, maskErr);
 		return 1;
 	}
 
 	const MaskEntry* entry = maskFile.FindEntry(step.loadMaskName);
 	if (!entry) {
 		wxLogError("Automation: LoadMask - mask name '%s' not found in file '%s'.",
-			step.loadMaskName, step.loadMaskFile);
+			step.loadMaskName, loadMaskFile);
 		return 1;
 	}
 
@@ -3362,20 +3374,31 @@ void AutomationDialog::UpdateExportForBatchMode() {
 		page->Layout();
 }
 
-std::string AutomationDialog::MakeRelativeToProject(const std::string& absolutePath) {
+wxString AutomationDialog::MakeRelativeToProject(const wxString& absolutePath) const {
 	if (absolutePath.empty())
 		return absolutePath;
 
-	std::string projPath = GetProjectPath();
-	wxFileName fn(wxString::FromUTF8(absolutePath));
+	wxFileName fn(absolutePath);
 
 	if (fn.IsRelative())
 		return absolutePath; // Already relative
 
-	if (fn.MakeRelativeTo(wxString::FromUTF8(projPath)))
-		return fn.GetFullPath().ToUTF8().data();
+	if (fn.MakeRelativeTo(wxString::FromUTF8(GetProjectPath())))
+		return fn.GetFullPath();
 
 	return absolutePath; // Couldn't make relative, return as-is
+}
+
+wxString AutomationDialog::MakeAbsoluteToProject(const wxString& path) const {
+	if (path.empty())
+		return path;
+
+	wxFileName fn(path);
+	if (!fn.IsRelative())
+		return path;
+
+	fn.MakeAbsolute(wxString::FromUTF8(GetProjectPath()));
+	return fn.GetFullPath();
 }
 
 void AutomationDialog::PopulateVariablesUI() {
@@ -3548,9 +3571,9 @@ void AutomationDialog::OnBatchModeChanged(wxCommandEvent& WXUNUSED(event)) {
 std::vector<std::string> AutomationDialog::GatherBatchFiles() {
 	std::vector<std::string> result;
 
-	std::string folder = script.GetBatchFolder();
+	wxString folder = MakeAbsoluteToProject(wxString::FromUTF8(script.GetBatchFolder()));
 	std::string ext = script.GetBatchExtension();
-	if (folder.empty() || ext.empty())
+	if (folder.IsEmpty() || ext.empty())
 		return result;
 
 	// Ensure extension starts with *
@@ -3558,14 +3581,14 @@ std::vector<std::string> AutomationDialog::GatherBatchFiles() {
 
 	wxArrayString wxFiles;
 	if (script.GetBatchSubdirectories())
-		wxDir::GetAllFiles(wxString::FromUTF8(folder), &wxFiles, wildcard);
+		wxDir::GetAllFiles(folder, &wxFiles, wildcard);
 	else {
-		wxDir dir(wxString::FromUTF8(folder));
+		wxDir dir(folder);
 		if (dir.IsOpened()) {
 			wxString f;
 			if (dir.GetFirst(&f, wildcard, wxDIR_FILES)) {
 				do {
-					wxFiles.Add(wxString::FromUTF8(folder) + wxFileName::GetPathSeparator() + f);
+					wxFiles.Add(folder + wxFileName::GetPathSeparator() + f);
 				} while (dir.GetNext(&f));
 			}
 		}
