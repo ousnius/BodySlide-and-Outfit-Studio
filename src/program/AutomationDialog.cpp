@@ -1719,6 +1719,7 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 }
 
 void AutomationDialog::ResetAndClearProject() {
+	project->SetBaseShape(nullptr, false);
 	project->GetWorkAnim()->Clear();
 	project->GetWorkNif()->Clear();
 	outfitStudio->ResetProject();
