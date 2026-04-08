@@ -1830,6 +1830,11 @@ int AutomationDialog::ExecuteStepConformSliders(const AutomationStep& step) {
 		return 0;
 	}
 
+	if (!project->GetBaseShape()) {
+		wxLogError("Automation: ConformSliders - no reference shape loaded.");
+		return 1;
+	}
+
 	ConformOptions options;
 	options.proximityRadius = step.conformProximityRadius;
 	options.maxResults = step.conformMaxResults;
@@ -1839,6 +1844,22 @@ int AutomationDialog::ExecuteStepConformSliders(const AutomationStep& step) {
 	options.axisY = step.conformAxisY;
 	options.axisZ = step.conformAxisZ;
 	options.sliderNames = step.conformSliderNames;
+
+	if (options.sliderNames.empty()) {
+		wxLogMessage("Automation: ConformSliders - conforming all non-zap/non-UV sliders.");
+	}
+	else {
+		wxString namesList;
+		for (const auto& sn : options.sliderNames) {
+			if (!namesList.empty())
+				namesList += ", ";
+			namesList += wxString::FromUTF8(sn);
+		}
+		wxLogMessage("Automation: ConformSliders - conforming %zu named slider(s): %s",
+					 options.sliderNames.size(), namesList);
+	}
+
+	outfitStudio->ZeroSliders();
 
 	project->InitConform();
 	for (auto* shape : shapes) {
@@ -3796,12 +3817,20 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			bool stepFailed = false;
 			for (size_t i = 0; i < execScript.GetSteps().size(); i++) {
-				int err = ExecuteStep(execScript.GetSteps()[i]);
+				const auto& batchStep = execScript.GetSteps()[i];
+				int err = ExecuteStep(batchStep);
 				if (err != 0) {
 					wxLogError("Automation: Batch - step %zu failed on '%s'.", i + 1, filePath);
 					stepFailed = true;
 					break;
 				}
+
+				outfitStudio->RefreshGUIFromProj();
+
+				if (StepChangesSliderSet(batchStep.type))
+					outfitStudio->CreateSetSliders();
+
+				outfitStudio->ApplySliders();
 			}
 
 			if (stepFailed)
@@ -3963,12 +3992,20 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			bool stepFailed = false;
 			for (size_t i = 0; i < execScript.GetSteps().size(); i++) {
-				int err = ExecuteStep(execScript.GetSteps()[i]);
+				const auto& batchStep = execScript.GetSteps()[i];
+				int err = ExecuteStep(batchStep);
 				if (err != 0) {
 					wxLogError("Automation: Batch - step %zu failed on '%s'.", i + 1, setName);
 					stepFailed = true;
 					break;
 				}
+
+				outfitStudio->RefreshGUIFromProj();
+
+				if (StepChangesSliderSet(batchStep.type))
+					outfitStudio->CreateSetSliders();
+
+				outfitStudio->ApplySliders();
 			}
 
 			if (stepFailed)
