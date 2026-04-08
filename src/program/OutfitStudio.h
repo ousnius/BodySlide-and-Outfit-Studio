@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/TweakBrush.h"
 #include "../components/UndoHistory.h"
 #include "../render/GLSurface.h"
+#include "../ui/WeightCopyDialog.h"
 #include "../ui/wxSliderPanel.h"
 #include "../ui/wxStateButton.h"
 #include "../utils/ConfigurationManager.h"
@@ -111,13 +112,7 @@ public:
 	}
 };
 
-struct WeightCopyOptions {
-	float proximityRadius = 0.0f;
-	int maxResults = 0;
-	bool showSkinTransOption = false;
-	bool doSkinTransCopy = false;
-	bool doTransformGeo = false;
-};
+
 
 enum class ToolID {
 	Any = -1,
@@ -268,6 +263,7 @@ public:
 	void UpdateNodeColors();
 
 	void ShowBones(bool show = true);
+	bool IsBonesMode() { return bonesMode; }
 	void UpdateBones();
 
 	void ShowFloor(bool show = true);
@@ -1007,6 +1003,7 @@ public:
 	void HighlightSliderData();
 	void HighlightBoneNamesWithWeights();
 	void RefreshGUIWeightColors();
+	void PoseToGUI();
 	void GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones);
 	std::vector<std::string> GetSelectedBones();
 	void CalcAutoXMirrorBone();
@@ -1195,7 +1192,6 @@ private:
 
 	bool HasUnweightedCheck();
 	void CalcCopySkinTransOption(WeightCopyOptions& options);
-	bool ShowWeightCopy(WeightCopyOptions& options, bool silent = false);
 	void ReselectBone();
 
 	int CopySegPartForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
@@ -1419,7 +1415,6 @@ private:
 	void GetBoneDlgData(wxDialog& dlg, nifly::MatTransform& xform, std::string& parentBone, int& addCount);
 	void OnEditBone(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
-	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnCheckBadBones(wxCommandEvent& event);
@@ -1640,7 +1635,6 @@ private:
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
 	void ApplyPose();
 	AnimBone* GetPoseBonePtr();
-	void PoseToGUI();
 	void OnPoseBoneChanged(wxCommandEvent& event);
 	void OnPoseValChanged(int cind, float val);
 	void OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind);

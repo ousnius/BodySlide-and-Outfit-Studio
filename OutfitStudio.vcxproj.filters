@@ -110,6 +110,9 @@
     <None Include="res\xrc\Setup.xrc">
       <Filter>Resources</Filter>
     </None>
+    <None Include="res\xrc\WeightCopy.xrc">
+      <Filter>Resources</Filter>
+    </None>
     <None Include="lang\BodySlide.pot">
       <Filter>Resources</Filter>
     </None>
@@ -1414,6 +1417,9 @@
     <ClInclude Include="src\ui\wxBrushSettingsPopup.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\WeightCopyDialog.h">
+      <Filter>UI</Filter>
+    </ClInclude>
     <ClInclude Include="src\ui\wxSliderPanel.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -2122,6 +2128,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\WeightCopyDialog.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\wxSliderPanel.cpp">

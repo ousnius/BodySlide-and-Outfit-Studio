@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+	<object class="wxDialog" name="dlgCopyWeights">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
+		<size>580,520</size>
+		<title>Copy Bone Weights</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticText" name="copyWeightsDescription">
+					<label>Each vertex of the reference will copy its weights to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become weighted and work well. Often, the default values are sufficient.</label>
+					<wrap>550</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxFlexGridSizer">
+					<rows>0</rows>
+					<cols>3</cols>
+					<vgap>0</vgap>
+					<hgap>0</hgap>
+					<growablecols></growablecols>
+					<growablerows></growablerows>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="proximityRadiusLabel">
+							<label>Search Radius</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxSlider" name="proximityRadiusSlider">
+							<value translate="0">5000</value>
+							<min>0</min>
+							<max>20000</max>
+							<size>400,-1</size>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="proximityRadiusText">
+							<size>60,-1</size>
+							<value translate="0">5.00000</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="maxResultsLabel">
+							<label>Max Vertex Targets</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxSlider" name="maxResultsSlider">
+							<value translate="0">4</value>
+							<min>1</min>
+							<max>100</max>
+							<size>400,-1</size>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="maxResultsText">
+							<size>60,-1</size>
+							<value translate="0">4</value>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT</flag>
+				<border>10</border>
+				<object class="wxCheckBox" name="noTargetLimit">
+					<label>No Target Limit</label>
+					<checked>0</checked>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxTOP</flag>
+				<border>10</border>
+				<object class="wxStaticText" name="boneListLabel">
+					<label>Bones to copy (click to preview weights):</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+				<border>10</border>
+				<object class="wxCheckListBox" name="boneList">
+					<size>-1,160</size>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxTOP</flag>
+				<border>10</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnCheckAll">
+							<label>Check All</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnUncheckAll">
+							<label>Uncheck All</label>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxTOP</flag>
+				<border>10</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="poseLabel">
+							<label>Pose:</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxChoice" name="poseChoice">
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticText" name="copyTransDescription">
+					<label>The skin coordinate system doesn't match the reference shape's. Do you want to copy the transforms?</label>
+					<wrap>550</wrap>
+					<hidden>1</hidden>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT</flag>
+				<border>10</border>
+				<object class="wxCheckBox" name="cbCopySkinTrans">
+					<label>Copy skin transform from reference</label>
+					<checked>1</checked>
+					<hidden>1</hidden>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT</flag>
+				<border>10</border>
+				<object class="wxCheckBox" name="cbTransformGeo">
+					<label>Recalculate geometry's coordinates so it doesn't move</label>
+					<tooltip>Transform geometry so its position in global coordinates does not change.</tooltip>
+					<checked>1</checked>
+					<hidden>1</hidden>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnPreview">
+							<label>&amp;Preview</label>
+							<tooltip>Run the weight copy and preview the results. Click again to update the preview.</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxGauge" name="previewProgress">
+							<size>-1,16</size>
+							<range>100</range>
+							<value>0</value>
+							<hidden>1</hidden>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<size>10,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+</resource>

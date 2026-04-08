@@ -83,6 +83,7 @@ set(OSsources
 	src/files/ObjFile.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
+	src/ui/WeightCopyDialog.cpp
 	src/program/EditUV.cpp
 	src/program/FBXImportDialog.cpp
 	src/program/ObjImportDialog.cpp

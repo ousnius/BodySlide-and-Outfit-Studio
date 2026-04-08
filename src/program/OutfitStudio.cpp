@@ -1,4 +1,4 @@
-/*
+﻿/*
 BodySlide and Outfit Studio
 
 This program is free software: you can redistribute it and/or modify
@@ -279,7 +279,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("deleteBoneSelected"), OutfitStudioFrame::OnDeleteBoneFromSelected)
 	EVT_MENU(XRCID("editBone"), OutfitStudioFrame::OnEditBone)
 	EVT_MENU(XRCID("copyBoneWeight"), OutfitStudioFrame::OnCopyBoneWeight)
-	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudioFrame::OnCopySelectedWeight)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
 	EVT_MENU(XRCID("checkBadBones"), OutfitStudioFrame::OnCheckBadBones)
@@ -1199,6 +1198,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Project.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Actions.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/WeightCopy.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Slider.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Skeleton.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Settings.xrc");
@@ -10849,72 +10849,6 @@ bool OutfitStudioFrame::HasUnweightedCheck() {
 	return false;
 }
 
-bool OutfitStudioFrame::ShowWeightCopy(WeightCopyOptions& options, bool silent) {
-	CloseBrushSettings();
-
-	wxDialog dlg;
-	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCopyWeights")) {
-		XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
-			float changed = XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->GetValue() / 1000.0f;
-			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", changed));
-		});
-
-		XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->Bind(wxEVT_TEXT, [&dlg](wxCommandEvent&) {
-			float changed = atof(XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->GetValue().c_str());
-			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(changed * 1000);
-		});
-
-		XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
-			int changed = XRCCTRL(dlg, "maxResultsSlider", wxSlider)->GetValue();
-			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->ChangeValue(wxString::Format("%d", changed));
-		});
-
-		XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Bind(wxEVT_TEXT, [&dlg](wxCommandEvent&) {
-			int changed = atol(XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->GetValue().c_str());
-			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->SetValue(changed);
-		});
-
-		XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->Bind(wxEVT_CHECKBOX, [&dlg](wxCommandEvent&) {
-			bool noTargetLimit = XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->IsChecked();
-			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Enable(!noTargetLimit);
-			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Enable(!noTargetLimit);
-		});
-
-		wxCheckBox* cbCopySkinTrans = XRCCTRL(dlg, "cbCopySkinTrans", wxCheckBox);
-		wxCheckBox* cbTransformGeo = XRCCTRL(dlg, "cbTransformGeo", wxCheckBox);
-		if (options.showSkinTransOption) {
-			cbCopySkinTrans->SetValue(options.doSkinTransCopy);
-			cbTransformGeo->SetValue(options.doTransformGeo);
-			cbCopySkinTrans->Show();
-			cbTransformGeo->Show();
-			XRCCTRL(dlg, "copyTransDescription", wxStaticText)->Show();
-		}
-
-		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
-
-		dlg.SetSize(dlg.GetBestSize());
-
-		if (silent || dlg.ShowModal() == wxID_OK) {
-			options.proximityRadius = atof(XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->GetValue().c_str());
-
-			bool noTargetLimit = XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->IsChecked();
-			if (!noTargetLimit)
-				options.maxResults = atol(XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->GetValue().c_str());
-			else
-				options.maxResults = std::numeric_limits<int>::max();
-
-			if (options.showSkinTransOption) {
-				options.doSkinTransCopy = cbCopySkinTrans->IsChecked();
-				options.doTransformGeo = cbTransformGeo->IsChecked();
-			}
-
-			return true;
-		}
-	}
-
-	return false;
-}
-
 void OutfitStudioFrame::ReselectBone() {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
@@ -11024,19 +10958,55 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 }
 
 int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, bool silent) {
+	CloseBrushSettings();
+
 	WeightCopyOptions options;
 	CalcCopySkinTransOption(options);
 	AnimInfo& workAnim = *project->GetWorkAnim();
 
-	StartProgress(_("Copying bone weights..."));
-
-	if (ShowWeightCopy(options, silent)) {
+	WeightCopyDialog dlg(this, project, glView, poseDataCollection, lastNormalizeBones, shapes, options, silent);
+	if (dlg.GetResult()) {
+		StartProgress(_("Copying bone weights..."));
 
 		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 		usp->undoType = UndoType::Weight;
 
-		std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
+		std::vector<std::string> baseBones;
+		if (!options.selectedBones.empty())
+			baseBones = options.selectedBones;
+		else
+			baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
+
 		std::sort(baseBones.begin(), baseBones.end());
+
+		int nCopyBones = static_cast<int>(baseBones.size());
+		std::vector<std::string> lockedBones;
+		bool bSpreadWeight = false;
+
+		// When copying a subset of bones, compute normalization info
+		if (!options.selectedBones.empty()) {
+			std::unordered_set<std::string> selBones{baseBones.begin(), baseBones.end()};
+			std::vector<std::string> normBones, notNormBones;
+			GetNormalizeBones(&normBones, &notNormBones);
+
+			for (auto& bone : normBones)
+				if (!selBones.count(bone))
+					baseBones.push_back(bone);
+
+			bSpreadWeight = static_cast<int>(baseBones.size()) > nCopyBones;
+
+			if (bSpreadWeight) {
+				for (auto& bone : notNormBones)
+					if (!selBones.count(bone))
+						lockedBones.push_back(bone);
+			}
+			else {
+				for (auto& bone : notNormBones)
+					if (!selBones.count(bone))
+						baseBones.push_back(bone);
+			}
+		}
+
 		std::unordered_map<uint16_t, float> mask;
 
 		const int inc = 100 / shapes.size() - 1;
@@ -11064,16 +11034,17 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 			mask.clear();
 			glView->GetShapeMask(mask, shape->name.get());
 
-			std::vector<std::string> bones = workAnim.shapeBones[shape->name.get()];
 			std::vector<std::string> mergedBones = baseBones;
 
-			for (auto b : bones)
-				if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
-					mergedBones.push_back(b);
+			// For full copy, also add shape-specific bones not already in baseBones
+			if (options.selectedBones.empty()) {
+				std::vector<std::string> bones = workAnim.shapeBones[shape->name.get()];
+				for (auto& b : bones)
+					if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
+						mergedBones.push_back(b);
+			}
 
-			std::vector<std::string> lockedBones;
-
-			project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, mergedBones, baseBones.size(), lockedBones, usp->usss.back(), false);
+			project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, mergedBones, nCopyBones, lockedBones, usp->usss.back(), bSpreadWeight);
 			EndProgress();
 		}
 
@@ -11087,101 +11058,11 @@ int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, boo
 
 		workAnim.CleanupBones();
 		UpdateAnimationGUI();
-	}
-
-	EndProgress();
-	return 0;
-}
-
-void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
-	if (!ShapeSelectionCheck())
-		return;
-
-	if (!project->GetBaseShape()) {
-		wxMessageBox(_("There is no reference shape!"), _("Error"));
-		return;
-	}
-
-	std::vector<std::string> boneList = GetSelectedBones();
-	int nSelBones = boneList.size();
-	if (nSelBones < 1)
-		return;
-
-	std::unordered_set<std::string> selBones{boneList.begin(), boneList.end()};
-
-	std::string bonesString;
-	for (std::string& boneName : boneList)
-		bonesString += "'" + boneName + "' ";
-
-	std::vector<std::string> normBones, notNormBones, lockedBones;
-	GetNormalizeBones(&normBones, &notNormBones);
-	for (auto& bone : normBones)
-		if (!selBones.count(bone))
-			boneList.push_back(bone);
-
-	bool bHasNormBones = static_cast<int>(boneList.size()) > nSelBones;
-	if (bHasNormBones) {
-		for (auto& bone : notNormBones)
-			if (!selBones.count(bone))
-				lockedBones.push_back(bone);
-	}
-	else {
-		for (auto& bone : notNormBones)
-			if (!selBones.count(bone))
-				boneList.push_back(bone);
-	}
-
-	WeightCopyOptions options;
-	CalcCopySkinTransOption(options);
-	AnimInfo& workAnim = *project->GetWorkAnim();
-
-	if (ShowWeightCopy(options)) {
-		StartProgress(_("Copying selected bone weights..."));
-
-		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
-		usp->undoType = UndoType::Weight;
-		std::unordered_map<uint16_t, float> mask;
-		for (size_t i = 0; i < selectedItems.size(); i++) {
-			NiShape* shape = selectedItems[i]->GetShape();
-			if (!project->IsBaseShape(shape)) {
-				wxLogMessage("Copying selected bone weights to '%s' for %s...", shape->name.get(), bonesString);
-				if (options.doSkinTransCopy) {
-					MatTransform globalToBaseShape = workAnim.GetTransformGlobalToShape(project->GetBaseShape());
-					MatTransform globalToShape = workAnim.GetTransformGlobalToShape(shape);
-
-					if (options.doTransformGeo && !globalToBaseShape.IsNearlyEqualTo(globalToShape)) {
-						MatTransform shapeToBaseShape = globalToBaseShape.ComposeTransforms(globalToShape.InverseTransform());
-						project->ApplyTransformToShapeGeometry(shape, shapeToBaseShape);
-					}
-
-					workAnim.SetTransformGlobalToShape(shape, globalToBaseShape);
-				}
-
-				usp->usss.resize(usp->usss.size() + 1);
-				usp->usss.back().shapeName = shape->name.get();
-
-				mask.clear();
-				glView->GetShapeMask(mask, shape->name.get());
-
-				project->CopyBoneWeights(shape, options.proximityRadius, options.maxResults, mask, boneList, nSelBones, lockedBones, usp->usss.back(), bHasNormBones);
-			}
-			else
-				wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
-		}
-
-		if (options.doSkinTransCopy || options.doTransformGeo)
-			RefreshGUIFromProj();
-
-		ActiveShapesUpdated(usp, false);
-		project->morpher.ClearProximityCache();
-
-		UpdateUndoTools();
 
 		EndProgress();
 	}
 
-	workAnim.CleanupBones();
-	UpdateAnimationGUI();
+	return 0;
 }
 
 void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {

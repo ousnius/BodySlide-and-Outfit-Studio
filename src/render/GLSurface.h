@@ -405,6 +405,8 @@ public:
 			UpdateShaders(o);
 	}
 
+	bool GetWeightColors() const { return bWeightColors; }
+
 	void SetVertexColors(bool bVisible = true) {
 		bVertexColors = bVisible;
 
