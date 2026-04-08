@@ -7331,7 +7331,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		SetNoSubMeshes();
 
 		ReselectBone();
-		glView->GetUndoHistory()->ClearHistory();
 		UpdateUndoTools();
 	}
 	else if (id == colorsTabButton->GetId()) {
