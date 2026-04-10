@@ -103,6 +103,10 @@ wxEND_EVENT_TABLE()
 wxIMPLEMENT_APP(BodySlideApp);
 
 BodySlideApp::~BodySlideApp() {
+	++previewLoadGeneration;
+	if (previewLoadThread.joinable())
+		previewLoadThread.join();
+
 	delete locale;
 	locale = nullptr;
 
@@ -142,6 +146,7 @@ bool BodySlideApp::OnInit() {
 	wxImage::AddHandler(new wxDDSHandler);
 
 	preview = nullptr;
+	previewWindow = nullptr;
 	sliderView = nullptr;
 
 	Bind(wxEVT_CHAR_HOOK, &BodySlideApp::CharHook, this);
@@ -189,6 +194,9 @@ bool BodySlideApp::OnInit() {
 	sliderView->SetPosition(wxPoint(x, y));
 	if (maximized == "true")
 		sliderView->Maximize();
+
+	// Set preview pointer to the embedded panel before any data loading
+	InitPreviewPanel();
 
 	sliderView->Show();
 	SetTopWindow(sliderView);
@@ -395,7 +403,10 @@ void BodySlideApp::LoadData() {
 	sliderView->ClearSliderGUI();
 
 	if (preview)
-		preview->Close();
+		CleanupPreview();
+
+	if (previewWindow)
+		ClosePreview();
 
 	sliderManager.ClearSliders();
 	sliderManager.ClearPresets();
@@ -421,6 +432,13 @@ void BodySlideApp::LoadData() {
 
 	sliderView->Thaw();
 	sliderView->Layout();
+	if (sliderView->leftPanel)
+		sliderView->leftPanel->Layout();
+
+	// Trigger initial preview load for embedded panel
+	if (preview && preview->IsGLInitialized() && !previewWindow && !activeOutfit.empty()) {
+		InitPreview();
+	}
 }
 
 void BodySlideApp::CharHook(wxKeyEvent& event) {
@@ -695,6 +713,7 @@ void BodySlideApp::ActivateOutfit(const std::string& outfitName) {
 	PopulateOutfitList(outfitName);
 
 	ActivatePreset(activePreset, false);
+
 	InitPreview();
 
 	sliderView->Layout();
@@ -1320,6 +1339,7 @@ void BodySlideApp::CopyPreviewWeightToSliders() {
 }
 
 void BodySlideApp::ShowPreview() {
+	// For standalone mode (cmd preview, or when no main frame exists)
 	if (preview)
 		return;
 
@@ -1329,13 +1349,320 @@ void BodySlideApp::ShowPreview() {
 	int h = BodySlideConfig.GetIntValue("PreviewFrame.height");
 	std::string maximized = BodySlideConfig["PreviewFrame.maximized"];
 
-	preview = new PreviewWindow(wxPoint(x, y), wxSize(w, h), this);
+	previewWindow = new PreviewWindow(wxPoint(x, y), wxSize(w, h), this);
 	if (maximized == "true")
-		preview->Maximize();
+		previewWindow->Maximize();
+
+	preview = previewWindow->GetPanel();
 
 	// Set base data path for texture loading
 	std::string baseGamePath = Config["GameDataPath"];
 	preview->SetBaseDataPath(baseGamePath);
+}
+
+void BodySlideApp::InitPreviewPanel() {
+	// Set up the embedded preview panel in the main frame
+	if (sliderView && sliderView->previewPanel) {
+		preview = sliderView->previewPanel;
+		std::string baseGamePath = Config["GameDataPath"];
+		preview->SetBaseDataPath(baseGamePath);
+	}
+}
+
+void BodySlideApp::ClosePreview() {
+	if (previewWindow) {
+		previewWindow->Close();
+		// PreviewClosed() will be called from OnClose
+	}
+}
+
+void BodySlideApp::PreviewClosed() {
+	// Called when the standalone preview window is closed
+	previewWindow = nullptr;
+	// If the main frame has an embedded panel, keep using it
+	if (sliderView && sliderView->previewPanel) {
+		preview = sliderView->previewPanel;
+	}
+	else {
+		preview = nullptr;
+	}
+}
+
+void BodySlideApp::PopOutPreview() {
+	if (!sliderView || !sliderView->previewPanel || previewWindow)
+		return;
+
+	PreviewPanel* panel = sliderView->previewPanel;
+
+	int x = BodySlideConfig.GetIntValue("PreviewFrame.x");
+	int y = BodySlideConfig.GetIntValue("PreviewFrame.y");
+	int w = BodySlideConfig.GetIntValue("PreviewFrame.width");
+	int h = BodySlideConfig.GetIntValue("PreviewFrame.height");
+	std::string maximized = BodySlideConfig["PreviewFrame.maximized"];
+
+	// Unsplit: remove panel from splitter and shrink the main frame
+	sliderView->UnsplitPreview();
+
+	// Reparent into standalone window
+	previewWindow = new PreviewWindow(wxPoint(x, y), wxSize(w, h), this, panel);
+	if (maximized == "true")
+		previewWindow->Maximize();
+
+	preview = panel;
+	panel->ShowPopoutButton(false);
+
+	sliderView->previewVisible = false;
+	sliderView->UpdatePreviewButtonLabel();
+}
+
+void BodySlideApp::DockPreview() {
+	if (!previewWindow || !sliderView)
+		return;
+
+	PreviewPanel* panel = previewWindow->ReleasePanel();
+	if (!panel)
+		return;
+
+	// Reparent back into splitter
+	panel->Reparent(sliderView->splitter);
+	sliderView->previewPanel = panel;
+	preview = panel;
+
+	sliderView->SplitPreview(panel);
+	sliderView->previewVisible = true;
+	sliderView->UpdatePreviewButtonLabel();
+	panel->ShowPopoutButton(true);
+	panel->Layout();
+
+	previewWindow->Destroy();
+	previewWindow = nullptr;
+}
+
+void BodySlideApp::InitPreview() {
+	if (!preview)
+		return;
+
+	if (projects.empty())
+		return;
+
+	// Cancel any in-flight load
+	uint64_t gen = ++previewLoadGeneration;
+
+	if (previewLoadThread.joinable())
+		previewLoadThread.join();
+
+	preview->ShowLoadingIndicator(true);
+	previewLoading = true;
+
+	// Capture per-project info for the background thread
+	struct ProjectInfo {
+		size_t index;
+		std::string inputFileName;
+		std::string setName;
+		SliderSet sliderSetCopy;
+		bool needsReload;
+	};
+
+	auto projectInfos = std::make_shared<std::vector<ProjectInfo>>();
+	for (size_t i = 0; i < projects.size(); ++i) {
+		auto& pp = projects[i];
+		ProjectInfo info;
+		info.index = i;
+		info.inputFileName = pp->sliderSet.GetInputFileName();
+		info.setName = pp->sliderSet.GetName();
+		info.sliderSetCopy = pp->sliderSet;
+
+		if (multiProjectMode) {
+			// Multi-project always reloads
+			info.needsReload = true;
+		}
+		else {
+			// Single-project: skip if NIF hasn't changed
+			info.needsReload = !pp->baseNif || pp->inputFileName != info.inputFileName || pp->setName != info.setName || sliderManager.NeedReload();
+		}
+
+		projectInfos->push_back(std::move(info));
+	}
+
+	auto extraNifPaths = multiProjectMode ? preview->GetExtraNifPaths() : std::vector<std::string>{};
+	bool isMultiProject = multiProjectMode;
+
+	previewLoadThread = std::thread([this, gen, projectInfos, extraNifPaths, isMultiProject]() {
+		struct ProjectResult {
+			size_t index;
+			nifly::NifFile* baseNif = nullptr;
+			nifly::NifFile modNif;
+			bool loaded = false;
+		};
+
+		std::vector<ProjectResult> results(projectInfos->size());
+
+		for (size_t i = 0; i < projectInfos->size(); ++i) {
+			if (previewLoadGeneration.load() != gen) {
+				for (size_t j = 0; j < i; ++j)
+					delete results[j].baseNif;
+				return;
+			}
+
+			auto& info = (*projectInfos)[i];
+			auto& result = results[i];
+			result.index = info.index;
+
+			if (!info.needsReload)
+				continue;
+
+			result.baseNif = new nifly::NifFile();
+			std::fstream file;
+			PlatformUtil::OpenFileStream(file, info.inputFileName, std::ios::in | std::ios::binary);
+			if (result.baseNif->Load(file)) {
+				delete result.baseNif;
+				result.baseNif = nullptr;
+				continue;
+			}
+
+			result.modNif.CopyFrom(*result.baseNif);
+
+			DiffDataSets dataSets;
+			info.sliderSetCopy.LoadSetDiffData(dataSets);
+
+			// Build preview mesh (apply sliders, zap verts)
+			bool keepZappedShapes = info.sliderSetCopy.KeepZappedShapes();
+			std::vector<nifly::Vector3> verts;
+			std::vector<nifly::Vector2> uvs;
+			std::vector<uint16_t> zapIdx;
+			for (auto it = info.sliderSetCopy.ShapesBegin(); it != info.sliderSetCopy.ShapesEnd(); ++it) {
+				zapIdx.clear();
+				auto shape = result.baseNif->FindBlockByName<nifly::NiShape>(it->first);
+				if (!result.baseNif->GetVertsForShape(shape, verts))
+					continue;
+
+				result.baseNif->GetUvsForShape(shape, uvs);
+				ApplySliders(it->second.targetShape, sliderManager.slidersBig, dataSets, verts, zapIdx, &uvs);
+
+				shape = result.modNif.FindBlockByName<nifly::NiShape>(it->first);
+				if (zapIdx.size() > 0) {
+					result.modNif.SetVertsForShape(shape, verts);
+					result.modNif.SetUvsForShape(shape, uvs);
+					if (result.modNif.DeleteVertsForShape(shape, zapIdx) && !keepZappedShapes)
+						result.modNif.DeleteShape(shape);
+				}
+				else {
+					result.modNif.SetVertsForShape(shape, verts);
+					result.modNif.SetUvsForShape(shape, uvs);
+				}
+			}
+			result.loaded = true;
+		}
+
+		if (previewLoadGeneration.load() != gen) {
+			for (auto& r : results)
+				delete r.baseNif;
+			return;
+		}
+
+		CallAfter([this, gen, results = std::move(results), projectInfos, extraNifPaths, isMultiProject]() mutable {
+			if (previewLoadGeneration.load() != gen) {
+				for (auto& r : results)
+					delete r.baseNif;
+				return;
+			}
+
+			if (!preview) {
+				for (auto& r : results)
+					delete r.baseNif;
+				previewLoading = false;
+				return;
+			}
+
+			bool anyGenWeights = false;
+			std::string baseGamePath = Config["GameDataPath"];
+			preview->SetBaseDataPath(baseGamePath);
+
+			for (size_t i = 0; i < results.size() && i < projects.size(); ++i) {
+				auto& result = results[i];
+				auto& pp = projects[result.index];
+				auto& info = (*projectInfos)[i];
+
+				if (result.loaded) {
+					delete pp->baseNif;
+					pp->baseNif = result.baseNif;
+					result.baseNif = nullptr; // Ownership transferred
+					pp->modNif = std::move(result.modNif);
+					pp->inputFileName = info.inputFileName;
+					pp->setName = info.setName;
+				}
+
+				if (pp->sliderSet.GenWeights())
+					anyGenWeights = true;
+
+				pp->sliderSet.LoadSetDiffData(pp->dataSets);
+				preview->AddMeshFromNif(&pp->modNif);
+
+				for (auto& s : pp->modNif.GetShapeNames())
+					preview->AddNifShapeTextures(&pp->modNif, s);
+
+				UpdateMeshesFromSet(pp->sliderSet);
+			}
+
+			if (!isMultiProject)
+				sliderManager.FlagReload(false);
+
+			preview->ShowWeight(anyGenWeights);
+			if (sliderView)
+				preview->ShowLockShapeButton(anyGenWeights);
+
+			if (isMultiProject) {
+				preview->LoadNifFiles(extraNifPaths);
+			}
+			else if (!projects.empty()) {
+				// Single-project extras: normals gen layers, reference shape
+				auto* pp = projects[0].get();
+				preview->SetNormalsGenerationLayers(pp->sliderSet.GetNormalsGenLayers());
+
+				if (pp->sliderSet.HasReferenceInfo()) {
+					bool hasBuiltInRef = false;
+					std::string refInfoShape = pp->sliderSet.GetReferenceShapeName();
+					if (!refInfoShape.empty() && pp->baseNif->FindBlockByName<nifly::NiShape>(refInfoShape))
+						hasBuiltInRef = true;
+					if (!hasBuiltInRef && ClippingFixer::FindReferenceShape(*pp->baseNif))
+						hasBuiltInRef = true;
+
+					if (hasBuiltInRef) {
+						preview->ShowReferenceCheckbox(false);
+						referenceNif.reset();
+					}
+					else {
+						if (!referenceNif)
+							LoadExternalReference(pp->sliderSet);
+
+						if (referenceNif) {
+							bool hasClippingFix = clippingFixStrength > 0.0f;
+							preview->ShowReferenceCheckbox(true);
+							if (hasClippingFix)
+								preview->SetReferenceCheckboxState(true, false);
+							else
+								preview->SetReferenceCheckboxState(false, true);
+
+							preview->AddMeshFromNif(referenceNif.get(), const_cast<char*>(referenceShapeName.c_str()));
+							preview->AddNifShapeTextures(referenceNif.get(), referenceShapeName);
+							preview->SetMeshVisibility(referenceShapeName, preview->IsShowReferenceChecked());
+						}
+						else {
+							preview->ShowReferenceCheckbox(false);
+						}
+					}
+				}
+				else {
+					preview->ShowReferenceCheckbox(false);
+					referenceNif.reset();
+				}
+			}
+
+			UpdatePreview();
+			preview->ShowLoadingIndicator(false);
+			previewLoading = false;
+		});
+	});
 }
 
 void BodySlideApp::LoadPreviewNifs(const std::vector<std::string>& filePaths) {
@@ -1511,163 +1838,6 @@ void BodySlideApp::BuildPreviewMesh(ProjectData* pp, bool freshLoad) {
 			pp->modNif.SetUvsForShape(shape, uvs);
 		}
 	}
-}
-
-void BodySlideApp::InitPreview() {
-	if (!preview)
-		return;
-
-	// Multi-project mode
-	if (multiProjectMode) {
-		wxLogMessage("Loading multi-project preview meshes...");
-
-		bool anyGenWeights = false;
-
-		for (auto& pp : projects) {
-			std::string inputFileName = pp->sliderSet.GetInputFileName();
-
-			// Load NIF
-			pp->baseNif = new NifFile();
-			std::fstream file;
-			PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
-			if (pp->baseNif->Load(file)) {
-				wxLogError("Failed to load NIF: %s", inputFileName);
-				delete pp->baseNif;
-				pp->baseNif = nullptr;
-				continue;
-			}
-
-			pp->modNif.CopyFrom(*pp->baseNif);
-
-			if (pp->sliderSet.GenWeights())
-				anyGenWeights = true;
-
-			// Load diff data for this project's set
-			pp->sliderSet.LoadSetDiffData(pp->dataSets);
-
-			BuildPreviewMesh(pp.get(), true);
-
-			// Add meshes from this project
-			preview->AddMeshFromNif(&pp->modNif);
-
-			for (auto& s : pp->modNif.GetShapeNames())
-				preview->AddNifShapeTextures(&pp->modNif, s);
-		}
-
-		preview->ShowWeight(anyGenWeights);
-		if (sliderView)
-			preview->ShowLockShapeButton(anyGenWeights);
-
-		// Load any extra NIF files on top of project meshes
-		preview->LoadNifFiles(preview->GetExtraNifPaths());
-
-		// Update mesh settings from all sets
-		for (auto& pp : projects)
-			UpdateMeshesFromSet(pp->sliderSet);
-
-		UpdatePreview();
-		return;
-	}
-
-	// Single-project mode
-	if (projects.empty())
-		return;
-
-	wxLogMessage("Loading preview meshes...");
-	auto& activeSet = GetActiveSet();
-	std::string inputFileName = activeSet.GetInputFileName();
-	std::string inputSetName = activeSet.GetName();
-	bool freshLoad = false;
-
-	ProjectData* pp = projects[0].get();
-
-	if (!pp->baseNif || pp->inputFileName != inputFileName || pp->setName != inputSetName || sliderManager.NeedReload()) {
-		delete pp->baseNif;
-		pp->baseNif = new NifFile();
-
-		std::fstream file;
-		PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
-		if (pp->baseNif->Load(file))
-			return;
-
-		pp->modNif.CopyFrom(*pp->baseNif);
-		pp->inputFileName = inputFileName;
-		pp->setName = inputSetName;
-
-		freshLoad = true;
-		sliderManager.FlagReload(false);
-	}
-
-	preview->ShowWeight(pp->sliderSet.GenWeights());
-	if (sliderView)
-		preview->ShowLockShapeButton(pp->sliderSet.GenWeights());
-
-	pp->sliderSet.LoadSetDiffData(pp->dataSets);
-
-	BuildPreviewMesh(pp, freshLoad);
-
-	std::string baseGamePath = Config["GameDataPath"];
-	preview->AddMeshFromNif(&pp->modNif);
-	preview->SetBaseDataPath(baseGamePath);
-
-	UpdateMeshesFromSet(pp->sliderSet);
-
-	for (auto& s : pp->modNif.GetShapeNames())
-		preview->AddNifShapeTextures(&pp->modNif, s);
-
-	preview->SetNormalsGenerationLayers(pp->sliderSet.GetNormalsGenLayers());
-
-	// Configure reference checkbox for single-project mode.
-	// Only show the checkbox when the NIF does not already contain a built-in reference
-	// shape (skin-shaded body) and we need to load one externally from the referenced project.
-	if (!multiProjectMode && pp->sliderSet.HasReferenceInfo()) {
-		bool hasBuiltInRef = false;
-
-		// Check if the NIF already has the shape named in the reference info
-		std::string refInfoShape = pp->sliderSet.GetReferenceShapeName();
-		if (!refInfoShape.empty() && pp->baseNif->FindBlockByName<NiShape>(refInfoShape))
-			hasBuiltInRef = true;
-
-		// Also check for any skin-shaded reference shape (e.g. copied reference)
-		if (!hasBuiltInRef && ClippingFixer::FindReferenceShape(*pp->baseNif))
-			hasBuiltInRef = true;
-
-		if (hasBuiltInRef) {
-			// NIF already includes the reference — no external load or checkbox needed
-			preview->ShowReferenceCheckbox(false);
-			referenceNif.reset();
-		}
-		else {
-			// No built-in reference; load externally and offer the checkbox
-			if (!referenceNif)
-				LoadExternalReference(pp->sliderSet);
-
-			if (referenceNif) {
-				bool hasClippingFix = clippingFixStrength > 0.0f;
-				preview->ShowReferenceCheckbox(true);
-
-				if (hasClippingFix) {
-					preview->SetReferenceCheckboxState(true, false);
-				}
-				else {
-					preview->SetReferenceCheckboxState(false, true);
-				}
-
-				preview->AddMeshFromNif(referenceNif.get(), const_cast<char*>(referenceShapeName.c_str()));
-				preview->AddNifShapeTextures(referenceNif.get(), referenceShapeName);
-				preview->SetMeshVisibility(referenceShapeName, preview->IsShowReferenceChecked());
-			}
-			else {
-				preview->ShowReferenceCheckbox(false);
-			}
-		}
-	}
-	else {
-		preview->ShowReferenceCheckbox(false);
-		referenceNif.reset();
-	}
-
-	UpdatePreview();
 }
 
 void BodySlideApp::ApplyClippingFix(NifFile& nif,
@@ -1910,7 +2080,14 @@ void BodySlideApp::CleanupPreview() {
 	if (!preview)
 		return;
 
+	// Cancel async load and wait for it to finish
+	++previewLoadGeneration;
+	if (previewLoadThread.joinable())
+		previewLoadThread.join();
+	previewLoading = false;
+
 	preview->Cleanup();
+	preview->ShowLoadingIndicator(false);
 	referenceNif.reset();
 
 	if (multiProjectMode) {
@@ -2179,10 +2356,12 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("Lights/Directional2.x", 30);
 	Config.SetDefaultValue("Lights/Directional2.y", 20);
 	Config.SetDefaultValue("Lights/Directional2.z", -100);
-	BodySlideConfig.SetDefaultValue("BodySlideFrame.width", 800);
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.width", 1200);
 	BodySlideConfig.SetDefaultValue("BodySlideFrame.height", 600);
 	BodySlideConfig.SetDefaultValue("BodySlideFrame.x", 100);
 	BodySlideConfig.SetDefaultValue("BodySlideFrame.y", 100);
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.sashpos", 500);
+	BodySlideConfig.SetDefaultBoolValue("BodySlideFrame.previewVisible", true);
 
 	wxSize previewSize(720 + xborder * 2, 720 + yborder * 2);
 	BodySlideConfig.SetDefaultValue("PreviewFrame.width", previewSize.GetWidth());
@@ -4108,6 +4287,55 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 		return;
 	}
 
+	// --- Embed splitter with preview panel ---
+	// Capture the XRC-created sizer and all children, then reparent them
+	// into the left side of a splitter window.
+	wxSizer* originalSizer = GetSizer();
+
+	splitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
+	splitter->SetMinimumPaneSize(200);
+
+	leftPanel = new wxPanel(splitter, wxID_ANY);
+
+	// Reparent all XRC children from frame to leftPanel
+	wxWindowList children = GetChildren();
+	for (auto* child : children) {
+		if (child != splitter)
+			child->Reparent(leftPanel);
+	}
+
+	// Move the XRC sizer to leftPanel
+	SetSizer(nullptr, false);
+	leftPanel->SetSizer(originalSizer);
+	leftPanel->SetBackgroundColour(GetBackgroundColour());
+	leftPanel->SetDoubleBuffered(true);
+
+	// Create embedded preview panel
+	previewPanel = new PreviewPanel(splitter, app);
+
+	// Read sash position and visibility from config
+	previewVisible = BodySlideConfig.GetBoolValue("BodySlideFrame.previewVisible", true);
+	savedSashPosition = BodySlideConfig.GetIntValue("BodySlideFrame.sashpos");
+
+	if (previewVisible) {
+		splitter->SplitVertically(leftPanel, previewPanel, savedSashPosition);
+	}
+	else {
+		splitter->Initialize(leftPanel);
+		previewPanel->Hide();
+	}
+
+	// Set new top-level sizer for the frame
+	wxBoxSizer* frameSizer = new wxBoxSizer(wxVERTICAL);
+	frameSizer->Add(splitter, 1, wxEXPAND);
+	SetSizer(frameSizer);
+
+	// Connect splitter events
+	splitter->Bind(wxEVT_SPLITTER_SASH_POS_CHANGED, &BodySlideFrame::OnSashPosChanged, this);
+
+	// Listen for pop-out events from the preview panel
+	splitter->Bind(EVT_PREVIEW_POPOUT, &BodySlideFrame::OnPreviewPopout, this);
+
 	outfitChoice = (wxChoice*)FindWindowByName("outfitChoice", this);
 	presetChoice = (wxChoice*)FindWindowByName("presetChoice", this);
 	btnSavePreset = (wxButton*)FindWindowByName("btnSavePreset", this);
@@ -4116,7 +4344,6 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Settings.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/About.xrc");
 
-	SetDoubleBuffered(true);
 	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "/res/images/BodySlide.png", wxBITMAP_TYPE_PNG));
 	SetSize(size);
 
@@ -4156,7 +4383,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	presetFilter->SetDescriptiveText(_("Filter presets..."));
 
 	int categoryTabSizerID = XRCID("categoryTabSizer");
-	wxSizerItem* si = GetSizer()->GetItemById(categoryTabSizerID, true);
+	wxSizerItem* si = leftPanel->GetSizer()->GetItemById(categoryTabSizerID, true);
 
 	categoryTabSizer = si ? si->GetSizer() : nullptr;
 
@@ -4207,6 +4434,15 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 
 	wxAcceleratorTable accel(5, entries);
 	SetAcceleratorTable(accel);
+
+	// Update preview toggle button label
+	auto btnPreview = (wxButton*)FindWindowByName("btnPreview", this);
+	if (btnPreview) {
+		if (previewVisible)
+			btnPreview->SetLabel(_("Hide Preview"));
+		else
+			btnPreview->SetLabel(_("Show Preview"));
+	}
 }
 
 void BodySlideFrame::OnLinkClicked(wxHtmlLinkEvent& link) {
@@ -4409,6 +4645,7 @@ void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
+	app->CleanupPreview();
 	app->ClosePreview();
 
 	sliderPool.Clear();
@@ -4446,8 +4683,9 @@ void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnActivateFrame(wxActivateEvent& event) {
 	event.Skip();
-	if (event.GetActive())
+	if (event.GetActive()) {
 		sliderScroll->SetFocusIgnoringChildren();
+	}
 }
 
 void BodySlideFrame::OnIconizeFrame(wxIconizeEvent& event) {
@@ -5026,10 +5264,105 @@ void BodySlideFrame::OnLowToHigh(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnPreview(wxCommandEvent& WXUNUSED(event)) {
-	if (OutfitIsEmpty())
+	if (previewVisible) {
+		// Hide preview
+		UnsplitPreview();
+		previewVisible = false;
+		BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", false);
+		UpdatePreviewButtonLabel();
+	}
+	else {
+		// If preview is popped out, dock it back instead
+		if (app->IsPreviewPoppedOut()) {
+			app->DockPreview();
+			return;
+		}
+
+		// Show preview
+		SplitPreview();
+		previewVisible = true;
+		BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", true);
+		UpdatePreviewButtonLabel();
+
+		// Trigger preview load if outfit is selected
+		if (!OutfitIsEmpty()) {
+			app->InitPreviewPanel();
+			if (app->HasActiveProject()) {
+				app->InitPreview();
+			}
+		}
+	}
+}
+
+void BodySlideFrame::OnSashPosChanged(wxSplitterEvent& event) {
+	if (!IsVisible())
 		return;
 
-	app->ShowPreview();
+	int pos = event.GetSashPosition();
+	BodySlideConfig.SetValue("BodySlideFrame.sashpos", pos);
+	savedSashPosition = pos;
+	savedPreviewWidth = splitter->GetSize().GetWidth() - pos;
+	if (savedPreviewWidth > 0)
+		BodySlideConfig.SetValue("BodySlideFrame.previewWidth", savedPreviewWidth);
+}
+
+void BodySlideFrame::OnPreviewPopout(wxCommandEvent& WXUNUSED(event)) {
+	app->PopOutPreview();
+}
+
+void BodySlideFrame::OnPreviewWindowClosed() {
+	app->DockPreview();
+}
+
+void BodySlideFrame::UnsplitPreview() {
+	if (!splitter || !splitter->IsSplit())
+		return;
+
+	savedSashPosition = splitter->GetSashPosition();
+	savedPreviewWidth = splitter->GetSize().GetWidth() - savedSashPosition;
+	BodySlideConfig.SetValue("BodySlideFrame.sashpos", savedSashPosition);
+	BodySlideConfig.SetValue("BodySlideFrame.previewWidth", savedPreviewWidth);
+	splitter->Unsplit(previewPanel);
+
+	if (savedPreviewWidth > 0) {
+		wxSize sz = GetSize();
+		sz.SetWidth(sz.GetWidth() - savedPreviewWidth);
+		SetSize(sz);
+	}
+}
+
+void BodySlideFrame::SplitPreview(wxPanel* panel) {
+	if (!splitter || splitter->IsSplit())
+		return;
+
+	wxPanel* panelToSplit = panel ? panel : previewPanel;
+	if (!panelToSplit)
+		return;
+
+	int previewWidth = savedPreviewWidth;
+	if (previewWidth <= 0)
+		previewWidth = BodySlideConfig.GetIntValue("BodySlideFrame.previewWidth");
+	if (previewWidth <= 0)
+		previewWidth = 400;
+
+	int sashPos = savedSashPosition;
+	if (sashPos <= 0)
+		sashPos = BodySlideConfig.GetIntValue("BodySlideFrame.sashpos");
+	if (sashPos <= 0)
+		sashPos = GetClientSize().GetWidth();
+
+	wxSize sz = GetSize();
+	sz.SetWidth(sz.GetWidth() + previewWidth);
+	SetSize(sz);
+
+	panelToSplit->Show();
+	splitter->SplitVertically(leftPanel, panelToSplit, sashPos);
+}
+
+void BodySlideFrame::UpdatePreviewButtonLabel() {
+	auto btn = (wxButton*)FindWindowByName("btnPreview", this);
+	if (btn)
+		btn->SetLabel(previewVisible ? _("Hide Preview") : _("Show Preview"));
 }
 
 void BodySlideFrame::OnBuildBodies(wxCommandEvent& WXUNUSED(event)) {

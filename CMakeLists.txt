@@ -100,6 +100,7 @@ set(BSsources
 	src/program/BodySlideApp.cpp
 	src/program/NormalsGenDialog.cpp
 	src/program/PreviewWindow.cpp
+	src/ui/PreviewPanel.cpp
 	src/ui/wxNormalsGenDlg.cpp
 	src/components/BuildSelection.cpp
 	)

@@ -29,6 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "GroupManager.h"
 #include "PresetSaveDialog.h"
 #include "PreviewWindow.h"
+#include "../ui/PreviewPanel.h"
 #include "../ui/wxStateButton.h"
 
 #include "../FSEngine/FSEngine.h"
@@ -44,12 +45,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/intl.h>
 #include <wx/listctrl.h>
 #include <wx/progdlg.h>
+#include <wx/splitter.h>
 #include <wx/srchctrl.h>
 #include <wx/statline.h>
 #include <wx/stdpaths.h>
 #include <wx/tokenzr.h>
 #include <wx/wxprec.h>
 #include <wx/xrc/xmlres.h>
+
+#include <atomic>
+#include <thread>
 
 
 enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };
@@ -67,7 +72,8 @@ class BodySlideFrame;
 class BodySlideApp : public wxApp {
 	/* UI Managers */
 	BodySlideFrame* sliderView = nullptr;
-	PreviewWindow* preview = nullptr;
+	PreviewPanel* preview = nullptr;
+	PreviewWindow* previewWindow = nullptr;
 
 	/* Command-Line Arguments */
 	std::vector<std::string> cmdGroupBuild;
@@ -224,17 +230,21 @@ public:
 	void CopySliderValues(bool toHigh);
 	void CopyPreviewWeightToSliders();
 	void ShowPreview();
+	void InitPreviewPanel();
 	void BuildPreviewMesh(ProjectData* pp, bool freshLoad);
 	void InitPreview();
 	void CleanupPreview();
 	void LoadPreviewNifs(const std::vector<std::string>& nifFilePaths);
-	void ClosePreview() {
-		// Calling Close() will cause PreviewClosed() to be called,
-		// where we reset the preview window pointer to null
-		if (preview)
-			preview->Close();
-	}
-	void PreviewClosed() { preview = nullptr; }
+	void ClosePreview();
+	void PreviewClosed();
+	void PopOutPreview();
+	void DockPreview();
+	bool IsPreviewPoppedOut() const { return previewWindow != nullptr; }
+
+	/* Async preview loading */
+	std::atomic<uint64_t> previewLoadGeneration{0};
+	std::thread previewLoadThread;
+	bool previewLoading = false;
 
 	void ApplyClippingFix(nifly::NifFile& nif,
 						const std::vector<nifly::Vector3>& bodyVerts,
@@ -380,6 +390,19 @@ public:
 	wxCheckListBox* batchBuildList = nullptr;
 	wxMenu* fileCollisionMenu = nullptr;
 
+	// Splitter and embedded preview
+	wxSplitterWindow* splitter = nullptr;
+	wxPanel* leftPanel = nullptr;
+	PreviewPanel* previewPanel = nullptr;
+	bool previewVisible = true;
+	int savedSashPosition = -1;
+	int savedPreviewWidth = 0;
+
+	// Helpers for preview docking/undocking
+	void UnsplitPreview();
+	void SplitPreview(wxPanel* panel = nullptr);
+	void UpdatePreviewButtonLabel();
+
 	BodySlideFrame(BodySlideApp* app, const wxSize& size);
 	~BodySlideFrame() { delete fileCollisionMenu; }
 
@@ -463,6 +486,10 @@ private:
 	void OnOutfitChoiceSelect(wxCommandEvent& event);
 
 	void OnPreview(wxCommandEvent& event);
+	void OnSashPosChanged(wxSplitterEvent& event);
+	void OnPreviewPopout(wxCommandEvent& event);
+	void OnPreviewWindowClosed();
+
 	void OnHighToLow(wxCommandEvent& event);
 	void OnLowToHigh(wxCommandEvent& event);
 	void OnBuildBodies(wxCommandEvent& event);

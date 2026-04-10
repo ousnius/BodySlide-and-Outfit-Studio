@@ -754,6 +754,9 @@
     <ClInclude Include="src\program\NormalsGenDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\PreviewPanel.h">
+      <Filter>UI</Filter>
+    </ClInclude>
     <ClInclude Include="src\ui\wxNormalsGenDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -1841,6 +1844,9 @@
     </ClCompile>
     <ClCompile Include="src\program\NormalsGenDialog.cpp">
       <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\PreviewPanel.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\wxNormalsGenDlg.cpp">
       <Filter>UI</Filter>

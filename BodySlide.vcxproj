@@ -779,6 +779,7 @@
     <ClInclude Include="src\render\GLOffscreenBuffer.h" />
     <ClInclude Include="src\render\GLShader.h" />
     <ClInclude Include="src\render\GLSurface.h" />
+    <ClInclude Include="src\ui\PreviewPanel.h" />
     <ClInclude Include="src\ui\wxNormalsGenDlg.h" />
     <ClInclude Include="src\ui\wxStateButton.h" />
     <ClInclude Include="src\utils\AABBTree.h" />
@@ -845,6 +846,7 @@
     <ClCompile Include="src\render\GLOffscreenBuffer.cpp" />
     <ClCompile Include="src\render\GLShader.cpp" />
     <ClCompile Include="src\render\GLSurface.cpp" />
+    <ClCompile Include="src\ui\PreviewPanel.cpp" />
     <ClCompile Include="src\ui\wxNormalsGenDlg.cpp" />
     <ClCompile Include="src\ui\wxStateButton.cpp" />
     <ClCompile Include="src\utils\AABBTree.cpp" />
