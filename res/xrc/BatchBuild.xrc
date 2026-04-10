@@ -104,16 +104,32 @@
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxStdDialogButtonSizer">
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnPreviewConflicts">
+							<label>&amp;Preview</label>
+							<tooltip>Open a preview window showing the conflicting outfits for the selected group</tooltip>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxButton" name="wxID_OK">
 							<label>&amp;OK</label>
 						</object>
 					</object>
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxButton" name="wxID_CANCEL">
 							<label>&amp;Cancel</label>

@@ -24,7 +24,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <atomic>
 #include <regex>
 #include <wx/wrapsizer.h>
-#include <wx/treelist.h>
 #include <wx/debugrpt.h>
 
 #ifdef WIN64
@@ -178,8 +177,10 @@ bool BodySlideApp::OnInit() {
 	if (cmdPreviewMode && !cmdPreviewNifs.empty()) {
 		wxLogMessage("BodySlide preview mode initialized.");
 		ShowPreview();
-		if (preview)
+		if (preview) {
+			preview->SetReadOnlyMode(true);
 			LoadPreviewNifs(cmdPreviewNifs);
+		}
 		return true;
 	}
 
@@ -1486,8 +1487,9 @@ void BodySlideApp::InitPreview() {
 
 	auto extraNifPaths = multiProjectMode ? preview->GetExtraNifPaths() : std::vector<std::string>{};
 	bool isMultiProject = multiProjectMode;
+	PreviewPanel* targetPreview = preview;
 
-	previewLoadThread = std::thread([this, gen, projectInfos, extraNifPaths, isMultiProject]() {
+	previewLoadThread = std::thread([this, gen, projectInfos, extraNifPaths, isMultiProject, targetPreview]() {
 		struct ProjectResult {
 			size_t index;
 			nifly::NifFile* baseNif = nullptr;
@@ -1560,14 +1562,17 @@ void BodySlideApp::InitPreview() {
 			return;
 		}
 
-		CallAfter([this, gen, results = std::move(results), projectInfos, extraNifPaths, isMultiProject]() mutable {
+		CallAfter([this, gen, targetPreview, results = std::move(results), projectInfos, extraNifPaths, isMultiProject]() mutable {
 			if (previewLoadGeneration.load() != gen) {
 				for (auto& r : results)
 					delete r.baseNif;
 				return;
 			}
 
-			if (!preview) {
+			// Verify the target panel is still the active preview.
+			// Prevents stale callbacks from writing to the wrong panel
+			// (e.g. conflicts preview closed while async load was in-flight).
+			if (!preview || preview != targetPreview) {
 				for (auto& r : results)
 					delete r.baseNif;
 				previewLoading = false;
@@ -1608,7 +1613,7 @@ void BodySlideApp::InitPreview() {
 				sliderManager.FlagReload(false);
 
 			preview->ShowWeight(anyGenWeights);
-			if (sliderView)
+			if (sliderView && !preview->IsReadOnlyMode())
 				preview->ShowLockShapeButton(anyGenWeights);
 
 			if (isMultiProject) {
@@ -3360,6 +3365,98 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	return 0;
 }
 
+int BodySlideApp::ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* treeListCtrl) {
+	// Save the main app state so the conflicts preview doesn't corrupt it.
+	// LoadProjects() -> CleanupPreview() -> AddProjectSliders() all operate on
+	// shared app members (projects, sliderManager, multiProjectMode).
+	PreviewPanel* savedPreview = preview;
+	PreviewWindow* savedPreviewWindow = previewWindow;
+	auto savedProjects = std::move(projects);
+	bool savedMultiProjectMode = multiProjectMode;
+	SliderManager savedSliderManager;
+	std::swap(sliderManager, savedSliderManager);
+	multiProjectMode = false;
+	preview = nullptr;
+	previewWindow = nullptr;
+
+	PreviewWindow* conflictsPreviewWnd = nullptr;
+
+	auto closeConflictsPreview = [&]() {
+		if (!conflictsPreviewWnd)
+			return;
+		if (previewWindow == conflictsPreviewWnd)
+			CleanupPreview();
+		auto* wnd = conflictsPreviewWnd;
+		conflictsPreviewWnd = nullptr;
+		previewWindow = nullptr;
+		preview = nullptr;
+		wnd->Destroy();
+	};
+
+	wxButton* btnPreviewConflicts = XRCCTRL(*dlg, "btnPreviewConflicts", wxButton);
+	if (btnPreviewConflicts) {
+		btnPreviewConflicts->Bind(wxEVT_BUTTON, [&](wxCommandEvent& WXUNUSED(event)) {
+			wxTreeListItem sel = treeListCtrl->GetSelection();
+			if (!sel.IsOk())
+				return;
+
+			// Walk up to the group root (level 1) if a child is selected
+			wxTreeListItem groupItem = sel;
+			wxTreeListItem parent = treeListCtrl->GetItemParent(sel);
+			if (parent.IsOk() && parent != treeListCtrl->GetRootItem())
+				groupItem = parent;
+
+			// Build preview entries from all children in this group
+			std::vector<PreviewProjectEntry> entries;
+			for (wxTreeListItem child = treeListCtrl->GetFirstChild(groupItem); child.IsOk(); child = treeListCtrl->GetNextSibling(child)) {
+				std::string outfitName = treeListCtrl->GetItemText(child).ToUTF8().data();
+				auto src = outfitNameSource.find(outfitName);
+				if (src != outfitNameSource.end())
+					entries.push_back({src->second, outfitName});
+			}
+
+			if (entries.empty())
+				return;
+
+			closeConflictsPreview();
+
+			// Open a new standalone preview window
+			wxSize previewSize = dlg->FromDIP(wxSize(800, 600));
+			conflictsPreviewWnd = new PreviewWindow(wxDefaultPosition, previewSize, this);
+			previewWindow = conflictsPreviewWnd;
+			preview = conflictsPreviewWnd->GetPanel();
+
+			// Handle user closing the preview window via X button.
+			// Must cancel the async load thread before the panel is destroyed,
+			// otherwise the CallAfter callback could target the wrong panel.
+			conflictsPreviewWnd->Bind(wxEVT_CLOSE_WINDOW, [&](wxCloseEvent&) {
+				closeConflictsPreview();
+			});
+
+			wxString title = wxString::Format(_("Preview - %s"), wxString::FromUTF8(treeListCtrl->GetItemText(groupItem)));
+			conflictsPreviewWnd->SetTitle(title);
+
+			std::string baseGamePath = Config["GameDataPath"];
+			preview->SetBaseDataPath(baseGamePath);
+			preview->SetReadOnlyMode(true);
+			preview->SetProjectData(entries, false);
+		});
+	}
+
+	int result = dlg->ShowModal();
+
+	closeConflictsPreview();
+
+	// Restore main app state
+	previewWindow = savedPreviewWindow;
+	preview = savedPreview;
+	projects = std::move(savedProjects);
+	multiProjectMode = savedMultiProjectMode;
+	std::swap(sliderManager, savedSliderManager);
+
+	return result;
+}
+
 int BodySlideApp::BuildListBodies(
 	std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool clean, bool tri, bool forceNormals, const std::string& custPath) {
 	std::string datapath = custPath;
@@ -3575,7 +3672,7 @@ int BodySlideApp::BuildListBodies(
 			choicesSizer->Add(treeListCtrl, 1, wxEXPAND, 0);
 			scrollOverrides->FitInside();
 
-			if (dlgBuildOverride->ShowModal() == wxID_CANCEL) {
+			if (ShowBuildOverrideWithPreview(dlgBuildOverride, treeListCtrl) == wxID_CANCEL) {
 				wxLogMessage("Aborted batch build by not choosing a file override.");
 				delete dlgBuildOverride;
 				return 1;
