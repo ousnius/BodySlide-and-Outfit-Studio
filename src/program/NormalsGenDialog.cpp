@@ -120,7 +120,7 @@ void NormalsGenDialog::doMoveUpLayer(wxCommandEvent& WXUNUSED(event)) {
 	if (!s || !s->IsCategory() || s->GetName() == "Background")
 		return;
 
-	int n = 1;
+	intptr_t n = 1;
 	for (auto it = pgLayers->GetIterator(wxPG_ITERATE_CATEGORIES); !it.AtEnd(); ++it) {
 		wxPGProperty* p = it.GetProperty();
 		p->SetClientData(reinterpret_cast<void*>(n++));
@@ -135,7 +135,7 @@ void NormalsGenDialog::doMoveUpLayer(wxCommandEvent& WXUNUSED(event)) {
 	if (!me || !prev)
 		return;
 
-	int t = reinterpret_cast<unsigned long>(me->GetClientData());
+	intptr_t t = reinterpret_cast<intptr_t>(me->GetClientData());
 	me->SetClientData(prev->GetClientData());
 	prev->SetClientData(reinterpret_cast<void*>(t));
 
