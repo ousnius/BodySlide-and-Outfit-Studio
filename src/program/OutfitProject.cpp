@@ -263,6 +263,8 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 			errmsg = _("Failed to write base .nif file: ") + saveFileName;
 			return errmsg;
 		}
+
+		SaveExternalMeshes(clone, saveFileName);
 	}
 
 	owner->ShowPartition();
@@ -1057,6 +1059,7 @@ int OutfitProject::SaveSliderNIF(const std::string& sliderName, NiShape* shape, 
 	if (nif.Save(file) != 0)
 		return 3;
 
+	SaveExternalMeshes(nif, fileName);
 	return 0;
 }
 
@@ -5139,7 +5142,11 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
 
-	return clone.Save(file);
+	int result = clone.Save(file);
+	if (result == 0)
+		SaveExternalMeshes(clone, fileName);
+
+	return result;
 }
 
 
@@ -5200,7 +5207,67 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
 
-	return clone.Save(file);
+	int result = clone.Save(file);
+	if (result == 0)
+		SaveExternalMeshes(clone, fileName);
+
+	return result;
+}
+
+bool OutfitProject::SaveExternalMeshes(NifFile& nif, const std::string& nifFileName) {
+	if (!nif.GetHeader().GetVersion().IsSF())
+		return true;
+
+	wxFileName nifPath(wxString::FromUTF8(nifFileName));
+	wxString nifDir = nifPath.GetPath();
+
+	for (auto& s : nif.GetShapes()) {
+		auto meshPaths = nif.GetExternalGeometryPathRefs(s);
+		uint8_t meshIndex = 0;
+
+		for (auto& meshPathRef : meshPaths) {
+			std::string meshPath = meshPathRef.get();
+			if (meshPath.empty()) {
+				meshIndex++;
+				continue;
+			}
+
+			// Build full output path: geometries/{meshPath}.mesh in the Data root (sibling to Meshes/)
+			wxFileName nifDirName(nifDir + wxFileName::GetPathSeparator());
+			wxString dataDir = nifDirName.GetPath(wxPATH_GET_VOLUME, wxPATH_NATIVE);  // go up from Meshes/ subdirs
+			// Walk up to the directory that contains "meshes" (case-insensitive)
+			wxFileName walker(nifDir + wxFileName::GetPathSeparator());
+			while (walker.GetDirCount() > 0) {
+				wxString lastDir = walker.GetDirs().Last();
+				if (lastDir.CmpNoCase("meshes") == 0) {
+					walker.RemoveLastDir();
+					break;
+				}
+				walker.RemoveLastDir();
+			}
+			wxString rootDir = walker.GetPath();
+			wxFileName meshFullPath(rootDir + wxFileName::GetPathSeparator() + "geometries"
+				+ wxFileName::GetPathSeparator() + wxString::FromUTF8(meshPath) + ".mesh");
+
+			// Ensure the directory exists
+			wxFileName::Mkdir(meshFullPath.GetPath(), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+			std::string meshFileStr = meshFullPath.GetFullPath().ToUTF8().data();
+
+			std::fstream meshFile;
+			PlatformUtil::OpenFileStream(meshFile, meshFileStr, std::ios::out | std::ios::binary);
+			if (meshFile.fail()) {
+				wxLogError("Failed to save external mesh file '%s'.", meshFileStr);
+				meshIndex++;
+				continue;
+			}
+
+			nif.SaveExternalShapeData(s, meshFile, meshIndex);
+			meshIndex++;
+		}
+	}
+
+	return true;
 }
 
 int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {

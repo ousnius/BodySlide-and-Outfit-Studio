@@ -387,6 +387,9 @@ public:
 	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false);
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 
+	// Save external .mesh files for Starfield BSGeometry shapes alongside the NIF
+	bool SaveExternalMeshes(nifly::NifFile& nif, const std::string& nifFileName);
+
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
 	int ExportOBJ(const std::string& fileName,
 				  const std::vector<nifly::NiShape*>& shapes,
