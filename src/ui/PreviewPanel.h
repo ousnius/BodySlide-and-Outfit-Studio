@@ -51,6 +51,7 @@ class PreviewPanel : public wxPanel {
 	std::vector<PreviewProjectEntry> projectEntries;
 	bool loadAllProjects = false;
 	bool multiProjectMode = false;
+	bool readOnlyMode = false;
 	int weight = 100;
 	bool glInitialized = false;
 
@@ -69,6 +70,16 @@ public:
 	void OnPopout(wxCommandEvent& event);
 
 	void ShowPopoutButton(bool show);
+
+	void SetReadOnlyMode(bool readOnly) {
+		readOnlyMode = readOnly;
+		if (readOnly) {
+			ShowLockShapeButton(false);
+			ShowPopoutButton(false);
+		}
+	}
+
+	bool IsReadOnlyMode() const { return readOnlyMode; }
 
 	void Cleanup();
 

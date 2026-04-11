@@ -44,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/imagpng.h>
 #include <wx/intl.h>
 #include <wx/listctrl.h>
+#include <wx/treelist.h>
 #include <wx/progdlg.h>
 #include <wx/splitter.h>
 #include <wx/srchctrl.h>
@@ -267,6 +268,7 @@ public:
 						bool tri = false,
 						bool forceNormals = false,
 						const std::string& custPath = "");
+	int ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* treeListCtrl);
 	void GroupBuild(const std::vector<std::string>& groupNames);
 
 	void AddTriData(nifly::NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
