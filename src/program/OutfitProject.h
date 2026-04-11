@@ -387,6 +387,11 @@ public:
 	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false);
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 
+	// Prompt the user to choose internal or external geometry for Starfield NIFs.
+	// Sets flag 0x200 on BSGeometry shapes accordingly.
+	// nifFileName is used to derive the geometry folder name for external mode.
+	void ConfigureInternalGeometry(nifly::NifFile& nif, const std::string& nifFileName);
+
 	// Save external .mesh files for Starfield BSGeometry shapes alongside the NIF
 	bool SaveExternalMeshes(nifly::NifFile& nif, const std::string& nifFileName);
 

@@ -59,15 +59,18 @@ static void SaveExternalMeshes(NifFile& nif, const std::string& nifFileName) {
 			// Build full output path: geometries/{meshPath}.mesh in the Data root (sibling to Meshes/)
 			// Walk up from the NIF directory to find the "meshes" parent, then use its parent as root
 			wxFileName walker(nifDir + wxFileName::GetPathSeparator());
+			bool foundMeshes = false;
 			while (walker.GetDirCount() > 0) {
 				wxString lastDir = walker.GetDirs().Last();
 				if (lastDir.CmpNoCase("meshes") == 0) {
 					walker.RemoveLastDir();
+					foundMeshes = true;
 					break;
 				}
 				walker.RemoveLastDir();
 			}
-			wxString rootDir = walker.GetPath();
+			// If not inside a game data layout, place geometries/ next to the NIF
+			wxString rootDir = foundMeshes ? walker.GetPath() : nifDir;
 			wxFileName meshFullPath(rootDir + wxFileName::GetPathSeparator() + "geometries"
 				+ wxFileName::GetPathSeparator() + wxString::FromUTF8(meshPath) + ".mesh");
 			wxFileName::Mkdir(meshFullPath.GetPath(), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
