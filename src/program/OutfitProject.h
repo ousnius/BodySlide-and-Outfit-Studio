@@ -387,6 +387,10 @@ public:
 	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false);
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 
+	// Force internal geometry (flag 0x200) on all BSGeometry shapes in a Starfield NIF.
+	// Used for project ShapeData NIFs to keep things simple (no external .mesh files).
+	void ForceInternalGeometry(nifly::NifFile& nif);
+
 	// Prompt the user to choose internal or external geometry for Starfield NIFs.
 	// Sets flag 0x200 on BSGeometry shapes accordingly.
 	// nifFileName is used to derive the geometry folder name for external mode.

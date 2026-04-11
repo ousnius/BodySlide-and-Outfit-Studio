@@ -256,7 +256,8 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		clone.SetShapeOrder(owner->GetShapeList());
 		clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
-		ConfigureInternalGeometry(clone, saveFileName);
+		// Project ShapeData NIFs always use internal geometry for simplicity
+		ForceInternalGeometry(clone);
 
 		std::fstream file;
 		PlatformUtil::OpenFileStream(file, saveFileName, std::ios::out | std::ios::binary);
@@ -265,8 +266,6 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 			errmsg = _("Failed to write base .nif file: ") + saveFileName;
 			return errmsg;
 		}
-
-		SaveExternalMeshes(clone, saveFileName);
 	}
 
 	owner->ShowPartition();
@@ -1055,13 +1054,15 @@ int OutfitProject::SaveSliderNIF(const std::string& sliderName, NiShape* shape, 
 		nif.DeleteUnreferencedNodes();
 	}
 
+	// Slider NIFs in ShapeData always use internal geometry
+	ForceInternalGeometry(nif);
+
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
 
 	if (nif.Save(file) != 0)
 		return 3;
 
-	SaveExternalMeshes(nif, fileName);
 	return 0;
 }
 
@@ -5218,6 +5219,17 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 		SaveExternalMeshes(clone, fileName);
 
 	return result;
+}
+
+void OutfitProject::ForceInternalGeometry(NifFile& nif) {
+	if (!nif.GetHeader().GetVersion().IsSF())
+		return;
+
+	for (auto& s : nif.GetShapes()) {
+		auto bsgeo = dynamic_cast<BSGeometry*>(s);
+		if (bsgeo)
+			bsgeo->SetInternalGeomData(true);
+	}
 }
 
 void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& nifFileName) {
