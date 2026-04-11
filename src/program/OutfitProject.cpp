@@ -256,6 +256,8 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		clone.SetShapeOrder(owner->GetShapeList());
 		clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
+		ConfigureInternalGeometry(clone, saveFileName);
+
 		std::fstream file;
 		PlatformUtil::OpenFileStream(file, saveFileName, std::ios::out | std::ios::binary);
 
@@ -5139,6 +5141,8 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	clone.SetShapeOrder(owner->GetShapeList());
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
+	ConfigureInternalGeometry(clone, fileName);
+
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
 
@@ -5204,6 +5208,8 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
+	ConfigureInternalGeometry(clone, fileName);
+
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
 
@@ -5212,6 +5218,69 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 		SaveExternalMeshes(clone, fileName);
 
 	return result;
+}
+
+void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& nifFileName) {
+	if (!nif.GetHeader().GetVersion().IsSF())
+		return;
+
+	bool hasBSGeo = false;
+	for (auto& s : nif.GetShapes()) {
+		if (s->HasType<BSGeometry>()) {
+			hasBSGeo = true;
+			break;
+		}
+	}
+	if (!hasBSGeo)
+		return;
+
+	int result = wxMessageBox(
+		_("Starfield supports two modes for mesh geometry data:\n\n"
+		  "Internal: Mesh data is embedded directly in the NIF file.\n"
+		  "Simpler for modding \u2014 single file, no external dependencies.\n\n"
+		  "External: Mesh data is stored in separate .mesh files under geometries/.\n"
+		  "Can be streamed from BA2 archives for better game performance.\n\n"
+		  "Would you like to embed the geometry data in the NIF (internal)?\n"
+		  "Choose 'Yes' for internal or 'No' for external."),
+		_("Starfield Geometry Mode"),
+		wxYES_NO | wxICON_QUESTION,
+		owner);
+
+	bool useInternal = (result == wxYES);
+
+	// Derive geometry folder name from the NIF filename (without extension)
+	wxFileName nifPath(wxString::FromUTF8(nifFileName));
+	std::string folderName = nifPath.GetName().ToUTF8().data();
+
+	for (auto& s : nif.GetShapes()) {
+		auto bsgeo = dynamic_cast<BSGeometry*>(s);
+		if (!bsgeo)
+			continue;
+
+		bsgeo->SetInternalGeomData(useInternal);
+
+		if (!useInternal) {
+			// Ensure external mesh paths are set
+			for (uint8_t i = 0; i < bsgeo->MeshCount(); i++) {
+				auto mesh = bsgeo->SelectMesh(i);
+				if (mesh && mesh->meshName.get().empty()) {
+					// Generate mesh path: NifName\ShapeName
+					std::string shapeName = s->name.get();
+					auto sanitize = [](std::string& str) {
+						for (char& c : str) {
+							if (c == ' ' || c == '/' || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
+								c = '_';
+						}
+					};
+					std::string folder = folderName;
+					sanitize(folder);
+					sanitize(shapeName);
+					mesh->meshName.get() = folder + "\\" + shapeName;
+				}
+				bsgeo->ReleaseMesh();
+			}
+		}
+	}
 }
 
 bool OutfitProject::SaveExternalMeshes(NifFile& nif, const std::string& nifFileName) {
@@ -5233,19 +5302,20 @@ bool OutfitProject::SaveExternalMeshes(NifFile& nif, const std::string& nifFileN
 			}
 
 			// Build full output path: geometries/{meshPath}.mesh in the Data root (sibling to Meshes/)
-			wxFileName nifDirName(nifDir + wxFileName::GetPathSeparator());
-			wxString dataDir = nifDirName.GetPath(wxPATH_GET_VOLUME, wxPATH_NATIVE);  // go up from Meshes/ subdirs
 			// Walk up to the directory that contains "meshes" (case-insensitive)
 			wxFileName walker(nifDir + wxFileName::GetPathSeparator());
+			bool foundMeshes = false;
 			while (walker.GetDirCount() > 0) {
 				wxString lastDir = walker.GetDirs().Last();
 				if (lastDir.CmpNoCase("meshes") == 0) {
 					walker.RemoveLastDir();
+					foundMeshes = true;
 					break;
 				}
 				walker.RemoveLastDir();
 			}
-			wxString rootDir = walker.GetPath();
+			// If not inside a game data layout, place geometries/ next to the NIF
+			wxString rootDir = foundMeshes ? walker.GetPath() : nifDir;
 			wxFileName meshFullPath(rootDir + wxFileName::GetPathSeparator() + "geometries"
 				+ wxFileName::GetPathSeparator() + wxString::FromUTF8(meshPath) + ".mesh");
 
