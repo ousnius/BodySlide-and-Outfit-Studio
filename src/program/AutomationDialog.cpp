@@ -3132,9 +3132,11 @@ int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
 				std::vector<nifly::Vector3> fixedVerts = outfitVerts;
 				ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
 
-				// Compute mesh-space morph diffs and update the slider's morph data
+				// Compute mesh-space morph diffs, only for vertices already in the slider's diff set
 				TargetDataDiffs morphDiffs;
 				for (size_t i = 0; i < outfitVerts.size(); i++) {
+					if (diffSet->find(static_cast<uint16_t>(i)) == diffSet->end())
+						continue;
 					nifly::Vector3 nifDiff = fixedVerts[i] - outfitVerts[i];
 					if (nifDiff.IsZero(true))
 						continue;

@@ -8938,7 +8938,8 @@ void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVert
 											NiShape* shape,
 											const std::vector<Vector3>& outfitVerts,
 											const ClippingFixOptions& options,
-											UndoStateProject* usp) {
+											UndoStateProject* usp,
+											const TargetDataDiffs* allowedVerts) {
 	std::vector<Triangle> outfitTris;
 	shape->GetTriangles(outfitTris);
 
@@ -8951,6 +8952,9 @@ void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVert
 	for (size_t i = 0; i < outfitVerts.size(); i++) {
 		Vector3 diff = fixedVerts[i] - outfitVerts[i];
 		if (diff.IsZero(true))
+			continue;
+
+		if (allowedVerts && allowedVerts->find(static_cast<uint16_t>(i)) == allowedVerts->end())
 			continue;
 
 		uss.pointStartState[i] = Mesh::TransformPosNifToMesh(outfitVerts[i]);
@@ -9006,7 +9010,7 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 		std::vector<Vector3> outfitVerts;
 		project->GetLiveVerts(shape, outfitVerts);
 
-		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp);
+		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp, diffSet);
 	}
 
 	if (usp->usss.empty()) {
