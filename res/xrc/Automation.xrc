@@ -136,6 +136,7 @@
 															<item>Shapes: Apply Pose</item>
 															<item>Shapes: Delete Shape</item>
 															<item>Shapes: Duplicate Shape</item>
+															<item>Shapes: Fix Clipping</item>
 															<item>Shapes: Invert UVs</item>
 															<item>Shapes: Mirror Shape</item>
 															<item>Shapes: Refine Mesh</item>
@@ -1462,6 +1463,74 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtDupNewName">
 																	<tooltip>Name for the duplicated shape. Supports {{PLACEHOLDER}} variables.</tooltip>
 																	<hint>New shape name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- FixClipping -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageFixClipping">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Fix Clipping</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceFixClipMode">
+																	<content>
+																		<item>Shapes</item>
+																		<item>Sliders</item>
+																	</content>
+																	<selection>0</selection>
+																	<tooltip>Shapes: fix base geometry of target shapes. Sliders: fix clipping for each slider individually.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Strength (0 - 100):</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtFixClipStrength">
+																	<value translate="0">50</value>
+																	<tooltip>Clipping fix strength between 0 and 100.</tooltip>
+																	<hint translate="0">0-100</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText" name="lblFixClipSliderNames">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtFixClipSliderNames">
+																	<tooltip>Comma-separated list of slider names to fix clipping for (Sliders mode only). Leave empty to process all non-zap/non-UV sliders.</tooltip>
+																	<hint>Comma-separated slider list</hint>
 																</object>
 															</object>
 														</object>

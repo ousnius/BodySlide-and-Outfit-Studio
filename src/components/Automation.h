@@ -32,6 +32,7 @@ enum class AutomationStepType {
 	ApplyPose,
 	DeleteShape,
 	DuplicateShape,
+	FixClipping,
 	InvertUVs,
 	MirrorShape,
 	RefineMesh,
@@ -46,7 +47,7 @@ enum class AutomationStepType {
 	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 30;
+constexpr int AutomationStepTypeCount = 31;
 static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -240,6 +241,11 @@ struct AutomationStep {
 	// LoadMask params
 	std::string loadMaskFile;
 	std::string loadMaskName;
+
+	// FixClipping params
+	int fixClipMode = 0;          // 0 = Shapes, 1 = Sliders
+	float fixClipStrength = 0.5f;  // 0.0 - 1.0
+	std::vector<std::string> fixClipSliderNames;
 };
 
 class AutomationScript {

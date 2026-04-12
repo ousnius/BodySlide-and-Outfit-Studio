@@ -43,6 +43,7 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::SetSliderProperties: return "SetSliderProperties";
 		case AutomationStepType::LoadMask: return "LoadMask";
 		case AutomationStepType::RemoveUnusedNodes: return "RemoveUnusedNodes";
+		case AutomationStepType::FixClipping: return "FixClipping";
 		default: return "LoadReference";
 	}
 }
@@ -78,6 +79,7 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "SetSliderProperties") return AutomationStepType::SetSliderProperties;
 	if (str == "LoadMask") return AutomationStepType::LoadMask;
 	if (str == "RemoveUnusedNodes") return AutomationStepType::RemoveUnusedNodes;
+	if (str == "FixClipping") return AutomationStepType::FixClipping;
 	return AutomationStepType::LoadReference;
 }
 
@@ -513,6 +515,14 @@ int AutomationScript::Load(const std::string& fileName) {
 			case AutomationStepType::RemoveUnusedNodes:
 				// No additional params
 				break;
+			case AutomationStepType::FixClipping: {
+				step.fixClipMode = GetChildInt(stepElem, "Mode", 0);
+				step.fixClipStrength = GetChildFloat(stepElem, "Strength", 0.5f);
+				const char* sn = GetChildText(stepElem, "SliderNames");
+				if (sn)
+					step.fixClipSliderNames = SplitCommaSeparated(sn);
+				break;
+			}
 		}
 
 		steps.push_back(std::move(step));
@@ -761,6 +771,13 @@ int AutomationScript::Save(const std::string& fileName) {
 			case AutomationStepType::RemoveUnusedNodes:
 				// No additional params
 				break;
+
+			case AutomationStepType::FixClipping:
+				SetChildInt(doc, stepElem, "Mode", step.fixClipMode, 0);
+				SetChildFloat(doc, stepElem, "Strength", step.fixClipStrength, 0.5f);
+				if (!step.fixClipSliderNames.empty())
+					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.fixClipSliderNames, ", "));
+				break;
 		}
 	}
 
@@ -846,6 +863,8 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		for (auto& s : step.weightBoneList)
 			SubstituteInString(s, vars);
 		for (auto& s : step.sliderNames)
+			SubstituteInString(s, vars);
+		for (auto& s : step.fixClipSliderNames)
 			SubstituteInString(s, vars);
 	}
 }
