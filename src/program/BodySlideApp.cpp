@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "BodySlideApp.h"
 #include "../components/ClippingFixer.h"
+#include "../components/Mesh.h"
+#include "../files/SFMorphFile.h"
 #include "../files/wxDDSImage.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
@@ -1269,6 +1271,153 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 		return false;
 
 	return true;
+}
+
+bool BodySlideApp::WriteSFMorphFile(const std::string& morphPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices) {
+	DiffDataSets currentDiffs;
+	sliderSet.LoadSetDiffData(currentDiffs);
+
+	bool success = false;
+
+	for (auto targetShape = sliderSet.ShapesBegin(); targetShape != sliderSet.ShapesEnd(); ++targetShape) {
+		auto shape = nif.FindBlockByName<NiShape>(targetShape->first);
+		if (!shape)
+			continue;
+
+		const std::vector<uint16_t>& shapeZapIndices = zapIndices[targetShape->first];
+
+		int shapeVertCount = shape->GetNumVertices();
+		shapeVertCount += shapeZapIndices.size();
+
+		if (shapeVertCount <= 0)
+			continue;
+
+		if (shapeZapIndices.size() > 0 && shapeZapIndices.back() >= shapeVertCount)
+			continue;
+
+		auto zapRanges = FindContinuousRanges(shapeZapIndices);
+
+		// Get base shape data for normal/tangent calculation
+		std::vector<Vector3> baseVerts;
+		std::vector<Vector2> baseUVs;
+		std::vector<Triangle> baseTris;
+		nif.GetVertsForShape(shape, baseVerts);
+		nif.GetUvsForShape(shape, baseUVs);
+		shape->GetTriangles(baseTris);
+
+		SFMorphFile morphFile;
+		morphFile.SetVertexCount(shapeVertCount - static_cast<int>(shapeZapIndices.size()));
+
+		for (size_t s = 0; s < sliderSet.size(); s++) {
+			std::string dn = sliderSet[s].TargetDataName(targetShape->second.targetShape);
+			std::string target = targetShape->second.targetShape;
+			if (dn.empty())
+				continue;
+
+			if (sliderSet[s].bClamp || sliderSet[s].bZap || sliderSet[s].bUV)
+				continue;
+
+			std::vector<Vector3> diffs;
+			diffs.resize(shapeVertCount);
+
+			currentDiffs.ApplyDiff(dn, target, 1.0f, &diffs);
+
+			for (auto range = zapRanges.rbegin(); range != zapRanges.rend(); ++range) {
+				const auto start = diffs.cbegin() + range->index;
+				diffs.erase(start, start + range->length);
+			}
+
+			std::unordered_map<uint16_t, Vector3> morphOffsets;
+			int i = 0;
+			for (auto& d : diffs) {
+				if (!d.IsZero(true))
+					morphOffsets.emplace(i, d);
+				i++;
+			}
+
+			if (morphOffsets.empty())
+				continue;
+
+			// Calculate normals and tangents for the morphed shape
+			std::unordered_map<uint16_t, Vector3> morphNormals;
+			std::unordered_map<uint16_t, Vector3> morphTangents;
+
+			// baseVerts/baseUVs/baseTris are already post-zap (NIF was already processed)
+			std::vector<Vector3> morphedVerts = baseVerts;
+
+			// Apply morph diffs to positions
+			if (morphedVerts.size() == diffs.size()) {
+				for (size_t v = 0; v < morphedVerts.size(); v++)
+					morphedVerts[v] += diffs[v];
+			}
+
+			int nVerts = static_cast<int>(morphedVerts.size());
+			int nTris = static_cast<int>(baseTris.size());
+
+			if (nVerts > 0 && nTris > 0) {
+				Mesh tmpMesh{};
+				tmpMesh.nVerts = nVerts;
+				tmpMesh.nTris = nTris;
+				tmpMesh.verts = std::make_unique<Vector3[]>(nVerts);
+				tmpMesh.norms = std::make_unique<Vector3[]>(nVerts);
+				tmpMesh.tangents = std::make_unique<Vector3[]>(nVerts);
+				tmpMesh.bitangents = std::make_unique<Vector3[]>(nVerts);
+				tmpMesh.texcoord = std::make_unique<Vector2[]>(nVerts);
+
+				if (nTris > 0)
+					tmpMesh.tris = std::make_unique<Triangle[]>(nTris);
+
+				for (int v = 0; v < nVerts; v++)
+					tmpMesh.verts[v] = Mesh::TransformPosNifToMesh(morphedVerts[v]);
+
+				if (!baseUVs.empty()) {
+					for (int v = 0; v < nVerts && v < static_cast<int>(baseUVs.size()); v++) {
+						tmpMesh.texcoord[v].u = baseUVs[v].u;
+						tmpMesh.texcoord[v].v = baseUVs[v].v;
+					}
+				}
+
+				for (int t = 0; t < nTris; t++)
+					tmpMesh.tris[t] = baseTris[t];
+
+				tmpMesh.SmoothNormals();
+
+				for (int v = 0; v < nVerts; v++) {
+					morphNormals[v] = Mesh::TransformDirMeshToNif(tmpMesh.norms[v]);
+					morphTangents[v] = Mesh::TransformDirMeshToNif(tmpMesh.tangents[v]);
+				}
+			}
+
+			morphFile.AddMorph(sliderSet[s].name, morphOffsets, {}, morphNormals, morphTangents);
+		}
+
+		if (morphFile.GetMorphCount() == 0)
+			continue;
+
+		// Build output path: base path + ".dat" for single shape, + "_shapeName.dat" for multi-shape
+		std::string shapeFilePath;
+		int shapeCount = 0;
+		for (auto s = sliderSet.ShapesBegin(); s != sliderSet.ShapesEnd(); ++s)
+			shapeCount++;
+
+		if (shapeCount > 1)
+			shapeFilePath = morphPath + "_" + targetShape->first + ".dat";
+		else
+			shapeFilePath = morphPath + ".dat";
+
+		morphFile.CacheToFileData();
+
+		if (!morphFile.Write(shapeFilePath)) {
+			wxLogError("Failed to write morph.dat file to '%s'!", shapeFilePath);
+			wxMessageBox(wxString().Format(_("Failed to write morph.dat file to the following location\n\n%s"), shapeFilePath),
+						 _("Unable to process"), wxOK | wxICON_ERROR);
+			continue;
+		}
+
+		success = true;
+	}
+
+	return success;
 }
 
 void BodySlideApp::CopySliderValues(bool toHigh) {
@@ -3228,61 +3377,76 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 	bool triKeep = activeSet.PreventMorphFile();
 
-	if (tri && !triKeep) {
-		std::string triFilePath = outFileNameBig + ".tri";
+	if (targetGame == SF) {
+		/* Write Starfield morph.dat files */
+		if (tri && !triKeep) {
+			WriteSFMorphFile(outFileNameBig, activeSet, nifBig, zapIdxAll);
 
-		// TRI file already exists but isn't a body TRI file, don't overwrite!
-		if (wxFileName::FileExists(wxString::FromUTF8(triFilePath)) && !IsBodyTriFile(triFilePath))
-			triKeep = true;
-	}
-
-	/* Add TRI path for in-game morphs */
-	if (tri && !triKeep) {
-		std::string triPath = activeSet.GetOutputFilePath() + ".tri";
-		std::string triPathTrimmed = triPath;
-		// Replace multiple backslashes or forward slashes with one backslash
-		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");
-
-		// Remove everything before and including the meshes path
-		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");
-
-		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
-			wxLogError("Failed to write TRI file to '%s'!", triPath);
-			wxMessageBox(wxString().Format(_("Failed to write TRI file to the following location\n\n%s"), triPath), _("Unable to process"), wxOK | wxICON_ERROR);
-		}
-
-		if (targetGame != FO4 && targetGame != FO4VR && targetGame != FO76) {
-			for (auto targetShape = activeSet.ShapesBegin(); targetShape != activeSet.ShapesEnd(); ++targetShape) {
-				auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
-				if (!shape)
-					continue;
-
-				if (tri && shape->GetNumVertices() > 0) {
-					AddTriData(nifBig, targetShape->first, triPathTrimmed);
-					if (activeSet.GenWeights())
-						AddTriData(nifSmall, targetShape->first, triPathTrimmed);
-
-					tri = false;
-				}
+			// Set all shapes to dynamic/mutable
+			for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+				nifBig.SetShapeDynamic(it->first);
+				if (activeSet.GenWeights())
+					nifSmall.SetShapeDynamic(it->first);
 			}
 		}
-		else {
-			AddTriData(nifBig, "", triPathTrimmed, true);
-			if (activeSet.GenWeights())
-				AddTriData(nifSmall, "", triPathTrimmed, true);
+	}
+	else {
+		if (tri && !triKeep) {
+			std::string triFilePath = outFileNameBig + ".tri";
+
+			// TRI file already exists but isn't a body TRI file, don't overwrite!
+			if (wxFileName::FileExists(wxString::FromUTF8(triFilePath)) && !IsBodyTriFile(triFilePath))
+				triKeep = true;
 		}
 
-		// Set all shapes to dynamic/mutable
-		for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
-			nifBig.SetShapeDynamic(it->first);
-			if (activeSet.GenWeights())
-				nifSmall.SetShapeDynamic(it->first);
+		/* Add TRI path for in-game morphs */
+		if (tri && !triKeep) {
+			std::string triPath = activeSet.GetOutputFilePath() + ".tri";
+			std::string triPathTrimmed = triPath;
+			// Replace multiple backslashes or forward slashes with one backslash
+			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");
+
+			// Remove everything before and including the meshes path
+			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");
+
+			if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
+				wxLogError("Failed to write TRI file to '%s'!", triPath);
+				wxMessageBox(wxString().Format(_("Failed to write TRI file to the following location\n\n%s"), triPath), _("Unable to process"), wxOK | wxICON_ERROR);
+			}
+
+			if (targetGame != FO4 && targetGame != FO4VR && targetGame != FO76) {
+				for (auto targetShape = activeSet.ShapesBegin(); targetShape != activeSet.ShapesEnd(); ++targetShape) {
+					auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
+					if (!shape)
+						continue;
+
+					if (tri && shape->GetNumVertices() > 0) {
+						AddTriData(nifBig, targetShape->first, triPathTrimmed);
+						if (activeSet.GenWeights())
+							AddTriData(nifSmall, targetShape->first, triPathTrimmed);
+
+						tri = false;
+					}
+				}
+			}
+			else {
+				AddTriData(nifBig, "", triPathTrimmed, true);
+				if (activeSet.GenWeights())
+					AddTriData(nifSmall, "", triPathTrimmed, true);
+			}
+
+			// Set all shapes to dynamic/mutable
+			for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+				nifBig.SetShapeDynamic(it->first);
+				if (activeSet.GenWeights())
+					nifSmall.SetShapeDynamic(it->first);
+			}
 		}
-	}
-	else if (!triKeep) {
-		wxString triPath = wxString::FromUTF8(outFileNameBig + ".tri");
-		if (IsBodyTriFile(triPath.ToUTF8().data()))
-			wxRemoveFile(triPath);
+		else if (!triKeep) {
+			wxString triPath = wxString::FromUTF8(outFileNameBig + ".tri");
+			if (IsBodyTriFile(triPath.ToUTF8().data()))
+				wxRemoveFile(triPath);
+		}
 	}
 
 	wxString savedLow;
@@ -4090,60 +4254,75 @@ int BodySlideApp::BuildListBodies(
 
 		bool triKeep = currentSet.PreventMorphFile();
 
-		if (tri && !triKeep) {
-			std::string triFilePath = outFileNameBig + ".tri";
+		if (targetGame == SF) {
+			/* Write Starfield morph.dat files */
+			if (tri && !triKeep) {
+				WriteSFMorphFile(outFileNameBig, currentSet, nifBig, zapIdxAll);
 
-			// TRI file already exists but isn't a body TRI file, don't overwrite!
-			if (wxFileName::FileExists(wxString::FromUTF8(triFilePath)) && !IsBodyTriFile(triFilePath))
-				triKeep = true;
-		}
-
-		/* Add TRI path for in-game morphs */
-		if (tri && !triKeep) {
-			bool triEnd = tri;
-			std::string triPath = currentSet.GetOutputFilePath() + ".tri";
-			std::string triPathTrimmed = triPath;
-			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"),
-												"\\"); // Replace multiple backslashes or forward slashes with one backslash
-			triPathTrimmed = std::regex_replace(triPathTrimmed,
-												std::regex(".*meshes\\\\", std::regex_constants::icase),
-												""); // Remove everything before and including the meshes path
-
-			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
-				wxLogError("Failed to create TRI file to '%s'!", triPath);
-
-			if (targetGame != FO4 && targetGame != FO4VR && targetGame != FO76) {
-				for (auto targetShape = currentSet.ShapesBegin(); targetShape != currentSet.ShapesEnd(); ++targetShape) {
-					auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
-					if (!shape)
-						continue;
-
-					if (triEnd && shape->GetNumVertices() > 0) {
-						AddTriData(nifBig, targetShape->first, triPathTrimmed);
-						if (currentSet.GenWeights())
-							AddTriData(nifSmall, targetShape->first, triPathTrimmed);
-
-						triEnd = false;
-					}
+				// Set all shapes to dynamic/mutable
+				for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
+					nifBig.SetShapeDynamic(it->first);
+					if (currentSet.GenWeights())
+						nifSmall.SetShapeDynamic(it->first);
 				}
 			}
-			else {
-				AddTriData(nifBig, "", triPathTrimmed, true);
-				if (currentSet.GenWeights())
-					AddTriData(nifSmall, "", triPathTrimmed, true);
+		}
+		else {
+			if (tri && !triKeep) {
+				std::string triFilePath = outFileNameBig + ".tri";
+
+				// TRI file already exists but isn't a body TRI file, don't overwrite!
+				if (wxFileName::FileExists(wxString::FromUTF8(triFilePath)) && !IsBodyTriFile(triFilePath))
+					triKeep = true;
 			}
 
-			// Set all shapes to dynamic/mutable
-			for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
-				nifBig.SetShapeDynamic(it->first);
-				if (currentSet.GenWeights())
-					nifSmall.SetShapeDynamic(it->first);
+			/* Add TRI path for in-game morphs */
+			if (tri && !triKeep) {
+				bool triEnd = tri;
+				std::string triPath = currentSet.GetOutputFilePath() + ".tri";
+				std::string triPathTrimmed = triPath;
+				triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"),
+													"\\"); // Replace multiple backslashes or forward slashes with one backslash
+				triPathTrimmed = std::regex_replace(triPathTrimmed,
+													std::regex(".*meshes\\\\", std::regex_constants::icase),
+													""); // Remove everything before and including the meshes path
+
+				if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
+					wxLogError("Failed to create TRI file to '%s'!", triPath);
+
+				if (targetGame != FO4 && targetGame != FO4VR && targetGame != FO76) {
+					for (auto targetShape = currentSet.ShapesBegin(); targetShape != currentSet.ShapesEnd(); ++targetShape) {
+						auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
+						if (!shape)
+							continue;
+
+						if (triEnd && shape->GetNumVertices() > 0) {
+							AddTriData(nifBig, targetShape->first, triPathTrimmed);
+							if (currentSet.GenWeights())
+								AddTriData(nifSmall, targetShape->first, triPathTrimmed);
+
+							triEnd = false;
+						}
+					}
+				}
+				else {
+					AddTriData(nifBig, "", triPathTrimmed, true);
+					if (currentSet.GenWeights())
+						AddTriData(nifSmall, "", triPathTrimmed, true);
+				}
+
+				// Set all shapes to dynamic/mutable
+				for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
+					nifBig.SetShapeDynamic(it->first);
+					if (currentSet.GenWeights())
+						nifSmall.SetShapeDynamic(it->first);
+				}
 			}
-		}
-		else if (!triKeep) {
-			std::string triPath = outFileNameBig + ".tri";
-			if (IsBodyTriFile(triPath))
-				wxRemoveFile(triPath);
+			else if (!triKeep) {
+				std::string triPath = outFileNameBig + ".tri";
+				if (IsBodyTriFile(triPath))
+					wxRemoveFile(triPath);
+			}
 		}
 
 		NifSaveOptions nifOptions;
@@ -5973,6 +6152,7 @@ void BodySlideFrame::RefreshTargetGameState() {
 			case FO4VR:
 			case SKYRIMSE:
 			case SKYRIMVR:
+			case SF:
 				cbMorphs->SetValue(buildMorphsDef);
 				cbMorphs->Show();
 				break;
