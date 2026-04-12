@@ -144,6 +144,7 @@ private:
 	int ExecuteStepLoadMask(const AutomationStep& step);
 	int ExecuteStepSetSliderProperties(const AutomationStep& step);
 	int ExecuteStepRemoveUnusedNodes(const AutomationStep& step);
+	int ExecuteStepFixClipping(const AutomationStep& step);
 
 	std::vector<std::string> GatherBatchFiles();
 	std::vector<std::pair<std::string, std::string>> GatherBatchSliderSets();

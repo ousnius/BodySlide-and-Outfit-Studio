@@ -317,6 +317,7 @@ public:
 					  const nifly::Vector3* color = nullptr,
 					  const bool asMesh = false);
 	Mesh* AddVisSeg(const nifly::Vector3& p1, const nifly::Vector3& p2, const std::string& name = "", const bool asMesh = false);
+	Mesh* AddVisEdges(const Mesh* refMesh, const std::vector<nifly::Edge>& edges, const std::string& name, const nifly::Vector3& color = nifly::Vector3(1.0f, 0.0f, 0.0f));
 	Mesh* AddVisSeamEdges(const Mesh* refMesh, bool asMesh = false);
 	std::vector<Mesh*> AddFloor(float width = 100.0f, float stepSmall = 1.0f, float stepBig = 5.0f);
 

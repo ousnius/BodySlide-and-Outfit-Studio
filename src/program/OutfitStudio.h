@@ -593,8 +593,6 @@ public:
 		}
 	}
 
-	void ClearOverlays() { gls.ClearOverlays(); }
-
 	void Cleanup() {
 		XMoveMesh = nullptr;
 		YMoveMesh = nullptr;
@@ -1383,7 +1381,8 @@ private:
 							nifly::NiShape* shape,
 							const std::vector<nifly::Vector3>& outfitVerts,
 							const ClippingFixOptions& options,
-							UndoStateProject* usp);
+							UndoStateProject* usp,
+							const TargetDataDiffs* allowedVerts = nullptr);
 
 	void OnInvertUV(wxCommandEvent& event);
 	void OnMirrorShape(wxCommandEvent& event);
@@ -1592,6 +1591,7 @@ private:
 		if (!activeItem)
 			return;
 
+		glView->gls.DeleteOverlay("refineErrorEdges");
 		glView->ClearMask();
 
 		if (glView->GetTransformMode())

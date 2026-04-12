@@ -4,6 +4,8 @@ See the included LICENSE file
 */
 
 #include "EditUV.h"
+#include "../render/GLOffscreenBuffer.h"
+
 #include <regex>
 
 extern ConfigurationManager Config;
@@ -105,6 +107,7 @@ wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_MENU(XRCID("btnScale"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnRotate"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnSeamEdges"), EditUV::OnSeamEdges)
+	EVT_MENU(XRCID("fileExportUVTemplate"), EditUV::OnExportUVTemplate)
 	EVT_MENU(XRCID("editUndo"), EditUV::OnUndo)
 	EVT_MENU(XRCID("editRedo"), EditUV::OnRedo)
 	EVT_MENU(XRCID("editSelectAll"), EditUV::OnSelectAll)
@@ -218,6 +221,59 @@ void EditUV::OnMaskSelection(wxCommandEvent& WXUNUSED(event)) {
 
 	shapeMesh->QueueUpdate(Mesh::UpdateType::Mask);
 	os->glView->Render();
+}
+
+void EditUV::OnExportUVTemplate(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog dlg;
+	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgExportUV"))
+		return;
+
+	wxChoice* choiceResolution = XRCCTRL(dlg, "choiceResolution", wxChoice);
+	wxColourPickerCtrl* cpWireColor = XRCCTRL(dlg, "cpWireColor", wxColourPickerCtrl);
+	wxColourPickerCtrl* cpBackgroundColor = XRCCTRL(dlg, "cpBackgroundColor", wxColourPickerCtrl);
+	wxCheckBox* cbTransparentBG = XRCCTRL(dlg, "cbTransparentBG", wxCheckBox);
+	wxCheckBox* cbIncludeTexture = XRCCTRL(dlg, "cbIncludeTexture", wxCheckBox);
+
+	auto onTransparentToggle = [&](wxCommandEvent&) {
+		cpBackgroundColor->Enable(!cbTransparentBG->IsChecked());
+	};
+
+	cbTransparentBG->Bind(wxEVT_CHECKBOX, onTransparentToggle);
+	cpBackgroundColor->Enable(!cbTransparentBG->IsChecked());
+
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
+	int resolutions[] = {512, 1024, 2048, 4096};
+	int resIndex = choiceResolution->GetSelection();
+	if (resIndex < 0 || resIndex > 3)
+		resIndex = 2;
+	int resolution = resolutions[resIndex];
+
+	wxColour wireColor = cpWireColor->GetColour();
+	wxColour bgColor = cpBackgroundColor->GetColour();
+	bool transparentBG = cbTransparentBG->IsChecked();
+	bool includeTexture = cbIncludeTexture->IsChecked();
+
+	wxChoice* choiceWrapMode = XRCCTRL(dlg, "choiceWrapMode", wxChoice);
+	wxCheckBox* cbAntiAliasing = XRCCTRL(dlg, "cbAntiAliasing", wxCheckBox);
+	bool clampUVs = choiceWrapMode->GetSelection() == 1;
+	bool antiAliasing = cbAntiAliasing->IsChecked();
+
+	wxFileDialog saveDialog(this,
+		_("Save UV template image"),
+		wxEmptyString,
+		wxEmptyString,
+		"PNG Files (*.png)|*.png|TGA Files (*.tga)|*.tga|BMP Files (*.bmp)|*.bmp|JPG Files (*.jpg)|*.jpg|DDS Files (*.dds)|*.dds",
+		wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+	if (saveDialog.ShowModal() != wxID_OK)
+		return;
+
+	std::string filename = saveDialog.GetPath().ToUTF8().data();
+
+	if (!canvas->ExportUVTemplate(filename, resolution, wireColor, bgColor, transparentBG, includeTexture, clampUVs, antiAliasing))
+		wxMessageBox(_("Failed to export UV template."), _("Error"), wxICON_ERROR, this);
 }
 
 void EditUV::OnTranslate(wxCommandEvent& WXUNUSED(event)) {
@@ -1141,6 +1197,133 @@ void EditUVCanvas::InitMeshes() {
 	boxSelectMesh->CreateBuffers();
 	uvSurface.AddOverlay(boxSelectMesh);
 	uvSurface.UpdateShaders(boxSelectMesh);
+}
+
+bool EditUVCanvas::ExportUVTemplate(const std::string& filename, int resolution, const wxColour& wireColor, const wxColour& bgColor, bool transparentBG, bool includeTexture, bool clampUVs, bool antiAliasing) {
+	if (!uvGridMesh)
+		return false;
+
+	uvSurface.SetContext();
+
+	// Determine save format from file extension
+	int saveType = SOIL_SAVE_TYPE_PNG;
+	std::string ext = filename.substr(filename.find_last_of('.') + 1);
+	if (ext == "tga" || ext == "TGA")
+		saveType = SOIL_SAVE_TYPE_TGA;
+	else if (ext == "bmp" || ext == "BMP")
+		saveType = SOIL_SAVE_TYPE_BMP;
+	else if (ext == "jpg" || ext == "JPG" || ext == "jpeg" || ext == "JPEG")
+		saveType = SOIL_SAVE_TYPE_JPG;
+	else if (ext == "dds" || ext == "DDS")
+		saveType = SOIL_SAVE_TYPE_DDS;
+
+	// Formats without alpha support: pick a contrasting background based on wire color brightness
+	bool formatSupportsAlpha = (saveType == SOIL_SAVE_TYPE_PNG || saveType == SOIL_SAVE_TYPE_TGA || saveType == SOIL_SAVE_TYPE_DDS);
+	bool useTransparency = transparentBG && formatSupportsAlpha;
+
+	// MSAA: use 4x multisampling when anti-aliasing is enabled
+	int samples = antiAliasing ? 4 : 0;
+
+	// Save current state
+	Vector3 savedCamPos = uvSurface.camPos;
+	Vector3 savedCamOffset = uvSurface.camOffset;
+	Vector3 savedCamRot = uvSurface.camRot;
+	Vector3 savedCamRotOffset = uvSurface.camRotOffset;
+	Vector3 savedBgColor = uvSurface.GetBackgroundColor();
+	Vector3 savedGridColor = uvGridMesh->color;
+	bool savedVertexColors = uvGridMesh->vertexColors;
+
+	// Reset camera to default UV view (shows full 0-1 UV space)
+	uvSurface.camPos = Vector3(-0.5f, 0.5f, -1.0f);
+	uvSurface.camOffset = Vector3();
+	uvSurface.camRot = Vector3();
+	uvSurface.camRotOffset = Vector3();
+
+	// Set up the projection for a square 1:1 viewport
+	uint32_t savedW, savedH;
+	uvSurface.GetSize(savedW, savedH);
+	uvSurface.SetSize(resolution, resolution);
+	uvSurface.UpdateProjection();
+
+	// Create offscreen buffer (with optional MSAA)
+	GLOffScreenBuffer offscreen(&uvSurface, resolution, resolution, 1, {}, samples);
+	offscreen.Start();
+
+	// Clear with background color
+	if (useTransparency) {
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	}
+	else if (transparentBG && !formatSupportsAlpha) {
+		float luminance = wireColor.Red() / 255.0f * 0.299f + wireColor.Green() / 255.0f * 0.587f + wireColor.Blue() / 255.0f * 0.114f;
+		float bg = luminance > 0.5f ? 0.0f : 1.0f;
+		glClearColor(bg, bg, bg, 1.0f);
+	}
+	else {
+		glClearColor(bgColor.Red() / 255.0f, bgColor.Green() / 255.0f, bgColor.Blue() / 255.0f, 1.0f);
+	}
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Clamp: use scissor test to restrict rendering to 0-1 UV range
+	if (clampUVs) {
+		glEnable(GL_SCISSOR_TEST);
+		glScissor(0, 0, resolution, resolution);
+	}
+
+	// Render texture plane if requested
+	if (includeTexture && planeMesh && planeMesh->material) {
+		uvSurface.RenderMesh(planeMesh);
+	}
+
+	// Render UV wireframe with custom color (disable vertex colors, override mesh color)
+	uvGridMesh->color = Vector3(wireColor.Red() / 255.0f, wireColor.Green() / 255.0f, wireColor.Blue() / 255.0f);
+	uvGridMesh->vertexColors = false;
+	uvSurface.UpdateShaders(uvGridMesh);
+	uvSurface.RenderMesh(uvGridMesh);
+
+	if (clampUVs) {
+		glDisable(GL_SCISSOR_TEST);
+	}
+
+	// Resolve MSAA (no-op if samples == 0) and read pixels
+	offscreen.Resolve();
+
+	std::unique_ptr<GLubyte[]> pixels(new GLubyte[resolution * resolution * 4]);
+	glReadPixels(0, 0, resolution, resolution, GL_RGBA, GL_UNSIGNED_BYTE, pixels.get());
+
+	offscreen.End();
+
+	// Restore mesh state
+	uvGridMesh->color = savedGridColor;
+	uvGridMesh->vertexColors = savedVertexColors;
+	uvSurface.UpdateShaders(uvGridMesh);
+
+	// Restore camera and viewport
+	uvSurface.camPos = savedCamPos;
+	uvSurface.camOffset = savedCamOffset;
+	uvSurface.camRot = savedCamRot;
+	uvSurface.camRotOffset = savedCamRotOffset;
+	uvSurface.SetBackgroundColor(savedBgColor);
+	uvSurface.SetSize(savedW, savedH);
+
+	// Flip vertically (glReadPixels reads bottom-to-top, all save formats expect top-to-bottom)
+	{
+		int rowBytes = resolution * 4;
+		std::unique_ptr<GLubyte[]> rowBuf(new GLubyte[rowBytes]);
+		for (int y = 0; y < resolution / 2; y++) {
+			GLubyte* topRow = pixels.get() + y * rowBytes;
+			GLubyte* botRow = pixels.get() + (resolution - 1 - y) * rowBytes;
+			memcpy(rowBuf.get(), topRow, rowBytes);
+			memcpy(topRow, botRow, rowBytes);
+			memcpy(botRow, rowBuf.get(), rowBytes);
+		}
+	}
+
+	int result = SOIL_save_image(filename.c_str(), saveType, resolution, resolution, 4, pixels.get());
+
+	// Re-render the canvas
+	Render();
+
+	return result != 0;
 }
 
 void EditUVCanvas::UpdateCursor(int ScreenX, int ScreenY, const std::string& meshName) {

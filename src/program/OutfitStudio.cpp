@@ -4293,7 +4293,7 @@ void OutfitStudioFrame::ClearProject() {
 
 	project->mCopyRef = true;
 
-	glView->ClearOverlays();
+	glView->gls.ClearOverlays();
 	activePartition.Unset();
 	activeSegment.Unset();
 
@@ -4594,6 +4594,8 @@ void OutfitStudioFrame::UpdateBoneTree() {
 }
 
 void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
+	glView->gls.DeleteOverlay("refineErrorEdges");
+
 	for (auto& shape : project->GetWorkNif()->GetShapes())
 		MeshFromProj(shape, reloadTextures);
 
@@ -8936,7 +8938,8 @@ void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVert
 											NiShape* shape,
 											const std::vector<Vector3>& outfitVerts,
 											const ClippingFixOptions& options,
-											UndoStateProject* usp) {
+											UndoStateProject* usp,
+											const TargetDataDiffs* allowedVerts) {
 	std::vector<Triangle> outfitTris;
 	shape->GetTriangles(outfitTris);
 
@@ -8949,6 +8952,9 @@ void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVert
 	for (size_t i = 0; i < outfitVerts.size(); i++) {
 		Vector3 diff = fixedVerts[i] - outfitVerts[i];
 		if (diff.IsZero(true))
+			continue;
+
+		if (allowedVerts && allowedVerts->find(static_cast<uint16_t>(i)) == allowedVerts->end())
 			continue;
 
 		uss.pointStartState[i] = Mesh::TransformPosNifToMesh(outfitVerts[i]);
@@ -9004,7 +9010,7 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 		std::vector<Vector3> outfitVerts;
 		project->GetLiveVerts(shape, outfitVerts);
 
-		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp);
+		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp, diffSet);
 	}
 
 	if (usp->usss.empty()) {
@@ -10347,6 +10353,8 @@ void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
 	if (!ShapeSelectionCheck())
 		return;
 
+	glView->gls.DeleteOverlay("refineErrorEdges");
+
 	if (bEditSlider) {
 		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
@@ -10407,8 +10415,21 @@ void OutfitStudioFrame::OnRefineMesh(wxCommandEvent& WXUNUSED(event)) {
 	UndoStateShape uss;
 	uss.shapeName = shape->name.get();
 	Mesh* m = glView->GetMesh(shape->name.get());
-	if (!project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts, false)) {
-		wxMessageBox(_("An edge has multiple triangles of the same orientation.  Correct the orientations before splitting."), _("Error"), wxICON_ERROR);
+	std::vector<Edge> badEdges;
+	if (!project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts, false, &badEdges)) {
+		if (!badEdges.empty()) {
+			glView->gls.AddVisEdges(m, badEdges, "refineErrorEdges");
+
+			// Add bad edge vertices to the mask
+			for (const auto& e : badEdges) {
+				m->mask[e.p1] = 1.0f;
+				m->mask[e.p2] = 1.0f;
+			}
+			m->QueueUpdate(Mesh::UpdateType::Mask);
+		}
+
+		wxMessageBox(_("Some edges have multiple triangles of the same orientation. They have been highlighted and masked. Correct the orientations before refining."), _("Error"), wxICON_ERROR);
+		glView->Render();
 		return;
 	}
 

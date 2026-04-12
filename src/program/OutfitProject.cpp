@@ -3258,7 +3258,7 @@ Ideally, PrepareRefineMesh would take a list of edges, not a list of
 vertices.  But OutfitStudio doesn't yet have an edge-mask tool.
 Parameter "noCurveOffset" disables the smoothing/curving of the new vertex position within split edges.
 */
-bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset) {
+bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset, std::vector<Edge>* badEdges) {
 	// Get vertex coordinates and triangle data
 	size_t nverts = pincs.size();
 	const std::vector<Vector3>* verts = workNif.GetVertsForShape(shape);
@@ -3319,6 +3319,7 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 	// The boolean in singleEdges indicates whether the edge has been
 	// split yet (in the following big loop).
 	std::unordered_map<Edge, bool> singleEdges;
+	bool hasBadEdges = false;
 	for (size_t ti = 0; ti < tris.size(); ++ti) {
 		if (tris[ti].p1 >= nverts || tris[ti].p2 >= nverts ||
 			tris[ti].p3 >= nverts)
@@ -3327,11 +3328,19 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 			Edge e = tris[ti].GetEdge(tei);
 			if (!pincs[e.p1] || !pincs[e.p2])
 				continue;
-			if (singleEdges.find(e) != singleEdges.end())
-				return false;	// Multiple triangles for this edge
+			if (singleEdges.find(e) != singleEdges.end()) {
+				// Multiple triangles for this edge
+				if (badEdges)
+					badEdges->push_back(e);
+				hasBadEdges = true;
+				continue;
+			}
 			singleEdges[e] = false;
 		}
 	}
+
+	if (hasBadEdges)
+		return false;
 
 	uint16_t newvi = nverts;
 
@@ -3362,23 +3371,48 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 		Mesh::GetWeldSet(weldVerts, edge.p2, p2s);
 
 		// Search for edge and reverse-edge matches in singleEdges
+		bool edgeError = false;
 		for (const auto p1 : p1s) {
 			for (const auto p2 : p2s) {
 				auto seit = singleEdges.find(Edge(p1, p2));
-				if (seit != singleEdges.end() && !seit->second)
+				if (seit != singleEdges.end() && !seit->second) {
+					if (badEdges) {
+						badEdges->push_back(Edge(p1, p2));
+						hasBadEdges = true;
+						edgeError = true;
+						continue;
+					}
 					return false;	// Multiple triangles for this edge
+				}
 				seit = singleEdges.find(Edge(p2, p1));
 				if (seit == singleEdges.end())
 					continue;
-				if (seit->second)
+				if (seit->second) {
+					if (badEdges) {
+						badEdges->push_back(Edge(p2, p1));
+						hasBadEdges = true;
+						edgeError = true;
+						continue;
+					}
 					return false;	// Shouldn't be possible
+				}
 				seit->second = true;
-				if (hasre)
+				if (hasre) {
+					if (badEdges) {
+						badEdges->push_back(Edge(p2, p1));
+						hasBadEdges = true;
+						edgeError = true;
+						continue;
+					}
 					return false;	// Multiple reverse edges for this edge
+				}
 				hasre = true;
 				redge = Edge(p2, p1);
 			}
 		}
+
+		if (edgeError)
+			continue;
 
 		// Find the edge and redge vertex data
 		const UndoStateVertex& p1d = duss.delVerts[dussInds[edge.p1]];
@@ -3554,6 +3588,9 @@ bool OutfitProject::PrepareRefineMesh(NiShape* shape, UndoStateShape& uss, std::
 			emls.emplace_back(EdgeWithMidAndLen{redge, rusv.index, elen});
 	}
 	// end big loop through the edges
+
+	if (hasBadEdges)
+		return false;
 
 	// Sort the edges from longest to shortest so that we'll split the
 	// triangles for the longest edges first.

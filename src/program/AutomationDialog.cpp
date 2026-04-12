@@ -10,6 +10,7 @@ See the included LICENSE file
 
 #include "../files/MaskFile.h"
 #include "../files/TriFile.h"
+#include "../components/ClippingFixer.h"
 #include "../utils/PlatformUtil.h"
 
 #include <NifFile.hpp>
@@ -807,6 +808,17 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 		case AutomationStepType::RemoveUnusedNodes:
 			// No parameters to set
 			break;
+
+		case AutomationStepType::FixClipping: {
+			auto* choice = XRCCTRL(*this, "choiceFixClipMode", wxChoice);
+			if (choice)
+				choice->SetSelection(step.fixClipMode);
+			auto* txt = XRCCTRL(*this, "txtFixClipStrength", wxTextCtrl);
+			if (txt)
+				txt->SetValue(wxString::Format("%d", static_cast<int>(step.fixClipStrength * 100)));
+			SetVectorValue("txtFixClipSliderNames", step.fixClipSliderNames);
+			break;
+		}
 	}
 }
 
@@ -1097,6 +1109,15 @@ void AutomationDialog::UpdateStepFromUI() {
 		case AutomationStepType::RemoveUnusedNodes:
 			// No parameters to read
 			break;
+
+		case AutomationStepType::FixClipping: {
+			auto* choice = XRCCTRL(*this, "choiceFixClipMode", wxChoice);
+			if (choice)
+				step.fixClipMode = choice->GetSelection();
+			step.fixClipStrength = GetFloatValue("txtFixClipStrength") / 100.0f;
+			step.fixClipSliderNames = GetVectorValue("txtFixClipSliderNames");
+			break;
+		}
 	}
 
 	RefreshStepRow(selectedStep);
@@ -2981,6 +3002,164 @@ int AutomationDialog::ExecuteStepRemoveUnusedNodes(const AutomationStep&) {
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
+	nifly::NiShape* refShape = project->GetBaseShape();
+	if (!refShape) {
+		wxLogError("Automation: FixClipping - no reference shape set.");
+		return 1;
+	}
+
+	ClippingFixOptions options;
+	options.strength = std::max(0.0f, std::min(1.0f, step.fixClipStrength));
+	if (options.strength <= 0.0f) {
+		wxLogWarning("Automation: FixClipping - strength is 0, nothing to do.");
+		return 0;
+	}
+
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: FixClipping - no target shapes found.");
+		return 0;
+	}
+
+	if (step.fixClipMode == 0) {
+		// Shapes mode: fix base geometry of target shapes with no sliders applied
+		wxLogMessage("Automation: FixClipping (Shapes mode, strength=%.0f%%)...", step.fixClipStrength * 100.0f);
+
+		std::vector<nifly::Vector3> bodyVerts;
+		std::vector<nifly::Triangle> bodyTris;
+		project->GetWorkNif()->GetVertsForShape(refShape, bodyVerts);
+		refShape->GetTriangles(bodyTris);
+
+		for (auto* shape : shapes) {
+			if (project->IsBaseShape(shape))
+				continue;
+
+			std::vector<nifly::Vector3> outfitVerts;
+			project->GetWorkNif()->GetVertsForShape(shape, outfitVerts);
+
+			std::vector<nifly::Triangle> outfitTris;
+			shape->GetTriangles(outfitTris);
+
+			std::vector<nifly::Vector3> fixedVerts = outfitVerts;
+			ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
+
+			bool changed = false;
+			for (size_t i = 0; i < outfitVerts.size(); i++) {
+				nifly::Vector3 diff = fixedVerts[i] - outfitVerts[i];
+				if (!diff.IsZero(true)) {
+					changed = true;
+					break;
+				}
+			}
+
+			if (changed) {
+				wxLogMessage("Automation: FixClipping - fixed base geometry for '%s'.", shape->name.get());
+				project->GetWorkNif()->SetVertsForShape(shape, fixedVerts);
+			}
+		}
+
+		outfitStudio->ApplySliders();
+	}
+	else if (step.fixClipMode == 1) {
+		// Sliders mode: fix clipping for each slider individually
+		wxLogMessage("Automation: FixClipping (Sliders mode, strength=%.0f%%)...", step.fixClipStrength * 100.0f);
+
+		// Build list of sliders to process
+		std::vector<size_t> sliderIndices;
+		if (step.fixClipSliderNames.empty()) {
+			// Process all non-zap/non-UV sliders that have morph data
+			for (size_t i = 0; i < project->SliderCount(); i++) {
+				if (project->activeSet[i].bZap || project->activeSet[i].bUV)
+					continue;
+				sliderIndices.push_back(i);
+			}
+			wxLogMessage("Automation: FixClipping - processing all %zu non-zap/non-UV sliders.", sliderIndices.size());
+		}
+		else {
+			for (const auto& name : step.fixClipSliderNames) {
+				size_t idx;
+				if (!project->SliderIndexFromName(name, idx)) {
+					wxLogError("Automation: FixClipping - slider '%s' not found.", name);
+					return 1;
+				}
+				sliderIndices.push_back(idx);
+			}
+		}
+
+		if (sliderIndices.empty()) {
+			wxLogWarning("Automation: FixClipping - no sliders to process.");
+			return 0;
+		}
+
+		// Save current slider values
+		std::vector<float> savedValues(project->SliderCount());
+		for (size_t i = 0; i < project->SliderCount(); i++)
+			savedValues[i] = project->SliderValue(i);
+
+		for (size_t si : sliderIndices) {
+			std::string sliderName = project->GetSliderName(si);
+			wxLogMessage("Automation: FixClipping - processing slider '%s'...", sliderName);
+
+			// Set all sliders to 0%, then this slider to 100%
+			for (size_t i = 0; i < project->SliderCount(); i++)
+				outfitStudio->SetSliderValue(i, 0);
+			outfitStudio->SetSliderValue(si, 100);
+			outfitStudio->ApplySliders();
+
+			// Get live body verts (base + this slider at 100%)
+			std::vector<nifly::Vector3> bodyVerts;
+			std::vector<nifly::Triangle> bodyTris;
+			project->GetLiveVerts(refShape, bodyVerts);
+			refShape->GetTriangles(bodyTris);
+
+			for (auto* shape : shapes) {
+				if (project->IsBaseShape(shape))
+					continue;
+
+				// Check if this shape has morph data for this slider
+				TargetDataDiffs* diffSet = project->GetDiffSet(project->activeSet[si], shape);
+				if (!diffSet || diffSet->empty())
+					continue;
+
+				// Get live outfit verts (base + this slider morph at 100%)
+				std::vector<nifly::Vector3> outfitVerts;
+				project->GetLiveVerts(shape, outfitVerts);
+
+				std::vector<nifly::Triangle> outfitTris;
+				shape->GetTriangles(outfitTris);
+
+				std::vector<nifly::Vector3> fixedVerts = outfitVerts;
+				ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
+
+				// Compute mesh-space morph diffs, only for vertices already in the slider's diff set
+				TargetDataDiffs morphDiffs;
+				for (size_t i = 0; i < outfitVerts.size(); i++) {
+					if (diffSet->find(static_cast<uint16_t>(i)) == diffSet->end())
+						continue;
+					nifly::Vector3 nifDiff = fixedVerts[i] - outfitVerts[i];
+					if (nifDiff.IsZero(true))
+						continue;
+					morphDiffs[static_cast<uint16_t>(i)] = Mesh::TransformDiffNifToMesh(nifDiff);
+				}
+
+				if (!morphDiffs.empty()) {
+					wxLogMessage("Automation: FixClipping - updated %zu vertices for '%s' slider '%s'.",
+								 morphDiffs.size(), shape->name.get(), sliderName);
+					project->UpdateMorphResult(shape, sliderName, morphDiffs);
+				}
+			}
+		}
+
+		// Restore original slider values
+		for (size_t i = 0; i < project->SliderCount(); i++)
+			outfitStudio->SetSliderValue(i, static_cast<int>(savedValues[i] * 100));
+		outfitStudio->ApplySliders();
+	}
+
+	return 0;
+}
+
 int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 	switch (step.type) {
 		case AutomationStepType::ClearProject: return ExecuteStepClearProject(step);
@@ -3013,6 +3192,7 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
 		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
 		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
+		case AutomationStepType::FixClipping: return ExecuteStepFixClipping(step);
 	}
 
 	return 0;

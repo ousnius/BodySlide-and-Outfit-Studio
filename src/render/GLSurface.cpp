@@ -1929,6 +1929,37 @@ Mesh* GLSurface::AddVisPlane(const Matrix4& mat, const Vector2& size, float uvSc
 	return m;
 }
 
+Mesh* GLSurface::AddVisEdges(const Mesh* refMesh, const std::vector<Edge>& edges, const std::string& name, const Vector3& color) {
+	if (!refMesh || edges.empty())
+		return nullptr;
+
+	if (!SetContext())
+		return nullptr;
+
+	auto m = new Mesh();
+	m->nVerts = refMesh->nVerts;
+	m->nEdges = static_cast<int>(edges.size());
+
+	m->verts = std::make_unique<Vector3[]>(m->nVerts);
+	m->edges = std::make_unique<Edge[]>(m->nEdges);
+
+	for (int v = 0; v < refMesh->nVerts; v++)
+		m->verts[v] = refMesh->verts[v];
+
+	for (size_t e = 0; e < edges.size(); e++)
+		m->edges[e] = edges[e];
+
+	m->shapeName = name;
+	m->color = color;
+	m->material = GetPrimitiveMaterial();
+	m->CreateBuffers();
+
+	m->rendermode = Mesh::RenderMode::UnlitWire;
+	AddOverlay(m);
+
+	return m;
+}
+
 Mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::string& name, const bool asMesh) {
 	Mesh* m = nullptr;
 

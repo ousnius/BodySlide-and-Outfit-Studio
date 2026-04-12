@@ -95,6 +95,13 @@
 	</object>
 	<object class="wxMenuBar" name="uvMenuBar">
 		<label>Menu</label>
+		<object class="wxMenu" name="menuFile">
+			<label>File</label>
+			<object class="wxMenuItem" name="fileExportUVTemplate">
+				<label>Export UV Template...\tCtrl+E</label>
+				<help>Export the UV layout as an image file.</help>
+			</object>
+		</object>
 		<object class="wxMenu" name="menuEdit">
 			<label>Edit</label>
 			<object class="wxMenuItem" name="editUndo">
@@ -454,6 +461,140 @@
 						<label>&amp;Cancel</label>
 					</object>
 				</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxDialog" name="dlgExportUV">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
+		<title>Export UV Template</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxFlexGridSizer">
+					<cols>2</cols>
+					<vgap>8</vgap>
+					<hgap>10</hgap>
+					<growablecols>1</growablecols>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxStaticText">
+							<label>Resolution</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<object class="wxChoice" name="choiceResolution">
+							<content>
+								<item>512 x 512</item>
+								<item>1024 x 1024</item>
+								<item>2048 x 2048</item>
+								<item>4096 x 4096</item>
+							</content>
+							<selection>2</selection>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxStaticText">
+							<label>Wire Color</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<object class="wxColourPickerCtrl" name="cpWireColor">
+							<colour>#FFFFFF</colour>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxStaticText">
+							<label>Background Color</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<object class="wxColourPickerCtrl" name="cpBackgroundColor">
+							<colour>#000000</colour>
+						</object>
+					</object>
+					<object class="spacer">
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<object class="wxCheckBox" name="cbTransparentBG">
+							<label>Transparent Background</label>
+							<checked>1</checked>
+						</object>
+					</object>
+					<object class="spacer">
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<object class="wxCheckBox" name="cbIncludeTexture">
+							<label>Include Texture</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL</flag>
+						<object class="wxStaticText">
+							<label>Wrap Mode</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<object class="wxChoice" name="choiceWrapMode">
+							<content>
+								<item>Wrap</item>
+								<item>Clamp</item>
+							</content>
+							<selection>0</selection>
+						</object>
+					</object>
+					<object class="spacer">
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<object class="wxCheckBox" name="cbAntiAliasing">
+							<label>Anti-Aliasing</label>
+							<checked>1</checked>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>10</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
 				</object>
 			</object>
 		</object>
