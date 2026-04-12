@@ -593,8 +593,6 @@ public:
 		}
 	}
 
-	void ClearOverlays() { gls.ClearOverlays(); }
-
 	void Cleanup() {
 		XMoveMesh = nullptr;
 		YMoveMesh = nullptr;
@@ -1592,6 +1590,7 @@ private:
 		if (!activeItem)
 			return;
 
+		glView->gls.DeleteOverlay("refineErrorEdges");
 		glView->ClearMask();
 
 		if (glView->GetTransformMode())
