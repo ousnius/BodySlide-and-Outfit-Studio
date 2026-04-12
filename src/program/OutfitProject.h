@@ -115,8 +115,8 @@ class OutfitProject {
 	// All cloth data blocks that have been loaded during work
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
 
-	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path) const;
-	void ValidateNIF(nifly::NifFile& nif);
+	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath = std::string()) const;
+	void ValidateNIF(nifly::NifFile& nif, const std::string& nifFilePath = std::string());
 
 	// Applies the inverse of the blended pose transform to a NIF-space diff
 	// vector for a single vertex, converting it from posed space to rest space.

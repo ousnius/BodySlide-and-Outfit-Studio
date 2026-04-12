@@ -17,6 +17,7 @@ See the included LICENSE file
 #include "../FSEngine/FSEngine.h"
 #include "../FSEngine/FSManager.h"
 
+#include <algorithm>
 #include <regex>
 #include <sstream>
 
@@ -2202,7 +2203,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 		return 2;
 	}
 
-	ValidateNIF(refNif);
+	ValidateNIF(refNif, fileName);
 
 	std::vector<std::string> deletedShapes;
 
@@ -2293,7 +2294,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		return 2;
 	}
 
-	ValidateNIF(refNif);
+	ValidateNIF(refNif, refFile);
 
 	std::vector<std::string> shapes = refNif.GetShapeNames();
 	if (shapes.empty()) {
@@ -5065,7 +5066,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 		return 1;
 	}
 
-	ValidateNIF(nif);
+	ValidateNIF(nif, fileName);
 
 	nif.SetNodeName(0, "Scene Root");
 	nif.RenameDuplicateShapes();
@@ -5286,7 +5287,7 @@ void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& n
 	int result = wxMessageBox(
 		_("Starfield supports two modes for mesh geometry data:\n\n"
 		  "Internal: Mesh data is embedded directly in the NIF file.\n"
-		  "Simpler for modding — single file, no external dependencies.\n\n"
+		  "Simpler for modding - single file, no external dependencies.\n\n"
 		  "External: Mesh data is stored in separate .mesh files under geometries/.\n"
 		  "Can be streamed from BA2 archives for better game performance.\n\n"
 		  "Would you like to embed the geometry data in the NIF (internal)?\n"
@@ -5710,64 +5711,72 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiSh
 }
 #endif
 
-std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std::string& dir, const std::string& path) const {
-	// Replace all backward slashes with one forward slash
+std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath) const {
+	// Normalize path: replace backslashes, extract relative geometries path, ensure prefix and suffix
 	std::string meshPath = std::regex_replace(path, std::regex("\\\\+"), "/");
-
-	// Remove everything before the first occurence of "/geometries/"
 	meshPath = std::regex_replace(meshPath, std::regex("^(.*?)/geometries/", std::regex_constants::icase), "");
-
-	// Remove all slashes from the front
 	meshPath = std::regex_replace(meshPath, std::regex("^/+"), "");
-
-	// If the path doesn't start with "geometries/", add it to the front
 	meshPath = std::regex_replace(meshPath, std::regex("^(?!^geometries/)", std::regex_constants::icase), "geometries/");
 
-	const std::string_view suffix = ".mesh";
-	bool endsWithSuffix = meshPath.size() >= suffix.size() && meshPath.compare(meshPath.size() - suffix.size(), suffix.size(), suffix) == 0;
-	if (!endsWithSuffix)
-		meshPath = meshPath + ".mesh";
+	if (meshPath.size() < 5 || meshPath.compare(meshPath.size() - 5, 5, ".mesh") != 0)
+		meshPath += ".mesh";
 
-	// Check if loose file exists
-	std::string fullPath = dir + meshPath;
-	bool looseFileExists = PlatformUtil::FileExists(fullPath);
-	if (looseFileExists) {
-		auto fileStream = std::make_unique<std::fstream>();
-		if (fileStream) {
-			PlatformUtil::OpenFileStream(*fileStream, fullPath, std::ios::in | std::ios::binary);
-			if (!fileStream->fail())
-				return fileStream;
+	// Try opening a loose file at the given path
+	auto tryOpenLoose = [](const std::string& fullPath) -> std::unique_ptr<std::istream> {
+		if (!PlatformUtil::FileExists(fullPath))
+			return nullptr;
+
+		auto fs = std::make_unique<std::fstream>();
+		PlatformUtil::OpenFileStream(*fs, fullPath, std::ios::in | std::ios::binary);
+		if (!fs->fail())
+			return fs;
+
+		return nullptr;
+	};
+
+	// 1) Loose file in GameDataPath
+	if (auto stream = tryOpenLoose(dir + meshPath))
+		return stream;
+
+	// 2) Beside the meshes folder (or NIF directory) of the loading NIF
+	if (!nifFilePath.empty()) {
+		std::string nifDir = std::regex_replace(nifFilePath, std::regex("\\\\+"), "/");
+		std::string nifDirLower = nifDir;
+		std::transform(nifDirLower.begin(), nifDirLower.end(), nifDirLower.begin(), ::tolower);
+
+		auto meshesPos = nifDirLower.rfind("/meshes/");
+		if (meshesPos != std::string::npos) {
+			if (auto stream = tryOpenLoose(nifDir.substr(0, meshesPos + 1) + meshPath))
+				return stream;
 		}
-	}
-	else {
-		// Search for file in archives
-		wxMemoryBuffer data;
-		for (FSArchiveFile* archive : FSManager::archiveList()) {
-			if (archive) {
-				if (archive->hasFile(meshPath)) {
-					wxMemoryBuffer outData;
-					archive->fileContents(meshPath, outData);
-
-					if (!outData.IsEmpty()) {
-						data = std::move(outData);
-						break;
-					}
-				}
+		else {
+			auto lastSlash = nifDir.rfind('/');
+			if (lastSlash != std::string::npos) {
+				if (auto stream = tryOpenLoose(nifDir.substr(0, lastSlash + 1) + meshPath))
+					return stream;
 			}
 		}
+	}
 
-		if (!data.IsEmpty()) {
-			std::string content((char*)data.GetData(), data.GetDataLen());
-			auto contentStream = std::make_unique<std::istringstream>(content, std::istringstream::binary);
-			if (contentStream && !contentStream->fail())
-				return contentStream;
+	// 3) Search in archives
+	for (FSArchiveFile* archive : FSManager::archiveList()) {
+		if (archive && archive->hasFile(meshPath)) {
+			wxMemoryBuffer outData;
+			archive->fileContents(meshPath, outData);
+
+			if (!outData.IsEmpty()) {
+				auto contentStream = std::make_unique<std::istringstream>(
+					std::string(static_cast<char*>(outData.GetData()), outData.GetDataLen()), std::istringstream::binary);
+				if (!contentStream->fail())
+					return contentStream;
+			}
 		}
 	}
 
 	return nullptr;
 }
 
-void OutfitProject::ValidateNIF(NifFile& nif) {
+void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	bool match = false;
 
@@ -5816,7 +5825,7 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 		for (auto meshPath : nif.GetExternalGeometryPathRefs(s)) {
 			auto dataPath = Config["GameDataPath"];
 
-			auto meshStream = GetExternalGeometryStream(dataPath, meshPath.get());
+			auto meshStream = GetExternalGeometryStream(dataPath, meshPath.get(), nifFilePath);
 			if (!meshStream) {
 				wxMessageBox(wxString::Format(_("Unable to locate external mesh data for shape. Expected path: %s"), meshPath.get()),
 							 _("External Mesh Data Load Failure"),
