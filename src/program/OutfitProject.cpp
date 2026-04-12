@@ -17,6 +17,7 @@ See the included LICENSE file
 #include "../FSEngine/FSEngine.h"
 #include "../FSEngine/FSManager.h"
 
+#include <algorithm>
 #include <regex>
 #include <sstream>
 
@@ -255,6 +256,9 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 
 		clone.SetShapeOrder(owner->GetShapeList());
 		clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
+
+		// Project ShapeData NIFs always use internal geometry for simplicity
+		ForceInternalGeometry(clone);
 
 		std::fstream file;
 		PlatformUtil::OpenFileStream(file, saveFileName, std::ios::out | std::ios::binary);
@@ -1050,6 +1054,9 @@ int OutfitProject::SaveSliderNIF(const std::string& sliderName, NiShape* shape, 
 
 		nif.DeleteUnreferencedNodes();
 	}
+
+	// Slider NIFs in ShapeData always use internal geometry
+	ForceInternalGeometry(nif);
 
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
@@ -2196,7 +2203,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 		return 2;
 	}
 
-	ValidateNIF(refNif);
+	ValidateNIF(refNif, fileName);
 
 	std::vector<std::string> deletedShapes;
 
@@ -2287,7 +2294,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		return 2;
 	}
 
-	ValidateNIF(refNif);
+	ValidateNIF(refNif, refFile);
 
 	std::vector<std::string> shapes = refNif.GetShapeNames();
 	if (shapes.empty()) {
@@ -5059,7 +5066,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 		return 1;
 	}
 
-	ValidateNIF(nif);
+	ValidateNIF(nif, fileName);
 
 	nif.SetNodeName(0, "Scene Root");
 	nif.RenameDuplicateShapes();
@@ -5125,7 +5132,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	return 0;
 }
 
-int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef) {
+int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef, std::optional<bool> useInternalGeom) {
 	workAnim.CleanupBones();
 	owner->UpdateAnimationGUI();
 
@@ -5173,10 +5180,16 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	clone.SetShapeOrder(owner->GetShapeList());
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
+	ConfigureInternalGeometry(clone, fileName, useInternalGeom);
+
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
 
-	return clone.Save(file);
+	int result = clone.Save(file);
+	if (result == 0)
+		SaveExternalMeshes(clone, fileName);
+
+	return result;
 }
 
 
@@ -5209,7 +5222,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 	}
 }
 
-int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes) {
+int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes, std::optional<bool> useInternalGeom) {
 	if (exportShapes.empty())
 		return 1;
 
@@ -5234,10 +5247,141 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
+	ConfigureInternalGeometry(clone, fileName, useInternalGeom);
+
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
 
-	return clone.Save(file);
+	int result = clone.Save(file);
+	if (result == 0)
+		SaveExternalMeshes(clone, fileName);
+
+	return result;
+}
+
+void OutfitProject::ForceInternalGeometry(NifFile& nif) {
+	if (!nif.GetHeader().GetVersion().IsSF())
+		return;
+
+	for (auto& s : nif.GetShapes()) {
+		auto bsgeo = dynamic_cast<BSGeometry*>(s);
+		if (bsgeo)
+			bsgeo->SetInternalGeomData(true);
+	}
+}
+
+void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& nifFileName, std::optional<bool> useInternalGeom) {
+	if (!nif.GetHeader().GetVersion().IsSF())
+		return;
+
+	bool hasBSGeo = false;
+	for (auto& s : nif.GetShapes()) {
+		if (s->HasType<BSGeometry>()) {
+			hasBSGeo = true;
+			break;
+		}
+	}
+	if (!hasBSGeo)
+		return;
+
+	// Derive geometry folder name from the NIF filename (without extension)
+	wxFileName nifPath(wxString::FromUTF8(nifFileName));
+	std::string folderName = nifPath.GetName().ToUTF8().data();
+
+	for (auto& s : nif.GetShapes()) {
+		auto bsgeo = dynamic_cast<BSGeometry*>(s);
+		if (!bsgeo)
+			continue;
+
+		// Use provided choice, or keep the shape's current state
+		bool useInternal = useInternalGeom.value_or(bsgeo->HasInternalGeomData());
+
+		bsgeo->SetInternalGeomData(useInternal);
+
+		if (!useInternal) {
+			// Ensure external mesh paths are set
+			for (uint8_t i = 0; i < bsgeo->MeshCount(); i++) {
+				auto mesh = bsgeo->SelectMesh(i);
+				if (mesh && mesh->meshName.get().empty()) {
+					// Generate mesh path: NifName\ShapeName_Index
+					std::string shapeName = s->name.get();
+					auto sanitize = [](std::string& str) {
+						for (char& c : str) {
+							if (c == ' ' || c == '/' || c == ':' || c == '*' || c == '?' || c == '"' || c == '<' || c == '>' || c == '|')
+								c = '_';
+						}
+					};
+					std::string folder = folderName;
+					sanitize(folder);
+					sanitize(shapeName);
+					mesh->meshName.get() = folder + "\\" + shapeName + "_" + std::to_string(i);
+				}
+				bsgeo->ReleaseMesh();
+			}
+		}
+	}
+}
+
+bool OutfitProject::SaveExternalMeshes(NifFile& nif, const std::string& nifFileName) {
+	if (!nif.GetHeader().GetVersion().IsSF())
+		return true;
+
+	wxFileName nifPath(wxString::FromUTF8(nifFileName));
+	wxString nifDir = nifPath.GetPath();
+
+	for (auto& s : nif.GetShapes()) {
+		auto meshPaths = nif.GetExternalGeometryPathRefs(s);
+		uint8_t meshIndex = 0;
+
+		for (auto& meshPathRef : meshPaths) {
+			std::string meshPath = meshPathRef.get();
+			if (meshPath.empty()) {
+				meshIndex++;
+				continue;
+			}
+
+			// Build full output path: geometries/{meshPath}.mesh in the Data root (sibling to Meshes/)
+			// Walk up to the directory that contains "meshes" (case-insensitive)
+			wxFileName walker(nifDir + wxFileName::GetPathSeparator());
+			bool foundMeshes = false;
+			while (walker.GetDirCount() > 0) {
+				wxString lastDir = walker.GetDirs().Last();
+				if (lastDir.CmpNoCase("meshes") == 0) {
+					walker.RemoveLastDir();
+					foundMeshes = true;
+					break;
+				}
+				walker.RemoveLastDir();
+			}
+			// If not inside a game data layout, place geometries/ next to the NIF
+			wxString rootDir = foundMeshes ? walker.GetPath() : nifDir;
+			wxString normalizedMeshPath = wxString::FromUTF8(meshPath);
+			normalizedMeshPath.Replace("\\", wxString(wxFileName::GetPathSeparator()));
+			normalizedMeshPath.Replace("/", wxString(wxFileName::GetPathSeparator()));
+			if (normalizedMeshPath.Length() < 5 || normalizedMeshPath.Right(5).CmpNoCase(".mesh") != 0)
+				normalizedMeshPath += ".mesh";
+			wxFileName meshFullPath(rootDir + wxFileName::GetPathSeparator() + "geometries"
+				+ wxFileName::GetPathSeparator() + normalizedMeshPath);
+
+			// Ensure the directory exists
+			wxFileName::Mkdir(meshFullPath.GetPath(), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+			std::string meshFileStr = meshFullPath.GetFullPath().ToUTF8().data();
+
+			std::fstream meshFile;
+			PlatformUtil::OpenFileStream(meshFile, meshFileStr, std::ios::out | std::ios::binary);
+			if (meshFile.fail()) {
+				wxLogError("Failed to save external mesh file '%s'.", meshFileStr.c_str());
+				meshIndex++;
+				continue;
+			}
+
+			nif.SaveExternalShapeData(s, meshFile, meshIndex);
+			meshIndex++;
+		}
+	}
+
+	return true;
 }
 
 int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape) {
@@ -5561,64 +5705,72 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiSh
 }
 #endif
 
-std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std::string& dir, const std::string& path) const {
-	// Replace all backward slashes with one forward slash
+std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath) const {
+	// Normalize path: replace backslashes, extract relative geometries path, ensure prefix and suffix
 	std::string meshPath = std::regex_replace(path, std::regex("\\\\+"), "/");
-
-	// Remove everything before the first occurence of "/geometries/"
 	meshPath = std::regex_replace(meshPath, std::regex("^(.*?)/geometries/", std::regex_constants::icase), "");
-
-	// Remove all slashes from the front
 	meshPath = std::regex_replace(meshPath, std::regex("^/+"), "");
-
-	// If the path doesn't start with "geometries/", add it to the front
 	meshPath = std::regex_replace(meshPath, std::regex("^(?!^geometries/)", std::regex_constants::icase), "geometries/");
 
-	const std::string_view suffix = ".mesh";
-	bool endsWithSuffix = meshPath.size() >= suffix.size() && meshPath.compare(meshPath.size() - suffix.size(), suffix.size(), suffix) == 0;
-	if (!endsWithSuffix)
-		meshPath = meshPath + ".mesh";
+	if (meshPath.size() < 5 || meshPath.compare(meshPath.size() - 5, 5, ".mesh") != 0)
+		meshPath += ".mesh";
 
-	// Check if loose file exists
-	std::string fullPath = dir + meshPath;
-	bool looseFileExists = PlatformUtil::FileExists(fullPath);
-	if (looseFileExists) {
-		auto fileStream = std::make_unique<std::fstream>();
-		if (fileStream) {
-			PlatformUtil::OpenFileStream(*fileStream, fullPath, std::ios::in | std::ios::binary);
-			if (!fileStream->fail())
-				return fileStream;
+	// Try opening a loose file at the given path
+	auto tryOpenLoose = [](const std::string& fullPath) -> std::unique_ptr<std::istream> {
+		if (!PlatformUtil::FileExists(fullPath))
+			return nullptr;
+
+		auto fs = std::make_unique<std::fstream>();
+		PlatformUtil::OpenFileStream(*fs, fullPath, std::ios::in | std::ios::binary);
+		if (!fs->fail())
+			return fs;
+
+		return nullptr;
+	};
+
+	// 1) Loose file in GameDataPath
+	if (auto stream = tryOpenLoose(dir + meshPath))
+		return stream;
+
+	// 2) Beside the meshes folder (or NIF directory) of the loading NIF
+	if (!nifFilePath.empty()) {
+		std::string nifDir = std::regex_replace(nifFilePath, std::regex("\\\\+"), "/");
+		std::string nifDirLower = nifDir;
+		std::transform(nifDirLower.begin(), nifDirLower.end(), nifDirLower.begin(), ::tolower);
+
+		auto meshesPos = nifDirLower.rfind("/meshes/");
+		if (meshesPos != std::string::npos) {
+			if (auto stream = tryOpenLoose(nifDir.substr(0, meshesPos + 1) + meshPath))
+				return stream;
 		}
-	}
-	else {
-		// Search for file in archives
-		wxMemoryBuffer data;
-		for (FSArchiveFile* archive : FSManager::archiveList()) {
-			if (archive) {
-				if (archive->hasFile(meshPath)) {
-					wxMemoryBuffer outData;
-					archive->fileContents(meshPath, outData);
-
-					if (!outData.IsEmpty()) {
-						data = std::move(outData);
-						break;
-					}
-				}
+		else {
+			auto lastSlash = nifDir.rfind('/');
+			if (lastSlash != std::string::npos) {
+				if (auto stream = tryOpenLoose(nifDir.substr(0, lastSlash + 1) + meshPath))
+					return stream;
 			}
 		}
+	}
 
-		if (!data.IsEmpty()) {
-			std::string content((char*)data.GetData(), data.GetDataLen());
-			auto contentStream = std::make_unique<std::istringstream>(content, std::istringstream::binary);
-			if (contentStream && !contentStream->fail())
-				return contentStream;
+	// 3) Search in archives
+	for (FSArchiveFile* archive : FSManager::archiveList()) {
+		if (archive && archive->hasFile(meshPath)) {
+			wxMemoryBuffer outData;
+			archive->fileContents(meshPath, outData);
+
+			if (!outData.IsEmpty()) {
+				auto contentStream = std::make_unique<std::istringstream>(
+					std::string(static_cast<char*>(outData.GetData()), outData.GetDataLen()), std::istringstream::binary);
+				if (!contentStream->fail())
+					return contentStream;
+			}
 		}
 	}
 
 	return nullptr;
 }
 
-void OutfitProject::ValidateNIF(NifFile& nif) {
+void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	bool match = false;
 
@@ -5667,7 +5819,7 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 		for (auto meshPath : nif.GetExternalGeometryPathRefs(s)) {
 			auto dataPath = Config["GameDataPath"];
 
-			auto meshStream = GetExternalGeometryStream(dataPath, meshPath.get());
+			auto meshStream = GetExternalGeometryStream(dataPath, meshPath.get(), nifFilePath);
 			if (!meshStream) {
 				wxMessageBox(wxString::Format(_("Unable to locate external mesh data for shape. Expected path: %s"), meshPath.get()),
 							 _("External Mesh Data Load Failure"),

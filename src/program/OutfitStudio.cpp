@@ -4756,6 +4756,26 @@ void OutfitStudioFrame::OnImportNIF(wxCommandEvent& WXUNUSED(event)) {
 	EndProgress();
 }
 
+std::optional<bool> OutfitStudioFrame::PromptStarfieldGeometryMode() {
+	auto* nif = project->GetWorkNif();
+	if (!nif->GetHeader().GetVersion().IsSF())
+		return std::nullopt;
+
+	int result = wxMessageBox(
+		_("Starfield supports two modes for mesh geometry data:\n\n"
+		  "Internal: Mesh data is embedded directly in the NIF file.\n"
+		  "Simpler for modding - single file, no external dependencies.\n\n"
+		  "External: Mesh data is stored in separate .mesh files under geometries/.\n"
+		  "Can be streamed from BA2 archives for better game performance.\n\n"
+		  "Would you like to embed the geometry data in the NIF (internal)?\n"
+		  "Choose 'Yes' for internal or 'No' for external."),
+		_("Starfield Geometry Mode"),
+		wxYES_NO | wxICON_QUESTION,
+		this);
+
+	return (result == wxYES);
+}
+
 void OutfitStudioFrame::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetWorkNif()->IsValid())
 		return;
@@ -4778,7 +4798,9 @@ void OutfitStudioFrame::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 
-	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes);
+	auto useInternalGeom = PromptStarfieldGeometryMode();
+
+	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes, false, useInternalGeom);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s'!"), fileName), _("Export Error"), wxICON_ERROR);
@@ -4810,7 +4832,9 @@ void OutfitStudioFrame::OnExportNIFWithRef(wxCommandEvent& event) {
 			shapeMeshes.push_back(m);
 	}
 
-	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes, true);
+	auto useInternalGeom = PromptStarfieldGeometryMode();
+
+	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes, true, useInternalGeom);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s' with reference!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s' with reference!"), fileName), _("Export Error"), wxICON_ERROR);
@@ -4834,7 +4858,9 @@ void OutfitStudioFrame::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Exporting selected shapes to NIF file '%s'.", fileName);
 
-	if (project->ExportShapeNIF(fileName.ToUTF8().data(), shapes)) {
+	auto useInternalGeom = PromptStarfieldGeometryMode();
+
+	if (project->ExportShapeNIF(fileName.ToUTF8().data(), shapes, useInternalGeom)) {
 		wxLogError("Failed to export selected shapes to NIF file '%s'!", fileName);
 		wxMessageBox(_("Failed to export selected shapes to NIF file!"), _("Error"), wxICON_ERROR);
 	}

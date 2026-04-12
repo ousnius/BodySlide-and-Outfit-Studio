@@ -10,6 +10,7 @@ See the included LICENSE file
 #include "../components/Mesh.h"
 #include "OutfitStudio.h"
 
+#include <optional>
 #include <wx/arrstr.h>
 #include <wx/filename.h>
 
@@ -115,8 +116,8 @@ class OutfitProject {
 	// All cloth data blocks that have been loaded during work
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
 
-	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path) const;
-	void ValidateNIF(nifly::NifFile& nif);
+	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath = std::string()) const;
+	void ValidateNIF(nifly::NifFile& nif, const std::string& nifFilePath = std::string());
 
 	// Applies the inverse of the blended pose transform to a NIF-space diff
 	// vector for a single vertex, converting it from posed space to rest space.
@@ -384,8 +385,17 @@ public:
 	void ApplyPoseTransformsToAllShapeGeometry(UndoStateProject& usp);
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
-	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false);
-	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
+	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false, std::optional<bool> useInternalGeom = std::nullopt);
+	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes, std::optional<bool> useInternalGeom = std::nullopt);
+
+	// Force internal geometry (flag 0x200) on all BSGeometry shapes in a Starfield NIF.
+	void ForceInternalGeometry(nifly::NifFile& nif);
+
+	// Prompt the user to choose internal or external geometry for Starfield NIF export.
+	void ConfigureInternalGeometry(nifly::NifFile& nif, const std::string& nifFileName, std::optional<bool> useInternalGeom = std::nullopt);
+
+	// Save external .mesh files for Starfield BSGeometry shapes alongside the NIF.
+	bool SaveExternalMeshes(nifly::NifFile& nif, const std::string& nifFileName);
 
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
 	int ExportOBJ(const std::string& fileName,
