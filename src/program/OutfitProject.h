@@ -388,15 +388,12 @@ public:
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 
 	// Force internal geometry (flag 0x200) on all BSGeometry shapes in a Starfield NIF.
-	// Used for project ShapeData NIFs to keep things simple (no external .mesh files).
 	void ForceInternalGeometry(nifly::NifFile& nif);
 
-	// Prompt the user to choose internal or external geometry for Starfield NIFs.
-	// Sets flag 0x200 on BSGeometry shapes accordingly.
-	// nifFileName is used to derive the geometry folder name for external mode.
+	// Prompt the user to choose internal or external geometry for Starfield NIF export.
 	void ConfigureInternalGeometry(nifly::NifFile& nif, const std::string& nifFileName);
 
-	// Save external .mesh files for Starfield BSGeometry shapes alongside the NIF
+	// Save external .mesh files for Starfield BSGeometry shapes alongside the NIF.
 	bool SaveExternalMeshes(nifly::NifFile& nif, const std::string& nifFileName);
 
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);

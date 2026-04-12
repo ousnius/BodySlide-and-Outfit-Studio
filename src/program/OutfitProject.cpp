@@ -5249,7 +5249,7 @@ void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& n
 	int result = wxMessageBox(
 		_("Starfield supports two modes for mesh geometry data:\n\n"
 		  "Internal: Mesh data is embedded directly in the NIF file.\n"
-		  "Simpler for modding \u2014 single file, no external dependencies.\n\n"
+		  "Simpler for modding — single file, no external dependencies.\n\n"
 		  "External: Mesh data is stored in separate .mesh files under geometries/.\n"
 		  "Can be streamed from BA2 archives for better game performance.\n\n"
 		  "Would you like to embed the geometry data in the NIF (internal)?\n"

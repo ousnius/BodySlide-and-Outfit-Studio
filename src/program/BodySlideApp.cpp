@@ -36,60 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using namespace nifly;
 
-// Save external .mesh files for Starfield BSGeometry shapes alongside the NIF
-static void SaveExternalMeshes(NifFile& nif, const std::string& nifFileName) {
-	if (!nif.GetHeader().GetVersion().IsSF())
-		return;
-
-	wxFileName nifPath(wxString::FromUTF8(nifFileName));
-	wxString nifDir = nifPath.GetPath();
-
-	for (auto& s : nif.GetShapes()) {
-		auto meshPaths = nif.GetExternalGeometryPathRefs(s);
-		uint8_t meshIndex = 0;
-
-		for (auto& meshPathRef : meshPaths) {
-			std::string meshPath = meshPathRef.get();
-			if (meshPath.empty()) {
-				meshIndex++;
-				continue;
-			}
-
-			// Build full output path: geometries/{meshPath}.mesh in the Data root (sibling to Meshes/)
-			// Walk up from the NIF directory to find the "meshes" parent, then use its parent as root
-			wxFileName walker(nifDir + wxFileName::GetPathSeparator());
-			bool foundMeshes = false;
-			while (walker.GetDirCount() > 0) {
-				wxString lastDir = walker.GetDirs().Last();
-				if (lastDir.CmpNoCase("meshes") == 0) {
-					walker.RemoveLastDir();
-					foundMeshes = true;
-					break;
-				}
-				walker.RemoveLastDir();
-			}
-			// If not inside a game data layout, place geometries/ next to the NIF
-			wxString rootDir = foundMeshes ? walker.GetPath() : nifDir;
-			wxFileName meshFullPath(rootDir + wxFileName::GetPathSeparator() + "geometries"
-				+ wxFileName::GetPathSeparator() + wxString::FromUTF8(meshPath) + ".mesh");
-			wxFileName::Mkdir(meshFullPath.GetPath(), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
-
-			std::string meshFileStr = meshFullPath.GetFullPath().ToUTF8().data();
-
-			std::fstream meshFile;
-			PlatformUtil::OpenFileStream(meshFile, meshFileStr, std::ios::out | std::ios::binary);
-			if (meshFile.fail()) {
-				wxLogError("Failed to save external mesh file '%s'.", meshFileStr);
-				meshIndex++;
-				continue;
-			}
-
-			nif.SaveExternalShapeData(s, meshFile, meshIndex);
-			meshIndex++;
-		}
-	}
-}
-
 ConfigurationManager Config;
 ConfigurationManager BodySlideConfig;
 
@@ -3372,8 +3318,6 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			PlatformUtil::OpenFileStream(fileSmall, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
 		}
 
-		SaveExternalMeshes(nifSmall, std::string(custName.ToUTF8().data()));
-
 		wxString custEnd;
 		if (custName.EndsWith("_0.nif", &custEnd))
 			custName = custEnd + "_1.nif";
@@ -3408,8 +3352,6 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 		PlatformUtil::OpenFileStream(fileBig, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
 	}
-
-	SaveExternalMeshes(nifBig, std::string(custName.ToUTF8().data()));
 
 	wxString msg = _("Successfully processed the following files:\n");
 	if (!savedLow.IsEmpty())
@@ -4220,8 +4162,6 @@ int BodySlideApp::BuildListBodies(
 				return;
 			}
 
-			SaveExternalMeshes(nifBig, outFileNameBig);
-
 			std::fstream fileSmall;
 			PlatformUtil::OpenFileStream(fileSmall, outFileNameSmall, std::ios::out | std::ios::binary);
 
@@ -4229,8 +4169,6 @@ int BodySlideApp::BuildListBodies(
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
 				return;
 			}
-
-			SaveExternalMeshes(nifSmall, outFileNameSmall);
 		}
 		else {
 			outFileNameBig += ".nif";
@@ -4242,8 +4180,6 @@ int BodySlideApp::BuildListBodies(
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
-
-			SaveExternalMeshes(nifBig, outFileNameBig);
 		}
 	};
 
