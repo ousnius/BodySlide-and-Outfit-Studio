@@ -10139,8 +10139,12 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	if (!delShapes.empty()) {
 		if (wxMessageBox(_("Are you sure you wish to delete parts of the selected shapes?"), _("Confirm Delete"), wxYES_NO) == wxNO)
 			return;
-		for (NiShape* shape : delShapes)
+
+		for (NiShape* shape : delShapes) {
+			usp->deletedShapes.emplace_back();
+			project->CaptureShapeDeleteState(shape, usp->deletedShapes.back());
 			project->DeleteShape(shape);
+		}
 	}
 
 	// Now do the vertex deletion
@@ -10480,8 +10484,11 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		// Delete shape(s) when in meshes tab
-		if (wxMessageBox(_("Are you sure you wish to delete the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO | wxICON_WARNING) == wxNO)
+		if (wxMessageBox(_("Are you sure you wish to delete the selected shapes?"), _("Confirm Delete"), wxYES_NO | wxICON_WARNING) == wxNO)
 			return;
+
+		UndoStateProject* usp = glView->GetUndoHistory()->PushState();
+		usp->undoType = UndoType::ShapeDelete;
 
 		std::vector<ShapeItemData> selected;
 		for (auto& i : selectedItems)
@@ -10496,14 +10503,18 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 
 			std::string shapeName = i.GetShape()->name.get();
 			wxLogMessage("Deleting shape '%s'.", shapeName);
+
+			usp->deletedShapes.emplace_back();
+			project->CaptureShapeDeleteState(i.GetShape(), usp->deletedShapes.back());
+
 			project->DeleteShape(i.GetShape());
-			glView->DeleteMesh(shapeName);
 			wxTreeItemId item = i.GetId();
 			outfitShapes->Delete(item);
 		}
 
 		SetPendingChanges();
 		UpdateAnimationGUI();
+		UpdateUndoTools();
 		glView->Render();
 	}
 	else if (currentTabButton == boneTabButton) {
@@ -14178,6 +14189,13 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 	}
 	else if (undoType == UndoType::Mesh) {
 		maskStash = StashMasks();
+
+		// Undo: restore deleted shapes before processing vertex mesh undos
+		if (bUndo) {
+			for (auto& ds : usp->deletedShapes)
+				os->project->RestoreDeletedShape(ds);
+		}
+
 		for (auto& uss : usp->usss) {
 			NiShape* shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
 			if (!shape)
@@ -14186,8 +14204,33 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 			os->project->ApplyShapeMeshUndo(shape, maskStash[uss.shapeName], uss, bUndo);
 		}
 
+		// Redo: re-delete shapes after processing vertex mesh redos
+		if (!bUndo) {
+			for (auto& ds : usp->deletedShapes) {
+				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(ds.shapeName);
+				if (shape)
+					os->project->DeleteShape(shape);
+			}
+		}
+
 		os->RefreshGUIFromProj(false, false);
 		UnstashMasks(maskStash);
+		os->ApplySliders();
+	}
+	else if (undoType == UndoType::ShapeDelete) {
+		if (bUndo) {
+			for (auto& ds : usp->deletedShapes)
+				os->project->RestoreDeletedShape(ds);
+		}
+		else {
+			for (auto& ds : usp->deletedShapes) {
+				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(ds.shapeName);
+				if (shape)
+					os->project->DeleteShape(shape);
+			}
+		}
+
+		os->RefreshGUIFromProj(false, false);
 		os->ApplySliders();
 	}
 	else if (undoType == UndoType::Mirror) {

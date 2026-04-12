@@ -4117,6 +4117,108 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 	workNif.DeleteShape(shape);
 }
 
+void OutfitProject::CaptureShapeDeleteState(NiShape* shape, UndoStateShapeDelete& state) {
+	if (!shape)
+		return;
+
+	state.shapeName = shape->name.get();
+	state.wasBaseShape = IsBaseShape(shape);
+
+	// Clone shape and all child blocks into a temporary NIF
+	state.nifBackup.Create(workNif.GetHeader().GetVersion());
+	state.nifBackup.CloneShape(shape, state.shapeName, &workNif);
+
+	// Capture slider diffs
+	std::string target = ShapeToTarget(state.shapeName);
+	for (size_t si = 0; si < activeSet.size(); si++) {
+		SliderData& sd = activeSet[si];
+		std::string targetDataName = sd.TargetDataName(target);
+		if (targetDataName.empty())
+			targetDataName = target + sd.name;
+
+		TargetDataDiffs* diffSet = nullptr;
+		if (state.wasBaseShape)
+			diffSet = baseDiffData.GetDiffSet(targetDataName);
+		else
+			diffSet = morpher.GetDiffSet(targetDataName);
+
+		if (diffSet && !diffSet->empty()) {
+			UndoStateShapeSliderDiff ssd;
+			ssd.sliderName = sd.name;
+			ssd.targetDataName = targetDataName;
+			ssd.diffs = *diffSet;
+			state.sliderDiffs.push_back(std::move(ssd));
+		}
+	}
+
+	// Capture texture and material references
+	auto tex = shapeTextures.find(state.shapeName);
+	if (tex != shapeTextures.end())
+		state.textures = tex->second;
+
+	auto mat = shapeMaterialFiles.find(state.shapeName);
+	if (mat != shapeMaterialFiles.end())
+		state.materialFile = mat->second;
+}
+
+NiShape* OutfitProject::RestoreDeletedShape(UndoStateShapeDelete& state) {
+	// Find the backup shape in the temp NIF
+	auto backupShapes = state.nifBackup.GetShapes();
+	if (backupShapes.empty())
+		return nullptr;
+
+	NiShape* backupShape = backupShapes.front();
+
+	// Rename if a shape with the same name already exists
+	std::string restoreName = state.shapeName;
+	if (workNif.FindBlockByName<NiShape>(restoreName)) {
+		int suffix = 2;
+		std::string candidate;
+		do {
+			candidate = restoreName + "_" + std::to_string(suffix++);
+		} while (workNif.FindBlockByName<NiShape>(candidate));
+
+		wxLogMessage("Restoring shape '%s' as '%s' (name conflict).", restoreName, candidate);
+		restoreName = candidate;
+	}
+
+	state.shapeName = restoreName;
+
+	// Clone shape back into working NIF
+	auto restoredShape = workNif.CloneShape(backupShape, restoreName, &state.nifBackup);
+	if (!restoredShape)
+		return nullptr;
+
+	// Reload bone weights from the cloned NIF blocks
+	workAnim.LoadFromNif(&workNif, restoredShape);
+
+	// Restore slider diffs
+	std::string target = ShapeToTarget(state.shapeName);
+	bool restoreAsBase = state.wasBaseShape && baseShape == nullptr;
+
+	for (auto& ssd : state.sliderDiffs) {
+		if (restoreAsBase)
+			baseDiffData.LoadSet(ssd.targetDataName, target, ssd.diffs);
+		else
+			morpher.SetResultDiff(state.shapeName, ssd.sliderName, ssd.diffs);
+	}
+
+	// Restore texture and material references
+	if (!state.textures.empty())
+		shapeTextures[state.shapeName] = state.textures;
+
+	if (state.materialFile.has_value())
+		shapeMaterialFiles[state.shapeName] = state.materialFile.value();
+
+	// Restore base shape status if appropriate
+	if (restoreAsBase) {
+		baseShape = restoredShape;
+		morpher.LinkRefDiffData(&baseDiffData);
+	}
+
+	return restoredShape;
+}
+
 void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName) {
 	std::string shapeName = shape->name.get();
 	std::string oldTarget = ShapeToTarget(shapeName);

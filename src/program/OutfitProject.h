@@ -27,6 +27,7 @@ struct ConformOptions {
 
 class OutfitStudioFrame;
 struct UndoStateShape;
+struct UndoStateShapeDelete;
 
 struct MergeCheckErrors {
 	bool canMerge = false;
@@ -348,6 +349,8 @@ public:
 
 	nifly::NiShape* DuplicateShape(nifly::NiShape* sourceShape, const std::string& destShapeName);
 	void DeleteShape(nifly::NiShape* shape);
+	void CaptureShapeDeleteState(nifly::NiShape* shape, UndoStateShapeDelete& state);
+	nifly::NiShape* RestoreDeletedShape(UndoStateShapeDelete& state);
 
 	void DeleteBone(const std::string& boneName) {
 		if (workNif.IsValid()) {
