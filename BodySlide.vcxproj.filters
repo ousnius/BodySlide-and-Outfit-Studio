@@ -694,6 +694,9 @@
     <ClInclude Include="src\files\ResourceLoader.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\SFMorphFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\TriFile.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -1786,6 +1789,9 @@
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\ResourceLoader.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMorphFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\TriFile.cpp">
