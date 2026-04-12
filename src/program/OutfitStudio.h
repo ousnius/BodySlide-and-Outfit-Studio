@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../FSEngine/FSEngine.h"
 #include "../FSEngine/FSManager.h"
 
+#include <optional>
 #include <wx/clrpicker.h>
 #include <wx/cmdline.h>
 #include <wx/collpane.h>
@@ -1234,6 +1235,8 @@ private:
 	void OnExportNIF(wxCommandEvent& event);
 	void OnExportNIFWithRef(wxCommandEvent& event);
 	void OnExportShapeNIF(wxCommandEvent& event);
+
+	std::optional<bool> PromptStarfieldGeometryMode();
 
 	void OnImportOBJ(wxCommandEvent& event);
 	void OnExportOBJ(wxCommandEvent& event);

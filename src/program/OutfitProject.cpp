@@ -5132,7 +5132,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	return 0;
 }
 
-int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef) {
+int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef, std::optional<bool> useInternalGeom) {
 	workAnim.CleanupBones();
 	owner->UpdateAnimationGUI();
 
@@ -5180,7 +5180,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	clone.SetShapeOrder(owner->GetShapeList());
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
-	ConfigureInternalGeometry(clone, fileName);
+	ConfigureInternalGeometry(clone, fileName, useInternalGeom);
 
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
@@ -5222,7 +5222,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 	}
 }
 
-int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes) {
+int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes, std::optional<bool> useInternalGeom) {
 	if (exportShapes.empty())
 		return 1;
 
@@ -5247,7 +5247,7 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
-	ConfigureInternalGeometry(clone, fileName);
+	ConfigureInternalGeometry(clone, fileName, useInternalGeom);
 
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
@@ -5270,7 +5270,7 @@ void OutfitProject::ForceInternalGeometry(NifFile& nif) {
 	}
 }
 
-void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& nifFileName) {
+void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& nifFileName, std::optional<bool> useInternalGeom) {
 	if (!nif.GetHeader().GetVersion().IsSF())
 		return;
 
@@ -5284,20 +5284,6 @@ void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& n
 	if (!hasBSGeo)
 		return;
 
-	int result = wxMessageBox(
-		_("Starfield supports two modes for mesh geometry data:\n\n"
-		  "Internal: Mesh data is embedded directly in the NIF file.\n"
-		  "Simpler for modding - single file, no external dependencies.\n\n"
-		  "External: Mesh data is stored in separate .mesh files under geometries/.\n"
-		  "Can be streamed from BA2 archives for better game performance.\n\n"
-		  "Would you like to embed the geometry data in the NIF (internal)?\n"
-		  "Choose 'Yes' for internal or 'No' for external."),
-		_("Starfield Geometry Mode"),
-		wxYES_NO | wxICON_QUESTION,
-		owner);
-
-	bool useInternal = (result == wxYES);
-
 	// Derive geometry folder name from the NIF filename (without extension)
 	wxFileName nifPath(wxString::FromUTF8(nifFileName));
 	std::string folderName = nifPath.GetName().ToUTF8().data();
@@ -5306,6 +5292,9 @@ void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& n
 		auto bsgeo = dynamic_cast<BSGeometry*>(s);
 		if (!bsgeo)
 			continue;
+
+		// Use provided choice, or keep the shape's current state
+		bool useInternal = useInternalGeom.value_or(bsgeo->HasInternalGeomData());
 
 		bsgeo->SetInternalGeomData(useInternal);
 
