@@ -558,13 +558,18 @@ int AutomationScript::Save(const std::string& fileName) {
 		XMLElement* batchElem = doc.NewElement("Batch");
 		batchElem->SetAttribute("mode", AutomationBatchModeToString(batchMode).c_str());
 		root->InsertEndChild(batchElem);
-		SetChildText(doc, batchElem, "Folder", batchFolder);
-		SetChildText(doc, batchElem, "Extension", batchExtension);
-		SetChildBool(doc, batchElem, "Subdirectories", batchSubdirectories, false);
-		SetChildText(doc, batchElem, "FileFilter", batchFileFilter);
-		SetChildBool(doc, batchElem, "FileFilterRegex", batchFileFilterRegex, false);
-		SetChildText(doc, batchElem, "SliderSetFilter", batchSliderSetFilter);
-		SetChildBool(doc, batchElem, "SliderSetFilterRegex", batchSliderSetFilterRegex, false);
+		
+		if (batchMode == AutomationBatchMode::FolderScan) {
+			SetChildText(doc, batchElem, "Folder", batchFolder);
+			SetChildText(doc, batchElem, "Extension", batchExtension);
+			SetChildBool(doc, batchElem, "Subdirectories", batchSubdirectories, false);
+			SetChildText(doc, batchElem, "FileFilter", batchFileFilter);
+			SetChildBool(doc, batchElem, "FileFilterRegex", batchFileFilterRegex, false);
+		}
+		else if (batchMode == AutomationBatchMode::SliderSets) {
+			SetChildText(doc, batchElem, "SliderSetFilter", batchSliderSetFilter);
+			SetChildBool(doc, batchElem, "SliderSetFilterRegex", batchSliderSetFilterRegex, false);
+		}
 	}
 
 	for (const auto& step : steps) {
