@@ -5314,7 +5314,7 @@ void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& n
 			for (uint8_t i = 0; i < bsgeo->MeshCount(); i++) {
 				auto mesh = bsgeo->SelectMesh(i);
 				if (mesh && mesh->meshName.get().empty()) {
-					// Generate mesh path: NifName\ShapeName
+					// Generate mesh path: NifName\ShapeName_Index
 					std::string shapeName = s->name.get();
 					auto sanitize = [](std::string& str) {
 						for (char& c : str) {
@@ -5325,7 +5325,7 @@ void OutfitProject::ConfigureInternalGeometry(NifFile& nif, const std::string& n
 					std::string folder = folderName;
 					sanitize(folder);
 					sanitize(shapeName);
-					mesh->meshName.get() = folder + "\\" + shapeName;
+					mesh->meshName.get() = folder + "\\" + shapeName + "_" + std::to_string(i);
 				}
 				bsgeo->ReleaseMesh();
 			}
@@ -5366,8 +5366,13 @@ bool OutfitProject::SaveExternalMeshes(NifFile& nif, const std::string& nifFileN
 			}
 			// If not inside a game data layout, place geometries/ next to the NIF
 			wxString rootDir = foundMeshes ? walker.GetPath() : nifDir;
+			wxString normalizedMeshPath = wxString::FromUTF8(meshPath);
+			normalizedMeshPath.Replace("\\", wxString(wxFileName::GetPathSeparator()));
+			normalizedMeshPath.Replace("/", wxString(wxFileName::GetPathSeparator()));
+			if (normalizedMeshPath.Length() < 5 || normalizedMeshPath.Right(5).CmpNoCase(".mesh") != 0)
+				normalizedMeshPath += ".mesh";
 			wxFileName meshFullPath(rootDir + wxFileName::GetPathSeparator() + "geometries"
-				+ wxFileName::GetPathSeparator() + wxString::FromUTF8(meshPath) + ".mesh");
+				+ wxFileName::GetPathSeparator() + normalizedMeshPath);
 
 			// Ensure the directory exists
 			wxFileName::Mkdir(meshFullPath.GetPath(), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
@@ -5377,7 +5382,7 @@ bool OutfitProject::SaveExternalMeshes(NifFile& nif, const std::string& nifFileN
 			std::fstream meshFile;
 			PlatformUtil::OpenFileStream(meshFile, meshFileStr, std::ios::out | std::ios::binary);
 			if (meshFile.fail()) {
-				wxLogError("Failed to save external mesh file '%s'.", meshFileStr);
+				wxLogError("Failed to save external mesh file '%s'.", meshFileStr.c_str());
 				meshIndex++;
 				continue;
 			}
