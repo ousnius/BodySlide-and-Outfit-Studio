@@ -99,6 +99,7 @@ private:
 	void OnSelectLess(wxCommandEvent& event);
 	void OnSelectMore(wxCommandEvent& event);
 	void OnMaskSelection(wxCommandEvent& event);
+	void OnExportUVTemplate(wxCommandEvent& event);
 	void OnTranslate(wxCommandEvent& event);
 	void OnRotate(wxCommandEvent& event);
 	void OnScale(wxCommandEvent& event);
@@ -134,6 +135,8 @@ public:
 	void SetCursorType(GLSurface::CursorType cursorType) { uvSurface.SetCursorType(cursorType); }
 
 	void Render() { uvSurface.RenderOneFrame(); }
+
+	bool ExportUVTemplate(const std::string& filename, int resolution, const wxColour& wireColor, const wxColour& bgColor, bool transparentBG, bool includeTexture, bool clampUVs, bool antiAliasing);
 
 private:
 	EditUV* editUV = nullptr;
