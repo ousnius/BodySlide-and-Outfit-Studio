@@ -492,10 +492,10 @@
 						<flag>wxEXPAND</flag>
 						<object class="wxChoice" name="choiceResolution">
 							<content>
-								<item>512 x 512</item>
-								<item>1024 x 1024</item>
-								<item>2048 x 2048</item>
-								<item>4096 x 4096</item>
+								<item translate="0">512 x 512</item>
+								<item translate="0">1024 x 1024</item>
+								<item translate="0">2048 x 2048</item>
+								<item translate="0">4096 x 4096</item>
 							</content>
 							<selection>2</selection>
 						</object>
