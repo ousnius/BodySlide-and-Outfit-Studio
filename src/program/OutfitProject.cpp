@@ -56,7 +56,8 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 								bool genWeights,
 								bool copyRef,
 								bool preventMorphFile,
-								bool keepZappedShapes) {
+								bool keepZappedShapes,
+								const wxString& strSFMorphPath) {
 	UpdateProgress(1, _("Checking destination..."));
 	std::string errmsg = "";
 	std::string outfit{strOutfitName.ToUTF8()};
@@ -76,6 +77,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	outSet.SetGenWeights(genWeights);
 	outSet.SetPreventMorphFile(preventMorphFile);
 	outSet.SetKeepZappedShapes(keepZappedShapes);
+	outSet.SetSFMorphPath(strSFMorphPath.ToUTF8().data());
 	outSet.SetNotes(activeSet.GetNotes());
 
 	const wxString sliderSetsStr = "SliderSets";
@@ -100,6 +102,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	mGenWeights = genWeights;
 	bPreventMorphFile = preventMorphFile;
 	bKeepZappedShapes = keepZappedShapes;
+	mSFMorphPath = strSFMorphPath;
 
 	auto shapes = workNif.GetShapes();
 
@@ -2479,6 +2482,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	mGenWeights = activeSet.GenWeights();
 	bPreventMorphFile = activeSet.PreventMorphFile();
 	bKeepZappedShapes = activeSet.KeepZappedShapes();
+	mSFMorphPath = wxString::FromUTF8(activeSet.GetSFMorphPath());
 
 	// Preserve reference info from the loaded project so it gets saved again
 	if (activeSet.HasReferenceInfo()) {

@@ -1273,8 +1273,8 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 	return true;
 }
 
-bool BodySlideApp::WriteSFMorphFile(const std::string& morphPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices) {
-	wxLogMessage("Writing Starfield morph.dat file(s) to '%s'...", morphPath);
+bool BodySlideApp::WriteSFMorphFile(const std::string& morphFolder, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices) {
+	wxLogMessage("Writing Starfield morph.dat file(s) to '%s'...", morphFolder);
 
 	DiffDataSets currentDiffs;
 	sliderSet.LoadSetDiffData(currentDiffs);
@@ -1402,16 +1402,18 @@ bool BodySlideApp::WriteSFMorphFile(const std::string& morphPath, SliderSet& sli
 
 		wxLogMessage("Writing %zu morph(s) for shape '%s'...", morphFile.morphOffsetsCache.size(), targetShape->first);
 
-		// Build output path: base path + ".dat" for single shape, + "_shapeName.dat" for multi-shape
+		// Build output path: folder + "morph.dat" for single shape, + "morph_shapeName.dat" for multi-shape
+		wxFileName::Mkdir(wxString::FromUTF8(morphFolder), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
 		std::string shapeFilePath;
 		int shapeCount = 0;
 		for (auto s = sliderSet.ShapesBegin(); s != sliderSet.ShapesEnd(); ++s)
 			shapeCount++;
 
 		if (shapeCount > 1)
-			shapeFilePath = morphPath + "_" + targetShape->first + ".dat";
+			shapeFilePath = morphFolder + PathSepStr + "morph_" + targetShape->first + ".dat";
 		else
-			shapeFilePath = morphPath + ".dat";
+			shapeFilePath = morphFolder + PathSepStr + "morph.dat";
 
 		morphFile.CacheToFileData();
 
@@ -3388,8 +3390,10 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 	if (targetGame == SF) {
 		/* Write Starfield morph.dat files */
-		if (tri && !triKeep) {
-			WriteSFMorphFile(outFileNameBig, activeSet, nifBig, zapIdxAll);
+		std::string sfMorphPath = activeSet.GetSFMorphPath();
+		if (tri && !triKeep && !sfMorphPath.empty()) {
+			std::string morphFolder = GetOutputDataPath() + sfMorphPath;
+			WriteSFMorphFile(morphFolder, activeSet, nifBig, zapIdxAll);
 
 			// Set all shapes to dynamic/mutable
 			for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
@@ -4265,8 +4269,10 @@ int BodySlideApp::BuildListBodies(
 
 		if (targetGame == SF) {
 			/* Write Starfield morph.dat files */
-			if (tri && !triKeep) {
-				WriteSFMorphFile(outFileNameBig, currentSet, nifBig, zapIdxAll);
+			std::string sfMorphPath = currentSet.GetSFMorphPath();
+			if (tri && !triKeep && !sfMorphPath.empty()) {
+				std::string morphFolder = datapath + sfMorphPath;
+				WriteSFMorphFile(morphFolder, currentSet, nifBig, zapIdxAll);
 
 				// Set all shapes to dynamic/mutable
 				for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
