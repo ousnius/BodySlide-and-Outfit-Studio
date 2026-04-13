@@ -1274,6 +1274,8 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 }
 
 bool BodySlideApp::WriteSFMorphFile(const std::string& morphPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices) {
+	wxLogMessage("Writing Starfield morph.dat file(s) to '%s'...", morphPath);
+
 	DiffDataSets currentDiffs;
 	sliderSet.LoadSetDiffData(currentDiffs);
 
@@ -1281,8 +1283,10 @@ bool BodySlideApp::WriteSFMorphFile(const std::string& morphPath, SliderSet& sli
 
 	for (auto targetShape = sliderSet.ShapesBegin(); targetShape != sliderSet.ShapesEnd(); ++targetShape) {
 		auto shape = nif.FindBlockByName<NiShape>(targetShape->first);
-		if (!shape)
+		if (!shape) {
+			wxLogMessage("Shape '%s' not found in NIF, skipping.", targetShape->first);
 			continue;
+		}
 
 		const std::vector<uint16_t>& shapeZapIndices = zapIndices[targetShape->first];
 
@@ -1391,8 +1395,12 @@ bool BodySlideApp::WriteSFMorphFile(const std::string& morphPath, SliderSet& sli
 			morphFile.AddMorph(sliderSet[s].name, morphOffsets, {}, morphNormals, morphTangents);
 		}
 
-		if (morphFile.GetMorphCount() == 0)
+		if (morphFile.morphOffsetsCache.empty()) {
+			wxLogMessage("No morphs found for shape '%s', skipping morph.dat.", targetShape->first);
 			continue;
+		}
+
+		wxLogMessage("Writing %zu morph(s) for shape '%s'...", morphFile.morphOffsetsCache.size(), targetShape->first);
 
 		// Build output path: base path + ".dat" for single shape, + "_shapeName.dat" for multi-shape
 		std::string shapeFilePath;
@@ -1414,6 +1422,7 @@ bool BodySlideApp::WriteSFMorphFile(const std::string& morphPath, SliderSet& sli
 			continue;
 		}
 
+		wxLogMessage("Successfully wrote morph.dat to '%s'.", shapeFilePath);
 		success = true;
 	}
 
