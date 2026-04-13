@@ -8965,7 +8965,7 @@ void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVert
 											const std::vector<Vector3>& outfitVerts,
 											const ClippingFixOptions& options,
 											UndoStateProject* usp,
-											const TargetDataDiffs* allowedVerts) {
+											const std::unordered_set<uint16_t>* allowedVerts) {
 	std::vector<Triangle> outfitTris;
 	shape->GetTriangles(outfitTris);
 
@@ -9019,8 +9019,8 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UndoType::VertexPosition;
 
-	auto shapes = project->GetWorkNif()->GetShapes();
-	for (auto& shape : shapes) {
+	for (auto& sel : selectedItems) {
+		NiShape* shape = sel->GetShape();
 		if (project->IsBaseShape(shape))
 			continue;
 
@@ -9033,10 +9033,22 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 		if (!diffSet || diffSet->empty())
 			continue;
 
+		std::unordered_map<uint16_t, float> unmasked;
+		glView->GetShapeUnmasked(unmasked, shape->name.get());
+
+		std::unordered_set<uint16_t> allowed;
+		for (auto& d : *diffSet) {
+			if (unmasked.empty() || unmasked.count(d.first))
+				allowed.insert(d.first);
+		}
+
+		if (allowed.empty())
+			continue;
+
 		std::vector<Vector3> outfitVerts;
 		project->GetLiveVerts(shape, outfitVerts);
 
-		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp, diffSet);
+		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp, &allowed);
 	}
 
 	if (usp->usss.empty()) {
@@ -10089,10 +10101,18 @@ void OutfitStudioFrame::OnFixClippingShape(wxCommandEvent& event) {
 		if (project->IsBaseShape(shape))
 			continue;
 
+		std::unordered_map<uint16_t, float> unmasked;
+		glView->GetShapeUnmasked(unmasked, shape->name.get());
+
+		std::unordered_set<uint16_t> allowed;
+		if (!unmasked.empty())
+			for (auto& u : unmasked)
+				allowed.insert(u.first);
+
 		std::vector<Vector3> outfitVerts;
 		project->GetWorkNif()->GetVertsForShape(shape, outfitVerts);
 
-		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp);
+		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp, allowed.empty() ? nullptr : &allowed);
 	}
 
 	if (usp->usss.empty()) {

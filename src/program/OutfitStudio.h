@@ -1385,7 +1385,7 @@ private:
 							const std::vector<nifly::Vector3>& outfitVerts,
 							const ClippingFixOptions& options,
 							UndoStateProject* usp,
-							const TargetDataDiffs* allowedVerts = nullptr);
+							const std::unordered_set<uint16_t>* allowedVerts = nullptr);
 
 	void OnInvertUV(wxCommandEvent& event);
 	void OnMirrorShape(wxCommandEvent& event);
