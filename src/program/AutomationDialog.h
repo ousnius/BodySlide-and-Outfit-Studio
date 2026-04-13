@@ -50,11 +50,14 @@ private:
 	wxComboBox* cmbAutomation = nullptr;
 	wxButton* btnSaveScript = nullptr;
 	wxButton* btnExecuteAll = nullptr;
+	wxButton* btnClose = nullptr;
 	wxStatusBar* statusBar = nullptr;
 	wxGauge* progressBar = nullptr;
 	wxCollapsiblePane* paneOutput = nullptr;
 	wxTextCtrl* txtOutput = nullptr;
 	wxLog* oldLogTarget = nullptr;
+	bool cancelRequested = false;
+	bool isExecuting = false;
 
 	// UI helper methods
 	void SetCheckboxValue(const char* name, bool value);
@@ -71,6 +74,7 @@ private:
 	void StartProgress(const wxString& msg = "");
 	void UpdateProgress(int val, const wxString& msg = "");
 	void EndProgress(const wxString& msg = "");
+	void SetExecutionUIState(bool running);
 
 	void PopulateStepList();
 	void SelectStep(int index);
@@ -169,6 +173,7 @@ private:
 	void OnExecuteAll(wxCommandEvent& event);
 	void OnExecuteSelected(wxCommandEvent& event);
 	void OnClose(wxCommandEvent& event);
+	void OnWindowClose(wxCloseEvent& event);
 	void OnAddVariable(wxCommandEvent& event);
 	void OnRemoveVariable(wxCommandEvent& event);
 	void OnRefTemplateChanged(wxCommandEvent& event);
@@ -186,6 +191,7 @@ private:
 	void OnSliderPropZapChanged(wxCommandEvent& event);
 	void UpdateSliderPropDefaultVisibility();
 	void OnBatchModeChanged(wxCommandEvent& event);
+	void OnCharHook(wxKeyEvent& event);
 
 	wxDECLARE_EVENT_TABLE();
 };

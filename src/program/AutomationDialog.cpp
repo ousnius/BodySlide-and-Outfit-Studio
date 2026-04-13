@@ -82,6 +82,7 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	cmbAutomation = XRCCTRL(*this, "cmbAutomation", wxComboBox);
 	btnSaveScript = XRCCTRL(*this, "btnSaveScript", wxButton);
 	btnExecuteAll = XRCCTRL(*this, "btnExecuteAll", wxButton);
+	btnClose = dynamic_cast<wxButton*>(FindWindow(wxID_CLOSE));
 
 	listSteps->InsertColumn(0, _("Active"), wxLIST_FORMAT_CENTER, 65);
 	listSteps->InsertColumn(1, _("Type"), wxLIST_FORMAT_LEFT, 165);
@@ -90,6 +91,9 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 
 	listSteps->Bind(wxEVT_CONTEXT_MENU, &AutomationDialog::OnStepListContextMenu, this);
 	listSteps->Bind(wxEVT_KEY_DOWN, &AutomationDialog::OnStepListKeyDown, this);
+
+	Bind(wxEVT_CHAR_HOOK, &AutomationDialog::OnCharHook, this);
+	Bind(wxEVT_CLOSE_WINDOW, &AutomationDialog::OnWindowClose, this);
 
 	// Placeholder label shown when step list is empty
 	lblStepsPlaceholder = new wxStaticText(listSteps, wxID_ANY, _("Right-click to add steps..."), wxPoint(0, 40), wxDefaultSize, wxALIGN_CENTER_HORIZONTAL | wxST_NO_AUTORESIZE);
@@ -284,6 +288,9 @@ void AutomationDialog::StartProgress(const wxString& msg) {
 	if (progressBar)
 		return;
 
+	cancelRequested = false;
+	SetExecutionUIState(true);
+
 	wxRect rect;
 	statusBar->GetFieldRect(1, rect);
 	progressBar = new wxGauge(statusBar, wxID_ANY, 10000, rect.GetPosition(), rect.GetSize());
@@ -311,6 +318,15 @@ void AutomationDialog::UpdateProgress(int val, const wxString& msg) {
 	wxYield();
 }
 
+void AutomationDialog::OnCharHook(wxKeyEvent& event) {
+	if (event.GetKeyCode() == WXK_ESCAPE && progressBar) {
+		cancelRequested = true;
+		statusBar->SetStatusText(_("Cancelling..."));
+		return;
+	}
+	event.Skip();
+}
+
 void AutomationDialog::EndProgress(const wxString& msg) {
 	if (!progressBar)
 		return;
@@ -325,6 +341,39 @@ void AutomationDialog::EndProgress(const wxString& msg) {
 		delete wxLog::SetActiveTarget(oldLogTarget);
 		oldLogTarget = nullptr;
 	}
+
+	SetExecutionUIState(false);
+}
+
+void AutomationDialog::SetExecutionUIState(bool running) {
+	isExecuting = running;
+
+	wxWindowList children = GetChildren();
+	for (wxWindowList::iterator it = children.begin(); it != children.end(); ++it) {
+		wxWindow* child = *it;
+		if (!child)
+			continue;
+
+		if (child == statusBar || child == btnClose || child == paneOutput)
+			continue;
+
+		child->Enable(!running);
+	}
+
+	if (btnClose)
+		btnClose->SetLabel(running ? _("Cancel") : _("Close"));
+}
+
+void AutomationDialog::OnWindowClose(wxCloseEvent& event) {
+	if (isExecuting) {
+		cancelRequested = true;
+		if (statusBar)
+			statusBar->SetStatusText(_("Cancelling..."));
+		event.Veto();
+		return;
+	}
+
+	event.Skip();
 }
 
 void AutomationDialog::PopulateStepList() {
@@ -1276,9 +1325,9 @@ void AutomationDialog::LoadAutomation(const wxString& name) {
 void AutomationDialog::UpdateButtonState() {
 	bool hasSteps = !script.GetSteps().empty();
 	if (btnSaveScript)
-		btnSaveScript->Enable(hasSteps);
+		btnSaveScript->Enable(hasSteps && !isExecuting);
 	if (btnExecuteAll)
-		btnExecuteAll->Enable(hasSteps);
+		btnExecuteAll->Enable(hasSteps && !isExecuting);
 }
 
 void AutomationDialog::OnAutomationSelected(wxCommandEvent& WXUNUSED(event)) {
@@ -1563,6 +1612,9 @@ bool AutomationDialog::ShowCheckableListDialog(const wxString& title, const wxSt
 }
 
 void AutomationDialog::OnExecuteAll(wxCommandEvent& WXUNUSED(event)) {
+	if (isExecuting)
+		return;
+
 	if (selectedStep >= 0)
 		UpdateStepFromUI();
 
@@ -1675,6 +1727,9 @@ void AutomationDialog::OnExecuteAll(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void AutomationDialog::OnExecuteSelected(wxCommandEvent& WXUNUSED(event)) {
+	if (isExecuting)
+		return;
+
 	if (selectedStep < 0) {
 		wxMessageBox(_("No step selected."), _("Automation"), wxICON_INFORMATION);
 		return;
@@ -1685,6 +1740,13 @@ void AutomationDialog::OnExecuteSelected(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void AutomationDialog::OnClose(wxCommandEvent& WXUNUSED(event)) {
+	if (isExecuting) {
+		cancelRequested = true;
+		if (statusBar)
+			statusBar->SetStatusText(_("Cancelling..."));
+		return;
+	}
+
 	if (selectedStep >= 0)
 		UpdateStepFromUI();
 	EndModal(wxID_CLOSE);
@@ -1726,6 +1788,13 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 			wxString::FromUTF8(AutomationStepTypeToString(step.type)));
 
 		UpdateProgress(i * 100 / totalSteps, stepDesc);
+
+		if (cancelRequested) {
+			wxLogMessage("Automation: Cancelled by user.");
+			EndProgress(_("Automation cancelled."));
+			return;
+		}
+
 		wxLogMessage("Automation: %s", stepDesc);
 
 		int err = ExecuteStep(step);
@@ -3921,6 +3990,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 	if (batchMode == AutomationBatchMode::FolderScan) {
 		auto batchFiles = selectedFiles.empty() ? GatherBatchFiles() : selectedFiles;
 		if (batchFiles.empty()) {
+			EndProgress(_("No files found."));
 			wxMessageBox(_("No files found matching the batch folder scan criteria."), _("Automation"), wxICON_INFORMATION);
 			return;
 		}
@@ -3937,6 +4007,11 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			int progress = itemIdx * 100 / totalItems;
 			wxString msg = wxString::Format(_("Processing %d/%d: %s"), itemIdx + 1, totalItems, fn.GetFullName());
 			UpdateProgress(progress, msg);
+
+			if (cancelRequested) {
+				wxLogMessage("Automation: Batch cancelled by user.");
+				break;
+			}
 
 			// Set up batch-specific variables
 			auto vars = CollectVariables();
@@ -4022,19 +4097,21 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			ResetAndClearProject();
 		}
 
-		EndProgress(_("Batch complete."));
+		EndProgress(cancelRequested ? _("Batch cancelled.") : _("Batch complete."));
 
 		// Refresh UI
 		outfitStudio->RefreshGUIFromProj();
 		outfitStudio->CreateSetSliders();
 
-		wxMessageBox(wxString::Format(_("Batch completed: %d/%d items processed successfully."),
+		wxMessageBox(wxString::Format(cancelRequested ? _("Batch cancelled: %d/%d items processed before cancellation.")
+													  : _("Batch completed: %d/%d items processed successfully."),
 									  processedCount - errorCount, processedCount),
 					 _("Automation"), wxICON_INFORMATION);
 	}
 	else if (batchMode == AutomationBatchMode::SliderSets) {
 		auto batchSets = selectedSets.empty() ? GatherBatchSliderSets() : selectedSets;
 		if (batchSets.empty()) {
+			EndProgress(_("No slider sets found."));
 			wxMessageBox(_("No slider sets found matching the filter criteria."), _("Automation"), wxICON_INFORMATION);
 			return;
 		}
@@ -4050,6 +4127,11 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			int progress = itemIdx * 100 / totalItems;
 			wxString msg = wxString::Format(_("Processing %d/%d: %s"), itemIdx + 1, totalItems, wxString::FromUTF8(setName));
 			UpdateProgress(progress, msg);
+
+			if (cancelRequested) {
+				wxLogMessage("Automation: Batch cancelled by user.");
+				break;
+			}
 
 			// Set up batch-specific variables
 			auto vars = CollectVariables();
@@ -4197,13 +4279,14 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			ResetAndClearProject();
 		}
 
-		EndProgress(_("Batch complete."));
+		EndProgress(cancelRequested ? _("Batch cancelled.") : _("Batch complete."));
 
 		// Refresh UI
 		outfitStudio->RefreshGUIFromProj();
 		outfitStudio->CreateSetSliders();
 
-		wxMessageBox(wxString::Format(_("Batch completed: %d/%d slider sets processed successfully."),
+		wxMessageBox(wxString::Format(cancelRequested ? _("Batch cancelled: %d/%d slider sets processed before cancellation.")
+													  : _("Batch completed: %d/%d slider sets processed successfully."),
 									  processedCount - errorCount, processedCount),
 					 _("Automation"), wxICON_INFORMATION);
 	}
