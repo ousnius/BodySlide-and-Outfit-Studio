@@ -6,7 +6,7 @@
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
-			<minsize>620,400</minsize>
+			<minsize>620,480</minsize>
 			<object class="sizeritem">
 				<option>1</option>
 				<flag>wxALL|wxEXPAND</flag>
@@ -92,6 +92,29 @@
 													<object class="wxChoice" name="shaderType">
 														<selection>0</selection>
 														<content />
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>5</border>
+													<object class="wxStaticText" name="lbShadingType">
+														<label>Shading</label>
+														<wrap>-1</wrap>
+														<hidden>1</hidden>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxChoice" name="shadingType">
+														<hidden>1</hidden>
+														<selection>1</selection>
+														<content>
+															<item>Hard</item>
+															<item>Smooth</item>
+														</content>
 													</object>
 												</object>
 												<object class="sizeritem">
@@ -303,11 +326,771 @@
 								</object>
 								<object class="sizeritem">
 									<option>0</option>
-									<flag>wxALL|wxEXPAND</flag>
+									<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 									<border>5</border>
-									<object class="wxStaticBoxSizer">
-										<orient>wxVERTICAL</orient>
+									<object class="wxCollapsiblePane" name="shaderFlagsPane">
+										<label>Shader Flags</label>
+										<collapsed>1</collapsed>
+										<object class="panewindow">
+											<object class="wxBoxSizer">
+												<orient>wxHORIZONTAL</orient>
+												<object class="sizeritem">
+													<option>1</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxStaticBoxSizer">
+														<orient>wxVERTICAL</orient>
+														<label>Shader Flags 1</label>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND</flag>
+															<border>0</border>
+															<object class="wxCheckListBox" name="shaderFlags1List">
+																<style>wxLB_SINGLE</style>
+																<size>-1,200</size>
+																<content />
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>1</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxStaticBoxSizer">
+														<orient>wxVERTICAL</orient>
+														<label>Shader Flags 2</label>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND</flag>
+															<border>0</border>
+															<object class="wxCheckListBox" name="shaderFlags2List">
+																<style>wxLB_SINGLE</style>
+																<size>-1,200</size>
+																<content />
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxCollapsiblePane" name="advancedShaderPane">
+										<label>Advanced</label>
+										<collapsed>1</collapsed>
+										<object class="panewindow">
+											<object class="wxFlexGridSizer">
+												<rows>0</rows>
+												<cols>4</cols>
+												<vgap>0</vgap>
+												<hgap>5</hgap>
+												<growablecols>1,3</growablecols>
+												<growablerows></growablerows>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbUVOffset">
+														<label>UV Offset</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>3</border>
+															<object class="wxTextCtrl" name="uvOffsetU">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND</flag>
+															<border>0</border>
+															<object class="wxTextCtrl" name="uvOffsetV">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbUVScale">
+														<label>UV Scale</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>3</border>
+															<object class="wxTextCtrl" name="uvScaleU">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">1.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND</flag>
+															<border>0</border>
+															<object class="wxTextCtrl" name="uvScaleV">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">1.0000</value>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbTextureClampMode">
+														<label>Texture Clamp Mode</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxChoice" name="textureClampMode">
+														<selection>3</selection>
+														<content>
+															<item>Clamp S Clamp T</item>
+															<item>Clamp S Wrap T</item>
+															<item>Wrap S Clamp T</item>
+															<item>Wrap S Wrap T</item>
+														</content>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbEnvironmentMapScale">
+														<label>Env Map Scale</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="environmentMapScale">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbRefractionStrength">
+														<label>Refraction Strength</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="refractionStrength">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">0.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbRefractionFirePeriod">
+														<label>Refr. Fire Period</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="refractionFirePeriod">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">0</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbParallaxMaxPasses">
+														<label>Parallax Max Passes</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="parallaxMaxPasses">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">4.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbParallaxScale">
+														<label>Parallax Scale</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="parallaxScale">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbLightingEffect1">
+														<label>Lighting Effect 1</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="lightingEffect1">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">0.3000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbLightingEffect2">
+														<label>Lighting Effect 2</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="lightingEffect2">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">2.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbSkinTintColor">
+														<label>Skin Tint Color</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxColourPickerCtrl" name="skinTintColor">
+														<value translate="0">#ffffff</value>
+														<style>wxCLRP_DEFAULT_STYLE</style>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbHairTintColor">
+														<label>Hair Tint Color</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxColourPickerCtrl" name="hairTintColor">
+														<value translate="0">#ffffff</value>
+														<style>wxCLRP_DEFAULT_STYLE</style>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbParallaxInnerLayerThickness">
+														<label>Inner Layer Thickness</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="parallaxInnerLayerThickness">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">0.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbParallaxRefractionScale">
+														<label>Parallax Refr. Scale</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="parallaxRefractionScale">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbParallaxInnerLayerTexScale">
+														<label>Inner Layer Tex Scale</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>3</border>
+															<object class="wxTextCtrl" name="parallaxInnerLayerTexScaleU">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">1.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND</flag>
+															<border>0</border>
+															<object class="wxTextCtrl" name="parallaxInnerLayerTexScaleV">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">1.0000</value>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbParallaxEnvmapStrength">
+														<label>Parallax Envmap Str.</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="parallaxEnvmapStrength">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbSparkleParameters">
+														<label>Sparkle Parameters</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>2</border>
+															<object class="wxTextCtrl" name="sparkleParamsR">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>2</border>
+															<object class="wxTextCtrl" name="sparkleParamsG">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>2</border>
+															<object class="wxTextCtrl" name="sparkleParamsB">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND</flag>
+															<border>0</border>
+															<object class="wxTextCtrl" name="sparkleParamsA">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbEyeCubemapScale">
+														<label>Eye Cubemap Scale</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="eyeCubemapScale">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbEyeLeftReflectionCenter">
+														<label>Left Eye Refl. Center</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>3</border>
+															<object class="wxTextCtrl" name="eyeLeftReflectX">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>3</border>
+															<object class="wxTextCtrl" name="eyeLeftReflectY">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND</flag>
+															<border>0</border>
+															<object class="wxTextCtrl" name="eyeLeftReflectZ">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbEyeRightReflectionCenter">
+														<label>Right Eye Refl. Center</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>3</border>
+															<object class="wxTextCtrl" name="eyeRightReflectX">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxRIGHT|wxEXPAND</flag>
+															<border>3</border>
+															<object class="wxTextCtrl" name="eyeRightReflectY">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND</flag>
+															<border>0</border>
+															<object class="wxTextCtrl" name="eyeRightReflectZ">
+																<style>wxTE_CENTRE</style>
+																<value translate="0">0.0000</value>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbWetMaterialPath">
+														<label>Wet Material</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="wetMaterialPath">
+														<value></value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbSubsurfaceRolloff">
+														<label>Subsurface Rolloff</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="subsurfaceRolloff">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">0.3000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbRimlightPower">
+														<label>Rimlight Power</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="rimlightPower">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">2.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbBacklightPower">
+														<label>Backlight Power</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="backlightPower">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">0.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbGrayscaleToPaletteScale">
+														<label>Grayscale To Palette</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="grayscaleToPaletteScale">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbFresnelPower">
+														<label>Fresnel Power</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="fresnelPower">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">5.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbWetnessSpecScale">
+														<label>Wetness Spec Scale</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="wetnessSpecScale">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">0.6000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbWetnessSpecPower">
+														<label>Wetness Spec Power</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="wetnessSpecPower">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.4000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbWetnessMinVar">
+														<label>Wetness Min Var</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="wetnessMinVar">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">0.2000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbWetnessEnvMapScale">
+														<label>Wetness Env Map Scale</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="wetnessEnvMapScale">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.0000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbWetnessFresnelPower">
+														<label>Wetness Fresnel Power</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="wetnessFresnelPower">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">1.6000</value>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>3</border>
+													<object class="wxStaticText" name="lbWetnessMetalness">
+														<label>Wetness Metalness</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>3</border>
+													<object class="wxTextCtrl" name="wetnessMetalness">
+														<style>wxTE_CENTRE</style>
+														<value translate="0">0.0000</value>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxCollapsiblePane" name="transparencyPane">
 										<label>Transparency</label>
+										<collapsed>1</collapsed>
+										<object class="panewindow">
+											<object class="wxBoxSizer">
+												<orient>wxVERTICAL</orient>
 										<object class="sizeritem">
 											<option>0</option>
 											<flag>wxEXPAND</flag>
@@ -427,6 +1210,124 @@
 											<option>0</option>
 											<flag>wxEXPAND</flag>
 											<border>5</border>
+											<object class="wxFlexGridSizer">
+												<rows>0</rows>
+												<cols>4</cols>
+												<vgap>0</vgap>
+												<hgap>5</hgap>
+												<growablecols>1,3</growablecols>
+												<growablerows></growablerows>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>5</border>
+													<object class="wxStaticText" name="lbAlphaSrcBlend">
+														<label>Src Blend</label>
+														<wrap>-1</wrap>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxChoice" name="alphaSrcBlend">
+														<selection>6</selection>
+														<content>
+															<item>ONE</item>
+															<item>ZERO</item>
+															<item>SRC_COLOR</item>
+															<item>INV_SRC_COLOR</item>
+															<item>DST_COLOR</item>
+															<item>INV_DST_COLOR</item>
+															<item>SRC_ALPHA</item>
+															<item>INV_SRC_ALPHA</item>
+															<item>DST_ALPHA</item>
+															<item>INV_DST_ALPHA</item>
+															<item>SRC_ALPHA_SAT</item>
+														</content>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>5</border>
+													<object class="wxStaticText" name="lbAlphaDestBlend">
+														<label>Dest Blend</label>
+														<wrap>-1</wrap>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxChoice" name="alphaDestBlend">
+														<selection>7</selection>
+														<content>
+															<item>ONE</item>
+															<item>ZERO</item>
+															<item>SRC_COLOR</item>
+															<item>INV_SRC_COLOR</item>
+															<item>DST_COLOR</item>
+															<item>INV_DST_COLOR</item>
+															<item>SRC_ALPHA</item>
+															<item>INV_SRC_ALPHA</item>
+															<item>DST_ALPHA</item>
+															<item>INV_DST_ALPHA</item>
+															<item>SRC_ALPHA_SAT</item>
+														</content>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>5</border>
+													<object class="wxStaticText" name="lbAlphaTestFunc">
+														<label>Test Function</label>
+														<wrap>-1</wrap>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxChoice" name="alphaTestFunc">
+														<selection>4</selection>
+														<content>
+															<item>ALWAYS</item>
+															<item>LESS</item>
+															<item>EQUAL</item>
+															<item>LEQUAL</item>
+															<item>GREATER</item>
+															<item>NOTEQUAL</item>
+															<item>GEQUAL</item>
+															<item>NEVER</item>
+														</content>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>5</border>
+													<object class="wxStaticText" name="lbAlphaNoSorter">
+														<label>No Sorter</label>
+														<wrap>-1</wrap>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxCheckBox" name="alphaNoSorter">
+														<checked>0</checked>
+														<enabled>0</enabled>
+													</object>
+												</object>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxEXPAND</flag>
+											<border>5</border>
 											<object class="wxBoxSizer">
 												<orient>wxHORIZONTAL</orient>
 												<object class="sizeritem">
@@ -448,6 +1349,8 @@
 														<default>0</default>
 													</object>
 												</object>
+											</object>
+										</object>
 											</object>
 										</object>
 									</object>

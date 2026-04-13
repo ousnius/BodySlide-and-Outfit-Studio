@@ -59,6 +59,8 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 	shaderName = XRCCTRL(*this, "shaderName", wxTextCtrl);
 	btnMaterialChooser = XRCCTRL(*this, "btnMaterialChooser", wxButton);
 	shaderType = XRCCTRL(*this, "shaderType", wxChoice);
+	lbShadingType = XRCCTRL(*this, "lbShadingType", wxStaticText);
+	shadingType = XRCCTRL(*this, "shadingType", wxChoice);
 	specularColor = XRCCTRL(*this, "specularColor", wxColourPickerCtrl);
 	specularStrength = XRCCTRL(*this, "specularStrength", wxTextCtrl);
 	specularPower = XRCCTRL(*this, "specularPower", wxTextCtrl);
@@ -71,12 +73,99 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 	btnRemoveShader = XRCCTRL(*this, "btnRemoveShader", wxButton);
 	btnSetTextures = XRCCTRL(*this, "btnSetTextures", wxButton);
 
+	shaderFlagsPane = XRCCTRL(*this, "shaderFlagsPane", wxCollapsiblePane);
+	shaderFlags1List = XRCCTRL(*this, "shaderFlags1List", wxCheckListBox);
+	shaderFlags2List = XRCCTRL(*this, "shaderFlags2List", wxCheckListBox);
+
+	advancedShaderPane = XRCCTRL(*this, "advancedShaderPane", wxCollapsiblePane);
+	uvOffsetU = XRCCTRL(*this, "uvOffsetU", wxTextCtrl);
+	uvOffsetV = XRCCTRL(*this, "uvOffsetV", wxTextCtrl);
+	uvScaleU = XRCCTRL(*this, "uvScaleU", wxTextCtrl);
+	uvScaleV = XRCCTRL(*this, "uvScaleV", wxTextCtrl);
+	textureClampMode = XRCCTRL(*this, "textureClampMode", wxChoice);
+	environmentMapScale = XRCCTRL(*this, "environmentMapScale", wxTextCtrl);
+	refractionStrength = XRCCTRL(*this, "refractionStrength", wxTextCtrl);
+	refractionFirePeriod = XRCCTRL(*this, "refractionFirePeriod", wxTextCtrl);
+	parallaxMaxPasses = XRCCTRL(*this, "parallaxMaxPasses", wxTextCtrl);
+	parallaxScale = XRCCTRL(*this, "parallaxScale", wxTextCtrl);
+	lightingEffect1 = XRCCTRL(*this, "lightingEffect1", wxTextCtrl);
+	lightingEffect2 = XRCCTRL(*this, "lightingEffect2", wxTextCtrl);
+	skinTintColor = XRCCTRL(*this, "skinTintColor", wxColourPickerCtrl);
+	hairTintColor = XRCCTRL(*this, "hairTintColor", wxColourPickerCtrl);
+	parallaxInnerLayerThickness = XRCCTRL(*this, "parallaxInnerLayerThickness", wxTextCtrl);
+	parallaxRefractionScale = XRCCTRL(*this, "parallaxRefractionScale", wxTextCtrl);
+	parallaxInnerLayerTexScaleU = XRCCTRL(*this, "parallaxInnerLayerTexScaleU", wxTextCtrl);
+	parallaxInnerLayerTexScaleV = XRCCTRL(*this, "parallaxInnerLayerTexScaleV", wxTextCtrl);
+	parallaxEnvmapStrength = XRCCTRL(*this, "parallaxEnvmapStrength", wxTextCtrl);
+	sparkleParamsR = XRCCTRL(*this, "sparkleParamsR", wxTextCtrl);
+	sparkleParamsG = XRCCTRL(*this, "sparkleParamsG", wxTextCtrl);
+	sparkleParamsB = XRCCTRL(*this, "sparkleParamsB", wxTextCtrl);
+	sparkleParamsA = XRCCTRL(*this, "sparkleParamsA", wxTextCtrl);
+	eyeCubemapScale = XRCCTRL(*this, "eyeCubemapScale", wxTextCtrl);
+	eyeLeftReflectX = XRCCTRL(*this, "eyeLeftReflectX", wxTextCtrl);
+	eyeLeftReflectY = XRCCTRL(*this, "eyeLeftReflectY", wxTextCtrl);
+	eyeLeftReflectZ = XRCCTRL(*this, "eyeLeftReflectZ", wxTextCtrl);
+	eyeRightReflectX = XRCCTRL(*this, "eyeRightReflectX", wxTextCtrl);
+	eyeRightReflectY = XRCCTRL(*this, "eyeRightReflectY", wxTextCtrl);
+	eyeRightReflectZ = XRCCTRL(*this, "eyeRightReflectZ", wxTextCtrl);
+	wetMaterialPath = XRCCTRL(*this, "wetMaterialPath", wxTextCtrl);
+	subsurfaceRolloff = XRCCTRL(*this, "subsurfaceRolloff", wxTextCtrl);
+	rimlightPower = XRCCTRL(*this, "rimlightPower", wxTextCtrl);
+	backlightPower = XRCCTRL(*this, "backlightPower", wxTextCtrl);
+	grayscaleToPaletteScale = XRCCTRL(*this, "grayscaleToPaletteScale", wxTextCtrl);
+	fresnelPower = XRCCTRL(*this, "fresnelPower", wxTextCtrl);
+	wetnessSpecScale = XRCCTRL(*this, "wetnessSpecScale", wxTextCtrl);
+	wetnessSpecPower = XRCCTRL(*this, "wetnessSpecPower", wxTextCtrl);
+	wetnessMinVar = XRCCTRL(*this, "wetnessMinVar", wxTextCtrl);
+	wetnessEnvMapScale = XRCCTRL(*this, "wetnessEnvMapScale", wxTextCtrl);
+	wetnessFresnelPower = XRCCTRL(*this, "wetnessFresnelPower", wxTextCtrl);
+	wetnessMetalness = XRCCTRL(*this, "wetnessMetalness", wxTextCtrl);
+
 	alphaThreshold = XRCCTRL(*this, "alphaThreshold", wxTextCtrl);
 	vertexAlpha = XRCCTRL(*this, "vertexAlpha", wxCheckBox);
 	alphaTest = XRCCTRL(*this, "alphaTest", wxCheckBox);
 	alphaBlend = XRCCTRL(*this, "alphaBlend", wxCheckBox);
+	alphaSrcBlend = XRCCTRL(*this, "alphaSrcBlend", wxChoice);
+	alphaDestBlend = XRCCTRL(*this, "alphaDestBlend", wxChoice);
+	alphaTestFunc = XRCCTRL(*this, "alphaTestFunc", wxChoice);
+	alphaNoSorter = XRCCTRL(*this, "alphaNoSorter", wxCheckBox);
 	btnAddTransparency = XRCCTRL(*this, "btnAddTransparency", wxButton);
 	btnRemoveTransparency = XRCCTRL(*this, "btnRemoveTransparency", wxButton);
+
+	transparencyPane = XRCCTRL(*this, "transparencyPane", wxCollapsiblePane);
+
+	// Bind collapsible pane events to update layout
+	auto onPaneChanged = [this](wxCollapsiblePaneEvent&) {
+		pgShader->Layout();
+	};
+	shaderFlagsPane->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, onPaneChanged);
+	advancedShaderPane->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, onPaneChanged);
+	transparencyPane->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, onPaneChanged);
+
+	// Update advanced field visibility when shader type changes
+	shaderType->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) {
+		UpdateShaderTypeFields(shaderType->GetSelection());
+	});
+
+	// Sync vertex colors/alpha/double-sided checkboxes with shader flags list
+	vertexColors->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& evt) {
+		if (shaderFlags2List->GetCount() > 5)
+			shaderFlags2List->Check(5, evt.IsChecked());
+	});
+	doubleSided->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& evt) {
+		if (shaderFlags2List->GetCount() > 4)
+			shaderFlags2List->Check(4, evt.IsChecked());
+	});
+	vertexAlpha->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& evt) {
+		if (shaderFlags1List->GetCount() > 3)
+			shaderFlags1List->Check(3, evt.IsChecked());
+		// Enabling vertex alpha also enables vertex colors
+		if (evt.IsChecked()) {
+			if (shaderFlags2List->GetCount() > 5)
+				shaderFlags2List->Check(5, true);
+			vertexColors->SetValue(true);
+		}
+	});
 
 	btnCopyShaderFromShape = XRCCTRL(*this, "btnCopyShaderFromShape", wxButton);
 
@@ -99,8 +188,8 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 	textRZ = XRCCTRL(*this, "textRZ", wxTextCtrl);
 	cbTransformGeo = XRCCTRL(*this, "cbTransformGeo", wxCheckBox);
 
-	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
+	auto& version = nif->GetHeader().GetVersion();
+	if (version.Stream() >= 130) {
 		lbShaderName->SetLabel(_("Material"));
 		btnMaterialChooser->Show();
 		pgShader->Layout();
@@ -177,6 +266,8 @@ void ShapeProperties::GetShader() {
 		vertexAlpha->Disable();
 		alphaTest->Disable();
 		alphaBlend->Disable();
+		shaderFlagsPane->Disable();
+		advancedShaderPane->Disable();
 	}
 	else {
 		if (!shader) {
@@ -197,6 +288,27 @@ void ShapeProperties::GetShader() {
 			vertexAlpha->Disable();
 			alphaTest->Disable();
 			alphaBlend->Disable();
+			shaderFlagsPane->Disable();
+			advancedShaderPane->Disable();
+
+			// Check for standalone NiMaterialProperty (Oblivion/FO3)
+			NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+			if (material) {
+				specularColor->Enable();
+				specularPower->Enable();
+				emissiveColor->Enable();
+				emissiveMultiple->Enable();
+				alpha->Enable();
+
+				Vector3 colorVec = material->GetSpecularColor() * 255.0f;
+				specularColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
+				specularPower->SetValue(wxString::Format("%.4f", material->GetGlossiness()));
+
+				Color4 color = material->GetEmissiveColor() * 255.0f;
+				emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
+				emissiveMultiple->SetValue(wxString::Format("%.4f", material->GetEmissiveMultiple()));
+				alpha->SetValue(wxString::Format("%.4f", material->GetAlpha()));
+			}
 		}
 		else {
 			btnAddShader->Disable();
@@ -216,6 +328,8 @@ void ShapeProperties::GetShader() {
 			vertexAlpha->Enable();
 			alphaTest->Enable();
 			alphaBlend->Enable();
+			shaderFlagsPane->Enable();
+			advancedShaderPane->Enable();
 		}
 	}
 
@@ -275,6 +389,8 @@ void ShapeProperties::GetShader() {
 	}
 
 	GetShaderType();
+	GetShaderFlags();
+	GetAdvancedShaderProperties();
 }
 
 
@@ -344,8 +460,354 @@ void ShapeProperties::GetShaderType() {
 				case BSShaderType::SHADER_NOLIGHTING: shaderType->SetSelection(7); break;
 				default: shaderType->SetSelection(1);
 			}
+
+			// NiShadeProperty::shadingFlags (FO3/NV)
+			auto* bsShaderProp = dynamic_cast<BSShaderProperty*>(shader);
+			if (bsShaderProp) {
+				lbShadingType->Show();
+				shadingType->Show();
+				shadingType->SetSelection(bsShaderProp->shadingFlags == SHADING_SMOOTH ? 1 : 0);
+
+				if (!multipleShapes)
+					shadingType->Enable();
+			}
 		}
 	}
+}
+
+void ShapeProperties::GetShaderFlags() {
+	shaderFlags1List->Clear();
+	shaderFlags2List->Clear();
+
+	bool multipleShapes = shapes.size() > 1;
+	if (multipleShapes)
+		return;
+
+	NiShape* shape = shapes[0];
+	NiShader* shader = nif->GetShader(shape);
+	if (!shader)
+		return;
+
+	auto* bsShaderProp = dynamic_cast<BSShaderProperty*>(shader);
+	if (!bsShaderProp)
+		return;
+
+	uint32_t sf1 = bsShaderProp->shaderFlags1;
+	uint32_t sf2 = bsShaderProp->shaderFlags2;
+
+	std::vector<ShaderFlagDef> flags1Defs;
+	std::vector<ShaderFlagDef> flags2Defs;
+
+	if (shader->HasType<BSShaderPPLightingProperty>()) {
+		flags1Defs = GetFO3ShaderFlags1();
+		flags2Defs = GetFO3ShaderFlags2();
+	}
+	else if (nif->GetHeader().GetVersion().Stream() >= 130) {
+		flags1Defs = GetFO4ShaderFlags1();
+		flags2Defs = GetFO4ShaderFlags2();
+	}
+	else {
+		flags1Defs = GetSkyrimShaderFlags1();
+		flags2Defs = GetSkyrimShaderFlags2();
+	}
+
+	wxArrayString flagNames1, flagNames2;
+	for (auto& def : flags1Defs)
+		flagNames1.Add(wxString::Format("%s (Bit %d)", def.name, def.bit));
+	for (auto& def : flags2Defs)
+		flagNames2.Add(wxString::Format("%s (Bit %d)", def.name, def.bit));
+
+	shaderFlags1List->InsertItems(flagNames1, 0);
+	shaderFlags2List->InsertItems(flagNames2, 0);
+
+	for (size_t i = 0; i < flags1Defs.size(); i++) {
+		if (sf1 & (static_cast<uint32_t>(1) << flags1Defs[i].bit))
+			shaderFlags1List->Check(i, true);
+	}
+
+	for (size_t i = 0; i < flags2Defs.size(); i++) {
+		if (sf2 & (static_cast<uint32_t>(1) << flags2Defs[i].bit))
+			shaderFlags2List->Check(i, true);
+	}
+}
+
+void ShapeProperties::GetAdvancedShaderProperties() {
+	bool multipleShapes = shapes.size() > 1;
+
+	// Helper to show/hide a control and its label in the advanced grid.
+	// Handles both controls directly in the flex grid and controls nested in sub-sizers.
+	wxSizer* gridSizer = advancedShaderPane->GetPane()->GetSizer();
+	auto showControl = [gridSizer](wxWindow* ctrl, bool show) {
+		if (!ctrl || !gridSizer)
+			return;
+		ctrl->Show(show);
+
+		wxSizerItem* prevItem = nullptr;
+		for (auto* item : gridSizer->GetChildren()) {
+			bool found = false;
+
+			if (item->GetWindow() == ctrl) {
+				found = true;
+			}
+			else if (item->IsSizer()) {
+				// Check if the control is inside a sub-sizer (e.g. UV offset box)
+				for (auto* subItem : item->GetSizer()->GetChildren()) {
+					if (subItem->GetWindow() == ctrl) {
+						// Show/hide all sibling controls in the sub-sizer
+						for (auto* s : item->GetSizer()->GetChildren())
+							if (s->GetWindow())
+								s->GetWindow()->Show(show);
+						found = true;
+						break;
+					}
+				}
+			}
+
+			if (found) {
+				item->Show(show);
+				if (prevItem) {
+					prevItem->Show(show);
+					if (prevItem->GetWindow())
+						prevItem->GetWindow()->Show(show);
+				}
+				return;
+			}
+			prevItem = item;
+		}
+	};
+
+	// Hide all advanced controls initially
+	auto hideAll = [&]() {
+		wxWindow* allCtrls[] = {
+			uvOffsetU, uvScaleU, textureClampMode, environmentMapScale,
+			refractionStrength, refractionFirePeriod, parallaxMaxPasses, parallaxScale,
+			lightingEffect1, lightingEffect2, skinTintColor, hairTintColor,
+			parallaxInnerLayerThickness, parallaxRefractionScale,
+			parallaxInnerLayerTexScaleU,
+			parallaxEnvmapStrength, sparkleParamsR,
+			eyeCubemapScale, eyeLeftReflectX,
+			eyeRightReflectX,
+			wetMaterialPath, subsurfaceRolloff, rimlightPower, backlightPower,
+			grayscaleToPaletteScale, fresnelPower,
+			wetnessSpecScale, wetnessSpecPower, wetnessMinVar, wetnessEnvMapScale,
+			wetnessFresnelPower, wetnessMetalness
+		};
+		for (auto* ctrl : allCtrls)
+			showControl(ctrl, false);
+	};
+
+	hideAll();
+
+	if (multipleShapes)
+		return;
+
+	NiShape* shape = shapes[0];
+	NiShader* shader = nif->GetShader(shape);
+	if (!shader)
+		return;
+
+	auto& version = nif->GetHeader().GetVersion();
+
+	if (shader->HasType<BSShaderPPLightingProperty>()) {
+		auto bspplp = dynamic_cast<BSShaderPPLightingProperty*>(shader);
+		auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
+		if (!bspplp || !bssp)
+			return;
+
+		showControl(environmentMapScale, true);
+		environmentMapScale->SetValue(wxString::Format("%.4f", bssp->environmentMapScale));
+
+		auto* bsslp = dynamic_cast<BSShaderLightingProperty*>(shader);
+		if (bsslp) {
+			showControl(textureClampMode, true);
+			textureClampMode->SetSelection(bsslp->textureClampMode < 4 ? bsslp->textureClampMode : 3);
+		}
+
+		showControl(refractionStrength, true);
+		refractionStrength->SetValue(wxString::Format("%.4f", bspplp->refractionStrength));
+
+		showControl(refractionFirePeriod, true);
+		refractionFirePeriod->SetValue(wxString::Format("%d", bspplp->refractionFirePeriod));
+
+		showControl(parallaxMaxPasses, true);
+		parallaxMaxPasses->SetValue(wxString::Format("%.4f", bspplp->parallaxMaxPasses));
+
+		showControl(parallaxScale, true);
+		parallaxScale->SetValue(wxString::Format("%.4f", bspplp->parallaxScale));
+	}
+	else if (shader->HasType<BSLightingShaderProperty>()) {
+		auto bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
+		auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
+		if (!bslsp || !bssp)
+			return;
+
+		uint32_t shaderTypeVal = bslsp->GetShaderType();
+
+		// Common properties always shown for BSLightingShaderProperty
+		showControl(uvOffsetU, true);
+		uvOffsetU->SetValue(wxString::Format("%.4f", bssp->uvOffset.u));
+		uvOffsetV->SetValue(wxString::Format("%.4f", bssp->uvOffset.v));
+
+		showControl(uvScaleU, true);
+		uvScaleU->SetValue(wxString::Format("%.4f", bssp->uvScale.u));
+		uvScaleV->SetValue(wxString::Format("%.4f", bssp->uvScale.v));
+
+		showControl(textureClampMode, true);
+		textureClampMode->SetSelection(bslsp->textureClampMode < 4 ? bslsp->textureClampMode : 3);
+
+		showControl(refractionStrength, true);
+		refractionStrength->SetValue(wxString::Format("%.4f", bslsp->refractionStrength));
+
+		// Lighting Effect 1/2 (softlighting/rimlightPower) - stream < 130
+		if (version.Stream() < 130) {
+			showControl(lightingEffect1, true);
+			lightingEffect1->SetValue(wxString::Format("%.4f", bslsp->softlighting));
+
+			showControl(lightingEffect2, true);
+			lightingEffect2->SetValue(wxString::Format("%.4f", bslsp->rimlightPower));
+		}
+
+		// Shader type-specific fields
+		UpdateShaderTypeFields(shaderTypeVal);
+
+		// FO4+ properties (stream >= 130)
+		if (version.Stream() >= 130) {
+			showControl(grayscaleToPaletteScale, true);
+			grayscaleToPaletteScale->SetValue(wxString::Format("%.4f", bslsp->grayscaleToPaletteScale));
+
+			showControl(fresnelPower, true);
+			fresnelPower->SetValue(wxString::Format("%.4f", bslsp->fresnelPower));
+
+			showControl(wetnessSpecScale, true);
+			wetnessSpecScale->SetValue(wxString::Format("%.4f", bslsp->wetnessSpecScale));
+
+			showControl(wetnessSpecPower, true);
+			wetnessSpecPower->SetValue(wxString::Format("%.4f", bslsp->wetnessSpecPower));
+
+			showControl(wetnessMinVar, true);
+			wetnessMinVar->SetValue(wxString::Format("%.4f", bslsp->wetnessMinVar));
+
+			showControl(wetnessFresnelPower, true);
+			wetnessFresnelPower->SetValue(wxString::Format("%.4f", bslsp->wetnessFresnelPower));
+
+			showControl(wetnessMetalness, true);
+			wetnessMetalness->SetValue(wxString::Format("%.4f", bslsp->wetnessMetalness));
+
+			showControl(wetMaterialPath, true);
+			wetMaterialPath->SetValue(bslsp->GetWetMaterialName());
+
+			showControl(subsurfaceRolloff, true);
+			subsurfaceRolloff->SetValue(wxString::Format("%.4f", bslsp->subsurfaceRolloff));
+
+			showControl(rimlightPower, true);
+			rimlightPower->SetValue(wxString::Format("%.4f", bslsp->rimlightPower));
+
+			showControl(backlightPower, true);
+			backlightPower->SetValue(wxString::Format("%.4f", bslsp->backlightPower));
+		}
+
+		// FO4-only (stream 130-139)
+		if (version.IsFO4()) {
+			showControl(wetnessEnvMapScale, true);
+			wetnessEnvMapScale->SetValue(wxString::Format("%.4f", bslsp->wetnessEnvmapScale));
+		}
+	}
+
+	advancedShaderPane->GetPane()->Layout();
+}
+
+void ShapeProperties::UpdateShaderTypeFields(uint32_t shaderTypeVal) {
+	wxSizer* gridSizer = advancedShaderPane->GetPane()->GetSizer();
+	auto showControl = [gridSizer](wxWindow* ctrl, bool show) {
+		if (!ctrl || !gridSizer)
+			return;
+		ctrl->Show(show);
+
+		wxSizerItem* prevItem = nullptr;
+		for (auto* item : gridSizer->GetChildren()) {
+			bool found = false;
+			if (item->GetWindow() == ctrl) {
+				found = true;
+			}
+			else if (item->IsSizer()) {
+				for (auto* subItem : item->GetSizer()->GetChildren()) {
+					if (subItem->GetWindow() == ctrl) {
+						for (auto* s : item->GetSizer()->GetChildren())
+							if (s->GetWindow())
+								s->GetWindow()->Show(show);
+						found = true;
+						break;
+					}
+				}
+			}
+			if (found) {
+				item->Show(show);
+				if (prevItem) {
+					prevItem->Show(show);
+					if (prevItem->GetWindow())
+						prevItem->GetWindow()->Show(show);
+				}
+				return;
+			}
+			prevItem = item;
+		}
+	};
+
+	// Hide all shader-type-specific fields
+	wxWindow* typeSpecificCtrls[] = {
+		environmentMapScale, skinTintColor, hairTintColor,
+		parallaxMaxPasses, parallaxScale,
+		parallaxInnerLayerThickness, parallaxRefractionScale,
+		parallaxInnerLayerTexScaleU, parallaxEnvmapStrength,
+		sparkleParamsR,
+		eyeCubemapScale, eyeLeftReflectX, eyeRightReflectX
+	};
+	for (auto* ctrl : typeSpecificCtrls)
+		showControl(ctrl, false);
+
+	switch (shaderTypeVal) {
+		case BSLightingShaderPropertyShaderType::BSLSP_ENVMAP:
+			showControl(environmentMapScale, true);
+			break;
+		case BSLightingShaderPropertyShaderType::BSLSP_SKINTINT:
+			showControl(skinTintColor, true);
+			break;
+		case BSLightingShaderPropertyShaderType::BSLSP_HAIRTINT:
+			showControl(hairTintColor, true);
+			break;
+		case BSLightingShaderPropertyShaderType::BSLSP_PARALLAXOCC:
+			showControl(parallaxMaxPasses, true);
+			showControl(parallaxScale, true);
+			break;
+		case BSLightingShaderPropertyShaderType::BSLSP_MULTILAYERPARALLAX:
+			showControl(parallaxInnerLayerThickness, true);
+			showControl(parallaxRefractionScale, true);
+			showControl(parallaxInnerLayerTexScaleU, true);
+			showControl(parallaxEnvmapStrength, true);
+			break;
+		case BSLightingShaderPropertyShaderType::BSLSP_MULTIINDEXSNOW:
+			showControl(sparkleParamsR, true);
+			break;
+		case BSLightingShaderPropertyShaderType::BSLSP_EYE:
+			showControl(eyeCubemapScale, true);
+			showControl(eyeLeftReflectX, true);
+			showControl(eyeRightReflectX, true);
+			break;
+	}
+
+	advancedShaderPane->GetPane()->Layout();
+	advancedShaderPane->InvalidateBestSize();
+	pgShader->InvalidateBestSize();
+	nbProperties->InvalidateBestSize();
+	InvalidateBestSize();
+	pgShader->Layout();
+
+	// Grow the dialog if needed, but don't shrink it
+	wxSize cur = GetSize();
+	wxSize best = GetBestSize();
+	wxSize newSize(std::max(cur.x, best.x), std::max(cur.y, best.y));
+	SetMinSize(newSize);
+	SetSize(newSize);
 }
 
 void ShapeProperties::OnChooseMaterial(wxCommandEvent& WXUNUSED(event)) {
@@ -585,6 +1047,10 @@ void ShapeProperties::GetTransparency() {
 		vertexAlpha->Disable();
 		alphaTest->Disable();
 		alphaBlend->Disable();
+		alphaSrcBlend->Disable();
+		alphaDestBlend->Disable();
+		alphaTestFunc->Disable();
+		alphaNoSorter->Disable();
 	}
 	else {
 		if (alphaProp) {
@@ -593,6 +1059,10 @@ void ShapeProperties::GetTransparency() {
 			btnRemoveTransparency->Enable();
 			alphaTest->Enable();
 			alphaBlend->Enable();
+			alphaSrcBlend->Enable();
+			alphaDestBlend->Enable();
+			alphaTestFunc->Enable();
+			alphaNoSorter->Enable();
 
 			NiShader* shader = nif->GetShader(shape);
 			if (shader)
@@ -603,6 +1073,10 @@ void ShapeProperties::GetTransparency() {
 			vertexAlpha->Disable();
 			alphaTest->Disable();
 			alphaBlend->Disable();
+			alphaSrcBlend->Disable();
+			alphaDestBlend->Disable();
+			alphaTestFunc->Disable();
+			alphaNoSorter->Disable();
 			btnAddTransparency->Enable();
 			btnRemoveTransparency->Disable();
 		}
@@ -613,7 +1087,21 @@ void ShapeProperties::GetTransparency() {
 		alphaThreshold->SetValue(wxString::Format("%d", alphaProp->threshold));
 		alphaTest->SetValue(alphaProp->flags & (1 << 9));
 		alphaBlend->SetValue(alphaProp->flags & 1);
+
+		int srcBlend = (alphaProp->flags >> 1) & 0xF;
+		int destBlend = (alphaProp->flags >> 5) & 0xF;
+		int testFunc = (alphaProp->flags >> 10) & 0x7;
+		bool noSorter = (alphaProp->flags >> 13) & 1;
+
+		alphaSrcBlend->SetSelection(srcBlend < static_cast<int>(alphaSrcBlend->GetCount()) ? srcBlend : 0);
+		alphaDestBlend->SetSelection(destBlend < static_cast<int>(alphaDestBlend->GetCount()) ? destBlend : 0);
+		alphaTestFunc->SetSelection(testFunc < static_cast<int>(alphaTestFunc->GetCount()) ? testFunc : 0);
+		alphaNoSorter->SetValue(noSorter);
 	}
+
+	// Expand transparency pane if the mesh has an alpha property
+	if (anyWithTrans)
+		transparencyPane->Collapse(false);
 }
 
 void ShapeProperties::OnAddTransparency(wxCommandEvent& WXUNUSED(event)) {
@@ -741,14 +1229,14 @@ void ShapeProperties::GetGeometry() {
 	dynamic->Disable();
 	fullPrecision->Disable();
 
-	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	auto& version = nif->GetHeader().GetVersion();
 
 	bool subIndexAvail = false;
-	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76)
+	if (version.Stream() >= 130)
 		subIndexAvail = true;
 
 	bool dynamicAvail = false;
-	if (targetGame == SKYRIMSE || targetGame == SKYRIMVR)
+	if (version.Stream() == 100)
 		dynamicAvail = true;
 
 	bool fullPrecisionAvail = true;
@@ -1085,7 +1573,7 @@ void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 
 void ShapeProperties::ApplyChanges() {
 	bool multipleShapes = shapes.size() > 1;
-	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	auto& version = nif->GetHeader().GetVersion();
 
 	wxColour color = specularColor->GetColour();
 	Vector3 specColor(color.Red(), color.Green(), color.Blue());
@@ -1143,6 +1631,62 @@ void ShapeProperties::ApplyChanges() {
 					bslsp->SetEmissiveMultiple(emisMultiple);
 
 					bslsp->SetAlpha(alphaValue);
+
+					// Advanced properties
+					auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
+					if (bssp) {
+						bssp->uvOffset.u = atof(uvOffsetU->GetValue().c_str());
+						bssp->uvOffset.v = atof(uvOffsetV->GetValue().c_str());
+						bssp->uvScale.u = atof(uvScaleU->GetValue().c_str());
+						bssp->uvScale.v = atof(uvScaleV->GetValue().c_str());
+						bssp->environmentMapScale = atof(environmentMapScale->GetValue().c_str());
+					}
+
+					bslsp->textureClampMode = static_cast<TexClampMode>(textureClampMode->GetSelection());
+					bslsp->refractionStrength = atof(refractionStrength->GetValue().c_str());
+					bslsp->softlighting = atof(lightingEffect1->GetValue().c_str());
+					bslsp->rimlightPower = atof(lightingEffect2->GetValue().c_str());
+
+					wxColour stc = skinTintColor->GetColour();
+					bslsp->skinTintColor = Vector3(stc.Red() / 255.0f, stc.Green() / 255.0f, stc.Blue() / 255.0f);
+
+					wxColour htc = hairTintColor->GetColour();
+					bslsp->hairTintColor = Vector3(htc.Red() / 255.0f, htc.Green() / 255.0f, htc.Blue() / 255.0f);
+
+					bslsp->maxPasses = atof(parallaxMaxPasses->GetValue().c_str());
+					bslsp->scale = atof(parallaxScale->GetValue().c_str());
+					bslsp->parallaxInnerLayerThickness = atof(parallaxInnerLayerThickness->GetValue().c_str());
+					bslsp->parallaxRefractionScale = atof(parallaxRefractionScale->GetValue().c_str());
+					bslsp->parallaxInnerLayerTextureScale.u = atof(parallaxInnerLayerTexScaleU->GetValue().c_str());
+					bslsp->parallaxInnerLayerTextureScale.v = atof(parallaxInnerLayerTexScaleV->GetValue().c_str());
+					bslsp->parallaxEnvmapStrength = atof(parallaxEnvmapStrength->GetValue().c_str());
+
+					bslsp->sparkleParameters.r = atof(sparkleParamsR->GetValue().c_str());
+					bslsp->sparkleParameters.g = atof(sparkleParamsG->GetValue().c_str());
+					bslsp->sparkleParameters.b = atof(sparkleParamsB->GetValue().c_str());
+					bslsp->sparkleParameters.a = atof(sparkleParamsA->GetValue().c_str());
+
+					bslsp->eyeCubemapScale = atof(eyeCubemapScale->GetValue().c_str());
+					bslsp->eyeLeftReflectionCenter.x = atof(eyeLeftReflectX->GetValue().c_str());
+					bslsp->eyeLeftReflectionCenter.y = atof(eyeLeftReflectY->GetValue().c_str());
+					bslsp->eyeLeftReflectionCenter.z = atof(eyeLeftReflectZ->GetValue().c_str());
+					bslsp->eyeRightReflectionCenter.x = atof(eyeRightReflectX->GetValue().c_str());
+					bslsp->eyeRightReflectionCenter.y = atof(eyeRightReflectY->GetValue().c_str());
+					bslsp->eyeRightReflectionCenter.z = atof(eyeRightReflectZ->GetValue().c_str());
+
+					if (version.Stream() >= 130) {
+						bslsp->SetWetMaterialName(wetMaterialPath->GetValue().ToStdString());
+						bslsp->subsurfaceRolloff = atof(subsurfaceRolloff->GetValue().c_str());
+						bslsp->backlightPower = atof(backlightPower->GetValue().c_str());
+						bslsp->grayscaleToPaletteScale = atof(grayscaleToPaletteScale->GetValue().c_str());
+						bslsp->fresnelPower = atof(fresnelPower->GetValue().c_str());
+						bslsp->wetnessSpecScale = atof(wetnessSpecScale->GetValue().c_str());
+						bslsp->wetnessSpecPower = atof(wetnessSpecPower->GetValue().c_str());
+						bslsp->wetnessMinVar = atof(wetnessMinVar->GetValue().c_str());
+						bslsp->wetnessEnvmapScale = atof(wetnessEnvMapScale->GetValue().c_str());
+						bslsp->wetnessFresnelPower = atof(wetnessFresnelPower->GetValue().c_str());
+						bslsp->wetnessMetalness = atof(wetnessMetalness->GetValue().c_str());
+					}
 				}
 			}
 			else if (shader->HasType<BSShaderPPLightingProperty>()) {
@@ -1158,6 +1702,41 @@ void ShapeProperties::ApplyChanges() {
 				}
 
 				shader->SetShaderType(type);
+
+				auto bspplp = dynamic_cast<BSShaderPPLightingProperty*>(shader);
+				if (bspplp) {
+					auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
+					if (bssp) {
+						bssp->environmentMapScale = atof(environmentMapScale->GetValue().c_str());
+						bssp->shadingFlags = shadingType->GetSelection() == 1 ? SHADING_SMOOTH : SHADING_HARD;
+					}
+
+					auto* bsslp = dynamic_cast<BSShaderLightingProperty*>(shader);
+					if (bsslp)
+						bsslp->textureClampMode = static_cast<TexClampMode>(textureClampMode->GetSelection());
+
+					bspplp->refractionStrength = atof(refractionStrength->GetValue().c_str());
+					bspplp->refractionFirePeriod = atoi(refractionFirePeriod->GetValue().c_str());
+					bspplp->parallaxMaxPasses = atof(parallaxMaxPasses->GetValue().c_str());
+					bspplp->parallaxScale = atof(parallaxScale->GetValue().c_str());
+				}
+			}
+
+			// Save shader flags
+			auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
+			if (bssp) {
+				uint32_t sf1 = 0;
+				uint32_t sf2 = 0;
+				for (unsigned int i = 0; i < shaderFlags1List->GetCount(); i++) {
+					if (shaderFlags1List->IsChecked(i))
+						sf1 |= (static_cast<uint32_t>(1) << i);
+				}
+				for (unsigned int i = 0; i < shaderFlags2List->GetCount(); i++) {
+					if (shaderFlags2List->IsChecked(i))
+						sf2 |= (static_cast<uint32_t>(1) << i);
+				}
+				bssp->shaderFlags1 = sf1;
+				bssp->shaderFlags2 = sf2;
 			}
 		}
 
@@ -1175,15 +1754,31 @@ void ShapeProperties::ApplyChanges() {
 		if (alphaProp) {
 			alphaProp->threshold = atoi(alphaThreshold->GetValue().c_str());
 
+			// Rebuild flags from all controls
+			uint16_t flags = 0;
+
 			if (alphaBlend->IsChecked())
-				alphaProp->flags |= 1;
-			else
-				alphaProp->flags &= ~1;
+				flags |= 1;
+
+			int srcBlend = alphaSrcBlend->GetSelection();
+			if (srcBlend >= 0)
+				flags |= (static_cast<uint16_t>(srcBlend) & 0xF) << 1;
+
+			int destBlend = alphaDestBlend->GetSelection();
+			if (destBlend >= 0)
+				flags |= (static_cast<uint16_t>(destBlend) & 0xF) << 5;
 
 			if (alphaTest->IsChecked())
-				alphaProp->flags |= 1 << 9;
-			else
-				alphaProp->flags &= ~(1 << 9);
+				flags |= 1 << 9;
+
+			int testFunc = alphaTestFunc->GetSelection();
+			if (testFunc >= 0)
+				flags |= (static_cast<uint16_t>(testFunc) & 0x7) << 10;
+
+			if (alphaNoSorter->IsChecked())
+				flags |= 1 << 13;
+
+			alphaProp->flags = flags;
 
 			if (shader) {
 				bool hadVertexAlpha = shader->HasVertexAlpha();
@@ -1239,7 +1834,7 @@ void ShapeProperties::ApplyChanges() {
 			if (subIndex->IsEnabled() && subIndexState != wxCheckBoxState::wxCHK_UNDETERMINED) {
 				bool hasSubIndex = shape->HasType<BSSubIndexTriShape>();
 
-				if ((targetGame == FO4 || targetGame == FO4VR || targetGame == FO76)) {
+				if (version.Stream() >= 130) {
 					if (subIndexState == wxCheckBoxState::wxCHK_CHECKED && !hasSubIndex) {
 						auto bsSITS = std::make_unique<BSSubIndexTriShape>();
 						*static_cast<BSTriShape*>(bsSITS.get()) = *bsTriShape;
@@ -1265,7 +1860,7 @@ void ShapeProperties::ApplyChanges() {
 			if (dynamic->IsEnabled() && dynamicState != wxCheckBoxState::wxCHK_UNDETERMINED) {
 				bool hasDynamic = shape->HasType<BSDynamicTriShape>();
 
-				if (targetGame == SKYRIMSE) {
+				if (version.Stream() == 100) {
 					if (dynamicState == wxCheckBoxState::wxCHK_CHECKED && !hasDynamic) {
 						auto bsDTS = std::make_unique<BSDynamicTriShape>();
 						*static_cast<BSTriShape*>(bsDTS.get()) = *bsTriShape;
