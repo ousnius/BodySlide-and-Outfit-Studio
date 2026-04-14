@@ -41,6 +41,7 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::DeleteSlider: return "DeleteSlider";
 		case AutomationStepType::SetSliderValues: return "SetSliderValues";
 		case AutomationStepType::SetSliderProperties: return "SetSliderProperties";
+		case AutomationStepType::ClearMask: return "ClearMask";
 		case AutomationStepType::LoadMask: return "LoadMask";
 		case AutomationStepType::RemoveUnusedNodes: return "RemoveUnusedNodes";
 		case AutomationStepType::FixClipping: return "FixClipping";
@@ -77,6 +78,7 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "DeleteSlider") return AutomationStepType::DeleteSlider;
 	if (str == "SetSliderValues") return AutomationStepType::SetSliderValues;
 	if (str == "SetSliderProperties") return AutomationStepType::SetSliderProperties;
+	if (str == "ClearMask") return AutomationStepType::ClearMask;
 	if (str == "LoadMask") return AutomationStepType::LoadMask;
 	if (str == "RemoveUnusedNodes") return AutomationStepType::RemoveUnusedNodes;
 	if (str == "FixClipping") return AutomationStepType::FixClipping;
@@ -344,7 +346,7 @@ int AutomationScript::Load(const std::string& fileName) {
 			case AutomationStepType::DeleteSlider: {
 				const char* sn = GetChildText(stepElem, "SliderName");
 				if (sn)
-					step.deleteSliderName = sn;
+					step.deleteSliderNames = SplitCommaSeparated(sn);
 				const char* re = GetChildText(stepElem, "Regex");
 				if (re)
 					step.deleteSliderRegex = (std::string(re) == "true");
@@ -493,6 +495,9 @@ int AutomationScript::Load(const std::string& fileName) {
 				step.mirrorSwapBonesX = GetChildBool(stepElem, "SwapBonesX", false);
 				break;
 			}
+			case AutomationStepType::ClearMask:
+				// No additional params (uses target meshes)
+				break;
 			case AutomationStepType::LoadMask: {
 				const char* mf = GetChildText(stepElem, "MaskFile");
 				if (mf)
@@ -649,7 +654,8 @@ int AutomationScript::Save(const std::string& fileName) {
 				break;
 
 			case AutomationStepType::DeleteSlider:
-				SetChildText(doc, stepElem, "SliderName", step.deleteSliderName);
+				if (!step.deleteSliderNames.empty())
+					SetChildText(doc, stepElem, "SliderName", JoinStrings(step.deleteSliderNames, ", "));
 				if (step.deleteSliderRegex)
 					SetChildText(doc, stepElem, "Regex", "true");
 				break;
@@ -759,6 +765,10 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildBool(doc, stepElem, "SwapBonesX", step.mirrorSwapBonesX, false);
 				break;
 
+			case AutomationStepType::ClearMask:
+				// No additional params (uses target meshes)
+				break;
+
 			case AutomationStepType::LoadMask:
 				SetChildText(doc, stepElem, "MaskFile", step.loadMaskFile);
 				SetChildText(doc, stepElem, "MaskName", step.loadMaskName);
@@ -844,7 +854,7 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInString(step.importFilePath, vars);
 		SubstituteInString(step.renameOldName, vars);
 		SubstituteInString(step.renameNewName, vars);
-		SubstituteInString(step.deleteSliderName, vars);
+		SubstituteInStringVector(step.deleteSliderNames, vars);
 		SubstituteInString(step.setRefShapeName, vars);
 		SubstituteInString(step.addBoneName, vars);
 		SubstituteInString(step.addBoneParent, vars);

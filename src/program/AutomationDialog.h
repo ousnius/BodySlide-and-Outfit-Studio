@@ -146,6 +146,7 @@ private:
 	int ExecuteStepDuplicateShape(const AutomationStep& step);
 	int ExecuteStepMirrorShape(const AutomationStep& step);
 	int ExecuteStepLoadMask(const AutomationStep& step);
+	int ExecuteStepClearMask(const AutomationStep& step);
 	int ExecuteStepSetSliderProperties(const AutomationStep& step);
 	int ExecuteStepRemoveUnusedNodes(const AutomationStep& step);
 	int ExecuteStepFixClipping(const AutomationStep& step);
@@ -163,6 +164,7 @@ private:
 	void OnOpenFolder(wxCommandEvent& event);
 	void OnAutomationSelected(wxCommandEvent& event);
 	void OnAddStep(wxCommandEvent& event);
+	void OnDuplicateStep(wxCommandEvent& event);
 	void OnRemoveStep(wxCommandEvent& event);
 	void OnMoveUp(wxCommandEvent& event);
 	void OnMoveDown(wxCommandEvent& event);
@@ -192,6 +194,9 @@ private:
 	void UpdateSliderPropDefaultVisibility();
 	void OnBatchModeChanged(wxCommandEvent& event);
 	void OnCharHook(wxKeyEvent& event);
+	void OnAddShapeToField(wxCommandEvent& event);
+	void OnAddSliderToField(wxCommandEvent& event);
+	void AppendFromList(const char* textCtrlName, const wxArrayString& items, const wxString& title);
 
 	wxDECLARE_EVENT_TABLE();
 };

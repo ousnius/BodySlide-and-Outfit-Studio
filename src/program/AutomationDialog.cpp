@@ -21,6 +21,7 @@ See the included LICENSE file
 #include <wx/filename.h>
 
 #include <regex>
+#include <set>
 
 #include "../components/SliderSet.h"
 
@@ -136,6 +137,31 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	UpdateBatchPanelVisibility();
 	PopulateAutomationList();
 	UpdateButtonState();
+
+	// Bind "+" buttons for appending shapes/sliders to comma-separated fields
+	auto* btnAddTargetMesh = XRCCTRL(*this, "btnAddTargetMesh", wxButton);
+	if (btnAddTargetMesh)
+		btnAddTargetMesh->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddShapeToField, this);
+
+	auto* btnAddDeleteSlider = XRCCTRL(*this, "btnAddDeleteSlider", wxButton);
+	if (btnAddDeleteSlider)
+		btnAddDeleteSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	auto* btnAddSetSlider = XRCCTRL(*this, "btnAddSetSlider", wxButton);
+	if (btnAddSetSlider)
+		btnAddSetSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	auto* btnAddConformSlider = XRCCTRL(*this, "btnAddConformSlider", wxButton);
+	if (btnAddConformSlider)
+		btnAddConformSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	auto* btnAddSliderProp = XRCCTRL(*this, "btnAddSliderProp", wxButton);
+	if (btnAddSliderProp)
+		btnAddSliderProp->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	auto* btnAddFixClipSlider = XRCCTRL(*this, "btnAddFixClipSlider", wxButton);
+	if (btnAddFixClipSlider)
+		btnAddFixClipSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
 
 	// Restore last selected automation script
 	std::string lastScript = OutfitStudioConfig["AutomationDialog.lastScript"];
@@ -437,6 +463,7 @@ void AutomationDialog::ShowStepSettings(bool show) {
 void AutomationDialog::OnStepListContextMenu(wxContextMenuEvent& WXUNUSED(event)) {
 	enum {
 		ID_CTX_ADD_STEP = wxID_HIGHEST + 100,
+		ID_CTX_DUPLICATE_STEP,
 		ID_CTX_REMOVE_STEP,
 		ID_CTX_MOVE_UP,
 		ID_CTX_MOVE_DOWN,
@@ -447,6 +474,7 @@ void AutomationDialog::OnStepListContextMenu(wxContextMenuEvent& WXUNUSED(event)
 	menu.Append(ID_CTX_ADD_STEP, _("Add Step"));
 
 	bool hasSelection = (selectedStep >= 0);
+	menu.Append(ID_CTX_DUPLICATE_STEP, _("Duplicate Step"))->Enable(hasSelection);
 	menu.Append(ID_CTX_REMOVE_STEP, _("Remove Step"))->Enable(hasSelection);
 	menu.AppendSeparator();
 	menu.Append(ID_CTX_MOVE_UP, _("Move Up"))->Enable(hasSelection && selectedStep > 0);
@@ -458,6 +486,7 @@ void AutomationDialog::OnStepListContextMenu(wxContextMenuEvent& WXUNUSED(event)
 	wxCommandEvent evt;
 	switch (result) {
 		case ID_CTX_ADD_STEP: OnAddStep(evt); break;
+		case ID_CTX_DUPLICATE_STEP: OnDuplicateStep(evt); break;
 		case ID_CTX_REMOVE_STEP: OnRemoveStep(evt); break;
 		case ID_CTX_MOVE_UP: OnMoveUp(evt); break;
 		case ID_CTX_MOVE_DOWN: OnMoveDown(evt); break;
@@ -694,7 +723,7 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			break;
 		}
 		case AutomationStepType::DeleteSlider: {
-			SetTextValue("txtDeleteSliderName", step.deleteSliderName);
+			SetVectorValue("txtDeleteSliderName", step.deleteSliderNames);
 			SetCheckboxValue("chkDeleteSliderRegex", step.deleteSliderRegex);
 			break;
 		}
@@ -818,6 +847,10 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			SetCheckboxValue("chkMirrorSwapBonesX", step.mirrorSwapBonesX);
 			break;
 		}
+
+		case AutomationStepType::ClearMask:
+			// No parameters to set
+			break;
 
 		case AutomationStepType::LoadMask: {
 			auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
@@ -1024,7 +1057,7 @@ void AutomationDialog::UpdateStepFromUI() {
 			break;
 		}
 		case AutomationStepType::DeleteSlider: {
-			step.deleteSliderName = GetTextValue("txtDeleteSliderName");
+			step.deleteSliderNames = GetVectorValue("txtDeleteSliderName");
 			step.deleteSliderRegex = GetCheckboxValue("chkDeleteSliderRegex");
 			break;
 		}
@@ -1144,6 +1177,10 @@ void AutomationDialog::UpdateStepFromUI() {
 			step.mirrorSwapBonesX = GetCheckboxValue("chkMirrorSwapBonesX");
 			break;
 		}
+
+		case AutomationStepType::ClearMask:
+			// No parameters to read
+			break;
 
 		case AutomationStepType::LoadMask: {
 			auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
@@ -1456,6 +1493,24 @@ void AutomationDialog::OnAddStep(wxCommandEvent& WXUNUSED(event)) {
 		script.AddStep(step);
 		newIndex = static_cast<int>(script.GetSteps().size()) - 1;
 	}
+
+	PopulateStepList();
+
+	listSteps->SetItemState(newIndex, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	listSteps->EnsureVisible(newIndex);
+	SelectStep(newIndex);
+	UpdateButtonState();
+}
+
+void AutomationDialog::OnDuplicateStep(wxCommandEvent& WXUNUSED(event)) {
+	if (selectedStep < 0 || selectedStep >= static_cast<int>(script.GetSteps().size()))
+		return;
+
+	UpdateStepFromUI();
+
+	AutomationStep copy = script.GetSteps()[selectedStep];
+	int newIndex = selectedStep + 1;
+	script.InsertStep(newIndex, copy);
 
 	PopulateStepList();
 
@@ -2853,14 +2908,16 @@ int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep&) {
 }
 
 int AutomationDialog::ExecuteStepDeleteSlider(const AutomationStep& step) {
-	if (step.deleteSliderName.empty()) {
+	if (step.deleteSliderNames.empty()) {
 		wxLogError("Automation: DeleteSlider - no slider name specified.");
 		return 1;
 	}
 
 	if (step.deleteSliderRegex) {
+		// In regex mode, use first entry as pattern
+		std::string pattern = JoinStrings(step.deleteSliderNames, ", ");
 		try {
-			std::regex re(step.deleteSliderName, std::regex::icase);
+			std::regex re(pattern, std::regex::icase);
 			std::vector<std::string> sliderList;
 			project->GetSliderList(sliderList);
 			int deleted = 0;
@@ -2871,16 +2928,18 @@ int AutomationDialog::ExecuteStepDeleteSlider(const AutomationStep& step) {
 					deleted++;
 				}
 			}
-			wxLogMessage("Automation: Deleted %d slider(s) matching '%s'.", deleted, step.deleteSliderName);
+			wxLogMessage("Automation: Deleted %d slider(s) matching '%s'.", deleted, pattern);
 		}
 		catch (const std::regex_error&) {
-			wxLogError("Automation: DeleteSlider - invalid regex '%s'.", step.deleteSliderName);
+			wxLogError("Automation: DeleteSlider - invalid regex '%s'.", pattern);
 			return 1;
 		}
 	}
 	else {
-		wxLogMessage("Automation: Deleting slider '%s'...", step.deleteSliderName);
-		project->DeleteSlider(step.deleteSliderName);
+		for (const auto& sliderName : step.deleteSliderNames) {
+			wxLogMessage("Automation: Deleting slider '%s'...", sliderName);
+			project->DeleteSlider(sliderName);
+		}
 	}
 	return 0;
 }
@@ -2962,6 +3021,27 @@ int AutomationDialog::ExecuteStepMirrorShape(const AutomationStep& step) {
 		if (step.mirrorSwapBonesX)
 			project->GetWorkAnim()->SwapBonesLR(shape->name.get());
 	}
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepClearMask(const AutomationStep& step) {
+	auto targetShapes = ResolveTargetShapes(step);
+	if (targetShapes.empty()) {
+		wxLogWarning("Automation: ClearMask - no target shapes found.");
+		return 0;
+	}
+
+	for (auto* shape : targetShapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* mesh = outfitStudio->glView->GetMesh(shapeName);
+		if (!mesh)
+			continue;
+
+		wxLogMessage("Automation: Clearing mask for shape '%s'...", shapeName);
+		mesh->MaskFill(0.0f);
+	}
+
+	outfitStudio->glView->Render();
 	return 0;
 }
 
@@ -3258,6 +3338,7 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::ResetTransforms: return ExecuteStepResetTransforms(step);
 		case AutomationStepType::DuplicateShape: return ExecuteStepDuplicateShape(step);
 		case AutomationStepType::MirrorShape: return ExecuteStepMirrorShape(step);
+		case AutomationStepType::ClearMask: return ExecuteStepClearMask(step);
 		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
 		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
 		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
@@ -3876,6 +3957,87 @@ void AutomationDialog::OnBatchModeChanged(wxCommandEvent& WXUNUSED(event)) {
 			UpdateSaveProjectBatchModeUI(step);
 		}
 	}
+}
+
+void AutomationDialog::AppendFromList(const char* textCtrlName, const wxArrayString& items, const wxString& title) {
+	if (items.IsEmpty())
+		return;
+
+	auto* txt = XRCCTRL(*this, textCtrlName, wxTextCtrl);
+	if (!txt)
+		return;
+
+	// Parse existing entries to exclude from the list
+	std::vector<std::string> existing = SplitCommaSeparated(std::string(txt->GetValue().ToUTF8().data()));
+	std::set<std::string> existingSet(existing.begin(), existing.end());
+
+	wxArrayString filtered;
+	for (const auto& item : items) {
+		if (existingSet.find(std::string(item.ToUTF8().data())) == existingSet.end())
+			filtered.Add(item);
+	}
+
+	if (filtered.IsEmpty())
+		return;
+
+	wxMultiChoiceDialog dlg(this, _("Select items to add:"), title, filtered);
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
+	wxArrayInt selections = dlg.GetSelections();
+	if (selections.IsEmpty())
+		return;
+
+	wxString current = txt->GetValue().Trim().Trim(false);
+	for (int sel : selections) {
+		wxString item = filtered[sel];
+		if (!current.IsEmpty())
+			current += ", ";
+		current += item;
+	}
+	txt->SetValue(current);
+}
+
+void AutomationDialog::OnAddShapeToField(wxCommandEvent& WXUNUSED(event)) {
+	wxArrayString items;
+	auto* workNif = project->GetWorkNif();
+	if (workNif) {
+		for (auto* shape : workNif->GetShapes())
+			items.Add(wxString::FromUTF8(shape->name.get()));
+	}
+
+	AppendFromList("txtTargetMeshes", items, _("Add Shapes"));
+}
+
+void AutomationDialog::OnAddSliderToField(wxCommandEvent& event) {
+	// Determine which text control to append to based on which button was clicked
+	wxWindow* btn = dynamic_cast<wxWindow*>(event.GetEventObject());
+	const char* textCtrlName = nullptr;
+
+	if (btn) {
+		wxString name = btn->GetName();
+		if (name == "btnAddDeleteSlider")
+			textCtrlName = "txtDeleteSliderName";
+		else if (name == "btnAddSetSlider")
+			textCtrlName = "txtSetSliderNames";
+		else if (name == "btnAddConformSlider")
+			textCtrlName = "txtConformSliderNames";
+		else if (name == "btnAddSliderProp")
+			textCtrlName = "txtSliderPropNames";
+		else if (name == "btnAddFixClipSlider")
+			textCtrlName = "txtFixClipSliderNames";
+	}
+
+	if (!textCtrlName)
+		return;
+
+	wxArrayString items;
+	std::vector<std::string> sliderList;
+	project->GetSliderList(sliderList);
+	for (const auto& s : sliderList)
+		items.Add(wxString::FromUTF8(s));
+
+	AppendFromList(textCtrlName, items, _("Add Sliders"));
 }
 
 std::vector<std::string> AutomationDialog::GatherBatchFiles() {

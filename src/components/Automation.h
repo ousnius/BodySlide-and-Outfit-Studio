@@ -43,11 +43,12 @@ enum class AutomationStepType {
 	DeleteSlider,
 	SetSliderValues,
 	SetSliderProperties,
+	ClearMask,
 	LoadMask,
 	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 31;
+constexpr int AutomationStepTypeCount = 32;
 static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -192,7 +193,7 @@ struct AutomationStep {
 	std::string renameNewName;
 
 	// DeleteSlider params
-	std::string deleteSliderName;
+	std::vector<std::string> deleteSliderNames;
 	bool deleteSliderRegex = false;
 
 	// SetReferenceShape params
