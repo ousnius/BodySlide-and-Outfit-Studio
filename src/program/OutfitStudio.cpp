@@ -5711,6 +5711,9 @@ void OutfitStudioFrame::OnShapeDrop(wxTreeEvent& event) {
 	// Select new item
 	outfitShapes->UnselectAll();
 	outfitShapes->SelectItem(movedItem);
+
+	// Keep NIF shape order in sync with the tree order so future GUI refreshes preserve user reordering.
+	project->GetWorkNif()->SetShapeOrder(GetShapeList());
 }
 
 void OutfitStudioFrame::OnBoneContext(wxTreeEvent& WXUNUSED(event)) {
