@@ -818,14 +818,24 @@ static void SubstituteInString(std::string& str, const std::map<std::string, std
 	}
 }
 
+static void SubstituteInStringVector(std::vector<std::string>& vec, const std::map<std::string, std::string>& variables) {
+	std::vector<std::string> result;
+	for (auto& s : vec) {
+		SubstituteInString(s, variables);
+		auto parts = SplitCommaSeparated(s);
+		for (auto& p : parts)
+			result.push_back(std::move(p));
+	}
+	vec = std::move(result);
+}
+
 void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::string>& vars) {
 	for (auto& step : steps) {
 		if (!step.active)
 			continue;
 
 		SubstituteInString(step.note, vars);
-		for (auto& m : step.targetMeshes)
-			SubstituteInString(m, vars);
+		SubstituteInStringVector(step.targetMeshes, vars);
 
 		SubstituteInString(step.refSourceFile, vars);
 		SubstituteInString(step.refSet, vars);
@@ -841,8 +851,7 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInString(step.editBoneName, vars);
 		SubstituteInString(step.editBoneParent, vars);
 		SubstituteInString(step.poseName, vars);
-		for (auto& b : step.deleteBoneNames)
-			SubstituteInString(b, vars);
+		SubstituteInStringVector(step.deleteBoneNames, vars);
 		SubstituteInString(step.saveName, vars);
 		SubstituteInString(step.saveOutputFileName, vars);
 		SubstituteInString(step.saveOutputDataPath, vars);
@@ -861,15 +870,11 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInString(step.loadMaskFile, vars);
 		SubstituteInString(step.loadMaskName, vars);
 
-		for (auto& s : step.setSliderNames)
-			SubstituteInString(s, vars);
-		for (auto& s : step.conformSliderNames)
-			SubstituteInString(s, vars);
-		for (auto& s : step.weightBoneList)
-			SubstituteInString(s, vars);
-		for (auto& s : step.sliderNames)
-			SubstituteInString(s, vars);
-		for (auto& s : step.fixClipSliderNames)
-			SubstituteInString(s, vars);
+		SubstituteInStringVector(step.setSliderNames, vars);
+		SubstituteInStringVector(step.conformSliderNames, vars);
+		SubstituteInStringVector(step.weightBoneList, vars);
+		SubstituteInStringVector(step.sliderNames, vars);
+		SubstituteInStringVector(step.sliderPropNames, vars);
+		SubstituteInStringVector(step.fixClipSliderNames, vars);
 	}
 }
