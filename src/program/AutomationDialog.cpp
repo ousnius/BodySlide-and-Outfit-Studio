@@ -1288,6 +1288,40 @@ std::string AutomationDialog::GetAutomationsFolder() {
 	return GetProjectPath() + "/Automations";
 }
 
+void AutomationDialog::CollectScripts(const wxString& baseFolder, const wxString& currentFolder, std::vector<std::pair<wxString, wxString>>& entries) {
+	wxDir dir(currentFolder);
+	if (!dir.IsOpened())
+		return;
+
+	// Collect .xml files in this folder
+	wxString filename;
+	if (dir.GetFirst(&filename, "*.xml", wxDIR_FILES)) {
+		do {
+			wxFileName fn(filename);
+			wxString relativePath;
+			if (currentFolder == baseFolder) {
+				relativePath = fn.GetName();
+			}
+			else {
+				wxString subPath;
+				wxFileName::SplitPath(currentFolder, nullptr, nullptr, &subPath);
+				// Get the relative folder path from baseFolder
+				wxString relFolder = currentFolder.Mid(baseFolder.length() + 1);
+				relativePath = relFolder + "/" + fn.GetName();
+			}
+			entries.push_back({relativePath, relativePath});
+		} while (dir.GetNext(&filename));
+	}
+
+	// Recurse into subdirectories
+	wxString dirName;
+	if (dir.GetFirst(&dirName, wxEmptyString, wxDIR_DIRS)) {
+		do {
+			CollectScripts(baseFolder, currentFolder + "/" + dirName, entries);
+		} while (dir.GetNext(&dirName));
+	}
+}
+
 void AutomationDialog::PopulateAutomationList() {
 	if (!cmbAutomation)
 		return;
@@ -1297,31 +1331,81 @@ void AutomationDialog::PopulateAutomationList() {
 	cmbAutomation->Append(_("<New>"));
 
 	wxString folder = wxString::FromUTF8(GetAutomationsFolder());
-	if (wxDir::Exists(folder)) {
-		wxDir dir(folder);
-		if (dir.IsOpened()) {
-			wxString filename;
-			if (dir.GetFirst(&filename, "*.xml", wxDIR_FILES)) {
-				do {
-					wxFileName fn(filename);
-					cmbAutomation->Append(fn.GetName());
-				} while (dir.GetNext(&filename));
-			}
+	if (!wxDir::Exists(folder)) {
+		if (!currentText.IsEmpty())
+			cmbAutomation->SetValue(currentText);
+		return;
+	}
+
+	// Collect all scripts recursively: {relativePath, displayName}
+	std::vector<std::pair<wxString, wxString>> entries;
+	CollectScripts(folder, folder, entries);
+
+	// Separate root-level scripts from subfolder scripts
+	std::vector<wxString> rootScripts;
+	std::map<wxString, std::vector<wxString>> folderScripts;
+
+	for (auto& [path, display] : entries) {
+		int sep = path.Find('/');
+		if (sep == wxNOT_FOUND) {
+			rootScripts.push_back(path);
 		}
+		else {
+			wxString folderName = path.Left(sep);
+			folderScripts[folderName].push_back(path);
+		}
+	}
+
+	// Sort root scripts (case-insensitive)
+	std::sort(rootScripts.begin(), rootScripts.end(),
+		[](const wxString& a, const wxString& b) { return a.CmpNoCase(b) < 0; });
+
+	// Add root-level scripts
+	for (auto& name : rootScripts)
+		cmbAutomation->Append(name);
+
+	// Add folder groups with separator headers
+	for (auto& [folderName, scripts] : folderScripts) {
+		std::sort(scripts.begin(), scripts.end(),
+			[](const wxString& a, const wxString& b) { return a.CmpNoCase(b) < 0; });
+
+		// Separator header
+		wxString separator = wxS("\u2500\u2500\u2500 ") + folderName + wxS(" \u2500\u2500\u2500");
+		cmbAutomation->Append(separator);
+
+		for (auto& path : scripts)
+			cmbAutomation->Append(path);
 	}
 
 	if (!currentText.IsEmpty())
 		cmbAutomation->SetValue(currentText);
 }
 
-wxString AutomationDialog::SanitizeFileName(const wxString& name) {
+bool AutomationDialog::IsSeparatorItem(const wxString& text) {
+	return text.StartsWith(wxS("\u2500"));
+}
+
+wxString AutomationDialog::SanitizePath(const wxString& name) {
 	wxString result;
+	bool lastWasSep = false;
 	for (auto ch : name) {
-		if (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '/' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')
+		if (ch == '/') {
+			if (!result.IsEmpty() && !lastWasSep)
+				result += '/';
+			lastWasSep = true;
+		}
+		else if (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*') {
 			result += '_';
-		else
+			lastWasSep = false;
+		}
+		else {
 			result += ch;
+			lastWasSep = false;
+		}
 	}
+	// Trim trailing separator
+	if (result.EndsWith("/"))
+		result.RemoveLast();
 	return result;
 }
 
@@ -1329,7 +1413,7 @@ void AutomationDialog::LoadAutomation(const wxString& name) {
 	if (name.IsEmpty())
 		return;
 
-	wxString sanitized = SanitizeFileName(name);
+	wxString sanitized = SanitizePath(name);
 	wxString filePath = wxString::FromUTF8(GetAutomationsFolder()) + "/" + sanitized + ".xml";
 
 	if (!wxFileExists(filePath))
@@ -1369,6 +1453,13 @@ void AutomationDialog::UpdateButtonState() {
 
 void AutomationDialog::OnAutomationSelected(wxCommandEvent& WXUNUSED(event)) {
 	wxString name = cmbAutomation->GetValue();
+
+	// Ignore separator header items
+	if (IsSeparatorItem(name)) {
+		cmbAutomation->SetValue(wxEmptyString);
+		return;
+	}
+
 	if (name == _("<New>")) {
 		script = AutomationScript();
 		selectedStep = -1;
@@ -1406,14 +1497,15 @@ void AutomationDialog::OnSaveScript(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	wxString sanitized = SanitizeFileName(name);
+	wxString sanitized = SanitizePath(name);
 	wxString folder = wxString::FromUTF8(GetAutomationsFolder());
 
-	// Create folder if missing
-	if (!wxDir::Exists(folder))
-		wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+	// Create folder (including subdirectories) if missing
+	wxFileName fnPath(folder + "/" + sanitized + ".xml");
+	if (!wxDir::Exists(fnPath.GetPath()))
+		wxFileName::Mkdir(fnPath.GetPath(), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
-	wxString filePath = folder + "/" + sanitized + ".xml";
+	wxString filePath = fnPath.GetFullPath();
 	int err = script.Save(filePath.ToUTF8().data());
 	if (err) {
 		wxMessageBox(wxString::Format(_("Failed to save automation script (error %d)."), err), _("Error"), wxICON_ERROR);
@@ -1431,7 +1523,7 @@ void AutomationDialog::OnDeleteScript(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	wxString sanitized = SanitizeFileName(name);
+	wxString sanitized = SanitizePath(name);
 	wxString filePath = wxString::FromUTF8(GetAutomationsFolder()) + "/" + sanitized + ".xml";
 
 	if (!wxFileExists(filePath)) {

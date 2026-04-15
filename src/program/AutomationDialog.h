@@ -86,8 +86,10 @@ private:
 
 	std::string GetAutomationsFolder();
 	void PopulateAutomationList();
+	void CollectScripts(const wxString& baseFolder, const wxString& currentFolder, std::vector<std::pair<wxString, wxString>>& entries);
+	static bool IsSeparatorItem(const wxString& text);
 	void LoadAutomation(const wxString& name);
-	static wxString SanitizeFileName(const wxString& name);
+	static wxString SanitizePath(const wxString& name);
 
 	void PopulateRefTemplates();
 	void PopulateSetsFromFile(const wxString& filePath, const char* choiceName, const char* shapesChoiceName = nullptr);
