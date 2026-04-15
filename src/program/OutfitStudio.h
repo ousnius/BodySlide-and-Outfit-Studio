@@ -69,7 +69,7 @@ public:
 };
 
 struct ShapeItemState {
-	nifly::NiShape* shape = nullptr;
+	std::string shapeName;
 	int state = 0;
 	bool selected = false;
 };

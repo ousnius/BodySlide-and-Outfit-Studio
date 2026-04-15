@@ -4349,13 +4349,14 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 	std::vector<ShapeItemState> prevStates;
 
 	if (outfitRoot.IsOk()) {
+		// Collect names from tree items using the tree label text (safe even if NiShape* is dangling)
 		wxTreeItemIdValue cookie;
 		wxTreeItemId child = outfitShapes->GetFirstChild(outfitRoot, cookie);
 		while (child.IsOk()) {
 			auto itemData = (ShapeItemData*)outfitShapes->GetItemData(child);
 			if (itemData) {
-				ShapeItemState prevState;
-				prevState.shape = itemData->GetShape();
+				ShapeItemState prevState{};
+				prevState.shapeName = outfitShapes->GetItemText(child).ToUTF8().data();
 				prevState.state = outfitShapes->GetItemState(child);
 
 				if (outfitShapes->IsSelected(child))
@@ -4395,7 +4396,7 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 			outfitShapes->SetItemTextColour(item, wxColour(0, 255, 0));
 		}
 
-		auto it = std::find_if(prevStates.begin(), prevStates.end(), [&shape](const ShapeItemState& state) { return state.shape == shape; });
+		auto it = std::find_if(prevStates.begin(), prevStates.end(), [&shape](const ShapeItemState& state) { return state.shapeName == shape->name.get(); });
 
 		if (it != prevStates.end()) {
 			outfitShapes->SetItemState(item, it->state);
@@ -9368,9 +9369,6 @@ void OutfitStudioFrame::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
 		project->SetBaseShape(shape);
 	else
 		project->SetBaseShape(nullptr);
-
-	if (shape)
-		project->SetTextures(shape);
 
 	RefreshGUIFromProj();
 	SetPendingChanges();
