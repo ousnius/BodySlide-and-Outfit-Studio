@@ -136,6 +136,7 @@
 															<item>Shapes: Apply Pose</item>
 															<item>Shapes: Delete Shape</item>
 															<item>Shapes: Duplicate Shape</item>
+															<item>Shapes: Fix Bad Bones</item>
 															<item>Shapes: Fix Clipping</item>
 															<item>Shapes: Invert UVs</item>
 															<item>Shapes: Mirror Shape</item>
@@ -1475,6 +1476,24 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																	<hint>New shape name</hint>
 																</object>
 															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- FixBadBones -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageFixBadBones">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Fix Bad Bones</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Fixes bones with inconsistent NIF transforms by applying recommended corrections automatically.</label>
 														</object>
 													</object>
 												</object>

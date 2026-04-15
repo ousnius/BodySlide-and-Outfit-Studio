@@ -45,6 +45,7 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::LoadMask: return "LoadMask";
 		case AutomationStepType::RemoveUnusedNodes: return "RemoveUnusedNodes";
 		case AutomationStepType::FixClipping: return "FixClipping";
+		case AutomationStepType::FixBadBones: return "FixBadBones";
 		default: return "LoadReference";
 	}
 }
@@ -82,6 +83,7 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "LoadMask") return AutomationStepType::LoadMask;
 	if (str == "RemoveUnusedNodes") return AutomationStepType::RemoveUnusedNodes;
 	if (str == "FixClipping") return AutomationStepType::FixClipping;
+	if (str == "FixBadBones") return AutomationStepType::FixBadBones;
 	return AutomationStepType::LoadReference;
 }
 
@@ -528,6 +530,9 @@ int AutomationScript::Load(const std::string& fileName) {
 					step.fixClipSliderNames = SplitCommaSeparated(sn);
 				break;
 			}
+			case AutomationStepType::FixBadBones:
+				// No additional params
+				break;
 		}
 
 		steps.push_back(std::move(step));
@@ -792,6 +797,10 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildFloat(doc, stepElem, "Strength", step.fixClipStrength, 0.5f);
 				if (!step.fixClipSliderNames.empty())
 					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.fixClipSliderNames, ", "));
+				break;
+
+			case AutomationStepType::FixBadBones:
+				// No additional params
 				break;
 		}
 	}

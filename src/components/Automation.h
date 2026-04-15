@@ -32,6 +32,7 @@ enum class AutomationStepType {
 	ApplyPose,
 	DeleteShape,
 	DuplicateShape,
+	FixBadBones,
 	FixClipping,
 	InvertUVs,
 	MirrorShape,
@@ -48,7 +49,7 @@ enum class AutomationStepType {
 	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 32;
+constexpr int AutomationStepTypeCount = 33;
 static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 

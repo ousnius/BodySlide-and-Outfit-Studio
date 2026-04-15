@@ -901,6 +901,10 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			SetVectorValue("txtFixClipSliderNames", step.fixClipSliderNames);
 			break;
 		}
+
+		case AutomationStepType::FixBadBones:
+			// No parameters to set
+			break;
 	}
 }
 
@@ -1204,6 +1208,10 @@ void AutomationDialog::UpdateStepFromUI() {
 			step.fixClipSliderNames = GetVectorValue("txtFixClipSliderNames");
 			break;
 		}
+
+		case AutomationStepType::FixBadBones:
+			// No parameters to read
+			break;
 	}
 
 	RefreshStepRow(selectedStep);
@@ -3401,6 +3409,15 @@ int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepFixBadBones(const AutomationStep& WXUNUSED(step)) {
+	wxLogMessage("Automation: Fixing bad bones...");
+
+	if (!project->CheckForBadBones(false))
+		wxLogMessage("Automation: No bad bones found.");
+
+	return 0;
+}
+
 int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 	switch (step.type) {
 		case AutomationStepType::ClearProject: return ExecuteStepClearProject(step);
@@ -3435,6 +3452,7 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
 		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
 		case AutomationStepType::FixClipping: return ExecuteStepFixClipping(step);
+		case AutomationStepType::FixBadBones: return ExecuteStepFixBadBones(step);
 	}
 
 	return 0;

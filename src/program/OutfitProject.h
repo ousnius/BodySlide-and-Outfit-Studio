@@ -379,7 +379,7 @@ public:
 	void RemoveSkinning(nifly::NiShape* s);
 	void RemoveSkinning();
 
-	bool CheckForBadBones();
+	bool CheckForBadBones(bool interactive = true);
 	bool ShapeHasBadBones(nifly::NiShape* s);
 
 	void GetAllPoseTransforms(nifly::NiShape* s, std::vector<nifly::MatTransform>& ts);
