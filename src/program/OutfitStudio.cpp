@@ -6894,11 +6894,8 @@ void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnDepthClip(wxCommandEvent& WXUNUSED(event)) {
-	//float zNear = cbDepthClip->IsChecked() ? 0.001f : 0.1f;
-	//glView->SetDepthClip(zNear, glView->gls.zFar);
-
-	float zFar = cbDepthClip->IsChecked() ? 100000.0f : 1000.0f;
-	glView->SetDepthClip(glView->gls.zNear, zFar);
+	float zNear = cbDepthClip->IsChecked() ? 0.001f : 0.1f;
+	glView->SetDepthClip(zNear, glView->gls.zFar);
 }
 
 void OutfitStudioFrame::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
