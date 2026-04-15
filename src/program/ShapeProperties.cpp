@@ -153,8 +153,13 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 			shaderFlags2List->Check(5, evt.IsChecked());
 	});
 	doubleSided->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& evt) {
-		if (shaderFlags2List->GetCount() > 4)
-			shaderFlags2List->Check(4, evt.IsChecked());
+		// FO3/NV: bit 4 of shaderFlags2 is "Refraction Tint", not "Double Sided".
+		// Double sided is controlled by NiStencilProperty for those games.
+		NiShader* s = nif->GetShader(shapes[0]);
+		if (s && !s->HasType<BSShaderPPLightingProperty>()) {
+			if (shaderFlags2List->GetCount() > 4)
+				shaderFlags2List->Check(4, evt.IsChecked());
+		}
 	});
 	vertexAlpha->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& evt) {
 		if (shaderFlags1List->GetCount() > 3)
@@ -340,8 +345,21 @@ void ShapeProperties::GetShader() {
 		bool hasVertexAlpha = shader->HasVertexAlpha();
 		shaderName->SetValue(shader->name.get());
 		vertexColors->SetValue(hasVertexColors);
-		doubleSided->SetValue(isDoubleSided);
 		vertexAlpha->SetValue(hasVertexAlpha);
+
+		// FO3/NV: Double sided is controlled by NiStencilProperty, not shader flags
+		if (shader->HasType<BSShaderPPLightingProperty>()) {
+			NiStencilProperty* stencil = nif->GetStencilProperty(shape);
+			if (stencil) {
+				int drawMode = (stencil->flags & DRAW_MASK) >> DRAW_POS;
+				isDoubleSided = (drawMode == DRAW_BOTH);
+			}
+			else {
+				isDoubleSided = false;
+			}
+		}
+
+		doubleSided->SetValue(isDoubleSided);
 
 		Color4 color;
 		Vector3 colorVec;
@@ -1603,7 +1621,27 @@ void ShapeProperties::ApplyChanges() {
 			if (vertexColors->IsChecked() && !hadVertexColors)
 				shape->SetVertexColors(true);
 
-			shader->SetDoubleSided(doubleSided->IsChecked());
+			// FO3/NV: Double sided is controlled by NiStencilProperty, not shader flags
+			if (shader->HasType<BSShaderPPLightingProperty>()) {
+				bool wantDoubleSided = doubleSided->IsChecked();
+				NiStencilProperty* stencil = nif->GetStencilProperty(shape);
+				if (wantDoubleSided) {
+					if (!stencil) {
+						auto stencilProp = std::make_unique<NiStencilProperty>();
+						int stencilRef = nif->GetHeader().AddBlock(std::move(stencilProp));
+						shape->propertyRefs.AddBlockRef(stencilRef);
+					}
+					else {
+						stencil->flags = (stencil->flags & ~DRAW_MASK) | (DRAW_BOTH << DRAW_POS);
+					}
+				}
+				else if (stencil) {
+					stencil->flags = (stencil->flags & ~DRAW_MASK) | (DRAW_CCW << DRAW_POS);
+				}
+			}
+			else {
+				shader->SetDoubleSided(doubleSided->IsChecked());
+			}
 
 			if (shader->HasType<BSEffectShaderProperty>()) {
 				shader->SetEmissiveColor(emisColor);
