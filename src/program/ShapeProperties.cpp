@@ -155,15 +155,17 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 	doubleSided->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& evt) {
 		// FO3/NV: bit 4 of shaderFlags2 is "Refraction Tint", not "Double Sided".
 		// Double sided is controlled by NiStencilProperty for those games.
-		NiShader* s = nif->GetShader(shapes[0]);
-		if (s && !s->HasType<BSShaderPPLightingProperty>()) {
+		if (!isFO3NV) {
 			if (shaderFlags2List->GetCount() > 4)
 				shaderFlags2List->Check(4, evt.IsChecked());
 		}
 	});
 	vertexAlpha->Bind(wxEVT_CHECKBOX, [this](wxCommandEvent& evt) {
-		if (shaderFlags1List->GetCount() > 3)
-			shaderFlags1List->Check(3, evt.IsChecked());
+		// FO3/NV: Vertex Alpha only works with BSShaderNoLightingProperty
+		if (!isFO3NV || isFO3NVNoLighting) {
+			if (shaderFlags1List->GetCount() > 3)
+				shaderFlags1List->Check(3, evt.IsChecked());
+		}
 		// Enabling vertex alpha also enables vertex colors
 		if (evt.IsChecked()) {
 			if (shaderFlags2List->GetCount() > 5)
@@ -253,6 +255,9 @@ void ShapeProperties::GetShader() {
 	NiShape* shape = shapes[0];
 	NiShader* shader = nif->GetShader(shape);
 
+	isFO3NV = shader && shader->HasType<BSShaderLightingProperty>();
+	isFO3NVNoLighting = shader && shader->HasType<BSShaderNoLightingProperty>();
+
 	if (multipleShapes) {
 		btnAddShader->Enable(anyWithoutShader);
 		btnRemoveShader->Enable(anyWithShader);
@@ -331,6 +336,11 @@ void ShapeProperties::GetShader() {
 			vertexColors->Enable();
 			doubleSided->Enable();
 			vertexAlpha->Enable();
+
+			// FO3/NV: Vertex Alpha only works with BSShaderNoLightingProperty
+			if (isFO3NV && !isFO3NVNoLighting)
+				vertexAlpha->Disable();
+
 			alphaTest->Enable();
 			alphaBlend->Enable();
 			shaderFlagsPane->Enable();
@@ -348,7 +358,7 @@ void ShapeProperties::GetShader() {
 		vertexAlpha->SetValue(hasVertexAlpha);
 
 		// FO3/NV: Double sided is controlled by NiStencilProperty, not shader flags
-		if (shader->HasType<BSShaderPPLightingProperty>()) {
+		if (isFO3NV) {
 			NiStencilProperty* stencil = nif->GetStencilProperty(shape);
 			if (stencil) {
 				int drawMode = (stencil->flags & DRAW_MASK) >> DRAW_POS;
@@ -516,7 +526,7 @@ void ShapeProperties::GetShaderFlags() {
 	std::vector<ShaderFlagDef> flags1Defs;
 	std::vector<ShaderFlagDef> flags2Defs;
 
-	if (shader->HasType<BSShaderPPLightingProperty>()) {
+	if (isFO3NV) {
 		flags1Defs = GetFO3ShaderFlags1();
 		flags2Defs = GetFO3ShaderFlags2();
 	}
@@ -1083,8 +1093,11 @@ void ShapeProperties::GetTransparency() {
 			alphaNoSorter->Enable();
 
 			NiShader* shader = nif->GetShader(shape);
-			if (shader)
-				vertexAlpha->Enable();
+			if (shader) {
+				// FO3/NV: Vertex Alpha only works with BSShaderNoLightingProperty
+				if (!isFO3NV || isFO3NVNoLighting)
+					vertexAlpha->Enable();
+			}
 		}
 		else {
 			alphaThreshold->Disable();
@@ -1622,7 +1635,7 @@ void ShapeProperties::ApplyChanges() {
 				shape->SetVertexColors(true);
 
 			// FO3/NV: Double sided is controlled by NiStencilProperty, not shader flags
-			if (shader->HasType<BSShaderPPLightingProperty>()) {
+			if (isFO3NV) {
 				bool wantDoubleSided = doubleSided->IsChecked();
 				NiStencilProperty* stencil = nif->GetStencilProperty(shape);
 				if (wantDoubleSided) {
@@ -1819,12 +1832,16 @@ void ShapeProperties::ApplyChanges() {
 			alphaProp->flags = flags;
 
 			if (shader) {
-				bool hadVertexAlpha = shader->HasVertexAlpha();
-				shader->SetVertexAlpha(vertexAlpha->IsChecked());
+				// FO3/NV: Vertex Alpha only works with BSShaderNoLightingProperty
+				bool canSetVertexAlpha = !isFO3NV || isFO3NVNoLighting;
+				if (canSetVertexAlpha) {
+					bool hadVertexAlpha = shader->HasVertexAlpha();
+					shader->SetVertexAlpha(vertexAlpha->IsChecked());
 
-				if (vertexAlpha->IsChecked() && !hadVertexAlpha) {
-					shader->SetVertexColors(true);
-					shape->SetVertexColors(true);
+					if (vertexAlpha->IsChecked() && !hadVertexAlpha) {
+						shader->SetVertexColors(true);
+						shape->SetVertexColors(true);
+					}
 				}
 			}
 		}

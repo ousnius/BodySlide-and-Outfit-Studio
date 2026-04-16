@@ -129,6 +129,10 @@ private:
 	nifly::NifFile* nif = nullptr;
 	std::vector<nifly::NiShape*> shapes;
 
+	// Shader type classification for the first shape (set in GetShader)
+	bool isFO3NV = false;
+	bool isFO3NVNoLighting = false;
+
 	bool confirmationAccepted = false;
 
 	bool ShowConfirmationDialog();
