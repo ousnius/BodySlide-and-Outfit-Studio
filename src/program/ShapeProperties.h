@@ -153,8 +153,14 @@ private:
 
 	void GetExtraData();
 	void AddExtraData(nifly::NiShape* shape, nifly::NiExtraData* extraData, bool uiOnly = false);
+	wxWindow* CreateValueControl(int id, int typeSelection);
+	void UpdateEditButtonLabel(int id);
 	void ChangeExtraDataType(nifly::NiShape* shape, int index);
 	void RemoveExtraData(int index);
+	void OnEditExtraData(wxCommandEvent& event);
+	void ShowVectorEditDialog(int extraDataIndex);
+	void ShowColorEditDialog(int extraDataIndex);
+	void ShowListEditDialog(int extraDataIndex);
 
 	void GetCoordTrans();
 	void OnTransChanged(wxCommandEvent&);

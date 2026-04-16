@@ -5,6 +5,9 @@ See the included LICENSE file
 
 #include "ShapeProperties.h"
 
+#include <wx/grid.h>
+#include <wx/valnum.h>
+
 extern ConfigurationManager Config;
 
 using namespace nifly;
@@ -1356,19 +1359,11 @@ void ShapeProperties::GetExtraData() {
 	NiShape* shape = shapes[0];
 
 	for (size_t i = 0; i < extraDataIndices.size(); i++) {
-		wxButton* extraDataBtn = dynamic_cast<wxButton*>(FindWindowById(1000 + i, this));
-		wxChoice* extraDataType = dynamic_cast<wxChoice*>(FindWindowById(2000 + i, this));
-		wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + i, this));
-		wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
-
-		if (extraDataBtn)
-			extraDataBtn->Destroy();
-		if (extraDataType)
-			extraDataType->Destroy();
-		if (extraDataName)
-			extraDataName->Destroy();
-		if (extraDataValue)
-			extraDataValue->Destroy();
+		for (int base : {1000, 2000, 3000, 4000}) {
+			wxWindow* ctrl = FindWindowById(base + static_cast<int>(i), this);
+			if (ctrl)
+				ctrl->Destroy();
+		}
 
 		pgExtraData->FitInside();
 		pgExtraData->Layout();
@@ -1412,45 +1407,107 @@ void ShapeProperties::AddExtraData(NiShape* shape, NiExtraData* extraData, bool 
 	types.Add("NiStringExtraData");
 	types.Add("NiIntegerExtraData");
 	types.Add("NiFloatExtraData");
+	types.Add("NiBooleanExtraData");
+	types.Add("NiVectorExtraData");
+	types.Add("NiColorExtraData");
+	types.Add("NiIntegersExtraData");
+	types.Add("NiStringsExtraData");
+	types.Add("NiFloatsExtraData");
+	types.Add("BSDistantObjectLargeRefExtraData");
 	wxChoice* extraDataType = new wxChoice(pgExtraData, 2000 + id, wxDefaultPosition, wxDefaultSize, types);
 	extraDataType->SetSelection(0);
 	extraDataType->Bind(wxEVT_CHOICE, &ShapeProperties::OnChangeExtraDataType, this);
 
 	wxTextCtrl* extraDataName = new wxTextCtrl(pgExtraData, 3000 + id);
-	wxTextCtrl* extraDataValue = new wxTextCtrl(pgExtraData, 4000 + id);
+
+	int typeSelection = 0;
 
 	if (uiOnly) {
 		if (extraData->HasType<NiStringExtraData>()) {
 			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
-			extraDataType->SetSelection(0);
+			typeSelection = 0;
 			extraDataName->SetValue(stringExtraData->name.get());
-			extraDataValue->SetValue(stringExtraData->stringData.get());
 		}
 		else if (extraData->HasType<NiIntegerExtraData>()) {
 			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
-			extraDataType->SetSelection(1);
+			typeSelection = 1;
 			extraDataName->SetValue(intExtraData->name.get());
-			extraDataValue->SetValue(wxString::Format("%d", intExtraData->integerData));
 		}
 		else if (extraData->HasType<NiFloatExtraData>()) {
 			auto floatExtraData = static_cast<NiFloatExtraData*>(extraData);
-			extraDataType->SetSelection(2);
+			typeSelection = 2;
 			extraDataName->SetValue(floatExtraData->name.get());
-			extraDataValue->SetValue(wxString::Format("%f", floatExtraData->floatData));
+		}
+		else if (extraData->HasType<NiBooleanExtraData>()) {
+			typeSelection = 3;
+			extraDataName->SetValue(extraData->name.get());
+		}
+		else if (extraData->HasType<NiVectorExtraData>()) {
+			typeSelection = 4;
+			extraDataName->SetValue(extraData->name.get());
+		}
+		else if (extraData->HasType<NiColorExtraData>()) {
+			typeSelection = 5;
+			extraDataName->SetValue(extraData->name.get());
+		}
+		else if (extraData->HasType<NiIntegersExtraData>()) {
+			typeSelection = 6;
+			extraDataName->SetValue(extraData->name.get());
+		}
+		else if (extraData->HasType<NiStringsExtraData>()) {
+			typeSelection = 7;
+			extraDataName->SetValue(extraData->name.get());
+		}
+		else if (extraData->HasType<NiFloatsExtraData>()) {
+			typeSelection = 8;
+			extraDataName->SetValue(extraData->name.get());
+		}
+		else if (extraData->HasType<BSDistantObjectLargeRefExtraData>()) {
+			typeSelection = 9;
+			extraDataName->SetValue(extraData->name.get());
 		}
 		else {
 			extraDataBtn->Destroy();
 			extraDataType->Destroy();
 			extraDataName->Destroy();
-			extraDataValue->Destroy();
 			return;
+		}
+	}
+
+	extraDataType->SetSelection(typeSelection);
+
+	wxWindow* valueCtrl = CreateValueControl(id, typeSelection);
+
+	if (uiOnly) {
+		if (extraData->HasType<NiStringExtraData>()) {
+			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
+			static_cast<wxTextCtrl*>(valueCtrl)->SetValue(stringExtraData->stringData.get());
+		}
+		else if (extraData->HasType<NiIntegerExtraData>()) {
+			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
+			static_cast<wxTextCtrl*>(valueCtrl)->SetValue(wxString::Format("%d", intExtraData->integerData));
+		}
+		else if (extraData->HasType<NiFloatExtraData>()) {
+			auto floatExtraData = static_cast<NiFloatExtraData*>(extraData);
+			static_cast<wxTextCtrl*>(valueCtrl)->SetValue(wxString::Format("%f", floatExtraData->floatData));
+		}
+		else if (extraData->HasType<NiBooleanExtraData>()) {
+			auto boolExtraData = static_cast<NiBooleanExtraData*>(extraData);
+			static_cast<wxCheckBox*>(valueCtrl)->SetValue(boolExtraData->booleanData);
+		}
+		else if (extraData->HasType<BSDistantObjectLargeRefExtraData>()) {
+			auto distExtraData = static_cast<BSDistantObjectLargeRefExtraData*>(extraData);
+			static_cast<wxCheckBox*>(valueCtrl)->SetValue(distExtraData->largeRef);
+		}
+		else {
+			UpdateEditButtonLabel(id);
 		}
 	}
 
 	extraDataGrid->Add(extraDataBtn, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 5);
 	extraDataGrid->Add(extraDataType, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 5);
 	extraDataGrid->Add(extraDataName, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 5);
-	extraDataGrid->Add(extraDataValue, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 5);
+	extraDataGrid->Add(valueCtrl, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 5);
 
 	pgExtraData->FitInside();
 	pgExtraData->Layout();
@@ -1475,29 +1532,77 @@ void ShapeProperties::ChangeExtraDataType(NiShape* shape, int id) {
 	extraDataIndices[id] = 0xFFFFFFFF;
 
 	wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + id, this));
-	wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + id, this));
+	std::string nameStr = extraDataName->GetValue().ToStdString();
+
+	// Destroy the old value control and create the appropriate new one
+	wxWindow* oldValueCtrl = FindWindowById(4000 + id, this);
+	if (oldValueCtrl) {
+		extraDataGrid->Replace(oldValueCtrl, CreateValueControl(id, selection));
+		oldValueCtrl->Destroy();
+	}
 
 	std::unique_ptr<NiExtraData> extraDataResult = nullptr;
 	switch (selection) {
 		case 0: {
 			auto strExtraData = std::make_unique<NiStringExtraData>();
-			strExtraData->name.get() = extraDataName->GetValue().ToStdString();
-			strExtraData->stringData.get() = extraDataValue->GetValue().ToStdString();
+			strExtraData->name.get() = nameStr;
 			extraDataResult = std::move(strExtraData);
 			break;
 		}
 		case 1: {
 			auto intExtraData = std::make_unique<NiIntegerExtraData>();
-			intExtraData->name.get() = extraDataName->GetValue().ToStdString();
+			intExtraData->name.get() = nameStr;
 			intExtraData->integerData = 0;
 			extraDataResult = std::move(intExtraData);
 			break;
 		}
 		case 2: {
 			auto floatExtraData = std::make_unique<NiFloatExtraData>();
-			floatExtraData->name.get() = extraDataName->GetValue().ToStdString();
+			floatExtraData->name.get() = nameStr;
 			floatExtraData->floatData = 0.0f;
 			extraDataResult = std::move(floatExtraData);
+			break;
+		}
+		case 3: {
+			auto boolExtraData = std::make_unique<NiBooleanExtraData>();
+			boolExtraData->name.get() = nameStr;
+			extraDataResult = std::move(boolExtraData);
+			break;
+		}
+		case 4: {
+			auto vecExtraData = std::make_unique<NiVectorExtraData>();
+			vecExtraData->name.get() = nameStr;
+			extraDataResult = std::move(vecExtraData);
+			break;
+		}
+		case 5: {
+			auto colorExtraData = std::make_unique<NiColorExtraData>();
+			colorExtraData->name.get() = nameStr;
+			extraDataResult = std::move(colorExtraData);
+			break;
+		}
+		case 6: {
+			auto intsExtraData = std::make_unique<NiIntegersExtraData>();
+			intsExtraData->name.get() = nameStr;
+			extraDataResult = std::move(intsExtraData);
+			break;
+		}
+		case 7: {
+			auto strsExtraData = std::make_unique<NiStringsExtraData>();
+			strsExtraData->name.get() = nameStr;
+			extraDataResult = std::move(strsExtraData);
+			break;
+		}
+		case 8: {
+			auto floatsExtraData = std::make_unique<NiFloatsExtraData>();
+			floatsExtraData->name.get() = nameStr;
+			extraDataResult = std::move(floatsExtraData);
+			break;
+		}
+		case 9: {
+			auto distExtraData = std::make_unique<BSDistantObjectLargeRefExtraData>();
+			distExtraData->name.get() = nameStr;
+			extraDataResult = std::move(distExtraData);
 			break;
 		}
 	}
@@ -1506,6 +1611,8 @@ void ShapeProperties::ChangeExtraDataType(NiShape* shape, int id) {
 		extraDataIndices[id] = nif->AssignExtraData(shape, std::move(extraDataResult));
 		os->SetPendingChanges();
 	}
+
+	pgExtraData->Layout();
 }
 
 void ShapeProperties::OnRemoveExtraData(wxCommandEvent& event) {
@@ -1513,15 +1620,11 @@ void ShapeProperties::OnRemoveExtraData(wxCommandEvent& event) {
 }
 
 void ShapeProperties::RemoveExtraData(int id) {
-	wxButton* extraDataBtn = dynamic_cast<wxButton*>(FindWindowById(1000 + id, this));
-	wxChoice* extraDataType = dynamic_cast<wxChoice*>(FindWindowById(2000 + id, this));
-	wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + id, this));
-	wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + id, this));
-
-	extraDataBtn->Destroy();
-	extraDataType->Destroy();
-	extraDataName->Destroy();
-	extraDataValue->Destroy();
+	for (int base : {1000, 2000, 3000, 4000}) {
+		wxWindow* ctrl = FindWindowById(base + id, this);
+		if (ctrl)
+			ctrl->Destroy();
+	}
 
 	int index = extraDataIndices[id];
 	nif->GetHeader().DeleteBlock(index);
@@ -1535,6 +1638,321 @@ void ShapeProperties::RemoveExtraData(int id) {
 	pgExtraData->FitInside();
 	pgExtraData->Layout();
 	os->SetPendingChanges();
+}
+
+wxWindow* ShapeProperties::CreateValueControl(int id, int typeSelection) {
+	wxWindow* ctrl = nullptr;
+
+	switch (typeSelection) {
+		case 0: // NiStringExtraData
+			ctrl = new wxTextCtrl(pgExtraData, 4000 + id);
+			break;
+
+		case 1: // NiIntegerExtraData
+			ctrl = new wxTextCtrl(pgExtraData, 4000 + id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, wxIntegerValidator<unsigned long>());
+			break;
+
+		case 2: // NiFloatExtraData
+			ctrl = new wxTextCtrl(pgExtraData, 4000 + id, wxEmptyString, wxDefaultPosition, wxDefaultSize, 0, wxFloatingPointValidator<float>());
+			break;
+
+		case 3: // NiBooleanExtraData
+		case 9: // BSDistantObjectLargeRefExtraData
+			ctrl = new wxCheckBox(pgExtraData, 4000 + id, "");
+			break;
+
+		case 4: // NiVectorExtraData
+		case 5: // NiColorExtraData
+		case 6: // NiIntegersExtraData
+		case 7: // NiStringsExtraData
+		case 8: // NiFloatsExtraData
+		{
+			auto* btn = new wxButton(pgExtraData, 4000 + id, _("Edit..."));
+			btn->Bind(wxEVT_BUTTON, &ShapeProperties::OnEditExtraData, this);
+			ctrl = btn;
+			break;
+		}
+	}
+
+	return ctrl;
+}
+
+void ShapeProperties::UpdateEditButtonLabel(int id) {
+	auto* btn = dynamic_cast<wxButton*>(FindWindowById(4000 + id, this));
+	if (!btn)
+		return;
+
+	int blockIndex = extraDataIndices[id];
+	auto extraData = nif->GetHeader().GetBlock<NiExtraData>(blockIndex);
+	if (!extraData)
+		return;
+
+	if (extraData->HasType<NiVectorExtraData>()) {
+		auto vecED = static_cast<NiVectorExtraData*>(extraData);
+		btn->SetLabel(wxString::Format(_("Edit... (%.2f, %.2f, %.2f, %.2f)"),
+			vecED->vectorData.x, vecED->vectorData.y, vecED->vectorData.z, vecED->vectorData.w));
+	}
+	else if (extraData->HasType<NiColorExtraData>()) {
+		auto colorED = static_cast<NiColorExtraData*>(extraData);
+		btn->SetLabel(wxString::Format(_("Edit... (%.2f, %.2f, %.2f, %.2f)"),
+			colorED->colorData.r, colorED->colorData.g, colorED->colorData.b, colorED->colorData.a));
+	}
+	else if (extraData->HasType<NiIntegersExtraData>()) {
+		auto intsED = static_cast<NiIntegersExtraData*>(extraData);
+		btn->SetLabel(wxString::Format(_("%s (%u items)"), _("Edit..."), static_cast<unsigned int>(intsED->integersData.size())));
+	}
+	else if (extraData->HasType<NiStringsExtraData>()) {
+		auto strsED = static_cast<NiStringsExtraData*>(extraData);
+		btn->SetLabel(wxString::Format(_("%s (%u items)"), _("Edit..."), static_cast<unsigned int>(strsED->stringsData.size())));
+	}
+	else if (extraData->HasType<NiFloatsExtraData>()) {
+		auto floatsED = static_cast<NiFloatsExtraData*>(extraData);
+		btn->SetLabel(wxString::Format(_("%s (%u items)"), _("Edit..."), static_cast<unsigned int>(floatsED->floatsData.size())));
+	}
+}
+
+void ShapeProperties::OnEditExtraData(wxCommandEvent& event) {
+	int id = event.GetId() - 4000;
+	if (id < 0 || id >= static_cast<int>(extraDataIndices.size()))
+		return;
+
+	int blockIndex = extraDataIndices[id];
+	auto extraData = nif->GetHeader().GetBlock<NiExtraData>(blockIndex);
+	if (!extraData)
+		return;
+
+	if (extraData->HasType<NiVectorExtraData>())
+		ShowVectorEditDialog(blockIndex);
+	else if (extraData->HasType<NiColorExtraData>())
+		ShowColorEditDialog(blockIndex);
+	else if (extraData->HasType<NiIntegersExtraData>() || extraData->HasType<NiStringsExtraData>() || extraData->HasType<NiFloatsExtraData>())
+		ShowListEditDialog(blockIndex);
+
+	UpdateEditButtonLabel(id);
+	pgExtraData->Layout();
+}
+
+void ShapeProperties::ShowVectorEditDialog(int extraDataIndex) {
+	auto vecED = nif->GetHeader().GetBlock<NiVectorExtraData>(extraDataIndex);
+	if (!vecED)
+		return;
+
+	wxDialog dlg(this, wxID_ANY, _("Edit Vector Extra Data"), wxDefaultPosition, wxSize(400, 280), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+	auto* sizer = new wxBoxSizer(wxVERTICAL);
+	auto* grid = new wxFlexGridSizer(2, 5, 5);
+	grid->AddGrowableCol(1, 1);
+
+	auto addField = [&](const wxString& label, float value) -> wxTextCtrl* {
+		grid->Add(new wxStaticText(&dlg, wxID_ANY, label), 0, wxALIGN_CENTER_VERTICAL);
+		auto* tc = new wxTextCtrl(&dlg, wxID_ANY, wxString::Format("%.6f", value));
+		grid->Add(tc, 1, wxEXPAND);
+		return tc;
+	};
+
+	auto* xCtrl = addField("X:", vecED->vectorData.x);
+	auto* yCtrl = addField("Y:", vecED->vectorData.y);
+	auto* zCtrl = addField("Z:", vecED->vectorData.z);
+	auto* wCtrl = addField("W:", vecED->vectorData.w);
+
+	sizer->Add(grid, 1, wxEXPAND | wxALL, 10);
+	sizer->Add(dlg.CreateStdDialogButtonSizer(wxOK | wxCANCEL), 0, wxEXPAND | wxBOTTOM | wxLEFT | wxRIGHT, 10);
+	dlg.SetSizer(sizer);
+
+	if (dlg.ShowModal() == wxID_OK) {
+		double val;
+		if (xCtrl->GetValue().ToDouble(&val)) vecED->vectorData.x = static_cast<float>(val);
+		if (yCtrl->GetValue().ToDouble(&val)) vecED->vectorData.y = static_cast<float>(val);
+		if (zCtrl->GetValue().ToDouble(&val)) vecED->vectorData.z = static_cast<float>(val);
+		if (wCtrl->GetValue().ToDouble(&val)) vecED->vectorData.w = static_cast<float>(val);
+		os->SetPendingChanges();
+	}
+}
+
+void ShapeProperties::ShowColorEditDialog(int extraDataIndex) {
+	auto colorED = nif->GetHeader().GetBlock<NiColorExtraData>(extraDataIndex);
+	if (!colorED)
+		return;
+
+	wxDialog dlg(this, wxID_ANY, _("Edit Color Extra Data"), wxDefaultPosition, wxSize(420, 320), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+	auto* sizer = new wxBoxSizer(wxVERTICAL);
+	auto* grid = new wxFlexGridSizer(2, 5, 5);
+	grid->AddGrowableCol(1, 1);
+
+	auto addField = [&](const wxString& label, float value) -> wxTextCtrl* {
+		grid->Add(new wxStaticText(&dlg, wxID_ANY, label), 0, wxALIGN_CENTER_VERTICAL);
+		auto* tc = new wxTextCtrl(&dlg, wxID_ANY, wxString::Format("%.6f", value));
+		grid->Add(tc, 1, wxEXPAND);
+		return tc;
+	};
+
+	auto* rCtrl = addField("R:", colorED->colorData.r);
+	auto* gCtrl = addField("G:", colorED->colorData.g);
+	auto* bCtrl = addField("B:", colorED->colorData.b);
+	auto* aCtrl = addField("A:", colorED->colorData.a);
+
+	// Color picker row
+	grid->Add(new wxStaticText(&dlg, wxID_ANY, _("Preview:")), 0, wxALIGN_CENTER_VERTICAL);
+	auto clampByte = [](float f) -> unsigned char {
+		return static_cast<unsigned char>(std::clamp(f * 255.0f, 0.0f, 255.0f));
+	};
+	wxColour initColor(clampByte(colorED->colorData.r), clampByte(colorED->colorData.g), clampByte(colorED->colorData.b));
+	auto* picker = new wxColourPickerCtrl(&dlg, wxID_ANY, initColor);
+	grid->Add(picker, 1, wxEXPAND);
+
+	// Sync: picker -> float fields
+	picker->Bind(wxEVT_COLOURPICKER_CHANGED, [rCtrl, gCtrl, bCtrl](wxColourPickerEvent& evt) {
+		wxColour c = evt.GetColour();
+		rCtrl->ChangeValue(wxString::Format("%.6f", c.Red() / 255.0f));
+		gCtrl->ChangeValue(wxString::Format("%.6f", c.Green() / 255.0f));
+		bCtrl->ChangeValue(wxString::Format("%.6f", c.Blue() / 255.0f));
+	});
+
+	// Sync: float fields -> picker
+	auto syncPickerFromFields = [rCtrl, gCtrl, bCtrl, picker, clampByte](wxCommandEvent&) {
+		double r, g, b;
+		if (!rCtrl->GetValue().ToDouble(&r)) return;
+		if (!gCtrl->GetValue().ToDouble(&g)) return;
+		if (!bCtrl->GetValue().ToDouble(&b)) return;
+		picker->SetColour(wxColour(clampByte(static_cast<float>(r)), clampByte(static_cast<float>(g)), clampByte(static_cast<float>(b))));
+	};
+	rCtrl->Bind(wxEVT_TEXT, syncPickerFromFields);
+	gCtrl->Bind(wxEVT_TEXT, syncPickerFromFields);
+	bCtrl->Bind(wxEVT_TEXT, syncPickerFromFields);
+
+	sizer->Add(grid, 1, wxEXPAND | wxALL, 10);
+	sizer->Add(dlg.CreateStdDialogButtonSizer(wxOK | wxCANCEL), 0, wxEXPAND | wxBOTTOM | wxLEFT | wxRIGHT, 10);
+	dlg.SetSizer(sizer);
+
+	if (dlg.ShowModal() == wxID_OK) {
+		double val;
+		if (rCtrl->GetValue().ToDouble(&val)) colorED->colorData.r = static_cast<float>(val);
+		if (gCtrl->GetValue().ToDouble(&val)) colorED->colorData.g = static_cast<float>(val);
+		if (bCtrl->GetValue().ToDouble(&val)) colorED->colorData.b = static_cast<float>(val);
+		if (aCtrl->GetValue().ToDouble(&val)) colorED->colorData.a = static_cast<float>(val);
+		os->SetPendingChanges();
+	}
+}
+
+void ShapeProperties::ShowListEditDialog(int extraDataIndex) {
+	auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataIndex);
+	if (!extraData)
+		return;
+
+	bool isIntegers = extraData->HasType<NiIntegersExtraData>();
+	bool isStrings = extraData->HasType<NiStringsExtraData>();
+	bool isFloats = extraData->HasType<NiFloatsExtraData>();
+
+	wxString title;
+	if (isIntegers) title = _("Edit Integers Extra Data");
+	else if (isStrings) title = _("Edit Strings Extra Data");
+	else if (isFloats) title = _("Edit Floats Extra Data");
+	else return;
+
+	wxDialog dlg(this, wxID_ANY, title, wxDefaultPosition, wxSize(450, 400), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER);
+	auto* sizer = new wxBoxSizer(wxVERTICAL);
+
+	auto* grid = new wxGrid(&dlg, wxID_ANY);
+	grid->CreateGrid(0, 1);
+	grid->EnableEditing(true);
+	grid->SetColLabelValue(0, _("Value"));
+	grid->SetColSize(0, 350);
+	grid->SetColLabelSize(25);
+	grid->SetRowLabelSize(50);
+	grid->EnableDragRowSize(false);
+	grid->EnableDragColSize(true);
+
+	// Populate
+	if (isIntegers) {
+		auto intsED = static_cast<NiIntegersExtraData*>(extraData);
+		for (size_t i = 0; i < intsED->integersData.size(); i++) {
+			grid->AppendRows(1);
+			grid->SetCellValue(static_cast<int>(i), 0, wxString::Format("%u", intsED->integersData[i]));
+		}
+	}
+	else if (isStrings) {
+		auto strsED = static_cast<NiStringsExtraData*>(extraData);
+		for (size_t i = 0; i < strsED->stringsData.size(); i++) {
+			grid->AppendRows(1);
+			grid->SetCellValue(static_cast<int>(i), 0, strsED->stringsData[i].get());
+		}
+	}
+	else if (isFloats) {
+		auto floatsED = static_cast<NiFloatsExtraData*>(extraData);
+		for (size_t i = 0; i < floatsED->floatsData.size(); i++) {
+			grid->AppendRows(1);
+			grid->SetCellValue(static_cast<int>(i), 0, wxString::Format("%.6f", floatsED->floatsData[i]));
+		}
+	}
+
+	sizer->Add(grid, 1, wxEXPAND | wxALL, 10);
+
+	// Button bar for adding/removing rows
+	auto* btnSizer = new wxBoxSizer(wxHORIZONTAL);
+	auto* addRowBtn = new wxButton(&dlg, wxID_ANY, _("Add Row"));
+	auto* removeRowBtn = new wxButton(&dlg, wxID_ANY, _("Remove Row"));
+	btnSizer->Add(addRowBtn, 0, wxRIGHT, 5);
+	btnSizer->Add(removeRowBtn, 0);
+	sizer->Add(btnSizer, 0, wxLEFT | wxRIGHT | wxBOTTOM, 10);
+
+	addRowBtn->Bind(wxEVT_BUTTON, [grid](wxCommandEvent&) {
+		grid->AppendRows(1);
+	});
+
+	removeRowBtn->Bind(wxEVT_BUTTON, [grid](wxCommandEvent&) {
+		wxArrayInt selectedRows = grid->GetSelectedRows();
+		if (selectedRows.IsEmpty() && grid->GetNumberRows() > 0) {
+			grid->DeleteRows(grid->GetNumberRows() - 1, 1);
+		}
+		else {
+			selectedRows.Sort([](int* a, int* b) { return *b - *a; });
+			for (int row : selectedRows)
+				grid->DeleteRows(row, 1);
+		}
+	});
+
+	sizer->Add(dlg.CreateStdDialogButtonSizer(wxOK | wxCANCEL), 0, wxEXPAND | wxBOTTOM | wxLEFT | wxRIGHT, 10);
+	dlg.SetSizer(sizer);
+
+	// Ensure in-place editor is closed before the dialog is dismissed
+	dlg.Bind(wxEVT_CLOSE_WINDOW, [grid](wxCloseEvent& evt) {
+		grid->SaveEditControlValue();
+		evt.Skip();
+	});
+
+	if (dlg.ShowModal() == wxID_OK) {
+
+		if (isIntegers) {
+			auto intsED = static_cast<NiIntegersExtraData*>(extraData);
+			intsED->integersData.clear();
+			for (int i = 0; i < grid->GetNumberRows(); i++) {
+				unsigned long val = 0;
+				grid->GetCellValue(i, 0).ToULong(&val);
+				uint32_t uval = static_cast<uint32_t>(val);
+				intsED->integersData.push_back(uval);
+			}
+		}
+		else if (isStrings) {
+			auto strsED = static_cast<NiStringsExtraData*>(extraData);
+			strsED->stringsData.clear();
+			for (int i = 0; i < grid->GetNumberRows(); i++) {
+				NiString s;
+				s.get() = grid->GetCellValue(i, 0).ToStdString();
+				strsED->stringsData.push_back(s);
+			}
+		}
+		else if (isFloats) {
+			auto floatsED = static_cast<NiFloatsExtraData*>(extraData);
+			floatsED->floatsData.clear();
+			for (int i = 0; i < grid->GetNumberRows(); i++) {
+				double val = 0.0;
+				grid->GetCellValue(i, 0).ToDouble(&val);
+				float fval = static_cast<float>(val);
+				floatsED->floatsData.push_back(fval);
+			}
+		}
+
+		os->SetPendingChanges();
+	}
 }
 
 void ShapeProperties::GetCoordTrans() {
@@ -1848,8 +2266,7 @@ void ShapeProperties::ApplyChanges() {
 
 		for (size_t i = 0; i < extraDataIndices.size(); i++) {
 			wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + i, this));
-			wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
-			if (!extraDataName || !extraDataValue)
+			if (!extraDataName)
 				continue;
 
 			auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataIndices[i]);
@@ -1858,20 +2275,43 @@ void ShapeProperties::ApplyChanges() {
 
 				if (extraData->HasType<NiStringExtraData>()) {
 					auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
-					stringExtraData->stringData.get() = extraDataValue->GetValue().ToStdString();
+					auto* valCtrl = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
+					if (valCtrl)
+						stringExtraData->stringData.get() = valCtrl->GetValue().ToStdString();
 				}
 				else if (extraData->HasType<NiIntegerExtraData>()) {
 					auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
-					unsigned long val = 0;
-					if (extraDataValue->GetValue().ToULong(&val))
-						intExtraData->integerData = val;
+					auto* valCtrl = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
+					if (valCtrl) {
+						unsigned long val = 0;
+						if (valCtrl->GetValue().ToULong(&val))
+							intExtraData->integerData = val;
+					}
 				}
 				else if (extraData->HasType<NiFloatExtraData>()) {
 					auto floatExtraData = static_cast<NiFloatExtraData*>(extraData);
-					double val = 0.0;
-					if (extraDataValue->GetValue().ToDouble(&val))
-						floatExtraData->floatData = (float)val;
+					auto* valCtrl = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
+					if (valCtrl) {
+						double val = 0.0;
+						if (valCtrl->GetValue().ToDouble(&val))
+							floatExtraData->floatData = (float)val;
+					}
 				}
+				else if (extraData->HasType<NiBooleanExtraData>()) {
+					auto boolExtraData = static_cast<NiBooleanExtraData*>(extraData);
+					auto* valCtrl = dynamic_cast<wxCheckBox*>(FindWindowById(4000 + i, this));
+					if (valCtrl)
+						boolExtraData->booleanData = valCtrl->GetValue();
+				}
+				else if (extraData->HasType<BSDistantObjectLargeRefExtraData>()) {
+					auto distExtraData = static_cast<BSDistantObjectLargeRefExtraData*>(extraData);
+					auto* valCtrl = dynamic_cast<wxCheckBox*>(FindWindowById(4000 + i, this));
+					if (valCtrl)
+						distExtraData->largeRef = valCtrl->GetValue();
+				}
+				// NiVectorExtraData, NiColorExtraData, NiIntegersExtraData,
+				// NiStringsExtraData, NiFloatsExtraData are saved directly
+				// from their edit dialogs, so no action needed here.
 			}
 		}
 	}
