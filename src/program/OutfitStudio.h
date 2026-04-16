@@ -898,6 +898,7 @@ public:
 	std::string activeSlider;
 	std::string lastActiveSlider;
 	bool bEditSlider = false;
+	bool autoFrameSelected = false;
 	std::vector<int> triParts;	// the partition index for each triangle, or -1 for none
 	std::vector<int> triSParts; // the segment partition index for each triangle, or -1 for none
 
@@ -1335,6 +1336,8 @@ private:
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);
 	void OnToggleRotationCenter(wxCommandEvent& event);
+	void OnFrameSelected(wxCommandEvent& event);
+	void FrameSelected();
 	void OnShowNodes(wxCommandEvent& event);
 	void OnShowBones(wxCommandEvent& event);
 	void OnShowFloor(wxCommandEvent& event);

@@ -227,6 +227,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnViewRight"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewPerspective"), OutfitStudioFrame::OnTogglePerspective)
 	EVT_MENU(XRCID("btnToggleRotationCenter"), OutfitStudioFrame::OnToggleRotationCenter)
+	EVT_MENU(XRCID("btnFrameSelected"), OutfitStudioFrame::OnFrameSelected)
 
 	EVT_MENU(XRCID("btnShowNodes"), OutfitStudioFrame::OnShowNodes)
 	EVT_MENU(XRCID("btnShowBones"), OutfitStudioFrame::OnShowBones)
@@ -2933,7 +2934,9 @@ void OutfitStudioFrame::UpdateActiveShape() {
 	menuBar->Enable(XRCID("btnSmoothSeamsAngle"), enableSmoothSeamsAngle);
 	menuBar->Check(XRCID("btnLockNormals"), lockNormals);
 
-	if (glView->rotationCenterMode == RotationCenterMode::MeshCenter)
+	if (autoFrameSelected)
+		FrameSelected();
+	else if (glView->rotationCenterMode == RotationCenterMode::MeshCenter)
 		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
 
 	glView->UpdateBones();
@@ -6845,6 +6848,8 @@ void OutfitStudioFrame::OnTogglePerspective(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::OnToggleRotationCenter(wxCommandEvent& WXUNUSED(event)) {
+	autoFrameSelected = false;
+
 	if (glView->rotationCenterMode != RotationCenterMode::Zero) {
 		glView->rotationCenterMode = RotationCenterMode::Zero;
 		glView->gls.camRotOffset.Zero();
@@ -6852,6 +6857,65 @@ void OutfitStudioFrame::OnToggleRotationCenter(wxCommandEvent& WXUNUSED(event)) 
 	else {
 		glView->rotationCenterMode = RotationCenterMode::MeshCenter;
 		glView->gls.camRotOffset = glView->gls.GetActiveCenter();
+	}
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnFrameSelected(wxCommandEvent& WXUNUSED(event)) {
+	autoFrameSelected = !autoFrameSelected;
+	FrameSelected();
+}
+
+void OutfitStudioFrame::FrameSelected() {
+	auto& gls = glView->gls;
+	const auto& meshes = gls.GetActiveMeshes();
+	if (meshes.empty())
+		return;
+
+	nifly::Vector3 bbMin(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+	nifly::Vector3 bbMax(std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest(), std::numeric_limits<float>::lowest());
+	int count = 0;
+
+	for (auto& m : meshes) {
+		for (int i = 0; i < m->nVerts; i++) {
+			if (m->mask && m->mask[i] != 0.0f)
+				continue;
+			nifly::Vector3 v = m->TransformPosMeshToModel(m->verts[i]);
+			bbMin.x = std::min(bbMin.x, v.x);
+			bbMin.y = std::min(bbMin.y, v.y);
+			bbMin.z = std::min(bbMin.z, v.z);
+			bbMax.x = std::max(bbMax.x, v.x);
+			bbMax.y = std::max(bbMax.y, v.y);
+			bbMax.z = std::max(bbMax.z, v.z);
+			count++;
+		}
+	}
+
+	if (count == 0)
+		return;
+
+	nifly::Vector3 center = (bbMin + bbMax) / 2.0f;
+	float extentX = bbMax.x - bbMin.x;
+	float extentY = bbMax.y - bbMin.y;
+	float extentZ = bbMax.z - bbMin.z;
+	float radius = std::max({extentX, extentY, extentZ}) / 2.0f;
+	if (radius < 0.001f)
+		radius = 0.001f;
+
+	gls.camRotOffset = center;
+	glView->rotationCenterMode = RotationCenterMode::MeshCenter;
+
+	gls.camPos.x = -center.x;
+	gls.camPos.y = -center.y;
+
+	if (gls.perspective) {
+		float fovRad = gls.mFov * DEG2RAD;
+		float distance = radius / std::tan(fovRad / 2.0f);
+		gls.camPos.z = -(distance + radius);
+	}
+	else {
+		gls.camPos.z = -(radius * 2.5f);
 	}
 
 	glView->Render();

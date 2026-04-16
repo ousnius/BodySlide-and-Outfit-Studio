@@ -2358,6 +2358,10 @@
 				<label>Toggle Rotation Center\tShift+R</label>
 				<help>Switch between the different rotation center modes.</help>
 			</object>
+			<object class="wxMenuItem" name="btnFrameSelected">
+				<label>Frame Selected\tR</label>
+				<help>Center and zoom the camera to frame the selected shapes, ignoring masked vertices.</help>
+			</object>
 			<object class="wxMenuItem" name="btnShowNodes">
 				<label>Show Nodes\tShift+N</label>
 				<checkable>1</checkable>
