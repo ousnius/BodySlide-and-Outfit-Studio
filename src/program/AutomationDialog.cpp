@@ -420,10 +420,7 @@ void AutomationDialog::PopulateStepList() {
 			targetStr = "(all)";
 		listSteps->SetItem(idx, 2, wxString::FromUTF8(targetStr));
 
-		wxString noteExcerpt = wxString::FromUTF8(steps[i].note);
-		if (noteExcerpt.length() > 60)
-			noteExcerpt = noteExcerpt.Left(57) + "...";
-		listSteps->SetItem(idx, 3, noteExcerpt);
+		listSteps->SetItem(idx, 3, wxString::FromUTF8(steps[i].note));
 	}
 }
 
@@ -440,10 +437,7 @@ void AutomationDialog::RefreshStepRow(int index) {
 		targetStr = "(all)";
 	listSteps->SetItem(index, 2, wxString::FromUTF8(targetStr));
 
-	wxString noteExcerpt = wxString::FromUTF8(step.note);
-	if (noteExcerpt.length() > 60)
-		noteExcerpt = noteExcerpt.Left(57) + "...";
-	listSteps->SetItem(index, 3, noteExcerpt);
+	listSteps->SetItem(index, 3, wxString::FromUTF8(step.note));
 }
 
 void AutomationDialog::ShowStepSettings(bool show) {
