@@ -2842,6 +2842,7 @@ int AutomationDialog::ExecuteStepRenameShape(const AutomationStep& step) {
 
 	wxLogMessage("Automation: Renaming shape '%s' to '%s'...", step.renameOldName, step.renameNewName);
 	project->RenameShape(shape, step.renameNewName);
+	outfitStudio->glView->RenameShape(step.renameOldName, step.renameNewName);
 	return 0;
 }
 
