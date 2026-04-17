@@ -179,6 +179,7 @@ public:
 	void RecalcCustomBoneXFormsFromSkin(const std::string& shape, const std::string& boneName);
 	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
+	void WriteNodesToNif(nifly::NifFile* nif, const std::string& shapeException = "");
 	void WriteToNif(nifly::NifFile* nif, const std::string& shapeException = "");
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName);

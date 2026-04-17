@@ -15,7 +15,7 @@ See the included LICENSE file
 #include <unordered_set>
 #include <vector>
 
-enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh, Mirror, ShapeDelete };
+enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh, Mirror, ShapeDelete, NodeTransform };
 
 struct UndoStateVertexWeight {
 	float startVal, endVal;
@@ -117,4 +117,11 @@ struct UndoStateProject {
 	bool mirrorY = false;
 	bool mirrorZ = false;
 	bool swapBonesX = false;
+
+	// Fields below are only meaningful for UndoType::NodeTransform.  They
+	// record the start/end transform-to-parent of a single bone/node whose
+	// local transform was edited by the user.
+	std::string boneName;
+	nifly::MatTransform nodeStartXformToParent;
+	nifly::MatTransform nodeEndXformToParent;
 };

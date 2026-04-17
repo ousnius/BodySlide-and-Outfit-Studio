@@ -254,15 +254,18 @@ public:
 	void ShowRotationCenter(bool show = true);
 
 	void ShowTransformTool(bool show = true);
+	void UpdateTransformCenter();
 	void UpdateTransformTool();
 
 	void ShowPivot(bool show = true);
 	void UpdatePivot();
 
+	bool GetNodesMode() { return nodesMode; }
 	void ShowNodes(bool show = true);
 	void UpdateNodes();
 	void UpdateNodeColors();
 
+	bool GetBonesMode() { return bonesMode; }
 	void ShowBones(bool show = true);
 	bool IsBonesMode() { return bonesMode; }
 	void UpdateBones();
@@ -786,6 +789,27 @@ private:
 	Mesh* ZScaleMesh = nullptr;
 	Mesh* ScaleUniformMesh = nullptr;
 	nifly::Vector3 xformCenter; // Transform center for transform brushes (rotate, specifically cares about this)
+	nifly::Vector3 xformCenterInitial;
+	// Snapshots of the active bone/node's transforms at the start of a
+	// bones/nodes-mode transform stroke.  Used to apply the accumulated drag
+	// offset as an absolute change from the initial pose each frame, so that
+	// the bone/node does not double-integrate its own movement.
+	nifly::MatTransform xformInitialLocalToParent;
+	nifly::MatTransform xformInitialParentToGlobal;
+	// Active transform kind while editing a bone/node in bones/nodes mode.
+	// 0 = translate, 1 = rotate.
+	int boneXformType = 0;
+	// Initial pick origin (model space) and rotation-plane normal (model
+	// space) for a bones/nodes-mode rotation stroke.
+	nifly::Vector3 boneXformPickStart;
+	nifly::Vector3 boneXformPlaneNormalModel;
+	nifly::Vector3 boneXformAxisModel;
+	float boneXformPlaneDist = 0.0f;
+	// Pose-mode transform: editing the bone's poseTranVec/poseRotVec only.
+	// No NIF changes, no undo state.
+	bool boneXformPoseMode = false;
+	nifly::Vector3 boneXformPoseInitialTran;
+	nifly::Vector3 boneXformPoseInitialRot;
 	float lastCenterDistance = 0.0f;
 
 	Mesh* XPivotMesh = nullptr;
@@ -1640,6 +1664,15 @@ private:
 	void OnImportMask(wxCommandEvent& event);
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
 	void ApplyPose();
+
+public:
+	// Called after a bone/node transform is applied, to re-enable the
+	// transform tool on the bones tab and refresh the bone tree icons so
+	// that any newly-introduced bad-bones state is visible.
+	void UpdateBoneTransformToolEnabled();
+	void RefreshBoneTreeBadBoneIcons();
+
+private:
 	AnimBone* GetPoseBonePtr();
 	void OnPoseBoneChanged(wxCommandEvent& event);
 	void OnPoseValChanged(int cind, float val);

@@ -5627,6 +5627,9 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 	glView->UpdateNodeColors();
 	RefreshGUIWeightColors();
 	CalcAutoXMirrorBone();
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool();
 }
 
 void OutfitStudioFrame::OnBoneActivated(wxTreeEvent& event) {
@@ -6926,6 +6929,7 @@ void OutfitStudioFrame::OnShowNodes(wxCommandEvent& event) {
 	menuBar->Check(event.GetId(), enabled);
 	toolBarV->ToggleTool(event.GetId(), enabled);
 	glView->ShowNodes(enabled);
+	UpdateBoneTransformToolEnabled();
 }
 
 void OutfitStudioFrame::OnShowBones(wxCommandEvent& event) {
@@ -6933,6 +6937,7 @@ void OutfitStudioFrame::OnShowBones(wxCommandEvent& event) {
 	menuBar->Check(event.GetId(), enabled);
 	toolBarV->ToggleTool(event.GetId(), enabled);
 	glView->ShowBones(enabled);
+	UpdateBoneTransformToolEnabled();
 }
 
 void OutfitStudioFrame::OnShowFloor(wxCommandEvent& event) {
@@ -7283,9 +7288,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		UpdateVertexColors();
 	}
 
-	if (id != boneTabButton->GetId() || id != colorsTabButton->GetId()) {
-		glView->SetTransformMode(false);
-
+	if (id != boneTabButton->GetId() && id != colorsTabButton->GetId()) {
 		menuBar->Check(XRCID("btnInflateBrush"), true);
 		menuBar->Enable(XRCID("btnTransform"), true);
 		menuBar->Enable(XRCID("btnPivot"), true);
@@ -7376,7 +7379,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		posePane->Show();
 		bonesFilter->GetParent()->Show();
 
-		glView->SetTransformMode(false);
+		UpdateBoneTransformToolEnabled();
+
 		SelectTool(ToolID::WeightBrush);
 		glView->SetWeightVisible();
 
@@ -7389,7 +7393,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnWeightBrush"), true);
 		menuBar->Enable(XRCID("btnColorBrush"), false);
 		menuBar->Enable(XRCID("btnAlphaBrush"), false);
-		menuBar->Enable(XRCID("btnTransform"), false);
 		menuBar->Enable(XRCID("btnPivot"), false);
 		menuBar->Enable(XRCID("btnVertexEdit"), false);
 		menuBar->Enable(XRCID("btnInflateBrush"), true);
@@ -7408,7 +7411,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnWeightBrush"), true);
 		toolBarH->EnableTool(XRCID("btnColorBrush"), false);
 		toolBarH->EnableTool(XRCID("btnAlphaBrush"), false);
-		toolBarV->EnableTool(XRCID("btnTransform"), false);
 		toolBarV->EnableTool(XRCID("btnPivot"), false);
 		toolBarV->EnableTool(XRCID("btnVertexEdit"), false);
 		toolBarH->EnableTool(XRCID("btnInflateBrush"), true);
@@ -11331,9 +11333,20 @@ void OutfitStudioFrame::OnMaskBoneWeighted(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnCheckBadBones(wxCommandEvent& WXUNUSED(event)) {
-	project->CheckForBadBones();
+	if (!project->CheckForBadBones())
+		return;
+
+	// CheckForBadBones updates AnimBone transforms in-place but leaves the
+	// NIF nodes untouched; push the fixed transforms out so every view
+	// (node overlays, bad-bone indicator, gizmo center) is consistent.
+	if (auto* nif = project->GetWorkNif()) {
+		if (auto* workAnim = project->GetWorkAnim())
+			workAnim->WriteNodesToNif(nif);
+	}
 
 	glView->UpdateBones();
+	glView->UpdateNodes();
+	RefreshBoneTreeBadBoneIcons();
 	HighlightBoneNamesWithWeights();
 	ApplyPose();
 	SetPendingChanges();
@@ -12132,6 +12145,35 @@ void OutfitStudioFrame::ApplyPose() {
 	}
 	glView->UpdateBones();
 	glView->Render();
+}
+
+void OutfitStudioFrame::UpdateBoneTransformToolEnabled() {
+	// The transform tool is generally enabled on every tab except bones (and
+	// colors), but on the bones tab we want it enabled when the user has
+	// turned on bones-mode or nodes-mode, so they can drag bones/nodes.
+	if (!currentTabButton || !boneTabButton || currentTabButton->GetId() != boneTabButton->GetId())
+		return;
+
+	const bool enable = glView->GetBonesMode() || glView->GetNodesMode();
+	menuBar->Enable(XRCID("btnTransform"), enable);
+	toolBarV->EnableTool(XRCID("btnTransform"), enable);
+	if (!enable)
+		glView->SetTransformMode(false);
+}
+
+void OutfitStudioFrame::RefreshBoneTreeBadBoneIcons() {
+	// Iterate the bone list and refresh each item's state so that the
+	// bad-bones icon reflects any inconsistent transforms introduced by the
+	// last edit.
+	if (!outfitBones || !bonesRoot.IsOk())
+		return;
+
+	wxTreeItemIdValue cookie;
+	wxTreeItemId item = outfitBones->GetFirstChild(bonesRoot, cookie);
+	while (item.IsOk()) {
+		UpdateBoneItemState(item, outfitBones->GetItemText(item).ToStdString());
+		item = outfitBones->GetNextChild(bonesRoot, cookie);
+	}
 }
 
 AnimBone* OutfitStudioFrame::GetPoseBonePtr() {
@@ -13212,6 +13254,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		return false;
 
 	tpi.center = xformCenter;
+	xformCenterInitial = xformCenter;
 
 	std::string mname = hitMesh->shapeName;
 	if (mname.find("Move") != std::string::npos) {
@@ -13280,19 +13323,97 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	else
 		return false;
 
-	activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), &translateBrush, *undoHistory.PushState());
+	if (!nodesMode && !bonesMode) {
+		activeStroke = std::make_unique<TweakStroke>(gls.GetActiveMeshes(), &translateBrush, *undoHistory.PushState());
 
-	if (os->bEditSlider) {
-		activeStroke->usp.sliderName = os->activeSlider;
+		if (os->bEditSlider) {
+			activeStroke->usp.sliderName = os->activeSlider;
 
-		float sliderscale = os->project->SliderValue(os->activeSlider);
-		if (sliderscale == 0.0)
-			sliderscale = 1.0;
+			float sliderscale = os->project->SliderValue(os->activeSlider);
+			if (sliderscale == 0.0)
+				sliderscale = 1.0;
 
-		activeStroke->usp.sliderscale = sliderscale;
+			activeStroke->usp.sliderscale = sliderscale;
+		}
+
+		activeStroke->beginStroke(tpi);
 	}
+	else {
+		// Bones/nodes-mode transform: edit the active bone/node directly.
+		// The TweakStroke machinery isn't used here because we don't need
+		// to modify any mesh vertices through a brush -- we change the
+		// bone's local transform and let skinning update the meshes.
+		const std::string activeBone = os->GetActiveBone();
+		if (activeBone.empty())
+			return false;
 
-	activeStroke->beginStroke(tpi);
+		// Only translate and rotate are supported for bones/nodes.
+		if (mname.find("Move") != std::string::npos)
+			boneXformType = 0;
+		else if (mname.find("Rotate") != std::string::npos)
+			boneXformType = 1;
+		else
+			return false;
+
+		boneXformPickStart = tpi.origin;
+		boneXformPlaneNormalModel = tpi.normal;
+		boneXformAxisModel = tpi.view;
+		boneXformPlaneDist = tpi.origin.dot(tpi.normal);
+
+		// Pose mode: edit poseTranVec/poseRotVec only (no NIF writes, no
+		// undo).  Only AnimBones have pose data; plain NIF nodes do not.
+		boneXformPoseMode = false;
+		AnimBone* poseBPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+		if (os->project->bPose && poseBPtr) {
+			boneXformPoseMode = true;
+			xformInitialLocalToParent = poseBPtr->xformToParent;
+			// M = parent_pose_to_global ∘ xformToParent
+			MatTransform parentPoseToGlobal;
+			if (poseBPtr->parent)
+				parentPoseToGlobal = poseBPtr->parent->xformPoseToGlobal;
+			xformInitialParentToGlobal = parentPoseToGlobal.ComposeTransforms(poseBPtr->xformToParent);
+			boneXformPoseInitialTran = poseBPtr->poseTranVec;
+			boneXformPoseInitialRot = poseBPtr->poseRotVec;
+		}
+		else {
+			// Capture the initial transforms of the active bone/node.
+			xformInitialLocalToParent = MatTransform();
+			xformInitialParentToGlobal = MatTransform();
+
+			const AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+			if (bPtr) {
+				xformInitialLocalToParent = bPtr->xformToParent;
+				if (bPtr->parent)
+					xformInitialParentToGlobal = bPtr->parent->xformToGlobal;
+			}
+			else if (auto* nif = os->project->GetWorkNif()) {
+				if (NiNode* node = nif->FindBlockByName<NiNode>(activeBone)) {
+					xformInitialLocalToParent = node->GetTransformToParent();
+					// Compose the transforms of all ancestor nodes to build
+					// parent-to-global.
+					NiNode* p = nif->GetParentNode(node);
+					while (p) {
+						xformInitialParentToGlobal = p->GetTransformToParent().ComposeTransforms(xformInitialParentToGlobal);
+						p = nif->GetParentNode(p);
+					}
+				}
+				else {
+					// No AnimBone and no NiNode -- nothing to edit.
+					return false;
+				}
+			}
+			else
+				return false;
+
+			// Push an undo state.  nodeEndXformToParent is filled in in
+			// EndTransform; until then it equals nodeStartXformToParent.
+			UndoStateProject* usp = undoHistory.PushState();
+			usp->undoType = UndoType::NodeTransform;
+			usp->boneName = activeBone;
+			usp->nodeStartXformToParent = xformInitialLocalToParent;
+			usp->nodeEndXformToParent = xformInitialLocalToParent;
+		}
+	}
 
 	XMoveMesh->bVisible = false;
 	YMoveMesh->bVisible = false;
@@ -13313,35 +13434,179 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 	Vector3 pn;
 	float pd;
 
-	translateBrush.GetWorkingPlane(pn, pd);
-	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
+	if (!nodesMode && !bonesMode) {
+		translateBrush.GetWorkingPlane(pn, pd);
+		gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
+		activeStroke->updateStroke(tpi);
+		ShowTransformTool();
+		return;
+	}
 
-	activeStroke->updateStroke(tpi);
+	// Bones/nodes-mode transform: compute the bone/node's new local transform
+	// directly from the drag and apply it.  Meshes update live via skinning.
+	const std::string activeBone = os->GetActiveBone();
+	if (activeBone.empty()) {
+		ShowTransformTool();
+		return;
+	}
 
+	// Intersect the mouse ray with the pick plane captured in StartTransform.
+	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, boneXformPlaneNormalModel, boneXformPlaneDist);
+
+	if (boneXformPoseMode) {
+		AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+		if (!bPtr) {
+			ShowTransformTool();
+			return;
+		}
+
+		// M = parent_pose_to_global ∘ xformToParent  (captured in
+		// xformInitialParentToGlobal).  Edits go into poseTranVec/poseRotVec
+		// which are applied in the bone's own CS before xformToParent.
+		if (boneXformType == 0) {
+			const float t = (tpi.origin - boneXformPickStart).dot(boneXformAxisModel);
+			const Vector3 axisGlobal = Mesh::TransformDirMeshToNif(boneXformAxisModel);
+			const Vector3 globalOffset = axisGlobal * Mesh::TransformDistMeshToNif(t);
+			const Vector3 localOffset = xformInitialParentToGlobal.InverseTransform().ApplyTransformToDiff(globalOffset);
+			bPtr->poseTranVec = boneXformPoseInitialTran + localOffset;
+		}
+		else if (boneXformType == 1) {
+			const Vector3 a = boneXformPickStart - xformCenterInitial;
+			const Vector3 b = tpi.origin - xformCenterInitial;
+			if (a.length() > EPSILON && b.length() > EPSILON) {
+				const float sinA = a.cross(b).dot(boneXformPlaneNormalModel);
+				const float cosA = a.dot(b);
+				const float angle = std::atan2(sinA, cosA);
+
+				Vector3 axisGlobal = Mesh::TransformDirMeshToNif(boneXformPlaneNormalModel);
+				Vector3 axisLocal = xformInitialParentToGlobal.rotation.Transpose() * axisGlobal;
+				const float axisLen = axisLocal.length();
+				if (axisLen > EPSILON) {
+					axisLocal /= axisLen;
+					const Matrix3 rot = RotVecToMat(axisLocal * angle);
+					const Matrix3 newPoseRot = rot * RotVecToMat(boneXformPoseInitialRot);
+					bPtr->poseRotVec = RotMatToVec(newPoseRot);
+				}
+			}
+		}
+
+		bPtr->UpdatePoseTransform();
+
+		// Live mesh update to show the pose change immediately.
+		if (auto* nif = os->project->GetWorkNif()) {
+			for (auto& s : nif->GetShapes()) {
+				std::vector<Vector3> verts;
+				os->project->GetLiveVerts(s, verts);
+				UpdateMeshVertices(s->name.get(), &verts, true, true, false);
+			}
+		}
+
+		// Keep the pose-sliders GUI in sync with the new values.
+		os->PoseToGUI();
+
+		UpdateBones();
+		UpdateNodes();
+		ShowTransformTool();
+		return;
+	}
+
+	MatTransform newToParent = xformInitialLocalToParent;
+
+	if (boneXformType == 0) {
+		// Translate along the gizmo's axis.  Project the drag vector onto
+		// the axis in model space, convert to nif distance, then map the
+		// resulting global offset into parent space (so scale/rotation of
+		// ancestor nodes is handled correctly).
+		const float t = (tpi.origin - boneXformPickStart).dot(boneXformAxisModel);
+		const Vector3 axisGlobal = Mesh::TransformDirMeshToNif(boneXformAxisModel);
+		const Vector3 globalOffset = axisGlobal * Mesh::TransformDistMeshToNif(t);
+		const Vector3 parentOffset = xformInitialParentToGlobal.InverseTransform().ApplyTransformToDiff(globalOffset);
+		newToParent.translation = xformInitialLocalToParent.translation + parentOffset;
+	}
+	else if (boneXformType == 1) {
+		// Rotate about the gizmo ring's axis.  Angle is the signed angle
+		// between the initial and current pick vectors in the rotation plane.
+		const Vector3 a = boneXformPickStart - xformCenterInitial;
+		const Vector3 b = tpi.origin - xformCenterInitial;
+		if (a.length() > EPSILON && b.length() > EPSILON) {
+			const float sinA = a.cross(b).dot(boneXformPlaneNormalModel);
+			const float cosA = a.dot(b);
+			const float angle = std::atan2(sinA, cosA);
+
+			// Convert axis from model to global, then to parent.
+			Vector3 axisGlobal = Mesh::TransformDirMeshToNif(boneXformPlaneNormalModel);
+			Vector3 axisParent = xformInitialParentToGlobal.rotation.Transpose() * axisGlobal;
+			const float axisLen = axisParent.length();
+			if (axisLen > EPSILON) {
+				axisParent /= axisLen;
+				const Matrix3 rot = RotVecToMat(axisParent * angle);
+				newToParent.rotation = rot * xformInitialLocalToParent.rotation;
+			}
+		}
+	}
+
+	// Apply the new transform to the AnimBone (if any) and to the NIF node.
+	// We deliberately do not recalculate xformSkinToBone: that way the mesh
+	// follows the bone through skinning, the active pose updates live, and
+	// the "check for bad bones" residual correctly flags the new mismatch.
+	auto* nif = os->project->GetWorkNif();
+	AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(activeBone);
+	if (bPtr)
+		bPtr->SetTransformBoneToParent(newToParent);
+	if (nif)
+		nif->SetNodeTransformToParent(activeBone, newToParent);
+
+	// Record the end state on the open undo entry so an in-progress drag is
+	// already undo-able if the stroke is canceled.
+	if (UndoStateProject* usp = undoHistory.GetCurState()) {
+		if (usp->undoType == UndoType::NodeTransform && usp->boneName == activeBone)
+			usp->nodeEndXformToParent = newToParent;
+	}
+
+	// Live mesh update (so skinned vertices follow the bone).
+	if (nif) {
+		for (auto& s : nif->GetShapes()) {
+			std::vector<Vector3> verts;
+			os->project->GetLiveVerts(s, verts);
+			UpdateMeshVertices(s->name.get(), &verts, true, true, false);
+		}
+	}
+
+	UpdateBones();
+	UpdateNodes();
 	ShowTransformTool();
 }
 
 void wxGLPanel::EndTransform() {
-	activeStroke->endStroke();
-	activeStroke = nullptr;
+	if (!nodesMode && !bonesMode) {
+		activeStroke->endStroke();
+		activeStroke = nullptr;
 
-	os->ActiveShapesUpdated(undoHistory.GetCurState());
-	if (!os->bEditSlider) {
-		{
-			UndoStateProject* usp = undoHistory.GetCurState();
-			for (auto& uss : usp->usss) {
-				auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
-				if (shape)
-					os->project->ComputeUndoRestDiffs(shape, uss);
+		os->ActiveShapesUpdated(undoHistory.GetCurState());
+		if (!os->bEditSlider) {
+			{
+				UndoStateProject* usp = undoHistory.GetCurState();
+				for (auto& uss : usp->usss) {
+					auto shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+					if (shape)
+						os->project->ComputeUndoRestDiffs(shape, uss);
+				}
+			}
+
+			for (auto& s : os->project->GetWorkNif()->GetShapes()) {
+				os->UpdateShapeSource(s);
+				os->project->RefreshMorphShape(s);
+			}
+
+			if (os->project->bPose) {
+				for (auto& s : os->project->GetWorkNif()->GetShapes()) {
+					std::vector<Vector3> verts;
+					os->project->GetLiveVerts(s, verts);
+					UpdateMeshVertices(s->name.get(), &verts, true, true, false);
+				}
 			}
 		}
-
-		for (auto& s : os->project->GetWorkNif()->GetShapes()) {
-			os->UpdateShapeSource(s);
-			os->project->RefreshMorphShape(s);
-		}
-
-		if (os->project->bPose) {
+		else if (os->project->bPose) {
 			for (auto& s : os->project->GetWorkNif()->GetShapes()) {
 				std::vector<Vector3> verts;
 				os->project->GetLiveVerts(s, verts);
@@ -13349,12 +13614,20 @@ void wxGLPanel::EndTransform() {
 			}
 		}
 	}
-	else if (os->project->bPose) {
-		for (auto& s : os->project->GetWorkNif()->GetShapes()) {
-			std::vector<Vector3> verts;
-			os->project->GetLiveVerts(s, verts);
-			UpdateMeshVertices(s->name.get(), &verts, true, true, false);
+	else {
+		// Bones/nodes-mode: sync the AnimInfo's bone transforms out to the
+		// NIF, refresh the bone-tree bad-bone icons, and mark the project
+		// as modified.  In pose mode we only edited poseTranVec/poseRotVec
+		// on the AnimBone -- no NIF writes, no undo, no pending changes.
+		if (!boneXformPoseMode) {
+			if (auto* nif = os->project->GetWorkNif()) {
+				if (auto* workAnim = os->project->GetWorkAnim())
+					workAnim->WriteNodesToNif(nif);
+			}
+			os->RefreshBoneTreeBadBoneIcons();
+			os->SetPendingChanges();
 		}
+		boneXformPoseMode = false;
 	}
 
 	ShowTransformTool();
@@ -14328,6 +14601,32 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 
 		os->RefreshGUIFromProj(false);
 	}
+	else if (undoType == UndoType::NodeTransform) {
+		const MatTransform& target = bUndo ? usp->nodeStartXformToParent : usp->nodeEndXformToParent;
+
+		if (AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(usp->boneName))
+			bPtr->SetTransformBoneToParent(target);
+
+		auto* nif = os->project->GetWorkNif();
+		if (nif) {
+			nif->SetNodeTransformToParent(usp->boneName, target);
+			if (auto* workAnim = os->project->GetWorkAnim())
+				workAnim->WriteNodesToNif(nif);
+
+			// Re-skin all shapes so poses and bind-pose display both follow
+			// the restored bone transform.
+			for (auto& s : nif->GetShapes()) {
+				std::vector<Vector3> verts;
+				os->project->GetLiveVerts(s, verts);
+				UpdateMeshVertices(s->name.get(), &verts, true, true, false);
+			}
+		}
+
+		UpdateBones();
+		UpdateNodes();
+		os->RefreshBoneTreeBadBoneIcons();
+		os->SetPendingChanges();
+	}
 
 	if (bRender) {
 		if (transformMode)
@@ -14394,10 +14693,7 @@ void wxGLPanel::ShowRotationCenter(bool show) {
 }
 
 void wxGLPanel::ShowTransformTool(bool show) {
-	if (pivotMode)
-		xformCenter = pivotPosition;
-	else
-		xformCenter = gls.GetActiveCenter();
+	UpdateTransformCenter();
 
 	if (show) {
 		XMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
@@ -14438,6 +14734,14 @@ void wxGLPanel::ShowTransformTool(bool show) {
 			ZPivotMesh->bVisible = false;
 			PivotCenterMesh->bVisible = false;
 		}
+
+		if (nodesMode || bonesMode) {
+			// Only move and rotate gizmos are supported for bones/nodes.
+			XScaleMesh->bVisible = false;
+			YScaleMesh->bVisible = false;
+			ZScaleMesh->bVisible = false;
+			ScaleUniformMesh->bVisible = false;
+		}
 	}
 	else {
 		if (XMoveMesh) {
@@ -14463,6 +14767,35 @@ void wxGLPanel::ShowTransformTool(bool show) {
 
 	UpdateTransformTool();
 	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateTransformCenter() {
+	bool centerSet = false;
+
+	if (pivotMode) {
+		xformCenter = pivotPosition;
+		centerSet = true;
+	}
+	else if (nodesMode || bonesMode) {
+		std::string activeBone = os->GetActiveBone();
+		if (!activeBone.empty()) {
+			auto boneMesh = gls.GetOverlay("BP_" + activeBone);
+			if (boneMesh) {
+				xformCenter = boneMesh->verts[0];
+				centerSet = true;
+			}
+			else {
+				auto nodeMesh = gls.GetOverlay("P_" + activeBone);
+				if (nodeMesh) {
+					xformCenter = nodeMesh->verts[0];
+					centerSet = true;
+				}
+			}
+		}
+	}
+
+	if (!centerSet)
+		xformCenter = gls.GetActiveCenter();
 }
 
 void wxGLPanel::UpdateTransformTool() {
@@ -14569,6 +14902,9 @@ void wxGLPanel::ShowNodes(bool show) {
 	for (auto& m : nodesLines)
 		m->bVisible = show;
 
+	if (transformMode)
+		ShowTransformTool();
+
 	gls.RenderOneFrame();
 }
 
@@ -14638,6 +14974,9 @@ void wxGLPanel::ShowBones(bool show) {
 
 	for (auto& m : bonesLines)
 		m->bVisible = show;
+
+	if (transformMode)
+		ShowTransformTool();
 
 	gls.RenderOneFrame();
 }
