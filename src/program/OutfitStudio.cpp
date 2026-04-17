@@ -7379,15 +7379,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		posePane->Show();
 		bonesFilter->GetParent()->Show();
 
-		if (!glView->GetNodesMode() && !glView->GetBonesMode()) {
-			glView->SetTransformMode(false);
-			menuBar->Enable(XRCID("btnTransform"), false);
-			toolBarV->EnableTool(XRCID("btnTransform"), false);
-		}
-		else {
-			menuBar->Enable(XRCID("btnTransform"), true);
-			toolBarV->EnableTool(XRCID("btnTransform"), true);
-		}
+		UpdateBoneTransformToolEnabled();
 
 		SelectTool(ToolID::WeightBrush);
 		glView->SetWeightVisible();
@@ -13356,11 +13348,6 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 			return false;
 
 		// Only translate and rotate are supported for bones/nodes.
-		if (translateBrush.Type() != TweakBrush::BrushType::Transform) {
-			// not reachable -- translateBrush is always the xform brush
-		}
-		// xformType was set above via SetXFormType; we cached its int value
-		// on the brush, but only 0 (move) and 1 (rotate) are valid here.
 		if (mname.find("Move") != std::string::npos)
 			boneXformType = 0;
 		else if (mname.find("Rotate") != std::string::npos)
@@ -13445,11 +13432,10 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 	Vector3 pn;
-	Vector3 vd;
 	float pd;
 
 	if (!nodesMode && !bonesMode) {
-		translateBrush.GetWorkingPlane(pn, vd, pd);
+		translateBrush.GetWorkingPlane(pn, pd);
 		gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
 		activeStroke->updateStroke(tpi);
 		ShowTransformTool();
@@ -13693,10 +13679,9 @@ bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
 void wxGLPanel::UpdatePivotPosition(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 	Vector3 pn;
-	Vector3 vd;
 	float pd;
 
-	translateBrush.GetWorkingPlane(pn, vd, pd);
+	translateBrush.GetWorkingPlane(pn, pd);
 	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
 
 	activeStroke->updateStroke(tpi);

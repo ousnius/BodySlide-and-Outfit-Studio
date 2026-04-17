@@ -361,7 +361,7 @@ public:
 	TB_XForm();
 	virtual ~TB_XForm();
 
-	void GetWorkingPlane(nifly::Vector3& outPlaneNormal, nifly::Vector3& outViewDir, float& outPlaneDist);
+	void GetWorkingPlane(nifly::Vector3& outPlaneNormal, float& outPlaneDist);
 	int CachedPointIndex(Mesh*, int query) { return query; }
 	void SetXFormType(int type) { xformType = type; }
 
