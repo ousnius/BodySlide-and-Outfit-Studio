@@ -5624,6 +5624,18 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 		itemTree = outfitBones->GetNextChild(bonesRoot, cookie);
 	}
 
+	// Sync with pose panel choice if the active bone exists there
+	if (!activeBone.empty() && cPoseBone) {
+		wxString activeBoneStr = wxString::FromUTF8(activeBone);
+		for (unsigned int i = 0; i < cPoseBone->GetCount(); ++i) {
+			if (cPoseBone->GetString(i) == activeBoneStr) {
+				cPoseBone->SetSelection(i);
+				PoseToGUI();  // Update sliders and text values for the selected bone
+				break;
+			}
+		}
+	}
+
 	glView->UpdateNodeColors();
 	RefreshGUIWeightColors();
 	CalcAutoXMirrorBone();
