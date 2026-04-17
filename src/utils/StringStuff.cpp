@@ -23,6 +23,14 @@ bool StringsEqualInsens(const char* a, const char* b) {
 	}
 }
 
+bool StringStartsWith(std::string_view s, std::string_view prefix) {
+	return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
+}
+
+bool StringEndsWith(std::string_view s, std::string_view suffix) {
+	return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
 std::string ToOSSlashes(const std::string& s) {
 	std::string d(s);
 	size_t len = d.length();

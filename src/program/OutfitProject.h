@@ -10,6 +10,7 @@ See the included LICENSE file
 #include "../components/Mesh.h"
 #include "OutfitStudio.h"
 
+#include <optional>
 #include <wx/arrstr.h>
 #include <wx/filename.h>
 
@@ -21,10 +22,12 @@ struct ConformOptions {
 	bool axisX = true;
 	bool axisY = true;
 	bool axisZ = true;
+	std::vector<std::string> sliderNames; // If empty, conform all non-zap/non-UV sliders
 };
 
 class OutfitStudioFrame;
 struct UndoStateShape;
+struct UndoStateShapeDelete;
 
 struct MergeCheckErrors {
 	bool canMerge = false;
@@ -105,6 +108,8 @@ void AddWeldedToVertexList(const Mesh::WeldVertsType& welcVerts, std::vector<boo
 class OutfitProject {
 	OutfitStudioFrame* owner = nullptr;
 
+	void UpdateProgress(int val, const wxString& msg = "");
+
 	nifly::NifFile workNif;
 	AnimInfo workAnim;
 	nifly::NiShape* baseShape = nullptr;
@@ -112,8 +117,12 @@ class OutfitProject {
 	// All cloth data blocks that have been loaded during work
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
 
-	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path) const;
-	void ValidateNIF(nifly::NifFile& nif);
+	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath = std::string()) const;
+	void ValidateNIF(nifly::NifFile& nif, const std::string& nifFilePath = std::string());
+
+	// Applies the inverse of the blended pose transform to a NIF-space diff
+	// vector for a single vertex, converting it from posed space to rest space.
+	nifly::Vector3 InversePoseDiff(int vertIndex, const nifly::Vector3& diffNif, AnimSkin& animSkin, const nifly::MatTransform& globalToSkin);
 
 public:
 	std::string outfitName = "New Outfit";
@@ -140,6 +149,11 @@ public:
 	bool bPreventMorphFile = false;
 	bool bKeepZappedShapes = false;
 	bool bPose = false;
+
+	// Reference source info (remembered when reference is loaded from an OSP)
+	std::string mRefProjectFile;    // OSP file path relative to project dir
+	std::string mRefProjectName;    // Slider set name in the OSP file
+	std::string mRefShapeName;      // Shape name in the project
 
 	// Returns a string error message or empty string on success.
 	std::string Save(const wxFileName& sliderSetFile,
@@ -211,7 +225,9 @@ public:
 	bool SetSliderFromNIF(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	void SetSliderFromBSD(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	bool SetSliderFromOBJ(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
+#ifdef USE_FBXSDK
 	bool SetSliderFromFBX(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
+#endif
 	void SetSliderFromDiff(const std::string& sliderName, nifly::NiShape* shape, const TargetDataDiffs& diff);
 	int SaveSliderNIF(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
 	int SaveSliderBSD(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName);
@@ -251,6 +267,14 @@ public:
 	void RefreshMorphShape(nifly::NiShape* shape);
 	void UpdateShapeFromMesh(nifly::NiShape* shape, const Mesh* m);
 	void UpdateMorphResult(nifly::NiShape* shape, const std::string& sliderName, const TargetDataDiffs& vertUpdates);
+
+	// Converts per-vertex diffs from posed mesh space to rest mesh space.
+	// Only has effect when bPose is true; otherwise diffs are unchanged.
+	void UndoPoseDiffs(nifly::NiShape* shape, std::unordered_map<uint16_t, nifly::Vector3>& diffs);
+
+	// Computes and stores rest-space NIF diffs in the undo state for
+	// pose-independent undo/redo. Only has effect when bPose is true.
+	void ComputeUndoRestDiffs(nifly::NiShape* shape, UndoStateShape& uss);
 	void ScaleMorphResult(nifly::NiShape* shape, const std::string& sliderName, float scaleValue);
 	void MoveVertex(nifly::NiShape* shape, const nifly::Vector3& pos, const int& id);
 	void OffsetShape(nifly::NiShape* shape, const nifly::Vector3& xlate, std::unordered_map<uint16_t, float>* mask = nullptr);
@@ -290,13 +314,19 @@ public:
 	void DeleteSlider(const std::string& sliderName);
 
 	int LoadSkeletonReference(const std::string& skeletonFileName);
-	int LoadReferenceTemplate(
-		const std::string& sourceFile, const std::string& set, const std::string& shape, bool loadAll = false, bool mergeSliders = false, bool mergeZaps = false);
+	int LoadReferenceTemplate(const std::string& sourceFile,
+							  const std::string& set,
+							  const std::string& shape,
+							  bool loadAll = false,
+							  bool mergeSliders = false,
+							  bool mergeZaps = false,
+							  bool appendNewSliders = true);
 	int LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders = false, bool mergeZaps = false);
-	int LoadReference(const std::string& fileName, const std::string& setName, const std::string& shapeName = "", bool mergeSliders = false, bool mergeZaps = false);
+	int LoadReference(
+		const std::string& fileName, const std::string& setName, const std::string& shapeName = "", bool mergeSliders = false, bool mergeZaps = false, bool appendNewSliders = true);
 
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
-	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true);
+	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true, const bool appendNewSliders = true);
 
 	TargetDataDiffs* GetDiffSet(SliderData& silderData, nifly::NiShape* shape);
 
@@ -307,7 +337,7 @@ public:
 
 	bool PrepareCollapseVertex(nifly::NiShape* shape, UndoStateShape& uss, const std::vector<uint16_t>& indices);
 	bool PrepareFlipEdge(nifly::NiShape* shape, UndoStateShape& uss, const nifly::Edge& edge);
-	bool PrepareRefineMesh(nifly::NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset);
+	bool PrepareRefineMesh(nifly::NiShape* shape, UndoStateShape& uss, std::vector<bool>& pincs, const Mesh::WeldVertsType& weldVerts, const bool noCurveOffset, std::vector<nifly::Edge>* badEdges = nullptr);
 
 	bool IsVertexOnBoundary(nifly::NiShape* shape, int vi);
 	bool PointsHaveDifferingWeightsOrDiffs(nifly::NiShape* shape1, int p1, nifly::NiShape* shape2, int p2);
@@ -319,6 +349,8 @@ public:
 
 	nifly::NiShape* DuplicateShape(nifly::NiShape* sourceShape, const std::string& destShapeName);
 	void DeleteShape(nifly::NiShape* shape);
+	void CaptureShapeDeleteState(nifly::NiShape* shape, UndoStateShapeDelete& state);
+	nifly::NiShape* RestoreDeletedShape(UndoStateShapeDelete& state);
 
 	void DeleteBone(const std::string& boneName) {
 		if (workNif.IsValid()) {
@@ -347,7 +379,7 @@ public:
 	void RemoveSkinning(nifly::NiShape* s);
 	void RemoveSkinning();
 
-	bool CheckForBadBones();
+	bool CheckForBadBones(bool interactive = true);
 	bool ShapeHasBadBones(nifly::NiShape* s);
 
 	void GetAllPoseTransforms(nifly::NiShape* s, std::vector<nifly::MatTransform>& ts);
@@ -356,8 +388,17 @@ public:
 	void ApplyPoseTransformsToAllShapeGeometry(UndoStateProject& usp);
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
-	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false);
-	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
+	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false, std::optional<bool> useInternalGeom = std::nullopt);
+	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes, std::optional<bool> useInternalGeom = std::nullopt);
+
+	// Force internal geometry (flag 0x200) on all BSGeometry shapes in a Starfield NIF.
+	void ForceInternalGeometry(nifly::NifFile& nif);
+
+	// Prompt the user to choose internal or external geometry for Starfield NIF export.
+	void ConfigureInternalGeometry(nifly::NifFile& nif, const std::string& nifFileName, std::optional<bool> useInternalGeom = std::nullopt);
+
+	// Save external .mesh files for Starfield BSGeometry shapes alongside the NIF.
+	bool SaveExternalMeshes(nifly::NifFile& nif, const std::string& nifFileName);
 
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
 	int ExportOBJ(const std::string& fileName,
@@ -366,6 +407,8 @@ public:
 				  const nifly::Vector3& scale = nifly::Vector3(1.0f, 1.0f, 1.0f),
 				  const nifly::Vector3& offset = nifly::Vector3());
 
+#ifdef USE_FBXSDK
 	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", nifly::NiShape* mergeShape = nullptr);
 	int ExportFBX(const std::string& fileName, const std::vector<nifly::NiShape*>& shapes, bool transToGlobal);
+#endif
 };

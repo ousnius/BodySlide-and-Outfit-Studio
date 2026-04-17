@@ -12,7 +12,7 @@ See the included LICENSE file
 
 #include <glm/gtx/gradient_paint.hpp>
 
-GLOffScreenBuffer::GLOffScreenBuffer(GLSurface* gls, int width, int height, int count, const std::vector<GLuint>& texIds) {
+GLOffScreenBuffer::GLOffScreenBuffer(GLSurface* gls, int width, int height, int count, const std::vector<GLuint>& texIds, int samples) {
 	// for naming textures in CreateTextures
 	static int globcount = 0;
 	globcount++;
@@ -21,6 +21,7 @@ GLOffScreenBuffer::GLOffScreenBuffer(GLSurface* gls, int width, int height, int 
 	glsRef = gls;
 	w = width;
 	h = height;
+	msaaSamples = (samples > 0 && glRenderbufferStorageMultisample && glBlitFramebuffer) ? samples : 0;
 
 	// current active buffer index starts at -1 to detect if it's been set yet or not
 	current = -1;
@@ -55,6 +56,23 @@ GLOffScreenBuffer::GLOffScreenBuffer(GLSurface* gls, int width, int height, int 
 		glBindFramebuffer(GL_FRAMEBUFFER, pmfbo[i]);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pmtex[i], 0);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, mrbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
+	// Create MSAA resources if requested
+	if (msaaSamples > 0) {
+		glGenFramebuffers(1, &msaaFBO);
+		glGenRenderbuffers(1, &msaaColorRBO);
+		glGenRenderbuffers(1, &msaaDepthRBO);
+
+		glBindRenderbuffer(GL_RENDERBUFFER, msaaColorRBO);
+		glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, GL_RGBA8, w, h);
+		glBindRenderbuffer(GL_RENDERBUFFER, msaaDepthRBO);
+		glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSamples, GL_DEPTH_COMPONENT24, w, h);
+
+		glBindFramebuffer(GL_FRAMEBUFFER, msaaFBO);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, msaaColorRBO);
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, msaaDepthRBO);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 }
@@ -98,7 +116,14 @@ void GLOffScreenBuffer::Start() {
 	if (current < 0)
 		NextBuffer();
 
-	glBindFramebuffer(GL_FRAMEBUFFER, pmfbo[current]);
+	if (msaaSamples > 0) {
+		glBindFramebuffer(GL_FRAMEBUFFER, msaaFBO);
+		glEnable(GL_MULTISAMPLE);
+	}
+	else {
+		glBindFramebuffer(GL_FRAMEBUFFER, pmfbo[current]);
+	}
+
 	isBound = true;
 	glClearDepth(1.0f);
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -173,7 +198,19 @@ void GLOffScreenBuffer::SaveTexture(const std::string& filename) {
 	delete[] pixels;
 }
 
+void GLOffScreenBuffer::Resolve() {
+	if (msaaSamples > 0 && current >= 0) {
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, msaaFBO);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pmfbo[current]);
+		glBlitFramebuffer(0, 0, w, h, 0, 0, w, h, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+		glBindFramebuffer(GL_FRAMEBUFFER, pmfbo[current]);
+	}
+}
+
 void GLOffScreenBuffer::End() {
+	if (msaaSamples > 0)
+		glDisable(GL_MULTISAMPLE);
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	isBound = false;
 }
@@ -181,6 +218,12 @@ void GLOffScreenBuffer::End() {
 GLOffScreenBuffer::~GLOffScreenBuffer() {
 	if (isBound)
 		End();
+
+	if (msaaSamples > 0) {
+		glDeleteRenderbuffers(1, &msaaColorRBO);
+		glDeleteRenderbuffers(1, &msaaDepthRBO);
+		glDeleteFramebuffers(1, &msaaFBO);
+	}
 
 	deleteTextures();
 	glDeleteRenderbuffers(1, &mrbo);

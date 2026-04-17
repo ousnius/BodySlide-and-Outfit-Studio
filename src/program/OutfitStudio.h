@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/TweakBrush.h"
 #include "../components/UndoHistory.h"
 #include "../render/GLSurface.h"
+#include "../ui/WeightCopyDialog.h"
 #include "../ui/wxSliderPanel.h"
 #include "../ui/wxStateButton.h"
 #include "../utils/ConfigurationManager.h"
@@ -32,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../FSEngine/FSEngine.h"
 #include "../FSEngine/FSManager.h"
 
+#include <optional>
 #include <wx/clrpicker.h>
 #include <wx/cmdline.h>
 #include <wx/collpane.h>
@@ -46,6 +48,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/treectrl.h>
 #include <wx/wizard.h>
 #include <wx/xrc/xmlres.h>
+#include <wx/snglinst.h>
+#include <wx/ipc.h>
 #ifdef _WINDOWS
 #include <wx/msw/registry.h>
 #endif
@@ -65,7 +69,7 @@ public:
 };
 
 struct ShapeItemState {
-	nifly::NiShape* shape = nullptr;
+	std::string shapeName;
 	int state = 0;
 	bool selected = false;
 };
@@ -109,13 +113,7 @@ public:
 	}
 };
 
-struct WeightCopyOptions {
-	float proximityRadius = 0.0f;
-	int maxResults = 0;
-	bool showSkinTransOption = false;
-	bool doSkinTransCopy = false;
-	bool doTransformGeo = false;
-};
+
 
 enum class ToolID {
 	Any = -1,
@@ -140,6 +138,7 @@ enum class ToolID {
 
 
 struct ConformOptions;
+struct ClippingFixOptions;
 class OutfitStudioFrame;
 class EditUV;
 struct SymmetricVertices;
@@ -268,6 +267,7 @@ public:
 
 	bool GetBonesMode() { return bonesMode; }
 	void ShowBones(bool show = true);
+	bool IsBonesMode() { return bonesMode; }
 	void UpdateBones();
 
 	void ShowFloor(bool show = true);
@@ -597,8 +597,6 @@ public:
 		}
 	}
 
-	void ClearOverlays() { gls.ClearOverlays(); }
-
 	void Cleanup() {
 		XMoveMesh = nullptr;
 		YMoveMesh = nullptr;
@@ -648,6 +646,11 @@ public:
 
 	void SetFieldOfView(const int fieldOfView) {
 		gls.SetFieldOfView(fieldOfView);
+		gls.RenderOneFrame();
+	}
+
+	void SetDepthClip(const float zNear, const float zFar) {
+		gls.SetDepthClip(zNear, zFar);
 		gls.RenderOneFrame();
 	}
 
@@ -807,6 +810,7 @@ private:
 
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
+												   {wxCMD_LINE_OPTION, "single", "single-instance", "Force single instance behavior (yes/no)", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE},
 												   wxCMD_LINE_DESC_END};
 
@@ -847,6 +851,18 @@ private:
 
 	wxArrayString cmdFiles;
 	wxString cmdProject;
+	int cmdForceSingleInstanceBehavior = -1;  // -1 = not set, 0 = no (force new), 1 = yes (force existing)
+
+	// DDE uses a service name, TCP uses a port number
+#if defined(__WINDOWS__) && wxUSE_DDE_FOR_IPC
+	const wxString OS_IPC_SERVICE = "OutfitStudioIPC";
+#else
+	const wxString OS_IPC_SERVICE = "54318";
+#endif
+
+	// Single instance checker and IPC server
+	wxSingleInstanceChecker* singleChecker = nullptr;
+	wxServer* ipcServer = nullptr;
 };
 
 struct ProjectHistoryEntry {
@@ -875,6 +891,10 @@ public:
 	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
 	~OutfitStudioFrame() {}
 
+	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
+
+	const std::vector<RefTemplate>& GetRefTemplates() const { return refTemplates; }
+
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;
 	OutfitProject* project = nullptr;
@@ -882,6 +902,7 @@ public:
 	std::string activeSlider;
 	std::string lastActiveSlider;
 	bool bEditSlider = false;
+	bool autoFrameSelected = false;
 	std::vector<int> triParts;	// the partition index for each triangle, or -1 for none
 	std::vector<int> triSParts; // the segment partition index for each triangle, or -1 for none
 
@@ -936,9 +957,12 @@ public:
 	wxStateButton* lightsTabButton = nullptr;
 	wxButton* brushSettings = nullptr;
 	wxSlider* fovSlider = nullptr;
+	wxCheckBox* cbDepthClip = nullptr;
 	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
 	wxCollapsiblePane* masksPane = nullptr;
 	wxCollapsiblePane* posePane = nullptr;
+	wxCollapsiblePane* notesPane = nullptr;
+	wxTextCtrl* projectNotes = nullptr;
 
 	wxTreeItemId shapesRoot;
 	wxTreeItemId outfitRoot;
@@ -957,6 +981,9 @@ public:
 	bool SaveProjectAs();
 	bool LoadProject(const std::string& fileName, const std::string& projectName = "", bool clearProject = true);
 	void CreateSetSliders();
+
+	void UpdateReferenceTemplates();
+	void ResetProject();
 
 	std::string NewSlider(const std::string& suggestedName = "", bool skipPrompt = false);
 
@@ -980,15 +1007,17 @@ public:
 	void HighlightSliderData();
 	void HighlightBoneNamesWithWeights();
 	void RefreshGUIWeightColors();
+	void PoseToGUI();
 	void GetNormalizeBones(std::vector<std::string>* normBones, std::vector<std::string>* notNormBones);
 	std::vector<std::string> GetSelectedBones();
 	void CalcAutoXMirrorBone();
 	std::string GetXMirrorBone();
 
-	void ShowSegment(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
+	void ShowSegment(const wxTreeItemId& item = nullptr);
 	void UpdateSegmentNames();
+	bool PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const nifly::Vector3& hitPointModel, float radiusModel);
 
-	void ShowPartition(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
+	void ShowPartition(const wxTreeItemId& item = nullptr);
 	void UpdatePartitionNames();
 
 	void SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp);
@@ -1000,7 +1029,7 @@ public:
 	void UpdateAnimationGUI();
 	void UpdateBoneItemState(const wxTreeItemId& item, const std::string& boneName);
 	void UpdateBoneTree();
-	void RefreshGUIFromProj(bool render = true);
+	void RefreshGUIFromProj(bool render = true, bool stashMasks = true);
 	void MeshesFromProj(const bool reloadTextures = false);
 	void MeshFromProj(nifly::NiShape* shape, const bool reloadTextures = false);
 
@@ -1157,17 +1186,16 @@ private:
 	void ScrollWindowIntoView(wxScrolledWindow* scrolled, wxWindow* window);
 	void HighlightSlider(const std::string& name);
 
-	void UpdateReferenceTemplates();
-
 	void ClearProject();
 	void RenameProject(const std::string& projectName);
 
 	void UpdateMeshFromSet(nifly::NiShape* shape);
 	void FillVertexColors();
 
+	bool ShapeSelectionCheck();
+
 	bool HasUnweightedCheck();
 	void CalcCopySkinTransOption(WeightCopyOptions& options);
-	bool ShowWeightCopy(WeightCopyOptions& options, bool silent = false);
 	void ReselectBone();
 
 	int CopySegPartForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
@@ -1198,6 +1226,7 @@ private:
 	void OnAddProject(wxCommandEvent& event);
 	void OnLoadReference(wxCommandEvent& event);
 	void OnConvertBodyReference(wxCommandEvent& event);
+	void OnRunAutomation(wxCommandEvent& event);
 	void OnLoadOutfit(wxCommandEvent& event);
 	void OnUnloadProject(wxCommandEvent& event);
 
@@ -1211,6 +1240,8 @@ private:
 	void OnExportNIF(wxCommandEvent& event);
 	void OnExportNIFWithRef(wxCommandEvent& event);
 	void OnExportShapeNIF(wxCommandEvent& event);
+
+	std::optional<bool> PromptStarfieldGeometryMode();
 
 	void OnImportOBJ(wxCommandEvent& event);
 	void OnExportOBJ(wxCommandEvent& event);
@@ -1245,6 +1276,7 @@ private:
 	void OnColorClampMaxValueSlider(wxCommandEvent& event);
 	void OnColorClampMaxValueChanged(wxCommandEvent& event);
 	void OnSwapBrush(wxCommandEvent& event);
+	void OnMaskVertexColor(wxCommandEvent& event);
 	void OnFixedWeight(wxCommandEvent& event);
 	void OnCBNormalizeWeights(wxCommandEvent& event);
 	void OnSelectSliders(wxCommandEvent& event);
@@ -1308,11 +1340,14 @@ private:
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);
 	void OnToggleRotationCenter(wxCommandEvent& event);
+	void OnFrameSelected(wxCommandEvent& event);
+	void FrameSelected();
 	void OnShowNodes(wxCommandEvent& event);
 	void OnShowBones(wxCommandEvent& event);
 	void OnShowFloor(wxCommandEvent& event);
 	void OnBrushSettings(wxCommandEvent& event);
 	void OnFieldOfViewSlider(wxCommandEvent& event);
+	void OnDepthClip(wxCommandEvent& event);
 	void OnUpdateLights(wxCommandEvent& event);
 	void OnResetLights(wxCommandEvent& event);
 
@@ -1348,6 +1383,16 @@ private:
 
 	void ShowSliderProperties(const std::string& sliderName);
 	void OnSliderProperties(wxCommandEvent& event);
+	void OnSliderFixClipping(wxCommandEvent& event);
+
+	bool ShowClippingFixStrength(float& outStrength);
+	void FixClippingForShape(const std::vector<nifly::Vector3>& bodyVerts,
+							const std::vector<nifly::Triangle>& bodyTris,
+							nifly::NiShape* shape,
+							const std::vector<nifly::Vector3>& outfitVerts,
+							const ClippingFixOptions& options,
+							UndoStateProject* usp,
+							const std::unordered_set<uint16_t>* allowedVerts = nullptr);
 
 	void OnInvertUV(wxCommandEvent& event);
 	void OnMirrorShape(wxCommandEvent& event);
@@ -1358,6 +1403,7 @@ private:
 	void OnScaleShape(wxCommandEvent& event);
 	void OnRotateShape(wxCommandEvent& event);
 	void OnInflateShape(wxCommandEvent& event);
+	void OnFixClippingShape(wxCommandEvent& event);
 
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetReference(wxCommandEvent& event);
@@ -1378,7 +1424,6 @@ private:
 	void GetBoneDlgData(wxDialog& dlg, nifly::MatTransform& xform, std::string& parentBone, int& addCount);
 	void OnEditBone(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
-	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnCheckBadBones(wxCommandEvent& event);
@@ -1556,6 +1601,7 @@ private:
 		if (!activeItem)
 			return;
 
+		glView->gls.DeleteOverlay("refineErrorEdges");
 		glView->ClearMask();
 
 		if (glView->GetTransformMode())
@@ -1593,12 +1639,12 @@ private:
 
 	void OnSelectMask(wxCommandEvent& event);
 	void OnSaveMask(wxCommandEvent& event);
-	void OnSaveAsMask(wxCommandEvent& event);
 	void OnDeleteMask(wxCommandEvent& event);
+	void OnExportMask(wxCommandEvent& event);
+	void OnImportMask(wxCommandEvent& event);
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
 	void ApplyPose();
 	AnimBone* GetPoseBonePtr();
-	void PoseToGUI();
 	void OnPoseBoneChanged(wxCommandEvent& event);
 	void OnPoseValChanged(int cind, float val);
 	void OnAnyPoseSlider(wxScrollEvent& e, wxTextCtrl* t, int cind);

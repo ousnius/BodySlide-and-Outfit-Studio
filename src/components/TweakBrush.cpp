@@ -290,24 +290,42 @@ float ParabolaFit(Mesh* m, int pti, int p1, int p2, const ValueFuncType& ValueFu
 	// from p1 to pti.
 	int op1 = m->FindOpposingPoint(p1, pti, maxDotForDeriv);
 	float deriv1 = 0.0f;
-	if (op1 == -1)
-		deriv1 = (tvw - v1w) / (tv - v1).length();
+	if (op1 == -1) {
+		float len1 = (tv - v1).length();
+		if (len1 > 1e-6f)
+			deriv1 = (tvw - v1w) / len1;
+		else
+			deriv1 = 0.0f;
+	}
 	else {
 		const Vector3& ov1 = m->verts[op1];
 		float ov1w = ValueFunc(op1);
-		deriv1 = (tvw - ov1w) / (tv - ov1).length();
+		float len1 = (tv - ov1).length();
+		if (len1 > 1e-6f)
+			deriv1 = (tvw - ov1w) / len1;
+		else
+			deriv1 = 0.0f;
 	}
 
 	// Find derivative of weight at p2 in roughly the direction
 	// from p2 to pti.
 	int op2 = m->FindOpposingPoint(p2, pti, maxDotForDeriv);
 	float deriv2 = 0.0f;
-	if (op2 == -1)
-		deriv2 = (tvw - v2w) / (tv - v2).length();
+	if (op2 == -1) {
+		float len2 = (tv - v2).length();
+		if (len2 > 1e-6f)
+			deriv2 = (tvw - v2w) / len2;
+		else
+			deriv2 = 0.0f;
+	}
 	else {
 		const Vector3& ov2 = m->verts[op2];
 		float ov2w = ValueFunc(op2);
-		deriv2 = (tvw - ov2w) / (tv - ov2).length();
+		float len2 = (tv - ov2).length();
+		if (len2 > 1e-6f)
+			deriv2 = (tvw - ov2w) / len2;
+		else
+			deriv2 = 0.0f;
 	}
 
 	// Second derivative of weight at pti in roughly the direction
@@ -316,7 +334,10 @@ float ParabolaFit(Mesh* m, int pti, int p1, int p2, const ValueFuncType& ValueFu
 
 	// Calculate t, which is where pti is along the segment from
 	// p1 to p2.
-	float t = (tv - v1).dot(v2 - v1) / (v2 - v1).length2();
+	float denom = (v2 - v1).length2();
+	float t = 0.5f;
+	if (denom > 1e-12f)
+		t = (tv - v1).dot(v2 - v1) / denom;
 
 	// Parabola fit of weight at pti.
 	return v1w + (v2w - v1w) * t - 0.5f * secderiv * t * (1 - t);
@@ -1560,7 +1581,7 @@ void TB_SmoothWeight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* p
 
 		adjFlag[0] = b0falloff > 0.0;
 
-		float str = wv[i] - uss.boneWeights[0].weights[i].endVal;
+        float str = wv[i] - uss.boneWeights[0].weights[i].endVal;
 		float maskF = 1.0f - m->mask[i];
 
 		uss.boneWeights[0].weights[i].endVal += str * maskF * b0falloff;
@@ -1575,7 +1596,7 @@ void TB_SmoothWeight::brushAction(Mesh* m, TweakPickInfo& pickInfo, const int* p
 				b1falloff = falloff;
 
 			adjFlag[1] = b1falloff > 0.0;
-			str = mwv[i] - uss.boneWeights[1].weights[i].endVal;
+            str = mwv[i] - uss.boneWeights[1].weights[i].endVal;
 			uss.boneWeights[1].weights[i].endVal += str * maskF * b1falloff;
 
 			if (!bNormalizeWeights)

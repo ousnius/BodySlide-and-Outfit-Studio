@@ -754,6 +754,9 @@
     <ClInclude Include="src\program\NormalsGenDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\PreviewPanel.h">
+      <Filter>UI</Filter>
+    </ClInclude>
     <ClInclude Include="src\ui\wxNormalsGenDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -1672,6 +1675,9 @@
     <ClInclude Include="src\components\BuildSelection.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\ClippingFixer.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\UndoState.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -1839,6 +1845,9 @@
     <ClCompile Include="src\program\NormalsGenDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui\PreviewPanel.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
     <ClCompile Include="src\ui\wxNormalsGenDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -1867,6 +1876,9 @@
       <Filter>Libraries\LZ4F</Filter>
     </ClCompile>
     <ClCompile Include="src\components\BuildSelection.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\ClippingFixer.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="lib\nifly\src\Animation.cpp">

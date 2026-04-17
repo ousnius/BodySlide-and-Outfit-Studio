@@ -55,6 +55,8 @@ private:
 
 	nifly::Vector3 colorBackground = nifly::Vector3(0.82f, 0.82f, 0.82f);
 	nifly::Vector3 colorWire = nifly::Vector3(0.3137f, 0.3137f, 0.3137f);
+	nifly::Vector3 colorPoints = nifly::Vector3(0.0f, 1.0f, 0.0f);
+	nifly::Vector3 colorPointsMasked = nifly::Vector3(1.0f, 0.0f, 0.0f);
 	nifly::Vector3 colorRed = nifly::Vector3(1.0f, 0.25f, 0.25f);
 	nifly::Vector3 colorGreen = nifly::Vector3(0.25f, 1.0f, 0.25f);
 
@@ -79,18 +81,24 @@ public:
 
 	bool perspective = true;
 	float mFov = 90.0f;
+	float zNear = 0.1f;
+	float zFar = 1000.0f;
 	nifly::Vector3 camPos;
 	nifly::Vector3 camOffset;
 	nifly::Vector3 camRot; // Turntable camera emulation.
 	nifly::Vector3 camRotOffset;
 
-	nifly::Vector3 GetBackgroundColor() { return colorBackground; }
-
+	nifly::Vector3 GetBackgroundColor() const { return colorBackground; }
 	void SetBackgroundColor(const nifly::Vector3& color) { colorBackground = color; }
 
-	nifly::Vector3 GetWireColor() { return colorWire; }
-
+	nifly::Vector3 GetWireColor() const { return colorWire; }
 	void SetWireColor(const nifly::Vector3& color) { colorWire = color; }
+
+	nifly::Vector3 GetPointColor() const { return colorPoints; }
+	void SetPointColor(const nifly::Vector3& color) { colorPoints = color; }
+
+	nifly::Vector3 GetMaskedPointColor() const { return colorPointsMasked; }
+	void SetMaskedPointColor(const nifly::Vector3& color) { colorPointsMasked = color; }
 
 	void ClearMeshes() {
 		SetContext();
@@ -261,6 +269,7 @@ public:
 	void SetView(const char type);
 	void SetPerspective(const bool enabled);
 	void SetFieldOfView(const int fieldOfView);
+	void SetDepthClip(const float zNear, const float zFar);
 	void UpdateLights(const int ambient,
 					  const int frontal,
 					  const int directional0,
@@ -290,7 +299,7 @@ public:
 	};
 
 	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, CursorHitResult* hitResult = nullptr);
-	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, Mesh* hitMesh = nullptr);
+	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr, Mesh* hitMesh = nullptr, Mesh** outHitMesh = nullptr);
 	void ShowCursor(bool show = true);
 	void HidePointCursor();
 	void HideSegCursor();
@@ -326,6 +335,7 @@ public:
 					  const nifly::Vector3* color = nullptr,
 					  const bool asMesh = false);
 	Mesh* AddVisSeg(const nifly::Vector3& p1, const nifly::Vector3& p2, const std::string& name = "", const bool asMesh = false);
+	Mesh* AddVisEdges(const Mesh* refMesh, const std::vector<nifly::Edge>& edges, const std::string& name, const nifly::Vector3& color = nifly::Vector3(1.0f, 0.0f, 0.0f));
 	Mesh* AddVisSeamEdges(const Mesh* refMesh, bool asMesh = false);
 	std::vector<Mesh*> AddFloor(float width = 100.0f, float stepSmall = 1.0f, float stepBig = 5.0f);
 
@@ -413,6 +423,8 @@ public:
 		for (auto& o : overlays)
 			UpdateShaders(o);
 	}
+
+	bool GetWeightColors() const { return bWeightColors; }
 
 	void SetVertexColors(bool bVisible = true) {
 		bVertexColors = bVisible;

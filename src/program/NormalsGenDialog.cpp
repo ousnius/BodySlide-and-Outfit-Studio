@@ -4,7 +4,7 @@ See the included LICENSE file
 */
 
 #include "NormalsGenDialog.h"
-#include "PreviewWindow.h"
+#include "../ui/PreviewPanel.h"
 
 NormalsGenDialog::NormalsGenDialog(wxWindow* parent, std::vector<NormalGenLayer>& inLayersRef)
 	: wxNormalsGenDlg(parent)
@@ -120,7 +120,7 @@ void NormalsGenDialog::doMoveUpLayer(wxCommandEvent& WXUNUSED(event)) {
 	if (!s || !s->IsCategory() || s->GetName() == "Background")
 		return;
 
-	int n = 1;
+	intptr_t n = 1;
 	for (auto it = pgLayers->GetIterator(wxPG_ITERATE_CATEGORIES); !it.AtEnd(); ++it) {
 		wxPGProperty* p = it.GetProperty();
 		p->SetClientData(reinterpret_cast<void*>(n++));
@@ -135,7 +135,7 @@ void NormalsGenDialog::doMoveUpLayer(wxCommandEvent& WXUNUSED(event)) {
 	if (!me || !prev)
 		return;
 
-	int t = reinterpret_cast<unsigned long>(me->GetClientData());
+	intptr_t t = reinterpret_cast<intptr_t>(me->GetClientData());
 	me->SetClientData(prev->GetClientData());
 	prev->SetClientData(reinterpret_cast<void*>(t));
 
@@ -163,14 +163,18 @@ void NormalsGenDialog::doSetOutputFileName(wxFileDirPickerEvent& WXUNUSED(event)
 }
 
 void NormalsGenDialog::doPreviewNormalMap(wxCommandEvent& WXUNUSED(event)) {
-	PreviewWindow* preview = reinterpret_cast<PreviewWindow*>(GetParent());
+	PreviewPanel* preview = dynamic_cast<PreviewPanel*>(GetParent());
+	if (!preview)
+		return;
 
 	// no file name specified so it only renders a preview.
 	preview->RenderNormalMap();
 }
 
 void NormalsGenDialog::doGenerateNormalMap(wxCommandEvent& WXUNUSED(event)) {
-	PreviewWindow* preview = reinterpret_cast<PreviewWindow*>(GetParent());
+	PreviewPanel* preview = dynamic_cast<PreviewPanel*>(GetParent());
+	if (!preview)
+		return;
 
 	wxFileName outfile;
 	if (cbSaveToBGLayerFile->IsChecked())

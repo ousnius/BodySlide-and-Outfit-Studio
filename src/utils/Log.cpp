@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "Log.h"
 
+#include <filesystem>
 #include <wx/utils.h>
 
 /*
@@ -26,7 +27,8 @@ void Log::Initialize(int level, const wxString& fileName) {
 		int sigCount = 0;
 
 		//Open stream at end to find out file size
-		std::ifstream truncStream(fileName.ToStdString(), std::ios_base::ate);
+		std::filesystem::path filePath(fileName.ToStdWstring());
+		std::ifstream truncStream(filePath, std::ios_base::ate);
 		if (truncStream) {
 			//Store size and seek back to beginning
 			std::streampos streamSize = truncStream.tellg();
@@ -64,7 +66,7 @@ void Log::Initialize(int level, const wxString& fileName) {
 		}
 
 		//Open ofstream, creating empty log file
-		stream.open(fileName.ToStdString(), std::ios_base::app);
+		stream.open(filePath, std::ios_base::app);
 		if (stream) {
 			wxLog* log = new wxLogStream(&stream);
 			log->SetLogLevel(level);
@@ -73,7 +75,7 @@ void Log::Initialize(int level, const wxString& fileName) {
 			if (!textCopy.empty()) {
 				stream.close();
 				stream.clear();
-				stream.open(fileName.ToStdString());
+				stream.open(filePath);
 				log->LogText(textCopy);
 			}
 

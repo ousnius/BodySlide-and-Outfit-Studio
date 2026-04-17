@@ -16,9 +16,18 @@ wxEND_EVENT_TABLE()
 wxStateButton::wxStateButton()
 	: wxButton() {}
 
-wxStateButton::wxStateButton(
-	wxWindow* parent, wxWindowID id, const wxString& label, const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name)
-	: wxButton(parent, id, label, pos, size, style, validator, name) {}
+wxStateButton::wxStateButton(wxWindow* parent,
+							 wxWindowID id,
+							 const wxString& label,
+							 const wxPoint& pos,
+							 const wxSize& size,
+							 long style,
+							 const wxValidator& validator,
+							 const wxString& name,
+							 const bool noState)
+	: wxButton(parent, id, label, pos, size, style, validator, name) {
+	m_bNoState = noState;
+}
 
 /*
  * Called by the system of by wxWidgets when the panel needs
@@ -86,10 +95,16 @@ void wxStateButton::mouseDown(wxMouseEvent& WXUNUSED(event)) {
 	evt.SetEventObject(this);
 	ProcessEvent(evt);
 
-	if (!evt.GetSkipped())
+	if (!evt.GetSkipped()) {
 		m_bChecked = true;
+		Refresh();
+	}
 }
 
 void wxStateButton::mouseReleased(wxMouseEvent& event) {
+	if (m_bNoState) {
+		m_bChecked = false;
+		Refresh();
+	}
 	event.Skip();
 }

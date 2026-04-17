@@ -31,25 +31,6 @@ std::shared_ptr<AABBTree> Mesh::CreateBVH() {
 	return bvh;
 }
 
-void Mesh::BuildTriAdjacency() {
-	if (!tris)
-		return;
-
-	vertTris = std::make_unique<std::vector<int>[]>(nVerts);
-	auto vt = vertTris.get();
-	for (int t = 0; t < nTris; t++) {
-		uint16_t i1 = tris[t].p1;
-		uint16_t i2 = tris[t].p2;
-		uint16_t i3 = tris[t].p3;
-		if (i1 >= nVerts || i2 >= nVerts || i3 >= nVerts)
-			continue;
-
-		vt[i1].push_back(t);
-		vt[i2].push_back(t);
-		vt[i3].push_back(t);
-	}
-}
-
 void Mesh::BuildVertexAdjacency() {
 	if (!tris)
 		return;
@@ -426,7 +407,8 @@ int Mesh::FindAdjacentBalancedPairs(int pt, int pairs[]) const {
 		float bestDot = 1;
 		int bestInd = 0;
 		for (int i = 0; i < c; ++i)
-			if (!donePt[i] && !donePt[matchInd[i]] && matchDot[i] < bestDot) {
+			// Avoid pairing a point with itself: require matchInd[i] != i
+			if (!donePt[i] && matchInd[i] != i && !donePt[matchInd[i]] && matchDot[i] < bestDot) {
 				bestDot = matchDot[i];
 				bestInd = i;
 				gotOne = true;

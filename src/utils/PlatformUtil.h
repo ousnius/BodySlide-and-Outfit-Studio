@@ -9,6 +9,7 @@ See the included LICENSE file
 #include <Windows.h>
 #endif
 
+#include <cstdint>
 #include <fstream>
 #include <string>
 

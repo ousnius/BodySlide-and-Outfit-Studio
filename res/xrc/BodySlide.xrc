@@ -17,7 +17,7 @@
 					<cols>5</cols>
 					<vgap>0</vgap>
 					<hgap>0</hgap>
-					<growablecols>1</growablecols>
+					<growablecols>1,3,4</growablecols>
 					<growablerows></growablerows>
 					<object class="sizeritem">
 						<option>0</option>
@@ -75,7 +75,7 @@
 								</object>
 							</object>
 							<object class="sizeritem">
-								<option>0</option>
+								<option>1</option>
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
 								<object class="unknown" name="searchHolder" />
@@ -176,8 +176,22 @@
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALL|wxEXPAND</flag>
-						<border>5</border>
-						<object class="unknown" name="sliderFilter" />
+						<border>0</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="unknown" name="sliderFilter" />
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="unknown" name="presetFilter" />
+							</object>
+						</object>
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
@@ -194,6 +208,14 @@
 						<border>0</border>
 						<object class="unknown" name="dummy" />
 					</object>
+				</object>
+			</object>
+			<object class="sizeritem" name="categoryTabSizer">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>0</border>
+				<object class="wxWrapSizer">
+					<orient>wxHORIZONTAL</orient>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -390,6 +412,37 @@
 											<label>Force Body Normals</label>
 											<tooltip>Adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.</tooltip>
 											<hidden>1</hidden>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxPanel" name="panelClippingSliders">
+											<object class="wxFlexGridSizer">
+												<cols>2</cols>
+												<rows>1</rows>
+												<vgap>2</vgap>
+												<hgap>4</hgap>
+												<growablecols>1</growablecols>
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<fg>#a0a0a0</fg>
+														<label>Fix Clipping</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxSlider" name="sliderClippingStrength">
+														<size>100,-1</size>
+														<value>0</value>
+														<min>0</min>
+														<max>100</max>
+														<tooltip>Controls how far outfit vertices are pushed away from the body surface.</tooltip>
+													</object>
+												</object>
+											</object>
 										</object>
 									</object>
 								</object>

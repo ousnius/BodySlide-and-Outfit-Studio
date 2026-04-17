@@ -1,0 +1,2689 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+	<object class="wxDialog" name="dlgAutomation">
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxMAXIMIZE_BOX</style>
+		<title>Automation Script</title>
+		<centered>1</centered>
+		<size>900,650</size>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+
+			<!-- Toolbar -->
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<flag>wxALIGN_CENTER_VERTICAL|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText">
+							<label>Automation:</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxComboBox" name="cmbAutomation">
+							<tooltip>Select an automation to load, or type a name for a new one</tooltip>
+							<hint>Automation name...</hint>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnSaveScript">
+							<label>Save</label>
+							<tooltip>Save the automation script</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnDeleteScript">
+							<label>Delete</label>
+							<tooltip>Delete the current automation script</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnOpenFolder">
+							<label>Open Folder</label>
+							<tooltip>Open the Automations folder in file explorer</tooltip>
+						</object>
+					</object>
+				</object>
+			</object>
+
+			<!-- Main splitter area -->
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+
+					<!-- Left: Step list -->
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxRIGHT|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxListCtrl" name="listSteps">
+							<style>wxLC_REPORT|wxLC_SINGLE_SEL</style>
+							<size>350,-1</size>
+						</object>
+					</object>
+
+					<!-- Right: Step details -->
+					<object class="sizeritem">
+						<option>2</option>
+						<flag>wxEXPAND</flag>
+						<border>0</border>
+						<object class="wxPanel" name="panelStepSettings">
+							<object class="wxBoxSizer">
+								<orient>wxVERTICAL</orient>
+
+								<!-- Common fields -->
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxBOTTOM|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxStaticBoxSizer">
+										<orient>wxVERTICAL</orient>
+										<label>Step Settings</label>
+
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxALL|wxEXPAND</flag>
+											<border>3</border>
+											<object class="wxFlexGridSizer">
+												<cols>2</cols>
+												<vgap>5</vgap>
+												<hgap>10</hgap>
+												<growablecols>1</growablecols>
+
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<label>Type:</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxChoice" name="choiceStepType">
+														<content>
+															<item>Bones: Add Custom Bone</item>
+															<item>Bones: Copy Bone Weights</item>
+															<item>Bones: Delete Bones</item>
+															<item>Bones: Edit Custom Bone</item>
+															<item>Bones: Remove Skinning</item>
+															<item>Export: File</item>
+															<item>Export: Save Project</item>
+															<item>Import: File</item>
+															<item>Import: Slider Data</item>
+															<item>Project: Add Project</item>
+															<item>Project: Clear Project</item>
+															<item>Project: Clear Reference</item>
+															<item>Project: Load Reference</item>
+															<item>Project: Set Base Shape</item>
+															<item>Project: Set Reference Shape</item>
+															<item>Shapes: Apply Pose</item>
+															<item>Shapes: Delete Shape</item>
+															<item>Shapes: Duplicate Shape</item>
+															<item>Shapes: Fix Bad Bones</item>
+															<item>Shapes: Fix Clipping</item>
+															<item>Shapes: Invert UVs</item>
+															<item>Shapes: Mirror Shape</item>
+															<item>Shapes: Refine Mesh</item>
+															<item>Shapes: Rename Shape</item>
+															<item>Shapes: Reset Transforms</item>
+															<item>Shapes: Transform Shape</item>
+															<item>Sliders: Conform Sliders</item>
+															<item>Sliders: Delete Slider</item>
+															<item>Sliders: Set Slider Values</item>
+															<item>Sliders: Set Slider Properties</item>
+															<item>Masks: Clear Mask</item>
+															<item>Masks: Load Mask</item>
+															<item>Nodes: Remove Unused Nodes</item>
+														</content>
+													</object>
+												</object>
+
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<label>Active:</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxCheckBox" name="chkActive">
+														<label>Execute this step</label>
+														<checked>1</checked>
+													</object>
+												</object>
+
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<label>Target Shapes:</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND|wxRIGHT</flag>
+															<border>5</border>
+															<object class="wxTextCtrl" name="txtTargetMeshes">
+																<tooltip>Comma-separated list of shape names. Leave empty to target all shapes.</tooltip>
+																<hint>Comma-separated shape list</hint>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<flag>wxALIGN_CENTER_VERTICAL|wxRIGHT</flag>
+															<border>5</border>
+															<object class="wxButton" name="btnAddTargetMesh">
+																<label>+</label>
+																<size>24,-1</size>
+																<tooltip>Add shapes from list</tooltip>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<flag>wxALIGN_CENTER_VERTICAL</flag>
+															<object class="wxCheckBox" name="chkTargetRegex">
+																<label>Regex</label>
+																<tooltip>Use regex matching for target shape names</tooltip>
+															</object>
+														</object>
+													</object>
+												</object>
+
+												<object class="sizeritem">
+													<flag>wxALIGN_TOP</flag>
+													<object class="wxStaticText">
+														<label>Note:</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxTextCtrl" name="txtNote">
+														<style>wxTE_MULTILINE</style>
+														<size>-1,50</size>
+														<tooltip>A note to describe what this step does and how to configure it.</tooltip>
+														<hint>Description of this step...</hint>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+								</object>
+
+								<!-- Type-specific panels in a simplebook -->
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxEXPAND</flag>
+									<border>0</border>
+									<object class="wxSimplebook" name="bookStepPages">
+
+										<!-- AddCustomBone -->
+										<object class="simplebookpage">
+											<selected>1</selected>
+											<object class="wxPanel" name="pageAddCustomBone">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Add Custom Bone</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Bone Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtAddBoneName">
+																	<hint>Bone name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Parent Bone:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtAddBoneParent">
+																	<tooltip>Name of the parent bone (leave empty for no parent)</tooltip>
+																	<hint>Parent bone name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Translation:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxRIGHT</flag>
+																		<border>3</border>
+																		<object class="wxTextCtrl" name="txtAddBoneTransX">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">X</tooltip>
+																			<hint translate="0">X</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxRIGHT</flag>
+																		<border>3</border>
+																		<object class="wxTextCtrl" name="txtAddBoneTransY">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">Y</tooltip>
+																			<hint translate="0">Y</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<object class="wxTextCtrl" name="txtAddBoneTransZ">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">Z</tooltip>
+																			<hint translate="0">Z</hint>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Rotation:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxRIGHT</flag>
+																		<border>3</border>
+																		<object class="wxTextCtrl" name="txtAddBoneRotX">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">X</tooltip>
+																			<hint translate="0">X</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxRIGHT</flag>
+																		<border>3</border>
+																		<object class="wxTextCtrl" name="txtAddBoneRotY">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">Y</tooltip>
+																			<hint translate="0">Y</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<object class="wxTextCtrl" name="txtAddBoneRotZ">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">Z</tooltip>
+																			<hint translate="0">Z</hint>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- CopyBoneWeights -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageCopyBoneWeights">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Copy Bone Weights</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Proximity Radius:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtWeightRadius">
+																	<value translate="0">10.0</value>
+																	<hint translate="0">10.0</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Max Results:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtWeightMaxResults">
+																	<value translate="0">10</value>
+																	<hint translate="0">10</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Bone List:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtWeightBoneList">
+																	<tooltip>Comma-separated list of bone names. Leave empty to copy all bones.</tooltip>
+																	<hint>Comma-separated bone list</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- DeleteBones -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageDeleteBones">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Delete Bones</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Bone Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtDeleteBoneNames">
+																	<tooltip>Comma-separated list of bone names to delete</tooltip>
+																	<hint>Comma-separated bone list</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkDeleteBoneFromProject">
+																	<label>Delete bone entirely from project</label>
+																	<checked>1</checked>
+																	<tooltip>If checked, deletes the bone from all shapes and the NIF. If unchecked, only removes bone weights from target shapes.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- EditBone -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageEditBone">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Edit Bone</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Bone Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtEditBoneName">
+																	<tooltip>Name of the custom bone to edit</tooltip>
+																	<hint>Bone name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Parent Bone:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtEditBoneParent">
+																	<tooltip>Name of the parent bone (leave empty for no parent)</tooltip>
+																	<hint>Parent bone name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Translation:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxRIGHT</flag>
+																		<border>3</border>
+																		<object class="wxTextCtrl" name="txtEditBoneTransX">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">X</tooltip>
+																			<hint translate="0">X</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxRIGHT</flag>
+																		<border>3</border>
+																		<object class="wxTextCtrl" name="txtEditBoneTransY">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">Y</tooltip>
+																			<hint translate="0">Y</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<object class="wxTextCtrl" name="txtEditBoneTransZ">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">Z</tooltip>
+																			<hint translate="0">Z</hint>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Rotation:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxRIGHT</flag>
+																		<border>3</border>
+																		<object class="wxTextCtrl" name="txtEditBoneRotX">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">X</tooltip>
+																			<hint translate="0">X</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxRIGHT</flag>
+																		<border>3</border>
+																		<object class="wxTextCtrl" name="txtEditBoneRotY">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">Y</tooltip>
+																			<hint translate="0">Y</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<object class="wxTextCtrl" name="txtEditBoneRotZ">
+																			<value translate="0">0.0</value>
+																			<tooltip translate="0">Z</tooltip>
+																			<hint translate="0">Z</hint>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- RemoveSkinning -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageRemoveSkinning">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Remove Skinning</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Removes skinning from target shapes (or all shapes if Target Meshes is empty).
+																This deletes all bone weights and skinning data from the shapes.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ExportFile -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageExportFile">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Export File</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblExportPath">
+																	<label>Export File Path:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<flag>wxEXPAND</flag>
+																		<object class="wxFilePickerCtrl" name="fpExportFile">
+																			<message>Select export file path</message>
+																			<wildcard>NIF Files (*.nif)|*.nif|OBJ Files (*.obj)|*.obj|FBX Files (*.fbx)|*.fbx|OSD Files (*.osd)|*.osd|TRI Files (*.tri)|*.tri|All Files (*.*)|*.*</wildcard>
+																			<style>wxFLP_SAVE|wxFLP_USE_TEXTCTRL|wxFLP_OVERWRITE_PROMPT</style>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxEXPAND</flag>
+																		<object class="wxDirPickerCtrl" name="dpExportFolder">
+																			<message>Select export folder</message>
+																			<style>wxDIRP_USE_TEXTCTRL</style>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Options:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkExportUseOriginalPath">
+																			<label>Use original file path from batch operation</label>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkExportWithRef">
+																			<label>Export with reference shape (.nif only)</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Filename Prefix:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtExportPrefix">
+																	<tooltip>Prefix to add before the filename. Supports {{PLACEHOLDER}} variables.</tooltip>
+																	<hint>e.g. prefix_</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Filename Suffix:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtExportSuffix">
+																	<tooltip>Suffix to add after the filename before the extension. Supports {{PLACEHOLDER}} variables.</tooltip>
+																	<hint>e.g. _suffix</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SaveProject -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSaveProject">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Save Project</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxCheckBox" name="chkSaveUseOriginal">
+															<label>Use original project from batch</label>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxPanel" name="panelSaveOriginalFields">
+															<object class="wxFlexGridSizer">
+																<cols>2</cols>
+																<vgap>5</vgap>
+																<hgap>10</hgap>
+																<growablecols>1</growablecols>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Display Name:</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxTextCtrl" name="txtSaveDisplayName">
+																		<tooltip>Name shown in BodySlide (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint>Display name</hint>
+																	</object>
+																</object>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Output File Name:</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxTextCtrl" name="txtSaveOutputFileName">
+																		<tooltip>Base filename for the output NIF (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint>Output filename</hint>
+																	</object>
+																</object>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Output Data Path:</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxTextCtrl" name="txtSaveOutputDataPath">
+																		<tooltip>Game data path for output (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint translate="0">meshes\...</hint>
+																	</object>
+																</object>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Slider Set File:</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxTextCtrl" name="txtSaveSliderSetFile">
+																		<tooltip>Slider set project file (.osp) (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint translate="0">SliderSets\file.osp</hint>
+																	</object>
+																</object>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Shape Data Folder:</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxTextCtrl" name="txtSaveShapeDataFolder">
+																		<tooltip>Folder for slider data files (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint translate="0">ShapeData\folder</hint>
+																	</object>
+																</object>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Shape Data File:</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxTextCtrl" name="txtSaveShapeDataFile">
+																		<tooltip>Base NIF filename (supports {{PLACEHOLDER}} variables)</tooltip>
+																		<hint translate="0">filename.nif</hint>
+																	</object>
+																</object>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Options:</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxBoxSizer">
+																		<orient>wxVERTICAL</orient>
+																		<object class="sizeritem">
+																			<object class="wxCheckBox" name="chkSaveGenWeights">
+																				<label>Generate low/high weight outputs</label>
+																				<checked>1</checked>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<object class="wxCheckBox" name="chkSaveAutoCopyRef">
+																				<label>Copy reference to output</label>
+																				<checked>1</checked>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxPanel" name="panelSaveBatchFields">
+															<object class="wxFlexGridSizer">
+																<cols>2</cols>
+																<vgap>5</vgap>
+																<hgap>10</hgap>
+																<growablecols>1</growablecols>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Replace (from):</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxTextCtrl" name="txtSaveReplaceFrom">
+																		<tooltip>Text to find and replace in original project fields (batch only)</tooltip>
+																		<hint>Find text</hint>
+																	</object>
+																</object>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Replace (to):</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxTextCtrl" name="txtSaveReplaceTo">
+																		<tooltip>Replacement text for matching text in original project fields (batch only)</tooltip>
+																		<hint>Replace with</hint>
+																	</object>
+																</object>
+
+																<object class="sizeritem">
+																	<flag>wxALIGN_CENTER_VERTICAL</flag>
+																	<object class="wxStaticText">
+																		<label>Suffix:</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<flag>wxEXPAND</flag>
+																	<object class="wxTextCtrl" name="txtSaveSuffix">
+																		<tooltip>Suffix to append to Display Name, Shape Data Folder, and Shape Data File name (batch only)</tooltip>
+																		<hint>e.g. _modified</hint>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxCheckBox" name="chkSaveCopyRefFromProject">
+																	<label>Copy reference based on loaded project</label>
+																	<tooltip>If the loaded project had a reference shape, include it in the output. Otherwise, exclude it. Overrides the option above. (batch only)</tooltip>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxLEFT|wxEXPAND</flag>
+																<border>5</border>
+																<option>1</option>
+																<object class="wxTextCtrl" name="txtSaveCopyRefShapeName">
+																	<tooltip>Only treat these shape names as the reference (comma-separated). Leave empty to use any reference shape.</tooltip>
+																	<hint>Comma-separated shape list</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ImportFile -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageImportFile">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Import File</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkImportFromFolder">
+																	<label>Import all files from folder</label>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblImportFile">
+																	<label>File:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxFilePickerCtrl" name="fpImportFile">
+																	<message>Select file to import</message>
+																	<wildcard>NIF Files (*.nif)|*.nif|OBJ Files (*.obj)|*.obj|FBX Files (*.fbx)|*.fbx|All Files (*.*)|*.*</wildcard>
+																	<style>wxFLP_DEFAULT_STYLE|wxFLP_USE_TEXTCTRL</style>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblImportFolder">
+																	<label>Folder:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxDirPickerCtrl" name="dpImportFolder">
+																	<message>Select folder to import from</message>
+																	<style>wxDIRP_DEFAULT_STYLE|wxDIRP_USE_TEXTCTRL</style>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ImportSliderData -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageImportSliderData">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Import Slider Data</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkSliderDataFromFolder">
+																	<label>Import all files from folder (ShapeName#SliderName.ext)</label>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblSliderDataFile">
+																	<label>Slider Data File:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxFilePickerCtrl" name="fpSliderDataFile">
+																	<message>Select slider data file</message>
+																	<wildcard>Slider Data Files (*.osd;*.bsd)|*.osd;*.bsd|All Files (*.*)|*.*</wildcard>
+																	<style>wxFLP_DEFAULT_STYLE|wxFLP_USE_TEXTCTRL</style>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblSliderDataFolder">
+																	<label>Folder:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxDirPickerCtrl" name="dpSliderDataFolder">
+																	<message>Select folder with slider data files</message>
+																	<style>wxDIRP_DEFAULT_STYLE|wxDIRP_USE_TEXTCTRL</style>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Options:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkSliderMerge">
+																	<label>Merge into existing sliders</label>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSliderNames">
+																	<tooltip>Comma-separated list of slider names. Leave empty to import all sliders.</tooltip>
+																	<hint>Comma-separated slider list</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- AddProject -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageAddProject">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Add Project</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Source File:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxFilePickerCtrl" name="fpAddProjSourceFile">
+																	<message>Select project file</message>
+																	<wildcard>Slider Set Files (*.osp;*.xml)|*.osp;*.xml|All Files (*.*)|*.*</wildcard>
+																	<style>wxFLP_DEFAULT_STYLE|wxFLP_USE_TEXTCTRL</style>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Set:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceAddProjSet">
+																	<tooltip>Name of the slider set to add</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Options:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkAddProjAppendSliders">
+																			<label>Append new sliders</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ClearProject -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageClearProject">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Clear Project</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Clears the current project (removes all shapes, sliders, and references).
+																No additional parameters needed.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ClearReference -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageClearReference">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Clear Reference</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Removes the current reference/base shape from the project. Slider data for the reference is moved to the morpher.
+																No additional parameters needed.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- LoadReference -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageLoadReference">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Load Reference</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Template:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceRefTemplate">
+																	<tooltip>Select a reference template to auto-fill the fields below</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Source File:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxFilePickerCtrl" name="fpRefSourceFile">
+																	<message>Select reference file</message>
+																	<wildcard>Slider Set Files (*.osp;*.xml)|*.osp;*.xml|NIF Files (*.nif)|*.nif|All Files (*.*)|*.*</wildcard>
+																	<style>wxFLP_DEFAULT_STYLE|wxFLP_USE_TEXTCTRL</style>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Set:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceRefSet">
+																	<tooltip>Name of the slider set within the source file</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Shape:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceRefShape">
+																	<tooltip>Name of the reference shape</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Options:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkRefLoadAll">
+																			<label>Load all shapes</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkRefMergeSliders">
+																			<label>Merge sliders</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkRefMergeZaps">
+																			<label>Merge zaps</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkRefAppendNewSliders">
+																			<label>Append new sliders</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetBaseShape -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetBaseShape">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Base Shape</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Bakes the current slider values into the base geometry of all shapes and zeros all sliders.
+
+Equivalent to "Slider -> Set Base Shape" in the menu.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetReferenceShape -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetReferenceShape">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Reference Shape</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Shape Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSetRefShapeName">
+																	<tooltip>Name of the shape to set as reference (highlighted green).</tooltip>
+																	<hint>Shape name</hint>
+																</object>
+															</object>
+
+															<object class="spacer">
+																<size>0,0</size>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkSetRefUnset">
+																	<label>Unset Reference</label>
+																	<tooltip>Unset the reference shape instead of setting one. Morph data will be moved.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ApplyPose -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageApplyPose">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Apply Pose</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Pose Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtPoseName">
+																	<tooltip>Name of the pose from PoseData to apply to meshes</tooltip>
+																	<hint>Pose name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- DeleteShape -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageDeleteShape">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Delete Shape</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Deletes the shapes specified in the Target Meshes field above.
+
+If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- DuplicateShape -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageDuplicateShape">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Duplicate Shape</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>New Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtDupNewName">
+																	<tooltip>Name for the duplicated shape. Supports {{PLACEHOLDER}} variables.</tooltip>
+																	<hint>New shape name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- FixBadBones -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageFixBadBones">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Fix Bad Bones</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Fixes bones with inconsistent NIF transforms by applying recommended corrections automatically.</label>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- FixClipping -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageFixClipping">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Fix Clipping</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceFixClipMode">
+																	<content>
+																		<item>Shapes</item>
+																		<item>Sliders</item>
+																	</content>
+																	<selection>0</selection>
+																	<tooltip>Shapes: fix base geometry of target shapes. Sliders: fix clipping for each slider individually.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Strength (0 - 100):</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtFixClipStrength">
+																	<value translate="0">50</value>
+																	<tooltip>Clipping fix strength between 0 and 100.</tooltip>
+																	<hint translate="0">0-100</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText" name="lblFixClipSliderNames">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtFixClipSliderNames">
+																			<tooltip>Comma-separated list of slider names to fix clipping for (Sliders mode only). Leave empty to process all non-zap/non-UV sliders.</tooltip>
+																			<hint>Comma-separated slider list</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddFixClipSlider">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- InvertUVs -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageInvertUVs">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Invert UVs</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxBoxSizer">
+															<orient>wxVERTICAL</orient>
+															<object class="sizeritem">
+																<object class="wxCheckBox" name="chkInvertU">
+																	<label>Invert U</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxTOP</flag>
+																<border>3</border>
+																<object class="wxCheckBox" name="chkInvertV">
+																	<label>Invert V</label>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- MirrorShape -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMirrorShape">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Mirror Shape</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxBoxSizer">
+															<orient>wxVERTICAL</orient>
+															<object class="sizeritem">
+																<object class="wxCheckBox" name="chkMirrorX">
+																	<label>Mirror X</label>
+																	<checked>1</checked>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxTOP</flag>
+																<border>3</border>
+																<object class="wxCheckBox" name="chkMirrorY">
+																	<label>Mirror Y</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxTOP</flag>
+																<border>3</border>
+																<object class="wxCheckBox" name="chkMirrorZ">
+																	<label>Mirror Z</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxTOP</flag>
+																<border>3</border>
+																<object class="wxCheckBox" name="chkMirrorSwapBonesX">
+																	<label>Swap bones left/right (X axis)</label>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- RefineMesh -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageRefineMesh">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Refine Mesh</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Subdivides/refines meshes by splitting edges.
+																All unmasked vertices are refined. Use the Target Meshes field above to select which shapes to refine.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- RenameShape -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageRenameShape">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Rename Shape</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Old Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtRenameOldName">
+																	<tooltip>Current name of the shape (supports {{PLACEHOLDER}} variables)</tooltip>
+																	<hint>Current shape name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>New Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtRenameNewName">
+																	<tooltip>New name for the shape (supports {{PLACEHOLDER}} variables)</tooltip>
+																	<hint>New shape name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ResetTransforms -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageResetTransforms">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Reset Transforms</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Resets global-to-skin transforms for all skinned meshes. No additional parameters needed.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- TransformShape -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageTransformShape">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Transform Shape</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>4</cols>
+															<vgap>5</vgap>
+															<hgap>5</hgap>
+															<growablecols>1,2,3</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Move:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMoveX">
+																	<value translate="0">0.0</value>
+																	<tooltip>Move X</tooltip>
+																	<hint translate="0">X</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMoveY">
+																	<value translate="0">0.0</value>
+																	<tooltip>Move Y</tooltip>
+																	<hint translate="0">Y</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMoveZ">
+																	<value translate="0">0.0</value>
+																	<tooltip>Move Z</tooltip>
+																	<hint translate="0">Z</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Rotate (Ã‚Â°):</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtRotateX">
+																	<value translate="0">0.0</value>
+																	<tooltip>Rotate X (degrees)</tooltip>
+																	<hint translate="0">X</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtRotateY">
+																	<value translate="0">0.0</value>
+																	<tooltip>Rotate Y (degrees)</tooltip>
+																	<hint translate="0">Y</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtRotateZ">
+																	<value translate="0">0.0</value>
+																	<tooltip>Rotate Z (degrees)</tooltip>
+																	<hint translate="0">Z</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Scale:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtScaleX">
+																	<value translate="0">1.0</value>
+																	<tooltip>Scale X</tooltip>
+																	<hint translate="0">X</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtScaleY">
+																	<value translate="0">1.0</value>
+																	<tooltip>Scale Y</tooltip>
+																	<hint translate="0">Y</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtScaleZ">
+																	<value translate="0">1.0</value>
+																	<tooltip>Scale Z</tooltip>
+																	<hint translate="0">Z</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Inflate:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtInflateX">
+																	<value translate="0">0.0</value>
+																	<tooltip>Inflate X (along normals)</tooltip>
+																	<hint translate="0">X</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtInflateY">
+																	<value translate="0">0.0</value>
+																	<tooltip>Inflate Y (along normals)</tooltip>
+																	<hint translate="0">Y</hint>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtInflateZ">
+																	<value translate="0">0.0</value>
+																	<tooltip>Inflate Z (along normals)</tooltip>
+																	<hint translate="0">Z</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ConformSliders -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageConformSliders">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Conform Sliders</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Proximity Radius:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtConformRadius">
+																	<value translate="0">10.0</value>
+																	<hint translate="0">10.0</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Max Results:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtConformMaxResults">
+																	<value translate="0">10</value>
+																	<hint translate="0">10</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Options:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkConformNoSqueeze">
+																			<label>No squeeze</label>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkConformSolidMode">
+																			<label>Solid mode</label>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Axes:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<flag>wxRIGHT</flag>
+																		<border>10</border>
+																		<object class="wxCheckBox" name="chkConformAxisX">
+																			<label>X</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxRIGHT</flag>
+																		<border>10</border>
+																		<object class="wxCheckBox" name="chkConformAxisY">
+																			<label>Y</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkConformAxisZ">
+																			<label>Z</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtConformSliderNames">
+																			<tooltip>Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.</tooltip>
+																			<hint>Comma-separated slider list</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddConformSlider">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- DeleteSlider -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageDeleteSlider">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Delete Slider</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtDeleteSliderName">
+																			<tooltip>Comma-separated list of slider names to delete. If regex is checked, the text is used as a single regex pattern.</tooltip>
+																			<hint>Comma-separated slider list or pattern</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddDeleteSlider">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Regex:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkDeleteSliderRegex">
+																	<label>Match slider names by regex pattern</label>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetSliderValues -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetSliderValues">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Slider Values</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtSetSliderNames">
+																			<tooltip>Comma-separated list of slider names. Leave empty to set all visible sliders.</tooltip>
+																			<hint>Comma-separated slider list</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddSetSlider">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Value (0 - 100):</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSetSliderValue">
+																	<value translate="0">100</value>
+																	<tooltip>Slider value between 0 and 100 (percentage)</tooltip>
+																	<hint translate="0">0-100</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetSliderProperties -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetSliderProperties">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Slider Properties</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtSliderPropNames">
+																			<tooltip>Comma-separated list of slider names. Leave empty to apply to all sliders.</tooltip>
+																			<hint>Comma-separated slider list</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddSliderProp">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Zap:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceSliderPropZap">
+																	<content>
+																		<item>No change</item>
+																		<item>No</item>
+																		<item>Yes</item>
+																	</content>
+																	<tooltip>Set the zap flag on matching sliders.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Hidden:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceSliderPropHidden">
+																	<content>
+																		<item>No change</item>
+																		<item>No</item>
+																		<item>Yes</item>
+																	</content>
+																	<tooltip>Set the hidden flag on matching sliders.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblSliderPropZapped">
+																	<label>Default Zapped:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceSliderPropZapped">
+																	<content>
+																		<item>No change</item>
+																		<item>Not zapped</item>
+																		<item>Zapped</item>
+																	</content>
+																	<tooltip>Whether matching zap sliders are zapped by default.</tooltip>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblSliderPropDefaultLo">
+																	<label>Default (Small):</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSliderPropDefaultLo">
+																	<tooltip>Default small value (0-100). Leave empty for no change.</tooltip>
+																	<hint translate="0">0-100</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText" name="lblSliderPropDefaultHi">
+																	<label>Default (Big):</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSliderPropDefaultHi">
+																	<tooltip>Default big value (0-100). Leave empty for no change.</tooltip>
+																	<hint translate="0">0-100</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ClearMask -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageClearMask">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Clear Mask</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Clears the mask for the target shape(s).</label>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- LoadMask -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageLoadMask">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Load Mask</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mask File:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxFilePickerCtrl" name="fpLoadMaskFile">
+																	<message>Select a mask XML file</message>
+																	<wildcard>XML Files (*.xml)|*.xml</wildcard>
+																	<style>wxFLP_OPEN|wxFLP_FILE_MUST_EXIST|wxFLP_USE_TEXTCTRL</style>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mask Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceLoadMaskName">
+																	<tooltip>Select a mask entry from the loaded mask file.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- RemoveUnusedNodes -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageRemoveUnusedNodes">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Remove Unused Nodes</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Removes all unreferenced nodes from the NIF.</label>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+
+			<!-- Variables section -->
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxCollapsiblePane" name="paneVariables">
+					<label>Placeholder Variables</label>
+					<object class="panewindow">
+						<object class="wxBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxBOTTOM</flag>
+								<border>3</border>
+								<object class="wxStaticText">
+									<label>Define {{KEY}} = Value pairs. These are substituted in all text fields before execution.</label>
+									<wrap>500</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxEXPAND</flag>
+								<border>0</border>
+								<object class="wxFlexGridSizer">
+									<cols>2</cols>
+									<vgap>3</vgap>
+									<hgap>5</hgap>
+									<growablecols>1</growablecols>
+
+									<object class="sizeritem">
+										<flag>wxALIGN_CENTER_VERTICAL</flag>
+										<object class="wxStaticText">
+											<label>Key:</label>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<flag>wxALIGN_CENTER_VERTICAL</flag>
+										<object class="wxStaticText">
+											<label>Value:</label>
+										</object>
+									</object>
+
+									<object class="sizeritem">
+										<flag>wxEXPAND</flag>
+										<object class="wxTextCtrl" name="txtVarKey1">
+											<hint>KEY</hint>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<flag>wxEXPAND</flag>
+										<object class="wxTextCtrl" name="txtVarVal1">
+											<hint>Value</hint>
+										</object>
+									</object>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxTOP</flag>
+								<border>3</border>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<object class="wxButton" name="btnAddVariable">
+											<label>+ Add</label>
+											<size>80,-1</size>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<flag>wxLEFT</flag>
+										<border>5</border>
+										<object class="wxButton" name="btnRemoveVariable">
+											<label>- Remove</label>
+											<size>80,-1</size>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+
+			<!-- Bottom buttons -->
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxCollapsiblePane" name="paneBatch">
+					<label>Batch Operation</label>
+					<object class="panewindow">
+						<object class="wxBoxSizer">
+							<orient>wxVERTICAL</orient>
+
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxBOTTOM|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxRadioBox" name="radioBatchMode">
+									<label>Mode</label>
+									<dimension>1</dimension>
+									<content>
+										<item>None (run on current project)</item>
+										<item>Folder scan (repeat on files in folder)</item>
+										<item>Slider sets (repeat on installed slider sets)</item>
+									</content>
+									<selection>0</selection>
+								</object>
+							</object>
+
+							<!-- Folder scan options -->
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxEXPAND|wxBOTTOM</flag>
+								<border>5</border>
+								<object class="wxPanel" name="panelBatchFolder">
+									<object class="wxStaticBoxSizer" name="boxBatchFolder">
+										<orient>wxVERTICAL</orient>
+										<label>Folder Scan Settings</label>
+										<object class="sizeritem">
+											<flag>wxALL|wxEXPAND</flag>
+											<border>3</border>
+											<object class="wxFlexGridSizer">
+												<cols>2</cols>
+												<vgap>5</vgap>
+												<hgap>10</hgap>
+												<growablecols>1</growablecols>
+
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<label>Folder:</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxDirPickerCtrl" name="dpBatchFolder">
+														<message>Select folder to scan</message>
+														<style>wxDIRP_DEFAULT_STYLE|wxDIRP_USE_TEXTCTRL</style>
+													</object>
+												</object>
+
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<label>Extension:</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxTextCtrl" name="txtBatchExtension">
+														<value translate="0">.nif</value>
+														<tooltip>File extension to scan for (e.g. .nif, .obj)</tooltip>
+														<hint translate="0">.nif</hint>
+													</object>
+												</object>
+
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<label>Options:</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxCheckBox" name="chkBatchSubdirs">
+														<label>Include subdirectories</label>
+													</object>
+												</object>
+
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<label>File Filter:</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND|wxRIGHT</flag>
+															<border>5</border>
+															<object class="wxTextCtrl" name="txtBatchFileFilter">
+																<tooltip>Filter file/folder names (substring or regex)</tooltip>
+																<hint>Filter pattern...</hint>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<flag>wxALIGN_CENTER_VERTICAL</flag>
+															<object class="wxCheckBox" name="chkBatchFileFilterRegex">
+																<label>Regex</label>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+									</object>
+								</object>
+							</object>
+
+							<!-- Slider set batch options -->
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxEXPAND</flag>
+								<border>0</border>
+								<object class="wxPanel" name="panelBatchSliderSets">
+									<object class="wxStaticBoxSizer" name="boxBatchSliderSets">
+										<orient>wxVERTICAL</orient>
+										<label>Slider Set Settings</label>
+										<object class="sizeritem">
+											<flag>wxALL|wxEXPAND</flag>
+											<border>3</border>
+											<object class="wxFlexGridSizer">
+												<cols>2</cols>
+												<vgap>5</vgap>
+												<hgap>10</hgap>
+												<growablecols>1</growablecols>
+
+												<object class="sizeritem">
+													<flag>wxALIGN_CENTER_VERTICAL</flag>
+													<object class="wxStaticText">
+														<label>Filter:</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<flag>wxEXPAND</flag>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxEXPAND|wxRIGHT</flag>
+															<border>5</border>
+															<object class="wxTextCtrl" name="txtBatchSliderSetFilter">
+																<tooltip>Filter slider set names (substring or regex). Leave empty for all.</tooltip>
+																<hint>Filter pattern...</hint>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<flag>wxALIGN_CENTER_VERTICAL</flag>
+															<object class="wxCheckBox" name="chkBatchSliderSetFilterRegex">
+																<label>Regex</label>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- RefineMesh -->
+
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+
+			<!-- Output log -->
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxCollapsiblePane" name="paneOutput">
+					<label>Output Log</label>
+					<collapsed>1</collapsed>
+				</object>
+			</object>
+
+			<!-- Execute buttons -->
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnExecuteAll">
+							<label>Execute</label>
+							<tooltip>Execute all active steps in order</tooltip>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<object class="wxButton" name="wxID_CLOSE">
+							<label>Close</label>
+						</object>
+					</object>
+				</object>
+			</object>
+
+		</object>
+	</object>
+</resource>

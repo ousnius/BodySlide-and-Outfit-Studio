@@ -50,7 +50,9 @@ class SliderCategoryCollection {
 	std::unordered_map<std::string, SliderCategory> categories;
 
 public:
-	// Loads all categories in the specified folder.
+	void Clear() { categories.clear(); }
+
+	// Loads all categories in the specified folder (appends, does not clear).
 	int LoadCategories(const std::string& basePath);
 
 	int GetAllCategories(std::vector<std::string>& outCategories);

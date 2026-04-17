@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "../components/BuildSelection.h"
+#include "../components/ClippingFixer.h"
 #include "../components/SliderCategories.h"
 #include "../components/SliderData.h"
 #include "../components/SliderGroup.h"
@@ -28,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "GroupManager.h"
 #include "PresetSaveDialog.h"
 #include "PreviewWindow.h"
+#include "../ui/PreviewPanel.h"
+#include "../ui/wxStateButton.h"
 
 #include "../FSEngine/FSEngine.h"
 #include "../FSEngine/FSManager.h"
@@ -41,7 +44,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/imagpng.h>
 #include <wx/intl.h>
 #include <wx/listctrl.h>
+#include <wx/treelist.h>
 #include <wx/progdlg.h>
+#include <wx/splitter.h>
 #include <wx/srchctrl.h>
 #include <wx/statline.h>
 #include <wx/stdpaths.h>
@@ -49,21 +54,46 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/wxprec.h>
 #include <wx/xrc/xmlres.h>
 
+#include <atomic>
+#include <thread>
+
 
 enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };
+
+struct ShapePreviewData {
+	std::string name;
+	std::vector<nifly::Vector3> verts;
+	std::vector<nifly::Vector2> uvs;
+	std::vector<uint16_t> zapIdx;
+	int projectIdx = 0;
+};
 
 class BodySlideFrame;
 
 class BodySlideApp : public wxApp {
 	/* UI Managers */
 	BodySlideFrame* sliderView = nullptr;
-	PreviewWindow* preview = nullptr;
+	PreviewPanel* preview = nullptr;
+	PreviewWindow* previewWindow = nullptr;
 
 	/* Command-Line Arguments */
 	std::vector<std::string> cmdGroupBuild;
 	std::string cmdTargetDir;
 	std::string cmdPreset;
 	bool cmdTri = false;
+	std::vector<std::string> cmdPreviewNifs;
+	bool cmdPreviewMode = false;
+
+public:
+	/* Clipping Fix */
+	float clippingFixStrength = 0.0f; // 0-100 scale, 0 disables clipping fix
+private:
+
+	/* Reference shape loaded from external project for clipping fix */
+	std::unique_ptr<nifly::NifFile> referenceNif;
+	SliderSet referenceSliderSet;
+	DiffDataSets referenceDiffData;
+	std::string referenceShapeName;
 
 	/* Localization */
 	wxLocale* locale = nullptr;
@@ -71,8 +101,6 @@ class BodySlideApp : public wxApp {
 
 	/* Data Managers */
 	SliderManager sliderManager;
-	DiffDataSets dataSets;
-	SliderSet activeSet;
 	Log logger;
 
 	/* Data Items */
@@ -90,10 +118,21 @@ class BodySlideApp : public wxApp {
 	/* Cache */
 	std::map<std::string, nifly::NifFile, case_insensitive_compare> refNormalsCache; // Cache for reference normals files
 
-	std::string previewBaseName;
-	std::string previewSetName;
-	nifly::NifFile* previewBaseNif = nullptr;
-	nifly::NifFile PreviewMod;
+	struct ProjectData {
+		SliderSet sliderSet;
+		DiffDataSets dataSets;
+		nifly::NifFile* baseNif = nullptr;
+		nifly::NifFile modNif;
+		std::string setName;
+		std::string inputFileName;
+
+		~ProjectData() { delete baseNif; }
+		ProjectData() = default;
+		ProjectData(const ProjectData&) = delete;
+		ProjectData& operator=(const ProjectData&) = delete;
+	};
+	std::vector<std::unique_ptr<ProjectData>> projects;
+	bool multiProjectMode = false;
 
 	int CreateSetSliders(const std::string& outfit);
 
@@ -117,7 +156,11 @@ public:
 
 	std::string GetOutputDataPath() const;
 	std::string GetProjectPath() const;
-	SliderSet& GetActiveSet() { return activeSet; }
+	SliderSet& GetActiveSet() { return projects[0]->sliderSet; }
+	DiffDataSets& GetActiveDataSets() { return projects[0]->dataSets; }
+	bool HasActiveProject() const { return !projects.empty(); }
+
+	int AddProjectSliders(const std::string& projectFile, const std::string& setName);
 
 	void InitLanguage();
 
@@ -126,6 +169,8 @@ public:
 
 	void LoadData();
 	void CharHook(wxKeyEvent& event);
+
+	bool OutfitExists(const std::string& name) const { return outfitNameSource.find(name) != outfitNameSource.end(); }
 
 	void LoadAllCategories();
 
@@ -136,10 +181,13 @@ public:
 
 	void PopulateFilterData();
 	void ApplyOutfitFilter();
+	std::vector<std::string> ApplyPresetFilter(const std::vector<std::string>& presetNames);
 	int GetOutfits(std::vector<std::string>& outList);
 	int GetFilteredOutfits(std::vector<std::string>& outList);
 
 	void LoadPresets(const std::string& sliderSet);
+	void GetPresetNames(std::vector<std::string>& outNames);
+	void InitializeSliders(const std::string& presetName = "");
 	void PopulatePresetList(const std::string& select);
 	void PopulateOutfitList(const std::string& select);
 	void DisplayActiveSet();
@@ -160,7 +208,11 @@ public:
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
 
-	std::vector<std::string> GetConflictingOutfits() { return outFileCount.find(activeSet.GetOutputFilePath())->second; }
+	std::vector<std::string> GetConflictingOutfits() {
+		if (projects.empty())
+			return {};
+		return outFileCount.find(GetActiveSet().GetOutputFilePath())->second;
+	}
 
 	void DeleteOutfit(const std::string& outfitName);
 	void DeletePreset(const std::string& presetName);
@@ -170,26 +222,43 @@ public:
 
 	void ApplySliders(const std::string& targetShape,
 					  std::vector<Slider>& sliderSet,
+					  DiffDataSets& dataSets,
 					  std::vector<nifly::Vector3>& verts,
 					  std::vector<uint16_t>& zapidx,
 					  std::vector<nifly::Vector2>* uvs = nullptr);
 	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, nifly::NifFile& nif, std::unordered_map<std::string, std::vector<uint16_t>>& zapIndices);
 
 	void CopySliderValues(bool toHigh);
+	void CopyPreviewWeightToSliders();
 	void ShowPreview();
+	void InitPreviewPanel();
+	void BuildPreviewMesh(ProjectData* pp, bool freshLoad);
 	void InitPreview();
 	void CleanupPreview();
-	void ClosePreview() {
-		// Calling Close() will cause PreviewClosed() to be called,
-		// where we reset the preview window pointer to null
-		if (preview)
-			preview->Close();
-	}
-	void PreviewClosed() { preview = nullptr; }
+	void LoadPreviewNifs(const std::vector<std::string>& nifFilePaths);
+	void ClosePreview();
+	void PreviewClosed();
+	void PopOutPreview();
+	void DockPreview();
+	bool IsPreviewPoppedOut() const { return previewWindow != nullptr; }
 
+	/* Async preview loading */
+	std::atomic<uint64_t> previewLoadGeneration{0};
+	std::thread previewLoadThread;
+	bool previewLoading = false;
+
+	void ApplyClippingFix(nifly::NifFile& nif,
+						const std::vector<nifly::Vector3>& bodyVerts,
+						const std::vector<nifly::Triangle>& bodyTris,
+						std::unordered_map<std::string, std::vector<nifly::Vector3>*>& shapeVerts);
+	bool LoadExternalReference(const SliderSet& sliderSet);
+	void UpdateReferenceCheckboxState();
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
-	void UpdateMeshesFromSet();
+	std::vector<ShapePreviewData> ComputeMorphedShapeData(int weight);
+	void PostProcessPreview(std::vector<ShapePreviewData>& shapeData, int weight);
+	void UpdateExternalReferenceMesh(int weight, std::vector<nifly::Vector3>* outVerts = nullptr);
+	void UpdateMeshesFromSet(SliderSet& set);
 	void ApplyReferenceNormals(nifly::NifFile& nif);
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false, bool forceNormals = false);
@@ -199,6 +268,7 @@ public:
 						bool tri = false,
 						bool forceNormals = false,
 						const std::string& custPath = "");
+	int ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* treeListCtrl);
 	void GroupBuild(const std::vector<std::string>& groupNames);
 
 	void AddTriData(nifly::NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
@@ -217,6 +287,7 @@ static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild",
 												   {wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_OPTION, "p", "preset", "preset used for the build, defaults to last used preset", wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build"},
+												   {wxCMD_LINE_OPTION, "preview", "preview", "open the specified nif files in preview mode", wxCMD_LINE_VAL_STRING},
 												   wxCMD_LINE_DESC_END};
 
 #define DELAYLOAD_TIMER 299
@@ -238,6 +309,7 @@ public:
 	wxCheckBox* check = nullptr;
 	wxStaticText* label = nullptr;
 	wxPanel* dummyPanel2 = nullptr;
+	wxStateButton* tabButton = nullptr;
 
 	SliderCategoryUI();
 
@@ -245,6 +317,7 @@ public:
 
 	bool Create(wxScrolledWindow* scrollWindow,
 				wxSizer* sliderLayout,
+				wxSizer* categoryTabSizer,
 				const std::string& name,
 				const std::vector<std::string>& sliders,
 				bool pEnabled = true,
@@ -310,6 +383,8 @@ public:
 	wxSearchCtrl* search = nullptr;
 	wxSearchCtrl* outfitsearch = nullptr;
 	wxSearchCtrl* sliderFilter = nullptr;
+	wxSearchCtrl* presetFilter = nullptr;
+	wxSizer* categoryTabSizer = nullptr;
 
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxFlexGridSizer* sliderLayout = nullptr;
@@ -317,8 +392,21 @@ public:
 	wxCheckListBox* batchBuildList = nullptr;
 	wxMenu* fileCollisionMenu = nullptr;
 
+	// Splitter and embedded preview
+	wxSplitterWindow* splitter = nullptr;
+	wxPanel* leftPanel = nullptr;
+	PreviewPanel* previewPanel = nullptr;
+	bool previewVisible = true;
+	int savedSashPosition = -1;
+	int savedPreviewWidth = 0;
+
+	// Helpers for preview docking/undocking
+	void UnsplitPreview();
+	void SplitPreview(wxPanel* panel = nullptr);
+	void UpdatePreviewButtonLabel();
+
 	BodySlideFrame(BodySlideApp* app, const wxSize& size);
-	~BodySlideFrame() {}
+	~BodySlideFrame() { delete fileCollisionMenu; }
 
 	void HideSlider(SliderDisplay* slider);
 	void ShowLowColumn(bool show);
@@ -369,9 +457,11 @@ private:
 	void OnOutfitSearchChange(wxCommandEvent& event);
 
 	void OnSliderFilterChanged(wxCommandEvent&);
+	void OnPresetFilterChanged(wxCommandEvent&);
 
 	void OnZapCheckChanged(wxCommandEvent& event);
 	void OnCategoryCheckChanged(wxCommandEvent& event);
+	void OnCategoryTabButton(wxCommandEvent& event);
 
 	void OnEraseBackground(wxEraseEvent& event);
 
@@ -398,6 +488,10 @@ private:
 	void OnOutfitChoiceSelect(wxCommandEvent& event);
 
 	void OnPreview(wxCommandEvent& event);
+	void OnSashPosChanged(wxSplitterEvent& event);
+	void OnPreviewPopout(wxCommandEvent& event);
+	void OnPreviewWindowClosed();
+
 	void OnHighToLow(wxCommandEvent& event);
 	void OnLowToHigh(wxCommandEvent& event);
 	void OnBuildBodies(wxCommandEvent& event);
@@ -414,12 +508,16 @@ private:
 
 	void OnEditProject(wxCommandEvent& event);
 
+	void OnClippingStrengthChanged(wxCommandEvent& event);
+
 	bool OutfitIsEmpty() {
 		if (outfitChoice && !outfitChoice->GetStringSelection().empty())
 			return false;
 
 		return true;
 	}
+
+	void RefreshTargetGameState();
 
 	BodySlideApp* app;
 

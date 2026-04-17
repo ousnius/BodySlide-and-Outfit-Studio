@@ -87,7 +87,7 @@ std::map<ZapChoiceKey, bool> BuildSelection::GetZapChoices() {
 
 bool BuildSelection::GetZapChoice(const std::string& project, const std::string& zap) {
 	if (!HasZapChoice(project, zap))
-		return "";
+		return false;
 
 	return zapChoice[{project, zap}];
 }
@@ -204,21 +204,18 @@ void BuildSelectionFile::Get(BuildSelection& outBuildSel) {
 
 // Updates or adds output choices in the XML document
 int BuildSelectionFile::UpdateOutputChoices(BuildSelection& inBuildSel) {
-	BuildSelection bsFile = root;
-
 	for (auto& choice : inBuildSel.GetOutputChoices()) {
 		XMLElement* elem = nullptr;
 
-		if (bsFile.HasOutputPath(choice.first)) {
-			XMLElement* choiceElem = root->FirstChildElement("OutputChoice");
-			while (choiceElem) {
-				if (choiceElem->Attribute("path") == choice.first) {
-					elem = choiceElem;
-					break;
-				}
-
-				choiceElem = choiceElem->NextSiblingElement("OutputChoice");
+		XMLElement* choiceElem = root->FirstChildElement("OutputChoice");
+		while (choiceElem) {
+			const char* attrPath = choiceElem->Attribute("path");
+			if (attrPath && choice.first.compare(attrPath) == 0) {
+				elem = choiceElem;
+				break;
 			}
+
+			choiceElem = choiceElem->NextSiblingElement("OutputChoice");
 		}
 
 		if (!elem) {
@@ -237,21 +234,19 @@ int BuildSelectionFile::UpdateOutputChoices(BuildSelection& inBuildSel) {
 
 // Updates or adds zap choices in the XML document
 int BuildSelectionFile::UpdateZapChoices(BuildSelection& inBuildSel) {
-	BuildSelection bsFile = root;
-
 	for (auto& choice : inBuildSel.GetZapChoices()) {
 		XMLElement* elem = nullptr;
 
-		if (bsFile.HasZapChoice(choice.first.first, choice.first.second)) {
-			XMLElement* choiceElem = root->FirstChildElement("ZapChoice");
-			while (choiceElem) {
-				if (choiceElem->Attribute("project") == choice.first.first && choiceElem->Attribute("zap") == choice.first.second) {
-					elem = choiceElem;
-					break;
-				}
-
-				choiceElem = choiceElem->NextSiblingElement("ZapChoice");
+		XMLElement* choiceElem = root->FirstChildElement("ZapChoice");
+		while (choiceElem) {
+			const char* attrProject = choiceElem->Attribute("project");
+			const char* attrZap = choiceElem->Attribute("zap");
+			if (attrProject && attrZap && choice.first.first.compare(attrProject) == 0 && choice.first.second.compare(attrZap) == 0) {
+				elem = choiceElem;
+				break;
 			}
+
+			choiceElem = choiceElem->NextSiblingElement("ZapChoice");
 		}
 
 		if (!elem) {

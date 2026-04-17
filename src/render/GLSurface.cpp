@@ -268,6 +268,11 @@ void GLSurface::SetFieldOfView(const int fieldOfView) {
 	mFov = fieldOfView;
 }
 
+void GLSurface::SetDepthClip(const float pzNear, const float pzFar) {
+	zNear = pzNear;
+	zFar = pzFar;
+}
+
 void GLSurface::UpdateLights(const int ambient,
 							 const int frontal,
 							 const int directional0,
@@ -612,12 +617,15 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 	return collided;
 }
 
-bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, Mesh* hitMesh) {
+bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, Mesh* hitMesh, Mesh** outHitMesh) {
 	if (!hitMesh && activeMeshes.empty())
 		return false;
 
 	if (outIndex)
 		(*outIndex) = -1;
+
+	if (outHitMesh)
+		(*outHitMesh) = nullptr;
 
 	std::vector<Mesh*> hitMeshes;
 	if (hitMesh)
@@ -662,6 +670,8 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, Mesh* h
 
 				if (outIndex)
 					(*outIndex) = pointid;
+				if (outHitMesh)
+					(*outHitMesh) = m;
 
 				return true;
 			}
@@ -708,7 +718,7 @@ void GLSurface::SetSize(uint32_t w, uint32_t h) {
 	if (!SetContext())
 		return;
 
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, w*this->canvas->GetContentScaleFactor(), h*this->canvas->GetContentScaleFactor());
 	vpW = w;
 	vpH = h;
 }
@@ -721,14 +731,14 @@ void GLSurface::GetSize(uint32_t& w, uint32_t& h) {
 void GLSurface::UpdateProjection() {
 	float aspect = (float)vpW / (float)vpH;
 	if (perspective)
-		matProjection = glm::perspective(glm::radians(mFov), aspect, 0.1f, 1000.0f);
+		matProjection = glm::perspective(glm::radians(mFov), aspect, zNear, zFar);
 	else
 		matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect,
 								   (-camPos.z + camOffset.z) / 2.0f * aspect,
 								   (camPos.z + camOffset.z) / 2.0f,
 								   (-camPos.z + camOffset.z) / 2.0f,
-								   0.1f,
-								   1000.0f);
+								   zNear,
+								   zFar);
 
 	auto mat = glm::identity<glm::mat4x4>();
 	matView = glm::translate(mat, glm::vec3(camPos.x, camPos.y, camPos.z));
@@ -749,7 +759,7 @@ void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, u
 	GLuint m_vertexArrayObject = 0;
 	glGenVertexArrays(1, &m_vertexArrayObject);
 
-	glViewport(0, 0, w, h);
+	glViewport(0, 0, w*this->canvas->GetContentScaleFactor(), h*this->canvas->GetContentScaleFactor());
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	// This relies on shader manipulation of vertex positions to render a single triangle clipped to the surface
@@ -1101,7 +1111,8 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 		if (m->bShowPoints && m->mask) {
 			glEnable(GL_PROGRAM_POINT_SIZE);
 			shader.SetAdjustPointSize(true);
-			shader.SetColor(Vector3(0.0f, 1.0f, 0.0f));
+			shader.SetColor(colorPoints);
+			shader.SetSubColor(colorPointsMasked);
 
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 
@@ -1915,6 +1926,37 @@ Mesh* GLSurface::AddVisPlane(const Matrix4& mat, const Vector2& size, float uvSc
 	m->textured = true;
 
 	m->CreateBuffers();
+	return m;
+}
+
+Mesh* GLSurface::AddVisEdges(const Mesh* refMesh, const std::vector<Edge>& edges, const std::string& name, const Vector3& color) {
+	if (!refMesh || edges.empty())
+		return nullptr;
+
+	if (!SetContext())
+		return nullptr;
+
+	auto m = new Mesh();
+	m->nVerts = refMesh->nVerts;
+	m->nEdges = static_cast<int>(edges.size());
+
+	m->verts = std::make_unique<Vector3[]>(m->nVerts);
+	m->edges = std::make_unique<Edge[]>(m->nEdges);
+
+	for (int v = 0; v < refMesh->nVerts; v++)
+		m->verts[v] = refMesh->verts[v];
+
+	for (size_t e = 0; e < edges.size(); e++)
+		m->edges[e] = edges[e];
+
+	m->shapeName = name;
+	m->color = color;
+	m->material = GetPrimitiveMaterial();
+	m->CreateBuffers();
+
+	m->rendermode = Mesh::RenderMode::UnlitWire;
+	AddOverlay(m);
+
 	return m;
 }
 

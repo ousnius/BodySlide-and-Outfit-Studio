@@ -17,12 +17,18 @@ class GLOffScreenBuffer {
 	GLSurface* glsRef = nullptr;
 	GLuint* pmfbo = nullptr;
 	GLuint* pmtex = nullptr;
-	GLuint mrbo;
-	bool isBound;
-	int current;
-	int numBuffers;
-	int w, h;
-	int GLOBCount;
+	GLuint mrbo = 0;
+	bool isBound = false;
+	int current = -1;
+	int numBuffers = 0;
+	int w = 0, h = 0;
+	int GLOBCount = 0;
+	int msaaSamples = 0;
+
+	// MSAA resources (only used when msaaSamples > 0)
+	GLuint msaaFBO = 0;
+	GLuint msaaColorRBO = 0;
+	GLuint msaaDepthRBO = 0;
 
 	void createTextures() {
 		for (int i = 0; i < numBuffers; i++) {
@@ -40,7 +46,7 @@ class GLOffScreenBuffer {
 	}
 
 public:
-	GLOffScreenBuffer(GLSurface* gls, int width, int height, int count = 1, const std::vector<GLuint>& texIds = std::vector<GLuint>());
+	GLOffScreenBuffer(GLSurface* gls, int width, int height, int count = 1, const std::vector<GLuint>& texIds = std::vector<GLuint>(), int samples = 0);
 
 	std::string texName(int index = -1);
 
@@ -53,6 +59,7 @@ public:
 	GLuint GetTexID();
 
 	void SaveTexture(const std::string& filename);
+	void Resolve();
 	void End();
 
 	~GLOffScreenBuffer();

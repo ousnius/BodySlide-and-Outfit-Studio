@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
 	<object class="wxFrame" name="outfitStudio">
 		<style>wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER|wxSYSTEM_MENU|wxTAB_TRAVERSAL</style>
@@ -147,6 +147,12 @@
 						<radio>1</radio>
 					</object>
 					<object class="separator" />
+					<object class="wxCheckBox" name="cbDepthClip">
+						<fg>#ffffff</fg>
+						<label>Depth Clip</label>
+						<checked>0</checked>
+						<tooltip>Simulates lower depth buffer precision to help with depth-related clipping</tooltip>
+					</object>
 					<object class="wxSlider" name="fovSlider">
 						<size>100,25</size>
 						<value translate="0">65</value>
@@ -163,7 +169,7 @@
 						<size>-1,25</size>
 						<label>Brush Settings</label>
 					</object>
-					<object class="space"/>
+					<object class="space" />
 					<object class="tool" name="btnDiscord">
 						<label translate="0">Discord</label>
 						<tooltip>Open Discord invite link.</tooltip>
@@ -502,7 +508,7 @@
 																	<option>0</option>
 																	<flag>wxEXPAND|wxTOP</flag>
 																	<border>5</border>
-																	<object class="wxPanel" name ="colorPalette">
+																	<object class="wxPanel" name="colorPalette">
 																		<object class="wxBoxSizer">
 																			<orient>wxHORIZONTAL</orient>
 																			<object class="sizeritem">
@@ -587,6 +593,15 @@
 																	<object class="wxButton" name="btnSwapBrush">
 																		<size>-1,25</size>
 																		<label>Edit Alpha</label>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxEXPAND|wxTOP</flag>
+																	<border>5</border>
+																	<object class="wxButton" name="btnMaskVertexColor">
+																		<size>-1,25</size>
+																		<label>Mask matching color</label>
 																	</object>
 																</object>
 															</object>
@@ -1242,9 +1257,9 @@
 																				<option>1</option>
 																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxChoice" name="cMaskName">
+																				<object class="wxComboBox" name="cMaskName">
 																					<style>wxCB_SORT</style>
-																					<selection>0</selection>
+																					<value></value>
 																					<content />
 																				</object>
 																			</object>
@@ -1261,18 +1276,34 @@
 																				<option>0</option>
 																				<flag>wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxButton" name="saveAsMask">
+																				<object class="wxButton" name="deleteMask">
 																					<size>-1,25</size>
-																					<label>Save As...</label>
+																					<label>Delete</label>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>0</option>
+																		<flag>wxALL|wxEXPAND</flag>
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxLEFT|wxBOTTOM|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxButton" name="exportMask">
+																					<size>-1,25</size>
+																					<label>Export...</label>
 																				</object>
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<flag>wxLEFT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxButton" name="deleteMask">
+																				<object class="wxButton" name="importMask">
 																					<size>-1,25</size>
-																					<label>Delete</label>
+																					<label>Import...</label>
 																				</object>
 																			</object>
 																		</object>
@@ -1618,6 +1649,31 @@
 															</object>
 														</object>
 													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND|wxLEFT</flag>
+														<border>2</border>
+														<object class="wxCollapsiblePane" name="notesPane">
+															<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+															<collapsed>1</collapsed>
+															<label>Notes</label>
+															<bg>wxSYS_COLOUR_MENU</bg>
+															<object class="panewindow">
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxALL|wxEXPAND</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="projectNotes">
+																			<style>wxTE_MULTILINE</style>
+																			<size>-1,120</size>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
 												</object>
 											</object>
 										</object>
@@ -1673,6 +1729,10 @@
 			<object class="wxMenuItem" name="fileConvBodyRef">
 				<label>Convert / Replace Reference...\tCtrl+Shift+R</label>
 				<help>Convert to or replace an outfit's body/reference</help>
+			</object>
+			<object class="wxMenuItem" name="menuRunAutomation">
+				<label>Open Automation...\tCtrl+Shift+A</label>
+				<help>Open the automation dialog to create, load and execute automation scripts.</help>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="fileSave">
@@ -1871,12 +1931,12 @@
 					<help>Edit the texture coordinates.</help>
 				</object>
 				<object class="wxMenuItem" name="uvInvertX">
-					<label>Invert X</label>
-					<help>Inverts the X-axis of the texture coordinates.</help>
+					<label>Invert X (Mirror)</label>
+					<help>Inverts the X-axis to mirror the texture coordinates.</help>
 				</object>
 				<object class="wxMenuItem" name="uvInvertY">
-					<label>Invert Y</label>
-					<help>Inverts the Y-axis of the texture coordinates.</help>
+					<label>Invert Y (Flip)</label>
+					<help>Inverts the Y-axis to flip the texture coordinates.</help>
 				</object>
 			</object>
 			<object class="wxMenuItem" name="deleteVerts">
@@ -1928,6 +1988,10 @@
 				<label>Inflate...</label>
 				<help>Inflates/deflates a shape along its normals. This permanently moves vertices.</help>
 			</object>
+			<object class="wxMenuItem" name="fixClippingShape">
+				<label>Fix Clipping...</label>
+				<help>Fixes clipping of outfit vertices that penetrate the reference shape.</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenu" name="menuNormals">
 				<label>Normals</label>
@@ -1952,10 +2016,6 @@
 			<object class="wxMenuItem" name="copyBoneWeight">
 				<label>Copy Bone Weights</label>
 				<help>Copies all bone weights from the reference shape to the current shape.</help>
-			</object>
-			<object class="wxMenuItem" name="copySelectedWeight">
-				<label>Copy Selected Weights</label>
-				<help>Copies selected bone weights from the reference shape to the current shape.</help>
 			</object>
 			<object class="wxMenuItem" name="transferSelectedWeight">
 				<label>Transfer Selected Weights</label>
@@ -1991,6 +2051,9 @@
 			<object class="wxMenuItem" name="deleteShape">
 				<label>Delete\tDel</label>
 				<help>Removes the currently selected shape from the outfit.</help>
+				<extra-accels>
+					<accel>Ctrl+Shift+Del</accel>
+				</extra-accels>
 			</object>
 			<object class="wxMenuItem" name="shapeProperties">
 				<label>Properties...</label>
@@ -2006,6 +2069,10 @@
 			<object class="wxMenuItem" name="sliderConformAll">
 				<label>Conform All\tCtrl+Shift+C</label>
 				<help>Conform all outfit shapes to all checked sliders.</help>
+			</object>
+			<object class="wxMenuItem" name="sliderFixClipping">
+				<label>Fix Clipping...</label>
+				<help>Fixes clipping of outfit vertices that penetrate the reference shape for the active slider.</help>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="saveBaseShape">
@@ -2291,6 +2358,10 @@
 				<label>Toggle Rotation Center\tShift+R</label>
 				<help>Switch between the different rotation center modes.</help>
 			</object>
+			<object class="wxMenuItem" name="btnFrameSelected">
+				<label>Frame Selected\tR</label>
+				<help>Center and zoom the camera to frame the selected shapes, ignoring masked vertices.</help>
+			</object>
 			<object class="wxMenuItem" name="btnShowNodes">
 				<label>Show Nodes\tShift+N</label>
 				<checkable>1</checkable>
@@ -2419,14 +2490,14 @@
 			<label>Inflate...</label>
 			<help>Inflates/deflates a shape along its normals. This permanently moves vertices.</help>
 		</object>
+		<object class="wxMenuItem" name="fixClippingShape">
+			<label>Fix Clipping...</label>
+			<help>Fixes clipping of outfit vertices that penetrate the reference shape.</help>
+		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="copyBoneWeight">
 			<label>Copy Bone Weights</label>
 			<help>Copies all bone weights from the reference shape to the current shape.</help>
-		</object>
-		<object class="wxMenuItem" name="copySelectedWeight">
-			<label>Copy Selected Weights</label>
-			<help>Copies selected bone weights from the reference shape to the current shape.</help>
 		</object>
 		<object class="wxMenuItem" name="transferSelectedWeight">
 			<label>Transfer Selected Weights</label>

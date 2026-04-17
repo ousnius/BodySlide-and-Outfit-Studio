@@ -310,5 +310,11 @@ void main(void)
 				discard;
 
 		fragColor.a *= prop.alpha;
+		gl_FragDepth = gl_FragCoord.z;
+	}
+	else
+	{
+		// Minimal depth offset for wireframe to prevent z-fighting with its own mesh
+		gl_FragDepth = gl_FragCoord.z - 0.00001f;
 	}
 }

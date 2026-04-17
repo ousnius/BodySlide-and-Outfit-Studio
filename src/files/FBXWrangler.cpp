@@ -3,6 +3,8 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
+#ifdef USE_FBXSDK
+
 #include "FBXWrangler.h"
 #include <fbxsdk.h>
 
@@ -671,3 +673,5 @@ void FBXWrangler::Priv::LoadMesh(const FBXImportOptions& options, FbxNode* node)
 
 	shapes[shape.name] = std::move(shape);
 }
+
+#endif

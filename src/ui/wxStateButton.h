@@ -10,6 +10,7 @@ See the included LICENSE file
 class wxStateButton : public wxButton {
 	bool m_bChecked = false;
 	bool m_bPendingChanges = false;
+	bool m_bNoState = false;
 	wxString text;
 
 public:
@@ -21,7 +22,8 @@ public:
 				  const wxSize& size = wxDefaultSize,
 				  long style = 0,
 				  const wxValidator& validator = wxDefaultValidator,
-				  const wxString& name = "button");
+				  const wxString& name = "button",
+				  const bool noState = false);
 
 	void paintEvent(wxPaintEvent& evt);
 	void paintNow();

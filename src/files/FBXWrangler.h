@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #pragma once
 
+#ifdef USE_FBXSDK
+
 #include "../components/Anim.h"
 #include "../components/Mesh.h"
 #include "../program/FBXImportOptions.h"
@@ -79,3 +81,5 @@ public:
 	bool ExportScene(const std::string& fileName);
 	bool ImportScene(const std::string& fileName, const FBXImportOptions& options = FBXImportOptions());
 };
+
+#endif

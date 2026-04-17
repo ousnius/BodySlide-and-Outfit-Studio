@@ -87,7 +87,6 @@ public:
 
 	uint32_t overlayLayer = 0;					 // Layer for order of rendering overlays
 
-	std::unique_ptr<std::vector<int>[]> vertTris;		 // Map of triangles for which each vert is a member.
 	std::unique_ptr<std::vector<int>[]> vertEdges;		 // Map of edges for which each vert is a member.
 	WeldVertsType weldVerts; // Verts that are duplicated for UVs but are in the same position.
 	bool bGotWeldVerts = false;							 // Whether weldVerts has been calculated yet.
@@ -139,7 +138,6 @@ public:
 
 	void MakeEdges(); // Creates the list of edges from the list of triangles.
 
-	void BuildTriAdjacency();	 // Triangle adjacency optional to reduce overhead when it's not needed.
 	void BuildVertexAdjacency(); // Vertex adjacency optional to reduce overhead when it's not needed.
 	void BuildEdgeList();		 // Edge list optional to reduce overhead when it's not needed.
 

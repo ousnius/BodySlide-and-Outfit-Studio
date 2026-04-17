@@ -8,6 +8,7 @@ See the included LICENSE file
 #include <tinyxml2.h>
 
 #include "DiffData.h"
+#include "../utils/StringStuff.h"
 
 using namespace tinyxml2;
 
@@ -36,7 +37,7 @@ public:
 	std::vector<std::string> zapToggles;
 
 	float curValue = 0.0f;
-	bool bShow = false;
+	bool bShow = true;
 
 	std::vector<DiffInfo> dataFiles;
 
@@ -60,14 +61,20 @@ public:
 		return "";
 	}
 
-	void RenameTarget(const std::string& oldTarget, const std::string& newTarget) {
+	void RenameTarget(const std::string& oldTarget, const std::string& newTarget, const std::string& dataName) {
 		for (auto& df : dataFiles) {
 			if (df.targetName == oldTarget) {
 				df.targetName = newTarget;
 
-				if (df.dataName.length() >= oldTarget.length()) {
+				if (df.dataName == oldTarget + dataName) {
+					df.dataName = newTarget + dataName;
+				}
+				else if (StringStartsWith(df.dataName, oldTarget)) {
 					std::string dtname = df.dataName.substr(oldTarget.length());
 					df.dataName = newTarget + dtname;
+				}
+				else if (StringEndsWith(df.dataName, name)) {
+					df.dataName = newTarget + name;
 				}
 			}
 		}

@@ -29,13 +29,11 @@ void Automorph::RenameResultDiffData(const std::string& shape, const std::string
 	targetSliderDataNames.erase(setName);
 }
 
-void Automorph::RenameShape(const std::string& oldShapeName, const std::string& oldTarget, const std::string& newShapeName) {
+void Automorph::RenameShape(const std::string& oldShapeName, const std::string& newShapeName) {
 	if (sourceShapes.find(oldShapeName) != sourceShapes.end()) {
 		sourceShapes[newShapeName] = sourceShapes[oldShapeName];
 		sourceShapes.erase(oldShapeName);
 	}
-
-	resultDiffData.DeepRename(oldTarget, newShapeName);
 
 	std::vector<std::string> oldKeys;
 	for (auto& tsdn : targetSliderDataNames) {
@@ -56,9 +54,19 @@ void Automorph::RenameShape(const std::string& oldShapeName, const std::string& 
 		targetSliderDataNames.erase(oldKeys[i]);
 }
 
-void Automorph::CopyShape(const std::string& srcShapeName, const std::string& srcTarget, const std::string& destShapeName) {
-	resultDiffData.DeepCopy(srcTarget, destShapeName);
+void Automorph::RenameDataTarget(const std::string& oldTarget, const std::string& newTarget) {
+	resultDiffData.RenameDataTarget(oldTarget, newTarget);
+}
 
+void Automorph::RenameSet(const std::string& oldName, const std::string& newName) {
+	resultDiffData.RenameSet(oldName, newName);
+}
+
+void Automorph::CopySet(const std::string& oldName, const std::string& newName, const std::string& newTargetName) {
+	resultDiffData.CopySet(oldName, newName, newTargetName);
+}
+
+void Automorph::CopyShape(const std::string& srcShapeName, const std::string& destShapeName) {
 	std::vector<std::string> newVals;
 	std::vector<std::string> oldKeys;
 	std::vector<std::string> newKeys;
@@ -91,6 +99,10 @@ void Automorph::CopyShape(const std::string& srcShapeName, const std::string& sr
 
 	for (size_t i = 0; i < oldKeys.size(); i++)
 		targetSliderDataNames[newKeys[i]] = newVals[i];
+}
+
+std::string Automorph::GetDataTargetName(const std::string& targetName, const std::string& dataNameSuffix) {
+	return resultDiffData.GetDataTargetName(targetName, dataNameSuffix);
 }
 
 void Automorph::SetRef(NifFile& ref, NiShape* refShape, const AnimInfo* workAnim) {
@@ -261,8 +273,9 @@ void Automorph::LoadResultDiffs(SliderSet& fromSet) {
 				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);
 }
 
-void Automorph::MergeResultDiffs(SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal) {
-	fromSet.Merge(mergeSet, resultDiffData, baseDiffData, baseShape, newDataLocal);
+void Automorph::MergeResultDiffs(
+	SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape, const bool newDataLocal, const bool appendNewSliders) {
+	fromSet.Merge(mergeSet, resultDiffData, baseDiffData, baseShape, newDataLocal, appendNewSliders);
 	for (size_t i = 0; i < fromSet.size(); i++)
 		for (auto& df : fromSet[i].dataFiles)
 			if (df.dataName != (df.targetName + fromSet[i].name))

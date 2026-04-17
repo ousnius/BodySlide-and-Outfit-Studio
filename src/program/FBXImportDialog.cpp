@@ -3,6 +3,8 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
+#ifdef USE_FBXSDK
+
 #include "FBXImportDialog.h"
 #include "../utils/ConfigDialogUtil.h"
 #include "../utils/ConfigurationManager.h"
@@ -397,3 +399,5 @@ void FBXImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {
 
 	EndModal(wxID_OK);
 }
+
+#endif

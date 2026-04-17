@@ -26,6 +26,7 @@ set(commonsources
 	lib/nifly/src/Factory.cpp
 	lib/nifly/src/Geometry.cpp
 	lib/nifly/src/NifFile.cpp
+	lib/nifly/src/NifUtil.cpp
 	lib/nifly/src/Nodes.cpp
 	lib/nifly/src/Object3d.cpp
 	lib/nifly/src/Objects.cpp
@@ -39,6 +40,7 @@ set(commonsources
 	lib/TinyXML-2/tinyxml2.cpp
 	src/components/Anim.cpp
 	src/components/Automorph.cpp
+	src/components/ClippingFixer.cpp
 	src/components/DiffData.cpp
 	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp
@@ -48,6 +50,7 @@ set(commonsources
 	src/components/SliderManager.cpp
 	src/components/SliderPresets.cpp
 	src/components/SliderSet.cpp
+	src/files/MaskFile.cpp
 	src/files/MaterialFile.cpp
 	src/files/ResourceLoader.cpp
 	src/files/TriFile.cpp
@@ -72,12 +75,15 @@ set(OSsources
 	${commonsources}
 	src/components/PoseData.cpp
 	src/components/RefTemplates.cpp
+	src/components/Automation.cpp
 	src/components/TweakBrush.cpp
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
 	src/files/ObjFile.cpp
+	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
+	src/ui/WeightCopyDialog.cpp
 	src/program/EditUV.cpp
 	src/program/FBXImportDialog.cpp
 	src/program/ObjImportDialog.cpp
@@ -85,6 +91,7 @@ set(OSsources
 	src/program/OutfitStudio.cpp
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp
+	src/program/AutomationDialog.cpp
 	src/program/SliderDataImportDialog.cpp
 	)
 set(BSsources
@@ -93,12 +100,15 @@ set(BSsources
 	src/program/BodySlideApp.cpp
 	src/program/NormalsGenDialog.cpp
 	src/program/PreviewWindow.cpp
+	src/ui/PreviewPanel.cpp
 	src/ui/wxNormalsGenDlg.cpp
 	src/components/BuildSelection.cpp
 	)
 
 add_executable(OutfitStudio ${OSsources})
 add_executable(BodySlide ${BSsources})
+
+target_compile_definitions(OutfitStudio PRIVATE USE_FBXSDK)
 
 include(${wxWidgets_USE_FILE})
 target_include_directories(OutfitStudio SYSTEM PRIVATE

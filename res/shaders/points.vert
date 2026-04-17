@@ -68,11 +68,10 @@ void main(void)
 
 	if (vertexMask > 0.0)
 	{
-		vColor = vec4(1.0, 0.0, 0.0, 0.5);
+		vColor = vec4(subColor.rgb, 0.5);
 	}
 	else
 	{
-		vColor.rgb = color.rgb;
-		vColor.a = 0.5;
+		vColor = vec4(color.rgb, 0.5);
 	}
 }

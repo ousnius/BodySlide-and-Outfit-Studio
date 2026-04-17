@@ -45,9 +45,12 @@ public:
 	int SaveSet(const std::string& name, const std::string& target, const std::string& toFile);
 	bool LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);
 	bool SaveData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);
+
 	void RenameSet(const std::string& oldName, const std::string& newName);
-	void DeepRename(const std::string& oldName, const std::string& newName);
-	void DeepCopy(const std::string& srcName, const std::string& destName);
+	void RenameDataTarget(const std::string& oldTarget, const std::string& newTarget);
+	void CopySet(const std::string& oldName, const std::string& newName, const std::string& newTargetName);
+	std::string GetDataTargetName(const std::string& targetName, const std::string& dataNameSuffix);
+
 	void AddEmptySet(const std::string& name, const std::string& target);
 	void UpdateDiff(const std::string& name, const std::string& target, uint16_t index, const nifly::Vector3& newdiff);
 	void SumDiff(const std::string& name, const std::string& target, uint16_t index, const nifly::Vector3& newdiff);

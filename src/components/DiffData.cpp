@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "DiffData.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/StringStuff.h"
 #include "NifUtil.hpp"
 #include "UndoState.h"
 
@@ -261,55 +262,27 @@ void DiffDataSets::RenameSet(const std::string& oldName, const std::string& newN
 	}
 }
 
-void DiffDataSets::DeepRename(const std::string& oldName, const std::string& newName) {
-	std::vector<std::string> oldTargets;
-	std::vector<std::string> newTargets;
-	std::string newDT = "";
+void DiffDataSets::RenameDataTarget(const std::string& oldTarget, const std::string& newTarget) {
 	for (auto& dt : dataTargets) {
-		if (dt.second == oldName && dt.first.length() >= oldName.length()) {
-			oldTargets.push_back(dt.first);
-			newDT = dt.first.substr(oldName.length());
-			newDT = newName + newDT;
-			newTargets.push_back(newDT);
-			dt.second = newName;
-		}
-	}
-	for (size_t i = 0; i < oldTargets.size(); i++) {
-		std::string ot = oldTargets[i];
-		std::string nt = newTargets[i];
-		if (dataTargets.find(ot) != dataTargets.end()) {
-			dataTargets[nt] = dataTargets[ot];
-			dataTargets.erase(ot);
-		}
-		if (namedSet.find(ot) != namedSet.end()) {
-			namedSet[nt] = std::move(namedSet[ot]);
-			namedSet.erase(ot);
-		}
+		if (dt.second == oldTarget)
+			dt.second = newTarget;
 	}
 }
 
-void DiffDataSets::DeepCopy(const std::string& srcName, const std::string& destName) {
-	std::vector<std::string> oldTargets;
-	std::vector<std::string> newTargets;
-	std::string newDT = "";
+void DiffDataSets::CopySet(const std::string& oldName, const std::string& newName, const std::string& newTargetName) {
+	auto namedSetIt = namedSet.find(oldName);
+	if (namedSetIt != namedSet.end()) {
+		namedSet[newName] = std::make_unique<TargetDataDiffs>(*namedSetIt->second);
+		dataTargets[newName] = newTargetName;
+	}
+}
 
+std::string DiffDataSets::GetDataTargetName(const std::string& targetName, const std::string& dataNameSuffix) {
 	for (auto& dt : dataTargets) {
-		if (dt.second == srcName && dt.first.length() >= srcName.length()) {
-			oldTargets.push_back(dt.first);
-			newDT = dt.first.substr(srcName.length());
-			newDT = destName + newDT;
-			newTargets.push_back(newDT);
-		}
+		if (dt.second == targetName && StringEndsWith(dt.first, dataNameSuffix))
+			return dt.first;
 	}
-
-	for (size_t i = 0; i < oldTargets.size(); i++) {
-		std::string ot = oldTargets[i];
-		std::string nt = newTargets[i];
-		dataTargets[nt] = destName;
-
-		if (namedSet.find(ot) != namedSet.end())
-			namedSet[nt] = std::make_unique<TargetDataDiffs>(*namedSet[ot]);
-	}
+	return "";
 }
 
 void DiffDataSets::AddEmptySet(const std::string& name, const std::string& target) {

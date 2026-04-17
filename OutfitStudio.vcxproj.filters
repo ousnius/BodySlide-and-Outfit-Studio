@@ -110,6 +110,9 @@
     <None Include="res\xrc\Setup.xrc">
       <Filter>Resources</Filter>
     </None>
+    <None Include="res\xrc\WeightCopy.xrc">
+      <Filter>Resources</Filter>
+    </None>
     <None Include="lang\BodySlide.pot">
       <Filter>Resources</Filter>
     </None>
@@ -590,6 +593,9 @@
     <None Include="res\xrc\ConvertBodyReference.xrc">
       <Filter>Resources</Filter>
     </None>
+    <None Include="res\xrc\Automation.xrc">
+      <Filter>Resources</Filter>
+    </None>
     <None Include="lib\gli\glm\ext\matrix_clip_space.inl">
       <Filter>Libraries\gli\glm\ext</Filter>
     </None>
@@ -721,6 +727,9 @@
     <ClInclude Include="src\components\Automorph.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\ClippingFixer.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\ObjFile.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -728,6 +737,9 @@
       <Filter>Files</Filter>
     </ClInclude>
     <ClInclude Include="src\files\TriFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\MaskFile.h">
       <Filter>Files</Filter>
     </ClInclude>
     <ClInclude Include="src\files\FBXWrangler.h">
@@ -1405,11 +1417,20 @@
     <ClInclude Include="src\ui\wxBrushSettingsPopup.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\WeightCopyDialog.h">
+      <Filter>UI</Filter>
+    </ClInclude>
     <ClInclude Include="src\ui\wxSliderPanel.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="src\program\ConvertBodyReferenceDialog.h">
       <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\program\AutomationDialog.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\Automation.h">
+      <Filter>Components</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\ConfigDialogUtil.h">
       <Filter>Utilities</Filter>
@@ -1959,6 +1980,9 @@
     <ClCompile Include="src\components\Automorph.cpp">
       <Filter>Components</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\ClippingFixer.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\DiffData.cpp">
       <Filter>Components</Filter>
     </ClCompile>
@@ -1969,6 +1993,9 @@
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\TriFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\MaskFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\FBXWrangler.cpp">
@@ -2103,11 +2130,20 @@
     <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui\WeightCopyDialog.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
     <ClCompile Include="src\ui\wxSliderPanel.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp">
       <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\AutomationDialog.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\Automation.cpp">
+      <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\program\SliderDataImportDialog.cpp">
       <Filter>Program</Filter>

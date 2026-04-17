@@ -6,13 +6,16 @@ See the included LICENSE file
 #pragma once
 
 #include "../utils/AABBTree.h"
+#include "../files/MaterialFile.h"
+#include "NifFile.hpp"
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh, Mirror };
+enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh, Mirror, ShapeDelete };
 
 struct UndoStateVertexWeight {
 	float startVal, endVal;
@@ -66,6 +69,11 @@ struct UndoStateShape {
 	// is meaningful.
 	std::unordered_map<int, nifly::Vector3> pointStartState;
 	std::unordered_map<int, nifly::Vector3> pointEndState;
+	// restDiffs is only meaningful for UndoType::VertexPosition when the
+	// edit occurred while posed. Contains rest-space NIF diffs per vertex,
+	// used for pose-independent undo/redo (so changing the pose between
+	// the edit and the undo doesn't break the mesh).
+	std::unordered_map<int, nifly::Vector3> restDiffs;
 	// boneWeights is only meaningful for UndoType::Weight.
 	std::vector<UndoStateBoneWeights> boneWeights;
 	// delVerts, addVerts, delTris, and addTris are only meaningful for
@@ -75,9 +83,28 @@ struct UndoStateShape {
 	bool hadVertexColors = false;
 };
 
+struct UndoStateShapeSliderDiff {
+	std::string sliderName;
+	std::string targetDataName;
+	std::unordered_map<uint16_t, nifly::Vector3> diffs;
+};
+
+struct UndoStateShapeDelete {
+	std::string shapeName;
+	bool wasBaseShape = false;
+	nifly::NifFile nifBackup;
+	std::vector<UndoStateShapeSliderDiff> sliderDiffs;
+	std::vector<std::string> textures;
+	std::optional<MaterialFile> materialFile;
+};
+
 struct UndoStateProject {
 	UndoType undoType = UndoType::VertexPosition;
 	std::vector<UndoStateShape> usss;
+
+	// Shapes that were fully deleted. Used by UndoType::ShapeDelete and
+	// UndoType::Mesh (when vertex deletion removes an entire shape).
+	std::vector<UndoStateShapeDelete> deletedShapes;
 
 	// if undoType is UndoType::VertexPosition and sliderName is not empty,
 	// this is a slider shape edit rather than a base shape edit.
