@@ -20,6 +20,8 @@ See the included LICENSE file
 #include <wx/msgdlg.h>
 #include <wx/filename.h>
 
+#include <tinyxml2.h>
+
 #include <regex>
 #include <set>
 
@@ -1305,6 +1307,15 @@ void AutomationDialog::CollectScripts(const wxString& baseFolder, const wxString
 	wxString filename;
 	if (dir.GetFirst(&filename, "*.xml", wxDIR_FILES)) {
 		do {
+			wxString fullPath = currentFolder + "/" + filename;
+
+			// Only include files whose root element is <AutomationScript>
+			tinyxml2::XMLDocument doc;
+			if (doc.LoadFile(fullPath.ToUTF8().data()) != tinyxml2::XML_SUCCESS)
+				continue;
+			if (!doc.FirstChildElement("AutomationScript"))
+				continue;
+
 			wxFileName fn(filename);
 			wxString relativePath;
 			if (currentFolder == baseFolder) {
