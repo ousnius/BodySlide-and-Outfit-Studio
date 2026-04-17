@@ -515,27 +515,24 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	// Add/remove nodes and set transforms
 	WriteNodesToNif(nif, shapeException);
 
-	// Collect list of needed bones
-	std::unordered_set<const AnimBone*> neededBones;
+	// Generate map of bone names to node IDs in a single pass.
+	std::unordered_map<std::string, int> boneIDMap;
 	for (auto& bones : shapeBones) {
+		if (bones.first == shapeException)
+			continue;
+
 		for (auto& bone : bones.second) {
+			if (boneIDMap.find(bone) != boneIDMap.end())
+				continue;
+
 			const AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(bone);
 			if (!bptr)
 				continue;
 
-			if (bones.first == shapeException)
-				continue;
-
-			neededBones.insert(bptr);
+			NiNode* node = nif->FindBlockByName<NiNode>(bptr->boneName);
+			if (node)
+				boneIDMap[bptr->boneName] = nif->GetBlockID(node);
 		}
-	}
-
-	// Generate map of bone names to node IDs.
-	std::unordered_map<std::string, int> boneIDMap;
-	for (const AnimBone* bptr : neededBones) {
-		NiNode* node = nif->FindBlockByName<NiNode>(bptr->boneName);
-		if (node)
-			boneIDMap[bptr->boneName] = nif->GetBlockID(node);
 	}
 
 	// Generate bone node ID list for each shape and set it.
