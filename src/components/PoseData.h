@@ -28,6 +28,7 @@ class PoseData {
 public:
 	std::string name;
 	std::vector<PoseBoneData> boneData;
+	bool readOnly = false;
 
 	PoseData() {}
 

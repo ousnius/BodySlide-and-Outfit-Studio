@@ -1695,12 +1695,14 @@ private:
 	void OnResetBonePose(wxCommandEvent& event);
 	void OnResetAllPose(wxCommandEvent& event);
 	void OnPoseToMesh(wxCommandEvent& event);
+	void ResetAllPoseBones();
 	void ActivatePose(bool checked);
 	void OnPoseCheckBox(wxCommandEvent& event);
 	void OnSelectPose(wxCommandEvent& event);
 	void OnSavePose(wxCommandEvent& event);
-	void OnSaveAsPose(wxCommandEvent& event);
 	void OnDeletePose(wxCommandEvent& event);
+
+	void UpdatePoseButtonStates();
 
 	wxDECLARE_EVENT_TABLE();
 };

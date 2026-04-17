@@ -1334,9 +1334,9 @@
 																				<option>1</option>
 																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxChoice" name="cPoseName">
+																				<object class="wxComboBox" name="cPoseName">
 																					<style>wxCB_SORT</style>
-																					<selection>0</selection>
+																					<value></value>
 																					<content />
 																				</object>
 																			</object>
@@ -1351,11 +1351,11 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<flag>wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxButton" name="saveAsPose">
+																				<object class="wxButton" name="deletePose">
 																					<size>-1,25</size>
-																					<label>Save As...</label>
+																					<label>Delete</label>
 																				</object>
 																			</object>
 																			<object class="sizeritem">
