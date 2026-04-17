@@ -7288,7 +7288,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		UpdateVertexColors();
 	}
 
-	if (id != boneTabButton->GetId() || id != colorsTabButton->GetId()) {
+	if (id != boneTabButton->GetId() && id != colorsTabButton->GetId()) {
 		menuBar->Check(XRCID("btnInflateBrush"), true);
 		menuBar->Enable(XRCID("btnTransform"), true);
 		menuBar->Enable(XRCID("btnPivot"), true);
