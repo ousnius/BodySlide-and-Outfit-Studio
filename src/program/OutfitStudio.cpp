@@ -134,6 +134,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMBOBOX(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
 	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
 	EVT_BUTTON(XRCID("deletePose"), OutfitStudioFrame::OnDeletePose)
+	EVT_BUTTON(XRCID("loadHkxPose"), OutfitStudioFrame::OnLoadHkxPose)
 
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
 	EVT_TEXT_ENTER(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
@@ -1278,6 +1279,15 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (segmentTabButton) {
 		bool showSegmentTab = wxGetApp().targetGame == FO4 || wxGetApp().targetGame == FO4VR || wxGetApp().targetGame == FO76;
 		segmentTabButton->Show(showSegmentTab);
+	}
+
+	// The HKX pose pipeline supports Skyrim LE/SE/VR and Fallout 4/VR
+	// natively (no external tools required). Other games use unsupported
+	// Havok variants (Skyrim ragdoll-only formats, Starfield, etc.).
+	if (wxWindow* loadHkxPoseBtn = FindWindow(XRCID("loadHkxPose"))) {
+		TargetGame tg = wxGetApp().targetGame;
+		bool showLoadHkx = (tg == SKYRIM || tg == SKYRIMSE || tg == SKYRIMVR || tg == FO4 || tg == FO4VR);
+		loadHkxPoseBtn->Show(showLoadHkx);
 	}
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
@@ -12419,9 +12429,6 @@ void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 	if (poseSel != wxNOT_FOUND) {
 		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
 
-		std::vector<std::string> bones;
-		AnimSkeleton::getInstance().GetBoneNames(bones);
-
 		if (!poseData) {
 			// "<New>" sentinel: reset all bones to an unposed state.
 			ResetAllPoseBones();
@@ -12432,25 +12439,7 @@ void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 			return;
 		}
 
-		for (const auto& boneName : bones) {
-			AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
-			if (!bone)
-				continue;
-
-			auto poseBoneData = std::find_if(poseData->boneData.begin(), poseData->boneData.end(), [&boneName](const PoseBoneData& rt) { return rt.name == boneName; });
-			if (poseBoneData != poseData->boneData.end()) {
-				bone->poseRotVec = poseBoneData->rotation;
-				bone->poseTranVec = poseBoneData->translation;
-				bone->poseScale = poseBoneData->scale;
-			}
-			else {
-				bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
-				bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
-				bone->poseScale = 1.0f;
-			}
-
-			bone->UpdatePoseTransform();
-		}
+		poseData->ApplyToSkeleton();
 
 		PoseToGUI();
 		ActivatePose(true);
@@ -12587,6 +12576,117 @@ void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
+void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
+	TargetGame targetGame = wxGetApp().targetGame;
+	if (targetGame != SKYRIM && targetGame != SKYRIMSE && targetGame != SKYRIMVR && targetGame != FO4 && targetGame != FO4VR) {
+		wxMessageBox(_("Loading HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
+					 _("Load HKX Pose"),
+					 wxOK | wxICON_INFORMATION,
+					 this);
+		return;
+	}
+
+	// Ask the user which .hkx pose file to load.
+	wxFileDialog loadDlg(this,
+						 _("Select HKX pose file"),
+						 wxEmptyString,
+						 wxEmptyString,
+						 "HKX files (*.hkx)|*.hkx",
+						 wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+
+	if (loadDlg.ShowModal() == wxID_CANCEL)
+		return;
+
+	wxString srcHkx = loadDlg.GetPath();
+
+	// Derive the Havok skeleton path from the reference skeleton configured
+	// for this target game (Settings → Anim/DefaultSkeletonReference). The
+	// NIF and HKX files share the same base name per Bethesda convention,
+	// so we simply swap the extension.
+	wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
+	if (defSkelNif.IsEmpty()) {
+		wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton "
+					   "in the application settings before loading an HKX pose."),
+					 _("Load HKX Pose"),
+					 wxOK | wxICON_ERROR,
+					 this);
+		return;
+	}
+
+	wxFileName defSkelFn(defSkelNif);
+	if (defSkelFn.IsRelative())
+		defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
+	defSkelFn.SetExt("hkx");
+
+	wxString skelHkx = defSkelFn.GetFullPath();
+	if (!wxFileExists(skelHkx)) {
+		wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured "
+									    "reference skeleton.\n\nExpected file:\n%s\n\n"
+									    "To load HKX poses, place a matching .hkx skeleton file "
+									    "alongside the .nif reference skeleton."),
+									  skelHkx),
+					 _("Load HKX Pose"),
+					 wxOK | wxICON_ERROR,
+					 this);
+		return;
+	}
+
+	// Build a pose name from the source file name.
+	wxFileName srcFn(srcHkx);
+	std::string poseName = std::string("HKX: ") + std::string(srcFn.GetName().ToUTF8().data());
+
+	PoseData pd;
+	pd.name = poseName;
+
+	if (!PoseDataCollection::LoadHkxPose(std::string(skelHkx.ToUTF8().data()), std::string(srcHkx.ToUTF8().data()), pd)) {
+		wxMessageBox(_("Failed to parse the HKX pose data."), _("Load HKX Pose"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+	// Add or replace the pose in the collection and the combobox. The
+	// combobox stores raw PoseData pointers; PoseDataCollection uses a
+	// deque so existing addresses stay valid across the AddPose call.
+	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
+	if (!cPoseName)
+		return;
+
+	auto makeUniquePoseName = [cPoseName](const std::string& baseName) {
+		wxString uniqueName = wxString::FromUTF8(baseName);
+		if (cPoseName->FindString(uniqueName) == wxNOT_FOUND)
+			return uniqueName;
+
+		for (int suffix = 1;; ++suffix) {
+			wxString candidate = wxString::Format("%s (%d)", uniqueName, suffix);
+			if (cPoseName->FindString(candidate) == wxNOT_FOUND)
+				return candidate;
+		}
+	};
+
+	int existingSel = cPoseName->FindString(wxString::FromUTF8(pd.name));
+	if (existingSel != wxNOT_FOUND) {
+		auto existing = reinterpret_cast<PoseData*>(cPoseName->GetClientData(existingSel));
+		if (existing && !existing->readOnly) {
+			existing->boneData = std::move(pd.boneData);
+			existing->absoluteLocal = pd.absoluteLocal;
+			cPoseName->SetSelection(existingSel);
+		}
+		else {
+			pd.name = std::string(makeUniquePoseName(pd.name).ToUTF8().data());
+			PoseData* added = poseDataCollection.AddPose(std::move(pd));
+			int idx = cPoseName->Append(wxString::FromUTF8(added->name), added);
+			cPoseName->SetSelection(idx);
+		}
+	}
+	else {
+		PoseData* added = poseDataCollection.AddPose(std::move(pd));
+		int idx = cPoseName->Append(wxString::FromUTF8(added->name), added);
+		cPoseName->SetSelection(idx);
+	}
+
+	// Apply the pose by replaying the OnSelectPose handler.
+	wxCommandEvent dummy;
+	OnSelectPose(dummy);
+}
 
 wxBEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)
 	EVT_PAINT(wxGLPanel::OnPaint)

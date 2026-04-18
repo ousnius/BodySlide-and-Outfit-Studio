@@ -742,6 +742,9 @@
     <ClInclude Include="src\files\MaskFile.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\HkxFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\FBXWrangler.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -1998,6 +2001,9 @@
     <ClCompile Include="src\files\MaskFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\files\HkxFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\files\FBXWrangler.cpp">
       <Filter>Files</Filter>
     </ClCompile>
@@ -2125,6 +2131,9 @@
       <Filter>Libraries\nifly\src</Filter>
     </ClCompile>
     <ClCompile Include="src\components\PoseData.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseDataHkx.cpp">
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp">
