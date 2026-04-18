@@ -144,7 +144,10 @@ bool ParseSections(const Buf& buf, Format fmt, Section out[3]) {
 
 	for (int i = 0; i < 3; ++i) {
 		const uint8_t* h = buf.data + firstSection + i * hdrSize;
-		out[i].name.assign(reinterpret_cast<const char*>(h), strnlen(reinterpret_cast<const char*>(h), 16));
+		const char* nameStart = reinterpret_cast<const char*>(h);
+		const void* nameEnd = std::memchr(nameStart, '\0', 16);
+		const size_t nameLen = nameEnd ? static_cast<const char*>(nameEnd) - nameStart : 16;
+		out[i].name.assign(nameStart, nameLen);
 		uint32_t s = ReadU32(h + 0x14);
 		out[i].absStart = s;
 		out[i].localFixupAbs = s + ReadU32(h + 0x18);
