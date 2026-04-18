@@ -43,10 +43,21 @@ static float GetJsonFloat(const nlohmann::json& obj, const char* key, float defa
 }
 
 // Convert SAF yaw/pitch/roll (degrees) to an axis-angle rotation vector,
-// reproducing SAM/SAF's MatrixFromEulerYPR (version >= 1) and the legacy
-// transposed MatrixFromEulerYPRTransposed with negated angles (version 0,
-// used by MatrixFromDegree). Both variants are taken directly from
-// ScreenArcherMenu's SAF/conversions.cpp.
+// reproducing the effective rotation that SAF applies via RotateMatrix().
+//
+// SAF's NiMatrix43::data[col][row] is column-major. RotateMatrix() multiplies
+// as M*pt where M[row][col] = data[col][row]. nifly's Matrix3 is row-major,
+// so we need m[row][col] = data[col][row] to get the same rotation.
+//
+// Version 0 (legacy):  MatrixFromDegree() calls
+//   MatrixFromEulerYPRTransposed(matrix, -x*D2R, -y*D2R, -z*D2R)
+//   which writes data[row][col] = formula (standard indexing).
+//   m[row][col] = data[col][row] = formula[col][row]  → transposed copy.
+//
+// Version >= 1:  MatrixFromPose() calls
+//   MatrixFromEulerYPR(matrix, x*D2R, y*D2R, z*D2R)
+//   which writes data[col][row] = formula (swapped indexing).
+//   m[row][col] = data[col][row] = formula[row][col]  → direct copy.
 static nifly::Vector3 SafEulerToRotVec(float yawDeg, float pitchDeg, float rollDeg, unsigned int version) {
 	const float deg2rad = 3.14159265358979323846f / 180.0f;
 
@@ -68,28 +79,22 @@ static nifly::Vector3 SafEulerToRotVec(float yawDeg, float pitchDeg, float rollD
 	float sinZ = std::sin(z);
 	float cosZ = std::cos(z);
 
+	// The nine trig expressions are identical between both SAF functions;
+	// only the data[i][j] index mapping differs (see comment above). The
+	// version 0 branch transposes the off-diagonal assignments accordingly.
 	nifly::Matrix3 m;
 	if (version == 0) {
-		// SAF::MatrixFromEulerYPRTransposed layout.
 		m[0][0] = cosY * cosZ;
-		m[0][1] = -cosY * sinZ;
-		m[0][2] = sinY;
-		m[1][0] = sinX * sinY * cosZ + sinZ * cosX;
+		m[0][1] = sinX * sinY * cosZ + sinZ * cosX;
+		m[0][2] = sinX * sinZ - cosX * sinY * cosZ;
+		m[1][0] = -cosY * sinZ;
 		m[1][1] = cosX * cosZ - sinX * sinY * sinZ;
-		m[1][2] = -sinX * cosY;
-		m[2][0] = sinX * sinZ - cosX * sinY * cosZ;
-		m[2][1] = cosX * sinY * sinZ + sinX * cosZ;
+		m[1][2] = cosX * sinY * sinZ + sinX * cosZ;
+		m[2][0] = sinY;
+		m[2][1] = -sinX * cosY;
 		m[2][2] = cosX * cosY;
 	}
 	else {
-		// SAF::MatrixFromEulerYPR layout. SAF stores this into an
-		// NiMatrix43 whose `data[i][j]` is indexed as [column][row]
-		// (see RotateMatrix in SAF/conversions.cpp: out.x accumulates
-		// data[0][0]*x + data[1][0]*y + data[2][0]*z, meaning
-		// M[0][j] == data[j][0]). Converting the raw assignments via
-		// that mapping yields the standard row-major rotation matrix
-		// below. Copying them verbatim into a row-major Matrix3 would
-		// store the transpose, i.e. the inverse rotation.
 		m[0][0] = cosY * cosZ;
 		m[0][1] = -cosY * sinZ;
 		m[0][2] = sinY;
