@@ -125,6 +125,8 @@ target_include_directories(OutfitStudio PUBLIC
 	lib/nifly/include
 	lib/nifly/external
 	lib/TinyXML-2
+	lib/fkYAML/include
+	lib/nlohmannjson/include
 	)
 target_include_directories(BodySlide PUBLIC
 	lib/gli

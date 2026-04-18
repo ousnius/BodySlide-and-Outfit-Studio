@@ -68,6 +68,12 @@
     <Filter Include="Libraries\nifly\src">
       <UniqueIdentifier>{d95f2d14-c32c-42eb-8742-c174b699d5fe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Libraries\fkYAML">
+      <UniqueIdentifier>{3f339eee-e545-4d1d-a050-a3d2fbb686cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\nlohmannjson">
+      <UniqueIdentifier>{dccfbf1e-b15e-4cf8-a112-7c543d854aa8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="OutfitStudio.ico">
@@ -1935,6 +1941,18 @@
     </ClInclude>
     <ClInclude Include="src\files\SFMorphFile.h">
       <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\fkYAML\include\fkYAML\fkyaml_fwd.hpp">
+      <Filter>Libraries\fkYAML</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\fkYAML\include\fkYAML\node.hpp">
+      <Filter>Libraries\fkYAML</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\nlohmannjson\include\nlohmann\json.hpp">
+      <Filter>Libraries\nlohmannjson</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\nlohmannjson\include\nlohmann\json_fwd.hpp">
+      <Filter>Libraries\nlohmannjson</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
