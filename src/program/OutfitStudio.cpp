@@ -4545,6 +4545,33 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 	std::string poseDataPath = GetProjectPath() + "/PoseData";
 	poseDataCollection.LoadData(poseDataPath);
 
+	// Additionally load community-supplied ScreenArcherMenu/SAF poses if the
+	// target game ships them in a known location:
+	//   Skyrim SE/VR: Data\SAM\Poses\*.yaml
+	const TargetGame samGame = wxGetApp().targetGame;
+	wxString samRelDir;
+	switch (samGame) {
+	case SKYRIMSE:
+	case SKYRIMVR:
+		samRelDir = wxString("SAM") + PathSepChar + "Poses";
+		break;
+	default:
+		break;
+	}
+
+	if (!samRelDir.IsEmpty()) {
+		wxString gameDataPath = wxGetApp().GetGameDataPath(samGame);
+		if (!gameDataPath.IsEmpty()) {
+			if (!gameDataPath.EndsWith(PathSepChar))
+				gameDataPath.Append(PathSepChar);
+			wxString samDir = gameDataPath + samRelDir;
+			if (wxDirExists(samDir)) {
+				std::string utf8Dir(samDir.ToUTF8().data());
+					poseDataCollection.LoadYamlData(utf8Dir, "SAM: ");
+			}
+		}
+	}
+
 	for (auto& poseData : poseDataCollection.poseData) {
 		wxString poseName = wxString::FromUTF8(poseData.name);
 		cPoseName->Append(poseName, &poseData);

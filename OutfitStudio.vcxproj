@@ -896,6 +896,7 @@
     <ClCompile Include="src\components\Mesh.cpp" />
     <ClCompile Include="src\components\NormalGenLayers.cpp" />
     <ClCompile Include="src\components\PoseData.cpp" />
+    <ClCompile Include="src\components\PoseDataYaml.cpp" />
     <ClCompile Include="src\components\PoseDataHkx.cpp" />
     <ClCompile Include="src\components\RefTemplates.cpp" />
     <ClCompile Include="src\components\SliderCategories.cpp" />

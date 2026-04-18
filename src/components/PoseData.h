@@ -31,6 +31,8 @@ class PoseData {
 public:
 	std::string name;
 	std::vector<PoseBoneData> boneData;
+	// When true, the pose was loaded from a read-only source (e.g. a SAM
+	// YAML file) and must not be modified or deleted by Outfit Studio.
 	bool readOnly = false;
 	// When true, rotation/translation/scale in boneData are the absolute
 	// local-to-parent transform at frame 0 (as stored by Havok HKX), not an
@@ -74,6 +76,11 @@ public:
 
 	// Appends a pose to the collection and returns a stable pointer to it.
 	PoseData* AddPose(PoseData pose);
+
+	// Loads all SAM pose YAML files from the specified folder (recursively).
+	// The pose name is derived from the file name (without extension) and is
+	// prefixed with namePrefix. Entries are appended to poseData.
+	int LoadYamlData(const std::string& basePath, const std::string& namePrefix);
 
 	// Loads a single pose from a Havok HKX skeleton + animation pair.
 	// Both files are parsed natively (no external tools required) for all

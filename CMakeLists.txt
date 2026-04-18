@@ -74,6 +74,7 @@ set(commonsources
 set(OSsources
 	${commonsources}
 	src/components/PoseData.cpp
+	src/components/PoseDataYaml.cpp
 	src/components/PoseDataHkx.cpp
 	src/components/RefTemplates.cpp
 	src/components/Automation.cpp
