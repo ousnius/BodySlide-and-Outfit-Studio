@@ -82,6 +82,13 @@ public:
 	// prefixed with namePrefix. Entries are appended to poseData.
 	int LoadYamlData(const std::string& basePath, const std::string& namePrefix);
 
+	// Loads all SAF pose JSON files from the specified folder (recursively).
+	// SAF is the Fallout 4 companion of SAM, using a different on-disk format
+	// (JSON instead of YAML) with yaw/pitch/roll rotation fields in degrees.
+	// The pose name is derived from the file name (without extension) and is
+	// prefixed with namePrefix. Entries are appended to poseData.
+	int LoadJsonData(const std::string& basePath, const std::string& namePrefix);
+
 	// Loads a single pose from a Havok HKX skeleton + animation pair.
 	// Both files are parsed natively (no external tools required) for all
 	// supported variants: Skyrim LE, Skyrim SE/VR and Fallout 4. The bones

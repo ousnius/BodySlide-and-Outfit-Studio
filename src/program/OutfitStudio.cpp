@@ -4548,12 +4548,19 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 	// Additionally load community-supplied ScreenArcherMenu/SAF poses if the
 	// target game ships them in a known location:
 	//   Skyrim SE/VR: Data\SAM\Poses\*.yaml
+	//   Fallout 4/VR: Data\F4SE\Plugins\SAF\Poses\*.json
 	const TargetGame samGame = wxGetApp().targetGame;
 	wxString samRelDir;
+	bool samUsesJson = false;
 	switch (samGame) {
 	case SKYRIMSE:
 	case SKYRIMVR:
 		samRelDir = wxString("SAM") + PathSepChar + "Poses";
+		break;
+	case FO4:
+	case FO4VR:
+		samRelDir = wxString("F4SE") + PathSepChar + "Plugins" + PathSepChar + "SAF" + PathSepChar + "Poses";
+		samUsesJson = true;
 		break;
 	default:
 		break;
@@ -4567,6 +4574,9 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 			wxString samDir = gameDataPath + samRelDir;
 			if (wxDirExists(samDir)) {
 				std::string utf8Dir(samDir.ToUTF8().data());
+				if (samUsesJson)
+					poseDataCollection.LoadJsonData(utf8Dir, "SAM: ");
+				else
 					poseDataCollection.LoadYamlData(utf8Dir, "SAM: ");
 			}
 		}

@@ -2154,6 +2154,9 @@
     <ClCompile Include="src\components\PoseDataYaml.cpp">
       <Filter>Components</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\PoseDataJson.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\PoseDataHkx.cpp">
       <Filter>Components</Filter>
     </ClCompile>
