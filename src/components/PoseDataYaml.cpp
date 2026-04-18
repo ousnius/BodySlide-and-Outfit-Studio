@@ -161,8 +161,8 @@ int PoseDataCollection::LoadYamlData(const std::string& basePath, const std::str
 		return 0;
 
 	wxArrayString files;
-	wxDir::GetAllFiles(wxBase, &files, "*.yaml", wxDIR_FILES | wxDIR_DIRS);
-	wxDir::GetAllFiles(wxBase, &files, "*.yml", wxDIR_FILES | wxDIR_DIRS);
+	wxDir::GetAllFiles(wxBase, &files, "*.yaml", wxDIR_FILES);
+	wxDir::GetAllFiles(wxBase, &files, "*.yml", wxDIR_FILES);
 
 	int loaded = 0;
 	for (auto& file : files) {
