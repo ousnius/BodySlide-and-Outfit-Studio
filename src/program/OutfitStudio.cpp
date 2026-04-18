@@ -12429,9 +12429,6 @@ void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 	if (poseSel != wxNOT_FOUND) {
 		auto poseData = reinterpret_cast<PoseData*>(cPoseName->GetClientData(poseSel));
 
-		std::vector<std::string> bones;
-		AnimSkeleton::getInstance().GetBoneNames(bones);
-
 		if (!poseData) {
 			// "<New>" sentinel: reset all bones to an unposed state.
 			ResetAllPoseBones();
@@ -12442,44 +12439,7 @@ void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
 			return;
 		}
 
-		for (const auto& boneName : bones) {
-			AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
-			if (!bone)
-				continue;
-
-			auto poseBoneData = std::find_if(poseData->boneData.begin(), poseData->boneData.end(), [&boneName](const PoseBoneData& rt) { return rt.name == boneName; });
-			if (poseBoneData != poseData->boneData.end()) {
-				if (poseData->absoluteLocal) {
-					// HKX-sourced poses store the absolute local-to-parent
-					// transform at frame 0. Convert to an Outfit-Studio delta
-					// using this bone's actual xformToParent so the rendered
-					// result equals the authored local transform regardless
-					// of any mismatch between the NIF bind pose and the HKX
-					// reference pose.
-					MatTransform frameLocal;
-					frameLocal.translation = poseBoneData->translation;
-					frameLocal.rotation = RotVecToMat(poseBoneData->rotation);
-					frameLocal.scale = poseBoneData->scale;
-
-					MatTransform delta = bone->xformToParent.InverseTransform().ComposeTransforms(frameLocal);
-					bone->poseRotVec = RotMatToVec(delta.rotation);
-					bone->poseTranVec = delta.translation;
-					bone->poseScale = (delta.scale != 0.0f) ? delta.scale : 1.0f;
-				}
-				else {
-					bone->poseRotVec = poseBoneData->rotation;
-					bone->poseTranVec = poseBoneData->translation;
-					bone->poseScale = poseBoneData->scale;
-				}
-			}
-			else {
-				bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
-				bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
-				bone->poseScale = 1.0f;
-			}
-
-			bone->UpdatePoseTransform();
-		}
+		poseData->ApplyToSkeleton();
 
 		PoseToGUI();
 		ActivatePose(true);

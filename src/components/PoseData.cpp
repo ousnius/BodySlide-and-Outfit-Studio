@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "PoseData.h"
+#include "Anim.h"
 #include "../utils/PlatformUtil.h"
 
 bool PoseData::LoadElement(XMLElement* srcElement) {
@@ -72,6 +73,48 @@ int PoseDataCollection::LoadData(const std::string& basePath) {
 PoseData* PoseDataCollection::AddPose(PoseData pose) {
 	poseData.push_back(std::move(pose));
 	return &poseData.back();
+}
+
+void PoseData::ApplyToSkeleton() const {
+	using namespace nifly;
+
+	std::vector<std::string> bones;
+	AnimSkeleton::getInstance().GetBoneNames(bones);
+
+	for (const auto& boneName : bones) {
+		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		if (!bone)
+			continue;
+
+		auto it = std::find_if(boneData.begin(), boneData.end(),
+			[&boneName](const PoseBoneData& bd) { return bd.name == boneName; });
+
+		if (it != boneData.end()) {
+			if (absoluteLocal) {
+				MatTransform frameLocal;
+				frameLocal.translation = it->translation;
+				frameLocal.rotation = RotVecToMat(it->rotation);
+				frameLocal.scale = it->scale;
+
+				MatTransform delta = bone->xformToParent.InverseTransform().ComposeTransforms(frameLocal);
+				bone->poseRotVec = RotMatToVec(delta.rotation);
+				bone->poseTranVec = delta.translation;
+				bone->poseScale = (delta.scale != 0.0f) ? delta.scale : 1.0f;
+			}
+			else {
+				bone->poseRotVec = it->rotation;
+				bone->poseTranVec = it->translation;
+				bone->poseScale = it->scale;
+			}
+		}
+		else {
+			bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
+			bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
+			bone->poseScale = 1.0f;
+		}
+
+		bone->UpdatePoseTransform();
+	}
 }
 
 

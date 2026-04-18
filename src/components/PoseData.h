@@ -9,6 +9,8 @@ See the included LICENSE file
 
 #include "Object3d.hpp"
 
+class AnimBone;
+
 #include <deque>
 #include <map>
 #include <set>
@@ -50,6 +52,13 @@ public:
 
 	bool LoadElement(XMLElement* srcElement);
 	void WriteElement(XMLElement* element, bool append = false) const;
+
+	// Applies this pose to all named bones in the skeleton. For each bone,
+	// if a matching PoseBoneData entry exists, sets poseRotVec/poseTranVec/
+	// poseScale (converting from absolute local-to-parent when absoluteLocal
+	// is set). Bones without a matching entry are reset to the identity pose.
+	// Calls UpdatePoseTransform on every bone.
+	void ApplyToSkeleton() const;
 };
 
 class PoseDataCollection {
