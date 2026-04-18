@@ -183,7 +183,7 @@ int PoseDataCollection::LoadJsonData(const std::string& basePath, const std::str
 		return 0;
 
 	wxArrayString files;
-	wxDir::GetAllFiles(wxBase, &files, "*.json", wxDIR_FILES | wxDIR_DIRS);
+	wxDir::GetAllFiles(wxBase, &files, "*.json", wxDIR_FILES);
 
 	int loaded = 0;
 	for (auto& file : files) {
