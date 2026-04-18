@@ -12690,14 +12690,32 @@ void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
 	if (!cPoseName)
 		return;
 
+	auto makeUniquePoseName = [cPoseName](const std::string& baseName) {
+		wxString uniqueName = wxString::FromUTF8(baseName);
+		if (cPoseName->FindString(uniqueName) == wxNOT_FOUND)
+			return uniqueName;
+
+		for (int suffix = 1;; ++suffix) {
+			wxString candidate = wxString::Format("%s (%d)", uniqueName, suffix);
+			if (cPoseName->FindString(candidate) == wxNOT_FOUND)
+				return candidate;
+		}
+	};
+
 	int existingSel = cPoseName->FindString(wxString::FromUTF8(pd.name));
 	if (existingSel != wxNOT_FOUND) {
 		auto existing = reinterpret_cast<PoseData*>(cPoseName->GetClientData(existingSel));
 		if (existing && !existing->readOnly) {
 			existing->boneData = std::move(pd.boneData);
 			existing->absoluteLocal = pd.absoluteLocal;
+			cPoseName->SetSelection(existingSel);
 		}
-		cPoseName->SetSelection(existingSel);
+		else {
+			pd.name = std::string(makeUniquePoseName(pd.name).ToUTF8().data());
+			PoseData* added = poseDataCollection.AddPose(std::move(pd));
+			int idx = cPoseName->Append(wxString::FromUTF8(added->name), added);
+			cPoseName->SetSelection(idx);
+		}
 	}
 	else {
 		PoseData* added = poseDataCollection.AddPose(std::move(pd));
