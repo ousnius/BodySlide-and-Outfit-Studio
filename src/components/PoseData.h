@@ -9,6 +9,7 @@ See the included LICENSE file
 
 #include "Object3d.hpp"
 
+#include <deque>
 #include <map>
 #include <set>
 #include <unordered_set>

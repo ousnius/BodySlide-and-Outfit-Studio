@@ -69,6 +69,11 @@ int PoseDataCollection::LoadData(const std::string& basePath) {
 	return 0;
 }
 
+PoseData* PoseDataCollection::AddPose(PoseData pose) {
+	poseData.push_back(std::move(pose));
+	return &poseData.back();
+}
+
 
 PoseDataFile::PoseDataFile(const std::string& srcFileName) {
 	root = nullptr;
