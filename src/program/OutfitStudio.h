@@ -1703,6 +1703,8 @@ private:
 	void OnDeletePose(wxCommandEvent& event);
 	void OnLoadHkxPose(wxCommandEvent& event);
 
+	// Updates enabled state of the Save/Delete pose buttons based on
+	// whether the currently selected pose is read-only (e.g. SAM YAML).
 	void UpdatePoseButtonStates();
 
 	wxDECLARE_EVENT_TABLE();
