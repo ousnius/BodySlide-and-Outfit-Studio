@@ -74,12 +74,14 @@ set(commonsources
 set(OSsources
 	${commonsources}
 	src/components/PoseData.cpp
+	src/components/PoseDataHkx.cpp
 	src/components/RefTemplates.cpp
 	src/components/Automation.cpp
 	src/components/TweakBrush.cpp
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
+	src/files/HkxFile.cpp
 	src/files/ObjFile.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp

@@ -1701,6 +1701,7 @@ private:
 	void OnSelectPose(wxCommandEvent& event);
 	void OnSavePose(wxCommandEvent& event);
 	void OnDeletePose(wxCommandEvent& event);
+	void OnLoadHkxPose(wxCommandEvent& event);
 
 	void UpdatePoseButtonStates();
 

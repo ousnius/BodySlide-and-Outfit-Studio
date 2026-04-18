@@ -225,9 +225,25 @@ void WeightCopyDialog::OnPoseSelected(wxCommandEvent&) {
 			auto it = std::find_if(poseData->boneData.begin(), poseData->boneData.end(),
 				[&boneName](const PoseBoneData& pd) { return pd.name == boneName; });
 			if (it != poseData->boneData.end()) {
-				bone->poseRotVec = it->rotation;
-				bone->poseTranVec = it->translation;
-				bone->poseScale = it->scale;
+				if (poseData->absoluteLocal) {
+					// HKX/SAM-sourced poses store the absolute local-to-parent
+					// transform. Convert to an Outfit-Studio delta using this
+					// bone's xformToParent (matches OnSelectPose behavior).
+					MatTransform frameLocal;
+					frameLocal.translation = it->translation;
+					frameLocal.rotation = RotVecToMat(it->rotation);
+					frameLocal.scale = it->scale;
+
+					MatTransform delta = bone->xformToParent.InverseTransform().ComposeTransforms(frameLocal);
+					bone->poseRotVec = RotMatToVec(delta.rotation);
+					bone->poseTranVec = delta.translation;
+					bone->poseScale = (delta.scale != 0.0f) ? delta.scale : 1.0f;
+				}
+				else {
+					bone->poseRotVec = it->rotation;
+					bone->poseTranVec = it->translation;
+					bone->poseScale = it->scale;
+				}
 			}
 			else {
 				bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);

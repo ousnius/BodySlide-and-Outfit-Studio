@@ -824,6 +824,7 @@
     <ClInclude Include="src\files\SFMorphFile.h" />
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\files\MaskFile.h" />
+    <ClInclude Include="src\files\HkxFile.h" />
     <ClInclude Include="src\program\ConvertBodyReferenceDialog.h" />
     <ClInclude Include="src\program\AutomationDialog.h" />
     <ClInclude Include="src\components\Automation.h" />
@@ -891,6 +892,7 @@
     <ClCompile Include="src\components\Mesh.cpp" />
     <ClCompile Include="src\components\NormalGenLayers.cpp" />
     <ClCompile Include="src\components\PoseData.cpp" />
+    <ClCompile Include="src\components\PoseDataHkx.cpp" />
     <ClCompile Include="src\components\RefTemplates.cpp" />
     <ClCompile Include="src\components\SliderCategories.cpp" />
     <ClCompile Include="src\components\SliderData.cpp" />
@@ -908,6 +910,7 @@
     <ClCompile Include="src\files\SFMorphFile.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\files\MaskFile.cpp" />
+    <ClCompile Include="src\files\HkxFile.cpp" />
     <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp" />
     <ClCompile Include="src\program\AutomationDialog.cpp" />
     <ClCompile Include="src\components\Automation.cpp" />
