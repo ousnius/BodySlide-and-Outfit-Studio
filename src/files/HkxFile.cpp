@@ -91,8 +91,9 @@ bool ReadAllFile(const std::string& path, std::vector<uint8_t>& out) {
 	}
 	ifs.seekg(0, std::ios::beg);
 	out.resize(static_cast<size_t>(endPos));
-	ifs.read(reinterpret_cast<char*>(out.data()), endPos);
-	return ifs.good() || ifs.eof();
+	const std::streamsize bytesToRead = static_cast<std::streamsize>(out.size());
+	ifs.read(reinterpret_cast<char*>(out.data()), bytesToRead);
+	return ifs && ifs.gcount() == bytesToRead;
 }
 
 // ─── Fixup tables and section descriptors ─────────────────────────────────
