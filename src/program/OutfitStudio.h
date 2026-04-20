@@ -669,6 +669,10 @@ public:
 
 	void Render() { gls.RenderOneFrame(); }
 
+	// Hover highlight: overlays a light green copy of the given shape's mesh.
+	// Pass an empty string or call ClearHoverHighlight() to remove it.
+	void SetHoverHighlight(const std::string& shapeName);
+	void ClearHoverHighlight();
 
 private:
 	void OnShown();
@@ -692,6 +696,8 @@ private:
 	void OnCaptureLost(wxMouseCaptureLostEvent& event);
 
 	std::unique_ptr<wxGLContext> context;
+
+	std::string hoverHighlightName;
 
 	bool rbuttonDown = false;
 	bool lbuttonDown = false;
@@ -1317,6 +1323,9 @@ private:
 	void OnShapeDrag(wxTreeEvent& event);
 	void OnShapeDrop(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
+
+	void OnShapeTreeMotion(wxMouseEvent& event);
+	void OnShapeTreeLeave(wxMouseEvent& event);
 
 	void ToggleBoneState(wxTreeItemId firstItem = wxTreeItemId());
 	void OnBoneStateToggle(wxTreeEvent& event);

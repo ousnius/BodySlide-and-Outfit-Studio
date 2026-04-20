@@ -1308,6 +1308,9 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 		outfitShapes->AssignStateImageList(visStateImages);
 		shapesRoot = outfitShapes->AddRoot("Shapes");
+
+		outfitShapes->Bind(wxEVT_MOTION, &OutfitStudioFrame::OnShapeTreeMotion, this);
+		outfitShapes->Bind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnShapeTreeLeave, this);
 	}
 
 	outfitBones = (wxTreeCtrl*)FindWindowByName("outfitBones");
@@ -5748,6 +5751,32 @@ void OutfitStudioFrame::OnShapeContext(wxTreeEvent& event) {
 			delete menu;
 		}
 	}
+}
+
+void OutfitStudioFrame::OnShapeTreeMotion(wxMouseEvent& event) {
+	event.Skip();
+
+	if (!outfitShapes || !glView)
+		return;
+
+	int flags = 0;
+	wxTreeItemId item = outfitShapes->HitTest(event.GetPosition(), flags);
+
+	std::string newHover;
+	if (item.IsOk() && outfitShapes->GetItemParent(item).IsOk()) {
+		auto* data = dynamic_cast<ShapeItemData*>(outfitShapes->GetItemData(item));
+		if (data && data->GetShape())
+			newHover = data->GetShape()->name.get();
+	}
+
+	glView->SetHoverHighlight(newHover);
+}
+
+void OutfitStudioFrame::OnShapeTreeLeave(wxMouseEvent& event) {
+	event.Skip();
+
+	if (glView)
+		glView->ClearHoverHighlight();
 }
 
 void OutfitStudioFrame::OnShapeDrag(wxTreeEvent& event) {
@@ -12942,6 +12971,74 @@ void wxGLPanel::SetActiveShapes(const std::vector<std::string>& shapeNames) {
 
 void wxGLPanel::SetSelectedShape(const std::string& shapeName) {
 	gls.SetSelectedMesh(shapeName);
+}
+
+static const char* kHoverHighlightOverlayName = "_shapehoverhilite";
+
+void wxGLPanel::SetHoverHighlight(const std::string& shapeName) {
+	if (shapeName == hoverHighlightName)
+		return;
+
+	// Drop any existing overlay first.
+	if (!hoverHighlightName.empty()) {
+		gls.DeleteOverlay(kHoverHighlightOverlayName);
+		hoverHighlightName.clear();
+	}
+
+	if (shapeName.empty())
+		return;
+
+	Mesh* src = gls.GetMesh(shapeName);
+	if (!src || src->nVerts <= 0 || src->nTris <= 0 || !src->verts || !src->tris)
+		return;
+
+	// Need an active GL context to create buffers for the overlay mesh.
+	if (!gls.SetContext())
+		return;
+
+	auto* hov = new Mesh();
+	hov->nVerts = src->nVerts;
+	hov->nTris = src->nTris;
+	hov->verts = std::make_unique<nifly::Vector3[]>(hov->nVerts);
+	hov->norms = std::make_unique<nifly::Vector3[]>(hov->nVerts);
+	hov->tris = std::make_unique<nifly::Triangle[]>(hov->nTris);
+
+	for (int i = 0; i < hov->nVerts; i++) {
+		hov->verts[i] = src->verts[i];
+		if (src->norms)
+			hov->norms[i] = src->norms[i];
+	}
+	for (int t = 0; t < hov->nTris; t++)
+		hov->tris[t] = src->tris[t];
+
+	// Inherit the source's model-space transform so the overlay sits
+	// exactly on top of the original shape (skinned shapes have a
+	// non-identity matModel).
+	hov->matModel = src->matModel;
+	hov->xformMeshToModel = src->xformMeshToModel;
+	hov->xformModelToMesh = src->xformModelToMesh;
+
+	hov->shapeName = kHoverHighlightOverlayName;
+	hov->color = nifly::Vector3(0.25f, 1.0f, 0.25f); // Light green
+	hov->prop.alpha = 0.5f;                           // Semi-transparent blend
+	hov->material = gls.GetPrimitiveMaterial();       // Unlit, solid tint
+	hov->rendermode = Mesh::RenderMode::UnlitSolid;
+	hov->overlayLayer = 100;                          // Draw on top of other overlays
+	hov->doublesided = true;
+	hov->CreateBuffers();
+
+	gls.AddOverlay(hov);
+	hoverHighlightName = shapeName;
+	Render();
+}
+
+void wxGLPanel::ClearHoverHighlight() {
+	if (hoverHighlightName.empty())
+		return;
+
+	gls.DeleteOverlay(kHoverHighlightOverlayName);
+	hoverHighlightName.clear();
+	Render();
 }
 
 void wxGLPanel::SetActiveTool(ToolID brushID) {
