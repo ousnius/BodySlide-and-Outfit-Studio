@@ -1814,6 +1814,10 @@
 				<label>Settings</label>
 				<help>Open settings dialog.</help>
 			</object>
+			<object class="wxMenuItem" name="fileAbout">
+				<label>About...</label>
+				<help>Open the About dialog.</help>
+			</object>
 			<object class="wxMenuItem" name="fileExit">
 				<label>Exit\tAlt+F4</label>
 				<help>Exit Outfit Studio.</help>

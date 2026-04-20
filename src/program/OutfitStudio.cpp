@@ -87,6 +87,7 @@ public:
 wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CLOSE(OutfitStudioFrame::OnClose)
 	EVT_MENU(XRCID("fileExit"), OutfitStudioFrame::OnExit)
+	EVT_MENU(XRCID("fileAbout"), OutfitStudioFrame::OnAbout)
 
 	EVT_MENU(wxID_ANY, OutfitStudioFrame::OnMenuItem)
 	EVT_MENU(XRCID("packProjects"), OutfitStudioFrame::OnPackProjects)
@@ -1203,6 +1204,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Slider.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Skeleton.xrc");
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Settings.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/About.xrc");
 
 	const std::array<int, 3> statusWidths = {-1, 400, 100};
 	statusBar = (wxStatusBar*)FindWindowByName("statusBar");
@@ -2324,6 +2326,19 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		delete settings;
+	}
+}
+
+void OutfitStudioFrame::OnAbout(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog* about = wxXmlResource::Get()->LoadDialog(this, "dlgAbout");
+	if (about) {
+		about->SetSize(about->FromDIP(wxSize(625, 375)));
+		about->SetMinSize(about->FromDIP(wxSize(625, 375)));
+		about->CenterOnParent();
+		about->Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+		about->Bind(wxEVT_HTML_LINK_CLICKED, &OutfitStudioFrame::OnLinkClicked, this);
+		about->ShowModal();
+		delete about;
 	}
 }
 
@@ -9518,6 +9533,10 @@ void OutfitStudioFrame::OnEnterClose(wxKeyEvent& event) {
 	}
 	else
 		event.Skip();
+}
+
+void OutfitStudioFrame::OnLinkClicked(wxHtmlLinkEvent& link) {
+	wxLaunchDefaultBrowser(link.GetLinkInfo().GetHref());
 }
 
 void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {

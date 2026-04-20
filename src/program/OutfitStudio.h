@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/dataview.h>
 #include <wx/filepicker.h>
 #include <wx/grid.h>
+#include <wx/html/htmlwin.h>
 #include <wx/spinctrl.h>
 #include <wx/splitter.h>
 #include <wx/srchctrl.h>
@@ -1232,6 +1233,8 @@ private:
 	void OnChooseTargetGame(wxCommandEvent& event);
 	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
 	void OnSettings(wxCommandEvent& event);
+	void OnAbout(wxCommandEvent& event);
+	void OnLinkClicked(wxHtmlLinkEvent& link);
 
 	void OnSashPosChanged(wxSplitterEvent& event);
 	void OnMoveWindowStart(wxMoveEvent& event);
