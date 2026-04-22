@@ -114,6 +114,12 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
 	else
 		sfMorphPath.clear();
 
+	tmpElement = element->FirstChildElement("SFMorphTargetShape");
+	if (tmpElement && tmpElement->GetText())
+		sfMorphTargetShape = tmpElement->GetText();
+	else
+		sfMorphTargetShape.clear();
+
 	XMLElement* shapeName = element->FirstChildElement(shapeStr.c_str());
 	while (shapeName) {
 		shapeName->SetName("Shape");
@@ -418,6 +424,12 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		newElement = sliderSetElement->GetDocument()->NewElement("SFMorphPath");
 		std::string sfMorphPath_bs = ToBackslashes(sfMorphPath);
 		newText = sliderSetElement->GetDocument()->NewText(sfMorphPath_bs.c_str());
+		sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
+	}
+
+	if (!sfMorphTargetShape.empty()) {
+		newElement = sliderSetElement->GetDocument()->NewElement("SFMorphTargetShape");
+		newText = sliderSetElement->GetDocument()->NewText(sfMorphTargetShape.c_str());
 		sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
 	}
 

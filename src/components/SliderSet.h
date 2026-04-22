@@ -35,6 +35,7 @@ class SliderSet {
 	bool preventMorphFile = false; // Prevents the building of morph .tri files in BodySlide for this project.
 	bool keepZappedShapes = false; // Prevents the removal of fully zapped shapes when building in BodySlide.
 	std::string sfMorphPath; // Starfield morph.dat output folder (relative to game data path). Empty = don't write.
+	std::string sfMorphTargetShape; // Starfield morph target shape name. Empty = no morph output.
 
 	std::map<std::string, SliderSetShape> shapeAttributes;
 
@@ -65,6 +66,8 @@ public:
 	void SetKeepZappedShapes(bool inKeepZappedShapes) { keepZappedShapes = inKeepZappedShapes; }
 	void SetSFMorphPath(const std::string& inSFMorphPath) { sfMorphPath = inSFMorphPath; }
 	std::string GetSFMorphPath() { return sfMorphPath; }
+	void SetSFMorphTargetShape(const std::string& inShape) { sfMorphTargetShape = inShape; }
+	std::string GetSFMorphTargetShape() { return sfMorphTargetShape; }
 
 	std::string GetNotes() { return notes; }
 	void SetNotes(const std::string& inNotes) { notes = inNotes; }
