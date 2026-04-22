@@ -2507,10 +2507,8 @@ bool OutfitStudioFrame::SaveProjectAs() {
 			// Populate morph target shape dropdown
 			wxChoice* morphShapeChoice = XRCCTRL(dlg, "sssSFMorphTargetShape", wxChoice);
 			morphShapeChoice->Append("(None)");
-			for (auto& s : project->GetWorkNif()->GetShapes()) {
-				if (!project->IsBaseShape(s))
-					morphShapeChoice->Append(wxString::FromUTF8(s->name.get()));
-			}
+			for (auto& s : project->GetWorkNif()->GetShapes())
+				morphShapeChoice->Append(wxString::FromUTF8(s->name.get()));
 
 			// Select previously saved shape, or default to (None)
 			if (!project->mSFMorphTargetShape.empty()) {
