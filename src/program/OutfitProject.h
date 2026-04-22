@@ -149,6 +149,7 @@ public:
 	bool bPreventMorphFile = false;
 	bool bKeepZappedShapes = false;
 	wxString mSFMorphPath;
+	wxString mSFMorphTargetShape;
 	bool bPose = false;
 
 	// Reference source info (remembered when reference is loaded from an OSP)
@@ -167,7 +168,8 @@ public:
 					 bool copyRef,
 					 bool preventMorphFile,
 					 bool keepZappedShapes,
-					 const wxString& strSFMorphPath = "");
+					 const wxString& strSFMorphPath = "",
+					 const wxString& strSFMorphTargetShape = "");
 
 	bool SaveSliderData(const std::string& fileName, bool copyRef = true);
 
