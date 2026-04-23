@@ -1398,9 +1398,12 @@ bool BodySlideApp::WriteSFMorphFile(const std::string& morphFolder, SliderSet& s
 
 			tmpMesh.SmoothNormals();
 
-			for (int v = 0; v < nVerts; v++) {
-				morphNormals[v] = Mesh::TransformDirMeshToNif(tmpMesh.norms[v]);
-				morphTangents[v] = Mesh::TransformDirMeshToNif(tmpMesh.tangents[v]);
+			for (const auto& morphOffset : morphOffsets) {
+				const int v = morphOffset.first;
+				if (v >= 0 && v < nVerts) {
+					morphNormals[v] = Mesh::TransformDirMeshToNif(tmpMesh.norms[v]);
+					morphTangents[v] = Mesh::TransformDirMeshToNif(tmpMesh.tangents[v]);
+				}
 			}
 		}
 
@@ -3395,10 +3398,6 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 		if (tri && !triKeep && !sfMorphPath.empty() && !sfMorphTargetShape.empty()) {
 			std::string morphFolder = GetOutputDataPath() + sfMorphPath;
 			WriteSFMorphFile(morphFolder, activeSet, nifBig, zapIdxAll);
-
-			nifBig.SetShapeDynamic(sfMorphTargetShape);
-			if (activeSet.GenWeights())
-				nifSmall.SetShapeDynamic(sfMorphTargetShape);
 		}
 	}
 	else {
@@ -4272,10 +4271,6 @@ int BodySlideApp::BuildListBodies(
 			if (tri && !triKeep && !sfMorphPath.empty() && !sfMorphTargetShape.empty()) {
 				std::string morphFolder = datapath + sfMorphPath;
 				WriteSFMorphFile(morphFolder, currentSet, nifBig, zapIdxAll);
-
-				nifBig.SetShapeDynamic(sfMorphTargetShape);
-				if (currentSet.GenWeights())
-					nifSmall.SetShapeDynamic(sfMorphTargetShape);
 			}
 		}
 		else {
