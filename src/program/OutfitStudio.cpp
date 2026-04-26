@@ -522,6 +522,29 @@ bool OutfitStudio::OnInit() {
 	// create single instance checker
 	singleChecker = new wxSingleInstanceChecker(wxString("OutfitStudioInstance"));
 
+	// Headless automation mode: skip single-instance/IPC, do not show the frame,
+	// run the named automation script and then close the frame so the app exits
+	// cleanly through the normal wx event loop / destructor chain.
+	if (!cmdAutomation.IsEmpty()) {
+		frame = new OutfitStudioFrame(wxPoint(x, y), wxSize(w, h));
+		// Intentionally do not call frame->Show() / Maximize().
+		SetTopWindow(frame);
+
+		InitArchives();
+
+		// Defer execution until the main loop is running so wxYield/UI events work.
+		CallAfter([this]() {
+			automationExitCode = RunAutomationFromCmdLine();
+			if (frame) {
+				// Suppress the unsaved-changes prompt in headless mode.
+				frame->SetPendingChanges(false);
+				frame->Close(true);  // fires OnClose -> cleans project/glView, then frame deletion
+			}
+		});
+
+		return true;
+	}
+
 	// If files were passed on the command line, try single-instance IPC via wxWidgets
 	if (!cmdFiles.IsEmpty()) {
 		if (singleChecker->IsAnotherRunning()) {
@@ -666,6 +689,7 @@ void OutfitStudio::OnInitCmdLine(wxCmdLineParser& parser) {
 
 bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& parser) {
 	parser.Found("proj", &cmdProject);
+	parser.Found("automation", &cmdAutomation);
 
 	wxString singleInstanceArg;
 	if (parser.Found("single", &singleInstanceArg)) {
@@ -683,6 +707,27 @@ bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& parser) {
 		cmdFiles.Add(parser.GetParam(i));
 
 	return true;
+}
+
+int OutfitStudio::RunAutomationFromCmdLine() {
+	wxLogMessage("Automation: Running script '%s' in headless mode.", cmdAutomation);
+
+	AutomationDialog* dlg = new AutomationDialog(frame, frame->project);
+	// Dialog must remain unshown.
+
+	int code = dlg->RunHeadless(cmdAutomation, cmdFiles);
+
+	// Dialog is parented to the frame and would be auto-deleted on frame teardown,
+	// but explicitly destroying it here releases its resources (XRC unload, status
+	// bar, etc.) before the frame closes.
+	dlg->Destroy();
+	return code;
+}
+
+int OutfitStudio::OnExit() {
+	int base = wxApp::OnExit();
+	// In automation mode propagate the script's exit code; otherwise keep wx's.
+	return cmdAutomation.IsEmpty() ? base : automationExitCode;
 }
 
 bool OutfitStudio::OnExceptionInMainLoop() {
@@ -3175,8 +3220,18 @@ std::vector<std::string> OutfitStudioFrame::GetShapeList() {
 
 void OutfitStudioFrame::UpdateShapeSource(NiShape* shape) {
 	Mesh* m = glView->GetMesh(shape->name.get());
-	if (m)
+	if (m) {
 		project->UpdateShapeFromMesh(shape, m);
+		return;
+	}
+
+	// Headless / no GL mesh: bake the live (slider-applied) verts directly
+	// into the NIF. This mirrors UpdateShapeFromMesh's non-pose path without
+	// requiring a GL mesh round-trip.
+	std::vector<Vector3> liveVerts;
+	project->GetLiveVerts(shape, liveVerts);
+	if (!liveVerts.empty())
+		project->GetWorkNif()->SetVertsForShape(shape, liveVerts);
 }
 
 void OutfitStudioFrame::ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo) {

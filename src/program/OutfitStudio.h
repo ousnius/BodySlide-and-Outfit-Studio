@@ -838,6 +838,7 @@ private:
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_OPTION, "single", "single-instance", "Force single instance behavior (yes/no)", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
+												   {wxCMD_LINE_OPTION, "a", "automation", "Run an automation script by name (no .xml extension); positional args are batch inputs", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE},
 												   wxCMD_LINE_DESC_END};
 
@@ -848,6 +849,7 @@ public:
 	virtual ~OutfitStudio();
 
 	virtual bool OnInit();
+	virtual int OnExit() override;
 	virtual void OnInitCmdLine(wxCmdLineParser& parser);
 	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
 
@@ -878,7 +880,11 @@ private:
 
 	wxArrayString cmdFiles;
 	wxString cmdProject;
+	wxString cmdAutomation;
 	int cmdForceSingleInstanceBehavior = -1;  // -1 = not set, 0 = no (force new), 1 = yes (force existing)
+	int automationExitCode = 0;
+
+	int RunAutomationFromCmdLine();
 
 	// DDE uses a service name, TCP uses a port number
 #if defined(__WINDOWS__) && wxUSE_DDE_FOR_IPC

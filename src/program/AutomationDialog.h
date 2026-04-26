@@ -30,6 +30,12 @@ public:
 	AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project);
 	~AutomationDialog() override;
 
+	// Run an automation script without showing the dialog. Returns 0 on success,
+	// non-zero on failure (script not found, no active steps, batch errors, etc.).
+	// `batchInputs` are positional CLI args: file paths or directories for FolderScan,
+	// slider set project names for SliderSets. Ignored for non-batch scripts.
+	int RunHeadless(const wxString& scriptName, const wxArrayString& batchInputs);
+
 private:
 	OutfitStudioFrame* outfitStudio = nullptr;
 	OutfitProject* project = nullptr;
@@ -58,6 +64,8 @@ private:
 	wxLog* oldLogTarget = nullptr;
 	bool cancelRequested = false;
 	bool isExecuting = false;
+	bool headlessMode = false;
+	int lastRunErrors = 0;
 
 	// UI helper methods
 	void SetCheckboxValue(const char* name, bool value);

@@ -326,7 +326,7 @@ void AutomationDialog::StartProgress(const wxString& msg) {
 	statusBar->SetStatusText(msg.IsEmpty() ? _("Starting...") : msg);
 
 	// Redirect log output to the output pane
-	if (paneOutput && txtOutput) {
+	if (!headlessMode && paneOutput && txtOutput) {
 		txtOutput->Clear();
 		paneOutput->Collapse(false);
 		GetSizer()->Layout();
@@ -1422,6 +1422,210 @@ wxString AutomationDialog::SanitizePath(const wxString& name) {
 	return result;
 }
 
+int AutomationDialog::RunHeadless(const wxString& scriptName, const wxArrayString& batchInputs) {
+	headlessMode = true;
+	lastRunErrors = 0;
+
+	if (scriptName.IsEmpty()) {
+		wxLogError("Automation: No script name provided.");
+		return 1;
+	}
+
+	// Verify the script file exists before calling LoadAutomation (which silently
+	// returns on missing files).
+	wxString sanitized = SanitizePath(scriptName);
+	wxString filePath = wxString::FromUTF8(GetAutomationsFolder()) + "/" + sanitized + ".xml";
+	if (!wxFileExists(filePath)) {
+		wxLogError("Automation: Script '%s' not found at '%s'.", scriptName, filePath);
+		return 2;
+	}
+
+	LoadAutomation(scriptName);
+
+	std::vector<size_t> indices;
+	for (size_t i = 0; i < script.GetSteps().size(); i++) {
+		if (script.GetSteps()[i].active)
+			indices.push_back(i);
+	}
+	if (indices.empty()) {
+		wxLogError("Automation: Script '%s' has no active steps.", scriptName);
+		return 3;
+	}
+
+	auto mode = script.GetBatchMode();
+
+	if (mode == AutomationBatchMode::None) {
+		if (!batchInputs.IsEmpty())
+			wxLogWarning("Automation: Script is not a batch script; ignoring %u positional argument(s).",
+						 static_cast<unsigned>(batchInputs.GetCount()));
+		ExecuteSteps(indices);
+		return lastRunErrors == 0 ? 0 : 10;
+	}
+
+	if (mode == AutomationBatchMode::FolderScan) {
+		std::vector<std::string> selectedFiles;
+
+		if (batchInputs.IsEmpty()) {
+			// Fall back to the script's configured batch folder/filter and let the
+			// user confirm via the existing checkable list dialog.
+			auto files = GatherBatchFiles();
+			if (files.empty()) {
+				wxLogError("Automation: No files found matching the batch folder scan criteria.");
+				return 4;
+			}
+
+			wxArrayString displayItems;
+			for (const auto& fp : files)
+				displayItems.Add(wxString::FromUTF8(fp));
+
+			std::vector<size_t> checkedIndices;
+			if (!ShowCheckableListDialog(_("Batch Files"),
+										 wxString::Format(_("Select files to process (%d found):"), static_cast<int>(files.size())),
+										 displayItems, checkedIndices)) {
+				wxLogMessage("Automation: Batch file selection cancelled.");
+				return 5;
+			}
+			if (checkedIndices.empty()) {
+				wxLogError("Automation: No files selected.");
+				return 6;
+			}
+
+			for (size_t idx : checkedIndices)
+				selectedFiles.push_back(files[idx]);
+		}
+		else {
+			// Expand directories using the script's batch settings.
+			std::string ext = script.GetBatchExtension();
+			wxString wildcard = wxString::FromUTF8("*" + ext);
+			std::string filter = script.GetBatchFileFilter();
+			bool useRegex = script.GetBatchFileFilterRegex();
+			std::regex filterRegex;
+			if (useRegex && !filter.empty()) {
+				try {
+					filterRegex = std::regex(filter, std::regex::icase);
+				}
+				catch (const std::regex_error&) {
+					wxLogWarning("Automation: Invalid batch file filter regex '%s'.", filter);
+					useRegex = false;
+				}
+			}
+
+			for (const auto& input : batchInputs) {
+				if (wxDirExists(input)) {
+					wxArrayString found;
+					if (script.GetBatchSubdirectories())
+						wxDir::GetAllFiles(input, &found, wildcard);
+					else {
+						wxDir d(input);
+						if (d.IsOpened()) {
+							wxString f;
+							if (d.GetFirst(&f, wildcard, wxDIR_FILES)) {
+								do {
+									found.Add(input + wxFileName::GetPathSeparator() + f);
+								} while (d.GetNext(&f));
+							}
+						}
+					}
+					for (const auto& fp : found) {
+						wxFileName fn(fp);
+						std::string name = fn.GetFullName().ToUTF8().data();
+						if (!MatchesFilter(name, filter, useRegex, filterRegex))
+							continue;
+						selectedFiles.push_back(std::string(fp.ToUTF8().data()));
+					}
+				}
+				else if (wxFileExists(input)) {
+					selectedFiles.push_back(std::string(input.ToUTF8().data()));
+				}
+				else {
+					wxLogWarning("Automation: Input '%s' is not an existing file or directory; skipping.", input);
+				}
+			}
+
+			if (selectedFiles.empty()) {
+				wxLogError("Automation: No files resolved from positional arguments.");
+				return 7;
+			}
+		}
+
+		ExecuteBatch(indices, selectedFiles);
+		return lastRunErrors == 0 ? 0 : 10;
+	}
+
+	if (mode == AutomationBatchMode::SliderSets) {
+		std::vector<std::pair<std::string, std::string>> selectedSets;
+
+		if (batchInputs.IsEmpty()) {
+			auto sets = GatherBatchSliderSets();
+			if (sets.empty()) {
+				wxLogError("Automation: No slider sets found matching the filter criteria.");
+				return 4;
+			}
+
+			wxArrayString displayItems;
+			for (const auto& [fp, setName] : sets)
+				displayItems.Add(wxString::FromUTF8(setName));
+
+			std::vector<size_t> checkedIndices;
+			if (!ShowCheckableListDialog(_("Batch Slider Sets"),
+										 wxString::Format(_("Select slider sets to process (%d found):"), static_cast<int>(sets.size())),
+										 displayItems, checkedIndices)) {
+				wxLogMessage("Automation: Slider set selection cancelled.");
+				return 5;
+			}
+			if (checkedIndices.empty()) {
+				wxLogError("Automation: No slider sets selected.");
+				return 6;
+			}
+
+			for (size_t idx : checkedIndices)
+				selectedSets.push_back(sets[idx]);
+		}
+		else {
+			// Resolve set project names against <ProjectPath>/SliderSets/*.{osp,xml}.
+			std::string projPath = GetProjectPath();
+			wxArrayString files;
+			wxDir::GetAllFiles(wxString::FromUTF8(projPath) + "/SliderSets", &files, "*.osp");
+			wxDir::GetAllFiles(wxString::FromUTF8(projPath) + "/SliderSets", &files, "*.xml");
+
+			std::set<std::string> wanted;
+			for (const auto& s : batchInputs)
+				wanted.insert(std::string(s.ToUTF8().data()));
+
+			std::set<std::string> resolved;
+			for (const auto& fp : files) {
+				SliderSetFile ssf(fp.ToUTF8().data());
+				if (ssf.fail())
+					continue;
+				std::vector<std::string> setNames;
+				ssf.GetSetNamesUnsorted(setNames);
+				for (const auto& sn : setNames) {
+					if (wanted.count(sn)) {
+						selectedSets.push_back({std::string(fp.ToUTF8().data()), sn});
+						resolved.insert(sn);
+					}
+				}
+			}
+
+			for (const auto& w : wanted) {
+				if (!resolved.count(w))
+					wxLogWarning("Automation: Slider set '%s' not found in project SliderSets.", w);
+			}
+
+			if (selectedSets.empty()) {
+				wxLogError("Automation: No slider sets resolved from positional arguments.");
+				return 7;
+			}
+		}
+
+		ExecuteBatch(indices, {}, selectedSets);
+		return lastRunErrors == 0 ? 0 : 10;
+	}
+
+	wxLogError("Automation: Unknown batch mode.");
+	return 8;
+}
+
 void AutomationDialog::LoadAutomation(const wxString& name) {
 	if (name.IsEmpty())
 		return;
@@ -1434,7 +1638,10 @@ void AutomationDialog::LoadAutomation(const wxString& name) {
 
 	int err = script.Load(filePath.ToUTF8().data());
 	if (err) {
-		wxMessageBox(wxString::Format(_("Failed to load automation script (error %d)."), err), _("Error"), wxICON_ERROR);
+		if (headlessMode)
+			wxLogError("Automation: Failed to load automation script (error %d).", err);
+		else
+			wxMessageBox(wxString::Format(_("Failed to load automation script (error %d)."), err), _("Error"), wxICON_ERROR);
 		return;
 	}
 
@@ -1928,6 +2135,8 @@ static bool StepChangesSliderSet(AutomationStepType type) {
 }
 
 void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
+	lastRunErrors = 0;
+
 	// Make a copy so placeholder substitution doesn't modify the UI version
 	AutomationScript execScript;
 	for (size_t idx : stepIndices)
@@ -1952,6 +2161,7 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 		if (cancelRequested) {
 			wxLogMessage("Automation: Cancelled by user.");
 			EndProgress(_("Automation cancelled."));
+			lastRunErrors++;
 			return;
 		}
 
@@ -1959,6 +2169,7 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 
 		int err = ExecuteStep(step);
 		if (err != 0) {
+			lastRunErrors++;
 			wxString errMsg = wxString::Format(
 				_("Step %d (%s) failed with error %d.\n\n%s\n\nContinue with remaining steps?"),
 				i + 1,
@@ -1966,10 +2177,16 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 				err,
 				wxString::FromUTF8(step.note));
 
-			int result = wxMessageBox(errMsg, _("Automation Error"), wxYES_NO | wxICON_ERROR);
-			if (result != wxYES) {
-				EndProgress(_("Automation aborted."));
-				return;
+			if (headlessMode) {
+				wxLogError("Automation: %s", errMsg);
+				// Auto-continue in headless mode
+			}
+			else {
+				int result = wxMessageBox(errMsg, _("Automation Error"), wxYES_NO | wxICON_ERROR);
+				if (result != wxYES) {
+					EndProgress(_("Automation aborted."));
+					return;
+				}
 			}
 		}
 
@@ -1983,8 +2200,10 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 
 	EndProgress(_("Automation complete."));
 
-	wxMessageBox(wxString::Format(_("Automation completed: %d step(s) executed."), totalSteps),
-				 _("Automation"), wxICON_INFORMATION);
+	if (!headlessMode) {
+		wxMessageBox(wxString::Format(_("Automation completed: %d step(s) executed."), totalSteps),
+					 _("Automation"), wxICON_INFORMATION);
+	}
 }
 
 void AutomationDialog::ResetAndClearProject() {
@@ -4254,6 +4473,7 @@ std::vector<std::pair<std::string, std::string>> AutomationDialog::GatherBatchSl
 
 void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::string>& selectedFiles, const std::vector<std::pair<std::string, std::string>>& selectedSets) {
 	auto batchMode = script.GetBatchMode();
+	lastRunErrors = 0;
 
 	// Pre-set OptimizeForSSE if not already configured.
 	// ValidateNIF would normally prompt via wxMessageBox parented to OutfitStudioFrame,
@@ -4269,7 +4489,11 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 		auto batchFiles = selectedFiles.empty() ? GatherBatchFiles() : selectedFiles;
 		if (batchFiles.empty()) {
 			EndProgress(_("No files found."));
-			wxMessageBox(_("No files found matching the batch folder scan criteria."), _("Automation"), wxICON_INFORMATION);
+			if (!headlessMode)
+				wxMessageBox(_("No files found matching the batch folder scan criteria."), _("Automation"), wxICON_INFORMATION);
+			else
+				wxLogError("Automation: No files found matching the batch folder scan criteria.");
+			lastRunErrors++;
 			return;
 		}
 
@@ -4381,16 +4605,26 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 		outfitStudio->RefreshGUIFromProj();
 		outfitStudio->CreateSetSliders();
 
-		wxMessageBox(wxString::Format(cancelRequested ? _("Batch cancelled: %d/%d items processed before cancellation.")
-													  : _("Batch completed: %d/%d items processed successfully."),
-									  processedCount - errorCount, processedCount),
-					 _("Automation"), wxICON_INFORMATION);
+		lastRunErrors += errorCount;
+		if (cancelRequested)
+			lastRunErrors++;
+
+		if (!headlessMode) {
+			wxMessageBox(wxString::Format(cancelRequested ? _("Batch cancelled: %d/%d items processed before cancellation.")
+														  : _("Batch completed: %d/%d items processed successfully."),
+										  processedCount - errorCount, processedCount),
+						 _("Automation"), wxICON_INFORMATION);
+		}
 	}
 	else if (batchMode == AutomationBatchMode::SliderSets) {
 		auto batchSets = selectedSets.empty() ? GatherBatchSliderSets() : selectedSets;
 		if (batchSets.empty()) {
 			EndProgress(_("No slider sets found."));
-			wxMessageBox(_("No slider sets found matching the filter criteria."), _("Automation"), wxICON_INFORMATION);
+			if (!headlessMode)
+				wxMessageBox(_("No slider sets found matching the filter criteria."), _("Automation"), wxICON_INFORMATION);
+			else
+				wxLogError("Automation: No slider sets found matching the filter criteria.");
+			lastRunErrors++;
 			return;
 		}
 
@@ -4563,9 +4797,15 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 		outfitStudio->RefreshGUIFromProj();
 		outfitStudio->CreateSetSliders();
 
-		wxMessageBox(wxString::Format(cancelRequested ? _("Batch cancelled: %d/%d slider sets processed before cancellation.")
-													  : _("Batch completed: %d/%d slider sets processed successfully."),
-									  processedCount - errorCount, processedCount),
-					 _("Automation"), wxICON_INFORMATION);
+		lastRunErrors += errorCount;
+		if (cancelRequested)
+			lastRunErrors++;
+
+		if (!headlessMode) {
+			wxMessageBox(wxString::Format(cancelRequested ? _("Batch cancelled: %d/%d slider sets processed before cancellation.")
+														  : _("Batch completed: %d/%d slider sets processed successfully."),
+										  processedCount - errorCount, processedCount),
+						 _("Automation"), wxICON_INFORMATION);
+		}
 	}
 }
