@@ -206,6 +206,32 @@ void GLShader::SetAdjustPointSize(const bool enable) {
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
+void GLShader::SetPointSpacingWS(const float spacing) {
+	GLint loc = glGetUniformLocation(progID, "pointSpacingWS");
+	if (loc >= 0)
+		glUniform1f(loc, spacing);
+}
+
+void GLShader::SetPointSizeParams(const float minPx, const float maxPx, const float scale) {
+	GLint loc = glGetUniformLocation(progID, "pointSizeMinPx");
+	if (loc >= 0)
+		glUniform1f(loc, minPx);
+
+	loc = glGetUniformLocation(progID, "pointSizeMaxPx");
+	if (loc >= 0)
+		glUniform1f(loc, maxPx);
+
+	loc = glGetUniformLocation(progID, "pointSizeScale");
+	if (loc >= 0)
+		glUniform1f(loc, scale);
+}
+
+void GLShader::SetViewportSize(const float widthPx, const float heightPx) {
+	GLint loc = glGetUniformLocation(progID, "viewportSizePx");
+	if (loc >= 0)
+		glUniform2f(loc, widthPx, heightPx);
+}
+
 void GLShader::SetFrontalLight(const DirectionalLight& light) {
 	GLint loc = glGetUniformLocation(progID, "frontal.diffuse");
 	if (loc >= 0)

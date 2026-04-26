@@ -1525,8 +1525,10 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	OutfitStudioConfig.ClearValueArray("BrushSettings", "Brush");
 	OutfitStudioConfig.AppendValueArray("BrushSettings", "Brush", brushSettingsEntries);
 
-	if (glView)
+	if (glView) {
 		delete glView;
+		glView = nullptr;
+	}
 
 	if (bmpEditSlider)
 		delete bmpEditSlider;
@@ -12863,6 +12865,11 @@ void wxGLPanel::OnShown() {
 		gls.SetMaskedPointColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
 	}
 
+	gls.SetPointSizeParams(
+		Config.GetFloatValue("Rendering/PointSizeMin", 4.0f),
+		Config.GetFloatValue("Rendering/PointSizeMax", 14.0f),
+		Config.GetFloatValue("Rendering/PointSizeScale", 0.6f));
+
 	bool perspectiveView = OutfitStudioConfig.GetBoolValue("Rendering/PerspectiveView", true);
 	os->menuBar->Check(XRCID("btnViewPerspective"), perspectiveView);
 	os->toolBarV->ToggleTool(XRCID("btnViewPerspective"), perspectiveView);
@@ -15446,6 +15453,7 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 			Mesh* m = GetMesh(os->activeItem->GetShape()->name.get());
 			if (m) {
 				m->bShowPoints = true;
+				m->ComputeAvgEdgeLength();
 				m->QueueUpdate(Mesh::UpdateType::Mask);
 			}
 		}

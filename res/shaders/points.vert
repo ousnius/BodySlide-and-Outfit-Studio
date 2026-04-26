@@ -15,6 +15,13 @@ uniform vec3 color;
 uniform vec3 subColor;
 uniform bool bAdjustPointSize;
 
+// Density-aware point sizing inputs (only used when bAdjustPointSize is true).
+uniform float pointSpacingWS;     // Average edge length in world space (0 disables density scaling).
+uniform vec2  viewportSizePx;     // Framebuffer size in pixels.
+uniform float pointSizeMinPx;     // Minimum point size in pixels.
+uniform float pointSizeMaxPx;     // Maximum point size in pixels.
+uniform float pointSizeScale;     // Multiplier on the screen-space neighbor spacing.
+
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec3 vertexNormal;
 layout(location = 2) in vec3 vertexTangent;
@@ -35,6 +42,7 @@ out vec4 vColor;
 out vec2 vUV;
 out float pointVisible;
 out float vViewDepth;
+out float vBiasedDepth;
 
 
 void main(void)
@@ -50,8 +58,26 @@ void main(void)
 
 	gl_Position = matProjection * vec4(vPos, 1.0);
 
+	// Depth bias to keep the point above the underlying wireframe / surface without
+	// z-fighting. The shift is done in view space proportional to view depth, which
+	// produces a roughly constant window-space offset at every zoom level (unlike a
+	// fixed window-space bias, which has to fade out and creates a visible cutoff).
+	float biasWS = max(vViewDepth * 0.005, 1e-3);
+	vec3 vPosBiased = vec3(vPos.xy, vPos.z + biasWS); // camera looks down -Z, so +Z is toward camera
+	vec4 clipBiased = matProjection * vec4(vPosBiased, 1.0);
+	vBiasedDepth = (clipBiased.z / clipBiased.w) * 0.5 + 0.5;
+
 	if (bAdjustPointSize)
-		gl_PointSize = clamp(30.0 / vViewDepth, 2.0, 12.0); // Shrinks with distance
+	{
+		// Convert pointSpacingWS (world-space neighbor distance) into a screen-space pixel
+		// distance at the vertex's depth. matProjection[1][1] is the perspective Y scale
+		// (cot(fovY/2)); multiplying by half the framebuffer height converts NDC to pixels.
+		float screenSpacingPx = pointSpacingWS * matProjection[1][1] * (viewportSizePx.y * 0.5) / max(vViewDepth, 1e-4);
+
+		// Fall back to the maximum size if no spacing was provided.
+		float sizePx = (pointSpacingWS > 0.0) ? (screenSpacingPx * pointSizeScale) : pointSizeMaxPx;
+		gl_PointSize = clamp(sizePx, pointSizeMinPx, pointSizeMaxPx);
+	}
 
 	n = vertexNormal;
 
@@ -68,10 +94,10 @@ void main(void)
 
 	if (vertexMask > 0.0)
 	{
-		vColor = vec4(subColor.rgb, 0.5);
+		vColor = vec4(subColor.rgb, 0.7);
 	}
 	else
 	{
-		vColor = vec4(color.rgb, 0.5);
+		vColor = vec4(color.rgb, 0.7);
 	}
 }

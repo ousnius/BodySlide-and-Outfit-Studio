@@ -21,6 +21,7 @@ in float maskFactor;
 in float vViewDepth;
 in vec4 vColor;
 in float pointVisible;
+in float vBiasedDepth;
 
 out vec4 fragColor;
 
@@ -35,21 +36,13 @@ void main(void)
 	if (dot(gl_PointCoord - 0.5, gl_PointCoord - 0.5) > 0.25)
 		discard;
 
-	// Only apply full bias when very close to the camera
-	float depthBiasMax = 1e-3;
-	float fadeStart = 0.1;   // where fading starts (same as znear)
-	float fadeEnd = 15.0;    // where bias fully fades (15 world units away)
-
-	float fadeFactor = clamp(1.0 - (vViewDepth - fadeStart) / (fadeEnd - fadeStart), 0.0, 1.0);
-	float scaledBias = depthBiasMax * fadeFactor;
-
-	gl_FragDepth = gl_FragCoord.z - scaledBias;
+	// View-space biased depth (computed in the vertex shader). Pulls the point
+	// slightly toward the camera so it stays visible above the wireframe at every
+	// zoom level without a hard fade cutoff.
+	gl_FragDepth = vBiasedDepth;
 
 	vec4 color = vColor;
 	color = clamp(color, 0.0, 1.0);
 
 	fragColor = color;
-
-	// Visualize scaled depth bias
-	//fragColor = vec4(vec3(scaledBias * 1000.0), 1.0);
 }

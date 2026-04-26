@@ -124,6 +124,10 @@ public:
 	float smoothSeamNormalsAngle = 60.0f; // Smoothing threshold in degrees for generating smooth normals on seams.
 	bool lockNormals = false;
 
+	// Average edge length in world space, used for screen-space sizing of vertex points.
+	// Negative means "not yet computed" - call ComputeAvgEdgeLength().
+	float avgEdgeLengthWS = -1.0f;
+
 	uint16_t alphaFlags = 0;
 	uint8_t alphaThreshold = 0;
 
@@ -140,6 +144,10 @@ public:
 
 	void BuildVertexAdjacency(); // Vertex adjacency optional to reduce overhead when it's not needed.
 	void BuildEdgeList();		 // Edge list optional to reduce overhead when it's not needed.
+
+	// Computes (and caches in avgEdgeLengthWS) the mean triangle edge length in world space.
+	// Used to scale vertex points to mesh density. Returns the cached value if already computed.
+	float ComputeAvgEdgeLength();
 
 	void CalcWeldVerts();
 

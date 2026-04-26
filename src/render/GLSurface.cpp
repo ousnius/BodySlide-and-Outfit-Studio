@@ -1114,6 +1114,11 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 			shader.SetColor(colorPoints);
 			shader.SetSubColor(colorPointsMasked);
 
+			// Density-aware point sizing.
+			shader.SetPointSpacingWS(m->avgEdgeLengthWS > 0.0f ? m->avgEdgeLengthWS : 0.0f);
+			shader.SetPointSizeParams(pointSizeMin, pointSizeMax, pointSizeScale);
+			shader.SetViewportSize(static_cast<float>(vpW), static_cast<float>(vpH));
+
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);

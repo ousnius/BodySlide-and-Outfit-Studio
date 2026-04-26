@@ -90,6 +90,11 @@ void GLDialog::OnShown() {
 		gls.SetMaskedPointColor(Vector3(colorR / 255.0f, colorG / 255.0f, colorB / 255.0f));
 	}
 
+	gls.SetPointSizeParams(
+		Config.GetFloatValue("Rendering/PointSizeMin", 4.0f),
+		Config.GetFloatValue("Rendering/PointSizeMax", 14.0f),
+		Config.GetFloatValue("Rendering/PointSizeScale", 0.6f));
+
 	// Turn texture rendering off initially
 	gls.ToggleTextures();
 
