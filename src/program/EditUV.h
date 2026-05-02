@@ -15,7 +15,7 @@ const int EDITUV_DIRECTION_LEFT = 0x2;
 const int EDITUV_DIRECTION_UP = 0x4;
 const int EDITUV_DIRECTION_DOWN = 0x8;
 
-enum class EditUVTool { BoxSelection, VertexSelection, Move, Scale, Rotate };
+enum class EditUVTool { BoxSelection, RopeSelection, VertexSelection, Move, Scale, Rotate };
 
 class EditUVAction {
 	Mesh* actionMesh = nullptr;
@@ -116,6 +116,7 @@ public:
 	Mesh* planeMesh = nullptr;
 	Mesh* uvGridMesh = nullptr;
 	Mesh* boxSelectMesh = nullptr;
+	Mesh* ropeSelectMesh = nullptr;
 
 	EditUVCanvas(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs);
 	~EditUVCanvas();
@@ -165,9 +166,11 @@ private:
 	float lastAngle;
 
 	int hoverPoint = -1;
+	std::vector<nifly::Vector2> ropeSelectPoints;
 
 	GLMaterial uvGridMaterial;
 	GLMaterial boxSelectMaterial;
+	GLMaterial ropeSelectMaterial;
 
 	void OnShown();
 	void OnPaint(wxPaintEvent& event);
@@ -187,6 +190,10 @@ private:
 	void InitMeshes();
 	void UpdateCursor(int ScreenX, int ScreenY, const std::string& meshName);
 	bool SelectVertex(const wxPoint& screenPos, bool unselect = false);
+	bool AddRopeSelectPoint(const nifly::Vector3& point, bool force = false);
+	void UpdateRopeSelectMesh();
+	void ApplyRopeSelection(bool unselect);
+	bool PointInRopeSelection(const nifly::Vector2& point) const;
 
 	wxDECLARE_EVENT_TABLE();
 };
