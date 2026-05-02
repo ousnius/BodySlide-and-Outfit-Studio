@@ -5849,17 +5849,26 @@ void OutfitStudioFrame::OnShapeTreeMotion(wxMouseEvent& event) {
 	if (!outfitShapes || !glView)
 		return;
 
+	const wxPoint mousePos = event.GetPosition();
 	int flags = 0;
-	wxTreeItemId item = outfitShapes->HitTest(event.GetPosition(), flags);
+	wxTreeItemId item = outfitShapes->HitTest(mousePos, flags);
 
-	std::string newHover;
-	if (item.IsOk() && outfitShapes->GetItemParent(item).IsOk()) {
-		auto* data = dynamic_cast<ShapeItemData*>(outfitShapes->GetItemData(item));
-		if (data && data->GetShape())
-			newHover = data->GetShape()->name.get();
+	bool onItemLabelText = false;
+	if ((flags & wxTREE_HITTEST_ONITEMLABEL) != 0 && item.IsOk() && outfitShapes->GetItemParent(item).IsOk()) {
+		wxRect labelRect;
+		onItemLabelText = outfitShapes->GetBoundingRect(item, labelRect, true) && labelRect.Contains(mousePos);
 	}
 
-	glView->SetHoverHighlight(newHover);
+	if (onItemLabelText) {
+		auto* data = dynamic_cast<ShapeItemData*>(outfitShapes->GetItemData(item));
+		if (data && data->GetShape())
+			glView->SetHoverHighlight(data->GetShape()->name.get());
+		else
+			glView->ClearHoverHighlight();
+	}
+	else {
+		glView->ClearHoverHighlight();
+	}
 }
 
 void OutfitStudioFrame::OnShapeTreeLeave(wxMouseEvent& event) {
