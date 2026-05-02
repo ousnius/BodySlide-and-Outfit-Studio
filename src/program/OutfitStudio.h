@@ -247,6 +247,11 @@ public:
 	void EndMoveVertex();
 	void CancelMoveVertex();
 
+	bool StartEdgeSlide(const wxPoint& screenPos);
+	void UpdateEdgeSlide(const wxPoint& screenPos);
+	void EndEdgeSlide();
+	void CancelEdgeSlide();
+
 	bool RestoreMode(UndoStateProject* usp);
 	void ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender = true);
 	bool UndoStroke();
@@ -337,6 +342,12 @@ public:
 
 	bool GetToolOptionRestrictNormal() { return toolOptionRestrictNormal; }
 	void SetToolOptionRestrictNormal(bool on = true) { toolOptionRestrictNormal = on; }
+
+	bool GetToolOptionEdgeSlide() { return toolOptionEdgeSlide; }
+	void SetToolOptionEdgeSlide(bool on = true) { toolOptionEdgeSlide = on; }
+
+	bool GetToolOptionEdgeSlideUVCorrection() { return toolOptionEdgeSlideUVCorrection; }
+	void SetToolOptionEdgeSlideUVCorrection(bool on = true) { toolOptionEdgeSlideUVCorrection = on; }
 
 	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
 		Mesh* m = gls.GetMesh(shapeName);
@@ -722,6 +733,11 @@ private:
 	MoveVertexOperation moveVertexOperation = MoveVertexOperation::None;
 	int moveVertexTarget;
 	std::string moveVertexWeldTargetMeshName;
+	nifly::Vector3 edgeSlideStartPosition;
+	nifly::Vector2 edgeSlideStartUV;
+	nifly::Edge edgeSlideCurrentEdge;
+	int edgeSlideTarget = -1;
+	bool edgeSlideHasUV = false;
 
 	std::set<Mesh*> BVHUpdateQueue;
 
@@ -748,6 +764,7 @@ private:
 	bool isPickingVertex = false;
 	bool isPickingEdge = false;
 	bool isMovingVertex = false;
+	bool isSlidingEdge = false;
 	bool toolOptionXMirror = true;
 	bool toolOptionXMirrorWeight = false;
 	bool toolOptionConnectedOnly = false;
@@ -756,6 +773,8 @@ private:
 	bool toolOptionRestrictSurface = false;
 	bool toolOptionRestrictPlane = false;
 	bool toolOptionRestrictNormal = false;
+	bool toolOptionEdgeSlide = false;
+	bool toolOptionEdgeSlideUVCorrection = true;
 
 	TweakBrush* activeBrush = nullptr;
 	TweakBrush* savedBrush;
@@ -989,6 +1008,7 @@ public:
 	wxStateButton* partitionTabButton = nullptr;
 	wxStateButton* lightsTabButton = nullptr;
 	wxButton* brushSettings = nullptr;
+	wxCheckBox* cbEdgeSlideCorrectUV = nullptr;
 	wxSlider* fovSlider = nullptr;
 	wxCheckBox* cbDepthClip = nullptr;
 	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
@@ -1081,6 +1101,7 @@ public:
 	void ScrollToActiveSlider();
 
 	void SelectTool(ToolID tool);
+	void UpdateEdgeSlideToolOptionsUI(ToolID tool);
 	void ReEnableToolOptionsUI();
 	void ReToggleToolOptionsUI();
 
@@ -1384,6 +1405,7 @@ private:
 	void OnShowBones(wxCommandEvent& event);
 	void OnShowFloor(wxCommandEvent& event);
 	void OnBrushSettings(wxCommandEvent& event);
+	void OnEdgeSlideCorrectUV(wxCommandEvent& event);
 	void OnFieldOfViewSlider(wxCommandEvent& event);
 	void OnDepthClip(wxCommandEvent& event);
 	void OnUpdateLights(wxCommandEvent& event);
@@ -1517,6 +1539,7 @@ private:
 		glView->SetToolOptionRestrictSurface(event.IsChecked());
 		if (event.IsChecked()) {
 			glView->SetToolOptionRestrictPlane(false);
+			glView->SetToolOptionEdgeSlide(false);
 		}
 		ReToggleToolOptionsUI();
 	}
@@ -1526,6 +1549,7 @@ private:
 		if (event.IsChecked()) {
 			glView->SetToolOptionRestrictSurface(false);
 			glView->SetToolOptionRestrictNormal(false);
+			glView->SetToolOptionEdgeSlide(false);
 		}
 		ReToggleToolOptionsUI();
 	}
@@ -1534,7 +1558,19 @@ private:
 		glView->SetToolOptionRestrictNormal(event.IsChecked());
 		if (event.IsChecked()) {
 			glView->SetToolOptionRestrictPlane(false);
+			glView->SetToolOptionEdgeSlide(false);
 		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionEdgeSlide(wxCommandEvent& event) {
+		glView->SetToolOptionEdgeSlide(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictSurface(false);
+			glView->SetToolOptionRestrictPlane(false);
+			glView->SetToolOptionRestrictNormal(false);
+		}
+		ReEnableToolOptionsUI();
 		ReToggleToolOptionsUI();
 	}
 

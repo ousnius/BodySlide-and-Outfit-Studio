@@ -202,6 +202,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnRestrictSurface"), OutfitStudioFrame::OnToolOptionRestrictSurface)
 	EVT_MENU(XRCID("btnRestrictPlane"), OutfitStudioFrame::OnToolOptionRestrictPlane)
 	EVT_MENU(XRCID("btnRestrictNormal"), OutfitStudioFrame::OnToolOptionRestrictNormal)
+	EVT_MENU(XRCID("btnEdgeSlide"), OutfitStudioFrame::OnToolOptionEdgeSlide)
 
 	EVT_MENU(XRCID("btnSelect"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnTransform"), OutfitStudioFrame::OnSelectTool)
@@ -1283,6 +1284,12 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		brushSettings = reinterpret_cast<wxButton*>(toolBarH->FindWindowByName("brushSettings"));
 		if (brushSettings)
 			brushSettings->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnBrushSettings, this);
+
+		cbEdgeSlideCorrectUV = reinterpret_cast<wxCheckBox*>(toolBarH->FindWindowByName("cbEdgeSlideCorrectUV"));
+		if (cbEdgeSlideCorrectUV) {
+			cbEdgeSlideCorrectUV->Bind(wxEVT_CHECKBOX, &OutfitStudioFrame::OnEdgeSlideCorrectUV, this);
+			cbEdgeSlideCorrectUV->Show(false);
+		}
 
 		fovSlider = reinterpret_cast<wxSlider*>(toolBarH->FindWindowByName("fovSlider"));
 		if (fovSlider)
@@ -3527,6 +3534,8 @@ void OutfitStudioFrame::ScrollToActiveSlider() {
 }
 
 void OutfitStudioFrame::SelectTool(ToolID tool) {
+	UpdateEdgeSlideToolOptionsUI(tool);
+
 	if (tool == ToolID::Select) {
 		glView->SetEditMode(false);
 		glView->SetBrushMode(false);
@@ -3671,6 +3680,20 @@ void OutfitStudioFrame::SelectTool(ToolID tool) {
 	UpdateBrushSettings();
 }
 
+void OutfitStudioFrame::UpdateEdgeSlideToolOptionsUI(ToolID tool) {
+	bool isEdgeSlide = tool == ToolID::MoveVertex && glView->GetToolOptionEdgeSlide();
+	if (!cbEdgeSlideCorrectUV)
+		return;
+
+	cbEdgeSlideCorrectUV->Show(isEdgeSlide);
+	cbEdgeSlideCorrectUV->SetValue(isEdgeSlide && glView->GetToolOptionEdgeSlideUVCorrection());
+
+	if (toolBarH) {
+		toolBarH->Layout();
+		toolBarH->Refresh();
+	}
+}
+
 void OutfitStudioFrame::ReEnableToolOptionsUI() {
 	bool isBrush = glView->GetActiveBrush() != nullptr;
 	ToolID toolid = glView->GetActiveTool();
@@ -3678,6 +3701,8 @@ void OutfitStudioFrame::ReEnableToolOptionsUI() {
 	bool isIB = toolid == ToolID::InflateBrush || toolid == ToolID::DeflateBrush;
 	bool isMB = toolid == ToolID::MoveBrush;
 	bool isSB = toolid == ToolID::SmoothBrush;
+
+	UpdateEdgeSlideToolOptionsUI(toolid);
 
 	menuBar->Enable(XRCID("btnXMirror"), isBrush || isMV);
 	tbvHider.Show(XRCID("btnXMirror"), isBrush || isMV);
@@ -3687,6 +3712,7 @@ void OutfitStudioFrame::ReEnableToolOptionsUI() {
 	tbvHider.Show(XRCID("btnMerge"), isMV);
 	menuBar->Enable(XRCID("btnWeld"), isMV);
 	tbvHider.Show(XRCID("btnWeld"), isMV);
+	tbvHider.Show(XRCID("btnEdgeSlide"), isMV);
 	menuBar->Enable(XRCID("btnRestrictSurface"), isMV);
 	tbvHider.Show(XRCID("btnRestrictSurface"), isMV);
 	menuBar->Enable(XRCID("btnRestrictPlane"), isMV || isMB || isSB);
@@ -3710,6 +3736,12 @@ void OutfitStudioFrame::ReToggleToolOptionsUI() {
 	bool rsurf = glView->GetToolOptionRestrictSurface();
 	bool rplane = glView->GetToolOptionRestrictPlane();
 	bool rnormal = glView->GetToolOptionRestrictNormal();
+	bool edgeSlide = glView->GetToolOptionEdgeSlide();
+	bool isES = isMV && edgeSlide;
+	bool edgeSlideUVCorrection = glView->GetToolOptionEdgeSlideUVCorrection();
+
+	if (cbEdgeSlideCorrectUV)
+		cbEdgeSlideCorrectUV->SetValue(isES && edgeSlideUVCorrection);
 
 	menuBar->Check(XRCID("btnTransform"), transformMode);
 	toolBarV->ToggleTool(XRCID("btnTransform"), transformMode);
@@ -3721,6 +3753,7 @@ void OutfitStudioFrame::ReToggleToolOptionsUI() {
 	toolBarV->ToggleTool(XRCID("btnMerge"), isMV && merge);
 	menuBar->Check(XRCID("btnWeld"), isMV && weld);
 	toolBarV->ToggleTool(XRCID("btnWeld"), isMV && weld);
+	toolBarV->ToggleTool(XRCID("btnEdgeSlide"), isES);
 	menuBar->Check(XRCID("btnRestrictSurface"), isMV && rsurf);
 	toolBarV->ToggleTool(XRCID("btnRestrictSurface"), isMV && rsurf);
 	menuBar->Check(XRCID("btnRestrictPlane"), (isMV || isMB || isSB) && rplane);
@@ -7120,6 +7153,11 @@ void OutfitStudioFrame::OnBrushSettings(wxCommandEvent& WXUNUSED(event)) {
 		CloseBrushSettings();
 	else
 		PopupBrushSettings(brushSettings);
+}
+
+void OutfitStudioFrame::OnEdgeSlideCorrectUV(wxCommandEvent& event) {
+	glView->SetToolOptionEdgeSlideUVCorrection(event.IsChecked());
+	ReToggleToolOptionsUI();
 }
 
 void OutfitStudioFrame::OnFieldOfViewSlider(wxCommandEvent& WXUNUSED(event)) {
@@ -13260,6 +13298,10 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				CancelMoveVertex();
 				isMovingVertex = false;
 			}
+			if (isSlidingEdge) {
+				CancelEdgeSlide();
+				isSlidingEdge = false;
+			}
 			os->CloseBrushSettings();
 		}
 	}
@@ -14174,6 +14216,221 @@ void wxGLPanel::ClickCollapseVertex() {
 	os->SetPendingChanges();
 }
 
+struct EdgeSlideCandidate {
+	Edge edge;
+	int targetPoint = -1;
+	float t = 0.0f;
+	float distanceSquared = 0.0f;
+};
+
+static float ClampEdgeSlideT(float t) {
+	if (t < 0.0f)
+		return 0.0f;
+
+	if (t > 1.0f)
+		return 1.0f;
+
+	return t;
+}
+
+static bool FindEdgeSlideCandidate(GLSurface& gls, Mesh* m, int slidePoint, const Vector3& startPosition, const wxPoint& screenPos, EdgeSlideCandidate& outCandidate) {
+	if (!m || slidePoint < 0 || slidePoint >= m->nVerts)
+		return false;
+
+	if (!m->vertEdges || !m->edges)
+		m->BuildEdgeList();
+
+	if (!m->vertEdges || !m->edges)
+		return false;
+
+	int startX = 0;
+	int startY = 0;
+	gls.ProjectPointToScreen(m->TransformPosMeshToModel(startPosition), startX, startY);
+
+	bool foundCandidate = false;
+	std::unordered_set<int> seenTargets;
+	for (int edgeIndex : m->vertEdges[slidePoint]) {
+		if (edgeIndex < 0 || edgeIndex >= m->nEdges)
+			continue;
+
+		const Edge& edge = m->edges[edgeIndex];
+		int targetPoint = -1;
+		if (edge.p1 == slidePoint)
+			targetPoint = edge.p2;
+		else if (edge.p2 == slidePoint)
+			targetPoint = edge.p1;
+		else
+			continue;
+
+		if (targetPoint < 0 || targetPoint >= m->nVerts || !seenTargets.insert(targetPoint).second)
+			continue;
+
+		int endX = 0;
+		int endY = 0;
+		gls.ProjectPointToScreen(m->TransformPosMeshToModel(m->verts[targetPoint]), endX, endY);
+
+		float dx = static_cast<float>(endX - startX);
+		float dy = static_cast<float>(endY - startY);
+		float edgeLengthSquared = dx * dx + dy * dy;
+		if (edgeLengthSquared <= 0.0001f)
+			continue;
+
+		float cursorDx = static_cast<float>(screenPos.x - startX);
+		float cursorDy = static_cast<float>(screenPos.y - startY);
+		float t = ClampEdgeSlideT((cursorDx * dx + cursorDy * dy) / edgeLengthSquared);
+		float closestX = static_cast<float>(startX) + dx * t;
+		float closestY = static_cast<float>(startY) + dy * t;
+		float distX = static_cast<float>(screenPos.x) - closestX;
+		float distY = static_cast<float>(screenPos.y) - closestY;
+		float distanceSquared = distX * distX + distY * distY;
+
+		if (!foundCandidate || distanceSquared < outCandidate.distanceSquared) {
+			outCandidate.edge = edge;
+			outCandidate.targetPoint = targetPoint;
+			outCandidate.t = t;
+			outCandidate.distanceSquared = distanceSquared;
+			foundCandidate = true;
+		}
+	}
+
+	return foundCandidate;
+}
+
+bool wxGLPanel::StartEdgeSlide(const wxPoint& WXUNUSED(screenPos)) {
+	if (lastHitResult.hitMeshName.empty() || lastHitResult.hoverPoint < 0)
+		return false;
+
+	Mesh* m = GetMesh(lastHitResult.hitMeshName);
+	if (!m)
+		return false;
+
+	if (!os->CheckEditableState())
+		return false;
+
+	if (!m->vertEdges || !m->edges)
+		m->BuildEdgeList();
+
+	if (!m->vertEdges || !m->edges || m->vertEdges[lastHitResult.hoverPoint].empty())
+		return false;
+
+	mouseDownMeshName = lastHitResult.hitMeshName;
+	mouseDownPoint = lastHitResult.hoverPoint;
+	mouseHasMovedSinceStart = false;
+	edgeSlideStartPosition = lastHitResult.hoverMeshCoord;
+	edgeSlideStartUV = Vector2();
+	edgeSlideCurrentEdge = Edge();
+	edgeSlideTarget = -1;
+	edgeSlideHasUV = !os->bEditSlider && GetToolOptionEdgeSlideUVCorrection() && m->texcoord != nullptr;
+	if (edgeSlideHasUV)
+		edgeSlideStartUV = m->texcoord[mouseDownPoint];
+
+	UndoStateProject* usp = undoHistory.PushState();
+	usp->undoType = UndoType::VertexPosition;
+	usp->usss.emplace_back();
+	usp->usss[0].shapeName = mouseDownMeshName;
+	usp->usss[0].pointEndState[mouseDownPoint] = usp->usss[0].pointStartState[mouseDownPoint] = edgeSlideStartPosition;
+	if (edgeSlideHasUV)
+		usp->usss[0].uvEndState[mouseDownPoint] = usp->usss[0].uvStartState[mouseDownPoint] = edgeSlideStartUV;
+
+	if (os->bEditSlider) {
+		usp->sliderName = os->activeSlider;
+		float sliderscale = os->project->SliderValue(os->activeSlider);
+		if (sliderscale == 0.0)
+			sliderscale = 1.0;
+
+		usp->sliderscale = sliderscale;
+	}
+
+	gls.SetPointCursor(lastHitResult.hoverRealCoord);
+	gls.SetCenterCursor(lastHitResult.hoverRealCoord);
+	gls.ShowCursor(true);
+
+	return true;
+}
+
+void wxGLPanel::UpdateEdgeSlide(const wxPoint& screenPos) {
+	Mesh* m = GetMesh(mouseDownMeshName);
+	if (!m || mouseDownPoint < 0)
+		return;
+
+	UndoStateProject* usp = undoHistory.GetCurState();
+	if (!usp)
+		return;
+
+	UndoStateShape& uss = usp->usss[0];
+
+	EdgeSlideCandidate candidate;
+	if (!FindEdgeSlideCandidate(gls, m, mouseDownPoint, edgeSlideStartPosition, screenPos, candidate)) {
+		gls.HideSegCursor();
+		return;
+	}
+
+	edgeSlideCurrentEdge = candidate.edge;
+	edgeSlideTarget = candidate.targetPoint;
+
+	Vector3 targetPosition = m->verts[edgeSlideTarget];
+	Vector3 newPosition = edgeSlideStartPosition + (targetPosition - edgeSlideStartPosition) * candidate.t;
+	uss.pointEndState[mouseDownPoint] = newPosition;
+	m->verts[mouseDownPoint] = newPosition;
+	m->QueueUpdate(Mesh::UpdateType::Position);
+
+	if (edgeSlideHasUV && m->texcoord) {
+		Vector2 targetUV = m->texcoord[edgeSlideTarget];
+		Vector2 newUV = edgeSlideStartUV + (targetUV - edgeSlideStartUV) * candidate.t;
+		uss.uvEndState[mouseDownPoint] = newUV;
+		m->texcoord[mouseDownPoint] = newUV;
+		m->QueueUpdate(Mesh::UpdateType::TextureCoordinates);
+	}
+
+	Vector3 newPositionModel = m->TransformPosMeshToModel(newPosition);
+	gls.SetPointCursor(newPositionModel);
+	gls.SetCenterCursor(newPositionModel);
+	gls.AddVisSeg(m->TransformPosMeshToModel(edgeSlideStartPosition), m->TransformPosMeshToModel(targetPosition), "seghilite");
+	gls.ShowCursor(true);
+}
+
+void wxGLPanel::EndEdgeSlide() {
+	isSlidingEdge = false;
+	UndoStateProject* usp = undoHistory.GetCurState();
+	if (!usp)
+		return;
+
+	UndoStateShape& uss = usp->usss[0];
+	bool positionChanged = uss.pointEndState[mouseDownPoint] != uss.pointStartState[mouseDownPoint];
+	bool uvChanged = false;
+	auto uvStart = uss.uvStartState.find(mouseDownPoint);
+	auto uvEnd = uss.uvEndState.find(mouseDownPoint);
+	if (uvStart != uss.uvStartState.end() && uvEnd != uss.uvEndState.end())
+		uvChanged = uvStart->second != uvEnd->second;
+
+	if (!positionChanged && !uvChanged) {
+		CancelEdgeSlide();
+		return;
+	}
+
+	if (!os->bEditSlider) {
+		NiShape* shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(mouseDownMeshName);
+		if (shape)
+			os->project->ComputeUndoRestDiffs(shape, uss);
+	}
+
+	ApplyUndoState(usp, false);
+	gls.HideSegCursor();
+
+	os->UpdateUndoTools();
+	os->SetPendingChanges();
+}
+
+void wxGLPanel::CancelEdgeSlide() {
+	UndoStateProject* usp = undoHistory.GetCurState();
+	if (!usp)
+		return;
+
+	ApplyUndoState(usp, true);
+	undoHistory.PopState();
+	gls.HideSegCursor();
+}
+
 bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	if (lastHitResult.hitMeshName.empty() || lastHitResult.hoverPoint < 0)
 		return false;
@@ -14807,6 +15064,40 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 		os->ActiveShapesUpdated(usp, bUndo);
 	}
 	else if (undoType == UndoType::VertexPosition) {
+		auto applyUVState = [&](UndoStateShape& uss) {
+			if (!usp->sliderName.empty())
+				return;
+
+			const auto& uvState = bUndo ? uss.uvStartState : uss.uvEndState;
+			if (uvState.empty())
+				return;
+
+			Mesh* m = GetMesh(uss.shapeName);
+			if (m && m->texcoord) {
+				for (auto& uvIt : uvState) {
+					if (uvIt.first >= 0 && uvIt.first < m->nVerts)
+						m->texcoord[uvIt.first] = uvIt.second;
+				}
+
+				m->QueueUpdate(Mesh::UpdateType::TextureCoordinates);
+			}
+
+			NiShape* shape = os->project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+			if (!shape)
+				return;
+
+			std::vector<Vector2> uvs;
+			if (!os->project->GetWorkNif()->GetUvsForShape(shape, uvs))
+				return;
+
+			for (auto& uvIt : uvState) {
+				if (uvIt.first >= 0 && uvIt.first < static_cast<int>(uvs.size()))
+					uvs[uvIt.first] = uvIt.second;
+			}
+
+			os->project->GetWorkNif()->SetUvsForShape(shape, uvs);
+		};
+
 		bool hasRestDiffs = false;
 		for (auto& uss : usp->usss) {
 			if (!uss.restDiffs.empty()) {
@@ -14851,6 +15142,8 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 				Mesh* m = GetMesh(uss.shapeName);
 				if (m)
 					m->CalcWeldVerts();
+
+				applyUVState(uss);
 			}
 		}
 		else {
@@ -14867,6 +15160,8 @@ void wxGLPanel::ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender) 
 				BVHUpdateQueue.insert(m);
 
 				m->QueueUpdate(Mesh::UpdateType::Position);
+
+				applyUVState(uss);
 			}
 
 			os->ActiveShapesUpdated(usp, bUndo);
@@ -15657,7 +15952,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		gls.RenderOneFrame();
 	}
 
-	if (lbuttonDown || isMovingVertex) {
+	if (lbuttonDown || isMovingVertex || isSlidingEdge) {
 		isLDragging = true;
 		if (isTransforming) {
 			UpdateTransform(event.GetPosition());
@@ -15680,6 +15975,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else if (isMovingVertex) {
 			UpdateMoveVertex(event.GetPosition() - mouseDownOffset);
 		}
+		else if (isSlidingEdge) {
+			UpdateEdgeSlide(event.GetPosition());
+		}
 		else {
 			if (Config.MatchValue("Input/LeftMousePan", "true")) {
 				gls.PanCamera(x - lastX, y - lastY);
@@ -15691,7 +15989,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		gls.RenderOneFrame();
 	}
 
-	if (!rbuttonDown && !lbuttonDown && !isMovingVertex) {
+	if (!rbuttonDown && !lbuttonDown && !isMovingVertex && !isSlidingEdge) {
 		GLSurface::CursorHitResult hitResult{};
 
 		if (editMode) {
@@ -15825,7 +16123,18 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 			isPickingEdge = true;
 	}
 	else if (activeTool == ToolID::MoveVertex) {
-		if (isMovingVertex) {
+		if (GetToolOptionEdgeSlide()) {
+			if (isSlidingEdge) {
+				EndEdgeSlide();
+				isSlidingEdge = false;
+			}
+			else {
+				bool meshHit = StartEdgeSlide(event.GetPosition());
+				if (meshHit)
+					isSlidingEdge = true;
+			}
+		}
+		else if (isMovingVertex) {
 			EndMoveVertex();
 			isMovingVertex = false;
 		}
@@ -15894,6 +16203,15 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 			mouseHasMovedSinceStart = true;
 	}
 
+	if (isSlidingEdge) {
+		if (mouseHasMovedSinceStart) {
+			EndEdgeSlide();
+			isSlidingEdge = false;
+		}
+		else
+			mouseHasMovedSinceStart = true;
+	}
+
 	if (isTransforming) {
 		EndTransform();
 		isTransforming = false;
@@ -15932,6 +16250,11 @@ void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 	if (isMovingVertex) {
 		CancelMoveVertex();
 		isMovingVertex = false;
+	}
+
+	if (isSlidingEdge) {
+		CancelEdgeSlide();
+		isSlidingEdge = false;
 	}
 
 	if (isTransforming) {

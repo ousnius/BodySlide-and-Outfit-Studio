@@ -169,6 +169,12 @@
 						<size>-1,25</size>
 						<label>Brush Settings</label>
 					</object>
+					<object class="wxCheckBox" name="cbEdgeSlideCorrectUV">
+						<fg>#ffffff</fg>
+						<label>Correct UVs</label>
+						<checked>1</checked>
+						<tooltip>Correct UV coordinates while sliding edges.</tooltip>
+					</object>
 					<object class="space" />
 					<object class="tool" name="btnDiscord">
 						<label translate="0">Discord</label>
@@ -296,6 +302,14 @@
 								<label>Weld Vertex</label>
 								<tooltip>Welds two vertices while keeping the texture coordinates (UV) distinct.</tooltip>
 								<bitmap>$(AppDir)\res\images\Weld.png</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnEdgeSlide">
+								<label>Edge Slide</label>
+								<tooltip>Slides a vertex along a connected edge.</tooltip>
+								<bitmap>$(AppDir)\res\images\EdgeSlide.png</bitmap>
+								<bitmap2>$(AppDir)\res\images\EdgeSlide_d.png</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
