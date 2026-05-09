@@ -701,6 +701,35 @@ void ShapeProperties::GetAdvancedShaderProperties() {
 		// Shader type-specific fields
 		UpdateShaderTypeFields(shaderTypeVal);
 
+		environmentMapScale->SetValue(wxString::Format("%.4f", bslsp->environmentMapScale));
+
+		Vector3 colorVec = bslsp->skinTintColor * 255.0f;
+		skinTintColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
+
+		colorVec = bslsp->hairTintColor * 255.0f;
+		hairTintColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
+
+		parallaxMaxPasses->SetValue(wxString::Format("%.4f", bslsp->maxPasses));
+		parallaxScale->SetValue(wxString::Format("%.4f", bslsp->scale));
+		parallaxInnerLayerThickness->SetValue(wxString::Format("%.4f", bslsp->parallaxInnerLayerThickness));
+		parallaxRefractionScale->SetValue(wxString::Format("%.4f", bslsp->parallaxRefractionScale));
+		parallaxInnerLayerTexScaleU->SetValue(wxString::Format("%.4f", bslsp->parallaxInnerLayerTextureScale.u));
+		parallaxInnerLayerTexScaleV->SetValue(wxString::Format("%.4f", bslsp->parallaxInnerLayerTextureScale.v));
+		parallaxEnvmapStrength->SetValue(wxString::Format("%.4f", bslsp->parallaxEnvmapStrength));
+
+		sparkleParamsR->SetValue(wxString::Format("%.4f", bslsp->sparkleParameters.r));
+		sparkleParamsG->SetValue(wxString::Format("%.4f", bslsp->sparkleParameters.g));
+		sparkleParamsB->SetValue(wxString::Format("%.4f", bslsp->sparkleParameters.b));
+		sparkleParamsA->SetValue(wxString::Format("%.4f", bslsp->sparkleParameters.a));
+
+		eyeCubemapScale->SetValue(wxString::Format("%.4f", bslsp->eyeCubemapScale));
+		eyeLeftReflectX->SetValue(wxString::Format("%.4f", bslsp->eyeLeftReflectionCenter.x));
+		eyeLeftReflectY->SetValue(wxString::Format("%.4f", bslsp->eyeLeftReflectionCenter.y));
+		eyeLeftReflectZ->SetValue(wxString::Format("%.4f", bslsp->eyeLeftReflectionCenter.z));
+		eyeRightReflectX->SetValue(wxString::Format("%.4f", bslsp->eyeRightReflectionCenter.x));
+		eyeRightReflectY->SetValue(wxString::Format("%.4f", bslsp->eyeRightReflectionCenter.y));
+		eyeRightReflectZ->SetValue(wxString::Format("%.4f", bslsp->eyeRightReflectionCenter.z));
+
 		// FO4+ properties (stream >= 130)
 		if (version.Stream() >= 130) {
 			showControl(grayscaleToPaletteScale, true);
