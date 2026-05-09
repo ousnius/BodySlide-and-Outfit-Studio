@@ -5402,18 +5402,10 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 						step.saveSliderSetFile = ssfFn.GetFullPath().ToUTF8().data();
 					}
 
-					// Apply suffix to display name, shape data folder, shape data file, and slider set file
+					// Apply suffix to display name, shape data folder, and slider set file
 					if (!step.saveSuffix.empty()) {
 						step.saveName += step.saveSuffix;
 						step.saveShapeDataFolder += step.saveSuffix;
-
-						wxFileName shapeDataFn(wxString::FromUTF8(step.saveShapeDataFile));
-						if (!shapeDataFn.GetName().IsEmpty()) {
-							wxString shapeDataFileName = shapeDataFn.GetName() + wxString::FromUTF8(step.saveSuffix);
-							if (!shapeDataFn.GetExt().IsEmpty())
-								shapeDataFileName += "." + shapeDataFn.GetExt();
-							step.saveShapeDataFile = shapeDataFileName.ToUTF8().data();
-						}
 
 						// Insert suffix before the file extension for slider set file
 						wxFileName ssfFn(wxString::FromUTF8(step.saveSliderSetFile));

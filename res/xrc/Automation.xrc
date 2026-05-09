@@ -916,7 +916,7 @@
 																<object class="sizeritem">
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveSuffix">
-																				<tooltip>Suffix to append to Display Name, Shape Data Folder, Shape Data File name, and Slider Set file name (batch only)</tooltip>
+																				<tooltip>Suffix to append to Display Name, Shape Data Folder, and Slider Set file name (batch only)</tooltip>
 																		<hint>e.g. _modified</hint>
 																	</object>
 																</object>
