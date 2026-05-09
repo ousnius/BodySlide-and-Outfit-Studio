@@ -185,7 +185,7 @@
 															<flag>wxEXPAND|wxRIGHT</flag>
 															<border>5</border>
 															<object class="wxTextCtrl" name="txtTargetMeshes">
-																<tooltip>Comma-separated list of shape names. Leave empty to target all shapes.</tooltip>
+																<tooltip>Comma-separated list of shape names. Leave empty to target all non-reference shapes.</tooltip>
 																<hint>Comma-separated shape list</hint>
 															</object>
 														</object>
@@ -621,7 +621,7 @@
 														<flag>wxALL|wxEXPAND</flag>
 														<border>5</border>
 														<object class="wxStaticText">
-															<label>Removes skinning from target shapes (or all shapes if Target Meshes is empty).
+															<label>Removes skinning from target shapes (or all non-reference shapes if Target Shapes is empty).
 																This deletes all bone weights and skinning data from the shapes.</label>
 															<wrap>400</wrap>
 														</object>
@@ -916,7 +916,7 @@
 																<object class="sizeritem">
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveSuffix">
-																		<tooltip>Suffix to append to Display Name, Shape Data Folder, and Shape Data File name (batch only)</tooltip>
+																				<tooltip>Suffix to append to Display Name, Shape Data Folder, Shape Data File name, and Slider Set file name (batch only)</tooltip>
 																		<hint>e.g. _modified</hint>
 																	</object>
 																</object>
@@ -1798,7 +1798,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															<object class="sizeritem">
 																<flag>wxALIGN_CENTER_VERTICAL</flag>
 																<object class="wxStaticText">
-																	<label>Rotate (Ã‚Â°):</label>
+																	<label>Rotate (deg):</label>
 																</object>
 															</object>
 															<object class="sizeritem">

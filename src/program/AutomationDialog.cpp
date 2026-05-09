@@ -605,8 +605,8 @@ void AutomationDialog::ApplyBatchModeDefaults(AutomationStep& step) const {
 			step.saveUseOriginal = false;
 		}
 	}
-	else if (step.type == AutomationStepType::ExportFile && IsBatchMode(AutomationBatchMode::FolderScan)) {
-		step.exportUseOriginalPath = true;
+	else if (step.type == AutomationStepType::ExportFile) {
+		step.exportUseOriginalPath = IsBatchMode(AutomationBatchMode::FolderScan);
 	}
 }
 
@@ -631,19 +631,23 @@ void AutomationDialog::UpdateSaveProjectBatchModeUI(const AutomationStep& step) 
 	UpdateSaveFieldsEnabled(fieldsEnabled);
 }
 
-void AutomationDialog::UpdateExportFileBatchModeUI(const AutomationStep& step) {
+void AutomationDialog::UpdateExportFileBatchModeUI(const AutomationStep& WXUNUSED(step)) {
+	bool folderBatch = IsBatchMode(AutomationBatchMode::FolderScan);
+	bool effectiveUseOriginalPath = folderBatch;
+
 	auto* chkUseOrig = XRCCTRL(*this, "chkExportUseOriginalPath", wxCheckBox);
 	if (chkUseOrig) {
-		if (IsBatchMode(AutomationBatchMode::FolderScan)) {
+		if (folderBatch) {
 			chkUseOrig->SetValue(true);
 			chkUseOrig->Enable(false);
 		}
 		else {
-			chkUseOrig->Enable(true);
+			chkUseOrig->SetValue(false);
+			chkUseOrig->Enable(false);
 		}
 	}
 
-	UpdateExportFieldsEnabled(!step.exportUseOriginalPath);
+	UpdateExportFieldsEnabled(!effectiveUseOriginalPath);
 }
 
 void AutomationDialog::SetFloatValue(const char* name, float value) {
@@ -951,7 +955,7 @@ void AutomationDialog::PopulateStepList() {
 
 		std::string targetStr = JoinStrings(steps[i].targetMeshes, ", ");
 		if (targetStr.empty())
-			targetStr = "(all)";
+			targetStr = "(all non-reference)";
 		listSteps->SetItem(idx, 2, wxString::FromUTF8(targetStr));
 
 		listSteps->SetItem(idx, 3, wxString::FromUTF8(steps[i].note));
@@ -968,7 +972,7 @@ void AutomationDialog::RefreshStepRow(int index) {
 
 	std::string targetStr = JoinStrings(step.targetMeshes, ", ");
 	if (targetStr.empty())
-		targetStr = "(all)";
+		targetStr = "(all non-reference)";
 	listSteps->SetItem(index, 2, wxString::FromUTF8(targetStr));
 
 	listSteps->SetItem(index, 3, wxString::FromUTF8(step.note));
@@ -1697,7 +1701,7 @@ void AutomationDialog::UpdateStepFromUI() {
 					step.exportFilePath = fp->GetPath().ToUTF8().data();
 			}
 			step.exportWithRef = GetCheckboxValue("chkExportWithRef");
-			step.exportUseOriginalPath = GetCheckboxValue("chkExportUseOriginalPath");
+			step.exportUseOriginalPath = IsBatchMode(AutomationBatchMode::FolderScan) && GetCheckboxValue("chkExportUseOriginalPath");
 			step.exportPrefix = GetTextValue("txtExportPrefix");
 			step.exportSuffix = GetTextValue("txtExportSuffix");
 			break;
@@ -1797,25 +1801,28 @@ std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep
 	}
 
 	std::vector<NiShape*> result;
+	auto addUniqueShape = [&result](NiShape* shape) {
+		if (shape && std::find(result.begin(), result.end(), shape) == result.end())
+			result.push_back(shape);
+	};
 
 	if (step.targetRegex) {
 		auto allShapes = project->GetWorkNif()->GetShapes();
 		for (const auto& pattern : step.targetMeshes) {
 			try {
 				std::regex re(pattern, std::regex::icase);
+				bool matched = false;
 				for (auto* shape : allShapes) {
 					if (std::regex_search(shape->name.get(), re)) {
-						// Avoid duplicates
-						if (std::find(result.begin(), result.end(), shape) == result.end())
-							result.push_back(shape);
+						addUniqueShape(shape);
+						matched = true;
 					}
 				}
+				if (!matched)
+					wxLogWarning("Automation: Target shape regex '%s' matched no shapes.", pattern);
 			}
-			catch (const std::regex_error&) {
-				wxLogWarning("Automation: Invalid regex pattern '%s', treating as literal.", pattern);
-				NiShape* shape = FindShapeByName(pattern);
-				if (shape && std::find(result.begin(), result.end(), shape) == result.end())
-					result.push_back(shape);
+			catch (const std::regex_error& e) {
+				wxLogWarning("Automation: Invalid target shape regex '%s' (%s); skipping pattern.", pattern, e.what());
 			}
 		}
 	}
@@ -1823,7 +1830,9 @@ std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep
 		for (const auto& name : step.targetMeshes) {
 			NiShape* shape = FindShapeByName(name);
 			if (shape)
-				result.push_back(shape);
+				addUniqueShape(shape);
+			else
+				wxLogWarning("Automation: Target shape '%s' not found.", name);
 		}
 	}
 
@@ -3083,8 +3092,7 @@ int AutomationDialog::ExecuteStepEditBone(const AutomationStep& step) {
 int AutomationDialog::ExecuteStepRemoveSkinning(const AutomationStep& step) {
 	auto shapes = ResolveTargetShapes(step);
 	if (shapes.empty()) {
-		wxLogMessage("Automation: Removing skinning from all shapes...");
-		project->RemoveSkinning();
+		wxLogWarning("Automation: RemoveSkinning - no target shapes found.");
 	}
 	else {
 		for (auto* shape : shapes) {
@@ -3715,7 +3723,7 @@ int AutomationDialog::ExecuteStepExportFile(const AutomationStep& step) {
 	return 0;
 }
 
-int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep&) {
+int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep& step) {
 	wxLogMessage("Automation: Refining meshes...");
 
 	auto workNif = project->GetWorkNif();
@@ -3724,12 +3732,18 @@ int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep&) {
 		return 1;
 	}
 
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: RefineMesh - no target shapes found.");
+		return 0;
+	}
+
 	constexpr size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
 	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
 	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
 		maxTriIndex = std::numeric_limits<uint32_t>().max();
 
-	for (auto* shape : workNif->GetShapes()) {
+	for (auto* shape : shapes) {
 		size_t nverts = shape->GetNumVertices();
 
 		// Determine unmasked vertices
@@ -4018,11 +4032,7 @@ int AutomationDialog::ExecuteStepSetShaderProperties(const AutomationStep& step)
 	if (!nif)
 		return 0;
 
-	std::vector<NiShape*> targetShapes;
-	if (step.targetMeshes.empty())
-		targetShapes = nif->GetShapes();
-	else
-		targetShapes = ResolveTargetShapes(step);
+	auto targetShapes = ResolveTargetShapes(step);
 
 	if (targetShapes.empty()) {
 		wxLogWarning("Automation: SetShaderProperties - no target shapes found.");
@@ -4702,6 +4712,7 @@ void AutomationDialog::UpdateExportFieldsEnabled(bool enabled) {
 
 void AutomationDialog::UpdateExportForBatchMode() {
 	bool isBatch = radioBatchMode && radioBatchMode->GetSelection() != 0;
+	bool folderBatch = radioBatchMode && radioBatchMode->GetSelection() == static_cast<int>(AutomationBatchMode::FolderScan);
 
 	auto* lbl = XRCCTRL(*this, "lblExportPath", wxStaticText);
 	if (lbl)
@@ -4717,8 +4728,8 @@ void AutomationDialog::UpdateExportForBatchMode() {
 
 	auto* chk = XRCCTRL(*this, "chkExportUseOriginalPath", wxCheckBox);
 	if (chk) {
-		chk->Show(isBatch);
-		if (!isBatch)
+		chk->Show(folderBatch);
+		if (!folderBatch)
 			chk->SetValue(false);
 	}
 
@@ -4756,6 +4767,33 @@ wxString AutomationDialog::MakeAbsoluteToProject(const wxString& path) const {
 
 void AutomationDialog::PopulateVariablesUI() {
 	const auto& vars = script.GetVariables();
+
+	auto* paneVariables = XRCCTRL(*this, "paneVariables", wxCollapsiblePane);
+	wxFlexGridSizer* gridSizer = nullptr;
+	if (paneVariables) {
+		wxWindow* paneWin = paneVariables->GetPane();
+		wxSizer* boxSizer = paneWin ? paneWin->GetSizer() : nullptr;
+		if (boxSizer && boxSizer->GetItemCount() >= 2)
+			gridSizer = dynamic_cast<wxFlexGridSizer*>(boxSizer->GetItem(static_cast<size_t>(1))->GetSizer());
+	}
+
+	for (int i = 10; i >= 2; i--) {
+		wxString keyName = wxString::Format("txtVarKey%d", i);
+		wxString valName = wxString::Format("txtVarVal%d", i);
+		auto* keyCtrl = dynamic_cast<wxTextCtrl*>(FindWindow(keyName));
+		auto* valCtrl = dynamic_cast<wxTextCtrl*>(FindWindow(valName));
+		if (keyCtrl) {
+			if (gridSizer)
+				gridSizer->Detach(keyCtrl);
+			keyCtrl->Destroy();
+		}
+		if (valCtrl) {
+			if (gridSizer)
+				gridSizer->Detach(valCtrl);
+			valCtrl->Destroy();
+		}
+	}
+	varRowCount = 1;
 
 	// Clear existing rows (set them empty)
 	for (int i = 1; i <= 10; i++) {
@@ -5369,6 +5407,14 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 						step.saveName += step.saveSuffix;
 						step.saveShapeDataFolder += step.saveSuffix;
 
+						wxFileName shapeDataFn(wxString::FromUTF8(step.saveShapeDataFile));
+						if (!shapeDataFn.GetName().IsEmpty()) {
+							wxString shapeDataFileName = shapeDataFn.GetName() + wxString::FromUTF8(step.saveSuffix);
+							if (!shapeDataFn.GetExt().IsEmpty())
+								shapeDataFileName += "." + shapeDataFn.GetExt();
+							step.saveShapeDataFile = shapeDataFileName.ToUTF8().data();
+						}
+
 						// Insert suffix before the file extension for slider set file
 						wxFileName ssfFn(wxString::FromUTF8(step.saveSliderSetFile));
 						ssfFn.SetName(ssfFn.GetName() + wxString::FromUTF8(step.saveSuffix));
@@ -5377,10 +5423,9 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 				}
 				else if (step.type == AutomationStepType::ExportFile) {
 					if (step.exportUseOriginalPath) {
-						// Overwrite the original file loaded by the batch
-                        step.exportFilePath = filePath;
+						wxLogWarning("Automation: ExportFile - original-path export is only supported for folder scan batches; using configured export folder.");
 					}
-					else if (!step.exportFilePath.empty()) {
+					if (!step.exportFilePath.empty()) {
 						// In batch mode, exportFilePath is a folder - construct full path
 						wxFileName exportFn;
 						exportFn.SetPath(wxString::FromUTF8(step.exportFilePath));

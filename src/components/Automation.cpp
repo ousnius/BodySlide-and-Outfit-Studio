@@ -369,6 +369,10 @@ int AutomationScript::Load(const std::string& fileName) {
 			case AutomationStepType::RemoveSkinning:
 				// No additional params (uses target meshes)
 				break;
+			case AutomationStepType::SetBaseShape:
+			case AutomationStepType::ClearReference:
+				// No additional params
+				break;
 			case AutomationStepType::TransformShape: {
 				step.moveX = GetChildFloat(stepElem, "MoveX", 0.0f);
 				step.moveY = GetChildFloat(stepElem, "MoveY", 0.0f);
