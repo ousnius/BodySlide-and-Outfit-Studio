@@ -19,9 +19,11 @@ See the included LICENSE file
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include <wx/filename.h>
+#include <wx/clntdata.h>
 
 #include <tinyxml2.h>
 
+#include <algorithm>
 #include <regex>
 #include <set>
 
@@ -31,6 +33,362 @@ using namespace nifly;
 
 extern ConfigurationManager Config;
 extern ConfigurationManager OutfitStudioConfig;
+
+namespace {
+enum class ShaderPropertyValueKind {
+	Scalar,
+	Vector2,
+	Color,
+	Choice
+};
+
+struct ShaderPropertyChoiceDef {
+	const char* label;
+	const char* value;
+};
+
+struct ShaderPropertyDef {
+	const char* name;
+	const char* label;
+	ShaderPropertyValueKind kind;
+	float default1;
+	float default2;
+	float default3;
+	float default4;
+	const ShaderPropertyChoiceDef* choices;
+	size_t choiceCount;
+};
+
+const ShaderPropertyChoiceDef ShaderTypeChoices[] = {
+	{"Default (BSLighting)", "BSLighting:0"},
+	{"Environment Map (BSLighting)", "BSLighting:1"},
+	{"Glow Shader (BSLighting)", "BSLighting:2"},
+	{"Heightmap (BSLighting)", "BSLighting:3"},
+	{"Face Tint (BSLighting)", "BSLighting:4"},
+	{"Skin Tint (BSLighting)", "BSLighting:5"},
+	{"Hair Tint (BSLighting)", "BSLighting:6"},
+	{"Parallax Occlusion Material (BSLighting)", "BSLighting:7"},
+	{"World Multitexture (BSLighting)", "BSLighting:8"},
+	{"World Map 1 (BSLighting)", "BSLighting:9"},
+	{"Unknown 10 (BSLighting)", "BSLighting:10"},
+	{"Multi Layer Parallax (BSLighting)", "BSLighting:11"},
+	{"Unknown 12 (BSLighting)", "BSLighting:12"},
+	{"World Map 2 (BSLighting)", "BSLighting:13"},
+	{"Sparkle Snow (BSLighting)", "BSLighting:14"},
+	{"World Map 3 (BSLighting)", "BSLighting:15"},
+	{"Eye Environment Map (BSLighting)", "BSLighting:16"},
+	{"Unknown 17 (BSLighting)", "BSLighting:17"},
+	{"World Map 4 (BSLighting)", "BSLighting:18"},
+	{"World LOD Multitexture (BSLighting)", "BSLighting:19"},
+	{"Tall Grass (FO3/NV)", "PPLighting:0"},
+	{"Default (FO3/NV)", "PPLighting:1"},
+	{"Sky (FO3/NV)", "PPLighting:10"},
+	{"Skin (FO3/NV)", "PPLighting:14"},
+	{"Water (FO3/NV)", "PPLighting:17"},
+	{"Lighting 30 (FO3/NV)", "PPLighting:29"},
+	{"Tile (FO3/NV)", "PPLighting:32"},
+	{"No Lighting (FO3/NV)", "PPLighting:33"}
+};
+
+const ShaderPropertyDef ShaderPropertyDefs[] = {
+	{"ShaderType", "Shader Type", ShaderPropertyValueKind::Choice, 0.0f, 0.0f, 0.0f, 1.0f, ShaderTypeChoices, sizeof(ShaderTypeChoices) / sizeof(ShaderTypeChoices[0])},
+	{"SpecularColor", "Specular Color", ShaderPropertyValueKind::Color, 1.0f, 1.0f, 1.0f, 1.0f, nullptr, 0},
+	{"SpecularStrength", "Specular Strength", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"SpecularPower", "Specular Power", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"EmissiveColor", "Emissive Color", ShaderPropertyValueKind::Color, 0.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"EmissiveMultiple", "Emissive Multiple", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"Alpha", "Alpha", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"EnvMapScale", "Env Map Scale", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"EyeCubemapScale", "Eye Cubemap Scale", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"UVOffset", "UV Offset", ShaderPropertyValueKind::Vector2, 0.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"UVScale", "UV Scale", ShaderPropertyValueKind::Vector2, 1.0f, 1.0f, 0.0f, 1.0f, nullptr, 0},
+	{"LightingEffect1", "Lighting Effect 1", ShaderPropertyValueKind::Scalar, 0.3f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"LightingEffect2", "Lighting Effect 2", ShaderPropertyValueKind::Scalar, 2.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"SkinTintColor", "Skin Tint Color", ShaderPropertyValueKind::Color, 1.0f, 1.0f, 1.0f, 1.0f, nullptr, 0},
+	{"HairTintColor", "Hair Tint Color", ShaderPropertyValueKind::Color, 1.0f, 1.0f, 1.0f, 1.0f, nullptr, 0},
+	{"RefractionStrength", "Refraction Strength", ShaderPropertyValueKind::Scalar, 0.0f, 0.0f, 0.0f, 1.0f, nullptr, 0}
+};
+
+const ShaderPropertyDef* FindShaderPropertyDef(const std::string& name) {
+	for (const auto& def : ShaderPropertyDefs) {
+		if (name == def.name)
+			return &def;
+	}
+	return nullptr;
+}
+
+AutomationStep::ShaderProperty MakeDefaultShaderProperty(const ShaderPropertyDef& def) {
+	AutomationStep::ShaderProperty prop;
+	prop.name = def.name;
+	prop.value1 = def.default1;
+	prop.value2 = def.default2;
+	prop.value3 = def.default3;
+	prop.value4 = def.default4;
+	if (def.kind == ShaderPropertyValueKind::Choice && def.choiceCount > 0)
+		prop.stringValue = def.choices[0].value;
+	return prop;
+}
+
+int ColorByte(float value) {
+	value = std::max(0.0f, std::min(1.0f, value));
+	return static_cast<int>(value * 255.0f + 0.5f);
+}
+
+std::string GetChoiceClientValue(wxChoice* choice) {
+	if (!choice)
+		return "";
+
+	int sel = choice->GetSelection();
+	if (sel == wxNOT_FOUND)
+		return "";
+
+	auto* data = dynamic_cast<wxStringClientData*>(choice->GetClientObject(sel));
+	if (!data)
+		return "";
+
+	return data->GetData().ToUTF8().data();
+}
+
+int FindChoiceByClientValue(wxChoice* choice, const std::string& value) {
+	if (!choice)
+		return wxNOT_FOUND;
+
+	for (unsigned int i = 0; i < choice->GetCount(); i++) {
+		auto* data = dynamic_cast<wxStringClientData*>(choice->GetClientObject(i));
+		if (data && value == data->GetData().ToUTF8().data())
+			return static_cast<int>(i);
+	}
+
+	return wxNOT_FOUND;
+}
+
+bool ParseShaderTypeValue(const std::string& value, std::string& domain, uint32_t& shaderType) {
+	size_t sep = value.find(':');
+	if (sep == std::string::npos)
+		return false;
+
+	domain = value.substr(0, sep);
+	try {
+		shaderType = static_cast<uint32_t>(std::stoul(value.substr(sep + 1)));
+	}
+	catch (...) {
+		return false;
+	}
+
+	return true;
+}
+
+bool ApplyAutomationShaderProperty(NifFile* nif, NiShape* shape, const AutomationStep::ShaderProperty& prop) {
+	NiShader* shader = nif->GetShader(shape);
+	if (!shader)
+		return false;
+
+	NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+	auto* bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
+	auto* bsesp = dynamic_cast<BSEffectShaderProperty*>(shader);
+	auto* bspplp = dynamic_cast<BSShaderPPLightingProperty*>(shader);
+	auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
+	auto& version = nif->GetHeader().GetVersion();
+
+	Vector3 vectorValue(prop.value1, prop.value2, prop.value3);
+	Color4 colorValue(prop.value1, prop.value2, prop.value3, prop.value4);
+
+	if (prop.name == "ShaderType") {
+		std::string domain;
+		uint32_t shaderType = 0;
+		if (!ParseShaderTypeValue(prop.stringValue, domain, shaderType))
+			return false;
+
+		if (domain == "BSLighting" && bslsp) {
+			uint32_t oldType = bslsp->GetShaderType();
+			bslsp->SetShaderType(shaderType);
+
+			if (oldType != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && shaderType == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP)
+				bslsp->SetEnvironmentMapping(true);
+			else if (oldType == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && shaderType != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP)
+				bslsp->SetEnvironmentMapping(false);
+
+			return true;
+		}
+
+		if (domain == "PPLighting" && bspplp) {
+			shader->SetShaderType(shaderType);
+			return true;
+		}
+
+		return false;
+	}
+
+	if (prop.name == "SpecularColor") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetSpecularColor(vectorValue);
+			applied = true;
+		}
+		if (material) {
+			material->SetSpecularColor(vectorValue);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "SpecularStrength") {
+		if (!bslsp)
+			return false;
+		bslsp->SetSpecularStrength(prop.value1);
+		return true;
+	}
+
+	if (prop.name == "SpecularPower") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetGlossiness(prop.value1);
+			applied = true;
+		}
+		if (material) {
+			material->SetGlossiness(prop.value1);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "EmissiveColor") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetEmissiveColor(colorValue);
+			applied = true;
+		}
+		if (bsesp) {
+			bsesp->SetEmissiveColor(colorValue);
+			applied = true;
+		}
+		if (bspplp && version.User() >= 12) {
+			bspplp->emissiveColor = colorValue;
+			applied = true;
+		}
+		if (material) {
+			material->SetEmissiveColor(colorValue);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "EmissiveMultiple") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetEmissiveMultiple(prop.value1);
+			applied = true;
+		}
+		if (bsesp) {
+			bsesp->SetEmissiveMultiple(prop.value1);
+			applied = true;
+		}
+		if (material) {
+			material->SetEmissiveMultiple(prop.value1);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "Alpha") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetAlpha(prop.value1);
+			applied = true;
+		}
+		if (material) {
+			material->SetAlpha(prop.value1);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "EnvMapScale") {
+		bool applied = false;
+		if (bslsp && bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP) {
+			bslsp->environmentMapScale = prop.value1;
+			applied = true;
+		}
+		else if (bsesp && version.User() == 12 && version.Stream() >= 130) {
+			bsesp->envMapScale = prop.value1;
+			applied = true;
+		}
+		else if (bssp && version.User() <= 11) {
+			bssp->environmentMapScale = prop.value1;
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "EyeCubemapScale") {
+		if (!bslsp || bslsp->GetShaderType() != BSLightingShaderPropertyShaderType::BSLSP_EYE)
+			return false;
+		bslsp->eyeCubemapScale = prop.value1;
+		return true;
+	}
+
+	if (prop.name == "UVOffset") {
+		if (!bssp || version.User() != 12)
+			return false;
+		bssp->uvOffset = Vector2(prop.value1, prop.value2);
+		return true;
+	}
+
+	if (prop.name == "UVScale") {
+		if (!bssp || version.User() != 12)
+			return false;
+		bssp->uvScale = Vector2(prop.value1, prop.value2);
+		return true;
+	}
+
+	if (prop.name == "LightingEffect1") {
+		if (!bslsp || version.Stream() >= 130)
+			return false;
+		bslsp->softlighting = prop.value1;
+		return true;
+	}
+
+	if (prop.name == "LightingEffect2") {
+		if (!bslsp || version.Stream() >= 130)
+			return false;
+		bslsp->rimlightPower = prop.value1;
+		return true;
+	}
+
+	if (prop.name == "SkinTintColor") {
+		if (!bslsp || bslsp->GetShaderType() != BSLightingShaderPropertyShaderType::BSLSP_SKINTINT)
+			return false;
+		bslsp->skinTintColor = vectorValue;
+		return true;
+	}
+
+	if (prop.name == "HairTintColor") {
+		if (!bslsp || bslsp->GetShaderType() != BSLightingShaderPropertyShaderType::BSLSP_HAIRTINT)
+			return false;
+		bslsp->hairTintColor = vectorValue;
+		return true;
+	}
+
+	if (prop.name == "RefractionStrength") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->refractionStrength = prop.value1;
+			applied = true;
+		}
+		if (bspplp && version.User() == 11 && version.Stream() > 14) {
+			bspplp->refractionStrength = prop.value1;
+			applied = true;
+		}
+		if (bsesp && version.User() == 12 && version.Stream() > 139 && version.Stream() < 172) {
+			bsesp->refractionPower = prop.value1;
+			applied = true;
+		}
+		return applied;
+	}
+
+	return false;
+}
+}
 
 wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 	EVT_COMBOBOX(XRCID("cmbAutomation"), AutomationDialog::OnAutomationSelected)
@@ -160,6 +518,11 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	auto* btnAddSliderProp = XRCCTRL(*this, "btnAddSliderProp", wxButton);
 	if (btnAddSliderProp)
 		btnAddSliderProp->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	PopulateShaderPropertyChoice();
+	auto* btnAddShaderProp = XRCCTRL(*this, "btnAddShaderProp", wxButton);
+	if (btnAddShaderProp)
+		btnAddShaderProp->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddShaderProperty, this);
 
 	auto* btnAddFixClipSlider = XRCCTRL(*this, "btnAddFixClipSlider", wxButton);
 	if (btnAddFixClipSlider)
@@ -308,6 +671,177 @@ void AutomationDialog::SetVectorValue(const char* name, const std::vector<std::s
 std::vector<std::string> AutomationDialog::GetVectorValue(const char* name) const {
 	auto* txt = XRCCTRL(*this, name, wxTextCtrl);
 	return txt ? SplitCommaSeparated(std::string(txt->GetValue().ToUTF8().data())) : std::vector<std::string>();
+}
+
+void AutomationDialog::PopulateShaderPropertyChoice() {
+	auto* choice = XRCCTRL(*this, "choiceShaderPropAdd", wxChoice);
+	if (choice) {
+		choice->Clear();
+		for (const auto& def : ShaderPropertyDefs)
+			choice->Append(wxString::FromUTF8(def.label), new wxStringClientData(wxString::FromUTF8(def.name)));
+
+		if (choice->GetCount() > 0)
+			choice->SetSelection(0);
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+	if (rowsWindow)
+		rowsWindow->SetScrollRate(0, 8);
+}
+
+void AutomationDialog::ClearShaderPropertyRows() {
+	auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+	if (rowsWindow) {
+		if (auto* rowsSizer = rowsWindow->GetSizer())
+			rowsSizer->Clear(true);
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+
+	shaderPropertyRows.clear();
+}
+
+void AutomationDialog::AddShaderPropertyRow(const AutomationStep::ShaderProperty& prop) {
+	const ShaderPropertyDef* def = FindShaderPropertyDef(prop.name);
+	if (!def)
+		return;
+
+	auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+	if (!rowsWindow)
+		return;
+
+	wxSizer* rowsSizer = rowsWindow->GetSizer();
+	if (!rowsSizer) {
+		rowsSizer = new wxBoxSizer(wxVERTICAL);
+		rowsWindow->SetSizer(rowsSizer);
+	}
+
+	auto* rowPanel = new wxPanel(rowsWindow, wxID_ANY);
+	auto* rowSizer = new wxBoxSizer(wxHORIZONTAL);
+
+	ShaderPropertyRowControls row;
+	row.panel = rowPanel;
+	row.propertyName = prop.name;
+
+	auto* label = new wxStaticText(rowPanel, wxID_ANY, wxString::FromUTF8(def->label), wxDefaultPosition, wxSize(145, -1));
+	rowSizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+	switch (def->kind) {
+		case ShaderPropertyValueKind::Choice: {
+			auto* choice = new wxChoice(rowPanel, wxID_ANY);
+			for (size_t i = 0; i < def->choiceCount; i++)
+				choice->Append(wxString::FromUTF8(def->choices[i].label), new wxStringClientData(wxString::FromUTF8(def->choices[i].value)));
+
+			int selection = FindChoiceByClientValue(choice, prop.stringValue);
+			choice->SetSelection(selection != wxNOT_FOUND ? selection : 0);
+			row.choice = choice;
+			rowSizer->Add(choice, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			break;
+		}
+		case ShaderPropertyValueKind::Color: {
+			auto* color = new wxColourPickerCtrl(rowPanel, wxID_ANY, wxColour(ColorByte(prop.value1), ColorByte(prop.value2), ColorByte(prop.value3), ColorByte(prop.value4)));
+			row.color = color;
+			rowSizer->Add(color, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			break;
+		}
+		case ShaderPropertyValueKind::Vector2: {
+			auto* value1 = new wxTextCtrl(rowPanel, wxID_ANY, wxString::Format("%.5g", prop.value1), wxDefaultPosition, wxSize(80, -1));
+			auto* value2 = new wxTextCtrl(rowPanel, wxID_ANY, wxString::Format("%.5g", prop.value2), wxDefaultPosition, wxSize(80, -1));
+			row.value1 = value1;
+			row.value2 = value2;
+			rowSizer->Add(value1, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			rowSizer->Add(value2, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			rowSizer->AddStretchSpacer(1);
+			break;
+		}
+		case ShaderPropertyValueKind::Scalar:
+		default: {
+			auto* value = new wxTextCtrl(rowPanel, wxID_ANY, wxString::Format("%.5g", prop.value1), wxDefaultPosition, wxSize(90, -1));
+			row.value1 = value;
+			rowSizer->Add(value, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			rowSizer->AddStretchSpacer(1);
+			break;
+		}
+	}
+
+	auto* btnRemove = new wxButton(rowPanel, wxID_ANY, "X", wxDefaultPosition, wxSize(28, -1));
+	btnRemove->SetToolTip(_("Remove this shader property"));
+	btnRemove->Bind(wxEVT_BUTTON, [this, rowPanel](wxCommandEvent&) { RemoveShaderPropertyRow(rowPanel); });
+	rowSizer->Add(btnRemove, 0, wxALIGN_CENTER_VERTICAL);
+
+	rowPanel->SetSizer(rowSizer);
+	rowsSizer->Add(rowPanel, 0, wxEXPAND | wxBOTTOM, 4);
+	shaderPropertyRows.push_back(row);
+
+	rowsWindow->FitInside();
+	rowsWindow->Layout();
+	auto* page = XRCCTRL(*this, "pageSetShaderProperties", wxPanel);
+	if (page)
+		page->Layout();
+}
+
+void AutomationDialog::RemoveShaderPropertyRow(wxWindow* rowPanel) {
+	for (auto it = shaderPropertyRows.begin(); it != shaderPropertyRows.end(); ++it) {
+		if (it->panel == rowPanel) {
+			auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+			if (rowsWindow && rowsWindow->GetSizer())
+				rowsWindow->GetSizer()->Detach(it->panel);
+			if (it->panel)
+				it->panel->Destroy();
+			shaderPropertyRows.erase(it);
+			break;
+		}
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+	if (rowsWindow) {
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+}
+
+void AutomationDialog::RebuildShaderPropertyRows(const std::vector<AutomationStep::ShaderProperty>& properties) {
+	ClearShaderPropertyRows();
+	for (const auto& prop : properties)
+		AddShaderPropertyRow(prop);
+}
+
+std::vector<AutomationStep::ShaderProperty> AutomationDialog::ReadShaderPropertyRows() const {
+	std::vector<AutomationStep::ShaderProperty> properties;
+	for (const auto& row : shaderPropertyRows) {
+		const ShaderPropertyDef* def = FindShaderPropertyDef(row.propertyName);
+		if (!def)
+			continue;
+
+		AutomationStep::ShaderProperty prop = MakeDefaultShaderProperty(*def);
+		prop.name = row.propertyName;
+
+		switch (def->kind) {
+			case ShaderPropertyValueKind::Choice:
+				prop.stringValue = GetChoiceClientValue(row.choice);
+				break;
+			case ShaderPropertyValueKind::Color: {
+				wxColour color = row.color ? row.color->GetColour() : wxColour(ColorByte(prop.value1), ColorByte(prop.value2), ColorByte(prop.value3), ColorByte(prop.value4));
+				prop.value1 = color.Red() / 255.0f;
+				prop.value2 = color.Green() / 255.0f;
+				prop.value3 = color.Blue() / 255.0f;
+				prop.value4 = color.Alpha() / 255.0f;
+				break;
+			}
+			case ShaderPropertyValueKind::Vector2:
+				prop.value1 = row.value1 ? static_cast<float>(atof(row.value1->GetValue().c_str())) : prop.value1;
+				prop.value2 = row.value2 ? static_cast<float>(atof(row.value2->GetValue().c_str())) : prop.value2;
+				break;
+			case ShaderPropertyValueKind::Scalar:
+			default:
+				prop.value1 = row.value1 ? static_cast<float>(atof(row.value1->GetValue().c_str())) : prop.value1;
+				break;
+		}
+
+		properties.push_back(prop);
+	}
+
+	return properties;
 }
 
 // Progress methods
@@ -699,6 +1233,10 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			UpdateSliderPropDefaultVisibility();
 			break;
 		}
+		case AutomationStepType::SetShaderProperties: {
+			RebuildShaderPropertyRows(step.shaderProperties);
+			break;
+		}
 		case AutomationStepType::ImportFile: {
 			auto* fp = XRCCTRL(*this, "fpImportFile", wxFilePickerCtrl);
 			if (fp)
@@ -1046,6 +1584,10 @@ void AutomationDialog::UpdateStepFromUI() {
 					step.sliderPropDefaultHi = val.IsEmpty() ? -1 : wxAtoi(val);
 				}
 			}
+			break;
+		}
+		case AutomationStepType::SetShaderProperties: {
+			step.shaderProperties = ReadShaderPropertyRows();
 			break;
 		}
 		case AutomationStepType::DeleteShape:
@@ -3466,6 +4008,72 @@ int AutomationDialog::ExecuteStepSetSliderProperties(const AutomationStep& step)
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepSetShaderProperties(const AutomationStep& step) {
+	if (step.shaderProperties.empty()) {
+		wxLogWarning("Automation: SetShaderProperties - no shader properties configured.");
+		return 0;
+	}
+
+	NifFile* nif = project->GetWorkNif();
+	if (!nif)
+		return 0;
+
+	std::vector<NiShape*> targetShapes;
+	if (step.targetMeshes.empty())
+		targetShapes = nif->GetShapes();
+	else
+		targetShapes = ResolveTargetShapes(step);
+
+	if (targetShapes.empty()) {
+		wxLogWarning("Automation: SetShaderProperties - no target shapes found.");
+		return 0;
+	}
+
+	int updatedShapes = 0;
+	int updatedValues = 0;
+
+	for (auto* shape : targetShapes) {
+		if (!shape)
+			continue;
+
+		NiShader* shader = nif->GetShader(shape);
+		if (!shader)
+			continue;
+
+		int shapeUpdates = 0;
+		for (const auto& prop : step.shaderProperties) {
+			if (prop.name == "ShaderType" && ApplyAutomationShaderProperty(nif, shape, prop))
+				shapeUpdates++;
+		}
+
+		for (const auto& prop : step.shaderProperties) {
+			if (prop.name != "ShaderType" && ApplyAutomationShaderProperty(nif, shape, prop))
+				shapeUpdates++;
+		}
+
+		if (shapeUpdates > 0) {
+			updatedShapes++;
+			updatedValues += shapeUpdates;
+			project->SetTextures(shape);
+			outfitStudio->MeshFromProj(shape, true);
+			wxLogMessage("Automation: SetShaderProperties - updated %d shader properties on '%s'.",
+				shapeUpdates,
+				shape->name.get());
+		}
+	}
+
+	if (updatedShapes > 0) {
+		outfitStudio->SetPendingChanges();
+		outfitStudio->glView->Render();
+		wxLogMessage("Automation: SetShaderProperties - updated %d shader values on %d shapes.", updatedValues, updatedShapes);
+	}
+	else {
+		wxLogWarning("Automation: SetShaderProperties - found no matching shader properties on target shapes.");
+	}
+
+	return 0;
+}
+
 int AutomationDialog::ExecuteStepRemoveUnusedNodes(const AutomationStep&) {
 	wxLogMessage("Automation: Removing unused nodes...");
 	int deletionCount = 0;
@@ -3675,6 +4283,7 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::ClearMask: return ExecuteStepClearMask(step);
 		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
 		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
+		case AutomationStepType::SetShaderProperties: return ExecuteStepSetShaderProperties(step);
 		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
 		case AutomationStepType::FixClipping: return ExecuteStepFixClipping(step);
 		case AutomationStepType::FixBadBones: return ExecuteStepFixBadBones(step);
@@ -3998,6 +4607,24 @@ void AutomationDialog::UpdateSliderPropDefaultVisibility() {
 	auto* panel = XRCCTRL(*this, "pageSetSliderProperties", wxPanel);
 	if (panel)
 		panel->Layout();
+}
+
+void AutomationDialog::OnAddShaderProperty(wxCommandEvent& WXUNUSED(event)) {
+	auto* choice = XRCCTRL(*this, "choiceShaderPropAdd", wxChoice);
+	std::string propertyName = GetChoiceClientValue(choice);
+	if (propertyName.empty())
+		return;
+
+	for (const auto& row : shaderPropertyRows) {
+		if (row.propertyName == propertyName)
+			return;
+	}
+
+	const ShaderPropertyDef* def = FindShaderPropertyDef(propertyName);
+	if (!def)
+		return;
+
+	AddShaderPropertyRow(MakeDefaultShaderProperty(*def));
 }
 
 void AutomationDialog::OnLoadMaskFileChanged(wxFileDirPickerEvent& event) {

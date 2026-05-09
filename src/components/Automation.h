@@ -44,12 +44,13 @@ enum class AutomationStepType {
 	DeleteSlider,
 	SetSliderValues,
 	SetSliderProperties,
+	SetShaderProperties,
 	ClearMask,
 	LoadMask,
 	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 33;
+constexpr int AutomationStepTypeCount = 34;
 static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -239,6 +240,17 @@ struct AutomationStep {
 	int sliderPropHidden = -1;    // -1 = no change, 0 = false, 1 = true
 	int sliderPropDefaultLo = -1; // -1 = no change, 0-100 = set value
 	int sliderPropDefaultHi = -1; // -1 = no change, 0-100 = set value
+
+	// SetShaderProperties params
+	struct ShaderProperty {
+		std::string name;
+		std::string stringValue;
+		float value1 = 0.0f;
+		float value2 = 0.0f;
+		float value3 = 0.0f;
+		float value4 = 1.0f;
+	};
+	std::vector<ShaderProperty> shaderProperties;
 
 	// LoadMask params
 	std::string loadMaskFile;

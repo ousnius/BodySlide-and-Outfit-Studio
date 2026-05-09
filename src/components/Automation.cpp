@@ -41,6 +41,7 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::DeleteSlider: return "DeleteSlider";
 		case AutomationStepType::SetSliderValues: return "SetSliderValues";
 		case AutomationStepType::SetSliderProperties: return "SetSliderProperties";
+		case AutomationStepType::SetShaderProperties: return "SetShaderProperties";
 		case AutomationStepType::ClearMask: return "ClearMask";
 		case AutomationStepType::LoadMask: return "LoadMask";
 		case AutomationStepType::RemoveUnusedNodes: return "RemoveUnusedNodes";
@@ -79,6 +80,7 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "DeleteSlider") return AutomationStepType::DeleteSlider;
 	if (str == "SetSliderValues") return AutomationStepType::SetSliderValues;
 	if (str == "SetSliderProperties") return AutomationStepType::SetSliderProperties;
+	if (str == "SetShaderProperties") return AutomationStepType::SetShaderProperties;
 	if (str == "ClearMask") return AutomationStepType::ClearMask;
 	if (str == "LoadMask") return AutomationStepType::LoadMask;
 	if (str == "RemoveUnusedNodes") return AutomationStepType::RemoveUnusedNodes;
@@ -519,6 +521,29 @@ int AutomationScript::Load(const std::string& fileName) {
 				step.sliderPropDefaultHi = GetChildInt(stepElem, "DefaultHi", -1);
 				break;
 			}
+			case AutomationStepType::SetShaderProperties: {
+				XMLElement* shaderPropsElem = stepElem->FirstChildElement("ShaderProperties");
+				if (shaderPropsElem) {
+					XMLElement* propElem = shaderPropsElem->FirstChildElement("Property");
+					while (propElem) {
+						AutomationStep::ShaderProperty prop;
+						const char* name = propElem->Attribute("name");
+						if (name) {
+							prop.name = name;
+							const char* stringValue = propElem->Attribute("stringValue");
+							if (stringValue)
+								prop.stringValue = stringValue;
+							prop.value1 = propElem->FloatAttribute("value1", 0.0f);
+							prop.value2 = propElem->FloatAttribute("value2", 0.0f);
+							prop.value3 = propElem->FloatAttribute("value3", 0.0f);
+							prop.value4 = propElem->FloatAttribute("value4", 1.0f);
+							step.shaderProperties.push_back(std::move(prop));
+						}
+						propElem = propElem->NextSiblingElement("Property");
+					}
+				}
+				break;
+			}
 			case AutomationStepType::RemoveUnusedNodes:
 				// No additional params
 				break;
@@ -788,6 +813,26 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildInt(doc, stepElem, "DefaultHi", step.sliderPropDefaultHi, -1);
 				break;
 
+			case AutomationStepType::SetShaderProperties:
+				if (!step.shaderProperties.empty()) {
+					XMLElement* shaderPropsElem = doc.NewElement("ShaderProperties");
+					stepElem->InsertEndChild(shaderPropsElem);
+					for (const auto& prop : step.shaderProperties) {
+						if (prop.name.empty())
+							continue;
+						XMLElement* propElem = doc.NewElement("Property");
+						propElem->SetAttribute("name", prop.name.c_str());
+						if (!prop.stringValue.empty())
+							propElem->SetAttribute("stringValue", prop.stringValue.c_str());
+						propElem->SetAttribute("value1", prop.value1);
+						propElem->SetAttribute("value2", prop.value2);
+						propElem->SetAttribute("value3", prop.value3);
+						propElem->SetAttribute("value4", prop.value4);
+						shaderPropsElem->InsertEndChild(propElem);
+					}
+				}
+				break;
+
 			case AutomationStepType::RemoveUnusedNodes:
 				// No additional params
 				break;
@@ -895,5 +940,9 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInStringVector(step.sliderNames, vars);
 		SubstituteInStringVector(step.sliderPropNames, vars);
 		SubstituteInStringVector(step.fixClipSliderNames, vars);
+		for (auto& prop : step.shaderProperties) {
+			SubstituteInString(prop.name, vars);
+			SubstituteInString(prop.stringValue, vars);
+		}
 	}
 }

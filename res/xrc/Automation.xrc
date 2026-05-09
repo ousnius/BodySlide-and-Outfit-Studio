@@ -148,6 +148,7 @@
 															<item>Sliders: Delete Slider</item>
 															<item>Sliders: Set Slider Values</item>
 															<item>Sliders: Set Slider Properties</item>
+															<item>Shaders: Set Shader Properties</item>
 															<item>Masks: Clear Mask</item>
 															<item>Masks: Load Mask</item>
 															<item>Nodes: Remove Unused Nodes</item>
@@ -2283,6 +2284,73 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<object class="wxTextCtrl" name="txtSliderPropDefaultHi">
 																	<tooltip>Default big value (0-100). Leave empty for no change.</tooltip>
 																	<hint translate="0">0-100</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetShaderProperties -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetShaderProperties">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Shader Properties</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Property:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxChoice" name="choiceShaderPropAdd">
+																			<tooltip>Select a shader property to add to this step.</tooltip>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddShaderProp">
+																			<label>Add</label>
+																			<tooltip>Add the selected shader property to this step.</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Values:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxEXPAND</flag>
+																<object class="wxScrolledWindow" name="panelShaderPropRows">
+																	<style>wxVSCROLL|wxTAB_TRAVERSAL</style>
+																	<size>-1,220</size>
+																	<object class="wxBoxSizer">
+																		<orient>wxVERTICAL</orient>
+																	</object>
 																</object>
 															</object>
 														</object>

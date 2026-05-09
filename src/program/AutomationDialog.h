@@ -8,12 +8,14 @@ See the included LICENSE file
 #include "../components/Automation.h"
 
 #include <wx/collpane.h>
+#include <wx/clrpicker.h>
 #include <wx/combobox.h>
 #include <wx/filepicker.h>
 #include <wx/gauge.h>
 #include <wx/listctrl.h>
 #include <wx/log.h>
 #include <wx/radiobox.h>
+#include <wx/scrolwin.h>
 #include <wx/simplebook.h>
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
@@ -67,6 +69,16 @@ private:
 	bool headlessMode = false;
 	int lastRunErrors = 0;
 
+	struct ShaderPropertyRowControls {
+		wxPanel* panel = nullptr;
+		std::string propertyName;
+		wxTextCtrl* value1 = nullptr;
+		wxTextCtrl* value2 = nullptr;
+		wxColourPickerCtrl* color = nullptr;
+		wxChoice* choice = nullptr;
+	};
+	std::vector<ShaderPropertyRowControls> shaderPropertyRows;
+
 	// UI helper methods
 	void SetCheckboxValue(const char* name, bool value);
 	bool GetCheckboxValue(const char* name) const;
@@ -115,6 +127,12 @@ private:
 	void UpdateExportFieldsEnabled(bool useOriginal);
 	void UpdateSetRefFieldsEnabled(bool enabled);
 	void UpdateExportForBatchMode();
+	void PopulateShaderPropertyChoice();
+	void ClearShaderPropertyRows();
+	void AddShaderPropertyRow(const AutomationStep::ShaderProperty& prop);
+	void RemoveShaderPropertyRow(wxWindow* rowPanel);
+	void RebuildShaderPropertyRows(const std::vector<AutomationStep::ShaderProperty>& properties);
+	std::vector<AutomationStep::ShaderProperty> ReadShaderPropertyRows() const;
 
 	std::map<std::string, std::string> CollectVariables();
 	void PopulateVariablesUI();
@@ -158,6 +176,7 @@ private:
 	int ExecuteStepLoadMask(const AutomationStep& step);
 	int ExecuteStepClearMask(const AutomationStep& step);
 	int ExecuteStepSetSliderProperties(const AutomationStep& step);
+	int ExecuteStepSetShaderProperties(const AutomationStep& step);
 	int ExecuteStepRemoveUnusedNodes(const AutomationStep& step);
 	int ExecuteStepFixClipping(const AutomationStep& step);
 	int ExecuteStepFixBadBones(const AutomationStep& step);
@@ -203,6 +222,7 @@ private:
 	void PopulateMaskNamesFromFile(const wxString& filePath);
 	void OnSliderPropZapChanged(wxCommandEvent& event);
 	void UpdateSliderPropDefaultVisibility();
+	void OnAddShaderProperty(wxCommandEvent& event);
 	void OnBatchModeChanged(wxCommandEvent& event);
 	void OnCharHook(wxKeyEvent& event);
 	void OnAddShapeToField(wxCommandEvent& event);
