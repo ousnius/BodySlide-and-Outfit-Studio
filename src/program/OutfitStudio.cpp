@@ -327,6 +327,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("segmentReset"), OutfitStudioFrame::OnSegmentReset)
 	EVT_BUTTON(XRCID("segmentSSFEdit"), OutfitStudioFrame::OnSegmentEditSSF)
 
+	EVT_TREE_STATE_IMAGE_CLICK(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionVisToggle)
 	EVT_TREE_SEL_CHANGED(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionContext)
 	EVT_COMMAND_RIGHT_CLICK(XRCID("partitionTree"), OutfitStudioFrame::OnPartitionTreeContext)
@@ -1391,8 +1392,19 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		segmentRoot = segmentTree->AddRoot("Segments");
 
 	partitionTree = (wxTreeCtrl*)FindWindowByName("partitionTree");
-	if (partitionTree)
+	if (partitionTree) {
+		wxImageList* partitionStateImages = new wxImageList(16, 16, false, 2);
+		wxBitmap visImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoVisible.png", wxBITMAP_TYPE_PNG);
+		wxBitmap invImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoInvisible.png", wxBITMAP_TYPE_PNG);
+
+		if (visImg.IsOk())
+			partitionStateImages->Add(visImg);
+		if (invImg.IsOk())
+			partitionStateImages->Add(invImg);
+
+		partitionTree->AssignStateImageList(partitionStateImages);
 		partitionRoot = partitionTree->AddRoot("Partitions");
+	}
 
 	int ambient = Config.GetIntValue("Lights/Ambient");
 	int frontal = Config.GetIntValue("Lights/Frontal");
@@ -6580,6 +6592,30 @@ void OutfitStudioFrame::OnPartitionSelect(wxTreeEvent& event) {
 	ShowPartition(event.GetItem());
 }
 
+void OutfitStudioFrame::OnPartitionVisToggle(wxTreeEvent& event) {
+	wxTreeItemId item = event.GetItem();
+	if (!item.IsOk() || !partitionTree->GetItemParent(item).IsOk()) {
+		event.Skip();
+		return;
+	}
+
+	partitionTree->SetItemState(item, partitionTree->GetItemState(item) == 1 ? 0 : 1);
+
+	Mesh* m = nullptr;
+	if (activeItem && activeItem->GetShape())
+		m = glView->GetMesh(activeItem->GetShape()->name.get());
+
+	if (m) {
+		if (m->subMeshes.empty())
+			SetSubMeshesForPartitions(m, triParts);
+
+		ApplyPartitionVisibility(m);
+		glView->Render();
+	}
+
+	event.Skip();
+}
+
 void OutfitStudioFrame::OnPartitionContext(wxTreeEvent& event) {
 	if (!event.GetItem().IsOk())
 		return;
@@ -6638,6 +6674,7 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 		newItem = partitionTree->InsertItem(partitionRoot, activePartition, "Partition", -1, -1, new PartitionItemData(partInd, isSkyrim ? 32 : 0));
 
 	if (newItem.IsOk()) {
+		partitionTree->SetItemState(newItem, 0);
 		partitionTree->UnselectAll();
 		partitionTree->SelectItem(newItem);
 	}
@@ -6762,7 +6799,8 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 	NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
 	if (project->GetWorkNif()->GetShapePartitions(shape, partitionInfo, triParts)) {
 		for (uint32_t i = 0; i < partitionInfo.size(); i++) {
-			partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(static_cast<int>(i), partitionInfo[i].partID));
+			wxTreeItemId item = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(static_cast<int>(i), partitionInfo[i].partID));
+			partitionTree->SetItemState(item, 0);
 		}
 	}
 
@@ -6773,6 +6811,45 @@ void OutfitStudioFrame::CreatePartitionTree(NiShape* shape) {
 	wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
 	if (child.IsOk())
 		partitionTree->SelectItem(child);
+}
+
+void OutfitStudioFrame::ApplyPartitionVisibility(Mesh* m) {
+	if (!m)
+		return;
+
+	if (m->subMeshesVisible.size() != m->subMeshes.size())
+		m->subMeshesVisible.assign(m->subMeshes.size(), true);
+
+	if (!partitionTree || !partitionRoot.IsOk())
+		return;
+
+	wxTreeItemIdValue cookie;
+	wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
+	while (child.IsOk()) {
+		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
+		if (partitionData && partitionData->index >= 0 && static_cast<size_t>(partitionData->index) < m->subMeshesVisible.size())
+			m->subMeshesVisible[partitionData->index] = partitionTree->GetItemState(child) != 1;
+
+		child = partitionTree->GetNextChild(partitionRoot, cookie);
+	}
+}
+
+void OutfitStudioFrame::ResetPartitionVisibility() {
+	if (partitionTree && partitionRoot.IsOk()) {
+		wxTreeItemIdValue cookie;
+		wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
+		while (child.IsOk()) {
+			partitionTree->SetItemState(child, 0);
+			child = partitionTree->GetNextChild(partitionRoot, cookie);
+		}
+	}
+
+	if (glView) {
+		for (auto& m : glView->gls.GetMeshes()) {
+			if (m)
+				m->subMeshesVisible.assign(m->subMeshes.size(), true);
+		}
+	}
 }
 
 void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item) {
@@ -6815,6 +6892,7 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item) {
 	Mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triParts);
+		ApplyPartitionVisibility(m);
 
 		// Set colors for non-selected partitions
 		int nsm = m->subMeshes.size();
@@ -6898,12 +6976,16 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(Mesh* m, const std::vector<int
 	// Find first triangle of each sub-mesh.
 	m->subMeshes.clear();
 	m->subMeshesColor.clear();
+	m->subMeshesVisible.clear();
+	m->triSubMeshes.assign(nTris, -1);
+	int negativeSubMeshIndex = -1;
 
 	for (uint32_t ti = 0; ti < nTris; ++ti) {
 		while (tp[triInds[ti]] >= static_cast<int>(m->subMeshes.size()))
 			m->subMeshes.emplace_back(ti, 0);
 
 		if (tp[triInds[ti]] < 0) {
+			negativeSubMeshIndex = static_cast<int>(m->subMeshes.size());
 			m->subMeshes.emplace_back(ti, 0);
 			break;
 		}
@@ -6915,6 +6997,14 @@ void OutfitStudioFrame::SetSubMeshesForPartitions(Mesh* m, const std::vector<int
 		m->subMeshes[si].second = m->subMeshes[si + 1].first - m->subMeshes[si].first;
 
 	m->subMeshes.pop_back();
+	m->subMeshesVisible.assign(m->subMeshes.size(), true);
+
+	for (uint32_t ti = 0; ti < nTris; ++ti) {
+		int subMeshIndex = tp[ti] >= 0 ? tp[ti] : negativeSubMeshIndex;
+		if (subMeshIndex >= 0 && static_cast<size_t>(subMeshIndex) < m->subMeshes.size())
+			m->triSubMeshes[ti] = subMeshIndex;
+	}
+
 	m->QueueUpdate(Mesh::UpdateType::Indices);
 }
 
@@ -6924,6 +7014,8 @@ void OutfitStudioFrame::SetNoSubMeshes(Mesh* m) {
 
 	m->subMeshes.clear();
 	m->subMeshesColor.clear();
+	m->subMeshesVisible.clear();
+	m->triSubMeshes.clear();
 
 	for (int ti = 0; ti < m->nTris; ++ti)
 		m->renderTris[ti] = m->tris[ti];
@@ -7459,6 +7551,9 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionApply->Show(false);
 		partitionReset->Show(false);
 
+		if (currentTabButton == partitionTabButton)
+			ResetPartitionVisibility();
+
 		if (glView->GetSegmentMode())
 			glView->ClearActiveMask();
 
@@ -7848,6 +7943,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
 
+		ResetPartitionVisibility();
 		ShowPartition(partitionTree->GetSelection());
 	}
 	else if (id == lightsTabButton->GetId()) {

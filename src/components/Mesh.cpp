@@ -31,6 +31,20 @@ std::shared_ptr<AABBTree> Mesh::CreateBVH() {
 	return bvh;
 }
 
+bool Mesh::IsFacetVisible(int facet) const {
+	if (subMeshesVisible.empty() || triSubMeshes.empty())
+		return true;
+
+	if (facet < 0 || static_cast<size_t>(facet) >= triSubMeshes.size())
+		return true;
+
+	int subMeshIndex = triSubMeshes[facet];
+	if (subMeshIndex < 0 || static_cast<size_t>(subMeshIndex) >= subMeshesVisible.size())
+		return true;
+
+	return subMeshesVisible[subMeshIndex];
+}
+
 float Mesh::ComputeAvgEdgeLength() {
 	if (avgEdgeLengthWS >= 0.0f)
 		return avgEdgeLengthWS;

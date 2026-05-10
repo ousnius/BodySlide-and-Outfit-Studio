@@ -17,6 +17,22 @@ using namespace nifly;
 
 extern ConfigurationManager Config;
 
+namespace {
+const IntersectResult* NearestVisibleFacet(const Mesh* mesh, const std::vector<IntersectResult>& results) {
+	const IntersectResult* nearest = nullptr;
+
+	for (const auto& result : results) {
+		if (!mesh->IsFacetVisible(static_cast<int>(result.HitFacet)))
+			continue;
+
+		if (!nearest || result.HitDistance < nearest->HitDistance)
+			nearest = &result;
+	}
+
+	return nearest;
+}
+}
+
 const wxGLAttributes& GLSurface::GetGLAttribs() {
 	static bool attribsInitialized{false};
 	static wxGLAttributes attribs;
@@ -350,9 +366,10 @@ Mesh* GLSurface::PickMesh(int ScreenX, int ScreenY) {
 		GetPickRay(ScreenX, ScreenY, m, d, o);
 
 		if (m->bvh->IntersectRay(o, d, &results)) {
-			if (results[0].HitDistance < curd) {
+			const IntersectResult* nearestHit = NearestVisibleFacet(m, results);
+			if (nearestHit && nearestHit->HitDistance < curd) {
 				pickedMesh = m;
-				curd = results[0].HitDistance;
+				curd = nearestHit->HitDistance;
 			}
 		}
 	}
@@ -390,18 +407,12 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 				if (!m->bVisible)
 					continue;
 
+				const IntersectResult* nearestHit = NearestVisibleFacet(m, results);
+				if (!nearestHit)
+					continue;
+
 				collided = true;
-
-				size_t min_i = 0;
-				float minDist = results[0].HitDistance;
-				for (size_t i = 1; i < results.size(); i++) {
-					if (results[i].HitDistance < minDist) {
-						minDist = results[i].HitDistance;
-						min_i = i;
-					}
-				}
-
-				Vector3 origin = results[min_i].HitCoord;
+				Vector3 origin = nearestHit->HitCoord;
 
 				bool closest = true;
 				float viewDistance = origin.DistanceTo(o);
@@ -416,9 +427,9 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 					outOrigin = origin;
 
 					if (outFacet)
-						(*outFacet) = results[min_i].HitFacet;
+						(*outFacet) = nearestHit->HitFacet;
 
-					outNormal = m->tris[results[min_i].HitFacet].trinormal(m->verts.get());
+					outNormal = m->tris[nearestHit->HitFacet].trinormal(m->verts.get());
 
 					if (hitMesh)
 						(*hitMesh) = m;
@@ -525,20 +536,14 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 				if (!m->bVisible)
 					continue;
 
+				const IntersectResult* nearestHit = NearestVisibleFacet(m, results);
+				if (!nearestHit)
+					continue;
+
 				collided = true;
+				Vector3 origin = nearestHit->HitCoord;
 
-				size_t min_i = 0;
-				float minDist = results[0].HitDistance;
-				for (size_t i = 1; i < results.size(); i++) {
-					if (results[i].HitDistance < minDist) {
-						minDist = results[i].HitDistance;
-						min_i = i;
-					}
-				}
-
-				Vector3 origin = results[min_i].HitCoord;
-
-				Triangle t = m->tris[results[min_i].HitFacet];
+				Triangle t = m->tris[nearestHit->HitFacet];
 
 				Vector3 hilitepoint = m->verts[t.p1];
 				float closestdist = fabs(m->verts[t.p1].DistanceTo(origin));
@@ -570,7 +575,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 
 					Vector3 morigin = m->TransformPosMeshToModel(origin);
 
-					Vector3 norm = m->tris[results[min_i].HitFacet].trinormal(m->verts.get());
+					Vector3 norm = m->tris[nearestHit->HitFacet].trinormal(m->verts.get());
 					norm = m->TransformDirMeshToModel(norm);
 
 					AddVisCircle(morigin, norm, cursorSize, "cursormesh");
@@ -604,7 +609,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, CursorHit
 						hitResult->hitMesh = m;
 						hitResult->hitMeshName = m->shapeName;
 						hitResult->hoverEdge = closestEdge;
-						hitResult->hoverTri = results[min_i].HitFacet;
+						hitResult->hoverTri = nearestHit->HitFacet;
 					}
 				}
 
@@ -641,18 +646,13 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex, Mesh* h
 		std::vector<IntersectResult> results;
 		if (m->bvh && m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
-				size_t min_i = 0;
-				float minDist = results[0].HitDistance;
-				for (size_t i = 1; i < results.size(); i++) {
-					if (results[i].HitDistance < minDist) {
-						minDist = results[i].HitDistance;
-						min_i = i;
-					}
-				}
+				const IntersectResult* nearestHit = NearestVisibleFacet(m, results);
+				if (!nearestHit)
+					continue;
 
-				Vector3 origin = results[min_i].HitCoord;
+				Vector3 origin = nearestHit->HitCoord;
 
-				Triangle t = m->tris[results[min_i].HitFacet];
+				Triangle t = m->tris[nearestHit->HitFacet];
 
 				float closestdist = fabs(m->verts[t.p1].DistanceTo(origin));
 				float nextdist = fabs(m->verts[t.p2].DistanceTo(origin));
@@ -1012,6 +1012,9 @@ void GLSurface::RenderMesh(Mesh* m) {
 
 		// Render sub meshes
 		for (size_t s = 0; s < m->subMeshes.size(); ++s) {
+			if (s < m->subMeshesVisible.size() && !m->subMeshesVisible[s])
+				continue;
+
 			GLuint subIndex = m->subMeshes[s].first;
 			GLuint subSize = m->subMeshes[s].second;
 			Vector3 subColor = m->color;
@@ -1032,6 +1035,9 @@ void GLSurface::RenderMesh(Mesh* m) {
 
 			// Render wireframes for sub meshes
 			for (size_t s = 0; s < m->subMeshes.size(); ++s) {
+				if (s < m->subMeshesVisible.size() && !m->subMeshesVisible[s])
+					continue;
+
 				GLuint subIndex = m->subMeshes[s].first;
 				GLuint subSize = m->subMeshes[s].second;
 				glDrawElements(GL_TRIANGLES, subSize * 3, GL_UNSIGNED_SHORT, (GLvoid*)(subIndex * 3 * sizeof(GLushort)));

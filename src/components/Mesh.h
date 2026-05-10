@@ -81,6 +81,8 @@ public:
 
 	std::vector<std::pair<uint32_t, uint32_t>> subMeshes; // Start index and size of each sub mesh
 	std::vector<nifly::Vector3> subMeshesColor;			  // Color of each sub mesh
+	std::vector<bool> subMeshesVisible;					  // Visibility of each sub mesh
+	std::vector<int> triSubMeshes;						  // Original triangle index to sub mesh index
 
 	ShaderProperties prop;
 	GLMaterial* material = nullptr;
@@ -139,6 +141,7 @@ public:
 
 	// Creates a new bvh tree for the mesh.
 	std::shared_ptr<AABBTree> CreateBVH();
+	bool IsFacetVisible(int facet) const;
 
 	void MakeEdges(); // Creates the list of edges from the list of triangles.
 

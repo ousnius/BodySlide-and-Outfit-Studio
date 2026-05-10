@@ -1072,6 +1072,8 @@ public:
 
 	void ShowPartition(const wxTreeItemId& item = nullptr);
 	void UpdatePartitionNames();
+	void ApplyPartitionVisibility(Mesh* m);
+	void ResetPartitionVisibility();
 
 	void SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp);
 	void SetNoSubMeshes(Mesh* m);
@@ -1381,6 +1383,7 @@ private:
 	void OnSegmentEditSSF(wxCommandEvent& event);
 
 	void OnPartitionSelect(wxTreeEvent& event);
+	void OnPartitionVisToggle(wxTreeEvent& event);
 	void OnPartitionContext(wxTreeEvent& event);
 	void OnPartitionTreeContext(wxCommandEvent& event);
 	void OnAddPartition(wxCommandEvent& event);
