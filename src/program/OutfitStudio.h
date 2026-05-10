@@ -1068,6 +1068,8 @@ public:
 
 	void ShowSegment(const wxTreeItemId& item = nullptr);
 	void UpdateSegmentNames();
+	void ApplySegmentVisibility(Mesh* m);
+	void ResetSegmentVisibility();
 	bool PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const nifly::Vector3& hitPointModel, float radiusModel);
 
 	void ShowPartition(const wxTreeItemId& item = nullptr);
@@ -1365,6 +1367,7 @@ private:
 
 	int CalcMaxSegPartID();
 	void OnSegmentSelect(wxTreeEvent& event);
+	void OnSegmentVisToggle(wxTreeEvent& event);
 	void OnSegmentContext(wxTreeEvent& event);
 	void OnSegmentTreeContext(wxCommandEvent& event);
 	void OnAddSegment(wxCommandEvent& event);

@@ -314,6 +314,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneContext)
 	EVT_COMMAND_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudioFrame::OnBoneTreeContext)
 
+	EVT_TREE_STATE_IMAGE_CLICK(XRCID("segmentTree"), OutfitStudioFrame::OnSegmentVisToggle)
 	EVT_TREE_SEL_CHANGED(XRCID("segmentTree"), OutfitStudioFrame::OnSegmentSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("segmentTree"), OutfitStudioFrame::OnSegmentContext)
 	EVT_COMMAND_RIGHT_CLICK(XRCID("segmentTree"), OutfitStudioFrame::OnSegmentTreeContext)
@@ -1388,8 +1389,19 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	colorSettings = (wxPanel*)FindWindowByName("colorSettings");
 
 	segmentTree = (wxTreeCtrl*)FindWindowByName("segmentTree");
-	if (segmentTree)
+	if (segmentTree) {
+		wxImageList* segmentStateImages = new wxImageList(16, 16, false, 2);
+		wxBitmap visImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoVisible.png", wxBITMAP_TYPE_PNG);
+		wxBitmap invImg(wxString::FromUTF8(Config["AppDir"]) + "/res/images/icoInvisible.png", wxBITMAP_TYPE_PNG);
+
+		if (visImg.IsOk())
+			segmentStateImages->Add(visImg);
+		if (invImg.IsOk())
+			segmentStateImages->Add(invImg);
+
+		segmentTree->AssignStateImageList(segmentStateImages);
 		segmentRoot = segmentTree->AddRoot("Segments");
+	}
 
 	partitionTree = (wxTreeCtrl*)FindWindowByName("partitionTree");
 	if (partitionTree) {
@@ -5972,6 +5984,45 @@ void OutfitStudioFrame::OnSegmentSelect(wxTreeEvent& event) {
 	ShowSegment(event.GetItem());
 }
 
+void OutfitStudioFrame::OnSegmentVisToggle(wxTreeEvent& event) {
+	wxTreeItemId item = event.GetItem();
+	if (!item.IsOk() || !segmentTree->GetItemParent(item).IsOk()) {
+		event.Skip();
+		return;
+	}
+
+	int newState = segmentTree->GetItemState(item) == 1 ? 0 : 1;
+	segmentTree->SetItemState(item, newState);
+
+	if (segmentTree->GetItemParent(item) == segmentRoot) {
+		wxTreeItemIdValue cookie;
+		wxTreeItemId child = segmentTree->GetFirstChild(item, cookie);
+		while (child.IsOk()) {
+			segmentTree->SetItemState(child, newState);
+			child = segmentTree->GetNextChild(item, cookie);
+		}
+	}
+	else if (newState == 0) {
+		wxTreeItemId parent = segmentTree->GetItemParent(item);
+		if (parent.IsOk() && parent != segmentRoot)
+			segmentTree->SetItemState(parent, 0);
+	}
+
+	Mesh* m = nullptr;
+	if (activeItem && activeItem->GetShape())
+		m = glView->GetMesh(activeItem->GetShape()->name.get());
+
+	if (m) {
+		if (m->subMeshes.empty())
+			SetSubMeshesForPartitions(m, triSParts);
+
+		ApplySegmentVisibility(m);
+		glView->Render();
+	}
+
+	event.Skip();
+}
+
 void OutfitStudioFrame::OnSegmentContext(wxTreeEvent& event) {
 	if (!event.GetItem().IsOk())
 		return;
@@ -6034,6 +6085,7 @@ void OutfitStudioFrame::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 		newItem = segmentTree->InsertItem(segmentRoot, activeSegment, "Segment", -1, -1, new SegmentItemData(newPartID));
 
 	if (newItem.IsOk()) {
+		segmentTree->SetItemState(newItem, 0);
 		segmentTree->UnselectAll();
 		segmentTree->SelectItem(newItem);
 	}
@@ -6063,6 +6115,7 @@ void OutfitStudioFrame::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
 		newItem = segmentTree->InsertItem(parent, activeSegment, "Sub Segment", -1, -1, new SubSegmentItemData(newPartID, 0, 0xFFFFFFFF));
 
 	if (newItem.IsOk()) {
+		segmentTree->SetItemState(newItem, 0);
 		segmentTree->UnselectAll();
 		segmentTree->SelectItem(newItem);
 	}
@@ -6298,9 +6351,11 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 		for (size_t i = 0; i < inf.segs.size(); i++) {
 			wxTreeItemId segID = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(inf.segs[i].partID));
 			if (segID.IsOk()) {
+				segmentTree->SetItemState(segID, 0);
 				for (size_t j = 0; j < inf.segs[i].subs.size(); j++) {
 					NifSubSegmentInfo& sub = inf.segs[i].subs[j];
-					segmentTree->AppendItem(segID, "Sub Segment", -1, -1, new SubSegmentItemData(sub.partID, sub.userSlotID, sub.material, sub.extraData));
+					wxTreeItemId subID = segmentTree->AppendItem(segID, "Sub Segment", -1, -1, new SubSegmentItemData(sub.partID, sub.userSlotID, sub.material, sub.extraData));
+					segmentTree->SetItemState(subID, 0);
 				}
 			}
 		}
@@ -6316,6 +6371,69 @@ void OutfitStudioFrame::CreateSegmentTree(NiShape* shape) {
 	wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
 	if (child.IsOk())
 		segmentTree->SelectItem(child);
+}
+
+void OutfitStudioFrame::ApplySegmentVisibility(Mesh* m) {
+	if (!m)
+		return;
+
+	if (m->subMeshesVisible.size() != m->subMeshes.size())
+		m->subMeshesVisible.assign(m->subMeshes.size(), true);
+
+	if (!segmentTree || !segmentRoot.IsOk())
+		return;
+
+	const auto setSubMeshVisible = [&](int partID, bool visible) {
+		if (partID >= 0 && static_cast<size_t>(partID) < m->subMeshesVisible.size())
+			m->subMeshesVisible[partID] = visible;
+	};
+
+	wxTreeItemIdValue cookie;
+	wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
+	while (child.IsOk()) {
+		SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(child));
+		bool segmentVisible = segmentTree->GetItemState(child) != 1;
+		if (segmentData)
+			setSubMeshVisible(segmentData->partID, segmentVisible);
+
+		wxTreeItemIdValue subCookie;
+		wxTreeItemId subChild = segmentTree->GetFirstChild(child, subCookie);
+		while (subChild.IsOk()) {
+			SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(subChild));
+			if (subSegmentData)
+				setSubMeshVisible(subSegmentData->partID, segmentVisible && segmentTree->GetItemState(subChild) != 1);
+
+			subChild = segmentTree->GetNextChild(child, subCookie);
+		}
+
+		child = segmentTree->GetNextChild(segmentRoot, cookie);
+	}
+}
+
+void OutfitStudioFrame::ResetSegmentVisibility() {
+	if (segmentTree && segmentRoot.IsOk()) {
+		wxTreeItemIdValue cookie;
+		wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
+		while (child.IsOk()) {
+			segmentTree->SetItemState(child, 0);
+
+			wxTreeItemIdValue subCookie;
+			wxTreeItemId subChild = segmentTree->GetFirstChild(child, subCookie);
+			while (subChild.IsOk()) {
+				segmentTree->SetItemState(subChild, 0);
+				subChild = segmentTree->GetNextChild(child, subCookie);
+			}
+
+			child = segmentTree->GetNextChild(segmentRoot, cookie);
+		}
+	}
+
+	if (glView) {
+		for (auto& m : glView->gls.GetMeshes()) {
+			if (m)
+				m->subMeshesVisible.assign(m->subMeshes.size(), true);
+		}
+	}
 }
 
 bool OutfitStudioFrame::PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const Vector3& hitPointModel, float radiusModel) {
@@ -6493,6 +6611,7 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
 	Mesh* m = glView->GetMesh(activeItem->GetShape()->name.get());
 	if (m) {
 		SetSubMeshesForPartitions(m, triSParts);
+		ApplySegmentVisibility(m);
 
 		// Set colors for segments
 		int nsm = m->subMeshes.size();
@@ -7525,6 +7644,9 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		segmentApply->Show(false);
 		segmentReset->Show(false);
 
+		if (currentTabButton == segmentTabButton)
+			ResetSegmentVisibility();
+
 		if (glView->GetSegmentMode())
 			glView->ClearActiveMask();
 
@@ -7876,6 +7998,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		toolBarH->EnableTool(XRCID("btnSplitEdgeTool"), false);
 		toolBarH->EnableTool(XRCID("btnMoveVertexTool"), false);
 
+		ResetSegmentVisibility();
 		ShowSegment(segmentTree->GetSelection());
 	}
 	else if (id == partitionTabButton->GetId()) {
