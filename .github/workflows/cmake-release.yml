@@ -107,6 +107,7 @@ jobs:
           sudo apt-get install --no-install-recommends -y \
             build-essential \
             cmake \
+            directx-headers-dev \
             g++ \
             gcc \
             libglew-dev \
