@@ -2502,7 +2502,9 @@ bool OutfitStudioFrame::SaveProject() {
 									  project->mGenWeights,
 									  project->mCopyRef,
 									  project->bPreventMorphFile,
-									  project->bKeepZappedShapes);
+									  project->bKeepZappedShapes,
+									  project->mSFMorphPath,
+									  project->mSFMorphTargetShape);
 
 	if (!error.empty()) {
 		wxLogError(error.c_str());
@@ -2534,6 +2536,28 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		XRCCTRL(dlg, "sssNameCopy", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnSSSNameCopy, this);
 		XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudioFrame::OnSSSGenWeightsTrue, this);
 		XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudioFrame::OnSSSGenWeightsFalse, this);
+
+		XRCCTRL(dlg, "sssOutputDataPathBrowse", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
+			wxString dataPath = wxString::FromUTF8(Config["GameDataPath"]);
+			wxString result = wxDirSelector(_("Select output data path"), dataPath, 0, wxDefaultPosition, &dlg);
+			if (!result.empty()) {
+				wxFileName relPath(result);
+				if (!dataPath.empty())
+					relPath.MakeRelativeTo(dataPath);
+				XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->ChangeValue(relPath.GetFullPath());
+			}
+		});
+
+		XRCCTRL(dlg, "sssSFMorphPathBrowse", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
+			wxString dataPath = wxString::FromUTF8(Config["GameDataPath"]);
+			wxString result = wxDirSelector(_("Select morph.dat output folder"), dataPath, 0, wxDefaultPosition, &dlg);
+			if (!result.empty()) {
+				wxFileName relPath(result);
+				if (!dataPath.empty())
+					relPath.MakeRelativeTo(dataPath);
+				XRCCTRL(dlg, "sssSFMorphPath", wxTextCtrl)->ChangeValue(relPath.GetFullPath());
+			}
+		});
 
 		std::string outName;
 		if (!project->mOutfitName.empty())
@@ -2586,6 +2610,33 @@ bool OutfitStudioFrame::SaveProjectAs() {
 
 		XRCCTRL(dlg, "sssPreventMorphFile", wxCheckBox)->SetValue(project->bPreventMorphFile);
 		XRCCTRL(dlg, "sssKeepZappedShapes", wxCheckBox)->SetValue(project->bKeepZappedShapes);
+
+		auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+		if (targetGame == SF) {
+			XRCCTRL(dlg, "sssSFMorphPath", wxTextCtrl)->ChangeValue(project->mSFMorphPath);
+
+			// Populate morph target shape dropdown
+			wxChoice* morphShapeChoice = XRCCTRL(dlg, "sssSFMorphTargetShape", wxChoice);
+			morphShapeChoice->Append("(None)");
+			for (auto& s : project->GetWorkNif()->GetShapes())
+				morphShapeChoice->Append(wxString::FromUTF8(s->name.get()));
+
+			// Select previously saved shape, or default to (None)
+			if (!project->mSFMorphTargetShape.empty()) {
+				int sel = morphShapeChoice->FindString(project->mSFMorphTargetShape);
+				morphShapeChoice->SetSelection(sel != wxNOT_FOUND ? sel : 0);
+			}
+			else {
+				morphShapeChoice->SetSelection(0);
+			}
+		}
+		else {
+			XRCCTRL(dlg, "m_SFMorphPathLabel", wxStaticText)->Hide();
+			XRCCTRL(dlg, "sssSFMorphPath", wxTextCtrl)->Hide();
+			XRCCTRL(dlg, "sssSFMorphPathBrowse", wxButton)->Hide();
+			XRCCTRL(dlg, "m_SFMorphTargetShapeLabel", wxStaticText)->Hide();
+			XRCCTRL(dlg, "sssSFMorphTargetShape", wxChoice)->Hide();
+		}
 
 		if (!project->GetBaseShape()) {
 			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(false);
@@ -2661,6 +2712,12 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	bool genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
 	bool preventMorphFile = XRCCTRL(dlg, "sssPreventMorphFile", wxCheckBox)->GetValue();
 	bool keepZappedShapes = XRCCTRL(dlg, "sssKeepZappedShapes", wxCheckBox)->GetValue();
+	wxString strSFMorphPath = XRCCTRL(dlg, "sssSFMorphPath", wxTextCtrl)->GetValue();
+	wxString strSFMorphTargetShape;
+	wxChoice* morphShapeChoice = XRCCTRL(dlg, "sssSFMorphTargetShape", wxChoice);
+	int sel = morphShapeChoice->GetSelection();
+	if (sel > 0) // 0 = "(None)"
+		strSFMorphTargetShape = morphShapeChoice->GetString(sel);
 
 	wxLogMessage("Saving project '%s'...", strOutfitName);
 	StartProgress(wxString::Format(_("Saving project '%s'..."), strOutfitName));
@@ -2679,7 +2736,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	if (projectNotes)
 		project->activeSet.SetNotes(projectNotes->GetValue().ToUTF8().data());
 
-	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, copyRef, preventMorphFile, keepZappedShapes);
+	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, copyRef, preventMorphFile, keepZappedShapes, strSFMorphPath, strSFMorphTargetShape);
 
 	if (error.empty()) {
 		SetPendingChanges(false);
