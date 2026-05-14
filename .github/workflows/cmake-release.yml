@@ -13,8 +13,6 @@ jobs:
 
     env:
       BUILD_TYPE: Release
-      VCPKG_BINARY_SOURCES: clear;files,${{ runner.temp }}\vcpkg-binary-cache,readwrite
-      VCPKG_ROOT: ${{ runner.temp }}\vcpkg
       VCPKG_TARGET_TRIPLET: x64-windows-static
 
     steps:
@@ -26,7 +24,7 @@ jobs:
       - name: Cache vcpkg binary packages
         uses: actions/cache@v4
         with:
-          path: ${{ runner.temp }}\vcpkg-binary-cache
+          path: vcpkg-binary-cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-${{ hashFiles('.github/workflows/cmake-release.yml') }}
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-
@@ -34,22 +32,28 @@ jobs:
       - name: Bootstrap vcpkg
         shell: pwsh
         run: |
-          git clone https://github.com/microsoft/vcpkg.git "$env:VCPKG_ROOT"
-          & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
+          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
+          git clone https://github.com/microsoft/vcpkg.git $vcpkgRoot
+          & (Join-Path $vcpkgRoot "bootstrap-vcpkg.bat") -disableMetrics
 
       - name: Install dependencies
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path "${{ runner.temp }}\vcpkg-binary-cache" | Out-Null
-          & "$env:VCPKG_ROOT\vcpkg.exe" install "wxwidgets:$env:VCPKG_TARGET_TRIPLET"
+          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
+          $vcpkgCache = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
+          New-Item -ItemType Directory -Force -Path $vcpkgCache | Out-Null
+          $env:VCPKG_BINARY_SOURCES = "clear;files,$vcpkgCache,readwrite"
+          & (Join-Path $vcpkgRoot "vcpkg.exe") install "wxwidgets:$env:VCPKG_TARGET_TRIPLET"
 
       - name: Configure CMake
         shell: pwsh
         run: |
+          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
+          $toolchainFile = Join-Path $vcpkgRoot "scripts/buildsystems/vcpkg.cmake"
           cmake -S . -B build/windows-x64-release `
             -G "Visual Studio 17 2022" `
             -A x64 `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
             -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TARGET_TRIPLET" `
             -DBSOS_ENABLE_FBXSDK=OFF
 
