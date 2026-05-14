@@ -113,9 +113,11 @@ jobs:
             libgl1-mesa-dev \
             libglu1-mesa-dev \
             libwxgtk3.2-dev \
-            libwxgtk-gl3.2-dev \
             ninja-build \
             pkg-config
+
+          wx-config --version
+          wx-config --libs gl
 
       - name: Configure CMake
         run: |
