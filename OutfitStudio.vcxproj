@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -126,7 +126,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -157,7 +157,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -194,7 +194,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -434,6 +434,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="lib\DDS.h" />
+    <ClInclude Include="lib\fkYAML\include\fkYAML\fkyaml_fwd.hpp" />
+    <ClInclude Include="lib\fkYAML\include\fkYAML\node.hpp" />
     <ClInclude Include="lib\FSEngine\FSBSA.h" />
     <ClInclude Include="lib\FSEngine\FSEngine.h" />
     <ClInclude Include="lib\FSEngine\FSManager.h" />
@@ -778,6 +780,8 @@
     <ClInclude Include="lib\LZ4F\lz4frame_static.h" />
     <ClInclude Include="lib\LZ4F\lz4hc.h" />
     <ClInclude Include="lib\LZ4F\xxhash.h" />
+    <ClInclude Include="lib\nlohmannjson\include\nlohmann\json.hpp" />
+    <ClInclude Include="lib\nlohmannjson\include\nlohmann\json_fwd.hpp" />
     <ClInclude Include="lib\SOIL2\image_DXT.h" />
     <ClInclude Include="lib\SOIL2\image_helper.h" />
     <ClInclude Include="lib\SOIL2\pkm_helper.h" />
@@ -809,6 +813,7 @@
     <ClInclude Include="src\components\RefTemplates.h" />
     <ClInclude Include="src\components\SliderCategories.h" />
     <ClInclude Include="src\components\SliderData.h" />
+    <ClInclude Include="src\components\SliderDataFileUtil.h" />
     <ClInclude Include="src\components\SliderGroup.h" />
     <ClInclude Include="src\components\SliderManager.h" />
     <ClInclude Include="src\components\SliderPresets.h" />
@@ -824,6 +829,7 @@
     <ClInclude Include="src\files\SFMorphFile.h" />
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\files\MaskFile.h" />
+    <ClInclude Include="src\files\HkxFile.h" />
     <ClInclude Include="src\program\ConvertBodyReferenceDialog.h" />
     <ClInclude Include="src\program\AutomationDialog.h" />
     <ClInclude Include="src\components\Automation.h" />
@@ -835,6 +841,7 @@
     <ClInclude Include="src\program\OutfitStudio.h" />
     <ClInclude Include="src\program\PresetSaveDialog.h" />
     <ClInclude Include="src\program\ShapeProperties.h" />
+    <ClInclude Include="src\program\SliderDataDialog.h" />
     <ClInclude Include="src\program\SliderDataImportDialog.h" />
     <ClInclude Include="src\render\GLCanvas.h" />
     <ClInclude Include="src\render\GLDialog.h" />
@@ -891,6 +898,9 @@
     <ClCompile Include="src\components\Mesh.cpp" />
     <ClCompile Include="src\components\NormalGenLayers.cpp" />
     <ClCompile Include="src\components\PoseData.cpp" />
+    <ClCompile Include="src\components\PoseDataYaml.cpp" />
+    <ClCompile Include="src\components\PoseDataJson.cpp" />
+    <ClCompile Include="src\components\PoseDataHkx.cpp" />
     <ClCompile Include="src\components\RefTemplates.cpp" />
     <ClCompile Include="src\components\SliderCategories.cpp" />
     <ClCompile Include="src\components\SliderData.cpp" />
@@ -908,6 +918,7 @@
     <ClCompile Include="src\files\SFMorphFile.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\files\MaskFile.cpp" />
+    <ClCompile Include="src\files\HkxFile.cpp" />
     <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp" />
     <ClCompile Include="src\program\AutomationDialog.cpp" />
     <ClCompile Include="src\components\Automation.cpp" />
@@ -919,6 +930,7 @@
     <ClCompile Include="src\program\OutfitStudio.cpp" />
     <ClCompile Include="src\program\PresetSaveDialog.cpp" />
     <ClCompile Include="src\program\ShapeProperties.cpp" />
+    <ClCompile Include="src\program\SliderDataDialog.cpp" />
     <ClCompile Include="src\program\SliderDataImportDialog.cpp" />
     <ClCompile Include="src\render\GLCanvas.cpp" />
     <ClCompile Include="src\render\GLDialog.cpp" />

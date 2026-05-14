@@ -8,12 +8,14 @@ See the included LICENSE file
 #include "../components/Automation.h"
 
 #include <wx/collpane.h>
+#include <wx/clrpicker.h>
 #include <wx/combobox.h>
 #include <wx/filepicker.h>
 #include <wx/gauge.h>
 #include <wx/listctrl.h>
 #include <wx/log.h>
 #include <wx/radiobox.h>
+#include <wx/scrolwin.h>
 #include <wx/simplebook.h>
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
@@ -29,6 +31,12 @@ class AutomationDialog : public wxDialog {
 public:
 	AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProject* project);
 	~AutomationDialog() override;
+
+	// Run an automation script without showing the dialog. Returns 0 on success,
+	// non-zero on failure (script not found, no active steps, batch errors, etc.).
+	// `batchInputs` are positional CLI args: file paths or directories for FolderScan,
+	// slider set project names for SliderSets. Ignored for non-batch scripts.
+	int RunHeadless(const wxString& scriptName, const wxArrayString& batchInputs);
 
 private:
 	OutfitStudioFrame* outfitStudio = nullptr;
@@ -50,11 +58,26 @@ private:
 	wxComboBox* cmbAutomation = nullptr;
 	wxButton* btnSaveScript = nullptr;
 	wxButton* btnExecuteAll = nullptr;
+	wxButton* btnClose = nullptr;
 	wxStatusBar* statusBar = nullptr;
 	wxGauge* progressBar = nullptr;
 	wxCollapsiblePane* paneOutput = nullptr;
 	wxTextCtrl* txtOutput = nullptr;
 	wxLog* oldLogTarget = nullptr;
+	bool cancelRequested = false;
+	bool isExecuting = false;
+	bool headlessMode = false;
+	int lastRunErrors = 0;
+
+	struct ShaderPropertyRowControls {
+		wxPanel* panel = nullptr;
+		std::string propertyName;
+		wxTextCtrl* value1 = nullptr;
+		wxTextCtrl* value2 = nullptr;
+		wxColourPickerCtrl* color = nullptr;
+		wxChoice* choice = nullptr;
+	};
+	std::vector<ShaderPropertyRowControls> shaderPropertyRows;
 
 	// UI helper methods
 	void SetCheckboxValue(const char* name, bool value);
@@ -71,6 +94,7 @@ private:
 	void StartProgress(const wxString& msg = "");
 	void UpdateProgress(int val, const wxString& msg = "");
 	void EndProgress(const wxString& msg = "");
+	void SetExecutionUIState(bool running);
 
 	void PopulateStepList();
 	void SelectStep(int index);
@@ -82,8 +106,10 @@ private:
 
 	std::string GetAutomationsFolder();
 	void PopulateAutomationList();
+	void CollectScripts(const wxString& baseFolder, const wxString& currentFolder, std::vector<std::pair<wxString, wxString>>& entries);
+	static bool IsSeparatorItem(const wxString& text);
 	void LoadAutomation(const wxString& name);
-	static wxString SanitizeFileName(const wxString& name);
+	static wxString SanitizePath(const wxString& name);
 
 	void PopulateRefTemplates();
 	void PopulateSetsFromFile(const wxString& filePath, const char* choiceName, const char* shapesChoiceName = nullptr);
@@ -101,6 +127,12 @@ private:
 	void UpdateExportFieldsEnabled(bool useOriginal);
 	void UpdateSetRefFieldsEnabled(bool enabled);
 	void UpdateExportForBatchMode();
+	void PopulateShaderPropertyChoice();
+	void ClearShaderPropertyRows();
+	void AddShaderPropertyRow(const AutomationStep::ShaderProperty& prop);
+	void RemoveShaderPropertyRow(wxWindow* rowPanel);
+	void RebuildShaderPropertyRows(const std::vector<AutomationStep::ShaderProperty>& properties);
+	std::vector<AutomationStep::ShaderProperty> ReadShaderPropertyRows() const;
 
 	std::map<std::string, std::string> CollectVariables();
 	void PopulateVariablesUI();
@@ -142,9 +174,12 @@ private:
 	int ExecuteStepDuplicateShape(const AutomationStep& step);
 	int ExecuteStepMirrorShape(const AutomationStep& step);
 	int ExecuteStepLoadMask(const AutomationStep& step);
+	int ExecuteStepClearMask(const AutomationStep& step);
 	int ExecuteStepSetSliderProperties(const AutomationStep& step);
+	int ExecuteStepSetShaderProperties(const AutomationStep& step);
 	int ExecuteStepRemoveUnusedNodes(const AutomationStep& step);
 	int ExecuteStepFixClipping(const AutomationStep& step);
+	int ExecuteStepFixBadBones(const AutomationStep& step);
 
 	std::vector<std::string> GatherBatchFiles();
 	std::vector<std::pair<std::string, std::string>> GatherBatchSliderSets();
@@ -159,6 +194,7 @@ private:
 	void OnOpenFolder(wxCommandEvent& event);
 	void OnAutomationSelected(wxCommandEvent& event);
 	void OnAddStep(wxCommandEvent& event);
+	void OnDuplicateStep(wxCommandEvent& event);
 	void OnRemoveStep(wxCommandEvent& event);
 	void OnMoveUp(wxCommandEvent& event);
 	void OnMoveDown(wxCommandEvent& event);
@@ -169,6 +205,7 @@ private:
 	void OnExecuteAll(wxCommandEvent& event);
 	void OnExecuteSelected(wxCommandEvent& event);
 	void OnClose(wxCommandEvent& event);
+	void OnWindowClose(wxCloseEvent& event);
 	void OnAddVariable(wxCommandEvent& event);
 	void OnRemoveVariable(wxCommandEvent& event);
 	void OnRefTemplateChanged(wxCommandEvent& event);
@@ -185,7 +222,12 @@ private:
 	void PopulateMaskNamesFromFile(const wxString& filePath);
 	void OnSliderPropZapChanged(wxCommandEvent& event);
 	void UpdateSliderPropDefaultVisibility();
+	void OnAddShaderProperty(wxCommandEvent& event);
 	void OnBatchModeChanged(wxCommandEvent& event);
+	void OnCharHook(wxKeyEvent& event);
+	void OnAddShapeToField(wxCommandEvent& event);
+	void OnAddSliderToField(wxCommandEvent& event);
+	void AppendFromList(const char* textCtrlName, const wxArrayString& items, const wxString& title);
 
 	wxDECLARE_EVENT_TABLE();
 };

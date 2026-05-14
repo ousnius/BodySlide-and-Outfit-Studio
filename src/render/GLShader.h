@@ -66,6 +66,9 @@ public:
 	void SetAlphaProperties(const uint16_t flags, const float threshold, const float value);
 	void SetAlphaThreshold(const float threshold);
 	void SetAdjustPointSize(const bool enable);
+	void SetPointSpacingWS(const float spacing);
+	void SetPointSizeParams(const float minPx, const float maxPx, const float scale);
+	void SetViewportSize(const float widthPx, const float heightPx);
 
 	void SetFrontalLight(const DirectionalLight& light);
 	void SetDirectionalLight(const DirectionalLight& light, const int index);

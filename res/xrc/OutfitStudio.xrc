@@ -169,6 +169,12 @@
 						<size>-1,25</size>
 						<label>Brush Settings</label>
 					</object>
+					<object class="wxCheckBox" name="cbEdgeSlideCorrectUV">
+						<fg>#ffffff</fg>
+						<label>Correct UVs</label>
+						<checked>1</checked>
+						<tooltip>Correct UV coordinates while sliding edges.</tooltip>
+					</object>
 					<object class="space" />
 					<object class="tool" name="btnDiscord">
 						<label translate="0">Discord</label>
@@ -296,6 +302,14 @@
 								<label>Weld Vertex</label>
 								<tooltip>Welds two vertices while keeping the texture coordinates (UV) distinct.</tooltip>
 								<bitmap>$(AppDir)\res\images\Weld.png</bitmap>
+								<toggle>1</toggle>
+								<checked>0</checked>
+							</object>
+							<object class="tool" name="btnEdgeSlide">
+								<label>Edge Slide</label>
+								<tooltip>Slides a vertex along a connected edge.</tooltip>
+								<bitmap>$(AppDir)\res\images\EdgeSlide.png</bitmap>
+								<bitmap2>$(AppDir)\res\images\EdgeSlide_d.png</bitmap2>
 								<toggle>1</toggle>
 								<checked>0</checked>
 							</object>
@@ -1334,9 +1348,9 @@
 																				<option>1</option>
 																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxChoice" name="cPoseName">
+																				<object class="wxComboBox" name="cPoseName">
 																					<style>wxCB_SORT</style>
-																					<selection>0</selection>
+																					<value></value>
 																					<content />
 																				</object>
 																			</object>
@@ -1351,20 +1365,20 @@
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<flag>wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxButton" name="saveAsPose">
+																				<object class="wxButton" name="deletePose">
 																					<size>-1,25</size>
-																					<label>Save As...</label>
+																					<label>Delete</label>
 																				</object>
 																			</object>
 																			<object class="sizeritem">
 																				<option>0</option>
 																				<flag>wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxButton" name="deletePose">
+																				<object class="wxButton" name="loadHkxPose">
 																					<size>-1,25</size>
-																					<label>Delete</label>
+																					<label>Load HKX...</label>
 																				</object>
 																			</object>
 																		</object>
@@ -1814,6 +1828,10 @@
 				<label>Settings</label>
 				<help>Open settings dialog.</help>
 			</object>
+			<object class="wxMenuItem" name="fileAbout">
+				<label>About...</label>
+				<help>Open the About dialog.</help>
+			</object>
 			<object class="wxMenuItem" name="fileExit">
 				<label>Exit\tAlt+F4</label>
 				<help>Exit Outfit Studio.</help>
@@ -2199,6 +2217,11 @@
 				<help>Delete the active slider from the project. (Cannot be undone)</help>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="sliderDataLocations">
+				<label>Slider Data...</label>
+				<help>View and edit local and external slider data locations.</help>
+			</object>
+			<object class="separator" />
 			<object class="wxMenuItem" name="sliderProperties">
 				<label>Properties...\tTab</label>
 				<help>Display and edit the active slider's properties.</help>
@@ -2357,6 +2380,10 @@
 			<object class="wxMenuItem" name="btnToggleRotationCenter">
 				<label>Toggle Rotation Center\tShift+R</label>
 				<help>Switch between the different rotation center modes.</help>
+			</object>
+			<object class="wxMenuItem" name="btnFrameSelected">
+				<label>Frame Selected\tR</label>
+				<help>Center and zoom the camera to frame the selected shapes, ignoring masked vertices.</help>
 			</object>
 			<object class="wxMenuItem" name="btnShowNodes">
 				<label>Show Nodes\tShift+N</label>

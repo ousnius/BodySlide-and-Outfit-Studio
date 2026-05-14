@@ -74,12 +74,16 @@ set(commonsources
 set(OSsources
 	${commonsources}
 	src/components/PoseData.cpp
+	src/components/PoseDataYaml.cpp
+	src/components/PoseDataJson.cpp
+	src/components/PoseDataHkx.cpp
 	src/components/RefTemplates.cpp
 	src/components/Automation.cpp
 	src/components/TweakBrush.cpp
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
+	src/files/HkxFile.cpp
 	src/files/ObjFile.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
@@ -92,6 +96,7 @@ set(OSsources
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp
 	src/program/AutomationDialog.cpp
+	src/program/SliderDataDialog.cpp
 	src/program/SliderDataImportDialog.cpp
 	)
 set(BSsources
@@ -123,6 +128,8 @@ target_include_directories(OutfitStudio PUBLIC
 	lib/nifly/include
 	lib/nifly/external
 	lib/TinyXML-2
+	lib/fkYAML/include
+	lib/nlohmannjson/include
 	)
 target_include_directories(BodySlide PUBLIC
 	lib/gli

@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/dataview.h>
 #include <wx/filepicker.h>
 #include <wx/grid.h>
+#include <wx/html/htmlwin.h>
 #include <wx/spinctrl.h>
 #include <wx/splitter.h>
 #include <wx/srchctrl.h>
@@ -69,7 +70,7 @@ public:
 };
 
 struct ShapeItemState {
-	nifly::NiShape* shape = nullptr;
+	std::string shapeName;
 	int state = 0;
 	bool selected = false;
 };
@@ -246,6 +247,11 @@ public:
 	void EndMoveVertex();
 	void CancelMoveVertex();
 
+	bool StartEdgeSlide(const wxPoint& screenPos);
+	void UpdateEdgeSlide(const wxPoint& screenPos);
+	void EndEdgeSlide();
+	void CancelEdgeSlide();
+
 	bool RestoreMode(UndoStateProject* usp);
 	void ApplyUndoState(UndoStateProject* usp, bool bUndo, bool bRender = true);
 	bool UndoStroke();
@@ -254,15 +260,18 @@ public:
 	void ShowRotationCenter(bool show = true);
 
 	void ShowTransformTool(bool show = true);
+	void UpdateTransformCenter();
 	void UpdateTransformTool();
 
 	void ShowPivot(bool show = true);
 	void UpdatePivot();
 
+	bool GetNodesMode() { return nodesMode; }
 	void ShowNodes(bool show = true);
 	void UpdateNodes();
 	void UpdateNodeColors();
 
+	bool GetBonesMode() { return bonesMode; }
 	void ShowBones(bool show = true);
 	bool IsBonesMode() { return bonesMode; }
 	void UpdateBones();
@@ -333,6 +342,12 @@ public:
 
 	bool GetToolOptionRestrictNormal() { return toolOptionRestrictNormal; }
 	void SetToolOptionRestrictNormal(bool on = true) { toolOptionRestrictNormal = on; }
+
+	bool GetToolOptionEdgeSlide() { return toolOptionEdgeSlide; }
+	void SetToolOptionEdgeSlide(bool on = true) { toolOptionEdgeSlide = on; }
+
+	bool GetToolOptionEdgeSlideUVCorrection() { return toolOptionEdgeSlideUVCorrection; }
+	void SetToolOptionEdgeSlideUVCorrection(bool on = true) { toolOptionEdgeSlideUVCorrection = on; }
 
 	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
 		Mesh* m = gls.GetMesh(shapeName);
@@ -665,6 +680,10 @@ public:
 
 	void Render() { gls.RenderOneFrame(); }
 
+	// Hover highlight: overlays a light green copy of the given shape's mesh.
+	// Pass an empty string or call ClearHoverHighlight() to remove it.
+	void SetHoverHighlight(const std::string& shapeName);
+	void ClearHoverHighlight();
 
 private:
 	void OnShown();
@@ -689,6 +708,8 @@ private:
 
 	std::unique_ptr<wxGLContext> context;
 
+	std::string hoverHighlightName;
+
 	bool rbuttonDown = false;
 	bool lbuttonDown = false;
 	bool mbuttonDown = false;
@@ -712,6 +733,11 @@ private:
 	MoveVertexOperation moveVertexOperation = MoveVertexOperation::None;
 	int moveVertexTarget;
 	std::string moveVertexWeldTargetMeshName;
+	nifly::Vector3 edgeSlideStartPosition;
+	nifly::Vector2 edgeSlideStartUV;
+	nifly::Edge edgeSlideCurrentEdge;
+	int edgeSlideTarget = -1;
+	bool edgeSlideHasUV = false;
 
 	std::set<Mesh*> BVHUpdateQueue;
 
@@ -738,6 +764,7 @@ private:
 	bool isPickingVertex = false;
 	bool isPickingEdge = false;
 	bool isMovingVertex = false;
+	bool isSlidingEdge = false;
 	bool toolOptionXMirror = true;
 	bool toolOptionXMirrorWeight = false;
 	bool toolOptionConnectedOnly = false;
@@ -746,6 +773,8 @@ private:
 	bool toolOptionRestrictSurface = false;
 	bool toolOptionRestrictPlane = false;
 	bool toolOptionRestrictNormal = false;
+	bool toolOptionEdgeSlide = false;
+	bool toolOptionEdgeSlideUVCorrection = true;
 
 	TweakBrush* activeBrush = nullptr;
 	TweakBrush* savedBrush;
@@ -786,6 +815,27 @@ private:
 	Mesh* ZScaleMesh = nullptr;
 	Mesh* ScaleUniformMesh = nullptr;
 	nifly::Vector3 xformCenter; // Transform center for transform brushes (rotate, specifically cares about this)
+	nifly::Vector3 xformCenterInitial;
+	// Snapshots of the active bone/node's transforms at the start of a
+	// bones/nodes-mode transform stroke.  Used to apply the accumulated drag
+	// offset as an absolute change from the initial pose each frame, so that
+	// the bone/node does not double-integrate its own movement.
+	nifly::MatTransform xformInitialLocalToParent;
+	nifly::MatTransform xformInitialParentToGlobal;
+	// Active transform kind while editing a bone/node in bones/nodes mode.
+	// 0 = translate, 1 = rotate.
+	int boneXformType = 0;
+	// Initial pick origin (model space) and rotation-plane normal (model
+	// space) for a bones/nodes-mode rotation stroke.
+	nifly::Vector3 boneXformPickStart;
+	nifly::Vector3 boneXformPlaneNormalModel;
+	nifly::Vector3 boneXformAxisModel;
+	float boneXformPlaneDist = 0.0f;
+	// Pose-mode transform: editing the bone's poseTranVec/poseRotVec only.
+	// No NIF changes, no undo state.
+	bool boneXformPoseMode = false;
+	nifly::Vector3 boneXformPoseInitialTran;
+	nifly::Vector3 boneXformPoseInitialRot;
 	float lastCenterDistance = 0.0f;
 
 	Mesh* XPivotMesh = nullptr;
@@ -807,6 +857,7 @@ private:
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_OPTION, "single", "single-instance", "Force single instance behavior (yes/no)", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
+												   {wxCMD_LINE_OPTION, "a", "automation", "Run an automation script by name (no .xml extension); positional args are batch inputs", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL},
 												   {wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE},
 												   wxCMD_LINE_DESC_END};
 
@@ -817,6 +868,7 @@ public:
 	virtual ~OutfitStudio();
 
 	virtual bool OnInit();
+	virtual int OnExit() override;
 	virtual void OnInitCmdLine(wxCmdLineParser& parser);
 	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
 
@@ -847,7 +899,11 @@ private:
 
 	wxArrayString cmdFiles;
 	wxString cmdProject;
+	wxString cmdAutomation;
 	int cmdForceSingleInstanceBehavior = -1;  // -1 = not set, 0 = no (force new), 1 = yes (force existing)
+	int automationExitCode = 0;
+
+	int RunAutomationFromCmdLine();
 
 	// DDE uses a service name, TCP uses a port number
 #if defined(__WINDOWS__) && wxUSE_DDE_FOR_IPC
@@ -898,6 +954,7 @@ public:
 	std::string activeSlider;
 	std::string lastActiveSlider;
 	bool bEditSlider = false;
+	bool autoFrameSelected = false;
 	std::vector<int> triParts;	// the partition index for each triangle, or -1 for none
 	std::vector<int> triSParts; // the segment partition index for each triangle, or -1 for none
 
@@ -951,6 +1008,7 @@ public:
 	wxStateButton* partitionTabButton = nullptr;
 	wxStateButton* lightsTabButton = nullptr;
 	wxButton* brushSettings = nullptr;
+	wxCheckBox* cbEdgeSlideCorrectUV = nullptr;
 	wxSlider* fovSlider = nullptr;
 	wxCheckBox* cbDepthClip = nullptr;
 	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
@@ -998,6 +1056,8 @@ public:
 
 	void ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo = false);
 	void UpdateActiveShape();
+	bool ConfirmSliderDataLocalForEdit(nifly::NiShape* shape, const std::string& sliderName);
+	bool ConfirmSliderDataLocalForEdit(const std::vector<nifly::NiShape*>& shapes, const std::vector<std::string>& sliderNames);
 	void UpdateBoneCounts();
 	void HighlightSliderData();
 	void HighlightBoneNamesWithWeights();
@@ -1010,10 +1070,14 @@ public:
 
 	void ShowSegment(const wxTreeItemId& item = nullptr);
 	void UpdateSegmentNames();
+	void ApplySegmentVisibility(Mesh* m);
+	void ResetSegmentVisibility();
 	bool PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const nifly::Vector3& hitPointModel, float radiusModel);
 
 	void ShowPartition(const wxTreeItemId& item = nullptr);
 	void UpdatePartitionNames();
+	void ApplyPartitionVisibility(Mesh* m);
+	void ResetPartitionVisibility();
 
 	void SetSubMeshesForPartitions(Mesh* m, const std::vector<int>& tp);
 	void SetNoSubMeshes(Mesh* m);
@@ -1043,6 +1107,7 @@ public:
 	void ScrollToActiveSlider();
 
 	void SelectTool(ToolID tool);
+	void UpdateEdgeSlideToolOptionsUI(ToolID tool);
 	void ReEnableToolOptionsUI();
 	void ReToggleToolOptionsUI();
 
@@ -1207,6 +1272,8 @@ private:
 	void OnChooseTargetGame(wxCommandEvent& event);
 	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
 	void OnSettings(wxCommandEvent& event);
+	void OnAbout(wxCommandEvent& event);
+	void OnLinkClicked(wxHtmlLinkEvent& link);
 
 	void OnSashPosChanged(wxSplitterEvent& event);
 	void OnMoveWindowStart(wxMoveEvent& event);
@@ -1290,6 +1357,9 @@ private:
 	void OnShapeDrop(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 
+	void OnShapeTreeMotion(wxMouseEvent& event);
+	void OnShapeTreeLeave(wxMouseEvent& event);
+
 	void ToggleBoneState(wxTreeItemId firstItem = wxTreeItemId());
 	void OnBoneStateToggle(wxTreeEvent& event);
 	void OnBoneSelect(wxTreeEvent& event);
@@ -1299,6 +1369,7 @@ private:
 
 	int CalcMaxSegPartID();
 	void OnSegmentSelect(wxTreeEvent& event);
+	void OnSegmentVisToggle(wxTreeEvent& event);
 	void OnSegmentContext(wxTreeEvent& event);
 	void OnSegmentTreeContext(wxCommandEvent& event);
 	void OnAddSegment(wxCommandEvent& event);
@@ -1317,6 +1388,7 @@ private:
 	void OnSegmentEditSSF(wxCommandEvent& event);
 
 	void OnPartitionSelect(wxTreeEvent& event);
+	void OnPartitionVisToggle(wxTreeEvent& event);
 	void OnPartitionContext(wxTreeEvent& event);
 	void OnPartitionTreeContext(wxCommandEvent& event);
 	void OnAddPartition(wxCommandEvent& event);
@@ -1335,10 +1407,13 @@ private:
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);
 	void OnToggleRotationCenter(wxCommandEvent& event);
+	void OnFrameSelected(wxCommandEvent& event);
+	void FrameSelected();
 	void OnShowNodes(wxCommandEvent& event);
 	void OnShowBones(wxCommandEvent& event);
 	void OnShowFloor(wxCommandEvent& event);
 	void OnBrushSettings(wxCommandEvent& event);
+	void OnEdgeSlideCorrectUV(wxCommandEvent& event);
 	void OnFieldOfViewSlider(wxCommandEvent& event);
 	void OnDepthClip(wxCommandEvent& event);
 	void OnUpdateLights(wxCommandEvent& event);
@@ -1376,6 +1451,7 @@ private:
 
 	void ShowSliderProperties(const std::string& sliderName);
 	void OnSliderProperties(wxCommandEvent& event);
+	void OnSliderDataLocations(wxCommandEvent& event);
 	void OnSliderFixClipping(wxCommandEvent& event);
 
 	bool ShowClippingFixStrength(float& outStrength);
@@ -1385,7 +1461,7 @@ private:
 							const std::vector<nifly::Vector3>& outfitVerts,
 							const ClippingFixOptions& options,
 							UndoStateProject* usp,
-							const TargetDataDiffs* allowedVerts = nullptr);
+							const std::unordered_set<uint16_t>* allowedVerts = nullptr);
 
 	void OnInvertUV(wxCommandEvent& event);
 	void OnMirrorShape(wxCommandEvent& event);
@@ -1472,6 +1548,7 @@ private:
 		glView->SetToolOptionRestrictSurface(event.IsChecked());
 		if (event.IsChecked()) {
 			glView->SetToolOptionRestrictPlane(false);
+			glView->SetToolOptionEdgeSlide(false);
 		}
 		ReToggleToolOptionsUI();
 	}
@@ -1481,6 +1558,7 @@ private:
 		if (event.IsChecked()) {
 			glView->SetToolOptionRestrictSurface(false);
 			glView->SetToolOptionRestrictNormal(false);
+			glView->SetToolOptionEdgeSlide(false);
 		}
 		ReToggleToolOptionsUI();
 	}
@@ -1489,7 +1567,19 @@ private:
 		glView->SetToolOptionRestrictNormal(event.IsChecked());
 		if (event.IsChecked()) {
 			glView->SetToolOptionRestrictPlane(false);
+			glView->SetToolOptionEdgeSlide(false);
 		}
+		ReToggleToolOptionsUI();
+	}
+
+	void OnToolOptionEdgeSlide(wxCommandEvent& event) {
+		glView->SetToolOptionEdgeSlide(event.IsChecked());
+		if (event.IsChecked()) {
+			glView->SetToolOptionRestrictSurface(false);
+			glView->SetToolOptionRestrictPlane(false);
+			glView->SetToolOptionRestrictNormal(false);
+		}
+		ReEnableToolOptionsUI();
 		ReToggleToolOptionsUI();
 	}
 
@@ -1637,6 +1727,15 @@ private:
 	void OnImportMask(wxCommandEvent& event);
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
 	void ApplyPose();
+
+public:
+	// Called after a bone/node transform is applied, to re-enable the
+	// transform tool on the bones tab and refresh the bone tree icons so
+	// that any newly-introduced bad-bones state is visible.
+	void UpdateBoneTransformToolEnabled();
+	void RefreshBoneTreeBadBoneIcons();
+
+private:
 	AnimBone* GetPoseBonePtr();
 	void OnPoseBoneChanged(wxCommandEvent& event);
 	void OnPoseValChanged(int cind, float val);
@@ -1659,12 +1758,17 @@ private:
 	void OnResetBonePose(wxCommandEvent& event);
 	void OnResetAllPose(wxCommandEvent& event);
 	void OnPoseToMesh(wxCommandEvent& event);
+	void ResetAllPoseBones();
 	void ActivatePose(bool checked);
 	void OnPoseCheckBox(wxCommandEvent& event);
 	void OnSelectPose(wxCommandEvent& event);
 	void OnSavePose(wxCommandEvent& event);
-	void OnSaveAsPose(wxCommandEvent& event);
 	void OnDeletePose(wxCommandEvent& event);
+	void OnLoadHkxPose(wxCommandEvent& event);
+
+	// Updates enabled state of the Save/Delete pose buttons based on
+	// whether the currently selected pose is read-only (e.g. SAM YAML).
+	void UpdatePoseButtonStates();
 
 	wxDECLARE_EVENT_TABLE();
 };

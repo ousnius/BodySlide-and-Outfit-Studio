@@ -2282,6 +2282,12 @@ msgstr ""
 msgid "Moves a vertex."
 msgstr ""
 
+msgid "Edge Slide"
+msgstr ""
+
+msgid "Slides a vertex along a connected edge."
+msgstr ""
+
 #: res/xrc/OutfitStudio.xrc:152
 msgid "Depth Clip"
 msgstr ""
@@ -2300,6 +2306,12 @@ msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:170
 msgid "Brush Settings"
+msgstr ""
+
+msgid "Correct UVs"
+msgstr ""
+
+msgid "Correct UV coordinates while sliding edges."
 msgstr ""
 
 #: res/xrc/OutfitStudio.xrc:175

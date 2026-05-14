@@ -12,6 +12,11 @@ extern ConfigurationManager Config;
 
 using namespace nifly;
 
+namespace {
+constexpr float RopeSelectMinPointDistSq = 0.000025f;
+constexpr size_t RopeSelectMaxPoints = 2048;
+}
+
 std::unordered_map<int, Vector2>& EditUVAction::GetStartState() {
 	return startState;
 }
@@ -102,6 +107,7 @@ bool EditUVHistory::Forward() {
 
 wxBEGIN_EVENT_TABLE(EditUV, wxFrame)
 	EVT_MENU(XRCID("btnBoxSelection"), EditUV::OnSelectTool)
+	EVT_MENU(XRCID("btnRopeSelection"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnVertexSelection"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnMove"), EditUV::OnSelectTool)
 	EVT_MENU(XRCID("btnScale"), EditUV::OnSelectTool)
@@ -164,6 +170,8 @@ void EditUV::OnSelectTool(wxCommandEvent& event) {
 	int id = event.GetId();
 	if (id == XRCID("btnBoxSelection"))
 		SelectTool(EditUVTool::BoxSelection);
+	else if (id == XRCID("btnRopeSelection"))
+		SelectTool(EditUVTool::RopeSelection);
 	else if (id == XRCID("btnVertexSelection"))
 		SelectTool(EditUVTool::VertexSelection);
 	else if (id == XRCID("btnMove"))
@@ -452,6 +460,10 @@ void EditUV::SelectTool(EditUVTool tool) {
 			canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
 			uvToolBar->ToggleTool(XRCID("btnBoxSelection"), true);
 			break;
+		case EditUVTool::RopeSelection:
+			canvas->SetCursor(wxStockCursor::wxCURSOR_CROSS);
+			uvToolBar->ToggleTool(XRCID("btnRopeSelection"), true);
+			break;
 		case EditUVTool::VertexSelection:
 			canvas->SetCursor(wxStockCursor::wxCURSOR_DEFAULT);
 			canvas->SetCursorType(GLSurface::PointCursor);
@@ -689,6 +701,14 @@ void EditUVCanvas::OnMouseMove(wxMouseEvent& event) {
 
 			boxSelectMesh->QueueUpdate(Mesh::UpdateType::Position);
 		}
+		else if (activeTool == EditUVTool::RopeSelection) {
+			AddRopeSelectPoint(current);
+
+			if (!wxGetKeyState(wxKeyCode::WXK_ALT))
+				ropeSelectMesh->color = Vector3(1.0f, 1.0f, 0.0f);
+			else
+				ropeSelectMesh->color = Vector3(0.0f, 1.0f, 0.0f);
+		}
 		else if (activeTool == EditUVTool::VertexSelection) {
 			SelectVertex(p, wxGetKeyState(wxKeyCode::WXK_ALT));
 		}
@@ -850,6 +870,13 @@ void EditUVCanvas::OnLeftDown(wxMouseEvent& event) {
 			boxSelectMesh->bVisible = true;
 			break;
 
+		case EditUVTool::RopeSelection:
+			ropeSelectPoints.clear();
+			AddRopeSelectPoint(click, true);
+			ropeSelectMesh->color = Vector3(1.0f, 1.0f, 0.0f);
+			ropeSelectMesh->bVisible = true;
+			break;
+
 		case EditUVTool::Move:
 		case EditUVTool::Scale:
 		case EditUVTool::Rotate:
@@ -906,6 +933,17 @@ void EditUVCanvas::OnLeftUp(wxMouseEvent& event) {
 			boxSelectMesh->bVisible = false;
 			break;
 
+		case EditUVTool::RopeSelection: {
+			Vector3 up;
+			Vector3 d;
+			uvSurface.GetPickRay(upX, upY, nullptr, d, up);
+			AddRopeSelectPoint(up);
+			ApplyRopeSelection(wxGetKeyState(wxKeyCode::WXK_ALT));
+			ropeSelectMesh->bVisible = false;
+			ropeSelectPoints.clear();
+			break;
+		}
+
 		case EditUVTool::VertexSelection: SelectVertex(p, wxGetKeyState(wxKeyCode::WXK_ALT)); break;
 
 		case EditUVTool::Move:
@@ -952,10 +990,11 @@ void EditUVCanvas::OnKeyDown(wxKeyEvent& event) {
 	if (!lbuttonDown && !rbuttonDown && !mbuttonDown) {
 		switch (event.GetKeyCode()) {
 			case '1': editUV->SelectTool(EditUVTool::BoxSelection); break;
-			case '2': editUV->SelectTool(EditUVTool::VertexSelection); break;
-			case '3': editUV->SelectTool(EditUVTool::Move); break;
-			case '4': editUV->SelectTool(EditUVTool::Scale); break;
-			case '5': editUV->SelectTool(EditUVTool::Rotate); break;
+			case '2': editUV->SelectTool(EditUVTool::RopeSelection); break;
+			case '3': editUV->SelectTool(EditUVTool::VertexSelection); break;
+			case '4': editUV->SelectTool(EditUVTool::Move); break;
+			case '5': editUV->SelectTool(EditUVTool::Scale); break;
+			case '6': editUV->SelectTool(EditUVTool::Rotate); break;
 		}
 	}
 }
@@ -1197,6 +1236,101 @@ void EditUVCanvas::InitMeshes() {
 	boxSelectMesh->CreateBuffers();
 	uvSurface.AddOverlay(boxSelectMesh);
 	uvSurface.UpdateShaders(boxSelectMesh);
+
+	ropeSelectMesh = new Mesh();
+	ropeSelectMesh->color = Vector3(1.0f, 1.0f, 0.0f);
+	ropeSelectMesh->prop.alpha = 0.25f;
+	ropeSelectMesh->alphaFlags = 4333;
+
+	ropeSelectMaterial = GLMaterial(Config["AppDir"] + "/res/shaders/primitive.vert", Config["AppDir"] + "/res/shaders/primitive.frag");
+	ropeSelectMesh->material = &ropeSelectMaterial;
+
+	ropeSelectMesh->shapeName = "RopeSelect";
+	ropeSelectMesh->doublesided = true;
+	ropeSelectMesh->bVisible = false;
+
+	uvSurface.AddOverlay(ropeSelectMesh);
+	uvSurface.UpdateShaders(ropeSelectMesh);
+}
+
+bool EditUVCanvas::AddRopeSelectPoint(const Vector3& point, bool force) {
+	if (ropeSelectPoints.size() >= RopeSelectMaxPoints)
+		return false;
+
+	Vector2 ropePoint(point.x, point.y);
+	if (!force && !ropeSelectPoints.empty()) {
+		Vector2 diff = ropePoint - ropeSelectPoints.back();
+		if (diff.u * diff.u + diff.v * diff.v < RopeSelectMinPointDistSq)
+			return false;
+	}
+
+	ropeSelectPoints.push_back(ropePoint);
+	UpdateRopeSelectMesh();
+	return true;
+}
+
+void EditUVCanvas::UpdateRopeSelectMesh() {
+	if (!ropeSelectMesh)
+		return;
+
+	int pointCount = static_cast<int>(ropeSelectPoints.size());
+	if (pointCount < 3) {
+		ropeSelectMesh->bVisible = false;
+		return;
+	}
+
+	if (!uvSurface.SetContext())
+		return;
+
+	ropeSelectMesh->nVerts = pointCount;
+	ropeSelectMesh->nTris = pointCount - 2;
+	ropeSelectMesh->verts = std::make_unique<Vector3[]>(ropeSelectMesh->nVerts);
+	ropeSelectMesh->tris = std::make_unique<Triangle[]>(ropeSelectMesh->nTris);
+
+	for (int i = 0; i < pointCount; i++)
+		ropeSelectMesh->verts[i] = Vector3(ropeSelectPoints[i].u, ropeSelectPoints[i].v, 0.0f);
+
+	for (int i = 0; i < ropeSelectMesh->nTris; i++)
+		ropeSelectMesh->tris[i] = Triangle(0, i + 1, i + 2);
+
+	ropeSelectMesh->bVisible = true;
+	ropeSelectMesh->CreateBuffers();
+}
+
+void EditUVCanvas::ApplyRopeSelection(bool unselect) {
+	if (ropeSelectPoints.size() < 3)
+		return;
+
+	bool additive = wxGetKeyState(wxKeyCode::WXK_SHIFT);
+	for (int i = 0; i < uvGridMesh->nVerts; i++) {
+		Vector2 uvPoint(uvGridMesh->verts[i].x, uvGridMesh->verts[i].y);
+		if (PointInRopeSelection(uvPoint)) {
+			uvGridMesh->vcolors[i].x = unselect ? 0.0f : 1.0f;
+			uvGridMesh->vcolors[i].y = 1.0f;
+			uvGridMesh->vcolors[i].z = 0.0f;
+		}
+		else if (!unselect && !additive) {
+			uvGridMesh->vcolors[i].x = 0.0f;
+			uvGridMesh->vcolors[i].y = 1.0f;
+			uvGridMesh->vcolors[i].z = 0.0f;
+		}
+	}
+
+	uvGridMesh->QueueUpdate(Mesh::UpdateType::VertexColors);
+}
+
+bool EditUVCanvas::PointInRopeSelection(const Vector2& point) const {
+	bool inside = false;
+	size_t pointCount = ropeSelectPoints.size();
+	for (size_t i = 0, j = pointCount - 1; i < pointCount; j = i++) {
+		const Vector2& pi = ropeSelectPoints[i];
+		const Vector2& pj = ropeSelectPoints[j];
+		bool crosses = ((pi.v > point.v) != (pj.v > point.v)) && (point.u < (pj.u - pi.u) * (point.v - pi.v) / (pj.v - pi.v) + pi.u);
+		if (crosses)
+			inside = !inside;
+	}
+
+	return inside;
 }
 
 bool EditUVCanvas::ExportUVTemplate(const std::string& filename, int resolution, const wxColour& wireColor, const wxColour& bgColor, bool transparentBG, bool includeTexture, bool clampUVs, bool antiAliasing) {

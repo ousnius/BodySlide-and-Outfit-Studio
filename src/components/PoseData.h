@@ -9,6 +9,9 @@ See the included LICENSE file
 
 #include "Object3d.hpp"
 
+class AnimBone;
+
+#include <deque>
 #include <map>
 #include <set>
 #include <unordered_set>
@@ -28,6 +31,15 @@ class PoseData {
 public:
 	std::string name;
 	std::vector<PoseBoneData> boneData;
+	// When true, the pose was loaded from a read-only source (e.g. a SAM
+	// YAML file) and must not be modified or deleted by Outfit Studio.
+	bool readOnly = false;
+	// When true, rotation/translation/scale in boneData are the absolute
+	// local-to-parent transform at frame 0 (as stored by Havok HKX), not an
+	// Outfit-Studio-style delta on top of the bind pose. The caller must
+	// convert to a delta against the live skeleton's xformToParent before
+	// assigning poseRotVec/poseTranVec/poseScale.
+	bool absoluteLocal = false;
 
 	PoseData() {}
 
@@ -42,14 +54,50 @@ public:
 
 	bool LoadElement(XMLElement* srcElement);
 	void WriteElement(XMLElement* element, bool append = false) const;
+
+	// Applies this pose to all named bones in the skeleton. For each bone,
+	// if a matching PoseBoneData entry exists, sets poseRotVec/poseTranVec/
+	// poseScale (converting from absolute local-to-parent when absoluteLocal
+	// is set). Bones without a matching entry are reset to the identity pose.
+	// Calls UpdatePoseTransform on every bone.
+	void ApplyToSkeleton() const;
 };
 
 class PoseDataCollection {
 public:
-	std::vector<PoseData> poseData;
+	// Stored as a deque so that pointers/references to individual entries
+	// remain stable across subsequent insertions. The combobox in Outfit
+	// Studio holds raw PoseData* in its ClientData; with a vector every
+	// push_back would invalidate every previously stored pointer.
+	std::deque<PoseData> poseData;
 
 	// Loads all pose data in the specified folder.
 	int LoadData(const std::string& basePath);
+
+	// Appends a pose to the collection and returns a stable pointer to it.
+	PoseData* AddPose(PoseData pose);
+
+	// Loads all SAM pose YAML files from the specified folder (recursively).
+	// The pose name is derived from the file name (without extension) and is
+	// prefixed with namePrefix. Entries are appended to poseData.
+	int LoadYamlData(const std::string& basePath, const std::string& namePrefix);
+
+	// Loads all SAF pose JSON files from the specified folder (recursively).
+	// SAF is the Fallout 4 companion of SAM, using a different on-disk format
+	// (JSON instead of YAML) with yaw/pitch/roll rotation fields in degrees.
+	// The pose name is derived from the file name (without extension) and is
+	// prefixed with namePrefix. Entries are appended to poseData.
+	int LoadJsonData(const std::string& basePath, const std::string& namePrefix);
+
+	// Loads a single pose from a Havok HKX skeleton + animation pair.
+	// Both files are parsed natively (no external tools required) for all
+	// supported variants: Skyrim LE, Skyrim SE/VR and Fallout 4. The bones
+	// parsed from skeletonHkxPath are matched to the animation's transform
+	// tracks via the animation binding (when present), otherwise positionally.
+	// `frameIndex` selects which frame of the animation to extract. On
+	// success, outPose.boneData is populated and absoluteLocal is set.
+	// Returns false if either file cannot be parsed.
+	static bool LoadHkxPose(const std::string& skeletonHkxPath, const std::string& animHkxPath, PoseData& outPose, uint32_t frameIndex = 0);
 };
 
 class PoseDataFile {

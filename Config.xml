@@ -54,7 +54,12 @@
         <Directional2 x="0" y="20" z="-100">85</Directional2></Lights>
     <!--Rendering Settings-->
     <Rendering>
-        <ColorBackground r="160" g="160" b="160"></ColorBackground></Rendering>
+        <ColorBackground r="160" g="160" b="160"></ColorBackground>
+        <!-- Vertex point sizes (in logical pixels) for the vertex edit mode in Outfit Studio. -->
+        <PointSizeMin>4.0</PointSizeMin>
+        <PointSizeMax>14.0</PointSizeMax>
+        <!-- Multiplier on the screen-space spacing between neighbor vertices. Lower = smaller points on dense meshes. -->
+        <PointSizeScale>0.6</PointSizeScale></Rendering>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference></DefaultSkeletonReference>

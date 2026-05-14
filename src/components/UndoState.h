@@ -15,7 +15,7 @@ See the included LICENSE file
 #include <unordered_set>
 #include <vector>
 
-enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh, Mirror, ShapeDelete };
+enum class UndoType { VertexPosition, Mask, Weight, Color, Alpha, Mesh, Mirror, ShapeDelete, NodeTransform };
 
 struct UndoStateVertexWeight {
 	float startVal, endVal;
@@ -69,6 +69,10 @@ struct UndoStateShape {
 	// is meaningful.
 	std::unordered_map<int, nifly::Vector3> pointStartState;
 	std::unordered_map<int, nifly::Vector3> pointEndState;
+	// uvStartState and uvEndState are only meaningful for
+	// UndoType::VertexPosition edits that also correct base mesh UVs.
+	std::unordered_map<int, nifly::Vector2> uvStartState;
+	std::unordered_map<int, nifly::Vector2> uvEndState;
 	// restDiffs is only meaningful for UndoType::VertexPosition when the
 	// edit occurred while posed. Contains rest-space NIF diffs per vertex,
 	// used for pose-independent undo/redo (so changing the pose between
@@ -117,4 +121,11 @@ struct UndoStateProject {
 	bool mirrorY = false;
 	bool mirrorZ = false;
 	bool swapBonesX = false;
+
+	// Fields below are only meaningful for UndoType::NodeTransform.  They
+	// record the start/end transform-to-parent of a single bone/node whose
+	// local transform was edited by the user.
+	std::string boneName;
+	nifly::MatTransform nodeStartXformToParent;
+	nifly::MatTransform nodeEndXformToParent;
 };

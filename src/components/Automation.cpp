@@ -41,9 +41,12 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::DeleteSlider: return "DeleteSlider";
 		case AutomationStepType::SetSliderValues: return "SetSliderValues";
 		case AutomationStepType::SetSliderProperties: return "SetSliderProperties";
+		case AutomationStepType::SetShaderProperties: return "SetShaderProperties";
+		case AutomationStepType::ClearMask: return "ClearMask";
 		case AutomationStepType::LoadMask: return "LoadMask";
 		case AutomationStepType::RemoveUnusedNodes: return "RemoveUnusedNodes";
 		case AutomationStepType::FixClipping: return "FixClipping";
+		case AutomationStepType::FixBadBones: return "FixBadBones";
 		default: return "LoadReference";
 	}
 }
@@ -77,9 +80,12 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "DeleteSlider") return AutomationStepType::DeleteSlider;
 	if (str == "SetSliderValues") return AutomationStepType::SetSliderValues;
 	if (str == "SetSliderProperties") return AutomationStepType::SetSliderProperties;
+	if (str == "SetShaderProperties") return AutomationStepType::SetShaderProperties;
+	if (str == "ClearMask") return AutomationStepType::ClearMask;
 	if (str == "LoadMask") return AutomationStepType::LoadMask;
 	if (str == "RemoveUnusedNodes") return AutomationStepType::RemoveUnusedNodes;
 	if (str == "FixClipping") return AutomationStepType::FixClipping;
+	if (str == "FixBadBones") return AutomationStepType::FixBadBones;
 	return AutomationStepType::LoadReference;
 }
 
@@ -344,7 +350,7 @@ int AutomationScript::Load(const std::string& fileName) {
 			case AutomationStepType::DeleteSlider: {
 				const char* sn = GetChildText(stepElem, "SliderName");
 				if (sn)
-					step.deleteSliderName = sn;
+					step.deleteSliderNames = SplitCommaSeparated(sn);
 				const char* re = GetChildText(stepElem, "Regex");
 				if (re)
 					step.deleteSliderRegex = (std::string(re) == "true");
@@ -362,6 +368,10 @@ int AutomationScript::Load(const std::string& fileName) {
 			case AutomationStepType::RefineMesh:
 			case AutomationStepType::RemoveSkinning:
 				// No additional params (uses target meshes)
+				break;
+			case AutomationStepType::SetBaseShape:
+			case AutomationStepType::ClearReference:
+				// No additional params
 				break;
 			case AutomationStepType::TransformShape: {
 				step.moveX = GetChildFloat(stepElem, "MoveX", 0.0f);
@@ -493,6 +503,9 @@ int AutomationScript::Load(const std::string& fileName) {
 				step.mirrorSwapBonesX = GetChildBool(stepElem, "SwapBonesX", false);
 				break;
 			}
+			case AutomationStepType::ClearMask:
+				// No additional params (uses target meshes)
+				break;
 			case AutomationStepType::LoadMask: {
 				const char* mf = GetChildText(stepElem, "MaskFile");
 				if (mf)
@@ -512,6 +525,29 @@ int AutomationScript::Load(const std::string& fileName) {
 				step.sliderPropDefaultHi = GetChildInt(stepElem, "DefaultHi", -1);
 				break;
 			}
+			case AutomationStepType::SetShaderProperties: {
+				XMLElement* shaderPropsElem = stepElem->FirstChildElement("ShaderProperties");
+				if (shaderPropsElem) {
+					XMLElement* propElem = shaderPropsElem->FirstChildElement("Property");
+					while (propElem) {
+						AutomationStep::ShaderProperty prop;
+						const char* name = propElem->Attribute("name");
+						if (name) {
+							prop.name = name;
+							const char* stringValue = propElem->Attribute("stringValue");
+							if (stringValue)
+								prop.stringValue = stringValue;
+							prop.value1 = propElem->FloatAttribute("value1", 0.0f);
+							prop.value2 = propElem->FloatAttribute("value2", 0.0f);
+							prop.value3 = propElem->FloatAttribute("value3", 0.0f);
+							prop.value4 = propElem->FloatAttribute("value4", 1.0f);
+							step.shaderProperties.push_back(std::move(prop));
+						}
+						propElem = propElem->NextSiblingElement("Property");
+					}
+				}
+				break;
+			}
 			case AutomationStepType::RemoveUnusedNodes:
 				// No additional params
 				break;
@@ -523,6 +559,9 @@ int AutomationScript::Load(const std::string& fileName) {
 					step.fixClipSliderNames = SplitCommaSeparated(sn);
 				break;
 			}
+			case AutomationStepType::FixBadBones:
+				// No additional params
+				break;
 		}
 
 		steps.push_back(std::move(step));
@@ -649,7 +688,8 @@ int AutomationScript::Save(const std::string& fileName) {
 				break;
 
 			case AutomationStepType::DeleteSlider:
-				SetChildText(doc, stepElem, "SliderName", step.deleteSliderName);
+				if (!step.deleteSliderNames.empty())
+					SetChildText(doc, stepElem, "SliderName", JoinStrings(step.deleteSliderNames, ", "));
 				if (step.deleteSliderRegex)
 					SetChildText(doc, stepElem, "Regex", "true");
 				break;
@@ -759,6 +799,10 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildBool(doc, stepElem, "SwapBonesX", step.mirrorSwapBonesX, false);
 				break;
 
+			case AutomationStepType::ClearMask:
+				// No additional params (uses target meshes)
+				break;
+
 			case AutomationStepType::LoadMask:
 				SetChildText(doc, stepElem, "MaskFile", step.loadMaskFile);
 				SetChildText(doc, stepElem, "MaskName", step.loadMaskName);
@@ -773,6 +817,26 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildInt(doc, stepElem, "DefaultHi", step.sliderPropDefaultHi, -1);
 				break;
 
+			case AutomationStepType::SetShaderProperties:
+				if (!step.shaderProperties.empty()) {
+					XMLElement* shaderPropsElem = doc.NewElement("ShaderProperties");
+					stepElem->InsertEndChild(shaderPropsElem);
+					for (const auto& prop : step.shaderProperties) {
+						if (prop.name.empty())
+							continue;
+						XMLElement* propElem = doc.NewElement("Property");
+						propElem->SetAttribute("name", prop.name.c_str());
+						if (!prop.stringValue.empty())
+							propElem->SetAttribute("stringValue", prop.stringValue.c_str());
+						propElem->SetAttribute("value1", prop.value1);
+						propElem->SetAttribute("value2", prop.value2);
+						propElem->SetAttribute("value3", prop.value3);
+						propElem->SetAttribute("value4", prop.value4);
+						shaderPropsElem->InsertEndChild(propElem);
+					}
+				}
+				break;
+
 			case AutomationStepType::RemoveUnusedNodes:
 				// No additional params
 				break;
@@ -782,6 +846,10 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildFloat(doc, stepElem, "Strength", step.fixClipStrength, 0.5f);
 				if (!step.fixClipSliderNames.empty())
 					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.fixClipSliderNames, ", "));
+				break;
+
+			case AutomationStepType::FixBadBones:
+				// No additional params
 				break;
 		}
 	}
@@ -818,14 +886,24 @@ static void SubstituteInString(std::string& str, const std::map<std::string, std
 	}
 }
 
+static void SubstituteInStringVector(std::vector<std::string>& vec, const std::map<std::string, std::string>& variables) {
+	std::vector<std::string> result;
+	for (auto& s : vec) {
+		SubstituteInString(s, variables);
+		auto parts = SplitCommaSeparated(s);
+		for (auto& p : parts)
+			result.push_back(std::move(p));
+	}
+	vec = std::move(result);
+}
+
 void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::string>& vars) {
 	for (auto& step : steps) {
 		if (!step.active)
 			continue;
 
 		SubstituteInString(step.note, vars);
-		for (auto& m : step.targetMeshes)
-			SubstituteInString(m, vars);
+		SubstituteInStringVector(step.targetMeshes, vars);
 
 		SubstituteInString(step.refSourceFile, vars);
 		SubstituteInString(step.refSet, vars);
@@ -834,15 +912,14 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInString(step.importFilePath, vars);
 		SubstituteInString(step.renameOldName, vars);
 		SubstituteInString(step.renameNewName, vars);
-		SubstituteInString(step.deleteSliderName, vars);
+		SubstituteInStringVector(step.deleteSliderNames, vars);
 		SubstituteInString(step.setRefShapeName, vars);
 		SubstituteInString(step.addBoneName, vars);
 		SubstituteInString(step.addBoneParent, vars);
 		SubstituteInString(step.editBoneName, vars);
 		SubstituteInString(step.editBoneParent, vars);
 		SubstituteInString(step.poseName, vars);
-		for (auto& b : step.deleteBoneNames)
-			SubstituteInString(b, vars);
+		SubstituteInStringVector(step.deleteBoneNames, vars);
 		SubstituteInString(step.saveName, vars);
 		SubstituteInString(step.saveOutputFileName, vars);
 		SubstituteInString(step.saveOutputDataPath, vars);
@@ -861,15 +938,15 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInString(step.loadMaskFile, vars);
 		SubstituteInString(step.loadMaskName, vars);
 
-		for (auto& s : step.setSliderNames)
-			SubstituteInString(s, vars);
-		for (auto& s : step.conformSliderNames)
-			SubstituteInString(s, vars);
-		for (auto& s : step.weightBoneList)
-			SubstituteInString(s, vars);
-		for (auto& s : step.sliderNames)
-			SubstituteInString(s, vars);
-		for (auto& s : step.fixClipSliderNames)
-			SubstituteInString(s, vars);
+		SubstituteInStringVector(step.setSliderNames, vars);
+		SubstituteInStringVector(step.conformSliderNames, vars);
+		SubstituteInStringVector(step.weightBoneList, vars);
+		SubstituteInStringVector(step.sliderNames, vars);
+		SubstituteInStringVector(step.sliderPropNames, vars);
+		SubstituteInStringVector(step.fixClipSliderNames, vars);
+		for (auto& prop : step.shaderProperties) {
+			SubstituteInString(prop.name, vars);
+			SubstituteInString(prop.stringValue, vars);
+		}
 	}
 }

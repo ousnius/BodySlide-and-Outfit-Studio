@@ -216,26 +216,7 @@ void WeightCopyDialog::OnPoseSelected(wxCommandEvent&) {
 	}
 	else {
 		auto poseData = reinterpret_cast<PoseData*>(poseChoice->GetClientData(sel));
-		std::vector<std::string> bones;
-		AnimSkeleton::getInstance().GetBoneNames(bones);
-		for (const auto& boneName : bones) {
-			AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
-			if (!bone)
-				continue;
-			auto it = std::find_if(poseData->boneData.begin(), poseData->boneData.end(),
-				[&boneName](const PoseBoneData& pd) { return pd.name == boneName; });
-			if (it != poseData->boneData.end()) {
-				bone->poseRotVec = it->rotation;
-				bone->poseTranVec = it->translation;
-				bone->poseScale = it->scale;
-			}
-			else {
-				bone->poseRotVec = Vector3(0.0f, 0.0f, 0.0f);
-				bone->poseTranVec = Vector3(0.0f, 0.0f, 0.0f);
-				bone->poseScale = 1.0f;
-			}
-			bone->UpdatePoseTransform();
-		}
+		poseData->ApplyToSkeleton();
 		project->bPose = true;
 	}
 

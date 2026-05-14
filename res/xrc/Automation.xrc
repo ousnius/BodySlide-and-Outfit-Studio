@@ -136,6 +136,7 @@
 															<item>Shapes: Apply Pose</item>
 															<item>Shapes: Delete Shape</item>
 															<item>Shapes: Duplicate Shape</item>
+															<item>Shapes: Fix Bad Bones</item>
 															<item>Shapes: Fix Clipping</item>
 															<item>Shapes: Invert UVs</item>
 															<item>Shapes: Mirror Shape</item>
@@ -147,6 +148,8 @@
 															<item>Sliders: Delete Slider</item>
 															<item>Sliders: Set Slider Values</item>
 															<item>Sliders: Set Slider Properties</item>
+															<item>Shaders: Set Shader Properties</item>
+															<item>Masks: Clear Mask</item>
 															<item>Masks: Load Mask</item>
 															<item>Nodes: Remove Unused Nodes</item>
 														</content>
@@ -182,8 +185,17 @@
 															<flag>wxEXPAND|wxRIGHT</flag>
 															<border>5</border>
 															<object class="wxTextCtrl" name="txtTargetMeshes">
-																<tooltip>Comma-separated list of shape names. Leave empty to target all shapes.</tooltip>
+																<tooltip>Comma-separated list of shape names. Leave empty to target all non-reference shapes.</tooltip>
 																<hint>Comma-separated shape list</hint>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<flag>wxALIGN_CENTER_VERTICAL|wxRIGHT</flag>
+															<border>5</border>
+															<object class="wxButton" name="btnAddTargetMesh">
+																<label>+</label>
+																<size>24,-1</size>
+																<tooltip>Add shapes from list</tooltip>
 															</object>
 														</object>
 														<object class="sizeritem">
@@ -609,7 +621,7 @@
 														<flag>wxALL|wxEXPAND</flag>
 														<border>5</border>
 														<object class="wxStaticText">
-															<label>Removes skinning from target shapes (or all shapes if Target Meshes is empty).
+															<label>Removes skinning from target shapes (or all non-reference shapes if Target Shapes is empty).
 																This deletes all bone weights and skinning data from the shapes.</label>
 															<wrap>400</wrap>
 														</object>
@@ -904,7 +916,7 @@
 																<object class="sizeritem">
 																	<flag>wxEXPAND</flag>
 																	<object class="wxTextCtrl" name="txtSaveSuffix">
-																		<tooltip>Suffix to append to Display Name, Shape Data Folder, and Shape Data File name (batch only)</tooltip>
+																				<tooltip>Suffix to append to Display Name, Shape Data Folder, and Slider Set file name (batch only)</tooltip>
 																		<hint>e.g. _modified</hint>
 																	</object>
 																</object>
@@ -1471,6 +1483,24 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 											</object>
 										</object>
 
+										<!-- FixBadBones -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageFixBadBones">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Fix Bad Bones</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Fixes bones with inconsistent NIF transforms by applying recommended corrections automatically.</label>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
 										<!-- FixClipping -->
 										<object class="simplebookpage">
 											<object class="wxPanel" name="pageFixClipping">
@@ -1528,9 +1558,25 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															</object>
 															<object class="sizeritem">
 																<flag>wxEXPAND</flag>
-																<object class="wxTextCtrl" name="txtFixClipSliderNames">
-																	<tooltip>Comma-separated list of slider names to fix clipping for (Sliders mode only). Leave empty to process all non-zap/non-UV sliders.</tooltip>
-																	<hint>Comma-separated slider list</hint>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtFixClipSliderNames">
+																			<tooltip>Comma-separated list of slider names to fix clipping for (Sliders mode only). Leave empty to process all non-zap/non-UV sliders.</tooltip>
+																			<hint>Comma-separated slider list</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddFixClipSlider">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
 																</object>
 															</object>
 														</object>
@@ -1752,7 +1798,7 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															<object class="sizeritem">
 																<flag>wxALIGN_CENTER_VERTICAL</flag>
 																<object class="wxStaticText">
-																	<label>Rotate (Ã‚Â°):</label>
+																	<label>Rotate (deg):</label>
 																</object>
 															</object>
 															<object class="sizeritem">
@@ -1957,9 +2003,25 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															</object>
 															<object class="sizeritem">
 																<flag>wxEXPAND</flag>
-																<object class="wxTextCtrl" name="txtConformSliderNames">
-																	<tooltip>Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.</tooltip>
-																	<hint>Comma-separated slider list</hint>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtConformSliderNames">
+																			<tooltip>Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.</tooltip>
+																			<hint>Comma-separated slider list</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddConformSlider">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
 																</object>
 															</object>
 														</object>
@@ -1987,14 +2049,30 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															<object class="sizeritem">
 																<flag>wxALIGN_CENTER_VERTICAL</flag>
 																<object class="wxStaticText">
-																	<label>Slider Name:</label>
+																	<label>Slider Names:</label>
 																</object>
 															</object>
 															<object class="sizeritem">
 																<flag>wxEXPAND</flag>
-																<object class="wxTextCtrl" name="txtDeleteSliderName">
-																	<tooltip>Name of the slider to delete. If regex is checked, matches slider names by pattern.</tooltip>
-																	<hint>Slider name or pattern</hint>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtDeleteSliderName">
+																			<tooltip>Comma-separated list of slider names to delete. If regex is checked, the text is used as a single regex pattern.</tooltip>
+																			<hint>Comma-separated slider list or pattern</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddDeleteSlider">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
 																</object>
 															</object>
 
@@ -2040,9 +2118,25 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															</object>
 															<object class="sizeritem">
 																<flag>wxEXPAND</flag>
-																<object class="wxTextCtrl" name="txtSetSliderNames">
-																	<tooltip>Comma-separated list of slider names. Leave empty to set all visible sliders.</tooltip>
-																	<hint>Comma-separated slider list</hint>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtSetSliderNames">
+																			<tooltip>Comma-separated list of slider names. Leave empty to set all visible sliders.</tooltip>
+																			<hint>Comma-separated slider list</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddSetSlider">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
 																</object>
 															</object>
 
@@ -2090,9 +2184,25 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 															</object>
 															<object class="sizeritem">
 																<flag>wxEXPAND</flag>
-																<object class="wxTextCtrl" name="txtSliderPropNames">
-																	<tooltip>Comma-separated list of slider names. Leave empty to apply to all sliders.</tooltip>
-																	<hint>Comma-separated slider list</hint>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtSliderPropNames">
+																			<tooltip>Comma-separated list of slider names. Leave empty to apply to all sliders.</tooltip>
+																			<hint>Comma-separated slider list</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddSliderProp">
+																			<label>+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
 																</object>
 															</object>
 
@@ -2176,6 +2286,91 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																	<hint translate="0">0-100</hint>
 																</object>
 															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetShaderProperties -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetShaderProperties">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Shader Properties</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Property:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxChoice" name="choiceShaderPropAdd">
+																			<tooltip>Select a shader property to add to this step.</tooltip>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddShaderProp">
+																			<label>Add</label>
+																			<tooltip>Add the selected shader property to this step.</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Values:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxEXPAND</flag>
+																<object class="wxScrolledWindow" name="panelShaderPropRows">
+																	<style>wxVSCROLL|wxTAB_TRAVERSAL</style>
+																	<size>-1,220</size>
+																	<object class="wxBoxSizer">
+																		<orient>wxVERTICAL</orient>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ClearMask -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageClearMask">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Clear Mask</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Clears the mask for the target shape(s).</label>
 														</object>
 													</object>
 												</object>

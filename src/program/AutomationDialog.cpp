@@ -19,8 +19,13 @@ See the included LICENSE file
 #include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include <wx/filename.h>
+#include <wx/clntdata.h>
 
+#include <tinyxml2.h>
+
+#include <algorithm>
 #include <regex>
+#include <set>
 
 #include "../components/SliderSet.h"
 
@@ -28,6 +33,362 @@ using namespace nifly;
 
 extern ConfigurationManager Config;
 extern ConfigurationManager OutfitStudioConfig;
+
+namespace {
+enum class ShaderPropertyValueKind {
+	Scalar,
+	Vector2,
+	Color,
+	Choice
+};
+
+struct ShaderPropertyChoiceDef {
+	const char* label;
+	const char* value;
+};
+
+struct ShaderPropertyDef {
+	const char* name;
+	const char* label;
+	ShaderPropertyValueKind kind;
+	float default1;
+	float default2;
+	float default3;
+	float default4;
+	const ShaderPropertyChoiceDef* choices;
+	size_t choiceCount;
+};
+
+const ShaderPropertyChoiceDef ShaderTypeChoices[] = {
+	{"Default (BSLighting)", "BSLighting:0"},
+	{"Environment Map (BSLighting)", "BSLighting:1"},
+	{"Glow Shader (BSLighting)", "BSLighting:2"},
+	{"Heightmap (BSLighting)", "BSLighting:3"},
+	{"Face Tint (BSLighting)", "BSLighting:4"},
+	{"Skin Tint (BSLighting)", "BSLighting:5"},
+	{"Hair Tint (BSLighting)", "BSLighting:6"},
+	{"Parallax Occlusion Material (BSLighting)", "BSLighting:7"},
+	{"World Multitexture (BSLighting)", "BSLighting:8"},
+	{"World Map 1 (BSLighting)", "BSLighting:9"},
+	{"Unknown 10 (BSLighting)", "BSLighting:10"},
+	{"Multi Layer Parallax (BSLighting)", "BSLighting:11"},
+	{"Unknown 12 (BSLighting)", "BSLighting:12"},
+	{"World Map 2 (BSLighting)", "BSLighting:13"},
+	{"Sparkle Snow (BSLighting)", "BSLighting:14"},
+	{"World Map 3 (BSLighting)", "BSLighting:15"},
+	{"Eye Environment Map (BSLighting)", "BSLighting:16"},
+	{"Unknown 17 (BSLighting)", "BSLighting:17"},
+	{"World Map 4 (BSLighting)", "BSLighting:18"},
+	{"World LOD Multitexture (BSLighting)", "BSLighting:19"},
+	{"Tall Grass (FO3/NV)", "PPLighting:0"},
+	{"Default (FO3/NV)", "PPLighting:1"},
+	{"Sky (FO3/NV)", "PPLighting:10"},
+	{"Skin (FO3/NV)", "PPLighting:14"},
+	{"Water (FO3/NV)", "PPLighting:17"},
+	{"Lighting 30 (FO3/NV)", "PPLighting:29"},
+	{"Tile (FO3/NV)", "PPLighting:32"},
+	{"No Lighting (FO3/NV)", "PPLighting:33"}
+};
+
+const ShaderPropertyDef ShaderPropertyDefs[] = {
+	{"ShaderType", "Shader Type", ShaderPropertyValueKind::Choice, 0.0f, 0.0f, 0.0f, 1.0f, ShaderTypeChoices, sizeof(ShaderTypeChoices) / sizeof(ShaderTypeChoices[0])},
+	{"SpecularColor", "Specular Color", ShaderPropertyValueKind::Color, 1.0f, 1.0f, 1.0f, 1.0f, nullptr, 0},
+	{"SpecularStrength", "Specular Strength", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"SpecularPower", "Specular Power", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"EmissiveColor", "Emissive Color", ShaderPropertyValueKind::Color, 0.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"EmissiveMultiple", "Emissive Multiple", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"Alpha", "Alpha", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"EnvMapScale", "Env Map Scale", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"EyeCubemapScale", "Eye Cubemap Scale", ShaderPropertyValueKind::Scalar, 1.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"UVOffset", "UV Offset", ShaderPropertyValueKind::Vector2, 0.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"UVScale", "UV Scale", ShaderPropertyValueKind::Vector2, 1.0f, 1.0f, 0.0f, 1.0f, nullptr, 0},
+	{"LightingEffect1", "Lighting Effect 1", ShaderPropertyValueKind::Scalar, 0.3f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"LightingEffect2", "Lighting Effect 2", ShaderPropertyValueKind::Scalar, 2.0f, 0.0f, 0.0f, 1.0f, nullptr, 0},
+	{"SkinTintColor", "Skin Tint Color", ShaderPropertyValueKind::Color, 1.0f, 1.0f, 1.0f, 1.0f, nullptr, 0},
+	{"HairTintColor", "Hair Tint Color", ShaderPropertyValueKind::Color, 1.0f, 1.0f, 1.0f, 1.0f, nullptr, 0},
+	{"RefractionStrength", "Refraction Strength", ShaderPropertyValueKind::Scalar, 0.0f, 0.0f, 0.0f, 1.0f, nullptr, 0}
+};
+
+const ShaderPropertyDef* FindShaderPropertyDef(const std::string& name) {
+	for (const auto& def : ShaderPropertyDefs) {
+		if (name == def.name)
+			return &def;
+	}
+	return nullptr;
+}
+
+AutomationStep::ShaderProperty MakeDefaultShaderProperty(const ShaderPropertyDef& def) {
+	AutomationStep::ShaderProperty prop;
+	prop.name = def.name;
+	prop.value1 = def.default1;
+	prop.value2 = def.default2;
+	prop.value3 = def.default3;
+	prop.value4 = def.default4;
+	if (def.kind == ShaderPropertyValueKind::Choice && def.choiceCount > 0)
+		prop.stringValue = def.choices[0].value;
+	return prop;
+}
+
+int ColorByte(float value) {
+	value = std::max(0.0f, std::min(1.0f, value));
+	return static_cast<int>(value * 255.0f + 0.5f);
+}
+
+std::string GetChoiceClientValue(wxChoice* choice) {
+	if (!choice)
+		return "";
+
+	int sel = choice->GetSelection();
+	if (sel == wxNOT_FOUND)
+		return "";
+
+	auto* data = dynamic_cast<wxStringClientData*>(choice->GetClientObject(sel));
+	if (!data)
+		return "";
+
+	return data->GetData().ToUTF8().data();
+}
+
+int FindChoiceByClientValue(wxChoice* choice, const std::string& value) {
+	if (!choice)
+		return wxNOT_FOUND;
+
+	for (unsigned int i = 0; i < choice->GetCount(); i++) {
+		auto* data = dynamic_cast<wxStringClientData*>(choice->GetClientObject(i));
+		if (data && value == data->GetData().ToUTF8().data())
+			return static_cast<int>(i);
+	}
+
+	return wxNOT_FOUND;
+}
+
+bool ParseShaderTypeValue(const std::string& value, std::string& domain, uint32_t& shaderType) {
+	size_t sep = value.find(':');
+	if (sep == std::string::npos)
+		return false;
+
+	domain = value.substr(0, sep);
+	try {
+		shaderType = static_cast<uint32_t>(std::stoul(value.substr(sep + 1)));
+	}
+	catch (...) {
+		return false;
+	}
+
+	return true;
+}
+
+bool ApplyAutomationShaderProperty(NifFile* nif, NiShape* shape, const AutomationStep::ShaderProperty& prop) {
+	NiShader* shader = nif->GetShader(shape);
+	if (!shader)
+		return false;
+
+	NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+	auto* bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
+	auto* bsesp = dynamic_cast<BSEffectShaderProperty*>(shader);
+	auto* bspplp = dynamic_cast<BSShaderPPLightingProperty*>(shader);
+	auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
+	auto& version = nif->GetHeader().GetVersion();
+
+	Vector3 vectorValue(prop.value1, prop.value2, prop.value3);
+	Color4 colorValue(prop.value1, prop.value2, prop.value3, prop.value4);
+
+	if (prop.name == "ShaderType") {
+		std::string domain;
+		uint32_t shaderType = 0;
+		if (!ParseShaderTypeValue(prop.stringValue, domain, shaderType))
+			return false;
+
+		if (domain == "BSLighting" && bslsp) {
+			uint32_t oldType = bslsp->GetShaderType();
+			bslsp->SetShaderType(shaderType);
+
+			if (oldType != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && shaderType == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP)
+				bslsp->SetEnvironmentMapping(true);
+			else if (oldType == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && shaderType != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP)
+				bslsp->SetEnvironmentMapping(false);
+
+			return true;
+		}
+
+		if (domain == "PPLighting" && bspplp) {
+			shader->SetShaderType(shaderType);
+			return true;
+		}
+
+		return false;
+	}
+
+	if (prop.name == "SpecularColor") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetSpecularColor(vectorValue);
+			applied = true;
+		}
+		if (material) {
+			material->SetSpecularColor(vectorValue);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "SpecularStrength") {
+		if (!bslsp)
+			return false;
+		bslsp->SetSpecularStrength(prop.value1);
+		return true;
+	}
+
+	if (prop.name == "SpecularPower") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetGlossiness(prop.value1);
+			applied = true;
+		}
+		if (material) {
+			material->SetGlossiness(prop.value1);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "EmissiveColor") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetEmissiveColor(colorValue);
+			applied = true;
+		}
+		if (bsesp) {
+			bsesp->SetEmissiveColor(colorValue);
+			applied = true;
+		}
+		if (bspplp && version.User() >= 12) {
+			bspplp->emissiveColor = colorValue;
+			applied = true;
+		}
+		if (material) {
+			material->SetEmissiveColor(colorValue);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "EmissiveMultiple") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetEmissiveMultiple(prop.value1);
+			applied = true;
+		}
+		if (bsesp) {
+			bsesp->SetEmissiveMultiple(prop.value1);
+			applied = true;
+		}
+		if (material) {
+			material->SetEmissiveMultiple(prop.value1);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "Alpha") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->SetAlpha(prop.value1);
+			applied = true;
+		}
+		if (material) {
+			material->SetAlpha(prop.value1);
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "EnvMapScale") {
+		bool applied = false;
+		if (bslsp && bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP) {
+			bslsp->environmentMapScale = prop.value1;
+			applied = true;
+		}
+		else if (bsesp && version.User() == 12 && version.Stream() >= 130) {
+			bsesp->envMapScale = prop.value1;
+			applied = true;
+		}
+		else if (bssp && version.User() <= 11) {
+			bssp->environmentMapScale = prop.value1;
+			applied = true;
+		}
+		return applied;
+	}
+
+	if (prop.name == "EyeCubemapScale") {
+		if (!bslsp || bslsp->GetShaderType() != BSLightingShaderPropertyShaderType::BSLSP_EYE)
+			return false;
+		bslsp->eyeCubemapScale = prop.value1;
+		return true;
+	}
+
+	if (prop.name == "UVOffset") {
+		if (!bssp || version.User() != 12)
+			return false;
+		bssp->uvOffset = Vector2(prop.value1, prop.value2);
+		return true;
+	}
+
+	if (prop.name == "UVScale") {
+		if (!bssp || version.User() != 12)
+			return false;
+		bssp->uvScale = Vector2(prop.value1, prop.value2);
+		return true;
+	}
+
+	if (prop.name == "LightingEffect1") {
+		if (!bslsp || version.Stream() >= 130)
+			return false;
+		bslsp->softlighting = prop.value1;
+		return true;
+	}
+
+	if (prop.name == "LightingEffect2") {
+		if (!bslsp || version.Stream() >= 130)
+			return false;
+		bslsp->rimlightPower = prop.value1;
+		return true;
+	}
+
+	if (prop.name == "SkinTintColor") {
+		if (!bslsp || bslsp->GetShaderType() != BSLightingShaderPropertyShaderType::BSLSP_SKINTINT)
+			return false;
+		bslsp->skinTintColor = vectorValue;
+		return true;
+	}
+
+	if (prop.name == "HairTintColor") {
+		if (!bslsp || bslsp->GetShaderType() != BSLightingShaderPropertyShaderType::BSLSP_HAIRTINT)
+			return false;
+		bslsp->hairTintColor = vectorValue;
+		return true;
+	}
+
+	if (prop.name == "RefractionStrength") {
+		bool applied = false;
+		if (bslsp) {
+			bslsp->refractionStrength = prop.value1;
+			applied = true;
+		}
+		if (bspplp && version.User() == 11 && version.Stream() > 14) {
+			bspplp->refractionStrength = prop.value1;
+			applied = true;
+		}
+		if (bsesp && version.User() == 12 && version.Stream() > 139 && version.Stream() < 172) {
+			bsesp->refractionPower = prop.value1;
+			applied = true;
+		}
+		return applied;
+	}
+
+	return false;
+}
+}
 
 wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 	EVT_COMBOBOX(XRCID("cmbAutomation"), AutomationDialog::OnAutomationSelected)
@@ -82,6 +443,7 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	cmbAutomation = XRCCTRL(*this, "cmbAutomation", wxComboBox);
 	btnSaveScript = XRCCTRL(*this, "btnSaveScript", wxButton);
 	btnExecuteAll = XRCCTRL(*this, "btnExecuteAll", wxButton);
+	btnClose = dynamic_cast<wxButton*>(FindWindow(wxID_CLOSE));
 
 	listSteps->InsertColumn(0, _("Active"), wxLIST_FORMAT_CENTER, 65);
 	listSteps->InsertColumn(1, _("Type"), wxLIST_FORMAT_LEFT, 165);
@@ -90,6 +452,9 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 
 	listSteps->Bind(wxEVT_CONTEXT_MENU, &AutomationDialog::OnStepListContextMenu, this);
 	listSteps->Bind(wxEVT_KEY_DOWN, &AutomationDialog::OnStepListKeyDown, this);
+
+	Bind(wxEVT_CHAR_HOOK, &AutomationDialog::OnCharHook, this);
+	Bind(wxEVT_CLOSE_WINDOW, &AutomationDialog::OnWindowClose, this);
 
 	// Placeholder label shown when step list is empty
 	lblStepsPlaceholder = new wxStaticText(listSteps, wxID_ANY, _("Right-click to add steps..."), wxPoint(0, 40), wxDefaultSize, wxALIGN_CENTER_HORIZONTAL | wxST_NO_AUTORESIZE);
@@ -132,6 +497,36 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	UpdateBatchPanelVisibility();
 	PopulateAutomationList();
 	UpdateButtonState();
+
+	// Bind "+" buttons for appending shapes/sliders to comma-separated fields
+	auto* btnAddTargetMesh = XRCCTRL(*this, "btnAddTargetMesh", wxButton);
+	if (btnAddTargetMesh)
+		btnAddTargetMesh->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddShapeToField, this);
+
+	auto* btnAddDeleteSlider = XRCCTRL(*this, "btnAddDeleteSlider", wxButton);
+	if (btnAddDeleteSlider)
+		btnAddDeleteSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	auto* btnAddSetSlider = XRCCTRL(*this, "btnAddSetSlider", wxButton);
+	if (btnAddSetSlider)
+		btnAddSetSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	auto* btnAddConformSlider = XRCCTRL(*this, "btnAddConformSlider", wxButton);
+	if (btnAddConformSlider)
+		btnAddConformSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	auto* btnAddSliderProp = XRCCTRL(*this, "btnAddSliderProp", wxButton);
+	if (btnAddSliderProp)
+		btnAddSliderProp->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	PopulateShaderPropertyChoice();
+	auto* btnAddShaderProp = XRCCTRL(*this, "btnAddShaderProp", wxButton);
+	if (btnAddShaderProp)
+		btnAddShaderProp->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddShaderProperty, this);
+
+	auto* btnAddFixClipSlider = XRCCTRL(*this, "btnAddFixClipSlider", wxButton);
+	if (btnAddFixClipSlider)
+		btnAddFixClipSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
 
 	// Restore last selected automation script
 	std::string lastScript = OutfitStudioConfig["AutomationDialog.lastScript"];
@@ -210,8 +605,8 @@ void AutomationDialog::ApplyBatchModeDefaults(AutomationStep& step) const {
 			step.saveUseOriginal = false;
 		}
 	}
-	else if (step.type == AutomationStepType::ExportFile && IsBatchMode(AutomationBatchMode::FolderScan)) {
-		step.exportUseOriginalPath = true;
+	else if (step.type == AutomationStepType::ExportFile) {
+		step.exportUseOriginalPath = IsBatchMode(AutomationBatchMode::FolderScan);
 	}
 }
 
@@ -236,19 +631,23 @@ void AutomationDialog::UpdateSaveProjectBatchModeUI(const AutomationStep& step) 
 	UpdateSaveFieldsEnabled(fieldsEnabled);
 }
 
-void AutomationDialog::UpdateExportFileBatchModeUI(const AutomationStep& step) {
+void AutomationDialog::UpdateExportFileBatchModeUI(const AutomationStep& WXUNUSED(step)) {
+	bool folderBatch = IsBatchMode(AutomationBatchMode::FolderScan);
+	bool effectiveUseOriginalPath = folderBatch;
+
 	auto* chkUseOrig = XRCCTRL(*this, "chkExportUseOriginalPath", wxCheckBox);
 	if (chkUseOrig) {
-		if (IsBatchMode(AutomationBatchMode::FolderScan)) {
+		if (folderBatch) {
 			chkUseOrig->SetValue(true);
 			chkUseOrig->Enable(false);
 		}
 		else {
-			chkUseOrig->Enable(true);
+			chkUseOrig->SetValue(false);
+			chkUseOrig->Enable(false);
 		}
 	}
 
-	UpdateExportFieldsEnabled(!step.exportUseOriginalPath);
+	UpdateExportFieldsEnabled(!effectiveUseOriginalPath);
 }
 
 void AutomationDialog::SetFloatValue(const char* name, float value) {
@@ -278,11 +677,185 @@ std::vector<std::string> AutomationDialog::GetVectorValue(const char* name) cons
 	return txt ? SplitCommaSeparated(std::string(txt->GetValue().ToUTF8().data())) : std::vector<std::string>();
 }
 
+void AutomationDialog::PopulateShaderPropertyChoice() {
+	auto* choice = XRCCTRL(*this, "choiceShaderPropAdd", wxChoice);
+	if (choice) {
+		choice->Clear();
+		for (const auto& def : ShaderPropertyDefs)
+			choice->Append(wxString::FromUTF8(def.label), new wxStringClientData(wxString::FromUTF8(def.name)));
+
+		if (choice->GetCount() > 0)
+			choice->SetSelection(0);
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+	if (rowsWindow)
+		rowsWindow->SetScrollRate(0, 8);
+}
+
+void AutomationDialog::ClearShaderPropertyRows() {
+	auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+	if (rowsWindow) {
+		if (auto* rowsSizer = rowsWindow->GetSizer())
+			rowsSizer->Clear(true);
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+
+	shaderPropertyRows.clear();
+}
+
+void AutomationDialog::AddShaderPropertyRow(const AutomationStep::ShaderProperty& prop) {
+	const ShaderPropertyDef* def = FindShaderPropertyDef(prop.name);
+	if (!def)
+		return;
+
+	auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+	if (!rowsWindow)
+		return;
+
+	wxSizer* rowsSizer = rowsWindow->GetSizer();
+	if (!rowsSizer) {
+		rowsSizer = new wxBoxSizer(wxVERTICAL);
+		rowsWindow->SetSizer(rowsSizer);
+	}
+
+	auto* rowPanel = new wxPanel(rowsWindow, wxID_ANY);
+	auto* rowSizer = new wxBoxSizer(wxHORIZONTAL);
+
+	ShaderPropertyRowControls row;
+	row.panel = rowPanel;
+	row.propertyName = prop.name;
+
+	auto* label = new wxStaticText(rowPanel, wxID_ANY, wxString::FromUTF8(def->label), wxDefaultPosition, wxSize(145, -1));
+	rowSizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+	switch (def->kind) {
+		case ShaderPropertyValueKind::Choice: {
+			auto* choice = new wxChoice(rowPanel, wxID_ANY);
+			for (size_t i = 0; i < def->choiceCount; i++)
+				choice->Append(wxString::FromUTF8(def->choices[i].label), new wxStringClientData(wxString::FromUTF8(def->choices[i].value)));
+
+			int selection = FindChoiceByClientValue(choice, prop.stringValue);
+			choice->SetSelection(selection != wxNOT_FOUND ? selection : 0);
+			row.choice = choice;
+			rowSizer->Add(choice, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			break;
+		}
+		case ShaderPropertyValueKind::Color: {
+			auto* color = new wxColourPickerCtrl(rowPanel, wxID_ANY, wxColour(ColorByte(prop.value1), ColorByte(prop.value2), ColorByte(prop.value3), ColorByte(prop.value4)));
+			row.color = color;
+			rowSizer->Add(color, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			break;
+		}
+		case ShaderPropertyValueKind::Vector2: {
+			auto* value1 = new wxTextCtrl(rowPanel, wxID_ANY, wxString::Format("%.5g", prop.value1), wxDefaultPosition, wxSize(80, -1));
+			auto* value2 = new wxTextCtrl(rowPanel, wxID_ANY, wxString::Format("%.5g", prop.value2), wxDefaultPosition, wxSize(80, -1));
+			row.value1 = value1;
+			row.value2 = value2;
+			rowSizer->Add(value1, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			rowSizer->Add(value2, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			rowSizer->AddStretchSpacer(1);
+			break;
+		}
+		case ShaderPropertyValueKind::Scalar:
+		default: {
+			auto* value = new wxTextCtrl(rowPanel, wxID_ANY, wxString::Format("%.5g", prop.value1), wxDefaultPosition, wxSize(90, -1));
+			row.value1 = value;
+			rowSizer->Add(value, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+			rowSizer->AddStretchSpacer(1);
+			break;
+		}
+	}
+
+	auto* btnRemove = new wxButton(rowPanel, wxID_ANY, "X", wxDefaultPosition, wxSize(28, -1));
+	btnRemove->SetToolTip(_("Remove this shader property"));
+	btnRemove->Bind(wxEVT_BUTTON, [this, rowPanel](wxCommandEvent&) { RemoveShaderPropertyRow(rowPanel); });
+	rowSizer->Add(btnRemove, 0, wxALIGN_CENTER_VERTICAL);
+
+	rowPanel->SetSizer(rowSizer);
+	rowsSizer->Add(rowPanel, 0, wxEXPAND | wxBOTTOM, 4);
+	shaderPropertyRows.push_back(row);
+
+	rowsWindow->FitInside();
+	rowsWindow->Layout();
+	auto* page = XRCCTRL(*this, "pageSetShaderProperties", wxPanel);
+	if (page)
+		page->Layout();
+}
+
+void AutomationDialog::RemoveShaderPropertyRow(wxWindow* rowPanel) {
+	for (auto it = shaderPropertyRows.begin(); it != shaderPropertyRows.end(); ++it) {
+		if (it->panel == rowPanel) {
+			auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+			if (rowsWindow && rowsWindow->GetSizer())
+				rowsWindow->GetSizer()->Detach(it->panel);
+			if (it->panel)
+				it->panel->Destroy();
+			shaderPropertyRows.erase(it);
+			break;
+		}
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelShaderPropRows", wxScrolledWindow);
+	if (rowsWindow) {
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+}
+
+void AutomationDialog::RebuildShaderPropertyRows(const std::vector<AutomationStep::ShaderProperty>& properties) {
+	ClearShaderPropertyRows();
+	for (const auto& prop : properties)
+		AddShaderPropertyRow(prop);
+}
+
+std::vector<AutomationStep::ShaderProperty> AutomationDialog::ReadShaderPropertyRows() const {
+	std::vector<AutomationStep::ShaderProperty> properties;
+	for (const auto& row : shaderPropertyRows) {
+		const ShaderPropertyDef* def = FindShaderPropertyDef(row.propertyName);
+		if (!def)
+			continue;
+
+		AutomationStep::ShaderProperty prop = MakeDefaultShaderProperty(*def);
+		prop.name = row.propertyName;
+
+		switch (def->kind) {
+			case ShaderPropertyValueKind::Choice:
+				prop.stringValue = GetChoiceClientValue(row.choice);
+				break;
+			case ShaderPropertyValueKind::Color: {
+				wxColour color = row.color ? row.color->GetColour() : wxColour(ColorByte(prop.value1), ColorByte(prop.value2), ColorByte(prop.value3), ColorByte(prop.value4));
+				prop.value1 = color.Red() / 255.0f;
+				prop.value2 = color.Green() / 255.0f;
+				prop.value3 = color.Blue() / 255.0f;
+				prop.value4 = color.Alpha() / 255.0f;
+				break;
+			}
+			case ShaderPropertyValueKind::Vector2:
+				prop.value1 = row.value1 ? static_cast<float>(atof(row.value1->GetValue().c_str())) : prop.value1;
+				prop.value2 = row.value2 ? static_cast<float>(atof(row.value2->GetValue().c_str())) : prop.value2;
+				break;
+			case ShaderPropertyValueKind::Scalar:
+			default:
+				prop.value1 = row.value1 ? static_cast<float>(atof(row.value1->GetValue().c_str())) : prop.value1;
+				break;
+		}
+
+		properties.push_back(prop);
+	}
+
+	return properties;
+}
+
 // Progress methods
 
 void AutomationDialog::StartProgress(const wxString& msg) {
 	if (progressBar)
 		return;
+
+	cancelRequested = false;
+	SetExecutionUIState(true);
 
 	wxRect rect;
 	statusBar->GetFieldRect(1, rect);
@@ -291,7 +864,7 @@ void AutomationDialog::StartProgress(const wxString& msg) {
 	statusBar->SetStatusText(msg.IsEmpty() ? _("Starting...") : msg);
 
 	// Redirect log output to the output pane
-	if (paneOutput && txtOutput) {
+	if (!headlessMode && paneOutput && txtOutput) {
 		txtOutput->Clear();
 		paneOutput->Collapse(false);
 		GetSizer()->Layout();
@@ -311,6 +884,15 @@ void AutomationDialog::UpdateProgress(int val, const wxString& msg) {
 	wxYield();
 }
 
+void AutomationDialog::OnCharHook(wxKeyEvent& event) {
+	if (event.GetKeyCode() == WXK_ESCAPE && progressBar) {
+		cancelRequested = true;
+		statusBar->SetStatusText(_("Cancelling..."));
+		return;
+	}
+	event.Skip();
+}
+
 void AutomationDialog::EndProgress(const wxString& msg) {
 	if (!progressBar)
 		return;
@@ -325,6 +907,39 @@ void AutomationDialog::EndProgress(const wxString& msg) {
 		delete wxLog::SetActiveTarget(oldLogTarget);
 		oldLogTarget = nullptr;
 	}
+
+	SetExecutionUIState(false);
+}
+
+void AutomationDialog::SetExecutionUIState(bool running) {
+	isExecuting = running;
+
+	wxWindowList children = GetChildren();
+	for (wxWindowList::iterator it = children.begin(); it != children.end(); ++it) {
+		wxWindow* child = *it;
+		if (!child)
+			continue;
+
+		if (child == statusBar || child == btnClose || child == paneOutput)
+			continue;
+
+		child->Enable(!running);
+	}
+
+	if (btnClose)
+		btnClose->SetLabel(running ? _("Cancel") : _("Close"));
+}
+
+void AutomationDialog::OnWindowClose(wxCloseEvent& event) {
+	if (isExecuting) {
+		cancelRequested = true;
+		if (statusBar)
+			statusBar->SetStatusText(_("Cancelling..."));
+		event.Veto();
+		return;
+	}
+
+	event.Skip();
 }
 
 void AutomationDialog::PopulateStepList() {
@@ -340,13 +955,10 @@ void AutomationDialog::PopulateStepList() {
 
 		std::string targetStr = JoinStrings(steps[i].targetMeshes, ", ");
 		if (targetStr.empty())
-			targetStr = "(all)";
+			targetStr = "(all non-reference)";
 		listSteps->SetItem(idx, 2, wxString::FromUTF8(targetStr));
 
-		wxString noteExcerpt = wxString::FromUTF8(steps[i].note);
-		if (noteExcerpt.length() > 60)
-			noteExcerpt = noteExcerpt.Left(57) + "...";
-		listSteps->SetItem(idx, 3, noteExcerpt);
+		listSteps->SetItem(idx, 3, wxString::FromUTF8(steps[i].note));
 	}
 }
 
@@ -360,13 +972,10 @@ void AutomationDialog::RefreshStepRow(int index) {
 
 	std::string targetStr = JoinStrings(step.targetMeshes, ", ");
 	if (targetStr.empty())
-		targetStr = "(all)";
+		targetStr = "(all non-reference)";
 	listSteps->SetItem(index, 2, wxString::FromUTF8(targetStr));
 
-	wxString noteExcerpt = wxString::FromUTF8(step.note);
-	if (noteExcerpt.length() > 60)
-		noteExcerpt = noteExcerpt.Left(57) + "...";
-	listSteps->SetItem(index, 3, noteExcerpt);
+	listSteps->SetItem(index, 3, wxString::FromUTF8(step.note));
 }
 
 void AutomationDialog::ShowStepSettings(bool show) {
@@ -388,6 +997,7 @@ void AutomationDialog::ShowStepSettings(bool show) {
 void AutomationDialog::OnStepListContextMenu(wxContextMenuEvent& WXUNUSED(event)) {
 	enum {
 		ID_CTX_ADD_STEP = wxID_HIGHEST + 100,
+		ID_CTX_DUPLICATE_STEP,
 		ID_CTX_REMOVE_STEP,
 		ID_CTX_MOVE_UP,
 		ID_CTX_MOVE_DOWN,
@@ -398,6 +1008,7 @@ void AutomationDialog::OnStepListContextMenu(wxContextMenuEvent& WXUNUSED(event)
 	menu.Append(ID_CTX_ADD_STEP, _("Add Step"));
 
 	bool hasSelection = (selectedStep >= 0);
+	menu.Append(ID_CTX_DUPLICATE_STEP, _("Duplicate Step"))->Enable(hasSelection);
 	menu.Append(ID_CTX_REMOVE_STEP, _("Remove Step"))->Enable(hasSelection);
 	menu.AppendSeparator();
 	menu.Append(ID_CTX_MOVE_UP, _("Move Up"))->Enable(hasSelection && selectedStep > 0);
@@ -409,6 +1020,7 @@ void AutomationDialog::OnStepListContextMenu(wxContextMenuEvent& WXUNUSED(event)
 	wxCommandEvent evt;
 	switch (result) {
 		case ID_CTX_ADD_STEP: OnAddStep(evt); break;
+		case ID_CTX_DUPLICATE_STEP: OnDuplicateStep(evt); break;
 		case ID_CTX_REMOVE_STEP: OnRemoveStep(evt); break;
 		case ID_CTX_MOVE_UP: OnMoveUp(evt); break;
 		case ID_CTX_MOVE_DOWN: OnMoveDown(evt); break;
@@ -625,6 +1237,10 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			UpdateSliderPropDefaultVisibility();
 			break;
 		}
+		case AutomationStepType::SetShaderProperties: {
+			RebuildShaderPropertyRows(step.shaderProperties);
+			break;
+		}
 		case AutomationStepType::ImportFile: {
 			auto* fp = XRCCTRL(*this, "fpImportFile", wxFilePickerCtrl);
 			if (fp)
@@ -645,7 +1261,7 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			break;
 		}
 		case AutomationStepType::DeleteSlider: {
-			SetTextValue("txtDeleteSliderName", step.deleteSliderName);
+			SetVectorValue("txtDeleteSliderName", step.deleteSliderNames);
 			SetCheckboxValue("chkDeleteSliderRegex", step.deleteSliderRegex);
 			break;
 		}
@@ -770,6 +1386,10 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			break;
 		}
 
+		case AutomationStepType::ClearMask:
+			// No parameters to set
+			break;
+
 		case AutomationStepType::LoadMask: {
 			auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
 			if (fp) {
@@ -819,6 +1439,10 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			SetVectorValue("txtFixClipSliderNames", step.fixClipSliderNames);
 			break;
 		}
+
+		case AutomationStepType::FixBadBones:
+			// No parameters to set
+			break;
 	}
 }
 
@@ -966,6 +1590,10 @@ void AutomationDialog::UpdateStepFromUI() {
 			}
 			break;
 		}
+		case AutomationStepType::SetShaderProperties: {
+			step.shaderProperties = ReadShaderPropertyRows();
+			break;
+		}
 		case AutomationStepType::DeleteShape:
 			// No parameters — uses Target Meshes
 			break;
@@ -975,7 +1603,7 @@ void AutomationDialog::UpdateStepFromUI() {
 			break;
 		}
 		case AutomationStepType::DeleteSlider: {
-			step.deleteSliderName = GetTextValue("txtDeleteSliderName");
+			step.deleteSliderNames = GetVectorValue("txtDeleteSliderName");
 			step.deleteSliderRegex = GetCheckboxValue("chkDeleteSliderRegex");
 			break;
 		}
@@ -1073,7 +1701,7 @@ void AutomationDialog::UpdateStepFromUI() {
 					step.exportFilePath = fp->GetPath().ToUTF8().data();
 			}
 			step.exportWithRef = GetCheckboxValue("chkExportWithRef");
-			step.exportUseOriginalPath = GetCheckboxValue("chkExportUseOriginalPath");
+			step.exportUseOriginalPath = IsBatchMode(AutomationBatchMode::FolderScan) && GetCheckboxValue("chkExportUseOriginalPath");
 			step.exportPrefix = GetTextValue("txtExportPrefix");
 			step.exportSuffix = GetTextValue("txtExportSuffix");
 			break;
@@ -1095,6 +1723,10 @@ void AutomationDialog::UpdateStepFromUI() {
 			step.mirrorSwapBonesX = GetCheckboxValue("chkMirrorSwapBonesX");
 			break;
 		}
+
+		case AutomationStepType::ClearMask:
+			// No parameters to read
+			break;
 
 		case AutomationStepType::LoadMask: {
 			auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
@@ -1118,6 +1750,10 @@ void AutomationDialog::UpdateStepFromUI() {
 			step.fixClipSliderNames = GetVectorValue("txtFixClipSliderNames");
 			break;
 		}
+
+		case AutomationStepType::FixBadBones:
+			// No parameters to read
+			break;
 	}
 
 	RefreshStepRow(selectedStep);
@@ -1165,25 +1801,28 @@ std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep
 	}
 
 	std::vector<NiShape*> result;
+	auto addUniqueShape = [&result](NiShape* shape) {
+		if (shape && std::find(result.begin(), result.end(), shape) == result.end())
+			result.push_back(shape);
+	};
 
 	if (step.targetRegex) {
 		auto allShapes = project->GetWorkNif()->GetShapes();
 		for (const auto& pattern : step.targetMeshes) {
 			try {
 				std::regex re(pattern, std::regex::icase);
+				bool matched = false;
 				for (auto* shape : allShapes) {
 					if (std::regex_search(shape->name.get(), re)) {
-						// Avoid duplicates
-						if (std::find(result.begin(), result.end(), shape) == result.end())
-							result.push_back(shape);
+						addUniqueShape(shape);
+						matched = true;
 					}
 				}
+				if (!matched)
+					wxLogWarning("Automation: Target shape regex '%s' matched no shapes.", pattern);
 			}
-			catch (const std::regex_error&) {
-				wxLogWarning("Automation: Invalid regex pattern '%s', treating as literal.", pattern);
-				NiShape* shape = FindShapeByName(pattern);
-				if (shape && std::find(result.begin(), result.end(), shape) == result.end())
-					result.push_back(shape);
+			catch (const std::regex_error& e) {
+				wxLogWarning("Automation: Invalid target shape regex '%s' (%s); skipping pattern.", pattern, e.what());
 			}
 		}
 	}
@@ -1191,7 +1830,9 @@ std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep
 		for (const auto& name : step.targetMeshes) {
 			NiShape* shape = FindShapeByName(name);
 			if (shape)
-				result.push_back(shape);
+				addUniqueShape(shape);
+			else
+				wxLogWarning("Automation: Target shape '%s' not found.", name);
 		}
 	}
 
@@ -1200,6 +1841,49 @@ std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep
 
 std::string AutomationDialog::GetAutomationsFolder() {
 	return GetProjectPath() + "/Automations";
+}
+
+void AutomationDialog::CollectScripts(const wxString& baseFolder, const wxString& currentFolder, std::vector<std::pair<wxString, wxString>>& entries) {
+	wxDir dir(currentFolder);
+	if (!dir.IsOpened())
+		return;
+
+	// Collect .xml files in this folder
+	wxString filename;
+	if (dir.GetFirst(&filename, "*.xml", wxDIR_FILES)) {
+		do {
+			wxString fullPath = currentFolder + "/" + filename;
+
+			// Only include files whose root element is <AutomationScript>
+			tinyxml2::XMLDocument doc;
+			if (doc.LoadFile(fullPath.ToUTF8().data()) != tinyxml2::XML_SUCCESS)
+				continue;
+			if (!doc.FirstChildElement("AutomationScript"))
+				continue;
+
+			wxFileName fn(filename);
+			wxString relativePath;
+			if (currentFolder == baseFolder) {
+				relativePath = fn.GetName();
+			}
+			else {
+				wxString subPath;
+				wxFileName::SplitPath(currentFolder, nullptr, nullptr, &subPath);
+				// Get the relative folder path from baseFolder
+				wxString relFolder = currentFolder.Mid(baseFolder.length() + 1);
+				relativePath = relFolder + "/" + fn.GetName();
+			}
+			entries.push_back({relativePath, relativePath});
+		} while (dir.GetNext(&filename));
+	}
+
+	// Recurse into subdirectories
+	wxString dirName;
+	if (dir.GetFirst(&dirName, wxEmptyString, wxDIR_DIRS)) {
+		do {
+			CollectScripts(baseFolder, currentFolder + "/" + dirName, entries);
+		} while (dir.GetNext(&dirName));
+	}
 }
 
 void AutomationDialog::PopulateAutomationList() {
@@ -1211,39 +1895,293 @@ void AutomationDialog::PopulateAutomationList() {
 	cmbAutomation->Append(_("<New>"));
 
 	wxString folder = wxString::FromUTF8(GetAutomationsFolder());
-	if (wxDir::Exists(folder)) {
-		wxDir dir(folder);
-		if (dir.IsOpened()) {
-			wxString filename;
-			if (dir.GetFirst(&filename, "*.xml", wxDIR_FILES)) {
-				do {
-					wxFileName fn(filename);
-					cmbAutomation->Append(fn.GetName());
-				} while (dir.GetNext(&filename));
-			}
+	if (!wxDir::Exists(folder)) {
+		if (!currentText.IsEmpty())
+			cmbAutomation->SetValue(currentText);
+		return;
+	}
+
+	// Collect all scripts recursively: {relativePath, displayName}
+	std::vector<std::pair<wxString, wxString>> entries;
+	CollectScripts(folder, folder, entries);
+
+	// Separate root-level scripts from subfolder scripts
+	std::vector<wxString> rootScripts;
+	std::map<wxString, std::vector<wxString>> folderScripts;
+
+	for (auto& [path, display] : entries) {
+		int sep = path.Find('/');
+		if (sep == wxNOT_FOUND) {
+			rootScripts.push_back(path);
 		}
+		else {
+			wxString folderName = path.Left(sep);
+			folderScripts[folderName].push_back(path);
+		}
+	}
+
+	// Sort root scripts (case-insensitive)
+	std::sort(rootScripts.begin(), rootScripts.end(),
+		[](const wxString& a, const wxString& b) { return a.CmpNoCase(b) < 0; });
+
+	// Add root-level scripts
+	for (auto& name : rootScripts)
+		cmbAutomation->Append(name);
+
+	// Add folder groups with separator headers
+	for (auto& [folderName, scripts] : folderScripts) {
+		std::sort(scripts.begin(), scripts.end(),
+			[](const wxString& a, const wxString& b) { return a.CmpNoCase(b) < 0; });
+
+		// Separator header
+		wxString separator = wxS("\u2500\u2500\u2500 ") + folderName + wxS(" \u2500\u2500\u2500");
+		cmbAutomation->Append(separator);
+
+		for (auto& path : scripts)
+			cmbAutomation->Append(path);
 	}
 
 	if (!currentText.IsEmpty())
 		cmbAutomation->SetValue(currentText);
 }
 
-wxString AutomationDialog::SanitizeFileName(const wxString& name) {
+bool AutomationDialog::IsSeparatorItem(const wxString& text) {
+	return text.StartsWith(wxS("\u2500"));
+}
+
+wxString AutomationDialog::SanitizePath(const wxString& name) {
 	wxString result;
+	bool lastWasSep = false;
 	for (auto ch : name) {
-		if (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '/' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')
+		if (ch == '/') {
+			if (!result.IsEmpty() && !lastWasSep)
+				result += '/';
+			lastWasSep = true;
+		}
+		else if (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*') {
 			result += '_';
-		else
+			lastWasSep = false;
+		}
+		else {
 			result += ch;
+			lastWasSep = false;
+		}
 	}
+	// Trim trailing separator
+	if (result.EndsWith("/"))
+		result.RemoveLast();
 	return result;
+}
+
+int AutomationDialog::RunHeadless(const wxString& scriptName, const wxArrayString& batchInputs) {
+	headlessMode = true;
+	lastRunErrors = 0;
+
+	if (scriptName.IsEmpty()) {
+		wxLogError("Automation: No script name provided.");
+		return 1;
+	}
+
+	// Verify the script file exists before calling LoadAutomation (which silently
+	// returns on missing files).
+	wxString sanitized = SanitizePath(scriptName);
+	wxString filePath = wxString::FromUTF8(GetAutomationsFolder()) + "/" + sanitized + ".xml";
+	if (!wxFileExists(filePath)) {
+		wxLogError("Automation: Script '%s' not found at '%s'.", scriptName, filePath);
+		return 2;
+	}
+
+	LoadAutomation(scriptName);
+
+	std::vector<size_t> indices;
+	for (size_t i = 0; i < script.GetSteps().size(); i++) {
+		if (script.GetSteps()[i].active)
+			indices.push_back(i);
+	}
+	if (indices.empty()) {
+		wxLogError("Automation: Script '%s' has no active steps.", scriptName);
+		return 3;
+	}
+
+	auto mode = script.GetBatchMode();
+
+	if (mode == AutomationBatchMode::None) {
+		if (!batchInputs.IsEmpty())
+			wxLogWarning("Automation: Script is not a batch script; ignoring %u positional argument(s).",
+						 static_cast<unsigned>(batchInputs.GetCount()));
+		ExecuteSteps(indices);
+		return lastRunErrors == 0 ? 0 : 10;
+	}
+
+	if (mode == AutomationBatchMode::FolderScan) {
+		std::vector<std::string> selectedFiles;
+
+		if (batchInputs.IsEmpty()) {
+			// Fall back to the script's configured batch folder/filter and let the
+			// user confirm via the existing checkable list dialog.
+			auto files = GatherBatchFiles();
+			if (files.empty()) {
+				wxLogError("Automation: No files found matching the batch folder scan criteria.");
+				return 4;
+			}
+
+			wxArrayString displayItems;
+			for (const auto& fp : files)
+				displayItems.Add(wxString::FromUTF8(fp));
+
+			std::vector<size_t> checkedIndices;
+			if (!ShowCheckableListDialog(_("Batch Files"),
+										 wxString::Format(_("Select files to process (%d found):"), static_cast<int>(files.size())),
+										 displayItems, checkedIndices)) {
+				wxLogMessage("Automation: Batch file selection cancelled.");
+				return 5;
+			}
+			if (checkedIndices.empty()) {
+				wxLogError("Automation: No files selected.");
+				return 6;
+			}
+
+			for (size_t idx : checkedIndices)
+				selectedFiles.push_back(files[idx]);
+		}
+		else {
+			// Expand directories using the script's batch settings.
+			std::string ext = script.GetBatchExtension();
+			wxString wildcard = wxString::FromUTF8("*" + ext);
+			std::string filter = script.GetBatchFileFilter();
+			bool useRegex = script.GetBatchFileFilterRegex();
+			std::regex filterRegex;
+			if (useRegex && !filter.empty()) {
+				try {
+					filterRegex = std::regex(filter, std::regex::icase);
+				}
+				catch (const std::regex_error&) {
+					wxLogWarning("Automation: Invalid batch file filter regex '%s'.", filter);
+					useRegex = false;
+				}
+			}
+
+			for (const auto& input : batchInputs) {
+				if (wxDirExists(input)) {
+					wxArrayString found;
+					if (script.GetBatchSubdirectories())
+						wxDir::GetAllFiles(input, &found, wildcard);
+					else {
+						wxDir d(input);
+						if (d.IsOpened()) {
+							wxString f;
+							if (d.GetFirst(&f, wildcard, wxDIR_FILES)) {
+								do {
+									found.Add(input + wxFileName::GetPathSeparator() + f);
+								} while (d.GetNext(&f));
+							}
+						}
+					}
+					for (const auto& fp : found) {
+						wxFileName fn(fp);
+						std::string name = fn.GetFullName().ToUTF8().data();
+						if (!MatchesFilter(name, filter, useRegex, filterRegex))
+							continue;
+						selectedFiles.push_back(std::string(fp.ToUTF8().data()));
+					}
+				}
+				else if (wxFileExists(input)) {
+					selectedFiles.push_back(std::string(input.ToUTF8().data()));
+				}
+				else {
+					wxLogWarning("Automation: Input '%s' is not an existing file or directory; skipping.", input);
+				}
+			}
+
+			if (selectedFiles.empty()) {
+				wxLogError("Automation: No files resolved from positional arguments.");
+				return 7;
+			}
+		}
+
+		ExecuteBatch(indices, selectedFiles);
+		return lastRunErrors == 0 ? 0 : 10;
+	}
+
+	if (mode == AutomationBatchMode::SliderSets) {
+		std::vector<std::pair<std::string, std::string>> selectedSets;
+
+		if (batchInputs.IsEmpty()) {
+			auto sets = GatherBatchSliderSets();
+			if (sets.empty()) {
+				wxLogError("Automation: No slider sets found matching the filter criteria.");
+				return 4;
+			}
+
+			wxArrayString displayItems;
+			for (const auto& [fp, setName] : sets)
+				displayItems.Add(wxString::FromUTF8(setName));
+
+			std::vector<size_t> checkedIndices;
+			if (!ShowCheckableListDialog(_("Batch Slider Sets"),
+										 wxString::Format(_("Select slider sets to process (%d found):"), static_cast<int>(sets.size())),
+										 displayItems, checkedIndices)) {
+				wxLogMessage("Automation: Slider set selection cancelled.");
+				return 5;
+			}
+			if (checkedIndices.empty()) {
+				wxLogError("Automation: No slider sets selected.");
+				return 6;
+			}
+
+			for (size_t idx : checkedIndices)
+				selectedSets.push_back(sets[idx]);
+		}
+		else {
+			// Resolve set project names against <ProjectPath>/SliderSets/*.{osp,xml}.
+			std::string projPath = GetProjectPath();
+			wxArrayString files;
+			wxDir::GetAllFiles(wxString::FromUTF8(projPath) + "/SliderSets", &files, "*.osp");
+			wxDir::GetAllFiles(wxString::FromUTF8(projPath) + "/SliderSets", &files, "*.xml");
+
+			std::set<std::string> wanted;
+			for (const auto& s : batchInputs)
+				wanted.insert(std::string(s.ToUTF8().data()));
+
+			std::set<std::string> resolved;
+			for (const auto& fp : files) {
+				SliderSetFile ssf(fp.ToUTF8().data());
+				if (ssf.fail())
+					continue;
+				std::vector<std::string> setNames;
+				ssf.GetSetNamesUnsorted(setNames);
+				for (const auto& sn : setNames) {
+					if (wanted.count(sn)) {
+						selectedSets.push_back({std::string(fp.ToUTF8().data()), sn});
+						resolved.insert(sn);
+					}
+				}
+			}
+
+			for (const auto& w : wanted) {
+				if (!resolved.count(w))
+					wxLogWarning("Automation: Slider set '%s' not found in project SliderSets.", w);
+			}
+
+			if (selectedSets.empty()) {
+				wxLogError("Automation: No slider sets resolved from positional arguments.");
+				return 7;
+			}
+		}
+
+		ExecuteBatch(indices, {}, selectedSets);
+		return lastRunErrors == 0 ? 0 : 10;
+	}
+
+	wxLogError("Automation: Unknown batch mode.");
+	return 8;
 }
 
 void AutomationDialog::LoadAutomation(const wxString& name) {
 	if (name.IsEmpty())
 		return;
 
-	wxString sanitized = SanitizeFileName(name);
+	wxString sanitized = SanitizePath(name);
 	wxString filePath = wxString::FromUTF8(GetAutomationsFolder()) + "/" + sanitized + ".xml";
 
 	if (!wxFileExists(filePath))
@@ -1251,7 +2189,10 @@ void AutomationDialog::LoadAutomation(const wxString& name) {
 
 	int err = script.Load(filePath.ToUTF8().data());
 	if (err) {
-		wxMessageBox(wxString::Format(_("Failed to load automation script (error %d)."), err), _("Error"), wxICON_ERROR);
+		if (headlessMode)
+			wxLogError("Automation: Failed to load automation script (error %d).", err);
+		else
+			wxMessageBox(wxString::Format(_("Failed to load automation script (error %d)."), err), _("Error"), wxICON_ERROR);
 		return;
 	}
 
@@ -1276,13 +2217,20 @@ void AutomationDialog::LoadAutomation(const wxString& name) {
 void AutomationDialog::UpdateButtonState() {
 	bool hasSteps = !script.GetSteps().empty();
 	if (btnSaveScript)
-		btnSaveScript->Enable(hasSteps);
+		btnSaveScript->Enable(hasSteps && !isExecuting);
 	if (btnExecuteAll)
-		btnExecuteAll->Enable(hasSteps);
+		btnExecuteAll->Enable(hasSteps && !isExecuting);
 }
 
 void AutomationDialog::OnAutomationSelected(wxCommandEvent& WXUNUSED(event)) {
 	wxString name = cmbAutomation->GetValue();
+
+	// Ignore separator header items
+	if (IsSeparatorItem(name)) {
+		cmbAutomation->SetValue(wxEmptyString);
+		return;
+	}
+
 	if (name == _("<New>")) {
 		script = AutomationScript();
 		selectedStep = -1;
@@ -1320,14 +2268,15 @@ void AutomationDialog::OnSaveScript(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	wxString sanitized = SanitizeFileName(name);
+	wxString sanitized = SanitizePath(name);
 	wxString folder = wxString::FromUTF8(GetAutomationsFolder());
 
-	// Create folder if missing
-	if (!wxDir::Exists(folder))
-		wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+	// Create folder (including subdirectories) if missing
+	wxFileName fnPath(folder + "/" + sanitized + ".xml");
+	if (!wxDir::Exists(fnPath.GetPath()))
+		wxFileName::Mkdir(fnPath.GetPath(), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
-	wxString filePath = folder + "/" + sanitized + ".xml";
+	wxString filePath = fnPath.GetFullPath();
 	int err = script.Save(filePath.ToUTF8().data());
 	if (err) {
 		wxMessageBox(wxString::Format(_("Failed to save automation script (error %d)."), err), _("Error"), wxICON_ERROR);
@@ -1345,7 +2294,7 @@ void AutomationDialog::OnDeleteScript(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	wxString sanitized = SanitizeFileName(name);
+	wxString sanitized = SanitizePath(name);
 	wxString filePath = wxString::FromUTF8(GetAutomationsFolder()) + "/" + sanitized + ".xml";
 
 	if (!wxFileExists(filePath)) {
@@ -1407,6 +2356,24 @@ void AutomationDialog::OnAddStep(wxCommandEvent& WXUNUSED(event)) {
 		script.AddStep(step);
 		newIndex = static_cast<int>(script.GetSteps().size()) - 1;
 	}
+
+	PopulateStepList();
+
+	listSteps->SetItemState(newIndex, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
+	listSteps->EnsureVisible(newIndex);
+	SelectStep(newIndex);
+	UpdateButtonState();
+}
+
+void AutomationDialog::OnDuplicateStep(wxCommandEvent& WXUNUSED(event)) {
+	if (selectedStep < 0 || selectedStep >= static_cast<int>(script.GetSteps().size()))
+		return;
+
+	UpdateStepFromUI();
+
+	AutomationStep copy = script.GetSteps()[selectedStep];
+	int newIndex = selectedStep + 1;
+	script.InsertStep(newIndex, copy);
 
 	PopulateStepList();
 
@@ -1563,6 +2530,9 @@ bool AutomationDialog::ShowCheckableListDialog(const wxString& title, const wxSt
 }
 
 void AutomationDialog::OnExecuteAll(wxCommandEvent& WXUNUSED(event)) {
+	if (isExecuting)
+		return;
+
 	if (selectedStep >= 0)
 		UpdateStepFromUI();
 
@@ -1675,6 +2645,9 @@ void AutomationDialog::OnExecuteAll(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void AutomationDialog::OnExecuteSelected(wxCommandEvent& WXUNUSED(event)) {
+	if (isExecuting)
+		return;
+
 	if (selectedStep < 0) {
 		wxMessageBox(_("No step selected."), _("Automation"), wxICON_INFORMATION);
 		return;
@@ -1685,6 +2658,13 @@ void AutomationDialog::OnExecuteSelected(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void AutomationDialog::OnClose(wxCommandEvent& WXUNUSED(event)) {
+	if (isExecuting) {
+		cancelRequested = true;
+		if (statusBar)
+			statusBar->SetStatusText(_("Cancelling..."));
+		return;
+	}
+
 	if (selectedStep >= 0)
 		UpdateStepFromUI();
 	EndModal(wxID_CLOSE);
@@ -1706,6 +2686,8 @@ static bool StepChangesSliderSet(AutomationStepType type) {
 }
 
 void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
+	lastRunErrors = 0;
+
 	// Make a copy so placeholder substitution doesn't modify the UI version
 	AutomationScript execScript;
 	for (size_t idx : stepIndices)
@@ -1726,10 +2708,19 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 			wxString::FromUTF8(AutomationStepTypeToString(step.type)));
 
 		UpdateProgress(i * 100 / totalSteps, stepDesc);
+
+		if (cancelRequested) {
+			wxLogMessage("Automation: Cancelled by user.");
+			EndProgress(_("Automation cancelled."));
+			lastRunErrors++;
+			return;
+		}
+
 		wxLogMessage("Automation: %s", stepDesc);
 
 		int err = ExecuteStep(step);
 		if (err != 0) {
+			lastRunErrors++;
 			wxString errMsg = wxString::Format(
 				_("Step %d (%s) failed with error %d.\n\n%s\n\nContinue with remaining steps?"),
 				i + 1,
@@ -1737,10 +2728,16 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 				err,
 				wxString::FromUTF8(step.note));
 
-			int result = wxMessageBox(errMsg, _("Automation Error"), wxYES_NO | wxICON_ERROR);
-			if (result != wxYES) {
-				EndProgress(_("Automation aborted."));
-				return;
+			if (headlessMode) {
+				wxLogError("Automation: %s", errMsg);
+				// Auto-continue in headless mode
+			}
+			else {
+				int result = wxMessageBox(errMsg, _("Automation Error"), wxYES_NO | wxICON_ERROR);
+				if (result != wxYES) {
+					EndProgress(_("Automation aborted."));
+					return;
+				}
 			}
 		}
 
@@ -1754,8 +2751,10 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 
 	EndProgress(_("Automation complete."));
 
-	wxMessageBox(wxString::Format(_("Automation completed: %d step(s) executed."), totalSteps),
-				 _("Automation"), wxICON_INFORMATION);
+	if (!headlessMode) {
+		wxMessageBox(wxString::Format(_("Automation completed: %d step(s) executed."), totalSteps),
+					 _("Automation"), wxICON_INFORMATION);
+	}
 }
 
 void AutomationDialog::ResetAndClearProject() {
@@ -2093,8 +3092,7 @@ int AutomationDialog::ExecuteStepEditBone(const AutomationStep& step) {
 int AutomationDialog::ExecuteStepRemoveSkinning(const AutomationStep& step) {
 	auto shapes = ResolveTargetShapes(step);
 	if (shapes.empty()) {
-		wxLogMessage("Automation: Removing skinning from all shapes...");
-		project->RemoveSkinning();
+		wxLogWarning("Automation: RemoveSkinning - no target shapes found.");
 	}
 	else {
 		for (auto* shape : shapes) {
@@ -2613,6 +3611,7 @@ int AutomationDialog::ExecuteStepRenameShape(const AutomationStep& step) {
 
 	wxLogMessage("Automation: Renaming shape '%s' to '%s'...", step.renameOldName, step.renameNewName);
 	project->RenameShape(shape, step.renameNewName);
+	outfitStudio->glView->RenameShape(step.renameOldName, step.renameNewName);
 	return 0;
 }
 
@@ -2724,7 +3723,7 @@ int AutomationDialog::ExecuteStepExportFile(const AutomationStep& step) {
 	return 0;
 }
 
-int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep&) {
+int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep& step) {
 	wxLogMessage("Automation: Refining meshes...");
 
 	auto workNif = project->GetWorkNif();
@@ -2733,12 +3732,18 @@ int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep&) {
 		return 1;
 	}
 
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: RefineMesh - no target shapes found.");
+		return 0;
+	}
+
 	constexpr size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
 	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
 	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
 		maxTriIndex = std::numeric_limits<uint32_t>().max();
 
-	for (auto* shape : workNif->GetShapes()) {
+	for (auto* shape : shapes) {
 		size_t nverts = shape->GetNumVertices();
 
 		// Determine unmasked vertices
@@ -2784,14 +3789,16 @@ int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep&) {
 }
 
 int AutomationDialog::ExecuteStepDeleteSlider(const AutomationStep& step) {
-	if (step.deleteSliderName.empty()) {
+	if (step.deleteSliderNames.empty()) {
 		wxLogError("Automation: DeleteSlider - no slider name specified.");
 		return 1;
 	}
 
 	if (step.deleteSliderRegex) {
+		// In regex mode, use first entry as pattern
+		std::string pattern = JoinStrings(step.deleteSliderNames, ", ");
 		try {
-			std::regex re(step.deleteSliderName, std::regex::icase);
+			std::regex re(pattern, std::regex::icase);
 			std::vector<std::string> sliderList;
 			project->GetSliderList(sliderList);
 			int deleted = 0;
@@ -2802,16 +3809,18 @@ int AutomationDialog::ExecuteStepDeleteSlider(const AutomationStep& step) {
 					deleted++;
 				}
 			}
-			wxLogMessage("Automation: Deleted %d slider(s) matching '%s'.", deleted, step.deleteSliderName);
+			wxLogMessage("Automation: Deleted %d slider(s) matching '%s'.", deleted, pattern);
 		}
 		catch (const std::regex_error&) {
-			wxLogError("Automation: DeleteSlider - invalid regex '%s'.", step.deleteSliderName);
+			wxLogError("Automation: DeleteSlider - invalid regex '%s'.", pattern);
 			return 1;
 		}
 	}
 	else {
-		wxLogMessage("Automation: Deleting slider '%s'...", step.deleteSliderName);
-		project->DeleteSlider(step.deleteSliderName);
+		for (const auto& sliderName : step.deleteSliderNames) {
+			wxLogMessage("Automation: Deleting slider '%s'...", sliderName);
+			project->DeleteSlider(sliderName);
+		}
 	}
 	return 0;
 }
@@ -2893,6 +3902,27 @@ int AutomationDialog::ExecuteStepMirrorShape(const AutomationStep& step) {
 		if (step.mirrorSwapBonesX)
 			project->GetWorkAnim()->SwapBonesLR(shape->name.get());
 	}
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepClearMask(const AutomationStep& step) {
+	auto targetShapes = ResolveTargetShapes(step);
+	if (targetShapes.empty()) {
+		wxLogWarning("Automation: ClearMask - no target shapes found.");
+		return 0;
+	}
+
+	for (auto* shape : targetShapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* mesh = outfitStudio->glView->GetMesh(shapeName);
+		if (!mesh)
+			continue;
+
+		wxLogMessage("Automation: Clearing mask for shape '%s'...", shapeName);
+		mesh->MaskFill(0.0f);
+	}
+
+	outfitStudio->glView->Render();
 	return 0;
 }
 
@@ -2987,6 +4017,68 @@ int AutomationDialog::ExecuteStepSetSliderProperties(const AutomationStep& step)
 			project->SetSliderDefault(i, step.sliderPropDefaultHi, true);
 			wxLogMessage("Automation: Slider '%s' default (big) = %d.", name, step.sliderPropDefaultHi);
 		}
+	}
+
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepSetShaderProperties(const AutomationStep& step) {
+	if (step.shaderProperties.empty()) {
+		wxLogWarning("Automation: SetShaderProperties - no shader properties configured.");
+		return 0;
+	}
+
+	NifFile* nif = project->GetWorkNif();
+	if (!nif)
+		return 0;
+
+	auto targetShapes = ResolveTargetShapes(step);
+
+	if (targetShapes.empty()) {
+		wxLogWarning("Automation: SetShaderProperties - no target shapes found.");
+		return 0;
+	}
+
+	int updatedShapes = 0;
+	int updatedValues = 0;
+
+	for (auto* shape : targetShapes) {
+		if (!shape)
+			continue;
+
+		NiShader* shader = nif->GetShader(shape);
+		if (!shader)
+			continue;
+
+		int shapeUpdates = 0;
+		for (const auto& prop : step.shaderProperties) {
+			if (prop.name == "ShaderType" && ApplyAutomationShaderProperty(nif, shape, prop))
+				shapeUpdates++;
+		}
+
+		for (const auto& prop : step.shaderProperties) {
+			if (prop.name != "ShaderType" && ApplyAutomationShaderProperty(nif, shape, prop))
+				shapeUpdates++;
+		}
+
+		if (shapeUpdates > 0) {
+			updatedShapes++;
+			updatedValues += shapeUpdates;
+			project->SetTextures(shape);
+			outfitStudio->MeshFromProj(shape, true);
+			wxLogMessage("Automation: SetShaderProperties - updated %d shader properties on '%s'.",
+				shapeUpdates,
+				shape->name.get());
+		}
+	}
+
+	if (updatedShapes > 0) {
+		outfitStudio->SetPendingChanges();
+		outfitStudio->glView->Render();
+		wxLogMessage("Automation: SetShaderProperties - updated %d shader values on %d shapes.", updatedValues, updatedShapes);
+	}
+	else {
+		wxLogWarning("Automation: SetShaderProperties - found no matching shader properties on target shapes.");
 	}
 
 	return 0;
@@ -3160,6 +4252,15 @@ int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepFixBadBones(const AutomationStep& WXUNUSED(step)) {
+	wxLogMessage("Automation: Fixing bad bones...");
+
+	if (!project->CheckForBadBones(false))
+		wxLogMessage("Automation: No bad bones found.");
+
+	return 0;
+}
+
 int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 	switch (step.type) {
 		case AutomationStepType::ClearProject: return ExecuteStepClearProject(step);
@@ -3189,10 +4290,13 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::ResetTransforms: return ExecuteStepResetTransforms(step);
 		case AutomationStepType::DuplicateShape: return ExecuteStepDuplicateShape(step);
 		case AutomationStepType::MirrorShape: return ExecuteStepMirrorShape(step);
+		case AutomationStepType::ClearMask: return ExecuteStepClearMask(step);
 		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
 		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
+		case AutomationStepType::SetShaderProperties: return ExecuteStepSetShaderProperties(step);
 		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
 		case AutomationStepType::FixClipping: return ExecuteStepFixClipping(step);
+		case AutomationStepType::FixBadBones: return ExecuteStepFixBadBones(step);
 	}
 
 	return 0;
@@ -3515,6 +4619,24 @@ void AutomationDialog::UpdateSliderPropDefaultVisibility() {
 		panel->Layout();
 }
 
+void AutomationDialog::OnAddShaderProperty(wxCommandEvent& WXUNUSED(event)) {
+	auto* choice = XRCCTRL(*this, "choiceShaderPropAdd", wxChoice);
+	std::string propertyName = GetChoiceClientValue(choice);
+	if (propertyName.empty())
+		return;
+
+	for (const auto& row : shaderPropertyRows) {
+		if (row.propertyName == propertyName)
+			return;
+	}
+
+	const ShaderPropertyDef* def = FindShaderPropertyDef(propertyName);
+	if (!def)
+		return;
+
+	AddShaderPropertyRow(MakeDefaultShaderProperty(*def));
+}
+
 void AutomationDialog::OnLoadMaskFileChanged(wxFileDirPickerEvent& event) {
 	wxString filePath = event.GetPath();
 	PopulateMaskNamesFromFile(filePath);
@@ -3590,6 +4712,7 @@ void AutomationDialog::UpdateExportFieldsEnabled(bool enabled) {
 
 void AutomationDialog::UpdateExportForBatchMode() {
 	bool isBatch = radioBatchMode && radioBatchMode->GetSelection() != 0;
+	bool folderBatch = radioBatchMode && radioBatchMode->GetSelection() == static_cast<int>(AutomationBatchMode::FolderScan);
 
 	auto* lbl = XRCCTRL(*this, "lblExportPath", wxStaticText);
 	if (lbl)
@@ -3605,8 +4728,8 @@ void AutomationDialog::UpdateExportForBatchMode() {
 
 	auto* chk = XRCCTRL(*this, "chkExportUseOriginalPath", wxCheckBox);
 	if (chk) {
-		chk->Show(isBatch);
-		if (!isBatch)
+		chk->Show(folderBatch);
+		if (!folderBatch)
 			chk->SetValue(false);
 	}
 
@@ -3644,6 +4767,33 @@ wxString AutomationDialog::MakeAbsoluteToProject(const wxString& path) const {
 
 void AutomationDialog::PopulateVariablesUI() {
 	const auto& vars = script.GetVariables();
+
+	auto* paneVariables = XRCCTRL(*this, "paneVariables", wxCollapsiblePane);
+	wxFlexGridSizer* gridSizer = nullptr;
+	if (paneVariables) {
+		wxWindow* paneWin = paneVariables->GetPane();
+		wxSizer* boxSizer = paneWin ? paneWin->GetSizer() : nullptr;
+		if (boxSizer && boxSizer->GetItemCount() >= 2)
+			gridSizer = dynamic_cast<wxFlexGridSizer*>(boxSizer->GetItem(static_cast<size_t>(1))->GetSizer());
+	}
+
+	for (int i = 10; i >= 2; i--) {
+		wxString keyName = wxString::Format("txtVarKey%d", i);
+		wxString valName = wxString::Format("txtVarVal%d", i);
+		auto* keyCtrl = dynamic_cast<wxTextCtrl*>(FindWindow(keyName));
+		auto* valCtrl = dynamic_cast<wxTextCtrl*>(FindWindow(valName));
+		if (keyCtrl) {
+			if (gridSizer)
+				gridSizer->Detach(keyCtrl);
+			keyCtrl->Destroy();
+		}
+		if (valCtrl) {
+			if (gridSizer)
+				gridSizer->Detach(valCtrl);
+			valCtrl->Destroy();
+		}
+	}
+	varRowCount = 1;
 
 	// Clear existing rows (set them empty)
 	for (int i = 1; i <= 10; i++) {
@@ -3809,6 +4959,87 @@ void AutomationDialog::OnBatchModeChanged(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
+void AutomationDialog::AppendFromList(const char* textCtrlName, const wxArrayString& items, const wxString& title) {
+	if (items.IsEmpty())
+		return;
+
+	auto* txt = XRCCTRL(*this, textCtrlName, wxTextCtrl);
+	if (!txt)
+		return;
+
+	// Parse existing entries to exclude from the list
+	std::vector<std::string> existing = SplitCommaSeparated(std::string(txt->GetValue().ToUTF8().data()));
+	std::set<std::string> existingSet(existing.begin(), existing.end());
+
+	wxArrayString filtered;
+	for (const auto& item : items) {
+		if (existingSet.find(std::string(item.ToUTF8().data())) == existingSet.end())
+			filtered.Add(item);
+	}
+
+	if (filtered.IsEmpty())
+		return;
+
+	wxMultiChoiceDialog dlg(this, _("Select items to add:"), title, filtered);
+	if (dlg.ShowModal() != wxID_OK)
+		return;
+
+	wxArrayInt selections = dlg.GetSelections();
+	if (selections.IsEmpty())
+		return;
+
+	wxString current = txt->GetValue().Trim().Trim(false);
+	for (int sel : selections) {
+		wxString item = filtered[sel];
+		if (!current.IsEmpty())
+			current += ", ";
+		current += item;
+	}
+	txt->SetValue(current);
+}
+
+void AutomationDialog::OnAddShapeToField(wxCommandEvent& WXUNUSED(event)) {
+	wxArrayString items;
+	auto* workNif = project->GetWorkNif();
+	if (workNif) {
+		for (auto* shape : workNif->GetShapes())
+			items.Add(wxString::FromUTF8(shape->name.get()));
+	}
+
+	AppendFromList("txtTargetMeshes", items, _("Add Shapes"));
+}
+
+void AutomationDialog::OnAddSliderToField(wxCommandEvent& event) {
+	// Determine which text control to append to based on which button was clicked
+	wxWindow* btn = dynamic_cast<wxWindow*>(event.GetEventObject());
+	const char* textCtrlName = nullptr;
+
+	if (btn) {
+		wxString name = btn->GetName();
+		if (name == "btnAddDeleteSlider")
+			textCtrlName = "txtDeleteSliderName";
+		else if (name == "btnAddSetSlider")
+			textCtrlName = "txtSetSliderNames";
+		else if (name == "btnAddConformSlider")
+			textCtrlName = "txtConformSliderNames";
+		else if (name == "btnAddSliderProp")
+			textCtrlName = "txtSliderPropNames";
+		else if (name == "btnAddFixClipSlider")
+			textCtrlName = "txtFixClipSliderNames";
+	}
+
+	if (!textCtrlName)
+		return;
+
+	wxArrayString items;
+	std::vector<std::string> sliderList;
+	project->GetSliderList(sliderList);
+	for (const auto& s : sliderList)
+		items.Add(wxString::FromUTF8(s));
+
+	AppendFromList(textCtrlName, items, _("Add Sliders"));
+}
+
 std::vector<std::string> AutomationDialog::GatherBatchFiles() {
 	std::vector<std::string> result;
 
@@ -3907,6 +5138,7 @@ std::vector<std::pair<std::string, std::string>> AutomationDialog::GatherBatchSl
 
 void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::string>& selectedFiles, const std::vector<std::pair<std::string, std::string>>& selectedSets) {
 	auto batchMode = script.GetBatchMode();
+	lastRunErrors = 0;
 
 	// Pre-set OptimizeForSSE if not already configured.
 	// ValidateNIF would normally prompt via wxMessageBox parented to OutfitStudioFrame,
@@ -3921,7 +5153,12 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 	if (batchMode == AutomationBatchMode::FolderScan) {
 		auto batchFiles = selectedFiles.empty() ? GatherBatchFiles() : selectedFiles;
 		if (batchFiles.empty()) {
-			wxMessageBox(_("No files found matching the batch folder scan criteria."), _("Automation"), wxICON_INFORMATION);
+			EndProgress(_("No files found."));
+			if (!headlessMode)
+				wxMessageBox(_("No files found matching the batch folder scan criteria."), _("Automation"), wxICON_INFORMATION);
+			else
+				wxLogError("Automation: No files found matching the batch folder scan criteria.");
+			lastRunErrors++;
 			return;
 		}
 
@@ -3937,6 +5174,11 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			int progress = itemIdx * 100 / totalItems;
 			wxString msg = wxString::Format(_("Processing %d/%d: %s"), itemIdx + 1, totalItems, fn.GetFullName());
 			UpdateProgress(progress, msg);
+
+			if (cancelRequested) {
+				wxLogMessage("Automation: Batch cancelled by user.");
+				break;
+			}
 
 			// Set up batch-specific variables
 			auto vars = CollectVariables();
@@ -4022,20 +5264,32 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			ResetAndClearProject();
 		}
 
-		EndProgress(_("Batch complete."));
+		EndProgress(cancelRequested ? _("Batch cancelled.") : _("Batch complete."));
 
 		// Refresh UI
 		outfitStudio->RefreshGUIFromProj();
 		outfitStudio->CreateSetSliders();
 
-		wxMessageBox(wxString::Format(_("Batch completed: %d/%d items processed successfully."),
-									  processedCount - errorCount, processedCount),
-					 _("Automation"), wxICON_INFORMATION);
+		lastRunErrors += errorCount;
+		if (cancelRequested)
+			lastRunErrors++;
+
+		if (!headlessMode) {
+			wxMessageBox(wxString::Format(cancelRequested ? _("Batch cancelled: %d/%d items processed before cancellation.")
+														  : _("Batch completed: %d/%d items processed successfully."),
+										  processedCount - errorCount, processedCount),
+						 _("Automation"), wxICON_INFORMATION);
+		}
 	}
 	else if (batchMode == AutomationBatchMode::SliderSets) {
 		auto batchSets = selectedSets.empty() ? GatherBatchSliderSets() : selectedSets;
 		if (batchSets.empty()) {
-			wxMessageBox(_("No slider sets found matching the filter criteria."), _("Automation"), wxICON_INFORMATION);
+			EndProgress(_("No slider sets found."));
+			if (!headlessMode)
+				wxMessageBox(_("No slider sets found matching the filter criteria."), _("Automation"), wxICON_INFORMATION);
+			else
+				wxLogError("Automation: No slider sets found matching the filter criteria.");
+			lastRunErrors++;
 			return;
 		}
 
@@ -4050,6 +5304,11 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			int progress = itemIdx * 100 / totalItems;
 			wxString msg = wxString::Format(_("Processing %d/%d: %s"), itemIdx + 1, totalItems, wxString::FromUTF8(setName));
 			UpdateProgress(progress, msg);
+
+			if (cancelRequested) {
+				wxLogMessage("Automation: Batch cancelled by user.");
+				break;
+			}
 
 			// Set up batch-specific variables
 			auto vars = CollectVariables();
@@ -4143,7 +5402,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 						step.saveSliderSetFile = ssfFn.GetFullPath().ToUTF8().data();
 					}
 
-					// Apply suffix to display name, shape data folder, shape data file, and slider set file
+					// Apply suffix to display name, shape data folder, and slider set file
 					if (!step.saveSuffix.empty()) {
 						step.saveName += step.saveSuffix;
 						step.saveShapeDataFolder += step.saveSuffix;
@@ -4156,10 +5415,9 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 				}
 				else if (step.type == AutomationStepType::ExportFile) {
 					if (step.exportUseOriginalPath) {
-						// Overwrite the original file loaded by the batch
-                        step.exportFilePath = filePath;
+						wxLogWarning("Automation: ExportFile - original-path export is only supported for folder scan batches; using configured export folder.");
 					}
-					else if (!step.exportFilePath.empty()) {
+					if (!step.exportFilePath.empty()) {
 						// In batch mode, exportFilePath is a folder - construct full path
 						wxFileName exportFn;
 						exportFn.SetPath(wxString::FromUTF8(step.exportFilePath));
@@ -4197,14 +5455,21 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			ResetAndClearProject();
 		}
 
-		EndProgress(_("Batch complete."));
+		EndProgress(cancelRequested ? _("Batch cancelled.") : _("Batch complete."));
 
 		// Refresh UI
 		outfitStudio->RefreshGUIFromProj();
 		outfitStudio->CreateSetSliders();
 
-		wxMessageBox(wxString::Format(_("Batch completed: %d/%d slider sets processed successfully."),
-									  processedCount - errorCount, processedCount),
-					 _("Automation"), wxICON_INFORMATION);
+		lastRunErrors += errorCount;
+		if (cancelRequested)
+			lastRunErrors++;
+
+		if (!headlessMode) {
+			wxMessageBox(wxString::Format(cancelRequested ? _("Batch cancelled: %d/%d slider sets processed before cancellation.")
+														  : _("Batch completed: %d/%d slider sets processed successfully."),
+										  processedCount - errorCount, processedCount),
+						 _("Automation"), wxICON_INFORMATION);
+		}
 	}
 }

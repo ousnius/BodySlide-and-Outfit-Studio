@@ -57,6 +57,11 @@ private:
 	nifly::Vector3 colorWire = nifly::Vector3(0.3137f, 0.3137f, 0.3137f);
 	nifly::Vector3 colorPoints = nifly::Vector3(0.0f, 1.0f, 0.0f);
 	nifly::Vector3 colorPointsMasked = nifly::Vector3(1.0f, 0.0f, 0.0f);
+
+	// Vertex point sizing (in logical pixels). Read from Config.xml; see RenderMeshAsPoints.
+	float pointSizeMin = 4.0f;
+	float pointSizeMax = 14.0f;
+	float pointSizeScale = 0.6f;
 	nifly::Vector3 colorRed = nifly::Vector3(1.0f, 0.25f, 0.25f);
 	nifly::Vector3 colorGreen = nifly::Vector3(0.25f, 1.0f, 0.25f);
 
@@ -99,6 +104,12 @@ public:
 
 	nifly::Vector3 GetMaskedPointColor() const { return colorPointsMasked; }
 	void SetMaskedPointColor(const nifly::Vector3& color) { colorPointsMasked = color; }
+
+	void SetPointSizeParams(float min, float max, float scale) {
+		pointSizeMin = min;
+		pointSizeMax = max;
+		pointSizeScale = scale;
+	}
 
 	void ClearMeshes() {
 		SetContext();

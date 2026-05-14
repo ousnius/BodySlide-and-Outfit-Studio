@@ -31,6 +31,49 @@ std::shared_ptr<AABBTree> Mesh::CreateBVH() {
 	return bvh;
 }
 
+bool Mesh::IsFacetVisible(int facet) const {
+	if (subMeshesVisible.empty() || triSubMeshes.empty())
+		return true;
+
+	if (facet < 0 || static_cast<size_t>(facet) >= triSubMeshes.size())
+		return true;
+
+	int subMeshIndex = triSubMeshes[facet];
+	if (subMeshIndex < 0 || static_cast<size_t>(subMeshIndex) >= subMeshesVisible.size())
+		return true;
+
+	return subMeshesVisible[subMeshIndex];
+}
+
+float Mesh::ComputeAvgEdgeLength() {
+	if (avgEdgeLengthWS >= 0.0f)
+		return avgEdgeLengthWS;
+
+	if (!verts || !tris || nTris <= 0 || nVerts <= 0) {
+		avgEdgeLengthWS = 0.0f;
+		return avgEdgeLengthWS;
+	}
+
+	// Mesh-space scale of matModel for converting mesh-space edge length to world space.
+	// Outfit Studio uses uniform scaling on shapes, so a single axis is representative.
+	const float modelScale = std::sqrt(matModel[0][0] * matModel[0][0] + matModel[0][1] * matModel[0][1] + matModel[0][2] * matModel[0][2]);
+
+	double sum = 0.0;
+	uint64_t count = 0;
+	for (int i = 0; i < nTris; ++i) {
+		const Triangle& t = tris[i];
+		if (t.p1 >= static_cast<uint32_t>(nVerts) || t.p2 >= static_cast<uint32_t>(nVerts) || t.p3 >= static_cast<uint32_t>(nVerts))
+			continue;
+		sum += (verts[t.p1] - verts[t.p2]).length();
+		sum += (verts[t.p2] - verts[t.p3]).length();
+		sum += (verts[t.p3] - verts[t.p1]).length();
+		count += 3;
+	}
+
+	avgEdgeLengthWS = (count > 0) ? static_cast<float>(sum / static_cast<double>(count)) * modelScale : 0.0f;
+	return avgEdgeLengthWS;
+}
+
 void Mesh::BuildVertexAdjacency() {
 	if (!tris)
 		return;
