@@ -75,14 +75,39 @@ jobs:
             }
           }
 
+      - name: Package artifacts
+        shell: pwsh
+        run: |
+          $packageName = "BodySlide-and-Outfit-Studio-windows-x64-release"
+          $artifactRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts"
+          $packageDir = Join-Path $artifactRoot $packageName
+
+          Remove-Item -Recurse -Force $artifactRoot -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+
+          Copy-Item "build/windows-x64-release/Release/BodySlide x64.exe" $packageDir
+          Copy-Item "build/windows-x64-release/Release/OutfitStudio x64.exe" $packageDir
+          Copy-Item "build/windows-x64-release/Release/*.pdb" $packageDir -ErrorAction SilentlyContinue
+          Copy-Item "res" $packageDir -Recurse
+          Copy-Item "lang" $packageDir -Recurse
+
+          foreach ($file in @("BodySlide.xml", "BuildSelection.xml", "Config.xml", "OutfitStudio.xml", "RefTemplates.xml")) {
+            Copy-Item $file $packageDir
+          }
+
+          foreach ($directory in @("SliderSets", "Automations", "PoseData", "RefTemplates", "ShapeData", "SliderCategories", "SliderGroups", "SliderPresets")) {
+            New-Item -ItemType Directory -Force -Path (Join-Path $packageDir $directory) | Out-Null
+          }
+
+          Push-Location $artifactRoot
+          cmake -E tar cf "$packageName.zip" --format=zip -- $packageName
+          Pop-Location
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-x64-release
-          path: |
-            build/windows-x64-release/Release/BodySlide x64.exe
-            build/windows-x64-release/Release/OutfitStudio x64.exe
-            build/windows-x64-release/Release/*.pdb
+          path: artifacts/BodySlide-and-Outfit-Studio-windows-x64-release.zip
           if-no-files-found: error
           retention-days: 7
 
@@ -135,12 +160,38 @@ jobs:
           test -x "build/ubuntu-gcc-release/BodySlide x64"
           test -x "build/ubuntu-gcc-release/OutfitStudio x64"
 
+      - name: Package artifacts
+        run: |
+          package_name="BodySlide-and-Outfit-Studio-ubuntu-gcc-release"
+          artifact_root="$GITHUB_WORKSPACE/artifacts"
+          package_dir="$artifact_root/$package_name"
+
+          rm -rf "$artifact_root"
+          mkdir -p "$package_dir"
+
+          cp "build/ubuntu-gcc-release/BodySlide x64" "$package_dir/"
+          cp "build/ubuntu-gcc-release/OutfitStudio x64" "$package_dir/"
+          cp -a res "$package_dir/"
+          cp -a lang "$package_dir/"
+          cp BodySlide.xml BuildSelection.xml Config.xml OutfitStudio.xml RefTemplates.xml "$package_dir/"
+
+          mkdir -p \
+            "$package_dir/SliderSets" \
+            "$package_dir/Automations" \
+            "$package_dir/PoseData" \
+            "$package_dir/RefTemplates" \
+            "$package_dir/ShapeData" \
+            "$package_dir/SliderCategories" \
+            "$package_dir/SliderGroups" \
+            "$package_dir/SliderPresets"
+
+          cd "$artifact_root"
+          cmake -E tar cf "$package_name.zip" --format=zip -- "$package_name"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ubuntu-gcc-release
-          path: |
-            build/ubuntu-gcc-release/BodySlide x64
-            build/ubuntu-gcc-release/OutfitStudio x64
+          path: artifacts/BodySlide-and-Outfit-Studio-ubuntu-gcc-release.zip
           if-no-files-found: error
           retention-days: 7
