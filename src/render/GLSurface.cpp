@@ -10,6 +10,7 @@ See the included LICENSE file
 #include <wx/msgdlg.h>
 
 #include <algorithm>
+#include <cfloat>
 #include <limits>
 #include <set>
 

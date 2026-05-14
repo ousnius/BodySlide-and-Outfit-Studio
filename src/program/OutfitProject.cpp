@@ -20,6 +20,7 @@ See the included LICENSE file
 #include "../FSEngine/FSManager.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <regex>
 #include <sstream>
 
