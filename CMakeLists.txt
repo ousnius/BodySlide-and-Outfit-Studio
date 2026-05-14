@@ -215,7 +215,6 @@ set(BSOS_COMMON_SOURCES
 	lib/FSEngine/FSBSA.cpp
 	lib/FSEngine/FSEngine.cpp
 	lib/FSEngine/FSManager.cpp
-	lib/gli/core/dummy.cpp
 	lib/gli/glm/detail/glm.cpp
 	lib/LZ4F/lz4.c
 	lib/LZ4F/lz4file.c
