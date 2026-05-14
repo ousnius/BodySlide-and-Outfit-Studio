@@ -16,8 +16,19 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        config: [Release, RelWithDebInfo]
-        arch: [x64, Win32]
+        include:
+          - config: Release
+            arch: x64
+            vcpkg_triplet: x64-windows
+          - config: Release
+            arch: Win32
+            vcpkg_triplet: x86-windows
+          - config: RelWithDebInfo
+            arch: x64
+            vcpkg_triplet: x64-windows
+          - config: RelWithDebInfo
+            arch: Win32
+            vcpkg_triplet: x86-windows
     
     steps:
       - name: Checkout code
@@ -31,7 +42,7 @@ jobs:
       - name: Install wxWidgets
         run: |
           vcpkg integrate install
-          vcpkg install wxwidgets:${{ matrix.arch }}-windows
+          vcpkg install wxwidgets:${{ matrix.vcpkg_triplet }}
 
       - name: Create build directory
         run: mkdir build
@@ -43,6 +54,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DBSOS_ENABLE_FBXSDK=OFF `
             -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }} `
             ..
 
       - name: Build
