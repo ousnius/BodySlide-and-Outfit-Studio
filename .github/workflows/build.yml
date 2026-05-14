@@ -1,4 +1,4 @@
-name: Build OutfitStudio and BodySlide
+name: Build OutfitStudio and BodySlide x64
 
 on:
   push:
@@ -16,19 +16,7 @@ jobs:
     runs-on: windows-latest
     strategy:
       matrix:
-        include:
-          - config: Release
-            arch: x64
-            vcpkg_triplet: x64-windows
-          - config: Release
-            arch: Win32
-            vcpkg_triplet: x86-windows
-          - config: RelWithDebInfo
-            arch: x64
-            vcpkg_triplet: x64-windows
-          - config: RelWithDebInfo
-            arch: Win32
-            vcpkg_triplet: x86-windows
+        config: [Release, RelWithDebInfo]
     
     steps:
       - name: Checkout code
@@ -37,12 +25,12 @@ jobs:
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         with:
-          arch: ${{ matrix.arch }}
+          arch: x64
 
-      - name: Install wxWidgets
+      - name: Install wxWidgets x64
         run: |
           vcpkg integrate install
-          vcpkg install wxwidgets:${{ matrix.vcpkg_triplet }}
+          vcpkg install wxwidgets:x64-windows
 
       - name: Create build directory
         run: mkdir build
@@ -50,11 +38,11 @@ jobs:
       - name: Configure CMake
         working-directory: build
         run: |
-          cmake -G "Visual Studio 17 2022" -A ${{ matrix.arch }} `
+          cmake -G "Visual Studio 17 2022" -A x64 `
             -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
             -DBSOS_ENABLE_FBXSDK=OFF `
             -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
-            -DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }} `
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
             ..
 
       - name: Build
@@ -64,6 +52,6 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.config }}-${{ matrix.arch }}
+          name: build-${{ matrix.config }}-x64
           path: build/${{ matrix.config }}/**/*.exe
           retention-days: 30
