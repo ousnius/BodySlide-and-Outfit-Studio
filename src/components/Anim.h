@@ -10,6 +10,10 @@ See the included LICENSE file
 
 #include <map>
 
+// Starfield meshes are normalized to metric units; vertices are scaled by this
+// factor during BSGeometryMeshData deserialization to match older-game units.
+constexpr float sfHavokScale = 69.969f;
+
 struct VertexBoneWeights {
 	std::vector<uint8_t> boneIds;
 	std::vector<float> weights;

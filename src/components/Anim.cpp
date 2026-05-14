@@ -138,11 +138,6 @@ void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 		boneWeights[newID].LoadFromNif(loadFromFile, shape, newID);
 		boneNames[node->name.get()] = newID;
 		if (!gotGTS) {
-			// We don't have a global-to-skin transform, probably because
-			// the NIF has BSSkinBoneData instead of NiSkinData (FO4 or
-			// newer).  So calculate by:
-			// Compose: skin -> bone -> global
-			// and inverting.
 			MatTransform xformBoneToGlobal;
 			if (AnimSkeleton::getInstance().GetBoneTransformToGlobal(node->name.get(), xformBoneToGlobal)) {
 				eachXformGlobalToSkin.push_back(xformBoneToGlobal.ComposeTransforms(boneWeights[newID].xformSkinToBone).InverseTransform());
@@ -150,8 +145,46 @@ void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 		}
 		newID++;
 	}
-	if (!eachXformGlobalToSkin.empty())
+
+	// SF NIFs have no bone NiNodes — use bone names from SkinAttach instead
+	if (newID == 0) {
+		std::vector<std::string> nameList;
+		loadFromFile->GetShapeBoneList(shape, nameList);
+		for (auto& bn : nameList) {
+			boneWeights[newID].LoadFromNif(loadFromFile, shape, newID);
+			boneNames[bn] = newID;
+			if (!gotGTS) {
+				MatTransform xformBoneToGlobal;
+				if (AnimSkeleton::getInstance().GetBoneTransformToGlobal(bn, xformBoneToGlobal)) {
+					if (bn == "C_Spine1" || bn == "C_Hips") {
+						wxLogMessage("SF bone '%s': boneToGlobal t=(%.6f, %.6f, %.6f) scale=%.4f",
+							bn, xformBoneToGlobal.translation.x, xformBoneToGlobal.translation.y,
+							xformBoneToGlobal.translation.z, xformBoneToGlobal.scale);
+						wxLogMessage("  skinToBone t=(%.6f, %.6f, %.6f) scale=%.4f",
+							boneWeights[newID].xformSkinToBone.translation.x,
+							boneWeights[newID].xformSkinToBone.translation.y,
+							boneWeights[newID].xformSkinToBone.translation.z,
+							boneWeights[newID].xformSkinToBone.scale);
+					}
+					eachXformGlobalToSkin.push_back(xformBoneToGlobal.ComposeTransforms(boneWeights[newID].xformSkinToBone).InverseTransform());
+				}
+			}
+			newID++;
+		}
+	}
+
+	if (!eachXformGlobalToSkin.empty()) {
 		xformGlobalToSkin = CalcMedianMatTransform(eachXformGlobalToSkin);
+		wxLogMessage("AnimSkin GTS: t=(%.6f, %.6f, %.6f) scale=%.6f from %zu bones",
+			xformGlobalToSkin.translation.x, xformGlobalToSkin.translation.y,
+			xformGlobalToSkin.translation.z, xformGlobalToSkin.scale,
+			eachXformGlobalToSkin.size());
+		if (!eachXformGlobalToSkin.empty()) {
+			auto& first = eachXformGlobalToSkin[0];
+			wxLogMessage("  first GTS entry: t=(%.6f, %.6f, %.6f) scale=%.6f",
+				first.translation.x, first.translation.y, first.translation.z, first.scale);
+		}
+	}
 }
 
 bool AnimInfo::LoadFromNif(NifFile* nif) {
@@ -183,9 +216,20 @@ bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 	for (auto& bn : boneNames) {
 		if (!AnimSkeleton::getInstance().RefBone(bn)) {
 			AnimBone* cstm = AnimSkeleton::getInstance().LoadCustomBoneFromNif(nif, bn);
-			if (!cstm->isStandardBone)
-				nonRefBones += bn + "\n";
-			AnimSkeleton::getInstance().RefBone(bn);
+			if (!cstm) {
+				// SF body NIFs have no bone NiNodes — look up in the reference skeleton
+				NifFile& skelNif = AnimSkeleton::getInstance().refSkeletonNif;
+				cstm = AnimSkeleton::getInstance().LoadCustomBoneFromNif(&skelNif, bn);
+			}
+			if (cstm) {
+				if (!cstm->isStandardBone)
+					nonRefBones += bn + "\n";
+				AnimSkeleton::getInstance().RefBone(bn);
+			}
+			else {
+				wxLogWarning("Bone '%s' not found in NIF or reference skeleton, skipping.", bn);
+				continue;
+			}
 		}
 
 		shapeBones[shapeName].push_back(bn);
