@@ -1,0 +1,139 @@
+name: CMake Release
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64-release:
+    name: Windows x64 Release
+    runs-on: windows-latest
+
+    env:
+      BUILD_TYPE: Release
+      VCPKG_BINARY_SOURCES: clear;files,${{ runner.temp }}\vcpkg-binary-cache,readwrite
+      VCPKG_ROOT: ${{ runner.temp }}\vcpkg
+      VCPKG_TARGET_TRIPLET: x64-windows-static
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Cache vcpkg binary packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}\vcpkg-binary-cache
+          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-${{ hashFiles('.github/workflows/cmake-release.yml') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git "$env:VCPKG_ROOT"
+          & "$env:VCPKG_ROOT\bootstrap-vcpkg.bat" -disableMetrics
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ runner.temp }}\vcpkg-binary-cache" | Out-Null
+          & "$env:VCPKG_ROOT\vcpkg.exe" install "wxwidgets:$env:VCPKG_TARGET_TRIPLET"
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          cmake -S . -B build/windows-x64-release `
+            -G "Visual Studio 17 2022" `
+            -A x64 `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TARGET_TRIPLET" `
+            -DBSOS_ENABLE_FBXSDK=OFF
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build/windows-x64-release --config "$env:BUILD_TYPE" --target BodySlide OutfitStudio --parallel
+
+      - name: Verify outputs
+        shell: pwsh
+        run: |
+          $outputs = @(
+            "build/windows-x64-release/Release/BodySlide x64.exe",
+            "build/windows-x64-release/Release/OutfitStudio x64.exe"
+          )
+
+          foreach ($output in $outputs) {
+            if (-not (Test-Path $output)) {
+              Write-Error "Missing expected build output: $output"
+            }
+          }
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-release
+          path: |
+            build/windows-x64-release/Release/BodySlide x64.exe
+            build/windows-x64-release/Release/OutfitStudio x64.exe
+            build/windows-x64-release/Release/*.pdb
+          if-no-files-found: error
+          retention-days: 7
+
+  ubuntu-gcc-release:
+    name: Ubuntu GCC Release
+    runs-on: ubuntu-latest
+
+    env:
+      BUILD_TYPE: Release
+      CC: gcc
+      CXX: g++
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            build-essential \
+            cmake \
+            g++ \
+            gcc \
+            libglew-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libwxgtk3.2-dev \
+            libwxgtk-gl3.2-dev \
+            ninja-build \
+            pkg-config
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build/ubuntu-gcc-release \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+            -DBSOS_ENABLE_FBXSDK=OFF
+
+      - name: Build
+        run: cmake --build build/ubuntu-gcc-release --target BodySlide OutfitStudio --parallel
+
+      - name: Verify outputs
+        run: |
+          test -x "build/ubuntu-gcc-release/BodySlide x64"
+          test -x "build/ubuntu-gcc-release/OutfitStudio x64"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu-gcc-release
+          path: |
+            build/ubuntu-gcc-release/BodySlide x64
+            build/ubuntu-gcc-release/OutfitStudio x64
+          if-no-files-found: error
+          retention-days: 7
