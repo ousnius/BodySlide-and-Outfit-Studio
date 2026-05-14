@@ -1,0 +1,57 @@
+name: Build OutfitStudio and BodySlide
+
+on:
+  push:
+    branches:
+      - dev
+      - main
+  pull_request:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        config: [Release, RelWithDebInfo]
+        arch: [x64, Win32]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch }}
+
+      - name: Install wxWidgets
+        run: |
+          vcpkg integrate install
+          vcpkg install wxwidgets:${{ matrix.arch }}-windows
+
+      - name: Create build directory
+        run: mkdir build
+
+      - name: Configure CMake
+        working-directory: build
+        run: |
+          cmake -G "Visual Studio 17 2022" -A ${{ matrix.arch }} `
+            -DCMAKE_BUILD_TYPE=${{ matrix.config }} `
+            -DBSOS_ENABLE_FBXSDK=OFF `
+            -DCMAKE_TOOLCHAIN_FILE="C:/vcpkg/scripts/buildsystems/vcpkg.cmake" `
+            ..
+
+      - name: Build
+        working-directory: build
+        run: cmake --build . --config ${{ matrix.config }} --parallel
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.config }}-${{ matrix.arch }}
+          path: build/${{ matrix.config }}/**/*.exe
+          retention-days: 30
