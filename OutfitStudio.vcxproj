@@ -813,6 +813,7 @@
     <ClInclude Include="src\components\RefTemplates.h" />
     <ClInclude Include="src\components\SliderCategories.h" />
     <ClInclude Include="src\components\SliderData.h" />
+    <ClInclude Include="src\components\SliderDataFileUtil.h" />
     <ClInclude Include="src\components\SliderGroup.h" />
     <ClInclude Include="src\components\SliderManager.h" />
     <ClInclude Include="src\components\SliderPresets.h" />
@@ -840,6 +841,7 @@
     <ClInclude Include="src\program\OutfitStudio.h" />
     <ClInclude Include="src\program\PresetSaveDialog.h" />
     <ClInclude Include="src\program\ShapeProperties.h" />
+    <ClInclude Include="src\program\SliderDataDialog.h" />
     <ClInclude Include="src\program\SliderDataImportDialog.h" />
     <ClInclude Include="src\render\GLCanvas.h" />
     <ClInclude Include="src\render\GLDialog.h" />
@@ -928,6 +930,7 @@
     <ClCompile Include="src\program\OutfitStudio.cpp" />
     <ClCompile Include="src\program\PresetSaveDialog.cpp" />
     <ClCompile Include="src\program\ShapeProperties.cpp" />
+    <ClCompile Include="src\program\SliderDataDialog.cpp" />
     <ClCompile Include="src\program\SliderDataImportDialog.cpp" />
     <ClCompile Include="src\render\GLCanvas.cpp" />
     <ClCompile Include="src\render\GLDialog.cpp" />

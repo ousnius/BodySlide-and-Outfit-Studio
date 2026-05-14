@@ -2217,6 +2217,11 @@
 				<help>Delete the active slider from the project. (Cannot be undone)</help>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="sliderDataLocations">
+				<label>Slider Data...</label>
+				<help>View and edit local and external slider data locations.</help>
+			</object>
+			<object class="separator" />
 			<object class="wxMenuItem" name="sliderProperties">
 				<label>Properties...\tTab</label>
 				<help>Display and edit the active slider's properties.</help>

@@ -706,6 +706,9 @@
     <ClInclude Include="src\components\SliderData.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\SliderDataFileUtil.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\SliderGroup.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -764,6 +767,9 @@
       <Filter>Program</Filter>
     </ClInclude>
     <ClInclude Include="src\program\ShapeProperties.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\program\SliderDataDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
     <ClInclude Include="src\program\OutfitProject.h">
@@ -2035,6 +2041,9 @@
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\program\ShapeProperties.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\SliderDataDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\program\OutfitProject.cpp">

@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitProject.h"
+#include "../components/SliderDataFileUtil.h"
 #include "../components/WeightNorm.h"
 #include "../files/FBXWrangler.h"
 #include "../files/ObjFile.h"
@@ -12,6 +13,7 @@ See the included LICENSE file
 #include "../program/FBXImportDialog.h"
 #include "../program/ObjImportDialog.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/StringStuff.h"
 #include "NifUtil.hpp"
 
 #include "../FSEngine/FSEngine.h"
@@ -100,6 +102,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	mGenWeights = genWeights;
 	bPreventMorphFile = preventMorphFile;
 	bKeepZappedShapes = keepZappedShapes;
+	activeSet.ClearLocalOnlyDataFolders();
 
 	auto shapes = workNif.GetShapes();
 
@@ -113,8 +116,10 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	if (copyRef && baseShape) {
 		// Add all the reference shapes to the target list.
 		std::string baseShapeName = baseShape->name.get();
-		outSet.AddShapeTarget(baseShapeName, ShapeToTarget(baseShapeName));
-		outSet.SetTargetDataFolders(ShapeToTarget(baseShapeName), activeSet.GetShapeDataFolders(baseShapeName));
+		std::string baseTarget = ShapeToTarget(baseShapeName);
+		outSet.AddShapeTarget(baseShapeName, baseTarget);
+		if (activeSet.TargetHasExternalData(baseTarget))
+			outSet.SetTargetDataFolders(baseTarget, activeSet.GetShapeDataFolders(baseShapeName));
 		outSet.SetSmoothSeamNormals(baseShapeName, activeSet.GetSmoothSeamNormals(baseShapeName));
 		outSet.SetSmoothSeamNormalsAngle(baseShapeName, activeSet.GetSmoothSeamNormalsAngle(baseShapeName));
 		outSet.SetLockNormals(baseShapeName, activeSet.GetLockNormals(baseShapeName));
@@ -131,13 +136,16 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 			continue;
 
 		std::string shapeName = s->name.get();
-		outSet.AddShapeTarget(shapeName, ShapeToTarget(shapeName));
+		std::string targetName = ShapeToTarget(shapeName);
+		outSet.AddShapeTarget(shapeName, targetName);
 
 		// Reference only if not local folder
-		std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
-		for (auto& df : shapeDataFolders) {
-			if (df != activeSet.GetDefaultDataFolder())
-				outSet.AddTargetDataFolder(ShapeToTarget(shapeName), df);
+		if (activeSet.TargetHasExternalData(targetName)) {
+			std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
+			for (auto& df : shapeDataFolders) {
+				if (df != activeSet.GetDefaultDataFolder())
+					outSet.AddTargetDataFolder(targetName, df);
+			}
 		}
 
 		outSet.SetSmoothSeamNormals(shapeName, activeSet.GetSmoothSeamNormals(shapeName));
@@ -545,6 +553,260 @@ std::string OutfitProject::SliderShapeDataName(const size_t index, const std::st
 	return activeSet.ShapeToDataName(index, shapeName);
 }
 
+std::string OutfitProject::SliderDataTargetForShape(NiShape* shape) {
+	if (!shape)
+		return "";
+
+	std::string shapeName = shape->name.get();
+	std::string target = ShapeToTarget(shapeName);
+	if (target.empty()) {
+		target = shapeName;
+		activeSet.AddShapeTarget(shapeName, target);
+	}
+
+	return target;
+}
+
+void OutfitProject::GetSliderDataLocations(std::vector<SliderDataLocation>& outLocations, const std::string& sliderName) {
+	outLocations.clear();
+	activeSet.ClearLocalOnlyDataFolders();
+
+	for (size_t sliderIndex = 0; sliderIndex < activeSet.size(); sliderIndex++) {
+		if (!sliderName.empty() && activeSet[sliderIndex].name != sliderName)
+			continue;
+
+		for (size_t dataFileIndex = 0; dataFileIndex < activeSet[sliderIndex].dataFiles.size(); dataFileIndex++) {
+			auto& dataFile = activeSet[sliderIndex].dataFiles[dataFileIndex];
+			SliderDataFileResolution resolution = activeSet.ResolveSliderDataFile(dataFile);
+
+			SliderDataLocation location;
+			location.sliderIndex = sliderIndex;
+			location.dataIndex = dataFileIndex;
+			location.sliderName = activeSet[sliderIndex].name;
+			location.shapeName = activeSet.TargetToShape(dataFile.targetName);
+			if (location.shapeName.empty())
+				location.shapeName = dataFile.targetName;
+			location.targetName = dataFile.targetName;
+			location.dataName = dataFile.dataName;
+			location.fileName = dataFile.fileName;
+			location.dataFileName = resolution.dataFileName;
+			location.dataNameInFile = resolution.dataNameInFile;
+			location.local = dataFile.bLocal;
+			location.resolved = resolution.resolved;
+			location.isBSD = resolution.isBSD;
+			location.resolvedPath = resolution.resolvedPath;
+			location.candidatePath = resolution.candidatePath;
+			location.dataFolders = resolution.dataFolders;
+
+			outLocations.push_back(std::move(location));
+		}
+	}
+}
+
+bool OutfitProject::SliderDataIsExternal(const std::string& sliderName, NiShape* shape) {
+	size_t sliderIndex = 0;
+	if (!shape || !SliderIndexFromName(sliderName, sliderIndex))
+		return false;
+
+	std::string target = ShapeToTarget(shape->name.get());
+	if (target.empty())
+		target = shape->name.get();
+	if (target.empty())
+		return false;
+
+	for (auto& dataFile : activeSet[sliderIndex].dataFiles)
+		if (dataFile.targetName == target && !dataFile.bLocal)
+			return true;
+
+	return false;
+}
+
+std::string OutfitProject::EnsureSliderDataLocal(const std::string& sliderName, NiShape* shape) {
+	size_t sliderIndex = 0;
+	if (!shape || !SliderIndexFromName(sliderName, sliderIndex))
+		return "";
+
+	std::string target = SliderDataTargetForShape(shape);
+	if (target.empty())
+		return "";
+
+	std::string dataName = activeSet[sliderIndex].TargetDataName(target);
+	if (dataName.empty()) {
+		dataName = target + sliderName;
+		activeSet[sliderIndex].AddDataFile(target, dataName, dataName);
+	}
+	else
+		activeSet[sliderIndex].SetLocalData(dataName);
+
+	if (!activeSet.TargetHasExternalData(target))
+		activeSet.ClearLocalOnlyDataFolders();
+
+	return dataName;
+}
+
+bool OutfitProject::SetSliderDataLocal(const size_t sliderIndex, const size_t dataIndex, std::string* errorMessage) {
+	DiffInfo* dataFile = activeSet.GetSliderDataFile(sliderIndex, dataIndex);
+	if (!dataFile) {
+		if (errorMessage)
+			*errorMessage = "Slider data entry no longer exists.";
+		return false;
+	}
+
+	std::string targetName = dataFile->targetName;
+	activeSet.SetSliderDataFileLocal(sliderIndex, dataIndex, true);
+	if (!activeSet.TargetHasExternalData(targetName))
+		activeSet.ClearLocalOnlyDataFolders();
+
+	return true;
+}
+
+bool OutfitProject::SetSliderDataExternal(const size_t sliderIndex, const size_t dataIndex, const std::vector<std::string>& dataFolders, std::string* errorMessage) {
+	return SetSliderDataExternal(sliderIndex, dataIndex, dataFolders, std::string(), errorMessage);
+}
+
+bool OutfitProject::SetSliderDataExternal(const size_t sliderIndex, const size_t dataIndex, const std::vector<std::string>& dataFolders, const std::string& osdFileName, std::string* errorMessage) {
+	std::vector<std::pair<size_t, size_t>> dataEntries;
+	dataEntries.emplace_back(sliderIndex, dataIndex);
+	return SetSliderDataExternal(dataEntries, dataFolders, osdFileName, errorMessage);
+}
+
+bool OutfitProject::SetSliderDataExternal(const std::vector<std::pair<size_t, size_t>>& dataEntries, const std::vector<std::string>& dataFolders, std::string* errorMessage) {
+	return SetSliderDataExternal(dataEntries, dataFolders, std::string(), errorMessage);
+}
+
+bool OutfitProject::SetSliderDataExternal(const std::vector<std::pair<size_t, size_t>>& dataEntries, const std::vector<std::string>& dataFolders, const std::string& osdFileName, std::string* errorMessage) {
+	std::vector<std::string> checkedFolders;
+	for (auto& dataFolder : dataFolders)
+		if (!dataFolder.empty())
+			checkedFolders.push_back(dataFolder);
+
+	std::string checkedOSDFileName = ToOSSlashes(osdFileName);
+	if (!checkedOSDFileName.empty() && !SliderDataFileNameIsOSD(checkedOSDFileName)) {
+		if (errorMessage)
+			*errorMessage = "Enter an .osd file name.";
+		return false;
+	}
+
+	if (checkedFolders.empty()) {
+		if (errorMessage)
+			*errorMessage = "Enter at least one shape data folder.";
+		return false;
+	}
+
+	if (dataEntries.empty()) {
+		if (errorMessage)
+			*errorMessage = "Select at least one slider data entry.";
+		return false;
+	}
+
+	struct CheckedDataEntry {
+		size_t sliderIndex = 0;
+		size_t dataIndex = 0;
+		std::string fileName;
+	};
+
+	std::vector<CheckedDataEntry> checkedEntries;
+	std::vector<std::string> targetNames;
+	for (auto& dataEntry : dataEntries) {
+		DiffInfo* selectedDataFile = activeSet.GetSliderDataFile(dataEntry.first, dataEntry.second);
+		if (!selectedDataFile) {
+			if (errorMessage)
+				*errorMessage = "Slider data entry no longer exists.";
+			return false;
+		}
+
+		bool duplicateEntry = false;
+		for (auto& checkedEntry : checkedEntries) {
+			if (checkedEntry.sliderIndex == dataEntry.first && checkedEntry.dataIndex == dataEntry.second) {
+				duplicateEntry = true;
+				break;
+			}
+		}
+		if (!duplicateEntry) {
+			CheckedDataEntry checkedEntry;
+			checkedEntry.sliderIndex = dataEntry.first;
+			checkedEntry.dataIndex = dataEntry.second;
+			checkedEntry.fileName = BuildSliderDataFileName(*selectedDataFile, checkedOSDFileName);
+			checkedEntries.push_back(std::move(checkedEntry));
+		}
+
+		bool knownTarget = false;
+		for (auto& targetName : targetNames) {
+			if (targetName == selectedDataFile->targetName) {
+				knownTarget = true;
+				break;
+			}
+		}
+		if (!knownTarget)
+			targetNames.push_back(selectedDataFile->targetName);
+	}
+
+	auto targetSelected = [&](const std::string& targetName) {
+		for (auto& selectedTarget : targetNames)
+			if (selectedTarget == targetName)
+				return true;
+
+		return false;
+	};
+
+	auto entrySelected = [&](size_t sliderIndex, size_t dataIndex) {
+		for (auto& checkedEntry : checkedEntries)
+			if (checkedEntry.sliderIndex == sliderIndex && checkedEntry.dataIndex == dataIndex)
+				return true;
+
+		return false;
+	};
+
+	auto selectedFileName = [&](size_t sliderIndex, size_t dataIndex) -> const std::string* {
+		for (auto& checkedEntry : checkedEntries)
+			if (checkedEntry.sliderIndex == sliderIndex && checkedEntry.dataIndex == dataIndex)
+				return &checkedEntry.fileName;
+
+		return nullptr;
+	};
+
+	for (size_t curSliderIndex = 0; curSliderIndex < activeSet.size(); curSliderIndex++) {
+		for (size_t curDataIndex = 0; curDataIndex < activeSet[curSliderIndex].dataFiles.size(); curDataIndex++) {
+			auto& dataFile = activeSet[curSliderIndex].dataFiles[curDataIndex];
+			if (!targetSelected(dataFile.targetName))
+				continue;
+
+			bool selectedEntry = entrySelected(curSliderIndex, curDataIndex);
+			if (dataFile.bLocal && !selectedEntry)
+				continue;
+
+			DiffInfo resolvedDataFile = dataFile;
+			if (selectedEntry)
+				resolvedDataFile.bLocal = false;
+
+			if (const std::string* fileName = selectedFileName(curSliderIndex, curDataIndex))
+				resolvedDataFile.fileName = *fileName;
+
+			SliderDataFileResolution resolution = activeSet.ResolveSliderDataFile(resolvedDataFile, &checkedFolders);
+			if (!resolution.resolved) {
+				if (errorMessage) {
+					*errorMessage = "Could not find slider data for '";
+					*errorMessage += activeSet[curSliderIndex].name;
+					*errorMessage += "' / '";
+					*errorMessage += dataFile.dataName;
+					*errorMessage += "' in the selected data folder(s).";
+				}
+				return false;
+			}
+		}
+	}
+
+	for (auto& targetName : targetNames)
+		activeSet.SetTargetDataFolders(targetName, checkedFolders);
+
+	for (auto& dataEntry : checkedEntries) {
+		activeSet.SetSliderDataFileName(dataEntry.sliderIndex, dataEntry.dataIndex, dataEntry.fileName);
+		activeSet.SetSliderDataFileLocal(dataEntry.sliderIndex, dataEntry.dataIndex, false);
+	}
+
+	return true;
+}
+
 bool OutfitProject::SliderClamp(const size_t index) {
 	if (!ValidSlider(index))
 		return false;
@@ -731,10 +993,12 @@ void OutfitProject::CloneSlider(const std::string& sliderName, const std::string
 }
 
 void OutfitProject::NegateSlider(const std::string& sliderName, NiShape* shape) {
-	std::string target = ShapeToTarget(shape->name.get());
+	std::string target = SliderDataTargetForShape(shape);
+	std::string sliderData = EnsureSliderDataLocal(sliderName, shape);
+	if (sliderData.empty())
+		return;
 
 	if (IsBaseShape(shape)) {
-		std::string sliderData = activeSet[sliderName].TargetDataName(target);
 		baseDiffData.ScaleDiff(sliderData, target, -1.0f);
 	}
 	else
@@ -1119,7 +1383,7 @@ int OutfitProject::SaveSliderOBJ(const std::string& sliderName, NiShape* shape, 
 }
 
 bool OutfitProject::SetSliderFromNIF(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
-	std::string target = ShapeToTarget(shape->name.get());
+	std::string target = SliderDataTargetForShape(shape);
 
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
@@ -1160,8 +1424,11 @@ bool OutfitProject::SetSliderFromNIF(const std::string& sliderName, NiShape* sha
 			return false;
 	}
 
+	std::string sliderData = EnsureSliderDataLocal(sliderName, shape);
+	if (sliderData.empty())
+		return false;
+
 	if (IsBaseShape(shape)) {
-		std::string sliderData = activeSet[sliderName].TargetDataName(target);
 		baseDiffData.LoadSet(sliderData, target, diff);
 	}
 	else
@@ -1171,9 +1438,12 @@ bool OutfitProject::SetSliderFromNIF(const std::string& sliderName, NiShape* sha
 }
 
 void OutfitProject::SetSliderFromBSD(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
-	std::string target = ShapeToTarget(shape->name.get());
+	std::string target = SliderDataTargetForShape(shape);
+	std::string sliderData = EnsureSliderDataLocal(sliderName, shape);
+	if (sliderData.empty())
+		return;
+
 	if (IsBaseShape(shape)) {
-		std::string sliderData = activeSet[sliderName].TargetDataName(target);
 		baseDiffData.LoadSet(sliderData, target, fileName);
 	}
 	else {
@@ -1185,7 +1455,7 @@ void OutfitProject::SetSliderFromBSD(const std::string& sliderName, NiShape* sha
 }
 
 bool OutfitProject::SetSliderFromOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
-	std::string target = ShapeToTarget(shape->name.get());
+	std::string target = SliderDataTargetForShape(shape);
 
 	ObjImportOptions options;
 	options.NoFaces = true;
@@ -1218,8 +1488,11 @@ bool OutfitProject::SetSliderFromOBJ(const std::string& sliderName, NiShape* sha
 			return false;
 	}
 
+	std::string sliderData = EnsureSliderDataLocal(sliderName, shape);
+	if (sliderData.empty())
+		return false;
+
 	if (IsBaseShape(shape)) {
-		std::string sliderData = activeSet[sliderName].TargetDataName(target);
 		baseDiffData.LoadSet(sliderData, target, diff);
 	}
 	else
@@ -1230,7 +1503,7 @@ bool OutfitProject::SetSliderFromOBJ(const std::string& sliderName, NiShape* sha
 
 #ifdef USE_FBXSDK
 bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
-	std::string target = ShapeToTarget(shape->name.get());
+	std::string target = SliderDataTargetForShape(shape);
 
 	FBXWrangler fbxw;
 	bool result = fbxw.ImportScene(fileName);
@@ -1254,11 +1527,18 @@ bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, NiShape* sha
 		if (workNif.CalcShapeDiff(shape, &fbxShape->verts, diff, 1.0f))
 			return false;
 
-		std::string sliderData = activeSet[sliderName].TargetDataName(target);
+		std::string sliderData = EnsureSliderDataLocal(sliderName, shape);
+		if (sliderData.empty())
+			return false;
+
 		baseDiffData.LoadSet(sliderData, target, diff);
 	}
 	else {
 		if (workNif.CalcShapeDiff(shape, &fbxShape->verts, diff, 1.0f))
+			return false;
+
+		std::string sliderData = EnsureSliderDataLocal(sliderName, shape);
+		if (sliderData.empty())
 			return false;
 
 		morpher.SetResultDiff(target, sliderName, diff);
@@ -1269,9 +1549,12 @@ bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, NiShape* sha
 #endif
 
 void OutfitProject::SetSliderFromDiff(const std::string& sliderName, NiShape* shape, const TargetDataDiffs& diff) {
-	std::string target = ShapeToTarget(shape->name.get());
+	std::string target = SliderDataTargetForShape(shape);
+	std::string sliderData = EnsureSliderDataLocal(sliderName, shape);
+	if (sliderData.empty())
+		return;
+
 	if (IsBaseShape(shape)) {
-		std::string sliderData = activeSet[sliderName].TargetDataName(target);
 		baseDiffData.LoadSet(sliderData, target, diff);
 	}
 	else {
@@ -1701,14 +1984,10 @@ void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderN
 	// Morph results are stored in two different places depending on whether it's an outfit or the base shape.
 	// The outfit morphs are stored in the automorpher, whereas the base shape diff info is stored in directly in basediffdata.
 
-	std::string target = ShapeToTarget(shape->name.get());
-	std::string dataName = activeSet[sliderName].TargetDataName(target);
-	if (!vertUpdates.empty()) {
-		if (dataName.empty())
-			activeSet[sliderName].AddDataFile(target, target + sliderName, target + sliderName);
-		else
-			activeSet[sliderName].SetLocalData(dataName);
-	}
+	std::string target = SliderDataTargetForShape(shape);
+	std::string dataName = vertUpdates.empty() ? activeSet[sliderName].TargetDataName(target) : EnsureSliderDataLocal(sliderName, shape);
+	if (dataName.empty())
+		return;
 
 	if (IsBaseShape(shape)) {
 		for (auto& i : vertUpdates) {
@@ -1721,10 +2000,13 @@ void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderN
 }
 
 void OutfitProject::ScaleMorphResult(NiShape* shape, const std::string& sliderName, float scaleValue) {
+	std::string sliderData = EnsureSliderDataLocal(sliderName, shape);
+	if (sliderData.empty())
+		return;
+
 	if (IsBaseShape(shape)) {
-		std::string target = ShapeToTarget(shape->name.get());
-		std::string dataName = activeSet[sliderName].TargetDataName(target);
-		baseDiffData.ScaleDiff(dataName, target, scaleValue);
+		std::string target = SliderDataTargetForShape(shape);
+		baseDiffData.ScaleDiff(sliderData, target, scaleValue);
 	}
 	else
 		morpher.ScaleResultDiff(shape->name.get(), sliderName, scaleValue);
@@ -2121,10 +2403,12 @@ void OutfitProject::ClearOutfit() {
 }
 
 void OutfitProject::ClearSlider(NiShape* shape, const std::string& sliderName) {
-	std::string target = ShapeToTarget(shape->name.get());
+	std::string target = SliderDataTargetForShape(shape);
+	std::string data = EnsureSliderDataLocal(sliderName, shape);
+	if (data.empty())
+		return;
 
 	if (IsBaseShape(shape)) {
-		std::string data = activeSet[sliderName].TargetDataName(target);
 		baseDiffData.EmptySet(data, target);
 	}
 	else
@@ -2132,10 +2416,12 @@ void OutfitProject::ClearSlider(NiShape* shape, const std::string& sliderName) {
 }
 
 void OutfitProject::ClearUnmaskedDiff(NiShape* shape, const std::string& sliderName, std::unordered_map<uint16_t, float>* mask) {
-	std::string target = ShapeToTarget(shape->name.get());
+	std::string target = SliderDataTargetForShape(shape);
+	std::string data = EnsureSliderDataLocal(sliderName, shape);
+	if (data.empty())
+		return;
 
 	if (IsBaseShape(shape)) {
-		std::string data = activeSet[sliderName].TargetDataName(target);
 		baseDiffData.ZeroVertDiff(data, target, nullptr, mask);
 	}
 	else
@@ -2581,6 +2867,29 @@ void OutfitProject::InitConform() {
 	}
 }
 
+void OutfitProject::GetConformSliderNames(const ConformOptions& options, std::vector<std::string>& outSliderNames) {
+	outSliderNames.clear();
+
+	for (size_t i = 0; i < activeSet.size(); i++) {
+		if (SliderZap(i) || SliderUV(i))
+			continue;
+
+		if (!options.sliderNames.empty()) {
+			bool found = false;
+			for (const auto& sliderName : options.sliderNames) {
+				if (sliderName == activeSet[i].name) {
+					found = true;
+					break;
+				}
+			}
+			if (!found)
+				continue;
+		}
+
+		outSliderNames.push_back(activeSet[i].name);
+	}
+}
+
 void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) {
 	if (!workNif.IsValid() || !baseShape)
 		return;
@@ -2595,28 +2904,27 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 	morpher.BuildProximityCache(shape->name.get(), options.proximityRadius, &maskIndices);
 
 	std::string refTarget = ShapeToTarget(baseShape->name.get());
-	int conformedCount = 0;
+	std::vector<std::string> conformSliderNames;
+	GetConformSliderNames(options, conformSliderNames);
+
+	int conformedCount = static_cast<int>(conformSliderNames.size());
 	int skippedByFilter = 0;
-	for (size_t i = 0; i < activeSet.size(); i++) {
-		if (SliderZap(i) || SliderUV(i))
-			continue;
-		if (!options.sliderNames.empty()) {
-			bool found = false;
-			for (const auto& sn : options.sliderNames) {
-				if (sn == activeSet[i].name) {
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				skippedByFilter++;
-				continue;
-			}
-		}
-		conformedCount++;
+	if (!options.sliderNames.empty()) {
+		// Count sliders excluded only by the name filter (not by zap/UV).
+		size_t eligible = 0;
+		for (size_t i = 0; i < activeSet.size(); i++)
+			if (!SliderZap(i) && !SliderUV(i))
+				eligible++;
+
+		skippedByFilter = static_cast<int>(eligible) - conformedCount;
+		if (skippedByFilter < 0)
+			skippedByFilter = 0;
+	}
+
+	for (const auto& sliderName : conformSliderNames) {
 		morpher.GenerateResultDiff(shape->name.get(),
-									   activeSet[i].name,
-									   activeSet[i].TargetDataName(refTarget),
+									   sliderName,
+									   activeSet[sliderName].TargetDataName(refTarget),
 									   true,
 									   options.maxResults,
 									   options.noSqueeze,
@@ -2624,6 +2932,7 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 									   options.axisX,
 									   options.axisY,
 									   options.axisZ);
+		EnsureSliderDataLocal(sliderName, shape);
 	}
 
 	if (!options.sliderNames.empty())

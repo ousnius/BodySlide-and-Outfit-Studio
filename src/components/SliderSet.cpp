@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "SliderSet.h"
+#include "SliderDataFileUtil.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 
@@ -16,6 +17,110 @@ SliderSet::~SliderSet() {}
 
 SliderSet::SliderSet(XMLElement* element) {
 	LoadSliderSet(element);
+}
+
+std::vector<std::string> SliderSet::GetTargetDataFolders(const std::string& targetName) const {
+	for (auto& shape : shapeAttributes) {
+		if (shape.second.targetShape == targetName) {
+			if (!shape.second.dataFolders.empty())
+				return shape.second.dataFolders;
+
+			break;
+		}
+	}
+
+	std::vector<std::string> dataFolders;
+	dataFolders.push_back(datafolder);
+	return dataFolders;
+}
+
+SliderDataFileResolution SliderSet::ResolveSliderDataFile(const DiffInfo& dataFile, const std::vector<std::string>* externalDataFolders) const {
+	SliderDataFileResolution result;
+	if (dataFile.fileName.size() <= 4)
+		return result;
+
+	result.isBSD = SliderDataFileIsBSD(dataFile.fileName);
+	if (!dataFile.bLocal && externalDataFolders)
+		result.dataFolders = *externalDataFolders;
+	else if (!dataFile.bLocal)
+		result.dataFolders = GetTargetDataFolders(dataFile.targetName);
+	else
+		result.dataFolders.push_back(datafolder);
+
+	std::string fullFilePath = baseDataPath + PathSepStr;
+	std::string dataFileName = dataFile.fileName;
+
+	if (!result.isBSD) {
+		if (!SplitSliderDataFileName(dataFile.fileName, dataFileName, result.dataNameInFile))
+			return result;
+	}
+
+	result.dataFileName = dataFileName;
+
+	for (auto& dataFolder : result.dataFolders) {
+		std::string filePath = dataFolder + PathSepStr + dataFileName;
+		std::string candidatePath = fullFilePath + filePath;
+		if (result.candidatePath.empty())
+			result.candidatePath = candidatePath;
+
+		if (PlatformUtil::FileExists(candidatePath)) {
+			result.resolved = true;
+			result.resolvedPath = candidatePath;
+			break;
+		}
+	}
+
+	return result;
+}
+
+DiffInfo* SliderSet::GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex) {
+	if (sliderIndex >= sliders.size() || dataFileIndex >= sliders[sliderIndex].dataFiles.size())
+		return nullptr;
+
+	return &sliders[sliderIndex].dataFiles[dataFileIndex];
+}
+
+const DiffInfo* SliderSet::GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex) const {
+	if (sliderIndex >= sliders.size() || dataFileIndex >= sliders[sliderIndex].dataFiles.size())
+		return nullptr;
+
+	return &sliders[sliderIndex].dataFiles[dataFileIndex];
+}
+
+void SliderSet::SetSliderDataFileLocal(const size_t sliderIndex, const size_t dataFileIndex, const bool local) {
+	DiffInfo* dataFile = GetSliderDataFile(sliderIndex, dataFileIndex);
+	if (dataFile)
+		dataFile->bLocal = local;
+}
+
+void SliderSet::SetSliderDataFileName(const size_t sliderIndex, const size_t dataFileIndex, const std::string& fileName) {
+	DiffInfo* dataFile = GetSliderDataFile(sliderIndex, dataFileIndex);
+	if (dataFile)
+		dataFile->fileName = fileName;
+}
+
+bool SliderSet::TargetHasExternalData(const std::string& targetName) const {
+	for (auto& slider : sliders)
+		for (auto& dataFile : slider.dataFiles)
+			if (dataFile.targetName == targetName && !dataFile.bLocal)
+				return true;
+
+	return false;
+}
+
+bool SliderSet::ClearLocalOnlyDataFolders() {
+	bool changed = false;
+	for (auto& shape : shapeAttributes) {
+		if (shape.second.dataFolders.empty())
+			continue;
+
+		if (!TargetHasExternalData(shape.second.targetShape)) {
+			shape.second.dataFolders.clear();
+			changed = true;
+		}
+	}
+
+	return changed;
 }
 
 

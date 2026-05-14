@@ -1056,6 +1056,8 @@ public:
 
 	void ActiveShapesUpdated(UndoStateProject* usp, bool bIsUndo = false);
 	void UpdateActiveShape();
+	bool ConfirmSliderDataLocalForEdit(nifly::NiShape* shape, const std::string& sliderName);
+	bool ConfirmSliderDataLocalForEdit(const std::vector<nifly::NiShape*>& shapes, const std::vector<std::string>& sliderNames);
 	void UpdateBoneCounts();
 	void HighlightSliderData();
 	void HighlightBoneNamesWithWeights();
@@ -1449,6 +1451,7 @@ private:
 
 	void ShowSliderProperties(const std::string& sliderName);
 	void OnSliderProperties(wxCommandEvent& event);
+	void OnSliderDataLocations(wxCommandEvent& event);
 	void OnSliderFixClipping(wxCommandEvent& event);
 
 	bool ShowClippingFixStrength(float& outStrength);

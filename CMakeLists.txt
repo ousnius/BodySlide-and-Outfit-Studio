@@ -96,6 +96,7 @@ set(OSsources
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp
 	src/program/AutomationDialog.cpp
+	src/program/SliderDataDialog.cpp
 	src/program/SliderDataImportDialog.cpp
 	)
 set(BSsources

@@ -24,6 +24,16 @@ public:
 	bool lockNormals = false;
 };
 
+struct SliderDataFileResolution {
+	bool resolved = false;
+	bool isBSD = false;
+	std::string dataFileName;
+	std::string dataNameInFile;
+	std::string resolvedPath;
+	std::string candidatePath;
+	std::vector<std::string> dataFolders;
+};
+
 class SliderSet {
 	std::string name;
 	std::string baseDataPath; // Base data path - from application configuration.
@@ -119,6 +129,14 @@ public:
 	std::string GetOutputFile() { return outputfile; }
 	std::string GetOutputFilePath();
 	std::string GetDefaultDataFolder() { return datafolder; }
+	std::vector<std::string> GetTargetDataFolders(const std::string& targetName) const;
+	SliderDataFileResolution ResolveSliderDataFile(const DiffInfo& dataFile, const std::vector<std::string>* externalDataFolders = nullptr) const;
+	DiffInfo* GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex);
+	const DiffInfo* GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex) const;
+	void SetSliderDataFileLocal(const size_t sliderIndex, const size_t dataFileIndex, const bool local);
+	void SetSliderDataFileName(const size_t sliderIndex, const size_t dataFileIndex, const std::string& fileName);
+	bool TargetHasExternalData(const std::string& targetName) const;
+	bool ClearLocalOnlyDataFolders();
 
 	bool GenWeights();
 	bool PreventMorphFile();
