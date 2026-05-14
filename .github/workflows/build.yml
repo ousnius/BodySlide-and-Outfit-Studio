@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - dev
-      - main
   pull_request:
     branches:
       - dev
-      - main
   workflow_dispatch:
 
 jobs:
@@ -49,9 +47,13 @@ jobs:
         working-directory: build
         run: cmake --build . --config ${{ matrix.config }} --parallel
 
+      - name: Copy res folder
+        run: |
+          xcopy res build\${{ matrix.config }}\res /E /I /Y
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.config }}-x64
-          path: build/${{ matrix.config }}/**/*.exe
+          path: build/${{ matrix.config }}/
           retention-days: 30
