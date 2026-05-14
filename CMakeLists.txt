@@ -14,6 +14,15 @@ option(BSOS_ENABLE_FBXSDK "Build Outfit Studio with Autodesk FBX SDK support whe
 set(BSOS_FBXSDK_ROOT "" CACHE PATH "Root directory of the Autodesk FBX SDK")
 set(fbxsdk_dir "" CACHE PATH "Compatibility alias for BSOS_FBXSDK_ROOT")
 
+if(WIN32 AND DEFINED wxWidgets_ROOT_DIR AND wxWidgets_ROOT_DIR
+		AND (NOT DEFINED wxWidgets_LIB_DIR OR wxWidgets_LIB_DIR STREQUAL "" OR wxWidgets_LIB_DIR MATCHES "-NOTFOUND$"))
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		set(wxWidgets_LIB_DIR "${wxWidgets_ROOT_DIR}/lib/vc_x64_lib" CACHE PATH "wxWidgets library directory" FORCE)
+	else()
+		set(wxWidgets_LIB_DIR "${wxWidgets_ROOT_DIR}/lib/vc_lib" CACHE PATH "wxWidgets library directory" FORCE)
+	endif()
+endif()
+
 set(BSOS_WX_COMPONENTS gl core base net xml xrc adv qa html propgrid)
 find_package(wxWidgets CONFIG QUIET COMPONENTS ${BSOS_WX_COMPONENTS})
 if(wxWidgets_FOUND AND TARGET wx::base)
