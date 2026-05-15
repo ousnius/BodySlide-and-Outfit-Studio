@@ -4055,7 +4055,7 @@ void OutfitStudioFrame::AddProjectHistory(const std::string& fileName, const std
 	else if (maxCount > MAX_PROJECT_HISTORY)
 		maxCount = MAX_PROJECT_HISTORY;
 
-	if (projectHistory.size() == maxCount)
+	if (projectHistory.size() == static_cast<size_t>(maxCount))
 		projectHistory.pop_back();
 
 	projectHistory.push_front(projectHistoryEntry);
@@ -6728,17 +6728,13 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
 		if (segmentData) {
 			// Active segment is a normal segment
 			// Collect list of partition IDs for segment and children.
-			// Also find partition ID of last child, or segment if none.
 			selPartIDs[segmentData->partID] = true;
-			int destPartID = segmentData->partID;
 			wxTreeItemIdValue subCookie;
 			wxTreeItemId child = segmentTree->GetFirstChild(activeSegment, subCookie);
 			while (child.IsOk()) {
 				SubSegmentItemData* childData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(child));
-				if (childData) {
+				if (childData)
 					selPartIDs[childData->partID] = true;
-					destPartID = childData->partID;
-				}
 				child = segmentTree->GetNextChild(activeSegment, subCookie);
 			}
 		}
@@ -7303,10 +7299,11 @@ void OutfitStudioFrame::OnSliderCheckBox(wxCommandEvent& event) {
 		wxSliderPanel* lastSliderPanel = sliderPanels[lastCheckedSlider];
 
 		if (sliderPanel && lastSliderPanel) {
-			size_t sliderIndex = sliderPool.FindIndex(sliderPanel);
-			size_t lastSliderIndex = sliderPool.FindIndex(lastSliderPanel);
+			const size_t sliderIndex = sliderPool.FindIndex(sliderPanel);
+			const size_t lastSliderIndex = sliderPool.FindIndex(lastSliderPanel);
+			const size_t invalidSliderIndex = static_cast<size_t>(-1);
 
-			if (sliderIndex != -1 && lastSliderIndex != -1 && sliderIndex != lastSliderIndex) {
+			if (sliderIndex != invalidSliderIndex && lastSliderIndex != invalidSliderIndex && sliderIndex != lastSliderIndex) {
 				size_t startIndex, endIndex;
 				if (sliderIndex > lastSliderIndex) {
 					startIndex = lastSliderIndex;
@@ -12607,7 +12604,7 @@ void OutfitStudioFrame::OnSmoothSeamsAngle(wxCommandEvent& WXUNUSED(event)) {
 	std::vector<float> oldMeshAngles;
 	oldMeshAngles.resize(activeMeshes.size());
 
-	for (int i = 0; i < activeMeshes.size(); i++)
+	for (size_t i = 0; i < activeMeshes.size(); i++)
 		oldMeshAngles[i] = activeMeshes[i]->smoothSeamNormalsAngle;
 
 	wxDialog dlg;
@@ -12615,7 +12612,7 @@ void OutfitStudioFrame::OnSmoothSeamsAngle(wxCommandEvent& WXUNUSED(event)) {
 		auto updatePreview = [&]() {
 			float angle = atof(XRCCTRL(dlg, "angleText", wxTextCtrl)->GetValue().c_str());
 
-			for (int i = 0; i < activeMeshes.size(); i++) {
+			for (size_t i = 0; i < activeMeshes.size(); i++) {
 				Mesh* m = activeMeshes[i];
 				m->smoothSeamNormalsAngle = angle;
 				m->SmoothNormals();
@@ -12650,7 +12647,7 @@ void OutfitStudioFrame::OnSmoothSeamsAngle(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "angleText", wxTextCtrl)->SetValue(wxString::Format("%0.2f", oldMeshAngles.front()));
 
 		if (dlg.ShowModal() != wxID_OK) {
-			for (int i = 0; i < activeMeshes.size(); i++) {
+			for (size_t i = 0; i < activeMeshes.size(); i++) {
 				Mesh* m = activeMeshes[i];
 				m->smoothSeamNormalsAngle = oldMeshAngles[i];
 				m->SmoothNormals();
@@ -13998,7 +13995,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	else
 		activeStroke->beginStroke(tpi);
 
-	if (activeBrush->Type() != TweakBrush::BrushType::Move)
+	if (activeBrush->Type() != TweakBrush::BrushType::Move) {
 		if (segmentMode) {
 			if (os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius())) {
 				os->ShowSegment();
@@ -14008,6 +14005,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		else {
 			activeStroke->updateStroke(tpi);
 		}
+	}
 
 	return true;
 }

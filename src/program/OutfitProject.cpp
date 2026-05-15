@@ -965,7 +965,7 @@ bool OutfitProject::SliderIndexFromName(const std::string& sliderName, size_t& i
 
 void OutfitProject::CloneSlider(const std::string& sliderName, const std::string& cloneName) {
 	size_t cloneIndex = activeSet.CloneSlider(sliderName, cloneName);
-	if (cloneIndex == -1)
+	if (cloneIndex == static_cast<size_t>(-1))
 		return;
 
 	for (auto& shape : workNif.GetShapes()) {

@@ -94,9 +94,10 @@ void ObjFile::LoadNoFaces(std::istream& ins, const ObjImportOptions& options) {
 	if (d.name.empty())
 		d.name = "object";
 
-	if (!d.verts.empty())
+	if (!d.verts.empty()) {
 		if (options.ImportAll || options.ImportShapes.count(d.name) > 0)
 			data[d.name] = std::move(d);
+	}
 	else
 		data.erase(d.name);
 }

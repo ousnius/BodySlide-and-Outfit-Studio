@@ -159,7 +159,7 @@ bool SFMorphFile::FileToCacheData() {
 	size_t morphDataSize = 0;
 
 	for (size_t i = 0; i < numVertices; i++) {
-		int size = 0;
+		size_t size = 0;
 		if (numVertices > 0 && i != numVertices - 1)
 			size = offsets[i + 1].offset - offsets[i].offset;
 		else
@@ -290,7 +290,7 @@ void SFMorphFile::CacheToFileData() {
 		auto& morphKeyIndices = vertexMorphKeyIndices[i];
 
 		std::array<uint32_t, 4> binaryMarkers{};
-		for (int p = 0; p < morphKeyIndices.size(); p++)
+		for (size_t p = 0; p < morphKeyIndices.size(); p++)
 			binaryMarkers[morphKeyIndices[p] / 32] |= 1 << (morphKeyIndices[p] % 32);
 
 		offsetData.keyMarker[0] = static_cast<SFMorphKey>(binaryMarkers[0]);
@@ -315,7 +315,7 @@ void SFMorphFile::UpdateCachedMorphData() {
 			std::unordered_map<uint16_t, Vector3> diff;
 			for (uint16_t i = 0; i < numVertices; i++) {
 				auto& indices = vertexMorphKeyIndices[i];
-				for (int j = 0; j < indices.size(); ++j) {
+				for (size_t j = 0; j < indices.size(); ++j) {
 					auto& id = indices[j];
 					auto& morphName = morphNames[id];
 					auto& data = vertexMorphDataUnpacked[i][j];

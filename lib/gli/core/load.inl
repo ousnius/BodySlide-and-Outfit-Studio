@@ -41,10 +41,18 @@ namespace gli
 
 		std::vector<char> Data(static_cast<std::size_t>(End - Beg));
 
-		std::fread(&Data[0], 1, Data.size(), File);
-		std::fclose(File);
+		if(Data.empty())
+		{
+			std::fclose(File);
+			return texture();
+		}
 
-		return load(&Data[0], Data.size());
+		std::size_t Read = std::fread(Data.data(), 1, Data.size(), File);
+		std::fclose(File);
+		if(Read != Data.size())
+			return texture();
+
+		return load(Data.data(), Data.size());
 	}
 
 	/// Load a texture (DDS, KTX or KMG) from file

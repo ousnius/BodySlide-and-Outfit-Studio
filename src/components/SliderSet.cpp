@@ -131,7 +131,7 @@ size_t SliderSet::CloneSlider(const std::string& sliderName, const std::string& 
 	});
 
 	if (sliderIt == sliders.end())
-		return 0xFFFFFFFF;
+		return static_cast<size_t>(-1);
 
 	// Clone slider
 	auto& clonedSlider = sliders.emplace_back(*sliderIt);

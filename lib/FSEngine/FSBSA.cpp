@@ -121,14 +121,20 @@ wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, wxUint32 unpackedSize = 0
 }
 
 wxMemoryBuffer lz4fUncompress(const wxMemoryBuffer& data, wxUint32 unpackedSize = 0, int skip = 0) {
-	if (data.GetDataLen() <= skip) {
+	if (skip < 0) {
 		// Input data is truncated
 		return wxMemoryBuffer();
 	}
 
-	(void*)&unpackedSize; // unused
+	const size_t skipSize = static_cast<size_t>(skip);
+	if (data.GetDataLen() <= skipSize) {
+		// Input data is truncated
+		return wxMemoryBuffer();
+	}
 
-	size_t srcSize = data.GetDataLen() - skip;
+	(void)unpackedSize;
+
+	size_t srcSize = data.GetDataLen() - skipSize;
 	size_t dstSize = ((unsigned int*)data.GetData())[0];
 
 	wxMemoryBuffer result(dstSize);
@@ -138,7 +144,7 @@ wxMemoryBuffer lz4fUncompress(const wxMemoryBuffer& data, wxUint32 unpackedSize 
 
 	LZ4F_decompressOptions_t options = { 0 };
 
-	LZ4F_decompress(dCtx, result.GetData(), &dstSize, (char*)data.GetData() + skip, &srcSize, &options);
+	LZ4F_decompress(dCtx, result.GetData(), &dstSize, (char*)data.GetData() + skipSize, &srcSize, &options);
 	LZ4F_freeDecompressionContext(dCtx);
 
 	result.SetDataLen(dstSize);
