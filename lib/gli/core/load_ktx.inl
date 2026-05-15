@@ -52,6 +52,7 @@ namespace detail
 
 	inline texture load_ktx10(char const* Data, std::size_t Size)
 	{
+		static_cast<void>(Size);
 		detail::ktx_header10 const & Header(*reinterpret_cast<detail::ktx_header10 const*>(Data));
 
 		size_t Offset = sizeof(detail::ktx_header10);

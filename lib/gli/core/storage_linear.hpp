@@ -59,18 +59,18 @@ namespace gli
 			size_type Face,
 			size_type Level) const;
 
-		size_type image_offset(extent1d const& Coord, extent1d const& Extent) const;
+		size_type image_offset(extent1d const& Coord, extent1d const& ImageExtent) const;
 
-		size_type image_offset(extent2d const& Coord, extent2d const& Extent) const;
+		size_type image_offset(extent2d const& Coord, extent2d const& ImageExtent) const;
 
-		size_type image_offset(extent3d const& Coord, extent3d const& Extent) const;
+		size_type image_offset(extent3d const& Coord, extent3d const& ImageExtent) const;
 
 		/// Copy a subset of a specific image of a texture 
 		void copy(
 			storage_linear const& StorageSrc,
 			size_t LayerSrc, size_t FaceSrc, size_t LevelSrc, extent_type const& BlockIndexSrc,
 			size_t LayerDst, size_t FaceDst, size_t LevelDst, extent_type const& BlockIndexDst,
-			extent_type const& BlockCount);
+			extent_type const& CopyBlockCount);
 
 		size_type level_size(
 			size_type Level) const;

@@ -782,6 +782,8 @@
     <ClInclude Include="lib\LZ4F\xxhash.h" />
     <ClInclude Include="lib\nlohmannjson\include\nlohmann\json.hpp" />
     <ClInclude Include="lib\nlohmannjson\include\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="lib\SOIL2\image_array.h" />
+    <ClInclude Include="lib\SOIL2\image_array_helper.h" />
     <ClInclude Include="lib\SOIL2\image_DXT.h" />
     <ClInclude Include="lib\SOIL2\image_helper.h" />
     <ClInclude Include="lib\SOIL2\pkm_helper.h" />
@@ -886,6 +888,7 @@
     <ClCompile Include="lib\nifly\src\Particles.cpp" />
     <ClCompile Include="lib\nifly\src\Shaders.cpp" />
     <ClCompile Include="lib\nifly\src\Skin.cpp" />
+    <ClCompile Include="lib\SOIL2\image_array.c" />
     <ClCompile Include="lib\SOIL2\image_DXT.c" />
     <ClCompile Include="lib\SOIL2\image_helper.c" />
     <ClCompile Include="lib\SOIL2\SOIL2.c" />

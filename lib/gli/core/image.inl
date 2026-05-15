@@ -8,6 +8,7 @@ namespace detail
 	)
 	{
 		GLI_ASSERT(glm::all(glm::lessThan(TexelCoord, Extent)));
+		static_cast<void>(Extent);
 
 		return static_cast<size_t>(TexelCoord.x);
 	}
@@ -44,6 +45,7 @@ namespace detail
 	)
 	{
 		GLI_ASSERT(TexelCoord.x < Extent.x);
+		static_cast<void>(Extent);
 
 		return TexelCoord.x;
 	}
@@ -56,6 +58,7 @@ namespace detail
 	{
 		GLI_ASSERT(TexelCoord.x < Extent.x && TexelCoord.x >= 0 && TexelCoord.x < std::numeric_limits<extent2d::value_type>::max());
 		GLI_ASSERT(TexelCoord.y < Extent.y && TexelCoord.y >= 0 && TexelCoord.y < std::numeric_limits<extent2d::value_type>::max());
+		static_cast<void>(Extent);
 
 		glm::u32vec2 const Input(TexelCoord);
 
@@ -71,6 +74,7 @@ namespace detail
 		GLI_ASSERT(TexelCoord.x < Extent.x);
 		GLI_ASSERT(TexelCoord.y < Extent.y);
 		GLI_ASSERT(TexelCoord.z < Extent.z);
+		static_cast<void>(Extent);
 
 		glm::u32vec3 const Input(TexelCoord);
 
@@ -213,9 +217,9 @@ namespace detail
 			*(this->data<genType>() + TexelIndex) = Texel;
 	}
 
-	inline image::data_type* image::compute_data(size_type BaseLayer, size_type BaseFace, size_type BaseLevel)
+	inline image::data_type* image::compute_data(size_type BaseLayer, size_type BaseFace, size_type Level)
 	{
-		size_type const BaseOffset = this->Storage->base_offset(BaseLayer, BaseFace, BaseLevel);
+		size_type const BaseOffset = this->Storage->base_offset(BaseLayer, BaseFace, Level);
 
 		return this->Storage->data() + BaseOffset;
 	}

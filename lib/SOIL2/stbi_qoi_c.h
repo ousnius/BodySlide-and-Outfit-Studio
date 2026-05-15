@@ -115,6 +115,8 @@ int stbi__qoi_info_from_file(FILE *f, int *x, int *y, int *comp)
 
 static void *stbi__qoi_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
 {
+   (void)ri;
+
    if (!stbi__qoi_info(s, (int*)&s->img_x, (int*)&s->img_y, &s->img_n))
       return NULL;
 
@@ -159,17 +161,17 @@ static void *stbi__qoi_load(stbi__context *s, int *x, int *y, int *comp, int req
          c = recent[tag];
       }
       else if ((tag >> 6) == 1) {
-         stbi_uc r = (c >> 24) + ((tag >> 4) & 3) - 2;
-         stbi_uc g = (c >> 16) + ((tag >> 2) & 3) - 2;
-         stbi_uc b = (c >> 8)  + (tag & 3) - 2;
+         stbi_uc r = (stbi_uc)((c >> 24) + ((tag >> 4) & 3) - 2);
+         stbi_uc g = (stbi_uc)((c >> 16) + ((tag >> 2) & 3) - 2);
+         stbi_uc b = (stbi_uc)((c >> 8)  + (tag & 3) - 2);
          c = (c & 0xff) | ((stbi__uint32) r << 24) | ((stbi__uint32) g << 16) | ((stbi__uint32) b << 8);
       }
       else if ((tag >> 6) == 2) {
          stbi_uc rb = stbi__get8(s);
-         stbi_uc dg = (tag & 0x3f) - 32;
-         stbi_uc r = (c >> 24) + dg + (rb >> 4) - 8;
-         stbi_uc g = (c >> 16) + dg;
-         stbi_uc b = (c >> 8)  + dg + (rb & 0xf) - 8;
+         stbi_uc dg = (stbi_uc)((tag & 0x3f) - 32);
+         stbi_uc r = (stbi_uc)((c >> 24) + dg + (rb >> 4) - 8);
+         stbi_uc g = (stbi_uc)((c >> 16) + dg);
+         stbi_uc b = (stbi_uc)((c >> 8)  + dg + (rb & 0xf) - 8);
          c = (c & 0xff) | ((stbi__uint32) r << 24) | ((stbi__uint32) g << 16) | ((stbi__uint32) b << 8);
       }
       else {
@@ -180,26 +182,26 @@ static void *stbi__qoi_load(stbi__context *s, int *x, int *y, int *comp, int req
          if (s->img_n == 3) {
             int i;
             for (i = 0; i < run; i++) {
-               *dst++ = c >> 24;
-               *dst++ = c >> 16;
-               *dst++ = c >> 8;
+               *dst++ = (stbi_uc)(c >> 24);
+               *dst++ = (stbi_uc)(c >> 16);
+               *dst++ = (stbi_uc)(c >> 8);
             }
          }
          else {
             int i;
             for (i = 0; i < run; i++) {
-               *dst++ = c >> 24;
-               *dst++ = c >> 16;
-               *dst++ = c >> 8;
-               *dst++ = c;
+               *dst++ = (stbi_uc)(c >> 24);
+               *dst++ = (stbi_uc)(c >> 16);
+               *dst++ = (stbi_uc)(c >> 8);
+               *dst++ = (stbi_uc)c;
             }
          }
       }
 
-      *dst++ = c >> 24;
-      *dst++ = c >> 16;
-      *dst++ = c >> 8;
-      if (s->img_n != 3) *dst++ = c;
+      *dst++ = (stbi_uc)(c >> 24);
+      *dst++ = (stbi_uc)(c >> 16);
+      *dst++ = (stbi_uc)(c >> 8);
+      if (s->img_n != 3) *dst++ = (stbi_uc)c;
 
       recent[0x3f & (
          ((c >> 24) & 0xff) * 3u +

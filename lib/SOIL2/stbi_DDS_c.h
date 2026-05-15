@@ -99,14 +99,14 @@ void stbi_decode_DXT1_block(
 	c0 = compressed[0] + (compressed[1] << 8);
 	c1 = compressed[2] + (compressed[3] << 8);
 	stbi_rgb_888_from_565( c0, &r, &g, &b );
-	decode_colors[0] = r;
-	decode_colors[1] = g;
-	decode_colors[2] = b;
+	decode_colors[0] = (unsigned char)r;
+	decode_colors[1] = (unsigned char)g;
+	decode_colors[2] = (unsigned char)b;
 	decode_colors[3] = 255;
 	stbi_rgb_888_from_565( c1, &r, &g, &b );
-	decode_colors[4] = r;
-	decode_colors[5] = g;
-	decode_colors[6] = b;
+	decode_colors[4] = (unsigned char)r;
+	decode_colors[5] = (unsigned char)g;
+	decode_colors[6] = (unsigned char)b;
 	decode_colors[7] = 255;
 	if( c0 > c1 )
 	{
@@ -151,7 +151,7 @@ void stbi_decode_DXT23_alpha_block(
 	//	each alpha value gets 4 bits
 	for( i = 3; i < 16*4; i += 4 )
 	{
-		uncompressed[i] = stbi_convert_bit_range(
+		uncompressed[i] = (unsigned char)stbi_convert_bit_range(
 				(compressed[next_bit>>3] >> (next_bit&7)) & 15,
 				4, 8 );
 		next_bit += 4;
@@ -213,13 +213,13 @@ void stbi_decode_DXT_color_block(
 	c0 = compressed[0] + (compressed[1] << 8);
 	c1 = compressed[2] + (compressed[3] << 8);
 	stbi_rgb_888_from_565( c0, &r, &g, &b );
-	decode_colors[0] = r;
-	decode_colors[1] = g;
-	decode_colors[2] = b;
+	decode_colors[0] = (unsigned char)r;
+	decode_colors[1] = (unsigned char)g;
+	decode_colors[2] = (unsigned char)b;
 	stbi_rgb_888_from_565( c1, &r, &g, &b );
-	decode_colors[3] = r;
-	decode_colors[4] = g;
-	decode_colors[5] = b;
+	decode_colors[3] = (unsigned char)r;
+	decode_colors[4] = (unsigned char)g;
+	decode_colors[5] = (unsigned char)b;
 	//	Like DXT1, but no choicees:
 	//	no alpha, 2 interpolated colors
 	decode_colors[6] = (2*decode_colors[0] + decode_colors[3]) / 3;

@@ -163,6 +163,7 @@ namespace detail
 	inline texture load_dds(char const * Data, std::size_t Size)
 	{
 		GLI_ASSERT(Data && (Size >= sizeof(detail::FOURCC_DDS)));
+		static_cast<void>(Size);
 
 		if(strncmp(Data, detail::FOURCC_DDS, 4) != 0)
 			return texture();

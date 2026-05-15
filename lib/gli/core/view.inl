@@ -143,7 +143,7 @@ namespace gli
 		return texture(
 			Texture, TARGET_CUBE, Texture.format(),
 			Texture.base_layer(), Texture.max_layer(),
-			Texture.base_face(), Texture.base_face() + MaxFace,
+			Texture.base_face() + BaseFace, Texture.base_face() + MaxFace,
 			Texture.base_level() + BaseLevel, Texture.base_level() + MaxLevel);
 	}
 
