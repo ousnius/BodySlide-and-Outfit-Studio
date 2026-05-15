@@ -6,10 +6,13 @@ on:
 permissions:
   contents: read
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   windows-x64-release:
     name: Windows x64 Release
-    runs-on: windows-latest
+    runs-on: windows-2025-vs2026
 
     env:
       BUILD_TYPE: Release
@@ -17,12 +20,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
       - name: Cache vcpkg binary packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vcpkg-binary-cache
           key: vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-${{ hashFiles('.github/workflows/cmake-release.yml') }}
@@ -51,7 +54,7 @@ jobs:
           $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
           $toolchainFile = Join-Path $vcpkgRoot "scripts/buildsystems/vcpkg.cmake"
           cmake -S . -B build/windows-x64-release `
-            -G "Visual Studio 17 2022" `
+            -G "Visual Studio 18 2026" `
             -A x64 `
             -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
             -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TARGET_TRIPLET" `
@@ -81,6 +84,7 @@ jobs:
           $packageName = "BodySlide-and-Outfit-Studio-windows-x64-release"
           $artifactRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts"
           $packageDir = Join-Path $artifactRoot $packageName
+          $artifactFile = Join-Path $artifactRoot "windows-x64-release.zip"
 
           Remove-Item -Recurse -Force $artifactRoot -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
@@ -99,17 +103,18 @@ jobs:
             New-Item -ItemType Directory -Force -Path (Join-Path $packageDir $directory) | Out-Null
           }
 
-          Push-Location $artifactRoot
-          cmake -E tar cf "$packageName.zip" --format=zip -- $packageName
+          Push-Location $packageDir
+          cmake -E tar cf $artifactFile --format=zip -- .
           Pop-Location
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: windows-x64-release
-          path: artifacts/BodySlide-and-Outfit-Studio-windows-x64-release.zip
+          path: artifacts/windows-x64-release.zip
+          archive: false
           if-no-files-found: error
           retention-days: 7
+
 
   ubuntu-gcc-release:
     name: Ubuntu GCC Release
@@ -122,7 +127,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
@@ -165,6 +170,7 @@ jobs:
           package_name="BodySlide-and-Outfit-Studio-ubuntu-gcc-release"
           artifact_root="$GITHUB_WORKSPACE/artifacts"
           package_dir="$artifact_root/$package_name"
+          artifact_file="$artifact_root/ubuntu-gcc-release.zip"
 
           rm -rf "$artifact_root"
           mkdir -p "$package_dir"
@@ -185,13 +191,13 @@ jobs:
             "$package_dir/SliderGroups" \
             "$package_dir/SliderPresets"
 
-          cd "$artifact_root"
-          cmake -E tar cf "$package_name.zip" --format=zip -- "$package_name"
+          cd "$package_dir"
+          cmake -E tar cf "$artifact_file" --format=zip -- .
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: ubuntu-gcc-release
-          path: artifacts/BodySlide-and-Outfit-Studio-ubuntu-gcc-release.zip
+          path: artifacts/ubuntu-gcc-release.zip
+          archive: false
           if-no-files-found: error
           retention-days: 7
