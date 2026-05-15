@@ -15880,19 +15880,6 @@ void wxGLPanel::UpdateBones() {
 	auto workAnim = os->project->GetWorkAnim();
 	bool isSF = os->project->GetWorkNif()->GetHeader().GetVersion().IsSF();
 
-	MatTransform sfGlobalToSkin;
-	if (isSF) {
-		for (auto* s : os->project->GetWorkNif()->GetShapes()) {
-			if (s->IsSkinned()) {
-				sfGlobalToSkin = workAnim->GetTransformGlobalToShape(s);
-				wxLogMessage("SF UpdateBones: shape='%s' globalToSkin t=(%.4f, %.4f, %.4f) scale=%.4f",
-					s->name.get(), sfGlobalToSkin.translation.x, sfGlobalToSkin.translation.y,
-					sfGlobalToSkin.translation.z, sfGlobalToSkin.scale);
-				break;
-			}
-		}
-	}
-
 	std::function<bool(AnimBone*)> addChildBones = [&](AnimBone* parent) {
 		bool anyBoneInSelection = false;
 
@@ -15915,17 +15902,9 @@ void wxGLPanel::UpdateBones() {
 					Vector3 parentPosition = parentToGlobal.ApplyTransform(Vector3());
 
 					if (isSF) {
-						if (cb->boneName == "C_Spine1" || cb->boneName == "C_Hips") {
-							wxLogMessage("SF bone '%s': raw globalPos=(%.4f, %.4f, %.4f) gts.t=(%.4f, %.4f, %.4f)",
-								cb->boneName, position.x, position.y, position.z,
-								sfGlobalToSkin.translation.x, sfGlobalToSkin.translation.y, sfGlobalToSkin.translation.z);
-						}
-						position = (position + sfGlobalToSkin.translation) * sfHavokScale;
-						parentPosition = (parentPosition + sfGlobalToSkin.translation) * sfHavokScale;
-						if (cb->boneName == "C_Spine1" || cb->boneName == "C_Hips") {
-							wxLogMessage("SF bone '%s': after havokScale pos=(%.4f, %.4f, %.4f)",
-								cb->boneName, position.x, position.y, position.z);
-						}
+						constexpr float havokScale = 69.969f;
+						position *= havokScale;
+						parentPosition *= havokScale;
 					}
 
 					bool matchesParent = position.IsNearlyEqualTo(parentPosition);

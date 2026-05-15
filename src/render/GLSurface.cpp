@@ -1384,20 +1384,6 @@ Mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	for (int i = 0; i < m->nVerts; i++)
 		m->verts[i] = Mesh::TransformPosNifToMesh(nifVerts[i]);
 
-	if (!nifVerts.empty()) {
-		Vector3 vmin = nifVerts[0], vmax = nifVerts[0];
-		for (auto& v : nifVerts) {
-			if (v.x < vmin.x) vmin.x = v.x;
-			if (v.y < vmin.y) vmin.y = v.y;
-			if (v.z < vmin.z) vmin.z = v.z;
-			if (v.x > vmax.x) vmax.x = v.x;
-			if (v.y > vmax.y) vmax.y = v.y;
-			if (v.z > vmax.z) vmax.z = v.z;
-		}
-		wxLogMessage("Mesh '%s': %d verts, nif-space bounds min=(%.4f, %.4f, %.4f) max=(%.4f, %.4f, %.4f)",
-			shapeName, m->nVerts, vmin.x, vmin.y, vmin.z, vmax.x, vmax.y, vmax.z);
-	}
-
 	if (nifUvs && !nifUvs->empty()) {
 		for (int i = 0; i < m->nVerts; i++) {
 			m->texcoord[i].u = (*nifUvs)[i].u;

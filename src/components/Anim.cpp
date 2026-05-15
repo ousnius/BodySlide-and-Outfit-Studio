@@ -156,16 +156,6 @@ void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 			if (!gotGTS) {
 				MatTransform xformBoneToGlobal;
 				if (AnimSkeleton::getInstance().GetBoneTransformToGlobal(bn, xformBoneToGlobal)) {
-					if (bn == "C_Spine1" || bn == "C_Hips") {
-						wxLogMessage("SF bone '%s': boneToGlobal t=(%.6f, %.6f, %.6f) scale=%.4f",
-							bn, xformBoneToGlobal.translation.x, xformBoneToGlobal.translation.y,
-							xformBoneToGlobal.translation.z, xformBoneToGlobal.scale);
-						wxLogMessage("  skinToBone t=(%.6f, %.6f, %.6f) scale=%.4f",
-							boneWeights[newID].xformSkinToBone.translation.x,
-							boneWeights[newID].xformSkinToBone.translation.y,
-							boneWeights[newID].xformSkinToBone.translation.z,
-							boneWeights[newID].xformSkinToBone.scale);
-					}
 					eachXformGlobalToSkin.push_back(xformBoneToGlobal.ComposeTransforms(boneWeights[newID].xformSkinToBone).InverseTransform());
 				}
 			}
@@ -175,14 +165,12 @@ void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 
 	if (!eachXformGlobalToSkin.empty()) {
 		xformGlobalToSkin = CalcMedianMatTransform(eachXformGlobalToSkin);
-		wxLogMessage("AnimSkin GTS: t=(%.6f, %.6f, %.6f) scale=%.6f from %zu bones",
-			xformGlobalToSkin.translation.x, xformGlobalToSkin.translation.y,
-			xformGlobalToSkin.translation.z, xformGlobalToSkin.scale,
-			eachXformGlobalToSkin.size());
-		if (!eachXformGlobalToSkin.empty()) {
-			auto& first = eachXformGlobalToSkin[0];
-			wxLogMessage("  first GTS entry: t=(%.6f, %.6f, %.6f) scale=%.6f",
-				first.translation.x, first.translation.y, first.translation.z, first.scale);
+
+		// SF skeleton transforms are in meters but mesh vertices are scaled
+		// by havokScale (69.969) during loading — match the translation
+		if (loadFromFile->GetHeader().GetVersion().IsSF()) {
+			constexpr float havokScale = 69.969f;
+			xformGlobalToSkin.translation *= havokScale;
 		}
 	}
 }
@@ -225,10 +213,6 @@ bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 				if (!cstm->isStandardBone)
 					nonRefBones += bn + "\n";
 				AnimSkeleton::getInstance().RefBone(bn);
-			}
-			else {
-				wxLogWarning("Bone '%s' not found in NIF or reference skeleton, skipping.", bn);
-				continue;
 			}
 		}
 
