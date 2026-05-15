@@ -165,13 +165,6 @@ void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 
 	if (!eachXformGlobalToSkin.empty()) {
 		xformGlobalToSkin = CalcMedianMatTransform(eachXformGlobalToSkin);
-
-		// SF skeleton transforms are in meters but mesh vertices are scaled
-		// by havokScale (69.969) during loading — match the translation
-		if (loadFromFile->GetHeader().GetVersion().IsSF()) {
-			constexpr float havokScale = 69.969f;
-			xformGlobalToSkin.translation *= havokScale;
-		}
 	}
 }
 

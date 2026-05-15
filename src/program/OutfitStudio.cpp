@@ -13224,6 +13224,8 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 		if (shape && shape->IsSkinned()) {
 			// Overwrite skin matrix with the one from AnimInfo
 			MatTransform globalToShape = os->project->GetWorkAnim()->GetTransformGlobalToShape(shape);
+			if (nif->GetHeader().GetVersion().IsSF())
+				globalToShape.translation *= sfHavokScale;
 			m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(globalToShape.ComposeTransforms(Mesh::xformMeshToNif)));
 		}
 
@@ -15902,9 +15904,8 @@ void wxGLPanel::UpdateBones() {
 					Vector3 parentPosition = parentToGlobal.ApplyTransform(Vector3());
 
 					if (isSF) {
-						constexpr float havokScale = 69.969f;
-						position *= havokScale;
-						parentPosition *= havokScale;
+						position *= sfHavokScale;
+						parentPosition *= sfHavokScale;
 					}
 
 					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
