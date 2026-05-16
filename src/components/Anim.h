@@ -8,7 +8,13 @@ See the included LICENSE file
 #include "../utils/ConfigurationManager.h"
 #include "NifFile.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <map>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 struct VertexBoneWeights {
 	std::vector<uint8_t> boneIds;

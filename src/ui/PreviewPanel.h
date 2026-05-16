@@ -9,6 +9,15 @@ See the included LICENSE file
 #include "../render/GLSurface.h"
 #include "../utils/ConfigurationManager.h"
 #include "../program/NormalsGenDialog.h"
+
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
 #include <wx/wx.h>
 #include <wx/activityindicator.h>
 

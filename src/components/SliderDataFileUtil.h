@@ -9,6 +9,7 @@ See the included LICENSE file
 
 #include "../utils/StringStuff.h"
 
+#include <cstddef>
 #include <string>
 
 inline bool SliderDataFileIsBSD(const std::string& fileName) {

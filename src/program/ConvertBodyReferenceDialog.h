@@ -8,6 +8,8 @@ See the included LICENSE file
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
 
+#include <vector>
+
 #include "OutfitProject.h"
 
 class OutfitStudioFrame;

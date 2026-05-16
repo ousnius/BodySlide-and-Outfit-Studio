@@ -32,8 +32,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../ui/PreviewPanel.h"
 #include "../ui/wxStateButton.h"
 
-#include "../FSEngine/FSEngine.h"
-#include "../FSEngine/FSManager.h"
+#include "FSEngine/FSEngine.h"
+#include "FSEngine/FSManager.h"
 
 #include <wx/clrpicker.h>
 #include <wx/cmdline.h>
@@ -55,7 +55,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/xrc/xmlres.h>
 
 #include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
 #include <thread>
+#include <unordered_map>
+#include <vector>
 
 
 enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };

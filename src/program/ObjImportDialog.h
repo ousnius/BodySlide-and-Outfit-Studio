@@ -9,6 +9,9 @@ See the included LICENSE file
 #include <wx/xrc/xmlres.h>
 #include <wx/listctrl.h>
 
+#include <cstddef>
+#include <string>
+
 #include "../render/GLDialog.h"
 #include "../render/GLSurface.h"
 #include "../files/ObjFile.h"

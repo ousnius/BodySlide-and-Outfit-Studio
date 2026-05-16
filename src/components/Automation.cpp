@@ -7,7 +7,9 @@ See the included LICENSE file
 
 #include "../utils/PlatformUtil.h"
 
-#include <regex>
+#include <tinyxml2.h>
+
+#include <cstdio>
 
 using namespace tinyxml2;
 

@@ -6,6 +6,8 @@ See the included LICENSE file
 #pragma once
 
 #include <set>
+#include <string>
+#include <vector>
 #include <wx/srchctrl.h>
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>

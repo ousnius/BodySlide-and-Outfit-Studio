@@ -8,6 +8,8 @@ See the included LICENSE file
 #include <tinyxml2.h>
 
 #include <map>
+#include <string>
+#include <utility>
 #include <wx/dir.h>
 
 using namespace tinyxml2;

@@ -10,14 +10,14 @@ See the included LICENSE file
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
-#include "../program/FBXImportDialog.h"
-#include "../program/ObjImportDialog.h"
+#include "FBXImportDialog.h"
+#include "ObjImportDialog.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 #include "NifUtil.hpp"
 
-#include "../FSEngine/FSEngine.h"
-#include "../FSEngine/FSManager.h"
+#include "FSEngine/FSEngine.h"
+#include "FSEngine/FSManager.h"
 
 #include <algorithm>
 #include <cfloat>

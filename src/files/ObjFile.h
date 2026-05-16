@@ -9,8 +9,9 @@ See the included LICENSE file
 
 #include <fstream>
 #include <map>
-#include <string>
 #include <set>
+#include <string>
+#include <vector>
 
 struct ObjImportOptions {
 	bool InvertU = false;

@@ -10,6 +10,10 @@ See the included LICENSE file
 #include "DiffData.h"
 #include "../utils/StringStuff.h"
 
+#include <cstddef>
+#include <string>
+#include <vector>
+
 using namespace tinyxml2;
 
 struct DiffInfo {

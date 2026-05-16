@@ -6,6 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include <set>
+#include <string>
 
 struct OBJImportOptions {
 	bool InvertU = false;

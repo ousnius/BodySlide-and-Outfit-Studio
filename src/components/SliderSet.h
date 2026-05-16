@@ -7,8 +7,14 @@ See the included LICENSE file
 
 #include <tinyxml2.h>
 
-#include "../components/NormalGenLayers.h"
+#include "NormalGenLayers.h"
 #include "SliderData.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <map>
+#include <string>
+#include <vector>
 
 using namespace tinyxml2;
 

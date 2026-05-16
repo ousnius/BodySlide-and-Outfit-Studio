@@ -10,9 +10,17 @@ See the included LICENSE file
 #include "../components/Mesh.h"
 #include "OutfitStudio.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <iosfwd>
+#include <map>
+#include <memory>
 #include <optional>
 #include <set>
+#include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 #include <wx/arrstr.h>
 #include <wx/filename.h>
 

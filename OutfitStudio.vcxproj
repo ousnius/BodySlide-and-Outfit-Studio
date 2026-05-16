@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -126,7 +126,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -157,7 +157,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -194,7 +194,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -924,6 +924,7 @@
     <ClCompile Include="src\files\HkxFile.cpp" />
     <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp" />
     <ClCompile Include="src\program\AutomationDialog.cpp" />
+    <ClCompile Include="src\program\AutomationDialogExecute.cpp" />
     <ClCompile Include="src\components\Automation.cpp" />
     <ClCompile Include="src\program\EditUV.cpp" />
     <ClCompile Include="src\program\FBXImportDialog.cpp" />

@@ -298,6 +298,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/program/ShapeProperties.cpp
 	src/program/ConvertBodyReferenceDialog.cpp
 	src/program/AutomationDialog.cpp
+	src/program/AutomationDialogExecute.cpp
 	src/program/SliderDataDialog.cpp
 	src/program/SliderDataImportDialog.cpp
 	src/render/GLCanvas.cpp

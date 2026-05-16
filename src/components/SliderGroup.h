@@ -9,6 +9,7 @@ See the included LICENSE file
 
 #include <map>
 #include <set>
+#include <string>
 #include <unordered_set>
 #include <vector>
 #include <wx/dir.h>

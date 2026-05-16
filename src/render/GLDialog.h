@@ -8,6 +8,12 @@ See the included LICENSE file
 #include "GLSurface.h"
 #include "GLCanvas.h"
 
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 #include <wx/wx.h>
 
 class GLDialog : public wxDialog {

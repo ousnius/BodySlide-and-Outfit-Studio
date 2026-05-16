@@ -7,7 +7,9 @@ See the included LICENSE file
 
 #include "OutfitProject.h"
 
+#include <cstddef>
 #include <functional>
+#include <string>
 #include <vector>
 
 #include <wx/dialog.h>

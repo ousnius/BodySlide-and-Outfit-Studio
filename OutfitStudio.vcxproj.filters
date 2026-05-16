@@ -2190,6 +2190,9 @@
     <ClCompile Include="src\program\AutomationDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
+    <ClCompile Include="src\program\AutomationDialogExecute.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\Automation.cpp">
       <Filter>Components</Filter>
     </ClCompile>

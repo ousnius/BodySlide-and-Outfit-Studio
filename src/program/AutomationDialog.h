@@ -7,18 +7,33 @@ See the included LICENSE file
 
 #include "../components/Automation.h"
 
+#include <cstddef>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <wx/arrstr.h>
+#include <wx/button.h>
+#include <wx/checkbox.h>
+#include <wx/choice.h>
 #include <wx/collpane.h>
 #include <wx/clrpicker.h>
 #include <wx/combobox.h>
+#include <wx/dialog.h>
+#include <wx/event.h>
 #include <wx/filepicker.h>
 #include <wx/gauge.h>
 #include <wx/listctrl.h>
 #include <wx/log.h>
+#include <wx/panel.h>
 #include <wx/radiobox.h>
-#include <wx/scrolwin.h>
 #include <wx/simplebook.h>
-#include <wx/wx.h>
-#include <wx/xrc/xmlres.h>
+#include <wx/stattext.h>
+#include <wx/statusbr.h>
+#include <wx/string.h>
+#include <wx/textctrl.h>
+#include <wx/window.h>
 
 class OutfitStudioFrame;
 class OutfitProject;
@@ -168,6 +183,10 @@ private:
 	void UpdateBatchPanelVisibility();
 
 	void ResetAndClearProject();
+	static int TexturePathIndexForName(const std::string& name);
+	static int ResolveTexturePathIndex(const AutomationStep::TexturePath& path);
+	static std::string TexturePathNameForIndex(int index);
+	static bool StepChangesSliderSet(AutomationStepType type);
 
 	void ExecuteSteps(const std::vector<size_t>& stepIndices);
 	void ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::string>& selectedFiles = {}, const std::vector<std::pair<std::string, std::string>>& selectedSets = {});

@@ -5,8 +5,10 @@ See the included LICENSE file
 
 #pragma once
 
+#include <algorithm>
 #include <iterator>
 #include <string>
+#include <string_view>
 #include <vector>
 
 /* StringsEqualNInsens: returns true if the first len characters of a

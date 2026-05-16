@@ -1,10 +1,13 @@
 #pragma once
+
 #include "../components/RefTemplates.h"
-#include "ConfigDialogUtil.h"
+#include "ConfigurationManager.h"
+
+#include <cstdlib>
+#include <string>
 #include <type_traits>
 #include <vector>
 
-#include "ConfigurationManager.h"
 #include <wx/checkbox.h>
 #include <wx/choice.h>
 #include <wx/dialog.h>

@@ -2,7 +2,9 @@
 
 #include "Object3d.hpp"
 
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 struct IntersectResult;
 

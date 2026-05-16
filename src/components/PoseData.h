@@ -11,9 +11,11 @@ See the included LICENSE file
 
 class AnimBone;
 
+#include <cstdint>
 #include <deque>
 #include <map>
 #include <set>
+#include <string>
 #include <unordered_set>
 #include <vector>
 #include <wx/dir.h>

@@ -60,7 +60,13 @@ See the included LICENSE file
 #include "Mesh.h"
 #include "UndoState.h"
 
+#include <cstdint>
 #include <future>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 // Collecton of information that identifies the position and attributes where a brush stroke is taking place.
 class TweakPickInfo {

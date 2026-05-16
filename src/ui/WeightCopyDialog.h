@@ -9,6 +9,11 @@ See the included LICENSE file
 #include "../components/PoseData.h"
 #include "../components/UndoState.h"
 
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
 #include <wx/checklst.h>
 #include <wx/gauge.h>
 #include <wx/wx.h>

@@ -8,10 +8,13 @@ See the included LICENSE file
 #include "Object3d.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
-#include <unordered_map>
 #include <map>
 #include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 enum SFMorphKey : uint32_t {
 	None = 0,

@@ -4,8 +4,8 @@ See the included LICENSE file
 */
 
 #include "ConfigurationManager.h"
-#include "../utils/PlatformUtil.h"
-#include "../utils/StringStuff.h"
+#include "PlatformUtil.h"
+#include "StringStuff.h"
 
 ConfigurationItem::~ConfigurationItem() {
 	for (auto& it : properties)

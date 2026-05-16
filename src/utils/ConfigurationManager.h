@@ -5,11 +5,14 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../TinyXML-2/tinyxml2.h"
-#include "../utils/StringStuff.h"
+#include <tinyxml2.h>
+
+#include "StringStuff.h"
 
 #include <map>
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <wx/string.h>
 

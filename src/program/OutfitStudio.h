@@ -30,10 +30,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/Log.h"
 #include "OutfitProject.h"
 
-#include "../FSEngine/FSEngine.h"
-#include "../FSEngine/FSManager.h"
+#include "FSEngine/FSEngine.h"
+#include "FSEngine/FSManager.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <deque>
+#include <map>
+#include <memory>
 #include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include <wx/clrpicker.h>
 #include <wx/cmdline.h>
 #include <wx/collpane.h>

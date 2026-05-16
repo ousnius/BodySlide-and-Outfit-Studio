@@ -12,11 +12,17 @@ See the included LICENSE file
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/euler_angles.hpp>
 
+#include <algorithm>
 #include <array>
+#include <cstdint>
+#include <iterator>
 #include <memory>
 #include <set>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 class GLMaterial;
 

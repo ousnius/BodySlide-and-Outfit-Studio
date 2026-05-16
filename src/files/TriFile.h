@@ -8,9 +8,12 @@ See the included LICENSE file
 #include "Object3d.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <map>
 #include <memory>
+#include <string>
+#include <vector>
 
 enum MorphType : uint8_t { MORPHTYPE_POSITION, MORPHTYPE_UV };
 

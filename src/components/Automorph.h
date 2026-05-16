@@ -10,6 +10,14 @@ See the included LICENSE file
 #include "NifFile.hpp"
 #include "SliderSet.h"
 
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 class AnimInfo;
 
 class Automorph {

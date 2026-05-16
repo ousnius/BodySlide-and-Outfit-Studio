@@ -8,6 +8,7 @@ See the included LICENSE file
 #include <tinyxml2.h>
 
 #include <set>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>

@@ -5,14 +5,13 @@ See the included LICENSE file
 
 #pragma once
 
-#include <tinyxml2.h>
-
 #include "../utils/StringStuff.h"
 
-#include <algorithm>
+#include <cstddef>
 #include <map>
 #include <regex>
 #include <string>
+#include <utility>
 #include <vector>
 
 enum class AutomationStepType {
