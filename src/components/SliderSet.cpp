@@ -241,6 +241,8 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
 
 			if (shapeName->Attribute("target"))
 				shape.targetShape = shapeName->Attribute("target");
+			else if (shape.targetShape.empty())
+				shape.targetShape = shapeText;
 
 			shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals", true);
 			shape.smoothSeamNormalsAngle = shapeName->FloatAttribute("SmoothSeamNormalsAngle", SliderSetShape::SliderSetDefaultSmoothAngle);

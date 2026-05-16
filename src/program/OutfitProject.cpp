@@ -578,6 +578,152 @@ std::string OutfitProject::SliderDataTargetForShape(NiShape* shape) {
 	return target;
 }
 
+std::string OutfitProject::ShapeTargetOrDefault(const std::string& shapeName) {
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+		if (it->first == shapeName) {
+			if (it->second.targetShape.empty())
+				return shapeName;
+
+			return it->second.targetShape;
+		}
+	}
+
+	return shapeName;
+}
+
+bool OutfitProject::TargetNameInUse(const std::string& targetName, const std::string& exceptShapeName) {
+	if (targetName.empty())
+		return false;
+
+	std::set<std::string> shapeNames;
+	if (workNif.IsValid()) {
+		for (auto* shape : workNif.GetShapes())
+			shapeNames.insert(shape->name.get());
+	}
+
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it)
+		shapeNames.insert(it->first);
+
+	for (auto& shapeName : shapeNames) {
+		if (shapeName == exceptShapeName)
+			continue;
+
+		if (ShapeTargetOrDefault(shapeName) == targetName)
+			return true;
+	}
+
+	return false;
+}
+
+std::string OutfitProject::UniqueTargetNameForShape(const std::string& shapeName, const std::set<std::string>& reservedTargets) {
+	std::string baseTarget = shapeName.empty() ? "Shape" : shapeName;
+	std::string target = baseTarget;
+	int targetSuffix = 2;
+
+	while (reservedTargets.find(target) != reservedTargets.end() || TargetNameInUse(target, shapeName))
+		target = baseTarget + "_" + std::to_string(targetSuffix++);
+
+	return target;
+}
+
+void OutfitProject::RetargetShapeData(const std::string& shapeName, const std::string& newTarget) {
+	if (shapeName.empty() || newTarget.empty())
+		return;
+
+	std::string oldTarget = ShapeTargetOrDefault(shapeName);
+	if (oldTarget.empty() || oldTarget == newTarget)
+		return;
+
+	NiShape* shape = workNif.FindBlockByName<NiShape>(shapeName);
+	bool isBaseShape = IsBaseShape(shape);
+	std::vector<std::pair<std::string, std::string>> sliderDataNames;
+	for (size_t i = 0; i < activeSet.size(); i++) {
+		SliderData& slider = activeSet[i];
+		for (auto& dataFile : slider.dataFiles) {
+			if (dataFile.targetName != oldTarget)
+				continue;
+
+			std::string oldDataName = dataFile.dataName;
+			std::string newDataName = oldDataName;
+			if (oldDataName == oldTarget + slider.name)
+				newDataName = newTarget + slider.name;
+			else if (StringStartsWith(oldDataName, oldTarget))
+				newDataName = newTarget + oldDataName.substr(oldTarget.length());
+			else if (StringEndsWith(oldDataName, slider.name))
+				newDataName = newTarget + slider.name;
+			else
+				newDataName = newTarget + slider.name;
+
+			if (oldDataName != newDataName) {
+				if (isBaseShape)
+					baseDiffData.RenameSet(oldDataName, newDataName);
+				else
+					morpher.RenameSet(oldDataName, newDataName);
+			}
+
+			dataFile.targetName = newTarget;
+			dataFile.dataName = newDataName;
+			dataFile.fileName = newDataName;
+			dataFile.bLocal = true;
+			sliderDataNames.emplace_back(slider.name, newDataName);
+		}
+	}
+
+	activeSet.AddShapeTarget(shapeName, newTarget);
+
+	if (isBaseShape) {
+		baseDiffData.RenameDataTarget(oldTarget, newTarget);
+	}
+	else {
+		morpher.RenameDataTarget(oldTarget, newTarget);
+		for (auto& sliderDataName : sliderDataNames)
+			morpher.SetResultDataName(newTarget, sliderDataName.first, sliderDataName.second);
+	}
+
+	wxLogMessage("Retargeted shape '%s' slider data from target '%s' to local target '%s' to avoid a target name conflict.", shapeName, oldTarget, newTarget);
+}
+
+void OutfitProject::ResolveTargetConflictsForIncomingShapes(const std::vector<std::pair<std::string, std::string>>& incomingShapeTargets) {
+	if (incomingShapeTargets.empty())
+		return;
+
+	std::set<std::string> incomingShapeNames;
+	std::set<std::string> incomingTargets;
+	for (auto& incomingShapeTarget : incomingShapeTargets) {
+		if (incomingShapeTarget.first.empty())
+			continue;
+
+		incomingShapeNames.insert(incomingShapeTarget.first);
+		if (incomingShapeTarget.second.empty())
+			incomingTargets.insert(incomingShapeTarget.first);
+		else
+			incomingTargets.insert(incomingShapeTarget.second);
+	}
+
+	if (incomingTargets.empty())
+		return;
+
+	std::set<std::string> existingShapeNames;
+	if (workNif.IsValid()) {
+		for (auto* shape : workNif.GetShapes())
+			existingShapeNames.insert(shape->name.get());
+	}
+
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it)
+		existingShapeNames.insert(it->first);
+
+	for (auto& shapeName : existingShapeNames) {
+		if (incomingShapeNames.find(shapeName) != incomingShapeNames.end())
+			continue;
+
+		std::string target = ShapeTargetOrDefault(shapeName);
+		if (incomingTargets.find(target) == incomingTargets.end())
+			continue;
+
+		RetargetShapeData(shapeName, UniqueTargetNameForShape(shapeName, incomingTargets));
+	}
+}
+
 void OutfitProject::GetSliderDataLocations(std::vector<SliderDataLocation>& outLocations, const std::string& sliderName) {
 	outLocations.clear();
 	activeSet.ClearLocalOnlyDataFolders();
@@ -2505,6 +2651,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	}
 
 	ValidateNIF(refNif, fileName);
+	ResolveTargetConflictsForIncomingShapes({{shapeName, shapeName}});
 
 	std::vector<std::string> deletedShapes;
 
@@ -2569,10 +2716,15 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	std::string dataFolder = activeSet.GetDefaultDataFolder();
 	std::vector<std::string> dataNames = activeSet.GetLocalData(shapeName);
 
-	sset.GetSet(setName, activeSet, appendNewSliders);
+	SliderSet refSet;
+	if (sset.GetSet(setName, refSet, appendNewSliders)) {
+		wxLogError("Could not load set '%s' from slider set file '%s'!", setName, fileName);
+		wxMessageBox(wxString::Format(_("Could not load set '%s' from slider set file '%s'!"), setName, fileName), _("Reference Error"), wxICON_ERROR, owner);
+		return 1;
+	}
 
-	activeSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
-	std::string refFile = activeSet.GetInputFileName();
+	refSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
+	std::string refFile = refSet.GetInputFileName();
 
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, refFile, std::ios::in | std::ios::binary);
@@ -2616,6 +2768,10 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		wxMessageBox(wxString::Format(_("Shape '%s' not found in reference NIF file '%s'!"), shape, refFile), _("Reference Error"), wxICON_ERROR, owner);
 		return 4;
 	}
+
+	ResolveTargetConflictsForIncomingShapes({{shape, refSet.ShapeToTarget(shape)}});
+	sset.GetSet(setName, activeSet, appendNewSliders);
+	activeSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
 
 	std::vector<std::string> deletedShapes;
 
@@ -2869,6 +3025,16 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 					 owner);
 	}
 
+	std::vector<std::pair<std::string, std::string>> incomingShapeTargets;
+	for (auto shapeTarget = addSet.ShapesBegin(); shapeTarget != addSet.ShapesEnd(); ++shapeTarget) {
+		if (renamedShapes.find(shapeTarget->first) != renamedShapes.end())
+			continue;
+
+		if (workNif.FindBlockByName<NiShape>(shapeTarget->first))
+			incomingShapeTargets.emplace_back(shapeTarget->first, shapeTarget->second.targetShape);
+	}
+	ResolveTargetConflictsForIncomingShapes(incomingShapeTargets);
+
 	UpdateProgress(70, _("Updating slider data..."));
 	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->name.get() : "", newDataLocal, appendNewSliders);
 
@@ -2921,6 +3087,7 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 	morpher.BuildProximityCache(shape->name.get(), options.proximityRadius, &maskIndices);
 
 	std::string refTarget = ShapeToTarget(baseShape->name.get());
+	std::string resultTarget = SliderDataTargetForShape(shape);
 	std::vector<std::string> conformSliderNames;
 	GetConformSliderNames(options, conformSliderNames);
 
@@ -2948,7 +3115,8 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 									   options.solidMode,
 									   options.axisX,
 									   options.axisY,
-									   options.axisZ);
+									   options.axisZ,
+									   resultTarget);
 		EnsureSliderDataLocal(sliderName, shape);
 	}
 

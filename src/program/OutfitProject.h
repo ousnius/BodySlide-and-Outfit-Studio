@@ -11,6 +11,7 @@ See the included LICENSE file
 #include "OutfitStudio.h"
 
 #include <optional>
+#include <set>
 #include <utility>
 #include <wx/arrstr.h>
 #include <wx/filename.h>
@@ -139,6 +140,11 @@ class OutfitProject {
 	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath = std::string()) const;
 	void ValidateNIF(nifly::NifFile& nif, const std::string& nifFilePath = std::string());
 	std::string SliderDataTargetForShape(nifly::NiShape* shape);
+	std::string ShapeTargetOrDefault(const std::string& shapeName);
+	bool TargetNameInUse(const std::string& targetName, const std::string& exceptShapeName);
+	std::string UniqueTargetNameForShape(const std::string& shapeName, const std::set<std::string>& reservedTargets);
+	void RetargetShapeData(const std::string& shapeName, const std::string& newTarget);
+	void ResolveTargetConflictsForIncomingShapes(const std::vector<std::pair<std::string, std::string>>& incomingShapeTargets);
 
 	// Applies the inverse of the blended pose transform to a NIF-space diff
 	// vector for a single vertex, converting it from posed space to rest space.
