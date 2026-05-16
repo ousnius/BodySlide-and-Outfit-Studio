@@ -203,7 +203,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 				if (targSlider.empty())
 					targSlider = targ + outSet[i].name;
 
-				if (morpher.GetResultDiffSize(shapeName, activeSet[i].name) > 0) {
+				if (morpher.GetResultDiffSize(targ, activeSet[i].name) > 0) {
 					std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
 					bool isDefaultDataFolder = shapeDataFolders.size() == 1 && shapeDataFolders.front() == activeSet.GetDefaultDataFolder();
 
@@ -324,13 +324,13 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef) {
 				if (targSlider.empty())
 					targSlider = targ + activeSet[i].name;
 
-				if (morpher.GetResultDiffSize(shapeName, activeSet[i].name) > 0) {
+				if (morpher.GetResultDiffSize(targ, activeSet[i].name) > 0) {
 					std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
 					bool isDefaultDataFolder = shapeDataFolders.size() == 1 && shapeDataFolders.front() == activeSet.GetDefaultDataFolder();
 
 					if (isDefaultDataFolder || activeSet[i].IsLocalData(targSlider)) {
 						std::unordered_map<uint16_t, Vector3> diff;
-						morpher.GetRawResultDiff(shapeName, activeSet[i].name, diff);
+						morpher.GetRawResultDiff(targ, activeSet[i].name, diff);
 						osdDiffs.LoadSet(targSlider, targ, diff);
 						osdNames[fileName][targSlider] = targ;
 					}
@@ -457,7 +457,7 @@ void OutfitProject::AddEmptySlider(const std::string& newName) {
 
 	if (baseShape) {
 		std::string baseShapeName = baseShape->name.get();
-		std::string target = ShapeToTarget(baseShapeName);
+		std::string target = SliderDataTargetForShape(baseShape);
 		std::string shapeSlider = target + newName;
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(baseShapeName, target);
@@ -466,12 +466,15 @@ void OutfitProject::AddEmptySlider(const std::string& newName) {
 }
 
 void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<uint16_t, float>& verts, NiShape* shape) {
+	if (!shape)
+		return;
+
 	std::unordered_map<uint16_t, Vector3> diffData;
 	Vector3 moveVec(0.0f, 1.0f, 0.0f);
 	for (auto& v : verts)
 		diffData[v.first] = moveVec;
 
-	std::string target = ShapeToTarget(shape->name.get());
+	std::string target = SliderDataTargetForShape(shape);
 	std::string shapeSlider = target + newName;
 
 	size_t sliderID = 0;
@@ -490,7 +493,7 @@ void OutfitProject::AddZapSlider(const std::string& newName, std::unordered_map<
 			baseDiffData.SumDiff(shapeSlider, target, i.first, i.second);
 	}
 	else
-		morpher.SetResultDiff(shape->name.get(), newName, diffData);
+		morpher.SetResultDiff(target, newName, diffData);
 }
 
 void OutfitProject::AddCombinedSlider(const std::string& newName) {
@@ -504,13 +507,14 @@ void OutfitProject::AddCombinedSlider(const std::string& newName) {
 		diffData.clear();
 		GetLiveVerts(s, verts);
 		workNif.CalcShapeDiff(s, &verts, diffData);
-		morpher.SetResultDiff(s->name.get(), newName, diffData);
+		std::string target = SliderDataTargetForShape(s);
+		morpher.SetResultDiff(target, newName, diffData);
 	}
 
 	size_t sliderID = activeSet.CreateSlider(newName);
 	if (baseShape) {
 		std::string baseShapeName = baseShape->name.get();
-		std::string target = ShapeToTarget(baseShapeName);
+		std::string target = SliderDataTargetForShape(baseShape);
 		std::string shapeSlider = target + newName;
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		baseDiffData.AddEmptySet(shapeSlider, target);
@@ -994,7 +998,7 @@ void OutfitProject::CloneSlider(const std::string& sliderName, const std::string
 		else {
 			auto diffData = morpher.GetDiffSet(oldDT);
 			if (diffData)
-				morpher.SetResultDiff(shape->name.get(), cloneName, *diffData);
+				morpher.SetResultDiff(target, cloneName, *diffData);
 		}
 	}
 }
@@ -1033,7 +1037,8 @@ void OutfitProject::MaskAffected(const std::string& sliderName, NiShape* shape) 
 	}
 	else {
 		std::unordered_map<uint16_t, Vector3> outDiff;
-		morpher.GetRawResultDiff(shape->name.get(), sliderName, outDiff);
+		std::string target = SliderDataTargetForShape(shape);
+		morpher.GetRawResultDiff(target, sliderName, outDiff);
 
 		for (auto& i : outDiff) {
 			if (m->nVerts > i.first)
@@ -2003,20 +2008,23 @@ void OutfitProject::UpdateMorphResult(NiShape* shape, const std::string& sliderN
 		}
 	}
 	else
-		morpher.UpdateResultDiff(shape->name.get(), sliderName, vertUpdates);
+		morpher.UpdateResultDiff(target, sliderName, vertUpdates);
 }
 
 void OutfitProject::ScaleMorphResult(NiShape* shape, const std::string& sliderName, float scaleValue) {
+	std::string target = SliderDataTargetForShape(shape);
+	if (target.empty())
+		return;
+
 	std::string sliderData = EnsureSliderDataLocal(sliderName, shape);
 	if (sliderData.empty())
 		return;
 
 	if (IsBaseShape(shape)) {
-		std::string target = SliderDataTargetForShape(shape);
 		baseDiffData.ScaleDiff(sliderData, target, scaleValue);
 	}
 	else
-		morpher.ScaleResultDiff(shape->name.get(), sliderName, scaleValue);
+		morpher.ScaleResultDiff(target, sliderName, scaleValue);
 }
 
 void OutfitProject::MoveVertex(NiShape* shape, const Vector3& pos, const int& id) {
@@ -3308,7 +3316,7 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask,
 					if (IsBaseShape(shape))
 						baseDiffData.AddEmptySet(targetDataName, target);
 					else
-						morpher.AddEmptySet(shape->name.get(), diff.sliderName);
+						morpher.AddEmptySet(target, diff.sliderName);
 				}
 
 				std::unordered_map<uint16_t, Vector3>* diffSet;
@@ -4518,7 +4526,7 @@ NiShape* OutfitProject::RestoreDeletedShape(UndoStateShapeDelete& state) {
 		if (restoreAsBase)
 			baseDiffData.LoadSet(ssd.targetDataName, target, ssd.diffs);
 		else
-			morpher.SetResultDiff(state.shapeName, ssd.sliderName, ssd.diffs);
+			morpher.SetResultDiff(target, ssd.sliderName, ssd.diffs);
 	}
 
 	// Restore texture and material references
