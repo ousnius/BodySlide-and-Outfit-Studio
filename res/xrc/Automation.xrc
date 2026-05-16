@@ -144,11 +144,13 @@
 															<item>Shapes: Rename Shape</item>
 															<item>Shapes: Reset Transforms</item>
 															<item>Shapes: Transform Shape</item>
+															<item>Shapes: Set Geometry Properties</item>
 															<item>Sliders: Conform Sliders</item>
 															<item>Sliders: Delete Slider</item>
 															<item>Sliders: Set Slider Values</item>
 															<item>Sliders: Set Slider Properties</item>
 															<item>Shaders: Set Shader Properties</item>
+															<item>Shaders: Set Texture Paths</item>
 															<item>Masks: Clear Mask</item>
 															<item>Masks: Load Mask</item>
 															<item>Nodes: Remove Unused Nodes</item>
@@ -185,7 +187,7 @@
 															<flag>wxEXPAND|wxRIGHT</flag>
 															<border>5</border>
 															<object class="wxTextCtrl" name="txtTargetMeshes">
-																<tooltip>Comma-separated list of shape names. Leave empty to target all non-reference shapes.</tooltip>
+																<tooltip>Comma-separated list of shape names. Leave empty to target all shapes.</tooltip>
 																<hint>Comma-separated shape list</hint>
 															</object>
 														</object>
@@ -621,7 +623,7 @@
 														<flag>wxALL|wxEXPAND</flag>
 														<border>5</border>
 														<object class="wxStaticText">
-															<label>Removes skinning from target shapes (or all non-reference shapes if Target Shapes is empty).
+															<label>Removes skinning from target shapes (or all shapes if Target Shapes is empty).
 																This deletes all bone weights and skinning data from the shapes.</label>
 															<wrap>400</wrap>
 														</object>
@@ -1440,7 +1442,7 @@ Equivalent to "Slider -> Set Base Shape" in the menu.</label>
 														<object class="wxStaticText">
 															<label>Deletes the shapes specified in the Target Meshes field above.
 
-If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode for pattern matching.</label>
+If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern matching.</label>
 															<wrap>400</wrap>
 														</object>
 													</object>
@@ -1885,6 +1887,73 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																	<value translate="0">0.0</value>
 																	<tooltip>Inflate Z (along normals)</tooltip>
 																	<hint translate="0">Z</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetGeometryProperties -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetGeometryProperties">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Geometry Properties</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Property:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxChoice" name="choiceGeometryPropAdd">
+																			<tooltip>Select a geometry property to add to this step.</tooltip>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddGeometryProp">
+																			<label>Add</label>
+																			<tooltip>Add the selected geometry property to this step.</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Values:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxEXPAND</flag>
+																<object class="wxScrolledWindow" name="panelGeometryPropRows">
+																	<style>wxVSCROLL|wxTAB_TRAVERSAL</style>
+																	<size>-1,160</size>
+																	<object class="wxBoxSizer">
+																		<orient>wxVERTICAL</orient>
+																	</object>
 																</object>
 															</object>
 														</object>
@@ -2346,6 +2415,73 @@ If Target Meshes is empty, all non-reference shapes are deleted. Use Regex mode 
 																<option>1</option>
 																<flag>wxEXPAND</flag>
 																<object class="wxScrolledWindow" name="panelShaderPropRows">
+																	<style>wxVSCROLL|wxTAB_TRAVERSAL</style>
+																	<size>-1,220</size>
+																	<object class="wxBoxSizer">
+																		<orient>wxVERTICAL</orient>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetTexturePaths -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetTexturePaths">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Texture Paths</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Texture Slot:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxChoice" name="choiceTexturePathAdd">
+																			<tooltip>Select a texture slot to add to this step.</tooltip>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddTexturePath">
+																			<label>Add</label>
+																			<tooltip>Add the selected texture path to this step.</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_TOP</flag>
+																<object class="wxStaticText">
+																	<label>Paths:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxEXPAND</flag>
+																<object class="wxScrolledWindow" name="panelTexturePathRows">
 																	<style>wxVSCROLL|wxTAB_TRAVERSAL</style>
 																	<size>-1,220</size>
 																	<object class="wxBoxSizer">

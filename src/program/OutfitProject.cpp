@@ -6331,8 +6331,7 @@ std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std
 	// 2) Beside the meshes folder (or NIF directory) of the loading NIF
 	if (!nifFilePath.empty()) {
 		std::string nifDir = std::regex_replace(nifFilePath, std::regex("\\\\+"), "/");
-		std::string nifDirLower = nifDir;
-		std::transform(nifDirLower.begin(), nifDirLower.end(), nifDirLower.begin(), ::tolower);
+		std::string nifDirLower = ToLower(nifDir);
 
 		auto meshesPos = nifDirLower.rfind("/meshes/");
 		if (meshesPos != std::string::npos) {

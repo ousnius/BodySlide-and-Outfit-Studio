@@ -3226,8 +3226,8 @@ void OutfitStudioFrame::CalcAutoXMirrorBone() {
 		int flips = 0;
 		bool nomatch = false;
 		for (size_t i = 0; i < abLen && !nomatch; ++i) {
-			char abc = std::tolower(activeBone[i]);
-			char bc = std::tolower(b[i]);
+			char abc = ToLower(activeBone[i]);
+			char bc = ToLower(b[i]);
 			if (abc == 'l') {
 				if (bc == 'r')
 					++flips;

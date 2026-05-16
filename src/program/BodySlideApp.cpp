@@ -1880,8 +1880,7 @@ void BodySlideApp::LoadPreviewNifs(const std::vector<std::string>& filePaths) {
 		// Detect OSP extension
 		size_t dotPos = entry.filePath.find_last_of('.');
 		if (dotPos != std::string::npos) {
-			std::string ext = entry.filePath.substr(dotPos + 1);
-			std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+			std::string ext = ToLower(entry.filePath.substr(dotPos + 1));
 			entry.isOsp = (ext == "osp");
 		}
 

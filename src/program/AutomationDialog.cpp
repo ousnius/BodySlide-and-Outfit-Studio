@@ -24,6 +24,7 @@ See the included LICENSE file
 #include <tinyxml2.h>
 
 #include <algorithm>
+#include <memory>
 #include <regex>
 #include <set>
 
@@ -57,6 +58,18 @@ struct ShaderPropertyDef {
 	float default4;
 	const ShaderPropertyChoiceDef* choices;
 	size_t choiceCount;
+};
+
+struct GeometryPropertyDef {
+	const char* name;
+	const char* label;
+	bool defaultEnabled;
+};
+
+struct TexturePathDef {
+	int index;
+	const char* name;
+	const char* label;
 };
 
 const ShaderPropertyChoiceDef ShaderTypeChoices[] = {
@@ -109,6 +122,29 @@ const ShaderPropertyDef ShaderPropertyDefs[] = {
 	{"RefractionStrength", "Refraction Strength", ShaderPropertyValueKind::Scalar, 0.0f, 0.0f, 0.0f, 1.0f, nullptr, 0}
 };
 
+const GeometryPropertyDef GeometryPropertyDefs[] = {
+	{"Skinned", "Skinned", true},
+	{"Dynamic", "Dynamic", true},
+	{"FullPrecision", "Full Precision", true},
+	{"SubIndex", "Sub Index", true}
+};
+
+const TexturePathDef TexturePathDefs[] = {
+	{0, "Diffuse", "0: Diffuse"},
+	{1, "Normal", "1: Normal"},
+	{2, "Glow/Skin", "2: Glow/Skin"},
+	{3, "Parallax", "3: Parallax"},
+	{4, "Environment", "4: Environment"},
+	{5, "Env Mask", "5: Env Mask"},
+	{6, "6", "6"},
+	{7, "Specular", "7: Specular"},
+	{8, "8", "8"},
+	{9, "9", "9"},
+	{10, "10", "10"},
+	{11, "11", "11"},
+	{12, "12", "12"}
+};
+
 const ShaderPropertyDef* FindShaderPropertyDef(const std::string& name) {
 	for (const auto& def : ShaderPropertyDefs) {
 		if (name == def.name)
@@ -127,6 +163,68 @@ AutomationStep::ShaderProperty MakeDefaultShaderProperty(const ShaderPropertyDef
 	if (def.kind == ShaderPropertyValueKind::Choice && def.choiceCount > 0)
 		prop.stringValue = def.choices[0].value;
 	return prop;
+}
+
+const GeometryPropertyDef* FindGeometryPropertyDef(const std::string& name) {
+	for (const auto& def : GeometryPropertyDefs) {
+		if (name == def.name)
+			return &def;
+	}
+	return nullptr;
+}
+
+AutomationStep::GeometryProperty MakeDefaultGeometryProperty(const GeometryPropertyDef& def) {
+	AutomationStep::GeometryProperty prop;
+	prop.name = def.name;
+	prop.enabled = def.defaultEnabled;
+	return prop;
+}
+
+const TexturePathDef* FindTexturePathDefByIndex(int index) {
+	for (const auto& def : TexturePathDefs) {
+		if (def.index == index)
+			return &def;
+	}
+	return nullptr;
+}
+
+const TexturePathDef* FindTexturePathDefByName(const std::string& name) {
+	std::string nameLower = ToLower(name);
+	for (const auto& def : TexturePathDefs) {
+		if (nameLower == ToLower(def.name) || nameLower == ToLower(def.label))
+			return &def;
+	}
+	return nullptr;
+}
+
+int ResolveTexturePathIndex(const AutomationStep::TexturePath& path) {
+	if (path.index >= 0)
+		return path.index;
+
+	const TexturePathDef* def = FindTexturePathDefByName(path.name);
+	return def ? def->index : -1;
+}
+
+std::string TexturePathNameForIndex(int index) {
+	const TexturePathDef* def = FindTexturePathDefByIndex(index);
+	return def ? def->name : std::to_string(index);
+}
+
+AutomationStep::TexturePath MakeDefaultTexturePath(const TexturePathDef& def) {
+	AutomationStep::TexturePath path;
+	path.index = def.index;
+	path.name = def.name;
+	return path;
+}
+
+int ExpectedBSShaderTextureCount(const NiVersion& version) {
+	if (version.User() == 12 && version.Stream() == 155)
+		return 13;
+	if (version.User() == 12 && version.Stream() == 130)
+		return 10;
+	if (version.User() == 12)
+		return 9;
+	return 6;
 }
 
 int ColorByte(float value) {
@@ -388,6 +486,169 @@ bool ApplyAutomationShaderProperty(NifFile* nif, NiShape* shape, const Automatio
 
 	return false;
 }
+
+bool ConvertToSubIndexTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiShape*& shape) {
+	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+	if (!bsTriShape || shape->HasType<BSSubIndexTriShape>())
+		return false;
+
+	auto bsSITS = std::make_unique<BSSubIndexTriShape>();
+	*static_cast<BSTriShape*>(bsSITS.get()) = *bsTriShape;
+	bsSITS->SetDefaultSegments();
+	bsSITS->name.get() = bsTriShape->name.get();
+
+	NiShape* newShape = bsSITS.get();
+	outfitStudio->UpdateShapeReference(bsTriShape, newShape);
+	nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsSITS));
+	shape = newShape;
+	return true;
+}
+
+bool ConvertFromSubIndexTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiShape*& shape) {
+	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+	if (!bsTriShape || !shape->HasType<BSSubIndexTriShape>())
+		return false;
+
+	auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
+	bsTS->name.get() = bsTriShape->name.get();
+
+	NiShape* newShape = bsTS.get();
+	outfitStudio->UpdateShapeReference(bsTriShape, newShape);
+	nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
+	shape = newShape;
+	return true;
+}
+
+bool ConvertToDynamicTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiShape*& shape) {
+	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+	if (!bsTriShape || shape->HasType<BSDynamicTriShape>())
+		return false;
+
+	auto bsDTS = std::make_unique<BSDynamicTriShape>();
+	*static_cast<BSTriShape*>(bsDTS.get()) = *bsTriShape;
+	bsDTS->name.get() = bsTriShape->name.get();
+
+	bsDTS->vertexDesc.RemoveFlag(VF_VERTEX);
+	bsDTS->vertexDesc.SetFlag(VF_FULLPREC);
+	bsDTS->CalcDynamicData();
+	bsDTS->CalcDataSizes(nif->GetHeader().GetVersion());
+
+	NiShape* newShape = bsDTS.get();
+	outfitStudio->UpdateShapeReference(bsTriShape, newShape);
+	nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsDTS));
+	shape = newShape;
+	return true;
+}
+
+bool ConvertFromDynamicTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiShape*& shape) {
+	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+	if (!bsTriShape || !shape->HasType<BSDynamicTriShape>())
+		return false;
+
+	auto bsTS = std::make_unique<BSTriShape>(*bsTriShape);
+	bsTS->name.get() = bsTriShape->name.get();
+
+	bsTS->vertexDesc.SetFlag(VF_VERTEX);
+	bsTS->vertexDesc.RemoveFlag(VF_FULLPREC);
+	bsTS->CalcDataSizes(nif->GetHeader().GetVersion());
+
+	NiShape* newShape = bsTS.get();
+	outfitStudio->UpdateShapeReference(bsTriShape, newShape);
+	nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), std::move(bsTS));
+	shape = newShape;
+	return true;
+}
+
+bool ApplyAutomationGeometryProperty(NifFile* nif,
+									 OutfitStudioFrame* outfitStudio,
+									 OutfitProject* project,
+									 NiShape*& shape,
+									 const AutomationStep::GeometryProperty& prop,
+									 bool& removedSkinning) {
+	if (!shape)
+		return false;
+
+	if (prop.name == "Skinned") {
+		if (shape->IsSkinned() == prop.enabled)
+			return false;
+
+		if (prop.enabled) {
+			project->CreateSkinning(shape);
+		}
+		else {
+			project->RemoveSkinning(shape);
+			removedSkinning = true;
+		}
+		return true;
+	}
+
+	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+	if (!bsTriShape) {
+		wxLogWarning("Automation: SetGeometryProperties - '%s' is not a BSTriShape; skipped %s.", shape->name.get(), prop.name.c_str());
+		return false;
+	}
+
+	auto& version = nif->GetHeader().GetVersion();
+
+	if (prop.name == "FullPrecision") {
+		if (version.Stream() == 100) {
+			wxLogWarning("Automation: SetGeometryProperties - Full Precision is not editable for stream 100; skipped '%s'.", shape->name.get());
+			return false;
+		}
+		if (!bsTriShape->CanChangePrecision()) {
+			wxLogWarning("Automation: SetGeometryProperties - Full Precision cannot be changed for '%s'.", shape->name.get());
+			return false;
+		}
+		if (bsTriShape->IsFullPrecision() == prop.enabled)
+			return false;
+
+		bsTriShape->SetFullPrecision(prop.enabled);
+		return true;
+	}
+
+	if (prop.name == "SubIndex") {
+		if (version.Stream() < 130) {
+			wxLogWarning("Automation: SetGeometryProperties - Sub Index requires stream 130 or newer; skipped '%s'.", shape->name.get());
+			return false;
+		}
+
+		return prop.enabled ? ConvertToSubIndexTriShape(nif, outfitStudio, shape) : ConvertFromSubIndexTriShape(nif, outfitStudio, shape);
+	}
+
+	if (prop.name == "Dynamic") {
+		if (version.Stream() != 100) {
+			wxLogWarning("Automation: SetGeometryProperties - Dynamic requires stream 100; skipped '%s'.", shape->name.get());
+			return false;
+		}
+
+		return prop.enabled ? ConvertToDynamicTriShape(nif, outfitStudio, shape) : ConvertFromDynamicTriShape(nif, outfitStudio, shape);
+	}
+
+	return false;
+}
+
+BSShaderTextureSet* GetOrCreateBSShaderTextureSet(NifFile* nif, NiShape* shape) {
+	NiShader* shader = nif->GetShader(shape);
+	if (!shader)
+		return nullptr;
+
+	auto textureSetRef = shader->TextureSetRef();
+	if (!textureSetRef)
+		return nullptr;
+
+	auto textureSet = nif->GetHeader().GetBlock(textureSetRef);
+	if (!textureSet) {
+		auto newTextureSet = std::make_unique<BSShaderTextureSet>(nif->GetHeader().GetVersion());
+		textureSet = newTextureSet.get();
+		textureSetRef->index = nif->GetHeader().AddBlock(std::move(newTextureSet));
+	}
+
+	int expectedCount = ExpectedBSShaderTextureCount(nif->GetHeader().GetVersion());
+	if (static_cast<int>(textureSet->textures.size()) < expectedCount)
+		textureSet->textures.resize(expectedCount);
+
+	return textureSet;
+}
 }
 
 wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
@@ -523,6 +784,16 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	auto* btnAddShaderProp = XRCCTRL(*this, "btnAddShaderProp", wxButton);
 	if (btnAddShaderProp)
 		btnAddShaderProp->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddShaderProperty, this);
+
+	PopulateGeometryPropertyChoice();
+	auto* btnAddGeometryProp = XRCCTRL(*this, "btnAddGeometryProp", wxButton);
+	if (btnAddGeometryProp)
+		btnAddGeometryProp->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddGeometryProperty, this);
+
+	PopulateTexturePathChoice();
+	auto* btnAddTexturePath = XRCCTRL(*this, "btnAddTexturePath", wxButton);
+	if (btnAddTexturePath)
+		btnAddTexturePath->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddTexturePath, this);
 
 	auto* btnAddFixClipSlider = XRCCTRL(*this, "btnAddFixClipSlider", wxButton);
 	if (btnAddFixClipSlider)
@@ -848,6 +1119,239 @@ std::vector<AutomationStep::ShaderProperty> AutomationDialog::ReadShaderProperty
 	return properties;
 }
 
+void AutomationDialog::PopulateGeometryPropertyChoice() {
+	auto* choice = XRCCTRL(*this, "choiceGeometryPropAdd", wxChoice);
+	if (choice) {
+		choice->Clear();
+		for (const auto& def : GeometryPropertyDefs)
+			choice->Append(wxString::FromUTF8(def.label), new wxStringClientData(wxString::FromUTF8(def.name)));
+
+		if (choice->GetCount() > 0)
+			choice->SetSelection(0);
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+	if (rowsWindow)
+		rowsWindow->SetScrollRate(0, 8);
+}
+
+void AutomationDialog::ClearGeometryPropertyRows() {
+	auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+	if (rowsWindow) {
+		if (auto* rowsSizer = rowsWindow->GetSizer())
+			rowsSizer->Clear(true);
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+
+	geometryPropertyRows.clear();
+}
+
+void AutomationDialog::AddGeometryPropertyRow(const AutomationStep::GeometryProperty& prop) {
+	const GeometryPropertyDef* def = FindGeometryPropertyDef(prop.name);
+	if (!def)
+		return;
+
+	auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+	if (!rowsWindow)
+		return;
+
+	wxSizer* rowsSizer = rowsWindow->GetSizer();
+	if (!rowsSizer) {
+		rowsSizer = new wxBoxSizer(wxVERTICAL);
+		rowsWindow->SetSizer(rowsSizer);
+	}
+
+	auto* rowPanel = new wxPanel(rowsWindow, wxID_ANY);
+	auto* rowSizer = new wxBoxSizer(wxHORIZONTAL);
+
+	GeometryPropertyRowControls row;
+	row.panel = rowPanel;
+	row.propertyName = prop.name;
+
+	auto* label = new wxStaticText(rowPanel, wxID_ANY, wxString::FromUTF8(def->label), wxDefaultPosition, wxSize(145, -1));
+	rowSizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+	auto* choice = new wxChoice(rowPanel, wxID_ANY);
+	choice->Append(_("Enabled"));
+	choice->Append(_("Disabled"));
+	choice->SetSelection(prop.enabled ? 0 : 1);
+	row.value = choice;
+	rowSizer->Add(choice, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+	rowSizer->AddStretchSpacer(1);
+
+	auto* btnRemove = new wxButton(rowPanel, wxID_ANY, "X", wxDefaultPosition, wxSize(28, -1));
+	btnRemove->SetToolTip(_("Remove this geometry property"));
+	btnRemove->Bind(wxEVT_BUTTON, [this, rowPanel](wxCommandEvent&) { RemoveGeometryPropertyRow(rowPanel); });
+	rowSizer->Add(btnRemove, 0, wxALIGN_CENTER_VERTICAL);
+
+	rowPanel->SetSizer(rowSizer);
+	rowsSizer->Add(rowPanel, 0, wxEXPAND | wxBOTTOM, 4);
+	geometryPropertyRows.push_back(row);
+
+	rowsWindow->FitInside();
+	rowsWindow->Layout();
+	auto* page = XRCCTRL(*this, "pageSetGeometryProperties", wxPanel);
+	if (page)
+		page->Layout();
+}
+
+void AutomationDialog::RemoveGeometryPropertyRow(wxWindow* rowPanel) {
+	for (auto it = geometryPropertyRows.begin(); it != geometryPropertyRows.end(); ++it) {
+		if (it->panel == rowPanel) {
+			auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+			if (rowsWindow && rowsWindow->GetSizer())
+				rowsWindow->GetSizer()->Detach(it->panel);
+			if (it->panel)
+				it->panel->Destroy();
+			geometryPropertyRows.erase(it);
+			break;
+		}
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+	if (rowsWindow) {
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+}
+
+void AutomationDialog::RebuildGeometryPropertyRows(const std::vector<AutomationStep::GeometryProperty>& properties) {
+	ClearGeometryPropertyRows();
+	for (const auto& prop : properties)
+		AddGeometryPropertyRow(prop);
+}
+
+std::vector<AutomationStep::GeometryProperty> AutomationDialog::ReadGeometryPropertyRows() const {
+	std::vector<AutomationStep::GeometryProperty> properties;
+	for (const auto& row : geometryPropertyRows) {
+		const GeometryPropertyDef* def = FindGeometryPropertyDef(row.propertyName);
+		if (!def)
+			continue;
+
+		AutomationStep::GeometryProperty prop = MakeDefaultGeometryProperty(*def);
+		prop.name = row.propertyName;
+		prop.enabled = !row.value || row.value->GetSelection() != 1;
+		properties.push_back(prop);
+	}
+
+	return properties;
+}
+
+void AutomationDialog::PopulateTexturePathChoice() {
+	auto* choice = XRCCTRL(*this, "choiceTexturePathAdd", wxChoice);
+	if (choice) {
+		choice->Clear();
+		for (const auto& def : TexturePathDefs)
+			choice->Append(wxString::FromUTF8(def.label), new wxStringClientData(wxString::Format("%d", def.index)));
+
+		if (choice->GetCount() > 0)
+			choice->SetSelection(0);
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+	if (rowsWindow)
+		rowsWindow->SetScrollRate(0, 8);
+}
+
+void AutomationDialog::ClearTexturePathRows() {
+	auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+	if (rowsWindow) {
+		if (auto* rowsSizer = rowsWindow->GetSizer())
+			rowsSizer->Clear(true);
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+
+	texturePathRows.clear();
+}
+
+void AutomationDialog::AddTexturePathRow(const AutomationStep::TexturePath& path) {
+	int index = ResolveTexturePathIndex(path);
+	const TexturePathDef* def = FindTexturePathDefByIndex(index);
+	if (!def)
+		return;
+
+	auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+	if (!rowsWindow)
+		return;
+
+	wxSizer* rowsSizer = rowsWindow->GetSizer();
+	if (!rowsSizer) {
+		rowsSizer = new wxBoxSizer(wxVERTICAL);
+		rowsWindow->SetSizer(rowsSizer);
+	}
+
+	auto* rowPanel = new wxPanel(rowsWindow, wxID_ANY);
+	auto* rowSizer = new wxBoxSizer(wxHORIZONTAL);
+
+	TexturePathRowControls row;
+	row.panel = rowPanel;
+	row.index = index;
+	row.name = path.name.empty() ? def->name : path.name;
+
+	auto* label = new wxStaticText(rowPanel, wxID_ANY, wxString::FromUTF8(def->label), wxDefaultPosition, wxSize(145, -1));
+	rowSizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+	auto* value = new wxTextCtrl(rowPanel, wxID_ANY, wxString::FromUTF8(path.path));
+	row.path = value;
+	rowSizer->Add(value, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+	auto* btnRemove = new wxButton(rowPanel, wxID_ANY, "X", wxDefaultPosition, wxSize(28, -1));
+	btnRemove->SetToolTip(_("Remove this texture path"));
+	btnRemove->Bind(wxEVT_BUTTON, [this, rowPanel](wxCommandEvent&) { RemoveTexturePathRow(rowPanel); });
+	rowSizer->Add(btnRemove, 0, wxALIGN_CENTER_VERTICAL);
+
+	rowPanel->SetSizer(rowSizer);
+	rowsSizer->Add(rowPanel, 0, wxEXPAND | wxBOTTOM, 4);
+	texturePathRows.push_back(row);
+
+	rowsWindow->FitInside();
+	rowsWindow->Layout();
+	auto* page = XRCCTRL(*this, "pageSetTexturePaths", wxPanel);
+	if (page)
+		page->Layout();
+}
+
+void AutomationDialog::RemoveTexturePathRow(wxWindow* rowPanel) {
+	for (auto it = texturePathRows.begin(); it != texturePathRows.end(); ++it) {
+		if (it->panel == rowPanel) {
+			auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+			if (rowsWindow && rowsWindow->GetSizer())
+				rowsWindow->GetSizer()->Detach(it->panel);
+			if (it->panel)
+				it->panel->Destroy();
+			texturePathRows.erase(it);
+			break;
+		}
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+	if (rowsWindow) {
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+}
+
+void AutomationDialog::RebuildTexturePathRows(const std::vector<AutomationStep::TexturePath>& paths) {
+	ClearTexturePathRows();
+	for (const auto& path : paths)
+		AddTexturePathRow(path);
+}
+
+std::vector<AutomationStep::TexturePath> AutomationDialog::ReadTexturePathRows() const {
+	std::vector<AutomationStep::TexturePath> paths;
+	for (const auto& row : texturePathRows) {
+		AutomationStep::TexturePath path;
+		path.index = row.index;
+		path.name = row.name.empty() ? TexturePathNameForIndex(row.index) : row.name;
+		path.path = row.path ? row.path->GetValue().ToUTF8().data() : std::string();
+		paths.push_back(path);
+	}
+
+	return paths;
+}
+
 // Progress methods
 
 void AutomationDialog::StartProgress(const wxString& msg) {
@@ -955,7 +1459,7 @@ void AutomationDialog::PopulateStepList() {
 
 		std::string targetStr = JoinStrings(steps[i].targetMeshes, ", ");
 		if (targetStr.empty())
-			targetStr = "(all non-reference)";
+			targetStr = "(all)";
 		listSteps->SetItem(idx, 2, wxString::FromUTF8(targetStr));
 
 		listSteps->SetItem(idx, 3, wxString::FromUTF8(steps[i].note));
@@ -972,7 +1476,7 @@ void AutomationDialog::RefreshStepRow(int index) {
 
 	std::string targetStr = JoinStrings(step.targetMeshes, ", ");
 	if (targetStr.empty())
-		targetStr = "(all non-reference)";
+		targetStr = "(all)";
 	listSteps->SetItem(index, 2, wxString::FromUTF8(targetStr));
 
 	listSteps->SetItem(index, 3, wxString::FromUTF8(step.note));
@@ -1239,6 +1743,14 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 		}
 		case AutomationStepType::SetShaderProperties: {
 			RebuildShaderPropertyRows(step.shaderProperties);
+			break;
+		}
+		case AutomationStepType::SetGeometryProperties: {
+			RebuildGeometryPropertyRows(step.geometryProperties);
+			break;
+		}
+		case AutomationStepType::SetTexturePaths: {
+			RebuildTexturePathRows(step.texturePaths);
 			break;
 		}
 		case AutomationStepType::ImportFile: {
@@ -1594,6 +2106,14 @@ void AutomationDialog::UpdateStepFromUI() {
 			step.shaderProperties = ReadShaderPropertyRows();
 			break;
 		}
+		case AutomationStepType::SetGeometryProperties: {
+			step.geometryProperties = ReadGeometryPropertyRows();
+			break;
+		}
+		case AutomationStepType::SetTexturePaths: {
+			step.texturePaths = ReadTexturePathRows();
+			break;
+		}
 		case AutomationStepType::DeleteShape:
 			// No parameters — uses Target Meshes
 			break;
@@ -1788,13 +2308,13 @@ NiShape* AutomationDialog::FindShapeByName(const std::string& name) {
 	return nullptr;
 }
 
-std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep& step) {
+std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep& step, bool includeBaseShapeOnEmpty) {
 	if (step.targetMeshes.empty()) {
 		auto allShapes = project->GetWorkNif()->GetShapes();
 		std::vector<NiShape*> result;
 		auto* baseShape = project->GetBaseShape();
 		for (auto* shape : allShapes) {
-			if (shape != baseShape)
+			if (includeBaseShapeOnEmpty || shape != baseShape)
 				result.push_back(shape);
 		}
 		return result;
@@ -2844,7 +3364,7 @@ int AutomationDialog::ExecuteStepSetSliderValues(const AutomationStep& step) {
 }
 
 int AutomationDialog::ExecuteStepConformSliders(const AutomationStep& step) {
-	auto shapes = ResolveTargetShapes(step);
+	auto shapes = ResolveTargetShapes(step, false);
 	if (shapes.empty()) {
 		wxLogWarning("Automation: ConformSliders - no target shapes found.");
 		return 0;
@@ -2895,7 +3415,7 @@ int AutomationDialog::ExecuteStepConformSliders(const AutomationStep& step) {
 }
 
 int AutomationDialog::ExecuteStepCopyBoneWeights(const AutomationStep& step) {
-	auto shapes = ResolveTargetShapes(step);
+	auto shapes = ResolveTargetShapes(step, false);
 	if (shapes.empty()) {
 		wxLogWarning("Automation: CopyBoneWeights - no target shapes found.");
 		return 0;
@@ -4084,6 +4604,181 @@ int AutomationDialog::ExecuteStepSetShaderProperties(const AutomationStep& step)
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepSetGeometryProperties(const AutomationStep& step) {
+	if (step.geometryProperties.empty()) {
+		wxLogWarning("Automation: SetGeometryProperties - no geometry properties configured.");
+		return 0;
+	}
+
+	NifFile* nif = project->GetWorkNif();
+	if (!nif)
+		return 0;
+
+	auto targetShapes = ResolveTargetShapes(step);
+	if (targetShapes.empty()) {
+		wxLogWarning("Automation: SetGeometryProperties - no target shapes found.");
+		return 0;
+	}
+
+	const char* propertyOrder[] = {"FullPrecision", "SubIndex", "Dynamic", "Skinned"};
+	std::vector<NiShape*> changedShapes;
+	bool removedSkinning = false;
+	int updatedShapes = 0;
+	int updatedValues = 0;
+
+	for (auto* targetShape : targetShapes) {
+		if (!targetShape)
+			continue;
+
+		NiShape* shape = targetShape;
+		int shapeUpdates = 0;
+		for (const char* propertyName : propertyOrder) {
+			for (const auto& prop : step.geometryProperties) {
+				if (prop.name == propertyName && ApplyAutomationGeometryProperty(nif, outfitStudio, project, shape, prop, removedSkinning))
+					shapeUpdates++;
+			}
+		}
+
+		if (shapeUpdates > 0) {
+			updatedShapes++;
+			updatedValues += shapeUpdates;
+			changedShapes.push_back(shape);
+			wxLogMessage("Automation: SetGeometryProperties - updated %d geometry properties on '%s'.",
+				shapeUpdates,
+				shape->name.get());
+		}
+	}
+
+	if (updatedShapes > 0) {
+		if (removedSkinning) {
+			nif->DeleteUnreferencedNodes();
+			outfitStudio->UpdateAnimationGUI();
+		}
+
+		for (auto* shape : changedShapes) {
+			if (!shape)
+				continue;
+			project->SetTextures(shape);
+			outfitStudio->MeshFromProj(shape, true);
+		}
+
+		outfitStudio->SetPendingChanges();
+		outfitStudio->glView->Render();
+		wxLogMessage("Automation: SetGeometryProperties - updated %d geometry values on %d shapes.", updatedValues, updatedShapes);
+	}
+	else {
+		wxLogWarning("Automation: SetGeometryProperties - found no applicable geometry properties on target shapes.");
+	}
+
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepSetTexturePaths(const AutomationStep& step) {
+	if (step.texturePaths.empty()) {
+		wxLogWarning("Automation: SetTexturePaths - no texture paths configured.");
+		return 0;
+	}
+
+	NifFile* nif = project->GetWorkNif();
+	if (!nif)
+		return 0;
+
+	std::vector<AutomationStep::TexturePath> texturePaths;
+	for (const auto& path : step.texturePaths) {
+		int index = ResolveTexturePathIndex(path);
+		if (index < 0) {
+			wxLogWarning("Automation: SetTexturePaths - texture slot '%s' could not be resolved; skipping.", path.name.c_str());
+			continue;
+		}
+
+		const TexturePathDef* namedDef = path.name.empty() ? nullptr : FindTexturePathDefByName(path.name);
+		if (path.index >= 0 && namedDef && namedDef->index != path.index) {
+			wxLogWarning("Automation: SetTexturePaths - slot name '%s' points to %d but index %d was specified; using index %d.",
+				path.name.c_str(),
+				namedDef->index,
+				path.index,
+				path.index);
+		}
+
+		AutomationStep::TexturePath resolvedPath = path;
+		resolvedPath.index = index;
+		if (resolvedPath.name.empty())
+			resolvedPath.name = TexturePathNameForIndex(index);
+		texturePaths.push_back(std::move(resolvedPath));
+	}
+
+	if (texturePaths.empty()) {
+		wxLogWarning("Automation: SetTexturePaths - no valid texture slots configured.");
+		return 0;
+	}
+
+	auto targetShapes = ResolveTargetShapes(step);
+	if (targetShapes.empty()) {
+		wxLogWarning("Automation: SetTexturePaths - no target shapes found.");
+		return 0;
+	}
+
+	std::vector<NiShape*> changedShapes;
+	int updatedShapes = 0;
+	int updatedValues = 0;
+	int skippedValues = 0;
+
+	for (auto* shape : targetShapes) {
+		if (!shape)
+			continue;
+
+		BSShaderTextureSet* textureSet = GetOrCreateBSShaderTextureSet(nif, shape);
+		if (!textureSet) {
+			skippedValues += static_cast<int>(texturePaths.size());
+			wxLogWarning("Automation: SetTexturePaths - '%s' has no BSShaderTextureSet-capable shader; skipped.", shape->name.get());
+			continue;
+		}
+
+		int expectedCount = ExpectedBSShaderTextureCount(nif->GetHeader().GetVersion());
+		int shapeUpdates = 0;
+		for (const auto& path : texturePaths) {
+			if (path.index < 0 || path.index >= expectedCount) {
+				skippedValues++;
+				wxLogWarning("Automation: SetTexturePaths - slot %d is not valid for this NIF version on '%s'.", path.index, shape->name.get());
+				continue;
+			}
+
+			std::string texturePath = ToBackslashes(path.path);
+			if (textureSet->textures[path.index].get() == texturePath)
+				continue;
+
+			textureSet->textures[path.index].get() = texturePath;
+			shapeUpdates++;
+		}
+
+		if (shapeUpdates > 0) {
+			updatedShapes++;
+			updatedValues += shapeUpdates;
+			changedShapes.push_back(shape);
+			wxLogMessage("Automation: SetTexturePaths - updated %d texture paths on '%s'.", shapeUpdates, shape->name.get());
+		}
+	}
+
+	if (updatedShapes > 0) {
+		nif->TrimTexturePaths();
+		for (auto* shape : changedShapes) {
+			if (!shape)
+				continue;
+			project->SetTextures(shape);
+			outfitStudio->MeshFromProj(shape, true);
+		}
+
+		outfitStudio->SetPendingChanges();
+		outfitStudio->glView->Render();
+		wxLogMessage("Automation: SetTexturePaths - updated %d texture paths on %d shapes (%d skipped).", updatedValues, updatedShapes, skippedValues);
+	}
+	else {
+		wxLogWarning("Automation: SetTexturePaths - found no applicable texture paths on target shapes (%d skipped).", skippedValues);
+	}
+
+	return 0;
+}
+
 int AutomationDialog::ExecuteStepRemoveUnusedNodes(const AutomationStep&) {
 	wxLogMessage("Automation: Removing unused nodes...");
 	int deletionCount = 0;
@@ -4294,6 +4989,8 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
 		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
 		case AutomationStepType::SetShaderProperties: return ExecuteStepSetShaderProperties(step);
+		case AutomationStepType::SetGeometryProperties: return ExecuteStepSetGeometryProperties(step);
+		case AutomationStepType::SetTexturePaths: return ExecuteStepSetTexturePaths(step);
 		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
 		case AutomationStepType::FixClipping: return ExecuteStepFixClipping(step);
 		case AutomationStepType::FixBadBones: return ExecuteStepFixBadBones(step);
@@ -4635,6 +5332,50 @@ void AutomationDialog::OnAddShaderProperty(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	AddShaderPropertyRow(MakeDefaultShaderProperty(*def));
+}
+
+void AutomationDialog::OnAddGeometryProperty(wxCommandEvent& WXUNUSED(event)) {
+	auto* choice = XRCCTRL(*this, "choiceGeometryPropAdd", wxChoice);
+	std::string propertyName = GetChoiceClientValue(choice);
+	if (propertyName.empty())
+		return;
+
+	for (const auto& row : geometryPropertyRows) {
+		if (row.propertyName == propertyName)
+			return;
+	}
+
+	const GeometryPropertyDef* def = FindGeometryPropertyDef(propertyName);
+	if (!def)
+		return;
+
+	AddGeometryPropertyRow(MakeDefaultGeometryProperty(*def));
+}
+
+void AutomationDialog::OnAddTexturePath(wxCommandEvent& WXUNUSED(event)) {
+	auto* choice = XRCCTRL(*this, "choiceTexturePathAdd", wxChoice);
+	std::string indexText = GetChoiceClientValue(choice);
+	if (indexText.empty())
+		return;
+
+	int index = -1;
+	try {
+		index = std::stoi(indexText);
+	}
+	catch (...) {
+		return;
+	}
+
+	for (const auto& row : texturePathRows) {
+		if (row.index == index)
+			return;
+	}
+
+	const TexturePathDef* def = FindTexturePathDefByIndex(index);
+	if (!def)
+		return;
+
+	AddTexturePathRow(MakeDefaultTexturePath(*def));
 }
 
 void AutomationDialog::OnLoadMaskFileChanged(wxFileDirPickerEvent& event) {

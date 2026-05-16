@@ -23,6 +23,10 @@ bool StringStartsWith(std::string_view s, std::string_view prefix);
 /* StringEndsWith: returns true if the string s ends with suffix.*/
 bool StringEndsWith(std::string_view s, std::string_view suffix);
 
+/* ToLower: converts ASCII characters in strings to lowercase. */
+char ToLower(unsigned char c);
+std::string ToLower(const std::string& s);
+
 /* ToOSSlash: converts all forward and back slashes in s to the path
 separator character for the operating system and returns the result. */
 std::string ToOSSlashes(const std::string& s);
@@ -40,7 +44,7 @@ std::string JoinStrings(const std::vector<std::string>& elements, const char* co
 /* case_insensitive_compare: can be used for maps and more */
 struct case_insensitive_compare {
 	struct nocase_compare {
-		bool operator()(const unsigned char& c1, const unsigned char& c2) const { return tolower(c1) < tolower(c2); }
+		bool operator()(const unsigned char& c1, const unsigned char& c2) const { return ToLower(c1) < ToLower(c2); }
 	};
 
 	bool operator()(const std::string& s1, const std::string& s2) const { return std::lexicographical_compare(s1.begin(), s1.end(), s2.begin(), s2.end(), nocase_compare()); }

@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "Anim.h"
 #include "NifUtil.hpp"
+#include "../utils/StringStuff.h"
 #include <unordered_set>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
@@ -628,8 +629,8 @@ void AnimInfo::MatchSymmetricBoneNames(std::vector<std::string> boneNames, std::
 			int flips = 0;
 			bool nomatch = false;
 			for (size_t i = 0; i < b1len && !nomatch; ++i) {
-				char b1c = std::tolower(boneNames[bi1][i]);
-				char b2c = std::tolower(boneNames[bi2][i]);
+				char b1c = ToLower(boneNames[bi1][i]);
+				char b2c = ToLower(boneNames[bi2][i]);
 				if (b1c == 'l' && b2c == 'r')
 					++flips;
 				else if (b1c == 'r' && b2c == 'l')
