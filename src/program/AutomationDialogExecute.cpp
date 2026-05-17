@@ -270,6 +270,83 @@ bool ApplyAutomationShaderProperty(NifFile* nif, NiShape* shape, const Automatio
 	return false;
 }
 
+bool IsSupportedAutomationExtraDataType(const std::string& type) {
+	return type == "NiStringExtraData"
+		|| type == "NiIntegerExtraData"
+		|| type == "NiFloatExtraData"
+		|| type == "NiBooleanExtraData";
+}
+
+std::unique_ptr<NiExtraData> CreateAutomationExtraData(const std::string& type, const std::string& name) {
+	std::unique_ptr<NiExtraData> extraData;
+	if (type == "NiStringExtraData")
+		extraData = std::make_unique<NiStringExtraData>();
+	else if (type == "NiIntegerExtraData")
+		extraData = std::make_unique<NiIntegerExtraData>();
+	else if (type == "NiFloatExtraData")
+		extraData = std::make_unique<NiFloatExtraData>();
+	else if (type == "NiBooleanExtraData")
+		extraData = std::make_unique<NiBooleanExtraData>();
+
+	if (extraData)
+		extraData->name.get() = name;
+
+	return extraData;
+}
+
+bool ApplyAutomationExtraDataValue(NiExtraData* extraData, const std::string& value, std::string& error) {
+	if (!extraData) {
+		error = "missing extra data block";
+		return false;
+	}
+
+	if (auto* stringExtraData = dynamic_cast<NiStringExtraData*>(extraData)) {
+		stringExtraData->stringData.get() = value;
+		return true;
+	}
+
+	if (auto* intExtraData = dynamic_cast<NiIntegerExtraData*>(extraData)) {
+		uint32_t parsed = 0;
+		if (!ParseUInt32Value(value, parsed)) {
+			error = "expected an unsigned integer";
+			return false;
+		}
+		intExtraData->integerData = parsed;
+		return true;
+	}
+
+	if (auto* floatExtraData = dynamic_cast<NiFloatExtraData*>(extraData)) {
+		float parsed = 0.0f;
+		if (!ParseFloatValue(value, parsed)) {
+			error = "expected a floating point number";
+			return false;
+		}
+		floatExtraData->floatData = parsed;
+		return true;
+	}
+
+	if (auto* boolExtraData = dynamic_cast<NiBooleanExtraData*>(extraData)) {
+		bool parsed = false;
+		if (!ParseBoolValue(value, parsed)) {
+			error = "expected true or false";
+			return false;
+		}
+		boolExtraData->booleanData = parsed;
+		return true;
+	}
+
+	error = "unsupported extra data block type";
+	return false;
+}
+
+std::string ExtraDataTargetLabel(NiAVObject* target) {
+	if (!target)
+		return "<none>";
+
+	std::string label = target->name.get();
+	return label.empty() ? "<root>" : label;
+}
+
 bool ConvertToSubIndexTriShape(NifFile* nif, OutfitStudioFrame* outfitStudio, NiShape*& shape) {
 	auto* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (!bsTriShape || shape->HasType<BSSubIndexTriShape>())
@@ -1913,6 +1990,196 @@ int AutomationDialog::ExecuteStepSetGeometryProperties(const AutomationStep& ste
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepSetExtraData(const AutomationStep& step) {
+	NifFile* nif = project->GetWorkNif();
+	if (!nif)
+		return 0;
+
+	std::string type = TrimString(step.extraDataType.empty() ? "NiStringExtraData" : step.extraDataType);
+	std::string name = TrimString(step.extraDataName);
+	if (name.empty()) {
+		wxLogError("Automation: SetExtraData - extra data name is empty.");
+		return 1;
+	}
+
+	if (!IsSupportedAutomationExtraDataType(type)) {
+		wxLogError("Automation: SetExtraData - unsupported extra data block type '%s'.", type.c_str());
+		return 1;
+	}
+
+	auto validationBlock = CreateAutomationExtraData(type, name);
+	std::string valueError;
+	if (!ApplyAutomationExtraDataValue(validationBlock.get(), step.extraDataValue, valueError)) {
+		wxLogError("Automation: SetExtraData - invalid value for %s '%s': %s.", type.c_str(), name.c_str(), valueError.c_str());
+		return 1;
+	}
+
+	std::vector<NiAVObject*> targets;
+	if (step.targetMeshes.empty()) {
+		NiNode* root = nif->GetRootNode();
+		if (!root) {
+			wxLogError("Automation: SetExtraData - no root node found.");
+			return 1;
+		}
+		targets.push_back(root);
+	}
+	else {
+		auto shapes = ResolveTargetShapes(step);
+		for (auto* shape : shapes)
+			targets.push_back(shape);
+	}
+
+	if (targets.empty()) {
+		wxLogWarning("Automation: SetExtraData - no targets found.");
+		return 0;
+	}
+
+	int updatedBlocks = 0;
+	int addedBlocks = 0;
+	int skippedExistingBlocks = 0;
+	for (auto* target : targets) {
+		if (!target)
+			continue;
+
+		int targetUpdates = 0;
+		bool found = false;
+		int refCount = static_cast<int>(target->extraDataRefs.GetSize());
+		for (int i = refCount - 1; i >= 0; i--) {
+			uint32_t blockId = target->extraDataRefs.GetBlockRef(i);
+			auto* extraData = nif->GetHeader().GetBlock<NiExtraData>(blockId);
+			if (!extraData || extraData->name.get() != name)
+				continue;
+
+			found = true;
+			if (std::string(extraData->GetBlockName()) == type) {
+				std::string error;
+				if (!ApplyAutomationExtraDataValue(extraData, step.extraDataValue, error)) {
+					wxLogError("Automation: SetExtraData - failed to update %s '%s' on '%s': %s.",
+						type.c_str(),
+						name.c_str(),
+						ExtraDataTargetLabel(target).c_str(),
+						error.c_str());
+					return 1;
+				}
+				updatedBlocks++;
+				targetUpdates++;
+			}
+			else {
+				skippedExistingBlocks++;
+				wxLogWarning("Automation: SetExtraData - '%s' already exists on '%s' as %s; not creating a duplicate %s block.",
+					name.c_str(),
+					ExtraDataTargetLabel(target).c_str(),
+					extraData->GetBlockName(),
+					type.c_str());
+			}
+		}
+
+		if (!found) {
+			auto extraData = CreateAutomationExtraData(type, name);
+			std::string error;
+			if (!ApplyAutomationExtraDataValue(extraData.get(), step.extraDataValue, error)) {
+				wxLogError("Automation: SetExtraData - failed to add %s '%s' on '%s': %s.",
+					type.c_str(),
+					name.c_str(),
+					ExtraDataTargetLabel(target).c_str(),
+					error.c_str());
+				return 1;
+			}
+
+			nif->AssignExtraData(target, std::move(extraData));
+			addedBlocks++;
+			targetUpdates++;
+		}
+
+		if (targetUpdates > 0) {
+			wxLogMessage("Automation: SetExtraData - set '%s' on '%s'.", name.c_str(), ExtraDataTargetLabel(target).c_str());
+		}
+	}
+
+	if (updatedBlocks > 0 || addedBlocks > 0) {
+		outfitStudio->SetPendingChanges();
+		outfitStudio->glView->Render();
+		wxLogMessage("Automation: SetExtraData - updated %d, added %d extra data blocks (%d existing-name blocks skipped).",
+			updatedBlocks,
+			addedBlocks,
+			skippedExistingBlocks);
+	}
+	else if (skippedExistingBlocks > 0) {
+		wxLogWarning("Automation: SetExtraData - no extra data blocks were changed (%d existing-name blocks skipped).", skippedExistingBlocks);
+	}
+
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepDeleteExtraData(const AutomationStep& step) {
+	NifFile* nif = project->GetWorkNif();
+	if (!nif)
+		return 0;
+
+	std::string name = TrimString(step.extraDataName);
+	if (name.empty()) {
+		wxLogError("Automation: DeleteExtraData - extra data name is empty.");
+		return 1;
+	}
+
+	std::vector<NiAVObject*> targets;
+	if (step.targetMeshes.empty()) {
+		NiNode* root = nif->GetRootNode();
+		if (!root) {
+			wxLogError("Automation: DeleteExtraData - no root node found.");
+			return 1;
+		}
+		targets.push_back(root);
+	}
+	else {
+		auto shapes = ResolveTargetShapes(step);
+		for (auto* shape : shapes)
+			targets.push_back(shape);
+	}
+
+	if (targets.empty()) {
+		wxLogWarning("Automation: DeleteExtraData - no targets found.");
+		return 0;
+	}
+
+	int deletedBlocks = 0;
+	for (auto* target : targets) {
+		if (!target)
+			continue;
+
+		int targetDeletes = 0;
+		int refCount = static_cast<int>(target->extraDataRefs.GetSize());
+		for (int i = refCount - 1; i >= 0; i--) {
+			uint32_t blockId = target->extraDataRefs.GetBlockRef(i);
+			auto* extraData = nif->GetHeader().GetBlock<NiExtraData>(blockId);
+			if (!extraData || extraData->name.get() != name)
+				continue;
+
+			nif->GetHeader().DeleteBlock(blockId);
+			deletedBlocks++;
+			targetDeletes++;
+		}
+
+		if (targetDeletes > 0) {
+			wxLogMessage("Automation: DeleteExtraData - removed %d '%s' blocks from '%s'.",
+				targetDeletes,
+				name.c_str(),
+				ExtraDataTargetLabel(target).c_str());
+		}
+	}
+
+	if (deletedBlocks > 0) {
+		outfitStudio->SetPendingChanges();
+		outfitStudio->glView->Render();
+		wxLogMessage("Automation: DeleteExtraData - removed %d extra data blocks.", deletedBlocks);
+	}
+	else {
+		wxLogWarning("Automation: DeleteExtraData - no extra data named '%s' found.", name.c_str());
+	}
+
+	return 0;
+}
+
 int AutomationDialog::ExecuteStepSetTexturePaths(const AutomationStep& step) {
 	if (step.texturePaths.empty()) {
 		wxLogWarning("Automation: SetTexturePaths - no texture paths configured.");
@@ -2230,6 +2497,8 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
 		case AutomationStepType::SetShaderProperties: return ExecuteStepSetShaderProperties(step);
 		case AutomationStepType::SetGeometryProperties: return ExecuteStepSetGeometryProperties(step);
+		case AutomationStepType::SetExtraData: return ExecuteStepSetExtraData(step);
+		case AutomationStepType::DeleteExtraData: return ExecuteStepDeleteExtraData(step);
 		case AutomationStepType::SetTexturePaths: return ExecuteStepSetTexturePaths(step);
 		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
 		case AutomationStepType::FixClipping: return ExecuteStepFixClipping(step);

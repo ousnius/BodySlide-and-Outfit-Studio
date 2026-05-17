@@ -224,6 +224,8 @@ private:
 	int ExecuteStepSetSliderProperties(const AutomationStep& step);
 	int ExecuteStepSetShaderProperties(const AutomationStep& step);
 	int ExecuteStepSetGeometryProperties(const AutomationStep& step);
+	int ExecuteStepSetExtraData(const AutomationStep& step);
+	int ExecuteStepDeleteExtraData(const AutomationStep& step);
 	int ExecuteStepSetTexturePaths(const AutomationStep& step);
 	int ExecuteStepRemoveUnusedNodes(const AutomationStep& step);
 	int ExecuteStepFixClipping(const AutomationStep& step);

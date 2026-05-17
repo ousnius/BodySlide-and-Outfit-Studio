@@ -234,6 +234,18 @@ int FindChoiceByClientValue(wxChoice* choice, const std::string& value) {
 	return wxNOT_FOUND;
 }
 
+bool StepTargetsRootOnEmpty(AutomationStepType type) {
+	return type == AutomationStepType::SetExtraData || type == AutomationStepType::DeleteExtraData;
+}
+
+std::string GetStepTargetDisplayString(const AutomationStep& step) {
+	std::string targetStr = JoinStrings(step.targetMeshes, ", ");
+	if (!targetStr.empty())
+		return targetStr;
+
+	return StepTargetsRootOnEmpty(step.type) ? "(root)" : "(all)";
+}
+
 }
 
 int AutomationDialog::TexturePathIndexForName(const std::string& name) {
@@ -1059,10 +1071,7 @@ void AutomationDialog::PopulateStepList() {
 		long idx = listSteps->InsertItem(i, steps[i].active ? wxString(L"\u2713") : wxString(""));
 		listSteps->SetItem(idx, 1, wxString::FromUTF8(AutomationStepTypeToString(steps[i].type)));
 
-		std::string targetStr = JoinStrings(steps[i].targetMeshes, ", ");
-		if (targetStr.empty())
-			targetStr = "(all)";
-		listSteps->SetItem(idx, 2, wxString::FromUTF8(targetStr));
+		listSteps->SetItem(idx, 2, wxString::FromUTF8(GetStepTargetDisplayString(steps[i])));
 
 		listSteps->SetItem(idx, 3, wxString::FromUTF8(steps[i].note));
 	}
@@ -1076,10 +1085,7 @@ void AutomationDialog::RefreshStepRow(int index) {
 	listSteps->SetItem(index, 0, step.active ? wxString(L"\u2713") : wxString(""));
 	listSteps->SetItem(index, 1, wxString::FromUTF8(AutomationStepTypeToString(step.type)));
 
-	std::string targetStr = JoinStrings(step.targetMeshes, ", ");
-	if (targetStr.empty())
-		targetStr = "(all)";
-	listSteps->SetItem(index, 2, wxString::FromUTF8(targetStr));
+	listSteps->SetItem(index, 2, wxString::FromUTF8(GetStepTargetDisplayString(step)));
 
 	listSteps->SetItem(index, 3, wxString::FromUTF8(step.note));
 }
@@ -1356,6 +1362,26 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 		}
 		case AutomationStepType::SetGeometryProperties: {
 			RebuildGeometryPropertyRows(step.geometryProperties);
+			break;
+		}
+		case AutomationStepType::SetExtraData: {
+			auto* choice = XRCCTRL(*this, "choiceExtraDataType", wxChoice);
+			if (choice) {
+				wxString typeName = wxString::FromUTF8(step.extraDataType.empty() ? "NiStringExtraData" : step.extraDataType);
+				int idx = choice->FindString(typeName);
+				if (idx != wxNOT_FOUND)
+					choice->SetSelection(idx);
+				else if (!typeName.IsEmpty()) {
+					choice->Append(typeName);
+					choice->SetSelection(choice->GetCount() - 1);
+				}
+			}
+			SetTextValue("txtExtraDataName", step.extraDataName);
+			SetTextValue("txtExtraDataValue", step.extraDataValue);
+			break;
+		}
+		case AutomationStepType::DeleteExtraData: {
+			SetTextValue("txtDeleteExtraDataName", step.extraDataName);
 			break;
 		}
 		case AutomationStepType::SetTexturePaths: {
@@ -1722,6 +1748,18 @@ void AutomationDialog::UpdateStepFromUI() {
 		}
 		case AutomationStepType::SetGeometryProperties: {
 			step.geometryProperties = ReadGeometryPropertyRows();
+			break;
+		}
+		case AutomationStepType::SetExtraData: {
+			auto* choice = XRCCTRL(*this, "choiceExtraDataType", wxChoice);
+			if (choice && choice->GetSelection() != wxNOT_FOUND)
+				step.extraDataType = choice->GetStringSelection().ToUTF8().data();
+			step.extraDataName = GetTextValue("txtExtraDataName");
+			step.extraDataValue = GetTextValue("txtExtraDataValue");
+			break;
+		}
+		case AutomationStepType::DeleteExtraData: {
+			step.extraDataName = GetTextValue("txtDeleteExtraDataName");
 			break;
 		}
 		case AutomationStepType::SetTexturePaths: {

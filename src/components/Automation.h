@@ -42,6 +42,8 @@ enum class AutomationStepType {
 	ResetTransforms,
 	TransformShape,
 	SetGeometryProperties,
+	SetExtraData,
+	DeleteExtraData,
 	ConformSliders,
 	DeleteSlider,
 	SetSliderValues,
@@ -53,7 +55,7 @@ enum class AutomationStepType {
 	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 36;
+constexpr int AutomationStepTypeCount = 38;
 static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -178,6 +180,11 @@ struct AutomationStep {
 		bool enabled = false;
 	};
 	std::vector<GeometryProperty> geometryProperties;
+
+	// SetExtraData / DeleteExtraData params
+	std::string extraDataType = "NiStringExtraData";
+	std::string extraDataName;
+	std::string extraDataValue;
 
 	// InvertUVs params
 	bool invertU = false;

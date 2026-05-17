@@ -40,6 +40,8 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::ResetTransforms: return "ResetTransforms";
 		case AutomationStepType::TransformShape: return "TransformShape";
 		case AutomationStepType::SetGeometryProperties: return "SetGeometryProperties";
+		case AutomationStepType::SetExtraData: return "SetExtraData";
+		case AutomationStepType::DeleteExtraData: return "DeleteExtraData";
 		case AutomationStepType::ConformSliders: return "ConformSliders";
 		case AutomationStepType::DeleteSlider: return "DeleteSlider";
 		case AutomationStepType::SetSliderValues: return "SetSliderValues";
@@ -81,6 +83,8 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "ResetTransforms") return AutomationStepType::ResetTransforms;
 	if (str == "TransformShape") return AutomationStepType::TransformShape;
 	if (str == "SetGeometryProperties") return AutomationStepType::SetGeometryProperties;
+	if (str == "SetExtraData") return AutomationStepType::SetExtraData;
+	if (str == "DeleteExtraData") return AutomationStepType::DeleteExtraData;
 	if (str == "ConformSliders") return AutomationStepType::ConformSliders;
 	if (str == "DeleteSlider") return AutomationStepType::DeleteSlider;
 	if (str == "SetSliderValues") return AutomationStepType::SetSliderValues;
@@ -575,6 +579,24 @@ int AutomationScript::Load(const std::string& fileName) {
 				}
 				break;
 			}
+			case AutomationStepType::SetExtraData: {
+				const char* type = GetChildText(stepElem, "BlockType");
+				if (type)
+					step.extraDataType = type;
+				const char* name = GetChildText(stepElem, "Name");
+				if (name)
+					step.extraDataName = name;
+				const char* value = GetChildText(stepElem, "Value");
+				if (value)
+					step.extraDataValue = value;
+				break;
+			}
+			case AutomationStepType::DeleteExtraData: {
+				const char* name = GetChildText(stepElem, "Name");
+				if (name)
+					step.extraDataName = name;
+				break;
+			}
 			case AutomationStepType::SetTexturePaths: {
 				XMLElement* texturePathsElem = stepElem->FirstChildElement("TexturePaths");
 				if (texturePathsElem) {
@@ -904,6 +926,16 @@ int AutomationScript::Save(const std::string& fileName) {
 				}
 				break;
 
+			case AutomationStepType::SetExtraData:
+				SetChildText(doc, stepElem, "BlockType", step.extraDataType);
+				SetChildText(doc, stepElem, "Name", step.extraDataName);
+				SetChildText(doc, stepElem, "Value", step.extraDataValue);
+				break;
+
+			case AutomationStepType::DeleteExtraData:
+				SetChildText(doc, stepElem, "Name", step.extraDataName);
+				break;
+
 			case AutomationStepType::SetTexturePaths:
 				if (!step.texturePaths.empty()) {
 					XMLElement* texturePathsElem = doc.NewElement("TexturePaths");
@@ -1022,6 +1054,9 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInString(step.dupNewName, vars);
 		SubstituteInString(step.loadMaskFile, vars);
 		SubstituteInString(step.loadMaskName, vars);
+		SubstituteInString(step.extraDataType, vars);
+		SubstituteInString(step.extraDataName, vars);
+		SubstituteInString(step.extraDataValue, vars);
 
 		SubstituteInStringVector(step.setSliderNames, vars);
 		SubstituteInStringVector(step.conformSliderNames, vars);

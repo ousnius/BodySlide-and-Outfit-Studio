@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <limits>
 #include <sstream>
 
 bool StringsEqualNInsens(const char* a, const char* b, int len) {
@@ -88,4 +89,63 @@ std::string JoinStrings(const std::vector<std::string>& elements, const char* co
 			os << *elements.rbegin();
 			return os.str();
 	}
+}
+
+std::string TrimString(const std::string& value) {
+	size_t first = value.find_first_not_of(" \t\r\n");
+	if (first == std::string::npos)
+		return "";
+	size_t last = value.find_last_not_of(" \t\r\n");
+	return value.substr(first, last - first + 1);
+}
+
+bool ParseUInt32Value(const std::string& text, uint32_t& value) {
+	std::string trimmed = TrimString(text);
+	if (trimmed.empty())
+		return false;
+	if (trimmed[0] == '-')
+		return false;
+
+	try {
+		size_t pos = 0;
+		unsigned long parsed = std::stoul(trimmed, &pos, 0);
+		if (pos != trimmed.size() || parsed > std::numeric_limits<uint32_t>::max())
+			return false;
+		value = static_cast<uint32_t>(parsed);
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
+}
+
+bool ParseFloatValue(const std::string& text, float& value) {
+	std::string trimmed = TrimString(text);
+	if (trimmed.empty())
+		return false;
+
+	try {
+		size_t pos = 0;
+		float parsed = std::stof(trimmed, &pos);
+		if (pos != trimmed.size())
+			return false;
+		value = parsed;
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
+}
+
+bool ParseBoolValue(const std::string& text, bool& value) {
+	std::string lower = ToLower(TrimString(text));
+	if (lower == "true" || lower == "1" || lower == "yes" || lower == "on") {
+		value = true;
+		return true;
+	}
+	if (lower == "false" || lower == "0" || lower == "no" || lower == "off") {
+		value = false;
+		return true;
+	}
+	return false;
 }

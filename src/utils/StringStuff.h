@@ -6,6 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <string>
 #include <string_view>
@@ -42,6 +43,14 @@ std::vector<std::string> SplitString(const std::string& s, const char delim);
 
 /* JoinStrings: joins a vector of strings into one string with separators */
 std::string JoinStrings(const std::vector<std::string>& elements, const char* const separator);
+
+/* TrimString: removes leading and trailing whitespace. */
+std::string TrimString(const std::string& value);
+
+/* Parsers for simple text-control values. */
+bool ParseUInt32Value(const std::string& text, uint32_t& value);
+bool ParseFloatValue(const std::string& text, float& value);
+bool ParseBoolValue(const std::string& text, bool& value);
 
 /* case_insensitive_compare: can be used for maps and more */
 struct case_insensitive_compare {

@@ -145,6 +145,8 @@
 															<item>Shapes: Reset Transforms</item>
 															<item>Shapes: Transform Shape</item>
 															<item>Shapes: Set Geometry Properties</item>
+															<item>Shapes: Set Extra Data</item>
+															<item>Shapes: Delete Extra Data</item>
 															<item>Sliders: Conform Sliders</item>
 															<item>Sliders: Delete Slider</item>
 															<item>Sliders: Set Slider Values</item>
@@ -187,7 +189,7 @@
 															<flag>wxEXPAND|wxRIGHT</flag>
 															<border>5</border>
 															<object class="wxTextCtrl" name="txtTargetMeshes">
-																<tooltip>Comma-separated list of shape names. Leave empty to target all shapes.</tooltip>
+																<tooltip>Comma-separated list of shape names. Leave empty to target all shapes, or the root node for extra data steps.</tooltip>
 																<hint>Comma-separated shape list</hint>
 															</object>
 														</object>
@@ -1976,6 +1978,107 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 											</object>
 										</object>
 
+										<!-- SetExtraData -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetExtraData">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Extra Data</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Block Type:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceExtraDataType">
+																	<content>
+																		<item>NiStringExtraData</item>
+																		<item>NiIntegerExtraData</item>
+																		<item>NiFloatExtraData</item>
+																		<item>NiBooleanExtraData</item>
+																	</content>
+																	<tooltip>Extra data block type to create when the name is not found.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtExtraDataName">
+																	<hint>Extra data name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Value:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtExtraDataValue">
+																	<tooltip>Value text. Boolean values accept true/false, yes/no, on/off, or 1/0.</tooltip>
+																	<hint>Extra data value</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- DeleteExtraData -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageDeleteExtraData">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Delete Extra Data</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtDeleteExtraDataName">
+																	<hint>Extra data name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
 										<!-- ConformSliders -->
 										<object class="simplebookpage">
 											<object class="wxPanel" name="pageConformSliders">
@@ -2017,6 +2120,45 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																<object class="wxTextCtrl" name="txtConformMaxResults">
 																	<value translate="0">10</value>
 																	<hint translate="0">10</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Smooth Results:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkConformSmoothResults" />
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Smoothing Iterations:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtConformSmoothIterations">
+																	<value translate="0">2</value>
+																	<hint translate="0">2</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Smoothing Strength:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtConformSmoothStrength">
+																	<value translate="0">0.5</value>
+																	<hint translate="0">0.5</hint>
 																</object>
 															</object>
 
@@ -2156,45 +2298,6 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																			<tooltip>Add sliders from list</tooltip>
 																		</object>
 																	</object>
-																</object>
-															</object>
-
-															<object class="sizeritem">
-																<flag>wxALIGN_CENTER_VERTICAL</flag>
-																<object class="wxStaticText">
-																	<label>Smooth Results:</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<flag>wxEXPAND</flag>
-																<object class="wxCheckBox" name="chkConformSmoothResults" />
-															</object>
-
-															<object class="sizeritem">
-																<flag>wxALIGN_CENTER_VERTICAL</flag>
-																<object class="wxStaticText">
-																	<label>Smoothing Iterations:</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<flag>wxEXPAND</flag>
-																<object class="wxTextCtrl" name="txtConformSmoothIterations">
-																	<value translate="0">2</value>
-																	<hint translate="0">2</hint>
-																</object>
-															</object>
-
-															<object class="sizeritem">
-																<flag>wxALIGN_CENTER_VERTICAL</flag>
-																<object class="wxStaticText">
-																	<label>Smoothing Strength:</label>
-																</object>
-															</object>
-															<object class="sizeritem">
-																<flag>wxEXPAND</flag>
-																<object class="wxTextCtrl" name="txtConformSmoothStrength">
-																	<value translate="0">0.5</value>
-																	<hint translate="0">0.5</hint>
 																</object>
 															</object>
 
