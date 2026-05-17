@@ -760,6 +760,12 @@
     <ClInclude Include="src\files\MaterialFile.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\SFMaterialFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\SFMaterialGraph.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\program\OutfitStudio.h">
       <Filter>Program</Filter>
     </ClInclude>
@@ -2041,6 +2047,12 @@
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\MaterialFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMaterialFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMaterialGraph.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\program\OutfitStudio.cpp">

@@ -289,6 +289,8 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/HkxFile.cpp
 	src/files/MaskFile.cpp
 	src/files/ObjFile.cpp
+	src/files/SFMaterialFile.cpp
+	src/files/SFMaterialGraph.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
 	src/ui/WeightCopyDialog.cpp
@@ -328,6 +330,15 @@ endif()
 
 add_executable(OutfitStudio ${BSOS_OUTFIT_STUDIO_SOURCES})
 add_executable(BodySlide ${BSOS_BODYSLIDE_SOURCES})
+add_executable(SFMaterialFileTest
+	tests/SFMaterialFileTest.cpp
+	src/files/SFMaterialFile.cpp
+	src/files/SFMaterialGraph.cpp
+	src/utils/StringStuff.cpp
+)
+target_include_directories(SFMaterialFileTest PRIVATE
+	lib/nlohmannjson/include
+)
 
 set(BSOS_COMMON_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib
