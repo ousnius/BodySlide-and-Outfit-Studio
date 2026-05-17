@@ -615,6 +615,9 @@ int AutomationDialog::ExecuteStepConformSliders(const AutomationStep& step) {
 	ConformOptions options;
 	options.proximityRadius = step.conformProximityRadius;
 	options.maxResults = step.conformMaxResults;
+	options.smoothResultDeltas = step.conformSmoothResults;
+	options.smoothIterations = step.conformSmoothIterations;
+	options.smoothStrength = step.conformSmoothStrength;
 	options.noSqueeze = step.conformNoSqueeze;
 	options.solidMode = step.conformSolidMode;
 	options.axisX = step.conformAxisX;

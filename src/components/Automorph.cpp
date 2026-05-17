@@ -6,6 +6,9 @@ See the included LICENSE file
 #include "Automorph.h"
 #include "Anim.h"
 
+#include <algorithm>
+
+
 using namespace nifly;
 
 Automorph::Automorph() {}
@@ -183,6 +186,8 @@ void Automorph::CopyMeshMask(Mesh* m, const std::string& shapeName) {
 void Automorph::MeshFromNifShape(Mesh* m, NifFile& ref, NiShape* shape, const AnimInfo* workAnim) {
 	std::vector<Vector3> nifVerts;
 	ref.GetVertsForShape(shape, nifVerts);
+	std::vector<Triangle> nifTris;
+	shape->GetTriangles(nifTris);
 
 	m->shapeName = shape->name.get();
 
@@ -190,6 +195,11 @@ void Automorph::MeshFromNifShape(Mesh* m, NifFile& ref, NiShape* shape, const An
 
 	m->nVerts = nifVerts.size();
 	m->verts = std::make_unique<Vector3[]>(m->nVerts);
+	m->nTris = nifTris.size();
+	if (m->nTris > 0) {
+		m->tris = std::make_unique<Triangle[]>(m->nTris);
+		std::copy(nifTris.begin(), nifTris.end(), m->tris.get());
+	}
 
 	// Load verts. No CS transformation is done (in contrast to the very similar code in GLSurface).
 	for (int i = 0; i < m->nVerts; i++)
@@ -353,6 +363,158 @@ std::string Automorph::ResultDataName(const std::string& shapeName, const std::s
 		return search;
 
 	return f->second;
+}
+
+void Automorph::SmoothResultDiff(const std::string& shapeName, const std::string& sliderName, const std::string& resultTargetName, int iterations, float strength) {
+	if (iterations <= 0 || strength <= 0.0f)
+		return;
+
+	auto shapeItem = sourceShapes.find(shapeName);
+	if (shapeItem == sourceShapes.end())
+		return;
+
+	Mesh* m = shapeItem->second;
+	if (!m || m->nVerts <= 0 || m->nTris <= 0 || !m->tris)
+		return;
+
+	std::string resultTarget = resultTargetName.empty() ? shapeName : resultTargetName;
+	std::string dataName = ResultDataName(resultTarget, sliderName);
+	if (!resultDiffData.TargetMatch(dataName, resultTarget))
+		return;
+
+	auto resultDiffSet = resultDiffData.GetDiffSet(dataName);
+	if (!resultDiffSet || resultDiffSet->empty())
+		return;
+
+	if (!m->bGotWeldVerts)
+		m->CalcWeldVerts();
+	if (!m->adjVerts)
+		m->BuildVertexAdjacency();
+	if (!m->adjVerts)
+		return;
+
+	strength = std::clamp(strength, 0.0f, 1.0f);
+	std::vector<Vector3> current(m->nVerts);
+	std::vector<Vector3> next(m->nVerts);
+	std::vector<bool> hasValue(m->nVerts, false);
+	std::vector<bool> isCandidate(m->nVerts, false);
+	std::vector<int> candidates;
+	candidates.reserve(resultDiffSet->size() * 4);
+
+	auto isLockedByMask = [&](int index) {
+		return m->mask && bEnableMask && m->mask[index] >= 1.0f;
+	};
+
+	auto addCandidate = [&](int index) {
+		if (index < 0 || index >= m->nVerts || isCandidate[index])
+			return;
+		isCandidate[index] = true;
+		candidates.push_back(index);
+	};
+
+	auto addCandidateWithWelds = [&](int index) {
+		if (index < 0 || index >= m->nVerts)
+			return;
+
+		std::vector<int> weldSet;
+		m->GetWeldSet(index, weldSet);
+		for (int weldIndex : weldSet)
+			addCandidate(weldIndex);
+	};
+
+	for (auto& diff : *resultDiffSet) {
+		int index = diff.first;
+		if (index < 0 || index >= m->nVerts)
+			continue;
+
+		current[index] = diff.second;
+		hasValue[index] = true;
+		addCandidateWithWelds(index);
+		for (int adjIndex : m->adjVerts[index])
+			addCandidateWithWelds(adjIndex);
+	}
+
+	auto syncWelds = [&](std::vector<Vector3>& values, std::vector<bool>* valueFlags) {
+		for (int index : candidates) {
+			if (m->LeastWeldedVertexIndex(index) != index)
+				continue;
+
+			std::vector<int> weldSet;
+			m->GetWeldSet(index, weldSet);
+			if (weldSet.size() <= 1)
+				continue;
+
+			Vector3 total;
+			int count = 0;
+			for (int weldIndex : weldSet) {
+				if (weldIndex < 0 || weldIndex >= m->nVerts || isLockedByMask(weldIndex))
+					continue;
+				if (valueFlags && !(*valueFlags)[weldIndex])
+					continue;
+
+				total += values[weldIndex];
+				count++;
+			}
+
+			if (count == 0)
+				continue;
+
+			Vector3 average = total / static_cast<float>(count);
+			for (int weldIndex : weldSet) {
+				if (weldIndex < 0 || weldIndex >= m->nVerts || isLockedByMask(weldIndex))
+					continue;
+
+				values[weldIndex] = average;
+				if (valueFlags)
+					(*valueFlags)[weldIndex] = true;
+			}
+		}
+	};
+
+	syncWelds(current, &hasValue);
+
+	for (int iteration = 0; iteration < iterations; iteration++) {
+		next = current;
+		for (int index : candidates) {
+			if (isLockedByMask(index))
+				continue;
+
+			const auto& adjVerts = m->adjVerts[index];
+			if (adjVerts.empty())
+				continue;
+
+			Vector3 total;
+			int count = 0;
+			for (int adjIndex : adjVerts) {
+				if (adjIndex < 0 || adjIndex >= m->nVerts || isLockedByMask(adjIndex))
+					continue;
+
+				total += current[adjIndex];
+				count++;
+			}
+
+			if (count == 0)
+				continue;
+
+			float vertexStrength = strength;
+			if (m->mask && bEnableMask)
+				vertexStrength *= (1.0f - m->mask[index]);
+
+			Vector3 average = total / static_cast<float>(count);
+			next[index] = (current[index] * (1.0f - vertexStrength)) + (average * vertexStrength);
+		}
+
+		syncWelds(next, nullptr);
+		current.swap(next);
+	}
+
+	resultDiffSet->clear();
+	for (int index : candidates) {
+		if (current[index].IsZero(true))
+			continue;
+
+		(*resultDiffSet)[static_cast<uint16_t>(index)] = current[index];
+	}
 }
 
 void Automorph::GenerateResultDiff(

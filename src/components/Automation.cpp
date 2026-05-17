@@ -298,6 +298,9 @@ int AutomationScript::Load(const std::string& fileName) {
 			case AutomationStepType::ConformSliders: {
 				step.conformProximityRadius = GetChildFloat(stepElem, "ProximityRadius", 10.0f);
 				step.conformMaxResults = GetChildInt(stepElem, "MaxResults", 10);
+				step.conformSmoothResults = GetChildBool(stepElem, "SmoothResults", false);
+				step.conformSmoothIterations = GetChildInt(stepElem, "SmoothIterations", 2);
+				step.conformSmoothStrength = GetChildFloat(stepElem, "SmoothStrength", 0.5f);
 				step.conformNoSqueeze = GetChildBool(stepElem, "NoSqueeze", false);
 				step.conformSolidMode = GetChildBool(stepElem, "SolidMode", false);
 				step.conformAxisX = GetChildBool(stepElem, "AxisX", true);
@@ -688,6 +691,9 @@ int AutomationScript::Save(const std::string& fileName) {
 			case AutomationStepType::ConformSliders:
 				SetChildFloat(doc, stepElem, "ProximityRadius", step.conformProximityRadius, 10.0f);
 				SetChildInt(doc, stepElem, "MaxResults", step.conformMaxResults, 10);
+				SetChildBool(doc, stepElem, "SmoothResults", step.conformSmoothResults, false);
+				SetChildInt(doc, stepElem, "SmoothIterations", step.conformSmoothIterations, 2);
+				SetChildFloat(doc, stepElem, "SmoothStrength", step.conformSmoothStrength, 0.5f);
 				SetChildBool(doc, stepElem, "NoSqueeze", step.conformNoSqueeze, false);
 				SetChildBool(doc, stepElem, "SolidMode", step.conformSolidMode, false);
 				SetChildBool(doc, stepElem, "AxisX", step.conformAxisX, true);

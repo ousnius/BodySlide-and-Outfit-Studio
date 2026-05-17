@@ -140,6 +140,9 @@ struct AutomationStep {
 	// ConformSliders params
 	float conformProximityRadius = 10.0f;
 	int conformMaxResults = 10;
+	bool conformSmoothResults = false;
+	int conformSmoothIterations = 2;
+	float conformSmoothStrength = 0.5f;
 	bool conformNoSqueeze = false;
 	bool conformSolidMode = false;
 	bool conformAxisX = true;

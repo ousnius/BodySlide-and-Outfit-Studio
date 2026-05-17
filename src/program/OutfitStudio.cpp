@@ -9945,8 +9945,22 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
 			}
 		});
 
+		auto updateSmoothingState = [&dlg]() {
+			bool smoothResults = XRCCTRL(dlg, "smoothResults", wxCheckBox)->IsChecked();
+			XRCCTRL(dlg, "smoothIterationsText", wxTextCtrl)->Enable(smoothResults);
+			XRCCTRL(dlg, "smoothStrengthText", wxTextCtrl)->Enable(smoothResults);
+		};
+
+		XRCCTRL(dlg, "smoothResults", wxCheckBox)->Bind(wxEVT_CHECKBOX, [&updateSmoothingState](wxCommandEvent&) {
+			updateSmoothingState();
+		});
+		updateSmoothingState();
+
 		XRCCTRL(dlg, "presetDefault", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
 			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "smoothResults", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "smoothIterationsText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "smoothStrengthText", wxTextCtrl)->Disable();
 			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("10.00000");
@@ -9959,6 +9973,9 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
 
 		XRCCTRL(dlg, "presetEvenMovement", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
 			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "smoothResults", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "smoothIterationsText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "smoothStrengthText", wxTextCtrl)->Disable();
 			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(true);
 			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Disable();
@@ -9969,6 +9986,9 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
 
 		XRCCTRL(dlg, "presetSolidObject", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
 			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "smoothResults", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "smoothIterationsText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "smoothStrengthText", wxTextCtrl)->Disable();
 			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(true);
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Disable();
@@ -9988,6 +10008,9 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
 			else
 				options.maxResults = std::numeric_limits<int>::max();
 
+			options.smoothResultDeltas = XRCCTRL(dlg, "smoothResults", wxCheckBox)->IsChecked();
+			options.smoothIterations = atol(XRCCTRL(dlg, "smoothIterationsText", wxTextCtrl)->GetValue().c_str());
+			options.smoothStrength = atof(XRCCTRL(dlg, "smoothStrengthText", wxTextCtrl)->GetValue().c_str());
 			options.noSqueeze = XRCCTRL(dlg, "noSqueeze", wxCheckBox)->IsChecked();
 			options.solidMode = XRCCTRL(dlg, "solidMode", wxCheckBox)->IsChecked();
 			options.axisX = XRCCTRL(dlg, "axisX", wxCheckBox)->IsChecked();

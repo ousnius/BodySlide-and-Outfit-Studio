@@ -1268,7 +1268,14 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			txt = XRCCTRL(*this, "txtConformMaxResults", wxTextCtrl);
 			if (txt)
 				txt->SetValue(wxString::Format("%d", step.conformMaxResults));
+			txt = XRCCTRL(*this, "txtConformSmoothIterations", wxTextCtrl);
+			if (txt)
+				txt->SetValue(wxString::Format("%d", step.conformSmoothIterations));
+			txt = XRCCTRL(*this, "txtConformSmoothStrength", wxTextCtrl);
+			if (txt)
+				txt->SetValue(wxString::Format("%.2f", step.conformSmoothStrength));
 
+			SetCheckboxValue("chkConformSmoothResults", step.conformSmoothResults);
 			SetCheckboxValue("chkConformNoSqueeze", step.conformNoSqueeze);
 			SetCheckboxValue("chkConformSolidMode", step.conformSolidMode);
 			SetCheckboxValue("chkConformAxisX", step.conformAxisX);
@@ -1607,6 +1614,9 @@ void AutomationDialog::UpdateStepFromUI() {
 		case AutomationStepType::ConformSliders: {
 			step.conformProximityRadius = GetFloatValue("txtConformRadius");
 			step.conformMaxResults = GetIntValue("txtConformMaxResults");
+			step.conformSmoothResults = GetCheckboxValue("chkConformSmoothResults");
+			step.conformSmoothIterations = GetIntValue("txtConformSmoothIterations");
+			step.conformSmoothStrength = GetFloatValue("txtConformSmoothStrength");
 			step.conformNoSqueeze = GetCheckboxValue("chkConformNoSqueeze");
 			step.conformSolidMode = GetCheckboxValue("chkConformSolidMode");
 			step.conformAxisX = GetCheckboxValue("chkConformAxisX");

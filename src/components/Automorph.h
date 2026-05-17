@@ -90,6 +90,11 @@ public:
 							bool axisY = true,
 							bool axisZ = true,
 							const std::string& resultTargetName = "");
+	void SmoothResultDiff(const std::string& shapeName,
+						  const std::string& sliderName,
+						  const std::string& resultTargetName,
+						  int iterations,
+						  float strength);
 
 	void SetResultDataName(const std::string& shapeName, const std::string& sliderName, const std::string& dataName);
 	std::string ResultDataName(const std::string& shapeName, const std::string& sliderName);

@@ -3117,6 +3117,8 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 									   options.axisY,
 									   options.axisZ,
 									   resultTarget);
+		if (options.smoothResultDeltas)
+			morpher.SmoothResultDiff(shape->name.get(), sliderName, resultTarget, options.smoothIterations, options.smoothStrength);
 		EnsureSliderDataLocal(sliderName, shape);
 	}
 

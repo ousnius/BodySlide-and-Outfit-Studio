@@ -27,6 +27,9 @@ See the included LICENSE file
 struct ConformOptions {
 	float proximityRadius = 10.0f;
 	int maxResults = 10;
+	bool smoothResultDeltas = false;
+	int smoothIterations = 2;
+	float smoothStrength = 0.5f;
 	bool noSqueeze = false;
 	bool solidMode = false;
 	bool axisX = true;
