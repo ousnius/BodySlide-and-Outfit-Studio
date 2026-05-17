@@ -1360,6 +1360,7 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			if (fp)
 				fp->SetPath(wxString::FromUTF8(step.importFilePath));
 			SetCheckboxValue("chkImportFromFolder", step.importFromFolder);
+			SetCheckboxValue("chkImportBeforeBatch", step.importBeforeBatch);
 			auto* dp = XRCCTRL(*this, "dpImportFolder", wxDirPickerCtrl);
 			if (dp)
 				dp->SetPath(wxString::FromUTF8(step.importFilePath));
@@ -1640,6 +1641,7 @@ void AutomationDialog::UpdateStepFromUI() {
 		case AutomationStepType::ImportFile: {
 			auto* chkFolder = XRCCTRL(*this, "chkImportFromFolder", wxCheckBox);
 			step.importFromFolder = chkFolder && chkFolder->GetValue();
+			step.importBeforeBatch = GetCheckboxValue("chkImportBeforeBatch");
 			if (step.importFromFolder) {
 				auto* dp = XRCCTRL(*this, "dpImportFolder", wxDirPickerCtrl);
 				if (dp)
@@ -3728,8 +3730,30 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			vars["BATCH_DIR"] = fn.GetPath().ToUTF8().data();
 			vars["BATCH_FULLNAME"] = fn.GetFullName().ToUTF8().data();
 
+			AutomationScript execScript;
+			for (size_t idx : stepIndices)
+				execScript.AddStep(script.GetSteps()[idx]);
+
+			execScript.SubstitutePlaceholders(vars);
+
 			// Clear project for fresh start
 			ResetAndClearProject();
+
+			size_t firstStepToExecute = 0;
+			if (!execScript.GetSteps().empty() && !stepIndices.empty() && stepIndices.front() == 0) {
+				const auto& firstStep = execScript.GetSteps().front();
+				if (firstStep.type == AutomationStepType::ImportFile && firstStep.importBeforeBatch) {
+					wxLogMessage("Automation: Importing first Import File step before batch file '%s'.", filePath);
+					int baseImportErr = ExecuteStepImportFile(firstStep);
+					if (baseImportErr) {
+						wxLogError("Automation: Batch - failed to import base file before '%s' (error %d), skipping.", filePath, baseImportErr);
+						errorCount++;
+						continue;
+					}
+
+					firstStepToExecute = 1;
+				}
+			}
 
 			// Import the batch file
 			wxString ext = fn.GetExt().Lower();
@@ -3755,13 +3779,6 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 				continue;
 			}
 
-			// Build and execute script copy with substituted variables
-			AutomationScript execScript;
-			for (size_t idx : stepIndices)
-				execScript.AddStep(script.GetSteps()[idx]);
-
-			execScript.SubstitutePlaceholders(vars);
-
 			// Process steps that have exportUseOriginalPath
 			for (auto& step : execScript.GetSteps()) {
 				if (step.type == AutomationStepType::ExportFile) {
@@ -3779,7 +3796,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 			}
 
 			bool stepFailed = false;
-			for (size_t i = 0; i < execScript.GetSteps().size(); i++) {
+			for (size_t i = firstStepToExecute; i < execScript.GetSteps().size(); i++) {
 				const auto& batchStep = execScript.GetSteps()[i];
 				int err = ExecuteStep(batchStep);
 				if (err != 0) {

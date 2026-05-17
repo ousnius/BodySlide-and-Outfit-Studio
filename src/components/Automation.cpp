@@ -339,6 +339,7 @@ int AutomationScript::Load(const std::string& fileName) {
 				if (filePath)
 					step.importFilePath = filePath;
 				step.importFromFolder = GetChildBool(stepElem, "FromFolder", false);
+				step.importBeforeBatch = GetChildBool(stepElem, "BeforeBatchFile", false);
 				break;
 			}
 			case AutomationStepType::DeleteShape:
@@ -714,6 +715,7 @@ int AutomationScript::Save(const std::string& fileName) {
 			case AutomationStepType::ImportFile:
 				SetChildText(doc, stepElem, "FilePath", step.importFilePath);
 				SetChildBool(doc, stepElem, "FromFolder", step.importFromFolder, false);
+				SetChildBool(doc, stepElem, "BeforeBatchFile", step.importBeforeBatch, false);
 				break;
 
 			case AutomationStepType::SetSliderValues:

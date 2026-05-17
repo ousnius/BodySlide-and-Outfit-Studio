@@ -161,6 +161,7 @@ struct AutomationStep {
 	// ImportFile params
 	std::string importFilePath;
 	bool importFromFolder = false;
+	bool importBeforeBatch = false;
 
 	// TransformShape params
 	float moveX = 0.0f, moveY = 0.0f, moveZ = 0.0f;

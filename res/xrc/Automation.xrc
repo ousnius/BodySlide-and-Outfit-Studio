@@ -985,6 +985,20 @@
 
 															<object class="sizeritem">
 																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Batch:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkImportBeforeBatch">
+																	<label>Load before batch file (step #1 only)</label>
+																	<tooltip>In folder batch mode, import this file before each batch file so its root node and blocks become the base.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
 																<object class="wxStaticText" name="lblImportFile">
 																	<label>File:</label>
 																</object>
