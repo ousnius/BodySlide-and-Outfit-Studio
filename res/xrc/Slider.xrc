@@ -77,7 +77,7 @@
 	</object>
 	<object class="wxDialog" name="dlgSliderProp">
 		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
-		<size>287,210</size>
+		<size>760,560</size>
 		<title>Slider Properties</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -220,6 +220,59 @@
 						<object class="wxCheckListBox" name="zapToggleList">
 							<style>wxLB_HSCROLL|wxLB_NEEDED_SB</style>
 							<enabled>0</enabled>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Slider Data</label>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<minsize>-1,150</minsize>
+						<object class="wxListCtrl" name="sliderDataList">
+							<style>wxLC_REPORT|wxLC_HRULES|wxLC_VRULES</style>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSliderDataLocal">
+									<label>Make Local</label>
+									<enabled>0</enabled>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSliderDataExternal">
+									<label>Make External</label>
+									<enabled>0</enabled>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSliderDataFolders">
+									<label>Edit Folders...</label>
+									<enabled>0</enabled>
+								</object>
+							</object>
 						</object>
 					</object>
 				</object>

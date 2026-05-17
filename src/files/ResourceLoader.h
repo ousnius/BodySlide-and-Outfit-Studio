@@ -5,14 +5,18 @@ See the included LICENSE file
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <unordered_map>
+#include <vector>
 
 #include "../utils/StringStuff.h"
 
-#include <../SOIL2/SOIL2.h>
+#include <SOIL2/SOIL2.h>
 #include <gli.hpp>
 
 typedef unsigned int GLuint;

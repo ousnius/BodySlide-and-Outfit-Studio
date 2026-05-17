@@ -144,7 +144,7 @@ int
 				{
 					sum_value += orig[index + v*width*channels + u*channels];
 				}
-				resampled[j*mip_width*channels + i*channels + c] = sum_value / block_area;
+				resampled[j*mip_width*channels + i*channels + c] = (unsigned char)(sum_value / block_area);
 			}
 		}
 	}
@@ -188,7 +188,7 @@ int
 	return 1;
 }
 
-unsigned char clamp_byte( int x ) { return ( (x) < 0 ? (0) : ( (x) > 255 ? 255 : (x) ) ); }
+unsigned char clamp_byte( int x ) { return (unsigned char)( (x) < 0 ? (0) : ( (x) > 255 ? 255 : (x) ) ); }
 
 /*
 	This function takes the RGB components of the image
@@ -372,13 +372,13 @@ RGBE_to_RGBdivA
 		/* and encode it into RGBdivA */
 		iv = (m != 0.0f) ? (int)(255.0f / m) : 1;
 		iv = (iv < 1) ? 1 : iv;
-		img[3] = (iv > 255) ? 255 : iv;
+		img[3] = clamp_byte( iv );
 		iv = (int)(img[3] * r + 0.5f);
-		img[0] = (iv > 255) ? 255 : iv;
+		img[0] = clamp_byte( iv );
 		iv = (int)(img[3] * g + 0.5f);
-		img[1] = (iv > 255) ? 255 : iv;
+		img[1] = clamp_byte( iv );
 		iv = (int)(img[3] * b + 0.5f);
-		img[2] = (iv > 255) ? 255 : iv;
+		img[2] = clamp_byte( iv );
 		/* and on to the next pixel */
 		img += 4;
 	}
@@ -421,13 +421,13 @@ RGBE_to_RGBdivA2
 		/* and encode it into RGBdivA */
 		iv = (m != 0.0f) ? (int)sqrtf( 255.0f * 255.0f / m ) : 1;
 		iv = (iv < 1) ? 1 : iv;
-		img[3] = (iv > 255) ? 255 : iv;
+		img[3] = clamp_byte( iv );
 		iv = (int)(img[3] * img[3] * r / 255.0f + 0.5f);
-		img[0] = (iv > 255) ? 255 : iv;
+		img[0] = clamp_byte( iv );
 		iv = (int)(img[3] * img[3] * g / 255.0f + 0.5f);
-		img[1] = (iv > 255) ? 255 : iv;
+		img[1] = clamp_byte( iv );
 		iv = (int)(img[3] * img[3] * b / 255.0f + 0.5f);
-		img[2] = (iv > 255) ? 255 : iv;
+		img[2] = clamp_byte( iv );
 		/* and on to the next pixel */
 		img += 4;
 	}

@@ -44,10 +44,10 @@ typedef union {
 static const unsigned char qoi_padding[8] = {0,0,0,0,0,0,0,1};
 
 static void qoi_write_32(unsigned char *bytes, int *p, unsigned int v) {
-   bytes[(*p)++] = (0xff000000 & v) >> 24;
-   bytes[(*p)++] = (0x00ff0000 & v) >> 16;
-   bytes[(*p)++] = (0x0000ff00 & v) >> 8;
-   bytes[(*p)++] = (0x000000ff & v);
+   bytes[(*p)++] = (unsigned char)((0xff000000 & v) >> 24);
+   bytes[(*p)++] = (unsigned char)((0x00ff0000 & v) >> 16);
+   bytes[(*p)++] = (unsigned char)((0x0000ff00 & v) >> 8);
+   bytes[(*p)++] = (unsigned char)(0x000000ff & v);
 }
 
 static void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
@@ -112,7 +112,7 @@ static void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
       if (px.v == px_prev.v) {
          run++;
          if (run == 62 || px_pos == px_end) {
-            bytes[p++] = QOI_OP_RUN | (run - 1);
+            bytes[p++] = (unsigned char)(QOI_OP_RUN | (run - 1));
             run = 0;
          }
       }
@@ -120,14 +120,14 @@ static void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
          int index_pos;
 
          if (run > 0) {
-            bytes[p++] = QOI_OP_RUN | (run - 1);
+            bytes[p++] = (unsigned char)(QOI_OP_RUN | (run - 1));
             run = 0;
          }
 
          index_pos = QOI_COLOR_HASH(px) % 64;
 
          if (index[index_pos].v == px.v) {
-            bytes[p++] = QOI_OP_INDEX | index_pos;
+            bytes[p++] = (unsigned char)(QOI_OP_INDEX | index_pos);
          }
          else {
             index[index_pos] = px;
@@ -145,15 +145,15 @@ static void *qoi_encode(const void *data, const qoi_desc *desc, int *out_len) {
                   vg > -3 && vg < 2 &&
                   vb > -3 && vb < 2
                ) {
-                  bytes[p++] = QOI_OP_DIFF | (vr + 2) << 4 | (vg + 2) << 2 | (vb + 2);
+                  bytes[p++] = (unsigned char)(QOI_OP_DIFF | (vr + 2) << 4 | (vg + 2) << 2 | (vb + 2));
                }
                else if (
                   vg_r >  -9 && vg_r <  8 &&
                   vg   > -33 && vg   < 32 &&
                   vg_b >  -9 && vg_b <  8
                ) {
-                  bytes[p++] = QOI_OP_LUMA     | (vg   + 32);
-                  bytes[p++] = (vg_r + 8) << 4 | (vg_b +  8);
+                  bytes[p++] = (unsigned char)(QOI_OP_LUMA | (vg + 32));
+                  bytes[p++] = (unsigned char)((vg_r + 8) << 4 | (vg_b + 8));
                }
                else {
                   bytes[p++] = QOI_OP_RGB;
@@ -189,7 +189,7 @@ static int stbi_write_qoi_core(stbi__write_context *s, int x, int y, int comp, c
    qoi_desc desc;
    desc.width = x;
    desc.height = y;
-   desc.channels = comp;
+   desc.channels = (unsigned char)comp;
    desc.colorspace = QOI_LINEAR;
    int out_len = 0;
    void* res = qoi_encode(data, &desc, &out_len);

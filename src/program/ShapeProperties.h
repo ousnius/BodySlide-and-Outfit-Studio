@@ -7,6 +7,10 @@ See the included LICENSE file
 
 #include "OutfitStudio.h"
 #include "ShaderFlagDefs.h"
+
+#include <cstdint>
+#include <vector>
+
 #include <wx/checklst.h>
 #include <wx/clrpicker.h>
 #include <wx/collpane.h>

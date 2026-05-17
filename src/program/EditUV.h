@@ -7,6 +7,11 @@ See the included LICENSE file
 
 #include "OutfitStudio.h"
 
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 const int EDITUV_MAX_UNDO = 200;
 
 const int EDITUV_DIRECTION_NONE = 0x0;

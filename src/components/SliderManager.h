@@ -8,6 +8,9 @@ See the included LICENSE file
 #include "SliderPresets.h"
 #include "SliderSet.h"
 
+#include <string>
+#include <vector>
+
 class Slider {
 public:
 	std::string name;

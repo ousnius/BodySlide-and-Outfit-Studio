@@ -230,9 +230,7 @@ unsigned char* convert_image_to_DXT5(
 					ublock[idx++] = uncompressed[(j+y)*width*channels+(i+x)*channels];
 					ublock[idx++] = uncompressed[(j+y)*width*channels+(i+x)*channels+chan_step];
 					ublock[idx++] = uncompressed[(j+y)*width*channels+(i+x)*channels+chan_step+chan_step];
-					ublock[idx++] =
-						has_alpha * uncompressed[(j+y)*width*channels+(i+x)*channels+channels-1]
-						+ (1-has_alpha)*255;
+					ublock[idx++] = (unsigned char)(has_alpha ? uncompressed[(j+y)*width*channels+(i+x)*channels+channels-1] : 255);
 				}
 				for( x = mx; x < 4; ++x )
 				{
@@ -598,8 +596,8 @@ void
 		}
 	}
 	/*	store those limits, and zero the rest of the compressed dataset	*/
-	compressed[0] = a0;
-	compressed[1] = a1;
+	compressed[0] = (unsigned char)a0;
+	compressed[1] = (unsigned char)a1;
 	/*	zero out the compressed data	*/
 	compressed[2] = 0;
 	compressed[3] = 0;

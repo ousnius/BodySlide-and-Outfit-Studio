@@ -8,6 +8,8 @@ See the included LICENSE file
 #include "../components/NormalGenLayers.h"
 #include "../ui/wxNormalsGenDlg.h"
 
+#include <vector>
+
 class NormalsGenDialog : public wxNormalsGenDlg {
 protected:
 	void doShowPresetContext(wxCommandEvent& event);

@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "SliderSet.h"
+#include "SliderDataFileUtil.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 
@@ -18,6 +19,110 @@ SliderSet::SliderSet(XMLElement* element) {
 	LoadSliderSet(element);
 }
 
+std::vector<std::string> SliderSet::GetTargetDataFolders(const std::string& targetName) const {
+	for (auto& shape : shapeAttributes) {
+		if (shape.second.targetShape == targetName) {
+			if (!shape.second.dataFolders.empty())
+				return shape.second.dataFolders;
+
+			break;
+		}
+	}
+
+	std::vector<std::string> dataFolders;
+	dataFolders.push_back(datafolder);
+	return dataFolders;
+}
+
+SliderDataFileResolution SliderSet::ResolveSliderDataFile(const DiffInfo& dataFile, const std::vector<std::string>* externalDataFolders) const {
+	SliderDataFileResolution result;
+	if (dataFile.fileName.size() <= 4)
+		return result;
+
+	result.isBSD = SliderDataFileIsBSD(dataFile.fileName);
+	if (!dataFile.bLocal && externalDataFolders)
+		result.dataFolders = *externalDataFolders;
+	else if (!dataFile.bLocal)
+		result.dataFolders = GetTargetDataFolders(dataFile.targetName);
+	else
+		result.dataFolders.push_back(datafolder);
+
+	std::string fullFilePath = baseDataPath + PathSepStr;
+	std::string dataFileName = dataFile.fileName;
+
+	if (!result.isBSD) {
+		if (!SplitSliderDataFileName(dataFile.fileName, dataFileName, result.dataNameInFile))
+			return result;
+	}
+
+	result.dataFileName = dataFileName;
+
+	for (auto& dataFolder : result.dataFolders) {
+		std::string filePath = dataFolder + PathSepStr + dataFileName;
+		std::string candidatePath = fullFilePath + filePath;
+		if (result.candidatePath.empty())
+			result.candidatePath = candidatePath;
+
+		if (PlatformUtil::FileExists(candidatePath)) {
+			result.resolved = true;
+			result.resolvedPath = candidatePath;
+			break;
+		}
+	}
+
+	return result;
+}
+
+DiffInfo* SliderSet::GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex) {
+	if (sliderIndex >= sliders.size() || dataFileIndex >= sliders[sliderIndex].dataFiles.size())
+		return nullptr;
+
+	return &sliders[sliderIndex].dataFiles[dataFileIndex];
+}
+
+const DiffInfo* SliderSet::GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex) const {
+	if (sliderIndex >= sliders.size() || dataFileIndex >= sliders[sliderIndex].dataFiles.size())
+		return nullptr;
+
+	return &sliders[sliderIndex].dataFiles[dataFileIndex];
+}
+
+void SliderSet::SetSliderDataFileLocal(const size_t sliderIndex, const size_t dataFileIndex, const bool local) {
+	DiffInfo* dataFile = GetSliderDataFile(sliderIndex, dataFileIndex);
+	if (dataFile)
+		dataFile->bLocal = local;
+}
+
+void SliderSet::SetSliderDataFileName(const size_t sliderIndex, const size_t dataFileIndex, const std::string& fileName) {
+	DiffInfo* dataFile = GetSliderDataFile(sliderIndex, dataFileIndex);
+	if (dataFile)
+		dataFile->fileName = fileName;
+}
+
+bool SliderSet::TargetHasExternalData(const std::string& targetName) const {
+	for (auto& slider : sliders)
+		for (auto& dataFile : slider.dataFiles)
+			if (dataFile.targetName == targetName && !dataFile.bLocal)
+				return true;
+
+	return false;
+}
+
+bool SliderSet::ClearLocalOnlyDataFolders() {
+	bool changed = false;
+	for (auto& shape : shapeAttributes) {
+		if (shape.second.dataFolders.empty())
+			continue;
+
+		if (!TargetHasExternalData(shape.second.targetShape)) {
+			shape.second.dataFolders.clear();
+			changed = true;
+		}
+	}
+
+	return changed;
+}
+
 
 size_t SliderSet::CloneSlider(const std::string& sliderName, const std::string& cloneName) {
 	// Find slider
@@ -26,7 +131,7 @@ size_t SliderSet::CloneSlider(const std::string& sliderName, const std::string& 
 	});
 
 	if (sliderIt == sliders.end())
-		return 0xFFFFFFFF;
+		return static_cast<size_t>(-1);
 
 	// Clone slider
 	auto& clonedSlider = sliders.emplace_back(*sliderIt);
@@ -108,6 +213,18 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
 		keepZappedShapes = tmpElement->BoolAttribute("KeepZappedShapes");
 	}
 
+	tmpElement = element->FirstChildElement("SFMorphPath");
+	if (tmpElement && tmpElement->GetText())
+		sfMorphPath = ToOSSlashes(tmpElement->GetText());
+	else
+		sfMorphPath.clear();
+
+	tmpElement = element->FirstChildElement("SFMorphTargetShape");
+	if (tmpElement && tmpElement->GetText())
+		sfMorphTargetShape = tmpElement->GetText();
+	else
+		sfMorphTargetShape.clear();
+
 	XMLElement* shapeName = element->FirstChildElement(shapeStr.c_str());
 	while (shapeName) {
 		shapeName->SetName("Shape");
@@ -124,6 +241,8 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
 
 			if (shapeName->Attribute("target"))
 				shape.targetShape = shapeName->Attribute("target");
+			else if (shape.targetShape.empty())
+				shape.targetShape = shapeText;
 
 			shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals", true);
 			shape.smoothSeamNormalsAngle = shapeName->FloatAttribute("SmoothSeamNormalsAngle", SliderSetShape::SliderSetDefaultSmoothAngle);
@@ -407,6 +526,19 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 
 	newText = sliderSetElement->GetDocument()->NewText(outputfile.c_str());
 	outputFileElement->InsertEndChild(newText);
+
+	if (!sfMorphPath.empty()) {
+		newElement = sliderSetElement->GetDocument()->NewElement("SFMorphPath");
+		std::string sfMorphPath_bs = ToBackslashes(sfMorphPath);
+		newText = sliderSetElement->GetDocument()->NewText(sfMorphPath_bs.c_str());
+		sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
+	}
+
+	if (!sfMorphTargetShape.empty()) {
+		newElement = sliderSetElement->GetDocument()->NewElement("SFMorphTargetShape");
+		newText = sliderSetElement->GetDocument()->NewText(sfMorphTargetShape.c_str());
+		sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
+	}
 
 	XMLElement* baseShapeElement;
 	XMLElement* sliderElement;

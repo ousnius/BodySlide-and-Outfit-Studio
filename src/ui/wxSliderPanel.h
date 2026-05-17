@@ -5,6 +5,9 @@ See the included LICENSE file
 
 #pragma once
 
+#include <cstddef>
+#include <vector>
+
 #include <wx/wx.h>
 
 class wxSliderPanel : public wxWindow {

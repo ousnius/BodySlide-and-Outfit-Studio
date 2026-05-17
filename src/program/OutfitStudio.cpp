@@ -28,12 +28,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "GroupManager.h"
 #include "PresetSaveDialog.h"
 #include "ShapeProperties.h"
+#include "SliderDataDialog.h"
 #include "SliderDataImportDialog.h"
 #include "AutomationDialog.h"
 #include "../components/ClippingFixer.h"
+#include "../utils/StringStuff.h"
 
 #include <sstream>
 #include <wx/debugrpt.h>
+#include <wx/listctrl.h>
+#include <wx/textctrl.h>
 #include <wx/wfstream.h>
 #include <wx/zipstrm.h>
 
@@ -194,6 +198,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("sliderClear"), OutfitStudioFrame::OnClearSlider)
 	EVT_MENU(XRCID("sliderDelete"), OutfitStudioFrame::OnDeleteSlider)
 	EVT_MENU(XRCID("sliderProperties"), OutfitStudioFrame::OnSliderProperties)
+	EVT_MENU(XRCID("sliderDataLocations"), OutfitStudioFrame::OnSliderDataLocations)
 
 	EVT_MENU(XRCID("btnXMirror"), OutfitStudioFrame::OnXMirror)
 	EVT_MENU(XRCID("btnConnected"), OutfitStudioFrame::OnConnectedOnly)
@@ -2497,7 +2502,9 @@ bool OutfitStudioFrame::SaveProject() {
 									  project->mGenWeights,
 									  project->mCopyRef,
 									  project->bPreventMorphFile,
-									  project->bKeepZappedShapes);
+									  project->bKeepZappedShapes,
+									  project->mSFMorphPath,
+									  project->mSFMorphTargetShape);
 
 	if (!error.empty()) {
 		wxLogError(error.c_str());
@@ -2529,6 +2536,28 @@ bool OutfitStudioFrame::SaveProjectAs() {
 		XRCCTRL(dlg, "sssNameCopy", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudioFrame::OnSSSNameCopy, this);
 		XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudioFrame::OnSSSGenWeightsTrue, this);
 		XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudioFrame::OnSSSGenWeightsFalse, this);
+
+		XRCCTRL(dlg, "sssOutputDataPathBrowse", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
+			wxString dataPath = wxString::FromUTF8(Config["GameDataPath"]);
+			wxString result = wxDirSelector(_("Select output data path"), dataPath, 0, wxDefaultPosition, &dlg);
+			if (!result.empty()) {
+				wxFileName relPath(result);
+				if (!dataPath.empty())
+					relPath.MakeRelativeTo(dataPath);
+				XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->ChangeValue(relPath.GetFullPath());
+			}
+		});
+
+		XRCCTRL(dlg, "sssSFMorphPathBrowse", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
+			wxString dataPath = wxString::FromUTF8(Config["GameDataPath"]);
+			wxString result = wxDirSelector(_("Select morph.dat output folder"), dataPath, 0, wxDefaultPosition, &dlg);
+			if (!result.empty()) {
+				wxFileName relPath(result);
+				if (!dataPath.empty())
+					relPath.MakeRelativeTo(dataPath);
+				XRCCTRL(dlg, "sssSFMorphPath", wxTextCtrl)->ChangeValue(relPath.GetFullPath());
+			}
+		});
 
 		std::string outName;
 		if (!project->mOutfitName.empty())
@@ -2581,6 +2610,33 @@ bool OutfitStudioFrame::SaveProjectAs() {
 
 		XRCCTRL(dlg, "sssPreventMorphFile", wxCheckBox)->SetValue(project->bPreventMorphFile);
 		XRCCTRL(dlg, "sssKeepZappedShapes", wxCheckBox)->SetValue(project->bKeepZappedShapes);
+
+		auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+		if (targetGame == SF) {
+			XRCCTRL(dlg, "sssSFMorphPath", wxTextCtrl)->ChangeValue(project->mSFMorphPath);
+
+			// Populate morph target shape dropdown
+			wxChoice* morphShapeChoice = XRCCTRL(dlg, "sssSFMorphTargetShape", wxChoice);
+			morphShapeChoice->Append("(None)");
+			for (auto& s : project->GetWorkNif()->GetShapes())
+				morphShapeChoice->Append(wxString::FromUTF8(s->name.get()));
+
+			// Select previously saved shape, or default to (None)
+			if (!project->mSFMorphTargetShape.empty()) {
+				int sel = morphShapeChoice->FindString(project->mSFMorphTargetShape);
+				morphShapeChoice->SetSelection(sel != wxNOT_FOUND ? sel : 0);
+			}
+			else {
+				morphShapeChoice->SetSelection(0);
+			}
+		}
+		else {
+			XRCCTRL(dlg, "m_SFMorphPathLabel", wxStaticText)->Hide();
+			XRCCTRL(dlg, "sssSFMorphPath", wxTextCtrl)->Hide();
+			XRCCTRL(dlg, "sssSFMorphPathBrowse", wxButton)->Hide();
+			XRCCTRL(dlg, "m_SFMorphTargetShapeLabel", wxStaticText)->Hide();
+			XRCCTRL(dlg, "sssSFMorphTargetShape", wxChoice)->Hide();
+		}
 
 		if (!project->GetBaseShape()) {
 			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(false);
@@ -2656,6 +2712,12 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	bool genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
 	bool preventMorphFile = XRCCTRL(dlg, "sssPreventMorphFile", wxCheckBox)->GetValue();
 	bool keepZappedShapes = XRCCTRL(dlg, "sssKeepZappedShapes", wxCheckBox)->GetValue();
+	wxString strSFMorphPath = XRCCTRL(dlg, "sssSFMorphPath", wxTextCtrl)->GetValue();
+	wxString strSFMorphTargetShape;
+	wxChoice* morphShapeChoice = XRCCTRL(dlg, "sssSFMorphTargetShape", wxChoice);
+	int sel = morphShapeChoice->GetSelection();
+	if (sel > 0) // 0 = "(None)"
+		strSFMorphTargetShape = morphShapeChoice->GetString(sel);
 
 	wxLogMessage("Saving project '%s'...", strOutfitName);
 	StartProgress(wxString::Format(_("Saving project '%s'..."), strOutfitName));
@@ -2674,7 +2736,7 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	if (projectNotes)
 		project->activeSet.SetNotes(projectNotes->GetValue().ToUTF8().data());
 
-	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, copyRef, preventMorphFile, keepZappedShapes);
+	std::string error = project->Save(sliderSetFile, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile, genWeights, copyRef, preventMorphFile, keepZappedShapes, strSFMorphPath, strSFMorphTargetShape);
 
 	if (error.empty()) {
 		SetPendingChanges(false);
@@ -3164,8 +3226,8 @@ void OutfitStudioFrame::CalcAutoXMirrorBone() {
 		int flips = 0;
 		bool nomatch = false;
 		for (size_t i = 0; i < abLen && !nomatch; ++i) {
-			char abc = std::tolower(activeBone[i]);
-			char bc = std::tolower(b[i]);
+			char abc = ToLower(activeBone[i]);
+			char bc = ToLower(b[i]);
 			if (abc == 'l') {
 				if (bc == 'r')
 					++flips;
@@ -3834,11 +3896,79 @@ void OutfitStudioFrame::UpdateBrushSettings() {
 	}
 }
 
+bool OutfitStudioFrame::ConfirmSliderDataLocalForEdit(NiShape* shape, const std::string& sliderName) {
+	std::vector<NiShape*> shapes;
+	if (shape)
+		shapes.push_back(shape);
+
+	std::vector<std::string> sliderNames;
+	if (!sliderName.empty())
+		sliderNames.push_back(sliderName);
+
+	return ConfirmSliderDataLocalForEdit(shapes, sliderNames);
+}
+
+bool OutfitStudioFrame::ConfirmSliderDataLocalForEdit(const std::vector<NiShape*>& shapes, const std::vector<std::string>& sliderNames) {
+	if (!project || shapes.empty() || sliderNames.empty())
+		return true;
+
+	std::vector<std::pair<NiShape*, std::string>> externalData;
+	std::vector<std::string> labels;
+
+	for (auto* shape : shapes) {
+		if (!shape)
+			continue;
+
+		std::string shapeName = shape->name.get();
+		for (const auto& sliderName : sliderNames) {
+			if (sliderName.empty() || !project->SliderDataIsExternal(sliderName, shape))
+				continue;
+
+			externalData.emplace_back(shape, sliderName);
+			std::string label = shapeName + " / " + sliderName;
+			if (std::find(labels.begin(), labels.end(), label) == labels.end())
+				labels.push_back(label);
+		}
+	}
+
+	if (externalData.empty())
+		return true;
+
+	wxString message = _("The slider data you are about to edit is external. Editing it will make the affected slider data local to this project. Continue and make it local?");
+	if (!labels.empty()) {
+		message += "\n\n";
+		message += _("Affected slider data:");
+
+		size_t maxLabels = std::min<size_t>(labels.size(), 8);
+		for (size_t i = 0; i < maxLabels; i++) {
+			message += "\n  ";
+			message += wxString::FromUTF8(labels[i]);
+		}
+
+		if (labels.size() > maxLabels)
+			message += "\n  ...";
+	}
+
+	int response = wxMessageBox(message, _("External Slider Data"), wxYES_NO | wxICON_WARNING, this);
+	if (response != wxYES)
+		return false;
+
+	for (auto& data : externalData)
+		project->EnsureSliderDataLocal(data.second, data.first);
+
+	SetPendingChanges();
+	HighlightSliderData();
+	return true;
+}
+
 bool OutfitStudioFrame::CheckEditableState() {
 	if (!activeItem)
 		return false;
 
 	ToolID activeTool = glView->GetActiveTool();
+
+	// These brushes do not modify slider morph data, so they are always
+	// editable regardless of slider state.
 	if (activeTool == ToolID::MaskBrush || activeTool == ToolID::WeightBrush || activeTool == ToolID::ColorBrush || activeTool == ToolID::AlphaBrush)
 		return true;
 
@@ -3857,16 +3987,23 @@ bool OutfitStudioFrame::CheckEditableState() {
 			return false;
 		}
 
+		std::vector<NiShape*> shapes;
+		for (auto* item : selectedItems)
+			if (item)
+				shapes.push_back(item->GetShape());
+
+		if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{activeSlider}))
+			return false;
+
 		return true;
 	}
-	else {
-		if (activeTool == ToolID::UndiffBrush) {
-			wxMessageBox(_("You can only use the undiff brush while editing a slider. Note, use the pencil button next to a slider to enable editing of that slider's morph."),
-						 wxMessageBoxCaptionStr,
-						 wxOK,
-						 this);
-			return false;
-		}
+
+	if (activeTool == ToolID::UndiffBrush) {
+		wxMessageBox(_("You can only use the undiff brush while editing a slider. Note, use the pencil button next to a slider to enable editing of that slider's morph."),
+						wxMessageBoxCaptionStr,
+						wxOK,
+						this);
+		return false;
 	}
 
 	if (project->AllSlidersZero())
@@ -3918,7 +4055,7 @@ void OutfitStudioFrame::AddProjectHistory(const std::string& fileName, const std
 	else if (maxCount > MAX_PROJECT_HISTORY)
 		maxCount = MAX_PROJECT_HISTORY;
 
-	if (projectHistory.size() == maxCount)
+	if (projectHistory.size() == static_cast<size_t>(maxCount))
 		projectHistory.pop_back();
 
 	projectHistory.push_front(projectHistoryEntry);
@@ -6591,17 +6728,13 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
 		if (segmentData) {
 			// Active segment is a normal segment
 			// Collect list of partition IDs for segment and children.
-			// Also find partition ID of last child, or segment if none.
 			selPartIDs[segmentData->partID] = true;
-			int destPartID = segmentData->partID;
 			wxTreeItemIdValue subCookie;
 			wxTreeItemId child = segmentTree->GetFirstChild(activeSegment, subCookie);
 			while (child.IsOk()) {
 				SubSegmentItemData* childData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(child));
-				if (childData) {
+				if (childData)
 					selPartIDs[childData->partID] = true;
-					destPartID = childData->partID;
-				}
 				child = segmentTree->GetNextChild(activeSegment, subCookie);
 			}
 		}
@@ -7166,10 +7299,11 @@ void OutfitStudioFrame::OnSliderCheckBox(wxCommandEvent& event) {
 		wxSliderPanel* lastSliderPanel = sliderPanels[lastCheckedSlider];
 
 		if (sliderPanel && lastSliderPanel) {
-			size_t sliderIndex = sliderPool.FindIndex(sliderPanel);
-			size_t lastSliderIndex = sliderPool.FindIndex(lastSliderPanel);
+			const size_t sliderIndex = sliderPool.FindIndex(sliderPanel);
+			const size_t lastSliderIndex = sliderPool.FindIndex(lastSliderPanel);
+			const size_t invalidSliderIndex = static_cast<size_t>(-1);
 
-			if (sliderIndex != -1 && lastSliderIndex != -1 && sliderIndex != lastSliderIndex) {
+			if (sliderIndex != invalidSliderIndex && lastSliderIndex != invalidSliderIndex && sliderIndex != lastSliderIndex) {
 				size_t startIndex, endIndex;
 				if (sliderIndex > lastSliderIndex) {
 					startIndex = lastSliderIndex;
@@ -7467,6 +7601,13 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 		scale = 1.01f;
 
 	if (scale != 0.0f) {
+		std::vector<NiShape*> shapes;
+		for (auto& i : selectedItems)
+			shapes.push_back(i->GetShape());
+
+		if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{activeSlider}))
+			return;
+
 		for (auto& i : selectedItems) {
 			auto shape = i->GetShape();
 			std::vector<Vector3> verts;
@@ -8415,6 +8556,9 @@ void OutfitStudioFrame::OnSliderImportNIF(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
+	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), activeSlider))
+		return;
+
 	wxLogMessage("Importing slider to '%s' for shape '%s' from NIF file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 	if (!project->SetSliderFromNIF(activeSlider, activeItem->GetShape(), fn.ToUTF8().data())) {
 		wxLogError("No mesh found in the .nif file that matches currently selected shape!");
@@ -8440,6 +8584,9 @@ void OutfitStudioFrame::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.IsEmpty())
 		return;
 
+	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), activeSlider))
+		return;
+
 	wxLogMessage("Importing slider to '%s' for shape '%s' from BSD file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
 	project->SetSliderFromBSD(activeSlider, activeItem->GetShape(), fn.ToUTF8().data());
 
@@ -8459,6 +8606,9 @@ void OutfitStudioFrame::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 
 	wxString fn = wxFileSelector(_("Import .obj file for slider calculation"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
 	if (fn.IsEmpty())
+		return;
+
+	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), activeSlider))
 		return;
 
 	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
@@ -8580,6 +8730,9 @@ void OutfitStudioFrame::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 				createSliderGUI(sliderName->second, sliderScroll, sliderScroll->GetSizer());
 			}
 
+			if (!ConfirmSliderDataLocalForEdit(shape, sliderName->second))
+				continue;
+
 			project->SetSliderFromDiff(sliderName->second, shape, *diff.second);
 		}
 	}
@@ -8693,6 +8846,9 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 			}
 
 			std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
+			if (!ConfirmSliderDataLocalForEdit(shape, morphData->name))
+				continue;
+
 			project->SetSliderFromDiff(morphData->name, shape, diff);
 
 			if (morphData->type == MORPHTYPE_UV) {
@@ -8820,6 +8976,9 @@ void OutfitStudioFrame::OnSliderImportMorphsSF(wxCommandEvent& WXUNUSED(event)) 
 
 		auto& morphIndex = morphFile.morphNamesCacheMap[morphName];
 		auto& morphOffsets = morphFile.morphOffsetsCache[morphIndex];
+		if (!ConfirmSliderDataLocalForEdit(shape, sliderName->second))
+			continue;
+
 		project->SetSliderFromDiff(sliderName->second, shape, morphOffsets);
 	}
 
@@ -8849,6 +9008,9 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 	wxString fn = wxFileSelector(_("Import .fbx file for slider calculation"), wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
 	if (fn.IsEmpty())
+		return;
+
+	if (!ConfirmSliderDataLocalForEdit(activeItem->GetShape(), activeSlider))
 		return;
 
 	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", activeSlider, activeItem->GetShape()->name.get(), fn);
@@ -9070,6 +9232,22 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 	if (result != wxYES)
 		return;
 
+	std::vector<NiShape*> shapes;
+	for (auto& i : selectedItems)
+		shapes.push_back(i->GetShape());
+
+	std::vector<std::string> sliderNames;
+	if (!bEditSlider) {
+		for (auto& sliderPanel : sliderPanels)
+			if (sliderPanel.second->sliderCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED)
+				sliderNames.push_back(sliderPanel.first);
+	}
+	else
+		sliderNames.push_back(activeSlider);
+
+	if (!ConfirmSliderDataLocalForEdit(shapes, sliderNames))
+		return;
+
 	auto clearSlider = [&](const std::string& sliderName) {
 		std::unordered_map<uint16_t, float> mask;
 		for (auto& i : selectedItems) {
@@ -9203,6 +9381,13 @@ void OutfitStudioFrame::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	std::vector<NiShape*> shapes;
+	for (auto& i : selectedItems)
+		shapes.push_back(i->GetShape());
+
+	if (!ConfirmSliderDataLocalForEdit(shapes, std::vector<std::string>{activeSlider}))
+		return;
+
 	wxLogMessage("Negating slider '%s' for the selected shapes.", activeSlider);
 	for (auto& i : selectedItems)
 		project->NegateSlider(activeSlider, i->GetShape());
@@ -9288,6 +9473,9 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSliderProp")) {
+		dlg.SetSize(dlg.FromDIP(wxSize(760, 560)));
+		dlg.SetMinSize(dlg.FromDIP(wxSize(500, 480)));
+
 		wxTextCtrl* edSliderName = XRCCTRL(dlg, "edSliderName", wxTextCtrl);
 		wxStaticText* lbValLo = XRCCTRL(dlg, "lbValLo", wxStaticText);
 		wxStaticText* lbValHi = XRCCTRL(dlg, "lbValHi", wxStaticText);
@@ -9299,6 +9487,29 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 		wxCheckBox* chkZap = XRCCTRL(dlg, "chkZap", wxCheckBox);
 		wxCheckBox* chkUV = XRCCTRL(dlg, "chkUV", wxCheckBox);
 		wxCheckListBox* zapToggleList = XRCCTRL(dlg, "zapToggleList", wxCheckListBox);
+		wxListCtrl* sliderDataList = XRCCTRL(dlg, "sliderDataList", wxListCtrl);
+		wxButton* btnSliderDataLocal = XRCCTRL(dlg, "btnSliderDataLocal", wxButton);
+		wxButton* btnSliderDataExternal = XRCCTRL(dlg, "btnSliderDataExternal", wxButton);
+		wxButton* btnSliderDataFolders = XRCCTRL(dlg, "btnSliderDataFolders", wxButton);
+
+		std::vector<SliderDataLocation> sliderDataRows;
+		auto updateSliderDataButtons = [&]() {
+			std::vector<SliderDataLocation> locations;
+			size_t selectionCount = SliderDataList::GetSelected(sliderDataList, sliderDataRows, locations);
+			bool allLocal = SliderDataList::AllHaveSource(locations, true);
+			bool allExternal = SliderDataList::AllHaveSource(locations, false);
+			btnSliderDataLocal->Enable(selectionCount > 0 && allExternal);
+			btnSliderDataExternal->Enable(selectionCount > 0 && allLocal);
+			btnSliderDataFolders->Enable(selectionCount > 0 && allExternal);
+		};
+
+		auto refreshSliderData = [&]() {
+			project->GetSliderDataLocations(sliderDataRows, sliderName);
+			SliderDataList::Populate(sliderDataList, sliderDataRows, nullptr, false);
+			updateSliderDataButtons();
+		};
+
+		SliderDataList::Configure(sliderDataList, false);
 
 		long loVal = (int)(project->SliderDefault(curSlider, false));
 		long hiVal = (int)(project->SliderDefault(curSlider, true));
@@ -9350,6 +9561,35 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 			cbValZapped->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
 		else
 			cbValZapped->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
+
+		refreshSliderData();
+		sliderDataList->Bind(wxEVT_LIST_ITEM_SELECTED, [&](wxListEvent&) { updateSliderDataButtons(); });
+		sliderDataList->Bind(wxEVT_LIST_ITEM_DESELECTED, [&](wxListEvent&) { updateSliderDataButtons(); });
+		SliderDataList::BindSelectAll(&dlg, sliderDataList, updateSliderDataButtons);
+		btnSliderDataLocal->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
+			std::vector<SliderDataLocation> locations;
+			SliderDataList::GetSelected(sliderDataList, sliderDataRows, locations);
+			if (SliderDataList::MakeLocal(&dlg, project, locations)) {
+				SetPendingChanges();
+				refreshSliderData();
+			}
+		});
+		btnSliderDataExternal->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
+			std::vector<SliderDataLocation> locations;
+			SliderDataList::GetSelected(sliderDataList, sliderDataRows, locations);
+			if (SliderDataList::EditFolders(&dlg, project, locations)) {
+				SetPendingChanges();
+				refreshSliderData();
+			}
+		});
+		btnSliderDataFolders->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
+			std::vector<SliderDataLocation> locations;
+			SliderDataList::GetSelected(sliderDataList, sliderDataRows, locations);
+			if (SliderDataList::EditFolders(&dlg, project, locations)) {
+				SetPendingChanges();
+				refreshSliderData();
+			}
+		});
 
 		chkZap->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& event) {
 			bool checked = event.IsChecked();
@@ -9431,6 +9671,11 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	ShowSliderProperties(activeSlider);
+}
+
+void OutfitStudioFrame::OnSliderDataLocations(wxCommandEvent& WXUNUSED(event)) {
+	SliderDataLocationsDialog dlg(this, project);
+	dlg.ShowModal();
 }
 
 bool OutfitStudioFrame::ShowClippingFixStrength(float& outStrength) {
@@ -9611,6 +9856,9 @@ void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& WXUNUSED(event)) {
 }
 
 int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent) {
+	if (shapes.empty())
+		return 0;
+
 	StartProgress(_("Conforming shapes..."));
 
 	ConformOptions options;
@@ -9621,6 +9869,19 @@ int OutfitStudioFrame::ConformShapes(std::vector<NiShape*> shapes, bool silent) 
 		for (size_t i = 0; i < project->SliderCount(); i++)
 			if (project->SliderShow(i))
 				options.sliderNames.push_back(project->GetSliderName(i));
+
+		std::vector<NiShape*> targetShapes;
+		for (auto* shape : shapes)
+			if (shape && !project->IsBaseShape(shape))
+				targetShapes.push_back(shape);
+
+		std::vector<std::string> conformSliderNames;
+		project->GetConformSliderNames(options, conformSliderNames);
+		if (!ConfirmSliderDataLocalForEdit(targetShapes, conformSliderNames)) {
+			EndProgress();
+			HighlightSliderData();
+			return 0;
+		}
 
 		ZeroSliders();
 
@@ -12343,7 +12604,7 @@ void OutfitStudioFrame::OnSmoothSeamsAngle(wxCommandEvent& WXUNUSED(event)) {
 	std::vector<float> oldMeshAngles;
 	oldMeshAngles.resize(activeMeshes.size());
 
-	for (int i = 0; i < activeMeshes.size(); i++)
+	for (size_t i = 0; i < activeMeshes.size(); i++)
 		oldMeshAngles[i] = activeMeshes[i]->smoothSeamNormalsAngle;
 
 	wxDialog dlg;
@@ -12351,7 +12612,7 @@ void OutfitStudioFrame::OnSmoothSeamsAngle(wxCommandEvent& WXUNUSED(event)) {
 		auto updatePreview = [&]() {
 			float angle = atof(XRCCTRL(dlg, "angleText", wxTextCtrl)->GetValue().c_str());
 
-			for (int i = 0; i < activeMeshes.size(); i++) {
+			for (size_t i = 0; i < activeMeshes.size(); i++) {
 				Mesh* m = activeMeshes[i];
 				m->smoothSeamNormalsAngle = angle;
 				m->SmoothNormals();
@@ -12386,7 +12647,7 @@ void OutfitStudioFrame::OnSmoothSeamsAngle(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "angleText", wxTextCtrl)->SetValue(wxString::Format("%0.2f", oldMeshAngles.front()));
 
 		if (dlg.ShowModal() != wxID_OK) {
-			for (int i = 0; i < activeMeshes.size(); i++) {
+			for (size_t i = 0; i < activeMeshes.size(); i++) {
 				Mesh* m = activeMeshes[i];
 				m->smoothSeamNormalsAngle = oldMeshAngles[i];
 				m->SmoothNormals();
@@ -12421,6 +12682,9 @@ void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
 	auto shape = activeItem->GetShape();
 	Mesh* m = glView->GetMesh(shape->name.get());
 	if (shape && m) {
+		if (bEditSlider && !ConfirmSliderDataLocalForEdit(shape, activeSlider))
+			return;
+
 		editUV = new EditUV(this, project->GetWorkNif(), shape, m, activeSlider);
 
 		editUV->Bind(wxEVT_CLOSE_WINDOW, [&](wxCloseEvent& event) {
@@ -13733,7 +13997,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	else
 		activeStroke->beginStroke(tpi);
 
-	if (activeBrush->Type() != TweakBrush::BrushType::Move)
+	if (activeBrush->Type() != TweakBrush::BrushType::Move) {
 		if (segmentMode) {
 			if (os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius())) {
 				os->ShowSegment();
@@ -13743,6 +14007,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		else {
 			activeStroke->updateStroke(tpi);
 		}
+	}
 
 	return true;
 }
@@ -16620,6 +16885,11 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 
 				owner->StartProgress(_("Loading slider file..."));
 				owner->UpdateProgress(1, _("Loading slider file..."));
+
+				if (!owner->ConfirmSliderDataLocalForEdit(owner->activeItem->GetShape(), targetSlider)) {
+					owner->EndProgress();
+					return false;
+				}
 
 				if (isBSD)
 					owner->project->SetSliderFromBSD(targetSlider, owner->activeItem->GetShape(), inputFile.ToUTF8().data());

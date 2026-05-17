@@ -7,6 +7,10 @@ See the included LICENSE file
 
 #include "../components/SliderGroup.h"
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include <wx/filepicker.h>
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>

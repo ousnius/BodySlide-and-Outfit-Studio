@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "../utils/AABBTree.h"
 
 #include <algorithm>
+#include <cfloat>
 #include <cmath>
 #include <unordered_set>
 

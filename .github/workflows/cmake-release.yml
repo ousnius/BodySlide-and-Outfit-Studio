@@ -1,0 +1,203 @@
+name: CMake Release
+
+on:
+  push:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  windows-x64-release:
+    name: Windows x64 Release
+    runs-on: windows-2025-vs2026
+
+    env:
+      BUILD_TYPE: Release
+      VCPKG_TARGET_TRIPLET: x64-windows-static
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Cache vcpkg binary packages
+        uses: actions/cache@v5
+        with:
+          path: vcpkg-binary-cache
+          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-${{ hashFiles('.github/workflows/cmake-release.yml') }}
+          restore-keys: |
+            vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-
+
+      - name: Bootstrap vcpkg
+        shell: pwsh
+        run: |
+          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
+          git clone https://github.com/microsoft/vcpkg.git $vcpkgRoot
+          & (Join-Path $vcpkgRoot "bootstrap-vcpkg.bat") -disableMetrics
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
+          $vcpkgCache = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
+          New-Item -ItemType Directory -Force -Path $vcpkgCache | Out-Null
+          $env:VCPKG_BINARY_SOURCES = "clear;files,$vcpkgCache,readwrite"
+          & (Join-Path $vcpkgRoot "vcpkg.exe") install "wxwidgets:$env:VCPKG_TARGET_TRIPLET"
+
+      - name: Configure CMake
+        shell: pwsh
+        run: |
+          $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
+          $toolchainFile = Join-Path $vcpkgRoot "scripts/buildsystems/vcpkg.cmake"
+          cmake -S . -B build/windows-x64-release `
+            -G "Visual Studio 18 2026" `
+            -A x64 `
+            -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
+            -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TARGET_TRIPLET" `
+            -DBSOS_ENABLE_FBXSDK=OFF
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build/windows-x64-release --config "$env:BUILD_TYPE" --target BodySlide OutfitStudio --parallel
+
+      - name: Verify outputs
+        shell: pwsh
+        run: |
+          $outputs = @(
+            "build/windows-x64-release/Release/BodySlide x64.exe",
+            "build/windows-x64-release/Release/OutfitStudio x64.exe"
+          )
+
+          foreach ($output in $outputs) {
+            if (-not (Test-Path $output)) {
+              Write-Error "Missing expected build output: $output"
+            }
+          }
+
+      - name: Package artifacts
+        shell: pwsh
+        run: |
+          $packageName = "BodySlide-and-Outfit-Studio-windows-x64-release"
+          $artifactRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts"
+          $packageDir = Join-Path $artifactRoot $packageName
+          $artifactFile = Join-Path $artifactRoot "windows-x64-release.zip"
+
+          Remove-Item -Recurse -Force $artifactRoot -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+
+          Copy-Item "build/windows-x64-release/Release/BodySlide x64.exe" $packageDir
+          Copy-Item "build/windows-x64-release/Release/OutfitStudio x64.exe" $packageDir
+          Copy-Item "build/windows-x64-release/Release/*.pdb" $packageDir -ErrorAction SilentlyContinue
+          Copy-Item "res" $packageDir -Recurse
+          Copy-Item "lang" $packageDir -Recurse
+
+          foreach ($file in @("BodySlide.xml", "BuildSelection.xml", "Config.xml", "OutfitStudio.xml", "RefTemplates.xml")) {
+            Copy-Item $file $packageDir
+          }
+
+          foreach ($directory in @("SliderSets", "Automations", "PoseData", "RefTemplates", "ShapeData", "SliderCategories", "SliderGroups", "SliderPresets")) {
+            New-Item -ItemType Directory -Force -Path (Join-Path $packageDir $directory) | Out-Null
+          }
+
+          Push-Location $packageDir
+          cmake -E tar cf $artifactFile --format=zip -- .
+          Pop-Location
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          path: artifacts/windows-x64-release.zip
+          archive: false
+          if-no-files-found: error
+          retention-days: 7
+
+
+  ubuntu-gcc-release:
+    name: Ubuntu GCC Release
+    runs-on: ubuntu-latest
+
+    env:
+      BUILD_TYPE: Release
+      CC: gcc
+      CXX: g++
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            build-essential \
+            cmake \
+            directx-headers-dev \
+            g++ \
+            gcc \
+            libglew-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libwxgtk3.2-dev \
+            ninja-build \
+            pkg-config
+
+          wx-config --version
+          wx-config --libs gl
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B build/ubuntu-gcc-release \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+            -DBSOS_ENABLE_FBXSDK=OFF
+
+      - name: Build
+        run: cmake --build build/ubuntu-gcc-release --target BodySlide OutfitStudio --parallel
+
+      - name: Verify outputs
+        run: |
+          test -x "build/ubuntu-gcc-release/BodySlide x64"
+          test -x "build/ubuntu-gcc-release/OutfitStudio x64"
+
+      - name: Package artifacts
+        run: |
+          package_name="BodySlide-and-Outfit-Studio-ubuntu-gcc-release"
+          artifact_root="$GITHUB_WORKSPACE/artifacts"
+          package_dir="$artifact_root/$package_name"
+          artifact_file="$artifact_root/ubuntu-gcc-release.zip"
+
+          rm -rf "$artifact_root"
+          mkdir -p "$package_dir"
+
+          cp "build/ubuntu-gcc-release/BodySlide x64" "$package_dir/"
+          cp "build/ubuntu-gcc-release/OutfitStudio x64" "$package_dir/"
+          cp -a res "$package_dir/"
+          cp -a lang "$package_dir/"
+          cp BodySlide.xml BuildSelection.xml Config.xml OutfitStudio.xml RefTemplates.xml "$package_dir/"
+
+          mkdir -p \
+            "$package_dir/SliderSets" \
+            "$package_dir/Automations" \
+            "$package_dir/PoseData" \
+            "$package_dir/RefTemplates" \
+            "$package_dir/ShapeData" \
+            "$package_dir/SliderCategories" \
+            "$package_dir/SliderGroups" \
+            "$package_dir/SliderPresets"
+
+          cd "$package_dir"
+          cmake -E tar cf "$artifact_file" --format=zip -- .
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          path: artifacts/ubuntu-gcc-release.zip
+          archive: false
+          if-no-files-found: error
+          retention-days: 7

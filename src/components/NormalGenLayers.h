@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include <tinyxml2.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

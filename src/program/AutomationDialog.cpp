@@ -9,17 +9,15 @@ See the included LICENSE file
 #include "OutfitStudio.h"
 
 #include "../files/MaskFile.h"
-#include "../files/TriFile.h"
-#include "../components/ClippingFixer.h"
-#include "../utils/PlatformUtil.h"
 
 #include <NifFile.hpp>
 
+#include <wx/wx.h>
 #include <wx/dir.h>
-#include <wx/filedlg.h>
 #include <wx/msgdlg.h>
 #include <wx/filename.h>
 #include <wx/clntdata.h>
+#include <wx/xrc/xmlres.h>
 
 #include <tinyxml2.h>
 
@@ -57,6 +55,18 @@ struct ShaderPropertyDef {
 	float default4;
 	const ShaderPropertyChoiceDef* choices;
 	size_t choiceCount;
+};
+
+struct GeometryPropertyDef {
+	const char* name;
+	const char* label;
+	bool defaultEnabled;
+};
+
+struct TexturePathDef {
+	int index;
+	const char* name;
+	const char* label;
 };
 
 const ShaderPropertyChoiceDef ShaderTypeChoices[] = {
@@ -109,6 +119,29 @@ const ShaderPropertyDef ShaderPropertyDefs[] = {
 	{"RefractionStrength", "Refraction Strength", ShaderPropertyValueKind::Scalar, 0.0f, 0.0f, 0.0f, 1.0f, nullptr, 0}
 };
 
+const GeometryPropertyDef GeometryPropertyDefs[] = {
+	{"Skinned", "Skinned", true},
+	{"Dynamic", "Dynamic", true},
+	{"FullPrecision", "Full Precision", true},
+	{"SubIndex", "Sub Index", true}
+};
+
+const TexturePathDef TexturePathDefs[] = {
+	{0, "Diffuse", "0: Diffuse"},
+	{1, "Normal", "1: Normal"},
+	{2, "Glow/Skin", "2: Glow/Skin"},
+	{3, "Parallax", "3: Parallax"},
+	{4, "Environment", "4: Environment"},
+	{5, "Env Mask", "5: Env Mask"},
+	{6, "6", "6"},
+	{7, "Specular", "7: Specular"},
+	{8, "8", "8"},
+	{9, "9", "9"},
+	{10, "10", "10"},
+	{11, "11", "11"},
+	{12, "12", "12"}
+};
+
 const ShaderPropertyDef* FindShaderPropertyDef(const std::string& name) {
 	for (const auto& def : ShaderPropertyDefs) {
 		if (name == def.name)
@@ -127,6 +160,45 @@ AutomationStep::ShaderProperty MakeDefaultShaderProperty(const ShaderPropertyDef
 	if (def.kind == ShaderPropertyValueKind::Choice && def.choiceCount > 0)
 		prop.stringValue = def.choices[0].value;
 	return prop;
+}
+
+const GeometryPropertyDef* FindGeometryPropertyDef(const std::string& name) {
+	for (const auto& def : GeometryPropertyDefs) {
+		if (name == def.name)
+			return &def;
+	}
+	return nullptr;
+}
+
+AutomationStep::GeometryProperty MakeDefaultGeometryProperty(const GeometryPropertyDef& def) {
+	AutomationStep::GeometryProperty prop;
+	prop.name = def.name;
+	prop.enabled = def.defaultEnabled;
+	return prop;
+}
+
+const TexturePathDef* FindTexturePathDefByIndex(int index) {
+	for (const auto& def : TexturePathDefs) {
+		if (def.index == index)
+			return &def;
+	}
+	return nullptr;
+}
+
+const TexturePathDef* FindTexturePathDefByName(const std::string& name) {
+	std::string nameLower = ToLower(name);
+	for (const auto& def : TexturePathDefs) {
+		if (nameLower == ToLower(def.name) || nameLower == ToLower(def.label))
+			return &def;
+	}
+	return nullptr;
+}
+
+AutomationStep::TexturePath MakeDefaultTexturePath(const TexturePathDef& def) {
+	AutomationStep::TexturePath path;
+	path.index = def.index;
+	path.name = def.name;
+	return path;
 }
 
 int ColorByte(float value) {
@@ -162,232 +234,23 @@ int FindChoiceByClientValue(wxChoice* choice, const std::string& value) {
 	return wxNOT_FOUND;
 }
 
-bool ParseShaderTypeValue(const std::string& value, std::string& domain, uint32_t& shaderType) {
-	size_t sep = value.find(':');
-	if (sep == std::string::npos)
-		return false;
-
-	domain = value.substr(0, sep);
-	try {
-		shaderType = static_cast<uint32_t>(std::stoul(value.substr(sep + 1)));
-	}
-	catch (...) {
-		return false;
-	}
-
-	return true;
 }
 
-bool ApplyAutomationShaderProperty(NifFile* nif, NiShape* shape, const AutomationStep::ShaderProperty& prop) {
-	NiShader* shader = nif->GetShader(shape);
-	if (!shader)
-		return false;
-
-	NiMaterialProperty* material = nif->GetMaterialProperty(shape);
-	auto* bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
-	auto* bsesp = dynamic_cast<BSEffectShaderProperty*>(shader);
-	auto* bspplp = dynamic_cast<BSShaderPPLightingProperty*>(shader);
-	auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
-	auto& version = nif->GetHeader().GetVersion();
-
-	Vector3 vectorValue(prop.value1, prop.value2, prop.value3);
-	Color4 colorValue(prop.value1, prop.value2, prop.value3, prop.value4);
-
-	if (prop.name == "ShaderType") {
-		std::string domain;
-		uint32_t shaderType = 0;
-		if (!ParseShaderTypeValue(prop.stringValue, domain, shaderType))
-			return false;
-
-		if (domain == "BSLighting" && bslsp) {
-			uint32_t oldType = bslsp->GetShaderType();
-			bslsp->SetShaderType(shaderType);
-
-			if (oldType != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && shaderType == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP)
-				bslsp->SetEnvironmentMapping(true);
-			else if (oldType == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && shaderType != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP)
-				bslsp->SetEnvironmentMapping(false);
-
-			return true;
-		}
-
-		if (domain == "PPLighting" && bspplp) {
-			shader->SetShaderType(shaderType);
-			return true;
-		}
-
-		return false;
-	}
-
-	if (prop.name == "SpecularColor") {
-		bool applied = false;
-		if (bslsp) {
-			bslsp->SetSpecularColor(vectorValue);
-			applied = true;
-		}
-		if (material) {
-			material->SetSpecularColor(vectorValue);
-			applied = true;
-		}
-		return applied;
-	}
-
-	if (prop.name == "SpecularStrength") {
-		if (!bslsp)
-			return false;
-		bslsp->SetSpecularStrength(prop.value1);
-		return true;
-	}
-
-	if (prop.name == "SpecularPower") {
-		bool applied = false;
-		if (bslsp) {
-			bslsp->SetGlossiness(prop.value1);
-			applied = true;
-		}
-		if (material) {
-			material->SetGlossiness(prop.value1);
-			applied = true;
-		}
-		return applied;
-	}
-
-	if (prop.name == "EmissiveColor") {
-		bool applied = false;
-		if (bslsp) {
-			bslsp->SetEmissiveColor(colorValue);
-			applied = true;
-		}
-		if (bsesp) {
-			bsesp->SetEmissiveColor(colorValue);
-			applied = true;
-		}
-		if (bspplp && version.User() >= 12) {
-			bspplp->emissiveColor = colorValue;
-			applied = true;
-		}
-		if (material) {
-			material->SetEmissiveColor(colorValue);
-			applied = true;
-		}
-		return applied;
-	}
-
-	if (prop.name == "EmissiveMultiple") {
-		bool applied = false;
-		if (bslsp) {
-			bslsp->SetEmissiveMultiple(prop.value1);
-			applied = true;
-		}
-		if (bsesp) {
-			bsesp->SetEmissiveMultiple(prop.value1);
-			applied = true;
-		}
-		if (material) {
-			material->SetEmissiveMultiple(prop.value1);
-			applied = true;
-		}
-		return applied;
-	}
-
-	if (prop.name == "Alpha") {
-		bool applied = false;
-		if (bslsp) {
-			bslsp->SetAlpha(prop.value1);
-			applied = true;
-		}
-		if (material) {
-			material->SetAlpha(prop.value1);
-			applied = true;
-		}
-		return applied;
-	}
-
-	if (prop.name == "EnvMapScale") {
-		bool applied = false;
-		if (bslsp && bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP) {
-			bslsp->environmentMapScale = prop.value1;
-			applied = true;
-		}
-		else if (bsesp && version.User() == 12 && version.Stream() >= 130) {
-			bsesp->envMapScale = prop.value1;
-			applied = true;
-		}
-		else if (bssp && version.User() <= 11) {
-			bssp->environmentMapScale = prop.value1;
-			applied = true;
-		}
-		return applied;
-	}
-
-	if (prop.name == "EyeCubemapScale") {
-		if (!bslsp || bslsp->GetShaderType() != BSLightingShaderPropertyShaderType::BSLSP_EYE)
-			return false;
-		bslsp->eyeCubemapScale = prop.value1;
-		return true;
-	}
-
-	if (prop.name == "UVOffset") {
-		if (!bssp || version.User() != 12)
-			return false;
-		bssp->uvOffset = Vector2(prop.value1, prop.value2);
-		return true;
-	}
-
-	if (prop.name == "UVScale") {
-		if (!bssp || version.User() != 12)
-			return false;
-		bssp->uvScale = Vector2(prop.value1, prop.value2);
-		return true;
-	}
-
-	if (prop.name == "LightingEffect1") {
-		if (!bslsp || version.Stream() >= 130)
-			return false;
-		bslsp->softlighting = prop.value1;
-		return true;
-	}
-
-	if (prop.name == "LightingEffect2") {
-		if (!bslsp || version.Stream() >= 130)
-			return false;
-		bslsp->rimlightPower = prop.value1;
-		return true;
-	}
-
-	if (prop.name == "SkinTintColor") {
-		if (!bslsp || bslsp->GetShaderType() != BSLightingShaderPropertyShaderType::BSLSP_SKINTINT)
-			return false;
-		bslsp->skinTintColor = vectorValue;
-		return true;
-	}
-
-	if (prop.name == "HairTintColor") {
-		if (!bslsp || bslsp->GetShaderType() != BSLightingShaderPropertyShaderType::BSLSP_HAIRTINT)
-			return false;
-		bslsp->hairTintColor = vectorValue;
-		return true;
-	}
-
-	if (prop.name == "RefractionStrength") {
-		bool applied = false;
-		if (bslsp) {
-			bslsp->refractionStrength = prop.value1;
-			applied = true;
-		}
-		if (bspplp && version.User() == 11 && version.Stream() > 14) {
-			bspplp->refractionStrength = prop.value1;
-			applied = true;
-		}
-		if (bsesp && version.User() == 12 && version.Stream() > 139 && version.Stream() < 172) {
-			bsesp->refractionPower = prop.value1;
-			applied = true;
-		}
-		return applied;
-	}
-
-	return false;
+int AutomationDialog::TexturePathIndexForName(const std::string& name) {
+	const TexturePathDef* def = FindTexturePathDefByName(name);
+	return def ? def->index : -1;
 }
+
+int AutomationDialog::ResolveTexturePathIndex(const AutomationStep::TexturePath& path) {
+	if (path.index >= 0)
+		return path.index;
+
+	return TexturePathIndexForName(path.name);
+}
+
+std::string AutomationDialog::TexturePathNameForIndex(int index) {
+	const TexturePathDef* def = FindTexturePathDefByIndex(index);
+	return def ? def->name : std::to_string(index);
 }
 
 wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
@@ -523,6 +386,16 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	auto* btnAddShaderProp = XRCCTRL(*this, "btnAddShaderProp", wxButton);
 	if (btnAddShaderProp)
 		btnAddShaderProp->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddShaderProperty, this);
+
+	PopulateGeometryPropertyChoice();
+	auto* btnAddGeometryProp = XRCCTRL(*this, "btnAddGeometryProp", wxButton);
+	if (btnAddGeometryProp)
+		btnAddGeometryProp->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddGeometryProperty, this);
+
+	PopulateTexturePathChoice();
+	auto* btnAddTexturePath = XRCCTRL(*this, "btnAddTexturePath", wxButton);
+	if (btnAddTexturePath)
+		btnAddTexturePath->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddTexturePath, this);
 
 	auto* btnAddFixClipSlider = XRCCTRL(*this, "btnAddFixClipSlider", wxButton);
 	if (btnAddFixClipSlider)
@@ -848,6 +721,239 @@ std::vector<AutomationStep::ShaderProperty> AutomationDialog::ReadShaderProperty
 	return properties;
 }
 
+void AutomationDialog::PopulateGeometryPropertyChoice() {
+	auto* choice = XRCCTRL(*this, "choiceGeometryPropAdd", wxChoice);
+	if (choice) {
+		choice->Clear();
+		for (const auto& def : GeometryPropertyDefs)
+			choice->Append(wxString::FromUTF8(def.label), new wxStringClientData(wxString::FromUTF8(def.name)));
+
+		if (choice->GetCount() > 0)
+			choice->SetSelection(0);
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+	if (rowsWindow)
+		rowsWindow->SetScrollRate(0, 8);
+}
+
+void AutomationDialog::ClearGeometryPropertyRows() {
+	auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+	if (rowsWindow) {
+		if (auto* rowsSizer = rowsWindow->GetSizer())
+			rowsSizer->Clear(true);
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+
+	geometryPropertyRows.clear();
+}
+
+void AutomationDialog::AddGeometryPropertyRow(const AutomationStep::GeometryProperty& prop) {
+	const GeometryPropertyDef* def = FindGeometryPropertyDef(prop.name);
+	if (!def)
+		return;
+
+	auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+	if (!rowsWindow)
+		return;
+
+	wxSizer* rowsSizer = rowsWindow->GetSizer();
+	if (!rowsSizer) {
+		rowsSizer = new wxBoxSizer(wxVERTICAL);
+		rowsWindow->SetSizer(rowsSizer);
+	}
+
+	auto* rowPanel = new wxPanel(rowsWindow, wxID_ANY);
+	auto* rowSizer = new wxBoxSizer(wxHORIZONTAL);
+
+	GeometryPropertyRowControls row;
+	row.panel = rowPanel;
+	row.propertyName = prop.name;
+
+	auto* label = new wxStaticText(rowPanel, wxID_ANY, wxString::FromUTF8(def->label), wxDefaultPosition, wxSize(145, -1));
+	rowSizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+	auto* choice = new wxChoice(rowPanel, wxID_ANY);
+	choice->Append(_("Enabled"));
+	choice->Append(_("Disabled"));
+	choice->SetSelection(prop.enabled ? 0 : 1);
+	row.value = choice;
+	rowSizer->Add(choice, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+	rowSizer->AddStretchSpacer(1);
+
+	auto* btnRemove = new wxButton(rowPanel, wxID_ANY, "X", wxDefaultPosition, wxSize(28, -1));
+	btnRemove->SetToolTip(_("Remove this geometry property"));
+	btnRemove->Bind(wxEVT_BUTTON, [this, rowPanel](wxCommandEvent&) { RemoveGeometryPropertyRow(rowPanel); });
+	rowSizer->Add(btnRemove, 0, wxALIGN_CENTER_VERTICAL);
+
+	rowPanel->SetSizer(rowSizer);
+	rowsSizer->Add(rowPanel, 0, wxEXPAND | wxBOTTOM, 4);
+	geometryPropertyRows.push_back(row);
+
+	rowsWindow->FitInside();
+	rowsWindow->Layout();
+	auto* page = XRCCTRL(*this, "pageSetGeometryProperties", wxPanel);
+	if (page)
+		page->Layout();
+}
+
+void AutomationDialog::RemoveGeometryPropertyRow(wxWindow* rowPanel) {
+	for (auto it = geometryPropertyRows.begin(); it != geometryPropertyRows.end(); ++it) {
+		if (it->panel == rowPanel) {
+			auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+			if (rowsWindow && rowsWindow->GetSizer())
+				rowsWindow->GetSizer()->Detach(it->panel);
+			if (it->panel)
+				it->panel->Destroy();
+			geometryPropertyRows.erase(it);
+			break;
+		}
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelGeometryPropRows", wxScrolledWindow);
+	if (rowsWindow) {
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+}
+
+void AutomationDialog::RebuildGeometryPropertyRows(const std::vector<AutomationStep::GeometryProperty>& properties) {
+	ClearGeometryPropertyRows();
+	for (const auto& prop : properties)
+		AddGeometryPropertyRow(prop);
+}
+
+std::vector<AutomationStep::GeometryProperty> AutomationDialog::ReadGeometryPropertyRows() const {
+	std::vector<AutomationStep::GeometryProperty> properties;
+	for (const auto& row : geometryPropertyRows) {
+		const GeometryPropertyDef* def = FindGeometryPropertyDef(row.propertyName);
+		if (!def)
+			continue;
+
+		AutomationStep::GeometryProperty prop = MakeDefaultGeometryProperty(*def);
+		prop.name = row.propertyName;
+		prop.enabled = !row.value || row.value->GetSelection() != 1;
+		properties.push_back(prop);
+	}
+
+	return properties;
+}
+
+void AutomationDialog::PopulateTexturePathChoice() {
+	auto* choice = XRCCTRL(*this, "choiceTexturePathAdd", wxChoice);
+	if (choice) {
+		choice->Clear();
+		for (const auto& def : TexturePathDefs)
+			choice->Append(wxString::FromUTF8(def.label), new wxStringClientData(wxString::Format("%d", def.index)));
+
+		if (choice->GetCount() > 0)
+			choice->SetSelection(0);
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+	if (rowsWindow)
+		rowsWindow->SetScrollRate(0, 8);
+}
+
+void AutomationDialog::ClearTexturePathRows() {
+	auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+	if (rowsWindow) {
+		if (auto* rowsSizer = rowsWindow->GetSizer())
+			rowsSizer->Clear(true);
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+
+	texturePathRows.clear();
+}
+
+void AutomationDialog::AddTexturePathRow(const AutomationStep::TexturePath& path) {
+	int index = ResolveTexturePathIndex(path);
+	const TexturePathDef* def = FindTexturePathDefByIndex(index);
+	if (!def)
+		return;
+
+	auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+	if (!rowsWindow)
+		return;
+
+	wxSizer* rowsSizer = rowsWindow->GetSizer();
+	if (!rowsSizer) {
+		rowsSizer = new wxBoxSizer(wxVERTICAL);
+		rowsWindow->SetSizer(rowsSizer);
+	}
+
+	auto* rowPanel = new wxPanel(rowsWindow, wxID_ANY);
+	auto* rowSizer = new wxBoxSizer(wxHORIZONTAL);
+
+	TexturePathRowControls row;
+	row.panel = rowPanel;
+	row.index = index;
+	row.name = path.name.empty() ? def->name : path.name;
+
+	auto* label = new wxStaticText(rowPanel, wxID_ANY, wxString::FromUTF8(def->label), wxDefaultPosition, wxSize(145, -1));
+	rowSizer->Add(label, 0, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+	auto* value = new wxTextCtrl(rowPanel, wxID_ANY, wxString::FromUTF8(path.path));
+	row.path = value;
+	rowSizer->Add(value, 1, wxALIGN_CENTER_VERTICAL | wxRIGHT, 5);
+
+	auto* btnRemove = new wxButton(rowPanel, wxID_ANY, "X", wxDefaultPosition, wxSize(28, -1));
+	btnRemove->SetToolTip(_("Remove this texture path"));
+	btnRemove->Bind(wxEVT_BUTTON, [this, rowPanel](wxCommandEvent&) { RemoveTexturePathRow(rowPanel); });
+	rowSizer->Add(btnRemove, 0, wxALIGN_CENTER_VERTICAL);
+
+	rowPanel->SetSizer(rowSizer);
+	rowsSizer->Add(rowPanel, 0, wxEXPAND | wxBOTTOM, 4);
+	texturePathRows.push_back(row);
+
+	rowsWindow->FitInside();
+	rowsWindow->Layout();
+	auto* page = XRCCTRL(*this, "pageSetTexturePaths", wxPanel);
+	if (page)
+		page->Layout();
+}
+
+void AutomationDialog::RemoveTexturePathRow(wxWindow* rowPanel) {
+	for (auto it = texturePathRows.begin(); it != texturePathRows.end(); ++it) {
+		if (it->panel == rowPanel) {
+			auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+			if (rowsWindow && rowsWindow->GetSizer())
+				rowsWindow->GetSizer()->Detach(it->panel);
+			if (it->panel)
+				it->panel->Destroy();
+			texturePathRows.erase(it);
+			break;
+		}
+	}
+
+	auto* rowsWindow = XRCCTRL(*this, "panelTexturePathRows", wxScrolledWindow);
+	if (rowsWindow) {
+		rowsWindow->FitInside();
+		rowsWindow->Layout();
+	}
+}
+
+void AutomationDialog::RebuildTexturePathRows(const std::vector<AutomationStep::TexturePath>& paths) {
+	ClearTexturePathRows();
+	for (const auto& path : paths)
+		AddTexturePathRow(path);
+}
+
+std::vector<AutomationStep::TexturePath> AutomationDialog::ReadTexturePathRows() const {
+	std::vector<AutomationStep::TexturePath> paths;
+	for (const auto& row : texturePathRows) {
+		AutomationStep::TexturePath path;
+		path.index = row.index;
+		path.name = row.name.empty() ? TexturePathNameForIndex(row.index) : row.name;
+		path.path = row.path ? row.path->GetValue().ToUTF8().data() : std::string();
+		paths.push_back(path);
+	}
+
+	return paths;
+}
+
 // Progress methods
 
 void AutomationDialog::StartProgress(const wxString& msg) {
@@ -955,7 +1061,7 @@ void AutomationDialog::PopulateStepList() {
 
 		std::string targetStr = JoinStrings(steps[i].targetMeshes, ", ");
 		if (targetStr.empty())
-			targetStr = "(all non-reference)";
+			targetStr = "(all)";
 		listSteps->SetItem(idx, 2, wxString::FromUTF8(targetStr));
 
 		listSteps->SetItem(idx, 3, wxString::FromUTF8(steps[i].note));
@@ -972,7 +1078,7 @@ void AutomationDialog::RefreshStepRow(int index) {
 
 	std::string targetStr = JoinStrings(step.targetMeshes, ", ");
 	if (targetStr.empty())
-		targetStr = "(all non-reference)";
+		targetStr = "(all)";
 	listSteps->SetItem(index, 2, wxString::FromUTF8(targetStr));
 
 	listSteps->SetItem(index, 3, wxString::FromUTF8(step.note));
@@ -1239,6 +1345,14 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 		}
 		case AutomationStepType::SetShaderProperties: {
 			RebuildShaderPropertyRows(step.shaderProperties);
+			break;
+		}
+		case AutomationStepType::SetGeometryProperties: {
+			RebuildGeometryPropertyRows(step.geometryProperties);
+			break;
+		}
+		case AutomationStepType::SetTexturePaths: {
+			RebuildTexturePathRows(step.texturePaths);
 			break;
 		}
 		case AutomationStepType::ImportFile: {
@@ -1594,6 +1708,14 @@ void AutomationDialog::UpdateStepFromUI() {
 			step.shaderProperties = ReadShaderPropertyRows();
 			break;
 		}
+		case AutomationStepType::SetGeometryProperties: {
+			step.geometryProperties = ReadGeometryPropertyRows();
+			break;
+		}
+		case AutomationStepType::SetTexturePaths: {
+			step.texturePaths = ReadTexturePathRows();
+			break;
+		}
 		case AutomationStepType::DeleteShape:
 			// No parameters — uses Target Meshes
 			break;
@@ -1788,13 +1910,13 @@ NiShape* AutomationDialog::FindShapeByName(const std::string& name) {
 	return nullptr;
 }
 
-std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep& step) {
+std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep& step, bool includeBaseShapeOnEmpty) {
 	if (step.targetMeshes.empty()) {
 		auto allShapes = project->GetWorkNif()->GetShapes();
 		std::vector<NiShape*> result;
 		auto* baseShape = project->GetBaseShape();
 		for (auto* shape : allShapes) {
-			if (shape != baseShape)
+			if (includeBaseShapeOnEmpty || shape != baseShape)
 				result.push_back(shape);
 		}
 		return result;
@@ -2670,1636 +2792,11 @@ void AutomationDialog::OnClose(wxCommandEvent& WXUNUSED(event)) {
 	EndModal(wxID_CLOSE);
 }
 
-static bool StepChangesSliderSet(AutomationStepType type) {
-	switch (type) {
-		case AutomationStepType::ClearProject:
-		case AutomationStepType::LoadReference:
-		case AutomationStepType::AddProject:
-		case AutomationStepType::DeleteSlider:
-		case AutomationStepType::ClearReference:
-		case AutomationStepType::SetBaseShape:
-		case AutomationStepType::ImportSliderData:
-			return true;
-		default:
-			return false;
-	}
-}
-
-void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
-	lastRunErrors = 0;
-
-	// Make a copy so placeholder substitution doesn't modify the UI version
-	AutomationScript execScript;
-	for (size_t idx : stepIndices)
-		execScript.AddStep(script.GetSteps()[idx]);
-
-	// Apply placeholder substitution
-	auto vars = CollectVariables();
-	if (!vars.empty())
-		execScript.SubstitutePlaceholders(vars);
-
-	StartProgress(_("Running automation script..."));
-
-	int totalSteps = static_cast<int>(execScript.GetSteps().size());
-	for (int i = 0; i < totalSteps; i++) {
-		const auto& step = execScript.GetSteps()[i];
-		wxString stepDesc = wxString::Format(_("Step %d/%d: %s"),
-			i + 1, totalSteps,
-			wxString::FromUTF8(AutomationStepTypeToString(step.type)));
-
-		UpdateProgress(i * 100 / totalSteps, stepDesc);
-
-		if (cancelRequested) {
-			wxLogMessage("Automation: Cancelled by user.");
-			EndProgress(_("Automation cancelled."));
-			lastRunErrors++;
-			return;
-		}
-
-		wxLogMessage("Automation: %s", stepDesc);
-
-		int err = ExecuteStep(step);
-		if (err != 0) {
-			lastRunErrors++;
-			wxString errMsg = wxString::Format(
-				_("Step %d (%s) failed with error %d.\n\n%s\n\nContinue with remaining steps?"),
-				i + 1,
-				wxString::FromUTF8(AutomationStepTypeToString(step.type)),
-				err,
-				wxString::FromUTF8(step.note));
-
-			if (headlessMode) {
-				wxLogError("Automation: %s", errMsg);
-				// Auto-continue in headless mode
-			}
-			else {
-				int result = wxMessageBox(errMsg, _("Automation Error"), wxYES_NO | wxICON_ERROR);
-				if (result != wxYES) {
-					EndProgress(_("Automation aborted."));
-					return;
-				}
-			}
-		}
-
-		outfitStudio->RefreshGUIFromProj();
-
-		if (StepChangesSliderSet(step.type))
-			outfitStudio->CreateSetSliders();
-
-		outfitStudio->ApplySliders();
-	}
-
-	EndProgress(_("Automation complete."));
-
-	if (!headlessMode) {
-		wxMessageBox(wxString::Format(_("Automation completed: %d step(s) executed."), totalSteps),
-					 _("Automation"), wxICON_INFORMATION);
-	}
-}
-
 void AutomationDialog::ResetAndClearProject() {
 	project->SetBaseShape(nullptr, false);
 	project->GetWorkAnim()->Clear();
 	project->GetWorkNif()->Clear();
 	outfitStudio->ResetProject();
-}
-
-int AutomationDialog::ExecuteStepClearProject(const AutomationStep&) {
-	wxLogMessage("Automation: Clearing project...");
-	ResetAndClearProject();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepLoadReference(const AutomationStep& step) {
-	if (step.refSourceFile.empty()) {
-		wxLogError("Automation: LoadReference - no source file specified.");
-		return 1;
-	}
-
-	wxString refSourceFile = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile));
-	wxFileName fn(refSourceFile);
-	wxString ext = fn.GetExt().Lower();
-	std::string refSourceFileStd = refSourceFile.ToUTF8().data();
-
-	int err = 0;
-	if (ext == "nif") {
-		err = project->LoadReferenceNif(refSourceFileStd, step.refShape, step.refMergeSliders, step.refMergeZaps);
-	}
-	else {
-		if (!step.refSet.empty()) {
-			err = project->LoadReference(refSourceFileStd, step.refSet, step.refShape, step.refMergeSliders, step.refMergeZaps, step.refAppendNewSliders);
-		}
-		else {
-			err = project->LoadReferenceTemplate(refSourceFileStd, step.refSet, step.refShape, step.refLoadAll, step.refMergeSliders, step.refMergeZaps, step.refAppendNewSliders);
-		}
-	}
-
-	if (err) {
-		wxLogError("Automation: LoadReference failed with error %d.", err);
-		return err;
-	}
-
-	project->SetTextures();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepAddProject(const AutomationStep& step) {
-	if (step.refSourceFile.empty()) {
-		wxLogError("Automation: AddProject - no source file specified.");
-		return 1;
-	}
-
-	wxString refSourceFile = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile));
-	std::string refSourceFileStd = refSourceFile.ToUTF8().data();
-	wxLogMessage("Automation: Adding project from '%s' (set: '%s')...", refSourceFile, step.refSet);
-	int err = project->AddFromSliderSet(refSourceFileStd, step.refSet, true, step.refAppendNewSliders);
-	if (err) {
-		wxLogError("Automation: AddProject failed with error %d.", err);
-		return err;
-	}
-
-	project->SetTextures();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepSetSliderValues(const AutomationStep& step) {
-	int intVal = static_cast<int>(step.setSliderValue * 100);
-	if (step.setSliderNames.empty()) {
-		wxLogMessage("Automation: Setting all slider values to %d%%...", intVal);
-		for (size_t i = 0; i < project->SliderCount(); i++)
-			outfitStudio->SetSliderValue(i, intVal);
-	}
-	else {
-		for (const auto& name : step.setSliderNames) {
-			if (!project->ValidSlider(name)) {
-				wxLogError("Automation: SetSliderValues - slider '%s' not found.", name);
-				return 1;
-			}
-			wxLogMessage("Automation: Setting slider '%s' to %d%%...", name, intVal);
-			outfitStudio->SetSliderValue(name, intVal);
-		}
-	}
-	outfitStudio->ApplySliders();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepConformSliders(const AutomationStep& step) {
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: ConformSliders - no target shapes found.");
-		return 0;
-	}
-
-	if (!project->GetBaseShape()) {
-		wxLogError("Automation: ConformSliders - no reference shape loaded.");
-		return 1;
-	}
-
-	ConformOptions options;
-	options.proximityRadius = step.conformProximityRadius;
-	options.maxResults = step.conformMaxResults;
-	options.noSqueeze = step.conformNoSqueeze;
-	options.solidMode = step.conformSolidMode;
-	options.axisX = step.conformAxisX;
-	options.axisY = step.conformAxisY;
-	options.axisZ = step.conformAxisZ;
-	options.sliderNames = step.conformSliderNames;
-
-	if (options.sliderNames.empty()) {
-		wxLogMessage("Automation: ConformSliders - conforming all non-zap/non-UV sliders.");
-	}
-	else {
-		wxString namesList;
-		for (const auto& sn : options.sliderNames) {
-			if (!namesList.empty())
-				namesList += ", ";
-			namesList += wxString::FromUTF8(sn);
-		}
-		wxLogMessage("Automation: ConformSliders - conforming %zu named slider(s): %s",
-					 options.sliderNames.size(), namesList);
-	}
-
-	outfitStudio->ZeroSliders();
-
-	project->InitConform();
-	for (auto* shape : shapes) {
-		wxLogMessage("Automation: Conforming '%s'...", shape->name.get());
-		Mesh* m = outfitStudio->glView->GetMesh(shape->name.get());
-		if (m)
-			project->morpher.CopyMeshMask(m, shape->name.get());
-		project->ConformShape(shape, options);
-	}
-	project->morpher.ClearProximityCache();
-	project->morpher.UnlinkRefDiffData();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepCopyBoneWeights(const AutomationStep& step) {
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: CopyBoneWeights - no target shapes found.");
-		return 0;
-	}
-
-	if (!project->GetBaseShape()) {
-		wxLogError("Automation: CopyBoneWeights - no reference shape loaded.");
-		return 1;
-	}
-
-	AnimInfo& workAnim = *project->GetWorkAnim();
-	std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
-	std::sort(baseBones.begin(), baseBones.end());
-
-	int shapeIdx = 0;
-	for (auto* shape : shapes) {
-		wxLogMessage("Automation: Copying bone weights to '%s'...", shape->name.get());
-
-		std::unordered_map<uint16_t, float> mask;
-		outfitStudio->glView->GetShapeMask(mask, shape->name.get());
-		UndoStateShape uss;
-		uss.shapeName = shape->name.get();
-
-		std::vector<std::string> boneList;
-		if (!step.weightBoneList.empty()) {
-			boneList = step.weightBoneList;
-		}
-		else {
-			// Use all bones from base + shape
-			boneList = baseBones;
-			auto& shapeBones = workAnim.shapeBones[shape->name.get()];
-			for (const auto& b : shapeBones) {
-				if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
-					boneList.push_back(b);
-			}
-		}
-
-		int nCopyBones = step.weightBoneList.empty() ? static_cast<int>(baseBones.size()) : static_cast<int>(step.weightBoneList.size());
-		std::vector<std::string> lockedBones;
-
-		project->CopyBoneWeights(shape, step.weightProximityRadius, step.weightMaxResults,
-								 mask, boneList, nCopyBones, lockedBones, uss, false);
-		shapeIdx++;
-	}
-	project->morpher.ClearProximityCache();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepSetBaseShape(const AutomationStep&) {
-	wxLogMessage("Automation: Setting base shape (baking slider values)...");
-	outfitStudio->SetBaseShape();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepClearReference(const AutomationStep&) {
-	wxLogMessage("Automation: Clearing reference...");
-	project->DeleteShape(project->GetBaseShape());
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepTransformShape(const AutomationStep& step) {
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: TransformShape - no target shapes found.");
-		return 0;
-	}
-
-	nifly::Vector3 move(step.moveX, step.moveY, step.moveZ);
-	nifly::Vector3 rotate(step.rotateX, step.rotateY, step.rotateZ);
-	nifly::Vector3 scale(step.scaleX, step.scaleY, step.scaleZ);
-
-	for (auto* shape : shapes) {
-		wxLogMessage("Automation: Transforming shape '%s'...", shape->name.get());
-		if (move.x != 0.0f || move.y != 0.0f || move.z != 0.0f)
-			project->OffsetShape(shape, move);
-		if (rotate.x != 0.0f || rotate.y != 0.0f || rotate.z != 0.0f)
-			project->RotateShape(shape, rotate);
-		if (scale.x != 1.0f || scale.y != 1.0f || scale.z != 1.0f)
-			project->ScaleShape(shape, scale);
-	}
-
-	// Inflate: move vertices along their normals
-	nifly::Vector3 inflate(step.inflateX, step.inflateY, step.inflateZ);
-	if (inflate.x != 0.0f || inflate.y != 0.0f || inflate.z != 0.0f) {
-		for (auto* shape : shapes) {
-			wxLogMessage("Automation: Inflating shape '%s'...", shape->name.get());
-			const std::vector<nifly::Vector3>* verts = project->GetWorkNif()->GetVertsForShape(shape);
-			const std::vector<nifly::Vector3>* norms = project->GetWorkNif()->GetNormalsForShape(shape);
-			if (!verts || !norms || verts->size() != norms->size())
-				continue;
-
-			std::vector<nifly::Vector3> newVerts = *verts;
-			for (size_t i = 0; i < newVerts.size(); i++) {
-				nifly::Vector3 diff = (*norms)[i].ComponentMultiply(inflate);
-				newVerts[i] += diff;
-			}
-			project->GetWorkNif()->SetVertsForShape(shape, newVerts);
-		}
-	}
-
-	outfitStudio->ApplySliders();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepInvertUVs(const AutomationStep& step) {
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: InvertUVs - no target shapes found.");
-		return 0;
-	}
-
-	if (!step.invertU && !step.invertV) {
-		wxLogWarning("Automation: InvertUVs - neither U nor V inversion selected.");
-		return 0;
-	}
-
-	for (auto* shape : shapes) {
-		wxLogMessage("Automation: Inverting UVs for '%s' (U=%d, V=%d)...", shape->name.get(), step.invertU, step.invertV);
-		project->GetWorkNif()->InvertUVsForShape(shape, step.invertU, step.invertV);
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepDeleteBones(const AutomationStep& step) {
-	if (step.deleteBoneNames.empty()) {
-		wxLogError("Automation: DeleteBones - no bone names specified.");
-		return 1;
-	}
-
-	if (step.deleteBoneFromProject) {
-		for (const auto& boneName : step.deleteBoneNames) {
-			wxLogMessage("Automation: Deleting bone '%s' from project...", boneName);
-			project->DeleteBone(boneName);
-		}
-	}
-	else {
-		auto shapes = ResolveTargetShapes(step);
-		if (shapes.empty()) {
-			wxLogWarning("Automation: DeleteBones - no target shapes found for weight removal.");
-			return 0;
-		}
-		for (const auto& boneName : step.deleteBoneNames) {
-			for (auto* shape : shapes) {
-				wxLogMessage("Automation: Removing bone '%s' weights from '%s'...", boneName, shape->name.get());
-				project->GetWorkAnim()->RemoveShapeBone(shape->name.get(), boneName);
-			}
-		}
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepAddCustomBone(const AutomationStep& step) {
-	if (step.addBoneName.empty()) {
-		wxLogError("Automation: AddCustomBone - no bone name specified.");
-		return 1;
-	}
-
-	nifly::MatTransform xform;
-	xform.translation = nifly::Vector3(step.addBoneTransX, step.addBoneTransY, step.addBoneTransZ);
-	nifly::Vector3 rotVec(step.addBoneRotX, step.addBoneRotY, step.addBoneRotZ);
-	xform.rotation = nifly::RotVecToMat(rotVec);
-
-	wxLogMessage("Automation: Adding custom bone '%s' (parent: '%s')...", step.addBoneName, step.addBoneParent);
-	project->AddCustomBoneRef(step.addBoneName, step.addBoneParent, xform);
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepEditBone(const AutomationStep& step) {
-	if (step.editBoneName.empty()) {
-		wxLogError("Automation: EditBone - no bone name specified.");
-		return 1;
-	}
-
-	AnimBone* bPtr = AnimSkeleton::getInstance().GetBonePtr(step.editBoneName);
-	if (!bPtr) {
-		wxLogError("Automation: EditBone - bone '%s' not found.", step.editBoneName);
-		return 1;
-	}
-	if (bPtr->isStandardBone) {
-		wxLogError("Automation: EditBone - bone '%s' is a standard bone, cannot edit.", step.editBoneName);
-		return 1;
-	}
-
-	nifly::MatTransform xform;
-	xform.translation = nifly::Vector3(step.editBoneTransX, step.editBoneTransY, step.editBoneTransZ);
-	nifly::Vector3 rotVec(step.editBoneRotX, step.editBoneRotY, step.editBoneRotZ);
-	xform.rotation = nifly::RotVecToMat(rotVec);
-
-	wxLogMessage("Automation: Editing custom bone '%s' (parent: '%s')...", step.editBoneName, step.editBoneParent);
-	project->ModifyCustomBone(bPtr, step.editBoneParent, xform);
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepRemoveSkinning(const AutomationStep& step) {
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: RemoveSkinning - no target shapes found.");
-	}
-	else {
-		for (auto* shape : shapes) {
-			wxLogMessage("Automation: Removing skinning from '%s'...", shape->name.get());
-			project->RemoveSkinning(shape);
-		}
-		project->GetWorkNif()->DeleteUnreferencedNodes();
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepApplyPose(const AutomationStep& step) {
-	if (step.poseName.empty()) {
-		wxLogError("Automation: ApplyPose - no pose name specified.");
-		return 1;
-	}
-
-	// Find the pose by name
-	PoseData* posePtr = nullptr;
-	for (auto& pd : outfitStudio->poseDataCollection.poseData) {
-		if (pd.name == step.poseName) {
-			posePtr = &pd;
-			break;
-		}
-	}
-	if (!posePtr) {
-		wxLogError("Automation: ApplyPose - pose '%s' not found.", step.poseName);
-		return 1;
-	}
-
-	wxLogMessage("Automation: Applying pose '%s' to meshes...", step.poseName);
-
-	// Set bone poses from PoseData
-	std::vector<std::string> boneNames;
-	AnimSkeleton::getInstance().GetActiveBoneNames(boneNames);
-	for (const auto& boneName : boneNames) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
-		if (!bone)
-			continue;
-
-		auto it = std::find_if(posePtr->boneData.begin(), posePtr->boneData.end(),
-			[&](const PoseBoneData& pbd) { return pbd.name == boneName; });
-
-		if (it != posePtr->boneData.end()) {
-			bone->poseRotVec = it->rotation;
-			bone->poseTranVec = it->translation;
-			bone->poseScale = it->scale;
-		}
-		else {
-			bone->poseRotVec = nifly::Vector3(0.0f, 0.0f, 0.0f);
-			bone->poseTranVec = nifly::Vector3(0.0f, 0.0f, 0.0f);
-			bone->poseScale = 1.0f;
-		}
-		bone->UpdatePoseTransform();
-	}
-
-	// Enable pose and apply to mesh geometry
-	project->bPose = true;
-
-	UndoStateProject usp;
-	project->ApplyPoseTransformsToAllShapeGeometry(usp);
-
-	// Reset bone poses after applying
-	for (const auto& boneName : boneNames) {
-		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
-		if (!bone)
-			continue;
-		bone->poseRotVec = nifly::Vector3(0.0f, 0.0f, 0.0f);
-		bone->poseTranVec = nifly::Vector3(0.0f, 0.0f, 0.0f);
-		bone->poseScale = 1.0f;
-		bone->UpdatePoseTransform();
-	}
-
-	project->bPose = false;
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
-	if (step.sliderDataFile.empty()) {
-		wxLogError("Automation: ImportSliderData - no file/folder specified.");
-		return 1;
-	}
-
-	wxString sliderDataPath = MakeAbsoluteToProject(wxString::FromUTF8(step.sliderDataFile));
-	std::string sliderDataPathStd = sliderDataPath.ToUTF8().data();
-
-	if (step.sliderDataFromFolder) {
-		wxLogMessage("Automation: Importing slider data from folder '%s'...", sliderDataPath);
-		wxDir dir(sliderDataPath);
-		if (!dir.IsOpened()) {
-			wxLogError("Automation: ImportSliderData - cannot open folder '%s'.", sliderDataPath);
-			return 1;
-		}
-
-		int importCount = 0;
-		const auto& shapes = project->GetWorkNif()->GetShapes();
-		wxString filename;
-		bool cont = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES);
-		while (cont) {
-			std::string fname = filename.ToUTF8().data();
-			wxFileName wxFn(filename);
-			std::string extLower = wxFn.GetExt().Lower().ToUTF8().data();
-			std::string fullPath = sliderDataPathStd + "/" + fname;
-
-			if (extLower == "osd") {
-				// OSD: import all sliders, auto-mapping shapes by target name
-				OSDataFile osd;
-				if (osd.Read(fullPath)) {
-					auto& diffs = osd.GetDataDiffs();
-					for (auto& [diffName, diffData] : diffs) {
-						std::string bestTargetName;
-						NiShape* bestShape = nullptr;
-
-						for (auto* shape : shapes) {
-							std::string targetName = project->ShapeToTarget(shape->name.get());
-							if (diffName.substr(0, targetName.size()) == targetName) {
-								if (targetName.length() > bestTargetName.length()) {
-									bestTargetName = targetName;
-									bestShape = shape;
-								}
-							}
-						}
-
-						if (!bestShape || bestTargetName.empty())
-							continue;
-
-						auto sliderName = project->activeSet.SliderFromDataName(bestTargetName, diffName);
-						if (sliderName.empty())
-							sliderName = diffName.substr(bestTargetName.length());
-
-						if (!step.sliderNames.empty()) {
-							bool found = false;
-							for (const auto& name : step.sliderNames) {
-								if (name == sliderName) {
-									found = true;
-									break;
-								}
-							}
-							if (!found)
-								continue;
-						}
-
-						if (!project->ValidSlider(sliderName)) {
-							if (step.sliderMerge)
-								continue;
-							project->AddEmptySlider(sliderName);
-						}
-
-						if (diffData)
-							project->SetSliderFromDiff(sliderName, bestShape, *diffData);
-
-						importCount++;
-						wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, bestShape->name.get());
-					}
-				}
-				else {
-					wxLogWarning("Automation: Failed to read OSD file '%s'.", fname);
-				}
-			}
-			else if (extLower == "tri") {
-				// TRI: import all morphs, auto-mapping shapes by name
-				TriFile tri;
-				if (tri.Read(fullPath)) {
-					auto morphs = tri.GetMorphs();
-					for (auto& [shapeName, morphList] : morphs) {
-						auto* shape = project->GetWorkNif()->FindBlockByName<NiShape>(shapeName);
-						if (!shape)
-							continue;
-
-						for (auto& morphData : morphList) {
-							if (!step.sliderNames.empty()) {
-								bool found = false;
-								for (const auto& name : step.sliderNames) {
-									if (name == morphData->name) {
-										found = true;
-										break;
-									}
-								}
-								if (!found)
-									continue;
-							}
-
-							if (!project->ValidSlider(morphData->name)) {
-								if (step.sliderMerge)
-									continue;
-								project->AddEmptySlider(morphData->name);
-							}
-
-							std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
-							project->SetSliderFromDiff(morphData->name, shape, diff);
-
-							if (morphData->type == MORPHTYPE_UV) {
-								size_t sliderIndex = 0;
-								if (project->SliderIndexFromName(morphData->name, sliderIndex))
-									project->SetSliderUV(sliderIndex, true);
-							}
-
-							importCount++;
-							wxLogMessage("Automation: Imported morph '%s' for shape '%s'.", morphData->name, shapeName);
-						}
-					}
-				}
-				else {
-					wxLogWarning("Automation: Failed to read TRI file '%s'.", fname);
-				}
-			}
-			else if (extLower == "bsd" || extLower == "nif" || extLower == "obj" || extLower == "fbx") {
-				// NIF/OBJ/FBX/BSD: use "ShapeName#SliderName.ext" naming pattern
-				auto hashPos = fname.find('#');
-				if (hashPos != std::string::npos) {
-					std::string shapeName = fname.substr(0, hashPos);
-					std::string rest = fname.substr(hashPos + 1);
-					auto dotPos = rest.rfind('.');
-					std::string sliderName = (dotPos != std::string::npos) ? rest.substr(0, dotPos) : rest;
-
-					NiShape* shape = FindShapeByName(shapeName);
-					if (shape) {
-						if (step.sliderMerge && !project->ValidSlider(sliderName)) {
-							cont = dir.GetNext(&filename);
-							continue;
-						}
-
-						if (!project->ValidSlider(sliderName))
-							project->AddEmptySlider(sliderName);
-
-						bool ok = false;
-						if (extLower == "bsd") {
-							project->SetSliderFromBSD(sliderName, shape, fullPath);
-							ok = true;
-						}
-						else if (extLower == "nif") {
-							ok = project->SetSliderFromNIF(sliderName, shape, fullPath);
-						}
-						else if (extLower == "obj") {
-							ok = project->SetSliderFromOBJ(sliderName, shape, fullPath);
-						}
-#ifdef USE_FBXSDK
-						else if (extLower == "fbx") {
-							ok = project->SetSliderFromFBX(sliderName, shape, fullPath);
-						}
-#endif
-
-						if (ok) {
-							importCount++;
-							wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, shapeName);
-						}
-						else {
-							wxLogWarning("Automation: Failed to import slider '%s' for shape '%s' from '%s'.", sliderName, shapeName, fname);
-						}
-					}
-					else {
-						wxLogWarning("Automation: Shape '%s' not found for file '%s'.", shapeName, fname);
-					}
-				}
-			}
-
-			cont = dir.GetNext(&filename);
-		}
-
-		wxLogMessage("Automation: Imported %d slider data file(s) from folder.", importCount);
-	}
-	else {
-		// Single file mode
-		wxLogMessage("Automation: Importing slider data from '%s'...", sliderDataPath);
-		wxFileName fn(sliderDataPath);
-		wxString ext = fn.GetExt().Lower();
-
-		if (ext == "osd") {
-			// OSD multi-diff import
-			OSDataFile osd;
-			if (!osd.Read(sliderDataPathStd)) {
-				wxLogError("Automation: Failed to read OSD file '%s'.", sliderDataPath);
-				return 1;
-			}
-
-			auto& diffs = osd.GetDataDiffs();
-			const auto& shapes = project->GetWorkNif()->GetShapes();
-
-			for (auto& [diffName, diffData] : diffs) {
-				std::string bestTargetName;
-				NiShape* bestShape = nullptr;
-
-				for (auto* shape : shapes) {
-					std::string shapeName = shape->name.get();
-					std::string targetName = project->ShapeToTarget(shapeName);
-					if (diffName.substr(0, targetName.size()) == targetName) {
-						if (targetName.length() > bestTargetName.length()) {
-							bestTargetName = targetName;
-							bestShape = shape;
-						}
-					}
-				}
-
-				if (!bestShape || bestTargetName.empty())
-					continue;
-
-				auto sliderName = project->activeSet.SliderFromDataName(bestTargetName, diffName);
-				if (sliderName.empty())
-					sliderName = diffName.substr(bestTargetName.length());
-
-				if (!step.sliderNames.empty()) {
-					bool found = false;
-					for (const auto& name : step.sliderNames) {
-						if (name == sliderName) {
-							found = true;
-							break;
-						}
-					}
-					if (!found)
-						continue;
-				}
-
-				if (!project->ValidSlider(sliderName)) {
-					if (step.sliderMerge)
-						continue;
-					project->AddEmptySlider(sliderName);
-				}
-
-				if (diffData)
-					project->SetSliderFromDiff(sliderName, bestShape, *diffData);
-				wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, bestShape->name.get());
-			}
-		}
-		else if (ext == "tri") {
-			// TRI multi-morph import
-			TriFile tri;
-			if (!tri.Read(sliderDataPathStd)) {
-				wxLogError("Automation: Failed to read TRI file '%s'.", sliderDataPath);
-				return 1;
-			}
-
-			auto morphs = tri.GetMorphs();
-			for (auto& [shapeName, morphList] : morphs) {
-				auto* shape = project->GetWorkNif()->FindBlockByName<NiShape>(shapeName);
-				if (!shape)
-					continue;
-
-				for (auto& morphData : morphList) {
-					if (!step.sliderNames.empty()) {
-						bool found = false;
-						for (const auto& name : step.sliderNames) {
-							if (name == morphData->name) {
-								found = true;
-								break;
-							}
-						}
-						if (!found)
-							continue;
-					}
-
-					if (!project->ValidSlider(morphData->name)) {
-						if (step.sliderMerge)
-							continue;
-						project->AddEmptySlider(morphData->name);
-					}
-
-					std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
-					project->SetSliderFromDiff(morphData->name, shape, diff);
-
-					if (morphData->type == MORPHTYPE_UV) {
-						size_t sliderIndex = 0;
-						if (project->SliderIndexFromName(morphData->name, sliderIndex))
-							project->SetSliderUV(sliderIndex, true);
-					}
-
-					wxLogMessage("Automation: Imported morph '%s' for shape '%s'.", morphData->name, shapeName);
-				}
-			}
-		}
-		else if (ext == "nif" || ext == "obj" || ext == "bsd" || ext == "fbx") {
-			// Per-shape slider import: compute diff from file mesh vs current shape
-			std::string sliderName;
-			if (!step.sliderNames.empty())
-				sliderName = step.sliderNames[0];
-			else
-				sliderName = fn.GetName().ToUTF8().data();
-
-			if (!project->ValidSlider(sliderName)) {
-				if (step.sliderMerge) {
-					wxLogWarning("Automation: Slider '%s' does not exist and merge-only is enabled.", sliderName);
-					return 0;
-				}
-				project->AddEmptySlider(sliderName);
-			}
-
-			const auto& shapes = project->GetWorkNif()->GetShapes();
-			for (auto* shape : shapes) {
-				bool ok = false;
-				if (ext == "nif")
-					ok = project->SetSliderFromNIF(sliderName, shape, sliderDataPathStd);
-				else if (ext == "obj")
-					ok = project->SetSliderFromOBJ(sliderName, shape, sliderDataPathStd);
-				else if (ext == "bsd") {
-					project->SetSliderFromBSD(sliderName, shape, sliderDataPathStd);
-					ok = true;
-				}
-#ifdef USE_FBXSDK
-				else if (ext == "fbx")
-					ok = project->SetSliderFromFBX(sliderName, shape, sliderDataPathStd);
-#endif
-
-				if (ok)
-					wxLogMessage("Automation: Imported slider '%s' for shape '%s'.", sliderName, shape->name.get());
-			}
-		}
-		else {
-			wxLogError("Automation: ImportSliderData - unsupported file format '.%s'.", ext);
-			return 1;
-		}
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
-	if (step.importFilePath.empty()) {
-		wxLogError("Automation: ImportFile - no file/folder specified.");
-		return 1;
-	}
-
-	wxString importFilePath = MakeAbsoluteToProject(wxString::FromUTF8(step.importFilePath));
-	std::string importFilePathStd = importFilePath.ToUTF8().data();
-
-	if (step.importFromFolder) {
-		// Folder mode: import all NIF/OBJ/FBX files from the folder
-		wxLogMessage("Automation: Importing all files from folder '%s'...", importFilePath);
-		wxDir dir(importFilePath);
-		if (!dir.IsOpened()) {
-			wxLogError("Automation: ImportFile - cannot open folder '%s'.", importFilePath);
-			return 1;
-		}
-
-		int importCount = 0;
-		wxString filename;
-		bool cont = dir.GetFirst(&filename, wxEmptyString, wxDIR_FILES);
-		while (cont) {
-			wxFileName fn(filename);
-			wxString ext = fn.GetExt().Lower();
-			if (ext == "nif" || ext == "obj" || ext == "fbx") {
-				std::string fullPath = importFilePathStd + "/" + filename.ToUTF8().data();
-				int err = 0;
-				if (ext == "nif")
-					err = project->ImportNIF(fullPath, false);
-				else if (ext == "obj")
-					err = project->ImportOBJ(fullPath);
-				else if (ext == "fbx")
-#ifdef USE_FBXSDK
-					err = project->ImportFBX(fullPath);
-#else
-					wxLogError("Automation: FBX import is not available (FBX SDK not compiled in).");
-#endif
-
-				if (err)
-					wxLogWarning("Automation: Failed to import '%s' (error %d).", fullPath, err);
-				else
-					importCount++;
-			}
-			cont = dir.GetNext(&filename);
-		}
-
-		wxLogMessage("Automation: Imported %d file(s) from folder.", importCount);
-	}
-	else {
-		// Single file mode
-		wxFileName fn(importFilePath);
-		wxString ext = fn.GetExt().Lower();
-		int err = 0;
-
-		if (ext == "nif")
-			err = project->ImportNIF(importFilePathStd, false);
-		else if (ext == "obj")
-			err = project->ImportOBJ(importFilePathStd);
-		else if (ext == "fbx")
-#ifdef USE_FBXSDK
-			err = project->ImportFBX(importFilePathStd);
-#else
-			wxLogError("Automation: FBX import is not available (FBX SDK not compiled in).");
-#endif
-		else {
-			wxLogError("Automation: ImportFile - unsupported file extension '%s'.", ext);
-			return 1;
-		}
-
-		if (err) {
-			wxLogError("Automation: ImportFile '%s' failed with error %d.", importFilePath, err);
-			return err;
-		}
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepDeleteShape(const AutomationStep& step) {
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: DeleteShape - no target shapes found.");
-		return 0;
-	}
-
-	for (auto* shape : shapes) {
-		wxLogMessage("Automation: Deleting shape '%s'...", shape->name.get());
-		project->DeleteShape(shape);
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepRenameShape(const AutomationStep& step) {
-	if (step.renameOldName.empty() || step.renameNewName.empty()) {
-		wxLogError("Automation: RenameShape - old or new name not specified.");
-		return 1;
-	}
-
-	NiShape* shape = FindShapeByName(step.renameOldName);
-	if (!shape) {
-		wxLogError("Automation: RenameShape - shape '%s' not found.", step.renameOldName);
-		return 1;
-	}
-
-	wxLogMessage("Automation: Renaming shape '%s' to '%s'...", step.renameOldName, step.renameNewName);
-	project->RenameShape(shape, step.renameNewName);
-	outfitStudio->glView->RenameShape(step.renameOldName, step.renameNewName);
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepSaveProject(const AutomationStep& step) {
-	if (step.saveSliderSetFile.empty() || step.saveOutputFileName.empty()) {
-		wxLogError("Automation: SaveProject - required fields not filled.");
-		return 1;
-	}
-
-	wxLogMessage("Automation: Saving project '%s'...", step.saveName);
-
-	wxFileName sliderSetFile(wxString::FromUTF8(step.saveSliderSetFile));
-	wxString strOutfitName = wxString::FromUTF8(step.saveName);
-	wxString strDataDir = wxString::FromUTF8(step.saveShapeDataFolder);
-	wxString strBaseFile = wxString::FromUTF8(step.saveShapeDataFile);
-	wxString strGamePath = wxString::FromUTF8(step.saveOutputDataPath);
-	wxString strGameFile = wxString::FromUTF8(step.saveOutputFileName);
-
-	std::string result = project->Save(sliderSetFile, strOutfitName, strDataDir,
-									   strBaseFile, strGamePath, strGameFile,
-									   step.saveGenWeights, step.saveAutoCopyRef,
-									   false, false);
-
-	if (!result.empty()) {
-		wxLogError("Automation: SaveProject error: %s", result);
-		return 1;
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepExportFile(const AutomationStep& step) {
-	if (step.exportFilePath.empty()) {
-		wxLogError("Automation: ExportFile - no file path specified.");
-		return 1;
-	}
-
-	// Apply prefix/suffix to filename
-	std::string exportPath = step.exportFilePath;
-	if (!step.exportPrefix.empty() || !step.exportSuffix.empty()) {
-		wxFileName fn(wxString::FromUTF8(exportPath));
-		wxString name = fn.GetName();
-		if (!step.exportPrefix.empty())
-			name = wxString::FromUTF8(step.exportPrefix) + name;
-		if (!step.exportSuffix.empty())
-			name = name + wxString::FromUTF8(step.exportSuffix);
-		fn.SetName(name);
-		exportPath = fn.GetFullPath().ToUTF8().data();
-	}
-
-	wxFileName fn(wxString::FromUTF8(exportPath));
-	wxString ext = fn.GetExt().Lower();
-
-	wxLogMessage("Automation: Exporting to '%s'...", exportPath);
-
-	if (ext == "nif") {
-		std::vector<Mesh*> shapeMeshes;
-		for (auto* s : project->GetWorkNif()->GetShapes()) {
-			if (step.exportWithRef || !project->IsBaseShape(s)) {
-				Mesh* m = outfitStudio->glView->GetMesh(s->name.get());
-				if (m)
-					shapeMeshes.push_back(m);
-			}
-		}
-		int err = project->ExportNIF(exportPath, shapeMeshes, step.exportWithRef);
-		if (err) {
-			wxLogError("Automation: ExportNIF failed with error %d.", err);
-			return err;
-		}
-	}
-	else if (ext == "obj") {
-		auto shapes = project->GetWorkNif()->GetShapes();
-		int err = project->ExportOBJ(exportPath, shapes, false);
-		if (err) {
-			wxLogError("Automation: ExportOBJ failed with error %d.", err);
-			return err;
-		}
-	}
-	else if (ext == "fbx") {
-#ifdef USE_FBXSDK
-		auto shapes = project->GetWorkNif()->GetShapes();
-		int err = project->ExportFBX(exportPath, shapes, false);
-		if (err) {
-			wxLogError("Automation: ExportFBX failed with error %d.", err);
-			return err;
-		}
-#else
-		wxLogError("Automation: FBX export is not available (FBX SDK not compiled in).");
-		return 1;
-#endif
-	}
-	else if (ext == "osd") {
-		bool ok = project->SaveSliderData(exportPath);
-		if (!ok) {
-			wxLogError("Automation: SaveSliderData failed.");
-			return 1;
-		}
-	}
-	else if (ext == "tri") {
-		bool ok = project->WriteMorphTRI(exportPath);
-		if (!ok) {
-			wxLogError("Automation: WriteMorphTRI failed.");
-			return 1;
-		}
-	}
-	else {
-		wxLogError("Automation: ExportFile - unsupported file extension '%s'.", ext);
-		return 1;
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepRefineMesh(const AutomationStep& step) {
-	wxLogMessage("Automation: Refining meshes...");
-
-	auto workNif = project->GetWorkNif();
-	if (!workNif) {
-		wxLogError("Automation: RefineMesh - no work NIF loaded.");
-		return 1;
-	}
-
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: RefineMesh - no target shapes found.");
-		return 0;
-	}
-
-	constexpr size_t maxVertIndex = std::numeric_limits<uint16_t>().max();
-	size_t maxTriIndex = std::numeric_limits<uint16_t>().max();
-	if (workNif->GetHeader().GetVersion().IsFO4() || workNif->GetHeader().GetVersion().IsFO76())
-		maxTriIndex = std::numeric_limits<uint32_t>().max();
-
-	for (auto* shape : shapes) {
-		size_t nverts = shape->GetNumVertices();
-
-		// Determine unmasked vertices
-		std::unordered_map<uint16_t, float> mask;
-		outfitStudio->glView->GetShapeUnmasked(mask, shape->name.get());
-		std::vector<bool> pincs(nverts, false);
-		for (auto& m : mask)
-			pincs[m.first] = true;
-
-		std::vector<Triangle> tris;
-		shape->GetTriangles(tris);
-		size_t nedges = 0;
-		for (Triangle& tri : tris) {
-			int ntripts = pincs[tri.p1] + pincs[tri.p2] + pincs[tri.p3];
-			if (ntripts == 3)
-				nedges += 3;
-			else if (ntripts == 2)
-				nedges += 1;
-		}
-
-		if (nverts + nedges > maxVertIndex || shape->GetNumTriangles() + nedges > maxTriIndex) {
-			wxLogWarning("Automation: RefineMesh - shape '%s' would exceed vertex/triangle limits, skipping.", shape->name.get());
-			continue;
-		}
-
-		Mesh* m = outfitStudio->glView->GetMesh(shape->name.get());
-		if (!m)
-			continue;
-
-		UndoStateShape uss;
-		uss.shapeName = shape->name.get();
-		if (!project->PrepareRefineMesh(shape, uss, pincs, m->weldVerts, false)) {
-			wxLogWarning("Automation: RefineMesh - shape '%s' has orientation issues, skipping.", shape->name.get());
-			continue;
-		}
-
-		std::vector<float> emptyMask;
-		project->ApplyShapeMeshUndo(shape, emptyMask, uss, false);
-	}
-
-	outfitStudio->ApplySliders();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepDeleteSlider(const AutomationStep& step) {
-	if (step.deleteSliderNames.empty()) {
-		wxLogError("Automation: DeleteSlider - no slider name specified.");
-		return 1;
-	}
-
-	if (step.deleteSliderRegex) {
-		// In regex mode, use first entry as pattern
-		std::string pattern = JoinStrings(step.deleteSliderNames, ", ");
-		try {
-			std::regex re(pattern, std::regex::icase);
-			std::vector<std::string> sliderList;
-			project->GetSliderList(sliderList);
-			int deleted = 0;
-			for (const auto& name : sliderList) {
-				if (std::regex_search(name, re)) {
-					wxLogMessage("Automation: Deleting slider '%s'...", name);
-					project->DeleteSlider(name);
-					deleted++;
-				}
-			}
-			wxLogMessage("Automation: Deleted %d slider(s) matching '%s'.", deleted, pattern);
-		}
-		catch (const std::regex_error&) {
-			wxLogError("Automation: DeleteSlider - invalid regex '%s'.", pattern);
-			return 1;
-		}
-	}
-	else {
-		for (const auto& sliderName : step.deleteSliderNames) {
-			wxLogMessage("Automation: Deleting slider '%s'...", sliderName);
-			project->DeleteSlider(sliderName);
-		}
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepSetReferenceShape(const AutomationStep& step) {
-	if (step.setRefUnset) {
-		wxLogMessage("Automation: Unsetting reference shape...");
-		project->SetBaseShape(nullptr);
-		return 0;
-	}
-
-	if (step.setRefShapeName.empty()) {
-		wxLogError("Automation: SetReferenceShape - no shape name specified.");
-		return 1;
-	}
-
-	NiShape* shape = FindShapeByName(step.setRefShapeName);
-	if (!shape) {
-		wxLogError("Automation: SetReferenceShape - shape '%s' not found.", step.setRefShapeName);
-		return 1;
-	}
-
-	wxLogMessage("Automation: Setting reference shape to '%s'...", step.setRefShapeName);
-	project->SetBaseShape(shape);
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepResetTransforms(const AutomationStep&) {
-	wxLogMessage("Automation: Resetting transforms...");
-	project->ResetTransforms();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepDuplicateShape(const AutomationStep& step) {
-	if (step.dupNewName.empty()) {
-		wxLogError("Automation: DuplicateShape - no new name specified.");
-		return 1;
-	}
-
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: DuplicateShape - no target shapes found.");
-		return 0;
-	}
-
-	for (auto* shape : shapes) {
-		std::string newName = step.dupNewName;
-		// If duplicating multiple shapes, append original name to avoid duplicates
-		if (shapes.size() > 1)
-			newName = step.dupNewName + "_" + shape->name.get();
-
-		if (project->IsValidShape(newName)) {
-			wxLogWarning("Automation: DuplicateShape - shape '%s' already exists, skipping.", newName);
-			continue;
-		}
-
-		wxLogMessage("Automation: Duplicating shape '%s' as '%s'...", shape->name.get(), newName);
-		project->DuplicateShape(shape, newName);
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepMirrorShape(const AutomationStep& step) {
-	if (!step.mirrorX && !step.mirrorY && !step.mirrorZ) {
-		wxLogWarning("Automation: MirrorShape - no mirror axis selected.");
-		return 0;
-	}
-
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: MirrorShape - no target shapes found.");
-		return 0;
-	}
-
-	for (auto* shape : shapes) {
-		wxLogMessage("Automation: Mirroring shape '%s' (X=%d, Y=%d, Z=%d, SwapBones=%d)...",
-			shape->name.get(), step.mirrorX, step.mirrorY, step.mirrorZ, step.mirrorSwapBonesX);
-		project->GetWorkNif()->MirrorShape(shape, step.mirrorX, step.mirrorY, step.mirrorZ);
-		if (step.mirrorSwapBonesX)
-			project->GetWorkAnim()->SwapBonesLR(shape->name.get());
-	}
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepClearMask(const AutomationStep& step) {
-	auto targetShapes = ResolveTargetShapes(step);
-	if (targetShapes.empty()) {
-		wxLogWarning("Automation: ClearMask - no target shapes found.");
-		return 0;
-	}
-
-	for (auto* shape : targetShapes) {
-		std::string shapeName = shape->name.get();
-		Mesh* mesh = outfitStudio->glView->GetMesh(shapeName);
-		if (!mesh)
-			continue;
-
-		wxLogMessage("Automation: Clearing mask for shape '%s'...", shapeName);
-		mesh->MaskFill(0.0f);
-	}
-
-	outfitStudio->glView->Render();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepLoadMask(const AutomationStep& step) {
-	if (step.loadMaskFile.empty()) {
-		wxLogError("Automation: LoadMask - no mask file specified.");
-		return 1;
-	}
-
-	if (step.loadMaskName.empty()) {
-		wxLogError("Automation: LoadMask - no mask name specified.");
-		return 1;
-	}
-
-	wxString loadMaskFile = MakeAbsoluteToProject(wxString::FromUTF8(step.loadMaskFile));
-	std::string loadMaskFileStd = loadMaskFile.ToUTF8().data();
-	MaskFile maskFile;
-	int maskErr = maskFile.Load(loadMaskFileStd);
-	if (maskErr) {
-		wxLogError("Automation: LoadMask - failed to load file '%s' (error %d).", loadMaskFile, maskErr);
-		return 1;
-	}
-
-	const MaskEntry* entry = maskFile.FindEntry(step.loadMaskName);
-	if (!entry) {
-		wxLogError("Automation: LoadMask - mask name '%s' not found in file '%s'.",
-			step.loadMaskName, loadMaskFile);
-		return 1;
-	}
-
-	auto targetShapes = ResolveTargetShapes(step);
-	if (targetShapes.empty()) {
-		wxLogWarning("Automation: LoadMask - no target shapes found.");
-		return 0;
-	}
-
-	for (auto* shape : targetShapes) {
-		std::string shapeName = shape->name.get();
-		Mesh* mesh = outfitStudio->glView->GetMesh(shapeName);
-		if (!mesh)
-			continue;
-
-		const MaskShapeData* matched = entry->FindMatchingMask(shapeName, mesh->nVerts);
-		if (!matched) {
-			wxLogWarning("Automation: LoadMask - no matching mask found for shape '%s' (vertex count: %d).",
-				shapeName, mesh->nVerts);
-			continue;
-		}
-
-		wxLogMessage("Automation: Loading mask '%s' onto shape '%s' (matched from '%s')...",
-			step.loadMaskName, shapeName, matched->name);
-		auto maskCopy = matched->mask;
-		outfitStudio->glView->SetShapeMask(maskCopy, shapeName);
-	}
-
-	outfitStudio->glView->Render();
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepSetSliderProperties(const AutomationStep& step) {
-	wxLogMessage("Automation: Setting slider properties...");
-
-	for (size_t i = 0; i < project->SliderCount(); i++) {
-		std::string name = project->GetSliderName(i);
-
-		// If specific slider names given, check if this one matches
-		if (!step.sliderPropNames.empty()) {
-			bool found = false;
-			for (const auto& n : step.sliderPropNames) {
-				if (n == name) {
-					found = true;
-					break;
-				}
-			}
-			if (!found)
-				continue;
-		}
-
-		if (step.sliderPropZap >= 0) {
-			project->SetSliderZap(i, step.sliderPropZap != 0);
-			wxLogMessage("Automation: Slider '%s' zap = %s.", name, step.sliderPropZap ? "true" : "false");
-		}
-		if (step.sliderPropHidden >= 0) {
-			project->SetSliderHidden(i, step.sliderPropHidden != 0);
-			wxLogMessage("Automation: Slider '%s' hidden = %s.", name, step.sliderPropHidden ? "true" : "false");
-		}
-		if (step.sliderPropDefaultLo >= 0) {
-			project->SetSliderDefault(i, step.sliderPropDefaultLo, false);
-			wxLogMessage("Automation: Slider '%s' default (small) = %d.", name, step.sliderPropDefaultLo);
-		}
-		if (step.sliderPropDefaultHi >= 0) {
-			project->SetSliderDefault(i, step.sliderPropDefaultHi, true);
-			wxLogMessage("Automation: Slider '%s' default (big) = %d.", name, step.sliderPropDefaultHi);
-		}
-	}
-
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepSetShaderProperties(const AutomationStep& step) {
-	if (step.shaderProperties.empty()) {
-		wxLogWarning("Automation: SetShaderProperties - no shader properties configured.");
-		return 0;
-	}
-
-	NifFile* nif = project->GetWorkNif();
-	if (!nif)
-		return 0;
-
-	auto targetShapes = ResolveTargetShapes(step);
-
-	if (targetShapes.empty()) {
-		wxLogWarning("Automation: SetShaderProperties - no target shapes found.");
-		return 0;
-	}
-
-	int updatedShapes = 0;
-	int updatedValues = 0;
-
-	for (auto* shape : targetShapes) {
-		if (!shape)
-			continue;
-
-		NiShader* shader = nif->GetShader(shape);
-		if (!shader)
-			continue;
-
-		int shapeUpdates = 0;
-		for (const auto& prop : step.shaderProperties) {
-			if (prop.name == "ShaderType" && ApplyAutomationShaderProperty(nif, shape, prop))
-				shapeUpdates++;
-		}
-
-		for (const auto& prop : step.shaderProperties) {
-			if (prop.name != "ShaderType" && ApplyAutomationShaderProperty(nif, shape, prop))
-				shapeUpdates++;
-		}
-
-		if (shapeUpdates > 0) {
-			updatedShapes++;
-			updatedValues += shapeUpdates;
-			project->SetTextures(shape);
-			outfitStudio->MeshFromProj(shape, true);
-			wxLogMessage("Automation: SetShaderProperties - updated %d shader properties on '%s'.",
-				shapeUpdates,
-				shape->name.get());
-		}
-	}
-
-	if (updatedShapes > 0) {
-		outfitStudio->SetPendingChanges();
-		outfitStudio->glView->Render();
-		wxLogMessage("Automation: SetShaderProperties - updated %d shader values on %d shapes.", updatedValues, updatedShapes);
-	}
-	else {
-		wxLogWarning("Automation: SetShaderProperties - found no matching shader properties on target shapes.");
-	}
-
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepRemoveUnusedNodes(const AutomationStep&) {
-	wxLogMessage("Automation: Removing unused nodes...");
-	int deletionCount = 0;
-	auto workNif = project->GetWorkNif();
-	if (workNif)
-		workNif->DeleteUnreferencedNodes(&deletionCount);
-	wxLogMessage("Automation: %d unreferenced nodes removed.", deletionCount);
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
-	nifly::NiShape* refShape = project->GetBaseShape();
-	if (!refShape) {
-		wxLogError("Automation: FixClipping - no reference shape set.");
-		return 1;
-	}
-
-	ClippingFixOptions options;
-	options.strength = std::max(0.0f, std::min(1.0f, step.fixClipStrength));
-	if (options.strength <= 0.0f) {
-		wxLogWarning("Automation: FixClipping - strength is 0, nothing to do.");
-		return 0;
-	}
-
-	auto shapes = ResolveTargetShapes(step);
-	if (shapes.empty()) {
-		wxLogWarning("Automation: FixClipping - no target shapes found.");
-		return 0;
-	}
-
-	if (step.fixClipMode == 0) {
-		// Shapes mode: fix base geometry of target shapes with no sliders applied
-		wxLogMessage("Automation: FixClipping (Shapes mode, strength=%.0f%%)...", step.fixClipStrength * 100.0f);
-
-		std::vector<nifly::Vector3> bodyVerts;
-		std::vector<nifly::Triangle> bodyTris;
-		project->GetWorkNif()->GetVertsForShape(refShape, bodyVerts);
-		refShape->GetTriangles(bodyTris);
-
-		for (auto* shape : shapes) {
-			if (project->IsBaseShape(shape))
-				continue;
-
-			std::vector<nifly::Vector3> outfitVerts;
-			project->GetWorkNif()->GetVertsForShape(shape, outfitVerts);
-
-			std::vector<nifly::Triangle> outfitTris;
-			shape->GetTriangles(outfitTris);
-
-			std::vector<nifly::Vector3> fixedVerts = outfitVerts;
-			ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
-
-			bool changed = false;
-			for (size_t i = 0; i < outfitVerts.size(); i++) {
-				nifly::Vector3 diff = fixedVerts[i] - outfitVerts[i];
-				if (!diff.IsZero(true)) {
-					changed = true;
-					break;
-				}
-			}
-
-			if (changed) {
-				wxLogMessage("Automation: FixClipping - fixed base geometry for '%s'.", shape->name.get());
-				project->GetWorkNif()->SetVertsForShape(shape, fixedVerts);
-			}
-		}
-
-		outfitStudio->ApplySliders();
-	}
-	else if (step.fixClipMode == 1) {
-		// Sliders mode: fix clipping for each slider individually
-		wxLogMessage("Automation: FixClipping (Sliders mode, strength=%.0f%%)...", step.fixClipStrength * 100.0f);
-
-		// Build list of sliders to process
-		std::vector<size_t> sliderIndices;
-		if (step.fixClipSliderNames.empty()) {
-			// Process all non-zap/non-UV sliders that have morph data
-			for (size_t i = 0; i < project->SliderCount(); i++) {
-				if (project->activeSet[i].bZap || project->activeSet[i].bUV)
-					continue;
-				sliderIndices.push_back(i);
-			}
-			wxLogMessage("Automation: FixClipping - processing all %zu non-zap/non-UV sliders.", sliderIndices.size());
-		}
-		else {
-			for (const auto& name : step.fixClipSliderNames) {
-				size_t idx;
-				if (!project->SliderIndexFromName(name, idx)) {
-					wxLogError("Automation: FixClipping - slider '%s' not found.", name);
-					return 1;
-				}
-				sliderIndices.push_back(idx);
-			}
-		}
-
-		if (sliderIndices.empty()) {
-			wxLogWarning("Automation: FixClipping - no sliders to process.");
-			return 0;
-		}
-
-		// Save current slider values
-		std::vector<float> savedValues(project->SliderCount());
-		for (size_t i = 0; i < project->SliderCount(); i++)
-			savedValues[i] = project->SliderValue(i);
-
-		for (size_t si : sliderIndices) {
-			std::string sliderName = project->GetSliderName(si);
-			wxLogMessage("Automation: FixClipping - processing slider '%s'...", sliderName);
-
-			// Set all sliders to 0%, then this slider to 100%
-			for (size_t i = 0; i < project->SliderCount(); i++)
-				outfitStudio->SetSliderValue(i, 0);
-			outfitStudio->SetSliderValue(si, 100);
-			outfitStudio->ApplySliders();
-
-			// Get live body verts (base + this slider at 100%)
-			std::vector<nifly::Vector3> bodyVerts;
-			std::vector<nifly::Triangle> bodyTris;
-			project->GetLiveVerts(refShape, bodyVerts);
-			refShape->GetTriangles(bodyTris);
-
-			for (auto* shape : shapes) {
-				if (project->IsBaseShape(shape))
-					continue;
-
-				// Check if this shape has morph data for this slider
-				TargetDataDiffs* diffSet = project->GetDiffSet(project->activeSet[si], shape);
-				if (!diffSet || diffSet->empty())
-					continue;
-
-				// Get live outfit verts (base + this slider morph at 100%)
-				std::vector<nifly::Vector3> outfitVerts;
-				project->GetLiveVerts(shape, outfitVerts);
-
-				std::vector<nifly::Triangle> outfitTris;
-				shape->GetTriangles(outfitTris);
-
-				std::vector<nifly::Vector3> fixedVerts = outfitVerts;
-				ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
-
-				// Compute mesh-space morph diffs, only for vertices already in the slider's diff set
-				TargetDataDiffs morphDiffs;
-				for (size_t i = 0; i < outfitVerts.size(); i++) {
-					if (diffSet->find(static_cast<uint16_t>(i)) == diffSet->end())
-						continue;
-					nifly::Vector3 nifDiff = fixedVerts[i] - outfitVerts[i];
-					if (nifDiff.IsZero(true))
-						continue;
-					morphDiffs[static_cast<uint16_t>(i)] = Mesh::TransformDiffNifToMesh(nifDiff);
-				}
-
-				if (!morphDiffs.empty()) {
-					wxLogMessage("Automation: FixClipping - updated %zu vertices for '%s' slider '%s'.",
-								 morphDiffs.size(), shape->name.get(), sliderName);
-					project->UpdateMorphResult(shape, sliderName, morphDiffs);
-				}
-			}
-		}
-
-		// Restore original slider values
-		for (size_t i = 0; i < project->SliderCount(); i++)
-			outfitStudio->SetSliderValue(i, static_cast<int>(savedValues[i] * 100));
-		outfitStudio->ApplySliders();
-	}
-
-	return 0;
-}
-
-int AutomationDialog::ExecuteStepFixBadBones(const AutomationStep& WXUNUSED(step)) {
-	wxLogMessage("Automation: Fixing bad bones...");
-
-	if (!project->CheckForBadBones(false))
-		wxLogMessage("Automation: No bad bones found.");
-
-	return 0;
-}
-
-int AutomationDialog::ExecuteStep(const AutomationStep& step) {
-	switch (step.type) {
-		case AutomationStepType::ClearProject: return ExecuteStepClearProject(step);
-		case AutomationStepType::LoadReference: return ExecuteStepLoadReference(step);
-		case AutomationStepType::AddProject: return ExecuteStepAddProject(step);
-		case AutomationStepType::SetSliderValues: return ExecuteStepSetSliderValues(step);
-		case AutomationStepType::ConformSliders: return ExecuteStepConformSliders(step);
-		case AutomationStepType::CopyBoneWeights: return ExecuteStepCopyBoneWeights(step);
-		case AutomationStepType::SetBaseShape: return ExecuteStepSetBaseShape(step);
-		case AutomationStepType::ClearReference: return ExecuteStepClearReference(step);
-		case AutomationStepType::TransformShape: return ExecuteStepTransformShape(step);
-		case AutomationStepType::InvertUVs: return ExecuteStepInvertUVs(step);
-		case AutomationStepType::DeleteBones: return ExecuteStepDeleteBones(step);
-		case AutomationStepType::AddCustomBone: return ExecuteStepAddCustomBone(step);
-		case AutomationStepType::EditBone: return ExecuteStepEditBone(step);
-		case AutomationStepType::RemoveSkinning: return ExecuteStepRemoveSkinning(step);
-		case AutomationStepType::ApplyPose: return ExecuteStepApplyPose(step);
-		case AutomationStepType::ImportSliderData: return ExecuteStepImportSliderData(step);
-		case AutomationStepType::ImportFile: return ExecuteStepImportFile(step);
-		case AutomationStepType::DeleteShape: return ExecuteStepDeleteShape(step);
-		case AutomationStepType::RenameShape: return ExecuteStepRenameShape(step);
-		case AutomationStepType::SaveProject: return ExecuteStepSaveProject(step);
-		case AutomationStepType::ExportFile: return ExecuteStepExportFile(step);
-		case AutomationStepType::RefineMesh: return ExecuteStepRefineMesh(step);
-		case AutomationStepType::DeleteSlider: return ExecuteStepDeleteSlider(step);
-		case AutomationStepType::SetReferenceShape: return ExecuteStepSetReferenceShape(step);
-		case AutomationStepType::ResetTransforms: return ExecuteStepResetTransforms(step);
-		case AutomationStepType::DuplicateShape: return ExecuteStepDuplicateShape(step);
-		case AutomationStepType::MirrorShape: return ExecuteStepMirrorShape(step);
-		case AutomationStepType::ClearMask: return ExecuteStepClearMask(step);
-		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
-		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
-		case AutomationStepType::SetShaderProperties: return ExecuteStepSetShaderProperties(step);
-		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
-		case AutomationStepType::FixClipping: return ExecuteStepFixClipping(step);
-		case AutomationStepType::FixBadBones: return ExecuteStepFixBadBones(step);
-	}
-
-	return 0;
 }
 
 void AutomationDialog::OnAddVariable(wxCommandEvent& WXUNUSED(event)) {
@@ -4635,6 +3132,50 @@ void AutomationDialog::OnAddShaderProperty(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	AddShaderPropertyRow(MakeDefaultShaderProperty(*def));
+}
+
+void AutomationDialog::OnAddGeometryProperty(wxCommandEvent& WXUNUSED(event)) {
+	auto* choice = XRCCTRL(*this, "choiceGeometryPropAdd", wxChoice);
+	std::string propertyName = GetChoiceClientValue(choice);
+	if (propertyName.empty())
+		return;
+
+	for (const auto& row : geometryPropertyRows) {
+		if (row.propertyName == propertyName)
+			return;
+	}
+
+	const GeometryPropertyDef* def = FindGeometryPropertyDef(propertyName);
+	if (!def)
+		return;
+
+	AddGeometryPropertyRow(MakeDefaultGeometryProperty(*def));
+}
+
+void AutomationDialog::OnAddTexturePath(wxCommandEvent& WXUNUSED(event)) {
+	auto* choice = XRCCTRL(*this, "choiceTexturePathAdd", wxChoice);
+	std::string indexText = GetChoiceClientValue(choice);
+	if (indexText.empty())
+		return;
+
+	int index = -1;
+	try {
+		index = std::stoi(indexText);
+	}
+	catch (...) {
+		return;
+	}
+
+	for (const auto& row : texturePathRows) {
+		if (row.index == index)
+			return;
+	}
+
+	const TexturePathDef* def = FindTexturePathDefByIndex(index);
+	if (!def)
+		return;
+
+	AddTexturePathRow(MakeDefaultTexturePath(*def));
 }
 
 void AutomationDialog::OnLoadMaskFileChanged(wxFileDirPickerEvent& event) {

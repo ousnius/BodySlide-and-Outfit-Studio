@@ -5,12 +5,13 @@ See the included LICENSE file
 
 #pragma once
 
-#include <tinyxml2.h>
+#include "../utils/StringStuff.h"
 
-#include <algorithm>
+#include <cstddef>
 #include <map>
 #include <regex>
 #include <string>
+#include <utility>
 #include <vector>
 
 enum class AutomationStepType {
@@ -40,17 +41,19 @@ enum class AutomationStepType {
 	RenameShape,
 	ResetTransforms,
 	TransformShape,
+	SetGeometryProperties,
 	ConformSliders,
 	DeleteSlider,
 	SetSliderValues,
 	SetSliderProperties,
 	SetShaderProperties,
+	SetTexturePaths,
 	ClearMask,
 	LoadMask,
 	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 34;
+constexpr int AutomationStepTypeCount = 36;
 static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -100,10 +103,8 @@ inline bool MatchesFilter(const std::string& name, const std::string& filter, bo
 		return std::regex_search(name, filterRegex);
 
 	// Substring match (case-insensitive)
-	std::string nameLower = name;
-	std::string filterLower = filter;
-	std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-	std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
+	std::string nameLower = ToLower(name);
+	std::string filterLower = ToLower(filter);
 	return nameLower.find(filterLower) != std::string::npos;
 }
 
@@ -166,6 +167,13 @@ struct AutomationStep {
 	float rotateX = 0.0f, rotateY = 0.0f, rotateZ = 0.0f;
 	float scaleX = 1.0f, scaleY = 1.0f, scaleZ = 1.0f;
 	float inflateX = 0.0f, inflateY = 0.0f, inflateZ = 0.0f;
+
+	// SetGeometryProperties params
+	struct GeometryProperty {
+		std::string name;
+		bool enabled = false;
+	};
+	std::vector<GeometryProperty> geometryProperties;
 
 	// InvertUVs params
 	bool invertU = false;
@@ -251,6 +259,14 @@ struct AutomationStep {
 		float value4 = 1.0f;
 	};
 	std::vector<ShaderProperty> shaderProperties;
+
+	// SetTexturePaths params
+	struct TexturePath {
+		int index = -1;
+		std::string name;
+		std::string path;
+	};
+	std::vector<TexturePath> texturePaths;
 
 	// LoadMask params
 	std::string loadMaskFile;

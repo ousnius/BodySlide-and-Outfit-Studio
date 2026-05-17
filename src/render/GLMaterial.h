@@ -6,6 +6,10 @@ See the included LICENSE file
 #include "../files/ResourceLoader.h"
 #include "GLShader.h"
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 class GLMaterial {
 private:
 	// texture names linked with this material.  Used to lookup OGL texture ids in Resource Loader.

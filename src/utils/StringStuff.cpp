@@ -1,10 +1,12 @@
 #include "StringStuff.h"
+
+#include <algorithm>
 #include <cctype>
 #include <sstream>
 
 bool StringsEqualNInsens(const char* a, const char* b, int len) {
 	while (len > 0) {
-		if (std::tolower(*a) != std::tolower(*b))
+		if (ToLower(*a) != ToLower(*b))
 			return false;
 		if (*a == '\0')
 			return true;
@@ -15,7 +17,7 @@ bool StringsEqualNInsens(const char* a, const char* b, int len) {
 
 bool StringsEqualInsens(const char* a, const char* b) {
 	while (true) {
-		if (std::tolower(*a) != std::tolower(*b))
+		if (ToLower(*a) != ToLower(*b))
 			return false;
 		if (*a == '\0')
 			return true;
@@ -29,6 +31,16 @@ bool StringStartsWith(std::string_view s, std::string_view prefix) {
 
 bool StringEndsWith(std::string_view s, std::string_view suffix) {
 	return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+char ToLower(unsigned char c) {
+	return static_cast<char>(std::tolower(c));
+}
+
+std::string ToLower(const std::string& s) {
+	std::string d(s);
+	std::transform(d.begin(), d.end(), d.begin(), [](unsigned char c) { return ToLower(c); });
+	return d;
 }
 
 std::string ToOSSlashes(const std::string& s) {

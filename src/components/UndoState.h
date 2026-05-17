@@ -8,6 +8,8 @@ See the included LICENSE file
 #include "../utils/AABBTree.h"
 #include "../files/MaterialFile.h"
 #include "NifFile.hpp"
+
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>

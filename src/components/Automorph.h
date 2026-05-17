@@ -10,6 +10,14 @@ See the included LICENSE file
 #include "NifFile.hpp"
 #include "SliderSet.h"
 
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 class AnimInfo;
 
 class Automorph {
@@ -80,7 +88,8 @@ public:
 							bool solidMode = false,
 							bool axisX = true,
 							bool axisY = true,
-							bool axisZ = true);
+							bool axisZ = true,
+							const std::string& resultTargetName = "");
 
 	void SetResultDataName(const std::string& shapeName, const std::string& sliderName, const std::string& dataName);
 	std::string ResultDataName(const std::string& shapeName, const std::string& sliderName);

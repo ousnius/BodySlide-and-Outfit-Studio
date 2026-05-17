@@ -4,9 +4,10 @@ See the included LICENSE file
 */
 
 #include "SliderPresets.h"
-#include "../TinyXML-2/tinyxml2.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
+
+#include <tinyxml2.h>
 
 #include <wx/dir.h>
 

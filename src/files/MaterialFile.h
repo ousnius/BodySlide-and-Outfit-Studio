@@ -6,7 +6,10 @@ See the included LICENSE file
 #pragma once
 
 #include "Object3d.hpp"
+
+#include <cstdint>
 #include <fstream>
+#include <string>
 
 class MaterialFile {
 	bool failed = false;

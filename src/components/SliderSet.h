@@ -7,8 +7,14 @@ See the included LICENSE file
 
 #include <tinyxml2.h>
 
-#include "../components/NormalGenLayers.h"
+#include "NormalGenLayers.h"
 #include "SliderData.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <map>
+#include <string>
+#include <vector>
 
 using namespace tinyxml2;
 
@@ -24,6 +30,16 @@ public:
 	bool lockNormals = false;
 };
 
+struct SliderDataFileResolution {
+	bool resolved = false;
+	bool isBSD = false;
+	std::string dataFileName;
+	std::string dataNameInFile;
+	std::string resolvedPath;
+	std::string candidatePath;
+	std::vector<std::string> dataFolders;
+};
+
 class SliderSet {
 	std::string name;
 	std::string baseDataPath; // Base data path - from application configuration.
@@ -34,6 +50,8 @@ class SliderSet {
 	bool genWeights = false; // Generate both low and high weight meshes on output.
 	bool preventMorphFile = false; // Prevents the building of morph .tri files in BodySlide for this project.
 	bool keepZappedShapes = false; // Prevents the removal of fully zapped shapes when building in BodySlide.
+	std::string sfMorphPath; // Starfield morph.dat output folder (relative to game data path). Empty = don't write.
+	std::string sfMorphTargetShape; // Starfield morph target shape name. Empty = no morph output.
 
 	std::map<std::string, SliderSetShape> shapeAttributes;
 
@@ -62,6 +80,10 @@ public:
 	void SetGenWeights(bool inGenWeights) { genWeights = inGenWeights; }
 	void SetPreventMorphFile(bool inPreventMorphFile) { preventMorphFile = inPreventMorphFile; }
 	void SetKeepZappedShapes(bool inKeepZappedShapes) { keepZappedShapes = inKeepZappedShapes; }
+	void SetSFMorphPath(const std::string& inSFMorphPath) { sfMorphPath = inSFMorphPath; }
+	std::string GetSFMorphPath() { return sfMorphPath; }
+	void SetSFMorphTargetShape(const std::string& inShape) { sfMorphTargetShape = inShape; }
+	std::string GetSFMorphTargetShape() { return sfMorphTargetShape; }
 
 	std::string GetNotes() { return notes; }
 	void SetNotes(const std::string& inNotes) { notes = inNotes; }
@@ -119,6 +141,14 @@ public:
 	std::string GetOutputFile() { return outputfile; }
 	std::string GetOutputFilePath();
 	std::string GetDefaultDataFolder() { return datafolder; }
+	std::vector<std::string> GetTargetDataFolders(const std::string& targetName) const;
+	SliderDataFileResolution ResolveSliderDataFile(const DiffInfo& dataFile, const std::vector<std::string>* externalDataFolders = nullptr) const;
+	DiffInfo* GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex);
+	const DiffInfo* GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex) const;
+	void SetSliderDataFileLocal(const size_t sliderIndex, const size_t dataFileIndex, const bool local);
+	void SetSliderDataFileName(const size_t sliderIndex, const size_t dataFileIndex, const std::string& fileName);
+	bool TargetHasExternalData(const std::string& targetName) const;
+	bool ClearLocalOnlyDataFolders();
 
 	bool GenWeights();
 	bool PreventMorphFile();

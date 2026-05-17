@@ -26,20 +26,20 @@ namespace detail
 	};
 }//namespace detail
 
-	inline gl::gl(profile Profile)
-		: Profile(Profile)
+	inline gl::gl(profile ProfileValue)
+		: Profile(ProfileValue)
 	{
-		bool const HasSwizzle = has_swizzle(Profile);
+		bool const HasSwizzle = has_swizzle(ProfileValue);
 		external_format const ExternalBGR = HasSwizzle ? EXTERNAL_RGB : EXTERNAL_BGR;
 		external_format const ExternalBGRA = HasSwizzle ? EXTERNAL_RGBA : EXTERNAL_BGRA;
 		external_format const ExternalBGRInt = HasSwizzle ? EXTERNAL_RGB_INTEGER : EXTERNAL_BGR_INTEGER;
 		external_format const ExternalBGRAInt = HasSwizzle ? EXTERNAL_RGBA_INTEGER : EXTERNAL_BGRA_INTEGER;
 
-		external_format const ExternalSRGB8 = Profile != PROFILE_ES20 ? EXTERNAL_RGB : EXTERNAL_SRGB_EXT;
-		external_format const ExternalSRGB8_A8 = Profile != PROFILE_ES20 ? EXTERNAL_RGBA : EXTERNAL_SRGB_ALPHA_EXT;
+		external_format const ExternalSRGB8 = ProfileValue != PROFILE_ES20 ? EXTERNAL_RGB : EXTERNAL_SRGB_EXT;
+		external_format const ExternalSRGB8_A8 = ProfileValue != PROFILE_ES20 ? EXTERNAL_RGBA : EXTERNAL_SRGB_ALPHA_EXT;
 
-		internal_format const InternalBGRA = Profile == PROFILE_ES20 ? INTERNAL_BGRA8_UNORM : INTERNAL_RGBA8_UNORM;
-		internal_format const InternalRGBETC = Profile == PROFILE_ES20 ? INTERNAL_RGB_ETC : INTERNAL_RGB_ETC2;
+		internal_format const InternalBGRA = ProfileValue == PROFILE_ES20 ? INTERNAL_BGRA8_UNORM : INTERNAL_RGBA8_UNORM;
+		internal_format const InternalRGBETC = ProfileValue == PROFILE_ES20 ? INTERNAL_RGB_ETC : INTERNAL_RGB_ETC2;
 
 		internal_format const InternalLuminance8 = HasSwizzle ? INTERNAL_R8_UNORM : INTERNAL_LUMINANCE8;
 		internal_format const InternalAlpha8 = HasSwizzle ? INTERNAL_R8_UNORM : INTERNAL_ALPHA8;
@@ -53,7 +53,7 @@ namespace detail
 		external_format const ExternalAlpha = HasSwizzle ? EXTERNAL_RED : EXTERNAL_ALPHA;
 		external_format const ExternalLuminanceAlpha = HasSwizzle ? EXTERNAL_RG : EXTERNAL_LUMINANCE_ALPHA;
 
-		type_format const TypeF16 = Profile == PROFILE_ES20 ? TYPE_F16_OES : TYPE_F16;
+		type_format const TypeF16 = ProfileValue == PROFILE_ES20 ? TYPE_F16_OES : TYPE_F16;
 
 		format_desc const Table[] =
 		{
@@ -327,13 +327,13 @@ namespace detail
 	{
 		GLI_ASSERT(Format >= FORMAT_FIRST && Format <= FORMAT_LAST);
 
-		gl::format_desc const& FormatDesc = this->FormatDesc[Format - FORMAT_FIRST];
+		gl::format_desc const& FormatDescriptor = this->FormatDesc[Format - FORMAT_FIRST];
 
 		gl::format FormatGL;
-		FormatGL.Internal = FormatDesc.Internal;
-		FormatGL.External = FormatDesc.External;
-		FormatGL.Type = FormatDesc.Type;
-		FormatGL.Swizzles = this->compute_swizzle(FormatDesc, Swizzles);
+		FormatGL.Internal = FormatDescriptor.Internal;
+		FormatGL.External = FormatDescriptor.External;
+		FormatGL.Type = FormatDescriptor.Type;
+		FormatGL.Swizzles = this->compute_swizzle(FormatDescriptor, Swizzles);
 		return FormatGL;
 	}
 
@@ -354,12 +354,12 @@ namespace detail
 		return gli::FORMAT_UNDEFINED;
 	}
 
-	inline gl::swizzles gl::compute_swizzle(format_desc const& FormatDesc, gli::swizzles const& Swizzles) const
+	inline gl::swizzles gl::compute_swizzle(format_desc const& FormatDescriptor, gli::swizzles const& Swizzles) const
 	{
 		if (!this->has_swizzle(this->Profile))
 			return swizzles(gl::SWIZZLE_RED, gl::SWIZZLE_GREEN, gl::SWIZZLE_BLUE, gl::SWIZZLE_ALPHA);
 
-		bool const IsExternalBGRA = ((FormatDesc.Properties & detail::FORMAT_PROPERTY_BGRA_FORMAT_BIT) && !has_swizzle(this->Profile)) || (FormatDesc.Properties & detail::FORMAT_PROPERTY_BGRA_TYPE_BIT);
+		bool const IsExternalBGRA = ((FormatDescriptor.Properties & detail::FORMAT_PROPERTY_BGRA_FORMAT_BIT) && !has_swizzle(this->Profile)) || (FormatDescriptor.Properties & detail::FORMAT_PROPERTY_BGRA_TYPE_BIT);
 
 		return detail::translate(IsExternalBGRA ? gli::swizzles(Swizzles.b, Swizzles.g, Swizzles.r, Swizzles.a) : Swizzles);
 	}

@@ -103,7 +103,7 @@ namespace gli
 		data_type* Data;
 		size_type const Size;
 
-		data_type* compute_data(size_type BaseLayer, size_type BaseFace, size_type BaseLevel);
+		data_type* compute_data(size_type BaseLayer, size_type BaseFace, size_type Level);
 		size_type compute_size(size_type Level) const;
 	};
 }//namespace gli

@@ -8,6 +8,12 @@ See the included LICENSE file
 #include "GLMaterial.h"
 #include "NifFile.hpp"
 
+#include <algorithm>
+#include <cstdint>
+#include <string>
+#include <unordered_set>
+#include <vector>
+
 #include <wx/glcanvas.h>
 
 class GLSurface {

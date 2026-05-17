@@ -12,8 +12,12 @@ See the included LICENSE file
 #include "../program/FBXImportOptions.h"
 #include "NifFile.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 struct FBXImportOptions {
 	bool InvertU = false;

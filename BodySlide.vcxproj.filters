@@ -694,6 +694,9 @@
     <ClInclude Include="src\files\ResourceLoader.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\SFMorphFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\TriFile.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -1741,6 +1744,12 @@
     <ClInclude Include="lib\LZ4F\lz4file.h">
       <Filter>Libraries\LZ4F</Filter>
     </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_array.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_array_helper.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1786,6 +1795,9 @@
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\ResourceLoader.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMorphFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\TriFile.cpp">
@@ -1937,6 +1949,9 @@
     </ClCompile>
     <ClCompile Include="lib\nifly\src\NifUtil.cpp">
       <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_array.c">
+      <Filter>Libraries\SOIL2</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

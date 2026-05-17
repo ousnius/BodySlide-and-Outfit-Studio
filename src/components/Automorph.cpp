@@ -356,7 +356,17 @@ std::string Automorph::ResultDataName(const std::string& shapeName, const std::s
 }
 
 void Automorph::GenerateResultDiff(
-	const std::string& shapeName, const std::string& sliderName, const std::string& refDataName, bool transformResults, int maxResults, bool noSqueeze, bool solidMode, bool axisX, bool axisY, bool axisZ) {
+	const std::string& shapeName,
+	const std::string& sliderName,
+	const std::string& refDataName,
+	bool transformResults,
+	int maxResults,
+	bool noSqueeze,
+	bool solidMode,
+	bool axisX,
+	bool axisY,
+	bool axisZ,
+	const std::string& resultTargetName) {
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
@@ -365,7 +375,8 @@ void Automorph::GenerateResultDiff(
 		return;
 
 	Mesh* m = sourceShapes[shapeName];
-	std::string dataName = shapeName + sliderName;
+	std::string resultTarget = resultTargetName.empty() ? shapeName : resultTargetName;
+	std::string dataName = ResultDataName(resultTarget, sliderName);
 
 	MatTransform transform;
 	if (transformResults) {
@@ -373,14 +384,14 @@ void Automorph::GenerateResultDiff(
 		transformResults = !transform.IsNearlyEqualTo(MatTransform());
 	}
 
-	if (resultDiffData.TargetMatch(dataName, shapeName)) {
+	if (resultDiffData.TargetMatch(dataName, resultTarget)) {
 		if (m->mask)
 			resultDiffData.ZeroVertDiff(dataName, m->nVerts, m->mask.get());
 		else
 			resultDiffData.ClearSet(dataName);
 	}
 
-	resultDiffData.AddEmptySet(dataName, shapeName);
+	resultDiffData.AddEmptySet(dataName, resultTarget);
 	auto resultDiffSet = resultDiffData.GetDiffSet(dataName);
 
 	std::vector<Vector3> totalMoveList;

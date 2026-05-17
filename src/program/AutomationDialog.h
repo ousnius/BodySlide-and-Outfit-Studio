@@ -7,18 +7,33 @@ See the included LICENSE file
 
 #include "../components/Automation.h"
 
+#include <cstddef>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <wx/arrstr.h>
+#include <wx/button.h>
+#include <wx/checkbox.h>
+#include <wx/choice.h>
 #include <wx/collpane.h>
 #include <wx/clrpicker.h>
 #include <wx/combobox.h>
+#include <wx/dialog.h>
+#include <wx/event.h>
 #include <wx/filepicker.h>
 #include <wx/gauge.h>
 #include <wx/listctrl.h>
 #include <wx/log.h>
+#include <wx/panel.h>
 #include <wx/radiobox.h>
-#include <wx/scrolwin.h>
 #include <wx/simplebook.h>
-#include <wx/wx.h>
-#include <wx/xrc/xmlres.h>
+#include <wx/stattext.h>
+#include <wx/statusbr.h>
+#include <wx/string.h>
+#include <wx/textctrl.h>
+#include <wx/window.h>
 
 class OutfitStudioFrame;
 class OutfitProject;
@@ -79,6 +94,21 @@ private:
 	};
 	std::vector<ShaderPropertyRowControls> shaderPropertyRows;
 
+	struct GeometryPropertyRowControls {
+		wxPanel* panel = nullptr;
+		std::string propertyName;
+		wxChoice* value = nullptr;
+	};
+	std::vector<GeometryPropertyRowControls> geometryPropertyRows;
+
+	struct TexturePathRowControls {
+		wxPanel* panel = nullptr;
+		int index = -1;
+		std::string name;
+		wxTextCtrl* path = nullptr;
+	};
+	std::vector<TexturePathRowControls> texturePathRows;
+
 	// UI helper methods
 	void SetCheckboxValue(const char* name, bool value);
 	bool GetCheckboxValue(const char* name) const;
@@ -133,6 +163,18 @@ private:
 	void RemoveShaderPropertyRow(wxWindow* rowPanel);
 	void RebuildShaderPropertyRows(const std::vector<AutomationStep::ShaderProperty>& properties);
 	std::vector<AutomationStep::ShaderProperty> ReadShaderPropertyRows() const;
+	void PopulateGeometryPropertyChoice();
+	void ClearGeometryPropertyRows();
+	void AddGeometryPropertyRow(const AutomationStep::GeometryProperty& prop);
+	void RemoveGeometryPropertyRow(wxWindow* rowPanel);
+	void RebuildGeometryPropertyRows(const std::vector<AutomationStep::GeometryProperty>& properties);
+	std::vector<AutomationStep::GeometryProperty> ReadGeometryPropertyRows() const;
+	void PopulateTexturePathChoice();
+	void ClearTexturePathRows();
+	void AddTexturePathRow(const AutomationStep::TexturePath& path);
+	void RemoveTexturePathRow(wxWindow* rowPanel);
+	void RebuildTexturePathRows(const std::vector<AutomationStep::TexturePath>& paths);
+	std::vector<AutomationStep::TexturePath> ReadTexturePathRows() const;
 
 	std::map<std::string, std::string> CollectVariables();
 	void PopulateVariablesUI();
@@ -141,6 +183,10 @@ private:
 	void UpdateBatchPanelVisibility();
 
 	void ResetAndClearProject();
+	static int TexturePathIndexForName(const std::string& name);
+	static int ResolveTexturePathIndex(const AutomationStep::TexturePath& path);
+	static std::string TexturePathNameForIndex(int index);
+	static bool StepChangesSliderSet(AutomationStepType type);
 
 	void ExecuteSteps(const std::vector<size_t>& stepIndices);
 	void ExecuteBatch(const std::vector<size_t>& stepIndices, const std::vector<std::string>& selectedFiles = {}, const std::vector<std::pair<std::string, std::string>>& selectedSets = {});
@@ -177,6 +223,8 @@ private:
 	int ExecuteStepClearMask(const AutomationStep& step);
 	int ExecuteStepSetSliderProperties(const AutomationStep& step);
 	int ExecuteStepSetShaderProperties(const AutomationStep& step);
+	int ExecuteStepSetGeometryProperties(const AutomationStep& step);
+	int ExecuteStepSetTexturePaths(const AutomationStep& step);
 	int ExecuteStepRemoveUnusedNodes(const AutomationStep& step);
 	int ExecuteStepFixClipping(const AutomationStep& step);
 	int ExecuteStepFixBadBones(const AutomationStep& step);
@@ -187,7 +235,7 @@ private:
 	bool ShowCheckableListDialog(const wxString& title, const wxString& labelText, const wxArrayString& items, std::vector<size_t>& checkedIndices);
 
 	nifly::NiShape* FindShapeByName(const std::string& name);
-	std::vector<nifly::NiShape*> ResolveTargetShapes(const AutomationStep& step);
+	std::vector<nifly::NiShape*> ResolveTargetShapes(const AutomationStep& step, bool includeBaseShapeOnEmpty = true);
 
 	void OnSaveScript(wxCommandEvent& event);
 	void OnDeleteScript(wxCommandEvent& event);
@@ -223,6 +271,8 @@ private:
 	void OnSliderPropZapChanged(wxCommandEvent& event);
 	void UpdateSliderPropDefaultVisibility();
 	void OnAddShaderProperty(wxCommandEvent& event);
+	void OnAddGeometryProperty(wxCommandEvent& event);
+	void OnAddTexturePath(wxCommandEvent& event);
 	void OnBatchModeChanged(wxCommandEvent& event);
 	void OnCharHook(wxKeyEvent& event);
 	void OnAddShapeToField(wxCommandEvent& event);

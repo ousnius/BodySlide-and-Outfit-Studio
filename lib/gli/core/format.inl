@@ -375,7 +375,7 @@ namespace detail
 
 	inline bool is_packed(format Format)
 	{
-		gli::uint16 flags = detail::get_format_info(Format).Flags;
+		gli::uint32 flags = detail::get_format_info(Format).Flags;
 
 		return (flags & detail::CAP_PACKED8_BIT) != 0 || (flags & detail::CAP_PACKED16_BIT) != 0 || (flags & detail::CAP_PACKED32_BIT) != 0;
 	}

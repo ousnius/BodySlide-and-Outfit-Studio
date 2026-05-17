@@ -7,10 +7,12 @@ See the included LICENSE file
 
 #include "Object3d.hpp"
 
+#include <cstdint>
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
-#include <memory>
+#include <vector>
 
 struct UndoStateVertexSliderDiff;
 

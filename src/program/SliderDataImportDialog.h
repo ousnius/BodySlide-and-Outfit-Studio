@@ -7,6 +7,9 @@ See the included LICENSE file
 
 #include "ShapeProperties.h"
 
+#include <string>
+#include <unordered_map>
+
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
 

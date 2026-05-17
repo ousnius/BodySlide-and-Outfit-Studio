@@ -706,6 +706,9 @@
     <ClInclude Include="src\components\SliderData.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\SliderDataFileUtil.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\SliderGroup.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -764,6 +767,9 @@
       <Filter>Program</Filter>
     </ClInclude>
     <ClInclude Include="src\program\ShapeProperties.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\program\SliderDataDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
     <ClInclude Include="src\program\OutfitProject.h">
@@ -1954,6 +1960,12 @@
     <ClInclude Include="lib\nlohmannjson\include\nlohmann\json_fwd.hpp">
       <Filter>Libraries\nlohmannjson</Filter>
     </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_array.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_array_helper.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -2035,6 +2047,9 @@
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\program\ShapeProperties.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\SliderDataDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\program\OutfitProject.cpp">
@@ -2175,6 +2190,9 @@
     <ClCompile Include="src\program\AutomationDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
+    <ClCompile Include="src\program\AutomationDialogExecute.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\Automation.cpp">
       <Filter>Components</Filter>
     </ClCompile>
@@ -2210,6 +2228,9 @@
     </ClCompile>
     <ClCompile Include="lib\nifly\src\NifUtil.cpp">
       <Filter>Libraries\nifly\src</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_array.c">
+      <Filter>Libraries\SOIL2</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

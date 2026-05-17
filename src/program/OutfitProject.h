@@ -10,7 +10,17 @@ See the included LICENSE file
 #include "../components/Mesh.h"
 #include "OutfitStudio.h"
 
+#include <cstddef>
+#include <cstdint>
+#include <iosfwd>
+#include <map>
+#include <memory>
 #include <optional>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <wx/arrstr.h>
 #include <wx/filename.h>
 
@@ -23,6 +33,24 @@ struct ConformOptions {
 	bool axisY = true;
 	bool axisZ = true;
 	std::vector<std::string> sliderNames; // If empty, conform all non-zap/non-UV sliders
+};
+
+struct SliderDataLocation {
+	size_t sliderIndex = 0;
+	size_t dataIndex = 0;
+	std::string sliderName;
+	std::string shapeName;
+	std::string targetName;
+	std::string dataName;
+	std::string fileName;
+	std::string dataFileName;
+	std::string dataNameInFile;
+	bool local = false;
+	bool resolved = false;
+	bool isBSD = false;
+	std::string resolvedPath;
+	std::string candidatePath;
+	std::vector<std::string> dataFolders;
 };
 
 class OutfitStudioFrame;
@@ -119,6 +147,12 @@ class OutfitProject {
 
 	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath = std::string()) const;
 	void ValidateNIF(nifly::NifFile& nif, const std::string& nifFilePath = std::string());
+	std::string SliderDataTargetForShape(nifly::NiShape* shape);
+	std::string ShapeTargetOrDefault(const std::string& shapeName);
+	bool TargetNameInUse(const std::string& targetName, const std::string& exceptShapeName);
+	std::string UniqueTargetNameForShape(const std::string& shapeName, const std::set<std::string>& reservedTargets);
+	void RetargetShapeData(const std::string& shapeName, const std::string& newTarget);
+	void ResolveTargetConflictsForIncomingShapes(const std::vector<std::pair<std::string, std::string>>& incomingShapeTargets);
 
 	// Applies the inverse of the blended pose transform to a NIF-space diff
 	// vector for a single vertex, converting it from posed space to rest space.
@@ -148,6 +182,8 @@ public:
 	bool mGenWeights = false;
 	bool bPreventMorphFile = false;
 	bool bKeepZappedShapes = false;
+	wxString mSFMorphPath;
+	wxString mSFMorphTargetShape;
 	bool bPose = false;
 
 	// Reference source info (remembered when reference is loaded from an OSP)
@@ -165,7 +201,9 @@ public:
 					 bool genWeights,
 					 bool copyRef,
 					 bool preventMorphFile,
-					 bool keepZappedShapes);
+					 bool keepZappedShapes,
+					 const wxString& strSFMorphPath = "",
+					 const wxString& strSFMorphTargetShape = "");
 
 	bool SaveSliderData(const std::string& fileName, bool copyRef = true);
 
@@ -202,6 +240,14 @@ public:
 
 	// Slider data can have a separate name from the shape target.
 	std::string SliderShapeDataName(const size_t index, const std::string& shapeName);
+	void GetSliderDataLocations(std::vector<SliderDataLocation>& outLocations, const std::string& sliderName = "");
+	bool SliderDataIsExternal(const std::string& sliderName, nifly::NiShape* shape);
+	std::string EnsureSliderDataLocal(const std::string& sliderName, nifly::NiShape* shape);
+	bool SetSliderDataLocal(const size_t sliderIndex, const size_t dataIndex, std::string* errorMessage = nullptr);
+	bool SetSliderDataExternal(const size_t sliderIndex, const size_t dataIndex, const std::vector<std::string>& dataFolders, std::string* errorMessage = nullptr);
+	bool SetSliderDataExternal(const size_t sliderIndex, const size_t dataIndex, const std::vector<std::string>& dataFolders, const std::string& osdFileName, std::string* errorMessage = nullptr);
+	bool SetSliderDataExternal(const std::vector<std::pair<size_t, size_t>>& dataEntries, const std::vector<std::string>& dataFolders, std::string* errorMessage = nullptr);
+	bool SetSliderDataExternal(const std::vector<std::pair<size_t, size_t>>& dataEntries, const std::vector<std::string>& dataFolders, const std::string& osdFileName, std::string* errorMessage = nullptr);
 	bool SliderClamp(const size_t index);
 	bool SliderZap(const size_t index);
 	bool SliderUV(const size_t index);
@@ -241,6 +287,7 @@ public:
 	float SliderDefault(const size_t index, const bool hi);
 
 	void InitConform();
+	void GetConformSliderNames(const ConformOptions& options, std::vector<std::string>& outSliderNames);
 	void ConformShape(nifly::NiShape* shape, const ConformOptions& options = ConformOptions());
 
 	const std::string& ShapeToTarget(const std::string& shapeName);

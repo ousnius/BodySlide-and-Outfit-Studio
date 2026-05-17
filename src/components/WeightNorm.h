@@ -7,6 +7,11 @@ See the included LICENSE file
 
 #include "UndoState.h"
 
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
 class AnimInfo;
 
 /* BoneWeightAutoNormalizer: this class has the algorithm for

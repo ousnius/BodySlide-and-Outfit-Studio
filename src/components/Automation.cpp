@@ -7,7 +7,9 @@ See the included LICENSE file
 
 #include "../utils/PlatformUtil.h"
 
-#include <regex>
+#include <tinyxml2.h>
+
+#include <cstdio>
 
 using namespace tinyxml2;
 
@@ -37,11 +39,13 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::RenameShape: return "RenameShape";
 		case AutomationStepType::ResetTransforms: return "ResetTransforms";
 		case AutomationStepType::TransformShape: return "TransformShape";
+		case AutomationStepType::SetGeometryProperties: return "SetGeometryProperties";
 		case AutomationStepType::ConformSliders: return "ConformSliders";
 		case AutomationStepType::DeleteSlider: return "DeleteSlider";
 		case AutomationStepType::SetSliderValues: return "SetSliderValues";
 		case AutomationStepType::SetSliderProperties: return "SetSliderProperties";
 		case AutomationStepType::SetShaderProperties: return "SetShaderProperties";
+		case AutomationStepType::SetTexturePaths: return "SetTexturePaths";
 		case AutomationStepType::ClearMask: return "ClearMask";
 		case AutomationStepType::LoadMask: return "LoadMask";
 		case AutomationStepType::RemoveUnusedNodes: return "RemoveUnusedNodes";
@@ -76,11 +80,13 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "RenameShape") return AutomationStepType::RenameShape;
 	if (str == "ResetTransforms") return AutomationStepType::ResetTransforms;
 	if (str == "TransformShape") return AutomationStepType::TransformShape;
+	if (str == "SetGeometryProperties") return AutomationStepType::SetGeometryProperties;
 	if (str == "ConformSliders") return AutomationStepType::ConformSliders;
 	if (str == "DeleteSlider") return AutomationStepType::DeleteSlider;
 	if (str == "SetSliderValues") return AutomationStepType::SetSliderValues;
 	if (str == "SetSliderProperties") return AutomationStepType::SetSliderProperties;
 	if (str == "SetShaderProperties") return AutomationStepType::SetShaderProperties;
+	if (str == "SetTexturePaths") return AutomationStepType::SetTexturePaths;
 	if (str == "ClearMask") return AutomationStepType::ClearMask;
 	if (str == "LoadMask") return AutomationStepType::LoadMask;
 	if (str == "RemoveUnusedNodes") return AutomationStepType::RemoveUnusedNodes;
@@ -548,6 +554,44 @@ int AutomationScript::Load(const std::string& fileName) {
 				}
 				break;
 			}
+			case AutomationStepType::SetGeometryProperties: {
+				XMLElement* geometryPropsElem = stepElem->FirstChildElement("GeometryProperties");
+				if (geometryPropsElem) {
+					XMLElement* propElem = geometryPropsElem->FirstChildElement("Property");
+					while (propElem) {
+						AutomationStep::GeometryProperty prop;
+						const char* name = propElem->Attribute("name");
+						if (name) {
+							prop.name = name;
+							prop.enabled = propElem->BoolAttribute("enabled", false);
+							step.geometryProperties.push_back(std::move(prop));
+						}
+						propElem = propElem->NextSiblingElement("Property");
+					}
+				}
+				break;
+			}
+			case AutomationStepType::SetTexturePaths: {
+				XMLElement* texturePathsElem = stepElem->FirstChildElement("TexturePaths");
+				if (texturePathsElem) {
+					XMLElement* pathElem = texturePathsElem->FirstChildElement("Path");
+					while (pathElem) {
+						AutomationStep::TexturePath path;
+						path.index = pathElem->IntAttribute("index", -1);
+						const char* name = pathElem->Attribute("name");
+						if (name)
+							path.name = name;
+						const char* value = pathElem->Attribute("value");
+						if (value)
+							path.path = value;
+
+						if (path.index >= 0 || !path.name.empty())
+							step.texturePaths.push_back(std::move(path));
+						pathElem = pathElem->NextSiblingElement("Path");
+					}
+				}
+				break;
+			}
 			case AutomationStepType::RemoveUnusedNodes:
 				// No additional params
 				break;
@@ -837,6 +881,39 @@ int AutomationScript::Save(const std::string& fileName) {
 				}
 				break;
 
+			case AutomationStepType::SetGeometryProperties:
+				if (!step.geometryProperties.empty()) {
+					XMLElement* geometryPropsElem = doc.NewElement("GeometryProperties");
+					stepElem->InsertEndChild(geometryPropsElem);
+					for (const auto& prop : step.geometryProperties) {
+						if (prop.name.empty())
+							continue;
+						XMLElement* propElem = doc.NewElement("Property");
+						propElem->SetAttribute("name", prop.name.c_str());
+						propElem->SetAttribute("enabled", prop.enabled);
+						geometryPropsElem->InsertEndChild(propElem);
+					}
+				}
+				break;
+
+			case AutomationStepType::SetTexturePaths:
+				if (!step.texturePaths.empty()) {
+					XMLElement* texturePathsElem = doc.NewElement("TexturePaths");
+					stepElem->InsertEndChild(texturePathsElem);
+					for (const auto& path : step.texturePaths) {
+						if (path.index < 0 && path.name.empty())
+							continue;
+						XMLElement* pathElem = doc.NewElement("Path");
+						if (path.index >= 0)
+							pathElem->SetAttribute("index", path.index);
+						if (!path.name.empty())
+							pathElem->SetAttribute("name", path.name.c_str());
+						pathElem->SetAttribute("value", path.path.c_str());
+						texturePathsElem->InsertEndChild(pathElem);
+					}
+				}
+				break;
+
 			case AutomationStepType::RemoveUnusedNodes:
 				// No additional params
 				break;
@@ -947,6 +1024,10 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		for (auto& prop : step.shaderProperties) {
 			SubstituteInString(prop.name, vars);
 			SubstituteInString(prop.stringValue, vars);
+		}
+		for (auto& path : step.texturePaths) {
+			SubstituteInString(path.name, vars);
+			SubstituteInString(path.path, vars);
 		}
 	}
 }

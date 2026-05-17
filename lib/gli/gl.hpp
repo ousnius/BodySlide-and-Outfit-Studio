@@ -338,7 +338,7 @@ namespace gli
 			swizzles Swizzles;
 		};
 
-		gl(profile Profile);
+		gl(profile ProfileValue);
 
 		/// Convert GLI targets into OpenGL texture targets
 		target const& translate(gli::target Target) const;
@@ -358,12 +358,12 @@ namespace gli
 			unsigned int Properties;
 		};
 
-		bool has_swizzle(profile Profile) const
+		bool has_swizzle(profile ProfileValue) const
 		{
-			return Profile == PROFILE_ES30 || Profile == PROFILE_GL33;
+			return ProfileValue == PROFILE_ES30 || ProfileValue == PROFILE_GL33;
 		}
 
-		gl::swizzles compute_swizzle(format_desc const& FormatDesc, gli::swizzles const& Swizzle) const;
+		gl::swizzles compute_swizzle(format_desc const& FormatDescriptor, gli::swizzles const& Swizzle) const;
 
 		std::array<format_desc, FORMAT_COUNT> FormatDesc;
 		profile Profile;

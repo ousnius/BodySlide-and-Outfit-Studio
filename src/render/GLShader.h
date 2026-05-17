@@ -8,6 +8,9 @@ See the included LICENSE file
 #include "../components/Mesh.h"
 #include "GLExtensions.h"
 
+#include <cstdint>
+#include <string>
+
 class GLShader {
 	static bool extChecked;
 

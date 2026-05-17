@@ -6,8 +6,8 @@ See the included LICENSE file
 #include "../render/GLMaterial.h"
 #include "../utils/ConfigurationManager.h"
 
-#include "../FSEngine/FSEngine.h"
-#include "../FSEngine/FSManager.h"
+#include "FSEngine/FSEngine.h"
+#include "FSEngine/FSManager.h"
 
 #include <wx/filename.h>
 #include <wx/log.h>
