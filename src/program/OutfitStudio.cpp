@@ -13511,6 +13511,8 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 		if (shape && shape->IsSkinned()) {
 			// Overwrite skin matrix with the one from AnimInfo
 			MatTransform globalToShape = os->project->GetWorkAnim()->GetTransformGlobalToShape(shape);
+			if (nif->GetHeader().GetVersion().IsSF())
+				globalToShape.translation *= sfHavokScale;
 			m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(globalToShape.ComposeTransforms(Mesh::xformMeshToNif)));
 		}
 
@@ -16166,6 +16168,7 @@ void wxGLPanel::UpdateBones() {
 	bonesLines.clear();
 
 	auto workAnim = os->project->GetWorkAnim();
+	bool isSF = os->project->GetWorkNif()->GetHeader().GetVersion().IsSF();
 
 	std::function<bool(AnimBone*)> addChildBones = [&](AnimBone* parent) {
 		bool anyBoneInSelection = false;
@@ -16187,6 +16190,12 @@ void wxGLPanel::UpdateBones() {
 					Vector3 position = toGlobal.ApplyTransform(Vector3());
 					const MatTransform& parentToGlobal = os->project->bPose ? parent->xformPoseToGlobal : parent->xformToGlobal;
 					Vector3 parentPosition = parentToGlobal.ApplyTransform(Vector3());
+
+					if (isSF) {
+						position *= sfHavokScale;
+						parentPosition *= sfHavokScale;
+					}
+
 					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
 
 					Vector3 renderPosition = Mesh::TransformPosNifToMesh(position);

@@ -1771,6 +1771,7 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 		std::vector<float> wv(nv, 0.0f);
 		AnimSkin& animSkin = workAnim.shapeSkinning[shape->name.get()];
 		MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(shape);
+		bool isSF = workNif.GetHeader().GetVersion().IsSF();
 
 		for (auto& boneNamesIt : animSkin.boneNames) {
 			AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
@@ -1779,6 +1780,10 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 
 				// Compose transform: skin -> (posed) bone -> global -> skin
 				MatTransform transform = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+
+				if (isSF)
+					transform.translation *= sfHavokScale;
+
 				if (transform.IsNearlyEqualTo(MatTransform()))
 					transform.Clear();
 
@@ -6899,6 +6904,7 @@ void OutfitProject::GetAllPoseTransforms(NiShape* s, std::vector<MatTransform>& 
 
 	AnimSkin& animSkin = workAnim.shapeSkinning[s->name.get()];
 	MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(s);
+	bool isSF = workNif.GetHeader().GetVersion().IsSF();
 
 	for (auto& boneNamesIt : animSkin.boneNames) {
 		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
@@ -6907,6 +6913,9 @@ void OutfitProject::GetAllPoseTransforms(NiShape* s, std::vector<MatTransform>& 
 		AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
 		// Compose transform: skin -> (posed) bone -> global -> skin
 		MatTransform t = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+
+		if (isSF)
+			t.translation *= sfHavokScale;
 		// Add weighted contributions to vertex transforms for this bone
 		for (auto& wIt : animW.weights) {
 			int vi = wIt.first;
