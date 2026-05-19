@@ -399,6 +399,8 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 	if (verts.size() == 0) // Check for empty shape
 		return false;
 
+	bool isSF = refNif->GetHeader().GetVersion().IsSF();
+
 	std::vector<Vector3> boundVerts;
 	for (auto& w : shapeSkinning[shapeName].boneWeights[boneIndex].weights) {
 		if (w.first >= verts.size()) // Incoming weights have a larger set of possible verts.
@@ -408,6 +410,13 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 	}
 
 	BoundingSphere bounds(boundVerts);
+
+	// SF vertices are scaled by havokScale internally but BSSkin::BoneData
+	// bounds must be in the NIF's native meter-scale coordinate space
+	if (isSF) {
+		bounds.center /= sfHavokScale;
+		bounds.radius /= sfHavokScale;
+	}
 
 	const MatTransform& xformSkinToBone = shapeSkinning[shapeName].boneWeights[boneIndex].xformSkinToBone;
 
