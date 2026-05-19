@@ -700,6 +700,8 @@ int AutomationDialog::ExecuteStepConformSliders(const AutomationStep& step) {
 	options.axisX = step.conformAxisX;
 	options.axisY = step.conformAxisY;
 	options.axisZ = step.conformAxisZ;
+	options.fixClipping = step.conformFixClipping;
+	options.fixClippingStrength = std::max(0.0f, std::min(1.0f, step.conformFixClippingStrength));
 	options.sliderNames = step.conformSliderNames;
 
 	if (options.sliderNames.empty()) {
@@ -2401,12 +2403,6 @@ int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
 			outfitStudio->SetSliderValue(si, 100);
 			outfitStudio->ApplySliders();
 
-			// Get live body verts (base + this slider at 100%)
-			std::vector<nifly::Vector3> bodyVerts;
-			std::vector<nifly::Triangle> bodyTris;
-			project->GetLiveVerts(refShape, bodyVerts);
-			refShape->GetTriangles(bodyTris);
-
 			for (auto* shape : shapes) {
 				if (project->IsBaseShape(shape))
 					continue;
@@ -2416,26 +2412,8 @@ int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
 				if (!diffSet || diffSet->empty())
 					continue;
 
-				// Get live outfit verts (base + this slider morph at 100%)
-				std::vector<nifly::Vector3> outfitVerts;
-				project->GetLiveVerts(shape, outfitVerts);
-
-				std::vector<nifly::Triangle> outfitTris;
-				shape->GetTriangles(outfitTris);
-
-				std::vector<nifly::Vector3> fixedVerts = outfitVerts;
-				ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
-
-				// Compute mesh-space morph diffs, only for vertices already in the slider's diff set
 				TargetDataDiffs morphDiffs;
-				for (size_t i = 0; i < outfitVerts.size(); i++) {
-					if (diffSet->find(static_cast<uint16_t>(i)) == diffSet->end())
-						continue;
-					nifly::Vector3 nifDiff = fixedVerts[i] - outfitVerts[i];
-					if (nifDiff.IsZero(true))
-						continue;
-					morphDiffs[static_cast<uint16_t>(i)] = Mesh::TransformDiffNifToMesh(nifDiff);
-				}
+				project->CalcSliderClippingCorrection(shape, sliderName, options.strength, morphDiffs);
 
 				if (!morphDiffs.empty()) {
 					wxLogMessage("Automation: FixClipping - updated %zu vertices for '%s' slider '%s'.",

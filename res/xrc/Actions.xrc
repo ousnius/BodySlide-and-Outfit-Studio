@@ -1075,7 +1075,7 @@
 	</object>
 	<object class="wxDialog" name="dlgConforming">
 		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-		<size>414,205</size>
+		<size>600,570</size>
 		<title>Conforming...</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -1085,323 +1085,398 @@
 				<flag>wxALL|wxEXPAND</flag>
 				<border>10</border>
 				<object class="wxStaticText" name="conformingDescription">
-					<label>Each vertex of the reference will copy its slider data to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become conformed and work well. Often, the default values are sufficient.</label>
+					<label>Use Default or pick a preset, then adjust only what needs a different result. Hover options for details; some meshes still need manual cleanup.</label>
 					<wrap>550</wrap>
 				</object>
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND|wxALL</flag>
-				<border>5</border>
-				<object class="wxFlexGridSizer">
-					<rows>0</rows>
-					<cols>3</cols>
-					<vgap>0</vgap>
-					<hgap>0</hgap>
-					<growablecols></growablecols>
-					<growablerows></growablerows>
+				<flag>wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM</flag>
+				<border>8</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Search</label>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="proximityRadiusLabel">
-							<label>Search Radius</label>
-							<wrap>-1</wrap>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT|wxTOP</flag>
+						<border>6</border>
+						<object class="wxStaticText">
+							<label>Higher values blend more vertices; lower values stay more local.</label>
+							<wrap>550</wrap>
 						</object>
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxSlider" name="proximityRadiusSlider">
-							<value translate="0">10000</value>
-							<min>0</min>
-							<max>20000</max>
-							<size>400,-1</size>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="proximityRadiusText">
-							<size>60,-1</size>
-							<value translate="0">10.00000</value>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="maxResultsLabel">
-							<label>Max Vertex Targets</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxSlider" name="maxResultsSlider">
-							<value translate="0">10</value>
-							<min>1</min>
-							<max>100</max>
-							<size>400,-1</size>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="maxResultsText">
-							<size>60,-1</size>
-							<value translate="0">10</value>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="smoothResultsLabel">
-							<label>Smooth Results</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxCheckBox" name="smoothResults">
-							<checked>0</checked>
-						</object>
-					</object>
-					<object class="spacer">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="smoothIterationsLabel">
-							<label>Smoothing Iterations</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="smoothIterationsText">
-							<size>60,-1</size>
-							<value translate="0">2</value>
-						</object>
-					</object>
-					<object class="spacer">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="smoothStrengthLabel">
-							<label>Smoothing Strength</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="smoothStrengthText">
-							<size>60,-1</size>
-							<value translate="0">0.50000</value>
-						</object>
-					</object>
-					<object class="spacer">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="noTargetLimitLabel">
-							<label>No Target Limit</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxCheckBox" name="noTargetLimit">
-							<checked>0</checked>
-						</object>
-					</object>
-					<object class="spacer">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="noSqueezeLabel">
-							<label>No Squeeze</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxCheckBox" name="noSqueeze">
-							<checked>0</checked>
-						</object>
-					</object>
-					<object class="spacer">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="solidModeLabel">
-							<label>Solid Mode</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxCheckBox" name="solidMode">
-							<checked>0</checked>
-						</object>
-					</object>
-					<object class="spacer">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="axisLabel">
-							<label>Axis</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
+						<flag>wxEXPAND|wxALL</flag>
+						<border>6</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>3</cols>
+							<vgap>5</vgap>
+							<hgap>8</hgap>
+							<growablecols>1</growablecols>
 							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxCheckBox" name="axisX">
-									<label translate="0">X</label>
-									<checked>1</checked>
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="proximityRadiusLabel">
+									<label>Radius</label>
+									<tooltip>Distance around each outfit vertex to search for reference vertices. Larger values find more matches but can cross into nearby unrelated geometry.</tooltip>
+									<wrap>-1</wrap>
 								</object>
 							</object>
 							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxCheckBox" name="axisY">
-									<label translate="0">Y</label>
-									<checked>1</checked>
+								<flag>wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxSlider" name="proximityRadiusSlider">
+									<value translate="0">10000</value>
+									<min>0</min>
+									<max>20000</max>
+									<size>400,-1</size>
+									<tooltip>Distance around each outfit vertex to search for reference vertices. Larger values find more matches but can cross into nearby unrelated geometry.</tooltip>
 								</object>
 							</object>
 							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxCheckBox" name="axisZ">
-									<label translate="0">Z</label>
-									<checked>1</checked>
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxTextCtrl" name="proximityRadiusText">
+									<size>70,-1</size>
+									<value translate="0">10.00000</value>
+									<tooltip>Distance around each outfit vertex to search for reference vertices. Larger values find more matches but can cross into nearby unrelated geometry.</tooltip>
 								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="maxResultsLabel">
+									<label>Max Targets</label>
+									<tooltip>Limits how many nearby reference vertices are blended for each outfit vertex. Lower values favor closest matches; higher values average more movement.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxEXPAND|wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxSlider" name="maxResultsSlider">
+									<value translate="0">10</value>
+									<min>1</min>
+									<max>100</max>
+									<size>400,-1</size>
+									<tooltip>Limits how many nearby reference vertices are blended for each outfit vertex. Lower values favor closest matches; higher values average more movement.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxTextCtrl" name="maxResultsText">
+									<size>70,-1</size>
+									<value translate="0">10</value>
+									<tooltip>Limits how many nearby reference vertices are blended for each outfit vertex. Lower values favor closest matches; higher values average more movement.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="noTargetLimitLabel">
+									<label>No Target Limit</label>
+									<tooltip>Uses every matching reference vertex inside the search radius and disables Max Vertex Targets. Turning this on sets the radius to 5.0.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxCheckBox" name="noTargetLimit">
+									<checked>0</checked>
+									<tooltip>Uses every matching reference vertex inside the search radius and disables Max Vertex Targets. Turning this on sets the radius to 5.0.</tooltip>
+								</object>
+							</object>
+							<object class="spacer">
+								<size>0,0</size>
 							</object>
 						</object>
-					</object>
-					<object class="spacer">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="preset">
-							<label>Preset</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxLEFT|wxBOTTOM</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxRIGHT|wxEXPAND</flag>
-								<border>5</border>
-								<object class="wxButton" name="presetDefault">
-									<size>-1,25</size>
-									<label>Default</label>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxRIGHT|wxEXPAND</flag>
-								<border>5</border>
-								<object class="wxButton" name="presetEvenMovement">
-									<size>-1,25</size>
-									<label>Even Movement</label>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxRIGHT|wxEXPAND</flag>
-								<border>5</border>
-								<object class="wxButton" name="presetSolidObject">
-									<size>-1,25</size>
-									<label>Solid Object</label>
-								</object>
-							</object>
-						</object>
-					</object>
-					<object class="spacer">
-						<option>0</option>
-						<flag>wxLEFT|wxRIGHT</flag>
-						<border>5</border>
-						<size>0,0</size>
 					</object>
 				</object>
 			</object>
 			<object class="sizeritem">
-				<option>1</option>
+				<option>0</option>
+				<flag>wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM</flag>
+				<border>8</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Delta Smoothing</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT|wxTOP</flag>
+						<border>6</border>
+						<object class="wxStaticText">
+							<label>Softens jagged slider deltas after conforming.</label>
+							<wrap>550</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxALL</flag>
+						<border>6</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>5</vgap>
+							<hgap>8</hgap>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="smoothResultsLabel">
+									<label>Smooth Deltas</label>
+									<tooltip>Runs a smoothing pass on the conformed slider data before it is saved to the outfit shape.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxCheckBox" name="smoothResults">
+									<checked>0</checked>
+									<tooltip>Runs a smoothing pass on the conformed slider data before it is saved to the outfit shape.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="smoothIterationsLabel">
+									<label>Iterations</label>
+									<tooltip>Number of smoothing passes. More passes spread movement farther and make the result softer.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxTextCtrl" name="smoothIterationsText">
+									<size>70,-1</size>
+									<value translate="0">2</value>
+									<tooltip>Number of smoothing passes. More passes spread movement farther and make the result softer.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="smoothStrengthLabel">
+									<label>Strength (0-1)</label>
+									<tooltip>Blend amount for each smoothing pass. 0 leaves the deltas unchanged; 1 applies the strongest smoothing.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxTextCtrl" name="smoothStrengthText">
+									<size>70,-1</size>
+									<value translate="0">0.50000</value>
+									<tooltip>Blend amount for each smoothing pass. 0 leaves the deltas unchanged; 1 applies the strongest smoothing.</tooltip>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM</flag>
+				<border>8</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Clipping Fix</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT|wxTOP</flag>
+						<border>6</border>
+						<object class="wxStaticText">
+							<label>Reduces intersections in the new slider deltas.</label>
+							<wrap>550</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxALL</flag>
+						<border>6</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>5</vgap>
+							<hgap>8</hgap>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="fixClippingLabel">
+									<label>Fix Clipping</label>
+									<tooltip>After each slider is conformed, adjust the result to reduce intersections with the reference shape.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxCheckBox" name="fixClipping">
+									<checked>0</checked>
+									<tooltip>After each slider is conformed, adjust the result to reduce intersections with the reference shape.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="fixClippingStrengthLabel">
+									<label>Strength (%)</label>
+									<tooltip>How strongly to apply the clipping correction. Higher values push more of the correction into the conformed slider.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxTextCtrl" name="fixClippingStrengthText">
+									<size>70,-1</size>
+									<value translate="0">50</value>
+									<enabled>0</enabled>
+									<tooltip>How strongly to apply the clipping correction. Higher values push more of the correction into the conformed slider.</tooltip>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM</flag>
+				<border>8</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Shape Movement</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT|wxTOP</flag>
+						<border>6</border>
+						<object class="wxStaticText">
+							<label>Useful for rigid shapes or limiting movement axes.</label>
+							<wrap>550</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxALL</flag>
+						<border>6</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>5</vgap>
+							<hgap>8</hgap>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="noSqueezeLabel">
+									<label>No X Squeeze</label>
+									<tooltip>Only copies X movement that stays on the same side of the reference. Helps avoid left/right squeezing across the center line.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxCheckBox" name="noSqueeze">
+									<checked>0</checked>
+									<tooltip>Only copies X movement that stays on the same side of the reference. Helps avoid left/right squeezing across the center line.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="solidModeLabel">
+									<label>Solid Mode</label>
+									<tooltip>Uses one combined movement for the entire shape instead of separate per-vertex movement. Useful for rigid accessories or solid objects.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxCheckBox" name="solidMode">
+									<checked>0</checked>
+									<tooltip>Uses one combined movement for the entire shape instead of separate per-vertex movement. Useful for rigid accessories or solid objects.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxStaticText" name="axisLabel">
+									<label>Axes</label>
+									<tooltip>Choose which axes are allowed to receive copied movement. Unchecked axes keep their existing slider movement.</tooltip>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<flag>wxRIGHT</flag>
+										<border>8</border>
+										<object class="wxCheckBox" name="axisX">
+											<label translate="0">X</label>
+											<checked>1</checked>
+											<tooltip>Allow conforming to write X-axis movement.</tooltip>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<flag>wxRIGHT</flag>
+										<border>8</border>
+										<object class="wxCheckBox" name="axisY">
+											<label translate="0">Y</label>
+											<checked>1</checked>
+											<tooltip>Allow conforming to write Y-axis movement.</tooltip>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<object class="wxCheckBox" name="axisZ">
+											<label translate="0">Z</label>
+											<checked>1</checked>
+											<tooltip>Allow conforming to write Z-axis movement.</tooltip>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxLEFT|wxRIGHT|wxBOTTOM</flag>
+				<border>8</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Presets</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<flag>wxRIGHT</flag>
+								<border>6</border>
+								<object class="wxButton" name="presetDefault">
+									<size>-1,25</size>
+									<label>Default</label>
+									<tooltip>Radius 10, max 10, no smoothing or clipping fix. Good starting point for most outfits.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxRIGHT</flag>
+								<border>6</border>
+								<object class="wxButton" name="presetEvenMovement">
+									<size>-1,25</size>
+									<label>Even Movement</label>
+									<tooltip>Radius 5, no target limit, and No Squeeze enabled. Helps soft shapes move more evenly without pulling across the center line.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<flag>wxRIGHT</flag>
+								<border>6</border>
+								<object class="wxButton" name="presetSmoothClipping">
+									<size>-1,25</size>
+									<label>Smooth Clipping</label>
+									<tooltip>Even Movement plus smoothing and clipping fix. Useful when conforming creates noisy deltas or small intersections.</tooltip>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<object class="wxButton" name="presetSolidObject">
+									<size>-1,25</size>
+									<label>Solid Object</label>
+									<tooltip>No target limit and Solid Mode enabled. Useful for rigid meshes that should move as one piece.</tooltip>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
 				<flag>wxEXPAND|wxALL</flag>
 				<border>5</border>
 				<object class="wxStdDialogButtonSizer">

@@ -32,13 +32,6 @@ private:
 	static std::vector<nifly::Vector3> ComputeVertexNormals(const std::vector<nifly::Vector3>& verts,
 															const std::vector<nifly::Triangle>& tris);
 
-	// Find the closest point on a triangle to a given point, and return
-	// the signed distance (negative = inside/below the surface).
-	static float SignedDistanceToTriangle(const nifly::Vector3& point,
-										  const nifly::Triangle& tri,
-										  const nifly::Vector3* bodyVerts,
-										  nifly::Vector3& outClosestPoint);
-
 	// Compute barycentric coordinates of point p on triangle (v1, v2, v3).
 	static void BarycentricCoords(const nifly::Vector3& p,
 								  const nifly::Vector3& v1,

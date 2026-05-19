@@ -8,6 +8,14 @@
 
 struct IntersectResult;
 
+struct AABBTriangleDistanceData {
+	nifly::Vector3 v1;
+	nifly::Vector3 edge12;
+	nifly::Vector3 edge13;
+	nifly::Vector3 edge23;
+	float areaMetric = 0.0f;
+};
+
 struct AABB {
 	nifly::Vector3 min;
 	nifly::Vector3 max;
@@ -26,6 +34,8 @@ struct AABB {
 	bool IntersectAABB(const AABB& other);
 
 	bool IntersectRay(const nifly::Vector3& Origin, const nifly::Vector3& Direction, nifly::Vector3* outCoord);
+
+	float DistanceSquaredToPoint(const nifly::Vector3& point) const;
 
 	bool IntersectSphere(const nifly::Vector3& Origin, const float radius);
 };
@@ -66,6 +76,12 @@ public:
 		void AddRayIntersectFrames(nifly::Vector3& origin, nifly::Vector3& direction, std::vector<nifly::Vector3>& verts, std::vector<nifly::Edge>& edges);
 		bool IntersectRay(nifly::Vector3& origin, nifly::Vector3& direction, std::vector<IntersectResult>* results);
 		bool IntersectSphere(nifly::Vector3& origin, const float radius, std::vector<IntersectResult>* results);
+		bool ClosestFacetInSphere(nifly::Vector3& origin,
+								   const float radiusSquared,
+								   float& bestDistSquared,
+								   uint32_t& facetIndex,
+								   nifly::Vector3* closestPoint,
+								   const std::vector<AABBTriangleDistanceData>* triangleDistanceData);
 		void UpdateAABB(const AABB* childBB = nullptr);
 	};
 
@@ -90,6 +106,15 @@ public:
 	void BuildRayIntersectFrames(nifly::Vector3& origin, nifly::Vector3& direction, nifly::Vector3** outVerts, uint16_t* outNumVerts, nifly::Edge** outEdges, uint32_t* outNumEdges);
 	bool IntersectRay(nifly::Vector3& origin, nifly::Vector3& direction, std::vector<IntersectResult>* results = nullptr);
 	bool IntersectSphere(nifly::Vector3& origin, const float radius, std::vector<IntersectResult>* results = nullptr);
+	bool ClosestFacetInSphere(nifly::Vector3& origin,
+						 const float radius,
+						 uint32_t& facetIndex,
+						 nifly::Vector3* closestPoint = nullptr,
+						 const std::vector<AABBTriangleDistanceData>* triangleDistanceData = nullptr);
+	static void BuildTriangleDistanceData(const nifly::Vector3* vertices,
+									 const nifly::Triangle* facets,
+									 uint32_t nFacets,
+									 std::vector<AABBTriangleDistanceData>& outData);
 };
 
 struct IntersectResult {
