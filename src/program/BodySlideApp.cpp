@@ -21,20 +21,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../files/SFMorphFile.h"
 #include "../files/wxDDSImage.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/ParallelFor.h"
 #include "../utils/StringStuff.h"
 
 #include <atomic>
+#include <mutex>
 #include <regex>
+#include <thread>
+#include <unordered_map>
+#include <utility>
 #include <wx/wrapsizer.h>
 #include <wx/debugrpt.h>
-
-#ifdef WIN64
-#include <concurrent_unordered_map.h>
-#include <ppl.h>
-#include <ppltasks.h>
-#else
-#undef _PPL_H
-#endif
 
 using namespace nifly;
 
@@ -2454,6 +2451,9 @@ void BodySlideApp::UpdateMeshesFromSet(SliderSet& set) {
 }
 
 void BodySlideApp::ApplyReferenceNormals(NifFile& nif) {
+	static std::mutex refNormalsCacheMutex;
+	std::lock_guard<std::mutex> cacheLock(refNormalsCacheMutex);
+
 	for (auto& s : nif.GetShapes()) {
 		std::string shapeName = s->name.get();
 
@@ -3899,23 +3899,48 @@ int BodySlideApp::BuildListBodies(
 	progWnd.SetSize(400, 150);
 	float progstep = 1000.0f / outfitList.size();
 	std::atomic<int> count = 0;
-
-#ifdef _PPL_H
-	concurrency::concurrent_unordered_map<std::string, std::string> failedOutfitsCon;
-#else
 	std::unordered_map<std::string, std::string> failedOutfitsCon;
-#endif
+	std::mutex batchBuildMutex;
+	std::mutex outputDirectoryMutex;
+
+	auto recordFailure = [&](const std::string& outfit, const auto& message) {
+		std::lock_guard<std::mutex> lock(batchBuildMutex);
+		failedOutfitsCon[outfit] = message;
+	};
+
+	auto outputDirectoryExists = [](const wxString& dir) {
+		wxFileName dirName;
+		dirName.AssignDir(dir);
+		return dirName.DirExists();
+	};
+
+	auto ensureOutputDirectory = [&](const wxString& dir) {
+		if (outputDirectoryExists(dir))
+			return true;
+
+		std::lock_guard<std::mutex> lock(outputDirectoryMutex);
+		if (outputDirectoryExists(dir))
+			return true;
+
+		if (wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL))
+			return true;
+
+		return outputDirectoryExists(dir);
+	};
 
 	auto buildOutfit = [&](const std::string& outfit) {
-		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), wxString::FromUTF8(outfit), ++count, (int)outfitList.size());
-		progWnd.Update((int)(count * progstep) - 1, progMsg);
-		progWnd.Fit();
-
-		wxLogMessage(progMsg);
+		int processedCount = ++count;
+		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), wxString::FromUTF8(outfit), processedCount, (int)outfitList.size());
+		{
+			std::lock_guard<std::mutex> lock(batchBuildMutex);
+			progWnd.Update((int)(processedCount * progstep) - 1, progMsg);
+			progWnd.Fit();
+			wxLogMessage(progMsg);
+		}
 
 		/* Load set */
 		if (outfitNameSource.find(outfit) == outfitNameSource.end()) {
-			failedOutfitsCon[outfit] = _("No recorded outfit name source");
+			recordFailure(outfit, _("No recorded outfit name source"));
 			return;
 		}
 
@@ -3926,12 +3951,12 @@ int BodySlideApp::BuildListBodies(
 		sliderDoc.Open(outfitNameSource[outfit]);
 		if (!sliderDoc.fail()) {
 			if (sliderDoc.GetSet(outfit, currentSet)) {
-				failedOutfitsCon[outfit] = _("Unable to get slider set from file: ") + outfitNameSource[outfit];
+				recordFailure(outfit, _("Unable to get slider set from file: ") + outfitNameSource[outfit]);
 				return;
 			}
 		}
 		else {
-			failedOutfitsCon[outfit] = _("Unable to open slider set file: ") + outfitNameSource[outfit];
+			recordFailure(outfit, _("Unable to open slider set file: ") + outfitNameSource[outfit]);
 			return;
 		}
 
@@ -3966,7 +3991,7 @@ int BodySlideApp::BuildListBodies(
 		NifFile nifBig;
 		NifFile nifSmall;
 		if (nifBig.Load(file)) {
-			failedOutfitsCon[outfit] = _("Unable to load input nif: ") + currentSet.GetInputFileName();
+			recordFailure(outfit, _("Unable to load input nif: ") + currentSet.GetInputFileName());
 			return;
 		}
 
@@ -4251,10 +4276,10 @@ int BodySlideApp::BuildListBodies(
 
 		/* Create directory for the outfit */
 		wxString dir = wxString::FromUTF8(datapath + currentSet.GetOutputPath());
-		bool success = wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+		bool success = ensureOutputDirectory(dir);
 
 		if (!success) {
-			failedOutfitsCon[outfit] = _("Unable to create destination directory: ") + dir.ToUTF8().data();
+			recordFailure(outfit, _("Unable to create destination directory: ") + dir.ToUTF8().data());
 			return;
 		}
 
@@ -4342,7 +4367,7 @@ int BodySlideApp::BuildListBodies(
 			PlatformUtil::OpenFileStream(fileBig, outFileNameBig, std::ios::out | std::ios::binary);
 
 			if (nifBig.Save(fileBig, nifOptions)) {
-				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
+				recordFailure(outfit, _("Unable to save nif file: ") + outFileNameBig);
 				return;
 			}
 
@@ -4350,7 +4375,7 @@ int BodySlideApp::BuildListBodies(
 			PlatformUtil::OpenFileStream(fileSmall, outFileNameSmall, std::ios::out | std::ios::binary);
 
 			if (nifSmall.Save(fileSmall, nifOptions)) {
-				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
+				recordFailure(outfit, _("Unable to save nif file: ") + outFileNameSmall);
 				return;
 			}
 		}
@@ -4361,27 +4386,34 @@ int BodySlideApp::BuildListBodies(
 			PlatformUtil::OpenFileStream(fileBig, outFileNameBig, std::ios::out | std::ios::binary);
 
 			if (nifBig.Save(fileBig, nifOptions)) {
-				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
+				recordFailure(outfit, _("Unable to save nif file: ") + outFileNameBig);
 				return;
 			}
 		}
 	};
 
 	// Multi-threading for 64-bit only due to memory limits of 32-bit builds
-#ifdef _PPL_H
-	// Parallel loop is run inside a task
-	auto buildTask = concurrency::create_task([&] { concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), buildOutfit); });
+	if (sizeof(void*) >= 8 && outfitList.size() > 1) {
+		std::atomic<bool> buildDone = false;
+		std::thread buildTask([&] {
+			ParallelForDynamic(outfitList.size(), 1, 1, [&](size_t startIndex, size_t endIndex) {
+				for (size_t outfitIndex = startIndex; outfitIndex < endIndex; outfitIndex++)
+					buildOutfit(outfitList[outfitIndex]);
+			});
+			buildDone = true;
+		});
 
-	// Yield outside of task
-	while (!buildTask.is_done()) {
-		Yield();
-		wxMilliSleep(100);
+		while (!buildDone) {
+			Yield();
+			wxMilliSleep(100);
+		}
+
+		buildTask.join();
 	}
-#else
-	for (auto& outfit : outfitList) {
-		buildOutfit(outfit);
+	else {
+		for (auto& outfit : outfitList)
+			buildOutfit(outfit);
 	}
-#endif
 
 	progWnd.Update(1000);
 

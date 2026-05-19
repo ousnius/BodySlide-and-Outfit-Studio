@@ -5,19 +5,15 @@ See the included LICENSE file
 
 #include "DiffData.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/ParallelFor.h"
 #include "../utils/StringStuff.h"
 #include "NifUtil.hpp"
 #include "UndoState.h"
 
 #include <algorithm>
 #include <fstream>
-
-#ifdef WIN64
-#include <concurrent_unordered_map.h>
-#include <ppl.h>
-#else
-#undef _PPL_H
-#endif
+#include <utility>
+#include <vector>
 
 using namespace nifly;
 
@@ -181,29 +177,27 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, co
 }
 
 bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
-#ifdef _PPL_H
-	Concurrency::concurrent_unordered_map<std::string, std::unique_ptr<OSDataFile>> loaded;
-	Concurrency::parallel_for_each(osdNames.begin(), osdNames.end(), [&](auto& osd) {
-		auto osdFile = std::make_unique<OSDataFile>();
-		if (!osdFile->Read(osd.first))
-			return;
+	std::vector<std::pair<std::string, const std::map<std::string, std::string>*>> osdEntries;
+	osdEntries.reserve(osdNames.size());
+	for (auto& osd : osdNames)
+		osdEntries.emplace_back(osd.first, &osd.second);
 
-		loaded[osd.first] = std::move(osdFile);
+	std::vector<std::unique_ptr<OSDataFile>> loaded(osdEntries.size());
+	ParallelForDynamic(osdEntries.size(), 1, 1, [&](size_t startIndex, size_t endIndex) {
+		for (size_t entryIndex = startIndex; entryIndex < endIndex; entryIndex++) {
+			auto osdFile = std::make_unique<OSDataFile>();
+			if (osdFile->Read(osdEntries[entryIndex].first))
+				loaded[entryIndex] = std::move(osdFile);
+		}
 	});
-#endif
-	for (auto& osd : osdNames) {
-#ifdef _PPL_H
-		auto kvp = loaded.find(osd.first);
-		if (kvp == loaded.end())
+
+	for (size_t entryIndex = 0; entryIndex < osdEntries.size(); entryIndex++) {
+		auto& osdFile = loaded[entryIndex];
+		if (!osdFile)
 			continue;
 
-		auto& osdFile = kvp->second;
-#else
-		auto osdFile = std::make_unique<OSDataFile>();
-		if (!osdFile->Read(osd.first))
-			continue;
-#endif
-		for (auto& dataNames : osd.second) {
+		auto& osd = osdEntries[entryIndex];
+		for (auto& dataNames : *osd.second) {
 			auto diff = osdFile->GetDataDiff(dataNames.first);
 			if (diff)
 				MoveToSet(dataNames.first, dataNames.second, *diff);
