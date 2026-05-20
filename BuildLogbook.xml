@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- A file to keep track of the currently built meshes -->
+<BuildLogbook>
+
+    <!-- 
+    A simple entry that lists the mesh, which set it was built with, and which preset was used.
+
+    There should be only one "Mesh" entry per path.
+    If a mesh is built again, the old entry should be deleted and replaced with the new one, 
+    so that the logbook represents the contents of the game/ouput folder.
+    -->
+    <Mesh path="meshes\armor\studded\female\boots" set="DH 3BA Leather boots" preset="The Female Gaze v2 Outfit"/>
+
+    <!-- 
+    A "Mesh" can contain slider information.
+    Ideally, this should be limited to sliders that were modified from the set's and preset's default values.
+    -->
+    <Mesh path="meshes\armor\imperial\f\cuirasslight" set="DH 3BA Imperial light armor" preset="The Female Gaze v2 Pushup">
+        <!-- For example, modifications of the set's Zaps -->
+        <SetSlider name="Outfit var.1" size="big" value="100"/>
+        <SetSlider name="Outfit var.1" size="small" value="100"/>
+        <SetSlider name="Outfit var.2" size="big" value="0"/>
+        <SetSlider name="Outfit var.2" size="small" value="0"/>
+        <!-- Or edits of the preset's sliders-->
+        <SetSlider name="BreastsPressed_v2" size="big" value="24"/>
+    </Mesh>
+</BuildLogbook>
