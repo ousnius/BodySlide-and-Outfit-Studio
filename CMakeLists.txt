@@ -419,3 +419,17 @@ else()
 	set_target_properties(OutfitStudio PROPERTIES OUTPUT_NAME "OutfitStudio")
 	set_target_properties(BodySlide PROPERTIES OUTPUT_NAME "BodySlide")
 endif()
+
+# On Linux/BSD, place a symlink to the source res/ directory next to the built
+# binaries so they can find res/xrc/Setup.xrc and friends when run directly from
+# the build directory.  Windows/macOS portable layouts are handled separately.
+if(UNIX AND NOT APPLE)
+	set(BSOS_RES_LINK "${CMAKE_CURRENT_BINARY_DIR}/res")
+	if(NOT EXISTS "${BSOS_RES_LINK}")
+		file(CREATE_LINK
+			"${CMAKE_CURRENT_SOURCE_DIR}/res"
+			"${BSOS_RES_LINK}"
+			SYMBOLIC
+		)
+	endif()
+endif()

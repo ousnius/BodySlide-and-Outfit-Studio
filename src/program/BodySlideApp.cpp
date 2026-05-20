@@ -121,7 +121,21 @@ bool BodySlideApp::OnInit() {
 #ifdef _DEBUG
 	std::string dataDir{wxGetCwd().ToUTF8()};
 #else
-	std::string dataDir{wxStandardPaths::Get().GetDataDir().ToUTF8()};
+	std::string dataDir;
+	wxString dataDirOverride;
+	if (wxGetEnv("WX_BODYSLIDE_DATA_DIR", &dataDirOverride) && !dataDirOverride.IsEmpty()) {
+		dataDir = dataDirOverride.ToUTF8();
+	}
+	else {
+#if defined(__linux__) || defined(__FreeBSD__) || (defined(__unix__) && !defined(__APPLE__))
+		// On Linux/BSD GetDataDir() returns the install prefix data dir (e.g. /usr/share/<app>),
+		// which is wrong for portable builds.  Derive from the executable's own location so the
+		// res/ directory next to the binary is found.
+		dataDir = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath().ToUTF8();
+#else
+		dataDir = wxStandardPaths::Get().GetDataDir().ToUTF8();
+#endif
+	}
 #endif
 
 	Config.LoadConfig(dataDir + "/Config.xml");
@@ -3877,7 +3891,7 @@ int BodySlideApp::BuildListBodies(
 
 					// Remove from outfitList all outfits in choicesList[index]
 					for (auto& outfit : choicesList[index]) {
-						auto result = std::find(outfitList.begin(), outfitList.end(), outfit.ToUTF8());
+						auto result = std::find(outfitList.begin(), outfitList.end(), std::string(outfit.ToUTF8()));
 						if (result != outfitList.end())
 							outfitList.erase(result);
 					}

@@ -474,7 +474,21 @@ bool OutfitStudio::OnInit() {
 #ifdef _DEBUG
 	std::string dataDir{wxGetCwd().ToUTF8()};
 #else
-	std::string dataDir{wxStandardPaths::Get().GetDataDir().ToUTF8()};
+	std::string dataDir;
+	wxString dataDirOverride;
+	if (wxGetEnv("WX_OUTFITSTUDIO_DATA_DIR", &dataDirOverride) && !dataDirOverride.IsEmpty()) {
+		dataDir = dataDirOverride.ToUTF8();
+	}
+	else {
+#if defined(__linux__) || defined(__FreeBSD__) || (defined(__unix__) && !defined(__APPLE__))
+		// On Linux/BSD GetDataDir() returns the install prefix data dir (e.g. /usr/share/<app>),
+		// which is wrong for portable builds.  Derive from the executable's own location so the
+		// res/ directory next to the binary is found.
+		dataDir = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath().ToUTF8();
+#else
+		dataDir = wxStandardPaths::Get().GetDataDir().ToUTF8();
+#endif
+	}
 #endif
 
 	Config.LoadConfig(dataDir + "/Config.xml");
