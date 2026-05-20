@@ -310,6 +310,8 @@ int AutomationScript::Load(const std::string& fileName) {
 				step.conformAxisX = GetChildBool(stepElem, "AxisX", true);
 				step.conformAxisY = GetChildBool(stepElem, "AxisY", true);
 				step.conformAxisZ = GetChildBool(stepElem, "AxisZ", true);
+				step.conformFixClipping = GetChildBool(stepElem, "FixClipping", false);
+				step.conformFixClippingStrength = GetChildFloat(stepElem, "FixClippingStrength", 0.5f);
 				const char* csn = GetChildText(stepElem, "SliderNames");
 				if (csn)
 					step.conformSliderNames = SplitCommaSeparated(csn);
@@ -721,6 +723,8 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildBool(doc, stepElem, "AxisX", step.conformAxisX, true);
 				SetChildBool(doc, stepElem, "AxisY", step.conformAxisY, true);
 				SetChildBool(doc, stepElem, "AxisZ", step.conformAxisZ, true);
+				SetChildBool(doc, stepElem, "FixClipping", step.conformFixClipping, false);
+				SetChildFloat(doc, stepElem, "FixClippingStrength", step.conformFixClippingStrength, 0.5f);
 				if (!step.conformSliderNames.empty())
 					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.conformSliderNames, ", "));
 				break;

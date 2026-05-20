@@ -9770,14 +9770,12 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 	ClippingFixOptions options;
 	options.strength = strength;
 
-	// Get reference shape live verts (base + slider applied)
-	std::vector<Vector3> bodyVerts;
-	std::vector<Triangle> bodyTris;
-	project->GetLiveVerts(refShape, bodyVerts);
-	refShape->GetTriangles(bodyTris);
-
 	UndoStateProject* usp = glView->GetUndoHistory()->PushState();
 	usp->undoType = UndoType::VertexPosition;
+
+	float sliderscale = project->SliderValue(activeSlider);
+	if (sliderscale == 0.0)
+		sliderscale = 1.0;
 
 	for (auto& sel : selectedItems) {
 		NiShape* shape = sel->GetShape();
@@ -9797,18 +9795,40 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 		glView->GetShapeUnmasked(unmasked, shape->name.get());
 
 		std::unordered_set<uint16_t> allowed;
-		for (auto& d : *diffSet) {
-			if (unmasked.empty() || unmasked.count(d.first))
-				allowed.insert(d.first);
+		const std::unordered_set<uint16_t>* allowedVerts = nullptr;
+		if (!unmasked.empty()) {
+			for (auto& v : unmasked)
+				allowed.insert(v.first);
+
+			if (allowed.empty())
+				continue;
+
+			allowedVerts = &allowed;
 		}
 
-		if (allowed.empty())
+		TargetDataDiffs morphDiffs;
+		project->CalcSliderClippingCorrection(shape, activeSlider, options.strength, morphDiffs, allowedVerts);
+		if (morphDiffs.empty())
 			continue;
 
 		std::vector<Vector3> outfitVerts;
 		project->GetLiveVerts(shape, outfitVerts);
 
-		FixClippingForShape(bodyVerts, bodyTris, shape, outfitVerts, options, usp, &allowed);
+		UndoStateShape uss;
+		uss.shapeName = shape->name.get();
+
+		for (auto& diffEntry : morphDiffs) {
+			uint16_t vertIndex = diffEntry.first;
+			if (vertIndex >= outfitVerts.size())
+				continue;
+
+			Vector3 start = Mesh::TransformPosNifToMesh(outfitVerts[vertIndex]);
+			uss.pointStartState[vertIndex] = start;
+			uss.pointEndState[vertIndex] = start + diffEntry.second * sliderscale;
+		}
+
+		if (!uss.pointStartState.empty())
+			usp->usss.push_back(std::move(uss));
 	}
 
 	if (usp->usss.empty()) {
@@ -9817,11 +9837,6 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	usp->sliderName = activeSlider;
-
-	float sliderscale = project->SliderValue(activeSlider);
-	if (sliderscale == 0.0)
-		sliderscale = 1.0;
-
 	usp->sliderscale = sliderscale;
 
 	glView->ApplyUndoState(usp, false);
@@ -9970,11 +9985,24 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
 		});
 		updateSmoothingState();
 
+		auto updateFixClippingState = [&dlg]() {
+			bool fixClipping = XRCCTRL(dlg, "fixClipping", wxCheckBox)->IsChecked();
+			XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->Enable(fixClipping);
+		};
+
+		XRCCTRL(dlg, "fixClipping", wxCheckBox)->Bind(wxEVT_CHECKBOX, [&updateFixClippingState](wxCommandEvent&) {
+			updateFixClippingState();
+		});
+		updateFixClippingState();
+
 		XRCCTRL(dlg, "presetDefault", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
 			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "smoothResults", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "smoothIterationsText", wxTextCtrl)->Disable();
 			XRCCTRL(dlg, "smoothStrengthText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "fixClipping", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->ChangeValue("50");
+			XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->Disable();
 			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("10.00000");
@@ -9990,6 +10018,25 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
 			XRCCTRL(dlg, "smoothResults", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "smoothIterationsText", wxTextCtrl)->Disable();
 			XRCCTRL(dlg, "smoothStrengthText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "fixClipping", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->ChangeValue("50");
+			XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Disable();
+			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("5.00000");
+			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(5000);
+		});
+
+		XRCCTRL(dlg, "presetSmoothClipping", wxButton)->Bind(wxEVT_BUTTON, [&dlg](wxCommandEvent&) {
+			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "smoothResults", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "smoothIterationsText", wxTextCtrl)->Enable();
+			XRCCTRL(dlg, "smoothStrengthText", wxTextCtrl)->Enable();
+			XRCCTRL(dlg, "fixClipping", wxCheckBox)->SetValue(true);
+			XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->ChangeValue("50");
+			XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->Enable();
 			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(true);
 			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Disable();
@@ -10003,6 +10050,9 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
 			XRCCTRL(dlg, "smoothResults", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "smoothIterationsText", wxTextCtrl)->Disable();
 			XRCCTRL(dlg, "smoothStrengthText", wxTextCtrl)->Disable();
+			XRCCTRL(dlg, "fixClipping", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->ChangeValue("50");
+			XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->Disable();
 			XRCCTRL(dlg, "noSqueeze", wxCheckBox)->SetValue(false);
 			XRCCTRL(dlg, "solidMode", wxCheckBox)->SetValue(true);
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Disable();
@@ -10030,6 +10080,8 @@ bool OutfitStudioFrame::ShowConform(ConformOptions& options, bool silent) {
 			options.axisX = XRCCTRL(dlg, "axisX", wxCheckBox)->IsChecked();
 			options.axisY = XRCCTRL(dlg, "axisY", wxCheckBox)->IsChecked();
 			options.axisZ = XRCCTRL(dlg, "axisZ", wxCheckBox)->IsChecked();
+			options.fixClipping = XRCCTRL(dlg, "fixClipping", wxCheckBox)->IsChecked();
+			options.fixClippingStrength = std::max(0.0f, std::min(1.0f, static_cast<float>(atof(XRCCTRL(dlg, "fixClippingStrengthText", wxTextCtrl)->GetValue().c_str()) / 100.0f)));
 			return true;
 		}
 	}
@@ -13525,6 +13577,8 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 		if (shape && shape->IsSkinned()) {
 			// Overwrite skin matrix with the one from AnimInfo
 			MatTransform globalToShape = os->project->GetWorkAnim()->GetTransformGlobalToShape(shape);
+			if (nif->GetHeader().GetVersion().IsSF())
+				globalToShape.translation *= sfHavokScale;
 			m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(globalToShape.ComposeTransforms(Mesh::xformMeshToNif)));
 		}
 
@@ -16180,6 +16234,7 @@ void wxGLPanel::UpdateBones() {
 	bonesLines.clear();
 
 	auto workAnim = os->project->GetWorkAnim();
+	bool isSF = os->project->GetWorkNif()->GetHeader().GetVersion().IsSF();
 
 	std::function<bool(AnimBone*)> addChildBones = [&](AnimBone* parent) {
 		bool anyBoneInSelection = false;
@@ -16201,6 +16256,12 @@ void wxGLPanel::UpdateBones() {
 					Vector3 position = toGlobal.ApplyTransform(Vector3());
 					const MatTransform& parentToGlobal = os->project->bPose ? parent->xformPoseToGlobal : parent->xformToGlobal;
 					Vector3 parentPosition = parentToGlobal.ApplyTransform(Vector3());
+
+					if (isSF) {
+						position *= sfHavokScale;
+						parentPosition *= sfHavokScale;
+					}
+
 					bool matchesParent = position.IsNearlyEqualTo(parentPosition);
 
 					Vector3 renderPosition = Mesh::TransformPosNifToMesh(position);

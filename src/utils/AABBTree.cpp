@@ -5,7 +5,148 @@ See the included LICENSE file
 
 #include "AABBTree.h"
 
+#include <algorithm>
+#include <cfloat>
+
 using namespace nifly;
+
+namespace {
+float DistanceSquaredToSegment(const Vector3& point, const Vector3& start, const Vector3& segment, float segmentLenSq, Vector3* outClosestPoint) {
+	if (segmentLenSq <= 1e-12f) {
+		if (outClosestPoint)
+			*outClosestPoint = start;
+		return (point - start).length2();
+	}
+
+	float t = (point - start).dot(segment) / segmentLenSq;
+	if (t <= 0.0f) {
+		if (outClosestPoint)
+			*outClosestPoint = start;
+		return (point - start).length2();
+	}
+	if (t >= 1.0f) {
+		Vector3 end = start + segment;
+		if (outClosestPoint)
+			*outClosestPoint = end;
+		return (point - end).length2();
+	}
+
+	Vector3 closest = start + segment * t;
+	if (outClosestPoint)
+		*outClosestPoint = closest;
+	return (point - closest).length2();
+}
+
+float DistanceSquaredToTriangle(const AABBTriangleDistanceData& triData, const Vector3& point, Vector3* outClosestPoint) {
+	if (triData.areaMetric <= 1e-12f) {
+		Vector3 cp1;
+		Vector3 cp2;
+		Vector3 cp3;
+		Vector3 v2 = triData.v1 + triData.edge12;
+		Vector3 v3 = triData.v1 + triData.edge13;
+		Vector3 edge31 = triData.edge13 * -1.0f;
+		float d1 = DistanceSquaredToSegment(point, triData.v1, triData.edge12, triData.edge12.length2(), &cp1);
+		float d2 = DistanceSquaredToSegment(point, v2, triData.edge23, triData.edge23.length2(), &cp2);
+		float d3 = DistanceSquaredToSegment(point, v3, edge31, triData.edge13.length2(), &cp3);
+		if (d1 <= d2 && d1 <= d3) {
+			if (outClosestPoint)
+				*outClosestPoint = cp1;
+			return d1;
+		}
+		if (d2 <= d3) {
+			if (outClosestPoint)
+				*outClosestPoint = cp2;
+			return d2;
+		}
+		if (outClosestPoint)
+			*outClosestPoint = cp3;
+		return d3;
+	}
+
+	Vector3 pointToV1 = point - triData.v1;
+	float d1 = triData.edge12.dot(pointToV1);
+	float d2 = triData.edge13.dot(pointToV1);
+	if (d1 <= 0.0f && d2 <= 0.0f) {
+		if (outClosestPoint)
+			*outClosestPoint = triData.v1;
+		return pointToV1.length2();
+	}
+
+	Vector3 pointToV2 = pointToV1 - triData.edge12;
+	float d3 = triData.edge12.dot(pointToV2);
+	float d4 = triData.edge13.dot(pointToV2);
+	if (d3 >= 0.0f && d4 <= d3) {
+		if (outClosestPoint)
+			*outClosestPoint = triData.v1 + triData.edge12;
+		return pointToV2.length2();
+	}
+
+	float vc = d1 * d4 - d3 * d2;
+	if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
+		float v = d1 / (d1 - d3);
+		Vector3 closest = triData.v1 + triData.edge12 * v;
+		if (outClosestPoint)
+			*outClosestPoint = closest;
+		return (point - closest).length2();
+	}
+
+	Vector3 pointToV3 = pointToV1 - triData.edge13;
+	float d5 = triData.edge12.dot(pointToV3);
+	float d6 = triData.edge13.dot(pointToV3);
+	if (d6 >= 0.0f && d5 <= d6) {
+		if (outClosestPoint)
+			*outClosestPoint = triData.v1 + triData.edge13;
+		return pointToV3.length2();
+	}
+
+	float vb = d5 * d2 - d1 * d6;
+	if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
+		float w = d2 / (d2 - d6);
+		Vector3 closest = triData.v1 + triData.edge13 * w;
+		if (outClosestPoint)
+			*outClosestPoint = closest;
+		return (point - closest).length2();
+	}
+
+	float va = d3 * d6 - d5 * d4;
+	if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
+		float w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+		Vector3 closest = triData.v1 + triData.edge12 + triData.edge23 * w;
+		if (outClosestPoint)
+			*outClosestPoint = closest;
+		return (point - closest).length2();
+	}
+
+	float denom = 1.0f / (va + vb + vc);
+	float v = vb * denom;
+	float w = vc * denom;
+	Vector3 closest = triData.v1 + triData.edge12 * v + triData.edge13 * w;
+	if (outClosestPoint)
+		*outClosestPoint = closest;
+	return (point - closest).length2();
+}
+
+AABBTriangleDistanceData MakeTriangleDistanceData(const Vector3* verts, const Triangle& tri) {
+	AABBTriangleDistanceData triData;
+	const Vector3& v1 = verts[tri.p1];
+	const Vector3& v2 = verts[tri.p2];
+	const Vector3& v3 = verts[tri.p3];
+	triData.v1 = v1;
+	triData.edge12 = v2 - v1;
+	triData.edge13 = v3 - v1;
+	triData.edge23 = v3 - v2;
+	float edge12LenSq = triData.edge12.length2();
+	float edge13LenSq = triData.edge13.length2();
+	float edgeDot = triData.edge12.dot(triData.edge13);
+	triData.areaMetric = edge12LenSq * edge13LenSq - edgeDot * edgeDot;
+	return triData;
+}
+
+float DistanceSquaredToTriangle(const Vector3* verts, const Triangle& tri, const Vector3& point, Vector3* outClosestPoint) {
+	AABBTriangleDistanceData triData = MakeTriangleDistanceData(verts, tri);
+	return DistanceSquaredToTriangle(triData, point, outClosestPoint);
+}
+}
 
 AABB::AABB(const Vector3& newMin, const Vector3& newMax) {
 	min = newMin;
@@ -273,35 +414,39 @@ bool AABB::IntersectRay(const Vector3& Origin, const Vector3& Direction, Vector3
 	return true;
 }
 
-bool AABB::IntersectSphere(const Vector3& Origin, const float radius) {
+float AABB::DistanceSquaredToPoint(const Vector3& point) const {
 	float s, d = 0;
 
-	if (Origin.x < min.x) {
-		s = Origin.x - min.x;
+	if (point.x < min.x) {
+		s = point.x - min.x;
 		d += s * s;
 	}
-	else if (Origin.x > max.x) {
-		s = Origin.x - max.x;
+	else if (point.x > max.x) {
+		s = point.x - max.x;
 		d += s * s;
 	}
-	if (Origin.y < min.y) {
-		s = Origin.y - min.y;
+	if (point.y < min.y) {
+		s = point.y - min.y;
 		d += s * s;
 	}
-	else if (Origin.y > max.y) {
-		s = Origin.y - max.y;
+	else if (point.y > max.y) {
+		s = point.y - max.y;
 		d += s * s;
 	}
-	if (Origin.z < min.z) {
-		s = Origin.z - min.z;
+	if (point.z < min.z) {
+		s = point.z - min.z;
 		d += s * s;
 	}
-	else if (Origin.z > max.z) {
-		s = Origin.z - max.z;
+	else if (point.z > max.z) {
+		s = point.z - max.z;
 		d += s * s;
 	}
 
-	return d <= radius * radius;
+	return d;
+}
+
+bool AABB::IntersectSphere(const Vector3& Origin, const float radius) {
+	return DistanceSquaredToPoint(Origin) <= radius * radius;
 }
 
 AABBTree::AABBTreeNode::AABBTreeNode(
@@ -605,6 +750,54 @@ bool AABBTree::AABBTreeNode::IntersectSphere(Vector3& origin, const float radius
 	return Pcollide || Ncollide;
 }
 
+bool AABBTree::AABBTreeNode::ClosestFacetInSphere(Vector3& origin,
+												  const float radiusSquared,
+												  float& bestDistSquared,
+												  uint32_t& facetIndex,
+												  Vector3* closestPoint,
+												  const std::vector<AABBTriangleDistanceData>* triangleDistanceData) {
+	float nodeDistSquared = mBB.DistanceSquaredToPoint(origin);
+	if (nodeDistSquared > radiusSquared || nodeDistSquared > bestDistSquared)
+		return false;
+
+	if (!P && !N) {
+		bool found = false;
+		for (uint32_t i = 0; i < nFacets; i++) {
+			uint32_t f = mIFacets[i];
+			Vector3 candidateClosestPoint;
+			Vector3* candidateClosestPointPtr = closestPoint ? &candidateClosestPoint : nullptr;
+			float distSquared = (triangleDistanceData && f < triangleDistanceData->size())
+				? DistanceSquaredToTriangle((*triangleDistanceData)[f], origin, candidateClosestPointPtr)
+				: DistanceSquaredToTriangle(tree->vertexRef, tree->triRef[f], origin, candidateClosestPointPtr);
+			if (distSquared <= radiusSquared && distSquared <= bestDistSquared) {
+				bestDistSquared = distSquared;
+				facetIndex = f;
+				if (closestPoint)
+					*closestPoint = candidateClosestPoint;
+				found = true;
+			}
+		}
+		return found;
+	}
+
+	AABBTreeNode* first = P.get();
+	AABBTreeNode* second = N.get();
+	float firstDistSquared = first ? first->mBB.DistanceSquaredToPoint(origin) : FLT_MAX;
+	float secondDistSquared = second ? second->mBB.DistanceSquaredToPoint(origin) : FLT_MAX;
+	if (secondDistSquared < firstDistSquared) {
+		std::swap(first, second);
+		std::swap(firstDistSquared, secondDistSquared);
+	}
+
+	bool found = false;
+	if (first && firstDistSquared <= radiusSquared && firstDistSquared <= bestDistSquared)
+		found = first->ClosestFacetInSphere(origin, radiusSquared, bestDistSquared, facetIndex, closestPoint, triangleDistanceData) || found;
+	if (second && secondDistSquared <= radiusSquared && secondDistSquared <= bestDistSquared)
+		found = second->ClosestFacetInSphere(origin, radiusSquared, bestDistSquared, facetIndex, closestPoint, triangleDistanceData) || found;
+
+	return found;
+}
+
 void AABBTree::AABBTreeNode::UpdateAABB(const AABB* childBB) {
 	if (!childBB) {
 		if (nFacets > 0) {
@@ -786,4 +979,26 @@ bool AABBTree::IntersectRay(Vector3& origin, Vector3& direction, std::vector<Int
 
 bool AABBTree::IntersectSphere(Vector3& origin, const float radius, std::vector<IntersectResult>* results) {
 	return root->IntersectSphere(origin, radius, results);
+}
+
+bool AABBTree::ClosestFacetInSphere(Vector3& origin,
+									const float radius,
+									uint32_t& facetIndex,
+									Vector3* closestPoint,
+									const std::vector<AABBTriangleDistanceData>* triangleDistanceData) {
+	if (!root || radius < 0.0f)
+		return false;
+
+	float radiusSquared = radius * radius;
+	float bestDistSquared = radiusSquared;
+	return root->ClosestFacetInSphere(origin, radiusSquared, bestDistSquared, facetIndex, closestPoint, triangleDistanceData);
+}
+
+void AABBTree::BuildTriangleDistanceData(const Vector3* vertices,
+										 const Triangle* facets,
+										 uint32_t nFacets,
+										 std::vector<AABBTriangleDistanceData>& outData) {
+	outData.resize(nFacets);
+	for (uint32_t facetIndex = 0; facetIndex < nFacets; facetIndex++)
+		outData[facetIndex] = MakeTriangleDistanceData(vertices, facets[facetIndex]);
 }

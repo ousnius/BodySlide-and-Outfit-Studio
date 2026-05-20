@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "OutfitProject.h"
+#include "../components/ClippingFixer.h"
 #include "../components/SliderDataFileUtil.h"
 #include "../components/WeightNorm.h"
 #include "../files/FBXWrangler.h"
@@ -21,12 +22,14 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <cfloat>
+#include <limits>
 #include <regex>
 #include <sstream>
 
 extern ConfigurationManager Config;
 
 using namespace nifly;
+
 
 OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 	owner = inOwner;
@@ -1771,6 +1774,7 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 		std::vector<float> wv(nv, 0.0f);
 		AnimSkin& animSkin = workAnim.shapeSkinning[shape->name.get()];
 		MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(shape);
+		bool isSF = workNif.GetHeader().GetVersion().IsSF();
 
 		for (auto& boneNamesIt : animSkin.boneNames) {
 			AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
@@ -1779,6 +1783,10 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 
 				// Compose transform: skin -> (posed) bone -> global -> skin
 				MatTransform transform = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+
+				if (isSF)
+					transform.translation *= sfHavokScale;
+
 				if (transform.IsNearlyEqualTo(MatTransform()))
 					transform.Clear();
 
@@ -3073,6 +3081,204 @@ void OutfitProject::GetConformSliderNames(const ConformOptions& options, std::ve
 	}
 }
 
+namespace {
+struct SavedSliderState {
+	float value = 0.0f;
+	bool show = false;
+};
+
+Vector3 RemoveNeutralClippingCorrection(const Vector3& sliderCorrection, const Vector3& neutralCorrection) {
+	float neutralLenSq = neutralCorrection.length2();
+	if (neutralLenSq <= 1e-12f)
+		return sliderCorrection;
+
+	float neutralShare = sliderCorrection.dot(neutralCorrection) / neutralLenSq;
+	if (neutralShare <= 0.0f)
+		return sliderCorrection;
+
+	return sliderCorrection - neutralCorrection * std::min(1.0f, neutralShare);
+}
+}
+
+bool OutfitProject::BuildClippingCorrectionCache(NiShape* shape, float strength, ClippingCorrectionCache& cache) {
+	cache = ClippingCorrectionCache();
+
+	if (!shape || IsBaseShape(shape) || !baseShape || strength <= 0.0f)
+		return false;
+
+	baseShape->GetTriangles(cache.bodyTris);
+	shape->GetTriangles(cache.outfitTris);
+	if (cache.bodyTris.empty() || cache.outfitTris.empty())
+		return false;
+
+	std::vector<SavedSliderState> savedStates(activeSet.size());
+	for (size_t sliderIndex = 0; sliderIndex < activeSet.size(); sliderIndex++) {
+		savedStates[sliderIndex].value = activeSet[sliderIndex].curValue;
+		savedStates[sliderIndex].show = activeSet[sliderIndex].bShow;
+		activeSet[sliderIndex].curValue = 0.0f;
+		activeSet[sliderIndex].bShow = false;
+	}
+
+	GetLiveVerts(baseShape, cache.neutralBodyVerts);
+	GetLiveVerts(shape, cache.neutralOutfitVerts);
+
+	for (size_t sliderIndex = 0; sliderIndex < activeSet.size(); sliderIndex++) {
+		activeSet[sliderIndex].curValue = savedStates[sliderIndex].value;
+		activeSet[sliderIndex].bShow = savedStates[sliderIndex].show;
+	}
+
+	if (cache.neutralBodyVerts.empty() || cache.neutralOutfitVerts.empty())
+		return false;
+
+	ClippingFixOptions fixOptions;
+	fixOptions.strength = std::max(0.0f, std::min(1.0f, strength));
+
+	cache.fixedNeutralVerts = cache.neutralOutfitVerts;
+	ClippingFixer::FixClipping(cache.neutralBodyVerts, cache.bodyTris, cache.fixedNeutralVerts, cache.outfitTris, fixOptions);
+	cache.valid = true;
+	return true;
+}
+
+void OutfitProject::CalcSliderClippingCorrection(NiShape* shape,
+											 const std::string& sliderName,
+											 float strength,
+											 TargetDataDiffs& outMorphDiffs,
+											 const std::unordered_set<uint16_t>* allowedVerts) {
+	CalcSliderClippingCorrection(shape, sliderName, strength, outMorphDiffs, allowedVerts, nullptr);
+}
+
+void OutfitProject::CalcSliderClippingCorrection(NiShape* shape,
+											 const std::string& sliderName,
+											 float strength,
+											 TargetDataDiffs& outMorphDiffs,
+											 const std::unordered_set<uint16_t>* allowedVerts,
+											 const ClippingCorrectionCache* cache) {
+	outMorphDiffs.clear();
+
+	if (!shape || IsBaseShape(shape) || !baseShape || strength <= 0.0f)
+		return;
+
+	size_t sliderIndex = 0;
+	if (!SliderIndexFromName(sliderName, sliderIndex))
+		return;
+
+	TargetDataDiffs* diffSet = GetDiffSet(activeSet[sliderIndex], shape);
+	if (!diffSet || diffSet->empty())
+		return;
+
+	const ClippingCorrectionCache* validCache = (cache && cache->valid) ? cache : nullptr;
+	std::vector<Triangle> bodyTris;
+	std::vector<Triangle> outfitTris;
+	const std::vector<Triangle>* bodyTrisPtr = nullptr;
+	const std::vector<Triangle>* outfitTrisPtr = nullptr;
+
+	if (validCache) {
+		bodyTrisPtr = &validCache->bodyTris;
+		outfitTrisPtr = &validCache->outfitTris;
+	}
+	else {
+		baseShape->GetTriangles(bodyTris);
+		shape->GetTriangles(outfitTris);
+		bodyTrisPtr = &bodyTris;
+		outfitTrisPtr = &outfitTris;
+	}
+
+	if (bodyTrisPtr->empty() || outfitTrisPtr->empty())
+		return;
+
+	std::vector<SavedSliderState> savedStates(activeSet.size());
+	for (size_t activeSliderIndex = 0; activeSliderIndex < activeSet.size(); activeSliderIndex++) {
+		savedStates[activeSliderIndex].value = activeSet[activeSliderIndex].curValue;
+		savedStates[activeSliderIndex].show = activeSet[activeSliderIndex].bShow;
+		activeSet[activeSliderIndex].curValue = 0.0f;
+		activeSet[activeSliderIndex].bShow = false;
+	}
+
+	std::vector<Vector3> neutralBodyVerts;
+	std::vector<Vector3> neutralOutfitVerts;
+	if (!validCache) {
+		GetLiveVerts(baseShape, neutralBodyVerts);
+		GetLiveVerts(shape, neutralOutfitVerts);
+	}
+
+	activeSet[sliderIndex].curValue = 1.0f;
+	activeSet[sliderIndex].bShow = true;
+
+	std::vector<Vector3> sliderBodyVerts;
+	std::vector<Vector3> sliderOutfitVerts;
+	GetLiveVerts(baseShape, sliderBodyVerts);
+	GetLiveVerts(shape, sliderOutfitVerts);
+
+	for (size_t activeSliderIndex = 0; activeSliderIndex < activeSet.size(); activeSliderIndex++) {
+		activeSet[activeSliderIndex].curValue = savedStates[activeSliderIndex].value;
+		activeSet[activeSliderIndex].bShow = savedStates[activeSliderIndex].show;
+	}
+
+	const std::vector<Vector3>* neutralBodyVertsPtr = validCache ? &validCache->neutralBodyVerts : &neutralBodyVerts;
+	const std::vector<Vector3>* neutralOutfitVertsPtr = validCache ? &validCache->neutralOutfitVerts : &neutralOutfitVerts;
+	if (neutralBodyVertsPtr->empty() || neutralOutfitVertsPtr->empty() || sliderBodyVerts.empty() || sliderOutfitVerts.empty())
+		return;
+
+	ClippingFixOptions fixOptions;
+	fixOptions.strength = std::max(0.0f, std::min(1.0f, strength));
+
+	std::vector<Vector3> fixedNeutralVerts;
+	const std::vector<Vector3>* fixedNeutralVertsPtr = nullptr;
+	if (validCache) {
+		fixedNeutralVertsPtr = &validCache->fixedNeutralVerts;
+	}
+	else {
+		fixedNeutralVerts = *neutralOutfitVertsPtr;
+		ClippingFixer::FixClipping(*neutralBodyVertsPtr, *bodyTrisPtr, fixedNeutralVerts, *outfitTrisPtr, fixOptions);
+		fixedNeutralVertsPtr = &fixedNeutralVerts;
+	}
+
+	std::vector<Vector3> fixedSliderVerts = sliderOutfitVerts;
+	ClippingFixer::FixClipping(sliderBodyVerts, *bodyTrisPtr, fixedSliderVerts, *outfitTrisPtr, fixOptions);
+
+	size_t vertCount = std::min(neutralOutfitVertsPtr->size(), std::min(fixedNeutralVertsPtr->size(), std::min(sliderOutfitVerts.size(), fixedSliderVerts.size())));
+	constexpr size_t maxTargetDataVertexCount = static_cast<size_t>(std::numeric_limits<uint16_t>::max()) + 1;
+	if (vertCount > maxTargetDataVertexCount) {
+		wxLogWarning("Clipping correction for shape '%s' slider '%s' is limited to vertices 0-%u because slider diffs use 16-bit vertex indices.",
+					 shape->name.get(), sliderName.c_str(), static_cast<unsigned int>(std::numeric_limits<uint16_t>::max()));
+	}
+
+	auto addCorrection = [&](uint16_t vertIndex) {
+		if (diffSet->find(vertIndex) == diffSet->end())
+			return;
+
+		if (allowedVerts && allowedVerts->find(vertIndex) == allowedVerts->end())
+			return;
+
+		if (vertIndex >= vertCount)
+			return;
+
+		Vector3 neutralCorrection = (*fixedNeutralVertsPtr)[vertIndex] - (*neutralOutfitVertsPtr)[vertIndex];
+		Vector3 sliderCorrection = fixedSliderVerts[vertIndex] - sliderOutfitVerts[vertIndex];
+		Vector3 nifDiff = RemoveNeutralClippingCorrection(sliderCorrection, neutralCorrection);
+		if (nifDiff.IsZero(true))
+			return;
+
+		outMorphDiffs[vertIndex] = Mesh::TransformDiffNifToMesh(nifDiff);
+	};
+
+	if (allowedVerts && allowedVerts->size() < diffSet->size()) {
+		for (uint16_t vertIndex : *allowedVerts)
+			addCorrection(vertIndex);
+	}
+	else {
+		for (auto& diffEntry : *diffSet)
+			addCorrection(diffEntry.first);
+	}
+}
+
+void OutfitProject::ApplyClippingFixToConformedSlider(NiShape* shape, const std::string& sliderName, float strength) {
+	TargetDataDiffs morphDiffs;
+	CalcSliderClippingCorrection(shape, sliderName, strength, morphDiffs);
+	if (!morphDiffs.empty())
+		UpdateMorphResult(shape, sliderName, morphDiffs);
+}
+
 void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) {
 	if (!workNif.IsValid() || !baseShape)
 		return;
@@ -3105,10 +3311,16 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 			skippedByFilter = 0;
 	}
 
+	ClippingCorrectionCache clippingCache;
+	bool clippingCacheAttempted = false;
+
 	for (const auto& sliderName : conformSliderNames) {
+		std::string refDataName = activeSet[sliderName].TargetDataName(refTarget);
+		bool hasReferenceDiff = !refDataName.empty() && baseDiffData.GetDiffSet(refDataName);
+
 		morpher.GenerateResultDiff(shape->name.get(),
 									   sliderName,
-									   activeSet[sliderName].TargetDataName(refTarget),
+									   refDataName,
 									   true,
 									   options.maxResults,
 									   options.noSqueeze,
@@ -3120,6 +3332,22 @@ void OutfitProject::ConformShape(NiShape* shape, const ConformOptions& options) 
 		if (options.smoothResultDeltas)
 			morpher.SmoothResultDiff(shape->name.get(), sliderName, resultTarget, options.smoothIterations, options.smoothStrength);
 		EnsureSliderDataLocal(sliderName, shape);
+		if (options.fixClipping && hasReferenceDiff && morpher.GetResultDiffSize(resultTarget, sliderName) > 0) {
+			if (!clippingCacheAttempted) {
+				clippingCacheAttempted = true;
+				BuildClippingCorrectionCache(shape, options.fixClippingStrength, clippingCache);
+			}
+
+			if (clippingCache.valid) {
+				TargetDataDiffs morphDiffs;
+				CalcSliderClippingCorrection(shape, sliderName, options.fixClippingStrength, morphDiffs, nullptr, &clippingCache);
+				if (!morphDiffs.empty())
+					UpdateMorphResult(shape, sliderName, morphDiffs);
+			}
+			else {
+				ApplyClippingFixToConformedSlider(shape, sliderName, options.fixClippingStrength);
+			}
+		}
 	}
 
 	if (!options.sliderNames.empty())
@@ -6899,6 +7127,7 @@ void OutfitProject::GetAllPoseTransforms(NiShape* s, std::vector<MatTransform>& 
 
 	AnimSkin& animSkin = workAnim.shapeSkinning[s->name.get()];
 	MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(s);
+	bool isSF = workNif.GetHeader().GetVersion().IsSF();
 
 	for (auto& boneNamesIt : animSkin.boneNames) {
 		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
@@ -6907,6 +7136,9 @@ void OutfitProject::GetAllPoseTransforms(NiShape* s, std::vector<MatTransform>& 
 		AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
 		// Compose transform: skin -> (posed) bone -> global -> skin
 		MatTransform t = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
+
+		if (isSF)
+			t.translation *= sfHavokScale;
 		// Add weighted contributions to vertex transforms for this bone
 		for (auto& wIt : animW.weights) {
 			int vi = wIt.first;

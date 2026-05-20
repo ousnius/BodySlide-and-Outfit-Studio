@@ -19,6 +19,7 @@ See the included LICENSE file
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <wx/arrstr.h>
@@ -35,6 +36,8 @@ struct ConformOptions {
 	bool axisX = true;
 	bool axisY = true;
 	bool axisZ = true;
+	bool fixClipping = false;
+	float fixClippingStrength = 0.5f;
 	std::vector<std::string> sliderNames; // If empty, conform all non-zap/non-UV sliders
 };
 
@@ -160,6 +163,22 @@ class OutfitProject {
 	// Applies the inverse of the blended pose transform to a NIF-space diff
 	// vector for a single vertex, converting it from posed space to rest space.
 	nifly::Vector3 InversePoseDiff(int vertIndex, const nifly::Vector3& diffNif, AnimSkin& animSkin, const nifly::MatTransform& globalToSkin);
+	struct ClippingCorrectionCache {
+		std::vector<nifly::Triangle> bodyTris;
+		std::vector<nifly::Triangle> outfitTris;
+		std::vector<nifly::Vector3> neutralBodyVerts;
+		std::vector<nifly::Vector3> neutralOutfitVerts;
+		std::vector<nifly::Vector3> fixedNeutralVerts;
+		bool valid = false;
+	};
+	bool BuildClippingCorrectionCache(nifly::NiShape* shape, float strength, ClippingCorrectionCache& cache);
+	void CalcSliderClippingCorrection(nifly::NiShape* shape,
+									  const std::string& sliderName,
+									  float strength,
+									  TargetDataDiffs& outMorphDiffs,
+									  const std::unordered_set<uint16_t>* allowedVerts,
+									  const ClippingCorrectionCache* cache);
+	void ApplyClippingFixToConformedSlider(nifly::NiShape* shape, const std::string& sliderName, float strength);
 
 public:
 	std::string outfitName = "New Outfit";
@@ -292,6 +311,11 @@ public:
 	void InitConform();
 	void GetConformSliderNames(const ConformOptions& options, std::vector<std::string>& outSliderNames);
 	void ConformShape(nifly::NiShape* shape, const ConformOptions& options = ConformOptions());
+	void CalcSliderClippingCorrection(nifly::NiShape* shape,
+									  const std::string& sliderName,
+									  float strength,
+									  TargetDataDiffs& outMorphDiffs,
+									  const std::unordered_set<uint16_t>* allowedVerts = nullptr);
 
 	const std::string& ShapeToTarget(const std::string& shapeName);
 	const std::string& TargetToShape(const std::string& targetName);

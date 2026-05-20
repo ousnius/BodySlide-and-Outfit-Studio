@@ -1287,6 +1287,10 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			SetCheckboxValue("chkConformAxisX", step.conformAxisX);
 			SetCheckboxValue("chkConformAxisY", step.conformAxisY);
 			SetCheckboxValue("chkConformAxisZ", step.conformAxisZ);
+			SetCheckboxValue("chkConformFixClipping", step.conformFixClipping);
+			txt = XRCCTRL(*this, "txtConformFixClipStrength", wxTextCtrl);
+			if (txt)
+				txt->SetValue(wxString::Format("%d", static_cast<int>(step.conformFixClippingStrength * 100)));
 			SetVectorValue("txtConformSliderNames", step.conformSliderNames);
 			break;
 		}
@@ -1648,6 +1652,8 @@ void AutomationDialog::UpdateStepFromUI() {
 			step.conformAxisX = GetCheckboxValue("chkConformAxisX");
 			step.conformAxisY = GetCheckboxValue("chkConformAxisY");
 			step.conformAxisZ = GetCheckboxValue("chkConformAxisZ");
+			step.conformFixClipping = GetCheckboxValue("chkConformFixClipping");
+			step.conformFixClippingStrength = GetFloatValue("txtConformFixClipStrength") / 100.0f;
 			step.conformSliderNames = GetVectorValue("txtConformSliderNames");
 			break;
 		}

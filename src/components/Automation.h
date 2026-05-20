@@ -150,6 +150,8 @@ struct AutomationStep {
 	bool conformAxisX = true;
 	bool conformAxisY = true;
 	bool conformAxisZ = true;
+	bool conformFixClipping = false;
+	float conformFixClippingStrength = 0.5f;
 	std::vector<std::string> conformSliderNames;
 
 	// CopyBoneWeights params
