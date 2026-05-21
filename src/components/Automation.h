@@ -33,6 +33,7 @@ enum class AutomationStepType {
 	ApplyPose,
 	DeleteShape,
 	DuplicateShape,
+	ChangePartitions,
 	FixBadBones,
 	FixClipping,
 	InvertUVs,
@@ -55,7 +56,7 @@ enum class AutomationStepType {
 	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 38;
+constexpr int AutomationStepTypeCount = 39;
 static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -241,6 +242,10 @@ struct AutomationStep {
 
 	// DuplicateShape params
 	std::string dupNewName;
+
+	// ChangePartitions params
+	std::string partitionSource;
+	std::string partitionDestination;
 
 	// MirrorShape params
 	bool mirrorX = true;

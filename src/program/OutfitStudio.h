@@ -1086,6 +1086,7 @@ public:
 	bool PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const nifly::Vector3& hitPointModel, float radiusModel);
 
 	void ShowPartition(const wxTreeItemId& item = nullptr);
+	void RefreshActivePartitionTree();
 	void UpdatePartitionNames();
 	void ApplyPartitionVisibility(Mesh* m);
 	void ResetPartitionVisibility();
