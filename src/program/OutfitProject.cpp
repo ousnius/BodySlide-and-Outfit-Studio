@@ -2289,7 +2289,15 @@ void OutfitProject::CopyBoneWeights(NiShape* shape,
 
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
-	morpher.BuildProximityCache(shapeName, proximityRadius);
+
+	std::unordered_map<uint16_t, float> refMask;
+	owner->glView->GetShapeMask(refMask, baseShapeName);
+
+	std::set<uint16_t> refMaskIndices;
+	for (auto& m : refMask)
+		refMaskIndices.insert(m.first);
+
+	morpher.BuildProximityCache(shapeName, proximityRadius, refMaskIndices.empty() ? nullptr : &refMaskIndices);
 	CreateSkinning(shape);
 
 	int step = 40 / nCopyBones;
