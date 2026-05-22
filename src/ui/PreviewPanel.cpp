@@ -71,7 +71,13 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
 	// Pop-out button (placed in uiPanel, below Lock Shape)
-	popoutButton = new wxBitmapButton(uiPanel, wxID_ANY, wxArtProvider::GetBitmap(wxART_NEW_DIR, wxART_BUTTON, FromDIP(wxSize(16, 16))));
+	popoutButton = new wxBitmapButton(
+		uiPanel,
+		wxID_ANY,
+		wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/PopOut.png", wxBITMAP_TYPE_PNG),
+		wxDefaultPosition,
+		FromDIP(wxSize(28, 28)));
+	popoutButton->SetMinSize(FromDIP(wxSize(28, 28)));
 	popoutButton->SetToolTip(_("Pop out preview into a separate window"));
 	popoutButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnPopout, this);
 
