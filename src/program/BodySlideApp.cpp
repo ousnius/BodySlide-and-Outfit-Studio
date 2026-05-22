@@ -3612,7 +3612,7 @@ int BodySlideApp::ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* tr
 			std::string baseGamePath = Config["GameDataPath"];
 			preview->SetBaseDataPath(baseGamePath);
 			preview->SetReadOnlyMode(true);
-			preview->SetProjectData(entries, false);
+			preview->SetProjectData(entries, false, BodySlideConfig["SelectedPreset"]);
 		});
 	}
 

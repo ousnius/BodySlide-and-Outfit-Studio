@@ -266,9 +266,10 @@ void PreviewPanel::LoadNifFiles(const std::vector<std::string>& nifFilePaths) {
 	}
 }
 
-void PreviewPanel::SetProjectData(const std::vector<PreviewProjectEntry>& entries, bool loadAll) {
+void PreviewPanel::SetProjectData(const std::vector<PreviewProjectEntry>& entries, bool loadAll, const std::string& initialPreset) {
 	projectEntries = entries;
 	loadAllProjects = loadAll;
+	initialPresetName = initialPreset;
 
 	if (!loadAll && projectChoice) {
 		projectChoice->Clear();
@@ -304,7 +305,7 @@ void PreviewPanel::LoadProjects(const std::vector<PreviewProjectEntry>& entries)
 	app->LoadPresets(entries[0].setName);
 
 	if (presetChoice) {
-		wxString previousPreset = presetChoice->GetStringSelection();
+		wxString previousPreset = initialPresetName.empty() ? presetChoice->GetStringSelection() : wxString::FromUTF8(initialPresetName);
 		presetChoice->Clear();
 
 		std::vector<std::string> presetNames;
@@ -323,6 +324,7 @@ void PreviewPanel::LoadProjects(const std::vector<PreviewProjectEntry>& entries)
 			presetLabel->Show();
 
 			app->InitializeSliders(presetNames[idx]);
+			initialPresetName.clear();
 		}
 		else {
 			presetChoice->Hide();
