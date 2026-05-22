@@ -282,7 +282,10 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/components/TweakBrush.cpp
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
+	src/components/UniversalModel.cpp
+	src/components/ImageScanner.cpp
 	src/files/FBXWrangler.cpp
+	src/files/GLTFHandler.cpp
 	src/files/HkxFile.cpp
 	src/files/MaskFile.cpp
 	src/files/ObjFile.cpp
@@ -418,4 +421,28 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 else()
 	set_target_properties(OutfitStudio PROPERTIES OUTPUT_NAME "OutfitStudio")
 	set_target_properties(BodySlide PROPERTIES OUTPUT_NAME "BodySlide")
+endif()
+
+# Universal Model Unit Tests
+option(BSOS_BUILD_TESTS "Build universal model unit tests" ON)
+if(BSOS_BUILD_TESTS)
+	find_library(NIFLY_LIBRARY nifly PATHS ${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly HINTS ${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly)
+	if(NIFLY_LIBRARY)
+		add_executable(TestUniversalModel tests/universal_model/TestUniversalModel.cpp)
+		target_include_directories(TestUniversalModel PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}/src
+			${CMAKE_CURRENT_SOURCE_DIR}/src/components
+			${CMAKE_CURRENT_SOURCE_DIR}/lib
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/gli
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
+			${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
+		)
+		target_link_libraries(TestUniversalModel PRIVATE ${NIFLY_LIBRARY} pthread)
+		target_compile_options(TestUniversalModel PRIVATE -Wall -std=c++17)
+	else()
+		message(WARNING "nifly library not found, skipping TestUniversalModel")
+	endif()
 endif()
