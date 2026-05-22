@@ -136,6 +136,7 @@
 															<item>Shapes: Apply Pose</item>
 															<item>Shapes: Delete Shape</item>
 															<item>Shapes: Duplicate Shape</item>
+															<item>Shapes: Change Partitions</item>
 															<item>Shapes: Fix Bad Bones</item>
 															<item>Shapes: Fix Clipping</item>
 															<item>Shapes: Invert UVs</item>
@@ -1501,6 +1502,55 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 											</object>
 										</object>
 
+										<!-- ChangePartitions -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageChangePartitions">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Change Partitions</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Source Partition:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choicePartitionSource">
+																	<tooltip>Source partition type to change from.</tooltip>
+																	<content />
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Destination Partition:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choicePartitionDestination">
+																	<tooltip>Destination partition type to assign to.</tooltip>
+																	<content />
+																</object>
+															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
 										<!-- FixBadBones -->
 										<object class="simplebookpage">
 											<object class="wxPanel" name="pageFixBadBones">
@@ -2217,6 +2267,34 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																			<checked>1</checked>
 																		</object>
 																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Fix Clipping:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkConformFixClipping">
+																	<tooltip>Run clipping fix on each conformed shape/slider delta immediately after conforming it.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Clipping Strength:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtConformFixClipStrength">
+																	<value translate="0">50</value>
+																	<hint translate="0">50</hint>
+																	<tooltip>Strength percentage for conform-time clipping fix.</tooltip>
 																</object>
 															</object>
 

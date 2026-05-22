@@ -509,6 +509,29 @@ BSShaderTextureSet* GetOrCreateBSShaderTextureSet(NifFile* nif, NiShape* shape) 
 
 	return textureSet;
 }
+
+bool ParseAutomationPartitionID(const std::string& value, int& partitionID) {
+	std::string trimmedValue = TrimString(value);
+	if (trimmedValue.empty())
+		return false;
+
+	std::smatch match;
+	static const std::regex partitionChoicePattern("^([0-9]+)\\s+.+$");
+	if (!std::regex_match(trimmedValue, match, partitionChoicePattern))
+		return false;
+
+	try {
+		long parsedValue = std::stol(match[1].str());
+		if (parsedValue < std::numeric_limits<int>::min() || parsedValue > std::numeric_limits<int>::max())
+			return false;
+
+		partitionID = static_cast<int>(parsedValue);
+		return true;
+	}
+	catch (...) {
+		return false;
+	}
+}
 }
 
 bool AutomationDialog::StepChangesSliderSet(AutomationStepType type) {
@@ -646,7 +669,7 @@ int AutomationDialog::ExecuteStepAddProject(const AutomationStep& step) {
 	wxString refSourceFile = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile));
 	std::string refSourceFileStd = refSourceFile.ToUTF8().data();
 	wxLogMessage("Automation: Adding project from '%s' (set: '%s')...", refSourceFile, step.refSet);
-	int err = project->AddFromSliderSet(refSourceFileStd, step.refSet, true, step.refAppendNewSliders);
+	int err = project->AddFromSliderSet(refSourceFileStd, step.refSet, false, step.refAppendNewSliders);
 	if (err) {
 		wxLogError("Automation: AddProject failed with error %d.", err);
 		return err;
@@ -700,6 +723,8 @@ int AutomationDialog::ExecuteStepConformSliders(const AutomationStep& step) {
 	options.axisX = step.conformAxisX;
 	options.axisY = step.conformAxisY;
 	options.axisZ = step.conformAxisZ;
+	options.fixClipping = step.conformFixClipping;
+	options.fixClippingStrength = std::max(0.0f, std::min(1.0f, step.conformFixClippingStrength));
 	options.sliderNames = step.conformSliderNames;
 
 	if (options.sliderNames.empty()) {
@@ -1720,6 +1745,131 @@ int AutomationDialog::ExecuteStepDuplicateShape(const AutomationStep& step) {
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepChangePartitions(const AutomationStep& step) {
+	int sourcePartitionID = 0;
+	int destinationPartitionID = 0;
+	if (!ParseAutomationPartitionID(step.partitionSource, sourcePartitionID)) {
+		wxLogError("Automation: ChangePartitions - invalid source partition '%s'.", step.partitionSource);
+		return 1;
+	}
+
+	if (!ParseAutomationPartitionID(step.partitionDestination, destinationPartitionID)) {
+		wxLogError("Automation: ChangePartitions - invalid destination partition '%s'.", step.partitionDestination);
+		return 1;
+	}
+
+	if (sourcePartitionID == destinationPartitionID) {
+		wxLogWarning("Automation: ChangePartitions - source and destination partitions are both %d; nothing to do.", sourcePartitionID);
+		return 0;
+	}
+
+	NifFile* workNif = project->GetWorkNif();
+	if (!workNif) {
+		wxLogError("Automation: ChangePartitions - no work NIF loaded.");
+		return 1;
+	}
+
+	auto targetShapes = ResolveTargetShapes(step);
+	if (targetShapes.empty()) {
+		wxLogWarning("Automation: ChangePartitions - no target shapes found.");
+		return 0;
+	}
+
+	int updatedShapes = 0;
+	int affectedTriangles = 0;
+	int skippedShapes = 0;
+	NiShape* activeShape = outfitStudio->activeItem ? outfitStudio->activeItem->GetShape() : nullptr;
+	bool activeShapeUpdated = false;
+
+	for (auto* shape : targetShapes) {
+		NiVector<BSDismemberSkinInstance::PartitionInfo> partitionInfo;
+		std::vector<int> trianglePartitions;
+		if (!workNif->GetShapePartitions(shape, partitionInfo, trianglePartitions)) {
+			wxLogWarning("Automation: ChangePartitions - shape '%s' has no partitions; skipping.", shape->name.get());
+			skippedShapes++;
+			continue;
+		}
+
+		std::vector<int> sourcePartitionIndices;
+		int destinationPartitionIndex = -1;
+		for (size_t partitionIndex = 0; partitionIndex < partitionInfo.size(); partitionIndex++) {
+			int bodyPartID = partitionInfo[partitionIndex].partID;
+			if (bodyPartID == sourcePartitionID)
+				sourcePartitionIndices.push_back(static_cast<int>(partitionIndex));
+			else if (bodyPartID == destinationPartitionID && destinationPartitionIndex < 0)
+				destinationPartitionIndex = static_cast<int>(partitionIndex);
+		}
+
+		if (sourcePartitionIndices.empty()) {
+			wxLogWarning("Automation: ChangePartitions - shape '%s' has no partition %d; skipping.", shape->name.get(), sourcePartitionID);
+			skippedShapes++;
+			continue;
+		}
+
+		auto isSourcePartitionIndex = [&sourcePartitionIndices](int partitionIndex) {
+			return std::find(sourcePartitionIndices.begin(), sourcePartitionIndices.end(), partitionIndex) != sourcePartitionIndices.end();
+		};
+
+		int shapeAffectedTriangles = 0;
+		for (int partitionIndex : trianglePartitions) {
+			if (isSourcePartitionIndex(partitionIndex))
+				shapeAffectedTriangles++;
+		}
+
+		bool changed = false;
+		if (destinationPartitionIndex < 0) {
+			destinationPartitionIndex = sourcePartitionIndices.front();
+			partitionInfo[destinationPartitionIndex].partID = destinationPartitionID;
+			changed = true;
+		}
+
+		for (int sourcePartitionIndex : sourcePartitionIndices) {
+			if (sourcePartitionIndex == destinationPartitionIndex)
+				continue;
+
+			changed = true;
+			for (int& trianglePartition : trianglePartitions) {
+				if (trianglePartition == sourcePartitionIndex)
+					trianglePartition = destinationPartitionIndex;
+			}
+		}
+
+		if (!changed)
+			continue;
+
+		workNif->SetShapePartitions(shape, partitionInfo, trianglePartitions);
+		workNif->RemoveEmptyPartitions(shape);
+		outfitStudio->MeshFromProj(shape, true);
+		if (shape == activeShape)
+			activeShapeUpdated = true;
+
+		updatedShapes++;
+		affectedTriangles += shapeAffectedTriangles;
+		wxLogMessage("Automation: ChangePartitions - changed %d triangle(s) on '%s' from partition %d to %d.",
+			shapeAffectedTriangles,
+			shape->name.get(),
+			sourcePartitionID,
+			destinationPartitionID);
+	}
+
+	if (updatedShapes > 0) {
+		if (activeShapeUpdated && outfitStudio->activeItem && outfitStudio->activeItem->GetShape() == activeShape)
+			outfitStudio->RefreshActivePartitionTree();
+
+		outfitStudio->SetPendingChanges();
+		outfitStudio->glView->Render();
+		wxLogMessage("Automation: ChangePartitions - updated %d shape(s), changed %d triangle assignment(s), skipped %d shape(s).",
+			updatedShapes,
+			affectedTriangles,
+			skippedShapes);
+	}
+	else {
+		wxLogWarning("Automation: ChangePartitions - no matching partition assignments were changed.");
+	}
+
+	return 0;
+}
+
 int AutomationDialog::ExecuteStepMirrorShape(const AutomationStep& step) {
 	if (!step.mirrorX && !step.mirrorY && !step.mirrorZ) {
 		wxLogWarning("Automation: MirrorShape - no mirror axis selected.");
@@ -2401,12 +2551,6 @@ int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
 			outfitStudio->SetSliderValue(si, 100);
 			outfitStudio->ApplySliders();
 
-			// Get live body verts (base + this slider at 100%)
-			std::vector<nifly::Vector3> bodyVerts;
-			std::vector<nifly::Triangle> bodyTris;
-			project->GetLiveVerts(refShape, bodyVerts);
-			refShape->GetTriangles(bodyTris);
-
 			for (auto* shape : shapes) {
 				if (project->IsBaseShape(shape))
 					continue;
@@ -2416,26 +2560,8 @@ int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
 				if (!diffSet || diffSet->empty())
 					continue;
 
-				// Get live outfit verts (base + this slider morph at 100%)
-				std::vector<nifly::Vector3> outfitVerts;
-				project->GetLiveVerts(shape, outfitVerts);
-
-				std::vector<nifly::Triangle> outfitTris;
-				shape->GetTriangles(outfitTris);
-
-				std::vector<nifly::Vector3> fixedVerts = outfitVerts;
-				ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
-
-				// Compute mesh-space morph diffs, only for vertices already in the slider's diff set
 				TargetDataDiffs morphDiffs;
-				for (size_t i = 0; i < outfitVerts.size(); i++) {
-					if (diffSet->find(static_cast<uint16_t>(i)) == diffSet->end())
-						continue;
-					nifly::Vector3 nifDiff = fixedVerts[i] - outfitVerts[i];
-					if (nifDiff.IsZero(true))
-						continue;
-					morphDiffs[static_cast<uint16_t>(i)] = Mesh::TransformDiffNifToMesh(nifDiff);
-				}
+				project->CalcSliderClippingCorrection(shape, sliderName, options.strength, morphDiffs);
 
 				if (!morphDiffs.empty()) {
 					wxLogMessage("Automation: FixClipping - updated %zu vertices for '%s' slider '%s'.",
@@ -2491,6 +2617,7 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::SetReferenceShape: return ExecuteStepSetReferenceShape(step);
 		case AutomationStepType::ResetTransforms: return ExecuteStepResetTransforms(step);
 		case AutomationStepType::DuplicateShape: return ExecuteStepDuplicateShape(step);
+		case AutomationStepType::ChangePartitions: return ExecuteStepChangePartitions(step);
 		case AutomationStepType::MirrorShape: return ExecuteStepMirrorShape(step);
 		case AutomationStepType::ClearMask: return ExecuteStepClearMask(step);
 		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);

@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "OutfitProject.h"
 #include "OutfitStudio.h"
+#include "PartitionTypeChoices.h"
 
 #include "../files/MaskFile.h"
 
@@ -234,6 +235,21 @@ int FindChoiceByClientValue(wxChoice* choice, const std::string& value) {
 	return wxNOT_FOUND;
 }
 
+void SetChoiceSelectionString(wxChoice* choice, const std::string& value) {
+	if (!choice)
+		return;
+
+	if (value.empty() || !choice->SetStringSelection(wxString::FromUTF8(value)))
+		choice->SetSelection(wxNOT_FOUND);
+}
+
+std::string GetChoiceSelectionString(wxChoice* choice) {
+	if (!choice || choice->GetSelection() == wxNOT_FOUND)
+		return "";
+
+	return choice->GetStringSelection().ToUTF8().data();
+}
+
 bool StepTargetsRootOnEmpty(AutomationStepType type) {
 	return type == AutomationStepType::SetExtraData || type == AutomationStepType::DeleteExtraData;
 }
@@ -319,6 +335,9 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	btnSaveScript = XRCCTRL(*this, "btnSaveScript", wxButton);
 	btnExecuteAll = XRCCTRL(*this, "btnExecuteAll", wxButton);
 	btnClose = dynamic_cast<wxButton*>(FindWindow(wxID_CLOSE));
+
+	PartitionTypeChoices::Populate(XRCCTRL(*this, "choicePartitionSource", wxChoice));
+	PartitionTypeChoices::Populate(XRCCTRL(*this, "choicePartitionDestination", wxChoice));
 
 	listSteps->InsertColumn(0, _("Active"), wxLIST_FORMAT_CENTER, 65);
 	listSteps->InsertColumn(1, _("Type"), wxLIST_FORMAT_LEFT, 165);
@@ -1287,6 +1306,10 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			SetCheckboxValue("chkConformAxisX", step.conformAxisX);
 			SetCheckboxValue("chkConformAxisY", step.conformAxisY);
 			SetCheckboxValue("chkConformAxisZ", step.conformAxisZ);
+			SetCheckboxValue("chkConformFixClipping", step.conformFixClipping);
+			txt = XRCCTRL(*this, "txtConformFixClipStrength", wxTextCtrl);
+			if (txt)
+				txt->SetValue(wxString::Format("%d", static_cast<int>(step.conformFixClippingStrength * 100)));
 			SetVectorValue("txtConformSliderNames", step.conformSliderNames);
 			break;
 		}
@@ -1526,6 +1549,12 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			break;
 		}
 
+		case AutomationStepType::ChangePartitions: {
+			SetChoiceSelectionString(XRCCTRL(*this, "choicePartitionSource", wxChoice), step.partitionSource);
+			SetChoiceSelectionString(XRCCTRL(*this, "choicePartitionDestination", wxChoice), step.partitionDestination);
+			break;
+		}
+
 		case AutomationStepType::MirrorShape: {
 			SetCheckboxValue("chkMirrorX", step.mirrorX);
 			SetCheckboxValue("chkMirrorY", step.mirrorY);
@@ -1648,6 +1677,8 @@ void AutomationDialog::UpdateStepFromUI() {
 			step.conformAxisX = GetCheckboxValue("chkConformAxisX");
 			step.conformAxisY = GetCheckboxValue("chkConformAxisY");
 			step.conformAxisZ = GetCheckboxValue("chkConformAxisZ");
+			step.conformFixClipping = GetCheckboxValue("chkConformFixClipping");
+			step.conformFixClippingStrength = GetFloatValue("txtConformFixClipStrength") / 100.0f;
 			step.conformSliderNames = GetVectorValue("txtConformSliderNames");
 			break;
 		}
@@ -1885,6 +1916,12 @@ void AutomationDialog::UpdateStepFromUI() {
 
 		case AutomationStepType::DuplicateShape: {
 			step.dupNewName = GetTextValue("txtDupNewName");
+			break;
+		}
+
+		case AutomationStepType::ChangePartitions: {
+			step.partitionSource = GetChoiceSelectionString(XRCCTRL(*this, "choicePartitionSource", wxChoice));
+			step.partitionDestination = GetChoiceSelectionString(XRCCTRL(*this, "choicePartitionDestination", wxChoice));
 			break;
 		}
 

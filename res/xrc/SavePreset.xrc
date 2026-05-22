@@ -54,6 +54,16 @@
 				</object>
 			</object>
 			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticText" name="spGroupHelp">
+					<fg>#505050</fg>
+					<label>A preset appears for outfits in any selected group. If an outfit is added to a group, presets must share that group to appear.</label>
+					<wrap>430</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
 				<option>1</option>
 				<flag>wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</flag>
 				<border>5</border>

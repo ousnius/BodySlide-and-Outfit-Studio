@@ -45,6 +45,7 @@ else()
 endif()
 
 find_package(OpenGL REQUIRED)
+find_package(Threads REQUIRED)
 if(UNIX AND NOT APPLE)
 	find_package(GLEW REQUIRED)
 endif()
@@ -365,6 +366,7 @@ function(bsos_configure_target target)
 		${BSOS_WX_LIBRARIES}
 		${BSOS_OPENGL_LIBRARIES}
 		${BSOS_GLEW_LIBRARY}
+		Threads::Threads
 	)
 
 	if(MSVC)

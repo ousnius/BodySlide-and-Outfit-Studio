@@ -218,6 +218,7 @@ private:
 	int ExecuteStepSetReferenceShape(const AutomationStep& step);
 	int ExecuteStepResetTransforms(const AutomationStep& step);
 	int ExecuteStepDuplicateShape(const AutomationStep& step);
+	int ExecuteStepChangePartitions(const AutomationStep& step);
 	int ExecuteStepMirrorShape(const AutomationStep& step);
 	int ExecuteStepLoadMask(const AutomationStep& step);
 	int ExecuteStepClearMask(const AutomationStep& step);

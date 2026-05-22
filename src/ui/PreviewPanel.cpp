@@ -71,7 +71,13 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
 	// Pop-out button (placed in uiPanel, below Lock Shape)
-	popoutButton = new wxBitmapButton(uiPanel, wxID_ANY, wxArtProvider::GetBitmap(wxART_NEW_DIR, wxART_BUTTON, FromDIP(wxSize(16, 16))));
+	popoutButton = new wxBitmapButton(
+		uiPanel,
+		wxID_ANY,
+		wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/PopOut.png", wxBITMAP_TYPE_PNG),
+		wxDefaultPosition,
+		FromDIP(wxSize(28, 28)));
+	popoutButton->SetMinSize(FromDIP(wxSize(28, 28)));
 	popoutButton->SetToolTip(_("Pop out preview into a separate window"));
 	popoutButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnPopout, this);
 
@@ -266,9 +272,10 @@ void PreviewPanel::LoadNifFiles(const std::vector<std::string>& nifFilePaths) {
 	}
 }
 
-void PreviewPanel::SetProjectData(const std::vector<PreviewProjectEntry>& entries, bool loadAll) {
+void PreviewPanel::SetProjectData(const std::vector<PreviewProjectEntry>& entries, bool loadAll, const std::string& initialPreset) {
 	projectEntries = entries;
 	loadAllProjects = loadAll;
+	initialPresetName = initialPreset;
 
 	if (!loadAll && projectChoice) {
 		projectChoice->Clear();
@@ -304,7 +311,7 @@ void PreviewPanel::LoadProjects(const std::vector<PreviewProjectEntry>& entries)
 	app->LoadPresets(entries[0].setName);
 
 	if (presetChoice) {
-		wxString previousPreset = presetChoice->GetStringSelection();
+		wxString previousPreset = initialPresetName.empty() ? presetChoice->GetStringSelection() : wxString::FromUTF8(initialPresetName);
 		presetChoice->Clear();
 
 		std::vector<std::string> presetNames;
@@ -323,6 +330,7 @@ void PreviewPanel::LoadProjects(const std::vector<PreviewProjectEntry>& entries)
 			presetLabel->Show();
 
 			app->InitializeSliders(presetNames[idx]);
+			initialPresetName.clear();
 		}
 		else {
 			presetChoice->Hide();

@@ -33,6 +33,7 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::ApplyPose: return "ApplyPose";
 		case AutomationStepType::DeleteShape: return "DeleteShape";
 		case AutomationStepType::DuplicateShape: return "DuplicateShape";
+		case AutomationStepType::ChangePartitions: return "ChangePartitions";
 		case AutomationStepType::InvertUVs: return "InvertUVs";
 		case AutomationStepType::MirrorShape: return "MirrorShape";
 		case AutomationStepType::RefineMesh: return "RefineMesh";
@@ -76,6 +77,7 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "ApplyPose") return AutomationStepType::ApplyPose;
 	if (str == "DeleteShape") return AutomationStepType::DeleteShape;
 	if (str == "DuplicateShape") return AutomationStepType::DuplicateShape;
+	if (str == "ChangePartitions") return AutomationStepType::ChangePartitions;
 	if (str == "InvertUVs") return AutomationStepType::InvertUVs;
 	if (str == "MirrorShape") return AutomationStepType::MirrorShape;
 	if (str == "RefineMesh") return AutomationStepType::RefineMesh;
@@ -310,6 +312,8 @@ int AutomationScript::Load(const std::string& fileName) {
 				step.conformAxisX = GetChildBool(stepElem, "AxisX", true);
 				step.conformAxisY = GetChildBool(stepElem, "AxisY", true);
 				step.conformAxisZ = GetChildBool(stepElem, "AxisZ", true);
+				step.conformFixClipping = GetChildBool(stepElem, "FixClipping", false);
+				step.conformFixClippingStrength = GetChildFloat(stepElem, "FixClippingStrength", 0.5f);
 				const char* csn = GetChildText(stepElem, "SliderNames");
 				if (csn)
 					step.conformSliderNames = SplitCommaSeparated(csn);
@@ -508,6 +512,15 @@ int AutomationScript::Load(const std::string& fileName) {
 				const char* dn = GetChildText(stepElem, "NewName");
 				if (dn)
 					step.dupNewName = dn;
+				break;
+			}
+			case AutomationStepType::ChangePartitions: {
+				const char* source = GetChildText(stepElem, "SourcePartition");
+				if (source)
+					step.partitionSource = source;
+				const char* destination = GetChildText(stepElem, "DestinationPartition");
+				if (destination)
+					step.partitionDestination = destination;
 				break;
 			}
 			case AutomationStepType::MirrorShape: {
@@ -721,6 +734,8 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildBool(doc, stepElem, "AxisX", step.conformAxisX, true);
 				SetChildBool(doc, stepElem, "AxisY", step.conformAxisY, true);
 				SetChildBool(doc, stepElem, "AxisZ", step.conformAxisZ, true);
+				SetChildBool(doc, stepElem, "FixClipping", step.conformFixClipping, false);
+				SetChildFloat(doc, stepElem, "FixClippingStrength", step.conformFixClippingStrength, 0.5f);
 				if (!step.conformSliderNames.empty())
 					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.conformSliderNames, ", "));
 				break;
@@ -864,6 +879,11 @@ int AutomationScript::Save(const std::string& fileName) {
 
 			case AutomationStepType::DuplicateShape:
 				SetChildText(doc, stepElem, "NewName", step.dupNewName);
+				break;
+
+			case AutomationStepType::ChangePartitions:
+				SetChildText(doc, stepElem, "SourcePartition", step.partitionSource);
+				SetChildText(doc, stepElem, "DestinationPartition", step.partitionDestination);
 				break;
 
 			case AutomationStepType::MirrorShape:
@@ -1052,6 +1072,8 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInString(step.exportPrefix, vars);
 		SubstituteInString(step.exportSuffix, vars);
 		SubstituteInString(step.dupNewName, vars);
+		SubstituteInString(step.partitionSource, vars);
+		SubstituteInString(step.partitionDestination, vars);
 		SubstituteInString(step.loadMaskFile, vars);
 		SubstituteInString(step.loadMaskName, vars);
 		SubstituteInString(step.extraDataType, vars);

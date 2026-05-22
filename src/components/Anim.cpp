@@ -139,11 +139,6 @@ void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 		boneWeights[newID].LoadFromNif(loadFromFile, shape, newID);
 		boneNames[node->name.get()] = newID;
 		if (!gotGTS) {
-			// We don't have a global-to-skin transform, probably because
-			// the NIF has BSSkinBoneData instead of NiSkinData (FO4 or
-			// newer).  So calculate by:
-			// Compose: skin -> bone -> global
-			// and inverting.
 			MatTransform xformBoneToGlobal;
 			if (AnimSkeleton::getInstance().GetBoneTransformToGlobal(node->name.get(), xformBoneToGlobal)) {
 				eachXformGlobalToSkin.push_back(xformBoneToGlobal.ComposeTransforms(boneWeights[newID].xformSkinToBone).InverseTransform());
@@ -151,8 +146,27 @@ void AnimSkin::LoadFromNif(NifFile* loadFromFile, NiShape* shape) {
 		}
 		newID++;
 	}
-	if (!eachXformGlobalToSkin.empty())
+
+	// SF NIFs have no bone NiNodes — use bone names from SkinAttach instead
+	if (newID == 0) {
+		std::vector<std::string> nameList;
+		loadFromFile->GetShapeBoneList(shape, nameList);
+		for (auto& bn : nameList) {
+			boneWeights[newID].LoadFromNif(loadFromFile, shape, newID);
+			boneNames[bn] = newID;
+			if (!gotGTS) {
+				MatTransform xformBoneToGlobal;
+				if (AnimSkeleton::getInstance().GetBoneTransformToGlobal(bn, xformBoneToGlobal)) {
+					eachXformGlobalToSkin.push_back(xformBoneToGlobal.ComposeTransforms(boneWeights[newID].xformSkinToBone).InverseTransform());
+				}
+			}
+			newID++;
+		}
+	}
+
+	if (!eachXformGlobalToSkin.empty()) {
 		xformGlobalToSkin = CalcMedianMatTransform(eachXformGlobalToSkin);
+	}
 }
 
 bool AnimInfo::LoadFromNif(NifFile* nif) {
@@ -184,9 +198,16 @@ bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 	for (auto& bn : boneNames) {
 		if (!AnimSkeleton::getInstance().RefBone(bn)) {
 			AnimBone* cstm = AnimSkeleton::getInstance().LoadCustomBoneFromNif(nif, bn);
-			if (!cstm->isStandardBone)
-				nonRefBones += bn + "\n";
-			AnimSkeleton::getInstance().RefBone(bn);
+			if (!cstm) {
+				// SF body NIFs have no bone NiNodes — look up in the reference skeleton
+				NifFile& skelNif = AnimSkeleton::getInstance().refSkeletonNif;
+				cstm = AnimSkeleton::getInstance().LoadCustomBoneFromNif(&skelNif, bn);
+			}
+			if (cstm) {
+				if (!cstm->isStandardBone)
+					nonRefBones += bn + "\n";
+				AnimSkeleton::getInstance().RefBone(bn);
+			}
 		}
 
 		shapeBones[shapeName].push_back(bn);
@@ -378,6 +399,8 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 	if (verts.size() == 0) // Check for empty shape
 		return false;
 
+	bool isSF = refNif->GetHeader().GetVersion().IsSF();
+
 	std::vector<Vector3> boundVerts;
 	for (auto& w : shapeSkinning[shapeName].boneWeights[boneIndex].weights) {
 		if (w.first >= verts.size()) // Incoming weights have a larger set of possible verts.
@@ -387,6 +410,13 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 	}
 
 	BoundingSphere bounds(boundVerts);
+
+	// SF vertices are scaled by havokScale internally but BSSkin::BoneData
+	// bounds must be in the NIF's native meter-scale coordinate space
+	if (isSF) {
+		bounds.center /= sfHavokScale;
+		bounds.radius /= sfHavokScale;
+	}
 
 	const MatTransform& xformSkinToBone = shapeSkinning[shapeName].boneWeights[boneIndex].xformSkinToBone;
 
@@ -427,6 +457,8 @@ void AnimInfo::CleanupBones() {
 }
 
 void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) {
+	bool isSF = nif->GetHeader().GetVersion().IsSF();
+
 	// Collect list of needed bones.  Also delete bones used by shapeException
 	// and no other shape if they have no children and have root parent.
 	std::unordered_set<const AnimBone*> neededBones;
@@ -446,6 +478,18 @@ void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) 
 
 			neededBones.insert(bptr);
 		}
+	}
+
+	// Starfield BSGeometry NIFs don't use bone NiNodes — the game resolves
+	// bones from SkinAttach names against the skeleton at runtime.
+	// Delete any existing bone NiNodes that OS may have loaded from the skeleton.
+	if (isSF) {
+		for (const AnimBone* bptr : neededBones) {
+			NiNode* node = nif->FindBlockByName<NiNode>(bptr->boneName);
+			if (node && nif->CanDeleteNode(node))
+				nif->DeleteNode(bptr->boneName);
+		}
+		return;
 	}
 
 	// Make sure each needed bone has a node by creating it if necessary.
@@ -537,16 +581,27 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	}
 
 	// Generate bone node ID list for each shape and set it.
+	bool isSF = nif->GetHeader().GetVersion().IsSF();
 	for (auto& bones : shapeBones) {
 		if (bones.first == shapeException)
 			continue;
+
+		auto shape = nif->FindBlockByName<NiShape>(bones.first);
+
+		// SF BSGeometry: bone refs must all be None — the game uses SkinAttach
+		// names, not NiNode block refs.  Keep the count correct.
+		if (isSF && shape && shape->HasType<BSGeometry>()) {
+			std::vector<int> bids(bones.second.size(), NIF_NPOS);
+			nif->SetShapeBoneIDList(shape, bids);
+			continue;
+		}
+
 		std::vector<int> bids;
 		for (auto& bone : bones.second) {
 			auto it = boneIDMap.find(bone);
 			if (it != boneIDMap.end())
 				bids.push_back(it->second);
 		}
-		auto shape = nif->FindBlockByName<NiShape>(bones.first);
 		nif->SetShapeBoneIDList(shape, bids);
 	}
 
