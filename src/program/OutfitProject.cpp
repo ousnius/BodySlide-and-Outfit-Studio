@@ -184,8 +184,14 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 				std::string baseShapeName = baseShape->name.get();
 				targ = ShapeToTarget(baseShapeName);
 				targSlider = activeSet[i].TargetDataName(targ);
-				if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
-					if (activeSet[i].IsLocalData(targSlider)) {
+				bool hasBaseDiff = false;
+				if (!targSlider.empty()) {
+					TargetDataDiffs* baseDiff = baseDiffData.GetDiffSet(targSlider);
+					hasBaseDiff = baseDiff && !baseDiff->empty();
+				}
+
+				if (hasBaseDiff || (!targSlider.empty() && !activeSet[i].IsLocalData(targSlider))) {
+					if (hasBaseDiff && activeSet[i].IsLocalData(targSlider)) {
 						targSliderData = osdFileName + PathSepStr + targSlider;
 						outSet[id].AddDataFile(targ, targSlider, targSliderData);
 					}
@@ -203,14 +209,18 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 				std::string shapeName = s->name.get();
 				targ = ShapeToTarget(shapeName);
 				targSlider = activeSet[i].TargetDataName(targ);
+				bool hasDataFile = !targSlider.empty();
 				if (targSlider.empty())
 					targSlider = targ + outSet[i].name;
 
-				if (morpher.GetResultDiffSize(targ, activeSet[i].name) > 0) {
+				bool hasResultDiff = morpher.GetResultDiffSize(targ, activeSet[i].name) > 0;
+				bool hasExternalData = hasDataFile && !activeSet[i].IsLocalData(targSlider);
+
+				if (hasResultDiff || hasExternalData) {
 					std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
 					bool isDefaultDataFolder = shapeDataFolders.size() == 1 && shapeDataFolders.front() == activeSet.GetDefaultDataFolder();
 
-					if (isDefaultDataFolder || activeSet[i].IsLocalData(targSlider)) {
+					if (hasResultDiff && (isDefaultDataFolder || !hasDataFile || activeSet[i].IsLocalData(targSlider))) {
 						targSliderData = osdFileName + PathSepStr + targSlider;
 						outSet[i].AddDataFile(targ, targSlider, targSliderData);
 					}

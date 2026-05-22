@@ -669,7 +669,7 @@ int AutomationDialog::ExecuteStepAddProject(const AutomationStep& step) {
 	wxString refSourceFile = MakeAbsoluteToProject(wxString::FromUTF8(step.refSourceFile));
 	std::string refSourceFileStd = refSourceFile.ToUTF8().data();
 	wxLogMessage("Automation: Adding project from '%s' (set: '%s')...", refSourceFile, step.refSet);
-	int err = project->AddFromSliderSet(refSourceFileStd, step.refSet, true, step.refAppendNewSliders);
+	int err = project->AddFromSliderSet(refSourceFileStd, step.refSet, false, step.refAppendNewSliders);
 	if (err) {
 		wxLogError("Automation: AddProject failed with error %d.", err);
 		return err;

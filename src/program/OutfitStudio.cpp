@@ -2821,7 +2821,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	if (clearProject)
 		error = project->LoadFromSliderSet(fileName, outfit, &origShapeOrder);
 	else
-		error = project->AddFromSliderSet(fileName, outfit);
+		error = project->AddFromSliderSet(fileName, outfit, false);
 
 	if (error) {
 		EndProgress();
