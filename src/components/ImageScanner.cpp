@@ -499,6 +499,128 @@ std::unique_ptr<DepthMap> DepthEstimator::StereoMatching(const ImageData& leftIm
 	return depth;
 }
 
+void DepthEstimator::EdgeAwareUpsample(const DepthMap& input, DepthMap& output, 
+										int targetWidth, int targetHeight) {
+	output.Allocate(targetWidth, targetHeight);
+	
+	// Calculate scale factors
+	float scaleX = static_cast<float>(input.width) / targetWidth;
+	float scaleY = static_cast<float>(input.height) / targetHeight;
+	
+	// Edge detection threshold - depth differences above this are considered edges
+	float edgeThreshold = 0.1f;
+	
+	// First pass: compute edge map from input depth
+	std::vector<float> inputEdges(input.width * input.height, 0.0f);
+	for (int y = 1; y < input.height - 1; ++y) {
+		for (int x = 1; x < input.width - 1; ++x) {
+			float center = input.depth[y * input.width + x];
+			float dx = std::abs(input.depth[y * input.width + x + 1] - center) +
+					   std::abs(input.depth[y * input.width + x - 1] - center);
+			float dy = std::abs(input.depth[(y + 1) * input.width + x] - center) +
+					   std::abs(input.depth[(y - 1) * input.width + x] - center);
+			
+			inputEdges[y * input.width + x] = std::sqrt(dx * dx + dy * dy);
+		}
+	}
+	
+	// Bilinear interpolation with edge-aware guidance
+	for (int ty = 0; ty < targetHeight; ++ty) {
+		for (int tx = 0; tx < targetWidth; ++tx) {
+			// Map to input coordinates with bounds clamping
+			float srcX = std::min(static_cast<float>(tx) * scaleX, static_cast<float>(input.width - 1));
+			float srcY = std::min(static_cast<float>(ty) * scaleY, static_cast<float>(input.height - 1));
+			
+			int x0 = static_cast<int>(srcX);
+			int y0 = static_cast<int>(srcY);
+			int x1 = std::min(x0 + 1, input.width - 1);
+			int y1 = std::min(y0 + 1, input.height - 1);
+			
+			float fx = srcX - x0;
+			float fy = srcY - y0;
+			
+			// Get depth values at four corners
+			float d00 = input.depth[y0 * input.width + x0];
+			float d10 = input.depth[y0 * input.width + x1];
+			float d01 = input.depth[y1 * input.width + x0];
+			float d11 = input.depth[y1 * input.width + x1];
+			
+		// Check if there's a significant edge at this location
+		float edgeStrength = inputEdges[y0 * input.width + x0];
+		
+		// Edge threshold scaled by local depth (add epsilon to avoid very small thresholds)
+		float localEdgeThreshold = edgeThreshold * (d00 + 0.01f);
+		
+		if (edgeStrength > localEdgeThreshold) {
+				// Near an edge - use nearest neighbor to preserve sharp transitions
+				// Find the corner with minimum edge strength (most reliable)
+				float e00 = inputEdges[y0 * input.width + x0];
+				float e10 = inputEdges[y0 * input.width + x1];
+				float e01 = inputEdges[y1 * input.width + x0];
+				float e11 = inputEdges[y1 * input.width + x1];
+				
+				float minEdge = e00;
+				float result = d00;
+				
+				if (e10 < minEdge) { minEdge = e10; result = d10; }
+				if (e01 < minEdge) { minEdge = e01; result = d01; }
+				if (e11 < minEdge) { minEdge = e11; result = d11; }
+				
+				output.depth[ty * targetWidth + tx] = result;
+			} else {
+				// Smooth area - use bilinear interpolation
+				float value = d00 * (1 - fx) * (1 - fy) +
+							  d10 * fx * (1 - fy) +
+							  d01 * (1 - fx) * fy +
+							  d11 * fx * fy;
+				output.depth[ty * targetWidth + tx] = value;
+			}
+		}
+	}
+	
+	output.minDepthObserved = *std::min_element(output.depth.begin(), output.depth.end());
+	output.maxDepthObserved = *std::max_element(output.depth.begin(), output.depth.end());
+	output.focalLengthX = input.focalLengthX;
+	output.focalLengthY = input.focalLengthY;
+	output.principalPointX = input.principalPointX;
+	output.principalPointY = input.principalPointY;
+	
+	// Upsample confidence map if available
+	if (input.confidence.has_value()) {
+		auto& inputConf = input.confidence.value();
+		std::vector<float> outputConf(targetWidth * targetHeight);
+		
+		for (int ty = 0; ty < targetHeight; ++ty) {
+			for (int tx = 0; tx < targetWidth; ++tx) {
+				float srcX = tx * scaleX;
+				float srcY = ty * scaleY;
+				
+				int x0 = static_cast<int>(srcX);
+				int y0 = static_cast<int>(srcY);
+				int x1 = std::min(x0 + 1, input.width - 1);
+				int y1 = std::min(y0 + 1, input.height - 1);
+				
+				float fx = srcX - x0;
+				float fy = srcY - y0;
+				
+				float c00 = inputConf[y0 * input.width + x0];
+				float c10 = inputConf[y0 * input.width + x1];
+				float c01 = inputConf[y1 * input.width + x0];
+				float c11 = inputConf[y1 * input.width + x1];
+				
+				float conf = c00 * (1 - fx) * (1 - fy) +
+						   c10 * fx * (1 - fy) +
+						   c01 * (1 - fx) * fy +
+						   c11 * fx * fy;
+				
+				outputConf[ty * targetWidth + tx] = conf;
+			}
+		}
+		
+		output.confidence = std::move(outputConf);
+	}
+}
+
 // ============== MESH RECONSTRUCTOR IMPLEMENTATION ==============
 
 std::unique_ptr<UniversalMesh> MeshReconstructor::ReconstructFromDepthAndColor(
@@ -973,7 +1095,7 @@ void MeshReconstructor::FillHoles(UniversalMesh& mesh) {
 				}
 			}
 			
-			if (!foundNext || hole.size() > 1000) break;  // Safety limit
+			if (!foundNext || hole.size() > config.maxHoleSize) break;  // Configurable safety limit
 			if (current == edge.first) break;  // Loop closed
 		}
 		
