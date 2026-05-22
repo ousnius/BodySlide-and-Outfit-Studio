@@ -156,6 +156,9 @@ public:
 		progressCallback = std::move(callback);
 	}
 
+	// Edge-aware upsampling for depth maps (public for testing)
+	void EdgeAwareUpsample(const DepthMap& input, DepthMap& output, int targetWidth, int targetHeight);
+
 private:
 	void ReportProgress(float progress, const std::string& message);
 	DepthEstimationConfig config;
@@ -166,9 +169,6 @@ private:
 	std::unique_ptr<DepthMap> StereoMatching(const ImageData& leftImage, 
 											 const ImageData& rightImage,
 											 float baseline);
-	
-	// Edge-aware upsampling
-	void EdgeAwareUpsample(const DepthMap& input, DepthMap& output, int targetWidth, int targetHeight);
 	
 	// Confidence estimation
 	std::vector<float> EstimateConfidence(const DepthMap& depthMap);

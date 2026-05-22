@@ -242,22 +242,69 @@ bool TestDepthMapAccess() {
     REQUIRE(invalidPtr == nullptr);
     
     return true;
+}// Test: ImageData validation
+bool TestImageDataValidation() {
+	ImageData img;
+	
+	REQUIRE(!img.IsValid());
+	
+	img.width = 100;
+	img.height = 100;
+	img.pixels.resize(100 * 100 * 4);
+	img.channels = 4;
+	
+	REQUIRE(img.IsValid());
+	
+	return true;
 }
 
-// Test: ImageData validation
-bool TestImageDataValidation() {
-    ImageData img;
-    
-    REQUIRE(!img.IsValid());
-    
-    img.width = 100;
-    img.height = 100;
-    img.pixels.resize(100 * 100 * 4);
-    img.channels = 4;
-    
-    REQUIRE(img.IsValid());
-    
-    return true;
+// Test: EdgeAwareUpsample functionality
+bool TestEdgeAwareUpsample() {
+	DepthEstimator estimator;
+	DepthEstimationConfig config;
+	estimator.SetConfig(config);
+	
+	// Create a small input depth map with a clear edge
+	DepthMap input;
+	input.Allocate(4, 4);
+	
+	// Fill with uniform depth (smooth area)
+	for (int i = 0; i < 16; ++i) {
+		input.depth[i] = 1.0f;
+	}
+	
+	// Add a depth discontinuity (edge) at x=2
+	input.depth[2] = 0.5f;
+	input.depth[3] = 0.5f;
+	input.depth[6] = 0.5f;
+	input.depth[7] = 0.5f;
+	input.depth[10] = 0.5f;
+	input.depth[11] = 0.5f;
+	input.depth[14] = 0.5f;
+	input.depth[15] = 0.5f;
+	
+	input.minDepthObserved = 0.5f;
+	input.maxDepthObserved = 1.0f;
+	
+	// Upsample to 8x8
+	DepthMap output;
+	estimator.EdgeAwareUpsample(input, output, 8, 8);
+	
+	// Verify output dimensions
+	REQUIRE(output.width == 8);
+	REQUIRE(output.height == 8);
+	REQUIRE(output.depth.size() == 64);
+	
+	// Verify depth range is preserved
+	REQUIRE(output.minDepthObserved > 0.0f);
+	REQUIRE(output.maxDepthObserved <= 1.0f);
+	
+	// Verify all output values are valid (non-zero, positive)
+	for (size_t i = 0; i < output.depth.size(); ++i) {
+		REQUIRE(output.depth[i] > 0.0f);
+	}
+	
+	return true;
 }
 
 // Main test runner
@@ -285,6 +332,7 @@ int main() {
     runTest("Skeleton Creation", TestSkeletonCreation);
     runTest("DepthMap Access", TestDepthMapAccess);
     runTest("ImageData Validation", TestImageDataValidation);
+    runTest("EdgeAwareUpsample", TestEdgeAwareUpsample);
     
     std::cout << std::endl << "=== Results: " << testsPassed << " passed, " << testsFailed << " failed ===" << std::endl;
     
