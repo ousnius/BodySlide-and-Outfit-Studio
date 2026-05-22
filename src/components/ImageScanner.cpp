@@ -1423,7 +1423,7 @@ std::vector<float> ImageScanner::ParseCameraPoseJSON(const std::string& json) {
 			}
 		}
 	} catch (const nlohmann::json::parse_error& e) {
-		// Fall back to simple parsing for non-JSON files
+		// JSON parsing failed - LoadCameraPoses will use identity matrix as fallback
 	}
 	
 	return pose;
