@@ -195,6 +195,7 @@ public:
 	void LoadPresets(const std::string& sliderSet);
 	void GetPresetNames(std::vector<std::string>& outNames);
 	void InitializeSliders(const std::string& presetName = "");
+	void RefreshPresetsForCurrentOutfit();
 	void PopulatePresetList(const std::string& select);
 	void PopulateOutfitList(const std::string& select);
 	void DisplayActiveSet();

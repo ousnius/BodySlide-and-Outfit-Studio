@@ -3118,6 +3118,16 @@ void BodySlideApp::InitializeSliders(const std::string& presetName) {
 	sliderManager.InitializeSliders(presetName);
 }
 
+void BodySlideApp::RefreshPresetsForCurrentOutfit() {
+	std::string outfitName = BodySlideConfig["SelectedOutfit"];
+	std::string presetName = BodySlideConfig["SelectedPreset"];
+
+	sliderManager.ClearPresets();
+	SetPresetGroups(outfitName);
+	LoadPresets(outfitName);
+	PopulatePresetList(presetName);
+}
+
 int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNormals) {
 	if (projects.empty())
 		return 1;
@@ -4694,6 +4704,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	presetFilter->ShowSearchButton(true);
 	presetFilter->ShowCancelButton(true);
 	presetFilter->SetDescriptiveText(_("Filter presets..."));
+	presetFilter->SetToolTip(_("Search visible preset names. Presets are first limited by the selected outfit's groups."));
 
 	int categoryTabSizerID = XRCID("categoryTabSizer");
 	wxSizerItem* si = leftPanel->GetSizer()->GetItemById(categoryTabSizerID, true);
@@ -5425,6 +5436,7 @@ void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
 
 	if (ret == 0) {
 		app->LoadAllGroups();
+		app->RefreshPresetsForCurrentOutfit();
 		search->ChangeValue(gName);
 		outfitsearch->ChangeValue("");
 		app->PopulateOutfitList("");
@@ -5433,6 +5445,7 @@ void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnRefreshGroups(wxCommandEvent& WXUNUSED(event)) {
 	app->LoadAllGroups();
+	app->RefreshPresetsForCurrentOutfit();
 }
 
 void BodySlideFrame::OnRefreshOutfits(wxCommandEvent& WXUNUSED(event)) {
@@ -5536,7 +5549,8 @@ void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
 
 	GroupManager gm(this, outfits);
 	gm.ShowModal();
-	app->LoadPresets("");
+	app->LoadAllGroups();
+	app->RefreshPresetsForCurrentOutfit();
 }
 
 void BodySlideFrame::OnConflictPopup(wxMouseEvent& WXUNUSED(event)) {

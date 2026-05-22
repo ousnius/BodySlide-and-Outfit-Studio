@@ -110,7 +110,7 @@
 								<border>5</border>
 								<object class="wxChoice" name="presetChoice">
 									<style>wxCB_SORT</style>
-									<tooltip>Choose from a list of slider settings presets</tooltip>
+									<tooltip>Choose from slider settings presets assigned to groups used by the selected outfit</tooltip>
 									<selection>0</selection>
 									<content />
 								</object>
@@ -162,7 +162,7 @@
 						<border>5</border>
 						<object class="wxButton" name="btnGroupManager">
 							<fg>wxSYS_COLOUR_BTNTEXT</fg>
-							<tooltip>Opens the group manager where you can edit existing or create new groups</tooltip>
+							<tooltip>Opens the group manager. Groups filter batch builds and decide which presets appear for each outfit</tooltip>
 							<label>Group Manager</label>
 						</object>
 					</object>
