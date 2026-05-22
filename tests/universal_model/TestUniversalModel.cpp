@@ -98,11 +98,30 @@ bool TestMeshApplyWeld() {
     std::map<uint32_t, std::vector<uint32_t>> weldMap;
     weldMap[0] = {1, 2};  // vertex 0 absorbs 1 and 2
     
+    size_t vertexCountBefore = mesh.vertices.size();
+    size_t triCountBefore = mesh.triangles.size();
+    
     mesh.ApplyWeld(weldMap);
     
-    // After welding, should have 2 vertices
+    // After welding, should have 2 vertices (0 kept, 3 kept; 1,2 merged into 0)
     REQUIRE(mesh.vertices.size() == 2);
-    REQUIRE(mesh.triangles.size() == 2);
+    REQUIRE(mesh.triangles.size() == triCountBefore);
+    
+    // Verify all triangle vertex indices are valid (within bounds)
+    for (const auto& tri : mesh.triangles) {
+        REQUIRE(tri.v1 < mesh.vertices.size());
+        REQUIRE(tri.v2 < mesh.vertices.size());
+        REQUIRE(tri.v3 < mesh.vertices.size());
+    }
+    
+    // Verify triangles still reference valid vertices (v3 was index 3, now should be 1)
+    // After weld: original 0 -> new 0, original 3 -> new 1
+    for (const auto& tri : mesh.triangles) {
+        // All indices should be 0 or 1 since we only have 2 vertices now
+        REQUIRE(tri.v1 <= 1);
+        REQUIRE(tri.v2 <= 1);
+        REQUIRE(tri.v3 <= 1);
+    }
     
     return true;
 }
@@ -136,8 +155,17 @@ bool TestFormatRegistry() {
     std::vector<FormatInfo> formats;
     reg1.GetAllFormats(formats);
     
+    // Should have at least one format registered (NIF)
+    REQUIRE(formats.size() > 0);
+    
     // GetHandler should return valid handler or nullptr
     IFormatHandler* handler = reg1.GetHandler(FormatType::NIF);
+    REQUIRE(handler != nullptr);
+    
+    // Verify the handler's format info
+    FormatInfo info = handler->GetFormatInfo();
+    REQUIRE(info.type == FormatType::NIF);
+    REQUIRE(!info.name.empty());
     
     return true;
 }
@@ -175,6 +203,20 @@ bool TestSkeletonCreation() {
     
     // Should have a root bone
     REQUIRE(!skeleton.rootBoneName.empty());
+    
+    // Verify skeleton has some standard bones (Root, Pelvis, Spine, Head)
+    bool hasRoot = false, hasPelvis = false, hasSpine = false, hasHead = false;
+    for (const auto& bone : skeleton.bones) {
+        if (bone.name == u8"Root") hasRoot = true;
+        if (bone.name == u8"Pelvis") hasPelvis = true;
+        if (bone.name == u8"Spine") hasSpine = true;
+        if (bone.name == u8"Head") hasHead = true;
+    }
+    REQUIRE(hasRoot);  // Must have Root bone
+    REQUIRE(hasPelvis || skeleton.bones.size() >= 5);  // Should have pelvis or substantial skeleton
+    
+    // Verify root bone is actually named correctly
+    REQUIRE(skeleton.rootBoneName == u8"Root");
     
     return true;
 }

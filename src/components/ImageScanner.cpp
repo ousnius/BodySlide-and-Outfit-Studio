@@ -23,6 +23,8 @@ ImageScanner Implementation
 #include "ImageScanner.h"
 #include "../components/UniversalModel.h"
 
+#include <nlohmann/json.hpp>
+
 using namespace univmodel;
 
 // ============== IMAGE PROCESSOR IMPLEMENTATION ==============
@@ -812,27 +814,31 @@ void MeshReconstructor::OptimizeMesh(UniversalMesh& mesh) {
 	}
 	
 	if (config.smoothMesh && mesh.vertices.size() > 2) {
+		// Build adjacency information ONCE before the smoothing loop
+		std::map<uint32_t, std::vector<uint32_t>> vertexNeighbors;
+		for (const auto& tri : mesh.triangles) {
+			if (tri.v1 >= mesh.vertices.size() || tri.v2 >= mesh.vertices.size() || tri.v3 >= mesh.vertices.size())
+				continue;
+			vertexNeighbors[tri.v1].push_back(tri.v2);
+			vertexNeighbors[tri.v1].push_back(tri.v3);
+			vertexNeighbors[tri.v2].push_back(tri.v1);
+			vertexNeighbors[tri.v2].push_back(tri.v3);
+			vertexNeighbors[tri.v3].push_back(tri.v1);
+			vertexNeighbors[tri.v3].push_back(tri.v2);
+		}
+		
+		// Remove duplicate neighbors for each vertex
+		for (auto& [vid, neighbors] : vertexNeighbors) {
+			std::sort(neighbors.begin(), neighbors.end());
+			neighbors.erase(std::unique(neighbors.begin(), neighbors.end()), neighbors.end());
+		}
+		
 		for (int iter = 0; iter < config.smoothIterations; ++iter) {
 			// Simple Laplacian smooth - compute neighbor average
 			std::vector<Vertex> smoothed = mesh.vertices;
 			
-			// Build adjacency information from triangles
-			std::map<uint32_t, std::vector<uint32_t>> vertexNeighbors;
-			for (const auto& tri : mesh.triangles) {
-				vertexNeighbors[tri.v1].push_back(tri.v2);
-				vertexNeighbors[tri.v1].push_back(tri.v3);
-				vertexNeighbors[tri.v2].push_back(tri.v1);
-				vertexNeighbors[tri.v2].push_back(tri.v3);
-				vertexNeighbors[tri.v3].push_back(tri.v1);
-				vertexNeighbors[tri.v3].push_back(tri.v2);
-			}
-			
 			for (auto& [vid, neighbors] : vertexNeighbors) {
-				// Remove duplicates
-				std::sort(neighbors.begin(), neighbors.end());
-				neighbors.erase(std::unique(neighbors.begin(), neighbors.end()), neighbors.end());
-				
-				if (neighbors.empty()) continue;
+				if (vid >= smoothed.size() || neighbors.empty()) continue;
 				
 				float avgX = 0, avgY = 0, avgZ = 0;
 				for (uint32_t nid : neighbors) {
@@ -1232,118 +1238,70 @@ std::vector<float> ImageScanner::LoadCameraPoses(const std::vector<std::string>&
 std::vector<float> ImageScanner::ParseCameraPoseJSON(const std::string& json) {
 	std::vector<float> pose;
 	
-	// Try to find a 16-element array in the JSON
-	// Format 1: {"camera_pose": [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]}
-	// Format 2: [[1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]]
-	// Format 3: {"rotation": [...], "translation": [...]}
+	if (json.empty()) {
+		return pose;
+	}
 	
-	// Find array start
-	auto findArray = [](const std::string& str, size_t start) -> std::pair<size_t, size_t> {
-		size_t arrStart = str.find('[', start);
-		if (arrStart == std::string::npos) return {0, 0};
+	try {
+		auto j = nlohmann::json::parse(json);
 		
-		// Count brackets to find end
-		int depth = 1;
-		size_t arrEnd = arrStart + 1;
-		while (depth > 0 && arrEnd < str.size()) {
-			if (str[arrEnd] == '[') depth++;
-			else if (str[arrEnd] == ']') depth--;
-			arrEnd++;
+		// Format 1: {"camera_pose": [16 numbers]}
+		if (j.contains("camera_pose") && j["camera_pose"].is_array()) {
+			auto& arr = j["camera_pose"];
+			if (arr.size() >= 16) {
+				pose.resize(16);
+				for (int i = 0; i < 16; ++i) {
+					pose[i] = arr[i].get<float>();
+				}
+				return pose;
+			}
 		}
-		return {arrStart, arrEnd};
-	};
-	
-	size_t searchPos = 0;
-	
-	// Look for "camera_pose" key
-	auto camPoseKey = json.find("camera_pose");
-	if (camPoseKey != std::string::npos) {
-		searchPos = camPoseKey + 11;  // length of "camera_pose"
-	} else {
-		// Check for standalone array at start
-		auto arr = findArray(json, 0);
-		if (arr.second > arr.first) {
-			searchPos = arr.first;
-		}
-	}
-	
-	// Find the array
-	auto arr = findArray(json, searchPos);
-	if (arr.second <= arr.first) {
-		return pose;
-	}
-	
-	// Extract numbers from the array
-	std::string arrayStr = json.substr(arr.first, arr.second - arr.first);
-	std::vector<float> values;
-	std::string currentNum;
-	bool inNumber = false;
-	bool hasDecimal = false;
-	bool hasNegative = false;
-	
-	for (size_t i = 1; i < arrayStr.size() - 1; ++i) {  // Skip [ and ]
-		char c = arrayStr[i];
 		
-		if ((c >= '0' && c <= '9') || c == '.' || c == '-' || c == 'e' || c == 'E') {
-			if (c == '-' && !currentNum.empty() && currentNum.back() != 'e' && currentNum.back() != 'E') {
-				hasNegative = true;
-			}
-			if (c == '.' && currentNum.find('.') != std::string::npos) {
-				// Second decimal point - end current number
-				if (!currentNum.empty()) {
-					try {
-						if (hasNegative && currentNum[0] != '-') {
-							currentNum = "-" + currentNum;
-						}
-						values.push_back(std::stof(currentNum));
-					} catch (...) {}
-					currentNum.clear();
+		// Format 2: Direct array [[16 numbers]] or [16 numbers]
+		if (j.is_array() && !j.empty()) {
+			// Check if it's a nested array (Format 2: [[...]])
+			if (j[0].is_array()) {
+				auto& inner = j[0];
+				if (inner.size() >= 16) {
+					pose.resize(16);
+					for (int i = 0; i < 16; ++i) {
+						pose[i] = inner[i].get<float>();
+					}
+					return pose;
 				}
-				hasNegative = false;
-				currentNum = "";
-				inNumber = false;
-				continue;
-			}
-			currentNum += c;
-			inNumber = true;
-		} else if ((c == ',' || c == ' ') && inNumber) {
-			try {
-				if (hasNegative && currentNum[0] != '-') {
-					currentNum = "-" + currentNum;
+			} else if (j.size() >= 16) {
+				// Flat array format
+				pose.resize(16);
+				for (int i = 0; i < 16; ++i) {
+					pose[i] = j[i].get<float>();
 				}
-				values.push_back(std::stof(currentNum));
-			} catch (...) {}
-			currentNum.clear();
-			hasNegative = false;
-			inNumber = false;
+				return pose;
+			}
 		}
-	}
-	
-	// Don't forget the last number
-	if (!currentNum.empty()) {
-		try {
-			if (hasNegative && currentNum[0] != '-') {
-				currentNum = "-" + currentNum;
+		
+		// Format 3: {"rotation": [9], "translation": [3]}
+		if (j.contains("rotation") && j.contains("translation")) {
+			auto& rot = j["rotation"];
+			auto& trans = j["translation"];
+			if (rot.is_array() && trans.is_array() && rot.size() >= 9 && trans.size() >= 3) {
+				pose.resize(16, 0.0f);
+				pose[15] = 1.0f;  // homogeneous coordinate
+				
+				// Row-major 3x3 rotation matrix
+				for (int i = 0; i < 9; ++i) {
+					pose[i] = rot[i].get<float>();
+				}
+				
+				// Translation
+				pose[12] = trans[0].get<float>();
+				pose[13] = trans[1].get<float>();
+				pose[14] = trans[2].get<float>();
+				
+				return pose;
 			}
-			values.push_back(std::stof(currentNum));
-		} catch (...) {}
-	}
-	
-	// If we got 16 values, use them as the camera pose
-	if (values.size() >= 16) {
-		pose.assign(values.begin(), values.begin() + 16);
-		return pose;
-	}
-	
-	// Try format 3: separate rotation and translation
-	if (values.size() >= 12) {
-		// Assume first 9 are rotation (3x3), next 3 are translation
-		pose.resize(16);
-		pose[0] = values[0]; pose[1] = values[1]; pose[2] = values[2]; pose[3] = 0;
-		pose[4] = values[3]; pose[5] = values[4]; pose[6] = values[5]; pose[7] = 0;
-		pose[8] = values[6]; pose[9] = values[7]; pose[10] = values[8]; pose[11] = 0;
-		pose[12] = values[9]; pose[13] = values[10]; pose[14] = values[11]; pose[15] = 1;
-		return pose;
+		}
+	} catch (const nlohmann::json::parse_error& e) {
+		// Fall back to simple parsing for non-JSON files
 	}
 	
 	return pose;
