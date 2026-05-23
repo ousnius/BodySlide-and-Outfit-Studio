@@ -243,6 +243,7 @@ public:
 
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
+	void LoadBuildLogbookEntry(const std::string& outfitName, const std::string& activePreset);
 
 	std::vector<std::string> GetConflictingOutfits() {
 		if (projects.empty())

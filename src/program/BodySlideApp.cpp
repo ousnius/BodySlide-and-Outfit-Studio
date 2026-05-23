@@ -458,6 +458,7 @@ void BodySlideApp::LoadData() {
 		std::string activePreset = BodySlideConfig["SelectedPreset"];
 		PopulatePresetList(activePreset);
 		ActivatePreset(activePreset);
+		LoadBuildLogbookEntry(activeOutfit, activePreset);
 
 		wxLogMessage("Finished setting up '%s'.", activeOutfit);
 	}
@@ -911,6 +912,8 @@ void BodySlideApp::ActivateOutfit(const std::string& outfitName) {
 
 	ActivatePreset(activePreset, false);
 
+	LoadBuildLogbookEntry(outfitName, activePreset);
+
 	InitPreview();
 
 	sliderView->Layout();
@@ -953,6 +956,31 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 	if (preview && updatePreview)
 		zapChanged ? RebuildPreviewMeshes() : UpdatePreview();
 }
+
+void BodySlideApp::LoadBuildLogbookEntry(const std::string& outfitName, const std::string& activePreset) {
+
+	wxLogMessage("Loading logbook entry for set '%s' and preset '%s'...", outfitName, activePreset);
+
+	BuildLogbookFile logbookFile;
+	BuildLogbook logbook;
+	GetBuildLogbook(logbookFile, logbook);
+
+	std::string outputPath = GetActiveSet().GetOutputFilePath();
+	BuildLogbookEntry entry = logbook.GetEntry(outputPath);
+
+	if (entry.set == outfitName && entry.preset == activePreset) {
+		for (const auto& sv : entry.sliders) {
+			if (sv.size == "big") {
+				sliderManager.SetSlider(sv.name, false, sv.value);
+				sliderView->SetSliderPosition(sv.name.c_str(), sv.value, SLIDER_HI);
+			} else if (sv.size == "small") {
+				sliderManager.SetSlider(sv.name, true, sv.value);
+				sliderView->SetSliderPosition(sv.name.c_str(), sv.value, SLIDER_LO);
+			}
+		}
+	}
+}
+
 
 void BodySlideApp::DeleteOutfit(const std::string& outfitName) {
 	auto outfit = outfitNameSource.find(outfitName);
@@ -1311,10 +1339,8 @@ void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
 	buildSelFile.Save();
 }
 
-#include <mutex>
-std::mutex logbookMutex;
-
 void BodySlideApp::UpdateBuildLogbook(SliderSet currentSet, bool remove) {
+	std::mutex logbookMutex;
 	std::lock_guard<std::mutex> lock(logbookMutex);
 
 	BuildLogbookFile logbookFile;
@@ -1333,14 +1359,16 @@ void BodySlideApp::UpdateBuildLogbook(SliderSet currentSet, bool remove) {
 		entry.path = outputPath;
 		entry.set = currentSet.GetName();
 		
-		// Record the preset that is currently active, if any
+		// Record the preset that is currently active
 		std::string activePreset = BodySlideConfig["SelectedPreset"];
 		entry.preset = activePreset;
 		
 		float defaultValue = 0.0f;
 
-		// Iterate over all 'big' (100 weight) sliders
-		for (auto& sliderBig : sliderManager.slidersBig) {
+		// Iterate over all sliders
+		for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
+			auto& sliderBig = sliderManager.slidersBig[i];
+			auto& sliderSmall = sliderManager.slidersSmall[i];
 
 			// Get the preset slider value, or if it doesn't exist, the slider default
 			defaultValue = sliderManager.GetBigPresetValue(activePreset, sliderBig.name, sliderBig.defValue);
@@ -1353,10 +1381,6 @@ void BodySlideApp::UpdateBuildLogbook(SliderSet currentSet, bool remove) {
 				v.value = sliderBig.value;
 				entry.sliders.push_back(v);
 			}
-		}
-
-		// Iterate over all 'small' (0 weight) sliders
-		for (auto& sliderSmall : sliderManager.slidersSmall) {
 
 			defaultValue = sliderManager.GetSmallPresetValue(activePreset, sliderSmall.name, sliderSmall.defValue);
 
@@ -1370,7 +1394,6 @@ void BodySlideApp::UpdateBuildLogbook(SliderSet currentSet, bool remove) {
 			}
 		}
 		
-	
 		// Append the newly populated entry to the logbook
 		logbook.AddEntry(entry);
 		logbookFile.UpdateEntries(logbook);
