@@ -457,6 +457,8 @@ void AnimInfo::CleanupBones() {
 }
 
 void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) {
+	bool isSF = nif->GetHeader().GetVersion().IsSF();
+
 	// Collect list of needed bones.  Also delete bones used by shapeException
 	// and no other shape if they have no children and have root parent.
 	std::unordered_set<const AnimBone*> neededBones;
@@ -476,6 +478,18 @@ void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) 
 
 			neededBones.insert(bptr);
 		}
+	}
+
+	// Starfield BSGeometry NIFs don't use bone NiNodes — the game resolves
+	// bones from SkinAttach names against the skeleton at runtime.
+	// Delete any existing bone NiNodes that OS may have loaded from the skeleton.
+	if (isSF) {
+		for (const AnimBone* bptr : neededBones) {
+			NiNode* node = nif->FindBlockByName<NiNode>(bptr->boneName);
+			if (node && nif->CanDeleteNode(node))
+				nif->DeleteNode(bptr->boneName);
+		}
+		return;
 	}
 
 	// Make sure each needed bone has a node by creating it if necessary.
@@ -567,16 +581,27 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	}
 
 	// Generate bone node ID list for each shape and set it.
+	bool isSF = nif->GetHeader().GetVersion().IsSF();
 	for (auto& bones : shapeBones) {
 		if (bones.first == shapeException)
 			continue;
+
+		auto shape = nif->FindBlockByName<NiShape>(bones.first);
+
+		// SF BSGeometry: bone refs must all be None — the game uses SkinAttach
+		// names, not NiNode block refs.  Keep the count correct.
+		if (isSF && shape && shape->HasType<BSGeometry>()) {
+			std::vector<int> bids(bones.second.size(), NIF_NPOS);
+			nif->SetShapeBoneIDList(shape, bids);
+			continue;
+		}
+
 		std::vector<int> bids;
 		for (auto& bone : bones.second) {
 			auto it = boneIDMap.find(bone);
 			if (it != boneIDMap.end())
 				bids.push_back(it->second);
 		}
-		auto shape = nif->FindBlockByName<NiShape>(bones.first);
 		nif->SetShapeBoneIDList(shape, bids);
 	}
 

@@ -33,6 +33,7 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::ApplyPose: return "ApplyPose";
 		case AutomationStepType::DeleteShape: return "DeleteShape";
 		case AutomationStepType::DuplicateShape: return "DuplicateShape";
+		case AutomationStepType::ChangePartitions: return "ChangePartitions";
 		case AutomationStepType::InvertUVs: return "InvertUVs";
 		case AutomationStepType::MirrorShape: return "MirrorShape";
 		case AutomationStepType::RefineMesh: return "RefineMesh";
@@ -76,6 +77,7 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "ApplyPose") return AutomationStepType::ApplyPose;
 	if (str == "DeleteShape") return AutomationStepType::DeleteShape;
 	if (str == "DuplicateShape") return AutomationStepType::DuplicateShape;
+	if (str == "ChangePartitions") return AutomationStepType::ChangePartitions;
 	if (str == "InvertUVs") return AutomationStepType::InvertUVs;
 	if (str == "MirrorShape") return AutomationStepType::MirrorShape;
 	if (str == "RefineMesh") return AutomationStepType::RefineMesh;
@@ -512,6 +514,15 @@ int AutomationScript::Load(const std::string& fileName) {
 					step.dupNewName = dn;
 				break;
 			}
+			case AutomationStepType::ChangePartitions: {
+				const char* source = GetChildText(stepElem, "SourcePartition");
+				if (source)
+					step.partitionSource = source;
+				const char* destination = GetChildText(stepElem, "DestinationPartition");
+				if (destination)
+					step.partitionDestination = destination;
+				break;
+			}
 			case AutomationStepType::MirrorShape: {
 				step.mirrorX = GetChildBool(stepElem, "MirrorX", true);
 				step.mirrorY = GetChildBool(stepElem, "MirrorY", false);
@@ -870,6 +881,11 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildText(doc, stepElem, "NewName", step.dupNewName);
 				break;
 
+			case AutomationStepType::ChangePartitions:
+				SetChildText(doc, stepElem, "SourcePartition", step.partitionSource);
+				SetChildText(doc, stepElem, "DestinationPartition", step.partitionDestination);
+				break;
+
 			case AutomationStepType::MirrorShape:
 				SetChildBool(doc, stepElem, "MirrorX", step.mirrorX, true);
 				SetChildBool(doc, stepElem, "MirrorY", step.mirrorY, false);
@@ -1056,6 +1072,8 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInString(step.exportPrefix, vars);
 		SubstituteInString(step.exportSuffix, vars);
 		SubstituteInString(step.dupNewName, vars);
+		SubstituteInString(step.partitionSource, vars);
+		SubstituteInString(step.partitionDestination, vars);
 		SubstituteInString(step.loadMaskFile, vars);
 		SubstituteInString(step.loadMaskName, vars);
 		SubstituteInString(step.extraDataType, vars);

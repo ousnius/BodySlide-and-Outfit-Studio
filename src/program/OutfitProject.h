@@ -400,7 +400,7 @@ public:
 		const std::string& fileName, const std::string& setName, const std::string& shapeName = "", bool mergeSliders = false, bool mergeZaps = false, bool appendNewSliders = true);
 
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
-	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = true, const bool appendNewSliders = true);
+	int AddFromSliderSet(const std::string& fileName, const std::string& setName, const bool newDataLocal = false, const bool appendNewSliders = true);
 
 	TargetDataDiffs* GetDiffSet(SliderData& silderData, nifly::NiShape* shape);
 

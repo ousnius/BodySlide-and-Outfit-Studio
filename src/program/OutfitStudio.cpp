@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "EditUV.h"
 #include "GroupManager.h"
 #include "PresetSaveDialog.h"
+#include "PartitionTypeChoices.h"
 #include "ShapeProperties.h"
 #include "SliderDataDialog.h"
 #include "SliderDataImportDialog.h"
@@ -1284,6 +1285,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	this->DragAcceptFiles(true);
 
 	menuBar = xrc->LoadMenuBar(this, "menuBar");
+	PartitionTypeChoices::Populate(dynamic_cast<wxChoice*>(FindWindowByName("partitionType")));
 
 	std::vector<std::string> projectHistoryFiles;
 	OutfitStudioConfig.GetValueAttributeArray("ProjectHistory", "Project", "file", projectHistoryFiles);
@@ -2833,7 +2835,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	if (clearProject)
 		error = project->LoadFromSliderSet(fileName, outfit, &origShapeOrder);
 	else
-		error = project->AddFromSliderSet(fileName, outfit);
+		error = project->AddFromSliderSet(fileName, outfit, false);
 
 	if (error) {
 		EndProgress();
@@ -7048,6 +7050,13 @@ void OutfitStudioFrame::OnPartitionReset(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::ResetPartitions() {
+	if (activeItem)
+		CreatePartitionTree(activeItem->GetShape());
+	else
+		CreatePartitionTree(nullptr);
+}
+
+void OutfitStudioFrame::RefreshActivePartitionTree() {
 	if (activeItem)
 		CreatePartitionTree(activeItem->GetShape());
 	else

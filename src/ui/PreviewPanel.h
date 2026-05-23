@@ -58,6 +58,7 @@ class PreviewPanel : public wxPanel {
 	std::string baseDataPath;
 	std::vector<std::string> extraNifPaths;
 	std::vector<PreviewProjectEntry> projectEntries;
+	std::string initialPresetName;
 	bool loadAllProjects = false;
 	bool multiProjectMode = false;
 	bool readOnlyMode = false;
@@ -137,7 +138,7 @@ public:
 
 	void SetExtraNifPaths(const std::vector<std::string>& paths) { extraNifPaths = paths; }
 	const std::vector<std::string>& GetExtraNifPaths() const { return extraNifPaths; }
-	void SetProjectData(const std::vector<PreviewProjectEntry>& entries, bool loadAll = false);
+	void SetProjectData(const std::vector<PreviewProjectEntry>& entries, bool loadAll = false, const std::string& initialPreset = "");
 	void SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers);
 	void LoadNifFiles(const std::vector<std::string>& nifFilePaths);
 	void LoadProjects(const std::vector<PreviewProjectEntry>& entries);

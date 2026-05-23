@@ -23,16 +23,20 @@ PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 	xrc->LoadDialog(this, parent, "dlgSavePreset");
 
 	SetDoubleBuffered(true);
-	SetSize(FromDIP(wxSize(460, 300)));
-	SetSizeHints(FromDIP(wxSize(460, 300)), FromDIP(wxSize(460, -1)));
+	SetSize(FromDIP(wxSize(460, 340)));
+	SetSizeHints(FromDIP(wxSize(460, 340)), FromDIP(wxSize(460, -1)));
 	CenterOnParent();
 
 	wxSearchCtrl* search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, FromDIP(wxSize(200, -1)), wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
-	search->SetDescriptiveText("Group Filter");
-	search->SetToolTip("Filter list by group name");
+	search->SetDescriptiveText(_("Group Filter"));
+	search->SetToolTip(_("Filter list by group name"));
 
 	xrc->AttachUnknownControl("spFilter", search, this);
+	auto groupHelp = (wxStaticText*)FindWindowByName("spGroupHelp", this);
+	if (groupHelp)
+		groupHelp->Wrap(FromDIP(430));
+
 	wxCheckListBox* chkbox = XRCCTRL((*this), "spGroupDisplay", wxCheckListBox);
 	chkbox->SetDoubleBuffered(true);
 }
