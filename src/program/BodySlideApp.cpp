@@ -1169,6 +1169,17 @@ void BodySlideApp::GetBuildSelection(BuildSelectionFile& file, BuildSelection& b
 	file.Get(buildSel);
 }
 
+void BodySlideApp::GetBuildLogbook(BuildLogbookFile& file, BuildLogbook& buildLog) {
+	const std::string buildLogFileName = Config["AppDir"] + PathSepStr + "BuildLogbook.xml";
+
+	file.Open(buildLogFileName);
+
+	if (file.fail())
+		file.New(buildLogFileName);
+
+	file.Get(buildLog);
+}
+
 void BodySlideApp::UpdateConflictManager() {
 	if (projects.empty())
 		return;
@@ -1298,6 +1309,75 @@ void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
 	buildSelFile.UpdateZapChoices(buildSelection);
 
 	buildSelFile.Save();
+}
+
+#include <mutex>
+std::mutex logbookMutex;
+
+void BodySlideApp::UpdateBuildLogbook(SliderSet currentSet, bool remove) {
+	std::lock_guard<std::mutex> lock(logbookMutex);
+
+	BuildLogbookFile logbookFile;
+	BuildLogbook logbook;
+	GetBuildLogbook(logbookFile, logbook);
+
+	std::string outputPath = currentSet.GetOutputFilePath();
+
+	if (remove) {
+		// If requested, remove any existing entry that matches the output path to keep the logbook clean
+		logbook.RemoveEntry(outputPath);
+		logbookFile.RemoveEntry(outputPath);
+	} else {
+		// Create a new entry for the current build
+		BuildLogbookEntry entry;
+		entry.path = outputPath;
+		entry.set = currentSet.GetName();
+		
+		// Record the preset that is currently active, if any
+		std::string activePreset = BodySlideConfig["SelectedPreset"];
+		entry.preset = activePreset;
+		
+		float defaultValue = 0.0f;
+
+		// Iterate over all 'big' (100 weight) sliders
+		for (auto& sliderBig : sliderManager.slidersBig) {
+
+			// Get the preset slider value, or if it doesn't exist, the slider default
+			defaultValue = sliderManager.GetBigPresetValue(activePreset, sliderBig.name, sliderBig.defValue);
+
+			// If the slider value has changed, save it
+			if (sliderBig.value != defaultValue) {
+				BuildLogbookEntry::SliderValue v;
+				v.name = sliderBig.name;
+				v.size = "big";
+				v.value = sliderBig.value;
+				entry.sliders.push_back(v);
+			}
+		}
+
+		// Iterate over all 'small' (0 weight) sliders
+		for (auto& sliderSmall : sliderManager.slidersSmall) {
+
+			defaultValue = sliderManager.GetSmallPresetValue(activePreset, sliderSmall.name, sliderSmall.defValue);
+
+			if (sliderSmall.value != defaultValue) {
+				// If the slider value has changed, save it
+				BuildLogbookEntry::SliderValue v;
+				v.name = sliderSmall.name;
+				v.size = "small";
+				v.value = sliderSmall.value;
+				entry.sliders.push_back(v);
+			}
+		}
+		
+	
+		// Append the newly populated entry to the logbook
+		logbook.AddEntry(entry);
+		logbookFile.UpdateEntries(logbook);
+	}
+
+	// Commit the changes to the BuildLogbook.xml file
+	logbookFile.Save();
 }
 
 void BodySlideApp::EditProject(const std::string& projectName) {
@@ -3430,6 +3510,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			return 4;
 		}
 
+		UpdateBuildLogbook(activeSet, true);
+
 		wxString removeHigh, removeLow;
 		wxString msg = _("Removed the following files:\n");
 		bool genWeights = activeSet.GenWeights();
@@ -3784,6 +3866,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 	if (!savedHigh.IsEmpty())
 		msg.Append(savedHigh);
+
+	UpdateBuildLogbook(activeSet);	
 
 	wxLogMessage("%s", msg);
 	wxMessageBox(msg, _("Process Successful"));
@@ -4223,9 +4307,11 @@ int BodySlideApp::BuildListBodies(
 			if (genWeights)
 				removeHigh = removePath + "_1.nif";
 
+			UpdateBuildLogbook(currentSet, true);
+
 			if (wxFileName::FileExists(removeHigh))
 				wxRemoveFile(removeHigh);
-
+				
 			if (!genWeights)
 				return;
 
@@ -4630,6 +4716,8 @@ int BodySlideApp::BuildListBodies(
 				recordFailure(outfit, _("Unable to save nif file: ") + outFileNameSmall);
 				return;
 			}
+
+			UpdateBuildLogbook(currentSet);
 		}
 		else {
 			outFileNameBig += ".nif";
@@ -4641,6 +4729,8 @@ int BodySlideApp::BuildListBodies(
 				recordFailure(outfit, _("Unable to save nif file: ") + outFileNameBig);
 				return;
 			}
+
+			UpdateBuildLogbook(currentSet);
 		}
 	};
 

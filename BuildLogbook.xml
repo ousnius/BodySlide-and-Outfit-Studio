@@ -1,28 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- A file to keep track of the currently built meshes -->
+<!--
+This file should represent the contents of the game/ouput folder by keeping track of each mesh that has been built with BodySlide.
+
+Every time a mesh is built, either on its own or as part of a batch build, an entry will be created in this file.
+If a mesh that already exists in this file is rebuilt, its entry will be updated.
+If a mesh gets deleted, its entry in this file will be removed.
+
+-->
 <BuildLogbook>
 
-    <!-- 
-    A simple entry that lists the mesh, which set it was built with, and which preset was used.
-
-    There should be only one "Mesh" entry per path.
-    If a mesh is built again, the old entry should be deleted and replaced with the new one, 
-    so that the logbook represents the contents of the game/ouput folder.
+    <!--
+    A simple entry that lists a Mesh (identified by its path), which set it was built with, and which preset was used. 
+    Each "path" should be unique across the file.
+    This simple entry did not register any change to the default values of the set or preset sliders.
     -->
     <Mesh path="meshes\armor\studded\female\boots" set="DH 3BA Leather boots" preset="The Female Gaze v2 Outfit"/>
 
     <!-- 
-    A "Mesh" can contain slider information.
-    Ideally, this should be limited to sliders that were modified from the set's and preset's default values.
+    An entry that describes a Mesh, and stores information about any sliders that have been modified.
+    Only Sliders that don't match the default values of the set and the preset should be listed.
     -->
     <Mesh path="meshes\armor\imperial\f\cuirasslight" set="DH 3BA Imperial light armor" preset="The Female Gaze v2 Pushup">
-        <!-- For example, modifications of the set's Zaps -->
+        <!-- Example modifications of the set's Zaps -->
         <SetSlider name="Outfit var.1" size="big" value="100"/>
         <SetSlider name="Outfit var.1" size="small" value="100"/>
         <SetSlider name="Outfit var.2" size="big" value="0"/>
         <SetSlider name="Outfit var.2" size="small" value="0"/>
-        <!-- Or edits of the preset's sliders-->
+        <!-- Example modifications of the preset's sliders-->
         <SetSlider name="BreastsPressed_v2" size="big" value="24"/>
     </Mesh>
 </BuildLogbook>

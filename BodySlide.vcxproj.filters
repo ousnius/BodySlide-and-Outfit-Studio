@@ -1899,6 +1899,9 @@
     <ClCompile Include="src\components\BuildSelection.cpp">
       <Filter>Components</Filter>
     </ClCompile>
+    <ClCompile Include="src\components\BuildLogbook.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\ClippingFixer.cpp">
       <Filter>Components</Filter>
     </ClCompile>

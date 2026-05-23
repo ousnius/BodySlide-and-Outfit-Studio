@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "../components/BuildSelection.h"
+#include "../components/BuildLogbook.h"
 #include "../components/ClippingFixer.h"
 #include "../components/SliderCategories.h"
 #include "../components/SliderData.h"
@@ -227,6 +228,7 @@ public:
 	void DisplayActiveSet();
 
 	void GetBuildSelection(BuildSelectionFile& file, BuildSelection& buildSel);
+	void GetBuildLogbook(BuildLogbookFile& file, BuildLogbook& buildLog);
 
 	void UpdateConflictManager();
 	void SetDefaultBuildSelection();
@@ -305,6 +307,9 @@ public:
 						bool tri = false,
 						bool forceNormals = false,
 						const std::string& custPath = "");
+
+	void UpdateBuildLogbook(SliderSet currentSet, bool remove = false);
+
 	int ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* treeListCtrl);
 	void GroupBuild(const std::vector<std::string>& groupNames);
 
