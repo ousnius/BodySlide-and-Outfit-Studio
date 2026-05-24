@@ -25,6 +25,7 @@ public:
 	~PresetSaveDialog();
 
 	std::string GetProjectPath() const;
+	void SetExistingPreset(const std::string& presetName, const std::string& presetFileName, const std::vector<std::string>& groups);
 
 	void FilterGroups(const std::string& filter = "");
 
@@ -34,4 +35,8 @@ public:
 	void OnSave(wxCommandEvent& event);
 
 	wxDECLARE_EVENT_TABLE();
+
+private:
+	bool editExistingPreset = false;
+	std::string existingPresetFileName;
 };

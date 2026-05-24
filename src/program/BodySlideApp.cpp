@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/ParallelFor.h"
 #include "../utils/StringStuff.h"
 
+#include <algorithm>
 #include <atomic>
 #include <mutex>
 #include <regex>
@@ -77,6 +78,7 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_BUTTON(XRCID("btnOutfitStudio"), BodySlideFrame::OnOutfitStudio)
 	EVT_BUTTON(XRCID("btnSettings"), BodySlideFrame::OnSettings)
 	EVT_BUTTON(XRCID("btnAbout"), BodySlideFrame::OnAbout)
+	EVT_BUTTON(XRCID("btnEditPreset"), BodySlideFrame::OnEditPreset)
 	EVT_BUTTON(XRCID("btnSavePreset"), BodySlideFrame::OnSavePreset)
 	EVT_BUTTON(XRCID("btnSavePresetAs"), BodySlideFrame::OnSavePresetAs)
 	EVT_BUTTON(XRCID("btnGroupManager"), BodySlideFrame::OnGroupManager)
@@ -3114,6 +3116,14 @@ void BodySlideApp::GetPresetNames(std::vector<std::string>& outNames) {
 	sliderManager.GetPresetNames(outNames);
 }
 
+std::string BodySlideApp::GetPresetFileName(const std::string& presetName) {
+	return sliderManager.GetPresetFileNames(presetName);
+}
+
+void BodySlideApp::GetPresetGroups(const std::string& presetName, std::vector<std::string>& outGroups) {
+	sliderManager.GetPresetGroups(presetName, outGroups);
+}
+
 void BodySlideApp::InitializeSliders(const std::string& presetName) {
 	sliderManager.InitializeSliders(presetName);
 }
@@ -4591,6 +4601,11 @@ int BodySlideApp::SaveSliderPositions(const std::string& outputFile, const std::
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
 }
 
+int BodySlideApp::SavePresetGroups(const std::string& outputFile, const std::string& presetName, std::vector<std::string>& groups) {
+	std::string outfitName = BodySlideConfig["SelectedOutfit"];
+	return sliderManager.SavePresetGroups(outputFile, presetName, outfitName, groups);
+}
+
 BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	: delayLoad(this, DELAYLOAD_TIMER) {
 	app = a;
@@ -5512,6 +5527,49 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	SetPresetChanged(false);
 	app->LoadPresets("");
 	app->PopulatePresetList(presetName);
+}
+
+void BodySlideFrame::OnEditPreset(wxCommandEvent& WXUNUSED(event)) {
+	if (OutfitIsEmpty())
+		return;
+
+	std::string presetName = BodySlideConfig["SelectedPreset"];
+	if (presetName.empty())
+		return;
+
+	std::string presetFileName = app->GetPresetFileName(presetName);
+	if (presetFileName.empty()) {
+		wxLogError("Failed to find preset file for '%s'!", presetName);
+		wxMessageBox(wxString::Format(_("Failed to find preset file for '%s'!"), presetName), _("Error"), wxICON_ERROR, this);
+		return;
+	}
+
+	std::vector<std::string> groups;
+	app->GetPresetGroups(presetName, groups);
+
+	PresetSaveDialog psd(this);
+	app->GetAllGroupNames(psd.allGroupNames);
+	for (auto& group : groups) {
+		if (std::find(psd.allGroupNames.begin(), psd.allGroupNames.end(), group) == psd.allGroupNames.end())
+			psd.allGroupNames.push_back(group);
+	}
+	psd.SetExistingPreset(presetName, presetFileName, groups);
+	psd.FilterGroups();
+	psd.ShowModal();
+	if (psd.outFileName.empty())
+		return;
+
+	groups.assign(psd.outGroups.begin(), psd.outGroups.end());
+
+	int error = app->SavePresetGroups(psd.outFileName, presetName, groups);
+	if (error) {
+		wxLogError("Failed to save preset '%s' (%d)!", presetName, error);
+		wxMessageBox(wxString::Format(_("Failed to save preset '%s' (%d)!"), presetName, error), _("Error"), wxICON_ERROR, this);
+	}
+
+	app->LoadPresets("");
+	app->PopulatePresetList(presetName);
+	BodySlideConfig.SetValue("SelectedPreset", presetName);
 }
 
 void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {

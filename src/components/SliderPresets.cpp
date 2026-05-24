@@ -321,6 +321,9 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 	if (retSaveDoc)
 		return retSaveDoc;
 
+	presetFileNames[presetName] = filePath;
+	presetGroups[presetName] = assignGroups;
+
 	return 0;
 }
 

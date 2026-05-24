@@ -194,6 +194,8 @@ public:
 
 	void LoadPresets(const std::string& sliderSet);
 	void GetPresetNames(std::vector<std::string>& outNames);
+	std::string GetPresetFileName(const std::string& presetName);
+	void GetPresetGroups(const std::string& presetName, std::vector<std::string>& outGroups);
 	void InitializeSliders(const std::string& presetName = "");
 	void RefreshPresetsForCurrentOutfit();
 	void PopulatePresetList(const std::string& select);
@@ -290,6 +292,7 @@ public:
 
 	int UpdateSliderPositions(const std::string& presetName);
 	int SaveSliderPositions(const std::string& outputFile, const std::string& presetName, std::vector<std::string>& groups);
+	int SavePresetGroups(const std::string& outputFile, const std::string& presetName, std::vector<std::string>& groups);
 };
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild", "groupbuild", "builds the specified group on launch", wxCMD_LINE_VAL_STRING},
@@ -490,6 +493,7 @@ private:
 	void OnDeleteProject(wxCommandEvent& event);
 	void OnDeletePreset(wxCommandEvent& event);
 
+	void OnEditPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);
 	void OnSavePresetAs(wxCommandEvent& event);
 	void OnGroupManager(wxCommandEvent& event);
