@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <utility>
 #include <wx/wrapsizer.h>
 #include <wx/debugrpt.h>
+#include <wx/textctrl.h>
 
 using namespace nifly;
 
@@ -6040,10 +6041,14 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxDirPickerCtrl* dpOutputPath = XRCCTRL(*settings, "dpOutputPath", wxDirPickerCtrl);
 		wxString outputPath = wxString::FromUTF8(Config["OutputDataPath"]);
 		dpOutputPath->SetPath(outputPath);
+		if (wxTextCtrl* outputPathText = dpOutputPath->GetTextCtrl())
+			outputPathText->SetHint(_("Optional (uses Game Data Path if empty)"));
 
 		wxDirPickerCtrl* dpProjectPath = XRCCTRL(*settings, "dpProjectPath", wxDirPickerCtrl);
 		wxString projectPath = wxString::FromUTF8(Config["ProjectPath"]);
 		dpProjectPath->SetPath(projectPath);
+		if (wxTextCtrl* projectPathText = dpProjectPath->GetTextCtrl())
+			projectPathText->SetHint(_("Optional (uses executable directory if empty)"));
 
 		wxCheckBox* cbShowForceBodyNormals = XRCCTRL(*settings, "cbShowForceBodyNormals", wxCheckBox);
 		cbShowForceBodyNormals->SetValue(Config.GetBoolValue("ShowForceBodyNormals"));
