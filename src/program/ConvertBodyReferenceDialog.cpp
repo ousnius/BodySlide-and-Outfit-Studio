@@ -193,7 +193,26 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 	}
 
 	project->DeleteShape(project->GetBaseShape());
-	auto remainingOutfitShapes = project->GetWorkNif()->GetShapes(); // get outfit shapes
+
+	std::vector<std::string> remainingOutfitShapeNames;
+	for (auto* shape : project->GetWorkNif()->GetShapes())
+		remainingOutfitShapeNames.push_back(shape->name.get());
+
+	auto getRemainingOutfitShapes = [&]() {
+		std::vector<nifly::NiShape*> shapes;
+		for (auto* shape : project->GetWorkNif()->GetShapes()) {
+			if (project->IsBaseShape(shape))
+				continue;
+
+			const bool isRemainingOutfitShape = std::find(remainingOutfitShapeNames.begin(),
+														 remainingOutfitShapeNames.end(),
+														 shape->name.get()) != remainingOutfitShapeNames.end();
+			if (isRemainingOutfitShape)
+				shapes.push_back(shape);
+		}
+
+		return shapes;
+	};
 
 	if (conversionRefTemplate != "None") {
 		outfitStudio->UpdateProgress(5, _("Loading conversion reference..."));
@@ -206,12 +225,15 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 		outfitStudio->CreateSetSliders();
 		outfitStudio->RefreshGUIFromProj();
 
-		outfitStudio->UpdateProgress(20, _("Conforming outfit parts..."));
-		outfitStudio->StartSubProgress(20, 35);
+		auto remainingOutfitShapes = getRemainingOutfitShapes();
+		if (!remainingOutfitShapes.empty()) {
+			outfitStudio->UpdateProgress(20, _("Conforming outfit parts..."));
+			outfitStudio->StartSubProgress(20, 35);
 
-		// We shouldn't ever need to skip using default for this case as a correct conversion reference should always conform accurately
-		if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, true), _("Conform Error"), "Failed to conform shapes"))
-			return;
+			// We shouldn't ever need to skip using default for this case as a correct conversion reference should always conform accurately
+			if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, true), _("Conform Error"), "Failed to conform shapes"))
+				return;
+		}
 
 		outfitStudio->UpdateProgress(35, _("Updating conversion Slider..."));
 		outfitStudio->SetSliderValue(project->activeSet.size() - 1, 100);
@@ -243,17 +265,23 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 		return;
 
 	if (copyBoneWeights) {
-		outfitStudio->UpdateProgress(65, _("Copying bones..."));
-		outfitStudio->StartSubProgress(65, 85);
-		if (AlertProgressError(outfitStudio->CopyBoneWeightForShapes(remainingOutfitShapes, skipCopyBonesPopup), _("Copy Bone Weights Error"), "Failed to copy bone weights"))
-			return;
+		auto remainingOutfitShapes = getRemainingOutfitShapes();
+		if (!remainingOutfitShapes.empty()) {
+			outfitStudio->UpdateProgress(65, _("Copying bones..."));
+			outfitStudio->StartSubProgress(65, 85);
+			if (AlertProgressError(outfitStudio->CopyBoneWeightForShapes(remainingOutfitShapes, skipCopyBonesPopup), _("Copy Bone Weights Error"), "Failed to copy bone weights"))
+				return;
+		}
 	}
 
 	if (conformSliders) {
-		outfitStudio->UpdateProgress(85, _("Conforming outfit parts..."));
-		outfitStudio->StartSubProgress(85, 100);
-		if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, skipConformPopup), _("Conform Error"), "Failed to conform shapes"))
-			return;
+		auto remainingOutfitShapes = getRemainingOutfitShapes();
+		if (!remainingOutfitShapes.empty()) {
+			outfitStudio->UpdateProgress(85, _("Conforming outfit parts..."));
+			outfitStudio->StartSubProgress(85, 100);
+			if (AlertProgressError(outfitStudio->ConformShapes(remainingOutfitShapes, skipConformPopup), _("Conform Error"), "Failed to conform shapes"))
+				return;
+		}
 	}
 
 	if (!addBonesText.IsEmpty()) {
@@ -266,6 +294,7 @@ void ConvertBodyReferenceDialog::ConvertBodyReference() const {
 	}
 
 	if (deleteReferenceOnCompleted) {
+		auto remainingOutfitShapes = getRemainingOutfitShapes();
 		auto allShapes = project->GetWorkNif()->GetShapes();
 		for (auto& s : allShapes) {
 			if (std::find(remainingOutfitShapes.begin(), remainingOutfitShapes.end(), s) == remainingOutfitShapes.end())

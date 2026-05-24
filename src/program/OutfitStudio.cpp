@@ -11882,6 +11882,9 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 }
 
 int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, bool silent) {
+	if (shapes.empty())
+		return 0;
+
 	CloseBrushSettings();
 
 	WeightCopyOptions options;
@@ -12161,6 +12164,9 @@ void OutfitStudioFrame::OnCopySegPart(wxCommandEvent& WXUNUSED(event)) {
 }
 
 int OutfitStudioFrame::CopySegPartForShapes(std::vector<NiShape*> shapes, bool silent) {
+	if (shapes.empty())
+		return 0;
+
 	int failshapes = 0;
 
 	StartProgress(_("Copying segments/partitions..."));
