@@ -62,6 +62,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 
@@ -118,6 +119,10 @@ private:
 	std::map<std::string, std::string> groupAlias;								   // Group name aliases.
 	std::vector<std::string> ungroupedOutfits;									   // Outfits without a group.
 	std::vector<std::string> filteredOutfits;									   // Filtered outfit names.
+	std::vector<std::string> favoriteOutfits;
+	std::vector<std::string> favoritePresets;
+	std::unordered_set<std::string> favoriteOutfitSet;
+	std::unordered_set<std::string> favoritePresetSet;
 	std::vector<std::string> presetGroups;
 	std::vector<std::string> allGroups;
 	SliderSetGroupCollection gCollection;
@@ -142,6 +147,12 @@ private:
 	bool multiProjectMode = false;
 
 	int CreateSetSliders(const std::string& outfit);
+	std::string GetFavoriteConfigKey(const std::string& listName) const;
+	std::string SerializeFavoriteNames(const std::vector<std::string>& names) const;
+	std::vector<std::string> DeserializeFavoriteNames(const std::string& value) const;
+	void SetFavoriteList(std::vector<std::string>& list, std::unordered_set<std::string>& set, const std::vector<std::string>& names);
+	bool RemoveFavoriteName(std::vector<std::string>& list, std::unordered_set<std::string>& set, const std::string& name);
+	void SortFavoritesFirst(std::vector<std::string>& names, const std::unordered_set<std::string>& favorites) const;
 
 public:
 	virtual ~BodySlideApp();
@@ -178,6 +189,18 @@ public:
 	void CharHook(wxKeyEvent& event);
 
 	bool OutfitExists(const std::string& name) const { return outfitNameSource.find(name) != outfitNameSource.end(); }
+	bool PresetExists(const std::string& name);
+
+	void LoadFavorites();
+	void SaveFavorites();
+	bool IsFavoriteOutfit(const std::string& name) const;
+	bool IsFavoritePreset(const std::string& name) const;
+	void SortOutfitNamesForDisplay(std::vector<std::string>& names) const;
+	void SortPresetNamesForDisplay(std::vector<std::string>& names) const;
+	void ToggleFavoriteOutfit(const std::string& name);
+	void ToggleFavoritePreset(const std::string& name);
+	void RemoveFavoriteOutfit(const std::string& name);
+	void RemoveFavoritePreset(const std::string& name);
 
 	void LoadAllCategories();
 
@@ -391,6 +414,8 @@ public:
 
 	wxChoice* outfitChoice = nullptr;
 	wxChoice* presetChoice = nullptr;
+	wxButton* btnFavoriteOutfit = nullptr;
+	wxButton* btnFavoritePreset = nullptr;
 	wxButton* btnSavePreset = nullptr;
 	wxSearchCtrl* search = nullptr;
 	wxSearchCtrl* outfitsearch = nullptr;
@@ -403,6 +428,9 @@ public:
 
 	wxCheckListBox* batchBuildList = nullptr;
 	wxMenu* fileCollisionMenu = nullptr;
+	std::vector<std::string> outfitChoiceNames;
+	std::vector<std::string> presetChoiceNames;
+	bool populatingChoices = false;
 
 	// Splitter and embedded preview
 	wxSplitterWindow* splitter = nullptr;
@@ -446,6 +474,8 @@ public:
 
 	void PopulateOutfitList(const wxArrayString& items, const wxString& selectItem);
 	void PopulatePresetList(const wxArrayString& items, const wxString& selectItem);
+	std::string GetSelectedOutfitName() const;
+	std::string GetSelectedPresetName() const;
 
 	void SetSliderPosition(const wxString& name, float newValue, short HiLo);
 	void DoFilterSliders();
@@ -463,6 +493,12 @@ private:
 	void OnEnterClose(wxKeyEvent& event);
 
 	void OnEnterSliderWindow(wxMouseEvent& event);
+	wxString FavoriteChoiceLabel(const std::string& name, bool favorite) const;
+	bool SelectChoiceName(wxChoice* choice, const std::vector<std::string>& names, const std::string& selectItem) const;
+	void SetFavoriteButtonBitmap(wxButton* button, bool favorite) const;
+	void UpdateFavoriteButtons();
+	void RebuildOutfitChoice(const std::string& selectItem);
+	void RebuildPresetChoice(const std::string& selectItem);
 	void OnSliderChange(wxScrollEvent& event);
 	void OnSliderReadoutChange(wxCommandEvent& event);
 	void OnSearchChange(wxCommandEvent& event);
@@ -489,6 +525,8 @@ private:
 
 	void OnChooseOutfit(wxCommandEvent& event);
 	void OnChoosePreset(wxCommandEvent& event);
+	void OnFavoriteOutfit(wxCommandEvent& event);
+	void OnFavoritePreset(wxCommandEvent& event);
 
 	void OnDeleteProject(wxCommandEvent& event);
 	void OnDeletePreset(wxCommandEvent& event);
@@ -524,7 +562,7 @@ private:
 	void OnClippingStrengthChanged(wxCommandEvent& event);
 
 	bool OutfitIsEmpty() {
-		if (outfitChoice && !outfitChoice->GetStringSelection().empty())
+		if (!GetSelectedOutfitName().empty())
 			return false;
 
 		return true;

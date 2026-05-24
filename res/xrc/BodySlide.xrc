@@ -40,10 +40,19 @@
 								<flag>wxALIGN_CENTER</flag>
 								<border>5</border>
 								<object class="wxChoice" name="outfitChoice">
-									<style>wxCB_SORT</style>
 									<tooltip>Select an outfit to modify</tooltip>
 									<selection>0</selection>
 									<content />
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnFavoriteOutfit">
+									<size>24,24</size>
+									<bitmap>$(AppDir)\res\images\FavoriteStarEmpty.png</bitmap>
+									<tooltip>Favorite this outfit/body</tooltip>
 								</object>
 							</object>
 						</object>
@@ -109,10 +118,19 @@
 								<flag>wxALIGN_CENTER</flag>
 								<border>5</border>
 								<object class="wxChoice" name="presetChoice">
-									<style>wxCB_SORT</style>
 									<tooltip>Choose from slider settings presets assigned to groups used by the selected outfit</tooltip>
 									<selection>0</selection>
 									<content />
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnFavoritePreset">
+									<size>24,24</size>
+									<bitmap>$(AppDir)\res\images\FavoriteStarEmpty.png</bitmap>
+									<tooltip>Favorite this preset</tooltip>
 								</object>
 							</object>
 						</object>

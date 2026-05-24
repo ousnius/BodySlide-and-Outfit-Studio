@@ -40,6 +40,14 @@ using namespace nifly;
 ConfigurationManager Config;
 ConfigurationManager BodySlideConfig;
 
+namespace {
+constexpr const char* FavoriteStar = "\xE2\x98\x85";
+constexpr char FavoriteSeparator = ';';
+constexpr char FavoriteEscape = '\\';
+constexpr const char* FavoriteStarIcon = "/res/images/FavoriteStar.png";
+constexpr const char* FavoriteStarEmptyIcon = "/res/images/FavoriteStarEmpty.png";
+}
+
 const std::array<wxString, 10> TargetGames = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout76", "Oblivion", "Starfield"};
 const std::array<wxLanguage, 37> SupportedLangs = {wxLANGUAGE_ENGLISH,	  wxLANGUAGE_AFRIKAANS,		   wxLANGUAGE_ARABIC,  wxLANGUAGE_CATALAN,	  wxLANGUAGE_CZECH,
 												   wxLANGUAGE_DANISH,	  wxLANGUAGE_GERMAN,		   wxLANGUAGE_GREEK,   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,
@@ -66,6 +74,8 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_TIMER(DELAYLOAD_TIMER, BodySlideFrame::OnDelayLoad)
 	EVT_CHOICE(XRCID("outfitChoice"), BodySlideFrame::OnChooseOutfit)
 	EVT_CHOICE(XRCID("presetChoice"), BodySlideFrame::OnChoosePreset)
+	EVT_BUTTON(XRCID("btnFavoriteOutfit"), BodySlideFrame::OnFavoriteOutfit)
+	EVT_BUTTON(XRCID("btnFavoritePreset"), BodySlideFrame::OnFavoritePreset)
 
 	EVT_BUTTON(XRCID("btnDeleteProject"), BodySlideFrame::OnDeleteProject)
 	EVT_BUTTON(XRCID("btnDeletePreset"), BodySlideFrame::OnDeletePreset)
@@ -156,6 +166,8 @@ bool BodySlideApp::OnInit() {
 	wxLogMessage("Executable directory: %s", wxString::FromUTF8(dataDir));
 	if (!SetDefaultConfig())
 		return false;
+
+	LoadFavorites();
 
 	InitLanguage();
 
@@ -479,7 +491,9 @@ void BodySlideApp::CharHook(wxKeyEvent& event) {
 				int curSel = sliderView->outfitChoice->GetSelection();
 				if (curSel > 0) {
 					sliderView->outfitChoice->SetSelection(curSel - 1);
-					ActivateOutfit(sliderView->outfitChoice->GetStringSelection().ToUTF8().data());
+					std::string outfitName = sliderView->GetSelectedOutfitName();
+					if (!outfitName.empty())
+						ActivateOutfit(outfitName);
 				}
 			}
 			return;
@@ -491,7 +505,9 @@ void BodySlideApp::CharHook(wxKeyEvent& event) {
 				int curCount = sliderView->outfitChoice->GetCount();
 				if (curCount > 0 && curSel < curCount - 1) {
 					sliderView->outfitChoice->Select(curSel + 1);
-					ActivateOutfit(sliderView->outfitChoice->GetStringSelection().ToUTF8().data());
+					std::string outfitName = sliderView->GetSelectedOutfitName();
+					if (!outfitName.empty())
+						ActivateOutfit(outfitName);
 				}
 			}
 			return;
@@ -509,7 +525,7 @@ void BodySlideApp::CharHook(wxKeyEvent& event) {
 				int curSel = sliderView->presetChoice->GetSelection();
 				if (curSel > 0) {
 					sliderView->presetChoice->SetSelection(curSel - 1);
-					ActivatePreset(sliderView->presetChoice->GetStringSelection().ToUTF8().data());
+					ActivatePreset(sliderView->GetSelectedPresetName());
 				}
 			}
 			return;
@@ -521,7 +537,7 @@ void BodySlideApp::CharHook(wxKeyEvent& event) {
 				int curCount = sliderView->presetChoice->GetCount();
 				if (curCount > 0 && curSel < curCount - 1) {
 					sliderView->presetChoice->Select(curSel + 1);
-					ActivatePreset(sliderView->presetChoice->GetStringSelection().ToUTF8().data());
+					ActivatePreset(sliderView->GetSelectedPresetName());
 				}
 			}
 			return;
@@ -613,6 +629,151 @@ std::string BodySlideApp::GetProjectPath() const {
 	return res.empty() ? Config["AppDir"] : res;
 }
 
+bool BodySlideApp::PresetExists(const std::string& name) {
+	if (name.empty())
+		return false;
+
+	std::vector<std::string> presetNames;
+	sliderManager.GetPresetNames(presetNames);
+	return std::find(presetNames.begin(), presetNames.end(), name) != presetNames.end();
+}
+
+std::string BodySlideApp::GetFavoriteConfigKey(const std::string& listName) const {
+	return "Favorites/" + TargetGames[targetGame].ToStdString() + "/" + listName;
+}
+
+std::string BodySlideApp::SerializeFavoriteNames(const std::vector<std::string>& names) const {
+	std::string result;
+	for (size_t i = 0; i < names.size(); i++) {
+		if (i > 0)
+			result.push_back(FavoriteSeparator);
+
+		for (char c : names[i]) {
+			if (c == FavoriteSeparator || c == FavoriteEscape)
+				result.push_back(FavoriteEscape);
+
+			result.push_back(c);
+		}
+	}
+
+	return result;
+}
+
+std::vector<std::string> BodySlideApp::DeserializeFavoriteNames(const std::string& value) const {
+	std::vector<std::string> names;
+	std::string current;
+	bool escaped = false;
+
+	for (char c : value) {
+		if (escaped) {
+			current.push_back(c);
+			escaped = false;
+		}
+		else if (c == FavoriteEscape)
+			escaped = true;
+		else if (c == FavoriteSeparator) {
+			if (!current.empty())
+				names.push_back(current);
+			current.clear();
+		}
+		else
+			current.push_back(c);
+	}
+
+	if (escaped)
+		current.push_back(FavoriteEscape);
+
+	if (!current.empty())
+		names.push_back(current);
+
+	return names;
+}
+
+void BodySlideApp::SetFavoriteList(std::vector<std::string>& list, std::unordered_set<std::string>& set, const std::vector<std::string>& names) {
+	list.clear();
+	set.clear();
+
+	for (const auto& name : names) {
+		if (!name.empty() && set.insert(name).second)
+			list.push_back(name);
+	}
+}
+
+bool BodySlideApp::RemoveFavoriteName(std::vector<std::string>& list, std::unordered_set<std::string>& set, const std::string& name) {
+	if (set.erase(name) == 0)
+		return false;
+
+	list.erase(std::remove(list.begin(), list.end(), name), list.end());
+	return true;
+}
+
+void BodySlideApp::SortFavoritesFirst(std::vector<std::string>& names, const std::unordered_set<std::string>& favorites) const {
+	std::sort(names.begin(), names.end(), case_insensitive_compare());
+	std::stable_partition(names.begin(), names.end(), [&favorites](const std::string& name) { return favorites.find(name) != favorites.end(); });
+}
+
+void BodySlideApp::LoadFavorites() {
+	SetFavoriteList(favoriteOutfits, favoriteOutfitSet, DeserializeFavoriteNames(BodySlideConfig[GetFavoriteConfigKey("Outfits")]));
+	SetFavoriteList(favoritePresets, favoritePresetSet, DeserializeFavoriteNames(BodySlideConfig[GetFavoriteConfigKey("Presets")]));
+}
+
+void BodySlideApp::SaveFavorites() {
+	BodySlideConfig.SetValue(GetFavoriteConfigKey("Outfits"), SerializeFavoriteNames(favoriteOutfits));
+	BodySlideConfig.SetValue(GetFavoriteConfigKey("Presets"), SerializeFavoriteNames(favoritePresets));
+}
+
+bool BodySlideApp::IsFavoriteOutfit(const std::string& name) const {
+	return favoriteOutfitSet.find(name) != favoriteOutfitSet.end();
+}
+
+bool BodySlideApp::IsFavoritePreset(const std::string& name) const {
+	return favoritePresetSet.find(name) != favoritePresetSet.end();
+}
+
+void BodySlideApp::SortOutfitNamesForDisplay(std::vector<std::string>& names) const {
+	SortFavoritesFirst(names, favoriteOutfitSet);
+}
+
+void BodySlideApp::SortPresetNamesForDisplay(std::vector<std::string>& names) const {
+	SortFavoritesFirst(names, favoritePresetSet);
+}
+
+void BodySlideApp::ToggleFavoriteOutfit(const std::string& name) {
+	if (name.empty() || !OutfitExists(name))
+		return;
+
+	if (!RemoveFavoriteName(favoriteOutfits, favoriteOutfitSet, name)) {
+		favoriteOutfitSet.insert(name);
+		favoriteOutfits.push_back(name);
+	}
+
+	SortOutfitNamesForDisplay(filteredOutfits);
+
+	SaveFavorites();
+}
+
+void BodySlideApp::ToggleFavoritePreset(const std::string& name) {
+	if (name.empty() || !PresetExists(name))
+		return;
+
+	if (!RemoveFavoriteName(favoritePresets, favoritePresetSet, name)) {
+		favoritePresetSet.insert(name);
+		favoritePresets.push_back(name);
+	}
+
+	SaveFavorites();
+}
+
+void BodySlideApp::RemoveFavoriteOutfit(const std::string& name) {
+	if (RemoveFavoriteName(favoriteOutfits, favoriteOutfitSet, name))
+		SaveFavorites();
+}
+
+void BodySlideApp::RemoveFavoritePreset(const std::string& name) {
+	if (RemoveFavoriteName(favoritePresets, favoritePresetSet, name))
+		SaveFavorites();
+}
+
 void BodySlideApp::RefreshOutfitList() {
 	LoadSliderSets();
 	PopulateOutfitList("");
@@ -687,6 +848,20 @@ int BodySlideApp::LoadSliderSets() {
 		if (groups.empty())
 			ungroupedOutfits.push_back(o.first);
 	}
+
+	bool favoritesChanged = false;
+	for (auto it = favoriteOutfits.begin(); it != favoriteOutfits.end();) {
+		if (OutfitExists(*it))
+			++it;
+		else {
+			favoriteOutfitSet.erase(*it);
+			it = favoriteOutfits.erase(it);
+			favoritesChanged = true;
+		}
+	}
+
+	if (favoritesChanged)
+		SaveFavorites();
 
 	return 0;
 }
@@ -778,6 +953,7 @@ void BodySlideApp::DeleteOutfit(const std::string& outfitName) {
 
 		if (!sliderDoc.DeleteSet(outfit->first)) {
 			if (sliderDoc.Save()) {
+				RemoveFavoriteOutfit(outfitName);
 				RefreshOutfitList();
 
 				if (sliderView->outfitChoice) {
@@ -787,7 +963,9 @@ void BodySlideApp::DeleteOutfit(const std::string& outfitName) {
 					else if (count > select - 1)
 						sliderView->outfitChoice->Select(select - 1);
 
-					ActivateOutfit(sliderView->outfitChoice->GetStringSelection().ToUTF8().data());
+					std::string selectedOutfit = sliderView->GetSelectedOutfitName();
+					if (!selectedOutfit.empty())
+						ActivateOutfit(selectedOutfit);
 				}
 			}
 			else
@@ -811,6 +989,7 @@ void BodySlideApp::DeletePreset(const std::string& presetName) {
 
 	wxLogMessage("Deleting preset '%s'...", presetName);
 	if (!sliderManager.DeletePreset(outputFile, presetName)) {
+		RemoveFavoritePreset(presetName);
 		LoadPresets("");
 		PopulatePresetList(presetName);
 
@@ -821,7 +1000,7 @@ void BodySlideApp::DeletePreset(const std::string& presetName) {
 			else if (count > select - 1)
 				sliderView->presetChoice->Select(select - 1);
 
-			ActivatePreset(sliderView->presetChoice->GetStringSelection().ToUTF8().data());
+			ActivatePreset(sliderView->GetSelectedPresetName());
 		}
 	}
 	else
@@ -3058,6 +3237,8 @@ void BodySlideApp::ApplyOutfitFilter() {
 		}
 	}
 
+	SortOutfitNamesForDisplay(filteredOutfits);
+
 	BodySlideConfig.SetValue("LastGroupFilter", grpSrch.ToUTF8().data());
 	BodySlideConfig.SetValue("LastOutfitFilter", outfitSrch);
 }
@@ -3080,6 +3261,8 @@ std::vector<std::string> BodySlideApp::ApplyPresetFilter(const std::vector<std::
 				filteredPresets.push_back(entryStr.ToUTF8().data());
 		}
 	}
+
+	SortPresetNamesForDisplay(filteredPresets);
 
 	BodySlideConfig.SetValue("LastPresetFilter", presetSearchStr.ToUTF8().data());
 	return filteredPresets;
@@ -4677,6 +4860,8 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 
 	outfitChoice = (wxChoice*)FindWindowByName("outfitChoice", this);
 	presetChoice = (wxChoice*)FindWindowByName("presetChoice", this);
+	btnFavoriteOutfit = (wxButton*)FindWindowByName("btnFavoriteOutfit", this);
+	btnFavoritePreset = (wxButton*)FindWindowByName("btnFavoritePreset", this);
 	btnSavePreset = (wxButton*)FindWindowByName("btnSavePreset", this);
 
 	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/BatchBuild.xrc");
@@ -4783,6 +4968,8 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 		else
 			btnPreview->SetLabel(_("Show Preview"));
 	}
+
+	UpdateFavoriteButtons();
 }
 
 void BodySlideFrame::OnLinkClicked(wxHtmlLinkEvent& link) {
@@ -4888,13 +5075,19 @@ void BodySlideFrame::AddSliderGUI(const std::string& name, const std::string& di
 }
 
 void BodySlideFrame::ClearPresetList() {
+	presetChoiceNames.clear();
 	if (presetChoice)
 		presetChoice->Clear();
+
+	UpdateFavoriteButtons();
 }
 
 void BodySlideFrame::ClearOutfitList() {
+	outfitChoiceNames.clear();
 	if (outfitChoice)
 		outfitChoice->Clear();
+
+	UpdateFavoriteButtons();
 }
 
 void BodySlideFrame::ClearSliderGUI() {
@@ -4917,41 +5110,188 @@ void BodySlideFrame::SetPresetChanged(bool changed) {
 		btnSavePreset->Enable(changed);
 }
 
+wxString BodySlideFrame::FavoriteChoiceLabel(const std::string& name, bool favorite) const {
+	wxString label = wxString::FromUTF8(name);
+	if (!favorite || label.empty())
+		return label;
+
+	return wxString::FromUTF8(FavoriteStar) + " " + label;
+}
+
+bool BodySlideFrame::SelectChoiceName(wxChoice* choice, const std::vector<std::string>& names, const std::string& selectItem) const {
+	for (size_t i = 0; i < names.size(); i++) {
+		if (names[i] == selectItem) {
+			choice->SetSelection(i);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void BodySlideFrame::SetFavoriteButtonBitmap(wxButton* button, bool favorite) const {
+	if (!button)
+		return;
+
+	wxString iconPath = wxString::FromUTF8(Config["AppDir"]) + wxString::FromUTF8(favorite ? FavoriteStarIcon : FavoriteStarEmptyIcon);
+	wxBitmap bitmap(iconPath, wxBITMAP_TYPE_PNG);
+	if (bitmap.IsOk()) {
+		button->SetLabel("");
+		button->SetBitmap(bitmap);
+	}
+}
+
 void BodySlideFrame::PopulateOutfitList(const wxArrayString& items, const wxString& selectItem) {
 	if (!outfitChoice)
 		return;
 
+	outfitChoiceNames.clear();
+
+	for (size_t i = 0; i < items.GetCount(); i++) {
+		std::string rawName = items[i].ToUTF8().data();
+		outfitChoiceNames.push_back(rawName);
+	}
+
+	RebuildOutfitChoice(selectItem.ToUTF8().data());
+}
+
+void BodySlideFrame::RebuildOutfitChoice(const std::string& selectItem) {
+	if (!outfitChoice)
+		return;
+
+	std::string selectedName = selectItem;
+	if (selectedName.empty())
+		selectedName = GetSelectedOutfitName();
+
+	app->SortOutfitNamesForDisplay(outfitChoiceNames);
+
+	populatingChoices = true;
+	wxEventBlocker blocker(outfitChoice, wxEVT_CHOICE);
+	outfitChoice->Freeze();
 	outfitChoice->Clear();
-	outfitChoice->Append(items);
-	if (!outfitChoice->SetStringSelection(selectItem)) {
+
+	for (const auto& rawName : outfitChoiceNames)
+		outfitChoice->Append(FavoriteChoiceLabel(rawName, app->IsFavoriteOutfit(rawName)));
+
+	if (!SelectChoiceName(outfitChoice, outfitChoiceNames, selectedName)) {
 		int i = wxNOT_FOUND;
-		if (selectItem.empty())
+		wxString missingItem = wxString::FromUTF8(selectedName);
+		if (missingItem.empty()) {
+			outfitChoiceNames.push_back("");
 			i = outfitChoice->Append("");
-		else if (selectItem.First('['))
-			i = outfitChoice->Append("[" + selectItem + "]");
-		else
-			i = outfitChoice->Append(selectItem);
+		}
+		else if (!missingItem.StartsWith("[")) {
+			outfitChoiceNames.push_back(selectedName);
+			i = outfitChoice->Append("[" + missingItem + "]");
+		}
+		else {
+			outfitChoiceNames.push_back(selectedName);
+			i = outfitChoice->Append(missingItem);
+		}
 
 		outfitChoice->SetSelection(i);
 	}
+
+	outfitChoice->Thaw();
+	populatingChoices = false;
+	UpdateFavoriteButtons();
 }
 
 void BodySlideFrame::PopulatePresetList(const wxArrayString& items, const wxString& selectItem) {
 	if (!presetChoice)
 		return;
 
+	presetChoiceNames.clear();
+
+	for (size_t i = 0; i < items.GetCount(); i++) {
+		std::string rawName = items[i].ToUTF8().data();
+		presetChoiceNames.push_back(rawName);
+	}
+
+	RebuildPresetChoice(selectItem.ToUTF8().data());
+}
+
+void BodySlideFrame::RebuildPresetChoice(const std::string& selectItem) {
+	if (!presetChoice)
+		return;
+
+	std::string selectedName = selectItem;
+	if (selectedName.empty())
+		selectedName = GetSelectedPresetName();
+
+	app->SortPresetNamesForDisplay(presetChoiceNames);
+
+	populatingChoices = true;
+	wxEventBlocker blocker(presetChoice, wxEVT_CHOICE);
+	presetChoice->Freeze();
 	presetChoice->Clear();
-	presetChoice->Append(items);
-	if (!presetChoice->SetStringSelection(selectItem)) {
+
+	for (const auto& rawName : presetChoiceNames)
+		presetChoice->Append(FavoriteChoiceLabel(rawName, app->IsFavoritePreset(rawName)));
+
+	if (!SelectChoiceName(presetChoice, presetChoiceNames, selectedName)) {
 		int i = wxNOT_FOUND;
-		if (selectItem.empty())
+		wxString missingItem = wxString::FromUTF8(selectedName);
+		if (missingItem.empty()) {
+			presetChoiceNames.push_back("");
 			i = presetChoice->Append("");
-		else if (selectItem.First('['))
-			i = presetChoice->Append("[" + selectItem + "]");
-		else
-			i = presetChoice->Append(selectItem);
+		}
+		else if (!missingItem.StartsWith("[")) {
+			presetChoiceNames.push_back(selectedName);
+			i = presetChoice->Append("[" + missingItem + "]");
+		}
+		else {
+			presetChoiceNames.push_back(selectedName);
+			i = presetChoice->Append(missingItem);
+		}
 
 		presetChoice->SetSelection(i);
+	}
+
+	presetChoice->Thaw();
+	populatingChoices = false;
+	UpdateFavoriteButtons();
+}
+
+std::string BodySlideFrame::GetSelectedOutfitName() const {
+	if (!outfitChoice)
+		return "";
+
+	int selection = outfitChoice->GetSelection();
+	if (selection < 0 || selection >= static_cast<int>(outfitChoiceNames.size()))
+		return "";
+
+	return outfitChoiceNames[selection];
+}
+
+std::string BodySlideFrame::GetSelectedPresetName() const {
+	if (!presetChoice)
+		return "";
+
+	int selection = presetChoice->GetSelection();
+	if (selection < 0 || selection >= static_cast<int>(presetChoiceNames.size()))
+		return "";
+
+	return presetChoiceNames[selection];
+}
+
+void BodySlideFrame::UpdateFavoriteButtons() {
+	if (btnFavoriteOutfit) {
+		std::string outfitName = GetSelectedOutfitName();
+		bool canFavorite = !outfitName.empty() && app->OutfitExists(outfitName);
+		bool isFavorite = canFavorite && app->IsFavoriteOutfit(outfitName);
+		btnFavoriteOutfit->Enable(canFavorite);
+		SetFavoriteButtonBitmap(btnFavoriteOutfit, isFavorite);
+		btnFavoriteOutfit->SetToolTip(isFavorite ? _("Remove this outfit/body from favorites") : _("Favorite this outfit/body"));
+	}
+
+	if (btnFavoritePreset) {
+		std::string presetName = GetSelectedPresetName();
+		bool canFavorite = !presetName.empty() && app->PresetExists(presetName);
+		bool isFavorite = canFavorite && app->IsFavoritePreset(presetName);
+		btnFavoritePreset->Enable(canFavorite);
+		SetFavoriteButtonBitmap(btnFavoritePreset, isFavorite);
+		btnFavoritePreset->SetToolTip(isFavorite ? _("Remove this preset from favorites") : _("Favorite this preset"));
 	}
 }
 
@@ -5012,6 +5352,8 @@ void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 		if (menuRegexOutfits)
 			BodySlideConfig.SetBoolValue("RegexFilterOutfits", menuRegexOutfits->IsChecked());
 	}
+
+	app->SaveFavorites();
 
 	int ret = BodySlideConfig.SaveConfig(Config["AppDir"] + "/BodySlide.xml", "BodySlideConfig");
 	if (ret)
@@ -5480,14 +5822,53 @@ void BodySlideFrame::OnFilterHasZaps(wxCommandEvent& WXUNUSED(event)) {
 	app->PopulateOutfitList("");
 }
 
-void BodySlideFrame::OnChooseOutfit(wxCommandEvent& event) {
-	std::string sstr{event.GetString().ToUTF8()};
+void BodySlideFrame::OnChooseOutfit(wxCommandEvent& WXUNUSED(event)) {
+	if (populatingChoices)
+		return;
+
+	std::string sstr = GetSelectedOutfitName();
+	if (sstr.empty())
+		return;
+
+	if (sstr == BodySlideConfig["SelectedOutfit"]) {
+		UpdateFavoriteButtons();
+		return;
+	}
+
 	app->ActivateOutfit(sstr);
+	UpdateFavoriteButtons();
 }
 
-void BodySlideFrame::OnChoosePreset(wxCommandEvent& event) {
-	std::string sstr{event.GetString().ToUTF8()};
+void BodySlideFrame::OnChoosePreset(wxCommandEvent& WXUNUSED(event)) {
+	if (populatingChoices)
+		return;
+
+	std::string sstr = GetSelectedPresetName();
+	if (sstr == BodySlideConfig["SelectedPreset"]) {
+		UpdateFavoriteButtons();
+		return;
+	}
+
 	app->ActivatePreset(sstr);
+	UpdateFavoriteButtons();
+}
+
+void BodySlideFrame::OnFavoriteOutfit(wxCommandEvent& WXUNUSED(event)) {
+	std::string outfitName = GetSelectedOutfitName();
+	if (outfitName.empty() || !app->OutfitExists(outfitName))
+		return;
+
+	app->ToggleFavoriteOutfit(outfitName);
+	RebuildOutfitChoice(outfitName);
+}
+
+void BodySlideFrame::OnFavoritePreset(wxCommandEvent& WXUNUSED(event)) {
+	std::string presetName = GetSelectedPresetName();
+	if (presetName.empty() || !app->PresetExists(presetName))
+		return;
+
+	app->ToggleFavoritePreset(presetName);
+	RebuildPresetChoice(presetName);
 }
 
 void BodySlideFrame::OnDeleteProject(wxCommandEvent& WXUNUSED(event)) {
@@ -6193,7 +6574,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToUTF8().data());
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
+			app->SaveFavorites();
 			app->targetGame = targ;
+			app->LoadFavorites();
 			app->InitArchives();
 			app->LoadAllCategories();
 			app->LoadAllGroups();
