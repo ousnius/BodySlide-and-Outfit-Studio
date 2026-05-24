@@ -11,7 +11,7 @@
 				<option>0</option>
 				<flag>wxALL</flag>
 				<border>5</border>
-				<object class="wxStaticText" name="m_staticText15">
+				<object class="wxStaticText" name="spPresetNameLabel">
 					<label>Please enter a name for the new preset:</label>
 					<wrap>-1</wrap>
 				</object>
@@ -34,7 +34,7 @@
 						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText16">
+						<object class="wxStaticText" name="spGroupSelectLabel">
 							<label>Select groups to assign to the new preset:</label>
 							<wrap>-1</wrap>
 						</object>

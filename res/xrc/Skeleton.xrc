@@ -11,7 +11,7 @@
 				<option>0</option>
 				<flag>wxALL</flag>
 				<border>5</border>
-				<object class="wxStaticText" name="m_staticText5">
+				<object class="wxStaticText" name="boneListLabel">
 					<label>Bones in the current reference skeleton:</label>
 					<wrap>-1</wrap>
 				</object>
