@@ -1191,6 +1191,9 @@ void BodySlideApp::UpdateConflictManager() {
 		conflictInfo->Show();
 	else
 		conflictInfo->Hide();
+
+	if (sliderView->leftPanel)
+		sliderView->leftPanel->Layout();
 }
 
 void BodySlideApp::SetDefaultBuildSelection() {
