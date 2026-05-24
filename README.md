@@ -3,6 +3,8 @@ BodySlide and Outfit Studio
 
 BodySlide and Outfit Studio, a tool to convert, create, and customize outfits and bodies for The Elder Scrolls, Fallout and Starfield.
 
+[![CMake Release](https://github.com/ousnius/BodySlide-and-Outfit-Studio/actions/workflows/cmake-release.yml/badge.svg)](https://github.com/ousnius/BodySlide-and-Outfit-Studio/actions/workflows/cmake-release.yml)
+
 **Created by and/or with the help of:**
 * Caliente
 * ousnius
@@ -21,6 +23,7 @@ BodySlide and Outfit Studio, a tool to convert, create, and customize outfits an
 * [LZ4(F)](https://github.com/lz4/lz4)
 * [TinyXML-2](https://github.com/leethomason/tinyxml2)
 * [nlohmann/json](https://github.com/nlohmann/json)
+* [fkYAML](https://github.com/fktn-k/fkYAML)
 * FSEngine (BSA/BA2 library)
 * [Autodesk FBX SDK](https://aps.autodesk.com/developer/overview/fbx-sdk)
 
