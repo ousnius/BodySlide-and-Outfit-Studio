@@ -68,6 +68,8 @@ void Log::Initialize(int level, const wxString& fileName) {
 		//Open ofstream, creating empty log file
 		stream.open(filePath, std::ios_base::app);
 		if (stream) {
+			stream << std::unitbuf;
+
 			wxLog* log = new wxLogStream(&stream);
 			log->SetLogLevel(level);
 
