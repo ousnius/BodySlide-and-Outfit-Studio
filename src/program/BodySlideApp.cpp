@@ -1294,9 +1294,7 @@ void BodySlideApp::EditProject(const std::string& projectName) {
 }
 
 void BodySlideApp::LaunchOutfitStudio(const wxString& args) {
-#ifdef WIN64
-	const wxString osExec = "OutfitStudio x64.exe";
-#elif _WIN32
+#ifdef _WIN32
 	const wxString osExec = "OutfitStudio.exe";
 #else
 	const wxString osExec = "OutfitStudio";

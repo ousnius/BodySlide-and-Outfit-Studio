@@ -7455,8 +7455,8 @@ msgstr "FBX-Datei mit neuem Modell importieren"
 #: src/program/OutfitStudio.cpp:5351 src/program/OutfitStudio.cpp:5390
 #: src/program/OutfitStudio.cpp:5454 src/program/OutfitStudio.cpp:9040
 msgid ""
-"FBX is only supported in 64-bit builds of Outfit Studio. Start "
-"\"OutfitStudio x64\" instead."
+"FBX is only supported in 64-bit builds of Outfit Studio. Start the 64-bit "
+"Outfit Studio executable instead."
 msgstr ""
 
 #: src/program/OutfitStudio.cpp:5351 src/program/OutfitStudio.cpp:5390

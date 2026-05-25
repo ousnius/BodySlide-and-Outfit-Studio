@@ -68,8 +68,8 @@ jobs:
         shell: pwsh
         run: |
           $outputs = @(
-            "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/BodySlide x64.exe",
-            "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/OutfitStudio x64.exe"
+            "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/BodySlide.exe",
+            "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/OutfitStudio.exe"
           )
 
           foreach ($output in $outputs) {
@@ -89,8 +89,8 @@ jobs:
           Remove-Item -Recurse -Force $artifactRoot -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
-          Copy-Item "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/BodySlide x64.exe" $packageDir
-          Copy-Item "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/OutfitStudio x64.exe" $packageDir
+          Copy-Item "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/BodySlide.exe" $packageDir
+          Copy-Item "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/OutfitStudio.exe" $packageDir
           Copy-Item "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/*.pdb" $packageDir -ErrorAction SilentlyContinue
           Copy-Item "res" $packageDir -Recurse
           Copy-Item "lang" $packageDir -Recurse
@@ -165,8 +165,8 @@ jobs:
 
       - name: Verify outputs
         run: |
-          test -x "build/ubuntu-gcc-relwithdebinfo/BodySlide x64"
-          test -x "build/ubuntu-gcc-relwithdebinfo/OutfitStudio x64"
+          test -x "build/ubuntu-gcc-relwithdebinfo/BodySlide"
+          test -x "build/ubuntu-gcc-relwithdebinfo/OutfitStudio"
 
       - name: Package artifacts
         run: |
@@ -178,8 +178,8 @@ jobs:
           rm -rf "$artifact_root"
           mkdir -p "$package_dir"
 
-          cp "build/ubuntu-gcc-relwithdebinfo/BodySlide x64" "$package_dir/"
-          cp "build/ubuntu-gcc-relwithdebinfo/OutfitStudio x64" "$package_dir/"
+          cp "build/ubuntu-gcc-relwithdebinfo/BodySlide" "$package_dir/"
+          cp "build/ubuntu-gcc-relwithdebinfo/OutfitStudio" "$package_dir/"
           cp -a res "$package_dir/"
           cp -a lang "$package_dir/"
           cp BodySlide.xml BuildSelection.xml Config.xml OutfitStudio.xml RefTemplates.xml "$package_dir/"

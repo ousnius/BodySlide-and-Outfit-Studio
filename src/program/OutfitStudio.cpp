@@ -5352,7 +5352,7 @@ void OutfitStudioFrame::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Imported shape(s) from FBX.");
 	glView->Render();
 #else
-	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start \"OutfitStudio x64\" instead."), _("Info"), wxICON_INFORMATION);
+	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start the 64-bit Outfit Studio executable instead."), _("Info"), wxICON_INFORMATION);
 #endif
 }
 
@@ -5391,7 +5391,7 @@ void OutfitStudioFrame::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 		wxMessageBox(_("Failed to export FBX file!"), _("Export Error"), wxICON_ERROR);
 	}
 #else
-	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start \"OutfitStudio x64\" instead."), _("Info"), wxICON_INFORMATION);
+	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start the 64-bit Outfit Studio executable instead."), _("Info"), wxICON_INFORMATION);
 #endif
 }
 
@@ -5455,7 +5455,7 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 #else
-	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start \"OutfitStudio x64\" instead."), _("Info"), wxICON_INFORMATION);
+	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start the 64-bit Outfit Studio executable instead."), _("Info"), wxICON_INFORMATION);
 #endif
 }
 
@@ -9041,7 +9041,7 @@ void OutfitStudioFrame::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	ApplySliders();
 	HighlightSliderData();
 #else
-	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start \"OutfitStudio x64\" instead."), _("Info"), wxICON_INFORMATION);
+	wxMessageBox(_("FBX is only supported in 64-bit builds of Outfit Studio. Start the 64-bit Outfit Studio executable instead."), _("Info"), wxICON_INFORMATION);
 #endif
 }
 
