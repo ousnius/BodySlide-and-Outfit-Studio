@@ -139,7 +139,7 @@ bool BodySlideApp::OnInit() {
 
 	Config.SetDefaultValue("AppDir", dataDir);
 
-	logger.Initialize(Config.GetIntValue("LogLevel", -1), dataDir + "/Log_BS.txt");
+	logger.Initialize(Config.GetIntValue("LogLevel", 2), dataDir + "/Log_BS.txt");
 	wxLogMessage("Initializing BodySlide...");
 
 #ifdef NDEBUG

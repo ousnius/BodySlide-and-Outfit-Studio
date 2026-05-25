@@ -483,7 +483,7 @@ bool OutfitStudio::OnInit() {
 
 	Config.SetDefaultValue("AppDir", dataDir);
 
-	logger.Initialize(Config.GetIntValue("LogLevel", -1), dataDir + "/Log_OS.txt");
+	logger.Initialize(Config.GetIntValue("LogLevel", 2), dataDir + "/Log_OS.txt");
 	wxLogMessage("Initializing Outfit Studio...");
 
 #ifdef NDEBUG
