@@ -169,7 +169,13 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 
 			g = element->FirstChildElement("Group");
 			while (g) {
-				std::string groupName = g->Attribute("name");
+				const char* groupNameAttr = g->Attribute("name");
+				if (!groupNameAttr) {
+					g = g->NextSiblingElement("Group");
+					continue;
+				}
+
+				std::string groupName = groupNameAttr;
 				groups.push_back(groupName);
 
 				for (auto& filter : groupFilter) {
@@ -180,7 +186,8 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 				}
 				g = g->NextSiblingElement("Group");
 			}
-			if (element->Attribute("set") == sliderSet || allPresets)
+			const char* setAttr = element->Attribute("set");
+			if ((setAttr && setAttr == sliderSet) || allPresets)
 				skip = false;
 
 			if (skip) {
@@ -188,7 +195,12 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 				continue;
 			}
 
-			presetName = element->Attribute("name");
+			const char* nameAttr = element->Attribute("name");
+			if (!nameAttr) {
+				element = element->NextSiblingElement("Preset");
+				continue;
+			}
+			presetName = nameAttr;
 			if (presetFileNames.find(presetName) != presetFileNames.end()) {
 				element = element->NextSiblingElement("Preset");
 				continue;
@@ -201,8 +213,15 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 
 			setSlider = element->FirstChildElement("SetSlider");
 			while (setSlider) {
-				sliderName = setSlider->Attribute("name");
-				applyTo = setSlider->Attribute("size");
+				const char* sliderNameAttr = setSlider->Attribute("name");
+				const char* sizeAttr = setSlider->Attribute("size");
+				if (!sliderNameAttr || !sizeAttr) {
+					setSlider = setSlider->NextSiblingElement("SetSlider");
+					continue;
+				}
+
+				sliderName = sliderNameAttr;
+				applyTo = sizeAttr;
 				o = setSlider->FloatAttribute("value") / 100.0f;
 				s = b = -10000.0f;
 				if (applyTo == "small")
@@ -257,7 +276,8 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 		presetElem = slidersNode->FirstChildElement("Preset");
 		while (presetElem) {
 			// Replace preset if found in file.
-			if (StringsEqualInsens(presetElem->Attribute("name"), presetName.c_str())) {
+			const char* pName = presetElem->Attribute("name");
+			if (pName && StringsEqualInsens(pName, presetName.c_str())) {
 				XMLElement* tmpElem = presetElem;
 				presetElem = presetElem->NextSiblingElement("Preset");
 				slidersNode->DeleteChild(tmpElem);
@@ -353,7 +373,8 @@ int PresetCollection::DeletePreset(const std::string& filePath, const std::strin
 	if (slidersNode) {
 		XMLElement* presetElem = slidersNode->FirstChildElement("Preset");
 		while (presetElem) {
-			if (StringsEqualInsens(presetElem->Attribute("name"), presetName.c_str())) {
+			const char* pName = presetElem->Attribute("name");
+			if (pName && StringsEqualInsens(pName, presetName.c_str())) {
 				slidersNode->DeleteChild(presetElem);
 				break;
 			}
