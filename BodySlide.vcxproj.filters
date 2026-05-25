@@ -769,6 +769,9 @@
     <ClInclude Include="src\utils\PlatformUtil.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="src\utils\StackTrace.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
     <ClInclude Include="src\utils\StringStuff.h">
       <Filter>Utilities</Filter>
     </ClInclude>
@@ -1867,6 +1870,9 @@
       <Filter>Components</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\PlatformUtil.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\StackTrace.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\StringStuff.cpp">

@@ -33,8 +33,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "SliderDataImportDialog.h"
 #include "AutomationDialog.h"
 #include "../components/ClippingFixer.h"
+#include "../utils/StackTrace.h"
 #include "../utils/StringStuff.h"
 
+#include <cstdlib>
 #include <sstream>
 #include <wx/debugrpt.h>
 #include <wx/listctrl.h>
@@ -783,6 +785,8 @@ void OutfitStudio::OnFatalException() {
 	logger.SetFormatter(false);
 
 	wxLogError("Fatal exception has occurred, the program will terminate.");
+	LogStackTraceFromException();
+
 	wxMessageBox(_("Fatal exception has occurred, the program will terminate."), _("Fatal exception"), wxICON_ERROR);
 
 	wxDebugReport report;

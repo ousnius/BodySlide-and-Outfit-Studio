@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../files/wxDDSImage.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/ParallelFor.h"
+#include "../utils/StackTrace.h"
 #include "../utils/StringStuff.h"
 
 #include <algorithm>
@@ -352,6 +353,8 @@ void BodySlideApp::OnFatalException() {
 	logger.SetFormatter(false);
 
 	wxLogError("Fatal exception has occurred, the program will terminate.");
+	LogStackTraceFromException();
+
 	wxMessageBox(_("Fatal exception has occurred, the program will terminate."), _("Fatal exception"), wxICON_ERROR);
 
 	wxDebugReport report;

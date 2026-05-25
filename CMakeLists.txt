@@ -269,6 +269,7 @@ set(BSOS_COMMON_SOURCES
 	src/utils/ConfigurationManager.cpp
 	src/utils/Log.cpp
 	src/utils/PlatformUtil.cpp
+	src/utils/StackTrace.cpp
 	src/utils/StringStuff.cpp
 	src/utils/WxBuildConfigCheck.cpp
 )
@@ -366,6 +367,9 @@ function(bsos_configure_target target)
 		${BSOS_GLEW_LIBRARY}
 		Threads::Threads
 	)
+	if(WIN32)
+		target_link_libraries(${target} PRIVATE dbghelp)
+	endif()
 
 	if(MSVC)
 		target_compile_options(${target} PRIVATE /W4 /bigobj /wd26812)
