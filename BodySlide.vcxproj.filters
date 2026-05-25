@@ -1872,6 +1872,9 @@
     <ClCompile Include="src\utils\StringStuff.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\WxBuildConfigCheck.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
     <ClCompile Include="src\files\wxDDSImage.cpp">
       <Filter>Files</Filter>
     </ClCompile>

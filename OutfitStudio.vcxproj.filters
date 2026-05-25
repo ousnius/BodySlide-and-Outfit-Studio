@@ -2103,6 +2103,9 @@
     <ClCompile Include="src\utils\StringStuff.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
+    <ClCompile Include="src\utils\WxBuildConfigCheck.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
     <ClCompile Include="lib\gli\core\dummy.cpp">
       <Filter>Libraries\gli\core</Filter>
     </ClCompile>

@@ -270,6 +270,7 @@ set(BSOS_COMMON_SOURCES
 	src/utils/Log.cpp
 	src/utils/PlatformUtil.cpp
 	src/utils/StringStuff.cpp
+	src/utils/WxBuildConfigCheck.cpp
 )
 
 set(BSOS_OUTFIT_STUDIO_SOURCES

@@ -952,6 +952,7 @@
     <ClCompile Include="src\utils\Log.cpp" />
     <ClCompile Include="src\utils\PlatformUtil.cpp" />
     <ClCompile Include="src\utils\StringStuff.cpp" />
+    <ClCompile Include="src\utils\WxBuildConfigCheck.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml" />
