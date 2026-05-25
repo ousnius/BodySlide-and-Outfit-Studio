@@ -1,4 +1,4 @@
-name: CMake Release
+name: CMake RelWithDebInfo
 
 on:
   push:
@@ -10,12 +10,12 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-  windows-x64-release:
-    name: Windows x64 Release
+  windows-x64-relwithdebinfo:
+    name: Windows x64 RelWithDebInfo
     runs-on: windows-2025-vs2026
 
     env:
-      BUILD_TYPE: Release
+      BUILD_TYPE: RelWithDebInfo
       VCPKG_TARGET_TRIPLET: x64-windows-static
 
     steps:
@@ -46,14 +46,14 @@ jobs:
           $vcpkgCache = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
           New-Item -ItemType Directory -Force -Path $vcpkgCache | Out-Null
           $env:VCPKG_BINARY_SOURCES = "clear;files,$vcpkgCache,readwrite"
-          & (Join-Path $vcpkgRoot "vcpkg.exe") install "wxwidgets:$env:VCPKG_TARGET_TRIPLET"
+          & (Join-Path $vcpkgRoot "vcpkg.exe") install "wxwidgets[debug-support]:$env:VCPKG_TARGET_TRIPLET"
 
       - name: Configure CMake
         shell: pwsh
         run: |
           $vcpkgRoot = Join-Path $env:RUNNER_TEMP "vcpkg"
           $toolchainFile = Join-Path $vcpkgRoot "scripts/buildsystems/vcpkg.cmake"
-          cmake -S . -B build/windows-x64-release `
+          cmake -S . -B build/windows-x64-relwithdebinfo `
             -G "Visual Studio 18 2026" `
             -A x64 `
             -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
@@ -62,14 +62,14 @@ jobs:
 
       - name: Build
         shell: pwsh
-        run: cmake --build build/windows-x64-release --config "$env:BUILD_TYPE" --target BodySlide OutfitStudio --parallel
+        run: cmake --build build/windows-x64-relwithdebinfo --config "$env:BUILD_TYPE" --target BodySlide OutfitStudio --parallel
 
       - name: Verify outputs
         shell: pwsh
         run: |
           $outputs = @(
-            "build/windows-x64-release/Release/BodySlide x64.exe",
-            "build/windows-x64-release/Release/OutfitStudio x64.exe"
+            "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/BodySlide x64.exe",
+            "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/OutfitStudio x64.exe"
           )
 
           foreach ($output in $outputs) {
@@ -81,17 +81,17 @@ jobs:
       - name: Package artifacts
         shell: pwsh
         run: |
-          $packageName = "BodySlide-and-Outfit-Studio-windows-x64-release"
+          $packageName = "BodySlide-and-Outfit-Studio-windows-x64-relwithdebinfo"
           $artifactRoot = Join-Path $env:GITHUB_WORKSPACE "artifacts"
           $packageDir = Join-Path $artifactRoot $packageName
-          $artifactFile = Join-Path $artifactRoot "windows-x64-release.zip"
+          $artifactFile = Join-Path $artifactRoot "windows-x64-relwithdebinfo.zip"
 
           Remove-Item -Recurse -Force $artifactRoot -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
 
-          Copy-Item "build/windows-x64-release/Release/BodySlide x64.exe" $packageDir
-          Copy-Item "build/windows-x64-release/Release/OutfitStudio x64.exe" $packageDir
-          Copy-Item "build/windows-x64-release/Release/*.pdb" $packageDir -ErrorAction SilentlyContinue
+          Copy-Item "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/BodySlide x64.exe" $packageDir
+          Copy-Item "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/OutfitStudio x64.exe" $packageDir
+          Copy-Item "build/windows-x64-relwithdebinfo/$env:BUILD_TYPE/*.pdb" $packageDir -ErrorAction SilentlyContinue
           Copy-Item "res" $packageDir -Recurse
           Copy-Item "lang" $packageDir -Recurse
 
@@ -110,18 +110,19 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          path: artifacts/windows-x64-release.zip
+          path: artifacts/windows-x64-relwithdebinfo.zip
           archive: false
           if-no-files-found: error
           retention-days: 7
 
 
-  ubuntu-gcc-release:
-    name: Ubuntu GCC Release
+
+  ubuntu-gcc-relwithdebinfo:
+    name: Ubuntu GCC RelWithDebInfo
     runs-on: ubuntu-latest
 
     env:
-      BUILD_TYPE: Release
+      BUILD_TYPE: RelWithDebInfo
       CC: gcc
       CXX: g++
 
@@ -148,35 +149,37 @@ jobs:
             pkg-config
 
           wx-config --version
-          wx-config --libs gl
+          wx-config --selected-config
+          wx-config --cxxflags
+          wx-config --libs gl,core,base,net,xml,xrc,adv,qa,html,propgrid
 
       - name: Configure CMake
         run: |
-          cmake -S . -B build/ubuntu-gcc-release \
+          cmake -S . -B build/ubuntu-gcc-relwithdebinfo \
             -G Ninja \
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
             -DBSOS_ENABLE_FBXSDK=OFF
 
       - name: Build
-        run: cmake --build build/ubuntu-gcc-release --target BodySlide OutfitStudio --parallel
+        run: cmake --build build/ubuntu-gcc-relwithdebinfo --target BodySlide OutfitStudio --parallel
 
       - name: Verify outputs
         run: |
-          test -x "build/ubuntu-gcc-release/BodySlide x64"
-          test -x "build/ubuntu-gcc-release/OutfitStudio x64"
+          test -x "build/ubuntu-gcc-relwithdebinfo/BodySlide x64"
+          test -x "build/ubuntu-gcc-relwithdebinfo/OutfitStudio x64"
 
       - name: Package artifacts
         run: |
-          package_name="BodySlide-and-Outfit-Studio-ubuntu-gcc-release"
+          package_name="BodySlide-and-Outfit-Studio-ubuntu-gcc-relwithdebinfo"
           artifact_root="$GITHUB_WORKSPACE/artifacts"
           package_dir="$artifact_root/$package_name"
-          artifact_file="$artifact_root/ubuntu-gcc-release.zip"
+          artifact_file="$artifact_root/ubuntu-gcc-relwithdebinfo.zip"
 
           rm -rf "$artifact_root"
           mkdir -p "$package_dir"
 
-          cp "build/ubuntu-gcc-release/BodySlide x64" "$package_dir/"
-          cp "build/ubuntu-gcc-release/OutfitStudio x64" "$package_dir/"
+          cp "build/ubuntu-gcc-relwithdebinfo/BodySlide x64" "$package_dir/"
+          cp "build/ubuntu-gcc-relwithdebinfo/OutfitStudio x64" "$package_dir/"
           cp -a res "$package_dir/"
           cp -a lang "$package_dir/"
           cp BodySlide.xml BuildSelection.xml Config.xml OutfitStudio.xml RefTemplates.xml "$package_dir/"
@@ -197,7 +200,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          path: artifacts/ubuntu-gcc-release.zip
+          path: artifacts/ubuntu-gcc-relwithdebinfo.zip
           archive: false
           if-no-files-found: error
           retention-days: 7
