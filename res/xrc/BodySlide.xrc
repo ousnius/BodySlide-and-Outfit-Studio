@@ -31,7 +31,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxLEFT|wxTOP|wxBOTTOM|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -40,11 +40,26 @@
 								<flag>wxALIGN_CENTER</flag>
 								<border>5</border>
 								<object class="wxChoice" name="outfitChoice">
-									<style>wxCB_SORT</style>
 									<tooltip>Select an outfit to modify</tooltip>
 									<selection>0</selection>
 									<content />
 								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnFavoriteOutfit">
+									<size>24,24</size>
+									<bitmap>$(AppDir)\res\images\FavoriteStarEmpty.png</bitmap>
+									<tooltip>Favorite this outfit/body</tooltip>
+								</object>
+							</object>
+							<object class="spacer">
+								<option>0</option>
+								<flag></flag>
+								<border>0</border>
+								<size>2,0</size>
 							</object>
 						</object>
 					</object>
@@ -64,9 +79,15 @@
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
+							<object class="spacer">
+								<option>0</option>
+								<flag></flag>
+								<border>0</border>
+								<size>2,0</size>
+							</object>
 							<object class="sizeritem">
 								<option>0</option>
-								<flag>wxTOP|wxBOTTOM|wxLEFT|wxEXPAND</flag>
+								<flag>wxTOP|wxBOTTOM|wxEXPAND</flag>
 								<border>5</border>
 								<object class="wxButton" name="btnEditProject">
 									<size>24,24</size>
@@ -100,7 +121,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<flag>wxLEFT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -109,11 +130,26 @@
 								<flag>wxALIGN_CENTER</flag>
 								<border>5</border>
 								<object class="wxChoice" name="presetChoice">
-									<style>wxCB_SORT</style>
 									<tooltip>Choose from slider settings presets assigned to groups used by the selected outfit</tooltip>
 									<selection>0</selection>
 									<content />
 								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnFavoritePreset">
+									<size>24,24</size>
+									<bitmap>$(AppDir)\res\images\FavoriteStarEmpty.png</bitmap>
+									<tooltip>Favorite this preset</tooltip>
+								</object>
+							</object>
+							<object class="spacer">
+								<option>0</option>
+								<flag></flag>
+								<border>0</border>
+								<size>2,0</size>
 							</object>
 						</object>
 					</object>
@@ -133,6 +169,22 @@
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
+							<object class="spacer">
+								<option>0</option>
+								<flag></flag>
+								<border>0</border>
+								<size>2,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL</flag>
+								<border>0</border>
+								<object class="wxButton" name="btnEditPreset">
+									<size>24,24</size>
+									<bitmap>$(AppDir)\res\images\EditSmall.png</bitmap>
+									<tooltip>Edit groups assigned to the selected preset</tooltip>
+								</object>
+							</object>
 							<object class="sizeritem">
 								<option>1</option>
 								<flag>wxLEFT|wxEXPAND</flag>

@@ -11,7 +11,7 @@
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxStaticText" name="m_staticText32">
+				<object class="wxStaticText" name="moveVertexDescLabel">
 					<label>This permanently moves a single vertex straight to the given location.</label>
 					<wrap>400</wrap>
 				</object>
@@ -32,7 +32,7 @@
 					<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText3">
+						<object class="wxStaticText" name="posXLabel">
 							<label translate="0">X</label>
 							<wrap>-1</wrap>
 						</object>
@@ -49,7 +49,7 @@
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText4">
+						<object class="wxStaticText" name="posYLabel">
 							<label translate="0">Y</label>
 							<wrap>-1</wrap>
 						</object>
@@ -66,7 +66,7 @@
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText5">
+						<object class="wxStaticText" name="posZLabel">
 							<label translate="0">Z</label>
 							<wrap>-1</wrap>
 						</object>

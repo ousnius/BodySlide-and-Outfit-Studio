@@ -50,6 +50,28 @@ std::string PresetSaveDialog::GetProjectPath() const {
 	return res.empty() ? Config["AppDir"] : res;
 }
 
+void PresetSaveDialog::SetExistingPreset(const std::string& presetName, const std::string& presetFileName, const std::vector<std::string>& groups) {
+	editExistingPreset = true;
+	existingPresetFileName = presetFileName;
+	selectedGroups.clear();
+	selectedGroups.insert(groups.begin(), groups.end());
+
+	SetTitle(_("Edit preset groups..."));
+
+	if (auto presetNameLabel = XRCCTRL((*this), "spPresetNameLabel", wxStaticText))
+		presetNameLabel->SetLabel(_("Preset name:"));
+
+	if (auto groupLabel = XRCCTRL((*this), "spGroupSelectLabel", wxStaticText))
+		groupLabel->SetLabel(_("Select groups to assign to this preset:"));
+
+	if (auto presetNameCtrl = XRCCTRL((*this), "spPresetName", wxTextCtrl)) {
+		presetNameCtrl->ChangeValue(wxString::FromUTF8(presetName));
+		presetNameCtrl->SetEditable(false);
+	}
+
+	Layout();
+}
+
 void PresetSaveDialog::FilterGroups(const std::string& filter) {
 	wxCheckListBox* chkbox = XRCCTRL((*this), "spGroupDisplay", wxCheckListBox);
 	chkbox->Clear();
@@ -97,6 +119,14 @@ void PresetSaveDialog::CheckGroup(wxCommandEvent& event) {
 
 void PresetSaveDialog::OnSave(wxCommandEvent& WXUNUSED(event)) {
 	outPresetName = XRCCTRL((*this), "spPresetName", wxTextCtrl)->GetValue().ToUTF8();
+	outGroups.assign(selectedGroups.begin(), selectedGroups.end());
+
+	if (editExistingPreset) {
+		outFileName = existingPresetFileName;
+		EndModal(wxID_OK);
+		return;
+	}
+
 	std::string presetFile = outPresetName + ".xml";
 
 	wxFileDialog savePresetDialog(this,
@@ -107,8 +137,7 @@ void PresetSaveDialog::OnSave(wxCommandEvent& WXUNUSED(event)) {
 								  wxFD_SAVE);
 	if (savePresetDialog.ShowModal() == wxID_OK) {
 		outFileName = savePresetDialog.GetPath().ToUTF8();
-		outGroups.assign(selectedGroups.begin(), selectedGroups.end());
-		wxDialog::Close();
+		EndModal(wxID_OK);
 	}
 }
 
