@@ -6,6 +6,11 @@ See the included LICENSE file
 #include "BuildLogbook.h"
 #include "../utils/PlatformUtil.h"
 
+std::string BuildLogbookEntry::GetSummary() {
+	std::string summary = "Outfit: " + set + "\nPreset: " + preset + "\nSlider modifications: " + (sliders.size() > 0 ? "Yes" : "No");
+	return summary;
+}
+
 int BuildLogbook::LoadBuildLogbook(XMLElement* srcElement) {
 	if (srcElement == nullptr)
 		return 1;

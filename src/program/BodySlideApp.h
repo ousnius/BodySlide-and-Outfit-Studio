@@ -243,7 +243,9 @@ public:
 
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
-	void LoadBuildLogbookEntry(const std::string& outfitName, const std::string& activePreset);
+	void LoadLogbookEntry();
+	void ActivateLogbookEntry();
+	
 
 	std::vector<std::string> GetConflictingOutfits() {
 		if (projects.empty())
@@ -546,6 +548,8 @@ private:
 	void OnGroupManager(wxCommandEvent& event);
 	void OnConflictPopup(wxMouseEvent& event);
 	void OnOutfitChoiceSelect(wxCommandEvent& event);
+
+	void OnLoadLogbook(wxMouseEvent& event);
 
 	void OnPreview(wxCommandEvent& event);
 	void OnSashPosChanging(wxSplitterEvent& event);

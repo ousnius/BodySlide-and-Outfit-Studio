@@ -26,6 +26,8 @@ public:
 		float value;
 	};
 	std::vector<SliderValue> sliders;
+
+	std::string GetSummary();
 };
 
 class BuildLogbook {
