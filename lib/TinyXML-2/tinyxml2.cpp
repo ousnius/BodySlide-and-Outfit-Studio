@@ -24,7 +24,7 @@ distribution.
 #include "tinyxml2.h"
 
 #include <new>		// yes, this one new style header, is in the Android SDK.
-#if defined(ANDROID_NDK) || defined(__BORLANDC__) || defined(__QNXNTO__)
+#if defined(ANDROID_NDK)
 #   include <stddef.h>
 #   include <stdarg.h>
 #else
@@ -32,15 +32,27 @@ distribution.
 #   include <cstdarg>
 #endif
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1400 ) && (!defined WINCE)
-	// Microsoft Visual Studio, version 2005 and higher. Not WinCE.
-	/*int _snprintf_s(
-	   char *buffer,
-	   size_t sizeOfBuffer,
-	   size_t count,
-	   const char *format [,
-		  argument] ...
-	);*/
+// Handle fallthrough attribute for different compilers
+#ifndef __has_attribute
+#   define __has_attribute(x) 0
+#endif
+#ifndef __has_cpp_attribute
+#  define __has_cpp_attribute(x) 0
+#endif
+
+#if (__cplusplus >= 201703L && __has_cpp_attribute(fallthrough))
+#   define TIXML_FALLTHROUGH [[fallthrough]]
+#elif __has_cpp_attribute(clang::fallthrough)
+#   define TIXML_FALLTHROUGH [[clang::fallthrough]]
+#elif __has_attribute(fallthrough)
+#   define TIXML_FALLTHROUGH __attribute__((fallthrough))
+#else
+#   define TIXML_FALLTHROUGH (void(0))
+#endif
+
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)
+	// Microsoft Visual Studio, version 2005 and higher.
 	static inline int TIXML_SNPRINTF( char* buffer, size_t size, const char* format, ... )
 	{
 		va_list va;
@@ -59,33 +71,11 @@ distribution.
 	#define TIXML_VSCPRINTF	_vscprintf
 	#define TIXML_SSCANF	sscanf_s
 #elif defined _MSC_VER
-	// Microsoft Visual Studio 2003 and earlier or WinCE
+	// Microsoft Visual Studio 2003 and earlier.
 	#define TIXML_SNPRINTF	_snprintf
 	#define TIXML_VSNPRINTF _vsnprintf
 	#define TIXML_SSCANF	sscanf
-	#if (_MSC_VER < 1400 ) && (!defined WINCE)
-		// Microsoft Visual Studio 2003 and not WinCE.
-		#define TIXML_VSCPRINTF   _vscprintf // VS2003's C runtime has this, but VC6 C runtime or WinCE SDK doesn't have.
-	#else
-		// Microsoft Visual Studio 2003 and earlier or WinCE.
-		static inline int TIXML_VSCPRINTF( const char* format, va_list va )
-		{
-			int len = 512;
-			for (;;) {
-				len = len*2;
-				char* str = new char[len]();
-				const int required = _vsnprintf(str, len, format, va);
-				delete[] str;
-				if ( required != -1 ) {
-					TIXMLASSERT( required >= 0 );
-					len = required;
-					break;
-				}
-			}
-			TIXMLASSERT( len >= 0 );
-			return len;
-		}
-	#endif
+	#define TIXML_VSCPRINTF	_vscprintf
 #else
 	// GCC version 3 and higher
 	//#warning( "Using sn* functions." )
@@ -93,6 +83,9 @@ distribution.
 	#define TIXML_VSNPRINTF	vsnprintf
 	static inline int TIXML_VSCPRINTF( const char* format, va_list va )
 	{
+	    if (!format) {
+	        return 0;
+	    }
 		int len = vsnprintf( 0, 0, format, va );
 		TIXMLASSERT( len >= 0 );
 		return len;
@@ -100,7 +93,7 @@ distribution.
 	#define TIXML_SSCANF   sscanf
 #endif
 
-#if defined(_WIN64)
+#if defined(_MSC_VER)
 	#define TIXML_FSEEK _fseeki64
 	#define TIXML_FTELL _ftelli64
 #elif defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
@@ -234,13 +227,13 @@ char* StrPair::ParseName( char* p )
     if ( !p || !(*p) ) {
         return 0;
     }
-    if ( !XMLUtil::IsNameStartChar( (unsigned char) *p ) ) {
+    if ( !XMLUtil::IsNameStartChar( static_cast<unsigned char>(*p) ) ) {
         return 0;
     }
 
     char* const start = p;
     ++p;
-    while ( *p && XMLUtil::IsNameChar( (unsigned char) *p ) ) {
+    while ( *p && XMLUtil::IsNameChar( static_cast<unsigned char>(*p) ) ) {
         ++p;
     }
 
@@ -446,17 +439,17 @@ void XMLUtil::ConvertUTF32ToUTF8( unsigned long input, char* output, int* length
             --output;
             *output = static_cast<char>((input | BYTE_MARK) & BYTE_MASK);
             input >>= 6;
-            //fall through
+            TIXML_FALLTHROUGH;
         case 3:
             --output;
             *output = static_cast<char>((input | BYTE_MARK) & BYTE_MASK);
             input >>= 6;
-            //fall through
+            TIXML_FALLTHROUGH;
         case 2:
             --output;
             *output = static_cast<char>((input | BYTE_MARK) & BYTE_MASK);
             input >>= 6;
-            //fall through
+            TIXML_FALLTHROUGH;
         case 1:
             --output;
             *output = static_cast<char>(input | FIRST_BYTE_MARK[*length]);
@@ -467,101 +460,96 @@ void XMLUtil::ConvertUTF32ToUTF8( unsigned long input, char* output, int* length
 }
 
 
-const char* XMLUtil::GetCharacterRef( const char* p, char* value, int* length )
+const char* XMLUtil::GetCharacterRef(const char* p, char* value, int* length)
 {
-    // Presume an entity, and pull it out.
+    // Assume an entity, and pull it out.
     *length = 0;
 
-    if ( *(p+1) == '#' && *(p+2) ) {
-        unsigned long ucs = 0;
-        TIXMLASSERT( sizeof( ucs ) >= 4 );
+    static const uint32_t MAX_CODE_POINT = 0x10FFFF;
+
+    if (*(p + 1) == '#' && *(p + 2)) {
+        uint32_t ucs = 0;
         ptrdiff_t delta = 0;
-        unsigned mult = 1;
+        uint32_t mult = 1;
         static const char SEMICOLON = ';';
 
-        if ( *(p+2) == 'x' ) {
+        bool hex = false;
+        uint32_t radix = 10;
+        const char* q = 0;
+        char terminator = '#';
+
+        if (*(p + 2) == 'x') {
             // Hexadecimal.
-            const char* q = p+3;
-            if ( !(*q) ) {
-                return 0;
-            }
+            hex = true;
+            radix = 16;
+            terminator = 'x';
 
-            q = strchr( q, SEMICOLON );
-
-            if ( !q ) {
-                return 0;
-            }
-            TIXMLASSERT( *q == SEMICOLON );
-
-            delta = q-p;
-            --q;
-
-            while ( *q != 'x' ) {
-                unsigned int digit = 0;
-
-                if ( *q >= '0' && *q <= '9' ) {
-                    digit = *q - '0';
-                }
-                else if ( *q >= 'a' && *q <= 'f' ) {
-                    digit = *q - 'a' + 10;
-                }
-                else if ( *q >= 'A' && *q <= 'F' ) {
-                    digit = *q - 'A' + 10;
-                }
-                else {
-                    return 0;
-                }
-                TIXMLASSERT( digit < 16 );
-                TIXMLASSERT( digit == 0 || mult <= UINT_MAX / digit );
-                const unsigned int digitScaled = mult * digit;
-                TIXMLASSERT( ucs <= ULONG_MAX - digitScaled );
-                ucs += digitScaled;
-                TIXMLASSERT( mult <= UINT_MAX / 16 );
-                mult *= 16;
-                --q;
-            }
+            q = p + 3;
         }
         else {
             // Decimal.
-            const char* q = p+2;
-            if ( !(*q) ) {
+            q = p + 2;
+        }
+        if (!(*q)) {
+            return 0;
+        }
+
+        q = strchr(q, SEMICOLON);
+        if (!q) {
+            return 0;
+        }
+        TIXMLASSERT(*q == SEMICOLON);
+
+        delta = q - p;
+        --q;
+
+        while (*q != terminator) {
+            uint32_t digit = 0;
+
+            if (*q >= '0' && *q <= '9') {
+                digit = *q - '0';
+            }
+            else if (hex && (*q >= 'a' && *q <= 'f')) {
+                digit = *q - 'a' + 10;
+            }
+            else if (hex && (*q >= 'A' && *q <= 'F')) {
+                digit = *q - 'A' + 10;
+            }
+            else {
                 return 0;
             }
+            TIXMLASSERT(digit < radix);
 
-            q = strchr( q, SEMICOLON );
-
-            if ( !q ) {
+            const unsigned int digitScaled = mult * digit;
+            // Reject before adding: if digitScaled alone exceeds MAX_CODE_POINT,
+            // or if adding it to ucs would exceed it (checked without overflow by
+            // testing ucs > MAX_CODE_POINT - digitScaled, safe since digitScaled
+            // <= MAX_CODE_POINT at this point).
+            if (digitScaled > MAX_CODE_POINT || ucs > MAX_CODE_POINT - digitScaled) {
                 return 0;
             }
-            TIXMLASSERT( *q == SEMICOLON );
-
-            delta = q-p;
+            ucs += digitScaled;
+            mult *= radix;
+            if (mult > MAX_CODE_POINT) {
+                mult = MAX_CODE_POINT;
+            }
             --q;
-
-            while ( *q != '#' ) {
-                if ( *q >= '0' && *q <= '9' ) {
-                    const unsigned int digit = *q - '0';
-                    TIXMLASSERT( digit < 10 );
-                    TIXMLASSERT( digit == 0 || mult <= UINT_MAX / digit );
-                    const unsigned int digitScaled = mult * digit;
-                    TIXMLASSERT( ucs <= ULONG_MAX - digitScaled );
-                    ucs += digitScaled;
-                }
-                else {
-                    return 0;
-                }
-                TIXMLASSERT( mult <= UINT_MAX / 10 );
-                mult *= 10;
-                --q;
-            }
+        }
+        // Out of range:
+        if (ucs > MAX_CODE_POINT) {
+            return 0;
         }
         // convert the UCS to UTF-8
-        ConvertUTF32ToUTF8( ucs, value, length );
+        ConvertUTF32ToUTF8(ucs, value, length);
+        if (*length == 0) {
+            // If *length is 0, ConvertUTF32ToUTF8 rejected the code point.
+            // Fail safely.
+            return 0;
+        }
         return p + delta + 1;
     }
-    return p+1;
+    return p + 1;
 }
-
 
 void XMLUtil::ToStr( int v, char* buffer, int bufferSize )
 {
@@ -700,7 +688,7 @@ bool XMLUtil::ToInt64(const char* str, int64_t* value)
 bool XMLUtil::ToUnsigned64(const char* str, uint64_t* value) {
     unsigned long long v = 0;	// horrible syntax trick to make the compiler happy about %llu
     if(TIXML_SSCANF(str, IsPrefixHex(str) ? "%llx" : "%llu", &v) == 1) {
-        *value = (uint64_t)v;
+        *value = static_cast<uint64_t>(v);
         return true;
     }
     return false;
@@ -818,7 +806,17 @@ XMLNode::XMLNode( XMLDocument* doc ) :
 
 XMLNode::~XMLNode()
 {
-    DeleteChildren();
+    // Fast path: this node is dying, so maintaining _firstChild/_lastChild and
+    // sibling _prev/_next links is unnecessary. Only _parent must be zeroed to
+    // satisfy the MarkInUse assertion inside DeleteNode.
+    XMLNode *currentChild = _firstChild;
+    while (currentChild != NULL) {
+        XMLNode *next = currentChild->_next;
+        currentChild->_parent = 0;
+        DeleteNode(currentChild);
+        currentChild = next;
+    }
+
     if ( _parent ) {
         _parent->Unlink( this );
     }
@@ -1977,7 +1975,7 @@ char* XMLElement::ParseAttributes( char* p, int* curLineNumPtr )
         }
 
         // attribute.
-        if (XMLUtil::IsNameStartChar( (unsigned char) *p ) ) {
+        if (XMLUtil::IsNameStartChar( static_cast<unsigned char>(*p) ) ) {
             XMLAttribute* attrib = CreateAttribute();
             TIXMLASSERT( attrib );
             attrib->_parseLineNum = _document->_parseCurLineNum;
@@ -2244,7 +2242,7 @@ void XMLDocument::Clear()
     delete [] _charBuffer;
     _charBuffer = 0;
 	_parsingDepth = 0;
-
+    
 #if 0
     _textPool.Trace( "text" );
     _elementPool.Trace( "element" );
@@ -2319,7 +2317,7 @@ static FILE* callfopen( const char* filepath, const char* mode )
 {
     TIXMLASSERT( filepath );
     TIXMLASSERT( mode );
-#if defined(_MSC_VER) && (_MSC_VER >= 1400 ) && (!defined WINCE)
+#if defined(_MSC_VER) && (_MSC_VER >= 1400)
     FILE* fp = 0;
     const errno_t err = fopen_s( &fp, filepath, mode );
     if ( err ) {
@@ -2331,9 +2329,11 @@ static FILE* callfopen( const char* filepath, const char* mode )
     return fp;
 }
 
-void XMLDocument::DeleteNode( XMLNode* node )	{
-    TIXMLASSERT( node );
-    TIXMLASSERT(node->_document == this );
+void XMLDocument::DeleteNode( XMLNode* node )	{   
+    if(node == 0) {
+        return; // check for null pointer
+    }
+    TIXMLASSERT(node->_document == this);
     if (node->_parent) {
         node->_parent->DeleteChild( node );
     }
@@ -2585,7 +2585,7 @@ void XMLDocument::PopDepth()
 	--_parsingDepth;
 }
 
-XMLPrinter::XMLPrinter( FILE* file, bool compact, int depth ) :
+XMLPrinter::XMLPrinter( FILE* file, bool compact, int depth, EscapeAposCharsInAttributes aposInAttributes ) :
     _elementJustOpened( false ),
     _stack(),
     _firstElement( true ),
@@ -2602,9 +2602,11 @@ XMLPrinter::XMLPrinter( FILE* file, bool compact, int depth ) :
     }
     for( int i=0; i<NUM_ENTITIES; ++i ) {
         const char entityValue = entities[i].value;
-        const unsigned char flagIndex = static_cast<unsigned char>(entityValue);
-        TIXMLASSERT( flagIndex < ENTITY_RANGE );
-        _entityFlag[flagIndex] = true;
+        if ((aposInAttributes == ESCAPE_APOS_CHARS_IN_ATTRIBUTES) || (entityValue != SINGLE_QUOTE)) {
+            const unsigned char flagIndex = static_cast<unsigned char>(entityValue);
+            TIXMLASSERT( flagIndex < ENTITY_RANGE );
+            _entityFlag[flagIndex] = true;
+        }
     }
     _restrictedEntityFlag[static_cast<unsigned char>('&')] = true;
     _restrictedEntityFlag[static_cast<unsigned char>('<')] = true;
@@ -2641,7 +2643,7 @@ void XMLPrinter::Write( const char* data, size_t size )
         fwrite ( data , sizeof(char), size, _fp);
     }
     else {
-        char* p = _buffer.PushArr( static_cast<int>(size) ) - 1;   // back up over the null terminator.
+        char* p = _buffer.PushArr( size ) - 1;   // back up over the null terminator.
         memcpy( p, data, size );
         p[size] = 0;
     }
