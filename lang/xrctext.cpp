@@ -346,8 +346,6 @@ _("Target Shapes:");
 _("Comma-separated list of shape names. Leave empty to target all shapes, or the root node for extra data steps.");
 #line 194 "res/xrc/Automation.xrc"
 _("Comma-separated shape list");
-#line 201 "res/xrc/Automation.xrc"
-_("+");
 #line 203 "res/xrc/Automation.xrc"
 _("Add shapes from list");
 #line 209 "res/xrc/Automation.xrc"
@@ -678,8 +676,6 @@ _("Slider Names:");
 _("Comma-separated list of slider names to fix clipping for (Sliders mode only). Leave empty to process all non-zap/non-UV sliders.");
 #line 1637 "res/xrc/Automation.xrc"
 _("Comma-separated slider list");
-#line 1643 "res/xrc/Automation.xrc"
-_("+");
 #line 1645 "res/xrc/Automation.xrc"
 _("Add sliders from list");
 #line 1661 "res/xrc/Automation.xrc"
@@ -816,12 +812,6 @@ _("No squeeze");
 _("Solid mode");
 #line 2241 "res/xrc/Automation.xrc"
 _("Axes:");
-#line 2252 "res/xrc/Automation.xrc"
-_("X");
-#line 2260 "res/xrc/Automation.xrc"
-_("Y");
-#line 2266 "res/xrc/Automation.xrc"
-_("Z");
 #line 2276 "res/xrc/Automation.xrc"
 _("Fix Clipping:");
 #line 2282 "res/xrc/Automation.xrc"
@@ -836,8 +826,6 @@ _("Slider Names:");
 _("Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.");
 #line 2317 "res/xrc/Automation.xrc"
 _("Comma-separated slider list");
-#line 2323 "res/xrc/Automation.xrc"
-_("+");
 #line 2325 "res/xrc/Automation.xrc"
 _("Add sliders from list");
 #line 2341 "res/xrc/Automation.xrc"
@@ -848,8 +836,6 @@ _("Slider Names:");
 _("Comma-separated list of slider names to delete. If regex is checked, the text is used as a single regex pattern.");
 #line 2368 "res/xrc/Automation.xrc"
 _("Comma-separated slider list or pattern");
-#line 2374 "res/xrc/Automation.xrc"
-_("+");
 #line 2376 "res/xrc/Automation.xrc"
 _("Add sliders from list");
 #line 2385 "res/xrc/Automation.xrc"
@@ -864,8 +850,6 @@ _("Slider Names:");
 _("Comma-separated list of slider names. Leave empty to set all visible sliders.");
 #line 2432 "res/xrc/Automation.xrc"
 _("Comma-separated slider list");
-#line 2438 "res/xrc/Automation.xrc"
-_("+");
 #line 2440 "res/xrc/Automation.xrc"
 _("Add sliders from list");
 #line 2449 "res/xrc/Automation.xrc"
@@ -880,8 +864,6 @@ _("Slider Names:");
 _("Comma-separated list of slider names. Leave empty to apply to all sliders.");
 #line 2498 "res/xrc/Automation.xrc"
 _("Comma-separated slider list");
-#line 2504 "res/xrc/Automation.xrc"
-_("+");
 #line 2506 "res/xrc/Automation.xrc"
 _("Add sliders from list");
 #line 2515 "res/xrc/Automation.xrc"

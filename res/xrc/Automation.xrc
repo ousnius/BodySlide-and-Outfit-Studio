@@ -198,7 +198,7 @@
 															<flag>wxALIGN_CENTER_VERTICAL|wxRIGHT</flag>
 															<border>5</border>
 															<object class="wxButton" name="btnAddTargetMesh">
-																<label>+</label>
+																<label translate="0">+</label>
 																<size>24,-1</size>
 																<tooltip>Add shapes from list</tooltip>
 															</object>
@@ -1640,7 +1640,7 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																	<object class="sizeritem">
 																		<flag>wxALIGN_CENTER_VERTICAL</flag>
 																		<object class="wxButton" name="btnAddFixClipSlider">
-																			<label>+</label>
+																			<label translate="0">+</label>
 																			<size>24,-1</size>
 																			<tooltip>Add sliders from list</tooltip>
 																		</object>
@@ -2249,7 +2249,7 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																		<flag>wxRIGHT</flag>
 																		<border>10</border>
 																		<object class="wxCheckBox" name="chkConformAxisX">
-																			<label>X</label>
+																			<label translate="0">X</label>
 																			<checked>1</checked>
 																		</object>
 																	</object>
@@ -2257,13 +2257,13 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																		<flag>wxRIGHT</flag>
 																		<border>10</border>
 																		<object class="wxCheckBox" name="chkConformAxisY">
-																			<label>Y</label>
+																			<label translate="0">Y</label>
 																			<checked>1</checked>
 																		</object>
 																	</object>
 																	<object class="sizeritem">
 																		<object class="wxCheckBox" name="chkConformAxisZ">
-																			<label>Z</label>
+																			<label translate="0">Z</label>
 																			<checked>1</checked>
 																		</object>
 																	</object>
@@ -2320,7 +2320,7 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																	<object class="sizeritem">
 																		<flag>wxALIGN_CENTER_VERTICAL</flag>
 																		<object class="wxButton" name="btnAddConformSlider">
-																			<label>+</label>
+																			<label translate="0">+</label>
 																			<size>24,-1</size>
 																			<tooltip>Add sliders from list</tooltip>
 																		</object>
@@ -2371,7 +2371,7 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																	<object class="sizeritem">
 																		<flag>wxALIGN_CENTER_VERTICAL</flag>
 																		<object class="wxButton" name="btnAddDeleteSlider">
-																			<label>+</label>
+																			<label translate="0">+</label>
 																			<size>24,-1</size>
 																			<tooltip>Add sliders from list</tooltip>
 																		</object>
@@ -2435,7 +2435,7 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																	<object class="sizeritem">
 																		<flag>wxALIGN_CENTER_VERTICAL</flag>
 																		<object class="wxButton" name="btnAddSetSlider">
-																			<label>+</label>
+																			<label translate="0">+</label>
 																			<size>24,-1</size>
 																			<tooltip>Add sliders from list</tooltip>
 																		</object>
@@ -2501,7 +2501,7 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																	<object class="sizeritem">
 																		<flag>wxALIGN_CENTER_VERTICAL</flag>
 																		<object class="wxButton" name="btnAddSliderProp">
-																			<label>+</label>
+																			<label translate="0">+</label>
 																			<size>24,-1</size>
 																			<tooltip>Add sliders from list</tooltip>
 																		</object>
