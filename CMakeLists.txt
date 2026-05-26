@@ -339,6 +339,10 @@ add_executable(SFMaterialFileTest
 target_include_directories(SFMaterialFileTest PRIVATE
 	lib/nlohmannjson/include
 )
+add_executable(SFResourceHashTest
+	tests/SFResourceHashTest.cpp
+	src/files/SFResourceHash.cpp
+)
 
 set(BSOS_COMMON_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib
