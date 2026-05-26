@@ -117,6 +117,8 @@ enum class AutomationBatchMode {
 	SliderSets
 };
 
+inline constexpr const char* DefaultAutomationBatchExtension = ".nif";
+
 std::string AutomationBatchModeToString(AutomationBatchMode mode);
 AutomationBatchMode AutomationBatchModeFromString(const std::string& str);
 
@@ -303,7 +305,7 @@ class AutomationScript {
 	// Batch settings
 	AutomationBatchMode batchMode = AutomationBatchMode::None;
 	std::string batchFolder;
-	std::string batchExtension;
+	std::string batchExtension = DefaultAutomationBatchExtension;
 	bool batchSubdirectories = false;
 	std::string batchFileFilter;
 	bool batchFileFilterRegex = false;

@@ -218,7 +218,7 @@ int AutomationScript::Load(const std::string& fileName) {
 	// Reset batch settings
 	batchMode = AutomationBatchMode::None;
 	batchFolder.clear();
-	batchExtension.clear();
+	batchExtension = DefaultAutomationBatchExtension;
 	batchSubdirectories = false;
 	batchFileFilter.clear();
 	batchFileFilterRegex = false;
