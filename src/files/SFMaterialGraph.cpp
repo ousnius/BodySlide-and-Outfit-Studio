@@ -7,29 +7,23 @@ See the included LICENSE file
 
 #include "../utils/StringStuff.h"
 
+#include <nlohmann/json.hpp>
+
 #include <algorithm>
 #include <unordered_map>
 #include <utility>
 
-namespace {
-constexpr const char* RootLayeredMaterial = "materials/layered/root/layeredmaterials.mat";
-constexpr const char* LayerIDType = "BSMaterial::LayerID";
-constexpr const char* MaterialIDType = "BSMaterial::MaterialID";
-constexpr const char* TextureSetIDType = "BSMaterial::TextureSetID";
-constexpr const char* MRTextureFileType = "BSMaterial::MRTextureFile";
-constexpr const char* TextureFileType = "BSMaterial::TextureFile";
-
-std::string ToForwardSlashes(const std::string& path) {
+std::string SFMaterialGraph::ToForwardSlashes(const std::string& path) {
     std::string normalized(path);
     std::replace(normalized.begin(), normalized.end(), '\\', '/');
     return normalized;
 }
 
-bool EqualsInsensitive(const std::string& a, const std::string& b) {
+bool SFMaterialGraph::EqualsInsensitive(const std::string& a, const std::string& b) {
     return StringsEqualInsens(a.c_str(), b.c_str());
 }
 
-std::string NormalizeTexturePath(const std::string& path) {
+std::string SFMaterialGraph::NormalizeTexturePath(const std::string& path) {
     std::string normalized = ToForwardSlashes(path);
 
     constexpr const char* dataPrefix = "Data/";
@@ -39,15 +33,15 @@ std::string NormalizeTexturePath(const std::string& path) {
     return normalized;
 }
 
-bool IsTextureComponent(const SFMaterialComponent& component) {
+bool SFMaterialGraph::IsTextureComponent(const SFMaterialComponent& component) {
     return component.type == MRTextureFileType || component.type == TextureFileType;
 }
 
-bool IsSlotInRange(size_t slot, size_t numTextures) {
+bool SFMaterialGraph::IsSlotInRange(size_t slot, size_t numTextures) {
     return slot < numTextures && slot < static_cast<size_t>(SFMaterialTextureSlot::Count);
 }
 
-const SFMaterialComponent* FindIndexedComponent(const SFMaterialGraphObject& object, const char* type, size_t index) {
+const SFMaterialComponent* SFMaterialGraph::FindIndexedComponent(const SFMaterialGraphObject& object, const char* type, size_t index) {
     for (const auto& component : object.components)
         if (component.type == type && component.index == index && !component.linkedID.empty())
             return &component;
@@ -55,7 +49,7 @@ const SFMaterialComponent* FindIndexedComponent(const SFMaterialGraphObject& obj
     return nullptr;
 }
 
-std::vector<size_t> GetLayerIndexes(const SFMaterialGraphObject& root) {
+std::vector<size_t> SFMaterialGraph::GetLayerIndexes(const SFMaterialGraphObject& root) {
     std::vector<size_t> indexes;
 
     for (const auto& component : root.components) {
@@ -70,15 +64,67 @@ std::vector<size_t> GetLayerIndexes(const SFMaterialGraphObject& root) {
     return indexes;
 }
 
-bool HasAnyTexture(const std::vector<std::string>& textureFiles) {
+bool SFMaterialGraph::HasAnyTexture(const std::vector<std::string>& textureFiles) {
     return std::any_of(textureFiles.begin(), textureFiles.end(), [](const std::string& texture) {
         return !texture.empty();
     });
 }
-}
 
 void SFMaterialGraph::Clear() {
     objects.clear();
+}
+
+bool SFMaterialGraph::LoadFromMaterialJson(const nlohmann::json& material) {
+    Clear();
+
+    const auto jsonObjects = material.find("Objects");
+    if (jsonObjects == material.end() || !jsonObjects->is_array())
+        return false;
+
+    for (const auto& jsonObject : *jsonObjects) {
+        SFMaterialGraphObject object;
+
+        const auto id = jsonObject.find("ID");
+        if (id != jsonObject.end() && id->is_string())
+            object.id = id->get<std::string>();
+
+        const auto parent = jsonObject.find("Parent");
+        if (parent != jsonObject.end() && parent->is_string())
+            object.parent = parent->get<std::string>();
+
+        const auto components = jsonObject.find("Components");
+        if (components != jsonObject.end() && components->is_array()) {
+            for (const auto& jsonComponent : *components) {
+                SFMaterialComponent component;
+
+                const auto type = jsonComponent.find("Type");
+                if (type != jsonComponent.end() && type->is_string())
+                    component.type = type->get<std::string>();
+
+                const auto index = jsonComponent.find("Index");
+                if (index != jsonComponent.end() && index->is_number_unsigned())
+                    component.index = index->get<size_t>();
+
+                const auto data = jsonComponent.find("Data");
+                if (data != jsonComponent.end() && data->is_object()) {
+                    const auto fileName = data->find("FileName");
+                    if (fileName != data->end() && fileName->is_string())
+                        component.fileName = fileName->get<std::string>();
+
+                    const auto linkedID = data->find("ID");
+                    if (linkedID != data->end() && linkedID->is_string())
+                        component.linkedID = linkedID->get<std::string>();
+                }
+
+                object.components.push_back(std::move(component));
+            }
+        }
+
+        AddObject(std::move(object));
+    }
+
+    BuildChildLinks();
+    return true;
 }
 
 void SFMaterialGraph::AddObject(SFMaterialGraphObject object) {

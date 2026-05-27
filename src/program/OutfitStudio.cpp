@@ -13617,6 +13617,10 @@ void wxGLPanel::SetMeshTextures(
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
 	}
+	else if (targetGame == SF) {
+		vShader = Config["AppDir"] + "/res/shaders/sf_default.vert";
+		fShader = Config["AppDir"] + "/res/shaders/sf_default.frag";
+	}
 	else if (targetGame == OB) {
 		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";

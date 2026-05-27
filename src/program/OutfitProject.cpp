@@ -34,67 +34,85 @@ using namespace nifly;
 
 namespace {
 
-bool HasExtensionInsensitive(const std::string& path, const std::string& extension) {
-	if (extension.empty())
-		return true;
+class MaterialPathUtil {
+public:
+	static std::string NormalizeMaterialPath(std::string matFile, const std::string& extension) {
+		matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");
+		matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "materials/");
+		matFile = std::regex_replace(matFile, std::regex("^/+"), "");
 
-	if (path.length() < extension.length())
-		return false;
+		if (!StartsWithInsensitive(matFile, "materials/"))
+			matFile = "materials/" + matFile;
 
-	return StringsEqualInsens(path.substr(path.length() - extension.length()).c_str(), extension.c_str());
-}
+		if (!HasExtensionInsensitive(matFile, extension))
+			matFile += extension;
 
-bool StartsWithInsensitive(const std::string& path, const std::string& prefix) {
-	if (path.length() < prefix.length())
-		return false;
-
-	return StringsEqualInsens(path.substr(0, prefix.length()).c_str(), prefix.c_str());
-}
-
-std::string NormalizeMaterialPath(std::string matFile, const std::string& extension) {
-	matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");
-	matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "materials/");
-	matFile = std::regex_replace(matFile, std::regex("^/+"), "");
-
-	if (!StartsWithInsensitive(matFile, "materials/"))
-		matFile = "materials/" + matFile;
-
-	if (!HasExtensionInsensitive(matFile, extension))
-		matFile += extension;
-
-	return matFile;
-}
-
-bool ReadArchiveFile(const std::string& filePath, wxMemoryBuffer& data) {
-	for (FSArchiveFile* archive : FSManager::archiveList()) {
-		if (!archive || !archive->hasFile(filePath))
-			continue;
-
-		wxMemoryBuffer outData;
-		archive->fileContents(filePath, outData);
-		if (!outData.IsEmpty()) {
-			data = std::move(outData);
-			return true;
-		}
+		return matFile;
 	}
 
-	return false;
-}
+	static std::string NormalizeTexturePath(std::string textureFile) {
+		textureFile = std::regex_replace(textureFile, std::regex("\\\\+"), "/");
+		textureFile = std::regex_replace(textureFile, std::regex("^(.*?)/textures/", std::regex_constants::icase), "");
+		textureFile = std::regex_replace(textureFile, std::regex("^/+"), "");
 
-bool ReadArchivedSFMaterialFile(const std::string& matFile, std::vector<std::string>& texFiles, size_t numTextures) {
-	wxMemoryBuffer data;
-	if (!ReadArchiveFile(matFile, data))
+		if (!StartsWithInsensitive(textureFile, "textures/"))
+			textureFile = "textures/" + textureFile;
+
+		return textureFile;
+	}
+
+private:
+	static bool HasExtensionInsensitive(const std::string& path, const std::string& extension) {
+		if (extension.empty())
+			return true;
+
+		if (path.length() < extension.length())
+			return false;
+
+		return StringsEqualInsens(path.substr(path.length() - extension.length()).c_str(), extension.c_str());
+	}
+
+	static bool StartsWithInsensitive(const std::string& path, const std::string& prefix) {
+		if (path.length() < prefix.length())
+			return false;
+
+		return StringsEqualInsens(path.substr(0, prefix.length()).c_str(), prefix.c_str());
+	}
+};
+
+class ArchiveMaterialLoader {
+public:
+	static bool ReadFile(const std::string& filePath, wxMemoryBuffer& data) {
+		for (FSArchiveFile* archive : FSManager::archiveList()) {
+			if (!archive || !archive->hasFile(filePath))
+				continue;
+
+			wxMemoryBuffer outData;
+			archive->fileContents(filePath, outData);
+			if (!outData.IsEmpty()) {
+				data = std::move(outData);
+				return true;
+			}
+		}
+
 		return false;
+	}
 
-	std::string content(static_cast<const char*>(data.GetData()), data.GetDataLen());
-	std::istringstream contentStream(content, std::istringstream::binary);
-	SFMaterialFile sfMat(contentStream);
-	if (sfMat.Failed())
-		return false;
+	static bool ReadSFMaterialFile(const std::string& matFile, std::vector<std::string>& texFiles, size_t numTextures) {
+		wxMemoryBuffer data;
+		if (!ReadFile(matFile, data))
+			return false;
 
-	texFiles = sfMat.GetTextureFiles(numTextures);
-	return true;
-}
+		std::string content(static_cast<const char*>(data.GetData()), data.GetDataLen());
+		std::istringstream contentStream(content, std::istringstream::binary);
+		SFMaterialFile sfMat(contentStream);
+		if (sfMat.Failed())
+			return false;
+
+		texFiles = sfMat.GetTextureFiles(numTextures);
+		return true;
+	}
+};
 
 }
 
@@ -2027,14 +2045,14 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 		MaterialFile mat(MaterialFile::BGSM);
 		if (hasMat) {
 			if (hasSFMat) {
-				matFile = NormalizeMaterialPath(matFile, ".mat");
+				matFile = MaterialPathUtil::NormalizeMaterialPath(matFile, ".mat");
 
 				SFMaterialFile sfMat(texturesDir + matFile);
 				if (!sfMat.Failed()) {
 					texFiles = sfMat.GetTextureFiles(MAX_TEXTURE_PATHS);
 				}
 				else {
-					bool resolvedFromArchive = ReadArchivedSFMaterialFile(matFile, texFiles, MAX_TEXTURE_PATHS);
+					bool resolvedFromArchive = ArchiveMaterialLoader::ReadSFMaterialFile(matFile, texFiles, MAX_TEXTURE_PATHS);
 					bool resolvedFromCdb = false;
 
 					if (!resolvedFromArchive) {
@@ -2057,7 +2075,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 				}
 			}
 			else {
-				matFile = NormalizeMaterialPath(matFile, "");
+				matFile = MaterialPathUtil::NormalizeMaterialPath(matFile, "");
 
 				// Attempt to read loose material file
 				mat = MaterialFile(texturesDir + matFile);
@@ -2065,22 +2083,8 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 				if (mat.Failed()) {
 					// Search for material file in archives
 					wxMemoryBuffer data;
-					for (FSArchiveFile* archive : FSManager::archiveList()) {
-						if (archive) {
-							if (archive->hasFile(matFile)) {
-								wxMemoryBuffer outData;
-								archive->fileContents(matFile, outData);
-
-								if (!outData.IsEmpty()) {
-									data = std::move(outData);
-									break;
-								}
-							}
-						}
-					}
-
-					if (!data.IsEmpty()) {
-						std::string content((char*)data.GetData(), data.GetDataLen());
+					if (ArchiveMaterialLoader::ReadFile(matFile, data)) {
+						std::string content(static_cast<const char*>(data.GetData()), data.GetDataLen());
 						std::istringstream contentStream(content, std::istringstream::binary);
 
 						mat = MaterialFile(contentStream);
@@ -2119,16 +2123,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
 			if (!texFiles[i].empty()) {
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("\\\\+"), "/"); // Replace all backward slashes with one forward slash
-				texFiles[i] = std::regex_replace(texFiles[i],
-												 std::regex("^(.*?)/textures/", std::regex_constants::icase),
-												 "");								  // Remove everything before the first occurence of "/textures/"
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^/+"), ""); // Remove all slashes from the front
-				texFiles[i] = std::regex_replace(texFiles[i],
-												 std::regex("^(?!^textures/)", std::regex_constants::icase),
-												 "textures/"); // If the path doesn't start with "textures/", add it to the front
-
-				texFiles[i] = texturesDir + texFiles[i];
+				texFiles[i] = texturesDir + MaterialPathUtil::NormalizeTexturePath(texFiles[i]);
 			}
 		}
 
@@ -6717,7 +6712,7 @@ SFMaterialDatabase* OutfitProject::GetSFMaterialDatabase() {
 	sfMaterialDb = std::make_unique<SFMaterialDatabase>();
 
 	wxMemoryBuffer data;
-	if (!ReadArchiveFile("materials/materialsbeta.cdb", data) || data.IsEmpty())
+	if (!ArchiveMaterialLoader::ReadFile("materials/materialsbeta.cdb", data) || data.IsEmpty())
 		return nullptr;
 
 	sfMaterialDbContent.assign(static_cast<const char*>(data.GetData()), data.GetDataLen());

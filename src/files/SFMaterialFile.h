@@ -17,6 +17,8 @@ class SFMaterialFile {
     bool failed = false;
     std::array<std::string, static_cast<size_t>(SFMaterialTextureSlot::Count)> textures;
 
+    static bool IsTextureSlotInRange(size_t slot);
+
 public:
     SFMaterialFile() = default;
     explicit SFMaterialFile(const std::string& fileName);

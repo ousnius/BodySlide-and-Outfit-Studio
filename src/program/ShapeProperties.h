@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "ShaderFlagDefs.h"
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include <wx/checklst.h>
@@ -170,6 +171,7 @@ private:
 	void OnTransChanged(wxCommandEvent&);
 
 	void AssignDefaultTexture(nifly::NiShape* shape);
+	static std::string DisplayTexturePath(const std::string& texturePath);
 	void RefreshMesh();
 	void ApplyChanges();
 

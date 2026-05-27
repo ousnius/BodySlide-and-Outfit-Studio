@@ -1052,36 +1052,6 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		bool seededFromResolvedTextures = false;
 		bool isSF = nif->GetHeader().GetVersion().IsSF();
 
-		auto displayTexturePath = [](const std::string& texPath) {
-			std::string displayPath = ToOSSlashes(texPath);
-			std::string dataPath = ToOSSlashes(Config["GameDataPath"]);
-
-			auto toLower = [](std::string value) {
-				std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
-					return static_cast<char>(std::tolower(c));
-				});
-				return value;
-			};
-
-			if (!dataPath.empty()) {
-				std::string displayPathLower = toLower(displayPath);
-				std::string dataPathLower = toLower(dataPath);
-				bool hasDataPathPrefix = displayPathLower.compare(0, dataPathLower.size(), dataPathLower) == 0;
-				bool dataPathEndsWithSeparator = dataPath.back() == '\\' || dataPath.back() == '/';
-				bool prefixEndsAtSeparator = dataPathEndsWithSeparator
-										  || displayPath.size() == dataPath.size()
-										  || (displayPath.size() > dataPath.size()
-											  && (displayPath[dataPath.size()] == '\\' || displayPath[dataPath.size()] == '/'));
-				if (hasDataPathPrefix && prefixEndsAtSeparator)
-					displayPath.erase(0, dataPath.size());
-			}
-
-			while (!displayPath.empty() && (displayPath[0] == '\\' || displayPath[0] == '/'))
-				displayPath.erase(0, 1);
-
-			return ToOSSlashes(displayPath);
-		};
-
 		if (isSF) {
 			auto resolvedTextures = os->project->GetShapeTextures(firstShape);
 			bool hasResolvedTextures = false;
@@ -1101,7 +1071,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 				if (resolvedTextures[i].empty())
 					continue;
 
-				stTexGrid->SetCellValue(i, 0, displayTexturePath(resolvedTextures[i]));
+				stTexGrid->SetCellValue(i, 0, DisplayTexturePath(resolvedTextures[i]));
 				seededFromResolvedTextures = true;
 			}
 		}
@@ -1186,6 +1156,36 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			os->glView->Render();
 		}
 	}
+}
+
+std::string ShapeProperties::DisplayTexturePath(const std::string& texturePath) {
+	std::string displayPath = ToOSSlashes(texturePath);
+	std::string dataPath = ToOSSlashes(Config["GameDataPath"]);
+
+	auto toLower = [](std::string value) {
+		std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+			return static_cast<char>(std::tolower(c));
+		});
+		return value;
+	};
+
+	if (!dataPath.empty()) {
+		std::string displayPathLower = toLower(displayPath);
+		std::string dataPathLower = toLower(dataPath);
+		bool hasDataPathPrefix = displayPathLower.compare(0, dataPathLower.size(), dataPathLower) == 0;
+		bool dataPathEndsWithSeparator = dataPath.back() == '\\' || dataPath.back() == '/';
+		bool prefixEndsAtSeparator = dataPathEndsWithSeparator
+								  || displayPath.size() == dataPath.size()
+								  || (displayPath.size() > dataPath.size()
+									  && (displayPath[dataPath.size()] == '\\' || displayPath[dataPath.size()] == '/'));
+		if (hasDataPathPrefix && prefixEndsAtSeparator)
+			displayPath.erase(0, dataPath.size());
+	}
+
+	while (!displayPath.empty() && (displayPath[0] == '\\' || displayPath[0] == '/'))
+		displayPath.erase(0, 1);
+
+	return ToOSSlashes(displayPath);
 }
 
 void ShapeProperties::AssignDefaultTexture(NiShape* shape) {
