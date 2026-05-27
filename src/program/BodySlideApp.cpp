@@ -5848,7 +5848,8 @@ void BodySlideFrame::OnChoosePreset(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	std::string sstr = GetSelectedPresetName();
-	if (sstr == BodySlideConfig["SelectedPreset"]) {
+	bool presetChanged = btnSavePreset && btnSavePreset->IsEnabled();
+	if (sstr == BodySlideConfig["SelectedPreset"] && !presetChanged) {
 		UpdateFavoriteButtons();
 		return;
 	}
