@@ -1,20 +1,18 @@
 #include "../src/files/SFMaterialFile.h"
 
-#include <cstdlib>
-#include <iostream>
+#include <catch2/catch_test_macros.hpp>
+
 #include <sstream>
 #include <vector>
 
 namespace {
 void Require(bool condition, const char* message) {
-    if (!condition) {
-        std::cerr << message << std::endl;
-        std::exit(1);
-    }
+    INFO(message);
+    REQUIRE(condition);
 }
 }
 
-int main() {
+TEST_CASE("Starfield material files resolve texture paths", "[SFMaterialFile]") {
     const char* materialJson = R"json(
 {
     "Objects": [
@@ -438,6 +436,4 @@ int main() {
     std::istringstream noResolvedTexturesInput(noResolvedTexturesJson);
     Require(directReadMaterial.Read(noResolvedTexturesInput) != 0, "Direct Read should reject graph materials with no resolvable textures");
     Require(directReadMaterial.Failed(), "Direct Read should fail when graph resolution finds no textures");
-
-    return 0;
 }

@@ -1,9 +1,10 @@
 #include "../src/files/SFMaterialDatabase.h"
 #include "../src/files/SFMaterialFile.h"
 
+#include <catch2/catch_test_macros.hpp>
+
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -307,10 +308,8 @@ std::string MakeQueuedComponentCDB() {
 }
 
 void Require(bool condition, const char* message) {
-    if (!condition) {
-        std::cerr << message << std::endl;
-        std::exit(1);
-    }
+    INFO(message);
+    REQUIRE(condition);
 }
 }
 
@@ -320,7 +319,7 @@ struct SFMaterialDatabaseTestAccess {
     }
 };
 
-int main() {
+TEST_CASE("Starfield material databases load synthetic indexes", "[SFMaterialDatabase]") {
     const std::string syntheticCDB = MakeSyntheticCDB(false);
     std::istringstream syntheticInput(syntheticCDB, std::ios::binary);
     SFMaterialDatabase syntheticDb;
@@ -356,12 +355,12 @@ int main() {
             "Second deferred MAP field should receive second serialized MAP chunk key");
     Require(queuedComponentJson["Data"]["SecondMap"]["Data"][0]["Data"]["Value"] == "222",
             "Second deferred MAP field should receive second serialized MAP chunk value");
+    }
 
+    TEST_CASE("Starfield material databases parse optional real CDB fixtures", "[SFMaterialDatabase][fixture]") {
     const char* fixturePath = std::getenv("SF_MATERIAL_CDB_FIXTURE");
     if (!fixturePath || !fixturePath[0]) {
-        std::cout << "SFMaterialDatabase synthetic tests PASSED" << std::endl;
-        std::cout << "SF_MATERIAL_CDB_FIXTURE not set, skipping real CDB fixture tests" << std::endl;
-        return 0;
+        SKIP("SF_MATERIAL_CDB_FIXTURE is not set");
     }
 
     std::ifstream input(fixturePath, std::ios::binary);
@@ -402,7 +401,4 @@ int main() {
             "CDB material color texture must not be a blender mask");
     Require(sfMat.GetTexture(SFMaterialTextureSlot::Normal).find("faces") == std::string::npos,
             "CDB material normal texture must not be a face detail normal");
-
-    std::cout << "SFMaterialDatabase header tests PASSED" << std::endl;
-    return 0;
 }

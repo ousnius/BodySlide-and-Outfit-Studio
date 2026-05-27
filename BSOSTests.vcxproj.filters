@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Tests">
+      <UniqueIdentifier>{35f7b2f0-3283-4f40-9375-e6a33bf0cc9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Files">
+      <UniqueIdentifier>{31b0bd95-3019-4613-82dd-66526823e45b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utilities">
+      <UniqueIdentifier>{7648bcdb-ae61-45de-b574-4caa0d137f28}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\files\SFMaterialDatabase.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\SFMaterialFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\SFMaterialGraph.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\SFResourceHash.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\StringStuff.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="tests\SFMaterialDatabaseTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\SFMaterialFileTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\SFResourceHashTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMaterialDatabase.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMaterialFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMaterialGraph.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFResourceHash.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\StringStuff.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
