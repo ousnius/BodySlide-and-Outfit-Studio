@@ -289,8 +289,10 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/HkxFile.cpp
 	src/files/MaskFile.cpp
 	src/files/ObjFile.cpp
+	src/files/SFMaterialDatabase.cpp
 	src/files/SFMaterialFile.cpp
 	src/files/SFMaterialGraph.cpp
+	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
 	src/ui/WeightCopyDialog.cpp

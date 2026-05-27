@@ -8,6 +8,8 @@ Working checklist for the remaining Starfield-specific work before a wider Nexus
 - [x] Populate Outfit Studio shader/material UI from loaded loose `.mat` data.
 - [x] Apply texture paths from loose material files to the shape texture controls.
 - [x] Support vanilla material lookup through the `.cdb` component database.
+- [x] Wire `.cdb` material fallback into Outfit Studio texture loading after loose/archived `.mat` lookup.
+- [x] Verify real `materials/materialsbeta.cdb` fixture resolves vanilla body texture paths through `SFMaterialGraph`.
 - [x] Decide how loose mod material files and archived vanilla material records are resolved when both exist.
 - [x] Verify texture UI/export behavior with Starfield NIFs whose Shader tab is editable in Shape Properties.
 - [ ] Verify archived vanilla `.cdb` resolution in Outfit Studio with a vanilla Starfield NIF.

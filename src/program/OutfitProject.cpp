@@ -11,6 +11,7 @@ See the included LICENSE file
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
+#include "../files/SFMaterialDatabase.h"
 #include "../files/SFMaterialFile.h"
 #include "FBXImportDialog.h"
 #include "ObjImportDialog.h"
@@ -2034,7 +2035,22 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 				}
 				else {
 					bool resolvedFromArchive = ReadArchivedSFMaterialFile(matFile, texFiles, MAX_TEXTURE_PATHS);
-					if (!resolvedFromArchive && shader) {
+					bool resolvedFromCdb = false;
+
+					if (!resolvedFromArchive) {
+						std::string materialJson;
+						SFMaterialDatabase* cdb = GetSFMaterialDatabase();
+						if (cdb && cdb->GetMaterialJSON(matFile, materialJson)) {
+							std::istringstream materialStream(materialJson);
+							SFMaterialFile cdbMat(materialStream);
+							if (!cdbMat.Failed()) {
+								texFiles = cdbMat.GetTextureFiles(MAX_TEXTURE_PATHS);
+								resolvedFromCdb = true;
+							}
+						}
+					}
+
+					if (!resolvedFromArchive && !resolvedFromCdb && shader) {
 						for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
 							workNif.GetTextureSlot(shape, texFiles[i], i);
 					}
@@ -6692,6 +6708,28 @@ std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std
 	}
 
 	return nullptr;
+}
+
+SFMaterialDatabase* OutfitProject::GetSFMaterialDatabase() {
+	if (sfMaterialDb)
+		return sfMaterialDb->Failed() ? nullptr : sfMaterialDb.get();
+
+	sfMaterialDb = std::make_unique<SFMaterialDatabase>();
+
+	wxMemoryBuffer data;
+	if (!ReadArchiveFile("materials/materialsbeta.cdb", data) || data.IsEmpty())
+		return nullptr;
+
+	sfMaterialDbContent.assign(static_cast<const char*>(data.GetData()), data.GetDataLen());
+	sfMaterialDbStream = std::make_unique<std::istringstream>(sfMaterialDbContent, std::ios::in | std::ios::binary);
+
+	if (!sfMaterialDb->Load(*sfMaterialDbStream) || sfMaterialDb->Failed()) {
+		sfMaterialDbContent.clear();
+		sfMaterialDbStream.reset();
+		return nullptr;
+	}
+
+	return sfMaterialDb.get();
 }
 
 void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {

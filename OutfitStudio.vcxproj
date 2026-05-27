@@ -826,8 +826,10 @@
     <ClInclude Include="src\components\WeightNorm.h" />
     <ClInclude Include="src\files\FBXWrangler.h" />
     <ClInclude Include="src\files\MaterialFile.h" />
+    <ClInclude Include="src\files\SFMaterialDatabase.h" />
     <ClInclude Include="src\files\SFMaterialFile.h" />
     <ClInclude Include="src\files\SFMaterialGraph.h" />
+    <ClInclude Include="src\files\SFResourceHash.h" />
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
     <ClInclude Include="src\files\SFMorphFile.h" />
@@ -919,8 +921,10 @@
     <ClCompile Include="src\components\WeightNorm.cpp" />
     <ClCompile Include="src\files\FBXWrangler.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
+    <ClCompile Include="src\files\SFMaterialDatabase.cpp" />
     <ClCompile Include="src\files\SFMaterialFile.cpp" />
     <ClCompile Include="src\files\SFMaterialGraph.cpp" />
+    <ClCompile Include="src\files\SFResourceHash.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
     <ClCompile Include="src\files\SFMorphFile.cpp" />
