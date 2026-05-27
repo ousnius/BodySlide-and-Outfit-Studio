@@ -9,6 +9,8 @@ See the included LICENSE file
 #include <array>
 #include <cctype>
 #include <cstddef>
+#include <iomanip>
+#include <sstream>
 #include <utility>
 
 namespace {
@@ -26,9 +28,26 @@ constexpr uint32_t SigCLAS = MakeSig("CLAS");
 constexpr uint32_t SigOBJT = MakeSig("OBJT");
 constexpr uint32_t SigUSER = MakeSig("USER");
 constexpr uint32_t SigUSRD = MakeSig("USRD");
+constexpr uint32_t SigDIFF = MakeSig("DIFF");
 constexpr uint32_t SigMAPC = MakeSig("MAPC");
 constexpr uint32_t SigLIST = MakeSig("LIST");
 constexpr uint32_t TypeBuiltinMask = 0xFFFFFF00u;
+constexpr uint32_t TypeNull = 0xFFFFFF01u;
+constexpr uint32_t TypeString = 0xFFFFFF02u;
+constexpr uint32_t TypeList = 0xFFFFFF03u;
+constexpr uint32_t TypeMap = 0xFFFFFF04u;
+constexpr uint32_t TypeRef = 0xFFFFFF05u;
+constexpr uint32_t TypeInt8 = 0xFFFFFF08u;
+constexpr uint32_t TypeUInt8 = 0xFFFFFF09u;
+constexpr uint32_t TypeInt16 = 0xFFFFFF0Au;
+constexpr uint32_t TypeUInt16 = 0xFFFFFF0Bu;
+constexpr uint32_t TypeInt32 = 0xFFFFFF0Cu;
+constexpr uint32_t TypeUInt32 = 0xFFFFFF0Du;
+constexpr uint32_t TypeInt64 = 0xFFFFFF0Eu;
+constexpr uint32_t TypeUInt64 = 0xFFFFFF0Fu;
+constexpr uint32_t TypeBool = 0xFFFFFF10u;
+constexpr uint32_t TypeFloat = 0xFFFFFF11u;
+constexpr uint32_t TypeDouble = 0xFFFFFF12u;
 constexpr uint32_t SFMatExtension = 0x0074616Du;
 constexpr uint32_t CDBResourceIDSize = 12;
 constexpr uint32_t CDBComponentTypeMapEntrySize = 5;
@@ -92,6 +111,23 @@ bool EqualsIgnoreCase(const char* lhs, const char* rhs) {
 
     return *lhs == *rhs;
 }
+
+bool IsBuiltinTypeRef(uint32_t typeRef) {
+    return (typeRef & TypeBuiltinMask) == TypeBuiltinMask;
+}
+
+bool IsChunkTypeRef(uint32_t typeRef) {
+    return typeRef == TypeList || typeRef == TypeMap;
+}
+
+std::string FormatResourceID(const SFResourceID& id) {
+    std::ostringstream ss;
+    ss << "res:" << std::uppercase << std::hex << std::setfill('0')
+       << std::setw(8) << id.dir << ':'
+       << std::setw(8) << id.file << ':'
+       << std::setw(8) << id.ext;
+    return ss.str();
+}
 }
 
 void SFMaterialDatabase::Clear() {
@@ -110,6 +146,9 @@ void SFMaterialDatabase::Clear() {
     componentDataStart = std::streampos(-1);
     readerVersion = 0;
     readerChunksRemaining = 0;
+    allComponentsRead = false;
+    componentPositions.clear();
+    componentJsonCache.clear();
 }
 
 bool SFMaterialDatabase::Load(std::istream& input) {
@@ -150,8 +189,14 @@ bool SFMaterialDatabase::HasMaterial(const std::string& matPath) const {
 }
 
 bool SFMaterialDatabase::GetMaterialJSON(const std::string& matPath, std::string& jsonOutput) {
-    (void)matPath;
     jsonOutput.clear();
+
+    if (failed || !HasMaterial(matPath))
+        return false;
+
+    if (!EnsureAllComponentsRead())
+        return false;
+
     return false;
 }
 
@@ -582,6 +627,520 @@ bool SFMaterialDatabase::HasExactCountedPayload(const Chunk& chunk, uint32_t hea
     const uint64_t expectedSize = static_cast<uint64_t>(headerSize)
         + static_cast<uint64_t>(count) * static_cast<uint64_t>(itemSize);
     return expectedSize == chunk.size;
+}
+
+bool SFMaterialDatabase::EnsureAllComponentsRead() {
+    if (allComponentsRead)
+        return true;
+
+    if (!componentStream || componentDataStart == std::streampos(-1))
+        return false;
+
+    componentStream->clear();
+    componentStream->seekg(componentDataStart);
+    if (!componentStream->good())
+        return false;
+
+    ReaderState state;
+    state.input = componentStream;
+    state.version = readerVersion;
+    state.chunksRemaining = readerChunksRemaining;
+
+    componentPositions.clear();
+    componentJsonCache.clear();
+    componentPositions.reserve(components.size());
+    componentJsonCache.reserve(components.size());
+
+    for (size_t i = 0; i < components.size(); ++i) {
+        const std::streampos componentPos = componentStream->tellg();
+        if (componentPos == std::streampos(-1))
+            return false;
+
+        componentPositions.emplace_back(componentPos);
+        componentJsonCache.emplace_back(nlohmann::json::object());
+        if (!ReadNextObject(state, componentJsonCache.back())) {
+            componentPositions.clear();
+            componentJsonCache.clear();
+            return false;
+        }
+    }
+
+    readerChunksRemaining = state.chunksRemaining;
+    allComponentsRead = true;
+    return true;
+}
+
+bool SFMaterialDatabase::ReadNextObject(ReaderState& state, nlohmann::json& value) {
+    if (!ReadChunk(state, value))
+        return false;
+
+    while (!state.chunkQueue.empty() || !state.userQueue.empty()) {
+        if (!ReadChunk(state, value))
+            return false;
+    }
+
+    return true;
+}
+
+bool SFMaterialDatabase::ReadChunk(ReaderState& state, nlohmann::json& value) {
+    Chunk chunk;
+    if (!ReadChunk(state, chunk))
+        return false;
+
+    const std::streampos payloadStart = state.input->tellg();
+    if (payloadStart == std::streampos(-1))
+        return false;
+
+    const std::streampos payloadEnd = payloadStart + static_cast<std::streamoff>(chunk.size);
+    const bool isDiff = chunk.sig == SigDIFF || chunk.sig == SigUSRD;
+    bool readValue = false;
+
+    switch (chunk.sig) {
+    case SigOBJT:
+    case SigDIFF:
+    {
+        if (chunk.size < 4)
+            return false;
+
+        uint32_t typeRef = 0;
+        readValue = ReadPod(*state.input, typeRef)
+            && ReadType(state, value, typeRef, isDiff);
+        break;
+    }
+    case SigUSER:
+    case SigUSRD:
+    {
+        if (chunk.size < 12 || state.userQueue.empty())
+            return false;
+
+        uint32_t targetType = 0;
+        uint32_t castedType = 0;
+        if (!ReadPod(*state.input, targetType) || !ReadPod(*state.input, castedType))
+            return false;
+
+        QueuedCast cast = state.userQueue.front();
+        state.userQueue.pop_front();
+
+        uint32_t userValue = 0;
+        readValue = cast.value
+            && ReadType(state, *cast.value, castedType, isDiff, true)
+            && ReadPod(*state.input, userValue);
+
+        (void)targetType;
+        (void)userValue;
+        break;
+    }
+    case SigLIST:
+    case SigMAPC:
+    {
+        if (state.chunkQueue.empty())
+            return false;
+
+        QueuedChunk queuedChunk = state.chunkQueue.front();
+        state.chunkQueue.pop_front();
+        if (!queuedChunk.value)
+            return false;
+
+        readValue = chunk.sig == SigLIST
+            ? ReadList(state, *queuedChunk.value, queuedChunk.isDiff)
+            : ReadMap(state, *queuedChunk.value, queuedChunk.isDiff);
+        break;
+    }
+    default:
+        return false;
+    }
+
+    return readValue && SkipTo(*state.input, payloadEnd);
+}
+
+bool SFMaterialDatabase::ReadType(ReaderState& state, nlohmann::json& value, uint32_t typeRef, bool isDiff, bool isCast) {
+    switch (typeRef) {
+    case TypeNull:
+        value = nullptr;
+        return true;
+    case TypeString:
+    {
+        std::string stringValue;
+        if (!ReadString(state, stringValue))
+            return false;
+
+        value = std::move(stringValue);
+        return true;
+    }
+    case TypeList:
+    case TypeMap:
+        return false;
+    case TypeRef:
+    {
+        uint32_t referencedType = 0;
+        if (!ReadPod(*state.input, referencedType))
+            return false;
+
+        if (IsBuiltinTypeRef(referencedType)) {
+            if (referencedType != TypeNull)
+                return false;
+
+            value = nullptr;
+            return true;
+        }
+
+        const CDBClass* referencedClass = FindClass(referencedType);
+        if (!referencedClass)
+            return false;
+
+        value["Type"] = "<ref>";
+        nlohmann::json& dataValue = value["Data"];
+        if (referencedClass->IsUser()) {
+            state.userQueue.push_back({ &dataValue, referencedType });
+            return true;
+        }
+
+        return ReadType(state, dataValue, referencedType, isDiff);
+    }
+    case TypeInt8:
+    {
+        int8_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeUInt8:
+    {
+        uint8_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeInt16:
+    {
+        int16_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeUInt16:
+    {
+        uint16_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeInt32:
+    {
+        int32_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeUInt32:
+    {
+        uint32_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeInt64:
+    {
+        int64_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeUInt64:
+    {
+        uint64_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeBool:
+    {
+        uint8_t boolValue = 0;
+        if (!ReadPod(*state.input, boolValue))
+            return false;
+
+        value = boolValue != 0 ? "true" : "false";
+        return true;
+    }
+    case TypeFloat:
+    {
+        float numericValue = 0.0f;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeDouble:
+    {
+        double numericValue = 0.0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    default:
+        break;
+    }
+
+    const char* typeName = GetString(typeRef);
+    if (EqualsIgnoreCase(typeName, "BSComponentDB2::ID")) {
+        uint32_t id = 0;
+        if (!isDiff) {
+            if (!ReadPod(*state.input, id))
+                return false;
+        }
+        else {
+            uint16_t fieldPadBegin = 0;
+            uint16_t fieldPadEnd = 0;
+            if (!ReadPod(*state.input, fieldPadBegin)
+                || !ReadPod(*state.input, id)
+                || !ReadPod(*state.input, fieldPadEnd)) {
+                return false;
+            }
+        }
+
+        value = id != 0 ? std::to_string(id) : "";
+        return true;
+    }
+
+    const CDBClass* cdbClass = FindClass(typeRef);
+    if (!cdbClass)
+        return false;
+
+    if (!isCast && cdbClass->IsUser()) {
+        state.userQueue.push_back({ &value, typeRef });
+        return true;
+    }
+
+    value["Type"] = GetString(cdbClass->nameOffset);
+    nlohmann::json& dataValue = value["Data"];
+    dataValue = nlohmann::json::object();
+
+    if (!isDiff) {
+        for (const ClassField& field : cdbClass->fields) {
+            nlohmann::json& fieldValue = dataValue[GetString(field.nameOffset)];
+            if (IsChunkTypeRef(field.typeId))
+                state.chunkQueue.push_back({ &fieldValue, isDiff });
+            else if (!ReadType(state, fieldValue, field.typeId, isDiff))
+                return false;
+        }
+
+        return true;
+    }
+
+    uint16_t fieldIndex = 0;
+    if (!ReadPod(*state.input, fieldIndex))
+        return false;
+
+    while (fieldIndex != 0xFFFFu) {
+        if (fieldIndex >= cdbClass->fields.size())
+            return false;
+
+        const ClassField& field = cdbClass->fields[fieldIndex];
+        nlohmann::json& fieldValue = dataValue[GetString(field.nameOffset)];
+        if (IsChunkTypeRef(field.typeId))
+            state.chunkQueue.push_back({ &fieldValue, isDiff });
+        else if (!ReadType(state, fieldValue, field.typeId, isDiff))
+            return false;
+
+        if (!ReadPod(*state.input, fieldIndex))
+            return false;
+    }
+
+    return true;
+}
+
+bool SFMaterialDatabase::ReadList(ReaderState& state, nlohmann::json& value, bool isDiff) {
+    ListHeader list;
+    if (!ReadPod(*state.input, list.elementType) || !ReadPod(*state.input, list.size))
+        return false;
+
+    value["Type"] = "<collection>";
+    nlohmann::json& dataValue = value["Data"];
+    dataValue = nlohmann::json::array();
+
+    if (list.size == 0)
+        return true;
+
+    value["ElementType"] = GetTypeName(list.elementType);
+    dataValue.get_ref<nlohmann::json::array_t&>().reserve(list.size);
+    for (uint32_t i = 0; i < list.size; ++i) {
+        nlohmann::json& itemValue = dataValue.emplace_back();
+        if (!ReadType(state, itemValue, list.elementType, isDiff))
+            return false;
+    }
+
+    return true;
+}
+
+bool SFMaterialDatabase::ReadMap(ReaderState& state, nlohmann::json& value, bool isDiff) {
+    MapHeader map;
+    if (!ReadPod(*state.input, map.keyType)
+        || !ReadPod(*state.input, map.valueType)
+        || !ReadPod(*state.input, map.size)) {
+        return false;
+    }
+
+    value["Type"] = "<collection>";
+    value["ElementType"] = "StdMapType::Pair";
+    nlohmann::json& dataValue = value["Data"];
+    dataValue = nlohmann::json::array();
+
+    if (map.size == 0)
+        return true;
+
+    dataValue.get_ref<nlohmann::json::array_t&>().reserve(map.size);
+    for (uint32_t i = 0; i < map.size; ++i) {
+        std::string key;
+        if (!ReadMapKeyString(state, map.keyType, key))
+            return false;
+
+        nlohmann::json& pairValue = dataValue.emplace_back();
+        pairValue["Type"] = "StdMapType::Pair";
+        nlohmann::json& pairData = pairValue["Data"];
+        pairData["Key"] = std::move(key);
+        if (!ReadType(state, pairData["Value"], map.valueType, isDiff))
+            return false;
+    }
+
+    return true;
+}
+
+bool SFMaterialDatabase::ReadMapKeyString(ReaderState& state, uint32_t typeRef, std::string& value) {
+    switch (typeRef) {
+    case TypeString:
+        return ReadString(state, value);
+    case TypeInt8:
+    {
+        int8_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeUInt8:
+    {
+        uint8_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeInt16:
+    {
+        int16_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeUInt16:
+    {
+        uint16_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeInt32:
+    {
+        int32_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeUInt32:
+    {
+        uint32_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeInt64:
+    {
+        int64_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeUInt64:
+    {
+        uint64_t numericValue = 0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeBool:
+    {
+        uint8_t boolValue = 0;
+        if (!ReadPod(*state.input, boolValue))
+            return false;
+
+        value = boolValue != 0 ? "true" : "false";
+        return true;
+    }
+    case TypeFloat:
+    {
+        float numericValue = 0.0f;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    case TypeDouble:
+    {
+        double numericValue = 0.0;
+        if (!ReadPod(*state.input, numericValue))
+            return false;
+
+        value = std::to_string(numericValue);
+        return true;
+    }
+    default:
+        break;
+    }
+
+    if (EqualsIgnoreCase(GetTypeName(typeRef), "BSResource::ID")) {
+        SFResourceID id;
+        if (!ReadResourceID(state, id))
+            return false;
+
+        value = FormatResourceID(id);
+        return true;
+    }
+
+    return false;
 }
 
 const char* SFMaterialDatabase::GetString(uint32_t offset) const {

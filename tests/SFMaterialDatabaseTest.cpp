@@ -65,6 +65,11 @@ void WriteResourceID(std::string& out, const SFResourceID& id) {
     WriteU32(out, id.dir);
 }
 
+struct ClassFieldSpec {
+    uint32_t nameOffset = 0;
+    uint32_t typeId = 0;
+};
+
 std::string MakeSyntheticCDB(bool includeParentPersistentID) {
     std::string stringTable;
     const uint32_t compiledDBType = AddString(stringTable, "BSMaterial::Internal::CompiledDB");
@@ -145,6 +150,161 @@ std::string MakeSyntheticCDB(bool includeParentPersistentID) {
     return cdb;
 }
 
+std::string MakeClassChunk(uint32_t nameOffset, uint16_t flags, const std::vector<ClassFieldSpec>& fields) {
+    std::string payload;
+    WriteU32(payload, nameOffset);
+    WriteU32(payload, 0);
+    WriteU16(payload, flags);
+    WriteU16(payload, static_cast<uint16_t>(fields.size()));
+
+    for (const ClassFieldSpec& field : fields) {
+        WriteU32(payload, field.nameOffset);
+        WriteU32(payload, field.typeId);
+        WriteU16(payload, 0);
+        WriteU16(payload, 0);
+    }
+
+    return payload;
+}
+
+std::string MakeQueuedComponentCDB() {
+    constexpr uint32_t TypeString = 0xFFFFFF02u;
+    constexpr uint32_t TypeList = 0xFFFFFF03u;
+    constexpr uint32_t TypeMap = 0xFFFFFF04u;
+    constexpr uint32_t TypeUInt32 = 0xFFFFFF0Du;
+    constexpr uint32_t TypeBool = 0xFFFFFF10u;
+
+    std::string stringTable;
+    const uint32_t compiledDBType = AddString(stringTable, "BSMaterial::Internal::CompiledDB");
+    const uint32_t fileIndexType = AddString(stringTable, "BSComponentDB2::DBFileIndex");
+    const uint32_t componentType = AddString(stringTable, "TestQueuedComponent");
+    const uint32_t enabledField = AddString(stringTable, "Enabled");
+    const uint32_t firstListField = AddString(stringTable, "FirstList");
+    const uint32_t secondMapField = AddString(stringTable, "SecondMap");
+
+    std::vector<std::string> chunks;
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "STRT", stringTable);
+
+    std::string typePayload;
+    WriteU32(typePayload, 3);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "TYPE", typePayload);
+
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "CLAS", MakeClassChunk(compiledDBType));
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "CLAS", MakeClassChunk(fileIndexType));
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "CLAS", MakeClassChunk(componentType, 0, {
+        { enabledField, TypeBool },
+        { firstListField, TypeList },
+        { secondMapField, TypeMap },
+    }));
+
+    std::string compiledObject;
+    WriteU32(compiledObject, compiledDBType);
+    WriteString(compiledObject, "synthetic");
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "OBJT", compiledObject);
+
+    std::string emptyMap;
+    WriteU32(emptyMap, 0);
+    WriteU32(emptyMap, 0);
+    WriteU32(emptyMap, 0);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "MAPC", emptyMap);
+
+    std::string emptyList;
+    WriteU32(emptyList, 0);
+    WriteU32(emptyList, 0);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "LIST", emptyList);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "LIST", emptyList);
+
+    std::string fileIndexObject;
+    WriteU32(fileIndexObject, fileIndexType);
+    WriteU8(fileIndexObject, 0);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "OBJT", fileIndexObject);
+
+    const uint16_t componentTypeIndex = 7;
+    std::string componentTypeMap;
+    WriteU32(componentTypeMap, 0);
+    WriteU32(componentTypeMap, 0);
+    WriteU32(componentTypeMap, 1);
+    WriteU16(componentTypeMap, componentTypeIndex);
+    WriteU16(componentTypeMap, 1);
+    WriteU8(componentTypeMap, 0);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "MAPC", componentTypeMap);
+
+    std::string componentClassRef;
+    WriteU32(componentClassRef, 0);
+    WriteU32(componentClassRef, TypeString);
+    WriteString(componentClassRef, "TestQueuedComponent");
+    WriteU32(componentClassRef, 0);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "USER", componentClassRef);
+
+    const std::string materialPath = "materials/actors/human/naked_body/female/naked_f_body.mat";
+    const SFResourceID materialID = SFGetResourceIdFromPath(materialPath);
+    std::string objectList;
+    WriteU32(objectList, 0);
+    WriteU32(objectList, 1);
+    WriteResourceID(objectList, materialID);
+    WriteU32(objectList, 42);
+    WriteU32(objectList, 0);
+    WriteU8(objectList, 1);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "LIST", objectList);
+
+    std::string componentList;
+    WriteU32(componentList, 0);
+    WriteU32(componentList, 1);
+    WriteU32(componentList, 42);
+    WriteU16(componentList, 0);
+    WriteU16(componentList, componentTypeIndex);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "LIST", componentList);
+
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "LIST", emptyList);
+
+    std::string componentObject;
+    WriteU32(componentObject, componentType);
+    WriteU8(componentObject, 1);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "OBJT", componentObject);
+
+    std::string firstList;
+    WriteU32(firstList, TypeUInt32);
+    WriteU32(firstList, 1);
+    WriteU32(firstList, 111);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "LIST", firstList);
+
+    std::string secondMap;
+    WriteU32(secondMap, TypeString);
+    WriteU32(secondMap, TypeUInt32);
+    WriteU32(secondMap, 1);
+    WriteString(secondMap, "second");
+    WriteU32(secondMap, 222);
+    chunks.emplace_back();
+    WriteChunk(chunks.back(), "MAPC", secondMap);
+
+    std::string cdb;
+    WriteU32(cdb, MakeSig("BETH"));
+    WriteU32(cdb, 8);
+    WriteU32(cdb, 1);
+    WriteU32(cdb, static_cast<uint32_t>(chunks.size() + 1));
+    for (const auto& chunk : chunks)
+        cdb.append(chunk);
+
+    return cdb;
+}
+
 void Require(bool condition, const char* message) {
     if (!condition) {
         std::cerr << message << std::endl;
@@ -152,6 +312,12 @@ void Require(bool condition, const char* message) {
     }
 }
 }
+
+struct SFMaterialDatabaseTestAccess {
+    static const nlohmann::json& ComponentJson(const SFMaterialDatabase& db, size_t index) {
+        return db.componentJsonCache.at(index);
+    }
+};
 
 int main() {
     const std::string syntheticCDB = MakeSyntheticCDB(false);
@@ -169,6 +335,26 @@ int main() {
     SFMaterialDatabase unverifiedObjectInfoDb;
     Require(!unverifiedObjectInfoDb.Load(unverifiedObjectInfoInput),
             "33-byte ObjectInfo entries should require schema support");
+
+    const std::string queuedComponentCDB = MakeQueuedComponentCDB();
+    std::istringstream queuedComponentInput(queuedComponentCDB, std::ios::binary);
+    SFMaterialDatabase queuedComponentDb;
+    Require(queuedComponentDb.Load(queuedComponentInput), "Queued component CDB should parse");
+    std::string queuedJsonOutput;
+    (void)queuedComponentDb.GetMaterialJSON("materials/actors/human/naked_body/female/naked_f_body.mat", queuedJsonOutput);
+    Require(queuedComponentDb.ComponentsRead(), "Queued component CDB should complete component read-all");
+    Require(queuedComponentDb.GetIndexedComponentCount() == 1, "Queued component CDB should index one component");
+    Require(queuedComponentDb.GetDeserializedComponentCount() == queuedComponentDb.GetIndexedComponentCount(),
+            "Queued component CDB should deserialize every indexed component");
+    const nlohmann::json& queuedComponentJson = SFMaterialDatabaseTestAccess::ComponentJson(queuedComponentDb, 0);
+    Require(queuedComponentJson["Data"]["Enabled"] == "true",
+            "Bool fields should deserialize to SFME-style true/false strings");
+    Require(queuedComponentJson["Data"]["FirstList"]["Data"][0] == "111",
+            "First deferred LIST field should receive first serialized LIST chunk");
+    Require(queuedComponentJson["Data"]["SecondMap"]["Data"][0]["Data"]["Key"] == "second",
+            "Second deferred MAP field should receive second serialized MAP chunk key");
+    Require(queuedComponentJson["Data"]["SecondMap"]["Data"][0]["Data"]["Value"] == "222",
+            "Second deferred MAP field should receive second serialized MAP chunk value");
 
     const char* fixturePath = std::getenv("SF_MATERIAL_CDB_FIXTURE");
     if (!fixturePath || !fixturePath[0]) {
@@ -189,6 +375,14 @@ int main() {
             "CDB should contain naked_f_body.mat");
     Require(!db.HasMaterial("materials/nonexistent/fake_material.mat"),
             "CDB should not find nonexistent material");
+
+    Require(!db.ComponentsRead(), "CDB fixture should not deserialize components before lookup");
+    Require(db.GetIndexedComponentCount() > 0, "CDB fixture should index components");
+    std::string jsonOutput;
+    (void)db.GetMaterialJSON("materials/actors/human/naked_body/female/naked_f_body.mat", jsonOutput);
+    Require(db.ComponentsRead(), "GetMaterialJSON should complete CDB component read-all");
+    Require(db.GetDeserializedComponentCount() == db.GetIndexedComponentCount(),
+            "GetMaterialJSON should deserialize every indexed CDB component");
 
     std::cout << "SFMaterialDatabase header tests PASSED" << std::endl;
     return 0;

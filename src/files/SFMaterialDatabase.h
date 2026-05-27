@@ -7,7 +7,10 @@ See the included LICENSE file
 
 #include "SFResourceHash.h"
 
+#include <nlohmann/json.hpp>
+
 #include <cstdint>
+#include <deque>
 #include <istream>
 #include <string>
 #include <unordered_map>
@@ -22,17 +25,34 @@ public:
 
     bool HasMaterial(const std::string& matPath) const;
     bool GetMaterialJSON(const std::string& matPath, std::string& jsonOutput);
+    bool ComponentsRead() const { return allComponentsRead; }
+    size_t GetIndexedComponentCount() const { return components.size(); }
+    size_t GetDeserializedComponentCount() const { return componentJsonCache.size(); }
 
 private:
+    friend struct SFMaterialDatabaseTestAccess;
+
     struct Chunk {
         uint32_t sig = 0;
         uint32_t size = 0;
+    };
+
+    struct QueuedChunk {
+        nlohmann::json* value = nullptr;
+        bool isDiff = false;
+    };
+
+    struct QueuedCast {
+        nlohmann::json* value = nullptr;
+        uint32_t typeRef = 0;
     };
 
     struct ReaderState {
         std::istream* input = nullptr;
         uint32_t version = 0;
         uint32_t chunksRemaining = 0;
+        std::deque<QueuedChunk> chunkQueue;
+        std::deque<QueuedCast> userQueue;
     };
 
     struct ClassField {
@@ -111,6 +131,9 @@ private:
     std::streampos componentDataStart = std::streampos(-1);
     uint32_t readerVersion = 0;
     uint32_t readerChunksRemaining = 0;
+    bool allComponentsRead = false;
+    std::vector<std::streampos> componentPositions;
+    std::vector<nlohmann::json> componentJsonCache;
 
     void Clear();
 
@@ -129,6 +152,13 @@ private:
     bool ReadEdgeList(ReaderState& state);
     void BuildLookupIndexes();
     bool HasExactCountedPayload(const Chunk& chunk, uint32_t headerSize, uint32_t count, uint32_t itemSize) const;
+    bool EnsureAllComponentsRead();
+    bool ReadNextObject(ReaderState& state, nlohmann::json& value);
+    bool ReadChunk(ReaderState& state, nlohmann::json& value);
+    bool ReadType(ReaderState& state, nlohmann::json& value, uint32_t typeRef, bool isDiff, bool isCast = false);
+    bool ReadList(ReaderState& state, nlohmann::json& value, bool isDiff);
+    bool ReadMap(ReaderState& state, nlohmann::json& value, bool isDiff);
+    bool ReadMapKeyString(ReaderState& state, uint32_t typeRef, std::string& value);
 
     const char* GetString(uint32_t offset) const;
     const char* GetBuiltinTypeName(uint32_t typeRef) const;
