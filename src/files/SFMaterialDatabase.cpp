@@ -56,6 +56,25 @@ constexpr uint32_t CDBObjectInfoWithParentPersistentIDSize = 33;
 constexpr uint32_t CDBComponentInfoSize = 8;
 constexpr uint32_t CDBEdgeInfoSize = 12;
 
+constexpr std::array<const char*, 6> RootMaterialPaths = {
+    "materials\\layered\\root\\materials.mat",
+    "materials\\layered\\root\\blenders.mat",
+    "materials\\layered\\root\\texturesets.mat",
+    "materials\\layered\\root\\uvstreams.mat",
+    "materials\\layered\\root\\layers.mat",
+    "materials\\layered\\root\\layeredmaterials.mat",
+};
+
+constexpr std::array<const char*, 7> IDComponentTypes = {
+    "BSMaterial::BlenderID",
+    "BSMaterial::LayerID",
+    "BSMaterial::MaterialID",
+    "BSMaterial::TextureSetID",
+    "BSMaterial::UVStreamID",
+    "BSMaterial::LODMaterialID",
+    "BSMaterial::LayeredMaterialID",
+};
+
 constexpr std::array<const char*, 19> BuiltinTypeNames = {
     "Unk0",
     "<null>",
@@ -191,13 +210,23 @@ bool SFMaterialDatabase::HasMaterial(const std::string& matPath) const {
 bool SFMaterialDatabase::GetMaterialJSON(const std::string& matPath, std::string& jsonOutput) {
     jsonOutput.clear();
 
-    if (failed || !HasMaterial(matPath))
+    if (failed)
+        return false;
+
+    const SFResourceID id = SFGetResourceIdFromPath(matPath);
+    const auto it = resourceToDb.find(id);
+    if (it == resourceToDb.end())
         return false;
 
     if (!EnsureAllComponentsRead())
         return false;
 
-    return false;
+    nlohmann::json materialJson;
+    if (!CreateMaterialJson(it->second, materialJson))
+        return false;
+
+    jsonOutput = materialJson.dump(2);
+    return true;
 }
 
 bool SFMaterialDatabase::ReadHeader(ReaderState& state) {
@@ -1141,6 +1170,226 @@ bool SFMaterialDatabase::ReadMapKeyString(ReaderState& state, uint32_t typeRef, 
     }
 
     return false;
+}
+
+bool SFMaterialDatabase::CreateMaterialJson(uint32_t dbID, nlohmann::json& output) const {
+    if (componentJsonCache.empty())
+        return false;
+
+    std::map<uint32_t, uint32_t> idMap;
+    std::vector<uint32_t> queue;
+
+    output = nlohmann::json::object();
+    output["Version"] = 1;
+    nlohmann::json& objectsValue = output["Objects"];
+    objectsValue = nlohmann::json::array();
+
+    idMap.emplace(dbID, 0);
+    nlohmann::json& materialObject = objectsValue.emplace_back();
+    if (!GetFullJson(dbID, materialObject))
+        return false;
+
+    SetMaterialParent(materialObject, dbID);
+    for (auto& component : materialObject["Components"])
+        GetReferencedIds(component, idMap, queue);
+
+    while (!queue.empty()) {
+        const uint32_t referencedID = queue.back();
+        queue.pop_back();
+
+        const ObjectInfo* referencedObject = GetObject(referencedID);
+        if (!referencedObject)
+            return false;
+
+        nlohmann::json& referencedJson = objectsValue.emplace_back();
+        referencedJson["ID"] = FormatResourceID(referencedObject->persistentID);
+        if (!GetFullJson(referencedID, referencedJson))
+            return false;
+
+        SetMaterialParent(referencedJson, referencedID);
+        for (auto& component : referencedJson["Components"])
+            GetReferencedIds(component, idMap, queue);
+    }
+
+    return true;
+}
+
+bool SFMaterialDatabase::GetFullJson(uint32_t dbID, nlohmann::json& objectValue) const {
+    nlohmann::json& componentsValue = objectValue["Components"];
+    componentsValue = nlohmann::json::array();
+
+    const std::vector<uint32_t> parentList = GetParentList(dbID);
+    if (parentList.empty())
+        return false;
+
+    for (auto idIt = parentList.rbegin(); idIt != parentList.rend(); ++idIt) {
+        const std::vector<size_t>* componentIndices = GetComponentIndices(*idIt);
+        if (!componentIndices)
+            continue;
+
+        for (size_t componentIndex : *componentIndices) {
+            if (componentIndex >= components.size() || componentIndex >= componentJsonCache.size())
+                return false;
+
+            const nlohmann::json& dbValue = componentJsonCache[componentIndex];
+            nlohmann::json& componentValue = GetIndexedComponent(componentsValue, dbValue, components[componentIndex].index);
+            ComposeJsons(componentValue["Data"], dbValue.value("Data", nlohmann::json::object()));
+        }
+    }
+
+    return true;
+}
+
+nlohmann::json& SFMaterialDatabase::GetIndexedComponent(nlohmann::json& componentsValue, const nlohmann::json& dbValue, uint32_t index) const {
+    const auto dbType = dbValue.find("Type");
+    const std::string dbTypeString = dbType != dbValue.end() && dbType->is_string() ? dbType->get<std::string>() : std::string();
+
+    for (auto& component : componentsValue) {
+        const auto componentIndex = component.find("Index");
+        const auto componentType = component.find("Type");
+        if (componentIndex != component.end() && componentIndex->is_number_unsigned()
+            && componentIndex->get<uint32_t>() == index
+            && componentType != component.end() && componentType->is_string()
+            && EqualsIgnoreCase(componentType->get<std::string>().c_str(), dbTypeString.c_str())) {
+            return component;
+        }
+    }
+
+    nlohmann::json& component = componentsValue.emplace_back();
+    component["Type"] = dbTypeString;
+    component["Index"] = index;
+    return component;
+}
+
+void SFMaterialDatabase::ComposeJsons(nlohmann::json& lhs, const nlohmann::json& rhs) const {
+    if (rhs.is_object()) {
+        if (rhs.empty()) {
+            lhs = nlohmann::json::object();
+            return;
+        }
+
+        if (!lhs.is_object())
+            lhs = nlohmann::json::object();
+
+        for (auto it = rhs.begin(); it != rhs.end(); ++it)
+            ComposeJsons(lhs[it.key()], *it);
+    }
+    else if (rhs.is_array()) {
+        if (rhs.empty()) {
+            lhs = nlohmann::json::array();
+            return;
+        }
+
+        if (!lhs.is_array())
+            lhs = nlohmann::json::array();
+
+        for (size_t i = 0; i < rhs.size(); ++i) {
+            if (!rhs[i].is_null())
+                ComposeJsons(lhs[i], rhs[i]);
+        }
+    }
+    else {
+        lhs = rhs;
+    }
+}
+
+void SFMaterialDatabase::GetReferencedIds(nlohmann::json& value, std::map<uint32_t, uint32_t>& idMap, std::vector<uint32_t>& queue) const {
+    if (value.is_object() && IsComponentReference(value)) {
+        auto data = value.find("Data");
+        if (data == value.end() || !data->is_object())
+            return;
+
+        auto id = data->find("ID");
+        if (id == data->end() || !id->is_string())
+            return;
+
+        const std::string idString = id->get<std::string>();
+        if (idString.empty())
+            return;
+
+        uint32_t dbID = 0;
+        try {
+            dbID = static_cast<uint32_t>(std::stoul(idString));
+        }
+        catch (...) {
+            return;
+        }
+
+        const ObjectInfo* object = GetObject(dbID);
+        if (!object)
+            return;
+
+        if (idMap.emplace(dbID, static_cast<uint32_t>(idMap.size())).second)
+            queue.emplace_back(dbID);
+
+        *id = FormatResourceID(object->persistentID);
+        return;
+    }
+
+    if (value.is_object()) {
+        for (auto& member : value)
+            GetReferencedIds(member, idMap, queue);
+    }
+    else if (value.is_array()) {
+        for (auto& member : value)
+            GetReferencedIds(member, idMap, queue);
+    }
+}
+
+bool SFMaterialDatabase::IsComponentReference(const nlohmann::json& componentValue) const {
+    const auto type = componentValue.find("Type");
+    if (type == componentValue.end() || !type->is_string())
+        return false;
+
+    const std::string& typeString = type->get_ref<const std::string&>();
+    return std::any_of(IDComponentTypes.begin(), IDComponentTypes.end(), [&typeString](const char* idType) {
+        return EqualsIgnoreCase(typeString.c_str(), idType);
+    });
+}
+
+void SFMaterialDatabase::SetMaterialParent(nlohmann::json& objectValue, uint32_t dbID) const {
+    const std::vector<uint32_t> parentList = GetParentList(dbID);
+    for (auto parentIt = parentList.begin() + 1; parentIt != parentList.end(); ++parentIt) {
+        const ObjectInfo* parent = GetObject(*parentIt);
+        if (!parent)
+            continue;
+
+        for (const char* rootPath : RootMaterialPaths) {
+            if (parent->persistentID == SFGetResourceIdFromPath(rootPath)) {
+                objectValue["Parent"] = rootPath;
+                return;
+            }
+        }
+    }
+}
+
+std::vector<uint32_t> SFMaterialDatabase::GetParentList(uint32_t dbID) const {
+    std::vector<uint32_t> result;
+    uint32_t currentID = dbID;
+
+    while (currentID != 0) {
+        result.emplace_back(currentID);
+        const ObjectInfo* object = GetObject(currentID);
+        if (!object || object->parentID == currentID)
+            break;
+
+        currentID = object->parentID;
+    }
+
+    return result;
+}
+
+const SFMaterialDatabase::ObjectInfo* SFMaterialDatabase::GetObject(uint32_t dbID) const {
+    const auto it = objectMap.find(dbID);
+    if (it == objectMap.end() || it->second >= objects.size())
+        return nullptr;
+
+    return &objects[it->second];
+}
+
+const std::vector<size_t>* SFMaterialDatabase::GetComponentIndices(uint32_t objectID) const {
+    const auto it = componentMap.find(objectID);
+    return it != componentMap.end() ? &it->second : nullptr;
 }
 
 const char* SFMaterialDatabase::GetString(uint32_t offset) const {

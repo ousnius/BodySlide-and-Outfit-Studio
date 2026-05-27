@@ -12,6 +12,7 @@ See the included LICENSE file
 #include <cstdint>
 #include <deque>
 #include <istream>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -159,6 +160,16 @@ private:
     bool ReadList(ReaderState& state, nlohmann::json& value, bool isDiff);
     bool ReadMap(ReaderState& state, nlohmann::json& value, bool isDiff);
     bool ReadMapKeyString(ReaderState& state, uint32_t typeRef, std::string& value);
+    bool CreateMaterialJson(uint32_t dbID, nlohmann::json& output) const;
+    bool GetFullJson(uint32_t dbID, nlohmann::json& objectValue) const;
+    nlohmann::json& GetIndexedComponent(nlohmann::json& componentsValue, const nlohmann::json& dbValue, uint32_t index) const;
+    void ComposeJsons(nlohmann::json& lhs, const nlohmann::json& rhs) const;
+    void GetReferencedIds(nlohmann::json& value, std::map<uint32_t, uint32_t>& idMap, std::vector<uint32_t>& queue) const;
+    bool IsComponentReference(const nlohmann::json& componentValue) const;
+    void SetMaterialParent(nlohmann::json& objectValue, uint32_t dbID) const;
+    std::vector<uint32_t> GetParentList(uint32_t dbID) const;
+    const ObjectInfo* GetObject(uint32_t dbID) const;
+    const std::vector<size_t>* GetComponentIndices(uint32_t objectID) const;
 
     const char* GetString(uint32_t offset) const;
     const char* GetBuiltinTypeName(uint32_t typeRef) const;

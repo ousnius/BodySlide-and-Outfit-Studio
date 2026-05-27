@@ -1,4 +1,5 @@
 #include "../src/files/SFMaterialDatabase.h"
+#include "../src/files/SFMaterialFile.h"
 
 #include <cstdlib>
 #include <fstream>
@@ -379,10 +380,28 @@ int main() {
     Require(!db.ComponentsRead(), "CDB fixture should not deserialize components before lookup");
     Require(db.GetIndexedComponentCount() > 0, "CDB fixture should index components");
     std::string jsonOutput;
-    (void)db.GetMaterialJSON("materials/actors/human/naked_body/female/naked_f_body.mat", jsonOutput);
+    Require(db.GetMaterialJSON("materials/actors/human/naked_body/female/naked_f_body.mat", jsonOutput),
+            "GetMaterialJSON should resolve naked_f_body.mat from CDB");
+    Require(!jsonOutput.empty(), "CDB material JSON output should not be empty");
     Require(db.ComponentsRead(), "GetMaterialJSON should complete CDB component read-all");
     Require(db.GetDeserializedComponentCount() == db.GetIndexedComponentCount(),
             "GetMaterialJSON should deserialize every indexed CDB component");
+
+    std::istringstream jsonStream(jsonOutput);
+    SFMaterialFile sfMat(jsonStream);
+    Require(!sfMat.Failed(), "SFMaterialFile should parse CDB-produced JSON");
+    Require(sfMat.GetTexture(SFMaterialTextureSlot::Color) == "Textures/Actors/human/Naked_Body/NakedBodyF_sk3_color.dds",
+            "CDB material should resolve naked body color texture");
+    Require(sfMat.GetTexture(SFMaterialTextureSlot::Normal) == "Textures/Actors/human/Naked_Body/nakedbodyf_normal.dds",
+            "CDB material should resolve naked body normal texture");
+    Require(sfMat.GetTexture(SFMaterialTextureSlot::Roughness) == "Textures/Actors/human/Naked_Body/nakedbodyf_rough.dds",
+            "CDB material should resolve naked body roughness texture");
+    Require(sfMat.GetTexture(SFMaterialTextureSlot::AmbientOcclusion) == "Textures/Actors/human/Naked_Body/NakedBodyF_ao.dds",
+            "CDB material should resolve naked body AO texture");
+    Require(sfMat.GetTexture(SFMaterialTextureSlot::Color).find("mask") == std::string::npos,
+            "CDB material color texture must not be a blender mask");
+    Require(sfMat.GetTexture(SFMaterialTextureSlot::Normal).find("faces") == std::string::npos,
+            "CDB material normal texture must not be a face detail normal");
 
     std::cout << "SFMaterialDatabase header tests PASSED" << std::endl;
     return 0;
