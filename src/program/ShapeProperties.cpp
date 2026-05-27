@@ -8,6 +8,9 @@ See the included LICENSE file
 #include <wx/grid.h>
 #include <wx/valnum.h>
 
+#include <algorithm>
+#include <cctype>
+
 extern ConfigurationManager Config;
 
 using namespace nifly;
@@ -202,6 +205,20 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, std::vector<
 	if (version.Stream() >= 130) {
 		lbShaderName->SetLabel(_("Material"));
 		btnMaterialChooser->Show();
+		pgShader->Layout();
+	}
+
+	if (version.IsSF()) {
+		XRCCTRL(*this, "lbShaderType", wxStaticText)->Hide();
+		shaderType->Hide();
+		XRCCTRL(*this, "lbSpecularColor", wxStaticText)->Hide();
+		specularColor->Hide();
+		XRCCTRL(*this, "lbSpecularStrength", wxStaticText)->Hide();
+		specularStrength->Hide();
+		XRCCTRL(*this, "lbSpecularPower", wxStaticText)->Hide();
+		specularPower->Hide();
+		shaderFlagsPane->Hide();
+		advancedShaderPane->Hide();
 		pgShader->Layout();
 	}
 
@@ -871,7 +888,12 @@ void ShapeProperties::UpdateShaderTypeFields(uint32_t shaderTypeVal) {
 }
 
 void ShapeProperties::OnChooseMaterial(wxCommandEvent& WXUNUSED(event)) {
-	wxString fileName = wxFileSelector(_("Choose material file"), wxEmptyString, wxEmptyString, ".bgsm", "Material files (*.bgsm;*.bgem)|*.bgsm;*.bgem", wxFD_FILE_MUST_EXIST, this);
+	bool isSF = nif->GetHeader().GetVersion().IsSF();
+	wxString defaultExt = isSF ? ".mat" : ".bgsm";
+	wxString wildcard = isSF
+		? "Starfield material files (*.mat)|*.mat|All material files (*.mat;*.bgsm;*.bgem)|*.mat;*.bgsm;*.bgem"
+		: "Material files (*.bgsm;*.bgem)|*.bgsm;*.bgem";
+	wxString fileName = wxFileSelector(_("Choose material file"), wxEmptyString, wxEmptyString, defaultExt, wildcard, wxFD_FILE_MUST_EXIST, this);
 	if (fileName.empty())
 		return;
 
@@ -995,16 +1017,30 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		stTexGrid->AutoSizeRows();
 		stTexGrid->EnableDragRowSize(false);
 		stTexGrid->SetRowLabelSize(80);
-		stTexGrid->SetRowLabelValue(0, "Diffuse");
-		stTexGrid->SetRowLabelValue(1, "Normal");
-		stTexGrid->SetRowLabelValue(2, "Glow/Skin");
-		stTexGrid->SetRowLabelValue(3, "Parallax");
-		stTexGrid->SetRowLabelValue(4, "Environment");
-		stTexGrid->SetRowLabelValue(5, "Env Mask");
-		stTexGrid->SetRowLabelValue(6, "6");
-		stTexGrid->SetRowLabelValue(7, "Specular");
-		stTexGrid->SetRowLabelValue(8, "8");
-		stTexGrid->SetRowLabelValue(9, "9");
+		if (nif->GetHeader().GetVersion().IsSF()) {
+			stTexGrid->SetRowLabelValue(0, "Color");
+			stTexGrid->SetRowLabelValue(1, "Normal");
+			stTexGrid->SetRowLabelValue(2, "Opacity");
+			stTexGrid->SetRowLabelValue(3, "Roughness");
+			stTexGrid->SetRowLabelValue(4, "Metalness");
+			stTexGrid->SetRowLabelValue(5, "AO");
+			stTexGrid->SetRowLabelValue(6, "Height");
+			stTexGrid->SetRowLabelValue(7, "Emissive");
+			stTexGrid->SetRowLabelValue(8, "Unused");
+			stTexGrid->SetRowLabelValue(9, "Unused");
+		}
+		else {
+			stTexGrid->SetRowLabelValue(0, "Diffuse");
+			stTexGrid->SetRowLabelValue(1, "Normal");
+			stTexGrid->SetRowLabelValue(2, "Glow/Skin");
+			stTexGrid->SetRowLabelValue(3, "Parallax");
+			stTexGrid->SetRowLabelValue(4, "Environment");
+			stTexGrid->SetRowLabelValue(5, "Env Mask");
+			stTexGrid->SetRowLabelValue(6, "6");
+			stTexGrid->SetRowLabelValue(7, "Specular");
+			stTexGrid->SetRowLabelValue(8, "8");
+			stTexGrid->SetRowLabelValue(9, "9");
+		}
 		stTexGrid->SetRowLabelAlignment(wxALIGN_LEFT, wxALIGN_CENTRE);
 
 		// Cell Defaults
@@ -1013,13 +1049,42 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		NiShape* firstShape = shapes[0];
 
 		int blockType = 0;
-		for (int i = 0; i < 10; i++) {
-			std::string texPath;
-			blockType = nif->GetTextureSlot(firstShape, texPath, i);
-			if (!blockType)
-				continue;
+		bool seededFromResolvedTextures = false;
+		bool isSF = nif->GetHeader().GetVersion().IsSF();
 
-			stTexGrid->SetCellValue(i, 0, ToOSSlashes(texPath));
+		if (isSF) {
+			auto resolvedTextures = os->project->GetShapeTextures(firstShape);
+			bool hasResolvedTextures = false;
+			for (const auto& texPath : resolvedTextures) {
+				if (!texPath.empty()) {
+					hasResolvedTextures = true;
+					break;
+				}
+			}
+
+			if (!hasResolvedTextures) {
+				os->project->SetTextures(firstShape);
+				resolvedTextures = os->project->GetShapeTextures(firstShape);
+			}
+
+			for (size_t i = 0; i < resolvedTextures.size() && i < 10; i++) {
+				if (resolvedTextures[i].empty())
+					continue;
+
+				stTexGrid->SetCellValue(i, 0, DisplayTexturePath(resolvedTextures[i]));
+				seededFromResolvedTextures = true;
+			}
+		}
+
+		if (!seededFromResolvedTextures) {
+			for (int i = 0; i < 10; i++) {
+				std::string texPath;
+				blockType = nif->GetTextureSlot(firstShape, texPath, i);
+				if (!blockType)
+					continue;
+
+				stTexGrid->SetCellValue(i, 0, ToOSSlashes(texPath));
+			}
 		}
 
 		// BSEffectShaderProperty
@@ -1053,15 +1118,31 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		if (dlg.ShowModal() == wxID_OK) {
 			auto dataPath = Config["GameDataPath"];
 			std::vector<std::string> texFiles(10);
+			std::vector<std::string> texPaths(10);
+			bool anyTextureSet = false;
 			for (int i = 0; i < 10; i++) {
-				std::string texPath = stTexGrid->GetCellValue(i, 0).ToStdString();
-				std::string texPath_bs = ToBackslashes(texPath);
+				texPaths[i] = stTexGrid->GetCellValue(i, 0).ToStdString();
+				if (!texPaths[i].empty()) {
+					texFiles[i] = dataPath + texPaths[i];
+					anyTextureSet = true;
+				}
+			}
+
+			if (isSF && !anyTextureSet) {
+				for (auto& shape : shapes) {
+					os->project->SetTextures(shape);
+					os->MeshFromProj(shape, true);
+				}
+
+				os->glView->Render();
+				return;
+			}
+
+			for (int i = 0; i < 10; i++) {
+				std::string texPath_bs = ToBackslashes(texPaths[i]);
 
 				for (auto& shape : shapes)
 					nif->SetTextureSlot(shape, texPath_bs, i);
-
-				if (!texPath.empty())
-					texFiles[i] = dataPath + texPath;
 			}
 
 			nif->TrimTexturePaths();
@@ -1075,6 +1156,36 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			os->glView->Render();
 		}
 	}
+}
+
+std::string ShapeProperties::DisplayTexturePath(const std::string& texturePath) {
+	std::string displayPath = ToOSSlashes(texturePath);
+	std::string dataPath = ToOSSlashes(Config["GameDataPath"]);
+
+	auto toLower = [](std::string value) {
+		std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+			return static_cast<char>(std::tolower(c));
+		});
+		return value;
+	};
+
+	if (!dataPath.empty()) {
+		std::string displayPathLower = toLower(displayPath);
+		std::string dataPathLower = toLower(dataPath);
+		bool hasDataPathPrefix = displayPathLower.compare(0, dataPathLower.size(), dataPathLower) == 0;
+		bool dataPathEndsWithSeparator = dataPath.back() == '\\' || dataPath.back() == '/';
+		bool prefixEndsAtSeparator = dataPathEndsWithSeparator
+								  || displayPath.size() == dataPath.size()
+								  || (displayPath.size() > dataPath.size()
+									  && (displayPath[dataPath.size()] == '\\' || displayPath[dataPath.size()] == '/'));
+		if (hasDataPathPrefix && prefixEndsAtSeparator)
+			displayPath.erase(0, dataPath.size());
+	}
+
+	while (!displayPath.empty() && (displayPath[0] == '\\' || displayPath[0] == '/'))
+		displayPath.erase(0, 1);
+
+	return ToOSSlashes(displayPath);
 }
 
 void ShapeProperties::AssignDefaultTexture(NiShape* shape) {
@@ -2052,6 +2163,7 @@ void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 void ShapeProperties::ApplyChanges() {
 	bool multipleShapes = shapes.size() > 1;
 	auto& version = nif->GetHeader().GetVersion();
+	bool isSF = version.IsSF();
 
 	wxColour color = specularColor->GetColour();
 	Vector3 specColor(color.Red(), color.Green(), color.Blue());
@@ -2110,80 +2222,84 @@ void ShapeProperties::ApplyChanges() {
 			else if (shader->HasType<BSLightingShaderProperty>()) {
 				auto bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
 				if (bslsp) {
-					bslsp->SetShaderType(type);
+					if (!isSF) {
+						bslsp->SetShaderType(type);
 
-					if (oldType != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && type == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP) {
-						// Shader type was changed to environment mapping, enable flag as well
-						bslsp->SetEnvironmentMapping(true);
-					}
-					else if (oldType == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && type != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP) {
-						// Shader type was changed away from environment mapping, disable flag as well
-						bslsp->SetEnvironmentMapping(false);
-					}
+						if (oldType != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && type == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP) {
+							// Shader type was changed to environment mapping, enable flag as well
+							bslsp->SetEnvironmentMapping(true);
+						}
+						else if (oldType == BSLightingShaderPropertyShaderType::BSLSP_ENVMAP && type != BSLightingShaderPropertyShaderType::BSLSP_ENVMAP) {
+							// Shader type was changed away from environment mapping, disable flag as well
+							bslsp->SetEnvironmentMapping(false);
+						}
 
-					bslsp->SetSpecularColor(specColor);
-					bslsp->SetSpecularStrength(specStrength);
-					bslsp->SetGlossiness(specPower);
+						bslsp->SetSpecularColor(specColor);
+						bslsp->SetSpecularStrength(specStrength);
+						bslsp->SetGlossiness(specPower);
+					}
 
 					bslsp->SetEmissiveColor(emisColor);
 					bslsp->SetEmissiveMultiple(emisMultiple);
 
 					bslsp->SetAlpha(alphaValue);
 
-					// Advanced properties
-					auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
-					if (bssp) {
-						bssp->uvOffset.u = atof(uvOffsetU->GetValue().c_str());
-						bssp->uvOffset.v = atof(uvOffsetV->GetValue().c_str());
-						bssp->uvScale.u = atof(uvScaleU->GetValue().c_str());
-						bssp->uvScale.v = atof(uvScaleV->GetValue().c_str());
-						bssp->environmentMapScale = atof(environmentMapScale->GetValue().c_str());
-					}
+					if (!isSF) {
+						// Advanced properties
+						auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
+						if (bssp) {
+							bssp->uvOffset.u = atof(uvOffsetU->GetValue().c_str());
+							bssp->uvOffset.v = atof(uvOffsetV->GetValue().c_str());
+							bssp->uvScale.u = atof(uvScaleU->GetValue().c_str());
+							bssp->uvScale.v = atof(uvScaleV->GetValue().c_str());
+							bssp->environmentMapScale = atof(environmentMapScale->GetValue().c_str());
+						}
 
-					bslsp->textureClampMode = static_cast<TexClampMode>(textureClampMode->GetSelection());
-					bslsp->refractionStrength = atof(refractionStrength->GetValue().c_str());
-					bslsp->softlighting = atof(lightingEffect1->GetValue().c_str());
-					bslsp->rimlightPower = atof(lightingEffect2->GetValue().c_str());
+						bslsp->textureClampMode = static_cast<TexClampMode>(textureClampMode->GetSelection());
+						bslsp->refractionStrength = atof(refractionStrength->GetValue().c_str());
+						bslsp->softlighting = atof(lightingEffect1->GetValue().c_str());
+						bslsp->rimlightPower = atof(lightingEffect2->GetValue().c_str());
 
-					wxColour stc = skinTintColor->GetColour();
-					bslsp->skinTintColor = Vector3(stc.Red() / 255.0f, stc.Green() / 255.0f, stc.Blue() / 255.0f);
+						wxColour stc = skinTintColor->GetColour();
+						bslsp->skinTintColor = Vector3(stc.Red() / 255.0f, stc.Green() / 255.0f, stc.Blue() / 255.0f);
 
-					wxColour htc = hairTintColor->GetColour();
-					bslsp->hairTintColor = Vector3(htc.Red() / 255.0f, htc.Green() / 255.0f, htc.Blue() / 255.0f);
+						wxColour htc = hairTintColor->GetColour();
+						bslsp->hairTintColor = Vector3(htc.Red() / 255.0f, htc.Green() / 255.0f, htc.Blue() / 255.0f);
 
-					bslsp->maxPasses = atof(parallaxMaxPasses->GetValue().c_str());
-					bslsp->scale = atof(parallaxScale->GetValue().c_str());
-					bslsp->parallaxInnerLayerThickness = atof(parallaxInnerLayerThickness->GetValue().c_str());
-					bslsp->parallaxRefractionScale = atof(parallaxRefractionScale->GetValue().c_str());
-					bslsp->parallaxInnerLayerTextureScale.u = atof(parallaxInnerLayerTexScaleU->GetValue().c_str());
-					bslsp->parallaxInnerLayerTextureScale.v = atof(parallaxInnerLayerTexScaleV->GetValue().c_str());
-					bslsp->parallaxEnvmapStrength = atof(parallaxEnvmapStrength->GetValue().c_str());
+						bslsp->maxPasses = atof(parallaxMaxPasses->GetValue().c_str());
+						bslsp->scale = atof(parallaxScale->GetValue().c_str());
+						bslsp->parallaxInnerLayerThickness = atof(parallaxInnerLayerThickness->GetValue().c_str());
+						bslsp->parallaxRefractionScale = atof(parallaxRefractionScale->GetValue().c_str());
+						bslsp->parallaxInnerLayerTextureScale.u = atof(parallaxInnerLayerTexScaleU->GetValue().c_str());
+						bslsp->parallaxInnerLayerTextureScale.v = atof(parallaxInnerLayerTexScaleV->GetValue().c_str());
+						bslsp->parallaxEnvmapStrength = atof(parallaxEnvmapStrength->GetValue().c_str());
 
-					bslsp->sparkleParameters.r = atof(sparkleParamsR->GetValue().c_str());
-					bslsp->sparkleParameters.g = atof(sparkleParamsG->GetValue().c_str());
-					bslsp->sparkleParameters.b = atof(sparkleParamsB->GetValue().c_str());
-					bslsp->sparkleParameters.a = atof(sparkleParamsA->GetValue().c_str());
+						bslsp->sparkleParameters.r = atof(sparkleParamsR->GetValue().c_str());
+						bslsp->sparkleParameters.g = atof(sparkleParamsG->GetValue().c_str());
+						bslsp->sparkleParameters.b = atof(sparkleParamsB->GetValue().c_str());
+						bslsp->sparkleParameters.a = atof(sparkleParamsA->GetValue().c_str());
 
-					bslsp->eyeCubemapScale = atof(eyeCubemapScale->GetValue().c_str());
-					bslsp->eyeLeftReflectionCenter.x = atof(eyeLeftReflectX->GetValue().c_str());
-					bslsp->eyeLeftReflectionCenter.y = atof(eyeLeftReflectY->GetValue().c_str());
-					bslsp->eyeLeftReflectionCenter.z = atof(eyeLeftReflectZ->GetValue().c_str());
-					bslsp->eyeRightReflectionCenter.x = atof(eyeRightReflectX->GetValue().c_str());
-					bslsp->eyeRightReflectionCenter.y = atof(eyeRightReflectY->GetValue().c_str());
-					bslsp->eyeRightReflectionCenter.z = atof(eyeRightReflectZ->GetValue().c_str());
+						bslsp->eyeCubemapScale = atof(eyeCubemapScale->GetValue().c_str());
+						bslsp->eyeLeftReflectionCenter.x = atof(eyeLeftReflectX->GetValue().c_str());
+						bslsp->eyeLeftReflectionCenter.y = atof(eyeLeftReflectY->GetValue().c_str());
+						bslsp->eyeLeftReflectionCenter.z = atof(eyeLeftReflectZ->GetValue().c_str());
+						bslsp->eyeRightReflectionCenter.x = atof(eyeRightReflectX->GetValue().c_str());
+						bslsp->eyeRightReflectionCenter.y = atof(eyeRightReflectY->GetValue().c_str());
+						bslsp->eyeRightReflectionCenter.z = atof(eyeRightReflectZ->GetValue().c_str());
 
-					if (version.Stream() >= 130) {
-						bslsp->SetWetMaterialName(wetMaterialPath->GetValue().ToStdString());
-						bslsp->subsurfaceRolloff = atof(subsurfaceRolloff->GetValue().c_str());
-						bslsp->backlightPower = atof(backlightPower->GetValue().c_str());
-						bslsp->grayscaleToPaletteScale = atof(grayscaleToPaletteScale->GetValue().c_str());
-						bslsp->fresnelPower = atof(fresnelPower->GetValue().c_str());
-						bslsp->wetnessSpecScale = atof(wetnessSpecScale->GetValue().c_str());
-						bslsp->wetnessSpecPower = atof(wetnessSpecPower->GetValue().c_str());
-						bslsp->wetnessMinVar = atof(wetnessMinVar->GetValue().c_str());
-						bslsp->wetnessEnvmapScale = atof(wetnessEnvMapScale->GetValue().c_str());
-						bslsp->wetnessFresnelPower = atof(wetnessFresnelPower->GetValue().c_str());
-						bslsp->wetnessMetalness = atof(wetnessMetalness->GetValue().c_str());
+						if (version.Stream() >= 130) {
+							bslsp->SetWetMaterialName(wetMaterialPath->GetValue().ToStdString());
+							bslsp->subsurfaceRolloff = atof(subsurfaceRolloff->GetValue().c_str());
+							bslsp->backlightPower = atof(backlightPower->GetValue().c_str());
+							bslsp->grayscaleToPaletteScale = atof(grayscaleToPaletteScale->GetValue().c_str());
+							bslsp->fresnelPower = atof(fresnelPower->GetValue().c_str());
+							bslsp->wetnessSpecScale = atof(wetnessSpecScale->GetValue().c_str());
+							bslsp->wetnessSpecPower = atof(wetnessSpecPower->GetValue().c_str());
+							bslsp->wetnessMinVar = atof(wetnessMinVar->GetValue().c_str());
+							bslsp->wetnessEnvmapScale = atof(wetnessEnvMapScale->GetValue().c_str());
+							bslsp->wetnessFresnelPower = atof(wetnessFresnelPower->GetValue().c_str());
+							bslsp->wetnessMetalness = atof(wetnessMetalness->GetValue().c_str());
+						}
 					}
 				}
 			}
@@ -2222,7 +2338,7 @@ void ShapeProperties::ApplyChanges() {
 
 			// Save shader flags
 			auto* bssp = dynamic_cast<BSShaderProperty*>(shader);
-			if (bssp) {
+			if (bssp && !isSF) {
 				uint32_t sf1 = 0;
 				uint32_t sf2 = 0;
 				for (unsigned int i = 0; i < shaderFlags1List->GetCount(); i++) {

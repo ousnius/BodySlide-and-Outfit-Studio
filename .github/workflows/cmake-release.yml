@@ -46,7 +46,7 @@ jobs:
           $vcpkgCache = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
           New-Item -ItemType Directory -Force -Path $vcpkgCache | Out-Null
           $env:VCPKG_BINARY_SOURCES = "clear;files,$vcpkgCache,readwrite"
-          & (Join-Path $vcpkgRoot "vcpkg.exe") install "wxwidgets[debug-support]:$env:VCPKG_TARGET_TRIPLET"
+          & (Join-Path $vcpkgRoot "vcpkg.exe") install "wxwidgets[debug-support]:$env:VCPKG_TARGET_TRIPLET" "catch2:$env:VCPKG_TARGET_TRIPLET"
 
       - name: Configure CMake
         shell: pwsh
@@ -58,11 +58,16 @@ jobs:
             -A x64 `
             -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
             -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TARGET_TRIPLET" `
+            -DBSOS_BUILD_TESTS=ON `
             -DBSOS_ENABLE_FBXSDK=OFF
 
       - name: Build
         shell: pwsh
-        run: cmake --build build/windows-x64-relwithdebinfo --config "$env:BUILD_TYPE" --target BodySlide OutfitStudio --parallel
+        run: cmake --build build/windows-x64-relwithdebinfo --config "$env:BUILD_TYPE" --target BodySlide OutfitStudio BSOSTests --parallel
+
+      - name: Test
+        shell: pwsh
+        run: ctest --test-dir build/windows-x64-relwithdebinfo -C "$env:BUILD_TYPE" --output-on-failure
 
       - name: Verify outputs
         shell: pwsh
@@ -146,7 +151,8 @@ jobs:
             libglu1-mesa-dev \
             libwxgtk3.2-dev \
             ninja-build \
-            pkg-config
+            pkg-config \
+            catch2
 
           wx-config --version
           wx-config --selected-config
@@ -158,10 +164,14 @@ jobs:
           cmake -S . -B build/ubuntu-gcc-relwithdebinfo \
             -G Ninja \
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+            -DBSOS_BUILD_TESTS=ON \
             -DBSOS_ENABLE_FBXSDK=OFF
 
       - name: Build
-        run: cmake --build build/ubuntu-gcc-relwithdebinfo --target BodySlide OutfitStudio --parallel
+        run: cmake --build build/ubuntu-gcc-relwithdebinfo --target BodySlide OutfitStudio BSOSTests --parallel
+
+      - name: Test
+        run: ctest --test-dir build/ubuntu-gcc-relwithdebinfo --output-on-failure
 
       - name: Verify outputs
         run: |

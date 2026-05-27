@@ -11,6 +11,7 @@ if(MSVC)
 endif()
 
 option(BSOS_ENABLE_FBXSDK "Build Outfit Studio with Autodesk FBX SDK support when available" ON)
+option(BSOS_BUILD_TESTS "Build Catch2-based tests" OFF)
 set(BSOS_FBXSDK_ROOT "" CACHE PATH "Root directory of the Autodesk FBX SDK")
 set(fbxsdk_dir "" CACHE PATH "Compatibility alias for BSOS_FBXSDK_ROOT")
 
@@ -289,6 +290,10 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/HkxFile.cpp
 	src/files/MaskFile.cpp
 	src/files/ObjFile.cpp
+	src/files/SFMaterialDatabase.cpp
+	src/files/SFMaterialFile.cpp
+	src/files/SFMaterialGraph.cpp
+	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
 	src/ui/WeightCopyDialog.cpp
@@ -350,6 +355,46 @@ if(WIN32)
 	else()
 		list(APPEND BSOS_PLATFORM_DEFINITIONS WIN32)
 	endif()
+endif()
+
+if(BSOS_BUILD_TESTS)
+	find_package(Catch2 3 CONFIG REQUIRED)
+	foreach(catch_target IN ITEMS Catch2::Catch2 Catch2::Catch2WithMain)
+		if(TARGET ${catch_target})
+			set_target_properties(${catch_target} PROPERTIES
+				MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+				MAP_IMPORTED_CONFIG_MINSIZEREL Release
+			)
+		endif()
+	endforeach()
+	include(Catch)
+	enable_testing()
+
+	add_executable(BSOSTests
+		tests/SFMaterialDatabaseTest.cpp
+		tests/SFMaterialFileTest.cpp
+		tests/SFResourceHashTest.cpp
+		src/files/SFMaterialDatabase.cpp
+		src/files/SFMaterialFile.cpp
+		src/files/SFMaterialGraph.cpp
+		src/files/SFResourceHash.cpp
+		src/utils/StringStuff.cpp
+	)
+	target_include_directories(BSOSTests PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
+	)
+	target_compile_definitions(BSOSTests PRIVATE ${BSOS_PLATFORM_DEFINITIONS})
+	target_link_libraries(BSOSTests PRIVATE Catch2::Catch2WithMain)
+	set_target_properties(BSOSTests PROPERTIES CXX_EXTENSIONS OFF)
+
+	if(MSVC)
+		target_compile_options(BSOSTests PRIVATE /W4 /bigobj /wd26812)
+	elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+		target_compile_options(BSOSTests PRIVATE -Wall)
+	endif()
+
+	catch_discover_tests(BSOSTests WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
 function(bsos_configure_target target)

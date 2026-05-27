@@ -539,6 +539,10 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
 	}
+	else if (targetGame == SF) {
+		vShader = Config["AppDir"] + "/res/shaders/sf_default.vert";
+		fShader = Config["AppDir"] + "/res/shaders/sf_default.frag";
+	}
 	else if (targetGame == OB) {
 		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
