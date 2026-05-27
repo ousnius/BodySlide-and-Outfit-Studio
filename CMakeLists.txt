@@ -361,10 +361,27 @@ if(BSOS_BUILD_TESTS)
 	find_package(Catch2 3 CONFIG REQUIRED)
 	foreach(catch_target IN ITEMS Catch2::Catch2 Catch2::Catch2WithMain)
 		if(TARGET ${catch_target})
-			set_target_properties(${catch_target} PROPERTIES
-				MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
-				MAP_IMPORTED_CONFIG_MINSIZEREL Release
-			)
+			# Get the list of available configurations for this target
+			get_target_property(catch_configs ${catch_target} IMPORTED_CONFIGURATIONS)
+			
+			# Map RelWithDebInfo and MinSizeRel to an available configuration
+			# Prefer Release, but fall back to Debug if Release is not available
+			set(mapped_config "")
+			if("Release" IN_LIST catch_configs)
+				set(mapped_config "Release")
+			elseif("Debug" IN_LIST catch_configs)
+				set(mapped_config "Debug")
+			elseif(catch_configs)
+				# Use the first available configuration
+				list(GET catch_configs 0 mapped_config)
+			endif()
+			
+			if(mapped_config)
+				set_target_properties(${catch_target} PROPERTIES
+					MAP_IMPORTED_CONFIG_RELWITHDEBINFO ${mapped_config}
+					MAP_IMPORTED_CONFIG_MINSIZEREL ${mapped_config}
+				)
+			endif()
 		endif()
 	endforeach()
 	include(Catch)
