@@ -947,7 +947,7 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 
 	sliderView->SetPresetChanged(false);
 
-	LoadLogbookEntry();
+	UpdateLogbookLabel();
 
 	if (UpdateZapChoices())
 		zapChanged = true;
@@ -956,7 +956,7 @@ void BodySlideApp::ActivatePreset(const std::string& presetName, const bool upda
 		zapChanged ? RebuildPreviewMeshes() : UpdatePreview();
 }
 
-void BodySlideApp::LoadLogbookEntry() {
+void BodySlideApp::UpdateLogbookLabel() {
 
 	std::string outfitName = BodySlideConfig["SelectedOutfit"];
 	std::string activePreset = BodySlideConfig["SelectedPreset"];
@@ -977,24 +977,24 @@ void BodySlideApp::LoadLogbookEntry() {
 
 		if (entry.set != outfitName) {
 			inLogbookLabel->SetLabel("Already built with another outfit.");
-			inLogbookLabel->SetToolTip("This mesh was last built with:\n" + wxString::FromUTF8(entrySummary) + "\nClick here to load this to BodySlide.");
+			inLogbookLabel->SetToolTip("This mesh was last built with:\n" + wxString::FromUTF8(entrySummary) + "\nRight click to load or forget it.");
 			inLogbookLabel->SetForegroundColour(wxColour("#FFD769"));
 		}
 
 		if (entry.set == outfitName && entry.preset != activePreset) {
 			inLogbookLabel->SetLabel("Already built with another preset.");
-			inLogbookLabel->SetToolTip("This mesh was last built with:\n" + wxString::FromUTF8(entrySummary) + "\nClick here to load this to BodySlide.");
+			inLogbookLabel->SetToolTip("This mesh was last built with:\n" + wxString::FromUTF8(entrySummary) + "\nRight click to load or forget it.");
 			inLogbookLabel->SetForegroundColour(wxColour("#FFD769"));
 		}
 
 		if (entry.set == outfitName && entry.preset == activePreset) {
 			inLogbookLabel->SetLabel("Already built with this preset!");
-			inLogbookLabel->SetToolTip("This mesh was last built with:\n" + wxString::FromUTF8(entrySummary) + "\nClick here to load this to BodySlide.");
+			inLogbookLabel->SetToolTip("This mesh was last built with:\n" + wxString::FromUTF8(entrySummary) + "\nRight click to load or forget it.");
 			inLogbookLabel->SetForegroundColour(wxColour("#00FFFF"));
 		}
 	} else {
 		inLogbookLabel->SetLabel("No build record for this outfit.");
-		inLogbookLabel->SetToolTip("Here you'll see the last outfit and preset it was built with.");
+		inLogbookLabel->SetToolTip("Build this mesh to record the last outfit, preset, and any slider modifications it was built with.");
 		inLogbookLabel->SetForegroundColour(wxColour("#c8c8d8"));
 	}
 
@@ -1018,17 +1018,18 @@ void BodySlideApp::ActivateLogbookEntry() {
 		std::string activePreset = BodySlideConfig["SelectedPreset"];
 
 		if (entry.set != activeOutfit) {
-			if (sliderView->outfitChoice) {
-				sliderView->outfitChoice->SetStringSelection(entry.set);
-			}
+			//if (sliderView->outfitChoice) {
+			//	sliderView->outfitChoice->SetStringSelection(entry.set);
+			//}
 			ActivateOutfit(entry.set);
 		}
 		
 		if (entry.preset != activePreset) {
-			if (sliderView->presetChoice) {
-				sliderView->presetChoice->SetStringSelection(entry.preset);
-			}
+			//if (sliderView->presetChoice) {
+			//	sliderView->presetChoice->SetStringSelection(entry.preset);
+			//}
 			ActivatePreset(entry.preset);
+			PopulatePresetList(entry.preset);
 		}
 
 		for (const auto& sv : entry.sliders) {
@@ -1411,7 +1412,7 @@ void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
 	buildSelFile.Save();
 }
 
-void BodySlideApp::UpdateBuildLogbook(SliderSet currentSet, bool remove) {
+void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
 	std::mutex logbookMutex;
 	std::lock_guard<std::mutex> lock(logbookMutex);
 
@@ -1421,61 +1422,78 @@ void BodySlideApp::UpdateBuildLogbook(SliderSet currentSet, bool remove) {
 
 	std::string outputPath = currentSet.GetOutputFilePath();
 
-	if (remove) {
-		// If requested, remove any existing entry that matches the output path to keep the logbook clean
-		logbook.RemoveEntry(outputPath);
-		logbookFile.RemoveEntry(outputPath);
-	} else {
-		// Create a new entry for the current build
-		BuildLogbookEntry entry;
-		entry.path = outputPath;
-		entry.set = currentSet.GetName();
-		
-		// Record the preset that is currently active
-		std::string activePreset = BodySlideConfig["SelectedPreset"];
-		entry.preset = activePreset;
-		
-		float defaultValue = 0.0f;
+	// Create a new entry for the current build
+	BuildLogbookEntry entry;
+	entry.path = outputPath;
+	entry.set = currentSet.GetName();
+	
+	// Record the preset that is currently active
+	std::string activePreset = BodySlideConfig["SelectedPreset"];
+	entry.preset = activePreset;
+	
+	float defaultValue = 0.0f;
 
-		// Iterate over all sliders
-		for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
-			auto& sliderBig = sliderManager.slidersBig[i];
-			auto& sliderSmall = sliderManager.slidersSmall[i];
+	// Iterate over all sliders
+	for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
+		auto& sliderBig = sliderManager.slidersBig[i];
+		auto& sliderSmall = sliderManager.slidersSmall[i];
 
-			// Get the preset slider value, or if it doesn't exist, the slider default
-			defaultValue = sliderManager.GetBigPresetValue(activePreset, sliderBig.name, sliderBig.defValue);
+		// Get the preset slider value, or if it doesn't exist, the slider default
+		defaultValue = sliderManager.GetBigPresetValue(activePreset, sliderBig.name, sliderBig.defValue);
 
-			// If the slider value has changed, save it
-			if (sliderBig.value != defaultValue) {
-				BuildLogbookEntry::SliderValue v;
-				v.name = sliderBig.name;
-				v.size = "big";
-				v.value = sliderBig.value;
-				entry.sliders.push_back(v);
-			}
-
-			defaultValue = sliderManager.GetSmallPresetValue(activePreset, sliderSmall.name, sliderSmall.defValue);
-
-			if (sliderSmall.value != defaultValue) {
-				// If the slider value has changed, save it
-				BuildLogbookEntry::SliderValue v;
-				v.name = sliderSmall.name;
-				v.size = "small";
-				v.value = sliderSmall.value;
-				entry.sliders.push_back(v);
-			}
+		// If the slider value has changed, save it
+		if (sliderBig.value != defaultValue) {
+			BuildLogbookEntry::SliderValue v;
+			v.name = sliderBig.name;
+			v.size = "big";
+			v.value = sliderBig.value;
+			entry.sliders.push_back(v);
 		}
-		
-		// Append the newly populated entry to the logbook
-		logbook.AddEntry(entry);
-		logbookFile.UpdateEntries(logbook);
-	}
 
+		defaultValue = sliderManager.GetSmallPresetValue(activePreset, sliderSmall.name, sliderSmall.defValue);
+
+		if (sliderSmall.value != defaultValue) {
+			// If the slider value has changed, save it
+			BuildLogbookEntry::SliderValue v;
+			v.name = sliderSmall.name;
+			v.size = "small";
+			v.value = sliderSmall.value;
+			entry.sliders.push_back(v);
+		}
+	}
+	
+	// Append the newly populated entry to the logbook
+	logbook.AddEntry(entry);
+	logbookFile.UpdateEntries(logbook);
+	
 	// Commit the changes to the BuildLogbook.xml file
 	logbookFile.Save();
 
 	// Reload the inLogbook label
-	LoadLogbookEntry();
+	UpdateLogbookLabel();
+}
+
+void BodySlideApp::RemoveFromLogbook(const std::string& outputPath) {
+	std::mutex logbookMutex;
+	std::lock_guard<std::mutex> lock(logbookMutex);
+
+	BuildLogbookFile logbookFile;
+	BuildLogbook logbook;
+	GetBuildLogbook(logbookFile, logbook);
+
+	// If none is specified, remove the active one
+	if (outputPath == "") {
+		logbook.RemoveEntry(GetActiveSet().GetOutputFilePath());
+		logbookFile.RemoveEntry(GetActiveSet().GetOutputFilePath());
+	}
+	else {
+		logbook.RemoveEntry(outputPath);
+		logbookFile.RemoveEntry(outputPath);
+	}
+		
+	logbookFile.Save();
+
+	UpdateLogbookLabel();
 }
 
 void BodySlideApp::EditProject(const std::string& projectName) {
@@ -3608,7 +3626,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			return 4;
 		}
 
-		UpdateBuildLogbook(activeSet, true);
+		RemoveFromLogbook(activeSet.GetOutputFilePath());
 
 		wxString removeHigh, removeLow;
 		wxString msg = _("Removed the following files:\n");
@@ -3965,7 +3983,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	if (!savedHigh.IsEmpty())
 		msg.Append(savedHigh);
 
-	UpdateBuildLogbook(activeSet);	
+	SaveToLogbook(activeSet);	
 
 	wxLogMessage("%s", msg);
 	wxMessageBox(msg, _("Process Successful"));
@@ -4405,7 +4423,7 @@ int BodySlideApp::BuildListBodies(
 			if (genWeights)
 				removeHigh = removePath + "_1.nif";
 
-			UpdateBuildLogbook(currentSet, true);
+			RemoveFromLogbook(currentSet.GetOutputFilePath());
 
 			if (wxFileName::FileExists(removeHigh))
 				wxRemoveFile(removeHigh);
@@ -4814,8 +4832,6 @@ int BodySlideApp::BuildListBodies(
 				recordFailure(outfit, _("Unable to save nif file: ") + outFileNameSmall);
 				return;
 			}
-
-			UpdateBuildLogbook(currentSet);
 		}
 		else {
 			outFileNameBig += ".nif";
@@ -4827,9 +4843,9 @@ int BodySlideApp::BuildListBodies(
 				recordFailure(outfit, _("Unable to save nif file: ") + outFileNameBig);
 				return;
 			}
-
-			UpdateBuildLogbook(currentSet);
 		}
+
+		SaveToLogbook(currentSet);
 	};
 
 	// Multi-threading for 64-bit only due to memory limits of 32-bit builds
@@ -5123,6 +5139,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 		}
 	}
 	fileCollisionMenu = xrc->LoadMenu("menuFileCollision");
+	logbookMenu = xrc->LoadMenu("menuLogbook");
 
 	search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
@@ -5162,7 +5179,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 
 	auto inLogbookLabel = (wxStaticText*)FindWindowByName("inLogbookLabel", this);
 	if (inLogbookLabel)
-		inLogbookLabel->Bind(wxEVT_LEFT_DOWN, &BodySlideFrame::OnLoadLogbook, this);
+		inLogbookLabel->Bind(wxEVT_RIGHT_DOWN, &BodySlideFrame::OnLogbookPopup, this);
 
 	xrc->AttachUnknownControl("searchHolder", search, this);
 	xrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
@@ -6274,9 +6291,25 @@ void BodySlideFrame::OnOutfitChoiceSelect(wxCommandEvent& WXUNUSED(event)) {
 	app->SetDefaultBuildSelection();
 }
 
-void BodySlideFrame::OnLoadLogbook(wxMouseEvent& WXUNUSED(event)) {
-	app->ActivateLogbookEntry();
+void BodySlideFrame::OnLogbookPopup(wxMouseEvent& WXUNUSED(event)) {
+	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuLogbook");
+	if (menu) {
+		menu->Bind(wxEVT_MENU, &BodySlideFrame::OnLogbookSelect, this);
+		PopupMenu(menu);
+		delete menu;
+	}
 }
+
+void BodySlideFrame::OnLogbookSelect(wxCommandEvent& event) {
+	if (event.GetId() == XRCID("menuLoadFromLogbook")) {
+		app->ActivateLogbookEntry();
+		UpdateFavoriteButtons();
+	}
+	else if (event.GetId() == XRCID("menuRemoveFromLogbook")) {
+		app->RemoveFromLogbook("");
+	}
+}
+
 
 void BodySlideFrame::OnHighToLow(wxCommandEvent& WXUNUSED(event)) {
 	app->CopySliderValues(false);
@@ -6741,8 +6774,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		cbPreviewAlwaysDetached->SetValue(BodySlideConfig.GetBoolValue("BodySlideFrame.previewAlwaysDetached", false));
 
 		// Hide the single instance setting (only relevant for Outfit Studio)
-		//XRCCTRL(*settings, "lbSingleInstanceBehavior", wxStaticText)->Hide();
-		//XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice)->Hide();
+		XRCCTRL(*settings, "lbSingleInstanceBehavior", wxStaticText)->Hide();
+		XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice)->Hide();
 
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
 		for (size_t i = 0; i < SupportedLangs.size(); i++)

@@ -243,7 +243,7 @@ public:
 
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
-	void LoadLogbookEntry();
+	void UpdateLogbookLabel();
 	void ActivateLogbookEntry();
 	
 
@@ -311,7 +311,8 @@ public:
 						bool forceNormals = false,
 						const std::string& custPath = "");
 
-	void UpdateBuildLogbook(SliderSet currentSet, bool remove = false);
+	void SaveToLogbook(SliderSet currentSet);
+	void RemoveFromLogbook(const std::string& outputPath);
 
 	int ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* treeListCtrl);
 	void GroupBuild(const std::vector<std::string>& groupNames);
@@ -439,6 +440,7 @@ public:
 
 	wxCheckListBox* batchBuildList = nullptr;
 	wxMenu* fileCollisionMenu = nullptr;
+	wxMenu* logbookMenu = nullptr;
 	std::vector<std::string> outfitChoiceNames;
 	std::vector<std::string> presetChoiceNames;
 	bool populatingChoices = false;
@@ -549,7 +551,8 @@ private:
 	void OnConflictPopup(wxMouseEvent& event);
 	void OnOutfitChoiceSelect(wxCommandEvent& event);
 
-	void OnLoadLogbook(wxMouseEvent& event);
+	void OnLogbookPopup(wxMouseEvent& event);
+	void OnLogbookSelect(wxCommandEvent& event);
 
 	void OnPreview(wxCommandEvent& event);
 	void OnSashPosChanging(wxSplitterEvent& event);
