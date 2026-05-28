@@ -57,7 +57,7 @@ jobs:
             -G "Visual Studio 18 2026" `
             -A x64 `
             -DCMAKE_TOOLCHAIN_FILE="$toolchainFile" `
-            -DCMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO=Release `
+            "-DCMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO=RelWithDebInfo;Release;None;NOCONFIG" `
             -DVCPKG_TARGET_TRIPLET="$env:VCPKG_TARGET_TRIPLET" `
             -DBSOS_BUILD_TESTS=ON `
             -DBSOS_ENABLE_FBXSDK=OFF
@@ -165,7 +165,7 @@ jobs:
           cmake -S . -B build/ubuntu-gcc-relwithdebinfo \
             -G Ninja \
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-            -DCMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO=Release \
+            "-DCMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO=RelWithDebInfo;Release;None;NOCONFIG" \
             -DBSOS_BUILD_TESTS=ON \
             -DBSOS_ENABLE_FBXSDK=OFF
 
