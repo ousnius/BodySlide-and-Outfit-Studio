@@ -165,7 +165,6 @@ jobs:
           cmake -S . -B build/ubuntu-gcc-relwithdebinfo \
             -G Ninja \
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-            "-DCMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO=RelWithDebInfo;Release;None;NOCONFIG" \
             -DBSOS_BUILD_TESTS=ON \
             -DBSOS_ENABLE_FBXSDK=OFF
 
