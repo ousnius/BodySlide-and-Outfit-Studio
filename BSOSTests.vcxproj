@@ -70,8 +70,8 @@
     <Catch2IncludeDirectories Condition="'$(Catch2Root)' != ''">$(Catch2Root)\include;</Catch2IncludeDirectories>
     <Catch2ReleaseLibraryDirectories Condition="'$(Catch2Root)' != ''">$(Catch2Root)\lib\manual-link;$(Catch2Root)\lib;</Catch2ReleaseLibraryDirectories>
     <Catch2DebugLibraryDirectories Condition="'$(Catch2Root)' != ''">$(Catch2Root)\debug\lib\manual-link;$(Catch2Root)\debug\lib;$(Catch2Root)\lib\manual-link;$(Catch2Root)\lib;</Catch2DebugLibraryDirectories>
-    <VcpkgCatch2ReleaseLibraryDirectories Condition="'$(VcpkgInstalledDir)' != ''">$(VcpkgInstalledDir)$(VcpkgTriplet)\lib\manual-link;</VcpkgCatch2ReleaseLibraryDirectories>
-    <VcpkgCatch2DebugLibraryDirectories Condition="'$(VcpkgInstalledDir)' != ''">$(VcpkgInstalledDir)$(VcpkgTriplet)\debug\lib\manual-link;</VcpkgCatch2DebugLibraryDirectories>
+    <VcpkgCatch2ReleaseLibraryDirectories Condition="'$(VcpkgInstalledDir)' != ''">$(VcpkgInstalledDir)$(VcpkgTriplet)\lib\manual-link;$(VcpkgInstalledDir)$(VcpkgTriplet)\lib;</VcpkgCatch2ReleaseLibraryDirectories>
+    <VcpkgCatch2DebugLibraryDirectories Condition="'$(VcpkgInstalledDir)' != ''">$(VcpkgInstalledDir)$(VcpkgTriplet)\debug\lib\manual-link;$(VcpkgInstalledDir)$(VcpkgTriplet)\debug\lib;$(VcpkgInstalledDir)$(VcpkgTriplet)\lib\manual-link;$(VcpkgInstalledDir)$(VcpkgTriplet)\lib;</VcpkgCatch2DebugLibraryDirectories>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Platform)'=='Win32'">
     <VcpkgTriplet>x86-windows-static</VcpkgTriplet>

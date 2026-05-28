@@ -6,13 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(MSVC)
+if(MSVC AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 option(BSOS_ENABLE_FBXSDK "Build Outfit Studio with Autodesk FBX SDK support when available" ON)
 option(BSOS_BUILD_TESTS "Build Catch2-based tests" OFF)
 set(BSOS_FBXSDK_ROOT "" CACHE PATH "Root directory of the Autodesk FBX SDK")
+set(BSOS_TEST_MSVC_RUNTIME_LIBRARY "" CACHE STRING "MSVC runtime library override for BSOSTests")
 set(fbxsdk_dir "" CACHE PATH "Compatibility alias for BSOS_FBXSDK_ROOT")
 
 if(WIN32 AND DEFINED wxWidgets_ROOT_DIR AND wxWidgets_ROOT_DIR
@@ -358,33 +359,9 @@ if(WIN32)
 endif()
 
 if(BSOS_BUILD_TESTS)
-	find_package(Catch2 3 CONFIG REQUIRED)
-	foreach(catch_target IN ITEMS Catch2::Catch2 Catch2::Catch2WithMain)
-		if(TARGET ${catch_target})
-			# Get the list of available configurations for this target
-			get_target_property(catch_configs ${catch_target} IMPORTED_CONFIGURATIONS)
-			
-			# Map RelWithDebInfo and MinSizeRel to an available configuration
-			# Prefer Release, but fall back to Debug if Release is not available
-			set(mapped_config "")
-			if("Release" IN_LIST catch_configs)
-				set(mapped_config "Release")
-			elseif("Debug" IN_LIST catch_configs)
-				set(mapped_config "Debug")
-			elseif(catch_configs)
-				# Use the first available configuration
-				list(GET catch_configs 0 mapped_config)
-			endif()
-			
-			if(mapped_config)
-				set_target_properties(${catch_target} PROPERTIES
-					MAP_IMPORTED_CONFIG_RELWITHDEBINFO ${mapped_config}
-					MAP_IMPORTED_CONFIG_MINSIZEREL ${mapped_config}
-				)
-			endif()
-		endif()
-	endforeach()
+	find_package(Catch2 3 REQUIRED)
 	include(Catch)
+	include(CTest)
 	enable_testing()
 
 	add_executable(BSOSTests
@@ -404,6 +381,9 @@ if(BSOS_BUILD_TESTS)
 	target_compile_definitions(BSOSTests PRIVATE ${BSOS_PLATFORM_DEFINITIONS})
 	target_link_libraries(BSOSTests PRIVATE Catch2::Catch2WithMain)
 	set_target_properties(BSOSTests PROPERTIES CXX_EXTENSIONS OFF)
+	if(MSVC AND BSOS_TEST_MSVC_RUNTIME_LIBRARY)
+		set_property(TARGET BSOSTests PROPERTY MSVC_RUNTIME_LIBRARY "${BSOS_TEST_MSVC_RUNTIME_LIBRARY}")
+	endif()
 
 	if(MSVC)
 		target_compile_options(BSOSTests PRIVATE /W4 /bigobj /wd26812)
@@ -411,7 +391,11 @@ if(BSOS_BUILD_TESTS)
 		target_compile_options(BSOSTests PRIVATE -Wall)
 	endif()
 
-	catch_discover_tests(BSOSTests WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
+	catch_discover_tests(BSOSTests
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		PROPERTIES
+			SKIP_REGULAR_EXPRESSION "SF_MATERIAL_CDB_FIXTURE is not set"
+	)
 endif()
 
 function(bsos_configure_target target)
