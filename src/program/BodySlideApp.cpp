@@ -6292,6 +6292,14 @@ void BodySlideFrame::OnOutfitChoiceSelect(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnLogbookPopup(wxMouseEvent& WXUNUSED(event)) {
+	BuildLogbookFile logbookFile;
+	BuildLogbook logbook;
+	app->GetBuildLogbook(logbookFile, logbook);
+
+	std::string outputPath = app->GetActiveSet().GetOutputFilePath();
+	if (!logbook.HasEntry(outputPath))
+		return;
+
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuLogbook");
 	if (menu) {
 		menu->Bind(wxEVT_MENU, &BodySlideFrame::OnLogbookSelect, this);
