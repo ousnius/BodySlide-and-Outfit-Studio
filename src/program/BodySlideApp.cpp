@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
 #include <atomic>
-#include <mutex>
 #include <regex>
 #include <thread>
 #include <unordered_map>
@@ -253,6 +252,7 @@ bool BodySlideApp::OnInit() {
 				wxICON_WARNING);
 	}
 
+	InitBuildLogbook();
 	LoadAllCategories();
 	LoadAllGroups();
 	LoadSliderSets();
@@ -964,15 +964,10 @@ void BodySlideApp::UpdateLogbookLabel() {
 	wxLogMessage("Loading logbook entry for set '%s' and preset '%s'...", outfitName, activePreset);
 
 	auto inLogbookLabel = (wxStaticText*)sliderView->FindWindowByName("inLogbookLabel");
-
-	BuildLogbookFile logbookFile;
-	BuildLogbook logbook;
-	GetBuildLogbook(logbookFile, logbook);
-	
 	std::string outputPath = GetActiveSet().GetOutputFilePath();
 
-	if (logbook.HasEntry(outputPath)) {
-		BuildLogbookEntry entry = logbook.GetEntry(outputPath);
+	if (buildLogbook.HasEntry(outputPath)) {
+		BuildLogbookEntry entry = buildLogbook.GetEntry(outputPath);
 		std::string entrySummary = entry.GetSummary();
 
 		if (entry.set != outfitName) {
@@ -1002,35 +997,25 @@ void BodySlideApp::UpdateLogbookLabel() {
 }
 
 void BodySlideApp::ActivateLogbookEntry() {
-	BuildLogbookFile logbookFile;
-	BuildLogbook logbook;
-	GetBuildLogbook(logbookFile, logbook);
 
 	wxLogMessage("Activating logbook entry...");
 
 	std::string outputPath = GetActiveSet().GetOutputFilePath();
 
-	if (logbook.HasEntry(outputPath)) {
+	if (buildLogbook.HasEntry(outputPath)) {
 
-		BuildLogbookEntry entry = logbook.GetEntry(outputPath);
+		BuildLogbookEntry entry = buildLogbook.GetEntry(outputPath);
 
 		std::string activeOutfit = BodySlideConfig["SelectedOutfit"];
 		std::string activePreset = BodySlideConfig["SelectedPreset"];
 
 		if (entry.set != activeOutfit) {
-			//if (sliderView->outfitChoice) {
-			//	sliderView->outfitChoice->SetStringSelection(entry.set);
-			//}
 			ActivateOutfit(entry.set);
 		}
-		
-		if (entry.preset != activePreset) {
-			//if (sliderView->presetChoice) {
-			//	sliderView->presetChoice->SetStringSelection(entry.preset);
-			//}
-			ActivatePreset(entry.preset);
-			PopulatePresetList(entry.preset);
-		}
+
+		// Always activate the preset to reset sliders and re-apply the logbook entry
+		ActivatePreset(entry.preset, false);
+		PopulatePresetList(entry.preset);
 
 		for (const auto& sv : entry.sliders) {
 			if (sv.size == "big") {
@@ -1042,6 +1027,7 @@ void BodySlideApp::ActivateLogbookEntry() {
 			}
 		}
 
+		// If the logbook introduced any slider modification, mark it as such
 		if (entry.sliders.size() > 0) sliderView->SetPresetChanged(true);
 		
 		bool zapChanged = false;
@@ -1270,15 +1256,15 @@ void BodySlideApp::GetBuildSelection(BuildSelectionFile& file, BuildSelection& b
 	file.Get(buildSel);
 }
 
-void BodySlideApp::GetBuildLogbook(BuildLogbookFile& file, BuildLogbook& buildLog) {
+void BodySlideApp::InitBuildLogbook() {
 	const std::string buildLogFileName = Config["AppDir"] + PathSepStr + "BuildLogbook.xml";
 
-	file.Open(buildLogFileName);
+	buildLogbookFile.Open(buildLogFileName);
 
-	if (file.fail())
-		file.New(buildLogFileName);
+	if (buildLogbookFile.fail())
+		buildLogbookFile.New(buildLogFileName);
 
-	file.Get(buildLog);
+	buildLogbookFile.Get(buildLogbook);
 }
 
 void BodySlideApp::UpdateConflictManager() {
@@ -1413,24 +1399,17 @@ void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
 }
 
 void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
-	std::mutex logbookMutex;
+
 	std::lock_guard<std::mutex> lock(logbookMutex);
 
-	BuildLogbookFile logbookFile;
-	BuildLogbook logbook;
-	GetBuildLogbook(logbookFile, logbook);
-
-	std::string outputPath = currentSet.GetOutputFilePath();
-
-	// Create a new entry for the current build
-	BuildLogbookEntry entry;
-	entry.path = outputPath;
-	entry.set = currentSet.GetName();
-	
-	// Record the preset that is currently active
 	std::string activePreset = BodySlideConfig["SelectedPreset"];
+
+	BuildLogbookEntry entry;
+	entry.path = currentSet.GetOutputFilePath();
+	entry.set = currentSet.GetName();
 	entry.preset = activePreset;
 	
+
 	float defaultValue = 0.0f;
 
 	// Iterate over all sliders
@@ -1450,10 +1429,10 @@ void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
 			entry.sliders.push_back(v);
 		}
 
+		// Do the same for the small value. For outfits with a single weight, it should be always 0 so nothing should happen
 		defaultValue = sliderManager.GetSmallPresetValue(activePreset, sliderSmall.name, sliderSmall.defValue);
 
 		if (sliderSmall.value != defaultValue) {
-			// If the slider value has changed, save it
 			BuildLogbookEntry::SliderValue v;
 			v.name = sliderSmall.name;
 			v.size = "small";
@@ -1463,35 +1442,30 @@ void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
 	}
 	
 	// Append the newly populated entry to the logbook
-	logbook.AddEntry(entry);
-	logbookFile.UpdateEntries(logbook);
-	
-	// Commit the changes to the BuildLogbook.xml file
-	logbookFile.Save();
+	buildLogbook.AddEntry(entry);
+
+	// Save the changes to the BuildLogbook.xml file
+	buildLogbookFile.UpdateEntries(buildLogbook);
+	buildLogbookFile.Save();
 
 	// Reload the inLogbook label
 	UpdateLogbookLabel();
 }
 
 void BodySlideApp::RemoveFromLogbook(const std::string& outputPath) {
-	std::mutex logbookMutex;
 	std::lock_guard<std::mutex> lock(logbookMutex);
-
-	BuildLogbookFile logbookFile;
-	BuildLogbook logbook;
-	GetBuildLogbook(logbookFile, logbook);
 
 	// If none is specified, remove the active one
 	if (outputPath == "") {
-		logbook.RemoveEntry(GetActiveSet().GetOutputFilePath());
-		logbookFile.RemoveEntry(GetActiveSet().GetOutputFilePath());
+		buildLogbook.RemoveEntry(GetActiveSet().GetOutputFilePath());
+		buildLogbookFile.RemoveEntry(GetActiveSet().GetOutputFilePath());
 	}
 	else {
-		logbook.RemoveEntry(outputPath);
-		logbookFile.RemoveEntry(outputPath);
+		buildLogbook.RemoveEntry(outputPath);
+		buildLogbookFile.RemoveEntry(outputPath);
 	}
 		
-	logbookFile.Save();
+	buildLogbookFile.Save();
 
 	UpdateLogbookLabel();
 }
@@ -6292,9 +6266,7 @@ void BodySlideFrame::OnOutfitChoiceSelect(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnLogbookPopup(wxMouseEvent& WXUNUSED(event)) {
-	BuildLogbookFile logbookFile;
-	BuildLogbook logbook;
-	app->GetBuildLogbook(logbookFile, logbook);
+	BuildLogbook& logbook = app->buildLogbook;
 
 	std::string outputPath = app->GetActiveSet().GetOutputFilePath();
 	if (!logbook.HasEntry(outputPath))

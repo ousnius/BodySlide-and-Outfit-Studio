@@ -60,6 +60,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -228,7 +229,11 @@ public:
 	void DisplayActiveSet();
 
 	void GetBuildSelection(BuildSelectionFile& file, BuildSelection& buildSel);
-	void GetBuildLogbook(BuildLogbookFile& file, BuildLogbook& buildLog);
+	void InitBuildLogbook();
+
+	std::mutex logbookMutex;
+	BuildLogbookFile buildLogbookFile;
+	BuildLogbook buildLogbook;
 
 	void UpdateConflictManager();
 	void SetDefaultBuildSelection();
