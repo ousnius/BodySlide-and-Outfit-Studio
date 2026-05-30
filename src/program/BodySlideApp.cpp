@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <algorithm>
 #include <atomic>
+#include <mutex>
 #include <regex>
 #include <thread>
 #include <unordered_map>
@@ -1258,13 +1259,7 @@ void BodySlideApp::GetBuildSelection(BuildSelectionFile& file, BuildSelection& b
 
 void BodySlideApp::InitBuildLogbook() {
 	const std::string buildLogFileName = Config["AppDir"] + PathSepStr + "BuildLogbook.xml";
-
-	buildLogbookFile.Open(buildLogFileName);
-
-	if (buildLogbookFile.fail())
-		buildLogbookFile.New(buildLogFileName);
-
-	buildLogbookFile.Get(buildLogbook);
+	buildLogbook.LoadFromFile(buildLogFileName);
 }
 
 void BodySlideApp::UpdateConflictManager() {
@@ -1400,6 +1395,7 @@ void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
 
 void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
 
+	static std::mutex logbookMutex;
 	std::lock_guard<std::mutex> lock(logbookMutex);
 
 	std::string activePreset = BodySlideConfig["SelectedPreset"];
@@ -1409,7 +1405,6 @@ void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
 	entry.set = currentSet.GetName();
 	entry.preset = activePreset;
 	
-
 	float defaultValue = 0.0f;
 
 	// Iterate over all sliders
@@ -1443,29 +1438,27 @@ void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
 	
 	// Append the newly populated entry to the logbook
 	buildLogbook.AddEntry(entry);
-
+	
 	// Save the changes to the BuildLogbook.xml file
-	buildLogbookFile.UpdateEntries(buildLogbook);
-	buildLogbookFile.Save();
+	buildLogbook.SaveToFile();
 
 	// Reload the inLogbook label
 	UpdateLogbookLabel();
 }
 
 void BodySlideApp::RemoveFromLogbook(const std::string& outputPath) {
+	static std::mutex logbookMutex;
 	std::lock_guard<std::mutex> lock(logbookMutex);
 
 	// If none is specified, remove the active one
 	if (outputPath == "") {
 		buildLogbook.RemoveEntry(GetActiveSet().GetOutputFilePath());
-		buildLogbookFile.RemoveEntry(GetActiveSet().GetOutputFilePath());
 	}
 	else {
 		buildLogbook.RemoveEntry(outputPath);
-		buildLogbookFile.RemoveEntry(outputPath);
 	}
 		
-	buildLogbookFile.Save();
+	buildLogbook.SaveToFile();
 
 	UpdateLogbookLabel();
 }

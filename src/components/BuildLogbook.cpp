@@ -37,13 +37,13 @@ int BuildLogbook::LoadBuildLogbook(XMLElement* srcElement) {
 				BuildLogbookEntry::SliderValue val;
 				val.name = sliderElem->Attribute("name");
 				val.size = sliderElem->Attribute("size");
-				val.value = sliderElem->FloatAttribute("value") / 100.0f;
+				val.value = sliderElem->FloatAttribute("value") / 100.0f; // Scale percentage value back to 0-1 range
 				entry.sliders.push_back(val);
 			}
 			sliderElem = sliderElem->NextSiblingElement("SetSlider");
 		}
 
-		entries[entry.path] = entry;
+		entries[entry.path] = entry; // Store entry mapped by its output path
 		elem = elem->NextSiblingElement("Mesh");
 	}
 
@@ -72,111 +72,84 @@ const std::map<std::string, BuildLogbookEntry>& BuildLogbook::GetEntries() const
 	return entries;
 }
 
-BuildLogbookFile::BuildLogbookFile(const std::string& srcFileName) {
-	Open(srcFileName);
-}
+bool BuildLogbook::LoadFromFile(const std::string& path) {
+	fileName = path;
+	entries.clear();
 
-void BuildLogbookFile::Clear() {
-	root = nullptr;
-	doc.Clear();
-	error = 0;
-}
-
-void BuildLogbookFile::New(const std::string& newFileName) {
-	if (root)
-		return;
-
-	Clear();
-
-	XMLElement* newElement = doc.NewElement("BuildLogbook");
-	root = doc.InsertEndChild(newElement)->ToElement();
-
-	fileName = newFileName;
-	doc.SetUserData(&fileName);
-
-	error = 0;
-}
-
-void BuildLogbookFile::Open(const std::string& srcFileName) {
-	root = nullptr;
-	error = 0;
-	fileName = srcFileName;
-
+	XMLDocument doc;
 	FILE* fp = nullptr;
 
 #ifdef _WINDOWS
-	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
-	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-	if (error || !fp)
-		return;
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(path);
+	if (_wfopen_s(&fp, winFileName.c_str(), L"rb") != 0 || !fp)
+		return false;
 #else
-	fp = fopen(srcFileName.c_str(), "rb");
-	if (!fp) {
-		error = errno;
-		return;
-	}
+	fp = fopen(path.c_str(), "rb");
+	if (!fp)
+		return false;
 #endif
 
-	error = doc.LoadFile(fp);
+	if (doc.LoadFile(fp) != 0) {
+		fclose(fp);
+		return false;
+	}
 	fclose(fp);
 
-	if (error)
-		return;
+	XMLElement* root = doc.FirstChildElement("BuildLogbook");
+	if (!root)
+		return false;
 
-	doc.SetUserData(&fileName);
-	root = doc.FirstChildElement("BuildLogbook");
-	if (!root) {
-		error = 2;
-		return;
-	}
-
-	error = 0;
+	LoadBuildLogbook(root);
+	return true;
 }
 
-void BuildLogbookFile::Rename(const std::string& newFileName) {
-	fileName = newFileName;
-}
+bool BuildLogbook::SaveToFile() {
+	if (fileName.empty()) return false;
 
-bool BuildLogbookFile::Save() {
+	XMLDocument doc;
+	XMLElement* root = nullptr;
 	FILE* fp = nullptr;
 
 #ifdef _WINDOWS
 	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
-	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
-	if (error || !fp)
-		return false;
+	if (_wfopen_s(&fp, winFileName.c_str(), L"rb") == 0 && fp) {
+		doc.LoadFile(fp);
+		fclose(fp);
+		root = doc.FirstChildElement("BuildLogbook");
+	}
 #else
-	fp = fopen(fileName.c_str(), "w");
-	if (!fp) {
-		error = errno;
-		return false;
+	fp = fopen(fileName.c_str(), "rb");
+	if (fp) {
+		doc.LoadFile(fp);
+		fclose(fp);
+		root = doc.FirstChildElement("BuildLogbook");
 	}
 #endif
 
-	doc.SetBOM(true);
+	if (!root) {
+		doc.Clear();
+		XMLElement* newElement = doc.NewElement("BuildLogbook");
+		root = doc.InsertEndChild(newElement)->ToElement();
+	}
 
-	const tinyxml2::XMLNode* firstChild = doc.FirstChild();
-	if (!firstChild || !firstChild->ToDeclaration())
-		doc.InsertFirstChild(doc.NewDeclaration());
+	// Remove Mesh elements that are no longer in our entries map
+	XMLElement* meshElem = root->FirstChildElement("Mesh");
+	while (meshElem) {
+		XMLElement* nextElem = meshElem->NextSiblingElement("Mesh");
+		const char* attrPath = meshElem->Attribute("path");
+		if (attrPath && !HasEntry(attrPath)) {
+			root->DeleteChild(meshElem);
+		}
+		meshElem = nextElem;
+	}
 
-	error = doc.SaveFile(fp);
-	fclose(fp);
-	if (error)
-		return false;
-
-	return true;
-}
-
-void BuildLogbookFile::Get(BuildLogbook& outLogbook) {
-	outLogbook = root;
-}
-
-int BuildLogbookFile::UpdateEntries(const BuildLogbook& inLogbook) {
-	for (const auto& pair : inLogbook.GetEntries()) {
+	// Update existing elements and add new ones
+	for (const auto& pair : GetEntries()) {
 		const BuildLogbookEntry& entry = pair.second;
 		XMLElement* elem = nullptr;
 
-		XMLElement* meshElem = root->FirstChildElement("Mesh");
+		// Try to find an existing <Mesh> element with the matching path
+		meshElem = root->FirstChildElement("Mesh");
 		while (meshElem) {
 			const char* attrPath = meshElem->Attribute("path");
 			if (attrPath && entry.path.compare(attrPath) == 0) {
@@ -186,12 +159,14 @@ int BuildLogbookFile::UpdateEntries(const BuildLogbook& inLogbook) {
 			meshElem = meshElem->NextSiblingElement("Mesh");
 		}
 
+		// If no matching <Mesh> element was found, create a new one and append it to the root
 		if (!elem) {
 			XMLElement* newElement = doc.NewElement("Mesh");
 			elem = root->InsertEndChild(newElement)->ToElement();
 		}
 
 		if (elem) {
+			// Update the attributes of the <Mesh> element
 			elem->SetAttribute("path", entry.path.c_str());
 			if (!entry.set.empty())
 				elem->SetAttribute("set", entry.set.c_str());
@@ -200,26 +175,37 @@ int BuildLogbookFile::UpdateEntries(const BuildLogbook& inLogbook) {
 				
 			elem->DeleteChildren(); // Clear existing sliders to update them
 			
+			// Recreate the <SetSlider> child elements based on the current data
 			for (const auto& slider : entry.sliders) {
 				XMLElement* sliderElem = doc.NewElement("SetSlider");
 				sliderElem->SetAttribute("name", slider.name.c_str());
 				sliderElem->SetAttribute("size", slider.size.c_str());
-				sliderElem->SetAttribute("value", (int)(slider.value * 100.0f));
+				sliderElem->SetAttribute("value", (int)(slider.value * 100.0f)); // Convert 0-1 scale back to percentage for XML
 				elem->InsertEndChild(sliderElem);
 			}
 		}
 	}
 
-	return 0;
-}
+#ifdef _WINDOWS
+	if (_wfopen_s(&fp, winFileName.c_str(), L"w") != 0 || !fp)
+		return false;
+#else
+	fp = fopen(fileName.c_str(), "w");
+	if (!fp)
+		return false;
+#endif
 
-void BuildLogbookFile::RemoveEntry(const std::string& path) {
-	XMLElement* elem = root->FirstChildElement("Mesh");
-	while (elem) {
-		if (path.compare(elem->Attribute("path")) == 0) {
-			root->DeleteChild(elem);
-			return;
-		}
-		elem = elem->NextSiblingElement("Mesh");
-	}
+	// Enable Byte Order Mark for UTF-8 when saving
+	doc.SetBOM(true);
+
+	// Ensure there is an XML declaration
+	const tinyxml2::XMLNode* firstChild = doc.FirstChild();
+	if (!firstChild || !firstChild->ToDeclaration())
+		doc.InsertFirstChild(doc.NewDeclaration());
+
+	// Save the XML document to the file pointer
+	int error = doc.SaveFile(fp);
+	fclose(fp);
+
+	return error == 0;
 }
