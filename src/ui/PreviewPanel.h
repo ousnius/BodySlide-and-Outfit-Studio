@@ -13,6 +13,7 @@ See the included LICENSE file
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -23,6 +24,7 @@ See the included LICENSE file
 
 class BodySlideApp;
 class PreviewCanvas;
+class SFMaterialDatabase;
 
 extern ConfigurationManager Config;
 
@@ -56,6 +58,11 @@ class PreviewPanel : public wxPanel {
 	GLSurface gls;
 	std::unordered_map<std::string, GLMaterial*> shapeMaterials;
 	std::string baseDataPath;
+
+	std::unique_ptr<SFMaterialDatabase> sfMaterialDb;
+	std::string sfMaterialDbContent;
+	std::unique_ptr<std::istringstream> sfMaterialDbStream;
+	SFMaterialDatabase* GetSFMaterialDatabase();
 	std::vector<std::string> extraNifPaths;
 	std::vector<PreviewProjectEntry> projectEntries;
 	std::string initialPresetName;

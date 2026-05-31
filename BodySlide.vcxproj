@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -125,7 +125,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -155,7 +155,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -192,7 +192,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -769,7 +769,11 @@
     <ClInclude Include="src\files\MaterialFile.h" />
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
+    <ClInclude Include="src\files\SFMaterialDatabase.h" />
+    <ClInclude Include="src\files\SFMaterialFile.h" />
+    <ClInclude Include="src\files\SFMaterialGraph.h" />
     <ClInclude Include="src\files\SFMorphFile.h" />
+    <ClInclude Include="src\files\SFResourceHash.h" />
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\files\wxDDSImage.h" />
     <ClInclude Include="src\program\BodySlideApp.h" />
@@ -839,7 +843,11 @@
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
+    <ClCompile Include="src\files\SFMaterialDatabase.cpp" />
+    <ClCompile Include="src\files\SFMaterialFile.cpp" />
+    <ClCompile Include="src\files\SFMaterialGraph.cpp" />
     <ClCompile Include="src\files\SFMorphFile.cpp" />
+    <ClCompile Include="src\files\SFResourceHash.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\files\wxDDSImage.cpp" />
     <ClCompile Include="src\program\BodySlideApp.cpp" />

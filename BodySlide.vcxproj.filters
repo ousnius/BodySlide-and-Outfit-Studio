@@ -694,7 +694,19 @@
     <ClInclude Include="src\files\ResourceLoader.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\SFMaterialDatabase.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\SFMaterialFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\SFMaterialGraph.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\SFMorphFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\SFResourceHash.h">
       <Filter>Files</Filter>
     </ClInclude>
     <ClInclude Include="src\files\TriFile.h">
@@ -1800,7 +1812,19 @@
     <ClCompile Include="src\files\ResourceLoader.cpp">
       <Filter>Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\files\SFMaterialDatabase.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMaterialFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMaterialGraph.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\files\SFMorphFile.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFResourceHash.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\TriFile.cpp">
