@@ -24,10 +24,10 @@ int BuildLogbook::LoadBuildLogbook(XMLElement* srcElement) {
 
 		BuildLogbookEntry entry;
 		entry.path = elem->Attribute("path");
-		
+
 		if (elem->Attribute("set"))
 			entry.set = elem->Attribute("set");
-			
+
 		if (elem->Attribute("preset"))
 			entry.preset = elem->Attribute("preset");
 
@@ -172,9 +172,9 @@ bool BuildLogbook::SaveToFile() {
 				elem->SetAttribute("set", entry.set.c_str());
 			if (!entry.preset.empty())
 				elem->SetAttribute("preset", entry.preset.c_str());
-				
+
 			elem->DeleteChildren(); // Clear existing sliders to update them
-			
+
 			// Recreate the <SetSlider> child elements based on the current data
 			for (const auto& slider : entry.sliders) {
 				XMLElement* sliderElem = doc.NewElement("SetSlider");

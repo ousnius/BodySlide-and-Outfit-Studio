@@ -1030,7 +1030,7 @@ void BodySlideApp::ActivateLogbookEntry() {
 
 		// If the logbook introduced any slider modification, mark it as such
 		if (entry.sliders.size() > 0) sliderView->SetPresetChanged(true);
-		
+
 		bool zapChanged = false;
 		if (UpdateZapChoices())
 			zapChanged = true;
@@ -1394,7 +1394,7 @@ void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
 }
 
 std::vector<BuildLogbookEntry::SliderValue> BodySlideApp::CalculateLogbookSliders() {
-	
+
 	std::vector<BuildLogbookEntry::SliderValue> logbookSliders;
 	std::string activePreset = BodySlideConfig["SelectedPreset"];
 	float defaultValue = 0.0f;
@@ -1441,10 +1441,10 @@ void BodySlideApp::SaveSetToLogbook(SliderSet currentSet) {
 	entry.set = currentSet.GetName();
 	entry.preset = activePreset;
 	entry.sliders = CalculateLogbookSliders();
-	
+
 	// Append the newly populated entry to the logbook
 	buildLogbook.AddEntry(entry);
-	
+
 	// Save the changes to the BuildLogbook.xml file
 	buildLogbook.SaveToFile();
 
@@ -1463,7 +1463,7 @@ void BodySlideApp::RemoveSetFromLogbook(const std::string& outputPath) {
 	else {
 		buildLogbook.RemoveEntry(outputPath);
 	}
-		
+
 	buildLogbook.SaveToFile();
 
 	UpdateLogbookLabel();
@@ -4185,7 +4185,7 @@ int BodySlideApp::BuildListBodies(
 
 				treeListCtrl->Expand(rootItem);
 			}
-			
+
 			bool checkBoxReverting = false;
 			auto handler = [&](wxTreeListEvent& e) {
 				if (checkBoxReverting) {
@@ -4409,7 +4409,7 @@ int BodySlideApp::BuildListBodies(
 
 			if (wxFileName::FileExists(removeHigh))
 				wxRemoveFile(removeHigh);
-				
+
 			if (!genWeights)
 				return;
 

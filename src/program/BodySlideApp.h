@@ -247,7 +247,7 @@ public:
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
 	void UpdateLogbookLabel();
 	void ActivateLogbookEntry();
-	
+
 
 	std::vector<std::string> GetConflictingOutfits() {
 		if (projects.empty())

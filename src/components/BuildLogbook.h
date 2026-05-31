@@ -39,7 +39,7 @@ public:
 	BuildLogbook(XMLElement* srcElement) { LoadBuildLogbook(srcElement); }
 
 	int LoadBuildLogbook(XMLElement* srcElement);
-	
+
 	bool LoadFromFile(const std::string& path);
 	bool SaveToFile();
 

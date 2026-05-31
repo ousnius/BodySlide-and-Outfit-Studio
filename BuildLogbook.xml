@@ -11,13 +11,13 @@ If a mesh gets deleted, its entry in this file will be removed.
 <BuildLogbook>
 
     <!--
-    A simple entry that lists a Mesh (identified by its path), which set it was built with, and which preset was used. 
+    A simple entry that lists a Mesh (identified by its path), which set it was built with, and which preset was used.
     Each "path" should be unique across the file.
     This simple entry did not register any change to the default values of the set or preset sliders.
     -->
     <Mesh path="meshes\armor\studded\female\boots" set="DH 3BA Leather boots" preset="The Female Gaze v2 Outfit"/>
 
-    <!-- 
+    <!--
     An entry that describes a Mesh, and stores information about any sliders that have been modified.
     Only Sliders that don't match the default values of the set and the preset should be listed.
     -->
