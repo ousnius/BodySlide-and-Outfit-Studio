@@ -313,8 +313,9 @@ public:
 						bool forceNormals = false,
 						const std::string& custPath = "");
 
-	void SaveToLogbook(SliderSet currentSet);
-	void RemoveFromLogbook(const std::string& outputPath);
+	std::vector<BuildLogbookEntry::SliderValue> CalculateLogbookSliders();
+	void SaveSetToLogbook(SliderSet currentSet);
+	void RemoveSetFromLogbook(const std::string& outputPath);
 
 	int ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* treeListCtrl);
 	void GroupBuild(const std::vector<std::string>& groupNames);

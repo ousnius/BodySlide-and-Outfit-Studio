@@ -1393,7 +1393,43 @@ void BodySlideApp::SetZapChoice(const std::string& zap, bool choice) {
 	buildSelFile.Save();
 }
 
-void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
+std::vector<BuildLogbookEntry::SliderValue> BodySlideApp::CalculateLogbookSliders() {
+	
+	std::vector<BuildLogbookEntry::SliderValue> logbookSliders;
+	std::string activePreset = BodySlideConfig["SelectedPreset"];
+	float defaultValue = 0.0f;
+
+	// Iterate over all sliders
+	for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
+		auto& sliderBig = sliderManager.slidersBig[i];
+		auto& sliderSmall = sliderManager.slidersSmall[i];
+
+		// Get the preset slider value, or if it doesn't exist, the slider default
+		defaultValue = sliderManager.GetBigPresetValue(activePreset, sliderBig.name, sliderBig.defValue);
+		if (sliderBig.value != defaultValue) {
+			// If the slider value has changed, save it
+			BuildLogbookEntry::SliderValue v;
+			v.name = sliderBig.name;
+			v.size = "big";
+			v.value = sliderBig.value;
+			logbookSliders.push_back(v);
+		}
+
+		// Do the same for the small value. For outfits with a single weight, it should be always 0 so nothing should happen
+		defaultValue = sliderManager.GetSmallPresetValue(activePreset, sliderSmall.name, sliderSmall.defValue);
+		if (sliderSmall.value != defaultValue) {
+			BuildLogbookEntry::SliderValue v;
+			v.name = sliderSmall.name;
+			v.size = "small";
+			v.value = sliderSmall.value;
+			logbookSliders.push_back(v);
+		}
+	}
+
+	return logbookSliders;
+}
+
+void BodySlideApp::SaveSetToLogbook(SliderSet currentSet) {
 
 	static std::mutex logbookMutex;
 	std::lock_guard<std::mutex> lock(logbookMutex);
@@ -1404,37 +1440,7 @@ void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
 	entry.path = currentSet.GetOutputFilePath();
 	entry.set = currentSet.GetName();
 	entry.preset = activePreset;
-	
-	float defaultValue = 0.0f;
-
-	// Iterate over all sliders
-	for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
-		auto& sliderBig = sliderManager.slidersBig[i];
-		auto& sliderSmall = sliderManager.slidersSmall[i];
-
-		// Get the preset slider value, or if it doesn't exist, the slider default
-		defaultValue = sliderManager.GetBigPresetValue(activePreset, sliderBig.name, sliderBig.defValue);
-
-		// If the slider value has changed, save it
-		if (sliderBig.value != defaultValue) {
-			BuildLogbookEntry::SliderValue v;
-			v.name = sliderBig.name;
-			v.size = "big";
-			v.value = sliderBig.value;
-			entry.sliders.push_back(v);
-		}
-
-		// Do the same for the small value. For outfits with a single weight, it should be always 0 so nothing should happen
-		defaultValue = sliderManager.GetSmallPresetValue(activePreset, sliderSmall.name, sliderSmall.defValue);
-
-		if (sliderSmall.value != defaultValue) {
-			BuildLogbookEntry::SliderValue v;
-			v.name = sliderSmall.name;
-			v.size = "small";
-			v.value = sliderSmall.value;
-			entry.sliders.push_back(v);
-		}
-	}
+	entry.sliders = CalculateLogbookSliders();
 	
 	// Append the newly populated entry to the logbook
 	buildLogbook.AddEntry(entry);
@@ -1446,7 +1452,7 @@ void BodySlideApp::SaveToLogbook(SliderSet currentSet) {
 	UpdateLogbookLabel();
 }
 
-void BodySlideApp::RemoveFromLogbook(const std::string& outputPath) {
+void BodySlideApp::RemoveSetFromLogbook(const std::string& outputPath) {
 	static std::mutex logbookMutex;
 	std::lock_guard<std::mutex> lock(logbookMutex);
 
@@ -3593,7 +3599,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 			return 4;
 		}
 
-		RemoveFromLogbook(activeSet.GetOutputFilePath());
+		RemoveSetFromLogbook(activeSet.GetOutputFilePath());
 
 		wxString removeHigh, removeLow;
 		wxString msg = _("Removed the following files:\n");
@@ -3950,7 +3956,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 	if (!savedHigh.IsEmpty())
 		msg.Append(savedHigh);
 
-	SaveToLogbook(activeSet);	
+	SaveSetToLogbook(activeSet);
 
 	wxLogMessage("%s", msg);
 	wxMessageBox(msg, _("Process Successful"));
@@ -4069,6 +4075,12 @@ int BodySlideApp::BuildListBodies(
 	}
 
 	std::string activePreset = BodySlideConfig["SelectedPreset"];
+
+	// Pre-calculate slider values for the logbook, since they are constant during the batch build
+	std::vector<BuildLogbookEntry::SliderValue> logbookSliders = CalculateLogbookSliders();
+
+	std::vector<BuildLogbookEntry> batchLogbookEntries;
+	std::vector<std::string> batchLogbookRemovals;
 
 	if (datapath.empty()) {
 		if (GetOutputDataPath().empty()) {
@@ -4390,7 +4402,10 @@ int BodySlideApp::BuildListBodies(
 			if (genWeights)
 				removeHigh = removePath + "_1.nif";
 
-			RemoveFromLogbook(currentSet.GetOutputFilePath());
+			{
+				std::lock_guard<std::mutex> lock(batchBuildMutex);
+				batchLogbookRemovals.push_back(currentSet.GetOutputFilePath());
+			}
 
 			if (wxFileName::FileExists(removeHigh))
 				wxRemoveFile(removeHigh);
@@ -4812,7 +4827,16 @@ int BodySlideApp::BuildListBodies(
 			}
 		}
 
-		SaveToLogbook(currentSet);
+		BuildLogbookEntry entry;
+		entry.path = currentSet.GetOutputFilePath();
+		entry.set = currentSet.GetName();
+		entry.preset = activePreset;
+		entry.sliders = logbookSliders;
+
+		{
+			std::lock_guard<std::mutex> lock(batchBuildMutex);
+			batchLogbookEntries.push_back(std::move(entry));
+		}
 	};
 
 	// Multi-threading for 64-bit only due to memory limits of 32-bit builds
@@ -4841,6 +4865,17 @@ int BodySlideApp::BuildListBodies(
 	progWnd.Update(1000);
 
 	failedOutfits.insert(failedOutfitsCon.begin(), failedOutfitsCon.end());
+
+	if (batchLogbookEntries.size() > 0 || batchLogbookRemovals.size() > 0) {
+		for (auto& entry : batchLogbookEntries) {
+			buildLogbook.AddEntry(entry);
+		}
+		for (auto& path : batchLogbookRemovals) {
+			buildLogbook.RemoveEntry(path);
+		}
+		buildLogbook.SaveToFile();
+		UpdateLogbookLabel();
+	}
 
 	if (failedOutfits.size() > 0)
 		return 3;
@@ -6279,7 +6314,7 @@ void BodySlideFrame::OnLogbookSelect(wxCommandEvent& event) {
 		UpdateFavoriteButtons();
 	}
 	else if (event.GetId() == XRCID("menuRemoveFromLogbook")) {
-		app->RemoveFromLogbook("");
+		app->RemoveSetFromLogbook("");
 	}
 }
 
