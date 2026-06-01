@@ -47,6 +47,7 @@ constexpr char FavoriteSeparator = ';';
 constexpr char FavoriteEscape = '\\';
 constexpr const char* FavoriteStarIcon = "/res/images/FavoriteStar.png";
 constexpr const char* FavoriteStarEmptyIcon = "/res/images/FavoriteStarEmpty.png";
+constexpr int MinBodySlideLeftPaneWidthDip = 850;
 }
 
 const std::array<wxString, 10> TargetGames = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout76", "Oblivion", "Starfield"};
@@ -4856,13 +4857,15 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 		return;
 	}
 
+	SetMinSize(FromDIP(wxSize(850, 400)));
+
 	// --- Embed splitter with preview panel ---
 	// Capture the XRC-created sizer and all children, then reparent them
 	// into the left side of a splitter window.
 	wxSizer* originalSizer = GetSizer();
 
 	splitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
-	splitter->SetMinimumPaneSize(200);
+	splitter->SetMinimumPaneSize(FromDIP(400));
 
 	leftPanel = new wxPanel(splitter, wxID_ANY);
 
@@ -4901,6 +4904,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	SetSizer(frameSizer);
 
 	// Connect splitter events
+	splitter->Bind(wxEVT_SPLITTER_SASH_POS_CHANGING, &BodySlideFrame::OnSashPosChanging, this);
 	splitter->Bind(wxEVT_SPLITTER_SASH_POS_CHANGED, &BodySlideFrame::OnSashPosChanged, this);
 
 	// Listen for pop-out events from the preview panel
@@ -6143,6 +6147,16 @@ void BodySlideFrame::OnSashPosChanged(wxSplitterEvent& event) {
 	savedPreviewWidth = splitter->GetSize().GetWidth() - pos;
 	if (savedPreviewWidth > 0)
 		BodySlideConfig.SetValue("BodySlideFrame.previewWidth", savedPreviewWidth);
+}
+
+void BodySlideFrame::OnSashPosChanging(wxSplitterEvent& event) {
+	if (!splitter || !splitter->IsSplit())
+		return;
+
+	const int minLeftWidth = FromDIP(MinBodySlideLeftPaneWidthDip);
+	if (event.GetSashPosition() < minLeftWidth) {
+		event.SetSashPosition(minLeftWidth);
+	}
 }
 
 void BodySlideFrame::OnPreviewPopout(wxCommandEvent& WXUNUSED(event)) {

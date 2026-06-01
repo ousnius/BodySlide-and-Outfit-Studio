@@ -542,6 +542,7 @@ private:
 	void OnOutfitChoiceSelect(wxCommandEvent& event);
 
 	void OnPreview(wxCommandEvent& event);
+	void OnSashPosChanging(wxSplitterEvent& event);
 	void OnSashPosChanged(wxSplitterEvent& event);
 	void OnPreviewPopout(wxCommandEvent& event);
 	void OnPreviewWindowClosed();
