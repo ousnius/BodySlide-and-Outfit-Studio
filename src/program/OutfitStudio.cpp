@@ -852,8 +852,9 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultValue("Lights/Directional2.x", 30);
 	Config.SetDefaultValue("Lights/Directional2.y", 20);
 	Config.SetDefaultValue("Lights/Directional2.z", -100);
-	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.width", 1150);
-	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.height", 780);
+	const wxSize outfitStudioFrameSize = wxWindow::FromDIP(wxSize(1360, 900), nullptr);
+	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.width", outfitStudioFrameSize.GetWidth());
+	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.height", outfitStudioFrameSize.GetHeight());
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.x", 100);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.y", 100);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.sashpos", 768);
@@ -2282,6 +2283,8 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
 		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
+
+		XRCCTRL(*settings, "cbPreviewAlwaysDetached", wxCheckBox)->Hide();
 
 		wxChoice* choiceSingleInstanceBehavior = XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice);
 		choiceSingleInstanceBehavior->SetSelection(OutfitStudioConfig.GetIntValue("SingleInstanceBehavior", 0));

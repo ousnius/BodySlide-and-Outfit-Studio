@@ -22,6 +22,7 @@ PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideAp
 	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "/res/images/BodySlide.png", wxBITMAP_TYPE_PNG));
 
 	panel = new PreviewPanel(this, app);
+	Bind(EVT_PREVIEW_POPOUT, &PreviewWindow::OnPreviewPopout, this);
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	sizer->Add(panel, 1, wxEXPAND);
@@ -37,6 +38,7 @@ PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideAp
 	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "/res/images/BodySlide.png", wxBITMAP_TYPE_PNG));
 
 	panel->Reparent(this);
+	Bind(EVT_PREVIEW_POPOUT, &PreviewWindow::OnPreviewPopout, this);
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	sizer->Add(panel, 1, wxEXPAND);
@@ -82,8 +84,16 @@ void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {
 		app->PreviewClosed();
 	}
 	else {
-		// Pop-out mode: dock the panel back into the main frame
-		app->DockPreview();
+		// Pop-out mode: close and hide by default, while preserving popped-out as the last state.
+		app->DockPreview(false, true);
 	}
 	wxLogMessage("Preview window closed.");
+}
+
+void PreviewWindow::OnPreviewPopout(wxCommandEvent& WXUNUSED(event)) {
+	if (!app)
+		return;
+
+	if (!BodySlideConfig.GetBoolValue("BodySlideFrame.previewAlwaysDetached", false))
+		app->DockPreview(true);
 }

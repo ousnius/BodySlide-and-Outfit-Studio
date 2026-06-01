@@ -204,6 +204,10 @@ bool BodySlideApp::OnInit() {
 	int w = BodySlideConfig.GetIntValue("BodySlideFrame.width");
 	int h = BodySlideConfig.GetIntValue("BodySlideFrame.height");
 	std::string maximized = BodySlideConfig["BodySlideFrame.maximized"];
+	bool savedPreviewVisible = BodySlideConfig.GetBoolValue("BodySlideFrame.previewVisible", false);
+	bool savedPreviewPoppedOut = BodySlideConfig.GetBoolValue("BodySlideFrame.previewPoppedOut", false);
+	bool previewAlwaysDetached = BodySlideConfig.GetBoolValue("BodySlideFrame.previewAlwaysDetached", false);
+	bool restorePreviewPoppedOut = savedPreviewPoppedOut || previewAlwaysDetached;
 
 	wxLogMessage("Loading BodySlide frame at X:%d Y:%d with W:%d H:%d...", x, y, w, h);
 	sliderView = new BodySlideFrame(this, wxSize(w, h));
@@ -213,6 +217,17 @@ bool BodySlideApp::OnInit() {
 
 	// Set preview pointer to the embedded panel before any data loading
 	InitPreviewPanel();
+	if (savedPreviewVisible && savedPreviewPoppedOut && sliderView->previewVisible) {
+		// Do not auto-open detached preview at startup; convert persisted open state to hidden.
+		sliderView->UnsplitPreview();
+		sliderView->previewVisible = false;
+		BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", false);
+		BodySlideConfig.SetBoolValue("BodySlideFrame.previewPoppedOut", true);
+		sliderView->UpdatePreviewButtonLabel();
+	}
+	else if (restorePreviewPoppedOut && sliderView->previewVisible) {
+		PopOutPreview();
+	}
 
 	sliderView->Show();
 	SetTopWindow(sliderView);
@@ -1756,13 +1771,18 @@ void BodySlideApp::PopOutPreview() {
 		previewWindow->Maximize();
 
 	preview = panel;
-	panel->ShowPopoutButton(false);
+	bool previewAlwaysDetached = BodySlideConfig.GetBoolValue("BodySlideFrame.previewAlwaysDetached", false);
+	panel->SetPopoutButtonDetachedState(true);
+	panel->ShowPopoutButton(!previewAlwaysDetached);
 
-	sliderView->previewVisible = false;
+	sliderView->previewVisible = true;
+	BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", true);
+	BodySlideConfig.SetBoolValue("BodySlideFrame.previewPoppedOut", true);
+	dockPoppedOutOnClose = false;
 	sliderView->UpdatePreviewButtonLabel();
 }
 
-void BodySlideApp::DockPreview() {
+void BodySlideApp::DockPreview(bool attachToMain, bool preservePoppedOutState) {
 	if (!previewWindow || !sliderView)
 		return;
 
@@ -1775,14 +1795,27 @@ void BodySlideApp::DockPreview() {
 	sliderView->previewPanel = panel;
 	preview = panel;
 
-	sliderView->SplitPreview(panel);
-	sliderView->previewVisible = true;
+	if (attachToMain) {
+		sliderView->SplitPreview(panel);
+		sliderView->previewVisible = true;
+		panel->SetPopoutButtonDetachedState(false);
+		panel->ShowPopoutButton(true);
+	}
+	else {
+		panel->Hide();
+		sliderView->previewVisible = false;
+		panel->SetPopoutButtonDetachedState(false);
+		panel->ShowPopoutButton(true);
+	}
+
+	BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", sliderView->previewVisible);
+	BodySlideConfig.SetBoolValue("BodySlideFrame.previewPoppedOut", !attachToMain && preservePoppedOutState);
 	sliderView->UpdatePreviewButtonLabel();
-	panel->ShowPopoutButton(true);
 	panel->Layout();
 
 	previewWindow->Destroy();
 	previewWindow = nullptr;
+	dockPoppedOutOnClose = false;
 }
 
 void BodySlideApp::InitPreview() {
@@ -2713,14 +2746,20 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("Lights/Directional2.x", 30);
 	Config.SetDefaultValue("Lights/Directional2.y", 20);
 	Config.SetDefaultValue("Lights/Directional2.z", -100);
-	BodySlideConfig.SetDefaultValue("BodySlideFrame.width", 1200);
-	BodySlideConfig.SetDefaultValue("BodySlideFrame.height", 600);
+	const wxSize bodySlideFrameSize = wxWindow::FromDIP(wxSize(1040, 840), nullptr);
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.width", bodySlideFrameSize.GetWidth());
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.height", bodySlideFrameSize.GetHeight());
 	BodySlideConfig.SetDefaultValue("BodySlideFrame.x", 100);
 	BodySlideConfig.SetDefaultValue("BodySlideFrame.y", 100);
-	BodySlideConfig.SetDefaultValue("BodySlideFrame.sashpos", 500);
-	BodySlideConfig.SetDefaultBoolValue("BodySlideFrame.previewVisible", true);
+	const int bodySlideFrameSashPos = wxWindow::FromDIP(980, nullptr);
+	const int bodySlideFramePreviewWidth = wxWindow::FromDIP(620, nullptr);
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.sashpos", bodySlideFrameSashPos);
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.previewWidth", bodySlideFramePreviewWidth);
+	BodySlideConfig.SetDefaultBoolValue("BodySlideFrame.previewVisible", false);
+	BodySlideConfig.SetDefaultBoolValue("BodySlideFrame.previewPoppedOut", false);
+	BodySlideConfig.SetDefaultBoolValue("BodySlideFrame.previewAlwaysDetached", false);
 
-	wxSize previewSize(720 + xborder * 2, 720 + yborder * 2);
+	const wxSize previewSize = wxWindow::FromDIP(wxSize(720 + xborder * 2, 720 + yborder * 2), nullptr);
 	BodySlideConfig.SetDefaultValue("PreviewFrame.width", previewSize.GetWidth());
 	BodySlideConfig.SetDefaultValue("PreviewFrame.height", previewSize.GetHeight());
 	BodySlideConfig.SetDefaultValue("PreviewFrame.x", 100);
@@ -4844,8 +4883,9 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	previewPanel = new PreviewPanel(splitter, app);
 
 	// Read sash position and visibility from config
-	previewVisible = BodySlideConfig.GetBoolValue("BodySlideFrame.previewVisible", true);
+	previewVisible = BodySlideConfig.GetBoolValue("BodySlideFrame.previewVisible", false);
 	savedSashPosition = BodySlideConfig.GetIntValue("BodySlideFrame.sashpos");
+	savedPreviewWidth = BodySlideConfig.GetIntValue("BodySlideFrame.previewWidth");
 
 	if (previewVisible) {
 		splitter->SplitVertically(leftPanel, previewPanel, savedSashPosition);
@@ -5333,8 +5373,15 @@ void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
+	bool previewWindowOpen = app->IsPreviewPoppedOut();
+	bool previewWasPoppedOut = previewWindowOpen || BodySlideConfig.GetBoolValue("BodySlideFrame.previewPoppedOut", false);
+	bool previewWasVisible = previewVisible || previewWindowOpen;
+
 	app->CleanupPreview();
 	app->ClosePreview();
+
+	BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", previewWasVisible);
+	BodySlideConfig.SetBoolValue("BodySlideFrame.previewPoppedOut", previewWasPoppedOut);
 
 	sliderPool.Clear();
 	sliderDisplays.clear();
@@ -6040,17 +6087,32 @@ void BodySlideFrame::OnLowToHigh(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnPreview(wxCommandEvent& WXUNUSED(event)) {
+	if (app->IsPreviewPoppedOut()) {
+		app->ClosePreview();
+		previewVisible = false;
+		BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", false);
+		BodySlideConfig.SetBoolValue("BodySlideFrame.previewPoppedOut", true);
+		UpdatePreviewButtonLabel();
+		return;
+	}
+
 	if (previewVisible) {
 		// Hide preview
 		UnsplitPreview();
 		previewVisible = false;
 		BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", false);
+		BodySlideConfig.SetBoolValue("BodySlideFrame.previewPoppedOut", false);
 		UpdatePreviewButtonLabel();
 	}
 	else {
-		// If preview is popped out, dock it back instead
-		if (app->IsPreviewPoppedOut()) {
-			app->DockPreview();
+		bool restorePreviewPoppedOut = BodySlideConfig.GetBoolValue("BodySlideFrame.previewPoppedOut", false)
+			|| BodySlideConfig.GetBoolValue("BodySlideFrame.previewAlwaysDetached", false);
+		if (restorePreviewPoppedOut) {
+			app->PopOutPreview();
+			previewVisible = true;
+			BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", true);
+			BodySlideConfig.SetBoolValue("BodySlideFrame.previewPoppedOut", true);
+			UpdatePreviewButtonLabel();
 			return;
 		}
 
@@ -6058,6 +6120,7 @@ void BodySlideFrame::OnPreview(wxCommandEvent& WXUNUSED(event)) {
 		SplitPreview();
 		previewVisible = true;
 		BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", true);
+		BodySlideConfig.SetBoolValue("BodySlideFrame.previewPoppedOut", false);
 		UpdatePreviewButtonLabel();
 
 		// Trigger preview load if outfit is selected
@@ -6083,11 +6146,17 @@ void BodySlideFrame::OnSashPosChanged(wxSplitterEvent& event) {
 }
 
 void BodySlideFrame::OnPreviewPopout(wxCommandEvent& WXUNUSED(event)) {
+	if (app->IsPreviewPoppedOut()) {
+		if (!BodySlideConfig.GetBoolValue("BodySlideFrame.previewAlwaysDetached", false))
+			app->DockPreview(true);
+		return;
+	}
+
 	app->PopOutPreview();
 }
 
 void BodySlideFrame::OnPreviewWindowClosed() {
-	app->DockPreview();
+	app->DockPreview(false, true);
 }
 
 void BodySlideFrame::UnsplitPreview() {
@@ -6458,6 +6527,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
 		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
 
+		wxCheckBox* cbPreviewAlwaysDetached = XRCCTRL(*settings, "cbPreviewAlwaysDetached", wxCheckBox);
+		cbPreviewAlwaysDetached->SetValue(BodySlideConfig.GetBoolValue("BodySlideFrame.previewAlwaysDetached", false));
+
 		// Hide the single instance setting (only relevant for Outfit Studio)
 		XRCCTRL(*settings, "lbSingleInstanceBehavior", wxStaticText)->Hide();
 		XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice)->Hide();
@@ -6548,6 +6620,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
 			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
 			Config.SetBoolValue("Input/MaskHistory", cbMaskHistory->IsChecked());
+			BodySlideConfig.SetBoolValue("BodySlideFrame.previewAlwaysDetached", cbPreviewAlwaysDetached->IsChecked());
 
 			int oldLang = Config.GetIntValue("Language");
 			int newLang = SupportedLangs[choiceLanguage->GetSelection()];

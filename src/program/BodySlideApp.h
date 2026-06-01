@@ -83,6 +83,7 @@ class BodySlideApp : public wxApp {
 	BodySlideFrame* sliderView = nullptr;
 	PreviewPanel* preview = nullptr;
 	PreviewWindow* previewWindow = nullptr;
+	bool dockPoppedOutOnClose = true;
 
 	/* Command-Line Arguments */
 	std::vector<std::string> cmdGroupBuild;
@@ -273,8 +274,10 @@ public:
 	void ClosePreview();
 	void PreviewClosed();
 	void PopOutPreview();
-	void DockPreview();
+	void DockPreview(bool attachToMain = true, bool preservePoppedOutState = false);
 	bool IsPreviewPoppedOut() const { return previewWindow != nullptr; }
+	void SetDockPoppedOutOnClose(bool dock) { dockPoppedOutOnClose = dock; }
+	bool ShouldDockPoppedOutOnClose() const { return dockPoppedOutOnClose; }
 
 	/* Async preview loading */
 	std::atomic<uint64_t> previewLoadGeneration{0};

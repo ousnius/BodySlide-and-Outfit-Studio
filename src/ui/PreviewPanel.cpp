@@ -78,7 +78,7 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 		wxDefaultPosition,
 		FromDIP(wxSize(28, 28)));
 	popoutButton->SetMinSize(FromDIP(wxSize(28, 28)));
-	popoutButton->SetToolTip(_("Pop out preview into a separate window"));
+	SetPopoutButtonDetachedState(false);
 	popoutButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnPopout, this);
 
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs());
@@ -631,6 +631,21 @@ void PreviewPanel::OnPopout(wxCommandEvent& WXUNUSED(event)) {
 void PreviewPanel::ShowPopoutButton(bool show) {
 	if (popoutButton)
 		popoutButton->Show(show);
+}
+
+void PreviewPanel::SetPopoutButtonDetachedState(bool detached) {
+	if (!popoutButton)
+		return;
+
+	const wxString imageName = detached ? "PopIn.png" : "PopOut.png";
+	wxBitmap bitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/" + imageName, wxBITMAP_TYPE_PNG);
+	if (bitmap.IsOk())
+		popoutButton->SetBitmap(bitmap);
+
+	if (detached)
+		popoutButton->SetToolTip(_("Pop preview back into the main window"));
+	else
+		popoutButton->SetToolTip(_("Pop out preview into a separate window"));
 }
 
 void PreviewPanel::ShowNormalGenWindow(wxCommandEvent& WXUNUSED(event)) {

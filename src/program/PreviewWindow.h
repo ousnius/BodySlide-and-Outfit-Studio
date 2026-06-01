@@ -33,6 +33,7 @@ public:
 	void OnClose(wxCloseEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
+	void OnPreviewPopout(wxCommandEvent& event);
 
 	PreviewPanel* GetPanel() { return panel; }
 

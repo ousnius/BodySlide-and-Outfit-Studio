@@ -80,6 +80,7 @@ public:
 	void OnPopout(wxCommandEvent& event);
 
 	void ShowPopoutButton(bool show);
+	void SetPopoutButtonDetachedState(bool detached);
 
 	void SetReadOnlyMode(bool readOnly) {
 		readOnlyMode = readOnly;
