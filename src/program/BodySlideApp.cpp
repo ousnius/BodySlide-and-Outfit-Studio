@@ -1014,11 +1014,39 @@ void BodySlideApp::ActivateLogbookEntry() {
 			ActivateOutfit(entry.set);
 		}
 
-		// Always activate the preset to reset sliders and re-apply the logbook entry
-		ActivatePreset(entry.preset, false);
-		PopulatePresetList(entry.preset);
+		// Re-implementing a section of ActivatePreset(entry.preset, false)
+		// To load the preset without applying BuildSelection zaps
+		BodySlideConfig.SetValue("SelectedPreset", entry.preset);
+		sliderManager.InitializeSliders(entry.preset);
 
+		bool zapChanged = false;
+		Slider* sliderSmall = nullptr;
+		Slider* sliderBig = nullptr;
+		for (size_t i = 0; i < sliderManager.slidersBig.size(); i++) {
+			sliderSmall = &sliderManager.slidersSmall[i];
+			sliderBig = &sliderManager.slidersBig[i];
+
+			if (sliderBig->zap && !sliderBig->uv && !zapChanged) {
+				auto* sd = sliderView->GetSliderDisplay(sliderBig->name);
+				if (sd) {
+					float zapValueUI = sd->zapCheckHi->IsChecked() ? 0.01f : 0.0f;
+					if (sliderBig->value != zapValueUI)
+						zapChanged = true;
+				}
+			}
+
+			sliderView->SetSliderPosition(sliderSmall->name.c_str(), sliderSmall->value, SLIDER_LO);
+			sliderView->SetSliderPosition(sliderBig->name.c_str(), sliderBig->value, SLIDER_HI);
+		}
+
+		// Load Logbook slider modifications
 		for (const auto& sv : entry.sliders) {
+
+			// Check how we need to update the preview
+			// Loading a Logbook entry doesn't apply its zap choices to BuildSelection
+			if (sv.zap)
+				zapChanged = true;
+
 			if (sv.size == "big") {
 				sliderManager.SetSlider(sv.name, false, sv.value);
 				sliderView->SetSliderPosition(sv.name.c_str(), sv.value, SLIDER_HI);
@@ -1029,12 +1057,12 @@ void BodySlideApp::ActivateLogbookEntry() {
 		}
 
 		// If the logbook introduced any slider modification, mark it as such
-		if (entry.sliders.size() > 0) sliderView->SetPresetChanged(true);
+		sliderView->SetPresetChanged(entry.sliders.size() > 0);
 
-		bool zapChanged = false;
-		if (UpdateZapChoices())
-			zapChanged = true;
+		PopulatePresetList(entry.preset);
+		UpdateLogbookLabel();
 
+		// We have waited until now to update the preview
 		if (preview)
 			zapChanged ? RebuildPreviewMeshes() : UpdatePreview();
 
@@ -1404,6 +1432,8 @@ std::vector<BuildLogbookEntry::SliderValue> BodySlideApp::CalculateLogbookSlider
 		auto& sliderBig = sliderManager.slidersBig[i];
 		auto& sliderSmall = sliderManager.slidersSmall[i];
 
+		// Note that zaps are calculated against defaults, not against BuildSelections
+
 		// Get the preset slider value, or if it doesn't exist, the slider default
 		defaultValue = sliderManager.GetBigPresetValue(activePreset, sliderBig.name, sliderBig.defValue);
 		if (sliderBig.value != defaultValue) {
@@ -1412,6 +1442,7 @@ std::vector<BuildLogbookEntry::SliderValue> BodySlideApp::CalculateLogbookSlider
 			v.name = sliderBig.name;
 			v.size = "big";
 			v.value = sliderBig.value;
+			v.zap = sliderBig.zap;
 			logbookSliders.push_back(v);
 		}
 
@@ -1422,6 +1453,7 @@ std::vector<BuildLogbookEntry::SliderValue> BodySlideApp::CalculateLogbookSlider
 			v.name = sliderSmall.name;
 			v.size = "small";
 			v.value = sliderSmall.value;
+			v.zap = sliderBig.zap;
 			logbookSliders.push_back(v);
 		}
 	}

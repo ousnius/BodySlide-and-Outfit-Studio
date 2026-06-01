@@ -38,6 +38,9 @@ int BuildLogbook::LoadBuildLogbook(XMLElement* srcElement) {
 				val.name = sliderElem->Attribute("name");
 				val.size = sliderElem->Attribute("size");
 				val.value = sliderElem->FloatAttribute("value") / 100.0f; // Scale percentage value back to 0-1 range
+				if (sliderElem->Attribute("zap"))
+					val.zap = sliderElem->BoolAttribute("zap");
+				else val.zap = false;
 				entry.sliders.push_back(val);
 			}
 			sliderElem = sliderElem->NextSiblingElement("SetSlider");
@@ -181,6 +184,8 @@ bool BuildLogbook::SaveToFile() {
 				sliderElem->SetAttribute("name", slider.name.c_str());
 				sliderElem->SetAttribute("size", slider.size.c_str());
 				sliderElem->SetAttribute("value", (int)(slider.value * 100.0f)); // Convert 0-1 scale back to percentage for XML
+				if (slider.zap)
+					sliderElem->SetAttribute("zap", "true");
 				elem->InsertEndChild(sliderElem);
 			}
 		}

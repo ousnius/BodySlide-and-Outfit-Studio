@@ -24,6 +24,7 @@ public:
 		std::string name;
 		std::string size;
 		float value;
+		bool zap;
 	};
 	std::vector<SliderValue> sliders;
 
