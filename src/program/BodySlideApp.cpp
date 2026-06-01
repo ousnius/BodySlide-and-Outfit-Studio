@@ -6164,6 +6164,13 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
+	bool custpath = false;
+	bool clean = false;
+	if (wxGetKeyState(WXK_CONTROL))
+		custpath = true;
+	else if (wxGetKeyState(WXK_ALT))
+		clean = true;
+
 	if (app->clippingFixStrength > 0.0f) {
 		int answer = wxMessageBox(
 			_("Fix Clipping is enabled for this batch build.\n\n"
@@ -6182,8 +6189,6 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	std::vector<std::string> outfitChoices;
 	std::vector<std::string> toBuild;
 
-	bool custpath = false;
-	bool clean = false;
 	bool tri = false;
 	bool forceNormals = false;
 
@@ -6194,11 +6199,6 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	auto cbForceBodyNormals = (wxCheckBox*)FindWindowByName("cbForceBodyNormals");
 	if (cbForceBodyNormals)
 		forceNormals = cbForceBodyNormals->IsChecked();
-
-	if (wxGetKeyState(WXK_CONTROL))
-		custpath = true;
-	else if (wxGetKeyState(WXK_ALT))
-		clean = true;
 
 	app->GetFilteredOutfits(outfitChoices);
 
