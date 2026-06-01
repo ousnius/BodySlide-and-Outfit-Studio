@@ -224,6 +224,9 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	if (!mRefProjectFile.empty() && !mRefProjectName.empty() && !mRefShapeName.empty()) {
 		outSet.SetReferenceInfo(mRefProjectFile, mRefProjectName, mRefShapeName);
 	}
+	else if (baseShape) {
+		outSet.SetReferenceInfo("", "", baseShape->name.get());
+	}
 
 	// Add all the outfit shapes to the target list.
 	for (auto& s : shapes) {
@@ -495,6 +498,17 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 	}
 
 	baseShape = shape;
+
+	if (shape) {
+		mRefProjectFile.clear();
+		mRefProjectName.clear();
+		mRefShapeName = shape->name.get();
+	}
+	else {
+		mRefProjectFile.clear();
+		mRefProjectName.clear();
+		mRefShapeName.clear();
+	}
 }
 
 
@@ -2805,6 +2819,9 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	mRefProjectName.clear();
 	mRefShapeName.clear();
 
+	if (baseShape)
+		mRefShapeName = baseShape->name.get();
+
 	if (!deletedShapes.empty()) {
 		std::string shapesJoin = JoinStrings(deletedShapes, "; ");
 		wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were deleted. Rename the duplicates yourself beforehand if you wish to keep them."), shapesJoin),
@@ -3003,23 +3020,31 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 
 	NiShape* newBaseShape = nullptr;
 
+	if (activeSet.HasReferenceInfo()) {
+		std::string refShape = activeSet.GetReferenceShapeName();
+		if (!refShape.empty())
+			newBaseShape = workNif.FindBlockByName<NiShape>(refShape);
+	}
+
 	// First external target with skin shader becomes reference
 	std::vector<std::string> refTargets;
-	activeSet.GetReferencedTargets(refTargets);
-	for (auto& target : refTargets) {
-		std::string shapeName = activeSet.TargetToShape(target);
-		auto shape = workNif.FindBlockByName<NiShape>(shapeName);
-		if (shape) {
-			NiShader* shader = workNif.GetShader(shape);
-			if (shader && shader->IsSkinTinted()) {
-				newBaseShape = shape;
-				break;
+	if (!newBaseShape) {
+		activeSet.GetReferencedTargets(refTargets);
+		for (auto& target : refTargets) {
+			std::string shapeName = activeSet.TargetToShape(target);
+			auto shape = workNif.FindBlockByName<NiShape>(shapeName);
+			if (shape) {
+				NiShader* shader = workNif.GetShader(shape);
+				if (shader && shader->IsSkinTinted()) {
+					newBaseShape = shape;
+					break;
+				}
 			}
 		}
 	}
 
 	// No external target found, first skin shaded shape becomes reference
-	if (refTargets.empty()) {
+	if (!newBaseShape && refTargets.empty()) {
 		for (auto shapeTarget = activeSet.ShapesBegin(); shapeTarget != activeSet.ShapesEnd(); ++shapeTarget) {
 			auto shape = workNif.FindBlockByName<NiShape>(shapeTarget->first);
 			if (shape) {
@@ -3070,6 +3095,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 
 int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName, const bool newDataLocal, const bool appendNewSliders) {
 	owner->StartProgress(_("Adding slider set..."));
+	const bool hadBaseShape = baseShape != nullptr;
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
 		owner->EndProgress();
@@ -3155,6 +3181,22 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 
 	UpdateProgress(70, _("Updating slider data..."));
 	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape ? baseShape->name.get() : "", newDataLocal, appendNewSliders);
+
+	// Set reference info if not already present and a new base shape was found
+	if (baseShape && !hadBaseShape && mRefProjectFile.empty() && mRefProjectName.empty() && mRefShapeName.empty()) {
+		wxFileName refFileName(wxString::FromUTF8(fileName));
+		if (refFileName.IsRelative())
+			refFileName.MakeAbsolute(wxString::FromUTF8(GetProjectPath()));
+
+		if (refFileName.MakeRelativeTo(wxString::FromUTF8(GetProjectPath())))
+			mRefProjectFile = refFileName.GetFullPath().ToUTF8().data();
+		else
+			mRefProjectFile = fileName;
+
+		mRefProjectName = sliderSetName;
+		if (baseShape)
+			mRefShapeName = baseShape->name.get();
+	}
 
 	owner->EndProgress();
 	return 0;
