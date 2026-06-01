@@ -9785,6 +9785,10 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 		if (project->IsBaseShape(shape))
 			continue;
 
+		NiShader* shader = project->GetWorkNif()->GetShader(shape);
+		if (shader && shader->IsSkinTinted())
+			continue;
+
 		// Only process shapes that have a diff for the active slider
 		size_t sliderIndex = 0;
 		if (!project->SliderIndexFromName(activeSlider, sliderIndex))
@@ -10954,6 +10958,10 @@ void OutfitStudioFrame::OnFixClippingShape(wxCommandEvent& event) {
 	for (auto& sel : selectedItems) {
 		NiShape* shape = sel->GetShape();
 		if (project->IsBaseShape(shape))
+			continue;
+
+		NiShader* shader = project->GetWorkNif()->GetShader(shape);
+		if (shader && shader->IsSkinTinted())
 			continue;
 
 		std::unordered_map<uint16_t, float> unmasked;

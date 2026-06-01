@@ -2205,6 +2205,10 @@ void BodySlideApp::ApplyClippingFix(NifFile& nif,
 		if (!shape)
 			continue;
 
+		NiShader* shader = nif.GetShader(shape);
+		if (shader && shader->IsSkinTinted())
+			continue;
+
 		std::vector<Triangle> outfitTris;
 		shape->GetTriangles(outfitTris);
 		if (outfitTris.empty())
