@@ -46,6 +46,7 @@ public:
 private:
 	void SetupControls();
 	void PopulateBoneList();
+	void HighlightBonesWithSelectionWeights();
 	void PopulatePoseDropdown();
 	void SetupEventHandlers();
 	void ShowSkinTransOptions();
@@ -61,6 +62,7 @@ private:
 	void OnBoneSelected(wxCommandEvent& event);
 
 	void CollectOptions();
+	std::string ExtractBoneNameFromListEntry(const wxString& entry) const;
 
 	OutfitProject* project = nullptr;
 	wxGLPanel* glView = nullptr;
@@ -81,6 +83,8 @@ private:
 	bool prevBonesMode = false;
 	bool prevWeightColors = false;
 	bool prevBPose = false;
+
+	static constexpr const char* kWeightedBoneSuffix = " [*]";
 
 	struct SavedBonePose {
 		nifly::Vector3 rotVec;

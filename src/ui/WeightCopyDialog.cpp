@@ -107,6 +107,44 @@ void WeightCopyDialog::PopulateBoneList() {
 			int idx = boneListBox->Append(bone);
 			boneListBox->Check(idx, true);
 		}
+
+		HighlightBonesWithSelectionWeights();
+	}
+}
+
+void WeightCopyDialog::HighlightBonesWithSelectionWeights() {
+	for (unsigned int i = 0; i < boneListBox->GetCount(); i++) {
+		bool isChecked = boneListBox->IsChecked(i);
+		std::string boneName = ExtractBoneNameFromListEntry(boneListBox->GetString(i));
+		bool hasWeights = false;
+
+		for (const auto* shape : previewShapes) {
+			if (shape && project->GetWorkAnim()->HasWeights(shape->name.get(), boneName)) {
+				hasWeights = true;
+				break;
+			}
+		}
+
+		wxString displayName = wxString::FromUTF8(boneName);
+
+#ifdef __WXMSW__
+		if (boneListBox->GetString(i) != displayName)
+			boneListBox->SetString(i, displayName);
+
+		if (wxOwnerDrawn* item = boneListBox->GetItem(i)) {
+			item->SetTextColour(hasWeights ? wxColour(0, 200, 0) : wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT));
+			boneListBox->RefreshItem(i);
+		}
+#else
+		wxString displayName = wxString::FromUTF8(boneName);
+		if (hasWeights)
+			displayName += kWeightedBoneSuffix;
+
+		if (boneListBox->GetString(i) != displayName)
+			boneListBox->SetString(i, displayName);
+#endif
+
+		boneListBox->Check(i, isChecked);
 	}
 }
 
@@ -234,7 +272,15 @@ void WeightCopyDialog::OnBoneSelected(wxCommandEvent&) {
 	int sel = boneListBox->GetSelection();
 	if (sel == wxNOT_FOUND)
 		return;
-	ShowBoneWeightColors(boneListBox->GetString(sel).ToStdString());
+	ShowBoneWeightColors(ExtractBoneNameFromListEntry(boneListBox->GetString(sel)));
+}
+
+std::string WeightCopyDialog::ExtractBoneNameFromListEntry(const wxString& entry) const {
+	std::string name = entry.ToStdString();
+	const size_t suffixPos = name.find(kWeightedBoneSuffix);
+	if (suffixPos != std::string::npos)
+		name.erase(suffixPos);
+	return name;
 }
 
 void WeightCopyDialog::ShowBoneWeightColors(const std::string& boneName) {
@@ -353,7 +399,7 @@ void WeightCopyDialog::OnPreview(wxCommandEvent&) {
 	std::vector<std::string> checkedBones;
 	for (unsigned int i = 0; i < boneListBox->GetCount(); i++) {
 		if (boneListBox->IsChecked(i))
-			checkedBones.push_back(boneListBox->GetString(i).ToStdString());
+			checkedBones.push_back(ExtractBoneNameFromListEntry(boneListBox->GetString(i)));
 	}
 
 	if (checkedBones.empty() || previewShapes.empty())
@@ -411,6 +457,7 @@ void WeightCopyDialog::OnPreview(wxCommandEvent&) {
 
 	ApplyPreviewWeights();
 	previewActive = true;
+	HighlightBonesWithSelectionWeights();
 
 	project->morpher.ClearProximityCache();
 
@@ -420,7 +467,7 @@ void WeightCopyDialog::OnPreview(wxCommandEvent&) {
 
 	int sel = boneListBox->GetSelection();
 	if (sel != wxNOT_FOUND)
-		ShowBoneWeightColors(boneListBox->GetString(sel).ToStdString());
+		ShowBoneWeightColors(ExtractBoneNameFromListEntry(boneListBox->GetString(sel)));
 	else
 		glView->Refresh();
 }
@@ -442,6 +489,6 @@ void WeightCopyDialog::CollectOptions() {
 	options.selectedBones.clear();
 	for (unsigned int i = 0; i < boneListBox->GetCount(); i++) {
 		if (boneListBox->IsChecked(i))
-			options.selectedBones.push_back(boneListBox->GetString(i).ToStdString());
+			options.selectedBones.push_back(ExtractBoneNameFromListEntry(boneListBox->GetString(i)));
 	}
 }
