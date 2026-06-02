@@ -269,6 +269,7 @@ public:
 	void InitPreviewPanel();
 	void BuildPreviewMesh(ProjectData* pp, bool freshLoad);
 	void InitPreview();
+	bool IsPreviewRenderable() const;
 	void CleanupPreview();
 	void LoadPreviewNifs(const std::vector<std::string>& nifFilePaths);
 	void ClosePreview();

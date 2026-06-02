@@ -1819,8 +1819,21 @@ void BodySlideApp::DockPreview(bool attachToMain, bool preservePoppedOutState) {
 	dockPoppedOutOnClose = false;
 }
 
-void BodySlideApp::InitPreview() {
+bool BodySlideApp::IsPreviewRenderable() const {
 	if (!preview)
+		return false;
+
+	if (previewWindow)
+		return previewWindow->IsShownOnScreen() && preview->IsShownOnScreen();
+
+	if (sliderView)
+		return sliderView->previewVisible && preview->IsShownOnScreen();
+
+	return preview->IsShownOnScreen();
+}
+
+void BodySlideApp::InitPreview() {
+	if (!IsPreviewRenderable())
 		return;
 
 	if (projects.empty())
@@ -1952,7 +1965,7 @@ void BodySlideApp::InitPreview() {
 			// Verify the target panel is still the active preview.
 			// Prevents stale callbacks from writing to the wrong panel
 			// (e.g. conflicts preview closed while async load was in-flight).
-			if (!preview || preview != targetPreview) {
+			if (!IsPreviewRenderable() || !preview || preview != targetPreview) {
 				for (auto& r : results)
 					delete r.baseNif;
 				previewLoading = false;
@@ -2323,7 +2336,7 @@ void BodySlideApp::UpdateReferenceCheckboxState() {
 }
 
 void BodySlideApp::UpdatePreview() {
-	if (!preview)
+	if (!IsPreviewRenderable())
 		return;
 
 	if (projects.empty())
@@ -2491,7 +2504,7 @@ void BodySlideApp::CleanupPreview() {
 }
 
 void BodySlideApp::RebuildPreviewMeshes() {
-	if (!preview)
+	if (!IsPreviewRenderable())
 		return;
 
 	if (projects.empty())
@@ -6117,6 +6130,14 @@ void BodySlideFrame::OnPreview(wxCommandEvent& WXUNUSED(event)) {
 			BodySlideConfig.SetBoolValue("BodySlideFrame.previewVisible", true);
 			BodySlideConfig.SetBoolValue("BodySlideFrame.previewPoppedOut", true);
 			UpdatePreviewButtonLabel();
+
+			// The preview may have been hidden while outfits changed; reload current data
+			// now that the detached preview window is visible again.
+			if (!OutfitIsEmpty()) {
+				app->InitPreviewPanel();
+				if (app->HasActiveProject())
+					app->InitPreview();
+			}
 			return;
 		}
 
