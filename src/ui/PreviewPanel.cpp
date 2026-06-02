@@ -4,6 +4,8 @@ See the included LICENSE file
 */
 
 #include "PreviewPanel.h"
+#include "../files/SFMaterialDatabase.h"
+#include "../files/SFMaterialFile.h"
 #include "../program/BodySlideApp.h"
 #include "../utils/PlatformUtil.h"
 
@@ -434,8 +436,42 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 	gls.RenderOneFrame();
 }
 
+SFMaterialDatabase* PreviewPanel::GetSFMaterialDatabase() {
+	if (sfMaterialDb)
+		return sfMaterialDb->Failed() ? nullptr : sfMaterialDb.get();
+
+	sfMaterialDb = std::make_unique<SFMaterialDatabase>();
+
+	wxMemoryBuffer data;
+	for (FSArchiveFile* archive : FSManager::archiveList()) {
+		if (archive && archive->hasFile("materials/materialsbeta.cdb")) {
+			wxMemoryBuffer outData;
+			archive->fileContents("materials/materialsbeta.cdb", outData);
+			if (!outData.IsEmpty()) {
+				data = std::move(outData);
+				break;
+			}
+		}
+	}
+
+	if (data.IsEmpty())
+		return nullptr;
+
+	sfMaterialDbContent.assign(static_cast<const char*>(data.GetData()), data.GetDataLen());
+	sfMaterialDbStream = std::make_unique<std::istringstream>(sfMaterialDbContent, std::ios::in | std::ios::binary);
+
+	if (!sfMaterialDb->Load(*sfMaterialDbStream) || sfMaterialDb->Failed()) {
+		sfMaterialDbContent.clear();
+		sfMaterialDbStream.reset();
+		return nullptr;
+	}
+
+	return sfMaterialDb.get();
+}
+
 void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName) {
 	bool hasMat = false;
+	bool hasSFMat = false;
 	std::string matFile;
 
 	const uint8_t MAX_TEXTURE_PATHS = 10;
@@ -451,6 +487,13 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 				if (!matFile.empty())
 					hasMat = true;
 			}
+			else if (fromNif->GetHeader().GetVersion().IsSF()) {
+				matFile = shader->name.get();
+				if (!matFile.empty()) {
+					hasMat = true;
+					hasSFMat = true;
+				}
+			}
 		}
 	}
 
@@ -461,54 +504,106 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 		matFile = std::regex_replace(matFile, std::regex("^/+"), "");
 		matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");
 
-		mat = MaterialFile(baseDataPath + matFile);
+		if (hasSFMat) {
+			if (!std::regex_search(matFile, std::regex("\\.mat$", std::regex_constants::icase)))
+				matFile += ".mat";
 
-		if (mat.Failed()) {
-			wxMemoryBuffer data;
-			for (FSArchiveFile* archive : FSManager::archiveList()) {
-				if (archive) {
-					if (archive->hasFile(matFile)) {
+			SFMaterialFile sfMat(baseDataPath + matFile);
+			if (!sfMat.Failed()) {
+				texFiles = sfMat.GetTextureFiles(MAX_TEXTURE_PATHS);
+			}
+			else {
+				bool resolvedFromArchive = false;
+				for (FSArchiveFile* archive : FSManager::archiveList()) {
+					if (archive && archive->hasFile(matFile)) {
 						wxMemoryBuffer outData;
 						archive->fileContents(matFile, outData);
-
 						if (!outData.IsEmpty()) {
-							data = std::move(outData);
+							std::string content(static_cast<const char*>(outData.GetData()), outData.GetDataLen());
+							std::istringstream contentStream(content, std::istringstream::binary);
+							SFMaterialFile archiveMat(contentStream);
+							if (!archiveMat.Failed()) {
+								texFiles = archiveMat.GetTextureFiles(MAX_TEXTURE_PATHS);
+								resolvedFromArchive = true;
+							}
 							break;
 						}
 					}
 				}
+
+				if (!resolvedFromArchive) {
+					std::string materialJson;
+					SFMaterialDatabase* cdb = GetSFMaterialDatabase();
+					if (cdb && cdb->GetMaterialJSON(matFile, materialJson)) {
+						std::istringstream materialStream(materialJson);
+						SFMaterialFile cdbMat(materialStream);
+						if (!cdbMat.Failed())
+							texFiles = cdbMat.GetTextureFiles(MAX_TEXTURE_PATHS);
+					}
+				}
+
+				bool hasAnyTex = false;
+				for (int i = 0; i < MAX_TEXTURE_PATHS && !hasAnyTex; i++)
+					hasAnyTex = !texFiles[i].empty();
+
+				if (!hasAnyTex && shader) {
+					for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+						fromNif->GetTextureSlot(shape, texFiles[i], i);
+				}
 			}
 
-			if (!data.IsEmpty()) {
-				std::string content((char*)data.GetData(), data.GetDataLen());
-				std::istringstream contentStream(content, std::istringstream::binary);
-
-				mat = MaterialFile(contentStream);
-			}
-		}
-
-		if (!mat.Failed()) {
-			if (mat.signature == MaterialFile::BGSM) {
-				texFiles[0] = mat.diffuseTexture.c_str();
-				texFiles[1] = mat.normalTexture.c_str();
-				texFiles[2] = mat.glowTexture.c_str();
-				texFiles[3] = mat.greyscaleTexture.c_str();
-				texFiles[4] = mat.envmapTexture.c_str();
-				texFiles[7] = mat.smoothSpecTexture.c_str();
-			}
-			else if (mat.signature == MaterialFile::BGEM) {
-				texFiles[0] = mat.baseTexture.c_str();
-				texFiles[1] = mat.fxNormalTexture.c_str();
-				texFiles[3] = mat.grayscaleTexture.c_str();
-				texFiles[4] = mat.fxEnvmapTexture.c_str();
-				texFiles[5] = mat.envmapMaskTexture.c_str();
-			}
-		}
-		else if (shader) {
 			hasMat = false;
+		}
+		else {
+			mat = MaterialFile(baseDataPath + matFile);
 
-			for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-				fromNif->GetTextureSlot(shape, texFiles[i], i);
+			if (mat.Failed()) {
+				wxMemoryBuffer data;
+				for (FSArchiveFile* archive : FSManager::archiveList()) {
+					if (archive) {
+						if (archive->hasFile(matFile)) {
+							wxMemoryBuffer outData;
+							archive->fileContents(matFile, outData);
+
+							if (!outData.IsEmpty()) {
+								data = std::move(outData);
+								break;
+							}
+						}
+					}
+				}
+
+				if (!data.IsEmpty()) {
+					std::string content((char*)data.GetData(), data.GetDataLen());
+					std::istringstream contentStream(content, std::istringstream::binary);
+
+					mat = MaterialFile(contentStream);
+				}
+			}
+
+			if (!mat.Failed()) {
+				if (mat.signature == MaterialFile::BGSM) {
+					texFiles[0] = mat.diffuseTexture.c_str();
+					texFiles[1] = mat.normalTexture.c_str();
+					texFiles[2] = mat.glowTexture.c_str();
+					texFiles[3] = mat.greyscaleTexture.c_str();
+					texFiles[4] = mat.envmapTexture.c_str();
+					texFiles[7] = mat.smoothSpecTexture.c_str();
+				}
+				else if (mat.signature == MaterialFile::BGEM) {
+					texFiles[0] = mat.baseTexture.c_str();
+					texFiles[1] = mat.fxNormalTexture.c_str();
+					texFiles[3] = mat.grayscaleTexture.c_str();
+					texFiles[4] = mat.fxEnvmapTexture.c_str();
+					texFiles[5] = mat.envmapMaskTexture.c_str();
+				}
+			}
+			else if (shader) {
+				hasMat = false;
+
+				for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+					fromNif->GetTextureSlot(shape, texFiles[i], i);
+			}
 		}
 	}
 	else if (shader) {
