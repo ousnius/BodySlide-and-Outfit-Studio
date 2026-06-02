@@ -318,6 +318,10 @@ set(BSOS_BODYSLIDE_SOURCES
 	${BSOS_COMMON_SOURCES}
 	src/components/BuildSelection.cpp
 	src/files/ObjFile.cpp
+	src/files/SFMaterialDatabase.cpp
+	src/files/SFMaterialFile.cpp
+	src/files/SFMaterialGraph.cpp
+	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/files/wxDDSImage.cpp
 	src/program/BodySlideApp.cpp
@@ -338,6 +342,7 @@ add_executable(BodySlide ${BSOS_BODYSLIDE_SOURCES})
 set(BSOS_COMMON_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/gli
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
@@ -345,7 +350,6 @@ set(BSOS_COMMON_INCLUDE_DIRS
 )
 set(BSOS_OUTFIT_STUDIO_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 )
 
 set(BSOS_PLATFORM_DEFINITIONS GLM_FORCE_SILENT_WARNINGS)
