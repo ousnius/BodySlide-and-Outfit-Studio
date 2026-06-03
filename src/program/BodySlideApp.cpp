@@ -5826,10 +5826,11 @@ void BodySlideFrame::OnBrowseOutfitFolder(wxCommandEvent& WXUNUSED(event)) {
 
 	auto& activeSet = app->GetActiveSet();
 
-	wxFileName folderPath(wxString::FromUTF8(activeSet.GetBaseDataPath()), wxEmptyString);
-	folderPath.AppendDir(wxString::FromUTF8(activeSet.GetDefaultDataFolder()));
+	wxFileName folderPath(wxString::FromUTF8(activeSet.GetInputFileName()));
 	if (folderPath.IsRelative())
 		folderPath.MakeAbsolute(wxString::FromUTF8(app->GetProjectPath()));
+
+	folderPath.SetFullName("");
 
 	if (!folderPath.FileExists() && folderPath.DirExists())
 		wxLaunchDefaultApplication(folderPath.GetPath());
