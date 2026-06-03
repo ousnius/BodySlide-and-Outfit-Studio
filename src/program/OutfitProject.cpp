@@ -836,6 +836,26 @@ void OutfitProject::ResolveTargetConflictsForIncomingShapes(const std::vector<st
 	}
 }
 
+bool OutfitProject::ResolveSliderDataEntry(const SliderDataKey& key, size_t& sliderIndex, size_t& dataIndex) {
+	for (size_t curSliderIndex = 0; curSliderIndex < activeSet.size(); curSliderIndex++) {
+		auto& slider = activeSet[curSliderIndex];
+		if (slider.name != key.sliderName)
+			continue;
+
+		for (size_t curDataIndex = 0; curDataIndex < slider.dataFiles.size(); curDataIndex++) {
+			auto& dataFile = slider.dataFiles[curDataIndex];
+			if (dataFile.targetName != key.targetName || dataFile.dataName != key.dataName)
+				continue;
+
+			sliderIndex = curSliderIndex;
+			dataIndex = curDataIndex;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void OutfitProject::GetSliderDataLocations(std::vector<SliderDataLocation>& outLocations, const std::string& sliderName) {
 	outLocations.clear();
 	activeSet.ClearLocalOnlyDataFolders();
@@ -849,14 +869,12 @@ void OutfitProject::GetSliderDataLocations(std::vector<SliderDataLocation>& outL
 			SliderDataFileResolution resolution = activeSet.ResolveSliderDataFile(dataFile);
 
 			SliderDataLocation location;
-			location.sliderIndex = sliderIndex;
-			location.dataIndex = dataFileIndex;
-			location.sliderName = activeSet[sliderIndex].name;
+			location.key.sliderName = activeSet[sliderIndex].name;
 			location.shapeName = activeSet.TargetToShape(dataFile.targetName);
 			if (location.shapeName.empty())
 				location.shapeName = dataFile.targetName;
-			location.targetName = dataFile.targetName;
-			location.dataName = dataFile.dataName;
+			location.key.targetName = dataFile.targetName;
+			location.key.dataName = dataFile.dataName;
 			location.fileName = dataFile.fileName;
 			location.dataFileName = resolution.dataFileName;
 			location.dataNameInFile = resolution.dataNameInFile;
@@ -913,6 +931,18 @@ std::string OutfitProject::EnsureSliderDataLocal(const std::string& sliderName, 
 	return dataName;
 }
 
+bool OutfitProject::SetSliderDataLocal(const SliderDataKey& key, std::string* errorMessage) {
+	size_t sliderIndex = 0;
+	size_t dataIndex = 0;
+	if (!ResolveSliderDataEntry(key, sliderIndex, dataIndex)) {
+		if (errorMessage)
+			*errorMessage = "Slider data entry no longer exists.";
+		return false;
+	}
+
+	return SetSliderDataLocal(sliderIndex, dataIndex, errorMessage);
+}
+
 bool OutfitProject::SetSliderDataLocal(const size_t sliderIndex, const size_t dataIndex, std::string* errorMessage) {
 	DiffInfo* dataFile = activeSet.GetSliderDataFile(sliderIndex, dataIndex);
 	if (!dataFile) {
@@ -936,6 +966,29 @@ bool OutfitProject::SetSliderDataExternal(const size_t sliderIndex, const size_t
 bool OutfitProject::SetSliderDataExternal(const size_t sliderIndex, const size_t dataIndex, const std::vector<std::string>& dataFolders, const std::string& osdFileName, std::string* errorMessage) {
 	std::vector<std::pair<size_t, size_t>> dataEntries;
 	dataEntries.emplace_back(sliderIndex, dataIndex);
+	return SetSliderDataExternal(dataEntries, dataFolders, osdFileName, errorMessage);
+}
+
+bool OutfitProject::SetSliderDataExternal(const std::vector<SliderDataKey>& dataKeys, const std::vector<std::string>& dataFolders, std::string* errorMessage) {
+	return SetSliderDataExternal(dataKeys, dataFolders, std::string(), errorMessage);
+}
+
+bool OutfitProject::SetSliderDataExternal(const std::vector<SliderDataKey>& dataKeys, const std::vector<std::string>& dataFolders, const std::string& osdFileName, std::string* errorMessage) {
+	std::vector<std::pair<size_t, size_t>> dataEntries;
+	dataEntries.reserve(dataKeys.size());
+
+	for (auto& dataKey : dataKeys) {
+		size_t sliderIndex = 0;
+		size_t dataIndex = 0;
+		if (!ResolveSliderDataEntry(dataKey, sliderIndex, dataIndex)) {
+			if (errorMessage)
+				*errorMessage = "Slider data entry no longer exists.";
+			return false;
+		}
+
+		dataEntries.emplace_back(sliderIndex, dataIndex);
+	}
+
 	return SetSliderDataExternal(dataEntries, dataFolders, osdFileName, errorMessage);
 }
 

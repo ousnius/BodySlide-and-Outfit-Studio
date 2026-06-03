@@ -41,13 +41,15 @@ struct ConformOptions {
 	std::vector<std::string> sliderNames; // If empty, conform all non-zap/non-UV sliders
 };
 
-struct SliderDataLocation {
-	size_t sliderIndex = 0;
-	size_t dataIndex = 0;
+struct SliderDataKey {
 	std::string sliderName;
-	std::string shapeName;
 	std::string targetName;
 	std::string dataName;
+};
+
+struct SliderDataLocation {
+	SliderDataKey key;
+	std::string shapeName;
 	std::string fileName;
 	std::string dataFileName;
 	std::string dataNameInFile;
@@ -161,6 +163,7 @@ class OutfitProject {
 	std::string UniqueTargetNameForShape(const std::string& shapeName, const std::set<std::string>& reservedTargets);
 	void RetargetShapeData(const std::string& shapeName, const std::string& newTarget);
 	void ResolveTargetConflictsForIncomingShapes(const std::vector<std::pair<std::string, std::string>>& incomingShapeTargets);
+	bool ResolveSliderDataEntry(const SliderDataKey& key, size_t& sliderIndex, size_t& dataIndex);
 
 	std::unique_ptr<SFMaterialDatabase> sfMaterialDb;
 	std::string sfMaterialDbContent;
@@ -271,9 +274,12 @@ public:
 	void GetSliderDataLocations(std::vector<SliderDataLocation>& outLocations, const std::string& sliderName = "");
 	bool SliderDataIsExternal(const std::string& sliderName, nifly::NiShape* shape);
 	std::string EnsureSliderDataLocal(const std::string& sliderName, nifly::NiShape* shape);
+	bool SetSliderDataLocal(const SliderDataKey& key, std::string* errorMessage = nullptr);
 	bool SetSliderDataLocal(const size_t sliderIndex, const size_t dataIndex, std::string* errorMessage = nullptr);
 	bool SetSliderDataExternal(const size_t sliderIndex, const size_t dataIndex, const std::vector<std::string>& dataFolders, std::string* errorMessage = nullptr);
 	bool SetSliderDataExternal(const size_t sliderIndex, const size_t dataIndex, const std::vector<std::string>& dataFolders, const std::string& osdFileName, std::string* errorMessage = nullptr);
+	bool SetSliderDataExternal(const std::vector<SliderDataKey>& dataKeys, const std::vector<std::string>& dataFolders, std::string* errorMessage = nullptr);
+	bool SetSliderDataExternal(const std::vector<SliderDataKey>& dataKeys, const std::vector<std::string>& dataFolders, const std::string& osdFileName, std::string* errorMessage = nullptr);
 	bool SetSliderDataExternal(const std::vector<std::pair<size_t, size_t>>& dataEntries, const std::vector<std::string>& dataFolders, std::string* errorMessage = nullptr);
 	bool SetSliderDataExternal(const std::vector<std::pair<size_t, size_t>>& dataEntries, const std::vector<std::string>& dataFolders, const std::string& osdFileName, std::string* errorMessage = nullptr);
 	bool SliderClamp(const size_t index);

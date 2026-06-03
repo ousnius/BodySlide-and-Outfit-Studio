@@ -74,17 +74,25 @@ SliderDataFileResolution SliderSet::ResolveSliderDataFile(const DiffInfo& dataFi
 }
 
 DiffInfo* SliderSet::GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex) {
-	if (sliderIndex >= sliders.size() || dataFileIndex >= sliders[sliderIndex].dataFiles.size())
+	if (sliderIndex >= sliders.size())
 		return nullptr;
 
-	return &sliders[sliderIndex].dataFiles[dataFileIndex];
+	auto& slider = sliders[sliderIndex];
+	if (dataFileIndex >= slider.dataFiles.size())
+		return nullptr;
+
+	return &slider.dataFiles[dataFileIndex];
 }
 
 const DiffInfo* SliderSet::GetSliderDataFile(const size_t sliderIndex, const size_t dataFileIndex) const {
-	if (sliderIndex >= sliders.size() || dataFileIndex >= sliders[sliderIndex].dataFiles.size())
+	if (sliderIndex >= sliders.size())
 		return nullptr;
 
-	return &sliders[sliderIndex].dataFiles[dataFileIndex];
+	const auto& slider = sliders[sliderIndex];
+	if (dataFileIndex >= slider.dataFiles.size())
+		return nullptr;
+
+	return &slider.dataFiles[dataFileIndex];
 }
 
 void SliderSet::SetSliderDataFileLocal(const size_t sliderIndex, const size_t dataFileIndex, const bool local) {

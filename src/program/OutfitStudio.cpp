@@ -9514,10 +9514,10 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 
 		std::vector<SliderDataLocation> sliderDataRows;
 		auto updateSliderDataButtons = [&]() {
-			std::vector<SliderDataLocation> locations;
-			size_t selectionCount = SliderDataList::GetSelected(sliderDataList, sliderDataRows, locations);
-			bool allLocal = SliderDataList::AllHaveSource(locations, true);
-			bool allExternal = SliderDataList::AllHaveSource(locations, false);
+			std::vector<size_t> selectedRows;
+			size_t selectionCount = SliderDataList::GetSelectedRows(sliderDataList, sliderDataRows, selectedRows);
+			bool allLocal = SliderDataList::AllHaveSource(sliderDataRows, selectedRows, true);
+			bool allExternal = SliderDataList::AllHaveSource(sliderDataRows, selectedRows, false);
 			btnSliderDataLocal->Enable(selectionCount > 0 && allExternal);
 			btnSliderDataExternal->Enable(selectionCount > 0 && allLocal);
 			btnSliderDataFolders->Enable(selectionCount > 0 && allExternal);
@@ -9587,25 +9587,25 @@ void OutfitStudioFrame::ShowSliderProperties(const std::string& sliderName) {
 		sliderDataList->Bind(wxEVT_LIST_ITEM_DESELECTED, [&](wxListEvent&) { updateSliderDataButtons(); });
 		SliderDataList::BindSelectAll(&dlg, sliderDataList, updateSliderDataButtons);
 		btnSliderDataLocal->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
-			std::vector<SliderDataLocation> locations;
-			SliderDataList::GetSelected(sliderDataList, sliderDataRows, locations);
-			if (SliderDataList::MakeLocal(&dlg, project, locations)) {
+			std::vector<size_t> selectedRows;
+			SliderDataList::GetSelectedRows(sliderDataList, sliderDataRows, selectedRows);
+			if (SliderDataList::MakeLocal(&dlg, project, sliderDataRows, selectedRows)) {
 				SetPendingChanges();
 				refreshSliderData();
 			}
 		});
 		btnSliderDataExternal->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
-			std::vector<SliderDataLocation> locations;
-			SliderDataList::GetSelected(sliderDataList, sliderDataRows, locations);
-			if (SliderDataList::EditFolders(&dlg, project, locations)) {
+			std::vector<size_t> selectedRows;
+			SliderDataList::GetSelectedRows(sliderDataList, sliderDataRows, selectedRows);
+			if (SliderDataList::EditFolders(&dlg, project, sliderDataRows, selectedRows)) {
 				SetPendingChanges();
 				refreshSliderData();
 			}
 		});
 		btnSliderDataFolders->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
-			std::vector<SliderDataLocation> locations;
-			SliderDataList::GetSelected(sliderDataList, sliderDataRows, locations);
-			if (SliderDataList::EditFolders(&dlg, project, locations)) {
+			std::vector<size_t> selectedRows;
+			SliderDataList::GetSelectedRows(sliderDataList, sliderDataRows, selectedRows);
+			if (SliderDataList::EditFolders(&dlg, project, sliderDataRows, selectedRows)) {
 				SetPendingChanges();
 				refreshSliderData();
 			}

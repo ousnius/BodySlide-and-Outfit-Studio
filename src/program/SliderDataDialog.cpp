@@ -48,13 +48,13 @@ void SliderDataList::Populate(wxListCtrl* list, const std::vector<SliderDataLoca
 			return;
 
 		const auto& row = rows[rowIndex];
-		long item = list->InsertItem(list->GetItemCount(), includeSlider ? wxString::FromUTF8(row.sliderName) : wxString::FromUTF8(row.shapeName));
+		long item = list->InsertItem(list->GetItemCount(), includeSlider ? wxString::FromUTF8(row.key.sliderName) : wxString::FromUTF8(row.shapeName));
 		int column = 1;
 		if (includeSlider)
 			list->SetItem(item, column++, wxString::FromUTF8(row.shapeName));
 
-		list->SetItem(item, column++, wxString::FromUTF8(row.targetName));
-		list->SetItem(item, column++, wxString::FromUTF8(row.dataName));
+		list->SetItem(item, column++, wxString::FromUTF8(row.key.targetName));
+		list->SetItem(item, column++, wxString::FromUTF8(row.key.dataName));
 		list->SetItem(item, column++, row.local ? _("Local") : _("External"));
 		list->SetItem(item, column++, JoinDataFolders(row.dataFolders));
 		list->SetItem(item, column++, wxString::FromUTF8(row.fileName));
@@ -74,25 +74,26 @@ void SliderDataList::Populate(wxListCtrl* list, const std::vector<SliderDataLoca
 	list->Thaw();
 }
 
-size_t SliderDataList::GetSelected(wxListCtrl* list, const std::vector<SliderDataLocation>& rows, std::vector<SliderDataLocation>& outLocations) {
-	outLocations.clear();
+size_t SliderDataList::GetSelectedRows(wxListCtrl* list, const std::vector<SliderDataLocation>& rows, std::vector<size_t>& outRowIndices) {
+	outRowIndices.clear();
 	long item = -1;
 	while ((item = list->GetNextItem(item, wxLIST_NEXT_ALL, wxLIST_STATE_SELECTED)) != -1) {
 		size_t rowIndex = static_cast<size_t>(list->GetItemData(item));
 		if (rowIndex < rows.size())
-			outLocations.push_back(rows[rowIndex]);
+			outRowIndices.push_back(rowIndex);
 	}
 
-	return outLocations.size();
+	return outRowIndices.size();
 }
 
-bool SliderDataList::AllHaveSource(const std::vector<SliderDataLocation>& locations, bool local) {
-	if (locations.empty())
+bool SliderDataList::AllHaveSource(const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices, bool local) {
+	if (rowIndices.empty())
 		return false;
 
-	for (auto& location : locations)
-		if (location.local != local)
+	for (auto rowIndex : rowIndices) {
+		if (rowIndex >= rows.size() || rows[rowIndex].local != local)
 			return false;
+	}
 
 	return true;
 }
@@ -120,14 +121,18 @@ void SliderDataList::BindSelectAll(wxWindow* window, wxListCtrl* list, const std
 	});
 }
 
-bool SliderDataList::MakeLocal(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& locations) {
+bool SliderDataList::MakeLocal(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
 	bool changed = false;
-	for (auto& location : locations) {
+	for (auto rowIndex : rowIndices) {
+		if (rowIndex >= rows.size())
+			continue;
+
+		auto& location = rows[rowIndex];
 		if (location.local)
 			continue;
 
 		std::string errorMessage;
-		if (!project->SetSliderDataLocal(location.sliderIndex, location.dataIndex, &errorMessage)) {
+		if (!project->SetSliderDataLocal(location.key, &errorMessage)) {
 			wxMessageBox(wxString::FromUTF8(errorMessage), _("Slider Data"), wxOK | wxICON_WARNING, parent);
 			return changed;
 		}
@@ -138,12 +143,12 @@ bool SliderDataList::MakeLocal(wxWindow* parent, OutfitProject* project, const s
 	return changed;
 }
 
-bool SliderDataList::EditFolders(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& locations) {
-	if (locations.empty())
+bool SliderDataList::EditFolders(wxWindow* parent, OutfitProject* project, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>& rowIndices) {
+	if (rowIndices.empty())
 		return false;
 
-	bool makeExternal = locations.front().local;
-	if (!AllHaveSource(locations, makeExternal)) {
+	bool makeExternal = rows[rowIndices.front()].local;
+	if (!AllHaveSource(rows, rowIndices, makeExternal)) {
 		wxMessageBox(_("Select either local or external slider data entries, not both."), _("Slider Data"), wxOK | wxICON_WARNING, parent);
 		return false;
 	}
@@ -160,9 +165,9 @@ bool SliderDataList::EditFolders(wxWindow* parent, OutfitProject* project, const
 
 	wxString commonFolders;
 	if (!makeExternal) {
-		commonFolders = JoinDataFolders(locations.front().dataFolders);
-		for (size_t locationIndex = 1; locationIndex < locations.size(); locationIndex++) {
-			if (JoinDataFolders(locations[locationIndex].dataFolders) != commonFolders) {
+		commonFolders = JoinDataFolders(rows[rowIndices.front()].dataFolders);
+		for (size_t selectedIndex = 1; selectedIndex < rowIndices.size(); selectedIndex++) {
+			if (JoinDataFolders(rows[rowIndices[selectedIndex]].dataFolders) != commonFolders) {
 				commonFolders.clear();
 				break;
 			}
@@ -177,7 +182,8 @@ bool SliderDataList::EditFolders(wxWindow* parent, OutfitProject* project, const
 	wxString commonOSDFile;
 	bool hasOSD = false;
 	bool hasOSDValue = false;
-	for (auto& location : locations) {
+	for (auto rowIndex : rowIndices) {
+		auto& location = rows[rowIndex];
 		if (location.isBSD)
 			continue;
 
@@ -212,10 +218,6 @@ bool SliderDataList::EditFolders(wxWindow* parent, OutfitProject* project, const
 	if (dlg.ShowModal() != wxID_OK)
 		return false;
 
-	std::vector<std::pair<size_t, size_t>> dataEntries;
-	for (auto& location : locations)
-		dataEntries.emplace_back(location.sliderIndex, location.dataIndex);
-
 	std::vector<std::string> dataFolders;
 	wxStringTokenizer tokenizer(folderText->GetValue(), ";");
 	while (tokenizer.HasMoreTokens()) {
@@ -230,9 +232,15 @@ bool SliderDataList::EditFolders(wxWindow* parent, OutfitProject* project, const
 	osdValue.Trim(true);
 	osdValue.Trim(false);
 	std::string osdFileName = osdValue.IsEmpty() ? std::string() : ToOSSlashes(std::string(osdValue.ToUTF8().data()));
+	std::vector<SliderDataKey> dataKeys;
+	dataKeys.reserve(rowIndices.size());
+	for (auto rowIndex : rowIndices) {
+		if (rowIndex < rows.size())
+			dataKeys.push_back(rows[rowIndex].key);
+	}
 
 	std::string errorMessage;
-	if (!project->SetSliderDataExternal(dataEntries, dataFolders, osdFileName, &errorMessage)) {
+	if (!project->SetSliderDataExternal(dataKeys, dataFolders, osdFileName, &errorMessage)) {
 		wxMessageBox(wxString::FromUTF8(errorMessage), _("Slider Data"), wxOK | wxICON_WARNING, parent);
 		return false;
 	}
@@ -290,41 +298,41 @@ SliderDataLocationsDialog::SliderDataLocationsDialog(OutfitStudioFrame* owner, O
 
 	SetSizer(mainSizer);
 
-	filterText->Bind(wxEVT_TEXT, [&](wxCommandEvent&) { ApplyFilters(); });
-	sourceChoice->Bind(wxEVT_CHOICE, [&](wxCommandEvent&) { ApplyFilters(); });
-	statusChoice->Bind(wxEVT_CHOICE, [&](wxCommandEvent&) { ApplyFilters(); });
-	sliderDataList->Bind(wxEVT_LIST_ITEM_SELECTED, [&](wxListEvent&) { UpdateButtons(); });
-	sliderDataList->Bind(wxEVT_LIST_ITEM_DESELECTED, [&](wxListEvent&) { UpdateButtons(); });
+	filterText->Bind(wxEVT_TEXT, [this](wxCommandEvent&) { ApplyFilters(); });
+	sourceChoice->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) { ApplyFilters(); });
+	statusChoice->Bind(wxEVT_CHOICE, [this](wxCommandEvent&) { ApplyFilters(); });
+	sliderDataList->Bind(wxEVT_LIST_ITEM_SELECTED, [this](wxListEvent&) { UpdateButtons(); });
+	sliderDataList->Bind(wxEVT_LIST_ITEM_DESELECTED, [this](wxListEvent&) { UpdateButtons(); });
 	SliderDataList::BindSelectAll(this, sliderDataList, [this]() { UpdateButtons(); });
-	btnMakeLocal->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
-		std::vector<SliderDataLocation> locations;
-		SliderDataList::GetSelected(sliderDataList, rows, locations);
-		if (SliderDataList::MakeLocal(this, project, locations))
+	btnMakeLocal->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+		std::vector<size_t> selectedRows;
+		SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+		if (SliderDataList::MakeLocal(this, this->project, rows, selectedRows))
 			MarkChangedAndRefresh();
 	});
-	btnMakeExternal->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
-		std::vector<SliderDataLocation> locations;
-		SliderDataList::GetSelected(sliderDataList, rows, locations);
-		if (SliderDataList::EditFolders(this, project, locations))
+	btnMakeExternal->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+		std::vector<size_t> selectedRows;
+		SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+		if (SliderDataList::EditFolders(this, this->project, rows, selectedRows))
 			MarkChangedAndRefresh();
 	});
-	btnEditFolders->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) {
-		std::vector<SliderDataLocation> locations;
-		SliderDataList::GetSelected(sliderDataList, rows, locations);
-		if (SliderDataList::EditFolders(this, project, locations))
+	btnEditFolders->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
+		std::vector<size_t> selectedRows;
+		SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+		if (SliderDataList::EditFolders(this, this->project, rows, selectedRows))
 			MarkChangedAndRefresh();
 	});
-	btnClose->Bind(wxEVT_BUTTON, [&](wxCommandEvent&) { EndModal(wxID_CLOSE); });
+	btnClose->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) { EndModal(wxID_CLOSE); });
 
 	RefreshRows();
 	CenterOnParent();
 }
 
 void SliderDataLocationsDialog::UpdateButtons() {
-	std::vector<SliderDataLocation> locations;
-	size_t selectionCount = SliderDataList::GetSelected(sliderDataList, rows, locations);
-	bool allLocal = SliderDataList::AllHaveSource(locations, true);
-	bool allExternal = SliderDataList::AllHaveSource(locations, false);
+	std::vector<size_t> selectedRows;
+	size_t selectionCount = SliderDataList::GetSelectedRows(sliderDataList, rows, selectedRows);
+	bool allLocal = SliderDataList::AllHaveSource(rows, selectedRows, true);
+	bool allExternal = SliderDataList::AllHaveSource(rows, selectedRows, false);
 	btnMakeLocal->Enable(selectionCount > 0 && allExternal);
 	btnMakeExternal->Enable(selectionCount > 0 && allLocal);
 	btnEditFolders->Enable(selectionCount > 0 && allExternal);
@@ -348,7 +356,7 @@ void SliderDataLocationsDialog::ApplyFilters() {
 			continue;
 
 		if (!filter.IsEmpty()) {
-			wxString haystack = wxString::FromUTF8(row.sliderName + " " + row.shapeName + " " + row.targetName + " " + row.dataName + " " + row.fileName);
+			wxString haystack = wxString::FromUTF8(row.key.sliderName + " " + row.shapeName + " " + row.key.targetName + " " + row.key.dataName + " " + row.fileName);
 			haystack += " ";
 			haystack += SliderDataList::JoinDataFolders(row.dataFolders);
 			if (!haystack.Lower().Contains(filter))
