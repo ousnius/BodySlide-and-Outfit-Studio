@@ -2249,11 +2249,7 @@ void BodySlideApp::ApplyClippingFix(NifFile& nif,
 			continue;
 
 		auto shape = nif.FindBlockByName<NiShape>(shapeName);
-		if (!shape)
-			continue;
-
-		NiShader* shader = nif.GetShader(shape);
-		if (shader && shader->IsSkinTinted())
+		if (!ClippingFixer::IsEligibleForFix(nif, shape))
 			continue;
 
 		std::vector<Triangle> outfitTris;
@@ -3553,7 +3549,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 
 				for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 					auto shape = nifBig.FindBlockByName<NiShape>(it->first);
-					if (!shape || shape == refShape)
+					if (shape == refShape || !ClippingFixer::IsEligibleForFix(nifBig, shape))
 						continue;
 
 					std::vector<Vector3> outfitVerts;
@@ -3578,7 +3574,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 						if (!bodyVertsSmall.empty() && !bodyTrisSmall.empty()) {
 							for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 								auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
-								if (!shapeSmall || shapeSmall == refShapeSmall)
+								if (shapeSmall == refShapeSmall || !ClippingFixer::IsEligibleForFix(nifSmall, shapeSmall))
 									continue;
 
 								std::vector<Vector3> outfitVerts;
@@ -4438,7 +4434,7 @@ int BodySlideApp::BuildListBodies(
 
 					for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
 						auto shape = nifBig.FindBlockByName<NiShape>(it->first);
-						if (!shape || shape == refShape)
+						if (shape == refShape || !ClippingFixer::IsEligibleForFix(nifBig, shape))
 							continue;
 
 						std::vector<Vector3> outfitVerts;
@@ -4462,7 +4458,7 @@ int BodySlideApp::BuildListBodies(
 							if (!bodyVertsSmall.empty() && !bodyTrisSmall.empty()) {
 								for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
 									auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
-									if (!shapeSmall || shapeSmall == refShapeSmall)
+									if (shapeSmall == refShapeSmall || !ClippingFixer::IsEligibleForFix(nifSmall, shapeSmall))
 										continue;
 
 									std::vector<Vector3> outfitVerts;

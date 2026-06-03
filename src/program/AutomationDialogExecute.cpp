@@ -2479,6 +2479,9 @@ int AutomationDialog::ExecuteStepFixClipping(const AutomationStep& step) {
 			if (project->IsBaseShape(shape))
 				continue;
 
+			if (!ClippingFixer::IsEligibleForFix(*project->GetWorkNif(), shape))
+				continue;
+
 			std::vector<nifly::Vector3> outfitVerts;
 			project->GetWorkNif()->GetVertsForShape(shape, outfitVerts);
 

@@ -18,6 +18,10 @@ public:
 	// Find the first shape in the NIF with a skin-tinted shader (the body/reference shape).
 	static nifly::NiShape* FindReferenceShape(nifly::NifFile& nif);
 
+	// Returns true if a shape is eligible for clipping fix.
+	// Shapes are excluded when null, hidden, missing a shader, or skin-tinted.
+	static bool IsEligibleForFix(nifly::NifFile& nif, nifly::NiShape* shape);
+
 	// Fix clipping of outfit vertices that penetrate the body mesh.
 	// Inflates the body surface outward and smoothly displaces nearby outfit
 	// vertices along the interpolated body normal, preserving outfit detail.

@@ -3258,6 +3258,9 @@ bool OutfitProject::BuildClippingCorrectionCache(NiShape* shape, float strength,
 	if (!shape || IsBaseShape(shape) || !baseShape || strength <= 0.0f)
 		return false;
 
+	if (!ClippingFixer::IsEligibleForFix(workNif, shape))
+		return false;
+
 	baseShape->GetTriangles(cache.bodyTris);
 	shape->GetTriangles(cache.outfitTris);
 	if (cache.bodyTris.empty() || cache.outfitTris.empty())
@@ -3308,6 +3311,9 @@ void OutfitProject::CalcSliderClippingCorrection(NiShape* shape,
 	outMorphDiffs.clear();
 
 	if (!shape || IsBaseShape(shape) || !baseShape || strength <= 0.0f)
+		return;
+
+	if (!ClippingFixer::IsEligibleForFix(workNif, shape))
 		return;
 
 	size_t sliderIndex = 0;

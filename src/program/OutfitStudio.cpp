@@ -9732,8 +9732,13 @@ void OutfitStudioFrame::FixClippingForShape(const std::vector<Vector3>& bodyVert
 											const ClippingFixOptions& options,
 											UndoStateProject* usp,
 											const std::unordered_set<uint16_t>* allowedVerts) {
+	if (!ClippingFixer::IsEligibleForFix(*project->GetWorkNif(), shape))
+		return;
+
 	std::vector<Triangle> outfitTris;
 	shape->GetTriangles(outfitTris);
+	if (outfitTris.empty())
+		return;
 
 	std::vector<Vector3> fixedVerts = outfitVerts;
 	ClippingFixer::FixClipping(bodyVerts, bodyTris, fixedVerts, outfitTris, options);
@@ -9788,8 +9793,7 @@ void OutfitStudioFrame::OnSliderFixClipping(wxCommandEvent& WXUNUSED(event)) {
 		if (project->IsBaseShape(shape))
 			continue;
 
-		NiShader* shader = project->GetWorkNif()->GetShader(shape);
-		if (shader && shader->IsSkinTinted())
+		if (!ClippingFixer::IsEligibleForFix(*project->GetWorkNif(), shape))
 			continue;
 
 		// Only process shapes that have a diff for the active slider
@@ -10963,8 +10967,7 @@ void OutfitStudioFrame::OnFixClippingShape(wxCommandEvent& event) {
 		if (project->IsBaseShape(shape))
 			continue;
 
-		NiShader* shader = project->GetWorkNif()->GetShader(shape);
-		if (shader && shader->IsSkinTinted())
+		if (!ClippingFixer::IsEligibleForFix(*project->GetWorkNif(), shape))
 			continue;
 
 		std::unordered_map<uint16_t, float> unmasked;

@@ -111,6 +111,20 @@ NiShape* ClippingFixer::FindReferenceShape(NifFile& nif) {
 	return nullptr;
 }
 
+bool ClippingFixer::IsEligibleForFix(NifFile& nif, NiShape* shape) {
+	if (!shape)
+		return false;
+
+	if ((shape->flags & 1) != 0)
+		return false;
+
+	NiShader* shader = nif.GetShader(shape);
+	if (!shader || shader->IsSkinTinted())
+		return false;
+
+	return true;
+}
+
 std::vector<Vector3> ClippingFixer::ComputeVertexNormals(const std::vector<Vector3>& verts,
 														 const std::vector<Triangle>& tris) {
 	std::vector<Vector3> normals(verts.size());
