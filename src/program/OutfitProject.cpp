@@ -3088,6 +3088,9 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 		mRefProjectName = activeSet.GetReferenceProjectName();
 		mRefShapeName = activeSet.GetReferenceShapeName();
 	}
+	else if (baseShape) {
+		mRefShapeName = baseShape->name.get();
+	}
 
 	owner->EndProgress();
 	return 0;
@@ -4993,6 +4996,9 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 	if (IsBaseShape(shape)) {
 		morpher.UnlinkRefDiffData();
 		baseShape = nullptr;
+		mRefProjectFile.clear();
+		mRefProjectName.clear();
+		mRefShapeName.clear();
 	}
 
 	owner->ClearSelected(shape);
@@ -5005,6 +5011,13 @@ void OutfitProject::CaptureShapeDeleteState(NiShape* shape, UndoStateShapeDelete
 
 	state.shapeName = shape->name.get();
 	state.wasBaseShape = IsBaseShape(shape);
+
+	// Capture reference info so it can be restored on undo
+	if (state.wasBaseShape) {
+		state.refProjectFile = mRefProjectFile;
+		state.refProjectName = mRefProjectName;
+		state.refShapeName = mRefShapeName;
+	}
 
 	// Clone shape and all child blocks into a temporary NIF
 	state.nifBackup.Create(workNif.GetHeader().GetVersion());
@@ -5096,6 +5109,9 @@ NiShape* OutfitProject::RestoreDeletedShape(UndoStateShapeDelete& state) {
 	if (restoreAsBase) {
 		baseShape = restoredShape;
 		morpher.LinkRefDiffData(&baseDiffData);
+		mRefProjectFile = state.refProjectFile;
+		mRefProjectName = state.refProjectName;
+		mRefShapeName = state.refShapeName;
 	}
 
 	return restoredShape;
