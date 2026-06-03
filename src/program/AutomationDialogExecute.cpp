@@ -1028,6 +1028,9 @@ int AutomationDialog::ExecuteStepApplyPose(const AutomationStep& step) {
 		bone->UpdatePoseTransform();
 	}
 
+	outfitStudio->PoseToGUI();
+	outfitStudio->glView->UpdateBones();
+	outfitStudio->glView->ApplyUndoState(&usp, false);
 	project->bPose = false;
 	return 0;
 }
