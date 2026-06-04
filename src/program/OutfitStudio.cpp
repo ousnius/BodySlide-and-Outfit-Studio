@@ -11282,7 +11282,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 	ApplySliders();
 }
 
-void OutfitStudioFrame::CheckCopyGeo(wxDialog& dlg) {
+MergeCheckErrors OutfitStudioFrame::CheckCopyGeo(wxDialog& dlg) {
 	wxStaticText* errors = XRCCTRL(dlg, "copyGeometryErrors", wxStaticText);
 	wxChoice* sourceChoice = XRCCTRL(dlg, "sourceChoice", wxChoice);
 	wxChoice* targetChoice = XRCCTRL(dlg, "targetChoice", wxChoice);
@@ -11293,34 +11293,46 @@ void OutfitStudioFrame::CheckCopyGeo(wxDialog& dlg) {
 	MergeCheckErrors e;
 	project->CheckMerge(source, target, e);
 	XRCCTRL(dlg, "wxID_OK", wxButton)->Enable(e.canMerge);
+	const bool hasWarnings = e.partitionsMismatch || e.segmentsMismatch || e.textureMismatch;
 
-	if (e.canMerge) {
+	if (e.canMerge && !hasWarnings) {
 		errors->SetLabel(_("No errors found!"));
 		dlg.SetSize(dlg.GetBestSize());
-		return;
+		return e;
 	}
 
-	wxString msg;
-	msg << _("Errors:");
+	wxString errorLines;
 	if (e.shapesSame)
-		msg << "\n- " << _("Target must be different from source.");
-	if (e.partitionsMismatch)
-		msg << "\n- " << _("Partitions do not match. Make sure the amount of partitions and their slots match up.");
-	if (e.segmentsMismatch)
-		msg << "\n- " << _("Segments do not match. Make sure the amount of segments, sub segments and their info as well as the segmentation file match.");
+		errorLines << "\n- " << _("Target must be different from source.");
 	if (e.tooManyVertices)
-		msg << "\n- " << _("Resulting shape would have too many vertices.");
+		errorLines << "\n- " << _("Resulting shape would have too many vertices.");
 	if (e.tooManyTriangles)
-		msg << "\n- " << _("Resulting shape would have too many triangles.");
+		errorLines << "\n- " << _("Resulting shape would have too many triangles.");
 	if (e.shaderMismatch)
-		msg << "\n- " << _("Shaders do not match. Make sure both shapes either have or don't have a shader and their shader type matches.");
-	if (e.textureMismatch)
-		msg << "\n- " << _("Base texture doesn't match. Make sure both shapes have the same base/diffuse texture path.");
+		errorLines << "\n- " << _("Shaders do not match. Make sure both shapes either have or don't have a shader and their shader type matches.");
 	if (e.alphaPropMismatch)
-		msg << "\n- " << _("Alpha property mismatch. Make sure both shapes either have or don't have an alpha property and their flags + threshold match.");
+		errorLines << "\n- " << _("Alpha property mismatch. Make sure both shapes either have or don't have an alpha property and their flags + threshold match.");
+
+	wxString warningLines;
+	if (e.partitionsMismatch)
+		warningLines << "\n- " << _("Partitions do not match. Merge will auto-reconcile matching slots and create missing partitions.");
+	if (e.segmentsMismatch)
+		warningLines << "\n- " << _("Segments do not match. Merge will auto-reconcile matching IDs and create missing segments/sub segments.");
+	if (e.textureMismatch)
+		warningLines << "\n- " << _("Base texture doesn't match. Merge will copy all texture paths from source to target.");
+
+	wxString msg;
+	if (!errorLines.empty())
+		msg << _("Errors:") << errorLines;
+	if (hasWarnings) {
+		if (!msg.empty())
+			msg << "\n";
+		msg << _("Warnings:") << warningLines;
+	}
 
 	errors->SetLabel(msg);
 	dlg.SetSize(dlg.GetBestSize());
+	return e;
 }
 
 void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
@@ -11362,9 +11374,10 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 	else
 		targetChoice->SetSelection(0);
 
-	sourceChoice->Bind(wxEVT_CHOICE, [this, &dlg](wxCommandEvent&) { CheckCopyGeo(dlg); });
-	targetChoice->Bind(wxEVT_CHOICE, [this, &dlg](wxCommandEvent&) { CheckCopyGeo(dlg); });
-	CheckCopyGeo(dlg);
+	MergeCheckErrors mergeErrors;
+	sourceChoice->Bind(wxEVT_CHOICE, [this, &dlg, &mergeErrors](wxCommandEvent&) { mergeErrors = CheckCopyGeo(dlg); });
+	targetChoice->Bind(wxEVT_CHOICE, [this, &dlg, &mergeErrors](wxCommandEvent&) { mergeErrors = CheckCopyGeo(dlg); });
+	mergeErrors = CheckCopyGeo(dlg);
 
 	if (dlg.ShowModal() != wxID_OK)
 		return;
@@ -11389,6 +11402,21 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 	std::unordered_map<std::string, std::vector<float>> maskStash = glView->StashMasks();
 
 	project->ApplyShapeMeshUndo(targetShape, maskStash[usp->usss[0].shapeName], usp->usss[0], false);
+
+	if (mergeErrors.textureMismatch) {
+		auto* workNif = project->GetWorkNif();
+		if (workNif) {
+			constexpr uint32_t kMaxTextureSlots = 10;
+			for (uint32_t texIndex = 0; texIndex < kMaxTextureSlots; ++texIndex) {
+				std::string sourceTexturePath;
+				workNif->GetTextureSlot(sourceShape, sourceTexturePath, texIndex);
+				workNif->SetTextureSlot(targetShape, sourceTexturePath, texIndex);
+			}
+			workNif->TrimTexturePaths();
+		}
+
+		project->SetTextures(targetShape);
+	}
 
 	if (XRCCTRL(dlg, "checkDeleteSource", wxCheckBox)->IsChecked())
 		project->DeleteShape(sourceShape);

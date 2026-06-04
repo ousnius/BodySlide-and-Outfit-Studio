@@ -86,6 +86,14 @@ struct UndoStateShape {
 	// UndoType::Mesh.  They are stored in sorted order by index.
 	std::vector<UndoStateVertex> delVerts, addVerts;
 	std::vector<UndoStateTriangle> delTris, addTris;
+	// Optional segment/partition metadata snapshots used for mesh edits that
+	// reconcile part assignments (for example merge geometry).
+	bool hasSegmentInfo = false;
+	nifly::NifSegmentationInfo segmentInfoBefore;
+	nifly::NifSegmentationInfo segmentInfoAfter;
+	bool hasPartitionInfo = false;
+	nifly::NiVector<nifly::BSDismemberSkinInstance::PartitionInfo> partitionInfoBefore;
+	nifly::NiVector<nifly::BSDismemberSkinInstance::PartitionInfo> partitionInfoAfter;
 	bool hadVertexColors = false;
 };
 

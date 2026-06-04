@@ -114,6 +114,185 @@ public:
 	}
 };
 
+int GetFirstSegmentPartID(const NifSegmentationInfo& inf) {
+	for (const NifSegmentInfo& seg : inf.segs) {
+		if (seg.partID >= 0)
+			return seg.partID;
+		for (const NifSubSegmentInfo& sub : seg.subs)
+			if (sub.partID >= 0)
+				return sub.partID;
+	}
+
+	return 0;
+}
+
+int FindSegmentIndexByPartID(const NifSegmentationInfo& inf, int partID) {
+	for (size_t i = 0; i < inf.segs.size(); ++i)
+		if (inf.segs[i].partID == partID)
+			return static_cast<int>(i);
+
+	return -1;
+}
+
+void RemapCopyGeoTriangles(UndoStateShape& uss, const std::vector<int>& mappedSourceParts) {
+	const size_t triCount = std::min(uss.delTris.size(), mappedSourceParts.size());
+	for (size_t ti = 0; ti < triCount; ++ti)
+		uss.delTris[ti].partID = mappedSourceParts[ti];
+}
+
+void ReconcileCopyGeoSegments(NifFile& workNif, NiShape* source, NiShape* target, UndoStateShape& uss) {
+	std::vector<int> sourceTriParts;
+	NifSegmentationInfo sourceInf;
+	bool sourceHasSegs = workNif.GetShapeSegments(source, sourceInf, sourceTriParts);
+
+	std::vector<int> targetTriParts;
+	NifSegmentationInfo targetInf;
+	bool targetHasSegs = workNif.GetShapeSegments(target, targetInf, targetTriParts);
+	if (!sourceHasSegs && !targetHasSegs)
+		return;
+
+	NifSegmentationInfo mergedInf = targetHasSegs ? targetInf : NifSegmentationInfo();
+	if (mergedInf.ssfFile.empty() && sourceHasSegs)
+		mergedInf.ssfFile = sourceInf.ssfFile;
+
+	std::unordered_set<int> usedPartIDs;
+	int maxPartID = -1;
+	for (const NifSegmentInfo& seg : mergedInf.segs) {
+		usedPartIDs.insert(seg.partID);
+		maxPartID = std::max(maxPartID, seg.partID);
+		for (const NifSubSegmentInfo& sub : seg.subs) {
+			usedPartIDs.insert(sub.partID);
+			maxPartID = std::max(maxPartID, sub.partID);
+		}
+	}
+
+	auto allocPartID = [&]() {
+		int id = std::max(0, maxPartID + 1);
+		while (usedPartIDs.find(id) != usedPartIDs.end())
+			++id;
+		usedPartIDs.insert(id);
+		maxPartID = std::max(maxPartID, id);
+		return id;
+	};
+
+	std::unordered_map<int, int> sourceToMergedPartIDs;
+	if (sourceHasSegs) {
+		for (const NifSegmentInfo& sourceSeg : sourceInf.segs) {
+			int mergedSegID = sourceSeg.partID;
+			int mergedSegIndex = FindSegmentIndexByPartID(mergedInf, mergedSegID);
+			if (mergedSegIndex < 0) {
+				if (usedPartIDs.find(mergedSegID) != usedPartIDs.end())
+					mergedSegID = allocPartID();
+				else {
+					usedPartIDs.insert(mergedSegID);
+					maxPartID = std::max(maxPartID, mergedSegID);
+				}
+
+				NifSegmentInfo newSeg = sourceSeg;
+				newSeg.partID = mergedSegID;
+				newSeg.subs.clear();
+				mergedInf.segs.push_back(newSeg);
+				mergedSegIndex = static_cast<int>(mergedInf.segs.size()) - 1;
+			}
+
+			sourceToMergedPartIDs[sourceSeg.partID] = mergedSegID;
+
+			NifSegmentInfo& mergedSeg = mergedInf.segs[mergedSegIndex];
+			for (const NifSubSegmentInfo& sourceSub : sourceSeg.subs) {
+				int mergedSubID = sourceSub.partID;
+				bool foundSubInSegment = false;
+				for (const NifSubSegmentInfo& mergedSub : mergedSeg.subs) {
+					if (mergedSub.partID == mergedSubID) {
+						foundSubInSegment = true;
+						break;
+					}
+				}
+
+				if (!foundSubInSegment) {
+					if (usedPartIDs.find(mergedSubID) != usedPartIDs.end())
+						mergedSubID = allocPartID();
+					else {
+						usedPartIDs.insert(mergedSubID);
+						maxPartID = std::max(maxPartID, mergedSubID);
+					}
+
+					NifSubSegmentInfo newSub = sourceSub;
+					newSub.partID = mergedSubID;
+					mergedSeg.subs.push_back(newSub);
+				}
+
+				sourceToMergedPartIDs[sourceSub.partID] = mergedSubID;
+			}
+		}
+	}
+
+	std::vector<int> mappedSourceParts(source->GetNumTriangles(), GetFirstSegmentPartID(mergedInf));
+	if (sourceHasSegs) {
+		for (size_t ti = 0; ti < sourceTriParts.size() && ti < mappedSourceParts.size(); ++ti) {
+			auto idIt = sourceToMergedPartIDs.find(sourceTriParts[ti]);
+			if (idIt != sourceToMergedPartIDs.end())
+				mappedSourceParts[ti] = idIt->second;
+		}
+	}
+
+	RemapCopyGeoTriangles(uss, mappedSourceParts);
+
+	uss.hasSegmentInfo = true;
+	uss.segmentInfoBefore = targetHasSegs ? targetInf : NifSegmentationInfo();
+	uss.segmentInfoAfter = mergedInf;
+	uss.hasPartitionInfo = false;
+}
+
+void ReconcileCopyGeoPartitions(NifFile& workNif, NiShape* source, NiShape* target, UndoStateShape& uss) {
+	std::vector<int> sourceTriParts;
+	NiVector<BSDismemberSkinInstance::PartitionInfo> sourceInfo;
+	bool sourceHasParts = workNif.GetShapePartitions(source, sourceInfo, sourceTriParts);
+
+	std::vector<int> targetTriParts;
+	NiVector<BSDismemberSkinInstance::PartitionInfo> targetInfo;
+	bool targetHasParts = workNif.GetShapePartitions(target, targetInfo, targetTriParts);
+	if (!sourceHasParts && !targetHasParts)
+		return;
+
+	NiVector<BSDismemberSkinInstance::PartitionInfo> mergedInfo = targetHasParts ? targetInfo : NiVector<BSDismemberSkinInstance::PartitionInfo>();
+	std::unordered_map<uint16_t, int> slotToTargetIndex;
+	for (int i = 0; i < static_cast<int>(mergedInfo.size()); ++i)
+		slotToTargetIndex[mergedInfo[i].partID] = i;
+
+	std::vector<int> sourceIndexToMergedIndex(sourceInfo.size(), 0);
+	if (sourceHasParts) {
+		for (size_t si = 0; si < sourceInfo.size(); ++si) {
+			const uint16_t partID = sourceInfo[si].partID;
+			auto targetIt = slotToTargetIndex.find(partID);
+			if (targetIt != slotToTargetIndex.end()) {
+				sourceIndexToMergedIndex[si] = targetIt->second;
+				continue;
+			}
+
+			const int newIndex = static_cast<int>(mergedInfo.size());
+			mergedInfo.push_back(sourceInfo[si]);
+			sourceIndexToMergedIndex[si] = newIndex;
+			slotToTargetIndex[partID] = newIndex;
+		}
+	}
+
+	std::vector<int> mappedSourceParts(source->GetNumTriangles(), mergedInfo.empty() ? -1 : 0);
+	if (sourceHasParts) {
+		for (size_t ti = 0; ti < sourceTriParts.size() && ti < mappedSourceParts.size(); ++ti) {
+			int sourcePartIndex = sourceTriParts[ti];
+			if (sourcePartIndex >= 0 && sourcePartIndex < static_cast<int>(sourceIndexToMergedIndex.size()))
+				mappedSourceParts[ti] = sourceIndexToMergedIndex[sourcePartIndex];
+		}
+	}
+
+	RemapCopyGeoTriangles(uss, mappedSourceParts);
+
+	uss.hasPartitionInfo = true;
+	uss.partitionInfoBefore = targetHasParts ? targetInfo : NiVector<BSDismemberSkinInstance::PartitionInfo>();
+	uss.partitionInfoAfter = mergedInfo;
+	uss.hasSegmentInfo = false;
+}
+
 }
 
 OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
@@ -3734,6 +3913,20 @@ void OutfitProject::ApplyShapeMeshUndo(NiShape* shape, std::vector<float>& mask,
 	if (!gotsegs)
 		gotparts = workNif.GetShapePartitions(shape, partitionInfo, triParts);
 
+	if (uss.hasSegmentInfo) {
+		gotsegs = true;
+		gotparts = false;
+		inf = bUndo ? uss.segmentInfoBefore : uss.segmentInfoAfter;
+		if (triParts.size() != tris.size())
+			triParts.resize(tris.size(), -1);
+	}
+	else if (uss.hasPartitionInfo && !gotsegs) {
+		gotparts = true;
+		partitionInfo = bUndo ? uss.partitionInfoBefore : uss.partitionInfoAfter;
+		if (triParts.size() != tris.size())
+			triParts.resize(tris.size(), -1);
+	}
+
 	std::vector<Vector3> verts;
 	workNif.GetVertsForShape(shape, verts);
 
@@ -4949,7 +5142,7 @@ void OutfitProject::CheckMerge(const std::string& sourceName, const std::string&
 		}
 	}
 
-	e.canMerge = !e.partitionsMismatch && !e.segmentsMismatch && !e.tooManyVertices && !e.tooManyTriangles && !e.shaderMismatch && !e.textureMismatch && !e.alphaPropMismatch;
+	e.canMerge = !e.tooManyVertices && !e.tooManyTriangles && !e.shaderMismatch && !e.alphaPropMismatch;
 }
 
 void OutfitProject::PrepareCopyGeo(NiShape* source, NiShape* target, UndoStateShape& uss) {
@@ -4970,6 +5163,15 @@ void OutfitProject::PrepareCopyGeo(NiShape* source, NiShape* target, UndoStateSh
 
 	CollectVertexData(source, uss, vinds);
 	CollectTriangleData(source, uss, tinds);
+
+	std::vector<int> sourceTriParts;
+	NifSegmentationInfo sourceSegInfo;
+	if (workNif.GetShapeSegments(source, sourceSegInfo, sourceTriParts)) {
+		ReconcileCopyGeoSegments(workNif, source, target, uss);
+	}
+	else if (workNif.GetHeader().GetVersion().File() == NiFileVersion::V20_2_0_7) {
+		ReconcileCopyGeoPartitions(workNif, source, target, uss);
+	}
 
 	for (uint16_t vi = 0; vi < snVerts; ++vi)
 		uss.delVerts[vi].index += tnVerts;
