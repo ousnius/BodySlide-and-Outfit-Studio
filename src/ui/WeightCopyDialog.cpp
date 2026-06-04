@@ -136,7 +136,6 @@ void WeightCopyDialog::HighlightBonesWithSelectionWeights() {
 			boneListBox->RefreshItem(i);
 		}
 #else
-		wxString displayName = wxString::FromUTF8(boneName);
 		if (hasWeights)
 			displayName += kWeightedBoneSuffix;
 
