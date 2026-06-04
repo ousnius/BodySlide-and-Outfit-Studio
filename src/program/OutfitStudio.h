@@ -1083,6 +1083,7 @@ public:
 	void UpdateSegmentNames();
 	void ApplySegmentVisibility(Mesh* m);
 	void ResetSegmentVisibility();
+	bool GrowShrinkSegmentPartitionSelection(bool grow);
 	bool PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri, const nifly::Vector3& hitPointModel, float radiusModel);
 
 	void ShowPartition(const wxTreeItemId& item = nullptr);

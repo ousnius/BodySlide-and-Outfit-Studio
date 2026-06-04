@@ -6671,6 +6671,215 @@ bool OutfitStudioFrame::PaintSegmentPartitionTriangles(Mesh* hitMesh, int hitTri
 	return changed;
 }
 
+bool OutfitStudioFrame::GrowShrinkSegmentPartitionSelection(bool grow) {
+	if (!activeItem || !glView->GetSegmentMode())
+		return false;
+
+	auto shape = activeItem->GetShape();
+	if (!shape)
+		return false;
+
+	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+	if (tris.empty())
+		return false;
+
+	std::vector<std::vector<int>> triNeighbors(tris.size());
+	std::unordered_map<uint64_t, int> edgeToTri;
+	edgeToTri.reserve(tris.size() * 3);
+
+	auto makeEdgeKey = [](int a, int b) -> uint64_t {
+		uint32_t va = static_cast<uint32_t>(std::min(a, b));
+		uint32_t vb = static_cast<uint32_t>(std::max(a, b));
+		return (static_cast<uint64_t>(va) << 32) | vb;
+	};
+
+	auto connectEdge = [&](int triIndex, int v1, int v2) {
+		uint64_t edgeKey = makeEdgeKey(v1, v2);
+		auto it = edgeToTri.find(edgeKey);
+		if (it == edgeToTri.end()) {
+			edgeToTri.emplace(edgeKey, triIndex);
+		}
+		else {
+			int otherTri = it->second;
+			if (otherTri != triIndex) {
+				triNeighbors[triIndex].push_back(otherTri);
+				triNeighbors[otherTri].push_back(triIndex);
+			}
+		}
+	};
+
+	for (size_t ti = 0; ti < tris.size(); ++ti) {
+		const Triangle& t = tris[ti];
+		int triIndex = static_cast<int>(ti);
+		connectEdge(triIndex, t.p1, t.p2);
+		connectEdge(triIndex, t.p2, t.p3);
+		connectEdge(triIndex, t.p3, t.p1);
+	}
+
+	bool changed = false;
+
+	if (triSParts.size() == tris.size() && activeSegment.IsOk() && segmentTree->GetItemParent(activeSegment).IsOk()) {
+		std::vector<bool> selPartIDs(CalcMaxSegPartID() + 1, false);
+		int destPartID = -1;
+
+		SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
+		if (subSegmentData) {
+			destPartID = subSegmentData->partID;
+			selPartIDs[destPartID] = true;
+		}
+		else {
+			SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
+			if (segmentData) {
+				selPartIDs[segmentData->partID] = true;
+				destPartID = segmentData->partID;
+				wxTreeItemIdValue subCookie;
+				wxTreeItemId child = segmentTree->GetFirstChild(activeSegment, subCookie);
+				while (child.IsOk()) {
+					SubSegmentItemData* childData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(child));
+					if (childData) {
+						selPartIDs[childData->partID] = true;
+						destPartID = childData->partID;
+					}
+					child = segmentTree->GetNextChild(activeSegment, subCookie);
+				}
+			}
+		}
+
+		if (destPartID >= 0) {
+			std::vector<bool> triSelected(tris.size(), false);
+			for (size_t ti = 0; ti < tris.size(); ++ti) {
+				int partID = triSParts[ti];
+				if (partID >= 0 && partID < static_cast<int>(selPartIDs.size()) && selPartIDs[partID])
+					triSelected[ti] = true;
+			}
+
+			if (grow) {
+				for (size_t ti = 0; ti < tris.size(); ++ti) {
+					if (triSelected[ti])
+						continue;
+
+					bool touchesSelection = false;
+					for (int nTri : triNeighbors[ti]) {
+						if (triSelected[nTri]) {
+							touchesSelection = true;
+							break;
+						}
+					}
+
+					if (touchesSelection && triSParts[ti] != destPartID) {
+						triSParts[ti] = destPartID;
+						changed = true;
+					}
+				}
+			}
+			else {
+				for (size_t ti = 0; ti < tris.size(); ++ti) {
+					if (!triSelected[ti])
+						continue;
+
+					std::unordered_map<int, int> neighborPartCounts;
+					bool boundary = false;
+					for (int nTri : triNeighbors[ti]) {
+						if (!triSelected[nTri]) {
+							boundary = true;
+							int nPartID = triSParts[nTri];
+							if (nPartID >= 0)
+								neighborPartCounts[nPartID]++;
+						}
+					}
+
+					if (!boundary || neighborPartCounts.empty())
+						continue;
+
+					int bestPartID = triSParts[ti];
+					int bestCount = -1;
+					for (const auto& kv : neighborPartCounts) {
+						if (kv.second > bestCount) {
+							bestPartID = kv.first;
+							bestCount = kv.second;
+						}
+					}
+
+					if (bestPartID != triSParts[ti]) {
+						triSParts[ti] = bestPartID;
+						changed = true;
+					}
+				}
+			}
+		}
+	}
+
+	if (triParts.size() == tris.size() && activePartition.IsOk() && partitionTree->GetItemParent(activePartition).IsOk()) {
+		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(activePartition));
+		if (partitionData) {
+			const int targetIndex = partitionData->index;
+			std::vector<bool> triSelected(tris.size(), false);
+			for (size_t ti = 0; ti < tris.size(); ++ti)
+				triSelected[ti] = triParts[ti] == targetIndex;
+
+			if (grow) {
+				for (size_t ti = 0; ti < tris.size(); ++ti) {
+					if (triSelected[ti])
+						continue;
+
+					bool touchesSelection = false;
+					for (int nTri : triNeighbors[ti]) {
+						if (triSelected[nTri]) {
+							touchesSelection = true;
+							break;
+						}
+					}
+
+					if (touchesSelection && triParts[ti] != targetIndex) {
+						triParts[ti] = targetIndex;
+						changed = true;
+					}
+				}
+			}
+			else {
+				for (size_t ti = 0; ti < tris.size(); ++ti) {
+					if (!triSelected[ti])
+						continue;
+
+					std::unordered_map<int, int> neighborPartCounts;
+					bool boundary = false;
+					for (int nTri : triNeighbors[ti]) {
+						if (!triSelected[nTri]) {
+							boundary = true;
+							int nPartID = triParts[nTri];
+							if (nPartID >= 0)
+								neighborPartCounts[nPartID]++;
+						}
+					}
+
+					if (!boundary || neighborPartCounts.empty())
+						continue;
+
+					int bestPartID = triParts[ti];
+					int bestCount = -1;
+					for (const auto& kv : neighborPartCounts) {
+						if (kv.second > bestCount) {
+							bestPartID = kv.first;
+							bestCount = kv.second;
+						}
+					}
+
+					if (bestPartID != triParts[ti]) {
+						triParts[ti] = bestPartID;
+						changed = true;
+					}
+				}
+			}
+		}
+	}
+
+	if (changed && currentTabButton)
+		currentTabButton->SetPendingChanges();
+
+	return changed;
+}
+
 void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
 	if (!activeItem || !glView->GetSegmentMode())
 		return;
@@ -6772,18 +6981,6 @@ void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item) {
 				float colorValue = (pi + 1.0f) / (nsm + 1);
 				m->subMeshesColor[pi] = glView->CreateColorRamp(colorValue);
 			}
-		}
-
-		// Set mask
-		m->MaskFill(0.0f);
-
-		for (size_t i = 0; i < triSParts.size(); ++i) {
-			if (triSParts[i] < 0 || !selPartIDs[triSParts[i]])
-				continue;
-
-			m->mask[tris[i].p1] = 1.0f;
-			m->mask[tris[i].p2] = 1.0f;
-			m->mask[tris[i].p3] = 1.0f;
 		}
 	}
 
@@ -7181,21 +7378,6 @@ void OutfitStudioFrame::ShowPartition(const wxTreeItemId& item) {
 				m->subMeshesColor[partitionData->index].x = 1.0f;
 				m->subMeshesColor[partitionData->index].y = 0.0f;
 				m->subMeshesColor[partitionData->index].z = 0.0f;
-			}
-		}
-
-		// Set mask
-		m->MaskFill(0.0f);
-
-		if (partitionData) {
-			for (size_t i = 0; i < allTris.size(); ++i) {
-				if (triParts[i] != partitionData->index)
-					continue;
-
-				const Triangle& t = allTris[i];
-				m->mask[t.p1] = 1.0f;
-				m->mask[t.p2] = 1.0f;
-				m->mask[t.p3] = 1.0f;
 			}
 		}
 	}
@@ -7808,9 +7990,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		if (currentTabButton == segmentTabButton)
 			ResetSegmentVisibility();
 
-		if (glView->GetSegmentMode())
-			glView->ClearActiveMask();
-
 		glView->SetSegmentMode(false);
 		glView->SetMaskVisible();
 
@@ -7836,9 +8015,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		if (currentTabButton == partitionTabButton)
 			ResetPartitionVisibility();
-
-		if (glView->GetSegmentMode())
-			glView->ClearActiveMask();
 
 		glView->SetSegmentMode(false);
 		glView->SetMaskVisible();
@@ -8123,7 +8299,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetSegmentMode();
 		SelectTool(ToolID::MaskBrush); // Use mask brush for segment editing (but with custom painting function 'PaintSegmentPartitionTriangles')
 		glView->SetMaskVisible(false);
-		glView->ClearMasks();
 
 		menuBar->Check(XRCID("btnMaskBrush"), true);
 		menuBar->Enable(XRCID("btnSelect"), false);
@@ -8191,7 +8366,6 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetSegmentMode();
 		SelectTool(ToolID::MaskBrush); // Use mask brush for partition editing (but with custom painting function 'PaintSegmentPartitionTriangles')
 		glView->SetMaskVisible(false);
-		glView->ClearMasks();
 
 		menuBar->Check(XRCID("btnMaskBrush"), true);
 		menuBar->Enable(XRCID("btnSelect"), false);
@@ -12584,6 +12758,19 @@ void OutfitStudioFrame::OnMaskLess(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem)
 		return;
 
+	if (glView->GetSegmentMode()) {
+		if (GrowShrinkSegmentPartitionSelection(false)) {
+			ShowSegment();
+			ShowPartition();
+		}
+
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool();
+		else
+			glView->Render();
+		return;
+	}
+
 	glView->MaskLess();
 
 	if (glView->GetTransformMode())
@@ -12595,6 +12782,19 @@ void OutfitStudioFrame::OnMaskLess(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::OnMaskMore(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem)
 		return;
+
+	if (glView->GetSegmentMode()) {
+		if (GrowShrinkSegmentPartitionSelection(true)) {
+			ShowSegment();
+			ShowPartition();
+		}
+
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool();
+		else
+			glView->Render();
+		return;
+	}
 
 	glView->MaskMore();
 
