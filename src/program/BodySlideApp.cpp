@@ -2055,9 +2055,9 @@ void BodySlideApp::InitPreview() {
 				}
 			}
 
+			previewLoading = false;
 			UpdatePreview();
 			preview->ShowLoadingIndicator(false);
-			previewLoading = false;
 		});
 	});
 }
@@ -2331,6 +2331,9 @@ void BodySlideApp::UpdateReferenceCheckboxState() {
 }
 
 void BodySlideApp::UpdatePreview() {
+	if (previewLoading)
+		return;
+
 	if (!IsPreviewRenderable())
 		return;
 

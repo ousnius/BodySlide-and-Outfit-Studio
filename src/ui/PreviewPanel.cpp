@@ -394,6 +394,9 @@ Mesh* PreviewPanel::GetMesh(const std::string& shapeName) {
 }
 
 void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
+	if (!glInitialized || !gls.SetContext())
+		return;
+
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 	for (size_t i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];
@@ -410,6 +413,9 @@ void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 }
 
 void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
+	if (!glInitialized || !gls.SetContext())
+		return;
+
 	gls.ClearMeshes();
 
 	for (auto* nif : nifs) {
