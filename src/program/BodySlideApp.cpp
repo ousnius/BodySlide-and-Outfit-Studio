@@ -2017,40 +2017,39 @@ void BodySlideApp::InitPreview() {
 				auto* pp = projects[0].get();
 				preview->SetNormalsGenerationLayers(pp->sliderSet.GetNormalsGenLayers());
 
-				if (pp->sliderSet.HasReferenceInfo()) {
-					bool hasBuiltInRef = false;
-					std::string refInfoShape = pp->sliderSet.GetReferenceShapeName();
-					if (!refInfoShape.empty() && pp->baseNif->FindBlockByName<nifly::NiShape>(refInfoShape))
-						hasBuiltInRef = true;
-					if (!hasBuiltInRef && ClippingFixer::FindReferenceShape(*pp->baseNif))
-						hasBuiltInRef = true;
+				bool hasBuiltInRef = false;
+				std::string refInfoShape = pp->sliderSet.GetReferenceShapeName();
+				if (!refInfoShape.empty() && pp->baseNif->FindBlockByName<nifly::NiShape>(refInfoShape))
+					hasBuiltInRef = true;
+				if (!hasBuiltInRef && ClippingFixer::FindReferenceShape(*pp->baseNif))
+					hasBuiltInRef = true;
 
-					if (hasBuiltInRef) {
-						preview->ShowReferenceCheckbox(false);
-						referenceNif.reset();
-					}
-					else {
-						if (!referenceNif)
-							LoadExternalReference(pp->sliderSet);
-
-						if (referenceNif) {
-							bool hasClippingFix = clippingFixStrength > 0.0f;
-							preview->ShowReferenceCheckbox(true);
-							if (hasClippingFix)
-								preview->SetReferenceCheckboxState(true, false);
-							else
-								preview->SetReferenceCheckboxState(false, true);
-
-							preview->AddMeshFromNif(referenceNif.get(), const_cast<char*>(referenceShapeName.c_str()));
-							preview->AddNifShapeTextures(referenceNif.get(), referenceShapeName);
-							preview->SetMeshVisibility(referenceShapeName, preview->IsShowReferenceChecked());
-						}
-						else {
-							preview->ShowReferenceCheckbox(false);
-						}
-					}
+				if (hasBuiltInRef) {
+					preview->ShowReferenceCheckbox(false);
+					referenceNif.reset();
 				}
 				else {
+					if (!referenceNif)
+						LoadExternalReference(pp->sliderSet);
+
+					if (referenceNif) {
+						bool hasClippingFix = clippingFixStrength > 0.0f;
+						preview->ShowReferenceCheckbox(true);
+						if (hasClippingFix)
+							preview->SetReferenceCheckboxState(true, false);
+						else
+							preview->SetReferenceCheckboxState(false, true);
+
+						preview->AddMeshFromNif(referenceNif.get(), const_cast<char*>(referenceShapeName.c_str()));
+						preview->AddNifShapeTextures(referenceNif.get(), referenceShapeName);
+						preview->SetMeshVisibility(referenceShapeName, preview->IsShowReferenceChecked());
+					}
+					else {
+						preview->ShowReferenceCheckbox(false);
+					}
+				}
+
+				if (!hasBuiltInRef && !referenceNif) {
 					preview->ShowReferenceCheckbox(false);
 					referenceNif.reset();
 				}
@@ -2262,7 +2261,7 @@ void BodySlideApp::ApplyClippingFix(NifFile& nif,
 }
 
 bool BodySlideApp::LoadExternalReference(const SliderSet& sliderSet) {
-	if (!sliderSet.HasReferenceInfo())
+	if (!sliderSet.HasExternalReferenceInfo())
 		return false;
 
 	std::string projectFile = sliderSet.GetReferenceProjectFile();

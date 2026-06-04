@@ -502,13 +502,17 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	sliderSetElement->DeleteChildren();
 	sliderSetElement->SetAttribute("name", name.c_str());
 
-	if (HasReferenceInfo()) {
+	if (!refProjectFile.empty() || !refProjectName.empty() || !refShapeName.empty()) {
 		XMLElement* newElement = sliderSetElement->GetDocument()->NewElement("ReferenceInfo");
 		XMLElement* refElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
-		std::string projectFile_bs = ToBackslashes(refProjectFile);
-		refElement->SetAttribute("ProjectFile", projectFile_bs.c_str());
-		refElement->SetAttribute("ProjectName", refProjectName.c_str());
-		refElement->SetAttribute("ShapeName", refShapeName.c_str());
+		if (!refProjectFile.empty()) {
+			std::string projectFile_bs = ToBackslashes(refProjectFile);
+			refElement->SetAttribute("ProjectFile", projectFile_bs.c_str());
+		}
+		if (!refProjectName.empty())
+			refElement->SetAttribute("ProjectName", refProjectName.c_str());
+		if (!refShapeName.empty())
+			refElement->SetAttribute("ShapeName", refShapeName.c_str());
 	}
 
 	XMLElement* newElement = sliderSetElement->GetDocument()->NewElement("DataFolder");

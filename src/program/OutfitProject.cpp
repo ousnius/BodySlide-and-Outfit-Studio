@@ -3252,7 +3252,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 
 	NiShape* newBaseShape = nullptr;
 
-	if (activeSet.HasReferenceInfo()) {
+	if (activeSet.HasReferenceShapeName()) {
 		std::string refShape = activeSet.GetReferenceShapeName();
 		if (!refShape.empty())
 			newBaseShape = workNif.FindBlockByName<NiShape>(refShape);
@@ -3315,12 +3315,14 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	mSFMorphTargetShape = wxString::FromUTF8(activeSet.GetSFMorphTargetShape());
 
 	// Preserve reference info from the loaded project so it gets saved again
-	if (activeSet.HasReferenceInfo()) {
+	if (!activeSet.GetReferenceProjectFile().empty())
 		mRefProjectFile = activeSet.GetReferenceProjectFile();
+	if (!activeSet.GetReferenceProjectName().empty())
 		mRefProjectName = activeSet.GetReferenceProjectName();
+	if (!activeSet.GetReferenceShapeName().empty())
 		mRefShapeName = activeSet.GetReferenceShapeName();
-	}
-	else if (baseShape) {
+
+	if (mRefShapeName.empty() && baseShape) {
 		mRefShapeName = baseShape->name.get();
 	}
 
@@ -3343,6 +3345,13 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 		owner->EndProgress();
 		return 2;
 	}
+
+	if (!addSet.GetReferenceProjectFile().empty())
+		mRefProjectFile = addSet.GetReferenceProjectFile();
+	if (!addSet.GetReferenceProjectName().empty())
+		mRefProjectName = addSet.GetReferenceProjectName();
+	if (!addSet.GetReferenceShapeName().empty())
+		mRefShapeName = addSet.GetReferenceShapeName();
 
 	addSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
 	std::string inputNif = addSet.GetInputFileName();

@@ -88,7 +88,8 @@ public:
 	std::string GetNotes() { return notes; }
 	void SetNotes(const std::string& inNotes) { notes = inNotes; }
 
-	bool HasReferenceInfo() const { return !refProjectFile.empty() && !refProjectName.empty() && !refShapeName.empty(); }
+	bool HasExternalReferenceInfo() const { return !refProjectFile.empty() && !refProjectName.empty() && !refShapeName.empty(); }
+	bool HasReferenceShapeName() const { return !refShapeName.empty(); }
 	void SetReferenceInfo(const std::string& projectFile, const std::string& projectName, const std::string& shapeName) {
 		refProjectFile = projectFile;
 		refProjectName = projectName;
