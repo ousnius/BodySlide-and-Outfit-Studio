@@ -28,6 +28,7 @@ See the included LICENSE file
 #include <regex>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 using namespace nifly;
@@ -769,40 +770,90 @@ int AutomationDialog::ExecuteStepCopyBoneWeights(const AutomationStep& step) {
 	}
 
 	AnimInfo& workAnim = *project->GetWorkAnim();
-	std::vector<std::string> baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
+	std::vector<std::string> baseBones;
+	if (!step.weightBoneList.empty())
+		baseBones = step.weightBoneList;
+	else
+		baseBones = workAnim.shapeBones[project->GetBaseShape()->name.get()];
+
 	std::sort(baseBones.begin(), baseBones.end());
 
-	int shapeIdx = 0;
+	int nCopyBones = static_cast<int>(baseBones.size());
+	std::vector<std::string> lockedBones;
+	bool bSpreadWeight = false;
+
+	if (!step.weightBoneList.empty()) {
+		std::unordered_set<std::string> selectedBones(baseBones.begin(), baseBones.end());
+		std::vector<std::string> normalizeBones;
+		std::vector<std::string> nonNormalizeBones;
+		outfitStudio->GetNormalizeBones(&normalizeBones, &nonNormalizeBones);
+
+		for (const auto& bone : normalizeBones) {
+			if (!selectedBones.count(bone))
+				baseBones.push_back(bone);
+		}
+
+		bSpreadWeight = static_cast<int>(baseBones.size()) > nCopyBones;
+
+		if (bSpreadWeight) {
+			for (const auto& bone : nonNormalizeBones) {
+				if (!selectedBones.count(bone))
+					lockedBones.push_back(bone);
+			}
+		}
+		else {
+			for (const auto& bone : nonNormalizeBones) {
+				if (!selectedBones.count(bone))
+					baseBones.push_back(bone);
+			}
+		}
+	}
+
+	UndoStateProject usp;
+	usp.undoType = UndoType::Weight;
+
 	for (auto* shape : shapes) {
+		if (project->IsBaseShape(shape)) {
+			wxLogWarning("Automation: CopyBoneWeights - shape '%s' is the reference shape; skipping.", shape->name.get());
+			continue;
+		}
+
 		wxLogMessage("Automation: Copying bone weights to '%s'...", shape->name.get());
 
 		std::unordered_map<uint16_t, float> mask;
 		outfitStudio->glView->GetShapeMask(mask, shape->name.get());
-		UndoStateShape uss;
+
+		usp.usss.resize(usp.usss.size() + 1);
+		UndoStateShape& uss = usp.usss.back();
 		uss.shapeName = shape->name.get();
 
-		std::vector<std::string> boneList;
-		if (!step.weightBoneList.empty()) {
-			boneList = step.weightBoneList;
-		}
-		else {
-			// Use all bones from base + shape
-			boneList = baseBones;
+		std::vector<std::string> mergedBones = baseBones;
+
+		if (step.weightBoneList.empty()) {
 			auto& shapeBones = workAnim.shapeBones[shape->name.get()];
 			for (const auto& b : shapeBones) {
 				if (!std::binary_search(baseBones.begin(), baseBones.end(), b))
-					boneList.push_back(b);
+					mergedBones.push_back(b);
 			}
 		}
 
-		int nCopyBones = step.weightBoneList.empty() ? static_cast<int>(baseBones.size()) : static_cast<int>(step.weightBoneList.size());
-		std::vector<std::string> lockedBones;
-
-		project->CopyBoneWeights(shape, step.weightProximityRadius, step.weightMaxResults,
-								 mask, boneList, nCopyBones, lockedBones, uss, false);
-		shapeIdx++;
+		project->CopyBoneWeights(shape,
+							 step.weightProximityRadius,
+							 step.weightMaxResults,
+							 mask,
+							 mergedBones,
+							 nCopyBones,
+							 lockedBones,
+							 uss,
+							 bSpreadWeight);
 	}
+
+	if (!usp.usss.empty())
+		outfitStudio->ActiveShapesUpdated(&usp, false);
+
 	project->morpher.ClearProximityCache();
+	workAnim.CleanupBones();
+	outfitStudio->UpdateAnimationGUI();
 	return 0;
 }
 
