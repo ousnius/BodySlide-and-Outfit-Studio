@@ -14115,7 +14115,20 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 
 	if (activeBrush->Type() != TweakBrush::BrushType::Move) {
 		if (segmentMode) {
-			if (os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius())) {
+			bool changed = os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius());
+
+			if (GetToolOptionXMirror()) {
+				Vector3 mirrorHitOrigin;
+				Vector3 mirrorHitNormal;
+				Mesh* mirrorHitMesh = nullptr;
+				int mirrorHitTri = -1;
+				if (gls.CollideMeshes(screenPos.x, screenPos.y, mirrorHitOrigin, mirrorHitNormal, true, &mirrorHitMesh, true, &mirrorHitTri) && mirrorHitMesh) {
+					mirrorHitOrigin = mirrorHitMesh->TransformPosMeshToModel(mirrorHitOrigin);
+					changed = os->PaintSegmentPartitionTriangles(mirrorHitMesh, mirrorHitTri, mirrorHitOrigin, activeBrush->getRadius()) || changed;
+				}
+			}
+
+			if (changed) {
 				os->ShowSegment();
 				os->ShowPartition();
 			}
@@ -14162,7 +14175,20 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		v = v * -1.0f;
 		tpi.view = v;
 		if (segmentMode) {
-			if (os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius())) {
+			bool changed = os->PaintSegmentPartitionTriangles(hitMesh, hitTri, tpi.origin, activeBrush->getRadius());
+
+			if (GetToolOptionXMirror()) {
+				Vector3 mirrorHitOrigin;
+				Vector3 mirrorHitNormal;
+				Mesh* mirrorHitMesh = nullptr;
+				int mirrorHitTri = -1;
+				if (gls.CollideMeshes(screenPos.x, screenPos.y, mirrorHitOrigin, mirrorHitNormal, true, &mirrorHitMesh, true, &mirrorHitTri) && mirrorHitMesh) {
+					mirrorHitOrigin = mirrorHitMesh->TransformPosMeshToModel(mirrorHitOrigin);
+					changed = os->PaintSegmentPartitionTriangles(mirrorHitMesh, mirrorHitTri, mirrorHitOrigin, activeBrush->getRadius()) || changed;
+				}
+			}
+
+			if (changed) {
 				os->ShowSegment();
 				os->ShowPartition();
 			}
