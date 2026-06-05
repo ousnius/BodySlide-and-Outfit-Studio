@@ -380,7 +380,7 @@
 					</object>
 					<object class="sizeritem">
 						<cellpos>1,0</cellpos>
-						<cellspan>1,3</cellspan>
+						<cellspan>1,2</cellspan>
 						<flag>wxLEFT</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
@@ -546,6 +546,19 @@
 						</object>
 					</object>
 					<object class="sizeritem">
+						<cellpos>1,2</cellpos>
+						<cellspan>1,1</cellspan>
+						<flag>wxALIGN_RIGHT|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="inLogbookLabel">
+							<style>wxALIGN_RIGHT</style>
+							<fg>#c8c8d8</fg>
+							<tooltip>Build this mesh to record the last outfit, preset, and any slider modifications it was built with.</tooltip>
+							<label></label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
 						<cellpos>2,2</cellpos>
 						<cellspan>1,1</cellspan>
 						<flag>wxALIGN_RIGHT|wxALL</flag>
@@ -639,5 +652,16 @@
 		</object>
 	</object>
 	<object class="wxMenu" name="menuFileCollision">
+	</object>
+	<object class="wxMenu" name="menuLogbook">
+		<object class="wxMenuItem" name="menuLoadFromLogbook">
+			<label>Load the latest build</label>
+			<help>Loads the outfit, preset and any slider modifications of the last build back to BodySlide</help>
+		</object>
+		<object class="separator" />
+		<object class="wxMenuItem" name="menuRemoveFromLogbook">
+			<label>Forget the latest build</label>
+			<help>Removes this outfit's data from the logbook, but doesn't delete the mesh</help>
+		</object>
 	</object>
 </resource>

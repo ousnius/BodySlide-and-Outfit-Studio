@@ -22,3 +22,4 @@
 *.vs
 
 /build
+/.vscode

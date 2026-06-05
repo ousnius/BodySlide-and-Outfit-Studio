@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "../components/BuildSelection.h"
+#include "../components/BuildLogbook.h"
 #include "../components/ClippingFixer.h"
 #include "../components/SliderCategories.h"
 #include "../components/SliderData.h"
@@ -227,6 +228,9 @@ public:
 	void DisplayActiveSet();
 
 	void GetBuildSelection(BuildSelectionFile& file, BuildSelection& buildSel);
+	void InitBuildLogbook();
+
+	BuildLogbook buildLogbook;
 
 	void UpdateConflictManager();
 	void SetDefaultBuildSelection();
@@ -241,6 +245,9 @@ public:
 
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
+	void UpdateLogbookLabel();
+	void ActivateLogbookEntry();
+
 
 	std::vector<std::string> GetConflictingOutfits() {
 		if (projects.empty())
@@ -306,6 +313,11 @@ public:
 						bool tri = false,
 						bool forceNormals = false,
 						const std::string& custPath = "");
+
+	std::vector<BuildLogbookEntry::SliderValue> CalculateLogbookSliders();
+	void SaveSetToLogbook(SliderSet currentSet);
+	void RemoveSetFromLogbook(const std::string& outputPath);
+
 	int ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* treeListCtrl);
 	void GroupBuild(const std::vector<std::string>& groupNames);
 
@@ -432,6 +444,7 @@ public:
 
 	wxCheckListBox* batchBuildList = nullptr;
 	wxMenu* fileCollisionMenu = nullptr;
+	wxMenu* logbookMenu = nullptr;
 	std::vector<std::string> outfitChoiceNames;
 	std::vector<std::string> presetChoiceNames;
 	bool populatingChoices = false;
@@ -541,6 +554,9 @@ private:
 	void OnGroupManager(wxCommandEvent& event);
 	void OnConflictPopup(wxMouseEvent& event);
 	void OnOutfitChoiceSelect(wxCommandEvent& event);
+
+	void OnLogbookPopup(wxMouseEvent& event);
+	void OnLogbookSelect(wxCommandEvent& event);
 
 	void OnPreview(wxCommandEvent& event);
 	void OnSashPosChanging(wxSplitterEvent& event);

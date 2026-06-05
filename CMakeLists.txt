@@ -317,6 +317,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 set(BSOS_BODYSLIDE_SOURCES
 	${BSOS_COMMON_SOURCES}
 	src/components/BuildSelection.cpp
+	src/components/BuildLogbook.cpp
 	src/files/ObjFile.cpp
 	src/files/SFMaterialDatabase.cpp
 	src/files/SFMaterialFile.cpp
