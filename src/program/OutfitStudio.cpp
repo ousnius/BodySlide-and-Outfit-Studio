@@ -11319,7 +11319,7 @@ MergeCheckErrors OutfitStudioFrame::CheckCopyGeo(wxDialog& dlg) {
 	if (e.segmentsMismatch)
 		warningLines << "\n- " << _("Segments do not match. Merge will auto-reconcile matching IDs and create missing segments/sub segments.");
 	if (e.textureMismatch)
-		warningLines << "\n- " << _("Base texture doesn't match. Merge will copy all texture paths from source to target.");
+		warningLines << "\n- " << _("Base texture doesn't match. Merge will use texture paths from the target shape.");
 
 	wxString msg;
 	if (!errorLines.empty())
@@ -11403,20 +11403,8 @@ void OutfitStudioFrame::OnCopyGeo(wxCommandEvent& WXUNUSED(event)) {
 
 	project->ApplyShapeMeshUndo(targetShape, maskStash[usp->usss[0].shapeName], usp->usss[0], false);
 
-	if (mergeErrors.textureMismatch) {
-		auto* workNif = project->GetWorkNif();
-		if (workNif) {
-			constexpr uint32_t kMaxTextureSlots = 10;
-			for (uint32_t texIndex = 0; texIndex < kMaxTextureSlots; ++texIndex) {
-				std::string sourceTexturePath;
-				workNif->GetTextureSlot(sourceShape, sourceTexturePath, texIndex);
-				workNif->SetTextureSlot(targetShape, sourceTexturePath, texIndex);
-			}
-			workNif->TrimTexturePaths();
-		}
-
+	if (mergeErrors.textureMismatch)
 		project->SetTextures(targetShape);
-	}
 
 	if (XRCCTRL(dlg, "checkDeleteSource", wxCheckBox)->IsChecked())
 		project->DeleteShape(sourceShape);
