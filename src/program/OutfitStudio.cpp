@@ -2269,9 +2269,6 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbShowForceBodyNormals = XRCCTRL(*settings, "cbShowForceBodyNormals", wxCheckBox);
 		cbShowForceBodyNormals->SetValue(Config.GetBoolValue("ShowForceBodyNormals"));
 
-		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
-		cbBBOverrideWarn->SetValue(Config.GetBoolValue("WarnBatchBuildOverride"));
-
 		wxCheckBox* cbBSATextures = XRCCTRL(*settings, "cbBSATextures", wxCheckBox);
 		cbBSATextures->SetValue(Config.GetBoolValue("BSATextureScan"));
 
@@ -2370,7 +2367,6 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToUTF8().data());
 
 			Config.SetBoolValue("ShowForceBodyNormals", cbShowForceBodyNormals->IsChecked());
-			Config.SetBoolValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
 			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
 			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
 			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());

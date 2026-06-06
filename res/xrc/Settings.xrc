@@ -210,16 +210,6 @@
 								<option>1</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
-								<object class="wxCheckBox" name="cbBBOverrideWarn">
-									<tooltip>Enables/disables the dialog for choosing which set to build during a batch build if overrides happen.</tooltip>
-									<label>Override Warning</label>
-									<checked>1</checked>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>2</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-								<border>5</border>
 								<object class="wxCheckBox" name="cbBSATextures">
 									<tooltip>Enables/disables scanning BSAs in the game data folder for textures to load.</tooltip>
 									<label>BSA Textures</label>
