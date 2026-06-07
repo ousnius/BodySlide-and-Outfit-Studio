@@ -645,7 +645,22 @@ std::string BodySlideApp::GetOutputDataPath() const {
 
 std::string BodySlideApp::GetProjectPath() const {
 	std::string res = Config["ProjectPath"];
-	return res.empty() ? Config["AppDir"] : res;
+	std::string path1 = Config["GameDataPath"] + PathSepStr + "CalienteTools" + PathSepStr + "BodySlide";
+	std::string path2 = Config["GameDataPath"] + PathSepStr + "Tools" + PathSepStr + "BodySlide";
+	if (res.empty()) {
+		if (wxDir::Exists(Config["AppDir"] + PathSepStr + "SliderSets")) {
+			return Config["AppDir"];
+		}
+		else if (wxDir::Exists(path1)) {
+			return path1;
+		}
+		else {
+			return path2;
+		}
+	}
+	else {
+		return res;
+	}
 }
 
 bool BodySlideApp::PresetExists(const std::string& name) {
