@@ -182,6 +182,59 @@ static bool ParseSafPoseJson(const std::string& filePath, PoseData& outPose) {
 }
 } // namespace
 
+bool PoseDataCollection::LoadJsonPose(const std::string& filePath, PoseData& outPose) {
+	outPose.absoluteLocal = true;
+	outPose.boneData.clear();
+	return ParseSafPoseJson(filePath, outPose);
+}
+
+bool PoseDataCollection::SaveJsonPose(const std::string& filePath, const PoseData& pose) {
+	nlohmann::json root = nlohmann::json::object();
+	nlohmann::json transforms = nlohmann::json::object();
+
+	root["version"] = 1u;
+	if (!pose.name.empty())
+		root["name"] = pose.name;
+
+	for (const auto& bone : pose.boneData) {
+		float yawDeg = 0.0f;
+		float pitchDeg = 0.0f;
+		float rollDeg = 0.0f;
+		nifly::RotVecToMat(bone.rotation).ToEulerDegrees(yawDeg, pitchDeg, rollDeg);
+
+		nlohmann::json transform = nlohmann::json::object();
+		transform["x"] = bone.translation.x;
+		transform["y"] = bone.translation.y;
+		transform["z"] = bone.translation.z;
+		transform["yaw"] = yawDeg;
+		transform["pitch"] = pitchDeg;
+		transform["roll"] = rollDeg;
+		transform["scale"] = bone.scale;
+		transforms[bone.name] = std::move(transform);
+	}
+
+	root["transforms"] = std::move(transforms);
+
+	std::ofstream ofs;
+	try {
+#ifdef _WINDOWS
+		std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
+		ofs.open(winFileName.c_str(), std::ios::out | std::ios::trunc);
+#else
+		ofs.open(filePath.c_str(), std::ios::out | std::ios::trunc);
+#endif
+	}
+	catch (...) {
+		return false;
+	}
+
+	if (!ofs.is_open())
+		return false;
+
+	ofs << root.dump(2);
+	return ofs.good();
+}
+
 int PoseDataCollection::LoadJsonData(const std::string& basePath, const std::string& namePrefix) {
 	wxString wxBase = wxString::FromUTF8(basePath.c_str());
 	if (!wxDirExists(wxBase))
@@ -194,11 +247,10 @@ int PoseDataCollection::LoadJsonData(const std::string& basePath, const std::str
 	for (auto& file : files) {
 		PoseData pd;
 		pd.readOnly = true;
-		pd.absoluteLocal = true;
 		wxFileName fn(file);
 		pd.name = namePrefix + std::string(fn.GetName().ToUTF8().data());
 
-		if (ParseSafPoseJson(file.ToUTF8().data(), pd)) {
+		if (LoadJsonPose(file.ToUTF8().data(), pd)) {
 			AddPose(std::move(pd));
 			++loaded;
 		}

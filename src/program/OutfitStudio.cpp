@@ -52,7 +52,38 @@ using namespace nifly;
 namespace {
 
 bool GetPoseHkxFormat(TargetGame targetGame, HKX::Format* outFormat = nullptr);
-QuaternionXYZW MatrixToHkxQuaternion(const Matrix3& matrix);
+
+int GetPreferredPoseFileFilterIndex(TargetGame targetGame) {
+	switch (targetGame) {
+	case SKYRIMSE:
+	case SKYRIMVR:
+		return 2;
+	case FO4:
+	case FO4VR:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+wxString GetPoseFileExtensionForFilter(int filterIndex) {
+	switch (filterIndex) {
+	case 0: return "hkx";
+	case 1: return "json";
+	case 2: return "yaml";
+	default: return wxEmptyString;
+	}
+}
+
+wxString EnsurePoseFileExtension(const wxString& filePath, int filterIndex) {
+	wxFileName fn(filePath);
+	if (!fn.HasExt()) {
+		wxString ext = GetPoseFileExtensionForFilter(filterIndex);
+		if (!ext.empty())
+			fn.SetExt(ext);
+	}
+	return fn.GetFullPath();
+}
 
 }
 
@@ -150,8 +181,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMBOBOX(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
 	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
 	EVT_BUTTON(XRCID("deletePose"), OutfitStudioFrame::OnDeletePose)
-	EVT_BUTTON(XRCID("saveHkxPose"), OutfitStudioFrame::OnSaveHkxPose)
-	EVT_BUTTON(XRCID("loadHkxPose"), OutfitStudioFrame::OnLoadHkxPose)
+	EVT_BUTTON(XRCID("exportPoseFile"), OutfitStudioFrame::OnSaveHkxPose)
+	EVT_BUTTON(XRCID("importPoseFile"), OutfitStudioFrame::OnLoadHkxPose)
 
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
 	EVT_TEXT_ENTER(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
@@ -1357,16 +1388,6 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		bool showSegmentTab = wxGetApp().targetGame == FO4 || wxGetApp().targetGame == FO4VR || wxGetApp().targetGame == FO76;
 		segmentTabButton->Show(showSegmentTab);
 	}
-
-	// The HKX pose pipeline supports Skyrim LE/SE/VR and Fallout 4/VR
-	// natively (no external tools required). Other games use unsupported
-	// Havok variants (Skyrim ragdoll-only formats, Starfield, etc.).
-	TargetGame poseHkxTarget = wxGetApp().targetGame;
-	bool showPoseHkxButtons = GetPoseHkxFormat(poseHkxTarget);
-	if (wxWindow* loadHkxPoseBtn = FindWindow(XRCID("loadHkxPose")))
-		loadHkxPoseBtn->Show(showPoseHkxButtons);
-	if (wxWindow* saveHkxPoseBtn = FindWindow(XRCID("saveHkxPose")))
-		saveHkxPoseBtn->Show(showPoseHkxButtons);
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
 	if (outfitShapes) {
@@ -13544,7 +13565,7 @@ void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
 	wxString dirName = wxString::FromUTF8(GetProjectPath()) + "/PoseData";
 	wxFileName::Mkdir(dirName, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
-	wxString fileName = dirName + "/" + wxString::FromUTF8(poseData->name) + ".xml";
+	wxString fileName = dirName + "/" + wxString::FromUTF8(PoseDataCollection::SanitizeFileStem(poseData->name).c_str()) + ".xml";
 
 	PoseDataFile poseDataFile;
 	poseDataFile.New(fileName.ToUTF8().data());
@@ -13573,7 +13594,7 @@ void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
 		if (result != wxYES)
 			return;
 
-		wxString fileName = wxString::FromUTF8(GetProjectPath()) + "/PoseData/" + wxString::FromUTF8(poseData->name) + ".xml";
+		wxString fileName = wxString::FromUTF8(GetProjectPath()) + "/PoseData/" + wxString::FromUTF8(PoseDataCollection::SanitizeFileStem(poseData->name).c_str()) + ".xml";
 		wxRemoveFile(fileName);
 
 		cPoseName->Delete(poseSel);
@@ -13600,233 +13621,156 @@ bool GetPoseHkxFormat(TargetGame targetGame, HKX::Format* outFormat) {
 	return true;
 }
 
-QuaternionXYZW MatrixToHkxQuaternion(const Matrix3& matrix) {
-	float x = 0.0f;
-	float y = 0.0f;
-	float z = 0.0f;
-	float w = 1.0f;
-
-	const float trace = matrix[0][0] + matrix[1][1] + matrix[2][2];
-	if (trace > 0.0f) {
-		const float scale = std::sqrt(trace + 1.0f) * 2.0f;
-		w = 0.25f * scale;
-		x = (matrix[2][1] - matrix[1][2]) / scale;
-		y = (matrix[0][2] - matrix[2][0]) / scale;
-		z = (matrix[1][0] - matrix[0][1]) / scale;
-	}
-	else if (matrix[0][0] > matrix[1][1] && matrix[0][0] > matrix[2][2]) {
-		const float scale = std::sqrt(1.0f + matrix[0][0] - matrix[1][1] - matrix[2][2]) * 2.0f;
-		w = (matrix[2][1] - matrix[1][2]) / scale;
-		x = 0.25f * scale;
-		y = (matrix[0][1] + matrix[1][0]) / scale;
-		z = (matrix[0][2] + matrix[2][0]) / scale;
-	}
-	else if (matrix[1][1] > matrix[2][2]) {
-		const float scale = std::sqrt(1.0f + matrix[1][1] - matrix[0][0] - matrix[2][2]) * 2.0f;
-		w = (matrix[0][2] - matrix[2][0]) / scale;
-		x = (matrix[0][1] + matrix[1][0]) / scale;
-		y = 0.25f * scale;
-		z = (matrix[1][2] + matrix[2][1]) / scale;
-	}
-	else {
-		const float scale = std::sqrt(1.0f + matrix[2][2] - matrix[0][0] - matrix[1][1]) * 2.0f;
-		w = (matrix[1][0] - matrix[0][1]) / scale;
-		x = (matrix[0][2] + matrix[2][0]) / scale;
-		y = (matrix[1][2] + matrix[2][1]) / scale;
-		z = 0.25f * scale;
-	}
-
-	const float length = std::sqrt(x * x + y * y + z * z + w * w);
-	if (length <= 1e-8f)
-		return QuaternionXYZW();
-
-	const float invLength = 1.0f / length;
-	return QuaternionXYZW(x * invLength, y * invLength, z * invLength, w * invLength);
-}
-
 } // namespace
 
 void OutfitStudioFrame::OnSaveHkxPose(wxCommandEvent& WXUNUSED(event)) {
-	HKX::Format hkxFormat = HKX::Format::Unknown;
-	if (!GetPoseHkxFormat(wxGetApp().targetGame, &hkxFormat)) {
-		wxMessageBox(_("Saving HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
-					 _("Save HKX Pose"),
-					 wxOK | wxICON_INFORMATION,
-					 this);
-		return;
-	}
-
-	wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
-	if (defSkelNif.IsEmpty()) {
-		wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings before saving an HKX pose."),
-					 _("Save HKX Pose"),
-					 wxOK | wxICON_ERROR,
-					 this);
-		return;
-	}
-
-	wxFileName defSkelFn(defSkelNif);
-	if (defSkelFn.IsRelative())
-		defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
-	defSkelFn.SetExt("hkx");
-
-	wxString skelHkx = defSkelFn.GetFullPath();
-	if (!wxFileExists(skelHkx)) {
-		wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nTo save HKX poses, place a matching .hkx skeleton file alongside the .nif reference skeleton."), skelHkx),
-					 _("Save HKX Pose"),
-					 wxOK | wxICON_ERROR,
-					 this);
-		return;
-	}
-
-	std::string skeletonError;
-	HKX::File skeletonFile;
-	if (!skeletonFile.Load(std::string(skelHkx.ToUTF8().data()), &skeletonError) || skeletonFile.GetSkeletons().empty()) {
-		wxMessageBox(wxString::Format(_("Failed to parse the HKX skeleton data.\n\n%s"), wxString::FromUTF8(skeletonError)),
-					 _("Save HKX Pose"),
-					 wxOK | wxICON_ERROR,
-					 this);
-		return;
-	}
-
-	const HKX::Skeleton& skeleton = skeletonFile.GetSkeletons().front();
-	if (skeleton.bones.empty()) {
-		wxMessageBox(_("The configured HKX skeleton does not contain any bones."), _("Save HKX Pose"), wxOK | wxICON_ERROR, this);
-		return;
-	}
-
-	wxString defaultFileName = "pose.hkx";
+	wxString defaultFileStem = "pose";
 	if (wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName")) {
 		wxString poseName = cPoseName->GetValue();
 		poseName.Trim(true).Trim(false);
 		if (!poseName.empty() && poseName != "<New>")
-			defaultFileName = poseName + ".hkx";
+			defaultFileStem = poseName;
 	}
+	defaultFileStem = wxString::FromUTF8(PoseDataCollection::SanitizeFileStem(std::string(defaultFileStem.ToUTF8().data())).c_str());
 
 	wxFileDialog saveDlg(this,
-					 _("Save HKX pose file"),
+					 _("Save pose file"),
 					 wxEmptyString,
-					 defaultFileName,
-					 "HKX files (*.hkx)|*.hkx",
+					 defaultFileStem,
+					 "HKX pose files (*.hkx)|*.hkx|SAM JSON pose files (*.json)|*.json|SAM YAML pose files (*.yaml;*.yml)|*.yaml;*.yml",
 					 wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	saveDlg.SetFilterIndex(GetPreferredPoseFileFilterIndex(wxGetApp().targetGame));
 	if (saveDlg.ShowModal() == wxID_CANCEL)
 		return;
 
-	std::vector<HKX::Transform> trackTransforms(skeleton.bones.size());
-	for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); ++boneIndex) {
-		HKX::Transform track = (boneIndex < skeleton.referencePose.size()) ? skeleton.referencePose[boneIndex] : HKX::Transform{};
-		if (AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(skeleton.bones[boneIndex].name)) {
-			MatTransform poseDelta;
-			poseDelta.translation = bone->poseTranVec;
-			poseDelta.rotation = RotVecToMat(bone->poseRotVec);
-			poseDelta.scale = (bone->poseScale != 0.0f) ? bone->poseScale : 1.0f;
+	wxString savePath = EnsurePoseFileExtension(saveDlg.GetPath(), saveDlg.GetFilterIndex());
+	wxFileName saveFn(savePath);
+	PoseFileFormat format = PoseDataCollection::GetPoseFileFormat(std::string(savePath.ToUTF8().data()));
+	std::string skeletonHkxPath;
+	HKX::Format hkxFormat = HKX::Format::Unknown;
 
-			MatTransform localTransform = bone->xformToParent.ComposeTransforms(poseDelta);
-			QuaternionXYZW quat = MatrixToHkxQuaternion(localTransform.rotation);
-
-			track.translation[0] = localTransform.translation.x;
-			track.translation[1] = localTransform.translation.y;
-			track.translation[2] = localTransform.translation.z;
-			track.rotation[0] = quat.x;
-			track.rotation[1] = quat.y;
-			track.rotation[2] = quat.z;
-			track.rotation[3] = quat.w;
-
-			float scale = (localTransform.scale != 0.0f) ? localTransform.scale : 1.0f;
-			track.scale[0] = scale;
-			track.scale[1] = scale;
-			track.scale[2] = scale;
+	if (format == PoseFileFormat::Hkx) {
+		if (!GetPoseHkxFormat(wxGetApp().targetGame, &hkxFormat)) {
+			wxMessageBox(_("Saving HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
+						 _("Save Pose File"),
+						 wxOK | wxICON_INFORMATION,
+						 this);
+			return;
 		}
-		trackTransforms[boneIndex] = track;
+
+		wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
+		if (defSkelNif.IsEmpty()) {
+			wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings before saving an HKX pose."),
+						 _("Save Pose File"),
+						 wxOK | wxICON_ERROR,
+						 this);
+			return;
+		}
+
+		wxFileName defSkelFn(defSkelNif);
+		if (defSkelFn.IsRelative())
+			defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
+		defSkelFn.SetExt("hkx");
+
+		wxString skelHkx = defSkelFn.GetFullPath();
+		if (!wxFileExists(skelHkx)) {
+			wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nTo save HKX poses, place a matching .hkx skeleton file alongside the .nif reference skeleton."), skelHkx),
+						 _("Save Pose File"),
+						 wxOK | wxICON_ERROR,
+						 this);
+			return;
+		}
+
+		skeletonHkxPath = std::string(skelHkx.ToUTF8().data());
+	}
+	else if (format != PoseFileFormat::Json && format != PoseFileFormat::Yaml) {
+		wxMessageBox(_("Please save the pose with a .hkx, .json, .yaml or .yml extension."), _("Save Pose File"), wxOK | wxICON_ERROR, this);
+		return;
 	}
 
-	HKX::SaveAnimationOptions saveOptions;
-	saveOptions.originalSkeletonName = skeleton.name;
-	saveOptions.containerName = "Merged Animation Container";
+	PoseData pd;
+	PoseDataCollection::CaptureCurrentPose(std::string(saveFn.GetName().ToUTF8().data()), format != PoseFileFormat::Yaml, pd);
+	if (pd.boneData.empty()) {
+		wxMessageBox(_("No skeleton bones are available to export a pose."), _("Save Pose File"), wxOK | wxICON_ERROR, this);
+		return;
+	}
 
 	std::string saveError;
-	if (!HKX::File::SavePoseAnimation(std::string(saveDlg.GetPath().ToUTF8().data()), hkxFormat, trackTransforms, saveOptions, &saveError)) {
-		wxMessageBox(wxString::Format(_("Failed to serialize the HKX pose data.\n\n%s"), wxString::FromUTF8(saveError)),
-					 _("Save HKX Pose"),
-					 wxOK | wxICON_ERROR,
-					 this);
+	if (!PoseDataCollection::SavePoseFile(std::string(savePath.ToUTF8().data()), pd, skeletonHkxPath, hkxFormat, &saveError)) {
+		wxString message = saveError.empty() ? _("Failed to save the pose file.") : wxString::FromUTF8(saveError);
+		wxMessageBox(message, _("Save Pose File"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
 	if (statusBar)
-		statusBar->SetStatusText(_("HKX pose saved."), 0);
+		statusBar->SetStatusText(_("Pose file saved."), 0);
 }
 
 void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
-	TargetGame targetGame = wxGetApp().targetGame;
-	if (!GetPoseHkxFormat(targetGame)) {
-		wxMessageBox(_("Loading HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
-					 _("Load HKX Pose"),
-					 wxOK | wxICON_INFORMATION,
-					 this);
-		return;
-	}
-
-	// Ask the user which .hkx pose file to load.
 	wxFileDialog loadDlg(this,
-						 _("Select HKX pose file"),
+						 _("Select pose file"),
 						 wxEmptyString,
 						 wxEmptyString,
-						 "HKX files (*.hkx)|*.hkx",
+						 "HKX pose files (*.hkx)|*.hkx|SAM JSON pose files (*.json)|*.json|SAM YAML pose files (*.yaml;*.yml)|*.yaml;*.yml",
 						 wxFD_OPEN | wxFD_FILE_MUST_EXIST);
-
+	loadDlg.SetFilterIndex(GetPreferredPoseFileFilterIndex(wxGetApp().targetGame));
 	if (loadDlg.ShowModal() == wxID_CANCEL)
 		return;
 
-	wxString srcHkx = loadDlg.GetPath();
+	wxString srcPath = loadDlg.GetPath();
+	PoseFileFormat format = PoseDataCollection::GetPoseFileFormat(std::string(srcPath.ToUTF8().data()));
+	std::string skeletonHkxPath;
 
-	// Derive the Havok skeleton path from the reference skeleton configured
-	// for this target game (Settings → Anim/DefaultSkeletonReference). The
-	// NIF and HKX files share the same base name per Bethesda convention,
-	// so we simply swap the extension.
-	wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
-	if (defSkelNif.IsEmpty()) {
-		wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton "
-					   "in the application settings before loading an HKX pose."),
-					 _("Load HKX Pose"),
-					 wxOK | wxICON_ERROR,
-					 this);
+	if (format == PoseFileFormat::Hkx) {
+		TargetGame targetGame = wxGetApp().targetGame;
+		if (!GetPoseHkxFormat(targetGame)) {
+			wxMessageBox(_("Loading HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
+						 _("Load Pose File"),
+						 wxOK | wxICON_INFORMATION,
+						 this);
+			return;
+		}
+
+		wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
+		if (defSkelNif.IsEmpty()) {
+			wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings before loading an HKX pose."),
+						 _("Load Pose File"),
+						 wxOK | wxICON_ERROR,
+						 this);
+			return;
+		}
+
+		wxFileName defSkelFn(defSkelNif);
+		if (defSkelFn.IsRelative())
+			defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
+		defSkelFn.SetExt("hkx");
+
+		wxString skelHkx = defSkelFn.GetFullPath();
+		if (!wxFileExists(skelHkx)) {
+			wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nTo load HKX poses, place a matching .hkx skeleton file alongside the .nif reference skeleton."),
+							  skelHkx),
+						 _("Load Pose File"),
+						 wxOK | wxICON_ERROR,
+						 this);
+			return;
+		}
+
+
+		skeletonHkxPath = std::string(skelHkx.ToUTF8().data());
+	}
+	else if (format != PoseFileFormat::Json && format != PoseFileFormat::Yaml) {
+		wxMessageBox(_("Please choose a pose file with a .hkx, .json, .yaml or .yml extension."), _("Load Pose File"), wxOK | wxICON_ERROR, this);
 		return;
 	}
-
-	wxFileName defSkelFn(defSkelNif);
-	if (defSkelFn.IsRelative())
-		defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
-	defSkelFn.SetExt("hkx");
-
-	wxString skelHkx = defSkelFn.GetFullPath();
-	if (!wxFileExists(skelHkx)) {
-		wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured "
-									    "reference skeleton.\n\nExpected file:\n%s\n\n"
-									    "To load HKX poses, place a matching .hkx skeleton file "
-									    "alongside the .nif reference skeleton."),
-									  skelHkx),
-					 _("Load HKX Pose"),
-					 wxOK | wxICON_ERROR,
-					 this);
-		return;
-	}
-
-	// Build a pose name from the source file name.
-	wxFileName srcFn(srcHkx);
-	std::string poseName = std::string("HKX: ") + std::string(srcFn.GetName().ToUTF8().data());
 
 	PoseData pd;
-	pd.name = poseName;
-
-	if (!PoseDataCollection::LoadHkxPose(std::string(skelHkx.ToUTF8().data()), std::string(srcHkx.ToUTF8().data()), pd)) {
-		wxMessageBox(_("Failed to parse the HKX pose data."), _("Load HKX Pose"), wxOK | wxICON_ERROR, this);
+	std::string loadError;
+	if (!PoseDataCollection::LoadPoseFile(std::string(srcPath.ToUTF8().data()), pd, skeletonHkxPath, &loadError)) {
+		wxString message = loadError.empty() ? _("Failed to load the pose file.") : wxString::FromUTF8(loadError);
+		wxMessageBox(message, _("Load Pose File"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
-	// Add or replace the pose in the collection and the combobox. The
-	// combobox stores raw PoseData pointers; PoseDataCollection uses a
-	// deque so existing addresses stay valid across the AddPose call.
 	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
 	if (!cPoseName)
 		return;
@@ -13864,9 +13808,10 @@ void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
 		cPoseName->SetSelection(idx);
 	}
 
-	// Apply the pose by replaying the OnSelectPose handler.
 	wxCommandEvent dummy;
 	OnSelectPose(dummy);
+	if (statusBar)
+		statusBar->SetStatusText(_("Pose file loaded."), 0);
 }
 
 wxBEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)

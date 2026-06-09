@@ -8,8 +8,19 @@ See the included LICENSE file
 
 #include <algorithm>
 #include <cmath>
+#include <unordered_map>
+
+#include <wx/filename.h>
 
 namespace {
+
+struct HkxQuaternion {
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
+	float w = 1.0f;
+};
+
 // Convert a unit quaternion (w, x, y, z) to a standard column-vector
 // rotation matrix (R such that R*v rotates v by the quaternion). This
 // matches what nifly stores in AnimBone::xformToParent.rotation (populated
@@ -52,6 +63,130 @@ static nifly::Matrix3 QuatToNiflyMat(float qw, float qx, float qy, float qz) {
 	m[2][1] = 2.0f * (yz + wx);
 	m[2][2] = 1.0f - 2.0f * (xx + yy);
 	return m;
+}
+
+static HkxQuaternion MatrixToHkxQuaternion(const nifly::Matrix3& matrix) {
+	HkxQuaternion quat;
+
+	const float trace = matrix[0][0] + matrix[1][1] + matrix[2][2];
+	if (trace > 0.0f) {
+		const float scale = std::sqrt(trace + 1.0f) * 2.0f;
+		quat.w = 0.25f * scale;
+		quat.x = (matrix[2][1] - matrix[1][2]) / scale;
+		quat.y = (matrix[0][2] - matrix[2][0]) / scale;
+		quat.z = (matrix[1][0] - matrix[0][1]) / scale;
+	}
+	else if (matrix[0][0] > matrix[1][1] && matrix[0][0] > matrix[2][2]) {
+		const float scale = std::sqrt(1.0f + matrix[0][0] - matrix[1][1] - matrix[2][2]) * 2.0f;
+		quat.w = (matrix[2][1] - matrix[1][2]) / scale;
+		quat.x = 0.25f * scale;
+		quat.y = (matrix[0][1] + matrix[1][0]) / scale;
+		quat.z = (matrix[0][2] + matrix[2][0]) / scale;
+	}
+	else if (matrix[1][1] > matrix[2][2]) {
+		const float scale = std::sqrt(1.0f + matrix[1][1] - matrix[0][0] - matrix[2][2]) * 2.0f;
+		quat.w = (matrix[0][2] - matrix[2][0]) / scale;
+		quat.x = (matrix[0][1] + matrix[1][0]) / scale;
+		quat.y = 0.25f * scale;
+		quat.z = (matrix[1][2] + matrix[2][1]) / scale;
+	}
+	else {
+		const float scale = std::sqrt(1.0f + matrix[2][2] - matrix[0][0] - matrix[1][1]) * 2.0f;
+		quat.w = (matrix[1][0] - matrix[0][1]) / scale;
+		quat.x = (matrix[0][2] + matrix[2][0]) / scale;
+		quat.y = (matrix[1][2] + matrix[2][1]) / scale;
+		quat.z = 0.25f * scale;
+	}
+
+	const float length = std::sqrt(quat.x * quat.x + quat.y * quat.y + quat.z * quat.z + quat.w * quat.w);
+	if (length <= 1e-8f)
+		return HkxQuaternion();
+
+	const float invLength = 1.0f / length;
+	quat.x *= invLength;
+	quat.y *= invLength;
+	quat.z *= invLength;
+	quat.w *= invLength;
+	return quat;
+}
+
+static bool SaveHkxPoseInternal(const std::string& skeletonHkxPath,
+							 const std::string& poseHkxPath,
+							 HKX::Format hkxFormat,
+							 const PoseData& pose,
+							 std::string* errorOut) {
+	if (hkxFormat == HKX::Format::Unknown) {
+		if (errorOut)
+			*errorOut = "Saving HKX poses is not supported for the current target game.";
+		return false;
+	}
+
+	if (skeletonHkxPath.empty()) {
+		if (errorOut)
+			*errorOut = "No HKX skeleton path was provided for pose export.";
+		return false;
+	}
+
+	if (!pose.absoluteLocal) {
+		if (errorOut)
+			*errorOut = "HKX export requires absolute local pose data.";
+		return false;
+	}
+
+	std::string skeletonError;
+	HKX::File skeletonFile;
+	if (!skeletonFile.Load(skeletonHkxPath, &skeletonError) || skeletonFile.GetSkeletons().empty()) {
+		if (errorOut)
+			*errorOut = skeletonError.empty() ? "Failed to parse the HKX skeleton data." : "Failed to parse the HKX skeleton data.\n\n" + skeletonError;
+		return false;
+	}
+
+	const HKX::Skeleton& skeleton = skeletonFile.GetSkeletons().front();
+	if (skeleton.bones.empty()) {
+		if (errorOut)
+			*errorOut = "The configured HKX skeleton does not contain any bones.";
+		return false;
+	}
+
+	std::unordered_map<std::string, const PoseBoneData*> poseBones;
+	poseBones.reserve(pose.boneData.size());
+	for (const auto& boneData : pose.boneData)
+		poseBones[boneData.name] = &boneData;
+
+	std::vector<HKX::Transform> trackTransforms(skeleton.bones.size());
+	for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); ++boneIndex) {
+		HKX::Transform track = (boneIndex < skeleton.referencePose.size()) ? skeleton.referencePose[boneIndex] : HKX::Transform{};
+		auto it = poseBones.find(skeleton.bones[boneIndex].name);
+		if (it != poseBones.end()) {
+			const PoseBoneData& boneData = *it->second;
+			HkxQuaternion quat = MatrixToHkxQuaternion(nifly::RotVecToMat(boneData.rotation));
+			track.translation[0] = boneData.translation.x;
+			track.translation[1] = boneData.translation.y;
+			track.translation[2] = boneData.translation.z;
+			track.rotation[0] = quat.x;
+			track.rotation[1] = quat.y;
+			track.rotation[2] = quat.z;
+			track.rotation[3] = quat.w;
+			float scale = (boneData.scale != 0.0f) ? boneData.scale : 1.0f;
+			track.scale[0] = scale;
+			track.scale[1] = scale;
+			track.scale[2] = scale;
+		}
+		trackTransforms[boneIndex] = track;
+	}
+
+	HKX::SaveAnimationOptions saveOptions;
+	saveOptions.originalSkeletonName = skeleton.name;
+	saveOptions.containerName = "Merged Animation Container";
+
+	std::string saveError;
+	if (!HKX::File::SavePoseAnimation(poseHkxPath, hkxFormat, trackTransforms, saveOptions, &saveError)) {
+		if (errorOut)
+			*errorOut = saveError.empty() ? "Failed to serialize the HKX pose data." : "Failed to serialize the HKX pose data.\n\n" + saveError;
+		return false;
+	}
+
+	return true;
 }
 } // namespace
 
@@ -109,4 +244,83 @@ bool PoseDataCollection::LoadHkxPose(const std::string& skeletonHkxPath, const s
 	}
 
 	return !outPose.boneData.empty();
+}
+
+bool PoseDataCollection::LoadPoseFile(const std::string& filePath,
+						 PoseData& outPose,
+						 const std::string& skeletonHkxPath,
+						 std::string* errorOut) {
+	PoseFileFormat format = GetPoseFileFormat(filePath);
+	wxFileName fileName(wxString::FromUTF8(filePath.c_str()));
+
+	switch (format) {
+	case PoseFileFormat::Hkx:
+		if (skeletonHkxPath.empty()) {
+			if (errorOut)
+				*errorOut = "No HKX skeleton path was provided for pose import.";
+			return false;
+		}
+		outPose.name = std::string("HKX: ") + std::string(fileName.GetName().ToUTF8().data());
+		if (!LoadHkxPose(skeletonHkxPath, filePath, outPose)) {
+			if (errorOut)
+				*errorOut = "Failed to parse the HKX pose data.";
+			return false;
+		}
+		return true;
+
+	case PoseFileFormat::Json:
+		outPose.name = std::string("SAM: ") + std::string(fileName.GetName().ToUTF8().data());
+		if (!LoadJsonPose(filePath, outPose)) {
+			if (errorOut)
+				*errorOut = "Failed to parse the SAM JSON pose data.";
+			return false;
+		}
+		return true;
+
+	case PoseFileFormat::Yaml:
+		outPose.name = std::string("SAM: ") + std::string(fileName.GetName().ToUTF8().data());
+		if (!LoadYamlPose(filePath, outPose)) {
+			if (errorOut)
+				*errorOut = "Failed to parse the SAM YAML pose data.";
+			return false;
+		}
+		return true;
+
+	default:
+		if (errorOut)
+			*errorOut = "Please choose a pose file with a .hkx, .json, .yaml or .yml extension.";
+		return false;
+	}
+}
+
+bool PoseDataCollection::SavePoseFile(const std::string& filePath,
+						 const PoseData& pose,
+						 const std::string& skeletonHkxPath,
+						 HKX::Format hkxFormat,
+						 std::string* errorOut) {
+	switch (GetPoseFileFormat(filePath)) {
+	case PoseFileFormat::Hkx:
+		return SaveHkxPoseInternal(skeletonHkxPath, filePath, hkxFormat, pose, errorOut);
+
+	case PoseFileFormat::Json:
+		if (!SaveJsonPose(filePath, pose)) {
+			if (errorOut)
+				*errorOut = "Failed to serialize the SAM JSON pose data.";
+			return false;
+		}
+		return true;
+
+	case PoseFileFormat::Yaml:
+		if (!SaveYamlPose(filePath, pose)) {
+			if (errorOut)
+				*errorOut = "Failed to serialize the SAM YAML pose data.";
+			return false;
+		}
+		return true;
+
+	default:
+		if (errorOut)
+			*errorOut = "Please save the pose with a .hkx, .json, .yaml or .yml extension.";
+		return false;
+	}
 }
