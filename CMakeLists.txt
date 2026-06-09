@@ -374,13 +374,16 @@ if(BSOS_BUILD_TESTS)
 	enable_testing()
 
 	add_executable(BSOSTests
+		tests/HkxFileTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFMaterialFileTest.cpp
 		tests/SFResourceHashTest.cpp
+		src/files/HkxFile.cpp
 		src/files/SFMaterialDatabase.cpp
 		src/files/SFMaterialFile.cpp
 		src/files/SFMaterialGraph.cpp
 		src/files/SFResourceHash.cpp
+		src/utils/PlatformUtil.cpp
 		src/utils/StringStuff.cpp
 	)
 	target_include_directories(BSOSTests PRIVATE

@@ -1779,6 +1779,7 @@ private:
 	void OnSelectPose(wxCommandEvent& event);
 	void OnSavePose(wxCommandEvent& event);
 	void OnDeletePose(wxCommandEvent& event);
+	void OnSaveHkxPose(wxCommandEvent& event);
 	void OnLoadHkxPose(wxCommandEvent& event);
 
 	// Updates enabled state of the Save/Delete pose buttons based on

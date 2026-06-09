@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "OutfitStudio.h"
 #include "../components/SliderGroup.h"
 #include "../components/SliderPresets.h"
+#include "../files/HkxFile.h"
 #include "../files/MaskFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
@@ -47,6 +48,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ConvertBodyReferenceDialog.h"
 
 using namespace nifly;
+
+namespace {
+
+bool GetPoseHkxFormat(TargetGame targetGame, HKX::Format* outFormat = nullptr);
+QuaternionXYZW MatrixToHkxQuaternion(const Matrix3& matrix);
+
+}
 
 // IPC connection handler for Outfit Studio single-instance checking
 class OutfitStudioIPCConnection : public wxConnection {
@@ -142,6 +150,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMBOBOX(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
 	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
 	EVT_BUTTON(XRCID("deletePose"), OutfitStudioFrame::OnDeletePose)
+	EVT_BUTTON(XRCID("saveHkxPose"), OutfitStudioFrame::OnSaveHkxPose)
 	EVT_BUTTON(XRCID("loadHkxPose"), OutfitStudioFrame::OnLoadHkxPose)
 
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
@@ -1352,11 +1361,12 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	// The HKX pose pipeline supports Skyrim LE/SE/VR and Fallout 4/VR
 	// natively (no external tools required). Other games use unsupported
 	// Havok variants (Skyrim ragdoll-only formats, Starfield, etc.).
-	if (wxWindow* loadHkxPoseBtn = FindWindow(XRCID("loadHkxPose"))) {
-		TargetGame tg = wxGetApp().targetGame;
-		bool showLoadHkx = (tg == SKYRIM || tg == SKYRIMSE || tg == SKYRIMVR || tg == FO4 || tg == FO4VR);
-		loadHkxPoseBtn->Show(showLoadHkx);
-	}
+	TargetGame poseHkxTarget = wxGetApp().targetGame;
+	bool showPoseHkxButtons = GetPoseHkxFormat(poseHkxTarget);
+	if (wxWindow* loadHkxPoseBtn = FindWindow(XRCID("loadHkxPose")))
+		loadHkxPoseBtn->Show(showPoseHkxButtons);
+	if (wxWindow* saveHkxPoseBtn = FindWindow(XRCID("saveHkxPose")))
+		saveHkxPoseBtn->Show(showPoseHkxButtons);
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
 	if (outfitShapes) {
@@ -13572,9 +13582,184 @@ void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
+namespace {
+
+bool GetPoseHkxFormat(TargetGame targetGame, HKX::Format* outFormat) {
+	HKX::Format format = HKX::Format::Unknown;
+	switch (targetGame) {
+		case SKYRIM: format = HKX::Format::Skyrim32; break;
+		case SKYRIMSE:
+		case SKYRIMVR: format = HKX::Format::Skyrim64; break;
+		case FO4:
+		case FO4VR: format = HKX::Format::Fallout64; break;
+		default: return false;
+	}
+
+	if (outFormat)
+		*outFormat = format;
+	return true;
+}
+
+QuaternionXYZW MatrixToHkxQuaternion(const Matrix3& matrix) {
+	float x = 0.0f;
+	float y = 0.0f;
+	float z = 0.0f;
+	float w = 1.0f;
+
+	const float trace = matrix[0][0] + matrix[1][1] + matrix[2][2];
+	if (trace > 0.0f) {
+		const float scale = std::sqrt(trace + 1.0f) * 2.0f;
+		w = 0.25f * scale;
+		x = (matrix[2][1] - matrix[1][2]) / scale;
+		y = (matrix[0][2] - matrix[2][0]) / scale;
+		z = (matrix[1][0] - matrix[0][1]) / scale;
+	}
+	else if (matrix[0][0] > matrix[1][1] && matrix[0][0] > matrix[2][2]) {
+		const float scale = std::sqrt(1.0f + matrix[0][0] - matrix[1][1] - matrix[2][2]) * 2.0f;
+		w = (matrix[2][1] - matrix[1][2]) / scale;
+		x = 0.25f * scale;
+		y = (matrix[0][1] + matrix[1][0]) / scale;
+		z = (matrix[0][2] + matrix[2][0]) / scale;
+	}
+	else if (matrix[1][1] > matrix[2][2]) {
+		const float scale = std::sqrt(1.0f + matrix[1][1] - matrix[0][0] - matrix[2][2]) * 2.0f;
+		w = (matrix[0][2] - matrix[2][0]) / scale;
+		x = (matrix[0][1] + matrix[1][0]) / scale;
+		y = 0.25f * scale;
+		z = (matrix[1][2] + matrix[2][1]) / scale;
+	}
+	else {
+		const float scale = std::sqrt(1.0f + matrix[2][2] - matrix[0][0] - matrix[1][1]) * 2.0f;
+		w = (matrix[1][0] - matrix[0][1]) / scale;
+		x = (matrix[0][2] + matrix[2][0]) / scale;
+		y = (matrix[1][2] + matrix[2][1]) / scale;
+		z = 0.25f * scale;
+	}
+
+	const float length = std::sqrt(x * x + y * y + z * z + w * w);
+	if (length <= 1e-8f)
+		return QuaternionXYZW();
+
+	const float invLength = 1.0f / length;
+	return QuaternionXYZW(x * invLength, y * invLength, z * invLength, w * invLength);
+}
+
+} // namespace
+
+void OutfitStudioFrame::OnSaveHkxPose(wxCommandEvent& WXUNUSED(event)) {
+	HKX::Format hkxFormat = HKX::Format::Unknown;
+	if (!GetPoseHkxFormat(wxGetApp().targetGame, &hkxFormat)) {
+		wxMessageBox(_("Saving HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
+					 _("Save HKX Pose"),
+					 wxOK | wxICON_INFORMATION,
+					 this);
+		return;
+	}
+
+	wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
+	if (defSkelNif.IsEmpty()) {
+		wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings before saving an HKX pose."),
+					 _("Save HKX Pose"),
+					 wxOK | wxICON_ERROR,
+					 this);
+		return;
+	}
+
+	wxFileName defSkelFn(defSkelNif);
+	if (defSkelFn.IsRelative())
+		defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
+	defSkelFn.SetExt("hkx");
+
+	wxString skelHkx = defSkelFn.GetFullPath();
+	if (!wxFileExists(skelHkx)) {
+		wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nTo save HKX poses, place a matching .hkx skeleton file alongside the .nif reference skeleton."), skelHkx),
+					 _("Save HKX Pose"),
+					 wxOK | wxICON_ERROR,
+					 this);
+		return;
+	}
+
+	std::string skeletonError;
+	HKX::File skeletonFile;
+	if (!skeletonFile.Load(std::string(skelHkx.ToUTF8().data()), &skeletonError) || skeletonFile.GetSkeletons().empty()) {
+		wxMessageBox(wxString::Format(_("Failed to parse the HKX skeleton data.\n\n%s"), wxString::FromUTF8(skeletonError)),
+					 _("Save HKX Pose"),
+					 wxOK | wxICON_ERROR,
+					 this);
+		return;
+	}
+
+	const HKX::Skeleton& skeleton = skeletonFile.GetSkeletons().front();
+	if (skeleton.bones.empty()) {
+		wxMessageBox(_("The configured HKX skeleton does not contain any bones."), _("Save HKX Pose"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+	wxString defaultFileName = "pose.hkx";
+	if (wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName")) {
+		wxString poseName = cPoseName->GetValue();
+		poseName.Trim(true).Trim(false);
+		if (!poseName.empty() && poseName != "<New>")
+			defaultFileName = poseName + ".hkx";
+	}
+
+	wxFileDialog saveDlg(this,
+					 _("Save HKX pose file"),
+					 wxEmptyString,
+					 defaultFileName,
+					 "HKX files (*.hkx)|*.hkx",
+					 wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	if (saveDlg.ShowModal() == wxID_CANCEL)
+		return;
+
+	std::vector<HKX::Transform> trackTransforms(skeleton.bones.size());
+	for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); ++boneIndex) {
+		HKX::Transform track = (boneIndex < skeleton.referencePose.size()) ? skeleton.referencePose[boneIndex] : HKX::Transform{};
+		if (AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(skeleton.bones[boneIndex].name)) {
+			MatTransform poseDelta;
+			poseDelta.translation = bone->poseTranVec;
+			poseDelta.rotation = RotVecToMat(bone->poseRotVec);
+			poseDelta.scale = (bone->poseScale != 0.0f) ? bone->poseScale : 1.0f;
+
+			MatTransform localTransform = bone->xformToParent.ComposeTransforms(poseDelta);
+			QuaternionXYZW quat = MatrixToHkxQuaternion(localTransform.rotation);
+
+			track.translation[0] = localTransform.translation.x;
+			track.translation[1] = localTransform.translation.y;
+			track.translation[2] = localTransform.translation.z;
+			track.rotation[0] = quat.x;
+			track.rotation[1] = quat.y;
+			track.rotation[2] = quat.z;
+			track.rotation[3] = quat.w;
+
+			float scale = (localTransform.scale != 0.0f) ? localTransform.scale : 1.0f;
+			track.scale[0] = scale;
+			track.scale[1] = scale;
+			track.scale[2] = scale;
+		}
+		trackTransforms[boneIndex] = track;
+	}
+
+	HKX::SaveAnimationOptions saveOptions;
+	saveOptions.originalSkeletonName = skeleton.name;
+	saveOptions.containerName = "Merged Animation Container";
+
+	std::string saveError;
+	if (!HKX::File::SavePoseAnimation(std::string(saveDlg.GetPath().ToUTF8().data()), hkxFormat, trackTransforms, saveOptions, &saveError)) {
+		wxMessageBox(wxString::Format(_("Failed to serialize the HKX pose data.\n\n%s"), wxString::FromUTF8(saveError)),
+					 _("Save HKX Pose"),
+					 wxOK | wxICON_ERROR,
+					 this);
+		return;
+	}
+
+	if (statusBar)
+		statusBar->SetStatusText(_("HKX pose saved."), 0);
+}
+
 void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
 	TargetGame targetGame = wxGetApp().targetGame;
-	if (targetGame != SKYRIM && targetGame != SKYRIMSE && targetGame != SKYRIMVR && targetGame != FO4 && targetGame != FO4VR) {
+	if (!GetPoseHkxFormat(targetGame)) {
 		wxMessageBox(_("Loading HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
 					 _("Load HKX Pose"),
 					 wxOK | wxICON_INFORMATION,

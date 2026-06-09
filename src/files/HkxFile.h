@@ -83,11 +83,25 @@ struct Animation {
 	}
 };
 
+struct SaveAnimationOptions {
+	std::string originalSkeletonName;
+	std::string containerName;
+};
+
 class File {
 public:
 	// Parse the given .hkx file. Returns false on failure; if errorOut is
 	// non-null it receives a short human-readable description.
 	bool Load(const std::string& path, std::string* errorOut = nullptr);
+
+	// Serialize a single-frame HKX animation packfile using static tracks.
+	// `transforms` are written positionally as transform tracks 0..N-1.
+	// The output format is selected explicitly via `format`.
+	static bool SavePoseAnimation(const std::string& path,
+							 Format format,
+							 const std::vector<Transform>& transforms,
+							 const SaveAnimationOptions& options = {},
+							 std::string* errorOut = nullptr);
 
 	Format GetFormat() const { return format; }
 	const std::vector<Skeleton>& GetSkeletons() const { return skeletons; }
