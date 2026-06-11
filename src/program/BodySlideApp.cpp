@@ -3038,7 +3038,7 @@ wxString BodySlideApp::GetGameDataPath(TargetGame targ) {
 	}
 #ifdef _WINDOWS
 	else {
-		std::string gameKey = Config[gkey];
+		std::string gameKey = Config[gkey].ToStdString();
 		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
 		if (!gameKey.empty() && key.Exists()) {
 			if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
@@ -4292,12 +4292,13 @@ int BodySlideApp::BuildListBodies(
 
 			if (currentSet[s].bZap && !currentSet[s].bUV) {
 				float vbig = sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f);
-				for (auto& sliderBig : sliderManager.slidersBig) {
-					if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp) {
-						vbig = sliderBig.value;
-						break;
-					}
-				}
+				
+				/*
+				* Note: skip applying sliderManager values on zaps in batch mode. 
+				* If a set has a zap with the same name as the set loaded in the UI,
+				* its value could be overwritten by the UI value.
+				* Only BuildSelection is a reliable source for zap values in batch mode.
+				*/
 
 				if (!currentSet[s].bHidden) {
 					// Apply stored zap choice for zaps visible to the user
@@ -4348,7 +4349,7 @@ int BodySlideApp::BuildListBodies(
 
 				vbig = sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f);
 				for (auto& sliderBig : sliderManager.slidersBig) {
-					if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp) {
+					if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp && !currentSet[s].bZap) {
 						vbig = sliderBig.value;
 						break;
 					}
@@ -4357,7 +4358,7 @@ int BodySlideApp::BuildListBodies(
 				if (currentSet.GenWeights()) {
 					vsmall = sliderManager.GetSmallPresetValue(activePreset, name, currentSet[s].defSmallValue / 100.0f);
 					for (auto& sliderSmall : sliderManager.slidersSmall) {
-						if (sliderSmall.name == name && sliderSmall.changed && !sliderSmall.clamp) {
+						if (sliderSmall.name == name && sliderSmall.changed && !sliderSmall.clamp && !currentSet[s].bZap) {
 							vsmall = sliderSmall.value;
 							break;
 						}
