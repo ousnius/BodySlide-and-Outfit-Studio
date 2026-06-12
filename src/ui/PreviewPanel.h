@@ -46,6 +46,7 @@ class PreviewPanel : public wxPanel {
 	wxChoice* projectChoice = nullptr;
 	wxStaticText* presetLabel = nullptr;
 	wxChoice* presetChoice = nullptr;
+	wxSlider* weightSlider = nullptr;
 	wxBitmapButton* popoutButton = nullptr;
 
 	wxPanel* loadingOverlay = nullptr;
@@ -107,10 +108,9 @@ public:
 
 	void ShowWeight(bool show = true) {
 		weight = 100;
-		wxSlider* weightSlider = (wxSlider*)FindWindowByName("weightSlider", this);
 		if (weightSlider) {
 			weightSlider->SetValue(weight);
-			weightSlider->GetParent()->Show(show);
+			weightSlider->Show(show);
 			Layout();
 		}
 	}
