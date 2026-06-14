@@ -26,7 +26,7 @@ const std::array<wxString, 10> TargetGames = {
 };
 } // namespace GameUtil
 
-std::string GameUtil::GetGameDataPath(int targ) {
+wxString GameUtil::GetGameDataPath(int targ) {
 	wxString dataPath;
 	wxString gamestr = GameUtil::TargetGames[targ];
 	wxString gkey = "GameRegKey/" + gamestr;
@@ -50,7 +50,7 @@ std::string GameUtil::GetGameDataPath(int targ) {
 		#endif
 	}
 #endif
-	return dataPath.ToStdString();
+	return dataPath;
 }
 
 void GameUtil::InitArchives() {

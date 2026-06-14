@@ -16,7 +16,7 @@ namespace GameUtil {
 
 	/// Get the game data path for the specified target game.
 	/// Checks config "GameDataPaths/<gamename>" first, then falls back to Windows registry on Windows.
-	std::string GetGameDataPath(int targ);
+	wxString GetGameDataPath(int targ);
 
 	/// Initialize archive loading (BSA/BA2 files) for the currently configured game.
 	void InitArchives();
