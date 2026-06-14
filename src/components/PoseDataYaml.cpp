@@ -12,6 +12,7 @@ See the included LICENSE file
 
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 
 namespace {
 // SAM pose YAML reader built on top of the fkYAML single-header library.
@@ -153,7 +154,74 @@ static bool ParseSamPoseYaml(const std::string& filePath, PoseData& outPose) {
 
 	return !outPose.boneData.empty();
 }
+
+static std::string EscapeYamlDoubleQuoted(const std::string& value) {
+	std::string escaped;
+	escaped.reserve(value.size());
+
+	for (char ch : value) {
+		switch (ch) {
+		case '\\': escaped += "\\\\"; break;
+		case '"': escaped += "\\\""; break;
+		case '\n': escaped += "\\n"; break;
+		case '\r': escaped += "\\r"; break;
+		case '\t': escaped += "\\t"; break;
+		default: escaped.push_back(ch); break;
+		}
+	}
+
+	return escaped;
+}
 } // namespace
+
+bool PoseDataCollection::LoadYamlPose(const std::string& filePath, PoseData& outPose) {
+	outPose.absoluteLocal = false;
+	outPose.boneData.clear();
+	return ParseSamPoseYaml(filePath, outPose);
+}
+
+bool PoseDataCollection::SaveYamlPose(const std::string& filePath, const PoseData& pose) {
+	std::ofstream ofs;
+	try {
+#ifdef _WINDOWS
+		std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
+		ofs.open(winFileName.c_str(), std::ios::out | std::ios::trunc);
+#else
+		ofs.open(filePath.c_str(), std::ios::out | std::ios::trunc);
+#endif
+	}
+	catch (...) {
+		return false;
+	}
+
+	if (!ofs.is_open())
+		return false;
+
+	ofs << std::setprecision(9);
+	ofs << "type: rltv\n";
+	ofs << "rotation: exyz\n";
+	if (!pose.name.empty())
+		ofs << "name: \"" << EscapeYamlDoubleQuoted(pose.name) << "\"\n";
+	ofs << "transforms:\n";
+
+	for (const auto& bone : pose.boneData) {
+		float rxDeg = 0.0f;
+		float ryDeg = 0.0f;
+		float rzDeg = 0.0f;
+		nifly::RotVecToMat(bone.rotation).ToEulerDegrees(rxDeg, ryDeg, rzDeg);
+
+		ofs << "  \"" << EscapeYamlDoubleQuoted(bone.name) << "\":\n";
+		ofs << "    tx: " << bone.translation.x << '\n';
+		ofs << "    ty: " << bone.translation.y << '\n';
+		ofs << "    tz: " << bone.translation.z << '\n';
+		ofs << "    rx: " << rxDeg << '\n';
+		ofs << "    ry: " << ryDeg << '\n';
+		ofs << "    rz: " << rzDeg << '\n';
+		ofs << "    s: " << bone.scale << '\n';
+	}
+
+	return ofs.good();
+}
 
 int PoseDataCollection::LoadYamlData(const std::string& basePath, const std::string& namePrefix) {
 	wxString wxBase = wxString::FromUTF8(basePath.c_str());
@@ -171,7 +239,7 @@ int PoseDataCollection::LoadYamlData(const std::string& basePath, const std::str
 		wxFileName fn(file);
 		pd.name = namePrefix + std::string(fn.GetName().ToUTF8().data());
 
-		if (ParseSamPoseYaml(file.ToUTF8().data(), pd)) {
+		if (LoadYamlPose(file.ToUTF8().data(), pd)) {
 			AddPose(std::move(pd));
 			++loaded;
 		}

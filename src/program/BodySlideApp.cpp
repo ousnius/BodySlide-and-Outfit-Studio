@@ -20,6 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/Mesh.h"
 #include "../files/SFMorphFile.h"
 #include "../files/wxDDSImage.h"
+#include "../utils/SettingsDialogShared.h"
 #include "../utils/PlatformUtil.h"
 #include "../utils/ParallelFor.h"
 #include "../utils/StackTrace.h"
@@ -148,6 +149,8 @@ bool BodySlideApp::OnInit() {
 #ifdef NDEBUG
 	wxHandleFatalExceptions();
 #endif
+
+	SetAppearance(SettingsDialogShared::GetConfiguredAppearance(Config));
 
 	wxString appDirUri = wxString::FromUTF8(dataDir);
 	appDirUri.Replace("#", "%23");
@@ -2731,6 +2734,7 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("BSATextureScan", true);
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultBoolValue("UseSystemLanguage", false);
+	SettingsDialogShared::SetDefaultAppearanceMode(Config);
 	BodySlideConfig.SetDefaultValue("SelectedOutfit", "");
 	BodySlideConfig.SetDefaultValue("SelectedPreset", "");
 	BodySlideConfig.SetDefaultBoolValue("BuildMorphs", false);
@@ -3035,7 +3039,7 @@ wxString BodySlideApp::GetGameDataPath(TargetGame targ) {
 	}
 #ifdef _WINDOWS
 	else {
-		std::string gameKey = Config[gkey];
+		std::string gameKey = Config[gkey].ToStdString();
 		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
 		if (!gameKey.empty() && key.Exists()) {
 			if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
@@ -4289,12 +4293,13 @@ int BodySlideApp::BuildListBodies(
 
 			if (currentSet[s].bZap && !currentSet[s].bUV) {
 				float vbig = sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f);
-				for (auto& sliderBig : sliderManager.slidersBig) {
-					if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp) {
-						vbig = sliderBig.value;
-						break;
-					}
-				}
+				
+				/*
+				* Note: skip applying sliderManager values on zaps in batch mode. 
+				* If a set has a zap with the same name as the set loaded in the UI,
+				* its value could be overwritten by the UI value.
+				* Only BuildSelection is a reliable source for zap values in batch mode.
+				*/
 
 				if (!currentSet[s].bHidden) {
 					// Apply stored zap choice for zaps visible to the user
@@ -4345,7 +4350,7 @@ int BodySlideApp::BuildListBodies(
 
 				vbig = sliderManager.GetBigPresetValue(activePreset, name, currentSet[s].defBigValue / 100.0f);
 				for (auto& sliderBig : sliderManager.slidersBig) {
-					if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp) {
+					if (sliderBig.name == name && sliderBig.changed && !sliderBig.clamp && !currentSet[s].bZap) {
 						vbig = sliderBig.value;
 						break;
 					}
@@ -4354,7 +4359,7 @@ int BodySlideApp::BuildListBodies(
 				if (currentSet.GenWeights()) {
 					vsmall = sliderManager.GetSmallPresetValue(activePreset, name, currentSet[s].defSmallValue / 100.0f);
 					for (auto& sliderSmall : sliderManager.slidersSmall) {
-						if (sliderSmall.name == name && sliderSmall.changed && !sliderSmall.clamp) {
+						if (sliderSmall.name == name && sliderSmall.changed && !sliderSmall.clamp && !currentSet[s].bZap) {
 							vsmall = sliderSmall.value;
 							break;
 						}
@@ -5901,11 +5906,6 @@ void BodySlideFrame::OnChooseOutfit(wxCommandEvent& WXUNUSED(event)) {
 	if (sstr.empty())
 		return;
 
-	if (sstr == BodySlideConfig["SelectedOutfit"]) {
-		UpdateFavoriteButtons();
-		return;
-	}
-
 	app->ActivateOutfit(sstr);
 	UpdateFavoriteButtons();
 }
@@ -5915,11 +5915,6 @@ void BodySlideFrame::OnChoosePreset(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	std::string sstr = GetSelectedPresetName();
-	bool presetChanged = btnSavePreset && btnSavePreset->IsEnabled();
-	if (sstr == BodySlideConfig["SelectedPreset"] && !presetChanged) {
-		UpdateFavoriteButtons();
-		return;
-	}
 
 	app->ActivatePreset(sstr);
 	UpdateFavoriteButtons();
@@ -6524,39 +6519,15 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCollapsiblePane* advancedPane = XRCCTRL(*settings, "advancedPane", wxCollapsiblePane);
 		advancedPane->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [&settings](wxCommandEvent&) { settings->Fit(); });
 
-		wxChoice* choiceTargetGame = XRCCTRL(*settings, "choiceTargetGame", wxChoice);
-		choiceTargetGame->Select(Config.GetIntValue("TargetGame"));
+		SettingsDialogShared::CommonSettingsDialogControls commonControls{};
+		SettingsDialogShared::InitCommonSettingsDialog(*settings,
+			Config,
+			BodySlideConfig,
+			SupportedLangs.data(),
+			SupportedLangs.size(),
+			commonControls);
 
-		wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*settings, "dpGameDataPath", wxDirPickerCtrl);
 		wxString gameDataPath = wxString::FromUTF8(Config["GameDataPath"]);
-		dpGameDataPath->SetPath(gameDataPath);
-
-		wxDirPickerCtrl* dpOutputPath = XRCCTRL(*settings, "dpOutputPath", wxDirPickerCtrl);
-		wxString outputPath = wxString::FromUTF8(Config["OutputDataPath"]);
-		dpOutputPath->SetPath(outputPath);
-		if (wxTextCtrl* outputPathText = dpOutputPath->GetTextCtrl())
-			outputPathText->SetHint(_("Optional (uses Game Data Path if empty)"));
-
-		wxDirPickerCtrl* dpProjectPath = XRCCTRL(*settings, "dpProjectPath", wxDirPickerCtrl);
-		wxString projectPath = wxString::FromUTF8(Config["ProjectPath"]);
-		dpProjectPath->SetPath(projectPath);
-		if (wxTextCtrl* projectPathText = dpProjectPath->GetTextCtrl())
-			projectPathText->SetHint(_("Optional (uses executable directory if empty)"));
-
-		wxCheckBox* cbShowForceBodyNormals = XRCCTRL(*settings, "cbShowForceBodyNormals", wxCheckBox);
-		cbShowForceBodyNormals->SetValue(Config.GetBoolValue("ShowForceBodyNormals"));
-
-		wxCheckBox* cbBSATextures = XRCCTRL(*settings, "cbBSATextures", wxCheckBox);
-		cbBSATextures->SetValue(Config.GetBoolValue("BSATextureScan"));
-
-		wxCheckBox* cbLeftMousePan = XRCCTRL(*settings, "cbLeftMousePan", wxCheckBox);
-		cbLeftMousePan->SetValue(Config.GetBoolValue("Input/LeftMousePan"));
-
-		wxCheckBox* cbBrushSettingsNearCursor = XRCCTRL(*settings, "cbBrushSettingsNearCursor", wxCheckBox);
-		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
-
-		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
-		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
 
 		wxCheckBox* cbPreviewAlwaysDetached = XRCCTRL(*settings, "cbPreviewAlwaysDetached", wxCheckBox);
 		cbPreviewAlwaysDetached->SetValue(BodySlideConfig.GetBoolValue("BodySlideFrame.previewAlwaysDetached", false));
@@ -6565,125 +6536,28 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(*settings, "lbSingleInstanceBehavior", wxStaticText)->Hide();
 		XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice)->Hide();
 
-		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
-		for (size_t i = 0; i < SupportedLangs.size(); i++)
-			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
+		SettingsFillDataFiles(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
 
-		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
-			choiceLanguage->SetStringSelection("English");
-
-		wxCheckBox* cbPerspectiveView = XRCCTRL(*settings, "cbPerspectiveView", wxCheckBox);
-		cbPerspectiveView->SetValue(BodySlideConfig.GetBoolValue("Rendering/PerspectiveView", true));
-
-		wxColourPickerCtrl* cpColorBackground = XRCCTRL(*settings, "cpColorBackground", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorBackground")) {
-			int colorR = Config.GetIntValue("Rendering/ColorBackground.r");
-			int colorG = Config.GetIntValue("Rendering/ColorBackground.g");
-			int colorB = Config.GetIntValue("Rendering/ColorBackground.b");
-			cpColorBackground->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxColourPickerCtrl* cpColorWire = XRCCTRL(*settings, "cpColorWire", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorWire")) {
-			int colorR = Config.GetIntValue("Rendering/ColorWire.r");
-			int colorG = Config.GetIntValue("Rendering/ColorWire.g");
-			int colorB = Config.GetIntValue("Rendering/ColorWire.b");
-			cpColorWire->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxColourPickerCtrl* cpColorPoints = XRCCTRL(*settings, "cpColorPoints", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorPoints")) {
-			int colorR = Config.GetIntValue("Rendering/ColorPoints.r");
-			int colorG = Config.GetIntValue("Rendering/ColorPoints.g");
-			int colorB = Config.GetIntValue("Rendering/ColorPoints.b");
-			cpColorPoints->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxColourPickerCtrl* cpColorPointsMasked = XRCCTRL(*settings, "cpColorPointsMasked", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorPointsMasked")) {
-			int colorR = Config.GetIntValue("Rendering/ColorPointsMasked.r");
-			int colorG = Config.GetIntValue("Rendering/ColorPointsMasked.g");
-			int colorB = Config.GetIntValue("Rendering/ColorPointsMasked.b");
-			cpColorPointsMasked->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
-		fpSkeletonFile->SetPath(wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]));
-
-		wxChoice* choiceSkeletonRoot = XRCCTRL(*settings, "choiceSkeletonRoot", wxChoice);
-		choiceSkeletonRoot->SetStringSelection(Config["Anim/SkeletonRootName"]);
-
-		wxCheckListBox* dataFileList = XRCCTRL(*settings, "DataFileList", wxCheckListBox);
-		SettingsFillDataFiles(dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
-
-		choiceTargetGame->Bind(wxEVT_CHOICE, &BodySlideFrame::OnChooseTargetGame, this);
+		commonControls.choiceTargetGame->Bind(wxEVT_CHOICE, &BodySlideFrame::OnChooseTargetGame, this);
 
 		if (settings->ShowModal() == wxID_OK) {
-			TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
-			Config.SetValue("TargetGame", targ);
+			int targetGameSelection = 0;
+			bool needsRestart = false;
+			SettingsDialogShared::SaveCommonSettingsDialog(
+				Config,
+				BodySlideConfig,
+				TargetGames.data(),
+				TargetGames.size(),
+				SupportedLangs.data(),
+				SupportedLangs.size(),
+				commonControls,
+				[this]() { app->InitLanguage(); },
+				targetGameSelection,
+				needsRestart);
 
-			if (!dpGameDataPath->GetPath().IsEmpty()) {
-				wxFileName gameDataDir = dpGameDataPath->GetDirName();
-				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToUTF8().data());
-				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToUTF8().data());
-			}
+			TargetGame targ = (TargetGame)targetGameSelection;
 
-			// set OutputDataPath even if it is empty
-			wxFileName outputDataDir = dpOutputPath->GetDirName();
-			Config.SetValue("OutputDataPath", outputDataDir.GetFullPath().ToUTF8().data());
-
-			// set ProjectPath even if it is empty
-			wxFileName projectDir = dpProjectPath->GetDirName();
-			Config.SetValue("ProjectPath", projectDir.GetFullPath().ToUTF8().data());
-
-			wxArrayInt items;
-			wxString selectedfiles;
-			for (uint32_t i = 0; i < dataFileList->GetCount(); i++)
-				if (!dataFileList->IsChecked(i))
-					selectedfiles += dataFileList->GetString(i) + "; ";
-
-			selectedfiles = selectedfiles.BeforeLast(';');
-			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToUTF8().data());
-
-			Config.SetBoolValue("ShowForceBodyNormals", cbShowForceBodyNormals->IsChecked());
-			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
-			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
-			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
-			Config.SetBoolValue("Input/MaskHistory", cbMaskHistory->IsChecked());
 			BodySlideConfig.SetBoolValue("BodySlideFrame.previewAlwaysDetached", cbPreviewAlwaysDetached->IsChecked());
-
-			int oldLang = Config.GetIntValue("Language");
-			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
-			if (oldLang != newLang) {
-				Config.SetValue("Language", newLang);
-				app->InitLanguage();
-			}
-
-			BodySlideConfig.SetBoolValue("Rendering/PerspectiveView", cbPerspectiveView->IsChecked());
-
-			wxColour colorBackground = cpColorBackground->GetColour();
-			Config.SetValue("Rendering/ColorBackground.r", colorBackground.Red());
-			Config.SetValue("Rendering/ColorBackground.g", colorBackground.Green());
-			Config.SetValue("Rendering/ColorBackground.b", colorBackground.Blue());
-
-			wxColour colorWire = cpColorWire->GetColour();
-			Config.SetValue("Rendering/ColorWire.r", colorWire.Red());
-			Config.SetValue("Rendering/ColorWire.g", colorWire.Green());
-			Config.SetValue("Rendering/ColorWire.b", colorWire.Blue());
-
-			wxColour colorPoints = cpColorPoints->GetColour();
-			Config.SetValue("Rendering/ColorPoints.r", colorPoints.Red());
-			Config.SetValue("Rendering/ColorPoints.g", colorPoints.Green());
-			Config.SetValue("Rendering/ColorPoints.b", colorPoints.Blue());
-
-			wxColour colorPointsMasked = cpColorPointsMasked->GetColour();
-			Config.SetValue("Rendering/ColorPointsMasked.r", colorPointsMasked.Red());
-			Config.SetValue("Rendering/ColorPointsMasked.g", colorPointsMasked.Green());
-			Config.SetValue("Rendering/ColorPointsMasked.b", colorPointsMasked.Blue());
-
-			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
-			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToUTF8().data());
-			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToUTF8().data());
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			app->SaveFavorites();
@@ -6697,6 +6571,10 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			RefreshTargetGameState();
 			Layout();
+
+			if (needsRestart) {
+				wxMessageBox(_("Settings changed. Please restart the application for changes to take effect."), _("Settings Changed"), wxOK | wxICON_INFORMATION);
+			}
 		}
 
 		delete settings;

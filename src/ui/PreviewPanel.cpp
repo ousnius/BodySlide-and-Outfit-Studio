@@ -50,10 +50,10 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	sizerProjectSelect->Add(presetLabel, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 	sizerProjectSelect->Add(presetChoice, 1, wxALL | wxEXPAND, 5);
 	projectSelectPanel->SetSizer(sizerProjectSelect);
-	projectSelectPanel->SetBackgroundColour(wxColour(210, 210, 210));
+	projectSelectPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
 
 	wxPanel* uiPanel = new wxPanel(this);
-	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
+	weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
 
 	optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, FromDIP(wxSize(25, 25)));
 	optButton->SetToolTip(_("Show the Normal Map Generator dialog."));
@@ -70,7 +70,7 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	showReferenceCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnShowReference, this);
 	showReferenceCheckbox->Hide();
 
-	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
+	uiPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
 
 	// Pop-out button (placed in uiPanel, below Lock Shape)
 	popoutButton = new wxBitmapButton(

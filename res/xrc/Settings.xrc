@@ -316,6 +316,38 @@
 							</object>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lbAppearance">
+									<size>100,-1</size>
+									<label>Appearance</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>2</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxChoice" name="choiceAppearance">
+									<tooltip>Controls application appearance mode.</tooltip>
+									<selection>1</selection>
+									<content>
+										<item translate="1">System</item>
+										<item translate="1">Light</item>
+										<item translate="1">Dark</item>
+									</content>
+								</object>
+							</object>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="sizeritem">

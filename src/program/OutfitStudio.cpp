@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "OutfitStudio.h"
 #include "../components/SliderGroup.h"
 #include "../components/SliderPresets.h"
+#include "../files/HkxFile.h"
 #include "../files/MaskFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
@@ -36,6 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/ProjectUtil.h"
 #include "../utils/StackTrace.h"
 #include "../utils/StringStuff.h"
+#include "../utils/SettingsDialogShared.h"
 
 #include <cstdlib>
 #include <sstream>
@@ -48,6 +50,44 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ConvertBodyReferenceDialog.h"
 
 using namespace nifly;
+
+namespace {
+
+bool GetPoseHkxFormat(TargetGame targetGame, HKX::Format* outFormat = nullptr);
+
+int GetPreferredPoseFileFilterIndex(TargetGame targetGame) {
+	switch (targetGame) {
+	case SKYRIMSE:
+	case SKYRIMVR:
+		return 2;
+	case FO4:
+	case FO4VR:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+wxString GetPoseFileExtensionForFilter(int filterIndex) {
+	switch (filterIndex) {
+	case 0: return "hkx";
+	case 1: return "json";
+	case 2: return "yaml";
+	default: return wxEmptyString;
+	}
+}
+
+wxString EnsurePoseFileExtension(const wxString& filePath, int filterIndex) {
+	wxFileName fn(filePath);
+	if (!fn.HasExt()) {
+		wxString ext = GetPoseFileExtensionForFilter(filterIndex);
+		if (!ext.empty())
+			fn.SetExt(ext);
+	}
+	return fn.GetFullPath();
+}
+
+}
 
 // IPC connection handler for Outfit Studio single-instance checking
 class OutfitStudioIPCConnection : public wxConnection {
@@ -143,7 +183,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMBOBOX(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
 	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
 	EVT_BUTTON(XRCID("deletePose"), OutfitStudioFrame::OnDeletePose)
-	EVT_BUTTON(XRCID("loadHkxPose"), OutfitStudioFrame::OnLoadHkxPose)
+	EVT_BUTTON(XRCID("exportPoseFile"), OutfitStudioFrame::OnSaveHkxPose)
+	EVT_BUTTON(XRCID("importPoseFile"), OutfitStudioFrame::OnLoadHkxPose)
 
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
 	EVT_TEXT_ENTER(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
@@ -490,6 +531,8 @@ bool OutfitStudio::OnInit() {
 	wxHandleFatalExceptions();
 #endif
 
+	SetAppearance(SettingsDialogShared::GetConfiguredAppearance(Config));
+
 	wxString appDirUri = wxString::FromUTF8(dataDir);
 	appDirUri.Replace("#", "%23");
 	wxSetEnv("AppDir", appDirUri);
@@ -831,6 +874,7 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("BSATextureScan", true);
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultBoolValue("UseSystemLanguage", false);
+	SettingsDialogShared::SetDefaultAppearanceMode(Config);
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
@@ -1345,15 +1389,6 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (segmentTabButton) {
 		bool showSegmentTab = wxGetApp().targetGame == FO4 || wxGetApp().targetGame == FO4VR || wxGetApp().targetGame == FO76;
 		segmentTabButton->Show(showSegmentTab);
-	}
-
-	// The HKX pose pipeline supports Skyrim LE/SE/VR and Fallout 4/VR
-	// natively (no external tools required). Other games use unsupported
-	// Havok variants (Skyrim ragdoll-only formats, Starfield, etc.).
-	if (wxWindow* loadHkxPoseBtn = FindWindow(XRCID("loadHkxPose"))) {
-		TargetGame tg = wxGetApp().targetGame;
-		bool showLoadHkx = (tg == SKYRIM || tg == SKYRIMSE || tg == SKYRIMVR || tg == FO4 || tg == FO4VR);
-		loadHkxPoseBtn->Show(showLoadHkx);
 	}
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
@@ -2245,177 +2280,64 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCollapsiblePane* advancedPane = XRCCTRL(*settings, "advancedPane", wxCollapsiblePane);
 		advancedPane->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [&settings](wxCommandEvent&) { settings->Fit(); });
 
-		wxChoice* choiceTargetGame = XRCCTRL(*settings, "choiceTargetGame", wxChoice);
-		choiceTargetGame->Select(Config.GetIntValue("TargetGame"));
+		SettingsDialogShared::CommonSettingsDialogControls commonControls{};
+		SettingsDialogShared::InitCommonSettingsDialog(*settings,
+			Config,
+			OutfitStudioConfig,
+			SupportedLangs.data(),
+			SupportedLangs.size(),
+			commonControls);
 
-		wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*settings, "dpGameDataPath", wxDirPickerCtrl);
 		wxString gameDataPath = wxString::FromUTF8(Config["GameDataPath"]);
-		dpGameDataPath->SetPath(gameDataPath);
-
-		wxDirPickerCtrl* dpOutputPath = XRCCTRL(*settings, "dpOutputPath", wxDirPickerCtrl);
-		wxString outputPath = wxString::FromUTF8(Config["OutputDataPath"]);
-		dpOutputPath->SetPath(outputPath);
-		if (wxTextCtrl* outputPathText = dpOutputPath->GetTextCtrl())
-			outputPathText->SetHint(_("Optional (uses Game Data Path if empty)"));
-
-		wxDirPickerCtrl* dpProjectPath = XRCCTRL(*settings, "dpProjectPath", wxDirPickerCtrl);
-		wxString projectPath = wxString::FromUTF8(Config["ProjectPath"]);
-		dpProjectPath->SetPath(projectPath);
-		if (wxTextCtrl* projectPathText = dpProjectPath->GetTextCtrl())
-			projectPathText->SetHint(_("Optional (uses executable directory if empty)"));
-
-		wxCheckBox* cbShowForceBodyNormals = XRCCTRL(*settings, "cbShowForceBodyNormals", wxCheckBox);
-		cbShowForceBodyNormals->SetValue(Config.GetBoolValue("ShowForceBodyNormals"));
-
-		wxCheckBox* cbBSATextures = XRCCTRL(*settings, "cbBSATextures", wxCheckBox);
-		cbBSATextures->SetValue(Config.GetBoolValue("BSATextureScan"));
-
-		wxCheckBox* cbLeftMousePan = XRCCTRL(*settings, "cbLeftMousePan", wxCheckBox);
-		cbLeftMousePan->SetValue(Config.GetBoolValue("Input/LeftMousePan"));
-
-		wxCheckBox* cbBrushSettingsNearCursor = XRCCTRL(*settings, "cbBrushSettingsNearCursor", wxCheckBox);
-		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
-
-		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
-		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
 
 		XRCCTRL(*settings, "cbPreviewAlwaysDetached", wxCheckBox)->Hide();
 
 		wxChoice* choiceSingleInstanceBehavior = XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice);
 		choiceSingleInstanceBehavior->SetSelection(OutfitStudioConfig.GetIntValue("SingleInstanceBehavior", 0));
 
-		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
-		for (size_t i = 0; i < SupportedLangs.size(); i++)
-			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
+		SettingsFillDataFiles(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
 
-		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
-			choiceLanguage->SetStringSelection("English");
-
-		wxCheckBox* cbPerspectiveView = XRCCTRL(*settings, "cbPerspectiveView", wxCheckBox);
-		cbPerspectiveView->SetValue(OutfitStudioConfig.GetBoolValue("Rendering/PerspectiveView", true));
-
-		wxColourPickerCtrl* cpColorBackground = XRCCTRL(*settings, "cpColorBackground", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorBackground")) {
-			int colorR = Config.GetIntValue("Rendering/ColorBackground.r");
-			int colorG = Config.GetIntValue("Rendering/ColorBackground.g");
-			int colorB = Config.GetIntValue("Rendering/ColorBackground.b");
-			cpColorBackground->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxColourPickerCtrl* cpColorWire = XRCCTRL(*settings, "cpColorWire", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorWire")) {
-			int colorR = Config.GetIntValue("Rendering/ColorWire.r");
-			int colorG = Config.GetIntValue("Rendering/ColorWire.g");
-			int colorB = Config.GetIntValue("Rendering/ColorWire.b");
-			cpColorWire->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxColourPickerCtrl* cpColorPoints = XRCCTRL(*settings, "cpColorPoints", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorPoints")) {
-			int colorR = Config.GetIntValue("Rendering/ColorPoints.r");
-			int colorG = Config.GetIntValue("Rendering/ColorPoints.g");
-			int colorB = Config.GetIntValue("Rendering/ColorPoints.b");
-			cpColorPoints->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxColourPickerCtrl* cpColorPointsMasked = XRCCTRL(*settings, "cpColorPointsMasked", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorPointsMasked")) {
-			int colorR = Config.GetIntValue("Rendering/ColorPointsMasked.r");
-			int colorG = Config.GetIntValue("Rendering/ColorPointsMasked.g");
-			int colorB = Config.GetIntValue("Rendering/ColorPointsMasked.b");
-			cpColorPointsMasked->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
-		fpSkeletonFile->SetPath(wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]));
-
-		wxChoice* choiceSkeletonRoot = XRCCTRL(*settings, "choiceSkeletonRoot", wxChoice);
-		choiceSkeletonRoot->SetStringSelection(Config["Anim/SkeletonRootName"]);
-
-		wxCheckListBox* dataFileList = XRCCTRL(*settings, "DataFileList", wxCheckListBox);
-		SettingsFillDataFiles(dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
-
-		choiceTargetGame->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnChooseTargetGame, this);
+		commonControls.choiceTargetGame->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnChooseTargetGame, this);
 
 		if (settings->ShowModal() == wxID_OK) {
-			TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
-			Config.SetValue("TargetGame", targ);
-
-			if (!dpGameDataPath->GetPath().IsEmpty()) {
-				wxFileName gameDataDir = dpGameDataPath->GetDirName();
-				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToUTF8().data());
-				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToUTF8().data());
-			}
-
-			// set OutputDataPath even if it is empty
-			wxFileName outputDataDir = dpOutputPath->GetDirName();
-			Config.SetValue("OutputDataPath", outputDataDir.GetFullPath().ToUTF8().data());
-
-			// set ProjectPath even if it is empty
-			wxFileName projectDir = dpProjectPath->GetDirName();
-			Config.SetValue("ProjectPath", projectDir.GetFullPath().ToUTF8().data());
-
-			wxArrayInt items;
-			wxString selectedfiles;
-			for (uint32_t i = 0; i < dataFileList->GetCount(); i++)
-				if (!dataFileList->IsChecked(i))
-					selectedfiles += dataFileList->GetString(i) + "; ";
-
-			selectedfiles = selectedfiles.BeforeLast(';');
-			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToUTF8().data());
-
-			Config.SetBoolValue("ShowForceBodyNormals", cbShowForceBodyNormals->IsChecked());
-			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
-			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
-			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
-			Config.SetBoolValue("Input/MaskHistory", cbMaskHistory->IsChecked());
+			int targetGameSelection = 0;
+			bool needsRestart = false;
+			SettingsDialogShared::SaveCommonSettingsDialog(
+				Config,
+				OutfitStudioConfig,
+				TargetGames.data(),
+				TargetGames.size(),
+				SupportedLangs.data(),
+				SupportedLangs.size(),
+				commonControls,
+				[]() { wxGetApp().InitLanguage(); },
+				targetGameSelection,
+				needsRestart);
 
 			OutfitStudioConfig.SetValue("SingleInstanceBehavior", choiceSingleInstanceBehavior->GetSelection());
 			OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
 
-			int oldLang = Config.GetIntValue("Language");
-			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
-			if (oldLang != newLang) {
-				Config.SetValue("Language", newLang);
-				wxGetApp().InitLanguage();
-			}
-
-			OutfitStudioConfig.SetBoolValue("Rendering/PerspectiveView", cbPerspectiveView->IsChecked());
-
-			wxColour colorBackground = cpColorBackground->GetColour();
-			Config.SetValue("Rendering/ColorBackground.r", colorBackground.Red());
-			Config.SetValue("Rendering/ColorBackground.g", colorBackground.Green());
-			Config.SetValue("Rendering/ColorBackground.b", colorBackground.Blue());
-			if (glView)
+			// Apply colors to GL view (SaveCommonSettingsDialog already saved them to config)
+			if (glView) {
+				wxColour colorBackground = commonControls.cpColorBackground->GetColour();
 				glView->gls.SetBackgroundColor(Vector3(colorBackground.Red() / 255.0f, colorBackground.Green() / 255.0f, colorBackground.Blue() / 255.0f));
 
-			wxColour colorWire = cpColorWire->GetColour();
-			Config.SetValue("Rendering/ColorWire.r", colorWire.Red());
-			Config.SetValue("Rendering/ColorWire.g", colorWire.Green());
-			Config.SetValue("Rendering/ColorWire.b", colorWire.Blue());
-			if (glView)
+				wxColour colorWire = commonControls.cpColorWire->GetColour();
 				glView->gls.SetWireColor(Vector3(colorWire.Red() / 255.0f, colorWire.Green() / 255.0f, colorWire.Blue() / 255.0f));
 
-			wxColour colorPoints = cpColorPoints->GetColour();
-			Config.SetValue("Rendering/ColorPoints.r", colorPoints.Red());
-			Config.SetValue("Rendering/ColorPoints.g", colorPoints.Green());
-			Config.SetValue("Rendering/ColorPoints.b", colorPoints.Blue());
-			if (glView)
+				wxColour colorPoints = commonControls.cpColorPoints->GetColour();
 				glView->gls.SetPointColor(Vector3(colorPoints.Red() / 255.0f, colorPoints.Green() / 255.0f, colorPoints.Blue() / 255.0f));
 
-			wxColour colorPointsMasked = cpColorPointsMasked->GetColour();
-			Config.SetValue("Rendering/ColorPointsMasked.r", colorPointsMasked.Red());
-			Config.SetValue("Rendering/ColorPointsMasked.g", colorPointsMasked.Green());
-			Config.SetValue("Rendering/ColorPointsMasked.b", colorPointsMasked.Blue());
-			if (glView)
+				wxColour colorPointsMasked = commonControls.cpColorPointsMasked->GetColour();
 				glView->gls.SetMaskedPointColor(Vector3(colorPointsMasked.Red() / 255.0f, colorPointsMasked.Green() / 255.0f, colorPointsMasked.Blue() / 255.0f));
-
-			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
-			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToUTF8().data());
-			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToUTF8().data());
+			}
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			wxGetApp().InitArchives();
+
+			if (needsRestart) {
+				wxMessageBox(_("Settings changed. Please restart the application for changes to take effect."), _("Settings Changed"), wxOK | wxICON_INFORMATION);
+			}
 		}
 
 		delete settings;
@@ -3492,6 +3414,46 @@ void OutfitStudioFrame::ClearSelected(NiShape* shape) {
 		activeItem = nullptr;
 
 	selectedItems.erase(std::remove_if(selectedItems.begin(), selectedItems.end(), [&](ShapeItemData* i) { return i->GetShape() == shape; }), selectedItems.end());
+}
+
+bool OutfitStudioFrame::GetShapeReferenceSource(NiShape* shape, std::string& outProjectFile, std::string& outProjectName) {
+	outProjectFile.clear();
+	outProjectName.clear();
+
+	if (!shape || !outfitRoot.IsOk())
+		return false;
+
+	wxTreeItemIdValue cookie;
+	wxTreeItemId child = outfitShapes->GetFirstChild(outfitRoot, cookie);
+	while (child.IsOk()) {
+		auto* itemData = dynamic_cast<ShapeItemData*>(outfitShapes->GetItemData(child));
+		if (itemData && itemData->GetShape() == shape) {
+			outProjectFile = itemData->GetRefProjectFile();
+			outProjectName = itemData->GetRefProjectName();
+			return true;
+		}
+
+		child = outfitShapes->GetNextChild(outfitRoot, cookie);
+	}
+
+	return false;
+}
+
+void OutfitStudioFrame::SetShapeReferenceSource(NiShape* shape, const std::string& projectFile, const std::string& projectName) {
+	if (!shape || !outfitRoot.IsOk())
+		return;
+
+	wxTreeItemIdValue cookie;
+	wxTreeItemId child = outfitShapes->GetFirstChild(outfitRoot, cookie);
+	while (child.IsOk()) {
+		auto* itemData = dynamic_cast<ShapeItemData*>(outfitShapes->GetItemData(child));
+		if (itemData && itemData->GetShape() == shape) {
+			itemData->SetRefSource(projectFile, projectName);
+			return;
+		}
+
+		child = outfitShapes->GetNextChild(outfitRoot, cookie);
+	}
 }
 
 std::string OutfitStudioFrame::GetActiveBone() {
@@ -4648,6 +4610,8 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 				ShapeItemState prevState{};
 				prevState.shapeName = outfitShapes->GetItemText(child).ToUTF8().data();
 				prevState.state = outfitShapes->GetItemState(child);
+				prevState.refProjectFile = itemData->GetRefProjectFile();
+				prevState.refProjectName = itemData->GetRefProjectName();
 
 				if (outfitShapes->IsSelected(child))
 					prevState.selected = true;
@@ -4681,6 +4645,9 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 		outfitShapes->SetItemState(item, 0);
 		outfitShapes->SetItemData(item, itemData);
 
+		if (project->IsBaseShape(shape))
+			itemData->SetRefSource(project->GetReferenceProjectFile(), project->GetReferenceProjectName());
+
 		if (project->IsBaseShape(shape)) {
 			outfitShapes->SetItemBold(item);
 			outfitShapes->SetItemTextColour(item, wxColour(0, 255, 0));
@@ -4690,6 +4657,7 @@ void OutfitStudioFrame::RefreshGUIFromProj(bool render, bool stashMasks) {
 
 		if (it != prevStates.end()) {
 			outfitShapes->SetItemState(item, it->state);
+			itemData->SetRefSource(it->refProjectFile, it->refProjectName);
 
 			if (it->selected) {
 				outfitShapes->SelectItem(item);
@@ -13532,7 +13500,7 @@ void OutfitStudioFrame::OnSavePose(wxCommandEvent& WXUNUSED(event)) {
 	wxString dirName = wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/PoseData";
 	wxFileName::Mkdir(dirName, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
-	wxString fileName = dirName + "/" + wxString::FromUTF8(poseData->name) + ".xml";
+	wxString fileName = dirName + "/" + wxString::FromUTF8(PoseDataCollection::SanitizeFileStem(poseData->name).c_str()) + ".xml";
 
 	PoseDataFile poseDataFile;
 	poseDataFile.New(fileName.ToUTF8().data());
@@ -13561,7 +13529,7 @@ void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
 		if (result != wxYES)
 			return;
 
-		wxString fileName = wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/PoseData/" + wxString::FromUTF8(poseData->name) + ".xml";
+		wxString fileName = wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/PoseData/" + wxString::FromUTF8(PoseDataCollection::SanitizeFileStem(poseData->name).c_str()) + ".xml";
 		wxRemoveFile(fileName);
 
 		cPoseName->Delete(poseSel);
@@ -13570,76 +13538,174 @@ void OutfitStudioFrame::OnDeletePose(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
-	TargetGame targetGame = wxGetApp().targetGame;
-	if (targetGame != SKYRIM && targetGame != SKYRIMSE && targetGame != SKYRIMVR && targetGame != FO4 && targetGame != FO4VR) {
-		wxMessageBox(_("Loading HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
-					 _("Load HKX Pose"),
-					 wxOK | wxICON_INFORMATION,
-					 this);
+namespace {
+
+bool GetPoseHkxFormat(TargetGame targetGame, HKX::Format* outFormat) {
+	HKX::Format format = HKX::Format::Unknown;
+	switch (targetGame) {
+		case SKYRIM: format = HKX::Format::Skyrim32; break;
+		case SKYRIMSE:
+		case SKYRIMVR: format = HKX::Format::Skyrim64; break;
+		case FO4:
+		case FO4VR: format = HKX::Format::Fallout64; break;
+		default: return false;
+	}
+
+	if (outFormat)
+		*outFormat = format;
+	return true;
+}
+
+} // namespace
+
+void OutfitStudioFrame::OnSaveHkxPose(wxCommandEvent& WXUNUSED(event)) {
+	wxString defaultFileStem = "pose";
+	if (wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName")) {
+		wxString poseName = cPoseName->GetValue();
+		poseName.Trim(true).Trim(false);
+		if (!poseName.empty() && poseName != "<New>")
+			defaultFileStem = poseName;
+	}
+	defaultFileStem = wxString::FromUTF8(PoseDataCollection::SanitizeFileStem(std::string(defaultFileStem.ToUTF8().data())).c_str());
+
+	wxFileDialog saveDlg(this,
+					 _("Save pose file"),
+					 wxEmptyString,
+					 defaultFileStem,
+					 "HKX pose files (*.hkx)|*.hkx|SAM JSON pose files (*.json)|*.json|SAM YAML pose files (*.yaml;*.yml)|*.yaml;*.yml",
+					 wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	saveDlg.SetFilterIndex(GetPreferredPoseFileFilterIndex(wxGetApp().targetGame));
+	if (saveDlg.ShowModal() == wxID_CANCEL)
+		return;
+
+	wxString savePath = EnsurePoseFileExtension(saveDlg.GetPath(), saveDlg.GetFilterIndex());
+	wxFileName saveFn(savePath);
+	PoseFileFormat format = PoseDataCollection::GetPoseFileFormat(std::string(savePath.ToUTF8().data()));
+	std::string skeletonHkxPath;
+	HKX::Format hkxFormat = HKX::Format::Unknown;
+
+	if (format == PoseFileFormat::Hkx) {
+		if (!GetPoseHkxFormat(wxGetApp().targetGame, &hkxFormat)) {
+			wxMessageBox(_("Saving HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
+						 _("Save Pose File"),
+						 wxOK | wxICON_INFORMATION,
+						 this);
+			return;
+		}
+
+		wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
+		if (defSkelNif.IsEmpty()) {
+			wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings before saving an HKX pose."),
+						 _("Save Pose File"),
+						 wxOK | wxICON_ERROR,
+						 this);
+			return;
+		}
+
+		wxFileName defSkelFn(defSkelNif);
+		if (defSkelFn.IsRelative())
+			defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
+		defSkelFn.SetExt("hkx");
+
+		wxString skelHkx = defSkelFn.GetFullPath();
+		if (!wxFileExists(skelHkx)) {
+			wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nTo save HKX poses, place a matching .hkx skeleton file alongside the .nif reference skeleton."), skelHkx),
+						 _("Save Pose File"),
+						 wxOK | wxICON_ERROR,
+						 this);
+			return;
+		}
+
+		skeletonHkxPath = std::string(skelHkx.ToUTF8().data());
+	}
+	else if (format != PoseFileFormat::Json && format != PoseFileFormat::Yaml) {
+		wxMessageBox(_("Please save the pose with a .hkx, .json, .yaml or .yml extension."), _("Save Pose File"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
-	// Ask the user which .hkx pose file to load.
-	wxFileDialog loadDlg(this,
-						 _("Select HKX pose file"),
-						 wxEmptyString,
-						 wxEmptyString,
-						 "HKX files (*.hkx)|*.hkx",
-						 wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	PoseData pd;
+	PoseDataCollection::CaptureCurrentPose(std::string(saveFn.GetName().ToUTF8().data()), format != PoseFileFormat::Yaml, pd);
+	if (pd.boneData.empty()) {
+		wxMessageBox(_("No skeleton bones are available to export a pose."), _("Save Pose File"), wxOK | wxICON_ERROR, this);
+		return;
+	}
 
+	std::string saveError;
+	if (!PoseDataCollection::SavePoseFile(std::string(savePath.ToUTF8().data()), pd, skeletonHkxPath, hkxFormat, &saveError)) {
+		wxString message = saveError.empty() ? _("Failed to save the pose file.") : wxString::FromUTF8(saveError);
+		wxMessageBox(message, _("Save Pose File"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+	if (statusBar)
+		statusBar->SetStatusText(_("Pose file saved."), 0);
+}
+
+void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
+	wxFileDialog loadDlg(this,
+						 _("Select pose file"),
+						 wxEmptyString,
+						 wxEmptyString,
+						 "HKX pose files (*.hkx)|*.hkx|SAM JSON pose files (*.json)|*.json|SAM YAML pose files (*.yaml;*.yml)|*.yaml;*.yml",
+						 wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	loadDlg.SetFilterIndex(GetPreferredPoseFileFilterIndex(wxGetApp().targetGame));
 	if (loadDlg.ShowModal() == wxID_CANCEL)
 		return;
 
-	wxString srcHkx = loadDlg.GetPath();
+	wxString srcPath = loadDlg.GetPath();
+	PoseFileFormat format = PoseDataCollection::GetPoseFileFormat(std::string(srcPath.ToUTF8().data()));
+	std::string skeletonHkxPath;
 
-	// Derive the Havok skeleton path from the reference skeleton configured
-	// for this target game (Settings → Anim/DefaultSkeletonReference). The
-	// NIF and HKX files share the same base name per Bethesda convention,
-	// so we simply swap the extension.
-	wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
-	if (defSkelNif.IsEmpty()) {
-		wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton "
-					   "in the application settings before loading an HKX pose."),
-					 _("Load HKX Pose"),
-					 wxOK | wxICON_ERROR,
-					 this);
+	if (format == PoseFileFormat::Hkx) {
+		TargetGame targetGame = wxGetApp().targetGame;
+		if (!GetPoseHkxFormat(targetGame)) {
+			wxMessageBox(_("Loading HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
+						 _("Load Pose File"),
+						 wxOK | wxICON_INFORMATION,
+						 this);
+			return;
+		}
+
+		wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
+		if (defSkelNif.IsEmpty()) {
+			wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings before loading an HKX pose."),
+						 _("Load Pose File"),
+						 wxOK | wxICON_ERROR,
+						 this);
+			return;
+		}
+
+		wxFileName defSkelFn(defSkelNif);
+		if (defSkelFn.IsRelative())
+			defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
+		defSkelFn.SetExt("hkx");
+
+		wxString skelHkx = defSkelFn.GetFullPath();
+		if (!wxFileExists(skelHkx)) {
+			wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nTo load HKX poses, place a matching .hkx skeleton file alongside the .nif reference skeleton."),
+							  skelHkx),
+						 _("Load Pose File"),
+						 wxOK | wxICON_ERROR,
+						 this);
+			return;
+		}
+
+
+		skeletonHkxPath = std::string(skelHkx.ToUTF8().data());
+	}
+	else if (format != PoseFileFormat::Json && format != PoseFileFormat::Yaml) {
+		wxMessageBox(_("Please choose a pose file with a .hkx, .json, .yaml or .yml extension."), _("Load Pose File"), wxOK | wxICON_ERROR, this);
 		return;
 	}
-
-	wxFileName defSkelFn(defSkelNif);
-	if (defSkelFn.IsRelative())
-		defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
-	defSkelFn.SetExt("hkx");
-
-	wxString skelHkx = defSkelFn.GetFullPath();
-	if (!wxFileExists(skelHkx)) {
-		wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured "
-									    "reference skeleton.\n\nExpected file:\n%s\n\n"
-									    "To load HKX poses, place a matching .hkx skeleton file "
-									    "alongside the .nif reference skeleton."),
-									  skelHkx),
-					 _("Load HKX Pose"),
-					 wxOK | wxICON_ERROR,
-					 this);
-		return;
-	}
-
-	// Build a pose name from the source file name.
-	wxFileName srcFn(srcHkx);
-	std::string poseName = std::string("HKX: ") + std::string(srcFn.GetName().ToUTF8().data());
 
 	PoseData pd;
-	pd.name = poseName;
-
-	if (!PoseDataCollection::LoadHkxPose(std::string(skelHkx.ToUTF8().data()), std::string(srcHkx.ToUTF8().data()), pd)) {
-		wxMessageBox(_("Failed to parse the HKX pose data."), _("Load HKX Pose"), wxOK | wxICON_ERROR, this);
+	std::string loadError;
+	if (!PoseDataCollection::LoadPoseFile(std::string(srcPath.ToUTF8().data()), pd, skeletonHkxPath, &loadError)) {
+		wxString message = loadError.empty() ? _("Failed to load the pose file.") : wxString::FromUTF8(loadError);
+		wxMessageBox(message, _("Load Pose File"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
-	// Add or replace the pose in the collection and the combobox. The
-	// combobox stores raw PoseData pointers; PoseDataCollection uses a
-	// deque so existing addresses stay valid across the AddPose call.
 	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
 	if (!cPoseName)
 		return;
@@ -13677,9 +13743,10 @@ void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
 		cPoseName->SetSelection(idx);
 	}
 
-	// Apply the pose by replaying the OnSelectPose handler.
 	wxCommandEvent dummy;
 	OnSelectPose(dummy);
+	if (statusBar)
+		statusBar->SetStatusText(_("Pose file loaded."), 0);
 }
 
 wxBEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)

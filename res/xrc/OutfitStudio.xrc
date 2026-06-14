@@ -1299,42 +1299,71 @@
 																		<option>0</option>
 																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 																		<object class="wxBoxSizer">
-																			<orient>wxHORIZONTAL</orient>
+																			<orient>wxVERTICAL</orient>
 																			<object class="sizeritem">
-																				<option>1</option>
+																				<option>0</option>
+																				<flag>wxEXPAND</flag>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxComboBox" name="cPoseName">
+																							<style>wxCB_SORT</style>
+																							<value></value>
+																							<content />
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxBOTTOM|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="savePose">
+																							<size>-1,25</size>
+																							<label>Save</label>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="deletePose">
+																							<size>-1,25</size>
+																							<label>Delete</label>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
 																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																				<border>5</border>
-																				<object class="wxComboBox" name="cPoseName">
-																					<style>wxCB_SORT</style>
-																					<value></value>
-																					<content />
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxButton" name="savePose">
-																					<size>-1,25</size>
-																					<label>Save</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxRIGHT|wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxButton" name="deletePose">
-																					<size>-1,25</size>
-																					<label>Delete</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxRIGHT|wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxButton" name="loadHkxPose">
-																					<size>-1,25</size>
-																					<label>Load HKX...</label>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="spacer">
+																						<option>1</option>
+																						<flag>wxEXPAND</flag>
+																						<size>0,0</size>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxRIGHT|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="importPoseFile">
+																							<size>-1,25</size>
+																							<label>Import...</label>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxRIGHT|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="exportPoseFile">
+																							<size>-1,25</size>
+																							<label>Export...</label>
+																						</object>
+																					</object>
 																				</object>
 																			</object>
 																		</object>

@@ -7,6 +7,8 @@ See the included LICENSE file
 #include "Anim.h"
 #include "../utils/PlatformUtil.h"
 
+#include <wx/filename.h>
+
 bool PoseData::LoadElement(XMLElement* srcElement) {
 	if (srcElement == nullptr)
 		return false;
@@ -73,6 +75,74 @@ int PoseDataCollection::LoadData(const std::string& basePath) {
 PoseData* PoseDataCollection::AddPose(PoseData pose) {
 	poseData.push_back(std::move(pose));
 	return &poseData.back();
+}
+
+PoseFileFormat PoseDataCollection::GetPoseFileFormat(const std::string& filePath) {
+	wxFileName fn(wxString::FromUTF8(filePath.c_str()));
+	wxString ext = fn.GetExt().Lower();
+	if (ext == "hkx")
+		return PoseFileFormat::Hkx;
+	if (ext == "json")
+		return PoseFileFormat::Json;
+	if (ext == "yaml" || ext == "yml")
+		return PoseFileFormat::Yaml;
+	return PoseFileFormat::Unknown;
+}
+
+std::string PoseDataCollection::SanitizeFileStem(const std::string& name) {
+	wxString wxName = wxString::FromUTF8(name.c_str());
+	wxName.Trim(true).Trim(false);
+	if (wxName.empty() || wxName == "<New>")
+		wxName = "pose";
+
+	static const char* invalidChars = "<>:\"/\\|?*";
+	for (const char* ch = invalidChars; *ch; ++ch)
+		wxName.Replace(wxString::Format("%c", *ch), "_");
+
+	while (!wxName.empty() && (wxName.Last() == '.' || wxName.Last() == ' '))
+		wxName.RemoveLast();
+
+	if (wxName.empty())
+		wxName = "pose";
+
+	return std::string(wxName.ToUTF8().data());
+}
+
+void PoseDataCollection::CaptureCurrentPose(const std::string& poseName, bool absoluteLocal, PoseData& outPose) {
+	outPose.name = poseName;
+	outPose.absoluteLocal = absoluteLocal;
+	outPose.boneData.clear();
+
+	std::vector<std::string> bones;
+	AnimSkeleton::getInstance().GetBoneNames(bones);
+
+	for (const auto& boneName : bones) {
+		AnimBone* bone = AnimSkeleton::getInstance().GetBonePtr(boneName);
+		if (!bone)
+			continue;
+
+		PoseBoneData poseBoneData{};
+		poseBoneData.name = bone->boneName;
+
+		if (absoluteLocal) {
+			nifly::MatTransform poseDelta;
+			poseDelta.translation = bone->poseTranVec;
+			poseDelta.rotation = nifly::RotVecToMat(bone->poseRotVec);
+			poseDelta.scale = (bone->poseScale != 0.0f) ? bone->poseScale : 1.0f;
+
+			nifly::MatTransform localTransform = bone->xformToParent.ComposeTransforms(poseDelta);
+			poseBoneData.rotation = nifly::RotMatToVec(localTransform.rotation);
+			poseBoneData.translation = localTransform.translation;
+			poseBoneData.scale = (localTransform.scale != 0.0f) ? localTransform.scale : 1.0f;
+		}
+		else {
+			poseBoneData.rotation = bone->poseRotVec;
+			poseBoneData.translation = bone->poseTranVec;
+			poseBoneData.scale = (bone->poseScale != 0.0f) ? bone->poseScale : 1.0f;
+		}
+
+		outPose.boneData.push_back(std::move(poseBoneData));
+	}
 }
 
 void PoseData::ApplyToSkeleton() const {

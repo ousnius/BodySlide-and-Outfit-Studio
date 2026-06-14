@@ -626,7 +626,22 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef) {
 	return true;
 }
 
+bool OutfitProject::ShapeSliderDataIsLocalOnly(const std::string& shapeName) {
+	std::string target = ShapeToTarget(shapeName);
+	for (size_t i = 0; i < activeSet.size(); i++) {
+		for (auto& dataFile : activeSet[i].dataFiles) {
+			if (dataFile.targetName == target && !dataFile.bLocal)
+				return false;
+		}
+	}
+
+	return true;
+}
+
 void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
+	if (owner && baseShape && baseShape != shape && (!mRefProjectFile.empty() || !mRefProjectName.empty()))
+		owner->SetShapeReferenceSource(baseShape, mRefProjectFile, mRefProjectName);
+
 	if (moveData) {
 		if (baseShape != shape) {
 			// Copy data from base shape to regular shape
@@ -662,8 +677,6 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 						targetData = target + sliderName;
 						activeSet[i].AddDataFile(target, target + sliderName, target + sliderName);
 					}
-					else
-						activeSet[i].SetLocalData(targetData);
 
 					std::unordered_map<uint16_t, Vector3> diff;
 					morpher.GetRawResultDiff(shapeName, sliderName, diff);
@@ -680,8 +693,26 @@ void OutfitProject::SetBaseShape(NiShape* shape, const bool moveData) {
 	baseShape = shape;
 
 	if (shape) {
-		mRefProjectFile.clear();
-		mRefProjectName.clear();
+		std::string refProjectFile;
+		std::string refProjectName;
+		if (owner && owner->GetShapeReferenceSource(shape, refProjectFile, refProjectName)) {
+			mRefProjectFile = refProjectFile;
+			mRefProjectName = refProjectName;
+		}
+		else {
+			mRefProjectFile.clear();
+			mRefProjectName.clear();
+		}
+
+		if (ShapeSliderDataIsLocalOnly(shape->name.get())) {
+			mRefProjectFile.clear();
+			mRefProjectName.clear();
+			if (owner)
+				owner->SetShapeReferenceSource(shape, "", "");
+		}
+		else if (owner)
+			owner->SetShapeReferenceSource(shape, mRefProjectFile, mRefProjectName);
+
 		mRefShapeName = shape->name.get();
 	}
 	else {

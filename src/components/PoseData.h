@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include <tinyxml2.h>
 
+#include "../files/HkxFile.h"
 #include "Object3d.hpp"
 
 class AnimBone;
@@ -21,6 +22,13 @@ class AnimBone;
 #include <wx/dir.h>
 
 using namespace tinyxml2;
+
+enum class PoseFileFormat {
+	Unknown,
+	Hkx,
+	Json,
+	Yaml,
+};
 
 struct PoseBoneData {
 	std::string name;
@@ -79,6 +87,17 @@ public:
 	// Appends a pose to the collection and returns a stable pointer to it.
 	PoseData* AddPose(PoseData pose);
 
+	// Returns the on-disk pose format inferred from the file extension.
+	static PoseFileFormat GetPoseFileFormat(const std::string& filePath);
+
+	// Sanitizes a pose name for safe use as a Windows file stem.
+	static std::string SanitizeFileStem(const std::string& name);
+
+	// Captures the current live skeleton pose into outPose.
+	// When absoluteLocal is true, transforms are stored in local-to-parent
+	// space; otherwise Outfit-Studio relative deltas are stored.
+	static void CaptureCurrentPose(const std::string& poseName, bool absoluteLocal, PoseData& outPose);
+
 	// Loads all SAM pose YAML files from the specified folder (recursively).
 	// The pose name is derived from the file name (without extension) and is
 	// prefixed with namePrefix. Entries are appended to poseData.
@@ -90,6 +109,35 @@ public:
 	// The pose name is derived from the file name (without extension) and is
 	// prefixed with namePrefix. Entries are appended to poseData.
 	int LoadJsonData(const std::string& basePath, const std::string& namePrefix);
+
+	// Loads a single SAM pose YAML file into outPose.
+	static bool LoadYamlPose(const std::string& filePath, PoseData& outPose);
+
+	// Loads a single SAF/SAM pose JSON file into outPose.
+	static bool LoadJsonPose(const std::string& filePath, PoseData& outPose);
+
+	// Saves pose data in SAM pose YAML format.
+	static bool SaveYamlPose(const std::string& filePath, const PoseData& pose);
+
+	// Saves pose data in SAF pose JSON format.
+	static bool SaveJsonPose(const std::string& filePath, const PoseData& pose);
+
+	// Loads a single pose file based on its extension.
+	// HKX files require skeletonHkxPath to point at the matching skeleton.
+	// On failure, errorOut receives a short human-readable error.
+	static bool LoadPoseFile(const std::string& filePath,
+						 PoseData& outPose,
+						 const std::string& skeletonHkxPath = std::string(),
+						 std::string* errorOut = nullptr);
+
+	// Saves a single pose file based on its extension.
+	// HKX files require skeletonHkxPath and hkxFormat to be supplied.
+	// On failure, errorOut receives a short human-readable error.
+	static bool SavePoseFile(const std::string& filePath,
+						 const PoseData& pose,
+						 const std::string& skeletonHkxPath = std::string(),
+						 HKX::Format hkxFormat = HKX::Format::Unknown,
+						 std::string* errorOut = nullptr);
 
 	// Loads a single pose from a Havok HKX skeleton + animation pair.
 	// Both files are parsed natively (no external tools required) for all

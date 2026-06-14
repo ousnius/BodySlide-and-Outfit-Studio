@@ -3,7 +3,7 @@
 	<object class="wxDialog" name="dlgGroupManager">
 		<style>wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER</style>
 		<size>800,500</size>
-		<bg>#f0f0f0</bg>
+		<bg>wxSYS_COLOUR_3DFACE</bg>
 		<title>Group Manager</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">

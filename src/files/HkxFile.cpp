@@ -20,6 +20,7 @@ and PredatorCZ/HavokLib (both GPLv3).
 #include <cmath>
 #include <cstring>
 #include <fstream>
+#include <limits>
 #include <unordered_map>
 #include <vector>
 
@@ -94,6 +95,295 @@ bool ReadAllFile(const std::string& path, std::vector<uint8_t>& out) {
 	const std::streamsize bytesToRead = static_cast<std::streamsize>(out.size());
 	ifs.read(reinterpret_cast<char*>(out.data()), bytesToRead);
 	return ifs && ifs.gcount() == bytesToRead;
+}
+
+bool WriteAllFile(const std::string& path, const std::vector<uint8_t>& data) {
+#ifdef _WINDOWS
+	std::wstring wpath = PlatformUtil::MultiByteToWideUTF8(path);
+	std::ofstream ofs(wpath.c_str(), std::ios::binary | std::ios::trunc);
+#else
+	std::ofstream ofs(path.c_str(), std::ios::binary | std::ios::trunc);
+#endif
+	if (!ofs.is_open())
+		return false;
+	if (!data.empty())
+		ofs.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
+	return ofs.good();
+}
+
+inline uint32_t AlignUp(uint32_t off, uint32_t alignment) {
+	if (alignment <= 1)
+		return off;
+	uint32_t r = off % alignment;
+	return r ? off + (alignment - r) : off;
+}
+
+void PatchU32(std::vector<uint8_t>& bytes, uint32_t off, uint32_t value) {
+	bytes[off + 0] = static_cast<uint8_t>(value & 0xFFu);
+	bytes[off + 1] = static_cast<uint8_t>((value >> 8) & 0xFFu);
+	bytes[off + 2] = static_cast<uint8_t>((value >> 16) & 0xFFu);
+	bytes[off + 3] = static_cast<uint8_t>((value >> 24) & 0xFFu);
+}
+
+void PatchF32(std::vector<uint8_t>& bytes, uint32_t off, float value) {
+	uint32_t raw = 0;
+	std::memcpy(&raw, &value, sizeof(raw));
+	PatchU32(bytes, off, raw);
+}
+
+void PatchU8(std::vector<uint8_t>& bytes, uint32_t off, uint8_t value) {
+	bytes[off] = value;
+}
+
+void AppendU8(std::vector<uint8_t>& bytes, uint8_t value) {
+	bytes.push_back(value);
+}
+
+void AppendU32(std::vector<uint8_t>& bytes, uint32_t value) {
+	bytes.push_back(static_cast<uint8_t>(value & 0xFFu));
+	bytes.push_back(static_cast<uint8_t>((value >> 8) & 0xFFu));
+	bytes.push_back(static_cast<uint8_t>((value >> 16) & 0xFFu));
+	bytes.push_back(static_cast<uint8_t>((value >> 24) & 0xFFu));
+}
+
+void AppendF32(std::vector<uint8_t>& bytes, float value) {
+	uint32_t raw = 0;
+	std::memcpy(&raw, &value, sizeof(raw));
+	AppendU32(bytes, raw);
+}
+
+void AppendStringZ(std::vector<uint8_t>& bytes, const std::string& value) {
+	bytes.insert(bytes.end(), value.begin(), value.end());
+	bytes.push_back(0);
+}
+
+void AlignBuffer(std::vector<uint8_t>& bytes, uint32_t alignment, uint8_t fill = 0) {
+	bytes.resize(AlignUp(static_cast<uint32_t>(bytes.size()), alignment), fill);
+}
+
+struct LocalFixup {
+	uint32_t src = 0;
+	uint32_t dst = 0;
+};
+
+struct GlobalFixup {
+	uint32_t src = 0;
+	uint32_t dst = 0;
+};
+
+struct VirtualFixup {
+	uint32_t src = 0;
+	uint32_t nameOff = 0;
+};
+
+struct ClassNameEntry {
+	uint32_t signature = 0;
+	const char* name = nullptr;
+};
+
+struct BuiltClassNames {
+	std::vector<uint8_t> bytes;
+	std::unordered_map<std::string, uint32_t> nameOffsets;
+};
+
+struct FormatTraits {
+	Format format = Format::Unknown;
+	uint32_t version = 0;
+	uint32_t ptrSize = 0;
+	uint32_t firstSectionOffset = 0;
+	uint32_t sectionHeaderSize = 0;
+	uint32_t containerSize = 0;
+	uint32_t animationType = 0;
+	const uint8_t* headerPrefix = nullptr;
+	uint32_t headerPrefixSize = 0;
+	const ClassNameEntry* classNames = nullptr;
+	size_t classNameCount = 0;
+};
+
+void QuatNormalize(float q[4]);
+
+static const uint8_t kHeaderPrefixV8[0x40] = {
+	0x57, 0xE0, 0xE0, 0x57, 0x10, 0xC0, 0xC0, 0x10,
+	0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+	0x04, 0x01, 0x00, 0x01, 0x03, 0x00, 0x00, 0x00,
+	0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x4B, 0x00, 0x00, 0x00,
+	0x68, 0x6B, 0x5F, 0x32, 0x30, 0x31, 0x30, 0x2E,
+	0x32, 0x2E, 0x30, 0x2D, 0x72, 0x31, 0x00, 0xFF,
+	0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF,
+};
+
+static const uint8_t kHeaderPrefixV11[0x50] = {
+	0x57, 0xE0, 0xE0, 0x57, 0x10, 0xC0, 0xC0, 0x10,
+	0x00, 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00,
+	0x08, 0x01, 0x00, 0x01, 0x03, 0x00, 0x00, 0x00,
+	0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x4B, 0x00, 0x00, 0x00,
+	0x68, 0x6B, 0x5F, 0x32, 0x30, 0x31, 0x34, 0x2E,
+	0x31, 0x2E, 0x30, 0x2D, 0x72, 0x31, 0x00, 0xFF,
+	0x00, 0x00, 0x00, 0x00, 0x15, 0x00, 0x10, 0x00,
+	0x14, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+};
+
+static const ClassNameEntry kClassNamesV8[] = {
+	{0x75585EF6u, "hkClass"},
+	{0x5C7EA4C2u, "hkClassMember"},
+	{0x8A3609CFu, "hkClassEnum"},
+	{0xCE6F8A6Cu, "hkClassEnumItem"},
+	{0x2772C11Eu, "hkRootLevelContainer"},
+	{0x8DC20333u, "hkaAnimationContainer"},
+	{0x792EE0BBu, "hkaSplineCompressedAnimation"},
+	{0x66EAC971u, "hkaAnimationBinding"},
+};
+
+static const ClassNameEntry kClassNamesV11[] = {
+	{0x33D42383u, "hkClass"},
+	{0xEFA719B0u, "hkClassMember"},
+	{0x8A3609CFu, "hkClassEnum"},
+	{0xCE6F8A6Cu, "hkClassEnumItem"},
+	{0x2772C11Eu, "hkRootLevelContainer"},
+	{0x26859F4Cu, "hkaAnimationContainer"},
+	{0xF8E0B860u, "hkaSplineCompressedAnimation"},
+	{0x0FAF9150u, "hkaAnimationBinding"},
+};
+
+const FormatTraits* GetFormatTraits(Format format) {
+	static const FormatTraits kTraits[] = {
+		{Format::Skyrim32, 8u, 4u, 0x40u, 0x30u, 0x70u, 5u, kHeaderPrefixV8, sizeof(kHeaderPrefixV8), kClassNamesV8, sizeof(kClassNamesV8) / sizeof(kClassNamesV8[0])},
+		{Format::Skyrim64, 8u, 8u, 0x40u, 0x30u, 0x80u, 5u, kHeaderPrefixV8, sizeof(kHeaderPrefixV8), kClassNamesV8, sizeof(kClassNamesV8) / sizeof(kClassNamesV8[0])},
+		{Format::Fallout64, 11u, 8u, 0x50u, 0x40u, 0x80u, 3u, kHeaderPrefixV11, sizeof(kHeaderPrefixV11), kClassNamesV11, sizeof(kClassNamesV11) / sizeof(kClassNamesV11[0])},
+	};
+
+	for (const auto& traits : kTraits)
+		if (traits.format == format)
+			return &traits;
+	return nullptr;
+}
+
+BuiltClassNames BuildClassNames(const FormatTraits& traits) {
+	BuiltClassNames built;
+	for (size_t i = 0; i < traits.classNameCount; ++i) {
+		const ClassNameEntry& entry = traits.classNames[i];
+		uint32_t entryStart = static_cast<uint32_t>(built.bytes.size());
+		AppendU32(built.bytes, entry.signature);
+		AppendU8(built.bytes, 0x09);
+		built.nameOffsets[entry.name] = entryStart + 5u;
+		AppendStringZ(built.bytes, entry.name);
+	}
+	AlignBuffer(built.bytes, 16u, 0xFFu);
+	return built;
+}
+
+void WriteSectionHeader(std::vector<uint8_t>& fileBytes,
+						uint32_t off,
+						uint32_t headerSize,
+						const char* name,
+						uint32_t start,
+						uint32_t localFixups,
+						uint32_t globalFixups,
+						uint32_t virtualFixups,
+						uint32_t exports,
+						uint32_t end) {
+	std::fill(fileBytes.begin() + off, fileBytes.begin() + off + headerSize, 0);
+	std::memcpy(fileBytes.data() + off, name, std::min<size_t>(std::strlen(name), 16u));
+	PatchU32(fileBytes, off + 0x10u, 0xFF000000u);
+	PatchU32(fileBytes, off + 0x14u, start);
+	PatchU32(fileBytes, off + 0x18u, localFixups);
+	PatchU32(fileBytes, off + 0x1Cu, globalFixups);
+	PatchU32(fileBytes, off + 0x20u, virtualFixups);
+	PatchU32(fileBytes, off + 0x24u, exports);
+	PatchU32(fileBytes, off + 0x28u, end);
+	PatchU32(fileBytes, off + 0x2Cu, end);
+	if (headerSize > 0x30u)
+		std::fill(fileBytes.begin() + off + 0x30u, fileBytes.begin() + off + headerSize, 0xFF);
+}
+
+bool IsNearlyIdentityFloat(float value, float identity) {
+	return std::fabs(value - identity) <= 1e-6f;
+}
+
+std::vector<uint8_t> BuildStaticPoseBlob(const std::vector<Transform>& transforms) {
+	const uint32_t maskAndQuantSize = AlignUp(static_cast<uint32_t>(transforms.size()) * 4u, 4u);
+	std::vector<uint8_t> blob(maskAndQuantSize, 0);
+
+	for (size_t trackIndex = 0; trackIndex < transforms.size(); ++trackIndex) {
+		const Transform& transform = transforms[trackIndex];
+		uint8_t posFlags = 0;
+		for (int axis = 0; axis < 3; ++axis)
+			if (!IsNearlyIdentityFloat(transform.translation[axis], 0.0f))
+				posFlags |= static_cast<uint8_t>(1u << axis);
+
+		float quat[4] = {transform.rotation[0], transform.rotation[1], transform.rotation[2], transform.rotation[3]};
+		QuatNormalize(quat);
+		bool hasRotation = !IsNearlyIdentityFloat(quat[0], 0.0f) || !IsNearlyIdentityFloat(quat[1], 0.0f) || !IsNearlyIdentityFloat(quat[2], 0.0f)
+						 || !IsNearlyIdentityFloat(quat[3], 1.0f);
+
+		uint8_t scaleFlags = 0;
+		for (int axis = 0; axis < 3; ++axis)
+			if (!IsNearlyIdentityFloat(transform.scale[axis], 1.0f))
+				scaleFlags |= static_cast<uint8_t>(1u << axis);
+
+		const size_t maskOff = trackIndex * 4u;
+		blob[maskOff + 0] = static_cast<uint8_t>(5u << 2); // uncompressed quaternion
+		blob[maskOff + 1] = posFlags;
+		blob[maskOff + 2] = hasRotation ? 1u : 0u;
+		blob[maskOff + 3] = scaleFlags;
+	}
+
+	AlignBuffer(blob, 4u);
+	for (const Transform& transform : transforms) {
+		for (int axis = 0; axis < 3; ++axis)
+			if (!IsNearlyIdentityFloat(transform.translation[axis], 0.0f))
+				AppendF32(blob, transform.translation[axis]);
+		AlignBuffer(blob, 4u);
+
+		float quat[4] = {transform.rotation[0], transform.rotation[1], transform.rotation[2], transform.rotation[3]};
+		QuatNormalize(quat);
+		bool hasRotation = !IsNearlyIdentityFloat(quat[0], 0.0f) || !IsNearlyIdentityFloat(quat[1], 0.0f) || !IsNearlyIdentityFloat(quat[2], 0.0f)
+						 || !IsNearlyIdentityFloat(quat[3], 1.0f);
+		if (hasRotation) {
+			AppendF32(blob, quat[0]);
+			AppendF32(blob, quat[1]);
+			AppendF32(blob, quat[2]);
+			AppendF32(blob, quat[3]);
+		}
+		AlignBuffer(blob, 4u);
+
+		for (int axis = 0; axis < 3; ++axis)
+			if (!IsNearlyIdentityFloat(transform.scale[axis], 1.0f))
+				AppendF32(blob, transform.scale[axis]);
+		AlignBuffer(blob, 4u);
+	}
+
+	return blob;
+}
+
+void SetArrayHeader(std::vector<uint8_t>& dataBytes,
+					uint32_t fieldRel,
+					uint32_t ptrSize,
+					uint32_t count,
+					uint32_t contentRel,
+					std::vector<LocalFixup>& localFixups) {
+	if (count > 0)
+		localFixups.push_back({fieldRel, contentRel});
+	PatchU32(dataBytes, fieldRel + ptrSize, count);
+	PatchU32(dataBytes, fieldRel + ptrSize + 4u, count ? (count | 0x80000000u) : 0x80000000u);
+}
+
+void SortAndUniqueLocalFixups(std::vector<LocalFixup>& fixups) {
+	std::sort(fixups.begin(), fixups.end(), [](const LocalFixup& a, const LocalFixup& b) { return a.src < b.src; });
+	fixups.erase(std::unique(fixups.begin(), fixups.end(), [](const LocalFixup& a, const LocalFixup& b) { return a.src == b.src && a.dst == b.dst; }), fixups.end());
+}
+
+void SortAndUniqueGlobalFixups(std::vector<GlobalFixup>& fixups) {
+	std::sort(fixups.begin(), fixups.end(), [](const GlobalFixup& a, const GlobalFixup& b) { return a.src < b.src; });
+	fixups.erase(std::unique(fixups.begin(), fixups.end(), [](const GlobalFixup& a, const GlobalFixup& b) { return a.src == b.src && a.dst == b.dst; }), fixups.end());
+}
+
+void SortAndUniqueVirtualFixups(std::vector<VirtualFixup>& fixups) {
+	std::sort(fixups.begin(), fixups.end(), [](const VirtualFixup& a, const VirtualFixup& b) { return a.src < b.src; });
+	fixups.erase(std::unique(fixups.begin(), fixups.end(), [](const VirtualFixup& a, const VirtualFixup& b) { return a.src == b.src && a.nameOff == b.nameOff; }), fixups.end());
 }
 
 // ─── Fixup tables and section descriptors ─────────────────────────────────
@@ -1136,6 +1426,222 @@ bool ParseAnimationBinding(const Buf& buf,
 }
 
 } // namespace
+
+bool File::SavePoseAnimation(const std::string& path,
+							 Format format,
+							 const std::vector<Transform>& transforms,
+							 const SaveAnimationOptions& options,
+							 std::string* errorOut) {
+	const FormatTraits* traits = GetFormatTraits(format);
+	if (!traits) {
+		if (errorOut)
+			*errorOut = "Unsupported HKX variant";
+		return false;
+	}
+	if (transforms.empty()) {
+		if (errorOut)
+			*errorOut = "No transform tracks to serialize";
+		return false;
+	}
+
+	const std::string containerName = options.containerName.empty() ? "Merged Animation Container" : options.containerName;
+	const std::string skeletonName = options.originalSkeletonName.empty() ? "Skeleton" : options.originalSkeletonName;
+	const uint32_t ptrSize = traits->ptrSize;
+	const uint32_t arrSize = HkArrayStride(ptrSize);
+	const uint32_t baseSize = 2u * ptrSize;
+	const uint32_t numTracks = static_cast<uint32_t>(transforms.size());
+	const uint32_t maxFramesPerBlock = 256u;
+	const uint32_t maskAndQuantSize = AlignUp(4u * numTracks, 4u);
+
+	BuiltClassNames classNames = BuildClassNames(*traits);
+
+	std::vector<uint8_t> dataBytes;
+	std::vector<LocalFixup> localFixups;
+	std::vector<GlobalFixup> globalFixups;
+	std::vector<VirtualFixup> virtualFixups;
+
+	dataBytes.resize(ptrSize + 8u, 0);
+	PatchU32(dataBytes, ptrSize, 1u);
+	PatchU32(dataBytes, ptrSize + 4u, 0x80000001u);
+	AlignBuffer(dataBytes, 16u);
+
+	const uint32_t rootRel = 0u;
+	const uint32_t namedVariantRel = static_cast<uint32_t>(dataBytes.size());
+	localFixups.push_back({rootRel, namedVariantRel});
+	dataBytes.resize(namedVariantRel + 3u * ptrSize, 0);
+
+	const uint32_t rootNameRel = static_cast<uint32_t>(dataBytes.size());
+	AppendStringZ(dataBytes, containerName);
+	const uint32_t rootClassRel = AlignUp(static_cast<uint32_t>(dataBytes.size()), 16u);
+	AlignBuffer(dataBytes, 16u);
+	AppendStringZ(dataBytes, "hkaAnimationContainer");
+	AlignBuffer(dataBytes, 16u);
+
+	localFixups.push_back({namedVariantRel, rootNameRel});
+	localFixups.push_back({namedVariantRel + ptrSize, rootClassRel});
+
+	const uint32_t containerRel = static_cast<uint32_t>(dataBytes.size());
+	globalFixups.push_back({namedVariantRel + 2u * ptrSize, containerRel});
+	virtualFixups.push_back({rootRel, classNames.nameOffsets.at("hkRootLevelContainer")});
+
+	dataBytes.resize(containerRel + traits->containerSize, 0);
+	const uint32_t containerBase = (ptrSize == 4u) ? 8u : 16u;
+	const uint32_t animationsArrayField = containerRel + containerBase + arrSize;
+	const uint32_t bindingsArrayField = containerRel + containerBase + 2u * arrSize;
+	SetArrayHeader(dataBytes, containerRel + containerBase, ptrSize, 0u, 0u, localFixups);
+	SetArrayHeader(dataBytes, containerRel + containerBase + 3u * arrSize, ptrSize, 0u, 0u, localFixups);
+	SetArrayHeader(dataBytes, containerRel + containerBase + 4u * arrSize, ptrSize, 0u, 0u, localFixups);
+	virtualFixups.push_back({containerRel, classNames.nameOffsets.at("hkaAnimationContainer")});
+
+	AlignBuffer(dataBytes, 16u);
+	const uint32_t animRel = static_cast<uint32_t>(dataBytes.size());
+	const uint32_t oDuration = baseSize + 4u;
+	const uint32_t oNumTracks = baseSize + 8u;
+	const uint32_t oNumFloatTracks = baseSize + 12u;
+	const uint32_t oExtractedMotion = baseSize + 16u;
+	const uint32_t oAnnTracks = oExtractedMotion + ptrSize;
+	const uint32_t splineBase = oAnnTracks + arrSize;
+	const uint32_t oNumFrames = splineBase;
+	const uint32_t oNumBlocks = splineBase + 4u;
+	const uint32_t oMaxFrames = splineBase + 8u;
+	const uint32_t oMaskQuant = splineBase + 12u;
+	const uint32_t oBlockDur = splineBase + 16u;
+	const uint32_t oFrameDur = splineBase + 24u;
+	uint32_t alignedAfter = splineBase + 28u;
+	if (ptrSize > 1u)
+		alignedAfter = AlignUp(alignedAfter, ptrSize);
+	const uint32_t oBlockOffsets = alignedAfter;
+	const uint32_t oFloatBlockOffsets = oBlockOffsets + arrSize;
+	const uint32_t oTransformOffsets = oFloatBlockOffsets + arrSize;
+	const uint32_t oFloatOffsets = oTransformOffsets + arrSize;
+	const uint32_t oData = oFloatOffsets + arrSize;
+	const uint32_t animHeaderSize = AlignUp(oData + arrSize, 16u);
+	dataBytes.resize(animRel + animHeaderSize, 0);
+
+	PatchU32(dataBytes, animRel + baseSize, traits->animationType);
+	PatchF32(dataBytes, animRel + oDuration, 1.0f / 30.0f);
+	PatchU32(dataBytes, animRel + oNumTracks, numTracks);
+	PatchU32(dataBytes, animRel + oNumFloatTracks, 0u);
+	SetArrayHeader(dataBytes, animRel + oAnnTracks, ptrSize, 0u, 0u, localFixups);
+	PatchU32(dataBytes, animRel + oNumFrames, 1u);
+	PatchU32(dataBytes, animRel + oNumBlocks, 1u);
+	PatchU32(dataBytes, animRel + oMaxFrames, maxFramesPerBlock);
+	PatchU32(dataBytes, animRel + oMaskQuant, maskAndQuantSize);
+	PatchF32(dataBytes, animRel + oBlockDur, std::numeric_limits<float>::infinity());
+	PatchF32(dataBytes, animRel + oFrameDur, std::numeric_limits<float>::infinity());
+	SetArrayHeader(dataBytes, animRel + oTransformOffsets, ptrSize, 0u, 0u, localFixups);
+	SetArrayHeader(dataBytes, animRel + oFloatOffsets, ptrSize, 0u, 0u, localFixups);
+	virtualFixups.push_back({animRel, classNames.nameOffsets.at("hkaSplineCompressedAnimation")});
+
+	AlignBuffer(dataBytes, 16u);
+	const uint32_t bindingRel = static_cast<uint32_t>(dataBytes.size());
+	const uint32_t bindNameOff = baseSize;
+	const uint32_t bindAnimOff = bindNameOff + ptrSize;
+	const uint32_t bindIdxOff = bindAnimOff + ptrSize;
+	const uint32_t bindBlendHintOff = bindIdxOff + 2u * arrSize;
+	const uint32_t bindingSize = AlignUp(bindBlendHintOff + 4u, 16u);
+	dataBytes.resize(bindingRel + bindingSize, 0);
+	SetArrayHeader(dataBytes, bindingRel + bindIdxOff, ptrSize, 0u, 0u, localFixups);
+	SetArrayHeader(dataBytes, bindingRel + bindIdxOff + arrSize, ptrSize, 0u, 0u, localFixups);
+	PatchU32(dataBytes, bindingRel + bindBlendHintOff, 0u);
+	globalFixups.push_back({bindingRel + bindAnimOff, animRel});
+	virtualFixups.push_back({bindingRel, classNames.nameOffsets.at("hkaAnimationBinding")});
+
+	const std::vector<uint8_t> blob = BuildStaticPoseBlob(transforms);
+
+	AlignBuffer(dataBytes, ptrSize);
+	const uint32_t containerAnimationsRel = static_cast<uint32_t>(dataBytes.size());
+	dataBytes.resize(containerAnimationsRel + ptrSize, 0);
+	AlignBuffer(dataBytes, ptrSize);
+	const uint32_t containerBindingsRel = static_cast<uint32_t>(dataBytes.size());
+	dataBytes.resize(containerBindingsRel + ptrSize, 0);
+	AlignBuffer(dataBytes, 4u);
+	const uint32_t blockOffsetsRel = static_cast<uint32_t>(dataBytes.size());
+	AppendU32(dataBytes, 0u);
+	AlignBuffer(dataBytes, 4u);
+	const uint32_t floatBlockOffsetsRel = static_cast<uint32_t>(dataBytes.size());
+	AppendU32(dataBytes, 0u);
+	AlignBuffer(dataBytes, 4u);
+	const uint32_t blobRel = static_cast<uint32_t>(dataBytes.size());
+	dataBytes.insert(dataBytes.end(), blob.begin(), blob.end());
+	AlignBuffer(dataBytes, 16u);
+	const uint32_t bindingNameRel = static_cast<uint32_t>(dataBytes.size());
+	AppendStringZ(dataBytes, skeletonName);
+	AlignBuffer(dataBytes, 16u);
+
+	SetArrayHeader(dataBytes, animationsArrayField, ptrSize, 1u, containerAnimationsRel, localFixups);
+	SetArrayHeader(dataBytes, bindingsArrayField, ptrSize, 1u, containerBindingsRel, localFixups);
+	globalFixups.push_back({containerAnimationsRel, animRel});
+	globalFixups.push_back({containerBindingsRel, bindingRel});
+
+	SetArrayHeader(dataBytes, animRel + oBlockOffsets, ptrSize, 1u, blockOffsetsRel, localFixups);
+	SetArrayHeader(dataBytes, animRel + oFloatBlockOffsets, ptrSize, 1u, floatBlockOffsetsRel, localFixups);
+	SetArrayHeader(dataBytes, animRel + oData, ptrSize, static_cast<uint32_t>(blob.size()), blobRel, localFixups);
+
+	localFixups.push_back({bindingRel + bindNameOff, bindingNameRel});
+
+	SortAndUniqueLocalFixups(localFixups);
+	SortAndUniqueGlobalFixups(globalFixups);
+	SortAndUniqueVirtualFixups(virtualFixups);
+
+	const uint32_t headerBytes = traits->headerPrefixSize + 3u * traits->sectionHeaderSize;
+	const uint32_t classnamesStart = headerBytes;
+	const uint32_t typesStart = classnamesStart + static_cast<uint32_t>(classNames.bytes.size());
+	const uint32_t classnamesEnd = classnamesStart + static_cast<uint32_t>(classNames.bytes.size());
+	const uint32_t dataStart = typesStart;
+
+	AlignBuffer(dataBytes, 16u);
+	const uint32_t dataSizeBeforeFixups = static_cast<uint32_t>(dataBytes.size());
+	const uint32_t localFixupsRel = dataSizeBeforeFixups;
+	for (const LocalFixup& fixup : localFixups) {
+		AppendU32(dataBytes, fixup.src);
+		AppendU32(dataBytes, fixup.dst);
+	}
+	AppendU32(dataBytes, 0xFFFFFFFFu);
+	AppendU32(dataBytes, 0xFFFFFFFFu);
+	AlignBuffer(dataBytes, 16u);
+
+	const uint32_t globalFixupsRel = static_cast<uint32_t>(dataBytes.size());
+	for (const GlobalFixup& fixup : globalFixups) {
+		AppendU32(dataBytes, fixup.src);
+		AppendU32(dataBytes, 2u);
+		AppendU32(dataBytes, fixup.dst);
+	}
+	AppendU32(dataBytes, 0xFFFFFFFFu);
+	AppendU32(dataBytes, 0xFFFFFFFFu);
+	AppendU32(dataBytes, 0xFFFFFFFFu);
+	AlignBuffer(dataBytes, 16u);
+
+	const uint32_t virtualFixupsRel = static_cast<uint32_t>(dataBytes.size());
+	for (const VirtualFixup& fixup : virtualFixups) {
+		AppendU32(dataBytes, fixup.src);
+		AppendU32(dataBytes, 0u);
+		AppendU32(dataBytes, fixup.nameOff);
+	}
+	AppendU32(dataBytes, 0xFFFFFFFFu);
+	AppendU32(dataBytes, 0xFFFFFFFFu);
+	AppendU32(dataBytes, 0xFFFFFFFFu);
+	AlignBuffer(dataBytes, 16u);
+	const uint32_t exportsRel = static_cast<uint32_t>(dataBytes.size());
+
+	std::vector<uint8_t> fileBytes(traits->headerPrefix, traits->headerPrefix + traits->headerPrefixSize);
+	fileBytes.resize(headerBytes, 0);
+	if (traits->format != Format::Fallout64)
+		PatchU8(fileBytes, 0x10u, static_cast<uint8_t>(ptrSize));
+	WriteSectionHeader(fileBytes, traits->firstSectionOffset + 0u * traits->sectionHeaderSize, traits->sectionHeaderSize, "__classnames__", classnamesStart, classnamesEnd - classnamesStart, classnamesEnd - classnamesStart, classnamesEnd - classnamesStart, classnamesEnd - classnamesStart, classnamesEnd - classnamesStart);
+	WriteSectionHeader(fileBytes, traits->firstSectionOffset + 1u * traits->sectionHeaderSize, traits->sectionHeaderSize, "__types__", typesStart, 0u, 0u, 0u, 0u, 0u);
+	WriteSectionHeader(fileBytes, traits->firstSectionOffset + 2u * traits->sectionHeaderSize, traits->sectionHeaderSize, "__data__", dataStart, localFixupsRel, globalFixupsRel, virtualFixupsRel, exportsRel, static_cast<uint32_t>(dataBytes.size()));
+	fileBytes.insert(fileBytes.end(), classNames.bytes.begin(), classNames.bytes.end());
+	fileBytes.insert(fileBytes.end(), dataBytes.begin(), dataBytes.end());
+
+	if (!WriteAllFile(path, fileBytes)) {
+		if (errorOut)
+			*errorOut = "Cannot write HKX file";
+		return false;
+	}
+
+	return true;
+}
 
 bool File::Load(const std::string& path, std::string* errorOut) {
 	skeletons.clear();
