@@ -164,6 +164,7 @@ class OutfitProject {
 	void RetargetShapeData(const std::string& shapeName, const std::string& newTarget);
 	void ResolveTargetConflictsForIncomingShapes(const std::vector<std::pair<std::string, std::string>>& incomingShapeTargets);
 	bool ResolveSliderDataEntry(const SliderDataKey& key, size_t& sliderIndex, size_t& dataIndex);
+	bool ShapeSliderDataIsLocalOnly(const std::string& shapeName);
 
 	std::unique_ptr<SFMaterialDatabase> sfMaterialDb;
 	std::string sfMaterialDbContent;
@@ -244,6 +245,8 @@ public:
 
 	nifly::NiShape* GetBaseShape() { return baseShape; }
 	void SetBaseShape(nifly::NiShape* shape, const bool moveData = true);
+	const std::string& GetReferenceProjectFile() const { return mRefProjectFile; }
+	const std::string& GetReferenceProjectName() const { return mRefProjectName; }
 
 	bool IsBaseShape(nifly::NiShape* shape) { return (shape && shape == baseShape); }
 
