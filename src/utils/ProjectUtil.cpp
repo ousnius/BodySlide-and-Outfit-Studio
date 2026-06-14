@@ -24,8 +24,12 @@ std::string ProjectUtil::GetProjectPath() {
 		pathsToCheck.push_back(projectPath);
 	}
 
+	// Check if SliderSets subdirectory exists in appDir, but return appDir if it does
+	if (wxDir::Exists(appDir + PathSepStr + "SliderSets")) {
+		return appDir;
+	}
+
 	// Fallback paths in order of preference
-	pathsToCheck.push_back(appDir + PathSepStr + "SliderSets");
 	pathsToCheck.push_back(gameDataPath + PathSepStr + "CalienteTools" + PathSepStr + "BodySlide");
 	pathsToCheck.push_back(gameDataPath + PathSepStr + "Tools" + PathSepStr + "BodySlide");
 
