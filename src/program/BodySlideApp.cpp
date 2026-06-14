@@ -2767,10 +2767,10 @@ bool BodySlideApp::SetDefaultConfig() {
 
 	targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 
+#ifdef _WINDOWS
 	wxString gameKey = Config["GameRegKey/" + GameUtil::TargetGames[targetGame]];
 	wxString gameValueKey = Config["GameRegVal/" + GameUtil::TargetGames[targetGame]];
 
-#ifdef _WINDOWS
 	if (Config["GameDataPath"].empty()) {
 		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
 		if (!gameKey.empty() && key.Exists()) {
@@ -4087,7 +4087,7 @@ int BodySlideApp::BuildListBodies(
 
 				// Remove from outfitList all outfits in choicesList[index]
 				for (auto& outfit : choicesList[index]) {
-					auto result = std::find(outfitList.begin(), outfitList.end(), outfit.ToUTF8());
+					auto result = std::find(outfitList.begin(), outfitList.end(), outfit.ToStdString());
 					if (result != outfitList.end())
 						outfitList.erase(result);
 				}

@@ -930,11 +930,10 @@ bool OutfitStudio::SetDefaultConfig() {
 
 	targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 
-	wxString gameKey = Config["GameRegKey/" + GameUtil::TargetGames[targetGame]];
-	wxString gameValueKey = Config["GameRegVal/" + GameUtil::TargetGames[targetGame]];
-
 	if (Config["GameDataPath"].empty()) {
 #ifdef _WINDOWS
+		wxString gameKey = Config["GameRegKey/" + GameUtil::TargetGames[targetGame]];
+		wxString gameValueKey = Config["GameRegVal/" + GameUtil::TargetGames[targetGame]];
 		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
 		if (!gameKey.empty() && key.Exists()) {
 			wxString installPath;
