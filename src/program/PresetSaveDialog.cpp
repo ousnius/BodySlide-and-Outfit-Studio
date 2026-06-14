@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "PresetSaveDialog.h"
 #include "../utils/ConfigurationManager.h"
+#include "../utils/ProjectUtil.h"
 
 #include <regex>
 
@@ -43,11 +44,6 @@ PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 
 PresetSaveDialog::~PresetSaveDialog() {
 	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/SavePreset.xrc");
-}
-
-std::string PresetSaveDialog::GetProjectPath() const {
-	std::string res = Config["ProjectPath"];
-	return res.empty() ? Config["AppDir"] : res;
 }
 
 void PresetSaveDialog::SetExistingPreset(const std::string& presetName, const std::string& presetFileName, const std::vector<std::string>& groups) {
@@ -131,7 +127,7 @@ void PresetSaveDialog::OnSave(wxCommandEvent& WXUNUSED(event)) {
 
 	wxFileDialog savePresetDialog(this,
 								  "Choose a preset file",
-								  wxString::FromUTF8(GetProjectPath()) + "/SliderPresets",
+								  wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/SliderPresets",
 								  wxString::FromUTF8(presetFile),
 								  "Preset Files (*.xml)|*.xml",
 								  wxFD_SAVE);

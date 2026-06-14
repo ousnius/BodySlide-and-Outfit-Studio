@@ -37,8 +37,6 @@ private:
 	std::map<std::string, std::vector<std::string>> groupMembers;
 	std::vector<std::string> allOutfits;
 
-	std::string GetProjectPath() const;
-
 	void RefreshUI(const bool = false);
 	bool ChooseFile();
 	void SaveGroup();
