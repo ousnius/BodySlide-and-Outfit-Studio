@@ -901,15 +901,10 @@ public:
 
 	void CharHook(wxKeyEvent& event);
 
-	wxString GetGameDataPath(TargetGame targ);
-
 	void InitLanguage();
 
 	bool SetDefaultConfig();
 	bool ShowSetup();
-
-	void InitArchives();
-	void GetArchiveFiles(std::vector<std::string>& outList);
 
 	TargetGame targetGame = TargetGame::FO3;
 

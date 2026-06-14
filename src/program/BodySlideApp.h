@@ -171,7 +171,6 @@ public:
 
 	bool SetDefaultConfig();
 	bool ShowSetup();
-	wxString GetGameDataPath(TargetGame targ);
 
 	std::string GetOutputDataPath() const;
 	SliderSet& GetActiveSet() { return projects[0]->sliderSet; }
@@ -181,9 +180,6 @@ public:
 	int AddProjectSliders(const std::string& projectFile, const std::string& setName);
 
 	void InitLanguage();
-
-	void InitArchives();
-	void GetArchiveFiles(std::vector<std::string>& outList);
 
 	void LoadData();
 	void CharHook(wxKeyEvent& event);

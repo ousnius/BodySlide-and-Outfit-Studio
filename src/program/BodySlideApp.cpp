@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/StackTrace.h"
 #include "../utils/StringStuff.h"
 #include "../utils/ProjectUtil.h"
+#include "../utils/GameUtil.h"
 
 #include <algorithm>
 #include <atomic>
@@ -52,7 +53,6 @@ constexpr const char* FavoriteStarEmptyIcon = "/res/images/FavoriteStarEmpty.png
 constexpr int MinBodySlideLeftPaneWidthDip = 850;
 }
 
-const std::array<wxString, 10> TargetGames = {"Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR", "Fallout76", "Oblivion", "Starfield"};
 const std::array<wxLanguage, 37> SupportedLangs = {wxLANGUAGE_ENGLISH,	  wxLANGUAGE_AFRIKAANS,		   wxLANGUAGE_ARABIC,  wxLANGUAGE_CATALAN,	  wxLANGUAGE_CZECH,
 												   wxLANGUAGE_DANISH,	  wxLANGUAGE_GERMAN,		   wxLANGUAGE_GREEK,   wxLANGUAGE_SPANISH,	  wxLANGUAGE_BASQUE,
 												   wxLANGUAGE_FINNISH,	  wxLANGUAGE_FRENCH,		   wxLANGUAGE_HINDI,   wxLANGUAGE_HUNGARIAN,  wxLANGUAGE_INDONESIAN,
@@ -383,46 +383,12 @@ void BodySlideApp::OnFatalException() {
 }
 
 
-void BodySlideApp::InitArchives() {
-	// Auto-detect archives
-	FSManager::del();
-
-	std::vector<std::string> fileList;
-	GetArchiveFiles(fileList);
-
-	FSManager::addArchives(fileList);
-}
-
-void BodySlideApp::GetArchiveFiles(std::vector<std::string>& outList) {
-	TargetGame targ = (TargetGame)Config.GetIntValue("TargetGame");
-	std::string cp = "GameDataFiles/" + TargetGames[targ].ToStdString();
-	wxString activatedFiles = Config[cp];
-
-	wxStringTokenizer tokenizer(activatedFiles, ";");
-	std::map<wxString, bool> fsearch;
-	while (tokenizer.HasMoreTokens()) {
-		wxString val = tokenizer.GetNextToken().Trim(false);
-		val = val.Trim().MakeLower();
-		fsearch[val] = true;
-	}
-
-	wxString dataDir = Config["GameDataPath"];
-	wxArrayString files;
-	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
-	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
-	for (auto& f : files) {
-		f = f.AfterLast('/').AfterLast('\\');
-		if (fsearch.find(f.Lower()) == fsearch.end())
-			outList.push_back((dataDir + f).ToUTF8().data());
-	}
-}
-
 void BodySlideApp::LoadData() {
 	if (!sliderView)
 		return;
 
 	wxLogMessage("Loading initial data...");
-	InitArchives();
+	GameUtil::InitArchives();
 
 	std::string activeOutfit = BodySlideConfig["SelectedOutfit"];
 	if (!activeOutfit.empty() && !OutfitExists(activeOutfit)) {
@@ -658,7 +624,7 @@ bool BodySlideApp::PresetExists(const std::string& name) {
 }
 
 std::string BodySlideApp::GetFavoriteConfigKey(const std::string& listName) const {
-	return "Favorites/" + TargetGames[targetGame].ToStdString() + "/" + listName;
+	return "Favorites/" + GameUtil::TargetGames[targetGame].ToStdString() + "/" + listName;
 }
 
 std::string BodySlideApp::SerializeFavoriteNames(const std::vector<std::string>& names) const {
@@ -2801,8 +2767,8 @@ bool BodySlideApp::SetDefaultConfig() {
 
 	targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 
-	wxString gameKey = Config["GameRegKey/" + TargetGames[targetGame]];
-	wxString gameValueKey = Config["GameRegVal/" + TargetGames[targetGame]];
+	wxString gameKey = Config["GameRegKey/" + GameUtil::TargetGames[targetGame]];
+	wxString gameValueKey = Config["GameRegVal/" + GameUtil::TargetGames[targetGame]];
 
 #ifdef _WINDOWS
 	if (Config["GameDataPath"].empty()) {
@@ -2905,55 +2871,55 @@ bool BodySlideApp::ShowSetup() {
 		wxDirPickerCtrl* dirStarfield = XRCCTRL(*setup, "dirStarfield", wxDirPickerCtrl);
 		dirStarfield->Bind(wxEVT_DIRPICKER_CHANGED, [&dirStarfield, &btStarfield](wxFileDirPickerEvent&) { btStarfield->Enable(dirStarfield->GetDirName().DirExists()); });
 
-		wxFileName dir = GetGameDataPath(OB);
+		wxFileName dir = GameUtil::GetGameDataPath(OB);
 		if (dir.DirExists()) {
 			dirOblivion->SetDirName(dir);
 			btOblivion->Enable();
 		}
 
-		dir = GetGameDataPath(FO3);
+		dir = GameUtil::GetGameDataPath(FO3);
 		if (dir.DirExists()) {
 			dirFallout3->SetDirName(dir);
 			btFallout3->Enable();
 		}
 
-		dir = GetGameDataPath(FONV);
+		dir = GameUtil::GetGameDataPath(FONV);
 		if (dir.DirExists()) {
 			dirFalloutNV->SetDirName(dir);
 			btFalloutNV->Enable();
 		}
 
-		dir = GetGameDataPath(SKYRIM);
+		dir = GameUtil::GetGameDataPath(SKYRIM);
 		if (dir.DirExists()) {
 			dirSkyrim->SetDirName(dir);
 			btSkyrim->Enable();
 		}
 
-		dir = GetGameDataPath(FO4);
+		dir = GameUtil::GetGameDataPath(FO4);
 		if (dir.DirExists()) {
 			dirFallout4->SetDirName(dir);
 			btFallout4->Enable();
 		}
 
-		dir = GetGameDataPath(SKYRIMSE);
+		dir = GameUtil::GetGameDataPath(SKYRIMSE);
 		if (dir.DirExists()) {
 			dirSkyrimSE->SetDirName(dir);
 			btSkyrimSE->Enable();
 		}
 
-		dir = GetGameDataPath(FO4VR);
+		dir = GameUtil::GetGameDataPath(FO4VR);
 		if (dir.DirExists()) {
 			dirFallout4VR->SetDirName(dir);
 			btFallout4VR->Enable();
 		}
 
-		dir = GetGameDataPath(SKYRIMVR);
+		dir = GameUtil::GetGameDataPath(SKYRIMVR);
 		if (dir.DirExists()) {
 			dirSkyrimVR->SetDirName(dir);
 			btSkyrimVR->Enable();
 		}
 
-		dir = GetGameDataPath(SF);
+		dir = GameUtil::GetGameDataPath(SF);
 		if (dir.DirExists()) {
 			dirStarfield->SetDirName(dir);
 			btStarfield->Enable();
@@ -3013,7 +2979,7 @@ bool BodySlideApp::ShowSetup() {
 			}
 
 			Config.SetValue("GameDataPath", dataDir.GetFullPath().ToUTF8().data());
-			Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), dataDir.GetFullPath().ToUTF8().data());
+			Config.SetValue("GameDataPaths/" + GameUtil::TargetGames[targ].ToStdString(), dataDir.GetFullPath().ToUTF8().data());
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			delete setup;
@@ -3025,30 +2991,6 @@ bool BodySlideApp::ShowSetup() {
 	}
 
 	return true;
-}
-
-wxString BodySlideApp::GetGameDataPath(TargetGame targ) {
-	wxString dataPath;
-	wxString gamestr = TargetGames[targ];
-	wxString gkey = "GameRegKey/" + gamestr;
-	wxString gval = "GameRegVal/" + gamestr;
-	wxString cust = "GameDataPaths/" + gamestr;
-
-	if (!Config[cust].IsEmpty()) {
-		dataPath = Config[cust];
-	}
-#ifdef _WINDOWS
-	else {
-		std::string gameKey = Config[gkey].ToStdString();
-		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
-		if (!gameKey.empty() && key.Exists()) {
-			if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
-				dataPath.Append("Data").Append(PathSepChar);
-			}
-		}
-	}
-#endif
-	return dataPath;
 }
 
 void BodySlideApp::InitLanguage() {
@@ -6475,7 +6417,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 	}
 
 	wxCheckListBox* dataFileList = XRCCTRL(*parent, "DataFileList", wxCheckListBox);
-	wxString dataDir = app->GetGameDataPath(targ);
+	wxString dataDir = GameUtil::GetGameDataPath(targ);
 
 	wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*parent, "dpGameDataPath", wxDirPickerCtrl);
 	dpGameDataPath->SetPath(dataDir);
@@ -6486,7 +6428,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
 	dataFileList->Clear();
 
-	wxString cp = "GameDataFiles/" + TargetGames[targetGame];
+	wxString cp = "GameDataFiles/" + GameUtil::TargetGames[targetGame];
 	wxString activatedFiles = Config[cp];
 
 	wxStringTokenizer tokenizer(activatedFiles, ";");
@@ -6546,8 +6488,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			SettingsDialogShared::SaveCommonSettingsDialog(
 				Config,
 				BodySlideConfig,
-				TargetGames.data(),
-				TargetGames.size(),
+				GameUtil::TargetGames.data(),
+				GameUtil::TargetGames.size(),
 				SupportedLangs.data(),
 				SupportedLangs.size(),
 				commonControls,
@@ -6563,7 +6505,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			app->SaveFavorites();
 			app->targetGame = targ;
 			app->LoadFavorites();
-			app->InitArchives();
+			GameUtil::InitArchives();
 			app->LoadAllCategories();
 			app->LoadAllGroups();
 			app->LoadSliderSets();
