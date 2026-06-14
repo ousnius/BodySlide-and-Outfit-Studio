@@ -157,6 +157,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
+            autoconf \
+            autoconf-archive \
+            automake \
             build-essential \
             cmake \
             directx-headers-dev \
@@ -165,6 +168,7 @@ jobs:
             libglew-dev \
             libgl1-mesa-dev \
             libglu1-mesa-dev \
+            libtool \
             ninja-build \
             pkg-config
 
