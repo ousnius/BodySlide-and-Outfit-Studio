@@ -222,11 +222,13 @@ void SFMorphFile::CacheToFileData() {
 	for (uint16_t i = 0; i < numVerticesShort; i++) {
 		std::vector<uint32_t> morphKeyIndices;
 
-		uint32_t morphKey = 0;
 		for (auto& morph : morphNames) {
-			if (morphKeyIndices.size() < 128) {
-				auto& morphIndex = morphNamesCacheMap[morph];
+			auto& morphIndex = morphNamesCacheMap[morph];
 
+			// The 128-bit keyMarker can only address shape keys 0-127, so a morph
+			// beyond that index cannot be represented in the morph.dat format. Skip
+			// it rather than setting a bit past the end of the 4-word keyMarker.
+			if (morphIndex < SFMaxShapeKeys) {
 				auto& morphOffsets = morphOffsetsCache[morphIndex];
 				auto& morphColors = morphColorsCache[morphIndex];
 				auto& morphNormals = morphNormalsCache[morphIndex];
@@ -270,8 +272,11 @@ void SFMorphFile::CacheToFileData() {
 
 						morphDataRaw.push_back(morphData);
 
-						morphKeyIndices.push_back(morphKey);
-						morphKey++;
+						// The key marker bit must be the morph's index in the shape key name
+						// table, not a per-vertex sequence number. Consumers pair the vertex's
+						// data run with the set bits in ascending order, so a sequence number
+						// misattributes every morph's deltas once two or more morphs overlap.
+						morphKeyIndices.push_back(morphIndex);
 					}
 				}
 			}
