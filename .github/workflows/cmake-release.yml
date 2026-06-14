@@ -168,6 +168,7 @@ jobs:
             libglew-dev \
             libgl1-mesa-dev \
             libglu1-mesa-dev \
+            libltdl-dev \
             libtool \
             ninja-build \
             pkg-config
