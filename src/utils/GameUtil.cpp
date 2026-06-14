@@ -26,11 +26,9 @@ const std::array<wxString, 10> TargetGames = {
 };
 } // namespace GameUtil
 
-std::string GameUtil::GetGameDataPath(int targ) {
+wxString GameUtil::GetGameDataPath(int targ) {
 	wxString dataPath;
 	wxString gamestr = GameUtil::TargetGames[targ];
-	wxString gkey = "GameRegKey/" + gamestr;
-	wxString gval = "GameRegVal/" + gamestr;
 	wxString cust = "GameDataPaths/" + gamestr;
 
 	if (!Config[cust].IsEmpty()) {
@@ -38,6 +36,8 @@ std::string GameUtil::GetGameDataPath(int targ) {
 	}
 #ifdef _WINDOWS
 	else {
+		wxString gkey = "GameRegKey/" + gamestr;
+		wxString gval = "GameRegVal/" + gamestr;
 		std::string gameKey = Config[gkey].ToStdString();
 		// Try to read from registry if available
 		#ifdef wxUSE_REGKEY
@@ -50,7 +50,7 @@ std::string GameUtil::GetGameDataPath(int targ) {
 		#endif
 	}
 #endif
-	return dataPath.ToStdString();
+	return dataPath;
 }
 
 void GameUtil::InitArchives() {

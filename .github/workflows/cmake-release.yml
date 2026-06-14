@@ -172,6 +172,8 @@ jobs:
             libxext-dev \
             libxft-dev \
             libxi-dev \
+            libxkbcommon-dev \
+            libxrandr-dev \
             libltdl-dev \
             libtool \
             libxtst-dev \
