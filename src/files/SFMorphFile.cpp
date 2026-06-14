@@ -223,9 +223,12 @@ void SFMorphFile::CacheToFileData() {
 		std::vector<uint32_t> morphKeyIndices;
 
 		for (auto& morph : morphNames) {
-			if (morphKeyIndices.size() < 128) {
-				auto& morphIndex = morphNamesCacheMap[morph];
+			auto& morphIndex = morphNamesCacheMap[morph];
 
+			// The 128-bit keyMarker can only address shape keys 0-127, so a morph
+			// beyond that index cannot be represented in the morph.dat format. Skip
+			// it rather than setting a bit past the end of the 4-word keyMarker.
+			if (morphIndex < SFMaxShapeKeys) {
 				auto& morphOffsets = morphOffsetsCache[morphIndex];
 				auto& morphColors = morphColorsCache[morphIndex];
 				auto& morphNormals = morphNormalsCache[morphIndex];

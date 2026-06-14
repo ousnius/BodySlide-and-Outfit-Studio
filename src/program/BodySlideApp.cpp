@@ -1572,6 +1572,11 @@ bool BodySlideApp::WriteSFMorphFile(const std::string& morphFolder, SliderSet& s
 			}
 		}
 
+		if (morphFile.morphOffsetsCache.size() >= SFMaxShapeKeys) {
+			wxLogWarning("Starfield morph.dat supports at most 128 morphs; '%s' and any remaining morphs were skipped.", sliderSet[s].name);
+			break;
+		}
+
 		morphFile.AddMorph(sliderSet[s].name, morphOffsets, {}, morphNormals, morphTangents);
 	}
 

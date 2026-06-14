@@ -70,6 +70,10 @@ struct SFMorphOffset {
 	SFMorphKey keyMarker[4];
 };
 
+// The per-vertex keyMarker is a fixed 128-bit field (4 x 32-bit words), so the
+// morph.dat format can only reference shape keys with indices 0-127.
+constexpr uint32_t SFMaxShapeKeys = 128;
+
 class SFMorphFile {
 	uint32_t numAxis = 3;
 	uint32_t numShapeKeys = 0;
