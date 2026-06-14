@@ -9,6 +9,7 @@ See the included LICENSE file
 
 #include "../utils/ConfigDialogUtil.h"
 #include "../utils/ConfigurationManager.h"
+#include "../utils/ProjectUtil.h"
 
 #include <regex>
 
@@ -329,7 +330,7 @@ int ConvertBodyReferenceDialog::LoadReferenceTemplate(const wxString& refTemplat
 	auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 	if (tmpl != refTemplates.end()) {
 		if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
-			error = project->LoadReferenceTemplate(GetProjectPath() + PathSepStr + tmpl->GetSource(),
+			error = project->LoadReferenceTemplate(ProjectUtil::GetProjectPath() + PathSepStr + tmpl->GetSource(),
 												   tmpl->GetSetName(),
 												   tmpl->GetShape(),
 												   tmpl->GetLoadAll(),

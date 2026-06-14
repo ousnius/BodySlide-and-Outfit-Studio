@@ -10,6 +10,7 @@ See the included LICENSE file
 #include "PartitionTypeChoices.h"
 
 #include "../files/MaskFile.h"
+#include "../utils/ProjectUtil.h"
 
 #include <NifFile.hpp>
 
@@ -1200,7 +1201,7 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 				if (!path.IsEmpty()) {
 					wxFileName fn(path);
 					if (fn.IsRelative()) {
-						std::string projPath = GetProjectPath();
+						std::string projPath = ProjectUtil::GetProjectPath();
 						fn.MakeAbsolute(wxString::FromUTF8(projPath));
 					}
 					fp->SetPath(fn.GetFullPath());
@@ -1260,7 +1261,7 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 				if (!path.IsEmpty()) {
 					wxFileName fn(path);
 					if (fn.IsRelative()) {
-						std::string projPath = GetProjectPath();
+						std::string projPath = ProjectUtil::GetProjectPath();
 						fn.MakeAbsolute(wxString::FromUTF8(projPath));
 					}
 					fp->SetPath(fn.GetFullPath());
@@ -1575,7 +1576,7 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 				if (!path.IsEmpty()) {
 					wxFileName fn(path);
 					if (fn.IsRelative()) {
-						std::string projPath = GetProjectPath();
+						std::string projPath = ProjectUtil::GetProjectPath();
 						fn.MakeAbsolute(wxString::FromUTF8(projPath));
 					}
 					fp->SetPath(fn.GetFullPath());
@@ -2049,7 +2050,7 @@ std::vector<NiShape*> AutomationDialog::ResolveTargetShapes(const AutomationStep
 }
 
 std::string AutomationDialog::GetAutomationsFolder() {
-	return GetProjectPath() + "/Automations";
+	return ProjectUtil::GetProjectPath() + "/Automations";
 }
 
 void AutomationDialog::CollectScripts(const wxString& baseFolder, const wxString& currentFolder, std::vector<std::pair<wxString, wxString>>& entries) {
@@ -2343,7 +2344,7 @@ int AutomationDialog::RunHeadless(const wxString& scriptName, const wxArrayStrin
 		}
 		else {
 			// Resolve set project names against <ProjectPath>/SliderSets/*.{osp,xml}.
-			std::string projPath = GetProjectPath();
+			std::string projPath = ProjectUtil::GetProjectPath();
 			wxArrayString files;
 			wxDir::GetAllFiles(wxString::FromUTF8(projPath) + "/SliderSets", &files, "*.osp");
 			wxDir::GetAllFiles(wxString::FromUTF8(projPath) + "/SliderSets", &files, "*.xml");
@@ -3006,7 +3007,7 @@ void AutomationDialog::OnRefTemplateChanged(wxCommandEvent& WXUNUSED(event)) {
 		if (!source.IsEmpty()) {
 			wxFileName fn(source);
 			if (fn.IsRelative()) {
-				std::string projPath = GetProjectPath();
+				std::string projPath = ProjectUtil::GetProjectPath();
 				fn.MakeAbsolute(wxString::FromUTF8(projPath));
 			}
 			fp->SetPath(fn.GetFullPath());
@@ -3375,7 +3376,7 @@ wxString AutomationDialog::MakeRelativeToProject(const wxString& absolutePath) c
 	if (fn.IsRelative())
 		return absolutePath; // Already relative
 
-	if (fn.MakeRelativeTo(wxString::FromUTF8(GetProjectPath())))
+	if (fn.MakeRelativeTo(wxString::FromUTF8(ProjectUtil::GetProjectPath())))
 		return fn.GetFullPath();
 
 	return absolutePath; // Couldn't make relative, return as-is
@@ -3389,7 +3390,7 @@ wxString AutomationDialog::MakeAbsoluteToProject(const wxString& path) const {
 	if (!fn.IsRelative())
 		return path;
 
-	fn.MakeAbsolute(wxString::FromUTF8(GetProjectPath()));
+	fn.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
 	return fn.GetFullPath();
 }
 
@@ -3727,7 +3728,7 @@ std::vector<std::string> AutomationDialog::GatherBatchFiles() {
 std::vector<std::pair<std::string, std::string>> AutomationDialog::GatherBatchSliderSets() {
 	std::vector<std::pair<std::string, std::string>> result; // (fileName, setName) pairs
 
-	std::string projPath = GetProjectPath();
+	std::string projPath = ProjectUtil::GetProjectPath();
 	wxArrayString files;
 	wxDir::GetAllFiles(wxString::FromUTF8(projPath) + "/SliderSets", &files, "*.osp");
 	wxDir::GetAllFiles(wxString::FromUTF8(projPath) + "/SliderSets", &files, "*.xml");

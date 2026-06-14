@@ -272,6 +272,7 @@ set(BSOS_COMMON_SOURCES
 	src/utils/Log.cpp
 	src/utils/PlatformUtil.cpp
 	src/utils/SettingsDialogShared.cpp
+	src/utils/ProjectUtil.cpp
 	src/utils/StackTrace.cpp
 	src/utils/StringStuff.cpp
 	src/utils/WxBuildConfigCheck.cpp

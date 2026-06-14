@@ -24,7 +24,7 @@ public:
 	PresetSaveDialog(wxWindow* parent);
 	~PresetSaveDialog();
 
-	std::string GetProjectPath() const;
+
 	void SetExistingPreset(const std::string& presetName, const std::string& presetFileName, const std::vector<std::string>& groups);
 
 	void FilterGroups(const std::string& filter = "");

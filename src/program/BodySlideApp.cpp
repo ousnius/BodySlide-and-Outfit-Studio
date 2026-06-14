@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/ParallelFor.h"
 #include "../utils/StackTrace.h"
 #include "../utils/StringStuff.h"
+#include "../utils/ProjectUtil.h"
 
 #include <algorithm>
 #include <atomic>
@@ -598,7 +599,7 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 		activeSet.Clear();
 		sliderManager.ClearSliders();
 		if (!sliderDoc.GetSet(outfit, activeSet)) {
-			activeSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
+			activeSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
 			sliderManager.AddSlidersInSet(activeSet);
 			DisplayActiveSet();
 		}
@@ -631,7 +632,7 @@ int BodySlideApp::AddProjectSliders(const std::string& projectFile, const std::s
 	if (sliderDoc.GetSet(setName, pp->sliderSet))
 		return 3;
 
-	pp->sliderSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
+	pp->sliderSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
 	pp->setName = setName;
 
 	// Add sliders from this set (additive)
@@ -646,10 +647,6 @@ std::string BodySlideApp::GetOutputDataPath() const {
 	return res.empty() ? Config["GameDataPath"] : res;
 }
 
-std::string BodySlideApp::GetProjectPath() const {
-	std::string res = Config["ProjectPath"];
-	return res.empty() ? Config["AppDir"] : res;
-}
 
 bool BodySlideApp::PresetExists(const std::string& name) {
 	if (name.empty())
@@ -809,8 +806,8 @@ int BodySlideApp::LoadSliderSets() {
 	outFileCount.clear();
 
 	wxArrayString files;
-	wxDir::GetAllFiles(wxString::FromUTF8(GetProjectPath()) + "/SliderSets", &files, "*.osp");
-	wxDir::GetAllFiles(wxString::FromUTF8(GetProjectPath()) + "/SliderSets", &files, "*.xml");
+	wxDir::GetAllFiles(wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/SliderSets", &files, "*.osp");
+	wxDir::GetAllFiles(wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/SliderSets", &files, "*.xml");
 
 	bool filterHasZaps = false;
 
@@ -2274,7 +2271,7 @@ bool BodySlideApp::LoadExternalReference(const SliderSet& sliderSet) {
 	// Resolve project file path relative to project directory
 	wxFileName refProjectFileName(wxString::FromUTF8(projectFile));
 	if (refProjectFileName.IsRelative())
-		refProjectFileName.MakeAbsolute(wxString::FromUTF8(GetProjectPath()));
+		refProjectFileName.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
 
 	std::string projectFilePath = refProjectFileName.GetFullPath().ToUTF8().data();
 
@@ -2291,7 +2288,7 @@ bool BodySlideApp::LoadExternalReference(const SliderSet& sliderSet) {
 		return false;
 	}
 
-	referenceSliderSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
+	referenceSliderSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
 
 	// Load diff data for the reference shape
 	referenceDiffData.Clear();
@@ -3091,7 +3088,7 @@ void BodySlideApp::InitLanguage() {
 void BodySlideApp::LoadAllCategories() {
 	wxLogMessage("Loading all slider categories...");
 	cCollection.Clear();
-	cCollection.LoadCategories(GetProjectPath() + "/SliderCategories");
+	cCollection.LoadCategories(ProjectUtil::GetProjectPath() + "/SliderCategories");
 }
 
 void BodySlideApp::SetPresetGroups(const std::string& setName) {
@@ -3121,7 +3118,7 @@ void BodySlideApp::SetPresetGroups(const std::string& setName) {
 
 void BodySlideApp::LoadAllGroups() {
 	wxLogMessage("Loading all slider groups...");
-	gCollection.LoadGroups(GetProjectPath() + "/SliderGroups");
+	gCollection.LoadGroups(ProjectUtil::GetProjectPath() + "/SliderGroups");
 
 	ungroupedOutfits.clear();
 	for (auto& o : outfitNameSource) {
@@ -3355,7 +3352,7 @@ void BodySlideApp::LoadPresets(const std::string& sliderSet) {
 				groups_and_aliases.push_back(ag.first);
 	}
 
-	sliderManager.LoadPresets(GetProjectPath() + "/SliderPresets", outfit, groups_and_aliases, groups_and_aliases.empty());
+	sliderManager.LoadPresets(ProjectUtil::GetProjectPath() + "/SliderPresets", outfit, groups_and_aliases, groups_and_aliases.empty());
 }
 
 void BodySlideApp::GetPresetNames(std::vector<std::string>& outNames) {
@@ -4230,7 +4227,7 @@ int BodySlideApp::BuildListBodies(
 			return;
 		}
 
-		currentSet.SetBaseDataPath(GetProjectPath() + PathSepStr + "ShapeData");
+		currentSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
 
 		// ALT key
 		if (clean && custPath.empty()) {
@@ -4717,7 +4714,7 @@ void BodySlideApp::GroupBuild(const std::vector<std::string>& groupNames) {
 	}
 
 	std::vector<std::string> groups;
-	sliderManager.LoadPresets(GetProjectPath() + "/SliderPresets", "", groups, true);
+	sliderManager.LoadPresets(ProjectUtil::GetProjectPath() + "/SliderPresets", "", groups, true);
 
 	// Apply saved build selections for CLI group builds before entering batch build conflict handling.
 	BuildSelectionFile buildSelFile;
@@ -5838,7 +5835,7 @@ void BodySlideFrame::OnBrowseOutfitFolder(wxCommandEvent& WXUNUSED(event)) {
 
 	wxFileName folderPath(wxString::FromUTF8(activeSet.GetInputFileName()));
 	if (folderPath.IsRelative())
-		folderPath.MakeAbsolute(wxString::FromUTF8(app->GetProjectPath()));
+		folderPath.MakeAbsolute(wxString::FromUTF8(ProjectUtil::GetProjectPath()));
 
 	folderPath.SetFullName("");
 
@@ -5852,7 +5849,7 @@ void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
 
 	wxFileDialog saveGroupDialog(this,
 								 _("Choose or create group file"),
-								 wxString::FromUTF8(app->GetProjectPath()) + "/SliderGroups",
+								 wxString::FromUTF8(ProjectUtil::GetProjectPath()) + "/SliderGroups",
 								 wxEmptyString,
 								 "Group Files (*.xml)|*.xml",
 								 wxFD_SAVE);

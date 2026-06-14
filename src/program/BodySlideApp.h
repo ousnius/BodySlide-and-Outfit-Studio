@@ -174,7 +174,6 @@ public:
 	wxString GetGameDataPath(TargetGame targ);
 
 	std::string GetOutputDataPath() const;
-	std::string GetProjectPath() const;
 	SliderSet& GetActiveSet() { return projects[0]->sliderSet; }
 	DiffDataSets& GetActiveDataSets() { return projects[0]->dataSets; }
 	bool HasActiveProject() const { return !projects.empty(); }

@@ -866,6 +866,7 @@
     <ClInclude Include="src\utils\Log.h" />
     <ClInclude Include="src\utils\PlatformUtil.h" />
     <ClInclude Include="src\utils\SettingsDialogShared.h" />
+    <ClInclude Include="src\utils\ProjectUtil.h" />
     <ClInclude Include="src\utils\StackTrace.h" />
     <ClInclude Include="src\utils\StringStuff.h" />
   </ItemGroup>
@@ -962,6 +963,7 @@
     <ClCompile Include="src\utils\Log.cpp" />
     <ClCompile Include="src\utils\PlatformUtil.cpp" />
     <ClCompile Include="src\utils\SettingsDialogShared.cpp" />
+    <ClCompile Include="src\utils\ProjectUtil.cpp" />
     <ClCompile Include="src\utils\StackTrace.cpp" />
     <ClCompile Include="src\utils\StringStuff.cpp" />
     <ClCompile Include="src\utils\WxBuildConfigCheck.cpp" />
