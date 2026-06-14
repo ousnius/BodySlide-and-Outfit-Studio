@@ -5909,11 +5909,6 @@ void BodySlideFrame::OnChooseOutfit(wxCommandEvent& WXUNUSED(event)) {
 	if (sstr.empty())
 		return;
 
-	if (sstr == BodySlideConfig["SelectedOutfit"]) {
-		UpdateFavoriteButtons();
-		return;
-	}
-
 	app->ActivateOutfit(sstr);
 	UpdateFavoriteButtons();
 }
@@ -5923,11 +5918,6 @@ void BodySlideFrame::OnChoosePreset(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	std::string sstr = GetSelectedPresetName();
-	bool presetChanged = btnSavePreset && btnSavePreset->IsEnabled();
-	if (sstr == BodySlideConfig["SelectedPreset"] && !presetChanged) {
-		UpdateFavoriteButtons();
-		return;
-	}
 
 	app->ActivatePreset(sstr);
 	UpdateFavoriteButtons();
