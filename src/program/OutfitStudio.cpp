@@ -36,6 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/ClippingFixer.h"
 #include "../utils/StackTrace.h"
 #include "../utils/StringStuff.h"
+#include "../utils/SettingsDialogShared.h"
 
 #include <cstdlib>
 #include <sstream>
@@ -532,6 +533,8 @@ bool OutfitStudio::OnInit() {
 	wxHandleFatalExceptions();
 #endif
 
+	SetAppearance(SettingsDialogShared::GetConfiguredAppearance(Config));
+
 	wxString appDirUri = wxString::FromUTF8(dataDir);
 	appDirUri.Replace("#", "%23");
 	wxSetEnv("AppDir", appDirUri);
@@ -873,6 +876,7 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("BSATextureScan", true);
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultBoolValue("UseSystemLanguage", false);
+	SettingsDialogShared::SetDefaultAppearanceMode(Config);
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
@@ -2278,177 +2282,64 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCollapsiblePane* advancedPane = XRCCTRL(*settings, "advancedPane", wxCollapsiblePane);
 		advancedPane->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [&settings](wxCommandEvent&) { settings->Fit(); });
 
-		wxChoice* choiceTargetGame = XRCCTRL(*settings, "choiceTargetGame", wxChoice);
-		choiceTargetGame->Select(Config.GetIntValue("TargetGame"));
+		SettingsDialogShared::CommonSettingsDialogControls commonControls{};
+		SettingsDialogShared::InitCommonSettingsDialog(*settings,
+			Config,
+			OutfitStudioConfig,
+			SupportedLangs.data(),
+			SupportedLangs.size(),
+			commonControls);
 
-		wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*settings, "dpGameDataPath", wxDirPickerCtrl);
 		wxString gameDataPath = wxString::FromUTF8(Config["GameDataPath"]);
-		dpGameDataPath->SetPath(gameDataPath);
-
-		wxDirPickerCtrl* dpOutputPath = XRCCTRL(*settings, "dpOutputPath", wxDirPickerCtrl);
-		wxString outputPath = wxString::FromUTF8(Config["OutputDataPath"]);
-		dpOutputPath->SetPath(outputPath);
-		if (wxTextCtrl* outputPathText = dpOutputPath->GetTextCtrl())
-			outputPathText->SetHint(_("Optional (uses Game Data Path if empty)"));
-
-		wxDirPickerCtrl* dpProjectPath = XRCCTRL(*settings, "dpProjectPath", wxDirPickerCtrl);
-		wxString projectPath = wxString::FromUTF8(Config["ProjectPath"]);
-		dpProjectPath->SetPath(projectPath);
-		if (wxTextCtrl* projectPathText = dpProjectPath->GetTextCtrl())
-			projectPathText->SetHint(_("Optional (uses executable directory if empty)"));
-
-		wxCheckBox* cbShowForceBodyNormals = XRCCTRL(*settings, "cbShowForceBodyNormals", wxCheckBox);
-		cbShowForceBodyNormals->SetValue(Config.GetBoolValue("ShowForceBodyNormals"));
-
-		wxCheckBox* cbBSATextures = XRCCTRL(*settings, "cbBSATextures", wxCheckBox);
-		cbBSATextures->SetValue(Config.GetBoolValue("BSATextureScan"));
-
-		wxCheckBox* cbLeftMousePan = XRCCTRL(*settings, "cbLeftMousePan", wxCheckBox);
-		cbLeftMousePan->SetValue(Config.GetBoolValue("Input/LeftMousePan"));
-
-		wxCheckBox* cbBrushSettingsNearCursor = XRCCTRL(*settings, "cbBrushSettingsNearCursor", wxCheckBox);
-		cbBrushSettingsNearCursor->SetValue(Config.GetBoolValue("Input/BrushSettingsNearCursor"));
-
-		wxCheckBox* cbMaskHistory = XRCCTRL(*settings, "cbMaskHistory", wxCheckBox);
-		cbMaskHistory->SetValue(Config.GetBoolValue("Input/MaskHistory"));
 
 		XRCCTRL(*settings, "cbPreviewAlwaysDetached", wxCheckBox)->Hide();
 
 		wxChoice* choiceSingleInstanceBehavior = XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice);
 		choiceSingleInstanceBehavior->SetSelection(OutfitStudioConfig.GetIntValue("SingleInstanceBehavior", 0));
 
-		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
-		for (size_t i = 0; i < SupportedLangs.size(); i++)
-			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
+		SettingsFillDataFiles(commonControls.dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
 
-		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
-			choiceLanguage->SetStringSelection("English");
-
-		wxCheckBox* cbPerspectiveView = XRCCTRL(*settings, "cbPerspectiveView", wxCheckBox);
-		cbPerspectiveView->SetValue(OutfitStudioConfig.GetBoolValue("Rendering/PerspectiveView", true));
-
-		wxColourPickerCtrl* cpColorBackground = XRCCTRL(*settings, "cpColorBackground", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorBackground")) {
-			int colorR = Config.GetIntValue("Rendering/ColorBackground.r");
-			int colorG = Config.GetIntValue("Rendering/ColorBackground.g");
-			int colorB = Config.GetIntValue("Rendering/ColorBackground.b");
-			cpColorBackground->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxColourPickerCtrl* cpColorWire = XRCCTRL(*settings, "cpColorWire", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorWire")) {
-			int colorR = Config.GetIntValue("Rendering/ColorWire.r");
-			int colorG = Config.GetIntValue("Rendering/ColorWire.g");
-			int colorB = Config.GetIntValue("Rendering/ColorWire.b");
-			cpColorWire->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxColourPickerCtrl* cpColorPoints = XRCCTRL(*settings, "cpColorPoints", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorPoints")) {
-			int colorR = Config.GetIntValue("Rendering/ColorPoints.r");
-			int colorG = Config.GetIntValue("Rendering/ColorPoints.g");
-			int colorB = Config.GetIntValue("Rendering/ColorPoints.b");
-			cpColorPoints->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxColourPickerCtrl* cpColorPointsMasked = XRCCTRL(*settings, "cpColorPointsMasked", wxColourPickerCtrl);
-		if (Config.Exists("Rendering/ColorPointsMasked")) {
-			int colorR = Config.GetIntValue("Rendering/ColorPointsMasked.r");
-			int colorG = Config.GetIntValue("Rendering/ColorPointsMasked.g");
-			int colorB = Config.GetIntValue("Rendering/ColorPointsMasked.b");
-			cpColorPointsMasked->SetColour(wxColour(colorR, colorG, colorB));
-		}
-
-		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
-		fpSkeletonFile->SetPath(wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]));
-
-		wxChoice* choiceSkeletonRoot = XRCCTRL(*settings, "choiceSkeletonRoot", wxChoice);
-		choiceSkeletonRoot->SetStringSelection(Config["Anim/SkeletonRootName"]);
-
-		wxCheckListBox* dataFileList = XRCCTRL(*settings, "DataFileList", wxCheckListBox);
-		SettingsFillDataFiles(dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
-
-		choiceTargetGame->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnChooseTargetGame, this);
+		commonControls.choiceTargetGame->Bind(wxEVT_CHOICE, &OutfitStudioFrame::OnChooseTargetGame, this);
 
 		if (settings->ShowModal() == wxID_OK) {
-			TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
-			Config.SetValue("TargetGame", targ);
-
-			if (!dpGameDataPath->GetPath().IsEmpty()) {
-				wxFileName gameDataDir = dpGameDataPath->GetDirName();
-				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToUTF8().data());
-				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToUTF8().data());
-			}
-
-			// set OutputDataPath even if it is empty
-			wxFileName outputDataDir = dpOutputPath->GetDirName();
-			Config.SetValue("OutputDataPath", outputDataDir.GetFullPath().ToUTF8().data());
-
-			// set ProjectPath even if it is empty
-			wxFileName projectDir = dpProjectPath->GetDirName();
-			Config.SetValue("ProjectPath", projectDir.GetFullPath().ToUTF8().data());
-
-			wxArrayInt items;
-			wxString selectedfiles;
-			for (uint32_t i = 0; i < dataFileList->GetCount(); i++)
-				if (!dataFileList->IsChecked(i))
-					selectedfiles += dataFileList->GetString(i) + "; ";
-
-			selectedfiles = selectedfiles.BeforeLast(';');
-			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToUTF8().data());
-
-			Config.SetBoolValue("ShowForceBodyNormals", cbShowForceBodyNormals->IsChecked());
-			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
-			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
-			Config.SetBoolValue("Input/BrushSettingsNearCursor", cbBrushSettingsNearCursor->IsChecked());
-			Config.SetBoolValue("Input/MaskHistory", cbMaskHistory->IsChecked());
+			int targetGameSelection = 0;
+			bool needsRestart = false;
+			SettingsDialogShared::SaveCommonSettingsDialog(
+				Config,
+				OutfitStudioConfig,
+				TargetGames.data(),
+				TargetGames.size(),
+				SupportedLangs.data(),
+				SupportedLangs.size(),
+				commonControls,
+				[]() { wxGetApp().InitLanguage(); },
+				targetGameSelection,
+				needsRestart);
 
 			OutfitStudioConfig.SetValue("SingleInstanceBehavior", choiceSingleInstanceBehavior->GetSelection());
 			OutfitStudioConfig.SaveConfig(Config["AppDir"] + "/OutfitStudio.xml", "OutfitStudioConfig");
 
-			int oldLang = Config.GetIntValue("Language");
-			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
-			if (oldLang != newLang) {
-				Config.SetValue("Language", newLang);
-				wxGetApp().InitLanguage();
-			}
-
-			OutfitStudioConfig.SetBoolValue("Rendering/PerspectiveView", cbPerspectiveView->IsChecked());
-
-			wxColour colorBackground = cpColorBackground->GetColour();
-			Config.SetValue("Rendering/ColorBackground.r", colorBackground.Red());
-			Config.SetValue("Rendering/ColorBackground.g", colorBackground.Green());
-			Config.SetValue("Rendering/ColorBackground.b", colorBackground.Blue());
-			if (glView)
+			// Apply colors to GL view (SaveCommonSettingsDialog already saved them to config)
+			if (glView) {
+				wxColour colorBackground = commonControls.cpColorBackground->GetColour();
 				glView->gls.SetBackgroundColor(Vector3(colorBackground.Red() / 255.0f, colorBackground.Green() / 255.0f, colorBackground.Blue() / 255.0f));
 
-			wxColour colorWire = cpColorWire->GetColour();
-			Config.SetValue("Rendering/ColorWire.r", colorWire.Red());
-			Config.SetValue("Rendering/ColorWire.g", colorWire.Green());
-			Config.SetValue("Rendering/ColorWire.b", colorWire.Blue());
-			if (glView)
+				wxColour colorWire = commonControls.cpColorWire->GetColour();
 				glView->gls.SetWireColor(Vector3(colorWire.Red() / 255.0f, colorWire.Green() / 255.0f, colorWire.Blue() / 255.0f));
 
-			wxColour colorPoints = cpColorPoints->GetColour();
-			Config.SetValue("Rendering/ColorPoints.r", colorPoints.Red());
-			Config.SetValue("Rendering/ColorPoints.g", colorPoints.Green());
-			Config.SetValue("Rendering/ColorPoints.b", colorPoints.Blue());
-			if (glView)
+				wxColour colorPoints = commonControls.cpColorPoints->GetColour();
 				glView->gls.SetPointColor(Vector3(colorPoints.Red() / 255.0f, colorPoints.Green() / 255.0f, colorPoints.Blue() / 255.0f));
 
-			wxColour colorPointsMasked = cpColorPointsMasked->GetColour();
-			Config.SetValue("Rendering/ColorPointsMasked.r", colorPointsMasked.Red());
-			Config.SetValue("Rendering/ColorPointsMasked.g", colorPointsMasked.Green());
-			Config.SetValue("Rendering/ColorPointsMasked.b", colorPointsMasked.Blue());
-			if (glView)
+				wxColour colorPointsMasked = commonControls.cpColorPointsMasked->GetColour();
 				glView->gls.SetMaskedPointColor(Vector3(colorPointsMasked.Red() / 255.0f, colorPointsMasked.Green() / 255.0f, colorPointsMasked.Blue() / 255.0f));
-
-			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
-			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToUTF8().data());
-			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToUTF8().data());
+			}
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			wxGetApp().InitArchives();
+
+			if (needsRestart) {
+				wxMessageBox(_("Settings changed. Please restart the application for changes to take effect."), _("Settings Changed"), wxOK | wxICON_INFORMATION);
+			}
 		}
 
 		delete settings;
