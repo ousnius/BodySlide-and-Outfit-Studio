@@ -26,10 +26,12 @@ namespace SettingsDialogShared {
 
 extern const char* const kAppearanceModeConfigKey;
 
+#ifdef __WXMSW__
 wxAppBase::Appearance GetConfiguredAppearance(ConfigurationManager& config);
+wxAppBase::Appearance GetAppearanceForSelection(int selection);
+#endif
 int GetAppearanceChoiceSelection(ConfigurationManager& config);
 const char* GetAppearanceConfigValueForSelection(int selection);
-wxAppBase::Appearance GetAppearanceForSelection(int selection);
 void SetDefaultAppearanceMode(ConfigurationManager& config);
 
 struct CommonSettingsDialogControls {

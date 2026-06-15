@@ -20,6 +20,7 @@ namespace SettingsDialogShared {
 
 const char* const kAppearanceModeConfigKey = "AppearanceMode";
 
+#ifdef __WXMSW__
 wxAppBase::Appearance GetConfiguredAppearance(ConfigurationManager& config) {
 	wxString appearanceMode = wxString::FromUTF8(config[kAppearanceModeConfigKey]);
 	if (appearanceMode.CmpNoCase("System") == 0)
@@ -28,6 +29,14 @@ wxAppBase::Appearance GetConfiguredAppearance(ConfigurationManager& config) {
 		return wxAppBase::Appearance::Dark;
 	return wxAppBase::Appearance::Light;
 }
+wxAppBase::Appearance GetAppearanceForSelection(int selection) {
+	switch (selection) {
+		case 0: return wxAppBase::Appearance::System;
+		case 2: return wxAppBase::Appearance::Dark;
+		default: return wxAppBase::Appearance::Light;
+	}
+}
+#endif
 
 int GetAppearanceChoiceSelection(ConfigurationManager& config) {
 	wxString appearanceMode = wxString::FromUTF8(config[kAppearanceModeConfigKey]);
@@ -43,14 +52,6 @@ const char* GetAppearanceConfigValueForSelection(int selection) {
 		case 0: return "System";
 		case 2: return "Dark";
 		default: return "Light";
-	}
-}
-
-wxAppBase::Appearance GetAppearanceForSelection(int selection) {
-	switch (selection) {
-		case 0: return wxAppBase::Appearance::System;
-		case 2: return wxAppBase::Appearance::Dark;
-		default: return wxAppBase::Appearance::Light;
 	}
 }
 
