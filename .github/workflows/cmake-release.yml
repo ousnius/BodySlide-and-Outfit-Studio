@@ -131,7 +131,6 @@ jobs:
       BUILD_TYPE: RelWithDebInfo
       CC: gcc
       CXX: g++
-      VCPKG_TARGET_TRIPLET: x64-linux
 
     steps:
       - name: Checkout
@@ -139,27 +138,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Cache vcpkg binary packages
-        uses: actions/cache@v5
-        with:
-          path: vcpkg-binary-cache
-          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-${{ hashFiles('.github/workflows/cmake-release.yml') }}
-          restore-keys: |
-            vcpkg-${{ runner.os }}-${{ env.VCPKG_TARGET_TRIPLET }}-
-
-      - name: Bootstrap vcpkg
-        run: |
-          vcpkg_root="$RUNNER_TEMP/vcpkg"
-          git clone https://github.com/microsoft/vcpkg.git "$vcpkg_root"
-          "$vcpkg_root/bootstrap-vcpkg.sh" -disableMetrics
-
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
-            autoconf \
-            autoconf-archive \
-            automake \
             build-essential \
             cmake \
             directx-headers-dev \
@@ -168,35 +150,21 @@ jobs:
             libglew-dev \
             libgl1-mesa-dev \
             libglu1-mesa-dev \
-            libx11-dev \
-            libxext-dev \
-            libxft-dev \
-            libxi-dev \
-            libxkbcommon-dev \
-            libxrandr-dev \
-            libltdl-dev \
-            libtool \
-            libxtst-dev \
+            libwxgtk3.2-dev \
             ninja-build \
-            pkg-config
+            pkg-config \
+            catch2
 
-          vcpkg_root="$RUNNER_TEMP/vcpkg"
-          vcpkg_cache="$GITHUB_WORKSPACE/vcpkg-binary-cache"
-          mkdir -p "$vcpkg_cache"
-          export VCPKG_BINARY_SOURCES="clear;files,$vcpkg_cache,readwrite"
-          "$vcpkg_root/vcpkg" install \
-            "wxwidgets:${VCPKG_TARGET_TRIPLET}" \
-            "catch2:${VCPKG_TARGET_TRIPLET}"
+          wx-config --version
+          wx-config --selected-config
+          wx-config --cxxflags
+          wx-config --libs gl,core,base,net,xml,xrc,adv,qa,html,propgrid
 
       - name: Configure CMake
         run: |
-          vcpkg_root="$RUNNER_TEMP/vcpkg"
-          toolchain_file="$vcpkg_root/scripts/buildsystems/vcpkg.cmake"
           cmake -S . -B build/ubuntu-gcc-relwithdebinfo \
             -G Ninja \
             -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-            -DCMAKE_TOOLCHAIN_FILE="$toolchain_file" \
-            -DVCPKG_TARGET_TRIPLET="$VCPKG_TARGET_TRIPLET" \
             -DBSOS_BUILD_TESTS=ON \
             -DBSOS_ENABLE_FBXSDK=OFF
 

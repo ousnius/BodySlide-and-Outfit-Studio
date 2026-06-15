@@ -150,7 +150,9 @@ bool BodySlideApp::OnInit() {
 	wxHandleFatalExceptions();
 #endif
 
+#ifdef __WXMSW__
 	SetAppearance(SettingsDialogShared::GetConfiguredAppearance(Config));
+#endif
 
 	wxString appDirUri = wxString::FromUTF8(dataDir);
 	appDirUri.Replace("#", "%23");
