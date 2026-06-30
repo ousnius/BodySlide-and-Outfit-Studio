@@ -617,6 +617,11 @@
 			<help>Show only outfits that have zap options.</help>
 			<checkable>1</checkable>
 		</object>
+		<object class="wxMenuItem" name="menuFilterOutputWinners">
+			<label>Hide Conflict Losers</label>
+			<help>Show only outfits winning or unresolved in their output file conflict.</help>
+			<checkable>1</checkable>
+		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="menuBrowseOutfitFolder">
 			<label>Browse outfit folder...</label>

@@ -108,6 +108,7 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_MENU(XRCID("menuRefreshOutfits"), BodySlideFrame::OnRefreshOutfits)
 	EVT_MENU(XRCID("menuRegexOutfits"), BodySlideFrame::OnRegexOutfits)
 	EVT_MENU(XRCID("menuFilterHasZaps"), BodySlideFrame::OnFilterHasZaps)
+	EVT_MENU(XRCID("menuFilterOutputWinners"), BodySlideFrame::OnFilterOutputWinners)
 	EVT_MENU(XRCID("menuBrowseOutfitFolder"), BodySlideFrame::OnBrowseOutfitFolder)
 	EVT_MENU(XRCID("menuSaveGroups"), BodySlideFrame::OnSaveGroups)
 
@@ -3150,6 +3151,7 @@ void BodySlideApp::ApplyOutfitFilter() {
 	bool showUngrouped = false;
 	bool regexFilterOutfits = false;
 	bool filterHasZaps = false;
+	bool filterBatchBuildSelected = false;
 
 	auto menuOutfitSrchContext = sliderView->outfitsearch->GetMenu();
 	if (menuOutfitSrchContext) {
@@ -3160,7 +3162,16 @@ void BodySlideApp::ApplyOutfitFilter() {
 		auto menuFilterHasZaps = menuOutfitSrchContext->FindItem(XRCID("menuFilterHasZaps"));
 		if (menuFilterHasZaps)
 			filterHasZaps = menuFilterHasZaps->IsChecked();
+
+		auto menuFilterOutputWinners = menuOutfitSrchContext->FindItem(XRCID("menuFilterOutputWinners"));
+		if (menuFilterOutputWinners)
+			filterBatchBuildSelected = menuFilterOutputWinners->IsChecked();
 	}
+
+	BuildSelectionFile buildSelFile;
+	BuildSelection buildSelection;
+	if (filterBatchBuildSelected)
+		GetBuildSelection(buildSelFile, buildSelection);
 
 	wxString grpSrch = sliderView->search->GetValue();
 	std::string outfitSrch{sliderView->outfitsearch->GetValue()};
@@ -3208,6 +3219,21 @@ void BodySlideApp::ApplyOutfitFilter() {
 		if (!filteredOut && filterHasZaps) {
 			if (std::find(outfitHasZaps.cbegin(), outfitHasZaps.cend(), no) == outfitHasZaps.cend())
 				filteredOut = true;
+		}
+
+		if (!filteredOut && filterBatchBuildSelected) {
+			for (auto& outFile : outFileCount) {
+				if (outFile.second.size() > 1) {
+					bool isInConflict = std::find(outFile.second.cbegin(), outFile.second.cend(), no) != outFile.second.cend();
+					if (isInConflict) {
+						std::string choice = buildSelection.GetOutputChoice(outFile.first);
+						if (!choice.empty() && choice != no) {
+							filteredOut = true;
+							break;
+						}
+					}
+				}
+			}
 		}
 
 		if (!filteredOut)
@@ -5843,6 +5869,11 @@ void BodySlideFrame::OnRegexOutfits(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnFilterHasZaps(wxCommandEvent& WXUNUSED(event)) {
+	app->PopulateFilterData();
+	app->PopulateOutfitList("");
+}
+
+void BodySlideFrame::OnFilterOutputWinners(wxCommandEvent& WXUNUSED(event)) {
 	app->PopulateFilterData();
 	app->PopulateOutfitList("");
 }
