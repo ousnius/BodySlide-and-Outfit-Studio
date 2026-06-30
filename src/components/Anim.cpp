@@ -435,6 +435,12 @@ void AnimInfo::SetWeights(const std::string& shape, const std::string& boneName,
 }
 
 void AnimInfo::CleanupBones() {
+	// Starfield BSGeometry binds skin to skeleton by bone name via SkinAttach block, per vertex weights index into that list
+	// "cleaning" up bones break those indices so skip for starfield. ASSUMPTION: keeping unused bones in SF is harmless
+	if (refNif && refNif->IsValid() && refNif->GetHeader().GetVersion().IsSF()) {
+		return;
+	}
+
 	for (auto& skin : shapeSkinning) {
 		std::vector<std::string> bonesToDelete;
 
@@ -616,7 +622,8 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 		if (!shape)
 			continue;
 
-		bool isBSShape = shape->HasType<BSTriShape>();
+		// BSGeometry (Starfield) stores per-vertex weights inline (like BSTriShape's vertex data). so we want to make sure they get updated.
+		bool isBSShape = shape->HasType<BSTriShape>() || shape->HasType<BSGeometry>();
 
 		std::unordered_map<uint16_t, VertexBoneWeights> vertWeights;
 		for (auto& boneName : shapeBoneList.second) {
