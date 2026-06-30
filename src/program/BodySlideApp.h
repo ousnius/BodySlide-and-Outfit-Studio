@@ -521,6 +521,7 @@ private:
 	void OnRefreshOutfits(wxCommandEvent& event);
 	void OnRegexOutfits(wxCommandEvent& event);
 	void OnFilterHasZaps(wxCommandEvent& event);
+	void OnFilterOutputWinners(wxCommandEvent& event);
 
 	void OnChooseOutfit(wxCommandEvent& event);
 	void OnChoosePreset(wxCommandEvent& event);
