@@ -70,6 +70,10 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	showReferenceCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnShowReference, this);
 	showReferenceCheckbox->Hide();
 
+	hideVirtualCheckbox = new wxCheckBox(uiPanel, wxID_ANY, _("Hide Virtual"), wxDefaultPosition, wxDefaultSize);
+	hideVirtualCheckbox->SetToolTip(_("Hide shapes whose names start with \"Virtual\"."));
+	hideVirtualCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnHideVirtual, this);
+
 	uiPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
 
 	// Pop-out button (placed in uiPanel, below Lock Shape)
@@ -95,6 +99,7 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	sizerButtons->Add(lockShapeButton, 0, wxALIGN_CENTER_VERTICAL);
 	sizerButtons->Add(popoutButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 4);
 	sizerRight->Add(sizerButtons, 0, wxTOP | wxALIGN_CENTER_HORIZONTAL, 2);
+	sizerRight->Add(hideVirtualCheckbox, 0, wxTOP | wxALIGN_CENTER_HORIZONTAL, 2);
 
 	sizerPanel->Add(sizerRight, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 
@@ -393,9 +398,22 @@ Mesh* PreviewPanel::GetMesh(const std::string& shapeName) {
 	return gls.GetMesh(shapeName);
 }
 
+static bool IsVirtualShape(const std::string& name) {
+	if (name.size() < 7)
+		return false;
+	static const char prefix[] = "virtual";
+	for (int i = 0; i < 7; i++) {
+		if (std::tolower((unsigned char)name[i]) != prefix[i])
+			return false;
+	}
+	return true;
+}
+
 void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 	if (!glInitialized || !gls.SetContext())
 		return;
+
+	bool hideVirtual = hideVirtualCheckbox->IsChecked();
 
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 	for (size_t i = 0; i < shapeList.size(); i++) {
@@ -408,6 +426,9 @@ void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildVertexAdjacency();
 			m->CreateBuffers();
+
+			if (hideVirtual && IsVirtualShape(shapeListName))
+				gls.SetMeshVisibility(shapeListName, false);
 		}
 	}
 }
@@ -417,6 +438,8 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 		return;
 
 	gls.ClearMeshes();
+
+	bool hideVirtual = hideVirtualCheckbox->IsChecked();
 
 	for (auto* nif : nifs) {
 		for (auto& shapeListName : nif->GetShapeNames()) {
@@ -434,6 +457,9 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 				m->material = iter->second;
 			else
 				AddNifShapeTextures(nif, shapeListName);
+
+			if (hideVirtual && IsVirtualShape(shapeListName))
+				gls.SetMeshVisibility(shapeListName, false);
 		}
 	}
 
@@ -722,6 +748,15 @@ void PreviewPanel::OnLockShape(wxCommandEvent& WXUNUSED(event)) {
 
 void PreviewPanel::OnShowReference(wxCommandEvent& WXUNUSED(event)) {
 	app->UpdatePreview();
+}
+
+void PreviewPanel::OnHideVirtual(wxCommandEvent& WXUNUSED(event)) {
+	bool hide = hideVirtualCheckbox->IsChecked();
+	for (auto* m : gls.GetMeshes()) {
+		if (IsVirtualShape(m->shapeName))
+			gls.SetMeshVisibility(m->shapeName, !hide);
+	}
+	gls.RenderOneFrame();
 }
 
 void PreviewPanel::OnPopout(wxCommandEvent& WXUNUSED(event)) {
