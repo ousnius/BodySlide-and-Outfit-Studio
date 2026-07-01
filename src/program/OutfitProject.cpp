@@ -6476,6 +6476,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	clone.SetShapeOrder(owner->GetShapeList());
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
+	GenerateStarfieldMeshlets(clone);
 	ConfigureInternalGeometry(clone, fileName, useInternalGeom);
 
 	std::fstream file;
@@ -6543,6 +6544,7 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
+	GenerateStarfieldMeshlets(clone);
 	ConfigureInternalGeometry(clone, fileName, useInternalGeom);
 
 	std::fstream file;
@@ -6563,6 +6565,22 @@ void OutfitProject::ForceInternalGeometry(NifFile& nif) {
 		auto bsgeo = dynamic_cast<BSGeometry*>(s);
 		if (bsgeo)
 			bsgeo->SetInternalGeomData(true);
+	}
+}
+
+void OutfitProject::GenerateStarfieldMeshlets(NifFile& nif) {
+	if (!nif.GetHeader().GetVersion().IsSF()) {
+		return;
+	}
+
+	// Generate meshlets for any BSGeometry that lacks them (freshly authored shapes, or shapes whose meshlets were dropped by an edit that changed the triangle list).
+	std::vector<NiShape*> toConvert;
+	for (auto& s : nif.GetShapes()) {
+		auto bsgeo = dynamic_cast<BSGeometry*>(s);
+        if (!bsgeo || bsgeo->HasMeshlets()) {
+            continue;
+		}
+		bsgeo->GenerateMeshlets();
 	}
 }
 
