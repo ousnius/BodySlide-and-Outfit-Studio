@@ -42,7 +42,7 @@ class PreviewPanel : public wxPanel {
 	wxButton* optButton = nullptr;
 	wxButton* lockShapeButton = nullptr;
 	wxCheckBox* showReferenceCheckbox = nullptr;
-	wxCheckBox* hideVirtualCheckbox = nullptr;
+	wxCheckBox* showHelperShapesCheckbox = nullptr;
 	wxStaticText* projectLabel = nullptr;
 	wxChoice* projectChoice = nullptr;
 	wxStaticText* presetLabel = nullptr;
@@ -86,7 +86,7 @@ public:
 	void ShowNormalGenWindow(wxCommandEvent& event);
 	void OnLockShape(wxCommandEvent& event);
 	void OnShowReference(wxCommandEvent& event);
-	void OnHideVirtual(wxCommandEvent& event);
+	void OnShowHelperShapes(wxCommandEvent& event);
 	void OnPopout(wxCommandEvent& event);
 
 	void ShowPopoutButton(bool show);
