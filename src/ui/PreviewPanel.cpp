@@ -70,6 +70,10 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	showReferenceCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnShowReference, this);
 	showReferenceCheckbox->Hide();
 
+	showHelperShapesCheckbox = new wxCheckBox(uiPanel, wxID_ANY, _("Show Helper Shapes"), wxDefaultPosition, wxDefaultSize);
+	showHelperShapesCheckbox->SetToolTip(_("Show helper shapes (e.g. collisions) - shapes with no shader or with the hidden flag set."));
+	showHelperShapesCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnShowHelperShapes, this);
+
 	uiPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
 
 	// Pop-out button (placed in uiPanel, below Lock Shape)
@@ -95,6 +99,7 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	sizerButtons->Add(lockShapeButton, 0, wxALIGN_CENTER_VERTICAL);
 	sizerButtons->Add(popoutButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 4);
 	sizerRight->Add(sizerButtons, 0, wxTOP | wxALIGN_CENTER_HORIZONTAL, 2);
+	sizerRight->Add(showHelperShapesCheckbox, 0, wxTOP | wxALIGN_CENTER_HORIZONTAL, 2);
 
 	sizerPanel->Add(sizerRight, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 
@@ -397,6 +402,8 @@ void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 	if (!glInitialized || !gls.SetContext())
 		return;
 
+	bool showHelperShapes = showHelperShapesCheckbox->IsChecked();
+
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 	for (size_t i = 0; i < shapeList.size(); i++) {
 		std::string& shapeListName = shapeList[i];
@@ -408,6 +415,9 @@ void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildVertexAdjacency();
 			m->CreateBuffers();
+
+			if (m->bHelperShape && !showHelperShapes)
+				gls.SetMeshVisibility(shapeListName, false);
 		}
 	}
 }
@@ -417,6 +427,8 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 		return;
 
 	gls.ClearMeshes();
+
+	bool showHelperShapes = showHelperShapesCheckbox->IsChecked();
 
 	for (auto* nif : nifs) {
 		for (auto& shapeListName : nif->GetShapeNames()) {
@@ -434,6 +446,9 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 				m->material = iter->second;
 			else
 				AddNifShapeTextures(nif, shapeListName);
+
+			if (m->bHelperShape && !showHelperShapes)
+				gls.SetMeshVisibility(shapeListName, false);
 		}
 	}
 
@@ -722,6 +737,15 @@ void PreviewPanel::OnLockShape(wxCommandEvent& WXUNUSED(event)) {
 
 void PreviewPanel::OnShowReference(wxCommandEvent& WXUNUSED(event)) {
 	app->UpdatePreview();
+}
+
+void PreviewPanel::OnShowHelperShapes(wxCommandEvent& WXUNUSED(event)) {
+	bool show = showHelperShapesCheckbox->IsChecked();
+	for (auto* m : gls.GetMeshes()) {
+		if (m->bHelperShape)
+			gls.SetMeshVisibility(m->shapeName, show);
+	}
+	gls.RenderOneFrame();
 }
 
 void PreviewPanel::OnPopout(wxCommandEvent& WXUNUSED(event)) {

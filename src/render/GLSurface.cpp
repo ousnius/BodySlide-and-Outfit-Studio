@@ -1276,6 +1276,7 @@ Mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	}
 
 	NiShader* shader = nif->GetShader(shape);
+	m->bHelperShape = !shader || (shape->flags & 1) != 0;
 	if (shader) {
 		m->doublesided = shader->IsDoubleSided();
 		m->modelSpace = shader->IsModelSpace();

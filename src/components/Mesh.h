@@ -127,6 +127,7 @@ public:
 	std::shared_ptr<AABBTree> bvh = nullptr;
 
 	bool bVisible = true;
+	bool bHelperShape = false; // true for shapes with no shader or with the hidden flag set (e.g. collisions)
 	bool bShowPoints = false;
 	bool smoothSeamNormals = true; // Smoothing for normals on seams.
 	float smoothSeamNormalsAngle = 60.0f; // Smoothing threshold in degrees for generating smooth normals on seams.
