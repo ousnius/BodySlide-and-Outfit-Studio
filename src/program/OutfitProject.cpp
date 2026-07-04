@@ -330,8 +330,15 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 								bool keepZappedShapes,
 								const wxString& strSFMorphPath,
 								const wxString& strSFMorphTargetShape) {
-	UpdateProgress(1, _("Checking destination..."));
 	std::string errmsg = "";
+
+	auto shapes = workNif.GetShapes();
+	if (shapes.empty()) {
+		errmsg = _("Project has no shapes!");
+		return errmsg;
+	}
+
+	UpdateProgress(1, _("Checking destination..."));
 	std::string outfit{strOutfitName.ToUTF8()};
 	std::string baseFile{strBaseFile.ToUTF8()};
 	std::string gameFile{strGameFile.ToUTF8()};
@@ -378,8 +385,6 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 	mSFMorphPath = strSFMorphPath;
 	mSFMorphTargetShape = strSFMorphTargetShape;
 	activeSet.ClearLocalOnlyDataFolders();
-
-	auto shapes = workNif.GetShapes();
 
 	wxString folder(wxString::Format("%s/%s/%s", wxString::FromUTF8(ProjectUtil::GetProjectPath()), "ShapeData", strDataDir));
 	wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
