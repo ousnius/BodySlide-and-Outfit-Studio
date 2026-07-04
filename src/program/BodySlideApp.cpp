@@ -1993,9 +1993,9 @@ void BodySlideApp::InitPreview() {
 
 				bool hasBuiltInRef = false;
 				std::string refInfoShape = pp->sliderSet.GetReferenceShapeName();
-				if (!refInfoShape.empty() && pp->baseNif->FindBlockByName<nifly::NiShape>(refInfoShape))
+				if (!refInfoShape.empty() && pp->baseNif && pp->baseNif->FindBlockByName<nifly::NiShape>(refInfoShape))
 					hasBuiltInRef = true;
-				if (!hasBuiltInRef && ClippingFixer::FindReferenceShape(*pp->baseNif))
+				if (!hasBuiltInRef && pp->baseNif && ClippingFixer::FindReferenceShape(*pp->baseNif))
 					hasBuiltInRef = true;
 
 				if (hasBuiltInRef) {
