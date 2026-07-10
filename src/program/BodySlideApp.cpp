@@ -6845,7 +6845,7 @@ bool SliderDisplay::Create(wxScrolledWindow* scrollWindow,
 		sliderLayout->Add(zapCheckLo, 0, wxALIGN_LEFT, 0);
 	}
 
-	sliderLo = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxDefaultSize, wxSL_AUTOTICKS | wxSL_BOTTOM | wxSL_HORIZONTAL);
+	sliderLo = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxDefaultSize, wxSL_BOTTOM | wxSL_HORIZONTAL);
 	sliderLo->SetTickFreq(5);
 	sliderLo->SetName(nameStr + "|LO");
 	sliderLo->Show(!oneSize && !isZap);
@@ -6872,7 +6872,7 @@ bool SliderDisplay::Create(wxScrolledWindow* scrollWindow,
 		sliderLayout->Add(zapCheckHi, 0, wxALIGN_LEFT, 0);
 	}
 
-	sliderHi = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxDefaultSize, wxSL_AUTOTICKS | wxSL_HORIZONTAL);
+	sliderHi = new wxSlider(scrollWindow, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxDefaultSize, wxSL_HORIZONTAL);
 	sliderHi->SetTickFreq(5);
 	sliderHi->SetName(nameStr + "|HI");
 	sliderHi->Show(!isZap);
