@@ -849,6 +849,7 @@
     <ClInclude Include="src\program\ShapeProperties.h" />
     <ClInclude Include="src\program\SliderDataDialog.h" />
     <ClInclude Include="src\program\SliderDataImportDialog.h" />
+    <ClInclude Include="src\program\AddProjectDialog.h" />
     <ClInclude Include="src\render\GLCanvas.h" />
     <ClInclude Include="src\render\GLDialog.h" />
     <ClInclude Include="src\render\GLExtensions.h" />
@@ -948,6 +949,7 @@
     <ClCompile Include="src\program\ShapeProperties.cpp" />
     <ClCompile Include="src\program\SliderDataDialog.cpp" />
     <ClCompile Include="src\program\SliderDataImportDialog.cpp" />
+    <ClCompile Include="src\program\AddProjectDialog.cpp" />
     <ClCompile Include="src\render\GLCanvas.cpp" />
     <ClCompile Include="src\render\GLDialog.cpp" />
     <ClCompile Include="src\render\GLExtensions.cpp" />
@@ -973,6 +975,7 @@
   <ItemGroup>
     <Xml Include="Config.xml" />
     <Xml Include="res\xrc\SliderDataImport.xrc" />
+    <Xml Include="res\xrc\AddProject.xrc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

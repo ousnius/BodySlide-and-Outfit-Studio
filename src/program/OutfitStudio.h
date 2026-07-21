@@ -1050,7 +1050,16 @@ public:
 
 	bool SaveProject();
 	bool SaveProjectAs();
-	bool LoadProject(const std::string& fileName, const std::string& projectName = "", bool clearProject = true);
+	bool LoadProject(const std::string& fileName,
+					 const std::string& projectName = "",
+					 bool clearProject = true,
+					 bool newDataLocal = false,
+					 bool appendNewSliders = true,
+					 bool setAsReference = true);
+	// Resolves the slider set to load from the given file, prompting the user if there is
+	// more than one. If preferredName is given and present in the file, it is used without
+	// prompting. Returns an empty string on failure (an error is shown) or if cancelled.
+	std::string ChooseSliderSetName(const std::string& fileName, const std::string& preferredName = "");
 	void CreateSetSliders();
 
 	void UpdateReferenceTemplates();

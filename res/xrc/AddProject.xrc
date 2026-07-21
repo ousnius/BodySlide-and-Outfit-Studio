@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+	<object class="wxDialog" name="dlgAddProject">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
+		<title>Add Project Options...</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxStaticText">
+					<label>Choose how the selected project will be added:</label>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxCheckBox" name="chkSliderDataLocal">
+					<label>Make slider data of added shapes local</label>
+					<tooltip>When enabled, the slider data of the added shapes is stored locally in this project instead of referencing the external slider set files.</tooltip>
+					<checked>1</checked>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxCheckBox" name="chkAppendNewSliders">
+					<label>Append new sliders</label>
+					<tooltip>When enabled, sliders from the added set that don't already exist in the project are added. When disabled, only data for matching existing sliders is merged.</tooltip>
+					<checked>1</checked>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+				<border>10</border>
+				<object class="wxCheckBox" name="chkSetAsReference">
+					<label>Set added body as reference if none exists</label>
+					<tooltip>When enabled and the project has no reference yet, a skin-tinted added shape becomes the project's reference/base shape.</tooltip>
+					<checked>1</checked>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>10</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+</resource>

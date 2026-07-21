@@ -1471,6 +1471,9 @@
     <ClInclude Include="src\program\SliderDataImportDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\AddProjectDialog.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="lib\gli\glm\ext\matrix_clip_space.hpp">
       <Filter>Libraries\gli\glm\ext</Filter>
     </ClInclude>
@@ -2238,6 +2241,9 @@
     <ClCompile Include="src\program\SliderDataImportDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
+    <ClCompile Include="src\program\AddProjectDialog.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
     <ClCompile Include="src\render\GLDialog.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
@@ -2277,6 +2283,9 @@
       <Filter>Resources</Filter>
     </Xml>
     <Xml Include="res\xrc\SliderDataImport.xrc">
+      <Filter>Resources</Filter>
+    </Xml>
+    <Xml Include="res\xrc\AddProject.xrc">
       <Filter>Resources</Filter>
     </Xml>
   </ItemGroup>

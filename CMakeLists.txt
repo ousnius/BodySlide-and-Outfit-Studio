@@ -313,6 +313,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/program/AutomationDialogExecute.cpp
 	src/program/SliderDataDialog.cpp
 	src/program/SliderDataImportDialog.cpp
+	src/program/AddProjectDialog.cpp
 	src/render/GLCanvas.cpp
 	src/render/GLDialog.cpp
 )

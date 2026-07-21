@@ -31,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PartitionTypeChoices.h"
 #include "ShapeProperties.h"
 #include "SliderDataDialog.h"
+#include "AddProjectDialog.h"
 #include "SliderDataImportDialog.h"
 #include "AutomationDialog.h"
 #include "../components/ClippingFixer.h"
@@ -2626,39 +2627,46 @@ bool OutfitStudioFrame::SaveProjectAs() {
 	return true;
 }
 
-bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::string& projectName, bool clearProject) {
-	std::vector<std::string> setnames;
-	SliderSetFile InFile(fileName);
-	if (InFile.fail()) {
+std::string OutfitStudioFrame::ChooseSliderSetName(const std::string& fileName, const std::string& preferredName) {
+	SliderSetFile inFile(fileName);
+	if (inFile.fail()) {
 		wxLogError("Failed to open '%s' as a slider set file!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to open '%s' as a slider set file!"), fileName), _("Slider Set Error"), wxICON_ERROR);
-		return false;
+		return "";
 	}
 
-	std::string outfit;
-	InFile.GetSetNames(setnames);
+	std::vector<std::string> setnames;
+	inFile.GetSetNames(setnames);
 
-	if (!projectName.empty()) {
-		auto it = std::find(setnames.begin(), setnames.end(), projectName);
+	if (!preferredName.empty()) {
+		auto it = std::find(setnames.begin(), setnames.end(), preferredName);
 		if (it != setnames.end())
-			outfit = projectName;
+			return preferredName;
 	}
 
-	if (outfit.empty()) {
+	if (setnames.size() > 1) {
 		wxArrayString choices;
 		for (auto& s : setnames)
 			choices.Add(wxString::FromUTF8(s));
 
-		if (choices.GetCount() > 1) {
-			outfit = wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this).ToUTF8();
-			if (outfit.empty())
-				return false;
-		}
-		else if (choices.GetCount() == 1)
-			outfit = choices.front().ToUTF8();
-		else
-			return false;
+		return wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this).ToUTF8().data();
 	}
+
+	if (setnames.size() == 1)
+		return setnames.front();
+
+	return "";
+}
+
+bool OutfitStudioFrame::LoadProject(const std::string& fileName,
+									const std::string& projectName,
+									bool clearProject,
+									bool newDataLocal,
+									bool appendNewSliders,
+									bool setAsReference) {
+	std::string outfit = ChooseSliderSetName(fileName, projectName);
+	if (outfit.empty())
+		return false;
 
 	wxLogMessage("Loading project '%s' from file '%s'...", outfit, fileName);
 	StartProgress(_("Loading project..."));
@@ -2690,7 +2698,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	if (clearProject)
 		error = project->LoadFromSliderSet(fileName, outfit, &origShapeOrder);
 	else
-		error = project->AddFromSliderSet(fileName, outfit, false);
+		error = project->AddFromSliderSet(fileName, outfit, newDataLocal, appendNewSliders, setAsReference);
 
 	if (error) {
 		EndProgress();
@@ -4197,7 +4205,19 @@ void OutfitStudioFrame::OnAddProject(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	std::string fileName{addProjectDialog.GetPath().ToUTF8()};
-	LoadProject(fileName, "", false);
+
+	// Choose the slider set to add before showing the options dialog
+	std::string outfit = ChooseSliderSetName(fileName);
+	if (outfit.empty())
+		return;
+
+	AddProjectDialog optionsDialog(this, OutfitStudioConfig);
+	if (optionsDialog.ShowModal() != wxID_OK)
+		return;
+
+	const auto& options = optionsDialog.GetOptions();
+
+	LoadProject(fileName, outfit, false, options.sliderDataLocal, options.appendNewSliders, options.setAsReference);
 }
 
 void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {

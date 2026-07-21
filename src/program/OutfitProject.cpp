@@ -3367,7 +3367,11 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 	return 0;
 }
 
-int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName, const bool newDataLocal, const bool appendNewSliders) {
+int OutfitProject::AddFromSliderSet(const std::string& fileName,
+									const std::string& sliderSetName,
+									const bool newDataLocal,
+									const bool appendNewSliders,
+									const bool setAsReference) {
 	owner->StartProgress(_("Adding slider set..."));
 	const bool hadBaseShape = baseShape != nullptr;
 	SliderSetFile InSS(fileName);
@@ -3400,7 +3404,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 		return 3;
 	}
 
-	if (!baseShape) {
+	if (setAsReference && !baseShape) {
 		NiShape* newBaseShape = nullptr;
 
 		// First external target with skin shader becomes reference
