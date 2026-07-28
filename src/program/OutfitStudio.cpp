@@ -8559,9 +8559,8 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 		if (XRCCTRL(dlg, "weightLo", wxRadioButton)->GetValue())
 			hi = false;
 
-		ZeroSliders();
-
 		if (choice == "Zero All") {
+			ZeroSliders();
 			wxLogMessage("Sliders were reset to zero.");
 			return;
 		}
@@ -8571,9 +8570,6 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 		float v;
 		bool r;
 		for (size_t i = 0; i < project->SliderCount(); i++) {
-			if (!presets.GetSliderExists(choice, project->GetSliderName(i)))
-				continue;
-
 			if (project->SliderClamp(i))
 				continue;
 
@@ -8582,6 +8578,7 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 			else
 				r = presets.GetSmallPreset(choice, project->GetSliderName(i), v);
 
+			// Sliders without a value in the preset fall back to their default for the chosen weight
 			if (!r)
 				v = project->SliderDefault(i, hi) / 100.0f;
 			if (project->SliderInvert(i))
