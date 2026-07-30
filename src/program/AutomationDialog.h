@@ -19,6 +19,7 @@ See the included LICENSE file
 #include <wx/choice.h>
 #include <wx/collpane.h>
 #include <wx/clrpicker.h>
+#include <wx/combo.h>
 #include <wx/combobox.h>
 #include <wx/dialog.h>
 #include <wx/event.h>
@@ -37,6 +38,7 @@ See the included LICENSE file
 
 class OutfitStudioFrame;
 class OutfitProject;
+class AutomationStepTypePopup;
 
 namespace nifly {
 class NiShape;
@@ -63,7 +65,9 @@ private:
 	wxListCtrl* listSteps = nullptr;
 	wxStaticText* lblStepsPlaceholder = nullptr;
 	wxSimplebook* bookStepPages = nullptr;
-	wxChoice* choiceStepType = nullptr;
+	wxComboCtrl* comboStepType = nullptr;
+	AutomationStepTypePopup* stepTypePopup = nullptr;
+	std::map<AutomationStepType, int> stepTypePageIndex;
 	wxCheckBox* chkActive = nullptr;
 	wxTextCtrl* txtTargetMeshes = nullptr;
 	wxCheckBox* chkTargetRegex = nullptr;
@@ -113,8 +117,8 @@ private:
 	void SetCheckboxValue(const char* name, bool value);
 	bool GetCheckboxValue(const char* name) const;
 	void SetTextValue(const char* name, const std::string& value);
+	void SetTextValue(const char* name, const wxString& value);
 	std::string GetTextValue(const char* name) const;
-	void SetFloatValue(const char* name, float value);
 	float GetFloatValue(const char* name) const;
 	int GetIntValue(const char* name) const;
 	void SetVectorValue(const char* name, const std::vector<std::string>& values);
@@ -130,6 +134,49 @@ private:
 	void SelectStep(int index);
 	void UpdateStepFromUI();
 	void UpdateUIFromStep(const AutomationStep& step);
+
+	// Generic marshalling driven by the step type's field table. Everything a
+	// plain control can express is handled here; the rest lives in the per-type
+	// UI hooks below, wired up in the step binding table.
+	void ApplyFieldsToUI(const AutomationStep& step);
+	void ReadFieldsFromUI(AutomationStep& step);
+
+	struct StepBinding {
+		AutomationStepType type;
+		int (AutomationDialog::*execute)(const AutomationStep&) = nullptr;
+		void (AutomationDialog::*toUI)(const AutomationStep&) = nullptr;
+		void (AutomationDialog::*fromUI)(AutomationStep&) = nullptr;
+	};
+	static const StepBinding* FindStepBinding(AutomationStepType type);
+
+	void ShowStepTypePage(AutomationStepType type);
+	void SetStepTypeSelection(AutomationStepType type);
+
+	void StepToUILoadReference(const AutomationStep& step);
+	void StepFromUILoadReference(AutomationStep& step);
+	void StepToUIAddProject(const AutomationStep& step);
+	void StepFromUIAddProject(AutomationStep& step);
+	void StepToUIImportFile(const AutomationStep& step);
+	void StepFromUIImportFile(AutomationStep& step);
+	void StepToUIImportSliderData(const AutomationStep& step);
+	void StepFromUIImportSliderData(AutomationStep& step);
+	void StepToUIExportFile(const AutomationStep& step);
+	void StepFromUIExportFile(AutomationStep& step);
+	void StepToUISaveProject(const AutomationStep& step);
+	void StepToUISetReferenceShape(const AutomationStep& step);
+	void StepToUISetExtraData(const AutomationStep& step);
+	void StepFromUISetExtraData(AutomationStep& step);
+	void StepToUILoadMask(const AutomationStep& step);
+	void StepFromUILoadMask(AutomationStep& step);
+	void StepToUISetSliderProperties(const AutomationStep& step);
+	void StepFromUISetSliderProperties(AutomationStep& step);
+	void StepToUISetShaderProperties(const AutomationStep& step);
+	void StepFromUISetShaderProperties(AutomationStep& step);
+	void StepToUISetGeometryProperties(const AutomationStep& step);
+	void StepFromUISetGeometryProperties(AutomationStep& step);
+	void StepToUISetTexturePaths(const AutomationStep& step);
+	void StepFromUISetTexturePaths(AutomationStep& step);
+
 	void RefreshStepRow(int index);
 	void ShowStepSettings(bool show);
 	void UpdateButtonState();
@@ -253,7 +300,7 @@ private:
 	void OnStepSelected(wxListEvent& event);
 	void OnStepListKeyDown(wxKeyEvent& event);
 	void OnStepListContextMenu(wxContextMenuEvent& event);
-	void OnStepTypeChanged(wxCommandEvent& event);
+	void OnStepTypeChanged(AutomationStepType type);
 	void OnExecuteAll(wxCommandEvent& event);
 	void OnExecuteSelected(wxCommandEvent& event);
 	void OnClose(wxCommandEvent& event);

@@ -14,6 +14,11 @@ See the included LICENSE file
 #include <utility>
 #include <vector>
 
+// The step type table holds English category and display names. They are marked
+// with wxTRANSLATE so the catalog picks them up, and translated at display time
+// with wxGetTranslation().
+#include <wx/translation.h>
+
 enum class AutomationStepType {
 	AddCustomBone,
 	CopyBoneWeights,
@@ -304,6 +309,136 @@ struct AutomationStep {
 	float fixClipStrength = 0.5f;  // 0.0 - 1.0
 	std::vector<std::string> fixClipSliderNames;
 };
+
+// Type of an AutomationStep member described by an AutomationField.
+enum class AutomationFieldKind {
+	Bool,
+	Int,
+	Float,
+	String,
+	StringList
+};
+
+// How a field is presented on the step's settings page. Fields marked None are
+// left to the step type's UI hooks (file pickers, dependent dropdowns, grids).
+enum class AutomationFieldUI {
+	None,
+	CheckBox,
+	Text,			// wxTextCtrl holding the value verbatim
+	TextList,		// wxTextCtrl holding a comma-separated list
+	TextPercent,	// wxTextCtrl showing 0-100 for a 0.0-1.0 float
+	TextOptional,	// wxTextCtrl that is empty when the value is negative
+	ChoiceTriState, // wxChoice mapping "no change"/"no"/"yes" to -1/0/1
+	ChoiceIndex,	// wxChoice whose selection index is the value
+	ChoiceString	// wxChoice whose selected label is the value
+};
+
+// One parameter of a step type: how it is stored, serialized and edited.
+struct AutomationField {
+	AutomationFieldKind kind = AutomationFieldKind::Bool;
+	const char* xmlName = nullptr;
+
+	union Member {
+		bool AutomationStep::* asBool;
+		int AutomationStep::* asInt;
+		float AutomationStep::* asFloat;
+		std::string AutomationStep::* asString;
+		std::vector<std::string> AutomationStep::* asStringList;
+	} member{};
+
+	union DefaultValue {
+		bool asBool;
+		int asInt;
+		float asFloat;
+	} defaultValue{};
+
+	const char* control = nullptr; // XRC name of the editing control
+	AutomationFieldUI ui = AutomationFieldUI::None;
+	const char* format = nullptr;  // printf format for numeric text controls
+};
+
+inline AutomationField FieldBool(const char* xmlName, bool AutomationStep::* member, bool defaultValue, const char* control = nullptr) {
+	AutomationField f;
+	f.kind = AutomationFieldKind::Bool;
+	f.xmlName = xmlName;
+	f.member.asBool = member;
+	f.defaultValue.asBool = defaultValue;
+	f.control = control;
+	f.ui = control ? AutomationFieldUI::CheckBox : AutomationFieldUI::None;
+	return f;
+}
+
+inline AutomationField FieldInt(const char* xmlName, int AutomationStep::* member, int defaultValue,
+	const char* control = nullptr, AutomationFieldUI ui = AutomationFieldUI::Text, const char* format = nullptr) {
+	AutomationField f;
+	f.kind = AutomationFieldKind::Int;
+	f.xmlName = xmlName;
+	f.member.asInt = member;
+	f.defaultValue.asInt = defaultValue;
+	f.control = control;
+	f.ui = control ? ui : AutomationFieldUI::None;
+	f.format = format;
+	return f;
+}
+
+inline AutomationField FieldFloat(const char* xmlName, float AutomationStep::* member, float defaultValue,
+	const char* control = nullptr, AutomationFieldUI ui = AutomationFieldUI::Text, const char* format = nullptr) {
+	AutomationField f;
+	f.kind = AutomationFieldKind::Float;
+	f.xmlName = xmlName;
+	f.member.asFloat = member;
+	f.defaultValue.asFloat = defaultValue;
+	f.control = control;
+	f.ui = control ? ui : AutomationFieldUI::None;
+	f.format = format;
+	return f;
+}
+
+inline AutomationField FieldString(const char* xmlName, std::string AutomationStep::* member,
+	const char* control = nullptr, AutomationFieldUI ui = AutomationFieldUI::Text) {
+	AutomationField f;
+	f.kind = AutomationFieldKind::String;
+	f.xmlName = xmlName;
+	f.member.asString = member;
+	f.control = control;
+	f.ui = control ? ui : AutomationFieldUI::None;
+	return f;
+}
+
+inline AutomationField FieldStringList(const char* xmlName, std::vector<std::string> AutomationStep::* member, const char* control = nullptr) {
+	AutomationField f;
+	f.kind = AutomationFieldKind::StringList;
+	f.xmlName = xmlName;
+	f.member.asStringList = member;
+	f.control = control;
+	f.ui = control ? AutomationFieldUI::TextList : AutomationFieldUI::None;
+	return f;
+}
+
+namespace tinyxml2 {
+class XMLDocument;
+class XMLElement;
+}
+
+// Everything the rest of the program needs to know about a step type. This table
+// is the single source of truth: enum/string conversion, the type picker, the
+// settings page, XML serialization and placeholder substitution all read from it.
+struct AutomationStepInfo {
+	AutomationStepType type = AutomationStepType::LoadReference;
+	const char* xmlName = nullptr;	// stable identifier written to saved scripts
+	const char* category = nullptr; // group in the step type picker
+	const char* displayName = nullptr;	// "<Category>: <Name>" shown to the user
+	const char* xrcPage = nullptr;	// wxPanel name of the settings page
+	std::vector<AutomationField> fields;
+
+	// Optional hooks for parameters a plain field can't describe (lists of structs)
+	void (*loadExtra)(AutomationStep&, tinyxml2::XMLElement*) = nullptr;
+	void (*saveExtra)(const AutomationStep&, tinyxml2::XMLDocument&, tinyxml2::XMLElement*) = nullptr;
+	void (*substituteExtra)(AutomationStep&, const std::map<std::string, std::string>&) = nullptr;
+};
+
+const std::vector<AutomationStepInfo>& GetAutomationStepTypes();
+const AutomationStepInfo& GetAutomationStepInfo(AutomationStepType type);
 
 class AutomationScript {
 	std::vector<AutomationStep> steps;

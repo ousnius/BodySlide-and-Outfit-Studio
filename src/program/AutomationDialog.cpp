@@ -19,11 +19,14 @@ See the included LICENSE file
 #include <wx/msgdlg.h>
 #include <wx/filename.h>
 #include <wx/clntdata.h>
+#include <wx/treectrl.h>
 #include <wx/xrc/xmlres.h>
 
 #include <tinyxml2.h>
 
 #include <algorithm>
+#include <cstdio>
+#include <functional>
 #include <regex>
 #include <set>
 
@@ -33,6 +36,214 @@ using namespace nifly;
 
 extern ConfigurationManager Config;
 extern ConfigurationManager OutfitStudioConfig;
+
+// Popup for the step type combo: the step types grouped by category in a tree,
+// with a filter box on top. Replaces a flat dropdown that had grown to 40 entries.
+class AutomationStepTypePopup : public wxComboPopup {
+public:
+	std::function<void(AutomationStepType)> onSelect;
+
+	bool Create(wxWindow* parent) override {
+		panel = new wxPanel(parent, wxID_ANY);
+
+		auto* sizer = new wxBoxSizer(wxVERTICAL);
+		filterText = new wxTextCtrl(panel, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+		filterText->SetHint(_("Filter..."));
+		sizer->Add(filterText, 0, wxEXPAND | wxALL, 2);
+
+		tree = new wxTreeCtrl(panel, wxID_ANY, wxDefaultPosition, wxDefaultSize,
+			wxTR_HIDE_ROOT | wxTR_HAS_BUTTONS | wxTR_SINGLE | wxTR_FULL_ROW_HIGHLIGHT | wxBORDER_NONE);
+		sizer->Add(tree, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 2);
+		panel->SetSizer(sizer);
+
+		filterText->Bind(wxEVT_TEXT, &AutomationStepTypePopup::OnFilterChanged, this);
+		filterText->Bind(wxEVT_TEXT_ENTER, &AutomationStepTypePopup::OnFilterEnter, this);
+		filterText->Bind(wxEVT_KEY_DOWN, &AutomationStepTypePopup::OnFilterKey, this);
+		tree->Bind(wxEVT_TREE_SEL_CHANGED, &AutomationStepTypePopup::OnTreeSelection, this);
+		tree->Bind(wxEVT_TREE_ITEM_ACTIVATED, &AutomationStepTypePopup::OnTreeActivated, this);
+		tree->Bind(wxEVT_LEFT_UP, &AutomationStepTypePopup::OnTreeClick, this);
+
+		Rebuild(wxEmptyString);
+		return true;
+	}
+
+	wxWindow* GetControl() override { return panel; }
+
+	void SetStringValue(const wxString& value) override { currentLabel = value; }
+	wxString GetStringValue() const override { return currentLabel; }
+
+	void OnPopup() override {
+		committed = false;
+		filterText->ChangeValue(wxEmptyString);
+		Rebuild(wxEmptyString);
+		SelectType(currentType);
+		filterText->SetFocus();
+	}
+
+	void OnDismiss() override {
+		// Arrowing through the tree previews types in the combo; put the real one
+		// back when the popup closes without a choice being made.
+		if (!committed && m_combo)
+			m_combo->SetText(currentLabel);
+	}
+
+	wxSize GetAdjustedSize(int minWidth, int prefHeight, int WXUNUSED(maxHeight)) override {
+		int width = std::max(minWidth, panel->FromDIP(280));
+		int height = std::max(prefHeight, panel->FromDIP(340));
+		return wxSize(width, height);
+	}
+
+	void SetSelectedType(AutomationStepType type) {
+		currentType = type;
+		currentLabel = wxGetTranslation(GetAutomationStepInfo(type).displayName);
+	}
+
+	// The display name without the redundant "<Category>: " prefix, so a leaf under
+	// "Shapes" reads "Invert UVs". Falls back to the full name for translations that
+	// don't follow the pattern.
+	static wxString StepTypeShortLabel(const AutomationStepInfo& info) {
+		wxString display = wxGetTranslation(info.displayName);
+		wxString prefix = wxGetTranslation(info.category) + ": ";
+		if (display.StartsWith(prefix))
+			return display.Mid(prefix.length());
+
+		return display;
+	}
+
+private:
+	void Rebuild(const wxString& filter) {
+		// Drop the selection before emptying the tree. wxTreeCtrl::DeleteAllItems()
+		// calls TreeView_DeleteAllItems() without suppressing the selection change
+		// that causes, and the TVN_SELCHANGED handler unconditionally calls
+		// SetFocus() on the tree (wxWidgets src/msw/treectrl.cpp) - that is what
+		// pulled focus out of the filter box. Unselect() goes through
+		// ClearFocusedItem(), which does suppress the notification, so deleting the
+		// items afterwards has no selection left to report.
+		tree->Unselect();
+
+		tree->Freeze();
+		tree->DeleteAllItems();
+		itemTypes.clear();
+
+		wxTreeItemId root = tree->AddRoot("root");
+		wxString needle = filter.Lower();
+		std::vector<std::pair<std::string, wxTreeItemId>> categoryItems;
+
+		for (const auto& info : GetAutomationStepTypes()) {
+			if (!needle.IsEmpty() && !wxGetTranslation(info.displayName).Lower().Contains(needle))
+				continue;
+
+			auto found = std::find_if(categoryItems.begin(), categoryItems.end(),
+				[&info](const auto& entry) { return entry.first == info.category; });
+
+			if (found == categoryItems.end()) {
+				wxTreeItemId categoryItem = tree->AppendItem(root, wxGetTranslation(info.category));
+				tree->SetItemBold(categoryItem, true);
+				categoryItems.emplace_back(info.category, categoryItem);
+				found = categoryItems.end() - 1;
+			}
+
+			itemTypes.emplace_back(tree->AppendItem(found->second, StepTypeShortLabel(info)), info.type);
+		}
+
+		// Collapsed by default so all categories fit on screen at once, but a filter
+		// is only useful when its matches are actually visible.
+		if (needle.IsEmpty()) {
+			for (const auto& [name, item] : categoryItems)
+				tree->Collapse(item);
+		}
+		else {
+			tree->ExpandAll();
+		}
+
+		tree->Thaw();
+	}
+
+	void SelectType(AutomationStepType type) {
+		for (const auto& [item, itemType] : itemTypes) {
+			if (itemType == type) {
+				tree->EnsureVisible(item);
+				tree->SelectItem(item);
+				return;
+			}
+		}
+	}
+
+	bool FindItemType(const wxTreeItemId& item, AutomationStepType& type) const {
+		for (const auto& entry : itemTypes) {
+			if (entry.first == item) {
+				type = entry.second;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	bool CommitItem(const wxTreeItemId& item) {
+		AutomationStepType type{};
+		if (!item.IsOk() || !FindItemType(item, type))
+			return false;
+
+		SetSelectedType(type);
+		committed = true;
+		m_combo->SetText(currentLabel);
+		Dismiss();
+
+		if (onSelect)
+			onSelect(type);
+
+		return true;
+	}
+
+	void OnFilterChanged(wxCommandEvent& event) {
+		Rebuild(filterText->GetValue());
+		event.Skip();
+	}
+
+	void OnFilterEnter(wxCommandEvent& WXUNUSED(event)) {
+		// Filtering down to one match and pressing enter should be enough
+		if (!itemTypes.empty())
+			CommitItem(itemTypes.front().first);
+	}
+
+	void OnFilterKey(wxKeyEvent& event) {
+		if (event.GetKeyCode() == WXK_DOWN && tree) {
+			tree->SetFocus();
+			return;
+		}
+		event.Skip();
+	}
+
+	void OnTreeSelection(wxTreeEvent& event) {
+		AutomationStepType type{};
+		if (m_combo && FindItemType(event.GetItem(), type))
+			m_combo->SetText(wxGetTranslation(GetAutomationStepInfo(type).displayName));
+
+		event.Skip();
+	}
+
+	void OnTreeActivated(wxTreeEvent& event) {
+		if (!CommitItem(event.GetItem()))
+			event.Skip();
+	}
+
+	void OnTreeClick(wxMouseEvent& event) {
+		int flags = 0;
+		wxTreeItemId item = tree->HitTest(event.GetPosition(), flags);
+		if (item.IsOk() && (flags & wxTREE_HITTEST_ONITEMLABEL) && CommitItem(item))
+			return;
+
+		event.Skip();
+	}
+
+	wxPanel* panel = nullptr;
+	wxTextCtrl* filterText = nullptr;
+	wxTreeCtrl* tree = nullptr;
+	wxString currentLabel;
+	AutomationStepType currentType = AutomationStepType::ClearProject;
+	bool committed = false;
+	std::vector<std::pair<wxTreeItemId, AutomationStepType>> itemTypes;
+};
 
 namespace {
 enum class ShaderPropertyValueKind {
@@ -288,7 +499,6 @@ wxBEGIN_EVENT_TABLE(AutomationDialog, wxDialog)
 	EVT_BUTTON(XRCID("btnDeleteScript"), AutomationDialog::OnDeleteScript)
 	EVT_BUTTON(XRCID("btnOpenFolder"), AutomationDialog::OnOpenFolder)
 	EVT_LIST_ITEM_SELECTED(XRCID("listSteps"), AutomationDialog::OnStepSelected)
-	EVT_CHOICE(XRCID("choiceStepType"), AutomationDialog::OnStepTypeChanged)
 	EVT_BUTTON(XRCID("btnExecuteAll"), AutomationDialog::OnExecuteAll)
 	EVT_BUTTON(wxID_CLOSE, AutomationDialog::OnClose)
 	EVT_BUTTON(XRCID("btnAddVariable"), AutomationDialog::OnAddVariable)
@@ -316,14 +526,29 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 
 	listSteps = XRCCTRL(*this, "listSteps", wxListCtrl);
 	bookStepPages = XRCCTRL(*this, "bookStepPages", wxSimplebook);
-	choiceStepType = XRCCTRL(*this, "choiceStepType", wxChoice);
+	comboStepType = XRCCTRL(*this, "comboStepType", wxComboCtrl);
 
-	// Verify the number of step type pages matches the enum count
-	if (bookStepPages && choiceStepType) {
-		wxASSERT_MSG(bookStepPages->GetPageCount() == AutomationStepTypeCount,
-			"bookStepPages page count must match AutomationStepTypeCount");
-		wxASSERT_MSG(choiceStepType->GetCount() == AutomationStepTypeCount,
-			"choiceStepType item count must match AutomationStepTypeCount");
+	// Match every step type to its settings page by the page's XRC panel name
+	if (bookStepPages) {
+		for (const auto& info : GetAutomationStepTypes()) {
+			for (size_t page = 0; page < bookStepPages->GetPageCount(); page++) {
+				wxWindow* window = bookStepPages->GetPage(page);
+				if (window && window->GetName() == wxString::FromUTF8(info.xrcPage)) {
+					stepTypePageIndex[info.type] = static_cast<int>(page);
+					break;
+				}
+			}
+
+			wxASSERT_MSG(stepTypePageIndex.count(info.type) != 0,
+				wxString::Format("no settings page named '%s' in Automation.xrc", info.xrcPage));
+		}
+	}
+
+	if (comboStepType) {
+		comboStepType->SetTextCtrlStyle(wxTE_READONLY);
+		stepTypePopup = new AutomationStepTypePopup();
+		comboStepType->SetPopupControl(stepTypePopup);
+		stepTypePopup->onSelect = [this](AutomationStepType type) { OnStepTypeChanged(type); };
 	}
 
 	chkActive = XRCCTRL(*this, "chkActive", wxCheckBox);
@@ -484,6 +709,12 @@ void AutomationDialog::SetTextValue(const char* name, const std::string& value) 
 		txt->SetValue(wxString::FromUTF8(value));
 }
 
+void AutomationDialog::SetTextValue(const char* name, const wxString& value) {
+	auto* txt = XRCCTRL(*this, name, wxTextCtrl);
+	if (txt)
+		txt->SetValue(value);
+}
+
 std::string AutomationDialog::GetTextValue(const char* name) const {
 	auto* txt = XRCCTRL(*this, name, wxTextCtrl);
 	return txt ? std::string(txt->GetValue().ToUTF8().data()) : "";
@@ -553,12 +784,6 @@ void AutomationDialog::UpdateExportFileBatchModeUI(const AutomationStep& WXUNUSE
 	}
 
 	UpdateExportFieldsEnabled(!effectiveUseOriginalPath);
-}
-
-void AutomationDialog::SetFloatValue(const char* name, float value) {
-	auto* txt = XRCCTRL(*this, name, wxTextCtrl);
-	if (txt)
-		txt->SetValue(wxString::Format("%.5g", value));
 }
 
 float AutomationDialog::GetFloatValue(const char* name) const {
@@ -1089,7 +1314,7 @@ void AutomationDialog::PopulateStepList() {
 
 	for (size_t i = 0; i < steps.size(); i++) {
 		long idx = listSteps->InsertItem(i, steps[i].active ? wxString(L"\u2713") : wxString(""));
-		listSteps->SetItem(idx, 1, wxString::FromUTF8(AutomationStepTypeToString(steps[i].type)));
+		listSteps->SetItem(idx, 1, wxGetTranslation(GetAutomationStepInfo(steps[i].type).displayName));
 
 		listSteps->SetItem(idx, 2, wxString::FromUTF8(GetStepTargetDisplayString(steps[i])));
 
@@ -1103,7 +1328,7 @@ void AutomationDialog::RefreshStepRow(int index) {
 
 	auto& step = script.GetSteps()[index];
 	listSteps->SetItem(index, 0, step.active ? wxString(L"\u2713") : wxString(""));
-	listSteps->SetItem(index, 1, wxString::FromUTF8(AutomationStepTypeToString(step.type)));
+	listSteps->SetItem(index, 1, wxGetTranslation(GetAutomationStepInfo(step.type).displayName));
 
 	listSteps->SetItem(index, 2, wxString::FromUTF8(GetStepTargetDisplayString(step)));
 
@@ -1175,6 +1400,565 @@ void AutomationDialog::SelectStep(int index) {
 	UpdateUIFromStep(script.GetSteps()[index]);
 }
 
+namespace {
+
+// printf a single numeric value with a per-field format, without going through
+// wxString::Format (whose format string has to be known at compile time).
+wxString FormatNumber(const char* format, float value) {
+	char buffer[64];
+	std::snprintf(buffer, sizeof(buffer), format, value);
+	return wxString::FromUTF8(buffer);
+}
+
+wxString FormatNumber(const char* format, int value) {
+	char buffer[64];
+	std::snprintf(buffer, sizeof(buffer), format, value);
+	return wxString::FromUTF8(buffer);
+}
+
+} // namespace
+
+void AutomationDialog::ApplyFieldsToUI(const AutomationStep& step) {
+	for (const AutomationField& field : GetAutomationStepInfo(step.type).fields) {
+		if (!field.control || field.ui == AutomationFieldUI::None)
+			continue;
+
+		switch (field.ui) {
+			case AutomationFieldUI::CheckBox:
+				SetCheckboxValue(field.control, step.*field.member.asBool);
+				break;
+
+			case AutomationFieldUI::Text:
+				if (field.kind == AutomationFieldKind::String)
+					SetTextValue(field.control, step.*field.member.asString);
+				else if (field.kind == AutomationFieldKind::Int)
+					SetTextValue(field.control, FormatNumber(field.format ? field.format : "%d", step.*field.member.asInt));
+				else if (field.kind == AutomationFieldKind::Float)
+					SetTextValue(field.control, FormatNumber(field.format ? field.format : "%.5g", step.*field.member.asFloat));
+				break;
+
+			case AutomationFieldUI::TextList:
+				SetVectorValue(field.control, step.*field.member.asStringList);
+				break;
+
+			case AutomationFieldUI::TextPercent:
+				SetTextValue(field.control, FormatNumber("%d", static_cast<int>(step.*field.member.asFloat * 100)));
+				break;
+
+			case AutomationFieldUI::TextOptional: {
+				// A negative value means "no change" and shows as an empty field
+				if (field.kind == AutomationFieldKind::Float) {
+					float value = step.*field.member.asFloat;
+					SetTextValue(field.control, value < 0.0f ? wxString() : FormatNumber(field.format ? field.format : "%.5g", value));
+				}
+				else if (field.kind == AutomationFieldKind::Int) {
+					int value = step.*field.member.asInt;
+					SetTextValue(field.control, value < 0 ? wxString() : FormatNumber(field.format ? field.format : "%d", value));
+				}
+				break;
+			}
+
+			case AutomationFieldUI::ChoiceTriState: {
+				auto* choice = dynamic_cast<wxChoice*>(FindWindow(wxString::FromUTF8(field.control)));
+				if (choice) {
+					int value = step.*field.member.asInt;
+					choice->SetSelection(value < 0 ? 0 : value + 1);
+				}
+				break;
+			}
+
+			case AutomationFieldUI::ChoiceIndex: {
+				auto* choice = dynamic_cast<wxChoice*>(FindWindow(wxString::FromUTF8(field.control)));
+				if (choice)
+					choice->SetSelection(step.*field.member.asInt);
+				break;
+			}
+
+			case AutomationFieldUI::ChoiceString:
+				SetChoiceSelectionString(dynamic_cast<wxChoice*>(FindWindow(wxString::FromUTF8(field.control))), step.*field.member.asString);
+				break;
+
+			case AutomationFieldUI::None:
+				break;
+		}
+	}
+}
+
+void AutomationDialog::ReadFieldsFromUI(AutomationStep& step) {
+	for (const AutomationField& field : GetAutomationStepInfo(step.type).fields) {
+		if (!field.control || field.ui == AutomationFieldUI::None)
+			continue;
+
+		switch (field.ui) {
+			case AutomationFieldUI::CheckBox:
+				step.*field.member.asBool = GetCheckboxValue(field.control);
+				break;
+
+			case AutomationFieldUI::Text:
+				if (field.kind == AutomationFieldKind::String)
+					step.*field.member.asString = GetTextValue(field.control);
+				else if (field.kind == AutomationFieldKind::Int)
+					step.*field.member.asInt = GetIntValue(field.control);
+				else if (field.kind == AutomationFieldKind::Float)
+					step.*field.member.asFloat = GetFloatValue(field.control);
+				break;
+
+			case AutomationFieldUI::TextList:
+				step.*field.member.asStringList = GetVectorValue(field.control);
+				break;
+
+			case AutomationFieldUI::TextPercent:
+				step.*field.member.asFloat = GetFloatValue(field.control) / 100.0f;
+				break;
+
+			case AutomationFieldUI::TextOptional: {
+				wxString text = wxString::FromUTF8(GetTextValue(field.control)).Trim().Trim(false);
+				if (field.kind == AutomationFieldKind::Float) {
+					float value = text.IsEmpty() ? -1.0f : static_cast<float>(atof(text.c_str()));
+					step.*field.member.asFloat = value < 0.0f ? -1.0f : value;
+				}
+				else if (field.kind == AutomationFieldKind::Int) {
+					int value = text.IsEmpty() ? -1 : atoi(text.c_str());
+					step.*field.member.asInt = value < 0 ? -1 : value;
+				}
+				break;
+			}
+
+			case AutomationFieldUI::ChoiceTriState: {
+				auto* choice = dynamic_cast<wxChoice*>(FindWindow(wxString::FromUTF8(field.control)));
+				if (choice) {
+					int selection = choice->GetSelection();
+					step.*field.member.asInt = selection <= 0 ? -1 : selection - 1;
+				}
+				break;
+			}
+
+			case AutomationFieldUI::ChoiceIndex: {
+				auto* choice = dynamic_cast<wxChoice*>(FindWindow(wxString::FromUTF8(field.control)));
+				if (choice)
+					step.*field.member.asInt = choice->GetSelection();
+				break;
+			}
+
+			case AutomationFieldUI::ChoiceString:
+				step.*field.member.asString = GetChoiceSelectionString(dynamic_cast<wxChoice*>(FindWindow(wxString::FromUTF8(field.control))));
+				break;
+
+			case AutomationFieldUI::None:
+				break;
+		}
+	}
+}
+
+// Per-type hooks for parameters no plain control can express: file and folder
+// pickers, dropdowns populated from a file, dependent fields and property grids.
+
+void AutomationDialog::StepToUILoadReference(const AutomationStep& step) {
+	auto* fp = XRCCTRL(*this, "fpRefSourceFile", wxFilePickerCtrl);
+	if (fp) {
+		// If path is relative, resolve it for the file picker display
+		wxString path = wxString::FromUTF8(step.refSourceFile);
+		if (!path.IsEmpty()) {
+			wxFileName fn(path);
+			if (fn.IsRelative()) {
+				std::string projPath = ProjectUtil::GetProjectPath();
+				fn.MakeAbsolute(wxString::FromUTF8(projPath));
+			}
+			fp->SetPath(fn.GetFullPath());
+		}
+		else {
+			fp->SetPath(wxEmptyString);
+		}
+
+		// Populate set/shape dropdowns from the file
+		PopulateSetsFromFile(fp->GetPath(), "choiceRefSet", "choiceRefShape");
+	}
+
+	auto* choiceSet = XRCCTRL(*this, "choiceRefSet", wxChoice);
+	if (choiceSet) {
+		wxString setName = wxString::FromUTF8(step.refSet);
+		int idx = choiceSet->FindString(setName);
+		if (idx != wxNOT_FOUND) {
+			choiceSet->SetSelection(idx);
+		}
+		else if (!setName.IsEmpty()) {
+			choiceSet->Append(setName);
+			choiceSet->SetSelection(choiceSet->GetCount() - 1);
+		}
+
+		// Populate shapes for the selected set
+		if (fp)
+			PopulateRefShapesForSet(fp->GetPath(), choiceSet->GetStringSelection());
+	}
+
+	auto* choiceShape = XRCCTRL(*this, "choiceRefShape", wxChoice);
+	if (choiceShape) {
+		wxString shapeName = wxString::FromUTF8(step.refShape);
+		int idx = choiceShape->FindString(shapeName);
+		if (idx != wxNOT_FOUND)
+			choiceShape->SetSelection(idx);
+		else if (!shapeName.IsEmpty()) {
+			choiceShape->Append(shapeName);
+			choiceShape->SetSelection(choiceShape->GetCount() - 1);
+		}
+	}
+
+	// Select the matching template if any
+	auto* choiceTemplate = XRCCTRL(*this, "choiceRefTemplate", wxChoice);
+	if (choiceTemplate)
+		choiceTemplate->SetSelection(0); // "(None)" by default
+}
+
+void AutomationDialog::StepFromUILoadReference(AutomationStep& step) {
+	auto* fp = XRCCTRL(*this, "fpRefSourceFile", wxFilePickerCtrl);
+	if (fp)
+		step.refSourceFile = MakeRelativeToProject(fp->GetPath()).ToUTF8().data();
+	auto* choiceSet = XRCCTRL(*this, "choiceRefSet", wxChoice);
+	if (choiceSet && choiceSet->GetSelection() != wxNOT_FOUND)
+		step.refSet = choiceSet->GetStringSelection().ToUTF8().data();
+	auto* choiceShape = XRCCTRL(*this, "choiceRefShape", wxChoice);
+	if (choiceShape && choiceShape->GetSelection() != wxNOT_FOUND)
+		step.refShape = choiceShape->GetStringSelection().ToUTF8().data();
+}
+
+void AutomationDialog::StepToUIAddProject(const AutomationStep& step) {
+	auto* fp = XRCCTRL(*this, "fpAddProjSourceFile", wxFilePickerCtrl);
+	if (fp) {
+		wxString path = wxString::FromUTF8(step.refSourceFile);
+		if (!path.IsEmpty()) {
+			wxFileName fn(path);
+			if (fn.IsRelative()) {
+				std::string projPath = ProjectUtil::GetProjectPath();
+				fn.MakeAbsolute(wxString::FromUTF8(projPath));
+			}
+			fp->SetPath(fn.GetFullPath());
+		}
+		else {
+			fp->SetPath(wxEmptyString);
+		}
+		PopulateSetsFromFile(fp->GetPath(), "choiceAddProjSet");
+	}
+
+	auto* choiceSet = XRCCTRL(*this, "choiceAddProjSet", wxChoice);
+	if (choiceSet) {
+		wxString setName = wxString::FromUTF8(step.refSet);
+		int idx = choiceSet->FindString(setName);
+		if (idx != wxNOT_FOUND)
+			choiceSet->SetSelection(idx);
+		else if (!setName.IsEmpty()) {
+			choiceSet->Append(setName);
+			choiceSet->SetSelection(choiceSet->GetCount() - 1);
+		}
+	}
+}
+
+void AutomationDialog::StepFromUIAddProject(AutomationStep& step) {
+	auto* fp = XRCCTRL(*this, "fpAddProjSourceFile", wxFilePickerCtrl);
+	if (fp)
+		step.refSourceFile = MakeRelativeToProject(fp->GetPath()).ToUTF8().data();
+	auto* choiceSet = XRCCTRL(*this, "choiceAddProjSet", wxChoice);
+	if (choiceSet && choiceSet->GetSelection() != wxNOT_FOUND)
+		step.refSet = choiceSet->GetStringSelection().ToUTF8().data();
+}
+
+void AutomationDialog::StepToUIImportFile(const AutomationStep& step) {
+	auto* fp = XRCCTRL(*this, "fpImportFile", wxFilePickerCtrl);
+	if (fp)
+		fp->SetPath(wxString::FromUTF8(step.importFilePath));
+	SetCheckboxValue("chkImportFromFolder", step.importFromFolder);
+	auto* dp = XRCCTRL(*this, "dpImportFolder", wxDirPickerCtrl);
+	if (dp)
+		dp->SetPath(wxString::FromUTF8(step.importFilePath));
+	UpdateImportFolderVisibility(step.importFromFolder);
+}
+
+void AutomationDialog::StepFromUIImportFile(AutomationStep& step) {
+	auto* chkFolder = XRCCTRL(*this, "chkImportFromFolder", wxCheckBox);
+	step.importFromFolder = chkFolder && chkFolder->GetValue();
+	if (step.importFromFolder) {
+		auto* dp = XRCCTRL(*this, "dpImportFolder", wxDirPickerCtrl);
+		if (dp)
+			step.importFilePath = dp->GetPath().ToUTF8().data();
+	}
+	else {
+		auto* fp = XRCCTRL(*this, "fpImportFile", wxFilePickerCtrl);
+		if (fp)
+			step.importFilePath = fp->GetPath().ToUTF8().data();
+	}
+}
+
+void AutomationDialog::StepToUIImportSliderData(const AutomationStep& step) {
+	auto* fp = XRCCTRL(*this, "fpSliderDataFile", wxFilePickerCtrl);
+	if (fp)
+		fp->SetPath(wxString::FromUTF8(step.sliderDataFile));
+	SetCheckboxValue("chkSliderDataFromFolder", step.sliderDataFromFolder);
+	auto* dp = XRCCTRL(*this, "dpSliderDataFolder", wxDirPickerCtrl);
+	if (dp)
+		dp->SetPath(wxString::FromUTF8(step.sliderDataFile));
+	UpdateSliderDataFolderVisibility(step.sliderDataFromFolder);
+}
+
+void AutomationDialog::StepFromUIImportSliderData(AutomationStep& step) {
+	auto* chkFolder = XRCCTRL(*this, "chkSliderDataFromFolder", wxCheckBox);
+	step.sliderDataFromFolder = chkFolder && chkFolder->GetValue();
+	if (step.sliderDataFromFolder) {
+		auto* dp = XRCCTRL(*this, "dpSliderDataFolder", wxDirPickerCtrl);
+		if (dp)
+			step.sliderDataFile = dp->GetPath().ToUTF8().data();
+	}
+	else {
+		auto* fp = XRCCTRL(*this, "fpSliderDataFile", wxFilePickerCtrl);
+		if (fp)
+			step.sliderDataFile = fp->GetPath().ToUTF8().data();
+	}
+}
+
+void AutomationDialog::StepToUIExportFile(const AutomationStep& step) {
+	bool isBatch = GetSelectedBatchMode() != AutomationBatchMode::None;
+	if (isBatch) {
+		auto* dp = XRCCTRL(*this, "dpExportFolder", wxDirPickerCtrl);
+		if (dp)
+			dp->SetPath(wxString::FromUTF8(step.exportFilePath));
+	}
+	else {
+		auto* fp = XRCCTRL(*this, "fpExportFile", wxFilePickerCtrl);
+		if (fp)
+			fp->SetPath(wxString::FromUTF8(step.exportFilePath));
+	}
+	SetCheckboxValue("chkExportUseOriginalPath", step.exportUseOriginalPath);
+	UpdateExportForBatchMode();
+	UpdateExportFileBatchModeUI(step);
+}
+
+void AutomationDialog::StepFromUIExportFile(AutomationStep& step) {
+	bool isBatch = radioBatchMode && radioBatchMode->GetSelection() != 0;
+	if (isBatch) {
+		auto* dp = XRCCTRL(*this, "dpExportFolder", wxDirPickerCtrl);
+		if (dp)
+			step.exportFilePath = dp->GetPath().ToUTF8().data();
+	}
+	else {
+		auto* fp = XRCCTRL(*this, "fpExportFile", wxFilePickerCtrl);
+		if (fp)
+			step.exportFilePath = fp->GetPath().ToUTF8().data();
+	}
+	step.exportUseOriginalPath = IsBatchMode(AutomationBatchMode::FolderScan) && GetCheckboxValue("chkExportUseOriginalPath");
+}
+
+void AutomationDialog::StepToUISaveProject(const AutomationStep& step) {
+	UpdateSaveProjectBatchModeUI(step);
+}
+
+void AutomationDialog::StepToUISetReferenceShape(const AutomationStep& step) {
+	UpdateSetRefFieldsEnabled(!step.setRefUnset);
+}
+
+void AutomationDialog::StepToUISetExtraData(const AutomationStep& step) {
+	auto* choice = XRCCTRL(*this, "choiceExtraDataType", wxChoice);
+	if (choice) {
+		wxString typeName = wxString::FromUTF8(step.extraDataType.empty() ? "NiStringExtraData" : step.extraDataType);
+		int idx = choice->FindString(typeName);
+		if (idx != wxNOT_FOUND)
+			choice->SetSelection(idx);
+		else if (!typeName.IsEmpty()) {
+			choice->Append(typeName);
+			choice->SetSelection(choice->GetCount() - 1);
+		}
+	}
+}
+
+void AutomationDialog::StepFromUISetExtraData(AutomationStep& step) {
+	auto* choice = XRCCTRL(*this, "choiceExtraDataType", wxChoice);
+	if (choice && choice->GetSelection() != wxNOT_FOUND)
+		step.extraDataType = choice->GetStringSelection().ToUTF8().data();
+}
+
+void AutomationDialog::StepToUILoadMask(const AutomationStep& step) {
+	auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
+	if (fp) {
+		// If path is relative, resolve it for the file picker display
+		wxString path = wxString::FromUTF8(step.loadMaskFile);
+		if (!path.IsEmpty()) {
+			wxFileName fn(path);
+			if (fn.IsRelative()) {
+				std::string projPath = ProjectUtil::GetProjectPath();
+				fn.MakeAbsolute(wxString::FromUTF8(projPath));
+			}
+			fp->SetPath(fn.GetFullPath());
+		}
+		else {
+			fp->SetPath(wxEmptyString);
+		}
+
+		// Populate dropdown from the mask file
+		PopulateMaskNamesFromFile(fp->GetPath());
+	}
+
+	auto* choice = XRCCTRL(*this, "choiceLoadMaskName", wxChoice);
+	if (choice) {
+		wxString maskName = wxString::FromUTF8(step.loadMaskName);
+		int idx = choice->FindString(maskName);
+		if (idx != wxNOT_FOUND)
+			choice->SetSelection(idx);
+		else if (!maskName.IsEmpty()) {
+			choice->Append(maskName);
+			choice->SetSelection(choice->GetCount() - 1);
+		}
+	}
+}
+
+void AutomationDialog::StepFromUILoadMask(AutomationStep& step) {
+	auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
+	if (fp)
+		step.loadMaskFile = MakeRelativeToProject(fp->GetPath()).ToUTF8().data();
+	auto* choice = XRCCTRL(*this, "choiceLoadMaskName", wxChoice);
+	if (choice && choice->GetSelection() != wxNOT_FOUND)
+		step.loadMaskName = choice->GetStringSelection().ToUTF8().data();
+}
+
+void AutomationDialog::StepToUISetSliderProperties(const AutomationStep& step) {
+	bool isZap = step.sliderPropZap == 1;
+	auto* choiceZapped = XRCCTRL(*this, "choiceSliderPropZapped", wxChoice);
+	if (choiceZapped) {
+		if (isZap) {
+			// Map lo/hi to zapped state: -1 = no change, both 0 = not zapped, any > 0 = zapped
+			if (step.sliderPropDefaultLo < 0 && step.sliderPropDefaultHi < 0)
+				choiceZapped->SetSelection(0);
+			else if (step.sliderPropDefaultLo > 0 || step.sliderPropDefaultHi > 0)
+				choiceZapped->SetSelection(2);
+			else
+				choiceZapped->SetSelection(1);
+		}
+		else {
+			choiceZapped->SetSelection(0);
+		}
+	}
+
+	auto* txtLo = XRCCTRL(*this, "txtSliderPropDefaultLo", wxTextCtrl);
+	if (txtLo)
+		txtLo->SetValue(step.sliderPropDefaultLo >= 0 ? wxString::Format("%d", step.sliderPropDefaultLo) : "");
+	auto* txtHi = XRCCTRL(*this, "txtSliderPropDefaultHi", wxTextCtrl);
+	if (txtHi)
+		txtHi->SetValue(step.sliderPropDefaultHi >= 0 ? wxString::Format("%d", step.sliderPropDefaultHi) : "");
+
+	UpdateSliderPropDefaultVisibility();
+}
+
+void AutomationDialog::StepFromUISetSliderProperties(AutomationStep& step) {
+	bool isZap = step.sliderPropZap == 1;
+	if (isZap) {
+		// Read from zapped choice instead of lo/hi text fields
+		auto* choiceZapped = XRCCTRL(*this, "choiceSliderPropZapped", wxChoice);
+		if (choiceZapped) {
+			int sel = choiceZapped->GetSelection();
+			if (sel == 2) {
+				step.sliderPropDefaultLo = 100;
+				step.sliderPropDefaultHi = 100;
+			}
+			else if (sel == 1) {
+				step.sliderPropDefaultLo = 0;
+				step.sliderPropDefaultHi = 0;
+			}
+			else {
+				step.sliderPropDefaultLo = -1;
+				step.sliderPropDefaultHi = -1;
+			}
+		}
+	}
+	else {
+		auto* txtLo = XRCCTRL(*this, "txtSliderPropDefaultLo", wxTextCtrl);
+		if (txtLo) {
+			wxString val = txtLo->GetValue().Trim();
+			step.sliderPropDefaultLo = val.IsEmpty() ? -1 : wxAtoi(val);
+		}
+		auto* txtHi = XRCCTRL(*this, "txtSliderPropDefaultHi", wxTextCtrl);
+		if (txtHi) {
+			wxString val = txtHi->GetValue().Trim();
+			step.sliderPropDefaultHi = val.IsEmpty() ? -1 : wxAtoi(val);
+		}
+	}
+}
+
+void AutomationDialog::StepToUISetShaderProperties(const AutomationStep& step) {
+	RebuildShaderPropertyRows(step.shaderProperties);
+}
+
+void AutomationDialog::StepFromUISetShaderProperties(AutomationStep& step) {
+	step.shaderProperties = ReadShaderPropertyRows();
+}
+
+void AutomationDialog::StepToUISetGeometryProperties(const AutomationStep& step) {
+	RebuildGeometryPropertyRows(step.geometryProperties);
+}
+
+void AutomationDialog::StepFromUISetGeometryProperties(AutomationStep& step) {
+	step.geometryProperties = ReadGeometryPropertyRows();
+}
+
+void AutomationDialog::StepToUISetTexturePaths(const AutomationStep& step) {
+	RebuildTexturePathRows(step.texturePaths);
+}
+
+void AutomationDialog::StepFromUISetTexturePaths(AutomationStep& step) {
+	step.texturePaths = ReadTexturePathRows();
+}
+
+// One row per step type: what runs it, and the hooks for anything on its settings
+// page that the field table can't describe. Types that are fully declarative only
+// name their executor.
+const AutomationDialog::StepBinding* AutomationDialog::FindStepBinding(AutomationStepType type) {
+	static const StepBinding bindings[] = {
+		{AutomationStepType::AddCustomBone, &AutomationDialog::ExecuteStepAddCustomBone},
+		{AutomationStepType::CopyBoneWeights, &AutomationDialog::ExecuteStepCopyBoneWeights},
+		{AutomationStepType::DeleteBones, &AutomationDialog::ExecuteStepDeleteBones},
+		{AutomationStepType::EditBone, &AutomationDialog::ExecuteStepEditBone},
+		{AutomationStepType::RemoveSkinning, &AutomationDialog::ExecuteStepRemoveSkinning},
+		{AutomationStepType::ExportFile, &AutomationDialog::ExecuteStepExportFile, &AutomationDialog::StepToUIExportFile, &AutomationDialog::StepFromUIExportFile},
+		{AutomationStepType::SaveProject, &AutomationDialog::ExecuteStepSaveProject, &AutomationDialog::StepToUISaveProject},
+		{AutomationStepType::ImportFile, &AutomationDialog::ExecuteStepImportFile, &AutomationDialog::StepToUIImportFile, &AutomationDialog::StepFromUIImportFile},
+		{AutomationStepType::ImportSliderData, &AutomationDialog::ExecuteStepImportSliderData, &AutomationDialog::StepToUIImportSliderData, &AutomationDialog::StepFromUIImportSliderData},
+		{AutomationStepType::AddProject, &AutomationDialog::ExecuteStepAddProject, &AutomationDialog::StepToUIAddProject, &AutomationDialog::StepFromUIAddProject},
+		{AutomationStepType::ClearProject, &AutomationDialog::ExecuteStepClearProject},
+		{AutomationStepType::ClearReference, &AutomationDialog::ExecuteStepClearReference},
+		{AutomationStepType::LoadReference, &AutomationDialog::ExecuteStepLoadReference, &AutomationDialog::StepToUILoadReference, &AutomationDialog::StepFromUILoadReference},
+		{AutomationStepType::SetBaseShape, &AutomationDialog::ExecuteStepSetBaseShape},
+		{AutomationStepType::SetReferenceShape, &AutomationDialog::ExecuteStepSetReferenceShape, &AutomationDialog::StepToUISetReferenceShape},
+		{AutomationStepType::ApplyPose, &AutomationDialog::ExecuteStepApplyPose},
+		{AutomationStepType::DeleteShape, &AutomationDialog::ExecuteStepDeleteShape},
+		{AutomationStepType::DuplicateShape, &AutomationDialog::ExecuteStepDuplicateShape},
+		{AutomationStepType::ChangePartitions, &AutomationDialog::ExecuteStepChangePartitions},
+		{AutomationStepType::FixBadBones, &AutomationDialog::ExecuteStepFixBadBones},
+		{AutomationStepType::FixClipping, &AutomationDialog::ExecuteStepFixClipping},
+		{AutomationStepType::InvertUVs, &AutomationDialog::ExecuteStepInvertUVs},
+		{AutomationStepType::MirrorShape, &AutomationDialog::ExecuteStepMirrorShape},
+		{AutomationStepType::RecalcNormals, &AutomationDialog::ExecuteStepRecalcNormals},
+		{AutomationStepType::RefineMesh, &AutomationDialog::ExecuteStepRefineMesh},
+		{AutomationStepType::RenameShape, &AutomationDialog::ExecuteStepRenameShape},
+		{AutomationStepType::ResetTransforms, &AutomationDialog::ExecuteStepResetTransforms},
+		{AutomationStepType::TransformShape, &AutomationDialog::ExecuteStepTransformShape},
+		{AutomationStepType::SetGeometryProperties, &AutomationDialog::ExecuteStepSetGeometryProperties, &AutomationDialog::StepToUISetGeometryProperties, &AutomationDialog::StepFromUISetGeometryProperties},
+		{AutomationStepType::SetExtraData, &AutomationDialog::ExecuteStepSetExtraData, &AutomationDialog::StepToUISetExtraData, &AutomationDialog::StepFromUISetExtraData},
+		{AutomationStepType::DeleteExtraData, &AutomationDialog::ExecuteStepDeleteExtraData},
+		{AutomationStepType::ConformSliders, &AutomationDialog::ExecuteStepConformSliders},
+		{AutomationStepType::DeleteSlider, &AutomationDialog::ExecuteStepDeleteSlider},
+		{AutomationStepType::SetSliderValues, &AutomationDialog::ExecuteStepSetSliderValues},
+		{AutomationStepType::SetSliderProperties, &AutomationDialog::ExecuteStepSetSliderProperties, &AutomationDialog::StepToUISetSliderProperties, &AutomationDialog::StepFromUISetSliderProperties},
+		{AutomationStepType::SetShaderProperties, &AutomationDialog::ExecuteStepSetShaderProperties, &AutomationDialog::StepToUISetShaderProperties, &AutomationDialog::StepFromUISetShaderProperties},
+		{AutomationStepType::SetTexturePaths, &AutomationDialog::ExecuteStepSetTexturePaths, &AutomationDialog::StepToUISetTexturePaths, &AutomationDialog::StepFromUISetTexturePaths},
+		{AutomationStepType::ClearMask, &AutomationDialog::ExecuteStepClearMask},
+		{AutomationStepType::LoadMask, &AutomationDialog::ExecuteStepLoadMask, &AutomationDialog::StepToUILoadMask, &AutomationDialog::StepFromUILoadMask},
+		{AutomationStepType::RemoveUnusedNodes, &AutomationDialog::ExecuteStepRemoveUnusedNodes},
+	};
+
+	static_assert(std::size(bindings) == AutomationStepTypeCount, "every AutomationStepType needs a binding");
+
+	for (const auto& binding : bindings)
+		if (binding.type == type)
+			return &binding;
+
+	return nullptr;
+}
+
 void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 	chkActive->SetValue(step.active);
 	txtNote->SetValue(wxString::FromUTF8(step.note));
@@ -1184,466 +1968,14 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 	if (chkTargetRegex)
 		chkTargetRegex->SetValue(step.targetRegex);
 
-	int typeIndex = static_cast<int>(step.type);
-	choiceStepType->SetSelection(typeIndex);
-	bookStepPages->SetSelection(typeIndex);
+	SetStepTypeSelection(step.type);
+	ShowStepTypePage(step.type);
 
-	switch (step.type) {
-		case AutomationStepType::ClearProject:
-			// No parameters to set
-			break;
+	ApplyFieldsToUI(step);
 
-		case AutomationStepType::LoadReference: {
-			auto* fp = XRCCTRL(*this, "fpRefSourceFile", wxFilePickerCtrl);
-			if (fp) {
-				// If path is relative, resolve it for the file picker display
-				wxString path = wxString::FromUTF8(step.refSourceFile);
-				if (!path.IsEmpty()) {
-					wxFileName fn(path);
-					if (fn.IsRelative()) {
-						std::string projPath = ProjectUtil::GetProjectPath();
-						fn.MakeAbsolute(wxString::FromUTF8(projPath));
-					}
-					fp->SetPath(fn.GetFullPath());
-				}
-				else {
-					fp->SetPath(wxEmptyString);
-				}
-
-				// Populate set/shape dropdowns from the file
-				PopulateSetsFromFile(fp->GetPath(), "choiceRefSet", "choiceRefShape");
-			}
-
-			auto* choiceSet = XRCCTRL(*this, "choiceRefSet", wxChoice);
-			if (choiceSet) {
-				wxString setName = wxString::FromUTF8(step.refSet);
-				int idx = choiceSet->FindString(setName);
-				if (idx != wxNOT_FOUND) {
-					choiceSet->SetSelection(idx);
-				}
-				else if (!setName.IsEmpty()) {
-					choiceSet->Append(setName);
-					choiceSet->SetSelection(choiceSet->GetCount() - 1);
-				}
-
-				// Populate shapes for the selected set
-				if (fp)
-					PopulateRefShapesForSet(fp->GetPath(), choiceSet->GetStringSelection());
-			}
-
-			auto* choiceShape = XRCCTRL(*this, "choiceRefShape", wxChoice);
-			if (choiceShape) {
-				wxString shapeName = wxString::FromUTF8(step.refShape);
-				int idx = choiceShape->FindString(shapeName);
-				if (idx != wxNOT_FOUND)
-					choiceShape->SetSelection(idx);
-				else if (!shapeName.IsEmpty()) {
-					choiceShape->Append(shapeName);
-					choiceShape->SetSelection(choiceShape->GetCount() - 1);
-				}
-			}
-
-			// Select the matching template if any
-			auto* choiceTemplate = XRCCTRL(*this, "choiceRefTemplate", wxChoice);
-			if (choiceTemplate)
-				choiceTemplate->SetSelection(0); // "(None)" by default
-
-			SetCheckboxValue("chkRefLoadAll", step.refLoadAll);
-			SetCheckboxValue("chkRefMergeSliders", step.refMergeSliders);
-			SetCheckboxValue("chkRefMergeZaps", step.refMergeZaps);
-			SetCheckboxValue("chkRefAppendNewSliders", step.refAppendNewSliders);
-			break;
-		}
-		case AutomationStepType::AddProject: {
-			auto* fp = XRCCTRL(*this, "fpAddProjSourceFile", wxFilePickerCtrl);
-			if (fp) {
-				wxString path = wxString::FromUTF8(step.refSourceFile);
-				if (!path.IsEmpty()) {
-					wxFileName fn(path);
-					if (fn.IsRelative()) {
-						std::string projPath = ProjectUtil::GetProjectPath();
-						fn.MakeAbsolute(wxString::FromUTF8(projPath));
-					}
-					fp->SetPath(fn.GetFullPath());
-				}
-				else {
-					fp->SetPath(wxEmptyString);
-				}
-				PopulateSetsFromFile(fp->GetPath(), "choiceAddProjSet");
-			}
-
-			auto* choiceSet = XRCCTRL(*this, "choiceAddProjSet", wxChoice);
-			if (choiceSet) {
-				wxString setName = wxString::FromUTF8(step.refSet);
-				int idx = choiceSet->FindString(setName);
-				if (idx != wxNOT_FOUND)
-					choiceSet->SetSelection(idx);
-				else if (!setName.IsEmpty()) {
-					choiceSet->Append(setName);
-					choiceSet->SetSelection(choiceSet->GetCount() - 1);
-				}
-			}
-
-			SetCheckboxValue("chkAddProjAppendSliders", step.refAppendNewSliders);
-			break;
-		}
-		case AutomationStepType::ConformSliders: {
-			auto* txt = XRCCTRL(*this, "txtConformRadius", wxTextCtrl);
-			if (txt)
-				txt->SetValue(wxString::Format("%.1f", step.conformProximityRadius));
-			txt = XRCCTRL(*this, "txtConformMaxResults", wxTextCtrl);
-			if (txt)
-				txt->SetValue(wxString::Format("%d", step.conformMaxResults));
-			txt = XRCCTRL(*this, "txtConformSmoothIterations", wxTextCtrl);
-			if (txt)
-				txt->SetValue(wxString::Format("%d", step.conformSmoothIterations));
-			txt = XRCCTRL(*this, "txtConformSmoothStrength", wxTextCtrl);
-			if (txt)
-				txt->SetValue(wxString::Format("%.2f", step.conformSmoothStrength));
-
-			SetCheckboxValue("chkConformSmoothResults", step.conformSmoothResults);
-			SetCheckboxValue("chkConformNoSqueeze", step.conformNoSqueeze);
-			SetCheckboxValue("chkConformSolidMode", step.conformSolidMode);
-			SetCheckboxValue("chkConformAxisX", step.conformAxisX);
-			SetCheckboxValue("chkConformAxisY", step.conformAxisY);
-			SetCheckboxValue("chkConformAxisZ", step.conformAxisZ);
-			SetCheckboxValue("chkConformFixClipping", step.conformFixClipping);
-			txt = XRCCTRL(*this, "txtConformFixClipStrength", wxTextCtrl);
-			if (txt)
-				txt->SetValue(wxString::Format("%d", static_cast<int>(step.conformFixClippingStrength * 100)));
-			SetVectorValue("txtConformSliderNames", step.conformSliderNames);
-			break;
-		}
-		case AutomationStepType::CopyBoneWeights: {
-			auto* txt = XRCCTRL(*this, "txtWeightRadius", wxTextCtrl);
-			if (txt)
-				txt->SetValue(wxString::Format("%.1f", step.weightProximityRadius));
-			txt = XRCCTRL(*this, "txtWeightMaxResults", wxTextCtrl);
-			if (txt)
-				txt->SetValue(wxString::Format("%d", step.weightMaxResults));
-			SetVectorValue("txtWeightBoneList", step.weightBoneList);
-			break;
-		}
-		case AutomationStepType::ImportSliderData: {
-			auto* fp = XRCCTRL(*this, "fpSliderDataFile", wxFilePickerCtrl);
-			if (fp)
-				fp->SetPath(wxString::FromUTF8(step.sliderDataFile));
-			SetCheckboxValue("chkSliderDataFromFolder", step.sliderDataFromFolder);
-			auto* dp = XRCCTRL(*this, "dpSliderDataFolder", wxDirPickerCtrl);
-			if (dp)
-				dp->SetPath(wxString::FromUTF8(step.sliderDataFile));
-			UpdateSliderDataFolderVisibility(step.sliderDataFromFolder);
-			SetCheckboxValue("chkSliderMerge", step.sliderMerge);
-			SetVectorValue("txtSliderNames", step.sliderNames);
-			break;
-		}
-		case AutomationStepType::SetSliderValues: {
-			SetVectorValue("txtSetSliderNames", step.setSliderNames);
-			auto* txt = XRCCTRL(*this, "txtSetSliderValue", wxTextCtrl);
-			if (txt)
-				txt->SetValue(wxString::Format("%d", static_cast<int>(step.setSliderValue * 100)));
-			break;
-		}
-		case AutomationStepType::SetSliderProperties: {
-			SetVectorValue("txtSliderPropNames", step.sliderPropNames);
-			auto* choiceZap = XRCCTRL(*this, "choiceSliderPropZap", wxChoice);
-			if (choiceZap)
-				choiceZap->SetSelection(step.sliderPropZap < 0 ? 0 : step.sliderPropZap + 1);
-			auto* choiceHidden = XRCCTRL(*this, "choiceSliderPropHidden", wxChoice);
-			if (choiceHidden)
-				choiceHidden->SetSelection(step.sliderPropHidden < 0 ? 0 : step.sliderPropHidden + 1);
-
-			bool isZap = step.sliderPropZap == 1;
-			auto* choiceZapped = XRCCTRL(*this, "choiceSliderPropZapped", wxChoice);
-			if (choiceZapped) {
-				if (isZap) {
-					// Map lo/hi to zapped state: -1 = no change, both 0 = not zapped, any > 0 = zapped
-					if (step.sliderPropDefaultLo < 0 && step.sliderPropDefaultHi < 0)
-						choiceZapped->SetSelection(0);
-					else if (step.sliderPropDefaultLo > 0 || step.sliderPropDefaultHi > 0)
-						choiceZapped->SetSelection(2);
-					else
-						choiceZapped->SetSelection(1);
-				}
-				else {
-					choiceZapped->SetSelection(0);
-				}
-			}
-
-			auto* txtLo = XRCCTRL(*this, "txtSliderPropDefaultLo", wxTextCtrl);
-			if (txtLo)
-				txtLo->SetValue(step.sliderPropDefaultLo >= 0 ? wxString::Format("%d", step.sliderPropDefaultLo) : "");
-			auto* txtHi = XRCCTRL(*this, "txtSliderPropDefaultHi", wxTextCtrl);
-			if (txtHi)
-				txtHi->SetValue(step.sliderPropDefaultHi >= 0 ? wxString::Format("%d", step.sliderPropDefaultHi) : "");
-
-			UpdateSliderPropDefaultVisibility();
-			break;
-		}
-		case AutomationStepType::SetShaderProperties: {
-			RebuildShaderPropertyRows(step.shaderProperties);
-			break;
-		}
-		case AutomationStepType::SetGeometryProperties: {
-			RebuildGeometryPropertyRows(step.geometryProperties);
-			break;
-		}
-		case AutomationStepType::SetExtraData: {
-			auto* choice = XRCCTRL(*this, "choiceExtraDataType", wxChoice);
-			if (choice) {
-				wxString typeName = wxString::FromUTF8(step.extraDataType.empty() ? "NiStringExtraData" : step.extraDataType);
-				int idx = choice->FindString(typeName);
-				if (idx != wxNOT_FOUND)
-					choice->SetSelection(idx);
-				else if (!typeName.IsEmpty()) {
-					choice->Append(typeName);
-					choice->SetSelection(choice->GetCount() - 1);
-				}
-			}
-			SetTextValue("txtExtraDataName", step.extraDataName);
-			SetTextValue("txtExtraDataValue", step.extraDataValue);
-			break;
-		}
-		case AutomationStepType::DeleteExtraData: {
-			SetTextValue("txtDeleteExtraDataName", step.extraDataName);
-			break;
-		}
-		case AutomationStepType::SetTexturePaths: {
-			RebuildTexturePathRows(step.texturePaths);
-			break;
-		}
-		case AutomationStepType::ImportFile: {
-			auto* fp = XRCCTRL(*this, "fpImportFile", wxFilePickerCtrl);
-			if (fp)
-				fp->SetPath(wxString::FromUTF8(step.importFilePath));
-			SetCheckboxValue("chkImportFromFolder", step.importFromFolder);
-			SetCheckboxValue("chkImportBeforeBatch", step.importBeforeBatch);
-			auto* dp = XRCCTRL(*this, "dpImportFolder", wxDirPickerCtrl);
-			if (dp)
-				dp->SetPath(wxString::FromUTF8(step.importFilePath));
-			UpdateImportFolderVisibility(step.importFromFolder);
-			break;
-		}
-		case AutomationStepType::DeleteShape:
-			// No parameters — uses Target Meshes
-			break;
-		case AutomationStepType::RenameShape: {
-			SetTextValue("txtRenameOldName", step.renameOldName);
-			SetTextValue("txtRenameNewName", step.renameNewName);
-			break;
-		}
-		case AutomationStepType::DeleteSlider: {
-			SetVectorValue("txtDeleteSliderName", step.deleteSliderNames);
-			SetCheckboxValue("chkDeleteSliderRegex", step.deleteSliderRegex);
-			break;
-		}
-		case AutomationStepType::SetReferenceShape: {
-			SetTextValue("txtSetRefShapeName", step.setRefShapeName);
-			SetCheckboxValue("chkSetRefUnset", step.setRefUnset);
-			UpdateSetRefFieldsEnabled(!step.setRefUnset);
-			break;
-		}
-		case AutomationStepType::RefineMesh:
-		case AutomationStepType::SetBaseShape:
-		case AutomationStepType::ClearReference:
-		case AutomationStepType::RemoveSkinning:
-			// No parameters to set
-			break;
-		case AutomationStepType::TransformShape: {
-			SetFloatValue("txtMoveX", step.moveX);
-			SetFloatValue("txtMoveY", step.moveY);
-			SetFloatValue("txtMoveZ", step.moveZ);
-			SetFloatValue("txtRotateX", step.rotateX);
-			SetFloatValue("txtRotateY", step.rotateY);
-			SetFloatValue("txtRotateZ", step.rotateZ);
-			SetFloatValue("txtScaleX", step.scaleX);
-			SetFloatValue("txtScaleY", step.scaleY);
-			SetFloatValue("txtScaleZ", step.scaleZ);
-			SetFloatValue("txtInflateX", step.inflateX);
-			SetFloatValue("txtInflateY", step.inflateY);
-			SetFloatValue("txtInflateZ", step.inflateZ);
-			break;
-		}
-		case AutomationStepType::InvertUVs: {
-			SetCheckboxValue("chkInvertU", step.invertU);
-			SetCheckboxValue("chkInvertV", step.invertV);
-			break;
-		}
-		case AutomationStepType::DeleteBones: {
-			SetVectorValue("txtDeleteBoneNames", step.deleteBoneNames);
-			SetCheckboxValue("chkDeleteBoneFromProject", step.deleteBoneFromProject);
-			break;
-		}
-		case AutomationStepType::AddCustomBone: {
-			SetTextValue("txtAddBoneName", step.addBoneName);
-			SetTextValue("txtAddBoneParent", step.addBoneParent);
-			SetFloatValue("txtAddBoneTransX", step.addBoneTransX);
-			SetFloatValue("txtAddBoneTransY", step.addBoneTransY);
-			SetFloatValue("txtAddBoneTransZ", step.addBoneTransZ);
-			SetFloatValue("txtAddBoneRotX", step.addBoneRotX);
-			SetFloatValue("txtAddBoneRotY", step.addBoneRotY);
-			SetFloatValue("txtAddBoneRotZ", step.addBoneRotZ);
-			break;
-		}
-		case AutomationStepType::EditBone: {
-			SetTextValue("txtEditBoneName", step.editBoneName);
-			SetTextValue("txtEditBoneParent", step.editBoneParent);
-			SetFloatValue("txtEditBoneTransX", step.editBoneTransX);
-			SetFloatValue("txtEditBoneTransY", step.editBoneTransY);
-			SetFloatValue("txtEditBoneTransZ", step.editBoneTransZ);
-			SetFloatValue("txtEditBoneRotX", step.editBoneRotX);
-			SetFloatValue("txtEditBoneRotY", step.editBoneRotY);
-			SetFloatValue("txtEditBoneRotZ", step.editBoneRotZ);
-			break;
-		}
-		case AutomationStepType::ApplyPose: {
-			SetTextValue("txtPoseName", step.poseName);
-			break;
-		}
-
-		case AutomationStepType::SaveProject: {
-			SetTextValue("txtSaveDisplayName", step.saveName);
-			SetTextValue("txtSaveOutputFileName", step.saveOutputFileName);
-			SetTextValue("txtSaveOutputDataPath", step.saveOutputDataPath);
-			SetTextValue("txtSaveSliderSetFile", step.saveSliderSetFile);
-			SetTextValue("txtSaveShapeDataFolder", step.saveShapeDataFolder);
-			SetTextValue("txtSaveShapeDataFile", step.saveShapeDataFile);
-
-			SetCheckboxValue("chkSaveGenWeights", step.saveGenWeights);
-			SetCheckboxValue("chkSaveAutoCopyRef", step.saveAutoCopyRef);
-			SetCheckboxValue("chkSaveCopyRefFromProject", step.saveCopyRefFromProject);
-			SetTextValue("txtSaveCopyRefShapeName", step.saveCopyRefShapeName);
-			SetCheckboxValue("chkSaveUseOriginal", step.saveUseOriginal);
-			SetTextValue("txtSaveReplaceFrom", step.saveReplaceFrom);
-			SetTextValue("txtSaveReplaceTo", step.saveReplaceTo);
-			SetTextValue("txtSaveSuffix", step.saveSuffix);
-			UpdateSaveProjectBatchModeUI(step);
-			break;
-		}
-		case AutomationStepType::ExportFile: {
-			bool isBatch = GetSelectedBatchMode() != AutomationBatchMode::None;
-			if (isBatch) {
-				auto* dp = XRCCTRL(*this, "dpExportFolder", wxDirPickerCtrl);
-				if (dp)
-					dp->SetPath(wxString::FromUTF8(step.exportFilePath));
-			}
-			else {
-				auto* fp = XRCCTRL(*this, "fpExportFile", wxFilePickerCtrl);
-				if (fp)
-					fp->SetPath(wxString::FromUTF8(step.exportFilePath));
-			}
-			SetCheckboxValue("chkExportWithRef", step.exportWithRef);
-			SetCheckboxValue("chkExportUseOriginalPath", step.exportUseOriginalPath);
-			SetTextValue("txtExportPrefix", step.exportPrefix);
-			SetTextValue("txtExportSuffix", step.exportSuffix);
-			UpdateExportForBatchMode();
-			UpdateExportFileBatchModeUI(step);
-			break;
-		}
-
-		case AutomationStepType::ResetTransforms:
-			// No parameters to set
-			break;
-
-		case AutomationStepType::DuplicateShape: {
-			SetTextValue("txtDupNewName", step.dupNewName);
-			break;
-		}
-
-		case AutomationStepType::ChangePartitions: {
-			SetChoiceSelectionString(XRCCTRL(*this, "choicePartitionSource", wxChoice), step.partitionSource);
-			SetChoiceSelectionString(XRCCTRL(*this, "choicePartitionDestination", wxChoice), step.partitionDestination);
-			break;
-		}
-
-		case AutomationStepType::MirrorShape: {
-			SetCheckboxValue("chkMirrorX", step.mirrorX);
-			SetCheckboxValue("chkMirrorY", step.mirrorY);
-			SetCheckboxValue("chkMirrorZ", step.mirrorZ);
-			SetCheckboxValue("chkMirrorSwapBonesX", step.mirrorSwapBonesX);
-			break;
-		}
-
-		case AutomationStepType::RecalcNormals: {
-			SetCheckboxValue("chkRecalcNormalsForce", step.normalsForce);
-
-			auto* choiceSeam = XRCCTRL(*this, "choiceRecalcNormalsSeam", wxChoice);
-			if (choiceSeam)
-				choiceSeam->SetSelection(step.normalsSeamSmooth < 0 ? 0 : step.normalsSeamSmooth + 1);
-
-			// An empty angle field means "no change", so the sentinel can't go through SetFloatValue
-			auto* txtAngle = XRCCTRL(*this, "txtRecalcNormalsAngle", wxTextCtrl);
-			if (txtAngle) {
-				if (step.normalsSeamAngle < 0.0f)
-					txtAngle->ChangeValue(wxEmptyString);
-				else
-					txtAngle->ChangeValue(wxString::Format("%0.2f", step.normalsSeamAngle));
-			}
-
-			auto* choiceLock = XRCCTRL(*this, "choiceRecalcNormalsLock", wxChoice);
-			if (choiceLock)
-				choiceLock->SetSelection(step.normalsLock < 0 ? 0 : step.normalsLock + 1);
-			break;
-		}
-
-		case AutomationStepType::ClearMask:
-			// No parameters to set
-			break;
-
-		case AutomationStepType::LoadMask: {
-			auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
-			if (fp) {
-				// If path is relative, resolve it for the file picker display
-				wxString path = wxString::FromUTF8(step.loadMaskFile);
-				if (!path.IsEmpty()) {
-					wxFileName fn(path);
-					if (fn.IsRelative()) {
-						std::string projPath = ProjectUtil::GetProjectPath();
-						fn.MakeAbsolute(wxString::FromUTF8(projPath));
-					}
-					fp->SetPath(fn.GetFullPath());
-				}
-				else {
-					fp->SetPath(wxEmptyString);
-				}
-
-				// Populate dropdown from the mask file
-				PopulateMaskNamesFromFile(fp->GetPath());
-			}
-
-			auto* choice = XRCCTRL(*this, "choiceLoadMaskName", wxChoice);
-			if (choice) {
-				wxString maskName = wxString::FromUTF8(step.loadMaskName);
-				int idx = choice->FindString(maskName);
-				if (idx != wxNOT_FOUND)
-					choice->SetSelection(idx);
-				else if (!maskName.IsEmpty()) {
-					choice->Append(maskName);
-					choice->SetSelection(choice->GetCount() - 1);
-				}
-			}
-			break;
-		}
-
-		case AutomationStepType::RemoveUnusedNodes:
-			// No parameters to set
-			break;
-
-		case AutomationStepType::FixClipping: {
-			auto* choice = XRCCTRL(*this, "choiceFixClipMode", wxChoice);
-			if (choice)
-				choice->SetSelection(step.fixClipMode);
-			auto* txt = XRCCTRL(*this, "txtFixClipStrength", wxTextCtrl);
-			if (txt)
-				txt->SetValue(wxString::Format("%d", static_cast<int>(step.fixClipStrength * 100)));
-			SetVectorValue("txtFixClipSliderNames", step.fixClipSliderNames);
-			break;
-		}
-
-		case AutomationStepType::FixBadBones:
-			// No parameters to set
-			break;
-	}
+	const StepBinding* binding = FindStepBinding(step.type);
+	if (binding && binding->toUI)
+		(this->*binding->toUI)(step);
 }
 
 void AutomationDialog::UpdateStepFromUI() {
@@ -1655,362 +1987,12 @@ void AutomationDialog::UpdateStepFromUI() {
 	step.note = txtNote->GetValue().ToUTF8().data();
 	step.targetMeshes = SplitCommaSeparated(txtTargetMeshes->GetValue().ToUTF8().data());
 	step.targetRegex = chkTargetRegex ? chkTargetRegex->GetValue() : false;
-	step.type = static_cast<AutomationStepType>(choiceStepType->GetSelection());
 
-	switch (step.type) {
-		case AutomationStepType::ClearProject:
-			// No parameters to read
-			break;
+	ReadFieldsFromUI(step);
 
-		case AutomationStepType::LoadReference: {
-			auto* fp = XRCCTRL(*this, "fpRefSourceFile", wxFilePickerCtrl);
-			if (fp)
-				step.refSourceFile = MakeRelativeToProject(fp->GetPath()).ToUTF8().data();
-			auto* choiceSet = XRCCTRL(*this, "choiceRefSet", wxChoice);
-			if (choiceSet && choiceSet->GetSelection() != wxNOT_FOUND)
-				step.refSet = choiceSet->GetStringSelection().ToUTF8().data();
-			auto* choiceShape = XRCCTRL(*this, "choiceRefShape", wxChoice);
-			if (choiceShape && choiceShape->GetSelection() != wxNOT_FOUND)
-				step.refShape = choiceShape->GetStringSelection().ToUTF8().data();
-
-			step.refLoadAll = GetCheckboxValue("chkRefLoadAll");
-			step.refMergeSliders = GetCheckboxValue("chkRefMergeSliders");
-			step.refMergeZaps = GetCheckboxValue("chkRefMergeZaps");
-			step.refAppendNewSliders = GetCheckboxValue("chkRefAppendNewSliders");
-			break;
-		}
-		case AutomationStepType::AddProject: {
-			auto* fp = XRCCTRL(*this, "fpAddProjSourceFile", wxFilePickerCtrl);
-			if (fp)
-				step.refSourceFile = MakeRelativeToProject(fp->GetPath()).ToUTF8().data();
-			auto* choiceSet = XRCCTRL(*this, "choiceAddProjSet", wxChoice);
-			if (choiceSet && choiceSet->GetSelection() != wxNOT_FOUND)
-				step.refSet = choiceSet->GetStringSelection().ToUTF8().data();
-			step.refAppendNewSliders = GetCheckboxValue("chkAddProjAppendSliders");
-			break;
-		}
-		case AutomationStepType::ConformSliders: {
-			step.conformProximityRadius = GetFloatValue("txtConformRadius");
-			step.conformMaxResults = GetIntValue("txtConformMaxResults");
-			step.conformSmoothResults = GetCheckboxValue("chkConformSmoothResults");
-			step.conformSmoothIterations = GetIntValue("txtConformSmoothIterations");
-			step.conformSmoothStrength = GetFloatValue("txtConformSmoothStrength");
-			step.conformNoSqueeze = GetCheckboxValue("chkConformNoSqueeze");
-			step.conformSolidMode = GetCheckboxValue("chkConformSolidMode");
-			step.conformAxisX = GetCheckboxValue("chkConformAxisX");
-			step.conformAxisY = GetCheckboxValue("chkConformAxisY");
-			step.conformAxisZ = GetCheckboxValue("chkConformAxisZ");
-			step.conformFixClipping = GetCheckboxValue("chkConformFixClipping");
-			step.conformFixClippingStrength = GetFloatValue("txtConformFixClipStrength") / 100.0f;
-			step.conformSliderNames = GetVectorValue("txtConformSliderNames");
-			break;
-		}
-		case AutomationStepType::CopyBoneWeights: {
-			step.weightProximityRadius = GetFloatValue("txtWeightRadius");
-			step.weightMaxResults = GetIntValue("txtWeightMaxResults");
-			step.weightBoneList = GetVectorValue("txtWeightBoneList");
-			break;
-		}
-		case AutomationStepType::ImportSliderData: {
-			auto* chkFolder = XRCCTRL(*this, "chkSliderDataFromFolder", wxCheckBox);
-			step.sliderDataFromFolder = chkFolder && chkFolder->GetValue();
-			if (step.sliderDataFromFolder) {
-				auto* dp = XRCCTRL(*this, "dpSliderDataFolder", wxDirPickerCtrl);
-				if (dp)
-					step.sliderDataFile = dp->GetPath().ToUTF8().data();
-			}
-			else {
-				auto* fp = XRCCTRL(*this, "fpSliderDataFile", wxFilePickerCtrl);
-				if (fp)
-					step.sliderDataFile = fp->GetPath().ToUTF8().data();
-			}
-			step.sliderMerge = GetCheckboxValue("chkSliderMerge");
-			step.sliderNames = GetVectorValue("txtSliderNames");
-			break;
-		}
-		case AutomationStepType::ImportFile: {
-			auto* chkFolder = XRCCTRL(*this, "chkImportFromFolder", wxCheckBox);
-			step.importFromFolder = chkFolder && chkFolder->GetValue();
-			step.importBeforeBatch = GetCheckboxValue("chkImportBeforeBatch");
-			if (step.importFromFolder) {
-				auto* dp = XRCCTRL(*this, "dpImportFolder", wxDirPickerCtrl);
-				if (dp)
-					step.importFilePath = dp->GetPath().ToUTF8().data();
-			}
-			else {
-				auto* fp = XRCCTRL(*this, "fpImportFile", wxFilePickerCtrl);
-				if (fp)
-					step.importFilePath = fp->GetPath().ToUTF8().data();
-			}
-			break;
-		}
-		case AutomationStepType::SetSliderValues: {
-			step.setSliderNames = GetVectorValue("txtSetSliderNames");
-			step.setSliderValue = GetFloatValue("txtSetSliderValue") / 100.0f;
-			break;
-		}
-		case AutomationStepType::SetSliderProperties: {
-			step.sliderPropNames = GetVectorValue("txtSliderPropNames");
-			auto* choiceZap = XRCCTRL(*this, "choiceSliderPropZap", wxChoice);
-			if (choiceZap) {
-				int sel = choiceZap->GetSelection();
-				step.sliderPropZap = sel <= 0 ? -1 : sel - 1;
-			}
-			auto* choiceHidden = XRCCTRL(*this, "choiceSliderPropHidden", wxChoice);
-			if (choiceHidden) {
-				int sel = choiceHidden->GetSelection();
-				step.sliderPropHidden = sel <= 0 ? -1 : sel - 1;
-			}
-
-			bool isZap = step.sliderPropZap == 1;
-			if (isZap) {
-				// Read from zapped choice instead of lo/hi text fields
-				auto* choiceZapped = XRCCTRL(*this, "choiceSliderPropZapped", wxChoice);
-				if (choiceZapped) {
-					int sel = choiceZapped->GetSelection();
-					if (sel == 2) {
-						step.sliderPropDefaultLo = 100;
-						step.sliderPropDefaultHi = 100;
-					}
-					else if (sel == 1) {
-						step.sliderPropDefaultLo = 0;
-						step.sliderPropDefaultHi = 0;
-					}
-					else {
-						step.sliderPropDefaultLo = -1;
-						step.sliderPropDefaultHi = -1;
-					}
-				}
-			}
-			else {
-				auto* txtLo = XRCCTRL(*this, "txtSliderPropDefaultLo", wxTextCtrl);
-				if (txtLo) {
-					wxString val = txtLo->GetValue().Trim();
-					step.sliderPropDefaultLo = val.IsEmpty() ? -1 : wxAtoi(val);
-				}
-				auto* txtHi = XRCCTRL(*this, "txtSliderPropDefaultHi", wxTextCtrl);
-				if (txtHi) {
-					wxString val = txtHi->GetValue().Trim();
-					step.sliderPropDefaultHi = val.IsEmpty() ? -1 : wxAtoi(val);
-				}
-			}
-			break;
-		}
-		case AutomationStepType::SetShaderProperties: {
-			step.shaderProperties = ReadShaderPropertyRows();
-			break;
-		}
-		case AutomationStepType::SetGeometryProperties: {
-			step.geometryProperties = ReadGeometryPropertyRows();
-			break;
-		}
-		case AutomationStepType::SetExtraData: {
-			auto* choice = XRCCTRL(*this, "choiceExtraDataType", wxChoice);
-			if (choice && choice->GetSelection() != wxNOT_FOUND)
-				step.extraDataType = choice->GetStringSelection().ToUTF8().data();
-			step.extraDataName = GetTextValue("txtExtraDataName");
-			step.extraDataValue = GetTextValue("txtExtraDataValue");
-			break;
-		}
-		case AutomationStepType::DeleteExtraData: {
-			step.extraDataName = GetTextValue("txtDeleteExtraDataName");
-			break;
-		}
-		case AutomationStepType::SetTexturePaths: {
-			step.texturePaths = ReadTexturePathRows();
-			break;
-		}
-		case AutomationStepType::DeleteShape:
-			// No parameters — uses Target Meshes
-			break;
-		case AutomationStepType::RenameShape: {
-			step.renameOldName = GetTextValue("txtRenameOldName");
-			step.renameNewName = GetTextValue("txtRenameNewName");
-			break;
-		}
-		case AutomationStepType::DeleteSlider: {
-			step.deleteSliderNames = GetVectorValue("txtDeleteSliderName");
-			step.deleteSliderRegex = GetCheckboxValue("chkDeleteSliderRegex");
-			break;
-		}
-		case AutomationStepType::SetReferenceShape: {
-			step.setRefShapeName = GetTextValue("txtSetRefShapeName");
-			step.setRefUnset = GetCheckboxValue("chkSetRefUnset");
-			break;
-		}
-		case AutomationStepType::RefineMesh:
-		case AutomationStepType::SetBaseShape:
-		case AutomationStepType::ClearReference:
-		case AutomationStepType::RemoveSkinning:
-			// No parameters to read
-			break;
-		case AutomationStepType::TransformShape: {
-			step.moveX = GetFloatValue("txtMoveX");
-			step.moveY = GetFloatValue("txtMoveY");
-			step.moveZ = GetFloatValue("txtMoveZ");
-			step.rotateX = GetFloatValue("txtRotateX");
-			step.rotateY = GetFloatValue("txtRotateY");
-			step.rotateZ = GetFloatValue("txtRotateZ");
-			step.scaleX = GetFloatValue("txtScaleX");
-			step.scaleY = GetFloatValue("txtScaleY");
-			step.scaleZ = GetFloatValue("txtScaleZ");
-			step.inflateX = GetFloatValue("txtInflateX");
-			step.inflateY = GetFloatValue("txtInflateY");
-			step.inflateZ = GetFloatValue("txtInflateZ");
-			break;
-		}
-		case AutomationStepType::InvertUVs: {
-			step.invertU = GetCheckboxValue("chkInvertU");
-			step.invertV = GetCheckboxValue("chkInvertV");
-			break;
-		}
-		case AutomationStepType::DeleteBones: {
-			step.deleteBoneNames = GetVectorValue("txtDeleteBoneNames");
-			step.deleteBoneFromProject = GetCheckboxValue("chkDeleteBoneFromProject");
-			break;
-		}
-		case AutomationStepType::AddCustomBone: {
-			step.addBoneName = GetTextValue("txtAddBoneName");
-			step.addBoneParent = GetTextValue("txtAddBoneParent");
-			step.addBoneTransX = GetFloatValue("txtAddBoneTransX");
-			step.addBoneTransY = GetFloatValue("txtAddBoneTransY");
-			step.addBoneTransZ = GetFloatValue("txtAddBoneTransZ");
-			step.addBoneRotX = GetFloatValue("txtAddBoneRotX");
-			step.addBoneRotY = GetFloatValue("txtAddBoneRotY");
-			step.addBoneRotZ = GetFloatValue("txtAddBoneRotZ");
-			break;
-		}
-		case AutomationStepType::EditBone: {
-			step.editBoneName = GetTextValue("txtEditBoneName");
-			step.editBoneParent = GetTextValue("txtEditBoneParent");
-			step.editBoneTransX = GetFloatValue("txtEditBoneTransX");
-			step.editBoneTransY = GetFloatValue("txtEditBoneTransY");
-			step.editBoneTransZ = GetFloatValue("txtEditBoneTransZ");
-			step.editBoneRotX = GetFloatValue("txtEditBoneRotX");
-			step.editBoneRotY = GetFloatValue("txtEditBoneRotY");
-			step.editBoneRotZ = GetFloatValue("txtEditBoneRotZ");
-			break;
-		}
-		case AutomationStepType::ApplyPose: {
-			step.poseName = GetTextValue("txtPoseName");
-			break;
-		}
-
-		case AutomationStepType::SaveProject: {
-			step.saveName = GetTextValue("txtSaveDisplayName");
-			step.saveOutputFileName = GetTextValue("txtSaveOutputFileName");
-			step.saveOutputDataPath = GetTextValue("txtSaveOutputDataPath");
-			step.saveSliderSetFile = GetTextValue("txtSaveSliderSetFile");
-			step.saveShapeDataFolder = GetTextValue("txtSaveShapeDataFolder");
-			step.saveShapeDataFile = GetTextValue("txtSaveShapeDataFile");
-
-			step.saveGenWeights = GetCheckboxValue("chkSaveGenWeights");
-			step.saveAutoCopyRef = GetCheckboxValue("chkSaveAutoCopyRef");
-			step.saveCopyRefFromProject = GetCheckboxValue("chkSaveCopyRefFromProject");
-			step.saveCopyRefShapeName = GetTextValue("txtSaveCopyRefShapeName");
-			step.saveUseOriginal = GetCheckboxValue("chkSaveUseOriginal");
-			step.saveReplaceFrom = GetTextValue("txtSaveReplaceFrom");
-			step.saveReplaceTo = GetTextValue("txtSaveReplaceTo");
-			step.saveSuffix = GetTextValue("txtSaveSuffix");
-			break;
-		}
-		case AutomationStepType::ExportFile: {
-			bool isBatch = radioBatchMode && radioBatchMode->GetSelection() != 0;
-			if (isBatch) {
-				auto* dp = XRCCTRL(*this, "dpExportFolder", wxDirPickerCtrl);
-				if (dp)
-					step.exportFilePath = dp->GetPath().ToUTF8().data();
-			}
-			else {
-				auto* fp = XRCCTRL(*this, "fpExportFile", wxFilePickerCtrl);
-				if (fp)
-					step.exportFilePath = fp->GetPath().ToUTF8().data();
-			}
-			step.exportWithRef = GetCheckboxValue("chkExportWithRef");
-			step.exportUseOriginalPath = IsBatchMode(AutomationBatchMode::FolderScan) && GetCheckboxValue("chkExportUseOriginalPath");
-			step.exportPrefix = GetTextValue("txtExportPrefix");
-			step.exportSuffix = GetTextValue("txtExportSuffix");
-			break;
-		}
-
-		case AutomationStepType::ResetTransforms:
-			// No parameters to read
-			break;
-
-		case AutomationStepType::DuplicateShape: {
-			step.dupNewName = GetTextValue("txtDupNewName");
-			break;
-		}
-
-		case AutomationStepType::ChangePartitions: {
-			step.partitionSource = GetChoiceSelectionString(XRCCTRL(*this, "choicePartitionSource", wxChoice));
-			step.partitionDestination = GetChoiceSelectionString(XRCCTRL(*this, "choicePartitionDestination", wxChoice));
-			break;
-		}
-
-		case AutomationStepType::MirrorShape: {
-			step.mirrorX = GetCheckboxValue("chkMirrorX");
-			step.mirrorY = GetCheckboxValue("chkMirrorY");
-			step.mirrorZ = GetCheckboxValue("chkMirrorZ");
-			step.mirrorSwapBonesX = GetCheckboxValue("chkMirrorSwapBonesX");
-			break;
-		}
-
-		case AutomationStepType::RecalcNormals: {
-			step.normalsForce = GetCheckboxValue("chkRecalcNormalsForce");
-
-			auto* choiceSeam = XRCCTRL(*this, "choiceRecalcNormalsSeam", wxChoice);
-			if (choiceSeam) {
-				int sel = choiceSeam->GetSelection();
-				step.normalsSeamSmooth = sel <= 0 ? -1 : sel - 1;
-			}
-
-			auto* txtAngle = XRCCTRL(*this, "txtRecalcNormalsAngle", wxTextCtrl);
-			if (txtAngle) {
-				wxString angleStr = txtAngle->GetValue().Trim().Trim(false);
-				float angle = angleStr.IsEmpty() ? -1.0f : static_cast<float>(atof(angleStr.c_str()));
-				step.normalsSeamAngle = angle < 0.0f ? -1.0f : angle;
-			}
-
-			auto* choiceLock = XRCCTRL(*this, "choiceRecalcNormalsLock", wxChoice);
-			if (choiceLock) {
-				int sel = choiceLock->GetSelection();
-				step.normalsLock = sel <= 0 ? -1 : sel - 1;
-			}
-			break;
-		}
-
-		case AutomationStepType::ClearMask:
-			// No parameters to read
-			break;
-
-		case AutomationStepType::LoadMask: {
-			auto* fp = XRCCTRL(*this, "fpLoadMaskFile", wxFilePickerCtrl);
-			if (fp)
-				step.loadMaskFile = MakeRelativeToProject(fp->GetPath()).ToUTF8().data();
-			auto* choice = XRCCTRL(*this, "choiceLoadMaskName", wxChoice);
-			if (choice && choice->GetSelection() != wxNOT_FOUND)
-				step.loadMaskName = choice->GetStringSelection().ToUTF8().data();
-			break;
-		}
-
-		case AutomationStepType::RemoveUnusedNodes:
-			// No parameters to read
-			break;
-
-		case AutomationStepType::FixClipping: {
-			auto* choice = XRCCTRL(*this, "choiceFixClipMode", wxChoice);
-			if (choice)
-				step.fixClipMode = choice->GetSelection();
-			step.fixClipStrength = GetFloatValue("txtFixClipStrength") / 100.0f;
-			step.fixClipSliderNames = GetVectorValue("txtFixClipSliderNames");
-			break;
-		}
-
-		case AutomationStepType::FixBadBones:
-			// No parameters to read
-			break;
-	}
+	const StepBinding* binding = FindStepBinding(step.type);
+	if (binding && binding->fromUI)
+		(this->*binding->fromUI)(step);
 
 	RefreshStepRow(selectedStep);
 }
@@ -2708,26 +2690,42 @@ void AutomationDialog::OnStepSelected(wxListEvent& event) {
 		listSteps->SetFocus();
 }
 
-void AutomationDialog::OnStepTypeChanged(wxCommandEvent& WXUNUSED(event)) {
-	int sel = choiceStepType->GetSelection();
-	if (sel < 0)
-		return;
+// Called by the step type popup once a type has been picked from the tree.
+void AutomationDialog::OnStepTypeChanged(AutomationStepType type) {
+	ShowStepTypePage(type);
 
-	if (selectedStep < 0 || selectedStep >= static_cast<int>(script.GetSteps().size())) {
-		bookStepPages->SetSelection(sel);
+	if (selectedStep < 0 || selectedStep >= static_cast<int>(script.GetSteps().size()))
 		return;
-	}
 
 	auto& step = script.GetSteps()[selectedStep];
 	step.active = chkActive->GetValue();
 	step.note = txtNote->GetValue().ToUTF8().data();
 	step.targetMeshes = SplitCommaSeparated(std::string(txtTargetMeshes->GetValue().ToUTF8().data()));
 	step.targetRegex = chkTargetRegex ? chkTargetRegex->GetValue() : false;
-	step.type = static_cast<AutomationStepType>(sel);
+	step.type = type;
 	ApplyBatchModeDefaults(step);
 
 	RefreshStepRow(selectedStep);
 	UpdateUIFromStep(step);
+}
+
+// The settings pages are matched to step types by their XRC panel name, so the
+// enum, the picker and the XRC no longer have to agree on an ordering.
+void AutomationDialog::ShowStepTypePage(AutomationStepType type) {
+	if (!bookStepPages)
+		return;
+
+	auto found = stepTypePageIndex.find(type);
+	if (found != stepTypePageIndex.end())
+		bookStepPages->SetSelection(found->second);
+}
+
+void AutomationDialog::SetStepTypeSelection(AutomationStepType type) {
+	if (!comboStepType || !stepTypePopup)
+		return;
+
+	stepTypePopup->SetSelectedType(type);
+	comboStepType->SetText(wxGetTranslation(GetAutomationStepInfo(type).displayName));
 }
 
 bool AutomationDialog::ShowCheckableListDialog(const wxString& title, const wxString& labelText, const wxArrayString& items, std::vector<size_t>& checkedIndices) {

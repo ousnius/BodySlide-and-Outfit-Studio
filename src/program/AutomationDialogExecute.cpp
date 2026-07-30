@@ -570,7 +570,7 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 		const auto& step = execScript.GetSteps()[i];
 		wxString stepDesc = wxString::Format(_("Step %d/%d: %s"),
 			i + 1, totalSteps,
-			wxString::FromUTF8(AutomationStepTypeToString(step.type)));
+			wxGetTranslation(GetAutomationStepInfo(step.type).displayName));
 
 		UpdateProgress(i * 100 / totalSteps, stepDesc);
 
@@ -589,7 +589,7 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 			wxString errMsg = wxString::Format(
 				_("Step %d (%s) failed with error %d.\n\n%s\n\nContinue with remaining steps?"),
 				i + 1,
-				wxString::FromUTF8(AutomationStepTypeToString(step.type)),
+				wxGetTranslation(GetAutomationStepInfo(step.type).displayName),
 				err,
 				wxString::FromUTF8(step.note));
 
@@ -2703,48 +2703,9 @@ int AutomationDialog::ExecuteStepFixBadBones(const AutomationStep& WXUNUSED(step
 }
 
 int AutomationDialog::ExecuteStep(const AutomationStep& step) {
-	switch (step.type) {
-		case AutomationStepType::ClearProject: return ExecuteStepClearProject(step);
-		case AutomationStepType::LoadReference: return ExecuteStepLoadReference(step);
-		case AutomationStepType::AddProject: return ExecuteStepAddProject(step);
-		case AutomationStepType::SetSliderValues: return ExecuteStepSetSliderValues(step);
-		case AutomationStepType::ConformSliders: return ExecuteStepConformSliders(step);
-		case AutomationStepType::CopyBoneWeights: return ExecuteStepCopyBoneWeights(step);
-		case AutomationStepType::SetBaseShape: return ExecuteStepSetBaseShape(step);
-		case AutomationStepType::ClearReference: return ExecuteStepClearReference(step);
-		case AutomationStepType::TransformShape: return ExecuteStepTransformShape(step);
-		case AutomationStepType::InvertUVs: return ExecuteStepInvertUVs(step);
-		case AutomationStepType::DeleteBones: return ExecuteStepDeleteBones(step);
-		case AutomationStepType::AddCustomBone: return ExecuteStepAddCustomBone(step);
-		case AutomationStepType::EditBone: return ExecuteStepEditBone(step);
-		case AutomationStepType::RemoveSkinning: return ExecuteStepRemoveSkinning(step);
-		case AutomationStepType::ApplyPose: return ExecuteStepApplyPose(step);
-		case AutomationStepType::ImportSliderData: return ExecuteStepImportSliderData(step);
-		case AutomationStepType::ImportFile: return ExecuteStepImportFile(step);
-		case AutomationStepType::DeleteShape: return ExecuteStepDeleteShape(step);
-		case AutomationStepType::RenameShape: return ExecuteStepRenameShape(step);
-		case AutomationStepType::SaveProject: return ExecuteStepSaveProject(step);
-		case AutomationStepType::ExportFile: return ExecuteStepExportFile(step);
-		case AutomationStepType::RefineMesh: return ExecuteStepRefineMesh(step);
-		case AutomationStepType::DeleteSlider: return ExecuteStepDeleteSlider(step);
-		case AutomationStepType::SetReferenceShape: return ExecuteStepSetReferenceShape(step);
-		case AutomationStepType::ResetTransforms: return ExecuteStepResetTransforms(step);
-		case AutomationStepType::DuplicateShape: return ExecuteStepDuplicateShape(step);
-		case AutomationStepType::ChangePartitions: return ExecuteStepChangePartitions(step);
-		case AutomationStepType::MirrorShape: return ExecuteStepMirrorShape(step);
-		case AutomationStepType::RecalcNormals: return ExecuteStepRecalcNormals(step);
-		case AutomationStepType::ClearMask: return ExecuteStepClearMask(step);
-		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
-		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);
-		case AutomationStepType::SetShaderProperties: return ExecuteStepSetShaderProperties(step);
-		case AutomationStepType::SetGeometryProperties: return ExecuteStepSetGeometryProperties(step);
-		case AutomationStepType::SetExtraData: return ExecuteStepSetExtraData(step);
-		case AutomationStepType::DeleteExtraData: return ExecuteStepDeleteExtraData(step);
-		case AutomationStepType::SetTexturePaths: return ExecuteStepSetTexturePaths(step);
-		case AutomationStepType::RemoveUnusedNodes: return ExecuteStepRemoveUnusedNodes(step);
-		case AutomationStepType::FixClipping: return ExecuteStepFixClipping(step);
-		case AutomationStepType::FixBadBones: return ExecuteStepFixBadBones(step);
-	}
+	const StepBinding* binding = FindStepBinding(step.type);
+	if (binding && binding->execute)
+		return (this->*binding->execute)(step);
 
 	return 0;
 }

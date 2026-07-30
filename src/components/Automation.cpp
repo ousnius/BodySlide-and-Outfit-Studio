@@ -1,4 +1,4 @@
-﻿/*
+/*
 BodySlide and Outfit Studio
 See the included LICENSE file
 */
@@ -9,97 +9,483 @@ See the included LICENSE file
 
 #include <tinyxml2.h>
 
+#include <cassert>
 #include <cstdio>
 
 using namespace tinyxml2;
 
-std::string AutomationStepTypeToString(AutomationStepType type) {
-	switch (type) {
-		case AutomationStepType::AddCustomBone: return "AddCustomBone";
-		case AutomationStepType::CopyBoneWeights: return "CopyBoneWeights";
-		case AutomationStepType::DeleteBones: return "DeleteBones";
-		case AutomationStepType::EditBone: return "EditBone";
-		case AutomationStepType::RemoveSkinning: return "RemoveSkinning";
-		case AutomationStepType::ExportFile: return "ExportFile";
-		case AutomationStepType::SaveProject: return "SaveProject";
-		case AutomationStepType::ImportFile: return "ImportFile";
-		case AutomationStepType::ImportSliderData: return "ImportSliderData";
-		case AutomationStepType::AddProject: return "AddProject";
-		case AutomationStepType::ClearProject: return "ClearProject";
-		case AutomationStepType::ClearReference: return "ClearReference";
-		case AutomationStepType::LoadReference: return "LoadReference";
-		case AutomationStepType::SetBaseShape: return "SetBaseShape";
-		case AutomationStepType::SetReferenceShape: return "SetReferenceShape";
-		case AutomationStepType::ApplyPose: return "ApplyPose";
-		case AutomationStepType::DeleteShape: return "DeleteShape";
-		case AutomationStepType::DuplicateShape: return "DuplicateShape";
-		case AutomationStepType::ChangePartitions: return "ChangePartitions";
-		case AutomationStepType::InvertUVs: return "InvertUVs";
-		case AutomationStepType::MirrorShape: return "MirrorShape";
-		case AutomationStepType::RecalcNormals: return "RecalcNormals";
-		case AutomationStepType::RefineMesh: return "RefineMesh";
-		case AutomationStepType::RenameShape: return "RenameShape";
-		case AutomationStepType::ResetTransforms: return "ResetTransforms";
-		case AutomationStepType::TransformShape: return "TransformShape";
-		case AutomationStepType::SetGeometryProperties: return "SetGeometryProperties";
-		case AutomationStepType::SetExtraData: return "SetExtraData";
-		case AutomationStepType::DeleteExtraData: return "DeleteExtraData";
-		case AutomationStepType::ConformSliders: return "ConformSliders";
-		case AutomationStepType::DeleteSlider: return "DeleteSlider";
-		case AutomationStepType::SetSliderValues: return "SetSliderValues";
-		case AutomationStepType::SetSliderProperties: return "SetSliderProperties";
-		case AutomationStepType::SetShaderProperties: return "SetShaderProperties";
-		case AutomationStepType::SetTexturePaths: return "SetTexturePaths";
-		case AutomationStepType::ClearMask: return "ClearMask";
-		case AutomationStepType::LoadMask: return "LoadMask";
-		case AutomationStepType::RemoveUnusedNodes: return "RemoveUnusedNodes";
-		case AutomationStepType::FixClipping: return "FixClipping";
-		case AutomationStepType::FixBadBones: return "FixBadBones";
-		default: return "LoadReference";
+static void SubstituteInString(std::string& str, const std::map<std::string, std::string>& variables);
+static void SubstituteInStringVector(std::vector<std::string>& vec, const std::map<std::string, std::string>& variables);
+
+namespace {
+
+using Step = AutomationStep;
+
+void LoadShaderProperties(AutomationStep& step, XMLElement* stepElem) {
+	XMLElement* shaderPropsElem = stepElem->FirstChildElement("ShaderProperties");
+	if (!shaderPropsElem)
+		return;
+
+	XMLElement* propElem = shaderPropsElem->FirstChildElement("Property");
+	while (propElem) {
+		AutomationStep::ShaderProperty prop;
+		const char* name = propElem->Attribute("name");
+		if (name) {
+			prop.name = name;
+			const char* stringValue = propElem->Attribute("stringValue");
+			if (stringValue)
+				prop.stringValue = stringValue;
+			prop.value1 = propElem->FloatAttribute("value1", 0.0f);
+			prop.value2 = propElem->FloatAttribute("value2", 0.0f);
+			prop.value3 = propElem->FloatAttribute("value3", 0.0f);
+			prop.value4 = propElem->FloatAttribute("value4", 1.0f);
+			step.shaderProperties.push_back(std::move(prop));
+		}
+		propElem = propElem->NextSiblingElement("Property");
 	}
 }
 
+void SaveShaderProperties(const AutomationStep& step, XMLDocument& doc, XMLElement* stepElem) {
+	if (step.shaderProperties.empty())
+		return;
+
+	XMLElement* shaderPropsElem = doc.NewElement("ShaderProperties");
+	stepElem->InsertEndChild(shaderPropsElem);
+	for (const auto& prop : step.shaderProperties) {
+		if (prop.name.empty())
+			continue;
+		XMLElement* propElem = doc.NewElement("Property");
+		propElem->SetAttribute("name", prop.name.c_str());
+		if (!prop.stringValue.empty())
+			propElem->SetAttribute("stringValue", prop.stringValue.c_str());
+		propElem->SetAttribute("value1", prop.value1);
+		propElem->SetAttribute("value2", prop.value2);
+		propElem->SetAttribute("value3", prop.value3);
+		propElem->SetAttribute("value4", prop.value4);
+		shaderPropsElem->InsertEndChild(propElem);
+	}
+}
+
+void SubstituteShaderProperties(AutomationStep& step, const std::map<std::string, std::string>& vars) {
+	for (auto& prop : step.shaderProperties) {
+		SubstituteInString(prop.name, vars);
+		SubstituteInString(prop.stringValue, vars);
+	}
+}
+
+void LoadGeometryProperties(AutomationStep& step, XMLElement* stepElem) {
+	XMLElement* geometryPropsElem = stepElem->FirstChildElement("GeometryProperties");
+	if (!geometryPropsElem)
+		return;
+
+	XMLElement* propElem = geometryPropsElem->FirstChildElement("Property");
+	while (propElem) {
+		AutomationStep::GeometryProperty prop;
+		const char* name = propElem->Attribute("name");
+		if (name) {
+			prop.name = name;
+			prop.enabled = propElem->BoolAttribute("enabled", false);
+			step.geometryProperties.push_back(std::move(prop));
+		}
+		propElem = propElem->NextSiblingElement("Property");
+	}
+}
+
+void SaveGeometryProperties(const AutomationStep& step, XMLDocument& doc, XMLElement* stepElem) {
+	if (step.geometryProperties.empty())
+		return;
+
+	XMLElement* geometryPropsElem = doc.NewElement("GeometryProperties");
+	stepElem->InsertEndChild(geometryPropsElem);
+	for (const auto& prop : step.geometryProperties) {
+		if (prop.name.empty())
+			continue;
+		XMLElement* propElem = doc.NewElement("Property");
+		propElem->SetAttribute("name", prop.name.c_str());
+		propElem->SetAttribute("enabled", prop.enabled);
+		geometryPropsElem->InsertEndChild(propElem);
+	}
+}
+
+void LoadTexturePaths(AutomationStep& step, XMLElement* stepElem) {
+	XMLElement* texturePathsElem = stepElem->FirstChildElement("TexturePaths");
+	if (!texturePathsElem)
+		return;
+
+	XMLElement* pathElem = texturePathsElem->FirstChildElement("Path");
+	while (pathElem) {
+		AutomationStep::TexturePath path;
+		path.index = pathElem->IntAttribute("index", -1);
+		const char* name = pathElem->Attribute("name");
+		if (name)
+			path.name = name;
+		const char* value = pathElem->Attribute("value");
+		if (value)
+			path.path = value;
+
+		if (path.index >= 0 || !path.name.empty())
+			step.texturePaths.push_back(std::move(path));
+		pathElem = pathElem->NextSiblingElement("Path");
+	}
+}
+
+void SaveTexturePaths(const AutomationStep& step, XMLDocument& doc, XMLElement* stepElem) {
+	if (step.texturePaths.empty())
+		return;
+
+	XMLElement* texturePathsElem = doc.NewElement("TexturePaths");
+	stepElem->InsertEndChild(texturePathsElem);
+	for (const auto& path : step.texturePaths) {
+		if (path.index < 0 && path.name.empty())
+			continue;
+		XMLElement* pathElem = doc.NewElement("Path");
+		if (path.index >= 0)
+			pathElem->SetAttribute("index", path.index);
+		if (!path.name.empty())
+			pathElem->SetAttribute("name", path.name.c_str());
+		pathElem->SetAttribute("value", path.path.c_str());
+		texturePathsElem->InsertEndChild(pathElem);
+	}
+}
+
+void SubstituteTexturePaths(AutomationStep& step, const std::map<std::string, std::string>& vars) {
+	for (auto& path : step.texturePaths) {
+		SubstituteInString(path.name, vars);
+		SubstituteInString(path.path, vars);
+	}
+}
+
+// LoadReference and AddProject describe the same project source parameters, but
+// expose different subsets of them on their settings pages.
+std::vector<AutomationField> ProjectSourceFields(const char* sourceControl,
+												 const char* setControl,
+												 const char* shapeControl,
+												 const char* loadAllControl,
+												 const char* mergeSlidersControl,
+												 const char* mergeZapsControl,
+												 const char* appendSlidersControl) {
+	return {
+		FieldString("SourceFile", &Step::refSourceFile, sourceControl, AutomationFieldUI::None),
+		FieldString("Set", &Step::refSet, setControl, AutomationFieldUI::None),
+		FieldString("Shape", &Step::refShape, shapeControl, AutomationFieldUI::None),
+		FieldBool("LoadAll", &Step::refLoadAll, false, loadAllControl),
+		FieldBool("MergeSliders", &Step::refMergeSliders, true, mergeSlidersControl),
+		FieldBool("MergeZaps", &Step::refMergeZaps, true, mergeZapsControl),
+		FieldBool("AppendNewSliders", &Step::refAppendNewSliders, false, appendSlidersControl),
+	};
+}
+
+std::vector<AutomationStepInfo> BuildStepTypes() {
+	std::vector<AutomationStepInfo> types;
+
+	// Reserved so the reference returned by add() stays valid while hooks are attached
+	types.reserve(AutomationStepTypeCount);
+
+	auto add = [&types](AutomationStepType type, const char* xmlName, const char* category,
+						const char* displayName, const char* xrcPage, std::vector<AutomationField> fields = {}) -> AutomationStepInfo& {
+		AutomationStepInfo info;
+		info.type = type;
+		info.xmlName = xmlName;
+		info.category = category;
+		info.displayName = displayName;
+		info.xrcPage = xrcPage;
+		info.fields = std::move(fields);
+		types.push_back(std::move(info));
+		return types.back();
+	};
+
+	// Bones
+	add(AutomationStepType::AddCustomBone, "AddCustomBone", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Add Custom Bone"), "pageAddCustomBone",
+		{
+			FieldString("BoneName", &Step::addBoneName, "txtAddBoneName"),
+			FieldString("ParentBone", &Step::addBoneParent, "txtAddBoneParent"),
+			FieldFloat("TransX", &Step::addBoneTransX, 0.0f, "txtAddBoneTransX"),
+			FieldFloat("TransY", &Step::addBoneTransY, 0.0f, "txtAddBoneTransY"),
+			FieldFloat("TransZ", &Step::addBoneTransZ, 0.0f, "txtAddBoneTransZ"),
+			FieldFloat("RotX", &Step::addBoneRotX, 0.0f, "txtAddBoneRotX"),
+			FieldFloat("RotY", &Step::addBoneRotY, 0.0f, "txtAddBoneRotY"),
+			FieldFloat("RotZ", &Step::addBoneRotZ, 0.0f, "txtAddBoneRotZ"),
+		});
+
+	add(AutomationStepType::CopyBoneWeights, "CopyBoneWeights", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Copy Bone Weights"), "pageCopyBoneWeights",
+		{
+			FieldFloat("ProximityRadius", &Step::weightProximityRadius, 10.0f, "txtWeightRadius", AutomationFieldUI::Text, "%.1f"),
+			FieldInt("MaxResults", &Step::weightMaxResults, 10, "txtWeightMaxResults"),
+			FieldStringList("BoneList", &Step::weightBoneList, "txtWeightBoneList"),
+		});
+
+	add(AutomationStepType::DeleteBones, "DeleteBones", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Delete Bones"), "pageDeleteBones",
+		{
+			FieldStringList("BoneNames", &Step::deleteBoneNames, "txtDeleteBoneNames"),
+			FieldBool("FromProject", &Step::deleteBoneFromProject, true, "chkDeleteBoneFromProject"),
+		});
+
+	add(AutomationStepType::EditBone, "EditBone", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Edit Custom Bone"), "pageEditBone",
+		{
+			FieldString("BoneName", &Step::editBoneName, "txtEditBoneName"),
+			FieldString("ParentBone", &Step::editBoneParent, "txtEditBoneParent"),
+			FieldFloat("TransX", &Step::editBoneTransX, 0.0f, "txtEditBoneTransX"),
+			FieldFloat("TransY", &Step::editBoneTransY, 0.0f, "txtEditBoneTransY"),
+			FieldFloat("TransZ", &Step::editBoneTransZ, 0.0f, "txtEditBoneTransZ"),
+			FieldFloat("RotX", &Step::editBoneRotX, 0.0f, "txtEditBoneRotX"),
+			FieldFloat("RotY", &Step::editBoneRotY, 0.0f, "txtEditBoneRotY"),
+			FieldFloat("RotZ", &Step::editBoneRotZ, 0.0f, "txtEditBoneRotZ"),
+		});
+
+	add(AutomationStepType::RemoveSkinning, "RemoveSkinning", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Remove Skinning"), "pageRemoveSkinning");
+
+	// Export
+	add(AutomationStepType::ExportFile, "ExportFile", wxTRANSLATE("Export"), wxTRANSLATE("Export: File"), "pageExportFile",
+		{
+			FieldString("FilePath", &Step::exportFilePath, nullptr),
+			FieldBool("WithRef", &Step::exportWithRef, true, "chkExportWithRef"),
+			FieldBool("UseOriginalPath", &Step::exportUseOriginalPath, false),
+			FieldString("Prefix", &Step::exportPrefix, "txtExportPrefix"),
+			FieldString("Suffix", &Step::exportSuffix, "txtExportSuffix"),
+		});
+
+	add(AutomationStepType::SaveProject, "SaveProject", wxTRANSLATE("Export"), wxTRANSLATE("Export: Save Project"), "pageSaveProject",
+		{
+			FieldString("DisplayName", &Step::saveName, "txtSaveDisplayName"),
+			FieldString("OutputFileName", &Step::saveOutputFileName, "txtSaveOutputFileName"),
+			FieldString("OutputDataPath", &Step::saveOutputDataPath, "txtSaveOutputDataPath"),
+			FieldString("SliderSetFile", &Step::saveSliderSetFile, "txtSaveSliderSetFile"),
+			FieldString("ShapeDataFolder", &Step::saveShapeDataFolder, "txtSaveShapeDataFolder"),
+			FieldString("ShapeDataFile", &Step::saveShapeDataFile, "txtSaveShapeDataFile"),
+			FieldBool("GenWeights", &Step::saveGenWeights, true, "chkSaveGenWeights"),
+			FieldBool("AutoCopyRef", &Step::saveAutoCopyRef, true, "chkSaveAutoCopyRef"),
+			FieldBool("CopyRefFromProject", &Step::saveCopyRefFromProject, false, "chkSaveCopyRefFromProject"),
+			FieldString("CopyRefShapeName", &Step::saveCopyRefShapeName, "txtSaveCopyRefShapeName"),
+			FieldBool("UseOriginal", &Step::saveUseOriginal, false, "chkSaveUseOriginal"),
+			FieldString("ReplaceFrom", &Step::saveReplaceFrom, "txtSaveReplaceFrom"),
+			FieldString("ReplaceTo", &Step::saveReplaceTo, "txtSaveReplaceTo"),
+			FieldString("Suffix", &Step::saveSuffix, "txtSaveSuffix"),
+		});
+
+	// Import
+	add(AutomationStepType::ImportFile, "ImportFile", wxTRANSLATE("Import"), wxTRANSLATE("Import: File"), "pageImportFile",
+		{
+			FieldString("FilePath", &Step::importFilePath, nullptr),
+			FieldBool("FromFolder", &Step::importFromFolder, false),
+			FieldBool("BeforeBatchFile", &Step::importBeforeBatch, false, "chkImportBeforeBatch"),
+		});
+
+	add(AutomationStepType::ImportSliderData, "ImportSliderData", wxTRANSLATE("Import"), wxTRANSLATE("Import: Slider Data"), "pageImportSliderData",
+		{
+			FieldString("SliderDataFile", &Step::sliderDataFile, nullptr),
+			FieldBool("FromFolder", &Step::sliderDataFromFolder, false),
+			FieldBool("MergeSliders", &Step::sliderMerge, false, "chkSliderMerge"),
+			FieldStringList("SliderNames", &Step::sliderNames, "txtSliderNames"),
+		});
+
+	// Project
+	add(AutomationStepType::AddProject, "AddProject", wxTRANSLATE("Project"), wxTRANSLATE("Project: Add Project"), "pageAddProject",
+		ProjectSourceFields(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, "chkAddProjAppendSliders"));
+
+	add(AutomationStepType::ClearProject, "ClearProject", wxTRANSLATE("Project"), wxTRANSLATE("Project: Clear Project"), "pageClearProject");
+	add(AutomationStepType::ClearReference, "ClearReference", wxTRANSLATE("Project"), wxTRANSLATE("Project: Clear Reference"), "pageClearReference");
+
+	add(AutomationStepType::LoadReference, "LoadReference", wxTRANSLATE("Project"), wxTRANSLATE("Project: Load Reference"), "pageLoadReference",
+		ProjectSourceFields(nullptr, nullptr, nullptr, "chkRefLoadAll", "chkRefMergeSliders", "chkRefMergeZaps", "chkRefAppendNewSliders"));
+
+	add(AutomationStepType::SetBaseShape, "SetBaseShape", wxTRANSLATE("Project"), wxTRANSLATE("Project: Set Base Shape"), "pageSetBaseShape");
+
+	add(AutomationStepType::SetReferenceShape, "SetReferenceShape", wxTRANSLATE("Project"), wxTRANSLATE("Project: Set Reference Shape"), "pageSetReferenceShape",
+		{
+			FieldString("ShapeName", &Step::setRefShapeName, "txtSetRefShapeName"),
+			FieldBool("UnsetReference", &Step::setRefUnset, false, "chkSetRefUnset"),
+		});
+
+	// Shapes
+	add(AutomationStepType::ApplyPose, "ApplyPose", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Apply Pose"), "pageApplyPose",
+		{
+			FieldString("PoseName", &Step::poseName, "txtPoseName"),
+		});
+
+	add(AutomationStepType::DeleteShape, "DeleteShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Delete Shape"), "pageDeleteShape");
+
+	add(AutomationStepType::DuplicateShape, "DuplicateShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Duplicate Shape"), "pageDuplicateShape",
+		{
+			FieldString("NewName", &Step::dupNewName, "txtDupNewName"),
+		});
+
+	add(AutomationStepType::ChangePartitions, "ChangePartitions", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Change Partitions"), "pageChangePartitions",
+		{
+			FieldString("SourcePartition", &Step::partitionSource, "choicePartitionSource", AutomationFieldUI::ChoiceString),
+			FieldString("DestinationPartition", &Step::partitionDestination, "choicePartitionDestination", AutomationFieldUI::ChoiceString),
+		});
+
+	add(AutomationStepType::FixBadBones, "FixBadBones", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Fix Bad Bones"), "pageFixBadBones");
+
+	add(AutomationStepType::FixClipping, "FixClipping", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Fix Clipping"), "pageFixClipping",
+		{
+			FieldInt("Mode", &Step::fixClipMode, 0, "choiceFixClipMode", AutomationFieldUI::ChoiceIndex),
+			FieldFloat("Strength", &Step::fixClipStrength, 0.5f, "txtFixClipStrength", AutomationFieldUI::TextPercent),
+			FieldStringList("SliderNames", &Step::fixClipSliderNames, "txtFixClipSliderNames"),
+		});
+
+	add(AutomationStepType::InvertUVs, "InvertUVs", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Invert UVs"), "pageInvertUVs",
+		{
+			FieldBool("InvertU", &Step::invertU, false, "chkInvertU"),
+			FieldBool("InvertV", &Step::invertV, false, "chkInvertV"),
+		});
+
+	add(AutomationStepType::MirrorShape, "MirrorShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Mirror Shape"), "pageMirrorShape",
+		{
+			FieldBool("MirrorX", &Step::mirrorX, true, "chkMirrorX"),
+			FieldBool("MirrorY", &Step::mirrorY, false, "chkMirrorY"),
+			FieldBool("MirrorZ", &Step::mirrorZ, false, "chkMirrorZ"),
+			FieldBool("SwapBonesX", &Step::mirrorSwapBonesX, false, "chkMirrorSwapBonesX"),
+		});
+
+	add(AutomationStepType::RecalcNormals, "RecalcNormals", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Recalculate Normals"), "pageRecalcNormals",
+		{
+			FieldBool("Force", &Step::normalsForce, true, "chkRecalcNormalsForce"),
+			FieldInt("SeamSmooth", &Step::normalsSeamSmooth, -1, "choiceRecalcNormalsSeam", AutomationFieldUI::ChoiceTriState),
+			FieldFloat("SeamAngle", &Step::normalsSeamAngle, -1.0f, "txtRecalcNormalsAngle", AutomationFieldUI::TextOptional, "%0.2f"),
+			FieldInt("LockNormals", &Step::normalsLock, -1, "choiceRecalcNormalsLock", AutomationFieldUI::ChoiceTriState),
+		});
+
+	add(AutomationStepType::RefineMesh, "RefineMesh", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Refine Mesh"), "pageRefineMesh");
+
+	add(AutomationStepType::RenameShape, "RenameShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Rename Shape"), "pageRenameShape",
+		{
+			FieldString("OldName", &Step::renameOldName, "txtRenameOldName"),
+			FieldString("NewName", &Step::renameNewName, "txtRenameNewName"),
+		});
+
+	add(AutomationStepType::ResetTransforms, "ResetTransforms", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Reset Transforms"), "pageResetTransforms");
+
+	add(AutomationStepType::TransformShape, "TransformShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Transform Shape"), "pageTransformShape",
+		{
+			FieldFloat("MoveX", &Step::moveX, 0.0f, "txtMoveX"),
+			FieldFloat("MoveY", &Step::moveY, 0.0f, "txtMoveY"),
+			FieldFloat("MoveZ", &Step::moveZ, 0.0f, "txtMoveZ"),
+			FieldFloat("RotateX", &Step::rotateX, 0.0f, "txtRotateX"),
+			FieldFloat("RotateY", &Step::rotateY, 0.0f, "txtRotateY"),
+			FieldFloat("RotateZ", &Step::rotateZ, 0.0f, "txtRotateZ"),
+			FieldFloat("ScaleX", &Step::scaleX, 1.0f, "txtScaleX"),
+			FieldFloat("ScaleY", &Step::scaleY, 1.0f, "txtScaleY"),
+			FieldFloat("ScaleZ", &Step::scaleZ, 1.0f, "txtScaleZ"),
+			FieldFloat("InflateX", &Step::inflateX, 0.0f, "txtInflateX"),
+			FieldFloat("InflateY", &Step::inflateY, 0.0f, "txtInflateY"),
+			FieldFloat("InflateZ", &Step::inflateZ, 0.0f, "txtInflateZ"),
+		});
+
+	auto& geomProps = add(AutomationStepType::SetGeometryProperties, "SetGeometryProperties", wxTRANSLATE("Shapes"),
+		wxTRANSLATE("Shapes: Set Geometry Properties"), "pageSetGeometryProperties");
+	geomProps.loadExtra = &LoadGeometryProperties;
+	geomProps.saveExtra = &SaveGeometryProperties;
+
+	add(AutomationStepType::SetExtraData, "SetExtraData", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Set Extra Data"), "pageSetExtraData",
+		{
+			FieldString("BlockType", &Step::extraDataType, nullptr),
+			FieldString("Name", &Step::extraDataName, "txtExtraDataName"),
+			FieldString("Value", &Step::extraDataValue, "txtExtraDataValue"),
+		});
+
+	add(AutomationStepType::DeleteExtraData, "DeleteExtraData", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Delete Extra Data"), "pageDeleteExtraData",
+		{
+			FieldString("Name", &Step::extraDataName, "txtDeleteExtraDataName"),
+		});
+
+	// Sliders
+	add(AutomationStepType::ConformSliders, "ConformSliders", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Conform Sliders"), "pageConformSliders",
+		{
+			FieldFloat("ProximityRadius", &Step::conformProximityRadius, 10.0f, "txtConformRadius", AutomationFieldUI::Text, "%.1f"),
+			FieldInt("MaxResults", &Step::conformMaxResults, 10, "txtConformMaxResults"),
+			FieldBool("SmoothResults", &Step::conformSmoothResults, false, "chkConformSmoothResults"),
+			FieldInt("SmoothIterations", &Step::conformSmoothIterations, 2, "txtConformSmoothIterations"),
+			FieldFloat("SmoothStrength", &Step::conformSmoothStrength, 0.5f, "txtConformSmoothStrength", AutomationFieldUI::Text, "%.2f"),
+			FieldBool("NoSqueeze", &Step::conformNoSqueeze, false, "chkConformNoSqueeze"),
+			FieldBool("SolidMode", &Step::conformSolidMode, false, "chkConformSolidMode"),
+			FieldBool("AxisX", &Step::conformAxisX, true, "chkConformAxisX"),
+			FieldBool("AxisY", &Step::conformAxisY, true, "chkConformAxisY"),
+			FieldBool("AxisZ", &Step::conformAxisZ, true, "chkConformAxisZ"),
+			FieldBool("FixClipping", &Step::conformFixClipping, false, "chkConformFixClipping"),
+			FieldFloat("FixClippingStrength", &Step::conformFixClippingStrength, 0.5f, "txtConformFixClipStrength", AutomationFieldUI::TextPercent),
+			FieldStringList("SliderNames", &Step::conformSliderNames, "txtConformSliderNames"),
+		});
+
+	add(AutomationStepType::DeleteSlider, "DeleteSlider", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Delete Slider"), "pageDeleteSlider",
+		{
+			FieldStringList("SliderName", &Step::deleteSliderNames, "txtDeleteSliderName"),
+			FieldBool("Regex", &Step::deleteSliderRegex, false, "chkDeleteSliderRegex"),
+		});
+
+	add(AutomationStepType::SetSliderValues, "SetSliderValues", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Set Slider Values"), "pageSetSliderValues",
+		{
+			FieldStringList("SliderNames", &Step::setSliderNames, "txtSetSliderNames"),
+			FieldFloat("Value", &Step::setSliderValue, 1.0f, "txtSetSliderValue", AutomationFieldUI::TextPercent),
+		});
+
+	add(AutomationStepType::SetSliderProperties, "SetSliderProperties", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Set Slider Properties"), "pageSetSliderProperties",
+		{
+			FieldStringList("SliderNames", &Step::sliderPropNames, "txtSliderPropNames"),
+			FieldInt("Zap", &Step::sliderPropZap, -1, "choiceSliderPropZap", AutomationFieldUI::ChoiceTriState),
+			FieldInt("Hidden", &Step::sliderPropHidden, -1, "choiceSliderPropHidden", AutomationFieldUI::ChoiceTriState),
+			FieldInt("DefaultLo", &Step::sliderPropDefaultLo, -1),
+			FieldInt("DefaultHi", &Step::sliderPropDefaultHi, -1),
+		});
+
+	// Shaders
+	auto& shaderProps = add(AutomationStepType::SetShaderProperties, "SetShaderProperties", wxTRANSLATE("Shaders"),
+		wxTRANSLATE("Shaders: Set Shader Properties"), "pageSetShaderProperties");
+	shaderProps.loadExtra = &LoadShaderProperties;
+	shaderProps.saveExtra = &SaveShaderProperties;
+	shaderProps.substituteExtra = &SubstituteShaderProperties;
+
+	auto& texPaths = add(AutomationStepType::SetTexturePaths, "SetTexturePaths", wxTRANSLATE("Shaders"),
+		wxTRANSLATE("Shaders: Set Texture Paths"), "pageSetTexturePaths");
+	texPaths.loadExtra = &LoadTexturePaths;
+	texPaths.saveExtra = &SaveTexturePaths;
+	texPaths.substituteExtra = &SubstituteTexturePaths;
+
+	// Masks
+	add(AutomationStepType::ClearMask, "ClearMask", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Clear Mask"), "pageClearMask");
+
+	add(AutomationStepType::LoadMask, "LoadMask", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Load Mask"), "pageLoadMask",
+		{
+			FieldString("MaskFile", &Step::loadMaskFile, nullptr),
+			FieldString("MaskName", &Step::loadMaskName, nullptr),
+		});
+
+	// Nodes
+	add(AutomationStepType::RemoveUnusedNodes, "RemoveUnusedNodes", wxTRANSLATE("Nodes"), wxTRANSLATE("Nodes: Remove Unused Nodes"), "pageRemoveUnusedNodes");
+
+	// A missing entry would silently drop the type's parameters and settings page
+	assert(types.size() == AutomationStepTypeCount && "every AutomationStepType needs a table entry");
+
+	return types;
+}
+
+} // namespace
+
+const std::vector<AutomationStepInfo>& GetAutomationStepTypes() {
+	static const std::vector<AutomationStepInfo> types = BuildStepTypes();
+	return types;
+}
+
+const AutomationStepInfo& GetAutomationStepInfo(AutomationStepType type) {
+	const auto& types = GetAutomationStepTypes();
+	for (const auto& info : types)
+		if (info.type == type)
+			return info;
+
+	// Every enum value has a table entry; fall back to the first one so callers
+	// never see a dangling reference if that ever stops being true.
+	return types.front();
+}
+
+std::string AutomationStepTypeToString(AutomationStepType type) {
+	return GetAutomationStepInfo(type).xmlName;
+}
+
 AutomationStepType AutomationStepTypeFromString(const std::string& str) {
-	if (str == "AddCustomBone") return AutomationStepType::AddCustomBone;
-	if (str == "CopyBoneWeights") return AutomationStepType::CopyBoneWeights;
-	if (str == "DeleteBones") return AutomationStepType::DeleteBones;
-	if (str == "EditBone") return AutomationStepType::EditBone;
-	if (str == "RemoveSkinning") return AutomationStepType::RemoveSkinning;
-	if (str == "ExportFile") return AutomationStepType::ExportFile;
-	if (str == "SaveProject") return AutomationStepType::SaveProject;
-	if (str == "ImportFile") return AutomationStepType::ImportFile;
-	if (str == "ImportSliderData") return AutomationStepType::ImportSliderData;
-	if (str == "AddProject") return AutomationStepType::AddProject;
-	if (str == "ClearProject") return AutomationStepType::ClearProject;
-	if (str == "ClearReference") return AutomationStepType::ClearReference;
-	if (str == "LoadReference") return AutomationStepType::LoadReference;
-	if (str == "SetBaseShape") return AutomationStepType::SetBaseShape;
-	if (str == "SetReferenceShape") return AutomationStepType::SetReferenceShape;
-	if (str == "ApplyPose") return AutomationStepType::ApplyPose;
-	if (str == "DeleteShape") return AutomationStepType::DeleteShape;
-	if (str == "DuplicateShape") return AutomationStepType::DuplicateShape;
-	if (str == "ChangePartitions") return AutomationStepType::ChangePartitions;
-	if (str == "InvertUVs") return AutomationStepType::InvertUVs;
-	if (str == "MirrorShape") return AutomationStepType::MirrorShape;
-	if (str == "RecalcNormals") return AutomationStepType::RecalcNormals;
-	if (str == "RefineMesh") return AutomationStepType::RefineMesh;
-	if (str == "RenameShape") return AutomationStepType::RenameShape;
-	if (str == "ResetTransforms") return AutomationStepType::ResetTransforms;
-	if (str == "TransformShape") return AutomationStepType::TransformShape;
-	if (str == "SetGeometryProperties") return AutomationStepType::SetGeometryProperties;
-	if (str == "SetExtraData") return AutomationStepType::SetExtraData;
-	if (str == "DeleteExtraData") return AutomationStepType::DeleteExtraData;
-	if (str == "ConformSliders") return AutomationStepType::ConformSliders;
-	if (str == "DeleteSlider") return AutomationStepType::DeleteSlider;
-	if (str == "SetSliderValues") return AutomationStepType::SetSliderValues;
-	if (str == "SetSliderProperties") return AutomationStepType::SetSliderProperties;
-	if (str == "SetShaderProperties") return AutomationStepType::SetShaderProperties;
-	if (str == "SetTexturePaths") return AutomationStepType::SetTexturePaths;
-	if (str == "ClearMask") return AutomationStepType::ClearMask;
-	if (str == "LoadMask") return AutomationStepType::LoadMask;
-	if (str == "RemoveUnusedNodes") return AutomationStepType::RemoveUnusedNodes;
-	if (str == "FixClipping") return AutomationStepType::FixClipping;
-	if (str == "FixBadBones") return AutomationStepType::FixBadBones;
+	for (const auto& info : GetAutomationStepTypes())
+		if (str == info.xmlName)
+			return info.type;
+
 	return AutomationStepType::LoadReference;
 }
 
@@ -281,380 +667,36 @@ int AutomationScript::Load(const std::string& fileName) {
 
 		step.targetRegex = GetChildBool(stepElem, "TargetRegex", false);
 
-		switch (step.type) {
-			case AutomationStepType::ClearProject:
-				// No additional params
-				break;
-
-			case AutomationStepType::LoadReference:
-			case AutomationStepType::AddProject: {
-				const char* src = GetChildText(stepElem, "SourceFile");
-				if (src)
-					step.refSourceFile = src;
-				const char* set = GetChildText(stepElem, "Set");
-				if (set)
-					step.refSet = set;
-				const char* shape = GetChildText(stepElem, "Shape");
-				if (shape)
-					step.refShape = shape;
-				step.refLoadAll = GetChildBool(stepElem, "LoadAll", false);
-				step.refMergeSliders = GetChildBool(stepElem, "MergeSliders", true);
-				step.refMergeZaps = GetChildBool(stepElem, "MergeZaps", true);
-				step.refAppendNewSliders = GetChildBool(stepElem, "AppendNewSliders", false);
-				break;
-			}
-			case AutomationStepType::ConformSliders: {
-				step.conformProximityRadius = GetChildFloat(stepElem, "ProximityRadius", 10.0f);
-				step.conformMaxResults = GetChildInt(stepElem, "MaxResults", 10);
-				step.conformSmoothResults = GetChildBool(stepElem, "SmoothResults", false);
-				step.conformSmoothIterations = GetChildInt(stepElem, "SmoothIterations", 2);
-				step.conformSmoothStrength = GetChildFloat(stepElem, "SmoothStrength", 0.5f);
-				step.conformNoSqueeze = GetChildBool(stepElem, "NoSqueeze", false);
-				step.conformSolidMode = GetChildBool(stepElem, "SolidMode", false);
-				step.conformAxisX = GetChildBool(stepElem, "AxisX", true);
-				step.conformAxisY = GetChildBool(stepElem, "AxisY", true);
-				step.conformAxisZ = GetChildBool(stepElem, "AxisZ", true);
-				step.conformFixClipping = GetChildBool(stepElem, "FixClipping", false);
-				step.conformFixClippingStrength = GetChildFloat(stepElem, "FixClippingStrength", 0.5f);
-				const char* csn = GetChildText(stepElem, "SliderNames");
-				if (csn)
-					step.conformSliderNames = SplitCommaSeparated(csn);
-				break;
-			}
-			case AutomationStepType::CopyBoneWeights: {
-				step.weightProximityRadius = GetChildFloat(stepElem, "ProximityRadius", 10.0f);
-				step.weightMaxResults = GetChildInt(stepElem, "MaxResults", 10);
-				const char* bones = GetChildText(stepElem, "BoneList");
-				if (bones)
-					step.weightBoneList = SplitCommaSeparated(bones);
-				break;
-			}
-			case AutomationStepType::ImportSliderData: {
-				const char* sdf = GetChildText(stepElem, "SliderDataFile");
-				if (sdf)
-					step.sliderDataFile = sdf;
-				step.sliderDataFromFolder = GetChildBool(stepElem, "FromFolder", false);
-				step.sliderMerge = GetChildBool(stepElem, "MergeSliders", false);
-				const char* sn = GetChildText(stepElem, "SliderNames");
-				if (sn)
-					step.sliderNames = SplitCommaSeparated(sn);
-				break;
-			}
-			case AutomationStepType::SetSliderValues: {
-				const char* svn = GetChildText(stepElem, "SliderNames");
-				if (svn)
-					step.setSliderNames = SplitCommaSeparated(svn);
-				step.setSliderValue = GetChildFloat(stepElem, "Value", 1.0f);
-				break;
-			}
-			case AutomationStepType::ImportFile: {
-				const char* filePath = GetChildText(stepElem, "FilePath");
-				if (filePath)
-					step.importFilePath = filePath;
-				step.importFromFolder = GetChildBool(stepElem, "FromFolder", false);
-				step.importBeforeBatch = GetChildBool(stepElem, "BeforeBatchFile", false);
-				break;
-			}
-			case AutomationStepType::DeleteShape:
-				// No additional params (uses target meshes)
-				break;
-			case AutomationStepType::RenameShape: {
-				const char* on = GetChildText(stepElem, "OldName");
-				if (on)
-					step.renameOldName = on;
-				const char* nn = GetChildText(stepElem, "NewName");
-				if (nn)
-					step.renameNewName = nn;
-				break;
-			}
-			case AutomationStepType::DeleteSlider: {
-				const char* sn = GetChildText(stepElem, "SliderName");
-				if (sn)
-					step.deleteSliderNames = SplitCommaSeparated(sn);
-				const char* re = GetChildText(stepElem, "Regex");
-				if (re)
-					step.deleteSliderRegex = (std::string(re) == "true");
-				break;
-			}
-			case AutomationStepType::SetReferenceShape: {
-				const char* sn = GetChildText(stepElem, "ShapeName");
-				if (sn)
-					step.setRefShapeName = sn;
-				const char* ur = GetChildText(stepElem, "UnsetReference");
-				if (ur)
-					step.setRefUnset = (std::string(ur) == "true");
-				break;
-			}
-			case AutomationStepType::RefineMesh:
-			case AutomationStepType::RemoveSkinning:
-				// No additional params (uses target meshes)
-				break;
-			case AutomationStepType::SetBaseShape:
-			case AutomationStepType::ClearReference:
-				// No additional params
-				break;
-			case AutomationStepType::TransformShape: {
-				step.moveX = GetChildFloat(stepElem, "MoveX", 0.0f);
-				step.moveY = GetChildFloat(stepElem, "MoveY", 0.0f);
-				step.moveZ = GetChildFloat(stepElem, "MoveZ", 0.0f);
-				step.rotateX = GetChildFloat(stepElem, "RotateX", 0.0f);
-				step.rotateY = GetChildFloat(stepElem, "RotateY", 0.0f);
-				step.rotateZ = GetChildFloat(stepElem, "RotateZ", 0.0f);
-				step.scaleX = GetChildFloat(stepElem, "ScaleX", 1.0f);
-				step.scaleY = GetChildFloat(stepElem, "ScaleY", 1.0f);
-				step.scaleZ = GetChildFloat(stepElem, "ScaleZ", 1.0f);
-				step.inflateX = GetChildFloat(stepElem, "InflateX", 0.0f);
-				step.inflateY = GetChildFloat(stepElem, "InflateY", 0.0f);
-				step.inflateZ = GetChildFloat(stepElem, "InflateZ", 0.0f);
-				break;
-			}
-			case AutomationStepType::InvertUVs: {
-				step.invertU = GetChildBool(stepElem, "InvertU", false);
-				step.invertV = GetChildBool(stepElem, "InvertV", false);
-				break;
-			}
-			case AutomationStepType::DeleteBones: {
-				const char* bn = GetChildText(stepElem, "BoneNames");
-				if (bn)
-					step.deleteBoneNames = SplitCommaSeparated(bn);
-				step.deleteBoneFromProject = GetChildBool(stepElem, "FromProject", true);
-				break;
-			}
-			case AutomationStepType::AddCustomBone: {
-				const char* bn = GetChildText(stepElem, "BoneName");
-				if (bn)
-					step.addBoneName = bn;
-				const char* pb = GetChildText(stepElem, "ParentBone");
-				if (pb)
-					step.addBoneParent = pb;
-				step.addBoneTransX = GetChildFloat(stepElem, "TransX", 0.0f);
-				step.addBoneTransY = GetChildFloat(stepElem, "TransY", 0.0f);
-				step.addBoneTransZ = GetChildFloat(stepElem, "TransZ", 0.0f);
-				step.addBoneRotX = GetChildFloat(stepElem, "RotX", 0.0f);
-				step.addBoneRotY = GetChildFloat(stepElem, "RotY", 0.0f);
-				step.addBoneRotZ = GetChildFloat(stepElem, "RotZ", 0.0f);
-				break;
-			}
-			case AutomationStepType::EditBone: {
-				const char* bn = GetChildText(stepElem, "BoneName");
-				if (bn)
-					step.editBoneName = bn;
-				const char* pb = GetChildText(stepElem, "ParentBone");
-				if (pb)
-					step.editBoneParent = pb;
-				step.editBoneTransX = GetChildFloat(stepElem, "TransX", 0.0f);
-				step.editBoneTransY = GetChildFloat(stepElem, "TransY", 0.0f);
-				step.editBoneTransZ = GetChildFloat(stepElem, "TransZ", 0.0f);
-				step.editBoneRotX = GetChildFloat(stepElem, "RotX", 0.0f);
-				step.editBoneRotY = GetChildFloat(stepElem, "RotY", 0.0f);
-				step.editBoneRotZ = GetChildFloat(stepElem, "RotZ", 0.0f);
-				break;
-			}
-			case AutomationStepType::ApplyPose: {
-				const char* pn = GetChildText(stepElem, "PoseName");
-				if (pn)
-					step.poseName = pn;
-				break;
-			}
-			case AutomationStepType::SaveProject: {
-				const char* dn = GetChildText(stepElem, "DisplayName");
-				if (dn)
-					step.saveName = dn;
-				const char* ofn = GetChildText(stepElem, "OutputFileName");
-				if (ofn)
-					step.saveOutputFileName = ofn;
-				const char* odp = GetChildText(stepElem, "OutputDataPath");
-				if (odp)
-					step.saveOutputDataPath = odp;
-				const char* ssf = GetChildText(stepElem, "SliderSetFile");
-				if (ssf)
-					step.saveSliderSetFile = ssf;
-				const char* sdf = GetChildText(stepElem, "ShapeDataFolder");
-				if (sdf)
-					step.saveShapeDataFolder = sdf;
-				const char* sdfile = GetChildText(stepElem, "ShapeDataFile");
-				if (sdfile)
-					step.saveShapeDataFile = sdfile;
-				step.saveGenWeights = GetChildBool(stepElem, "GenWeights", true);
-				step.saveAutoCopyRef = GetChildBool(stepElem, "AutoCopyRef", true);
-				step.saveCopyRefFromProject = GetChildBool(stepElem, "CopyRefFromProject", false);
-				const char* crsn = GetChildText(stepElem, "CopyRefShapeName");
-				if (crsn)
-					step.saveCopyRefShapeName = crsn;
-				step.saveUseOriginal = GetChildBool(stepElem, "UseOriginal", false);
-				const char* srf = GetChildText(stepElem, "ReplaceFrom");
-				if (srf)
-					step.saveReplaceFrom = srf;
-				const char* srt = GetChildText(stepElem, "ReplaceTo");
-				if (srt)
-					step.saveReplaceTo = srt;
-				const char* ssuffix = GetChildText(stepElem, "Suffix");
-				if (ssuffix)
-					step.saveSuffix = ssuffix;
-				break;
-			}
-			case AutomationStepType::ExportFile: {
-				const char* efp = GetChildText(stepElem, "FilePath");
-				if (efp)
-					step.exportFilePath = efp;
-				step.exportWithRef = GetChildBool(stepElem, "WithRef", true);
-				step.exportUseOriginalPath = GetChildBool(stepElem, "UseOriginalPath", false);
-				const char* epre = GetChildText(stepElem, "Prefix");
-				if (epre)
-					step.exportPrefix = epre;
-				const char* esuf = GetChildText(stepElem, "Suffix");
-				if (esuf)
-					step.exportSuffix = esuf;
-				break;
-			}
-			case AutomationStepType::ResetTransforms:
-				// No additional params
-				break;
-			case AutomationStepType::DuplicateShape: {
-				const char* dn = GetChildText(stepElem, "NewName");
-				if (dn)
-					step.dupNewName = dn;
-				break;
-			}
-			case AutomationStepType::ChangePartitions: {
-				const char* source = GetChildText(stepElem, "SourcePartition");
-				if (source)
-					step.partitionSource = source;
-				const char* destination = GetChildText(stepElem, "DestinationPartition");
-				if (destination)
-					step.partitionDestination = destination;
-				break;
-			}
-			case AutomationStepType::MirrorShape: {
-				step.mirrorX = GetChildBool(stepElem, "MirrorX", true);
-				step.mirrorY = GetChildBool(stepElem, "MirrorY", false);
-				step.mirrorZ = GetChildBool(stepElem, "MirrorZ", false);
-				step.mirrorSwapBonesX = GetChildBool(stepElem, "SwapBonesX", false);
-				break;
-			}
-			case AutomationStepType::RecalcNormals: {
-				step.normalsForce = GetChildBool(stepElem, "Force", true);
-				step.normalsSeamSmooth = GetChildInt(stepElem, "SeamSmooth", -1);
-				step.normalsSeamAngle = GetChildFloat(stepElem, "SeamAngle", -1.0f);
-				step.normalsLock = GetChildInt(stepElem, "LockNormals", -1);
-				break;
-			}
-			case AutomationStepType::ClearMask:
-				// No additional params (uses target meshes)
-				break;
-			case AutomationStepType::LoadMask: {
-				const char* mf = GetChildText(stepElem, "MaskFile");
-				if (mf)
-					step.loadMaskFile = mf;
-				const char* mn = GetChildText(stepElem, "MaskName");
-				if (mn)
-					step.loadMaskName = mn;
-				break;
-			}
-			case AutomationStepType::SetSliderProperties: {
-				const char* sn = GetChildText(stepElem, "SliderNames");
-				if (sn)
-					step.sliderPropNames = SplitCommaSeparated(sn);
-				step.sliderPropZap = GetChildInt(stepElem, "Zap", -1);
-				step.sliderPropHidden = GetChildInt(stepElem, "Hidden", -1);
-				step.sliderPropDefaultLo = GetChildInt(stepElem, "DefaultLo", -1);
-				step.sliderPropDefaultHi = GetChildInt(stepElem, "DefaultHi", -1);
-				break;
-			}
-			case AutomationStepType::SetShaderProperties: {
-				XMLElement* shaderPropsElem = stepElem->FirstChildElement("ShaderProperties");
-				if (shaderPropsElem) {
-					XMLElement* propElem = shaderPropsElem->FirstChildElement("Property");
-					while (propElem) {
-						AutomationStep::ShaderProperty prop;
-						const char* name = propElem->Attribute("name");
-						if (name) {
-							prop.name = name;
-							const char* stringValue = propElem->Attribute("stringValue");
-							if (stringValue)
-								prop.stringValue = stringValue;
-							prop.value1 = propElem->FloatAttribute("value1", 0.0f);
-							prop.value2 = propElem->FloatAttribute("value2", 0.0f);
-							prop.value3 = propElem->FloatAttribute("value3", 0.0f);
-							prop.value4 = propElem->FloatAttribute("value4", 1.0f);
-							step.shaderProperties.push_back(std::move(prop));
-						}
-						propElem = propElem->NextSiblingElement("Property");
-					}
+		// Type specific parameters come from the step type's field table
+		const AutomationStepInfo& info = GetAutomationStepInfo(step.type);
+		for (const AutomationField& field : info.fields) {
+			switch (field.kind) {
+				case AutomationFieldKind::Bool:
+					step.*field.member.asBool = GetChildBool(stepElem, field.xmlName, field.defaultValue.asBool);
+					break;
+				case AutomationFieldKind::Int:
+					step.*field.member.asInt = GetChildInt(stepElem, field.xmlName, field.defaultValue.asInt);
+					break;
+				case AutomationFieldKind::Float:
+					step.*field.member.asFloat = GetChildFloat(stepElem, field.xmlName, field.defaultValue.asFloat);
+					break;
+				case AutomationFieldKind::String: {
+					const char* text = GetChildText(stepElem, field.xmlName);
+					if (text)
+						step.*field.member.asString = text;
+					break;
 				}
-				break;
-			}
-			case AutomationStepType::SetGeometryProperties: {
-				XMLElement* geometryPropsElem = stepElem->FirstChildElement("GeometryProperties");
-				if (geometryPropsElem) {
-					XMLElement* propElem = geometryPropsElem->FirstChildElement("Property");
-					while (propElem) {
-						AutomationStep::GeometryProperty prop;
-						const char* name = propElem->Attribute("name");
-						if (name) {
-							prop.name = name;
-							prop.enabled = propElem->BoolAttribute("enabled", false);
-							step.geometryProperties.push_back(std::move(prop));
-						}
-						propElem = propElem->NextSiblingElement("Property");
-					}
+				case AutomationFieldKind::StringList: {
+					const char* text = GetChildText(stepElem, field.xmlName);
+					if (text)
+						step.*field.member.asStringList = SplitCommaSeparated(text);
+					break;
 				}
-				break;
 			}
-			case AutomationStepType::SetExtraData: {
-				const char* type = GetChildText(stepElem, "BlockType");
-				if (type)
-					step.extraDataType = type;
-				const char* name = GetChildText(stepElem, "Name");
-				if (name)
-					step.extraDataName = name;
-				const char* value = GetChildText(stepElem, "Value");
-				if (value)
-					step.extraDataValue = value;
-				break;
-			}
-			case AutomationStepType::DeleteExtraData: {
-				const char* name = GetChildText(stepElem, "Name");
-				if (name)
-					step.extraDataName = name;
-				break;
-			}
-			case AutomationStepType::SetTexturePaths: {
-				XMLElement* texturePathsElem = stepElem->FirstChildElement("TexturePaths");
-				if (texturePathsElem) {
-					XMLElement* pathElem = texturePathsElem->FirstChildElement("Path");
-					while (pathElem) {
-						AutomationStep::TexturePath path;
-						path.index = pathElem->IntAttribute("index", -1);
-						const char* name = pathElem->Attribute("name");
-						if (name)
-							path.name = name;
-						const char* value = pathElem->Attribute("value");
-						if (value)
-							path.path = value;
-
-						if (path.index >= 0 || !path.name.empty())
-							step.texturePaths.push_back(std::move(path));
-						pathElem = pathElem->NextSiblingElement("Path");
-					}
-				}
-				break;
-			}
-			case AutomationStepType::RemoveUnusedNodes:
-				// No additional params
-				break;
-			case AutomationStepType::FixClipping: {
-				step.fixClipMode = GetChildInt(stepElem, "Mode", 0);
-				step.fixClipStrength = GetChildFloat(stepElem, "Strength", 0.5f);
-				const char* sn = GetChildText(stepElem, "SliderNames");
-				if (sn)
-					step.fixClipSliderNames = SplitCommaSeparated(sn);
-				break;
-			}
-			case AutomationStepType::FixBadBones:
-				// No additional params
-				break;
 		}
+
+		if (info.loadExtra)
+			info.loadExtra(step, stepElem);
 
 		steps.push_back(std::move(step));
 		stepElem = stepElem->NextSiblingElement("Step");
@@ -716,295 +758,33 @@ int AutomationScript::Save(const std::string& fileName) {
 
 		SetChildBool(doc, stepElem, "TargetRegex", step.targetRegex, false);
 
-		switch (step.type) {
-			case AutomationStepType::ClearProject:
-				// No additional params
-				break;
-
-			case AutomationStepType::LoadReference:
-			case AutomationStepType::AddProject:
-				SetChildText(doc, stepElem, "SourceFile", step.refSourceFile);
-				SetChildText(doc, stepElem, "Set", step.refSet);
-				SetChildText(doc, stepElem, "Shape", step.refShape);
-				SetChildBool(doc, stepElem, "LoadAll", step.refLoadAll, false);
-				SetChildBool(doc, stepElem, "MergeSliders", step.refMergeSliders, true);
-				SetChildBool(doc, stepElem, "MergeZaps", step.refMergeZaps, true);
-				SetChildBool(doc, stepElem, "AppendNewSliders", step.refAppendNewSliders, false);
-				break;
-
-			case AutomationStepType::ConformSliders:
-				SetChildFloat(doc, stepElem, "ProximityRadius", step.conformProximityRadius, 10.0f);
-				SetChildInt(doc, stepElem, "MaxResults", step.conformMaxResults, 10);
-				SetChildBool(doc, stepElem, "SmoothResults", step.conformSmoothResults, false);
-				SetChildInt(doc, stepElem, "SmoothIterations", step.conformSmoothIterations, 2);
-				SetChildFloat(doc, stepElem, "SmoothStrength", step.conformSmoothStrength, 0.5f);
-				SetChildBool(doc, stepElem, "NoSqueeze", step.conformNoSqueeze, false);
-				SetChildBool(doc, stepElem, "SolidMode", step.conformSolidMode, false);
-				SetChildBool(doc, stepElem, "AxisX", step.conformAxisX, true);
-				SetChildBool(doc, stepElem, "AxisY", step.conformAxisY, true);
-				SetChildBool(doc, stepElem, "AxisZ", step.conformAxisZ, true);
-				SetChildBool(doc, stepElem, "FixClipping", step.conformFixClipping, false);
-				SetChildFloat(doc, stepElem, "FixClippingStrength", step.conformFixClippingStrength, 0.5f);
-				if (!step.conformSliderNames.empty())
-					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.conformSliderNames, ", "));
-				break;
-
-			case AutomationStepType::CopyBoneWeights:
-				SetChildFloat(doc, stepElem, "ProximityRadius", step.weightProximityRadius, 10.0f);
-				SetChildInt(doc, stepElem, "MaxResults", step.weightMaxResults, 10);
-				if (!step.weightBoneList.empty())
-					SetChildText(doc, stepElem, "BoneList", JoinStrings(step.weightBoneList, ", "));
-				break;
-
-			case AutomationStepType::ImportSliderData:
-				SetChildText(doc, stepElem, "SliderDataFile", step.sliderDataFile);
-				SetChildBool(doc, stepElem, "FromFolder", step.sliderDataFromFolder, false);
-				SetChildBool(doc, stepElem, "MergeSliders", step.sliderMerge, false);
-				if (!step.sliderNames.empty())
-					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.sliderNames, ", "));
-				break;
-
-			case AutomationStepType::ImportFile:
-				SetChildText(doc, stepElem, "FilePath", step.importFilePath);
-				SetChildBool(doc, stepElem, "FromFolder", step.importFromFolder, false);
-				SetChildBool(doc, stepElem, "BeforeBatchFile", step.importBeforeBatch, false);
-				break;
-
-			case AutomationStepType::SetSliderValues:
-				if (!step.setSliderNames.empty())
-					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.setSliderNames, ", "));
-				SetChildFloat(doc, stepElem, "Value", step.setSliderValue, 1.0f);
-				break;
-
-			case AutomationStepType::DeleteShape:
-				// No additional params (uses target meshes)
-				break;
-
-			case AutomationStepType::RenameShape:
-				SetChildText(doc, stepElem, "OldName", step.renameOldName);
-				SetChildText(doc, stepElem, "NewName", step.renameNewName);
-				break;
-
-			case AutomationStepType::DeleteSlider:
-				if (!step.deleteSliderNames.empty())
-					SetChildText(doc, stepElem, "SliderName", JoinStrings(step.deleteSliderNames, ", "));
-				if (step.deleteSliderRegex)
-					SetChildText(doc, stepElem, "Regex", "true");
-				break;
-
-			case AutomationStepType::SetReferenceShape:
-				SetChildText(doc, stepElem, "ShapeName", step.setRefShapeName);
-				if (step.setRefUnset)
-					SetChildText(doc, stepElem, "UnsetReference", "true");
-				break;
-
-			case AutomationStepType::RefineMesh:
-			case AutomationStepType::SetBaseShape:
-			case AutomationStepType::ClearReference:
-			case AutomationStepType::RemoveSkinning:
-				// No additional params
-				break;
-
-			case AutomationStepType::TransformShape:
-				SetChildFloat(doc, stepElem, "MoveX", step.moveX, 0.0f);
-				SetChildFloat(doc, stepElem, "MoveY", step.moveY, 0.0f);
-				SetChildFloat(doc, stepElem, "MoveZ", step.moveZ, 0.0f);
-				SetChildFloat(doc, stepElem, "RotateX", step.rotateX, 0.0f);
-				SetChildFloat(doc, stepElem, "RotateY", step.rotateY, 0.0f);
-				SetChildFloat(doc, stepElem, "RotateZ", step.rotateZ, 0.0f);
-				SetChildFloat(doc, stepElem, "ScaleX", step.scaleX, 1.0f);
-				SetChildFloat(doc, stepElem, "ScaleY", step.scaleY, 1.0f);
-				SetChildFloat(doc, stepElem, "ScaleZ", step.scaleZ, 1.0f);
-				SetChildFloat(doc, stepElem, "InflateX", step.inflateX, 0.0f);
-				SetChildFloat(doc, stepElem, "InflateY", step.inflateY, 0.0f);
-				SetChildFloat(doc, stepElem, "InflateZ", step.inflateZ, 0.0f);
-				break;
-
-			case AutomationStepType::InvertUVs:
-				SetChildBool(doc, stepElem, "InvertU", step.invertU, false);
-				SetChildBool(doc, stepElem, "InvertV", step.invertV, false);
-				break;
-
-			case AutomationStepType::DeleteBones:
-				if (!step.deleteBoneNames.empty())
-					SetChildText(doc, stepElem, "BoneNames", JoinStrings(step.deleteBoneNames, ", "));
-				SetChildBool(doc, stepElem, "FromProject", step.deleteBoneFromProject, true);
-				break;
-
-			case AutomationStepType::AddCustomBone:
-				SetChildText(doc, stepElem, "BoneName", step.addBoneName);
-				SetChildText(doc, stepElem, "ParentBone", step.addBoneParent);
-				SetChildFloat(doc, stepElem, "TransX", step.addBoneTransX, 0.0f);
-				SetChildFloat(doc, stepElem, "TransY", step.addBoneTransY, 0.0f);
-				SetChildFloat(doc, stepElem, "TransZ", step.addBoneTransZ, 0.0f);
-				SetChildFloat(doc, stepElem, "RotX", step.addBoneRotX, 0.0f);
-				SetChildFloat(doc, stepElem, "RotY", step.addBoneRotY, 0.0f);
-				SetChildFloat(doc, stepElem, "RotZ", step.addBoneRotZ, 0.0f);
-				break;
-
-			case AutomationStepType::EditBone:
-				SetChildText(doc, stepElem, "BoneName", step.editBoneName);
-				SetChildText(doc, stepElem, "ParentBone", step.editBoneParent);
-				SetChildFloat(doc, stepElem, "TransX", step.editBoneTransX, 0.0f);
-				SetChildFloat(doc, stepElem, "TransY", step.editBoneTransY, 0.0f);
-				SetChildFloat(doc, stepElem, "TransZ", step.editBoneTransZ, 0.0f);
-				SetChildFloat(doc, stepElem, "RotX", step.editBoneRotX, 0.0f);
-				SetChildFloat(doc, stepElem, "RotY", step.editBoneRotY, 0.0f);
-				SetChildFloat(doc, stepElem, "RotZ", step.editBoneRotZ, 0.0f);
-				break;
-
-			case AutomationStepType::ApplyPose:
-				SetChildText(doc, stepElem, "PoseName", step.poseName);
-				break;
-
-			case AutomationStepType::SaveProject:
-				SetChildText(doc, stepElem, "DisplayName", step.saveName);
-				SetChildText(doc, stepElem, "OutputFileName", step.saveOutputFileName);
-				SetChildText(doc, stepElem, "OutputDataPath", step.saveOutputDataPath);
-				SetChildText(doc, stepElem, "SliderSetFile", step.saveSliderSetFile);
-				SetChildText(doc, stepElem, "ShapeDataFolder", step.saveShapeDataFolder);
-				SetChildText(doc, stepElem, "ShapeDataFile", step.saveShapeDataFile);
-				SetChildBool(doc, stepElem, "GenWeights", step.saveGenWeights, true);
-				SetChildBool(doc, stepElem, "AutoCopyRef", step.saveAutoCopyRef, true);
-				SetChildBool(doc, stepElem, "CopyRefFromProject", step.saveCopyRefFromProject, false);
-				SetChildText(doc, stepElem, "CopyRefShapeName", step.saveCopyRefShapeName);
-				SetChildBool(doc, stepElem, "UseOriginal", step.saveUseOriginal, false);
-				SetChildText(doc, stepElem, "ReplaceFrom", step.saveReplaceFrom);
-				SetChildText(doc, stepElem, "ReplaceTo", step.saveReplaceTo);
-				SetChildText(doc, stepElem, "Suffix", step.saveSuffix);
-				break;
-
-			case AutomationStepType::ExportFile:
-				SetChildText(doc, stepElem, "FilePath", step.exportFilePath);
-				SetChildBool(doc, stepElem, "WithRef", step.exportWithRef, true);
-				SetChildBool(doc, stepElem, "UseOriginalPath", step.exportUseOriginalPath, false);
-				SetChildText(doc, stepElem, "Prefix", step.exportPrefix);
-				SetChildText(doc, stepElem, "Suffix", step.exportSuffix);
-				break;
-
-			case AutomationStepType::ResetTransforms:
-				// No additional params
-				break;
-
-			case AutomationStepType::DuplicateShape:
-				SetChildText(doc, stepElem, "NewName", step.dupNewName);
-				break;
-
-			case AutomationStepType::ChangePartitions:
-				SetChildText(doc, stepElem, "SourcePartition", step.partitionSource);
-				SetChildText(doc, stepElem, "DestinationPartition", step.partitionDestination);
-				break;
-
-			case AutomationStepType::MirrorShape:
-				SetChildBool(doc, stepElem, "MirrorX", step.mirrorX, true);
-				SetChildBool(doc, stepElem, "MirrorY", step.mirrorY, false);
-				SetChildBool(doc, stepElem, "MirrorZ", step.mirrorZ, false);
-				SetChildBool(doc, stepElem, "SwapBonesX", step.mirrorSwapBonesX, false);
-				break;
-
-			case AutomationStepType::RecalcNormals:
-				SetChildBool(doc, stepElem, "Force", step.normalsForce, true);
-				SetChildInt(doc, stepElem, "SeamSmooth", step.normalsSeamSmooth, -1);
-				SetChildFloat(doc, stepElem, "SeamAngle", step.normalsSeamAngle, -1.0f);
-				SetChildInt(doc, stepElem, "LockNormals", step.normalsLock, -1);
-				break;
-
-			case AutomationStepType::ClearMask:
-				// No additional params (uses target meshes)
-				break;
-
-			case AutomationStepType::LoadMask:
-				SetChildText(doc, stepElem, "MaskFile", step.loadMaskFile);
-				SetChildText(doc, stepElem, "MaskName", step.loadMaskName);
-				break;
-
-			case AutomationStepType::SetSliderProperties:
-				if (!step.sliderPropNames.empty())
-					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.sliderPropNames, ", "));
-				SetChildInt(doc, stepElem, "Zap", step.sliderPropZap, -1);
-				SetChildInt(doc, stepElem, "Hidden", step.sliderPropHidden, -1);
-				SetChildInt(doc, stepElem, "DefaultLo", step.sliderPropDefaultLo, -1);
-				SetChildInt(doc, stepElem, "DefaultHi", step.sliderPropDefaultHi, -1);
-				break;
-
-			case AutomationStepType::SetShaderProperties:
-				if (!step.shaderProperties.empty()) {
-					XMLElement* shaderPropsElem = doc.NewElement("ShaderProperties");
-					stepElem->InsertEndChild(shaderPropsElem);
-					for (const auto& prop : step.shaderProperties) {
-						if (prop.name.empty())
-							continue;
-						XMLElement* propElem = doc.NewElement("Property");
-						propElem->SetAttribute("name", prop.name.c_str());
-						if (!prop.stringValue.empty())
-							propElem->SetAttribute("stringValue", prop.stringValue.c_str());
-						propElem->SetAttribute("value1", prop.value1);
-						propElem->SetAttribute("value2", prop.value2);
-						propElem->SetAttribute("value3", prop.value3);
-						propElem->SetAttribute("value4", prop.value4);
-						shaderPropsElem->InsertEndChild(propElem);
-					}
+		// Type specific parameters come from the step type's field table
+		const AutomationStepInfo& info = GetAutomationStepInfo(step.type);
+		for (const AutomationField& field : info.fields) {
+			switch (field.kind) {
+				case AutomationFieldKind::Bool:
+					SetChildBool(doc, stepElem, field.xmlName, step.*field.member.asBool, field.defaultValue.asBool);
+					break;
+				case AutomationFieldKind::Int:
+					SetChildInt(doc, stepElem, field.xmlName, step.*field.member.asInt, field.defaultValue.asInt);
+					break;
+				case AutomationFieldKind::Float:
+					SetChildFloat(doc, stepElem, field.xmlName, step.*field.member.asFloat, field.defaultValue.asFloat);
+					break;
+				case AutomationFieldKind::String:
+					SetChildText(doc, stepElem, field.xmlName, step.*field.member.asString);
+					break;
+				case AutomationFieldKind::StringList: {
+					const std::vector<std::string>& values = step.*field.member.asStringList;
+					if (!values.empty())
+						SetChildText(doc, stepElem, field.xmlName, JoinStrings(values, ", "));
+					break;
 				}
-				break;
-
-			case AutomationStepType::SetGeometryProperties:
-				if (!step.geometryProperties.empty()) {
-					XMLElement* geometryPropsElem = doc.NewElement("GeometryProperties");
-					stepElem->InsertEndChild(geometryPropsElem);
-					for (const auto& prop : step.geometryProperties) {
-						if (prop.name.empty())
-							continue;
-						XMLElement* propElem = doc.NewElement("Property");
-						propElem->SetAttribute("name", prop.name.c_str());
-						propElem->SetAttribute("enabled", prop.enabled);
-						geometryPropsElem->InsertEndChild(propElem);
-					}
-				}
-				break;
-
-			case AutomationStepType::SetExtraData:
-				SetChildText(doc, stepElem, "BlockType", step.extraDataType);
-				SetChildText(doc, stepElem, "Name", step.extraDataName);
-				SetChildText(doc, stepElem, "Value", step.extraDataValue);
-				break;
-
-			case AutomationStepType::DeleteExtraData:
-				SetChildText(doc, stepElem, "Name", step.extraDataName);
-				break;
-
-			case AutomationStepType::SetTexturePaths:
-				if (!step.texturePaths.empty()) {
-					XMLElement* texturePathsElem = doc.NewElement("TexturePaths");
-					stepElem->InsertEndChild(texturePathsElem);
-					for (const auto& path : step.texturePaths) {
-						if (path.index < 0 && path.name.empty())
-							continue;
-						XMLElement* pathElem = doc.NewElement("Path");
-						if (path.index >= 0)
-							pathElem->SetAttribute("index", path.index);
-						if (!path.name.empty())
-							pathElem->SetAttribute("name", path.name.c_str());
-						pathElem->SetAttribute("value", path.path.c_str());
-						texturePathsElem->InsertEndChild(pathElem);
-					}
-				}
-				break;
-
-			case AutomationStepType::RemoveUnusedNodes:
-				// No additional params
-				break;
-
-			case AutomationStepType::FixClipping:
-				SetChildInt(doc, stepElem, "Mode", step.fixClipMode, 0);
-				SetChildFloat(doc, stepElem, "Strength", step.fixClipStrength, 0.5f);
-				if (!step.fixClipSliderNames.empty())
-					SetChildText(doc, stepElem, "SliderNames", JoinStrings(step.fixClipSliderNames, ", "));
-				break;
-
-			case AutomationStepType::FixBadBones:
-				// No additional params
-				break;
+			}
 		}
+
+		if (info.saveExtra)
+			info.saveExtra(step, doc, stepElem);
 	}
 
 	FILE* fp = nullptr;
@@ -1058,57 +838,16 @@ void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::s
 		SubstituteInString(step.note, vars);
 		SubstituteInStringVector(step.targetMeshes, vars);
 
-		SubstituteInString(step.refSourceFile, vars);
-		SubstituteInString(step.refSet, vars);
-		SubstituteInString(step.refShape, vars);
-		SubstituteInString(step.sliderDataFile, vars);
-		SubstituteInString(step.importFilePath, vars);
-		SubstituteInString(step.renameOldName, vars);
-		SubstituteInString(step.renameNewName, vars);
-		SubstituteInStringVector(step.deleteSliderNames, vars);
-		SubstituteInString(step.setRefShapeName, vars);
-		SubstituteInString(step.addBoneName, vars);
-		SubstituteInString(step.addBoneParent, vars);
-		SubstituteInString(step.editBoneName, vars);
-		SubstituteInString(step.editBoneParent, vars);
-		SubstituteInString(step.poseName, vars);
-		SubstituteInStringVector(step.deleteBoneNames, vars);
-		SubstituteInString(step.saveName, vars);
-		SubstituteInString(step.saveOutputFileName, vars);
-		SubstituteInString(step.saveOutputDataPath, vars);
-		SubstituteInString(step.saveSliderSetFile, vars);
-		SubstituteInString(step.saveShapeDataFolder, vars);
-		SubstituteInString(step.saveShapeDataFile, vars);
-		SubstituteInString(step.saveReplaceFrom, vars);
-		SubstituteInString(step.saveReplaceTo, vars);
-		SubstituteInString(step.saveSuffix, vars);
-		SubstituteInString(step.saveCopyRefShapeName, vars);
-
-		SubstituteInString(step.exportFilePath, vars);
-		SubstituteInString(step.exportPrefix, vars);
-		SubstituteInString(step.exportSuffix, vars);
-		SubstituteInString(step.dupNewName, vars);
-		SubstituteInString(step.partitionSource, vars);
-		SubstituteInString(step.partitionDestination, vars);
-		SubstituteInString(step.loadMaskFile, vars);
-		SubstituteInString(step.loadMaskName, vars);
-		SubstituteInString(step.extraDataType, vars);
-		SubstituteInString(step.extraDataName, vars);
-		SubstituteInString(step.extraDataValue, vars);
-
-		SubstituteInStringVector(step.setSliderNames, vars);
-		SubstituteInStringVector(step.conformSliderNames, vars);
-		SubstituteInStringVector(step.weightBoneList, vars);
-		SubstituteInStringVector(step.sliderNames, vars);
-		SubstituteInStringVector(step.sliderPropNames, vars);
-		SubstituteInStringVector(step.fixClipSliderNames, vars);
-		for (auto& prop : step.shaderProperties) {
-			SubstituteInString(prop.name, vars);
-			SubstituteInString(prop.stringValue, vars);
+		// Every text parameter of the step type takes placeholders
+		const AutomationStepInfo& info = GetAutomationStepInfo(step.type);
+		for (const AutomationField& field : info.fields) {
+			if (field.kind == AutomationFieldKind::String)
+				SubstituteInString(step.*field.member.asString, vars);
+			else if (field.kind == AutomationFieldKind::StringList)
+				SubstituteInStringVector(step.*field.member.asStringList, vars);
 		}
-		for (auto& path : step.texturePaths) {
-			SubstituteInString(path.name, vars);
-			SubstituteInString(path.path, vars);
-		}
+
+		if (info.substituteExtra)
+			info.substituteExtra(step, vars);
 	}
 }

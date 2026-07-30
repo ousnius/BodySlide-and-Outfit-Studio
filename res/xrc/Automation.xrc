@@ -116,49 +116,9 @@
 												</object>
 												<object class="sizeritem">
 													<flag>wxEXPAND</flag>
-													<object class="wxChoice" name="choiceStepType">
-														<content>
-															<item>Bones: Add Custom Bone</item>
-															<item>Bones: Copy Bone Weights</item>
-															<item>Bones: Delete Bones</item>
-															<item>Bones: Edit Custom Bone</item>
-															<item>Bones: Remove Skinning</item>
-															<item>Export: File</item>
-															<item>Export: Save Project</item>
-															<item>Import: File</item>
-															<item>Import: Slider Data</item>
-															<item>Project: Add Project</item>
-															<item>Project: Clear Project</item>
-															<item>Project: Clear Reference</item>
-															<item>Project: Load Reference</item>
-															<item>Project: Set Base Shape</item>
-															<item>Project: Set Reference Shape</item>
-															<item>Shapes: Apply Pose</item>
-															<item>Shapes: Delete Shape</item>
-															<item>Shapes: Duplicate Shape</item>
-															<item>Shapes: Change Partitions</item>
-															<item>Shapes: Fix Bad Bones</item>
-															<item>Shapes: Fix Clipping</item>
-															<item>Shapes: Invert UVs</item>
-															<item>Shapes: Mirror Shape</item>
-															<item>Shapes: Recalculate Normals</item>
-															<item>Shapes: Refine Mesh</item>
-															<item>Shapes: Rename Shape</item>
-															<item>Shapes: Reset Transforms</item>
-															<item>Shapes: Transform Shape</item>
-															<item>Shapes: Set Geometry Properties</item>
-															<item>Shapes: Set Extra Data</item>
-															<item>Shapes: Delete Extra Data</item>
-															<item>Sliders: Conform Sliders</item>
-															<item>Sliders: Delete Slider</item>
-															<item>Sliders: Set Slider Values</item>
-															<item>Sliders: Set Slider Properties</item>
-															<item>Shaders: Set Shader Properties</item>
-															<item>Shaders: Set Texture Paths</item>
-															<item>Masks: Clear Mask</item>
-															<item>Masks: Load Mask</item>
-															<item>Nodes: Remove Unused Nodes</item>
-														</content>
+													<object class="wxComboCtrl" name="comboStepType">
+														<style>wxCB_READONLY</style>
+														<tooltip>Pick the operation this step performs. The types are grouped by category and the popup can be filtered by typing.</tooltip>
 													</object>
 												</object>
 
