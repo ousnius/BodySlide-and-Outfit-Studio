@@ -38,6 +38,7 @@ enum class AutomationStepType {
 	FixClipping,
 	InvertUVs,
 	MirrorShape,
+	RecalcNormals,
 	RefineMesh,
 	RenameShape,
 	ResetTransforms,
@@ -56,7 +57,7 @@ enum class AutomationStepType {
 	RemoveUnusedNodes
 };
 
-constexpr int AutomationStepTypeCount = 39;
+constexpr int AutomationStepTypeCount = 40;
 static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -194,6 +195,12 @@ struct AutomationStep {
 	// InvertUVs params
 	bool invertU = false;
 	bool invertV = false;
+
+	// RecalcNormals params
+	bool normalsForce = true;		// Recalculate even if the shape's normals are locked
+	int normalsSeamSmooth = -1;		// -1 = no change, 0 = disable, 1 = enable
+	float normalsSeamAngle = -1.0f; // < 0 = no change, otherwise seam smoothing angle in degrees
+	int normalsLock = -1;			// -1 = no change, 0 = unlock, 1 = lock
 
 	// DeleteBones params
 	std::vector<std::string> deleteBoneNames;

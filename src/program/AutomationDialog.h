@@ -220,6 +220,7 @@ private:
 	int ExecuteStepDuplicateShape(const AutomationStep& step);
 	int ExecuteStepChangePartitions(const AutomationStep& step);
 	int ExecuteStepMirrorShape(const AutomationStep& step);
+	int ExecuteStepRecalcNormals(const AutomationStep& step);
 	int ExecuteStepLoadMask(const AutomationStep& step);
 	int ExecuteStepClearMask(const AutomationStep& step);
 	int ExecuteStepSetSliderProperties(const AutomationStep& step);

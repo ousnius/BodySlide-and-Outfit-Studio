@@ -141,6 +141,7 @@
 															<item>Shapes: Fix Clipping</item>
 															<item>Shapes: Invert UVs</item>
 															<item>Shapes: Mirror Shape</item>
+															<item>Shapes: Recalculate Normals</item>
 															<item>Shapes: Refine Mesh</item>
 															<item>Shapes: Rename Shape</item>
 															<item>Shapes: Reset Transforms</item>
@@ -1722,6 +1723,104 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 																	<label>Swap bones left/right (X axis)</label>
 																</object>
 															</object>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- RecalcNormals -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageRecalcNormals">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Recalculate Normals</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Force:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkRecalcNormalsForce">
+																	<label>Recalculate even if normals are locked</label>
+																	<checked>1</checked>
+																	<tooltip>Ignore the shape's lock normals setting and recalculate anyway. Also recalculates model space normals of Skyrim shapes.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Seam Smoothing:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceRecalcNormalsSeam">
+																	<content>
+																		<item>No change</item>
+																		<item>No</item>
+																		<item>Yes</item>
+																	</content>
+																	<selection>0</selection>
+																	<tooltip>Set the smooth seam normals flag of the target shapes in the project before recalculating.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Seam Angle:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtRecalcNormalsAngle">
+																	<tooltip>Seam smoothing angle in degrees (default 60). Leave empty to keep the value of each shape.</tooltip>
+																	<hint>Leave empty for no change</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Lock Normals:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceRecalcNormalsLock">
+																	<content>
+																		<item>No change</item>
+																		<item>No</item>
+																		<item>Yes</item>
+																	</content>
+																	<selection>0</selection>
+																	<tooltip>Set the lock normals flag of the target shapes in the project after recalculating.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Recalculates the normals and tangents of the target shapes and writes them into the project right away.
+																Leaving the target meshes empty includes the reference shape. Vertices locked through LOCKEDNORM extra data are never changed.</label>
+															<wrap>400</wrap>
 														</object>
 													</object>
 												</object>

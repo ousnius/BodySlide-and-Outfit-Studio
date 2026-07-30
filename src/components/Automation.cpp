@@ -36,6 +36,7 @@ std::string AutomationStepTypeToString(AutomationStepType type) {
 		case AutomationStepType::ChangePartitions: return "ChangePartitions";
 		case AutomationStepType::InvertUVs: return "InvertUVs";
 		case AutomationStepType::MirrorShape: return "MirrorShape";
+		case AutomationStepType::RecalcNormals: return "RecalcNormals";
 		case AutomationStepType::RefineMesh: return "RefineMesh";
 		case AutomationStepType::RenameShape: return "RenameShape";
 		case AutomationStepType::ResetTransforms: return "ResetTransforms";
@@ -80,6 +81,7 @@ AutomationStepType AutomationStepTypeFromString(const std::string& str) {
 	if (str == "ChangePartitions") return AutomationStepType::ChangePartitions;
 	if (str == "InvertUVs") return AutomationStepType::InvertUVs;
 	if (str == "MirrorShape") return AutomationStepType::MirrorShape;
+	if (str == "RecalcNormals") return AutomationStepType::RecalcNormals;
 	if (str == "RefineMesh") return AutomationStepType::RefineMesh;
 	if (str == "RenameShape") return AutomationStepType::RenameShape;
 	if (str == "ResetTransforms") return AutomationStepType::ResetTransforms;
@@ -530,6 +532,13 @@ int AutomationScript::Load(const std::string& fileName) {
 				step.mirrorSwapBonesX = GetChildBool(stepElem, "SwapBonesX", false);
 				break;
 			}
+			case AutomationStepType::RecalcNormals: {
+				step.normalsForce = GetChildBool(stepElem, "Force", true);
+				step.normalsSeamSmooth = GetChildInt(stepElem, "SeamSmooth", -1);
+				step.normalsSeamAngle = GetChildFloat(stepElem, "SeamAngle", -1.0f);
+				step.normalsLock = GetChildInt(stepElem, "LockNormals", -1);
+				break;
+			}
 			case AutomationStepType::ClearMask:
 				// No additional params (uses target meshes)
 				break;
@@ -891,6 +900,13 @@ int AutomationScript::Save(const std::string& fileName) {
 				SetChildBool(doc, stepElem, "MirrorY", step.mirrorY, false);
 				SetChildBool(doc, stepElem, "MirrorZ", step.mirrorZ, false);
 				SetChildBool(doc, stepElem, "SwapBonesX", step.mirrorSwapBonesX, false);
+				break;
+
+			case AutomationStepType::RecalcNormals:
+				SetChildBool(doc, stepElem, "Force", step.normalsForce, true);
+				SetChildInt(doc, stepElem, "SeamSmooth", step.normalsSeamSmooth, -1);
+				SetChildFloat(doc, stepElem, "SeamAngle", step.normalsSeamAngle, -1.0f);
+				SetChildInt(doc, stepElem, "LockNormals", step.normalsLock, -1);
 				break;
 
 			case AutomationStepType::ClearMask:

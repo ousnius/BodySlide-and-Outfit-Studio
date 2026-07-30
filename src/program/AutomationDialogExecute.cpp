@@ -1946,6 +1946,62 @@ int AutomationDialog::ExecuteStepMirrorShape(const AutomationStep& step) {
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepRecalcNormals(const AutomationStep& step) {
+	auto* workNif = project->GetWorkNif();
+	if (!workNif) {
+		wxLogError("Automation: RecalcNormals - no work NIF loaded.");
+		return 1;
+	}
+
+	// Empty targets include the reference shape on purpose: recalculating the
+	// reference's normals is legitimate and the project save skips it otherwise.
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: RecalcNormals - no target shapes found.");
+		return 0;
+	}
+
+	int recalcCount = 0;
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+
+		// Persist the settings into the slider set before recalculating. The render
+		// meshes are rebuilt from the project after every step, so setting these on
+		// the mesh alone would not stick.
+		if (step.normalsSeamSmooth >= 0)
+			project->activeSet.SetSmoothSeamNormals(shapeName, step.normalsSeamSmooth != 0);
+
+		if (step.normalsSeamAngle >= 0.0f)
+			project->activeSet.SetSmoothSeamNormalsAngle(shapeName, step.normalsSeamAngle);
+
+		bool smooth = project->activeSet.GetSmoothSeamNormals(shapeName);
+		float angle = project->activeSet.GetSmoothSeamNormalsAngle(shapeName);
+
+		if (project->activeSet.GetLockNormals(shapeName) && !step.normalsForce) {
+			wxLogMessage("Automation: RecalcNormals - '%s' has locked normals, skipping.", shapeName);
+		}
+		else {
+			wxLogMessage("Automation: Recalculating normals for '%s' (seams=%d, angle=%0.2f)...", shapeName, smooth, angle);
+
+			// Honors LOCKEDNORM vertices; force also overrides the model space shader skip on SK/SSE
+			workNif->CalcNormalsForShape(shape, step.normalsForce, smooth, angle);
+			workNif->CalcTangentsForShape(shape);
+			recalcCount++;
+		}
+
+		// Applied after the recalculation so that force + lock is a usable combination
+		if (step.normalsLock >= 0)
+			project->activeSet.SetLockNormals(shapeName, step.normalsLock != 0);
+	}
+
+	if (recalcCount > 0)
+		outfitStudio->SetPendingChanges();
+
+	wxLogMessage("Automation: RecalcNormals - recalculated normals on %d shape(s).", recalcCount);
+	return 0;
+}
+
 int AutomationDialog::ExecuteStepClearMask(const AutomationStep& step) {
 	auto targetShapes = ResolveTargetShapes(step);
 	if (targetShapes.empty()) {
@@ -2676,6 +2732,7 @@ int AutomationDialog::ExecuteStep(const AutomationStep& step) {
 		case AutomationStepType::DuplicateShape: return ExecuteStepDuplicateShape(step);
 		case AutomationStepType::ChangePartitions: return ExecuteStepChangePartitions(step);
 		case AutomationStepType::MirrorShape: return ExecuteStepMirrorShape(step);
+		case AutomationStepType::RecalcNormals: return ExecuteStepRecalcNormals(step);
 		case AutomationStepType::ClearMask: return ExecuteStepClearMask(step);
 		case AutomationStepType::LoadMask: return ExecuteStepLoadMask(step);
 		case AutomationStepType::SetSliderProperties: return ExecuteStepSetSliderProperties(step);

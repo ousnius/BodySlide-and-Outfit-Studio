@@ -1564,6 +1564,28 @@ void AutomationDialog::UpdateUIFromStep(const AutomationStep& step) {
 			break;
 		}
 
+		case AutomationStepType::RecalcNormals: {
+			SetCheckboxValue("chkRecalcNormalsForce", step.normalsForce);
+
+			auto* choiceSeam = XRCCTRL(*this, "choiceRecalcNormalsSeam", wxChoice);
+			if (choiceSeam)
+				choiceSeam->SetSelection(step.normalsSeamSmooth < 0 ? 0 : step.normalsSeamSmooth + 1);
+
+			// An empty angle field means "no change", so the sentinel can't go through SetFloatValue
+			auto* txtAngle = XRCCTRL(*this, "txtRecalcNormalsAngle", wxTextCtrl);
+			if (txtAngle) {
+				if (step.normalsSeamAngle < 0.0f)
+					txtAngle->ChangeValue(wxEmptyString);
+				else
+					txtAngle->ChangeValue(wxString::Format("%0.2f", step.normalsSeamAngle));
+			}
+
+			auto* choiceLock = XRCCTRL(*this, "choiceRecalcNormalsLock", wxChoice);
+			if (choiceLock)
+				choiceLock->SetSelection(step.normalsLock < 0 ? 0 : step.normalsLock + 1);
+			break;
+		}
+
 		case AutomationStepType::ClearMask:
 			// No parameters to set
 			break;
@@ -1931,6 +1953,30 @@ void AutomationDialog::UpdateStepFromUI() {
 			step.mirrorY = GetCheckboxValue("chkMirrorY");
 			step.mirrorZ = GetCheckboxValue("chkMirrorZ");
 			step.mirrorSwapBonesX = GetCheckboxValue("chkMirrorSwapBonesX");
+			break;
+		}
+
+		case AutomationStepType::RecalcNormals: {
+			step.normalsForce = GetCheckboxValue("chkRecalcNormalsForce");
+
+			auto* choiceSeam = XRCCTRL(*this, "choiceRecalcNormalsSeam", wxChoice);
+			if (choiceSeam) {
+				int sel = choiceSeam->GetSelection();
+				step.normalsSeamSmooth = sel <= 0 ? -1 : sel - 1;
+			}
+
+			auto* txtAngle = XRCCTRL(*this, "txtRecalcNormalsAngle", wxTextCtrl);
+			if (txtAngle) {
+				wxString angleStr = txtAngle->GetValue().Trim().Trim(false);
+				float angle = angleStr.IsEmpty() ? -1.0f : static_cast<float>(atof(angleStr.c_str()));
+				step.normalsSeamAngle = angle < 0.0f ? -1.0f : angle;
+			}
+
+			auto* choiceLock = XRCCTRL(*this, "choiceRecalcNormalsLock", wxChoice);
+			if (choiceLock) {
+				int sel = choiceLock->GetSelection();
+				step.normalsLock = sel <= 0 ? -1 : sel - 1;
+			}
 			break;
 		}
 
