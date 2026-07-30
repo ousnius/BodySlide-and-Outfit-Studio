@@ -544,6 +544,10 @@ bool AutomationDialog::StepChangesSliderSet(AutomationStepType type) {
 		case AutomationStepType::ClearReference:
 		case AutomationStepType::SetBaseShape:
 		case AutomationStepType::ImportSliderData:
+		case AutomationStepType::CloneSlider:
+		case AutomationStepType::MakeConversionRef:
+		case AutomationStepType::NewCombinedSlider:
+		case AutomationStepType::NewZapSlider:
 			return true;
 		default:
 			return false;
@@ -563,11 +567,19 @@ void AutomationDialog::ExecuteSteps(const std::vector<size_t>& stepIndices) {
 	if (!vars.empty())
 		execScript.SubstitutePlaceholders(vars);
 
+	runBaseVariables = vars;
+	runtimeVariables.clear();
+
 	StartProgress(_("Running automation script..."));
 
 	int totalSteps = static_cast<int>(execScript.GetSteps().size());
 	for (int i = 0; i < totalSteps; i++) {
-		const auto& step = execScript.GetSteps()[i];
+		// Copied so Set Variable steps earlier in the run can still fill in
+		// placeholders that were unknown when the script was substituted
+		AutomationStep step = execScript.GetSteps()[i];
+		if (!runtimeVariables.empty())
+			SubstituteStepPlaceholders(step, runtimeVariables);
+
 		wxString stepDesc = wxString::Format(_("Step %d/%d: %s"),
 			i + 1, totalSteps,
 			wxGetTranslation(GetAutomationStepInfo(step.type).displayName));
@@ -2698,6 +2710,962 @@ int AutomationDialog::ExecuteStepFixBadBones(const AutomationStep& WXUNUSED(step
 
 	if (!project->CheckForBadBones(false))
 		wxLogMessage("Automation: No bad bones found.");
+
+	return 0;
+}
+
+void AutomationDialog::RefreshMeshesWithMasks(std::unordered_map<std::string, std::vector<float>>& maskStash) {
+	// The stashed masks were already remapped to the new vertex lists by
+	// ApplyShapeMeshUndo while the render meshes still carry the old ones, so the
+	// rebuild has to happen without stashing again.
+	outfitStudio->RefreshGUIFromProj(false, false);
+	outfitStudio->glView->UnstashMasks(maskStash);
+}
+
+int AutomationDialog::ExecuteStepAddBone(const AutomationStep& step) {
+	if (step.addBoneRefNames.empty()) {
+		wxLogError("Automation: AddBone - no bone name specified.");
+		return 1;
+	}
+
+	int addedCount = 0;
+	for (const auto& boneName : step.addBoneRefNames) {
+		if (!AnimSkeleton::getInstance().GetBonePtr(boneName)) {
+			wxLogWarning("Automation: AddBone - '%s' is not in the loaded skeleton, skipping.", boneName);
+			continue;
+		}
+
+		wxLogMessage("Automation: Adding bone '%s' to the project...", boneName);
+		project->AddBoneRef(boneName);
+		addedCount++;
+	}
+
+	if (addedCount > 0)
+		outfitStudio->SetPendingChanges();
+
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepTransferWeights(const AutomationStep& step) {
+	auto* baseShape = project->GetBaseShape();
+	if (!baseShape) {
+		wxLogError("Automation: TransferWeights - there is no reference shape.");
+		return 1;
+	}
+
+	// Empty targets exclude the reference: weights can't be transferred onto itself
+	auto shapes = ResolveTargetShapes(step, false);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: TransferWeights - no target shapes found.");
+		return 0;
+	}
+
+	int baseVertCount = project->GetVertexCount(baseShape);
+	std::vector<std::string> boneList = step.transferWeightBones;
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		if (project->IsBaseShape(shape))
+			continue;
+
+		if (project->GetVertexCount(shape) != baseVertCount) {
+			wxLogWarning("Automation: TransferWeights - '%s' has a different vertex count than the reference, skipping.", shapeName);
+			continue;
+		}
+
+		// The mask is a per vertex blend factor here: fully masked vertices keep
+		// the weights they already have.
+		std::unordered_map<uint16_t, float> mask;
+		if (step.transferWeightUseMask)
+			outfitStudio->glView->GetShapeMask(mask, shapeName);
+
+		wxLogMessage("Automation: Transferring bone weights to '%s'...", shapeName);
+		project->TransferSelectedWeights(shape, mask.empty() ? nullptr : &mask, boneList.empty() ? nullptr : &boneList);
+	}
+
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepSetBoneTransform(const AutomationStep& step) {
+	if (step.boneXformNames.empty()) {
+		wxLogError("Automation: SetBoneTransform - no bone name specified.");
+		return 1;
+	}
+
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: SetBoneTransform - no target shapes found.");
+		return 0;
+	}
+
+	auto* workAnim = project->GetWorkAnim();
+	if (!workAnim) {
+		wxLogError("Automation: SetBoneTransform - no project loaded.");
+		return 1;
+	}
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		for (const auto& boneName : step.boneXformNames) {
+			if (step.boneXformMode == 0) {
+				wxLogMessage("Automation: Recalculating the skin transform of bone '%s' for '%s'...", boneName, shapeName);
+				workAnim->RecalcXFormSkinToBone(shapeName, boneName);
+			}
+			else {
+				wxLogMessage("Automation: Recalculating the node transform of bone '%s' from the skin of '%s'...", boneName, shapeName);
+				workAnim->RecalcCustomBoneXFormsFromSkin(shapeName, boneName);
+			}
+		}
+	}
+
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepMakeConversionRef(const AutomationStep& step) {
+	if (step.convRefSliderName.empty()) {
+		wxLogError("Automation: MakeConversionRef - no slider name specified.");
+		return 1;
+	}
+
+	if (project->AllSlidersZero()) {
+		wxLogError("Automation: MakeConversionRef - at least one slider value has to be non-zero.");
+		return 1;
+	}
+
+	if (project->ValidSlider(step.convRefSliderName)) {
+		wxLogError("Automation: MakeConversionRef - slider '%s' already exists.", step.convRefSliderName);
+		return 1;
+	}
+
+	wxLogMessage("Automation: Creating conversion slider '%s'...", step.convRefSliderName);
+	project->AddCombinedSlider(step.convRefSliderName);
+
+	auto* baseShape = project->GetBaseShape();
+	if (baseShape) {
+		// The reference mesh carries the current slider result; make that the new
+		// base geometry and let the conversion slider undo it.
+		Mesh* m = outfitStudio->glView->GetMesh(baseShape->name.get());
+		if (m)
+			project->UpdateShapeFromMesh(baseShape, m);
+
+		project->NegateSlider(step.convRefSliderName, baseShape);
+	}
+
+	std::vector<std::string> sliderList;
+	project->GetSliderList(sliderList);
+	for (const auto& sliderName : sliderList) {
+		if (sliderName == step.convRefSliderName)
+			continue;
+
+		wxLogMessage("Automation: Deleting slider '%s'...", sliderName);
+		project->DeleteSlider(sliderName);
+	}
+
+	outfitStudio->glView->GetUndoHistory()->ClearHistory();
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepCopySegPart(const AutomationStep& step) {
+	if (!project->GetBaseShape()) {
+		wxLogError("Automation: CopySegPart - there is no reference shape.");
+		return 1;
+	}
+
+	// Empty targets exclude the reference: it is the source of the copy
+	auto shapes = ResolveTargetShapes(step, false);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: CopySegPart - no target shapes found.");
+		return 0;
+	}
+
+	for (auto* shape : shapes) {
+		if (project->IsBaseShape(shape))
+			continue;
+
+		wxLogMessage("Automation: Copying segments/partitions to '%s'...", shape->name.get());
+		int failCount = project->CopySegPart(shape);
+		if (failCount)
+			wxLogWarning("Automation: CopySegPart - %d triangle(s) of '%s' could not be matched.", failCount, shape->name.get());
+	}
+
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepDeleteVertices(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: DeleteVertices - no target shapes found.");
+		return 0;
+	}
+
+	// Prepare everything first: PrepareDeleteVerts reports whole shapes that would
+	// lose all of their triangles instead of filling in an undo state.
+	std::vector<std::string> emptiedShapes;
+	std::vector<UndoStateShape> usss;
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+
+		std::unordered_map<uint16_t, float> verts;
+		if (step.deleteVertsMasked)
+			outfitStudio->glView->GetShapeMask(verts, shapeName);
+		else
+			outfitStudio->glView->GetShapeUnmasked(verts, shapeName);
+
+		if (verts.empty()) {
+			wxLogWarning("Automation: DeleteVertices - '%s' has no %s vertices, skipping.",
+				shapeName, step.deleteVertsMasked ? "masked" : "unmasked");
+			continue;
+		}
+
+		UndoStateShape uss;
+		uss.shapeName = shapeName;
+		if (project->PrepareDeleteVerts(shape, verts, uss))
+			emptiedShapes.push_back(shapeName);
+		else
+			usss.push_back(std::move(uss));
+	}
+
+	if (usss.empty() && emptiedShapes.empty())
+		return 0;
+
+	std::unordered_map<std::string, std::vector<float>> maskStash = outfitStudio->glView->StashMasks();
+
+	// Whole shapes go first and everything is looked up by name again, so that
+	// deleting a shape can't leave a stale pointer behind.
+	for (const auto& shapeName : emptiedShapes) {
+		if (!step.deleteVertsDeleteEmpty) {
+			wxLogWarning("Automation: DeleteVertices - '%s' would lose all of its triangles, skipping.", shapeName);
+			continue;
+		}
+
+		NiShape* shape = project->GetWorkNif()->FindBlockByName<NiShape>(shapeName);
+		if (!shape)
+			continue;
+
+		wxLogMessage("Automation: Deleting shape '%s', none of its triangles are left...", shapeName);
+		project->DeleteShape(shape);
+	}
+
+	for (auto& uss : usss) {
+		NiShape* shape = project->GetWorkNif()->FindBlockByName<NiShape>(uss.shapeName);
+		if (!shape)
+			continue;
+
+		wxLogMessage("Automation: Deleting the %s vertices of '%s'...", step.deleteVertsMasked ? "masked" : "unmasked", uss.shapeName);
+		project->ApplyShapeMeshUndo(shape, maskStash[uss.shapeName], uss, false);
+	}
+
+	project->GetWorkAnim()->CleanupBones();
+
+	RefreshMeshesWithMasks(maskStash);
+	outfitStudio->SetPendingChanges();
+	outfitStudio->ApplySliders();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepSeparateVertices(const AutomationStep& step) {
+	if (step.separateNewName.empty()) {
+		wxLogError("Automation: SeparateVertices - no name for the new shape specified.");
+		return 1;
+	}
+
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: SeparateVertices - no target shapes found.");
+		return 0;
+	}
+
+	if (shapes.size() > 1) {
+		wxLogError("Automation: SeparateVertices - %zu target shapes; the new shape name only fits one.", shapes.size());
+		return 1;
+	}
+
+	if (project->IsValidShape(step.separateNewName)) {
+		wxLogError("Automation: SeparateVertices - shape '%s' already exists.", step.separateNewName);
+		return 1;
+	}
+
+	NiShape* shape = shapes.front();
+	std::string shapeName = shape->name.get();
+
+	std::unordered_map<uint16_t, float> masked;
+	outfitStudio->glView->GetShapeMask(masked, shapeName);
+	if (masked.empty()) {
+		wxLogError("Automation: SeparateVertices - '%s' has no masked vertices to separate.", shapeName);
+		return 1;
+	}
+
+	wxLogMessage("Automation: Separating the masked vertices of '%s' into '%s'...", shapeName, step.separateNewName);
+
+	NiShape* newShape = project->DuplicateShape(shape, step.separateNewName);
+	if (!newShape) {
+		wxLogError("Automation: SeparateVertices - failed to duplicate '%s'.", shapeName);
+		return 1;
+	}
+
+	// The masked vertices go to the new shape, everything else stays behind
+	std::unordered_map<uint16_t, float> unmasked = masked;
+	outfitStudio->glView->InvertMaskTris(unmasked, shapeName);
+
+	UndoStateShape ussSource;
+	ussSource.shapeName = shapeName;
+	UndoStateShape ussNew;
+	ussNew.shapeName = step.separateNewName;
+
+	project->PrepareDeleteVerts(shape, masked, ussSource);
+	project->PrepareDeleteVerts(newShape, unmasked, ussNew);
+
+	std::unordered_map<std::string, std::vector<float>> maskStash = outfitStudio->glView->StashMasks();
+
+	project->ApplyShapeMeshUndo(shape, maskStash[ussSource.shapeName], ussSource, false);
+	project->ApplyShapeMeshUndo(newShape, maskStash[ussNew.shapeName], ussNew, false);
+
+	project->SetTextures();
+
+	RefreshMeshesWithMasks(maskStash);
+	outfitStudio->SetPendingChanges();
+	outfitStudio->ApplySliders();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepMergeGeometry(const AutomationStep& step) {
+	if (step.mergeSourceShape.empty() || step.mergeTargetShape.empty()) {
+		wxLogError("Automation: MergeGeometry - both a source and a target shape are required.");
+		return 1;
+	}
+
+	NiShape* sourceShape = FindShapeByName(step.mergeSourceShape);
+	if (!sourceShape) {
+		wxLogError("Automation: MergeGeometry - source shape '%s' not found.", step.mergeSourceShape);
+		return 1;
+	}
+
+	NiShape* targetShape = FindShapeByName(step.mergeTargetShape);
+	if (!targetShape) {
+		wxLogError("Automation: MergeGeometry - target shape '%s' not found.", step.mergeTargetShape);
+		return 1;
+	}
+
+	MergeCheckErrors e;
+	project->CheckMerge(step.mergeSourceShape, step.mergeTargetShape, e);
+
+	if (!e.canMerge) {
+		if (e.shapesSame)
+			wxLogError("Automation: MergeGeometry - the target has to be different from the source.");
+		if (e.tooManyVertices)
+			wxLogError("Automation: MergeGeometry - the resulting shape would have too many vertices.");
+		if (e.tooManyTriangles)
+			wxLogError("Automation: MergeGeometry - the resulting shape would have too many triangles.");
+		if (e.shaderMismatch)
+			wxLogError("Automation: MergeGeometry - the shaders of '%s' and '%s' do not match.", step.mergeSourceShape, step.mergeTargetShape);
+		if (e.alphaPropMismatch)
+			wxLogError("Automation: MergeGeometry - the alpha properties of '%s' and '%s' do not match.", step.mergeSourceShape, step.mergeTargetShape);
+		return 1;
+	}
+
+	if (e.partitionsMismatch)
+		wxLogWarning("Automation: MergeGeometry - partitions do not match; matching slots are reconciled and missing ones created.");
+	if (e.segmentsMismatch)
+		wxLogWarning("Automation: MergeGeometry - segments do not match; matching IDs are reconciled and missing ones created.");
+	if (e.textureMismatch)
+		wxLogWarning("Automation: MergeGeometry - base textures do not match; the texture paths of '%s' are kept.", step.mergeTargetShape);
+
+	wxLogMessage("Automation: Merging '%s' into '%s'...", step.mergeSourceShape, step.mergeTargetShape);
+
+	UndoStateShape uss;
+	uss.shapeName = step.mergeTargetShape;
+	project->PrepareCopyGeo(sourceShape, targetShape, uss);
+
+	std::unordered_map<std::string, std::vector<float>> maskStash = outfitStudio->glView->StashMasks();
+
+	project->ApplyShapeMeshUndo(targetShape, maskStash[uss.shapeName], uss, false);
+
+	if (e.textureMismatch)
+		project->SetTextures(targetShape);
+
+	if (step.mergeDeleteSource) {
+		wxLogMessage("Automation: Deleting the merged source shape '%s'...", step.mergeSourceShape);
+		project->DeleteShape(sourceShape);
+	}
+
+	RefreshMeshesWithMasks(maskStash);
+	outfitStudio->SetPendingChanges();
+	outfitStudio->ApplySliders();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepSymmetrizeVertices(const AutomationStep& step) {
+	if (!step.asymDoPositions && !step.asymDoUnmatched && !step.asymDoSliders && !step.asymDoBones) {
+		wxLogWarning("Automation: SymmetrizeVertices - nothing selected to symmetrize.");
+		return 0;
+	}
+
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: SymmetrizeVertices - no target shapes found.");
+		return 0;
+	}
+
+	std::vector<std::string> normBones, notNormBones;
+	outfitStudio->GetNormalizeBones(&normBones, &notNormBones);
+
+	UndoStateProject* usp = outfitStudio->glView->GetUndoHistory()->PushState();
+	usp->undoType = UndoType::Mesh;
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		// Masked vertices are left alone, matching the vertex asymmetry dialog
+		std::vector<bool> selVerts(m->nVerts);
+		for (int i = 0; i < m->nVerts; i++)
+			selVerts[i] = m->mask[i] == 0.0f;
+
+		SymmetricVertices symVerts;
+		project->MatchSymmetricVertices(shape, m->weldVerts, symVerts);
+
+		VertexAsymmetries asyms;
+		project->FindVertexAsymmetries(shape, symVerts, m->weldVerts, asyms);
+
+		VertexAsymmetryTasks tasks;
+		tasks.doPos = step.asymDoPositions;
+		tasks.doUnmatched = step.asymDoUnmatched;
+		tasks.doSliders.resize(asyms.sliders.size(), step.asymDoSliders);
+		tasks.doBones.resize(asyms.bones.size(), step.asymDoBones);
+
+		wxLogMessage("Automation: Symmetrizing the vertices of '%s' (%zu unmatched, %zu slider(s), %zu bone(s))...",
+			shapeName, symVerts.unmatched.size(), asyms.sliders.size(), asyms.bones.size());
+
+		usp->usss.emplace_back();
+		UndoStateShape& uss = usp->usss.back();
+		uss.shapeName = shapeName;
+		project->PrepareSymmetrizeVertices(shape, uss, symVerts, asyms, tasks, m->weldVerts, selVerts, normBones, notNormBones);
+	}
+
+	if (usp->usss.empty()) {
+		outfitStudio->glView->GetUndoHistory()->PopState();
+		wxLogWarning("Automation: SymmetrizeVertices - none of the target shapes have a mesh to work on.");
+		return 0;
+	}
+
+	outfitStudio->glView->ApplyUndoState(usp, false);
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepClearSliderData(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: ClearSliderData - no target shapes found.");
+		return 0;
+	}
+
+	std::vector<std::string> sliderNames = step.clearSliderNames;
+	if (sliderNames.empty())
+		project->GetSliderList(sliderNames);
+
+	if (sliderNames.empty()) {
+		wxLogWarning("Automation: ClearSliderData - the project has no sliders.");
+		return 0;
+	}
+
+	for (const auto& sliderName : sliderNames) {
+		if (!project->ValidSlider(sliderName)) {
+			wxLogWarning("Automation: ClearSliderData - slider '%s' not found, skipping.", sliderName);
+			continue;
+		}
+
+		for (auto* shape : shapes) {
+			std::string shapeName = shape->name.get();
+
+			// Masked vertices keep their slider data, like the menu item
+			std::unordered_map<uint16_t, float> mask;
+			if (step.clearSliderUseMask)
+				outfitStudio->glView->GetShapeMask(mask, shapeName);
+
+			wxLogMessage("Automation: Clearing the data of slider '%s' for '%s'...", sliderName, shapeName);
+			if (!mask.empty())
+				project->ClearUnmaskedDiff(shape, sliderName, &mask);
+			else
+				project->ClearSlider(shape, sliderName);
+		}
+	}
+
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepCloneSlider(const AutomationStep& step) {
+	if (step.cloneSliderSource.empty() || step.newSliderName.empty()) {
+		wxLogError("Automation: CloneSlider - both a source slider and a new name are required.");
+		return 1;
+	}
+
+	if (!project->ValidSlider(step.cloneSliderSource)) {
+		wxLogError("Automation: CloneSlider - slider '%s' not found.", step.cloneSliderSource);
+		return 1;
+	}
+
+	if (project->ValidSlider(step.newSliderName)) {
+		wxLogError("Automation: CloneSlider - slider '%s' already exists.", step.newSliderName);
+		return 1;
+	}
+
+	wxLogMessage("Automation: Cloning slider '%s' as '%s'...", step.cloneSliderSource, step.newSliderName);
+	project->CloneSlider(step.cloneSliderSource, step.newSliderName);
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepNegateSlider(const AutomationStep& step) {
+	if (step.negateSliderNames.empty()) {
+		wxLogError("Automation: NegateSlider - no slider name specified.");
+		return 1;
+	}
+
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: NegateSlider - no target shapes found.");
+		return 0;
+	}
+
+	for (const auto& sliderName : step.negateSliderNames) {
+		if (!project->ValidSlider(sliderName)) {
+			wxLogWarning("Automation: NegateSlider - slider '%s' not found, skipping.", sliderName);
+			continue;
+		}
+
+		for (auto* shape : shapes) {
+			wxLogMessage("Automation: Negating slider '%s' for '%s'...", sliderName, shape->name.get());
+			project->NegateSlider(sliderName, shape);
+		}
+	}
+
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepNewCombinedSlider(const AutomationStep& step) {
+	if (step.newSliderName.empty()) {
+		wxLogError("Automation: NewCombinedSlider - no slider name specified.");
+		return 1;
+	}
+
+	if (project->ValidSlider(step.newSliderName)) {
+		wxLogError("Automation: NewCombinedSlider - slider '%s' already exists.", step.newSliderName);
+		return 1;
+	}
+
+	wxLogMessage("Automation: Creating combined slider '%s'...", step.newSliderName);
+	project->AddCombinedSlider(step.newSliderName);
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepNewZapSlider(const AutomationStep& step) {
+	if (step.newSliderName.empty()) {
+		wxLogError("Automation: NewZapSlider - no slider name specified.");
+		return 1;
+	}
+
+	if (project->ValidSlider(step.newSliderName)) {
+		wxLogError("Automation: NewZapSlider - slider '%s' already exists.", step.newSliderName);
+		return 1;
+	}
+
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: NewZapSlider - no target shapes found.");
+		return 0;
+	}
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+
+		// The zap removes the unmasked vertices, so a mask marks what to keep
+		std::unordered_map<uint16_t, float> unmasked;
+		outfitStudio->glView->GetShapeUnmasked(unmasked, shapeName);
+		if (unmasked.empty()) {
+			wxLogWarning("Automation: NewZapSlider - '%s' is fully masked, skipping.", shapeName);
+			continue;
+		}
+
+		wxLogMessage("Automation: Adding zap '%s' for %zu vertices of '%s'...", step.newSliderName, unmasked.size(), shapeName);
+		project->AddZapSlider(step.newSliderName, unmasked, shape);
+	}
+
+	outfitStudio->SetPendingChanges();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepGrowShrinkMask(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: GrowShrinkMask - no target shapes found.");
+		return 0;
+	}
+
+	const bool grow = step.maskGrowShrinkMode == 0;
+	const int iterations = std::max(1, step.maskGrowShrinkCount);
+
+	// One pass of the same two stage logic the menu items use: welded vertices of
+	// the border first, and only when there are none of those the adjacent ring.
+	auto stepMask = [grow](Mesh* m) {
+		const float to = grow ? 1.0f : 0.0f;
+
+		std::vector<int> changed;
+		for (int i = 0; i < m->nVerts; i++) {
+			if (grow ? m->mask[i] == 0.0f : m->mask[i] > 0.0f)
+				continue;
+
+			m->DoForEachWeldedVertex(i, [&](int wvi) {
+				if (m->mask[wvi] != to)
+					changed.push_back(wvi);
+			});
+		}
+
+		if (changed.empty()) {
+			std::unordered_set<int> adjacentPoints;
+			for (int i = 0; i < m->nVerts; i++)
+				if (grow ? m->mask[i] > 0.0f : m->mask[i] == 0.0f)
+					m->GetAdjacentPoints(i, adjacentPoints);
+
+			for (int adj : adjacentPoints)
+				if (m->mask[adj] != to)
+					changed.push_back(adj);
+		}
+
+		for (int vi : changed)
+			m->mask[vi] = to;
+	};
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		wxLogMessage("Automation: %s the mask of '%s' %d time(s)...", grow ? "Growing" : "Shrinking", shapeName, iterations);
+
+		for (int i = 0; i < iterations; i++)
+			stepMask(m);
+
+		m->QueueUpdate(Mesh::UpdateType::Mask);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepInvertMask(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: InvertMask - no target shapes found.");
+		return 0;
+	}
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		wxLogMessage("Automation: Inverting the mask of '%s'...", shapeName);
+		for (int i = 0; i < m->nVerts; i++)
+			m->mask[i] = 1.0f - m->mask[i];
+
+		m->QueueUpdate(Mesh::UpdateType::Mask);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepMaskWeighted(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: MaskWeighted - no target shapes found.");
+		return 0;
+	}
+
+	auto* workAnim = project->GetWorkAnim();
+	if (!workAnim) {
+		wxLogError("Automation: MaskWeighted - no project loaded.");
+		return 1;
+	}
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		wxLogMessage("Automation: Masking the weighted vertices of '%s'...", shapeName);
+		m->MaskFill(0.0f);
+
+		auto boneIt = workAnim->shapeBones.find(shapeName);
+		if (boneIt == workAnim->shapeBones.end())
+			continue;
+
+		for (const auto& boneName : boneIt->second) {
+			auto* weights = workAnim->GetWeightsPtr(shapeName, boneName);
+			if (!weights)
+				continue;
+
+			for (const auto& bw : *weights)
+				if (bw.second > 0.0f && bw.first < m->nVerts)
+					m->mask[bw.first] = 1.0f;
+		}
+
+		m->QueueUpdate(Mesh::UpdateType::Mask);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepMaskBoneWeighted(const AutomationStep& step) {
+	if (step.maskBoneNames.empty()) {
+		wxLogError("Automation: MaskBoneWeighted - no bone name specified.");
+		return 1;
+	}
+
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: MaskBoneWeighted - no target shapes found.");
+		return 0;
+	}
+
+	auto* workAnim = project->GetWorkAnim();
+	if (!workAnim) {
+		wxLogError("Automation: MaskBoneWeighted - no project loaded.");
+		return 1;
+	}
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		wxLogMessage("Automation: Masking the vertices of '%s' weighted to %s...", shapeName, JoinStrings(step.maskBoneNames, ", "));
+		m->MaskFill(0.0f);
+
+		for (const auto& boneName : step.maskBoneNames) {
+			auto* weights = workAnim->GetWeightsPtr(shapeName, boneName);
+			if (!weights)
+				continue;
+
+			for (const auto& bw : *weights)
+				if (bw.second > 0.0f && bw.first < m->nVerts)
+					m->mask[bw.first] = 1.0f;
+		}
+
+		m->QueueUpdate(Mesh::UpdateType::Mask);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepMaskSliderAffected(const AutomationStep& step) {
+	if (step.maskSliderName.empty()) {
+		wxLogError("Automation: MaskSliderAffected - no slider name specified.");
+		return 1;
+	}
+
+	if (!project->ValidSlider(step.maskSliderName)) {
+		wxLogError("Automation: MaskSliderAffected - slider '%s' not found.", step.maskSliderName);
+		return 1;
+	}
+
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: MaskSliderAffected - no target shapes found.");
+		return 0;
+	}
+
+	for (auto* shape : shapes) {
+		wxLogMessage("Automation: Masking the vertices of '%s' affected by slider '%s'...", shape->name.get(), step.maskSliderName);
+		project->MaskAffected(step.maskSliderName, shape);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepMaskAsymmetric(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: MaskAsymmetric - no target shapes found.");
+		return 0;
+	}
+
+	const bool byTriangles = step.asymMaskMode == 0;
+
+	if (!byTriangles && !step.asymDoPositions && !step.asymDoUnmatched && !step.asymDoSliders && !step.asymDoBones) {
+		wxLogWarning("Automation: MaskAsymmetric - no kind of asymmetry selected.");
+		return 0;
+	}
+
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m || !m->mask)
+			continue;
+
+		// Both modes leave the asymmetric vertices unmasked and mask everything
+		// else, so the following steps operate on the asymmetries. Like the menu
+		// items, this only ever adds to the mask.
+		std::vector<bool> keepUnmasked;
+
+		if (byTriangles) {
+			wxLogMessage("Automation: Masking everything but the asymmetric triangles of '%s'...", shapeName);
+			keepUnmasked = project->CalculateAsymmetricTriangleVertexMask(shape, m->weldVerts);
+		}
+		else {
+			wxLogMessage("Automation: Masking everything but the asymmetric vertices of '%s'...", shapeName);
+
+			std::vector<bool> selVerts(m->nVerts);
+			for (int i = 0; i < m->nVerts; i++)
+				selVerts[i] = m->mask[i] == 0.0f;
+
+			SymmetricVertices symVerts;
+			project->MatchSymmetricVertices(shape, m->weldVerts, symVerts);
+
+			VertexAsymmetries asyms;
+			project->FindVertexAsymmetries(shape, symVerts, m->weldVerts, asyms);
+
+			VertexAsymmetryTasks tasks;
+			tasks.doPos = step.asymDoPositions;
+			tasks.doUnmatched = step.asymDoUnmatched;
+			tasks.doSliders.resize(asyms.sliders.size(), step.asymDoSliders);
+			tasks.doBones.resize(asyms.bones.size(), step.asymDoBones);
+
+			keepUnmasked = CalcVertexListForAsymmetryTasks(symVerts, asyms, tasks, m->nVerts);
+			AddWeldedToVertexList(m->weldVerts, keepUnmasked);
+
+			// Vertices that were already masked stay masked
+			for (int i = 0; i < m->nVerts; i++)
+				if (!selVerts[i])
+					keepUnmasked[i] = false;
+		}
+
+		for (int i = 0; i < m->nVerts; i++)
+			if (i >= static_cast<int>(keepUnmasked.size()) || !keepUnmasked[i])
+				m->mask[i] = 1.0f;
+
+		m->QueueUpdate(Mesh::UpdateType::Mask);
+	}
+
+	outfitStudio->glView->Render();
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepSaveMask(const AutomationStep& step) {
+	if (step.saveMaskFile.empty()) {
+		wxLogError("Automation: SaveMask - no mask file specified.");
+		return 1;
+	}
+
+	if (step.saveMaskName.empty()) {
+		wxLogError("Automation: SaveMask - no mask name specified.");
+		return 1;
+	}
+
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: SaveMask - no target shapes found.");
+		return 0;
+	}
+
+	std::map<std::string, std::unordered_map<uint16_t, float>> maskData;
+	std::map<std::string, int> vertexCounts;
+	for (auto* shape : shapes) {
+		std::string shapeName = shape->name.get();
+		Mesh* m = outfitStudio->glView->GetMesh(shapeName);
+		if (!m)
+			continue;
+
+		std::unordered_map<uint16_t, float> mask;
+		outfitStudio->glView->GetShapeMask(mask, shapeName);
+		maskData[shapeName] = std::move(mask);
+		vertexCounts[shapeName] = m->nVerts;
+	}
+
+	if (maskData.empty()) {
+		wxLogWarning("Automation: SaveMask - none of the target shapes have a mesh to read a mask from.");
+		return 0;
+	}
+
+	wxString saveMaskFile = MakeAbsoluteToProject(wxString::FromUTF8(step.saveMaskFile));
+	std::string saveMaskFileStd = saveMaskFile.ToUTF8().data();
+
+	MaskFile maskFile;
+	if (step.saveMaskMerge && wxFileName::FileExists(saveMaskFile)) {
+		int loadErr = maskFile.Load(saveMaskFileStd);
+		if (loadErr) {
+			wxLogError("Automation: SaveMask - failed to read the existing file '%s' (error %d).", saveMaskFile, loadErr);
+			return 1;
+		}
+	}
+
+	MaskEntry entry;
+	entry.name = step.saveMaskName;
+	entry.SetFromMaskData(maskData, vertexCounts);
+
+	auto& entries = maskFile.GetEntries();
+	auto existing = std::find_if(entries.begin(), entries.end(), [&step](const MaskEntry& e) { return e.name == step.saveMaskName; });
+	if (existing != entries.end())
+		*existing = std::move(entry);
+	else
+		entries.push_back(std::move(entry));
+
+	wxString maskFilePath = wxFileName(saveMaskFile).GetPath();
+	if (!maskFilePath.IsEmpty())
+		wxFileName::Mkdir(maskFilePath, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+	int err = maskFile.Save(saveMaskFileStd);
+	if (err) {
+		wxLogError("Automation: SaveMask - failed to write '%s' (error %d).", saveMaskFile, err);
+		return 1;
+	}
+
+	wxLogMessage("Automation: Saved mask '%s' for %zu shape(s) to '%s'.", step.saveMaskName, maskData.size(), saveMaskFile);
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepSetVariable(const AutomationStep& step) {
+	if (step.variableName.empty()) {
+		wxLogError("Automation: SetVariable - no variable name specified.");
+		return 1;
+	}
+
+	// The placeholder variables are substituted once before the run, so a name
+	// that is defined there has already been replaced everywhere.
+	if (runBaseVariables.find(step.variableName) != runBaseVariables.end())
+		wxLogWarning("Automation: SetVariable - '%s' is also a placeholder variable; those are substituted before the run and take precedence.", step.variableName);
+
+	runtimeVariables[step.variableName] = step.variableValue;
+	wxLogMessage("Automation: {{%s}} = '%s'.", step.variableName, step.variableValue);
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepLogMessage(const AutomationStep& step) {
+	wxString message = wxString::FromUTF8(step.logMessageText);
+
+	switch (step.logMessageLevel) {
+		case 2: wxLogError("%s", message); break;
+		case 1: wxLogWarning("%s", message); break;
+		default: wxLogMessage("%s", message); break;
+	}
 
 	return 0;
 }

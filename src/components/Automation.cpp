@@ -207,11 +207,22 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldFloat("RotZ", &Step::addBoneRotZ, 0.0f, "txtAddBoneRotZ"),
 		});
 
+	add(AutomationStepType::AddBone, "AddBone", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Add Bone"), "pageAddBone",
+		{
+			FieldStringList("BoneNames", &Step::addBoneRefNames, "txtAddBoneRefNames"),
+		});
+
 	add(AutomationStepType::CopyBoneWeights, "CopyBoneWeights", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Copy Bone Weights"), "pageCopyBoneWeights",
 		{
 			FieldFloat("ProximityRadius", &Step::weightProximityRadius, 10.0f, "txtWeightRadius", AutomationFieldUI::Text, "%.1f"),
 			FieldInt("MaxResults", &Step::weightMaxResults, 10, "txtWeightMaxResults"),
 			FieldStringList("BoneList", &Step::weightBoneList, "txtWeightBoneList"),
+		});
+
+	add(AutomationStepType::TransferWeights, "TransferWeights", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Transfer Selected Weights"), "pageTransferWeights",
+		{
+			FieldStringList("BoneNames", &Step::transferWeightBones, "txtTransferWeightBones"),
+			FieldBool("UseMask", &Step::transferWeightUseMask, true, "chkTransferWeightUseMask"),
 		});
 
 	add(AutomationStepType::DeleteBones, "DeleteBones", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Delete Bones"), "pageDeleteBones",
@@ -230,6 +241,12 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldFloat("RotX", &Step::editBoneRotX, 0.0f, "txtEditBoneRotX"),
 			FieldFloat("RotY", &Step::editBoneRotY, 0.0f, "txtEditBoneRotY"),
 			FieldFloat("RotZ", &Step::editBoneRotZ, 0.0f, "txtEditBoneRotZ"),
+		});
+
+	add(AutomationStepType::SetBoneTransform, "SetBoneTransform", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Set Bone Transform"), "pageSetBoneTransform",
+		{
+			FieldStringList("BoneNames", &Step::boneXformNames, "txtBoneXformNames"),
+			FieldInt("Mode", &Step::boneXformMode, 0, "choiceBoneXformMode", AutomationFieldUI::ChoiceIndex),
 		});
 
 	add(AutomationStepType::RemoveSkinning, "RemoveSkinning", wxTRANSLATE("Bones"), wxTRANSLATE("Bones: Remove Skinning"), "pageRemoveSkinning");
@@ -288,6 +305,11 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 	add(AutomationStepType::LoadReference, "LoadReference", wxTRANSLATE("Project"), wxTRANSLATE("Project: Load Reference"), "pageLoadReference",
 		ProjectSourceFields(nullptr, nullptr, nullptr, "chkRefLoadAll", "chkRefMergeSliders", "chkRefMergeZaps", "chkRefAppendNewSliders"));
 
+	add(AutomationStepType::MakeConversionRef, "MakeConversionRef", wxTRANSLATE("Project"), wxTRANSLATE("Project: Make Conversion Reference"), "pageMakeConversionRef",
+		{
+			FieldString("SliderName", &Step::convRefSliderName, "txtConvRefSliderName"),
+		});
+
 	add(AutomationStepType::SetBaseShape, "SetBaseShape", wxTRANSLATE("Project"), wxTRANSLATE("Project: Set Base Shape"), "pageSetBaseShape");
 
 	add(AutomationStepType::SetReferenceShape, "SetReferenceShape", wxTRANSLATE("Project"), wxTRANSLATE("Project: Set Reference Shape"), "pageSetReferenceShape",
@@ -302,7 +324,15 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldString("PoseName", &Step::poseName, "txtPoseName"),
 		});
 
+	add(AutomationStepType::CopySegPart, "CopySegPart", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Copy Segments/Partitions"), "pageCopySegPart");
+
 	add(AutomationStepType::DeleteShape, "DeleteShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Delete Shape"), "pageDeleteShape");
+
+	add(AutomationStepType::DeleteVertices, "DeleteVertices", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Delete Vertices"), "pageDeleteVertices",
+		{
+			FieldBool("DeleteMasked", &Step::deleteVertsMasked, false, "chkDeleteVertsMasked"),
+			FieldBool("DeleteEmptyShapes", &Step::deleteVertsDeleteEmpty, true, "chkDeleteVertsDeleteEmpty"),
+		});
 
 	add(AutomationStepType::DuplicateShape, "DuplicateShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Duplicate Shape"), "pageDuplicateShape",
 		{
@@ -330,6 +360,13 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldBool("InvertV", &Step::invertV, false, "chkInvertV"),
 		});
 
+	add(AutomationStepType::MergeGeometry, "MergeGeometry", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Merge Geometry"), "pageMergeGeometry",
+		{
+			FieldString("SourceShape", &Step::mergeSourceShape, "txtMergeSourceShape"),
+			FieldString("TargetShape", &Step::mergeTargetShape, "txtMergeTargetShape"),
+			FieldBool("DeleteSource", &Step::mergeDeleteSource, false, "chkMergeDeleteSource"),
+		});
+
 	add(AutomationStepType::MirrorShape, "MirrorShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Mirror Shape"), "pageMirrorShape",
 		{
 			FieldBool("MirrorX", &Step::mirrorX, true, "chkMirrorX"),
@@ -355,6 +392,21 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 		});
 
 	add(AutomationStepType::ResetTransforms, "ResetTransforms", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Reset Transforms"), "pageResetTransforms");
+
+	add(AutomationStepType::SeparateVertices, "SeparateVertices", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Separate Vertices"), "pageSeparateVertices",
+		{
+			FieldString("NewName", &Step::separateNewName, "txtSeparateNewName"),
+		});
+
+	// The asymmetry tasks are shared with MaskAsymmetric, which edits the same
+	// members through its own controls.
+	add(AutomationStepType::SymmetrizeVertices, "SymmetrizeVertices", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Symmetrize Vertices"), "pageSymmetrizeVertices",
+		{
+			FieldBool("Positions", &Step::asymDoPositions, true, "chkSymVertPositions"),
+			FieldBool("Unmatched", &Step::asymDoUnmatched, false, "chkSymVertUnmatched"),
+			FieldBool("Sliders", &Step::asymDoSliders, false, "chkSymVertSliders"),
+			FieldBool("Bones", &Step::asymDoBones, false, "chkSymVertBones"),
+		});
 
 	add(AutomationStepType::TransformShape, "TransformShape", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Transform Shape"), "pageTransformShape",
 		{
@@ -390,6 +442,18 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 		});
 
 	// Sliders
+	add(AutomationStepType::ClearSliderData, "ClearSliderData", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Clear Slider Data"), "pageClearSliderData",
+		{
+			FieldStringList("SliderNames", &Step::clearSliderNames, "txtClearSliderNames"),
+			FieldBool("UseMask", &Step::clearSliderUseMask, true, "chkClearSliderUseMask"),
+		});
+
+	add(AutomationStepType::CloneSlider, "CloneSlider", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Clone Slider"), "pageCloneSlider",
+		{
+			FieldString("SourceSlider", &Step::cloneSliderSource, "txtCloneSliderSource"),
+			FieldString("SliderName", &Step::newSliderName, "txtCloneSliderName"),
+		});
+
 	add(AutomationStepType::ConformSliders, "ConformSliders", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Conform Sliders"), "pageConformSliders",
 		{
 			FieldFloat("ProximityRadius", &Step::conformProximityRadius, 10.0f, "txtConformRadius", AutomationFieldUI::Text, "%.1f"),
@@ -411,6 +475,21 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 		{
 			FieldStringList("SliderName", &Step::deleteSliderNames, "txtDeleteSliderName"),
 			FieldBool("Regex", &Step::deleteSliderRegex, false, "chkDeleteSliderRegex"),
+		});
+
+	add(AutomationStepType::NegateSlider, "NegateSlider", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Negate Slider"), "pageNegateSlider",
+		{
+			FieldStringList("SliderNames", &Step::negateSliderNames, "txtNegateSliderNames"),
+		});
+
+	add(AutomationStepType::NewCombinedSlider, "NewCombinedSlider", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: New Combined Slider"), "pageNewCombinedSlider",
+		{
+			FieldString("SliderName", &Step::newSliderName, "txtNewCombinedSliderName"),
+		});
+
+	add(AutomationStepType::NewZapSlider, "NewZapSlider", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: New Zap Slider"), "pageNewZapSlider",
+		{
+			FieldString("SliderName", &Step::newSliderName, "txtNewZapSliderName"),
 		});
 
 	add(AutomationStepType::SetSliderValues, "SetSliderValues", wxTRANSLATE("Sliders"), wxTRANSLATE("Sliders: Set Slider Values"), "pageSetSliderValues",
@@ -444,14 +523,64 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 	// Masks
 	add(AutomationStepType::ClearMask, "ClearMask", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Clear Mask"), "pageClearMask");
 
+	add(AutomationStepType::GrowShrinkMask, "GrowShrinkMask", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Grow/Shrink Mask"), "pageGrowShrinkMask",
+		{
+			FieldInt("Mode", &Step::maskGrowShrinkMode, 0, "choiceMaskGrowShrinkMode", AutomationFieldUI::ChoiceIndex),
+			FieldInt("Iterations", &Step::maskGrowShrinkCount, 1, "txtMaskGrowShrinkCount"),
+		});
+
+	add(AutomationStepType::InvertMask, "InvertMask", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Invert Mask"), "pageInvertMask");
+
 	add(AutomationStepType::LoadMask, "LoadMask", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Load Mask"), "pageLoadMask",
 		{
 			FieldString("MaskFile", &Step::loadMaskFile, nullptr),
 			FieldString("MaskName", &Step::loadMaskName, nullptr),
 		});
 
+	// Shares the asymmetry tasks with SymmetrizeVertices
+	add(AutomationStepType::MaskAsymmetric, "MaskAsymmetric", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Asymmetric"), "pageMaskAsymmetric",
+		{
+			FieldInt("Mode", &Step::asymMaskMode, 0, "choiceMaskAsymMode", AutomationFieldUI::ChoiceIndex),
+			FieldBool("Positions", &Step::asymDoPositions, true, "chkMaskAsymPositions"),
+			FieldBool("Unmatched", &Step::asymDoUnmatched, false, "chkMaskAsymUnmatched"),
+			FieldBool("Sliders", &Step::asymDoSliders, false, "chkMaskAsymSliders"),
+			FieldBool("Bones", &Step::asymDoBones, false, "chkMaskAsymBones"),
+		});
+
+	add(AutomationStepType::MaskBoneWeighted, "MaskBoneWeighted", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Bone-Weighted Vertices"), "pageMaskBoneWeighted",
+		{
+			FieldStringList("BoneNames", &Step::maskBoneNames, "txtMaskBoneNames"),
+		});
+
+	add(AutomationStepType::MaskSliderAffected, "MaskSliderAffected", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Slider-Affected Vertices"), "pageMaskSliderAffected",
+		{
+			FieldString("SliderName", &Step::maskSliderName, "txtMaskSliderName"),
+		});
+
+	add(AutomationStepType::MaskWeighted, "MaskWeighted", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Mask Weighted Vertices"), "pageMaskWeighted");
+
+	add(AutomationStepType::SaveMask, "SaveMask", wxTRANSLATE("Masks"), wxTRANSLATE("Masks: Save Mask"), "pageSaveMask",
+		{
+			FieldString("MaskFile", &Step::saveMaskFile, "txtSaveMaskFile"),
+			FieldString("MaskName", &Step::saveMaskName, "txtSaveMaskName"),
+			FieldBool("Merge", &Step::saveMaskMerge, true, "chkSaveMaskMerge"),
+		});
+
 	// Nodes
 	add(AutomationStepType::RemoveUnusedNodes, "RemoveUnusedNodes", wxTRANSLATE("Nodes"), wxTRANSLATE("Nodes: Remove Unused Nodes"), "pageRemoveUnusedNodes");
+
+	// Script
+	add(AutomationStepType::SetVariable, "SetVariable", wxTRANSLATE("Script"), wxTRANSLATE("Script: Set Variable"), "pageSetVariable",
+		{
+			FieldString("Name", &Step::variableName, "txtSetVariableName"),
+			FieldString("Value", &Step::variableValue, "txtSetVariableValue"),
+		});
+
+	add(AutomationStepType::LogMessage, "LogMessage", wxTRANSLATE("Script"), wxTRANSLATE("Script: Log Message"), "pageLogMessage",
+		{
+			FieldString("Message", &Step::logMessageText, "txtLogMessage"),
+			FieldInt("Level", &Step::logMessageLevel, 0, "choiceLogMessageLevel", AutomationFieldUI::ChoiceIndex),
+		});
 
 	// A missing entry would silently drop the type's parameters and settings page
 	assert(types.size() == AutomationStepTypeCount && "every AutomationStepType needs a table entry");
@@ -830,24 +959,28 @@ static void SubstituteInStringVector(std::vector<std::string>& vec, const std::m
 	vec = std::move(result);
 }
 
+void SubstituteStepPlaceholders(AutomationStep& step, const std::map<std::string, std::string>& variables) {
+	SubstituteInString(step.note, variables);
+	SubstituteInStringVector(step.targetMeshes, variables);
+
+	// Every text parameter of the step type takes placeholders
+	const AutomationStepInfo& info = GetAutomationStepInfo(step.type);
+	for (const AutomationField& field : info.fields) {
+		if (field.kind == AutomationFieldKind::String)
+			SubstituteInString(step.*field.member.asString, variables);
+		else if (field.kind == AutomationFieldKind::StringList)
+			SubstituteInStringVector(step.*field.member.asStringList, variables);
+	}
+
+	if (info.substituteExtra)
+		info.substituteExtra(step, variables);
+}
+
 void AutomationScript::SubstitutePlaceholders(const std::map<std::string, std::string>& vars) {
 	for (auto& step : steps) {
 		if (!step.active)
 			continue;
 
-		SubstituteInString(step.note, vars);
-		SubstituteInStringVector(step.targetMeshes, vars);
-
-		// Every text parameter of the step type takes placeholders
-		const AutomationStepInfo& info = GetAutomationStepInfo(step.type);
-		for (const AutomationField& field : info.fields) {
-			if (field.kind == AutomationFieldKind::String)
-				SubstituteInString(step.*field.member.asString, vars);
-			else if (field.kind == AutomationFieldKind::StringList)
-				SubstituteInStringVector(step.*field.member.asStringList, vars);
-		}
-
-		if (info.substituteExtra)
-			info.substituteExtra(step, vars);
+		SubstituteStepPlaceholders(step, vars);
 	}
 }

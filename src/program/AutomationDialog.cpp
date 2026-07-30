@@ -658,6 +658,14 @@ AutomationDialog::AutomationDialog(OutfitStudioFrame* outfitStudio, OutfitProjec
 	if (btnAddFixClipSlider)
 		btnAddFixClipSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
 
+	auto* btnAddClearSlider = XRCCTRL(*this, "btnAddClearSlider", wxButton);
+	if (btnAddClearSlider)
+		btnAddClearSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
+	auto* btnAddNegateSlider = XRCCTRL(*this, "btnAddNegateSlider", wxButton);
+	if (btnAddNegateSlider)
+		btnAddNegateSlider->Bind(wxEVT_BUTTON, &AutomationDialog::OnAddSliderToField, this);
+
 	// Restore last selected automation script
 	std::string lastScript = OutfitStudioConfig["AutomationDialog.lastScript"];
 	if (!lastScript.empty()) {
@@ -1948,6 +1956,29 @@ const AutomationDialog::StepBinding* AutomationDialog::FindStepBinding(Automatio
 		{AutomationStepType::ClearMask, &AutomationDialog::ExecuteStepClearMask},
 		{AutomationStepType::LoadMask, &AutomationDialog::ExecuteStepLoadMask, &AutomationDialog::StepToUILoadMask, &AutomationDialog::StepFromUILoadMask},
 		{AutomationStepType::RemoveUnusedNodes, &AutomationDialog::ExecuteStepRemoveUnusedNodes},
+		{AutomationStepType::AddBone, &AutomationDialog::ExecuteStepAddBone},
+		{AutomationStepType::TransferWeights, &AutomationDialog::ExecuteStepTransferWeights},
+		{AutomationStepType::SetBoneTransform, &AutomationDialog::ExecuteStepSetBoneTransform},
+		{AutomationStepType::MakeConversionRef, &AutomationDialog::ExecuteStepMakeConversionRef},
+		{AutomationStepType::CopySegPart, &AutomationDialog::ExecuteStepCopySegPart},
+		{AutomationStepType::DeleteVertices, &AutomationDialog::ExecuteStepDeleteVertices},
+		{AutomationStepType::SeparateVertices, &AutomationDialog::ExecuteStepSeparateVertices},
+		{AutomationStepType::MergeGeometry, &AutomationDialog::ExecuteStepMergeGeometry},
+		{AutomationStepType::SymmetrizeVertices, &AutomationDialog::ExecuteStepSymmetrizeVertices},
+		{AutomationStepType::ClearSliderData, &AutomationDialog::ExecuteStepClearSliderData},
+		{AutomationStepType::CloneSlider, &AutomationDialog::ExecuteStepCloneSlider},
+		{AutomationStepType::NegateSlider, &AutomationDialog::ExecuteStepNegateSlider},
+		{AutomationStepType::NewCombinedSlider, &AutomationDialog::ExecuteStepNewCombinedSlider},
+		{AutomationStepType::NewZapSlider, &AutomationDialog::ExecuteStepNewZapSlider},
+		{AutomationStepType::GrowShrinkMask, &AutomationDialog::ExecuteStepGrowShrinkMask},
+		{AutomationStepType::InvertMask, &AutomationDialog::ExecuteStepInvertMask},
+		{AutomationStepType::MaskAsymmetric, &AutomationDialog::ExecuteStepMaskAsymmetric},
+		{AutomationStepType::MaskBoneWeighted, &AutomationDialog::ExecuteStepMaskBoneWeighted},
+		{AutomationStepType::MaskSliderAffected, &AutomationDialog::ExecuteStepMaskSliderAffected},
+		{AutomationStepType::MaskWeighted, &AutomationDialog::ExecuteStepMaskWeighted},
+		{AutomationStepType::SaveMask, &AutomationDialog::ExecuteStepSaveMask},
+		{AutomationStepType::SetVariable, &AutomationDialog::ExecuteStepSetVariable},
+		{AutomationStepType::LogMessage, &AutomationDialog::ExecuteStepLogMessage},
 	};
 
 	static_assert(std::size(bindings) == AutomationStepTypeCount, "every AutomationStepType needs a binding");
@@ -3699,6 +3730,10 @@ void AutomationDialog::OnAddSliderToField(wxCommandEvent& event) {
 			textCtrlName = "txtSliderPropNames";
 		else if (name == "btnAddFixClipSlider")
 			textCtrlName = "txtFixClipSliderNames";
+		else if (name == "btnAddClearSlider")
+			textCtrlName = "txtClearSliderNames";
+		else if (name == "btnAddNegateSlider")
+			textCtrlName = "txtNegateSliderNames";
 	}
 
 	if (!textCtrlName)
@@ -3866,6 +3901,9 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			execScript.SubstitutePlaceholders(vars);
 
+			runBaseVariables = vars;
+			runtimeVariables.clear();
+
 			// Clear project for fresh start
 			ResetAndClearProject();
 
@@ -3927,7 +3965,10 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			bool stepFailed = false;
 			for (size_t i = firstStepToExecute; i < execScript.GetSteps().size(); i++) {
-				const auto& batchStep = execScript.GetSteps()[i];
+				AutomationStep batchStep = execScript.GetSteps()[i];
+				if (!runtimeVariables.empty())
+					SubstituteStepPlaceholders(batchStep, runtimeVariables);
+
 				int err = ExecuteStep(batchStep);
 				if (err != 0) {
 					wxLogError("Automation: Batch - step %zu failed on '%s'.", i + 1, filePath);
@@ -4029,6 +4070,9 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			execScript.SubstitutePlaceholders(vars);
 
+			runBaseVariables = vars;
+			runtimeVariables.clear();
+
 			for (auto& step : execScript.GetSteps()) {
 				// Apply copy-ref-from-project: override saveAutoCopyRef based on loaded project
 				if (step.type == AutomationStepType::SaveProject && step.saveCopyRefFromProject) {
@@ -4118,7 +4162,10 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 
 			bool stepFailed = false;
 			for (size_t i = 0; i < execScript.GetSteps().size(); i++) {
-				const auto& batchStep = execScript.GetSteps()[i];
+				AutomationStep batchStep = execScript.GetSteps()[i];
+				if (!runtimeVariables.empty())
+					SubstituteStepPlaceholders(batchStep, runtimeVariables);
+
 				int err = ExecuteStep(batchStep);
 				if (err != 0) {
 					wxLogError("Automation: Batch - step %zu failed on '%s'.", i + 1, setName);

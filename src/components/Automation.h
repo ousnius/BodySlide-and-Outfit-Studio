@@ -19,11 +19,17 @@ See the included LICENSE file
 // with wxGetTranslation().
 #include <wx/translation.h>
 
+// The order here only groups related types together for readability; the picker
+// groups by the category in the step type table and scripts store the type as a
+// string, so values can be inserted anywhere without breaking anything.
 enum class AutomationStepType {
 	AddCustomBone,
+	AddBone,
 	CopyBoneWeights,
+	TransferWeights,
 	DeleteBones,
 	EditBone,
+	SetBoneTransform,
 	RemoveSkinning,
 	ExportFile,
 	SaveProject,
@@ -33,37 +39,57 @@ enum class AutomationStepType {
 	ClearProject,
 	ClearReference,
 	LoadReference,
+	MakeConversionRef,
 	SetBaseShape,
 	SetReferenceShape,
 	ApplyPose,
+	CopySegPart,
 	DeleteShape,
+	DeleteVertices,
 	DuplicateShape,
 	ChangePartitions,
 	FixBadBones,
 	FixClipping,
 	InvertUVs,
+	MergeGeometry,
 	MirrorShape,
 	RecalcNormals,
 	RefineMesh,
 	RenameShape,
 	ResetTransforms,
+	SeparateVertices,
+	SymmetrizeVertices,
 	TransformShape,
 	SetGeometryProperties,
 	SetExtraData,
 	DeleteExtraData,
+	ClearSliderData,
+	CloneSlider,
 	ConformSliders,
 	DeleteSlider,
+	NegateSlider,
+	NewCombinedSlider,
+	NewZapSlider,
 	SetSliderValues,
 	SetSliderProperties,
 	SetShaderProperties,
 	SetTexturePaths,
 	ClearMask,
+	GrowShrinkMask,
+	InvertMask,
 	LoadMask,
-	RemoveUnusedNodes
+	MaskAsymmetric,
+	MaskBoneWeighted,
+	MaskSliderAffected,
+	MaskWeighted,
+	SaveMask,
+	RemoveUnusedNodes,
+	SetVariable,
+	LogMessage
 };
 
-constexpr int AutomationStepTypeCount = 40;
-static_assert(static_cast<int>(AutomationStepType::RemoveUnusedNodes) + 1 == AutomationStepTypeCount,
+constexpr int AutomationStepTypeCount = 63;
+static_assert(static_cast<int>(AutomationStepType::LogMessage) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
 std::string AutomationStepTypeToString(AutomationStepType type);
@@ -308,6 +334,73 @@ struct AutomationStep {
 	int fixClipMode = 0;          // 0 = Shapes, 1 = Sliders
 	float fixClipStrength = 0.5f;  // 0.0 - 1.0
 	std::vector<std::string> fixClipSliderNames;
+
+	// AddBone params
+	std::vector<std::string> addBoneRefNames;
+
+	// TransferWeights params
+	std::vector<std::string> transferWeightBones; // Empty = every bone of the reference
+	bool transferWeightUseMask = true;
+
+	// SetBoneTransform params
+	std::vector<std::string> boneXformNames;
+	int boneXformMode = 0; // 0 = skin transform from node, 1 = node transform from skin
+
+	// MakeConversionRef params
+	std::string convRefSliderName;
+
+	// DeleteVertices params
+	bool deleteVertsMasked = false;     // false = delete unmasked (mask protects), like the menu item
+	bool deleteVertsDeleteEmpty = true; // Delete shapes that lose all of their triangles
+
+	// SeparateVertices params
+	std::string separateNewName;
+
+	// MergeGeometry params
+	std::string mergeSourceShape;
+	std::string mergeTargetShape;
+	bool mergeDeleteSource = false;
+
+	// SymmetrizeVertices / MaskAsymmetric params
+	bool asymDoPositions = true;
+	bool asymDoUnmatched = false;
+	bool asymDoSliders = false;
+	bool asymDoBones = false;
+	int asymMaskMode = 0; // 0 = asymmetric triangles, 1 = asymmetric vertices
+
+	// NewZapSlider / NewCombinedSlider / CloneSlider params
+	std::string newSliderName;
+	std::string cloneSliderSource;
+
+	// NegateSlider params
+	std::vector<std::string> negateSliderNames;
+
+	// ClearSliderData params
+	std::vector<std::string> clearSliderNames; // Empty = every slider of the project
+	bool clearSliderUseMask = true;
+
+	// GrowShrinkMask params
+	int maskGrowShrinkMode = 0;  // 0 = grow, 1 = shrink
+	int maskGrowShrinkCount = 1; // Number of times to grow/shrink
+
+	// MaskBoneWeighted params
+	std::vector<std::string> maskBoneNames;
+
+	// MaskSliderAffected params
+	std::string maskSliderName;
+
+	// SaveMask params
+	std::string saveMaskFile;
+	std::string saveMaskName;
+	bool saveMaskMerge = true; // Keep the other entries of an existing mask file
+
+	// SetVariable params
+	std::string variableName;
+	std::string variableValue;
+
+	// LogMessage params
+	std::string logMessageText;
+	int logMessageLevel = 0; // 0 = message, 1 = warning, 2 = error
 };
 
 // Type of an AutomationStep member described by an AutomationField.
@@ -439,6 +532,11 @@ struct AutomationStepInfo {
 
 const std::vector<AutomationStepInfo>& GetAutomationStepTypes();
 const AutomationStepInfo& GetAutomationStepInfo(AutomationStepType type);
+
+// Substitute placeholders like {{KEY}} in all string fields of a single step.
+// Steps that define variables at run time need this per step rather than once
+// for the whole script.
+void SubstituteStepPlaceholders(AutomationStep& step, const std::map<std::string, std::string>& variables);
 
 class AutomationScript {
 	std::vector<AutomationStep> steps;

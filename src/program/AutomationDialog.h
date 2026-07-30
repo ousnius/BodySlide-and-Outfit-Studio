@@ -10,6 +10,7 @@ See the included LICENSE file
 #include <cstddef>
 #include <map>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -61,6 +62,11 @@ private:
 	AutomationScript script;
 	int selectedStep = -1;
 	int varRowCount = 1;
+
+	// Variables defined by Set Variable steps while a script runs. Substituted into
+	// every following step, on top of the up front pass over the placeholder table.
+	std::map<std::string, std::string> runtimeVariables;
+	std::map<std::string, std::string> runBaseVariables;
 
 	wxListCtrl* listSteps = nullptr;
 	wxStaticText* lblStepsPlaceholder = nullptr;
@@ -279,6 +285,33 @@ private:
 	int ExecuteStepRemoveUnusedNodes(const AutomationStep& step);
 	int ExecuteStepFixClipping(const AutomationStep& step);
 	int ExecuteStepFixBadBones(const AutomationStep& step);
+	int ExecuteStepAddBone(const AutomationStep& step);
+	int ExecuteStepTransferWeights(const AutomationStep& step);
+	int ExecuteStepSetBoneTransform(const AutomationStep& step);
+	int ExecuteStepMakeConversionRef(const AutomationStep& step);
+	int ExecuteStepCopySegPart(const AutomationStep& step);
+	int ExecuteStepDeleteVertices(const AutomationStep& step);
+	int ExecuteStepSeparateVertices(const AutomationStep& step);
+	int ExecuteStepMergeGeometry(const AutomationStep& step);
+	int ExecuteStepSymmetrizeVertices(const AutomationStep& step);
+	int ExecuteStepClearSliderData(const AutomationStep& step);
+	int ExecuteStepCloneSlider(const AutomationStep& step);
+	int ExecuteStepNegateSlider(const AutomationStep& step);
+	int ExecuteStepNewCombinedSlider(const AutomationStep& step);
+	int ExecuteStepNewZapSlider(const AutomationStep& step);
+	int ExecuteStepGrowShrinkMask(const AutomationStep& step);
+	int ExecuteStepInvertMask(const AutomationStep& step);
+	int ExecuteStepMaskAsymmetric(const AutomationStep& step);
+	int ExecuteStepMaskBoneWeighted(const AutomationStep& step);
+	int ExecuteStepMaskSliderAffected(const AutomationStep& step);
+	int ExecuteStepMaskWeighted(const AutomationStep& step);
+	int ExecuteStepSaveMask(const AutomationStep& step);
+	int ExecuteStepSetVariable(const AutomationStep& step);
+	int ExecuteStepLogMessage(const AutomationStep& step);
+
+	// Rebuilds the render meshes after a step changed vertex or triangle counts,
+	// carrying the remapped masks over to the new meshes.
+	void RefreshMeshesWithMasks(std::unordered_map<std::string, std::vector<float>>& maskStash);
 
 	std::vector<std::string> GatherBatchFiles();
 	std::vector<std::pair<std::string, std::string>> GatherBatchSliderSets();

@@ -2872,6 +2872,1208 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 												</object>
 											</object>
 										</object>
+
+										<!-- AddBone -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageAddBone">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Add Bone</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Bone Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtAddBoneRefNames">
+																	<tooltip>Comma-separated list of bone names to add from the loaded skeleton.</tooltip>
+																	<hint>Comma-separated bone list</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Adds bone references from the loaded skeleton to every shape of the project, like the Add Bone dialog does.
+																Bones that are not in the skeleton are skipped.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- TransferWeights -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageTransferWeights">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Transfer Selected Weights</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Bone Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtTransferWeightBones">
+																	<tooltip>Comma-separated list of bones to transfer. Leave empty to transfer every bone of the reference shape.</tooltip>
+																	<hint>Leave empty for all bones</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mask:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkTransferWeightUseMask">
+																	<label>Keep the weights of masked vertices</label>
+																	<checked>1</checked>
+																	<tooltip>Blend the transferred weights by the current mask instead of overwriting everything.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Copies bone weights vertex by vertex from the reference shape. The target shapes need the same vertex count as the reference.
+																Leaving the target meshes empty excludes the reference shape.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetBoneTransform -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetBoneTransform">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Bone Transform</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Bone Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtBoneXformNames">
+																	<tooltip>Comma-separated list of bones to recalculate.</tooltip>
+																	<hint>Comma-separated bone list</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceBoneXformMode">
+																	<content>
+																		<item>Set bone as skin (skin transform from node)</item>
+																		<item>Set bone as node (node transform from skin)</item>
+																	</content>
+																	<selection>0</selection>
+																	<tooltip>Which of the two transforms is recalculated from the other one.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Recalculates the skin-to-bone transform of a bone from its node transform, or the other way around, for the target shapes.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- MakeConversionRef -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMakeConversionRef">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Make Conversion Reference</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtConvRefSliderName">
+																	<tooltip>Name of the conversion slider to create.</tooltip>
+																	<hint>ConvertToBase</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Turns the current slider settings into a new conversion slider and makes the deformed reference the new base shape.
+																Requires at least one non-zero slider value and deletes all other sliders of the project.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- CopySegPart -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageCopySegPart">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Copy Segments/Partitions</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Assigns every triangle of the target shapes to the segment/partition of the nearest reference triangle. Existing segments/partitions are cleared.
+																Leaving the target meshes empty excludes the reference shape. No additional parameters needed.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- DeleteVertices -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageDeleteVertices">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Delete Vertices</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxBoxSizer">
+															<orient>wxVERTICAL</orient>
+															<object class="sizeritem">
+																<object class="wxCheckBox" name="chkDeleteVertsMasked">
+																	<label>Delete the masked vertices instead of the unmasked ones</label>
+																	<tooltip>By default the mask protects vertices and everything else is deleted, like the menu item does.</tooltip>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxTOP</flag>
+																<border>3</border>
+																<object class="wxCheckBox" name="chkDeleteVertsDeleteEmpty">
+																	<label>Delete shapes that lose all of their triangles</label>
+																	<checked>1</checked>
+																	<tooltip>Uncheck to leave such shapes untouched instead.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Deletes vertices and their triangles from the target shapes. Set up the mask with the Masks steps first;
+																without a mask every vertex counts as unmasked.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- MergeGeometry -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMergeGeometry">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Merge Geometry</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Source Shape:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMergeSourceShape">
+																	<tooltip>Name of the shape whose geometry is copied.</tooltip>
+																	<hint>Shape name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Target Shape:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMergeTargetShape">
+																	<tooltip>Name of the shape the geometry is merged into.</tooltip>
+																	<hint>Shape name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Source:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkMergeDeleteSource">
+																	<label>Delete the source shape afterwards</label>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Merges the geometry of one shape into another one. The step fails if the shaders or alpha properties do not match
+																or the result would exceed the vertex/triangle limits. This step uses its own shape names, not the target meshes above.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SeparateVertices -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSeparateVertices">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Separate Vertices</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>New Shape Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSeparateNewName">
+																	<tooltip>Name of the new shape that receives the masked vertices.</tooltip>
+																	<hint>Shape name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Moves the masked vertices of a single target shape into a new shape. Needs exactly one target mesh and a non-empty mask.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SymmetrizeVertices -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSymmetrizeVertices">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Symmetrize Vertices</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxBoxSizer">
+															<orient>wxVERTICAL</orient>
+															<object class="sizeritem">
+																<object class="wxCheckBox" name="chkSymVertPositions">
+																	<label>Vertex positions</label>
+																	<checked>1</checked>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxTOP</flag>
+																<border>3</border>
+																<object class="wxCheckBox" name="chkSymVertUnmatched">
+																	<label>Unmatched vertices</label>
+																	<tooltip>Also move vertices that have no mirrored counterpart onto the mirror plane.</tooltip>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxTOP</flag>
+																<border>3</border>
+																<object class="wxCheckBox" name="chkSymVertSliders">
+																	<label>Slider data (all sliders)</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxTOP</flag>
+																<border>3</border>
+																<object class="wxCheckBox" name="chkSymVertBones">
+																	<label>Bone weights (all bones)</label>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Mirrors the selected kinds of data across the X axis for the unmasked vertices of the target shapes.
+																Masked vertices are left alone, just like in the vertex asymmetry dialog.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- ClearSliderData -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageClearSliderData">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Clear Slider Data</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtClearSliderNames">
+																			<tooltip>Comma-separated list of sliders to clear. Leave empty to clear every slider of the project.</tooltip>
+																			<hint>Leave empty for all sliders</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddClearSlider">
+																			<label translate="0">+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mask:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkClearSliderUseMask">
+																	<label>Keep the slider data of masked vertices</label>
+																	<checked>1</checked>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Removes the slider morph data of the target shapes without deleting the sliders themselves.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- CloneSlider -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageCloneSlider">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Clone Slider</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Source Slider:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtCloneSliderSource">
+																	<tooltip>Name of the slider to clone.</tooltip>
+																	<hint>Slider name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>New Slider:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtCloneSliderName">
+																	<tooltip>Name of the new slider. It must not exist yet.</tooltip>
+																	<hint>Slider name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Creates a copy of a slider including its data for all shapes.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- NegateSlider -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageNegateSlider">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Negate Slider</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxHORIZONTAL</orient>
+																	<object class="sizeritem">
+																		<option>1</option>
+																		<flag>wxEXPAND|wxRIGHT</flag>
+																		<border>5</border>
+																		<object class="wxTextCtrl" name="txtNegateSliderNames">
+																			<tooltip>Comma-separated list of sliders to negate.</tooltip>
+																			<hint>Comma-separated slider list</hint>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxALIGN_CENTER_VERTICAL</flag>
+																		<object class="wxButton" name="btnAddNegateSlider">
+																			<label translate="0">+</label>
+																			<size>24,-1</size>
+																			<tooltip>Add sliders from list</tooltip>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Inverts the morph data of the given sliders for the target shapes.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- NewCombinedSlider -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageNewCombinedSlider">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>New Combined Slider</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtNewCombinedSliderName">
+																	<tooltip>Name of the new slider. It must not exist yet.</tooltip>
+																	<hint>Slider name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Creates a new slider from the combined result of the currently set slider values.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- NewZapSlider -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageNewZapSlider">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>New Zap Slider</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtNewZapSliderName">
+																	<tooltip>Name of the new zap slider. It must not exist yet.</tooltip>
+																	<hint>Slider name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Creates a zap slider that removes the unmasked vertices of the target shapes, so the mask marks what to keep.
+																Set up the mask with the Masks steps first.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- GrowShrinkMask -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageGrowShrinkMask">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Grow/Shrink Mask</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceMaskGrowShrinkMode">
+																	<content>
+																		<item>Grow</item>
+																		<item>Shrink</item>
+																	</content>
+																	<selection>0</selection>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Iterations:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskGrowShrinkCount">
+																	<value>1</value>
+																	<tooltip>How many times the mask border is moved by one ring of vertices.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Moves the mask border of the target shapes outwards or inwards, like the grow/shrink mask menu items.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- InvertMask -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageInvertMask">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Invert Mask</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Inverts the mask of the target shapes. Fully masked vertices become unmasked and the other way around.
+																No additional parameters needed.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- MaskAsymmetric -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMaskAsymmetric">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Mask Asymmetric</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mode:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceMaskAsymMode">
+																	<content>
+																		<item>Asymmetric triangles</item>
+																		<item>Asymmetric vertices</item>
+																	</content>
+																	<selection>0</selection>
+																	<tooltip>Triangle mode looks at the triangle layout only and ignores the checkboxes below.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Asymmetries:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<object class="wxCheckBox" name="chkMaskAsymPositions">
+																			<label>Vertex positions</label>
+																			<checked>1</checked>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxTOP</flag>
+																		<border>3</border>
+																		<object class="wxCheckBox" name="chkMaskAsymUnmatched">
+																			<label>Unmatched vertices</label>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxTOP</flag>
+																		<border>3</border>
+																		<object class="wxCheckBox" name="chkMaskAsymSliders">
+																			<label>Slider data (all sliders)</label>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<flag>wxTOP</flag>
+																		<border>3</border>
+																		<object class="wxCheckBox" name="chkMaskAsymBones">
+																			<label>Bone weights (all bones)</label>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Masks everything except the asymmetric parts of the target shapes, so the following steps only work on those.
+																In vertex mode, vertices that are already masked stay masked.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- MaskBoneWeighted -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMaskBoneWeighted">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Mask Bone-Weighted Vertices</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Bone Names:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskBoneNames">
+																	<tooltip>Comma-separated list of bones whose weighted vertices are masked.</tooltip>
+																	<hint>Comma-separated bone list</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Replaces the mask of the target shapes with the vertices that have a weight greater than zero for any of the given bones.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- MaskSliderAffected -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMaskSliderAffected">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Mask Slider-Affected Vertices</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Slider Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtMaskSliderName">
+																	<tooltip>Name of the slider whose affected vertices are masked.</tooltip>
+																	<hint>Slider name</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Replaces the mask of the target shapes with the vertices that the given slider has morph data for.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- MaskWeighted -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageMaskWeighted">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Mask Weighted Vertices</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Replaces the mask of the target shapes with the vertices that have a weight greater than zero for any of their bones.
+																No additional parameters needed.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SaveMask -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSaveMask">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Save Mask</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mask File:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSaveMaskFile">
+																	<tooltip>Path of the XML mask file to write. Relative paths are resolved against the project folder.</tooltip>
+																	<hint>masks.xml</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Mask Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSaveMaskName">
+																	<tooltip>Name of the entry inside the mask file.</tooltip>
+																	<hint>Mask name</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Existing File:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkSaveMaskMerge">
+																	<label>Keep the other entries of an existing file</label>
+																	<checked>1</checked>
+																	<tooltip>Uncheck to overwrite the file with just this entry.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Writes the current mask of the target shapes into a named entry of an XML mask file, ready to be read back by Masks: Load Mask.
+																An entry of the same name is replaced.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- SetVariable -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageSetVariable">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Set Variable</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Name:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSetVariableName">
+																	<tooltip>Name of the variable, without the curly braces.</tooltip>
+																	<hint>KEY</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Value:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtSetVariableValue">
+																	<tooltip>Value to substitute. Placeholders of already known variables are resolved first.</tooltip>
+																	<hint>Value</hint>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Defines a {{KEY}} placeholder for the steps that follow. Names that are already in the placeholder variables below
+																are substituted before the run and cannot be overridden here.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
+										<!-- LogMessage -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageLogMessage">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Log Message</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxFlexGridSizer">
+															<cols>2</cols>
+															<vgap>5</vgap>
+															<hgap>10</hgap>
+															<growablecols>1</growablecols>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Message:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxTextCtrl" name="txtLogMessage">
+																	<tooltip>Text to write to the log. Placeholders are substituted.</tooltip>
+																	<hint>Message text</hint>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>Level:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxChoice" name="choiceLogMessageLevel">
+																	<content>
+																		<item>Message</item>
+																		<item>Warning</item>
+																		<item>Error</item>
+																	</content>
+																	<selection>0</selection>
+																	<tooltip>Errors and warnings are shown in a dialog outside of headless runs, but never fail the step.</tooltip>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Writes a message to the automation log. Useful to mark sections of a long batch run or to show a resolved variable.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
 									</object>
 								</object>
 							</object>
