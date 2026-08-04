@@ -47,14 +47,14 @@
         <LeftMousePan>false</LeftMousePan></Input>
     <!--Light Settings-->
     <Lights>
-        <Ambient>20</Ambient>
-        <Frontal>20</Frontal>
-        <Directional0 x="-100" y="10" z="100">60</Directional0>
-        <Directional1 x="100" y="10" z="100">60</Directional1>
-        <Directional2 x="0" y="20" z="-100">85</Directional2></Lights>
+        <Ambient>15</Ambient>
+        <Frontal>100</Frontal>
+        <Directional0 x="-100" y="10" z="100">0</Directional0>
+        <Directional1 x="100" y="10" z="100">0</Directional1>
+        <Directional2 x="0" y="20" z="-100">0</Directional2></Lights>
     <!--Rendering Settings-->
     <Rendering>
-        <ColorBackground r="160" g="160" b="160"></ColorBackground>
+        <ColorBackground r="210" g="210" b="210"></ColorBackground>
         <!-- Vertex point sizes (in logical pixels) for the vertex edit mode in Outfit Studio. -->
         <PointSizeMin>4.0</PointSizeMin>
         <PointSizeMax>14.0</PointSizeMax>

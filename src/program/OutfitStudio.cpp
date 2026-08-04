@@ -923,17 +923,17 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
 	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", true);
 	Config.SetDefaultBoolValue("Input/MaskHistory", true);
-	Config.SetDefaultValue("Lights/Ambient", 20);
-	Config.SetDefaultValue("Lights/Frontal", 20);
-	Config.SetDefaultValue("Lights/Directional0", 60);
+	Config.SetDefaultValue("Lights/Ambient", 15);
+	Config.SetDefaultValue("Lights/Frontal", 100);
+	Config.SetDefaultValue("Lights/Directional0", 0);
 	Config.SetDefaultValue("Lights/Directional0.x", -90);
 	Config.SetDefaultValue("Lights/Directional0.y", 10);
 	Config.SetDefaultValue("Lights/Directional0.z", 100);
-	Config.SetDefaultValue("Lights/Directional1", 60);
+	Config.SetDefaultValue("Lights/Directional1", 0);
 	Config.SetDefaultValue("Lights/Directional1.x", 70);
 	Config.SetDefaultValue("Lights/Directional1.y", 10);
 	Config.SetDefaultValue("Lights/Directional1.z", 100);
-	Config.SetDefaultValue("Lights/Directional2", 85);
+	Config.SetDefaultValue("Lights/Directional2", 0);
 	Config.SetDefaultValue("Lights/Directional2.x", 30);
 	Config.SetDefaultValue("Lights/Directional2.y", 20);
 	Config.SetDefaultValue("Lights/Directional2.z", -100);
@@ -7735,11 +7735,11 @@ void OutfitStudioFrame::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
-	int ambient = 20;
-	int frontal = 20;
-	int directional0 = 60;
-	int directional1 = 60;
-	int directional2 = 85;
+	int ambient = 15;
+	int frontal = 100;
+	int directional0 = 0;
+	int directional1 = 0;
+	int directional2 = 0;
 
 	glView->UpdateLights(ambient, frontal, directional0, directional1, directional2);
 
