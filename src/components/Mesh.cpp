@@ -318,6 +318,22 @@ void Mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	greyscaleColor = matFile.grayscaleToPaletteColor;
 	cubemap = matFile.environmentMapping;
 
+	// Skin and hair tint of the material file override the ones of the shader property.
+	// Material files have no skin tint color of their own, so the shader property color is kept for it.
+	if (matFile.hair) {
+		tintType = TintType::Hair;
+		prop.tintColor = matFile.hairTintColor;
+	}
+	else if (matFile.skinTint) {
+		if (tintType != TintType::Skin)
+			prop.tintColor = Vector3(1.0f, 1.0f, 1.0f);
+
+		tintType = TintType::Skin;
+	}
+	else {
+		tintType = TintType::None;
+	}
+
 	prop.alpha = matFile.alpha;
 	prop.uvOffset = matFile.uvOffset;
 	prop.uvScale = matFile.uvScale;

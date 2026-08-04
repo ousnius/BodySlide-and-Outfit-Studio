@@ -32,6 +32,7 @@ private:
 
 public:
 	enum class RenderMode { Normal, UnlitSolid, UnlitWire, UnlitWireDepth, UnlitPoints, UnlitPointsDepth, LitWire };
+	enum class TintType { None, Skin, Hair };
 	enum UpdateType { Position, Normals, Tangents, Bitangents, VertexColors, VertexAlpha, TextureCoordinates, Mask, Weight, Indices };
 
 	struct ShaderProperties {
@@ -43,6 +44,7 @@ public:
 		float envReflection = 1.0f;
 		nifly::Vector3 emissiveColor = nifly::Vector3(1.0f, 1.0f, 1.0f);
 		float emissiveMultiple = 1.0f;
+		nifly::Vector3 tintColor = nifly::Vector3(1.0f, 1.0f, 1.0f); // Skin or hair tint color
 		float alpha = 1.0f;
 		float backlightPower = 0.0f;
 		float rimlightPower = 2.0f;
@@ -121,6 +123,7 @@ public:
 	bool softlight = false;
 	bool glowmap = false;
 	bool greyscaleColor = false;
+	TintType tintType = TintType::None; // Applies prop.tintColor when not None
 	bool cubemap = false;
 	bool textured = false;
 

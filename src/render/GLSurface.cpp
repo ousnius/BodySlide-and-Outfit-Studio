@@ -918,6 +918,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 	shader.SetSoftlightEnabled(m->softlight);
 	shader.SetGlowmapEnabled(m->glowmap);
 	shader.SetGreyscaleColorEnabled(m->greyscaleColor);
+	shader.SetTintColorEnabled(m->tintType != Mesh::TintType::None);
 	shader.SetLightingEnabled(bLighting);
 	shader.SetWireframeEnabled(false);
 	shader.SetNormalMapEnabled(false);
@@ -1317,6 +1318,21 @@ Mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		m->prop.emissiveMultiple = shader->GetEmissiveMultiple();
 
 		m->prop.alpha = shader->GetAlpha();
+
+		// Skin and hair tint colors, only used by their respective shader types
+		if (!nif->GetHeader().GetVersion().IsSF()) {
+			auto* bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
+			if (bslsp) {
+				if (bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_SKINTINT) {
+					m->tintType = Mesh::TintType::Skin;
+					m->prop.tintColor = bslsp->skinTintColor;
+				}
+				else if (bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_HAIRTINT) {
+					m->tintType = Mesh::TintType::Hair;
+					m->prop.tintColor = bslsp->hairTintColor;
+				}
+			}
+		}
 	}
 
 	NiMaterialProperty* material = nif->GetMaterialProperty(shape);

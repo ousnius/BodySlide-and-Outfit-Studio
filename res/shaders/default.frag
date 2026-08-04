@@ -32,6 +32,7 @@ uniform bool bBacklight;
 uniform bool bRimlight;
 uniform bool bSoftlight;
 uniform bool bGlowmap;
+uniform bool bTintColor;
 
 uniform mat4 matModel;
 uniform mat4 matView;
@@ -48,6 +49,7 @@ struct Properties
 	float envReflection;
 	vec3 emissiveColor;
 	float emissiveMultiple;
+	vec3 tintColor;
 	float alpha;
 	float rimlightPower;
 	float softlighting;
@@ -157,6 +159,12 @@ void main(void)
 	uv = vUV * prop.uvScale + prop.uvOffset;
 	vec4 color = vColor;
 	albedo = vColor.rgb;
+
+	// Skin or hair tint color
+	if (bTintColor)
+	{
+		albedo *= prop.tintColor;
+	}
 
 	if (!bWireframe)
 	{

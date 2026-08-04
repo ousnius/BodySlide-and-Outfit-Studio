@@ -305,6 +305,10 @@ void GLShader::SetProperties(const Mesh::ShaderProperties& prop) {
 	if (loc >= 0)
 		glUniform1f(loc, prop.emissiveMultiple);
 
+	loc = glGetUniformLocation(progID, "prop.tintColor");
+	if (loc >= 0)
+		glUniform3f(loc, prop.tintColor.x, prop.tintColor.y, prop.tintColor.z);
+
 	loc = glGetUniformLocation(progID, "prop.alpha");
 	if (loc >= 0)
 		glUniform1f(loc, prop.alpha);
@@ -407,6 +411,12 @@ void GLShader::SetAlphaMaskEnabled(const bool enable) {
 
 void GLShader::SetGreyscaleColorEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bGreyscaleColor");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetTintColorEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bTintColor");
 	if (loc >= 0)
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
