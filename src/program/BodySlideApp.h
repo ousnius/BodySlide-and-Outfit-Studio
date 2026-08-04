@@ -89,6 +89,9 @@ class BodySlideApp : public wxApp {
 	std::vector<std::string> cmdGroupBuild;
 	std::string cmdTargetDir;
 	std::string cmdPreset;
+	std::string cmdPresetFile;
+	bool cmdPresetResolved = false;
+	bool cmdPresetPending = false;
 	bool cmdTri = false;
 	std::vector<std::string> cmdPreviewNifs;
 	bool cmdPreviewMode = false;
@@ -212,6 +215,7 @@ public:
 	int GetFilteredOutfits(std::vector<std::string>& outList);
 
 	void LoadPresets(const std::string& sliderSet);
+	void LoadCmdPresetFile();
 	void GetPresetNames(std::vector<std::string>& outNames);
 	std::string GetPresetFileName(const std::string& presetName);
 	void GetPresetGroups(const std::string& presetName, std::vector<std::string>& outGroups);
@@ -319,7 +323,12 @@ public:
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild", "groupbuild", "builds the specified group on launch", wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING},
-												   {wxCMD_LINE_OPTION, "p", "preset", "preset used for the build, defaults to last used preset", wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_OPTION,
+													"p",
+													"preset",
+													"preset to load on launch, use for the build or apply in preview mode, either a preset name or the "
+													"path to a preset XML file optionally followed by '?' and a preset name, defaults to last used preset",
+													wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build"},
 												   {wxCMD_LINE_OPTION, "preview", "preview", "open the specified nif files in preview mode", wxCMD_LINE_VAL_STRING},
 												   wxCMD_LINE_DESC_END};

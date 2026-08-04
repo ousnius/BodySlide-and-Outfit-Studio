@@ -47,6 +47,14 @@ public:
 		return presetCollection.LoadPresets(basePath, sliderSet, groupFilters, allPresets);
 	}
 
+	bool LoadPresetFile(const std::string& filePath,
+						const std::string& sliderSet,
+						std::vector<std::string>& groupFilters,
+						const bool allPresets = false,
+						std::vector<std::string>* outLoadedNames = nullptr) {
+		return presetCollection.LoadPresetFile(filePath, sliderSet, groupFilters, allPresets, outLoadedNames);
+	}
+
 	int SavePreset(const std::string& filePath, const std::string& presetName, const std::string& sliderSetName, std::vector<std::string>& assignGroups) {
 		int index = 0;
 		for (auto& s : slidersBig) {

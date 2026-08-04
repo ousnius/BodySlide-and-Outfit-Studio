@@ -35,6 +35,14 @@ public:
 	void GetPresetGroups(const std::string& set, std::vector<std::string>& outGroups);
 
 	bool LoadPresets(const std::string& basePath, const std::string& sliderSet, std::vector<std::string>& groupFilter, bool allPresets = false);
+
+	// Loads the presets of a single file. Names of the presets that were added are appended to outLoadedNames in file order.
+	bool LoadPresetFile(const std::string& filePath,
+						const std::string& sliderSet,
+						std::vector<std::string>& groupFilter,
+						bool allPresets = false,
+						std::vector<std::string>* outLoadedNames = nullptr);
+
 	int SavePreset(const std::string& filePath, const std::string& presetName, const std::string& sliderSetName, std::vector<std::string>& assignGroups);
 	int DeletePreset(const std::string& filePath, const std::string& presetName);
 };

@@ -125,6 +125,21 @@ void PresetCollection::GetPresetGroups(const std::string& set, std::vector<std::
 }
 
 bool PresetCollection::LoadPresets(const std::string& basePath, const std::string& sliderSet, std::vector<std::string>& groupFilter, bool allPresets) {
+	wxArrayString files;
+	wxString path = wxString::FromUTF8(basePath);
+	wxDir::GetAllFiles(path, &files, "*.xml");
+
+	for (auto& file : files)
+		LoadPresetFile(file.ToUTF8().data(), sliderSet, groupFilter, allPresets);
+
+	return 0;
+}
+
+bool PresetCollection::LoadPresetFile(const std::string& filePath,
+									  const std::string& sliderSet,
+									  std::vector<std::string>& groupFilter,
+									  bool allPresets,
+									  std::vector<std::string>* outLoadedNames) {
 	XMLDocument doc;
 	XMLElement* root;
 	XMLElement* element;
@@ -134,111 +149,108 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 	std::string presetName, sliderName, applyTo;
 	float o, b, s;
 
-	wxArrayString files;
-	wxString path = wxString::FromUTF8(basePath);
-	wxDir::GetAllFiles(path, &files, "*.xml");
-
-	for (auto& file : files) {
-		FILE* fp = nullptr;
+	FILE* fp = nullptr;
 
 #ifdef _WINDOWS
-		std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(file.ToUTF8().data());
-		int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
-		if (ret || !fp)
-			continue;
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
+	int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
+	if (ret || !fp)
+		return false;
 #else
-		fp = fopen(file.ToUTF8().data(), "rb");
-		if (!fp)
-			continue;
+	fp = fopen(filePath.c_str(), "rb");
+	if (!fp)
+		return false;
 #endif
 
-		int ret2 = doc.LoadFile(fp);
-		fclose(fp);
+	int ret2 = doc.LoadFile(fp);
+	fclose(fp);
 
-		if (ret2)
-			continue;
+	if (ret2)
+		return false;
 
-		root = doc.FirstChildElement("SliderPresets");
-		if (!root)
-			continue;
+	root = doc.FirstChildElement("SliderPresets");
+	if (!root)
+		return false;
 
-		element = root->FirstChildElement("Preset");
-		while (element) {
-			bool skip = true;
-			std::vector<std::string> groups;
+	element = root->FirstChildElement("Preset");
+	while (element) {
+		bool skip = true;
+		std::vector<std::string> groups;
 
-			g = element->FirstChildElement("Group");
-			while (g) {
-				const char* groupNameAttr = g->Attribute("name");
-				if (!groupNameAttr) {
-					g = g->NextSiblingElement("Group");
-					continue;
-				}
-
-				std::string groupName = groupNameAttr;
-				groups.push_back(groupName);
-
-				for (auto& filter : groupFilter) {
-					if (groupName == filter) {
-						skip = false;
-						break;
-					}
-				}
+		g = element->FirstChildElement("Group");
+		while (g) {
+			const char* groupNameAttr = g->Attribute("name");
+			if (!groupNameAttr) {
 				g = g->NextSiblingElement("Group");
-			}
-			const char* setAttr = element->Attribute("set");
-			if ((setAttr && setAttr == sliderSet) || allPresets)
-				skip = false;
-
-			if (skip) {
-				element = element->NextSiblingElement("Preset");
 				continue;
 			}
 
-			const char* nameAttr = element->Attribute("name");
-			if (!nameAttr) {
-				element = element->NextSiblingElement("Preset");
-				continue;
-			}
-			presetName = nameAttr;
-			if (presetFileNames.find(presetName) != presetFileNames.end()) {
-				element = element->NextSiblingElement("Preset");
-				continue;
-			}
+			std::string groupName = groupNameAttr;
+			groups.push_back(groupName);
 
-			presetFileNames[presetName] = file.ToUTF8();
-			presetGroups[presetName] = groups;
-
-			AddEmptyPreset(presetName);
-
-			setSlider = element->FirstChildElement("SetSlider");
-			while (setSlider) {
-				const char* sliderNameAttr = setSlider->Attribute("name");
-				const char* sizeAttr = setSlider->Attribute("size");
-				if (!sliderNameAttr || !sizeAttr) {
-					setSlider = setSlider->NextSiblingElement("SetSlider");
-					continue;
+			for (auto& filter : groupFilter) {
+				if (groupName == filter) {
+					skip = false;
+					break;
 				}
-
-				sliderName = sliderNameAttr;
-				applyTo = sizeAttr;
-				o = setSlider->FloatAttribute("value") / 100.0f;
-				s = b = -10000.0f;
-				if (applyTo == "small")
-					s = o;
-				else if (applyTo == "big")
-					b = o;
-				else if (applyTo == "both")
-					s = b = o;
-
-				SetSliderPreset(presetName, sliderName, b, s);
-				setSlider = setSlider->NextSiblingElement("SetSlider");
 			}
-			element = element->NextSiblingElement("Preset");
+			g = g->NextSiblingElement("Group");
 		}
+		const char* setAttr = element->Attribute("set");
+		if ((setAttr && setAttr == sliderSet) || allPresets)
+			skip = false;
+
+		if (skip) {
+			element = element->NextSiblingElement("Preset");
+			continue;
+		}
+
+		const char* nameAttr = element->Attribute("name");
+		if (!nameAttr) {
+			element = element->NextSiblingElement("Preset");
+			continue;
+		}
+		presetName = nameAttr;
+		if (presetFileNames.find(presetName) != presetFileNames.end()) {
+			element = element->NextSiblingElement("Preset");
+			continue;
+		}
+
+		presetFileNames[presetName] = filePath;
+		presetGroups[presetName] = groups;
+
+		AddEmptyPreset(presetName);
+
+		if (outLoadedNames)
+			outLoadedNames->push_back(presetName);
+
+		setSlider = element->FirstChildElement("SetSlider");
+		while (setSlider) {
+			const char* sliderNameAttr = setSlider->Attribute("name");
+			const char* sizeAttr = setSlider->Attribute("size");
+			if (!sliderNameAttr || !sizeAttr) {
+				setSlider = setSlider->NextSiblingElement("SetSlider");
+				continue;
+			}
+
+			sliderName = sliderNameAttr;
+			applyTo = sizeAttr;
+			o = setSlider->FloatAttribute("value") / 100.0f;
+			s = b = -10000.0f;
+			if (applyTo == "small")
+				s = o;
+			else if (applyTo == "big")
+				b = o;
+			else if (applyTo == "both")
+				s = b = o;
+
+			SetSliderPreset(presetName, sliderName, b, s);
+			setSlider = setSlider->NextSiblingElement("SetSlider");
+		}
+		element = element->NextSiblingElement("Preset");
 	}
 
-	return 0;
+	return true;
 }
 
 int PresetCollection::SavePreset(const std::string& filePath, const std::string& presetName, const std::string& sliderSetName, std::vector<std::string>& assignGroups) {

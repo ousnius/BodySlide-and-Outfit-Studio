@@ -329,8 +329,12 @@ void PreviewPanel::LoadProjects(const std::vector<PreviewProjectEntry>& entries)
 				presetChoice->Append(wxString::FromUTF8(name));
 
 			int idx = presetChoice->FindString(previousPreset);
-			if (idx == wxNOT_FOUND)
+			if (idx == wxNOT_FOUND) {
 				idx = 0;
+
+				if (!previousPreset.IsEmpty())
+					wxLogWarning("Preset '%s' is not available for the loaded project(s), using preset '%s' instead.", previousPreset, presetNames[idx]);
+			}
 
 			presetChoice->SetSelection(idx);
 			presetChoice->Show();

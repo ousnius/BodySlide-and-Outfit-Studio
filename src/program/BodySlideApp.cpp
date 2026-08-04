@@ -199,6 +199,10 @@ bool BodySlideApp::OnInit() {
 	// Handle preview mode - open nif files directly without main frame
 	if (cmdPreviewMode && !cmdPreviewNifs.empty()) {
 		wxLogMessage("BodySlide preview mode initialized.");
+
+		// Resolve the preset of a preset file given on the command line before the projects are loaded.
+		LoadCmdPresetFile();
+
 		ShowPreview();
 		if (preview) {
 			preview->SetReadOnlyMode(true);
@@ -302,8 +306,31 @@ bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
 	cmdTargetDir = targetDir.ToUTF8().data();
 
 	wxString preset;
-	parser.Found("p", &preset);
-	cmdPreset = preset.ToUTF8().data();
+	if (parser.Found("p", &preset)) {
+		preset.Trim(true).Trim(false);
+
+		// The preset can either be given by name or as the path to a preset XML file.
+		// A preset file can be followed by '?' and the name of one of its presets, same as for the preview option.
+		wxString presetPath = preset;
+		wxString presetName;
+
+		int nameSep = preset.Find('?');
+		if (nameSep != wxNOT_FOUND) {
+			presetPath = preset.Left(nameSep).Trim(true).Trim(false);
+			presetName = preset.Mid(nameSep + 1).Trim(true).Trim(false);
+		}
+
+		if (presetPath.Lower().EndsWith(".xml")) {
+			wxFileName presetFileName(presetPath);
+			presetFileName.MakeAbsolute();
+			cmdPresetFile = presetFileName.GetFullPath().ToUTF8().data();
+			cmdPreset = presetName.ToUTF8().data();
+		}
+		else
+			cmdPreset = preset.ToUTF8().data();
+
+		cmdPresetPending = !cmdPreset.empty() || !cmdPresetFile.empty();
+	}
 
 	cmdTri = parser.Found("tri");
 
@@ -429,6 +456,23 @@ void BodySlideApp::LoadData() {
 		LoadPresets(activeOutfit);
 
 		std::string activePreset = BodySlideConfig["SelectedPreset"];
+
+		if (cmdPresetPending) {
+			// A preset was specified on the command line, apply it instead of the last used one.
+			cmdPresetPending = false;
+
+			if (GetPresetFileName(cmdPreset).empty())
+				wxLogWarning("Preset '%s' from the command line is not available for set '%s', keeping preset '%s'.", cmdPreset, activeOutfit, activePreset);
+			else {
+				wxLogMessage("Applying preset '%s' from the command line.", cmdPreset);
+				activePreset = cmdPreset;
+
+				// Make sure a filter of the last session doesn't hide the preset in the list.
+				if (sliderView->presetFilter)
+					sliderView->presetFilter->ChangeValue("");
+			}
+		}
+
 		PopulatePresetList(activePreset);
 		ActivatePreset(activePreset);
 
@@ -2118,7 +2162,7 @@ void BodySlideApp::LoadPreviewNifs(const std::vector<std::string>& filePaths) {
 			wxLogMessage("Loading %zu combined project(s) in preview mode...", projEntries.size());
 			if (!nifPaths.empty())
 				preview->SetExtraNifPaths(nifPaths);
-			preview->SetProjectData(projEntries, true);
+			preview->SetProjectData(projEntries, true, cmdPreset);
 			return;
 		}
 	}
@@ -2150,13 +2194,16 @@ void BodySlideApp::LoadPreviewNifs(const std::vector<std::string>& filePaths) {
 			wxLogMessage("Loading %zu slider set(s) from %zu OSP file(s)", projEntries.size(), entries.size());
 			if (!nifPaths.empty())
 				preview->SetExtraNifPaths(nifPaths);
-			preview->SetProjectData(projEntries);
+			preview->SetProjectData(projEntries, false, cmdPreset);
 			return;
 		}
 
 		if (anyOsp)
 			return;
 	}
+
+	if (!cmdPreset.empty())
+		wxLogWarning("Preset '%s' from the command line is ignored, presets only apply to project files.", cmdPreset);
 
 	// Load as regular NIF files
 	std::vector<std::string> paths;
@@ -3312,12 +3359,53 @@ int BodySlideApp::GetFilteredOutfits(std::vector<std::string>& outList) {
 	return outList.size();
 }
 
+void BodySlideApp::LoadCmdPresetFile() {
+	if (cmdPresetFile.empty())
+		return;
+
+	std::vector<std::string> noGroupFilter;
+	std::vector<std::string> loadedPresets;
+
+	// Loaded before the preset folder so that the file given on the command line wins on name conflicts.
+	if (!sliderManager.LoadPresetFile(cmdPresetFile, "", noGroupFilter, true, &loadedPresets)) {
+		wxLogError("Failed to load preset file '%s' from the command line.", cmdPresetFile);
+		cmdPresetFile.clear();
+		cmdPresetPending = false;
+		return;
+	}
+
+	// The presets of the file are loaded again whenever the preset collection was cleared, the name is only resolved once.
+	if (cmdPresetResolved)
+		return;
+
+	cmdPresetResolved = true;
+
+	if (!cmdPreset.empty()) {
+		if (std::find(loadedPresets.begin(), loadedPresets.end(), cmdPreset) == loadedPresets.end())
+			wxLogWarning("Preset '%s' was not found in preset file '%s' from the command line.", cmdPreset, cmdPresetFile);
+
+		return;
+	}
+
+	if (loadedPresets.empty()) {
+		wxLogWarning("No presets found in preset file '%s' from the command line.", cmdPresetFile);
+		cmdPresetPending = false;
+		return;
+	}
+
+	// Without an explicit name, the first preset of the file is used.
+	cmdPreset = loadedPresets.front();
+	wxLogMessage("Using preset '%s' of preset file '%s' from the command line.", cmdPreset, cmdPresetFile);
+}
+
 void BodySlideApp::LoadPresets(const std::string& sliderSet) {
 	std::string outfit = sliderSet;
 	if (sliderSet.empty())
 		outfit = BodySlideConfig["SelectedOutfit"];
 
 	wxLogMessage("Loading assigned presets...");
+
+	LoadCmdPresetFile();
 
 	std::vector<std::string> groups_and_aliases;
 	for (auto& g : presetGroups) {
@@ -4682,8 +4770,12 @@ void BodySlideApp::GroupBuild(const std::vector<std::string>& groupNames) {
 		}
 	}
 
+	// Loaded before the preset folder so that a preset file given on the command line wins on name conflicts.
+	LoadCmdPresetFile();
+
 	std::string preset;
-	if (!cmdPreset.empty()) {
+	bool presetOverride = !cmdPreset.empty();
+	if (presetOverride) {
 		preset = BodySlideConfig["SelectedPreset"];
 		BodySlideConfig.SetValue("SelectedPreset", cmdPreset);
 	}
@@ -4740,7 +4832,7 @@ void BodySlideApp::GroupBuild(const std::vector<std::string>& groupNames) {
 	std::map<std::string, std::string> failedOutfits;
 	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, false, cmdTargetDir);
 
-	if (!cmdPreset.empty())
+	if (presetOverride)
 		BodySlideConfig.SetValue("SelectedPreset", preset);
 
 	wxLog::FlushActive();
