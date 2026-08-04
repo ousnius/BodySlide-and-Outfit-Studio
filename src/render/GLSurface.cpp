@@ -919,6 +919,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 	shader.SetGlowmapEnabled(m->glowmap);
 	shader.SetGreyscaleColorEnabled(m->greyscaleColor);
 	shader.SetTintColorEnabled(m->tintType != Mesh::TintType::None);
+	shader.SetFaceTintEnabled(m->faceTint);
 	shader.SetLightingEnabled(bLighting);
 	shader.SetWireframeEnabled(false);
 	shader.SetNormalMapEnabled(false);
@@ -1323,6 +1324,9 @@ Mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		if (!nif->GetHeader().GetVersion().IsSF()) {
 			auto* bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
 			if (bslsp) {
+				// Face tint map (FaceGen) of the face tint shader type, always in texture slot 6
+				m->faceTint = bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_FACE;
+
 				if (bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_SKINTINT) {
 					m->tintType = Mesh::TintType::Skin;
 					m->prop.tintColor = bslsp->skinTintColor;

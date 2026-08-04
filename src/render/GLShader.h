@@ -89,6 +89,7 @@ public:
 	void SetAlphaMaskEnabled(const bool enable);
 	void SetGreyscaleColorEnabled(const bool enable);
 	void SetTintColorEnabled(const bool enable);
+	void SetFaceTintEnabled(const bool enable);
 	void SetCubemapEnabled(const bool enable);
 	void SetEnvMaskEnabled(const bool enable);
 	void SetSpecularEnabled(const bool enable);

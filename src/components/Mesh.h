@@ -124,6 +124,7 @@ public:
 	bool glowmap = false;
 	bool greyscaleColor = false;
 	TintType tintType = TintType::None; // Applies prop.tintColor when not None
+	bool faceTint = false;				// Applies the face tint map of texture slot 6
 	bool cubemap = false;
 	bool textured = false;
 

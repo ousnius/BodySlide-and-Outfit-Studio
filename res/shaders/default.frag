@@ -15,6 +15,7 @@ uniform sampler2D texSpecular;
 uniform sampler2D texBacklight;
 uniform sampler2D texLightmask;
 uniform sampler2D texGlowmap;
+uniform sampler2D texFaceTint;
 
 uniform bool bLightEnabled;
 uniform bool bShowTexture;
@@ -33,6 +34,7 @@ uniform bool bRimlight;
 uniform bool bSoftlight;
 uniform bool bGlowmap;
 uniform bool bTintColor;
+uniform bool bFaceTint;
 
 uniform mat4 matModel;
 uniform mat4 matView;
@@ -174,6 +176,13 @@ void main(void)
 			baseMap = texture(texDiffuse, uv);
 			albedo *= baseMap.rgb;
 			color.a *= baseMap.a;
+
+			// Face tint map (FaceGen), blended in by its alpha channel
+			if (bFaceTint)
+			{
+				vec4 faceTintMap = texture(texFaceTint, uv);
+				albedo = mix(albedo, albedo * faceTintMap.rgb * 2.0, faceTintMap.a);
+			}
 
 			// Diffuse texture without lighting
 			color.rgb = albedo;

@@ -70,6 +70,7 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 	shader.BindTexture(3, 0, "texGreyscale");
 	shader.BindCubemap(4, 0, "texCubemap");
 	shader.BindTexture(5, 0, "texEnvMask");
+	shader.BindTexture(6, 0, "texFaceTint");
 	shader.BindTexture(7, 0, "texSpecular");
 	shader.BindTexture(7, 0, "texBacklight");
 	shader.BindTexture(20, 0, "texAlphaMask");
@@ -156,6 +157,19 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 					else
 						shader.SetEnvMaskEnabled(false);
 				}
+				break;
+
+			case 6:
+				// Face tint map (FaceGen), only used by the face tint shader type
+				if (texCache[id] != 0) {
+					shader.BindTexture(id, texCache[id], "texFaceTint");
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+					glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+					if (largestAF)
+						glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
+				}
+				else
+					shader.SetFaceTintEnabled(false);
 				break;
 
 			case 7:
