@@ -450,6 +450,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_SLIDER(XRCID("lightDirectional1Slider"), OutfitStudioFrame::OnUpdateLights)
 	EVT_SLIDER(XRCID("lightDirectional2Slider"), OutfitStudioFrame::OnUpdateLights)
 	EVT_BUTTON(XRCID("lightReset"), OutfitStudioFrame::OnResetLights)
+	EVT_BUTTON(XRCID("lightSave"), OutfitStudioFrame::OnSaveLights)
 
 	EVT_MENU(XRCID("btnDiscord"), OutfitStudioFrame::OnDiscord)
 	EVT_MENU(XRCID("btnGitHub"), OutfitStudioFrame::OnGitHub)
@@ -7763,6 +7764,15 @@ void OutfitStudioFrame::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
 	Config.SetValue("Lights/Directional0", directional0);
 	Config.SetValue("Lights/Directional1", directional1);
 	Config.SetValue("Lights/Directional2", directional2);
+}
+
+void OutfitStudioFrame::OnSaveLights(wxCommandEvent& event) {
+	// Make sure the current slider values are in the configuration before writing it out
+	OnUpdateLights(event);
+
+	int ret = Config.SaveConfig(Config["AppDir"] + "/Config.xml");
+	if (ret)
+		wxLogWarning("Failed to save configuration (%d)!", ret);
 }
 
 void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {

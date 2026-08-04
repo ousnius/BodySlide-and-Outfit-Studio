@@ -1469,6 +1469,7 @@ private:
 	void OnDepthClip(wxCommandEvent& event);
 	void OnUpdateLights(wxCommandEvent& event);
 	void OnResetLights(wxCommandEvent& event);
+	void OnSaveLights(wxCommandEvent& event);
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);

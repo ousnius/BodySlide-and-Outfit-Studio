@@ -659,9 +659,25 @@
 																	<option>0</option>
 																	<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
 																	<border>5</border>
-																	<object class="wxButton" name="lightReset">
-																		<size>-1,25</size>
-																		<label>Reset</label>
+																	<object class="wxBoxSizer">
+																		<orient>wxHORIZONTAL</orient>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxEXPAND</flag>
+																			<object class="wxButton" name="lightReset">
+																				<size>-1,25</size>
+																				<label>Reset</label>
+																			</object>
+																		</object>
+																		<object class="sizeritem">
+																			<option>1</option>
+																			<flag>wxLEFT|wxEXPAND</flag>
+																			<border>5</border>
+																			<object class="wxButton" name="lightSave">
+																				<size>-1,25</size>
+																				<label>Save</label>
+																			</object>
+																		</object>
 																	</object>
 																</object>
 																<object class="sizeritem">
