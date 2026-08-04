@@ -77,6 +77,11 @@ PoseData* PoseDataCollection::AddPose(PoseData pose) {
 	return &poseData.back();
 }
 
+AnimationData* PoseDataCollection::AddAnimation(AnimationData anim) {
+	animationData.push_back(std::move(anim));
+	return &animationData.back();
+}
+
 PoseFileFormat PoseDataCollection::GetPoseFileFormat(const std::string& filePath) {
 	wxFileName fn(wxString::FromUTF8(filePath.c_str()));
 	wxString ext = fn.GetExt().Lower();
@@ -142,6 +147,50 @@ void PoseDataCollection::CaptureCurrentPose(const std::string& poseName, bool ab
 		}
 
 		outPose.boneData.push_back(std::move(poseBoneData));
+	}
+}
+
+// Rotation vectors cannot be mixed componentwise, so the shortest arc from a to
+// b is taken as a fractional power of the delta rotation: a * (a⁻¹b)^t. Rotation
+// matrices are orthonormal, which makes the transpose the inverse.
+static nifly::Vector3 InterpolateRotation(const nifly::Vector3& a, const nifly::Vector3& b, float t) {
+	using namespace nifly;
+
+	Matrix3 matA = RotVecToMat(a);
+	Vector3 delta = RotMatToVec(matA.Transpose() * RotVecToMat(b));
+	return RotMatToVec(matA * RotVecToMat(delta * t));
+}
+
+void PoseData::Interpolate(const PoseData& a, const PoseData& b, float t, PoseData& outPose) {
+	outPose.name = a.name;
+	outPose.readOnly = a.readOnly;
+	outPose.absoluteLocal = a.absoluteLocal;
+
+	// outPose is written from a first, so it must not alias b.
+	outPose.boneData = a.boneData;
+
+	if (t <= 0.0f)
+		return;
+
+	for (size_t i = 0; i < outPose.boneData.size(); ++i) {
+		PoseBoneData& bd = outPose.boneData[i];
+
+		// Both poses normally come from the same animation, so they carry the
+		// same bones in the same order and the matching index hits.
+		const PoseBoneData* target = nullptr;
+		if (i < b.boneData.size() && b.boneData[i].name == bd.name) {
+			target = &b.boneData[i];
+		}
+		else {
+			auto it = std::find_if(b.boneData.begin(), b.boneData.end(), [&bd](const PoseBoneData& other) { return other.name == bd.name; });
+			if (it == b.boneData.end())
+				continue;
+			target = &*it;
+		}
+
+		bd.translation += (target->translation - bd.translation) * t;
+		bd.scale += (target->scale - bd.scale) * t;
+		bd.rotation = InterpolateRotation(bd.rotation, target->rotation, t);
 	}
 }
 

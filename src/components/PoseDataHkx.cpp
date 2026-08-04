@@ -9,6 +9,7 @@ See the included LICENSE file
 #include <algorithm>
 #include <cmath>
 #include <unordered_map>
+#include <unordered_set>
 
 #include <wx/filename.h>
 
@@ -110,6 +111,8 @@ static HkxQuaternion MatrixToHkxQuaternion(const nifly::Matrix3& matrix) {
 	return quat;
 }
 
+static void ConvertOutfitStudioScaleToHavok(const HKX::Skeleton& skel, PoseData& outPose);
+
 static bool SaveHkxPoseInternal(const std::string& skeletonHkxPath,
 							 const std::string& poseHkxPath,
 							 HKX::Format hkxFormat,
@@ -148,9 +151,15 @@ static bool SaveHkxPoseInternal(const std::string& skeletonHkxPath,
 		return false;
 	}
 
+	// Outfit Studio's skeleton scales a bone's translation by its parents',
+	// Havok's does not, so a pose with scaled bones has to be restated in
+	// Havok's terms before it is written out.
+	PoseData havokPose = pose;
+	ConvertOutfitStudioScaleToHavok(skeleton, havokPose);
+
 	std::unordered_map<std::string, const PoseBoneData*> poseBones;
-	poseBones.reserve(pose.boneData.size());
-	for (const auto& boneData : pose.boneData)
+	poseBones.reserve(havokPose.boneData.size());
+	for (const auto& boneData : havokPose.boneData)
 		poseBones[boneData.name] = &boneData;
 
 	std::vector<HKX::Transform> trackTransforms(skeleton.bones.size());
@@ -188,25 +197,11 @@ static bool SaveHkxPoseInternal(const std::string& skeletonHkxPath,
 
 	return true;
 }
-} // namespace
 
-bool PoseDataCollection::LoadHkxPose(const std::string& skeletonHkxPath, const std::string& animHkxPath, PoseData& outPose, uint32_t frameIndex) {
-	HKX::File skelFile;
-	if (!skelFile.Load(skeletonHkxPath, nullptr) || skelFile.GetSkeletons().empty())
-		return false;
-
-	HKX::File animFile;
-	if (!animFile.Load(animHkxPath, nullptr) || animFile.GetAnimations().empty())
-		return false;
-
-	const HKX::Skeleton& skel = skelFile.GetSkeletons().front();
-	const HKX::Animation& anim = animFile.GetAnimations().front();
-
-	if (anim.numTransformTracks == 0 || anim.numFrames == 0)
-		return false;
-
-	uint32_t frame = std::min(frameIndex, anim.numFrames - 1);
-
+// Extracts one frame of the animation into outPose, matching transform
+// tracks to skeleton bones via the animation binding (when present),
+// otherwise positionally.
+static bool ExtractHkxFramePose(const HKX::Skeleton& skel, const HKX::Animation& anim, uint32_t frame, PoseData& outPose) {
 	outPose.boneData.clear();
 	outPose.absoluteLocal = true;
 
@@ -239,11 +234,184 @@ bool PoseDataCollection::LoadHkxPose(const std::string& skeletonHkxPath, const s
 		bd.translation = nifly::Vector3(xf.translation[0], xf.translation[1], xf.translation[2]);
 		// HKX quaternion is xyzw; QuatToNiflyMat takes (w, x, y, z).
 		bd.rotation = nifly::RotMatToVec(QuatToNiflyMat(xf.rotation[3], xf.rotation[0], xf.rotation[1], xf.rotation[2]));
-		bd.scale = (xf.scale[0] != 0.0f) ? xf.scale[0] : 1.0f;
+		// Bone scales are deliberately dropped; see
+		// ConvertOutfitStudioScaleToHavok for why.
+		bd.scale = 1.0f;
 		outPose.boneData.push_back(std::move(bd));
 	}
 
 	return !outPose.boneData.empty();
+}
+
+// Havok and Outfit Studio disagree about what a bone's scale does. Havok
+// composes bones with hkQsTransform, whose scale does NOT apply to a child's
+// translation, while nifly's MatTransform - and so AnimBone::UpdatePoseTransform
+// - multiplies a child's translation by its parent's scale. Exported poses carry
+// the user's own scales, so their translations are restated in Havok's terms by
+// multiplying in the ancestors' accumulated scale.
+//
+// The import direction needs no such correction because it drops HKX bone scales
+// entirely (see ExtractHkxFramePose): with every scale at 1.0 the two conventions
+// coincide. Nothing is lost, because Bethesda's scale tracks are reciprocal
+// bookkeeping pairs meant to cancel out - measured over 471 shipped Skyrim
+// animations, the scale accumulated at the skinned bones is exactly 1.0 in 465 of
+// them and physically impossible in the rest. Applying what survives quantisation
+// made the character pulse about 1% in size, far more once frames were blended
+// across the sign changes some root tracks contain.
+static void ConvertOutfitStudioScaleToHavok(const HKX::Skeleton& skel, PoseData& outPose) {
+	const size_t nBones = skel.bones.size();
+
+	std::unordered_map<std::string, size_t> boneIndices;
+	boneIndices.reserve(nBones);
+	for (size_t i = 0; i < nBones; ++i)
+		boneIndices.emplace(skel.bones[i].name, i);
+
+	auto usableScale = [](float scale) { return scale > 0.0f && std::isfinite(scale); };
+
+	// Local scale per bone: the posed value where the pose drives the bone, the
+	// skeleton's reference scale everywhere else.
+	std::vector<float> localScale(nBones, 1.0f);
+	for (size_t i = 0; i < nBones && i < skel.referencePose.size(); ++i) {
+		if (usableScale(skel.referencePose[i].scale[0]))
+			localScale[i] = skel.referencePose[i].scale[0];
+	}
+	for (const PoseBoneData& bd : outPose.boneData) {
+		auto it = boneIndices.find(bd.name);
+		if (it != boneIndices.end() && usableScale(bd.scale))
+			localScale[it->second] = bd.scale;
+	}
+
+	// Accumulated scale of each bone's ancestors. Havok skeletons store bones
+	// parent before child, so one forward pass covers the whole hierarchy.
+	std::vector<float> ancestorScale(nBones, 1.0f);
+	for (size_t i = 0; i < nBones; ++i) {
+		int parent = skel.bones[i].parentIndex;
+		if (parent >= 0 && size_t(parent) < i)
+			ancestorScale[i] = ancestorScale[parent] * localScale[parent];
+	}
+
+	for (PoseBoneData& bd : outPose.boneData) {
+		auto it = boneIndices.find(bd.name);
+		if (it == boneIndices.end())
+			continue;
+
+		const float scale = ancestorScale[it->second];
+		if (usableScale(scale) && std::fabs(scale - 1.0f) > 1e-6f)
+			bd.translation *= scale;
+	}
+}
+
+// Collects the bones that carry the character through the world: those with an
+// animated translation (not lockTranslation) whose ancestors are all animated
+// too. On the Bethesda humanoid skeletons that is the root and COM chain. Bones
+// added by mods deeper in the hierarchy (wings, physics bones) sit below a
+// locked ancestor and are excluded, so their animated translation is kept.
+static std::unordered_set<std::string> CollectRootMotionBoneNames(const HKX::Skeleton& skel) {
+	std::unordered_set<std::string> names;
+
+	for (size_t i = 0; i < skel.bones.size(); ++i) {
+		if (skel.bones[i].lockTranslation)
+			continue;
+
+		bool rootMotion = true;
+		int parent = skel.bones[i].parentIndex;
+		for (size_t guard = 0; parent >= 0 && size_t(parent) < skel.bones.size() && guard <= skel.bones.size(); ++guard) {
+			if (skel.bones[parent].lockTranslation) {
+				rootMotion = false;
+				break;
+			}
+			parent = skel.bones[parent].parentIndex;
+		}
+
+		if (rootMotion)
+			names.insert(skel.bones[i].name);
+	}
+
+	return names;
+}
+} // namespace
+
+bool PoseDataCollection::LoadHkxPose(const std::string& skeletonHkxPath, const std::string& animHkxPath, PoseData& outPose, uint32_t frameIndex) {
+	HKX::File skelFile;
+	if (!skelFile.Load(skeletonHkxPath, nullptr) || skelFile.GetSkeletons().empty())
+		return false;
+
+	HKX::File animFile;
+	if (!animFile.Load(animHkxPath, nullptr) || animFile.GetAnimations().empty())
+		return false;
+
+	const HKX::Skeleton& skel = skelFile.GetSkeletons().front();
+	const HKX::Animation& anim = animFile.GetAnimations().front();
+
+	if (anim.numTransformTracks == 0 || anim.numFrames == 0)
+		return false;
+
+	uint32_t frame = std::min(frameIndex, anim.numFrames - 1);
+	return ExtractHkxFramePose(skel, anim, frame, outPose);
+}
+
+bool PoseDataCollection::LoadHkxAnimation(const std::string& skeletonHkxPath, const std::string& animHkxPath, AnimationData& outAnim, std::string* errorOut) {
+	std::string skelError;
+	auto setError = [errorOut](const std::string& message, const std::string& detail = std::string()) {
+		if (errorOut)
+			*errorOut = detail.empty() ? message : message + "\n\n" + detail;
+	};
+
+	HKX::File skelFile;
+	if (!skelFile.Load(skeletonHkxPath, &skelError) || skelFile.GetSkeletons().empty()) {
+		setError("Failed to parse the HKX skeleton data.", skelError);
+		return false;
+	}
+
+	std::string animError;
+	HKX::File animFile;
+	if (!animFile.Load(animHkxPath, &animError) || animFile.GetAnimations().empty()) {
+		setError("Failed to parse the HKX animation data.", animError);
+		return false;
+	}
+
+	const HKX::Skeleton& skel = skelFile.GetSkeletons().front();
+	const HKX::Animation& anim = animFile.GetAnimations().front();
+
+	if (anim.numTransformTracks == 0 || anim.numFrames == 0) {
+		setError("The HKX animation does not contain any frames.");
+		return false;
+	}
+
+	outAnim.frameDuration = (anim.frameDuration > 0.0f && std::isfinite(anim.frameDuration)) ? anim.frameDuration : 1.0f / 30.0f;
+	outAnim.framePoses.clear();
+	outAnim.framePoses.resize(anim.numFrames);
+
+	for (uint32_t frame = 0; frame < anim.numFrames; ++frame) {
+		outAnim.framePoses[frame].name = outAnim.name;
+		if (!ExtractHkxFramePose(skel, anim, frame, outAnim.framePoses[frame])) {
+			setError("The HKX animation tracks could not be matched to the skeleton bones.");
+			return false;
+		}
+	}
+
+	// Strip root motion: in a mesh editor the character drifting and bobbing
+	// around is only in the way. Freezing the root motion bones at their frame 0
+	// translation keeps the animation's starting placement without the movement
+	// it would apply on top.
+	const std::unordered_set<std::string> rootMotionBones = CollectRootMotionBoneNames(skel);
+	if (!rootMotionBones.empty() && outAnim.framePoses.size() > 1) {
+		std::unordered_map<std::string, nifly::Vector3> firstFrameTranslations;
+		for (const PoseBoneData& bd : outAnim.framePoses.front().boneData) {
+			if (rootMotionBones.count(bd.name))
+				firstFrameTranslations[bd.name] = bd.translation;
+		}
+
+		for (size_t frame = 1; frame < outAnim.framePoses.size(); ++frame) {
+			for (PoseBoneData& bd : outAnim.framePoses[frame].boneData) {
+				auto it = firstFrameTranslations.find(bd.name);
+				if (it != firstFrameTranslations.end())
+					bd.translation = it->second;
+			}
+		}
+	}
+
+	return true;
 }
 
 bool PoseDataCollection::LoadPoseFile(const std::string& filePath,

@@ -434,7 +434,9 @@ function(bsos_configure_target target)
 		Threads::Threads
 	)
 	if(WIN32)
-		target_link_libraries(${target} PRIVATE dbghelp)
+		# winmm: timeBeginPeriod, needed to pace animation playback above the
+		# default ~15.6 ms system clock tick.
+		target_link_libraries(${target} PRIVATE dbghelp winmm)
 	endif()
 
 	if(MSVC)

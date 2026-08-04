@@ -41,9 +41,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/StringStuff.h"
 #include "../utils/SettingsDialogShared.h"
 
+#include <cmath>
 #include <cstdlib>
+#include <iterator>
 #include <sstream>
 #include <wx/debugrpt.h>
+#include <wx/display.h>
 #include <wx/listctrl.h>
 #include <wx/textctrl.h>
 #include <wx/wfstream.h>
@@ -51,9 +54,37 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "ConvertBodyReferenceDialog.h"
 
+#ifdef __WXMSW__
+#include <wx/msw/wrapwin.h>
+
+#include <mmsystem.h>
+#endif
+
 using namespace nifly;
 
 namespace {
+
+// The playback timer only backs OnAnimIdle up for stretches where no idle events
+// arrive. It cannot pace playback on its own: on MSW it is a WM_TIMER, which
+// Windows rounds up to a multiple of the ~15.6 ms system clock tick, making 15 ms
+// the shortest useful request and 64 Hz the hard ceiling - measured, that holds
+// even with the clock resolution already raised.
+constexpr int AnimPlaybackTimerIntervalMS = 15;
+
+// Windows quantises waits to the system clock tick, ~15.6 ms by default, which
+// caps anything paced by sleeping at 64 Hz. Raising the resolution for the
+// duration of playback is what lets OnAnimIdle reach the display's refresh rate.
+// Since Windows 10 2004 this affects the calling process, not the whole system.
+void SetHighResolutionTimers(bool enable) {
+#ifdef __WXMSW__
+	if (enable)
+		timeBeginPeriod(1);
+	else
+		timeEndPeriod(1);
+#else
+	(void)enable;
+#endif
+}
 
 bool GetPoseHkxFormat(TargetGame targetGame, HKX::Format* outFormat = nullptr);
 
@@ -161,6 +192,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("importMask"), OutfitStudioFrame::OnImportMask)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("posePane"), OutfitStudioFrame::OnPaneCollapse)
+	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("animationPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("notesPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_CHOICE(XRCID("cPoseBone"), OutfitStudioFrame::OnPoseBoneChanged)
 	EVT_COMMAND_SCROLL(XRCID("rxPoseSlider"), OutfitStudioFrame::OnRXPoseSlider)
@@ -187,6 +219,14 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("deletePose"), OutfitStudioFrame::OnDeletePose)
 	EVT_BUTTON(XRCID("exportPoseFile"), OutfitStudioFrame::OnSaveHkxPose)
 	EVT_BUTTON(XRCID("importPoseFile"), OutfitStudioFrame::OnLoadHkxPose)
+
+	EVT_COMBOBOX(XRCID("cAnimationName"), OutfitStudioFrame::OnSelectAnimation)
+	EVT_BUTTON(XRCID("importAnimationFile"), OutfitStudioFrame::OnLoadHkxAnimation)
+	EVT_BUTTON(XRCID("animPlayPause"), OutfitStudioFrame::OnAnimPlayPause)
+	EVT_COMMAND_SCROLL(XRCID("animFrameSlider"), OutfitStudioFrame::OnAnimFrameSlider)
+	EVT_CHOICE(XRCID("animSpeed"), OutfitStudioFrame::OnAnimSpeedChanged)
+	EVT_CHECKBOX(XRCID("animInterpolate"), OutfitStudioFrame::OnAnimInterpolateChanged)
+	EVT_TIMER(ANIM_PLAYBACK_TIMER, OutfitStudioFrame::OnAnimPlaybackTimer)
 
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
 	EVT_TEXT_ENTER(XRCID("sliderFilter"), OutfitStudioFrame::OnSliderFilterChanged)
@@ -1316,6 +1356,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 	masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
 	posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
+	animationPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("animationPane"));
 	notesPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("notesPane"));
 	projectNotes = (wxTextCtrl*)FindWindowByName("projectNotes");
 
@@ -1454,6 +1495,20 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
 	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
 
+	cAnimationName = (wxComboBox*)FindWindowByName("cAnimationName");
+	animPlayPauseButton = (wxButton*)FindWindowByName("animPlayPause");
+	animFrameSlider = (wxSlider*)FindWindowByName("animFrameSlider");
+	animFrameText = dynamic_cast<wxStaticText*>(FindWindowByName("animFrameText"));
+	animSpeedChoice = (wxChoice*)FindWindowByName("animSpeed");
+	animInterpolateCheck = (wxCheckBox*)FindWindowByName("animInterpolate");
+
+	if (cAnimationName) {
+		cAnimationName->Append("<None>", (void*)nullptr);
+		cAnimationName->SetSelection(0);
+	}
+
+	animPlaybackTimer.SetOwner(this, ANIM_PLAYBACK_TIMER);
+
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
 		glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs());
@@ -1560,6 +1615,8 @@ void OutfitStudioFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
+	PauseAnimationPlayback();
+
 	if (!CheckPendingChanges())
 		return;
 
@@ -4523,6 +4580,8 @@ void OutfitStudioFrame::ClearProject() {
 	cPoseName->Clear();
 	cPoseName->Append("<New>", (void*)nullptr);
 	cPoseName->SetStringSelection("<New>");
+
+	ResetAnimationList();
 
 	if (projectNotes && notesPane) {
 		projectNotes->Clear();
@@ -7967,6 +8026,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		cbNormalizeWeights->Show(false);
 		xMirrorBoneLabel->Show(false);
 		posePane->Show(false);
+		if (animationPane)
+			animationPane->Show(false);
 		bonesFilter->GetParent()->Show(false);
 
 		if (project->bPose) {
@@ -8070,6 +8131,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		cbNormalizeWeights->Show();
 		xMirrorBoneLabel->Show();
 		posePane->Show();
+		if (animationPane)
+			animationPane->Show();
 		bonesFilter->GetParent()->Show();
 
 		UpdateBoneTransformToolEnabled();
@@ -13089,12 +13152,24 @@ void OutfitStudioFrame::OnPaneCollapse(wxCollapsiblePaneEvent& WXUNUSED(event)) 
 }
 
 void OutfitStudioFrame::ApplyPose() {
+	// Asking for a BVH update queues the shape with wxGLPanel::OnIdle, which
+	// rebuilds a whole AABB tree over every triangle of it - far too expensive
+	// to pay once per displayed animation frame. The tree only serves picking
+	// and brush hit tests, both locked out during playback, so the rebuild is
+	// deferred to the single ApplyPose that PauseAnimationPlayback does.
+	const bool updateBVH = !animPlaying;
+
 	for (auto& shape : project->GetWorkNif()->GetShapes()) {
 		std::vector<Vector3> verts;
 		project->GetLiveVerts(shape, verts);
-		glView->UpdateMeshVertices(shape->name.get(), &verts, true, true, false);
+		glView->UpdateMeshVertices(shape->name.get(), &verts, updateBVH, true, false);
 	}
-	glView->UpdateBones();
+
+	// Bone overlays cost one GL mesh created and destroyed per bone, not worth
+	// paying for every frame while they are not being drawn.
+	if (!animPlaying || glView->GetBonesMode() || glView->GetNodesMode())
+		glView->UpdateBones();
+
 	glView->Render();
 }
 
@@ -13345,6 +13420,14 @@ void OutfitStudioFrame::OnPoseCheckBox(wxCommandEvent& e) {
 }
 
 void OutfitStudioFrame::OnSelectPose(wxCommandEvent& WXUNUSED(event)) {
+	// Selecting a pose takes over the skeleton from any selected animation.
+	if (GetSelectedAnimation()) {
+		PauseAnimationPlayback();
+		animCurrentFrame = 0;
+		cAnimationName->SetSelection(0); // "<None>"
+		UpdateAnimationPlayerUI();
+	}
+
 	wxComboBox* cPoseName = (wxComboBox*)FindWindowByName("cPoseName");
 	int poseSel = cPoseName->GetSelection();
 	if (poseSel != wxNOT_FOUND) {
@@ -13616,41 +13699,8 @@ void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
 	std::string skeletonHkxPath;
 
 	if (format == PoseFileFormat::Hkx) {
-		TargetGame targetGame = wxGetApp().targetGame;
-		if (!GetPoseHkxFormat(targetGame)) {
-			wxMessageBox(_("Loading HKX poses is currently only supported for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
-						 _("Load Pose File"),
-						 wxOK | wxICON_INFORMATION,
-						 this);
+		if (!GetReferenceSkeletonHkxPath(skeletonHkxPath, _("Load Pose File")))
 			return;
-		}
-
-		wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
-		if (defSkelNif.IsEmpty()) {
-			wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings before loading an HKX pose."),
-						 _("Load Pose File"),
-						 wxOK | wxICON_ERROR,
-						 this);
-			return;
-		}
-
-		wxFileName defSkelFn(defSkelNif);
-		if (defSkelFn.IsRelative())
-			defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
-		defSkelFn.SetExt("hkx");
-
-		wxString skelHkx = defSkelFn.GetFullPath();
-		if (!wxFileExists(skelHkx)) {
-			wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nTo load HKX poses, place a matching .hkx skeleton file alongside the .nif reference skeleton."),
-							  skelHkx),
-						 _("Load Pose File"),
-						 wxOK | wxICON_ERROR,
-						 this);
-			return;
-		}
-
-
-		skeletonHkxPath = std::string(skelHkx.ToUTF8().data());
 	}
 	else if (format != PoseFileFormat::Json && format != PoseFileFormat::Yaml) {
 		wxMessageBox(_("Please choose a pose file with a .hkx, .json, .yaml or .yml extension."), _("Load Pose File"), wxOK | wxICON_ERROR, this);
@@ -13706,6 +13756,441 @@ void OutfitStudioFrame::OnLoadHkxPose(wxCommandEvent& WXUNUSED(event)) {
 	OnSelectPose(dummy);
 	if (statusBar)
 		statusBar->SetStatusText(_("Pose file loaded."), 0);
+}
+
+bool OutfitStudioFrame::GetReferenceSkeletonHkxPath(std::string& outPath, const wxString& caption) {
+	if (!GetPoseHkxFormat(wxGetApp().targetGame, nullptr)) {
+		wxMessageBox(_("HKX support is currently only available for Skyrim Legendary Edition, Skyrim Special Edition, Skyrim VR, Fallout 4 and Fallout 4 VR."),
+					 caption,
+					 wxOK | wxICON_INFORMATION,
+					 this);
+		return false;
+	}
+
+	wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
+	if (defSkelNif.IsEmpty()) {
+		wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings first."), caption, wxOK | wxICON_ERROR, this);
+		return false;
+	}
+
+	wxFileName defSkelFn(defSkelNif);
+	if (defSkelFn.IsRelative())
+		defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
+	defSkelFn.SetExt("hkx");
+
+	wxString skelHkx = defSkelFn.GetFullPath();
+	if (!wxFileExists(skelHkx)) {
+		wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nPlace a matching .hkx skeleton file alongside the .nif reference skeleton."),
+						  skelHkx),
+					 caption,
+					 wxOK | wxICON_ERROR,
+					 this);
+		return false;
+	}
+
+	outPath = std::string(skelHkx.ToUTF8().data());
+	return true;
+}
+
+AnimationData* OutfitStudioFrame::GetSelectedAnimation() {
+	if (!cAnimationName)
+		return nullptr;
+
+	int sel = cAnimationName->GetSelection();
+	if (sel == wxNOT_FOUND)
+		return nullptr;
+
+	// The "<None>" sentinel entry has null client data.
+	return reinterpret_cast<AnimationData*>(cAnimationName->GetClientData(sel));
+}
+
+double OutfitStudioFrame::GetAnimPlaybackSpeed() {
+	// Indices match the "animSpeed" choice contents in the XRC.
+	static const double speeds[] = {0.25, 0.5, 1.0, 1.5, 2.0};
+	constexpr int defaultSel = 2; // 1x
+
+	int sel = animSpeedChoice ? animSpeedChoice->GetSelection() : defaultSel;
+	if (sel < 0 || sel >= static_cast<int>(std::size(speeds)))
+		sel = defaultSel;
+
+	return speeds[sel];
+}
+
+bool OutfitStudioFrame::IsAnimationInterpolated() const {
+	return animInterpolateCheck && animInterpolateCheck->GetValue();
+}
+
+void OutfitStudioFrame::ApplyAnimationFrame(double framePos, bool updatePoseGUI) {
+	AnimationData* anim = GetSelectedAnimation();
+	if (!anim || anim->framePoses.empty())
+		return;
+
+	const size_t numFrames = anim->framePoses.size();
+	if (!(framePos >= 0.0) || framePos > double(numFrames))
+		framePos = 0.0;
+
+	animCurrentFrame = framePos;
+
+	const size_t frame = std::min(size_t(framePos), numFrames - 1);
+	const float blend = float(framePos - double(frame));
+
+	if (IsAnimationInterpolated() && numFrames > 1 && blend > 0.0f) {
+		// Playback loops, so the last frame blends back into the first one.
+		const size_t nextFrame = (frame + 1) % numFrames;
+		PoseData::Interpolate(anim->framePoses[frame], anim->framePoses[nextFrame], blend, animBlendPose);
+		animBlendPose.ApplyToSkeleton();
+	}
+	else {
+		anim->framePoses[frame].ApplyToSkeleton();
+	}
+
+	// Updating the pose sliders is skipped during playback; they are synced
+	// once when playback pauses.
+	if (updatePoseGUI)
+		PoseToGUI();
+
+	if (!project->bPose)
+		ActivatePose(true);
+	else
+		ApplyPose();
+
+	if (animFrameSlider && animFrameSlider->GetValue() != static_cast<int>(frame))
+		animFrameSlider->SetValue(static_cast<int>(frame));
+
+	if (animFrameText)
+		animFrameText->SetLabel(wxString::Format("%lu / %lu", static_cast<unsigned long>(frame + 1), static_cast<unsigned long>(numFrames)));
+}
+
+void OutfitStudioFrame::UpdateAnimationPlayerUI() {
+	AnimationData* anim = GetSelectedAnimation();
+	size_t numFrames = anim ? anim->GetNumFrames() : 0;
+
+	if (animPlayPauseButton) {
+		animPlayPauseButton->Enable(numFrames > 0);
+		animPlayPauseButton->SetLabel(animPlaying ? _("Pause") : _("Play"));
+	}
+
+	const size_t currentFrame = numFrames > 0 ? std::min(static_cast<size_t>(animCurrentFrame), numFrames - 1) : 0;
+
+	if (animFrameSlider) {
+		animFrameSlider->Enable(numFrames > 1);
+		animFrameSlider->SetRange(0, numFrames > 1 ? static_cast<int>(numFrames) - 1 : 1);
+		animFrameSlider->SetValue(static_cast<int>(currentFrame));
+	}
+
+	if (animSpeedChoice)
+		animSpeedChoice->Enable(numFrames > 0);
+
+	if (animInterpolateCheck)
+		animInterpolateCheck->Enable(numFrames > 1);
+
+	if (animFrameText) {
+		if (numFrames > 0)
+			animFrameText->SetLabel(wxString::Format("%lu / %lu", static_cast<unsigned long>(currentFrame + 1), static_cast<unsigned long>(numFrames)));
+		else
+			animFrameText->SetLabel("0 / 0");
+	}
+}
+
+int OutfitStudioFrame::GetAnimTargetFps() {
+	int refresh = 0;
+
+	const int displayIndex = wxDisplay::GetFromWindow(this);
+	if (displayIndex != wxNOT_FOUND) {
+		wxVideoMode mode = wxDisplay(static_cast<unsigned int>(displayIndex)).GetCurrentMode();
+		refresh = mode.refresh;
+	}
+
+	if (refresh <= 0)
+		refresh = 60;
+
+	return std::min(refresh, 120);
+}
+
+wxLongLong OutfitStudioFrame::GetAnimFrameDueInMicro() {
+	const wxLongLong period = 1000000 / std::max(animTargetFps, 1);
+	const wxLongLong elapsed = animPlaybackWatch.TimeInMicro() - animLastDrawMicro;
+	return elapsed >= period ? wxLongLong(0) : period - elapsed;
+}
+
+void OutfitStudioFrame::RestartAnimationClock() {
+	animClockBaseFrame = animCurrentFrame;
+	animPlaybackWatch.Start();
+	animLastDrawMicro = 0;
+}
+
+void OutfitStudioFrame::PumpAnimationPlayback() {
+	if (!animPlaying)
+		return;
+
+	AnimationData* anim = GetSelectedAnimation();
+	if (!anim || anim->framePoses.empty()) {
+		PauseAnimationPlayback();
+		return;
+	}
+
+	// Ticks arrive from idle, the timer and mouse motion at wildly different
+	// rates, so the drawing rate is decided here rather than by whatever woke us.
+	if (GetAnimFrameDueInMicro() > 0)
+		return;
+
+	animLastDrawMicro = animPlaybackWatch.TimeInMicro();
+
+	const size_t numFrames = anim->framePoses.size();
+	const double frameDuration = anim->frameDuration > 0.0f ? anim->frameDuration : 1.0f / 30.0f;
+
+	// Where the animation is due, from elapsed time rather than a tick count,
+	// so a late or dropped tick shifts nothing but the smoothness.
+	double framePos = animClockBaseFrame + (animPlaybackWatch.TimeInMicro().ToDouble() / 1000000.0) * GetAnimPlaybackSpeed() / frameDuration;
+	framePos = std::fmod(framePos, double(numFrames));
+	if (framePos < 0.0)
+		framePos = 0.0;
+
+	// Without interpolation only whole frames are ever shown, so skip the work
+	// entirely until the position has actually crossed into the next one.
+	if (!IsAnimationInterpolated() && size_t(framePos) == size_t(animCurrentFrame))
+		return;
+
+	ApplyAnimationFrame(framePos, false);
+}
+
+void OutfitStudioFrame::StartAnimationPlayback() {
+	AnimationData* anim = GetSelectedAnimation();
+	if (!anim || anim->framePoses.empty() || animPlaying)
+		return;
+
+	animPlaying = true;
+	SetAnimationPlaybackLock(true);
+	UpdateAnimationPlayerUI();
+
+	// Resolved once here: the window does not move between displays mid-play.
+	animTargetFps = GetAnimTargetFps();
+
+	RestartAnimationClock();
+	SetHighResolutionTimers(true);
+	Bind(wxEVT_IDLE, &OutfitStudioFrame::OnAnimIdle, this);
+	animPlaybackTimer.Start(AnimPlaybackTimerIntervalMS);
+}
+
+void OutfitStudioFrame::PauseAnimationPlayback() {
+	if (!animPlaying)
+		return;
+
+	animPlaybackTimer.Stop();
+	Unbind(wxEVT_IDLE, &OutfitStudioFrame::OnAnimIdle, this);
+	SetHighResolutionTimers(false);
+	animPlaying = false;
+	SetAnimationPlaybackLock(false);
+
+	// Land on a whole frame, so the pose left behind is the one the player
+	// reports rather than a blend between two of them. Unconditional because
+	// this is also the ApplyPose that rebuilds the mesh BVHs playback skipped.
+	if (GetSelectedAnimation())
+		ApplyAnimationFrame(std::floor(animCurrentFrame), false);
+	else
+		ApplyPose();
+
+	// The frame stays applied, so a paused animation behaves like a pose. Sync
+	// the pose sliders that were skipped while playing.
+	PoseToGUI();
+	UpdateAnimationPlayerUI();
+}
+
+void OutfitStudioFrame::ResetAnimationList() {
+	PauseAnimationPlayback();
+	animCurrentFrame = 0;
+
+	poseDataCollection.animationData.clear();
+
+	if (cAnimationName) {
+		cAnimationName->Clear();
+		cAnimationName->Append("<None>", (void*)nullptr);
+		cAnimationName->SetSelection(0);
+	}
+
+	UpdateAnimationPlayerUI();
+}
+
+void OutfitStudioFrame::SetAnimationPlaybackLock(bool locked) {
+	const bool enable = !locked;
+
+	if (menuBar) {
+		for (size_t i = 0; i < menuBar->GetMenuCount(); ++i)
+			menuBar->EnableTop(i, enable);
+	}
+
+	// Disabling a container disables its children without discarding their own
+	// enabled state, so whatever the current tab, tool and pose selection had
+	// decided (per-tool toolbar entries, the save/delete pose buttons, Pose to
+	// Mesh) comes back unchanged on unlock.
+	const std::initializer_list<wxWindow*> lockedWindows = {toolBarH,
+															toolBarV,
+															meshTabButton,
+															boneTabButton,
+															colorsTabButton,
+															segmentTabButton,
+															partitionTabButton,
+															lightsTabButton,
+															outfitShapes,
+															outfitBones,
+															sliderScroll,
+															sliderFilter,
+															bonesFilter,
+															masksPane,
+															notesPane,
+															posePane,
+															FindWindow(XRCID("cbFixedWeight")),
+															FindWindow(XRCID("cbNormalizeWeights")),
+															// The player itself stays usable; only the
+															// controls that would swap the animation out
+															// from under it are locked.
+															cAnimationName,
+															FindWindow(XRCID("importAnimationFile"))};
+
+	for (wxWindow* w : lockedWindows) {
+		if (w)
+			w->Enable(enable);
+	}
+
+	// Swallow every menu, toolbar and accelerator command while playing.
+	// Dynamically bound handlers run before the static event table, so this
+	// blocks all of them in one place.
+	if (locked)
+		Bind(wxEVT_MENU, &OutfitStudioFrame::OnBlockedCommandDuringPlayback, this);
+	else
+		Unbind(wxEVT_MENU, &OutfitStudioFrame::OnBlockedCommandDuringPlayback, this);
+}
+
+void OutfitStudioFrame::OnBlockedCommandDuringPlayback(wxCommandEvent& WXUNUSED(event)) {
+	// Intentionally empty: not calling Skip() drops the command.
+}
+
+void OutfitStudioFrame::OnSelectAnimation(wxCommandEvent& WXUNUSED(event)) {
+	PauseAnimationPlayback();
+	animCurrentFrame = 0;
+
+	AnimationData* anim = GetSelectedAnimation();
+	if (anim) {
+		// The animation takes over the skeleton pose; deselect any pose in
+		// the pose list without firing its handler.
+		if (auto cPoseName = (wxComboBox*)FindWindowByName("cPoseName"))
+			cPoseName->SetStringSelection("<New>");
+
+		ApplyAnimationFrame(0);
+	}
+	else {
+		// "<None>" sentinel: reset all bones like the "<New>" pose entry.
+		ResetAllPoseBones();
+		PoseToGUI();
+		ApplyPose();
+	}
+
+	UpdateAnimationPlayerUI();
+	UpdatePoseButtonStates();
+}
+
+void OutfitStudioFrame::OnLoadHkxAnimation(wxCommandEvent& WXUNUSED(event)) {
+	wxFileDialog loadDlg(this, _("Select animation file"), wxEmptyString, wxEmptyString, "HKX animation files (*.hkx)|*.hkx", wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+	if (loadDlg.ShowModal() == wxID_CANCEL)
+		return;
+
+	std::string skeletonHkxPath;
+	if (!GetReferenceSkeletonHkxPath(skeletonHkxPath, _("Load Animation File")))
+		return;
+
+	wxString srcPath = loadDlg.GetPath();
+	wxFileName srcFn(srcPath);
+
+	AnimationData anim;
+	anim.name = std::string(srcFn.GetName().ToUTF8().data());
+
+	std::string loadError;
+	if (!PoseDataCollection::LoadHkxAnimation(skeletonHkxPath, std::string(srcPath.ToUTF8().data()), anim, &loadError)) {
+		wxString message = loadError.empty() ? _("Failed to load the animation file.") : wxString::FromUTF8(loadError);
+		wxMessageBox(message, _("Load Animation File"), wxOK | wxICON_ERROR, this);
+		return;
+	}
+
+	if (!cAnimationName)
+		return;
+
+	wxString uniqueName = wxString::FromUTF8(anim.name);
+	if (cAnimationName->FindString(uniqueName) != wxNOT_FOUND) {
+		for (int suffix = 1;; ++suffix) {
+			wxString candidate = wxString::Format("%s (%d)", wxString::FromUTF8(anim.name), suffix);
+			if (cAnimationName->FindString(candidate) == wxNOT_FOUND) {
+				uniqueName = candidate;
+				break;
+			}
+		}
+	}
+	anim.name = std::string(uniqueName.ToUTF8().data());
+
+	AnimationData* added = poseDataCollection.AddAnimation(std::move(anim));
+	int idx = cAnimationName->Append(wxString::FromUTF8(added->name), added);
+	cAnimationName->SetSelection(idx);
+
+	wxCommandEvent dummy;
+	OnSelectAnimation(dummy);
+
+	if (statusBar)
+		statusBar->SetStatusText(_("Animation file loaded."), 0);
+}
+
+void OutfitStudioFrame::OnAnimPlayPause(wxCommandEvent& WXUNUSED(event)) {
+	if (animPlaying)
+		PauseAnimationPlayback();
+	else
+		StartAnimationPlayback();
+}
+
+void OutfitStudioFrame::OnAnimFrameSlider(wxScrollEvent& event) {
+	if (!GetSelectedAnimation())
+		return;
+
+	ApplyAnimationFrame(std::max(event.GetPosition(), 0), !animPlaying);
+
+	// Seeking moves the playhead, so playback has to continue from there.
+	if (animPlaying)
+		RestartAnimationClock();
+}
+
+void OutfitStudioFrame::OnAnimSpeedChanged(wxCommandEvent& WXUNUSED(event)) {
+	// The frame position is derived from the elapsed time and the speed, so the
+	// clock has to restart at the current frame for the new speed to take over
+	// from there rather than jump.
+	if (animPlaying)
+		RestartAnimationClock();
+}
+
+void OutfitStudioFrame::OnAnimInterpolateChanged(wxCommandEvent& WXUNUSED(event)) {
+	AnimationData* anim = GetSelectedAnimation();
+	if (!anim)
+		return;
+
+	// While playing, the next tick picks the new mode up on its own.
+	if (!animPlaying)
+		ApplyAnimationFrame(animCurrentFrame);
+}
+
+void OutfitStudioFrame::OnAnimPlaybackTimer(wxTimerEvent& WXUNUSED(event)) {
+	PumpAnimationPlayback();
+}
+
+void OutfitStudioFrame::OnAnimIdle(wxIdleEvent& event) {
+	if (!animPlaying)
+		return;
+
+	// Idle events asked for with RequestMore come back as fast as the event loop
+	// can spin, so hand the CPU back while the next frame is still a way off
+	// instead of burning a core on the wait. A millisecond at a time stays well
+	// inside one frame even at the 120 fps cap, where frames are 8.3 ms apart.
+	if (GetAnimFrameDueInMicro() > 1500)
+		wxMilliSleep(1);
+	else
+		PumpAnimationPlayback();
+
+	event.RequestMore();
 }
 
 wxBEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)
@@ -14011,6 +14496,12 @@ void wxGLPanel::SetLastTool(ToolID tool) {
 }
 
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
+	// No editing shortcuts while an animation is playing.
+	if (os && os->IsAnimationPlaying()) {
+		event.Skip();
+		return;
+	}
+
 	if (!event.HasAnyModifiers()) {
 		if (event.GetUnicodeKey() == 'V') {
 			wxPoint cursorPos(event.GetPosition());
@@ -16724,7 +17215,11 @@ void wxGLPanel::OnSize(wxSizeEvent& event) {
 void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 	int delt = event.GetWheelRotation();
 
-	if (event.ControlDown()) {
+	// Switching the edited slider and resizing the brush are both locked out
+	// during playback; zooming falls through.
+	const bool playing = os && os->IsAnimationPlaying();
+
+	if (!playing && event.ControlDown()) {
 		std::string sliderName = os->lastActiveSlider;
 
 		if (sliderName.empty())
@@ -16759,7 +17254,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 			}
 		}
 	}
-	else if (wxGetKeyState(wxKeyCode('S'))) {
+	else if (!playing && wxGetKeyState(wxKeyCode('S'))) {
 		wxPoint p = event.GetPosition();
 
 		if (brushMode) {
@@ -16786,6 +17281,10 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	if (os->IsActive())
 		SetFocus();
+
+	// Mouse motion floods the message queue, which starves both the idle events
+	// and the WM_TIMER that drive playback, so tick it from here as well.
+	os->PumpAnimationPlayback();
 
 	bool cursorExists = false;
 	int x;
@@ -16872,7 +17371,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	if (!rbuttonDown && !lbuttonDown && !isMovingVertex && !isSlidingEdge) {
 		GLSurface::CursorHitResult hitResult{};
 
-		if (editMode) {
+		// The brush cursor is hidden during playback: the brushes are locked out
+		// anyway, and it would hit-test against the mesh BVHs that playback
+		// leaves stale, reporting vertices that are not where it draws them.
+		if (editMode && !(os && os->IsAnimationPlaying())) {
 			cursorExists = gls.UpdateCursor(x, y, true, &hitResult);
 		}
 		else {
@@ -16971,6 +17473,11 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 
 	lbuttonDown = true;
 
+	// No tool may start editing while an animation plays; the click still falls
+	// through to camera navigation.
+	if (os && os->IsAnimationPlaying())
+		return;
+
 	if (transformMode) {
 		bool meshHit = StartTransform(event.GetPosition());
 		if (meshHit) {
@@ -17050,7 +17557,12 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 	if (GetCapture() == this)
 		ReleaseMouse();
 
-	if (!isLDragging && !isPainting && activeTool == ToolID::Select) {
+	// OnLeftDown bails out during playback, so none of the edit states below can
+	// be set; only the click-to-select path would still run, and it would pick
+	// against the mesh BVHs that playback leaves stale.
+	const bool playing = os && os->IsAnimationPlaying();
+
+	if (!playing && !isLDragging && !isPainting && activeTool == ToolID::Select) {
 		int x, y;
 		event.GetPosition(&x, &y);
 
@@ -17177,6 +17689,9 @@ void wxGLPanel::OnRightUp(wxMouseEvent& WXUNUSED(event)) {
 
 
 bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
+	if (owner && owner->IsAnimationPlaying())
+		return false;
+
 	if (owner) {
 		NiShape* mergeShape = nullptr;
 		if (owner->activeItem && fileNames.GetCount() == 1)
@@ -17232,6 +17747,9 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 }
 
 bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
+	if (owner && owner->IsAnimationPlaying())
+		return false;
+
 	if (owner) {
 		bool isMultiple = (fileNames.GetCount() > 1);
 		for (size_t i = 0; i < fileNames.GetCount(); i++) {

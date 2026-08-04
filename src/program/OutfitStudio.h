@@ -56,6 +56,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/splitter.h>
 #include <wx/srchctrl.h>
 #include <wx/stdpaths.h>
+#include <wx/stopwatch.h>
+#include <wx/timer.h>
 #include <wx/tokenzr.h>
 #include <wx/treectrl.h>
 #include <wx/wizard.h>
@@ -67,6 +69,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };
+
+#define ANIM_PLAYBACK_TIMER 300
 
 struct MergeCheckErrors;
 
@@ -965,6 +969,15 @@ public:
 
 	const std::vector<RefTemplate>& GetRefTemplates() const { return refTemplates; }
 
+	// True while an HKX animation is being played back; all editing is locked
+	// for the duration.
+	bool IsAnimationPlaying() const { return animPlaying; }
+
+	// Advances playback to whatever frame the wall clock says is due. Safe to
+	// call from any event source: the frame comes from elapsed time rather than
+	// a tick count, so the speed stays correct however often it arrives.
+	void PumpAnimationPlayback();
+
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;
 	OutfitProject* project = nullptr;
@@ -1008,6 +1021,12 @@ public:
 	wxTextCtrl* scPoseText = nullptr;
 	wxCheckBox* cbPose = nullptr;
 	wxButton* poseToMesh = nullptr;
+	wxComboBox* cAnimationName = nullptr;
+	wxButton* animPlayPauseButton = nullptr;
+	wxSlider* animFrameSlider = nullptr;
+	wxStaticText* animFrameText = nullptr;
+	wxChoice* animSpeedChoice = nullptr;
+	wxCheckBox* animInterpolateCheck = nullptr;
 	wxScrolledWindow* sliderScroll = nullptr;
 	wxMenuBar* menuBar = nullptr;
 	wxToolBar* toolBarH = nullptr;
@@ -1032,6 +1051,7 @@ public:
 	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
 	wxCollapsiblePane* masksPane = nullptr;
 	wxCollapsiblePane* posePane = nullptr;
+	wxCollapsiblePane* animationPane = nullptr;
 	wxCollapsiblePane* notesPane = nullptr;
 	wxTextCtrl* projectNotes = nullptr;
 
@@ -1801,6 +1821,64 @@ private:
 	// Updates enabled state of the Save/Delete pose buttons based on
 	// whether the currently selected pose is read-only (e.g. SAM YAML).
 	void UpdatePoseButtonStates();
+
+	// HKX animation playback. Every frame of a loaded animation is stored as a
+	// regular PoseData and applied through the same code path as poses, so a
+	// paused animation behaves exactly like an applied pose.
+	AnimationData* GetSelectedAnimation();
+	double GetAnimPlaybackSpeed();
+	bool IsAnimationInterpolated() const;
+	// Refresh rate of the display the window is on, capped at 120 and falling
+	// back to 60 when the display does not report one.
+	int GetAnimTargetFps();
+	// Microseconds until the next frame should be drawn, 0 when it is due.
+	wxLongLong GetAnimFrameDueInMicro();
+	// Applies the pose at the given frame position, blending the two frames
+	// around a fractional one when interpolation is on.
+	void ApplyAnimationFrame(double framePos, bool updatePoseGUI = true);
+	// Restarts the playback clock at the current frame. Needed whenever the
+	// position or the speed changes while playing, since the frame is derived
+	// from the time elapsed since the clock was last started.
+	void RestartAnimationClock();
+	void StartAnimationPlayback();
+	void PauseAnimationPlayback();
+	void ResetAnimationList();
+	void UpdateAnimationPlayerUI();
+	// Enables/disables everything that could edit meshes, bones or the project
+	// while an animation is playing. The player controls stay usable.
+	void SetAnimationPlaybackLock(bool locked);
+	// Resolves the .hkx file next to the configured reference skeleton, showing
+	// an error dialog with the given caption on failure.
+	bool GetReferenceSkeletonHkxPath(std::string& outPath, const wxString& caption);
+	void OnSelectAnimation(wxCommandEvent& event);
+	void OnLoadHkxAnimation(wxCommandEvent& event);
+	void OnAnimPlayPause(wxCommandEvent& event);
+	void OnAnimFrameSlider(wxScrollEvent& event);
+	void OnAnimSpeedChanged(wxCommandEvent& event);
+	void OnAnimInterpolateChanged(wxCommandEvent& event);
+	void OnAnimPlaybackTimer(wxTimerEvent& event);
+	// Bound only while an animation plays; this is what drives the frame rate,
+	// the timer being a fallback.
+	void OnAnimIdle(wxIdleEvent& event);
+	// Bound while an animation plays; swallows every menu, toolbar and
+	// accelerator command so nothing can edit the project.
+	void OnBlockedCommandDuringPlayback(wxCommandEvent& event);
+
+	wxTimer animPlaybackTimer;
+	bool animPlaying = false;
+	// Frame position, fractional while interpolating.
+	double animCurrentFrame = 0.0;
+	// Runs while playing; together with animClockBaseFrame it tells which frame
+	// is due, independent of how often ticks actually arrive.
+	wxStopWatch animPlaybackWatch;
+	double animClockBaseFrame = 0.0;
+	// Frame pacing: the animPlaybackWatch reading at which the last frame was
+	// drawn, and the rate being aimed for, resolved once per playback.
+	wxLongLong animLastDrawMicro = 0;
+	int animTargetFps = 60;
+	// Scratch pose for interpolated frames, kept around so that playback does
+	// not reallocate the bone list every tick.
+	PoseData animBlendPose;
 
 	wxDECLARE_EVENT_TABLE();
 };

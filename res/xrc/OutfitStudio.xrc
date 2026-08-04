@@ -1636,6 +1636,139 @@
 														</object>
 													</object>
 													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL|wxEXPAND|wxLEFT</flag>
+														<border>2</border>
+														<object class="wxCollapsiblePane" name="animationPane">
+															<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+															<collapsed>1</collapsed>
+															<label>Animation</label>
+															<bg>wxSYS_COLOUR_MENU</bg>
+															<hidden>1</hidden>
+															<object class="panewindow">
+																<object class="wxBoxSizer">
+																	<orient>wxVERTICAL</orient>
+																	<object class="sizeritem">
+																		<option>0</option>
+																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																		<border>5</border>
+																		<object class="wxBoxSizer">
+																			<orient>wxVERTICAL</orient>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxEXPAND</flag>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxComboBox" name="cAnimationName">
+																							<style>wxCB_READONLY</style>
+																							<value></value>
+																							<content />
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxBOTTOM|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="importAnimationFile">
+																							<size>-1,25</size>
+																							<label>Load...</label>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxEXPAND</flag>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxRIGHT</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="animPlayPause">
+																							<size>50,25</size>
+																							<label>Play</label>
+																							<enabled>0</enabled>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxEXPAND</flag>
+																						<object class="wxSlider" name="animFrameSlider">
+																							<style>wxSL_HORIZONTAL</style>
+																							<value translate="0">0</value>
+																							<min>0</min>
+																							<max>1</max>
+																							<enabled>0</enabled>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxBOTTOM|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxALIGN_CENTER_VERTICAL</flag>
+																						<object class="wxStaticText" name="animFrameText">
+																							<label translate="0">0 / 0</label>
+																						</object>
+																					</object>
+																					<object class="spacer">
+																						<option>1</option>
+																						<flag>wxEXPAND</flag>
+																						<size>0,0</size>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																						<border>10</border>
+																						<object class="wxCheckBox" name="animInterpolate">
+																							<label>Interpolate</label>
+																							<checked>1</checked>
+																							<tooltip>Blend between the animation's frames during playback instead of stepping from one to the next.</tooltip>
+																							<enabled>0</enabled>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																						<border>5</border>
+																						<object class="wxStaticText" name="animSpeedLabel">
+																							<label>Speed</label>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxALIGN_CENTER_VERTICAL</flag>
+																						<object class="wxChoice" name="animSpeed">
+																							<selection>2</selection>
+																							<content>
+																								<item translate="0">0.25x</item>
+																								<item translate="0">0.5x</item>
+																								<item translate="0">1x</item>
+																								<item translate="0">1.5x</item>
+																								<item translate="0">2x</item>
+																							</content>
+																							<enabled>0</enabled>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+															</object>
+														</object>
+													</object>
+													<object class="sizeritem">
 														<option>3</option>
 														<flag>wxEXPAND</flag>
 														<border>0</border>

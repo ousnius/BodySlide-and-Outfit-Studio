@@ -71,6 +71,23 @@ public:
 	// is set). Bones without a matching entry are reset to the identity pose.
 	// Calls UpdatePoseTransform on every bone.
 	void ApplyToSkeleton() const;
+
+	// Writes the pose that lies at t between a and b into outPose (0 yields a,
+	// 1 yields b). Translation and scale are mixed linearly, rotation along the
+	// shortest arc. outPose must not be b.
+	static void Interpolate(const PoseData& a, const PoseData& b, float t, PoseData& outPose);
+};
+
+// A full Havok animation, stored as one PoseData per frame so that playback can
+// reuse PoseData::ApplyToSkeleton for every frame.
+class AnimationData {
+public:
+	std::string name;
+	// Seconds per frame as stored in the HKX animation (usually 1/30).
+	float frameDuration = 1.0f / 30.0f;
+	std::vector<PoseData> framePoses;
+
+	size_t GetNumFrames() const { return framePoses.size(); }
 };
 
 class PoseDataCollection {
@@ -81,11 +98,18 @@ public:
 	// push_back would invalidate every previously stored pointer.
 	std::deque<PoseData> poseData;
 
+	// Loaded HKX animations. Same stable-pointer reasoning as poseData:
+	// the animation combobox holds raw AnimationData* in its ClientData.
+	std::deque<AnimationData> animationData;
+
 	// Loads all pose data in the specified folder.
 	int LoadData(const std::string& basePath);
 
 	// Appends a pose to the collection and returns a stable pointer to it.
 	PoseData* AddPose(PoseData pose);
+
+	// Appends an animation to the collection and returns a stable pointer to it.
+	AnimationData* AddAnimation(AnimationData anim);
 
 	// Returns the on-disk pose format inferred from the file extension.
 	static PoseFileFormat GetPoseFileFormat(const std::string& filePath);
@@ -148,6 +172,12 @@ public:
 	// success, outPose.boneData is populated and absoluteLocal is set.
 	// Returns false if either file cannot be parsed.
 	static bool LoadHkxPose(const std::string& skeletonHkxPath, const std::string& animHkxPath, PoseData& outPose, uint32_t frameIndex = 0);
+
+	// Loads a full Havok animation from a skeleton + animation HKX pair, one
+	// PoseData per frame (see LoadHkxPose for how tracks are matched to bones).
+	// Returns false if either file cannot be parsed or the animation has no
+	// frames, filling errorOut with the reason.
+	static bool LoadHkxAnimation(const std::string& skeletonHkxPath, const std::string& animHkxPath, AnimationData& outAnim, std::string* errorOut = nullptr);
 };
 
 class PoseDataFile {
