@@ -1326,7 +1326,7 @@ void BodySlideApp::LaunchOutfitStudio(const wxString& args) {
 #ifdef _WIN32
 	const wxString osExec = "OutfitStudio.exe";
 #else
-	const wxString osExec = "OutfitStudio";
+	const wxString osExec = "/OutfitStudio";
 #endif
 
 	wxString osExecCmd = wxString::Format("\"%s\\%s\" %s", wxString::FromUTF8(Config["AppDir"]), osExec, args);
