@@ -1329,7 +1329,8 @@ void BodySlideApp::LaunchOutfitStudio(const wxString& args) {
 	const wxString osExec = "OutfitStudio";
 #endif
 
-	wxString osExecCmd = wxString::Format("\"%s\\%s\" %s", wxString::FromUTF8(Config["AppDir"]), osExec, args);
+	wxFileName osExecFile(wxString::FromUTF8(Config["AppDir"]), osExec);
+	wxString osExecCmd = wxString::Format("\"%s\" %s", osExecFile.GetFullPath(), args);
 
 	if (!wxExecute(osExecCmd, wxEXEC_ASYNC)) {
 		wxLogError("Failed to execute '%s' process.", osExecCmd);
