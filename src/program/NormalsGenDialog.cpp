@@ -176,6 +176,12 @@ void NormalsGenDialog::doGenerateNormalMap(wxCommandEvent& WXUNUSED(event)) {
 	if (!preview)
 		return;
 
+#ifndef _WIN32
+	// bail out before touching any files, the conversion below can't run without texconv.
+	wxLogError("Unable to generate the normal map file: texconv is only available on Windows.");
+	wxMessageBox(_("Generating normal map files requires texconv, which is only available on Windows."), _("Error"), wxICON_ERROR);
+	return;
+#else
 	wxFileName outfile;
 	if (cbSaveToBGLayerFile->IsChecked())
 		outfile = refNormalGenLayers[0].sourceFileName;
@@ -194,15 +200,17 @@ void NormalsGenDialog::doGenerateNormalMap(wxCommandEvent& WXUNUSED(event)) {
 	// rendering to lossless png (SOIL2 wants to run dxt1 compression on dds which loses lots of quality).
 	preview->RenderNormalMap("ngtemp.png");
 
-	if (cbCompress->IsChecked()) {
-		// compression using texconv .. pretty slow, but uses direct compute to make it a bit faster.
-		wxBusyCursor compressWait;
-		wxExecute("texconv.exe -f BC7_UNORM ngtemp.png -o " + outfile.GetFullPath(), wxEXEC_SYNC);
+	// compression using texconv .. pretty slow, but uses direct compute to make it a bit faster.
+	// uncompressed 8bpp goes through texconv just because.
+	const wxString texFormat = cbCompress->IsChecked() ? "BC7_UNORM" : "R8G8B8A8_UNORM";
+	const wxString texConvCmd = wxString::Format("texconv.exe -f %s ngtemp.png -o \"%s\"", texFormat, outfile.GetFullPath());
+
+	wxBusyCursor convertWait;
+	if (wxExecute(texConvCmd, wxEXEC_SYNC) != 0) {
+		wxLogError("Failed to execute '%s' process.", texConvCmd);
+		wxMessageBox(_("Failed to convert the normal map using texconv!"), _("Error"), wxICON_ERROR);
 	}
-	else {
-		// uncompressed 8bpp using texconv just because.
-		wxExecute("texconv.exe -f R8G8B8A8_UNORM ngtemp.png -o " + outfile.GetFullPath());
-	}
+#endif
 }
 
 void NormalsGenDialog::doLoadPreset(wxCommandEvent& WXUNUSED(event)) {
