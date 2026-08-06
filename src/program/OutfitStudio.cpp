@@ -192,6 +192,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("importMask"), OutfitStudioFrame::OnImportMask)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("posePane"), OutfitStudioFrame::OnPaneCollapse)
+	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("physicsPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("animationPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("notesPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_CHOICE(XRCID("cPoseBone"), OutfitStudioFrame::OnPoseBoneChanged)
@@ -1360,8 +1361,10 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
 	partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
 	lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
+	toolScroll = dynamic_cast<wxScrolledWindow*>(FindWindowByName("toolScroll"));
 	masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
 	posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
+	physicsPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("physicsPane"));
 	animationPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("animationPane"));
 	notesPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("notesPane"));
 	projectNotes = (wxTextCtrl*)FindWindowByName("projectNotes");
@@ -1482,6 +1485,10 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (editPanel)
 		editPanel->SetBackgroundColour(wxColour(112, 112, 112));
 
+	// Dragging the splitter sash changes how much of the tool area fits.
+	if (wxWindow* bottomSplitPanel = FindWindowByName("bottomSplitPanel"))
+		bottomSplitPanel->Bind(wxEVT_SIZE, &OutfitStudioFrame::OnBottomPanelResize, this);
+
 	cXMirrorBone = (wxChoice*)FindWindowByName("cXMirrorBone");
 	cPoseBone = (wxChoice*)FindWindowByName("cPoseBone");
 	rxPoseSlider = (wxSlider*)FindWindowByName("rxPoseSlider");
@@ -1506,14 +1513,10 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
 
 	// Nothing is loaded yet, and only meshes that reference a physics XML can be
-	// simulated: UpdatePhysicsControlsVisibility reveals these again when one
+	// simulated: UpdatePhysicsControlsVisibility reveals the pane again when one
 	// shows up. In a build without Bullet that never happens.
-	for (wxWindow* physicsCtrl : {(wxWindow*)cbPhysics, (wxWindow*)cbPhysicsVis, (wxWindow*)physicsWindSlider, (wxWindow*)physicsWindDir, FindWindowByName("physicsWindLabel")}) {
-		if (physicsCtrl) {
-			physicsControls.push_back(physicsCtrl);
-			physicsCtrl->Hide();
-		}
-	}
+	if (physicsPane)
+		physicsPane->Hide();
 
 	cAnimationName = (wxComboBox*)FindWindowByName("cAnimationName");
 	animPlayPauseButton = (wxButton*)FindWindowByName("animPlayPause");
@@ -2829,9 +2832,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 		projectNotes->SetValue(notesText);
 		notesPane->Collapse(notesText.empty());
 
-		wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
-		if (parentPanel)
-			parentPanel->Layout();
+		UpdateToolScrollLayout();
 	}
 
 	UpdateTitle();
@@ -4612,9 +4613,7 @@ void OutfitStudioFrame::ClearProject() {
 		projectNotes->Clear();
 		notesPane->Collapse();
 
-		wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
-		if (parentPanel)
-			parentPanel->Layout();
+		UpdateToolScrollLayout();
 	}
 
 	project->outfitName.clear();
@@ -8061,6 +8060,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		cbNormalizeWeights->Show(false);
 		xMirrorBoneLabel->Show(false);
 		posePane->Show(false);
+		if (physicsPane)
+			physicsPane->Show(false);
 		if (animationPane)
 			animationPane->Show(false);
 		bonesFilter->GetParent()->Show(false);
@@ -8167,6 +8168,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		cbNormalizeWeights->Show();
 		xMirrorBoneLabel->Show();
 		posePane->Show();
+		if (physicsPane)
+			physicsPane->Show(physicsAvailable);
 		if (animationPane)
 			animationPane->Show();
 		bonesFilter->GetParent()->Show();
@@ -8451,10 +8454,9 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	UpdateBrushSettings();
 
 	wxPanel* topSplitPanel = (wxPanel*)FindWindowByName("topSplitPanel");
-	wxPanel* bottomSplitPanel = (wxPanel*)FindWindowByName("bottomSplitPanel");
-
 	topSplitPanel->Layout();
-	bottomSplitPanel->Layout();
+
+	UpdateToolScrollLayout();
 
 	Refresh();
 }
@@ -13183,8 +13185,42 @@ void OutfitStudioFrame::OnImportMask(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnPaneCollapse(wxCollapsiblePaneEvent& WXUNUSED(event)) {
-	wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
-	parentPanel->Layout();
+	UpdateToolScrollLayout();
+}
+
+void OutfitStudioFrame::OnBottomPanelResize(wxSizeEvent& event) {
+	event.Skip();
+	UpdateToolScrollLayout();
+}
+
+void OutfitStudioFrame::UpdateToolScrollLayout() {
+	wxWindow* container = FindWindowByName("bottomSplitPanel");
+	if (!container)
+		return;
+
+	wxSizer* contentSizer = toolScroll ? toolScroll->GetSizer() : nullptr;
+	if (contentSizer) {
+		// The panes stack up taller than the panel once a few of them are open.
+		// Letting the tool area claim its full height would squeeze the slider
+		// list to nothing and cut off whatever no longer fits, so cap it here
+		// and let the rest scroll.
+		int reserved = FromDIP(120);
+		if (notesPane && notesPane->IsShown())
+			reserved += notesPane->GetEffectiveMinSize().GetHeight();
+
+		const int room = std::max(container->GetClientSize().GetHeight() - reserved, FromDIP(80));
+		const int height = std::min(contentSizer->CalcMin().GetHeight(), room);
+
+		if (toolScroll->GetMinHeight() != height)
+			toolScroll->SetMinSize(wxSize(-1, height));
+	}
+
+	container->Layout();
+
+	// Scrollbars follow the virtual size, which the capped minimum above does
+	// not change.
+	if (toolScroll)
+		toolScroll->FitInside();
 }
 
 void OutfitStudioFrame::ApplyPose() {
@@ -14089,6 +14125,7 @@ void OutfitStudioFrame::SetAnimationPlaybackLock(bool locked) {
 															masksPane,
 															notesPane,
 															posePane,
+															physicsPane,
 															FindWindow(XRCID("cbFixedWeight")),
 															FindWindow(XRCID("cbNormalizeWeights")),
 															// The player itself stays usable; only the
@@ -14290,26 +14327,27 @@ void OutfitStudioFrame::ApplyPhysicsWind() {
 }
 
 void OutfitStudioFrame::UpdatePhysicsControlsVisibility() {
-	if (!cbPhysics)
+	if (!cbPhysics || !physicsPane)
 		return;
 
 	const bool available = project && Physics::HasPhysicsLinks(project->GetWorkNif(), project->shapePhysicsFiles);
-	if (available == cbPhysics->IsShown())
+	if (available == physicsAvailable)
 		return;
+
+	physicsAvailable = available;
 
 	// Deleting the last shape with physics while it simulates has to stop it,
 	// and UpdatePhysicsState only ever starts physics for a checked box
 	if (!available)
 		cbPhysics->SetValue(false);
 
-	for (wxWindow* physicsCtrl : physicsControls)
-		physicsCtrl->Show(available);
+	// The pane belongs to the bones tab; leaving it shows nothing regardless.
+	physicsPane->Show(available && currentTabButton == boneTabButton);
 
 	if (!available)
 		UpdatePhysicsState();
 
-	if (cbPhysics->GetParent())
-		cbPhysics->GetParent()->Layout();
+	UpdateToolScrollLayout();
 }
 
 void OutfitStudioFrame::ShutdownPhysics() {

@@ -1067,8 +1067,10 @@ public:
 	wxSlider* fovSlider = nullptr;
 	wxCheckBox* cbDepthClip = nullptr;
 	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
+	wxScrolledWindow* toolScroll = nullptr;
 	wxCollapsiblePane* masksPane = nullptr;
 	wxCollapsiblePane* posePane = nullptr;
+	wxCollapsiblePane* physicsPane = nullptr;
 	wxCollapsiblePane* animationPane = nullptr;
 	wxCollapsiblePane* notesPane = nullptr;
 	wxTextCtrl* projectNotes = nullptr;
@@ -1796,6 +1798,10 @@ private:
 	void OnExportMask(wxCommandEvent& event);
 	void OnImportMask(wxCommandEvent& event);
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
+	void OnBottomPanelResize(wxSizeEvent& event);
+	// Re-lays out the bottom panel, capping the scrolled tool area so the
+	// slider list below it keeps its room no matter how many panes are open.
+	void UpdateToolScrollLayout();
 	void ApplyPose();
 
 public:
@@ -1924,8 +1930,9 @@ private:
 	void OnPhysicsIdle(wxIdleEvent& event);
 
 	std::unique_ptr<Physics::Controller> physics;
-	// The pose pane's physics controls, shown and hidden as a block.
-	std::vector<wxWindow*> physicsControls;
+	// Whether any loaded mesh references a physics XML. The physics pane only
+	// exists on the bones tab, so showing it takes both this and the tab.
+	bool physicsAvailable = false;
 	wxTimer physicsTimer;
 	// Simulation built and active (either pump mode or animation lockstep).
 	bool physicsRunning = false;
