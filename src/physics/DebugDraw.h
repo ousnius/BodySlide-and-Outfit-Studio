@@ -7,22 +7,22 @@ See the included LICENSE file
 
 #ifdef USE_BULLET
 
-#include "PhysicsSystemBuilder.h"
+#include "SystemBuilder.h"
 
 #include <string>
 #include <vector>
 
 class GLSurface;
 
-namespace bsos {
+namespace Physics {
 // Draws the bone collision shapes and constraints of a set of physics systems
 // as named overlay primitives on a surface. Owns the names it drew so it can
 // replace or remove them again. Per-vertex/per-triangle collider clouds are
 // not drawn individually (they would be one overlay mesh per collider).
-class PhysicsDebugVis {
+class DebugVis {
 public:
 	// Replaces everything drawn by the previous call.
-	void Update(GLSurface& gls, const std::vector<hdt::Ref<BSOSSystem>>& systems);
+	void Update(GLSurface& gls, const std::vector<hdt::Ref<PreviewSystem>>& systems);
 
 	// Removes all overlays of the previous Update.
 	void Clear(GLSurface& gls);

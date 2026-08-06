@@ -17,7 +17,7 @@ upstream so the two stay diffable: fix bugs upstream where possible, and do not
 restructure or "improve" the simulation code here.
 
 `XmlReader` keeps the pull-style interface of its upstream counterpart, so the
-parsing code in `PhysicsSystemBuilder` stays comparable with upstream, but it
+parsing code in `Physics::SystemBuilder` stays comparable with upstream, but it
 is implemented on the tinyxml2 this project already ships rather than on the
 XmlInspector parser vendored by FSMP. The physics XML format is ordinary
 well-formed XML - FSMP's own validator reads the same files with pugixml and
@@ -38,8 +38,8 @@ dependencies on the game and its engine were replaced:
   hashing that bone and tag matching depends on.
 * The skeleton is read from and written to Outfit Studio's `AnimSkeleton` and
   `AnimInfo` instead of the game's `NiNode` tree. That glue lives one directory
-  up, in `PhysicsSystemBuilder` (the port of `hdtSkyrimSystem`) and
-  `PhysicsController`.
+  up, in `Physics::SystemBuilder` (the port of `hdtSkyrimSystem`) and
+  `Physics::Controller`.
 * Bullet's multithreaded classes (`btDiscreteDynamicsWorldMt`,
   `btCollisionDispatcherMt`, `btParallelFor`) are replaced by their
   single-threaded equivalents. They require a Bullet built with

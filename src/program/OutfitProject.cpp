@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "../components/SliderDataFileUtil.h"
 #include "../components/WeightNorm.h"
 #include "../files/FBXWrangler.h"
+#include "../files/GameDataStream.h"
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
@@ -300,11 +301,7 @@ OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 	owner = inOwner;
 	workAnim.SetRefNif(&workNif);
 
-	std::string defSkelFile = Config["Anim/DefaultSkeletonReference"];
-	if (wxFileName(wxString::FromUTF8(defSkelFile)).IsRelative())
-		LoadSkeletonReference(Config["AppDir"] + PathSepStr + defSkelFile);
-	else
-		LoadSkeletonReference(defSkelFile);
+	LoadDefaultSkeletonReference();
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR)
@@ -7048,39 +7045,6 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiSh
 }
 #endif
 
-// Try opening a loose file at the given path
-static std::unique_ptr<std::istream> OpenLooseFileStream(const std::string& fullPath) {
-	if (!PlatformUtil::FileExists(fullPath))
-		return nullptr;
-
-	auto fs = std::make_unique<std::fstream>();
-	PlatformUtil::OpenFileStream(*fs, fullPath, std::ios::in | std::ios::binary);
-	if (!fs->fail())
-		return fs;
-
-	return nullptr;
-}
-
-// Try opening a data-folder relative path in one of the loaded archives
-static std::unique_ptr<std::istream> OpenArchiveFileStream(const std::string& relPath) {
-	for (FSArchiveFile* archive : FSManager::archiveList()) {
-		if (!archive || !archive->hasFile(relPath))
-			continue;
-
-		wxMemoryBuffer outData;
-		archive->fileContents(relPath, outData);
-		if (outData.IsEmpty())
-			continue;
-
-		auto contentStream = std::make_unique<std::istringstream>(
-			std::string(static_cast<char*>(outData.GetData()), outData.GetDataLen()), std::istringstream::binary);
-		if (!contentStream->fail())
-			return contentStream;
-	}
-
-	return nullptr;
-}
-
 std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath) const {
 	// Normalize path: replace backslashes, extract relative geometries path, ensure prefix and suffix
 	std::string meshPath = std::regex_replace(path, std::regex("\\\\+"), "/");
@@ -7092,7 +7056,7 @@ std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std
 		meshPath += ".mesh";
 
 	// 1) Loose file in GameDataPath
-	if (auto stream = OpenLooseFileStream(dir + meshPath))
+	if (auto stream = GameDataStream::OpenLoose(dir + meshPath))
 		return stream;
 
 	// 2) Beside the meshes folder (or NIF directory) of the loading NIF
@@ -7102,72 +7066,27 @@ std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std
 
 		auto meshesPos = nifDirLower.rfind("/meshes/");
 		if (meshesPos != std::string::npos) {
-			if (auto stream = OpenLooseFileStream(nifDir.substr(0, meshesPos + 1) + meshPath))
+			if (auto stream = GameDataStream::OpenLoose(nifDir.substr(0, meshesPos + 1) + meshPath))
 				return stream;
 		}
 		else {
 			auto lastSlash = nifDir.rfind('/');
 			if (lastSlash != std::string::npos) {
-				if (auto stream = OpenLooseFileStream(nifDir.substr(0, lastSlash + 1) + meshPath))
+				if (auto stream = GameDataStream::OpenLoose(nifDir.substr(0, lastSlash + 1) + meshPath))
 					return stream;
 			}
 		}
 	}
 
 	// 3) Search in archives
-	if (auto stream = OpenArchiveFileStream(meshPath))
+	if (auto stream = GameDataStream::OpenArchive(meshPath))
 		return stream;
 
 	return nullptr;
 }
 
 std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::string& xmlPath) {
-	// Physics XML paths from "HDT Skinned Mesh Physics Object" extra data are
-	// relative to the game data folder, e.g.
-	// "SKSE\Plugins\hdtSkinnedMeshConfigs\outfit.xml". The game's resource
-	// system also accepts a leading "Data\" prefix ("Data\meshes\...") and
-	// mods in the wild use both spellings, so strip it before resolving.
-	std::string relPath = std::regex_replace(xmlPath, std::regex("\\\\+"), "/");
-	relPath = std::regex_replace(relPath, std::regex("^/+"), "");
-	if (ToLower(relPath).rfind("data/", 0) == 0)
-		relPath = relPath.substr(5);
-	if (relPath.empty())
-		return nullptr;
-
-	// 1) Loose file in GameDataPath
-	if (auto stream = OpenLooseFileStream(Config["GameDataPath"] + relPath))
-		return stream;
-
-	// 2) Relative to the project's input NIF: its "meshes" anchor points at
-	// the mod's data root, where SKSE/Plugins/... lives for loose mod folders
-	std::string nifFilePath = activeSet.GetInputFileName();
-	if (!nifFilePath.empty()) {
-		std::string nifDir = std::regex_replace(nifFilePath, std::regex("\\\\+"), "/");
-		std::string nifDirLower = ToLower(nifDir);
-
-		auto meshesPos = nifDirLower.rfind("/meshes/");
-		if (meshesPos != std::string::npos) {
-			if (auto stream = OpenLooseFileStream(nifDir.substr(0, meshesPos + 1) + relPath))
-				return stream;
-		}
-
-		auto lastSlash = nifDir.rfind('/');
-		if (lastSlash != std::string::npos) {
-			// Also try directly beside the NIF (both the full relative path
-			// and just the file name), for standalone test setups
-			if (auto stream = OpenLooseFileStream(nifDir.substr(0, lastSlash + 1) + relPath))
-				return stream;
-
-			auto fileNamePos = relPath.rfind('/');
-			if (fileNamePos != std::string::npos) {
-				if (auto stream = OpenLooseFileStream(nifDir.substr(0, lastSlash + 1) + relPath.substr(fileNamePos + 1)))
-					return stream;
-			}
-		}
-	}
-
-	// 3) Search in archives
-	return OpenArchiveFileStream(relPath);
+	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
 }
 
 SFMaterialDatabase* OutfitProject::GetSFMaterialDatabase() {

@@ -17,7 +17,7 @@ See the included LICENSE file
 // AnimBone::xformPoseToGlobal), so no axis swaps or unit scaling happen here.
 // MatTransform scale is intentionally dropped: physics bones are treated as
 // scale 1 (the builder warns when a posed bone is scaled).
-namespace bsos {
+namespace Physics {
 inline btVector3 ToBt(const nifly::Vector3& v) {
 	return btVector3(v.x, v.y, v.z);
 }

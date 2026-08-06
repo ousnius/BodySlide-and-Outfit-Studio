@@ -6,11 +6,15 @@ See the included LICENSE file
 #include "PreviewPanel.h"
 #include "../files/SFMaterialDatabase.h"
 #include "../files/SFMaterialFile.h"
+#include "../physics/Controller.h"
+#include "../physics/PumpClock.h"
 #include "../program/BodySlideApp.h"
 #include "../utils/PlatformUtil.h"
 
 #include <regex>
 #include <sstream>
+
+#include <wx/statline.h>
 
 using namespace nifly;
 
@@ -23,7 +27,11 @@ wxBEGIN_EVENT_TABLE(PreviewPanel, wxPanel)
 	EVT_COMMAND_SCROLL(wxID_ANY, PreviewPanel::OnWeightSlider)
 wxEND_EVENT_TABLE()
 
-PreviewPanel::~PreviewPanel() {}
+PreviewPanel::~PreviewPanel() {
+	// The popup hangs off the frame, not off this panel, and its handlers point
+	// back here
+	DestroyPhysicsWindPopup();
+}
 
 PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	: wxPanel(parent, wxID_ANY)
@@ -31,7 +39,7 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	, refNormalGenLayers(emptyLayers) {
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer* sizerToolBar = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* sizerProjectSelect = new wxBoxSizer(wxHORIZONTAL);
 
 	wxPanel* projectSelectPanel = new wxPanel(this);
@@ -52,33 +60,50 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	projectSelectPanel->SetSizer(sizerProjectSelect);
 	projectSelectPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
 
-	wxPanel* uiPanel = new wxPanel(this);
-	weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
+	toolBarPanel = new wxPanel(this);
+	toolBarPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
 
-	optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, FromDIP(wxSize(25, 25)));
+	weightSlider = new wxSlider(toolBarPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
+
+	optButton = new wxButton(toolBarPanel, wxID_ANY, "N", wxDefaultPosition, FromDIP(wxSize(28, 28)));
 	optButton->SetToolTip(_("Show the Normal Map Generator dialog."));
 	optButton->Bind(wxEVT_BUTTON, &PreviewPanel::ShowNormalGenWindow, this);
 	optButton->Hide();
 
-	lockShapeButton = new wxButton(uiPanel, wxID_ANY, _("Lock Shape"), wxDefaultPosition, wxDefaultSize);
+	lockShapeButton = new wxButton(toolBarPanel, wxID_ANY, _("Lock Shape"), wxDefaultPosition, wxDefaultSize);
 	lockShapeButton->SetToolTip(_("Set the current preview shape to both low and high weight sliders."));
 	lockShapeButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnLockShape, this);
 	lockShapeButton->Hide();
 
-	showReferenceCheckbox = new wxCheckBox(uiPanel, wxID_ANY, _("Show Reference"), wxDefaultPosition, wxDefaultSize);
+	showReferenceCheckbox = new wxCheckBox(toolBarPanel, wxID_ANY, _("Show Reference"), wxDefaultPosition, wxDefaultSize);
 	showReferenceCheckbox->SetToolTip(_("Show the reference shape from the source project for clipping preview."));
 	showReferenceCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnShowReference, this);
 	showReferenceCheckbox->Hide();
 
-	showHelperShapesCheckbox = new wxCheckBox(uiPanel, wxID_ANY, _("Show Helper Shapes"), wxDefaultPosition, wxDefaultSize);
+	showHelperShapesCheckbox = new wxCheckBox(toolBarPanel, wxID_ANY, _("Show Helper Shapes"), wxDefaultPosition, wxDefaultSize);
 	showHelperShapesCheckbox->SetToolTip(_("Show helper shapes (e.g. collisions) - shapes with no shader or with the hidden flag set."));
 	showHelperShapesCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnShowHelperShapes, this);
 
-	uiPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_3DFACE));
+	physicsCheckbox = new wxCheckBox(toolBarPanel, wxID_ANY, _("Physics"), wxDefaultPosition, wxDefaultSize);
+	physicsCheckbox->SetToolTip(_("Simulate HDT-SMP physics XMLs referenced by the previewed meshes"));
+	physicsCheckbox->Bind(wxEVT_CHECKBOX, &PreviewPanel::OnPhysics, this);
+	physicsCheckbox->Hide();
 
-	// Pop-out button (placed in uiPanel, below Lock Shape)
+	// The wind settings live in a drop-down so that turning physics on doesn't
+	// re-flow the tool bar around them. The label carries U+25BE as an escape
+	// because the sources are compiled without /utf-8.
+	physicsWindButton = new wxButton(toolBarPanel, wxID_ANY, _("Wind") + wxString(L" \u25BE"), wxDefaultPosition, wxDefaultSize, wxBU_EXACTFIT);
+	physicsWindButton->SetToolTip(_("Wind settings for the physics preview."));
+	physicsWindButton->Bind(wxEVT_BUTTON, &PreviewPanel::OnPhysicsWindButton, this);
+	physicsWindButton->Hide();
+
+	physicsWindDirIndex = static_cast<int>(Physics::WindDirectionNames().size()) - 1;
+
+	physicsTimer.SetOwner(this);
+	Bind(wxEVT_TIMER, &PreviewPanel::OnPhysicsTimer, this);
+
 	popoutButton = new wxBitmapButton(
-		uiPanel,
+		toolBarPanel,
 		wxID_ANY,
 		wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "/res/images/PopOut.png", wxBITMAP_TYPE_PNG),
 		wxDefaultPosition,
@@ -90,21 +115,33 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs());
 	context = std::make_unique<wxGLContext>(canvas, nullptr, &GLSurface::GetGLContextAttribs());
 
-	sizerPanel->Add(weightSlider, 1, wxTOP | wxLEFT | wxRIGHT, 10);
+	// Tool bar: weight slider on the left, view options in a left-aligned column
+	// next to it, buttons last. Everything is centered on one baseline so hiding
+	// a control doesn't shift the rest around. The slider gets its own
+	// stretching sizer, which keeps the gap when the slider itself is hidden.
+	wxBoxSizer* sizerWeight = new wxBoxSizer(wxHORIZONTAL);
+	sizerWeight->Add(weightSlider, 1, wxALIGN_CENTER_VERTICAL);
+	sizerToolBar->Add(sizerWeight, 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	sizerToolBar->Add(new wxStaticLine(toolBarPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLI_VERTICAL), 0, wxEXPAND | wxTOP | wxBOTTOM, 4);
 
-	wxBoxSizer* sizerRight = new wxBoxSizer(wxVERTICAL);
-	sizerRight->Add(showReferenceCheckbox, 0, wxALIGN_CENTER_HORIZONTAL);
+	wxBoxSizer* sizerOptions = new wxBoxSizer(wxVERTICAL);
+	sizerOptions->Add(showReferenceCheckbox, 0, wxBOTTOM, 2);
+	sizerOptions->Add(showHelperShapesCheckbox, 0, wxBOTTOM, 2);
+
+	wxBoxSizer* sizerPhysics = new wxBoxSizer(wxHORIZONTAL);
+	sizerPhysics->Add(physicsCheckbox, 0, wxALIGN_CENTER_VERTICAL);
+	sizerPhysics->Add(physicsWindButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 6);
+	sizerOptions->Add(sizerPhysics, 0);
+
+	sizerToolBar->Add(sizerOptions, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 
 	wxBoxSizer* sizerButtons = new wxBoxSizer(wxHORIZONTAL);
 	sizerButtons->Add(lockShapeButton, 0, wxALIGN_CENTER_VERTICAL);
 	sizerButtons->Add(popoutButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 4);
-	sizerRight->Add(sizerButtons, 0, wxTOP | wxALIGN_CENTER_HORIZONTAL, 2);
-	sizerRight->Add(showHelperShapesCheckbox, 0, wxTOP | wxALIGN_CENTER_HORIZONTAL, 2);
+	sizerButtons->Add(optButton, 0, wxLEFT | wxALIGN_CENTER_VERTICAL, 4);
+	sizerToolBar->Add(sizerButtons, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 
-	sizerPanel->Add(sizerRight, 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
-
-	sizerPanel->Add(optButton, 0, wxALL | wxALIGN_BOTTOM, 10);
-	uiPanel->SetSizer(sizerPanel);
+	toolBarPanel->SetSizer(sizerToolBar);
 
 	// Loading overlay (hidden by default, positioned over canvas)
 	loadingOverlay = new wxPanel(this, wxID_ANY);
@@ -121,7 +158,7 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 	loadingOverlay->Hide();
 
 	sizer->Add(projectSelectPanel, 0, wxEXPAND);
-	sizer->Add(uiPanel, 0, wxEXPAND);
+	sizer->Add(toolBarPanel, 0, wxEXPAND);
 	sizer->Add(canvas, 1, wxEXPAND);
 
 	SetSizer(sizer);
@@ -136,6 +173,65 @@ PreviewPanel::PreviewPanel(wxWindow* parent, BodySlideApp* app)
 
 	projectChoice->Bind(wxEVT_CHOICE, &PreviewPanel::OnProjectChoice, this);
 	presetChoice->Bind(wxEVT_CHOICE, &PreviewPanel::OnPresetChoice, this);
+}
+
+void PreviewPanel::CreatePhysicsWindPopup() {
+	// A popup is a window of its own, owned by the top level window it was
+	// created under. The preview panel moves between the main frame and its own
+	// frame when it's popped out, so the popup has to follow it there.
+	physicsWindPopup = new wxPopupTransientWindow(wxGetTopLevelParent(this), wxBORDER_SIMPLE | wxPU_CONTAINS_CONTROLS);
+
+	wxPanel* windPanel = new wxPanel(physicsWindPopup);
+	windPanel->SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW));
+
+	physicsWindSlider = new wxSlider(windPanel, wxID_ANY, physicsWindStrength, 0, 100, wxDefaultPosition, FromDIP(wxSize(140, -1)), wxSL_VALUE_LABEL, wxDefaultValidator, "physicsWindSlider");
+	physicsWindSlider->SetToolTip(_("World wind strength for the physics preview (0 = off)."));
+	physicsWindSlider->Bind(wxEVT_SCROLL_CHANGED, &PreviewPanel::OnPhysicsWind, this);
+	physicsWindSlider->Bind(wxEVT_SCROLL_THUMBTRACK, &PreviewPanel::OnPhysicsWind, this);
+
+	wxArrayString windDirections;
+	for (auto& name : Physics::WindDirectionNames())
+		windDirections.Add(wxGetTranslation(wxString::FromUTF8(name)));
+
+	physicsWindDir = new wxChoice(windPanel, wxID_ANY, wxDefaultPosition, wxDefaultSize, windDirections, 0, wxDefaultValidator, "physicsWindDir");
+	physicsWindDir->SetSelection(physicsWindDirIndex);
+	physicsWindDir->SetToolTip(_("Direction the wind blows in, as seen in the viewport. It stays fixed to the mesh while the camera turns."));
+	physicsWindDir->Bind(wxEVT_CHOICE, &PreviewPanel::OnPhysicsWindDir, this);
+
+	wxFlexGridSizer* sizerWind = new wxFlexGridSizer(2, FromDIP(4), FromDIP(8));
+	sizerWind->AddGrowableCol(1);
+	sizerWind->Add(new wxStaticText(windPanel, wxID_ANY, _("Strength")), 0, wxALIGN_CENTER_VERTICAL);
+	sizerWind->Add(physicsWindSlider, 1, wxEXPAND);
+	sizerWind->Add(new wxStaticText(windPanel, wxID_ANY, _("Direction")), 0, wxALIGN_CENTER_VERTICAL);
+	sizerWind->Add(physicsWindDir, 1, wxEXPAND);
+
+	wxBoxSizer* sizerWindBorder = new wxBoxSizer(wxVERTICAL);
+	sizerWindBorder->Add(sizerWind, 1, wxEXPAND | wxALL, FromDIP(8));
+	windPanel->SetSizerAndFit(sizerWindBorder);
+
+	wxBoxSizer* sizerPopup = new wxBoxSizer(wxVERTICAL);
+	sizerPopup->Add(windPanel, 1, wxEXPAND);
+	physicsWindPopup->SetSizerAndFit(sizerPopup);
+}
+
+void PreviewPanel::DestroyPhysicsWindPopup() {
+	if (!physicsWindPopup)
+		return;
+
+	if (physicsWindPopup->IsShown())
+		physicsWindPopup->Dismiss();
+
+	physicsWindPopup->Destroy();
+	physicsWindPopup = nullptr;
+	physicsWindSlider = nullptr;
+	physicsWindDir = nullptr;
+}
+
+void PreviewPanel::LayoutToolBar() {
+	if (toolBarPanel)
+		toolBarPanel->Layout();
+
+	Layout();
 }
 
 void PreviewPanel::ShowLoadingIndicator(bool show) {
@@ -395,7 +491,7 @@ void PreviewPanel::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& norma
 	if (normalsGenDlg)
 		normalsGenDlg->Hide();
 
-	Layout();
+	LayoutToolBar();
 }
 
 Mesh* PreviewPanel::GetMesh(const std::string& shapeName) {
@@ -710,8 +806,9 @@ void PreviewPanel::RenderNormalMap(const std::string& outfilename) {
 }
 
 void PreviewPanel::RightDrag(int dX, int dY) {
-	gls.TurnTableCamera(dX);
+	const float yawDegrees = gls.TurnTableCamera(dX);
 	gls.PitchCamera(dY);
+	app->InjectPreviewCameraYaw(yawDegrees);
 	gls.RenderOneFrame();
 }
 
@@ -731,6 +828,13 @@ void PreviewPanel::MouseWheel(int dW) {
 }
 
 void PreviewPanel::OnWeightSlider(wxScrollEvent& event) {
+	// The panel catches scroll events of any id, so make sure this is the weight
+	// slider and not one of the other sliders on it
+	if (event.GetEventObject() != weightSlider) {
+		event.Skip();
+		return;
+	}
+
 	weight = event.GetPosition();
 	app->UpdatePreview();
 }
@@ -752,14 +856,103 @@ void PreviewPanel::OnShowHelperShapes(wxCommandEvent& WXUNUSED(event)) {
 	gls.RenderOneFrame();
 }
 
+void PreviewPanel::ShowPhysicsControls(bool show) {
+	if (!physicsCheckbox)
+		return;
+
+	physicsCheckbox->Show(show);
+	if (!show)
+		SetPhysicsChecked(false);
+
+	LayoutToolBar();
+}
+
+void PreviewPanel::SetPhysicsChecked(bool checked) {
+	if (!physicsCheckbox)
+		return;
+
+	physicsCheckbox->SetValue(checked);
+
+	// Wind is meaningless without a running simulation
+	const bool showWind = checked && physicsCheckbox->IsShown();
+	if (physicsWindButton)
+		physicsWindButton->Show(showWind);
+
+	if (!showWind)
+		DestroyPhysicsWindPopup();
+
+	if (checked)
+		physicsTimer.Start(Physics::PumpTimerIntervalMS);
+	else
+		physicsTimer.Stop();
+
+	LayoutToolBar();
+}
+
+void PreviewPanel::ApplyPhysicsWind() {
+	app->SetPreviewWind(physicsWindDirIndex, physicsWindStrength);
+}
+
+void PreviewPanel::OnPhysics(wxCommandEvent& event) {
+	app->EnablePreviewPhysics(event.IsChecked());
+
+	// The simulation refuses to start without usable XMLs, so take the state
+	// from it instead of from the click
+	SetPhysicsChecked(app->IsPreviewPhysicsRunning());
+	ApplyPhysicsWind();
+}
+
+void PreviewPanel::OnPhysicsWindButton(wxCommandEvent& WXUNUSED(event)) {
+	if (!physicsWindButton)
+		return;
+
+	// Popping the preview out moves it to a different window, leaving the popup
+	// behind on the old one
+	if (physicsWindPopup && physicsWindPopup->GetParent() != wxGetTopLevelParent(this))
+		DestroyPhysicsWindPopup();
+
+	if (!physicsWindPopup)
+		CreatePhysicsWindPopup();
+
+	// Drop it down from the button, flipping to above it near the screen edge
+	physicsWindPopup->Position(physicsWindButton->GetScreenPosition(), physicsWindButton->GetSize());
+	physicsWindPopup->Popup();
+}
+
+void PreviewPanel::OnPhysicsWind(wxScrollEvent& WXUNUSED(event)) {
+	if (!physicsWindSlider)
+		return;
+
+	physicsWindStrength = physicsWindSlider->GetValue();
+	ApplyPhysicsWind();
+}
+
+void PreviewPanel::OnPhysicsWindDir(wxCommandEvent& WXUNUSED(event)) {
+	if (!physicsWindDir)
+		return;
+
+	physicsWindDirIndex = physicsWindDir->GetSelection();
+	ApplyPhysicsWind();
+}
+
+void PreviewPanel::PumpPhysics() {
+	app->PumpPreviewPhysics();
+}
+
+void PreviewPanel::OnPhysicsTimer(wxTimerEvent& WXUNUSED(event)) {
+	PumpPhysics();
+}
+
 void PreviewPanel::OnPopout(wxCommandEvent& WXUNUSED(event)) {
 	wxCommandEvent evt(EVT_PREVIEW_POPOUT);
 	wxPostEvent(GetParent(), evt);
 }
 
 void PreviewPanel::ShowPopoutButton(bool show) {
-	if (popoutButton)
+	if (popoutButton) {
 		popoutButton->Show(show);
+		LayoutToolBar();
+	}
 }
 
 void PreviewPanel::SetPopoutButtonDetachedState(bool detached) {
@@ -787,6 +980,9 @@ void PreviewPanel::ShowNormalGenWindow(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void PreviewPanel::Cleanup() {
+	physicsTimer.Stop();
+	DestroyPhysicsWindPopup();
+
 	if (canvas && context)
 		canvas->SetCurrent(*context);
 
@@ -833,6 +1029,10 @@ void PreviewCanvas::OnMotion(wxMouseEvent& event) {
 		if (topLevel && topLevel->IsActive())
 			SetFocus();
 	}
+
+	// Mouse motion floods the message queue and starves the WM_TIMER driving the
+	// physics, so tick it from here as well (the pump paces itself)
+	previewPanel->PumpPhysics();
 
 	auto delta = event.GetPosition() - lastMousePosition;
 

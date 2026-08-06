@@ -1,6 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{a3f1c2d4-9b7e-4f21-8c5a-2d6e0b1f4a37}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics\hdt">
+      <UniqueIdentifier>{b4e2d3c5-0c8f-4a32-9d6b-3e7f1c2a5b48}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Resources">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
@@ -1997,5 +2003,137 @@
     <Xml Include="Config.xml">
       <Filter>Resources</Filter>
     </Xml>
+    <ClInclude Include="src\physics\NiflyBullet.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\Controller.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\DebugDraw.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\SystemBuilder.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\XmlReader.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtAABB.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtBone.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtBoneScaleConstraint.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtBulletHelper.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtCollider.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtConeTwistConstraint.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtConstraintGroup.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtDispatcher.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtGeneric6DofConstraint.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtRefUtils.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshAlgorithm.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshBody.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshBone.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshShape.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshSystem.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshWorld.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtStiffSpringConstraint.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtStringUtils.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\hdt\hdtVertex.h">
+      <Filter>Physics\hdt</Filter>
+    </ClInclude>
+    <ClCompile Include="src\physics\Controller.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\DebugDraw.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\SystemBuilder.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\XmlReader.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtBoneScaleConstraint.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtCollider.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtConeTwistConstraint.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtDispatcher.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtGeneric6DofConstraint.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshAlgorithm.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshBody.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshBone.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshShape.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshSystem.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshWorld.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtStiffSpringConstraint.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\hdt\hdtVertex.cpp">
+      <Filter>Physics\hdt</Filter>
+    </ClCompile>
+    <ClInclude Include="src\physics\PumpClock.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\GameDataStream.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClCompile Include="src\files\GameDataStream.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

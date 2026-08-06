@@ -22,7 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/RefTemplates.h"
 #include "../components/TweakBrush.h"
 #include "../components/UndoHistory.h"
-#include "../physics/PhysicsController.h"
+#include "../physics/Controller.h"
+#include "../physics/PumpClock.h"
 #include "../render/GLSurface.h"
 #include "../ui/WeightCopyDialog.h"
 #include "../ui/wxSliderPanel.h"
@@ -1903,6 +1904,10 @@ private:
 	// Single authority over building/tearing down the simulation; call after
 	// anything that changes one of those conditions or the loaded meshes.
 	void UpdatePhysicsState();
+	// Shows the physics controls only while the loaded meshes reference a
+	// physics XML, since there is nothing to simulate otherwise. Stops a running
+	// simulation when the last of them goes away.
+	void UpdatePhysicsControlsVisibility();
 	// Hard teardown for project unload/close: stops the pump and drops all
 	// simulation state without touching the (possibly dying) project meshes.
 	void ShutdownPhysics();
@@ -1918,16 +1923,15 @@ private:
 	void OnPhysicsTimer(wxTimerEvent& event);
 	void OnPhysicsIdle(wxIdleEvent& event);
 
-	std::unique_ptr<bsos::PhysicsController> physics;
+	std::unique_ptr<Physics::Controller> physics;
+	// The pose pane's physics controls, shown and hidden as a block.
+	std::vector<wxWindow*> physicsControls;
 	wxTimer physicsTimer;
 	// Simulation built and active (either pump mode or animation lockstep).
 	bool physicsRunning = false;
 	// Own idle+timer pump bound (pose mode without animation playback).
 	bool physicsPumpActive = false;
-	wxStopWatch physicsWatch;
-	wxLongLong physicsLastStepMicro = 0;
-	wxLongLong physicsLastDrawMicro = 0;
-	int physicsTargetFps = 60;
+	Physics::PumpClock physicsClock;
 
 	wxDECLARE_EVENT_TABLE();
 };

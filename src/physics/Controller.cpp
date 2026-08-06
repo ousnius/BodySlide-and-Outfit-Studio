@@ -3,13 +3,32 @@ BodySlide and Outfit Studio
 See the included LICENSE file
 */
 
-#include "PhysicsController.h"
+#include "Controller.h"
+
+// The wind direction list is part of the interface both applications build
+// their controls from, so it exists with or without Bullet.
+namespace Physics {
+const std::vector<std::string>& WindDirectionNames() {
+	static const std::vector<std::string> names{"Up", "Down", "Forward", "Backward", "Left", "Right"};
+	return names;
+}
+
+WindDirection WindDirectionFromIndex(int index) {
+	static const WindDirection directions[]
+		= {WindDirection::Up, WindDirection::Down, WindDirection::Forward, WindDirection::Backward, WindDirection::Left, WindDirection::Right};
+
+	if (index < 0 || index >= static_cast<int>(sizeof(directions) / sizeof(directions[0])))
+		return WindDirection::Right;
+
+	return directions[index];
+}
+}
 
 #ifdef USE_BULLET
 
 #include "NiflyBullet.h"
-#include "PhysicsDebugDraw.h"
-#include "PhysicsSystemBuilder.h"
+#include "DebugDraw.h"
+#include "SystemBuilder.h"
 #include "hdt/hdtSkinnedMeshWorld.h"
 
 #include "../components/Anim.h"
@@ -22,7 +41,7 @@ See the included LICENSE file
 #include <sstream>
 #include <type_traits>
 
-namespace bsos {
+namespace Physics {
 // The skinning code takes the override map through Anim.h, which cannot depend
 // on this module; keep the two spellings of the type interchangeable.
 static_assert(std::is_same<PoseOverrideMap, AnimPoseOverrideMap>::value, "PoseOverrideMap must match AnimPoseOverrideMap");
@@ -61,9 +80,9 @@ namespace {
 	// Thin subclass so the controller can drive the protected per-frame hooks
 	// in the same order hdtSMP64's SkyrimPhysicsWorld did, and set the same
 	// default gravity (hdtSkyrimPhysicsWorld.cpp: (0, 0, -9.8 * scaleSkyrim)).
-	class BSOSWorld : public hdt::SkinnedMeshWorld {
+	class PreviewWorld : public hdt::SkinnedMeshWorld {
 	public:
-		BSOSWorld() { setGravity(btVector3(0, 0, -9.8f * scaleSkyrim)); }
+		PreviewWorld() { setGravity(btVector3(0, 0, -9.8f * scaleSkyrim)); }
 
 		using hdt::SkinnedMeshWorld::readTransform;
 		using hdt::SkinnedMeshWorld::writeTransform;
@@ -103,6 +122,13 @@ namespace {
 		}
 	};
 
+	// One system per distinct XML path, applied to the union of the shapes it
+	// was found on.
+	struct XmlEntry {
+		std::string path; // first-seen spelling
+		std::vector<nifly::NiShape*> shapes;
+	};
+
 	// Collects the physics XML paths attached to a block via NiStringExtraData
 	// named "HDT Skinned Mesh Physics Object".
 	std::vector<std::string> GetPhysicsXmlPaths(nifly::NifFile* nif, nifly::NiObjectNET* obj) {
@@ -123,14 +149,107 @@ namespace {
 
 		return result;
 	}
+
+	// Extra data on a shape applies to that shape; extra data on a NiNode
+	// applies to all shapes under that node. "shapePhysicsFiles" adds the links
+	// captured when each NIF was loaded: Outfit Studio merges the shapes of
+	// every file after the first into one work NIF, dropping the root nodes the
+	// links live on, so those shapes are only covered by that map.
+	std::vector<XmlEntry> CollectPhysicsXmlEntries(nifly::NifFile* nif, const ShapePhysicsFileMap& shapePhysicsFiles) {
+		std::vector<XmlEntry> entries;
+		if (!nif)
+			return entries;
+
+		auto addEntry = [&entries](const std::string& path, nifly::NiShape* shape) {
+			const hdt::IDStr pathId(path);
+			for (auto& e : entries) {
+				if (hdt::IDStr(e.path) == pathId) {
+					if (std::find(e.shapes.begin(), e.shapes.end(), shape) == e.shapes.end())
+						e.shapes.push_back(shape);
+					return;
+				}
+			}
+			entries.push_back({path, {shape}});
+		};
+
+		const auto shapes = nif->GetShapes();
+
+		for (auto* shape : shapes) {
+			for (const auto& xmlPath : GetPhysicsXmlPaths(nif, shape))
+				addEntry(xmlPath, shape);
+		}
+
+		for (auto* node : nif->GetNodes()) {
+			const auto xmlPaths = GetPhysicsXmlPaths(nif, node);
+			if (xmlPaths.empty())
+				continue;
+
+			for (auto* shape : shapes) {
+				bool underNode = false;
+				for (nifly::NiNode* p = nif->GetParentNode(shape); p; p = nif->GetParentNode(p)) {
+					if (p == node) {
+						underNode = true;
+						break;
+					}
+				}
+
+				if (underNode) {
+					for (const auto& xmlPath : xmlPaths)
+						addEntry(xmlPath, shape);
+				}
+			}
+		}
+
+		for (auto& shapePhysicsFile : shapePhysicsFiles) {
+			auto* shape = nif->FindBlockByName<nifly::NiShape>(shapePhysicsFile.first);
+			if (!shape)
+				continue;
+
+			for (const auto& xmlPath : shapePhysicsFile.second)
+				addEntry(xmlPath, shape);
+		}
+
+		return entries;
+	}
 }
 
-struct PhysicsController::Impl {
-	BSOSWorld world;
-	std::vector<hdt::Ref<BSOSSystem>> systems;
+bool HasPhysicsLinks(nifly::NifFile* nif, const ShapePhysicsFileMap& shapePhysicsFiles) {
+	if (!nif)
+		return false;
+
+	for (auto& shapePhysicsFile : shapePhysicsFiles) {
+		if (!shapePhysicsFile.second.empty() && nif->FindBlockByName<nifly::NiShape>(shapePhysicsFile.first))
+			return true;
+	}
+
+	// Answering "is there anything at all" does not need the shape sets
+	// CollectPhysicsXmlEntries builds, which is what makes this cheap enough to
+	// call whenever the loaded meshes change. A link on a node with no shapes
+	// under it counts here but builds nothing - it does not exist in practice,
+	// since the game only reads the link from the model root.
+	const auto shapes = nif->GetShapes();
+	if (shapes.empty())
+		return false;
+
+	for (auto* shape : shapes) {
+		if (!GetPhysicsXmlPaths(nif, shape).empty())
+			return true;
+	}
+
+	for (auto* node : nif->GetNodes()) {
+		if (!GetPhysicsXmlPaths(nif, node).empty())
+			return true;
+	}
+
+	return false;
+}
+
+struct Controller::Impl {
+	PreviewWorld world;
+	std::vector<hdt::Ref<PreviewSystem>> systems;
 	PoseOverrideMap poseOverrides;
 	std::unordered_set<std::string> affectedShapes;
-	PhysicsDebugVis debugVis;
+	DebugVis debugVis;
 	float rootYawRad = 0.0f;
 	// Wall-clock time that has not been simulated yet, kept below one tick
 	float leftoverTime = 0.0f;
@@ -150,14 +269,14 @@ struct PhysicsController::Impl {
 	}
 };
 
-PhysicsController::PhysicsController()
+Controller::Controller()
 	: impl(std::make_unique<Impl>()) {}
 
-PhysicsController::~PhysicsController() {
+Controller::~Controller() {
 	Clear();
 }
 
-size_t PhysicsController::BuildFromNif(nifly::NifFile* nif,
+size_t Controller::BuildFromNif(nifly::NifFile* nif,
 									   AnimInfo* anim,
 									   const XmlStreamResolver& resolver,
 									   const ShapePhysicsFileMap& shapePhysicsFiles,
@@ -167,68 +286,7 @@ size_t PhysicsController::BuildFromNif(nifly::NifFile* nif,
 	if (!nif || !anim || !resolver)
 		return 0;
 
-	// One system per distinct XML path, applied to the union of the shapes it
-	// was found on. Extra data on a shape applies to that shape; extra data on
-	// a NiNode applies to all shapes under that node.
-	struct XmlEntry {
-		std::string path; // first-seen spelling
-		std::vector<nifly::NiShape*> shapes;
-	};
-	std::vector<XmlEntry> entries;
-
-	auto addEntry = [&entries](const std::string& path, nifly::NiShape* shape) {
-		const hdt::IDStr pathId(path);
-		for (auto& e : entries) {
-			if (hdt::IDStr(e.path) == pathId) {
-				if (std::find(e.shapes.begin(), e.shapes.end(), shape) == e.shapes.end())
-					e.shapes.push_back(shape);
-				return;
-			}
-		}
-		entries.push_back({path, {shape}});
-	};
-
-	const auto shapes = nif->GetShapes();
-
-	for (auto* shape : shapes) {
-		for (const auto& xmlPath : GetPhysicsXmlPaths(nif, shape))
-			addEntry(xmlPath, shape);
-	}
-
-	for (auto* node : nif->GetNodes()) {
-		const auto xmlPaths = GetPhysicsXmlPaths(nif, node);
-		if (xmlPaths.empty())
-			continue;
-
-		for (auto* shape : shapes) {
-			bool underNode = false;
-			for (nifly::NiNode* p = nif->GetParentNode(shape); p; p = nif->GetParentNode(p)) {
-				if (p == node) {
-					underNode = true;
-					break;
-				}
-			}
-
-			if (underNode) {
-				for (const auto& xmlPath : xmlPaths)
-					addEntry(xmlPath, shape);
-			}
-		}
-	}
-
-	// Links captured when each NIF was loaded. Outfit Studio merges shapes of
-	// every file after the first into one work NIF, dropping the root nodes
-	// the links live on, so those shapes are only covered by this map.
-	for (auto& shapePhysicsFile : shapePhysicsFiles) {
-		auto* shape = nif->FindBlockByName<nifly::NiShape>(shapePhysicsFile.first);
-		if (!shape)
-			continue;
-
-		for (const auto& xmlPath : shapePhysicsFile.second)
-			addEntry(xmlPath, shape);
-	}
-
-	for (auto& entry : entries) {
+	for (auto& entry : CollectPhysicsXmlEntries(nif, shapePhysicsFiles)) {
 		auto stream = resolver(entry.path);
 		if (!stream) {
 			outWarnings.push_back("physics XML not found: " + entry.path);
@@ -239,14 +297,14 @@ size_t PhysicsController::BuildFromNif(nifly::NifFile* nif,
 		contents << stream->rdbuf();
 		const std::string xmlData = contents.str();
 
-		PhysicsBuildInput input;
+		BuildInput input;
 		input.xmlData = &xmlData;
 		input.xmlName = entry.path;
 		input.nif = nif;
 		input.anim = anim;
 		input.shapes = entry.shapes;
 
-		PhysicsSystemBuilder builder;
+		SystemBuilder builder;
 		auto system = builder.Build(input, outWarnings);
 		if (!system)
 			continue;
@@ -284,7 +342,7 @@ size_t PhysicsController::BuildFromNif(nifly::NifFile* nif,
 	return impl->systems.size();
 }
 
-void PhysicsController::Clear() {
+void Controller::Clear() {
 	if (!impl)
 		return;
 
@@ -298,11 +356,11 @@ void PhysicsController::Clear() {
 	impl->leftoverTime = 0.0f;
 }
 
-bool PhysicsController::IsActive() const {
+bool Controller::IsActive() const {
 	return impl && !impl->systems.empty();
 }
 
-void PhysicsController::ResetDynamics() {
+void Controller::ResetDynamics() {
 	if (!IsActive())
 		return;
 
@@ -314,7 +372,7 @@ void PhysicsController::ResetDynamics() {
 	impl->leftoverTime = 0.0f;
 }
 
-void PhysicsController::Step(float dtSeconds) {
+void Controller::Step(float dtSeconds) {
 	if (!IsActive())
 		return;
 
@@ -359,7 +417,7 @@ void PhysicsController::Step(float dtSeconds) {
 	}
 }
 
-void PhysicsController::InjectCameraYaw(float deltaDegrees) {
+void Controller::InjectCameraYaw(float deltaDegrees) {
 	if (!IsActive())
 		return;
 
@@ -374,25 +432,25 @@ void PhysicsController::InjectCameraYaw(float deltaDegrees) {
 	impl->rootYawRad = std::fmod(impl->rootYawRad, twoPi);
 }
 
-void PhysicsController::SetWindStrength(float strength) {
+void Controller::SetWindStrength(float strength) {
 	impl->windStrength = std::max(0.0f, std::min(strength, 1.0f));
 	impl->applyWind();
 }
 
-void PhysicsController::SetWindDirection(WindDirection direction) {
+void Controller::SetWindDirection(WindDirection direction) {
 	impl->windDirection = direction;
 	impl->applyWind();
 }
 
-const PoseOverrideMap& PhysicsController::PoseOverrides() const {
+const PoseOverrideMap& Controller::PoseOverrides() const {
 	return impl->poseOverrides;
 }
 
-const std::unordered_set<std::string>& PhysicsController::AffectedShapes() const {
+const std::unordered_set<std::string>& Controller::AffectedShapes() const {
 	return impl->affectedShapes;
 }
 
-void PhysicsController::UpdateDebugVis(GLSurface& gls, bool enabled) {
+void Controller::UpdateDebugVis(GLSurface& gls, bool enabled) {
 	if (enabled && IsActive())
 		impl->debugVis.Update(gls, impl->systems);
 	else
@@ -403,39 +461,45 @@ void PhysicsController::UpdateDebugVis(GLSurface& gls, bool enabled) {
 #else  // USE_BULLET
 
 // Inert stubs keep call sites valid in builds without Bullet.
-namespace bsos {
-struct PhysicsController::Impl {};
-
-PhysicsController::PhysicsController() = default;
-PhysicsController::~PhysicsController() = default;
-
-size_t PhysicsController::BuildFromNif(nifly::NifFile*, AnimInfo*, const XmlStreamResolver&, const ShapePhysicsFileMap&, std::vector<std::string>&) {
-	return 0;
-}
-
-void PhysicsController::Clear() {}
-
-bool PhysicsController::IsActive() const {
+namespace Physics {
+// Nothing can be simulated, so the applications keep their physics controls
+// hidden.
+bool HasPhysicsLinks(nifly::NifFile*, const ShapePhysicsFileMap&) {
 	return false;
 }
 
-void PhysicsController::ResetDynamics() {}
-void PhysicsController::Step(float) {}
-void PhysicsController::InjectCameraYaw(float) {}
-void PhysicsController::SetWindStrength(float) {}
-void PhysicsController::SetWindDirection(WindDirection) {}
+struct Controller::Impl {};
 
-const PoseOverrideMap& PhysicsController::PoseOverrides() const {
+Controller::Controller() = default;
+Controller::~Controller() = default;
+
+size_t Controller::BuildFromNif(nifly::NifFile*, AnimInfo*, const XmlStreamResolver&, const ShapePhysicsFileMap&, std::vector<std::string>&) {
+	return 0;
+}
+
+void Controller::Clear() {}
+
+bool Controller::IsActive() const {
+	return false;
+}
+
+void Controller::ResetDynamics() {}
+void Controller::Step(float) {}
+void Controller::InjectCameraYaw(float) {}
+void Controller::SetWindStrength(float) {}
+void Controller::SetWindDirection(WindDirection) {}
+
+const PoseOverrideMap& Controller::PoseOverrides() const {
 	static const PoseOverrideMap empty;
 	return empty;
 }
 
-const std::unordered_set<std::string>& PhysicsController::AffectedShapes() const {
+const std::unordered_set<std::string>& Controller::AffectedShapes() const {
 	static const std::unordered_set<std::string> empty;
 	return empty;
 }
 
-void PhysicsController::UpdateDebugVis(GLSurface&, bool) {}
+void Controller::UpdateDebugVis(GLSurface&, bool) {}
 }
 
 #endif	// USE_BULLET

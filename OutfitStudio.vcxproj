@@ -825,6 +825,7 @@
     <ClInclude Include="src\components\UndoHistory.h" />
     <ClInclude Include="src\components\WeightNorm.h" />
     <ClInclude Include="src\files\FBXWrangler.h" />
+    <ClInclude Include="src\files\GameDataStream.h" />
     <ClInclude Include="src\files\MaterialFile.h" />
     <ClInclude Include="src\files\SFMaterialDatabase.h" />
     <ClInclude Include="src\files\SFMaterialFile.h" />
@@ -837,9 +838,10 @@
     <ClInclude Include="src\files\MaskFile.h" />
     <ClInclude Include="src\files\HkxFile.h" />
     <ClInclude Include="src\physics\NiflyBullet.h" />
-    <ClInclude Include="src\physics\PhysicsController.h" />
-    <ClInclude Include="src\physics\PhysicsDebugDraw.h" />
-    <ClInclude Include="src\physics\PhysicsSystemBuilder.h" />
+    <ClInclude Include="src\physics\Controller.h" />
+    <ClInclude Include="src\physics\DebugDraw.h" />
+    <ClInclude Include="src\physics\PumpClock.h" />
+    <ClInclude Include="src\physics\SystemBuilder.h" />
     <ClInclude Include="src\physics\hdt\XmlReader.h" />
     <ClInclude Include="src\physics\hdt\hdtAABB.h" />
     <ClInclude Include="src\physics\hdt\hdtBone.h" />
@@ -948,6 +950,7 @@
     <ClCompile Include="src\components\UndoHistory.cpp" />
     <ClCompile Include="src\components\WeightNorm.cpp" />
     <ClCompile Include="src\files\FBXWrangler.cpp" />
+    <ClCompile Include="src\files\GameDataStream.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\SFMaterialDatabase.cpp" />
     <ClCompile Include="src\files\SFMaterialFile.cpp" />
@@ -959,9 +962,9 @@
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\files\MaskFile.cpp" />
     <ClCompile Include="src\files\HkxFile.cpp" />
-    <ClCompile Include="src\physics\PhysicsController.cpp" />
-    <ClCompile Include="src\physics\PhysicsDebugDraw.cpp" />
-    <ClCompile Include="src\physics\PhysicsSystemBuilder.cpp" />
+    <ClCompile Include="src\physics\Controller.cpp" />
+    <ClCompile Include="src\physics\DebugDraw.cpp" />
+    <ClCompile Include="src\physics\SystemBuilder.cpp" />
     <ClCompile Include="src\physics\hdt\XmlReader.cpp" />
     <ClCompile Include="src\physics\hdt\hdtBoneScaleConstraint.cpp" />
     <ClCompile Include="src\physics\hdt\hdtCollider.cpp" />

@@ -242,6 +242,11 @@ public:
 	void DisableCustomTransforms();
 };
 
+// Loads the skeleton configured as "Anim/DefaultSkeletonReference" into the
+// AnimSkeleton singleton, resolving a relative path against the application
+// directory. Returns 0 on success.
+int LoadDefaultSkeletonReference();
+
 // Bone name -> replacement pose-to-global transform, e.g. produced by the
 // physics preview simulation.
 using AnimPoseOverrideMap = std::unordered_map<std::string, nifly::MatTransform>;

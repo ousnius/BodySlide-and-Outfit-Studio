@@ -7,7 +7,7 @@ See the included LICENSE file
 
 #ifdef USE_BULLET
 
-#include "PhysicsController.h"
+#include "Controller.h"
 
 #include "hdt/hdtConeTwistConstraint.h"
 #include "hdt/hdtGeneric6DofConstraint.h"
@@ -35,27 +35,27 @@ class XMLReader;
 class PerVertexShape;
 }
 
-namespace bsos {
-class BSOSSystem;
+namespace Physics {
+class PreviewSystem;
 
 // Port of hdtSMP64's SkyrimBone: a physics bone bound to an AnimBone of the
 // application skeleton instead of a NiNode of the game scene graph.
-class BSOSBone : public hdt::SkinnedMeshBone {
+class PreviewBone : public hdt::SkinnedMeshBone {
 public:
-	BSOSBone(const hdt::IDStr& name, AnimBone* animBone, BSOSSystem* system, btRigidBody::btRigidBodyConstructionInfo& ci);
+	PreviewBone(const hdt::IDStr& name, AnimBone* animBone, PreviewSystem* system, btRigidBody::btRigidBodyConstructionInfo& ci);
 
 	void readTransform(float timeStep) override;
 	void writeTransform() override;
 
 	int m_depth = 0;
 	AnimBone* m_animBone = nullptr;
-	BSOSSystem* m_system = nullptr;
+	PreviewSystem* m_system = nullptr;
 };
 
 // Port of hdtSMP64's SkyrimBody. The game's runtime disable machinery
 // (updateActiveState) is not ported, but the XML attributes feeding it are
 // still parsed into the members below.
-class BSOSBody : public hdt::SkinnedMeshBody {
+class PreviewBody : public hdt::SkinnedMeshBody {
 public:
 	enum class SharedType {
 		SHARED_PUBLIC,
@@ -64,7 +64,7 @@ public:
 		SHARED_PRIVATE,
 	};
 
-	BSOSSystem* m_mesh = nullptr;
+	PreviewSystem* m_mesh = nullptr;
 	SharedType m_shared = SharedType::SHARED_PUBLIC;
 	bool m_disabled = false;
 	int m_disablePriority = 0;
@@ -77,8 +77,8 @@ public:
 // Port of hdtSMP64's SkyrimSystem minus the game skeleton members. Root
 // motion (camera turntable yaw) takes the role of the skeleton root
 // transform the game watched.
-class BSOSSystem : public hdt::SkinnedMeshSystem {
-	friend class PhysicsSystemBuilder;
+class PreviewSystem : public hdt::SkinnedMeshSystem {
+	friend class SystemBuilder;
 
 public:
 	hdt::SkinnedMeshBone* findBone(const hdt::IDStr& name);
@@ -111,7 +111,7 @@ public:
 // Inputs for building one physics system from one XML file. Vertices,
 // triangles, bone weights and skin transforms come from the NIF/AnimInfo
 // instead of the game's NiSkinInstance.
-struct PhysicsBuildInput {
+struct BuildInput {
 	const std::string* xmlData = nullptr; // whole XML file contents
 	std::string xmlName;				  // diagnostics prefix
 	nifly::NifFile* nif = nullptr;
@@ -121,20 +121,20 @@ struct PhysicsBuildInput {
 
 /*
 Port of hdtSMP64's SkyrimSystemCreator: parses a physics XML and builds the
-bone rigid bodies, constraints and collision meshes of one BSOSSystem, bound
+bone rigid bodies, constraints and collision meshes of one PreviewSystem, bound
 to AnimSkeleton bones. Mesh data (vertices, triangles, weights, skin-to-bone
 transforms) is sourced from nifly/AnimInfo. Diagnostics go to the warning
 list passed to Build.
 */
-class PhysicsSystemBuilder {
+class SystemBuilder {
 public:
-	hdt::Ref<BSOSSystem> Build(const PhysicsBuildInput& input, std::vector<std::string>& outWarnings);
+	hdt::Ref<PreviewSystem> Build(const BuildInput& input, std::vector<std::string>& outWarnings);
 
 protected:
-	std::unordered_map<hdt::IDStr, BSOSBone*> m_boneIndex;
+	std::unordered_map<hdt::IDStr, PreviewBone*> m_boneIndex;
 
-	void indexBone(BSOSBone* bone);
-	BSOSBone* findBoneFromIndex(const hdt::IDStr& name) const;
+	void indexBone(PreviewBone* bone);
+	PreviewBone* findBoneFromIndex(const hdt::IDStr& name) const;
 
 	struct DeferredBuild {
 		hdt::SkinnedMeshBody* body;
@@ -233,7 +233,7 @@ protected:
 	// NIF shape -> offset of its first vertex within the merged body
 	using VertexOffsetMap = std::vector<std::pair<nifly::NiShape*, int>>;
 
-	hdt::Ref<BSOSSystem> m_mesh;
+	hdt::Ref<PreviewSystem> m_mesh;
 	nifly::NifFile* m_nif = nullptr;
 	AnimInfo* m_anim = nullptr;
 	const std::vector<nifly::NiShape*>* m_nifShapes = nullptr;
@@ -245,10 +245,10 @@ protected:
 	void warn(const std::string& msg);
 
 	// Body of Build once the reader is set up
-	hdt::Ref<BSOSSystem> readSystem();
+	hdt::Ref<PreviewSystem> readSystem();
 
 	AnimBone* findAnimBone(const hdt::IDStr& name);
-	BSOSBone* getOrCreateBone(const hdt::IDStr& name);
+	PreviewBone* getOrCreateBone(const hdt::IDStr& name);
 
 	std::unordered_map<hdt::IDStr, BoneTemplate> m_boneTemplates;
 	std::unordered_map<hdt::IDStr, GenericConstraintTemplate> m_genericConstraintTemplates;
@@ -257,9 +257,9 @@ protected:
 	std::unordered_map<hdt::IDStr, std::shared_ptr<btCollisionShape>> m_shapes;
 	std::vector<std::shared_ptr<btCollisionShape>> m_shapeRefs;
 
-	std::pair<hdt::Ref<BSOSBody>, VertexOffsetMap> generateMeshBody(const std::string& name);
+	std::pair<hdt::Ref<PreviewBody>, VertexOffsetMap> generateMeshBody(const std::string& name);
 
-	bool findBones(const hdt::IDStr& bodyAName, const hdt::IDStr& bodyBName, BSOSBone*& bodyA, BSOSBone*& bodyB);
+	bool findBones(const hdt::IDStr& bodyAName, const hdt::IDStr& bodyBName, PreviewBone*& bodyA, PreviewBone*& bodyB);
 	bool parseFrameType(const std::string& name, FrameType& type, btTransform& frame);
 	static void calcFrame(FrameType type, const btTransform& frame, const hdt::btQsTransform& trA, const hdt::btQsTransform& trB, btTransform& frameA, btTransform& frameB);
 	void readFrameLerp(btTransform& tr);
@@ -273,10 +273,10 @@ protected:
 	const StiffSpringConstraintTemplate& getStiffSpringConstraintTemplate(const hdt::IDStr& name);
 	const ConeTwistConstraintTemplate& getConeTwistConstraintTemplate(const hdt::IDStr& name);
 
-	BSOSBone* createBoneFromNodeName(const hdt::IDStr& bodyName, const hdt::IDStr& templateName = hdt::IDStr(""), const bool readTemplate = false);
+	PreviewBone* createBoneFromNodeName(const hdt::IDStr& bodyName, const hdt::IDStr& templateName = hdt::IDStr(""), const bool readTemplate = false);
 	void readOrUpdateBone();
-	hdt::Ref<BSOSBody> readPerVertexShape();
-	hdt::Ref<BSOSBody> readPerTriangleShape();
+	hdt::Ref<PreviewBody> readPerVertexShape();
+	hdt::Ref<PreviewBody> readPerTriangleShape();
 	hdt::Ref<hdt::Generic6DofConstraint> readGenericConstraint();
 	hdt::Ref<hdt::StiffSpringConstraint> readStiffSpringConstraint();
 	hdt::Ref<hdt::ConeTwistConstraint> readConeTwistConstraint();

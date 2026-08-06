@@ -7,6 +7,7 @@ See the included LICENSE file
 #include "NifUtil.hpp"
 #include "../utils/StringStuff.h"
 #include <unordered_set>
+#include <wx/filename.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 
@@ -1103,6 +1104,14 @@ bool AnimBone::IsFullyUnposed() {
 		p = p->parent;
 	}
 	return IsUnposed();
+}
+
+int LoadDefaultSkeletonReference() {
+	std::string defSkelFile = Config["Anim/DefaultSkeletonReference"];
+	if (wxFileName(wxString::FromUTF8(defSkelFile)).IsRelative())
+		return AnimSkeleton::getInstance().LoadFromNif(Config["AppDir"] + PathSepStr + defSkelFile);
+
+	return AnimSkeleton::getInstance().LoadFromNif(defSkelFile);
 }
 
 void ApplySkinningToVerts(AnimInfo& anim, NiShape* shape, bool isSF, const AnimPoseOverrideMap* poseOverrides, std::vector<Vector3>& verts) {

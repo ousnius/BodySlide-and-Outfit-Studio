@@ -1505,14 +1505,15 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	physicsWindDir = (wxChoice*)FindWindowByName("physicsWindDir");
 	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
 
-#ifndef USE_BULLET
-	// The physics preview needs a build with Bullet; without it the controls
-	// exist (the XRC is shared) but stay hidden.
+	// Nothing is loaded yet, and only meshes that reference a physics XML can be
+	// simulated: UpdatePhysicsControlsVisibility reveals these again when one
+	// shows up. In a build without Bullet that never happens.
 	for (wxWindow* physicsCtrl : {(wxWindow*)cbPhysics, (wxWindow*)cbPhysicsVis, (wxWindow*)physicsWindSlider, (wxWindow*)physicsWindDir, FindWindowByName("physicsWindLabel")}) {
-		if (physicsCtrl)
+		if (physicsCtrl) {
+			physicsControls.push_back(physicsCtrl);
 			physicsCtrl->Hide();
+		}
 	}
-#endif
 
 	cAnimationName = (wxComboBox*)FindWindowByName("cAnimationName");
 	animPlayPauseButton = (wxButton*)FindWindowByName("animPlayPause");
@@ -4885,6 +4886,7 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 
 	RefreshGUIWeightColors();
 	PoseToGUI();
+	UpdatePhysicsControlsVisibility();
 
 	glView->UpdateNodes();
 	glView->UpdateBones();
@@ -13189,12 +13191,8 @@ void OutfitStudioFrame::ApplyPose() {
 	// While an animation plays there is no separate physics pump; the
 	// simulation advances in lockstep with each displayed frame, using the
 	// wall-clock time since the last step.
-	if (physicsRunning && animPlaying) {
-		const wxLongLong now = physicsWatch.TimeInMicro();
-		const float dt = static_cast<float>((now - physicsLastStepMicro).ToDouble() / 1000000.0);
-		physicsLastStepMicro = now;
-		physics->Step(dt);
-	}
+	if (physicsRunning && animPlaying)
+		physics->Step(physicsClock.TakeElapsed());
 
 	// Asking for a BVH update queues the shape with wxGLPanel::OnIdle, which
 	// rebuilds a whole AABB tree over every triangle of it - far too expensive
@@ -14283,22 +14281,35 @@ void OutfitStudioFrame::ApplyPhysicsWind() {
 	if (!physics)
 		return;
 
-	if (physicsWindDir) {
-		// Same order as the choice control in the XRC
-		static const bsos::WindDirection directions[] = {bsos::WindDirection::Up,
-														 bsos::WindDirection::Down,
-														 bsos::WindDirection::Forward,
-														 bsos::WindDirection::Backward,
-														 bsos::WindDirection::Left,
-														 bsos::WindDirection::Right};
-
-		const int selection = physicsWindDir->GetSelection();
-		if (selection >= 0 && selection < static_cast<int>(std::size(directions)))
-			physics->SetWindDirection(directions[selection]);
-	}
+	// The choice control lists Physics::WindDirectionNames() in order
+	if (physicsWindDir)
+		physics->SetWindDirection(Physics::WindDirectionFromIndex(physicsWindDir->GetSelection()));
 
 	if (physicsWindSlider)
 		physics->SetWindStrength(physicsWindSlider->GetValue() / 100.0f);
+}
+
+void OutfitStudioFrame::UpdatePhysicsControlsVisibility() {
+	if (!cbPhysics)
+		return;
+
+	const bool available = project && Physics::HasPhysicsLinks(project->GetWorkNif(), project->shapePhysicsFiles);
+	if (available == cbPhysics->IsShown())
+		return;
+
+	// Deleting the last shape with physics while it simulates has to stop it,
+	// and UpdatePhysicsState only ever starts physics for a checked box
+	if (!available)
+		cbPhysics->SetValue(false);
+
+	for (wxWindow* physicsCtrl : physicsControls)
+		physicsCtrl->Show(available);
+
+	if (!available)
+		UpdatePhysicsState();
+
+	if (cbPhysics->GetParent())
+		cbPhysics->GetParent()->Layout();
 }
 
 void OutfitStudioFrame::ShutdownPhysics() {
@@ -14328,7 +14339,7 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 
 	if (desired && !physicsRunning) {
 		if (!physics)
-			physics = std::make_unique<bsos::PhysicsController>();
+			physics = std::make_unique<Physics::Controller>();
 
 		std::vector<std::string> warnings;
 		OutfitProject* proj = project;
@@ -14358,9 +14369,7 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 
 		// The step clock must be valid for the lockstep path too, where
 		// StartPhysicsPump never runs
-		physicsWatch.Start();
-		physicsLastStepMicro = 0;
-		physicsLastDrawMicro = 0;
+		physicsClock.Reset(GetAnimTargetFps());
 
 		// The controller is fresh; re-apply the current wind settings
 		ApplyPhysicsWind();
@@ -14412,13 +14421,10 @@ void OutfitStudioFrame::StartPhysicsPump() {
 		return;
 
 	physicsPumpActive = true;
-	physicsTargetFps = GetAnimTargetFps();
-	physicsWatch.Start();
-	physicsLastStepMicro = 0;
-	physicsLastDrawMicro = 0;
+	physicsClock.Reset(GetAnimTargetFps());
 	SetHighResolutionTimers(true);
 	Bind(wxEVT_IDLE, &OutfitStudioFrame::OnPhysicsIdle, this);
-	physicsTimer.Start(AnimPlaybackTimerIntervalMS);
+	physicsTimer.Start(Physics::PumpTimerIntervalMS);
 }
 
 void OutfitStudioFrame::StopPhysicsPump() {
@@ -14435,18 +14441,11 @@ void OutfitStudioFrame::PumpPhysics() {
 	if (!physicsPumpActive || !physicsRunning)
 		return;
 
-	// Same pacing idea as PumpAnimationPlayback: ticks arrive from idle and
-	// the timer at wildly different rates, the drawing rate is decided here.
-	const wxLongLong period = 1000000 / std::max(physicsTargetFps, 1);
-	const wxLongLong now = physicsWatch.TimeInMicro();
-	if (now - physicsLastDrawMicro < period)
+	float dtSeconds = 0.0f;
+	if (!physicsClock.StepDue(dtSeconds))
 		return;
 
-	const float dt = static_cast<float>((now - physicsLastStepMicro).ToDouble() / 1000000.0);
-	physicsLastStepMicro = now;
-	physicsLastDrawMicro = now;
-
-	physics->Step(dt);
+	physics->Step(dtSeconds);
 
 	const auto& affectedShapes = physics->AffectedShapes();
 	for (auto& shape : project->GetWorkNif()->GetShapes()) {
@@ -14475,9 +14474,7 @@ void OutfitStudioFrame::OnPhysicsIdle(wxIdleEvent& event) {
 	if (!physicsPumpActive)
 		return;
 
-	const wxLongLong period = 1000000 / std::max(physicsTargetFps, 1);
-	const wxLongLong due = period - (physicsWatch.TimeInMicro() - physicsLastDrawMicro);
-	if (due > 1500)
+	if (physicsClock.UntilDue() > 1500)
 		wxMilliSleep(1);
 	else
 		PumpPhysics();

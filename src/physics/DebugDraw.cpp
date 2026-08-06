@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #ifdef USE_BULLET
 
-#include "PhysicsDebugDraw.h"
+#include "DebugDraw.h"
 
 #include "NiflyBullet.h"
 
@@ -17,7 +17,7 @@ See the included LICENSE file
 #include <BulletCollision/CollisionShapes/btCompoundShape.h>
 #include <BulletCollision/CollisionShapes/btSphereShape.h>
 
-namespace bsos {
+namespace Physics {
 namespace {
 	constexpr float meshScale = 0.1f; // NIF units -> mesh units
 
@@ -32,7 +32,7 @@ namespace {
 // Draws one bullet collision shape at the given physics-world transform.
 // Compound shapes recurse; unsupported shapes fall back to a sphere of their
 // bounding radius.
-void PhysicsDebugVis::drawShape(GLSurface& gls, const btCollisionShape* shape, const btTransform& transform, const nifly::Vector3& color) {
+void DebugVis::drawShape(GLSurface& gls, const btCollisionShape* shape, const btTransform& transform, const nifly::Vector3& color) {
 	if (!shape)
 		return;
 
@@ -109,7 +109,7 @@ void PhysicsDebugVis::drawShape(GLSurface& gls, const btCollisionShape* shape, c
 	}
 }
 
-void PhysicsDebugVis::drawConstraint(GLSurface& gls, const btTypedConstraint* constraint, const btTransform& rootMotionInv) {
+void DebugVis::drawConstraint(GLSurface& gls, const btTypedConstraint* constraint, const btTransform& rootMotionInv) {
 	if (!constraint)
 		return;
 
@@ -120,7 +120,7 @@ void PhysicsDebugVis::drawConstraint(GLSurface& gls, const btTypedConstraint* co
 	gls.AddVisSeg(ToMeshPos(a), ToMeshPos(b), visNames.back());
 }
 
-void PhysicsDebugVis::Update(GLSurface& gls, const std::vector<hdt::Ref<BSOSSystem>>& systems) {
+void DebugVis::Update(GLSurface& gls, const std::vector<hdt::Ref<PreviewSystem>>& systems) {
 	Clear(gls);
 
 	for (auto& system : systems) {
@@ -143,7 +143,7 @@ void PhysicsDebugVis::Update(GLSurface& gls, const std::vector<hdt::Ref<BSOSSyst
 	}
 }
 
-void PhysicsDebugVis::Clear(GLSurface& gls) {
+void DebugVis::Clear(GLSurface& gls) {
 	for (auto& name : visNames)
 		gls.DeleteOverlay(name);
 

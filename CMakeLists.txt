@@ -11,7 +11,7 @@ if(MSVC AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
 endif()
 
 option(BSOS_ENABLE_FBXSDK "Build Outfit Studio with Autodesk FBX SDK support when available" ON)
-option(BSOS_ENABLE_BULLET "Build Outfit Studio with Bullet physics preview support when available" ON)
+option(BSOS_ENABLE_BULLET "Build with Bullet physics preview support when available" ON)
 option(BSOS_BUILD_TESTS "Build Catch2-based tests" OFF)
 set(BSOS_FBXSDK_ROOT "" CACHE PATH "Root directory of the Autodesk FBX SDK")
 set(BSOS_TEST_MSVC_RUNTIME_LIBRARY "" CACHE STRING "MSVC runtime library override for BSOSTests")
@@ -240,13 +240,38 @@ if(BSOS_ENABLE_BULLET)
 		endforeach()
 		message(STATUS "Bullet found: ${BSOS_BULLET_INCLUDE_DIRS}")
 	else()
-		message(STATUS "Bullet not found; Outfit Studio will build without physics preview support")
+		message(STATUS "Bullet not found; building without physics preview support")
 	endif()
 else()
 	message(STATUS "Bullet physics preview support disabled")
 endif()
 
+# Physics preview sources are always listed; their bodies compile to empty
+# translation units unless USE_BULLET is defined (same convention as
+# FBXWrangler.cpp with USE_FBXSDK), so builds without Bullet stay valid. Both
+# applications preview physics, so they are part of the common sources.
+set(BSOS_PHYSICS_SOURCES
+	src/physics/Controller.cpp
+	src/physics/DebugDraw.cpp
+	src/physics/SystemBuilder.cpp
+	src/physics/hdt/XmlReader.cpp
+	src/physics/hdt/hdtBoneScaleConstraint.cpp
+	src/physics/hdt/hdtCollider.cpp
+	src/physics/hdt/hdtConeTwistConstraint.cpp
+	src/physics/hdt/hdtDispatcher.cpp
+	src/physics/hdt/hdtGeneric6DofConstraint.cpp
+	src/physics/hdt/hdtSkinnedMeshAlgorithm.cpp
+	src/physics/hdt/hdtSkinnedMeshBody.cpp
+	src/physics/hdt/hdtSkinnedMeshBone.cpp
+	src/physics/hdt/hdtSkinnedMeshShape.cpp
+	src/physics/hdt/hdtSkinnedMeshSystem.cpp
+	src/physics/hdt/hdtSkinnedMeshWorld.cpp
+	src/physics/hdt/hdtStiffSpringConstraint.cpp
+	src/physics/hdt/hdtVertex.cpp
+)
+
 set(BSOS_COMMON_SOURCES
+	${BSOS_PHYSICS_SOURCES}
 	lib/FSEngine/FSBSA.cpp
 	lib/FSEngine/FSEngine.cpp
 	lib/FSEngine/FSManager.cpp
@@ -288,6 +313,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/SliderManager.cpp
 	src/components/SliderPresets.cpp
 	src/components/SliderSet.cpp
+	src/files/GameDataStream.cpp
 	src/files/MaterialFile.cpp
 	src/files/ResourceLoader.cpp
 	src/files/TriFile.cpp
@@ -349,30 +375,6 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/render/GLCanvas.cpp
 	src/render/GLDialog.cpp
 )
-
-# Physics preview sources are always listed; their bodies compile to empty
-# translation units unless USE_BULLET is defined (same convention as
-# FBXWrangler.cpp with USE_FBXSDK), so builds without Bullet stay valid.
-set(BSOS_PHYSICS_SOURCES
-	src/physics/PhysicsController.cpp
-	src/physics/PhysicsDebugDraw.cpp
-	src/physics/PhysicsSystemBuilder.cpp
-	src/physics/hdt/XmlReader.cpp
-	src/physics/hdt/hdtBoneScaleConstraint.cpp
-	src/physics/hdt/hdtCollider.cpp
-	src/physics/hdt/hdtConeTwistConstraint.cpp
-	src/physics/hdt/hdtDispatcher.cpp
-	src/physics/hdt/hdtGeneric6DofConstraint.cpp
-	src/physics/hdt/hdtSkinnedMeshAlgorithm.cpp
-	src/physics/hdt/hdtSkinnedMeshBody.cpp
-	src/physics/hdt/hdtSkinnedMeshBone.cpp
-	src/physics/hdt/hdtSkinnedMeshShape.cpp
-	src/physics/hdt/hdtSkinnedMeshSystem.cpp
-	src/physics/hdt/hdtSkinnedMeshWorld.cpp
-	src/physics/hdt/hdtStiffSpringConstraint.cpp
-	src/physics/hdt/hdtVertex.cpp
-)
-list(APPEND BSOS_OUTFIT_STUDIO_SOURCES ${BSOS_PHYSICS_SOURCES})
 
 set(BSOS_BODYSLIDE_SOURCES
 	${BSOS_COMMON_SOURCES}
@@ -538,8 +540,10 @@ if(BSOS_HAVE_BULLET)
 	# ported physics code uses. It only adds inline members (the storage is
 	# SSE-backed either way), so it does not have to match how the Bullet
 	# libraries themselves were compiled.
-	target_compile_definitions(OutfitStudio PRIVATE USE_BULLET BT_USE_SSE_IN_API)
-	target_include_directories(OutfitStudio SYSTEM PRIVATE ${BSOS_BULLET_INCLUDE_DIRS})
+	foreach(bullet_target OutfitStudio BodySlide)
+		target_compile_definitions(${bullet_target} PRIVATE USE_BULLET BT_USE_SSE_IN_API)
+		target_include_directories(${bullet_target} SYSTEM PRIVATE ${BSOS_BULLET_INCLUDE_DIRS})
+	endforeach()
 
 	# The config package (BulletConfig.cmake) exports bare library names plus
 	# a library directory; the FindBullet module exports full paths and no
@@ -567,9 +571,11 @@ if(BSOS_HAVE_BULLET)
 			endif()
 		endforeach()
 		target_link_directories(OutfitStudio PRIVATE ${BSOS_BULLET_LIBRARY_DIRS})
+		target_link_directories(BodySlide PRIVATE ${BSOS_BULLET_LIBRARY_DIRS})
 	endif()
 
 	target_link_libraries(OutfitStudio PRIVATE ${BSOS_BULLET_LINK_LIBRARIES})
+	target_link_libraries(BodySlide PRIVATE ${BSOS_BULLET_LINK_LIBRARIES})
 endif()
 
 if(MSVC)

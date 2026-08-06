@@ -763,6 +763,9 @@
     <ClInclude Include="src\files\FBXWrangler.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\GameDataStream.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\MaterialFile.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -781,13 +784,16 @@
     <ClInclude Include="src\physics\NiflyBullet.h">
       <Filter>Physics</Filter>
     </ClInclude>
-    <ClInclude Include="src\physics\PhysicsController.h">
+    <ClInclude Include="src\physics\Controller.h">
       <Filter>Physics</Filter>
     </ClInclude>
-    <ClInclude Include="src\physics\PhysicsDebugDraw.h">
+    <ClInclude Include="src\physics\DebugDraw.h">
       <Filter>Physics</Filter>
     </ClInclude>
-    <ClInclude Include="src\physics\PhysicsSystemBuilder.h">
+    <ClInclude Include="src\physics\PumpClock.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\SystemBuilder.h">
       <Filter>Physics</Filter>
     </ClInclude>
     <ClInclude Include="src\physics\hdt\XmlReader.h">
@@ -2136,6 +2142,9 @@
     <ClCompile Include="src\files\FBXWrangler.cpp">
       <Filter>Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\files\GameDataStream.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\files\MaterialFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
@@ -2151,13 +2160,13 @@
     <ClCompile Include="src\files\SFResourceHash.cpp">
       <Filter>Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\physics\PhysicsController.cpp">
+    <ClCompile Include="src\physics\Controller.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
-    <ClCompile Include="src\physics\PhysicsDebugDraw.cpp">
+    <ClCompile Include="src\physics\DebugDraw.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
-    <ClCompile Include="src\physics\PhysicsSystemBuilder.cpp">
+    <ClCompile Include="src\physics\SystemBuilder.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="src\physics\hdt\XmlReader.cpp">

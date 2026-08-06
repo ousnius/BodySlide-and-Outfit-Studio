@@ -22,7 +22,7 @@ namespace nifly {
 class NifFile;
 }
 
-namespace bsos {
+namespace Physics {
 // Resolves a physics XML path as referenced by a NiStringExtraData (e.g.
 // "SKSE\Plugins\hdtSkinnedMeshConfigs\outfit.xml") to a readable stream, or
 // nullptr when it cannot be found.
@@ -32,7 +32,7 @@ using XmlStreamResolver = std::function<std::unique_ptr<std::istream>(const std:
 // simulation, consumed by the skinning code instead of
 // AnimBone::xformPoseToGlobal for bones driven by physics. Spelled out again
 // instead of including Anim.h, which would pull the application skeleton into
-// every user of this header; PhysicsController.cpp asserts that this stays the
+// every user of this header; Controller.cpp asserts that this stays the
 // same type as AnimPoseOverrideMap.
 using PoseOverrideMap = std::unordered_map<std::string, nifly::MatTransform>;
 
@@ -47,6 +47,17 @@ using ShapePhysicsFileMap = std::unordered_map<std::string, std::vector<std::str
 // inside the physics world.
 enum class WindDirection { Up, Down, Forward, Backward, Left, Right };
 
+// The wind directions in the order both applications list them in their
+// controls, so a selection index means the same thing in either.
+const std::vector<std::string>& WindDirectionNames();
+WindDirection WindDirectionFromIndex(int index);
+
+// True when "nif" or "shapePhysicsFiles" reference at least one physics XML,
+// i.e. when a physics preview has anything to simulate. Only looks at extra
+// data, so it is cheap enough to call whenever the loaded meshes change; the
+// XMLs are neither resolved nor parsed. Always false without Bullet.
+bool HasPhysicsLinks(nifly::NifFile* nif, const ShapePhysicsFileMap& shapePhysicsFiles);
+
 /*
 App-facing facade over the physics core ported from Faster HDT-SMP (see
 src/physics/hdt/README.md for its origin, license and the port notes). Owns
@@ -57,13 +68,13 @@ Bullet, never on OutfitProject or any UI type.
 Without USE_BULLET every method is an inert stub so call sites stay valid in
 builds without Bullet.
 */
-class PhysicsController {
+class Controller {
 public:
-	PhysicsController();
-	~PhysicsController();
+	Controller();
+	~Controller();
 
-	PhysicsController(const PhysicsController&) = delete;
-	PhysicsController& operator=(const PhysicsController&) = delete;
+	Controller(const Controller&) = delete;
+	Controller& operator=(const Controller&) = delete;
 
 	// Scans all shapes and nodes of the NIF for NiStringExtraData named
 	// "HDT Skinned Mesh Physics Object" and adds the links of

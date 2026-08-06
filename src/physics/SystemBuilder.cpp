@@ -11,7 +11,7 @@ The XML parsing semantics are kept identical to upstream.
 
 #ifdef USE_BULLET
 
-#include "PhysicsSystemBuilder.h"
+#include "SystemBuilder.h"
 
 #include "NiflyBullet.h"
 #include "hdt/XmlReader.h"
@@ -24,7 +24,7 @@ The XML parsing semantics are kept identical to upstream.
 #include <algorithm>
 #include <cfloat>
 
-namespace bsos {
+namespace Physics {
 using hdt::btQsTransform;
 using hdt::IDStr;
 using hdt::RESET_PHYSICS;
@@ -44,11 +44,11 @@ static btQsTransform ToBtQs(const nifly::MatTransform& t, float scaleOverride) {
 	return btQsTransform(ToBtQuaternion(t.rotation), ToBt(t.translation), scaleOverride);
 }
 
-btEmptyShape PhysicsSystemBuilder::BoneTemplate::emptyShape[1];
+btEmptyShape SystemBuilder::BoneTemplate::emptyShape[1];
 
-// ---------------------------------------------------------------- BSOSBone
+// ---------------------------------------------------------------- PreviewBone
 
-BSOSBone::BSOSBone(const IDStr& name, AnimBone* animBone, BSOSSystem* system, btRigidBody::btRigidBodyConstructionInfo& ci)
+PreviewBone::PreviewBone(const IDStr& name, AnimBone* animBone, PreviewSystem* system, btRigidBody::btRigidBodyConstructionInfo& ci)
 	: hdt::SkinnedMeshBone(name, ci)
 	, m_animBone(animBone)
 	, m_system(system) {
@@ -62,7 +62,7 @@ BSOSBone::BSOSBone(const IDStr& name, AnimBone* animBone, BSOSSystem* system, bt
 		++m_depth;
 }
 
-void BSOSBone::readTransform(float timeStep) {
+void PreviewBone::readTransform(float timeStep) {
 	// Upstream read the NiNode's world transform here. The kinematic input is
 	// now the pose-to-global transform of the AnimBone, shifted by the
 	// controller's root motion. Scale is treated as a constant 1 (poseScale
@@ -93,7 +93,7 @@ void BSOSBone::readTransform(float timeStep) {
 	}
 }
 
-void BSOSBone::writeTransform() {
+void PreviewBone::writeTransform() {
 	auto transform = m_rig.getWorldTransform() * m_rigToLocal;
 
 	m_currentTransform.setBasis(transform.getBasis());
@@ -111,10 +111,10 @@ void BSOSBone::writeTransform() {
 		(*overrides)[m_animBone->boneName] = FromBt(m_system->m_rootMotion.inverseTimes(transform));
 }
 
-// ---------------------------------------------------------------- BSOSBody
+// ---------------------------------------------------------------- PreviewBody
 
-bool BSOSBody::canCollideWith(const hdt::SkinnedMeshBody* rhs) const {
-	auto body = (BSOSBody*)rhs;
+bool PreviewBody::canCollideWith(const hdt::SkinnedMeshBody* rhs) const {
+	auto body = (PreviewBody*)rhs;
 	if (m_disabled || body->m_disabled)
 		return false;
 
@@ -134,15 +134,15 @@ bool BSOSBody::canCollideWith(const hdt::SkinnedMeshBody* rhs) const {
 	return hdt::SkinnedMeshBody::canCollideWith(rhs);
 }
 
-void BSOSBody::internalUpdate() {
+void PreviewBody::internalUpdate() {
 	if (m_disabled)
 		return;
 	hdt::SkinnedMeshBody::internalUpdate();
 }
 
-// -------------------------------------------------------------- BSOSSystem
+// -------------------------------------------------------------- PreviewSystem
 
-hdt::SkinnedMeshBone* BSOSSystem::findBone(const IDStr& name) {
+hdt::SkinnedMeshBone* PreviewSystem::findBone(const IDStr& name) {
 	for (auto i : m_bones) {
 		if (i->m_name == name)
 			return i.get();
@@ -151,7 +151,7 @@ hdt::SkinnedMeshBone* BSOSSystem::findBone(const IDStr& name) {
 	return nullptr;
 }
 
-hdt::SkinnedMeshBody* BSOSSystem::findBody(const IDStr& name) {
+hdt::SkinnedMeshBody* PreviewSystem::findBody(const IDStr& name) {
 	for (auto i : m_meshes) {
 		if (i->m_name == name)
 			return i.get();
@@ -160,7 +160,7 @@ hdt::SkinnedMeshBody* BSOSSystem::findBody(const IDStr& name) {
 	return nullptr;
 }
 
-int BSOSSystem::findBoneIdx(const IDStr& name) {
+int PreviewSystem::findBoneIdx(const IDStr& name) {
 	for (size_t i = 0; i < m_bones.size(); ++i) {
 		if (m_bones[i]->m_name == name)
 			return static_cast<int>(i);
@@ -169,7 +169,7 @@ int BSOSSystem::findBoneIdx(const IDStr& name) {
 	return -1;
 }
 
-float BSOSSystem::prepareForRead(float timeStep) {
+float PreviewSystem::prepareForRead(float timeStep) {
 	// Port of SkyrimSystem::prepareForRead. The game watched the skeleton
 	// root's world rotation and damped fast rotation to keep the simulation
 	// from exploding; here m_rootMotion (the camera turntable yaw) is the only
@@ -218,18 +218,18 @@ float BSOSSystem::prepareForRead(float timeStep) {
 	return timeStep;
 }
 
-// ---------------------------------------------------- PhysicsSystemBuilder
+// ---------------------------------------------------- SystemBuilder
 
-void PhysicsSystemBuilder::warn(const std::string& msg) {
+void SystemBuilder::warn(const std::string& msg) {
 	if (m_warnings)
 		m_warnings->push_back(m_filePath + ": " + msg);
 }
 
-void PhysicsSystemBuilder::indexBone(BSOSBone* bone) {
+void SystemBuilder::indexBone(PreviewBone* bone) {
 	m_boneIndex.emplace(bone->m_name, bone);
 }
 
-BSOSBone* PhysicsSystemBuilder::findBoneFromIndex(const IDStr& name) const {
+PreviewBone* SystemBuilder::findBoneFromIndex(const IDStr& name) const {
 	auto it = m_boneIndex.find(name);
 	return it != m_boneIndex.end() ? it->second : nullptr;
 }
@@ -239,7 +239,7 @@ BSOSBone* PhysicsSystemBuilder::findBoneFromIndex(const IDStr& name) const {
 // the NIF as a custom bone; the initial lookup retries with the NIF node's
 // exact spelling because AnimSkeleton is case-sensitive while SMP names
 // (BSFixedString upstream, IDStr here) are not.
-AnimBone* PhysicsSystemBuilder::findAnimBone(const IDStr& name) {
+AnimBone* SystemBuilder::findAnimBone(const IDStr& name) {
 	auto& skel = AnimSkeleton::getInstance();
 
 	AnimBone* bone = skel.GetBonePtr(name.str(), true);
@@ -263,7 +263,7 @@ AnimBone* PhysicsSystemBuilder::findAnimBone(const IDStr& name) {
 	return bone;
 }
 
-BSOSBone* PhysicsSystemBuilder::getOrCreateBone(const IDStr& name) {
+PreviewBone* SystemBuilder::getOrCreateBone(const IDStr& name) {
 	auto bone = findBoneFromIndex(name);
 	if (bone)
 		return bone;
@@ -272,7 +272,7 @@ BSOSBone* PhysicsSystemBuilder::getOrCreateBone(const IDStr& name) {
 	return createBoneFromNodeName(name);
 }
 
-hdt::Ref<BSOSSystem> PhysicsSystemBuilder::Build(const PhysicsBuildInput& input, std::vector<std::string>& outWarnings) {
+hdt::Ref<PreviewSystem> SystemBuilder::Build(const BuildInput& input, std::vector<std::string>& outWarnings) {
 	m_warnings = &outWarnings;
 	m_filePath = input.xmlName;
 
@@ -293,7 +293,7 @@ hdt::Ref<BSOSSystem> PhysicsSystemBuilder::Build(const PhysicsBuildInput& input,
 	return system;
 }
 
-hdt::Ref<BSOSSystem> PhysicsSystemBuilder::readSystem() {
+hdt::Ref<PreviewSystem> SystemBuilder::readSystem() {
 	// The whole document is parsed up front, so a malformed file is reported
 	// as such instead of as a missing <system> element.
 	if (m_reader->HasError()) {
@@ -307,7 +307,7 @@ hdt::Ref<BSOSSystem> PhysicsSystemBuilder::readSystem() {
 		return nullptr;
 	}
 
-	m_mesh = hdt::make_ref(new BSOSSystem);
+	m_mesh = hdt::make_ref(new PreviewSystem);
 	m_boneIndex.clear();
 
 	try {
@@ -413,13 +413,13 @@ hdt::Ref<BSOSSystem> PhysicsSystemBuilder::readSystem() {
 
 	m_mesh->m_shapeRefs.swap(m_shapeRefs);
 	std::sort(m_mesh->m_bones.begin(), m_mesh->m_bones.end(), [](const auto& a, const auto& b) {
-		return static_cast<BSOSBone*>(a.get())->m_depth < static_cast<BSOSBone*>(b.get())->m_depth;
+		return static_cast<PreviewBone*>(a.get())->m_depth < static_cast<PreviewBone*>(b.get())->m_depth;
 	});
 
 	return m_mesh->valid() ? m_mesh : nullptr;
 }
 
-hdt::Ref<hdt::ConstraintGroup> PhysicsSystemBuilder::readConstraintGroup() {
+hdt::Ref<hdt::ConstraintGroup> SystemBuilder::readConstraintGroup() {
 	hdt::Ref<hdt::ConstraintGroup> ret = hdt::make_ref(new hdt::ConstraintGroup);
 
 	while (m_reader->Inspect()) {
@@ -473,7 +473,7 @@ hdt::Ref<hdt::ConstraintGroup> PhysicsSystemBuilder::readConstraintGroup() {
 	return ret;
 }
 
-void PhysicsSystemBuilder::readBoneTemplate(BoneTemplate& cinfo) {
+void SystemBuilder::readBoneTemplate(BoneTemplate& cinfo) {
 	bool clearCollide = true;
 	while (m_reader->Inspect()) {
 		if (m_reader->GetInspected() == hdt::XMLReader::Inspected::StartTag) {
@@ -539,7 +539,7 @@ void PhysicsSystemBuilder::readBoneTemplate(BoneTemplate& cinfo) {
 	}
 }
 
-std::shared_ptr<btCollisionShape> PhysicsSystemBuilder::readShape() {
+std::shared_ptr<btCollisionShape> SystemBuilder::readShape() {
 	auto typeStr = m_reader->getAttribute("type");
 	if (typeStr == "ref") {
 		auto shapeName = m_reader->getAttribute("name");
@@ -700,7 +700,7 @@ std::shared_ptr<btCollisionShape> PhysicsSystemBuilder::readShape() {
 	return nullptr;
 }
 
-void PhysicsSystemBuilder::readOrUpdateBone() {
+void SystemBuilder::readOrUpdateBone() {
 	IDStr name = m_reader->getAttribute("name");
 	if (findBoneFromIndex(name)) {
 		warn("Bone " + name.str() + " already exists, skipped");
@@ -713,13 +713,13 @@ void PhysicsSystemBuilder::readOrUpdateBone() {
 		m_reader->skipCurrentElement();
 }
 
-BSOSBone* PhysicsSystemBuilder::createBoneFromNodeName(const IDStr& bodyName, const IDStr& templateName, const bool readTemplate) {
+PreviewBone* SystemBuilder::createBoneFromNodeName(const IDStr& bodyName, const IDStr& templateName, const bool readTemplate) {
 	auto animBone = findAnimBone(bodyName);
 	if (animBone) {
 		auto boneTemplate = getBoneTemplate(templateName);
 		if (readTemplate)
 			readBoneTemplate(boneTemplate);
-		auto bone = new BSOSBone(animBone->boneName, animBone, m_mesh.get(), boneTemplate);
+		auto bone = new PreviewBone(animBone->boneName, animBone, m_mesh.get(), boneTemplate);
 		bone->m_localToRig = boneTemplate.m_centerOfMassTransform;
 		bone->m_rigToLocal = boneTemplate.m_centerOfMassTransform.inverse();
 		bone->m_marginMultipler = boneTemplate.m_marginMultipler;
@@ -736,8 +736,8 @@ BSOSBone* PhysicsSystemBuilder::createBoneFromNodeName(const IDStr& bodyName, co
 	return nullptr;
 }
 
-std::pair<hdt::Ref<BSOSBody>, PhysicsSystemBuilder::VertexOffsetMap> PhysicsSystemBuilder::generateMeshBody(const std::string& name) {
-	hdt::Ref<BSOSBody> body = hdt::make_ref(new BSOSBody);
+std::pair<hdt::Ref<PreviewBody>, SystemBuilder::VertexOffsetMap> SystemBuilder::generateMeshBody(const std::string& name) {
+	hdt::Ref<PreviewBody> body = hdt::make_ref(new PreviewBody);
 	body->m_name = name;
 
 	int vertexStart = 0;
@@ -793,7 +793,7 @@ std::pair<hdt::Ref<BSOSBody>, PhysicsSystemBuilder::VertexOffsetMap> PhysicsSyst
 					boneFailed = true;
 					break;
 				}
-				auto newBone = new BSOSBone(animBone->boneName, animBone, m_mesh.get(), defaultBoneInfo);
+				auto newBone = new PreviewBone(animBone->boneName, animBone, m_mesh.get(), defaultBoneInfo);
 				// Upstream left the rig at identity here; seating it on the
 				// pose keeps constraint frames correct for skin-created bones.
 				newBone->readTransform(RESET_PHYSICS);
@@ -866,7 +866,7 @@ std::pair<hdt::Ref<BSOSBody>, PhysicsSystemBuilder::VertexOffsetMap> PhysicsSyst
 	return {body, vertexOffsetMap};
 }
 
-hdt::Ref<BSOSBody> PhysicsSystemBuilder::readPerVertexShape() {
+hdt::Ref<PreviewBody> SystemBuilder::readPerVertexShape() {
 	auto name = m_reader->getAttribute("name");
 
 	auto body = generateMeshBody(name).first;
@@ -888,20 +888,20 @@ hdt::Ref<BSOSBody> PhysicsSystemBuilder::readPerVertexShape() {
 			else if (nodeName == "shared") {
 				auto str = m_reader->readText();
 				if (str == "public") {
-					body->m_shared = BSOSBody::SharedType::SHARED_PUBLIC;
+					body->m_shared = PreviewBody::SharedType::SHARED_PUBLIC;
 				}
 				else if (str == "internal") {
-					body->m_shared = BSOSBody::SharedType::SHARED_INTERNAL;
+					body->m_shared = PreviewBody::SharedType::SHARED_INTERNAL;
 				}
 				else if (str == "external") {
-					body->m_shared = BSOSBody::SharedType::SHARED_EXTERNAL;
+					body->m_shared = PreviewBody::SharedType::SHARED_EXTERNAL;
 				}
 				else if (str == "private") {
-					body->m_shared = BSOSBody::SharedType::SHARED_PRIVATE;
+					body->m_shared = PreviewBody::SharedType::SHARED_PRIVATE;
 				}
 				else {
 					warn("unknown shared value, use default value \"public\"");
-					body->m_shared = BSOSBody::SharedType::SHARED_PUBLIC;
+					body->m_shared = PreviewBody::SharedType::SHARED_PUBLIC;
 				}
 			}
 			else if (nodeName == "tag") {
@@ -954,7 +954,7 @@ hdt::Ref<BSOSBody> PhysicsSystemBuilder::readPerVertexShape() {
 	return body;
 }
 
-hdt::Ref<BSOSBody> PhysicsSystemBuilder::readPerTriangleShape() {
+hdt::Ref<PreviewBody> SystemBuilder::readPerTriangleShape() {
 	auto name = m_reader->getAttribute("name");
 
 	auto bodyData = generateMeshBody(name);
@@ -991,20 +991,20 @@ hdt::Ref<BSOSBody> PhysicsSystemBuilder::readPerTriangleShape() {
 			else if (nodeName == "shared") {
 				auto str = m_reader->readText();
 				if (str == "public") {
-					body->m_shared = BSOSBody::SharedType::SHARED_PUBLIC;
+					body->m_shared = PreviewBody::SharedType::SHARED_PUBLIC;
 				}
 				else if (str == "internal") {
-					body->m_shared = BSOSBody::SharedType::SHARED_INTERNAL;
+					body->m_shared = PreviewBody::SharedType::SHARED_INTERNAL;
 				}
 				else if (str == "external") {
-					body->m_shared = BSOSBody::SharedType::SHARED_EXTERNAL;
+					body->m_shared = PreviewBody::SharedType::SHARED_EXTERNAL;
 				}
 				else if (str == "private") {
-					body->m_shared = BSOSBody::SharedType::SHARED_PRIVATE;
+					body->m_shared = PreviewBody::SharedType::SHARED_PRIVATE;
 				}
 				else {
 					warn("unknown shared value, use default value \"public\"");
-					body->m_shared = BSOSBody::SharedType::SHARED_PUBLIC;
+					body->m_shared = PreviewBody::SharedType::SHARED_PUBLIC;
 				}
 			}
 			else if (nodeName == "prenetration" || nodeName == "penetration") {
@@ -1059,7 +1059,7 @@ hdt::Ref<BSOSBody> PhysicsSystemBuilder::readPerTriangleShape() {
 	return body;
 }
 
-void PhysicsSystemBuilder::readFrameLerp(btTransform& tr) {
+void SystemBuilder::readFrameLerp(btTransform& tr) {
 	tr.setIdentity();
 	while (m_reader->Inspect()) {
 		if (m_reader->GetInspected() == hdt::XMLReader::Inspected::StartTag) {
@@ -1078,7 +1078,7 @@ void PhysicsSystemBuilder::readFrameLerp(btTransform& tr) {
 	}
 }
 
-bool PhysicsSystemBuilder::parseFrameType(const std::string& name, FrameType& frameType, btTransform& frame) {
+bool SystemBuilder::parseFrameType(const std::string& name, FrameType& frameType, btTransform& frame) {
 	if (name == "frameInA") {
 		frameType = FrameInA;
 		frame = m_reader->readTransform();
@@ -1096,7 +1096,7 @@ bool PhysicsSystemBuilder::parseFrameType(const std::string& name, FrameType& fr
 	return true;
 }
 
-void PhysicsSystemBuilder::readGenericConstraintTemplate(GenericConstraintTemplate& dest) {
+void SystemBuilder::readGenericConstraintTemplate(GenericConstraintTemplate& dest) {
 	while (m_reader->Inspect()) {
 		if (m_reader->GetInspected() == hdt::XMLReader::Inspected::StartTag) {
 			auto name = m_reader->GetName();
@@ -1184,7 +1184,7 @@ void PhysicsSystemBuilder::readGenericConstraintTemplate(GenericConstraintTempla
 	}
 }
 
-bool PhysicsSystemBuilder::findBones(const IDStr& bodyAName, const IDStr& bodyBName, BSOSBone*& bodyA, BSOSBone*& bodyB) {
+bool SystemBuilder::findBones(const IDStr& bodyAName, const IDStr& bodyBName, PreviewBone*& bodyA, PreviewBone*& bodyB) {
 	bodyA = findBoneFromIndex(bodyAName);
 	bodyB = findBoneFromIndex(bodyBName);
 
@@ -1229,7 +1229,7 @@ static btQuaternion rotFromAtoB(const btVector3& a, const btVector3& b) {
 	return btQuaternion(axis, angle);
 }
 
-void PhysicsSystemBuilder::calcFrame(FrameType type, const btTransform& frame, const btQsTransform& trA, const btQsTransform& trB, btTransform& frameA, btTransform& frameB) {
+void SystemBuilder::calcFrame(FrameType type, const btTransform& frame, const btQsTransform& trA, const btQsTransform& trB, btTransform& frameA, btTransform& frameB) {
 	btQsTransform frameInWorld;
 	switch (type) {
 		case FrameInA:
@@ -1286,12 +1286,12 @@ void PhysicsSystemBuilder::calcFrame(FrameType type, const btTransform& frame, c
 	}
 }
 
-hdt::Ref<hdt::Generic6DofConstraint> PhysicsSystemBuilder::readGenericConstraint() {
+hdt::Ref<hdt::Generic6DofConstraint> SystemBuilder::readGenericConstraint() {
 	auto bodyAName = IDStr(m_reader->getAttribute("bodyA"));
 	auto bodyBName = IDStr(m_reader->getAttribute("bodyB"));
 	auto clsname = IDStr(m_reader->getAttribute("template", ""));
 
-	BSOSBone *bodyA, *bodyB;
+	PreviewBone *bodyA, *bodyB;
 	if (!findBones(bodyAName, bodyBName, bodyA, bodyB))
 		return nullptr;
 
@@ -1368,7 +1368,7 @@ hdt::Ref<hdt::Generic6DofConstraint> PhysicsSystemBuilder::readGenericConstraint
 	return constraint;
 }
 
-void PhysicsSystemBuilder::readStiffSpringConstraintTemplate(StiffSpringConstraintTemplate& dest) {
+void SystemBuilder::readStiffSpringConstraintTemplate(StiffSpringConstraintTemplate& dest) {
 	while (m_reader->Inspect()) {
 		if (m_reader->GetInspected() == hdt::XMLReader::Inspected::StartTag) {
 			auto name = m_reader->GetName();
@@ -1392,7 +1392,7 @@ void PhysicsSystemBuilder::readStiffSpringConstraintTemplate(StiffSpringConstrai
 	}
 }
 
-void PhysicsSystemBuilder::readConeTwistConstraintTemplate(ConeTwistConstraintTemplate& dest) {
+void SystemBuilder::readConeTwistConstraintTemplate(ConeTwistConstraintTemplate& dest) {
 	while (m_reader->Inspect()) {
 		if (m_reader->GetInspected() == hdt::XMLReader::Inspected::StartTag) {
 			auto name = m_reader->GetName();
@@ -1420,40 +1420,40 @@ void PhysicsSystemBuilder::readConeTwistConstraintTemplate(ConeTwistConstraintTe
 	}
 }
 
-const PhysicsSystemBuilder::BoneTemplate& PhysicsSystemBuilder::getBoneTemplate(const IDStr& name) {
+const SystemBuilder::BoneTemplate& SystemBuilder::getBoneTemplate(const IDStr& name) {
 	auto iter = m_boneTemplates.find(name);
 	if (iter == m_boneTemplates.end())
 		return m_boneTemplates[IDStr()];
 	return iter->second;
 }
 
-const PhysicsSystemBuilder::GenericConstraintTemplate& PhysicsSystemBuilder::getGenericConstraintTemplate(const IDStr& name) {
+const SystemBuilder::GenericConstraintTemplate& SystemBuilder::getGenericConstraintTemplate(const IDStr& name) {
 	auto iter = m_genericConstraintTemplates.find(name);
 	if (iter == m_genericConstraintTemplates.end())
 		return m_genericConstraintTemplates[IDStr()];
 	return iter->second;
 }
 
-const PhysicsSystemBuilder::StiffSpringConstraintTemplate& PhysicsSystemBuilder::getStiffSpringConstraintTemplate(const IDStr& name) {
+const SystemBuilder::StiffSpringConstraintTemplate& SystemBuilder::getStiffSpringConstraintTemplate(const IDStr& name) {
 	auto iter = m_stiffSpringConstraintTemplates.find(name);
 	if (iter == m_stiffSpringConstraintTemplates.end())
 		return m_stiffSpringConstraintTemplates[IDStr()];
 	return iter->second;
 }
 
-const PhysicsSystemBuilder::ConeTwistConstraintTemplate& PhysicsSystemBuilder::getConeTwistConstraintTemplate(const IDStr& name) {
+const SystemBuilder::ConeTwistConstraintTemplate& SystemBuilder::getConeTwistConstraintTemplate(const IDStr& name) {
 	auto iter = m_coneTwistConstraintTemplates.find(name);
 	if (iter == m_coneTwistConstraintTemplates.end())
 		return m_coneTwistConstraintTemplates[IDStr()];
 	return iter->second;
 }
 
-hdt::Ref<hdt::StiffSpringConstraint> PhysicsSystemBuilder::readStiffSpringConstraint() {
+hdt::Ref<hdt::StiffSpringConstraint> SystemBuilder::readStiffSpringConstraint() {
 	auto bodyAName = IDStr(m_reader->getAttribute("bodyA"));
 	auto bodyBName = IDStr(m_reader->getAttribute("bodyB"));
 	auto clsname = IDStr(m_reader->getAttribute("template", ""));
 
-	BSOSBone *bodyA, *bodyB;
+	PreviewBone *bodyA, *bodyB;
 	if (!findBones(bodyAName, bodyBName, bodyA, bodyB))
 		return nullptr;
 
@@ -1469,12 +1469,12 @@ hdt::Ref<hdt::StiffSpringConstraint> PhysicsSystemBuilder::readStiffSpringConstr
 	return constraint;
 }
 
-hdt::Ref<hdt::ConeTwistConstraint> PhysicsSystemBuilder::readConeTwistConstraint() {
+hdt::Ref<hdt::ConeTwistConstraint> SystemBuilder::readConeTwistConstraint() {
 	auto bodyAName = IDStr(m_reader->getAttribute("bodyA"));
 	auto bodyBName = IDStr(m_reader->getAttribute("bodyB"));
 	auto clsname = IDStr(m_reader->getAttribute("template", ""));
 
-	BSOSBone *bodyA = nullptr, *bodyB = nullptr;
+	PreviewBone *bodyA = nullptr, *bodyB = nullptr;
 	if (!findBones(bodyAName, bodyBName, bodyA, bodyB)) {
 		return nullptr;
 	}

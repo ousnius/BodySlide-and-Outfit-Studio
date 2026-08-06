@@ -27,7 +27,7 @@ BodySlide and Outfit Studio, a tool to convert, create, and customize outfits an
 * [nifly](https://github.com/ousnius/nifly): C++ NIF library for the NetImmerse File Format (NetImmerse, Gamebryo, Creation Engine).
 * [NiflySharp](https://github.com/ousnius/NiflySharp): Native C# / .NET version of nifly that uses source generation based on [nifxml](https://github.com/niftools/nifxml).
 * [Faster HDT-SMP (FSMP)](https://github.com/DaymareOn/hdtSMP64): Skinned mesh physics for Skyrim SE/AE/VR, maintained by DaydreamingDay / DaymareOn, forked from [Karonar1](https://github.com/Karonar1/hdtSMP64) and [aers](https://github.com/aers/hdtSMP64), from the original [work](https://github.com/HydrogensaysHDT/hdt-skyrimse-mods) by HydrogensaysHDT.
-  Outfit Studio's physics preview is a port of its `hdtSkinnedMesh` core (GPL-3.0, like this project) so it simulates the same physics XML files with the same behavior. See [src/physics/hdt/README.md](src/physics/hdt/README.md) for the port notes.
+  The physics preview in BodySlide and Outfit Studio is a port of its `hdtSkinnedMesh` core (GPL-3.0, like this project) so it simulates the same physics XML files with the same behavior. See [src/physics/hdt/README.md](src/physics/hdt/README.md) for the port notes.
 
 **Libraries used:**
 * [wxWidgets](https://wxwidgets.org/)
