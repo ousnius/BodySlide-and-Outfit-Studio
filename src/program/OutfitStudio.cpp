@@ -192,6 +192,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("importMask"), OutfitStudioFrame::OnImportMask)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("posePane"), OutfitStudioFrame::OnPaneCollapse)
+	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("physicsPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("animationPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("notesPane"), OutfitStudioFrame::OnPaneCollapse)
 	EVT_CHOICE(XRCID("cPoseBone"), OutfitStudioFrame::OnPoseBoneChanged)
@@ -213,6 +214,11 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("resetAllPose"), OutfitStudioFrame::OnResetAllPose)
 	EVT_BUTTON(XRCID("poseToMesh"), OutfitStudioFrame::OnPoseToMesh)
 	EVT_CHECKBOX(XRCID("cbPose"), OutfitStudioFrame::OnPoseCheckBox)
+	EVT_CHECKBOX(XRCID("cbPhysics"), OutfitStudioFrame::OnPhysicsCheckBox)
+	EVT_CHECKBOX(XRCID("cbPhysicsVis"), OutfitStudioFrame::OnPhysicsVisCheckBox)
+	EVT_COMMAND_SCROLL(XRCID("physicsWindSlider"), OutfitStudioFrame::OnPhysicsWindSlider)
+	EVT_CHOICE(XRCID("physicsWindDir"), OutfitStudioFrame::OnPhysicsWindDir)
+	EVT_TIMER(PHYSICS_TIMER, OutfitStudioFrame::OnPhysicsTimer)
 
 	EVT_COMBOBOX(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
 	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
@@ -1355,8 +1361,10 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
 	partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
 	lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
+	toolScroll = dynamic_cast<wxScrolledWindow*>(FindWindowByName("toolScroll"));
 	masksPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("masksPane"));
 	posePane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("posePane"));
+	physicsPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("physicsPane"));
 	animationPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("animationPane"));
 	notesPane = dynamic_cast<wxCollapsiblePane*>(FindWindowByName("notesPane"));
 	projectNotes = (wxTextCtrl*)FindWindowByName("projectNotes");
@@ -1477,6 +1485,10 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	if (editPanel)
 		editPanel->SetBackgroundColour(wxColour(112, 112, 112));
 
+	// Dragging the splitter sash changes how much of the tool area fits.
+	if (wxWindow* bottomSplitPanel = FindWindowByName("bottomSplitPanel"))
+		bottomSplitPanel->Bind(wxEVT_SIZE, &OutfitStudioFrame::OnBottomPanelResize, this);
+
 	cXMirrorBone = (wxChoice*)FindWindowByName("cXMirrorBone");
 	cPoseBone = (wxChoice*)FindWindowByName("cPoseBone");
 	rxPoseSlider = (wxSlider*)FindWindowByName("rxPoseSlider");
@@ -1494,7 +1506,17 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	tzPoseText = (wxTextCtrl*)FindWindowByName("tzPoseText");
 	scPoseText = (wxTextCtrl*)FindWindowByName("scPoseText");
 	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
+	cbPhysics = (wxCheckBox*)FindWindowByName("cbPhysics");
+	cbPhysicsVis = (wxCheckBox*)FindWindowByName("cbPhysicsVis");
+	physicsWindSlider = (wxSlider*)FindWindowByName("physicsWindSlider");
+	physicsWindDir = (wxChoice*)FindWindowByName("physicsWindDir");
 	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
+
+	// Nothing is loaded yet, and only meshes that reference a physics XML can be
+	// simulated: UpdatePhysicsControlsVisibility reveals the pane again when one
+	// shows up. In a build without Bullet that never happens.
+	if (physicsPane)
+		physicsPane->Hide();
 
 	cAnimationName = (wxComboBox*)FindWindowByName("cAnimationName");
 	animPlayPauseButton = (wxButton*)FindWindowByName("animPlayPause");
@@ -1509,6 +1531,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	}
 
 	animPlaybackTimer.SetOwner(this, ANIM_PLAYBACK_TIMER);
+	physicsTimer.SetOwner(this, PHYSICS_TIMER);
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
@@ -1625,6 +1648,7 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 		editUV->Close();
 
 	if (project) {
+		ShutdownPhysics();
 		delete project;
 		project = nullptr;
 	}
@@ -2742,6 +2766,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 		bEditSlider = false;
 		MenuExitSliderEdit();
 
+		ShutdownPhysics();
 		delete project;
 		project = new OutfitProject(this);
 	}
@@ -2807,9 +2832,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 		projectNotes->SetValue(notesText);
 		notesPane->Collapse(notesText.empty());
 
-		wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
-		if (parentPanel)
-			parentPanel->Layout();
+		UpdateToolScrollLayout();
 	}
 
 	UpdateTitle();
@@ -4143,6 +4166,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
+	ShutdownPhysics();
 	delete project;
 	project = new OutfitProject(this);
 
@@ -4501,6 +4525,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	ResetProject();
 
+	ShutdownPhysics();
 	delete project;
 	project = new OutfitProject(this);
 
@@ -4588,9 +4613,7 @@ void OutfitStudioFrame::ClearProject() {
 		projectNotes->Clear();
 		notesPane->Collapse();
 
-		wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
-		if (parentPanel)
-			parentPanel->Layout();
+		UpdateToolScrollLayout();
 	}
 
 	project->outfitName.clear();
@@ -4862,6 +4885,7 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 
 	RefreshGUIWeightColors();
 	PoseToGUI();
+	UpdatePhysicsControlsVisibility();
 
 	glView->UpdateNodes();
 	glView->UpdateBones();
@@ -8036,12 +8060,15 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		cbNormalizeWeights->Show(false);
 		xMirrorBoneLabel->Show(false);
 		posePane->Show(false);
+		if (physicsPane)
+			physicsPane->Show(false);
 		if (animationPane)
 			animationPane->Show(false);
 		bonesFilter->GetParent()->Show(false);
 
 		if (project->bPose) {
 			project->bPose = false;
+			UpdatePhysicsState();
 			ApplyPose();
 		}
 
@@ -8141,6 +8168,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		cbNormalizeWeights->Show();
 		xMirrorBoneLabel->Show();
 		posePane->Show();
+		if (physicsPane)
+			physicsPane->Show(physicsAvailable);
 		if (animationPane)
 			animationPane->Show();
 		bonesFilter->GetParent()->Show();
@@ -8425,10 +8454,9 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	UpdateBrushSettings();
 
 	wxPanel* topSplitPanel = (wxPanel*)FindWindowByName("topSplitPanel");
-	wxPanel* bottomSplitPanel = (wxPanel*)FindWindowByName("bottomSplitPanel");
-
 	topSplitPanel->Layout();
-	bottomSplitPanel->Layout();
+
+	UpdateToolScrollLayout();
 
 	Refresh();
 }
@@ -13157,17 +13185,57 @@ void OutfitStudioFrame::OnImportMask(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnPaneCollapse(wxCollapsiblePaneEvent& WXUNUSED(event)) {
-	wxWindow* parentPanel = FindWindowByName("bottomSplitPanel");
-	parentPanel->Layout();
+	UpdateToolScrollLayout();
+}
+
+void OutfitStudioFrame::OnBottomPanelResize(wxSizeEvent& event) {
+	event.Skip();
+	UpdateToolScrollLayout();
+}
+
+void OutfitStudioFrame::UpdateToolScrollLayout() {
+	wxWindow* container = FindWindowByName("bottomSplitPanel");
+	if (!container)
+		return;
+
+	wxSizer* contentSizer = toolScroll ? toolScroll->GetSizer() : nullptr;
+	if (contentSizer) {
+		// The panes stack up taller than the panel once a few of them are open.
+		// Letting the tool area claim its full height would squeeze the slider
+		// list to nothing and cut off whatever no longer fits, so cap it here
+		// and let the rest scroll.
+		int reserved = FromDIP(120);
+		if (notesPane && notesPane->IsShown())
+			reserved += notesPane->GetEffectiveMinSize().GetHeight();
+
+		const int room = std::max(container->GetClientSize().GetHeight() - reserved, FromDIP(80));
+		const int height = std::min(contentSizer->CalcMin().GetHeight(), room);
+
+		if (toolScroll->GetMinHeight() != height)
+			toolScroll->SetMinSize(wxSize(-1, height));
+	}
+
+	container->Layout();
+
+	// Scrollbars follow the virtual size, which the capped minimum above does
+	// not change.
+	if (toolScroll)
+		toolScroll->FitInside();
 }
 
 void OutfitStudioFrame::ApplyPose() {
+	// While an animation plays there is no separate physics pump; the
+	// simulation advances in lockstep with each displayed frame, using the
+	// wall-clock time since the last step.
+	if (physicsRunning && animPlaying)
+		physics->Step(physicsClock.TakeElapsed());
+
 	// Asking for a BVH update queues the shape with wxGLPanel::OnIdle, which
 	// rebuilds a whole AABB tree over every triangle of it - far too expensive
 	// to pay once per displayed animation frame. The tree only serves picking
 	// and brush hit tests, both locked out during playback, so the rebuild is
 	// deferred to the single ApplyPose that PauseAnimationPlayback does.
-	const bool updateBVH = !animPlaying;
+	const bool updateBVH = !animPlaying && !physicsPumpActive;
 
 	for (auto& shape : project->GetWorkNif()->GetShapes()) {
 		std::vector<Vector3> verts;
@@ -13422,6 +13490,7 @@ void OutfitStudioFrame::ActivatePose(bool checked) {
 	project->bPose = checked;
 	poseToMesh->Enable(checked);
 
+	UpdatePhysicsState();
 	ApplyPose();
 }
 
@@ -13980,6 +14049,10 @@ void OutfitStudioFrame::StartAnimationPlayback() {
 	SetHighResolutionTimers(true);
 	Bind(wxEVT_IDLE, &OutfitStudioFrame::OnAnimIdle, this);
 	animPlaybackTimer.Start(AnimPlaybackTimerIntervalMS);
+
+	// Physics switches from its own pump to stepping in lockstep with the
+	// displayed animation frames (see ApplyPose)
+	UpdatePhysicsState();
 }
 
 void OutfitStudioFrame::PauseAnimationPlayback() {
@@ -14004,6 +14077,9 @@ void OutfitStudioFrame::PauseAnimationPlayback() {
 	// the pose sliders that were skipped while playing.
 	PoseToGUI();
 	UpdateAnimationPlayerUI();
+
+	// Back to the physics pump if physics stays enabled with pose mode on
+	UpdatePhysicsState();
 }
 
 void OutfitStudioFrame::ResetAnimationList() {
@@ -14049,6 +14125,7 @@ void OutfitStudioFrame::SetAnimationPlaybackLock(bool locked) {
 															masksPane,
 															notesPane,
 															posePane,
+															physicsPane,
 															FindWindow(XRCID("cbFixedWeight")),
 															FindWindow(XRCID("cbNormalizeWeights")),
 															// The player itself stays usable; only the
@@ -14158,6 +14235,11 @@ void OutfitStudioFrame::OnAnimFrameSlider(wxScrollEvent& event) {
 	if (!GetSelectedAnimation())
 		return;
 
+	// Seeking teleports the pose; re-seat the physics bodies on it instead of
+	// letting them interpret the jump as a huge velocity.
+	if (physicsRunning)
+		physics->ResetDynamics();
+
 	ApplyAnimationFrame(std::max(event.GetPosition(), 0), !animPlaying);
 
 	// Seeking moves the playhead, so playback has to continue from there.
@@ -14199,6 +14281,241 @@ void OutfitStudioFrame::OnAnimIdle(wxIdleEvent& event) {
 		wxMilliSleep(1);
 	else
 		PumpAnimationPlayback();
+
+	event.RequestMore();
+}
+
+void OutfitStudioFrame::InjectPhysicsCameraYaw(float deltaDegrees) {
+	if (physicsRunning)
+		physics->InjectCameraYaw(deltaDegrees);
+}
+
+void OutfitStudioFrame::OnPhysicsCheckBox(wxCommandEvent& e) {
+	// Physics only simulates while posing or playing; make checking the box
+	// take effect immediately by enabling pose mode along with it.
+	if (e.IsChecked() && !project->bPose && !animPlaying)
+		ActivatePose(true);
+	else
+		UpdatePhysicsState();
+}
+
+void OutfitStudioFrame::OnPhysicsVisCheckBox(wxCommandEvent& e) {
+	if (physics && physicsRunning) {
+		physics->UpdateDebugVis(glView->gls, e.IsChecked());
+		glView->Render();
+	}
+}
+
+void OutfitStudioFrame::OnPhysicsWindSlider(wxScrollEvent& WXUNUSED(e)) {
+	ApplyPhysicsWind();
+}
+
+void OutfitStudioFrame::OnPhysicsWindDir(wxCommandEvent& WXUNUSED(e)) {
+	ApplyPhysicsWind();
+}
+
+void OutfitStudioFrame::ApplyPhysicsWind() {
+	if (!physics)
+		return;
+
+	// The choice control lists Physics::WindDirectionNames() in order
+	if (physicsWindDir)
+		physics->SetWindDirection(Physics::WindDirectionFromIndex(physicsWindDir->GetSelection()));
+
+	if (physicsWindSlider)
+		physics->SetWindStrength(physicsWindSlider->GetValue() / 100.0f);
+}
+
+void OutfitStudioFrame::UpdatePhysicsControlsVisibility() {
+	if (!cbPhysics || !physicsPane)
+		return;
+
+	const bool available = project && Physics::HasPhysicsLinks(project->GetWorkNif(), project->shapePhysicsFiles);
+	if (available == physicsAvailable)
+		return;
+
+	physicsAvailable = available;
+
+	// Deleting the last shape with physics while it simulates has to stop it,
+	// and UpdatePhysicsState only ever starts physics for a checked box
+	if (!available)
+		cbPhysics->SetValue(false);
+
+	// The pane belongs to the bones tab; leaving it shows nothing regardless.
+	physicsPane->Show(available && currentTabButton == boneTabButton);
+
+	if (!available)
+		UpdatePhysicsState();
+
+	UpdateToolScrollLayout();
+}
+
+void OutfitStudioFrame::ShutdownPhysics() {
+	StopPhysicsPump();
+	physicsRunning = false;
+
+	if (project)
+		project->physicsPose = nullptr;
+
+	if (physics) {
+		if (glView)
+			physics->UpdateDebugVis(glView->gls, false);
+		physics->Clear();
+	}
+
+	if (cbPhysics)
+		cbPhysics->SetValue(false);
+
+	if (cbPhysicsVis) {
+		cbPhysicsVis->SetValue(false);
+		cbPhysicsVis->Enable(false);
+	}
+}
+
+void OutfitStudioFrame::UpdatePhysicsState() {
+	const bool desired = cbPhysics && cbPhysics->IsChecked() && project && (project->bPose || animPlaying);
+
+	if (desired && !physicsRunning) {
+		if (!physics)
+			physics = std::make_unique<Physics::Controller>();
+
+		std::vector<std::string> warnings;
+		OutfitProject* proj = project;
+		size_t systemCount = physics->BuildFromNif(
+			project->GetWorkNif(),
+			project->GetWorkAnim(),
+			[proj](const std::string& xmlPath) { return proj->GetPhysicsXmlStream(xmlPath); },
+			project->shapePhysicsFiles,
+			warnings);
+
+		for (auto& warning : warnings)
+			wxLogWarning("Physics: %s", warning);
+
+		if (systemCount == 0) {
+			statusBar->SetStatusText(_("No physics XMLs found in loaded meshes"));
+			physics->Clear();
+
+			// Nothing is simulating, so the box must not claim otherwise
+			cbPhysics->SetValue(false);
+			return;
+		}
+
+		statusBar->SetStatusText(wxString::Format(_("Physics active: %zu system(s)"), systemCount));
+		project->physicsPose = &physics->PoseOverrides();
+		physics->ResetDynamics();
+		physicsRunning = true;
+
+		// The step clock must be valid for the lockstep path too, where
+		// StartPhysicsPump never runs
+		physicsClock.Reset(GetAnimTargetFps());
+
+		// The controller is fresh; re-apply the current wind settings
+		ApplyPhysicsWind();
+
+		if (cbPhysicsVis)
+			cbPhysicsVis->Enable();
+
+		if (!animPlaying)
+			StartPhysicsPump();
+	}
+	else if (!desired && physicsRunning) {
+		// Drop the overrides before the pose is applied again, or the frame
+		// that is supposed to restore the user pose still shows the simulated
+		// one.
+		physicsRunning = false;
+		project->physicsPose = nullptr;
+		physics->UpdateDebugVis(glView->gls, false);
+		physics->Clear();
+		StopPhysicsPump();
+
+		if (cbPhysicsVis) {
+			cbPhysicsVis->SetValue(false);
+			cbPhysicsVis->Enable(false);
+		}
+
+		// Restore the clean user pose without the physics overrides. Also
+		// catches the BVH up with what is displayed: the pump skipped the
+		// rebuild on every tick.
+		ApplyPose();
+	}
+	else if (physicsRunning) {
+		// Animation playback took over or ended: while playing, ApplyPose
+		// steps the simulation in lockstep instead of the pump.
+		if (animPlaying && physicsPumpActive)
+			StopPhysicsPump();
+		else if (!animPlaying && !physicsPumpActive)
+			StartPhysicsPump();
+	}
+
+	// A checked box always means "simulating". Anything that stopped physics -
+	// leaving the bones tab, turning off pose mode, ending playback - clears
+	// it instead of leaving a checked box that does nothing.
+	if (cbPhysics && !physicsRunning)
+		cbPhysics->SetValue(false);
+}
+
+void OutfitStudioFrame::StartPhysicsPump() {
+	if (physicsPumpActive)
+		return;
+
+	physicsPumpActive = true;
+	physicsClock.Reset(GetAnimTargetFps());
+	SetHighResolutionTimers(true);
+	Bind(wxEVT_IDLE, &OutfitStudioFrame::OnPhysicsIdle, this);
+	physicsTimer.Start(Physics::PumpTimerIntervalMS);
+}
+
+void OutfitStudioFrame::StopPhysicsPump() {
+	if (!physicsPumpActive)
+		return;
+
+	physicsTimer.Stop();
+	Unbind(wxEVT_IDLE, &OutfitStudioFrame::OnPhysicsIdle, this);
+	SetHighResolutionTimers(false);
+	physicsPumpActive = false;
+}
+
+void OutfitStudioFrame::PumpPhysics() {
+	if (!physicsPumpActive || !physicsRunning)
+		return;
+
+	float dtSeconds = 0.0f;
+	if (!physicsClock.StepDue(dtSeconds))
+		return;
+
+	physics->Step(dtSeconds);
+
+	const auto& affectedShapes = physics->AffectedShapes();
+	for (auto& shape : project->GetWorkNif()->GetShapes()) {
+		if (affectedShapes.count(shape->name.get()) == 0)
+			continue;
+
+		std::vector<Vector3> verts;
+		project->GetLiveVerts(shape, verts);
+
+		// BVH rebuilds only serve picking and brushes; way too expensive per
+		// frame. StopPhysicsPump does one full ApplyPose to catch up.
+		glView->UpdateMeshVertices(shape->name.get(), &verts, false, true, false);
+	}
+
+	if (cbPhysicsVis && cbPhysicsVis->IsChecked())
+		physics->UpdateDebugVis(glView->gls, true);
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnPhysicsTimer(wxTimerEvent& WXUNUSED(event)) {
+	PumpPhysics();
+}
+
+void OutfitStudioFrame::OnPhysicsIdle(wxIdleEvent& event) {
+	if (!physicsPumpActive)
+		return;
+
+	if (physicsClock.UntilDue() > 1500)
+		wxMilliSleep(1);
+	else
+		PumpPhysics();
 
 	event.RequestMore();
 }
@@ -17293,8 +17610,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		SetFocus();
 
 	// Mouse motion floods the message queue, which starves both the idle events
-	// and the WM_TIMER that drive playback, so tick it from here as well.
+	// and the WM_TIMER that drive playback and physics, so tick them from here
+	// as well.
 	os->PumpAnimationPlayback();
+	os->PumpPhysics();
 
 	bool cursorExists = false;
 	int x;
@@ -17331,8 +17650,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.PanCamera(x - lastX, y - lastY);
 		}
 		else {
-			gls.TurnTableCamera(x - lastX);
+			float yawDegrees = gls.TurnTableCamera(x - lastX);
 			gls.PitchCamera(y - lastY);
+			os->InjectPhysicsCameraYaw(yawDegrees);
 			ShowRotationCenter();
 		}
 

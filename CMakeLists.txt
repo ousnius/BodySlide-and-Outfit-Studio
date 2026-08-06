@@ -11,6 +11,7 @@ if(MSVC AND NOT DEFINED CMAKE_MSVC_RUNTIME_LIBRARY)
 endif()
 
 option(BSOS_ENABLE_FBXSDK "Build Outfit Studio with Autodesk FBX SDK support when available" ON)
+option(BSOS_ENABLE_BULLET "Build with Bullet physics preview support when available" ON)
 option(BSOS_BUILD_TESTS "Build Catch2-based tests" OFF)
 set(BSOS_FBXSDK_ROOT "" CACHE PATH "Root directory of the Autodesk FBX SDK")
 set(BSOS_TEST_MSVC_RUNTIME_LIBRARY "" CACHE STRING "MSVC runtime library override for BSOSTests")
@@ -214,7 +215,63 @@ else()
 	message(STATUS "FBX SDK support disabled")
 endif()
 
+set(BSOS_HAVE_BULLET OFF)
+if(BSOS_ENABLE_BULLET)
+	# vcpkg and modern Bullet installs provide a config package; classic
+	# installs (e.g. libbullet-dev) are covered by CMake's FindBullet module.
+	# A Bullet source build installed beside the repository (like the
+	# wxWidgets/FBX SDK convention the vcxproj files use) is found without
+	# any configuration.
+	find_package(Bullet CONFIG QUIET HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../bullet3/install")
+	if(NOT BULLET_FOUND)
+		find_package(Bullet QUIET)
+	endif()
+
+	if(BULLET_FOUND)
+		set(BSOS_HAVE_BULLET ON)
+		# BULLET_INCLUDE_DIRS may be relative to BULLET_ROOT_DIR depending on
+		# how the package was built; normalize to absolute paths.
+		set(BSOS_BULLET_INCLUDE_DIRS)
+		foreach(bullet_include_dir IN LISTS BULLET_INCLUDE_DIRS)
+			if(NOT IS_ABSOLUTE "${bullet_include_dir}" AND DEFINED BULLET_ROOT_DIR)
+				set(bullet_include_dir "${BULLET_ROOT_DIR}/${bullet_include_dir}")
+			endif()
+			list(APPEND BSOS_BULLET_INCLUDE_DIRS "${bullet_include_dir}")
+		endforeach()
+		message(STATUS "Bullet found: ${BSOS_BULLET_INCLUDE_DIRS}")
+	else()
+		message(STATUS "Bullet not found; building without physics preview support")
+	endif()
+else()
+	message(STATUS "Bullet physics preview support disabled")
+endif()
+
+# Physics preview sources are always listed; their bodies compile to empty
+# translation units unless USE_BULLET is defined (same convention as
+# FBXWrangler.cpp with USE_FBXSDK), so builds without Bullet stay valid. Both
+# applications preview physics, so they are part of the common sources.
+set(BSOS_PHYSICS_SOURCES
+	src/physics/Controller.cpp
+	src/physics/DebugDraw.cpp
+	src/physics/SystemBuilder.cpp
+	src/physics/hdt/XmlReader.cpp
+	src/physics/hdt/hdtBoneScaleConstraint.cpp
+	src/physics/hdt/hdtCollider.cpp
+	src/physics/hdt/hdtConeTwistConstraint.cpp
+	src/physics/hdt/hdtDispatcher.cpp
+	src/physics/hdt/hdtGeneric6DofConstraint.cpp
+	src/physics/hdt/hdtSkinnedMeshAlgorithm.cpp
+	src/physics/hdt/hdtSkinnedMeshBody.cpp
+	src/physics/hdt/hdtSkinnedMeshBone.cpp
+	src/physics/hdt/hdtSkinnedMeshShape.cpp
+	src/physics/hdt/hdtSkinnedMeshSystem.cpp
+	src/physics/hdt/hdtSkinnedMeshWorld.cpp
+	src/physics/hdt/hdtStiffSpringConstraint.cpp
+	src/physics/hdt/hdtVertex.cpp
+)
+
 set(BSOS_COMMON_SOURCES
+	${BSOS_PHYSICS_SOURCES}
 	lib/FSEngine/FSBSA.cpp
 	lib/FSEngine/FSEngine.cpp
 	lib/FSEngine/FSManager.cpp
@@ -256,6 +313,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/SliderManager.cpp
 	src/components/SliderPresets.cpp
 	src/components/SliderSet.cpp
+	src/files/GameDataStream.cpp
 	src/files/MaterialFile.cpp
 	src/files/ResourceLoader.cpp
 	src/files/TriFile.cpp
@@ -475,6 +533,64 @@ if(BSOS_HAVE_FBXSDK)
 	if(NOT FBXSDK_ZLIB_LIBRARY_DEBUG AND NOT FBXSDK_ZLIB_LIBRARY_RELEASE AND TARGET ZLIB::ZLIB)
 		target_link_libraries(OutfitStudio PRIVATE ZLIB::ZLIB)
 	endif()
+endif()
+
+if(BSOS_HAVE_BULLET)
+	# BT_USE_SSE_IN_API exposes Bullet's SSE-based btVector3 API that the ported
+	# physics code prefers. It only adds inline members (the storage is SSE-backed
+	# either way), so it does not have to match how the Bullet libraries
+	# themselves were compiled. It has no effect unless btScalar.h also turns on
+	# BT_USE_SSE, which it does on Windows and macOS but not on Linux; the port
+	# falls back to explicit conversions there (see hdt::toSimd in
+	# hdtBulletHelper.h).
+	foreach(bullet_target OutfitStudio BodySlide)
+		target_compile_definitions(${bullet_target} PRIVATE USE_BULLET BT_USE_SSE_IN_API)
+		target_include_directories(${bullet_target} SYSTEM PRIVATE ${BSOS_BULLET_INCLUDE_DIRS})
+	endforeach()
+
+	# The port uses SSE4.1 intrinsics throughout, as the MSVC build does through
+	# BT_ALLOW_SSE4. GCC and Clang only accept those with a matching -m flag, and
+	# reject them in always_inline functions otherwise, so raise the instruction
+	# set for the physics sources alone.
+	if(NOT MSVC)
+		include(CheckCXXCompilerFlag)
+		check_cxx_compiler_flag("-msse4.1" BSOS_HAVE_SSE41_FLAG)
+		if(BSOS_HAVE_SSE41_FLAG)
+			set_source_files_properties(${BSOS_PHYSICS_SOURCES} PROPERTIES COMPILE_OPTIONS "-msse4.1")
+		endif()
+	endif()
+
+	# The config package (BulletConfig.cmake) exports bare library names plus
+	# a library directory; the FindBullet module exports full paths and no
+	# directory. Normalize the directory the same way as the include dirs.
+	set(BSOS_BULLET_LINK_LIBRARIES ${BULLET_LIBRARIES})
+
+	if(DEFINED BULLET_LIBRARY_DIRS)
+		set(BSOS_BULLET_LIBRARY_DIRS)
+		foreach(bullet_library_dir IN LISTS BULLET_LIBRARY_DIRS)
+			if(NOT IS_ABSOLUTE "${bullet_library_dir}" AND DEFINED BULLET_ROOT_DIR)
+				set(bullet_library_dir "${BULLET_ROOT_DIR}/${bullet_library_dir}")
+			endif()
+			list(APPEND BSOS_BULLET_LIBRARY_DIRS "${bullet_library_dir}")
+
+			# A Bullet source install keeps "_Debug"-suffixed debug variants
+			# next to the release libraries; they must be picked for Debug
+			# builds so the MSVC runtime (/MTd) matches. vcpkg installs have
+			# no suffix and are handled by its toolchain instead.
+			if(MSVC AND EXISTS "${bullet_library_dir}/BulletDynamics_Debug.lib")
+				set(BSOS_BULLET_LINK_LIBRARIES
+					"$<IF:$<CONFIG:Debug>,BulletDynamics_Debug,BulletDynamics>"
+					"$<IF:$<CONFIG:Debug>,BulletCollision_Debug,BulletCollision>"
+					"$<IF:$<CONFIG:Debug>,LinearMath_Debug,LinearMath>"
+				)
+			endif()
+		endforeach()
+		target_link_directories(OutfitStudio PRIVATE ${BSOS_BULLET_LIBRARY_DIRS})
+		target_link_directories(BodySlide PRIVATE ${BSOS_BULLET_LIBRARY_DIRS})
+	endif()
+
+	target_link_libraries(OutfitStudio PRIVATE ${BSOS_BULLET_LINK_LIBRARIES})
+	target_link_libraries(BodySlide PRIVATE ${BSOS_BULLET_LINK_LIBRARIES})
 endif()
 
 if(MSVC)

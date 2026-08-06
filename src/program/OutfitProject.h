@@ -200,6 +200,17 @@ public:
 	std::unordered_map<std::string, std::vector<std::string>> shapeTextures;
 	std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
 
+	// Physics XML files ("HDT Skinned Mesh Physics Object" extra data) that
+	// were linked to each shape by the NIF it came from. Only the first NIF
+	// loaded keeps its node hierarchy in the work NIF; every later file
+	// contributes shapes alone, so the link - which the game stores on the
+	// root node - has to be captured before the merge or it is lost.
+	std::unordered_map<std::string, std::vector<std::string>> shapePhysicsFiles;
+
+	// Records the physics XML files linked to the given shapes of a NIF that
+	// is about to be merged into the work NIF, keyed by shape name.
+	void CapturePhysicsFiles(nifly::NifFile& nif, const std::vector<nifly::NiShape*>& shapes);
+
 	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
 	OutfitProject(OutfitStudioFrame* inOwner = nullptr);
 	~OutfitProject();
@@ -217,6 +228,11 @@ public:
 	wxString mSFMorphPath;
 	wxString mSFMorphTargetShape;
 	bool bPose = false;
+
+	// Physics preview: replacement pose-to-global transforms for bones driven
+	// by the simulation, or nullptr while physics is off. Owned by the
+	// physics controller; consumed by GetLiveVerts' skinning.
+	const AnimPoseOverrideMap* physicsPose = nullptr;
 
 	// Reference source info (remembered when reference is loaded from an OSP)
 	std::string mRefProjectFile;    // OSP file path relative to project dir
@@ -241,6 +257,11 @@ public:
 
 	nifly::NifFile* GetWorkNif() { return &workNif; }
 	AnimInfo* GetWorkAnim() { return &workAnim; }
+
+	// Resolves a physics XML path referenced by a "HDT Skinned Mesh Physics
+	// Object" extra data to a readable stream (loose game data folder file,
+	// relative to the project's input NIF, or from loaded archives).
+	std::unique_ptr<std::istream> GetPhysicsXmlStream(const std::string& xmlPath);
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>>& GetClothData() { return clothData; }
 
 	nifly::NiShape* GetBaseShape() { return baseShape; }

@@ -258,7 +258,8 @@ public:
 
 	void RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, unsigned int h);
 
-	void TurnTableCamera(int dScreenX);
+	// Returns the applied rotation in degrees
+	float TurnTableCamera(int dScreenX);
 	void PitchCamera(int dScreenY);
 	void PanCamera(int dScreenX, int dScreenY);
 	void DollyCamera(int dAmount);

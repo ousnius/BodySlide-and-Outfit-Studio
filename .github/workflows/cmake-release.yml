@@ -46,7 +46,7 @@ jobs:
           $vcpkgCache = Join-Path $env:GITHUB_WORKSPACE "vcpkg-binary-cache"
           New-Item -ItemType Directory -Force -Path $vcpkgCache | Out-Null
           $env:VCPKG_BINARY_SOURCES = "clear;files,$vcpkgCache,readwrite"
-          & (Join-Path $vcpkgRoot "vcpkg.exe") install "wxwidgets[debug-support]:$env:VCPKG_TARGET_TRIPLET" "catch2:$env:VCPKG_TARGET_TRIPLET"
+          & (Join-Path $vcpkgRoot "vcpkg.exe") install "wxwidgets[debug-support]:$env:VCPKG_TARGET_TRIPLET" "catch2:$env:VCPKG_TARGET_TRIPLET" "bullet3:$env:VCPKG_TARGET_TRIPLET"
 
       - name: Configure CMake
         shell: pwsh
@@ -147,6 +147,7 @@ jobs:
             directx-headers-dev \
             g++ \
             gcc \
+            libbullet-dev \
             libglew-dev \
             libgl1-mesa-dev \
             libglu1-mesa-dev \

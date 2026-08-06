@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/RefTemplates.h"
 #include "../components/TweakBrush.h"
 #include "../components/UndoHistory.h"
+#include "../physics/Controller.h"
+#include "../physics/PumpClock.h"
 #include "../render/GLSurface.h"
 #include "../ui/WeightCopyDialog.h"
 #include "../ui/wxSliderPanel.h"
@@ -71,6 +73,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, SF };
 
 #define ANIM_PLAYBACK_TIMER 300
+#define PHYSICS_TIMER 301
 
 struct MergeCheckErrors;
 
@@ -978,6 +981,17 @@ public:
 	// a tick count, so the speed stays correct however often it arrives.
 	void PumpAnimationPlayback();
 
+	// Feeds a horizontal camera rotation into the physics preview so cloth
+	// and hair react as if the character turned under a fixed camera. No-op
+	// while physics is not simulating.
+	void InjectPhysicsCameraYaw(float deltaDegrees);
+
+	// The per-frame physics tick while physics runs without animation
+	// playback; while an animation plays, ApplyPose steps the simulation in
+	// lockstep instead. Internally paced, so like PumpAnimationPlayback it is
+	// safe to call from any event source at any rate.
+	void PumpPhysics();
+
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;
 	OutfitProject* project = nullptr;
@@ -1020,6 +1034,10 @@ public:
 	wxTextCtrl* tzPoseText = nullptr;
 	wxTextCtrl* scPoseText = nullptr;
 	wxCheckBox* cbPose = nullptr;
+	wxCheckBox* cbPhysics = nullptr;
+	wxCheckBox* cbPhysicsVis = nullptr;
+	wxSlider* physicsWindSlider = nullptr;
+	wxChoice* physicsWindDir = nullptr;
 	wxButton* poseToMesh = nullptr;
 	wxComboBox* cAnimationName = nullptr;
 	wxButton* animPlayPauseButton = nullptr;
@@ -1049,8 +1067,10 @@ public:
 	wxSlider* fovSlider = nullptr;
 	wxCheckBox* cbDepthClip = nullptr;
 	wxBrushSettingsPopupTransient* brushSettingsPopupTransient = nullptr;
+	wxScrolledWindow* toolScroll = nullptr;
 	wxCollapsiblePane* masksPane = nullptr;
 	wxCollapsiblePane* posePane = nullptr;
+	wxCollapsiblePane* physicsPane = nullptr;
 	wxCollapsiblePane* animationPane = nullptr;
 	wxCollapsiblePane* notesPane = nullptr;
 	wxTextCtrl* projectNotes = nullptr;
@@ -1778,6 +1798,10 @@ private:
 	void OnExportMask(wxCommandEvent& event);
 	void OnImportMask(wxCommandEvent& event);
 	void OnPaneCollapse(wxCollapsiblePaneEvent& event);
+	void OnBottomPanelResize(wxSizeEvent& event);
+	// Re-lays out the bottom panel, capping the scrolled tool area so the
+	// slider list below it keeps its room no matter how many panes are open.
+	void UpdateToolScrollLayout();
 	void ApplyPose();
 
 public:
@@ -1880,6 +1904,41 @@ private:
 	// Scratch pose for interpolated frames, kept around so that playback does
 	// not reallocate the bone list every tick.
 	PoseData animBlendPose;
+
+	// Physics preview (HDT-SMP): simulation runs while the physics checkbox
+	// is set and either pose mode is active or an animation is playing.
+	// Single authority over building/tearing down the simulation; call after
+	// anything that changes one of those conditions or the loaded meshes.
+	void UpdatePhysicsState();
+	// Shows the physics controls only while the loaded meshes reference a
+	// physics XML, since there is nothing to simulate otherwise. Stops a running
+	// simulation when the last of them goes away.
+	void UpdatePhysicsControlsVisibility();
+	// Hard teardown for project unload/close: stops the pump and drops all
+	// simulation state without touching the (possibly dying) project meshes.
+	void ShutdownPhysics();
+	void StartPhysicsPump();
+	void StopPhysicsPump();
+	void OnPhysicsCheckBox(wxCommandEvent& event);
+	void OnPhysicsVisCheckBox(wxCommandEvent& event);
+	void OnPhysicsWindSlider(wxScrollEvent& event);
+	void OnPhysicsWindDir(wxCommandEvent& event);
+	// Pushes the wind controls into the simulation; the controller is built
+	// fresh every time physics starts, so it has no idea of either value.
+	void ApplyPhysicsWind();
+	void OnPhysicsTimer(wxTimerEvent& event);
+	void OnPhysicsIdle(wxIdleEvent& event);
+
+	std::unique_ptr<Physics::Controller> physics;
+	// Whether any loaded mesh references a physics XML. The physics pane only
+	// exists on the bones tab, so showing it takes both this and the tab.
+	bool physicsAvailable = false;
+	wxTimer physicsTimer;
+	// Simulation built and active (either pump mode or animation lockstep).
+	bool physicsRunning = false;
+	// Own idle+timer pump bound (pose mode without animation playback).
+	bool physicsPumpActive = false;
+	Physics::PumpClock physicsClock;
 
 	wxDECLARE_EVENT_TABLE();
 };

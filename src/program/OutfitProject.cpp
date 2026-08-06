@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "../components/SliderDataFileUtil.h"
 #include "../components/WeightNorm.h"
 #include "../files/FBXWrangler.h"
+#include "../files/GameDataStream.h"
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
@@ -300,11 +301,7 @@ OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 	owner = inOwner;
 	workAnim.SetRefNif(&workNif);
 
-	std::string defSkelFile = Config["Anim/DefaultSkeletonReference"];
-	if (wxFileName(wxString::FromUTF8(defSkelFile)).IsRelative())
-		LoadSkeletonReference(Config["AppDir"] + PathSepStr + defSkelFile);
-	else
-		LoadSkeletonReference(defSkelFile);
+	LoadDefaultSkeletonReference();
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR)
@@ -2147,51 +2144,8 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 	}
 
 	if (bPose) {
-		int nv = outVerts.size();
-		std::vector<Vector3> pv(nv);
-		std::vector<float> wv(nv, 0.0f);
-		AnimSkin& animSkin = workAnim.shapeSkinning[shape->name.get()];
-		MatTransform globalToSkin = workAnim.GetTransformGlobalToShape(shape);
 		bool isSF = workNif.GetHeader().GetVersion().IsSF();
-
-		for (auto& boneNamesIt : animSkin.boneNames) {
-			AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
-			if (animB) {
-				AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
-
-				// Compose transform: skin -> (posed) bone -> global -> skin
-				MatTransform transform = globalToSkin.ComposeTransforms(animB->xformPoseToGlobal.ComposeTransforms(animW.xformSkinToBone));
-
-				if (isSF)
-					transform.translation *= sfHavokScale;
-
-				if (transform.IsNearlyEqualTo(MatTransform()))
-					transform.Clear();
-
-				// Add weighted contributions to vertex for this bone
-				for (auto& wIt : animW.weights) {
-					int ind = wIt.first;
-					float w = wIt.second;
-					pv[ind] += w * transform.ApplyTransform(outVerts[ind]);
-					wv[ind] += w;
-				}
-			}
-		}
-
-		// Check if total weight for each vertex was 1
-		for (int ind = 0; ind < nv; ++ind) {
-			if (wv[ind] < EPSILON) // If weights are missing for this vertex
-				pv[ind] = outVerts[ind];
-			else if (std::fabs(wv[ind] - 1.0f) >= EPSILON) // If weights are bad for this vertex
-				pv[ind] /= wv[ind];
-			// else do nothing because weights totaled 1.
-
-			// New position is nearly equal to old position (reduce noise)
-			if (pv[ind].IsNearlyEqualTo(outVerts[ind]))
-				pv[ind] = outVerts[ind];
-		}
-
-		outVerts.swap(pv);
+		ApplySkinningToVerts(workAnim, shape, isSF, physicsPose, outVerts);
 	}
 }
 
@@ -3192,6 +3146,9 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		clothData[refFile] = cloth->Clone();
 
 	refNif.GetHeader().DeleteBlockByType("BSClothExtraData");
+
+	// Record physics XML links of the reference before it is merged in
+	CapturePhysicsFiles(refNif, {refShape});
 
 	if (workNif.IsValid()) {
 		// Copy only reference shape
@@ -5297,6 +5254,7 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 	owner->glView->DeleteMesh(shapeName);
 	shapeTextures.erase(shapeName);
 	shapeMaterialFiles.erase(shapeName);
+	shapePhysicsFiles.erase(shapeName);
 
 	if (IsBaseShape(shape)) {
 		morpher.UnlinkRefDiffData();
@@ -5308,6 +5266,48 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 
 	owner->ClearSelected(shape);
 	workNif.DeleteShape(shape);
+}
+
+void OutfitProject::CapturePhysicsFiles(NifFile& nif, const std::vector<NiShape*>& shapes) {
+	// HDT-SMP links a model to its physics XML with a NiStringExtraData named
+	// "HDT Skinned Mesh Physics Object". The game only reads it from the
+	// model's root node, so that is where it usually sits, but extra data
+	// further down the hierarchy is honored here as well.
+	static const std::string physicsExtraDataName = "hdt skinned mesh physics object";
+
+	auto collect = [&nif](NiObjectNET* obj, std::vector<std::string>& outFiles) {
+		for (auto& extraDataRef : obj->extraDataRefs) {
+			auto stringExtraData = nif.GetHeader().GetBlock<NiStringExtraData>(extraDataRef);
+			if (!stringExtraData)
+				continue;
+
+			if (ToLower(stringExtraData->name.get()) != physicsExtraDataName)
+				continue;
+
+			const std::string& xmlPath = stringExtraData->stringData.get();
+			if (!xmlPath.empty() && std::find(outFiles.begin(), outFiles.end(), xmlPath) == outFiles.end())
+				outFiles.push_back(xmlPath);
+		}
+	};
+
+	for (auto& shape : shapes) {
+		if (!shape)
+			continue;
+
+		std::vector<std::string> physicsFiles;
+		collect(shape, physicsFiles);
+
+		for (NiNode* node = nif.GetParentNode(shape); node; node = nif.GetParentNode(node))
+			collect(node, physicsFiles);
+
+		// Always overwrite: re-importing a file must not keep links of a shape
+		// of the same name that no longer has any.
+		std::string shapeName = shape->name.get();
+		if (physicsFiles.empty())
+			shapePhysicsFiles.erase(shapeName);
+		else
+			shapePhysicsFiles[shapeName] = std::move(physicsFiles);
+	}
 }
 
 void OutfitProject::CaptureShapeDeleteState(NiShape* shape, UndoStateShapeDelete& state) {
@@ -5359,6 +5359,10 @@ void OutfitProject::CaptureShapeDeleteState(NiShape* shape, UndoStateShapeDelete
 	auto mat = shapeMaterialFiles.find(state.shapeName);
 	if (mat != shapeMaterialFiles.end())
 		state.materialFile = mat->second;
+
+	auto physics = shapePhysicsFiles.find(state.shapeName);
+	if (physics != shapePhysicsFiles.end())
+		state.physicsFiles = physics->second;
 }
 
 NiShape* OutfitProject::RestoreDeletedShape(UndoStateShapeDelete& state) {
@@ -5409,6 +5413,9 @@ NiShape* OutfitProject::RestoreDeletedShape(UndoStateShapeDelete& state) {
 
 	if (state.materialFile.has_value())
 		shapeMaterialFiles[state.shapeName] = state.materialFile.value();
+
+	if (!state.physicsFiles.empty())
+		shapePhysicsFiles[state.shapeName] = state.physicsFiles;
 
 	// Restore base shape status if appropriate
 	if (restoreAsBase) {
@@ -5473,6 +5480,13 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 		auto value = mat->second;
 		shapeMaterialFiles.erase(mat);
 		shapeMaterialFiles[newShapeName] = value;
+	}
+
+	auto physics = shapePhysicsFiles.find(shapeName);
+	if (physics != shapePhysicsFiles.end()) {
+		auto value = physics->second;
+		shapePhysicsFiles.erase(physics);
+		shapePhysicsFiles[newShapeName] = value;
 	}
 
 	if (isBaseShape) {
@@ -6422,6 +6436,9 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 
 	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
+	// Record physics XML links of all shapes before they are merged in
+	CapturePhysicsFiles(nif, nif.GetShapes());
+
 	if (workNif.IsValid()) {
 		for (auto& s : nif.GetShapes()) {
 			std::string shapeName = s->name.get();
@@ -7038,21 +7055,8 @@ std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std
 	if (meshPath.size() < 5 || meshPath.compare(meshPath.size() - 5, 5, ".mesh") != 0)
 		meshPath += ".mesh";
 
-	// Try opening a loose file at the given path
-	auto tryOpenLoose = [](const std::string& fullPath) -> std::unique_ptr<std::istream> {
-		if (!PlatformUtil::FileExists(fullPath))
-			return nullptr;
-
-		auto fs = std::make_unique<std::fstream>();
-		PlatformUtil::OpenFileStream(*fs, fullPath, std::ios::in | std::ios::binary);
-		if (!fs->fail())
-			return fs;
-
-		return nullptr;
-	};
-
 	// 1) Loose file in GameDataPath
-	if (auto stream = tryOpenLoose(dir + meshPath))
+	if (auto stream = GameDataStream::OpenLoose(dir + meshPath))
 		return stream;
 
 	// 2) Beside the meshes folder (or NIF directory) of the loading NIF
@@ -7062,34 +7066,27 @@ std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std
 
 		auto meshesPos = nifDirLower.rfind("/meshes/");
 		if (meshesPos != std::string::npos) {
-			if (auto stream = tryOpenLoose(nifDir.substr(0, meshesPos + 1) + meshPath))
+			if (auto stream = GameDataStream::OpenLoose(nifDir.substr(0, meshesPos + 1) + meshPath))
 				return stream;
 		}
 		else {
 			auto lastSlash = nifDir.rfind('/');
 			if (lastSlash != std::string::npos) {
-				if (auto stream = tryOpenLoose(nifDir.substr(0, lastSlash + 1) + meshPath))
+				if (auto stream = GameDataStream::OpenLoose(nifDir.substr(0, lastSlash + 1) + meshPath))
 					return stream;
 			}
 		}
 	}
 
 	// 3) Search in archives
-	for (FSArchiveFile* archive : FSManager::archiveList()) {
-		if (archive && archive->hasFile(meshPath)) {
-			wxMemoryBuffer outData;
-			archive->fileContents(meshPath, outData);
-
-			if (!outData.IsEmpty()) {
-				auto contentStream = std::make_unique<std::istringstream>(
-					std::string(static_cast<char*>(outData.GetData()), outData.GetDataLen()), std::istringstream::binary);
-				if (!contentStream->fail())
-					return contentStream;
-			}
-		}
-	}
+	if (auto stream = GameDataStream::OpenArchive(meshPath))
+		return stream;
 
 	return nullptr;
+}
+
+std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::string& xmlPath) {
+	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
 }
 
 SFMaterialDatabase* OutfitProject::GetSFMaterialDatabase() {

@@ -817,963 +817,1067 @@
 													<orient>wxVERTICAL</orient>
 													<object class="sizeritem">
 														<option>0</option>
-														<flag>wxALL|wxEXPAND|wxLEFT</flag>
-														<border>2</border>
-														<object class="wxPanel" name="editPanel">
-															<style>wxTAB_TRAVERSAL</style>
+														<flag>wxEXPAND</flag>
+														<border>0</border>
+														<object class="wxScrolledWindow" name="toolScroll">
+															<style>wxVSCROLL|wxTAB_TRAVERSAL</style>
+															<bg>#707070</bg>
+															<scrollrate>0,18</scrollrate>
 															<object class="wxBoxSizer">
 																<orient>wxVERTICAL</orient>
 																<object class="sizeritem">
 																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>0</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>0</option>
-																			<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																			<border>5</border>
-																			<object class="wxStaticText" name="segmentTypeLabel">
-																				<fg>#ffffff</fg>
-																				<label>Type</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<border>5</border>
-																			<object class="wxChoice" name="segmentType">
-																				<selection>0</selection>
-																				<content>
-																					<item translate="0">Default</item>
-																					<item translate="0">1 | Head/Hair | 0x86b72980</item>
-																					<item translate="0">1 | Neck | 0x0155094f</item>
-																					<item translate="0">Human 2 | R-Up Arm | 0xb2e2764f</item>
-																					<item translate="0">Human 2 | R-Lo Arm | 0x6fc3fbb2</item>
-																					<item translate="0">Human 4 | L-Up Arm | 0xfc03dc25</item>
-																					<item translate="0">Human 4 | L-Lo Arm | 0x212251d8</item>
-																					<item translate="0">Human 5 | R-Up Thi | 0xbf3a3cc5</item>
-																					<item translate="0">Human 5 | R-Kne-Clf | 0x22324321</item>
-																					<item translate="0">Human 5 | R-Lo Ft.-Ank | 0xc7e6bc92</item>
-																					<item translate="0">Human 6 | L-Up Leg | 0x865d8d9e</item>
-																					<item translate="0">Human 6 | L-Kne-Clf | 0x4630dac2</item>
-																					<item translate="0">Human 6 | L-Lo Ft.-Ank | 0xa3e42571</item>
-																					<item translate="0">Feral Ghoul 2 | R-Up Arm | 0x2a549ee1</item>
-																					<item translate="0">Feral Ghoul 2 | R-Lo Arm | 0xf775131c</item>
-																					<item translate="0">Feral Ghoul 2 | R-Hand | 0x85342e3c</item>
-																					<item translate="0">Feral Ghoul 4 | L-Up Arm | 0x4e560702</item>
-																					<item translate="0">Feral Ghoul 4 | L-Lo Arm | 0x93778aff</item>
-																					<item translate="0">Feral Ghoul 4 | L-Hand | 0x5ae407df</item>
-																					<item translate="0">Death Claw 1 | Neck | 0xc0f43cc3</item>
-																					<item translate="0">Death Claw 2 | R-Up-Arm | 0xf2ba1077</item>
-																					<item translate="0">Death Claw 2 | R-Elbow-4Arm | 0xf4e10d0d</item>
-																					<item translate="0">Death Claw 2 | R-Hand | 0xe2da5319</item>
-																					<item translate="0">Death Claw 4 | L-Up-Arm | 0x17932e95</item>
-																					<item translate="0">Death Claw 4 | L-Elbow-4Arm | 0x0861e2c0</item>
-																					<item translate="0">Death Claw 4 | L-Hand | 0x8beb7000</item>
-																					<item translate="0">Death Claw, Feral Ghoul 5 | R-Up Thi | 0x9af9d18c</item>
-																					<item translate="0">Death Claw, Feral Ghoul 5 | R-Lo Leg | 0x8e0daa93</item>
-																					<item translate="0">Death Claw, Feral Ghoul 5 | R-Lo Ft | 0x6bd95520</item>
-																					<item translate="0">Death Claw, Feral Ghoul 6 | L-Lo Thi | 0xa325b267</item>
-																					<item translate="0">Death Claw, Feral Ghoul 6 | L-Lo Leg | 0x51dd8370</item>
-																					<item translate="0">Death Claw, Feral Ghoul 6 | L-Lo Ft | 0xb4097cc3</item>
-																					<item translate="0">Super Mutant Hound 3 | Fr-Lf Up Leg | 0x99338c09</item>
-																					<item translate="0">Super Mutant Hound 3 | Fr-Lf Lo Leg | 0x7491a630</item>
-																					<item translate="0">Super Mutant Hound 3 | Fr-Lf Foot | 0x8a99ba3f</item>
-																					<item translate="0">Super Mutant Hound 4 | Bk-Lf Thigh | 0xa7860026</item>
-																					<item translate="0">Super Mutant Hound 4 | Bk-Lf Knee | 0xaf6a52d7</item>
-																					<item translate="0">Super Mutant Hound 4 | Bk-Lf Ankle | 0xb42c3610</item>
-																					<item translate="0">Super Mutant Hound 4 | Bk-Lf Foot | 0x6e284ec0</item>
-																					<item translate="0">Super Mutant Hound 5 | Bk-Ri Thigh | 0x0e97871c</item>
-																					<item translate="0">Super Mutant Hound 5 | Bk-Ri Knee | 0x02433b3b</item>
-																					<item translate="0">Super Mutant Hound 5 | Bk-Ri Ankle | 0x1d3db12a</item>
-																					<item translate="0">Super Mutant Hound 5 | Bk-Ri Foot | 0x20c9e4aa</item>
-																					<item translate="0">Super Mutant Hound 6 | Fr-Ri Up Leg | 0x5f96443c</item>
-																					<item translate="0">Super Mutant Hound 6 | Fr-Ri Lo Leg | 0xdd80210a</item>
-																					<item translate="0">Super Mutant Hound 6 | Fr-Ri Foot | 0x4c3c720a</item>
-																					<item translate="0">Mirelurk 2 | Fr-Ri-Up Arm | 0xa5f4be71</item>
-																					<item translate="0">Mirelurk 2 | Fr-Ri-Lo Arm | 0x99eb64eb</item>
-																					<item translate="0">Mirelurk 2 | R Claw | 0x3c9df64f</item>
-																					<item translate="0">Mirelurk 4 | L Shoulder | 0x40f66ca4</item>
-																					<item translate="0">Mirelurk 4 | L-Up Arm | 0xc1f62792</item>
-																					<item translate="0">Mirelurk 4 | L Elbow | 0xf0da47f2</item>
-																					<item translate="0">Mirelurk 4 | L Claw | 0x55acd556</item>
-																					<item translate="0">Mirelurk 5 | Fr-Ri Hip | 0x064f59cd</item>
-																					<item translate="0">Mirelurk 5 | Fr-Ri Thigh | 0x5b033df6</item>
-																					<item translate="0">Mirelurk 5 | Fr-Ri Calf | 0x15fc7bad</item>
-																					<item translate="0">Mirelurk 5 | Fr-Ri Foot | 0xf028841e</item>
-																					<item translate="0">Mirelurk 6 | Fr-Lf Hip-Thigh | 0xf62a541a</item>
-																					<item translate="0">Mirelurk 6 | Fr-Lf Kne-Clf | 0x5b1dd1c7</item>
-																					<item translate="0">Mirelurk 6 | Fr-Lf Foot | 0xbec92e74</item>
-																					<item translate="0">Mirelurk 8 | Bk-Ri Hip-Thigh | 0xfc5546b8</item>
-																					<item translate="0">Mirelurk 8 | Bk-Ri Kne-Clf | 0x24a15449</item>
-																					<item translate="0">Mirelurk 8 | Bk-Ri Foot | 0xc175abfa</item>
-																					<item translate="0">Mirelurk 9 | Bk-Lf Hip-Thigh | 0xb2b4ecd2</item>
-																					<item translate="0">Mirelurk 9 | Bk-Lf Kne-Clf | 0xc1886aab</item>
-																					<item translate="0">Mirelurk 9 | Bk-Lf Foot | 0x245c9518</item>
-																					<item translate="0">Dog 3 | Fr-Lf Knee | 0x5530c47b</item>
-																					<item translate="0">Dog 3 | Fr-Lf Calf | 0xcc3995c1</item>
-																					<item translate="0">Dog 3 | Fr-Lf Heel+Arch | 0xbd2750cf</item>
-																					<item translate="0">Dog 3 | Fr-Lf Paw | 0x77fe1ec8</item>
-																					<item translate="0">Dog 4 | Bk-Lf Knee | 0x52f7244b</item>
-																					<item translate="0">Dog 4 | Bk-Lf Calf | 0xcbfe75f1</item>
-																					<item translate="0">Dog 4 | Bk-Lf Heel+Arch | 0xfe31ace4</item>
-																					<item translate="0">Dog 4 | Bk-Lf Paw | 0x08eb5fa0</item>
-																					<item translate="0">Dog 5 | Bk-Ri Knee | 0x8d270da8</item>
-																					<item translate="0">Dog 5 | Bk-Ri Calf+Heel | 0x142e5c12</item>
-																					<item translate="0">Dog 5 | Bk-Ri Arch | 0x9a333507</item>
-																					<item translate="0">Dog 5 | Bk-Ri Paw | 0x61da7cb9</item>
-																					<item translate="0">Dog 6 | Fr-Ri Knee | 0x8ae0ed98</item>
-																					<item translate="0">Dog 6 | Fr-Ri Calf | 0x13e9bc22</item>
-																					<item translate="0">Dog 6 | Fr-Ri Heel+Arch | 0xd925c92c</item>
-																					<item translate="0">Dog 6 | Fr-Ri Paw | 0x1ecf3dd1</item>
-																					<item translate="0">Behemoth 2 | R-Arm+Elbow | 0x8c5ae189</item>
-																					<item translate="0">Behemoth 2 | R-4 Arm | 0x071dfd97</item>
-																					<item translate="0">Behemoth 2 | R-Hand | 0xded0fadf</item>
-																					<item translate="0">Behemoth 4 | L-Arm+Elbow | 0xc2bb4be3</item>
-																					<item translate="0">Behemoth 4 | L-4 Arm | 0x3e7a4ccc</item>
-																					<item translate="0">Behemoth 4 | L-Hand | 0xe7b74b84</item>
-																					<item translate="0">Behemoth 5 | R-Calf | 0xa411c600</item>
-																					<item translate="0">Behemoth 5 | R-Foot | 0xac900af3</item>
-																					<item translate="0">Behemoth 6 | L-Calf | 0xc0135fe3</item>
-																					<item translate="0">Behemoth 6 | R-Foot | 0x95f7bba8</item>
-																					<item translate="0">Robot 3 | Torso | 0x3d6644aa</item>
-																				</content>
-																				<hidden>1</hidden>
-																				<enabled>0</enabled>
-																			</object>
-																		</object>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>0</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>0</option>
-																			<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																			<border>5</border>
-																			<object class="wxStaticText" name="segmentSlotLabel">
-																				<fg>#ffffff</fg>
-																				<label>Slot</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<border>5</border>
-																			<object class="wxChoice" name="segmentSlot">
-																				<selection>0</selection>
-																				<content>
-																					<item translate="0">None</item>
-																					<item translate="0">30 - Hair Top</item>
-																					<item translate="0">31 - Hair Long</item>
-																					<item translate="0">32 - Head</item>
-																					<item translate="0">33 - Body</item>
-																					<item translate="0">34 - L Hand</item>
-																					<item translate="0">35 - R Hand</item>
-																					<item translate="0">36 - [U] Torso</item>
-																					<item translate="0">37 - [U] L Arm</item>
-																					<item translate="0">38 - [U] R Arm</item>
-																					<item translate="0">39 - [U] L Leg</item>
-																					<item translate="0">40 - [U] R Leg</item>
-																					<item translate="0">41 - [A] Torso</item>
-																					<item translate="0">42 - [A] L Arm</item>
-																					<item translate="0">43 - [A] R Arm</item>
-																					<item translate="0">44 - [A] L Leg</item>
-																					<item translate="0">45 - [A] R Leg</item>
-																					<item translate="0">46 - Headband</item>
-																					<item translate="0">47 - Eyes</item>
-																					<item translate="0">48 - Beard</item>
-																					<item translate="0">49 - Mouth</item>
-																					<item translate="0">50 - Neck</item>
-																					<item translate="0">51 - Ring</item>
-																					<item translate="0">52 - Scalp</item>
-																					<item translate="0">53 - Decapitation</item>
-																					<item translate="0">54 - Unnamed</item>
-																					<item translate="0">55 - Unnamed</item>
-																					<item translate="0">56 - Unnamed</item>
-																					<item translate="0">57 - Unnamed</item>
-																					<item translate="0">58 - Unnamed</item>
-																					<item translate="0">59 - Shield</item>
-																					<item translate="0">60 - Pipboy</item>
-																					<item translate="0">61 - FX</item>
-																					<item translate="0">65 - Robot</item>
-																					<item translate="0">70 - Robot</item>
-																					<item translate="0">75 - Robot</item>
-																					<item translate="0">80 - Robot</item>
-																					<item translate="0">85 - Robot</item>
-																					<item translate="0">90 - Robot</item>
-																					<item translate="0">95 - Robot</item>
-																					<item translate="0">100 - Gore</item>
-																					<item translate="0">101 - Gore</item>
-																					<item translate="0">102 - Gore</item>
-																					<item translate="0">103 - Gore</item>
-																					<item translate="0">160 - Pipboy Cap</item>
-																				</content>
-																				<hidden>1</hidden>
-																				<enabled>0</enabled>
-																			</object>
-																		</object>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>0</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>0</option>
-																			<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																			<border>5</border>
-																			<object class="wxStaticText" name="segmentSSFLabel">
-																				<fg>#ffffff</fg>
-																				<label>SSF File</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<border>5</border>
-																			<object class="wxTextCtrl" name="segmentSSF">
-																				<maxlength>255</maxlength>
-																				<hidden>1</hidden>
-																				<enabled>0</enabled>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>0</option>
-																			<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																			<border>5</border>
-																			<object class="wxButton" name="segmentSSFEdit">
-																				<size>-1,25</size>
-																				<label>Set</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>0</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<border>5</border>
-																			<object class="wxButton" name="segmentApply">
-																				<size>-1,25</size>
-																				<label>Apply</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<border>5</border>
-																			<object class="wxButton" name="segmentReset">
-																				<size>-1,25</size>
-																				<label>Reset</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>0</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>0</option>
-																			<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																			<border>5</border>
-																			<object class="wxStaticText" name="partitionTypeLabel">
-																				<fg>#ffffff</fg>
-																				<label>Type</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<border>5</border>
-																			<object class="wxChoice" name="partitionType">
-																				<selection>0</selection>
-																				<content />
-																				<hidden>1</hidden>
-																				<enabled>0</enabled>
-																			</object>
-																		</object>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>0</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<border>5</border>
-																			<object class="wxButton" name="partitionApply">
-																				<size>-1,25</size>
-																				<label>Apply</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<border>5</border>
-																			<object class="wxButton" name="partitionReset">
-																				<size>-1,25</size>
-																				<label>Reset</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>0</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>0</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<border>5</border>
-																			<object class="wxCheckBox" name="selectSliders">
-																				<fg>#ffffff</fg>
-																				<label>De-/Select Sliders</label>
-																				<checked>1</checked>
-																				<enabled>1</enabled>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL</flag>
-																			<border>0</border>
-																			<object class="unknown" name="sliderFilter" />
-																		</object>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>5</border>
-																	<object class="wxCheckBox" name="cbFixedWeight">
-																		<fg>#ffffff</fg>
-																		<label>Fixed Weight Brush</label>
-																		<checked>0</checked>
-																		<hidden>1</hidden>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>5</border>
-																	<object class="wxCheckBox" name="cbNormalizeWeights">
-																		<fg>#ffffff</fg>
-																		<label>Normalize Weights</label>
-																		<checked>0</checked>
-																		<hidden>1</hidden>
-																	</object>
-																</object>
-																<object class="sizeritem">
-																	<option>0</option>
-																	<flag>wxALL|wxEXPAND</flag>
-																	<border>5</border>
-																	<object class="wxBoxSizer">
-																		<orient>wxHORIZONTAL</orient>
-																		<object class="sizeritem">
-																			<option>0</option>
-																			<flag>wxRIGHT|wxALIGN_CENTER</flag>
-																			<border>15</border>
-																			<object class="wxStaticText" name="xMirrorBoneLabel">
-																				<fg>#ffffff</fg>
-																				<label>X-Mirror Bone</label>
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																		<object class="sizeritem">
-																			<option>1</option>
-																			<flag>wxALL|wxEXPAND</flag>
-																			<object class="wxChoice" name="cXMirrorBone">
-																				<selection>0</selection>
-																				<content />
-																				<hidden>1</hidden>
-																			</object>
-																		</object>
-																	</object>
-																</object>
-															</object>
-														</object>
-													</object>
-													<object class="sizeritem">
-														<option>0</option>
-														<flag>wxALL|wxEXPAND|wxLEFT</flag>
-														<border>2</border>
-														<object class="wxCollapsiblePane" name="masksPane">
-															<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
-															<collapsed>1</collapsed>
-															<label>Masks</label>
-															<bg>wxSYS_COLOUR_MENU</bg>
-															<hidden>0</hidden>
-															<object class="panewindow">
-																<object class="wxBoxSizer">
-																	<orient>wxVERTICAL</orient>
-																	<object class="sizeritem">
-																		<option>0</option>
-																		<flag>wxALL|wxEXPAND</flag>
-																		<object class="wxBoxSizer">
-																			<orient>wxHORIZONTAL</orient>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxComboBox" name="cMaskName">
-																					<style>wxCB_SORT</style>
-																					<value></value>
-																					<content />
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxButton" name="saveMask">
-																					<size>-1,25</size>
-																					<label>Save</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxButton" name="deleteMask">
-																					<size>-1,25</size>
-																					<label>Delete</label>
-																				</object>
-																			</object>
-																		</object>
-																	</object>
-																	<object class="sizeritem">
-																		<option>0</option>
-																		<flag>wxALL|wxEXPAND</flag>
-																		<object class="wxBoxSizer">
-																			<orient>wxHORIZONTAL</orient>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxLEFT|wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxButton" name="exportMask">
-																					<size>-1,25</size>
-																					<label>Export...</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxLEFT|wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxButton" name="importMask">
-																					<size>-1,25</size>
-																					<label>Import...</label>
-																				</object>
-																			</object>
-																		</object>
-																	</object>
-																</object>
-															</object>
-														</object>
-													</object>
-													<object class="sizeritem">
-														<option>0</option>
-														<flag>wxALL|wxEXPAND|wxLEFT</flag>
-														<border>2</border>
-														<object class="wxCollapsiblePane" name="posePane">
-															<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
-															<collapsed>1</collapsed>
-															<label>Posing</label>
-															<bg>wxSYS_COLOUR_MENU</bg>
-															<hidden>1</hidden>
-															<object class="panewindow">
-																<object class="wxBoxSizer">
-																	<orient>wxVERTICAL</orient>
-																	<object class="sizeritem">
-																		<option>0</option>
-																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																	<flag>wxALL|wxEXPAND|wxLEFT</flag>
+																	<border>2</border>
+																	<object class="wxPanel" name="editPanel">
+																		<style>wxTAB_TRAVERSAL</style>
 																		<object class="wxBoxSizer">
 																			<orient>wxVERTICAL</orient>
 																			<object class="sizeritem">
 																				<option>0</option>
-																				<flag>wxEXPAND</flag>
-																				<object class="wxBoxSizer">
-																					<orient>wxHORIZONTAL</orient>
-																					<object class="sizeritem">
-																						<option>1</option>
-																						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
-																						<border>5</border>
-																						<object class="wxComboBox" name="cPoseName">
-																							<style>wxCB_SORT</style>
-																							<value></value>
-																							<content />
-																						</object>
-																					</object>
-																					<object class="sizeritem">
-																						<option>0</option>
-																						<flag>wxBOTTOM|wxEXPAND</flag>
-																						<border>5</border>
-																						<object class="wxButton" name="savePose">
-																							<size>-1,25</size>
-																							<label>Save</label>
-																						</object>
-																					</object>
-																					<object class="sizeritem">
-																						<option>0</option>
-																						<flag>wxRIGHT|wxBOTTOM|wxEXPAND</flag>
-																						<border>5</border>
-																						<object class="wxButton" name="deletePose">
-																							<size>-1,25</size>
-																							<label>Delete</label>
-																						</object>
-																					</object>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxBoxSizer">
-																					<orient>wxHORIZONTAL</orient>
-																					<object class="spacer">
-																						<option>1</option>
-																						<flag>wxEXPAND</flag>
-																						<size>0,0</size>
-																					</object>
-																					<object class="sizeritem">
-																						<option>0</option>
-																						<flag>wxRIGHT|wxEXPAND</flag>
-																						<border>5</border>
-																						<object class="wxButton" name="importPoseFile">
-																							<size>-1,25</size>
-																							<label>Import...</label>
-																						</object>
-																					</object>
-																					<object class="sizeritem">
-																						<option>0</option>
-																						<flag>wxRIGHT|wxEXPAND</flag>
-																						<border>5</border>
-																						<object class="wxButton" name="exportPoseFile">
-																							<size>-1,25</size>
-																							<label>Export...</label>
-																						</object>
-																					</object>
-																				</object>
-																			</object>
-																		</object>
-																	</object>
-																	<object class="sizeritem">
-																		<option>0</option>
-																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-																		<border>5</border>
-																		<object class="wxBoxSizer">
-																			<orient>wxHORIZONTAL</orient>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxRIGHT|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxCheckBox" name="cbPose">
-																					<label>Show Pose</label>
-																					<checked>0</checked>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxChoice" name="cPoseBone">
-																					<selection>0</selection>
-																					<content />
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxLEFT|wxEXPAND</flag>
-																				<object class="wxButton" name="resetBonePose">
-																					<size>-1,25</size>
-																					<label>Reset Bone</label>
-																				</object>
-																			</object>
-																		</object>
-																	</object>
-																	<object class="sizeritem">
-																		<option>0</option>
-																		<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
-																		<border>5</border>
-																		<object class="wxFlexGridSizer">
-																			<rows>0</rows>
-																			<cols>3</cols>
-																			<vgap>0</vgap>
-																			<hgap>0</hgap>
-																			<growablecols>1</growablecols>
-																			<growablerows></growablerows>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
-																				<object class="wxStaticText" name="rxLabel">
-																					<label>Rotation X</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>1</option>
 																				<flag>wxALL|wxEXPAND</flag>
-																				<object class="wxSlider" name="rxPoseSlider">
-																					<style>wxSL_HORIZONTAL</style>
-																					<size>-1,10</size>
-																					<value translate="0">0</value>
-																					<min>-300</min>
-																					<max>300</max>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																				<object class="wxTextCtrl" name="rxPoseText">
-																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																					<size>40,-1</size>
-																					<value translate="0">0</value>
-																					<maxlength>0</maxlength>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
-																				<object class="wxStaticText" name="ryLabel">
-																					<label>Rotation Y</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<flag>wxALL|wxEXPAND</flag>
-																				<object class="wxSlider" name="ryPoseSlider">
-																					<style>wxSL_HORIZONTAL</style>
-																					<size>-1,10</size>
-																					<value translate="0">0</value>
-																					<min>-300</min>
-																					<max>300</max>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																				<object class="wxTextCtrl" name="ryPoseText">
-																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																					<size>40,-1</size>
-																					<value translate="0">0</value>
-																					<maxlength>0</maxlength>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
-																				<object class="wxStaticText" name="rzLabel">
-																					<label>Rotation Z</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<flag>wxALL|wxEXPAND</flag>
-																				<object class="wxSlider" name="rzPoseSlider">
-																					<style>wxSL_HORIZONTAL</style>
-																					<size>-1,10</size>
-																					<value translate="0">0</value>
-																					<min>-300</min>
-																					<max>300</max>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																				<object class="wxTextCtrl" name="rzPoseText">
-																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																					<size>40,-1</size>
-																					<value translate="0">0</value>
-																					<maxlength>0</maxlength>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
-																				<object class="wxStaticText" name="txLabel">
-																					<label>Offset X</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<flag>wxALL|wxEXPAND</flag>
-																				<object class="wxSlider" name="txPoseSlider">
-																					<style>wxSL_HORIZONTAL</style>
-																					<size>-1,10</size>
-																					<value translate="0">0</value>
-																					<min>-1000</min>
-																					<max>1000</max>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																				<object class="wxTextCtrl" name="txPoseText">
-																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																					<size>40,-1</size>
-																					<value translate="0">0</value>
-																					<maxlength>0</maxlength>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
-																				<object class="wxStaticText" name="tyLabel">
-																					<label>Offset Y</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<flag>wxALL|wxEXPAND</flag>
-																				<object class="wxSlider" name="tyPoseSlider">
-																					<style>wxSL_HORIZONTAL</style>
-																					<size>-1,10</size>
-																					<value translate="0">0</value>
-																					<min>-1000</min>
-																					<max>1000</max>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																				<object class="wxTextCtrl" name="tyPoseText">
-																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																					<size>40,-1</size>
-																					<value translate="0">0</value>
-																					<maxlength>0</maxlength>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxRIGHT|wxALIGN_LEFT</flag>
-																				<object class="wxStaticText" name="tzLabel">
-																					<label>Offset Z</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<flag>wxALL|wxEXPAND</flag>
-																				<object class="wxSlider" name="tzPoseSlider">
-																					<style>wxSL_HORIZONTAL</style>
-																					<size>-1,10</size>
-																					<value translate="0">0</value>
-																					<min>-1000</min>
-																					<max>1000</max>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-																				<object class="wxTextCtrl" name="tzPoseText">
-																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																					<size>40,-1</size>
-																					<value translate="0">0</value>
-																					<maxlength>0</maxlength>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<border>5</border>
-																				<flag>wxBOTTOM|wxALIGN_LEFT</flag>
-																				<object class="wxStaticText" name="scLabel">
-																					<label>Scale</label>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>1</option>
-																				<border>5</border>
-																				<flag>wxBOTTOM|wxEXPAND</flag>
-																				<object class="wxSlider" name="scPoseSlider">
-																					<style>wxSL_HORIZONTAL</style>
-																					<size>-1,10</size>
-																					<value translate="0">0</value>
-																					<min>-1000</min>
-																					<max>1000</max>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<border>5</border>
-																				<flag>wxBOTTOM|wxALIGN_CENTER_VERTICAL</flag>
-																				<object class="wxTextCtrl" name="scPoseText">
-																					<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-																					<size>40,-1</size>
-																					<value translate="0">1</value>
-																					<maxlength>0</maxlength>
-																				</object>
-																			</object>
-																		</object>
-																	</object>
-																	<object class="sizeritem">
-																		<option>1</option>
-																		<flag>wxALL|wxEXPAND</flag>
-																		<object class="wxButton" name="resetAllPose">
-																			<size>-1,25</size>
-																			<label>Reset All</label>
-																		</object>
-																	</object>
-																	<object class="sizeritem">
-																		<option>1</option>
-																		<flag>wxALL|wxEXPAND</flag>
-																		<object class="wxButton" name="poseToMesh">
-																			<size>-1,25</size>
-																			<label>Apply to Mesh</label>
-																			<enabled>0</enabled>
-																		</object>
-																	</object>
-																</object>
-															</object>
-														</object>
-													</object>
-													<object class="sizeritem">
-														<option>0</option>
-														<flag>wxALL|wxEXPAND|wxLEFT</flag>
-														<border>2</border>
-														<object class="wxCollapsiblePane" name="animationPane">
-															<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
-															<collapsed>1</collapsed>
-															<label>Animation</label>
-															<bg>wxSYS_COLOUR_MENU</bg>
-															<hidden>1</hidden>
-															<object class="panewindow">
-																<object class="wxBoxSizer">
-																	<orient>wxVERTICAL</orient>
-																	<object class="sizeritem">
-																		<option>0</option>
-																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-																		<border>5</border>
-																		<object class="wxBoxSizer">
-																			<orient>wxVERTICAL</orient>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxEXPAND</flag>
-																				<object class="wxBoxSizer">
-																					<orient>wxHORIZONTAL</orient>
-																					<object class="sizeritem">
-																						<option>1</option>
-																						<flag>wxRIGHT|wxBOTTOM|wxEXPAND</flag>
-																						<border>5</border>
-																						<object class="wxComboBox" name="cAnimationName">
-																							<style>wxCB_READONLY</style>
-																							<value></value>
-																							<content />
-																						</object>
-																					</object>
-																					<object class="sizeritem">
-																						<option>0</option>
-																						<flag>wxBOTTOM|wxEXPAND</flag>
-																						<border>5</border>
-																						<object class="wxButton" name="importAnimationFile">
-																							<size>-1,25</size>
-																							<label>Load...</label>
-																						</object>
-																					</object>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxEXPAND</flag>
+																				<border>0</border>
 																				<object class="wxBoxSizer">
 																					<orient>wxHORIZONTAL</orient>
 																					<object class="sizeritem">
 																						<option>0</option>
-																						<flag>wxRIGHT</flag>
+																						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 																						<border>5</border>
-																						<object class="wxButton" name="animPlayPause">
-																							<size>50,25</size>
-																							<label>Play</label>
-																							<enabled>0</enabled>
+																						<object class="wxStaticText" name="segmentTypeLabel">
+																							<fg>#ffffff</fg>
+																							<label>Type</label>
+																							<hidden>1</hidden>
 																						</object>
 																					</object>
 																					<object class="sizeritem">
 																						<option>1</option>
-																						<flag>wxEXPAND</flag>
-																						<object class="wxSlider" name="animFrameSlider">
-																							<style>wxSL_HORIZONTAL</style>
-																							<value translate="0">0</value>
-																							<min>0</min>
-																							<max>1</max>
-																							<enabled>0</enabled>
-																						</object>
-																					</object>
-																				</object>
-																			</object>
-																			<object class="sizeritem">
-																				<option>0</option>
-																				<flag>wxBOTTOM|wxEXPAND</flag>
-																				<border>5</border>
-																				<object class="wxBoxSizer">
-																					<orient>wxHORIZONTAL</orient>
-																					<object class="sizeritem">
-																						<option>0</option>
-																						<flag>wxALIGN_CENTER_VERTICAL</flag>
-																						<object class="wxStaticText" name="animFrameText">
-																							<label translate="0">0 / 0</label>
-																						</object>
-																					</object>
-																					<object class="spacer">
-																						<option>1</option>
-																						<flag>wxEXPAND</flag>
-																						<size>0,0</size>
-																					</object>
-																					<object class="sizeritem">
-																						<option>0</option>
-																						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
-																						<border>10</border>
-																						<object class="wxCheckBox" name="animInterpolate">
-																							<label>Interpolate</label>
-																							<checked>1</checked>
-																							<tooltip>Blend between the animation's frames during playback instead of stepping from one to the next.</tooltip>
-																							<enabled>0</enabled>
-																						</object>
-																					</object>
-																					<object class="sizeritem">
-																						<option>0</option>
-																						<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																						<flag>wxALL|wxEXPAND</flag>
 																						<border>5</border>
-																						<object class="wxStaticText" name="animSpeedLabel">
-																							<label>Speed</label>
-																						</object>
-																					</object>
-																					<object class="sizeritem">
-																						<option>0</option>
-																						<flag>wxALIGN_CENTER_VERTICAL</flag>
-																						<object class="wxChoice" name="animSpeed">
-																							<selection>2</selection>
+																						<object class="wxChoice" name="segmentType">
+																							<selection>0</selection>
 																							<content>
-																								<item translate="0">0.25x</item>
-																								<item translate="0">0.5x</item>
-																								<item translate="0">1x</item>
-																								<item translate="0">1.5x</item>
-																								<item translate="0">2x</item>
+																								<item translate="0">Default</item>
+																								<item translate="0">1 | Head/Hair | 0x86b72980</item>
+																								<item translate="0">1 | Neck | 0x0155094f</item>
+																								<item translate="0">Human 2 | R-Up Arm | 0xb2e2764f</item>
+																								<item translate="0">Human 2 | R-Lo Arm | 0x6fc3fbb2</item>
+																								<item translate="0">Human 4 | L-Up Arm | 0xfc03dc25</item>
+																								<item translate="0">Human 4 | L-Lo Arm | 0x212251d8</item>
+																								<item translate="0">Human 5 | R-Up Thi | 0xbf3a3cc5</item>
+																								<item translate="0">Human 5 | R-Kne-Clf | 0x22324321</item>
+																								<item translate="0">Human 5 | R-Lo Ft.-Ank | 0xc7e6bc92</item>
+																								<item translate="0">Human 6 | L-Up Leg | 0x865d8d9e</item>
+																								<item translate="0">Human 6 | L-Kne-Clf | 0x4630dac2</item>
+																								<item translate="0">Human 6 | L-Lo Ft.-Ank | 0xa3e42571</item>
+																								<item translate="0">Feral Ghoul 2 | R-Up Arm | 0x2a549ee1</item>
+																								<item translate="0">Feral Ghoul 2 | R-Lo Arm | 0xf775131c</item>
+																								<item translate="0">Feral Ghoul 2 | R-Hand | 0x85342e3c</item>
+																								<item translate="0">Feral Ghoul 4 | L-Up Arm | 0x4e560702</item>
+																								<item translate="0">Feral Ghoul 4 | L-Lo Arm | 0x93778aff</item>
+																								<item translate="0">Feral Ghoul 4 | L-Hand | 0x5ae407df</item>
+																								<item translate="0">Death Claw 1 | Neck | 0xc0f43cc3</item>
+																								<item translate="0">Death Claw 2 | R-Up-Arm | 0xf2ba1077</item>
+																								<item translate="0">Death Claw 2 | R-Elbow-4Arm | 0xf4e10d0d</item>
+																								<item translate="0">Death Claw 2 | R-Hand | 0xe2da5319</item>
+																								<item translate="0">Death Claw 4 | L-Up-Arm | 0x17932e95</item>
+																								<item translate="0">Death Claw 4 | L-Elbow-4Arm | 0x0861e2c0</item>
+																								<item translate="0">Death Claw 4 | L-Hand | 0x8beb7000</item>
+																								<item translate="0">Death Claw, Feral Ghoul 5 | R-Up Thi | 0x9af9d18c</item>
+																								<item translate="0">Death Claw, Feral Ghoul 5 | R-Lo Leg | 0x8e0daa93</item>
+																								<item translate="0">Death Claw, Feral Ghoul 5 | R-Lo Ft | 0x6bd95520</item>
+																								<item translate="0">Death Claw, Feral Ghoul 6 | L-Lo Thi | 0xa325b267</item>
+																								<item translate="0">Death Claw, Feral Ghoul 6 | L-Lo Leg | 0x51dd8370</item>
+																								<item translate="0">Death Claw, Feral Ghoul 6 | L-Lo Ft | 0xb4097cc3</item>
+																								<item translate="0">Super Mutant Hound 3 | Fr-Lf Up Leg | 0x99338c09</item>
+																								<item translate="0">Super Mutant Hound 3 | Fr-Lf Lo Leg | 0x7491a630</item>
+																								<item translate="0">Super Mutant Hound 3 | Fr-Lf Foot | 0x8a99ba3f</item>
+																								<item translate="0">Super Mutant Hound 4 | Bk-Lf Thigh | 0xa7860026</item>
+																								<item translate="0">Super Mutant Hound 4 | Bk-Lf Knee | 0xaf6a52d7</item>
+																								<item translate="0">Super Mutant Hound 4 | Bk-Lf Ankle | 0xb42c3610</item>
+																								<item translate="0">Super Mutant Hound 4 | Bk-Lf Foot | 0x6e284ec0</item>
+																								<item translate="0">Super Mutant Hound 5 | Bk-Ri Thigh | 0x0e97871c</item>
+																								<item translate="0">Super Mutant Hound 5 | Bk-Ri Knee | 0x02433b3b</item>
+																								<item translate="0">Super Mutant Hound 5 | Bk-Ri Ankle | 0x1d3db12a</item>
+																								<item translate="0">Super Mutant Hound 5 | Bk-Ri Foot | 0x20c9e4aa</item>
+																								<item translate="0">Super Mutant Hound 6 | Fr-Ri Up Leg | 0x5f96443c</item>
+																								<item translate="0">Super Mutant Hound 6 | Fr-Ri Lo Leg | 0xdd80210a</item>
+																								<item translate="0">Super Mutant Hound 6 | Fr-Ri Foot | 0x4c3c720a</item>
+																								<item translate="0">Mirelurk 2 | Fr-Ri-Up Arm | 0xa5f4be71</item>
+																								<item translate="0">Mirelurk 2 | Fr-Ri-Lo Arm | 0x99eb64eb</item>
+																								<item translate="0">Mirelurk 2 | R Claw | 0x3c9df64f</item>
+																								<item translate="0">Mirelurk 4 | L Shoulder | 0x40f66ca4</item>
+																								<item translate="0">Mirelurk 4 | L-Up Arm | 0xc1f62792</item>
+																								<item translate="0">Mirelurk 4 | L Elbow | 0xf0da47f2</item>
+																								<item translate="0">Mirelurk 4 | L Claw | 0x55acd556</item>
+																								<item translate="0">Mirelurk 5 | Fr-Ri Hip | 0x064f59cd</item>
+																								<item translate="0">Mirelurk 5 | Fr-Ri Thigh | 0x5b033df6</item>
+																								<item translate="0">Mirelurk 5 | Fr-Ri Calf | 0x15fc7bad</item>
+																								<item translate="0">Mirelurk 5 | Fr-Ri Foot | 0xf028841e</item>
+																								<item translate="0">Mirelurk 6 | Fr-Lf Hip-Thigh | 0xf62a541a</item>
+																								<item translate="0">Mirelurk 6 | Fr-Lf Kne-Clf | 0x5b1dd1c7</item>
+																								<item translate="0">Mirelurk 6 | Fr-Lf Foot | 0xbec92e74</item>
+																								<item translate="0">Mirelurk 8 | Bk-Ri Hip-Thigh | 0xfc5546b8</item>
+																								<item translate="0">Mirelurk 8 | Bk-Ri Kne-Clf | 0x24a15449</item>
+																								<item translate="0">Mirelurk 8 | Bk-Ri Foot | 0xc175abfa</item>
+																								<item translate="0">Mirelurk 9 | Bk-Lf Hip-Thigh | 0xb2b4ecd2</item>
+																								<item translate="0">Mirelurk 9 | Bk-Lf Kne-Clf | 0xc1886aab</item>
+																								<item translate="0">Mirelurk 9 | Bk-Lf Foot | 0x245c9518</item>
+																								<item translate="0">Dog 3 | Fr-Lf Knee | 0x5530c47b</item>
+																								<item translate="0">Dog 3 | Fr-Lf Calf | 0xcc3995c1</item>
+																								<item translate="0">Dog 3 | Fr-Lf Heel+Arch | 0xbd2750cf</item>
+																								<item translate="0">Dog 3 | Fr-Lf Paw | 0x77fe1ec8</item>
+																								<item translate="0">Dog 4 | Bk-Lf Knee | 0x52f7244b</item>
+																								<item translate="0">Dog 4 | Bk-Lf Calf | 0xcbfe75f1</item>
+																								<item translate="0">Dog 4 | Bk-Lf Heel+Arch | 0xfe31ace4</item>
+																								<item translate="0">Dog 4 | Bk-Lf Paw | 0x08eb5fa0</item>
+																								<item translate="0">Dog 5 | Bk-Ri Knee | 0x8d270da8</item>
+																								<item translate="0">Dog 5 | Bk-Ri Calf+Heel | 0x142e5c12</item>
+																								<item translate="0">Dog 5 | Bk-Ri Arch | 0x9a333507</item>
+																								<item translate="0">Dog 5 | Bk-Ri Paw | 0x61da7cb9</item>
+																								<item translate="0">Dog 6 | Fr-Ri Knee | 0x8ae0ed98</item>
+																								<item translate="0">Dog 6 | Fr-Ri Calf | 0x13e9bc22</item>
+																								<item translate="0">Dog 6 | Fr-Ri Heel+Arch | 0xd925c92c</item>
+																								<item translate="0">Dog 6 | Fr-Ri Paw | 0x1ecf3dd1</item>
+																								<item translate="0">Behemoth 2 | R-Arm+Elbow | 0x8c5ae189</item>
+																								<item translate="0">Behemoth 2 | R-4 Arm | 0x071dfd97</item>
+																								<item translate="0">Behemoth 2 | R-Hand | 0xded0fadf</item>
+																								<item translate="0">Behemoth 4 | L-Arm+Elbow | 0xc2bb4be3</item>
+																								<item translate="0">Behemoth 4 | L-4 Arm | 0x3e7a4ccc</item>
+																								<item translate="0">Behemoth 4 | L-Hand | 0xe7b74b84</item>
+																								<item translate="0">Behemoth 5 | R-Calf | 0xa411c600</item>
+																								<item translate="0">Behemoth 5 | R-Foot | 0xac900af3</item>
+																								<item translate="0">Behemoth 6 | L-Calf | 0xc0135fe3</item>
+																								<item translate="0">Behemoth 6 | R-Foot | 0x95f7bba8</item>
+																								<item translate="0">Robot 3 | Torso | 0x3d6644aa</item>
 																							</content>
+																							<hidden>1</hidden>
 																							<enabled>0</enabled>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>0</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																						<border>5</border>
+																						<object class="wxStaticText" name="segmentSlotLabel">
+																							<fg>#ffffff</fg>
+																							<label>Slot</label>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALL|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxChoice" name="segmentSlot">
+																							<selection>0</selection>
+																							<content>
+																								<item translate="0">None</item>
+																								<item translate="0">30 - Hair Top</item>
+																								<item translate="0">31 - Hair Long</item>
+																								<item translate="0">32 - Head</item>
+																								<item translate="0">33 - Body</item>
+																								<item translate="0">34 - L Hand</item>
+																								<item translate="0">35 - R Hand</item>
+																								<item translate="0">36 - [U] Torso</item>
+																								<item translate="0">37 - [U] L Arm</item>
+																								<item translate="0">38 - [U] R Arm</item>
+																								<item translate="0">39 - [U] L Leg</item>
+																								<item translate="0">40 - [U] R Leg</item>
+																								<item translate="0">41 - [A] Torso</item>
+																								<item translate="0">42 - [A] L Arm</item>
+																								<item translate="0">43 - [A] R Arm</item>
+																								<item translate="0">44 - [A] L Leg</item>
+																								<item translate="0">45 - [A] R Leg</item>
+																								<item translate="0">46 - Headband</item>
+																								<item translate="0">47 - Eyes</item>
+																								<item translate="0">48 - Beard</item>
+																								<item translate="0">49 - Mouth</item>
+																								<item translate="0">50 - Neck</item>
+																								<item translate="0">51 - Ring</item>
+																								<item translate="0">52 - Scalp</item>
+																								<item translate="0">53 - Decapitation</item>
+																								<item translate="0">54 - Unnamed</item>
+																								<item translate="0">55 - Unnamed</item>
+																								<item translate="0">56 - Unnamed</item>
+																								<item translate="0">57 - Unnamed</item>
+																								<item translate="0">58 - Unnamed</item>
+																								<item translate="0">59 - Shield</item>
+																								<item translate="0">60 - Pipboy</item>
+																								<item translate="0">61 - FX</item>
+																								<item translate="0">65 - Robot</item>
+																								<item translate="0">70 - Robot</item>
+																								<item translate="0">75 - Robot</item>
+																								<item translate="0">80 - Robot</item>
+																								<item translate="0">85 - Robot</item>
+																								<item translate="0">90 - Robot</item>
+																								<item translate="0">95 - Robot</item>
+																								<item translate="0">100 - Gore</item>
+																								<item translate="0">101 - Gore</item>
+																								<item translate="0">102 - Gore</item>
+																								<item translate="0">103 - Gore</item>
+																								<item translate="0">160 - Pipboy Cap</item>
+																							</content>
+																							<hidden>1</hidden>
+																							<enabled>0</enabled>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>0</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																						<border>5</border>
+																						<object class="wxStaticText" name="segmentSSFLabel">
+																							<fg>#ffffff</fg>
+																							<label>SSF File</label>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALL|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxTextCtrl" name="segmentSSF">
+																							<maxlength>255</maxlength>
+																							<hidden>1</hidden>
+																							<enabled>0</enabled>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="segmentSSFEdit">
+																							<size>-1,25</size>
+																							<label>Set</label>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>0</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALL|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="segmentApply">
+																							<size>-1,25</size>
+																							<label>Apply</label>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALL|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="segmentReset">
+																							<size>-1,25</size>
+																							<label>Reset</label>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>0</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																						<border>5</border>
+																						<object class="wxStaticText" name="partitionTypeLabel">
+																							<fg>#ffffff</fg>
+																							<label>Type</label>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALL|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxChoice" name="partitionType">
+																							<selection>0</selection>
+																							<content />
+																							<hidden>1</hidden>
+																							<enabled>0</enabled>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>0</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALL|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="partitionApply">
+																							<size>-1,25</size>
+																							<label>Apply</label>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALL|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxButton" name="partitionReset">
+																							<size>-1,25</size>
+																							<label>Reset</label>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>0</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxALL|wxEXPAND</flag>
+																						<border>5</border>
+																						<object class="wxCheckBox" name="selectSliders">
+																							<fg>#ffffff</fg>
+																							<label>De-/Select Sliders</label>
+																							<checked>1</checked>
+																							<enabled>1</enabled>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALL</flag>
+																						<border>0</border>
+																						<object class="unknown" name="sliderFilter" />
+																					</object>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxCheckBox" name="cbFixedWeight">
+																					<fg>#ffffff</fg>
+																					<label>Fixed Weight Brush</label>
+																					<checked>0</checked>
+																					<hidden>1</hidden>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxCheckBox" name="cbNormalizeWeights">
+																					<fg>#ffffff</fg>
+																					<label>Normalize Weights</label>
+																					<checked>0</checked>
+																					<hidden>1</hidden>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxALL|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxBoxSizer">
+																					<orient>wxHORIZONTAL</orient>
+																					<object class="sizeritem">
+																						<option>0</option>
+																						<flag>wxRIGHT|wxALIGN_CENTER</flag>
+																						<border>15</border>
+																						<object class="wxStaticText" name="xMirrorBoneLabel">
+																							<fg>#ffffff</fg>
+																							<label>X-Mirror Bone</label>
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																					<object class="sizeritem">
+																						<option>1</option>
+																						<flag>wxALL|wxEXPAND</flag>
+																						<object class="wxChoice" name="cXMirrorBone">
+																							<selection>0</selection>
+																							<content />
+																							<hidden>1</hidden>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND|wxLEFT</flag>
+																	<border>2</border>
+																	<object class="wxCollapsiblePane" name="masksPane">
+																		<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+																		<collapsed>1</collapsed>
+																		<label>Masks</label>
+																		<bg>wxSYS_COLOUR_MENU</bg>
+																		<hidden>0</hidden>
+																		<object class="panewindow">
+																			<object class="wxBoxSizer">
+																				<orient>wxVERTICAL</orient>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxALL|wxEXPAND</flag>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxComboBox" name="cMaskName">
+																								<style>wxCB_SORT</style>
+																								<value></value>
+																								<content />
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxBOTTOM|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxButton" name="saveMask">
+																								<size>-1,25</size>
+																								<label>Save</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxBOTTOM|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxButton" name="deleteMask">
+																								<size>-1,25</size>
+																								<label>Delete</label>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxALL|wxEXPAND</flag>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxLEFT|wxBOTTOM|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxButton" name="exportMask">
+																								<size>-1,25</size>
+																								<label>Export...</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxLEFT|wxBOTTOM|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxButton" name="importMask">
+																								<size>-1,25</size>
+																								<label>Import...</label>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND|wxLEFT</flag>
+																	<border>2</border>
+																	<object class="wxCollapsiblePane" name="posePane">
+																		<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+																		<collapsed>1</collapsed>
+																		<label>Posing</label>
+																		<bg>wxSYS_COLOUR_MENU</bg>
+																		<hidden>1</hidden>
+																		<object class="panewindow">
+																			<object class="wxBoxSizer">
+																				<orient>wxVERTICAL</orient>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxRIGHT|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxComboBox" name="cPoseName">
+																								<style>wxCB_SORT</style>
+																								<value></value>
+																								<content />
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxRIGHT|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxButton" name="savePose">
+																								<size>-1,25</size>
+																								<label>Save</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxButton" name="deletePose">
+																								<size>-1,25</size>
+																								<label>Delete</label>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="spacer">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<size>0,0</size>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxRIGHT|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxButton" name="importPoseFile">
+																								<size>-1,25</size>
+																								<label>Import...</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxButton" name="exportPoseFile">
+																								<size>-1,25</size>
+																								<label>Export...</label>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxStaticLine" name="poseSeparator">
+																						<style>wxLI_HORIZONTAL</style>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>5</border>
+																							<object class="wxCheckBox" name="cbPose">
+																								<label>Show Pose</label>
+																								<tooltip>Display the meshes with the pose below applied</tooltip>
+																								<checked>0</checked>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxRIGHT|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxChoice" name="cPoseBone">
+																								<selection>0</selection>
+																								<content />
+																								<tooltip>Bone the transform below applies to</tooltip>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxButton" name="resetBonePose">
+																								<size>-1,25</size>
+																								<label>Reset Bone</label>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxFlexGridSizer">
+																						<rows>0</rows>
+																						<cols>3</cols>
+																						<vgap>2</vgap>
+																						<hgap>5</hgap>
+																						<growablecols>1</growablecols>
+																						<growablerows></growablerows>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxStaticText" name="rxLabel">
+																								<label>Rotation X</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxSlider" name="rxPoseSlider">
+																								<style>wxSL_HORIZONTAL</style>
+																								<size>-1,10</size>
+																								<value translate="0">0</value>
+																								<min>-300</min>
+																								<max>300</max>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxTextCtrl" name="rxPoseText">
+																								<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																								<size>55,-1</size>
+																								<value translate="0">0</value>
+																								<maxlength>0</maxlength>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxStaticText" name="ryLabel">
+																								<label>Rotation Y</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxSlider" name="ryPoseSlider">
+																								<style>wxSL_HORIZONTAL</style>
+																								<size>-1,10</size>
+																								<value translate="0">0</value>
+																								<min>-300</min>
+																								<max>300</max>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxTextCtrl" name="ryPoseText">
+																								<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																								<size>55,-1</size>
+																								<value translate="0">0</value>
+																								<maxlength>0</maxlength>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxStaticText" name="rzLabel">
+																								<label>Rotation Z</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxSlider" name="rzPoseSlider">
+																								<style>wxSL_HORIZONTAL</style>
+																								<size>-1,10</size>
+																								<value translate="0">0</value>
+																								<min>-300</min>
+																								<max>300</max>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxTextCtrl" name="rzPoseText">
+																								<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																								<size>55,-1</size>
+																								<value translate="0">0</value>
+																								<maxlength>0</maxlength>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxStaticText" name="txLabel">
+																								<label>Offset X</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxSlider" name="txPoseSlider">
+																								<style>wxSL_HORIZONTAL</style>
+																								<size>-1,10</size>
+																								<value translate="0">0</value>
+																								<min>-1000</min>
+																								<max>1000</max>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxTextCtrl" name="txPoseText">
+																								<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																								<size>55,-1</size>
+																								<value translate="0">0</value>
+																								<maxlength>0</maxlength>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxStaticText" name="tyLabel">
+																								<label>Offset Y</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxSlider" name="tyPoseSlider">
+																								<style>wxSL_HORIZONTAL</style>
+																								<size>-1,10</size>
+																								<value translate="0">0</value>
+																								<min>-1000</min>
+																								<max>1000</max>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxTextCtrl" name="tyPoseText">
+																								<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																								<size>55,-1</size>
+																								<value translate="0">0</value>
+																								<maxlength>0</maxlength>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxStaticText" name="tzLabel">
+																								<label>Offset Z</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxSlider" name="tzPoseSlider">
+																								<style>wxSL_HORIZONTAL</style>
+																								<size>-1,10</size>
+																								<value translate="0">0</value>
+																								<min>-1000</min>
+																								<max>1000</max>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxTextCtrl" name="tzPoseText">
+																								<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																								<size>55,-1</size>
+																								<value translate="0">0</value>
+																								<maxlength>0</maxlength>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxStaticText" name="scLabel">
+																								<label>Scale</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxSlider" name="scPoseSlider">
+																								<style>wxSL_HORIZONTAL</style>
+																								<size>-1,10</size>
+																								<value translate="0">0</value>
+																								<min>-1000</min>
+																								<max>1000</max>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxTextCtrl" name="scPoseText">
+																								<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																								<size>55,-1</size>
+																								<value translate="0">1</value>
+																								<maxlength>0</maxlength>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxRIGHT|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxButton" name="resetAllPose">
+																								<size>-1,25</size>
+																								<label>Reset All</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxButton" name="poseToMesh">
+																								<size>-1,25</size>
+																								<label>Apply to Mesh</label>
+																								<enabled>0</enabled>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND|wxLEFT</flag>
+																	<border>2</border>
+																	<object class="wxCollapsiblePane" name="physicsPane">
+																		<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+																		<collapsed>1</collapsed>
+																		<label>Physics</label>
+																		<bg>wxSYS_COLOUR_MENU</bg>
+																		<hidden>1</hidden>
+																		<object class="panewindow">
+																			<object class="wxBoxSizer">
+																				<orient>wxVERTICAL</orient>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>10</border>
+																							<object class="wxCheckBox" name="cbPhysics">
+																								<label>Simulate</label>
+																								<tooltip>Simulate HDT-SMP physics XMLs referenced by the loaded meshes</tooltip>
+																								<checked>0</checked>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxCheckBox" name="cbPhysicsVis">
+																								<label>Show Colliders</label>
+																								<tooltip>Draw the collision shapes and constraints of the physics simulation</tooltip>
+																								<checked>0</checked>
+																								<enabled>0</enabled>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>5</border>
+																							<object class="wxStaticText" name="physicsWindLabel">
+																								<label>Wind</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>5</border>
+																							<object class="wxSlider" name="physicsWindSlider">
+																								<value>0</value>
+																								<min>0</min>
+																								<max>100</max>
+																								<tooltip>World wind strength for the physics preview (0 = off)</tooltip>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxChoice" name="physicsWindDir">
+																								<selection>5</selection>
+																								<content>
+																									<item>Up</item>
+																									<item>Down</item>
+																									<item>Forward</item>
+																									<item>Backward</item>
+																									<item>Left</item>
+																									<item>Right</item>
+																								</content>
+																								<tooltip>Direction the wind blows in, as seen in the viewport. It stays fixed to the mesh while the camera turns.</tooltip>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																</object>
+																<object class="sizeritem">
+																	<option>0</option>
+																	<flag>wxALL|wxEXPAND|wxLEFT</flag>
+																	<border>2</border>
+																	<object class="wxCollapsiblePane" name="animationPane">
+																		<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+																		<collapsed>1</collapsed>
+																		<label>Animation</label>
+																		<bg>wxSYS_COLOUR_MENU</bg>
+																		<hidden>1</hidden>
+																		<object class="panewindow">
+																			<object class="wxBoxSizer">
+																				<orient>wxVERTICAL</orient>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxRIGHT|wxEXPAND</flag>
+																							<border>5</border>
+																							<object class="wxComboBox" name="cAnimationName">
+																								<style>wxCB_READONLY</style>
+																								<value></value>
+																								<content />
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxEXPAND</flag>
+																							<object class="wxButton" name="importAnimationFile">
+																								<size>-1,25</size>
+																								<label>Load...</label>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>5</border>
+																							<object class="wxButton" name="animPlayPause">
+																								<size>55,25</size>
+																								<label>Play</label>
+																								<enabled>0</enabled>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>1</option>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>5</border>
+																							<object class="wxSlider" name="animFrameSlider">
+																								<style>wxSL_HORIZONTAL</style>
+																								<value translate="0">0</value>
+																								<min>0</min>
+																								<max>1</max>
+																								<enabled>0</enabled>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxStaticText" name="animFrameText">
+																								<style>wxALIGN_RIGHT</style>
+																								<size>55,-1</size>
+																								<label translate="0">0 / 0</label>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxBoxSizer">
+																						<orient>wxHORIZONTAL</orient>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxCheckBox" name="animInterpolate">
+																								<label>Interpolate</label>
+																								<checked>1</checked>
+																								<tooltip>Blend between the animation's frames during playback instead of stepping from one to the next.</tooltip>
+																								<enabled>0</enabled>
+																							</object>
+																						</object>
+																						<object class="spacer">
+																							<option>1</option>
+																							<flag>wxEXPAND</flag>
+																							<size>0,0</size>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>5</border>
+																							<object class="wxStaticText" name="animSpeedLabel">
+																								<label>Speed</label>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxChoice" name="animSpeed">
+																								<selection>2</selection>
+																								<content>
+																									<item translate="0">0.25x</item>
+																									<item translate="0">0.5x</item>
+																									<item translate="0">1x</item>
+																									<item translate="0">1.5x</item>
+																									<item translate="0">2x</item>
+																								</content>
+																								<enabled>0</enabled>
+																							</object>
 																						</object>
 																					</object>
 																				</object>

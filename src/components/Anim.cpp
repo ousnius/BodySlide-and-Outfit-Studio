@@ -7,6 +7,7 @@ See the included LICENSE file
 #include "NifUtil.hpp"
 #include "../utils/StringStuff.h"
 #include <unordered_set>
+#include <wx/filename.h>
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 
@@ -1103,4 +1104,66 @@ bool AnimBone::IsFullyUnposed() {
 		p = p->parent;
 	}
 	return IsUnposed();
+}
+
+int LoadDefaultSkeletonReference() {
+	std::string defSkelFile = Config["Anim/DefaultSkeletonReference"];
+	if (wxFileName(wxString::FromUTF8(defSkelFile)).IsRelative())
+		return AnimSkeleton::getInstance().LoadFromNif(Config["AppDir"] + PathSepStr + defSkelFile);
+
+	return AnimSkeleton::getInstance().LoadFromNif(defSkelFile);
+}
+
+void ApplySkinningToVerts(AnimInfo& anim, NiShape* shape, bool isSF, const AnimPoseOverrideMap* poseOverrides, std::vector<Vector3>& verts) {
+	size_t nv = verts.size();
+	std::vector<Vector3> pv(nv);
+	std::vector<float> wv(nv, 0.0f);
+	AnimSkin& animSkin = anim.shapeSkinning[shape->name.get()];
+	MatTransform globalToSkin = anim.GetTransformGlobalToShape(shape);
+
+	for (auto& boneNamesIt : animSkin.boneNames) {
+		AnimBone* animB = AnimSkeleton::getInstance().GetBonePtr(boneNamesIt.first);
+		if (animB) {
+			AnimWeight& animW = animSkin.boneWeights[boneNamesIt.second];
+
+			const MatTransform* poseToGlobal = &animB->xformPoseToGlobal;
+			if (poseOverrides) {
+				auto overrideIt = poseOverrides->find(boneNamesIt.first);
+				if (overrideIt != poseOverrides->end())
+					poseToGlobal = &overrideIt->second;
+			}
+
+			// Compose transform: skin -> (posed) bone -> global -> skin
+			MatTransform transform = globalToSkin.ComposeTransforms(poseToGlobal->ComposeTransforms(animW.xformSkinToBone));
+
+			if (isSF)
+				transform.translation *= sfHavokScale;
+
+			if (transform.IsNearlyEqualTo(MatTransform()))
+				transform.Clear();
+
+			// Add weighted contributions to vertex for this bone
+			for (auto& wIt : animW.weights) {
+				int ind = wIt.first;
+				float w = wIt.second;
+				pv[ind] += w * transform.ApplyTransform(verts[ind]);
+				wv[ind] += w;
+			}
+		}
+	}
+
+	// Check if total weight for each vertex was 1
+	for (size_t ind = 0; ind < nv; ++ind) {
+		if (wv[ind] < EPSILON) // If weights are missing for this vertex
+			pv[ind] = verts[ind];
+		else if (std::fabs(wv[ind] - 1.0f) >= EPSILON) // If weights are bad for this vertex
+			pv[ind] /= wv[ind];
+		// else do nothing because weights totaled 1.
+
+		// New position is nearly equal to old position (reduce noise)
+		if (pv[ind].IsNearlyEqualTo(verts[ind]))
+			pv[ind] = verts[ind];
+	}
+
+	verts.swap(pv);
 }

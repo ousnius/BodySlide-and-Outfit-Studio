@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "BodySlideApp.h"
 #include "../components/ClippingFixer.h"
 #include "../components/Mesh.h"
+#include "../files/GameDataStream.h"
 #include "../files/SFMorphFile.h"
 #include "../files/wxDDSImage.h"
 #include "../utils/SettingsDialogShared.h"
@@ -2076,6 +2077,7 @@ void BodySlideApp::InitPreview() {
 
 			previewLoading = false;
 			UpdatePreview();
+			UpdatePreviewPhysicsAvailability();
 			preview->ShowLoadingIndicator(false);
 		});
 	});
@@ -2491,15 +2493,189 @@ void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, 
 				sd.uvs.erase(sd.uvs.begin() + sd.zapIdx[z]);
 			}
 		}
+
+		if (previewPhysicsRunning) {
+			// Remember the morphed shape so a physics tick can skin it again
+			// without running all sliders, then show it simulated
+			previewMorphedVerts[sd.name] = sd.verts;
+			ApplyPreviewPhysicsSkinning(sd.name, sd.verts);
+		}
+
 		preview->UpdateMeshes(sd.name, &sd.verts, &sd.uvs);
 	}
 
 	preview->Render();
 }
 
+void BodySlideApp::UpdatePreviewPhysicsAvailability(bool keepRunning) {
+	// Whatever led here replaced the previewed meshes, so the simulation - which
+	// holds shapes of those meshes - has to go either way.
+	const bool wasRunning = previewPhysicsRunning;
+	EnablePreviewPhysics(false);
+
+	previewPhysicsAvailable = false;
+	for (auto& pp : projects) {
+		if (Physics::HasPhysicsLinks(&pp->modNif, {})) {
+			previewPhysicsAvailable = true;
+			break;
+		}
+	}
+
+	if (keepRunning && wasRunning && previewPhysicsAvailable)
+		EnablePreviewPhysics(true);
+
+	if (preview) {
+		preview->ShowPhysicsControls(previewPhysicsAvailable);
+		preview->SetPhysicsChecked(previewPhysicsRunning);
+	}
+}
+
+void BodySlideApp::EnablePreviewPhysics(bool enable) {
+	if (enable == previewPhysicsRunning)
+		return;
+
+	if (!enable) {
+		previewPhysicsRunning = false;
+		previewPhysics.clear();
+
+		// Put the meshes back to the plain morphed shape the sliders describe
+		if (IsPreviewRenderable()) {
+			for (auto& morphedVerts : previewMorphedVerts)
+				preview->UpdateMeshes(morphedVerts.first, &morphedVerts.second);
+
+			preview->Render();
+		}
+
+		previewMorphedVerts.clear();
+		return;
+	}
+
+	if (!IsPreviewRenderable() || projects.empty())
+		return;
+
+	// The simulation reads its kinematic input from the application skeleton,
+	// which BodySlide has no other use for and therefore never loaded.
+	if (AnimSkeleton::getInstance().GetActiveBoneCount() == 0 && LoadDefaultSkeletonReference() != 0) {
+		wxLogError("Physics preview needs the reference skeleton, which could not be loaded.");
+		return;
+	}
+
+	for (size_t i = 0; i < projects.size(); i++) {
+		auto& pp = projects[i];
+
+		auto anim = std::make_unique<AnimInfo>();
+		if (!anim->LoadFromNif(&pp->modNif))
+			continue;
+
+		// The mod's own folder is the fallback for physics XMLs that aren't
+		// installed under the game data path
+		const std::string& nifPath = pp->inputFileName;
+
+		std::vector<std::string> warnings;
+		auto controller = std::make_unique<Physics::Controller>();
+		size_t systemCount = controller->BuildFromNif(
+			&pp->modNif,
+			anim.get(),
+			[&nifPath](const std::string& xmlPath) { return GameDataStream::OpenPhysicsXml(xmlPath, nifPath); },
+			{},
+			warnings);
+
+		for (auto& warning : warnings)
+			wxLogWarning("Physics: %s", warning);
+
+		if (systemCount == 0)
+			continue;
+
+		controller->ResetDynamics();
+
+		PreviewPhysicsProject entry;
+		entry.controller = std::move(controller);
+		entry.anim = std::move(anim);
+		entry.projectIdx = i;
+		previewPhysics.push_back(std::move(entry));
+	}
+
+	if (previewPhysics.empty()) {
+		wxLogWarning("No physics XMLs could be loaded for the previewed meshes.");
+		return;
+	}
+
+	previewPhysicsRunning = true;
+	previewPhysicsClock.Reset();
+
+	// Fills the morphed vertex cache and shows the first simulated frame
+	UpdatePreview();
+}
+
+void BodySlideApp::ApplyPreviewPhysicsSkinning(const PreviewPhysicsProject& physics, const std::string& shapeName, std::vector<Vector3>& verts) {
+	auto& modNif = projects[physics.projectIdx]->modNif;
+	auto shape = modNif.FindBlockByName<NiShape>(shapeName);
+	if (!shape)
+		return;
+
+	ApplySkinningToVerts(*physics.anim, shape, modNif.GetHeader().GetVersion().IsSF(), &physics.controller->PoseOverrides(), verts);
+}
+
+void BodySlideApp::ApplyPreviewPhysicsSkinning(const std::string& shapeName, std::vector<Vector3>& verts) {
+	for (auto& physics : previewPhysics) {
+		if (physics.controller->AffectedShapes().count(shapeName) != 0) {
+			ApplyPreviewPhysicsSkinning(physics, shapeName, verts);
+			return;
+		}
+	}
+}
+
+void BodySlideApp::PumpPreviewPhysics() {
+	if (!previewPhysicsRunning)
+		return;
+
+	if (!IsPreviewRenderable()) {
+		EnablePreviewPhysics(false);
+		return;
+	}
+
+	float dtSeconds = 0.0f;
+	if (!previewPhysicsClock.StepDue(dtSeconds))
+		return;
+
+	for (auto& physics : previewPhysics)
+		physics.controller->Step(dtSeconds);
+
+	// Only the shapes the simulation actually drives have to be skinned again
+	std::vector<Vector3> verts;
+	for (auto& physics : previewPhysics) {
+		for (auto& shapeName : physics.controller->AffectedShapes()) {
+			auto morphedVerts = previewMorphedVerts.find(shapeName);
+			if (morphedVerts == previewMorphedVerts.end())
+				continue;
+
+			verts = morphedVerts->second;
+			ApplyPreviewPhysicsSkinning(physics, shapeName, verts);
+			preview->UpdateMeshes(shapeName, &verts);
+		}
+	}
+
+	preview->Render();
+}
+
+void BodySlideApp::InjectPreviewCameraYaw(float deltaDegrees) {
+	for (auto& physics : previewPhysics)
+		physics.controller->InjectCameraYaw(deltaDegrees);
+}
+
+void BodySlideApp::SetPreviewWind(int directionIndex, int strengthPercent) {
+	for (auto& physics : previewPhysics) {
+		physics.controller->SetWindDirection(Physics::WindDirectionFromIndex(directionIndex));
+		physics.controller->SetWindStrength(strengthPercent / 100.0f);
+	}
+}
+
 void BodySlideApp::CleanupPreview() {
 	if (!preview)
 		return;
+
+	EnablePreviewPhysics(false);
+	previewPhysicsAvailable = false;
 
 	// Cancel async load and wait for it to finish
 	++previewLoadGeneration;
@@ -2589,6 +2765,7 @@ void BodySlideApp::RebuildPreviewMeshes() {
 		}
 
 		PostProcessPreview(shapeData, weight);
+		UpdatePreviewPhysicsAvailability(true);
 		return;
 	}
 
@@ -2629,6 +2806,7 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	}
 
 	PostProcessPreview(shapeData, weight);
+	UpdatePreviewPhysicsAvailability(true);
 }
 
 void BodySlideApp::UpdateExternalReferenceMesh(int weight, std::vector<Vector3>* outVerts) {

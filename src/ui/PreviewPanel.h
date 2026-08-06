@@ -21,6 +21,9 @@ See the included LICENSE file
 
 #include <wx/wx.h>
 #include <wx/activityindicator.h>
+#include <wx/popupwin.h>
+#include <wx/timer.h>
+#include <wx/weakref.h>
 
 class BodySlideApp;
 class PreviewCanvas;
@@ -39,10 +42,23 @@ class PreviewPanel : public wxPanel {
 	BodySlideApp* app = nullptr;
 	PreviewCanvas* canvas = nullptr;
 	std::unique_ptr<wxGLContext> context;
+	wxPanel* toolBarPanel = nullptr;
 	wxButton* optButton = nullptr;
 	wxButton* lockShapeButton = nullptr;
 	wxCheckBox* showReferenceCheckbox = nullptr;
 	wxCheckBox* showHelperShapesCheckbox = nullptr;
+	wxCheckBox* physicsCheckbox = nullptr;
+	wxButton* physicsWindButton = nullptr;
+	// Created on demand under the window the preview currently lives in, so the
+	// controls only exist while the drop-down is around. The values are kept
+	// here instead. Weak references: docking the preview back destroys the
+	// window the popup hangs off, and the popup with it.
+	wxWeakRef<wxPopupTransientWindow> physicsWindPopup;
+	wxWeakRef<wxSlider> physicsWindSlider;
+	wxWeakRef<wxChoice> physicsWindDir;
+	int physicsWindStrength = 0;
+	int physicsWindDirIndex = 0;
+	wxTimer physicsTimer;
 	wxStaticText* projectLabel = nullptr;
 	wxChoice* projectChoice = nullptr;
 	wxStaticText* presetLabel = nullptr;
@@ -65,6 +81,13 @@ class PreviewPanel : public wxPanel {
 	std::string sfMaterialDbContent;
 	std::unique_ptr<std::istringstream> sfMaterialDbStream;
 	SFMaterialDatabase* GetSFMaterialDatabase();
+	void CreatePhysicsWindPopup();
+	void DestroyPhysicsWindPopup();
+	void ApplyPhysicsWind();
+	// Re-flows the tool bar above the canvas after a control was shown or
+	// hidden. The panel itself keeps its size, so its sizer needs the explicit
+	// nudge.
+	void LayoutToolBar();
 	std::vector<std::string> extraNifPaths;
 	std::vector<PreviewProjectEntry> projectEntries;
 	std::string initialPresetName;
@@ -88,6 +111,24 @@ public:
 	void OnShowReference(wxCommandEvent& event);
 	void OnShowHelperShapes(wxCommandEvent& event);
 	void OnPopout(wxCommandEvent& event);
+
+	void OnPhysics(wxCommandEvent& event);
+	void OnPhysicsWindButton(wxCommandEvent& event);
+	void OnPhysicsWind(wxScrollEvent& event);
+	void OnPhysicsWindDir(wxCommandEvent& event);
+	void OnPhysicsTimer(wxTimerEvent& event);
+
+	// One physics tick. Internally paced, so any event source may call it at
+	// any rate; a no-op while physics is off.
+	void PumpPhysics();
+
+	// Shows or hides the whole physics block. Only meshes that reference a
+	// physics XML can be simulated, so the controls stay out of the way for
+	// everything else.
+	void ShowPhysicsControls(bool show);
+	// Reflects whether the simulation is actually running, and shows the wind
+	// controls only while it is.
+	void SetPhysicsChecked(bool checked);
 
 	void ShowPopoutButton(bool show);
 	void SetPopoutButtonDetachedState(bool detached);
@@ -113,19 +154,21 @@ public:
 		if (weightSlider) {
 			weightSlider->SetValue(weight);
 			weightSlider->Show(show);
-			Layout();
+			LayoutToolBar();
 		}
 	}
 
 	void ShowLockShapeButton(bool show = true) {
-		if (lockShapeButton)
+		if (lockShapeButton) {
 			lockShapeButton->Show(show);
+			LayoutToolBar();
+		}
 	}
 
 	void ShowReferenceCheckbox(bool show = true) {
 		if (showReferenceCheckbox) {
 			showReferenceCheckbox->Show(show);
-			Layout();
+			LayoutToolBar();
 		}
 	}
 

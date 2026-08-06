@@ -110,6 +110,7 @@ struct UndoStateShapeDelete {
 	std::vector<UndoStateShapeSliderDiff> sliderDiffs;
 	std::vector<std::string> textures;
 	std::optional<MaterialFile> materialFile;
+	std::vector<std::string> physicsFiles;
 	// Reference info captured when wasBaseShape, restored on undo
 	std::string refProjectFile;
 	std::string refProjectName;

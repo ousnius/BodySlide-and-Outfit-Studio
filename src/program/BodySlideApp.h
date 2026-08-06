@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
+#include "../components/Anim.h"
 #include "../components/BuildSelection.h"
 #include "../components/ClippingFixer.h"
 #include "../components/SliderCategories.h"
@@ -24,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/SliderGroup.h"
 #include "../components/SliderManager.h"
 #include "../files/TriFile.h"
+#include "../physics/Controller.h"
+#include "../physics/PumpClock.h"
 #include "../utils/ConfigurationManager.h"
 #include "../utils/Log.h"
 #include "GroupManager.h"
@@ -149,6 +152,29 @@ private:
 	};
 	std::vector<std::unique_ptr<ProjectData>> projects;
 	bool multiProjectMode = false;
+
+	/* Physics preview (HDT-SMP), one simulation per previewed project */
+	struct PreviewPhysicsProject {
+		std::unique_ptr<Physics::Controller> controller;
+		// Skinning of the previewed NIF. Held by pointer because the physics
+		// bones keep pointers into it for as long as they exist.
+		std::unique_ptr<AnimInfo> anim;
+		size_t projectIdx = 0;
+	};
+	std::vector<PreviewPhysicsProject> previewPhysics;
+	// At least one previewed project references a physics XML, so the preview
+	// shows its physics controls.
+	bool previewPhysicsAvailable = false;
+	bool previewPhysicsRunning = false;
+	// Morphed (but not simulated) preview vertices per shape, so a physics tick
+	// can re-skin without running every slider again.
+	std::unordered_map<std::string, std::vector<nifly::Vector3>> previewMorphedVerts;
+	Physics::PumpClock previewPhysicsClock;
+
+	// Applies the simulated bone transforms on top of the shape's morphed
+	// vertices. The lookup overload picks the simulation driving the shape.
+	void ApplyPreviewPhysicsSkinning(const PreviewPhysicsProject& physics, const std::string& shapeName, std::vector<nifly::Vector3>& verts);
+	void ApplyPreviewPhysicsSkinning(const std::string& shapeName, std::vector<nifly::Vector3>& verts);
 
 	int CreateSetSliders(const std::string& outfit);
 	std::string GetFavoriteConfigKey(const std::string& listName) const;
@@ -292,6 +318,27 @@ public:
 	void UpdateReferenceCheckboxState();
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
+
+	/* Physics preview */
+	// Rescans the previewed meshes for physics XML links and shows or hides the
+	// preview's physics controls accordingly. Always tears the simulation down
+	// first, because whatever led here replaced the meshes it was built on; only
+	// a rebuild of an already running preview ("keepRunning") starts it again,
+	// so a newly opened preview always begins with physics off.
+	void UpdatePreviewPhysicsAvailability(bool keepRunning = false);
+	bool IsPreviewPhysicsAvailable() const { return previewPhysicsAvailable; }
+	// Builds or tears down the simulation for all previewed projects.
+	void EnablePreviewPhysics(bool enable);
+	bool IsPreviewPhysicsRunning() const { return previewPhysicsRunning; }
+	// One simulation tick plus the resulting re-skin and redraw. Internally
+	// paced, so it is safe to call from any event source at any rate.
+	void PumpPreviewPhysics();
+	// Feeds a horizontal camera rotation into the simulation so cloth and hair
+	// react as if the character turned under a fixed camera.
+	void InjectPreviewCameraYaw(float deltaDegrees);
+	// Wind direction as an index into Physics::WindDirectionNames(), strength in
+	// percent.
+	void SetPreviewWind(int directionIndex, int strengthPercent);
 	std::vector<ShapePreviewData> ComputeMorphedShapeData(int weight);
 	void PostProcessPreview(std::vector<ShapePreviewData>& shapeData, int weight);
 	void UpdateExternalReferenceMesh(int weight, std::vector<nifly::Vector3>* outVerts = nullptr);
