@@ -213,6 +213,11 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("resetAllPose"), OutfitStudioFrame::OnResetAllPose)
 	EVT_BUTTON(XRCID("poseToMesh"), OutfitStudioFrame::OnPoseToMesh)
 	EVT_CHECKBOX(XRCID("cbPose"), OutfitStudioFrame::OnPoseCheckBox)
+	EVT_CHECKBOX(XRCID("cbPhysics"), OutfitStudioFrame::OnPhysicsCheckBox)
+	EVT_CHECKBOX(XRCID("cbPhysicsVis"), OutfitStudioFrame::OnPhysicsVisCheckBox)
+	EVT_COMMAND_SCROLL(XRCID("physicsWindSlider"), OutfitStudioFrame::OnPhysicsWindSlider)
+	EVT_CHOICE(XRCID("physicsWindDir"), OutfitStudioFrame::OnPhysicsWindDir)
+	EVT_TIMER(PHYSICS_TIMER, OutfitStudioFrame::OnPhysicsTimer)
 
 	EVT_COMBOBOX(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
 	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
@@ -1494,7 +1499,20 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	tzPoseText = (wxTextCtrl*)FindWindowByName("tzPoseText");
 	scPoseText = (wxTextCtrl*)FindWindowByName("scPoseText");
 	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
+	cbPhysics = (wxCheckBox*)FindWindowByName("cbPhysics");
+	cbPhysicsVis = (wxCheckBox*)FindWindowByName("cbPhysicsVis");
+	physicsWindSlider = (wxSlider*)FindWindowByName("physicsWindSlider");
+	physicsWindDir = (wxChoice*)FindWindowByName("physicsWindDir");
 	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
+
+#ifndef USE_BULLET
+	// The physics preview needs a build with Bullet; without it the controls
+	// exist (the XRC is shared) but stay hidden.
+	for (wxWindow* physicsCtrl : {(wxWindow*)cbPhysics, (wxWindow*)cbPhysicsVis, (wxWindow*)physicsWindSlider, (wxWindow*)physicsWindDir, FindWindowByName("physicsWindLabel")}) {
+		if (physicsCtrl)
+			physicsCtrl->Hide();
+	}
+#endif
 
 	cAnimationName = (wxComboBox*)FindWindowByName("cAnimationName");
 	animPlayPauseButton = (wxButton*)FindWindowByName("animPlayPause");
@@ -1509,6 +1527,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	}
 
 	animPlaybackTimer.SetOwner(this, ANIM_PLAYBACK_TIMER);
+	physicsTimer.SetOwner(this, PHYSICS_TIMER);
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
@@ -1625,6 +1644,7 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 		editUV->Close();
 
 	if (project) {
+		ShutdownPhysics();
 		delete project;
 		project = nullptr;
 	}
@@ -2742,6 +2762,7 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName,
 		bEditSlider = false;
 		MenuExitSliderEdit();
 
+		ShutdownPhysics();
 		delete project;
 		project = new OutfitProject(this);
 	}
@@ -4143,6 +4164,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	bEditSlider = false;
 	MenuExitSliderEdit();
 
+	ShutdownPhysics();
 	delete project;
 	project = new OutfitProject(this);
 
@@ -4501,6 +4523,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	ResetProject();
 
+	ShutdownPhysics();
 	delete project;
 	project = new OutfitProject(this);
 
@@ -8042,6 +8065,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		if (project->bPose) {
 			project->bPose = false;
+			UpdatePhysicsState();
 			ApplyPose();
 		}
 
@@ -13162,12 +13186,22 @@ void OutfitStudioFrame::OnPaneCollapse(wxCollapsiblePaneEvent& WXUNUSED(event)) 
 }
 
 void OutfitStudioFrame::ApplyPose() {
+	// While an animation plays there is no separate physics pump; the
+	// simulation advances in lockstep with each displayed frame, using the
+	// wall-clock time since the last step.
+	if (physicsRunning && animPlaying) {
+		const wxLongLong now = physicsWatch.TimeInMicro();
+		const float dt = static_cast<float>((now - physicsLastStepMicro).ToDouble() / 1000000.0);
+		physicsLastStepMicro = now;
+		physics->Step(dt);
+	}
+
 	// Asking for a BVH update queues the shape with wxGLPanel::OnIdle, which
 	// rebuilds a whole AABB tree over every triangle of it - far too expensive
 	// to pay once per displayed animation frame. The tree only serves picking
 	// and brush hit tests, both locked out during playback, so the rebuild is
 	// deferred to the single ApplyPose that PauseAnimationPlayback does.
-	const bool updateBVH = !animPlaying;
+	const bool updateBVH = !animPlaying && !physicsPumpActive;
 
 	for (auto& shape : project->GetWorkNif()->GetShapes()) {
 		std::vector<Vector3> verts;
@@ -13422,6 +13456,7 @@ void OutfitStudioFrame::ActivatePose(bool checked) {
 	project->bPose = checked;
 	poseToMesh->Enable(checked);
 
+	UpdatePhysicsState();
 	ApplyPose();
 }
 
@@ -13980,6 +14015,10 @@ void OutfitStudioFrame::StartAnimationPlayback() {
 	SetHighResolutionTimers(true);
 	Bind(wxEVT_IDLE, &OutfitStudioFrame::OnAnimIdle, this);
 	animPlaybackTimer.Start(AnimPlaybackTimerIntervalMS);
+
+	// Physics switches from its own pump to stepping in lockstep with the
+	// displayed animation frames (see ApplyPose)
+	UpdatePhysicsState();
 }
 
 void OutfitStudioFrame::PauseAnimationPlayback() {
@@ -14004,6 +14043,9 @@ void OutfitStudioFrame::PauseAnimationPlayback() {
 	// the pose sliders that were skipped while playing.
 	PoseToGUI();
 	UpdateAnimationPlayerUI();
+
+	// Back to the physics pump if physics stays enabled with pose mode on
+	UpdatePhysicsState();
 }
 
 void OutfitStudioFrame::ResetAnimationList() {
@@ -14158,6 +14200,11 @@ void OutfitStudioFrame::OnAnimFrameSlider(wxScrollEvent& event) {
 	if (!GetSelectedAnimation())
 		return;
 
+	// Seeking teleports the pose; re-seat the physics bodies on it instead of
+	// letting them interpret the jump as a huge velocity.
+	if (physicsRunning)
+		physics->ResetDynamics();
+
 	ApplyAnimationFrame(std::max(event.GetPosition(), 0), !animPlaying);
 
 	// Seeking moves the playhead, so playback has to continue from there.
@@ -14199,6 +14246,241 @@ void OutfitStudioFrame::OnAnimIdle(wxIdleEvent& event) {
 		wxMilliSleep(1);
 	else
 		PumpAnimationPlayback();
+
+	event.RequestMore();
+}
+
+void OutfitStudioFrame::InjectPhysicsCameraYaw(float deltaDegrees) {
+	if (physicsRunning)
+		physics->InjectCameraYaw(deltaDegrees);
+}
+
+void OutfitStudioFrame::OnPhysicsCheckBox(wxCommandEvent& e) {
+	// Physics only simulates while posing or playing; make checking the box
+	// take effect immediately by enabling pose mode along with it.
+	if (e.IsChecked() && !project->bPose && !animPlaying)
+		ActivatePose(true);
+	else
+		UpdatePhysicsState();
+}
+
+void OutfitStudioFrame::OnPhysicsVisCheckBox(wxCommandEvent& e) {
+	if (physics && physicsRunning) {
+		physics->UpdateDebugVis(glView->gls, e.IsChecked());
+		glView->Render();
+	}
+}
+
+void OutfitStudioFrame::OnPhysicsWindSlider(wxScrollEvent& WXUNUSED(e)) {
+	ApplyPhysicsWind();
+}
+
+void OutfitStudioFrame::OnPhysicsWindDir(wxCommandEvent& WXUNUSED(e)) {
+	ApplyPhysicsWind();
+}
+
+void OutfitStudioFrame::ApplyPhysicsWind() {
+	if (!physics)
+		return;
+
+	if (physicsWindDir) {
+		// Same order as the choice control in the XRC
+		static const bsos::WindDirection directions[] = {bsos::WindDirection::Up,
+														 bsos::WindDirection::Down,
+														 bsos::WindDirection::Forward,
+														 bsos::WindDirection::Backward,
+														 bsos::WindDirection::Left,
+														 bsos::WindDirection::Right};
+
+		const int selection = physicsWindDir->GetSelection();
+		if (selection >= 0 && selection < static_cast<int>(std::size(directions)))
+			physics->SetWindDirection(directions[selection]);
+	}
+
+	if (physicsWindSlider)
+		physics->SetWindStrength(physicsWindSlider->GetValue() / 100.0f);
+}
+
+void OutfitStudioFrame::ShutdownPhysics() {
+	StopPhysicsPump();
+	physicsRunning = false;
+
+	if (project)
+		project->physicsPose = nullptr;
+
+	if (physics) {
+		if (glView)
+			physics->UpdateDebugVis(glView->gls, false);
+		physics->Clear();
+	}
+
+	if (cbPhysics)
+		cbPhysics->SetValue(false);
+
+	if (cbPhysicsVis) {
+		cbPhysicsVis->SetValue(false);
+		cbPhysicsVis->Enable(false);
+	}
+}
+
+void OutfitStudioFrame::UpdatePhysicsState() {
+	const bool desired = cbPhysics && cbPhysics->IsChecked() && project && (project->bPose || animPlaying);
+
+	if (desired && !physicsRunning) {
+		if (!physics)
+			physics = std::make_unique<bsos::PhysicsController>();
+
+		std::vector<std::string> warnings;
+		OutfitProject* proj = project;
+		size_t systemCount = physics->BuildFromNif(
+			project->GetWorkNif(),
+			project->GetWorkAnim(),
+			[proj](const std::string& xmlPath) { return proj->GetPhysicsXmlStream(xmlPath); },
+			project->shapePhysicsFiles,
+			warnings);
+
+		for (auto& warning : warnings)
+			wxLogWarning("Physics: %s", warning);
+
+		if (systemCount == 0) {
+			statusBar->SetStatusText(_("No physics XMLs found in loaded meshes"));
+			physics->Clear();
+
+			// Nothing is simulating, so the box must not claim otherwise
+			cbPhysics->SetValue(false);
+			return;
+		}
+
+		statusBar->SetStatusText(wxString::Format(_("Physics active: %zu system(s)"), systemCount));
+		project->physicsPose = &physics->PoseOverrides();
+		physics->ResetDynamics();
+		physicsRunning = true;
+
+		// The step clock must be valid for the lockstep path too, where
+		// StartPhysicsPump never runs
+		physicsWatch.Start();
+		physicsLastStepMicro = 0;
+		physicsLastDrawMicro = 0;
+
+		// The controller is fresh; re-apply the current wind settings
+		ApplyPhysicsWind();
+
+		if (cbPhysicsVis)
+			cbPhysicsVis->Enable();
+
+		if (!animPlaying)
+			StartPhysicsPump();
+	}
+	else if (!desired && physicsRunning) {
+		// Drop the overrides before the pose is applied again, or the frame
+		// that is supposed to restore the user pose still shows the simulated
+		// one.
+		physicsRunning = false;
+		project->physicsPose = nullptr;
+		physics->UpdateDebugVis(glView->gls, false);
+		physics->Clear();
+		StopPhysicsPump();
+
+		if (cbPhysicsVis) {
+			cbPhysicsVis->SetValue(false);
+			cbPhysicsVis->Enable(false);
+		}
+
+		// Restore the clean user pose without the physics overrides. Also
+		// catches the BVH up with what is displayed: the pump skipped the
+		// rebuild on every tick.
+		ApplyPose();
+	}
+	else if (physicsRunning) {
+		// Animation playback took over or ended: while playing, ApplyPose
+		// steps the simulation in lockstep instead of the pump.
+		if (animPlaying && physicsPumpActive)
+			StopPhysicsPump();
+		else if (!animPlaying && !physicsPumpActive)
+			StartPhysicsPump();
+	}
+
+	// A checked box always means "simulating". Anything that stopped physics -
+	// leaving the bones tab, turning off pose mode, ending playback - clears
+	// it instead of leaving a checked box that does nothing.
+	if (cbPhysics && !physicsRunning)
+		cbPhysics->SetValue(false);
+}
+
+void OutfitStudioFrame::StartPhysicsPump() {
+	if (physicsPumpActive)
+		return;
+
+	physicsPumpActive = true;
+	physicsTargetFps = GetAnimTargetFps();
+	physicsWatch.Start();
+	physicsLastStepMicro = 0;
+	physicsLastDrawMicro = 0;
+	SetHighResolutionTimers(true);
+	Bind(wxEVT_IDLE, &OutfitStudioFrame::OnPhysicsIdle, this);
+	physicsTimer.Start(AnimPlaybackTimerIntervalMS);
+}
+
+void OutfitStudioFrame::StopPhysicsPump() {
+	if (!physicsPumpActive)
+		return;
+
+	physicsTimer.Stop();
+	Unbind(wxEVT_IDLE, &OutfitStudioFrame::OnPhysicsIdle, this);
+	SetHighResolutionTimers(false);
+	physicsPumpActive = false;
+}
+
+void OutfitStudioFrame::PumpPhysics() {
+	if (!physicsPumpActive || !physicsRunning)
+		return;
+
+	// Same pacing idea as PumpAnimationPlayback: ticks arrive from idle and
+	// the timer at wildly different rates, the drawing rate is decided here.
+	const wxLongLong period = 1000000 / std::max(physicsTargetFps, 1);
+	const wxLongLong now = physicsWatch.TimeInMicro();
+	if (now - physicsLastDrawMicro < period)
+		return;
+
+	const float dt = static_cast<float>((now - physicsLastStepMicro).ToDouble() / 1000000.0);
+	physicsLastStepMicro = now;
+	physicsLastDrawMicro = now;
+
+	physics->Step(dt);
+
+	const auto& affectedShapes = physics->AffectedShapes();
+	for (auto& shape : project->GetWorkNif()->GetShapes()) {
+		if (affectedShapes.count(shape->name.get()) == 0)
+			continue;
+
+		std::vector<Vector3> verts;
+		project->GetLiveVerts(shape, verts);
+
+		// BVH rebuilds only serve picking and brushes; way too expensive per
+		// frame. StopPhysicsPump does one full ApplyPose to catch up.
+		glView->UpdateMeshVertices(shape->name.get(), &verts, false, true, false);
+	}
+
+	if (cbPhysicsVis && cbPhysicsVis->IsChecked())
+		physics->UpdateDebugVis(glView->gls, true);
+
+	glView->Render();
+}
+
+void OutfitStudioFrame::OnPhysicsTimer(wxTimerEvent& WXUNUSED(event)) {
+	PumpPhysics();
+}
+
+void OutfitStudioFrame::OnPhysicsIdle(wxIdleEvent& event) {
+	if (!physicsPumpActive)
+		return;
+
+	const wxLongLong period = 1000000 / std::max(physicsTargetFps, 1);
+	const wxLongLong due = period - (physicsWatch.TimeInMicro() - physicsLastDrawMicro);
+	if (due > 1500)
+		wxMilliSleep(1);
+	else
+		PumpPhysics();
 
 	event.RequestMore();
 }
@@ -17293,8 +17575,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		SetFocus();
 
 	// Mouse motion floods the message queue, which starves both the idle events
-	// and the WM_TIMER that drive playback, so tick it from here as well.
+	// and the WM_TIMER that drive playback and physics, so tick them from here
+	// as well.
 	os->PumpAnimationPlayback();
+	os->PumpPhysics();
 
 	bool cursorExists = false;
 	int x;
@@ -17331,8 +17615,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.PanCamera(x - lastX, y - lastY);
 		}
 		else {
-			gls.TurnTableCamera(x - lastX);
+			float yawDegrees = gls.TurnTableCamera(x - lastX);
 			gls.PitchCamera(y - lastY);
+			os->InjectPhysicsCameraYaw(yawDegrees);
 			ShowRotationCenter();
 		}
 

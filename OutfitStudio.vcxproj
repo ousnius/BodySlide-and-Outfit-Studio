@@ -126,8 +126,8 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -139,8 +139,8 @@
       <ExternalWarningLevel>Level1</ExternalWarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;libfbxsdk-mt.lib;libxml2-mt.lib;zlib-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\FBX SDK\2020.3.7\lib\x64\debug;..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;libfbxsdk-mt.lib;libxml2-mt.lib;zlib-mt.lib;BulletDynamics_Debug.lib;BulletCollision_Debug.lib;LinearMath_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\2020.3.7\lib\x64\debug;..\wxWidgets\lib\vc_x64_lib;..\bullet3\install\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -194,8 +194,8 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\2020.3.7\include;..\bullet3\install\include\bullet;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_FBXSDK;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
       </FunctionLevelLinking>
@@ -208,8 +208,8 @@
       <ExternalWarningLevel>Level1</ExternalWarningLevel>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;libfbxsdk-mt.lib;libxml2-mt.lib;zlib-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\FBX SDK\2020.3.7\lib\x64\release;..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;dbghelp.lib;winmm.lib;libfbxsdk-mt.lib;libxml2-mt.lib;zlib-mt.lib;BulletDynamics.lib;BulletCollision.lib;LinearMath.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\2020.3.7\lib\x64\release;..\wxWidgets\lib\vc_x64_lib;..\bullet3\install\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -836,6 +836,30 @@
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\files\MaskFile.h" />
     <ClInclude Include="src\files\HkxFile.h" />
+    <ClInclude Include="src\physics\NiflyBullet.h" />
+    <ClInclude Include="src\physics\PhysicsController.h" />
+    <ClInclude Include="src\physics\PhysicsDebugDraw.h" />
+    <ClInclude Include="src\physics\PhysicsSystemBuilder.h" />
+    <ClInclude Include="src\physics\hdt\XmlReader.h" />
+    <ClInclude Include="src\physics\hdt\hdtAABB.h" />
+    <ClInclude Include="src\physics\hdt\hdtBone.h" />
+    <ClInclude Include="src\physics\hdt\hdtBoneScaleConstraint.h" />
+    <ClInclude Include="src\physics\hdt\hdtBulletHelper.h" />
+    <ClInclude Include="src\physics\hdt\hdtCollider.h" />
+    <ClInclude Include="src\physics\hdt\hdtConeTwistConstraint.h" />
+    <ClInclude Include="src\physics\hdt\hdtConstraintGroup.h" />
+    <ClInclude Include="src\physics\hdt\hdtDispatcher.h" />
+    <ClInclude Include="src\physics\hdt\hdtGeneric6DofConstraint.h" />
+    <ClInclude Include="src\physics\hdt\hdtRefUtils.h" />
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshAlgorithm.h" />
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshBody.h" />
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshBone.h" />
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshShape.h" />
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshSystem.h" />
+    <ClInclude Include="src\physics\hdt\hdtSkinnedMeshWorld.h" />
+    <ClInclude Include="src\physics\hdt\hdtStiffSpringConstraint.h" />
+    <ClInclude Include="src\physics\hdt\hdtStringUtils.h" />
+    <ClInclude Include="src\physics\hdt\hdtVertex.h" />
     <ClInclude Include="src\program\ConvertBodyReferenceDialog.h" />
     <ClInclude Include="src\program\AutomationDialog.h" />
     <ClInclude Include="src\components\Automation.h" />
@@ -935,6 +959,23 @@
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\files\MaskFile.cpp" />
     <ClCompile Include="src\files\HkxFile.cpp" />
+    <ClCompile Include="src\physics\PhysicsController.cpp" />
+    <ClCompile Include="src\physics\PhysicsDebugDraw.cpp" />
+    <ClCompile Include="src\physics\PhysicsSystemBuilder.cpp" />
+    <ClCompile Include="src\physics\hdt\XmlReader.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtBoneScaleConstraint.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtCollider.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtConeTwistConstraint.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtDispatcher.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtGeneric6DofConstraint.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshAlgorithm.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshBody.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshBone.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshShape.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshSystem.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtSkinnedMeshWorld.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtStiffSpringConstraint.cpp" />
+    <ClCompile Include="src\physics\hdt\hdtVertex.cpp" />
     <ClCompile Include="src\program\ConvertBodyReferenceDialog.cpp" />
     <ClCompile Include="src\program\AutomationDialog.cpp" />
     <ClCompile Include="src\program\AutomationDialogExecute.cpp" />

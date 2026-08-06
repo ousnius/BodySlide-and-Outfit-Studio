@@ -241,3 +241,13 @@ public:
 	size_t GetBoneNames(std::vector<std::string>& outBoneNames) const;
 	void DisableCustomTransforms();
 };
+
+// Bone name -> replacement pose-to-global transform, e.g. produced by the
+// physics preview simulation.
+using AnimPoseOverrideMap = std::unordered_map<std::string, nifly::MatTransform>;
+
+// Applies CPU linear-blend skinning with the current pose to the given
+// shape-space vertices of the shape. Bones present in poseOverrides use the
+// override transform instead of their AnimBone::xformPoseToGlobal.
+void ApplySkinningToVerts(
+	AnimInfo& anim, nifly::NiShape* shape, bool isSF, const AnimPoseOverrideMap* poseOverrides, std::vector<nifly::Vector3>& verts);

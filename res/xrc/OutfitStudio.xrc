@@ -1422,6 +1422,78 @@
 																		<option>0</option>
 																		<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
 																		<border>5</border>
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxRIGHT|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxCheckBox" name="cbPhysics">
+																					<label>Physics</label>
+																					<tooltip>Simulate HDT-SMP physics XMLs referenced by the loaded meshes</tooltip>
+																					<checked>0</checked>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																				<border>5</border>
+																				<object class="wxCheckBox" name="cbPhysicsVis">
+																					<label>Show Colliders</label>
+																					<tooltip>Draw the collision shapes and constraints of the physics simulation</tooltip>
+																					<checked>0</checked>
+																					<enabled>0</enabled>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>0</option>
+																		<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+																		<border>5</border>
+																		<object class="wxBoxSizer">
+																			<orient>wxHORIZONTAL</orient>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																				<border>5</border>
+																				<object class="wxStaticText" name="physicsWindLabel">
+																					<label>Wind</label>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>1</option>
+																				<flag>wxEXPAND</flag>
+																				<object class="wxSlider" name="physicsWindSlider">
+																					<value>0</value>
+																					<min>0</min>
+																					<max>100</max>
+																					<tooltip>World wind strength for the physics preview (0 = off)</tooltip>
+																				</object>
+																			</object>
+																			<object class="sizeritem">
+																				<option>0</option>
+																				<flag>wxLEFT|wxALIGN_CENTER_VERTICAL</flag>
+																				<border>5</border>
+																				<object class="wxChoice" name="physicsWindDir">
+																					<selection>5</selection>
+																					<content>
+																						<item>Up</item>
+																						<item>Down</item>
+																						<item>Forward</item>
+																						<item>Backward</item>
+																						<item>Left</item>
+																						<item>Right</item>
+																					</content>
+																					<tooltip>Direction the wind blows in, as seen in the viewport. It stays fixed to the mesh while the camera turns.</tooltip>
+																				</object>
+																			</object>
+																		</object>
+																	</object>
+																	<object class="sizeritem">
+																		<option>0</option>
+																		<flag>wxTOP|wxLEFT|wxRIGHT|wxEXPAND</flag>
+																		<border>5</border>
 																		<object class="wxFlexGridSizer">
 																			<rows>0</rows>
 																			<cols>3</cols>

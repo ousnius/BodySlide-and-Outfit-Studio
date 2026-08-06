@@ -211,9 +211,11 @@ void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const ui
 	SetSize(vpWidth, vpHeight);
 }
 
-void GLSurface::TurnTableCamera(int dScreenX) {
+float GLSurface::TurnTableCamera(int dScreenX) {
 	float pct = (float)dScreenX / (float)vpW;
-	camRot.y += (pct * 500.0f);
+	float degrees = pct * 500.0f;
+	camRot.y += degrees;
+	return degrees;
 }
 
 void GLSurface::PitchCamera(int dScreenY) {
