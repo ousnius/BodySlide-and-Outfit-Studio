@@ -19,7 +19,7 @@ namespace hdt
 			new btSequentialImpulseConstraintSolver,
 			nullptr)
 	{
-		m_windSpeed = _mm_setzero_ps();
+		m_windSpeed.setZero();
 
 		auto collisionConfiguration = new btDefaultCollisionConfiguration;
 		auto collisionDispatcher = new CollisionDispatcher(collisionConfiguration);

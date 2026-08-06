@@ -165,8 +165,8 @@ namespace hdt
 				penetration = 0;
 			}
 
-			auto ab = (p1.pos() - p0.pos()).get128();
-			auto ac = (p2.pos() - p0.pos()).get128();
+			auto ab = toSimd(p1.pos() - p0.pos());
+			auto ac = toSimd(p2.pos() - p0.pos());
 			auto raw_normal = cross_product(ab, ac);
 			auto len = _mm_sqrt_ps(_mm_dp_ps(raw_normal, raw_normal, 0x77));
 			if (_mm_cvtss_f32(len) < FLT_EPSILON) {
@@ -178,10 +178,10 @@ namespace hdt
 				penetration = -penetration;
 			}
 
-			auto ap = (s.pos() - p0.pos()).get128();
+			auto ap = toSimd(s.pos() - p0.pos());
 			auto distance = _mm_dp_ps(ap, normal, 0x77);
 			float distanceFromPlane = _mm_cvtss_f32(distance);
-			auto projection = _mm_sub_ps(s.pos().get128(), _mm_mul_ps(normal, distance));
+			auto projection = _mm_sub_ps(toSimd(s.pos()), _mm_mul_ps(normal, distance));
 			float radiusWithMargin = r + margin;
 			bool isInsideContactPlane;
 			if (penetration >= FLT_EPSILON)
@@ -200,9 +200,9 @@ namespace hdt
 			}
 
 			// Compute (twice) area of each triangle between projection and two triangle points
-			ap = _mm_sub_ps(projection, p0.pos().get128());
-			auto bp = _mm_sub_ps(projection, p1.pos().get128());
-			auto cp = _mm_sub_ps(projection, p2.pos().get128());
+			ap = _mm_sub_ps(projection, toSimd(p0.pos()));
+			auto bp = _mm_sub_ps(projection, toSimd(p1.pos()));
+			auto cp = _mm_sub_ps(projection, toSimd(p2.pos()));
 			auto aa = cross_product(bp, cp);
 			ab = cross_product(cp, ap);
 			ac = cross_product(ap, bp);
@@ -220,9 +220,9 @@ namespace hdt
 			res.colliderA = a;
 			res.colliderB = b;
 			if (pointInTriangle) {
-				res.normOnB.set128(normal);
+				setSimd(res.normOnB, normal);
 				res.posA = s.pos() - res.normOnB * r;
-				res.posB.set128(projection);
+				setSimd(res.posB, projection);
 				res.depth = distanceFromPlane - radiusWithMargin;
 				return res.depth < -FLT_EPSILON;
 			}

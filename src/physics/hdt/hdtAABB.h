@@ -32,8 +32,8 @@ namespace hdt
 
 		void merge(const btVector3& p)
 		{
-			m_min = _mm_min_ps(m_min, p.get128());
-			m_max = _mm_max_ps(m_max, p.get128());
+			m_min = _mm_min_ps(m_min, toSimd(p));
+			m_max = _mm_max_ps(m_max, toSimd(p));
 		}
 
 		void merge(const Aabb& rhs)
@@ -50,9 +50,8 @@ namespace hdt
 		}
 
 		BoundingSphere(const btVector3& center, float radius) :
-			m_centerRadius(center)
+			m_centerRadius(center.x(), center.y(), center.z(), radius)
 		{
-			m_centerRadius[3] = radius;
 		}
 
 		btVector3 center() const { return m_centerRadius; }
@@ -62,7 +61,7 @@ namespace hdt
 		// SIMD stuff: splat radius from W into all lanes, then build AABB as center +/- radius
 		Aabb getAabb() const
 		{
-			__m128 c = m_centerRadius.get128();
+			__m128 c = toSimd(m_centerRadius);
 			__m128 r = _mm_shuffle_ps(c, c, _MM_SHUFFLE(3, 3, 3, 3));
 			return Aabb(_mm_sub_ps(c, r), _mm_add_ps(c, r));
 		}

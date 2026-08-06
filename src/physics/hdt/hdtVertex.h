@@ -37,15 +37,22 @@ namespace hdt
 
 		void set(const btVector3& p, float m)
 		{
-			m_data = setLane3(p.get128(), m);
+			m_data = setLane3(toSimd(p), m);
 		}
 
 		void set(const btVector4& pm)
 		{
-			m_data = pm.get128();
+			m_data = toSimd(pm);
 		}
 
-		btVector3 pos() const { return m_data; }
+		// The original relied on btVector4's implicit __m128 conversion, which
+		// Bullet only provides when built with BT_USE_SSE.
+		void set(__m128 pm)
+		{
+			m_data = pm;
+		}
+
+		btVector3 pos() const { return fromSimd(m_data); }
 		__m128 marginMultiplier4() const { return pshufd<0xFF>(m_data); }
 		float marginMultiplier() const { return _mm_cvtss_f32(marginMultiplier4()); }
 

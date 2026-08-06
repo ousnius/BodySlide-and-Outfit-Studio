@@ -20,9 +20,9 @@ namespace hdt
 
 	HDT_FORCEINLINE __m128 calcVertexState(__m128 skinPos, const Bone& bone, __m128 w)
 	{
-		auto p = bone.m_vertexToWorld * skinPos;
-		p = _mm_blend_ps(p.get128(), _mm_load_ps(bone.m_reserved), 0x8);
-		return _mm_mul_ps(w, p.get128());
+		auto p = bone.m_vertexToWorld * fromSimd(skinPos);
+		auto pm = _mm_blend_ps(toSimd(p), _mm_load_ps(bone.m_reserved), 0x8);
+		return _mm_mul_ps(w, pm);
 	}
 
 #if defined(__AVX2__)
@@ -31,9 +31,9 @@ namespace hdt
 		__m128 px = pshufd<0x00>(skinPos);
 		__m128 py = pshufd<0x55>(skinPos);
 		__m128 pz = pshufd<0xAA>(skinPos);
-		__m128 r = _mm_fmadd_ps(bone.m_vertexToWorld.m_col[2].get128(), pz, bone.m_vertexToWorld.m_col[3].get128());
-		r = _mm_fmadd_ps(bone.m_vertexToWorld.m_col[1].get128(), py, r);
-		r = _mm_fmadd_ps(bone.m_vertexToWorld.m_col[0].get128(), px, r);
+		__m128 r = _mm_fmadd_ps(toSimd(bone.m_vertexToWorld.m_col[2]), pz, toSimd(bone.m_vertexToWorld.m_col[3]));
+		r = _mm_fmadd_ps(toSimd(bone.m_vertexToWorld.m_col[1]), py, r);
+		r = _mm_fmadd_ps(toSimd(bone.m_vertexToWorld.m_col[0]), px, r);
 		r = _mm_blend_ps(r, _mm_load_ps(bone.m_reserved), 0x8);
 		return _mm_mul_ps(w, r);
 	}
@@ -74,7 +74,7 @@ namespace hdt
 
 			{
 				auto& v = verts[idx];
-				auto p = v.m_skinPos.get128();
+				auto p = toSimd(v.m_skinPos);
 				auto w = _mm_load_ps(v.m_weight);
 				auto pm = calcVertexStateFMA(p, bones[v.getBoneIdx(0)], setAll0(w));
 				pm += calcVertexStateFMA(p, bones[v.getBoneIdx(1)], setAll1(w));
@@ -84,7 +84,7 @@ namespace hdt
 			}
 			{
 				auto& v = verts[idx + 1];
-				auto p = v.m_skinPos.get128();
+				auto p = toSimd(v.m_skinPos);
 				auto w = _mm_load_ps(v.m_weight);
 				auto pm = calcVertexStateFMA(p, bones[v.getBoneIdx(0)], setAll0(w));
 				pm += calcVertexStateFMA(p, bones[v.getBoneIdx(1)], setAll1(w));
@@ -95,7 +95,7 @@ namespace hdt
 		}
 		for (; idx < size; ++idx) {
 			auto& v = verts[idx];
-			auto p = v.m_skinPos.get128();
+			auto p = toSimd(v.m_skinPos);
 			auto w = _mm_load_ps(v.m_weight);
 			auto pm = calcVertexStateFMA(p, bones[v.getBoneIdx(0)], setAll0(w));
 			pm += calcVertexStateFMA(p, bones[v.getBoneIdx(1)], setAll1(w));
@@ -118,7 +118,7 @@ namespace hdt
 
 			{
 				auto& v = verts[idx];
-				auto p = v.m_skinPos.get128();
+				auto p = toSimd(v.m_skinPos);
 				auto w = _mm_load_ps(v.m_weight);
 				auto pm = calcVertexState(p, bones[v.getBoneIdx(0)], setAll0(w));
 				pm += calcVertexState(p, bones[v.getBoneIdx(1)], setAll1(w));
@@ -128,7 +128,7 @@ namespace hdt
 			}
 			{
 				auto& v = verts[idx + 1];
-				auto p = v.m_skinPos.get128();
+				auto p = toSimd(v.m_skinPos);
 				auto w = _mm_load_ps(v.m_weight);
 				auto pm = calcVertexState(p, bones[v.getBoneIdx(0)], setAll0(w));
 				pm += calcVertexState(p, bones[v.getBoneIdx(1)], setAll1(w));
@@ -138,7 +138,7 @@ namespace hdt
 			}
 			{
 				auto& v = verts[idx + 2];
-				auto p = v.m_skinPos.get128();
+				auto p = toSimd(v.m_skinPos);
 				auto w = _mm_load_ps(v.m_weight);
 				auto pm = calcVertexState(p, bones[v.getBoneIdx(0)], setAll0(w));
 				pm += calcVertexState(p, bones[v.getBoneIdx(1)], setAll1(w));
@@ -148,7 +148,7 @@ namespace hdt
 			}
 			{
 				auto& v = verts[idx + 3];
-				auto p = v.m_skinPos.get128();
+				auto p = toSimd(v.m_skinPos);
 				auto w = _mm_load_ps(v.m_weight);
 				auto pm = calcVertexState(p, bones[v.getBoneIdx(0)], setAll0(w));
 				pm += calcVertexState(p, bones[v.getBoneIdx(1)], setAll1(w));
@@ -159,7 +159,7 @@ namespace hdt
 		}
 		for (; idx < size; ++idx) {
 			auto& v = verts[idx];
-			auto p = v.m_skinPos.get128();
+			auto p = toSimd(v.m_skinPos);
 			auto w = _mm_load_ps(v.m_weight);
 			auto pm = calcVertexState(p, bones[v.getBoneIdx(0)], setAll0(w));
 			pm += calcVertexState(p, bones[v.getBoneIdx(1)], setAll1(w));

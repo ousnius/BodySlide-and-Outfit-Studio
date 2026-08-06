@@ -536,14 +536,29 @@ if(BSOS_HAVE_FBXSDK)
 endif()
 
 if(BSOS_HAVE_BULLET)
-	# BT_USE_SSE_IN_API exposes Bullet's SSE-based btVector3 API that the
-	# ported physics code uses. It only adds inline members (the storage is
-	# SSE-backed either way), so it does not have to match how the Bullet
-	# libraries themselves were compiled.
+	# BT_USE_SSE_IN_API exposes Bullet's SSE-based btVector3 API that the ported
+	# physics code prefers. It only adds inline members (the storage is SSE-backed
+	# either way), so it does not have to match how the Bullet libraries
+	# themselves were compiled. It has no effect unless btScalar.h also turns on
+	# BT_USE_SSE, which it does on Windows and macOS but not on Linux; the port
+	# falls back to explicit conversions there (see hdt::toSimd in
+	# hdtBulletHelper.h).
 	foreach(bullet_target OutfitStudio BodySlide)
 		target_compile_definitions(${bullet_target} PRIVATE USE_BULLET BT_USE_SSE_IN_API)
 		target_include_directories(${bullet_target} SYSTEM PRIVATE ${BSOS_BULLET_INCLUDE_DIRS})
 	endforeach()
+
+	# The port uses SSE4.1 intrinsics throughout, as the MSVC build does through
+	# BT_ALLOW_SSE4. GCC and Clang only accept those with a matching -m flag, and
+	# reject them in always_inline functions otherwise, so raise the instruction
+	# set for the physics sources alone.
+	if(NOT MSVC)
+		include(CheckCXXCompilerFlag)
+		check_cxx_compiler_flag("-msse4.1" BSOS_HAVE_SSE41_FLAG)
+		if(BSOS_HAVE_SSE41_FLAG)
+			set_source_files_properties(${BSOS_PHYSICS_SOURCES} PROPERTIES COMPILE_OPTIONS "-msse4.1")
+		endif()
+	endif()
 
 	# The config package (BulletConfig.cmake) exports bare library names plus
 	# a library directory; the FindBullet module exports full paths and no

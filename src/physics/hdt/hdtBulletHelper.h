@@ -32,6 +32,39 @@ namespace hdt
 	typedef uint32_t U32;
 	typedef uint64_t U64;
 
+	// Bullet only exposes its SSE-backed vector API (get128/set128 and the
+	// implicit __m128 conversions) when its headers configure BT_USE_SSE, which
+	// they do on Windows and macOS but not on Linux (see LinearMath/btScalar.h),
+	// no matter what BT_USE_SSE_IN_API says. btVector3 and btVector4 are four
+	// 16-byte aligned floats either way, so convert here instead of depending on
+	// how the Bullet package was built.
+	static_assert(sizeof(btScalar) == sizeof(float),
+		"the physics preview needs a single precision Bullet (built without BT_USE_DOUBLE_PRECISION)");
+
+#if defined(BT_USE_SSE) && defined(BT_USE_SSE_IN_API)
+	inline __m128 toSimd(const btVector3& v) { return v.get128(); }
+	inline void setSimd(btVector3& v, __m128 m) { v.set128(m); }
+	inline btVector3 fromSimd(__m128 m) { return btVector3(m); }
+	inline btVector4 fromSimd4(__m128 m) { return btVector4(m); }
+#else
+	inline __m128 toSimd(const btVector3& v) { return _mm_loadu_ps(v.m_floats); }
+	inline void setSimd(btVector3& v, __m128 m) { _mm_storeu_ps(v.m_floats, m); }
+
+	inline btVector3 fromSimd(__m128 m)
+	{
+		btVector3 v;
+		setSimd(v, m);
+		return v;
+	}
+
+	inline btVector4 fromSimd4(__m128 m)
+	{
+		btVector4 v;
+		setSimd(v, m);
+		return v;
+	}
+#endif
+
 	template <int imm>
 	__m128 pshufd(__m128 m)
 	{
@@ -53,6 +86,10 @@ namespace hdt
 
 	inline float getLane3(__m128 v) { return _mm_cvtss_f32(pshufd<0xFF>(v)); }
 
+	// MSVC models __m128 as a class without arithmetic operators; GCC and Clang
+	// model it as a native vector type that already has them (scalar operands
+	// included), and reject operator overloads for non-class types.
+#if defined(_MSC_VER) && !defined(__clang__)
 	inline __m128& operator+=(__m128& l, __m128 r)
 	{
 		l = _mm_add_ps(l, r);
@@ -88,6 +125,7 @@ namespace hdt
 		l = _mm_mul_ps(l, setAll(r));
 		return l;
 	}
+#endif
 
 	inline __m128 cross(__m128 a, __m128 b)
 	{
@@ -188,8 +226,7 @@ namespace hdt
 			//0x30 inserts the 0th element of _mm_set_ss into the 3rd (W) element of t
 			m_originScale.mVec128 = _mm_insert_ps(t.get128(), _mm_set_ss(s), 0x30);
 #else
-			m_originScale = t;
-			m_originScale[3] = s;
+			m_originScale = btVector4(t.x(), t.y(), t.z(), s);
 #endif
 		}
 
@@ -199,8 +236,8 @@ namespace hdt
 #ifdef BT_ALLOW_SSE4
 			m_originScale.mVec128 = _mm_insert_ps(t.getOrigin().get128(), _mm_set_ss(s), 0x30);
 #else
-			m_originScale = t.getOrigin();
-			m_originScale[3] = s;
+			const btVector3& o = t.getOrigin();
+			m_originScale = btVector4(o.x(), o.y(), o.z(), s);
 #endif
 		}
 
@@ -236,9 +273,7 @@ namespace hdt
 #ifdef BT_ALLOW_SSE4
 			m_originScale.mVec128 = _mm_blend_ps(vec.get128(), m_originScale.get128(), 0b1000);
 #else
-			float s = getScale();
-			m_originScale = vec;
-			m_originScale[3] = s;
+			m_originScale = btVector4(vec.x(), vec.y(), vec.z(), getScale());
 #endif
 		}
 
@@ -272,8 +307,7 @@ namespace hdt
 #ifdef BT_ALLOW_SSE4
 			m_originScale.mVec128 = _mm_insert_ps(newOrigin.get128(), _mm_set_ss(newScale), 0x30);
 #else
-			m_originScale = newOrigin;
-			m_originScale[3] = newScale;
+			m_originScale = btVector4(newOrigin.x(), newOrigin.y(), newOrigin.z(), newScale);
 #endif
 		}
 
@@ -306,7 +340,7 @@ namespace hdt
 		btMatrix4x3(const btQsTransform& t)
 		{
 			reinterpret_cast<btMatrix3x3*>(this)->setRotation(t.getBasis());
-			__m128 scale = pshufd<0xFF>(t.getOrigin().get128());
+			__m128 scale = pshufd<0xFF>(toSimd(t.getOrigin()));
 			m_row[0] = _mm_mul_ps(m_row[0], scale);
 			m_row[1] = _mm_mul_ps(m_row[1], scale);
 			m_row[2] = _mm_mul_ps(m_row[2], scale);
@@ -318,14 +352,14 @@ namespace hdt
 		btVector3 operator*(const btVector3& rhs) const
 		{
 #ifdef BT_ALLOW_SSE4
-			auto v = _mm_blend_ps(rhs.get128(), _mm_set_ps1(1), 0x8);
+			auto v = _mm_blend_ps(toSimd(rhs), _mm_set_ps1(1), 0x8);
 			__m128 xmm0 = _mm_dp_ps(m_row[0], v, 0xF1);
 			__m128 xmm1 = _mm_dp_ps(m_row[1], v, 0xF2);
 			__m128 xmm2 = _mm_dp_ps(m_row[2], v, 0xF4);
 			xmm0 = _mm_or_ps(xmm0, xmm1);
 			xmm0 = _mm_or_ps(xmm0, xmm2);
 #else
-			auto v = rhs.get128();
+			auto v = toSimd(rhs);
 			v = setLane3(v, 1.0f);
 
 			__m128 xmm0 = _mm_mul_ps(m_row[0], v);
@@ -336,13 +370,13 @@ namespace hdt
 			xmm2 = _mm_hadd_ps(xmm2, xmm2);
 			xmm0 = _mm_hadd_ps(xmm0, xmm2);
 #endif
-			return xmm0;
+			return fromSimd(xmm0);
 		}
 
 		__m128 mulPack(const btVector3& rhs, float packW) const
 		{
 #ifdef BT_ALLOW_SSE4
-			auto v = _mm_blend_ps(rhs.get128(), _mm_set_ps1(1), 0x8);
+			auto v = _mm_blend_ps(toSimd(rhs), _mm_set_ps1(1), 0x8);
 			__m128 xmm0 = _mm_dp_ps(m_row[0], v, 0xF1);       // x, 0, 0, 0
 			__m128 xmm1 = _mm_dp_ps(m_row[1], v, 0xF2);       // 0, y, 0, 0
 			xmm0 = _mm_or_ps(xmm0, xmm1);                     // x, y, 0, 0
@@ -350,7 +384,7 @@ namespace hdt
 			xmm1 = _mm_unpacklo_ps(xmm1, _mm_set_ss(packW));  // z, w, 0, 0
 			xmm0 = _mm_movelh_ps(xmm0, xmm1);                 // x, y, z, w
 #else
-			auto v = rhs.get128();
+			auto v = toSimd(rhs);
 			v = setLane3(v, 1.0f);
 			auto w = _mm_load_ss(&packW);
 
@@ -381,11 +415,11 @@ namespace hdt
 			btMatrix3x3 rot;
 			rot.setRotation(t.getBasis());
 			rot = rot.transpose();
-			__m128 scale = pshufd<0xFF>(t.getOrigin().get128());
-			m_col[0] = rot[0].get128() * scale;
-			m_col[1] = rot[1].get128() * scale;
-			m_col[2] = rot[2].get128() * scale;
-			m_col[3] = t.getOrigin().get128();
+			__m128 scale = pshufd<0xFF>(toSimd(t.getOrigin()));
+			m_col[0] = fromSimd(_mm_mul_ps(toSimd(rot[0]), scale));
+			m_col[1] = fromSimd(_mm_mul_ps(toSimd(rot[1]), scale));
+			m_col[2] = fromSimd(_mm_mul_ps(toSimd(rot[2]), scale));
+			m_col[3] = t.getOrigin();
 		}
 
 		btVector3 operator*(const btVector3& rhs) const
@@ -417,7 +451,7 @@ namespace hdt
 	template <>
 	inline btVector3 abs(btVector3 rhs)
 	{
-		return _mm_andnot_ps(_mm_set_ps1(-0.f), rhs.get128());
+		return fromSimd(_mm_andnot_ps(_mm_set_ps1(-0.f), toSimd(rhs)));
 	}
 
 	template <class T>

@@ -36,8 +36,8 @@ namespace hdt
 
 			void getAabb([[maybe_unused]] const btTransform& t, btVector3& aabbMin, btVector3& aabbMax) const override
 			{
-				aabbMin = m_aabb.m_min;
-				aabbMax = m_aabb.m_max;
+				aabbMin = fromSimd(m_aabb.m_min);
+				aabbMax = fromSimd(m_aabb.m_max);
 			}
 
 			void setLocalScaling([[maybe_unused]] const btVector3& scaling) override
