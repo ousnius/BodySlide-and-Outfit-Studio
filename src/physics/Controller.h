@@ -52,6 +52,16 @@ enum class WindDirection { Up, Down, Forward, Backward, Left, Right };
 const std::vector<std::string>& WindDirectionNames();
 WindDirection WindDirectionFromIndex(int index);
 
+// One bone of the mesh patch the cursor grabbed: where the patch holds on to
+// that bone ("anchor", in NIF global space, same as PoseOverrideMap) and how
+// much of the patch that bone carries. Weight 1 is the bone carrying the most
+// of it, so the pull does not get stronger the more bones a patch spans.
+struct GrabTarget {
+	std::string boneName;
+	nifly::Vector3 anchor;
+	float weight = 1.0f;
+};
+
 // True when "nif" or "shapePhysicsFiles" reference at least one physics XML,
 // i.e. when a physics preview has anything to simulate. Only looks at extra
 // data, so it is cheap enough to call whenever the loaded meshes change; the
@@ -118,6 +128,26 @@ public:
 
 	// Direction the wind blows in, relative to the mesh.
 	void SetWindDirection(WindDirection direction);
+
+	// Starts dragging the given bones by their anchors, as if the user had
+	// taken hold of the mesh there. Bones no system simulates and bones the
+	// pose drives (kinematic ones) are dropped; returns false when that leaves
+	// nothing to drag. Replaces a grab still in progress.
+	//
+	// Nothing is moved directly: each bone is pulled towards where the cursor
+	// wants its anchor through a critically damped spring, so the constraints,
+	// collisions and gravity of the physics XML decide what the mesh actually
+	// does on the way, and how far it gets at all.
+	bool BeginGrab(const std::vector<GrabTarget>& targets);
+
+	// Moves the grab to "offset" away from where it started (NIF global space).
+	void UpdateGrab(const nifly::Vector3& offset);
+
+	// Lets go. The bones keep whatever velocity the drag gave them, so a fast
+	// release flings them.
+	void EndGrab();
+
+	bool IsGrabbing() const;
 
 	// Simulated replacement transforms for physics-driven bones.
 	const PoseOverrideMap& PoseOverrides() const;

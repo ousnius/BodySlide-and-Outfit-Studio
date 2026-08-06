@@ -274,6 +274,14 @@ public:
 	void ClickFlipEdge();
 	void ClickSplitEdge();
 
+	// Takes hold of the running physics simulation where the cursor points and
+	// drags it around, without touching the mesh data. Start fails when the
+	// cursor is not over a shape the simulation moves, leaving the click to the
+	// tool that would otherwise have had it.
+	bool StartPhysicsGrab(const wxPoint& screenPos);
+	void UpdatePhysicsGrab(const wxPoint& screenPos);
+	void EndPhysicsGrab();
+
 	bool StartMoveVertex(const wxPoint& screenPos);
 	void UpdateMoveVertex(const wxPoint& screenPos);
 	void EndMoveVertex();
@@ -771,6 +779,20 @@ private:
 	int edgeSlideTarget = -1;
 	bool edgeSlideHasUV = false;
 
+	// Where a physics grab took hold and the plane it reads the cursor
+	// against, both in model space. The simulation pulls the grabbed patch out
+	// from under the cursor immediately, so there is nothing left to hit-test
+	// against - the move brush freezes a plane for the same reason.
+	nifly::Vector3 physicsGrabStart;
+	nifly::Vector3 physicsGrabPlaneNormal;
+	float physicsGrabPlaneDist = 0.0f;
+
+	// Fills "outTargets" with the physics bones holding the patch of "m"
+	// around "meshPos", each weighted by how much of the patch it carries.
+	bool CollectPhysicsGrabTargets(Mesh* m, const nifly::Vector3& meshPos, std::vector<Physics::GrabTarget>& outTargets);
+	void ShowPhysicsGrabMarker(const nifly::Vector3& modelPos);
+	void HidePhysicsGrabMarker();
+
 	std::set<Mesh*> BVHUpdateQueue;
 
 	OutfitStudioFrame* os = nullptr;
@@ -797,6 +819,7 @@ private:
 	bool isPickingEdge = false;
 	bool isMovingVertex = false;
 	bool isSlidingEdge = false;
+	bool isPhysicsGrabbing = false;
 	bool toolOptionXMirror = true;
 	bool toolOptionXMirrorWeight = false;
 	bool toolOptionConnectedOnly = false;
@@ -992,6 +1015,27 @@ public:
 	// safe to call from any event source at any rate.
 	void PumpPhysics();
 
+	// Whether the viewport should treat a left drag as a grab of the running
+	// simulation rather than as whatever the active tool does.
+	bool IsPhysicsGrabEnabled() const;
+
+	// The shapes the simulation moves; empty while it is not running.
+	const std::unordered_set<std::string>& GetPhysicsAffectedShapes() const;
+
+	// Fits the BVHs of those shapes to where the simulation has moved them.
+	// The pump leaves them behind on purpose - rebuilding a tree per frame
+	// costs far more than it is worth for trees only picking uses - so
+	// anything that does pick the simulated mesh has to catch them up first.
+	void RefitPhysicsBVH();
+
+	// Grabbing the mesh with the cursor: drags the physics bones the grabbed
+	// patch is skinned to, leaving what the mesh does on the way to the
+	// constraints, collisions and gravity of its physics XML. Purely a
+	// simulation input - none of it reaches the mesh data or the undo history.
+	bool BeginPhysicsGrab(const std::vector<Physics::GrabTarget>& targets);
+	void UpdatePhysicsGrab(const nifly::Vector3& offset);
+	void EndPhysicsGrab();
+
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;
 	OutfitProject* project = nullptr;
@@ -1036,6 +1080,7 @@ public:
 	wxCheckBox* cbPose = nullptr;
 	wxCheckBox* cbPhysics = nullptr;
 	wxCheckBox* cbPhysicsVis = nullptr;
+	wxCheckBox* cbPhysicsGrab = nullptr;
 	wxSlider* physicsWindSlider = nullptr;
 	wxChoice* physicsWindDir = nullptr;
 	wxButton* poseToMesh = nullptr;
@@ -1921,6 +1966,9 @@ private:
 	void StopPhysicsPump();
 	void OnPhysicsCheckBox(wxCommandEvent& event);
 	void OnPhysicsVisCheckBox(wxCommandEvent& event);
+	void OnPhysicsGrabCheckBox(wxCommandEvent& event);
+	// Puts the grab checkbox in the state a (not) running simulation allows
+	void UpdatePhysicsGrabControl(bool enabled);
 	void OnPhysicsWindSlider(wxScrollEvent& event);
 	void OnPhysicsWindDir(wxCommandEvent& event);
 	// Pushes the wind controls into the simulation; the controller is built

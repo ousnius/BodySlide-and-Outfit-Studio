@@ -83,6 +83,10 @@ public:
 								   nifly::Vector3* closestPoint,
 								   const std::vector<AABBTriangleDistanceData>* triangleDistanceData);
 		void UpdateAABB(const AABB* childBB = nullptr);
+		// Recalculates this node's box and every box below it from the vertex
+		// positions as they are now. Unlike UpdateAABB, boxes shrink again
+		// rather than only growing to cover what moved.
+		void Refit();
 	};
 
 	std::unique_ptr<AABBTreeNode> root;
@@ -104,6 +108,12 @@ public:
 	void CalcAABBandGeoAvg(const uint32_t forFacets[], const uint32_t start, const uint32_t end, AABB& outBB, nifly::Vector3& outAxisAvg);
 	void BuildDebugFrames(nifly::Vector3** outVerts, uint16_t* outNumVerts, nifly::Edge** outEdges, uint32_t* outNumEdges);
 	void BuildRayIntersectFrames(nifly::Vector3& origin, nifly::Vector3& direction, nifly::Vector3** outVerts, uint16_t* outNumVerts, nifly::Edge** outEdges, uint32_t* outNumEdges);
+	// Fits every box of the tree to the vertex positions as they are now,
+	// keeping the split the tree was built with. Far cheaper than building a
+	// new tree, so it is the way to catch a tree up with deformed geometry -
+	// but the split gets worse the further the geometry moves, so it does not
+	// replace a rebuild.
+	void Refit();
 	bool IntersectRay(nifly::Vector3& origin, nifly::Vector3& direction, std::vector<IntersectResult>* results = nullptr);
 	bool IntersectSphere(nifly::Vector3& origin, const float radius, std::vector<IntersectResult>* results = nullptr);
 	bool ClosestFacetInSphere(nifly::Vector3& origin,

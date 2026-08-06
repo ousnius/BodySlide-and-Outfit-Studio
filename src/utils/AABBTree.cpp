@@ -812,6 +812,33 @@ void AABBTree::AABBTreeNode::UpdateAABB(const AABB* childBB) {
 		parent->UpdateAABB(&mBB);
 }
 
+void AABBTree::AABBTreeNode::Refit() {
+	// Leaves are the only nodes holding facets; everything above them is the
+	// union of its children.
+	if (!P && !N) {
+		if (nFacets > 0) {
+			Vector3 bogus;
+			tree->CalcAABBandGeoAvg(mIFacets.get(), 0, nFacets - 1, mBB, bogus);
+		}
+		return;
+	}
+
+	bool haveBox = false;
+	if (P) {
+		P->Refit();
+		mBB = P->mBB;
+		haveBox = true;
+	}
+
+	if (N) {
+		N->Refit();
+		if (haveBox)
+			mBB.Merge(N->mBB);
+		else
+			mBB = N->mBB;
+	}
+}
+
 AABBTree::AABBTree(Vector3* vertices, Triangle* facets, const uint32_t nFacets, const uint32_t maxDepth, const uint32_t minFacets) {
 	triRef = facets;
 	vertexRef = vertices;
@@ -971,6 +998,11 @@ void AABBTree::BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vect
 		(*outEdges)[i].p1 = e[i].p1;
 		(*outEdges)[i].p2 = e[i].p2;
 	}
+}
+
+void AABBTree::Refit() {
+	if (root)
+		root->Refit();
 }
 
 bool AABBTree::IntersectRay(Vector3& origin, Vector3& direction, std::vector<IntersectResult>* results) {

@@ -216,6 +216,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CHECKBOX(XRCID("cbPose"), OutfitStudioFrame::OnPoseCheckBox)
 	EVT_CHECKBOX(XRCID("cbPhysics"), OutfitStudioFrame::OnPhysicsCheckBox)
 	EVT_CHECKBOX(XRCID("cbPhysicsVis"), OutfitStudioFrame::OnPhysicsVisCheckBox)
+	EVT_CHECKBOX(XRCID("cbPhysicsGrab"), OutfitStudioFrame::OnPhysicsGrabCheckBox)
 	EVT_COMMAND_SCROLL(XRCID("physicsWindSlider"), OutfitStudioFrame::OnPhysicsWindSlider)
 	EVT_CHOICE(XRCID("physicsWindDir"), OutfitStudioFrame::OnPhysicsWindDir)
 	EVT_TIMER(PHYSICS_TIMER, OutfitStudioFrame::OnPhysicsTimer)
@@ -1508,6 +1509,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
 	cbPhysics = (wxCheckBox*)FindWindowByName("cbPhysics");
 	cbPhysicsVis = (wxCheckBox*)FindWindowByName("cbPhysicsVis");
+	cbPhysicsGrab = (wxCheckBox*)FindWindowByName("cbPhysicsGrab");
 	physicsWindSlider = (wxSlider*)FindWindowByName("physicsWindSlider");
 	physicsWindDir = (wxChoice*)FindWindowByName("physicsWindDir");
 	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
@@ -14306,6 +14308,60 @@ void OutfitStudioFrame::OnPhysicsVisCheckBox(wxCommandEvent& e) {
 	}
 }
 
+void OutfitStudioFrame::OnPhysicsGrabCheckBox(wxCommandEvent& e) {
+	// Turning it off mid-drag is only possible with a lost mouse capture, which
+	// releases the grab already; this is just to be sure nothing keeps pulling.
+	if (!e.IsChecked() && glView)
+		glView->EndPhysicsGrab();
+}
+
+void OutfitStudioFrame::UpdatePhysicsGrabControl(bool enabled) {
+	if (!cbPhysicsGrab)
+		return;
+
+	if (!enabled) {
+		cbPhysicsGrab->SetValue(false);
+		if (glView)
+			glView->EndPhysicsGrab();
+	}
+
+	cbPhysicsGrab->Enable(enabled);
+}
+
+bool OutfitStudioFrame::IsPhysicsGrabEnabled() const {
+	return physicsRunning && cbPhysicsGrab && cbPhysicsGrab->IsChecked();
+}
+
+const std::unordered_set<std::string>& OutfitStudioFrame::GetPhysicsAffectedShapes() const {
+	static const std::unordered_set<std::string> none;
+	return physicsRunning ? physics->AffectedShapes() : none;
+}
+
+void OutfitStudioFrame::RefitPhysicsBVH() {
+	if (!physicsRunning)
+		return;
+
+	for (const auto& shapeName : physics->AffectedShapes()) {
+		Mesh* m = glView->GetMesh(shapeName);
+		if (m && m->bvh)
+			m->bvh->Refit();
+	}
+}
+
+bool OutfitStudioFrame::BeginPhysicsGrab(const std::vector<Physics::GrabTarget>& targets) {
+	return physicsRunning && physics->BeginGrab(targets);
+}
+
+void OutfitStudioFrame::UpdatePhysicsGrab(const Vector3& offset) {
+	if (physicsRunning)
+		physics->UpdateGrab(offset);
+}
+
+void OutfitStudioFrame::EndPhysicsGrab() {
+	if (physics)
+		physics->EndGrab();
+}
+
 void OutfitStudioFrame::OnPhysicsWindSlider(wxScrollEvent& WXUNUSED(e)) {
 	ApplyPhysicsWind();
 }
@@ -14370,6 +14426,8 @@ void OutfitStudioFrame::ShutdownPhysics() {
 		cbPhysicsVis->SetValue(false);
 		cbPhysicsVis->Enable(false);
 	}
+
+	UpdatePhysicsGrabControl(false);
 }
 
 void OutfitStudioFrame::UpdatePhysicsState() {
@@ -14415,6 +14473,8 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 		if (cbPhysicsVis)
 			cbPhysicsVis->Enable();
 
+		UpdatePhysicsGrabControl(true);
+
 		if (!animPlaying)
 			StartPhysicsPump();
 	}
@@ -14432,6 +14492,8 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 			cbPhysicsVis->SetValue(false);
 			cbPhysicsVis->Enable(false);
 		}
+
+		UpdatePhysicsGrabControl(false);
 
 		// Restore the clean user pose without the physics overrides. Also
 		// catches the BVH up with what is displayed: the pump skipped the
@@ -16122,6 +16184,191 @@ void wxGLPanel::CancelEdgeSlide() {
 	gls.HideSegCursor();
 }
 
+bool wxGLPanel::StartPhysicsGrab(const wxPoint& screenPos) {
+	const auto& affectedShapes = os->GetPhysicsAffectedShapes();
+	if (affectedShapes.empty())
+		return false;
+
+	// The pump skips the BVH update every frame, so the trees still describe
+	// the pose the simulation started from. Fit them to where the mesh is now,
+	// or the grab misses the cloth that has swung away since.
+	os->RefitPhysicsBVH();
+
+	// Any shape the simulation moves can be grabbed, whether or not it is one
+	// of the shapes picked for editing: what is being grabbed is the
+	// simulation, not the project.
+	Vector3 viewDir;
+	Vector3 viewOrigin;
+	gls.GetPickRay(screenPos.x, screenPos.y, nullptr, viewDir, viewOrigin);
+
+	Mesh* hitMesh = nullptr;
+	Vector3 hitMeshPos;
+	float hitDistance = std::numeric_limits<float>::max();
+
+	for (auto* m : gls.GetMeshes()) {
+		if (!m->bVisible || !m->bvh || affectedShapes.count(m->shapeName) == 0)
+			continue;
+
+		Vector3 rayOrigin = m->TransformPosModelToMesh(viewOrigin);
+		Vector3 rayDir = m->TransformDirModelToMesh(viewDir);
+
+		std::vector<IntersectResult> results;
+		if (!m->bvh->IntersectRay(rayOrigin, rayDir, &results))
+			continue;
+
+		for (auto& result : results) {
+			const float distance = result.HitCoord.DistanceTo(rayOrigin);
+			if (distance >= hitDistance)
+				continue;
+
+			hitDistance = distance;
+			hitMesh = m;
+			hitMeshPos = result.HitCoord;
+		}
+	}
+
+	if (!hitMesh)
+		return false;
+
+	std::vector<Physics::GrabTarget> targets;
+	if (!CollectPhysicsGrabTargets(hitMesh, hitMeshPos, targets))
+		return false;
+
+	if (!os->BeginPhysicsGrab(targets))
+		return false;
+
+	// The simulation pulls the grabbed patch out from under the cursor right
+	// away, so the drag reads against a plane through the grabbed spot facing
+	// the camera rather than against the mesh - the move brush freezes a plane
+	// for the same reason.
+	physicsGrabStart = hitMesh->TransformPosMeshToModel(hitMeshPos);
+	physicsGrabPlaneNormal = viewDir * -1.0f;
+	physicsGrabPlaneDist = physicsGrabStart.dot(physicsGrabPlaneNormal);
+
+	ShowPhysicsGrabMarker(physicsGrabStart);
+	return true;
+}
+
+bool wxGLPanel::CollectPhysicsGrabTargets(Mesh* m, const Vector3& meshPos, std::vector<Physics::GrabTarget>& outTargets) {
+	AnimInfo* anim = os->project->GetWorkAnim();
+	auto skinIt = anim->shapeSkinning.find(m->shapeName);
+	if (skinIt == anim->shapeSkinning.end())
+		return false;
+
+	// A patch the size of the brush is taken hold of rather than a single
+	// vertex, so that a grab catches a piece of cloth instead of whichever
+	// bone happens to skin the one vertex under the cursor.
+	const float radius = m->TransformDistModelToMesh(brushSize);
+	if (!(radius > 0.0f))
+		return false;
+
+	Vector3 patchCenter = meshPos;
+	std::vector<IntersectResult> results;
+	m->bvh->IntersectSphere(patchCenter, radius, &results);
+
+	// Falloff towards the rim of the patch, so the pull stays centered on the
+	// cursor instead of dragging the whole bone chain the patch reaches into
+	std::unordered_map<uint16_t, float> patch;
+	for (auto& result : results) {
+		const Triangle& tri = m->tris[result.HitFacet];
+		for (const uint16_t point : {tri.p1, tri.p2, tri.p3}) {
+			if (patch.count(point) != 0)
+				continue;
+
+			const float distance = m->verts[point].DistanceTo(meshPos) / radius;
+			if (distance >= 1.0f)
+				continue;
+
+			patch[point] = 1.0f - distance * distance * (3.0f - 2.0f * distance);
+		}
+	}
+
+	if (patch.empty())
+		return false;
+
+	// Hand the patch over to the bones skinning it: each one gets the share of
+	// it its weights hold, anchored at the center of that share. Anchoring per
+	// bone rather than all of them at the cursor keeps the lever arms short,
+	// so pulling the hem of a skirt bends it instead of spinning its bones.
+	AnimSkin& skin = skinIt->second;
+	float strongest = 0.0f;
+
+	for (auto& boneName : skin.boneNames) {
+		AnimWeight& boneWeight = skin.boneWeights[boneName.second];
+
+		Vector3 anchor;
+		float share = 0.0f;
+
+		for (auto& patchPoint : patch) {
+			auto weightIt = boneWeight.weights.find(patchPoint.first);
+			if (weightIt == boneWeight.weights.end())
+				continue;
+
+			const float weight = patchPoint.second * weightIt->second;
+			if (!(weight > 0.0f))
+				continue;
+
+			// The simulation works in NIF global space, model space is that
+			// same space in render axes and units
+			anchor += Mesh::TransformPosMeshToNif(m->TransformPosMeshToModel(m->verts[patchPoint.first])) * weight;
+			share += weight;
+		}
+
+		if (!(share > 0.0f))
+			continue;
+
+		outTargets.push_back({boneName.first, anchor / share, share});
+		strongest = std::max(strongest, share);
+	}
+
+	if (outTargets.empty())
+		return false;
+
+	// Shares are relative to the bone holding the most of the patch: a patch
+	// spread thin over many bones must not pull harder than a compact one.
+	// Bones barely touching it only add drag, so they are dropped.
+	constexpr float minShare = 0.05f;
+	for (auto& target : outTargets)
+		target.weight /= strongest;
+
+	outTargets.erase(std::remove_if(outTargets.begin(), outTargets.end(), [minShare](const Physics::GrabTarget& target) { return target.weight < minShare; }),
+					 outTargets.end());
+
+	return !outTargets.empty();
+}
+
+void wxGLPanel::UpdatePhysicsGrab(const wxPoint& screenPos) {
+	Vector3 target;
+	if (!gls.CollidePlane(screenPos.x, screenPos.y, target, physicsGrabPlaneNormal, physicsGrabPlaneDist))
+		return;
+
+	os->UpdatePhysicsGrab(Mesh::TransformDiffMeshToNif(target - physicsGrabStart));
+	ShowPhysicsGrabMarker(target);
+}
+
+void wxGLPanel::EndPhysicsGrab() {
+	isPhysicsGrabbing = false;
+	HidePhysicsGrabMarker();
+	os->EndPhysicsGrab();
+}
+
+void wxGLPanel::ShowPhysicsGrabMarker(const Vector3& modelPos) {
+	// Marks where the cursor is pulling to, which is not where the mesh is:
+	// how far the mesh trails behind the marker shows how hard its physics
+	// setup is resisting the grab. Same circle the brush cursor uses, so the
+	// radius it covers reads the same way.
+	Mesh* marker = gls.AddVisCircle(modelPos, physicsGrabPlaneNormal, brushSize, "physicsgrabcircle");
+	if (marker)
+		marker->color = Vector3(1.0f, 0.75f, 0.2f);
+
+	gls.AddVisPoint(modelPos, "physicsgrabcenter")->color = Vector3(1.0f, 0.75f, 0.2f);
+}
+
+void wxGLPanel::HidePhysicsGrabMarker() {
+	gls.DeleteOverlay("physicsgrabcircle");
+	gls.DeleteOverlay("physicsgrabcenter");
+}
+
 bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	if (lastHitResult.hitMeshName.empty() || lastHitResult.hoverPoint < 0)
 		return false;
@@ -17663,7 +17910,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 	if (lbuttonDown || isMovingVertex || isSlidingEdge) {
 		isLDragging = true;
-		if (isTransforming) {
+		if (isPhysicsGrabbing) {
+			UpdatePhysicsGrab(event.GetPosition());
+		}
+		else if (isTransforming) {
 			UpdateTransform(event.GetPosition());
 		}
 		else if (isMovingPivot) {
@@ -17808,6 +18058,17 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 	if (os && os->IsAnimationPlaying())
 		return;
 
+	// A grab feeds the running simulation and never touches the mesh data, so
+	// while it is armed it takes the click ahead of the editing tools. Missing
+	// the simulated mesh leaves the click to them as if it were not.
+	if (os->IsPhysicsGrabEnabled()) {
+		bool meshHit = StartPhysicsGrab(event.GetPosition());
+		if (meshHit) {
+			isPhysicsGrabbing = true;
+			return;
+		}
+	}
+
 	if (transformMode) {
 		bool meshHit = StartTransform(event.GetPosition());
 		if (meshHit) {
@@ -17892,7 +18153,7 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 	// against the mesh BVHs that playback leaves stale.
 	const bool playing = os && os->IsAnimationPlaying();
 
-	if (!playing && !isLDragging && !isPainting && activeTool == ToolID::Select) {
+	if (!playing && !isLDragging && !isPainting && !isPhysicsGrabbing && activeTool == ToolID::Select) {
 		int x, y;
 		event.GetPosition(&x, &y);
 
@@ -17900,6 +18161,9 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		if (m)
 			os->SelectShape(m->shapeName);
 	}
+
+	if (isPhysicsGrabbing)
+		EndPhysicsGrab();
 
 	if (isPainting) {
 		EndBrushStroke();
@@ -17954,6 +18218,9 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 }
 
 void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
+	if (isPhysicsGrabbing)
+		EndPhysicsGrab();
+
 	if (isPainting) {
 		EndBrushStroke();
 		isPainting = false;

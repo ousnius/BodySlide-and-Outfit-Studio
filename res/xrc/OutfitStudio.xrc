@@ -1700,10 +1700,21 @@
 																						</object>
 																						<object class="sizeritem">
 																							<option>0</option>
-																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>10</border>
 																							<object class="wxCheckBox" name="cbPhysicsVis">
 																								<label>Show Colliders</label>
 																								<tooltip>Draw the collision shapes and constraints of the physics simulation</tooltip>
+																								<checked>0</checked>
+																								<enabled>0</enabled>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxCheckBox" name="cbPhysicsGrab">
+																								<label>Grab</label>
+																								<tooltip>Drag the simulated mesh around with the left mouse button, within what its physics constraints and gravity allow. Uses the brush size as the grab radius.</tooltip>
 																								<checked>0</checked>
 																								<enabled>0</enabled>
 																							</object>

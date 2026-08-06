@@ -60,6 +60,18 @@ namespace {
 	// in-game maximum barely moves stiffer setups.
 	constexpr float maxWindScale = 3.0f;
 
+	// How long the grab spring would take to close the gap to the cursor on its
+	// own. Short enough that the mesh feels attached to the cursor, long enough
+	// that the constraints of the XML still get to resist it - and that the
+	// spring stays well inside what a 1/60 explicit step integrates stably,
+	// including the stiffening a lever arm longer than the bone adds.
+	constexpr float grabResponseTime = 0.08f;
+
+	// The spring only ever pulls as if the cursor were this far away (a quarter
+	// meter), so throwing the cursor across the screen cannot feed the
+	// simulation unbounded energy - it just pulls at full strength for longer.
+	constexpr float grabMaxOffset = 0.25f * scaleSkyrim;
+
 	// NIF axes: +X is the mesh's own right, +Y forward, +Z up. Left and right
 	// are swapped against that because the viewport looks at the mesh from the
 	// front, where its right side is on the viewer's left - the labels name
@@ -245,6 +257,18 @@ bool HasPhysicsLinks(nifly::NifFile* nif, const ShapePhysicsFileMap& shapePhysic
 }
 
 struct Controller::Impl {
+	// One bone held by the cursor for as long as a grab lasts.
+	struct GrabbedBone {
+		PreviewSystem* system = nullptr;
+		btRigidBody* body = nullptr;
+		// Where the grab took hold, in NIF global space and in the body's own
+		// frame. The body carries the local one along as it moves, which is
+		// what makes the grab stick to the spot it started on.
+		btVector3 anchor = btVector3(0, 0, 0);
+		btVector3 localAnchor = btVector3(0, 0, 0);
+		float weight = 1.0f;
+	};
+
 	PreviewWorld world;
 	std::vector<hdt::Ref<PreviewSystem>> systems;
 	PoseOverrideMap poseOverrides;
@@ -255,6 +279,49 @@ struct Controller::Impl {
 	float leftoverTime = 0.0f;
 	float windStrength = 0.0f;
 	WindDirection windDirection = WindDirection::Right;
+	std::vector<GrabbedBone> grabbed;
+	// How far the cursor has dragged the grab, in NIF global space
+	btVector3 grabOffset = btVector3(0, 0, 0);
+
+	// Pulls every grabbed bone towards where the cursor wants its anchor, as a
+	// force rather than a teleport: the solver still has to get the bone there
+	// past its constraints, its collisions and gravity, so a stiff setup barely
+	// gives and a loose one follows the cursor almost exactly.
+	//
+	// Call once per tick, before the world recenters itself in
+	// applyTranslationOffset - the spring works in absolute positions.
+	void applyGrabForces() {
+		// Critically damped, with both gains per unit mass so that the pull
+		// feels the same whatever masses the XML handed its bones.
+		const btScalar omega = 1.0f / grabResponseTime;
+
+		for (auto& grabbedBone : grabbed) {
+			const btScalar inverseMass = grabbedBone.body->getInvMass();
+			if (!(inverseMass > 0.0f))
+				continue;
+
+			const btTransform& bodyTransform = grabbedBone.body->getWorldTransform();
+			const btVector3 anchorNow = bodyTransform * grabbedBone.localAnchor;
+			const btVector3 anchorWanted = grabbedBone.system->m_rootMotion * (grabbedBone.anchor + grabOffset);
+
+			btVector3 offset = anchorWanted - anchorNow;
+			const btScalar distance = offset.length();
+			if (distance > grabMaxOffset)
+				offset *= grabMaxOffset / distance;
+
+			// Both the lever arm the force acts on and the velocity to damp are
+			// those of the anchor, not of the body's center: pulling a bone by
+			// its edge has to turn it, or a grabbed skirt slides instead of
+			// folding.
+			const btVector3 leverArm = anchorNow - grabbedBone.body->getCenterOfMassPosition();
+			const btVector3 anchorVelocity = grabbedBone.body->getVelocityInLocalPoint(leverArm);
+
+			// Bones never sleep (addSkinnedMeshSystem disables deactivation for
+			// all of them), so the force always lands.
+			const btScalar strength = grabbedBone.weight / inverseMass;
+			grabbedBone.body->applyForce(strength * (omega * omega * offset - 2.0f * omega * anchorVelocity), leverArm);
+		}
+	}
 
 	// The root motion turns the mesh inside the physics world, so a wind
 	// vector fixed in world space would blow at a different side of the mesh
@@ -346,6 +413,9 @@ void Controller::Clear() {
 	if (!impl)
 		return;
 
+	// The grab points straight at the rigid bodies about to go away
+	EndGrab();
+
 	for (auto& system : impl->systems)
 		impl->world.removeSkinnedMeshSystem(system.get());
 
@@ -363,6 +433,10 @@ bool Controller::IsActive() const {
 void Controller::ResetDynamics() {
 	if (!IsActive())
 		return;
+
+	// Everything is about to be teleported back onto the pose, which would
+	// leave the grab holding on to a spot that no longer exists
+	EndGrab();
 
 	// Mirrors hdtSMP64 SkyrimPhysicsWorld::resetSystems (and the reset call in
 	// SkinnedMeshWorld::addSkinnedMeshSystem).
@@ -410,6 +484,9 @@ void Controller::Step(float dtSeconds) {
 	// readTransform/writeTransform itself.
 	for (int i = 0; i < ticks; ++i) {
 		impl->world.readTransform(fixedTimeStep);
+		// After readTransform, which is what moves the kinematic bones the grab
+		// is pulling against, and before the world recenters itself
+		impl->applyGrabForces();
 		const btVector3 offset = impl->world.applyTranslationOffset();
 		impl->world.stepSimulation(fixedTimeStep, 1, fixedTimeStep);
 		impl->world.restoreTranslationOffset(offset);
@@ -440,6 +517,62 @@ void Controller::SetWindStrength(float strength) {
 void Controller::SetWindDirection(WindDirection direction) {
 	impl->windDirection = direction;
 	impl->applyWind();
+}
+
+bool Controller::BeginGrab(const std::vector<GrabTarget>& targets) {
+	EndGrab();
+
+	if (!IsActive())
+		return false;
+
+	for (const auto& target : targets) {
+		if (!(target.weight > 0.0f))
+			continue;
+
+		const hdt::IDStr boneName(target.boneName);
+		for (auto& system : impl->systems) {
+			auto* bone = system->findBone(boneName);
+			if (!bone)
+				continue;
+
+			// A kinematic bone is an input to the simulation, not part of it:
+			// it goes where the pose says and there is nothing to pull it off.
+			if (bone->m_rig.isStaticOrKinematicObject())
+				break;
+
+			Impl::GrabbedBone grabbedBone;
+			grabbedBone.system = system.get();
+			grabbedBone.body = &bone->m_rig;
+			grabbedBone.anchor = ToBt(target.anchor);
+			// The bodies stand in root motion space and carry the anchor along
+			// from here on, so bind it in the frame they are in right now.
+			grabbedBone.localAnchor = bone->m_rig.getWorldTransform().inverse() * (system->m_rootMotion * grabbedBone.anchor);
+			grabbedBone.weight = std::max(0.0f, std::min(target.weight, 1.0f));
+			impl->grabbed.push_back(grabbedBone);
+			break;
+		}
+	}
+
+	return !impl->grabbed.empty();
+}
+
+void Controller::UpdateGrab(const nifly::Vector3& offset) {
+	if (!impl)
+		return;
+
+	impl->grabOffset = ToBt(offset);
+}
+
+void Controller::EndGrab() {
+	if (!impl)
+		return;
+
+	impl->grabbed.clear();
+	impl->grabOffset.setZero();
+}
+
+bool Controller::IsGrabbing() const {
+	return impl && !impl->grabbed.empty();
 }
 
 const PoseOverrideMap& Controller::PoseOverrides() const {
@@ -488,6 +621,17 @@ void Controller::Step(float) {}
 void Controller::InjectCameraYaw(float) {}
 void Controller::SetWindStrength(float) {}
 void Controller::SetWindDirection(WindDirection) {}
+
+bool Controller::BeginGrab(const std::vector<GrabTarget>&) {
+	return false;
+}
+
+void Controller::UpdateGrab(const nifly::Vector3&) {}
+void Controller::EndGrab() {}
+
+bool Controller::IsGrabbing() const {
+	return false;
+}
 
 const PoseOverrideMap& Controller::PoseOverrides() const {
 	static const PoseOverrideMap empty;
