@@ -282,6 +282,12 @@ public:
 	void UpdatePhysicsGrab(const wxPoint& screenPos);
 	void EndPhysicsGrab();
 
+	// Draws (or removes) the ball the running simulation collides with, at a
+	// position and radius given in NIF units. Placing it is the frame's job -
+	// this only shows where it ended up.
+	void ShowPhysicsProbe(const nifly::Vector3& nifPos, float nifRadius);
+	void HidePhysicsProbe();
+
 	bool StartMoveVertex(const wxPoint& screenPos);
 	void UpdateMoveVertex(const wxPoint& screenPos);
 	void EndMoveVertex();
@@ -495,7 +501,8 @@ public:
 
 	void ClearMasks() {
 		for (auto& m : gls.GetMeshes())
-			m->MaskFill(0.0f);
+			if (!m->bPrimitive)
+				m->MaskFill(0.0f);
 	}
 
 	void ClearActiveMask() {
@@ -505,7 +512,8 @@ public:
 
 	void ClearColors() {
 		for (auto& m : gls.GetMeshes())
-			m->ColorFill(nifly::Vector3());
+			if (!m->bPrimitive)
+				m->ColorFill(nifly::Vector3());
 	}
 
 	void ClearActiveColors() {
@@ -1081,6 +1089,16 @@ public:
 	wxCheckBox* cbPhysics = nullptr;
 	wxCheckBox* cbPhysicsVis = nullptr;
 	wxCheckBox* cbPhysicsGrab = nullptr;
+	wxCheckBox* cbPhysicsProbe = nullptr;
+	wxPanel* physicsProbePanel = nullptr;
+	wxSlider* physicsProbeX = nullptr;
+	wxSlider* physicsProbeY = nullptr;
+	wxSlider* physicsProbeZ = nullptr;
+	wxSlider* physicsProbeSize = nullptr;
+	wxTextCtrl* physicsProbeXText = nullptr;
+	wxTextCtrl* physicsProbeYText = nullptr;
+	wxTextCtrl* physicsProbeZText = nullptr;
+	wxTextCtrl* physicsProbeSizeText = nullptr;
 	wxSlider* physicsWindSlider = nullptr;
 	wxChoice* physicsWindDir = nullptr;
 	wxButton* poseToMesh = nullptr;
@@ -1969,6 +1987,25 @@ private:
 	void OnPhysicsGrabCheckBox(wxCommandEvent& event);
 	// Puts the grab checkbox in the state a (not) running simulation allows
 	void UpdatePhysicsGrabControl(bool enabled);
+	void OnPhysicsProbeCheckBox(wxCommandEvent& event);
+	// Each ball slider writes its value into the field beside it, and each field
+	// puts the handle back where the value is; either way the field is what is read.
+	void OnPhysicsProbeSlider(wxScrollEvent& event, wxTextCtrl* text);
+	void OnPhysicsProbeXSlider(wxScrollEvent& event);
+	void OnPhysicsProbeYSlider(wxScrollEvent& event);
+	void OnPhysicsProbeZSlider(wxScrollEvent& event);
+	void OnPhysicsProbeSizeSlider(wxScrollEvent& event);
+	void OnPhysicsProbeText(wxTextCtrl* text, wxSlider* slider);
+	void OnPhysicsProbeXText(wxCommandEvent& event);
+	void OnPhysicsProbeYText(wxCommandEvent& event);
+	void OnPhysicsProbeZText(wxCommandEvent& event);
+	void OnPhysicsProbeSizeText(wxCommandEvent& event);
+	// The same for the collision ball checkbox
+	void UpdatePhysicsProbeControl(bool enabled);
+	// Shows or hides the ball, its controls and its collider to match the box
+	void UpdatePhysicsProbeState();
+	// Pushes the ball's position and size into the simulation and the viewport
+	void ApplyPhysicsProbe();
 	void OnPhysicsWindSlider(wxScrollEvent& event);
 	void OnPhysicsWindDir(wxCommandEvent& event);
 	// Pushes the wind controls into the simulation; the controller is built

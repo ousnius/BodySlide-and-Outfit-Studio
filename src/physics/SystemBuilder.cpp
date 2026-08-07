@@ -111,12 +111,61 @@ void PreviewBone::writeTransform() {
 		(*overrides)[m_animBone->boneName] = FromBt(m_system->m_rootMotion.inverseTimes(transform));
 }
 
+// ------------------------------------------------------------------ ProbeBone
+
+ProbeBone::ProbeBone(PreviewSystem* system, btRigidBody::btRigidBodyConstructionInfo& ci)
+	: hdt::SkinnedMeshBone(IDStr("PhysicsProbe"), ci)
+	, m_system(system) {
+	m_rig.setCollisionFlags(btCollisionObject::CF_KINEMATIC_OBJECT);
+}
+
+void ProbeBone::readTransform(float timeStep) {
+	// Same kinematic drive as PreviewBone, with the cursor position standing in
+	// for the pose of a skeleton bone. Only the position is used; a sphere has
+	// nothing to rotate.
+	const btTransform pose(btMatrix3x3::getIdentity(), ToBt(m_position));
+	m_currentTransform = btQsTransform(m_system->m_rootMotion * pose, 1.0f);
+
+	auto current = m_rig.getWorldTransform();
+	auto dest = m_currentTransform.asTransform() * m_localToRig;
+
+	if (timeStep <= RESET_PHYSICS) {
+		static const btVector3 zero(0, 0, 0);
+		m_rig.setWorldTransform(dest);
+		m_rig.setInterpolationWorldTransform(dest);
+		m_rig.setLinearVelocity(zero);
+		m_rig.setAngularVelocity(zero);
+		m_rig.setInterpolationLinearVelocity(zero);
+		m_rig.setInterpolationAngularVelocity(zero);
+		m_rig.updateInertiaTensor();
+	}
+	else {
+		// Kinematic bodies are moved by integrating this velocity
+		// (SkinnedMeshWorld::integrateTransforms), so setting it is what makes
+		// the probe sweep towards the cursor and push cloth out of the way
+		// instead of jumping past it.
+		btVector3 linVel, angVel;
+		btTransformUtil::calculateVelocity(current, dest, timeStep, linVel, angVel);
+		m_rig.setLinearVelocity(linVel);
+		m_rig.setAngularVelocity(angVel);
+		m_rig.setInterpolationLinearVelocity(linVel);
+		m_rig.setInterpolationAngularVelocity(angVel);
+	}
+}
+
 // ---------------------------------------------------------------- PreviewBody
 
 bool PreviewBody::canCollideWith(const hdt::SkinnedMeshBody* rhs) const {
 	auto body = (PreviewBody*)rhs;
 	if (m_disabled || body->m_disabled)
 		return false;
+
+	// No XML can have been authored to accept the collision probe: it belongs
+	// to no system and carries no tags, so both the sharing rules and the tag
+	// lists below would turn it away. The user put it there deliberately, so it
+	// collides with whatever the simulation moves instead.
+	if (m_isProbe || body->m_isProbe)
+		return true;
 
 	// The preview simulates a single actor, so every system shares the same
 	// skeleton: "internal" always passes and "external" never does.
@@ -219,6 +268,64 @@ float PreviewSystem::prepareForRead(float timeStep) {
 }
 
 // ---------------------------------------------------- SystemBuilder
+
+hdt::Ref<PreviewSystem> SystemBuilder::BuildProbe(float radius) {
+	hdt::Ref<PreviewSystem> system = hdt::make_ref(new PreviewSystem);
+
+	BoneTemplate boneInfo;
+	auto* bone = new ProbeBone(system.get(), boneInfo);
+	system->m_bones.push_back(bone);
+
+	// A PreviewBody rather than a plain SkinnedMeshBody: the cloth reaches its
+	// collision partner through PreviewBody::canCollideWith, which casts to
+	// PreviewBody without checking.
+	hdt::Ref<PreviewBody> body = hdt::make_ref(new PreviewBody);
+	body->m_name = "PhysicsProbe";
+	body->m_mesh = system.get();
+	body->m_isProbe = true;
+
+	// One vertex at the bone origin, fully weighted to it. The per-vertex shape
+	// turns that into a single sphere collider centered on the bone.
+	body->m_vertices.resize(1);
+	body->m_vertices[0].m_skinPos = btVector3(0, 0, 0);
+	body->m_vertices[0].m_weight[0] = 1.0f;
+	body->m_vertices[0].setBoneIdx(0, 0);
+
+	body->addBone(bone, btQsTransform::getIdentity(), hdt::BoundingSphere(btVector3(0, 0, 0), radius));
+
+	// addBone leaves weightThreshold uninitialized - the XML fills it in through
+	// <weight-threshold> - and clipColliders compares against it. Garbage here
+	// silently throws the probe's only collider away.
+	body->m_skinnedBones[0].weightThreshold = 0.0f;
+
+	auto shape = hdt::make_ref(new hdt::PerVertexShape(body.get()));
+	shape->m_shapeProp.margin = radius;
+
+	// Same order the deferred builds of readSystem use.
+	shape->autoGen();
+	body->finishBuild();
+
+	system->m_meshes.push_back(body);
+
+	return system;
+}
+
+void SystemBuilder::SetProbeRadius(PreviewSystem* probe, float radius) {
+	if (!probe || probe->m_meshes.empty())
+		return;
+
+	auto* body = probe->m_meshes[0].get();
+	auto* shape = body->m_shape ? body->m_shape->asPerVertexShape() : nullptr;
+	if (!shape || body->m_skinnedBones.empty())
+		return;
+
+	shape->m_shapeProp.margin = radius;
+
+	// The broadphase AABB is built from the bounding sphere, not from the
+	// collider, so growing only the margin gives a collider that is culled
+	// before it is ever tested.
+	body->m_skinnedBones[0].localBoundingSphere = hdt::BoundingSphere(btVector3(0, 0, 0), radius);
+}
 
 void SystemBuilder::warn(const std::string& msg) {
 	if (m_warnings)

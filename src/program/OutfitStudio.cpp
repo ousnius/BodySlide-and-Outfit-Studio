@@ -217,6 +217,15 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CHECKBOX(XRCID("cbPhysics"), OutfitStudioFrame::OnPhysicsCheckBox)
 	EVT_CHECKBOX(XRCID("cbPhysicsVis"), OutfitStudioFrame::OnPhysicsVisCheckBox)
 	EVT_CHECKBOX(XRCID("cbPhysicsGrab"), OutfitStudioFrame::OnPhysicsGrabCheckBox)
+	EVT_CHECKBOX(XRCID("cbPhysicsProbe"), OutfitStudioFrame::OnPhysicsProbeCheckBox)
+	EVT_COMMAND_SCROLL(XRCID("physicsProbeX"), OutfitStudioFrame::OnPhysicsProbeXSlider)
+	EVT_COMMAND_SCROLL(XRCID("physicsProbeY"), OutfitStudioFrame::OnPhysicsProbeYSlider)
+	EVT_COMMAND_SCROLL(XRCID("physicsProbeZ"), OutfitStudioFrame::OnPhysicsProbeZSlider)
+	EVT_COMMAND_SCROLL(XRCID("physicsProbeSize"), OutfitStudioFrame::OnPhysicsProbeSizeSlider)
+	EVT_TEXT(XRCID("physicsProbeXText"), OutfitStudioFrame::OnPhysicsProbeXText)
+	EVT_TEXT(XRCID("physicsProbeYText"), OutfitStudioFrame::OnPhysicsProbeYText)
+	EVT_TEXT(XRCID("physicsProbeZText"), OutfitStudioFrame::OnPhysicsProbeZText)
+	EVT_TEXT(XRCID("physicsProbeSizeText"), OutfitStudioFrame::OnPhysicsProbeSizeText)
 	EVT_COMMAND_SCROLL(XRCID("physicsWindSlider"), OutfitStudioFrame::OnPhysicsWindSlider)
 	EVT_CHOICE(XRCID("physicsWindDir"), OutfitStudioFrame::OnPhysicsWindDir)
 	EVT_TIMER(PHYSICS_TIMER, OutfitStudioFrame::OnPhysicsTimer)
@@ -1510,6 +1519,16 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	cbPhysics = (wxCheckBox*)FindWindowByName("cbPhysics");
 	cbPhysicsVis = (wxCheckBox*)FindWindowByName("cbPhysicsVis");
 	cbPhysicsGrab = (wxCheckBox*)FindWindowByName("cbPhysicsGrab");
+	cbPhysicsProbe = (wxCheckBox*)FindWindowByName("cbPhysicsProbe");
+	physicsProbePanel = (wxPanel*)FindWindowByName("physicsProbePanel");
+	physicsProbeX = (wxSlider*)FindWindowByName("physicsProbeX");
+	physicsProbeY = (wxSlider*)FindWindowByName("physicsProbeY");
+	physicsProbeZ = (wxSlider*)FindWindowByName("physicsProbeZ");
+	physicsProbeSize = (wxSlider*)FindWindowByName("physicsProbeSize");
+	physicsProbeXText = (wxTextCtrl*)FindWindowByName("physicsProbeXText");
+	physicsProbeYText = (wxTextCtrl*)FindWindowByName("physicsProbeYText");
+	physicsProbeZText = (wxTextCtrl*)FindWindowByName("physicsProbeZText");
+	physicsProbeSizeText = (wxTextCtrl*)FindWindowByName("physicsProbeSizeText");
 	physicsWindSlider = (wxSlider*)FindWindowByName("physicsWindSlider");
 	physicsWindDir = (wxChoice*)FindWindowByName("physicsWindDir");
 	poseToMesh = (wxButton*)FindWindowByName("poseToMesh");
@@ -14315,6 +14334,137 @@ void OutfitStudioFrame::OnPhysicsGrabCheckBox(wxCommandEvent& e) {
 		glView->EndPhysicsGrab();
 }
 
+void OutfitStudioFrame::OnPhysicsProbeCheckBox(wxCommandEvent& WXUNUSED(e)) {
+	UpdatePhysicsProbeState();
+}
+
+// The sliders count in tenths of a NIF unit, so dragging one lands on a decimal
+// rather than jumping a whole unit at a time. The field beside it holds the value
+// that is actually used, and can be typed into for anything finer or further out
+// than the slider reaches.
+static constexpr double physicsProbeSliderScale = 10.0;
+
+void OutfitStudioFrame::OnPhysicsProbeSlider(wxScrollEvent& e, wxTextCtrl* text) {
+	if (!text)
+		return;
+
+	// "%g" rather than streaming the value in, which would spell 60 as 60.000000
+	// and leave nothing of it visible in a field this narrow
+	text->ChangeValue(wxString::Format("%g", e.GetPosition() / physicsProbeSliderScale));
+	ApplyPhysicsProbe();
+}
+
+void OutfitStudioFrame::OnPhysicsProbeXSlider(wxScrollEvent& e) {
+	OnPhysicsProbeSlider(e, physicsProbeXText);
+}
+void OutfitStudioFrame::OnPhysicsProbeYSlider(wxScrollEvent& e) {
+	OnPhysicsProbeSlider(e, physicsProbeYText);
+}
+void OutfitStudioFrame::OnPhysicsProbeZSlider(wxScrollEvent& e) {
+	OnPhysicsProbeSlider(e, physicsProbeZText);
+}
+void OutfitStudioFrame::OnPhysicsProbeSizeSlider(wxScrollEvent& e) {
+	OnPhysicsProbeSlider(e, physicsProbeSizeText);
+}
+
+void OutfitStudioFrame::OnPhysicsProbeText(wxTextCtrl* text, wxSlider* slider) {
+	if (!text || !slider)
+		return;
+
+	double val = 0.0;
+	if (!text->GetValue().ToDouble(&val))
+		return;
+
+	// Only to keep the handle where the value is - the slider clamps to its own
+	// range, and a typed value outside it is still the one that gets used.
+	slider->SetValue(static_cast<int>(std::lround(val * physicsProbeSliderScale)));
+	ApplyPhysicsProbe();
+}
+
+void OutfitStudioFrame::OnPhysicsProbeXText(wxCommandEvent& WXUNUSED(e)) {
+	OnPhysicsProbeText(physicsProbeXText, physicsProbeX);
+}
+void OutfitStudioFrame::OnPhysicsProbeYText(wxCommandEvent& WXUNUSED(e)) {
+	OnPhysicsProbeText(physicsProbeYText, physicsProbeY);
+}
+void OutfitStudioFrame::OnPhysicsProbeZText(wxCommandEvent& WXUNUSED(e)) {
+	OnPhysicsProbeText(physicsProbeZText, physicsProbeZ);
+}
+void OutfitStudioFrame::OnPhysicsProbeSizeText(wxCommandEvent& WXUNUSED(e)) {
+	OnPhysicsProbeText(physicsProbeSizeText, physicsProbeSize);
+}
+
+void OutfitStudioFrame::UpdatePhysicsProbeControl(bool enabled) {
+	if (!cbPhysicsProbe)
+		return;
+
+	if (!enabled)
+		cbPhysicsProbe->SetValue(false);
+
+	cbPhysicsProbe->Enable(enabled);
+	UpdatePhysicsProbeState();
+}
+
+// Brings the ball, its sliders and the simulation in line with the checkbox.
+void OutfitStudioFrame::UpdatePhysicsProbeState() {
+	const bool enabled = physicsRunning && cbPhysicsProbe && cbPhysicsProbe->IsChecked();
+
+	// The controls are the only way to place the ball, so they are of no use
+	// while there is no ball to place
+	if (physicsProbePanel && physicsProbePanel->IsShown() != enabled) {
+		physicsProbePanel->Show(enabled);
+
+		// The panel sits inside a collapsible pane, and it is that pane's best
+		// size the tool area lays out against, so it has to be recomputed
+		// before the pane will make room for the sliders.
+		if (physicsPane) {
+			physicsPane->GetPane()->Layout();
+			physicsPane->InvalidateBestSize();
+		}
+
+		UpdateToolScrollLayout();
+	}
+
+	if (enabled) {
+		ApplyPhysicsProbe();
+		return;
+	}
+
+	if (physics)
+		physics->ClearProbe();
+
+	if (glView)
+		glView->HidePhysicsProbe();
+}
+
+// Hands the ball's place and size to the simulation and to the mesh that draws it.
+// The fields are read rather than the sliders, so a value typed finer than the
+// slider steps or beyond the range it covers is the one that counts. Both are in
+// NIF units, the space the simulation works in.
+void OutfitStudioFrame::ApplyPhysicsProbe() {
+	if (!physicsRunning || !physicsProbeXText || !physicsProbeYText || !physicsProbeZText || !physicsProbeSizeText)
+		return;
+
+	double x = 0.0, y = 0.0, z = 0.0, size = 0.0;
+	if (!physicsProbeXText->GetValue().ToDouble(&x) || !physicsProbeYText->GetValue().ToDouble(&y) || !physicsProbeZText->GetValue().ToDouble(&z)
+		|| !physicsProbeSizeText->GetValue().ToDouble(&size))
+		return;
+
+	// A ball with no radius collides with nothing, and there would be nothing to draw
+	if (size <= 0.0)
+		return;
+
+	const Vector3 position(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z));
+	const float radius = static_cast<float>(size);
+
+	physics->SetProbe(position, radius);
+
+	if (glView) {
+		glView->ShowPhysicsProbe(position, radius);
+		glView->Render();
+	}
+}
+
 void OutfitStudioFrame::UpdatePhysicsGrabControl(bool enabled) {
 	if (!cbPhysicsGrab)
 		return;
@@ -14428,6 +14578,7 @@ void OutfitStudioFrame::ShutdownPhysics() {
 	}
 
 	UpdatePhysicsGrabControl(false);
+	UpdatePhysicsProbeControl(false);
 }
 
 void OutfitStudioFrame::UpdatePhysicsState() {
@@ -14474,6 +14625,7 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 			cbPhysicsVis->Enable();
 
 		UpdatePhysicsGrabControl(true);
+		UpdatePhysicsProbeControl(true);
 
 		if (!animPlaying)
 			StartPhysicsPump();
@@ -14494,6 +14646,7 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 		}
 
 		UpdatePhysicsGrabControl(false);
+		UpdatePhysicsProbeControl(false);
 
 		// Restore the clean user pose without the physics overrides. Also
 		// catches the BVH up with what is displayed: the pump skipped the
@@ -16369,6 +16522,27 @@ void wxGLPanel::HidePhysicsGrabMarker() {
 	gls.DeleteOverlay("physicsgrabcenter");
 }
 
+void wxGLPanel::ShowPhysicsProbe(const Vector3& nifPos, float nifRadius) {
+	// A mesh rather than an overlay: overlays are drawn after the depth buffer is
+	// cleared, so the ball would float in front of the cloth it is pressed into
+	// instead of sinking behind it, and how deep it has gone is the whole point.
+	// It carries bPrimitive, so nothing treats it as a shape of the project.
+	// Model space is NIF global space in render axes and units.
+	Mesh* m = gls.AddVis3dSphere(Mesh::TransformPosNifToMesh(nifPos), Mesh::TransformDistNifToMesh(nifRadius), Vector3(1.0f, 0.75f, 0.2f), "physicsprobeball", true);
+	if (!m)
+		return;
+
+	// Shaded rather than flat tinted, which the other primitives are. A ball drawn in one
+	// colour is a disc: nothing in it says where its near side is, and reading how far it
+	// has been pushed into the cloth is the whole reason it is on screen. The sphere is
+	// built with per-vertex normals and a tangent space already, so this is all it takes.
+	m->rendermode = Mesh::RenderMode::LitSolid;
+}
+
+void wxGLPanel::HidePhysicsProbe() {
+	gls.DeleteMesh("physicsprobeball");
+}
+
 bool wxGLPanel::StartMoveVertex(const wxPoint& screenPos) {
 	if (lastHitResult.hitMeshName.empty() || lastHitResult.hoverPoint < 0)
 		return false;
@@ -16750,7 +16924,7 @@ std::unordered_map<std::string, std::vector<float>> wxGLPanel::StashMasks() {
 	std::unordered_map<std::string, std::vector<float>> stash;
 	std::vector<Mesh*> meshes = gls.GetMeshes();
 	for (Mesh* m : meshes) {
-		if (!m->mask)
+		if (m->bPrimitive || !m->mask)
 			continue;
 		std::vector<float>& mask = stash[m->shapeName];
 		mask.resize(m->nVerts);
@@ -16762,6 +16936,9 @@ std::unordered_map<std::string, std::vector<float>> wxGLPanel::StashMasks() {
 void wxGLPanel::UnstashMasks(const std::unordered_map<std::string, std::vector<float>>& stash) {
 	std::vector<Mesh*> meshes = gls.GetMeshes();
 	for (Mesh* m : meshes) {
+		if (m->bPrimitive)
+			continue;
+
 		auto stit = stash.find(m->shapeName);
 		if (stit == stash.end())
 			continue;

@@ -283,6 +283,11 @@ struct Controller::Impl {
 	// How far the cursor has dragged the grab, in NIF global space
 	btVector3 grabOffset = btVector3(0, 0, 0);
 
+	// The cursor-driven collision sphere, deliberately kept out of "systems" so
+	// that IsActive and AffectedShapes keep meaning "there is cloth to simulate"
+	hdt::Ref<PreviewSystem> probe;
+	float probeRadius = 0.0f;
+
 	// Pulls every grabbed bone towards where the cursor wants its anchor, as a
 	// force rather than a teleport: the solver still has to get the bone there
 	// past its constraints, its collisions and gravity, so a stiff setup barely
@@ -415,6 +420,7 @@ void Controller::Clear() {
 
 	// The grab points straight at the rigid bodies about to go away
 	EndGrab();
+	ClearProbe();
 
 	for (auto& system : impl->systems)
 		impl->world.removeSkinnedMeshSystem(system.get());
@@ -473,6 +479,11 @@ void Controller::Step(float dtSeconds) {
 	const btTransform rootMotion(btQuaternion(btVector3(0, 0, 1), impl->rootYawRad));
 	for (auto& system : impl->systems)
 		system->m_rootMotion = rootMotion;
+
+	// The probe is placed in the same space the mesh is modelled in, so it has
+	// to turn with the mesh or it would slide off as the camera goes around.
+	if (impl->probe)
+		impl->probe->m_rootMotion = rootMotion;
 
 	// Keep the wind aimed at the same side of the mesh as it turns
 	impl->applyWind();
@@ -575,6 +586,48 @@ bool Controller::IsGrabbing() const {
 	return impl && !impl->grabbed.empty();
 }
 
+void Controller::SetProbe(const nifly::Vector3& position, float radius) {
+	if (!IsActive() || !(radius > 0.0f))
+		return;
+
+	if (!impl->probe) {
+		impl->probe = SystemBuilder::BuildProbe(radius);
+		if (!impl->probe)
+			return;
+
+		impl->probeRadius = radius;
+		impl->probe->m_rootMotion = btTransform(btQuaternion(btVector3(0, 0, 1), impl->rootYawRad));
+		static_cast<ProbeBone*>(impl->probe->getBones()[0].get())->m_position = position;
+
+		// Only now: addSkinnedMeshSystem ends with a RESET_PHYSICS readTransform,
+		// which seats the sphere wherever the bone currently says it is. Adding
+		// it before the position is set would spawn it at the origin and sweep it
+		// to the cursor over the first tick, flinging everything on the way.
+		impl->world.addSkinnedMeshSystem(impl->probe.get());
+		return;
+	}
+
+	static_cast<ProbeBone*>(impl->probe->getBones()[0].get())->m_position = position;
+
+	if (radius != impl->probeRadius) {
+		impl->probeRadius = radius;
+		SystemBuilder::SetProbeRadius(impl->probe.get(), radius);
+	}
+}
+
+void Controller::ClearProbe() {
+	if (!impl || !impl->probe)
+		return;
+
+	impl->world.removeSkinnedMeshSystem(impl->probe.get());
+	impl->probe.reset();
+	impl->probeRadius = 0.0f;
+}
+
+bool Controller::IsProbeActive() const {
+	return impl && impl->probe;
+}
+
 const PoseOverrideMap& Controller::PoseOverrides() const {
 	return impl->poseOverrides;
 }
@@ -630,6 +683,13 @@ void Controller::UpdateGrab(const nifly::Vector3&) {}
 void Controller::EndGrab() {}
 
 bool Controller::IsGrabbing() const {
+	return false;
+}
+
+void Controller::SetProbe(const nifly::Vector3&, float) {}
+void Controller::ClearProbe() {}
+
+bool Controller::IsProbeActive() const {
 	return false;
 }
 

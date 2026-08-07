@@ -363,7 +363,7 @@ Mesh* GLSurface::PickMesh(int ScreenX, int ScreenY) {
 
 	for (auto& m : meshes) {
 		results.clear();
-		if (!m->bVisible || !m->bvh)
+		if (m->bPrimitive || !m->bVisible || !m->bvh)
 			continue;
 
 		GetPickRay(ScreenX, ScreenY, m, d, o);
@@ -805,7 +805,7 @@ void GLSurface::RenderToTexture(GLMaterial* renderShader) {
 	// Render regular meshes only
 	for (size_t i = 0; i < meshes.size(); i++) {
 		m = meshes[i];
-		if (!m->bVisible || m->nTris == 0)
+		if (m->bPrimitive || !m->bVisible || m->nTris == 0)
 			continue;
 
 		oldDS = m->doublesided;
@@ -935,7 +935,8 @@ void GLSurface::RenderMesh(Mesh* m) {
 
 	glBindVertexArray(m->vao);
 
-	if (m->rendermode == Mesh::RenderMode::Normal || m->rendermode == Mesh::RenderMode::LitWire || m->rendermode == Mesh::RenderMode::UnlitSolid) {
+	if (m->rendermode == Mesh::RenderMode::Normal || m->rendermode == Mesh::RenderMode::LitWire || m->rendermode == Mesh::RenderMode::UnlitSolid
+		|| m->rendermode == Mesh::RenderMode::LitSolid) {
 		shader.SetFrontalLight(frontalLight);
 		shader.SetDirectionalLight(directionalLight0, 0);
 		shader.SetDirectionalLight(directionalLight1, 1);
@@ -947,6 +948,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
 
+		// LitSolid is left with the lighting the viewport toggle asked for above
 		if (m->rendermode == Mesh::RenderMode::UnlitSolid)
 			shader.SetLightingEnabled(false);
 
@@ -1118,7 +1120,8 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 
 	glBindVertexArray(m->vao);
 
-	if (m->rendermode == Mesh::RenderMode::Normal || m->rendermode == Mesh::RenderMode::LitWire || m->rendermode == Mesh::RenderMode::UnlitSolid) {
+	if (m->rendermode == Mesh::RenderMode::Normal || m->rendermode == Mesh::RenderMode::LitWire || m->rendermode == Mesh::RenderMode::UnlitSolid
+		|| m->rendermode == Mesh::RenderMode::LitSolid) {
 		if (m->bShowPoints && m->mask) {
 			glEnable(GL_PROGRAM_POINT_SIZE);
 			shader.SetAdjustPointSize(true);
@@ -1501,6 +1504,7 @@ Mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Ve
 	m->shapeName = name;
 	m->color = Vector3(0.0f, 1.0f, 1.0f);
 	m->material = GetPrimitiveMaterial();
+	m->bPrimitive = true;
 	m->CreateBuffers();
 
 	AddOverlay(m);
@@ -1544,6 +1548,7 @@ Mesh* GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, floa
 	m->color = Vector3(1.0f, 0.0f, 0.0f);
 	m->rendermode = Mesh::RenderMode::UnlitWire;
 	m->material = GetPrimitiveMaterial();
+	m->bPrimitive = true;
 
 	float i = 0.0f;
 	for (int j = 0; j < m->nVerts; j++) {
@@ -1618,6 +1623,7 @@ Mesh* GLSurface::AddVis3dSphere(const nifly::Vector3& center, float radius, cons
 		m->shapeName = name;
 		m->rendermode = Mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
+		m->bPrimitive = true;
 
 		if (asMesh)
 			AddMesh(m);
@@ -1685,6 +1691,7 @@ Mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 		m->shapeName = name;
 		m->rendermode = Mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
+		m->bPrimitive = true;
 
 		AddOverlay(m);
 	}
@@ -1777,6 +1784,7 @@ Mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 		m->shapeName = name;
 		m->rendermode = Mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
+		m->bPrimitive = true;
 
 		AddOverlay(m);
 	}
@@ -1885,6 +1893,7 @@ Mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 		m->shapeName = name;
 		m->rendermode = Mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
+		m->bPrimitive = true;
 
 		AddOverlay(m);
 	}
@@ -1937,6 +1946,7 @@ Mesh* GLSurface::AddVisPlane(const Matrix4& mat, const Vector2& size, float uvSc
 		m->shapeName = name;
 		m->rendermode = Mesh::RenderMode::UnlitSolid;
 		m->material = GetPrimitiveMaterial();
+		m->bPrimitive = true;
 		m->doublesided = true;
 
 		if (asMesh)
@@ -1987,6 +1997,7 @@ Mesh* GLSurface::AddVisEdges(const Mesh* refMesh, const std::vector<Edge>& edges
 	m->shapeName = name;
 	m->color = color;
 	m->material = GetPrimitiveMaterial();
+	m->bPrimitive = true;
 	m->CreateBuffers();
 
 	m->rendermode = Mesh::RenderMode::UnlitWire;
@@ -2030,6 +2041,7 @@ Mesh* GLSurface::AddVisSeg(const Vector3& p1, const Vector3& p2, const std::stri
 	m->shapeName = name;
 	m->color = Vector3(0.0f, 1.0f, 1.0f);
 	m->material = GetPrimitiveMaterial();
+	m->bPrimitive = true;
 	m->CreateBuffers();
 
 	if (asMesh) {
@@ -2108,6 +2120,7 @@ Mesh* GLSurface::AddVisSeamEdges(const Mesh* refMesh, bool asMesh) {
 	m->shapeName = name;
 	m->color = Vector3(1.0f, 1.0f, 0.0f);
 	m->material = GetPrimitiveMaterial();
+	m->bPrimitive = true;
 	m->CreateBuffers();
 
 	if (asMesh) {

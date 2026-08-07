@@ -52,6 +52,22 @@ public:
 	PreviewSystem* m_system = nullptr;
 };
 
+// The bone the collision probe hangs off. Unlike PreviewBone it is bound to no
+// AnimBone and drives no skeleton bone: its kinematic pose is wherever the
+// cursor last put it.
+class ProbeBone : public hdt::SkinnedMeshBone {
+public:
+	ProbeBone(PreviewSystem* system, btRigidBody::btRigidBodyConstructionInfo& ci);
+
+	void readTransform(float timeStep) override;
+	void writeTransform() override {}
+
+	PreviewSystem* m_system = nullptr;
+
+	// Where the probe should be, in NIF global space.
+	nifly::Vector3 m_position;
+};
+
 // Port of hdtSMP64's SkyrimBody. The game's runtime disable machinery
 // (updateActiveState) is not ported, but the XML attributes feeding it are
 // still parsed into the members below.
@@ -67,6 +83,9 @@ public:
 	PreviewSystem* m_mesh = nullptr;
 	SharedType m_shared = SharedType::SHARED_PUBLIC;
 	bool m_disabled = false;
+	// The collision probe, which comes from no XML and so cannot be covered by
+	// anything a shape declares it collides with
+	bool m_isProbe = false;
 	int m_disablePriority = 0;
 	hdt::IDStr m_disableTag;
 
@@ -129,6 +148,16 @@ list passed to Build.
 class SystemBuilder {
 public:
 	hdt::Ref<PreviewSystem> Build(const BuildInput& input, std::vector<std::string>& outWarnings);
+
+	// Builds the one-bone system behind Controller's collision probe: a single
+	// kinematic bone carrying a single-vertex per-vertex shape. That is exactly
+	// a sphere collider here, because the collider radius of a per-vertex shape
+	// is the vertex margin multiplier times the shape margin - so the probe
+	// needs no tessellation and no special case anywhere in the solver.
+	static hdt::Ref<PreviewSystem> BuildProbe(float radius);
+
+	// Resizes a system built by BuildProbe.
+	static void SetProbeRadius(PreviewSystem* probe, float radius);
 
 protected:
 	std::unordered_map<hdt::IDStr, PreviewBone*> m_boneIndex;

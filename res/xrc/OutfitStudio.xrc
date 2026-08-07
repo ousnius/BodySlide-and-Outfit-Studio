@@ -1711,10 +1711,21 @@
 																						</object>
 																						<object class="sizeritem">
 																							<option>0</option>
-																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>10</border>
 																							<object class="wxCheckBox" name="cbPhysicsGrab">
 																								<label>Grab</label>
 																								<tooltip>Drag the simulated mesh around with the left mouse button, within what its physics constraints and gravity allow. Uses the brush size as the grab radius.</tooltip>
+																								<checked>0</checked>
+																								<enabled>0</enabled>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
+																							<flag>wxALIGN_CENTER_VERTICAL</flag>
+																							<object class="wxCheckBox" name="cbPhysicsProbe">
+																								<label>Ball</label>
+																								<tooltip>Put a ball in the scene that the simulated mesh collides with. Drag it around with the left mouse button; the mouse wheel moves it towards and away from the camera (hold Shift to zoom instead). Uses the brush size as the ball radius.</tooltip>
 																								<checked>0</checked>
 																								<enabled>0</enabled>
 																							</object>
@@ -1760,6 +1771,141 @@
 																									<item>Right</item>
 																								</content>
 																								<tooltip>Direction the wind blows in, as seen in the viewport. It stays fixed to the mesh while the camera turns.</tooltip>
+																							</object>
+																						</object>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxPanel" name="physicsProbePanel">
+																						<hidden>1</hidden>
+																						<object class="wxFlexGridSizer">
+																							<cols>3</cols>
+																							<rows>4</rows>
+																							<vgap>2</vgap>
+																							<hgap>5</hgap>
+																							<growablecols>1</growablecols>
+																							<object class="sizeritem">
+																								<option>0</option>
+																								<flag>wxALIGN_CENTER_VERTICAL</flag>
+																								<object class="wxStaticText" name="physicsProbeXLabel">
+																									<label>X</label>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>1</option>
+																								<flag>wxEXPAND</flag>
+																								<object class="wxSlider" name="physicsProbeX">
+																									<style>wxSL_HORIZONTAL</style>
+																									<size>-1,10</size>
+																									<value translate="0">600</value>
+																									<min>-1500</min>
+																									<max>1500</max>
+																									<tooltip>Position of the collision ball along the NIF X axis, in NIF units</tooltip>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>0</option>
+																								<flag>wxALIGN_CENTER_VERTICAL</flag>
+																								<object class="wxTextCtrl" name="physicsProbeXText">
+																									<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																									<size>55,-1</size>
+																									<value translate="0">60</value>
+																									<maxlength>0</maxlength>
+																									<tooltip>Position of the collision ball along the NIF X axis, in NIF units</tooltip>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>0</option>
+																								<flag>wxALIGN_CENTER_VERTICAL</flag>
+																								<object class="wxStaticText" name="physicsProbeYLabel">
+																									<label>Y</label>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>1</option>
+																								<flag>wxEXPAND</flag>
+																								<object class="wxSlider" name="physicsProbeY">
+																									<style>wxSL_HORIZONTAL</style>
+																									<size>-1,10</size>
+																									<value translate="0">0</value>
+																									<min>-1500</min>
+																									<max>1500</max>
+																									<tooltip>Position of the collision ball along the NIF Y axis, in NIF units</tooltip>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>0</option>
+																								<flag>wxALIGN_CENTER_VERTICAL</flag>
+																								<object class="wxTextCtrl" name="physicsProbeYText">
+																									<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																									<size>55,-1</size>
+																									<value translate="0">0</value>
+																									<maxlength>0</maxlength>
+																									<tooltip>Position of the collision ball along the NIF Y axis, in NIF units</tooltip>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>0</option>
+																								<flag>wxALIGN_CENTER_VERTICAL</flag>
+																								<object class="wxStaticText" name="physicsProbeZLabel">
+																									<label>Z</label>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>1</option>
+																								<flag>wxEXPAND</flag>
+																								<object class="wxSlider" name="physicsProbeZ">
+																									<style>wxSL_HORIZONTAL</style>
+																									<size>-1,10</size>
+																									<value translate="0">1000</value>
+																									<min>-500</min>
+																									<max>2500</max>
+																									<tooltip>Height of the collision ball along the NIF Z axis, in NIF units</tooltip>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>0</option>
+																								<flag>wxALIGN_CENTER_VERTICAL</flag>
+																								<object class="wxTextCtrl" name="physicsProbeZText">
+																									<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																									<size>55,-1</size>
+																									<value translate="0">100</value>
+																									<maxlength>0</maxlength>
+																									<tooltip>Height of the collision ball along the NIF Z axis, in NIF units</tooltip>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>0</option>
+																								<flag>wxALIGN_CENTER_VERTICAL</flag>
+																								<object class="wxStaticText" name="physicsProbeSizeLabel">
+																									<label>Size</label>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>1</option>
+																								<flag>wxEXPAND</flag>
+																								<object class="wxSlider" name="physicsProbeSize">
+																									<style>wxSL_HORIZONTAL</style>
+																									<size>-1,10</size>
+																									<value translate="0">60</value>
+																									<min>1</min>
+																									<max>600</max>
+																									<tooltip>Radius of the collision ball, in NIF units</tooltip>
+																								</object>
+																							</object>
+																							<object class="sizeritem">
+																								<option>0</option>
+																								<flag>wxALIGN_CENTER_VERTICAL</flag>
+																								<object class="wxTextCtrl" name="physicsProbeSizeText">
+																									<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																									<size>55,-1</size>
+																									<value translate="0">6</value>
+																									<maxlength>0</maxlength>
+																									<tooltip>Radius of the collision ball, in NIF units</tooltip>
+																								</object>
 																							</object>
 																						</object>
 																					</object>

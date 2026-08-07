@@ -222,11 +222,13 @@ public:
 
 	const std::vector<Mesh*>& GetMeshes() { return meshes; }
 
+	// The meshes that stand for a shape, which is what a caller means when it asks for
+	// the meshes to work on. Primitives and shapes that are not drawn normally are left out.
 	const std::vector<Mesh*> GetMeshesFiltered() {
 		std::vector<Mesh*> filteredMeshes;
 
 		for (auto& m : meshes)
-			if (m->rendermode == Mesh::RenderMode::Normal)
+			if (!m->bPrimitive && m->rendermode == Mesh::RenderMode::Normal)
 				filteredMeshes.push_back(m);
 
 		return filteredMeshes;

@@ -149,6 +149,18 @@ public:
 
 	bool IsGrabbing() const;
 
+	// Places a sphere the simulation collides with at "position" (NIF global
+	// space), creating it on first use. It is kinematic: cloth and hair are
+	// pushed out of its way through the normal contact solver, so the
+	// constraints, collisions and gravity of the physics XML still decide the
+	// result, and nothing the sphere hits can move it.
+	void SetProbe(const nifly::Vector3& position, float radius);
+
+	// Takes the sphere back out of the world.
+	void ClearProbe();
+
+	bool IsProbeActive() const;
+
 	// Simulated replacement transforms for physics-driven bones.
 	const PoseOverrideMap& PoseOverrides() const;
 

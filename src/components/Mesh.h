@@ -31,7 +31,38 @@ private:
 	std::array<bool, 10> queueUpdate = {false};
 
 public:
-	enum class RenderMode { Normal, UnlitSolid, UnlitWire, UnlitWireDepth, UnlitPoints, UnlitPointsDepth, LitWire };
+	enum class RenderMode {
+		// Filled and shaded through the mesh's own material, with its textures, masks and
+		// weight colors. The only mode that stands for a shape of the project, so the
+		// wireframe overlay and everything asking for "the meshes" mean this one.
+		Normal,
+
+		// Filled in the mesh's flat color with no lighting. What the vis primitives are
+		// drawn in - a gizmo reads better as a flat tint than as something in the scene.
+		UnlitSolid,
+
+		// UnlitSolid that keeps its lighting, for a primitive whose shape the eye has to
+		// read: a flat tint says nothing about which way a sphere is turned or how near
+		// its front is. Needs per-vertex normals, which not every primitive builds.
+		LitSolid,
+
+		// The edge list as lines, with the depth test off, so it is drawn over whatever it
+		// crosses however deep in the scene it sits.
+		UnlitWire,
+
+		// UnlitWire that is depth tested, so it goes behind the geometry in front of it.
+		UnlitWireDepth,
+
+		// The vertices as points, with the depth test off, so none of them are hidden.
+		UnlitPoints,
+
+		// UnlitPoints that is depth tested, so points on the far side stay hidden.
+		UnlitPointsDepth,
+
+		// Shaded like Normal but filled as lines and drawn double sided - the see-through
+		// look shapes are given while something else is being worked on in front of them.
+		LitWire
+	};
 	enum class TintType { None, Skin, Hair };
 	enum UpdateType { Position, Normals, Tangents, Bitangents, VertexColors, VertexAlpha, TextureCoordinates, Mask, Weight, Indices };
 
@@ -132,6 +163,12 @@ public:
 
 	bool bVisible = true;
 	bool bHelperShape = false; // true for shapes with no shader or with the hidden flag set (e.g. collisions)
+	// True for the meshes the viewport draws for its own sake - the floor grid, the seam
+	// edge lines, the physics collision ball. They sit in the mesh list rather than the
+	// overlay list so that they are depth tested against the scene, but they stand for no
+	// shape in the project, so anything walking the mesh list looking for shapes has to
+	// leave them alone.
+	bool bPrimitive = false;
 	bool bShowPoints = false;
 	bool smoothSeamNormals = true; // Smoothing for normals on seams.
 	float smoothSeamNormalsAngle = 60.0f; // Smoothing threshold in degrees for generating smooth normals on seams.
