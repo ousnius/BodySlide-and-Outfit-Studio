@@ -14903,7 +14903,7 @@ void wxGLPanel::SetMeshTextures(
 		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
 	}
 
-	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, reloadTextures);
+	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, reloadTextures, m->hasShader);
 	if (mat) {
 		m->material = mat;
 

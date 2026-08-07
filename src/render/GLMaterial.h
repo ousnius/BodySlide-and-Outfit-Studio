@@ -37,6 +37,8 @@ public:
 
 	GLuint GetTexID(uint32_t index);
 	std::string GetTexName(uint32_t index);
+	// Whether the slot exists in this material and resolves to a loaded texture.
+	bool HasTexture(uint32_t index);
 
 	void BindTextures(GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklight, const bool hasLightmask);
 };

@@ -158,6 +158,10 @@ public:
 	bool faceTint = false;				// Applies the face tint map of texture slot 6
 	bool cubemap = false;
 	bool textured = false;
+	// Whether the shape this mesh came from has a shader block. Shapes without one have no textures to
+	// assign, so they render untextured instead of falling back to the "no image" placeholder. Meshes that
+	// don't come from a NIF shape (import previews, primitives) keep the placeholder behavior.
+	bool hasShader = true;
 
 	std::shared_ptr<AABBTree> bvh = nullptr;
 

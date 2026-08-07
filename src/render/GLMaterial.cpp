@@ -49,6 +49,13 @@ GLuint GLMaterial::GetTexID(uint32_t index) {
 	return texCache[index];
 }
 
+bool GLMaterial::HasTexture(uint32_t index) {
+	if (index >= texCache.size())
+		return false;
+
+	return GetTexID(index) != 0;
+}
+
 std::string GLMaterial::GetTexName(uint32_t index) {
 	if (index < texNames.size())
 		return texNames[index];

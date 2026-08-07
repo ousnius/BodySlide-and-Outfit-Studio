@@ -310,10 +310,11 @@ GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t s
 	return GLI_create_texture(texture, textureID);
 }
 
-GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures) {
+GLMaterial* ResourceLoader::AddMaterial(
+	const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures, const bool useDefaultTexture) {
 	auto texFiles = textureFiles;
 
-	MaterialKey key(texFiles, vShaderFile, fShaderFile);
+	MaterialKey key(texFiles, vShaderFile, fShaderFile, useDefaultTexture);
 	if (!reloadTextures) {
 		auto it = materials.find(key);
 		if (it != materials.end())
@@ -337,7 +338,8 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 	if (texRefs.empty())
 		texRefs.resize(1, 0);
 
-	if (texRefs[0] == 0) {
+	// Shapes without a shader have no textures to begin with and are left untextured instead of getting the placeholder.
+	if (useDefaultTexture && texRefs[0] == 0) {
 		// Load default image
 		std::string defaultTex = Config["AppDir"] + "/res/images/NoImg.png";
 
@@ -370,6 +372,8 @@ size_t ResourceLoader::MatKeyHash::operator()(const MaterialKey& key) const {
 
 	for (size_t i = 0; i < std::get<0>(key).size(); i++)
 		resHash ^= strHash(std::get<0>(key)[i]);
+
+	resHash ^= std::hash<bool>{}(std::get<3>(key));
 
 	return resHash;
 }

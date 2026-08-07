@@ -27,7 +27,13 @@ public:
 	ResourceLoader();
 	~ResourceLoader();
 
-	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
+	// useDefaultTexture substitutes the "no image" placeholder for a missing diffuse. Only pass true for shapes that
+	// have a shader to begin with - a shape without one has no textures by definition and is meant to render untextured.
+	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles,
+							const std::string& vShaderFile,
+							const std::string& fShaderFile,
+							const bool reloadTextures = false,
+							const bool useDefaultTexture = true);
 
 
 	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and
@@ -78,7 +84,9 @@ private:
 
 	// If N3983 gets accepted into a future C++ standard then
 	// we wouldn't have to explicitly define our own hash here.
-	typedef std::tuple<std::vector<std::string>, std::string, std::string> MaterialKey;
+	// The default texture flag is part of the key: the same (empty) texture list resolves to a different
+	// material depending on whether the "no image" placeholder was substituted for the diffuse.
+	typedef std::tuple<std::vector<std::string>, std::string, std::string, bool> MaterialKey;
 	struct MatKeyHash {
 		size_t operator()(const MaterialKey& key) const;
 	};

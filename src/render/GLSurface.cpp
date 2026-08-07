@@ -1232,7 +1232,8 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 void GLSurface::UpdateShaders(Mesh* m) {
 	if (m->material) {
 		GLShader& shader = m->material->GetShader();
-		shader.ShowTexture(bTextured && m->textured);
+		// Without a diffuse there's nothing to sample, so such meshes are shaded with their mesh color instead.
+		shader.ShowTexture(bTextured && m->textured && m->material->HasTexture(0));
 		shader.ShowLighting(bLighting);
 		shader.ShowMask(bMaskVisible && m->mask);
 		shader.ShowWeight(bWeightColors && m->weight);
@@ -1283,6 +1284,7 @@ Mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	}
 
 	NiShader* shader = nif->GetShader(shape);
+	m->hasShader = shader != nullptr;
 	m->bHelperShape = !shader || (shape->flags & 1) != 0;
 	if (shader) {
 		m->doublesided = shader->IsDoubleSided();
@@ -2302,11 +2304,12 @@ Mesh::RenderMode GLSurface::SetMeshRenderMode(const std::string& name, Mesh::Ren
 	return r;
 }
 
-GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures) {
+GLMaterial* GLSurface::AddMaterial(
+	const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures, const bool useDefaultTexture) {
 	if (!SetContext())
 		return nullptr;
 
-	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile, reloadTextures);
+	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile, reloadTextures, useDefaultTexture);
 	if (mat) {
 		std::string shaderError;
 		if (mat->GetShader().GetError(&shaderError)) {

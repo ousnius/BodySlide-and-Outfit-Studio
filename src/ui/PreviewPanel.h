@@ -221,7 +221,7 @@ public:
 		if (!m)
 			return;
 
-		GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader);
+		GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, false, m->hasShader);
 		if (mat) {
 			m->material = mat;
 			shapeMaterials[shapeName] = mat;
