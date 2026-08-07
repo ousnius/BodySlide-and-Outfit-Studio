@@ -2944,6 +2944,7 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
 	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", true);
 	Config.SetDefaultBoolValue("Input/MaskHistory", true);
+	Config.SetDefaultBoolValue("Input/ShapeHoverHighlight", true);
 	Config.SetDefaultValue("Lights/Ambient", 15);
 	Config.SetDefaultValue("Lights/Frontal", 100);
 	Config.SetDefaultValue("Lights/Directional0", 0);

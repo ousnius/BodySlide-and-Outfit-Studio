@@ -44,6 +44,7 @@ struct CommonSettingsDialogControls {
 	wxCheckBox* cbLeftMousePan;
 	wxCheckBox* cbBrushSettingsNearCursor;
 	wxCheckBox* cbMaskHistory;
+	wxCheckBox* cbShapeHoverHighlight;
 	wxChoice* choiceLanguage;
 	wxChoice* choiceAppearance;
 	wxCheckBox* cbPerspectiveView;

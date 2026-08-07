@@ -97,6 +97,9 @@ void InitCommonSettingsDialog(
 	controls.cbMaskHistory = XRCCTRL(settings, "cbMaskHistory", wxCheckBox);
 	controls.cbMaskHistory->SetValue(config.GetBoolValue("Input/MaskHistory"));
 
+	controls.cbShapeHoverHighlight = XRCCTRL(settings, "cbShapeHoverHighlight", wxCheckBox);
+	controls.cbShapeHoverHighlight->SetValue(config.GetBoolValue("Input/ShapeHoverHighlight"));
+
 	controls.choiceLanguage = XRCCTRL(settings, "choiceLanguage", wxChoice);
 	controls.choiceLanguage->Clear();
 	for (size_t i = 0; i < supportedLangCount; i++)
@@ -196,6 +199,7 @@ void SaveCommonSettingsDialog(
 	config.SetBoolValue("Input/LeftMousePan", controls.cbLeftMousePan->IsChecked());
 	config.SetBoolValue("Input/BrushSettingsNearCursor", controls.cbBrushSettingsNearCursor->IsChecked());
 	config.SetBoolValue("Input/MaskHistory", controls.cbMaskHistory->IsChecked());
+	config.SetBoolValue("Input/ShapeHoverHighlight", controls.cbShapeHoverHighlight->IsChecked());
 
 	int oldLang = config.GetIntValue("Language");
 	int selection = controls.choiceLanguage->GetSelection();

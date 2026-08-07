@@ -940,6 +940,7 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
 	Config.SetDefaultBoolValue("Input/BrushSettingsNearCursor", true);
 	Config.SetDefaultBoolValue("Input/MaskHistory", true);
+	Config.SetDefaultBoolValue("Input/ShapeHoverHighlight", true);
 	Config.SetDefaultValue("Lights/Ambient", 15);
 	Config.SetDefaultValue("Lights/Frontal", 100);
 	Config.SetDefaultValue("Lights/Directional0", 0);
@@ -2377,6 +2378,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 				wxColour colorPointsMasked = commonControls.cpColorPointsMasked->GetColour();
 				glView->gls.SetMaskedPointColor(Vector3(colorPointsMasked.Red() / 255.0f, colorPointsMasked.Green() / 255.0f, colorPointsMasked.Blue() / 255.0f));
+
+				if (!Config.GetBoolValue("Input/ShapeHoverHighlight"))
+					glView->ClearHoverHighlight();
 			}
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
@@ -6051,6 +6055,11 @@ void OutfitStudioFrame::OnShapeTreeMotion(wxMouseEvent& event) {
 
 	if (!outfitShapes || !glView)
 		return;
+
+	if (!Config.GetBoolValue("Input/ShapeHoverHighlight")) {
+		glView->ClearHoverHighlight();
+		return;
+	}
 
 	const wxPoint mousePos = event.GetPosition();
 	int flags = 0;

@@ -266,6 +266,24 @@
 								<option>1</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
+								<object class="wxCheckBox" name="cbShapeHoverHighlight">
+									<tooltip>Enables/disables highlighting a shape in the render view when hovering over its name in the shape list of Outfit Studio.</tooltip>
+									<label>Shape Hover Highlight</label>
+									<checked>1</checked>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
 								<object class="wxStaticText" name="lbSingleInstanceBehavior">
 									<size>100,-1</size>
 									<label>Single Instance</label>
