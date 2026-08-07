@@ -565,6 +565,12 @@ if(BSOS_HAVE_BULLET)
 	# directory. Normalize the directory the same way as the include dirs.
 	set(BSOS_BULLET_LINK_LIBRARIES ${BULLET_LIBRARIES})
 
+	# The port only uses the rigid body pipeline, but the config package lists
+	# every Bullet module, and distro packages do not always ship all of them
+	# (Ubuntu's libbullet-dev has no libBulletInverseDynamics). Drop the
+	# modules the port never references so linking only needs the core ones.
+	list(FILTER BSOS_BULLET_LINK_LIBRARIES EXCLUDE REGEX "Bullet3|BulletInverseDynamics|Bullet2FileLoader")
+
 	if(DEFINED BULLET_LIBRARY_DIRS)
 		set(BSOS_BULLET_LIBRARY_DIRS)
 		foreach(bullet_library_dir IN LISTS BULLET_LIBRARY_DIRS)
