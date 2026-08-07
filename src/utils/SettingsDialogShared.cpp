@@ -113,6 +113,9 @@ void InitCommonSettingsDialog(
 	controls.cbPerspectiveView = XRCCTRL(settings, "cbPerspectiveView", wxCheckBox);
 	controls.cbPerspectiveView->SetValue(appConfig.GetBoolValue("Rendering/PerspectiveView", true));
 
+	controls.cbComplexMaterial = XRCCTRL(settings, "cbComplexMaterial", wxCheckBox);
+	controls.cbComplexMaterial->SetValue(appConfig.GetBoolValue("Rendering/ComplexMaterial", true));
+
 	controls.cpColorBackground = XRCCTRL(settings, "cpColorBackground", wxColourPickerCtrl);
 	if (config.Exists("Rendering/ColorBackground")) {
 		int colorR = config.GetIntValue("Rendering/ColorBackground.r");
@@ -222,6 +225,7 @@ void SaveCommonSettingsDialog(
 	config.SetValue(kAppearanceModeConfigKey, GetAppearanceConfigValueForSelection(appearanceSelection));
 
 	appConfig.SetBoolValue("Rendering/PerspectiveView", controls.cbPerspectiveView->IsChecked());
+	appConfig.SetBoolValue("Rendering/ComplexMaterial", controls.cbComplexMaterial->IsChecked());
 
 	wxColour colorBackground = controls.cpColorBackground->GetColour();
 	config.SetValue("Rendering/ColorBackground.r", colorBackground.Red());

@@ -938,6 +938,8 @@ void GLSurface::RenderMesh(Mesh* m) {
 	shader.SetAlphaMaskEnabled(false);
 	shader.SetCubemapEnabled(m->cubemap);
 	shader.SetEnvMaskEnabled(false);
+	shader.SetComplexMaterialEnabled(bComplexMaterial && m->complexMaterial);
+	shader.SetCubemapMaxLod(m->cubemapMaxLod);
 	shader.SetProperties(m->prop);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1242,6 +1244,14 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 void GLSurface::UpdateShaders(Mesh* m) {
 	if (m->material) {
 		GLShader& shader = m->material->GetShader();
+
+		// Both are properties of the textures the material resolved to, so they're picked up here
+		// rather than per frame. Environment mapping is what puts a Complex Material in play at all:
+		// it's the shader property that gives slot 5 its meaning, not whether the cubemap file for
+		// slot 4 was found - a missing cubemap costs the reflection, not the glossiness.
+		m->complexMaterial = m->cubemap && m->material->IsComplexMaterial(5);
+		m->cubemapMaxLod = static_cast<float>(std::min(m->material->GetTexMaxMipLevel(4), 7));
+
 		// Without a diffuse there's nothing to sample, so such meshes are shaded with their mesh color instead.
 		shader.ShowTexture(bTextured && m->textured && m->material->HasTexture(0));
 		shader.ShowLighting(bLighting);

@@ -48,6 +48,7 @@ struct CommonSettingsDialogControls {
 	wxChoice* choiceLanguage;
 	wxChoice* choiceAppearance;
 	wxCheckBox* cbPerspectiveView;
+	wxCheckBox* cbComplexMaterial;
 	wxColourPickerCtrl* cpColorBackground;
 	wxColourPickerCtrl* cpColorWire;
 	wxColourPickerCtrl* cpColorPoints;

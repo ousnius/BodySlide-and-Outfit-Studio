@@ -187,6 +187,11 @@ public:
 		gls.SetMeshVisibility(shapeName, visible);
 	}
 
+	void SetComplexMaterialEnabled(bool enabled) {
+		gls.SetComplexMaterialEnabled(enabled);
+		Render();
+	}
+
 	void SetBaseDataPath(const std::string& path) { baseDataPath = path; }
 
 	void SetExtraNifPaths(const std::vector<std::string>& paths) { extraNifPaths = paths; }

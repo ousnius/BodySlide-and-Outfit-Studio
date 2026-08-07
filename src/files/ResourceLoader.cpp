@@ -12,6 +12,8 @@ See the included LICENSE file
 #include <wx/filename.h>
 #include <wx/log.h>
 
+#include <cmath>
+
 extern ConfigurationManager Config;
 
 ResourceLoader::ResourceLoader() {}
@@ -310,6 +312,82 @@ GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t s
 	return GLI_create_texture(texture, textureID);
 }
 
+int ResourceLoader::GetBoundMaxMipLevel(GLenum levelTarget) {
+	int maxLevel = 0;
+
+	// 32 is past the largest texture any GL implementation allows, so this terminates either way.
+	for (GLint level = 1; level < 32; level++) {
+		GLint levelWidth = 0;
+		glGetTexLevelParameteriv(levelTarget, level, GL_TEXTURE_WIDTH, &levelWidth);
+		if (levelWidth <= 0)
+			break;
+
+		maxLevel = level;
+	}
+
+	return maxLevel;
+}
+
+bool ResourceLoader::ClassifyComplexMaterial(GLuint textureID) const {
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	const GLint level = GetBoundMaxMipLevel(GL_TEXTURE_2D);
+
+	GLint width = 0;
+	GLint height = 0;
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_WIDTH, &width);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_HEIGHT, &height);
+	if (width <= 0 || height <= 0)
+		return false;
+
+	// Asking for RGBA8 makes the driver decompress whatever block format the file was in.
+	std::vector<uint8_t> pixels(static_cast<size_t>(width) * height * 4);
+
+	GLint packAlignment = 4;
+	glGetIntegerv(GL_PACK_ALIGNMENT, &packAlignment);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+	glPixelStorei(GL_PACK_ALIGNMENT, packAlignment);
+
+	double sumR = 0.0, sumG = 0.0, sumB = 0.0;
+	const size_t texelCount = static_cast<size_t>(width) * height;
+	for (size_t i = 0; i < texelCount; i++) {
+		sumR += pixels[i * 4 + 0];
+		sumG += pixels[i * 4 + 1];
+		sumB += pixels[i * 4 + 2];
+	}
+
+	const float avgR = static_cast<float>(sumR / texelCount / 255.0);
+	const float avgG = static_cast<float>(sumG / texelCount / 255.0);
+	const float avgB = static_cast<float>(sumB / texelCount / 255.0);
+
+	// Values at or below 4/255 count as black; the channels can't hold anything smaller reliably
+	// once the texture has been block compressed.
+	const float threshold = 4.0f / 255.0f;
+
+	// A vanilla environment mask is greyscale, so its green channel is nothing but the mask again.
+	// Reading that as a glossiness map would change how every env mapped shape has always looked.
+	const bool greyscale = std::fabs(avgR - avgG) < threshold && std::fabs(avgR - avgB) < threshold && std::fabs(avgG - avgB) < threshold;
+
+	return !greyscale && avgG > threshold;
+}
+
+bool ResourceLoader::IsComplexMaterialTexture(const std::string& texName) const {
+	auto it = complexMaterialTextures.find(texName);
+	if (it != complexMaterialTextures.end())
+		return it->second;
+
+	return false;
+}
+
+int ResourceLoader::GetTextureMaxMipLevel(const std::string& texName) const {
+	auto it = textureMaxMipLevels.find(texName);
+	if (it != textureMaxMipLevels.end())
+		return it->second;
+
+	return 0;
+}
+
 GLMaterial* ResourceLoader::AddMaterial(
 	const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures, const bool useDefaultTexture) {
 	auto texFiles = textureFiles;
@@ -332,6 +410,22 @@ GLMaterial* ResourceLoader::AddMaterial(
 			continue;
 
 		texRefs[i] = textureID;
+
+		// Slot 4 is the environment cube map, whose mip chain is how far a Complex Material
+		// reflection can be blurred.
+		if (isCubeMap && (reloadTextures || textureMaxMipLevels.find(texFiles[i]) == textureMaxMipLevels.end())) {
+			glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+			textureMaxMipLevels[texFiles[i]] = GetBoundMaxMipLevel(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+		}
+
+		// Slot 5 is the environment mask, which is also where a Complex Material texture lives.
+		if (i == 5 && (reloadTextures || complexMaterialTextures.find(texFiles[i]) == complexMaterialTextures.end())) {
+			const bool isComplexMaterial = ClassifyComplexMaterial(textureID);
+			complexMaterialTextures[texFiles[i]] = isComplexMaterial;
+
+			if (isComplexMaterial)
+				wxLogMessage("Texture file '%s' was detected as a Complex Material.", texFiles[i]);
+		}
 	}
 
 	// No diffuse found

@@ -56,6 +56,20 @@ bool GLMaterial::HasTexture(uint32_t index) {
 	return GetTexID(index) != 0;
 }
 
+bool GLMaterial::IsComplexMaterial(uint32_t index) {
+	if (!resLoaderRef || index >= texNames.size())
+		return false;
+
+	return resLoaderRef->IsComplexMaterialTexture(texNames[index]);
+}
+
+int GLMaterial::GetTexMaxMipLevel(uint32_t index) {
+	if (!resLoaderRef || index >= texNames.size())
+		return 0;
+
+	return resLoaderRef->GetTextureMaxMipLevel(texNames[index]);
+}
+
 std::string GLMaterial::GetTexName(uint32_t index) {
 	if (index < texNames.size())
 		return texNames[index];
@@ -143,6 +157,11 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 				if (hasEnvMapping) {
 					if (texCache[id] != 0) {
 						shader.BindCubemap(id, texCache[id], "texCubemap");
+						// A Complex Material picks its mip from roughness, so the levels have to blend
+						// into each other - without this the reflection steps visibly as glossiness
+						// varies across the surface.
+						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+						glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 						if (largestAF)
 							glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 					}

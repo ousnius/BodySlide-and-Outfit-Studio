@@ -2382,6 +2382,10 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 				if (!Config.GetBoolValue("Input/ShapeHoverHighlight"))
 					glView->ClearHoverHighlight();
+
+				// Only feeds a uniform, so the meshes and their textures stay as they are
+				glView->gls.SetComplexMaterialEnabled(OutfitStudioConfig.GetBoolValue("Rendering/ComplexMaterial", true));
+				glView->Render();
 			}
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
@@ -14844,6 +14848,8 @@ void wxGLPanel::OnShown() {
 	os->menuBar->Check(XRCID("btnViewPerspective"), perspectiveView);
 	os->toolBarV->ToggleTool(XRCID("btnViewPerspective"), perspectiveView);
 	gls.SetPerspective(perspectiveView);
+
+	gls.SetComplexMaterialEnabled(OutfitStudioConfig.GetBoolValue("Rendering/ComplexMaterial", true));
 
 	os->MeshesFromProj();
 

@@ -485,6 +485,18 @@ void GLShader::SetEnvMaskEnabled(const bool enable) {
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
+void GLShader::SetComplexMaterialEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bComplexMaterial");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetCubemapMaxLod(const float maxLod) {
+	GLint loc = glGetUniformLocation(progID, "cubemapMaxLod");
+	if (loc >= 0)
+		glUniform1f(loc, maxLod);
+}
+
 void GLShader::SetSpecularEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bSpecular");
 	if (loc >= 0)

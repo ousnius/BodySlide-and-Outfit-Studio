@@ -105,6 +105,10 @@ public:
 	void SetFaceTintEnabled(const bool enable);
 	void SetCubemapEnabled(const bool enable);
 	void SetEnvMaskEnabled(const bool enable);
+	void SetComplexMaterialEnabled(const bool enable);
+	// Highest mip the cubemap can be sampled at, which is how blurry a fully rough Complex Material
+	// reflection gets. Comes from the cubemap's own mip chain, since not every one has a full one.
+	void SetCubemapMaxLod(const float maxLod);
 	void SetSpecularEnabled(const bool enable);
 	void SetBacklightEnabled(const bool enable);
 	void SetRimlightEnabled(const bool enable);

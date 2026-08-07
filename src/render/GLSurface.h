@@ -46,6 +46,7 @@ private:
 	bool bMaskVisible = true;
 	bool bWeightColors = false;
 	bool bVertexColors = false;
+	bool bComplexMaterial = true;
 
 	float defLineWidth = 1.0f;
 	float defPointSize = 5.0f;
@@ -389,6 +390,10 @@ public:
 		for (auto& o : overlays)
 			UpdateShaders(o);
 	}
+
+	// Complex Material shading is still decided per texture and per pixel; this only says whether
+	// the ones that qualify are allowed to use it, so that the legacy look stays available.
+	void SetComplexMaterialEnabled(bool bEnable = true) { bComplexMaterial = bEnable; }
 
 	void ToggleWireframe() {
 		if (bWireframe)

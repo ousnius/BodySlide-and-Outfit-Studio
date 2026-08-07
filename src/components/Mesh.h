@@ -157,6 +157,12 @@ public:
 	TintType tintType = TintType::None; // Applies prop.tintColor when not None
 	bool faceTint = false;				// Applies the face tint map of texture slot 6
 	bool cubemap = false;
+	// True when the environment mask of texture slot 5 is a Skyrim "Complex Material": glossiness in
+	// its green channel and metalness in its blue one, rather than the greyscale reflection mask
+	// vanilla puts there. Decided once from the texture itself, see ResourceLoader.
+	bool complexMaterial = false;
+	// Highest mip of the cubemap in slot 4, how blurry a fully rough reflection is allowed to get.
+	float cubemapMaxLod = 0.0f;
 	bool textured = false;
 	// Whether the shape this mesh came from has a shader block. Shapes without one have no textures to
 	// assign, so they render untextured instead of falling back to the "no image" placeholder. Meshes that

@@ -19,6 +19,7 @@ See the included LICENSE file
 #include <SOIL2/SOIL2.h>
 #include <gli.hpp>
 
+typedef unsigned int GLenum;
 typedef unsigned int GLuint;
 class GLMaterial;
 
@@ -65,6 +66,16 @@ public:
 	bool RenameTexture(const std::string& texNameSrc, const std::string& texNameDest, bool overwrite = false);
 
 
+	// Whether the texture looks like a Skyrim "Complex Material" mask: glossiness in green and
+	//  metalness in blue, instead of the greyscale reflection mask vanilla puts in the same slot.
+	//  Classified once when the texture is loaded into the slot that carries it, since the verdict
+	//  is about the map as a whole and can't be made from the texel a fragment happens to sample.
+	bool IsComplexMaterialTexture(const std::string& texName) const;
+
+	// Highest mip level the texture actually has, 0 for one without a mip chain. Reflections pick
+	//  their mip from roughness, so the shader needs the real number rather than an assumed one.
+	int GetTextureMaxMipLevel(const std::string& texName) const;
+
 	// compares the incoming cacheTime with the internal cacheTime, and returns true if they match.
 	//  if they do not match, the incoming cacheTime is updated to match and the function returns false.
 	bool CacheStamp(int64_t& inCacheTime) {
@@ -82,6 +93,13 @@ private:
 	GLuint GLI_load_texture(const std::string& fileName, GLuint textureID = 0);
 	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID = 0);
 
+	// Highest level with actual storage for the currently bound texture. GL_TEXTURE_MAX_LEVEL isn't
+	//  usable here: the SOIL path never sets it and leaves it at its 1000 default, so the levels are
+	//  walked until one comes back with no width. Pass the cube map's first face for a cube map.
+	static int GetBoundMaxMipLevel(GLenum levelTarget);
+	// Reads the smallest mip - the average of the whole texture - and decides from it.
+	bool ClassifyComplexMaterial(GLuint textureID) const;
+
 	// If N3983 gets accepted into a future C++ standard then
 	// we wouldn't have to explicitly define our own hash here.
 	// The default texture flag is part of the key: the same (empty) texture list resolves to a different
@@ -97,6 +115,10 @@ private:
 
 	TextureCache textures;
 	MaterialCache materials;
+	// Keyed by texture name like the texture cache, so a verdict outlives the material that
+	// triggered it and survives the material cache handing back an existing entry.
+	std::map<std::string, bool, case_insensitive_compare> complexMaterialTextures;
+	std::map<std::string, int, case_insensitive_compare> textureMaxMipLevels;
 
 	int64_t cacheTime = 1;
 };

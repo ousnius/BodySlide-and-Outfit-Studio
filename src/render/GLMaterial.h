@@ -40,5 +40,10 @@ public:
 	// Whether the slot exists in this material and resolves to a loaded texture.
 	bool HasTexture(uint32_t index);
 
+	// Whether the texture in the slot was classified as a Complex Material mask.
+	bool IsComplexMaterial(uint32_t index);
+	// Highest mip level the texture in the slot has, 0 for one without a mip chain.
+	int GetTexMaxMipLevel(uint32_t index);
+
 	void BindTextures(GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklight, const bool hasLightmask);
 };

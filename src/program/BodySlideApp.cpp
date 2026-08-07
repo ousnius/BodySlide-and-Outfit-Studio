@@ -3040,6 +3040,11 @@ bool BodySlideApp::SetDefaultConfig() {
 	return true;
 }
 
+void BodySlideApp::ApplyComplexMaterialSetting() {
+	if (preview)
+		preview->SetComplexMaterialEnabled(BodySlideConfig.GetBoolValue("Rendering/ComplexMaterial", true));
+}
+
 bool BodySlideApp::ShowSetup() {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Setup.xrc");
@@ -6892,6 +6897,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			BodySlideConfig.SetBoolValue("BodySlideFrame.previewAlwaysDetached", cbPreviewAlwaysDetached->IsChecked());
 			BodySlideConfig.SetBoolValue("BodySlideFrame.previewOnLeft", cbPreviewOnLeft->IsChecked());
 			SetPreviewOnLeft(cbPreviewOnLeft->IsChecked());
+
+			// Only feeds a uniform, so the meshes and their textures stay as they are
+			app->ApplyComplexMaterialSetting();
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			app->SaveFavorites();
