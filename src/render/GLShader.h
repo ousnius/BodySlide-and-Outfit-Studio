@@ -46,6 +46,11 @@ class GLShader {
 	bool CheckExtensions();
 	bool LoadShaderFile(const std::string& fileName, std::string& text);
 
+	// Gives each sampler uniform of the linked program its fixed texture unit (the layout
+	// GLMaterial::BindTextures uses). Keeps the samplerCube off the unit the sampler2Ds sit on,
+	// which would otherwise make draw calls invalid for programs that never bind textures.
+	void AssignDefaultSamplerUnits();
+
 	// Attempts to load the specified source files (in text format).
 	bool LoadShaders(const std::string& vertexSource, const std::string& fragmentSource);
 

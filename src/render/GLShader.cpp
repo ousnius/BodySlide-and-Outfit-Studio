@@ -15,6 +15,7 @@ using namespace nifly;
 GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentSource)
 	: GLShader() {
 	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource)) {
+		AssignDefaultSamplerUnits();
 		ShowLighting();
 		// Left off until something says the mesh has a diffuse worth sampling, which is what
 		// GLSurface::UpdateShaders decides. Starting it on would make a shape that never got that
@@ -63,6 +64,43 @@ bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text) {
 		return false;
 
 	return true;
+}
+
+void GLShader::AssignDefaultSamplerUnits() {
+	// A freshly linked program has every sampler uniform on texture unit 0, which puts the
+	// samplerCube on the same unit as the sampler2Ds. A draw call with such a program is invalid
+	// whenever unit 0 happens to hold both a 2D and a cube texture (loading a cubemap leaves one
+	// bound there), and the driver then drops the draw with GL_INVALID_OPERATION. Hand every
+	// sampler its fixed unit up front - the same layout GLMaterial::BindTextures uses - so the
+	// program stays valid even for meshes that never bind any textures.
+	struct SamplerUnit {
+		const char* name;
+		GLint unit;
+	};
+
+	static const SamplerUnit samplerUnits[] = {
+		{"texDiffuse", 0},
+		{"texNormal", 1},
+		{"texGlowmap", 2},
+		{"texLightmask", 2},
+		{"texGreyscale", 3},
+		{"texCubemap", 4},
+		{"texEnvMask", 5},
+		{"texFaceTint", 6},
+		{"texSpecular", 7},
+		{"texBacklight", 7},
+		{"texAlphaMask", 20},
+	};
+
+	glUseProgram(progID);
+
+	for (const auto& su : samplerUnits) {
+		GLint loc = glGetUniformLocation(progID, su.name);
+		if (loc >= 0)
+			glUniform1i(loc, su.unit);
+	}
+
+	glUseProgram(0);
 }
 
 bool GLShader::LoadShaders(const std::string& vertexSource, const std::string& fragmentSource) {
