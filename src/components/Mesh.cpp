@@ -350,6 +350,13 @@ void Mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	prop.paletteScale = matFile.grayscaleToPaletteScale;
 }
 
+bool Mesh::HasTintColor() const {
+	if (tintType == TintType::None)
+		return false;
+
+	return prop.tintColor.x != 0.0f || prop.tintColor.y != 0.0f || prop.tintColor.z != 0.0f;
+}
+
 bool Mesh::HasAlphaBlend() {
 	bool alphaBlend = alphaFlags & 1;
 	if (prop.alpha < 1.0f)

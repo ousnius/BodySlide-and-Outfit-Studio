@@ -930,7 +930,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 	shader.SetSoftlightEnabled(m->softlight);
 	shader.SetGlowmapEnabled(m->glowmap);
 	shader.SetGreyscaleColorEnabled(m->greyscaleColor);
-	shader.SetTintColorEnabled(m->tintType != Mesh::TintType::None);
+	shader.SetTintColorEnabled(m->HasTintColor());
 	shader.SetFaceTintEnabled(m->faceTint);
 	shader.SetLightingEnabled(bLighting);
 	shader.SetWireframeEnabled(false);
