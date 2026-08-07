@@ -27,6 +27,11 @@ class GLShader {
 	// Linked Program ID after program creation.
 	GLuint progID = 0;
 
+	// Mirrors the bShowTexture uniform. A freshly linked program has it at false (uniforms start
+	// zeroed), which is also the safe state: a shader that samples a diffuse nobody bound draws
+	// nothing at all, while an unconfigured one just falls back to the mesh color.
+	bool bShowTexture = false;
+
 	/* error state, set if compile/link fails.  check errorstring for compile log
 		-1 = initial state -- not ready
 		0 = no error, shader ready
@@ -84,6 +89,9 @@ public:
 	void ShowVertexColors(bool bShow = true);
 	void ShowVertexAlpha(bool bShow = true);
 	void ShowTexture(bool bShow = true);
+	// Whether the shader samples its diffuse. Callers that have to set up what it samples (texture
+	// coordinates, texture bindings) ask here rather than deriving the condition a second time.
+	bool IsTextureShown() const { return bShowTexture; }
 
 	void SetNormalMapEnabled(const bool enable);
 	void SetAlphaMaskEnabled(const bool enable);

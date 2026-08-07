@@ -802,6 +802,10 @@ void GLSurface::RenderToTexture(GLMaterial* renderShader) {
 	bool oldDS;
 	GLMaterial* oldmat;
 
+	// The render shader draws the meshes in UV space, so it needs the texture coordinate attribute
+	// fed to it. It never passes through UpdateShaders, so say so here.
+	renderShader->GetShader().ShowTexture(true);
+
 	// Render regular meshes only
 	for (size_t i = 0; i < meshes.size(); i++) {
 		m = meshes[i];
@@ -894,6 +898,12 @@ void GLSurface::RenderMesh(Mesh* m) {
 	GLShader& shader = m->material->GetShader();
 	if (!shader.Begin())
 		return;
+
+	// Bind the diffuse if and only if the shader is going to sample it. The condition isn't
+	// recomputed here: whatever the shader was last told (UpdateShaders) is the only thing the
+	// fragment stage acts on, so asking it keeps the two from drifting apart. A program that
+	// samples texDiffuse in a frame where nothing was bound draws the shape as nothing at all.
+	const bool useTexture = shader.IsTextureShown() && m->texcoord != nullptr;
 
 	if (!m->HasAlphaBlend()) {
 		glDepthFunc(GL_LEQUAL);
@@ -988,7 +998,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Alpha
 		}
 
-		if (bTextured && m->textured && m->texcoord) {
+		if (useTexture) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
 			glEnableVertexAttribArray(6);
 			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
@@ -1051,7 +1061,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 			}
 		}
 
-		if (bTextured && m->textured && m->texcoord)
+		if (useTexture)
 			glDisableVertexAttribArray(6);
 
 		glDisableVertexAttribArray(5);

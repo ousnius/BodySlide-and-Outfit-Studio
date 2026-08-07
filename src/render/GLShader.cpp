@@ -16,7 +16,10 @@ GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentS
 	: GLShader() {
 	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource)) {
 		ShowLighting();
-		ShowTexture();
+		// Left off until something says the mesh has a diffuse worth sampling, which is what
+		// GLSurface::UpdateShaders decides. Starting it on would make a shape that never got that
+		// far sample a texture nobody bound, which draws it as nothing.
+		ShowTexture(false);
 		ShowMask();
 		ShowWeight(false);
 		ShowVertexColors(false);
@@ -389,6 +392,11 @@ void GLShader::ShowVertexAlpha(bool bShow) {
 }
 
 void GLShader::ShowTexture(bool bShow) {
+	if (bShowTexture == bShow)
+		return;
+
+	bShowTexture = bShow;
+
 	GLint loc = glGetUniformLocation(progID, "bShowTexture");
 	if (loc >= 0) {
 		glUseProgram(progID);
