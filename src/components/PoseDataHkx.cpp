@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "PoseData.h"
 #include "../files/HkxFile.h"
+#include "../utils/StringStuff.h"
 
 #include <algorithm>
 #include <cmath>
@@ -157,15 +158,18 @@ static bool SaveHkxPoseInternal(const std::string& skeletonHkxPath,
 	PoseData havokPose = pose;
 	ConvertOutfitStudioScaleToHavok(skeleton, havokPose);
 
+	// Keyed lowercase: the pose carries the NIF skeleton's bone names, which
+	// differ in case from the HKX skeleton's for a few Fallout 4 bones
+	// (HEAD/Head, SPINE1/Spine1, SPINE2/Spine2, WEAPON/Weapon).
 	std::unordered_map<std::string, const PoseBoneData*> poseBones;
 	poseBones.reserve(havokPose.boneData.size());
 	for (const auto& boneData : havokPose.boneData)
-		poseBones[boneData.name] = &boneData;
+		poseBones[ToLower(boneData.name)] = &boneData;
 
 	std::vector<HKX::Transform> trackTransforms(skeleton.bones.size());
 	for (size_t boneIndex = 0; boneIndex < skeleton.bones.size(); ++boneIndex) {
 		HKX::Transform track = (boneIndex < skeleton.referencePose.size()) ? skeleton.referencePose[boneIndex] : HKX::Transform{};
-		auto it = poseBones.find(skeleton.bones[boneIndex].name);
+		auto it = poseBones.find(ToLower(skeleton.bones[boneIndex].name));
 		if (it != poseBones.end()) {
 			const PoseBoneData& boneData = *it->second;
 			HkxQuaternion quat = MatrixToHkxQuaternion(nifly::RotVecToMat(boneData.rotation));
@@ -261,10 +265,11 @@ static bool ExtractHkxFramePose(const HKX::Skeleton& skel, const HKX::Animation&
 static void ConvertOutfitStudioScaleToHavok(const HKX::Skeleton& skel, PoseData& outPose) {
 	const size_t nBones = skel.bones.size();
 
+	// Keyed lowercase; see SaveHkxPoseInternal for why.
 	std::unordered_map<std::string, size_t> boneIndices;
 	boneIndices.reserve(nBones);
 	for (size_t i = 0; i < nBones; ++i)
-		boneIndices.emplace(skel.bones[i].name, i);
+		boneIndices.emplace(ToLower(skel.bones[i].name), i);
 
 	auto usableScale = [](float scale) { return scale > 0.0f && std::isfinite(scale); };
 
@@ -276,7 +281,7 @@ static void ConvertOutfitStudioScaleToHavok(const HKX::Skeleton& skel, PoseData&
 			localScale[i] = skel.referencePose[i].scale[0];
 	}
 	for (const PoseBoneData& bd : outPose.boneData) {
-		auto it = boneIndices.find(bd.name);
+		auto it = boneIndices.find(ToLower(bd.name));
 		if (it != boneIndices.end() && usableScale(bd.scale))
 			localScale[it->second] = bd.scale;
 	}
@@ -291,7 +296,7 @@ static void ConvertOutfitStudioScaleToHavok(const HKX::Skeleton& skel, PoseData&
 	}
 
 	for (PoseBoneData& bd : outPose.boneData) {
-		auto it = boneIndices.find(bd.name);
+		auto it = boneIndices.find(ToLower(bd.name));
 		if (it == boneIndices.end())
 			continue;
 

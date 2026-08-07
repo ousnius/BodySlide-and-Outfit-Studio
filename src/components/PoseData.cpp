@@ -6,6 +6,7 @@ See the included LICENSE file
 #include "PoseData.h"
 #include "Anim.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/StringStuff.h"
 
 #include <wx/filename.h>
 
@@ -205,8 +206,11 @@ void PoseData::ApplyToSkeleton() const {
 		if (!bone)
 			continue;
 
+		// Case-insensitive: Fallout 4's skeleton.hkx and skeleton.nif disagree
+		// on the case of a few bones (Head/HEAD, Spine1/SPINE1, Spine2/SPINE2,
+		// Weapon/WEAPON), and HKX poses carry the HKX skeleton's spelling.
 		auto it = std::find_if(boneData.begin(), boneData.end(),
-			[&boneName](const PoseBoneData& bd) { return bd.name == boneName; });
+			[&boneName](const PoseBoneData& bd) { return StringsEqualInsens(bd.name.c_str(), boneName.c_str()); });
 
 		if (it != boneData.end()) {
 			if (absoluteLocal) {
