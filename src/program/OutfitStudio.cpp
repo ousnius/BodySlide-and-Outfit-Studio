@@ -2339,6 +2339,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxString gameDataPath = wxString::FromUTF8(Config["GameDataPath"]);
 
 		XRCCTRL(*settings, "cbPreviewAlwaysDetached", wxCheckBox)->Hide();
+		XRCCTRL(*settings, "cbPreviewOnLeft", wxCheckBox)->Hide();
 
 		wxChoice* choiceSingleInstanceBehavior = XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice);
 		choiceSingleInstanceBehavior->SetSelection(OutfitStudioConfig.GetIntValue("SingleInstanceBehavior", 0));

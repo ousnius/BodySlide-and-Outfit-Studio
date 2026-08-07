@@ -492,12 +492,14 @@ public:
 	wxPanel* leftPanel = nullptr;
 	PreviewPanel* previewPanel = nullptr;
 	bool previewVisible = true;
+	bool previewOnLeft = false;
 	int savedSashPosition = -1;
 	int savedPreviewWidth = 0;
 
 	// Helpers for preview docking/undocking
 	void UnsplitPreview();
 	void SplitPreview(wxPanel* panel = nullptr);
+	void SetPreviewOnLeft(bool onLeft);
 	void UpdatePreviewButtonLabel();
 
 	BodySlideFrame(BodySlideApp* app, const wxSize& size);

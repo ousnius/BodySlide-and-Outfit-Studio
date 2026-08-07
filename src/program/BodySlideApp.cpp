@@ -2971,6 +2971,7 @@ bool BodySlideApp::SetDefaultConfig() {
 	BodySlideConfig.SetDefaultBoolValue("BodySlideFrame.previewVisible", false);
 	BodySlideConfig.SetDefaultBoolValue("BodySlideFrame.previewPoppedOut", false);
 	BodySlideConfig.SetDefaultBoolValue("BodySlideFrame.previewAlwaysDetached", false);
+	BodySlideConfig.SetDefaultBoolValue("BodySlideFrame.previewOnLeft", false);
 
 	const wxSize previewSize = wxWindow::FromDIP(wxSize(720 + xborder * 2, 720 + yborder * 2), nullptr);
 	BodySlideConfig.SetDefaultValue("PreviewFrame.width", previewSize.GetWidth());
@@ -5148,13 +5149,24 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize& size)
 	// Create embedded preview panel
 	previewPanel = new PreviewPanel(splitter, app);
 
-	// Read sash position and visibility from config
+	// Read sash position, side and visibility from config
 	previewVisible = BodySlideConfig.GetBoolValue("BodySlideFrame.previewVisible", false);
+	previewOnLeft = BodySlideConfig.GetBoolValue("BodySlideFrame.previewOnLeft", false);
 	savedSashPosition = BodySlideConfig.GetIntValue("BodySlideFrame.sashpos");
 	savedPreviewWidth = BodySlideConfig.GetIntValue("BodySlideFrame.previewWidth");
 
 	if (previewVisible) {
-		splitter->SplitVertically(leftPanel, previewPanel, savedSashPosition);
+		if (previewOnLeft) {
+			// The sash position is the preview width when the preview is the first pane
+			int previewWidth = savedPreviewWidth;
+			if (previewWidth <= 0)
+				previewWidth = FromDIP(400);
+
+			splitter->SplitVertically(previewPanel, leftPanel, previewWidth);
+		}
+		else {
+			splitter->SplitVertically(leftPanel, previewPanel, savedSashPosition);
+		}
 	}
 	else {
 		splitter->Initialize(leftPanel);
@@ -6411,7 +6423,7 @@ void BodySlideFrame::OnSashPosChanged(wxSplitterEvent& event) {
 	int pos = event.GetSashPosition();
 	BodySlideConfig.SetValue("BodySlideFrame.sashpos", pos);
 	savedSashPosition = pos;
-	savedPreviewWidth = splitter->GetSize().GetWidth() - pos;
+	savedPreviewWidth = previewOnLeft ? pos : splitter->GetSize().GetWidth() - pos;
 	if (savedPreviewWidth > 0)
 		BodySlideConfig.SetValue("BodySlideFrame.previewWidth", savedPreviewWidth);
 }
@@ -6420,9 +6432,18 @@ void BodySlideFrame::OnSashPosChanging(wxSplitterEvent& event) {
 	if (!splitter || !splitter->IsSplit())
 		return;
 
-	const int minLeftWidth = FromDIP(MinBodySlideLeftPaneWidthDip);
-	if (event.GetSashPosition() < minLeftWidth) {
-		event.SetSashPosition(minLeftWidth);
+	const int minMainWidth = FromDIP(MinBodySlideLeftPaneWidthDip);
+	if (previewOnLeft) {
+		// The main pane is on the right, so the sash may not move too far right
+		int maxSashPos = splitter->GetSize().GetWidth() - minMainWidth;
+		if (maxSashPos < splitter->GetMinimumPaneSize())
+			maxSashPos = splitter->GetMinimumPaneSize();
+
+		if (event.GetSashPosition() > maxSashPos)
+			event.SetSashPosition(maxSashPos);
+	}
+	else if (event.GetSashPosition() < minMainWidth) {
+		event.SetSashPosition(minMainWidth);
 	}
 }
 
@@ -6445,7 +6466,7 @@ void BodySlideFrame::UnsplitPreview() {
 		return;
 
 	savedSashPosition = splitter->GetSashPosition();
-	savedPreviewWidth = splitter->GetSize().GetWidth() - savedSashPosition;
+	savedPreviewWidth = previewOnLeft ? savedSashPosition : splitter->GetSize().GetWidth() - savedSashPosition;
 	BodySlideConfig.SetValue("BodySlideFrame.sashpos", savedSashPosition);
 	BodySlideConfig.SetValue("BodySlideFrame.previewWidth", savedPreviewWidth);
 	splitter->Unsplit(previewPanel);
@@ -6471,18 +6492,74 @@ void BodySlideFrame::SplitPreview(wxPanel* panel) {
 	if (previewWidth <= 0)
 		previewWidth = 400;
 
-	int sashPos = savedSashPosition;
-	if (sashPos <= 0)
-		sashPos = BodySlideConfig.GetIntValue("BodySlideFrame.sashpos");
-	if (sashPos <= 0)
-		sashPos = GetClientSize().GetWidth();
+	// With the preview on the left, the sash position is the preview width itself
+	int sashPos = previewWidth;
+	if (!previewOnLeft) {
+		sashPos = savedSashPosition;
+		if (sashPos <= 0)
+			sashPos = BodySlideConfig.GetIntValue("BodySlideFrame.sashpos");
+		if (sashPos <= 0)
+			sashPos = GetClientSize().GetWidth();
+	}
 
 	wxSize sz = GetSize();
 	sz.SetWidth(sz.GetWidth() + previewWidth);
 	SetSize(sz);
 
 	panelToSplit->Show();
-	splitter->SplitVertically(leftPanel, panelToSplit, sashPos);
+
+	if (previewOnLeft)
+		splitter->SplitVertically(panelToSplit, leftPanel, sashPos);
+	else
+		splitter->SplitVertically(leftPanel, panelToSplit, sashPos);
+
+	savedSashPosition = sashPos;
+	savedPreviewWidth = previewWidth;
+}
+
+void BodySlideFrame::SetPreviewOnLeft(bool onLeft) {
+	if (previewOnLeft == onLeft)
+		return;
+
+	if (!splitter || !splitter->IsSplit()) {
+		previewOnLeft = onLeft;
+		return;
+	}
+
+	// Keep the current preview width and swap the panes in place, without resizing the frame
+	const int splitterWidth = splitter->GetSize().GetWidth();
+	const int sashPos = splitter->GetSashPosition();
+
+	int previewWidth = previewOnLeft ? sashPos : splitterWidth - sashPos;
+	if (previewWidth <= 0)
+		previewWidth = savedPreviewWidth;
+	if (previewWidth <= 0)
+		previewWidth = FromDIP(400);
+
+	wxWindow* previewPane = splitter->GetWindow1() == leftPanel ? splitter->GetWindow2() : splitter->GetWindow1();
+	if (!previewPane) {
+		previewOnLeft = onLeft;
+		return;
+	}
+
+	previewOnLeft = onLeft;
+
+	splitter->Unsplit(previewPane);
+	previewPane->Show();
+
+	int newSashPos = onLeft ? previewWidth : splitterWidth - previewWidth;
+	if (newSashPos < splitter->GetMinimumPaneSize())
+		newSashPos = splitter->GetMinimumPaneSize();
+
+	if (onLeft)
+		splitter->SplitVertically(previewPane, leftPanel, newSashPos);
+	else
+		splitter->SplitVertically(leftPanel, previewPane, newSashPos);
+
+	savedSashPosition = newSashPos;
+	savedPreviewWidth = previewWidth;
+	BodySlideConfig.SetValue("BodySlideFrame.sashpos", newSashPos);
+	BodySlideConfig.SetValue("BodySlideFrame.previewWidth", previewWidth);
 }
 
 void BodySlideFrame::UpdatePreviewButtonLabel() {
@@ -6784,6 +6861,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbPreviewAlwaysDetached = XRCCTRL(*settings, "cbPreviewAlwaysDetached", wxCheckBox);
 		cbPreviewAlwaysDetached->SetValue(BodySlideConfig.GetBoolValue("BodySlideFrame.previewAlwaysDetached", false));
 
+		wxCheckBox* cbPreviewOnLeft = XRCCTRL(*settings, "cbPreviewOnLeft", wxCheckBox);
+		cbPreviewOnLeft->SetValue(BodySlideConfig.GetBoolValue("BodySlideFrame.previewOnLeft", false));
+
 		// Hide the single instance setting (only relevant for Outfit Studio)
 		XRCCTRL(*settings, "lbSingleInstanceBehavior", wxStaticText)->Hide();
 		XRCCTRL(*settings, "choiceSingleInstanceBehavior", wxChoice)->Hide();
@@ -6810,6 +6890,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			TargetGame targ = (TargetGame)targetGameSelection;
 
 			BodySlideConfig.SetBoolValue("BodySlideFrame.previewAlwaysDetached", cbPreviewAlwaysDetached->IsChecked());
+			BodySlideConfig.SetBoolValue("BodySlideFrame.previewOnLeft", cbPreviewOnLeft->IsChecked());
+			SetPreviewOnLeft(cbPreviewOnLeft->IsChecked());
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			app->SaveFavorites();
