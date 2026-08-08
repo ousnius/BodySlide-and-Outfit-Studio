@@ -27,6 +27,9 @@ struct WeightCopyOptions {
 	bool showSkinTransOption = false;
 	bool doSkinTransCopy = false;
 	bool doTransformGeo = false;
+	// Bones to check in the dialog's bone list on open. All bones are checked when empty.
+	std::vector<std::string> preselectedBones;
+	// Bones that were checked in the dialog when it was closed.
 	std::vector<std::string> selectedBones;
 };
 

@@ -2430,6 +2430,10 @@
 				<label>Copy Bone Weights</label>
 				<help>Copies all bone weights from the reference shape to the current shape.</help>
 			</object>
+			<object class="wxMenuItem" name="copySelectedWeight">
+				<label>Copy Selected Weights</label>
+				<help>Copies selected bone weights from the reference shape to the current shape.</help>
+			</object>
 			<object class="wxMenuItem" name="transferSelectedWeight">
 				<label>Transfer Selected Weights</label>
 				<help>Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order.</help>
@@ -2916,6 +2920,10 @@
 		<object class="wxMenuItem" name="copyBoneWeight">
 			<label>Copy Bone Weights</label>
 			<help>Copies all bone weights from the reference shape to the current shape.</help>
+		</object>
+		<object class="wxMenuItem" name="copySelectedWeight">
+			<label>Copy Selected Weights</label>
+			<help>Copies selected bone weights from the reference shape to the current shape.</help>
 		</object>
 		<object class="wxMenuItem" name="transferSelectedWeight">
 			<label>Transfer Selected Weights</label>

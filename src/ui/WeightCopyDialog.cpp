@@ -101,14 +101,29 @@ void WeightCopyDialog::SetupControls() {
 void WeightCopyDialog::PopulateBoneList() {
 	NiShape* baseShape = project->GetBaseShape();
 	if (baseShape) {
+		std::unordered_set<std::string> preselectedBones{options.preselectedBones.begin(), options.preselectedBones.end()};
+
 		std::vector<std::string> baseBones = project->GetWorkAnim()->shapeBones[baseShape->name.get()];
 		std::sort(baseBones.begin(), baseBones.end());
 		for (const auto& bone : baseBones) {
 			int idx = boneListBox->Append(bone);
-			boneListBox->Check(idx, true);
+			boneListBox->Check(idx, preselectedBones.empty() || preselectedBones.count(bone) != 0);
 		}
 
 		HighlightBonesWithSelectionWeights();
+
+		// Show the first preselected bone and its weight colors
+		if (!preselectedBones.empty()) {
+			for (unsigned int i = 0; i < boneListBox->GetCount(); i++) {
+				if (!boneListBox->IsChecked(i))
+					continue;
+
+				boneListBox->SetSelection(i);
+				boneListBox->EnsureVisible(i);
+				ShowBoneWeightColors(ExtractBoneNameFromListEntry(boneListBox->GetString(i)));
+				break;
+			}
+		}
 	}
 }
 
