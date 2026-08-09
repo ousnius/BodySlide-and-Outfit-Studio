@@ -390,6 +390,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("deleteBoneSelected"), OutfitStudioFrame::OnDeleteBoneFromSelected)
 	EVT_MENU(XRCID("editBone"), OutfitStudioFrame::OnEditBone)
 	EVT_MENU(XRCID("copyBoneWeight"), OutfitStudioFrame::OnCopyBoneWeight)
+	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudioFrame::OnCopySelectedWeight)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
 	EVT_MENU(XRCID("checkBadBones"), OutfitStudioFrame::OnCheckBadBones)
@@ -12132,12 +12133,30 @@ void OutfitStudioFrame::CalcCopySkinTransOption(WeightCopyOptions& options) {
 }
 
 void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
+	CopyWeightsToSelectedShapes(false);
+}
+
+void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
+	CopyWeightsToSelectedShapes(true);
+}
+
+void OutfitStudioFrame::CopyWeightsToSelectedShapes(bool selectedBonesOnly) {
 	if (!ShapeSelectionCheck())
 		return;
 
 	if (!project->GetBaseShape()) {
 		wxMessageBox(_("There is no reference shape!"), _("Error"));
 		return;
+	}
+
+	// Bones selected in the bone list are checked in the dialog, all bones otherwise
+	std::vector<std::string> preselectedBones;
+	if (selectedBonesOnly) {
+		preselectedBones = GetSelectedBones();
+		if (preselectedBones.empty()) {
+			wxMessageBox(_("There are no bones selected!"), _("Error"));
+			return;
+		}
 	}
 
 	std::vector<NiShape*> selectedShapes;
@@ -12147,16 +12166,17 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		else
 			wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
 	}
-	CopyBoneWeightForShapes(selectedShapes);
+	CopyBoneWeightForShapes(selectedShapes, false, preselectedBones);
 }
 
-int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, bool silent) {
+int OutfitStudioFrame::CopyBoneWeightForShapes(std::vector<NiShape*> shapes, bool silent, const std::vector<std::string>& preselectedBones) {
 	if (shapes.empty())
 		return 0;
 
 	CloseBrushSettings();
 
 	WeightCopyOptions options;
+	options.preselectedBones = preselectedBones;
 	CalcCopySkinTransOption(options);
 	AnimInfo& workAnim = *project->GetWorkAnim();
 

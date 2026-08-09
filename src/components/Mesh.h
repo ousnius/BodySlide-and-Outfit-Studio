@@ -154,7 +154,7 @@ public:
 	bool softlight = false;
 	bool glowmap = false;
 	bool greyscaleColor = false;
-	TintType tintType = TintType::None; // Applies prop.tintColor when not None
+	TintType tintType = TintType::None; // Which tint prop.tintColor holds, see HasTintColor()
 	bool faceTint = false;				// Applies the face tint map of texture slot 6
 	bool cubemap = false;
 	// True when the environment mask of texture slot 5 is a Skyrim "Complex Material": glossiness in
@@ -216,6 +216,10 @@ public:
 	void UpdateBuffers();
 	void QueueUpdate(const UpdateType& type);
 	void UpdateFromMaterialFile(const MaterialFile& matFile);
+	// Whether prop.tintColor is worth multiplying the albedo by. A black tint can only ever render the
+	// shape as nothing, which is never what a shape means to say: Fallout 4 skin NIFs leave the shader
+	// property's tint at black because the game supplies the actor's own skin tint at runtime.
+	bool HasTintColor() const;
 	bool HasAlphaBlend();
 
 	void ScaleVertices(const nifly::Vector3& center, const float& factor);

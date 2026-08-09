@@ -1249,7 +1249,7 @@ public:
 	void PopupBrushSettings(wxWindow* popupAt = nullptr);
 	void UpdateBrushSettings();
 	void DeleteSliders(bool keepSliders = false, bool keepZaps = false);
-	int CopyBoneWeightForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
+	int CopyBoneWeightForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false, const std::vector<std::string>& preselectedBones = {});
 	int ConformShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
 	void SetBaseShape();
 	void UpdateTitle();
@@ -1390,6 +1390,7 @@ private:
 
 	bool HasUnweightedCheck();
 	void CalcCopySkinTransOption(WeightCopyOptions& options);
+	void CopyWeightsToSelectedShapes(bool selectedBonesOnly);
 	void ReselectBone();
 
 	int CopySegPartForShapes(std::vector<nifly::NiShape*> shapes, bool silent = false);
@@ -1628,6 +1629,7 @@ private:
 	void GetBoneDlgData(wxDialog& dlg, nifly::MatTransform& xform, std::string& parentBone, int& addCount);
 	void OnEditBone(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
+	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnCheckBadBones(wxCommandEvent& event);
