@@ -12,6 +12,7 @@ See the included LICENSE file
 #include "../utils/PlatformUtil.h"
 
 #include <regex>
+#include <set>
 #include <sstream>
 
 #include <wx/statline.h>
@@ -557,37 +558,56 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 	gls.RenderOneFrame();
 }
 
-SFMaterialDatabase* PreviewPanel::GetSFMaterialDatabase() {
-	if (sfMaterialDb)
-		return sfMaterialDb->Failed() ? nullptr : sfMaterialDb.get();
+bool PreviewPanel::GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput) {
+	if ((TargetGame)Config.GetIntValue("TargetGame") != SF)
+		return false;
 
-	sfMaterialDb = std::make_unique<SFMaterialDatabase>();
+	if (!sfMaterialDbsLoaded) {
+		sfMaterialDbsLoaded = true;
 
-	wxMemoryBuffer data;
-	for (FSArchiveFile* archive : FSManager::archiveList()) {
-		if (archive && archive->hasFile("materials/materialsbeta.cdb")) {
-			wxMemoryBuffer outData;
-			archive->fileContents("materials/materialsbeta.cdb", outData);
-			if (!outData.IsEmpty()) {
-				data = std::move(outData);
-				break;
-			}
+		std::set<std::string> seen;
+		for (FSArchiveFile* archive : FSManager::archiveList()) {
+			if (!archive)
+				continue;
+
+			auto tryLoad = [&](const std::string& cdbPath) {
+				if (!seen.insert(cdbPath).second)
+					return;
+
+				wxMemoryBuffer data;
+				archive->fileContents(cdbPath, data);
+				if (data.IsEmpty())
+					return;
+
+				auto db = std::make_unique<SFMaterialDatabase>();
+				sfMaterialDbContents.emplace_back(static_cast<const char*>(data.GetData()), data.GetDataLen());
+				sfMaterialDbStreams.push_back(std::make_unique<std::istringstream>(sfMaterialDbContents.back(), std::ios::in | std::ios::binary));
+
+				if (db->Load(*sfMaterialDbStreams.back()) && !db->Failed()) {
+					sfMaterialDbs.push_back(std::move(db));
+				}
+				else {
+					sfMaterialDbContents.pop_back();
+					sfMaterialDbStreams.pop_back();
+				}
+			};
+
+			if (archive->hasFile("materials/materialsbeta.cdb"))
+				tryLoad("materials/materialsbeta.cdb");
+
+			std::vector<std::string> matches;
+			archive->findFilesBySuffix("materials/creations/", "materialsbeta.cdb", matches);
+			for (const auto& match : matches)
+				tryLoad(match);
 		}
 	}
 
-	if (data.IsEmpty())
-		return nullptr;
-
-	sfMaterialDbContent.assign(static_cast<const char*>(data.GetData()), data.GetDataLen());
-	sfMaterialDbStream = std::make_unique<std::istringstream>(sfMaterialDbContent, std::ios::in | std::ios::binary);
-
-	if (!sfMaterialDb->Load(*sfMaterialDbStream) || sfMaterialDb->Failed()) {
-		sfMaterialDbContent.clear();
-		sfMaterialDbStream.reset();
-		return nullptr;
+	for (auto& db : sfMaterialDbs) {
+		if (db->GetMaterialJSON(matPath, jsonOutput))
+			return true;
 	}
 
-	return sfMaterialDb.get();
+	return false;
 }
 
 void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName) {
@@ -654,8 +674,7 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 
 				if (!resolvedFromArchive) {
 					std::string materialJson;
-					SFMaterialDatabase* cdb = GetSFMaterialDatabase();
-					if (cdb && cdb->GetMaterialJSON(matFile, materialJson)) {
+					if (GetSFMaterialJSON(matFile, materialJson)) {
 						std::istringstream materialStream(materialJson);
 						SFMaterialFile cdbMat(materialStream);
 						if (!cdbMat.Failed())

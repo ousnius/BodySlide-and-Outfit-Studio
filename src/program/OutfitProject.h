@@ -155,7 +155,7 @@ class OutfitProject {
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
 
 	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath = std::string()) const;
-	SFMaterialDatabase* GetSFMaterialDatabase();
+	bool GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput);
 	void ValidateNIF(nifly::NifFile& nif, const std::string& nifFilePath = std::string());
 	std::string SliderDataTargetForShape(nifly::NiShape* shape);
 	std::string ShapeTargetOrDefault(const std::string& shapeName);
@@ -166,9 +166,10 @@ class OutfitProject {
 	bool ResolveSliderDataEntry(const SliderDataKey& key, size_t& sliderIndex, size_t& dataIndex);
 	bool ShapeSliderDataIsLocalOnly(const std::string& shapeName);
 
-	std::unique_ptr<SFMaterialDatabase> sfMaterialDb;
-	std::string sfMaterialDbContent;
-	std::unique_ptr<std::istream> sfMaterialDbStream;
+	std::vector<std::unique_ptr<SFMaterialDatabase>> sfMaterialDbs;
+	std::vector<std::string> sfMaterialDbContents;
+	std::vector<std::unique_ptr<std::istringstream>> sfMaterialDbStreams;
+	bool sfMaterialDbsLoaded = false;
 
 	// Applies the inverse of the blended pose transform to a NIF-space diff
 	// vector for a single vertex, converting it from posed space to rest space.

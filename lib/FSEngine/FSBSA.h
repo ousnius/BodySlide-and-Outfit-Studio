@@ -218,6 +218,8 @@ public:
 	void addFilesOfFolders(const std::string&, std::vector<std::string>&) const override final;
 	//! Returns the entire file tree of the BSA
 	void fileTree(std::vector<std::string>&) const override final;
+	//! Find files matching a prefix and suffix (searches flat file map for BA2s)
+	void findFilesBySuffix(const std::string& prefix, const std::string& suffix, std::vector<std::string>& results) const override final;
 
 	//! Returns the contents of the specified file
 	/*!

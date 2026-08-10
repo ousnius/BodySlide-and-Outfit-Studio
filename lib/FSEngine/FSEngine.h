@@ -78,6 +78,7 @@ public:
 	virtual wxInt64 fileSize(const std::string&) const = 0;
 	virtual void addFilesOfFolders(const std::string&, std::vector<std::string>&) const = 0;
 	virtual void fileTree(std::vector<std::string>&) const = 0;
+	virtual void findFilesBySuffix(const std::string& prefix, const std::string& suffix, std::vector<std::string>& results) const = 0;
 	virtual bool fileContents(const std::string&, wxMemoryBuffer&) = 0;
 	virtual bool exportFile(const std::string&, const std::string&) = 0;
 	virtual std::string absoluteFilePath(const std::string&) const = 0;

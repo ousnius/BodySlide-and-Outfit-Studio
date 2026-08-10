@@ -77,10 +77,11 @@ class PreviewPanel : public wxPanel {
 	std::unordered_map<std::string, GLMaterial*> shapeMaterials;
 	std::string baseDataPath;
 
-	std::unique_ptr<SFMaterialDatabase> sfMaterialDb;
-	std::string sfMaterialDbContent;
-	std::unique_ptr<std::istringstream> sfMaterialDbStream;
-	SFMaterialDatabase* GetSFMaterialDatabase();
+	std::vector<std::unique_ptr<SFMaterialDatabase>> sfMaterialDbs;
+	std::vector<std::string> sfMaterialDbContents;
+	std::vector<std::unique_ptr<std::istringstream>> sfMaterialDbStreams;
+	bool sfMaterialDbsLoaded = false;
+	bool GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput);
 	void CreatePhysicsWindPopup();
 	void DestroyPhysicsWindPopup();
 	void ApplyPhysicsWind();

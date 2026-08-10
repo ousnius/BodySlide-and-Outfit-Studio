@@ -114,6 +114,30 @@ public:
 		texFiles = sfMat.GetTextureFiles(numTextures);
 		return true;
 	}
+
+	static std::vector<std::string> FindAllCdbPaths() {
+		std::vector<std::string> cdbPaths;
+		std::set<std::string> seen;
+
+		for (FSArchiveFile* archive : FSManager::archiveList()) {
+			if (!archive)
+				continue;
+
+			if (archive->hasFile("materials/materialsbeta.cdb")) {
+				if (seen.insert("materials/materialsbeta.cdb").second)
+					cdbPaths.push_back("materials/materialsbeta.cdb");
+			}
+
+			std::vector<std::string> matches;
+			archive->findFilesBySuffix("materials/creations/", "materialsbeta.cdb", matches);
+			for (const auto& match : matches) {
+				if (seen.insert(match).second)
+					cdbPaths.push_back(match);
+			}
+		}
+
+		return cdbPaths;
+	}
 };
 
 int GetFirstSegmentPartID(const NifSegmentationInfo& inf) {
@@ -2294,8 +2318,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 
 					if (!resolvedFromArchive) {
 						std::string materialJson;
-						SFMaterialDatabase* cdb = GetSFMaterialDatabase();
-						if (cdb && cdb->GetMaterialJSON(matFile, materialJson)) {
+						if (GetSFMaterialJSON(matFile, materialJson)) {
 							std::istringstream materialStream(materialJson);
 							SFMaterialFile cdbMat(materialStream);
 							if (!cdbMat.Failed()) {
@@ -7089,26 +7112,40 @@ std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::stri
 	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
 }
 
-SFMaterialDatabase* OutfitProject::GetSFMaterialDatabase() {
-	if (sfMaterialDb)
-		return sfMaterialDb->Failed() ? nullptr : sfMaterialDb.get();
+bool OutfitProject::GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput) {
+	if ((TargetGame)Config.GetIntValue("TargetGame") != SF)
+		return false;
 
-	sfMaterialDb = std::make_unique<SFMaterialDatabase>();
+	if (!sfMaterialDbsLoaded) {
+		sfMaterialDbsLoaded = true;
 
-	wxMemoryBuffer data;
-	if (!ArchiveMaterialLoader::ReadFile("materials/materialsbeta.cdb", data) || data.IsEmpty())
-		return nullptr;
+		auto cdbPaths = ArchiveMaterialLoader::FindAllCdbPaths();
 
-	sfMaterialDbContent.assign(static_cast<const char*>(data.GetData()), data.GetDataLen());
-	sfMaterialDbStream = std::make_unique<std::istringstream>(sfMaterialDbContent, std::ios::in | std::ios::binary);
+		for (const auto& cdbPath : cdbPaths) {
+			wxMemoryBuffer data;
+			if (!ArchiveMaterialLoader::ReadFile(cdbPath, data) || data.IsEmpty())
+				continue;
 
-	if (!sfMaterialDb->Load(*sfMaterialDbStream) || sfMaterialDb->Failed()) {
-		sfMaterialDbContent.clear();
-		sfMaterialDbStream.reset();
-		return nullptr;
+			auto db = std::make_unique<SFMaterialDatabase>();
+			sfMaterialDbContents.emplace_back(static_cast<const char*>(data.GetData()), data.GetDataLen());
+			sfMaterialDbStreams.push_back(std::make_unique<std::istringstream>(sfMaterialDbContents.back(), std::ios::in | std::ios::binary));
+
+			if (db->Load(*sfMaterialDbStreams.back()) && !db->Failed()) {
+				sfMaterialDbs.push_back(std::move(db));
+			}
+			else {
+				sfMaterialDbContents.pop_back();
+				sfMaterialDbStreams.pop_back();
+			}
+		}
 	}
 
-	return sfMaterialDb.get();
+	for (auto& db : sfMaterialDbs) {
+		if (db->GetMaterialJSON(matPath, jsonOutput))
+			return true;
+	}
+
+	return false;
 }
 
 void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {
