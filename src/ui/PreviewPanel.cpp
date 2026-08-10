@@ -592,11 +592,8 @@ bool PreviewPanel::GetSFMaterialJSON(const std::string& matPath, std::string& js
 				}
 			};
 
-			if (archive->hasFile("materials/materialsbeta.cdb"))
-				tryLoad("materials/materialsbeta.cdb");
-
 			std::vector<std::string> matches;
-			archive->findFilesBySuffix("materials/creations/", "materialsbeta.cdb", matches);
+			archive->findFilesBySuffix("materials/", ".cdb", matches);
 			for (const auto& match : matches)
 				tryLoad(match);
 		}

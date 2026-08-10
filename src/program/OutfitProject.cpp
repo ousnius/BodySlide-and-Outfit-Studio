@@ -123,13 +123,8 @@ public:
 			if (!archive)
 				continue;
 
-			if (archive->hasFile("materials/materialsbeta.cdb")) {
-				if (seen.insert("materials/materialsbeta.cdb").second)
-					cdbPaths.push_back("materials/materialsbeta.cdb");
-			}
-
 			std::vector<std::string> matches;
-			archive->findFilesBySuffix("materials/creations/", "materialsbeta.cdb", matches);
+			archive->findFilesBySuffix("materials/", ".cdb", matches);
 			for (const auto& match : matches) {
 				if (seen.insert(match).second)
 					cdbPaths.push_back(match);
