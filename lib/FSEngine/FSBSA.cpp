@@ -535,6 +535,22 @@ void BSA::fileTree(std::vector<std::string> &tree) const {
 		addFilesOfFolders(folder.first, tree);
 }
 
+void BSA::findFilesBySuffix(const std::string& prefix, const std::string& suffix, std::vector<std::string>& results) const {
+	std::string lowerPrefix = prefix;
+	SequenceToLowerCase(lowerPrefix.begin(), lowerPrefix.end());
+	std::string lowerSuffix = suffix;
+	SequenceToLowerCase(lowerSuffix.begin(), lowerSuffix.end());
+
+	for (const auto& entry : root.files) {
+		const std::string& key = entry.first;
+		if (key.size() >= lowerPrefix.size() + lowerSuffix.size()
+			&& key.compare(0, lowerPrefix.size(), lowerPrefix) == 0
+			&& key.compare(key.size() - lowerSuffix.size(), lowerSuffix.size(), lowerSuffix) == 0) {
+			results.push_back(key);
+		}
+	}
+}
+
 bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 	if (const BSAFile *file = getFile(fn)) {
 		wxMutexLocker lock(bsaMutex);
