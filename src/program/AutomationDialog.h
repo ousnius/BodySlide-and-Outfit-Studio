@@ -261,6 +261,7 @@ private:
 	int ExecuteStepRemoveSkinning(const AutomationStep& step);
 	int ExecuteStepApplyPose(const AutomationStep& step);
 	int ExecuteStepImportSliderData(const AutomationStep& step);
+	int ImportSliderDataFromTRI(const AutomationStep& step, const std::string& filePath);
 	int ExecuteStepImportFile(const AutomationStep& step);
 	int ExecuteStepDeleteShape(const AutomationStep& step);
 	int ExecuteStepRenameShape(const AutomationStep& step);

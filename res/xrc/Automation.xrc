@@ -1034,7 +1034,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxFilePickerCtrl" name="fpSliderDataFile">
 																	<message>Select slider data file</message>
-																	<wildcard>Slider Data Files (*.osd;*.bsd)|*.osd;*.bsd|All Files (*.*)|*.*</wildcard>
+																	<wildcard>Slider Data Files (*.osd;*.bsd;*.tri;*.nif;*.obj;*.fbx)|*.osd;*.bsd;*.tri;*.nif;*.obj;*.fbx|All Files (*.*)|*.*</wildcard>
 																	<style>wxFLP_DEFAULT_STYLE|wxFLP_USE_TEXTCTRL</style>
 																</object>
 															</object>

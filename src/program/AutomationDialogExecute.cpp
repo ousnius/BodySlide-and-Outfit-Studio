@@ -1098,6 +1098,123 @@ int AutomationDialog::ExecuteStepApplyPose(const AutomationStep& step) {
 	return 0;
 }
 
+// Imports the morphs of a .tri file as slider data, auto-detecting the file type.
+// RaceMenu body TRI files store their morphs per shape name, FaceGen head TRI files
+// store a mesh with morphs and no shape names, so those are matched by vertex count.
+// Returns the number of imported morphs or -1 if the file couldn't be read.
+int AutomationDialog::ImportSliderDataFromTRI(const AutomationStep& step, const std::string& filePath) {
+	auto sliderSelected = [&step](const std::string& sliderName) {
+		if (step.sliderNames.empty())
+			return true;
+
+		return std::find(step.sliderNames.begin(), step.sliderNames.end(), sliderName) != step.sliderNames.end();
+	};
+
+	int importCount = 0;
+
+	if (IsHeadTriFile(filePath)) {
+		TriHeadFile tri;
+		if (!tri.Read(filePath))
+			return -1;
+
+		// Head TRI files have no shape names, so the shapes are matched by vertex count
+		int triVertCount = static_cast<int>(tri.GetVertexCount());
+		if (triVertCount > std::numeric_limits<uint16_t>::max()) {
+			wxLogWarning("Automation: Head TRI file '%s' has too many vertices (%d).", wxString::FromUTF8(filePath), triVertCount);
+			return 0;
+		}
+
+		std::vector<NiShape*> shapes;
+		for (auto* shape : project->GetWorkNif()->GetShapes())
+			if (project->GetVertexCount(shape) == triVertCount)
+				shapes.push_back(shape);
+
+		if (shapes.empty()) {
+			wxLogWarning("Automation: No shape with %d vertices found for head TRI file '%s'.", triVertCount, wxString::FromUTF8(filePath));
+			return 0;
+		}
+
+		// Prefer a shape that's named like the file, if there is one
+		NiShape* namedShape = nullptr;
+		std::string fileBaseName = wxFileName(wxString::FromUTF8(filePath)).GetName().ToUTF8().data();
+		for (auto* shape : shapes)
+			if (shape->name.get() == fileBaseName)
+				namedShape = shape;
+
+		if (namedShape)
+			shapes = {namedShape};
+
+		auto morphs = tri.GetMorphs();
+		for (auto* shape : shapes) {
+			std::string shapeName = shape->name.get();
+
+			for (auto& morph : morphs) {
+				if (!sliderSelected(morph.morphName))
+					continue;
+
+				std::unordered_map<uint16_t, Vector3> diff;
+				for (size_t i = 0; i < morph.vertices.size(); i++)
+					if (!morph.vertices[i].IsZero(true))
+						diff.emplace(static_cast<uint16_t>(i), morph.vertices[i]);
+
+				if (diff.empty())
+					continue;
+
+				if (!project->ValidSlider(morph.morphName)) {
+					if (step.sliderMerge)
+						continue;
+
+					project->AddEmptySlider(morph.morphName);
+				}
+
+				project->SetSliderFromDiff(morph.morphName, shape, diff);
+
+				importCount++;
+				wxLogMessage("Automation: Imported morph '%s' for shape '%s'.", morph.morphName, shapeName);
+			}
+		}
+
+		return importCount;
+	}
+
+	TriFile tri;
+	if (!tri.Read(filePath))
+		return -1;
+
+	auto morphs = tri.GetMorphs();
+	for (auto& [shapeName, morphList] : morphs) {
+		auto* shape = project->GetWorkNif()->FindBlockByName<NiShape>(shapeName);
+		if (!shape)
+			continue;
+
+		for (auto& morphData : morphList) {
+			if (!sliderSelected(morphData->name))
+				continue;
+
+			if (!project->ValidSlider(morphData->name)) {
+				if (step.sliderMerge)
+					continue;
+
+				project->AddEmptySlider(morphData->name);
+			}
+
+			std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
+			project->SetSliderFromDiff(morphData->name, shape, diff);
+
+			if (morphData->type == MORPHTYPE_UV) {
+				size_t sliderIndex = 0;
+				if (project->SliderIndexFromName(morphData->name, sliderIndex))
+					project->SetSliderUV(sliderIndex, true);
+			}
+
+			importCount++;
+			wxLogMessage("Automation: Imported morph '%s' for shape '%s'.", morphData->name, shapeName);
+		}
+	}
+
+	return importCount;
+}
+
 int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 	if (step.sliderDataFile.empty()) {
 		wxLogError("Automation: ImportSliderData - no file/folder specified.");
@@ -1181,51 +1298,12 @@ int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 				}
 			}
 			else if (extLower == "tri") {
-				// TRI: import all morphs, auto-mapping shapes by name
-				TriFile tri;
-				if (tri.Read(fullPath)) {
-					auto morphs = tri.GetMorphs();
-					for (auto& [shapeName, morphList] : morphs) {
-						auto* shape = project->GetWorkNif()->FindBlockByName<NiShape>(shapeName);
-						if (!shape)
-							continue;
-
-						for (auto& morphData : morphList) {
-							if (!step.sliderNames.empty()) {
-								bool found = false;
-								for (const auto& name : step.sliderNames) {
-									if (name == morphData->name) {
-										found = true;
-										break;
-									}
-								}
-								if (!found)
-									continue;
-							}
-
-							if (!project->ValidSlider(morphData->name)) {
-								if (step.sliderMerge)
-									continue;
-								project->AddEmptySlider(morphData->name);
-							}
-
-							std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
-							project->SetSliderFromDiff(morphData->name, shape, diff);
-
-							if (morphData->type == MORPHTYPE_UV) {
-								size_t sliderIndex = 0;
-								if (project->SliderIndexFromName(morphData->name, sliderIndex))
-									project->SetSliderUV(sliderIndex, true);
-							}
-
-							importCount++;
-							wxLogMessage("Automation: Imported morph '%s' for shape '%s'.", morphData->name, shapeName);
-						}
-					}
-				}
-				else {
+				// TRI: import all morphs, auto-mapping shapes by name or vertex count
+				int triImportCount = ImportSliderDataFromTRI(step, fullPath);
+				if (triImportCount >= 0)
+					importCount += triImportCount;
+				else
 					wxLogWarning("Automation: Failed to read TRI file '%s'.", fname);
-				}
 			}
 			else if (extLower == "bsd" || extLower == "nif" || extLower == "obj" || extLower == "fbx") {
 				// NIF/OBJ/FBX/BSD: use "ShapeName#SliderName.ext" naming pattern
@@ -1346,48 +1424,9 @@ int AutomationDialog::ExecuteStepImportSliderData(const AutomationStep& step) {
 		}
 		else if (ext == "tri") {
 			// TRI multi-morph import
-			TriFile tri;
-			if (!tri.Read(sliderDataPathStd)) {
+			if (ImportSliderDataFromTRI(step, sliderDataPathStd) < 0) {
 				wxLogError("Automation: Failed to read TRI file '%s'.", sliderDataPath);
 				return 1;
-			}
-
-			auto morphs = tri.GetMorphs();
-			for (auto& [shapeName, morphList] : morphs) {
-				auto* shape = project->GetWorkNif()->FindBlockByName<NiShape>(shapeName);
-				if (!shape)
-					continue;
-
-				for (auto& morphData : morphList) {
-					if (!step.sliderNames.empty()) {
-						bool found = false;
-						for (const auto& name : step.sliderNames) {
-							if (name == morphData->name) {
-								found = true;
-								break;
-							}
-						}
-						if (!found)
-							continue;
-					}
-
-					if (!project->ValidSlider(morphData->name)) {
-						if (step.sliderMerge)
-							continue;
-						project->AddEmptySlider(morphData->name);
-					}
-
-					std::unordered_map<uint16_t, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
-					project->SetSliderFromDiff(morphData->name, shape, diff);
-
-					if (morphData->type == MORPHTYPE_UV) {
-						size_t sliderIndex = 0;
-						if (project->SliderIndexFromName(morphData->name, sliderIndex))
-							project->SetSliderUV(sliderIndex, true);
-					}
-
-					wxLogMessage("Automation: Imported morph '%s' for shape '%s'.", morphData->name, shapeName);
-				}
 			}
 		}
 		else if (ext == "nif" || ext == "obj" || ext == "bsd" || ext == "fbx") {

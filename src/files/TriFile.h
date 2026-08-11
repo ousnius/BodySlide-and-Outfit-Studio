@@ -25,7 +25,11 @@ struct MorphData {
 
 typedef std::shared_ptr<MorphData> MorphDataPtr;
 
+// Checks for a RaceMenu body TRI file (morphs only, see TriFile).
 bool IsBodyTriFile(const std::string& fileName);
+
+// Checks for a FaceGen head TRI file (mesh and morphs, see TriHeadFile).
+bool IsHeadTriFile(const std::string& fileName);
 
 class TriFile {
 	std::map<std::string, std::vector<MorphDataPtr>> shapeMorphs;
@@ -81,6 +85,7 @@ public:
 	bool Read(const std::string& fileName);
 	bool Write(const std::string& fileName);
 
+	uint32_t GetVertexCount() const;
 	std::vector<nifly::Vector3> GetVertices();
 	std::vector<nifly::Triangle> GetTriangles();
 	std::vector<nifly::Vector2> GetUV();

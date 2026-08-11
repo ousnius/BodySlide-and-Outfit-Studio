@@ -26,6 +26,22 @@ bool IsBodyTriFile(const std::string& fileName) {
 	return true;
 }
 
+bool IsHeadTriFile(const std::string& fileName) {
+	std::fstream triFile;
+	PlatformUtil::OpenFileStream(triFile, fileName, std::ios::in | std::ios::binary);
+
+	if (!triFile.is_open())
+		return false;
+
+	// Identifier "FR" followed by the file type "TRI"
+	char hdr[5]{};
+	triFile.read(hdr, 5);
+	if (triFile.gcount() != 5)
+		return false;
+
+	return memcmp(hdr, "FRTRI", 5) == 0;
+}
+
 bool TriFile::Read(const std::string& fileName) {
 	std::fstream triFile;
 	PlatformUtil::OpenFileStream(triFile, fileName, std::ios::in | std::ios::binary);
@@ -593,6 +609,10 @@ bool TriHeadFile::Write(const std::string& fileName) {
 		return false;
 
 	return true;
+}
+
+uint32_t TriHeadFile::GetVertexCount() const {
+	return numVertices;
 }
 
 std::vector<Vector3> TriHeadFile::GetVertices() {
