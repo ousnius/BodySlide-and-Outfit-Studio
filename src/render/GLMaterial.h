@@ -44,6 +44,17 @@ public:
 	bool IsComplexMaterial(uint32_t index);
 	// Highest mip level the texture in the slot has, 0 for one without a mip chain.
 	int GetTexMaxMipLevel(uint32_t index);
+	// Edge length of the cube map in the slot, 0 for a slot that holds anything else.
+	int GetCubemapSize(uint32_t index);
+	// F0 reflectance a 1x1 cube map in the slot stands for, 1.0 for any other cube map.
+	nifly::Vector3 GetCubemapF0Color(uint32_t index);
 
-	void BindTextures(GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklight, const bool hasLightmask);
+	// dynamicCubemapID replaces whatever the cube map slot resolved to, including nothing at all.
+	// Whether a shape has earned that is decided by the caller, so passing one here means it has.
+	void BindTextures(GLfloat largestAF,
+					  const bool hasEnvMapping,
+					  const bool hasGlowmap,
+					  const bool hasBacklight,
+					  const bool hasLightmask,
+					  const GLuint dynamicCubemapID = 0);
 };

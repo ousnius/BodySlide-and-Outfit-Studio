@@ -16,6 +16,7 @@ See the included LICENSE file
 
 #include "../utils/StringStuff.h"
 
+#include <Object3d.hpp>
 #include <SOIL2/SOIL2.h>
 #include <gli.hpp>
 
@@ -76,6 +77,16 @@ public:
 	//  their mip from roughness, so the shader needs the real number rather than an assumed one.
 	int GetTextureMaxMipLevel(const std::string& texName) const;
 
+	// Edge length of the cube map's base level, 0 for a texture that isn't one. A 1x1 cube map holds
+	//  no reflection anybody wants; it is how Community Shaders and ENB mods mark a slot as wanting
+	//  a dynamic cube map instead, which is the only reason the size is worth remembering.
+	int GetCubemapSize(const std::string& texName) const;
+
+	// What a 1x1 cube map's single texel stood for, read as an sRGB F0 reflectance and returned
+	//  linear. Black means full reflectance rather than a black reflection, so it comes back as 1.0,
+	//  which is also what any cube map that isn't 1x1 returns.
+	nifly::Vector3 GetCubemapF0Color(const std::string& texName) const;
+
 	// compares the incoming cacheTime with the internal cacheTime, and returns true if they match.
 	//  if they do not match, the incoming cacheTime is updated to match and the function returns false.
 	bool CacheStamp(int64_t& inCacheTime) {
@@ -99,6 +110,8 @@ private:
 	static int GetBoundMaxMipLevel(GLenum levelTarget);
 	// Reads the smallest mip - the average of the whole texture - and decides from it.
 	bool ClassifyComplexMaterial(GLuint textureID) const;
+	// Records the bound cube map's size, and for a 1x1 one the color its texel stands for.
+	void ClassifyCubemap(const std::string& texName, GLuint textureID);
 
 	// If N3983 gets accepted into a future C++ standard then
 	// we wouldn't have to explicitly define our own hash here.
@@ -119,6 +132,8 @@ private:
 	// triggered it and survives the material cache handing back an existing entry.
 	std::map<std::string, bool, case_insensitive_compare> complexMaterialTextures;
 	std::map<std::string, int, case_insensitive_compare> textureMaxMipLevels;
+	std::map<std::string, int, case_insensitive_compare> cubemapSizes;
+	std::map<std::string, nifly::Vector3, case_insensitive_compare> cubemapF0Colors;
 
 	int64_t cacheTime = 1;
 };

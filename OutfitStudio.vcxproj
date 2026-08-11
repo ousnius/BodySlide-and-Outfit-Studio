@@ -831,6 +831,7 @@
     <ClInclude Include="src\files\SFMaterialFile.h" />
     <ClInclude Include="src\files\SFMaterialGraph.h" />
     <ClInclude Include="src\files\SFResourceHash.h" />
+    <ClInclude Include="src\files\EXRImage.h" />
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
     <ClInclude Include="src\files\SFMorphFile.h" />
@@ -879,6 +880,7 @@
     <ClInclude Include="src\render\GLCanvas.h" />
     <ClInclude Include="src\render\GLDialog.h" />
     <ClInclude Include="src\render\GLExtensions.h" />
+    <ClInclude Include="src\render\GLHDRiEnvironment.h" />
     <ClInclude Include="src\render\GLMaterial.h" />
     <ClInclude Include="src\render\GLOffscreenBuffer.h" />
     <ClInclude Include="src\render\GLShader.h" />
@@ -956,6 +958,7 @@
     <ClCompile Include="src\files\SFMaterialFile.cpp" />
     <ClCompile Include="src\files\SFMaterialGraph.cpp" />
     <ClCompile Include="src\files\SFResourceHash.cpp" />
+    <ClCompile Include="src\files\EXRImage.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
     <ClCompile Include="src\files\SFMorphFile.cpp" />
@@ -997,6 +1000,7 @@
     <ClCompile Include="src\render\GLCanvas.cpp" />
     <ClCompile Include="src\render\GLDialog.cpp" />
     <ClCompile Include="src\render\GLExtensions.cpp" />
+    <ClCompile Include="src\render\GLHDRiEnvironment.cpp" />
     <ClCompile Include="src\render\GLMaterial.cpp" />
     <ClCompile Include="src\render\GLOffscreenBuffer.cpp" />
     <ClCompile Include="src\render\GLShader.cpp" />

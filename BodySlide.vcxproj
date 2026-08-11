@@ -793,6 +793,7 @@
     <ClInclude Include="src\physics\PumpClock.h" />
     <ClInclude Include="src\files\GameDataStream.h" />
     <ClInclude Include="src\files\MaterialFile.h" />
+    <ClInclude Include="src\files\EXRImage.h" />
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
     <ClInclude Include="src\files\SFMaterialDatabase.h" />
@@ -808,6 +809,7 @@
     <ClInclude Include="src\program\PresetSaveDialog.h" />
     <ClInclude Include="src\program\PreviewWindow.h" />
     <ClInclude Include="src\render\GLExtensions.h" />
+    <ClInclude Include="src\render\GLHDRiEnvironment.h" />
     <ClInclude Include="src\render\GLMaterial.h" />
     <ClInclude Include="src\render\GLOffscreenBuffer.h" />
     <ClInclude Include="src\render\GLShader.h" />
@@ -888,6 +890,7 @@
     <ClCompile Include="src\physics\hdt\hdtVertex.cpp" />
     <ClCompile Include="src\files\GameDataStream.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
+    <ClCompile Include="src\files\EXRImage.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
     <ClCompile Include="src\files\SFMaterialDatabase.cpp" />
@@ -903,6 +906,7 @@
     <ClCompile Include="src\program\PresetSaveDialog.cpp" />
     <ClCompile Include="src\program\PreviewWindow.cpp" />
     <ClCompile Include="src\render\GLExtensions.cpp" />
+    <ClCompile Include="src\render\GLHDRiEnvironment.cpp" />
     <ClCompile Include="src\render\GLMaterial.cpp" />
     <ClCompile Include="src\render\GLOffscreenBuffer.cpp" />
     <ClCompile Include="src\render\GLShader.cpp" />

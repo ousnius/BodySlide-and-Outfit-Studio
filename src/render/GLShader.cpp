@@ -497,6 +497,18 @@ void GLShader::SetCubemapMaxLod(const float maxLod) {
 		glUniform1f(loc, maxLod);
 }
 
+void GLShader::SetCubemapMinLod(const float minLod) {
+	GLint loc = glGetUniformLocation(progID, "cubemapMinLod");
+	if (loc >= 0)
+		glUniform1f(loc, minLod);
+}
+
+void GLShader::SetCubemapTint(const nifly::Vector3& tint) {
+	GLint loc = glGetUniformLocation(progID, "cubemapTint");
+	if (loc >= 0)
+		glUniform3f(loc, tint.x, tint.y, tint.z);
+}
+
 void GLShader::SetSpecularEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bSpecular");
 	if (loc >= 0)
@@ -545,6 +557,18 @@ void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const char
 
 		glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 	}
+}
+
+void GLShader::SetUniform(const char* name, const int value) {
+	GLint loc = glGetUniformLocation(progID, name);
+	if (loc >= 0)
+		glUniform1i(loc, value);
+}
+
+void GLShader::SetUniform(const char* name, const float value) {
+	GLint loc = glGetUniformLocation(progID, name);
+	if (loc >= 0)
+		glUniform1f(loc, value);
 }
 
 bool GLShader::GetError(std::string* errorStr) {

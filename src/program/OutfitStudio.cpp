@@ -468,6 +468,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_SLIDER(XRCID("lightDirectional2Slider"), OutfitStudioFrame::OnUpdateLights)
 	EVT_BUTTON(XRCID("lightReset"), OutfitStudioFrame::OnResetLights)
 	EVT_BUTTON(XRCID("lightSave"), OutfitStudioFrame::OnSaveLights)
+	EVT_CHOICE(XRCID("hdriBackground"), OutfitStudioFrame::OnHDRiBackground)
 
 	EVT_MENU(XRCID("btnDiscord"), OutfitStudioFrame::OnDiscord)
 	EVT_MENU(XRCID("btnGitHub"), OutfitStudioFrame::OnGitHub)
@@ -956,6 +957,7 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultValue("Lights/Directional2.x", 30);
 	Config.SetDefaultValue("Lights/Directional2.y", 20);
 	Config.SetDefaultValue("Lights/Directional2.z", -100);
+	Config.SetDefaultValue("Rendering/HDRIBackground", "");
 	const wxSize outfitStudioFrameSize = wxWindow::FromDIP(wxSize(1360, 900), nullptr);
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.width", outfitStudioFrameSize.GetWidth());
 	OutfitStudioConfig.SetDefaultValue("OutfitStudioFrame.height", outfitStudioFrameSize.GetHeight());
@@ -1491,6 +1493,9 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 		auto lightDirectional2Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional2Slider");
 		lightDirectional2Slider->SetValue(directional2);
+
+		hdriBackground = (wxChoice*)lightSettings->FindWindowByName("hdriBackground");
+		PopulateHDRiBackgrounds();
 	}
 
 	auto editPanel = (wxPanel*)FindWindowByName("editPanel");
@@ -4979,6 +4984,10 @@ void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
 	for (auto& shape : project->GetWorkNif()->GetShapes())
 		MeshFromProj(shape, reloadTextures);
 
+	// Every mesh has been through SetMeshTextures by now, so whether any of them is a Complex
+	// Material has been decided and the environment can be turned on for them.
+	ApplyAutoHDRiBackground();
+
 	if (glView->GetVertexEdit())
 		glView->ShowVertexEdit();
 }
@@ -7833,6 +7842,107 @@ void OutfitStudioFrame::OnSaveLights(wxCommandEvent& event) {
 	int ret = Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 	if (ret)
 		wxLogWarning("Failed to save configuration (%d)!", ret);
+}
+
+void OutfitStudioFrame::PopulateHDRiBackgrounds() {
+	if (!hdriBackground)
+		return;
+
+	hdriBackground->Clear();
+
+	// Client data carries the file name; an empty one is what turns the environment off.
+	hdriBackground->Append(_("No background"), new wxStringClientData(""));
+
+#ifdef USE_OPENEXR
+	wxArrayString files;
+	wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "/res/hdri", &files, "*.exr", wxDIR_FILES);
+	files.Sort();
+
+	for (auto& file : files) {
+		const wxFileName fileName(file);
+
+		// The name on disk, not a translated one - these are files the user can add to and rename.
+		hdriBackground->Append(fileName.GetName(), new wxStringClientData(fileName.GetFullName()));
+	}
+#else
+	// Nothing can be loaded without an EXR decoder, and a choice with one entry reads as broken.
+	hdriBackground->Hide();
+
+	if (lightSettings) {
+		if (auto label = lightSettings->FindWindowByName("hdriBackgroundLabel"))
+			label->Hide();
+	}
+#endif
+
+	hdriBackground->SetSelection(0);
+}
+
+bool OutfitStudioFrame::SetHDRiBackground(const std::string& fileName) {
+	if (!glView->SetHDRiBackground(fileName) && !fileName.empty()) {
+		// The environment failed to load and was left off, so the choice has to say so too.
+		if (hdriBackground)
+			hdriBackground->SetSelection(0);
+
+		return false;
+	}
+
+	Config.SetValue("Rendering/HDRIBackground", fileName);
+
+	int ret = Config.SaveConfig(Config["AppDir"] + "/Config.xml");
+	if (ret)
+		wxLogWarning("Failed to save configuration (%d)!", ret);
+
+	if (!hdriBackground)
+		return true;
+
+	for (unsigned int i = 0; i < hdriBackground->GetCount(); i++) {
+		auto data = static_cast<wxStringClientData*>(hdriBackground->GetClientObject(i));
+		if (data && data->GetData().ToStdString() == fileName) {
+			hdriBackground->SetSelection(i);
+			break;
+		}
+	}
+
+	return true;
+}
+
+void OutfitStudioFrame::OnHDRiBackground(wxCommandEvent& WXUNUSED(event)) {
+	if (!hdriBackground)
+		return;
+
+	auto data = static_cast<wxStringClientData*>(hdriBackground->GetClientObject(hdriBackground->GetSelection()));
+	const std::string fileName = data ? data->GetData().ToStdString() : std::string();
+
+	// Turning it off by hand is a decision the automatic activation must not talk the user out of.
+	hdriBackgroundCleared = fileName.empty();
+
+	// Only a background the user asked for is worth interrupting them over. The automatic one below
+	// leaves its reason in the log and moves on.
+	if (!SetHDRiBackground(fileName))
+		wxMessageBox(wxString::Format(_("Failed to load the HDRi '%s'. See the log for details."), fileName), _("Error"), wxICON_ERROR, this);
+}
+
+void OutfitStudioFrame::ApplyAutoHDRiBackground() {
+#ifndef USE_OPENEXR
+	// Nothing to activate, and trying would log a failure for every project that has a Complex
+	// Material in it.
+	return;
+#else
+	if (hdriBackgroundCleared || !hdriBackground || glView->HasHDRiBackground())
+		return;
+
+	// Complex Material shading lives off what it reflects, so a project full of it is nearly
+	// impossible to judge against the flat background. Anything else is left as it was.
+	const auto& meshes = glView->gls.GetMeshes();
+	if (std::none_of(meshes.begin(), meshes.end(), [](const Mesh* m) { return m->complexMaterial; }))
+		return;
+
+	std::string fileName = Config["Rendering/HDRIBackground"];
+	if (fileName.empty() || !PlatformUtil::FileExists(Config["AppDir"] + "/res/hdri/" + fileName))
+		fileName = "sunrise.exr";
+
+	SetHDRiBackground(fileName);
+#endif
 }
 
 void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {

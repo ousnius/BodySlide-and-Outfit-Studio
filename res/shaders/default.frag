@@ -39,6 +39,13 @@ uniform bool bComplexMaterial;
 
 // Highest mip the cubemap has, which is as blurry as a fully rough reflection can get
 uniform float cubemapMaxLod;
+// Sharpest mip a reflection may use. A cubemap generated from an HDRi keeps a trace of blur even at
+// full gloss, which reads as more realistic than a mirror; one from a file passes 0 and stays as
+// authored.
+uniform float cubemapMinLod;
+// Tints what the cubemap reflects. Carries the sRGB F0 reflectance the 1x1 cubemap a generated one
+// replaced stood for, and is 1.0 for a cubemap that reflects on its own account.
+uniform vec3 cubemapTint;
 
 uniform mat4 matModel;
 uniform mat4 matView;
@@ -311,10 +318,10 @@ void main(void)
 				// A rough Complex Material reflects a blurred version of its surroundings, which is
 				// what the higher mips of the cubemap hold.
 				vec4 cubeMap = cmActive
-					? textureLod(texCubemap, reflectedWS, (1.0 - cmGlossiness) * cubemapMaxLod)
-					: texture(texCubemap, reflectedWS);
+					? textureLod(texCubemap, reflectedWS, mix(cubemapMinLod, cubemapMaxLod, 1.0 - cmGlossiness))
+					: textureLod(texCubemap, reflectedWS, cubemapMinLod);
 
-				cubeMap.rgb *= prop.envReflection;
+				cubeMap.rgb *= prop.envReflection * cubemapTint;
 
 				if (bEnvMask)
 				{

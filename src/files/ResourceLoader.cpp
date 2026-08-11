@@ -372,6 +372,46 @@ bool ResourceLoader::ClassifyComplexMaterial(GLuint textureID) const {
 	return !greyscale && avgG > threshold;
 }
 
+void ResourceLoader::ClassifyCubemap(const std::string& texName, GLuint textureID) {
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	GLint width = 0;
+	glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_TEXTURE_WIDTH, &width);
+	cubemapSizes[texName] = width;
+
+	if (width != 1)
+		return;
+
+	// The texel of a 1x1 cube map isn't a reflection, it's an sRGB F0 reflectance the dynamic cube
+	// map replacing it should be tinted with. Asking for RGBA8 makes the driver decompress whatever
+	// block format the file was in.
+	uint8_t texel[4] = {0, 0, 0, 0};
+
+	GLint packAlignment = 4;
+	glGetIntegerv(GL_PACK_ALIGNMENT, &packAlignment);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA, GL_UNSIGNED_BYTE, texel);
+	glPixelStorei(GL_PACK_ALIGNMENT, packAlignment);
+
+	// The same threshold the Complex Material classification uses for black. A black cube map is the
+	// plain "give me a dynamic one" marker rather than a color, and stands for full reflectance.
+	const uint8_t threshold = 4;
+	if (texel[0] <= threshold && texel[1] <= threshold && texel[2] <= threshold)
+		return;
+
+	auto srgbToLinear = [](const uint8_t value) {
+		const float v = value / 255.0f;
+		return v <= 0.04045f ? v / 12.92f : std::pow((v + 0.055f) / 1.055f, 2.4f);
+	};
+
+	cubemapF0Colors[texName] = nifly::Vector3(srgbToLinear(texel[0]), srgbToLinear(texel[1]), srgbToLinear(texel[2]));
+	wxLogMessage("Texture file '%s' is a 1x1 cube map with an F0 of %.3f, %.3f, %.3f.",
+				 texName,
+				 cubemapF0Colors[texName].x,
+				 cubemapF0Colors[texName].y,
+				 cubemapF0Colors[texName].z);
+}
+
 bool ResourceLoader::IsComplexMaterialTexture(const std::string& texName) const {
 	auto it = complexMaterialTextures.find(texName);
 	if (it != complexMaterialTextures.end())
@@ -386,6 +426,22 @@ int ResourceLoader::GetTextureMaxMipLevel(const std::string& texName) const {
 		return it->second;
 
 	return 0;
+}
+
+int ResourceLoader::GetCubemapSize(const std::string& texName) const {
+	auto it = cubemapSizes.find(texName);
+	if (it != cubemapSizes.end())
+		return it->second;
+
+	return 0;
+}
+
+nifly::Vector3 ResourceLoader::GetCubemapF0Color(const std::string& texName) const {
+	auto it = cubemapF0Colors.find(texName);
+	if (it != cubemapF0Colors.end())
+		return it->second;
+
+	return nifly::Vector3(1.0f, 1.0f, 1.0f);
 }
 
 GLMaterial* ResourceLoader::AddMaterial(
@@ -412,10 +468,12 @@ GLMaterial* ResourceLoader::AddMaterial(
 		texRefs[i] = textureID;
 
 		// Slot 4 is the environment cube map, whose mip chain is how far a Complex Material
-		// reflection can be blurred.
+		// reflection can be blurred, and whose size says whether it is a real reflection or the 1x1
+		// placeholder that asks for a dynamic one.
 		if (isCubeMap && (reloadTextures || textureMaxMipLevels.find(texFiles[i]) == textureMaxMipLevels.end())) {
 			glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 			textureMaxMipLevels[texFiles[i]] = GetBoundMaxMipLevel(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+			ClassifyCubemap(texFiles[i], textureID);
 		}
 
 		// Slot 5 is the environment mask, which is also where a Complex Material texture lives.

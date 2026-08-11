@@ -726,6 +726,16 @@ public:
 		gls.RenderOneFrame();
 	}
 
+	// Loads an HDRi from res/hdri as the environment, empty for none. Also changes what shapes with a
+	// dynamic cubemap reflect, but not the meshes or their textures.
+	bool SetHDRiBackground(const std::string& fileName) {
+		const bool loaded = gls.SetHDRiBackground(fileName);
+		gls.RenderOneFrame();
+		return loaded;
+	}
+
+	bool HasHDRiBackground() const { return gls.HasHDRiBackground(); }
+
 	void Render() { gls.RenderOneFrame(); }
 
 	// Hover highlight: overlays a light green copy of the given shape's mesh.
@@ -1069,6 +1079,10 @@ public:
 	wxTreeCtrl* segmentTree = nullptr;
 	wxTreeCtrl* partitionTree = nullptr;
 	wxPanel* lightSettings = nullptr;
+	wxChoice* hdriBackground = nullptr;
+	// Set when the user picks "No background" themselves. A project full of Complex Materials turns
+	// an HDRi on by itself, which would otherwise keep overriding somebody who turned it off.
+	bool hdriBackgroundCleared = false;
 	wxChoice* cXMirrorBone = nullptr;
 	wxChoice* cPoseBone = nullptr;
 	wxSlider* rxPoseSlider = nullptr;
@@ -1554,6 +1568,17 @@ private:
 	void OnUpdateLights(wxCommandEvent& event);
 	void OnResetLights(wxCommandEvent& event);
 	void OnSaveLights(wxCommandEvent& event);
+	void OnHDRiBackground(wxCommandEvent& event);
+
+	// Fills the background choice from the .exr files in res/hdri, so a file the user dropped in
+	// there is listed next to the ones that ship.
+	void PopulateHDRiBackgrounds();
+	// Applies an HDRi by file name, empty for none, and remembers it. Leaves the choice showing what
+	// is actually loaded, which after a failure is no background rather than what was asked for.
+	bool SetHDRiBackground(const std::string& fileName);
+	// Turns the last used background on by itself once a project turns out to have a Complex
+	// Material in it - the shading those want is hard to judge with nothing to reflect.
+	void ApplyAutoHDRiBackground();
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);

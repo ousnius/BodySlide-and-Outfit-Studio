@@ -36,6 +36,16 @@ uniform bool bGreyscaleColor;
 uniform bool bTintColor;
 uniform bool bFaceTint;
 
+// Highest mip the cubemap has, which is as blurry as a fully rough reflection can get
+uniform float cubemapMaxLod;
+// Sharpest mip a reflection may use. A cubemap generated from an HDRi keeps a trace of blur even at
+// full gloss, which reads as more realistic than a mirror; one from a file passes 0 and stays as
+// authored.
+uniform float cubemapMinLod;
+// Tints what the cubemap reflects. Carries the sRGB F0 reflectance the 1x1 cubemap a generated one
+// replaced stood for, and is 1.0 for a cubemap that reflects on its own account.
+uniform vec3 cubemapTint;
+
 uniform mat4 matModel;
 uniform mat4 matModelViewInverse;
 
@@ -256,8 +266,11 @@ void directionalLight(in DirectionalLight light, in vec3 lightDir, inout vec3 ou
 		vec3 reflected = reflect(viewDir, normal);
 		vec3 reflectedWS = vec3(matModel * (matModelViewInverse * vec4(reflected, 0.0)));
 
-		vec4 cube = textureLod(texCubemap, reflectedWS, 8.0 - smoothness * 8.0);
-		cube.rgb *= prop.envReflection * prop.specularStrength;
+		// Rough surfaces reflect a blurred version of their surroundings, which is what the higher
+		// mips hold. The range comes from the cubemap's own chain - assuming a full one made every
+		// cubemap with fewer levels reflect a blur it doesn't have.
+		vec4 cube = textureLod(texCubemap, reflectedWS, mix(cubemapMinLod, cubemapMaxLod, 1.0 - smoothness));
+		cube.rgb *= prop.envReflection * prop.specularStrength * cubemapTint;
 		if (bEnvMask)
 		{
 			cube.rgb *= envMask.r;

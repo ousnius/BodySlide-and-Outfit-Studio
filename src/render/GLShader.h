@@ -109,6 +109,13 @@ public:
 	// Highest mip the cubemap can be sampled at, which is how blurry a fully rough Complex Material
 	// reflection gets. Comes from the cubemap's own mip chain, since not every one has a full one.
 	void SetCubemapMaxLod(const float maxLod);
+	// Lowest mip the cubemap is sampled at. A cubemap generated from an HDRi is kept slightly blurred
+	// even at full gloss, which reads as more realistic than a mirror; one from a file is left as
+	// authored and passes 0.
+	void SetCubemapMinLod(const float minLod);
+	// Tints what the cubemap reflects. Carries the sRGB F0 reflectance a 1x1 cubemap stood for before
+	// a generated one replaced it, and is 1.0 for a cubemap that reflects on its own account.
+	void SetCubemapTint(const nifly::Vector3& tint);
 	void SetSpecularEnabled(const bool enable);
 	void SetBacklightEnabled(const bool enable);
 	void SetRimlightEnabled(const bool enable);
@@ -116,6 +123,12 @@ public:
 	void SetGlowmapEnabled(const bool enable);
 	void BindTexture(const GLint& index, const GLuint& texture, const char* samplerName);
 	void BindCubemap(const GLint& index, const GLuint& texture, const char* samplerName);
+
+	// Uniforms that belong to a single pass rather than to the shared mesh vocabulary above. The
+	// HDRi environment passes drive their own shaders and would otherwise each need a named setter
+	// here for a uniform nothing else will ever set.
+	void SetUniform(const char* name, const int value);
+	void SetUniform(const char* name, const float value);
 
 	bool GetError(std::string* errorStr = nullptr);
 

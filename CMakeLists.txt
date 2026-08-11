@@ -12,6 +12,7 @@ endif()
 
 option(BSOS_ENABLE_FBXSDK "Build Outfit Studio with Autodesk FBX SDK support when available" ON)
 option(BSOS_ENABLE_BULLET "Build with Bullet physics preview support when available" ON)
+option(BSOS_ENABLE_OPENEXR "Build with HDRi environment support when available" ON)
 option(BSOS_BUILD_TESTS "Build Catch2-based tests" OFF)
 set(BSOS_FBXSDK_ROOT "" CACHE PATH "Root directory of the Autodesk FBX SDK")
 set(BSOS_TEST_MSVC_RUNTIME_LIBRARY "" CACHE STRING "MSVC runtime library override for BSOSTests")
@@ -246,6 +247,33 @@ else()
 	message(STATUS "Bullet physics preview support disabled")
 endif()
 
+set(BSOS_HAVE_OPENEXR OFF)
+if(BSOS_ENABLE_OPENEXR)
+	# OpenEXR 3 ships a config package on every platform that matters here
+	# (vcpkg, and libopenexr-dev on Debian and Ubuntu). Imath comes with it and
+	# is looked up first because the OpenEXR config package depends on it. A
+	# source build installed beside the repository is found without any
+	# configuration, the same way Bullet is.
+	set(BSOS_OPENEXR_HINTS
+		"${CMAKE_CURRENT_SOURCE_DIR}/../openexr/install"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../Imath/install"
+	)
+	find_package(Imath CONFIG QUIET HINTS ${BSOS_OPENEXR_HINTS})
+	find_package(OpenEXR CONFIG QUIET HINTS ${BSOS_OPENEXR_HINTS})
+
+	# Only the C core is linked, never the C++ Imf library. The FBX SDK carries
+	# its own static copy of Iex, which the C++ one also defines, and the two
+	# cannot go into the same executable. The core also needs no Imath.
+	if(TARGET OpenEXR::OpenEXRCore)
+		set(BSOS_HAVE_OPENEXR ON)
+		message(STATUS "OpenEXR found: HDRi environments enabled")
+	else()
+		message(STATUS "OpenEXR not found; building without HDRi environment support")
+	endif()
+else()
+	message(STATUS "HDRi environment support disabled")
+endif()
+
 # Physics preview sources are always listed; their bodies compile to empty
 # translation units unless USE_BULLET is defined (same convention as
 # FBXWrangler.cpp with USE_FBXSDK), so builds without Bullet stay valid. Both
@@ -313,6 +341,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/SliderManager.cpp
 	src/components/SliderPresets.cpp
 	src/components/SliderSet.cpp
+	src/files/EXRImage.cpp
 	src/files/GameDataStream.cpp
 	src/files/MaterialFile.cpp
 	src/files/ResourceLoader.cpp
@@ -320,6 +349,7 @@ set(BSOS_COMMON_SOURCES
 	src/program/GroupManager.cpp
 	src/program/PresetSaveDialog.cpp
 	src/render/GLExtensions.cpp
+	src/render/GLHDRiEnvironment.cpp
 	src/render/GLMaterial.cpp
 	src/render/GLOffscreenBuffer.cpp
 	src/render/GLShader.cpp
@@ -521,6 +551,13 @@ function(bsos_link_config_libraries target debug_library release_library)
 		target_link_libraries(${target} PRIVATE ${release_library})
 	endif()
 endfunction()
+
+if(BSOS_HAVE_OPENEXR)
+	foreach(openexr_target OutfitStudio BodySlide)
+		target_compile_definitions(${openexr_target} PRIVATE USE_OPENEXR)
+		target_link_libraries(${openexr_target} PRIVATE OpenEXR::OpenEXRCore)
+	endforeach()
+endif()
 
 if(BSOS_HAVE_FBXSDK)
 	target_compile_definitions(OutfitStudio PRIVATE USE_FBXSDK)

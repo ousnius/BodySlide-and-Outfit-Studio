@@ -163,6 +163,14 @@ public:
 	bool complexMaterial = false;
 	// Highest mip of the cubemap in slot 4, how blurry a fully rough reflection is allowed to get.
 	float cubemapMaxLod = 0.0f;
+	// True when slot 4 asked to be replaced by a dynamic cubemap: either it holds the 1x1 cubemap
+	// Community Shaders and ENB mods use to mark one, or it holds nothing at all where the shader
+	// property says there is environment mapping. A real cubemap is a reflection the author chose
+	// and is left alone.
+	bool dynamicCubemap = false;
+	// The sRGB F0 reflectance a 1x1 cubemap stood for, which tints what the dynamic one reflects.
+	// Black cubemaps carry no color and come back as full reflectance.
+	nifly::Vector3 cubemapTint = nifly::Vector3(1.0f, 1.0f, 1.0f);
 	bool textured = false;
 	// Whether the shape this mesh came from has a shader block. Shapes without one have no textures to
 	// assign, so they render untextured instead of falling back to the "no image" placeholder. Meshes that
