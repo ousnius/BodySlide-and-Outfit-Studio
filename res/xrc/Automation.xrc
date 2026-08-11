@@ -963,6 +963,21 @@
 
 															<object class="sizeritem">
 																<flag>wxALIGN_CENTER_VERTICAL</flag>
+																<object class="wxStaticText">
+																	<label>TRI:</label>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<flag>wxEXPAND</flag>
+																<object class="wxCheckBox" name="chkImportTriSliders">
+																	<label>Import morphs of head TRI files as sliders</label>
+																	<checked>1</checked>
+																	<tooltip>Uncheck to only import the mesh of a head TRI file without adding its morphs as sliders.</tooltip>
+																</object>
+															</object>
+
+															<object class="sizeritem">
+																<flag>wxALIGN_CENTER_VERTICAL</flag>
 																<object class="wxStaticText" name="lblImportFile">
 																	<label>File:</label>
 																</object>
@@ -971,7 +986,7 @@
 																<flag>wxEXPAND</flag>
 																<object class="wxFilePickerCtrl" name="fpImportFile">
 																	<message>Select file to import</message>
-																	<wildcard>NIF Files (*.nif)|*.nif|OBJ Files (*.obj)|*.obj|FBX Files (*.fbx)|*.fbx|All Files (*.*)|*.*</wildcard>
+																	<wildcard>NIF Files (*.nif)|*.nif|OBJ Files (*.obj)|*.obj|FBX Files (*.fbx)|*.fbx|TRI (Head) Files (*.tri)|*.tri|All Files (*.*)|*.*</wildcard>
 																	<style>wxFLP_DEFAULT_STYLE|wxFLP_USE_TEXTCTRL</style>
 																</object>
 															</object>

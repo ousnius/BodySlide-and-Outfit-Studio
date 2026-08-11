@@ -285,6 +285,7 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldString("FilePath", &Step::importFilePath, nullptr),
 			FieldBool("FromFolder", &Step::importFromFolder, false),
 			FieldBool("BeforeBatchFile", &Step::importBeforeBatch, false, "chkImportBeforeBatch"),
+			FieldBool("TRISliders", &Step::importTriSliders, true, "chkImportTriSliders"),
 		});
 
 	add(AutomationStepType::ImportSliderData, "ImportSliderData", wxTRANSLATE("Import"), wxTRANSLATE("Import: Slider Data"), "pageImportSliderData",

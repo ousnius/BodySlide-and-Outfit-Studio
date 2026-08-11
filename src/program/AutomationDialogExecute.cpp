@@ -544,6 +544,7 @@ bool AutomationDialog::StepChangesSliderSet(AutomationStepType type) {
 		case AutomationStepType::ClearReference:
 		case AutomationStepType::SetBaseShape:
 		case AutomationStepType::ImportSliderData:
+		case AutomationStepType::ImportFile:
 		case AutomationStepType::CloneSlider:
 		case AutomationStepType::MakeConversionRef:
 		case AutomationStepType::NewCombinedSlider:
@@ -1483,7 +1484,7 @@ int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
 	std::string importFilePathStd = importFilePath.ToUTF8().data();
 
 	if (step.importFromFolder) {
-		// Folder mode: import all NIF/OBJ/FBX files from the folder
+		// Folder mode: import all NIF/OBJ/FBX/TRI files from the folder
 		wxLogMessage("Automation: Importing all files from folder '%s'...", importFilePath);
 		wxDir dir(importFilePath);
 		if (!dir.IsOpened()) {
@@ -1497,13 +1498,16 @@ int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
 		while (cont) {
 			wxFileName fn(filename);
 			wxString ext = fn.GetExt().Lower();
-			if (ext == "nif" || ext == "obj" || ext == "fbx") {
+			if (ext == "nif" || ext == "obj" || ext == "fbx" || ext == "tri") {
 				std::string fullPath = importFilePathStd + "/" + filename.ToUTF8().data();
 				int err = 0;
 				if (ext == "nif")
 					err = project->ImportNIF(fullPath, false);
 				else if (ext == "obj")
 					err = project->ImportOBJ(fullPath);
+				else if (ext == "tri")
+					// Only head TRI files carry a mesh, body TRI files are handled by the ImportSliderData step
+					err = project->ImportHeadTRI(fullPath, "", step.importTriSliders) ? 0 : 1;
 				else if (ext == "fbx")
 #ifdef USE_FBXSDK
 					err = project->ImportFBX(fullPath);
@@ -1531,6 +1535,9 @@ int AutomationDialog::ExecuteStepImportFile(const AutomationStep& step) {
 			err = project->ImportNIF(importFilePathStd, false);
 		else if (ext == "obj")
 			err = project->ImportOBJ(importFilePathStd);
+		else if (ext == "tri")
+			// Only head TRI files carry a mesh, body TRI files are handled by the ImportSliderData step
+			err = project->ImportHeadTRI(importFilePathStd, "", step.importTriSliders) ? 0 : 1;
 		else if (ext == "fbx")
 #ifdef USE_FBXSDK
 			err = project->ImportFBX(importFilePathStd);

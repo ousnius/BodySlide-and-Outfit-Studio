@@ -339,6 +339,12 @@ public:
 	int SaveSliderOBJ(const std::string& sliderName, nifly::NiShape* shape, const std::string& fileName, const bool onlyDiff = false);
 	bool WriteMorphTRI(const std::string& triPath);
 	bool WriteHeadTRI(nifly::NiShape* shape, const std::string& triPath);
+	// Imports a FaceGen head TRI file (mesh with morphs) as a new shape. The shape is named
+	// after the file if no name is given and made unique if that name is already taken.
+	// With withSliders, the morphs are loaded as slider data and the names of the added
+	// sliders are put into newSliders, otherwise only the mesh is imported.
+	// Returns the created shape or nullptr if the file couldn't be loaded.
+	nifly::NiShape* ImportHeadTRI(const std::string& triPath, const std::string& shapeName = "", bool withSliders = true, std::vector<std::string>* newSliders = nullptr);
 	bool WriteSFMorphs(nifly::NiShape* shape, const std::string& morphPath);
 
 	float& SliderValue(const size_t index);

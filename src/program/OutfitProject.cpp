@@ -1734,6 +1734,55 @@ bool OutfitProject::WriteHeadTRI(NiShape* shape, const std::string& triPath) {
 	return true;
 }
 
+NiShape* OutfitProject::ImportHeadTRI(const std::string& triPath, const std::string& shapeName, bool withSliders, std::vector<std::string>* newSliders) {
+	TriHeadFile tri;
+	if (!tri.Read(triPath))
+		return nullptr;
+
+	std::string baseName = shapeName;
+	if (baseName.empty())
+		baseName = wxFileName(wxString::FromUTF8(triPath)).GetName().ToUTF8().data();
+
+	std::string uniqueName = baseName;
+	for (int i = 2; IsValidShape(uniqueName); i++)
+		uniqueName = baseName + std::to_string(i);
+
+	auto verts = tri.GetVertices();
+	auto tris = tri.GetTriangles();
+	auto uvs = tri.GetUV();
+
+	auto shape = CreateNifShapeFromData(uniqueName, &verts, &tris, &uvs);
+	if (!shape)
+		return nullptr;
+
+	if (!withSliders)
+		return shape;
+
+	auto morphs = tri.GetMorphs();
+	for (auto& morph : morphs) {
+		std::unordered_map<uint16_t, Vector3> diff;
+		diff.reserve(morph.vertices.size());
+
+		for (size_t i = 0; i < morph.vertices.size(); i++)
+			if (!morph.vertices[i].IsZero(true))
+				diff.emplace(static_cast<uint16_t>(i), morph.vertices[i]);
+
+		if (diff.empty())
+			continue;
+
+		if (!ValidSlider(morph.morphName)) {
+			AddEmptySlider(morph.morphName);
+
+			if (newSliders)
+				newSliders->push_back(morph.morphName);
+		}
+
+		SetSliderFromDiff(morph.morphName, shape, diff);
+	}
+
+	return shape;
+}
+
 bool OutfitProject::WriteSFMorphs(nifly::NiShape* shape, const std::string& morphPath) {
 	SFMorphFile morphFile;
 	std::string morphPathFilePath = morphPath;

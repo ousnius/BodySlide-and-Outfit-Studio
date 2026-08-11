@@ -5514,13 +5514,6 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 		wxFileName fileName(fn);
 		wxLogMessage("Importing morphs from TRI (head) file '%s'...", fn);
 
-		TriHeadFile tri;
-		if (!tri.Read(fn.ToUTF8().data())) {
-			wxLogError("Failed to load TRI file '%s'!", fn);
-			wxMessageBox(_("Failed to load TRI file!"), _("Error"), wxICON_ERROR);
-			return;
-		}
-
 		std::string shapeName{fileName.GetName().ToUTF8()};
 		while (project->IsValidShape(shapeName)) {
 			std::string result{wxGetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape"), shapeName, this).ToUTF8()};
@@ -5530,30 +5523,17 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 			shapeName = std::move(result);
 		}
 
-		auto verts = tri.GetVertices();
-		auto tris = tri.GetTriangles();
-		auto uvs = tri.GetUV();
-		auto shape = project->CreateNifShapeFromData(shapeName, &verts, &tris, &uvs);
-		if (!shape)
+		std::vector<std::string> newSliders;
+		if (!project->ImportHeadTRI(fn.ToUTF8().data(), shapeName, true, &newSliders)) {
+			wxLogError("Failed to load TRI file '%s'!", fn);
+			wxMessageBox(_("Failed to load TRI file!"), _("Error"), wxICON_ERROR);
 			return;
+		}
 
 		RefreshGUIFromProj(false);
 
-		auto morphs = tri.GetMorphs();
-		for (auto& morph : morphs) {
-			if (!project->ValidSlider(morph.morphName)) {
-				project->AddEmptySlider(morph.morphName);
-				createSliderGUI(morph.morphName, sliderScroll, sliderScroll->GetSizer());
-			}
-
-			std::unordered_map<uint16_t, Vector3> diff;
-			diff.reserve(morph.vertices.size());
-
-			for (size_t i = 0; i < morph.vertices.size(); i++)
-				diff[i] = morph.vertices[i];
-
-			project->SetSliderFromDiff(morph.morphName, shape, diff);
-		}
+		for (auto& sliderName : newSliders)
+			createSliderGUI(sliderName, sliderScroll, sliderScroll->GetSizer());
 	}
 
 	sliderScroll->FitInside();
