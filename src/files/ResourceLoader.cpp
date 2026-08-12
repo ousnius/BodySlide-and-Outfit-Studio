@@ -393,11 +393,17 @@ void ResourceLoader::ClassifyCubemap(const std::string& texName, GLuint textureI
 	glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA, GL_UNSIGNED_BYTE, texel);
 	glPixelStorei(GL_PACK_ALIGNMENT, packAlignment);
 
-	// The same threshold the Complex Material classification uses for black. A black cube map is the
-	// plain "give me a dynamic one" marker rather than a color, and stands for full reflectance.
-	const uint8_t threshold = 4;
-	if (texel[0] <= threshold && texel[1] <= threshold && texel[2] <= threshold)
+	// Only a texel bright enough to be a reflectance is one. The dimmest a real material gets is the
+	// 0.04 linear of a dielectric, which is 56 in sRGB, so anything below that was authored to switch
+	// the static reflection off rather than to describe a surface - black and the near-blacks authors
+	// reach for instead both mean "give me a dynamic one", and stand for full reflectance. Taking such
+	// a texel as an F0 would scale the dynamic cube map down by a factor of hundreds, which looks
+	// exactly like the substitution never having happened.
+	const uint8_t f0Floor = 56;
+	if (texel[0] < f0Floor && texel[1] < f0Floor && texel[2] < f0Floor) {
+		wxLogMessage("Texture file '%s' is a 1x1 cube map standing in for a dynamic one.", texName);
 		return;
+	}
 
 	auto srgbToLinear = [](const uint8_t value) {
 		const float v = value / 255.0f;
