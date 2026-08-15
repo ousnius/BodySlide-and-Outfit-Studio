@@ -11459,7 +11459,7 @@ MergeCheckErrors OutfitStudioFrame::CheckCopyGeo(wxDialog& dlg) {
 	MergeCheckErrors e;
 	project->CheckMerge(source, target, e);
 	XRCCTRL(dlg, "wxID_OK", wxButton)->Enable(e.canMerge);
-	const bool hasWarnings = e.partitionsMismatch || e.segmentsMismatch || e.textureMismatch;
+	const bool hasWarnings = e.partitionsMismatch || e.segmentsMismatch || e.textureMismatch || e.transformsMismatch;
 
 	if (e.canMerge && !hasWarnings) {
 		errors->SetLabel(_("No errors found!"));
@@ -11486,6 +11486,8 @@ MergeCheckErrors OutfitStudioFrame::CheckCopyGeo(wxDialog& dlg) {
 		warningLines << "\n- " << _("Segments do not match. Merge will auto-reconcile matching IDs and create missing segments/sub segments.");
 	if (e.textureMismatch)
 		warningLines << "\n- " << _("Base texture doesn't match. Merge will use texture paths from the target shape.");
+	if (e.transformsMismatch)
+		warningLines << "\n- " << _("Transforms do not match. Merge will apply the transforms of both shapes to their geometry and clear them, without moving the meshes.");
 
 	wxString msg;
 	if (!errorLines.empty())

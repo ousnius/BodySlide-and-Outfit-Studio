@@ -1822,6 +1822,31 @@ int AutomationDialog::ExecuteStepSetReferenceShape(const AutomationStep& step) {
 	return 0;
 }
 
+int AutomationDialog::ExecuteStepApplyTransforms(const AutomationStep& step) {
+	auto shapes = ResolveTargetShapes(step);
+	if (shapes.empty()) {
+		wxLogWarning("Automation: ApplyTransforms - no target shapes found.");
+		return 0;
+	}
+
+	int appliedCount = 0;
+	for (auto* shape : shapes) {
+		if (!project->ApplyShapeTransformToGeometry(shape))
+			continue;
+
+		wxLogMessage("Automation: Applied the transform of shape '%s' to its geometry.", shape->name.get());
+		appliedCount++;
+	}
+
+	if (appliedCount == 0) {
+		wxLogMessage("Automation: ApplyTransforms - none of the target shapes had a transform to apply.");
+		return 0;
+	}
+
+	outfitStudio->ApplySliders();
+	return 0;
+}
+
 int AutomationDialog::ExecuteStepResetTransforms(const AutomationStep&) {
 	wxLogMessage("Automation: Resetting transforms...");
 	project->ResetTransforms();
@@ -3120,6 +3145,8 @@ int AutomationDialog::ExecuteStepMergeGeometry(const AutomationStep& step) {
 		wxLogWarning("Automation: MergeGeometry - segments do not match; matching IDs are reconciled and missing ones created.");
 	if (e.textureMismatch)
 		wxLogWarning("Automation: MergeGeometry - base textures do not match; the texture paths of '%s' are kept.", step.mergeTargetShape);
+	if (e.transformsMismatch)
+		wxLogWarning("Automation: MergeGeometry - transforms do not match; they are applied to the geometry of both shapes and cleared.");
 
 	wxLogMessage("Automation: Merging '%s' into '%s'...", step.mergeSourceShape, step.mergeTargetShape);
 

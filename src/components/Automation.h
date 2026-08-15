@@ -56,6 +56,7 @@ enum class AutomationStepType {
 	RecalcNormals,
 	RefineMesh,
 	RenameShape,
+	ApplyTransforms,
 	ResetTransforms,
 	SeparateVertices,
 	SymmetrizeVertices,
@@ -88,7 +89,7 @@ enum class AutomationStepType {
 	LogMessage
 };
 
-constexpr int AutomationStepTypeCount = 63;
+constexpr int AutomationStepTypeCount = 64;
 static_assert(static_cast<int>(AutomationStepType::LogMessage) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 

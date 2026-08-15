@@ -1871,6 +1871,25 @@ If Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern ma
 											</object>
 										</object>
 
+										<!-- ApplyTransforms -->
+										<object class="simplebookpage">
+											<object class="wxPanel" name="pageApplyTransforms">
+												<object class="wxStaticBoxSizer">
+													<orient>wxVERTICAL</orient>
+													<label>Apply Transforms</label>
+													<object class="sizeritem">
+														<option>0</option>
+														<flag>wxALL</flag>
+														<border>5</border>
+														<object class="wxStaticText">
+															<label>Applies the shape transforms of the target meshes to their geometry and clears them, without moving the meshes. No additional parameters needed.</label>
+															<wrap>400</wrap>
+														</object>
+													</object>
+												</object>
+											</object>
+										</object>
+
 										<!-- ResetTransforms -->
 										<object class="simplebookpage">
 											<object class="wxPanel" name="pageResetTransforms">

@@ -76,6 +76,7 @@ struct MergeCheckErrors {
 	bool shaderMismatch = false;
 	bool textureMismatch = false;
 	bool alphaPropMismatch = false;
+	bool transformsMismatch = false;
 };
 
 // SymmetricVertices: result from the function MatchSymmetricVertices
@@ -427,6 +428,11 @@ public:
 	void ScaleShape(nifly::NiShape* shape, const nifly::Vector3& scale, std::unordered_map<uint16_t, float>* mask = nullptr);
 	void RotateShape(nifly::NiShape* shape, const nifly::Vector3& angle, std::unordered_map<uint16_t, float>* mask = nullptr);
 	void ApplyTransformToShapeGeometry(nifly::NiShape* shape, const nifly::MatTransform& t);
+
+	// Applies the shape's shape-to-global transform to its geometry and clears the
+	// transform afterwards, so the mesh doesn't effectively move.
+	// Returns false if there was no transform to apply.
+	bool ApplyShapeTransformToGeometry(nifly::NiShape* shape);
 
 	// Uses the AutoMorph class to generate proximity values for bone weights.
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.

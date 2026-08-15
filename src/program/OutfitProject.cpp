@@ -2685,6 +2685,23 @@ void OutfitProject::ApplyTransformToShapeGeometry(NiShape* shape, const MatTrans
 	workNif.SetNormalsForShape(shape, norms);
 }
 
+bool OutfitProject::ApplyShapeTransformToGeometry(NiShape* shape) {
+	if (!shape)
+		return false;
+
+	MatTransform oldShapeToGlobal = workAnim.GetTransformShapeToGlobal(shape);
+	MatTransform newShapeToGlobal;
+	if (oldShapeToGlobal.IsNearlyEqualTo(newShapeToGlobal))
+		return false;
+
+	// Same as the shape properties dialog with the option to recalculate the
+	// geometry's coordinates: the vertices are moved by the old transform, so
+	// they stay in place once the transform is cleared.
+	ApplyTransformToShapeGeometry(shape, newShapeToGlobal.InverseTransform().ComposeTransforms(oldShapeToGlobal));
+	workAnim.SetTransformShapeToGlobal(shape, newShapeToGlobal);
+	return true;
+}
+
 void OutfitProject::CopyBoneWeights(NiShape* shape,
 									const float proximityRadius,
 									const int maxResults,
@@ -5271,12 +5288,27 @@ void OutfitProject::CheckMerge(const std::string& sourceName, const std::string&
 		}
 	}
 
+	if (!workAnim.GetTransformShapeToGlobal(source).IsNearlyEqualTo(workAnim.GetTransformShapeToGlobal(target))) {
+		// Coordinate systems of the shapes differ, so the merge has to apply
+		// the transforms to the geometry of both shapes first
+		e.transformsMismatch = true;
+	}
+
 	e.canMerge = !e.tooManyVertices && !e.tooManyTriangles && !e.shaderMismatch && !e.alphaPropMismatch;
 }
 
 void OutfitProject::PrepareCopyGeo(NiShape* source, NiShape* target, UndoStateShape& uss) {
 	if (!source || !target)
 		return;
+
+	// The vertices are collected in the source shape's coordinates and appended to
+	// the target shape, so both shapes need to share a coordinate system. If they
+	// don't, apply the transforms to the geometry of both shapes and clear them,
+	// which leaves the meshes where they are in global coordinates.
+	if (!workAnim.GetTransformShapeToGlobal(source).IsNearlyEqualTo(workAnim.GetTransformShapeToGlobal(target))) {
+		ApplyShapeTransformToGeometry(source);
+		ApplyShapeTransformToGeometry(target);
+	}
 
 	uint16_t snVerts = source->GetNumVertices();
 	uint16_t tnVerts = target->GetNumVertices();

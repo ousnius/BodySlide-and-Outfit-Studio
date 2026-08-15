@@ -392,6 +392,8 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldString("NewName", &Step::renameNewName, "txtRenameNewName"),
 		});
 
+	add(AutomationStepType::ApplyTransforms, "ApplyTransforms", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Apply Transforms"), "pageApplyTransforms");
+
 	add(AutomationStepType::ResetTransforms, "ResetTransforms", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Reset Transforms"), "pageResetTransforms");
 
 	add(AutomationStepType::SeparateVertices, "SeparateVertices", wxTRANSLATE("Shapes"), wxTRANSLATE("Shapes: Separate Vertices"), "pageSeparateVertices",

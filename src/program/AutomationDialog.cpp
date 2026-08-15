@@ -1942,6 +1942,7 @@ const AutomationDialog::StepBinding* AutomationDialog::FindStepBinding(Automatio
 		{AutomationStepType::RecalcNormals, &AutomationDialog::ExecuteStepRecalcNormals},
 		{AutomationStepType::RefineMesh, &AutomationDialog::ExecuteStepRefineMesh},
 		{AutomationStepType::RenameShape, &AutomationDialog::ExecuteStepRenameShape},
+		{AutomationStepType::ApplyTransforms, &AutomationDialog::ExecuteStepApplyTransforms},
 		{AutomationStepType::ResetTransforms, &AutomationDialog::ExecuteStepResetTransforms},
 		{AutomationStepType::TransformShape, &AutomationDialog::ExecuteStepTransformShape},
 		{AutomationStepType::SetGeometryProperties, &AutomationDialog::ExecuteStepSetGeometryProperties, &AutomationDialog::StepToUISetGeometryProperties, &AutomationDialog::StepFromUISetGeometryProperties},

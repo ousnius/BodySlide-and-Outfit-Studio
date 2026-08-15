@@ -270,6 +270,7 @@ private:
 	int ExecuteStepRefineMesh(const AutomationStep& step);
 	int ExecuteStepDeleteSlider(const AutomationStep& step);
 	int ExecuteStepSetReferenceShape(const AutomationStep& step);
+	int ExecuteStepApplyTransforms(const AutomationStep& step);
 	int ExecuteStepResetTransforms(const AutomationStep& step);
 	int ExecuteStepDuplicateShape(const AutomationStep& step);
 	int ExecuteStepChangePartitions(const AutomationStep& step);
