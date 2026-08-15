@@ -90,6 +90,9 @@ class BodySlideApp : public wxApp {
 
 	/* Command-Line Arguments */
 	std::vector<std::string> cmdGroupBuild;
+	std::vector<std::string> cmdBuildOutfits; // Outfits to build, given by name.
+	std::string cmdBuildFilter;				  // Outfits to build, given as an outfit filter expression.
+	bool cmdBuildFilterRegex = false;		  // The filter is a regular expression instead of a substring.
 	std::string cmdTargetDir;
 	std::string cmdPreset;
 	std::string cmdPresetFile;
@@ -239,6 +242,10 @@ public:
 
 	void PopulateFilterData();
 	void ApplyOutfitFilter();
+	// Matches outfit names the same way the outfit filter text box does, either as a
+	// case insensitive substring or, with useRegex, as a case insensitive regular expression.
+	// An invalid regular expression matches nothing and is reported through regexError.
+	std::vector<std::string> FilterOutfitNames(const std::vector<std::string>& names, const std::string& filter, bool useRegex, std::string* regexError = nullptr) const;
 	std::vector<std::string> ApplyPresetFilter(const std::vector<std::string>& presetNames);
 	int GetOutfits(std::vector<std::string>& outList);
 	int GetFilteredOutfits(std::vector<std::string>& outList);
@@ -356,7 +363,14 @@ public:
 						bool forceNormals = false,
 						const std::string& custPath = "");
 	int ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* treeListCtrl);
-	void GroupBuild(const std::vector<std::string>& groupNames);
+
+	// True if any of the command-line options that select outfits for a build was given.
+	bool HasCmdLineBuild() const { return !cmdGroupBuild.empty() || !cmdBuildOutfits.empty() || !cmdBuildFilter.empty(); }
+	// Resolves the outfits selected by the command line, in the order they were loaded in.
+	// Outfit names that don't exist and filters that match nothing are reported through failedOutfits.
+	std::vector<std::string> GetCmdLineBuildOutfits(std::map<std::string, std::string>& failedOutfits);
+	// Builds the outfits selected by the command line and closes the application.
+	void CommandLineBuild();
 
 	void AddTriData(nifly::NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
 
@@ -372,6 +386,17 @@ public:
 };
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {{wxCMD_LINE_OPTION, "gbuild", "groupbuild", "builds the specified group on launch", wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_OPTION,
+													"b",
+													"build",
+													"builds the specified outfits on launch, a single outfit name or a list of them separated by ',', ';' or '|'",
+													wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_OPTION,
+													"f",
+													"filter",
+													"builds all outfits matching the specified filter on launch, works like the outfit filter box",
+													wxCMD_LINE_VAL_STRING},
+												   {wxCMD_LINE_SWITCH, "regex", "regexfilter", "treats the value of the filter option as a regular expression"},
 												   {wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING},
 												   {wxCMD_LINE_OPTION,
 													"p",

@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <atomic>
 #include <mutex>
 #include <regex>
+#include <set>
 #include <thread>
 #include <unordered_map>
 #include <utility>
@@ -269,14 +270,12 @@ bool BodySlideApp::OnInit() {
 	LoadAllGroups();
 	LoadSliderSets();
 
-	if (cmdGroupBuild.empty()) {
+	wxLogMessage("BodySlide initialized.");
+
+	if (HasCmdLineBuild())
+		CommandLineBuild();
+	else
 		sliderView->delayLoad.Start(100, true);
-		wxLogMessage("BodySlide initialized.");
-	}
-	else {
-		wxLogMessage("BodySlide initialized.");
-		GroupBuild(cmdGroupBuild);
-	}
 
 	return true;
 }
@@ -297,6 +296,27 @@ bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
 			cmdGroupBuild.push_back(groupName);
 		}
 	}
+
+	wxString buildOutfits;
+	parser.Found("b", &buildOutfits);
+
+	// Outfit names can contain commas, so semicolons and pipes are accepted as separators as well.
+	wxStringTokenizer outfitTokenizer(buildOutfits, ",;|");
+	while (outfitTokenizer.HasMoreTokens()) {
+		wxString token = outfitTokenizer.GetNextToken().Trim(true).Trim(false);
+		if (!token.IsEmpty()) {
+			std::string outfitName = token.ToUTF8().data();
+			cmdBuildOutfits.push_back(outfitName);
+		}
+	}
+
+	wxString buildFilter;
+	if (parser.Found("f", &buildFilter)) {
+		buildFilter.Trim(true).Trim(false);
+		cmdBuildFilter = buildFilter.ToUTF8().data();
+	}
+
+	cmdBuildFilterRegex = parser.Found("regex");
 
 	wxString targetDir;
 	parser.Found("t", &targetDir);
@@ -3474,40 +3494,47 @@ void BodySlideApp::ApplyOutfitFilter() {
 	}
 
 
-	if (outfitSrch.empty()) {
-		for (auto& w : workFilterList)
-			filteredOutfits.push_back(w);
-	}
-	else {
-		wxString searchStr = wxString::FromUTF8(outfitSrch);
-		searchStr.MakeLower();
-
-		if (regexFilterOutfits) {
-			std::regex re;
-
-			for (auto& filterEntry : workFilterList) {
-				try {
-					re.assign(outfitSrch, std::regex::icase);
-					if (std::regex_search(filterEntry, re))
-						filteredOutfits.push_back(filterEntry);
-				}
-				catch (std::regex_error&) {
-				}
-			}
-		}
-		else {
-			for (auto& filterEntry : workFilterList) {
-				wxString entryStr = wxString::FromUTF8(filterEntry);
-				if (entryStr.Lower().Contains(searchStr))
-					filteredOutfits.push_back(entryStr.ToUTF8().data());
-			}
-		}
-	}
+	filteredOutfits = FilterOutfitNames(workFilterList, outfitSrch, regexFilterOutfits);
 
 	SortOutfitNamesForDisplay(filteredOutfits);
 
 	BodySlideConfig.SetValue("LastGroupFilter", grpSrch.ToUTF8().data());
 	BodySlideConfig.SetValue("LastOutfitFilter", outfitSrch);
+}
+
+std::vector<std::string> BodySlideApp::FilterOutfitNames(const std::vector<std::string>& names, const std::string& filter, bool useRegex, std::string* regexError) const {
+	if (filter.empty())
+		return names;
+
+	std::vector<std::string> matches;
+
+	if (useRegex) {
+		std::regex re;
+
+		try {
+			re.assign(filter, std::regex::icase);
+		}
+		catch (const std::regex_error& e) {
+			if (regexError)
+				*regexError = e.what();
+
+			return matches;
+		}
+
+		for (auto& name : names)
+			if (std::regex_search(name, re))
+				matches.push_back(name);
+	}
+	else {
+		wxString searchStr = wxString::FromUTF8(filter);
+		searchStr.MakeLower();
+
+		for (auto& name : names)
+			if (wxString::FromUTF8(name).Lower().Contains(searchStr))
+				matches.push_back(name);
+	}
+
+	return matches;
 }
 
 std::vector<std::string> BodySlideApp::ApplyPresetFilter(const std::vector<std::string>& presetNames) {
@@ -4942,19 +4969,79 @@ int BodySlideApp::BuildListBodies(
 	return 0;
 }
 
-void BodySlideApp::GroupBuild(const std::vector<std::string>& groupNames) {
-	std::vector<std::string> outfits;
-	for (auto& o : outfitNameSource) {
-		std::vector<std::string> groups;
-		gCollection.GetOutfitGroups(o.first, groups);
+std::vector<std::string> BodySlideApp::GetCmdLineBuildOutfits(std::map<std::string, std::string>& failedOutfits) {
+	// Collected case insensitively, so the same outfit selected by several options is only built once.
+	std::set<std::string, case_insensitive_compare> selected;
 
-		for (auto& g : groups) {
-			if (std::find(groupNames.begin(), groupNames.end(), g) != groupNames.end()) {
-				outfits.push_back(o.first);
-				break;
+	// The groups and the filter narrow the outfit list down together, the same way the group filter
+	// and the outfit filter box do in the GUI. Outfits named with the build option are added on top.
+	if (!cmdGroupBuild.empty() || !cmdBuildFilter.empty()) {
+		std::vector<std::string> matches = outfitNameOrder;
+
+		if (!cmdGroupBuild.empty()) {
+			matches.clear();
+
+			for (auto& no : outfitNameOrder) {
+				std::vector<std::string> groups;
+				gCollection.GetOutfitGroups(no, groups);
+
+				for (auto& g : groups) {
+					if (std::find(cmdGroupBuild.begin(), cmdGroupBuild.end(), g) != cmdGroupBuild.end()) {
+						matches.push_back(no);
+						break;
+					}
+				}
+			}
+
+			wxLogMessage("Command-line build: %d outfit(s) belong to the specified group(s).", (int)matches.size());
+
+			if (matches.empty())
+				failedOutfits["--groupbuild"] = _("No outfit belongs to any of the specified groups.").ToUTF8().data();
+		}
+
+		if (!cmdBuildFilter.empty() && !matches.empty()) {
+			std::string regexError;
+			matches = FilterOutfitNames(matches, cmdBuildFilter, cmdBuildFilterRegex, &regexError);
+
+			if (!regexError.empty()) {
+				wxLogError("Invalid regular expression '%s' from the command line: %s", cmdBuildFilter, regexError);
+				failedOutfits[cmdBuildFilter] = wxString::Format(_("Invalid regular expression: %s"), regexError).ToUTF8().data();
+			}
+			else {
+				wxLogMessage("Command-line build: %d outfit(s) match the filter '%s'.", (int)matches.size(), cmdBuildFilter);
+
+				if (matches.empty())
+					failedOutfits[cmdBuildFilter] = _("Filter doesn't match any outfit.").ToUTF8().data();
 			}
 		}
+
+		selected.insert(matches.begin(), matches.end());
 	}
+
+	for (auto& outfitName : cmdBuildOutfits) {
+		auto sourceIt = outfitNameSource.find(outfitName);
+		if (sourceIt == outfitNameSource.end()) {
+			wxLogError("Outfit '%s' from the command line doesn't exist.", outfitName);
+			failedOutfits[outfitName] = _("Outfit doesn't exist.").ToUTF8().data();
+			continue;
+		}
+
+		// Insert the name as it's defined in the slider set, not as it was spelled on the command line.
+		selected.insert(sourceIt->first);
+	}
+
+	// Built in the order the outfits were loaded in, no matter which option selected them.
+	std::vector<std::string> outfits;
+	for (auto& no : outfitNameOrder)
+		if (selected.find(no) != selected.end())
+			outfits.push_back(no);
+
+	return outfits;
+}
+
+void BodySlideApp::CommandLineBuild() {
+	std::map<std::string, std::string> failedOutfits;
+	std::vector<std::string> outfits = GetCmdLineBuildOutfits(failedOutfits);
 
 	// Loaded before the preset folder so that a preset file given on the command line wins on name conflicts.
 	LoadCmdPresetFile();
@@ -4969,7 +5056,7 @@ void BodySlideApp::GroupBuild(const std::vector<std::string>& groupNames) {
 	std::vector<std::string> groups;
 	sliderManager.LoadPresets(ProjectUtil::GetProjectPath() + "/SliderPresets", "", groups, true);
 
-	// Apply saved build selections for CLI group builds before entering batch build conflict handling.
+	// Apply saved build selections for command-line builds before entering batch build conflict handling.
 	BuildSelectionFile buildSelFile;
 	BuildSelection buildSelection;
 	GetBuildSelection(buildSelFile, buildSelection);
@@ -5008,14 +5095,13 @@ void BodySlideApp::GroupBuild(const std::vector<std::string>& groupNames) {
 		}
 
 		if (removedChoices > 0) {
-			wxLogMessage("Group build applied saved BuildSelection for output '%s': selected '%s', skipped %d conflicting choice(s).",
+			wxLogMessage("Command-line build applied saved BuildSelection for output '%s': selected '%s', skipped %d conflicting choice(s).",
 						 outFile.first,
 						 outputChoice,
 						 removedChoices);
 		}
 	}
 
-	std::map<std::string, std::string> failedOutfits;
 	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, false, cmdTargetDir);
 
 	if (presetOverride)
@@ -5024,7 +5110,7 @@ void BodySlideApp::GroupBuild(const std::vector<std::string>& groupNames) {
 	wxLog::FlushActive();
 
 	if (ret == 0) {
-		wxLogMessage("All group build sets processed successfully!");
+		wxLogMessage("All command-line build sets processed successfully!");
 	}
 	else if (ret == 3) {
 		wxArrayString errlist;
