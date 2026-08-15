@@ -72,6 +72,48 @@ float ComputeExposure(const std::vector<uint16_t>& pixels, const int width, cons
 	return std::clamp(static_cast<float>(kTargetLuminance / std::max(mean, 1.0e-4)), 0.01f, 100.0f);
 }
 
+// The state a full screen pass needs, put in place for as long as it lives and handed back exactly
+// as it was found. Restoring matters more than it looks: GLSurface picks a cull mode per mesh and
+// leaves it behind, so a frame whose last shape was DRAW_CW ends with GL_FRONT selected - and the
+// full screen triangle is wound front facing, so drawing it under that state would cull the whole
+// background away.
+struct FullScreenPassState {
+	GLboolean blend = GL_FALSE;
+	GLboolean cullFace = GL_FALSE;
+	GLboolean depthTest = GL_FALSE;
+	GLboolean depthMask = GL_TRUE;
+
+	FullScreenPassState() {
+		blend = glIsEnabled(GL_BLEND);
+		cullFace = glIsEnabled(GL_CULL_FACE);
+		depthTest = glIsEnabled(GL_DEPTH_TEST);
+		glGetBooleanv(GL_DEPTH_WRITEMASK, &depthMask);
+
+		// The triangle covers every pixel of its target, so there is nothing to test, blend or cull
+		// against.
+		glDisable(GL_BLEND);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_DEPTH_TEST);
+		glDepthMask(GL_FALSE);
+	}
+
+	~FullScreenPassState() {
+		if (blend)
+			glEnable(GL_BLEND);
+
+		if (cullFace)
+			glEnable(GL_CULL_FACE);
+
+		if (depthTest)
+			glEnable(GL_DEPTH_TEST);
+
+		glDepthMask(depthMask);
+	}
+
+	FullScreenPassState(const FullScreenPassState&) = delete;
+	FullScreenPassState& operator=(const FullScreenPassState&) = delete;
+};
+
 GLMaterial* CreateMaterial(const std::string& fragShader, std::string& outError) {
 	GLMaterial* material = new GLMaterial(Config["AppDir"] + "/res/shaders/fullscreentri.vert", Config["AppDir"] + "/res/shaders/" + fragShader);
 
@@ -191,13 +233,22 @@ bool GLHDRiEnvironment::Load(const std::string& fileName, std::string& outError)
 	glGenFramebuffers(1, &fbo);
 	glGenVertexArrays(1, &vao);
 
-	BuildCubemap(exposure);
+	if (!BuildCubemap(exposure)) {
+		outError = "The cube map could not be rendered into.";
+		Clear();
+		return false;
+	}
+
+	// The equirect has served its purpose. Everything downstream reads the cube map, so holding on
+	// to a full resolution RGBA16F copy of the source would cost video memory nothing ever reads.
+	glDeleteTextures(1, &equirectID);
+	equirectID = 0;
 
 	wxLogMessage("Loaded HDRi '%s' (%dx%d) at exposure %.3f.", fileName, width, height, exposure);
 	return true;
 }
 
-void GLHDRiEnvironment::BuildCubemap(const float exposure) {
+bool GLHDRiEnvironment::BuildCubemap(const float exposure) {
 	GLint prevFBO = 0;
 	GLint prevViewport[4] = {0, 0, 0, 0};
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &prevFBO);
@@ -205,59 +256,66 @@ void GLHDRiEnvironment::BuildCubemap(const float exposure) {
 
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 	glBindVertexArray(vao);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
-	glDisable(GL_CULL_FACE);
-	glDepthMask(GL_FALSE);
 
-	// Base level: the equirect projected onto each face.
-	GLShader& equirectShader = equirectMat->GetShader();
-	equirectShader.Begin();
-	equirectShader.SetUniform("exposure", exposure);
-	equirectShader.BindTexture(0, equirectID, "texDiffuse");
+	FullScreenPassState passState;
 
 	glViewport(0, 0, kFaceSize, kFaceSize);
-	for (int face = 0; face < 6; face++) {
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, cubemapID, 0);
-		equirectShader.SetUniform("cubeFace", face);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-	}
-	equirectShader.End();
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X, cubemapID, 0);
 
-	// Remaining levels: each one convolves the level above it, so the blur accumulates down the
-	// chain instead of every level having to reach all the way back to the sharpest one.
-	GLShader& prefilterShader = prefilterMat->GetShader();
-	prefilterShader.Begin();
-	prefilterShader.BindCubemap(4, cubemapID, "texCubemap");
+	// Checked once, before anything is drawn. Every attachment below is the same format and differs
+	// only in size, so what the driver makes of the first it makes of all of them. Worth asking:
+	// were the framebuffer to be left unusable, the passes would draw into the default one instead
+	// and paint the viewport with the environment while leaving the cube map empty.
+	const bool complete = !glCheckFramebufferStatus || glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
 
-	for (int level = 1; level <= maxLevel; level++) {
-		// The level being written must not also be readable. Narrowing the sampling window to the
-		// one level being read is what keeps this from being a framebuffer feedback loop.
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, level - 1);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, level - 1);
-
-		prefilterShader.SetUniform("roughness", static_cast<float>(level) / static_cast<float>(maxLevel));
-
-		const int levelSize = kFaceSize >> level;
-		glViewport(0, 0, levelSize, levelSize);
+	if (complete) {
+		// Base level: the equirect projected onto each face.
+		GLShader& equirectShader = equirectMat->GetShader();
+		equirectShader.Begin();
+		equirectShader.SetUniform("exposure", exposure);
+		equirectShader.BindTexture(0, equirectID, "texDiffuse");
 
 		for (int face = 0; face < 6; face++) {
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, cubemapID, level);
-			prefilterShader.SetUniform("cubeFace", face);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, cubemapID, 0);
+			equirectShader.SetUniform("cubeFace", face);
 			glDrawArrays(GL_TRIANGLES, 0, 3);
 		}
-	}
+		equirectShader.End();
 
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, maxLevel);
-	prefilterShader.End();
+		// Remaining levels: each one convolves the level above it, so the blur accumulates down the
+		// chain instead of every level having to reach all the way back to the sharpest one.
+		GLShader& prefilterShader = prefilterMat->GetShader();
+		prefilterShader.Begin();
+		prefilterShader.BindCubemap(4, cubemapID, "texCubemap");
+
+		for (int level = 1; level <= maxLevel; level++) {
+			// The level being written must not also be readable. Narrowing the sampling window to the
+			// one level being read is what keeps this from being a framebuffer feedback loop.
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, level - 1);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, level - 1);
+
+			prefilterShader.SetUniform("roughness", static_cast<float>(level) / static_cast<float>(maxLevel));
+
+			const int levelSize = kFaceSize >> level;
+			glViewport(0, 0, levelSize, levelSize);
+
+			for (int face = 0; face < 6; face++) {
+				glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, cubemapID, level);
+				prefilterShader.SetUniform("cubeFace", face);
+				glDrawArrays(GL_TRIANGLES, 0, 3);
+			}
+		}
+
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_BASE_LEVEL, 0);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_LEVEL, maxLevel);
+		prefilterShader.End();
+	}
 
 	glBindVertexArray(0);
 	glBindFramebuffer(GL_FRAMEBUFFER, prevFBO);
 	glViewport(prevViewport[0], prevViewport[1], prevViewport[2], prevViewport[3]);
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
 	glActiveTexture(GL_TEXTURE0);
+	return complete;
 }
 
 void GLHDRiEnvironment::RenderBackground(const glm::mat4x4& matProjection, const glm::mat4x4& matView) {
@@ -270,16 +328,13 @@ void GLHDRiEnvironment::RenderBackground(const glm::mat4x4& matProjection, const
 	shader.SetMatrixModelView(matView, glm::mat4x4(1.0f));
 	shader.BindCubemap(4, cubemapID, "texCubemap");
 
-	// Covers every pixel, so there is nothing to test or write against - the meshes go on top.
-	glDisable(GL_DEPTH_TEST);
-	glDepthMask(GL_FALSE);
+	// The meshes go on top of this, and each of them sets the depth and cull state it wants for
+	// itself, so what the pass borrows here is given straight back.
+	FullScreenPassState passState;
 
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	glBindVertexArray(0);
-
-	glDepthMask(GL_TRUE);
-	glEnable(GL_DEPTH_TEST);
 
 	shader.End();
 	glActiveTexture(GL_TEXTURE0);

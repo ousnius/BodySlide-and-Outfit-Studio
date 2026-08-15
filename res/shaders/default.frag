@@ -315,11 +315,26 @@ void main(void)
 				vec3 reflected = reflect(-viewDir, normal);
 				vec3 reflectedWS = vec3(matModel * (matModelViewInverse * vec4(reflected, 0.0)));
 
-				// A rough Complex Material reflects a blurred version of its surroundings, which is
-				// what the higher mips of the cubemap hold.
-				vec4 cubeMap = cmActive
-					? textureLod(texCubemap, reflectedWS, mix(cubemapMinLod, cubemapMaxLod, 1.0 - cmGlossiness))
-					: textureLod(texCubemap, reflectedWS, cubemapMinLod);
+				vec4 cubeMap = vec4(0.0);
+				if (cmActive)
+				{
+					// A rough Complex Material reflects a blurred version of its surroundings,
+					// which is what the higher mips of the cubemap hold.
+					cubeMap = textureLod(texCubemap, reflectedWS, mix(cubemapMinLod, cubemapMaxLod, 1.0 - cmGlossiness));
+				}
+				else if (cubemapMinLod > 0.0)
+				{
+					// A generated cubemap is never sampled sharper than its floor, whatever the
+					// surface asked for.
+					cubeMap = textureLod(texCubemap, reflectedWS, cubemapMinLod);
+				}
+				else
+				{
+					// Anything else keeps the mip the hardware picks from the reflection's own
+					// derivatives, the way it always has. Pinning it to level 0 instead would make
+					// every normal mapped env mapped surface shimmer.
+					cubeMap = texture(texCubemap, reflectedWS);
+				}
 
 				cubeMap.rgb *= prop.envReflection * cubemapTint;
 

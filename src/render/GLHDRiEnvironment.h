@@ -23,7 +23,12 @@ fails there, so callers need no conditionals of their own.
 */
 class GLHDRiEnvironment {
 public:
+	GLHDRiEnvironment() = default;
 	~GLHDRiEnvironment();
+
+	// Owns GL names and materials outright, so there is no sensible second copy of one.
+	GLHDRiEnvironment(const GLHDRiEnvironment&) = delete;
+	GLHDRiEnvironment& operator=(const GLHDRiEnvironment&) = delete;
 
 	// Reads the EXR and builds the cube map from it. A failure leaves whatever was loaded before
 	//  alone and puts the reason in outError.
@@ -46,7 +51,8 @@ public:
 	void RenderBackground(const glm::mat4x4& matProjection, const glm::mat4x4& matView);
 
 private:
-	// Equirectangular source, GL_RGBA16F. Kept so the cube map can be rebuilt without decoding again.
+	// Equirectangular source, GL_RGBA16F. Only alive between the upload and the cube map being
+	// rendered out of it; the member outlives that so Clear() can still free it if a load fails.
 	GLuint equirectID = 0;
 	// GL_TEXTURE_CUBE_MAP, GL_RGBA16F, with every level rendered rather than generated.
 	GLuint cubemapID = 0;
@@ -64,6 +70,7 @@ private:
 	// Compiles the passes on first use. False means one of them failed, with the log in outError.
 	bool LoadShaders(std::string& outError);
 	// Renders all six faces of every level. The base level projects the equirect, the rest convolve
-	//  the level above them.
-	void BuildCubemap(float exposure);
+	//  the level above them. False means the framebuffer wouldn't take the cube map as a target,
+	//  which leaves it holding nothing anybody should reflect.
+	bool BuildCubemap(float exposure);
 };

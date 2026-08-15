@@ -7877,7 +7877,7 @@ void OutfitStudioFrame::PopulateHDRiBackgrounds() {
 	hdriBackground->SetSelection(0);
 }
 
-bool OutfitStudioFrame::SetHDRiBackground(const std::string& fileName) {
+bool OutfitStudioFrame::SetHDRiBackground(const std::string& fileName, const bool remember) {
 	if (!glView->SetHDRiBackground(fileName) && !fileName.empty()) {
 		// The environment failed to load and was left off, so the choice has to say so too.
 		if (hdriBackground)
@@ -7886,11 +7886,17 @@ bool OutfitStudioFrame::SetHDRiBackground(const std::string& fileName) {
 		return false;
 	}
 
-	Config.SetValue("Rendering/HDRIBackground", fileName);
+	// Only a background the user picked is worth writing down. The automatic one is a convenience
+	// for the project at hand, and remembering it would make the setting say the user chose an HDRi
+	// they never asked for - and would rewrite the config on every project that has a Complex
+	// Material in it.
+	if (remember) {
+		Config.SetValue("Rendering/HDRIBackground", fileName);
 
-	int ret = Config.SaveConfig(Config["AppDir"] + "/Config.xml");
-	if (ret)
-		wxLogWarning("Failed to save configuration (%d)!", ret);
+		int ret = Config.SaveConfig(Config["AppDir"] + "/Config.xml");
+		if (ret)
+			wxLogWarning("Failed to save configuration (%d)!", ret);
+	}
 
 	if (!hdriBackground)
 		return true;
@@ -7918,7 +7924,7 @@ void OutfitStudioFrame::OnHDRiBackground(wxCommandEvent& WXUNUSED(event)) {
 
 	// Only a background the user asked for is worth interrupting them over. The automatic one below
 	// leaves its reason in the log and moves on.
-	if (!SetHDRiBackground(fileName))
+	if (!SetHDRiBackground(fileName, true))
 		wxMessageBox(wxString::Format(_("Failed to load the HDRi '%s'. See the log for details."), fileName), _("Error"), wxICON_ERROR, this);
 }
 
@@ -7937,11 +7943,12 @@ void OutfitStudioFrame::ApplyAutoHDRiBackground() {
 	if (std::none_of(meshes.begin(), meshes.end(), [](const Mesh* m) { return m->complexMaterial; }))
 		return;
 
+	// Whatever the user last picked by hand, which is the only thing that ever gets written there.
 	std::string fileName = Config["Rendering/HDRIBackground"];
 	if (fileName.empty() || !PlatformUtil::FileExists(Config["AppDir"] + "/res/hdri/" + fileName))
 		fileName = "sunrise.exr";
 
-	SetHDRiBackground(fileName);
+	SetHDRiBackground(fileName, false);
 #endif
 }
 

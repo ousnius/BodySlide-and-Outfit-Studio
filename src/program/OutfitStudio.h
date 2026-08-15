@@ -1573,9 +1573,10 @@ private:
 	// Fills the background choice from the .exr files in res/hdri, so a file the user dropped in
 	// there is listed next to the ones that ship.
 	void PopulateHDRiBackgrounds();
-	// Applies an HDRi by file name, empty for none, and remembers it. Leaves the choice showing what
-	// is actually loaded, which after a failure is no background rather than what was asked for.
-	bool SetHDRiBackground(const std::string& fileName);
+	// Applies an HDRi by file name, empty for none. Leaves the choice showing what is actually
+	// loaded, which after a failure is no background rather than what was asked for. remember writes
+	// the name to the config, and belongs only to a background the user picked themselves.
+	bool SetHDRiBackground(const std::string& fileName, bool remember);
 	// Turns the last used background on by itself once a project turns out to have a Complex
 	// Material in it - the shading those want is hard to judge with nothing to reflect.
 	void ApplyAutoHDRiBackground();
