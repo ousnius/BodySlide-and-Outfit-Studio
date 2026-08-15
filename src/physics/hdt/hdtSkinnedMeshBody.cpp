@@ -220,7 +220,7 @@ namespace hdt
 
 		uint32_t numUsed = 0;
 		std::vector<uint32_t> map(m_vertices.size());
-		for (int i = 0; i < m_vertices.size(); ++i) {
+		for (size_t i = 0; i < m_vertices.size(); ++i) {
 			if (flags[i]) {
 				m_vertices[numUsed] = m_vertices[i];
 				m_vpos[numUsed] = m_vpos[i];

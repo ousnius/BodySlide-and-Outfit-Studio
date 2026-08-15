@@ -28,7 +28,7 @@ namespace hdt
 
 	void SkinnedMeshSystem::writeTransform()
 	{
-		for (int i = 0; i < m_bones.size(); ++i) {
+		for (size_t i = 0; i < m_bones.size(); ++i) {
 			if (m_bones[i]->m_rig.isKinematicObject()) {
 				continue;
 			}

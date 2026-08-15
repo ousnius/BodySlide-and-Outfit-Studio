@@ -54,18 +54,18 @@ namespace hdt
 		Aabb aabbAll;
 		Aabb aabbMe;
 
-		U32 isKinematic;
+		U32 isKinematic = 0;
 
 		Collider* cbuf = nullptr;
-		Aabb* aabb;
-		U32 numCollider;
-		U32 dynCollider;
+		Aabb* aabb = nullptr;
+		U32 numCollider = 0;
+		U32 dynCollider = 0;
 
-		U32 dynChild;
+		U32 dynChild = 0;
 		vectorA16<ColliderTree> children;
 
 		vectorA16<Collider> colliders;
-		U32 key;
+		U32 key = 0;
 
 		void insertCollider(const U32* keys, size_t keyCount, const Collider& c);
 		void exportColliders(vectorA16<Collider>& exportTo);

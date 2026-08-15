@@ -49,7 +49,7 @@ namespace hdt
 
 		void writeTransform()
 		{
-			for (int i = 0; i < m_systems.size(); ++i) m_systems[i]->writeTransform();
+			for (size_t i = 0; i < m_systems.size(); ++i) m_systems[i]->writeTransform();
 		}
 
 		void applyGravity() override;

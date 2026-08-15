@@ -243,6 +243,7 @@ namespace hdt
 		void dispatch(ColliderTree* a, ColliderTree* b, std::vector<Aabb*>& listA, std::vector<Aabb*>& listB, const Aabb& refinedBForPruningA)
 		{
 			CollisionResult result;
+			result.normOnB.setZero();
 			CollisionResult temp;
 			bool hasResult = false;
 

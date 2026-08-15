@@ -31,14 +31,14 @@ namespace hdt
 	SkinnedMeshWorld::~SkinnedMeshWorld()
 	{
 		for (auto system : m_systems) {
-			for (int i = 0; i < system->m_meshes.size(); ++i)
+			for (size_t i = 0; i < system->m_meshes.size(); ++i)
 				removeCollisionObject(system->m_meshes[i].get());
 
-			for (int i = 0; i < system->m_constraints.size(); ++i)
+			for (size_t i = 0; i < system->m_constraints.size(); ++i)
 				if (system->m_constraints[i]->m_constraint)
 					removeConstraint(system->m_constraints[i]->m_constraint);
 
-			for (int i = 0; i < system->m_bones.size(); ++i)
+			for (size_t i = 0; i < system->m_bones.size(); ++i)
 				removeRigidBody(&system->m_bones[i]->m_rig);
 
 			for (auto i : system->m_constraintGroups)
@@ -61,11 +61,11 @@ namespace hdt
 		}
 
 		m_systems.push_back(hdt::make_ref(system));
-		for (int i = 0; i < system->m_meshes.size(); ++i) {
+		for (size_t i = 0; i < system->m_meshes.size(); ++i) {
 			addCollisionObject(system->m_meshes[i].get(), 1, 1);
 		}
 
-		for (int i = 0; i < system->m_bones.size(); ++i) {
+		for (size_t i = 0; i < system->m_bones.size(); ++i) {
 			system->m_bones[i]->m_rig.setActivationState(DISABLE_DEACTIVATION);
 			// 0,0 mask disables the collision of this object on Bullet.
 			addRigidBody(&system->m_bones[i]->m_rig, 0, 0);
@@ -75,7 +75,7 @@ namespace hdt
 			for (auto j : i->m_constraints)
 				addConstraint(j->m_constraint, true);
 
-		for (int i = 0; i < system->m_constraints.size(); ++i)
+		for (size_t i = 0; i < system->m_constraints.size(); ++i)
 			addConstraint(system->m_constraints[i]->m_constraint, true);
 
 		// -10 allows RESET_PHYSICS down the calls. But equality with a float?...
@@ -95,12 +95,12 @@ namespace hdt
 				if (j->m_constraint)
 					removeConstraint(j->m_constraint);
 
-		for (int i = 0; i < system->m_meshes.size(); ++i)
+		for (size_t i = 0; i < system->m_meshes.size(); ++i)
 			removeCollisionObject(system->m_meshes[i].get());
-		for (int i = 0; i < system->m_constraints.size(); ++i)
+		for (size_t i = 0; i < system->m_constraints.size(); ++i)
 			if (system->m_constraints[i]->m_constraint)
 				removeConstraint(system->m_constraints[i]->m_constraint);
-		for (int i = 0; i < system->m_bones.size(); ++i)
+		for (size_t i = 0; i < system->m_bones.size(); ++i)
 			removeRigidBody(&system->m_bones[i]->m_rig);
 
 		std::swap(*idx, m_systems.back());
