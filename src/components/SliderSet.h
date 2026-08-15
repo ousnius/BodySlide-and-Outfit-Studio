@@ -389,6 +389,10 @@ class SliderSetFile {
 	int version = 1;
 	int error = 0;
 
+	// Renames the elements of pre-version 1 documents to their current names and stamps the
+	// version attribute, so that the document can be read more than once.
+	void UpgradeLegacyFormat();
+
 public:
 	std::string fileName;
 

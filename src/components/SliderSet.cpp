@@ -702,6 +702,12 @@ void SliderSetFile::Open(const std::string& srcFileName) {
 
 	version = root->IntAttribute("version");
 
+	// Bring old element names up to date before anything reads the document. The parsing
+	// functions rename them in place as well, which would make a second read of the same
+	// document find nothing (the version attribute stays at the old value there).
+	if (version < 1)
+		UpgradeLegacyFormat();
+
 	XMLElement* setElement;
 	std::string setname;
 	setElement = root->FirstChildElement("SliderSet");
@@ -711,6 +717,34 @@ void SliderSetFile::Open(const std::string& srcFileName) {
 		setsOrder.push_back(setname);
 		setElement = setElement->NextSiblingElement("SliderSet");
 	}
+}
+
+void SliderSetFile::UpgradeLegacyFormat() {
+	auto renameElements = [](XMLElement* parent, const char* oldName, const char* newName) {
+		XMLElement* element = parent->FirstChildElement(oldName);
+		while (element) {
+			XMLElement* nextElement = element->NextSiblingElement(oldName);
+			element->SetName(newName);
+			element = nextElement;
+		}
+	};
+
+	XMLElement* setElement = root->FirstChildElement("SliderSet");
+	while (setElement) {
+		renameElements(setElement, "SetFolder", "DataFolder");
+		renameElements(setElement, "BaseShapeName", "Shape");
+
+		XMLElement* sliderEntry = setElement->FirstChildElement("Slider");
+		while (sliderEntry) {
+			renameElements(sliderEntry, "datafile", "Data");
+			sliderEntry = sliderEntry->NextSiblingElement("Slider");
+		}
+
+		setElement = setElement->NextSiblingElement("SliderSet");
+	}
+
+	version = 1;
+	root->SetAttribute("version", version);
 }
 
 void SliderSetFile::New(const std::string& newFileName) {
