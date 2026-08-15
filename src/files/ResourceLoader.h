@@ -31,11 +31,14 @@ public:
 
 	// useDefaultTexture substitutes the "no image" placeholder for a missing diffuse. Only pass true for shapes that
 	// have a shader to begin with - a shape without one has no textures by definition and is meant to render untextured.
+	// isPBR says the slots hold what Community Shaders' True PBR puts in them, which spares slot 5 the environment mask
+	// classification: that slot carries an RMAOS map, and the classifier would call every one of them a Complex Material.
 	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles,
 							const std::string& vShaderFile,
 							const std::string& fShaderFile,
 							const bool reloadTextures = false,
-							const bool useDefaultTexture = true);
+							const bool useDefaultTexture = true,
+							const bool isPBR = false);
 
 
 	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and

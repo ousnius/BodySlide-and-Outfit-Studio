@@ -48,6 +48,7 @@ private:
 	bool bWeightColors = false;
 	bool bVertexColors = false;
 	bool bComplexMaterial = true;
+	bool bPBR = true;
 
 	float defLineWidth = 1.0f;
 	float defPointSize = 5.0f;
@@ -363,11 +364,14 @@ public:
 
 	Mesh::RenderMode SetMeshRenderMode(const std::string& name, Mesh::RenderMode mode);
 
+	// isPBR says the slots are filled the way Community Shaders' True PBR fills them, which keeps the
+	// environment mask classifier off slot 5 - a True PBR shape keeps its RMAOS map there instead.
 	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles,
 							const std::string& vShaderFile,
 							const std::string& fShaderFile,
 							const bool reloadTextures = false,
-							const bool useDefaultTexture = true);
+							const bool useDefaultTexture = true,
+							const bool isPBR = false);
 	GLMaterial* GetPointsMaterial();
 	GLMaterial* GetPrimitiveMaterial();
 	ResourceLoader* GetResourceLoader() { return &resLoader; }
@@ -402,6 +406,12 @@ public:
 	// Complex Material shading is still decided per texture and per pixel; this only says whether
 	// the ones that qualify are allowed to use it, so that the legacy look stays available.
 	void SetComplexMaterialEnabled(bool bEnable = true) { bComplexMaterial = bEnable; }
+
+	// Whether a shape carrying the True PBR flag is allowed to be rendered as one. Unlike the Complex
+	// Material switch this picks a different pair of shader files rather than feeding a uniform, so
+	// the caller has to re-assign the meshes' materials for a change here to show.
+	void SetPBREnabled(bool bEnable = true) { bPBR = bEnable; }
+	bool IsPBREnabled() const { return bPBR; }
 
 	void ToggleWireframe() {
 		if (bWireframe)

@@ -51,10 +51,14 @@ public:
 
 	// dynamicCubemapID replaces whatever the cube map slot resolved to, including nothing at all.
 	// Whether a shape has earned that is decided by the caller, so passing one here means it has.
+	// isPBR re-reads two slots the way Community Shaders' True PBR fills them rather than the way
+	// vanilla does: slot 5 as an RMAOS map instead of an environment mask, and slot 2 as an emissive
+	// color instead of a glow map. The rest of the layout the two have in common.
 	void BindTextures(GLfloat largestAF,
 					  const bool hasEnvMapping,
 					  const bool hasGlowmap,
 					  const bool hasBacklight,
 					  const bool hasLightmask,
-					  const GLuint dynamicCubemapID = 0);
+					  const GLuint dynamicCubemapID = 0,
+					  const bool isPBR = false);
 };

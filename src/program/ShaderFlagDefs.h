@@ -84,7 +84,7 @@ inline std::vector<ShaderFlagDef> GetSkyrimShaderFlags2() {
 		{"Packed Tangent", 8}, {"Multi Index Snow", 9}, {"Vertex Lighting", 10}, {"Uniform Scale", 11},
 		{"Fit Slope", 12}, {"Billboard", 13}, {"No LOD Land Blend", 14}, {"EnvMap Light Fade", 15},
 		{"Wireframe", 16}, {"Weapon Blood", 17}, {"Hide On Local Map", 18}, {"Premult Alpha", 19},
-		{"Cloud LOD", 20}, {"Anisotropic Lighting", 21}, {"No Transparency Multisampling", 22}, {"Unused 01", 23},
+		{"Cloud LOD", 20}, {"Anisotropic Lighting", 21}, {"No Transparency Multisampling", 22}, {"Unused 01 / PBR", 23},
 		{"Multi Layer Parallax", 24}, {"Soft Lighting", 25}, {"Rim Lighting", 26}, {"Back Lighting", 27},
 		{"Unused 02", 28}, {"Tree Anim", 29}, {"Effect Lighting", 30}, {"HD LOD Objects", 31}
 	};

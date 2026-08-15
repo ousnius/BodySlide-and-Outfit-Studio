@@ -3065,6 +3065,20 @@ void BodySlideApp::ApplyComplexMaterialSetting() {
 		preview->SetComplexMaterialEnabled(BodySlideConfig.GetBoolValue("Rendering/ComplexMaterial", true));
 }
 
+void BodySlideApp::ApplyPBRSetting() {
+	if (!preview)
+		return;
+
+	// True PBR decides which shader files a shape is given rather than feeding a uniform, and the pair
+	// is picked while the textures are assigned, so the meshes have to be built again to pick it up.
+	const bool pbrEnabled = BodySlideConfig.GetBoolValue("Rendering/TruePBR", true);
+	if (pbrEnabled == preview->IsPBREnabled())
+		return;
+
+	preview->SetPBREnabled(pbrEnabled);
+	RebuildPreviewMeshes();
+}
+
 bool BodySlideApp::ShowSetup() {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Setup.xrc");
@@ -6986,6 +7000,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			// Only feeds a uniform, so the meshes and their textures stay as they are
 			app->ApplyComplexMaterialSetting();
+
+			// This one picks the shader files, so it rebuilds the preview meshes when it changed
+			app->ApplyPBRSetting();
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			app->SaveFavorites();

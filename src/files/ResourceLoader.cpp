@@ -450,8 +450,12 @@ nifly::Vector3 ResourceLoader::GetCubemapF0Color(const std::string& texName) con
 	return nifly::Vector3(1.0f, 1.0f, 1.0f);
 }
 
-GLMaterial* ResourceLoader::AddMaterial(
-	const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures, const bool useDefaultTexture) {
+GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureFiles,
+										const std::string& vShaderFile,
+										const std::string& fShaderFile,
+										const bool reloadTextures,
+										const bool useDefaultTexture,
+										const bool isPBR) {
 	auto texFiles = textureFiles;
 
 	MaterialKey key(texFiles, vShaderFile, fShaderFile, useDefaultTexture);
@@ -482,8 +486,11 @@ GLMaterial* ResourceLoader::AddMaterial(
 			ClassifyCubemap(texFiles[i], textureID);
 		}
 
-		// Slot 5 is the environment mask, which is also where a Complex Material texture lives.
-		if (i == 5 && (reloadTextures || complexMaterialTextures.find(texFiles[i]) == complexMaterialTextures.end())) {
+		// Slot 5 is the environment mask, which is also where a Complex Material texture lives - unless
+		// the shape is a True PBR one, where the same slot carries an RMAOS map instead. Those look
+		// nothing like a greyscale mask, so the classifier would call every one of them a Complex
+		// Material and say so in the log, for a verdict nothing would ever read.
+		if (i == 5 && !isPBR && (reloadTextures || complexMaterialTextures.find(texFiles[i]) == complexMaterialTextures.end())) {
 			const bool isComplexMaterial = ClassifyComplexMaterial(textureID);
 			complexMaterialTextures[texFiles[i]] = isComplexMaterial;
 

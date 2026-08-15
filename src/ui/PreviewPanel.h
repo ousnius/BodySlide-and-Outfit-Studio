@@ -193,6 +193,11 @@ public:
 		Render();
 	}
 
+	// Unlike the Complex Material switch this decides which shader files a True PBR shape is given, so
+	// the caller has to rebuild the preview meshes afterwards for it to take effect.
+	void SetPBREnabled(bool enabled) { gls.SetPBREnabled(enabled); }
+	bool IsPBREnabled() const { return gls.IsPBREnabled(); }
+
 	void SetBaseDataPath(const std::string& path) { baseDataPath = path; }
 
 	void SetExtraNifPaths(const std::vector<std::string>& paths) { extraNifPaths = paths; }
@@ -222,12 +227,13 @@ public:
 						  const std::string& vShader,
 						  const std::string& fShader,
 						  const bool hasMatFile = false,
-						  const MaterialFile& matFile = MaterialFile()) {
+						  const MaterialFile& matFile = MaterialFile(),
+						  const bool isPBR = false) {
 		Mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
-		GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, false, m->hasShader);
+		GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, false, m->hasShader, isPBR);
 		if (mat) {
 			m->material = mat;
 			shapeMaterials[shapeName] = mat;

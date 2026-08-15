@@ -405,12 +405,30 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxEXPAND|wxALL</flag>
-						<border>5</border>
-						<object class="wxCheckBox" name="cbComplexMaterial">
-							<tooltip>Enables/disables Complex Material shading for Skyrim, where the environment mask texture holds a glossiness map in its green channel and a metalness map in its blue one. Turn this off to render such textures the way vanilla does.</tooltip>
-							<label>Complex Material</label>
-							<checked>1</checked>
+						<flag>wxEXPAND</flag>
+						<border>0</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxEXPAND|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbComplexMaterial">
+									<tooltip>Enables/disables Complex Material shading for Skyrim, where the environment mask texture holds a glossiness map in its green channel and a metalness map in its blue one. Turn this off to render such textures the way vanilla does.</tooltip>
+									<label>Complex Material</label>
+									<checked>1</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxEXPAND|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbTruePBR">
+									<tooltip>Enables/disables True PBR shading for Skyrim (Community Shaders), used by shapes with the "Unused 01" shader flag set. Their texture slots hold a roughness/metalness/AO/specular map instead of an environment mask. Turn this off to render such shapes the way vanilla does.</tooltip>
+									<label>True PBR</label>
+									<checked>1</checked>
+								</object>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">

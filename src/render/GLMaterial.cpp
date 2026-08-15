@@ -91,8 +91,13 @@ std::string GLMaterial::GetTexName(uint32_t index) {
 	return "";
 }
 
-void GLMaterial::BindTextures(
-	GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklightMap, const bool hasLightmask, const GLuint dynamicCubemapID) {
+void GLMaterial::BindTextures(GLfloat largestAF,
+							  const bool hasEnvMapping,
+							  const bool hasGlowmap,
+							  const bool hasBacklightMap,
+							  const bool hasLightmask,
+							  const GLuint dynamicCubemapID,
+							  const bool isPBR) {
 	if (resLoaderRef && !resLoaderRef->CacheStamp(cacheTime)) {
 		// outdated cache, rebuild it.
 		for (size_t i = 0; i < texCache.size(); i++) {
@@ -103,9 +108,11 @@ void GLMaterial::BindTextures(
 	shader.BindTexture(0, 0, "texDiffuse");
 	shader.BindTexture(1, 0, "texNormal");
 	shader.BindTexture(2, 0, "texGlowmap");
+	shader.BindTexture(2, 0, "texEmissive");
 	shader.BindTexture(3, 0, "texGreyscale");
 	shader.BindCubemap(4, 0, "texCubemap");
 	shader.BindTexture(5, 0, "texEnvMask");
+	shader.BindTexture(5, 0, "texRMAOS");
 	shader.BindTexture(6, 0, "texFaceTint");
 	shader.BindTexture(7, 0, "texSpecular");
 	shader.BindTexture(7, 0, "texBacklight");
@@ -133,7 +140,22 @@ void GLMaterial::BindTextures(
 				break;
 
 			case 2:
-				if (hasGlowmap) {
+				if (isPBR) {
+					// Emissive color rather than a glow map. Community Shaders gates it on the texture
+					// being there rather than on a flag, since the patcher that writes these meshes
+					// clears the glow map flag on its way past.
+					if (texCache[id] != 0) {
+						shader.BindTexture(id, texCache[id], "texEmissive");
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+						if (largestAF)
+							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
+						shader.SetPBREmissiveEnabled(true);
+					}
+					else
+						shader.SetPBREmissiveEnabled(false);
+				}
+				else if (hasGlowmap) {
 					shader.SetRimlightEnabled(false);
 					shader.SetSoftlightEnabled(false);
 
@@ -189,7 +211,22 @@ void GLMaterial::BindTextures(
 				break;
 
 			case 5:
-				if (hasEnvMapping) {
+				if (isPBR) {
+					// Roughness, metalness, ambient occlusion and specular level, not an environment
+					// mask. Bound whatever the shape says about environment mapping, which True PBR
+					// meshes leave switched off - this map is what shades the surface at all.
+					if (texCache[id] != 0) {
+						shader.BindTexture(id, texCache[id], "texRMAOS");
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+						if (largestAF)
+							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
+						shader.SetRMAOSEnabled(true);
+					}
+					else
+						shader.SetRMAOSEnabled(false);
+				}
+				else if (hasEnvMapping) {
 					if (texCache[id] != 0) {
 						shader.BindTexture(id, texCache[id], "texEnvMask");
 						glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

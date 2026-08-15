@@ -328,6 +328,7 @@ void PreviewPanel::OnShown() {
 
 	gls.SetPerspective(BodySlideConfig.GetBoolValue("Rendering/PerspectiveView", true));
 	gls.SetComplexMaterialEnabled(BodySlideConfig.GetBoolValue("Rendering/ComplexMaterial", true));
+	gls.SetPBREnabled(BodySlideConfig.GetBoolValue("Rendering/TruePBR", true));
 
 	glInitialized = true;
 
@@ -766,6 +767,7 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 
 	std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
 	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
+	bool renderAsPBR = false;
 
 	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
@@ -780,8 +782,18 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
 	}
+	else {
+		// A True PBR shape reads its texture slots differently enough from every other Skyrim shape
+		// that it gets its own pair rather than another branch inside the shared one.
+		Mesh* m = gls.GetMesh(shapeName);
+		if (m && m->pbr && gls.IsPBREnabled()) {
+			vShader = Config["AppDir"] + "/res/shaders/sk_truepbr.vert";
+			fShader = Config["AppDir"] + "/res/shaders/sk_truepbr.frag";
+			renderAsPBR = true;
+		}
+	}
 
-	SetShapeTextures(shapeName, texFiles, vShader, fShader, hasMat, mat);
+	SetShapeTextures(shapeName, texFiles, vShader, fShader, hasMat, mat, renderAsPBR);
 }
 
 void PreviewPanel::RenderNormalMap(const std::string& outfilename) {

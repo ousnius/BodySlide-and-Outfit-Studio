@@ -947,13 +947,17 @@ void GLSurface::RenderMesh(Mesh* m) {
 	shader.SetWireframeEnabled(false);
 	shader.SetNormalMapEnabled(false);
 	shader.SetAlphaMaskEnabled(false);
-	shader.SetCubemapEnabled(m->cubemap);
+	const bool wantsEnvironment = m->WantsEnvironment();
+
+	shader.SetCubemapEnabled(wantsEnvironment);
 	shader.SetEnvMaskEnabled(false);
+	shader.SetRMAOSEnabled(false);
+	shader.SetPBREmissiveEnabled(false);
 	shader.SetComplexMaterialEnabled(bComplexMaterial && m->complexMaterial);
 
 	// A cubemap generated from an HDRi has its own mip chain to blur through, and carries whatever
 	// color the placeholder it replaced stood for. One from a file reflects on its own account.
-	const bool useDynamicCubemap = hdri.IsActive() && m->cubemap && m->dynamicCubemap;
+	const bool useDynamicCubemap = hdri.IsActive() && wantsEnvironment && m->dynamicCubemap;
 	shader.SetCubemapMaxLod(useDynamicCubemap ? hdri.GetMaxLod() : m->cubemapMaxLod);
 	shader.SetCubemapMinLod(useDynamicCubemap ? GLHDRiEnvironment::GetMinLod() : 0.0f);
 	shader.SetCubemapTint(useDynamicCubemap ? m->cubemapTint : Vector3(1.0f, 1.0f, 1.0f));
@@ -1023,7 +1027,13 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glEnableVertexAttribArray(6);
 			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
 
-			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight, useDynamicCubemap ? hdri.GetCubemapID() : 0);
+			m->material->BindTextures(largestAF,
+									  wantsEnvironment,
+									  m->glowmap,
+									  m->backlightMap,
+									  m->rimlight || m->softlight,
+									  useDynamicCubemap ? hdri.GetCubemapID() : 0,
+									  m->pbr);
 		}
 
 		if (m->mask) {
@@ -1267,14 +1277,17 @@ void GLSurface::UpdateShaders(Mesh* m) {
 		// rather than per frame. Environment mapping is what puts a Complex Material in play at all:
 		// it's the shader property that gives slot 5 its meaning, not whether the cubemap file for
 		// slot 4 was found - a missing cubemap costs the reflection, not the glossiness.
-		m->complexMaterial = m->cubemap && m->material->IsComplexMaterial(5);
+		// A True PBR shape is never one: slot 5 holds its RMAOS map, which the classifier would read
+		// as a Complex Material mask given the chance.
+		m->complexMaterial = m->cubemap && !m->pbr && m->material->IsComplexMaterial(5);
 		m->cubemapMaxLod = static_cast<float>(std::min(m->material->GetTexMaxMipLevel(4), 7));
 
 		// A 1x1 cubemap is a placeholder asking for a dynamic one rather than a reflection, and a
-		// cubemap that isn't there leaves an env mapped shape with nothing to reflect at all. Both
-		// are cases an HDRi can stand in for; a cubemap the author actually authored is not.
+		// cubemap that isn't there leaves a shape that wanted an environment with nothing to reflect
+		// at all - which is every True PBR shape, since those leave slot 4 empty on purpose. Both are
+		// cases an HDRi can stand in for; a cubemap the author actually authored is not.
 		const int cubemapSize = m->material->GetCubemapSize(4);
-		m->dynamicCubemap = m->cubemap && (cubemapSize == 1 || !m->material->HasTexture(4));
+		m->dynamicCubemap = m->WantsEnvironment() && (cubemapSize == 1 || !m->material->HasTexture(4));
 		m->cubemapTint = m->material->GetCubemapF0Color(4);
 
 		// Without a diffuse there's nothing to sample, so such meshes are shaded with their mesh color instead.
@@ -1372,10 +1385,28 @@ Mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 
 		m->prop.alpha = shader->GetAlpha();
 
-		// Skin and hair tint colors, only used by their respective shader types
+		// Everything that has to come off the lighting shader property itself rather than off the
+		// NiShader interface: the tint colors of the shader types that have one, and the True PBR flag.
 		if (!nif->GetHeader().GetVersion().IsSF()) {
 			auto* bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
 			if (bslsp) {
+				// Community Shaders "True PBR", which a shape asks for with Shader Flags 2 bit 23 - the bit
+				// NifSkope shows as "Unused 01". Only asked of Skyrim: Fallout 4 shares the block type and
+				// spends that bit on something else, and its shapes have their own shader either way.
+				// The multi layer parallax shader type counts alongside the default one, since True PBR
+				// borrows it purely as somewhere to keep its coat, fuzz and glint parameters. Such a shape
+				// still holds its RMAOS map in slot 5, and reading that as one is far closer than falling
+				// back to vanilla, which would take the same map for an environment mask.
+				if (nif->GetHeader().GetVersion().Stream() < 130) {
+					const uint32_t bslspType = bslsp->GetShaderType();
+					m->pbr = (bslsp->shaderFlags2 & SLSF2_UNUSED01) != 0
+							 && (bslspType == BSLightingShaderPropertyShaderType::BSLSP_DEFAULT
+								 || bslspType == BSLightingShaderPropertyShaderType::BSLSP_MULTILAYERPARALLAX);
+
+					if (m->pbr)
+						wxLogMessage("Shape '%s' was detected as a True PBR material.", shapeName);
+				}
+
 				// Face tint map (FaceGen) of the face tint shader type, always in texture slot 6
 				m->faceTint = bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::BSLSP_FACE;
 
@@ -2349,12 +2380,16 @@ Mesh::RenderMode GLSurface::SetMeshRenderMode(const std::string& name, Mesh::Ren
 	return r;
 }
 
-GLMaterial* GLSurface::AddMaterial(
-	const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures, const bool useDefaultTexture) {
+GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles,
+								   const std::string& vShaderFile,
+								   const std::string& fShaderFile,
+								   const bool reloadTextures,
+								   const bool useDefaultTexture,
+								   const bool isPBR) {
 	if (!SetContext())
 		return nullptr;
 
-	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile, reloadTextures, useDefaultTexture);
+	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile, reloadTextures, useDefaultTexture, isPBR);
 	if (mat) {
 		std::string shaderError;
 		if (mat->GetShader().GetError(&shaderError)) {

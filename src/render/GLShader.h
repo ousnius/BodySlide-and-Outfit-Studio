@@ -106,6 +106,13 @@ public:
 	void SetCubemapEnabled(const bool enable);
 	void SetEnvMaskEnabled(const bool enable);
 	void SetComplexMaterialEnabled(const bool enable);
+	// Whether texture slot 5 resolved to the RMAOS map a True PBR shape keeps there. Without one the
+	// shader falls back to the white Community Shaders substitutes, which describes a fully rough
+	// fully metallic surface.
+	void SetRMAOSEnabled(const bool enable);
+	// Whether texture slot 5's neighbour in slot 2 resolved to the emissive color map of a True PBR
+	// shape, which is not the glow map vanilla keeps in the same slot.
+	void SetPBREmissiveEnabled(const bool enable);
 	// Highest mip the cubemap can be sampled at, which is how blurry a fully rough Complex Material
 	// reflection gets. Comes from the cubemap's own mip chain, since not every one has a full one.
 	void SetCubemapMaxLod(const float maxLod);

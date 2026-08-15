@@ -161,6 +161,12 @@ public:
 	// its green channel and metalness in its blue one, rather than the greyscale reflection mask
 	// vanilla puts there. Decided once from the texture itself, see ResourceLoader.
 	bool complexMaterial = false;
+	// True when the shape is a Community Shaders "True PBR" material, which it says by setting Shader
+	// Flags 2 bit 23 - the bit NifSkope shows as "Unused 01". Its texture slots hold different maps
+	// than vanilla's: slot 5 an RMAOS map rather than an environment mask, slot 2 an emissive color
+	// rather than a glow map, and slot 4 nothing at all. Such a shape is rendered through its own pair
+	// of shader files, so this is separate from a Complex Material and the two never both apply.
+	bool pbr = false;
 	// Highest mip of the cubemap in slot 4, how blurry a fully rough reflection is allowed to get.
 	float cubemapMaxLod = 0.0f;
 	// True when slot 4 asked to be replaced by a dynamic cubemap: either it holds the 1x1 cubemap
@@ -228,6 +234,10 @@ public:
 	// shape as nothing, which is never what a shape means to say: Fallout 4 skin NIFs leave the shader
 	// property's tint at black because the game supplies the actor's own skin tint at runtime.
 	bool HasTintColor() const;
+	// Whether the shape has something to reflect, which is what puts texture slots 4 and 5 in play.
+	// Environment mapping is one way to ask for it; being a True PBR shape is the other, and those say
+	// so with their own flag while leaving environment mapping switched off.
+	bool WantsEnvironment() const { return cubemap || pbr; }
 	bool HasAlphaBlend();
 
 	void ScaleVertices(const nifly::Vector3& center, const float& factor);

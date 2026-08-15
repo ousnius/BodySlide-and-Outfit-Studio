@@ -2391,6 +2391,15 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 				// Only feeds a uniform, so the meshes and their textures stay as they are
 				glView->gls.SetComplexMaterialEnabled(OutfitStudioConfig.GetBoolValue("Rendering/ComplexMaterial", true));
+
+				// True PBR picks a different pair of shader files rather than feeding a uniform, so the
+				// shapes have to go back through their material assignment for a change here to show.
+				const bool pbrEnabled = OutfitStudioConfig.GetBoolValue("Rendering/TruePBR", true);
+				if (pbrEnabled != glView->gls.IsPBREnabled()) {
+					glView->gls.SetPBREnabled(pbrEnabled);
+					MeshesFromProj();
+				}
+
 				glView->Render();
 			}
 
@@ -7917,10 +7926,12 @@ void OutfitStudioFrame::ApplyAutoHDRiBackground() {
 	if (hdriBackgroundCleared || !hdriBackground || glView->HasHDRiBackground())
 		return;
 
-	// Complex Material shading lives off what it reflects, so a project full of it is nearly
-	// impossible to judge against the flat background. Anything else is left as it was.
+	// Complex Material and True PBR shading both live off what they reflect, so a project full of
+	// either is nearly impossible to judge against the flat background. A True PBR shape has the
+	// stronger claim of the two: its cube map slot is deliberately empty, so without an HDRi there is
+	// no image based lighting for it at all. Anything else is left as it was.
 	const auto& meshes = glView->gls.GetMeshes();
-	if (std::none_of(meshes.begin(), meshes.end(), [](const Mesh* m) { return m->complexMaterial; }))
+	if (std::none_of(meshes.begin(), meshes.end(), [](const Mesh* m) { return m->complexMaterial || m->pbr; }))
 		return;
 
 	// Whatever the user last picked by hand, which is the only thing that ever gets written there.
@@ -14967,6 +14978,7 @@ void wxGLPanel::OnShown() {
 	gls.SetPerspective(perspectiveView);
 
 	gls.SetComplexMaterialEnabled(OutfitStudioConfig.GetBoolValue("Rendering/ComplexMaterial", true));
+	gls.SetPBREnabled(OutfitStudioConfig.GetBoolValue("Rendering/TruePBR", true));
 
 	os->MeshesFromProj();
 
@@ -15021,6 +15033,7 @@ void wxGLPanel::SetMeshTextures(
 
 	std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
 	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
+	bool renderAsPBR = false;
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
@@ -15035,8 +15048,15 @@ void wxGLPanel::SetMeshTextures(
 		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/ob_default.frag";
 	}
+	else if (m->pbr && gls.IsPBREnabled()) {
+		// A True PBR shape reads its texture slots differently enough from every other Skyrim shape
+		// that it gets its own pair rather than another branch inside the shared one.
+		vShader = Config["AppDir"] + "/res/shaders/sk_truepbr.vert";
+		fShader = Config["AppDir"] + "/res/shaders/sk_truepbr.frag";
+		renderAsPBR = true;
+	}
 
-	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, reloadTextures, m->hasShader);
+	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, reloadTextures, m->hasShader, renderAsPBR);
 	if (mat) {
 		m->material = mat;
 

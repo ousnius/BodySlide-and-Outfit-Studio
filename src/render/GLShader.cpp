@@ -83,9 +83,11 @@ void GLShader::AssignDefaultSamplerUnits() {
 		{"texNormal", 1},
 		{"texGlowmap", 2},
 		{"texLightmask", 2},
+		{"texEmissive", 2},
 		{"texGreyscale", 3},
 		{"texCubemap", 4},
 		{"texEnvMask", 5},
+		{"texRMAOS", 5},
 		{"texFaceTint", 6},
 		{"texSpecular", 7},
 		{"texBacklight", 7},
@@ -487,6 +489,18 @@ void GLShader::SetEnvMaskEnabled(const bool enable) {
 
 void GLShader::SetComplexMaterialEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bComplexMaterial");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetRMAOSEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bRMAOS");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetPBREmissiveEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bPBREmissive");
 	if (loc >= 0)
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
