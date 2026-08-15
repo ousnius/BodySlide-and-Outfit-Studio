@@ -154,9 +154,34 @@ class OutfitProject {
 	// All cloth data blocks that have been loaded during work
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>> clothData;
 
+	// All HDT-SMP physics links that sat on the root node of a loaded NIF. The
+	// game reads only one of them, so a single one is picked for the output.
+	std::vector<std::unique_ptr<nifly::NiStringExtraData>> rootPhysicsData;
+
 	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath = std::string()) const;
 	bool GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput);
 	void ValidateNIF(nifly::NifFile& nif, const std::string& nifFilePath = std::string());
+
+	// Records the HDT-SMP links on the root node of a NIF that is about to be
+	// merged into the work NIF, for the choice made on save
+	void CaptureRootPhysicsData(nifly::NifFile& srcNif);
+
+	// One block MergeRootExtraData could bring over: the block in the loaded NIF
+	// and, when the project already has one of the same type and name, the block
+	// on the work root that merging it would replace.
+	struct RootExtraDataCandidate {
+		nifly::NiExtraData* source = nullptr;
+		nifly::NiExtraData* replaces = nullptr;
+	};
+
+	// Copies the extra data of a NIF's root node onto the work NIF's root node.
+	// CloneShape only brings over the shape and its bones, so without this every
+	// file merged after the first loses whatever sat on its root.
+	void MergeRootExtraData(nifly::NifFile& srcNif);
+
+	// Lets the user narrow the blocks to merge down. Returns false on cancel.
+	bool ChooseRootExtraData(std::vector<RootExtraDataCandidate>& merging);
+
 	std::string SliderDataTargetForShape(nifly::NiShape* shape);
 	std::string ShapeTargetOrDefault(const std::string& shapeName);
 	bool TargetNameInUse(const std::string& targetName, const std::string& exceptShapeName);
@@ -211,6 +236,10 @@ public:
 	// Records the physics XML files linked to the given shapes of a NIF that
 	// is about to be merged into the work NIF, keyed by shape name.
 	void CapturePhysicsFiles(nifly::NifFile& nif, const std::vector<nifly::NiShape*>& shapes);
+
+	// Set while an unattended script drives the project. Prompts that would
+	// otherwise stall the run fall back to their default answer instead.
+	bool suppressPrompts = false;
 
 	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
 	OutfitProject(OutfitStudioFrame* inOwner = nullptr);
@@ -494,6 +523,7 @@ public:
 	std::vector<bool> CalculateAsymmetricTriangleVertexMask(nifly::NiShape* shape, const Mesh::WeldVertsType& weldVerts);
 
 	void ChooseClothData(nifly::NifFile& nif);
+	void ChoosePhysicsData(nifly::NifFile& nif);
 	void ResetTransforms();
 
 	void CreateSkinning(nifly::NiShape* s);

@@ -2246,6 +2246,22 @@ int AutomationDialog::RunHeadless(const wxString& scriptName, const wxArrayStrin
 	headlessMode = true;
 	lastRunErrors = 0;
 
+	// Nobody is there to answer prompts, and the project outlives this dialog
+	struct PromptSuppression {
+		OutfitProject* project = nullptr;
+
+		PromptSuppression(OutfitProject* inProject)
+			: project(inProject) {
+			if (project)
+				project->suppressPrompts = true;
+		}
+
+		~PromptSuppression() {
+			if (project)
+				project->suppressPrompts = false;
+		}
+	} promptSuppression(project);
+
 	if (scriptName.IsEmpty()) {
 		wxLogError("Automation: No script name provided.");
 		return 1;

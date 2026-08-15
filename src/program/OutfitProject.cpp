@@ -314,6 +314,42 @@ void ReconcileCopyGeoPartitions(NifFile& workNif, NiShape* source, NiShape* targ
 	uss.hasSegmentInfo = false;
 }
 
+// HDT-SMP links a model to its physics XML with a NiStringExtraData of this
+// name. The game only reads it from the model's root node.
+const std::string physicsExtraDataName = "hdt skinned mesh physics object";
+
+bool IsPhysicsExtraData(NiExtraData* extraData) {
+	auto stringExtraData = dynamic_cast<NiStringExtraData*>(extraData);
+	return stringExtraData && ToLower(stringExtraData->name.get()) == physicsExtraDataName;
+}
+
+// The HDT-SMP links on the root node of a NIF, in block order
+std::vector<NiStringExtraData*> GetRootPhysicsExtraData(NifFile& nif) {
+	std::vector<NiStringExtraData*> physicsData;
+
+	auto root = nif.GetRootNode();
+	if (!root)
+		return physicsData;
+
+	for (auto& extraDataRef : root->extraDataRefs) {
+		auto stringExtraData = nif.GetHeader().GetBlock<NiStringExtraData>(extraDataRef);
+		if (stringExtraData && IsPhysicsExtraData(stringExtraData))
+			physicsData.push_back(stringExtraData);
+	}
+
+	return physicsData;
+}
+
+// Points the strings of a block that was cloned out of another NIF at the
+// strings of the header it now lives in
+void RemapExtraDataStrings(NifFile& nif, NiExtraData* extraData) {
+	std::vector<NiStringRef*> stringRefs;
+	extraData->GetStringRefs(stringRefs);
+
+	for (auto& stringRef : stringRefs)
+		stringRef->SetIndex(nif.GetHeader().AddOrFindStringId(stringRef->get()));
+}
+
 }
 
 OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
@@ -558,6 +594,7 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 
 		NifFile clone(workNif);
 		ChooseClothData(clone);
+		ChoosePhysicsData(clone);
 
 		if (!copyRef && baseShape) {
 			std::string baseShapeName = baseShape->name.get();
@@ -3085,10 +3122,24 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 		deletedShapes.push_back(shapeName);
 	}
 
+	// Add cloth data block of NIF to the list
+	std::vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(nullptr, true);
+	for (auto& cloth : clothDataBlocks)
+		clothData[fileName] = cloth->Clone();
+
+	refNif.GetHeader().DeleteBlockByType("BSClothExtraData");
+
+	// Record physics XML links of the reference before it is merged in
+	CaptureRootPhysicsData(refNif);
+	CapturePhysicsFiles(refNif, {refShape});
+
 	if (workNif.IsValid()) {
 		// Copy only reference shape
 		auto clonedShape = workNif.CloneShape(refShape, shapeName, &refNif);
 		workAnim.LoadFromNif(&workNif, clonedShape);
+
+		// CloneShape leaves the root behind, so bring its extra data over
+		MergeRootExtraData(refNif);
 	}
 	else {
 		// Copy the full file
@@ -3215,12 +3266,16 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	refNif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
 	// Record physics XML links of the reference before it is merged in
+	CaptureRootPhysicsData(refNif);
 	CapturePhysicsFiles(refNif, {refShape});
 
 	if (workNif.IsValid()) {
 		// Copy only reference shape
 		auto clonedShape = workNif.CloneShape(refShape, shape, &refNif);
 		workAnim.LoadFromNif(&workNif, clonedShape);
+
+		// CloneShape leaves the root behind, so bring its extra data over
+		MergeRootExtraData(refNif);
 	}
 	else {
 		// Copy the full file
@@ -5336,19 +5391,13 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 }
 
 void OutfitProject::CapturePhysicsFiles(NifFile& nif, const std::vector<NiShape*>& shapes) {
-	// HDT-SMP links a model to its physics XML with a NiStringExtraData named
-	// "HDT Skinned Mesh Physics Object". The game only reads it from the
-	// model's root node, so that is where it usually sits, but extra data
-	// further down the hierarchy is honored here as well.
-	static const std::string physicsExtraDataName = "hdt skinned mesh physics object";
-
+	// The game only reads the physics link from the model's root node, so that
+	// is where it usually sits, but extra data further down the hierarchy is
+	// honored here as well.
 	auto collect = [&nif](NiObjectNET* obj, std::vector<std::string>& outFiles) {
 		for (auto& extraDataRef : obj->extraDataRefs) {
 			auto stringExtraData = nif.GetHeader().GetBlock<NiStringExtraData>(extraDataRef);
-			if (!stringExtraData)
-				continue;
-
-			if (ToLower(stringExtraData->name.get()) != physicsExtraDataName)
+			if (!stringExtraData || !IsPhysicsExtraData(stringExtraData))
 				continue;
 
 			const std::string& xmlPath = stringExtraData->stringData.get();
@@ -5375,6 +5424,139 @@ void OutfitProject::CapturePhysicsFiles(NifFile& nif, const std::vector<NiShape*
 		else
 			shapePhysicsFiles[shapeName] = std::move(physicsFiles);
 	}
+}
+
+void OutfitProject::CaptureRootPhysicsData(NifFile& srcNif) {
+	for (auto* physicsExtraData : GetRootPhysicsExtraData(srcNif)) {
+		const std::string xmlPath = ToLower(physicsExtraData->stringData.get());
+		if (xmlPath.empty())
+			continue;
+
+		// The same file linked by two sources is one choice, not two
+		bool known = false;
+		for (auto& knownData : rootPhysicsData) {
+			if (ToLower(knownData->stringData.get()) == xmlPath) {
+				known = true;
+				break;
+			}
+		}
+
+		if (!known)
+			rootPhysicsData.push_back(physicsExtraData->Clone());
+	}
+}
+
+void OutfitProject::MergeRootExtraData(NifFile& srcNif) {
+	auto srcRoot = srcNif.GetRootNode();
+	auto destRoot = workNif.GetRootNode();
+	if (!srcRoot || !destRoot)
+		return;
+
+	// Extra data is looked up by name, so only one block of a type and name can
+	// ever be read. A loaded file that brings its own is offered as a
+	// replacement for the one the project already has.
+	auto findMatch = [](NiExtraData* extraData, NiExtraData* other) {
+		return other->GetBlockName() == std::string(extraData->GetBlockName()) && ToLower(other->name.get()) == ToLower(extraData->name.get());
+	};
+
+	auto findLoaded = [this, destRoot, &findMatch](NiExtraData* extraData) -> NiExtraData* {
+		for (auto& extraDataRef : destRoot->extraDataRefs) {
+			auto existing = workNif.GetHeader().GetBlock<NiExtraData>(extraDataRef);
+			if (existing && findMatch(extraData, existing))
+				return existing;
+		}
+
+		return nullptr;
+	};
+
+	std::vector<RootExtraDataCandidate> merging;
+	for (auto& extraDataRef : srcRoot->extraDataRefs) {
+		auto extraData = srcNif.GetHeader().GetBlock<NiExtraData>(extraDataRef);
+		if (!extraData)
+			continue;
+
+		// Cloth and physics data is collected per source and picked on save
+		if (dynamic_cast<BSClothExtraData*>(extraData) || IsPhysicsExtraData(extraData))
+			continue;
+
+		// A file listing the same name twice is offered once
+		bool duplicate = std::any_of(merging.begin(), merging.end(), [&](const RootExtraDataCandidate& candidate) {
+			return findMatch(extraData, candidate.source);
+		});
+
+		if (!duplicate)
+			merging.push_back({extraData, findLoaded(extraData)});
+	}
+
+	if (merging.empty())
+		return;
+
+	if (!ChooseRootExtraData(merging))
+		return;
+
+	for (auto& candidate : merging) {
+		// Making room for the replacement shifts block indices around, so the
+		// id of the block on its way out is resolved right before it goes
+		if (candidate.replaces)
+			workNif.GetHeader().DeleteBlock(workNif.GetBlockID(candidate.replaces));
+
+		auto clonedExtraData = candidate.source->Clone();
+		auto clonedBlock = clonedExtraData.get();
+		workNif.AssignExtraData(destRoot, std::move(clonedExtraData));
+
+		// The clone's string indices still point into the source header
+		RemapExtraDataStrings(workNif, clonedBlock);
+	}
+}
+
+bool OutfitProject::ChooseRootExtraData(std::vector<RootExtraDataCandidate>& merging) {
+	auto keepChosen = [&merging](const wxArrayInt& sel) {
+		std::vector<RootExtraDataCandidate> chosen;
+		for (size_t i = 0; i < sel.Count(); i++)
+			chosen.push_back(merging[sel[i]]);
+
+		merging = std::move(chosen);
+	};
+
+	wxArrayString extraDataNames;
+	wxArrayInt preSelected;
+	bool anyReplaced = false;
+
+	for (auto& candidate : merging) {
+		wxString label = wxString::Format("%s: %s", candidate.source->GetBlockName(), wxString::FromUTF8(candidate.source->name.get()));
+
+		auto stringExtraData = dynamic_cast<NiStringExtraData*>(candidate.source);
+		if (stringExtraData)
+			label += " = " + wxString::FromUTF8(stringExtraData->stringData.get());
+
+		// Replacing what the project already has is never the default
+		if (candidate.replaces) {
+			label += _(" (replaces the loaded one)");
+			anyReplaced = true;
+		}
+		else
+			preSelected.Add(static_cast<int>(extraDataNames.GetCount()));
+
+		extraDataNames.Add(label);
+	}
+
+	// Unattended runs get the default answer of "everything but the replacements"
+	if (suppressPrompts) {
+		keepChosen(preSelected);
+		return true;
+	}
+
+	wxString message = _("The root node of the loaded file has extra data for the root node of the project. Please choose all the entries to merge.");
+	if (anyReplaced)
+		message += "\n \n" + _("The entries that aren't checked already exist in the project under the same name. Only one block of a name can be used, so merging one of them replaces the one that is currently loaded.");
+
+	wxMultiChoiceDialog extraDataChoice(owner, message, _("Choose extra data"), extraDataNames);
+	extraDataChoice.SetSelections(preSelected);
+	if (extraDataChoice.ShowModal() == wxID_CANCEL)
+		return false;
+
+	keepChosen(extraDataChoice.GetSelections());
+	return true;
 }
 
 void OutfitProject::CaptureShapeDeleteState(NiShape* shape, UndoStateShapeDelete& state) {
@@ -6504,6 +6686,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
 	// Record physics XML links of all shapes before they are merged in
+	CaptureRootPhysicsData(nif);
 	CapturePhysicsFiles(nif, nif.GetShapes());
 
 	if (workNif.IsValid()) {
@@ -6512,6 +6695,9 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 			auto clonedShape = workNif.CloneShape(s, shapeName, &nif);
 			workAnim.LoadFromNif(&workNif, clonedShape);
 		}
+
+		// CloneShape leaves the root behind, so bring its extra data over
+		MergeRootExtraData(nif);
 	}
 	else {
 		workNif.CopyFrom(nif);
@@ -6527,6 +6713,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 
 	NifFile clone(workNif);
 	ChooseClothData(clone);
+	ChoosePhysicsData(clone);
 
 	std::vector<Vector3> liveVerts;
 	std::vector<Vector3> liveNorms;
@@ -6589,14 +6776,23 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 		for (auto& cloth : clothData)
 			clothFileNames.Add(wxString::FromUTF8(cloth.first));
 
-		wxMultiChoiceDialog clothDataChoice(owner,
-											_("There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."),
-											_("Choose cloth data"),
-											clothFileNames);
-		if (clothDataChoice.ShowModal() == wxID_CANCEL)
-			return;
+		wxArrayInt sel;
+		if (suppressPrompts) {
+			// Unattended runs get the default answer of "all origins"
+			for (size_t i = 0; i < clothFileNames.GetCount(); i++)
+				sel.Add(static_cast<int>(i));
+		}
+		else {
+			wxMultiChoiceDialog clothDataChoice(owner,
+												_("There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."),
+												_("Choose cloth data"),
+												clothFileNames);
+			if (clothDataChoice.ShowModal() == wxID_CANCEL)
+				return;
 
-		wxArrayInt sel = clothDataChoice.GetSelections();
+			sel = clothDataChoice.GetSelections();
+		}
+
 		for (size_t i = 0; i < sel.Count(); i++) {
 			std::string selString{clothFileNames[sel[i]].ToUTF8()};
 			if (!selString.empty()) {
@@ -6612,6 +6808,50 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 	}
 }
 
+void OutfitProject::ChoosePhysicsData(NifFile& nif) {
+	if (rootPhysicsData.empty())
+		return;
+
+	auto root = nif.GetRootNode();
+	if (!root)
+		return;
+
+	size_t chosen = 0;
+	if (rootPhysicsData.size() > 1 && !suppressPrompts) {
+		wxArrayString physicsFileNames;
+		for (auto& physicsData : rootPhysicsData)
+			physicsFileNames.Add(wxString::FromUTF8(physicsData->stringData.get()));
+
+		wxSingleChoiceDialog physicsDataChoice(
+			owner,
+			_("There was HDT-SMP physics data loaded at some point. Only one physics file can be linked to the root node, so please choose the one to use in the output."),
+			_("Choose physics data"),
+			physicsFileNames);
+		physicsDataChoice.SetSelection(0);
+		if (physicsDataChoice.ShowModal() == wxID_CANCEL)
+			return;
+
+		int sel = physicsDataChoice.GetSelection();
+		if (sel == wxNOT_FOUND)
+			return;
+
+		chosen = static_cast<size_t>(sel);
+	}
+
+	// Drop the links the work NIF inherited from the file it was created from,
+	// so the choice is the only one left. Deleting a block clears the refs
+	// pointing at it and shifts every higher block index down, so the ids have
+	// to be resolved one at a time.
+	for (auto* existingData : GetRootPhysicsExtraData(nif))
+		nif.GetHeader().DeleteBlock(nif.GetBlockID(existingData));
+
+	auto clonedData = rootPhysicsData[chosen]->Clone();
+	auto clonedBlock = clonedData.get();
+	nif.AssignExtraData(root, std::move(clonedData));
+
+	RemapExtraDataStrings(nif, clonedBlock);
+}
+
 int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes, std::optional<bool> useInternalGeom) {
 	if (exportShapes.empty())
 		return 1;
@@ -6623,6 +6863,7 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 
 	NifFile clone(workNif);
 	ChooseClothData(clone);
+	ChoosePhysicsData(clone);
 
 	clone.SetShapeOrder(owner->GetShapeList());
 
