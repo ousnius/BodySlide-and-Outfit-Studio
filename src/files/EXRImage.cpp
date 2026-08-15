@@ -174,12 +174,18 @@ bool LoadEXRImage(const std::string& fileName, std::vector<uint16_t>& outRGBA, i
 		}
 	}
 	else {
-		int32_t tilesX = 0, tilesY = 0;
-		if (exr_get_tile_counts(ctxt, part, 0, 0, &tilesX, &tilesY) != EXR_ERR_SUCCESS) {
+		// exr_get_tile_counts() only exists from OpenEXR 3.2 on, and Ubuntu still ships 3.1. The
+		// counts follow from the tile size, which every version has, over the area level 0 covers,
+		// which is the data window.
+		int32_t tileWidth = 0, tileHeight = 0;
+		if (exr_get_tile_sizes(ctxt, part, 0, 0, &tileWidth, &tileHeight) != EXR_ERR_SUCCESS || tileWidth <= 0 || tileHeight <= 0) {
 			outError = "Tiled image could not be read.";
 			exr_finish(&ctxt);
 			return false;
 		}
+
+		const int32_t tilesX = (width + tileWidth - 1) / tileWidth;
+		const int32_t tilesY = (height + tileHeight - 1) / tileHeight;
 
 		for (int32_t ty = 0; ty < tilesY; ty++) {
 			for (int32_t tx = 0; tx < tilesX; tx++) {
