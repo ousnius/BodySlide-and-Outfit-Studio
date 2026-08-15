@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
+#include "GLHDRiEnvironment.h"
 #include "GLMaterial.h"
 #include "NifFile.hpp"
 
@@ -46,6 +47,7 @@ private:
 	bool bMaskVisible = true;
 	bool bWeightColors = false;
 	bool bVertexColors = false;
+	bool bComplexMaterial = true;
 
 	float defLineWidth = 1.0f;
 	float defPointSize = 5.0f;
@@ -72,6 +74,7 @@ private:
 	nifly::Vector3 colorGreen = nifly::Vector3(0.25f, 1.0f, 0.25f);
 
 	ResourceLoader resLoader;
+	GLHDRiEnvironment hdri;
 	GLMaterial* pointsMat = nullptr;
 	GLMaterial* primitiveMat = nullptr;
 
@@ -101,6 +104,12 @@ public:
 
 	nifly::Vector3 GetBackgroundColor() const { return colorBackground; }
 	void SetBackgroundColor(const nifly::Vector3& color) { colorBackground = color; }
+
+	// Loads an HDRi to use as the environment, given as a file name inside res/hdri. An empty name
+	// turns it off and puts the flat background color back. The cube map it builds also stands in
+	// for cube map slots that asked for a dynamic one, so this changes reflections as well.
+	bool SetHDRiBackground(const std::string& fileName);
+	bool HasHDRiBackground() const { return hdri.IsActive(); }
 
 	nifly::Vector3 GetWireColor() const { return colorWire; }
 	void SetWireColor(const nifly::Vector3& color) { colorWire = color; }
@@ -389,6 +398,10 @@ public:
 		for (auto& o : overlays)
 			UpdateShaders(o);
 	}
+
+	// Complex Material shading is still decided per texture and per pixel; this only says whether
+	// the ones that qualify are allowed to use it, so that the legacy look stays available.
+	void SetComplexMaterialEnabled(bool bEnable = true) { bComplexMaterial = bEnable; }
 
 	void ToggleWireframe() {
 		if (bWireframe)

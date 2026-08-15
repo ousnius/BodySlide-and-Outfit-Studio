@@ -12,6 +12,8 @@ See the included LICENSE file
 #include <wx/filename.h>
 #include <wx/log.h>
 
+#include <cmath>
+
 extern ConfigurationManager Config;
 
 ResourceLoader::ResourceLoader() {}
@@ -310,6 +312,144 @@ GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t s
 	return GLI_create_texture(texture, textureID);
 }
 
+int ResourceLoader::GetBoundMaxMipLevel(GLenum levelTarget) {
+	int maxLevel = 0;
+
+	// 32 is past the largest texture any GL implementation allows, so this terminates either way.
+	for (GLint level = 1; level < 32; level++) {
+		GLint levelWidth = 0;
+		glGetTexLevelParameteriv(levelTarget, level, GL_TEXTURE_WIDTH, &levelWidth);
+		if (levelWidth <= 0)
+			break;
+
+		maxLevel = level;
+	}
+
+	return maxLevel;
+}
+
+bool ResourceLoader::ClassifyComplexMaterial(GLuint textureID) const {
+	glBindTexture(GL_TEXTURE_2D, textureID);
+
+	const GLint level = GetBoundMaxMipLevel(GL_TEXTURE_2D);
+
+	GLint width = 0;
+	GLint height = 0;
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_WIDTH, &width);
+	glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_HEIGHT, &height);
+	if (width <= 0 || height <= 0)
+		return false;
+
+	// Asking for RGBA8 makes the driver decompress whatever block format the file was in.
+	std::vector<uint8_t> pixels(static_cast<size_t>(width) * height * 4);
+
+	GLint packAlignment = 4;
+	glGetIntegerv(GL_PACK_ALIGNMENT, &packAlignment);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glGetTexImage(GL_TEXTURE_2D, level, GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+	glPixelStorei(GL_PACK_ALIGNMENT, packAlignment);
+
+	double sumR = 0.0, sumG = 0.0, sumB = 0.0;
+	const size_t texelCount = static_cast<size_t>(width) * height;
+	for (size_t i = 0; i < texelCount; i++) {
+		sumR += pixels[i * 4 + 0];
+		sumG += pixels[i * 4 + 1];
+		sumB += pixels[i * 4 + 2];
+	}
+
+	const float avgR = static_cast<float>(sumR / texelCount / 255.0);
+	const float avgG = static_cast<float>(sumG / texelCount / 255.0);
+	const float avgB = static_cast<float>(sumB / texelCount / 255.0);
+
+	// Values at or below 4/255 count as black; the channels can't hold anything smaller reliably
+	// once the texture has been block compressed.
+	const float threshold = 4.0f / 255.0f;
+
+	// A vanilla environment mask is greyscale, so its green channel is nothing but the mask again.
+	// Reading that as a glossiness map would change how every env mapped shape has always looked.
+	const bool greyscale = std::fabs(avgR - avgG) < threshold && std::fabs(avgR - avgB) < threshold && std::fabs(avgG - avgB) < threshold;
+
+	return !greyscale && avgG > threshold;
+}
+
+void ResourceLoader::ClassifyCubemap(const std::string& texName, GLuint textureID) {
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+	GLint width = 0;
+	glGetTexLevelParameteriv(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_TEXTURE_WIDTH, &width);
+	cubemapSizes[texName] = width;
+
+	if (width != 1)
+		return;
+
+	// The texel of a 1x1 cube map isn't a reflection, it's an sRGB F0 reflectance the dynamic cube
+	// map replacing it should be tinted with. Asking for RGBA8 makes the driver decompress whatever
+	// block format the file was in.
+	uint8_t texel[4] = {0, 0, 0, 0};
+
+	GLint packAlignment = 4;
+	glGetIntegerv(GL_PACK_ALIGNMENT, &packAlignment);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGBA, GL_UNSIGNED_BYTE, texel);
+	glPixelStorei(GL_PACK_ALIGNMENT, packAlignment);
+
+	// Only a texel bright enough to be a reflectance is one. The dimmest a real material gets is the
+	// 0.04 linear of a dielectric, which is 56 in sRGB, so anything below that was authored to switch
+	// the static reflection off rather than to describe a surface - black and the near-blacks authors
+	// reach for instead both mean "give me a dynamic one", and stand for full reflectance. Taking such
+	// a texel as an F0 would scale the dynamic cube map down by a factor of hundreds, which looks
+	// exactly like the substitution never having happened.
+	const uint8_t f0Floor = 56;
+	if (texel[0] < f0Floor && texel[1] < f0Floor && texel[2] < f0Floor) {
+		wxLogMessage("Texture file '%s' is a 1x1 cube map standing in for a dynamic one.", texName);
+		return;
+	}
+
+	auto srgbToLinear = [](const uint8_t value) {
+		const float v = value / 255.0f;
+		return v <= 0.04045f ? v / 12.92f : std::pow((v + 0.055f) / 1.055f, 2.4f);
+	};
+
+	cubemapF0Colors[texName] = nifly::Vector3(srgbToLinear(texel[0]), srgbToLinear(texel[1]), srgbToLinear(texel[2]));
+	wxLogMessage("Texture file '%s' is a 1x1 cube map with an F0 of %.3f, %.3f, %.3f.",
+				 texName,
+				 cubemapF0Colors[texName].x,
+				 cubemapF0Colors[texName].y,
+				 cubemapF0Colors[texName].z);
+}
+
+bool ResourceLoader::IsComplexMaterialTexture(const std::string& texName) const {
+	auto it = complexMaterialTextures.find(texName);
+	if (it != complexMaterialTextures.end())
+		return it->second;
+
+	return false;
+}
+
+int ResourceLoader::GetTextureMaxMipLevel(const std::string& texName) const {
+	auto it = textureMaxMipLevels.find(texName);
+	if (it != textureMaxMipLevels.end())
+		return it->second;
+
+	return 0;
+}
+
+int ResourceLoader::GetCubemapSize(const std::string& texName) const {
+	auto it = cubemapSizes.find(texName);
+	if (it != cubemapSizes.end())
+		return it->second;
+
+	return 0;
+}
+
+nifly::Vector3 ResourceLoader::GetCubemapF0Color(const std::string& texName) const {
+	auto it = cubemapF0Colors.find(texName);
+	if (it != cubemapF0Colors.end())
+		return it->second;
+
+	return nifly::Vector3(1.0f, 1.0f, 1.0f);
+}
+
 GLMaterial* ResourceLoader::AddMaterial(
 	const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures, const bool useDefaultTexture) {
 	auto texFiles = textureFiles;
@@ -332,6 +472,24 @@ GLMaterial* ResourceLoader::AddMaterial(
 			continue;
 
 		texRefs[i] = textureID;
+
+		// Slot 4 is the environment cube map, whose mip chain is how far a Complex Material
+		// reflection can be blurred, and whose size says whether it is a real reflection or the 1x1
+		// placeholder that asks for a dynamic one.
+		if (isCubeMap && (reloadTextures || textureMaxMipLevels.find(texFiles[i]) == textureMaxMipLevels.end())) {
+			glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+			textureMaxMipLevels[texFiles[i]] = GetBoundMaxMipLevel(GL_TEXTURE_CUBE_MAP_POSITIVE_X);
+			ClassifyCubemap(texFiles[i], textureID);
+		}
+
+		// Slot 5 is the environment mask, which is also where a Complex Material texture lives.
+		if (i == 5 && (reloadTextures || complexMaterialTextures.find(texFiles[i]) == complexMaterialTextures.end())) {
+			const bool isComplexMaterial = ClassifyComplexMaterial(textureID);
+			complexMaterialTextures[texFiles[i]] = isComplexMaterial;
+
+			if (isComplexMaterial)
+				wxLogMessage("Texture file '%s' was detected as a Complex Material.", texFiles[i]);
+		}
 	}
 
 	// No diffuse found

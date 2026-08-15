@@ -59,7 +59,10 @@
         <PointSizeMin>4.0</PointSizeMin>
         <PointSizeMax>14.0</PointSizeMax>
         <!-- Multiplier on the screen-space spacing between neighbor vertices. Lower = smaller points on dense meshes. -->
-        <PointSizeScale>0.6</PointSizeScale></Rendering>
+        <PointSizeScale>0.6</PointSizeScale>
+        <!-- The HDRi last picked in the Outfit Studio lights panel, as a file name in the "res\hdri" folder.
+	Outfit Studio always starts without one and turns this back on when a project with Complex Materials is loaded. -->
+        <HDRIBackground></HDRIBackground></Rendering>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference></DefaultSkeletonReference>

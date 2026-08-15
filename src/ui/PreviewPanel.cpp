@@ -327,6 +327,7 @@ void PreviewPanel::OnShown() {
 		Config.GetFloatValue("Rendering/PointSizeScale", 0.6f));
 
 	gls.SetPerspective(BodySlideConfig.GetBoolValue("Rendering/PerspectiveView", true));
+	gls.SetComplexMaterialEnabled(BodySlideConfig.GetBoolValue("Rendering/ComplexMaterial", true));
 
 	glInitialized = true;
 

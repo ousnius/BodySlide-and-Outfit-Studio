@@ -201,6 +201,9 @@ public:
 	bool SetDefaultConfig();
 	bool ShowSetup();
 
+	// Pushes the Complex Material render setting to the preview, if one is open.
+	void ApplyComplexMaterialSetting();
+
 	std::string GetOutputDataPath() const;
 	SliderSet& GetActiveSet() { return projects[0]->sliderSet; }
 	DiffDataSets& GetActiveDataSets() { return projects[0]->dataSets; }

@@ -35,6 +35,17 @@ uniform bool bSoftlight;
 uniform bool bGlowmap;
 uniform bool bTintColor;
 uniform bool bFaceTint;
+uniform bool bComplexMaterial;
+
+// Highest mip the cubemap has, which is as blurry as a fully rough reflection can get
+uniform float cubemapMaxLod;
+// Sharpest mip a reflection may use. A cubemap generated from an HDRi keeps a trace of blur even at
+// full gloss, which reads as more realistic than a mirror; one from a file passes 0 and stays as
+// authored.
+uniform float cubemapMinLod;
+// Tints what the cubemap reflects. Carries the sRGB F0 reflectance the 1x1 cubemap a generated one
+// replaced stood for, and is 1.0 for a cubemap that reflects on its own account.
+uniform vec3 cubemapTint;
 
 uniform mat4 matModel;
 uniform mat4 matView;
@@ -92,6 +103,16 @@ out vec4 fragColor;
 vec3 normal = vec3(0.0);
 float specFactor = 0.0;
 
+// Effective specular terms. Same as the shader property values unless a Complex Material
+// replaced them with what its glossiness and metalness maps ask for.
+float shininess = 0.0;
+vec3 specularColor = vec3(1.0);
+
+// Complex Material state, filled in by complexMaterial() below
+bool cmActive = false;
+float cmGlossiness = 1.0;
+vec3 cmSpecularColor = vec3(1.0);
+
 vec2 uv = vec2(0.0);
 vec3 albedo = vec3(0.0);
 vec3 emissive = vec3(0.0);
@@ -122,7 +143,7 @@ void directionalLight(in DirectionalLight light, in vec3 lightDir, inout vec3 ou
 	float NdotV = max(dot(normal, viewDir), 0.0);
 
 	outDiffuse += ambient + NdotL * light.diffuse;
-	outSpec += clamp(prop.specularColor * prop.specularStrength * specFactor * pow(NdotH, prop.shininess), 0.0, 1.0) * light.diffuse;
+	outSpec += clamp(specularColor * prop.specularStrength * specFactor * pow(NdotH, shininess), 0.0, 1.0) * light.diffuse;
 
 	// Back lighting not really useful for the current light setup of multiple directional lights
 	//if (bBacklight && bShowTexture)
@@ -200,13 +221,12 @@ void main(void)
 					}
 				}
 
-				if (bCubemap)
+				if (bEnvMask)
 				{
-					if (bEnvMask)
-					{
-						// Environment Mask
-						envMask = texture(texEnvMask, uv);
-					}
+					// Environment Mask, which for a Complex Material is also the glossiness and
+					// metalness map. Sampled whenever it's bound, not only when there is a cubemap
+					// to reflect - the maps shade the direct highlight either way.
+					envMask = texture(texEnvMask, uv);
 				}
 
 				if (bBacklight)
@@ -257,6 +277,34 @@ void main(void)
 				normal = normalize(normal);
 			}
 
+			shininess = prop.shininess;
+			specularColor = prop.specularColor;
+
+			// Complex Material: the environment mask carries a glossiness map in its green channel
+			// and a metalness map in its blue one, leaving red as the reflection mask it has always
+			// been. Green at or below 4/255 counts as black - block compression can't hold anything
+			// smaller - and is how the material is turned off for part of a texture.
+			// Note this is gated on the env mask rather than on the cubemap: environment mapping is
+			// what gives slot 5 this meaning, and a cubemap that failed to load only costs the
+			// reflection, not the shading of the direct highlight.
+			if (bComplexMaterial && bShowTexture && bEnvMask)
+			{
+				cmGlossiness = envMask.g;
+				cmActive = cmGlossiness > (4.0 / 255.0);
+
+				if (cmActive)
+				{
+					float metallic = envMask.b;
+
+					shininess *= cmGlossiness;
+
+					// Metal tints what it reflects with its own color and has no diffuse of its own
+					cmSpecularColor = mix(vec3(1.0), albedo, metallic);
+					specularColor *= cmSpecularColor;
+					albedo = mix(albedo, vec3(0.0), metallic);
+				}
+			}
+
 			directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);
 			directionalLight(directional0, lightDirectional0, outDiffuse, outSpecular);
 			directionalLight(directional1, lightDirectional1, outDiffuse, outSpecular);
@@ -267,8 +315,28 @@ void main(void)
 				vec3 reflected = reflect(-viewDir, normal);
 				vec3 reflectedWS = vec3(matModel * (matModelViewInverse * vec4(reflected, 0.0)));
 
-				vec4 cubeMap = texture(texCubemap, reflectedWS);
-				cubeMap.rgb *= prop.envReflection;
+				vec4 cubeMap = vec4(0.0);
+				if (cmActive)
+				{
+					// A rough Complex Material reflects a blurred version of its surroundings,
+					// which is what the higher mips of the cubemap hold.
+					cubeMap = textureLod(texCubemap, reflectedWS, mix(cubemapMinLod, cubemapMaxLod, 1.0 - cmGlossiness));
+				}
+				else if (cubemapMinLod > 0.0)
+				{
+					// A generated cubemap is never sampled sharper than its floor, whatever the
+					// surface asked for.
+					cubeMap = textureLod(texCubemap, reflectedWS, cubemapMinLod);
+				}
+				else
+				{
+					// Anything else keeps the mip the hardware picks from the reflection's own
+					// derivatives, the way it always has. Pinning it to level 0 instead would make
+					// every normal mapped env mapped surface shimmer.
+					cubeMap = texture(texCubemap, reflectedWS);
+				}
+
+				cubeMap.rgb *= prop.envReflection * cubemapTint;
 
 				if (bEnvMask)
 				{
@@ -280,7 +348,16 @@ void main(void)
 					cubeMap.rgb *= specFactor;
 				}
 
-				albedo += cubeMap.rgb;
+				if (cmActive)
+				{
+					// Added as specular rather than to the albedo, which metal drove to black -
+					// a metal lit only by its reflection has to keep it.
+					outSpecular += cubeMap.rgb * cmSpecularColor;
+				}
+				else
+				{
+					albedo += cubeMap.rgb;
+				}
 			}
 
 			// Emissive

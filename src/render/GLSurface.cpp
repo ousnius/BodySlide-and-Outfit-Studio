@@ -196,6 +196,8 @@ void GLSurface::Cleanup() {
 		primitiveMat = nullptr;
 	}
 
+	hdri.Clear();
+
 	resLoader.Cleanup();
 }
 
@@ -846,6 +848,15 @@ void GLSurface::RenderOneFrame() {
 
 	UpdateProjection();
 
+	if (hdri.IsActive()) {
+		// The environment goes down before anything else and covers the whole viewport, so the clear
+		// color above only ever shows when there is no HDRi. The projection is built here rather
+		// than taken from matProjection because that one is orthographic half the time, and an
+		// orthographic matrix has no divide to unproject a view ray through.
+		const float aspect = static_cast<float>(vpW) / static_cast<float>(vpH);
+		hdri.RenderBackground(glm::perspective(glm::radians(mFov), aspect, zNear, zFar), matView);
+	}
+
 	// Render regular meshes
 	for (auto& m : meshes) {
 		if (!m->HasAlphaBlend() && m->bVisible && (m->nTris != 0 || m->nEdges != 0))
@@ -938,6 +949,15 @@ void GLSurface::RenderMesh(Mesh* m) {
 	shader.SetAlphaMaskEnabled(false);
 	shader.SetCubemapEnabled(m->cubemap);
 	shader.SetEnvMaskEnabled(false);
+	shader.SetComplexMaterialEnabled(bComplexMaterial && m->complexMaterial);
+
+	// A cubemap generated from an HDRi has its own mip chain to blur through, and carries whatever
+	// color the placeholder it replaced stood for. One from a file reflects on its own account.
+	const bool useDynamicCubemap = hdri.IsActive() && m->cubemap && m->dynamicCubemap;
+	shader.SetCubemapMaxLod(useDynamicCubemap ? hdri.GetMaxLod() : m->cubemapMaxLod);
+	shader.SetCubemapMinLod(useDynamicCubemap ? GLHDRiEnvironment::GetMinLod() : 0.0f);
+	shader.SetCubemapTint(useDynamicCubemap ? m->cubemapTint : Vector3(1.0f, 1.0f, 1.0f));
+
 	shader.SetProperties(m->prop);
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1003,7 +1023,7 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glEnableVertexAttribArray(6);
 			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
 
-			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
+			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight, useDynamicCubemap ? hdri.GetCubemapID() : 0);
 		}
 
 		if (m->mask) {
@@ -1242,6 +1262,21 @@ void GLSurface::RenderMeshAsPoints(Mesh* m) {
 void GLSurface::UpdateShaders(Mesh* m) {
 	if (m->material) {
 		GLShader& shader = m->material->GetShader();
+
+		// Both are properties of the textures the material resolved to, so they're picked up here
+		// rather than per frame. Environment mapping is what puts a Complex Material in play at all:
+		// it's the shader property that gives slot 5 its meaning, not whether the cubemap file for
+		// slot 4 was found - a missing cubemap costs the reflection, not the glossiness.
+		m->complexMaterial = m->cubemap && m->material->IsComplexMaterial(5);
+		m->cubemapMaxLod = static_cast<float>(std::min(m->material->GetTexMaxMipLevel(4), 7));
+
+		// A 1x1 cubemap is a placeholder asking for a dynamic one rather than a reflection, and a
+		// cubemap that isn't there leaves an env mapped shape with nothing to reflect at all. Both
+		// are cases an HDRi can stand in for; a cubemap the author actually authored is not.
+		const int cubemapSize = m->material->GetCubemapSize(4);
+		m->dynamicCubemap = m->cubemap && (cubemapSize == 1 || !m->material->HasTexture(4));
+		m->cubemapTint = m->material->GetCubemapF0Color(4);
+
 		// Without a diffuse there's nothing to sample, so such meshes are shaded with their mesh color instead.
 		shader.ShowTexture(bTextured && m->textured && m->material->HasTexture(0));
 		shader.ShowLighting(bLighting);
@@ -2329,6 +2364,23 @@ GLMaterial* GLSurface::AddMaterial(
 	}
 
 	return mat;
+}
+
+bool GLSurface::SetHDRiBackground(const std::string& fileName) {
+	if (!SetContext())
+		return false;
+
+	std::string error;
+	if (!hdri.Load(fileName.empty() ? fileName : Config["AppDir"] + "/res/hdri/" + fileName, error)) {
+		wxLogError("Failed to load HDRi '%s': %s", fileName, error);
+
+		// A half-loaded environment would leave the cube map slots it stands in for pointing at
+		// nothing, so a failure falls all the way back to no environment at all.
+		hdri.Clear();
+		return false;
+	}
+
+	return true;
 }
 
 GLMaterial* GLSurface::GetPointsMaterial() {
