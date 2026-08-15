@@ -306,30 +306,27 @@ static void ConvertOutfitStudioScaleToHavok(const HKX::Skeleton& skel, PoseData&
 	}
 }
 
-// Collects the bones that carry the character through the world: those with an
-// animated translation (not lockTranslation) whose ancestors are all animated
-// too. On the Bethesda humanoid skeletons that is the root and COM chain. Bones
-// added by mods deeper in the hierarchy (wings, physics bones) sit below a
-// locked ancestor and are excluded, so their animated translation is kept.
+// Collects the bones that carry the character through the world: the roots of
+// the skeleton's hierarchies, which is the only place a translation moves the
+// whole character rather than posing a part of it.
+//
+// Note that this deliberately stops at the root and does not walk down the
+// chain of bones whose translation is unlocked. On the Bethesda humanoid
+// skeletons that chain continues into NPC COM [COM ] (Skyrim) / COM (Fallout
+// 4), and that bone is not world motion: it carries the body's vertical bob
+// and weight shift over the planted feet. Freezing it pins the pelvis in
+// space while the legs keep swinging, which makes the feet float and shuffle.
+// Measured over Skyrim's and Fallout 4's shipped animations, the COM track
+// spans several units vertically in a large share of them (Fallout 4: over 4.5
+// units in a quarter of them) while its net start-to-end displacement is zero
+// in all but a handful, so freezing it costs the pose everywhere and prevents
+// drift almost nowhere.
 static std::unordered_set<std::string> CollectRootMotionBoneNames(const HKX::Skeleton& skel) {
 	std::unordered_set<std::string> names;
 
-	for (size_t i = 0; i < skel.bones.size(); ++i) {
-		if (skel.bones[i].lockTranslation)
-			continue;
-
-		bool rootMotion = true;
-		int parent = skel.bones[i].parentIndex;
-		for (size_t guard = 0; parent >= 0 && size_t(parent) < skel.bones.size() && guard <= skel.bones.size(); ++guard) {
-			if (skel.bones[parent].lockTranslation) {
-				rootMotion = false;
-				break;
-			}
-			parent = skel.bones[parent].parentIndex;
-		}
-
-		if (rootMotion)
-			names.insert(skel.bones[i].name);
+	for (const HKX::Bone& bone : skel.bones) {
+		if (bone.parentIndex < 0)
+			names.insert(bone.name);
 	}
 
 	return names;
@@ -395,10 +392,11 @@ bool PoseDataCollection::LoadHkxAnimation(const std::string& skeletonHkxPath, co
 		}
 	}
 
-	// Strip root motion: in a mesh editor the character drifting and bobbing
-	// around is only in the way. Freezing the root motion bones at their frame 0
-	// translation keeps the animation's starting placement without the movement
-	// it would apply on top.
+	// Strip root motion: in a mesh editor the character walking out of the
+	// viewport is only in the way. Freezing the root motion bones at their
+	// frame 0 translation keeps the animation's starting placement without the
+	// world movement it would apply on top. Everything below the root is left
+	// alone so the body still animates over its feet.
 	const std::unordered_set<std::string> rootMotionBones = CollectRootMotionBoneNames(skel);
 	if (!rootMotionBones.empty() && outAnim.framePoses.size() > 1) {
 		std::unordered_map<std::string, nifly::Vector3> firstFrameTranslations;
