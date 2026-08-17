@@ -376,7 +376,9 @@ public:
 	// Builds the outfits selected by the command line and closes the application.
 	void CommandLineBuild();
 
-	void AddTriData(nifly::NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
+	// Removes all BODYTRI extra data from the file and attaches a single fresh one
+	// to the root node (toRoot) or else to the first shape with vertices.
+	void SetTriData(nifly::NifFile& nif, const std::string& triPath, bool toRoot = false);
 
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	bool IsUVSlider(const wxString& sliderName);

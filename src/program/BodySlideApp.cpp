@@ -3976,26 +3976,11 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 				wxMessageBox(wxString().Format(_("Failed to write TRI file to the following location\n\n%s"), triPath), _("Unable to process"), wxOK | wxICON_ERROR);
 			}
 
-			if (targetGame != FO4 && targetGame != FO4VR && targetGame != FO76) {
-				for (auto targetShape = activeSet.ShapesBegin(); targetShape != activeSet.ShapesEnd(); ++targetShape) {
-					auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
-					if (!shape)
-						continue;
+			bool triToRoot = targetGame == FO4 || targetGame == FO4VR || targetGame == FO76;
 
-					if (tri && shape->GetNumVertices() > 0) {
-						AddTriData(nifBig, targetShape->first, triPathTrimmed);
-						if (activeSet.GenWeights())
-							AddTriData(nifSmall, targetShape->first, triPathTrimmed);
-
-						tri = false;
-					}
-				}
-			}
-			else {
-				AddTriData(nifBig, "", triPathTrimmed, true);
-				if (activeSet.GenWeights())
-					AddTriData(nifSmall, "", triPathTrimmed, true);
-			}
+			SetTriData(nifBig, triPathTrimmed, triToRoot);
+			if (activeSet.GenWeights())
+				SetTriData(nifSmall, triPathTrimmed, triToRoot);
 
 			// Set all shapes to dynamic/mutable
 			for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
@@ -4866,7 +4851,6 @@ int BodySlideApp::BuildListBodies(
 
 			/* Add TRI path for in-game morphs */
 			if (tri && !triKeep) {
-				bool triEnd = tri;
 				std::string triPath = currentSet.GetOutputFilePath() + ".tri";
 				std::string triPathTrimmed = triPath;
 				triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"),
@@ -4878,26 +4862,11 @@ int BodySlideApp::BuildListBodies(
 				if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
 					wxLogError("Failed to create TRI file to '%s'!", triPath);
 
-				if (targetGame != FO4 && targetGame != FO4VR && targetGame != FO76) {
-					for (auto targetShape = currentSet.ShapesBegin(); targetShape != currentSet.ShapesEnd(); ++targetShape) {
-						auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
-						if (!shape)
-							continue;
+				bool triToRoot = targetGame == FO4 || targetGame == FO4VR || targetGame == FO76;
 
-						if (triEnd && shape->GetNumVertices() > 0) {
-							AddTriData(nifBig, targetShape->first, triPathTrimmed);
-							if (currentSet.GenWeights())
-								AddTriData(nifSmall, targetShape->first, triPathTrimmed);
-
-							triEnd = false;
-						}
-					}
-				}
-				else {
-					AddTriData(nifBig, "", triPathTrimmed, true);
-					if (currentSet.GenWeights())
-						AddTriData(nifSmall, "", triPathTrimmed, true);
-				}
+				SetTriData(nifBig, triPathTrimmed, triToRoot);
+				if (currentSet.GenWeights())
+					SetTriData(nifSmall, triPathTrimmed, triToRoot);
 
 				// Set all shapes to dynamic/mutable
 				for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
@@ -5141,20 +5110,44 @@ void BodySlideApp::CommandLineBuild() {
 	sliderView->Close(true);
 }
 
-void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot) {
+void BodySlideApp::SetTriData(NifFile& nif, const std::string& triPath, bool toRoot) {
+	auto& hdr = nif.GetHeader();
+
+	// Get rid of every BODYTRI block in the file, no matter where it's attached
+	std::vector<uint32_t> obsoleteIds;
+
+	for (uint32_t id = 0; id < hdr.GetNumBlocks(); id++) {
+		auto stringExtraData = hdr.GetBlock<NiStringExtraData>(id);
+		if (stringExtraData && stringExtraData->name.get() == "BODYTRI")
+			obsoleteIds.push_back(id);
+	}
+
+	// Delete the highest block ids first to keep the remaining ones valid
+	for (auto it = obsoleteIds.rbegin(); it != obsoleteIds.rend(); ++it)
+		hdr.DeleteBlock(*it);
+
+	// Fallout reads the path from the root node, the other games from a shape
 	NiAVObject* target = nullptr;
 
-	if (toRoot)
+	if (toRoot) {
 		target = nif.GetRootNode();
-	else
-		target = nif.FindBlockByName<NiShape>(shapeName);
-
-	if (target) {
-		auto triExtraData = std::make_unique<NiStringExtraData>();
-		triExtraData->name.get() = "BODYTRI";
-		triExtraData->stringData.get() = triPath;
-		nif.AssignExtraData(target, std::move(triExtraData));
 	}
+	else {
+		for (auto& shape : nif.GetShapes()) {
+			if (shape->GetNumVertices() > 0) {
+				target = shape;
+				break;
+			}
+		}
+	}
+
+	if (!target)
+		return;
+
+	auto triExtraData = std::make_unique<NiStringExtraData>();
+	triExtraData->name.get() = "BODYTRI";
+	triExtraData->stringData.get() = triPath;
+	nif.AssignExtraData(target, std::move(triExtraData));
 }
 
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
