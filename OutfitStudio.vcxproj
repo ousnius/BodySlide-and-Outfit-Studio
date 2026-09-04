@@ -421,6 +421,7 @@
     <None Include="res\xrc\ConvertBodyReference.xrc" />
     <None Include="res\xrc\Automation.xrc" />
     <None Include="res\xrc\EditUV.xrc" />
+    <None Include="res\xrc\PhysicsEditor.xrc" />
     <None Include="res\xrc\ImportDialog.xrc" />
     <None Include="res\xrc\OutfitStudio.xrc" />
     <None Include="res\xrc\Project.xrc" />
@@ -843,6 +844,9 @@
     <ClInclude Include="src\physics\DebugDraw.h" />
     <ClInclude Include="src\physics\PumpClock.h" />
     <ClInclude Include="src\physics\SystemBuilder.h" />
+    <ClInclude Include="src\physics\XmlDocument.h" />
+    <ClInclude Include="src\physics\XmlEditSession.h" />
+    <ClInclude Include="src\physics\XmlSchema.h" />
     <ClInclude Include="src\physics\hdt\XmlReader.h" />
     <ClInclude Include="src\physics\hdt\hdtAABB.h" />
     <ClInclude Include="src\physics\hdt\hdtBone.h" />
@@ -867,6 +871,7 @@
     <ClInclude Include="src\program\AutomationDialog.h" />
     <ClInclude Include="src\components\Automation.h" />
     <ClInclude Include="src\program\EditUV.h" />
+    <ClInclude Include="src\program\PhysicsEditorDialog.h" />
     <ClInclude Include="src\program\FBXImportDialog.h" />
     <ClInclude Include="src\program\GroupManager.h" />
     <ClInclude Include="src\program\ObjImportDialog.h" />
@@ -887,6 +892,7 @@
     <ClInclude Include="src\render\GLSurface.h" />
     <ClInclude Include="src\ui\wxBrushSettingsPopup.h" />
     <ClInclude Include="src\ui\WeightCopyDialog.h" />
+    <ClInclude Include="src\ui\wxPhysicsEditorDlg.h" />
     <ClInclude Include="src\ui\wxSliderPanel.h" />
     <ClInclude Include="src\ui\wxStateButton.h" />
     <ClInclude Include="src\utils\AABBTree.h" />
@@ -968,6 +974,9 @@
     <ClCompile Include="src\physics\Controller.cpp" />
     <ClCompile Include="src\physics\DebugDraw.cpp" />
     <ClCompile Include="src\physics\SystemBuilder.cpp" />
+    <ClCompile Include="src\physics\XmlDocument.cpp" />
+    <ClCompile Include="src\physics\XmlEditSession.cpp" />
+    <ClCompile Include="src\physics\XmlSchema.cpp" />
     <ClCompile Include="src\physics\hdt\XmlReader.cpp" />
     <ClCompile Include="src\physics\hdt\hdtBoneScaleConstraint.cpp" />
     <ClCompile Include="src\physics\hdt\hdtCollider.cpp" />
@@ -987,6 +996,7 @@
     <ClCompile Include="src\program\AutomationDialogExecute.cpp" />
     <ClCompile Include="src\components\Automation.cpp" />
     <ClCompile Include="src\program\EditUV.cpp" />
+    <ClCompile Include="src\program\PhysicsEditorDialog.cpp" />
     <ClCompile Include="src\program\FBXImportDialog.cpp" />
     <ClCompile Include="src\program\GroupManager.cpp" />
     <ClCompile Include="src\program\ObjImportDialog.cpp" />
@@ -1007,6 +1017,7 @@
     <ClCompile Include="src\render\GLSurface.cpp" />
     <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp" />
     <ClCompile Include="src\ui\WeightCopyDialog.cpp" />
+    <ClCompile Include="src\ui\wxPhysicsEditorDlg.cpp" />
     <ClCompile Include="src\ui\wxSliderPanel.cpp" />
     <ClCompile Include="src\ui\wxStateButton.cpp" />
     <ClCompile Include="src\utils\AABBTree.cpp" />

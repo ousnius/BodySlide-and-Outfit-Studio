@@ -2015,6 +2015,15 @@
     <ClInclude Include="src\physics\SystemBuilder.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="src\physics\XmlDocument.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlEditSession.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlSchema.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
     <ClInclude Include="src\physics\hdt\XmlReader.h">
       <Filter>Physics\hdt</Filter>
     </ClInclude>
@@ -2082,6 +2091,15 @@
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="src\physics\SystemBuilder.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlDocument.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlEditSession.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlSchema.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="src\physics\hdt\XmlReader.cpp">

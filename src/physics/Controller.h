@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #pragma once
 
+#include "XmlSchema.h"
+
 #include <Object3d.hpp>
 
 #include <functional>
@@ -62,11 +64,57 @@ struct GrabTarget {
 	float weight = 1.0f;
 };
 
+// One physics system as it was built: the XML it came from, spelled the way
+// the NIF link spells it (which is what the XmlStreamResolver is asked for),
+// and the shapes that link was found on.
+struct SystemInfo {
+	std::string xmlPath;
+	std::vector<std::string> shapeNames;
+};
+
+// One property change, addressed the way the XML addresses it, to be written
+// into the running simulation instead of rebuilding it.
+struct PatchRequest {
+	std::string xmlPath;	 // which system, as the NIF link spells it
+	ElementKind kind = ElementKind::Unknown;
+	std::string elementName; // bone or shape name; empty for a constraint
+	std::string bodyA;		 // constraints: the two bones they join
+	std::string bodyB;
+	std::string property; // schema child name, e.g. "linearStiffness"
+	ValueVariant value;
+};
+
+// Where the simulated bones are and how they are moving at one instant, in NIF
+// global space. Taken before a rebuild and put back afterwards so a structural
+// edit does not snap cloth back onto the pose; bones are matched by name, so
+// bones an edit added start from the pose and everything else carries on.
+// Kinematic bones are not part of it: the pose drives them either way.
+struct DynamicState {
+	struct BoneMotion {
+		std::string xmlPath;
+		std::string boneName;
+		nifly::MatTransform transform;
+		nifly::Vector3 linearVelocity;
+		nifly::Vector3 angularVelocity;
+	};
+
+	std::vector<BoneMotion> bones;
+	// Camera turntable yaw the systems were simulating under
+	float rootYawDegrees = 0.0f;
+};
+
 // True when "nif" or "shapePhysicsFiles" reference at least one physics XML,
 // i.e. when a physics preview has anything to simulate. Only looks at extra
 // data, so it is cheap enough to call whenever the loaded meshes change; the
 // XMLs are neither resolved nor parsed. Always false without Bullet.
 bool HasPhysicsLinks(nifly::NifFile* nif, const ShapePhysicsFileMap& shapePhysicsFiles);
+
+// The physics XMLs "nif" and "shapePhysicsFiles" reference, and the shapes
+// each of them was found on - the same grouping BuildFromNif would build one
+// system per. Only reads extra data: nothing is resolved, parsed or simulated,
+// so the editor can list and open the XMLs of a mesh that is not simulating.
+// Always empty without Bullet, where nothing shows the physics UI anyway.
+std::vector<SystemInfo> CollectPhysicsXmlLinks(nifly::NifFile* nif, const ShapePhysicsFileMap& shapePhysicsFiles);
 
 /*
 App-facing facade over the physics core ported from Faster HDT-SMP (see
@@ -100,6 +148,9 @@ public:
 						const ShapePhysicsFileMap& shapePhysicsFiles,
 						std::vector<std::string>& outWarnings);
 
+	// The systems BuildFromNif built, in build order.
+	const std::vector<SystemInfo>& Systems() const;
+
 	// Tears down all systems and the physics world.
 	void Clear();
 
@@ -109,6 +160,28 @@ public:
 	// Re-seats all dynamic bodies on the current kinematic pose. Call after
 	// enabling physics, seeking an animation or any other teleport.
 	void ResetDynamics();
+
+	// Writes one changed property straight into the running simulation, so a
+	// value can be tuned while watching the cloth react instead of after a
+	// rebuild that drops it back onto the pose.
+	//
+	// Returns false when the change cannot be made live - the value is baked
+	// into the objects at build time, the element has no live counterpart, the
+	// name it refers to does not resolve, or the address matches more than one
+	// constraint - and the caller then has to rebuild the system. False is a
+	// normal answer, not an error: it is the backstop that keeps the schema
+	// table's PatchKind from having to be perfect.
+	bool PatchProperty(const PatchRequest& request);
+
+	// Takes a snapshot of the motion of every dynamic bone, to be handed back
+	// to RestoreDynamicState after rebuilding the systems from edited XML.
+	DynamicState CaptureDynamicState() const;
+
+	// Puts the bones named by "state" back where they were and moving as they
+	// were. Bones the state does not name (or that came back kinematic) keep
+	// the pose the rebuild put them on. Ends any grab, which held on to rigid
+	// bodies that no longer exist.
+	void RestoreDynamicState(const DynamicState& state);
 
 	// Advances the simulation by the given wall-clock time. Simulates whole
 	// 1/60 ticks only and carries the remainder over to the next call, so the

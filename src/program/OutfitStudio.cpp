@@ -27,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/PlatformUtil.h"
 #include "EditUV.h"
 #include "GroupManager.h"
+#include "PhysicsEditorDialog.h"
 #include "PresetSaveDialog.h"
 #include "PartitionTypeChoices.h"
 #include "ShapeProperties.h"
@@ -43,6 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <cmath>
 #include <cstdlib>
+#include <fstream>
 #include <iterator>
 #include <sstream>
 #include <wx/debugrpt.h>
@@ -229,6 +231,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMMAND_SCROLL(XRCID("physicsWindSlider"), OutfitStudioFrame::OnPhysicsWindSlider)
 	EVT_CHOICE(XRCID("physicsWindDir"), OutfitStudioFrame::OnPhysicsWindDir)
 	EVT_TIMER(PHYSICS_TIMER, OutfitStudioFrame::OnPhysicsTimer)
+	EVT_TIMER(PHYSICS_REBUILD_TIMER, OutfitStudioFrame::OnPhysicsRebuildTimer)
+	EVT_TREE_SEL_CHANGED(XRCID("physicsSystemTree"), OutfitStudioFrame::OnPhysicsSystemTreeSelect)
+	EVT_BUTTON(XRCID("btnPhysicsEdit"), OutfitStudioFrame::OnPhysicsEdit)
 
 	EVT_COMBOBOX(XRCID("cPoseName"), OutfitStudioFrame::OnSelectPose)
 	EVT_BUTTON(XRCID("savePose"), OutfitStudioFrame::OnSavePose)
@@ -1524,6 +1529,8 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	scPoseText = (wxTextCtrl*)FindWindowByName("scPoseText");
 	cbPose = (wxCheckBox*)FindWindowByName("cbPose");
 	cbPhysics = (wxCheckBox*)FindWindowByName("cbPhysics");
+	physicsSystemTree = (wxTreeCtrl*)FindWindowByName("physicsSystemTree");
+	btnPhysicsEdit = (wxButton*)FindWindowByName("btnPhysicsEdit");
 	cbPhysicsVis = (wxCheckBox*)FindWindowByName("cbPhysicsVis");
 	cbPhysicsGrab = (wxCheckBox*)FindWindowByName("cbPhysicsGrab");
 	cbPhysicsProbe = (wxCheckBox*)FindWindowByName("cbPhysicsProbe");
@@ -1560,6 +1567,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	animPlaybackTimer.SetOwner(this, ANIM_PLAYBACK_TIMER);
 	physicsTimer.SetOwner(this, PHYSICS_TIMER);
+	physicsRebuildTimer.SetOwner(this, PHYSICS_REBUILD_TIMER);
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
@@ -4139,6 +4147,12 @@ void OutfitStudioFrame::SetPendingChanges(bool pending) {
 }
 
 bool OutfitStudioFrame::CheckPendingChanges() {
+	// Physics XMLs are separate files that saving the project does not
+	// write, so they get their own question rather than being folded into
+	// the project one and then quietly dropped.
+	if (!CheckPendingPhysicsXml())
+		return false;
+
 	if (pendingChanges) {
 		wxMessageDialog dlg(this,
 							wxString::Format(_("You have unsaved changes to '%s'. Would you like to save them now?"), project->OutfitName()),
@@ -14681,6 +14695,14 @@ void OutfitStudioFrame::UpdatePhysicsControlsVisibility() {
 		return;
 
 	const bool available = project && Physics::HasPhysicsLinks(project->GetWorkNif(), project->shapePhysicsFiles);
+
+	// The tree lists what the loaded meshes reference, so it follows them even
+	// when the pane's visibility does not change.
+	if (available)
+		RefreshPhysicsSystemTree();
+	else if (physicsSystemTree)
+		physicsSystemTree->DeleteAllItems();
+
 	if (available == physicsAvailable)
 		return;
 
@@ -14702,7 +14724,20 @@ void OutfitStudioFrame::UpdatePhysicsControlsVisibility() {
 
 void OutfitStudioFrame::ShutdownPhysics() {
 	StopPhysicsPump();
+	physicsRebuildTimer.Stop();
 	physicsRunning = false;
+
+	// It is a view over documents that are about to go with the project
+	if (physicsEditor)
+		physicsEditor->Close();
+
+	if (physicsSystemTree)
+		physicsSystemTree->DeleteAllItems();
+
+	// Every caller of this is about to delete the project the documents were
+	// read out of. Stopping the simulation on its own must not clear them:
+	// unchecking the box and checking it again has to come back to the edits.
+	physicsXml.Clear();
 
 	if (project)
 		project->physicsPose = nullptr;
@@ -14725,6 +14760,492 @@ void OutfitStudioFrame::ShutdownPhysics() {
 	UpdatePhysicsProbeControl(false);
 }
 
+namespace {
+// Which physics XML a row of the compact tree in the Physics pane stands for.
+// Every row of a document's subtree carries it, so a click anywhere under a
+// file still says which file.
+class PhysicsXmlItemData : public wxTreeItemData {
+public:
+	explicit PhysicsXmlItemData(std::string inXmlPath)
+		: xmlPath(std::move(inXmlPath)) {}
+
+	std::string xmlPath;
+};
+
+wxString PhysicsXmlFileName(const std::string& xmlPath) {
+	return wxString::FromUTF8(Physics::XmlFileName(xmlPath));
+}
+}
+
+void OutfitStudioFrame::BindPhysicsXmlSource() {
+	if (!project)
+		return;
+
+	// The session reads the XMLs out of the project, and a project can be
+	// replaced without the session noticing, so this is re-done rather than
+	// done once.
+	OutfitProject* proj = project;
+	physicsXml.SetSourceResolver([proj](const std::string& xmlPath, std::string* outSourcePath, bool* outFromArchive) {
+		return proj->GetPhysicsXmlStream(xmlPath, outSourcePath, outFromArchive);
+	});
+}
+
+void OutfitStudioFrame::RefreshPhysicsSystemTree() {
+	if (!physicsSystemTree)
+		return;
+
+	physicsSystemTree->DeleteAllItems();
+
+	if (!project) {
+		if (btnPhysicsEdit)
+			btnPhysicsEdit->Enable(false);
+		return;
+	}
+
+	BindPhysicsXmlSource();
+
+	// While the simulation runs, what it actually built is the truth. Before
+	// that, the links in the meshes are - which is what lets the pane and the
+	// editor work without simulating anything.
+	const std::vector<Physics::SystemInfo> systems = physicsRunning && physics
+														 ? physics->Systems()
+														 : Physics::CollectPhysicsXmlLinks(project->GetWorkNif(), project->shapePhysicsFiles);
+
+	const wxTreeItemId root = physicsSystemTree->AddRoot("physics");
+
+	for (const Physics::SystemInfo& system : systems) {
+		std::string error;
+		Physics::XmlDocument* doc = physicsXml.Open(system.xmlPath, error);
+
+		wxString label = PhysicsXmlFileName(system.xmlPath);
+		if (doc && doc->IsDirty())
+			label += " *";
+
+		const wxTreeItemId item = physicsSystemTree->AppendItem(root, label, -1, -1, new PhysicsXmlItemData(system.xmlPath));
+
+		if (doc) {
+			const size_t bones = doc->ChildrenOfKind(Physics::ElementKind::Bone).size();
+			const size_t shapes = doc->ChildrenOfKinds({Physics::ElementKind::PerVertexShape, Physics::ElementKind::PerTriangleShape}).size();
+			const size_t constraints = doc->ChildrenOfKinds({Physics::ElementKind::GenericConstraint,
+															Physics::ElementKind::StiffSpringConstraint,
+															Physics::ElementKind::ConeTwistConstraint,
+															Physics::ElementKind::ConstraintGroup})
+										   .size();
+
+			physicsSystemTree->AppendItem(item,
+										  wxString::Format(_("%d bones, %d shapes, %d constraints"),
+														   static_cast<int>(bones),
+														   static_cast<int>(shapes),
+														   static_cast<int>(constraints)),
+										  -1,
+										  -1,
+										  new PhysicsXmlItemData(system.xmlPath));
+		}
+		else {
+			// Says either that the file is not there or that only the editor
+			// cannot read it - in the latter case it is still simulated, see
+			// XmlEditSession::Resolver.
+			physicsSystemTree->AppendItem(item, wxString::FromUTF8(error), -1, -1, new PhysicsXmlItemData(system.xmlPath));
+		}
+
+		for (const std::string& shapeName : system.shapeNames) {
+			physicsSystemTree->AppendItem(item,
+										  wxString::Format(_("Shape: %s"), wxString::FromUTF8(shapeName)),
+										  -1,
+										  -1,
+										  new PhysicsXmlItemData(system.xmlPath));
+		}
+
+		physicsSystemTree->Expand(item);
+	}
+
+	if (btnPhysicsEdit)
+		btnPhysicsEdit->Enable(!physicsXml.Empty());
+
+	// The editor is a view over the same session
+	if (physicsEditor)
+		physicsEditor->RefreshDocuments();
+}
+
+std::string OutfitStudioFrame::SelectedPhysicsXmlPath() const {
+	if (!physicsSystemTree)
+		return std::string();
+
+	const wxTreeItemId selected = physicsSystemTree->GetSelection();
+	if (selected.IsOk()) {
+		if (auto* data = static_cast<PhysicsXmlItemData*>(physicsSystemTree->GetItemData(selected)))
+			return data->xmlPath;
+	}
+
+	// Nothing selected, but with a single XML there is no ambiguity to resolve
+	const std::vector<std::string> paths = physicsXml.Paths();
+	return paths.size() == 1 ? paths.front() : std::string();
+}
+
+void OutfitStudioFrame::OnPhysicsSystemTreeSelect(wxTreeEvent& event) {
+	event.Skip();
+
+	if (!physicsEditor)
+		return;
+
+	const std::string xmlPath = SelectedPhysicsXmlPath();
+	if (!xmlPath.empty())
+		physicsEditor->SelectDocument(xmlPath);
+}
+
+void OutfitStudioFrame::OnPhysicsEdit(wxCommandEvent& WXUNUSED(event)) {
+	if (!project)
+		return;
+
+	if (!physicsEditor) {
+		auto* editor = new PhysicsEditorDialog(this);
+		if (!editor->IsLoaded()) {
+			editor->Destroy();
+			return;
+		}
+
+		physicsEditor = editor;
+
+		// Nulled before the frame's own handler destroys it, the way EditUV
+		// does it, so nothing is left pointing at a window on its way out.
+		physicsEditor->Bind(wxEVT_CLOSE_WINDOW, [this](wxCloseEvent& closeEvent) {
+			physicsEditor = nullptr;
+			closeEvent.Skip();
+		});
+
+		physicsEditor->CenterOnParent();
+		physicsEditor->Show();
+	}
+	else {
+		physicsEditor->RefreshDocuments();
+		physicsEditor->Raise();
+	}
+
+	const std::string xmlPath = SelectedPhysicsXmlPath();
+	if (!xmlPath.empty())
+		physicsEditor->SelectDocument(xmlPath);
+}
+
+size_t OutfitStudioFrame::BuildPhysicsFromXml() {
+	if (!physics || !project)
+		return 0;
+
+	// Everything the builder resolves goes through the edit session, which
+	// adopts each XML on the way and serves what the editor holds from then on.
+	// Nothing is edited yet the first time round, so this changes nothing about
+	// what gets simulated - it only means every later rebuild reads the edits.
+	BindPhysicsXmlSource();
+
+	physicsXml.ClearWarnings();
+
+	std::vector<std::string> warnings;
+	const size_t systemCount
+		= physics->BuildFromNif(project->GetWorkNif(), project->GetWorkAnim(), physicsXml.Resolver(), project->shapePhysicsFiles, warnings);
+
+	// Files the session could not take over come first: they explain why the
+	// editor is about to show fewer documents than the simulation is running.
+	for (auto& warning : physicsXml.Warnings())
+		wxLogWarning("Physics: %s", warning);
+
+	for (auto& warning : warnings)
+		wxLogWarning("Physics: %s", warning);
+
+	// Whatever asked for this rebuild has had it
+	physicsXml.ClearRebuildRequest();
+	physicsRebuildTimer.Stop();
+
+	return systemCount;
+}
+
+bool OutfitStudioFrame::PatchOrRebuildPhysics(Physics::XmlDocument& doc, tinyxml2::XMLElement* element, const Physics::ChildDesc& desc) {
+	bool patched = false;
+
+	if (element && physicsRunning && physics && desc.patch == Physics::PatchKind::Hot) {
+		Physics::PatchRequest request;
+		request.xmlPath = doc.XmlPath();
+		request.kind = Physics::KindFromName(element->Name());
+		request.property = desc.name;
+		request.value = doc.GetValue(element, desc);
+
+		if (const char* name = element->Attribute("name"))
+			request.elementName = name;
+		if (const char* bodyA = element->Attribute("bodyA"))
+			request.bodyA = bodyA;
+		if (const char* bodyB = element->Attribute("bodyB"))
+			request.bodyB = bodyB;
+
+		// The controller has the last word: the schema table says what is
+		// meant to be patchable, this says what actually could be.
+		patched = physics->PatchProperty(request);
+	}
+
+	physicsXml.NotifyChanged(doc.XmlPath(), !patched);
+
+	if (patched) {
+		// The change is already in the simulation, but the viewport is only
+		// repainted by the pump, which does not run in animation lockstep.
+		if (glView && !physicsPumpActive)
+			glView->Render();
+	}
+	else {
+		RequestPhysicsRebuild();
+	}
+
+	return patched;
+}
+
+void OutfitStudioFrame::NotifyPhysicsXmlEdited(const std::string& xmlPath) {
+	physicsXml.NotifyChanged(xmlPath, true);
+	RequestPhysicsRebuild();
+}
+
+
+void OutfitStudioFrame::RefreshPhysicsLinks() {
+	BindPhysicsXmlSource();
+
+	// A first link makes the whole pane appear, and this refills the tree
+	// whether or not that changed.
+	UpdatePhysicsControlsVisibility();
+
+	if (physicsEditor)
+		physicsEditor->RefreshDocuments();
+
+	RequestPhysicsRebuild();
+}
+
+wxString OutfitStudioFrame::PhysicsXmlDirectory() const {
+	const wxString gameData = wxString::FromUTF8(Config["GameDataPath"]);
+	if (gameData.empty())
+		return wxString();
+
+	// Where hdtSMP64 itself looks, and where nearly every mod puts them. The
+	// folder is only a starting point for the dialog, so it not existing yet is
+	// not a problem worth reporting.
+	wxFileName configs(gameData, wxString());
+	configs.AppendDir("SKSE");
+	configs.AppendDir("Plugins");
+	configs.AppendDir("hdtSkinnedMeshConfigs");
+	if (configs.DirExists())
+		return configs.GetPath();
+
+	return gameData;
+}
+
+std::string OutfitStudioFrame::GameRelativeXmlPath(const wxString& path) const {
+	const wxString gameData = wxString::FromUTF8(Config["GameDataPath"]);
+	if (gameData.empty() || path.empty())
+		return std::string();
+
+	wxFileName file(path);
+	file.MakeAbsolute();
+
+	wxFileName root(gameData, wxString());
+	root.MakeAbsolute();
+
+	// MakeRelativeTo happily walks up out of the folder with "..", which is not
+	// a path any NIF can carry, so the answer only counts when it stays inside.
+	wxFileName relative = file;
+	if (!relative.MakeRelativeTo(root.GetPath()))
+		return std::string();
+
+	const wxString result = relative.GetFullPath();
+	if (result.StartsWith("..") || wxFileName(result).IsAbsolute())
+		return std::string();
+
+	// Backslashes, the way the extra data in every shipped model spells it.
+	wxString spelled = result;
+	spelled.Replace("/", "\\");
+	return std::string(spelled.ToUTF8());
+}
+
+bool OutfitStudioFrame::SavePhysicsXml(Physics::XmlDocument& doc, bool allowExport) {
+	if (doc.Origin() != Physics::XmlOrigin::Loose || doc.SourcePath().empty()) {
+		if (!allowExport) {
+			wxLogWarning(_("'%s' did not come from a loose file, so there is nothing to save it over. Use Export instead."),
+						 wxString::FromUTF8(doc.XmlPath()));
+			return false;
+		}
+
+		return ExportPhysicsXml(doc);
+	}
+
+	std::string error;
+	if (!doc.SaveToFile(doc.SourcePath(), error)) {
+		wxMessageBox(wxString::Format(_("Could not write '%s':\n\n%s"), wxString::FromUTF8(doc.SourcePath()), wxString::FromUTF8(error)),
+					 _("Save physics XML"),
+					 wxICON_ERROR);
+		return false;
+	}
+
+	doc.MarkClean();
+
+	// The editor draws the unsaved marker, and this did not go through it.
+	if (physicsEditor)
+		physicsEditor->RefreshDocuments();
+
+	return true;
+}
+
+bool OutfitStudioFrame::ExportPhysicsXml(Physics::XmlDocument& doc) {
+	// The name the NIF knows it by is the name it should be offered under, so
+	// exporting a file read out of an archive lands beside where it came from.
+	wxFileName suggested(wxString::FromUTF8(doc.SourcePath().empty() ? doc.XmlPath() : doc.SourcePath()));
+
+	wxFileDialog dialog(this,
+						_("Export physics XML"),
+						doc.SourcePath().empty() ? PhysicsXmlDirectory() : suggested.GetPath(),
+						suggested.GetFullName(),
+						"HDT-SMP physics files (*.xml)|*.xml",
+						wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+	if (dialog.ShowModal() == wxID_CANCEL)
+		return false;
+
+	const wxString path = dialog.GetPath();
+
+	std::string error;
+	if (!doc.SaveToFile(std::string(path.ToUTF8()), error)) {
+		wxMessageBox(wxString::Format(_("Could not write '%s':\n\n%s"), path, wxString::FromUTF8(error)), _("Export physics XML"), wxICON_ERROR);
+		return false;
+	}
+
+	// Rebound to where it now lives, so Save goes there from here on. What the
+	// NIF calls it does not change: exporting a copy elsewhere does not
+	// relink the model.
+	doc.SetSource(doc.XmlPath(), std::string(path.ToUTF8()), Physics::XmlOrigin::Loose);
+	doc.MarkClean();
+
+	if (physicsEditor)
+		physicsEditor->RefreshDocuments();
+
+	return true;
+}
+
+bool OutfitStudioFrame::ImportPhysicsXml(Physics::XmlDocument& doc, const wxString& path) {
+	std::ifstream stream(std::string(path.ToUTF8()), std::ios::binary);
+	if (!stream.good()) {
+		wxMessageBox(wxString::Format(_("Could not read '%s'."), path), _("Import physics XML"), wxICON_ERROR);
+		return false;
+	}
+
+	std::ostringstream contents;
+	contents << stream.rdbuf();
+
+	// Taken back as one step, like any other edit: importing over the wrong
+	// document is exactly the mistake undo exists for.
+	doc.BeginEdit("import");
+
+	std::string error;
+	if (!doc.ReplaceContent(contents.str(), error)) {
+		doc.Undo();
+		wxMessageBox(wxString::Format(_("'%s' is not a physics XML this editor can read:\n\n%s"), path, wxString::FromUTF8(error)),
+					 _("Import physics XML"),
+					 wxICON_ERROR);
+		return false;
+	}
+
+	NotifyPhysicsXmlEdited(doc.XmlPath());
+	return true;
+}
+
+bool OutfitStudioFrame::CheckPendingPhysicsXml() {
+	if (!physicsXml.AnyDirty())
+		return true;
+
+	wxString names;
+	for (Physics::XmlDocument* doc : physicsXml.Documents()) {
+		if (!doc->IsDirty())
+			continue;
+
+		names += "\n    " + wxString::FromUTF8(doc->XmlPath());
+	}
+
+	wxMessageDialog dialog(this,
+						   wxString::Format(_("These physics XMLs have changes that are not on disk:\n%s\n\nWould you like to save them now?"), names),
+						   _("Unsaved physics XML changes"),
+						   wxYES_NO | wxCANCEL | wxICON_WARNING | wxCANCEL_DEFAULT);
+
+	const int answer = dialog.ShowModal();
+	if (answer == wxID_CANCEL)
+		return false;
+	if (answer == wxID_NO)
+		return true;
+
+	// Saving is what was asked for, so a document that cannot be written back
+	// over anything asks where to put it rather than being skipped silently.
+	for (Physics::XmlDocument* doc : physicsXml.Documents()) {
+		if (doc->IsDirty() && !SavePhysicsXml(*doc, true))
+			return false;
+	}
+
+	return true;
+}
+
+void OutfitStudioFrame::RequestPhysicsRebuild() {
+	if (!physicsRunning)
+		return;
+
+	// Long enough that dragging a slider does not rebuild on the way, short
+	// enough that letting go of it looks immediate.
+	constexpr int physicsRebuildDelayMS = 250;
+
+	// Restarting the timer is the debounce: a value dragged through a hundred
+	// intermediate settings rebuilds once, when the dragging stops.
+	physicsRebuildTimer.Start(physicsRebuildDelayMS, wxTIMER_ONE_SHOT);
+}
+
+void OutfitStudioFrame::OnPhysicsRebuildTimer(wxTimerEvent& WXUNUSED(event)) {
+	RebuildPhysics();
+}
+
+void OutfitStudioFrame::RebuildPhysics() {
+	physicsRebuildTimer.Stop();
+
+	if (!physicsRunning || !physics || !project)
+		return;
+
+	// The grab holds rigid bodies of the systems about to be thrown away, and
+	// the marker it drew belongs to a drag that cannot survive this
+	if (glView && physics->IsGrabbing())
+		glView->EndPhysicsGrab();
+
+	const Physics::DynamicState state = physics->CaptureDynamicState();
+
+	// The map the project reads the overrides out of belongs to the controller
+	// and is cleared and refilled by the rebuild
+	project->physicsPose = nullptr;
+
+	const size_t systemCount = BuildPhysicsFromXml();
+	if (systemCount == 0) {
+		// The edited XMLs no longer build anything. Unchecking the box and
+		// leaving physicsRunning set is what sends UpdatePhysicsState down its
+		// teardown path, which is where the overrides come back off the pose.
+		statusBar->SetStatusText(_("Physics stopped: the edited XMLs build no systems"));
+
+		if (cbPhysics)
+			cbPhysics->SetValue(false);
+
+		UpdatePhysicsState();
+		return;
+	}
+
+	project->physicsPose = &physics->PoseOverrides();
+
+	// Puts the cloth back where it was and moving as it was, instead of
+	// dropping it onto the pose the fresh systems were built on
+	physics->RestoreDynamicState(state);
+
+	// The controller is new and knows none of the current settings
+	ApplyPhysicsWind();
+	UpdatePhysicsProbeState();
+	RefreshPhysicsSystemTree();
+
+	if (glView && cbPhysicsVis)
+		physics->UpdateDebugVis(glView->gls, cbPhysicsVis->IsChecked());
+
+	statusBar->SetStatusText(wxString::Format(_("Physics rebuilt: %zu system(s)"), systemCount));
+}
+
 void OutfitStudioFrame::UpdatePhysicsState() {
 	const bool desired = cbPhysics && cbPhysics->IsChecked() && project && (project->bPose || animPlaying);
 
@@ -14732,17 +15253,7 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 		if (!physics)
 			physics = std::make_unique<Physics::Controller>();
 
-		std::vector<std::string> warnings;
-		OutfitProject* proj = project;
-		size_t systemCount = physics->BuildFromNif(
-			project->GetWorkNif(),
-			project->GetWorkAnim(),
-			[proj](const std::string& xmlPath) { return proj->GetPhysicsXmlStream(xmlPath); },
-			project->shapePhysicsFiles,
-			warnings);
-
-		for (auto& warning : warnings)
-			wxLogWarning("Physics: %s", warning);
+		size_t systemCount = BuildPhysicsFromXml();
 
 		if (systemCount == 0) {
 			statusBar->SetStatusText(_("No physics XMLs found in loaded meshes"));
@@ -14757,6 +15268,10 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 		project->physicsPose = &physics->PoseOverrides();
 		physics->ResetDynamics();
 		physicsRunning = true;
+
+		// The tree now reports what was built rather than what was linked, and
+		// the two can differ: an XML that resolves to nothing builds nothing.
+		RefreshPhysicsSystemTree();
 
 		// The step clock must be valid for the lockstep path too, where
 		// StartPhysicsPump never runs

@@ -298,8 +298,19 @@ set(BSOS_PHYSICS_SOURCES
 	src/physics/hdt/hdtVertex.cpp
 )
 
+# The physics XML schema table, document model and edit session. Unlike the
+# sources above these depend on nothing but tinyxml2, nifly and the standard
+# library - no Bullet, no wxWidgets - so they compile identically with and
+# without USE_BULLET and can be linked straight into BSOSTests.
+set(BSOS_PHYSICS_XML_SOURCES
+	src/physics/XmlDocument.cpp
+	src/physics/XmlEditSession.cpp
+	src/physics/XmlSchema.cpp
+)
+
 set(BSOS_COMMON_SOURCES
 	${BSOS_PHYSICS_SOURCES}
+	${BSOS_PHYSICS_XML_SOURCES}
 	lib/FSEngine/FSBSA.cpp
 	lib/FSEngine/FSEngine.cpp
 	lib/FSEngine/FSManager.cpp
@@ -389,8 +400,10 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
 	src/ui/WeightCopyDialog.cpp
+	src/ui/wxPhysicsEditorDlg.cpp
 	src/ui/wxSliderPanel.cpp
 	src/program/EditUV.cpp
+	src/program/PhysicsEditorDialog.cpp
 	src/program/FBXImportDialog.cpp
 	src/program/ObjImportDialog.cpp
 	src/program/OutfitProject.cpp
@@ -467,10 +480,14 @@ if(BSOS_BUILD_TESTS)
 
 	add_executable(BSOSTests
 		tests/HkxFileTest.cpp
+		tests/PhysicsEditSessionTest.cpp
+		tests/PhysicsXmlTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFMaterialFileTest.cpp
 		tests/SFMorphFileTest.cpp
 		tests/SFResourceHashTest.cpp
+		${BSOS_PHYSICS_XML_SOURCES}
+		lib/TinyXML-2/tinyxml2.cpp
 		src/files/HkxFile.cpp
 		src/files/SFMaterialDatabase.cpp
 		src/files/SFMaterialFile.cpp
@@ -485,8 +502,10 @@ if(BSOS_BUILD_TESTS)
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
+		${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
 	)
-	target_compile_definitions(BSOSTests PRIVATE ${BSOS_PLATFORM_DEFINITIONS})
+	target_compile_definitions(BSOSTests PRIVATE ${BSOS_PLATFORM_DEFINITIONS}
+		BSOS_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data")
 	target_link_libraries(BSOSTests PRIVATE Catch2::Catch2WithMain)
 	set_target_properties(BSOSTests PROPERTIES CXX_EXTENSIONS OFF)
 	if(MSVC AND BSOS_TEST_MSVC_RUNTIME_LIBRARY)

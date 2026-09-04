@@ -238,6 +238,14 @@ public:
 	// is about to be merged into the work NIF, keyed by shape name.
 	void CapturePhysicsFiles(nifly::NifFile& nif, const std::vector<nifly::NiShape*>& shapes);
 
+	// Links a physics XML to the named shapes of the work NIF: writes the
+	// "HDT Skinned Mesh Physics Object" extra data onto each of them, records
+	// the link so the preview picks it up, and adds the path to the set an
+	// exported NIF may carry on its root node - which is the only place the
+	// game reads it from, so a link that exists only on a shape would work
+	// here and nowhere else. Returns how many shapes gained the link.
+	int LinkPhysicsFile(const std::string& xmlPath, const std::vector<std::string>& shapeNames);
+
 	// Set while an unattended script drives the project. Prompts that would
 	// otherwise stall the run fall back to their default answer instead.
 	bool suppressPrompts = false;
@@ -292,7 +300,11 @@ public:
 	// Resolves a physics XML path referenced by a "HDT Skinned Mesh Physics
 	// Object" extra data to a readable stream (loose game data folder file,
 	// relative to the project's input NIF, or from loaded archives).
-	std::unique_ptr<std::istream> GetPhysicsXmlStream(const std::string& xmlPath);
+	// "outSourcePath"/"outFromArchive" report where it was found, for editing
+	// it in place; see GameDataStream::OpenPhysicsXml.
+	std::unique_ptr<std::istream> GetPhysicsXmlStream(const std::string& xmlPath,
+													 std::string* outSourcePath = nullptr,
+													 bool* outFromArchive = nullptr);
 	std::unordered_map<std::string, std::unique_ptr<nifly::BSClothExtraData>>& GetClothData() { return clothData; }
 
 	nifly::NiShape* GetBaseShape() { return baseShape; }

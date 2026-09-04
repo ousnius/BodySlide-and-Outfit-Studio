@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/UndoHistory.h"
 #include "../physics/Controller.h"
 #include "../physics/PumpClock.h"
+#include "../physics/XmlEditSession.h"
 #include "../render/GLSurface.h"
 #include "../ui/WeightCopyDialog.h"
 #include "../ui/wxSliderPanel.h"
@@ -74,6 +75,7 @@ enum TargetGame { FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR, SKYRIMVR, FO76, OB, S
 
 #define ANIM_PLAYBACK_TIMER 300
 #define PHYSICS_TIMER 301
+#define PHYSICS_REBUILD_TIMER 302
 
 struct MergeCheckErrors;
 
@@ -174,6 +176,7 @@ struct ConformOptions;
 struct ClippingFixOptions;
 class OutfitStudioFrame;
 class EditUV;
+class PhysicsEditorDialog;
 struct SymmetricVertices;
 struct VertexAsymmetries;
 struct VertexAsymmetryTasks;
@@ -1022,6 +1025,53 @@ public:
 	// a tick count, so the speed stays correct however often it arrives.
 	void PumpAnimationPlayback();
 
+	// The physics XMLs of the loaded meshes, held open for editing. The editor
+	// window is a view over this, not its owner.
+	Physics::XmlEditSession& GetPhysicsXmlSession() { return physicsXml; }
+
+	// Pushes one edited property into the running simulation: written straight
+	// into the live objects when the schema and the controller both allow it,
+	// and otherwise queued for a debounced rebuild. Returns whether it went in
+	// without a rebuild.
+	bool PatchOrRebuildPhysics(Physics::XmlDocument& doc, tinyxml2::XMLElement* element, const Physics::ChildDesc& desc);
+
+	// For a change too broad to describe as one property - an undo, an import,
+	// a new or removed element - which always means a rebuild.
+	void NotifyPhysicsXmlEdited(const std::string& xmlPath);
+
+	// Where physics XMLs live for the target game, as the file dialogs
+	// should open on it. Empty when no game data path is configured.
+	wxString PhysicsXmlDirectory() const;
+
+	// The path a NIF would link a file by: relative to the game data folder
+	// and spelled with backslashes, the way the extra data in every shipped
+	// model spells it. Empty when the file is somewhere else entirely, in
+	// which case there is no link that would resolve in game.
+	std::string GameRelativeXmlPath(const wxString& path) const;
+
+	// Writes one physics XML back over the file it was read from. A document
+	// that came out of an archive, or that has never been on disk, has
+	// nothing to write back over: with "allowExport" it asks for a place to
+	// put it, and without it says so and fails.
+	bool SavePhysicsXml(Physics::XmlDocument& doc, bool allowExport = true);
+
+	// Save As. The document is rebound to the new file, so later saves land
+	// there, but its link - what the NIF calls it - does not change.
+	bool ExportPhysicsXml(Physics::XmlDocument& doc);
+
+	// Loads another file over a document, keeping its link and its place in
+	// the session. Undoable.
+	bool ImportPhysicsXml(Physics::XmlDocument& doc, const wxString& path);
+
+	// Offers to save physics XML edits that are not on disk yet. Answers
+	// false only when the user asks to stop what prompted it.
+	bool CheckPendingPhysicsXml();
+
+	// Picks up a change to which XMLs the loaded meshes link - a new file, a
+	// new link - everywhere it shows: the pane, the editor and the running
+	// simulation.
+	void RefreshPhysicsLinks();
+
 	// Feeds a horizontal camera rotation into the physics preview so cloth
 	// and hair react as if the character turned under a fixed camera. No-op
 	// while physics is not simulating.
@@ -1056,6 +1106,7 @@ public:
 
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;
+	PhysicsEditorDialog* physicsEditor = nullptr;
 	OutfitProject* project = nullptr;
 	ShapeItemData* activeItem = nullptr;
 	std::string activeSlider;
@@ -1148,6 +1199,8 @@ public:
 	wxCollapsiblePane* masksPane = nullptr;
 	wxCollapsiblePane* posePane = nullptr;
 	wxCollapsiblePane* physicsPane = nullptr;
+	wxTreeCtrl* physicsSystemTree = nullptr;
+	wxButton* btnPhysicsEdit = nullptr;
 	wxCollapsiblePane* animationPane = nullptr;
 	wxCollapsiblePane* notesPane = nullptr;
 	wxTextCtrl* projectNotes = nullptr;
@@ -2042,11 +2095,45 @@ private:
 	void OnPhysicsTimer(wxTimerEvent& event);
 	void OnPhysicsIdle(wxIdleEvent& event);
 
+	// Fills the compact tree in the Physics pane with the XMLs the loaded
+	// meshes reference, opening each in the edit session on the way, so the
+	// pane and the editor both work before anything is simulated.
+	void RefreshPhysicsSystemTree();
+	// Binds the session to the current project, which is where it reads the
+	// XMLs from. Cheap, and re-done whenever it might have gone stale.
+	void BindPhysicsXmlSource();
+	// The XML the pane tree has selected, or the only one there is.
+	std::string SelectedPhysicsXmlPath() const;
+	void OnPhysicsSystemTreeSelect(wxTreeEvent& event);
+	void OnPhysicsEdit(wxCommandEvent& event);
+
+	// Builds the systems of the simulation from the edit session's XMLs and
+	// logs what it could not do, returning how many systems came out of it.
+	// Shared by starting physics and rebuilding it.
+	size_t BuildPhysicsFromXml();
+
+	// Rebuilds the running simulation from the edited XMLs, keeping the bones
+	// where they are and moving as they are, so a structural edit does not drop
+	// the cloth back onto the pose. Does nothing while physics is not running -
+	// the next start reads the edited text anyway.
+	void RebuildPhysics();
+	// Asks for a rebuild a moment from now, restarting the wait on every call,
+	// so dragging a value through a hundred intermediate settings rebuilds once
+	// at the end instead of a hundred times on the way.
+	void RequestPhysicsRebuild();
+	void OnPhysicsRebuildTimer(wxTimerEvent& event);
+
 	std::unique_ptr<Physics::Controller> physics;
+	// The physics XMLs of the loaded meshes, held open for editing. Outlives
+	// both the simulation and the editor window: the preview keeps running on
+	// what the editor holds, whether or not the editor is open.
+	Physics::XmlEditSession physicsXml;
 	// Whether any loaded mesh references a physics XML. The physics pane only
 	// exists on the bones tab, so showing it takes both this and the tab.
 	bool physicsAvailable = false;
 	wxTimer physicsTimer;
+	// One shot, armed by RequestPhysicsRebuild.
+	wxTimer physicsRebuildTimer;
 	// Simulation built and active (either pump mode or animation lockstep).
 	bool physicsRunning = false;
 	// Own idle+timer pump bound (pose mode without animation playback).

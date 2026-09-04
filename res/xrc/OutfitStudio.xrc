@@ -1709,6 +1709,26 @@
 																					<option>0</option>
 																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 																					<border>5</border>
+																					<object class="wxTreeCtrl" name="physicsSystemTree">
+																						<style>wxTR_HAS_BUTTONS|wxTR_HIDE_ROOT|wxTR_LINES_AT_ROOT|wxTR_SINGLE</style>
+																						<size>-1,110</size>
+																						<tooltip>The HDT-SMP physics XMLs the loaded meshes reference, and what each of them declares</tooltip>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
+																					<object class="wxButton" name="btnPhysicsEdit">
+																						<size>-1,25</size>
+																						<label>Edit Physics...</label>
+																						<tooltip>Open the physics editor for the selected XML</tooltip>
+																					</object>
+																				</object>
+																				<object class="sizeritem">
+																					<option>0</option>
+																					<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+																					<border>5</border>
 																					<object class="wxBoxSizer">
 																						<orient>wxHORIZONTAL</orient>
 																						<object class="sizeritem">

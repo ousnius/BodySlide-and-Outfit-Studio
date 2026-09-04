@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A leading comment, outside the root. -->
+<system>
+	<!-- Ambient defaults for everything below. -->
+	<bone-default>
+		<mass>0,5</mass>
+		<linearDamping>0.2</linearDamping>
+		<friction>0.4</friction>
+	</bone-default>
+
+	<bone name="NPC L Breast01" unknownAttribute="kept verbatim">
+		<mass>+1.25</mass>
+		<friction>0.8</friction>
+		<!-- a comment nested inside an element -->
+	</bone>
+
+	<bone name="NPC L Breast02"/>
+
+	<bone-default>
+		<mass>2</mass>
+	</bone-default>
+
+	<bone name="NPC R Breast01"/>
+
+	<generic-constraint-default>
+		<linearStiffness x="100" y="100" z="100"/>
+		<angularDamping x="1" y="1" z="1"/>
+	</generic-constraint-default>
+
+	<generic-constraint bodyA="NPC L Breast01" bodyB="NPC L Breast02">
+		<linearLowerLimit x="-1" y="-1" z="-1"/>
+		<linearUpperLimit x="1" y="1" z="1"/>
+	</generic-constraint>
+
+	<constraint-group>
+		<!-- Defaults declared in here are not scoped to the group. -->
+		<generic-constraint-default>
+			<linearStiffness x="400" y="400" z="400"/>
+		</generic-constraint-default>
+		<generic-constraint bodyA="NPC R Breast01" bodyB="NPC L Breast01"/>
+	</constraint-group>
+
+	<per-triangle-shape name="BodyShape">
+		<margin>0.5</margin>
+		<penetration>1.5</penetration>
+		<tag>body</tag>
+		<tag>torso</tag>
+		<no-collide-with-tag>body</no-collide-with-tag>
+		<weight-threshold bone="NPC L Breast01">0.2</weight-threshold>
+		<shared>internal</shared>
+	</per-triangle-shape>
+
+	<per-vertex-shape name="HairShape">
+		<margin>1</margin>
+		<tag>hair</tag>
+		<can-collide-with-tag>body</can-collide-with-tag>
+	</per-vertex-shape>
+
+	<shape name="ball" type="sphere">
+		<radius>3.5</radius>
+	</shape>
+
+	<conetwist-constraint bodyA="NPC L Breast01" bodyB="NPC L Breast02">
+		<coneLimit>0.5</coneLimit>
+		<limitY>0.25</limitY>
+		<twistSpan>0.1</twistSpan>
+	</conetwist-constraint>
+
+	<!-- Neither the schema nor the port knows this one; it still has to survive. -->
+	<somethingUnknown attribute="1">text content</somethingUnknown>
+</system>

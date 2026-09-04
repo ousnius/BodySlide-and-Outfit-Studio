@@ -26,5 +26,13 @@ std::unique_ptr<std::istream> OpenArchive(const std::string& relPath);
 // the game data folder, then relative to "nifFilePath" (the NIF the link came
 // from, for mods previewed straight out of their own folder), then in the
 // archives. Returns nullptr when it cannot be found.
-std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const std::string& nifFilePath);
+//
+// "outSourcePath" reports where the contents actually came from, so an editor
+// can write them back there: the full path of the loose file, or the data
+// folder relative path inside the archive when "outFromArchive" comes back
+// true - which is not a writable location, so saving has to go elsewhere.
+std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath,
+											 const std::string& nifFilePath,
+											 std::string* outSourcePath = nullptr,
+											 bool* outFromArchive = nullptr);
 }

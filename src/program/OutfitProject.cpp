@@ -5458,6 +5458,71 @@ void OutfitProject::CapturePhysicsFiles(NifFile& nif, const std::vector<NiShape*
 	}
 }
 
+int OutfitProject::LinkPhysicsFile(const std::string& xmlPath, const std::vector<std::string>& shapeNames) {
+	if (xmlPath.empty())
+		return 0;
+
+	const std::string wanted = ToLower(xmlPath);
+
+	int linked = 0;
+	for (const std::string& shapeName : shapeNames) {
+		NiShape* shape = workNif.FindBlockByName<NiShape>(shapeName);
+		if (!shape)
+			continue;
+
+		bool present = false;
+		for (auto& extraDataRef : shape->extraDataRefs) {
+			auto stringExtraData = workNif.GetHeader().GetBlock<NiStringExtraData>(extraDataRef);
+			if (stringExtraData && IsPhysicsExtraData(stringExtraData) && ToLower(stringExtraData->stringData.get()) == wanted) {
+				present = true;
+				break;
+			}
+		}
+
+		if (present)
+			continue;
+
+		auto extraData = std::make_unique<NiStringExtraData>();
+		extraData->name.get() = "HDT Skinned Mesh Physics Object";
+		extraData->stringData.get() = xmlPath;
+		workNif.AssignExtraData(shape, std::move(extraData));
+
+		// Added to the map rather than recaptured from the work NIF. A shape
+		// merged in from a second file carries its link only here - the merge
+		// drops the root node the link was written on - so re-reading the NIF
+		// would erase exactly the links this map exists to hold.
+		std::vector<std::string>& linkedFiles = shapePhysicsFiles[shapeName];
+		const bool alreadyMapped
+			= std::any_of(linkedFiles.begin(), linkedFiles.end(), [&wanted](const std::string& file) { return ToLower(file) == wanted; });
+		if (!alreadyMapped)
+			linkedFiles.push_back(xmlPath);
+
+		linked++;
+	}
+
+	if (linked == 0)
+		return 0;
+
+	// ChoosePhysicsData writes the root node link out of this list on
+	// export, and it is the root node the game reads.
+	bool known = false;
+	for (auto& rootData : rootPhysicsData) {
+		if (ToLower(rootData->stringData.get()) == wanted) {
+			known = true;
+			break;
+		}
+	}
+
+	if (!known) {
+		auto rootData = std::make_unique<NiStringExtraData>();
+		rootData->name.get() = "HDT Skinned Mesh Physics Object";
+		rootData->stringData.get() = xmlPath;
+		rootPhysicsData.push_back(std::move(rootData));
+	}
+
+	return linked;
+}
+
 void OutfitProject::CaptureRootPhysicsData(NifFile& srcNif) {
 	for (auto* physicsExtraData : GetRootPhysicsExtraData(srcNif)) {
 		const std::string xmlPath = ToLower(physicsExtraData->stringData.get());
@@ -7425,8 +7490,8 @@ std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std
 	return nullptr;
 }
 
-std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::string& xmlPath) {
-	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
+std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::string& xmlPath, std::string* outSourcePath, bool* outFromArchive) {
+	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName(), outSourcePath, outFromArchive);
 }
 
 bool OutfitProject::GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput) {

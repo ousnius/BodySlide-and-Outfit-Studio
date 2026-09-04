@@ -680,6 +680,9 @@
     <None Include="res\xrc\EditUV.xrc">
       <Filter>Resources</Filter>
     </None>
+    <None Include="res\xrc\PhysicsEditor.xrc">
+      <Filter>Resources</Filter>
+    </None>
     <None Include="res\xrc\ImportDialog.xrc">
       <Filter>Resources</Filter>
     </None>
@@ -794,6 +797,15 @@
       <Filter>Physics</Filter>
     </ClInclude>
     <ClInclude Include="src\physics\SystemBuilder.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlDocument.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlEditSession.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlSchema.h">
       <Filter>Physics</Filter>
     </ClInclude>
     <ClInclude Include="src\physics\hdt\XmlReader.h">
@@ -1525,6 +1537,9 @@
     <ClInclude Include="src\program\EditUV.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\PhysicsEditorDialog.h">
+      <Filter>Program</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\RefTemplates.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -1535,6 +1550,9 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\WeightCopyDialog.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\wxPhysicsEditorDlg.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="src\ui\wxSliderPanel.h">
@@ -2169,6 +2187,15 @@
     <ClCompile Include="src\physics\SystemBuilder.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
+    <ClCompile Include="src\physics\XmlDocument.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlEditSession.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlSchema.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
     <ClCompile Include="src\physics\hdt\XmlReader.cpp">
       <Filter>Physics\hdt</Filter>
     </ClCompile>
@@ -2301,6 +2328,9 @@
     <ClCompile Include="src\program\EditUV.cpp">
       <Filter>Program</Filter>
     </ClCompile>
+    <ClCompile Include="src\program\PhysicsEditorDialog.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
     <ClCompile Include="src\components\RefTemplates.cpp">
       <Filter>Components</Filter>
     </ClCompile>
@@ -2359,6 +2389,9 @@
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\WeightCopyDialog.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ui\wxPhysicsEditorDlg.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="src\ui\wxSliderPanel.cpp">

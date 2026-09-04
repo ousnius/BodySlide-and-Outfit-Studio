@@ -1,0 +1,1887 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns="FSMP-Validator"
+	targetNamespace="FSMP-Validator"
+	elementFormDefault="qualified"
+    attributeFormDefault="unqualified"
+	version="2.2.0"
+	>
+
+	<!-- ############################################################ -->
+	<!-- attributeGroups -->
+	<!-- ############################################################ -->
+
+	<xsd:attributeGroup name="defaults">
+        <xsd:attribute name="name" type="xsd:string" use="optional">
+            <xsd:annotation>
+                <xsd:documentation>The name of a *-default element (for example bone-default,
+generic-constraint-default, per-triangle-shape-default,
+per-vertex-shape-default) is optional. If it isn't set, "" is the name. As the
+xml is interpreted line by line, you can redefine defaults so that they impact
+following matching elements.
+</xsd:documentation>
+            </xsd:annotation>
+			<!-- We could replace the type string by something more "ID"
+			<xsd:simpleType>
+				<xsd:restriction base="xsd:ID">
+					<xsd:pattern value=".*" />
+				</xsd:restriction>
+			</xsd:simpleType>
+			-->
+        </xsd:attribute>
+        <xsd:attribute name="extends" type="xsd:string" use="optional"/>
+    </xsd:attributeGroup>
+
+	<!-- ############################################################ -->
+	<!-- simpleTypes -->
+	<!-- ############################################################ -->
+
+	<xsd:simpleType name="flexFloat">
+		<xsd:annotation>
+			<xsd:documentation>A float that accepts either a dot or a comma as decimal separator (e.g. "1.5" or
+"1,5"). The hdtSMP64 runtime converts comma to dot before parsing, so both forms
+are valid at runtime.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value="-?(\d+([.,]\d*)?|[.,]\d+)"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<xsd:simpleType name="factor">
+		<xsd:annotation>
+			<xsd:documentation>A float in [0, 1]. Used for ratios, damping coefficients, and other
+dimensionless factors that represent a percentage or proportion. Accepts dot or
+comma as decimal separator (e.g. "0.5" or "0,5"). Range [0, 1] is enforced by
+the Schematron rules.
+</xsd:documentation>
+		</xsd:annotation>
+        <xsd:restriction base="flexFloat"/>
+    </xsd:simpleType>
+    <xsd:simpleType name="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>A non-negative float (>= 0). Used for physical quantities that cannot be
+negative, such as mass, friction, stiffness, and distances. Accepts dot or comma
+as decimal separator (e.g. "1.5" or "1,5"). The non-negative constraint is
+enforced by the Schematron rules.
+</xsd:documentation>
+		</xsd:annotation>
+        <xsd:restriction base="flexFloat"/>
+    </xsd:simpleType>
+	<xsd:simpleType name="shapeType">
+		<xsd:annotation>
+			<xsd:documentation>Collision shape primitive for a bone collider. Determines which child elements
+are valid inside the shape element: ref: references another named shape by name;
+the name attribute is required. box: axis-aligned box; requires halfExtend.
+sphere: sphere; requires radius. capsule: cylinder capped with hemispheres;
+requires radius and height. hull: convex hull built from point child elements.
+cylinder: open-ended cylinder; requires radius and height. Margin is added to
+the radius. compound: a composite of child shapes, each defined in a child
+element.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:restriction base="xsd:string">
+			<xsd:enumeration value="ref"/>
+			<xsd:enumeration value="box"/>
+			<xsd:enumeration value="sphere"/>
+			<xsd:enumeration value="capsule"/>
+			<xsd:enumeration value="hull"/>
+			<xsd:enumeration value="cylinder"/>
+			<xsd:enumeration value="compound"/>
+		</xsd:restriction>
+	</xsd:simpleType>
+
+	<!-- ############################################################ -->
+	<!-- root element -->
+	<!-- ############################################################ -->
+
+	<!-- Document root. Every hdtSMP64 physics XML file must have exactly one <system>
+	     element as its top-level element. All other xs:element declarations in this
+	     schema are reusable building blocks referenced via ref; none of them are
+	     valid document roots. -->
+	<xsd:element name="system">
+		<xsd:complexType>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded">
+                <xsd:element ref="bone"/>
+				<xsd:element ref="bone-default"/>
+				<xsd:element ref="per-triangle-shape-default"/>
+				<xsd:element ref="per-vertex-shape-default"/>
+				<xsd:element ref="conetwist-constraint"/>
+				<xsd:element ref="conetwist-constraint-default"/>
+				<xsd:element ref="constraint-group"/>
+				<xsd:element ref="generic-constraint"/>
+				<xsd:element ref="generic-constraint-default"/>
+				<xsd:element ref="per-triangle-shape"/>
+				<xsd:element ref="per-vertex-shape"/>
+				<xsd:element ref="shape"/>
+				<xsd:element ref="stiffspring-constraint"/>
+				<xsd:element ref="stiffspring-constraint-default"/>
+				<xsd:element ref="pattern"/>
+				<xsd:element ref="pattern-default"/>
+				<xsd:element ref="repeat"/>
+			</xsd:choice>
+		</xsd:complexType>
+		<xsd:key name="boneKey">
+			<xsd:selector xpath="bone"/>
+			<xsd:field xpath="@name"/>
+		</xsd:key>
+		<xsd:unique name="boneDefaultKey">
+			<xsd:selector xpath="bone-default"/>
+			<xsd:field xpath="@name"/>
+		</xsd:unique>
+		<xsd:keyref name="boneDefaultKeyInBoneTemplate" refer="boneDefaultKey">
+			<xsd:selector xpath="bone"/>
+			<xsd:field xpath="@template"/>
+		</xsd:keyref>
+		<xsd:keyref name="boneDefaultKeyInBoneExtends" refer="boneDefaultKey">
+			<xsd:selector xpath="bone|bone-default"/>
+			<xsd:field xpath="@extends"/>
+		</xsd:keyref>
+		<xsd:unique name="conetwistConstraintDefaultKey">
+			<xsd:selector xpath="conetwist-constraint-default"/>
+			<xsd:field xpath="@name"/>
+		</xsd:unique>
+		<xsd:keyref name="conetwistConstraintDefaultKeyInConetwistConstraint" refer="conetwistConstraintDefaultKey">
+			<xsd:selector xpath="conetwist-constraint"/>
+			<xsd:field xpath="@template"/>
+		</xsd:keyref>
+		<xsd:keyref name="conetwistConstraintDefaultKeyInConetwistConstraintTemplate" refer="conetwistConstraintDefaultKey">
+			<xsd:selector xpath="conetwist-constraint-template"/>
+			<xsd:field xpath="@extends"/>
+		</xsd:keyref>
+		<xsd:unique name="stiffspringConstraintDefaultKey">
+			<xsd:selector xpath="stiffspring-constraint-default"/>
+			<xsd:field xpath="@name"/>
+		</xsd:unique>
+		<xsd:keyref name="stiffspringConstraintDefaultKeyInStiffspringConstraint" refer="stiffspringConstraintDefaultKey">
+			<xsd:selector xpath="stiffspring-constraint"/>
+			<xsd:field xpath="@template"/>
+		</xsd:keyref>
+		<xsd:keyref name="stiffspringConstraintDefaultKeyInStiffspringConstraintTemplate" refer="stiffspringConstraintDefaultKey">
+			<xsd:selector xpath="stiffspring-constraint-template"/>
+			<xsd:field xpath="@extends"/>
+		</xsd:keyref>
+		<xsd:unique name="genericConstraintDefaultKey">
+			<xsd:selector xpath="generic-constraint-default"/>
+			<xsd:field xpath="@name"/>
+		</xsd:unique>
+		<xsd:keyref name="genericConstraintDefaultKeyInGenericConstraint" refer="genericConstraintDefaultKey">
+			<xsd:selector xpath="generic-constraint"/>
+			<xsd:field xpath="@template"/>
+		</xsd:keyref>
+		<xsd:keyref name="genericConstraintDefaultKeyInGenericConstraintTemplate" refer="genericConstraintDefaultKey">
+			<xsd:selector xpath="generic-constraint-template"/>
+			<xsd:field xpath="@extends"/>
+		</xsd:keyref>
+		<xsd:key name="per-triangle-shapeKey">
+			<xsd:selector xpath="per-triangle-shape"/>
+			<xsd:field xpath="@name"/>
+		</xsd:key>
+		<xsd:unique name="perTriangleShapeDefaultKey">
+			<xsd:selector xpath="per-triangle-shape-default"/>
+			<xsd:field xpath="@name"/>
+		</xsd:unique>
+		<xsd:keyref name="perTriangleShapeDefaultKeyInPerTriangleShape" refer="perTriangleShapeDefaultKey">
+			<xsd:selector xpath="per-triangle-shape"/>
+			<xsd:field xpath="@template"/>
+		</xsd:keyref>
+		<xsd:keyref name="perTriangleShapeDefaultKeyInPerTriangleShapeDefault" refer="perTriangleShapeDefaultKey">
+			<xsd:selector xpath="per-triangle-shape-default"/>
+			<xsd:field xpath="@extends"/>
+		</xsd:keyref>
+		<xsd:key name="per-vertex-shapeKey">
+			<xsd:selector xpath="per-vertex-shape"/>
+			<xsd:field xpath="@name"/>
+		</xsd:key>
+		<xsd:unique name="perVertexShapeDefaultKey">
+			<xsd:selector xpath="per-vertex-shape-default"/>
+			<xsd:field xpath="@name"/>
+		</xsd:unique>
+		<xsd:keyref name="perVertexShapeDefaultKeyInPerVertexShape" refer="perVertexShapeDefaultKey">
+			<xsd:selector xpath="per-vertex-shape"/>
+			<xsd:field xpath="@template"/>
+		</xsd:keyref>
+		<xsd:keyref name="perVertexShapeDefaultKeyInPerVertexShapeDefault" refer="perVertexShapeDefaultKey">
+			<xsd:selector xpath="per-vertex-shape-default"/>
+			<xsd:field xpath="@extends"/>
+		</xsd:keyref>
+	</xsd:element>
+
+	<!-- ############################################################ -->
+	<!-- pattern macros (expanded by FSMP before validation) -->
+	<!-- ############################################################ -->
+
+	<xsd:element name="pattern-default">
+		<xsd:annotation>
+			<xsd:documentation>Defines a reusable pattern macro: a parameterized cluster of bones and
+constraints. name is required; author (optional) namespaces it so its full name is author.name;
+version (optional) lets several versions of one pattern coexist. Holds zero or more param
+declarations followed by one body template. FSMP expands every pattern (and removes every
+pattern-default) before the document is validated against the rest of this schema, so a body may
+contain ${placeholders} that the strict element types would otherwise reject -- the body content is
+therefore left unvalidated here.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="param" minOccurs="0" maxOccurs="unbounded"/>
+				<xsd:element ref="body"/>
+			</xsd:sequence>
+			<xsd:attribute name="name" type="xsd:string" use="required"/>
+			<xsd:attribute name="author" type="xsd:string" use="optional"/>
+			<xsd:attribute name="version" type="xsd:string" use="optional"/>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="param">
+		<xsd:annotation>
+			<xsd:documentation>Declares a pattern parameter. name is required; default (optional) is the
+value used when a use site omits the parameter -- a parameter without a default is required.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:attribute name="name" type="xsd:string" use="required"/>
+			<xsd:attribute name="default" type="xsd:string" use="optional"/>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="body">
+		<xsd:annotation>
+			<xsd:documentation>The template a pattern expands to: ordinary system-level elements plus
+nested repeat and pattern uses, with ${param}/${loopVar}/${loopVar+/-N} placeholders. Left
+unvalidated (lax) because of the placeholders; FSMP validates the expanded result strictly.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:any processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="repeat">
+		<xsd:annotation>
+			<xsd:documentation>Emits its content once per index, binding var to from .. from+count-1
+(from defaults to 0). count and from are strings because they may be ${placeholders}. Nest two for a
+2-D grid. Content is left unvalidated (lax) for the same reason as body.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:any processContents="skip" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+			<xsd:attribute name="var" type="xsd:string" use="required"/>
+			<xsd:attribute name="count" type="xsd:string" use="required"/>
+			<xsd:attribute name="from" type="xsd:string" use="optional"/>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="pattern">
+		<xsd:annotation>
+			<xsd:documentation>Instantiates a pattern. name is required and is the pattern's full name
+(author.name when namespaced); version (optional) pins a version. Every other attribute supplies a
+parameter value, so arbitrary attributes are permitted here.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:attribute name="name" type="xsd:string" use="required"/>
+			<xsd:attribute name="version" type="xsd:string" use="optional"/>
+			<xsd:anyAttribute processContents="skip"/>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:element name="patterns">
+		<xsd:annotation>
+			<xsd:documentation>Root element of a shared pattern-library file, the kind that lives in
+data/skse/plugins/hdtSkinnedMeshConfigs/patterns/. FSMP loads every such file once at startup and
+makes its pattern-default definitions available to every physics XML. A library holds only pattern
+definitions (no bones, constraints, or shapes); those live in the consuming system file.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element ref="pattern-default" minOccurs="0" maxOccurs="unbounded"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+
+	<!-- ############################################################ -->
+	<!-- simple elements -->
+	<!-- ############################################################ -->
+
+	<xsd:element name="angularBounce" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Vector3. If undefined, it's set to (0.0, 0.0, 0.0). Not recommended;
+leave at default. Sets the bounce coefficient on the rotational limit motor of a
+generic-constraint. Bullet uses it to compute a bounce error that caps the
+constraint error at the angular limit. At speeds typical in SMP, any non-zero
+value causes violent jitter at limits rather than a physical rebound. Use
+angularStiffness/angularDamping to control limit behaviour instead.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularDamping" type="factor">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Between 0 and 1, will be clamped. If undefined, it's set to 0. Sets
+the angularDamping on the btRigidBody of a bone. Each physics step, the damping
+is applied on the btRigidBody angular velocity with this formula:
+angularVelocity *= pow(1 - angularDamping, timeStep) Timestep is in seconds.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularEquilibrium" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Optional. If undefined, it's set to (0.0, 0.0, 0.0). Sets the equilibrium point
+(resting orientation, in radians) for the angular springs of a generic 6 degrees
+of freedom constraint. It is also used as the servo target when
+angularServoMotors is enabled. The code existing in Bullet to calculate it
+automatically isn't used. Note: the FSMP 1.x meaning was the same; an older
+version of this documentation incorrectly described this as "maximum force to be
+applied to enabled angular motors" that is angularMaxMotorForce.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularLowerLimit" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Optional. If undefined, it's set to (1,1,1) (sic!). Each axis is in radians, and
+will be translated towards [-Pi, Pi]. The Generic 6 Degrees of Freedom Spring 2
+constraint contains a 3D vector of angular limits (Rotational Limit Motor 2),
+and this sets the minimum radian value of the angular constraint. Beware: lower
+limit being greater than upper limit is interpreted as no constraint.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularMaxMotorForce" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Vector3. Default: (0, 0, 0) (effectively unlimited). Maximum
+torque that can be applied by each enabled angular motor per axis. Has no effect
+unless angularMotors is true.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularMotors" type="xsd:boolean">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Boolean. Default: false. Enables motors for all three
+angular axes. Motors apply a constant torque toward a target velocity and can
+stabilise oscillating springs. Enable angularServoMotors to also target a
+specific position (equilibrium point).
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularNonHookeanDamping" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Default: 0. Applies a reduction or increase in spring
+damping, starting at 0 at equilibrium, and ending at factor * damping when at
+the limit. At equilibrium, damping is unchanged. A value of 0.5 means that by
+the time a spring is halfway from its resting point to the LowerLimit, it will
+have lost 0.25 * damping. Positive values reduce damping, negative values
+increase it. The useful range of this is typically -0.75 to 0.9, however values
+outside this are fine. Pairs extremely well with angularNonHookeanStiffness.
+damping * (1 - distanceFactor * angularNonHookeanDamping)
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularNonHookeanStiffness" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Default: 0. Applies a reduction or increase in spring
+stiffness, starting at 0 at equilibrium, and ending at factor * stiffness when
+at the limit. At equilibrium, stiffness is unchanged. A value of 0.5 means that
+by the time a spring is halfway from its resting point to the LowerLimit, it
+will have lost 0.25 * stiffness. Positive values reduce stiffness, negative
+values increase it. The useful range of this is typically -0.75 to 0.9, however
+values outside this are fine. Pairs extremely well with
+angularNonHookeanDamping. stiffness * (1 - distanceFactor *
+angularNonHookeanStiffness)
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularServoMotors" type="xsd:boolean">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Boolean. Default: false. If true, any enabled angular motors
+will function as servo motors, allowing a specific target coordinate to be set
+per axis. Current impl. simply changes this to the equilibrium point. Motors
+must be enabled (angularMotors).
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularSpringFrequency" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Vector3 (each axis 0.0 - 1.0). Default (0.25, 0.25, 0.25).
+Flood-control coefficient for the angular spring stiffness calculation per axis.
+Lower values cap the effective angular stiffness per axis, which can improve FPS
+at the cost of reduced spring responsiveness. Setting an axis to 1.0 would
+bypass the cap for that axis but causes severe jitter â€” disable the cap cleanly
+with angularStiffnessLimited = false instead.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularStiffness" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Optional. If undefined, it's set to (0,0,0). The Generic 6 Degrees of Freedom
+Spring 2 constraint contains a 3D vector of angular limits (Rotational Limit
+Motor 2), and this sets the spring stiffness of the angular constraint. This
+stiffness will be dynamically limited: "the spring should not be sampled faster
+that the quarter of its angular frequency" max stiffness = mass / (16 * dt * dt)
+(dt being the timestep) What sets the direction of the new velocity is the sign
+of: stiffness * distance from the equilibrium point - damping * velocity. NB:
+damping is dynamically limited too: max damping = m / dt Quick way to define it:
+mass * 40 * (turns per second) * (turns per second) Here is the explanation:
+angular stiffness = mass * (angular frequency)^2 = mass * 4 * Pi^2 * (turns per
+second)^2 For example, if you have a mass of 1 kg, and you want it to oscillate
+around the x axis 2 times per second, you'll have:: (1 * 4 * Pi^2 * 2^2, , ) =
+(157.91, , )
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularStiffnessLimited" type="xsd:boolean">
+        <xsd:annotation>
+            <xsd:documentation>FSMP 2.x: Optional. If undefined, it's set to true. Limits the spring frequency
+to max 0.25 turns per timestep. Honestly, you should set it to false and set
+your stiffness at the right level, because this limit is way too high: when you
+attain it, the spring will oscillate around once every 4 frames, you will
+perceive incredible jittering!
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+	<xsd:element name="springDampingLimited" type="xsd:boolean">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. If undefined, it's set to true. Limits the spring damping to
+mass x fps. This doesn't work for elements which could be scaled (like a body)
+because changing the scale changes the mass. You should set it to false.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularTargetVelocity" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Vector3. Default: (0, 0, 0). Target angular velocity (in
+radians per second per axis) for angular motors. Has no effect unless
+angularMotors is true.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="angularUpperLimit" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Optional. If undefined, it's set to (-1,-1,-1) (sic!). Each axis is in radians,
+and will be translated towards [-Pi, Pi]. The Generic 6 Degrees of Freedom
+Spring 2 constraint contains a 3D vector of angular limits (Rotational Limit
+Motor 2), and this sets the maximum radian value of the angular constraint.
+Beware: lower limit being greater than upper limit is interpreted as no
+constraint.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="biasFactor" type="factor">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Between 0 and 1. If undefined, it's set to 0.3. Bullet recommendation:
+between 0 and 0.6. This is the strength with which a constraint resists zeroth
+order (angular, not angular velocity) limit violation.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="can-collide-with-bone" type="xsd:string">
+        <xsd:annotation>
+            <xsd:documentation>Optional. Bone name. Whitelists collisions by bone name: this shape will ONLY
+collide with the bones you list, and nothing else. IMPORTANT: If you define
+can-collide-with-bone on a shape, it completely overrides all tag-based and
+negation-based filtering:
+- can-collide-with-tag is ignored
+- no-collide-with-bone is ignored
+- no-collide-with-tag is ignored
+You cannot mix can-collide-with-bone and no-collide-with-bone in the same shape: only can-collide-with-bone
+will be used. Priority rule: can-collide-with-* beats no-collide-with-*
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+	<xsd:element name="can-collide-with-tag" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Tag string. Whitelists collisions by tag: this shape will ONLY collide
+with shapes whose tag matches one of your listed can-collide-with-tag values,
+and NOTHING ELSE. Priority: can-collide-with-bone > can-collide-with-tag >
+no-collide-with-bone > no-collide-with-tag. If you define can-collide-with-tag,
+it completely overrides:
+- no-collide-with-tag (if both are present, only can-collide-with-tag applies)
+BUT: if can-collide-with-bone is also defined, that takes full priority and this
+tag is ignored. If you define no can-collide-with-* tags, collisions are
+unrestricted (all collisions allowed by default).
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="centerOfMassTransform" type="transform">
+        <xsd:annotation>
+            <xsd:documentation>Optional. Default: basis x="0" y="0" z="0" w="1", origin x="0" y="0" z="0"
+(identity). Offsets the centre of mass for this bone: the origin component
+translates the CoM, and the basis component rotates the principal axes of
+inertia. The effect is most noticeable on inertia tensor calculations: test
+carefully when using non-default values.
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+	<xsd:element name="coneLimit" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Strictly equivalent to the
+limitZ and swingSpan1 parameters.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="damping" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Used to calculate damping in
+springstiff scale constraints, spring force in springstiff constraints, and the
+velocity error in constraints groups.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="disable-priority" type="xsd:int">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Integer. Collision-disabling priority for this shape. When two shapes
+have matching disable-tags, the shape with the lower disable-priority is
+disabled. Used together with disable-tag.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="disable-tag" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation>Optional. String. Tag used to selectively disable collision shapes. When two
+shapes with matching disable-tags collide, the shape with the lower
+disable-priority is disabled. Used together with disable-priority.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+    <xsd:element name="enableAngularSprings" type="xsd:boolean">
+        <xsd:annotation>
+            <xsd:documentation>FSMP 2.x: Optional. Boolean. Default: true. Set to false to disable the spring
+entirely (also improves performance).
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+    <xsd:element name="enableLinearSprings" type="xsd:boolean">
+        <xsd:annotation>
+            <xsd:documentation>FSMP 2.x: Optional. Boolean. Default: true. Set to false to disable the spring
+entirely (also improves performance).
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+	<xsd:element name="equilibrium" type="factor">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Between 0 and 1. If undefined, it's set to 0.5. Allows to calculate,
+linearly between the minDistance and the maxDistance, the equilibrium point
+between 2 bodies in a StiffSpring constraint.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="frameInA" type="transform">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Transform (basis + origin).
+Defines the constraint frame by writing it in body A's local space.
+FSMP then computes the matching frame for body B automatically.
+
+This answers: "In which body's local space is this frame transform written?"
+It does not answer: "Which body is the linear reference frame?" That is
+controlled separately by useLinearReferenceFrameA.
+
+If no frame tag is defined, the runtime default is frameInB.
+If multiple frame tags are defined in the same constraint block, the last one
+wins and earlier frame tags are ignored.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="frameInB" type="transform">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Transform (basis + origin).
+Defines the constraint frame by writing it in body B's local space.
+FSMP then computes the matching frame for body A automatically.
+
+This is the runtime default when no frame tag is defined.
+If omitted entirely, it defaults to the identity transform: basis x="0" y="0"
+z="0" w="1" and origin x="0" y="0" z="0".
+
+This only controls where the frame transform is authored.
+It does not control which body is used as the linear reference frame; that is
+controlled separately by useLinearReferenceFrameA.
+
+If multiple frame tags are defined in the same constraint block, the last one
+wins and earlier frame tags are ignored.
+</xsd:documentation>
+		</xsd:annotation>
+
+	</xsd:element>
+	<xsd:element name="frameInLerp" type="lerp">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Linear interpolation of the constraint frame between body A and body
+B's local spaces. translationLerp: 0 = body A's position, 1 = body B's position.
+rotationLerp: 0 = body A's orientation, 1 = body B's orientation. Setting both
+to 1 is equivalent to frameInB (the runtime default). Important: If you define
+multiple frame tags in the same constraint block, the LAST ONE WINS and all
+others are ignored. Best practice: define only one frame tag per constraint.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="friction" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0.5. Allows to calculate rolling
+friction, spinning friction and combined friction between 2 bodies. Recommended:
+best simulation results happen when friction is non-zero (from the authors of
+the physics library).
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="gravity-factor" type="factor">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Between 0 and 1. If undefined, it's set to 1. Will be applied to the
+gravity of the bone. Has no effect on a static or kinematic object (so no effect
+if the bone mass is zero). Recommended: 1 Generally, doubling the gravity or
+doubling the mass gives exactly the same result, so you should configure mass
+rather than on gravity. However, some functions (for example limitation of
+stiffness) use the mass without taking into account the gravity.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="wind-factor" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 1. Will be applied to the wind
+effect on the bone. Has no effect on a static or kinematic object (so no effect
+if the bone mass is zero). Recommended: 1
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="halfExtend" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Required for shape type="box". Vector3. Half-extents of the box along each local
+axis (x, y, z). The full box dimensions are twice these values in each
+direction.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="inertia" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Vector3. If undefined, it's set to (0, 0, 0) (no inertia override;
+Bullet calculates inertia from the shape). The calculated local inertia tensor
+is divided component-wise by this value, acting as a per-axis inertia scaling
+factor. Values below 1 increase effective inertia (more resistance to rotation);
+values above 1 decrease it. Setting any component to 0 sets that inertia
+component to zero (not infinite), which can cause numerical instability.
+Strongly recommended: (1, 1, 1).
+</xsd:documentation>
+		</xsd:annotation>
+    </xsd:element>
+	<xsd:element name="limitSoftness" type="factor">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Between 0 and 1. If undefined, it's set to 1. Bullet recommendations:
+between 0.8 and 1. This describes the % of limits where the movement is free.
+Beyond this softness %, the limit is gradually enforced until the "hard" (1.0)
+limit is reached.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="limitX" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Strictly equivalent to the
+twistLimit and twistSpan parameters.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="limitY" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Strictly equivalent to the
+planeLimit and swingSpan2 parameters.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="limitZ" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Strictly equivalent to the
+coneLimit and swingSpan1 parameters.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="linearBounce" type="vector3">
+        <xsd:annotation>
+            <xsd:documentation>Optional. Vector3. If undefined, it's set to (0.0, 0.0, 0.0). Not recommended;
+leave at default. Bullet applies a bounce impulse when the body hits a linear
+limit. At the velocities typical in SMP, any non-zero value causes violent
+jitter at the limit rather than a physical rebound. Use
+linearStiffness/linearDamping to control limit behaviour instead.
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+	<xsd:element name="linearDamping" type="factor">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Between 0 and 1. If undefined, it's set to 0. On generic and
+stiffspring constraints, this is Hookean spring damping (good). On bones, this
+is a correction/adjustment (bad). Recommended (bones): 0 Recommended
+(constraints): whatever damps your springs at the right rate. On bones:
+bone_linearVelocity *= (1 - bone_linearDamping)^timeStep
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="linearEquilibrium" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Vector3. Default: (0, 0, 0). Resting position (equilibrium
+point) for the linear springs of a generic-constraint, in the constraint's local
+frame. Also used as the servo target when linearServoMotors is enabled.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="linearLowerLimit" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Optional. If undefined, it's set to (1, 1, 1). Isn't applied if linearLowerLimit
+> linearUpperLimit. The displacement is limited to this value.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="linearNonHookeanDamping" type="vector3">
+        <xsd:annotation>
+            <xsd:documentation>FSMP 2.x: Optional. Default: 0. Applies a reduction or increase in spring
+damping, starting at 0 at equilibrium, and ending at factor * damping when at
+the limit. At equilibrium, damping is unchanged. A value of 0.5 means that by
+the time a spring is halfway from its resting point to the LowerLimit, it will
+have lost 0.25 * damping. Positive values reduce damping, negative values
+increase it. The useful range of this is typically -0.75 to 0.9, however values
+outside this are fine. Pairs extremely well with linearNonHookeanStiffness.
+damping * (1 - distanceFactor * linearNonHookeanDamping)
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+	<xsd:element name="linearNonHookeanStiffness" type="vector3">
+        <xsd:annotation>
+            <xsd:documentation>FSMP 2.x: Optional. Default: 0. Applies a reduction or increase in spring
+stiffness, starting at 0 at equilibrium, and ending at factor * stiffness when
+at the limit. At equilibrium, stiffness is unchanged. A value of 0.5 means that
+by the time a spring is halfway from its resting point to the LowerLimit, it
+will have lost 0.25 * stiffness. Positive values reduce stiffness, negative
+values increase it. The useful range of this is typically -0.75 to 0.9, however
+values outside this are fine. Pairs extremely well with
+angularNonHookeanDamping. stiffness * (1 - distanceFactor *
+angularNonHookeanStiffness)
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+	<xsd:element name="linearMaxMotorForce" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Vector3. Default: (0, 0, 0) (effectively unlimited). Maximum
+force that can be applied by each enabled linear motor per axis. Has no effect
+unless linearMotors is true.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="linearMotors" type="xsd:boolean">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Boolean. Default: false. Enables motors for all three linear
+axes. Motors apply a constant force toward a target velocity and can stabilise
+oscillating springs. Enable linearServoMotors to also target a specific position
+(equilibrium point).
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="linearServoMotors" type="xsd:boolean">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Boolean. Default: false. If true, any enabled linear motors
+will function as servo motors, allowing a specific target coordinate to be set
+per axis. The current implementation simply changes this to the equilibrium
+point. Motors must be enabled (linearMotors).
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="linearSpringFrequency" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Vector3 (each axis 0.0 - 1.0). Default (0.25, 0.25, 0.25).
+Flood-control coefficient for the linear spring stiffness calculation per axis.
+Lower values cap the effective linear stiffness per axis, which can improve FPS
+at the cost of reduced spring responsiveness. Setting an axis to 1.0 would
+bypass the cap for that axis but causes severe jitter â€” disable the cap cleanly
+with linearStiffnessLimited = false instead.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="linearStiffness" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Default (0, 0, 0). Here is a simple way to define it: linear stiffness
+= mass * (angular frequency)^2 = mass * 4 * Pi^2 * (turns per second)^2 For
+example, if you have a mass of 1 kg, and you want it to oscillate along the x
+axis 2 times per second, you'll have: (1 * 4 * Pi^2 * 2^2, , ) = (157.91, , )
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="linearStiffnessLimited" type="xsd:boolean">
+        <xsd:annotation>
+            <xsd:documentation>FSMP 2.x: Optional. If undefined, it's set to true. Limits the spring frequency
+to max 0.25 turns per timestep. Honestly, you should set it to false and set
+your stiffness at the right level, because this limit is way too high: when you
+attain it, the spring will oscillate around once every 4 frames, you will
+perceive incredible jittering!
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+    <xsd:element name="linearTargetVelocity" type="vector3">
+        <xsd:annotation>
+            <xsd:documentation>FSMP 2.x: Optional. Vector3. Default: (0, 0, 0). Target linear velocity (in
+units per second per axis) for linear motors. Has no effect unless linearMotors
+is true.
+</xsd:documentation>
+        </xsd:annotation>
+    </xsd:element>
+	<xsd:element name="linearUpperLimit" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Optional. If undefined, it's set to (-1, -1, -1). Isn't applied if
+linearLowerLimit > linearUpperLimit. The displacement is limited to this value.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="margin" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Non-negative. If undefined, it's set to 1 (for per-triangle-shape and
+per-vertex-shape). Collision skin thickness for the mesh shape. Bullet expands
+the shape outward by this amount to improve collision stability and prevent
+tunnelling, at the cost of visual accuracy. Larger values make collisions
+trigger earlier (the shape appears "puffed out").
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="margin-multiplier" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Non-negative. If undefined, it's set to 1. Scales the collision margin
+of all shapes associated with this bone. Multiplied against each shape's own
+margin value. Values less than 1 reduce the effective margin; values greater
+than 1 increase it.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="mass" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. Setting mass to zero or unset creates a fixed (non-dynamic)
+rigid body.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="maxDistanceFactor" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Non-negative. If undefined, it's set to 1. Upper bound for the
+distance factor of a StiffSpring constraint, expressed as a multiple of the rest
+distance between the two bodies. The equilibrium point is a linear interpolation
+between minDistanceFactor and maxDistanceFactor, controlled by the equilibrium
+element. If minDistanceFactor > maxDistanceFactor, the spring limits are
+inverted and the equilibrium falls outside the [min, max] range.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="minDistanceFactor" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Non-negative. If undefined, it's set to 1. Lower bound for the
+distance factor of a StiffSpring constraint, expressed as a multiple of the rest
+distance between the two bodies. The equilibrium point is a linear interpolation
+between minDistanceFactor and maxDistanceFactor, controlled by the equilibrium
+element. If minDistanceFactor > maxDistanceFactor, the spring limits are
+inverted and the equilibrium falls outside the [min, max] range.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="motorCFM" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Non-negative. Default 0. Constraint Force Mixing for the
+motor. A non-zero CFM softens the motor: the target velocity is no longer
+rigidly enforced, allowing some slip. Higher values make the motor softer. 0 =
+rigid motor. See ODE documentation:
+http://ode.org/wiki/index.php/Manual#Constraint_Force_Mixing_.28CFM.29
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="motorERP" type="factor">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Factor [0, 1]. Default 0.9. Error Reduction Parameter for
+the motor: the fraction of the motor position error corrected per timestep. 1.0
+corrects the full error each step (rigid but potentially unstable); 0.0 applies
+no correction. See ODE documentation:
+http://ode.org/wiki/index.php/Manual#Joint_error_and_the_Error_Reduction_Parameter_.28ERP.29
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="no-collide-with-bone" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Bone name. Blacklists collisions by bone name: this shape will NOT
+collide with the bones you list, but WILL collide with all others. Important:
+can-collide-with-bone COMPLETELY OVERRIDES no-collide-with-bone. If you define
+both, only can-collide-with-bone is used. Priority rule: can-collide-with-*
+beats no-collide-with-*
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="no-collide-with-tag" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Tag string. Blacklists collisions by tag: this shape will NOT collide
+with shapes whose tag matches one of your listed no-collide-with-tag values, but
+WILL collide with all others. Important: can-collide-with-tag COMPLETELY
+OVERRIDES no-collide-with-tag. If you define both, only can-collide-with-tag is
+used. Priority rule: can-collide-with-* beats no-collide-with-*. If you define
+no collision tags at all, collisions are unrestricted (all collisions allowed by
+default).
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="penetration">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Float (positive or negative). If undefined, it's set to 1. Scales the
+penetration depth used when resolving per-triangle collisions. A value of 1 uses
+the natural penetration depth; negative values invert the direction of the
+collision response.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:simpleType>
+			<xsd:restriction base="flexFloat"/>
+		</xsd:simpleType>
+	</xsd:element>
+	<xsd:element name="planeLimit" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Strictly equivalent to the
+limitY and swingSpan2 parameters.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="point" type="vector3">
+		<xsd:annotation>
+			<xsd:documentation>Required (one or more) for shape type="hull". Vector3. A vertex of the convex
+hull in the bone's local space. Bullet computes the convex hull from all
+provided points.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="prenetration" type="flexFloat">
+		<xsd:annotation>
+			<xsd:documentation>Deprecated alias for penetration. Accepted at runtime but provided for backward
+compatibility only. Use penetration instead.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="relaxationFactor" type="factor">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Factor [0, 1]. If undefined, it's set to 1. Controls the rate at which
+constraint error is reduced after a limit violation in a ConeTwist constraint.
+Lower values make corrections slower and softer; 1.0 corrects fully each step.
+Bullet's recommended range: 0.8 - 1.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="restitution" type="flexFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Float. If undefined, it's set to 0. Bounciness coefficient for rigid
+body collisions: 0 = perfectly inelastic (no bounce), 1 = perfectly elastic
+(full rebound). Bullet combines the restitution of both colliding bodies to
+determine the collision impulse. Values outside [0, 1] are physically
+unrealistic.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="rollingFriction" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Non-negative. If undefined, it's set to 0. Resistance to rolling
+motion, separate from sliding friction (friction). Applies a torque opposing the
+rolling direction. Useful to prevent spherical or capsule shapes from rolling
+indefinitely after a collision.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="shared">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Case-sensitive. If undefined or mistyped, it's set to "public". Valid
+options: "public": the shape can collide with a body B if the shape's body can
+collide with that body B. Webspam phrasing: "Shape can match collisions
+anywhere, including other XML files on other skeletons." "internal": the shape
+can't collide with a shape from another skeleton; if it's the same skeleton,
+then see "public". Webspam phrasing: "Shape can be referenced by any XML file,
+but only on this skeleton." "external": the shape can't collide with a shape
+from the same skeleton; if it's another skeleton, then see "public". Webspam
+phrasing: "Shape can be referenced by any XML file, but only on other
+skeletons." "private": the shape can't collide with another mesh; if it's the
+same mesh, then see "public". Webspam phrasing: "Shape can only be referenced
+within this file."
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:simpleType>
+			<xsd:restriction base="xsd:string">
+				<xsd:enumeration value="public"/>
+				<xsd:enumeration value="private"/>
+				<xsd:enumeration value="internal"/>
+				<xsd:enumeration value="external"/>
+			</xsd:restriction>
+		</xsd:simpleType>
+	</xsd:element>
+	<xsd:element name="stiffness" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Non-negative. If undefined, it's set to 0. Spring stiffness for
+StiffSpring constraints. Higher values resist deviation from the equilibrium
+distance more strongly. A simple starting point: stiffness = mass * (2Ï€ *
+oscillations_per_second)Â².
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="stopCFM" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Non-negative. Default 0. Constraint Force Mixing for limit
+stops. A non-zero CFM softens the limit stop: the limit is no longer a hard
+wall, allowing some overshoot. Higher values make the limit softer. 0 = hard
+stop. See ODE documentation:
+http://ode.org/wiki/index.php/Manual#Constraint_Force_Mixing_.28CFM.29
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="stopERP" type="factor">
+		<xsd:annotation>
+			<xsd:documentation>FSMP 2.x: Optional. Factor [0, 1]. Default 0.2. Error Reduction Parameter for
+limit stops: the fraction of the limit violation corrected per timestep. Lower
+values correct violations more gently (less jitter at limits); 1.0 corrects
+fully each step. See ODE documentation:
+http://ode.org/wiki/index.php/Manual#Joint_error_and_the_Error_Reduction_Parameter_.28ERP.29
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="swingSpan1" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Strictly equivalent to the
+coneLimit and limitZ parameters.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="swingSpan2" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Strictly equivalent to the
+limitY and planeLimit parameters.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="tag" type="xsd:string">
+		<xsd:annotation>
+			<xsd:documentation>Optional. String. Once configured, a tag string can be used by other shapes to
+reference the shape, e.g. inside `can-collide-with-tag`, or
+`no-collide-with-tag` references.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="transform" type="transform">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Transform (basis + origin). An explicit local transform applied to a
+shape within a compound shape child. Positions and orients the sub-shape
+relative to the parent compound shape's bone.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="twistLimit" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Strictly equivalent to the
+limitX and twistSpan parameters.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="twistSpan" type="posFloat">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Positive. If undefined, it's set to 0. Strictly equivalent to the
+twistLimit and limitX parameters.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="useLinearReferenceFrameA" type="xsd:boolean">
+		<xsd:annotation>
+			<xsd:documentation>Optional. Boolean. Default: false.
+Controls which body is used as the reference frame for the linear part of a
+generic-constraint.
+
+false = use body B as the linear reference frame
+true = use body A as the linear reference frame
+
+This does not choose whether the frame transform is written as frameInA,
+frameInB, or frameInLerp.
+Those tags define the constraint frame itself.
+This flag only changes which body's frame is treated as the linear reference
+after the frame has been computed.
+
+So it is valid to use frameInA together with useLinearReferenceFrameA=false,
+or frameInB together with useLinearReferenceFrameA=true.
+</xsd:documentation>
+		</xsd:annotation>
+	</xsd:element>
+	<xsd:element name="weight-threshold">
+		<xsd:annotation>
+			<xsd:documentation>A "weight-threshold" in a "per-vertex-shape" or "per-triangle-shape" contains a
+float value and a "bone" attribute. Each skinned bone with that name in the
+"per-XXX-shape" has its weight-threshold set to the float value. This
+weight-threshold is used 3 ways:
+- When preparing collisions, no collision effect (displacement) is considered if
+the weight of the bone is zero or lower than the weight-threshold.
+- When processing collisions, when a collision happen between 2 shapes, if the
+weight of the shape at the vertex or triangle collision point is lower than the
+weight-threshold defined for the vertex or triangle collision point bone, then
+the collision effects aren't applied.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:simpleContent>
+				<xsd:extension base="flexFloat">
+					<xsd:attribute name="bone" type="xsd:string" use="required"/>
+				</xsd:extension>
+			</xsd:simpleContent>
+		</xsd:complexType>
+	</xsd:element>
+
+	<!-- ############################################################ -->
+	<!-- Complex elements -->
+	<!-- ############################################################ -->
+
+	<xsd:element name="bone-default">
+		<xsd:annotation>
+			<xsd:documentation>Template/default values for bones. Defines physics defaults (mass, damping,
+shape, friction, collision lists, etc.) used by subsequent bone declarations
+unless overridden. As XML is parsed in document order, redefining bone-default
+changes defaults for following bones. Optional attributes name/extends (via
+defaults attributeGroup) allow naming and inheritance of templates.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:annotation>
+				<xsd:documentation>When mass is set to 0, inertia, linearDamping and angularDamping are forbidden:
+they have no effect on a static (non-dynamic) rigid body.
+</xsd:documentation>
+			</xsd:annotation>
+			<xsd:all>
+				<xsd:element ref="mass" minOccurs="0"/>
+				<xsd:element ref="inertia" minOccurs="0"/>
+				<xsd:element ref="centerOfMassTransform" minOccurs="0"/>
+				<xsd:element ref="linearDamping" minOccurs="0"/>
+				<xsd:element ref="angularDamping" minOccurs="0"/>
+				<xsd:element ref="gravity-factor" minOccurs="0"/>
+				<xsd:element ref="wind-factor" minOccurs="0"/>
+				<xsd:element ref="friction" minOccurs="0"/>
+				<xsd:element ref="rollingFriction" minOccurs="0"/>
+				<xsd:element ref="restitution" minOccurs="0"/>
+				<xsd:element ref="margin-multiplier" minOccurs="0"/>
+				<xsd:element ref="shape" minOccurs="0"/>
+				<xsd:element ref="can-collide-with-bone" minOccurs="0"/>
+				<xsd:element ref="no-collide-with-bone" minOccurs="0"/>
+			</xsd:all>
+			<xsd:attributeGroup ref="defaults" />
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="bone">
+		<xsd:annotation>
+			<xsd:documentation>Bones can be used in constraints tags, can-collide-with-bone tags and
+no-collide-with-bone tags without being declared in a bone tag. If a node with
+that name exists, a bone will be created on the fly with the current
+bone-default values. Beware: bones can be created only once; the second
+declaration won't be taken into account, and will issue a warning in
+hdtSMP64.log saying that the bone is skipped.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:all>
+				<xsd:element ref="mass" minOccurs="0"/>
+				<xsd:element ref="inertia" minOccurs="0"/>
+				<xsd:element ref="centerOfMassTransform" minOccurs="0"/>
+				<xsd:element ref="linearDamping" minOccurs="0"/>
+				<xsd:element ref="angularDamping" minOccurs="0"/>
+				<xsd:element ref="gravity-factor" minOccurs="0"/>
+				<xsd:element ref="wind-factor" minOccurs="0"/>
+				<xsd:element ref="friction" minOccurs="0"/>
+				<xsd:element ref="rollingFriction" minOccurs="0"/>
+				<xsd:element ref="restitution" minOccurs="0"/>
+				<xsd:element ref="margin-multiplier" minOccurs="0"/>
+				<xsd:element ref="shape" minOccurs="0"/>
+				<xsd:element ref="can-collide-with-bone" minOccurs="0"/>
+				<xsd:element ref="no-collide-with-bone" minOccurs="0"/>
+			</xsd:all>
+			<xsd:attribute name="name" type="xsd:string" use="required"/>
+			<xsd:attribute name="template" type="xsd:string"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="child">
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="transform"/>
+				<xsd:element ref="shape"/>
+			</xsd:choice>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="conetwist-constraint">
+		<xsd:annotation>
+			<xsd:documentation>Don't use conetwist constraints. Anything you can do with a conetwist, you can
+do better with a GenericConstraint. swingSpan1, coneLimit, limitX are strictly
+equivalent. You should declare only one of them. swingSpan2, planeLimit, limitY
+are strictly equivalent. You should declare only one of them. twistSpan,
+twistLimit, limitZ are strictly equivalent. You should declare only one of them.
+
+NB: ConeTwist uses a swing-twist formulation with coupled angular behavior
+around a cone + twist band. Generic uses per-axis angular limits in a chosen
+frame (three independent angular rows, plus many extra spring/motor options).
+
+That means:
+- Cone boundary handling is different (coupled swing geometry vs axis-wise
+limits).
+- Error reduction path is different (cone softness/bias/relaxation vs ERP/CFM
+per axis).
+- Numerical behavior near limits differs (onset of correction, overshoot,
+jitter profile).
+
+That means:
+- Cone-style swing limit response will not be perfectly reproduced by axis
+limits.
+- Different "feel" at boundaries: how quickly it stiffens near edge, bounces,
+or damps at the limit can change.
+- Stability profile changes: some setups become more stable/tunable with
+Generic, others need retuning.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="frameInA"/>
+				<xsd:element ref="frameInB"/>
+				<xsd:element ref="frameInLerp"/>
+				<xsd:element ref="swingSpan1"/>
+				<xsd:element ref="swingSpan2"/>
+				<xsd:element ref="twistSpan"/>
+				<xsd:element ref="coneLimit"/>
+				<xsd:element ref="planeLimit"/>
+				<xsd:element ref="twistLimit"/>
+				<xsd:element ref="limitX"/>
+				<xsd:element ref="limitY"/>
+				<xsd:element ref="limitZ"/>
+				<xsd:element ref="limitSoftness"/>
+				<xsd:element ref="biasFactor"/>
+				<xsd:element ref="relaxationFactor"/>
+			</xsd:choice>
+			<xsd:attribute name="bodyA" type="xsd:string" use="required">
+				<xsd:annotation>
+					<xsd:documentation>bodyA is required and must contain a bone name. Bone declaration is optional,
+see the bone documentation.
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="bodyB" type="xsd:string" use="required">
+				<xsd:annotation>
+					<xsd:documentation>bodyB is required and must contain a bone name. Bone declaration is optional,
+see the bone documentation.
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="template" type="xsd:string"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="conetwist-constraint-default">
+		<xsd:annotation>
+			<xsd:documentation>Template/default values for conetwist-constraint elements. Defines default frame
+and angular limit parameters for following conetwist constraints unless
+overridden. As XML is parsed in document order, redefining
+conetwist-constraint-default changes behavior for subsequent
+conetwist-constraint elements. Templates can be named and inherited via
+name/extends.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="frameInA"/>
+				<xsd:element ref="frameInB"/>
+				<xsd:element ref="frameInLerp"/>
+				<xsd:element ref="swingSpan1"/>
+				<xsd:element ref="swingSpan2"/>
+				<xsd:element ref="twistSpan"/>
+				<xsd:element ref="coneLimit"/>
+				<xsd:element ref="planeLimit"/>
+				<xsd:element ref="twistLimit"/>
+				<xsd:element ref="limitX"/>
+				<xsd:element ref="limitY"/>
+				<xsd:element ref="limitZ"/>
+				<xsd:element ref="limitSoftness"/>
+				<xsd:element ref="biasFactor"/>
+				<xsd:element ref="relaxationFactor"/>
+			</xsd:choice>
+			<xsd:attribute name="name" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation>Don't use conetwist constraints. Anything you can do with a conetwist, you can
+do better with a GenericConstraint. The name of a conetwist-constraint-default
+is optional. If it isn't set, "" is the name. As the xml is interpreted line by
+line, you can redefine the default so that it impacts the following
+conetwist-constraints.
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="extends" type="xsd:string"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="constraint-group">
+		<xsd:annotation>
+			<xsd:documentation>Constraint-group is a container for constraints and constraint-default
+declarations read in document order. It does not create a special physics
+primitive by itself. Defaults declared inside a constraint-group are not
+local-scoped: they update the same template maps used outside the group and
+therefore affect following constraints after the group as well. Splitting
+constraints across multiple groups is usually equivalent to one group, except
+when defaults are redefined: then ordering changes can change behavior.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="generic-constraint"/>
+				<xsd:element ref="generic-constraint-default"/>
+				<xsd:element ref="stiffspring-constraint"/>
+				<xsd:element ref="stiffspring-constraint-default"/>
+				<xsd:element ref="conetwist-constraint"/>
+				<xsd:element ref="conetwist-constraint-default"/>
+			</xsd:choice>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="generic-constraint">
+		<xsd:annotation>
+			<xsd:documentation>Constraint between bodyA and bodyB (6 degrees of freedom: 3 linear + 3 angular
+axes).
+
+This constraint is frame/axis-based, not radial-distance-based. It can enforce
+per-axis limits, springs, motors, and servo behavior. Frames
+(frameInA/frameInB/frameInLerp) define the local coordinate systems in which
+linear and angular axes are solved.
+
+Core spring model per axis (conceptual): F_i = -k_i * (x_i - x_eq_i) - c_i * v_i
+(linear axis i) T_i = -k_i * (theta_i - theta_eq_i) - c_i * omega_i (angular
+axis i) where k = stiffness, c = damping, eq = equilibrium target.
+
+Limit behavior:
+- lower/upper limit tags define allowed ranges per axis
+- ERP/CFM (stopERP/stopCFM and motorERP/motorCFM) control how aggressively
+limits/motors are corrected
+
+Motor behavior:
+- target velocity and max motor force are set per axis
+- servo mode targets equilibrium values in the current runtime implementation
+
+Typical use: complex joints requiring independent linear/rotational limits and
+tuning per axis.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="angularBounce"/>
+				<xsd:element ref="angularEquilibrium"/>
+				<xsd:element ref="angularLowerLimit"/>
+				<xsd:element ref="angularStiffness"/>
+				<xsd:element ref="angularUpperLimit"/>
+				<xsd:element ref="frameInA"/>
+				<xsd:element ref="frameInB"/>
+				<xsd:element ref="frameInLerp"/>
+				<xsd:element ref="linearBounce"/>
+				<xsd:element ref="linearEquilibrium"/>
+				<xsd:element ref="linearLowerLimit"/>
+				<xsd:element ref="linearStiffness"/>
+				<xsd:element ref="linearUpperLimit"/>
+				<xsd:element ref="linearSpringFrequency"/>
+				<xsd:element ref="angularSpringFrequency"/>
+				<xsd:element ref="linearStiffnessLimited"/>
+				<xsd:element ref="angularStiffnessLimited"/>
+				<xsd:element ref="enableLinearSprings"/>
+				<xsd:element ref="enableAngularSprings"/>
+				<xsd:element ref="linearMotors"/>
+				<xsd:element ref="angularMotors"/>
+				<xsd:element ref="linearServoMotors"/>
+				<xsd:element ref="angularServoMotors"/>
+				<xsd:element ref="linearTargetVelocity"/>
+				<xsd:element ref="angularTargetVelocity"/>
+				<xsd:element ref="linearMaxMotorForce"/>
+				<xsd:element ref="angularMaxMotorForce"/>
+				<xsd:element ref="linearNonHookeanDamping"/>
+				<xsd:element ref="angularNonHookeanDamping"/>
+				<xsd:element ref="linearNonHookeanStiffness"/>
+				<xsd:element ref="angularNonHookeanStiffness"/>
+				<xsd:element ref="useLinearReferenceFrameA"/>
+				<xsd:element ref="stopERP"/>
+				<xsd:element ref="stopCFM"/>
+				<xsd:element ref="motorERP"/>
+				<xsd:element ref="motorCFM"/>
+				<xsd:element ref="springDampingLimited"/>
+				<!-- linear and angular damping are already declared as floats for bones -->
+				<!-- Yes, but they're crap and bad. This is spring damping. -->
+                                <xsd:element name="linearDamping" type="vector3">
+                                        <xsd:annotation>
+                                                <xsd:documentation>Optional. Vector3 (per-axis: x, y, z). Controls damping of linear spring
+oscillations for generic-constraint, per axis. Higher values = stronger damping
+= oscillations die out faster (more viscous). Combined with springDampingLimited
+to optionally cap excessive damping. Default: 0 (no damping; springs oscillate
+freely at their natural frequency). Typical range: 0.1 to 2.0 per axis, adjust
+per spring behavior needed. Note: This is different from bone-level damping
+(which affects all rigid body movement).
+</xsd:documentation>
+                                        </xsd:annotation>
+                                </xsd:element>
+                                <xsd:element name="angularDamping" type="vector3">
+                                        <xsd:annotation>
+                                                <xsd:documentation>Optional. Vector3 (per-axis: x, y, z). Controls damping of angular spring
+oscillations for generic-constraint, per axis. Higher values = stronger damping
+= rotational oscillations die out faster (more viscous). Combined with
+springDampingLimited to optionally cap excessive damping. Default: 0 (no
+damping; springs oscillate freely at their natural frequency). Typical range:
+0.1 to 2.0 per axis, adjust per spring behavior needed. Note: This is different
+from bone-level angular damping (which affects all rigid body rotation).
+</xsd:documentation>
+                                        </xsd:annotation>
+                                </xsd:element>
+			</xsd:choice>
+			<xsd:attribute name="bodyA" type="xsd:string" use="required">
+				<xsd:annotation>
+					<xsd:documentation>bodyA is required and must contain a bone name. Bone declaration is optional,
+see the bone documentation.
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="bodyB" type="xsd:string" use="required">
+				<xsd:annotation>
+					<xsd:documentation>bodyB is required and must contain a bone name. Bone declaration is optional,
+see the bone documentation.
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="template" type="xsd:string"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="generic-constraint-default">
+		<xsd:annotation>
+			<xsd:documentation>Template/default values for generic-constraint elements. Defines default
+per-axis limits, springs, damping, motors, and frame settings for following
+generic-constraint elements unless overridden. As XML is parsed in document
+order, redefining generic-constraint-default affects subsequent generic
+constraints. Optional attributes name/extends (via defaults attributeGroup)
+support named templates and inheritance.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="angularBounce"/>
+				<xsd:element ref="angularEquilibrium"/>
+				<xsd:element ref="angularLowerLimit"/>
+				<xsd:element ref="angularUpperLimit"/>
+				<xsd:element ref="angularStiffness"/>
+				<xsd:element ref="frameInA"/>
+				<xsd:element ref="frameInB"/>
+				<xsd:element ref="frameInLerp"/>
+				<xsd:element ref="linearBounce"/>
+				<xsd:element ref="linearEquilibrium"/>
+				<xsd:element ref="linearLowerLimit"/>
+				<xsd:element ref="linearUpperLimit"/>
+				<xsd:element ref="linearStiffness"/>
+				<xsd:element ref="linearSpringFrequency"/>
+				<xsd:element ref="angularSpringFrequency"/>
+				<xsd:element ref="linearStiffnessLimited"/>
+				<xsd:element ref="angularStiffnessLimited"/>
+				<xsd:element ref="enableLinearSprings"/>
+				<xsd:element ref="enableAngularSprings"/>
+				<xsd:element ref="linearMotors"/>
+				<xsd:element ref="angularMotors"/>
+				<xsd:element ref="linearServoMotors"/>
+				<xsd:element ref="angularServoMotors"/>
+				<xsd:element ref="linearTargetVelocity"/>
+				<xsd:element ref="angularTargetVelocity"/>
+				<xsd:element ref="linearMaxMotorForce"/>
+				<xsd:element ref="angularMaxMotorForce"/>
+				<xsd:element ref="linearNonHookeanDamping"/>
+				<xsd:element ref="angularNonHookeanDamping"/>
+				<xsd:element ref="linearNonHookeanStiffness"/>
+				<xsd:element ref="angularNonHookeanStiffness"/>
+				<xsd:element ref="useLinearReferenceFrameA"/>
+				<xsd:element ref="stopERP"/>
+				<xsd:element ref="stopCFM"/>
+				<xsd:element ref="motorERP"/>
+				<xsd:element ref="motorCFM"/>
+				<xsd:element ref="springDampingLimited"/>
+				<!-- linear and angular damping are already declared as floats for bones -->
+                <!-- Yes, but they're crap and bad.  This is spring damping. -->
+                                <xsd:element name="linearDamping" type="vector3">
+                                        <xsd:annotation>
+                                                <xsd:documentation>Optional. Vector3 (per-axis: x, y, z). Controls damping of linear spring
+oscillations for generic-constraint, per axis. Higher values = stronger damping
+= oscillations die out faster (more viscous). Combined with springDampingLimited
+to optionally cap excessive damping. Default: 0 (no damping; springs oscillate
+freely at their natural frequency). Typical range: 0.1 to 2.0 per axis, adjust
+per spring behavior needed. Note: This is different from bone-level damping
+(which affects all rigid body movement).
+</xsd:documentation>
+                                        </xsd:annotation>
+                                </xsd:element>
+                                <xsd:element name="angularDamping" type="vector3">
+                                        <xsd:annotation>
+                                                <xsd:documentation>Optional. Vector3 (per-axis: x, y, z). Controls damping of angular spring
+oscillations for generic-constraint, per axis. Higher values = stronger damping
+= rotational oscillations die out faster (more viscous). Combined with
+springDampingLimited to optionally cap excessive damping. Default: 0 (no
+damping; springs oscillate freely at their natural frequency). Typical range:
+0.1 to 2.0 per axis, adjust per spring behavior needed. Note: This is different
+from bone-level angular damping (which affects all rigid body rotation).
+</xsd:documentation>
+                                        </xsd:annotation>
+                                </xsd:element>
+			</xsd:choice>
+            <xsd:attributeGroup ref="defaults" />
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="per-triangle-shape">
+		<xsd:complexType>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element ref="margin"/>
+				<xsd:element ref="prenetration"/>
+				<xsd:element ref="penetration"/>
+				<xsd:element ref="tag"/>
+				<xsd:element ref="shared"/>
+				<xsd:element ref="no-collide-with-tag"/>
+				<xsd:element ref="no-collide-with-bone"/>
+				<xsd:element ref="can-collide-with-tag"/>
+				<xsd:element ref="can-collide-with-bone"/>
+				<xsd:element ref="weight-threshold"/>
+				<xsd:element ref="disable-tag"/>
+				<xsd:element ref="disable-priority"/>
+			</xsd:choice>
+			<xsd:attribute name="name" type="xsd:string" use="required"/>
+			<xsd:attribute name="template" type="xsd:string"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="per-triangle-shape-default">
+		<xsd:annotation>
+			<xsd:documentation>Template/default values for per-triangle-shape elements. Defines default tags,
+collision filters, margin/penetration settings, and weight-threshold behavior
+for following per-triangle-shape elements unless overridden. As XML is parsed in
+document order, redefining per-triangle-shape-default affects subsequent
+per-triangle-shape entries. Optional attributes name/extends (via defaults
+attributeGroup) support named templates and inheritance.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element ref="margin"/>
+				<xsd:element ref="prenetration"/>
+				<xsd:element ref="penetration"/>
+				<xsd:element ref="tag"/>
+				<xsd:element ref="shared"/>
+				<xsd:element ref="no-collide-with-tag"/>
+				<xsd:element ref="no-collide-with-bone"/>
+				<xsd:element ref="can-collide-with-tag"/>
+				<xsd:element ref="can-collide-with-bone"/>
+				<xsd:element ref="weight-threshold"/>
+				<xsd:element ref="disable-tag"/>
+				<xsd:element ref="disable-priority"/>
+			</xsd:choice>
+			<xsd:attributeGroup ref="defaults"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="per-vertex-shape">
+		<xsd:annotation>
+			<xsd:documentation>per-vertex-shape: there is no penetration tag inside per-vertex-shape.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element ref="margin"/>
+				<xsd:element ref="tag"/>
+				<xsd:element ref="shared"/>
+				<xsd:element ref="no-collide-with-tag"/>
+				<xsd:element ref="can-collide-with-tag"/>
+				<xsd:element ref="no-collide-with-bone"/>
+				<xsd:element ref="can-collide-with-bone"/>
+				<xsd:element ref="weight-threshold"/>
+				<xsd:element ref="disable-tag"/>
+				<xsd:element ref="disable-priority"/>
+			</xsd:choice>
+			<xsd:attribute name="name" type="xsd:string" use="required"/>
+			<xsd:attribute name="template" type="xsd:string"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="per-vertex-shape-default">
+		<xsd:annotation>
+			<xsd:documentation>Template/default values for per-vertex-shape elements. Defines default tags,
+collision filters, margin settings, and weight-threshold behavior for following
+per-vertex-shape elements unless overridden. As XML is parsed in document order,
+redefining per-vertex-shape-default affects subsequent per-vertex-shape entries.
+Optional attributes name/extends (via defaults attributeGroup) support named
+templates and inheritance.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice maxOccurs="unbounded">
+				<xsd:element ref="margin"/>
+				<xsd:element ref="tag"/>
+				<xsd:element ref="shared"/>
+				<xsd:element ref="no-collide-with-tag"/>
+				<xsd:element ref="can-collide-with-tag"/>
+				<xsd:element ref="no-collide-with-bone"/>
+				<xsd:element ref="can-collide-with-bone"/>
+				<xsd:element ref="weight-threshold"/>
+				<xsd:element ref="disable-tag"/>
+				<xsd:element ref="disable-priority"/>
+			</xsd:choice>
+			<xsd:attributeGroup ref="defaults"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="shape">
+		<xsd:annotation>
+			<xsd:documentation>Defines a collision shape that Bullet uses for physics simulation. Can be used
+in three ways:
+1) Top-level shape definition with name attribute: stores the shape in a named
+registry for reuse via &lt;ref&gt; elements
+2) Inline inside &lt;bone&gt; or &lt;bone-default&gt;: directly attaches the
+shape to that bone
+3) Nested inside a &lt;shape type="compound"&gt;: creates a composite shape from
+multiple child shapes
+
+Required attribute: type (box|sphere|capsule|hull|cylinder|compound). Optional
+attribute: name (required for top-level definitions; stores shape for reuse).
+Optional attribute: transform (used for positioning shapes within compound
+shapes).
+
+Child elements depend on the shape type:
+- box: requires halfExtend; optional margin
+- sphere: requires radius; no margin support
+- capsule: requires radius and height; optional margin
+- cylinder: requires radius and height; optional margin (added to radius)
+- hull: requires one or more point children (x y z coordinates)
+- compound: contains ref elements and/or nested shape elements
+
+IMPORTANT: The shape type directly controls Bullet physics behavior. Example: A
+breasts bone with a &lt;shape type="capsule"&gt; will collide smoothly and
+appear elastic/bouncy, while a &lt;shape type="hull"&gt; fitted to the exact
+mesh will constrain collisions more tightly to match the visual geometry. Choose
+the shape type based on desired physics feel, not just accuracy.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="halfExtend">
+					<xsd:annotation>
+						<xsd:documentation>Axis-aligned half-extents (half-dimensions) vector. For type box only. Vector3
+format: x y z (in game units). All components should be positive. Example:
+&lt;halfExtend&gt;0.5 0.3 0.2&lt;/halfExtend&gt; creates a box centered at
+origin with dimensions 1.0 x 0.6 x 0.4. Required for box shapes; optional for
+others (will be ignored).
+</xsd:documentation>
+					</xsd:annotation>
+				</xsd:element>
+				<xsd:element name="margin" type="posFloat">
+					<xsd:annotation>
+						<xsd:documentation>Collision margin (buffer around shape for continuous collision detection). For
+types box, hull and cylinder. Optional. Positive value in game units. If
+undefined, defaults to 0. For cylinder: margin is added to the radius
+(effectively increasing cylinder thickness). For box and hull: margin expands
+the shape symmetrically in all directions. Recommended: small value like
+0.01-0.05 to improve collision stability.
+</xsd:documentation>
+					</xsd:annotation>
+				</xsd:element>
+				<xsd:element name="radius" type="posFloat">
+					<xsd:annotation>
+						<xsd:documentation>Radius (half-width) of sphere, capsule, or cylinder shapes. For types sphere,
+capsule and cylinder. Optional. Positive value in game units. If undefined,
+defaults to 0 (degenerate shape). For sphere: radius from center to surface. For
+capsule: radius around the central axis (cylinder + hemispherical caps). For
+cylinder: radius of the circular cross-section.
+</xsd:documentation>
+					</xsd:annotation>
+				</xsd:element>
+				<xsd:element name="height" type="posFloat">
+					<xsd:annotation>
+						<xsd:documentation>Height along the primary axis. For types capsule and cylinder. Optional.
+Positive value in game units. If undefined, defaults to 0 (degenerate shape).
+For capsule: distance between the centers of the two hemispherical caps (along Y
+axis). For cylinder: distance from top face to bottom face (along Y axis). The
+shape extends from -height/2 to +height/2 in local Y coordinates.
+</xsd:documentation>
+					</xsd:annotation>
+				</xsd:element>
+				<xsd:element ref="point">
+					<xsd:annotation>
+						<xsd:documentation>Vertex coordinate for convex hull shape. For type hull only. Vector3 format: x y
+z. Define multiple &lt;point&gt; elements to create the hull. Bullet will
+compute the convex hull from all points you provide. Minimum 4 points required
+to form a valid convex hull (tetrahedron). Example: &lt;point&gt;0.0 0.0
+0.0&lt;/point&gt; &lt;point&gt;1.0 0.0 0.0&lt;/point&gt; etc.
+</xsd:documentation>
+					</xsd:annotation>
+				</xsd:element>
+				<xsd:element ref="child">
+					<xsd:annotation>
+						<xsd:documentation>Reference to a named shape (via name attribute). For type compound only.
+References a previously defined top-level &lt;shape name="xyz"&gt; element.
+Optional transform attribute positions the referenced shape within the compound.
+</xsd:documentation>
+					</xsd:annotation>
+				</xsd:element>
+			</xsd:choice>
+			<xsd:attribute name="name" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation>Optional name identifier for the shape. Usage depends on context:
+1) Top-level shapes: name is recommended (or required if you want to reuse the
+shape elsewhere). Stores shape in a named registry for reuse via &lt;shape
+type="ref" name="xyz"/&gt;.
+2) Inline shapes (inside bone/bone-default): name is optional. Only specify if
+you want to store it for later reuse.
+3) Reference shapes (type="ref"): name is required. Must match a previously
+defined top-level shape name.
+4) Nested shapes (inside compound): name is typically unused (position
+controlled by transform attribute).
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="type" type="shapeType" use="required">
+				<xsd:annotation>
+					<xsd:documentation>Required. Shape type (box|sphere|capsule|hull|cylinder|compound|ref).
+- box: axis-aligned box; requires halfExtend
+- sphere: sphere; requires radius
+- capsule: cylinder with hemispherical caps; requires radius and height
+- hull: convex hull from point cloud; requires one or more point children
+- cylinder: open-ended cylinder; requires radius and height; margin is added to
+radius
+- compound: composite of child shapes (ref elements or nested shape elements)
+- ref: reference to a previously defined named shape; requires name attribute
+pointing to existing shape
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="stiffspring-constraint">
+		<xsd:annotation>
+			<xsd:documentation>Distance-based spring constraint between two bones (bodyA and bodyB).
+
+This is a custom radial distance solver: every simulation step, runtime computes
+the current bone-to-bone distance and applies spring + damping forces along that
+live direction.
+
+Core spring equation: force = stiffness * (distance - equilibriumPoint) +
+damping * velocity
+
+Distance bounds:
+- minDistanceFactor scales the initial bodyA/bodyB distance to create the lower
+distance limit
+- maxDistanceFactor scales the initial bodyA/bodyB distance to create the upper
+distance limit
+- equilibrium (0..1) sets equilibriumPoint by interpolation between minDistance
+and maxDistance
+
+IMPORTANT: This is not generic-constraint. You can approximate a tether-like
+effect with generic-constraint in some setups, but you cannot guarantee exact
+replication of this custom radial distance solver behavior.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="minDistanceFactor"/>
+				<xsd:element ref="maxDistanceFactor"/>
+				<xsd:element ref="stiffness"/>
+				<xsd:element ref="damping"/>
+				<xsd:element ref="equilibrium"/>
+			</xsd:choice>
+			<xsd:attribute name="bodyA" type="xsd:string" use="required">
+				<xsd:annotation>
+					<xsd:documentation>bodyA is required and must contain a bone name. Bone declaration is optional,
+see the bone documentation.
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="bodyB" type="xsd:string" use="required">
+				<xsd:annotation>
+					<xsd:documentation>bodyB is required and must contain a bone name. Bone declaration is optional,
+see the bone documentation.
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="template" type="xsd:string"/>
+		</xsd:complexType>
+	</xsd:element>
+	<xsd:element name="stiffspring-constraint-default">
+		<xsd:annotation>
+			<xsd:documentation>Template/default values for stiffspring-constraint elements. Defines default
+min/max distance factors, stiffness, damping, and equilibrium interpolation for
+following stiffspring constraints unless overridden. As XML is parsed in
+document order, redefining stiffspring-constraint-default affects subsequent
+stiffspring-constraint elements. Templates can be named and inherited via
+name/extends.
+</xsd:documentation>
+		</xsd:annotation>
+		<xsd:complexType>
+			<xsd:choice minOccurs="0" maxOccurs="unbounded">
+				<xsd:element ref="minDistanceFactor"/>
+				<xsd:element ref="maxDistanceFactor"/>
+				<xsd:element ref="stiffness"/>
+				<xsd:element ref="damping"/>
+				<xsd:element ref="equilibrium"/>
+			</xsd:choice>
+			<xsd:attribute name="name" type="xsd:string">
+				<xsd:annotation>
+					<xsd:documentation>The name of a stiffspring-constraint-default is optional. If it isn't set, "" is
+the name. As the xml is interpreted line by line, you can redefine the default
+so that it impacts the following stiffspring-constraints.
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:attribute>
+			<xsd:attribute name="extends" type="xsd:string"/>
+		</xsd:complexType>
+	</xsd:element>
+
+	<!-- ############################################################ -->
+	<!-- complexTypes -->
+	<!-- ############################################################ -->
+
+	<xsd:complexType name="vector3">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:string">
+				<xsd:attribute name="x" type="flexFloat" use="required"/>
+				<xsd:attribute name="y" type="flexFloat" use="required"/>
+				<xsd:attribute name="z" type="flexFloat" use="required"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<xsd:complexType name="limitedVector3">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:string">
+				<xsd:attribute name="x" type="factor" use="required"/>
+				<xsd:attribute name="y" type="factor" use="required"/>
+				<xsd:attribute name="z" type="factor" use="required"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<xsd:complexType name="quaternion">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:string">
+				<xsd:attribute name="x" type="flexFloat" use="required"/>
+				<xsd:attribute name="y" type="flexFloat" use="required"/>
+				<xsd:attribute name="z" type="flexFloat" use="required"/>
+				<xsd:attribute name="w" type="flexFloat" use="required"/>
+			</xsd:extension>
+		</xsd:simpleContent>
+	</xsd:complexType>
+	<xsd:complexType name="transform">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="basis" type="quaternion">
+				<xsd:annotation>
+					<xsd:documentation>This is a quaternion. If it's set with a length of zero, it will be set as
+Identity (0, 0, 0, 1). Rotational COM.
+</xsd:documentation>
+				</xsd:annotation>
+			</xsd:element>
+			<xsd:element name="basis-axis-angle">
+				<xsd:annotation>
+					<xsd:documentation>This is a transformation rotation with an angle around an axis defined by a
+vector. If the vector (x, y, z) is (0, 0, 0), it will be set as (1,0,0), and the
+angle will be set at 0 whatever its value. The length of the vector isn't
+important as it will be normalized. The angle is in radians.
+</xsd:documentation>
+				</xsd:annotation>
+				<xsd:complexType>
+					<xsd:simpleContent>
+						<xsd:extension base="xsd:string">
+							<xsd:attribute name="x" type="flexFloat" use="required"/>
+							<xsd:attribute name="y" type="flexFloat" use="required"/>
+							<xsd:attribute name="z" type="flexFloat" use="required"/>
+							<xsd:attribute name="angle" type="flexFloat" use="required"/>
+						</xsd:extension>
+					</xsd:simpleContent>
+				</xsd:complexType>
+			</xsd:element>
+			<xsd:element name="origin" type="vector3"/>
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="lerp">
+		<xsd:all>
+			<xsd:element name="translationLerp" type="flexFloat" minOccurs="0"/>
+			<xsd:element name="rotationLerp" type="flexFloat" minOccurs="0"/>
+		</xsd:all>
+	</xsd:complexType>
+</xsd:schema>

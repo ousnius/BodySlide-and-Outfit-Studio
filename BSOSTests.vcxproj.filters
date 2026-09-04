@@ -10,8 +10,23 @@
     <Filter Include="Utilities">
       <UniqueIdentifier>{7648bcdb-ae61-45de-b574-4caa0d137f28}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{0f4c6f2a-5a2a-4c1e-9f3a-6d2b8c7e41d5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{b6f1c3d4-8e75-4a90-8c21-2f9a6b5d7e83}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\physics\XmlDocument.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlEditSession.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\physics\XmlSchema.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\SFMaterialDatabase.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -29,6 +44,24 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="tests\PhysicsEditSessionTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\PhysicsXmlTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlDocument.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlEditSession.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\physics\XmlSchema.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
     <ClCompile Include="tests\SFMaterialDatabaseTest.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
