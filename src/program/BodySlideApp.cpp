@@ -3493,8 +3493,10 @@ void BodySlideApp::ApplyOutfitFilter() {
 				if (outFile.second.size() > 1) {
 					bool isInConflict = std::find(outFile.second.cbegin(), outFile.second.cend(), no) != outFile.second.cend();
 					if (isInConflict) {
+						// Ignore saved choices of outfits that no longer exist
 						std::string choice = buildSelection.GetOutputChoice(outFile.first);
-						if (!choice.empty() && choice != no) {
+						bool choiceExists = std::find(outFile.second.cbegin(), outFile.second.cend(), choice) != outFile.second.cend();
+						if (!choice.empty() && choice != no && choiceExists) {
 							filteredOut = true;
 							break;
 						}
@@ -6775,8 +6777,10 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 			if (outfitsInBuild.size() <= 1)
 				continue;
 
+			// Ignore saved choices of outfits that no longer exist
 			std::string outputChoice = buildSelection.GetOutputChoice(outFile.first);
-			if (!outputChoice.empty()) {
+			bool choiceExists = std::find(outFile.second.cbegin(), outFile.second.cend(), outputChoice) != outFile.second.cend();
+			if (!outputChoice.empty() && choiceExists) {
 				for (auto& outfit : outfitsInBuild) {
 					if (outfit != outputChoice) {
 						// Uncheck choice by default
