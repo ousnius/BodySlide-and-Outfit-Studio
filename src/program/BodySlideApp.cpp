@@ -4216,6 +4216,7 @@ int BodySlideApp::BuildListBodies(
 
 	std::vector<std::string> outFileList;
 	std::vector<wxArrayString> choicesList;
+	std::vector<std::pair<std::string, std::string>> implicitChoices;
 	for (auto& outFile : outFileCount) {
 		if (outFile.second.size() > 1) {
 			wxArrayString selOutfits;
@@ -4225,21 +4226,28 @@ int BodySlideApp::BuildListBodies(
 					selOutfits.Add(wxString::FromUTF8(outfit));
 			}
 
-			// Same file would not be written more than once
-			if (selOutfits.size() <= 1)
+			// Same file would not be written more than once, but the only selected outfit becomes the output choice
+			if (selOutfits.size() <= 1) {
+				if (selOutfits.size() == 1 && !clean)
+					implicitChoices.emplace_back(outFile.first, selOutfits[0].ToUTF8().data());
 				continue;
+			}
 
 			outFileList.push_back(outFile.first);
 			choicesList.push_back(selOutfits);
 		}
 	}
 
-	if (!choicesList.empty()) {
-		// Load BuildSelection file or create new one
-		BuildSelectionFile buildSelFile;
-		BuildSelection buildSelection;
+	// Load BuildSelection file or create new one
+	BuildSelectionFile buildSelFile;
+	BuildSelection buildSelection;
+	if (!choicesList.empty() || !implicitChoices.empty())
 		GetBuildSelection(buildSelFile, buildSelection);
 
+	for (auto& implicitChoice : implicitChoices)
+		buildSelection.SetOutputChoice(implicitChoice.first, implicitChoice.second);
+
+	if (!choicesList.empty()) {
 		wxXmlResource* rsrc = wxXmlResource::Get();
 		wxDialog* dlgBuildOverride = rsrc->LoadDialog(sliderView, "dlgBuildOverride");
 		dlgBuildOverride->SetSize(dlgBuildOverride->FromDIP(wxSize(800, 400)));
@@ -4431,7 +4439,9 @@ int BodySlideApp::BuildListBodies(
 
 
 		delete dlgBuildOverride;
+	}
 
+	if (!choicesList.empty() || !implicitChoices.empty()) {
 		// Save output choices to file
 		buildSelFile.UpdateOutputChoices(buildSelection);
 		buildSelFile.Save();
