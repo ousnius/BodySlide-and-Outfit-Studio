@@ -37,6 +37,8 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 	std::string fileExtStr = std::string(fileExt.c_str());
 
 	GLuint textureID = 0;
+	// SOIL never uploads in an sRGB format, so only the GLI path can turn this on
+	bool isSRGB = false;
 
 	// Get existing index to overwrite texture data for, otherwise generate new index later
 	if (reloadTextures && ti != textures.end())
@@ -44,7 +46,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 	// All textures (GLI)
 	if (fileExtStr == "dds" || fileExtStr == "ktx")
-		textureID = GLI_load_texture(inFileName, textureID);
+		textureID = GLI_load_texture(inFileName, textureID, &isSRGB);
 
 	// Cubemap fallback (SOIL)
 	if (!textureID && isCubeMap)
@@ -83,7 +85,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 			// All textures (GLI)
 			if (fileExtStr == "dds" || fileExtStr == "ktx")
-				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen(), textureID);
+				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen(), textureID, &isSRGB);
 
 			// Cubemap fallback (SOIL)
 			if (!textureID && isCubeMap)
@@ -108,6 +110,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 	}
 
 	textures[inFileName] = textureID;
+	srgbTextures[inFileName] = isSRGB;
 
 	return textureID;
 }
@@ -136,6 +139,7 @@ void ResourceLoader::DeleteTexture(const std::string& texName) {
 		cacheTime++;
 		glDeleteTextures(1, &ti->second);
 		textures.erase(ti);
+		srgbTextures.erase(texName);
 	}
 }
 
@@ -162,7 +166,7 @@ bool ResourceLoader::RenameTexture(const std::string& texNameSrc, const std::str
 }
 
 // File extension can be KTX or DDS
-GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureID) {
+GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureID, bool* isSRGB) {
 	if (!extGLISupported) {
 		if (!extChecked) {
 			wxLogWarning("OpenGL features required for GLI_create_texture to work aren't there!");
@@ -174,6 +178,10 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureI
 	gli::gl glProfile(gli::gl::PROFILE_GL33);
 	gli::gl::format const format = glProfile.translate(texture.format(), texture.swizzles());
 	GLenum target = glProfile.translate(texture.target());
+
+	// An sRGB format is uploaded as one, so sampling hands back linear values
+	if (isSRGB)
+		*isSRGB = gli::is_srgb(texture.format());
 
 	if (textureID == 0)
 		glGenTextures(1, &textureID);
@@ -296,20 +304,20 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureI
 	return textureID;
 }
 
-GLuint ResourceLoader::GLI_load_texture(const std::string& fileName, GLuint textureID) {
+GLuint ResourceLoader::GLI_load_texture(const std::string& fileName, GLuint textureID, bool* isSRGB) {
 	gli::texture texture = gli::load(fileName);
 	if (texture.empty())
 		return textureID;
 
-	return GLI_create_texture(texture, textureID);
+	return GLI_create_texture(texture, textureID, isSRGB);
 }
 
-GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID) {
+GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID, bool* isSRGB) {
 	gli::texture texture = gli::load(buffer, size);
 	if (texture.empty())
 		return textureID;
 
-	return GLI_create_texture(texture, textureID);
+	return GLI_create_texture(texture, textureID, isSRGB);
 }
 
 int ResourceLoader::GetBoundMaxMipLevel(GLenum levelTarget) {
@@ -459,6 +467,14 @@ nifly::Vector3 ResourceLoader::GetCubemapF0Color(const std::string& texName) con
 		return it->second;
 
 	return nifly::Vector3(1.0f, 1.0f, 1.0f);
+}
+
+bool ResourceLoader::IsSRGBTexture(const std::string& texName) const {
+	auto it = srgbTextures.find(texName);
+	if (it != srgbTextures.end())
+		return it->second;
+
+	return false;
 }
 
 GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureFiles,

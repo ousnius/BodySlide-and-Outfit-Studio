@@ -84,6 +84,13 @@ Vector3 GLMaterial::GetCubemapF0Color(uint32_t index) {
 	return resLoaderRef->GetCubemapF0Color(texNames[index]);
 }
 
+bool GLMaterial::IsSRGB(uint32_t index) {
+	if (!resLoaderRef || index >= texNames.size())
+		return false;
+
+	return resLoaderRef->IsSRGBTexture(texNames[index]);
+}
+
 std::string GLMaterial::GetTexName(uint32_t index) {
 	if (index < texNames.size())
 		return texNames[index];
@@ -117,6 +124,8 @@ void GLMaterial::BindTextures(GLfloat largestAF,
 	shader.BindTexture(7, 0, "texSpecular");
 	shader.BindTexture(7, 0, "texBacklight");
 	shader.BindTexture(20, 0, "texAlphaMask");
+	shader.SetDiffuseSRGB(false);
+	shader.SetEmissiveSRGB(false);
 
 	for (GLint id = 0; id < static_cast<GLint>(texCache.size()); id++) {
 		switch (id) {
@@ -124,6 +133,8 @@ void GLMaterial::BindTextures(GLfloat largestAF,
 				shader.BindTexture(id, texCache[id], "texDiffuse");
 				if (largestAF)
 					glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
+				if (isPBR && texCache[id] != 0)
+					shader.SetDiffuseSRGB(IsSRGB(id));
 				break;
 
 			case 1:
@@ -151,6 +162,7 @@ void GLMaterial::BindTextures(GLfloat largestAF,
 						if (largestAF)
 							glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 						shader.SetPBREmissiveEnabled(true);
+						shader.SetEmissiveSRGB(IsSRGB(id));
 					}
 					else
 						shader.SetPBREmissiveEnabled(false);

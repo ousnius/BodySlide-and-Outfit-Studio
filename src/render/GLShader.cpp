@@ -505,6 +505,18 @@ void GLShader::SetPBREmissiveEnabled(const bool enable) {
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
+void GLShader::SetDiffuseSRGB(const bool srgb) {
+	GLint loc = glGetUniformLocation(progID, "bDiffuseSRGB");
+	if (loc >= 0)
+		glUniform1i(loc, srgb ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetEmissiveSRGB(const bool srgb) {
+	GLint loc = glGetUniformLocation(progID, "bEmissiveSRGB");
+	if (loc >= 0)
+		glUniform1i(loc, srgb ? GL_TRUE : GL_FALSE);
+}
+
 void GLShader::SetCubemapMaxLod(const float maxLod) {
 	GLint loc = glGetUniformLocation(progID, "cubemapMaxLod");
 	if (loc >= 0)

@@ -38,6 +38,10 @@ uniform bool bCubemap;
 uniform bool bRMAOS;
 uniform bool bEmissive;
 uniform bool bPBREmissive;
+// Whether the base color and emissive maps were uploaded in an sRGB format (a DDS saved as _SRGB),
+// which the GPU decodes as it samples. Decoding those again here would square away every dark color.
+uniform bool bDiffuseSRGB;
+uniform bool bEmissiveSRGB;
 
 // Highest mip the cubemap has, which is as rough a reflection as it can describe
 uniform float cubemapMaxLod;
@@ -275,7 +279,7 @@ void main(void)
 		{
 			// Base color, which is authored in sRGB and lit in linear
 			vec4 baseMap = texture(texDiffuse, uv);
-			albedo *= srgbToLinear(baseMap.rgb);
+			albedo *= bDiffuseSRGB ? baseMap.rgb : srgbToLinear(baseMap.rgb);
 			color.a *= baseMap.a;
 		}
 
@@ -318,7 +322,8 @@ void main(void)
 				// Emissive map
 				if (bPBREmissive && bShowTexture)
 				{
-					emissive *= srgbToLinear(texture(texEmissive, uv).rgb);
+					vec3 emissiveMap = texture(texEmissive, uv).rgb;
+					emissive *= bEmissiveSRGB ? emissiveMap : srgbToLinear(emissiveMap);
 				}
 			}
 

@@ -113,6 +113,10 @@ public:
 	// Whether texture slot 5's neighbour in slot 2 resolved to the emissive color map of a True PBR
 	// shape, which is not the glow map vanilla keeps in the same slot.
 	void SetPBREmissiveEnabled(const bool enable);
+	// Whether the True PBR base color and emissive maps were uploaded in an sRGB format. The GPU has
+	// decoded those to linear already, and the shader only decodes what it hasn't.
+	void SetDiffuseSRGB(const bool srgb);
+	void SetEmissiveSRGB(const bool srgb);
 	// Highest mip the cubemap can be sampled at, which is how blurry a fully rough Complex Material
 	// reflection gets. Comes from the cubemap's own mip chain, since not every one has a full one.
 	void SetCubemapMaxLod(const float maxLod);

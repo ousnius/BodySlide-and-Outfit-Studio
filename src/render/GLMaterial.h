@@ -48,6 +48,8 @@ public:
 	int GetCubemapSize(uint32_t index);
 	// F0 reflectance a 1x1 cube map in the slot stands for, 1.0 for any other cube map.
 	nifly::Vector3 GetCubemapF0Color(uint32_t index);
+	// Whether the texture in the slot was uploaded in an sRGB format and so samples as linear.
+	bool IsSRGB(uint32_t index);
 
 	// dynamicCubemapID replaces whatever the cube map slot resolved to, including nothing at all.
 	// Whether a shape has earned that is decided by the caller, so passing one here means it has.

@@ -90,6 +90,11 @@ public:
 	//  which is also what any cube map that isn't 1x1 returns.
 	nifly::Vector3 GetCubemapF0Color(const std::string& texName) const;
 
+	// Whether the texture was uploaded in an sRGB format, which the GPU decodes to linear as it is
+	//  sampled. Only a shader that does that decode itself needs to know, so it can skip it rather
+	//  than decode the texture a second time.
+	bool IsSRGBTexture(const std::string& texName) const;
+
 	// compares the incoming cacheTime with the internal cacheTime, and returns true if they match.
 	//  if they do not match, the incoming cacheTime is updated to match and the function returns false.
 	bool CacheStamp(int64_t& inCacheTime) {
@@ -103,9 +108,10 @@ public:
 
 private:
 	static bool extChecked;
-	GLuint GLI_create_texture(gli::texture& texture, GLuint textureID = 0);
-	GLuint GLI_load_texture(const std::string& fileName, GLuint textureID = 0);
-	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID = 0);
+	// isSRGB, if given, receives whether the texture went up in an sRGB format.
+	GLuint GLI_create_texture(gli::texture& texture, GLuint textureID = 0, bool* isSRGB = nullptr);
+	GLuint GLI_load_texture(const std::string& fileName, GLuint textureID = 0, bool* isSRGB = nullptr);
+	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID = 0, bool* isSRGB = nullptr);
 
 	// Highest level with actual storage for the currently bound texture. GL_TEXTURE_MAX_LEVEL isn't
 	//  usable here: the SOIL path never sets it and leaves it at its 1000 default, so the levels are
@@ -137,6 +143,7 @@ private:
 	std::map<std::string, int, case_insensitive_compare> textureMaxMipLevels;
 	std::map<std::string, int, case_insensitive_compare> cubemapSizes;
 	std::map<std::string, nifly::Vector3, case_insensitive_compare> cubemapF0Colors;
+	std::map<std::string, bool, case_insensitive_compare> srgbTextures;
 
 	int64_t cacheTime = 1;
 };
