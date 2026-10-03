@@ -469,828 +469,838 @@ _("Load before batch file (step #1 only)");
 #line 960 "res/xrc/Automation.xrc"
 _("In folder batch mode, import this file before each batch file so its root node and blocks become the base.");
 #line 967 "res/xrc/Automation.xrc"
-_("File:");
+_("TRI:");
 #line 973 "res/xrc/Automation.xrc"
-_("Select file to import");
+_("Import morphs of head TRI files as sliders");
+#line 975 "res/xrc/Automation.xrc"
+_("Uncheck to only import the mesh of a head TRI file without adding its morphs as sliders.");
 #line 982 "res/xrc/Automation.xrc"
-_("Folder:");
+_("File:");
 #line 988 "res/xrc/Automation.xrc"
-_("Select folder to import from");
+_("Select file to import");
+#line 997 "res/xrc/Automation.xrc"
+_("Folder:");
 #line 1003 "res/xrc/Automation.xrc"
+_("Select folder to import from");
+#line 1018 "res/xrc/Automation.xrc"
 _("Import Slider Data");
-#line 1017 "res/xrc/Automation.xrc"
+#line 1032 "res/xrc/Automation.xrc"
 _("Mode:");
-#line 1023 "res/xrc/Automation.xrc"
+#line 1038 "res/xrc/Automation.xrc"
 _("Import all files from folder (ShapeName#SliderName.ext)");
-#line 1030 "res/xrc/Automation.xrc"
-_("Slider Data File:");
-#line 1036 "res/xrc/Automation.xrc"
-_("Select slider data file");
 #line 1045 "res/xrc/Automation.xrc"
-_("Folder:");
+_("Slider Data File:");
 #line 1051 "res/xrc/Automation.xrc"
-_("Select folder with slider data files");
-#line 1059 "res/xrc/Automation.xrc"
-_("Options:");
-#line 1065 "res/xrc/Automation.xrc"
-_("Merge into existing sliders");
-#line 1072 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 1078 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names. Leave empty to import all sliders.");
-#line 1079 "res/xrc/Automation.xrc"
-_("Comma-separated slider list");
-#line 1093 "res/xrc/Automation.xrc"
-_("Add Project");
-#line 1107 "res/xrc/Automation.xrc"
-_("Source File:");
-#line 1113 "res/xrc/Automation.xrc"
-_("Select project file");
-#line 1122 "res/xrc/Automation.xrc"
-_("Slider Set:");
-#line 1128 "res/xrc/Automation.xrc"
-_("Name of the slider set to add");
-#line 1135 "res/xrc/Automation.xrc"
-_("Options:");
-#line 1144 "res/xrc/Automation.xrc"
-_("Append new sliders");
-#line 1161 "res/xrc/Automation.xrc"
-_("Clear Project");
-#line 1167 "res/xrc/Automation.xrc"
-_("Clears the current project (removes all shapes, sliders, and references).\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
-#line 1181 "res/xrc/Automation.xrc"
-_("Clear Reference");
-#line 1187 "res/xrc/Automation.xrc"
-_("Removes the current reference/base shape from the project. Slider data for the reference is moved to the morpher.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
-#line 1201 "res/xrc/Automation.xrc"
-_("Load Reference");
-#line 1215 "res/xrc/Automation.xrc"
-_("Template:");
-#line 1221 "res/xrc/Automation.xrc"
-_("Select a reference template to auto-fill the fields below");
-#line 1228 "res/xrc/Automation.xrc"
-_("Source File:");
-#line 1234 "res/xrc/Automation.xrc"
-_("Select reference file");
-#line 1243 "res/xrc/Automation.xrc"
-_("Slider Set:");
-#line 1249 "res/xrc/Automation.xrc"
-_("Name of the slider set within the source file");
-#line 1256 "res/xrc/Automation.xrc"
-_("Shape:");
-#line 1262 "res/xrc/Automation.xrc"
-_("Name of the reference shape");
-#line 1269 "res/xrc/Automation.xrc"
-_("Options:");
-#line 1278 "res/xrc/Automation.xrc"
-_("Load all shapes");
-#line 1284 "res/xrc/Automation.xrc"
-_("Merge sliders");
-#line 1290 "res/xrc/Automation.xrc"
-_("Merge zaps");
-#line 1296 "res/xrc/Automation.xrc"
-_("Append new sliders");
-#line 1313 "res/xrc/Automation.xrc"
-_("Set Base Shape");
-#line 1319 "res/xrc/Automation.xrc"
-_("Bakes the current slider values into the base geometry of all shapes and zeros all sliders.\n\nEquivalent to \"Slider -> Set Base Shape\" in the menu.");
-#line 1334 "res/xrc/Automation.xrc"
-_("Set Reference Shape");
-#line 1348 "res/xrc/Automation.xrc"
-_("Shape Name:");
-#line 1354 "res/xrc/Automation.xrc"
-_("Name of the shape to set as reference (highlighted green).");
-#line 1355 "res/xrc/Automation.xrc"
-_("Shape name");
-#line 1365 "res/xrc/Automation.xrc"
-_("Unset Reference");
-#line 1366 "res/xrc/Automation.xrc"
-_("Unset the reference shape instead of setting one. Morph data will be moved.");
-#line 1380 "res/xrc/Automation.xrc"
-_("Apply Pose");
-#line 1394 "res/xrc/Automation.xrc"
-_("Pose Name:");
-#line 1400 "res/xrc/Automation.xrc"
-_("Name of the pose from PoseData to apply to meshes");
-#line 1401 "res/xrc/Automation.xrc"
-_("Pose name");
-#line 1415 "res/xrc/Automation.xrc"
-_("Delete Shape");
-#line 1421 "res/xrc/Automation.xrc"
-_("Deletes the shapes specified in the Target Meshes field above.\n\nIf Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern matching.");
-#line 1436 "res/xrc/Automation.xrc"
-_("Duplicate Shape");
-#line 1450 "res/xrc/Automation.xrc"
-_("New Name:");
-#line 1456 "res/xrc/Automation.xrc"
-_("Name for the duplicated shape. Supports {{PLACEHOLDER}} variables.");
-#line 1457 "res/xrc/Automation.xrc"
-_("New shape name");
-#line 1471 "res/xrc/Automation.xrc"
-_("Change Partitions");
-#line 1485 "res/xrc/Automation.xrc"
-_("Source Partition:");
-#line 1491 "res/xrc/Automation.xrc"
-_("Source partition type to change from.");
-#line 1499 "res/xrc/Automation.xrc"
-_("Destination Partition:");
-#line 1505 "res/xrc/Automation.xrc"
-_("Destination partition type to assign to.");
-#line 1520 "res/xrc/Automation.xrc"
-_("Fix Bad Bones");
-#line 1526 "res/xrc/Automation.xrc"
-_("Fixes bones with inconsistent NIF transforms by applying recommended corrections automatically.");
-#line 1538 "res/xrc/Automation.xrc"
-_("Fix Clipping");
-#line 1552 "res/xrc/Automation.xrc"
-_("Mode:");
-#line 1559 "res/xrc/Automation.xrc"
-_("Shapes");
-#line 1560 "res/xrc/Automation.xrc"
-_("Sliders");
-#line 1563 "res/xrc/Automation.xrc"
-_("Shapes: fix base geometry of target shapes. Sliders: fix clipping for each slider individually.");
-#line 1570 "res/xrc/Automation.xrc"
-_("Strength (0 - 100):");
-#line 1577 "res/xrc/Automation.xrc"
-_("Clipping fix strength between 0 and 100.");
-#line 1585 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 1597 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names to fix clipping for (Sliders mode only). Leave empty to process all non-zap/non-UV sliders.");
-#line 1598 "res/xrc/Automation.xrc"
-_("Comma-separated slider list");
-#line 1606 "res/xrc/Automation.xrc"
-_("Add sliders from list");
-#line 1622 "res/xrc/Automation.xrc"
-_("Invert UVs");
-#line 1631 "res/xrc/Automation.xrc"
-_("Invert U");
-#line 1638 "res/xrc/Automation.xrc"
-_("Invert V");
-#line 1652 "res/xrc/Automation.xrc"
-_("Mirror Shape");
-#line 1661 "res/xrc/Automation.xrc"
-_("Mirror X");
-#line 1669 "res/xrc/Automation.xrc"
-_("Mirror Y");
-#line 1676 "res/xrc/Automation.xrc"
-_("Mirror Z");
-#line 1683 "res/xrc/Automation.xrc"
-_("Swap bones left/right (X axis)");
-#line 1697 "res/xrc/Automation.xrc"
-_("Recalculate Normals");
-#line 1711 "res/xrc/Automation.xrc"
-_("Force:");
-#line 1717 "res/xrc/Automation.xrc"
-_("Recalculate even if normals are locked");
-#line 1719 "res/xrc/Automation.xrc"
-_("Ignore the shape's lock normals setting and recalculate anyway. Also recalculates model space normals of Skyrim shapes.");
-#line 1726 "res/xrc/Automation.xrc"
-_("Seam Smoothing:");
-#line 1733 "res/xrc/Automation.xrc"
-_("No change");
-#line 1734 "res/xrc/Automation.xrc"
-_("No");
-#line 1735 "res/xrc/Automation.xrc"
-_("Yes");
-#line 1738 "res/xrc/Automation.xrc"
-_("Set the smooth seam normals flag of the target shapes in the project before recalculating.");
-#line 1745 "res/xrc/Automation.xrc"
-_("Seam Angle:");
-#line 1751 "res/xrc/Automation.xrc"
-_("Seam smoothing angle in degrees (default 60). Leave empty to keep the value of each shape.");
-#line 1752 "res/xrc/Automation.xrc"
-_("Leave empty for no change");
-#line 1759 "res/xrc/Automation.xrc"
-_("Lock Normals:");
-#line 1766 "res/xrc/Automation.xrc"
-_("No change");
-#line 1767 "res/xrc/Automation.xrc"
-_("No");
-#line 1768 "res/xrc/Automation.xrc"
-_("Yes");
-#line 1771 "res/xrc/Automation.xrc"
-_("Set the lock normals flag of the target shapes in the project after recalculating.");
-#line 1781 "res/xrc/Automation.xrc"
-_("Recalculates the normals and tangents of the target shapes and writes them into the project right away.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tLeaving the target meshes empty includes the reference shape. Vertices locked through LOCKEDNORM extra data are never changed.");
-#line 1795 "res/xrc/Automation.xrc"
-_("Refine Mesh");
-#line 1801 "res/xrc/Automation.xrc"
-_("Subdivides/refines meshes by splitting edges.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tAll unmasked vertices are refined. Use the Target Meshes field above to select which shapes to refine.");
-#line 1815 "res/xrc/Automation.xrc"
-_("Rename Shape");
-#line 1829 "res/xrc/Automation.xrc"
-_("Old Name:");
-#line 1835 "res/xrc/Automation.xrc"
-_("Current name of the shape (supports {{PLACEHOLDER}} variables)");
-#line 1836 "res/xrc/Automation.xrc"
-_("Current shape name");
-#line 1843 "res/xrc/Automation.xrc"
-_("New Name:");
-#line 1849 "res/xrc/Automation.xrc"
-_("New name for the shape (supports {{PLACEHOLDER}} variables)");
-#line 1850 "res/xrc/Automation.xrc"
-_("New shape name");
-#line 1864 "res/xrc/Automation.xrc"
-_("Reset Transforms");
-#line 1870 "res/xrc/Automation.xrc"
-_("Resets global-to-skin transforms for all skinned meshes. No additional parameters needed.");
-#line 1883 "res/xrc/Automation.xrc"
-_("Transform Shape");
-#line 1897 "res/xrc/Automation.xrc"
-_("Move:");
-#line 1904 "res/xrc/Automation.xrc"
-_("Move X");
-#line 1912 "res/xrc/Automation.xrc"
-_("Move Y");
-#line 1920 "res/xrc/Automation.xrc"
-_("Move Z");
-#line 1928 "res/xrc/Automation.xrc"
-_("Rotate (deg):");
-#line 1935 "res/xrc/Automation.xrc"
-_("Rotate X (degrees)");
-#line 1943 "res/xrc/Automation.xrc"
-_("Rotate Y (degrees)");
-#line 1951 "res/xrc/Automation.xrc"
-_("Rotate Z (degrees)");
-#line 1959 "res/xrc/Automation.xrc"
-_("Scale:");
-#line 1966 "res/xrc/Automation.xrc"
-_("Scale X");
-#line 1974 "res/xrc/Automation.xrc"
-_("Scale Y");
-#line 1982 "res/xrc/Automation.xrc"
-_("Scale Z");
-#line 1990 "res/xrc/Automation.xrc"
-_("Inflate:");
-#line 1997 "res/xrc/Automation.xrc"
-_("Inflate X (along normals)");
-#line 2005 "res/xrc/Automation.xrc"
-_("Inflate Y (along normals)");
-#line 2013 "res/xrc/Automation.xrc"
-_("Inflate Z (along normals)");
-#line 2028 "res/xrc/Automation.xrc"
-_("Set Geometry Properties");
-#line 2042 "res/xrc/Automation.xrc"
-_("Property:");
-#line 2054 "res/xrc/Automation.xrc"
-_("Select a geometry property to add to this step.");
-#line 2060 "res/xrc/Automation.xrc"
-_("Add");
-#line 2061 "res/xrc/Automation.xrc"
-_("Add the selected geometry property to this step.");
-#line 2070 "res/xrc/Automation.xrc"
-_("Values:");
-#line 2095 "res/xrc/Automation.xrc"
-_("Set Extra Data");
-#line 2109 "res/xrc/Automation.xrc"
-_("Block Type:");
-#line 2116 "res/xrc/Automation.xrc"
-_("NiStringExtraData");
-#line 2117 "res/xrc/Automation.xrc"
-_("NiIntegerExtraData");
-#line 2118 "res/xrc/Automation.xrc"
-_("NiFloatExtraData");
-#line 2119 "res/xrc/Automation.xrc"
-_("NiBooleanExtraData");
-#line 2121 "res/xrc/Automation.xrc"
-_("Extra data block type to create when the name is not found.");
-#line 2128 "res/xrc/Automation.xrc"
-_("Name:");
-#line 2134 "res/xrc/Automation.xrc"
-_("Extra data name");
-#line 2141 "res/xrc/Automation.xrc"
-_("Value:");
-#line 2147 "res/xrc/Automation.xrc"
-_("Value text. Boolean values accept true/false, yes/no, on/off, or 1/0.");
-#line 2148 "res/xrc/Automation.xrc"
-_("Extra data value");
-#line 2162 "res/xrc/Automation.xrc"
-_("Delete Extra Data");
-#line 2176 "res/xrc/Automation.xrc"
-_("Name:");
-#line 2182 "res/xrc/Automation.xrc"
-_("Extra data name");
-#line 2196 "res/xrc/Automation.xrc"
-_("Conform Sliders");
-#line 2210 "res/xrc/Automation.xrc"
-_("Proximity Radius:");
-#line 2224 "res/xrc/Automation.xrc"
-_("Max Results:");
-#line 2238 "res/xrc/Automation.xrc"
-_("Smooth Results:");
-#line 2249 "res/xrc/Automation.xrc"
-_("Smoothing Iterations:");
-#line 2263 "res/xrc/Automation.xrc"
-_("Smoothing Strength:");
-#line 2277 "res/xrc/Automation.xrc"
-_("Options:");
-#line 2286 "res/xrc/Automation.xrc"
-_("No squeeze");
-#line 2291 "res/xrc/Automation.xrc"
-_("Solid mode");
-#line 2300 "res/xrc/Automation.xrc"
-_("Axes:");
-#line 2335 "res/xrc/Automation.xrc"
-_("Fix Clipping:");
-#line 2341 "res/xrc/Automation.xrc"
-_("Run clipping fix on each conformed shape/slider delta immediately after conforming it.");
-#line 2348 "res/xrc/Automation.xrc"
-_("Clipping Strength:");
-#line 2356 "res/xrc/Automation.xrc"
-_("Strength percentage for conform-time clipping fix.");
-#line 2363 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 2375 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.");
-#line 2376 "res/xrc/Automation.xrc"
-_("Comma-separated slider list");
-#line 2384 "res/xrc/Automation.xrc"
-_("Add sliders from list");
-#line 2400 "res/xrc/Automation.xrc"
-_("Delete Slider");
-#line 2414 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 2426 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names to delete. If regex is checked, the text is used as a single regex pattern.");
-#line 2427 "res/xrc/Automation.xrc"
-_("Comma-separated slider list or pattern");
-#line 2435 "res/xrc/Automation.xrc"
-_("Add sliders from list");
-#line 2444 "res/xrc/Automation.xrc"
-_("Regex:");
-#line 2450 "res/xrc/Automation.xrc"
-_("Match slider names by regex pattern");
-#line 2464 "res/xrc/Automation.xrc"
-_("Set Slider Values");
-#line 2478 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 2490 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names. Leave empty to set all visible sliders.");
-#line 2491 "res/xrc/Automation.xrc"
-_("Comma-separated slider list");
-#line 2499 "res/xrc/Automation.xrc"
-_("Add sliders from list");
-#line 2508 "res/xrc/Automation.xrc"
-_("Value (0 - 100):");
-#line 2515 "res/xrc/Automation.xrc"
-_("Slider value between 0 and 100 (percentage)");
-#line 2530 "res/xrc/Automation.xrc"
-_("Set Slider Properties");
-#line 2544 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 2556 "res/xrc/Automation.xrc"
-_("Comma-separated list of slider names. Leave empty to apply to all sliders.");
-#line 2557 "res/xrc/Automation.xrc"
-_("Comma-separated slider list");
-#line 2565 "res/xrc/Automation.xrc"
-_("Add sliders from list");
-#line 2574 "res/xrc/Automation.xrc"
-_("Zap:");
-#line 2581 "res/xrc/Automation.xrc"
-_("No change");
-#line 2582 "res/xrc/Automation.xrc"
-_("No");
-#line 2583 "res/xrc/Automation.xrc"
-_("Yes");
-#line 2585 "res/xrc/Automation.xrc"
-_("Set the zap flag on matching sliders.");
-#line 2592 "res/xrc/Automation.xrc"
-_("Hidden:");
-#line 2599 "res/xrc/Automation.xrc"
-_("No change");
-#line 2600 "res/xrc/Automation.xrc"
-_("No");
-#line 2601 "res/xrc/Automation.xrc"
-_("Yes");
-#line 2603 "res/xrc/Automation.xrc"
-_("Set the hidden flag on matching sliders.");
-#line 2610 "res/xrc/Automation.xrc"
-_("Default Zapped:");
-#line 2617 "res/xrc/Automation.xrc"
-_("No change");
-#line 2618 "res/xrc/Automation.xrc"
-_("Not zapped");
-#line 2619 "res/xrc/Automation.xrc"
-_("Zapped");
-#line 2621 "res/xrc/Automation.xrc"
-_("Whether matching zap sliders are zapped by default.");
-#line 2627 "res/xrc/Automation.xrc"
-_("Default (Small):");
-#line 2633 "res/xrc/Automation.xrc"
-_("Default small value (0-100). Leave empty for no change.");
-#line 2641 "res/xrc/Automation.xrc"
-_("Default (Big):");
-#line 2647 "res/xrc/Automation.xrc"
-_("Default big value (0-100). Leave empty for no change.");
-#line 2662 "res/xrc/Automation.xrc"
-_("Set Shader Properties");
-#line 2676 "res/xrc/Automation.xrc"
-_("Property:");
-#line 2688 "res/xrc/Automation.xrc"
-_("Select a shader property to add to this step.");
-#line 2694 "res/xrc/Automation.xrc"
-_("Add");
-#line 2695 "res/xrc/Automation.xrc"
-_("Add the selected shader property to this step.");
-#line 2704 "res/xrc/Automation.xrc"
-_("Values:");
-#line 2729 "res/xrc/Automation.xrc"
-_("Set Texture Paths");
-#line 2743 "res/xrc/Automation.xrc"
-_("Texture Slot:");
-#line 2755 "res/xrc/Automation.xrc"
-_("Select a texture slot to add to this step.");
-#line 2761 "res/xrc/Automation.xrc"
-_("Add");
-#line 2762 "res/xrc/Automation.xrc"
-_("Add the selected texture path to this step.");
-#line 2771 "res/xrc/Automation.xrc"
-_("Paths:");
-#line 2796 "res/xrc/Automation.xrc"
-_("Clear Mask");
-#line 2802 "res/xrc/Automation.xrc"
-_("Clears the mask for the target shape(s).");
-#line 2814 "res/xrc/Automation.xrc"
-_("Load Mask");
-#line 2828 "res/xrc/Automation.xrc"
-_("Mask File:");
-#line 2834 "res/xrc/Automation.xrc"
-_("Select a mask XML file");
-#line 2843 "res/xrc/Automation.xrc"
-_("Mask Name:");
-#line 2849 "res/xrc/Automation.xrc"
-_("Select a mask entry from the loaded mask file.");
-#line 2863 "res/xrc/Automation.xrc"
-_("Remove Unused Nodes");
-#line 2869 "res/xrc/Automation.xrc"
-_("Removes all unreferenced nodes from the NIF.");
-#line 2881 "res/xrc/Automation.xrc"
-_("Add Bone");
-#line 2895 "res/xrc/Automation.xrc"
-_("Bone Names:");
-#line 2901 "res/xrc/Automation.xrc"
-_("Comma-separated list of bone names to add from the loaded skeleton.");
-#line 2902 "res/xrc/Automation.xrc"
-_("Comma-separated bone list");
-#line 2912 "res/xrc/Automation.xrc"
-_("Adds bone references from the loaded skeleton to every shape of the project, like the Add Bone dialog does.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tBones that are not in the skeleton are skipped.");
-#line 2926 "res/xrc/Automation.xrc"
-_("Transfer Selected Weights");
-#line 2940 "res/xrc/Automation.xrc"
-_("Bone Names:");
-#line 2946 "res/xrc/Automation.xrc"
-_("Comma-separated list of bones to transfer. Leave empty to transfer every bone of the reference shape.");
-#line 2947 "res/xrc/Automation.xrc"
-_("Leave empty for all bones");
-#line 2954 "res/xrc/Automation.xrc"
-_("Mask:");
-#line 2960 "res/xrc/Automation.xrc"
-_("Keep the weights of masked vertices");
-#line 2962 "res/xrc/Automation.xrc"
-_("Blend the transferred weights by the current mask instead of overwriting everything.");
-#line 2972 "res/xrc/Automation.xrc"
-_("Copies bone weights vertex by vertex from the reference shape. The target shapes need the same vertex count as the reference.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tLeaving the target meshes empty excludes the reference shape.");
-#line 2986 "res/xrc/Automation.xrc"
-_("Set Bone Transform");
-#line 3000 "res/xrc/Automation.xrc"
-_("Bone Names:");
-#line 3006 "res/xrc/Automation.xrc"
-_("Comma-separated list of bones to recalculate.");
-#line 3007 "res/xrc/Automation.xrc"
-_("Comma-separated bone list");
-#line 3014 "res/xrc/Automation.xrc"
-_("Mode:");
-#line 3021 "res/xrc/Automation.xrc"
-_("Set bone as skin (skin transform from node)");
-#line 3022 "res/xrc/Automation.xrc"
-_("Set bone as node (node transform from skin)");
-#line 3025 "res/xrc/Automation.xrc"
-_("Which of the two transforms is recalculated from the other one.");
-#line 3035 "res/xrc/Automation.xrc"
-_("Recalculates the skin-to-bone transform of a bone from its node transform, or the other way around, for the target shapes.");
-#line 3048 "res/xrc/Automation.xrc"
-_("Make Conversion Reference");
-#line 3062 "res/xrc/Automation.xrc"
-_("Slider Name:");
-#line 3068 "res/xrc/Automation.xrc"
-_("Name of the conversion slider to create.");
-#line 3069 "res/xrc/Automation.xrc"
-_("ConvertToBase");
-#line 3079 "res/xrc/Automation.xrc"
-_("Turns the current slider settings into a new conversion slider and makes the deformed reference the new base shape.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tRequires at least one non-zero slider value and deletes all other sliders of the project.");
-#line 3093 "res/xrc/Automation.xrc"
-_("Copy Segments/Partitions");
-#line 3099 "res/xrc/Automation.xrc"
-_("Assigns every triangle of the target shapes to the segment/partition of the nearest reference triangle. Existing segments/partitions are cleared.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tLeaving the target meshes empty excludes the reference shape. No additional parameters needed.");
-#line 3113 "res/xrc/Automation.xrc"
-_("Delete Vertices");
-#line 3122 "res/xrc/Automation.xrc"
-_("Delete the masked vertices instead of the unmasked ones");
-#line 3123 "res/xrc/Automation.xrc"
-_("By default the mask protects vertices and everything else is deleted, like the menu item does.");
-#line 3130 "res/xrc/Automation.xrc"
-_("Delete shapes that lose all of their triangles");
-#line 3132 "res/xrc/Automation.xrc"
-_("Uncheck to leave such shapes untouched instead.");
-#line 3142 "res/xrc/Automation.xrc"
-_("Deletes vertices and their triangles from the target shapes. Set up the mask with the Masks steps first;\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\twithout a mask every vertex counts as unmasked.");
-#line 3156 "res/xrc/Automation.xrc"
-_("Merge Geometry");
-#line 3170 "res/xrc/Automation.xrc"
-_("Source Shape:");
-#line 3176 "res/xrc/Automation.xrc"
-_("Name of the shape whose geometry is copied.");
-#line 3177 "res/xrc/Automation.xrc"
-_("Shape name");
-#line 3184 "res/xrc/Automation.xrc"
-_("Target Shape:");
-#line 3190 "res/xrc/Automation.xrc"
-_("Name of the shape the geometry is merged into.");
-#line 3191 "res/xrc/Automation.xrc"
-_("Shape name");
-#line 3198 "res/xrc/Automation.xrc"
-_("Source:");
-#line 3204 "res/xrc/Automation.xrc"
-_("Delete the source shape afterwards");
-#line 3214 "res/xrc/Automation.xrc"
-_("Merges the geometry of one shape into another one. The step fails if the shaders or alpha properties do not match\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tor the result would exceed the vertex/triangle limits. This step uses its own shape names, not the target meshes above.");
-#line 3228 "res/xrc/Automation.xrc"
-_("Separate Vertices");
-#line 3242 "res/xrc/Automation.xrc"
-_("New Shape Name:");
-#line 3248 "res/xrc/Automation.xrc"
-_("Name of the new shape that receives the masked vertices.");
-#line 3249 "res/xrc/Automation.xrc"
-_("Shape name");
-#line 3259 "res/xrc/Automation.xrc"
-_("Moves the masked vertices of a single target shape into a new shape. Needs exactly one target mesh and a non-empty mask.");
-#line 3272 "res/xrc/Automation.xrc"
-_("Symmetrize Vertices");
-#line 3281 "res/xrc/Automation.xrc"
-_("Vertex positions");
-#line 3289 "res/xrc/Automation.xrc"
-_("Unmatched vertices");
-#line 3290 "res/xrc/Automation.xrc"
-_("Also move vertices that have no mirrored counterpart onto the mirror plane.");
-#line 3297 "res/xrc/Automation.xrc"
-_("Slider data (all sliders)");
-#line 3304 "res/xrc/Automation.xrc"
-_("Bone weights (all bones)");
-#line 3314 "res/xrc/Automation.xrc"
-_("Mirrors the selected kinds of data across the X axis for the unmasked vertices of the target shapes.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tMasked vertices are left alone, just like in the vertex asymmetry dialog.");
-#line 3328 "res/xrc/Automation.xrc"
-_("Clear Slider Data");
-#line 3342 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 3354 "res/xrc/Automation.xrc"
-_("Comma-separated list of sliders to clear. Leave empty to clear every slider of the project.");
-#line 3355 "res/xrc/Automation.xrc"
-_("Leave empty for all sliders");
-#line 3363 "res/xrc/Automation.xrc"
-_("Add sliders from list");
-#line 3372 "res/xrc/Automation.xrc"
-_("Mask:");
-#line 3378 "res/xrc/Automation.xrc"
-_("Keep the slider data of masked vertices");
-#line 3389 "res/xrc/Automation.xrc"
-_("Removes the slider morph data of the target shapes without deleting the sliders themselves.");
-#line 3402 "res/xrc/Automation.xrc"
-_("Clone Slider");
-#line 3416 "res/xrc/Automation.xrc"
-_("Source Slider:");
-#line 3422 "res/xrc/Automation.xrc"
-_("Name of the slider to clone.");
-#line 3423 "res/xrc/Automation.xrc"
-_("Slider name");
-#line 3430 "res/xrc/Automation.xrc"
-_("New Slider:");
-#line 3436 "res/xrc/Automation.xrc"
-_("Name of the new slider. It must not exist yet.");
-#line 3437 "res/xrc/Automation.xrc"
-_("Slider name");
-#line 3447 "res/xrc/Automation.xrc"
-_("Creates a copy of a slider including its data for all shapes.");
-#line 3460 "res/xrc/Automation.xrc"
-_("Negate Slider");
-#line 3474 "res/xrc/Automation.xrc"
-_("Slider Names:");
-#line 3486 "res/xrc/Automation.xrc"
-_("Comma-separated list of sliders to negate.");
-#line 3487 "res/xrc/Automation.xrc"
-_("Comma-separated slider list");
-#line 3495 "res/xrc/Automation.xrc"
-_("Add sliders from list");
-#line 3507 "res/xrc/Automation.xrc"
-_("Inverts the morph data of the given sliders for the target shapes.");
-#line 3520 "res/xrc/Automation.xrc"
-_("New Combined Slider");
-#line 3534 "res/xrc/Automation.xrc"
-_("Slider Name:");
-#line 3540 "res/xrc/Automation.xrc"
-_("Name of the new slider. It must not exist yet.");
-#line 3541 "res/xrc/Automation.xrc"
-_("Slider name");
-#line 3551 "res/xrc/Automation.xrc"
-_("Creates a new slider from the combined result of the currently set slider values.");
-#line 3564 "res/xrc/Automation.xrc"
-_("New Zap Slider");
-#line 3578 "res/xrc/Automation.xrc"
-_("Slider Name:");
-#line 3584 "res/xrc/Automation.xrc"
-_("Name of the new zap slider. It must not exist yet.");
-#line 3585 "res/xrc/Automation.xrc"
-_("Slider name");
-#line 3595 "res/xrc/Automation.xrc"
-_("Creates a zap slider that removes the unmasked vertices of the target shapes, so the mask marks what to keep.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tSet up the mask with the Masks steps first.");
-#line 3609 "res/xrc/Automation.xrc"
-_("Grow/Shrink Mask");
-#line 3623 "res/xrc/Automation.xrc"
-_("Mode:");
-#line 3630 "res/xrc/Automation.xrc"
-_("Grow");
-#line 3631 "res/xrc/Automation.xrc"
-_("Shrink");
-#line 3640 "res/xrc/Automation.xrc"
-_("Iterations:");
-#line 3647 "res/xrc/Automation.xrc"
-_("How many times the mask border is moved by one ring of vertices.");
-#line 3657 "res/xrc/Automation.xrc"
-_("Moves the mask border of the target shapes outwards or inwards, like the grow/shrink mask menu items.");
-#line 3670 "res/xrc/Automation.xrc"
-_("Invert Mask");
-#line 3676 "res/xrc/Automation.xrc"
-_("Inverts the mask of the target shapes. Fully masked vertices become unmasked and the other way around.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
-#line 3690 "res/xrc/Automation.xrc"
-_("Mask Asymmetric");
-#line 3704 "res/xrc/Automation.xrc"
-_("Mode:");
-#line 3711 "res/xrc/Automation.xrc"
-_("Asymmetric triangles");
-#line 3712 "res/xrc/Automation.xrc"
-_("Asymmetric vertices");
-#line 3715 "res/xrc/Automation.xrc"
-_("Triangle mode looks at the triangle layout only and ignores the checkboxes below.");
-#line 3722 "res/xrc/Automation.xrc"
-_("Asymmetries:");
-#line 3731 "res/xrc/Automation.xrc"
-_("Vertex positions");
-#line 3739 "res/xrc/Automation.xrc"
-_("Unmatched vertices");
-#line 3746 "res/xrc/Automation.xrc"
-_("Slider data (all sliders)");
-#line 3753 "res/xrc/Automation.xrc"
-_("Bone weights (all bones)");
-#line 3765 "res/xrc/Automation.xrc"
-_("Masks everything except the asymmetric parts of the target shapes, so the following steps only work on those.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tIn vertex mode, vertices that are already masked stay masked.");
-#line 3779 "res/xrc/Automation.xrc"
-_("Mask Bone-Weighted Vertices");
-#line 3793 "res/xrc/Automation.xrc"
-_("Bone Names:");
-#line 3799 "res/xrc/Automation.xrc"
-_("Comma-separated list of bones whose weighted vertices are masked.");
-#line 3800 "res/xrc/Automation.xrc"
-_("Comma-separated bone list");
-#line 3810 "res/xrc/Automation.xrc"
-_("Replaces the mask of the target shapes with the vertices that have a weight greater than zero for any of the given bones.");
-#line 3823 "res/xrc/Automation.xrc"
-_("Mask Slider-Affected Vertices");
-#line 3837 "res/xrc/Automation.xrc"
-_("Slider Name:");
-#line 3843 "res/xrc/Automation.xrc"
-_("Name of the slider whose affected vertices are masked.");
-#line 3844 "res/xrc/Automation.xrc"
-_("Slider name");
-#line 3854 "res/xrc/Automation.xrc"
-_("Replaces the mask of the target shapes with the vertices that the given slider has morph data for.");
-#line 3867 "res/xrc/Automation.xrc"
-_("Mask Weighted Vertices");
-#line 3873 "res/xrc/Automation.xrc"
-_("Replaces the mask of the target shapes with the vertices that have a weight greater than zero for any of their bones.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
-#line 3887 "res/xrc/Automation.xrc"
-_("Save Mask");
-#line 3901 "res/xrc/Automation.xrc"
-_("Mask File:");
-#line 3907 "res/xrc/Automation.xrc"
-_("Path of the XML mask file to write. Relative paths are resolved against the project folder.");
-#line 3908 "res/xrc/Automation.xrc"
-_("masks.xml");
-#line 3915 "res/xrc/Automation.xrc"
-_("Mask Name:");
-#line 3921 "res/xrc/Automation.xrc"
-_("Name of the entry inside the mask file.");
-#line 3922 "res/xrc/Automation.xrc"
-_("Mask name");
-#line 3929 "res/xrc/Automation.xrc"
-_("Existing File:");
-#line 3935 "res/xrc/Automation.xrc"
-_("Keep the other entries of an existing file");
-#line 3937 "res/xrc/Automation.xrc"
-_("Uncheck to overwrite the file with just this entry.");
-#line 3947 "res/xrc/Automation.xrc"
-_("Writes the current mask of the target shapes into a named entry of an XML mask file, ready to be read back by Masks: Load Mask.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tAn entry of the same name is replaced.");
-#line 3961 "res/xrc/Automation.xrc"
-_("Set Variable");
-#line 3975 "res/xrc/Automation.xrc"
-_("Name:");
-#line 3981 "res/xrc/Automation.xrc"
-_("Name of the variable, without the curly braces.");
-#line 3982 "res/xrc/Automation.xrc"
-_("KEY");
-#line 3989 "res/xrc/Automation.xrc"
-_("Value:");
-#line 3995 "res/xrc/Automation.xrc"
-_("Value to substitute. Placeholders of already known variables are resolved first.");
-#line 3996 "res/xrc/Automation.xrc"
-_("Value");
-#line 4006 "res/xrc/Automation.xrc"
-_("Defines a {{KEY}} placeholder for the steps that follow. Names that are already in the placeholder variables below\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tare substituted before the run and cannot be overridden here.");
-#line 4020 "res/xrc/Automation.xrc"
-_("Log Message");
-#line 4034 "res/xrc/Automation.xrc"
-_("Message:");
-#line 4040 "res/xrc/Automation.xrc"
-_("Text to write to the log. Placeholders are substituted.");
-#line 4041 "res/xrc/Automation.xrc"
-_("Message text");
-#line 4048 "res/xrc/Automation.xrc"
-_("Level:");
-#line 4055 "res/xrc/Automation.xrc"
-_("Message");
-#line 4056 "res/xrc/Automation.xrc"
-_("Warning");
-#line 4057 "res/xrc/Automation.xrc"
-_("Error");
-#line 4060 "res/xrc/Automation.xrc"
-_("Errors and warnings are shown in a dialog outside of headless runs, but never fail the step.");
-#line 4070 "res/xrc/Automation.xrc"
-_("Writes a message to the automation log. Useful to mark sections of a long batch run or to show a resolved variable.");
-#line 4091 "res/xrc/Automation.xrc"
-_("Placeholder Variables");
-#line 4100 "res/xrc/Automation.xrc"
-_("Define {{KEY}} = Value pairs. These are substituted in all text fields before execution.");
-#line 4117 "res/xrc/Automation.xrc"
-_("Key:");
-#line 4123 "res/xrc/Automation.xrc"
-_("Value:");
-#line 4130 "res/xrc/Automation.xrc"
-_("KEY");
-#line 4136 "res/xrc/Automation.xrc"
-_("Value");
-#line 4149 "res/xrc/Automation.xrc"
-_("+ Add");
-#line 4157 "res/xrc/Automation.xrc"
-_("- Remove");
-#line 4174 "res/xrc/Automation.xrc"
-_("Batch Operation");
-#line 4184 "res/xrc/Automation.xrc"
-_("Mode");
-#line 4187 "res/xrc/Automation.xrc"
-_("None (run on current project)");
-#line 4188 "res/xrc/Automation.xrc"
-_("Folder scan (repeat on files in folder)");
-#line 4189 "res/xrc/Automation.xrc"
-_("Slider sets (repeat on installed slider sets)");
-#line 4203 "res/xrc/Automation.xrc"
-_("Folder Scan Settings");
-#line 4216 "res/xrc/Automation.xrc"
+_("Select slider data file");
+#line 1060 "res/xrc/Automation.xrc"
 _("Folder:");
-#line 4222 "res/xrc/Automation.xrc"
-_("Select folder to scan");
-#line 4230 "res/xrc/Automation.xrc"
-_("File Extension:");
-#line 4237 "res/xrc/Automation.xrc"
-_("File extension to scan for (e.g. .nif, .obj)");
-#line 4244 "res/xrc/Automation.xrc"
+#line 1066 "res/xrc/Automation.xrc"
+_("Select folder with slider data files");
+#line 1074 "res/xrc/Automation.xrc"
 _("Options:");
+#line 1080 "res/xrc/Automation.xrc"
+_("Merge into existing sliders");
+#line 1087 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 1093 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names. Leave empty to import all sliders.");
+#line 1094 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 1108 "res/xrc/Automation.xrc"
+_("Add Project");
+#line 1122 "res/xrc/Automation.xrc"
+_("Source File:");
+#line 1128 "res/xrc/Automation.xrc"
+_("Select project file");
+#line 1137 "res/xrc/Automation.xrc"
+_("Slider Set:");
+#line 1143 "res/xrc/Automation.xrc"
+_("Name of the slider set to add");
+#line 1150 "res/xrc/Automation.xrc"
+_("Options:");
+#line 1159 "res/xrc/Automation.xrc"
+_("Append new sliders");
+#line 1176 "res/xrc/Automation.xrc"
+_("Clear Project");
+#line 1182 "res/xrc/Automation.xrc"
+_("Clears the current project (removes all shapes, sliders, and references).\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
+#line 1196 "res/xrc/Automation.xrc"
+_("Clear Reference");
+#line 1202 "res/xrc/Automation.xrc"
+_("Removes the current reference/base shape from the project. Slider data for the reference is moved to the morpher.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
+#line 1216 "res/xrc/Automation.xrc"
+_("Load Reference");
+#line 1230 "res/xrc/Automation.xrc"
+_("Template:");
+#line 1236 "res/xrc/Automation.xrc"
+_("Select a reference template to auto-fill the fields below");
+#line 1243 "res/xrc/Automation.xrc"
+_("Source File:");
+#line 1249 "res/xrc/Automation.xrc"
+_("Select reference file");
+#line 1258 "res/xrc/Automation.xrc"
+_("Slider Set:");
+#line 1264 "res/xrc/Automation.xrc"
+_("Name of the slider set within the source file");
+#line 1271 "res/xrc/Automation.xrc"
+_("Shape:");
+#line 1277 "res/xrc/Automation.xrc"
+_("Name of the reference shape");
+#line 1284 "res/xrc/Automation.xrc"
+_("Options:");
+#line 1293 "res/xrc/Automation.xrc"
+_("Load all shapes");
+#line 1299 "res/xrc/Automation.xrc"
+_("Merge sliders");
+#line 1305 "res/xrc/Automation.xrc"
+_("Merge zaps");
+#line 1311 "res/xrc/Automation.xrc"
+_("Append new sliders");
+#line 1328 "res/xrc/Automation.xrc"
+_("Set Base Shape");
+#line 1334 "res/xrc/Automation.xrc"
+_("Bakes the current slider values into the base geometry of all shapes and zeros all sliders.\n\nEquivalent to \"Slider -> Set Base Shape\" in the menu.");
+#line 1349 "res/xrc/Automation.xrc"
+_("Set Reference Shape");
+#line 1363 "res/xrc/Automation.xrc"
+_("Shape Name:");
+#line 1369 "res/xrc/Automation.xrc"
+_("Name of the shape to set as reference (highlighted green).");
+#line 1370 "res/xrc/Automation.xrc"
+_("Shape name");
+#line 1380 "res/xrc/Automation.xrc"
+_("Unset Reference");
+#line 1381 "res/xrc/Automation.xrc"
+_("Unset the reference shape instead of setting one. Morph data will be moved.");
+#line 1395 "res/xrc/Automation.xrc"
+_("Apply Pose");
+#line 1409 "res/xrc/Automation.xrc"
+_("Pose Name:");
+#line 1415 "res/xrc/Automation.xrc"
+_("Name of the pose from PoseData to apply to meshes");
+#line 1416 "res/xrc/Automation.xrc"
+_("Pose name");
+#line 1430 "res/xrc/Automation.xrc"
+_("Delete Shape");
+#line 1436 "res/xrc/Automation.xrc"
+_("Deletes the shapes specified in the Target Meshes field above.\n\nIf Target Meshes is empty, all shapes are deleted. Use Regex mode for pattern matching.");
+#line 1451 "res/xrc/Automation.xrc"
+_("Duplicate Shape");
+#line 1465 "res/xrc/Automation.xrc"
+_("New Name:");
+#line 1471 "res/xrc/Automation.xrc"
+_("Name for the duplicated shape. Supports {{PLACEHOLDER}} variables.");
+#line 1472 "res/xrc/Automation.xrc"
+_("New shape name");
+#line 1486 "res/xrc/Automation.xrc"
+_("Change Partitions");
+#line 1500 "res/xrc/Automation.xrc"
+_("Source Partition:");
+#line 1506 "res/xrc/Automation.xrc"
+_("Source partition type to change from.");
+#line 1514 "res/xrc/Automation.xrc"
+_("Destination Partition:");
+#line 1520 "res/xrc/Automation.xrc"
+_("Destination partition type to assign to.");
+#line 1535 "res/xrc/Automation.xrc"
+_("Fix Bad Bones");
+#line 1541 "res/xrc/Automation.xrc"
+_("Fixes bones with inconsistent NIF transforms by applying recommended corrections automatically.");
+#line 1553 "res/xrc/Automation.xrc"
+_("Fix Clipping");
+#line 1567 "res/xrc/Automation.xrc"
+_("Mode:");
+#line 1574 "res/xrc/Automation.xrc"
+_("Shapes");
+#line 1575 "res/xrc/Automation.xrc"
+_("Sliders");
+#line 1578 "res/xrc/Automation.xrc"
+_("Shapes: fix base geometry of target shapes. Sliders: fix clipping for each slider individually.");
+#line 1585 "res/xrc/Automation.xrc"
+_("Strength (0 - 100):");
+#line 1592 "res/xrc/Automation.xrc"
+_("Clipping fix strength between 0 and 100.");
+#line 1600 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 1612 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names to fix clipping for (Sliders mode only). Leave empty to process all non-zap/non-UV sliders.");
+#line 1613 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 1621 "res/xrc/Automation.xrc"
+_("Add sliders from list");
+#line 1637 "res/xrc/Automation.xrc"
+_("Invert UVs");
+#line 1646 "res/xrc/Automation.xrc"
+_("Invert U");
+#line 1653 "res/xrc/Automation.xrc"
+_("Invert V");
+#line 1667 "res/xrc/Automation.xrc"
+_("Mirror Shape");
+#line 1676 "res/xrc/Automation.xrc"
+_("Mirror X");
+#line 1684 "res/xrc/Automation.xrc"
+_("Mirror Y");
+#line 1691 "res/xrc/Automation.xrc"
+_("Mirror Z");
+#line 1698 "res/xrc/Automation.xrc"
+_("Swap bones left/right (X axis)");
+#line 1712 "res/xrc/Automation.xrc"
+_("Recalculate Normals");
+#line 1726 "res/xrc/Automation.xrc"
+_("Force:");
+#line 1732 "res/xrc/Automation.xrc"
+_("Recalculate even if normals are locked");
+#line 1734 "res/xrc/Automation.xrc"
+_("Ignore the shape's lock normals setting and recalculate anyway. Also recalculates model space normals of Skyrim shapes.");
+#line 1741 "res/xrc/Automation.xrc"
+_("Seam Smoothing:");
+#line 1748 "res/xrc/Automation.xrc"
+_("No change");
+#line 1749 "res/xrc/Automation.xrc"
+_("No");
+#line 1750 "res/xrc/Automation.xrc"
+_("Yes");
+#line 1753 "res/xrc/Automation.xrc"
+_("Set the smooth seam normals flag of the target shapes in the project before recalculating.");
+#line 1760 "res/xrc/Automation.xrc"
+_("Seam Angle:");
+#line 1766 "res/xrc/Automation.xrc"
+_("Seam smoothing angle in degrees (default 60). Leave empty to keep the value of each shape.");
+#line 1767 "res/xrc/Automation.xrc"
+_("Leave empty for no change");
+#line 1774 "res/xrc/Automation.xrc"
+_("Lock Normals:");
+#line 1781 "res/xrc/Automation.xrc"
+_("No change");
+#line 1782 "res/xrc/Automation.xrc"
+_("No");
+#line 1783 "res/xrc/Automation.xrc"
+_("Yes");
+#line 1786 "res/xrc/Automation.xrc"
+_("Set the lock normals flag of the target shapes in the project after recalculating.");
+#line 1796 "res/xrc/Automation.xrc"
+_("Recalculates the normals and tangents of the target shapes and writes them into the project right away.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tLeaving the target meshes empty includes the reference shape. Vertices locked through LOCKEDNORM extra data are never changed.");
+#line 1810 "res/xrc/Automation.xrc"
+_("Refine Mesh");
+#line 1816 "res/xrc/Automation.xrc"
+_("Subdivides/refines meshes by splitting edges.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tAll unmasked vertices are refined. Use the Target Meshes field above to select which shapes to refine.");
+#line 1830 "res/xrc/Automation.xrc"
+_("Rename Shape");
+#line 1844 "res/xrc/Automation.xrc"
+_("Old Name:");
+#line 1850 "res/xrc/Automation.xrc"
+_("Current name of the shape (supports {{PLACEHOLDER}} variables)");
+#line 1851 "res/xrc/Automation.xrc"
+_("Current shape name");
+#line 1858 "res/xrc/Automation.xrc"
+_("New Name:");
+#line 1864 "res/xrc/Automation.xrc"
+_("New name for the shape (supports {{PLACEHOLDER}} variables)");
+#line 1865 "res/xrc/Automation.xrc"
+_("New shape name");
+#line 1879 "res/xrc/Automation.xrc"
+_("Apply Transforms");
+#line 1885 "res/xrc/Automation.xrc"
+_("Applies the shape transforms of the target meshes to their geometry and clears them, without moving the meshes. No additional parameters needed.");
+#line 1898 "res/xrc/Automation.xrc"
+_("Reset Transforms");
+#line 1904 "res/xrc/Automation.xrc"
+_("Resets global-to-skin transforms for all skinned meshes. No additional parameters needed.");
+#line 1917 "res/xrc/Automation.xrc"
+_("Transform Shape");
+#line 1931 "res/xrc/Automation.xrc"
+_("Move:");
+#line 1938 "res/xrc/Automation.xrc"
+_("Move X");
+#line 1946 "res/xrc/Automation.xrc"
+_("Move Y");
+#line 1954 "res/xrc/Automation.xrc"
+_("Move Z");
+#line 1962 "res/xrc/Automation.xrc"
+_("Rotate (deg):");
+#line 1969 "res/xrc/Automation.xrc"
+_("Rotate X (degrees)");
+#line 1977 "res/xrc/Automation.xrc"
+_("Rotate Y (degrees)");
+#line 1985 "res/xrc/Automation.xrc"
+_("Rotate Z (degrees)");
+#line 1993 "res/xrc/Automation.xrc"
+_("Scale:");
+#line 2000 "res/xrc/Automation.xrc"
+_("Scale X");
+#line 2008 "res/xrc/Automation.xrc"
+_("Scale Y");
+#line 2016 "res/xrc/Automation.xrc"
+_("Scale Z");
+#line 2024 "res/xrc/Automation.xrc"
+_("Inflate:");
+#line 2031 "res/xrc/Automation.xrc"
+_("Inflate X (along normals)");
+#line 2039 "res/xrc/Automation.xrc"
+_("Inflate Y (along normals)");
+#line 2047 "res/xrc/Automation.xrc"
+_("Inflate Z (along normals)");
+#line 2062 "res/xrc/Automation.xrc"
+_("Set Geometry Properties");
+#line 2076 "res/xrc/Automation.xrc"
+_("Property:");
+#line 2088 "res/xrc/Automation.xrc"
+_("Select a geometry property to add to this step.");
+#line 2094 "res/xrc/Automation.xrc"
+_("Add");
+#line 2095 "res/xrc/Automation.xrc"
+_("Add the selected geometry property to this step.");
+#line 2104 "res/xrc/Automation.xrc"
+_("Values:");
+#line 2129 "res/xrc/Automation.xrc"
+_("Set Extra Data");
+#line 2143 "res/xrc/Automation.xrc"
+_("Block Type:");
+#line 2150 "res/xrc/Automation.xrc"
+_("NiStringExtraData");
+#line 2151 "res/xrc/Automation.xrc"
+_("NiIntegerExtraData");
+#line 2152 "res/xrc/Automation.xrc"
+_("NiFloatExtraData");
+#line 2153 "res/xrc/Automation.xrc"
+_("NiBooleanExtraData");
+#line 2155 "res/xrc/Automation.xrc"
+_("Extra data block type to create when the name is not found.");
+#line 2162 "res/xrc/Automation.xrc"
+_("Name:");
+#line 2168 "res/xrc/Automation.xrc"
+_("Extra data name");
+#line 2175 "res/xrc/Automation.xrc"
+_("Value:");
+#line 2181 "res/xrc/Automation.xrc"
+_("Value text. Boolean values accept true/false, yes/no, on/off, or 1/0.");
+#line 2182 "res/xrc/Automation.xrc"
+_("Extra data value");
+#line 2196 "res/xrc/Automation.xrc"
+_("Delete Extra Data");
+#line 2210 "res/xrc/Automation.xrc"
+_("Name:");
+#line 2216 "res/xrc/Automation.xrc"
+_("Extra data name");
+#line 2230 "res/xrc/Automation.xrc"
+_("Conform Sliders");
+#line 2244 "res/xrc/Automation.xrc"
+_("Proximity Radius:");
+#line 2258 "res/xrc/Automation.xrc"
+_("Max Results:");
+#line 2272 "res/xrc/Automation.xrc"
+_("Smooth Results:");
+#line 2283 "res/xrc/Automation.xrc"
+_("Smoothing Iterations:");
+#line 2297 "res/xrc/Automation.xrc"
+_("Smoothing Strength:");
+#line 2311 "res/xrc/Automation.xrc"
+_("Options:");
+#line 2320 "res/xrc/Automation.xrc"
+_("No squeeze");
+#line 2325 "res/xrc/Automation.xrc"
+_("Solid mode");
+#line 2334 "res/xrc/Automation.xrc"
+_("Axes:");
+#line 2369 "res/xrc/Automation.xrc"
+_("Fix Clipping:");
+#line 2375 "res/xrc/Automation.xrc"
+_("Run clipping fix on each conformed shape/slider delta immediately after conforming it.");
+#line 2382 "res/xrc/Automation.xrc"
+_("Clipping Strength:");
+#line 2390 "res/xrc/Automation.xrc"
+_("Strength percentage for conform-time clipping fix.");
+#line 2397 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 2409 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names to conform. Leave empty to conform all visible sliders.");
+#line 2410 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 2418 "res/xrc/Automation.xrc"
+_("Add sliders from list");
+#line 2434 "res/xrc/Automation.xrc"
+_("Delete Slider");
+#line 2448 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 2460 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names to delete. If regex is checked, the text is used as a single regex pattern.");
+#line 2461 "res/xrc/Automation.xrc"
+_("Comma-separated slider list or pattern");
+#line 2469 "res/xrc/Automation.xrc"
+_("Add sliders from list");
+#line 2478 "res/xrc/Automation.xrc"
+_("Regex:");
+#line 2484 "res/xrc/Automation.xrc"
+_("Match slider names by regex pattern");
+#line 2498 "res/xrc/Automation.xrc"
+_("Set Slider Values");
+#line 2512 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 2524 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names. Leave empty to set all visible sliders.");
+#line 2525 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 2533 "res/xrc/Automation.xrc"
+_("Add sliders from list");
+#line 2542 "res/xrc/Automation.xrc"
+_("Value (0 - 100):");
+#line 2549 "res/xrc/Automation.xrc"
+_("Slider value between 0 and 100 (percentage)");
+#line 2564 "res/xrc/Automation.xrc"
+_("Set Slider Properties");
+#line 2578 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 2590 "res/xrc/Automation.xrc"
+_("Comma-separated list of slider names. Leave empty to apply to all sliders.");
+#line 2591 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 2599 "res/xrc/Automation.xrc"
+_("Add sliders from list");
+#line 2608 "res/xrc/Automation.xrc"
+_("Zap:");
+#line 2615 "res/xrc/Automation.xrc"
+_("No change");
+#line 2616 "res/xrc/Automation.xrc"
+_("No");
+#line 2617 "res/xrc/Automation.xrc"
+_("Yes");
+#line 2619 "res/xrc/Automation.xrc"
+_("Set the zap flag on matching sliders.");
+#line 2626 "res/xrc/Automation.xrc"
+_("Hidden:");
+#line 2633 "res/xrc/Automation.xrc"
+_("No change");
+#line 2634 "res/xrc/Automation.xrc"
+_("No");
+#line 2635 "res/xrc/Automation.xrc"
+_("Yes");
+#line 2637 "res/xrc/Automation.xrc"
+_("Set the hidden flag on matching sliders.");
+#line 2644 "res/xrc/Automation.xrc"
+_("Default Zapped:");
+#line 2651 "res/xrc/Automation.xrc"
+_("No change");
+#line 2652 "res/xrc/Automation.xrc"
+_("Not zapped");
+#line 2653 "res/xrc/Automation.xrc"
+_("Zapped");
+#line 2655 "res/xrc/Automation.xrc"
+_("Whether matching zap sliders are zapped by default.");
+#line 2661 "res/xrc/Automation.xrc"
+_("Default (Small):");
+#line 2667 "res/xrc/Automation.xrc"
+_("Default small value (0-100). Leave empty for no change.");
+#line 2675 "res/xrc/Automation.xrc"
+_("Default (Big):");
+#line 2681 "res/xrc/Automation.xrc"
+_("Default big value (0-100). Leave empty for no change.");
+#line 2696 "res/xrc/Automation.xrc"
+_("Set Shader Properties");
+#line 2710 "res/xrc/Automation.xrc"
+_("Property:");
+#line 2722 "res/xrc/Automation.xrc"
+_("Select a shader property to add to this step.");
+#line 2728 "res/xrc/Automation.xrc"
+_("Add");
+#line 2729 "res/xrc/Automation.xrc"
+_("Add the selected shader property to this step.");
+#line 2738 "res/xrc/Automation.xrc"
+_("Values:");
+#line 2763 "res/xrc/Automation.xrc"
+_("Set Texture Paths");
+#line 2777 "res/xrc/Automation.xrc"
+_("Texture Slot:");
+#line 2789 "res/xrc/Automation.xrc"
+_("Select a texture slot to add to this step.");
+#line 2795 "res/xrc/Automation.xrc"
+_("Add");
+#line 2796 "res/xrc/Automation.xrc"
+_("Add the selected texture path to this step.");
+#line 2805 "res/xrc/Automation.xrc"
+_("Paths:");
+#line 2830 "res/xrc/Automation.xrc"
+_("Clear Mask");
+#line 2836 "res/xrc/Automation.xrc"
+_("Clears the mask for the target shape(s).");
+#line 2848 "res/xrc/Automation.xrc"
+_("Load Mask");
+#line 2862 "res/xrc/Automation.xrc"
+_("Mask File:");
+#line 2868 "res/xrc/Automation.xrc"
+_("Select a mask XML file");
+#line 2877 "res/xrc/Automation.xrc"
+_("Mask Name:");
+#line 2883 "res/xrc/Automation.xrc"
+_("Select a mask entry from the loaded mask file.");
+#line 2897 "res/xrc/Automation.xrc"
+_("Remove Unused Nodes");
+#line 2903 "res/xrc/Automation.xrc"
+_("Removes all unreferenced nodes from the NIF.");
+#line 2915 "res/xrc/Automation.xrc"
+_("Add Bone");
+#line 2929 "res/xrc/Automation.xrc"
+_("Bone Names:");
+#line 2935 "res/xrc/Automation.xrc"
+_("Comma-separated list of bone names to add from the loaded skeleton.");
+#line 2936 "res/xrc/Automation.xrc"
+_("Comma-separated bone list");
+#line 2946 "res/xrc/Automation.xrc"
+_("Adds bone references from the loaded skeleton to every shape of the project, like the Add Bone dialog does.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tBones that are not in the skeleton are skipped.");
+#line 2960 "res/xrc/Automation.xrc"
+_("Transfer Selected Weights");
+#line 2974 "res/xrc/Automation.xrc"
+_("Bone Names:");
+#line 2980 "res/xrc/Automation.xrc"
+_("Comma-separated list of bones to transfer. Leave empty to transfer every bone of the reference shape.");
+#line 2981 "res/xrc/Automation.xrc"
+_("Leave empty for all bones");
+#line 2988 "res/xrc/Automation.xrc"
+_("Mask:");
+#line 2994 "res/xrc/Automation.xrc"
+_("Keep the weights of masked vertices");
+#line 2996 "res/xrc/Automation.xrc"
+_("Blend the transferred weights by the current mask instead of overwriting everything.");
+#line 3006 "res/xrc/Automation.xrc"
+_("Copies bone weights vertex by vertex from the reference shape. The target shapes need the same vertex count as the reference.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tLeaving the target meshes empty excludes the reference shape.");
+#line 3020 "res/xrc/Automation.xrc"
+_("Set Bone Transform");
+#line 3034 "res/xrc/Automation.xrc"
+_("Bone Names:");
+#line 3040 "res/xrc/Automation.xrc"
+_("Comma-separated list of bones to recalculate.");
+#line 3041 "res/xrc/Automation.xrc"
+_("Comma-separated bone list");
+#line 3048 "res/xrc/Automation.xrc"
+_("Mode:");
+#line 3055 "res/xrc/Automation.xrc"
+_("Set bone as skin (skin transform from node)");
+#line 3056 "res/xrc/Automation.xrc"
+_("Set bone as node (node transform from skin)");
+#line 3059 "res/xrc/Automation.xrc"
+_("Which of the two transforms is recalculated from the other one.");
+#line 3069 "res/xrc/Automation.xrc"
+_("Recalculates the skin-to-bone transform of a bone from its node transform, or the other way around, for the target shapes.");
+#line 3082 "res/xrc/Automation.xrc"
+_("Make Conversion Reference");
+#line 3096 "res/xrc/Automation.xrc"
+_("Slider Name:");
+#line 3102 "res/xrc/Automation.xrc"
+_("Name of the conversion slider to create.");
+#line 3103 "res/xrc/Automation.xrc"
+_("ConvertToBase");
+#line 3113 "res/xrc/Automation.xrc"
+_("Turns the current slider settings into a new conversion slider and makes the deformed reference the new base shape.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tRequires at least one non-zero slider value and deletes all other sliders of the project.");
+#line 3127 "res/xrc/Automation.xrc"
+_("Copy Segments/Partitions");
+#line 3133 "res/xrc/Automation.xrc"
+_("Assigns every triangle of the target shapes to the segment/partition of the nearest reference triangle. Existing segments/partitions are cleared.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tLeaving the target meshes empty excludes the reference shape. No additional parameters needed.");
+#line 3147 "res/xrc/Automation.xrc"
+_("Delete Vertices");
+#line 3156 "res/xrc/Automation.xrc"
+_("Delete the masked vertices instead of the unmasked ones");
+#line 3157 "res/xrc/Automation.xrc"
+_("By default the mask protects vertices and everything else is deleted, like the menu item does.");
+#line 3164 "res/xrc/Automation.xrc"
+_("Delete shapes that lose all of their triangles");
+#line 3166 "res/xrc/Automation.xrc"
+_("Uncheck to leave such shapes untouched instead.");
+#line 3176 "res/xrc/Automation.xrc"
+_("Deletes vertices and their triangles from the target shapes. Set up the mask with the Masks steps first;\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\twithout a mask every vertex counts as unmasked.");
+#line 3190 "res/xrc/Automation.xrc"
+_("Merge Geometry");
+#line 3204 "res/xrc/Automation.xrc"
+_("Source Shape:");
+#line 3210 "res/xrc/Automation.xrc"
+_("Name of the shape whose geometry is copied.");
+#line 3211 "res/xrc/Automation.xrc"
+_("Shape name");
+#line 3218 "res/xrc/Automation.xrc"
+_("Target Shape:");
+#line 3224 "res/xrc/Automation.xrc"
+_("Name of the shape the geometry is merged into.");
+#line 3225 "res/xrc/Automation.xrc"
+_("Shape name");
+#line 3232 "res/xrc/Automation.xrc"
+_("Source:");
+#line 3238 "res/xrc/Automation.xrc"
+_("Delete the source shape afterwards");
+#line 3248 "res/xrc/Automation.xrc"
+_("Merges the geometry of one shape into another one. The step fails if the shaders or alpha properties do not match\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tor the result would exceed the vertex/triangle limits. This step uses its own shape names, not the target meshes above.");
+#line 3262 "res/xrc/Automation.xrc"
+_("Separate Vertices");
+#line 3276 "res/xrc/Automation.xrc"
+_("New Shape Name:");
+#line 3282 "res/xrc/Automation.xrc"
+_("Name of the new shape that receives the masked vertices.");
+#line 3283 "res/xrc/Automation.xrc"
+_("Shape name");
+#line 3293 "res/xrc/Automation.xrc"
+_("Moves the masked vertices of a single target shape into a new shape. Needs exactly one target mesh and a non-empty mask.");
+#line 3306 "res/xrc/Automation.xrc"
+_("Symmetrize Vertices");
+#line 3315 "res/xrc/Automation.xrc"
+_("Vertex positions");
+#line 3323 "res/xrc/Automation.xrc"
+_("Unmatched vertices");
+#line 3324 "res/xrc/Automation.xrc"
+_("Also move vertices that have no mirrored counterpart onto the mirror plane.");
+#line 3331 "res/xrc/Automation.xrc"
+_("Slider data (all sliders)");
+#line 3338 "res/xrc/Automation.xrc"
+_("Bone weights (all bones)");
+#line 3348 "res/xrc/Automation.xrc"
+_("Mirrors the selected kinds of data across the X axis for the unmasked vertices of the target shapes.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tMasked vertices are left alone, just like in the vertex asymmetry dialog.");
+#line 3362 "res/xrc/Automation.xrc"
+_("Clear Slider Data");
+#line 3376 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 3388 "res/xrc/Automation.xrc"
+_("Comma-separated list of sliders to clear. Leave empty to clear every slider of the project.");
+#line 3389 "res/xrc/Automation.xrc"
+_("Leave empty for all sliders");
+#line 3397 "res/xrc/Automation.xrc"
+_("Add sliders from list");
+#line 3406 "res/xrc/Automation.xrc"
+_("Mask:");
+#line 3412 "res/xrc/Automation.xrc"
+_("Keep the slider data of masked vertices");
+#line 3423 "res/xrc/Automation.xrc"
+_("Removes the slider morph data of the target shapes without deleting the sliders themselves.");
+#line 3436 "res/xrc/Automation.xrc"
+_("Clone Slider");
+#line 3450 "res/xrc/Automation.xrc"
+_("Source Slider:");
+#line 3456 "res/xrc/Automation.xrc"
+_("Name of the slider to clone.");
+#line 3457 "res/xrc/Automation.xrc"
+_("Slider name");
+#line 3464 "res/xrc/Automation.xrc"
+_("New Slider:");
+#line 3470 "res/xrc/Automation.xrc"
+_("Name of the new slider. It must not exist yet.");
+#line 3471 "res/xrc/Automation.xrc"
+_("Slider name");
+#line 3481 "res/xrc/Automation.xrc"
+_("Creates a copy of a slider including its data for all shapes.");
+#line 3494 "res/xrc/Automation.xrc"
+_("Negate Slider");
+#line 3508 "res/xrc/Automation.xrc"
+_("Slider Names:");
+#line 3520 "res/xrc/Automation.xrc"
+_("Comma-separated list of sliders to negate.");
+#line 3521 "res/xrc/Automation.xrc"
+_("Comma-separated slider list");
+#line 3529 "res/xrc/Automation.xrc"
+_("Add sliders from list");
+#line 3541 "res/xrc/Automation.xrc"
+_("Inverts the morph data of the given sliders for the target shapes.");
+#line 3554 "res/xrc/Automation.xrc"
+_("New Combined Slider");
+#line 3568 "res/xrc/Automation.xrc"
+_("Slider Name:");
+#line 3574 "res/xrc/Automation.xrc"
+_("Name of the new slider. It must not exist yet.");
+#line 3575 "res/xrc/Automation.xrc"
+_("Slider name");
+#line 3585 "res/xrc/Automation.xrc"
+_("Creates a new slider from the combined result of the currently set slider values.");
+#line 3598 "res/xrc/Automation.xrc"
+_("New Zap Slider");
+#line 3612 "res/xrc/Automation.xrc"
+_("Slider Name:");
+#line 3618 "res/xrc/Automation.xrc"
+_("Name of the new zap slider. It must not exist yet.");
+#line 3619 "res/xrc/Automation.xrc"
+_("Slider name");
+#line 3629 "res/xrc/Automation.xrc"
+_("Creates a zap slider that removes the unmasked vertices of the target shapes, so the mask marks what to keep.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tSet up the mask with the Masks steps first.");
+#line 3643 "res/xrc/Automation.xrc"
+_("Grow/Shrink Mask");
+#line 3657 "res/xrc/Automation.xrc"
+_("Mode:");
+#line 3664 "res/xrc/Automation.xrc"
+_("Grow");
+#line 3665 "res/xrc/Automation.xrc"
+_("Shrink");
+#line 3674 "res/xrc/Automation.xrc"
+_("Iterations:");
+#line 3681 "res/xrc/Automation.xrc"
+_("How many times the mask border is moved by one ring of vertices.");
+#line 3691 "res/xrc/Automation.xrc"
+_("Moves the mask border of the target shapes outwards or inwards, like the grow/shrink mask menu items.");
+#line 3704 "res/xrc/Automation.xrc"
+_("Invert Mask");
+#line 3710 "res/xrc/Automation.xrc"
+_("Inverts the mask of the target shapes. Fully masked vertices become unmasked and the other way around.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
+#line 3724 "res/xrc/Automation.xrc"
+_("Mask Asymmetric");
+#line 3738 "res/xrc/Automation.xrc"
+_("Mode:");
+#line 3745 "res/xrc/Automation.xrc"
+_("Asymmetric triangles");
+#line 3746 "res/xrc/Automation.xrc"
+_("Asymmetric vertices");
+#line 3749 "res/xrc/Automation.xrc"
+_("Triangle mode looks at the triangle layout only and ignores the checkboxes below.");
+#line 3756 "res/xrc/Automation.xrc"
+_("Asymmetries:");
+#line 3765 "res/xrc/Automation.xrc"
+_("Vertex positions");
+#line 3773 "res/xrc/Automation.xrc"
+_("Unmatched vertices");
+#line 3780 "res/xrc/Automation.xrc"
+_("Slider data (all sliders)");
+#line 3787 "res/xrc/Automation.xrc"
+_("Bone weights (all bones)");
+#line 3799 "res/xrc/Automation.xrc"
+_("Masks everything except the asymmetric parts of the target shapes, so the following steps only work on those.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tIn vertex mode, vertices that are already masked stay masked.");
+#line 3813 "res/xrc/Automation.xrc"
+_("Mask Bone-Weighted Vertices");
+#line 3827 "res/xrc/Automation.xrc"
+_("Bone Names:");
+#line 3833 "res/xrc/Automation.xrc"
+_("Comma-separated list of bones whose weighted vertices are masked.");
+#line 3834 "res/xrc/Automation.xrc"
+_("Comma-separated bone list");
+#line 3844 "res/xrc/Automation.xrc"
+_("Replaces the mask of the target shapes with the vertices that have a weight greater than zero for any of the given bones.");
+#line 3857 "res/xrc/Automation.xrc"
+_("Mask Slider-Affected Vertices");
+#line 3871 "res/xrc/Automation.xrc"
+_("Slider Name:");
+#line 3877 "res/xrc/Automation.xrc"
+_("Name of the slider whose affected vertices are masked.");
+#line 3878 "res/xrc/Automation.xrc"
+_("Slider name");
+#line 3888 "res/xrc/Automation.xrc"
+_("Replaces the mask of the target shapes with the vertices that the given slider has morph data for.");
+#line 3901 "res/xrc/Automation.xrc"
+_("Mask Weighted Vertices");
+#line 3907 "res/xrc/Automation.xrc"
+_("Replaces the mask of the target shapes with the vertices that have a weight greater than zero for any of their bones.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tNo additional parameters needed.");
+#line 3921 "res/xrc/Automation.xrc"
+_("Save Mask");
+#line 3935 "res/xrc/Automation.xrc"
+_("Mask File:");
+#line 3941 "res/xrc/Automation.xrc"
+_("Path of the XML mask file to write. Relative paths are resolved against the project folder.");
+#line 3942 "res/xrc/Automation.xrc"
+_("masks.xml");
+#line 3949 "res/xrc/Automation.xrc"
+_("Mask Name:");
+#line 3955 "res/xrc/Automation.xrc"
+_("Name of the entry inside the mask file.");
+#line 3956 "res/xrc/Automation.xrc"
+_("Mask name");
+#line 3963 "res/xrc/Automation.xrc"
+_("Existing File:");
+#line 3969 "res/xrc/Automation.xrc"
+_("Keep the other entries of an existing file");
+#line 3971 "res/xrc/Automation.xrc"
+_("Uncheck to overwrite the file with just this entry.");
+#line 3981 "res/xrc/Automation.xrc"
+_("Writes the current mask of the target shapes into a named entry of an XML mask file, ready to be read back by Masks: Load Mask.\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tAn entry of the same name is replaced.");
+#line 3995 "res/xrc/Automation.xrc"
+_("Set Variable");
+#line 4009 "res/xrc/Automation.xrc"
+_("Name:");
+#line 4015 "res/xrc/Automation.xrc"
+_("Name of the variable, without the curly braces.");
+#line 4016 "res/xrc/Automation.xrc"
+_("KEY");
+#line 4023 "res/xrc/Automation.xrc"
+_("Value:");
+#line 4029 "res/xrc/Automation.xrc"
+_("Value to substitute. Placeholders of already known variables are resolved first.");
+#line 4030 "res/xrc/Automation.xrc"
+_("Value");
+#line 4040 "res/xrc/Automation.xrc"
+_("Defines a {{KEY}} placeholder for the steps that follow. Names that are already in the placeholder variables below\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tare substituted before the run and cannot be overridden here.");
+#line 4054 "res/xrc/Automation.xrc"
+_("Log Message");
+#line 4068 "res/xrc/Automation.xrc"
+_("Message:");
+#line 4074 "res/xrc/Automation.xrc"
+_("Text to write to the log. Placeholders are substituted.");
+#line 4075 "res/xrc/Automation.xrc"
+_("Message text");
+#line 4082 "res/xrc/Automation.xrc"
+_("Level:");
+#line 4089 "res/xrc/Automation.xrc"
+_("Message");
+#line 4090 "res/xrc/Automation.xrc"
+_("Warning");
+#line 4091 "res/xrc/Automation.xrc"
+_("Error");
+#line 4094 "res/xrc/Automation.xrc"
+_("Errors and warnings are shown in a dialog outside of headless runs, but never fail the step.");
+#line 4104 "res/xrc/Automation.xrc"
+_("Writes a message to the automation log. Useful to mark sections of a long batch run or to show a resolved variable.");
+#line 4125 "res/xrc/Automation.xrc"
+_("Placeholder Variables");
+#line 4134 "res/xrc/Automation.xrc"
+_("Define {{KEY}} = Value pairs. These are substituted in all text fields before execution.");
+#line 4151 "res/xrc/Automation.xrc"
+_("Key:");
+#line 4157 "res/xrc/Automation.xrc"
+_("Value:");
+#line 4164 "res/xrc/Automation.xrc"
+_("KEY");
+#line 4170 "res/xrc/Automation.xrc"
+_("Value");
+#line 4183 "res/xrc/Automation.xrc"
+_("+ Add");
+#line 4191 "res/xrc/Automation.xrc"
+_("- Remove");
+#line 4208 "res/xrc/Automation.xrc"
+_("Batch Operation");
+#line 4218 "res/xrc/Automation.xrc"
+_("Mode");
+#line 4221 "res/xrc/Automation.xrc"
+_("None (run on current project)");
+#line 4222 "res/xrc/Automation.xrc"
+_("Folder scan (repeat on files in folder)");
+#line 4223 "res/xrc/Automation.xrc"
+_("Slider sets (repeat on installed slider sets)");
+#line 4237 "res/xrc/Automation.xrc"
+_("Folder Scan Settings");
 #line 4250 "res/xrc/Automation.xrc"
+_("Folder:");
+#line 4256 "res/xrc/Automation.xrc"
+_("Select folder to scan");
+#line 4264 "res/xrc/Automation.xrc"
+_("File Extension:");
+#line 4271 "res/xrc/Automation.xrc"
+_("File extension to scan for (e.g. .nif, .obj)");
+#line 4278 "res/xrc/Automation.xrc"
+_("Options:");
+#line 4284 "res/xrc/Automation.xrc"
 _("Include subdirectories");
-#line 4257 "res/xrc/Automation.xrc"
+#line 4291 "res/xrc/Automation.xrc"
 _("File Filter:");
-#line 4269 "res/xrc/Automation.xrc"
+#line 4303 "res/xrc/Automation.xrc"
 _("Filter file/folder names (substring or regex)");
-#line 4270 "res/xrc/Automation.xrc"
+#line 4304 "res/xrc/Automation.xrc"
 _("Filter pattern...");
-#line 4276 "res/xrc/Automation.xrc"
+#line 4310 "res/xrc/Automation.xrc"
 _("Regex");
-#line 4295 "res/xrc/Automation.xrc"
+#line 4329 "res/xrc/Automation.xrc"
 _("Slider Set Settings");
-#line 4308 "res/xrc/Automation.xrc"
+#line 4342 "res/xrc/Automation.xrc"
 _("Filter:");
-#line 4320 "res/xrc/Automation.xrc"
+#line 4354 "res/xrc/Automation.xrc"
 _("Filter slider set names (substring or regex). Leave empty for all.");
-#line 4321 "res/xrc/Automation.xrc"
+#line 4355 "res/xrc/Automation.xrc"
 _("Filter pattern...");
-#line 4327 "res/xrc/Automation.xrc"
+#line 4361 "res/xrc/Automation.xrc"
 _("Regex");
-#line 4351 "res/xrc/Automation.xrc"
+#line 4385 "res/xrc/Automation.xrc"
 _("Output Log");
-#line 4368 "res/xrc/Automation.xrc"
+#line 4402 "res/xrc/Automation.xrc"
 _("Execute");
-#line 4369 "res/xrc/Automation.xrc"
+#line 4403 "res/xrc/Automation.xrc"
 _("Execute all active steps in order");
-#line 4379 "res/xrc/Automation.xrc"
+#line 4413 "res/xrc/Automation.xrc"
 _("Close");
 #line 6 "res/xrc/BatchBuild.xrc"
 _("Batch Build");
@@ -1920,907 +1930,999 @@ _("Clamp Max Value");
 _("Edit Alpha");
 #line 618 "res/xrc/OutfitStudio.xrc"
 _("Mask matching color");
-#line 664 "res/xrc/OutfitStudio.xrc"
+#line 669 "res/xrc/OutfitStudio.xrc"
 _("Reset");
-#line 677 "res/xrc/OutfitStudio.xrc"
+#line 678 "res/xrc/OutfitStudio.xrc"
+_("Save");
+#line 693 "res/xrc/OutfitStudio.xrc"
+_("Background");
+#line 701 "res/xrc/OutfitStudio.xrc"
+_("Lights the scene with an HDRi image and shows it as the background. Shapes whose cube map is missing or is the 1x1 placeholder that asks for a dynamic one reflect it as well.\n\nAdd your own .exr files to the \"res\\hdri\" folder to have them listed here.");
+#line 716 "res/xrc/OutfitStudio.xrc"
 _("Ambient");
-#line 702 "res/xrc/OutfitStudio.xrc"
+#line 741 "res/xrc/OutfitStudio.xrc"
 _("Frontal");
-#line 727 "res/xrc/OutfitStudio.xrc"
+#line 766 "res/xrc/OutfitStudio.xrc"
 _("Directional 1");
-#line 752 "res/xrc/OutfitStudio.xrc"
+#line 791 "res/xrc/OutfitStudio.xrc"
 _("Directional 2");
-#line 777 "res/xrc/OutfitStudio.xrc"
+#line 816 "res/xrc/OutfitStudio.xrc"
 _("Directional 3");
-#line 822 "res/xrc/OutfitStudio.xrc"
+#line 871 "res/xrc/OutfitStudio.xrc"
 _("Type");
-#line 945 "res/xrc/OutfitStudio.xrc"
+#line 994 "res/xrc/OutfitStudio.xrc"
 _("Slot");
-#line 1020 "res/xrc/OutfitStudio.xrc"
+#line 1069 "res/xrc/OutfitStudio.xrc"
 _("SSF File");
-#line 1040 "res/xrc/OutfitStudio.xrc"
+#line 1089 "res/xrc/OutfitStudio.xrc"
 _("Set");
-#line 1058 "res/xrc/OutfitStudio.xrc"
+#line 1107 "res/xrc/OutfitStudio.xrc"
 _("Apply");
-#line 1068 "res/xrc/OutfitStudio.xrc"
+#line 1117 "res/xrc/OutfitStudio.xrc"
 _("Reset");
-#line 1086 "res/xrc/OutfitStudio.xrc"
+#line 1135 "res/xrc/OutfitStudio.xrc"
 _("Type");
-#line 1115 "res/xrc/OutfitStudio.xrc"
+#line 1164 "res/xrc/OutfitStudio.xrc"
 _("Apply");
-#line 1125 "res/xrc/OutfitStudio.xrc"
+#line 1174 "res/xrc/OutfitStudio.xrc"
 _("Reset");
-#line 1143 "res/xrc/OutfitStudio.xrc"
+#line 1192 "res/xrc/OutfitStudio.xrc"
 _("De-/Select Sliders");
-#line 1162 "res/xrc/OutfitStudio.xrc"
+#line 1211 "res/xrc/OutfitStudio.xrc"
 _("Fixed Weight Brush");
-#line 1173 "res/xrc/OutfitStudio.xrc"
+#line 1222 "res/xrc/OutfitStudio.xrc"
 _("Normalize Weights");
-#line 1190 "res/xrc/OutfitStudio.xrc"
+#line 1239 "res/xrc/OutfitStudio.xrc"
 _("X-Mirror Bone");
-#line 1215 "res/xrc/OutfitStudio.xrc"
+#line 1264 "res/xrc/OutfitStudio.xrc"
 _("Masks");
-#line 1242 "res/xrc/OutfitStudio.xrc"
+#line 1291 "res/xrc/OutfitStudio.xrc"
 _("Save");
-#line 1251 "res/xrc/OutfitStudio.xrc"
+#line 1300 "res/xrc/OutfitStudio.xrc"
 _("Delete");
-#line 1267 "res/xrc/OutfitStudio.xrc"
+#line 1316 "res/xrc/OutfitStudio.xrc"
 _("Export...");
-#line 1276 "res/xrc/OutfitStudio.xrc"
+#line 1325 "res/xrc/OutfitStudio.xrc"
 _("Import...");
-#line 1292 "res/xrc/OutfitStudio.xrc"
+#line 1341 "res/xrc/OutfitStudio.xrc"
 _("Posing");
-#line 1324 "res/xrc/OutfitStudio.xrc"
+#line 1369 "res/xrc/OutfitStudio.xrc"
 _("Save");
-#line 1333 "res/xrc/OutfitStudio.xrc"
+#line 1377 "res/xrc/OutfitStudio.xrc"
 _("Delete");
-#line 1355 "res/xrc/OutfitStudio.xrc"
+#line 1399 "res/xrc/OutfitStudio.xrc"
 _("Import...");
-#line 1364 "res/xrc/OutfitStudio.xrc"
+#line 1407 "res/xrc/OutfitStudio.xrc"
 _("Export...");
-#line 1382 "res/xrc/OutfitStudio.xrc"
+#line 1431 "res/xrc/OutfitStudio.xrc"
 _("Show Pose");
-#line 1400 "res/xrc/OutfitStudio.xrc"
+#line 1432 "res/xrc/OutfitStudio.xrc"
+_("Display the meshes with the pose below applied");
+#line 1443 "res/xrc/OutfitStudio.xrc"
+_("Bone the transform below applies to");
+#line 1451 "res/xrc/OutfitStudio.xrc"
 _("Reset Bone");
-#line 1420 "res/xrc/OutfitStudio.xrc"
+#line 1471 "res/xrc/OutfitStudio.xrc"
 _("Rotation X");
-#line 1448 "res/xrc/OutfitStudio.xrc"
+#line 1499 "res/xrc/OutfitStudio.xrc"
 _("Rotation Y");
-#line 1476 "res/xrc/OutfitStudio.xrc"
+#line 1527 "res/xrc/OutfitStudio.xrc"
 _("Rotation Z");
-#line 1504 "res/xrc/OutfitStudio.xrc"
+#line 1555 "res/xrc/OutfitStudio.xrc"
 _("Offset X");
-#line 1532 "res/xrc/OutfitStudio.xrc"
+#line 1583 "res/xrc/OutfitStudio.xrc"
 _("Offset Y");
-#line 1560 "res/xrc/OutfitStudio.xrc"
+#line 1611 "res/xrc/OutfitStudio.xrc"
 _("Offset Z");
-#line 1589 "res/xrc/OutfitStudio.xrc"
+#line 1639 "res/xrc/OutfitStudio.xrc"
 _("Scale");
-#line 1622 "res/xrc/OutfitStudio.xrc"
+#line 1677 "res/xrc/OutfitStudio.xrc"
 _("Reset All");
-#line 1630 "res/xrc/OutfitStudio.xrc"
+#line 1685 "res/xrc/OutfitStudio.xrc"
 _("Apply to Mesh");
-#line 1658 "res/xrc/OutfitStudio.xrc"
-_("Notes");
-#line 1695 "res/xrc/OutfitStudio.xrc"
-_("Menu");
-#line 1697 "res/xrc/OutfitStudio.xrc"
-_("File");
-#line 1699 "res/xrc/OutfitStudio.xrc"
-_("New Project...\tCtrl+N");
-#line 1700 "res/xrc/OutfitStudio.xrc"
-_("Create a new outfit project.");
-#line 1703 "res/xrc/OutfitStudio.xrc"
-_("Load Project..\tCtrl+O");
-#line 1704 "res/xrc/OutfitStudio.xrc"
-_("Load a project.");
-#line 1707 "res/xrc/OutfitStudio.xrc"
-_("Add Project..\tCtrl+Shift+O");
-#line 1708 "res/xrc/OutfitStudio.xrc"
-_("Add a project without replacing the current one.");
-#line 1711 "res/xrc/OutfitStudio.xrc"
-_("Unload Project...\tCtrl+W");
-#line 1712 "res/xrc/OutfitStudio.xrc"
-_("Unloads the project and creates an empty new one.");
-#line 1715 "res/xrc/OutfitStudio.xrc"
-_("Recent Projects...");
+#line 1702 "res/xrc/OutfitStudio.xrc"
+_("Physics");
+#line 1719 "res/xrc/OutfitStudio.xrc"
+_("Simulate");
 #line 1720 "res/xrc/OutfitStudio.xrc"
-_("Load Reference...");
-#line 1721 "res/xrc/OutfitStudio.xrc"
-_("Load a new reference slider set, replacing any current reference objects.");
-#line 1724 "res/xrc/OutfitStudio.xrc"
-_("Load Outfit...");
-#line 1725 "res/xrc/OutfitStudio.xrc"
-_("Load a NIF file as the working outfit, replacing any current outfit objects.");
+_("Simulate HDT-SMP physics XMLs referenced by the loaded meshes");
 #line 1729 "res/xrc/OutfitStudio.xrc"
-_("Convert / Replace Reference...\tCtrl+Shift+R");
+_("Show Colliders");
 #line 1730 "res/xrc/OutfitStudio.xrc"
-_("Convert to or replace an outfit's body/reference");
-#line 1733 "res/xrc/OutfitStudio.xrc"
-_("Open Automation...\tCtrl+Shift+A");
-#line 1734 "res/xrc/OutfitStudio.xrc"
-_("Open the automation dialog to create, load and execute automation scripts.");
-#line 1738 "res/xrc/OutfitStudio.xrc"
-_("Save Project\tCtrl+S");
-#line 1739 "res/xrc/OutfitStudio.xrc"
-_("Save the project.");
-#line 1743 "res/xrc/OutfitStudio.xrc"
-_("Save Project As...\tCtrl+Shift+S");
-#line 1744 "res/xrc/OutfitStudio.xrc"
-_("Save the project under a new name.");
-#line 1748 "res/xrc/OutfitStudio.xrc"
-_("Import");
+_("Draw the collision shapes and constraints of the physics simulation");
+#line 1740 "res/xrc/OutfitStudio.xrc"
+_("Grab");
+#line 1741 "res/xrc/OutfitStudio.xrc"
+_("Drag the simulated mesh around with the left mouse button, within what its physics constraints and gravity allow. Uses the brush size as the grab radius.");
 #line 1750 "res/xrc/OutfitStudio.xrc"
-_("From NIF...");
+_("Ball");
 #line 1751 "res/xrc/OutfitStudio.xrc"
-_("Choose a NIF file to import into the project.");
-#line 1754 "res/xrc/OutfitStudio.xrc"
-_("From OBJ...");
-#line 1755 "res/xrc/OutfitStudio.xrc"
-_("Import an OBJ file as a new shape in the outfit.");
-#line 1758 "res/xrc/OutfitStudio.xrc"
-_("From FBX...");
-#line 1759 "res/xrc/OutfitStudio.xrc"
-_("Import an FBX file as a new shape in the outfit.");
-#line 1762 "res/xrc/OutfitStudio.xrc"
-_("From TRI (Head)...");
-#line 1763 "res/xrc/OutfitStudio.xrc"
-_("Import shape and morphs from a head TRI file.");
-#line 1766 "res/xrc/OutfitStudio.xrc"
-_("Import Data");
-#line 1768 "res/xrc/OutfitStudio.xrc"
-_("Import BSClothExtraData From HKX");
+_("Put a ball in the scene that the simulated mesh collides with. Drag it around with the left mouse button; the mouse wheel moves it towards and away from the camera (hold Shift to zoom instead). Uses the brush size as the ball radius.");
 #line 1769 "res/xrc/OutfitStudio.xrc"
-_("Choose an HKX file to import as a BSClothExtraData block into the project.");
-#line 1774 "res/xrc/OutfitStudio.xrc"
-_("Export");
-#line 1776 "res/xrc/OutfitStudio.xrc"
-_("To NIF...\tCtrl+E");
-#line 1777 "res/xrc/OutfitStudio.xrc"
-_("Save the current project as a NIF file (without reference)");
+_("Wind");
 #line 1780 "res/xrc/OutfitStudio.xrc"
-_("To NIF With Reference...\tCtrl+Alt+E");
-#line 1781 "res/xrc/OutfitStudio.xrc"
-_("Save the current project as a NIF file (including reference)");
-#line 1784 "res/xrc/OutfitStudio.xrc"
-_("To OBJ...");
-#line 1785 "res/xrc/OutfitStudio.xrc"
-_("Export the current project as an OBJ file.");
-#line 1788 "res/xrc/OutfitStudio.xrc"
-_("To FBX...");
+_("World wind strength for the physics preview (0 = off)");
 #line 1789 "res/xrc/OutfitStudio.xrc"
-_("Export the current project as an FBX file.");
+_("Up");
+#line 1790 "res/xrc/OutfitStudio.xrc"
+_("Down");
+#line 1791 "res/xrc/OutfitStudio.xrc"
+_("Forward");
 #line 1792 "res/xrc/OutfitStudio.xrc"
-_("To TRI (Head)...");
+_("Backward");
 #line 1793 "res/xrc/OutfitStudio.xrc"
-_("Export head morphs to a TRI file.");
+_("Left");
+#line 1794 "res/xrc/OutfitStudio.xrc"
+_("Right");
 #line 1796 "res/xrc/OutfitStudio.xrc"
-_("Export Data");
-#line 1798 "res/xrc/OutfitStudio.xrc"
-_("Export BSClothExtraData As HKX");
-#line 1799 "res/xrc/OutfitStudio.xrc"
-_("Save one of the currently loaded BSClothExtraData blocks to an HKX file.");
-#line 1804 "res/xrc/OutfitStudio.xrc"
-_("Make Conversion Reference");
-#line 1805 "res/xrc/OutfitStudio.xrc"
-_("Using the current slider settings for the reference shape, create a new reference that will morph from the current shape back to the base shape.");
-#line 1809 "res/xrc/OutfitStudio.xrc"
-_("Pack Projects...");
-#line 1810 "res/xrc/OutfitStudio.xrc"
-_("Pack one or more projects into a folder or archive for sharing.");
-#line 1813 "res/xrc/OutfitStudio.xrc"
-_("Settings");
-#line 1814 "res/xrc/OutfitStudio.xrc"
-_("Open settings dialog.");
+_("Direction the wind blows in, as seen in the viewport. It stays fixed to the mesh while the camera turns.");
 #line 1817 "res/xrc/OutfitStudio.xrc"
-_("About...");
-#line 1818 "res/xrc/OutfitStudio.xrc"
-_("Open the About dialog.");
-#line 1821 "res/xrc/OutfitStudio.xrc"
-_("Exit\tAlt+F4");
-#line 1822 "res/xrc/OutfitStudio.xrc"
-_("Exit Outfit Studio.");
-#line 1826 "res/xrc/OutfitStudio.xrc"
-_("Edit");
-#line 1828 "res/xrc/OutfitStudio.xrc"
-_("Undo\tCtrl+Z");
+_("X");
 #line 1829 "res/xrc/OutfitStudio.xrc"
-_("Undo the previous action.");
-#line 1832 "res/xrc/OutfitStudio.xrc"
-_("Redo\tCtrl+Y");
-#line 1833 "res/xrc/OutfitStudio.xrc"
-_("Redo the next undone action.");
-#line 1837 "res/xrc/OutfitStudio.xrc"
-_("X Mirror\tX");
-#line 1838 "res/xrc/OutfitStudio.xrc"
-_("Mirror edits across the X axis.");
-#line 1844 "res/xrc/OutfitStudio.xrc"
-_("Edit Connected Only\tC");
-#line 1845 "res/xrc/OutfitStudio.xrc"
-_("Edit only vertices that are connected to the ones under the brush within the brush radius");
-#line 1851 "res/xrc/OutfitStudio.xrc"
-_("Merge Vertex");
-#line 1852 "res/xrc/OutfitStudio.xrc"
-_("Merges two vertices and fills any gaps.");
-#line 1858 "res/xrc/OutfitStudio.xrc"
-_("Weld Vertex");
+_("Position of the collision ball along the NIF X axis, in NIF units");
+#line 1840 "res/xrc/OutfitStudio.xrc"
+_("Position of the collision ball along the NIF X axis, in NIF units");
+#line 1847 "res/xrc/OutfitStudio.xrc"
+_("Y");
 #line 1859 "res/xrc/OutfitStudio.xrc"
-_("Welds two vertices while keeping the texture coordinates (UV) distinct.");
-#line 1865 "res/xrc/OutfitStudio.xrc"
-_("Restrict To Surface");
-#line 1866 "res/xrc/OutfitStudio.xrc"
-_("Restricts motion to a mesh surface.");
-#line 1872 "res/xrc/OutfitStudio.xrc"
-_("Restrict To Plane");
-#line 1873 "res/xrc/OutfitStudio.xrc"
-_("Restricts motion to parallel to the surface.");
-#line 1879 "res/xrc/OutfitStudio.xrc"
-_("Restrict To Normal");
-#line 1880 "res/xrc/OutfitStudio.xrc"
-_("Restricts motion to perpendicular to the surface.");
-#line 1887 "res/xrc/OutfitStudio.xrc"
-_("Recalculate Normals");
-#line 1888 "res/xrc/OutfitStudio.xrc"
-_("Recalculate normals on active mesh");
-#line 1891 "res/xrc/OutfitStudio.xrc"
-_("Disable Normals Calculation");
-#line 1892 "res/xrc/OutfitStudio.xrc"
-_("Turn off all automatic recalculation of normals on all meshes. Only applies to Outfit Studio.");
-#line 1897 "res/xrc/OutfitStudio.xrc"
-_("Reset Transforms");
-#line 1898 "res/xrc/OutfitStudio.xrc"
-_("Resets the shape and skin transforms.");
-#line 1901 "res/xrc/OutfitStudio.xrc"
-_("Delete Unreferenced Nodes");
-#line 1902 "res/xrc/OutfitStudio.xrc"
-_("Deletes all nodes from the project that aren't used in any other block.");
-#line 1905 "res/xrc/OutfitStudio.xrc"
-_("Remove Skinning");
-#line 1906 "res/xrc/OutfitStudio.xrc"
-_("Removes skinning of all shapes and all unused nodes.");
-#line 1910 "res/xrc/OutfitStudio.xrc"
-_("Shape");
-#line 1912 "res/xrc/OutfitStudio.xrc"
-_("Export");
-#line 1914 "res/xrc/OutfitStudio.xrc"
-_("To NIF...");
-#line 1915 "res/xrc/OutfitStudio.xrc"
-_("Export only the selected shapes to a NIF file.");
-#line 1918 "res/xrc/OutfitStudio.xrc"
-_("To OBJ...");
+_("Position of the collision ball along the NIF Y axis, in NIF units");
+#line 1870 "res/xrc/OutfitStudio.xrc"
+_("Position of the collision ball along the NIF Y axis, in NIF units");
+#line 1877 "res/xrc/OutfitStudio.xrc"
+_("Z");
+#line 1889 "res/xrc/OutfitStudio.xrc"
+_("Height of the collision ball along the NIF Z axis, in NIF units");
+#line 1900 "res/xrc/OutfitStudio.xrc"
+_("Height of the collision ball along the NIF Z axis, in NIF units");
+#line 1907 "res/xrc/OutfitStudio.xrc"
+_("Size");
 #line 1919 "res/xrc/OutfitStudio.xrc"
-_("Export only the selected shapes to an OBJ file.");
-#line 1922 "res/xrc/OutfitStudio.xrc"
-_("To FBX...");
-#line 1923 "res/xrc/OutfitStudio.xrc"
-_("Export only the selected shapes to an FBX file.");
-#line 1926 "res/xrc/OutfitStudio.xrc"
-_("To TRI (Head)...");
-#line 1927 "res/xrc/OutfitStudio.xrc"
-_("Export head morphs to a TRI file.");
-#line 1931 "res/xrc/OutfitStudio.xrc"
-_("UV");
-#line 1933 "res/xrc/OutfitStudio.xrc"
-_("Edit...");
-#line 1934 "res/xrc/OutfitStudio.xrc"
-_("Edit the texture coordinates.");
-#line 1937 "res/xrc/OutfitStudio.xrc"
-_("Invert X (Mirror)");
-#line 1938 "res/xrc/OutfitStudio.xrc"
-_("Inverts the X-axis to mirror the texture coordinates.");
-#line 1941 "res/xrc/OutfitStudio.xrc"
-_("Invert Y (Flip)");
-#line 1942 "res/xrc/OutfitStudio.xrc"
-_("Inverts the Y-axis to flip the texture coordinates.");
-#line 1946 "res/xrc/OutfitStudio.xrc"
-_("Delete Vertices...\tShift+Del");
+_("Radius of the collision ball, in NIF units");
+#line 1930 "res/xrc/OutfitStudio.xrc"
+_("Radius of the collision ball, in NIF units");
 #line 1947 "res/xrc/OutfitStudio.xrc"
-_("Deletes all unmasked vertices of the currently selected shapes.");
-#line 1950 "res/xrc/OutfitStudio.xrc"
-_("Separate Vertices...\tShift+S");
-#line 1951 "res/xrc/OutfitStudio.xrc"
-_("Separate the current shape into two by using the mask.");
-#line 1954 "res/xrc/OutfitStudio.xrc"
-_("Mirror Shape...");
-#line 1955 "res/xrc/OutfitStudio.xrc"
-_("Mirror the selected shapes on any axis.");
-#line 1958 "res/xrc/OutfitStudio.xrc"
-_("Merge Geometry...");
-#line 1959 "res/xrc/OutfitStudio.xrc"
-_("Copies vertices and triangles from one shape to another.");
-#line 1962 "res/xrc/OutfitStudio.xrc"
-_("Duplicate...");
-#line 1963 "res/xrc/OutfitStudio.xrc"
-_("Duplicate the current shape.");
-#line 1966 "res/xrc/OutfitStudio.xrc"
-_("Refine Mesh");
-#line 1967 "res/xrc/OutfitStudio.xrc"
-_("Splits all edges between unmasked vertices");
-#line 1970 "res/xrc/OutfitStudio.xrc"
-_("Rename...\tF2");
-#line 1971 "res/xrc/OutfitStudio.xrc"
-_("Change the name of the current shape.");
-#line 1974 "res/xrc/OutfitStudio.xrc"
-_("Set Reference");
-#line 1975 "res/xrc/OutfitStudio.xrc"
-_("Turn the shape into the reference shape of the project.");
-#line 1979 "res/xrc/OutfitStudio.xrc"
-_("Move...");
-#line 1980 "res/xrc/OutfitStudio.xrc"
-_("Apply an offset adjustment to the mesh vertices. This permanently moves vertices.");
-#line 1983 "res/xrc/OutfitStudio.xrc"
-_("Scale...");
-#line 1984 "res/xrc/OutfitStudio.xrc"
-_("Apply a scale adjustment to the shape. This permanently moves vertices.");
-#line 1987 "res/xrc/OutfitStudio.xrc"
-_("Rotate...");
-#line 1988 "res/xrc/OutfitStudio.xrc"
-_("Apply a rotation to the mesh vertices. This permanently moves vertices.");
-#line 1991 "res/xrc/OutfitStudio.xrc"
-_("Inflate...");
-#line 1992 "res/xrc/OutfitStudio.xrc"
-_("Inflates/deflates a shape along its normals. This permanently moves vertices.");
-#line 1995 "res/xrc/OutfitStudio.xrc"
-_("Fix Clipping...");
-#line 1996 "res/xrc/OutfitStudio.xrc"
-_("Fixes clipping of outfit vertices that penetrate the reference shape.");
-#line 2000 "res/xrc/OutfitStudio.xrc"
-_("Normals");
+_("Animation");
+#line 1976 "res/xrc/OutfitStudio.xrc"
+_("Favorite this animation. Favorites are listed in Outfit Studio and BodySlide without loading them again.");
+#line 1985 "res/xrc/OutfitStudio.xrc"
+_("Load...");
 #line 2002 "res/xrc/OutfitStudio.xrc"
-_("Smooth Seam Normals");
-#line 2003 "res/xrc/OutfitStudio.xrc"
-_("Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape.");
-#line 2008 "res/xrc/OutfitStudio.xrc"
-_("Edit Smoothing Angle...");
-#line 2009 "res/xrc/OutfitStudio.xrc"
-_("Angle, in degrees, that controls the threshold at which normal seams are smoothed.");
-#line 2012 "res/xrc/OutfitStudio.xrc"
-_("Lock Normals");
-#line 2013 "res/xrc/OutfitStudio.xrc"
-_("Locks the mesh normals. Enable if you want to keep custom normals intact.");
-#line 2020 "res/xrc/OutfitStudio.xrc"
-_("Copy Bone Weights");
-#line 2021 "res/xrc/OutfitStudio.xrc"
-_("Copies all bone weights from the reference shape to the current shape.");
-#line 2024 "res/xrc/OutfitStudio.xrc"
-_("Transfer Selected Weights");
-#line 2025 "res/xrc/OutfitStudio.xrc"
-_("Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order.");
-#line 2028 "res/xrc/OutfitStudio.xrc"
-_("Mask Weighted Vertices");
-#line 2029 "res/xrc/OutfitStudio.xrc"
-_("Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.");
-#line 2032 "res/xrc/OutfitStudio.xrc"
-_("Check For Bad Bones...");
-#line 2033 "res/xrc/OutfitStudio.xrc"
-_("Looks for bones with inconsistencies in their transforms.  If any are found, a dialog is opened to give options for fixing them.");
-#line 2037 "res/xrc/OutfitStudio.xrc"
-_("Copy Partitions/Segments...");
-#line 2038 "res/xrc/OutfitStudio.xrc"
-_("Copies partitions/segments and all triangle assignments from the reference shape to the current shape.");
-#line 2042 "res/xrc/OutfitStudio.xrc"
-_("Mask Symmetric Vertices...");
-#line 2043 "res/xrc/OutfitStudio.xrc"
-_("Masks unmasked vertices that have a mirrored vertex with identical data.");
-#line 2046 "res/xrc/OutfitStudio.xrc"
-_("Symmetrize Vertices...");
-#line 2047 "res/xrc/OutfitStudio.xrc"
-_("Changes vertex data to be identical to mirrored vertices.");
-#line 2050 "res/xrc/OutfitStudio.xrc"
-_("Mask Symmetric Triangles");
-#line 2051 "res/xrc/OutfitStudio.xrc"
-_("Masks triangles that can be matched to a mirrored triangle.");
+_("Play");
+#line 2039 "res/xrc/OutfitStudio.xrc"
+_("Interpolate");
+#line 2041 "res/xrc/OutfitStudio.xrc"
+_("Blend between the animation's frames during playback instead of stepping from one to the next.");
 #line 2055 "res/xrc/OutfitStudio.xrc"
-_("Delete\tDel");
-#line 2056 "res/xrc/OutfitStudio.xrc"
-_("Removes the currently selected shape from the outfit.");
-#line 2062 "res/xrc/OutfitStudio.xrc"
-_("Properties...");
-#line 2063 "res/xrc/OutfitStudio.xrc"
-_("Opens the properties dialog for shader, texture and more settings of the selected shape.");
-#line 2067 "res/xrc/OutfitStudio.xrc"
-_("Slider");
-#line 2069 "res/xrc/OutfitStudio.xrc"
-_("Conform Selected\tCtrl+C");
-#line 2070 "res/xrc/OutfitStudio.xrc"
-_("Conform selected outfit shape to all checked sliders.");
-#line 2073 "res/xrc/OutfitStudio.xrc"
-_("Conform All\tCtrl+Shift+C");
-#line 2074 "res/xrc/OutfitStudio.xrc"
-_("Conform all outfit shapes to all checked sliders.");
-#line 2077 "res/xrc/OutfitStudio.xrc"
-_("Fix Clipping...");
-#line 2078 "res/xrc/OutfitStudio.xrc"
-_("Fixes clipping of outfit vertices that penetrate the reference shape for the active slider.");
-#line 2082 "res/xrc/OutfitStudio.xrc"
-_("Set Base Shape");
-#line 2083 "res/xrc/OutfitStudio.xrc"
-_("Set the current outfit shape as the base shape and clear slider data.");
-#line 2087 "res/xrc/OutfitStudio.xrc"
-_("Load Preset...");
-#line 2088 "res/xrc/OutfitStudio.xrc"
-_("Load and preview a slider preset. Inverted sliders will have inverted values.");
-#line 2091 "res/xrc/OutfitStudio.xrc"
-_("Save Preset...");
-#line 2092 "res/xrc/OutfitStudio.xrc"
-_("Save a slider preset with the current values. Inverted sliders will have inverted values.");
-#line 2096 "res/xrc/OutfitStudio.xrc"
-_("New Slider");
-#line 2097 "res/xrc/OutfitStudio.xrc"
-_("Create a new shape transformation slider.");
-#line 2100 "res/xrc/OutfitStudio.xrc"
-_("Coalesce sliders");
-#line 2101 "res/xrc/OutfitStudio.xrc"
-_("Create a new shape transformation slider based on the current slider values");
-#line 2104 "res/xrc/OutfitStudio.xrc"
-_("New Zap Slider");
-#line 2105 "res/xrc/OutfitStudio.xrc"
-_("Create a new Zap slider based on unmasked vertices");
-#line 2109 "res/xrc/OutfitStudio.xrc"
-_("Import");
-#line 2111 "res/xrc/OutfitStudio.xrc"
-_("Import OSD...");
-#line 2112 "res/xrc/OutfitStudio.xrc"
-_("Imports OSD file and creates sliders for shapes with a matching name.");
-#line 2115 "res/xrc/OutfitStudio.xrc"
-_("Import TRI Morphs...");
-#line 2116 "res/xrc/OutfitStudio.xrc"
-_("Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name.");
-#line 2119 "res/xrc/OutfitStudio.xrc"
-_("Import Starfield morphs...");
-#line 2120 "res/xrc/OutfitStudio.xrc"
-_("Imports Starfield morph.dat file and creates sliders for shapes with a matching name.");
-#line 2124 "res/xrc/OutfitStudio.xrc"
-_("Import to active slider");
-#line 2126 "res/xrc/OutfitStudio.xrc"
-_("Import NIF...");
-#line 2127 "res/xrc/OutfitStudio.xrc"
-_("Import a NIF file and overwrites the current shape's slider data.");
-#line 2130 "res/xrc/OutfitStudio.xrc"
-_("Import BSD...");
-#line 2131 "res/xrc/OutfitStudio.xrc"
-_("Import a BodySlide BSD file and overwrites the current shape's slider data.");
-#line 2134 "res/xrc/OutfitStudio.xrc"
-_("Import OBJ...");
-#line 2135 "res/xrc/OutfitStudio.xrc"
-_("Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference.");
-#line 2138 "res/xrc/OutfitStudio.xrc"
-_("Import FBX...");
+_("Speed");
+#line 2102 "res/xrc/OutfitStudio.xrc"
+_("Notes");
 #line 2139 "res/xrc/OutfitStudio.xrc"
-_("Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference.");
-#line 2145 "res/xrc/OutfitStudio.xrc"
-_("Export");
+_("Menu");
+#line 2141 "res/xrc/OutfitStudio.xrc"
+_("File");
+#line 2143 "res/xrc/OutfitStudio.xrc"
+_("New Project...\tCtrl+N");
+#line 2144 "res/xrc/OutfitStudio.xrc"
+_("Create a new outfit project.");
 #line 2147 "res/xrc/OutfitStudio.xrc"
-_("Export OSD...");
+_("Load Project..\tCtrl+O");
 #line 2148 "res/xrc/OutfitStudio.xrc"
-_("Exports all currently loaded slider data to an OSD file.");
+_("Load a project.");
 #line 2151 "res/xrc/OutfitStudio.xrc"
-_("Export TRI Morphs...");
+_("Add Project..\tCtrl+Shift+O");
 #line 2152 "res/xrc/OutfitStudio.xrc"
-_("Exports TRI morphs to a TRI file.");
+_("Add a project without replacing the current one.");
 #line 2155 "res/xrc/OutfitStudio.xrc"
-_("Export Starfield morphs...");
+_("Unload Project...\tCtrl+W");
 #line 2156 "res/xrc/OutfitStudio.xrc"
-_("Exports Starfield morph.dat file.");
+_("Unloads the project and creates an empty new one.");
 #line 2159 "res/xrc/OutfitStudio.xrc"
-_("Export to OBJs...");
-#line 2160 "res/xrc/OutfitStudio.xrc"
-_("Export all sliders to an OBJ file per slider.");
+_("Recent Projects...");
 #line 2164 "res/xrc/OutfitStudio.xrc"
-_("Export active slider");
-#line 2166 "res/xrc/OutfitStudio.xrc"
-_("Export NIF...");
-#line 2167 "res/xrc/OutfitStudio.xrc"
-_("Exports the current slider's data as a NIF file.");
-#line 2170 "res/xrc/OutfitStudio.xrc"
-_("Export BSD...");
-#line 2171 "res/xrc/OutfitStudio.xrc"
-_("Exports the current slider's data as a BodySlide BSD file.");
+_("Load Reference...");
+#line 2165 "res/xrc/OutfitStudio.xrc"
+_("Load a new reference slider set, replacing any current reference objects.");
+#line 2168 "res/xrc/OutfitStudio.xrc"
+_("Load Outfit...");
+#line 2169 "res/xrc/OutfitStudio.xrc"
+_("Load a NIF file as the working outfit, replacing any current outfit objects.");
+#line 2173 "res/xrc/OutfitStudio.xrc"
+_("Convert / Replace Reference...\tCtrl+Shift+R");
 #line 2174 "res/xrc/OutfitStudio.xrc"
-_("Export OBJ...");
-#line 2175 "res/xrc/OutfitStudio.xrc"
-_("Exports the current slider's data as an OBJ file.");
+_("Convert to or replace an outfit's body/reference");
+#line 2177 "res/xrc/OutfitStudio.xrc"
+_("Open Automation...\tCtrl+Shift+A");
+#line 2178 "res/xrc/OutfitStudio.xrc"
+_("Open the automation dialog to create, load and execute automation scripts.");
 #line 2182 "res/xrc/OutfitStudio.xrc"
-_("Clone Slider");
+_("Save Project\tCtrl+S");
 #line 2183 "res/xrc/OutfitStudio.xrc"
-_("Clones the current slider.");
+_("Save the project.");
 #line 2187 "res/xrc/OutfitStudio.xrc"
-_("Negate Slider");
+_("Save Project As...\tCtrl+Shift+S");
 #line 2188 "res/xrc/OutfitStudio.xrc"
-_("Negates the current slider, reversing it's effect");
+_("Save the project under a new name.");
 #line 2192 "res/xrc/OutfitStudio.xrc"
-_("Mask Affected Vertices");
-#line 2193 "res/xrc/OutfitStudio.xrc"
-_("Masks the vertices the slider is affecting for all selected shapes.");
-#line 2197 "res/xrc/OutfitStudio.xrc"
-_("Clear Slider Data");
+_("Import");
+#line 2194 "res/xrc/OutfitStudio.xrc"
+_("From NIF...");
+#line 2195 "res/xrc/OutfitStudio.xrc"
+_("Choose a NIF file to import into the project.");
 #line 2198 "res/xrc/OutfitStudio.xrc"
-_("Erases the slider data without removing the slider itself. (Cannot be undone)");
-#line 2201 "res/xrc/OutfitStudio.xrc"
-_("Delete Slider\tCtrl+Del");
+_("From OBJ...");
+#line 2199 "res/xrc/OutfitStudio.xrc"
+_("Import an OBJ file as a new shape in the outfit.");
 #line 2202 "res/xrc/OutfitStudio.xrc"
-_("Delete the active slider from the project. (Cannot be undone)");
+_("From FBX...");
+#line 2203 "res/xrc/OutfitStudio.xrc"
+_("Import an FBX file as a new shape in the outfit.");
 #line 2206 "res/xrc/OutfitStudio.xrc"
-_("Slider Data...");
+_("From TRI (Head)...");
 #line 2207 "res/xrc/OutfitStudio.xrc"
-_("View and edit local and external slider data locations.");
-#line 2211 "res/xrc/OutfitStudio.xrc"
-_("Properties...\tTab");
+_("Import shape and morphs from a head TRI file.");
+#line 2210 "res/xrc/OutfitStudio.xrc"
+_("Import Data");
 #line 2212 "res/xrc/OutfitStudio.xrc"
-_("Display and edit the active slider's properties.");
-#line 2217 "res/xrc/OutfitStudio.xrc"
-_("Tool");
-#line 2219 "res/xrc/OutfitStudio.xrc"
-_("Current Tool");
-#line 2221 "res/xrc/OutfitStudio.xrc"
-_("Select");
-#line 2222 "res/xrc/OutfitStudio.xrc"
-_("Navigate and select meshes (or vertices in vertex mode).");
-#line 2226 "res/xrc/OutfitStudio.xrc"
-_("Mask");
-#line 2227 "res/xrc/OutfitStudio.xrc"
-_("Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.");
-#line 2231 "res/xrc/OutfitStudio.xrc"
-_("Inflate");
-#line 2232 "res/xrc/OutfitStudio.xrc"
-_("Increase mesh volume in an area.");
-#line 2237 "res/xrc/OutfitStudio.xrc"
-_("Deflate");
-#line 2238 "res/xrc/OutfitStudio.xrc"
-_("Decrease mesh volume in an area.");
-#line 2242 "res/xrc/OutfitStudio.xrc"
-_("Move");
-#line 2243 "res/xrc/OutfitStudio.xrc"
-_("Move vertices over a plane parallel to the view.");
-#line 2247 "res/xrc/OutfitStudio.xrc"
-_("Smooth");
-#line 2248 "res/xrc/OutfitStudio.xrc"
-_("Smooth an area of a mesh.");
-#line 2252 "res/xrc/OutfitStudio.xrc"
-_("Undiff");
-#line 2253 "res/xrc/OutfitStudio.xrc"
-_("Undiff an area of a slider.");
-#line 2257 "res/xrc/OutfitStudio.xrc"
-_("Weight Paint");
-#line 2258 "res/xrc/OutfitStudio.xrc"
-_("Apply animation weight values for the currently selected bone.\nHold down the ALT key to weaken the weighting.");
-#line 2263 "res/xrc/OutfitStudio.xrc"
-_("Color Paint");
-#line 2264 "res/xrc/OutfitStudio.xrc"
-_("Apply vertex colors.\nHold down the ALT key to remove colors.");
-#line 2269 "res/xrc/OutfitStudio.xrc"
-_("Alpha Paint");
-#line 2270 "res/xrc/OutfitStudio.xrc"
-_("Apply vertex alpha.\nHold down the ALT key to remove alpha.");
-#line 2275 "res/xrc/OutfitStudio.xrc"
-_("Collapse Vertex");
-#line 2276 "res/xrc/OutfitStudio.xrc"
-_("Deletes vertices with no more than three connections, without creating a hole.");
-#line 2280 "res/xrc/OutfitStudio.xrc"
-_("Flip Edge");
-#line 2281 "res/xrc/OutfitStudio.xrc"
-_("Flips mesh edges so that the opposite pair of vertices is connected.");
-#line 2285 "res/xrc/OutfitStudio.xrc"
-_("Split Edge");
-#line 2286 "res/xrc/OutfitStudio.xrc"
-_("Splits a mesh edge in two with a new vertex.");
-#line 2290 "res/xrc/OutfitStudio.xrc"
-_("Move Vertex");
-#line 2291 "res/xrc/OutfitStudio.xrc"
-_("Moves a vertex.");
-#line 2296 "res/xrc/OutfitStudio.xrc"
-_("Transform\tF");
-#line 2297 "res/xrc/OutfitStudio.xrc"
-_("Shows a transform tool to manipulate shapes and vertices with.");
-#line 2301 "res/xrc/OutfitStudio.xrc"
-_("Pivot\tP");
-#line 2302 "res/xrc/OutfitStudio.xrc"
-_("Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.");
-#line 2306 "res/xrc/OutfitStudio.xrc"
-_("Vertex Edit\tQ");
-#line 2307 "res/xrc/OutfitStudio.xrc"
-_("Shows vertex points and lets you mask/unmask them.\nWithout any brush active, click on a vertex to unmask it.\nHold down CTRL to mask it.");
-#line 2312 "res/xrc/OutfitStudio.xrc"
-_("Increase Brush Size\tShift++");
-#line 2313 "res/xrc/OutfitStudio.xrc"
-_("Increase brush diameter");
-#line 2316 "res/xrc/OutfitStudio.xrc"
-_("Decrease Brush Size\tShift+-");
-#line 2317 "res/xrc/OutfitStudio.xrc"
-_("Decrease brush diameter");
-#line 2320 "res/xrc/OutfitStudio.xrc"
-_("Increase Brush Strength\tCtrl++");
-#line 2321 "res/xrc/OutfitStudio.xrc"
-_("Increase brush strength");
-#line 2324 "res/xrc/OutfitStudio.xrc"
-_("Decrease Brush Strength\tCtrl+-");
-#line 2325 "res/xrc/OutfitStudio.xrc"
-_("Decrease brush strength");
-#line 2329 "res/xrc/OutfitStudio.xrc"
-_("Mask Less\tA");
-#line 2330 "res/xrc/OutfitStudio.xrc"
-_("Mask Less");
-#line 2333 "res/xrc/OutfitStudio.xrc"
-_("Mask More\tD");
-#line 2334 "res/xrc/OutfitStudio.xrc"
-_("Mask More");
-#line 2338 "res/xrc/OutfitStudio.xrc"
-_("Invert Mask\tCtrl+I");
-#line 2339 "res/xrc/OutfitStudio.xrc"
-_("Invert Mask");
-#line 2342 "res/xrc/OutfitStudio.xrc"
-_("Clear Mask\tCtrl+A");
-#line 2343 "res/xrc/OutfitStudio.xrc"
-_("Clear Mask");
-#line 2347 "res/xrc/OutfitStudio.xrc"
-_("View");
-#line 2349 "res/xrc/OutfitStudio.xrc"
-_("Front\tShift+1");
-#line 2352 "res/xrc/OutfitStudio.xrc"
-_("Back\tShift+2");
-#line 2355 "res/xrc/OutfitStudio.xrc"
-_("Left\tShift+3");
-#line 2358 "res/xrc/OutfitStudio.xrc"
-_("Right\tShift+4");
-#line 2361 "res/xrc/OutfitStudio.xrc"
-_("Perspective\tShift+5");
-#line 2366 "res/xrc/OutfitStudio.xrc"
-_("Toggle Rotation Center\tShift+R");
-#line 2367 "res/xrc/OutfitStudio.xrc"
-_("Switch between the different rotation center modes.");
-#line 2370 "res/xrc/OutfitStudio.xrc"
-_("Frame Selected\tR");
-#line 2371 "res/xrc/OutfitStudio.xrc"
-_("Center and zoom the camera to frame the selected shapes, ignoring masked vertices.");
-#line 2374 "res/xrc/OutfitStudio.xrc"
-_("Show Nodes\tShift+N");
-#line 2378 "res/xrc/OutfitStudio.xrc"
-_("Show Bones\tShift+B");
-#line 2382 "res/xrc/OutfitStudio.xrc"
-_("Show Floor\tG");
-#line 2387 "res/xrc/OutfitStudio.xrc"
-_("Toggle Visibility\tE");
-#line 2388 "res/xrc/OutfitStudio.xrc"
-_("Switch between the different visibility modes for the selected shapes.");
-#line 2391 "res/xrc/OutfitStudio.xrc"
-_("Show Wireframe\tW");
-#line 2392 "res/xrc/OutfitStudio.xrc"
-_("Show wireframe on all models.");
-#line 2396 "res/xrc/OutfitStudio.xrc"
-_("Enable Lighting\tL");
-#line 2397 "res/xrc/OutfitStudio.xrc"
-_("Turn on or off lighting.");
-#line 2402 "res/xrc/OutfitStudio.xrc"
-_("Enable Textures\tT");
-#line 2403 "res/xrc/OutfitStudio.xrc"
-_("Display texture maps on models.");
-#line 2408 "res/xrc/OutfitStudio.xrc"
-_("Enable Vertex Colors");
-#line 2409 "res/xrc/OutfitStudio.xrc"
-_("Display vertex colors on models.");
-#line 2417 "res/xrc/OutfitStudio.xrc"
-_("Shape");
-#line 2419 "res/xrc/OutfitStudio.xrc"
+_("Import BSClothExtraData From HKX");
+#line 2213 "res/xrc/OutfitStudio.xrc"
+_("Choose an HKX file to import as a BSClothExtraData block into the project.");
+#line 2218 "res/xrc/OutfitStudio.xrc"
 _("Export");
-#line 2421 "res/xrc/OutfitStudio.xrc"
-_("To NIF...");
-#line 2422 "res/xrc/OutfitStudio.xrc"
-_("Export only the selected shapes to a NIF file.");
-#line 2425 "res/xrc/OutfitStudio.xrc"
+#line 2220 "res/xrc/OutfitStudio.xrc"
+_("To NIF...\tCtrl+E");
+#line 2221 "res/xrc/OutfitStudio.xrc"
+_("Save the current project as a NIF file (without reference)");
+#line 2224 "res/xrc/OutfitStudio.xrc"
+_("To NIF With Reference...\tCtrl+Alt+E");
+#line 2225 "res/xrc/OutfitStudio.xrc"
+_("Save the current project as a NIF file (including reference)");
+#line 2228 "res/xrc/OutfitStudio.xrc"
 _("To OBJ...");
-#line 2426 "res/xrc/OutfitStudio.xrc"
-_("Export only the selected shapes to an OBJ file.");
-#line 2429 "res/xrc/OutfitStudio.xrc"
+#line 2229 "res/xrc/OutfitStudio.xrc"
+_("Export the current project as an OBJ file.");
+#line 2232 "res/xrc/OutfitStudio.xrc"
 _("To FBX...");
-#line 2430 "res/xrc/OutfitStudio.xrc"
-_("Export only the selected shapes to an FBX file.");
-#line 2433 "res/xrc/OutfitStudio.xrc"
+#line 2233 "res/xrc/OutfitStudio.xrc"
+_("Export the current project as an FBX file.");
+#line 2236 "res/xrc/OutfitStudio.xrc"
 _("To TRI (Head)...");
-#line 2434 "res/xrc/OutfitStudio.xrc"
+#line 2237 "res/xrc/OutfitStudio.xrc"
 _("Export head morphs to a TRI file.");
-#line 2438 "res/xrc/OutfitStudio.xrc"
+#line 2240 "res/xrc/OutfitStudio.xrc"
+_("Export Data");
+#line 2242 "res/xrc/OutfitStudio.xrc"
+_("Export BSClothExtraData As HKX");
+#line 2243 "res/xrc/OutfitStudio.xrc"
+_("Save one of the currently loaded BSClothExtraData blocks to an HKX file.");
+#line 2248 "res/xrc/OutfitStudio.xrc"
+_("Make Conversion Reference");
+#line 2249 "res/xrc/OutfitStudio.xrc"
+_("Using the current slider settings for the reference shape, create a new reference that will morph from the current shape back to the base shape.");
+#line 2253 "res/xrc/OutfitStudio.xrc"
+_("Pack Projects...");
+#line 2254 "res/xrc/OutfitStudio.xrc"
+_("Pack one or more projects into a folder or archive for sharing.");
+#line 2257 "res/xrc/OutfitStudio.xrc"
+_("Settings");
+#line 2258 "res/xrc/OutfitStudio.xrc"
+_("Open settings dialog.");
+#line 2261 "res/xrc/OutfitStudio.xrc"
+_("About...");
+#line 2262 "res/xrc/OutfitStudio.xrc"
+_("Open the About dialog.");
+#line 2265 "res/xrc/OutfitStudio.xrc"
+_("Exit\tAlt+F4");
+#line 2266 "res/xrc/OutfitStudio.xrc"
+_("Exit Outfit Studio.");
+#line 2270 "res/xrc/OutfitStudio.xrc"
+_("Edit");
+#line 2272 "res/xrc/OutfitStudio.xrc"
+_("Undo\tCtrl+Z");
+#line 2273 "res/xrc/OutfitStudio.xrc"
+_("Undo the previous action.");
+#line 2276 "res/xrc/OutfitStudio.xrc"
+_("Redo\tCtrl+Y");
+#line 2277 "res/xrc/OutfitStudio.xrc"
+_("Redo the next undone action.");
+#line 2281 "res/xrc/OutfitStudio.xrc"
+_("X Mirror\tX");
+#line 2282 "res/xrc/OutfitStudio.xrc"
+_("Mirror edits across the X axis.");
+#line 2288 "res/xrc/OutfitStudio.xrc"
+_("Edit Connected Only\tC");
+#line 2289 "res/xrc/OutfitStudio.xrc"
+_("Edit only vertices that are connected to the ones under the brush within the brush radius");
+#line 2295 "res/xrc/OutfitStudio.xrc"
+_("Merge Vertex");
+#line 2296 "res/xrc/OutfitStudio.xrc"
+_("Merges two vertices and fills any gaps.");
+#line 2302 "res/xrc/OutfitStudio.xrc"
+_("Weld Vertex");
+#line 2303 "res/xrc/OutfitStudio.xrc"
+_("Welds two vertices while keeping the texture coordinates (UV) distinct.");
+#line 2309 "res/xrc/OutfitStudio.xrc"
+_("Restrict To Surface");
+#line 2310 "res/xrc/OutfitStudio.xrc"
+_("Restricts motion to a mesh surface.");
+#line 2316 "res/xrc/OutfitStudio.xrc"
+_("Restrict To Plane");
+#line 2317 "res/xrc/OutfitStudio.xrc"
+_("Restricts motion to parallel to the surface.");
+#line 2323 "res/xrc/OutfitStudio.xrc"
+_("Restrict To Normal");
+#line 2324 "res/xrc/OutfitStudio.xrc"
+_("Restricts motion to perpendicular to the surface.");
+#line 2331 "res/xrc/OutfitStudio.xrc"
+_("Recalculate Normals");
+#line 2332 "res/xrc/OutfitStudio.xrc"
+_("Recalculate normals on active mesh");
+#line 2335 "res/xrc/OutfitStudio.xrc"
+_("Disable Normals Calculation");
+#line 2336 "res/xrc/OutfitStudio.xrc"
+_("Turn off all automatic recalculation of normals on all meshes. Only applies to Outfit Studio.");
+#line 2341 "res/xrc/OutfitStudio.xrc"
+_("Reset Transforms");
+#line 2342 "res/xrc/OutfitStudio.xrc"
+_("Resets the shape and skin transforms.");
+#line 2345 "res/xrc/OutfitStudio.xrc"
+_("Delete Unreferenced Nodes");
+#line 2346 "res/xrc/OutfitStudio.xrc"
+_("Deletes all nodes from the project that aren't used in any other block.");
+#line 2349 "res/xrc/OutfitStudio.xrc"
+_("Remove Skinning");
+#line 2350 "res/xrc/OutfitStudio.xrc"
+_("Removes skinning of all shapes and all unused nodes.");
+#line 2354 "res/xrc/OutfitStudio.xrc"
+_("Shape");
+#line 2356 "res/xrc/OutfitStudio.xrc"
+_("Export");
+#line 2358 "res/xrc/OutfitStudio.xrc"
+_("To NIF...");
+#line 2359 "res/xrc/OutfitStudio.xrc"
+_("Export only the selected shapes to a NIF file.");
+#line 2362 "res/xrc/OutfitStudio.xrc"
+_("To OBJ...");
+#line 2363 "res/xrc/OutfitStudio.xrc"
+_("Export only the selected shapes to an OBJ file.");
+#line 2366 "res/xrc/OutfitStudio.xrc"
+_("To FBX...");
+#line 2367 "res/xrc/OutfitStudio.xrc"
+_("Export only the selected shapes to an FBX file.");
+#line 2370 "res/xrc/OutfitStudio.xrc"
+_("To TRI (Head)...");
+#line 2371 "res/xrc/OutfitStudio.xrc"
+_("Export head morphs to a TRI file.");
+#line 2375 "res/xrc/OutfitStudio.xrc"
 _("UV");
-#line 2440 "res/xrc/OutfitStudio.xrc"
+#line 2377 "res/xrc/OutfitStudio.xrc"
 _("Edit...");
-#line 2441 "res/xrc/OutfitStudio.xrc"
+#line 2378 "res/xrc/OutfitStudio.xrc"
 _("Edit the texture coordinates.");
-#line 2444 "res/xrc/OutfitStudio.xrc"
-_("Invert X");
-#line 2445 "res/xrc/OutfitStudio.xrc"
-_("Inverts the X-axis of the texture coordinates.");
-#line 2448 "res/xrc/OutfitStudio.xrc"
-_("Invert Y");
-#line 2449 "res/xrc/OutfitStudio.xrc"
-_("Inverts the Y-axis of the texture coordinates.");
-#line 2453 "res/xrc/OutfitStudio.xrc"
+#line 2381 "res/xrc/OutfitStudio.xrc"
+_("Invert X (Mirror)");
+#line 2382 "res/xrc/OutfitStudio.xrc"
+_("Inverts the X-axis to mirror the texture coordinates.");
+#line 2385 "res/xrc/OutfitStudio.xrc"
+_("Invert Y (Flip)");
+#line 2386 "res/xrc/OutfitStudio.xrc"
+_("Inverts the Y-axis to flip the texture coordinates.");
+#line 2390 "res/xrc/OutfitStudio.xrc"
 _("Delete Vertices...\tShift+Del");
-#line 2454 "res/xrc/OutfitStudio.xrc"
+#line 2391 "res/xrc/OutfitStudio.xrc"
 _("Deletes all unmasked vertices of the currently selected shapes.");
-#line 2457 "res/xrc/OutfitStudio.xrc"
+#line 2394 "res/xrc/OutfitStudio.xrc"
 _("Separate Vertices...\tShift+S");
-#line 2458 "res/xrc/OutfitStudio.xrc"
+#line 2395 "res/xrc/OutfitStudio.xrc"
 _("Separate the current shape into two by using the mask.");
-#line 2461 "res/xrc/OutfitStudio.xrc"
+#line 2398 "res/xrc/OutfitStudio.xrc"
 _("Mirror Shape...");
-#line 2462 "res/xrc/OutfitStudio.xrc"
+#line 2399 "res/xrc/OutfitStudio.xrc"
 _("Mirror the selected shapes on any axis.");
-#line 2465 "res/xrc/OutfitStudio.xrc"
+#line 2402 "res/xrc/OutfitStudio.xrc"
 _("Merge Geometry...");
-#line 2466 "res/xrc/OutfitStudio.xrc"
+#line 2403 "res/xrc/OutfitStudio.xrc"
 _("Copies vertices and triangles from one shape to another.");
-#line 2469 "res/xrc/OutfitStudio.xrc"
+#line 2406 "res/xrc/OutfitStudio.xrc"
 _("Duplicate...");
-#line 2470 "res/xrc/OutfitStudio.xrc"
+#line 2407 "res/xrc/OutfitStudio.xrc"
 _("Duplicate the current shape.");
-#line 2473 "res/xrc/OutfitStudio.xrc"
+#line 2410 "res/xrc/OutfitStudio.xrc"
 _("Refine Mesh");
-#line 2474 "res/xrc/OutfitStudio.xrc"
+#line 2411 "res/xrc/OutfitStudio.xrc"
 _("Splits all edges between unmasked vertices");
-#line 2477 "res/xrc/OutfitStudio.xrc"
+#line 2414 "res/xrc/OutfitStudio.xrc"
 _("Rename...\tF2");
-#line 2478 "res/xrc/OutfitStudio.xrc"
+#line 2415 "res/xrc/OutfitStudio.xrc"
 _("Change the name of the current shape.");
-#line 2481 "res/xrc/OutfitStudio.xrc"
+#line 2418 "res/xrc/OutfitStudio.xrc"
 _("Set Reference");
-#line 2482 "res/xrc/OutfitStudio.xrc"
+#line 2419 "res/xrc/OutfitStudio.xrc"
 _("Turn the shape into the reference shape of the project.");
-#line 2486 "res/xrc/OutfitStudio.xrc"
+#line 2423 "res/xrc/OutfitStudio.xrc"
 _("Move...");
-#line 2487 "res/xrc/OutfitStudio.xrc"
+#line 2424 "res/xrc/OutfitStudio.xrc"
 _("Apply an offset adjustment to the mesh vertices. This permanently moves vertices.");
-#line 2490 "res/xrc/OutfitStudio.xrc"
+#line 2427 "res/xrc/OutfitStudio.xrc"
 _("Scale...");
-#line 2491 "res/xrc/OutfitStudio.xrc"
+#line 2428 "res/xrc/OutfitStudio.xrc"
 _("Apply a scale adjustment to the shape. This permanently moves vertices.");
-#line 2494 "res/xrc/OutfitStudio.xrc"
+#line 2431 "res/xrc/OutfitStudio.xrc"
 _("Rotate...");
-#line 2495 "res/xrc/OutfitStudio.xrc"
+#line 2432 "res/xrc/OutfitStudio.xrc"
 _("Apply a rotation to the mesh vertices. This permanently moves vertices.");
-#line 2498 "res/xrc/OutfitStudio.xrc"
+#line 2435 "res/xrc/OutfitStudio.xrc"
 _("Inflate...");
-#line 2499 "res/xrc/OutfitStudio.xrc"
+#line 2436 "res/xrc/OutfitStudio.xrc"
 _("Inflates/deflates a shape along its normals. This permanently moves vertices.");
-#line 2502 "res/xrc/OutfitStudio.xrc"
+#line 2439 "res/xrc/OutfitStudio.xrc"
 _("Fix Clipping...");
-#line 2503 "res/xrc/OutfitStudio.xrc"
+#line 2440 "res/xrc/OutfitStudio.xrc"
 _("Fixes clipping of outfit vertices that penetrate the reference shape.");
-#line 2507 "res/xrc/OutfitStudio.xrc"
+#line 2444 "res/xrc/OutfitStudio.xrc"
+_("Normals");
+#line 2446 "res/xrc/OutfitStudio.xrc"
+_("Smooth Seam Normals");
+#line 2447 "res/xrc/OutfitStudio.xrc"
+_("Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape.");
+#line 2452 "res/xrc/OutfitStudio.xrc"
+_("Edit Smoothing Angle...");
+#line 2453 "res/xrc/OutfitStudio.xrc"
+_("Angle, in degrees, that controls the threshold at which normal seams are smoothed.");
+#line 2456 "res/xrc/OutfitStudio.xrc"
+_("Lock Normals");
+#line 2457 "res/xrc/OutfitStudio.xrc"
+_("Locks the mesh normals. Enable if you want to keep custom normals intact.");
+#line 2464 "res/xrc/OutfitStudio.xrc"
 _("Copy Bone Weights");
-#line 2508 "res/xrc/OutfitStudio.xrc"
+#line 2465 "res/xrc/OutfitStudio.xrc"
 _("Copies all bone weights from the reference shape to the current shape.");
-#line 2511 "res/xrc/OutfitStudio.xrc"
+#line 2468 "res/xrc/OutfitStudio.xrc"
+_("Copy Selected Weights");
+#line 2469 "res/xrc/OutfitStudio.xrc"
+_("Copies selected bone weights from the reference shape to the current shape.");
+#line 2472 "res/xrc/OutfitStudio.xrc"
 _("Transfer Selected Weights");
-#line 2512 "res/xrc/OutfitStudio.xrc"
+#line 2473 "res/xrc/OutfitStudio.xrc"
 _("Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order.");
-#line 2515 "res/xrc/OutfitStudio.xrc"
+#line 2476 "res/xrc/OutfitStudio.xrc"
 _("Mask Weighted Vertices");
-#line 2516 "res/xrc/OutfitStudio.xrc"
+#line 2477 "res/xrc/OutfitStudio.xrc"
 _("Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.");
-#line 2519 "res/xrc/OutfitStudio.xrc"
-_("Check For Bad Bones");
-#line 2520 "res/xrc/OutfitStudio.xrc"
+#line 2480 "res/xrc/OutfitStudio.xrc"
+_("Check For Bad Bones...");
+#line 2481 "res/xrc/OutfitStudio.xrc"
 _("Looks for bones with inconsistencies in their transforms.  If any are found, a dialog is opened to give options for fixing them.");
-#line 2524 "res/xrc/OutfitStudio.xrc"
+#line 2485 "res/xrc/OutfitStudio.xrc"
 _("Copy Partitions/Segments...");
-#line 2525 "res/xrc/OutfitStudio.xrc"
+#line 2486 "res/xrc/OutfitStudio.xrc"
 _("Copies partitions/segments and all triangle assignments from the reference shape to the current shape.");
-#line 2529 "res/xrc/OutfitStudio.xrc"
+#line 2490 "res/xrc/OutfitStudio.xrc"
 _("Mask Symmetric Vertices...");
-#line 2530 "res/xrc/OutfitStudio.xrc"
+#line 2491 "res/xrc/OutfitStudio.xrc"
 _("Masks unmasked vertices that have a mirrored vertex with identical data.");
-#line 2533 "res/xrc/OutfitStudio.xrc"
+#line 2494 "res/xrc/OutfitStudio.xrc"
 _("Symmetrize Vertices...");
-#line 2534 "res/xrc/OutfitStudio.xrc"
+#line 2495 "res/xrc/OutfitStudio.xrc"
 _("Changes vertex data to be identical to mirrored vertices.");
-#line 2537 "res/xrc/OutfitStudio.xrc"
+#line 2498 "res/xrc/OutfitStudio.xrc"
 _("Mask Symmetric Triangles");
-#line 2538 "res/xrc/OutfitStudio.xrc"
+#line 2499 "res/xrc/OutfitStudio.xrc"
 _("Masks triangles that can be matched to a mirrored triangle.");
-#line 2542 "res/xrc/OutfitStudio.xrc"
+#line 2503 "res/xrc/OutfitStudio.xrc"
 _("Delete\tDel");
-#line 2543 "res/xrc/OutfitStudio.xrc"
+#line 2504 "res/xrc/OutfitStudio.xrc"
 _("Removes the currently selected shape from the outfit.");
-#line 2546 "res/xrc/OutfitStudio.xrc"
+#line 2510 "res/xrc/OutfitStudio.xrc"
 _("Properties...");
-#line 2547 "res/xrc/OutfitStudio.xrc"
+#line 2511 "res/xrc/OutfitStudio.xrc"
 _("Opens the properties dialog for shader, texture and more settings of the selected shape.");
-#line 2551 "res/xrc/OutfitStudio.xrc"
-_("Bones");
+#line 2515 "res/xrc/OutfitStudio.xrc"
+_("Slider");
+#line 2517 "res/xrc/OutfitStudio.xrc"
+_("Conform Selected\tCtrl+C");
+#line 2518 "res/xrc/OutfitStudio.xrc"
+_("Conform selected outfit shape to all checked sliders.");
+#line 2521 "res/xrc/OutfitStudio.xrc"
+_("Conform All\tCtrl+Shift+C");
+#line 2522 "res/xrc/OutfitStudio.xrc"
+_("Conform all outfit shapes to all checked sliders.");
+#line 2525 "res/xrc/OutfitStudio.xrc"
+_("Fix Clipping...");
+#line 2526 "res/xrc/OutfitStudio.xrc"
+_("Fixes clipping of outfit vertices that penetrate the reference shape for the active slider.");
+#line 2530 "res/xrc/OutfitStudio.xrc"
+_("Set Base Shape");
+#line 2531 "res/xrc/OutfitStudio.xrc"
+_("Set the current outfit shape as the base shape and clear slider data.");
+#line 2535 "res/xrc/OutfitStudio.xrc"
+_("Load Preset...");
+#line 2536 "res/xrc/OutfitStudio.xrc"
+_("Load and preview a slider preset. Inverted sliders will have inverted values.");
+#line 2539 "res/xrc/OutfitStudio.xrc"
+_("Save Preset...");
+#line 2540 "res/xrc/OutfitStudio.xrc"
+_("Save a slider preset with the current values. Inverted sliders will have inverted values.");
+#line 2544 "res/xrc/OutfitStudio.xrc"
+_("New Slider");
+#line 2545 "res/xrc/OutfitStudio.xrc"
+_("Create a new shape transformation slider.");
+#line 2548 "res/xrc/OutfitStudio.xrc"
+_("Coalesce sliders");
+#line 2549 "res/xrc/OutfitStudio.xrc"
+_("Create a new shape transformation slider based on the current slider values");
+#line 2552 "res/xrc/OutfitStudio.xrc"
+_("New Zap Slider");
 #line 2553 "res/xrc/OutfitStudio.xrc"
-_("Bad Bone");
-#line 2555 "res/xrc/OutfitStudio.xrc"
-_("Set Skin Transform From Node");
-#line 2556 "res/xrc/OutfitStudio.xrc"
-_("Fixes the bad bone by calculating a new skin-to-bone transform.");
+_("Create a new Zap slider based on unmasked vertices");
+#line 2557 "res/xrc/OutfitStudio.xrc"
+_("Import");
 #line 2559 "res/xrc/OutfitStudio.xrc"
-_("Set Node Transform From Skin");
+_("Import OSD...");
 #line 2560 "res/xrc/OutfitStudio.xrc"
-_("Fixes the bad custom bone by calculating a new bone-to-global transform.");
+_("Imports OSD file and creates sliders for shapes with a matching name.");
+#line 2563 "res/xrc/OutfitStudio.xrc"
+_("Import TRI Morphs...");
 #line 2564 "res/xrc/OutfitStudio.xrc"
-_("Add");
-#line 2566 "res/xrc/OutfitStudio.xrc"
-_("From Skeleton...");
+_("Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name.");
 #line 2567 "res/xrc/OutfitStudio.xrc"
-_("Choose a bone from the reference skeleton to add to the project.");
-#line 2570 "res/xrc/OutfitStudio.xrc"
-_("Custom Bone...");
-#line 2571 "res/xrc/OutfitStudio.xrc"
-_("Add a custom bone to the project.");
+_("Import Starfield morphs...");
+#line 2568 "res/xrc/OutfitStudio.xrc"
+_("Imports Starfield morph.dat file and creates sliders for shapes with a matching name.");
+#line 2572 "res/xrc/OutfitStudio.xrc"
+_("Import to active slider");
+#line 2574 "res/xrc/OutfitStudio.xrc"
+_("Import NIF...");
 #line 2575 "res/xrc/OutfitStudio.xrc"
-_("Delete");
-#line 2577 "res/xrc/OutfitStudio.xrc"
-_("From Project");
+_("Import a NIF file and overwrites the current shape's slider data.");
 #line 2578 "res/xrc/OutfitStudio.xrc"
-_("Delete bone(s) from all shapes of the project.");
-#line 2581 "res/xrc/OutfitStudio.xrc"
-_("From Selected Shapes");
+_("Import BSD...");
+#line 2579 "res/xrc/OutfitStudio.xrc"
+_("Import a BodySlide BSD file and overwrites the current shape's slider data.");
 #line 2582 "res/xrc/OutfitStudio.xrc"
-_("Delete bone(s) from only the selected shapes.");
+_("Import OBJ...");
+#line 2583 "res/xrc/OutfitStudio.xrc"
+_("Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference.");
 #line 2586 "res/xrc/OutfitStudio.xrc"
-_("Edit Bone...");
+_("Import FBX...");
 #line 2587 "res/xrc/OutfitStudio.xrc"
-_("Edit a custom bone or view a standard bone.");
-#line 2590 "res/xrc/OutfitStudio.xrc"
-_("Mask Weighted Vertices");
-#line 2591 "res/xrc/OutfitStudio.xrc"
-_("Masks vertices with weights for the selected bones.");
+_("Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference.");
+#line 2593 "res/xrc/OutfitStudio.xrc"
+_("Export");
 #line 2595 "res/xrc/OutfitStudio.xrc"
-_("Bones");
-#line 2597 "res/xrc/OutfitStudio.xrc"
-_("Add");
+_("Export OSD...");
+#line 2596 "res/xrc/OutfitStudio.xrc"
+_("Exports all currently loaded slider data to an OSD file.");
 #line 2599 "res/xrc/OutfitStudio.xrc"
-_("From Skeleton...");
+_("Export TRI Morphs...");
 #line 2600 "res/xrc/OutfitStudio.xrc"
-_("Choose a bone from the reference skeleton to add to the project.");
+_("Exports TRI morphs to a TRI file.");
 #line 2603 "res/xrc/OutfitStudio.xrc"
-_("Custom Bone...");
+_("Export Starfield morphs...");
 #line 2604 "res/xrc/OutfitStudio.xrc"
-_("Add a custom bone to the project.");
-#line 2609 "res/xrc/OutfitStudio.xrc"
-_("Segments");
-#line 2611 "res/xrc/OutfitStudio.xrc"
-_("Add Segment...");
+_("Exports Starfield morph.dat file.");
+#line 2607 "res/xrc/OutfitStudio.xrc"
+_("Export to OBJs...");
+#line 2608 "res/xrc/OutfitStudio.xrc"
+_("Export all sliders to an OBJ file per slider.");
 #line 2612 "res/xrc/OutfitStudio.xrc"
-_("Choose a segment to add to the shape.");
+_("Export active slider");
+#line 2614 "res/xrc/OutfitStudio.xrc"
+_("Export NIF...");
 #line 2615 "res/xrc/OutfitStudio.xrc"
-_("Add Sub Segment...");
-#line 2616 "res/xrc/OutfitStudio.xrc"
-_("Add a new sub segment to the currently selected segment.");
+_("Exports the current slider's data as a NIF file.");
+#line 2618 "res/xrc/OutfitStudio.xrc"
+_("Export BSD...");
 #line 2619 "res/xrc/OutfitStudio.xrc"
-_("Delete Segment...");
-#line 2620 "res/xrc/OutfitStudio.xrc"
-_("Delete segment and all of its sub segments from the shape.");
-#line 2624 "res/xrc/OutfitStudio.xrc"
-_("Sub Segments");
-#line 2626 "res/xrc/OutfitStudio.xrc"
-_("Add Sub Segment...");
-#line 2627 "res/xrc/OutfitStudio.xrc"
-_("Add a new sub segment to the currently selected segment.");
+_("Exports the current slider's data as a BodySlide BSD file.");
+#line 2622 "res/xrc/OutfitStudio.xrc"
+_("Export OBJ...");
+#line 2623 "res/xrc/OutfitStudio.xrc"
+_("Exports the current slider's data as an OBJ file.");
 #line 2630 "res/xrc/OutfitStudio.xrc"
-_("Delete Sub Segment...");
+_("Clone Slider");
 #line 2631 "res/xrc/OutfitStudio.xrc"
-_("Delete the selected sub segment.");
+_("Clones the current slider.");
 #line 2635 "res/xrc/OutfitStudio.xrc"
-_("Segments");
-#line 2637 "res/xrc/OutfitStudio.xrc"
-_("Add Segment...");
-#line 2638 "res/xrc/OutfitStudio.xrc"
-_("Choose a segment to add to the shape.");
-#line 2642 "res/xrc/OutfitStudio.xrc"
-_("Partitions");
-#line 2644 "res/xrc/OutfitStudio.xrc"
-_("Add Partition...");
+_("Negate Slider");
+#line 2636 "res/xrc/OutfitStudio.xrc"
+_("Negates the current slider, reversing it's effect");
+#line 2640 "res/xrc/OutfitStudio.xrc"
+_("Mask Affected Vertices");
+#line 2641 "res/xrc/OutfitStudio.xrc"
+_("Masks the vertices the slider is affecting for all selected shapes.");
 #line 2645 "res/xrc/OutfitStudio.xrc"
-_("Adds a new partition to the shape.");
-#line 2648 "res/xrc/OutfitStudio.xrc"
-_("Delete Partition...");
+_("Clear Slider Data");
+#line 2646 "res/xrc/OutfitStudio.xrc"
+_("Erases the slider data without removing the slider itself. (Cannot be undone)");
 #line 2649 "res/xrc/OutfitStudio.xrc"
-_("Deletes the partition from the shape.");
-#line 2653 "res/xrc/OutfitStudio.xrc"
-_("Partitions");
+_("Delete Slider\tCtrl+Del");
+#line 2650 "res/xrc/OutfitStudio.xrc"
+_("Delete the active slider from the project. (Cannot be undone)");
+#line 2654 "res/xrc/OutfitStudio.xrc"
+_("Slider Data...");
 #line 2655 "res/xrc/OutfitStudio.xrc"
+_("View and edit local and external slider data locations.");
+#line 2659 "res/xrc/OutfitStudio.xrc"
+_("Properties...\tTab");
+#line 2660 "res/xrc/OutfitStudio.xrc"
+_("Display and edit the active slider's properties.");
+#line 2665 "res/xrc/OutfitStudio.xrc"
+_("Tool");
+#line 2667 "res/xrc/OutfitStudio.xrc"
+_("Current Tool");
+#line 2669 "res/xrc/OutfitStudio.xrc"
+_("Select");
+#line 2670 "res/xrc/OutfitStudio.xrc"
+_("Navigate and select meshes (or vertices in vertex mode).");
+#line 2674 "res/xrc/OutfitStudio.xrc"
+_("Mask");
+#line 2675 "res/xrc/OutfitStudio.xrc"
+_("Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.");
+#line 2679 "res/xrc/OutfitStudio.xrc"
+_("Inflate");
+#line 2680 "res/xrc/OutfitStudio.xrc"
+_("Increase mesh volume in an area.");
+#line 2685 "res/xrc/OutfitStudio.xrc"
+_("Deflate");
+#line 2686 "res/xrc/OutfitStudio.xrc"
+_("Decrease mesh volume in an area.");
+#line 2690 "res/xrc/OutfitStudio.xrc"
+_("Move");
+#line 2691 "res/xrc/OutfitStudio.xrc"
+_("Move vertices over a plane parallel to the view.");
+#line 2695 "res/xrc/OutfitStudio.xrc"
+_("Smooth");
+#line 2696 "res/xrc/OutfitStudio.xrc"
+_("Smooth an area of a mesh.");
+#line 2700 "res/xrc/OutfitStudio.xrc"
+_("Undiff");
+#line 2701 "res/xrc/OutfitStudio.xrc"
+_("Undiff an area of a slider.");
+#line 2705 "res/xrc/OutfitStudio.xrc"
+_("Weight Paint");
+#line 2706 "res/xrc/OutfitStudio.xrc"
+_("Apply animation weight values for the currently selected bone.\nHold down the ALT key to weaken the weighting.");
+#line 2711 "res/xrc/OutfitStudio.xrc"
+_("Color Paint");
+#line 2712 "res/xrc/OutfitStudio.xrc"
+_("Apply vertex colors.\nHold down the ALT key to remove colors.");
+#line 2717 "res/xrc/OutfitStudio.xrc"
+_("Alpha Paint");
+#line 2718 "res/xrc/OutfitStudio.xrc"
+_("Apply vertex alpha.\nHold down the ALT key to remove alpha.");
+#line 2723 "res/xrc/OutfitStudio.xrc"
+_("Collapse Vertex");
+#line 2724 "res/xrc/OutfitStudio.xrc"
+_("Deletes vertices with no more than three connections, without creating a hole.");
+#line 2728 "res/xrc/OutfitStudio.xrc"
+_("Flip Edge");
+#line 2729 "res/xrc/OutfitStudio.xrc"
+_("Flips mesh edges so that the opposite pair of vertices is connected.");
+#line 2733 "res/xrc/OutfitStudio.xrc"
+_("Split Edge");
+#line 2734 "res/xrc/OutfitStudio.xrc"
+_("Splits a mesh edge in two with a new vertex.");
+#line 2738 "res/xrc/OutfitStudio.xrc"
+_("Move Vertex");
+#line 2739 "res/xrc/OutfitStudio.xrc"
+_("Moves a vertex.");
+#line 2744 "res/xrc/OutfitStudio.xrc"
+_("Transform\tF");
+#line 2745 "res/xrc/OutfitStudio.xrc"
+_("Shows a transform tool to manipulate shapes and vertices with.");
+#line 2749 "res/xrc/OutfitStudio.xrc"
+_("Pivot\tP");
+#line 2750 "res/xrc/OutfitStudio.xrc"
+_("Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.");
+#line 2754 "res/xrc/OutfitStudio.xrc"
+_("Vertex Edit\tQ");
+#line 2755 "res/xrc/OutfitStudio.xrc"
+_("Shows vertex points and lets you mask/unmask them.\nWithout any brush active, click on a vertex to unmask it.\nHold down CTRL to mask it.");
+#line 2760 "res/xrc/OutfitStudio.xrc"
+_("Increase Brush Size\tShift++");
+#line 2761 "res/xrc/OutfitStudio.xrc"
+_("Increase brush diameter");
+#line 2764 "res/xrc/OutfitStudio.xrc"
+_("Decrease Brush Size\tShift+-");
+#line 2765 "res/xrc/OutfitStudio.xrc"
+_("Decrease brush diameter");
+#line 2768 "res/xrc/OutfitStudio.xrc"
+_("Increase Brush Strength\tCtrl++");
+#line 2769 "res/xrc/OutfitStudio.xrc"
+_("Increase brush strength");
+#line 2772 "res/xrc/OutfitStudio.xrc"
+_("Decrease Brush Strength\tCtrl+-");
+#line 2773 "res/xrc/OutfitStudio.xrc"
+_("Decrease brush strength");
+#line 2777 "res/xrc/OutfitStudio.xrc"
+_("Mask Less\tA");
+#line 2778 "res/xrc/OutfitStudio.xrc"
+_("Mask Less");
+#line 2781 "res/xrc/OutfitStudio.xrc"
+_("Mask More\tD");
+#line 2782 "res/xrc/OutfitStudio.xrc"
+_("Mask More");
+#line 2786 "res/xrc/OutfitStudio.xrc"
+_("Invert Mask\tCtrl+I");
+#line 2787 "res/xrc/OutfitStudio.xrc"
+_("Invert Mask");
+#line 2790 "res/xrc/OutfitStudio.xrc"
+_("Clear Mask\tCtrl+A");
+#line 2791 "res/xrc/OutfitStudio.xrc"
+_("Clear Mask");
+#line 2795 "res/xrc/OutfitStudio.xrc"
+_("View");
+#line 2797 "res/xrc/OutfitStudio.xrc"
+_("Front\tShift+1");
+#line 2800 "res/xrc/OutfitStudio.xrc"
+_("Back\tShift+2");
+#line 2803 "res/xrc/OutfitStudio.xrc"
+_("Left\tShift+3");
+#line 2806 "res/xrc/OutfitStudio.xrc"
+_("Right\tShift+4");
+#line 2809 "res/xrc/OutfitStudio.xrc"
+_("Perspective\tShift+5");
+#line 2814 "res/xrc/OutfitStudio.xrc"
+_("Toggle Rotation Center\tShift+R");
+#line 2815 "res/xrc/OutfitStudio.xrc"
+_("Switch between the different rotation center modes.");
+#line 2818 "res/xrc/OutfitStudio.xrc"
+_("Frame Selected\tR");
+#line 2819 "res/xrc/OutfitStudio.xrc"
+_("Center and zoom the camera to frame the selected shapes, ignoring masked vertices.");
+#line 2822 "res/xrc/OutfitStudio.xrc"
+_("Show Nodes\tShift+N");
+#line 2826 "res/xrc/OutfitStudio.xrc"
+_("Show Bones\tShift+B");
+#line 2830 "res/xrc/OutfitStudio.xrc"
+_("Show Floor\tG");
+#line 2835 "res/xrc/OutfitStudio.xrc"
+_("Toggle Visibility\tE");
+#line 2836 "res/xrc/OutfitStudio.xrc"
+_("Switch between the different visibility modes for the selected shapes.");
+#line 2839 "res/xrc/OutfitStudio.xrc"
+_("Show Wireframe\tW");
+#line 2840 "res/xrc/OutfitStudio.xrc"
+_("Show wireframe on all models.");
+#line 2844 "res/xrc/OutfitStudio.xrc"
+_("Enable Lighting\tL");
+#line 2845 "res/xrc/OutfitStudio.xrc"
+_("Turn on or off lighting.");
+#line 2850 "res/xrc/OutfitStudio.xrc"
+_("Enable Textures\tT");
+#line 2851 "res/xrc/OutfitStudio.xrc"
+_("Display texture maps on models.");
+#line 2856 "res/xrc/OutfitStudio.xrc"
+_("Enable Vertex Colors");
+#line 2857 "res/xrc/OutfitStudio.xrc"
+_("Display vertex colors on models.");
+#line 2865 "res/xrc/OutfitStudio.xrc"
+_("Shape");
+#line 2867 "res/xrc/OutfitStudio.xrc"
+_("Export");
+#line 2869 "res/xrc/OutfitStudio.xrc"
+_("To NIF...");
+#line 2870 "res/xrc/OutfitStudio.xrc"
+_("Export only the selected shapes to a NIF file.");
+#line 2873 "res/xrc/OutfitStudio.xrc"
+_("To OBJ...");
+#line 2874 "res/xrc/OutfitStudio.xrc"
+_("Export only the selected shapes to an OBJ file.");
+#line 2877 "res/xrc/OutfitStudio.xrc"
+_("To FBX...");
+#line 2878 "res/xrc/OutfitStudio.xrc"
+_("Export only the selected shapes to an FBX file.");
+#line 2881 "res/xrc/OutfitStudio.xrc"
+_("To TRI (Head)...");
+#line 2882 "res/xrc/OutfitStudio.xrc"
+_("Export head morphs to a TRI file.");
+#line 2886 "res/xrc/OutfitStudio.xrc"
+_("UV");
+#line 2888 "res/xrc/OutfitStudio.xrc"
+_("Edit...");
+#line 2889 "res/xrc/OutfitStudio.xrc"
+_("Edit the texture coordinates.");
+#line 2892 "res/xrc/OutfitStudio.xrc"
+_("Invert X");
+#line 2893 "res/xrc/OutfitStudio.xrc"
+_("Inverts the X-axis of the texture coordinates.");
+#line 2896 "res/xrc/OutfitStudio.xrc"
+_("Invert Y");
+#line 2897 "res/xrc/OutfitStudio.xrc"
+_("Inverts the Y-axis of the texture coordinates.");
+#line 2901 "res/xrc/OutfitStudio.xrc"
+_("Delete Vertices...\tShift+Del");
+#line 2902 "res/xrc/OutfitStudio.xrc"
+_("Deletes all unmasked vertices of the currently selected shapes.");
+#line 2905 "res/xrc/OutfitStudio.xrc"
+_("Separate Vertices...\tShift+S");
+#line 2906 "res/xrc/OutfitStudio.xrc"
+_("Separate the current shape into two by using the mask.");
+#line 2909 "res/xrc/OutfitStudio.xrc"
+_("Mirror Shape...");
+#line 2910 "res/xrc/OutfitStudio.xrc"
+_("Mirror the selected shapes on any axis.");
+#line 2913 "res/xrc/OutfitStudio.xrc"
+_("Merge Geometry...");
+#line 2914 "res/xrc/OutfitStudio.xrc"
+_("Copies vertices and triangles from one shape to another.");
+#line 2917 "res/xrc/OutfitStudio.xrc"
+_("Duplicate...");
+#line 2918 "res/xrc/OutfitStudio.xrc"
+_("Duplicate the current shape.");
+#line 2921 "res/xrc/OutfitStudio.xrc"
+_("Refine Mesh");
+#line 2922 "res/xrc/OutfitStudio.xrc"
+_("Splits all edges between unmasked vertices");
+#line 2925 "res/xrc/OutfitStudio.xrc"
+_("Rename...\tF2");
+#line 2926 "res/xrc/OutfitStudio.xrc"
+_("Change the name of the current shape.");
+#line 2929 "res/xrc/OutfitStudio.xrc"
+_("Set Reference");
+#line 2930 "res/xrc/OutfitStudio.xrc"
+_("Turn the shape into the reference shape of the project.");
+#line 2934 "res/xrc/OutfitStudio.xrc"
+_("Move...");
+#line 2935 "res/xrc/OutfitStudio.xrc"
+_("Apply an offset adjustment to the mesh vertices. This permanently moves vertices.");
+#line 2938 "res/xrc/OutfitStudio.xrc"
+_("Scale...");
+#line 2939 "res/xrc/OutfitStudio.xrc"
+_("Apply a scale adjustment to the shape. This permanently moves vertices.");
+#line 2942 "res/xrc/OutfitStudio.xrc"
+_("Rotate...");
+#line 2943 "res/xrc/OutfitStudio.xrc"
+_("Apply a rotation to the mesh vertices. This permanently moves vertices.");
+#line 2946 "res/xrc/OutfitStudio.xrc"
+_("Inflate...");
+#line 2947 "res/xrc/OutfitStudio.xrc"
+_("Inflates/deflates a shape along its normals. This permanently moves vertices.");
+#line 2950 "res/xrc/OutfitStudio.xrc"
+_("Fix Clipping...");
+#line 2951 "res/xrc/OutfitStudio.xrc"
+_("Fixes clipping of outfit vertices that penetrate the reference shape.");
+#line 2955 "res/xrc/OutfitStudio.xrc"
+_("Copy Bone Weights");
+#line 2956 "res/xrc/OutfitStudio.xrc"
+_("Copies all bone weights from the reference shape to the current shape.");
+#line 2959 "res/xrc/OutfitStudio.xrc"
+_("Copy Selected Weights");
+#line 2960 "res/xrc/OutfitStudio.xrc"
+_("Copies selected bone weights from the reference shape to the current shape.");
+#line 2963 "res/xrc/OutfitStudio.xrc"
+_("Transfer Selected Weights");
+#line 2964 "res/xrc/OutfitStudio.xrc"
+_("Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order.");
+#line 2967 "res/xrc/OutfitStudio.xrc"
+_("Mask Weighted Vertices");
+#line 2968 "res/xrc/OutfitStudio.xrc"
+_("Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.");
+#line 2971 "res/xrc/OutfitStudio.xrc"
+_("Check For Bad Bones");
+#line 2972 "res/xrc/OutfitStudio.xrc"
+_("Looks for bones with inconsistencies in their transforms.  If any are found, a dialog is opened to give options for fixing them.");
+#line 2976 "res/xrc/OutfitStudio.xrc"
+_("Copy Partitions/Segments...");
+#line 2977 "res/xrc/OutfitStudio.xrc"
+_("Copies partitions/segments and all triangle assignments from the reference shape to the current shape.");
+#line 2981 "res/xrc/OutfitStudio.xrc"
+_("Mask Symmetric Vertices...");
+#line 2982 "res/xrc/OutfitStudio.xrc"
+_("Masks unmasked vertices that have a mirrored vertex with identical data.");
+#line 2985 "res/xrc/OutfitStudio.xrc"
+_("Symmetrize Vertices...");
+#line 2986 "res/xrc/OutfitStudio.xrc"
+_("Changes vertex data to be identical to mirrored vertices.");
+#line 2989 "res/xrc/OutfitStudio.xrc"
+_("Mask Symmetric Triangles");
+#line 2990 "res/xrc/OutfitStudio.xrc"
+_("Masks triangles that can be matched to a mirrored triangle.");
+#line 2994 "res/xrc/OutfitStudio.xrc"
+_("Delete\tDel");
+#line 2995 "res/xrc/OutfitStudio.xrc"
+_("Removes the currently selected shape from the outfit.");
+#line 2998 "res/xrc/OutfitStudio.xrc"
+_("Properties...");
+#line 2999 "res/xrc/OutfitStudio.xrc"
+_("Opens the properties dialog for shader, texture and more settings of the selected shape.");
+#line 3003 "res/xrc/OutfitStudio.xrc"
+_("Bones");
+#line 3005 "res/xrc/OutfitStudio.xrc"
+_("Bad Bone");
+#line 3007 "res/xrc/OutfitStudio.xrc"
+_("Set Skin Transform From Node");
+#line 3008 "res/xrc/OutfitStudio.xrc"
+_("Fixes the bad bone by calculating a new skin-to-bone transform.");
+#line 3011 "res/xrc/OutfitStudio.xrc"
+_("Set Node Transform From Skin");
+#line 3012 "res/xrc/OutfitStudio.xrc"
+_("Fixes the bad custom bone by calculating a new bone-to-global transform.");
+#line 3016 "res/xrc/OutfitStudio.xrc"
+_("Add");
+#line 3018 "res/xrc/OutfitStudio.xrc"
+_("From Skeleton...");
+#line 3019 "res/xrc/OutfitStudio.xrc"
+_("Choose a bone from the reference skeleton to add to the project.");
+#line 3022 "res/xrc/OutfitStudio.xrc"
+_("Custom Bone...");
+#line 3023 "res/xrc/OutfitStudio.xrc"
+_("Add a custom bone to the project.");
+#line 3027 "res/xrc/OutfitStudio.xrc"
+_("Delete");
+#line 3029 "res/xrc/OutfitStudio.xrc"
+_("From Project");
+#line 3030 "res/xrc/OutfitStudio.xrc"
+_("Delete bone(s) from all shapes of the project.");
+#line 3033 "res/xrc/OutfitStudio.xrc"
+_("From Selected Shapes");
+#line 3034 "res/xrc/OutfitStudio.xrc"
+_("Delete bone(s) from only the selected shapes.");
+#line 3038 "res/xrc/OutfitStudio.xrc"
+_("Edit Bone...");
+#line 3039 "res/xrc/OutfitStudio.xrc"
+_("Edit a custom bone or view a standard bone.");
+#line 3042 "res/xrc/OutfitStudio.xrc"
+_("Mask Weighted Vertices");
+#line 3043 "res/xrc/OutfitStudio.xrc"
+_("Masks vertices with weights for the selected bones.");
+#line 3047 "res/xrc/OutfitStudio.xrc"
+_("Bones");
+#line 3049 "res/xrc/OutfitStudio.xrc"
+_("Add");
+#line 3051 "res/xrc/OutfitStudio.xrc"
+_("From Skeleton...");
+#line 3052 "res/xrc/OutfitStudio.xrc"
+_("Choose a bone from the reference skeleton to add to the project.");
+#line 3055 "res/xrc/OutfitStudio.xrc"
+_("Custom Bone...");
+#line 3056 "res/xrc/OutfitStudio.xrc"
+_("Add a custom bone to the project.");
+#line 3061 "res/xrc/OutfitStudio.xrc"
+_("Segments");
+#line 3063 "res/xrc/OutfitStudio.xrc"
+_("Add Segment...");
+#line 3064 "res/xrc/OutfitStudio.xrc"
+_("Choose a segment to add to the shape.");
+#line 3067 "res/xrc/OutfitStudio.xrc"
+_("Add Sub Segment...");
+#line 3068 "res/xrc/OutfitStudio.xrc"
+_("Add a new sub segment to the currently selected segment.");
+#line 3071 "res/xrc/OutfitStudio.xrc"
+_("Delete Segment...");
+#line 3072 "res/xrc/OutfitStudio.xrc"
+_("Delete segment and all of its sub segments from the shape.");
+#line 3076 "res/xrc/OutfitStudio.xrc"
+_("Sub Segments");
+#line 3078 "res/xrc/OutfitStudio.xrc"
+_("Add Sub Segment...");
+#line 3079 "res/xrc/OutfitStudio.xrc"
+_("Add a new sub segment to the currently selected segment.");
+#line 3082 "res/xrc/OutfitStudio.xrc"
+_("Delete Sub Segment...");
+#line 3083 "res/xrc/OutfitStudio.xrc"
+_("Delete the selected sub segment.");
+#line 3087 "res/xrc/OutfitStudio.xrc"
+_("Segments");
+#line 3089 "res/xrc/OutfitStudio.xrc"
+_("Add Segment...");
+#line 3090 "res/xrc/OutfitStudio.xrc"
+_("Choose a segment to add to the shape.");
+#line 3094 "res/xrc/OutfitStudio.xrc"
+_("Partitions");
+#line 3096 "res/xrc/OutfitStudio.xrc"
 _("Add Partition...");
-#line 2656 "res/xrc/OutfitStudio.xrc"
+#line 3097 "res/xrc/OutfitStudio.xrc"
+_("Adds a new partition to the shape.");
+#line 3100 "res/xrc/OutfitStudio.xrc"
+_("Delete Partition...");
+#line 3101 "res/xrc/OutfitStudio.xrc"
+_("Deletes the partition from the shape.");
+#line 3105 "res/xrc/OutfitStudio.xrc"
+_("Partitions");
+#line 3107 "res/xrc/OutfitStudio.xrc"
+_("Add Partition...");
+#line 3108 "res/xrc/OutfitStudio.xrc"
 _("Adds a new partition to the shape.");
 #line 5 "res/xrc/Project.xrc"
 _("New Project");
@@ -3069,88 +3171,104 @@ _("Keep preview as a detached window. Closing the pop-out will hide preview inst
 #line 166 "res/xrc/Settings.xrc"
 _("Preview Always Detached");
 #line 183 "res/xrc/Settings.xrc"
-_("With this turned on, BodySlide receives a new checkbox \"Force Body Normals\". Using it when building adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.");
+_("Attach the docked preview to the left side of the window instead of the right side.");
 #line 184 "res/xrc/Settings.xrc"
-_("Show 'Force Body Normals'");
+_("Preview On Left Side");
+#line 201 "res/xrc/Settings.xrc"
+_("With this turned on, BodySlide receives a new checkbox \"Force Body Normals\". Using it when building adds normal and tangent data to the body meshes (including bodies within outfits) for Skyrim. Use this only if you have a tangent space body mod.");
 #line 202 "res/xrc/Settings.xrc"
+_("Show 'Force Body Normals'");
+#line 220 "res/xrc/Settings.xrc"
 _("General");
-#line 214 "res/xrc/Settings.xrc"
-_("Enables/disables scanning BSAs in the game data folder for textures to load.");
-#line 215 "res/xrc/Settings.xrc"
-_("BSA Textures");
 #line 232 "res/xrc/Settings.xrc"
-_("Enables/disables panning the camera with the left mouse button in Outfit Studio.");
+_("Enables/disables scanning BSAs in the game data folder for textures to load.");
 #line 233 "res/xrc/Settings.xrc"
+_("BSA Textures");
+#line 250 "res/xrc/Settings.xrc"
+_("Enables/disables panning the camera with the left mouse button in Outfit Studio.");
+#line 251 "res/xrc/Settings.xrc"
 _("Left Mouse Pan");
-#line 242 "res/xrc/Settings.xrc"
+#line 260 "res/xrc/Settings.xrc"
 _("Enables/disables opening the brush settings near the mouse cursor when hitting the 'space' key.");
-#line 243 "res/xrc/Settings.xrc"
+#line 261 "res/xrc/Settings.xrc"
 _("Brush Settings Near Cursor");
-#line 252 "res/xrc/Settings.xrc"
+#line 270 "res/xrc/Settings.xrc"
 _("Enables/disables the undo history for the mask brush and vertex selection.");
-#line 253 "res/xrc/Settings.xrc"
-_("Mask History");
 #line 271 "res/xrc/Settings.xrc"
+_("Mask History");
+#line 288 "res/xrc/Settings.xrc"
+_("Enables/disables highlighting a shape in the render view when hovering over its name in the shape list of Outfit Studio.");
+#line 289 "res/xrc/Settings.xrc"
+_("Shape Hover Highlight");
+#line 307 "res/xrc/Settings.xrc"
 _("Single Instance");
-#line 280 "res/xrc/Settings.xrc"
+#line 316 "res/xrc/Settings.xrc"
 _("Controls behavior when opening files and another instance is already running.");
-#line 283 "res/xrc/Settings.xrc"
+#line 319 "res/xrc/Settings.xrc"
 _("Ask (Message Box)");
-#line 284 "res/xrc/Settings.xrc"
+#line 320 "res/xrc/Settings.xrc"
 _("Open in Existing");
-#line 285 "res/xrc/Settings.xrc"
+#line 321 "res/xrc/Settings.xrc"
 _("Open in New");
-#line 303 "res/xrc/Settings.xrc"
+#line 339 "res/xrc/Settings.xrc"
 _("Language");
-#line 312 "res/xrc/Settings.xrc"
+#line 348 "res/xrc/Settings.xrc"
 _("Use the selected language for the program.");
-#line 331 "res/xrc/Settings.xrc"
+#line 367 "res/xrc/Settings.xrc"
 _("Appearance");
-#line 340 "res/xrc/Settings.xrc"
+#line 376 "res/xrc/Settings.xrc"
 _("Controls application appearance mode.");
-#line 343 "res/xrc/Settings.xrc"
+#line 379 "res/xrc/Settings.xrc"
 _("System");
-#line 344 "res/xrc/Settings.xrc"
+#line 380 "res/xrc/Settings.xrc"
 _("Light");
-#line 345 "res/xrc/Settings.xrc"
-_("Dark");
-#line 359 "res/xrc/Settings.xrc"
-_("Rendering");
-#line 365 "res/xrc/Settings.xrc"
-_("Enables/disables the perspective view in the rendering window.");
-#line 366 "res/xrc/Settings.xrc"
-_("Perspective View");
 #line 381 "res/xrc/Settings.xrc"
+_("Dark");
+#line 395 "res/xrc/Settings.xrc"
+_("Rendering");
+#line 401 "res/xrc/Settings.xrc"
+_("Enables/disables the perspective view in the rendering window.");
+#line 402 "res/xrc/Settings.xrc"
+_("Perspective View");
+#line 417 "res/xrc/Settings.xrc"
+_("Enables/disables Complex Material shading for Skyrim, where the environment mask texture holds a glossiness map in its green channel and a metalness map in its blue one. Turn this off to render such textures the way vanilla does.");
+#line 418 "res/xrc/Settings.xrc"
+_("Complex Material");
+#line 427 "res/xrc/Settings.xrc"
+_("Enables/disables True PBR shading for Skyrim (Community Shaders), used by shapes with the \"Unused 01\" shader flag set. Their texture slots hold a roughness/metalness/AO/specular map instead of an environment mask. Turn this off to render such shapes the way vanilla does.");
+#line 428 "res/xrc/Settings.xrc"
+_("True PBR");
+#line 445 "res/xrc/Settings.xrc"
 _("Background Color");
-#line 390 "res/xrc/Settings.xrc"
+#line 454 "res/xrc/Settings.xrc"
 _("Background color of the renderer.");
-#line 407 "res/xrc/Settings.xrc"
+#line 471 "res/xrc/Settings.xrc"
 _("Wireframe Color");
-#line 416 "res/xrc/Settings.xrc"
+#line 480 "res/xrc/Settings.xrc"
 _("Wireframe color of the renderer.");
-#line 433 "res/xrc/Settings.xrc"
-_("Point Color (normal/masked)");
-#line 442 "res/xrc/Settings.xrc"
-_("Color of points in the renderer.");
-#line 451 "res/xrc/Settings.xrc"
-_("Color of masked points in the renderer.");
-#line 466 "res/xrc/Settings.xrc"
-_("Data Files");
-#line 484 "res/xrc/Settings.xrc"
-_("Reference Skeleton");
 #line 497 "res/xrc/Settings.xrc"
+_("Point Color (normal/masked)");
+#line 506 "res/xrc/Settings.xrc"
+_("Color of points in the renderer.");
+#line 515 "res/xrc/Settings.xrc"
+_("Color of masked points in the renderer.");
+#line 530 "res/xrc/Settings.xrc"
+_("Data Files");
+#line 548 "res/xrc/Settings.xrc"
+_("Reference Skeleton");
+#line 561 "res/xrc/Settings.xrc"
 _("File");
-#line 507 "res/xrc/Settings.xrc"
-_("Select a reference skeleton .nif file...");
-#line 510 "res/xrc/Settings.xrc"
-_("The reference skeleton file for Outfit Studio.");
-#line 527 "res/xrc/Settings.xrc"
-_("Root Node");
-#line 536 "res/xrc/Settings.xrc"
-_("The root node name of the reference skeleton. Can differ from game to game.");
-#line 564 "res/xrc/Settings.xrc"
-_("&OK");
 #line 571 "res/xrc/Settings.xrc"
+_("Select a reference skeleton .nif file...");
+#line 574 "res/xrc/Settings.xrc"
+_("The reference skeleton file for Outfit Studio.");
+#line 591 "res/xrc/Settings.xrc"
+_("Root Node");
+#line 600 "res/xrc/Settings.xrc"
+_("The root node name of the reference skeleton. Can differ from game to game.");
+#line 628 "res/xrc/Settings.xrc"
+_("&OK");
+#line 635 "res/xrc/Settings.xrc"
 _("&Cancel");
 #line 5 "res/xrc/Setup.xrc"
 _("Setup");
