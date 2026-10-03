@@ -331,17 +331,27 @@ int ResourceLoader::GetBoundMaxMipLevel(GLenum levelTarget) {
 bool ResourceLoader::ClassifyComplexMaterial(GLuint textureID) const {
 	glBindTexture(GL_TEXTURE_2D, textureID);
 
-	const GLint level = GetBoundMaxMipLevel(GL_TEXTURE_2D);
+	// Levels smaller than a 4x4 compression block are avoided, some drivers (AMD) write out the whole
+	// decompressed block for them regardless of the level's size.
+	GLint level = GetBoundMaxMipLevel(GL_TEXTURE_2D);
 
 	GLint width = 0;
 	GLint height = 0;
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_WIDTH, &width);
-	glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_HEIGHT, &height);
+	for (; level >= 0; level--) {
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_WIDTH, &width);
+		glGetTexLevelParameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_HEIGHT, &height);
+		if ((width >= 4 && height >= 4) || level == 0)
+			break;
+	}
+
 	if (width <= 0 || height <= 0)
 		return false;
 
-	// Asking for RGBA8 makes the driver decompress whatever block format the file was in.
-	std::vector<uint8_t> pixels(static_cast<size_t>(width) * height * 4);
+	// Asking for RGBA8 makes the driver decompress whatever block format the file was in. The buffer
+	// is rounded up to whole 4x4 blocks so a driver writing full blocks can't overrun it.
+	const size_t paddedWidth = (static_cast<size_t>(width) + 3) & ~size_t(3);
+	const size_t paddedHeight = (static_cast<size_t>(height) + 3) & ~size_t(3);
+	std::vector<uint8_t> pixels(paddedWidth * paddedHeight * 4);
 
 	GLint packAlignment = 4;
 	glGetIntegerv(GL_PACK_ALIGNMENT, &packAlignment);
@@ -384,8 +394,9 @@ void ResourceLoader::ClassifyCubemap(const std::string& texName, GLuint textureI
 
 	// The texel of a 1x1 cube map isn't a reflection, it's an sRGB F0 reflectance the dynamic cube
 	// map replacing it should be tinted with. Asking for RGBA8 makes the driver decompress whatever
-	// block format the file was in.
-	uint8_t texel[4] = {0, 0, 0, 0};
+	// block format the file was in. The buffer holds a whole 4x4 block, some drivers (AMD) write out
+	// all of it even for a 1x1 level.
+	uint8_t texel[4 * 4 * 4] = {};
 
 	GLint packAlignment = 4;
 	glGetIntegerv(GL_PACK_ALIGNMENT, &packAlignment);
