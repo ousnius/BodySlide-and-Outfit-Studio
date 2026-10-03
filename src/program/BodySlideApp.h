@@ -492,6 +492,10 @@ public:
 	// to the root node (toRoot) or else to the first shape with vertices.
 	void SetTriData(nifly::NifFile& nif, const std::string& triPath, bool toRoot = false);
 
+	// Lists every vertex in a LOCKEDNORM extra data block on each shape with locked normals,
+	// so RaceMenu doesn't recalculate those normals after applying in-game morphs.
+	void SetLockedNormalsData(nifly::NifFile& nif, SliderSet& sliderSet);
+
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	bool IsUVSlider(const wxString& sliderName);
 	std::vector<std::string> GetSliderZapToggles(const wxString& sliderName);

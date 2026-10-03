@@ -4495,6 +4495,13 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri, bool forceNo
 				if (activeSet.GenWeights())
 					nifSmall.SetShapeDynamic(it->first);
 			}
+
+			// RaceMenu recalculates normals after applying morphs unless they're locked
+			if (targetGame == SKYRIMSE || targetGame == SKYRIMVR) {
+				SetLockedNormalsData(nifBig, activeSet);
+				if (activeSet.GenWeights())
+					SetLockedNormalsData(nifSmall, activeSet);
+			}
 		}
 		else if (!triKeep) {
 			wxString triPath = wxString::FromUTF8(outFileNameBig + ".tri");
@@ -5401,6 +5408,13 @@ int BodySlideApp::BuildListBodies(
 					if (currentSet.GenWeights())
 						nifSmall.SetShapeDynamic(it->first);
 				}
+
+				// RaceMenu recalculates normals after applying morphs unless they're locked
+				if (targetGame == SKYRIMSE || targetGame == SKYRIMVR) {
+					SetLockedNormalsData(nifBig, currentSet);
+					if (currentSet.GenWeights())
+						SetLockedNormalsData(nifSmall, currentSet);
+				}
 			}
 			else if (!triKeep) {
 				std::string triPath = outFileNameBig + ".tri";
@@ -5675,6 +5689,44 @@ void BodySlideApp::SetTriData(NifFile& nif, const std::string& triPath, bool toR
 	triExtraData->name.get() = "BODYTRI";
 	triExtraData->stringData.get() = triPath;
 	nif.AssignExtraData(target, std::move(triExtraData));
+}
+
+void BodySlideApp::SetLockedNormalsData(NifFile& nif, SliderSet& sliderSet) {
+	auto& hdr = nif.GetHeader();
+
+	for (auto it = sliderSet.ShapesBegin(); it != sliderSet.ShapesEnd(); ++it) {
+		if (!it->second.lockNormals)
+			continue;
+
+		auto shape = nif.FindBlockByName<NiShape>(it->first);
+		if (!shape)
+			continue;
+
+		uint32_t numVerts = shape->GetNumVertices();
+		if (numVerts == 0)
+			continue;
+
+		// Reuse an existing LOCKEDNORM block of the shape
+		NiIntegersExtraData* lockedNormalsData = nullptr;
+		for (auto& extraDataRef : shape->extraDataRefs) {
+			auto integersExtraData = hdr.GetBlock<NiIntegersExtraData>(extraDataRef);
+			if (integersExtraData && integersExtraData->name == "LOCKEDNORM") {
+				lockedNormalsData = integersExtraData;
+				break;
+			}
+		}
+
+		if (!lockedNormalsData) {
+			auto newExtraData = std::make_unique<NiIntegersExtraData>();
+			newExtraData->name.get() = "LOCKEDNORM";
+			lockedNormalsData = newExtraData.get();
+			nif.AssignExtraData(shape, std::move(newExtraData));
+		}
+
+		lockedNormalsData->integersData.resize(numVerts);
+		for (uint32_t i = 0; i < numVerts; i++)
+			lockedNormalsData->integersData[i] = i;
+	}
 }
 
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
