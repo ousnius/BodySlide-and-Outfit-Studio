@@ -8806,9 +8806,17 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 			else
 				r = presets.GetSmallPreset(choice, project->GetSliderName(i), v);
 
-			// Sliders without a value in the preset fall back to their default for the chosen weight
-			if (!r)
+			if (!r) {
+				// Zaps without a value in the preset are cleared so they don't show up as protruding shapes
+				if (project->SliderZap(i)) {
+					SetSliderValue(i, 0);
+					continue;
+				}
+
+				// Sliders without a value in the preset fall back to their default for the chosen weight
 				v = project->SliderDefault(i, hi) / 100.0f;
+			}
+
 			if (project->SliderInvert(i))
 				v = 1.0f - v;
 
