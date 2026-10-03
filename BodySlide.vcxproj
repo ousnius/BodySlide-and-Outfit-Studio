@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -125,7 +125,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\bullet3\install\include\bullet;..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\bullet3\install\include\bullet;..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -155,7 +155,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -192,7 +192,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\bullet3\install\include\bullet;..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\nlohmannjson\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\bullet3\install\include\bullet;..\wxWidgets\include\msvc;..\wxWidgets\include;lib;lib\gli;lib\nifly\include;lib\nifly\external;lib\TinyXML-2;lib\fkYAML\include;lib\nlohmannjson\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;USE_BULLET;BT_USE_SSE_IN_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -759,6 +759,7 @@
     <ClInclude Include="src\components\DiffData.h" />
     <ClInclude Include="src\components\Mesh.h" />
     <ClInclude Include="src\components\NormalGenLayers.h" />
+    <ClInclude Include="src\components\PoseData.h" />
     <ClInclude Include="src\components\SliderCategories.h" />
     <ClInclude Include="src\components\SliderData.h" />
     <ClInclude Include="src\components\SliderGroup.h" />
@@ -792,6 +793,7 @@
     <ClInclude Include="src\physics\hdt\hdtVertex.h" />
     <ClInclude Include="src\physics\PumpClock.h" />
     <ClInclude Include="src\files\GameDataStream.h" />
+    <ClInclude Include="src\files\HkxFile.h" />
     <ClInclude Include="src\files\MaterialFile.h" />
     <ClInclude Include="src\files\EXRImage.h" />
     <ClInclude Include="src\files\ObjFile.h" />
@@ -865,6 +867,10 @@
     <ClCompile Include="src\components\DiffData.cpp" />
     <ClCompile Include="src\components\Mesh.cpp" />
     <ClCompile Include="src\components\NormalGenLayers.cpp" />
+    <ClCompile Include="src\components\PoseData.cpp" />
+    <ClCompile Include="src\components\PoseDataYaml.cpp" />
+    <ClCompile Include="src\components\PoseDataJson.cpp" />
+    <ClCompile Include="src\components\PoseDataHkx.cpp" />
     <ClCompile Include="src\components\SliderCategories.cpp" />
     <ClCompile Include="src\components\SliderData.cpp" />
     <ClCompile Include="src\components\SliderGroup.cpp" />
@@ -889,6 +895,7 @@
     <ClCompile Include="src\physics\hdt\hdtStiffSpringConstraint.cpp" />
     <ClCompile Include="src\physics\hdt\hdtVertex.cpp" />
     <ClCompile Include="src\files\GameDataStream.cpp" />
+    <ClCompile Include="src\files\HkxFile.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\EXRImage.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />

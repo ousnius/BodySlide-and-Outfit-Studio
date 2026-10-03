@@ -335,6 +335,10 @@ set(BSOS_COMMON_SOURCES
 	src/components/DiffData.cpp
 	src/components/Mesh.cpp
 	src/components/NormalGenLayers.cpp
+	src/components/PoseData.cpp
+	src/components/PoseDataHkx.cpp
+	src/components/PoseDataJson.cpp
+	src/components/PoseDataYaml.cpp
 	src/components/SliderCategories.cpp
 	src/components/SliderData.cpp
 	src/components/SliderGroup.cpp
@@ -343,6 +347,7 @@ set(BSOS_COMMON_SOURCES
 	src/components/SliderSet.cpp
 	src/files/EXRImage.cpp
 	src/files/GameDataStream.cpp
+	src/files/HkxFile.cpp
 	src/files/MaterialFile.cpp
 	src/files/ResourceLoader.cpp
 	src/files/TriFile.cpp
@@ -369,17 +374,12 @@ set(BSOS_COMMON_SOURCES
 
 set(BSOS_OUTFIT_STUDIO_SOURCES
 	${BSOS_COMMON_SOURCES}
-	src/components/PoseData.cpp
-	src/components/PoseDataYaml.cpp
-	src/components/PoseDataJson.cpp
-	src/components/PoseDataHkx.cpp
 	src/components/RefTemplates.cpp
 	src/components/Automation.cpp
 	src/components/TweakBrush.cpp
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
-	src/files/HkxFile.cpp
 	src/files/MaskFile.cpp
 	src/files/ObjFile.cpp
 	src/files/SFMaterialDatabase.cpp
@@ -434,14 +434,12 @@ add_executable(BodySlide ${BSOS_BODYSLIDE_SOURCES})
 set(BSOS_COMMON_INCLUDE_DIRS
 	${CMAKE_CURRENT_SOURCE_DIR}/lib
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/gli
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
 	${CMAKE_CURRENT_SOURCE_DIR}/src
-)
-set(BSOS_OUTFIT_STUDIO_INCLUDE_DIRS
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/fkYAML/include
 )
 
 set(BSOS_PLATFORM_DEFINITIONS GLM_FORCE_SILENT_WARNINGS)
@@ -536,8 +534,6 @@ endfunction()
 
 bsos_configure_target(OutfitStudio)
 bsos_configure_target(BodySlide)
-
-target_include_directories(OutfitStudio PRIVATE ${BSOS_OUTFIT_STUDIO_INCLUDE_DIRS})
 
 function(bsos_link_config_libraries target debug_library release_library)
 	if(debug_library AND release_library)

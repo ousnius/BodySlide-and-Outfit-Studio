@@ -73,6 +73,29 @@ int PoseDataCollection::LoadData(const std::string& basePath) {
 	return 0;
 }
 
+int PoseDataCollection::LoadGamePoses(const std::string& gameDataPath, bool fallout4) {
+	if (gameDataPath.empty())
+		return 0;
+
+	wxString poseDir = wxString::FromUTF8(gameDataPath);
+	if (!poseDir.EndsWith(PathSepChar))
+		poseDir.Append(PathSepChar);
+
+	if (fallout4)
+		poseDir += wxString("F4SE") + PathSepChar + "Plugins" + PathSepChar + "SAF" + PathSepChar + "Poses";
+	else
+		poseDir += wxString("SAM") + PathSepChar + "Poses";
+
+	if (!wxDirExists(poseDir))
+		return 0;
+
+	std::string utf8Dir(poseDir.ToUTF8().data());
+	if (fallout4)
+		return LoadJsonData(utf8Dir, "SAM: ");
+
+	return LoadYamlData(utf8Dir, "SAM: ");
+}
+
 PoseData* PoseDataCollection::AddPose(PoseData pose) {
 	poseData.push_back(std::move(pose));
 	return &poseData.back();

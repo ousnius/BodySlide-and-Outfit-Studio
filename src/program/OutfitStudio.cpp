@@ -88,6 +88,11 @@ void SetHighResolutionTimers(bool enable) {
 
 bool GetPoseHkxFormat(TargetGame targetGame, HKX::Format* outFormat = nullptr);
 
+// Same marks as BodySlide's favorite outfits, presets and animations
+constexpr const char* FavoriteStar = "\xE2\x98\x85";
+constexpr const char* FavoriteStarIcon = "/res/images/FavoriteStar.png";
+constexpr const char* FavoriteStarEmptyIcon = "/res/images/FavoriteStarEmpty.png";
+
 int GetPreferredPoseFileFilterIndex(TargetGame targetGame) {
 	switch (targetGame) {
 	case SKYRIMSE:
@@ -238,6 +243,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 
 	EVT_COMBOBOX(XRCID("cAnimationName"), OutfitStudioFrame::OnSelectAnimation)
 	EVT_BUTTON(XRCID("importAnimationFile"), OutfitStudioFrame::OnLoadHkxAnimation)
+	EVT_BUTTON(XRCID("animFavorite"), OutfitStudioFrame::OnAnimationFavorite)
 	EVT_BUTTON(XRCID("animPlayPause"), OutfitStudioFrame::OnAnimPlayPause)
 	EVT_COMMAND_SCROLL(XRCID("animFrameSlider"), OutfitStudioFrame::OnAnimFrameSlider)
 	EVT_CHOICE(XRCID("animSpeed"), OutfitStudioFrame::OnAnimSpeedChanged)
@@ -1547,16 +1553,14 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		physicsPane->Hide();
 
 	cAnimationName = (wxComboBox*)FindWindowByName("cAnimationName");
+	animFavoriteButton = (wxButton*)FindWindowByName("animFavorite");
 	animPlayPauseButton = (wxButton*)FindWindowByName("animPlayPause");
 	animFrameSlider = (wxSlider*)FindWindowByName("animFrameSlider");
 	animFrameText = dynamic_cast<wxStaticText*>(FindWindowByName("animFrameText"));
 	animSpeedChoice = (wxChoice*)FindWindowByName("animSpeed");
 	animInterpolateCheck = (wxCheckBox*)FindWindowByName("animInterpolate");
 
-	if (cAnimationName) {
-		cAnimationName->Append("<None>", (void*)nullptr);
-		cAnimationName->SetSelection(0);
-	}
+	ResetAnimationList();
 
 	animPlaybackTimer.SetOwner(this, ANIM_PLAYBACK_TIMER);
 	physicsTimer.SetOwner(this, PHYSICS_TIMER);
@@ -4884,36 +4888,15 @@ void OutfitStudioFrame::UpdateAnimationGUI() {
 	//   Skyrim SE/VR: Data\SAM\Poses\*.yaml
 	//   Fallout 4/VR: Data\F4SE\Plugins\SAF\Poses\*.json
 	const TargetGame samGame = wxGetApp().targetGame;
-	wxString samRelDir;
-	bool samUsesJson = false;
 	switch (samGame) {
 	case SKYRIMSE:
 	case SKYRIMVR:
-		samRelDir = wxString("SAM") + PathSepChar + "Poses";
-		break;
 	case FO4:
 	case FO4VR:
-		samRelDir = wxString("F4SE") + PathSepChar + "Plugins" + PathSepChar + "SAF" + PathSepChar + "Poses";
-		samUsesJson = true;
+		poseDataCollection.LoadGamePoses(GameUtil::GetGameDataPath(samGame).ToUTF8().data(), samGame == FO4 || samGame == FO4VR);
 		break;
 	default:
 		break;
-	}
-
-	if (!samRelDir.IsEmpty()) {
-		wxString gameDataPath = GameUtil::GetGameDataPath(samGame);
-		if (!gameDataPath.IsEmpty()) {
-			if (!gameDataPath.EndsWith(PathSepChar))
-				gameDataPath.Append(PathSepChar);
-			wxString samDir = gameDataPath + samRelDir;
-			if (wxDirExists(samDir)) {
-				std::string utf8Dir(samDir.ToUTF8().data());
-				if (samUsesJson)
-					poseDataCollection.LoadJsonData(utf8Dir, "SAM: ");
-				else
-					poseDataCollection.LoadYamlData(utf8Dir, "SAM: ");
-			}
-		}
 	}
 
 	for (auto& poseData : poseDataCollection.poseData) {
@@ -14011,29 +13994,12 @@ bool OutfitStudioFrame::GetReferenceSkeletonHkxPath(std::string& outPath, const 
 		return false;
 	}
 
-	wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
-	if (defSkelNif.IsEmpty()) {
-		wxMessageBox(_("No reference skeleton is configured. Please set a reference skeleton in the application settings first."), caption, wxOK | wxICON_ERROR, this);
-		return false;
-	}
+	wxString error;
+	if (PoseDataCollection::FindReferenceSkeletonHkx(outPath, error))
+		return true;
 
-	wxFileName defSkelFn(defSkelNif);
-	if (defSkelFn.IsRelative())
-		defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
-	defSkelFn.SetExt("hkx");
-
-	wxString skelHkx = defSkelFn.GetFullPath();
-	if (!wxFileExists(skelHkx)) {
-		wxMessageBox(wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nPlace a matching .hkx skeleton file alongside the .nif reference skeleton."),
-						  skelHkx),
-					 caption,
-					 wxOK | wxICON_ERROR,
-					 this);
-		return false;
-	}
-
-	outPath = std::string(skelHkx.ToUTF8().data());
-	return true;
+	wxMessageBox(error, caption, wxOK | wxICON_ERROR, this);
+	return false;
 }
 
 AnimationData* OutfitStudioFrame::GetSelectedAnimation() {
@@ -14108,6 +14074,12 @@ void OutfitStudioFrame::ApplyAnimationFrame(double framePos, bool updatePoseGUI)
 void OutfitStudioFrame::UpdateAnimationPlayerUI() {
 	AnimationData* anim = GetSelectedAnimation();
 	size_t numFrames = anim ? anim->GetNumFrames() : 0;
+
+	if (animFavoriteButton) {
+		const bool favorite = anim && poseDataCollection.IsFavoriteAnimation(*anim);
+		animFavoriteButton->SetBitmap(wxBitmap(wxString::FromUTF8(Config["AppDir"] + (favorite ? FavoriteStarIcon : FavoriteStarEmptyIcon)), wxBITMAP_TYPE_PNG));
+		animFavoriteButton->Enable(anim != nullptr);
+	}
 
 	if (animPlayPauseButton) {
 		animPlayPauseButton->Enable(numFrames > 0);
@@ -14253,13 +14225,41 @@ void OutfitStudioFrame::ResetAnimationList() {
 
 	poseDataCollection.animationData.clear();
 
+	// Read again every time, since BodySlide may have changed them
+	const TargetGame targetGame = wxGetApp().targetGame;
+	if (GetPoseHkxFormat(targetGame))
+		poseDataCollection.LoadFavoriteAnimations(GameUtil::TargetGames[targetGame].ToStdString());
+
 	if (cAnimationName) {
 		cAnimationName->Clear();
-		cAnimationName->Append("<None>", (void*)nullptr);
-		cAnimationName->SetSelection(0);
+		PopulateAnimationList();
 	}
 
 	UpdateAnimationPlayerUI();
+}
+
+void OutfitStudioFrame::PopulateAnimationList() {
+	if (!cAnimationName)
+		return;
+
+	AnimationData* selected = GetSelectedAnimation();
+
+	cAnimationName->Freeze();
+	cAnimationName->Clear();
+	cAnimationName->Append("<None>", (void*)nullptr);
+	cAnimationName->SetSelection(0);
+
+	for (auto& anim : poseDataCollection.animationData) {
+		wxString label = wxString::FromUTF8(anim.name);
+		if (poseDataCollection.IsFavoriteAnimation(anim))
+			label = wxString::FromUTF8(FavoriteStar) + " " + label;
+
+		const int idx = cAnimationName->Append(label, &anim);
+		if (&anim == selected)
+			cAnimationName->SetSelection(idx);
+	}
+
+	cAnimationName->Thaw();
 }
 
 void OutfitStudioFrame::SetAnimationPlaybackLock(bool locked) {
@@ -14322,6 +14322,22 @@ void OutfitStudioFrame::OnSelectAnimation(wxCommandEvent& WXUNUSED(event)) {
 	animCurrentFrame = 0;
 
 	AnimationData* anim = GetSelectedAnimation();
+	if (anim && !anim->IsLoaded()) {
+		// Favorites are only read once they're picked
+		wxString loadError;
+		bool loaded = false;
+		{
+			wxBusyCursor busy;
+			loaded = PoseDataCollection::LoadAnimationFrames(*anim, loadError);
+		}
+
+		if (!loaded) {
+			wxMessageBox(loadError, _("Load Animation File"), wxOK | wxICON_ERROR, this);
+			cAnimationName->SetSelection(0); // "<None>"
+			anim = nullptr;
+		}
+	}
+
 	if (anim) {
 		// The animation takes over the skeleton pose; deselect any pose in
 		// the pose list without firing its handler.
@@ -14350,43 +14366,55 @@ void OutfitStudioFrame::OnLoadHkxAnimation(wxCommandEvent& WXUNUSED(event)) {
 	if (!GetReferenceSkeletonHkxPath(skeletonHkxPath, _("Load Animation File")))
 		return;
 
-	wxString srcPath = loadDlg.GetPath();
-	wxFileName srcFn(srcPath);
+	// A file that's listed already, as a favorite or loaded before, is selected
+	// instead of being added again
+	const size_t prevCount = poseDataCollection.animationData.size();
+	AnimationData* anim = poseDataCollection.AddAnimationFile(std::string(loadDlg.GetPath().ToUTF8().data()));
 
-	AnimationData anim;
-	anim.name = std::string(srcFn.GetName().ToUTF8().data());
+	wxString loadError;
+	bool loaded = false;
+	{
+		wxBusyCursor busy;
+		loaded = PoseDataCollection::LoadAnimationFrames(*anim, loadError);
+	}
 
-	std::string loadError;
-	if (!PoseDataCollection::LoadHkxAnimation(skeletonHkxPath, std::string(srcPath.ToUTF8().data()), anim, &loadError)) {
-		wxString message = loadError.empty() ? _("Failed to load the animation file.") : wxString::FromUTF8(loadError);
-		wxMessageBox(message, _("Load Animation File"), wxOK | wxICON_ERROR, this);
+	if (!loaded) {
+		// A file that can't be read isn't worth listing. New entries go last,
+		// so dropping it doesn't move the selected one.
+		if (poseDataCollection.animationData.size() > prevCount)
+			poseDataCollection.animationData.pop_back();
+
+		wxMessageBox(loadError, _("Load Animation File"), wxOK | wxICON_ERROR, this);
 		return;
 	}
 
 	if (!cAnimationName)
 		return;
 
-	wxString uniqueName = wxString::FromUTF8(anim.name);
-	if (cAnimationName->FindString(uniqueName) != wxNOT_FOUND) {
-		for (int suffix = 1;; ++suffix) {
-			wxString candidate = wxString::Format("%s (%d)", wxString::FromUTF8(anim.name), suffix);
-			if (cAnimationName->FindString(candidate) == wxNOT_FOUND) {
-				uniqueName = candidate;
-				break;
-			}
+	PopulateAnimationList();
+	for (unsigned int i = 0; i < cAnimationName->GetCount(); i++) {
+		if (cAnimationName->GetClientData(i) == anim) {
+			cAnimationName->SetSelection(i);
+			break;
 		}
 	}
-	anim.name = std::string(uniqueName.ToUTF8().data());
-
-	AnimationData* added = poseDataCollection.AddAnimation(std::move(anim));
-	int idx = cAnimationName->Append(wxString::FromUTF8(added->name), added);
-	cAnimationName->SetSelection(idx);
 
 	wxCommandEvent dummy;
 	OnSelectAnimation(dummy);
 
 	if (statusBar)
 		statusBar->SetStatusText(_("Animation file loaded."), 0);
+}
+
+void OutfitStudioFrame::OnAnimationFavorite(wxCommandEvent& WXUNUSED(event)) {
+	AnimationData* anim = GetSelectedAnimation();
+	if (!anim)
+		return;
+
+	poseDataCollection.SetFavoriteAnimation(*anim, GameUtil::TargetGames[wxGetApp().targetGame].ToStdString(), !poseDataCollection.IsFavoriteAnimation(*anim));
+
+	PopulateAnimationList();
+	UpdateAnimationPlayerUI();
 }
 
 void OutfitStudioFrame::OnAnimPlayPause(wxCommandEvent& WXUNUSED(event)) {

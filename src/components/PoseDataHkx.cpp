@@ -5,6 +5,8 @@ See the included LICENSE file
 
 #include "PoseData.h"
 #include "../files/HkxFile.h"
+#include "../utils/ConfigurationManager.h"
+#include "../utils/PlatformUtil.h"
 #include "../utils/StringStuff.h"
 
 #include <algorithm>
@@ -13,6 +15,10 @@ See the included LICENSE file
 #include <unordered_set>
 
 #include <wx/filename.h>
+#include <wx/intl.h>
+#include <wx/log.h>
+
+extern ConfigurationManager Config;
 
 namespace {
 
@@ -494,4 +500,214 @@ bool PoseDataCollection::SavePoseFile(const std::string& filePath,
 			*errorOut = "Please save the pose with a .hkx, .json, .yaml or .yml extension.";
 		return false;
 	}
+}
+
+bool PoseDataCollection::FindReferenceSkeletonHkx(std::string& outPath, wxString& errorOut) {
+	wxString defSkelNif = wxString::FromUTF8(Config["Anim/DefaultSkeletonReference"]);
+	if (defSkelNif.IsEmpty()) {
+		errorOut = _("No reference skeleton is configured. Please set a reference skeleton in the application settings first.");
+		return false;
+	}
+
+	wxFileName defSkelFn(defSkelNif);
+	if (defSkelFn.IsRelative())
+		defSkelFn = wxFileName(wxString::FromUTF8(Config["AppDir"]) + PathSepChar + defSkelNif);
+	defSkelFn.SetExt("hkx");
+
+	wxString skelHkx = defSkelFn.GetFullPath();
+	if (!wxFileExists(skelHkx)) {
+		errorOut = wxString::Format(_("No Havok skeleton file was found next to the configured reference skeleton.\n\nExpected file:\n%s\n\nPlace a matching .hkx skeleton file alongside the .nif reference skeleton."),
+									skelHkx);
+		return false;
+	}
+
+	outPath = std::string(skelHkx.ToUTF8().data());
+	return true;
+}
+
+AnimationData* PoseDataCollection::AddAnimationFile(const std::string& filePath) {
+	for (auto& anim : animationData)
+		if (StringsEqualInsens(anim.sourcePath.c_str(), filePath.c_str()))
+			return &anim;
+
+	auto nameTaken = [this](const std::string& name) {
+		return std::any_of(animationData.begin(), animationData.end(), [&name](const AnimationData& a) { return a.name == name; });
+	};
+
+	AnimationData anim;
+	anim.sourcePath = filePath;
+	anim.name = wxFileName(wxString::FromUTF8(filePath)).GetName().ToUTF8().data();
+
+	if (nameTaken(anim.name)) {
+		for (int suffix = 2;; ++suffix) {
+			std::string candidate = anim.name + " (" + std::to_string(suffix) + ")";
+			if (!nameTaken(candidate)) {
+				anim.name = candidate;
+				break;
+			}
+		}
+	}
+
+	return AddAnimation(std::move(anim));
+}
+
+bool PoseDataCollection::LoadAnimationFrames(AnimationData& anim, wxString& errorOut) {
+	if (anim.IsLoaded())
+		return true;
+
+	std::string skeletonHkxPath;
+	if (!FindReferenceSkeletonHkx(skeletonHkxPath, errorOut))
+		return false;
+
+	// Read into a copy, so a failure halfway doesn't leave the entry looking loaded
+	AnimationData loaded;
+	loaded.name = anim.name;
+
+	std::string loadError;
+	if (!LoadHkxAnimation(skeletonHkxPath, anim.sourcePath, loaded, &loadError)) {
+		errorOut = loadError.empty() ? _("Failed to load the animation file.") : wxString::FromUTF8(loadError);
+		return false;
+	}
+
+	anim.frameDuration = loaded.frameDuration;
+	anim.framePoses = std::move(loaded.framePoses);
+	return true;
+}
+
+namespace {
+
+std::string AnimationFavoritesFilePath() {
+	return Config["AppDir"] + "/AnimationFavorites.xml";
+}
+
+FILE* OpenAnimationFavoritesFile(const char* mode) {
+	const std::string fileName = AnimationFavoritesFilePath();
+	FILE* fp = nullptr;
+
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
+	std::wstring winMode = PlatformUtil::MultiByteToWideUTF8(mode);
+	if (_wfopen_s(&fp, winFileName.c_str(), winMode.c_str()) != 0)
+		return nullptr;
+#else
+	fp = fopen(fileName.c_str(), mode);
+#endif
+
+	return fp;
+}
+
+// The favorites file as it is on disk right now, with or without the game's
+// element. Read again for every change, because the other program may have
+// changed it in the meantime.
+void LoadAnimationFavoritesDoc(tinyxml2::XMLDocument& doc) {
+	FILE* fp = OpenAnimationFavoritesFile("rb");
+	if (fp) {
+		doc.LoadFile(fp);
+		fclose(fp);
+	}
+
+	if (!doc.FirstChildElement("AnimationFavorites")) {
+		doc.Clear();
+		doc.InsertFirstChild(doc.NewDeclaration());
+		doc.InsertEndChild(doc.NewElement("AnimationFavorites"));
+	}
+}
+
+// Favorites inside the game's data folder are stored relative to it, so they
+// keep working when the game is moved or installed somewhere else
+std::string ToStoredFavoritePath(const std::string& path) {
+	const wxString dataPath = wxString::FromUTF8(Config["GameDataPath"]);
+	if (dataPath.IsEmpty())
+		return path;
+
+	wxFileName fileName(wxString::FromUTF8(path));
+	if (!fileName.MakeRelativeTo(dataPath))
+		return path;
+
+	// Somewhere else on the same drive
+	const wxString relPath = fileName.GetFullPath();
+	if (relPath.StartsWith(".."))
+		return path;
+
+	return relPath.ToUTF8().data();
+}
+
+std::string FromStoredFavoritePath(const std::string& storedPath) {
+	wxFileName fileName(wxString::FromUTF8(storedPath));
+	if (fileName.IsAbsolute())
+		return storedPath;
+
+	fileName.MakeAbsolute(wxString::FromUTF8(Config["GameDataPath"]));
+	return fileName.GetFullPath().ToUTF8().data();
+}
+
+// Full paths, whichever way they're stored
+std::vector<std::string> ReadAnimationFavorites(tinyxml2::XMLDocument& doc, const std::string& gameName) {
+	std::vector<std::string> paths;
+
+	XMLElement* gameElement = doc.FirstChildElement("AnimationFavorites")->FirstChildElement(gameName.c_str());
+	if (!gameElement)
+		return paths;
+
+	for (XMLElement* element = gameElement->FirstChildElement("Animation"); element; element = element->NextSiblingElement("Animation"))
+		if (element->GetText())
+			paths.push_back(FromStoredFavoritePath(element->GetText()));
+
+	return paths;
+}
+
+} // namespace
+
+void PoseDataCollection::LoadFavoriteAnimations(const std::string& gameName) {
+	tinyxml2::XMLDocument doc;
+	LoadAnimationFavoritesDoc(doc);
+	favoriteAnimations = ReadAnimationFavorites(doc, gameName);
+
+	for (auto& path : favoriteAnimations)
+		AddAnimationFile(path);
+}
+
+bool PoseDataCollection::IsFavoriteAnimation(const AnimationData& anim) const {
+	return std::any_of(favoriteAnimations.begin(), favoriteAnimations.end(), [&anim](const std::string& path) {
+		return StringsEqualInsens(path.c_str(), anim.sourcePath.c_str());
+	});
+}
+
+void PoseDataCollection::SetFavoriteAnimation(const AnimationData& anim, const std::string& gameName, bool favorite) {
+	if (anim.sourcePath.empty())
+		return;
+
+	tinyxml2::XMLDocument doc;
+	LoadAnimationFavoritesDoc(doc);
+
+	// Starts from the file rather than from this program's list, so favorites
+	// the other program added since aren't lost
+	std::vector<std::string> paths = ReadAnimationFavorites(doc, gameName);
+	paths.erase(std::remove_if(paths.begin(), paths.end(), [&anim](const std::string& path) {
+		return StringsEqualInsens(path.c_str(), anim.sourcePath.c_str());
+	}), paths.end());
+
+	if (favorite)
+		paths.push_back(anim.sourcePath);
+
+	XMLElement* root = doc.FirstChildElement("AnimationFavorites");
+	XMLElement* gameElement = root->FirstChildElement(gameName.c_str());
+	if (gameElement)
+		gameElement->DeleteChildren();
+	else
+		gameElement = root->InsertNewChildElement(gameName.c_str());
+
+	for (auto& path : paths)
+		gameElement->InsertNewChildElement("Animation")->SetText(ToStoredFavoritePath(path).c_str());
+
+	FILE* fp = OpenAnimationFavoritesFile("w");
+	if (fp) {
+		doc.SaveFile(fp);
+		fclose(fp);
+	}
+	else {
+		wxLogWarning("Failed to save the animation favorites to '%s'.", AnimationFavoritesFilePath());
+	}
+
+	favoriteAnimations = std::move(paths);
 }

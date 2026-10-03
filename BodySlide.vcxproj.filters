@@ -1705,6 +1705,12 @@
     <ClInclude Include="src\components\ClippingFixer.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\PoseData.h">
+      <Filter>Components</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\HkxFile.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\UndoState.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -1937,6 +1943,21 @@
     </ClCompile>
     <ClCompile Include="src\components\ClippingFixer.cpp">
       <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseData.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseDataYaml.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseDataJson.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\PoseDataHkx.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\HkxFile.cpp">
+      <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="lib\nifly\src\Animation.cpp">
       <Filter>Libraries\nifly\src</Filter>

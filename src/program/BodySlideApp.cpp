@@ -47,11 +47,8 @@ ConfigurationManager Config;
 ConfigurationManager BodySlideConfig;
 
 namespace {
-constexpr const char* FavoriteStar = "\xE2\x98\x85";
 constexpr char FavoriteSeparator = ';';
 constexpr char FavoriteEscape = '\\';
-constexpr const char* FavoriteStarIcon = "/res/images/FavoriteStar.png";
-constexpr const char* FavoriteStarEmptyIcon = "/res/images/FavoriteStarEmpty.png";
 constexpr int MinBodySlideLeftPaneWidthDip = 850;
 }
 
@@ -2012,6 +2009,9 @@ void BodySlideApp::InitPreview() {
 				return;
 			}
 
+			// The skinning and simulation describe the NIFs about to be replaced
+			ReleasePreviewSkinning();
+
 			bool anyGenWeights = false;
 			std::string baseGamePath = Config["GameDataPath"];
 			preview->SetBaseDataPath(baseGamePath);
@@ -2439,6 +2439,14 @@ std::vector<ShapePreviewData> BodySlideApp::ComputeMorphedShapeData(int weight) 
 }
 
 void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, int weight) {
+	// A pose or the simulation moves the vertices by their bones, after
+	// everything else was done to them
+	const bool skinned = IsPreviewSkinned() && EnsurePreviewSkinning();
+	if (!skinned) {
+		previewMorphedVerts.clear();
+		previewReferenceMorphedVerts.clear();
+	}
+
 	// Apply clipping fix and handle external reference
 	bool useExternalReference = !multiProjectMode && referenceNif && preview &&
 							  (clippingFixStrength > 0.0f || preview->IsShowReferenceChecked());
@@ -2450,6 +2458,7 @@ void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, 
 	// Hide external reference mesh when not in use
 	if (!useExternalReference && referenceNif && preview) {
 		preview->SetMeshVisibility(referenceShapeName, false);
+		previewReferenceMorphedVerts.clear();
 	}
 
 	if (clippingFixStrength > 0.0f) {
@@ -2514,11 +2523,11 @@ void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, 
 			}
 		}
 
-		if (previewPhysicsRunning) {
-			// Remember the morphed shape so a physics tick can skin it again
-			// without running all sliders, then show it simulated
+		if (skinned) {
+			// Remember the morphed shape so a physics or animation tick can skin
+			// it again without running all sliders, then show it skinned
 			previewMorphedVerts[sd.name] = sd.verts;
-			ApplyPreviewPhysicsSkinning(sd.name, sd.verts);
+			ApplyPreviewSkinning(sd.projectIdx, sd.name, sd.verts);
 		}
 
 		preview->UpdateMeshes(sd.name, &sd.verts, &sd.uvs);
@@ -2527,10 +2536,9 @@ void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, 
 	preview->Render();
 }
 
-void BodySlideApp::UpdatePreviewPhysicsAvailability(bool keepRunning) {
+void BodySlideApp::UpdatePreviewPhysicsAvailability(bool restart) {
 	// Whatever led here replaced the previewed meshes, so the simulation - which
 	// holds shapes of those meshes - has to go either way.
-	const bool wasRunning = previewPhysicsRunning;
 	EnablePreviewPhysics(false);
 
 	previewPhysicsAvailable = false;
@@ -2541,7 +2549,7 @@ void BodySlideApp::UpdatePreviewPhysicsAvailability(bool keepRunning) {
 		}
 	}
 
-	if (keepRunning && wasRunning && previewPhysicsAvailable)
+	if (restart && previewPhysicsAvailable)
 		EnablePreviewPhysics(true);
 
 	if (preview) {
@@ -2557,35 +2565,23 @@ void BodySlideApp::EnablePreviewPhysics(bool enable) {
 	if (!enable) {
 		previewPhysicsRunning = false;
 		previewPhysics.clear();
+		UpdatePreviewPump();
 
-		// Put the meshes back to the plain morphed shape the sliders describe
-		if (IsPreviewRenderable()) {
-			for (auto& morphedVerts : previewMorphedVerts)
-				preview->UpdateMeshes(morphedVerts.first, &morphedVerts.second);
-
-			preview->Render();
-		}
-
-		previewMorphedVerts.clear();
+		// Back to the plain morphed shape the sliders describe, or to the pose
+		// without the simulated bones
+		RefreshPreviewSkinning();
 		return;
 	}
 
 	if (!IsPreviewRenderable() || projects.empty())
 		return;
 
-	// The simulation reads its kinematic input from the application skeleton,
-	// which BodySlide has no other use for and therefore never loaded.
-	if (AnimSkeleton::getInstance().GetActiveBoneCount() == 0 && LoadDefaultSkeletonReference() != 0) {
-		wxLogError("Physics preview needs the reference skeleton, which could not be loaded.");
+	// The simulation reads its kinematic input from the application skeleton
+	if (!EnsurePreviewSkinning())
 		return;
-	}
 
-	for (size_t i = 0; i < projects.size(); i++) {
+	for (size_t i = 0; i < projects.size() && i < previewAnims.size(); i++) {
 		auto& pp = projects[i];
-
-		auto anim = std::make_unique<AnimInfo>();
-		if (!anim->LoadFromNif(&pp->modNif))
-			continue;
 
 		// The mod's own folder is the fallback for physics XMLs that aren't
 		// installed under the game data path
@@ -2595,7 +2591,7 @@ void BodySlideApp::EnablePreviewPhysics(bool enable) {
 		auto controller = std::make_unique<Physics::Controller>();
 		size_t systemCount = controller->BuildFromNif(
 			&pp->modNif,
-			anim.get(),
+			previewAnims[i].get(),
 			[&nifPath](const std::string& xmlPath) { return GameDataStream::OpenPhysicsXml(xmlPath, nifPath); },
 			{},
 			warnings);
@@ -2610,7 +2606,6 @@ void BodySlideApp::EnablePreviewPhysics(bool enable) {
 
 		PreviewPhysicsProject entry;
 		entry.controller = std::move(controller);
-		entry.anim = std::move(anim);
 		entry.projectIdx = i;
 		previewPhysics.push_back(std::move(entry));
 	}
@@ -2621,61 +2616,551 @@ void BodySlideApp::EnablePreviewPhysics(bool enable) {
 	}
 
 	previewPhysicsRunning = true;
-	previewPhysicsClock.Reset();
+	previewClock.Reset();
+	UpdatePreviewPump();
 
 	// Fills the morphed vertex cache and shows the first simulated frame
 	UpdatePreview();
 }
 
-void BodySlideApp::ApplyPreviewPhysicsSkinning(const PreviewPhysicsProject& physics, const std::string& shapeName, std::vector<Vector3>& verts) {
-	auto& modNif = projects[physics.projectIdx]->modNif;
-	auto shape = modNif.FindBlockByName<NiShape>(shapeName);
-	if (!shape)
-		return;
+bool BodySlideApp::EnsurePreviewSkeleton() {
+	if (previewSkeletonPath == Config["Anim/DefaultSkeletonReference"] && AnimSkeleton::getInstance().GetActiveBoneCount() > 0)
+		return true;
 
-	ApplySkinningToVerts(*physics.anim, shape, modNif.GetHeader().GetVersion().IsSF(), &physics.controller->PoseOverrides(), verts);
+	// BodySlide has no use for the skeleton outside of the preview, so it's
+	// only loaded once something there needs it
+	if (LoadDefaultSkeletonReference() != 0) {
+		wxLogError("The preview needs the reference skeleton, which could not be loaded.");
+		return false;
+	}
+
+	previewSkeletonPath = Config["Anim/DefaultSkeletonReference"];
+	return true;
 }
 
-void BodySlideApp::ApplyPreviewPhysicsSkinning(const std::string& shapeName, std::vector<Vector3>& verts) {
-	for (auto& physics : previewPhysics) {
-		if (physics.controller->AffectedShapes().count(shapeName) != 0) {
-			ApplyPreviewPhysicsSkinning(physics, shapeName, verts);
-			return;
+bool BodySlideApp::EnsurePreviewSkinning() {
+	if (previewAnimsBuilt && previewLooseAnimsBuilt)
+		return true;
+
+	if (!EnsurePreviewSkeleton())
+		return false;
+
+	if (!previewAnimsBuilt) {
+		previewAnims.clear();
+		for (auto& pp : projects) {
+			auto anim = std::make_unique<AnimInfo>();
+			anim->LoadFromNif(&pp->modNif);
+			previewAnims.push_back(std::move(anim));
+		}
+
+		previewReferenceAnim.reset();
+		if (referenceNif) {
+			previewReferenceAnim = std::make_unique<AnimInfo>();
+			previewReferenceAnim->LoadFromNif(referenceNif.get());
+		}
+
+		previewAnimsBuilt = true;
+	}
+
+	if (!previewLooseAnimsBuilt) {
+		previewLooseAnims.clear();
+		for (auto& nif : previewLooseNifs) {
+			auto anim = std::make_unique<AnimInfo>();
+			anim->LoadFromNif(nif.get());
+			previewLooseAnims.push_back(std::move(anim));
+		}
+
+		previewLooseAnimsBuilt = true;
+	}
+
+	// Loading the skinning may have added custom bones to the skeleton
+	ApplyPreviewSkeletonPose();
+	return true;
+}
+
+void BodySlideApp::SetPreviewLooseNifs(std::vector<std::unique_ptr<NifFile>> nifs) {
+	previewLooseAnims.clear();
+	previewLooseAnimsBuilt = false;
+	previewLooseNifs = std::move(nifs);
+
+	if (IsPreviewPosed() && EnsurePreviewSkinning())
+		UpdatePreviewLooseMeshes();
+}
+
+void BodySlideApp::UpdatePreviewLooseMeshes() {
+	if (!preview)
+		return;
+
+	const bool posed = IsPreviewPosed() && previewLooseAnimsBuilt;
+
+	std::vector<Vector3> verts;
+	for (size_t i = 0; i < previewLooseNifs.size(); i++) {
+		auto& nif = previewLooseNifs[i];
+		for (auto shape : nif->GetShapes()) {
+			if (!shape->IsSkinned() || !nif->GetVertsForShape(shape, verts))
+				continue;
+
+			if (posed && i < previewLooseAnims.size())
+				ApplySkinningToVerts(*previewLooseAnims[i], shape, nif->GetHeader().GetVersion().IsSF(), nullptr, verts);
+
+			preview->UpdateMeshes(shape->name.get(), &verts);
 		}
 	}
 }
 
-void BodySlideApp::PumpPreviewPhysics() {
-	if (!previewPhysicsRunning)
-		return;
+void BodySlideApp::ReleasePreviewSkinning() {
+	const bool physicsWasRunning = previewPhysicsRunning;
 
-	if (!IsPreviewRenderable()) {
-		EnablePreviewPhysics(false);
+	// The simulation holds pointers into the skinning, so it goes first
+	previewPhysicsRunning = false;
+	previewPhysics.clear();
+
+	previewAnims.clear();
+	previewReferenceAnim.reset();
+	previewAnimsBuilt = false;
+
+	// Nothing holds on to these, but they go along in case the skeleton changes
+	previewLooseAnims.clear();
+	previewLooseAnimsBuilt = false;
+
+	previewMorphedVerts.clear();
+	previewReferenceMorphedVerts.clear();
+
+	if (physicsWasRunning && preview)
+		preview->SetPhysicsChecked(false);
+
+	UpdatePreviewPump();
+}
+
+bool BodySlideApp::IsPreviewPosed() const {
+	return previewAnimIndex >= 0 || previewPoseIndex != PreviewPoseNone;
+}
+
+bool BodySlideApp::IsPreviewSkinned() const {
+	return previewPhysicsRunning || IsPreviewPosed();
+}
+
+AnimationData* BodySlideApp::GetPreviewAnimationData() {
+	if (previewAnimIndex < 0 || static_cast<size_t>(previewAnimIndex) >= previewPoses.animationData.size())
+		return nullptr;
+
+	return &previewPoses.animationData[previewAnimIndex];
+}
+
+void BodySlideApp::ApplyPreviewSkeletonPose() {
+	AnimationData* anim = GetPreviewAnimationData();
+	if (anim && !anim->framePoses.empty()) {
+		const size_t numFrames = anim->framePoses.size();
+		const size_t frame = std::min(static_cast<size_t>(previewAnimFrame), numFrames - 1);
+		const float blend = static_cast<float>(previewAnimFrame - static_cast<double>(frame));
+
+		if (previewAnimInterpolate && numFrames > 1 && blend > 0.0f) {
+			// Playback loops, so the last frame blends back into the first one
+			const size_t nextFrame = (frame + 1) % numFrames;
+			PoseData::Interpolate(anim->framePoses[frame], anim->framePoses[nextFrame], blend, previewAnimBlendPose);
+			previewAnimBlendPose.ApplyToSkeleton();
+		}
+		else {
+			anim->framePoses[frame].ApplyToSkeleton();
+		}
 		return;
 	}
 
-	float dtSeconds = 0.0f;
-	if (!previewPhysicsClock.StepDue(dtSeconds))
+	const int poseDataIndex = previewPoseIndex - PreviewPoseFirst;
+	if (poseDataIndex >= 0 && static_cast<size_t>(poseDataIndex) < previewPoses.poseData.size()) {
+		previewPoses.poseData[poseDataIndex].ApplyToSkeleton();
+		return;
+	}
+
+	// An empty pose puts every bone back where the skeleton has it
+	PoseData().ApplyToSkeleton();
+}
+
+void BodySlideApp::ApplyPreviewSkinning(size_t projectIdx, const std::string& shapeName, std::vector<Vector3>& verts) {
+	if (projectIdx >= projects.size() || projectIdx >= previewAnims.size())
 		return;
 
-	for (auto& physics : previewPhysics)
-		physics.controller->Step(dtSeconds);
+	auto& modNif = projects[projectIdx]->modNif;
+	auto shape = modNif.FindBlockByName<NiShape>(shapeName);
+	if (!shape || !shape->IsSkinned())
+		return;
 
-	// Only the shapes the simulation actually drives have to be skinned again
-	std::vector<Vector3> verts;
+	// The skinning indexes the vertices of the NIF it was loaded from
+	if (verts.size() != shape->GetNumVertices())
+		return;
+
+	const AnimPoseOverrideMap* poseOverrides = nullptr;
 	for (auto& physics : previewPhysics) {
-		for (auto& shapeName : physics.controller->AffectedShapes()) {
-			auto morphedVerts = previewMorphedVerts.find(shapeName);
-			if (morphedVerts == previewMorphedVerts.end())
-				continue;
+		if (physics.projectIdx == projectIdx && physics.controller->AffectedShapes().count(shapeName) != 0) {
+			poseOverrides = &physics.controller->PoseOverrides();
+			break;
+		}
+	}
 
-			verts = morphedVerts->second;
-			ApplyPreviewPhysicsSkinning(physics, shapeName, verts);
-			preview->UpdateMeshes(shapeName, &verts);
+	// Without a pose only the simulated shapes move, everything else stays as
+	// the sliders shape it
+	if (!poseOverrides && !IsPreviewPosed())
+		return;
+
+	ApplySkinningToVerts(*previewAnims[projectIdx], shape, modNif.GetHeader().GetVersion().IsSF(), poseOverrides, verts);
+}
+
+void BodySlideApp::ApplyPreviewReferenceSkinning(std::vector<Vector3>& verts) {
+	if (!referenceNif || !previewReferenceAnim || !IsPreviewPosed())
+		return;
+
+	auto shape = referenceNif->FindBlockByName<NiShape>(referenceShapeName);
+	if (!shape || !shape->IsSkinned() || verts.size() != shape->GetNumVertices())
+		return;
+
+	ApplySkinningToVerts(*previewReferenceAnim, shape, referenceNif->GetHeader().GetVersion().IsSF(), nullptr, verts);
+}
+
+void BodySlideApp::ReskinPreview(bool allShapes) {
+	if (!IsPreviewRenderable() || !previewAnimsBuilt)
+		return;
+
+	std::vector<Vector3> verts;
+	if (allShapes) {
+		for (size_t pi = 0; pi < projects.size(); pi++) {
+			auto& pp = projects[pi];
+			for (auto it = pp->sliderSet.ShapesBegin(); it != pp->sliderSet.ShapesEnd(); ++it) {
+				auto morphedVerts = previewMorphedVerts.find(it->first);
+				if (morphedVerts == previewMorphedVerts.end())
+					continue;
+
+				verts = morphedVerts->second;
+				ApplyPreviewSkinning(pi, it->first, verts);
+				preview->UpdateMeshes(it->first, &verts);
+			}
+		}
+
+		if (!previewReferenceMorphedVerts.empty()) {
+			verts = previewReferenceMorphedVerts;
+			ApplyPreviewReferenceSkinning(verts);
+			preview->UpdateMeshes(referenceShapeName, &verts);
+		}
+
+		UpdatePreviewLooseMeshes();
+	}
+	else {
+		// Only the shapes the simulation actually drives have to be skinned again
+		for (auto& physics : previewPhysics) {
+			for (auto& shapeName : physics.controller->AffectedShapes()) {
+				auto morphedVerts = previewMorphedVerts.find(shapeName);
+				if (morphedVerts == previewMorphedVerts.end())
+					continue;
+
+				verts = morphedVerts->second;
+				ApplyPreviewSkinning(physics.projectIdx, shapeName, verts);
+				preview->UpdateMeshes(shapeName, &verts);
+			}
 		}
 	}
 
 	preview->Render();
+}
+
+void BodySlideApp::RestoreUnskinnedPreview() {
+	if (IsPreviewRenderable()) {
+		for (auto& morphedVerts : previewMorphedVerts)
+			preview->UpdateMeshes(morphedVerts.first, &morphedVerts.second);
+
+		if (!previewReferenceMorphedVerts.empty())
+			preview->UpdateMeshes(referenceShapeName, &previewReferenceMorphedVerts);
+
+		UpdatePreviewLooseMeshes();
+		preview->Render();
+	}
+
+	previewMorphedVerts.clear();
+	previewReferenceMorphedVerts.clear();
+}
+
+void BodySlideApp::RefreshPreviewSkinning() {
+	if (!IsPreviewSkinned()) {
+		RestoreUnskinnedPreview();
+		return;
+	}
+
+	// A preview of loose NIFs has no project, so no sliders to run either
+	if (projects.empty()) {
+		if (IsPreviewRenderable() && EnsurePreviewSkinning()) {
+			UpdatePreviewLooseMeshes();
+			preview->Render();
+		}
+		return;
+	}
+
+	// Nothing was skinned so far, so the sliders have to run once to fill the
+	// morphed vertex cache
+	if (!previewAnimsBuilt || previewMorphedVerts.empty()) {
+		UpdatePreview();
+		return;
+	}
+
+	ReskinPreview(true);
+}
+
+void BodySlideApp::UpdatePreviewPump() {
+	if (preview)
+		preview->SetPumpActive(IsPreviewPumping());
+}
+
+void BodySlideApp::PumpPreview() {
+	if (!IsPreviewPumping())
+		return;
+
+	if (!IsPreviewRenderable()) {
+		previewAnimPlaying = false;
+		EnablePreviewPhysics(false);
+		UpdatePreviewPump();
+		return;
+	}
+
+	float dtSeconds = 0.0f;
+	if (!previewClock.StepDue(dtSeconds))
+		return;
+
+	bool skeletonMoved = false;
+	if (previewAnimPlaying) {
+		AnimationData* anim = GetPreviewAnimationData();
+		if (anim && !anim->framePoses.empty()) {
+			const double numFrames = static_cast<double>(anim->framePoses.size());
+			const double frameDuration = anim->frameDuration > 0.0f ? anim->frameDuration : 1.0 / 30.0;
+			const double prevFrame = previewAnimFrame;
+
+			previewAnimFrame = std::fmod(previewAnimFrame + dtSeconds * previewAnimSpeed / frameDuration, numFrames);
+			if (!(previewAnimFrame >= 0.0))
+				previewAnimFrame = 0.0;
+
+			// Without interpolation only whole frames are ever shown, so nothing
+			// changes until the position has crossed into the next one
+			if (previewAnimInterpolate || static_cast<size_t>(previewAnimFrame) != static_cast<size_t>(prevFrame)) {
+				ApplyPreviewSkeletonPose();
+				skeletonMoved = true;
+				preview->SyncAnimationControls();
+			}
+		}
+	}
+
+	for (auto& physics : previewPhysics)
+		physics.controller->Step(dtSeconds);
+
+	if (skeletonMoved || !previewPhysics.empty())
+		ReskinPreview(skeletonMoved);
+}
+
+void BodySlideApp::EnsurePreviewPosesLoaded() {
+	if (previewPosesLoaded)
+		return;
+
+	previewPosesLoaded = true;
+	previewPoses.LoadData(ProjectUtil::GetProjectPath() + "/PoseData");
+
+	switch (targetGame) {
+		case SKYRIMSE:
+		case SKYRIMVR:
+		case FO4:
+		case FO4VR:
+			previewPoses.LoadGamePoses(GameUtil::GetGameDataPath(targetGame).ToUTF8().data(), targetGame == FO4 || targetGame == FO4VR);
+			break;
+		default: break;
+	}
+
+	// Listed right away, but only read once selected
+	if (CanLoadPreviewAnimations())
+		previewPoses.LoadFavoriteAnimations(GetAnimationFavoritesGame());
+}
+
+std::string BodySlideApp::GetAnimationFavoritesGame() const {
+	return GameUtil::TargetGames[targetGame].ToStdString();
+}
+
+std::vector<std::string> BodySlideApp::GetPreviewPoseNames() {
+	EnsurePreviewPosesLoaded();
+
+	std::vector<std::string> names;
+	names.reserve(previewPoses.poseData.size());
+	for (auto& pose : previewPoses.poseData)
+		names.push_back(pose.name);
+
+	return names;
+}
+
+void BodySlideApp::SetPreviewPose(int poseIndex) {
+	if (poseIndex < PreviewPoseNone || poseIndex >= PreviewPoseFirst + static_cast<int>(previewPoses.poseData.size()))
+		poseIndex = PreviewPoseNone;
+
+	if (poseIndex == previewPoseIndex)
+		return;
+
+	previewPoseIndex = poseIndex;
+
+	// An animation decides the pose for as long as it's selected
+	if (previewAnimIndex >= 0)
+		return;
+
+	JumpPreviewSkeleton();
+}
+
+void BodySlideApp::JumpPreviewSkeleton() {
+	ApplyPreviewSkeletonPose();
+
+	// The bones teleport, so re-seat the simulated bodies on them instead of
+	// letting them read the jump as a huge velocity
+	for (auto& physics : previewPhysics)
+		physics.controller->ResetDynamics();
+
+	RefreshPreviewSkinning();
+}
+
+void BodySlideApp::ResetPreviewPoses() {
+	previewAnimPlaying = false;
+	ReleasePreviewSkinning();
+
+	previewPoses = PoseDataCollection();
+	previewPosesLoaded = false;
+	previewPoseIndex = PreviewPoseNone;
+	previewAnimIndex = -1;
+	previewAnimFrame = 0.0;
+
+	// The next game may use a different skeleton
+	previewSkeletonPath.clear();
+
+	if (preview)
+		preview->RefreshPoseControls();
+
+	UpdatePreview();
+}
+
+bool BodySlideApp::CanLoadPreviewAnimations() const {
+	switch (targetGame) {
+		case SKYRIM:
+		case SKYRIMSE:
+		case SKYRIMVR:
+		case FO4:
+		case FO4VR: return true;
+		default: return false;
+	}
+}
+
+bool BodySlideApp::LoadPreviewAnimation(const std::string& filePath, std::string& errorOut) {
+	EnsurePreviewPosesLoaded();
+
+	// A file that's listed already, as a favorite or loaded before, is selected
+	// instead of being added again
+	const size_t prevCount = previewPoses.animationData.size();
+	const AnimationData* anim = previewPoses.AddAnimationFile(filePath);
+
+	for (size_t i = 0; i < previewPoses.animationData.size(); i++) {
+		if (&previewPoses.animationData[i] != anim)
+			continue;
+
+		if (SetPreviewAnimation(static_cast<int>(i), &errorOut))
+			return true;
+
+		// A file that can't be read isn't worth listing. New entries go last,
+		// so dropping it doesn't move the selected one.
+		if (previewPoses.animationData.size() > prevCount)
+			previewPoses.animationData.pop_back();
+
+		return false;
+	}
+
+	return false;
+}
+
+std::vector<std::string> BodySlideApp::GetPreviewAnimationNames() {
+	EnsurePreviewPosesLoaded();
+
+	std::vector<std::string> names;
+	names.reserve(previewPoses.animationData.size());
+	for (auto& anim : previewPoses.animationData)
+		names.push_back(anim.name);
+
+	return names;
+}
+
+bool BodySlideApp::IsPreviewAnimationFavorite(int animIndex) const {
+	if (animIndex < 0 || static_cast<size_t>(animIndex) >= previewPoses.animationData.size())
+		return false;
+
+	return previewPoses.IsFavoriteAnimation(previewPoses.animationData[animIndex]);
+}
+
+void BodySlideApp::SetPreviewAnimationFavorite(int animIndex, bool favorite) {
+	if (animIndex < 0 || static_cast<size_t>(animIndex) >= previewPoses.animationData.size())
+		return;
+
+	previewPoses.SetFavoriteAnimation(previewPoses.animationData[animIndex], GetAnimationFavoritesGame(), favorite);
+}
+
+bool BodySlideApp::SetPreviewAnimation(int animIndex, std::string* errorOut) {
+	if (animIndex < 0 || static_cast<size_t>(animIndex) >= previewPoses.animationData.size())
+		animIndex = -1;
+
+	// Favorites are only read once they're picked
+	if (animIndex >= 0) {
+		wxString error;
+		if (!PoseDataCollection::LoadAnimationFrames(previewPoses.animationData[animIndex], error)) {
+			if (errorOut)
+				*errorOut = error.ToUTF8().data();
+			return false;
+		}
+	}
+
+	previewAnimIndex = animIndex;
+	previewAnimFrame = 0.0;
+
+	if (animIndex < 0)
+		previewAnimPlaying = false;
+
+	JumpPreviewSkeleton();
+	UpdatePreviewPump();
+	return true;
+}
+
+void BodySlideApp::SetPreviewAnimationPlaying(bool playing) {
+	AnimationData* anim = GetPreviewAnimationData();
+	if (!anim || anim->framePoses.empty())
+		playing = false;
+
+	if (playing == previewAnimPlaying)
+		return;
+
+	previewAnimPlaying = playing;
+
+	if (playing) {
+		previewClock.Reset();
+	}
+	else {
+		// Land on a whole frame, so the pose left behind is the one the frame
+		// slider reports rather than a blend between two of them
+		previewAnimFrame = std::floor(previewAnimFrame);
+		ApplyPreviewSkeletonPose();
+		RefreshPreviewSkinning();
+	}
+
+	UpdatePreviewPump();
+}
+
+size_t BodySlideApp::GetPreviewAnimationFrameCount() {
+	AnimationData* anim = GetPreviewAnimationData();
+	return anim ? anim->GetNumFrames() : 0;
+}
+
+void BodySlideApp::SeekPreviewAnimation(int frame) {
+	const size_t numFrames = GetPreviewAnimationFrameCount();
+	if (numFrames == 0)
+		return;
+
+	previewAnimFrame = static_cast<double>(std::clamp(frame, 0, static_cast<int>(numFrames) - 1));
+	JumpPreviewSkeleton();
+}
+
+void BodySlideApp::SetPreviewAnimationInterpolate(bool interpolate) {
+	previewAnimInterpolate = interpolate;
 }
 
 void BodySlideApp::InjectPreviewCameraYaw(float deltaDegrees) {
@@ -2694,7 +3179,10 @@ void BodySlideApp::CleanupPreview() {
 	if (!preview)
 		return;
 
-	EnablePreviewPhysics(false);
+	// The pose and animation stay selected for the next preview, but nothing
+	// keeps moving without one
+	previewAnimPlaying = false;
+	ReleasePreviewSkinning();
 	previewPhysicsAvailable = false;
 
 	// Cancel async load and wait for it to finish
@@ -2706,6 +3194,7 @@ void BodySlideApp::CleanupPreview() {
 	preview->Cleanup();
 	preview->ShowLoadingIndicator(false);
 	referenceNif.reset();
+	previewLooseNifs.clear();
 
 	if (multiProjectMode) {
 		projects.clear();
@@ -2728,6 +3217,10 @@ void BodySlideApp::RebuildPreviewMeshes() {
 
 	int weight = preview->GetWeight();
 	auto shapeData = ComputeMorphedShapeData(weight);
+
+	// The skinning and simulation describe the NIFs about to be rewritten
+	const bool physicsWasRunning = previewPhysicsRunning;
+	ReleasePreviewSkinning();
 
 	// Multi-project mode
 	if (multiProjectMode) {
@@ -2785,7 +3278,7 @@ void BodySlideApp::RebuildPreviewMeshes() {
 		}
 
 		PostProcessPreview(shapeData, weight);
-		UpdatePreviewPhysicsAvailability(true);
+		UpdatePreviewPhysicsAvailability(physicsWasRunning);
 		return;
 	}
 
@@ -2826,7 +3319,7 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	}
 
 	PostProcessPreview(shapeData, weight);
-	UpdatePreviewPhysicsAvailability(true);
+	UpdatePreviewPhysicsAvailability(physicsWasRunning);
 }
 
 void BodySlideApp::UpdateExternalReferenceMesh(int weight, std::vector<Vector3>* outVerts) {
@@ -2886,7 +3379,19 @@ void BodySlideApp::UpdateExternalReferenceMesh(int weight, std::vector<Vector3>*
 		}
 	}
 
-	preview->UpdateMeshes(referenceShapeName, &extRefVerts, &extRefUvs);
+	if (IsPreviewPosed() && previewAnimsBuilt) {
+		// The clipping fix works on the unposed body, only the display is posed
+		previewReferenceMorphedVerts = extRefVerts;
+
+		std::vector<Vector3> skinnedVerts = extRefVerts;
+		ApplyPreviewReferenceSkinning(skinnedVerts);
+		preview->UpdateMeshes(referenceShapeName, &skinnedVerts, &extRefUvs);
+	}
+	else {
+		previewReferenceMorphedVerts.clear();
+		preview->UpdateMeshes(referenceShapeName, &extRefVerts, &extRefUvs);
+	}
+
 	preview->SetMeshVisibility(referenceShapeName, true);
 
 	if (outVerts)
@@ -4082,6 +4587,10 @@ int BodySlideApp::ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* tr
 	// Save the main app state so the conflicts preview doesn't corrupt it.
 	// LoadProjects() -> CleanupPreview() -> AddProjectSliders() all operate on
 	// shared app members (projects, sliderManager, multiProjectMode).
+	// The preview skinning describes the main projects, so it can't outlive the swap.
+	previewAnimPlaying = false;
+	ReleasePreviewSkinning();
+
 	PreviewPanel* savedPreview = preview;
 	PreviewWindow* savedPreviewWindow = previewWindow;
 	auto savedProjects = std::move(projects);
@@ -4166,6 +4675,12 @@ int BodySlideApp::ShowBuildOverrideWithPreview(wxDialog* dlg, wxTreeListCtrl* tr
 	projects = std::move(savedProjects);
 	multiProjectMode = savedMultiProjectMode;
 	std::swap(sliderManager, savedSliderManager);
+
+	// The pose may have been changed from the conflicts preview
+	if (preview) {
+		preview->RefreshPoseControls();
+		UpdatePreview();
+	}
 
 	return result;
 }
@@ -6960,6 +7475,8 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCollapsiblePane* advancedPane = XRCCTRL(*settings, "advancedPane", wxCollapsiblePane);
 		advancedPane->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [&settings](wxCommandEvent&) { settings->Fit(); });
 
+		const std::string prevSkeletonReference = Config["Anim/DefaultSkeletonReference"];
+
 		SettingsDialogShared::CommonSettingsDialogControls commonControls{};
 		SettingsDialogShared::InitCommonSettingsDialog(*settings,
 			Config,
@@ -7013,7 +7530,12 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			app->SaveFavorites();
+			// Poses and animations are made for one game's skeleton, and the
+			// preview skinning was built on the skeleton loaded before
+			const bool skeletonChanged = targ != app->targetGame || Config["Anim/DefaultSkeletonReference"] != prevSkeletonReference;
 			app->targetGame = targ;
+			if (skeletonChanged)
+				app->ResetPreviewPoses();
 			app->LoadFavorites();
 			GameUtil::InitArchives();
 			app->LoadAllCategories();

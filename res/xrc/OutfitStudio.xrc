@@ -1968,6 +1968,17 @@
 																						</object>
 																						<object class="sizeritem">
 																							<option>0</option>
+																							<flag>wxRIGHT|wxALIGN_CENTER_VERTICAL</flag>
+																							<border>5</border>
+																							<object class="wxButton" name="animFavorite">
+																								<size>25,25</size>
+																								<bitmap>$(AppDir)\res\images\FavoriteStarEmpty.png</bitmap>
+																								<tooltip>Favorite this animation. Favorites are listed in Outfit Studio and BodySlide without loading them again.</tooltip>
+																								<enabled>0</enabled>
+																							</object>
+																						</object>
+																						<object class="sizeritem">
+																							<option>0</option>
 																							<flag>wxEXPAND</flag>
 																							<object class="wxButton" name="importAnimationFile">
 																								<size>-1,25</size>

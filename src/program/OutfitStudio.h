@@ -1117,6 +1117,7 @@ public:
 	wxChoice* physicsWindDir = nullptr;
 	wxButton* poseToMesh = nullptr;
 	wxComboBox* cAnimationName = nullptr;
+	wxButton* animFavoriteButton = nullptr;
 	wxButton* animPlayPauseButton = nullptr;
 	wxSlider* animFrameSlider = nullptr;
 	wxStaticText* animFrameText = nullptr;
@@ -1958,7 +1959,12 @@ private:
 	void RestartAnimationClock();
 	void StartAnimationPlayback();
 	void PauseAnimationPlayback();
+	// Empties the animation list down to the favorites, which are listed but
+	// only read once selected
 	void ResetAnimationList();
+	// Refills the animation drop-down from the animation entries, keeping the
+	// selection
+	void PopulateAnimationList();
 	void UpdateAnimationPlayerUI();
 	// Enables/disables everything that could edit meshes, bones or the project
 	// while an animation is playing. The player controls stay usable.
@@ -1968,6 +1974,7 @@ private:
 	bool GetReferenceSkeletonHkxPath(std::string& outPath, const wxString& caption);
 	void OnSelectAnimation(wxCommandEvent& event);
 	void OnLoadHkxAnimation(wxCommandEvent& event);
+	void OnAnimationFavorite(wxCommandEvent& event);
 	void OnAnimPlayPause(wxCommandEvent& event);
 	void OnAnimFrameSlider(wxScrollEvent& event);
 	void OnAnimSpeedChanged(wxCommandEvent& event);

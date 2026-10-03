@@ -58,7 +58,23 @@ class PreviewPanel : public wxPanel {
 	wxWeakRef<wxChoice> physicsWindDir;
 	int physicsWindStrength = 0;
 	int physicsWindDirIndex = 0;
-	wxTimer physicsTimer;
+	wxStaticText* poseLabel = nullptr;
+	wxChoice* poseChoice = nullptr;
+	wxButton* animationButton = nullptr;
+	// Created on demand like the wind drop-down. The animation state itself
+	// lives in the application.
+	wxWeakRef<wxPopupTransientWindow> animationPopup;
+	wxWeakRef<wxChoice> animationChoice;
+	wxWeakRef<wxBitmapButton> animationFavoriteButton;
+	// The star the favorite button shows, so playback doesn't reload its bitmap every frame
+	bool animationFavoriteShown = false;
+	wxWeakRef<wxButton> animationPlayButton;
+	wxWeakRef<wxSlider> animationFrameSlider;
+	wxWeakRef<wxStaticText> animationFrameText;
+	wxWeakRef<wxCheckBox> animationInterpolateCheck;
+	int animationSpeedIndex = 2;
+	// Ticks physics and animation playback
+	wxTimer pumpTimer;
 	wxStaticText* projectLabel = nullptr;
 	wxChoice* projectChoice = nullptr;
 	wxStaticText* presetLabel = nullptr;
@@ -85,6 +101,10 @@ class PreviewPanel : public wxPanel {
 	void CreatePhysicsWindPopup();
 	void DestroyPhysicsWindPopup();
 	void ApplyPhysicsWind();
+	void CreateAnimationPopup();
+	void DestroyAnimationPopup();
+	// Refills the animation drop-down from the animations loaded so far
+	void PopulateAnimationChoice();
 	// Re-flows the tool bar above the canvas after a control was shown or
 	// hidden. The panel itself keeps its size, so its sizer needs the explicit
 	// nudge.
@@ -117,11 +137,28 @@ public:
 	void OnPhysicsWindButton(wxCommandEvent& event);
 	void OnPhysicsWind(wxScrollEvent& event);
 	void OnPhysicsWindDir(wxCommandEvent& event);
-	void OnPhysicsTimer(wxTimerEvent& event);
+	void OnPumpTimer(wxTimerEvent& event);
 
-	// One physics tick. Internally paced, so any event source may call it at
-	// any rate; a no-op while physics is off.
-	void PumpPhysics();
+	void OnPoseChoice(wxCommandEvent& event);
+	void OnAnimationButton(wxCommandEvent& event);
+	void OnAnimationChoice(wxCommandEvent& event);
+	void OnAnimationFavorite(wxCommandEvent& event);
+	void OnLoadAnimation(wxCommandEvent& event);
+	void OnAnimationPlayPause(wxCommandEvent& event);
+	void OnAnimationFrame(wxScrollEvent& event);
+	void OnAnimationSpeed(wxCommandEvent& event);
+	void OnAnimationInterpolate(wxCommandEvent& event);
+
+	// One physics and animation tick. Internally paced, so any event source may
+	// call it at any rate; a no-op while nothing moves.
+	void Pump();
+	// Runs the tick timer while physics or an animation is playing
+	void SetPumpActive(bool active);
+
+	// Refills the pose list and reflects the selected pose and animation
+	void RefreshPoseControls();
+	// Reflects the animation's frame and play state in the drop-down
+	void SyncAnimationControls();
 
 	// Shows or hides the whole physics block. Only meshes that reference a
 	// physics XML can be simulated, so the controls stay out of the way for
