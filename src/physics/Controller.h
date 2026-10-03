@@ -106,6 +106,12 @@ public:
 	// True when at least one system was built.
 	bool IsActive() const;
 
+	// Replaces the rest shape the collision meshes of "shapeName" were built
+	// from, e.g. with the shape as the sliders morphed it. "verts" are
+	// unskinned and indexed like the vertices of the NIF shape; a different
+	// vertex count (e.g. after zapping) leaves the meshes as they are.
+	void SetShapeVertices(const std::string& shapeName, const std::vector<nifly::Vector3>& verts);
+
 	// Re-seats all dynamic bodies on the current kinematic pose. Call after
 	// enabling physics, seeking an animation or any other teleport.
 	void ResetDynamics();

@@ -50,6 +50,9 @@ dependencies on the game and its engine were replaced:
 * `XmlReader` is reimplemented on tinyxml2, as described above, which drops the
   vendored XmlInspector parser (about 14000 lines) without changing the
   interface the parsing code uses.
+* `SkinnedMeshBody::finishBuild` remembers which original vertex each kept
+  vertex came from (`m_sourceVertices`), so the preview can move the rest
+  shape of a collision mesh to where the sliders morphed the NIF shape.
 * Game-side pieces that have no meaning in a mesh editor are not ported:
   game hooks, `defaultBBPs.xml` name mapping (physics files are found through
   the `"HDT Skinned Mesh Physics Object"` extra data only), and the actor and

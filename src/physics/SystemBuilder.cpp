@@ -189,6 +189,43 @@ void PreviewBody::internalUpdate() {
 	hdt::SkinnedMeshBody::internalUpdate();
 }
 
+bool PreviewBody::setShapeVertices(const std::string& shapeName, const std::vector<nifly::Vector3>& verts) {
+	auto range = std::find_if(m_shapeRanges.begin(), m_shapeRanges.end(), [&shapeName](const ShapeRange& r) { return r.shapeName == shapeName; });
+	if (range == m_shapeRanges.end() || verts.size() != range->count)
+		return false;
+
+	for (size_t i = 0; i < m_vertices.size() && i < m_sourceVertices.size(); ++i) {
+		const uint32_t src = m_sourceVertices[i];
+		if (src >= range->start && src - range->start < range->count)
+			m_vertices[i].m_skinPos = ToBt(verts[src - range->start]);
+	}
+
+	// The broadphase only tests bodies whose bone bounding spheres touch, so
+	// grow the spheres of the skin data to whatever the morph pushed outside
+	// of them. Never shrink below them, they are what the game uses.
+	for (size_t b = 0; b < m_skinnedBones.size() && b < m_skinBoundingSpheres.size(); ++b)
+		m_skinnedBones[b].localBoundingSphere = m_skinBoundingSpheres[b];
+
+	for (const auto& v : m_vertices) {
+		for (int k = 0; k < 4; ++k) {
+			if (v.m_weight[k] <= 0.0f)
+				continue;
+
+			const hdt::U32 b = v.getBoneIdx(k);
+			if (b >= m_skinnedBones.size())
+				continue;
+
+			auto& bone = m_skinnedBones[b];
+			const btVector3 center = bone.localBoundingSphere.center();
+			const float dist = (bone.vertexToBone * v.m_skinPos - center).length();
+			if (dist > bone.localBoundingSphere.radius())
+				bone.localBoundingSphere = hdt::BoundingSphere(center, dist);
+		}
+	}
+
+	return true;
+}
+
 // -------------------------------------------------------------- PreviewSystem
 
 hdt::SkinnedMeshBone* PreviewSystem::findBone(const IDStr& name) {
@@ -958,6 +995,7 @@ std::pair<hdt::Ref<PreviewBody>, SystemBuilder::VertexOffsetMap> SystemBuilder::
 		}
 
 		vertexOffsetMap.emplace_back(shape, vertexStart);
+		body->m_shapeRanges.push_back({shape->name.get(), static_cast<uint32_t>(vertexStart), static_cast<uint32_t>(verts.size())});
 		boneStart = static_cast<int>(body->m_skinnedBones.size());
 		vertexStart = static_cast<int>(body->m_vertices.size());
 	}
@@ -969,6 +1007,9 @@ std::pair<hdt::Ref<PreviewBody>, SystemBuilder::VertexOffsetMap> SystemBuilder::
 
 	for (auto& i : body->m_vertices)
 		i.sortWeight();
+
+	for (auto& i : body->m_skinnedBones)
+		body->m_skinBoundingSpheres.push_back(i.localBoundingSphere);
 
 	return {body, vertexOffsetMap};
 }

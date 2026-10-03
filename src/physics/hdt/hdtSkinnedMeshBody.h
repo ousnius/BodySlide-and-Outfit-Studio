@@ -89,6 +89,9 @@ namespace hdt
 
 		std::vector<Vertex> m_vertices;
 		std::vector<VertexPos> m_vpos;
+		// Index each vertex had before finishBuild dropped the unused ones
+		// (preview addition, see README)
+		std::vector<uint32_t> m_sourceVertices;
 
 		std::vector<IDStr> m_tags;
 		std::unordered_set<IDStr> m_canCollideWithTags;

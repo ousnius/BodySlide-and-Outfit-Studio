@@ -3038,6 +3038,8 @@ void OutfitStudioFrame::ApplySliders(bool recalcBVH) {
 		glView->UpdateMeshVertices(shape->name.get(), &verts, recalcBVH, true, false, &uvs);
 	}
 
+	UpdatePhysicsShapes();
+
 	bool tMode = glView->GetTransformMode();
 
 	if (tMode)
@@ -14791,8 +14793,9 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 
 		statusBar->SetStatusText(wxString::Format(_("Physics active: %zu system(s)"), systemCount));
 		project->physicsPose = &physics->PoseOverrides();
-		physics->ResetDynamics();
 		physicsRunning = true;
+		UpdatePhysicsShapes();
+		physics->ResetDynamics();
 
 		// The step clock must be valid for the lockstep path too, where
 		// StartPhysicsPump never runs
@@ -14847,6 +14850,19 @@ void OutfitStudioFrame::UpdatePhysicsState() {
 	// it instead of leaving a checked box that does nothing.
 	if (cbPhysics && !physicsRunning)
 		cbPhysics->SetValue(false);
+}
+
+void OutfitStudioFrame::UpdatePhysicsShapes() {
+	if (!physicsRunning || !physics || !project)
+		return;
+
+	// The systems are built from the base shapes of the NIF, so they would
+	// otherwise keep colliding with the shapes the sliders morphed away from
+	std::vector<Vector3> verts;
+	for (auto& shape : project->GetWorkNif()->GetShapes()) {
+		project->GetMorphedVerts(shape, verts);
+		physics->SetShapeVertices(shape->name.get(), verts);
+	}
 }
 
 void OutfitStudioFrame::StartPhysicsPump() {

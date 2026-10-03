@@ -2527,6 +2527,12 @@ void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, 
 			// Remember the morphed shape so a physics or animation tick can skin
 			// it again without running all sliders, then show it skinned
 			previewMorphedVerts[sd.name] = sd.verts;
+
+			// Collide with the shape the sliders describe, not the base shape
+			for (auto& physics : previewPhysics)
+				if (physics.projectIdx == sd.projectIdx)
+					physics.controller->SetShapeVertices(sd.name, sd.verts);
+
 			ApplyPreviewSkinning(sd.projectIdx, sd.name, sd.verts);
 		}
 
@@ -2601,6 +2607,13 @@ void BodySlideApp::EnablePreviewPhysics(bool enable) {
 
 		if (systemCount == 0)
 			continue;
+
+		// The systems are built from the base shapes of the NIF
+		for (auto it = pp->sliderSet.ShapesBegin(); it != pp->sliderSet.ShapesEnd(); ++it) {
+			auto morphedVerts = previewMorphedVerts.find(it->first);
+			if (morphedVerts != previewMorphedVerts.end())
+				controller->SetShapeVertices(it->first, morphedVerts->second);
+		}
 
 		controller->ResetDynamics();
 

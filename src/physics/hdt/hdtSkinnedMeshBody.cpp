@@ -220,10 +220,12 @@ namespace hdt
 
 		uint32_t numUsed = 0;
 		std::vector<uint32_t> map(m_vertices.size());
+		m_sourceVertices.clear();
 		for (size_t i = 0; i < m_vertices.size(); ++i) {
 			if (flags[i]) {
 				m_vertices[numUsed] = m_vertices[i];
 				m_vpos[numUsed] = m_vpos[i];
+				m_sourceVertices.push_back(static_cast<uint32_t>(i));
 				map[i] = numUsed++;
 			}
 		}

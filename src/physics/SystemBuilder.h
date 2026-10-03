@@ -89,8 +89,26 @@ public:
 	int m_disablePriority = 0;
 	hdt::IDStr m_disableTag;
 
+	// Vertex range each NIF shape occupies in the body, indexed like
+	// m_vertices before finishBuild (see m_sourceVertices)
+	struct ShapeRange {
+		std::string shapeName;
+		uint32_t start = 0;
+		uint32_t count = 0;
+	};
+	std::vector<ShapeRange> m_shapeRanges;
+
+	// Bone bounding spheres of the NIF's skin data, per skinned bone
+	std::vector<hdt::BoundingSphere> m_skinBoundingSpheres;
+
 	bool canCollideWith(const hdt::SkinnedMeshBody* body) const override;
 	void internalUpdate() override;
+
+	// Replaces the rest positions of the vertices built from "shapeName" with
+	// "verts" (skin space, indexed like the shape's NIF vertices), e.g. after
+	// sliders morphed the shape. Returns false when the body has no vertices
+	// of that shape or the vertex count differs from the NIF's.
+	bool setShapeVertices(const std::string& shapeName, const std::vector<nifly::Vector3>& verts);
 };
 
 // Port of hdtSMP64's SkyrimSystem minus the game skeleton members. Root

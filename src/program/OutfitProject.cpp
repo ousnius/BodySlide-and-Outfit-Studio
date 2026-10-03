@@ -2214,6 +2214,15 @@ int OutfitProject::GetVertexCount(NiShape* shape) {
 }
 
 void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts, std::vector<Vector2>* outUVs) {
+	GetMorphedVerts(shape, outVerts, outUVs);
+
+	if (bPose) {
+		bool isSF = workNif.GetHeader().GetVersion().IsSF();
+		ApplySkinningToVerts(workAnim, shape, isSF, physicsPose, outVerts);
+	}
+}
+
+void OutfitProject::GetMorphedVerts(NiShape* shape, std::vector<Vector3>& outVerts, std::vector<Vector2>* outUVs) {
 	workNif.GetVertsForShape(shape, outVerts);
 	if (outUVs)
 		workNif.GetUvsForShape(shape, *outUVs);
@@ -2246,11 +2255,6 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 					morpher.ApplyResultToVerts(activeSet[i].name, target, &outVerts, activeSet[i].curValue);
 			}
 		}
-	}
-
-	if (bPose) {
-		bool isSF = workNif.GetHeader().GetVersion().IsSF();
-		ApplySkinningToVerts(workAnim, shape, isSF, physicsPose, outVerts);
 	}
 }
 

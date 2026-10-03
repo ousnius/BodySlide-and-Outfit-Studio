@@ -436,6 +436,15 @@ bool Controller::IsActive() const {
 	return impl && !impl->systems.empty();
 }
 
+void Controller::SetShapeVertices(const std::string& shapeName, const std::vector<nifly::Vector3>& verts) {
+	if (!IsActive())
+		return;
+
+	for (auto& system : impl->systems)
+		for (auto& body : system->meshes())
+			static_cast<PreviewBody*>(body.get())->setShapeVertices(shapeName, verts);
+}
+
 void Controller::ResetDynamics() {
 	if (!IsActive())
 		return;
@@ -668,6 +677,8 @@ void Controller::Clear() {}
 bool Controller::IsActive() const {
 	return false;
 }
+
+void Controller::SetShapeVertices(const std::string&, const std::vector<nifly::Vector3>&) {}
 
 void Controller::ResetDynamics() {}
 void Controller::Step(float) {}

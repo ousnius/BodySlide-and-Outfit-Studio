@@ -2008,6 +2008,8 @@ private:
 	// Single authority over building/tearing down the simulation; call after
 	// anything that changes one of those conditions or the loaded meshes.
 	void UpdatePhysicsState();
+	// Hands the shapes as the sliders morph them to the running simulation.
+	void UpdatePhysicsShapes();
 	// Shows the physics controls only while the loaded meshes reference a
 	// physics XML, since there is nothing to simulate otherwise. Stops a running
 	// simulation when the last of them goes away.
