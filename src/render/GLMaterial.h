@@ -63,4 +63,11 @@ public:
 					  const bool hasLightmask,
 					  const GLuint dynamicCubemapID = 0,
 					  const bool isPBR = false);
+
+	// Binds the textures of a Starfield layered material, each to its unit in list order, and the
+	// environment cube map to unit 4 when there is one.
+	void BindSFTextures(GLfloat largestAF, const GLuint cubemapID);
+	// One bit per texture: whether it was uploaded in an sRGB or in a signed format
+	uint32_t GetSRGBMask();
+	uint32_t GetSignedMask();
 };

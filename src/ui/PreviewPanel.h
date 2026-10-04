@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
+#include "../files/SFMaterialResolver.h"
 #include "../render/GLOffscreenBuffer.h"
 #include "../render/GLSurface.h"
 #include "../utils/ConfigurationManager.h"
@@ -27,7 +28,6 @@ See the included LICENSE file
 
 class BodySlideApp;
 class PreviewCanvas;
-class SFMaterialDatabase;
 
 extern ConfigurationManager Config;
 
@@ -91,13 +91,11 @@ class PreviewPanel : public wxPanel {
 
 	GLSurface gls;
 	std::unordered_map<std::string, GLMaterial*> shapeMaterials;
+	// Starfield layered materials by shape, kept so a mesh rebuilt from the NIF gets the same one back
+	std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
 	std::string baseDataPath;
 
-	std::vector<std::unique_ptr<SFMaterialDatabase>> sfMaterialDbs;
-	std::vector<std::string> sfMaterialDbContents;
-	std::vector<std::unique_ptr<std::istringstream>> sfMaterialDbStreams;
-	bool sfMaterialDbsLoaded = false;
-	bool GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput);
+	SFMaterialResolver sfMaterialResolver;
 	void CreatePhysicsWindPopup();
 	void DestroyPhysicsWindPopup();
 	void ApplyPhysicsWind();
@@ -280,6 +278,20 @@ public:
 
 			gls.UpdateShaders(m);
 		}
+	}
+
+	// A skinned Starfield shape has no bone nodes in its NIF to be placed by, so its skin space is placed
+	// by the reference skeleton's bones instead, the same way Outfit Studio does it.
+	void SetSFSkinTransform(nifly::NifFile* nif, const std::string& shapeName, Mesh* m);
+
+	void SetShapeSFMaterial(const std::string& shapeName, const std::shared_ptr<const SFLayeredMaterial>& material) {
+		Mesh* m = gls.GetMesh(shapeName);
+		if (!m || !material)
+			return;
+
+		gls.AssignSFMaterial(m, *material, Config["AppDir"] + "/res/shaders/sf_default.vert", Config["AppDir"] + "/res/shaders/sf_default.frag");
+		shapeSFMaterials[shapeName] = material;
+		gls.UpdateShaders(m);
 	}
 
 	void SetShapeVertexColors(nifly::NifFile* nif, const std::string& shapeName, Mesh* mesh) {

@@ -4,8 +4,7 @@ See the included LICENSE file
 */
 
 #include "PreviewPanel.h"
-#include "../files/SFMaterialDatabase.h"
-#include "../files/SFMaterialFile.h"
+#include "../files/GameDataStream.h"
 #include "../physics/Controller.h"
 #include "../physics/PumpClock.h"
 #include "../program/BodySlideApp.h"
@@ -398,6 +397,11 @@ void PreviewPanel::LoadNifFiles(const std::vector<std::string>& nifFilePaths) {
 			continue;
 		}
 
+		// A Starfield NIF only references the .mesh files its geometry is in
+		if (nifFile->GetHeader().GetVersion().IsSF())
+			for (const auto& meshPath : GameDataStream::LoadExternalGeometry(*nifFile, Config["GameDataPath"], nifPath))
+				wxLogWarning("Unable to locate external mesh data '%s' of nif file: %s", meshPath, nifPath);
+
 		wxLogMessage("Loading nif: %s", nifPath);
 		AddMeshFromNif(nifFile.get());
 
@@ -548,6 +552,7 @@ void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 			if (!m)
 				continue;
 
+			SetSFSkinTransform(nif, shapeListName, m);
 			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildVertexAdjacency();
 			m->CreateBuffers();
@@ -556,6 +561,22 @@ void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 				gls.SetMeshVisibility(shapeListName, false);
 		}
 	}
+}
+
+void PreviewPanel::SetSFSkinTransform(NifFile* nif, const std::string& shapeName, Mesh* m) {
+	if (!m || !nif->GetHeader().GetVersion().IsSF())
+		return;
+
+	auto shape = nif->FindBlockByName<NiShape>(shapeName);
+	if (!shape || !shape->IsSkinned() || !app->EnsurePreviewSkeleton())
+		return;
+
+	AnimSkin skin;
+	skin.LoadFromNif(nif, shape);
+
+	MatTransform globalToSkin = skin.xformGlobalToSkin;
+	globalToSkin.translation *= sfHavokScale;
+	m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(globalToSkin.ComposeTransforms(Mesh::xformMeshToNif)));
 }
 
 void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
@@ -572,13 +593,17 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 			if (!m)
 				continue;
 
+			SetSFSkinTransform(nif, shapeListName, m);
 			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildVertexAdjacency();
 			m->SmoothNormals();
 			m->CreateBuffers();
 
+			auto sfIter = shapeSFMaterials.find(shapeListName);
 			auto iter = shapeMaterials.find(shapeListName);
-			if (iter != shapeMaterials.end())
+			if (sfIter != shapeSFMaterials.end())
+				SetShapeSFMaterial(shapeListName, sfIter->second);
+			else if (iter != shapeMaterials.end())
 				m->material = iter->second;
 			else
 				AddNifShapeTextures(nif, shapeListName);
@@ -593,55 +618,6 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 	gls.RenderOneFrame();
 }
 
-bool PreviewPanel::GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput) {
-	if ((TargetGame)Config.GetIntValue("TargetGame") != SF)
-		return false;
-
-	if (!sfMaterialDbsLoaded) {
-		sfMaterialDbsLoaded = true;
-
-		std::set<std::string> seen;
-		for (FSArchiveFile* archive : FSManager::archiveList()) {
-			if (!archive)
-				continue;
-
-			auto tryLoad = [&](const std::string& cdbPath) {
-				if (!seen.insert(cdbPath).second)
-					return;
-
-				wxMemoryBuffer data;
-				archive->fileContents(cdbPath, data);
-				if (data.IsEmpty())
-					return;
-
-				auto db = std::make_unique<SFMaterialDatabase>();
-				sfMaterialDbContents.emplace_back(static_cast<const char*>(data.GetData()), data.GetDataLen());
-				sfMaterialDbStreams.push_back(std::make_unique<std::istringstream>(sfMaterialDbContents.back(), std::ios::in | std::ios::binary));
-
-				if (db->Load(*sfMaterialDbStreams.back()) && !db->Failed()) {
-					sfMaterialDbs.push_back(std::move(db));
-				}
-				else {
-					sfMaterialDbContents.pop_back();
-					sfMaterialDbStreams.pop_back();
-				}
-			};
-
-			std::vector<std::string> matches;
-			archive->findFilesBySuffix("materials/", ".cdb", matches);
-			for (const auto& match : matches)
-				tryLoad(match);
-		}
-	}
-
-	for (auto& db : sfMaterialDbs) {
-		if (db->GetMaterialJSON(matPath, jsonOutput))
-			return true;
-	}
-
-	return false;
-}
-
 void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName) {
 	bool hasMat = false;
 	bool hasSFMat = false;
@@ -649,6 +625,7 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 
 	const uint8_t MAX_TEXTURE_PATHS = 10;
 	std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
+	std::shared_ptr<const SFLayeredMaterial> sfMaterial;
 
 	NiShader* shader = nullptr;
 	auto shape = fromNif->FindBlockByName<NiShape>(shapeName);
@@ -678,50 +655,16 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 		matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");
 
 		if (hasSFMat) {
-			if (!std::regex_search(matFile, std::regex("\\.mat$", std::regex_constants::icase)))
-				matFile += ".mat";
+			SFLayeredMaterial sfMat;
+			if (sfMaterialResolver.Resolve(matFile, baseDataPath, sfMat)) {
+				texFiles = sfMat.GetPrimaryTextureFiles(MAX_TEXTURE_PATHS);
 
-			SFMaterialFile sfMat(baseDataPath + matFile);
-			if (!sfMat.Failed()) {
-				texFiles = sfMat.GetTextureFiles(MAX_TEXTURE_PATHS);
+				sfMat.ResolveTexturePaths([this](const std::string& texFile) { return baseDataPath + texFile; });
+				sfMaterial = std::make_shared<const SFLayeredMaterial>(std::move(sfMat));
 			}
-			else {
-				bool resolvedFromArchive = false;
-				for (FSArchiveFile* archive : FSManager::archiveList()) {
-					if (archive && archive->hasFile(matFile)) {
-						wxMemoryBuffer outData;
-						archive->fileContents(matFile, outData);
-						if (!outData.IsEmpty()) {
-							std::string content(static_cast<const char*>(outData.GetData()), outData.GetDataLen());
-							std::istringstream contentStream(content, std::istringstream::binary);
-							SFMaterialFile archiveMat(contentStream);
-							if (!archiveMat.Failed()) {
-								texFiles = archiveMat.GetTextureFiles(MAX_TEXTURE_PATHS);
-								resolvedFromArchive = true;
-							}
-							break;
-						}
-					}
-				}
-
-				if (!resolvedFromArchive) {
-					std::string materialJson;
-					if (GetSFMaterialJSON(matFile, materialJson)) {
-						std::istringstream materialStream(materialJson);
-						SFMaterialFile cdbMat(materialStream);
-						if (!cdbMat.Failed())
-							texFiles = cdbMat.GetTextureFiles(MAX_TEXTURE_PATHS);
-					}
-				}
-
-				bool hasAnyTex = false;
-				for (int i = 0; i < MAX_TEXTURE_PATHS && !hasAnyTex; i++)
-					hasAnyTex = !texFiles[i].empty();
-
-				if (!hasAnyTex && shader) {
-					for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-						fromNif->GetTextureSlot(shape, texFiles[i], i);
-				}
+			else if (shader) {
+				for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+					fromNif->GetTextureSlot(shape, texFiles[i], i);
 			}
 
 			hasMat = false;
@@ -803,13 +746,19 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 	bool renderAsPBR = false;
 
 	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame == SF) {
+		// Every Starfield shape renders through its layered material, a single layer of whatever textures
+		// it has when there is no material to read
+		if (!sfMaterial)
+			sfMaterial = std::make_shared<const SFLayeredMaterial>(SFLayeredMaterial::FromTextureFiles(texFiles));
+
+		SetShapeSFMaterial(shapeName, sfMaterial);
+		return;
+	}
+
 	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
-	}
-	else if (targetGame == SF) {
-		vShader = Config["AppDir"] + "/res/shaders/sf_default.vert";
-		fShader = Config["AppDir"] + "/res/shaders/sf_default.frag";
 	}
 	else if (targetGame == OB) {
 		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
@@ -1347,6 +1296,7 @@ void PreviewPanel::Cleanup() {
 
 	gls.Cleanup();
 	shapeMaterials.clear();
+	shapeSFMaterials.clear();
 	gls.RenderOneFrame();
 }
 

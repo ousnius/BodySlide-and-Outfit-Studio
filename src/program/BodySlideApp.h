@@ -214,9 +214,6 @@ private:
 	double previewAnimSpeed = 1.0;
 	PoseData previewAnimBlendPose;
 
-	// Loads the reference skeleton of the current game into the application
-	// skeleton if it isn't already.
-	bool EnsurePreviewSkeleton();
 	// Loads the poses and lists the favorite animations if it isn't done yet
 	void EnsurePreviewPosesLoaded();
 	// The game's section in the animation favorites
@@ -261,6 +258,9 @@ private:
 
 public:
 	virtual ~BodySlideApp();
+	// Loads the reference skeleton of the current game into the application
+	// skeleton if it isn't already.
+	bool EnsurePreviewSkeleton();
 	virtual bool OnInit();
 	virtual void OnInitCmdLine(wxCmdLineParser& parser);
 	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);

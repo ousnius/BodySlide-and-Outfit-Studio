@@ -203,16 +203,19 @@
   <ItemGroup>
     <ClInclude Include="src\files\SFMaterialDatabase.h" />
     <ClInclude Include="src\files\SFMaterialFile.h" />
+    <ClInclude Include="src\files\SFLayeredMaterial.h" />
     <ClInclude Include="src\files\SFMaterialGraph.h" />
     <ClInclude Include="src\files\SFResourceHash.h" />
     <ClInclude Include="src\utils\StringStuff.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tests\SFMaterialDatabaseTest.cpp" />
+    <ClCompile Include="tests\SFLayeredMaterialTest.cpp" />
     <ClCompile Include="tests\SFMaterialFileTest.cpp" />
     <ClCompile Include="tests\SFResourceHashTest.cpp" />
     <ClCompile Include="src\files\SFMaterialDatabase.cpp" />
     <ClCompile Include="src\files\SFMaterialFile.cpp" />
+    <ClCompile Include="src\files\SFLayeredMaterial.cpp" />
     <ClCompile Include="src\files\SFMaterialGraph.cpp" />
     <ClCompile Include="src\files\SFResourceHash.cpp" />
     <ClCompile Include="src\utils\StringStuff.cpp" />

@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "../utils/AABBTree.h"
 #include "../files/MaterialFile.h"
+#include "../files/SFLayeredMaterial.h"
 #include "NifFile.hpp"
 
 #include <cstdint>
@@ -110,6 +111,7 @@ struct UndoStateShapeDelete {
 	std::vector<UndoStateShapeSliderDiff> sliderDiffs;
 	std::vector<std::string> textures;
 	std::optional<MaterialFile> materialFile;
+	std::shared_ptr<const SFLayeredMaterial> sfMaterial;
 	std::vector<std::string> physicsFiles;
 	// Reference info captured when wasBaseShape, restored on undo
 	std::string refProjectFile;

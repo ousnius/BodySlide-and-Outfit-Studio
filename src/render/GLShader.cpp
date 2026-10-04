@@ -7,7 +7,9 @@ See the included LICENSE file
 #include "../utils/PlatformUtil.h"
 #include "Object3d.hpp"
 
+#include <algorithm>
 #include <fstream>
+#include <regex>
 #include <sstream>
 
 using namespace nifly;
@@ -49,7 +51,7 @@ bool GLShader::CheckExtensions() {
 	return extSupported;
 }
 
-bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text) {
+bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text, int includeDepth) {
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios_base::in | std::ios_base::binary);
 	if (!file)
@@ -63,7 +65,78 @@ bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text) {
 	if (text.empty())
 		return false;
 
+	if (text.find("#include") == std::string::npos)
+		return true;
+
+	// An include file can include others in turn, but never deeper than this, which is also what
+	// stops two files that include each other
+	constexpr int maxIncludeDepth = 4;
+	static const std::regex includeLine("^\\s*#include\\s+\"([^\"]+)\"\\s*$");
+
+	const size_t slash = fileName.find_last_of("/\\");
+	const std::string dir = slash == std::string::npos ? std::string() : fileName.substr(0, slash + 1);
+
+	std::istringstream lines(text);
+	std::string expanded;
+	std::string line;
+	int lineNumber = 0;
+
+	while (std::getline(lines, line)) {
+		++lineNumber;
+
+		std::smatch match;
+		if (!std::regex_match(line, match, includeLine)) {
+			expanded += line + "\n";
+			continue;
+		}
+
+		std::string includedText;
+		if (includeDepth >= maxIncludeDepth || !LoadShaderFile(dir + match[1].str(), includedText, includeDepth + 1))
+			return false;
+
+		// Line numbers in compile errors count from the start of whichever file the line came from
+		expanded += "#line 1\n" + includedText + "\n#line " + std::to_string(lineNumber + 1) + "\n";
+	}
+
+	text = std::move(expanded);
 	return true;
+}
+
+void GLShader::InsertDefines(std::string& text) {
+	const std::string defines = "#define MAX_TEXTURE_UNITS " + std::to_string(GetMaxTextureUnits()) + "\n";
+
+	// Nothing but comments may come before #version, so the defines go right after it, with a #line
+	// directive that keeps the line numbers of everything below as they were in the file
+	size_t version = text.find("#version");
+	if (version == std::string::npos) {
+		text.insert(0, defines + "#line 1\n");
+		return;
+	}
+
+	const size_t versionEnd = text.find('\n', version);
+	if (versionEnd == std::string::npos) {
+		text += "\n" + defines;
+		return;
+	}
+
+	const int versionLine = static_cast<int>(std::count(text.begin(), text.begin() + versionEnd, '\n')) + 1;
+	text.insert(versionEnd + 1, defines + "#line " + std::to_string(versionLine + 1) + "\n");
+}
+
+int GLShader::GetMaxTextureUnits() {
+	static GLint maxUnits = 0;
+	if (maxUnits <= 0) {
+		GLint units = 0;
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &units);
+
+		// Without a context to ask, the minimum OpenGL 3.3 promises
+		if (units <= 0)
+			return 16;
+
+		maxUnits = units;
+	}
+
+	return maxUnits;
 }
 
 void GLShader::AssignDefaultSamplerUnits() {
@@ -102,7 +175,101 @@ void GLShader::AssignDefaultSamplerUnits() {
 			glUniform1i(loc, su.unit);
 	}
 
+	// The sampler array of the Starfield shader, which GLMaterial::BindSFTextures fills in list order
+	for (size_t i = 0; i < GetSFMaxTextures(); i++) {
+		const std::string name = "textureUnits[" + std::to_string(i) + "]";
+		GLint loc = glGetUniformLocation(progID, name.c_str());
+		if (loc >= 0)
+			glUniform1i(loc, GetSFTextureUnit(i));
+	}
+
 	glUseProgram(0);
+}
+
+void GLShader::SetSFMaterial(const SFRenderData& data, const uint32_t srgbMask, const uint32_t signedMask) {
+	SFUniformLocations& loc = sfLocations;
+	if (!loc.lookedUp) {
+		auto find = [this](const char* name) {
+			return glGetUniformLocation(progID, name);
+		};
+
+		loc.numLayers = find("sfNumLayers");
+		loc.layerTextures = find("sfLayerTextures");
+		loc.layerReplacements = find("sfLayerReplacements");
+		loc.layerColors = find("sfLayerColors");
+		loc.layerUVs = find("sfLayerUVs");
+		loc.layerFlags = find("sfLayerFlags");
+		loc.layerNormalScales = find("sfLayerNormalScales");
+		loc.blenderMasks = find("sfBlenderMasks");
+		loc.blenderMaskReplacements = find("sfBlenderMaskReplacements");
+		loc.blenderUVs = find("sfBlenderUVs");
+		loc.blenderModes = find("sfBlenderModes");
+		loc.blenderChannels = find("sfBlenderChannels");
+		loc.blenderFlags = find("sfBlenderFlags");
+		loc.blenderParams = find("sfBlenderParams");
+		loc.blenderIntensities = find("sfBlenderIntensities");
+		loc.flags = find("sfFlags");
+		loc.alphaThreshold = find("sfAlphaThreshold");
+		loc.alphaSourceLayer = find("sfAlphaSourceLayer");
+		loc.alphaVertexColorChannel = find("sfAlphaVertexColorChannel");
+		loc.alphaUV = find("sfAlphaUV");
+		loc.materialAlpha = find("sfMaterialAlpha");
+		loc.opacityLayers = find("sfOpacityLayers");
+		loc.opacityBlendModes = find("sfOpacityBlendModes");
+		loc.emissiveLayers = find("sfEmissiveLayers");
+		loc.emissiveMasks = find("sfEmissiveMasks");
+		loc.emissiveTints = find("sfEmissiveTints");
+		loc.emissiveIntensity = find("sfEmissiveIntensity");
+		loc.transmissiveLayer = find("sfTransmissiveLayer");
+		loc.transmissiveScale = find("sfTransmissiveScale");
+		loc.sssStrength = find("sfSSSStrength");
+		loc.srgbMask = find("sfSRGBMask");
+		loc.signedMask = find("sfSignedMask");
+		loc.lookedUp = true;
+	}
+
+	constexpr GLsizei layers = static_cast<GLsizei>(SFLayeredMaterial::MaxLayers);
+	constexpr GLsizei blenders = static_cast<GLsizei>(SFLayeredMaterial::MaxBlenders);
+	constexpr GLsizei slots = layers * static_cast<GLsizei>(SFRenderData::SlotsPerLayer);
+
+	// A uniform the compiler optimized away has no location, which glUniform ignores
+	glUniform1i(loc.numLayers, data.numLayers);
+	glUniform1iv(loc.layerTextures, slots, data.layerTextures);
+	glUniform4fv(loc.layerReplacements, slots, data.layerReplacements);
+	glUniform4fv(loc.layerColors, layers, data.layerColors);
+	glUniform4fv(loc.layerUVs, layers, data.layerUVs);
+	glUniform1iv(loc.layerFlags, layers, data.layerFlags);
+	glUniform1fv(loc.layerNormalScales, layers, data.layerNormalScales);
+
+	glUniform1iv(loc.blenderMasks, blenders, data.blenderMasks);
+	glUniform4fv(loc.blenderMaskReplacements, blenders, data.blenderMaskReplacements);
+	glUniform4fv(loc.blenderUVs, blenders, data.blenderUVs);
+	glUniform1iv(loc.blenderModes, blenders, data.blenderModes);
+	glUniform1iv(loc.blenderChannels, blenders, data.blenderChannels);
+	glUniform1iv(loc.blenderFlags, blenders, data.blenderFlags);
+	glUniform4fv(loc.blenderParams, blenders, data.blenderParams);
+	glUniform1fv(loc.blenderIntensities, blenders, data.blenderIntensities);
+
+	glUniform1i(loc.flags, data.flags);
+	glUniform1f(loc.alphaThreshold, data.alphaThreshold);
+	glUniform1i(loc.alphaSourceLayer, data.alphaSourceLayer);
+	glUniform1i(loc.alphaVertexColorChannel, data.alphaVertexColorChannel);
+	glUniform4f(loc.alphaUV, data.alphaUV[0], data.alphaUV[1], data.alphaUV[2], data.alphaUV[3]);
+	glUniform1f(loc.materialAlpha, data.materialAlpha);
+	glUniform1iv(loc.opacityLayers, 3, data.opacityLayers);
+	glUniform1iv(loc.opacityBlendModes, 2, data.opacityBlendModes);
+
+	glUniform1iv(loc.emissiveLayers, 3, data.emissiveLayers);
+	glUniform1iv(loc.emissiveMasks, 3, data.emissiveMasks);
+	glUniform4fv(loc.emissiveTints, 3, data.emissiveTints);
+	glUniform1f(loc.emissiveIntensity, data.emissiveIntensity);
+
+	glUniform1i(loc.transmissiveLayer, data.transmissiveLayer);
+	glUniform1f(loc.transmissiveScale, data.transmissiveScale);
+	glUniform1f(loc.sssStrength, data.sssStrength);
+
+	glUniform1i(loc.srgbMask, static_cast<GLint>(srgbMask));
+	glUniform1i(loc.signedMask, static_cast<GLint>(signedMask));
 }
 
 bool GLShader::LoadShaders(const std::string& vertexSource, const std::string& fragmentSource) {
@@ -117,6 +284,9 @@ bool GLShader::LoadShaders(const std::string& vertexSource, const std::string& f
 		errorString = "OpenGL: Failed to load fragment shader from file: " + fragmentSource;
 		return false;
 	}
+
+	InsertDefines(vertSrc);
+	InsertDefines(fragSrc);
 
 	return BuildShaders();
 }

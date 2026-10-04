@@ -6,6 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include "../files/MaterialFile.h"
+#include "../files/SFLayeredMaterial.h"
 #include "../render/GLExtensions.h"
 #include "../utils/AABBTree.h"
 
@@ -100,6 +101,8 @@ public:
 	std::unique_ptr<nifly::Vector3[]> vcolors;
 	std::unique_ptr<float[]> valpha;
 	std::unique_ptr<nifly::Vector2[]> texcoord;
+	// Second UV channel, which only Starfield meshes have and which nothing edits
+	std::unique_ptr<nifly::Vector2[]> texcoord2;
 	std::unique_ptr<float[]> mask;
 	std::unique_ptr<float[]> weight;
 
@@ -115,7 +118,7 @@ public:
 
 	bool genBuffers = false;
 	GLuint vao = 0;
-	std::vector<GLuint> vbo = std::vector<GLuint>(9, 0);
+	std::vector<GLuint> vbo = std::vector<GLuint>(10, 0);
 	GLuint ibo = 0;
 
 	std::vector<std::pair<uint32_t, uint32_t>> subMeshes; // Start index and size of each sub mesh
@@ -167,6 +170,12 @@ public:
 	// rather than a glow map, and slot 4 nothing at all. Such a shape is rendered through its own pair
 	// of shader files, so this is separate from a Complex Material and the two never both apply.
 	bool pbr = false;
+	// True when the shape is rendered through a Starfield layered material, see GLSurface::AssignSFMaterial.
+	// Its texture slots follow the material rather than any fixed layout, so the slot 4 and 5 meanings
+	// of the other games never apply to it, and everything the shader needs to know about the
+	// material is in sfRenderData.
+	bool sfLayered = false;
+	std::shared_ptr<const SFRenderData> sfRenderData;
 	// Highest mip of the cubemap in slot 4, how blurry a fully rough reflection is allowed to get.
 	float cubemapMaxLod = 0.0f;
 	// True when slot 4 asked to be replaced by a dynamic cubemap: either it holds the 1x1 cubemap
@@ -236,8 +245,9 @@ public:
 	bool HasTintColor() const;
 	// Whether the shape has something to reflect, which is what puts texture slots 4 and 5 in play.
 	// Environment mapping is one way to ask for it; being a True PBR shape is the other, and those say
-	// so with their own flag while leaving environment mapping switched off.
-	bool WantsEnvironment() const { return cubemap || pbr; }
+	// so with their own flag while leaving environment mapping switched off, and so does every Starfield
+	// layered material, which is lit the same way.
+	bool WantsEnvironment() const { return cubemap || pbr || sfLayered; }
 	bool HasAlphaBlend();
 
 	void ScaleVertices(const nifly::Vector3& center, const float& factor);

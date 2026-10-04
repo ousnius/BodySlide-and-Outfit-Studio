@@ -202,6 +202,11 @@ void Mesh::CreateBuffers() {
 		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(float), weight.get(), GL_DYNAMIC_DRAW);
 	}
 
+	if (texcoord2) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[9]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord2.get(), GL_STATIC_DRAW);
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	// Element index array

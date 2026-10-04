@@ -385,6 +385,8 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/SFMaterialDatabase.cpp
 	src/files/SFMaterialFile.cpp
 	src/files/SFMaterialGraph.cpp
+	src/files/SFLayeredMaterial.cpp
+	src/files/SFMaterialResolver.cpp
 	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
@@ -413,6 +415,8 @@ set(BSOS_BODYSLIDE_SOURCES
 	src/files/SFMaterialDatabase.cpp
 	src/files/SFMaterialFile.cpp
 	src/files/SFMaterialGraph.cpp
+	src/files/SFLayeredMaterial.cpp
+	src/files/SFMaterialResolver.cpp
 	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/files/wxDDSImage.cpp
@@ -466,6 +470,7 @@ if(BSOS_BUILD_TESTS)
 	add_executable(BSOSTests
 		tests/HkxFileTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
+		tests/SFLayeredMaterialTest.cpp
 		tests/SFMaterialFileTest.cpp
 		tests/SFMorphFileTest.cpp
 		tests/SFResourceHashTest.cpp
@@ -473,6 +478,7 @@ if(BSOS_BUILD_TESTS)
 		src/files/SFMaterialDatabase.cpp
 		src/files/SFMaterialFile.cpp
 		src/files/SFMaterialGraph.cpp
+		src/files/SFLayeredMaterial.cpp
 		src/files/SFMorphFile.cpp
 		src/files/SFResourceHash.cpp
 		src/utils/PlatformUtil.cpp

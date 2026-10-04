@@ -50,6 +50,10 @@ PFNGLUNIFORM1FPROC glUniform1f = nullptr;
 PFNGLUNIFORM1IPROC glUniform1i = nullptr;
 PFNGLUNIFORM2FPROC glUniform2f = nullptr;
 PFNGLUNIFORM3FPROC glUniform3f = nullptr;
+PFNGLUNIFORM4FPROC glUniform4f = nullptr;
+PFNGLUNIFORM1IVPROC glUniform1iv = nullptr;
+PFNGLUNIFORM1FVPROC glUniform1fv = nullptr;
+PFNGLUNIFORM4FVPROC glUniform4fv = nullptr;
 PFNGLUNIFORMMATRIX3FVPROC glUniformMatrix3fv = nullptr;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv = nullptr;
 
@@ -135,6 +139,10 @@ void InitExtensions() {
 		glUniform1i = (PFNGLUNIFORM1IPROC)wglGetProcAddress("glUniform1i");
 		glUniform2f = (PFNGLUNIFORM2FPROC)wglGetProcAddress("glUniform2f");
 		glUniform3f = (PFNGLUNIFORM3FPROC)wglGetProcAddress("glUniform3f");
+		glUniform4f = (PFNGLUNIFORM4FPROC)wglGetProcAddress("glUniform4f");
+		glUniform1iv = (PFNGLUNIFORM1IVPROC)wglGetProcAddress("glUniform1iv");
+		glUniform1fv = (PFNGLUNIFORM1FVPROC)wglGetProcAddress("glUniform1fv");
+		glUniform4fv = (PFNGLUNIFORM4FVPROC)wglGetProcAddress("glUniform4fv");
 		glUniformMatrix3fv = (PFNGLUNIFORMMATRIX3FVPROC)wglGetProcAddress("glUniformMatrix3fv");
 		glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)wglGetProcAddress("glUniformMatrix4fv");
 
@@ -147,7 +155,7 @@ void InitExtensions() {
 		if (!glGetStringi || !glGenVertexArrays || !glBindVertexArray || !glDeleteVertexArrays || !glCreateShader || !glShaderSource || !glCompileShader || !glCreateProgram
 			|| !glAttachShader || !glLinkProgram || !glUseProgram || !glGetShaderiv || !glGetShaderInfoLog || !glGetProgramiv || !glGetProgramInfoLog || !glDisableVertexAttribArray
 			|| !glEnableVertexAttribArray || !glVertexAttribPointer || !glGenBuffers || !glDeleteBuffers || !glBindBuffer || !glBufferData || !glBufferSubData
-			|| !glGetAttribLocation || !glGetUniformLocation || !glUniform1f || !glUniform1i || !glUniform2f || !glUniform3f || !glUniformMatrix4fv || !glActiveTexture) {
+			|| !glGetAttribLocation || !glGetUniformLocation || !glUniform1f || !glUniform1i || !glUniform2f || !glUniform3f || !glUniform4f || !glUniform1iv || !glUniform1fv || !glUniform4fv || !glUniformMatrix4fv || !glActiveTexture) {
 			extSupported = false;
 		}
 
@@ -190,7 +198,7 @@ void InitExtensions() {
 	extSupported = glGetStringi && glGenVertexArrays && glBindVertexArray && glDeleteVertexArrays && glCreateShader && glShaderSource && glCompileShader && glCreateProgram
 				   && glAttachShader && glLinkProgram && glUseProgram && glGetShaderiv && glGetShaderInfoLog && glGetProgramiv && glGetProgramInfoLog && glDisableVertexAttribArray
 				   && glEnableVertexAttribArray && glVertexAttribPointer && glGenBuffers && glDeleteBuffers && glBindBuffer && glBufferData && glBufferSubData
-				   && glGetAttribLocation && glGetUniformLocation && glUniform1f && glUniform1i && glUniform2f && glUniform3f && glUniformMatrix4fv && glActiveTexture;
+				   && glGetAttribLocation && glGetUniformLocation && glUniform1f && glUniform1i && glUniform2f && glUniform3f && glUniform4f && glUniform1iv && glUniform1fv && glUniform4fv && glUniformMatrix4fv && glActiveTexture;
 	extInitialized = true;
 }
 

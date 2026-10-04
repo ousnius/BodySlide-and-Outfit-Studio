@@ -2,8 +2,14 @@
 
 /*
  * BodySlide and Outfit Studio
- * Starfield diffuse preview shader
+ * Shaders by jonwd7 and ousnius
+ * https://github.com/ousnius/BodySlide-and-Outfit-Studio
+ * http://www.niftools.org/
  */
+
+// The vertex stage of the Starfield layered material shader, see sf_default.frag. The same as the
+// True PBR one apart from handing on both UV channels, since a layer or blender of a Starfield
+// material can be mapped with either.
 
 uniform mat4 matProjection;
 uniform mat4 matView;
@@ -22,11 +28,17 @@ uniform bool bWireframe;
 
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec3 vertexNormal;
+layout(location = 2) in vec3 vertexTangent;
+layout(location = 3) in vec3 vertexBitangent;
 layout(location = 4) in vec3 vertexColors;
 layout(location = 5) in float vertexAlpha;
 layout(location = 6) in vec2 vertexUV;
 layout(location = 7) in float vertexMask;
 layout(location = 8) in float vertexWeight;
+layout(location = 9) in vec2 vertexUV2;
+
+// Whether the mesh has a second UV channel. Without one, the first stands in for it.
+uniform bool bUV2;
 
 struct DirectionalLight
 {
@@ -44,12 +56,16 @@ out vec3 lightDirectional0;
 out vec3 lightDirectional1;
 out vec3 lightDirectional2;
 
-out vec3 viewNormal;
+out vec3 viewDir;
+out vec3 n;
+out mat3 mv_tbn;
+
 out float maskFactor;
 out vec3 weightColor;
 
 out vec4 vColor;
-out vec2 vUV;
+// First UV channel in xy, second in zw
+out vec4 vUV;
 
 vec3 colorRamp(in float value)
 {
@@ -91,10 +107,11 @@ vec3 colorRamp(in float value)
 
 void main(void)
 {
+	// Initialization
 	maskFactor = 1.0;
 	weightColor = vec3(1.0, 1.0, 1.0);
 	vColor = vec4(1.0, 1.0, 1.0, 1.0);
-	vUV = vertexUV;
+	vUV = vec4(vertexUV, bUV2 ? vertexUV2 : vertexUV);
 
 	if (bShowVertexColor)
 	{
@@ -106,10 +123,21 @@ void main(void)
 		vColor.a = vertexAlpha;
 	}
 
+	// Eye-coordinate position of vertex
 	vec3 vPos = vec3(matModelView * vec4(vertexPosition, 1.0));
 	gl_Position = matProjection * vec4(vPos, 1.0);
 
-	viewNormal = normalize(mv_normalMatrix * vertexNormal);
+	n = vertexNormal;
+
+	vec3 mv_normal = mv_normalMatrix * n;
+	vec3 mv_tangent = mv_normalMatrix * vertexTangent;
+	vec3 mv_bitangent = mv_normalMatrix * vertexBitangent;
+
+	mv_tbn = mat3(mv_bitangent.x, mv_bitangent.y, mv_bitangent.z,
+	              mv_tangent.x, mv_tangent.y, mv_tangent.z,
+	              mv_normal.x, mv_normal.y, mv_normal.z);
+
+	viewDir = normalize(-vPos);
 	lightFrontal = normalize(frontal.direction);
 	lightDirectional0 = normalize(mat3(matView) * directional0.direction);
 	lightDirectional1 = normalize(mat3(matView) * directional1.direction);

@@ -199,6 +199,10 @@ bool BodySlideApp::OnInit() {
 	if (cmdPreviewMode && !cmdPreviewNifs.empty()) {
 		wxLogMessage("BodySlide preview mode initialized.");
 
+		// The main frame's data loading, which preview mode skips, is what makes the archives available
+		// otherwise. Without them the preview misses every texture, material and mesh kept in one.
+		GameUtil::InitArchives();
+
 		// Resolve the preset of a preset file given on the command line before the projects are loaded.
 		LoadCmdPresetFile();
 
@@ -1918,8 +1922,9 @@ void BodySlideApp::InitPreview() {
 	auto extraNifPaths = multiProjectMode ? preview->GetExtraNifPaths() : std::vector<std::string>{};
 	bool isMultiProject = multiProjectMode;
 	PreviewPanel* targetPreview = preview;
+	std::string dataPath = Config["GameDataPath"];
 
-	previewLoadThread = std::thread([this, gen, projectInfos, extraNifPaths, isMultiProject, targetPreview]() {
+	previewLoadThread = std::thread([this, gen, projectInfos, extraNifPaths, isMultiProject, targetPreview, dataPath]() {
 		struct ProjectResult {
 			size_t index;
 			nifly::NifFile* baseNif = nullptr;
@@ -1951,6 +1956,10 @@ void BodySlideApp::InitPreview() {
 				result.baseNif = nullptr;
 				continue;
 			}
+
+			if (result.baseNif->GetHeader().GetVersion().IsSF())
+				for (const auto& meshPath : GameDataStream::LoadExternalGeometry(*result.baseNif, dataPath, info.inputFileName))
+					wxLogWarning("Unable to locate external mesh data '%s' of nif file: %s", meshPath, info.inputFileName);
 
 			result.modNif.CopyFrom(*result.baseNif);
 
@@ -2349,6 +2358,10 @@ bool BodySlideApp::LoadExternalReference(const SliderSet& sliderSet) {
 		referenceNif.reset();
 		return false;
 	}
+
+	if (referenceNif->GetHeader().GetVersion().IsSF())
+		for (const auto& meshPath : GameDataStream::LoadExternalGeometry(*referenceNif, Config["GameDataPath"], refInputFile))
+			wxLogWarning("Unable to locate external mesh data '%s' of nif file: %s", meshPath, refInputFile);
 
 	// Verify the shape exists
 	auto refShape = referenceNif->FindBlockByName<NiShape>(referenceShapeName);

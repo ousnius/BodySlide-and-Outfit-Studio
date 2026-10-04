@@ -40,6 +40,18 @@ public:
 							const bool useDefaultTexture = true,
 							const bool isPBR = false);
 
+	// A Starfield layered material, whose texture list is whatever the material references rather than
+	// a fixed slot layout: every file is a plain 2D texture, none is classified, and one that can't be
+	// loaded is left out instead of being replaced by the placeholder - the material has a replacement
+	// color for that. The files that did load come back in loadedFiles, no more than maxTextures of
+	// them, in the order the material binds them to its texture units.
+	GLMaterial* AddSFMaterial(const std::vector<std::string>& textureFiles,
+							  const size_t maxTextures,
+							  const std::string& vShaderFile,
+							  const std::string& fShaderFile,
+							  const bool reloadTextures,
+							  std::vector<std::string>& loadedFiles);
+
 
 	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and
 	// tracks the resulting GL texture identifier so subsequent access to the same texture does not result
@@ -95,6 +107,10 @@ public:
 	//  than decode the texture a second time.
 	bool IsSRGBTexture(const std::string& texName) const;
 
+	// Whether the texture was uploaded in a signed format, such as the BC5_SNORM normal maps of
+	//  Starfield, which sample as -1 to 1 and so need no expanding from 0 to 1 in the shader.
+	bool IsSignedTexture(const std::string& texName) const;
+
 	// compares the incoming cacheTime with the internal cacheTime, and returns true if they match.
 	//  if they do not match, the incoming cacheTime is updated to match and the function returns false.
 	bool CacheStamp(int64_t& inCacheTime) {
@@ -108,10 +124,10 @@ public:
 
 private:
 	static bool extChecked;
-	// isSRGB, if given, receives whether the texture went up in an sRGB format.
-	GLuint GLI_create_texture(gli::texture& texture, GLuint textureID = 0, bool* isSRGB = nullptr);
-	GLuint GLI_load_texture(const std::string& fileName, GLuint textureID = 0, bool* isSRGB = nullptr);
-	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID = 0, bool* isSRGB = nullptr);
+	// isSRGB and isSigned, if given, receive whether the texture went up in an sRGB or a signed format.
+	GLuint GLI_create_texture(gli::texture& texture, GLuint textureID = 0, bool* isSRGB = nullptr, bool* isSigned = nullptr);
+	GLuint GLI_load_texture(const std::string& fileName, GLuint textureID = 0, bool* isSRGB = nullptr, bool* isSigned = nullptr);
+	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID = 0, bool* isSRGB = nullptr, bool* isSigned = nullptr);
 
 	// Highest level with actual storage for the currently bound texture. GL_TEXTURE_MAX_LEVEL isn't
 	//  usable here: the SOIL path never sets it and leaves it at its 1000 default, so the levels are
@@ -144,6 +160,7 @@ private:
 	std::map<std::string, int, case_insensitive_compare> cubemapSizes;
 	std::map<std::string, nifly::Vector3, case_insensitive_compare> cubemapF0Colors;
 	std::map<std::string, bool, case_insensitive_compare> srgbTextures;
+	std::map<std::string, bool, case_insensitive_compare> signedTextures;
 
 	int64_t cacheTime = 1;
 };
