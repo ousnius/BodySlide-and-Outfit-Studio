@@ -7334,46 +7334,6 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<NiSh
 }
 #endif
 
-std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath) const {
-	// Normalize path: replace backslashes, extract relative geometries path, ensure prefix and suffix
-	std::string meshPath = std::regex_replace(path, std::regex("\\\\+"), "/");
-	meshPath = std::regex_replace(meshPath, std::regex("^(.*?)/geometries/", std::regex_constants::icase), "");
-	meshPath = std::regex_replace(meshPath, std::regex("^/+"), "");
-	meshPath = std::regex_replace(meshPath, std::regex("^(?!^geometries/)", std::regex_constants::icase), "geometries/");
-
-	if (meshPath.size() < 5 || meshPath.compare(meshPath.size() - 5, 5, ".mesh") != 0)
-		meshPath += ".mesh";
-
-	// 1) Loose file in GameDataPath
-	if (auto stream = GameDataStream::OpenLoose(dir + meshPath))
-		return stream;
-
-	// 2) Beside the meshes folder (or NIF directory) of the loading NIF
-	if (!nifFilePath.empty()) {
-		std::string nifDir = std::regex_replace(nifFilePath, std::regex("\\\\+"), "/");
-		std::string nifDirLower = ToLower(nifDir);
-
-		auto meshesPos = nifDirLower.rfind("/meshes/");
-		if (meshesPos != std::string::npos) {
-			if (auto stream = GameDataStream::OpenLoose(nifDir.substr(0, meshesPos + 1) + meshPath))
-				return stream;
-		}
-		else {
-			auto lastSlash = nifDir.rfind('/');
-			if (lastSlash != std::string::npos) {
-				if (auto stream = GameDataStream::OpenLoose(nifDir.substr(0, lastSlash + 1) + meshPath))
-					return stream;
-			}
-		}
-	}
-
-	// 3) Search in archives
-	if (auto stream = GameDataStream::OpenArchive(meshPath))
-		return stream;
-
-	return nullptr;
-}
-
 std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::string& xmlPath) {
 	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
 }
@@ -7422,26 +7382,14 @@ void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {
 		}
 	}
 
-	for (auto& s : nif.GetShapes()) {
-		uint8_t meshIndex = 0;
-		for (auto meshPath : nif.GetExternalGeometryPathRefs(s)) {
-			auto dataPath = Config["GameDataPath"];
+	for (const auto& meshPath : GameDataStream::LoadExternalGeometry(nif, Config["GameDataPath"], nifFilePath))
+		wxMessageBox(wxString::Format(_("Unable to locate external mesh data for shape. Expected path: %s"), meshPath),
+					 _("External Mesh Data Load Failure"),
+					 wxICON_WARNING,
+					 owner);
 
-			auto meshStream = GetExternalGeometryStream(dataPath, meshPath.get(), nifFilePath);
-			if (!meshStream) {
-				wxMessageBox(wxString::Format(_("Unable to locate external mesh data for shape. Expected path: %s"), meshPath.get()),
-							 _("External Mesh Data Load Failure"),
-							 wxICON_WARNING,
-							 owner);
-				continue;
-			}
-
-			nif.LoadExternalShapeData(s, *meshStream, meshIndex);
-			meshIndex++;
-		}
-
+	for (auto& s : nif.GetShapes())
 		nif.TriangulateShape(s);
-	}
 }
 
 void OutfitProject::ResetTransforms() {

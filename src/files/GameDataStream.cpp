@@ -11,6 +11,7 @@ See the included LICENSE file
 
 #include "FSEngine/FSEngine.h"
 #include "FSEngine/FSManager.h"
+#include "NifFile.hpp"
 
 #include <fstream>
 #include <regex>
@@ -96,5 +97,62 @@ std::unique_ptr<std::istream> OpenPhysicsXml(const std::string& xmlPath, const s
 
 	// 3) Search in archives
 	return OpenArchive(relPath);
+}
+
+std::unique_ptr<std::istream> OpenExternalGeometry(const std::string& path, const std::string& dataPath, const std::string& nifFilePath) {
+	// Normalize path: replace backslashes, extract relative geometries path, ensure prefix and suffix
+	std::string meshPath = std::regex_replace(path, std::regex("\\\\+"), "/");
+	meshPath = std::regex_replace(meshPath, std::regex("^(.*?)/geometries/", std::regex_constants::icase), "");
+	meshPath = std::regex_replace(meshPath, std::regex("^/+"), "");
+	meshPath = std::regex_replace(meshPath, std::regex("^(?!^geometries/)", std::regex_constants::icase), "geometries/");
+
+	if (meshPath.size() < 5 || meshPath.compare(meshPath.size() - 5, 5, ".mesh") != 0)
+		meshPath += ".mesh";
+
+	// 1) Loose file in the data folder
+	if (auto stream = OpenLoose(dataPath + meshPath))
+		return stream;
+
+	// 2) Beside the meshes folder (or NIF directory) of the loading NIF
+	if (!nifFilePath.empty()) {
+		std::string nifDir = std::regex_replace(nifFilePath, std::regex("\\\\+"), "/");
+		std::string nifDirLower = ToLower(nifDir);
+
+		auto meshesPos = nifDirLower.rfind("/meshes/");
+		if (meshesPos != std::string::npos) {
+			if (auto stream = OpenLoose(nifDir.substr(0, meshesPos + 1) + meshPath))
+				return stream;
+		}
+		else {
+			auto lastSlash = nifDir.rfind('/');
+			if (lastSlash != std::string::npos) {
+				if (auto stream = OpenLoose(nifDir.substr(0, lastSlash + 1) + meshPath))
+					return stream;
+			}
+		}
+	}
+
+	// 3) Search in archives
+	return OpenArchive(meshPath);
+}
+
+std::vector<std::string> LoadExternalGeometry(nifly::NifFile& nif, const std::string& dataPath, const std::string& nifFilePath) {
+	std::vector<std::string> missing;
+
+	for (auto& shape : nif.GetShapes()) {
+		uint8_t meshIndex = 0;
+		for (auto meshPath : nif.GetExternalGeometryPathRefs(shape)) {
+			auto meshStream = OpenExternalGeometry(meshPath.get(), dataPath, nifFilePath);
+			if (!meshStream) {
+				missing.push_back(meshPath.get());
+				continue;
+			}
+
+			nif.LoadExternalShapeData(shape, *meshStream, meshIndex);
+			meshIndex++;
+		}
+	}
+
+	return missing;
 }
 }

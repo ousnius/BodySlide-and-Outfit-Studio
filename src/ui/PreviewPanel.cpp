@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "PreviewPanel.h"
+#include "../files/GameDataStream.h"
 #include "../physics/Controller.h"
 #include "../physics/PumpClock.h"
 #include "../program/BodySlideApp.h"
@@ -396,6 +397,11 @@ void PreviewPanel::LoadNifFiles(const std::vector<std::string>& nifFilePaths) {
 			continue;
 		}
 
+		// A Starfield NIF only references the .mesh files its geometry is in
+		if (nifFile->GetHeader().GetVersion().IsSF())
+			for (const auto& meshPath : GameDataStream::LoadExternalGeometry(*nifFile, Config["GameDataPath"], nifPath))
+				wxLogWarning("Unable to locate external mesh data '%s' of nif file: %s", meshPath, nifPath);
+
 		wxLogMessage("Loading nif: %s", nifPath);
 		AddMeshFromNif(nifFile.get());
 
@@ -546,6 +552,7 @@ void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 			if (!m)
 				continue;
 
+			SetSFSkinTransform(nif, shapeListName, m);
 			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildVertexAdjacency();
 			m->CreateBuffers();
@@ -554,6 +561,22 @@ void PreviewPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 				gls.SetMeshVisibility(shapeListName, false);
 		}
 	}
+}
+
+void PreviewPanel::SetSFSkinTransform(NifFile* nif, const std::string& shapeName, Mesh* m) {
+	if (!m || !nif->GetHeader().GetVersion().IsSF())
+		return;
+
+	auto shape = nif->FindBlockByName<NiShape>(shapeName);
+	if (!shape || !shape->IsSkinned() || !app->EnsurePreviewSkeleton())
+		return;
+
+	AnimSkin skin;
+	skin.LoadFromNif(nif, shape);
+
+	MatTransform globalToSkin = skin.xformGlobalToSkin;
+	globalToSkin.translation *= sfHavokScale;
+	m->SetXformModelToMesh(Mesh::xformNifToMesh.ComposeTransforms(globalToSkin.ComposeTransforms(Mesh::xformMeshToNif)));
 }
 
 void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
@@ -570,6 +593,7 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 			if (!m)
 				continue;
 
+			SetSFSkinTransform(nif, shapeListName, m);
 			SetShapeVertexColors(nif, shapeListName, m);
 			m->BuildVertexAdjacency();
 			m->SmoothNormals();

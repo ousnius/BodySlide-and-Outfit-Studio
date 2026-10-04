@@ -159,7 +159,6 @@ class OutfitProject {
 	// game reads only one of them, so a single one is picked for the output.
 	std::vector<std::unique_ptr<nifly::NiStringExtraData>> rootPhysicsData;
 
-	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath = std::string()) const;
 	void ValidateNIF(nifly::NifFile& nif, const std::string& nifFilePath = std::string());
 
 	// Records the HDT-SMP links on the root node of a NIF that is about to be

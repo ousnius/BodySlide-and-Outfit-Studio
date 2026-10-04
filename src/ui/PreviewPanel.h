@@ -280,6 +280,10 @@ public:
 		}
 	}
 
+	// A skinned Starfield shape has no bone nodes in its NIF to be placed by, so its skin space is placed
+	// by the reference skeleton's bones instead, the same way Outfit Studio does it.
+	void SetSFSkinTransform(nifly::NifFile* nif, const std::string& shapeName, Mesh* m);
+
 	void SetShapeSFMaterial(const std::string& shapeName, const std::shared_ptr<const SFLayeredMaterial>& material) {
 		Mesh* m = gls.GetMesh(shapeName);
 		if (!m || !material)
