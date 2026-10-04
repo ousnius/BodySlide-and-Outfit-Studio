@@ -12,8 +12,6 @@ See the included LICENSE file
 #include "../files/ObjFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
-#include "../files/SFMaterialDatabase.h"
-#include "../files/SFMaterialFile.h"
 #include "FBXImportDialog.h"
 #include "ObjImportDialog.h"
 #include "../utils/PlatformUtil.h"
@@ -36,52 +34,6 @@ using namespace nifly;
 
 namespace {
 
-class MaterialPathUtil {
-public:
-	static std::string NormalizeMaterialPath(std::string matFile, const std::string& extension) {
-		matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");
-		matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "materials/");
-		matFile = std::regex_replace(matFile, std::regex("^/+"), "");
-
-		if (!StartsWithInsensitive(matFile, "materials/"))
-			matFile = "materials/" + matFile;
-
-		if (!HasExtensionInsensitive(matFile, extension))
-			matFile += extension;
-
-		return matFile;
-	}
-
-	static std::string NormalizeTexturePath(std::string textureFile) {
-		textureFile = std::regex_replace(textureFile, std::regex("\\\\+"), "/");
-		textureFile = std::regex_replace(textureFile, std::regex("^(.*?)/textures/", std::regex_constants::icase), "");
-		textureFile = std::regex_replace(textureFile, std::regex("^/+"), "");
-
-		if (!StartsWithInsensitive(textureFile, "textures/"))
-			textureFile = "textures/" + textureFile;
-
-		return textureFile;
-	}
-
-private:
-	static bool HasExtensionInsensitive(const std::string& path, const std::string& extension) {
-		if (extension.empty())
-			return true;
-
-		if (path.length() < extension.length())
-			return false;
-
-		return StringsEqualInsens(path.substr(path.length() - extension.length()).c_str(), extension.c_str());
-	}
-
-	static bool StartsWithInsensitive(const std::string& path, const std::string& prefix) {
-		if (path.length() < prefix.length())
-			return false;
-
-		return StringsEqualInsens(path.substr(0, prefix.length()).c_str(), prefix.c_str());
-	}
-};
-
 class ArchiveMaterialLoader {
 public:
 	static bool ReadFile(const std::string& filePath, wxMemoryBuffer& data) {
@@ -98,40 +50,6 @@ public:
 		}
 
 		return false;
-	}
-
-	static bool ReadSFMaterialFile(const std::string& matFile, std::vector<std::string>& texFiles, size_t numTextures) {
-		wxMemoryBuffer data;
-		if (!ReadFile(matFile, data))
-			return false;
-
-		std::string content(static_cast<const char*>(data.GetData()), data.GetDataLen());
-		std::istringstream contentStream(content, std::istringstream::binary);
-		SFMaterialFile sfMat(contentStream);
-		if (sfMat.Failed())
-			return false;
-
-		texFiles = sfMat.GetTextureFiles(numTextures);
-		return true;
-	}
-
-	static std::vector<std::string> FindAllCdbPaths() {
-		std::vector<std::string> cdbPaths;
-		std::set<std::string> seen;
-
-		for (FSArchiveFile* archive : FSManager::archiveList()) {
-			if (!archive)
-				continue;
-
-			std::vector<std::string> matches;
-			archive->findFilesBySuffix("materials/", ".cdb", matches);
-			for (const auto& match : matches) {
-				if (seen.insert(match).second)
-					cdbPaths.push_back(match);
-			}
-		}
-
-		return cdbPaths;
 	}
 };
 
@@ -2342,6 +2260,14 @@ bool OutfitProject::GetShapeMaterialFile(NiShape* shape, MaterialFile& outMatFil
 	return false;
 }
 
+std::shared_ptr<const SFLayeredMaterial> OutfitProject::GetShapeSFMaterial(NiShape* shape) {
+	auto material = shapeSFMaterials.find(shape->name.get());
+	if (material != shapeSFMaterials.end())
+		return material->second;
+
+	return nullptr;
+}
+
 void OutfitProject::SetTextures() {
 	for (auto& s : workNif.GetShapes())
 		SetTextures(s);
@@ -2387,40 +2313,25 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 		}
 
 		shapeMaterialFiles.erase(shapeName);
+		shapeSFMaterials.erase(shapeName);
 
 		MaterialFile mat(MaterialFile::BGSM);
 		if (hasMat) {
 			if (hasSFMat) {
-				matFile = MaterialPathUtil::NormalizeMaterialPath(matFile, ".mat");
+				SFLayeredMaterial sfMat;
+				if (sfMaterialResolver.Resolve(matFile, texturesDir, sfMat)) {
+					texFiles = sfMat.GetPrimaryTextureFiles(MAX_TEXTURE_PATHS);
 
-				SFMaterialFile sfMat(texturesDir + matFile);
-				if (!sfMat.Failed()) {
-					texFiles = sfMat.GetTextureFiles(MAX_TEXTURE_PATHS);
+					sfMat.ResolveTexturePaths([&texturesDir](const std::string& texFile) { return texturesDir + texFile; });
+					shapeSFMaterials[shapeName] = std::make_shared<const SFLayeredMaterial>(std::move(sfMat));
 				}
-				else {
-					bool resolvedFromArchive = ArchiveMaterialLoader::ReadSFMaterialFile(matFile, texFiles, MAX_TEXTURE_PATHS);
-					bool resolvedFromCdb = false;
-
-					if (!resolvedFromArchive) {
-						std::string materialJson;
-						if (GetSFMaterialJSON(matFile, materialJson)) {
-							std::istringstream materialStream(materialJson);
-							SFMaterialFile cdbMat(materialStream);
-							if (!cdbMat.Failed()) {
-								texFiles = cdbMat.GetTextureFiles(MAX_TEXTURE_PATHS);
-								resolvedFromCdb = true;
-							}
-						}
-					}
-
-					if (!resolvedFromArchive && !resolvedFromCdb && shader) {
-						for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-							workNif.GetTextureSlot(shape, texFiles[i], i);
-					}
+				else if (shader) {
+					for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+						workNif.GetTextureSlot(shape, texFiles[i], i);
 				}
 			}
 			else {
-				matFile = MaterialPathUtil::NormalizeMaterialPath(matFile, "");
+				matFile = SFMaterialResolver::NormalizeMaterialPath(matFile, "");
 
 				// Attempt to read loose material file
 				mat = MaterialFile(texturesDir + matFile);
@@ -2468,14 +2379,33 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
 			if (!texFiles[i].empty()) {
-				texFiles[i] = texturesDir + MaterialPathUtil::NormalizeTexturePath(texFiles[i]);
+				texFiles[i] = texturesDir + SFMaterialResolver::NormalizeTexturePath(texFiles[i]);
 			}
 		}
 
 		shapeTextures[shapeName] = texFiles;
 	}
-	else
+	else {
 		shapeTextures[shapeName] = textureFiles;
+
+		// Textures picked by hand replace the ones the first layer of a Starfield material renders
+		// with, and leave the rest of the material as it was
+		if (workNif.GetHeader().GetVersion().IsSF()) {
+			SFLayeredMaterial sfMat;
+			auto existing = shapeSFMaterials.find(shapeName);
+			if (existing != shapeSFMaterials.end() && existing->second)
+				sfMat = *existing->second;
+
+			if (sfMat.layers.empty())
+				sfMat.layers.emplace_back();
+
+			auto& layerFiles = sfMat.layers[0].textureSet.files;
+			for (size_t i = 0; i < std::min<size_t>(textureFiles.size(), 8); i++)
+				layerFiles[i] = textureFiles[i];
+
+			shapeSFMaterials[shapeName] = std::make_shared<const SFLayeredMaterial>(std::move(sfMat));
+		}
+	}
 }
 
 bool OutfitProject::IsValidShape(const std::string& shapeName) {
@@ -5412,6 +5342,7 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 	owner->glView->DeleteMesh(shapeName);
 	shapeTextures.erase(shapeName);
 	shapeMaterialFiles.erase(shapeName);
+	shapeSFMaterials.erase(shapeName);
 	shapePhysicsFiles.erase(shapeName);
 
 	if (IsBaseShape(shape)) {
@@ -5645,6 +5576,10 @@ void OutfitProject::CaptureShapeDeleteState(NiShape* shape, UndoStateShapeDelete
 	if (mat != shapeMaterialFiles.end())
 		state.materialFile = mat->second;
 
+	auto sfMat = shapeSFMaterials.find(state.shapeName);
+	if (sfMat != shapeSFMaterials.end())
+		state.sfMaterial = sfMat->second;
+
 	auto physics = shapePhysicsFiles.find(state.shapeName);
 	if (physics != shapePhysicsFiles.end())
 		state.physicsFiles = physics->second;
@@ -5698,6 +5633,9 @@ NiShape* OutfitProject::RestoreDeletedShape(UndoStateShapeDelete& state) {
 
 	if (state.materialFile.has_value())
 		shapeMaterialFiles[state.shapeName] = state.materialFile.value();
+
+	if (state.sfMaterial)
+		shapeSFMaterials[state.shapeName] = state.sfMaterial;
 
 	if (!state.physicsFiles.empty())
 		shapePhysicsFiles[state.shapeName] = state.physicsFiles;
@@ -5765,6 +5703,13 @@ void OutfitProject::RenameShape(NiShape* shape, const std::string& newShapeName)
 		auto value = mat->second;
 		shapeMaterialFiles.erase(mat);
 		shapeMaterialFiles[newShapeName] = value;
+	}
+
+	auto sfMat = shapeSFMaterials.find(shapeName);
+	if (sfMat != shapeSFMaterials.end()) {
+		auto value = sfMat->second;
+		shapeSFMaterials.erase(sfMat);
+		shapeSFMaterials[newShapeName] = value;
 	}
 
 	auto physics = shapePhysicsFiles.find(shapeName);
@@ -7431,42 +7376,6 @@ std::unique_ptr<std::istream> OutfitProject::GetExternalGeometryStream(const std
 
 std::unique_ptr<std::istream> OutfitProject::GetPhysicsXmlStream(const std::string& xmlPath) {
 	return GameDataStream::OpenPhysicsXml(xmlPath, activeSet.GetInputFileName());
-}
-
-bool OutfitProject::GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput) {
-	if ((TargetGame)Config.GetIntValue("TargetGame") != SF)
-		return false;
-
-	if (!sfMaterialDbsLoaded) {
-		sfMaterialDbsLoaded = true;
-
-		auto cdbPaths = ArchiveMaterialLoader::FindAllCdbPaths();
-
-		for (const auto& cdbPath : cdbPaths) {
-			wxMemoryBuffer data;
-			if (!ArchiveMaterialLoader::ReadFile(cdbPath, data) || data.IsEmpty())
-				continue;
-
-			auto db = std::make_unique<SFMaterialDatabase>();
-			sfMaterialDbContents.emplace_back(static_cast<const char*>(data.GetData()), data.GetDataLen());
-			sfMaterialDbStreams.push_back(std::make_unique<std::istringstream>(sfMaterialDbContents.back(), std::ios::in | std::ios::binary));
-
-			if (db->Load(*sfMaterialDbStreams.back()) && !db->Failed()) {
-				sfMaterialDbs.push_back(std::move(db));
-			}
-			else {
-				sfMaterialDbContents.pop_back();
-				sfMaterialDbStreams.pop_back();
-			}
-		}
-	}
-
-	for (auto& db : sfMaterialDbs) {
-		if (db->GetMaterialJSON(matPath, jsonOutput))
-			return true;
-	}
-
-	return false;
 }
 
 void OutfitProject::ValidateNIF(NifFile& nif, const std::string& nifFilePath) {

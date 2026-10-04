@@ -386,6 +386,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/SFMaterialFile.cpp
 	src/files/SFMaterialGraph.cpp
 	src/files/SFLayeredMaterial.cpp
+	src/files/SFMaterialResolver.cpp
 	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
@@ -415,6 +416,7 @@ set(BSOS_BODYSLIDE_SOURCES
 	src/files/SFMaterialFile.cpp
 	src/files/SFMaterialGraph.cpp
 	src/files/SFLayeredMaterial.cpp
+	src/files/SFMaterialResolver.cpp
 	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/files/wxDDSImage.cpp

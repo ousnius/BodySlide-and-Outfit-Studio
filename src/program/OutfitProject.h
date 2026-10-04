@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "../components/Anim.h"
 #include "../components/Automorph.h"
 #include "../components/Mesh.h"
+#include "../files/SFMaterialResolver.h"
 #include "OutfitStudio.h"
 
 #include <cstddef>
@@ -62,7 +63,6 @@ struct SliderDataLocation {
 };
 
 class OutfitStudioFrame;
-class SFMaterialDatabase;
 struct UndoStateShape;
 struct UndoStateShapeDelete;
 
@@ -160,7 +160,6 @@ class OutfitProject {
 	std::vector<std::unique_ptr<nifly::NiStringExtraData>> rootPhysicsData;
 
 	std::unique_ptr<std::istream> GetExternalGeometryStream(const std::string& dir, const std::string& path, const std::string& nifFilePath = std::string()) const;
-	bool GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput);
 	void ValidateNIF(nifly::NifFile& nif, const std::string& nifFilePath = std::string());
 
 	// Records the HDT-SMP links on the root node of a NIF that is about to be
@@ -192,10 +191,7 @@ class OutfitProject {
 	bool ResolveSliderDataEntry(const SliderDataKey& key, size_t& sliderIndex, size_t& dataIndex);
 	bool ShapeSliderDataIsLocalOnly(const std::string& shapeName);
 
-	std::vector<std::unique_ptr<SFMaterialDatabase>> sfMaterialDbs;
-	std::vector<std::string> sfMaterialDbContents;
-	std::vector<std::unique_ptr<std::istringstream>> sfMaterialDbStreams;
-	bool sfMaterialDbsLoaded = false;
+	SFMaterialResolver sfMaterialResolver;
 
 	// Applies the inverse of the blended pose transform to a NIF-space diff
 	// vector for a single vertex, converting it from posed space to rest space.
@@ -226,6 +222,8 @@ public:
 
 	std::unordered_map<std::string, std::vector<std::string>> shapeTextures;
 	std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
+	// Starfield layered materials by shape, with texture paths resolved against the data folder
+	std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
 
 	// Physics XML files ("HDT Skinned Mesh Physics Object" extra data) that
 	// were linked to each shape by the NIF it came from. Only the first NIF
@@ -403,6 +401,7 @@ public:
 
 	std::vector<std::string> GetShapeTextures(nifly::NiShape* shape);
 	bool GetShapeMaterialFile(nifly::NiShape* shape, MaterialFile& outMatFile);
+	std::shared_ptr<const SFLayeredMaterial> GetShapeSFMaterial(nifly::NiShape* shape);
 
 	void SetTextures();
 	void SetTextures(const std::vector<std::string>& textureFiles);

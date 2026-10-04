@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #pragma once
 
+#include "../files/SFMaterialResolver.h"
 #include "../render/GLOffscreenBuffer.h"
 #include "../render/GLSurface.h"
 #include "../utils/ConfigurationManager.h"
@@ -27,7 +28,6 @@ See the included LICENSE file
 
 class BodySlideApp;
 class PreviewCanvas;
-class SFMaterialDatabase;
 
 extern ConfigurationManager Config;
 
@@ -93,11 +93,7 @@ class PreviewPanel : public wxPanel {
 	std::unordered_map<std::string, GLMaterial*> shapeMaterials;
 	std::string baseDataPath;
 
-	std::vector<std::unique_ptr<SFMaterialDatabase>> sfMaterialDbs;
-	std::vector<std::string> sfMaterialDbContents;
-	std::vector<std::unique_ptr<std::istringstream>> sfMaterialDbStreams;
-	bool sfMaterialDbsLoaded = false;
-	bool GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput);
+	SFMaterialResolver sfMaterialResolver;
 	void CreatePhysicsWindPopup();
 	void DestroyPhysicsWindPopup();
 	void ApplyPhysicsWind();

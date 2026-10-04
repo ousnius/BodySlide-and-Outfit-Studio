@@ -709,6 +709,9 @@
     <ClInclude Include="src\files\SFLayeredMaterial.h">
       <Filter>Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\SFMaterialResolver.h">
+      <Filter>Files</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\SFMaterialGraph.h">
       <Filter>Files</Filter>
     </ClInclude>
@@ -1837,6 +1840,9 @@
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\SFLayeredMaterial.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMaterialResolver.cpp">
       <Filter>Files</Filter>
     </ClCompile>
     <ClCompile Include="src\files\SFMaterialGraph.cpp">

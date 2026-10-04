@@ -4,8 +4,6 @@ See the included LICENSE file
 */
 
 #include "PreviewPanel.h"
-#include "../files/SFMaterialDatabase.h"
-#include "../files/SFMaterialFile.h"
 #include "../physics/Controller.h"
 #include "../physics/PumpClock.h"
 #include "../program/BodySlideApp.h"
@@ -593,55 +591,6 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 	gls.RenderOneFrame();
 }
 
-bool PreviewPanel::GetSFMaterialJSON(const std::string& matPath, std::string& jsonOutput) {
-	if ((TargetGame)Config.GetIntValue("TargetGame") != SF)
-		return false;
-
-	if (!sfMaterialDbsLoaded) {
-		sfMaterialDbsLoaded = true;
-
-		std::set<std::string> seen;
-		for (FSArchiveFile* archive : FSManager::archiveList()) {
-			if (!archive)
-				continue;
-
-			auto tryLoad = [&](const std::string& cdbPath) {
-				if (!seen.insert(cdbPath).second)
-					return;
-
-				wxMemoryBuffer data;
-				archive->fileContents(cdbPath, data);
-				if (data.IsEmpty())
-					return;
-
-				auto db = std::make_unique<SFMaterialDatabase>();
-				sfMaterialDbContents.emplace_back(static_cast<const char*>(data.GetData()), data.GetDataLen());
-				sfMaterialDbStreams.push_back(std::make_unique<std::istringstream>(sfMaterialDbContents.back(), std::ios::in | std::ios::binary));
-
-				if (db->Load(*sfMaterialDbStreams.back()) && !db->Failed()) {
-					sfMaterialDbs.push_back(std::move(db));
-				}
-				else {
-					sfMaterialDbContents.pop_back();
-					sfMaterialDbStreams.pop_back();
-				}
-			};
-
-			std::vector<std::string> matches;
-			archive->findFilesBySuffix("materials/", ".cdb", matches);
-			for (const auto& match : matches)
-				tryLoad(match);
-		}
-	}
-
-	for (auto& db : sfMaterialDbs) {
-		if (db->GetMaterialJSON(matPath, jsonOutput))
-			return true;
-	}
-
-	return false;
-}
-
 void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName) {
 	bool hasMat = false;
 	bool hasSFMat = false;
@@ -678,50 +627,13 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 		matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");
 
 		if (hasSFMat) {
-			if (!std::regex_search(matFile, std::regex("\\.mat$", std::regex_constants::icase)))
-				matFile += ".mat";
-
-			SFMaterialFile sfMat(baseDataPath + matFile);
-			if (!sfMat.Failed()) {
-				texFiles = sfMat.GetTextureFiles(MAX_TEXTURE_PATHS);
+			SFLayeredMaterial sfMat;
+			if (sfMaterialResolver.Resolve(matFile, baseDataPath, sfMat)) {
+				texFiles = sfMat.GetPrimaryTextureFiles(MAX_TEXTURE_PATHS);
 			}
-			else {
-				bool resolvedFromArchive = false;
-				for (FSArchiveFile* archive : FSManager::archiveList()) {
-					if (archive && archive->hasFile(matFile)) {
-						wxMemoryBuffer outData;
-						archive->fileContents(matFile, outData);
-						if (!outData.IsEmpty()) {
-							std::string content(static_cast<const char*>(outData.GetData()), outData.GetDataLen());
-							std::istringstream contentStream(content, std::istringstream::binary);
-							SFMaterialFile archiveMat(contentStream);
-							if (!archiveMat.Failed()) {
-								texFiles = archiveMat.GetTextureFiles(MAX_TEXTURE_PATHS);
-								resolvedFromArchive = true;
-							}
-							break;
-						}
-					}
-				}
-
-				if (!resolvedFromArchive) {
-					std::string materialJson;
-					if (GetSFMaterialJSON(matFile, materialJson)) {
-						std::istringstream materialStream(materialJson);
-						SFMaterialFile cdbMat(materialStream);
-						if (!cdbMat.Failed())
-							texFiles = cdbMat.GetTextureFiles(MAX_TEXTURE_PATHS);
-					}
-				}
-
-				bool hasAnyTex = false;
-				for (int i = 0; i < MAX_TEXTURE_PATHS && !hasAnyTex; i++)
-					hasAnyTex = !texFiles[i].empty();
-
-				if (!hasAnyTex && shader) {
-					for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-						fromNif->GetTextureSlot(shape, texFiles[i], i);
-				}
+			else if (shader) {
+				for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+					fromNif->GetTextureSlot(shape, texFiles[i], i);
 			}
 
 			hasMat = false;
