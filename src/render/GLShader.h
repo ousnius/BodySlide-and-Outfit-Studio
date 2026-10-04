@@ -44,7 +44,12 @@ class GLShader {
 	std::string errorString;
 
 	bool CheckExtensions();
-	bool LoadShaderFile(const std::string& fileName, std::string& text);
+	// Reads a shader source file and expands its #include "file" lines, which name files next to it.
+	// GLSL has no includes of its own; this lets shaders share code such as the PBR lighting.
+	bool LoadShaderFile(const std::string& fileName, std::string& text, int includeDepth = 0);
+	// Puts the defines every shader can rely on right after the #version line: MAX_TEXTURE_UNITS,
+	// the number of texture units a fragment shader can sample.
+	static void InsertDefines(std::string& text);
 
 	// Gives each sampler uniform of the linked program its fixed texture unit (the layout
 	// GLMaterial::BindTextures uses). Keeps the samplerCube off the unit the sampler2Ds sit on,
@@ -142,6 +147,9 @@ public:
 	void SetUniform(const char* name, const float value);
 
 	bool GetError(std::string* errorStr = nullptr);
+
+	// GL_MAX_TEXTURE_IMAGE_UNITS of the current context, read once
+	static int GetMaxTextureUnits();
 
 	// Activates the stored program for subsequent GL rendering calls.
 	int Begin();

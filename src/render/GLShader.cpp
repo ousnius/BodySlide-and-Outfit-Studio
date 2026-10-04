@@ -7,7 +7,9 @@ See the included LICENSE file
 #include "../utils/PlatformUtil.h"
 #include "Object3d.hpp"
 
+#include <algorithm>
 #include <fstream>
+#include <regex>
 #include <sstream>
 
 using namespace nifly;
@@ -49,7 +51,7 @@ bool GLShader::CheckExtensions() {
 	return extSupported;
 }
 
-bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text) {
+bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text, int includeDepth) {
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, fileName, std::ios_base::in | std::ios_base::binary);
 	if (!file)
@@ -63,7 +65,78 @@ bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text) {
 	if (text.empty())
 		return false;
 
+	if (text.find("#include") == std::string::npos)
+		return true;
+
+	// An include file can include others in turn, but never deeper than this, which is also what
+	// stops two files that include each other
+	constexpr int maxIncludeDepth = 4;
+	static const std::regex includeLine("^\\s*#include\\s+\"([^\"]+)\"\\s*$");
+
+	const size_t slash = fileName.find_last_of("/\\");
+	const std::string dir = slash == std::string::npos ? std::string() : fileName.substr(0, slash + 1);
+
+	std::istringstream lines(text);
+	std::string expanded;
+	std::string line;
+	int lineNumber = 0;
+
+	while (std::getline(lines, line)) {
+		++lineNumber;
+
+		std::smatch match;
+		if (!std::regex_match(line, match, includeLine)) {
+			expanded += line + "\n";
+			continue;
+		}
+
+		std::string includedText;
+		if (includeDepth >= maxIncludeDepth || !LoadShaderFile(dir + match[1].str(), includedText, includeDepth + 1))
+			return false;
+
+		// Line numbers in compile errors count from the start of whichever file the line came from
+		expanded += "#line 1\n" + includedText + "\n#line " + std::to_string(lineNumber + 1) + "\n";
+	}
+
+	text = std::move(expanded);
 	return true;
+}
+
+void GLShader::InsertDefines(std::string& text) {
+	const std::string defines = "#define MAX_TEXTURE_UNITS " + std::to_string(GetMaxTextureUnits()) + "\n";
+
+	// Nothing but comments may come before #version, so the defines go right after it, with a #line
+	// directive that keeps the line numbers of everything below as they were in the file
+	size_t version = text.find("#version");
+	if (version == std::string::npos) {
+		text.insert(0, defines + "#line 1\n");
+		return;
+	}
+
+	const size_t versionEnd = text.find('\n', version);
+	if (versionEnd == std::string::npos) {
+		text += "\n" + defines;
+		return;
+	}
+
+	const int versionLine = static_cast<int>(std::count(text.begin(), text.begin() + versionEnd, '\n')) + 1;
+	text.insert(versionEnd + 1, defines + "#line " + std::to_string(versionLine + 1) + "\n");
+}
+
+int GLShader::GetMaxTextureUnits() {
+	static GLint maxUnits = 0;
+	if (maxUnits <= 0) {
+		GLint units = 0;
+		glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &units);
+
+		// Without a context to ask, the minimum OpenGL 3.3 promises
+		if (units <= 0)
+			return 16;
+
+		maxUnits = units;
+	}
+
+	return maxUnits;
 }
 
 void GLShader::AssignDefaultSamplerUnits() {
@@ -117,6 +190,9 @@ bool GLShader::LoadShaders(const std::string& vertexSource, const std::string& f
 		errorString = "OpenGL: Failed to load fragment shader from file: " + fragmentSource;
 		return false;
 	}
+
+	InsertDefines(vertSrc);
+	InsertDefines(fragSrc);
 
 	return BuildShaders();
 }
