@@ -1028,6 +1028,14 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
 
 			if (m->sfLayered && m->sfRenderData) {
+				// Without its own buffer the second UV channel stands in as the first
+				shader.SetUniform("bUV2", m->texcoord2 ? 1 : 0);
+				if (m->texcoord2) {
+					glBindBuffer(GL_ARRAY_BUFFER, m->vbo[9]);
+					glEnableVertexAttribArray(9);
+					glVertexAttribPointer(9, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Second texture coordinates
+				}
+
 				shader.SetSFMaterial(*m->sfRenderData, m->material->GetSRGBMask(), m->material->GetSignedMask());
 				m->material->BindSFTextures(largestAF, useDynamicCubemap ? hdri.GetCubemapID() : 0);
 			}
@@ -1097,8 +1105,10 @@ void GLSurface::RenderMesh(Mesh* m) {
 			}
 		}
 
-		if (useTexture)
+		if (useTexture) {
 			glDisableVertexAttribArray(6);
+			glDisableVertexAttribArray(9);
+		}
 
 		glDisableVertexAttribArray(5);
 		glDisableVertexAttribArray(4);
@@ -1515,6 +1525,15 @@ Mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 			m->texcoord[i].v = (*nifUvs)[i].v;
 		}
 		m->textured = true;
+	}
+
+	// A Starfield material can map a layer or blender with the second UV channel instead
+	if (nif->GetHeader().GetVersion().IsSF()) {
+		NiGeometryData* geomData = nif->GetGeometryData(shape);
+		if (geomData && geomData->uvSets.size() > 1 && geomData->uvSets[1].size() == static_cast<size_t>(m->nVerts)) {
+			m->texcoord2 = std::make_unique<Vector2[]>(m->nVerts);
+			std::copy(geomData->uvSets[1].begin(), geomData->uvSets[1].end(), m->texcoord2.get());
+		}
 	}
 
 	// Copy triangles

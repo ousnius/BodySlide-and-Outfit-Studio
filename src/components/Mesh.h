@@ -101,6 +101,8 @@ public:
 	std::unique_ptr<nifly::Vector3[]> vcolors;
 	std::unique_ptr<float[]> valpha;
 	std::unique_ptr<nifly::Vector2[]> texcoord;
+	// Second UV channel, which only Starfield meshes have and which nothing edits
+	std::unique_ptr<nifly::Vector2[]> texcoord2;
 	std::unique_ptr<float[]> mask;
 	std::unique_ptr<float[]> weight;
 
@@ -116,7 +118,7 @@ public:
 
 	bool genBuffers = false;
 	GLuint vao = 0;
-	std::vector<GLuint> vbo = std::vector<GLuint>(9, 0);
+	std::vector<GLuint> vbo = std::vector<GLuint>(10, 0);
 	GLuint ibo = 0;
 
 	std::vector<std::pair<uint32_t, uint32_t>> subMeshes; // Start index and size of each sub mesh

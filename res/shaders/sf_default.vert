@@ -35,6 +35,10 @@ layout(location = 5) in float vertexAlpha;
 layout(location = 6) in vec2 vertexUV;
 layout(location = 7) in float vertexMask;
 layout(location = 8) in float vertexWeight;
+layout(location = 9) in vec2 vertexUV2;
+
+// Whether the mesh has a second UV channel. Without one, the first stands in for it.
+uniform bool bUV2;
 
 struct DirectionalLight
 {
@@ -107,7 +111,7 @@ void main(void)
 	maskFactor = 1.0;
 	weightColor = vec3(1.0, 1.0, 1.0);
 	vColor = vec4(1.0, 1.0, 1.0, 1.0);
-	vUV = vec4(vertexUV, vertexUV);
+	vUV = vec4(vertexUV, bUV2 ? vertexUV2 : vertexUV);
 
 	if (bShowVertexColor)
 	{
