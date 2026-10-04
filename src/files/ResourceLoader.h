@@ -40,6 +40,18 @@ public:
 							const bool useDefaultTexture = true,
 							const bool isPBR = false);
 
+	// A Starfield layered material, whose texture list is whatever the material references rather than
+	// a fixed slot layout: every file is a plain 2D texture, none is classified, and one that can't be
+	// loaded is left out instead of being replaced by the placeholder - the material has a replacement
+	// color for that. The files that did load come back in loadedFiles, no more than maxTextures of
+	// them, in the order the material binds them to its texture units.
+	GLMaterial* AddSFMaterial(const std::vector<std::string>& textureFiles,
+							  const size_t maxTextures,
+							  const std::string& vShaderFile,
+							  const std::string& fShaderFile,
+							  const bool reloadTextures,
+							  std::vector<std::string>& loadedFiles);
+
 
 	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and
 	// tracks the resulting GL texture identifier so subsequent access to the same texture does not result

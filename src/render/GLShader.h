@@ -27,6 +27,20 @@ class GLShader {
 	// Linked Program ID after program creation.
 	GLuint progID = 0;
 
+	// Uniform locations of the Starfield layered material, looked up the first time one is set. The
+	// shader sets them for every draw, and the names don't change while the program lives.
+	struct SFUniformLocations {
+		bool lookedUp = false;
+		GLint numLayers = -1, layerTextures = -1, layerReplacements = -1, layerColors = -1, layerUVs = -1, layerFlags = -1, layerNormalScales = -1;
+		GLint blenderMasks = -1, blenderMaskReplacements = -1, blenderUVs = -1, blenderModes = -1, blenderChannels = -1, blenderFlags = -1, blenderParams = -1,
+			  blenderIntensities = -1;
+		GLint flags = -1, alphaThreshold = -1, alphaSourceLayer = -1, alphaVertexColorChannel = -1, alphaUV = -1, materialAlpha = -1, opacityLayers = -1,
+			  opacityBlendModes = -1;
+		GLint emissiveLayers = -1, emissiveMasks = -1, emissiveTints = -1, emissiveIntensity = -1;
+		GLint transmissiveLayer = -1, transmissiveScale = -1, sssStrength = -1, srgbMask = -1, signedMask = -1;
+	};
+	SFUniformLocations sfLocations;
+
 	// Mirrors the bShowTexture uniform. A freshly linked program has it at false (uniforms start
 	// zeroed), which is also the safe state: a shader that samples a diffuse nobody bound draws
 	// nothing at all, while an unconfigured one just falls back to the mesh color.
@@ -150,6 +164,17 @@ public:
 
 	// GL_MAX_TEXTURE_IMAGE_UNITS of the current context, read once
 	static int GetMaxTextureUnits();
+
+	// How many textures a Starfield layered material can bind at once: every texture unit the fragment
+	// shader has, except the one the environment cube map takes. Matches SF_NUM_TEXTURES in
+	// sf_default.frag.
+	static size_t GetSFMaxTextures() { return GetMaxTextureUnits() >= 32 ? 31 : 15; }
+	// Texture unit of a Starfield material's texture, which skips the cube map's unit 4
+	static GLint GetSFTextureUnit(size_t index) { return index < 4 ? static_cast<GLint>(index) : static_cast<GLint>(index) + 1; }
+
+	// Hands a Starfield layered material to sf_default.frag. The masks say which of the material's
+	// textures went up in an sRGB and which in a signed format, one bit per texture.
+	void SetSFMaterial(const SFRenderData& data, const uint32_t srgbMask, const uint32_t signedMask);
 
 	// Activates the stored program for subsequent GL rendering calls.
 	int Begin();

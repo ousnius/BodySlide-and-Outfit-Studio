@@ -575,8 +575,11 @@ void PreviewPanel::RefreshMeshFromNif(const std::vector<NifFile*>& nifs) {
 			m->SmoothNormals();
 			m->CreateBuffers();
 
+			auto sfIter = shapeSFMaterials.find(shapeListName);
 			auto iter = shapeMaterials.find(shapeListName);
-			if (iter != shapeMaterials.end())
+			if (sfIter != shapeSFMaterials.end())
+				SetShapeSFMaterial(shapeListName, sfIter->second);
+			else if (iter != shapeMaterials.end())
 				m->material = iter->second;
 			else
 				AddNifShapeTextures(nif, shapeListName);
@@ -598,6 +601,7 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 
 	const uint8_t MAX_TEXTURE_PATHS = 10;
 	std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
+	std::shared_ptr<const SFLayeredMaterial> sfMaterial;
 
 	NiShader* shader = nullptr;
 	auto shape = fromNif->FindBlockByName<NiShape>(shapeName);
@@ -630,6 +634,9 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 			SFLayeredMaterial sfMat;
 			if (sfMaterialResolver.Resolve(matFile, baseDataPath, sfMat)) {
 				texFiles = sfMat.GetPrimaryTextureFiles(MAX_TEXTURE_PATHS);
+
+				sfMat.ResolveTexturePaths([this](const std::string& texFile) { return baseDataPath + texFile; });
+				sfMaterial = std::make_shared<const SFLayeredMaterial>(std::move(sfMat));
 			}
 			else if (shader) {
 				for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
@@ -715,13 +722,19 @@ void PreviewPanel::AddNifShapeTextures(NifFile* fromNif, const std::string& shap
 	bool renderAsPBR = false;
 
 	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame == SF) {
+		// Every Starfield shape renders through its layered material, a single layer of whatever textures
+		// it has when there is no material to read
+		if (!sfMaterial)
+			sfMaterial = std::make_shared<const SFLayeredMaterial>(SFLayeredMaterial::FromTextureFiles(texFiles));
+
+		SetShapeSFMaterial(shapeName, sfMaterial);
+		return;
+	}
+
 	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
-	}
-	else if (targetGame == SF) {
-		vShader = Config["AppDir"] + "/res/shaders/sf_default.vert";
-		fShader = Config["AppDir"] + "/res/shaders/sf_default.frag";
 	}
 	else if (targetGame == OB) {
 		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";
@@ -1259,6 +1272,7 @@ void PreviewPanel::Cleanup() {
 
 	gls.Cleanup();
 	shapeMaterials.clear();
+	shapeSFMaterials.clear();
 	gls.RenderOneFrame();
 }
 

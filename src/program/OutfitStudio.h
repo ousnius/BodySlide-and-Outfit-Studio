@@ -207,7 +207,8 @@ public:
 						 const std::vector<std::string>& textureFiles,
 						 const bool hasMatFile = false,
 						 const MaterialFile& matFile = MaterialFile(),
-						 const bool reloadTextures = false);
+						 const bool reloadTextures = false,
+						 const std::shared_ptr<const SFLayeredMaterial>& sfMaterial = nullptr);
 
 	Mesh* GetMesh(const std::string& shapeName) { return gls.GetMesh(shapeName); }
 

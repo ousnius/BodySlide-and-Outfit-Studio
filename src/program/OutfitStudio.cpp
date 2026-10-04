@@ -4996,7 +4996,7 @@ void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) 
 
 		MaterialFile matFile;
 		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
-		glView->SetMeshTextures(shape->name.get(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures);
+		glView->SetMeshTextures(shape->name.get(), project->GetShapeTextures(shape), hasMatFile, matFile, reloadTextures, project->GetShapeSFMaterial(shape));
 
 		UpdateMeshFromSet(shape);
 	}
@@ -7914,9 +7914,10 @@ void OutfitStudioFrame::ApplyAutoHDRiBackground() {
 	// Complex Material and True PBR shading both live off what they reflect, so a project full of
 	// either is nearly impossible to judge against the flat background. A True PBR shape has the
 	// stronger claim of the two: its cube map slot is deliberately empty, so without an HDRi there is
-	// no image based lighting for it at all. Anything else is left as it was.
+	// no image based lighting for it at all. Starfield materials are in the same position, since they
+	// are lit the True PBR way and never have a cube map of their own. Anything else is left as it was.
 	const auto& meshes = glView->gls.GetMeshes();
-	if (std::none_of(meshes.begin(), meshes.end(), [](const Mesh* m) { return m->complexMaterial || m->pbr; }))
+	if (std::none_of(meshes.begin(), meshes.end(), [](const Mesh* m) { return m->complexMaterial || m->pbr || (m->sfLayered && m->sfRenderData && m->sfRenderData->HasAnyTexture()); }))
 		return;
 
 	// Whatever the user last picked by hand, which is the only thing that ever gets written there.
@@ -11606,7 +11607,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 
 			MaterialFile matFile;
 			bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
-			glView->SetMeshTextures(newName, project->GetShapeTextures(shape), hasMatFile, matFile);
+			glView->SetMeshTextures(newName, project->GetShapeTextures(shape), hasMatFile, matFile, false, project->GetShapeSFMaterial(shape));
 
 			subitem = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(newName));
 			outfitShapes->SetItemState(subitem, 0);
@@ -15079,24 +15080,36 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 	}
 }
 
-void wxGLPanel::SetMeshTextures(
-	const std::string& shapeName, const std::vector<std::string>& textureFiles, const bool hasMatFile, const MaterialFile& matFile, const bool reloadTextures) {
+void wxGLPanel::SetMeshTextures(const std::string& shapeName,
+								const std::vector<std::string>& textureFiles,
+								const bool hasMatFile,
+								const MaterialFile& matFile,
+								const bool reloadTextures,
+								const std::shared_ptr<const SFLayeredMaterial>& sfMaterial) {
 	Mesh* m = gls.GetMesh(shapeName);
 	if (!m)
 		return;
+
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame == SF) {
+		// Every Starfield shape renders through its layered material. One that has none - its material
+		// couldn't be read, or it never had a shader - is a single layer of whatever textures it has.
+		const SFLayeredMaterial material = sfMaterial ? *sfMaterial : SFLayeredMaterial::FromTextureFiles(textureFiles);
+		gls.AssignSFMaterial(m, material, Config["AppDir"] + "/res/shaders/sf_default.vert", Config["AppDir"] + "/res/shaders/sf_default.frag", reloadTextures);
+		gls.UpdateShaders(m);
+		return;
+	}
+
+	m->sfLayered = false;
+	m->sfRenderData.reset();
 
 	std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
 	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
 	bool renderAsPBR = false;
 
-	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == FO4 || targetGame == FO4VR || targetGame == FO76) {
 		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
 		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
-	}
-	else if (targetGame == SF) {
-		vShader = Config["AppDir"] + "/res/shaders/sf_default.vert";
-		fShader = Config["AppDir"] + "/res/shaders/sf_default.frag";
 	}
 	else if (targetGame == OB) {
 		vShader = Config["AppDir"] + "/res/shaders/ob_default.vert";

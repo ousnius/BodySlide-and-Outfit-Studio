@@ -566,6 +566,37 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 	return entry.get();
 }
 
+GLMaterial* ResourceLoader::AddSFMaterial(const std::vector<std::string>& textureFiles,
+										  const size_t maxTextures,
+										  const std::string& vShaderFile,
+										  const std::string& fShaderFile,
+										  const bool reloadTextures,
+										  std::vector<std::string>& loadedFiles) {
+	loadedFiles.clear();
+	for (const auto& texFile : textureFiles) {
+		if (loadedFiles.size() >= maxTextures) {
+			wxLogWarning("Material has more textures than can be bound at once, '%s' and later ones are left out.", texFile);
+			break;
+		}
+
+		if (LoadTexture(texFile, false, reloadTextures))
+			loadedFiles.push_back(texFile);
+	}
+
+	MaterialKey key(loadedFiles, vShaderFile, fShaderFile, false);
+	if (!reloadTextures) {
+		auto it = materials.find(key);
+		if (it != materials.end())
+			return it->second.get();
+	}
+
+	auto& entry = materials[key];
+	if (!entry || !reloadTextures)
+		entry.reset(new GLMaterial(this, loadedFiles, vShaderFile, fShaderFile));
+
+	return entry.get();
+}
+
 void ResourceLoader::Cleanup() {
 	for (auto& tp : textures)
 		glDeleteTextures(1, &tp.second);

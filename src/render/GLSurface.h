@@ -372,6 +372,14 @@ public:
 							const bool reloadTextures = false,
 							const bool useDefaultTexture = true,
 							const bool isPBR = false);
+	// Renders the mesh with a Starfield layered material, whose texture paths have to be resolved
+	// already. The material also decides whether the mesh is two sided and how it blends, which a
+	// Starfield NIF leaves to it entirely.
+	void AssignSFMaterial(Mesh* m,
+						  const SFLayeredMaterial& material,
+						  const std::string& vShaderFile,
+						  const std::string& fShaderFile,
+						  const bool reloadTextures = false);
 	GLMaterial* GetPointsMaterial();
 	GLMaterial* GetPrimitiveMaterial();
 	ResourceLoader* GetResourceLoader() { return &resLoader; }

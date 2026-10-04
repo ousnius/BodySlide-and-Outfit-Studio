@@ -91,6 +91,8 @@ class PreviewPanel : public wxPanel {
 
 	GLSurface gls;
 	std::unordered_map<std::string, GLMaterial*> shapeMaterials;
+	// Starfield layered materials by shape, kept so a mesh rebuilt from the NIF gets the same one back
+	std::unordered_map<std::string, std::shared_ptr<const SFLayeredMaterial>> shapeSFMaterials;
 	std::string baseDataPath;
 
 	SFMaterialResolver sfMaterialResolver;
@@ -276,6 +278,16 @@ public:
 
 			gls.UpdateShaders(m);
 		}
+	}
+
+	void SetShapeSFMaterial(const std::string& shapeName, const std::shared_ptr<const SFLayeredMaterial>& material) {
+		Mesh* m = gls.GetMesh(shapeName);
+		if (!m || !material)
+			return;
+
+		gls.AssignSFMaterial(m, *material, Config["AppDir"] + "/res/shaders/sf_default.vert", Config["AppDir"] + "/res/shaders/sf_default.frag");
+		shapeSFMaterials[shapeName] = material;
+		gls.UpdateShaders(m);
 	}
 
 	void SetShapeVertexColors(nifly::NifFile* nif, const std::string& shapeName, Mesh* mesh) {

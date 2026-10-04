@@ -175,7 +175,101 @@ void GLShader::AssignDefaultSamplerUnits() {
 			glUniform1i(loc, su.unit);
 	}
 
+	// The sampler array of the Starfield shader, which GLMaterial::BindSFTextures fills in list order
+	for (size_t i = 0; i < GetSFMaxTextures(); i++) {
+		const std::string name = "textureUnits[" + std::to_string(i) + "]";
+		GLint loc = glGetUniformLocation(progID, name.c_str());
+		if (loc >= 0)
+			glUniform1i(loc, GetSFTextureUnit(i));
+	}
+
 	glUseProgram(0);
+}
+
+void GLShader::SetSFMaterial(const SFRenderData& data, const uint32_t srgbMask, const uint32_t signedMask) {
+	SFUniformLocations& loc = sfLocations;
+	if (!loc.lookedUp) {
+		auto find = [this](const char* name) {
+			return glGetUniformLocation(progID, name);
+		};
+
+		loc.numLayers = find("sfNumLayers");
+		loc.layerTextures = find("sfLayerTextures");
+		loc.layerReplacements = find("sfLayerReplacements");
+		loc.layerColors = find("sfLayerColors");
+		loc.layerUVs = find("sfLayerUVs");
+		loc.layerFlags = find("sfLayerFlags");
+		loc.layerNormalScales = find("sfLayerNormalScales");
+		loc.blenderMasks = find("sfBlenderMasks");
+		loc.blenderMaskReplacements = find("sfBlenderMaskReplacements");
+		loc.blenderUVs = find("sfBlenderUVs");
+		loc.blenderModes = find("sfBlenderModes");
+		loc.blenderChannels = find("sfBlenderChannels");
+		loc.blenderFlags = find("sfBlenderFlags");
+		loc.blenderParams = find("sfBlenderParams");
+		loc.blenderIntensities = find("sfBlenderIntensities");
+		loc.flags = find("sfFlags");
+		loc.alphaThreshold = find("sfAlphaThreshold");
+		loc.alphaSourceLayer = find("sfAlphaSourceLayer");
+		loc.alphaVertexColorChannel = find("sfAlphaVertexColorChannel");
+		loc.alphaUV = find("sfAlphaUV");
+		loc.materialAlpha = find("sfMaterialAlpha");
+		loc.opacityLayers = find("sfOpacityLayers");
+		loc.opacityBlendModes = find("sfOpacityBlendModes");
+		loc.emissiveLayers = find("sfEmissiveLayers");
+		loc.emissiveMasks = find("sfEmissiveMasks");
+		loc.emissiveTints = find("sfEmissiveTints");
+		loc.emissiveIntensity = find("sfEmissiveIntensity");
+		loc.transmissiveLayer = find("sfTransmissiveLayer");
+		loc.transmissiveScale = find("sfTransmissiveScale");
+		loc.sssStrength = find("sfSSSStrength");
+		loc.srgbMask = find("sfSRGBMask");
+		loc.signedMask = find("sfSignedMask");
+		loc.lookedUp = true;
+	}
+
+	constexpr GLsizei layers = static_cast<GLsizei>(SFLayeredMaterial::MaxLayers);
+	constexpr GLsizei blenders = static_cast<GLsizei>(SFLayeredMaterial::MaxBlenders);
+	constexpr GLsizei slots = layers * static_cast<GLsizei>(SFRenderData::SlotsPerLayer);
+
+	// A uniform the compiler optimized away has no location, which glUniform ignores
+	glUniform1i(loc.numLayers, data.numLayers);
+	glUniform1iv(loc.layerTextures, slots, data.layerTextures);
+	glUniform4fv(loc.layerReplacements, slots, data.layerReplacements);
+	glUniform4fv(loc.layerColors, layers, data.layerColors);
+	glUniform4fv(loc.layerUVs, layers, data.layerUVs);
+	glUniform1iv(loc.layerFlags, layers, data.layerFlags);
+	glUniform1fv(loc.layerNormalScales, layers, data.layerNormalScales);
+
+	glUniform1iv(loc.blenderMasks, blenders, data.blenderMasks);
+	glUniform4fv(loc.blenderMaskReplacements, blenders, data.blenderMaskReplacements);
+	glUniform4fv(loc.blenderUVs, blenders, data.blenderUVs);
+	glUniform1iv(loc.blenderModes, blenders, data.blenderModes);
+	glUniform1iv(loc.blenderChannels, blenders, data.blenderChannels);
+	glUniform1iv(loc.blenderFlags, blenders, data.blenderFlags);
+	glUniform4fv(loc.blenderParams, blenders, data.blenderParams);
+	glUniform1fv(loc.blenderIntensities, blenders, data.blenderIntensities);
+
+	glUniform1i(loc.flags, data.flags);
+	glUniform1f(loc.alphaThreshold, data.alphaThreshold);
+	glUniform1i(loc.alphaSourceLayer, data.alphaSourceLayer);
+	glUniform1i(loc.alphaVertexColorChannel, data.alphaVertexColorChannel);
+	glUniform4f(loc.alphaUV, data.alphaUV[0], data.alphaUV[1], data.alphaUV[2], data.alphaUV[3]);
+	glUniform1f(loc.materialAlpha, data.materialAlpha);
+	glUniform1iv(loc.opacityLayers, 3, data.opacityLayers);
+	glUniform1iv(loc.opacityBlendModes, 2, data.opacityBlendModes);
+
+	glUniform1iv(loc.emissiveLayers, 3, data.emissiveLayers);
+	glUniform1iv(loc.emissiveMasks, 3, data.emissiveMasks);
+	glUniform4fv(loc.emissiveTints, 3, data.emissiveTints);
+	glUniform1f(loc.emissiveIntensity, data.emissiveIntensity);
+
+	glUniform1i(loc.transmissiveLayer, data.transmissiveLayer);
+	glUniform1f(loc.transmissiveScale, data.transmissiveScale);
+	glUniform1f(loc.sssStrength, data.sssStrength);
+
+	glUniform1i(loc.srgbMask, static_cast<GLint>(srgbMask));
+	glUniform1i(loc.signedMask, static_cast<GLint>(signedMask));
 }
 
 bool GLShader::LoadShaders(const std::string& vertexSource, const std::string& fragmentSource) {

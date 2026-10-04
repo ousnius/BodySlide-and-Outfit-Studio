@@ -91,6 +91,48 @@ bool GLMaterial::IsSRGB(uint32_t index) {
 	return resLoaderRef->IsSRGBTexture(texNames[index]);
 }
 
+void GLMaterial::BindSFTextures(GLfloat largestAF, const GLuint cubemapID) {
+	if (resLoaderRef && !resLoaderRef->CacheStamp(cacheTime)) {
+		// outdated cache, rebuild it.
+		for (size_t i = 0; i < texCache.size(); i++) {
+			texCache[i] = resLoaderRef->GetTexID(texNames[i]);
+		}
+	}
+
+	// The sampler uniforms were pointed at these units when the program was linked
+	for (size_t i = 0; i < texCache.size() && i < GLShader::GetSFMaxTextures(); i++) {
+		glActiveTexture(GL_TEXTURE0 + GLShader::GetSFTextureUnit(i));
+		glBindTexture(GL_TEXTURE_2D, texCache[i]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		if (largestAF)
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
+	}
+
+	shader.BindCubemap(4, cubemapID, "texCubemap");
+}
+
+uint32_t GLMaterial::GetSRGBMask() {
+	uint32_t mask = 0;
+	for (size_t i = 0; i < texNames.size() && i < 32; i++)
+		if (IsSRGB(static_cast<uint32_t>(i)))
+			mask |= 1u << i;
+
+	return mask;
+}
+
+uint32_t GLMaterial::GetSignedMask() {
+	uint32_t mask = 0;
+	if (!resLoaderRef)
+		return mask;
+
+	for (size_t i = 0; i < texNames.size() && i < 32; i++)
+		if (resLoaderRef->IsSignedTexture(texNames[i]))
+			mask |= 1u << i;
+
+	return mask;
+}
+
 std::string GLMaterial::GetTexName(uint32_t index) {
 	if (index < texNames.size())
 		return texNames[index];

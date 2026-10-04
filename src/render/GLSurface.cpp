@@ -1027,13 +1027,19 @@ void GLSurface::RenderMesh(Mesh* m) {
 			glEnableVertexAttribArray(6);
 			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0); // Texture Coordinates
 
-			m->material->BindTextures(largestAF,
-									  wantsEnvironment,
-									  m->glowmap,
-									  m->backlightMap,
-									  m->rimlight || m->softlight,
-									  useDynamicCubemap ? hdri.GetCubemapID() : 0,
-									  m->pbr);
+			if (m->sfLayered && m->sfRenderData) {
+				shader.SetSFMaterial(*m->sfRenderData, m->material->GetSRGBMask(), m->material->GetSignedMask());
+				m->material->BindSFTextures(largestAF, useDynamicCubemap ? hdri.GetCubemapID() : 0);
+			}
+			else {
+				m->material->BindTextures(largestAF,
+										  wantsEnvironment,
+										  m->glowmap,
+										  m->backlightMap,
+										  m->rimlight || m->softlight,
+										  useDynamicCubemap ? hdri.GetCubemapID() : 0,
+										  m->pbr);
+			}
 		}
 
 		if (m->mask) {
@@ -1279,19 +1285,33 @@ void GLSurface::UpdateShaders(Mesh* m) {
 		// slot 4 was found - a missing cubemap costs the reflection, not the glossiness.
 		// A True PBR shape is never one: slot 5 holds its RMAOS map, which the classifier would read
 		// as a Complex Material mask given the chance.
-		m->complexMaterial = m->cubemap && !m->pbr && m->material->IsComplexMaterial(5);
-		m->cubemapMaxLod = static_cast<float>(std::min(m->material->GetTexMaxMipLevel(4), 7));
+		if (m->sfLayered) {
+			// A Starfield material's textures sit wherever its layers put them, so none of the slot
+			// based verdicts below mean anything for it. It never has a cubemap of its own and always
+			// reflects the one generated from the HDRi.
+			m->complexMaterial = false;
+			m->cubemapMaxLod = 0.0f;
+			m->dynamicCubemap = true;
+			m->cubemapTint = Vector3(1.0f, 1.0f, 1.0f);
 
-		// A 1x1 cubemap is a placeholder asking for a dynamic one rather than a reflection, and a
-		// cubemap that isn't there leaves a shape that wanted an environment with nothing to reflect
-		// at all - which is every True PBR shape, since those leave slot 4 empty on purpose. Both are
-		// cases an HDRi can stand in for; a cubemap the author actually authored is not.
-		const int cubemapSize = m->material->GetCubemapSize(4);
-		m->dynamicCubemap = m->WantsEnvironment() && (cubemapSize == 1 || !m->material->HasTexture(4));
-		m->cubemapTint = m->material->GetCubemapF0Color(4);
+			// A material whose every slot came out empty has nothing to show for its textures
+			shader.ShowTexture(bTextured && m->textured && m->sfRenderData && m->sfRenderData->HasAnyTexture());
+		}
+		else {
+			m->complexMaterial = m->cubemap && !m->pbr && m->material->IsComplexMaterial(5);
+			m->cubemapMaxLod = static_cast<float>(std::min(m->material->GetTexMaxMipLevel(4), 7));
 
-		// Without a diffuse there's nothing to sample, so such meshes are shaded with their mesh color instead.
-		shader.ShowTexture(bTextured && m->textured && m->material->HasTexture(0));
+			// A 1x1 cubemap is a placeholder asking for a dynamic one rather than a reflection, and a
+			// cubemap that isn't there leaves a shape that wanted an environment with nothing to reflect
+			// at all - which is every True PBR shape, since those leave slot 4 empty on purpose. Both are
+			// cases an HDRi can stand in for; a cubemap the author actually authored is not.
+			const int cubemapSize = m->material->GetCubemapSize(4);
+			m->dynamicCubemap = m->WantsEnvironment() && (cubemapSize == 1 || !m->material->HasTexture(4));
+			m->cubemapTint = m->material->GetCubemapF0Color(4);
+
+			// Without a diffuse there's nothing to sample, so such meshes are shaded with their mesh color instead.
+			shader.ShowTexture(bTextured && m->textured && m->material->HasTexture(0));
+		}
 		shader.ShowLighting(bLighting);
 		shader.ShowMask(bMaskVisible && m->mask);
 		shader.ShowWeight(bWeightColors && m->weight);
@@ -2378,6 +2398,55 @@ Mesh::RenderMode GLSurface::SetMeshRenderMode(const std::string& name, Mesh::Ren
 	Mesh::RenderMode r = m->rendermode;
 	m->rendermode = mode;
 	return r;
+}
+
+void GLSurface::AssignSFMaterial(Mesh* m,
+								 const SFLayeredMaterial& material,
+								 const std::string& vShaderFile,
+								 const std::string& fShaderFile,
+								 const bool reloadTextures) {
+	if (!m || !SetContext())
+		return;
+
+	std::vector<std::string> loadedTextures;
+	GLMaterial* mat = resLoader.AddSFMaterial(SFRenderData::CollectTextures(material),
+											  GLShader::GetSFMaxTextures(),
+											  vShaderFile,
+											  fShaderFile,
+											  reloadTextures,
+											  loadedTextures);
+	if (mat) {
+		std::string shaderError;
+		if (mat->GetShader().GetError(&shaderError)) {
+			wxLogError(wxString(shaderError));
+			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+		}
+	}
+
+	auto renderData = std::make_shared<SFRenderData>(SFRenderData::Build(material, loadedTextures));
+
+	m->material = mat;
+	m->sfLayered = true;
+	m->doublesided = material.twoSided;
+
+	// Effects and decals blend, additive effects onto what is behind them. Everything else is opaque
+	// and at most alpha tested, which the shader does from the material's own threshold.
+	m->alphaFlags = 0;
+	if (renderData->flags & SFRenderData::FlagAlphaBlend) {
+		const bool additive = (renderData->flags & SFRenderData::FlagEffect) && (material.effectBlendMode == 1 || material.effectEmissiveOnly);
+		constexpr uint16_t srcAlpha = 6 << 1;
+		const uint16_t dst = additive ? 0 : (7 << 5); // GL_ONE or GL_ONE_MINUS_SRC_ALPHA
+		m->alphaFlags = 1 | srcAlpha | dst;
+	}
+
+	if (material.layered)
+		wxLogMessage("Shape '%s' uses Starfield shader model '%s' with %d layer(s) and %zu texture(s).",
+					 m->shapeName,
+					 material.shaderModel,
+					 renderData->numLayers,
+					 loadedTextures.size());
+
+	m->sfRenderData = std::move(renderData);
 }
 
 GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles,

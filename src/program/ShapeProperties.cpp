@@ -1150,7 +1150,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 			for (auto& shape : shapes) {
 				os->project->SetTextures(shape, texFiles);
-				os->glView->SetMeshTextures(shape->name.get(), texFiles, false, MaterialFile(), true);
+				os->glView->SetMeshTextures(shape->name.get(), texFiles, false, MaterialFile(), true, os->project->GetShapeSFMaterial(shape));
 			}
 
 			os->glView->Render();
