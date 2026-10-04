@@ -39,6 +39,8 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 	GLuint textureID = 0;
 	// SOIL never uploads in an sRGB format, so only the GLI path can turn this on
 	bool isSRGB = false;
+	// Nor in a signed one
+	bool isSigned = false;
 
 	// Get existing index to overwrite texture data for, otherwise generate new index later
 	if (reloadTextures && ti != textures.end())
@@ -46,7 +48,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 	// All textures (GLI)
 	if (fileExtStr == "dds" || fileExtStr == "ktx")
-		textureID = GLI_load_texture(inFileName, textureID, &isSRGB);
+		textureID = GLI_load_texture(inFileName, textureID, &isSRGB, &isSigned);
 
 	// Cubemap fallback (SOIL)
 	if (!textureID && isCubeMap)
@@ -85,7 +87,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 			// All textures (GLI)
 			if (fileExtStr == "dds" || fileExtStr == "ktx")
-				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen(), textureID, &isSRGB);
+				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen(), textureID, &isSRGB, &isSigned);
 
 			// Cubemap fallback (SOIL)
 			if (!textureID && isCubeMap)
@@ -111,6 +113,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 	textures[inFileName] = textureID;
 	srgbTextures[inFileName] = isSRGB;
+	signedTextures[inFileName] = isSigned;
 
 	return textureID;
 }
@@ -140,6 +143,7 @@ void ResourceLoader::DeleteTexture(const std::string& texName) {
 		glDeleteTextures(1, &ti->second);
 		textures.erase(ti);
 		srgbTextures.erase(texName);
+		signedTextures.erase(texName);
 	}
 }
 
@@ -166,7 +170,7 @@ bool ResourceLoader::RenameTexture(const std::string& texNameSrc, const std::str
 }
 
 // File extension can be KTX or DDS
-GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureID, bool* isSRGB) {
+GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureID, bool* isSRGB, bool* isSigned) {
 	if (!extGLISupported) {
 		if (!extChecked) {
 			wxLogWarning("OpenGL features required for GLI_create_texture to work aren't there!");
@@ -182,6 +186,10 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureI
 	// An sRGB format is uploaded as one, so sampling hands back linear values
 	if (isSRGB)
 		*isSRGB = gli::is_srgb(texture.format());
+
+	// A signed format (BC5_SNORM normal maps) samples as -1 to 1 rather than 0 to 1
+	if (isSigned)
+		*isSigned = gli::is_signed(texture.format());
 
 	if (textureID == 0)
 		glGenTextures(1, &textureID);
@@ -304,20 +312,20 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureI
 	return textureID;
 }
 
-GLuint ResourceLoader::GLI_load_texture(const std::string& fileName, GLuint textureID, bool* isSRGB) {
+GLuint ResourceLoader::GLI_load_texture(const std::string& fileName, GLuint textureID, bool* isSRGB, bool* isSigned) {
 	gli::texture texture = gli::load(fileName);
 	if (texture.empty())
 		return textureID;
 
-	return GLI_create_texture(texture, textureID, isSRGB);
+	return GLI_create_texture(texture, textureID, isSRGB, isSigned);
 }
 
-GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID, bool* isSRGB) {
+GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID, bool* isSRGB, bool* isSigned) {
 	gli::texture texture = gli::load(buffer, size);
 	if (texture.empty())
 		return textureID;
 
-	return GLI_create_texture(texture, textureID, isSRGB);
+	return GLI_create_texture(texture, textureID, isSRGB, isSigned);
 }
 
 int ResourceLoader::GetBoundMaxMipLevel(GLenum levelTarget) {
@@ -472,6 +480,14 @@ nifly::Vector3 ResourceLoader::GetCubemapF0Color(const std::string& texName) con
 bool ResourceLoader::IsSRGBTexture(const std::string& texName) const {
 	auto it = srgbTextures.find(texName);
 	if (it != srgbTextures.end())
+		return it->second;
+
+	return false;
+}
+
+bool ResourceLoader::IsSignedTexture(const std::string& texName) const {
+	auto it = signedTextures.find(texName);
+	if (it != signedTextures.end())
 		return it->second;
 
 	return false;
