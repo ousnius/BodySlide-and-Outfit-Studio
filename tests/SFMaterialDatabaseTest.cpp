@@ -401,4 +401,52 @@ TEST_CASE("Starfield material databases load synthetic indexes", "[SFMaterialDat
             "CDB material color texture must not be a blender mask");
     Require(sfMat.GetTexture(SFMaterialTextureSlot::Normal).find("faces") == std::string::npos,
             "CDB material normal texture must not be a face detail normal");
+
+    // The CDB composes the root templates in, so it agrees with the loose file the mod ships
+    const SFLayeredMaterial& layered = sfMat.GetLayeredMaterial();
+    Require(layered.layered && layered.shaderModel == "BodySkin2Layer", "CDB material should resolve as a layered skin material");
+    Require(layered.layers.size() == 2 && layered.blenders.size() == 1, "CDB material should have two layers and one blender");
+    Require(layered.blenders[0].mode == SFBlendMode::Skin, "CDB material blender should use the Skin mode");
+    Require(!layered.blenders[0].maskFile.empty(), "CDB material blender should have a mask");
+    Require(layered.layers[1].uvStream.scale[0] == 50.0f, "CDB material detail layer should tile 50 times");
+    Require(layered.useSSS && layered.sssStrength == 0.5f, "CDB material should keep its SSS settings");
+}
+
+// Writes the composed JSON of real materials to disk, for checking which components and field names
+// the game's materials use. Lists the materials as SF_MATERIAL_CDB_DUMP (separated by ';') and writes
+// each one into SF_MATERIAL_CDB_DUMP_DIR with its path flattened into the file name.
+TEST_CASE("Starfield material databases dump optional real CDB materials", "[SFMaterialDatabase][fixture]") {
+    const char* fixturePath = std::getenv("SF_MATERIAL_CDB_FIXTURE");
+    const char* dumpList = std::getenv("SF_MATERIAL_CDB_DUMP");
+    const char* dumpDir = std::getenv("SF_MATERIAL_CDB_DUMP_DIR");
+    if (!fixturePath || !fixturePath[0] || !dumpList || !dumpList[0] || !dumpDir || !dumpDir[0]) {
+        SKIP("SF_MATERIAL_CDB_FIXTURE, SF_MATERIAL_CDB_DUMP or SF_MATERIAL_CDB_DUMP_DIR is not set");
+    }
+
+    std::ifstream input(fixturePath, std::ios::binary);
+    Require(input.good(), "CDB fixture file should open");
+
+    SFMaterialDatabase db;
+    Require(db.Load(input), "CDB header+index should parse successfully");
+
+    std::stringstream paths(dumpList);
+    std::string matPath;
+    while (std::getline(paths, matPath, ';')) {
+        if (matPath.empty())
+            continue;
+
+        std::string jsonOutput;
+        if (!db.HasMaterial(matPath) || !db.GetMaterialJSON(matPath, jsonOutput)) {
+            WARN("Material not found in CDB: " << matPath);
+            continue;
+        }
+
+        std::string fileName = matPath;
+        for (char& c : fileName)
+            if (c == '/' || c == '\\')
+                c = '_';
+
+        std::ofstream output(std::string(dumpDir) + "/" + fileName + ".json");
+        output << nlohmann::json::parse(jsonOutput).dump(4);
+    }
 }

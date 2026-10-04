@@ -35,6 +35,7 @@ SFMaterialFile::SFMaterialFile(std::istream& input) {
 
 int SFMaterialFile::Read(std::istream& input) {
     textures.fill(std::string());
+    layeredMaterial = SFLayeredMaterial();
     failed = false;
 
     nlohmann::json material = nlohmann::json::parse(input, nullptr, false, true);
@@ -57,6 +58,9 @@ int SFMaterialFile::Read(std::istream& input) {
 
     for (size_t i = 0; i < textures.size(); ++i)
         textures[i] = textureFiles[i];
+
+    if (!graph.ResolveLayeredMaterial(layeredMaterial))
+        layeredMaterial = SFLayeredMaterial::FromTextureFiles(textureFiles);
 
     return 0;
 }
