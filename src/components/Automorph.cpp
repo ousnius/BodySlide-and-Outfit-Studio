@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "Automorph.h"
 #include "Anim.h"
+#include "StarfieldSpace.h"
 
 #include <algorithm>
 
@@ -183,18 +184,6 @@ void Automorph::CopyMeshMask(Mesh* m, const std::string& shapeName) {
 		dm->mask[i] = m->mask[i];
 }
 
-MatTransform Automorph::GetShapeToGlobalForConform(const NifFile& ref, NiShape* shape, const AnimInfo* workAnim) {
-	MatTransform shapeToGlobal = workAnim->GetTransformShapeToGlobal(shape);
-
-	// Starfield vertices are scaled by havokScale, but the skin transform is derived from the
-	// skeleton in meters. The editor meshes scale its translation (see wxGLPanel::AddMeshFromNif),
-	// so do the same here to keep the outfit and the reference in the same space.
-	if (shape->IsSkinned() && ref.GetHeader().GetVersion().IsSF())
-		shapeToGlobal.translation *= sfHavokScale;
-
-	return shapeToGlobal;
-}
-
 void Automorph::MeshFromNifShape(Mesh* m, NifFile& ref, NiShape* shape, const AnimInfo* workAnim) {
 	std::vector<Vector3> nifVerts;
 	ref.GetVertsForShape(shape, nifVerts);
@@ -203,7 +192,8 @@ void Automorph::MeshFromNifShape(Mesh* m, NifFile& ref, NiShape* shape, const An
 
 	m->shapeName = shape->name.get();
 
-	m->SetXformMeshToModel(GetShapeToGlobalForConform(ref, shape, workAnim));
+	const bool isStarfield = ref.GetHeader().GetVersion().IsSF();
+	m->SetXformMeshToModel(ShapeToGlobalForConform(workAnim->GetTransformShapeToGlobal(shape), shape->IsSkinned(), isStarfield));
 
 	m->nVerts = nifVerts.size();
 	m->verts = std::make_unique<Vector3[]>(m->nVerts);

@@ -742,6 +742,9 @@
     <ClInclude Include="src\components\Automorph.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\StarfieldSpace.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\ClippingFixer.h">
       <Filter>Components</Filter>
     </ClInclude>

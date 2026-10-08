@@ -807,6 +807,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\components\Anim.h" />
     <ClInclude Include="src\components\Automorph.h" />
+    <ClInclude Include="src\components\StarfieldSpace.h" />
     <ClInclude Include="src\components\ClippingFixer.h" />
     <ClInclude Include="src\components\DiffData.h" />
     <ClInclude Include="src\components\Mesh.h" />
