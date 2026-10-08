@@ -183,6 +183,18 @@ void Automorph::CopyMeshMask(Mesh* m, const std::string& shapeName) {
 		dm->mask[i] = m->mask[i];
 }
 
+MatTransform Automorph::GetShapeToGlobalForConform(const NifFile& ref, NiShape* shape, const AnimInfo* workAnim) {
+	MatTransform shapeToGlobal = workAnim->GetTransformShapeToGlobal(shape);
+
+	// Starfield vertices are scaled by havokScale, but the skin transform is derived from the
+	// skeleton in meters. The editor meshes scale its translation (see wxGLPanel::AddMeshFromNif),
+	// so do the same here to keep the outfit and the reference in the same space.
+	if (shape->IsSkinned() && ref.GetHeader().GetVersion().IsSF())
+		shapeToGlobal.translation *= sfHavokScale;
+
+	return shapeToGlobal;
+}
+
 void Automorph::MeshFromNifShape(Mesh* m, NifFile& ref, NiShape* shape, const AnimInfo* workAnim) {
 	std::vector<Vector3> nifVerts;
 	ref.GetVertsForShape(shape, nifVerts);
@@ -191,7 +203,7 @@ void Automorph::MeshFromNifShape(Mesh* m, NifFile& ref, NiShape* shape, const An
 
 	m->shapeName = shape->name.get();
 
-	m->SetXformMeshToModel(workAnim->GetTransformShapeToGlobal(shape));
+	m->SetXformMeshToModel(GetShapeToGlobalForConform(ref, shape, workAnim));
 
 	m->nVerts = nifVerts.size();
 	m->verts = std::make_unique<Vector3[]>(m->nVerts);

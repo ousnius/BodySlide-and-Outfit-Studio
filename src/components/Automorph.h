@@ -68,6 +68,7 @@ public:
 	void UpdateMeshFromNif(nifly::NifFile& baseNif, const std::string& shapeName);
 	void CopyMeshMask(Mesh* m, const std::string& shapeName);
 
+	static nifly::MatTransform GetShapeToGlobalForConform(const nifly::NifFile& ref, nifly::NiShape* shape, const AnimInfo* workAnim);
 	void MeshFromNifShape(Mesh* m, nifly::NifFile& ref, nifly::NiShape* shape, const AnimInfo* workAnim);
 	// indices must be in ascending order.
 	void DeleteVerts(const std::string& shapeName, const std::vector<uint16_t>& indices);
