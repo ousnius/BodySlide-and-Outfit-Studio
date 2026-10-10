@@ -1193,6 +1193,7 @@ public:
 	void ApplySliders(bool recalcBVH = true);
 
 	void ShowSliderEffect(const std::string& sliderName, bool show = true);
+	wxSliderPanel* GetSliderPanel(const std::string& sliderName);
 
 	void SelectShape(const std::string& shapeName);
 	std::vector<std::string> GetShapeList();
