@@ -261,6 +261,11 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldString("Suffix", &Step::exportSuffix, "txtExportSuffix"),
 		});
 
+	add(AutomationStepType::ExportSFMorphs, "ExportSFMorphs", wxTRANSLATE("Export"), wxTRANSLATE("Export: Starfield Morphs"), "pageExportSFMorphs",
+		{
+			FieldString("Folder", &Step::exportSFMorphsFolder, "txtExportSFMorphsFolder"),
+		});
+
 	add(AutomationStepType::SaveProject, "SaveProject", wxTRANSLATE("Export"), wxTRANSLATE("Export: Save Project"), "pageSaveProject",
 		{
 			FieldString("DisplayName", &Step::saveName, "txtSaveDisplayName"),
@@ -277,6 +282,8 @@ std::vector<AutomationStepInfo> BuildStepTypes() {
 			FieldString("ReplaceFrom", &Step::saveReplaceFrom, "txtSaveReplaceFrom"),
 			FieldString("ReplaceTo", &Step::saveReplaceTo, "txtSaveReplaceTo"),
 			FieldString("Suffix", &Step::saveSuffix, "txtSaveSuffix"),
+			FieldString("SFMorphPath", &Step::saveSFMorphPath, "txtSaveSFMorphPath"),
+			FieldString("SFMorphTargetShape", &Step::saveSFMorphTargetShape, "txtSaveSFMorphTargetShape"),
 		});
 
 	// Import

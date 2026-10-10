@@ -267,6 +267,7 @@ private:
 	int ExecuteStepRenameShape(const AutomationStep& step);
 	int ExecuteStepSaveProject(const AutomationStep& step);
 	int ExecuteStepExportFile(const AutomationStep& step);
+	int ExecuteStepExportSFMorphs(const AutomationStep& step);
 	int ExecuteStepRefineMesh(const AutomationStep& step);
 	int ExecuteStepDeleteSlider(const AutomationStep& step);
 	int ExecuteStepSetReferenceShape(const AutomationStep& step);

@@ -1922,6 +1922,7 @@ const AutomationDialog::StepBinding* AutomationDialog::FindStepBinding(Automatio
 		{AutomationStepType::EditBone, &AutomationDialog::ExecuteStepEditBone},
 		{AutomationStepType::RemoveSkinning, &AutomationDialog::ExecuteStepRemoveSkinning},
 		{AutomationStepType::ExportFile, &AutomationDialog::ExecuteStepExportFile, &AutomationDialog::StepToUIExportFile, &AutomationDialog::StepFromUIExportFile},
+		{AutomationStepType::ExportSFMorphs, &AutomationDialog::ExecuteStepExportSFMorphs},
 		{AutomationStepType::SaveProject, &AutomationDialog::ExecuteStepSaveProject, &AutomationDialog::StepToUISaveProject},
 		{AutomationStepType::ImportFile, &AutomationDialog::ExecuteStepImportFile, &AutomationDialog::StepToUIImportFile, &AutomationDialog::StepFromUIImportFile},
 		{AutomationStepType::ImportSliderData, &AutomationDialog::ExecuteStepImportSliderData, &AutomationDialog::StepToUIImportSliderData, &AutomationDialog::StepFromUIImportSliderData},
@@ -2631,6 +2632,9 @@ void AutomationDialog::OnAddStep(wxCommandEvent& WXUNUSED(event)) {
 	step.saveSliderSetFile = project->mFileName;
 	step.saveShapeDataFolder = project->mDataDir;
 	step.saveShapeDataFile = project->mBaseFile;
+	step.saveSFMorphPath = project->mSFMorphPath;
+	step.saveSFMorphTargetShape = project->mSFMorphTargetShape;
+	step.exportSFMorphsFolder = project->mSFMorphPath;
 	ApplyBatchModeDefaults(step);
 
 	int newIndex;
@@ -4124,6 +4128,8 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 							step.saveShapeDataFolder = ss.GetDefaultDataFolder();
 							step.saveShapeDataFile = ss.GetInputFile();
 							step.saveGenWeights = ss.GenWeights();
+							step.saveSFMorphPath = ss.GetSFMorphPath();
+							step.saveSFMorphTargetShape = ss.GetSFMorphTargetShape();
 						}
 					}
 
@@ -4141,6 +4147,7 @@ void AutomationDialog::ExecuteBatch(const std::vector<size_t>& stepIndices, cons
 						replaceAll(step.saveOutputDataPath);
 						replaceAll(step.saveShapeDataFolder);
 						replaceAll(step.saveShapeDataFile);
+						replaceAll(step.saveSFMorphPath);
 
 						// Replace only in the filename part of the slider set file path
 						wxFileName ssfFn(wxString::FromUTF8(step.saveSliderSetFile));

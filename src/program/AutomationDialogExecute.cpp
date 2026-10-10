@@ -33,6 +33,8 @@ See the included LICENSE file
 
 using namespace nifly;
 
+extern ConfigurationManager Config;
+
 namespace {
 int ExpectedBSShaderTextureCount(const NiVersion& version) {
 	if (version.User() == 12 && version.Stream() == 155)
@@ -1604,10 +1606,16 @@ int AutomationDialog::ExecuteStepSaveProject(const AutomationStep& step) {
 	wxString strGamePath = wxString::FromUTF8(step.saveOutputDataPath);
 	wxString strGameFile = wxString::FromUTF8(step.saveOutputFileName);
 
+	wxString strSFMorphPath = wxString::FromUTF8(step.saveSFMorphPath);
+	wxString strSFMorphTargetShape = wxString::FromUTF8(step.saveSFMorphTargetShape);
+	if (!strSFMorphTargetShape.empty() && !FindShapeByName(step.saveSFMorphTargetShape))
+		wxLogWarning("Automation: SaveProject - Starfield morph target shape '%s' not found in the project.", strSFMorphTargetShape);
+
 	std::string result = project->Save(sliderSetFile, strOutfitName, strDataDir,
 									   strBaseFile, strGamePath, strGameFile,
 									   step.saveGenWeights, step.saveAutoCopyRef,
-									   false, false);
+									   project->bPreventMorphFile, project->bKeepZappedShapes,
+									   strSFMorphPath, strSFMorphTargetShape);
 
 	if (!result.empty()) {
 		wxLogError("Automation: SaveProject error: %s", result);
@@ -1692,6 +1700,56 @@ int AutomationDialog::ExecuteStepExportFile(const AutomationStep& step) {
 	}
 	else {
 		wxLogError("Automation: ExportFile - unsupported file extension '%s'.", ext);
+		return 1;
+	}
+	return 0;
+}
+
+int AutomationDialog::ExecuteStepExportSFMorphs(const AutomationStep& step) {
+	if (step.exportSFMorphsFolder.empty()) {
+		wxLogError("Automation: ExportSFMorphs - no output folder specified.");
+		return 1;
+	}
+
+	// A morph.dat holds the morphs of a single shape. Without target meshes, fall back
+	// to the project's morph target shape, then to the only non-reference shape.
+	std::vector<NiShape*> shapes;
+	if (step.targetMeshes.empty() && !project->mSFMorphTargetShape.empty()) {
+		NiShape* shape = FindShapeByName(project->mSFMorphTargetShape.ToUTF8().data());
+		if (shape)
+			shapes.push_back(shape);
+		else
+			wxLogWarning("Automation: ExportSFMorphs - project morph target shape '%s' not found.", project->mSFMorphTargetShape);
+	}
+
+	if (shapes.empty())
+		shapes = ResolveTargetShapes(step, false);
+
+	if (shapes.size() != 1) {
+		wxLogError("Automation: ExportSFMorphs - expected exactly one target shape, found %zu. Specify the morph target shape in Target Meshes.", shapes.size());
+		return 1;
+	}
+
+	// Relative folders are resolved against the game data path, like the project's morph.dat path
+	wxFileName morphFolder = wxFileName::DirName(wxString::FromUTF8(step.exportSFMorphsFolder));
+	if (morphFolder.IsRelative()) {
+		wxString dataPath = wxString::FromUTF8(Config["GameDataPath"]);
+		if (dataPath.empty()) {
+			wxLogError("Automation: ExportSFMorphs - relative folder '%s' needs a game data path to be set.", morphFolder.GetPath());
+			return 1;
+		}
+		morphFolder.MakeAbsolute(dataPath);
+	}
+
+	wxFileName::Mkdir(morphFolder.GetPath(), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+	wxFileName morphFile(morphFolder.GetPath(), "morph.dat");
+	wxString morphFilePath = morphFile.GetFullPath();
+
+	NiShape* shape = shapes.front();
+	wxLogMessage("Automation: Exporting Starfield morph.dat for shape '%s' to '%s'...", shape->name.get(), morphFilePath);
+	if (!project->WriteSFMorphs(shape, morphFilePath.ToUTF8().data())) {
+		wxLogError("Automation: ExportSFMorphs - failed to write '%s'.", morphFilePath);
 		return 1;
 	}
 	return 0;

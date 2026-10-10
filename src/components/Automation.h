@@ -32,6 +32,7 @@ enum class AutomationStepType {
 	SetBoneTransform,
 	RemoveSkinning,
 	ExportFile,
+	ExportSFMorphs,
 	SaveProject,
 	ImportFile,
 	ImportSliderData,
@@ -89,7 +90,7 @@ enum class AutomationStepType {
 	LogMessage
 };
 
-constexpr int AutomationStepTypeCount = 64;
+constexpr int AutomationStepTypeCount = 65;
 static_assert(static_cast<int>(AutomationStepType::LogMessage) + 1 == AutomationStepTypeCount,
 	"AutomationStepTypeCount must match the number of enum values");
 
@@ -281,6 +282,8 @@ struct AutomationStep {
 	std::string saveReplaceFrom; // Batch: replace this word in original fields
 	std::string saveReplaceTo;   // Batch: replace with this word
 	std::string saveSuffix;      // Batch: append suffix to original fields
+	std::string saveSFMorphPath;        // Starfield morph.dat output folder (relative to game data path)
+	std::string saveSFMorphTargetShape; // Starfield morph target shape name
 
 	// DuplicateShape params
 	std::string dupNewName;
@@ -301,6 +304,9 @@ struct AutomationStep {
 	bool exportUseOriginalPath = false; // Use original file path from batch mode
 	std::string exportPrefix;
 	std::string exportSuffix;
+
+	// ExportSFMorphs params
+	std::string exportSFMorphsFolder; // Folder that receives morph.dat (relative to game data path)
 
 	// SetSliderProperties params
 	std::vector<std::string> sliderPropNames;
