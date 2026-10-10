@@ -5,6 +5,7 @@ See the included LICENSE file
 
 #include "Automorph.h"
 #include "Anim.h"
+#include "StarfieldSpace.h"
 
 #include <algorithm>
 
@@ -165,7 +166,7 @@ void Automorph::UpdateMeshFromNif(NifFile& baseNif, const std::string& shapeName
 		return;
 
 	for (int i = 0; i < m->nVerts; i++)
-		m->verts[i] = upVerts[i];
+		m->verts[i] = m->TransformPosMeshToModel(upVerts[i]);
 }
 
 void Automorph::CopyMeshMask(Mesh* m, const std::string& shapeName) {
@@ -191,7 +192,8 @@ void Automorph::MeshFromNifShape(Mesh* m, NifFile& ref, NiShape* shape, const An
 
 	m->shapeName = shape->name.get();
 
-	m->SetXformMeshToModel(workAnim->GetTransformShapeToGlobal(shape));
+	const bool isStarfield = ref.GetHeader().GetVersion().IsSF();
+	m->SetXformMeshToModel(ShapeToGlobalForConform(workAnim->GetTransformShapeToGlobal(shape), shape->IsSkinned(), isStarfield));
 
 	m->nVerts = nifVerts.size();
 	m->verts = std::make_unique<Vector3[]>(m->nVerts);

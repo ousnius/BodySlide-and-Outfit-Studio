@@ -474,6 +474,7 @@ if(BSOS_BUILD_TESTS)
 		tests/SFMaterialFileTest.cpp
 		tests/SFMorphFileTest.cpp
 		tests/SFResourceHashTest.cpp
+		tests/StarfieldSpaceTest.cpp
 		src/files/HkxFile.cpp
 		src/files/SFMaterialDatabase.cpp
 		src/files/SFMaterialFile.cpp
@@ -483,6 +484,7 @@ if(BSOS_BUILD_TESTS)
 		src/files/SFResourceHash.cpp
 		src/utils/PlatformUtil.cpp
 		src/utils/StringStuff.cpp
+		lib/nifly/src/Object3d.cpp
 	)
 	target_include_directories(BSOSTests PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/src

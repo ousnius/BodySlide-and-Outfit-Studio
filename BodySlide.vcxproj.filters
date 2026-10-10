@@ -694,6 +694,9 @@
     <ClInclude Include="src\components\Automorph.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\StarfieldSpace.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\files\ObjFile.h">
       <Filter>Files</Filter>
     </ClInclude>

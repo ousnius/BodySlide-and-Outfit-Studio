@@ -7,6 +7,7 @@ See the included LICENSE file
 
 #include "../utils/ConfigurationManager.h"
 #include "NifFile.hpp"
+#include "StarfieldSpace.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -15,10 +16,6 @@ See the included LICENSE file
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-// Starfield meshes are normalized to metric units; vertices are scaled by this
-// factor during BSGeometryMeshData deserialization to match older-game units.
-constexpr float sfHavokScale = 69.969f;
 
 struct VertexBoneWeights {
 	std::vector<uint8_t> boneIds;
