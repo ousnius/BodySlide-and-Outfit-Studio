@@ -5436,6 +5436,19 @@ void OutfitProject::MergeRootExtraData(NifFile& srcNif) {
 		return nullptr;
 	};
 
+	// Only the plain value types are compared, anything else is offered in case it differs
+	auto sameContent = [](NiExtraData* extraData, NiExtraData* other) {
+		if (auto integerData = dynamic_cast<NiIntegerExtraData*>(extraData))
+			return integerData->integerData == static_cast<NiIntegerExtraData*>(other)->integerData;
+		if (auto stringData = dynamic_cast<NiStringExtraData*>(extraData))
+			return stringData->stringData.get() == static_cast<NiStringExtraData*>(other)->stringData.get();
+		if (auto floatData = dynamic_cast<NiFloatExtraData*>(extraData))
+			return floatData->floatData == static_cast<NiFloatExtraData*>(other)->floatData;
+		if (auto booleanData = dynamic_cast<NiBooleanExtraData*>(extraData))
+			return booleanData->booleanData == static_cast<NiBooleanExtraData*>(other)->booleanData;
+		return false;
+	};
+
 	std::vector<RootExtraDataCandidate> merging;
 	for (auto& extraDataRef : srcRoot->extraDataRefs) {
 		auto extraData = srcNif.GetHeader().GetBlock<NiExtraData>(extraDataRef);
@@ -5451,8 +5464,15 @@ void OutfitProject::MergeRootExtraData(NifFile& srcNif) {
 			return findMatch(extraData, candidate.source);
 		});
 
-		if (!duplicate)
-			merging.push_back({extraData, findLoaded(extraData)});
+		if (duplicate)
+			continue;
+
+		// Replacing a block with an identical one changes nothing, so it isn't offered
+		auto loaded = findLoaded(extraData);
+		if (loaded && sameContent(extraData, loaded))
+			continue;
+
+		merging.push_back({extraData, loaded});
 	}
 
 	if (merging.empty())
