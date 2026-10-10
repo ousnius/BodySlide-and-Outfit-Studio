@@ -2168,6 +2168,10 @@
 				<label>Load Outfit...</label>
 				<help>Load a NIF file as the working outfit, replacing any current outfit objects.</help>
 			</object>
+			<object class="wxMenuItem" name="fileBrowseArchives">
+				<label>Browse Archives...</label>
+				<help>Browse the meshes in the game's BSA/BA2 archives to load or import them.</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="fileConvBodyRef">
 				<label>Convert / Replace Reference...\tCtrl+Shift+R</label>

@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../files/MaskFile.h"
 #include "../files/TriFile.h"
 #include "../files/SFMorphFile.h"
+#include "../files/GameDataStream.h"
+#include "../ui/ArchiveBrowser.h"
 #include "../ui/wxBrushSettingsPopup.h"
 #include "../utils/ConfigDialogUtil.h"
 #include "../utils/PlatformUtil.h"
@@ -185,6 +187,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("fileConvBodyRef"), OutfitStudioFrame::OnConvertBodyReference)
 	EVT_MENU(XRCID("menuRunAutomation"), OutfitStudioFrame::OnRunAutomation)
 	EVT_MENU(XRCID("fileLoadOutfit"), OutfitStudioFrame::OnLoadOutfit)
+	EVT_MENU(XRCID("fileBrowseArchives"), OutfitStudioFrame::OnBrowseArchives)
 	EVT_MENU(XRCID("fileSave"), OutfitStudioFrame::OnSaveSliderSet)
 	EVT_MENU(XRCID("fileSaveAs"), OutfitStudioFrame::OnSaveSliderSetAs)
 	EVT_MENU(XRCID("fileUnload"), OutfitStudioFrame::OnUnloadProject)
@@ -1679,6 +1682,9 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	if (editUV)
 		editUV->Close();
 
+	if (archiveBrowser)
+		archiveBrowser->Close();
+
 	if (project) {
 		ShutdownPhysics();
 		delete project;
@@ -2409,6 +2415,11 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 		GameUtil::InitArchives();
+
+			// The browser refers to the archives that were just reloaded
+			if (archiveBrowser)
+				archiveBrowser->Rebuild();
+
 			if (needsRestart) {
 				wxMessageBox(_("Settings changed. Please restart the application for changes to take effect."), _("Settings Changed"), wxOK | wxICON_INFORMATION);
 			}
@@ -4563,6 +4574,80 @@ void OutfitStudioFrame::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		std::vector<std::string> texVec = {XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath().ToUTF8().data()};
 		project->SetTextures(texVec);
 	}
+
+	wxLogMessage("Creating outfit...");
+	UpdateProgress(50, _("Creating outfit..."));
+	RefreshGUIFromProj();
+
+	UpdateTitle();
+
+	wxLogMessage("Outfit loaded.");
+	EndProgress();
+}
+
+void OutfitStudioFrame::OnBrowseArchives(wxCommandEvent& WXUNUSED(event)) {
+	if (!archiveBrowser) {
+		archiveBrowser = new ArchiveBrowser(this);
+		archiveBrowser->Bind(wxEVT_CLOSE_WINDOW, [&](wxCloseEvent& event) {
+			archiveBrowser = nullptr;
+			event.Skip();
+		});
+	}
+
+	archiveBrowser->Show();
+	archiveBrowser->Raise();
+}
+
+void OutfitStudioFrame::LoadMeshFromArchive(const std::string& relPath, const std::string& archivePath, bool import) {
+	auto stream = GameDataStream::OpenArchive(relPath, archivePath);
+	if (!stream) {
+		wxLogError("Could not read '%s' from archive '%s'!", relPath, archivePath);
+		wxMessageBox(wxString::Format(_("Could not read '%s' from archive '%s'!"), wxString::FromUTF8(relPath), wxString::FromUTF8(archivePath)),
+					 _("Archive Error"),
+					 wxICON_ERROR,
+					 this);
+		return;
+	}
+
+	CloseBrushSettings();
+
+	if (import) {
+		StartProgress(_("Importing NIF file..."));
+		UpdateProgress(1, _("Importing NIF file..."));
+
+		project->ImportNIF(*stream, relPath, false);
+
+		UpdateProgress(60, _("Refreshing GUI..."));
+		project->SetTextures();
+
+		SetPendingChanges();
+		RefreshGUIFromProj();
+
+		UpdateTitle();
+		EndProgress();
+		return;
+	}
+
+	menuBar->Enable(XRCID("fileSave"), false);
+
+	wxLogMessage("Loading outfit from archive...");
+	StartProgress(_("Loading outfit..."));
+
+	for (auto& s : project->GetWorkNif()->GetShapes()) {
+		if (!project->IsBaseShape(s)) {
+			glView->DeleteMesh(s->name.get());
+		}
+	}
+
+	UpdateProgress(1, _("Loading outfit..."));
+
+	if (project->ImportNIF(*stream, relPath, true)) {
+		EndProgress();
+		RefreshGUIFromProj();
+		return;
+	}
+
+	project->SetTextures();
 
 	wxLogMessage("Creating outfit...");
 	UpdateProgress(50, _("Creating outfit..."));

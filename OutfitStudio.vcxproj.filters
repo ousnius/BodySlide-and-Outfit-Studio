@@ -700,6 +700,9 @@
     <ClInclude Include="lib\FSEngine\FSBSA.h">
       <Filter>Libraries\FSEngine</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\ArchiveIndex.h">
+      <Filter>Components</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\DiffData.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -1543,6 +1546,9 @@
     <ClInclude Include="src\ui\wxBrushSettingsPopup.h">
       <Filter>UI</Filter>
     </ClInclude>
+    <ClInclude Include="src\ui\ArchiveBrowser.h">
+      <Filter>UI</Filter>
+    </ClInclude>
     <ClInclude Include="src\ui\WeightCopyDialog.h">
       <Filter>UI</Filter>
     </ClInclude>
@@ -2373,6 +2379,12 @@
     <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="src\ui\ArchiveBrowser.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\ArchiveIndex.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
     <ClCompile Include="src\ui\WeightCopyDialog.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -2439,6 +2451,9 @@
       <Filter>Resources</Filter>
     </Xml>
     <Xml Include="res\xrc\AddProject.xrc">
+      <Filter>Resources</Filter>
+    </Xml>
+    <Xml Include="res\xrc\ArchiveBrowser.xrc">
       <Filter>Resources</Filter>
     </Xml>
   </ItemGroup>

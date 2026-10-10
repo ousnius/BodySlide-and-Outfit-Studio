@@ -34,9 +34,9 @@ std::unique_ptr<std::istream> OpenLoose(const std::string& fullPath) {
 	return nullptr;
 }
 
-std::unique_ptr<std::istream> OpenArchive(const std::string& relPath) {
+std::unique_ptr<std::istream> OpenArchive(const std::string& relPath, const std::string& archivePath) {
 	for (FSArchiveFile* archive : FSManager::archiveList()) {
-		if (!archive || !archive->hasFile(relPath))
+		if (!archive || (!archivePath.empty() && archive->path() != archivePath) || !archive->hasFile(relPath))
 			continue;
 
 		wxMemoryBuffer outData;

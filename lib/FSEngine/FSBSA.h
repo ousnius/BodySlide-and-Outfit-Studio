@@ -220,6 +220,8 @@ public:
 	void fileTree(std::vector<std::string>&) const override final;
 	//! Find files matching a prefix and suffix (searches flat file map for BA2s)
 	void findFilesBySuffix(const std::string& prefix, const std::string& suffix, std::vector<std::string>& results) const override final;
+	//! Calls fn for every file, BA2s (flat file map) and BSAs (folder tree) alike
+	void forEachFile(const std::function<void(const std::string&, wxInt64)>& fn) const override final;
 
 	//! Returns the contents of the specified file
 	/*!
@@ -303,6 +305,8 @@ protected:
 	const BSAFolder *getFolder(std::string fn) const;
 	//! Gets the specified file, or null if not found
 	const BSAFile *getFile(std::string fn) const;
+	//! Returns the (lazily counted) size of a file
+	static wxInt64 fileSize(const BSAFile *file);
 
 	//! The %BSA file
 	wxFile bsa;

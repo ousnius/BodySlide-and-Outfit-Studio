@@ -377,6 +377,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/components/RefTemplates.cpp
 	src/components/Automation.cpp
 	src/components/TweakBrush.cpp
+	src/components/ArchiveIndex.cpp
 	src/components/UndoHistory.cpp
 	src/components/WeightNorm.cpp
 	src/files/FBXWrangler.cpp
@@ -390,6 +391,7 @@ set(BSOS_OUTFIT_STUDIO_SOURCES
 	src/files/SFResourceHash.cpp
 	src/files/SFMorphFile.cpp
 	src/ui/wxBrushSettingsPopup.cpp
+	src/ui/ArchiveBrowser.cpp
 	src/ui/WeightCopyDialog.cpp
 	src/ui/wxSliderPanel.cpp
 	src/program/EditUV.cpp
@@ -468,6 +470,7 @@ if(BSOS_BUILD_TESTS)
 	enable_testing()
 
 	add_executable(BSOSTests
+		tests/ArchiveIndexTest.cpp
 		tests/HkxFileTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
@@ -475,6 +478,7 @@ if(BSOS_BUILD_TESTS)
 		tests/SFMorphFileTest.cpp
 		tests/SFResourceHashTest.cpp
 		tests/StarfieldSpaceTest.cpp
+		src/components/ArchiveIndex.cpp
 		src/files/HkxFile.cpp
 		src/files/SFMaterialDatabase.cpp
 		src/files/SFMaterialFile.cpp

@@ -501,22 +501,39 @@ void BSA::close() {
 }
 
 wxInt64 BSA::fileSize(const std::string & fn) const {
-	// note: lazy size count (not accurate for compressed files)
-	if (const BSAFile * file = getFile(fn)) {
-		if (file->sizeFlags > 0)
-			return file->size();
+	if (const BSAFile * file = getFile(fn))
+		return fileSize(file);
 
-		wxUint64 size = file->unpackedLength;
-
-		if (file->tex.chunks.size()) {
-			for (size_t i = 1; i < file->tex.chunks.size(); i++) {
-				size += file->tex.chunks[i].unpackedSize;
-			}
-		}
-
-		return size;
-	}
 	return 0;
+}
+
+wxInt64 BSA::fileSize(const BSAFile *file) {
+	// note: lazy size count (not accurate for compressed files)
+	if (file->sizeFlags > 0)
+		return file->size();
+
+	wxUint64 size = file->unpackedLength;
+
+	if (file->tex.chunks.size()) {
+		for (size_t i = 1; i < file->tex.chunks.size(); i++) {
+			size += file->tex.chunks[i].unpackedSize;
+		}
+	}
+
+	return size;
+}
+
+void BSA::forEachFile(const std::function<void(const std::string&, wxInt64)>& fn) const {
+	for (auto& file : root.files)
+		fn(file.first, fileSize(file.second));
+
+	for (auto& folder : folders) {
+		if (!folder.second)
+			continue;
+
+		for (auto& file : folder.second->files)
+			fn(folder.first + "/" + file.first, fileSize(file.second));
+	}
 }
 
 void BSA::addFilesOfFolders(const std::string &folderName, std::vector<std::string> &tree) const {

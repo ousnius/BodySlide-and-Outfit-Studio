@@ -6580,6 +6580,14 @@ std::vector<bool> OutfitProject::CalculateAsymmetricTriangleVertexMask(NiShape* 
 }
 
 int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std::string& inOutfitName, std::map<std::string, std::string>* renamedShapes) {
+	std::fstream fileStream;
+	if (!fileName.empty())
+		PlatformUtil::OpenFileStream(fileStream, fileName, std::ios::in | std::ios::binary);
+
+	return ImportNIF(fileStream, fileName, clear, inOutfitName, renamedShapes);
+}
+
+int OutfitProject::ImportNIF(std::istream& fileStream, const std::string& fileName, bool clear, const std::string& inOutfitName, std::map<std::string, std::string>* renamedShapes) {
 	if (clear)
 		ClearOutfit();
 
@@ -6615,9 +6623,6 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 				mGameFile = fileRest;
 		}
 	}
-
-	std::fstream fileStream;
-	PlatformUtil::OpenFileStream(fileStream, fileName, std::ios::in | std::ios::binary);
 
 	NifFile nif;
 	int error = nif.Load(fileStream);
