@@ -55,7 +55,7 @@ void SliderDataList::Populate(wxListCtrl* list, const std::vector<SliderDataLoca
 
 		list->SetItem(item, column++, wxString::FromUTF8(row.key.targetName));
 		list->SetItem(item, column++, wxString::FromUTF8(row.key.dataName));
-		list->SetItem(item, column++, row.local ? _("Local") : _("External"));
+		list->SetItem(item, column++, row.local ? _("Local") : row.linked ? _("Linked") : _("External"));
 		list->SetItem(item, column++, JoinDataFolders(row.dataFolders));
 		list->SetItem(item, column++, wxString::FromUTF8(row.fileName));
 		list->SetItem(item, column++, row.fileName.empty() ? _("No file") : row.resolved ? _("Found") : _("Missing"));
