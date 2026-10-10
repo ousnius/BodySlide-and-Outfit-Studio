@@ -166,7 +166,7 @@ void Automorph::UpdateMeshFromNif(NifFile& baseNif, const std::string& shapeName
 		return;
 
 	for (int i = 0; i < m->nVerts; i++)
-		m->verts[i] = upVerts[i];
+		m->verts[i] = m->TransformPosMeshToModel(upVerts[i]);
 }
 
 void Automorph::CopyMeshMask(Mesh* m, const std::string& shapeName) {
