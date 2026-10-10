@@ -563,7 +563,7 @@ void AnimInfo::WriteNodesToNif(NifFile* nif, const std::string& shapeException) 
 	}
 }
 
-void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
+bool AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	// Add/remove nodes and set transforms
 	WriteNodesToNif(nif, shapeException);
 
@@ -655,10 +655,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 		}
 	}
 
-	if (incomplete)
-		wxMessageBox(_("Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export."),
-					 _("Export Warning"),
-					 wxICON_WARNING);
+	return !incomplete;
 }
 
 void AnimInfo::RenameShape(const std::string& shapeName, const std::string& newShapeName) {

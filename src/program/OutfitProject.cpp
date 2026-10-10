@@ -518,10 +518,10 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 			std::string baseShapeName = baseShape->name.get();
 			auto shape = clone.FindBlockByName<NiShape>(baseShapeName);
 			clone.DeleteShape(shape);
-			workAnim.WriteToNif(&clone, baseShapeName);
+			WriteAnimToNif(clone, baseShapeName);
 		}
 		else
-			workAnim.WriteToNif(&clone);
+			WriteAnimToNif(clone);
 
 		for (auto& s : clone.GetShapes())
 			clone.UpdateSkinPartitions(s);
@@ -6746,10 +6746,10 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 		std::string baseShapeName = baseShape->name.get();
 		auto bshape = clone.FindBlockByName<NiShape>(baseShapeName);
 		clone.DeleteShape(bshape);
-		workAnim.WriteToNif(&clone, baseShapeName);
+		WriteAnimToNif(clone, baseShapeName);
 	}
 	else
-		workAnim.WriteToNif(&clone);
+		WriteAnimToNif(clone);
 
 	for (auto& s : clone.GetShapes())
 		clone.UpdateSkinPartitions(s);
@@ -6770,6 +6770,17 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<Mesh
 	return result;
 }
 
+
+void OutfitProject::WriteAnimToNif(NifFile& nif, const std::string& shapeException) {
+	if (workAnim.WriteToNif(&nif, shapeException))
+		return;
+
+	wxString message = _("Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export.");
+	wxLogWarning(message);
+
+	if (!suppressPrompts)
+		wxMessageBox(message, _("Export Warning"), wxICON_WARNING, owner);
+}
 
 void OutfitProject::ChooseClothData(NifFile& nif) {
 	if (!clothData.empty()) {
@@ -6872,7 +6883,7 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 		if (find(exportShapes.begin(), exportShapes.end(), s->name.get()) == exportShapes.end())
 			clone.DeleteShape(s);
 
-	workAnim.WriteToNif(&clone);
+	WriteAnimToNif(clone);
 
 	for (auto& s : clone.GetShapes())
 		clone.UpdateSkinPartitions(s);

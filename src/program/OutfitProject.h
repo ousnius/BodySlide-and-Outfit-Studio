@@ -530,6 +530,7 @@ public:
 
 	void ChooseClothData(nifly::NifFile& nif);
 	void ChoosePhysicsData(nifly::NifFile& nif);
+	void WriteAnimToNif(nifly::NifFile& nif, const std::string& shapeException = "");
 	void ResetTransforms();
 
 	void CreateSkinning(nifly::NiShape* s);
