@@ -85,8 +85,10 @@ static bool BSAReadSizedString(wxFile &bsa, std::string &s) {
 
 template<typename TIter>
 static void SequenceToLowerCase(TIter begin, TIter end) {
+	// Only letters, a blanket "|= 0x20" would also turn '_' into DEL and so on
 	for (auto it = begin; it != end; ++it)
-		*it |= 0x20;
+		if (*it >= 'A' && *it <= 'Z')
+			*it |= 0x20;
 }
 
 wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, wxUint32 unpackedSize = 0, int skip = 0) {
