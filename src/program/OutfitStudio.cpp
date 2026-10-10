@@ -3563,7 +3563,7 @@ void OutfitStudioFrame::HideSliderPanel(wxSliderPanel* sliderPanel) {
 	sliderPanel->sliderReadout->Unbind(wxEVT_ENTER_WINDOW, &OutfitStudioFrame::OnEnterHoverSlider, this);
 
 	// Hover leave
-	sliderPanel->btnSliderEdit->Bind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
+	sliderPanel->btnSliderEdit->Unbind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
 	sliderPanel->sliderCheck->Unbind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
 	sliderPanel->sliderName->Unbind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
 	sliderPanel->slider->Unbind(wxEVT_LEAVE_WINDOW, &OutfitStudioFrame::OnLeaveHoverSlider, this);
