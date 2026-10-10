@@ -3197,7 +3197,8 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	}
 
 	ResolveTargetConflictsForIncomingShapes({{shape, refSet.ShapeToTarget(shape)}});
-	sset.GetSet(setName, activeSet, appendNewSliders);
+	// Only the reference shape is taken from the set
+	sset.GetSet(setName, activeSet, appendNewSliders, shape);
 	activeSet.SetBaseDataPath(ProjectUtil::GetProjectPath() + PathSepStr + "ShapeData");
 
 	std::vector<std::string> deletedShapes;
