@@ -262,6 +262,8 @@ TEST_CASE("BA2 general archives extract to their source files", "[Archive][BA2]"
 		{"BA2/GNRL_ASCII.ba2", 4},
 		{"BA2/GNRL_NoComp.ba2", 14},
 		{"BA2/GNRL_Paths.ba2", 5},
+		// Version 8 (Fallout 4 next-gen update), same layout as version 1
+		{"BA2/GNRL_v8.ba2", 6},
 	}));
 
 	INFO(file);
