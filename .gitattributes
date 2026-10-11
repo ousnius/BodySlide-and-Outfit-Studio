@@ -1,2 +1,8 @@
 # Archive test corpus: stored as-is, never line-ending converted
 tests/data/archives/** filter=lfs diff=lfs merge=lfs -text
+
+# Havok packfiles
+*.hkx filter=lfs diff=lfs merge=lfs -text
+
+# NetImmerse/Gamebryo meshes
+*.nif filter=lfs diff=lfs merge=lfs -text
