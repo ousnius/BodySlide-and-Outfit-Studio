@@ -166,9 +166,10 @@ wxMemoryBuffer lz4Uncompress(const wxMemoryBuffer& data, wxUint32 unpackedSize =
 
 	wxMemoryBuffer result(dstSize);
 
-	LZ4_decompress_safe_partial((char*)data.GetData(), (char*)result.GetData(), srcSize, dstSize, dstSize);
+	// Negative on corrupt data, so a short result tells the caller it failed
+	int read = LZ4_decompress_safe_partial((char*)data.GetData(), (char*)result.GetData(), srcSize, dstSize, dstSize);
 
-	result.SetDataLen(dstSize);
+	result.SetDataLen(read > 0 ? read : 0);
 	return result;
 };
 
@@ -767,7 +768,10 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 						wxUint32 unpackedSize = 0;
 						std::memcpy(&unpackedSize, chunk.GetData(), 4);
 
-						if (headerVersion == SSE_BSAHEADER_VERSION)
+						// Nothing to decompress, and zlib can't be read up to an unknown size
+						if (unpackedSize == 0)
+							chunk.SetDataLen(0);
+						else if (headerVersion == SSE_BSAHEADER_VERSION)
 							chunk = lz4fUncompress(chunk, 0, 4);
 						else
 							chunk = gUncompress(chunk, unpackedSize, 4);
