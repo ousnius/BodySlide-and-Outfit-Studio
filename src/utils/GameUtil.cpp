@@ -31,26 +31,38 @@ wxString GameUtil::GetGameDataPath(int targ) {
 	wxString gamestr = GameUtil::TargetGames[targ];
 	wxString cust = "GameDataPaths/" + gamestr;
 
-	if (!Config[cust].IsEmpty()) {
+	if (!Config[cust].IsEmpty())
 		dataPath = Config[cust];
-	}
-#ifdef _WINDOWS
-	else {
-		wxString gkey = "GameRegKey/" + gamestr;
-		wxString gval = "GameRegVal/" + gamestr;
-		std::string gameKey = Config[gkey].ToStdString();
-		// Try to read from registry if available
-		#ifdef wxUSE_REGKEY
-			wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
-			if (!gameKey.empty() && key.Exists()) {
-				if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
-					dataPath.Append("Data").Append(PathSepChar);
-				}
-			}
-		#endif
-	}
-#endif
+	else
+		dataPath = GetRegistryDataPath(targ);
+
 	return dataPath;
+}
+
+wxString GameUtil::GetRegistryDataPath(int targ) {
+#if defined(_WINDOWS) && wxUSE_REGKEY
+	wxString gamestr = GameUtil::TargetGames[targ];
+	wxString gameKey = Config["GameRegKey/" + gamestr];
+	wxString gameVal = Config["GameRegVal/" + gamestr];
+	if (gameKey.empty())
+		return wxEmptyString;
+
+	// Bethesda keys are in the 32-bit view, Steam uninstall keys (Starfield) in the 64-bit view
+	for (auto viewMode : {wxRegKey::WOW64ViewMode_32, wxRegKey::WOW64ViewMode_64}) {
+		wxRegKey key(wxRegKey::HKLM, gameKey, viewMode);
+		wxString installPath;
+		if (key.Exists() && key.HasValue(gameVal) && key.QueryValue(gameVal, installPath) && !installPath.empty()) {
+			if (!installPath.EndsWith("\\") && !installPath.EndsWith("/"))
+				installPath.Append(PathSepChar);
+
+			installPath.Append("Data").Append(PathSepChar);
+			return installPath;
+		}
+	}
+#else
+	(void)targ;
+#endif
+	return wxEmptyString;
 }
 
 void GameUtil::InitArchives() {

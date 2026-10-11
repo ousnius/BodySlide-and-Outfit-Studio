@@ -3546,6 +3546,8 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("GameRegVal/Fallout4VR", "Installed Path");
 	Config.SetDefaultValue("GameRegKey/SkyrimVR", "Software\\Bethesda Softworks\\Skyrim VR");
 	Config.SetDefaultValue("GameRegVal/SkyrimVR", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/Starfield", "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Steam App 1716740");
+	Config.SetDefaultValue("GameRegVal/Starfield", "InstallLocation");
 
 	// Target game not set, show setup dialog
 	if (currentTarget == -1)
@@ -3555,18 +3557,11 @@ bool BodySlideApp::SetDefaultConfig() {
 	targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 
 #ifdef _WINDOWS
-	wxString gameKey = Config["GameRegKey/" + GameUtil::TargetGames[targetGame]];
-	wxString gameValueKey = Config["GameRegVal/" + GameUtil::TargetGames[targetGame]];
-
 	if (Config["GameDataPath"].empty()) {
-		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
-		if (!gameKey.empty() && key.Exists()) {
-			wxString installPath;
-			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
-				installPath.Append("Data").Append(PathSepChar);
-				Config.SetDefaultValue("GameDataPath", installPath.ToUTF8().data());
-				wxLogMessage("Registry game data path: %s", installPath);
-			}
+		wxString installPath = GameUtil::GetRegistryDataPath(targetGame);
+		if (!installPath.empty()) {
+			Config.SetDefaultValue("GameDataPath", installPath.ToUTF8().data());
+			wxLogMessage("Registry game data path: %s", installPath);
 		}
 	}
 #endif

@@ -18,6 +18,10 @@ namespace GameUtil {
 	/// Checks config "GameDataPaths/<gamename>" first, then falls back to Windows registry on Windows.
 	wxString GetGameDataPath(int targ);
 
+	/// Get the game data path from the Windows registry using config "GameRegKey/<gamename>" and "GameRegVal/<gamename>".
+	/// Returns an empty string if not found or not on Windows.
+	wxString GetRegistryDataPath(int targ);
+
 	/// Initialize archive loading (BSA/BA2 files) for the currently configured game.
 	void InitArchives();
 
