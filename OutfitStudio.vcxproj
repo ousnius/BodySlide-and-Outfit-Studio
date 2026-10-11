@@ -806,6 +806,7 @@
     <ClInclude Include="lib\TinyXML-2\tinyxml2.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\components\Anim.h" />
+    <ClInclude Include="src\components\ArchiveIndex.h" />
     <ClInclude Include="src\components\Automorph.h" />
     <ClInclude Include="src\components\StarfieldSpace.h" />
     <ClInclude Include="src\components\ClippingFixer.h" />
@@ -889,6 +890,7 @@
     <ClInclude Include="src\render\GLShader.h" />
     <ClInclude Include="src\render\GLSurface.h" />
     <ClInclude Include="src\ui\wxBrushSettingsPopup.h" />
+    <ClInclude Include="src\ui\ArchiveBrowser.h" />
     <ClInclude Include="src\ui\WeightCopyDialog.h" />
     <ClInclude Include="src\ui\wxSliderPanel.h" />
     <ClInclude Include="src\ui\wxStateButton.h" />
@@ -1011,6 +1013,8 @@
     <ClCompile Include="src\render\GLShader.cpp" />
     <ClCompile Include="src\render\GLSurface.cpp" />
     <ClCompile Include="src\ui\wxBrushSettingsPopup.cpp" />
+    <ClCompile Include="src\ui\ArchiveBrowser.cpp" />
+    <ClCompile Include="src\components\ArchiveIndex.cpp" />
     <ClCompile Include="src\ui\WeightCopyDialog.cpp" />
     <ClCompile Include="src\ui\wxSliderPanel.cpp" />
     <ClCompile Include="src\ui\wxStateButton.cpp" />
@@ -1029,6 +1033,7 @@
     <Xml Include="Config.xml" />
     <Xml Include="res\xrc\SliderDataImport.xrc" />
     <Xml Include="res\xrc\AddProject.xrc" />
+    <Xml Include="res\xrc\ArchiveBrowser.xrc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

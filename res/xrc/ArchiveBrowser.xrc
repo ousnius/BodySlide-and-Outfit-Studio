@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+	<object class="wxDialog" name="dlgArchiveBrowser">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxMAXIMIZE_BOX</style>
+		<title>Archive Browser</title>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxSearchCtrl" name="archiveSearch">
+					<hint>Search meshes...</hint>
+					<tooltip>Show only the meshes whose path contains the text.</tooltip>
+					<style>wxTE_PROCESS_ENTER</style>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+				<border>5</border>
+				<object class="unknown" name="archiveTree" />
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="archiveStatus">
+					<label></label>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnArchiveReplace">
+							<label>Replace Outfit</label>
+							<tooltip>Replace the current outfit shapes with the selected mesh.</tooltip>
+							<enabled>0</enabled>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnArchiveImport">
+							<label>Import</label>
+							<tooltip>Import the shapes of the selected mesh into the project.</tooltip>
+							<enabled>0</enabled>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnArchiveRefresh">
+							<label>Refresh</label>
+							<tooltip>Read the file lists of the loaded archives again.</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<object class="wxButton" name="btnArchiveClose">
+							<label>Close</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+</resource>

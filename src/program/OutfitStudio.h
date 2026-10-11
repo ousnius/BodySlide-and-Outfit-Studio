@@ -173,6 +173,7 @@ enum class ToolID {
 struct ConformOptions;
 struct ClippingFixOptions;
 class OutfitStudioFrame;
+class ArchiveBrowser;
 class EditUV;
 struct SymmetricVertices;
 struct VertexAsymmetries;
@@ -1012,6 +1013,10 @@ public:
 
 	void LoadFiles(const wxArrayString& files, const wxString& projectName = "");
 
+	// Loads a mesh out of a BSA/BA2 archive as the outfit, or imports it into
+	// the project when "import" is set.
+	void LoadMeshFromArchive(const std::string& relPath, const std::string& archivePath, bool import);
+
 	const std::vector<RefTemplate>& GetRefTemplates() const { return refTemplates; }
 
 	// True while an HKX animation is being played back; all editing is locked
@@ -1057,6 +1062,7 @@ public:
 
 	wxGLPanel* glView = nullptr;
 	EditUV* editUV = nullptr;
+	ArchiveBrowser* archiveBrowser = nullptr;
 	OutfitProject* project = nullptr;
 	ShapeItemData* activeItem = nullptr;
 	std::string activeSlider;
@@ -1442,6 +1448,7 @@ private:
 	void OnConvertBodyReference(wxCommandEvent& event);
 	void OnRunAutomation(wxCommandEvent& event);
 	void OnLoadOutfit(wxCommandEvent& event);
+	void OnBrowseArchives(wxCommandEvent& event);
 	void OnUnloadProject(wxCommandEvent& event);
 
 	void OnLoadOutfitFP_File(wxFileDirPickerEvent& event);

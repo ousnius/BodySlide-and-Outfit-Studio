@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <wx/datetime.h>
 #include <wx/atomic.h>
+#include <functional>
 #include <vector>
 
 
@@ -79,6 +80,8 @@ public:
 	virtual void addFilesOfFolders(const std::string&, std::vector<std::string>&) const = 0;
 	virtual void fileTree(std::vector<std::string>&) const = 0;
 	virtual void findFilesBySuffix(const std::string& prefix, const std::string& suffix, std::vector<std::string>& results) const = 0;
+	//! Calls fn with the full path and size of every file in the archive
+	virtual void forEachFile(const std::function<void(const std::string&, wxInt64)>& fn) const = 0;
 	virtual bool fileContents(const std::string&, wxMemoryBuffer&) = 0;
 	virtual bool exportFile(const std::string&, const std::string&) = 0;
 	virtual std::string absoluteFilePath(const std::string&) const = 0;

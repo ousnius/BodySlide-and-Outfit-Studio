@@ -546,6 +546,9 @@ public:
 	void ApplyPoseTransformsToAllShapeGeometry(UndoStateProject& usp);
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
+	// Imports a NIF from a stream, e.g. one read from an archive. "fileName" is
+	// only used for naming, messages and resolving external data.
+	int ImportNIF(std::istream& fileStream, const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
 	int ExportNIF(const std::string& fileName, const std::vector<Mesh*>& modMeshes, bool withRef = false, std::optional<bool> useInternalGeom = std::nullopt);
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes, std::optional<bool> useInternalGeom = std::nullopt);
 

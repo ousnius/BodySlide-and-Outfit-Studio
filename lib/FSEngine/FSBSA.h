@@ -38,8 +38,10 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wx/file.h>
 #include <wx/filename.h>
 #include <wx/thread.h>
-#include <unordered_map>
+#include <map>
 #include <memory>
+#include <tuple>
+#include <unordered_map>
 
 
 /* Default header data */
@@ -59,7 +61,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define OB_BSAARCHIVE_PATHNAMES           0x0001 //!< Whether the BSA has names for paths
 #define OB_BSAARCHIVE_FILENAMES           0x0002 //!< Whether the BSA has names for files
 #define OB_BSAARCHIVE_COMPRESSFILES       0x0004 //!< Whether the files are compressed
+#define OB_BSAARCHIVE_XBOX360             0x0040 //!< Packed for the Xbox 360
 #define F3_BSAARCHIVE_PREFIXFULLFILENAMES 0x0100 //!< Whether the name is prefixed to the data?
+#define F3_BSAARCHIVE_XMEMCODEC           0x0200 //!< Xbox 360 files are compressed with XMem (LZX) instead of zlib
 
 /* File flags */
 #define OB_BSAFILE_NIF  0x0001 //!< Set when the BSA contains NIF files
@@ -220,6 +224,8 @@ public:
 	void fileTree(std::vector<std::string>&) const override final;
 	//! Find files matching a prefix and suffix (searches flat file map for BA2s)
 	void findFilesBySuffix(const std::string& prefix, const std::string& suffix, std::vector<std::string>& results) const override final;
+	//! Calls fn for every file, BA2s (flat file map) and BSAs (folder tree) alike
+	void forEachFile(const std::function<void(const std::string&, wxInt64)>& fn) const override final;
 
 	//! Returns the contents of the specified file
 	/*!
@@ -303,6 +309,8 @@ protected:
 	const BSAFolder *getFolder(std::string fn) const;
 	//! Gets the specified file, or null if not found
 	const BSAFile *getFile(std::string fn) const;
+	//! Returns the (lazily counted) size of a file
+	static wxInt64 fileSize(const BSAFile *file);
 
 	//! The %BSA file
 	wxFile bsa;
@@ -340,6 +348,15 @@ protected:
 	bool compressToggle = false;
 	//! Whether Fallout 3 names are prefixed with an extra string
 	bool namePrefix = false;
+	//! Whether compressed files use the unsupported Xbox 360 XMem codec
+	bool xmemCompressed = false;
 
 	std::unique_ptr<char[]> fileNameSuperBuffer;
+
+	//! Files of a BA2 without a name table, by (folder hash, file hash, extension)
+	std::map<std::tuple<wxUint32, wxUint32, wxUint32>, BSAFile*> hashedFiles;
+	//! Adds a file of a BA2 without a name table
+	void insertHashedFile(wxUint32 dirHash, wxUint32 fileHash, const char ext[4], wxUint32 packed, wxUint32 unpacked, wxUint64 offset, BA2Tex* dds = nullptr);
+	//! Finds a file of a BA2 without a name table by the hashes of its path
+	const BSAFile *getHashedFile(const std::string& fn) const;
 };

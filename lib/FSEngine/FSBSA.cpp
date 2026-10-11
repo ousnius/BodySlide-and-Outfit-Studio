@@ -42,6 +42,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wx/zstream.h>
 #include <vector>
 #include <algorithm>
+#include <array>
+#include <cstring>
 
 #include "../LZ4F/lz4.h"
 #include "../LZ4F/lz4frame.h"
@@ -85,8 +87,10 @@ static bool BSAReadSizedString(wxFile &bsa, std::string &s) {
 
 template<typename TIter>
 static void SequenceToLowerCase(TIter begin, TIter end) {
+	// Only letters, a blanket "|= 0x20" would also turn '_' into DEL and so on
 	for (auto it = begin; it != end; ++it)
-		*it |= 0x20;
+		if (*it >= 'A' && *it <= 'Z')
+			*it |= 0x20;
 }
 
 wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, wxUint32 unpackedSize = 0, int skip = 0) {
@@ -105,8 +109,8 @@ wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, wxUint32 unpackedSize = 0
 	if (unpackedSize > 0) {
 		// Allocate if unpacked size is known
 		result.SetBufSize(unpackedSize);
-		result.SetDataLen(unpackedSize);
 		zlibStream.Read(result.GetData(), unpackedSize);
+		result.SetDataLen(zlibStream.LastRead());
 	}
 	else {
 		wxMemoryOutputStream output;
@@ -162,11 +166,36 @@ wxMemoryBuffer lz4Uncompress(const wxMemoryBuffer& data, wxUint32 unpackedSize =
 
 	wxMemoryBuffer result(dstSize);
 
-	LZ4_decompress_safe_partial((char*)data.GetData(), (char*)result.GetData(), srcSize, dstSize, dstSize);
+	// Negative on corrupt data, so a short result tells the caller it failed
+	int read = LZ4_decompress_safe_partial((char*)data.GetData(), (char*)result.GetData(), srcSize, dstSize, dstSize);
 
-	result.SetDataLen(dstSize);
+	result.SetDataLen(read > 0 ? read : 0);
 	return result;
 };
+
+//! Path hash of BA2 file records: CRC-32 of the lowercase string, skipping non-ASCII bytes
+static wxUint32 BA2Hash(const std::string &s) {
+	static const auto table = [] {
+		std::array<wxUint32, 256> t{};
+		for (wxUint32 i = 0; i < 256; i++) {
+			wxUint32 c = i;
+			for (int k = 0; k < 8; k++)
+				c = (c & 1) ? 0xEDB88320 ^ (c >> 1) : c >> 1;
+			t[i] = c;
+		}
+		return t;
+	}();
+
+	wxUint32 hash = 0;
+	for (unsigned char c : s) {
+		if (c >= 0x80)
+			continue;
+		if (c >= 'A' && c <= 'Z')
+			c |= 0x20;
+		hash = (hash >> 8) ^ table[(hash ^ c) & 0xFF];
+	}
+	return hash;
+}
 
 
 BSA::BSA(const std::string &filename) : FSArchiveFile(), bsa(filename), bsaInfo(filename), status("initialized") {
@@ -191,7 +220,8 @@ bool BSA::canOpen(const std::string &fn) {
 			if (f.Read((char *)&version, sizeof(version)) != 4)
 				return false;
 
-			return version == F4_BSAHEADER_VERSION || F4_BSAHEADER_VERSION2 || F4_BSAHEADER_VERSION3 || version == SF_BSAHEADER_VERSION2 || version == SF_BSAHEADER_VERSION3;
+			return version == F4_BSAHEADER_VERSION || version == F4_BSAHEADER_VERSION2 || version == F4_BSAHEADER_VERSION3 || version == SF_BSAHEADER_VERSION2
+				|| version == SF_BSAHEADER_VERSION3;
 		}
 		else if (magic == OB_BSAHEADER_FILEID) {
 			if (f.Read((char *)& version, sizeof(version)) != 4)
@@ -245,7 +275,9 @@ bool BSA::open() {
 			char* superBufferPtr = fileNameSuperBuffer.get();
 			std::vector<wxUint32> path_sizes(numFiles * 2);
 
-			if (bsa.Seek(ba2Header.nameTableOffset)) {
+			// Archive2 can leave the name table out, files are then only known by their path hashes
+			const bool hasNames = ba2Header.nameTableOffset != 0;
+			if (hasNames && bsa.Seek(ba2Header.nameTableOffset) != wxInvalidOffset) {
 				bsa.Read(superBufferPtr, numFiles * (MAX_PATH + 2));
 				wxUint32 cursor = 0;
 				wxUint32 n = 0;
@@ -272,7 +304,10 @@ bool BSA::open() {
 
 					wxUint32 n = 0;
 					for (wxUint32 i = 0; i < ba2Header.numFiles; i++) {
-						insertFile(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n], finfo[i].packedSize, finfo[i].unpackedSize, finfo[i].offset);
+						if (hasNames)
+							insertFile(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n], finfo[i].packedSize, finfo[i].unpackedSize, finfo[i].offset);
+						else
+							insertHashedFile(finfo[i].unk08, finfo[i].unk00, finfo[i].ext, finfo[i].packedSize, finfo[i].unpackedSize, finfo[i].offset);
 
 						/* Folders not required in this tool
 						std::string fullFile = std::string(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n]);
@@ -309,8 +344,14 @@ bool BSA::open() {
 						bsa.Read(texChunks.data(), tex.header.numChunks * 24);
 						tex.chunks = std::move(texChunks);
 
+						if (tex.chunks.empty())
+							throw std::string("texture chunks");
+
 						const BA2TexChunk& chunk = tex.chunks[0];
-						insertFile(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n], chunk.packedSize, chunk.unpackedSize, chunk.offset, &tex);
+						if (hasNames)
+							insertFile(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n], chunk.packedSize, chunk.unpackedSize, chunk.offset, &tex);
+						else
+							insertHashedFile(tex.header.dirHash, tex.header.nameHash, tex.header.ext, chunk.packedSize, chunk.unpackedSize, chunk.offset, &tex);
 
 						/* Folders not required in this tool
 						std::string fullFile = std::string(superBufferPtr + path_sizes[n], path_sizes[n + 1] - path_sizes[n]);
@@ -353,6 +394,10 @@ bool BSA::open() {
 				throw std::string("header flags");
 
 			compressToggle = (header.ArchiveFlags & OB_BSAARCHIVE_COMPRESSFILES) != 0;
+
+			// Skyrim SE ignores the XMem flag and keeps using LZ4
+			xmemCompressed = version != SSE_BSAHEADER_VERSION && (header.ArchiveFlags & OB_BSAARCHIVE_XBOX360) != 0
+				&& (header.ArchiveFlags & F3_BSAARCHIVE_XMEMCODEC) != 0;
 
 			if (version == F3_BSAHEADER_VERSION || version == SSE_BSAHEADER_VERSION)
 				namePrefix = (header.ArchiveFlags & F3_BSAARCHIVE_PREFIXFULLFILENAMES) != 0;
@@ -495,26 +540,47 @@ void BSA::close() {
 	root.files.clear();
 	folders.clear();
 
+	for (auto &it : hashedFiles)
+		delete it.second;
+	hashedFiles.clear();
+
 	fileNameSuperBuffer.reset();
 }
 
 wxInt64 BSA::fileSize(const std::string & fn) const {
-	// note: lazy size count (not accurate for compressed files)
-	if (const BSAFile * file = getFile(fn)) {
-		if (file->sizeFlags > 0)
-			return file->size();
+	if (const BSAFile * file = getFile(fn))
+		return fileSize(file);
 
-		wxUint64 size = file->unpackedLength;
-
-		if (file->tex.chunks.size()) {
-			for (size_t i = 1; i < file->tex.chunks.size(); i++) {
-				size += file->tex.chunks[i].unpackedSize;
-			}
-		}
-
-		return size;
-	}
 	return 0;
+}
+
+wxInt64 BSA::fileSize(const BSAFile *file) {
+	// note: lazy size count (not accurate for compressed files)
+	if (file->sizeFlags > 0)
+		return file->size();
+
+	wxUint64 size = file->unpackedLength;
+
+	if (file->tex.chunks.size()) {
+		for (size_t i = 1; i < file->tex.chunks.size(); i++) {
+			size += file->tex.chunks[i].unpackedSize;
+		}
+	}
+
+	return size;
+}
+
+void BSA::forEachFile(const std::function<void(const std::string&, wxInt64)>& fn) const {
+	for (auto& file : root.files)
+		fn(file.first, fileSize(file.second));
+
+	for (auto& folder : folders) {
+		if (!folder.second)
+			continue;
+
+		for (auto& file : folder.second->files)
+			fn(folder.first + "/" + file.first, fileSize(file.second));
+	}
 }
 
 void BSA::addFilesOfFolders(const std::string &folderName, std::vector<std::string> &tree) const {
@@ -558,12 +624,16 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 			wxInt64 filesz = file->size();
 			ssize_t fileok = 1;
 			if (namePrefix) {
-				char len;
+				// The data starts with the file's path as a length byte and the characters
+				wxUint8 len = 0;
 				fileok = bsa.Read(&len, 1);
-				filesz -= len;
+				filesz -= 1 + len;
 				if (fileok != wxInvalidOffset)
 					fileok = bsa.Seek(file->offset + 1 + len);
 			}
+
+			if (filesz < 0)
+				return false;
 
 			if (file->tex.chunks.size() > 0) {
 				// Fill DDS Header for BA2
@@ -580,10 +650,11 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				ddsHeader10.resourceDimension = DirectX::DDS_DIMENSION_TEXTURE2D;
 				ddsHeader10.arraySize = 1;
 
-				if (file->tex.header.unk16 == 2049) {
+				// Low byte: 1 for cube maps, high byte: tile mode
+				if (file->tex.header.unk16 & 0x1) {
 					ddsHeader.caps2 = DDS_CUBEMAP_ALLFACES;
+					// The array size counts cubes, not faces
 					ddsHeader10.miscFlag = DirectX::DDS_RESOURCE_MISC_TEXTURECUBE;
-					ddsHeader10.arraySize *= 6;
 				}
 
 				bool ok = true;
@@ -646,7 +717,7 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					case DXGI_FORMAT_R8G8B8A8_UINT:
 					case DXGI_FORMAT_R8G8B8A8_SNORM:
 					case DXGI_FORMAT_R8G8B8A8_SINT:
-						ddsHeader.ddspf = DirectX::DDSPF_A8R8G8B8;
+						ddsHeader.ddspf = DirectX::DDSPF_A8B8G8R8;
 						ddsHeader.pitchOrLinearSize *= 4; // 32bpp
 						break;
 
@@ -656,7 +727,22 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					case DXGI_FORMAT_R8_SNORM:
 					case DXGI_FORMAT_R8_SINT: ddsHeader.ddspf = DirectX::DDSPF_L8_NVTT1; break;
 
-					default: ok = false; break;
+					case DXGI_FORMAT_B8G8R8X8_UNORM:
+						ddsHeader.ddspf = DirectX::DDSPF_X8R8G8B8;
+						ddsHeader.pitchOrLinearSize *= 4; // 32bpp
+						break;
+
+					default:
+						// No legacy header for it, the DX10 header names the format
+						if (file->tex.header.format == DXGI_FORMAT_UNKNOWN) {
+							ok = false;
+							break;
+						}
+						ddsHeader.flags &= ~DDS_HEADER_FLAGS_LINEARSIZE;
+						ddsHeader.pitchOrLinearSize = 0;
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
 				}
 
 				if (!ok)
@@ -675,17 +761,37 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				if (file->sizeFlags > 0) {
 					// BSA
 					if (file->compressed() ^ compressToggle) {
-						if (headerVersion == SSE_BSAHEADER_VERSION)
+						// Compressed data starts with the original size
+						if (xmemCompressed || chunk.GetDataLen() < 4)
+							return false;
+
+						wxUint32 unpackedSize = 0;
+						std::memcpy(&unpackedSize, chunk.GetData(), 4);
+
+						// Nothing to decompress, and zlib can't be read up to an unknown size
+						if (unpackedSize == 0)
+							chunk.SetDataLen(0);
+						else if (headerVersion == SSE_BSAHEADER_VERSION)
 							chunk = lz4fUncompress(chunk, 0, 4);
 						else
-							chunk = gUncompress(chunk, 0, 4);
+							chunk = gUncompress(chunk, unpackedSize, 4);
+
+						if (chunk.GetDataLen() != unpackedSize)
+							return false;
 					}
 
 					content.AppendData(chunk, chunk.GetDataLen());
 				}
 				else if (file->packedLength > 0 && file->tex.chunks.empty()) {
 					// GNRL BA2 compressed
-					chunk = gUncompress(chunk, file->unpackedLength);
+					if (ba2Header.compressionFlag == 3)
+						chunk = lz4Uncompress(chunk, file->unpackedLength);
+					else
+						chunk = gUncompress(chunk, file->unpackedLength);
+
+					if (chunk.GetDataLen() != file->unpackedLength)
+						return false;
+
 					content.AppendData(chunk, chunk.GetDataLen());
 				}
 				else if (file->tex.chunks.empty()) {
@@ -871,6 +977,7 @@ BSA::BSAFile* BSA::insertFile(char* filename, int szFn, wxUint32 packed, wxUint3
 }
 
 const BSA::BSAFolder *BSA::getFolder(std::string fn) const {
+	std::replace(fn.begin(), fn.end(), '\\', '/');
 	SequenceToLowerCase(fn.begin(), fn.end());
 
 	if (fn.empty()) {
@@ -889,7 +996,11 @@ const BSA::BSAFolder *BSA::getFolder(std::string fn) const {
 }
 
 const BSA::BSAFile *BSA::getFile(std::string fn) const {
+	std::replace(fn.begin(), fn.end(), '\\', '/');
 	SequenceToLowerCase(fn.begin(), fn.end());
+
+	if (!hashedFiles.empty())
+		return getHashedFile(fn);
 
 	auto earlyfile = root.files.find(fn);
 	if (earlyfile != root.files.end()) {
@@ -916,6 +1027,51 @@ const BSA::BSAFile *BSA::getFile(std::string fn) const {
 	}
 
 	return nullptr;
+}
+
+void BSA::insertHashedFile(wxUint32 dirHash, wxUint32 fileHash, const char ext[4], wxUint32 packed, wxUint32 unpacked, wxUint64 offset, BA2Tex* dds) {
+	wxUint32 extValue = 0;
+	std::memcpy(&extValue, ext, 4);
+
+	auto& file = hashedFiles[std::make_tuple(dirHash, fileHash, extValue)];
+	if (file)
+		return;
+
+	file = new BSAFile;
+	if (dds)
+		file->tex = *dds;
+
+	file->packedLength = packed;
+	file->unpackedLength = unpacked;
+	file->offset = offset;
+}
+
+const BSA::BSAFile *BSA::getHashedFile(const std::string& fn) const {
+	// "meshes/actors/foo.nif" is hashed as folder "meshes\actors", name "foo" and extension "nif"
+	std::string folder;
+	std::string name = fn;
+	size_t slash = fn.find_last_of('/');
+	if (slash != std::string::npos) {
+		folder = fn.substr(0, slash);
+		name = fn.substr(slash + 1);
+	}
+	std::replace(folder.begin(), folder.end(), '/', '\\');
+
+	std::string ext;
+	size_t dot = name.find_last_of('.');
+	if (dot != std::string::npos) {
+		ext = name.substr(dot + 1);
+		name.resize(dot);
+	}
+
+	if (ext.size() > 4)
+		return nullptr;
+
+	wxUint32 extValue = 0;
+	std::memcpy(&extValue, ext.data(), ext.size());
+
+	auto it = hashedFiles.find(std::make_tuple(BA2Hash(folder), BA2Hash(name), extValue));
+	return it != hashedFiles.end() ? it->second : nullptr;
 }
 
 bool BSA::hasFile(const std::string &fn) const {

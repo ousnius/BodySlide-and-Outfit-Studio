@@ -22,8 +22,8 @@ namespace GameDataStream {
 std::unique_ptr<std::istream> OpenLoose(const std::string& fullPath);
 
 // Opens a data folder relative path ("meshes/actors/...") in one of the loaded
-// archives.
-std::unique_ptr<std::istream> OpenArchive(const std::string& relPath);
+// archives. A non-empty "archivePath" only reads from the archive at that path.
+std::unique_ptr<std::istream> OpenArchive(const std::string& relPath, const std::string& archivePath = {});
 
 // Resolves a physics XML path as referenced by a "HDT Skinned Mesh Physics
 // Object" NiStringExtraData, e.g.
