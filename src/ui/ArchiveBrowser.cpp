@@ -34,6 +34,15 @@ public:
 	const ArchiveIndex::Entry* file = nullptr;
 	bool populated = false;
 };
+
+// Archive paths are usually ASCII, older tools store other characters as
+// Windows-1252. Archive file names come in the system's code page.
+wxString ArchiveText(const std::string& text) {
+	wxString result = wxString::FromUTF8(text);
+	if (result.empty() && !text.empty())
+		result = wxString(text.c_str(), wxCSConv(wxFONTENCODING_CP1252));
+	return result;
+}
 }
 
 ArchiveBrowser::ArchiveBrowser(OutfitStudioFrame* parent)
@@ -161,7 +170,7 @@ void ArchiveBrowser::ShowTree(bool expandAll) {
 
 void ArchiveBrowser::PopulateItem(wxTreeListItem parent, const ArchiveIndex::Node& node) {
 	for (auto& folder : node.folders) {
-		wxTreeListItem item = tree->AppendItem(parent, wxString::FromUTF8(folder.first), ImageFolder, ImageFolderOpen, new ArchiveTreeData(&folder.second));
+		wxTreeListItem item = tree->AppendItem(parent, ArchiveText(folder.first), ImageFolder, ImageFolderOpen, new ArchiveTreeData(&folder.second));
 
 		// Placeholder so the folder can be expanded, filled in on demand
 		if (!folder.second.Empty())
@@ -170,10 +179,10 @@ void ArchiveBrowser::PopulateItem(wxTreeListItem parent, const ArchiveIndex::Nod
 
 	const auto& archives = index.Archives();
 	for (auto& file : node.files) {
-		wxTreeListItem item = tree->AppendItem(parent, wxString::FromUTF8(file.first), ImageFile, ImageFile, new ArchiveTreeData(&file.second));
+		wxTreeListItem item = tree->AppendItem(parent, ArchiveText(file.first), ImageFile, ImageFile, new ArchiveTreeData(&file.second));
 		tree->SetItemText(item, 1, wxString::Format("%lluKB", (unsigned long long)((file.second.size + 1023) / 1024)));
 		if (file.second.archive < archives.size())
-			tree->SetItemText(item, 2, wxString::FromUTF8(archives[file.second.archive].name));
+			tree->SetItemText(item, 2, ArchiveText(archives[file.second.archive].name));
 	}
 }
 
@@ -264,7 +273,13 @@ void ArchiveBrowser::OnSelectionChanged(wxTreeListEvent& WXUNUSED(event)) {
 	UpdateButtons();
 }
 
-void ArchiveBrowser::OnItemContextMenu(wxTreeListEvent& WXUNUSED(event)) {
+void ArchiveBrowser::OnItemContextMenu(wxTreeListEvent& event) {
+	// Act on the row that was clicked, which isn't always the selected one
+	if (event.GetItem().IsOk() && event.GetItem() != tree->GetSelection()) {
+		tree->Select(event.GetItem());
+		UpdateButtons();
+	}
+
 	if (!GetSelectedFile())
 		return;
 
