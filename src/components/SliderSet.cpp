@@ -186,7 +186,7 @@ size_t SliderSet::CopySlider(SliderData* other) {
 	return sliders.size() - 1;
 }
 
-int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
+int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders, const std::string& onlyShapeName) {
 	XMLElement* root = element->Parent()->ToElement();
 	int version = root->IntAttribute("version");
 
@@ -238,7 +238,7 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
 		shapeName->SetName("Shape");
 
 		auto shapeText = shapeName->GetText();
-		if (shapeText) {
+		if (shapeText && (onlyShapeName.empty() || onlyShapeName == shapeText)) {
 			auto& shape = shapeAttributes[shapeText];
 			if (shapeName->Attribute("DataFolder")) {
 				std::string dataFolderAttr = ToOSSlashes(shapeName->Attribute("DataFolder"));
@@ -260,13 +260,34 @@ int SliderSet::LoadSliderSet(XMLElement* element, bool appendNewSliders) {
 		shapeName = shapeName->NextSiblingElement(shapeStr.c_str());
 	}
 
+	std::string onlyTarget;
+	if (!onlyShapeName.empty()) {
+		onlyTarget = ShapeToTarget(onlyShapeName);
+		if (onlyTarget.empty())
+			onlyTarget = onlyShapeName;
+	}
+
 	XMLElement* sliderEntry = element->FirstChildElement("Slider");
 	while (sliderEntry) {
 		SliderData tmpSlider;
 		if (tmpSlider.LoadSliderData(sliderEntry, genWeights) == 0) {
+			// Data of other targets would duplicate the entries of existing shapes with the same target
+			if (!onlyTarget.empty()) {
+				tmpSlider.dataFiles.erase(std::remove_if(tmpSlider.dataFiles.begin(),
+														 tmpSlider.dataFiles.end(),
+														 [&onlyTarget](const DiffInfo& df) { return df.targetName != onlyTarget; }),
+										  tmpSlider.dataFiles.end());
+			}
+
 			// Check if slider already exists
 			for (auto& s : sliders) {
 				if (s.name == tmpSlider.name) {
+					// Replace stale data of the target that is being loaded
+					if (!onlyTarget.empty()) {
+						s.dataFiles.erase(std::remove_if(s.dataFiles.begin(), s.dataFiles.end(), [&onlyTarget](const DiffInfo& df) { return df.targetName == onlyTarget; }),
+										  s.dataFiles.end());
+					}
+
 					// Merge data of existing sliders
 					for (auto& df : tmpSlider.dataFiles)
 						s.AddDataFile(df.targetName, df.dataName, df.fileName, df.bLocal);
@@ -798,7 +819,7 @@ void SliderSetFile::SetShapes(const std::string& set, std::vector<std::string>& 
 	}
 }
 
-int SliderSetFile::GetSet(const std::string& setName, SliderSet& outSliderSet, bool appendNewSliders) {
+int SliderSetFile::GetSet(const std::string& setName, SliderSet& outSliderSet, bool appendNewSliders, const std::string& onlyShapeName) {
 	XMLElement* setPtr;
 	if (!HasSet(setName))
 		return 1;
@@ -806,7 +827,7 @@ int SliderSetFile::GetSet(const std::string& setName, SliderSet& outSliderSet, b
 	setPtr = setsInFile[setName];
 
 	int ret;
-	ret = outSliderSet.LoadSliderSet(setPtr, appendNewSliders);
+	ret = outSliderSet.LoadSliderSet(setPtr, appendNewSliders, onlyShapeName);
 
 	return ret;
 }

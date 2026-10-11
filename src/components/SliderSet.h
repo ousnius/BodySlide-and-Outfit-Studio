@@ -114,7 +114,8 @@ public:
 
 	std::vector<NormalGenLayer>& GetNormalsGenLayers() { return defNormalGen; }
 
-	int LoadSliderSet(XMLElement* sliderSetSource, bool appendNewSliders = true);
+	// With onlyShapeName, only the attributes and slider data of that shape are loaded.
+	int LoadSliderSet(XMLElement* sliderSetSource, bool appendNewSliders = true, const std::string& onlyShapeName = "");
 	void LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& forShape = "");
 
 	void Merge(SliderSet& mergeSet,
@@ -418,7 +419,7 @@ public:
 	void SetShapes(const std::string& set, std::vector<std::string>& outShapeNames);
 
 	// Gets a single slider set from the XML document based on the name.
-	int GetSet(const std::string& setName, SliderSet& outSliderSet, bool appendNewSliders = true);
+	int GetSet(const std::string& setName, SliderSet& outSliderSet, bool appendNewSliders = true, const std::string& onlyShapeName = "");
 	// Adds all of the slider sets in the file to the supplied slider set vector. Does not clear the vector before doing so.
 	int GetAllSets(std::vector<SliderSet>& outAppendSets);
 	// Gets only the output file path for the set

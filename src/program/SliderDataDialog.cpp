@@ -37,6 +37,35 @@ void SliderDataList::Configure(wxListCtrl* list, bool includeSlider) {
 	list->InsertColumn(column++, _("Data Folder(s)"), wxLIST_FORMAT_LEFT, includeSlider ? 245 : 210);
 	list->InsertColumn(column++, _("File"), wxLIST_FORMAT_LEFT, includeSlider ? 245 : 210);
 	list->InsertColumn(column++, _("Status"), wxLIST_FORMAT_LEFT, 85);
+
+	// Explain the source of the slider data under the mouse
+	int sourceColumn = includeSlider ? 4 : 3;
+	list->Bind(wxEVT_MOTION, [list, sourceColumn](wxMouseEvent& event) {
+		event.Skip();
+
+		int flags = 0;
+		long subItem = -1;
+		long item = list->HitTest(event.GetPosition(), flags, &subItem);
+
+		// Not all platforms report the column, then the whole row shows it
+		wxString tip;
+		if (item != wxNOT_FOUND && (subItem == -1 || subItem == sourceColumn)) {
+			wxString source = list->GetItemText(item, sourceColumn);
+			if (source == _("Local"))
+				tip = _("Stored in this project's own data file.");
+			else if (source == _("Linked"))
+				tip = _("Stored in another project's data file in the same data folder.");
+			else if (source == _("External"))
+				tip = _("Stored in the shape's data folders, separate from this project.");
+		}
+
+		if (list->GetToolTipText() != tip) {
+			if (tip.IsEmpty())
+				list->UnsetToolTip();
+			else
+				list->SetToolTip(tip);
+		}
+	});
 }
 
 void SliderDataList::Populate(wxListCtrl* list, const std::vector<SliderDataLocation>& rows, const std::vector<size_t>* visibleRows, bool includeSlider) {
@@ -55,7 +84,7 @@ void SliderDataList::Populate(wxListCtrl* list, const std::vector<SliderDataLoca
 
 		list->SetItem(item, column++, wxString::FromUTF8(row.key.targetName));
 		list->SetItem(item, column++, wxString::FromUTF8(row.key.dataName));
-		list->SetItem(item, column++, row.local ? _("Local") : _("External"));
+		list->SetItem(item, column++, row.local ? _("Local") : row.linked ? _("Linked") : _("External"));
 		list->SetItem(item, column++, JoinDataFolders(row.dataFolders));
 		list->SetItem(item, column++, wxString::FromUTF8(row.fileName));
 		list->SetItem(item, column++, row.fileName.empty() ? _("No file") : row.resolved ? _("Found") : _("Missing"));

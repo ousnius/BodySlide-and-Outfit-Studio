@@ -54,7 +54,8 @@ struct SliderDataLocation {
 	std::string fileName;
 	std::string dataFileName;
 	std::string dataNameInFile;
-	bool local = false;
+	bool local = false;	 // Data of this project
+	bool linked = false; // Data in the .osd file of another project in the same data folder
 	bool resolved = false;
 	bool isBSD = false;
 	std::string resolvedPath;
@@ -189,6 +190,17 @@ class OutfitProject {
 	void ResolveTargetConflictsForIncomingShapes(const std::vector<std::pair<std::string, std::string>>& incomingShapeTargets);
 	bool ResolveSliderDataEntry(const SliderDataKey& key, size_t& sliderIndex, size_t& dataIndex);
 	bool ShapeSliderDataIsLocalOnly(const std::string& shapeName);
+	std::string ProjectOSDFileName();
+	// Local slider data can point to the .osd file of another project in the same data folder.
+	bool SliderDataIsLinked(const DiffInfo& dataFile);
+	void UnlinkSliderData(DiffInfo& dataFile);
+	// Whether saving keeps the slider data entry as it is instead of writing its data to the project's own .osd file.
+	bool KeepSliderDataLink(const DiffInfo* dataFile,
+							const std::string& shapeName,
+							const bool isBaseShape,
+							const bool hasDiff,
+							const std::string& osdFileName,
+							const std::string& prevOSDFileName);
 
 	SFMaterialResolver sfMaterialResolver;
 
@@ -281,7 +293,7 @@ public:
 					 const wxString& strSFMorphPath = "",
 					 const wxString& strSFMorphTargetShape = "");
 
-	bool SaveSliderData(const std::string& fileName, bool copyRef = true);
+	bool SaveSliderData(const std::string& fileName, bool copyRef = true, const std::string& osdFileName = "", const std::string& prevOSDFileName = "");
 
 	nifly::NifFile* GetWorkNif() { return &workNif; }
 	AnimInfo* GetWorkAnim() { return &workAnim; }

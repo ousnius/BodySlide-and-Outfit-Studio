@@ -65,6 +65,14 @@ public:
 		return "";
 	}
 
+	DiffInfo* GetDataFile(const std::string& targetDataName) {
+		for (auto& df : dataFiles)
+			if (df.dataName == targetDataName)
+				return &df;
+
+		return nullptr;
+	}
+
 	void RenameTarget(const std::string& oldTarget, const std::string& newTarget, const std::string& dataName) {
 		for (auto& df : dataFiles) {
 			if (df.targetName == oldTarget) {
