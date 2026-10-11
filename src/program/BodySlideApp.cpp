@@ -2543,7 +2543,7 @@ void BodySlideApp::PostProcessPreview(std::vector<ShapePreviewData>& shapeData, 
 
 			// Collide with the shape the sliders describe, not the base shape
 			for (auto& physics : previewPhysics)
-				if (physics.projectIdx == sd.projectIdx)
+				if (physics.projectIdx == static_cast<size_t>(sd.projectIdx))
 					physics.controller->SetShapeVertices(sd.name, sd.verts);
 
 			ApplyPreviewSkinning(sd.projectIdx, sd.name, sd.verts);
