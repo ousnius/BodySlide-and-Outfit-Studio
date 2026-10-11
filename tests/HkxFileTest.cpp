@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -111,5 +112,57 @@ TEST_CASE("HKX pose animation serialization round-trips supported formats", "[Hk
 			RequireTransformNear(animation.At(0u, trackIndex), tracks[trackIndex]);
 
 		std::remove(path.c_str());
+	}
+}
+
+TEST_CASE("HKX loads game animations", "[HkxFile]") {
+	// frameDuration 0 skips the check: a single-frame pose has no frame spacing.
+	const struct {
+		const char* fileName;
+		HKX::Format format;
+		uint32_t numTracks;
+		uint32_t numFrames;
+		float duration;
+		float frameDuration;
+		const char* skeletonName;
+	} cases[] = {
+		{"LE_SplineCompressed.hkx", HKX::Format::Skyrim32, 97u, 1u, 0.033333f, 0.0f, "NPC Root [Root]"},
+		{"SE_SplineCompressed.hkx", HKX::Format::Skyrim64, 109u, 35u, 1.1664584f, 1.1664584f / 34.0f, "NPC Root [Root]"},
+		{"SE_InterleavedUncompressed.hkx", HKX::Format::Skyrim64, 36u, 31u, 1.25f, 1.25f / 30.0f, nullptr},
+		{"FO4_SplineCompressed.hkx", HKX::Format::Fallout64, 95u, 17u, 0.4333334f, 0.4333334f / 16.0f, "Root"},
+	};
+
+	for (const auto& testCase : cases) {
+		INFO(testCase.fileName);
+		const auto path = std::filesystem::u8path(BSOS_TEST_DATA_DIR) / "hkx" / testCase.fileName;
+
+		// Without "git lfs pull" the file is only a pointer file
+		std::ifstream stream(path, std::ios::binary);
+		std::string head(23, '\0');
+		if (!stream.read(head.data(), head.size()) || head == "version https://git-lfs")
+			SKIP("HKX test data is missing, run \"git lfs pull\"");
+
+		HKX::File file;
+		std::string error;
+		const bool loaded = file.Load(path.string(), &error);
+		INFO(error);
+		REQUIRE(loaded);
+		REQUIRE(file.GetFormat() == testCase.format);
+		REQUIRE(file.GetAnimations().size() == 1u);
+
+		const HKX::Animation& animation = file.GetAnimations().front();
+		REQUIRE(animation.numTransformTracks == testCase.numTracks);
+		REQUIRE(animation.numFrames == testCase.numFrames);
+		REQUIRE(animation.trackTransforms.size() == size_t(animation.numFrames) * animation.numTransformTracks);
+		RequireFloatNear(animation.duration, testCase.duration, "duration");
+		if (testCase.frameDuration > 0.0f)
+			RequireFloatNear(animation.frameDuration, testCase.frameDuration, "frame duration");
+		if (testCase.skeletonName)
+			REQUIRE(animation.binding.originalSkeletonName == testCase.skeletonName);
+
+		for (const HKX::Transform& transform : animation.trackTransforms) {
+			const float* q = transform.rotation;
+			RequireFloatNear(std::sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]), 1.0f, "rotation length");
+		}
 	}
 }

@@ -1271,6 +1271,27 @@ bool ParseSkeleton(const Buf& buf,
 	return true;
 }
 
+// Annotation tracks: per-track names.
+void ReadAnnotationTrackNames(const Buf& buf,
+							  uint32_t dataAbs,
+							  uint32_t animRel,
+							  uint32_t annTracksOff,
+							  uint32_t ptrSize,
+							  const std::unordered_map<uint32_t, uint32_t>& fixups,
+							  std::vector<std::string>& outNames) {
+	auto ar = ReadHkArray(buf, dataAbs, animRel, annTracksOff, ptrSize, fixups);
+	if (ar.contentRel >= 0 && ar.count > 0) {
+		const uint32_t annStride = ptrSize + HkArrayStride(ptrSize);
+		outNames.assign(ar.count, std::string{});
+		for (uint32_t i = 0; i < ar.count; ++i) {
+			uint32_t trackRel = uint32_t(ar.contentRel) + i * annStride;
+			int64_t strRel = ResolveLocal(fixups, trackRel);
+			if (strRel >= 0)
+				outNames[i] = ReadCString(buf, dataAbs + uint32_t(strRel));
+		}
+	}
+}
+
 bool ParseAnimation(const Buf& buf,
 					uint32_t dataAbs,
 					uint32_t animRel,
@@ -1367,26 +1388,84 @@ bool ParseAnimation(const Buf& buf,
 		return false;
 	}
 
-	// Annotation tracks: per-track names.
-	{
-		auto ar = ReadHkArray(buf, dataAbs, animRel, oAnnTracks, ptrSize, fixups);
-		if (ar.contentRel >= 0 && ar.count > 0) {
-			const uint32_t annStride = ptrSize + arrSize;
-			outAnim.trackNames.assign(ar.count, std::string{});
-			for (uint32_t i = 0; i < ar.count; ++i) {
-				uint32_t trackRel = uint32_t(ar.contentRel) + i * annStride;
-				int64_t strRel = ResolveLocal(fixups, trackRel);
-				if (strRel >= 0)
-					outAnim.trackNames[i] = ReadCString(buf, dataAbs + uint32_t(strRel));
-			}
-		}
-	}
+	ReadAnnotationTrackNames(buf, dataAbs, animRel, oAnnTracks, ptrSize, fixups, outAnim.trackNames);
 
 	if (!DecompressSpline(blob, blobSize, outAnim.numTransformTracks, outAnim.numFrames, numBlocks, maxFramesPerBlock, blockOffsets, maskAndQuantSize, outAnim.trackTransforms)) {
 		if (errorOut)
 			*errorOut = "Spline decompression failed";
 		return false;
 	}
+	return true;
+}
+
+// hkaInterleavedUncompressedAnimation stores one raw hkQsTransform per track
+// per frame, already in [frame * numTracks + track] order.
+bool ParseInterleavedAnimation(const Buf& buf,
+							   uint32_t dataAbs,
+							   uint32_t animRel,
+							   uint32_t ptrSize,
+							   const std::unordered_map<uint32_t, uint32_t>& fixups,
+							   Animation& outAnim,
+							   std::string* errorOut) {
+	const uint32_t base = 2u * ptrSize;
+	const uint32_t arrSize = HkArrayStride(ptrSize);
+
+	// hkaAnimation members
+	const uint32_t oDuration = base + 4;
+	const uint32_t oNumTracks = base + 8;
+	const uint32_t oExtractedMotion = base + 16;
+	const uint32_t oAnnTracks = oExtractedMotion + ptrSize;
+
+	// hkaInterleavedUncompressedAnimation members
+	const uint32_t oTransforms = oAnnTracks + arrSize;
+	const uint32_t oFloats = oTransforms + arrSize;
+
+	uint32_t a = dataAbs + animRel;
+	if (!buf.InBounds(a, oFloats + arrSize)) {
+		if (errorOut)
+			*errorOut = "Animation object truncated";
+		return false;
+	}
+
+	outAnim.duration = ReadF32(buf.data + a + oDuration);
+	outAnim.numTransformTracks = ReadU32(buf.data + a + oNumTracks);
+
+	auto ar = ReadHkArray(buf, dataAbs, animRel, oTransforms, ptrSize, fixups);
+	if (outAnim.numTransformTracks == 0 || ar.contentRel < 0 || ar.count == 0 || ar.count % outAnim.numTransformTracks != 0) {
+		if (errorOut)
+			*errorOut = "Animation has no transform data";
+		return false;
+	}
+
+	const uint32_t QS_STRIDE = 0x30;
+	uint32_t cAbs = dataAbs + uint32_t(ar.contentRel);
+	if (!buf.InBounds(cAbs, size_t(ar.count) * QS_STRIDE)) {
+		if (errorOut)
+			*errorOut = "Transform data truncated";
+		return false;
+	}
+
+	outAnim.numFrames = ar.count / outAnim.numTransformTracks;
+	if (outAnim.numFrames > 1 && outAnim.duration > 0.0f)
+		outAnim.frameDuration = outAnim.duration / float(outAnim.numFrames - 1);
+
+	outAnim.trackTransforms.resize(ar.count);
+	for (uint32_t i = 0; i < ar.count; ++i) {
+		const uint8_t* p = buf.data + cAbs + i * QS_STRIDE;
+		Transform& t = outAnim.trackTransforms[i];
+		t.translation[0] = ReadF32(p + 0);
+		t.translation[1] = ReadF32(p + 4);
+		t.translation[2] = ReadF32(p + 8);
+		t.rotation[0] = ReadF32(p + 16);
+		t.rotation[1] = ReadF32(p + 20);
+		t.rotation[2] = ReadF32(p + 24);
+		t.rotation[3] = ReadF32(p + 28);
+		t.scale[0] = ReadF32(p + 32);
+		t.scale[1] = ReadF32(p + 36);
+		t.scale[2] = ReadF32(p + 40);
+	}
+
+	ReadAnnotationTrackNames(buf, dataAbs, animRel, oAnnTracks, ptrSize, fixups, outAnim.trackNames);
 	return true;
 }
 
@@ -1710,6 +1789,7 @@ bool File::Load(const std::string& path, std::string* errorOut) {
 	// Map each animation object to its (optional) binding.
 	struct AnimRec {
 		uint32_t rel;
+		bool interleaved;
 	};
 	std::vector<AnimRec> animObjs;
 	std::vector<uint32_t> bindingObjs;
@@ -1721,7 +1801,10 @@ bool File::Load(const std::string& path, std::string* errorOut) {
 				skeletons.push_back(std::move(skel));
 		}
 		else if (obj.className == "hkaSplineCompressedAnimation") {
-			animObjs.push_back({obj.relOffset});
+			animObjs.push_back({obj.relOffset, false});
+		}
+		else if (obj.className == "hkaInterleavedUncompressedAnimation") {
+			animObjs.push_back({obj.relOffset, true});
 		}
 		else if (obj.className == "hkaAnimationBinding") {
 			bindingObjs.push_back(obj.relOffset);
@@ -1734,7 +1817,9 @@ bool File::Load(const std::string& path, std::string* errorOut) {
 	for (size_t i = 0; i < animObjs.size(); ++i) {
 		Animation anim;
 		std::string err;
-		if (!ParseAnimation(buf, dataSec->absStart, animObjs[i].rel, ptrSize, localFixups, anim, &err)) {
+		const bool parsed = animObjs[i].interleaved ? ParseInterleavedAnimation(buf, dataSec->absStart, animObjs[i].rel, ptrSize, localFixups, anim, &err)
+													: ParseAnimation(buf, dataSec->absStart, animObjs[i].rel, ptrSize, localFixups, anim, &err);
+		if (!parsed) {
 			if (errorOut && errorOut->empty())
 				*errorOut = err;
 			continue;
