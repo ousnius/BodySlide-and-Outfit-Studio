@@ -3,8 +3,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 
+#include <wx/log.h>
+
 #include <algorithm>
 #include <cstdint>
+#include <cctype>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
@@ -20,6 +24,13 @@ namespace fs = std::filesystem;
 // packed from, so every extracted file can be checked against its source.
 namespace {
 using Bytes = std::vector<uint8_t>;
+
+// Without a wx app, errors the reader logs (e.g. from zlib) pop up message boxes
+// that block the test run. Send them to stderr instead.
+const bool logToStderr = [] {
+	delete wxLog::SetActiveTarget(new wxLogStderr);
+	return true;
+}();
 
 fs::path CorpusDir() {
 	return fs::u8path(BSOS_TEST_DATA_DIR) / "archives";
@@ -100,6 +111,7 @@ struct DdsInfo {
 	uint32_t mips = 0;
 	uint32_t format = 0; // DXGI_FORMAT
 	bool cube = false;
+	uint32_t arraySize = 1; // Textures, or cubes for a cube map
 	size_t dataOffset = 0;
 };
 
@@ -127,6 +139,7 @@ std::optional<DdsInfo> ParseDds(const Bytes& data) {
 			return std::nullopt;
 		info.format = U32(data, 128);
 		info.cube |= (U32(data, 136) & 0x4) != 0; // RESOURCE_MISC_TEXTURECUBE
+		info.arraySize = U32(data, 140);
 		info.dataOffset = 148;
 	}
 	else if (pfFlags & 0x4) {
@@ -143,6 +156,8 @@ std::optional<DdsInfo> ParseDds(const Bytes& data) {
 			info.format = 28; // R8G8B8A8_UNORM
 		else if (red == 0xFF0000 && alpha == 0xFF000000)
 			info.format = 87; // B8G8R8A8_UNORM
+		else if (red == 0xFF0000 && alpha == 0)
+			info.format = 88; // B8G8R8X8_UNORM
 		else
 			return std::nullopt;
 	}
@@ -163,6 +178,7 @@ void RequireSameDds(const Bytes& extracted, const Bytes& source, const std::stri
 	CHECK(got->mips == want->mips);
 	CHECK(got->format == want->format);
 	CHECK(got->cube == want->cube);
+	CHECK(got->arraySize == want->arraySize);
 
 	Bytes gotData(extracted.begin() + got->dataOffset, extracted.end());
 	Bytes wantData(source.begin() + want->dataOffset, source.end());
@@ -211,8 +227,18 @@ struct ArchiveCase {
 TEST_CASE("BSA archives extract to their source files", "[Archive][BSA]") {
 	SkipWithoutCorpus();
 
-	// 0x68: Fallout 3, New Vegas, Skyrim LE (zlib). 0x69: Skyrim SE (LZ4).
+	// 0x67: Oblivion (zlib). 0x68: Fallout 3, New Vegas, Skyrim LE (zlib). 0x69: Skyrim SE (LZ4).
+	// The 0x67 archives are written by our own tool from the loose files with
+	// Oblivion's archive flags (0x703/0x707). The Toggle ones store every other
+	// file the other way than the archive's compression flag says.
 	auto [file, files] = GENERATE(values<ArchiveCase>({
+		{"BSA/0x67_ASCII.bsa", 4},
+		{"BSA/0x67_DDS.bsa", 4},
+		{"BSA/0x67_DDS_NoComp.bsa", 4},
+		{"BSA/0x67_Paths.bsa", 20},
+		{"BSA/0x67_Toggle_Comp.bsa", 4},
+		{"BSA/0x67_Toggle_NoComp.bsa", 4},
+		{"BSA/0x67_WAV_TXT.bsa", 2},
 		{"BSA/0x68_ASCII.bsa", 4},
 		{"BSA/0x68_ASCII_EmbedFileNames.bsa", 4},
 		{"BSA/0x68_DDS.bsa", 4},
@@ -262,6 +288,10 @@ TEST_CASE("BA2 general archives extract to their source files", "[Archive][BA2]"
 		{"BA2/GNRL_ASCII.ba2", 4},
 		{"BA2/GNRL_NoComp.ba2", 14},
 		{"BA2/GNRL_Paths.ba2", 5},
+		// Version 2 (Starfield): 8 more header bytes, uncompressed files
+		{"BA2/GNRL_v2.ba2", 27},
+		// Our own version 3 with LZ4 compression (compression flag 3)
+		{"BA2/GNRL_v3_LZ4.ba2", 2},
 		// Version 8 (Fallout 4 next-gen update), same layout as version 1
 		{"BA2/GNRL_v8.ba2", 6},
 	}));
@@ -280,6 +310,10 @@ TEST_CASE("BA2 texture archives extract to their source textures", "[Archive][BA
 		{"BA2/DDS.ba2", 23},
 		{"BA2/DDS_NoComp.ba2", 23},
 		{"BA2/DDS_XBOX.ba2", 23},
+		// Our own: formats without a legacy DDS header and a BC7 cube map, as
+		// version 1 (zlib) and version 3 (Starfield, LZ4)
+		{"BA2/DDS_Formats.ba2", 5},
+		{"BA2/DDS_Formats_v3_LZ4.ba2", 5},
 	}));
 
 	INFO(file);
@@ -321,6 +355,68 @@ TEST_CASE("Archive lookups ignore case and slash direction", "[Archive]") {
 	CHECK(ba2->hasFile("DDS\\BC1_16x16.DDS"));
 	CHECK(ba2->hasFile("dds/bc1_16x16.dds"));
 	CHECK_FALSE(ba2->hasFile("dds/missing.dds"));
+}
+
+TEST_CASE("Game archives extract every file", "[Archive][fixture]") {
+	// Folders with real game archives, separated by ';', e.g. a game's Data folder.
+	// They can't be part of the corpus, so this only runs on request.
+	const char* dirList = std::getenv("BSOS_ARCHIVE_TEST_DIRS");
+	if (!dirList || !dirList[0])
+		SKIP("BSOS_ARCHIVE_TEST_DIRS is not set");
+
+	std::vector<fs::path> archives;
+	std::string dirs = dirList;
+	for (size_t start = 0; start <= dirs.size();) {
+		size_t end = dirs.find(';', start);
+		if (end == std::string::npos)
+			end = dirs.size();
+
+		fs::path dir = fs::u8path(dirs.substr(start, end - start));
+		if (!dir.empty()) {
+			REQUIRE(fs::is_directory(dir));
+			for (auto& entry : fs::directory_iterator(dir)) {
+				std::string ext = entry.path().extension().u8string();
+				std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				if (entry.is_regular_file() && (ext == ".bsa" || ext == ".ba2"))
+					archives.push_back(entry.path());
+			}
+		}
+		start = end + 1;
+	}
+	REQUIRE(!archives.empty());
+
+	auto endsWith = [](const std::string& s, const char* suffix) {
+		size_t n = std::strlen(suffix);
+		return s.size() >= n && s.compare(s.size() - n, n, suffix) == 0;
+	};
+	auto startsWith = [](const wxMemoryBuffer& data, const char* magic) {
+		size_t n = std::strlen(magic);
+		return data.GetDataLen() >= n && std::memcmp(data.GetData(), magic, n) == 0;
+	};
+
+	for (auto& path : archives) {
+		INFO(path.u8string());
+		BSA archive(path.u8string());
+		REQUIRE(BSA::canOpen(path.u8string()));
+		REQUIRE(archive.open());
+
+		std::vector<std::string> files = ListFiles(archive);
+		std::vector<std::string> failures;
+		for (auto& file : files) {
+			wxMemoryBuffer data;
+			if (!archive.fileContents(file, data))
+				failures.push_back(file + ": not extracted");
+			else if (endsWith(file, ".nif") && !startsWith(data, "Gamebryo File Format") && !startsWith(data, "NetImmerse File Format"))
+				failures.push_back(file + ": not a NIF");
+			else if (endsWith(file, ".dds") && !startsWith(data, "DDS "))
+				failures.push_back(file + ": not a DDS");
+		}
+
+		UNSCOPED_INFO(path.filename().u8string() << ": " << files.size() << " files, " << failures.size() << " failed");
+		for (size_t i = 0; i < failures.size() && i < 20; i++)
+			UNSCOPED_INFO(failures[i]);
+		CHECK(failures.empty());
+	}
 }
 
 TEST_CASE("Only supported archive versions can be opened", "[Archive]") {
