@@ -471,6 +471,7 @@ if(BSOS_BUILD_TESTS)
 
 	add_executable(BSOSTests
 		tests/ArchiveIndexTest.cpp
+		tests/ArchiveTest.cpp
 		tests/HkxFileTest.cpp
 		tests/SFMaterialDatabaseTest.cpp
 		tests/SFLayeredMaterialTest.cpp
@@ -488,16 +489,26 @@ if(BSOS_BUILD_TESTS)
 		src/files/SFResourceHash.cpp
 		src/utils/PlatformUtil.cpp
 		src/utils/StringStuff.cpp
+		lib/FSEngine/FSBSA.cpp
+		lib/LZ4F/lz4.c
+		lib/LZ4F/lz4frame.c
+		lib/LZ4F/lz4hc.c
+		lib/LZ4F/xxhash.c
 		lib/nifly/src/Object3d.cpp
 	)
 	target_include_directories(BSOSTests PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/src
+		${CMAKE_CURRENT_SOURCE_DIR}/lib
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
 	)
-	target_compile_definitions(BSOSTests PRIVATE ${BSOS_PLATFORM_DEFINITIONS})
-	target_link_libraries(BSOSTests PRIVATE Catch2::Catch2WithMain)
+	target_compile_definitions(BSOSTests PRIVATE
+		${BSOS_PLATFORM_DEFINITIONS}
+		BSOS_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/data"
+	)
+	# The archive reader (FSBSA) is built on wxWidgets' file and zlib streams
+	target_link_libraries(BSOSTests PRIVATE Catch2::Catch2WithMain ${BSOS_WX_LIBRARIES} Threads::Threads)
 	set_target_properties(BSOSTests PROPERTIES CXX_EXTENSIONS OFF)
 	if(MSVC AND BSOS_TEST_MSVC_RUNTIME_LIBRARY)
 		set_property(TARGET BSOSTests PROPERTY MSVC_RUNTIME_LIBRARY "${BSOS_TEST_MSVC_RUNTIME_LIBRARY}")
