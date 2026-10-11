@@ -194,12 +194,13 @@ class OutfitProject {
 	// Local slider data can point to the .osd file of another project in the same data folder.
 	bool SliderDataIsLinked(const DiffInfo& dataFile);
 	void UnlinkSliderData(DiffInfo& dataFile);
-	// Whether slider data is written to the project's own .osd file on save instead of keeping its link.
-	bool SliderDataSavedLocally(const size_t sliderIndex,
-								const std::string& dataName,
-								const std::string& shapeName,
-								const std::string& osdFileName,
-								const std::string& prevOSDFileName);
+	// Whether saving keeps the slider data entry as it is instead of writing its data to the project's own .osd file.
+	bool KeepSliderDataLink(const DiffInfo* dataFile,
+							const std::string& shapeName,
+							const bool isBaseShape,
+							const bool hasDiff,
+							const std::string& osdFileName,
+							const std::string& prevOSDFileName);
 
 	SFMaterialResolver sfMaterialResolver;
 

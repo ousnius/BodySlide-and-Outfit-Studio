@@ -409,13 +409,12 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 		UpdateProgress(prog += step, _("Adding outfit shapes..."));
 	}
 
-	std::string osdFileName = baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
+	std::string osdFileName = ProjectOSDFileName();
 
 	if (activeSet.size() > 0) {
 		// Copy the reference slider info and add the outfit data to them.
 		std::string targ;
 		std::string targSlider;
-		std::string targSliderData;
 
 		prog = 10;
 		step = 20 / activeSet.size();
@@ -425,25 +424,21 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 			size_t id = outSet.CopySlider(&activeSet[i]);
 			outSet[id].Clear();
 
+			auto addDataFile = [&](const std::string& shapeName, const bool isBaseShape, const bool hasDiff) {
+				const DiffInfo* dataFile = activeSet[i].GetDataFile(targSlider);
+				if (KeepSliderDataLink(dataFile, shapeName, isBaseShape, hasDiff, osdFileName, prevOSDFileName))
+					outSet[id].AddDataFile(targ, targSlider, dataFile->fileName, dataFile->bLocal);
+				else if (hasDiff)
+					outSet[id].AddDataFile(targ, targSlider, osdFileName + PathSepStr + targSlider);
+			};
+
 			if (copyRef && baseShape) {
 				std::string baseShapeName = baseShape->name.get();
 				targ = ShapeToTarget(baseShapeName);
 				targSlider = activeSet[i].TargetDataName(targ);
-				bool hasBaseDiff = false;
 				if (!targSlider.empty()) {
 					TargetDataDiffs* baseDiff = baseDiffData.GetDiffSet(targSlider);
-					hasBaseDiff = baseDiff && !baseDiff->empty();
-				}
-
-				bool savedLocally = targSlider.empty() || SliderDataSavedLocally(i, targSlider, baseShapeName, osdFileName, prevOSDFileName);
-				if (hasBaseDiff && savedLocally) {
-					targSliderData = osdFileName + PathSepStr + targSlider;
-					outSet[id].AddDataFile(targ, targSlider, targSliderData);
-				}
-				else if (!targSlider.empty() && (!savedLocally || !activeSet[i].IsLocalData(targSlider))) {
-					// Keep the link to the data
-					targSliderData = activeSet[i].DataFileName(targSlider);
-					outSet[id].AddDataFile(targ, targSlider, targSliderData, activeSet[i].IsLocalData(targSlider));
+					addDataFile(baseShapeName, true, baseDiff && !baseDiff->empty());
 				}
 			}
 
@@ -454,22 +449,10 @@ std::string OutfitProject::Save(const wxFileName& sliderSetFile,
 				std::string shapeName = s->name.get();
 				targ = ShapeToTarget(shapeName);
 				targSlider = activeSet[i].TargetDataName(targ);
-				bool hasDataFile = !targSlider.empty();
 				if (targSlider.empty())
 					targSlider = targ + outSet[i].name;
 
-				bool hasResultDiff = morpher.GetResultDiffSize(targ, activeSet[i].name) > 0;
-				bool savedLocally = !hasDataFile || SliderDataSavedLocally(i, targSlider, shapeName, osdFileName, prevOSDFileName);
-
-				if (hasResultDiff && savedLocally) {
-					targSliderData = osdFileName + PathSepStr + targSlider;
-					outSet[i].AddDataFile(targ, targSlider, targSliderData);
-				}
-				else if (hasDataFile && (!savedLocally || !activeSet[i].IsLocalData(targSlider))) {
-					// Keep the link to the data
-					targSliderData = activeSet[i].DataFileName(targSlider);
-					outSet[i].AddDataFile(targ, targSlider, targSliderData, activeSet[i].IsLocalData(targSlider));
-				}
+				addDataFile(shapeName, false, morpher.GetResultDiffSize(targ, activeSet[i].name) > 0);
 			}
 			UpdateProgress(prog += step, _("Calculating slider data..."));
 		}
@@ -560,12 +543,10 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef, co
 				std::string baseShapeName = baseShape->name.get();
 				targ = ShapeToTarget(baseShapeName);
 				targSlider = activeSet[i].TargetDataName(targ);
-				if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
-					if (activeSet[i].IsLocalData(targSlider) && SliderDataSavedLocally(i, targSlider, baseShapeName, osdFileName, prevOSDFileName)) {
-						std::unordered_map<uint16_t, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
-						osdDiffs.LoadSet(targSlider, targ, *diff);
-						osdNames[fileName][targSlider] = targ;
-					}
+				std::unordered_map<uint16_t, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
+				if (diff && !diff->empty() && !KeepSliderDataLink(activeSet[i].GetDataFile(targSlider), baseShapeName, true, true, osdFileName, prevOSDFileName)) {
+					osdDiffs.LoadSet(targSlider, targ, *diff);
+					osdNames[fileName][targSlider] = targ;
 				}
 			}
 
@@ -579,13 +560,12 @@ bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef, co
 				if (targSlider.empty())
 					targSlider = targ + activeSet[i].name;
 
-				if (morpher.GetResultDiffSize(targ, activeSet[i].name) > 0) {
-					if (SliderDataSavedLocally(i, targSlider, shapeName, osdFileName, prevOSDFileName)) {
-						std::unordered_map<uint16_t, Vector3> diff;
-						morpher.GetRawResultDiff(targ, activeSet[i].name, diff);
-						osdDiffs.LoadSet(targSlider, targ, diff);
-						osdNames[fileName][targSlider] = targ;
-					}
+				if (morpher.GetResultDiffSize(targ, activeSet[i].name) > 0
+					&& !KeepSliderDataLink(activeSet[i].GetDataFile(targSlider), shapeName, false, true, osdFileName, prevOSDFileName)) {
+					std::unordered_map<uint16_t, Vector3> diff;
+					morpher.GetRawResultDiff(targ, activeSet[i].name, diff);
+					osdDiffs.LoadSet(targSlider, targ, diff);
+					osdNames[fileName][targSlider] = targ;
 				}
 			}
 		}
@@ -612,20 +592,16 @@ bool OutfitProject::SliderDataIsLinked(const DiffInfo& dataFile) {
 	std::string projectOSDFileName = ProjectOSDFileName();
 	std::string osdFileName;
 	std::string dataNameInFile;
-	if (projectOSDFileName.empty() || !SplitSliderDataFileName(dataFile.fileName, osdFileName, dataNameInFile))
-		return false;
-
-	return !StringsEqualInsens(osdFileName.c_str(), projectOSDFileName.c_str());
+	return !projectOSDFileName.empty() && SplitSliderDataFileName(dataFile.fileName, osdFileName, dataNameInFile)
+		&& !StringsEqualInsens(osdFileName.c_str(), projectOSDFileName.c_str());
 }
 
 void OutfitProject::UnlinkSliderData(DiffInfo& dataFile) {
-	if (SliderDataFileIsBSD(dataFile.fileName))
-		return;
-
 	std::string projectOSDFileName = ProjectOSDFileName();
 	std::string osdFileName;
 	std::string dataNameInFile;
-	if (!SplitSliderDataFileName(dataFile.fileName, osdFileName, dataNameInFile) || StringsEqualInsens(osdFileName.c_str(), projectOSDFileName.c_str()))
+	if (SliderDataFileIsBSD(dataFile.fileName) || !SplitSliderDataFileName(dataFile.fileName, osdFileName, dataNameInFile)
+		|| StringsEqualInsens(osdFileName.c_str(), projectOSDFileName.c_str()))
 		return;
 
 	// Point to the project's own file, the data is moved there on save
@@ -635,40 +611,40 @@ void OutfitProject::UnlinkSliderData(DiffInfo& dataFile) {
 		dataFile.fileName = projectOSDFileName + PathSepStr + dataFile.dataName;
 }
 
-bool OutfitProject::SliderDataSavedLocally(
-	const size_t sliderIndex, const std::string& dataName, const std::string& shapeName, const std::string& osdFileName, const std::string& prevOSDFileName) {
-	auto& slider = activeSet[sliderIndex];
-	auto dataFile = std::find_if(slider.dataFiles.begin(), slider.dataFiles.end(), [&dataName](const DiffInfo& df) { return df.dataName == dataName; });
-	if (dataFile == slider.dataFiles.end() || dataFile->fileName.empty())
-		return true;
-
-	const std::string& dataFileName = dataFile->fileName;
-	bool local = dataFile->bLocal;
-	std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
-	bool isDefaultDataFolder = shapeDataFolders.size() == 1 && shapeDataFolders.front() == activeSet.GetDefaultDataFolder();
-
-	// External data outside of the default data folder keeps its link
-	if (!local && !isDefaultDataFolder)
+bool OutfitProject::KeepSliderDataLink(const DiffInfo* dataFile,
+									   const std::string& shapeName,
+									   const bool isBaseShape,
+									   const bool hasDiff,
+									   const std::string& osdFileName,
+									   const std::string& prevOSDFileName) {
+	if (!dataFile)
 		return false;
 
-	if (osdFileName.empty() || SliderDataFileIsBSD(dataFileName))
-		return true;
+	if (!dataFile->bLocal) {
+		// Reference data, external data outside of the default data folder and external data that wasn't loaded keep their link
+		std::vector<std::string> shapeDataFolders = activeSet.GetShapeDataFolders(shapeName);
+		bool isDefaultDataFolder = shapeDataFolders.size() == 1 && shapeDataFolders.front() == activeSet.GetDefaultDataFolder();
+		if (isBaseShape || !isDefaultDataFolder || !hasDiff)
+			return true;
+	}
+
+	if (osdFileName.empty() || SliderDataFileIsBSD(dataFile->fileName))
+		return false;
 
 	// The data folder changes, so links within it can't be kept
 	if (activeSet.GetDefaultDataFolder() != mDataDir.ToUTF8().data())
-		return true;
+		return false;
 
-	// Data in another project's .osd file of the data folder keeps its link
 	std::string dataOSDFileName;
 	std::string dataNameInFile;
-	if (!SplitSliderDataFileName(dataFileName, dataOSDFileName, dataNameInFile))
-		return true;
+	if (!SplitSliderDataFileName(dataFile->fileName, dataOSDFileName, dataNameInFile))
+		return false;
 
 	if (StringsEqualInsens(dataOSDFileName.c_str(), osdFileName.c_str()) || StringsEqualInsens(dataOSDFileName.c_str(), prevOSDFileName.c_str()))
-		return true;
+		return false;
 
-	// Data merged from a project in another folder isn't there
-	return !activeSet.ResolveSliderDataFile(*dataFile).resolved;
+	// Data in another project's .osd file of the data folder keeps its link, unless it was merged from a project in another folder
+	return activeSet.ResolveSliderDataFile(*dataFile).resolved;
 }
 
 bool OutfitProject::ShapeSliderDataIsLocalOnly(const std::string& shapeName) {
@@ -1181,9 +1157,8 @@ std::string OutfitProject::EnsureSliderDataLocal(const std::string& sliderName, 
 	}
 	else {
 		activeSet[sliderIndex].SetLocalData(dataName);
-		for (auto& dataFile : activeSet[sliderIndex].dataFiles)
-			if (dataFile.dataName == dataName)
-				UnlinkSliderData(dataFile);
+		if (DiffInfo* dataFile = activeSet[sliderIndex].GetDataFile(dataName))
+			UnlinkSliderData(*dataFile);
 	}
 
 	if (!activeSet.TargetHasExternalData(target))
