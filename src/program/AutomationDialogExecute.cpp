@@ -1145,7 +1145,7 @@ int AutomationDialog::ImportSliderDataFromTRI(const AutomationStep& step, const 
 				namedShape = shape;
 
 		if (namedShape)
-			shapes = {namedShape};
+			shapes.assign(1, namedShape);
 
 		auto morphs = tri.GetMorphs();
 		for (auto* shape : shapes) {
