@@ -652,8 +652,8 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				// Low byte: 1 for cube maps, high byte: tile mode
 				if (file->tex.header.unk16 & 0x1) {
 					ddsHeader.caps2 = DDS_CUBEMAP_ALLFACES;
+					// The array size counts cubes, not faces
 					ddsHeader10.miscFlag = DirectX::DDS_RESOURCE_MISC_TEXTURECUBE;
-					ddsHeader10.arraySize *= 6;
 				}
 
 				bool ok = true;
@@ -726,7 +726,22 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					case DXGI_FORMAT_R8_SNORM:
 					case DXGI_FORMAT_R8_SINT: ddsHeader.ddspf = DirectX::DDSPF_L8_NVTT1; break;
 
-					default: ok = false; break;
+					case DXGI_FORMAT_B8G8R8X8_UNORM:
+						ddsHeader.ddspf = DirectX::DDSPF_X8R8G8B8;
+						ddsHeader.pitchOrLinearSize *= 4; // 32bpp
+						break;
+
+					default:
+						// No legacy header for it, the DX10 header names the format
+						if (file->tex.header.format == DXGI_FORMAT_UNKNOWN) {
+							ok = false;
+							break;
+						}
+						ddsHeader.flags &= ~DDS_HEADER_FLAGS_LINEARSIZE;
+						ddsHeader.pitchOrLinearSize = 0;
+						ddsHeader.ddspf = DirectX::DDSPF_DX10;
+						ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+						break;
 				}
 
 				if (!ok)
@@ -765,7 +780,14 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				}
 				else if (file->packedLength > 0 && file->tex.chunks.empty()) {
 					// GNRL BA2 compressed
-					chunk = gUncompress(chunk, file->unpackedLength);
+					if (ba2Header.compressionFlag == 3)
+						chunk = lz4Uncompress(chunk, file->unpackedLength);
+					else
+						chunk = gUncompress(chunk, file->unpackedLength);
+
+					if (chunk.GetDataLen() != file->unpackedLength)
+						return false;
+
 					content.AppendData(chunk, chunk.GetDataLen());
 				}
 				else if (file->tex.chunks.empty()) {
