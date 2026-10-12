@@ -107,7 +107,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -131,7 +131,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -156,7 +156,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
@@ -181,7 +181,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(Catch2IncludeDirectories)..\wxWidgets\include\msvc;..\wxWidgets\include;src;lib;lib\nifly\include;lib\nifly\external;lib\nlohmannjson\include;lib\TinyXML-2;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;BSOS_TEST_DATA_DIR="tests/data";WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
@@ -215,6 +215,13 @@
     <ClInclude Include="lib\LZ4F\lz4hc.h" />
     <ClInclude Include="lib\LZ4F\xxhash.h" />
     <ClInclude Include="lib\nifly\include\Object3d.hpp" />
+    <ClInclude Include="src\files\GameDataStream.h" />
+    <ClInclude Include="src\files\SFMaterialResolver.h" />
+    <ClInclude Include="src\utils\ConfigurationManager.h" />
+    <ClInclude Include="lib\FSEngine\FSEngine.h" />
+    <ClInclude Include="lib\FSEngine\FSManager.h" />
+    <ClInclude Include="lib\nifly\include\NifFile.hpp" />
+    <ClInclude Include="lib\TinyXML-2\tinyxml2.h" />
     <ClInclude Include="src\components\ArchiveIndex.h" />
     <ClInclude Include="src\components\MaskTransfer.h" />
     <ClInclude Include="src\components\StarfieldSpace.h" />
@@ -252,6 +259,26 @@
     <ClCompile Include="lib\LZ4F\lz4hc.c" />
     <ClCompile Include="lib\LZ4F\xxhash.c" />
     <ClCompile Include="lib\nifly\src\Object3d.cpp" />
+    <ClCompile Include="tests\StarfieldDataTest.cpp" />
+    <ClCompile Include="src\files\GameDataStream.cpp" />
+    <ClCompile Include="src\files\SFMaterialResolver.cpp" />
+    <ClCompile Include="src\utils\ConfigurationManager.cpp" />
+    <ClCompile Include="lib\FSEngine\FSEngine.cpp" />
+    <ClCompile Include="lib\FSEngine\FSManager.cpp" />
+    <ClCompile Include="lib\nifly\src\Animation.cpp" />
+    <ClCompile Include="lib\nifly\src\BasicTypes.cpp" />
+    <ClCompile Include="lib\nifly\src\bhk.cpp" />
+    <ClCompile Include="lib\nifly\src\ExtraData.cpp" />
+    <ClCompile Include="lib\nifly\src\Factory.cpp" />
+    <ClCompile Include="lib\nifly\src\Geometry.cpp" />
+    <ClCompile Include="lib\nifly\src\NifFile.cpp" />
+    <ClCompile Include="lib\nifly\src\NifUtil.cpp" />
+    <ClCompile Include="lib\nifly\src\Nodes.cpp" />
+    <ClCompile Include="lib\nifly\src\Objects.cpp" />
+    <ClCompile Include="lib\nifly\src\Particles.cpp" />
+    <ClCompile Include="lib\nifly\src\Shaders.cpp" />
+    <ClCompile Include="lib\nifly\src\Skin.cpp" />
+    <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

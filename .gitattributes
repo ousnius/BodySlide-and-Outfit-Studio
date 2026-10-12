@@ -1,6 +1,9 @@
 # Archive test corpus: stored as-is, never line-ending converted
 tests/data/archives/** filter=lfs diff=lfs merge=lfs -text
 
+# Starfield game data fixtures (NIFs, .mesh geometry, morph.dat)
+tests/data/starfield/** filter=lfs diff=lfs merge=lfs -text
+
 # Havok packfiles
 *.hkx filter=lfs diff=lfs merge=lfs -text
 

@@ -54,6 +54,27 @@
     <ClInclude Include="lib\nifly\include\Object3d.hpp">
       <Filter>Libraries</Filter>
     </ClInclude>
+    <ClInclude Include="src\files\GameDataStream.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\SFMaterialResolver.h">
+      <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utils\ConfigurationManager.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\FSEngine\FSEngine.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\FSEngine\FSManager.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\nifly\include\NifFile.hpp">
+      <Filter>Libraries</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\TinyXML-2\tinyxml2.h">
+      <Filter>Libraries</Filter>
+    </ClInclude>
     <ClInclude Include="src\components\ArchiveIndex.h">
       <Filter>Components</Filter>
     </ClInclude>
@@ -159,6 +180,66 @@
       <Filter>Libraries</Filter>
     </ClCompile>
     <ClCompile Include="lib\nifly\src\Object3d.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\StarfieldDataTest.cpp">
+      <Filter>Tests</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\GameDataStream.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\files\SFMaterialResolver.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utils\ConfigurationManager.cpp">
+      <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\FSEngine\FSEngine.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\FSEngine\FSManager.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Animation.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\BasicTypes.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\bhk.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\ExtraData.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Factory.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Geometry.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\NifFile.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\NifUtil.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Nodes.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Objects.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Particles.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Shaders.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\nifly\src\Skin.cpp">
+      <Filter>Libraries</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
       <Filter>Libraries</Filter>
     </ClCompile>
   </ItemGroup>

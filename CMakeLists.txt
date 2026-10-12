@@ -480,25 +480,45 @@ if(BSOS_BUILD_TESTS)
 		tests/SFMaterialFileTest.cpp
 		tests/SFMorphFileTest.cpp
 		tests/SFResourceHashTest.cpp
+		tests/StarfieldDataTest.cpp
 		tests/StarfieldSpaceTest.cpp
 		src/components/ArchiveIndex.cpp
 		src/components/MaskTransfer.cpp
 		src/files/HkxFile.cpp
+		src/files/GameDataStream.cpp
 		src/files/SFMaterialDatabase.cpp
 		src/files/SFMaterialFile.cpp
 		src/files/SFMaterialGraph.cpp
 		src/files/SFLayeredMaterial.cpp
+		src/files/SFMaterialResolver.cpp
 		src/files/SFMorphFile.cpp
 		src/files/SFResourceHash.cpp
 		src/utils/AABBTree.cpp
+		src/utils/ConfigurationManager.cpp
 		src/utils/PlatformUtil.cpp
 		src/utils/StringStuff.cpp
 		lib/FSEngine/FSBSA.cpp
+		lib/FSEngine/FSEngine.cpp
+		lib/FSEngine/FSManager.cpp
 		lib/LZ4F/lz4.c
 		lib/LZ4F/lz4frame.c
 		lib/LZ4F/lz4hc.c
 		lib/LZ4F/xxhash.c
+		lib/nifly/src/Animation.cpp
+		lib/nifly/src/BasicTypes.cpp
+		lib/nifly/src/bhk.cpp
+		lib/nifly/src/ExtraData.cpp
+		lib/nifly/src/Factory.cpp
+		lib/nifly/src/Geometry.cpp
+		lib/nifly/src/NifFile.cpp
+		lib/nifly/src/NifUtil.cpp
+		lib/nifly/src/Nodes.cpp
 		lib/nifly/src/Object3d.cpp
+		lib/nifly/src/Objects.cpp
+		lib/nifly/src/Particles.cpp
+		lib/nifly/src/Shaders.cpp
+		lib/nifly/src/Skin.cpp
+		lib/TinyXML-2/tinyxml2.cpp
 	)
 	target_include_directories(BSOSTests PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -506,6 +526,7 @@ if(BSOS_BUILD_TESTS)
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nlohmannjson/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/include
 		${CMAKE_CURRENT_SOURCE_DIR}/lib/nifly/external
+		${CMAKE_CURRENT_SOURCE_DIR}/lib/TinyXML-2
 	)
 	target_compile_definitions(BSOSTests PRIVATE
 		${BSOS_PLATFORM_DEFINITIONS}
